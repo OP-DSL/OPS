@@ -103,7 +103,7 @@ int main(int argc, const char **argv)
   ops_decl_const("dy",1,"double",&dy);
 
   //declare block
-  ops_block block = ops_decl_block(2,"block");
+  ops_block block = ops_decl_block_batch(2,"block",num_systems);
 
   //declare stencils
   int s2D_00[]         = {0,0};
@@ -111,7 +111,7 @@ int main(int argc, const char **argv)
   int s2D_00_P10_M10_0P1_0M1[]         = {0,0, 1,0, -1,0, 0,1, 0,-1};
   ops_stencil S2D_00_P10_M10_0P1_0M1 = ops_decl_stencil( 2, 5, s2D_00_P10_M10_0P1_0M1, "00:10:-10:01:0-1");
 
-  ops_reduction red_err = ops_decl_reduction_handle(sizeof(double), "double", "err");
+  ops_reduction red_err = ops_decl_reduction_handle_batch(sizeof(double), "double", "err", num_systems);
 
   //declare datasets
   int d_p[2] = {1,1}; //max halo depths for the dat in the possitive direction
@@ -133,6 +133,8 @@ int main(int argc, const char **argv)
 
   double ct0, ct1, et0, et1;
   ops_timers(&ct0, &et0);
+
+  ops_par_loop_blocks_all(num_systems);
 
   //populate forcing, reference solution and boundary conditions
   int iter_range_full[] = {-1,size[0]+1,-1,size[1]+1};
@@ -178,20 +180,29 @@ int main(int argc, const char **argv)
   ops_execute();
   ops_timers(&ct0, &it1);
 
-  double err = 0.0;
   ops_par_loop(poisson_kernel_error, "poisson_kernel_error", block, 2, iter_range,
       ops_arg_dat(u, 1, S2D_00, "double", OPS_READ),
       ops_arg_dat(ref , 1, S2D_00, "double", OPS_READ),
       ops_arg_reduce(red_err, 1, "double", OPS_INC));
 
-  ops_reduction_result(red_err,&err);
+  ops_par_loop_blocks_end();
+
+  double *err = new double[num_systems];
+  ops_reduction_result(red_err,err);
 
   ops_timers(&ct1, &et1);
   ops_timing_output(stdout);
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
-  double err_diff=fabs((100.0*(err/2008.72990634426))-100.0);
-  ops_printf("Total error: %3.15g\n",err);
+  double err_diff = 0.0;
+  for (int i = 0; i < num_systems; i++) {
+    err_diff=fabs((100.0*(err[i]/2008.72990634426))-100.0);
+    if (err_diff > 0.001) {
+      break;
+    }
+  }
+  ops_printf("Total error: %3.15g\n",err[0]);
   ops_printf("Total error is within %3.15E %% of the expected error\n",err_diff);
+  delete[] err;
 
   if(err_diff < 0.001) {
     ops_printf("This run is considered PASSED\n");

@@ -158,6 +158,7 @@ void restore_dat_ptrs() {
 }
 
 void ops_execute_amr() {
+  if (OPS_instance::getOPSInstance()->tiling_instance == NULL || ops_kernel_list.size() == 0) return; //nothing queued
   replicate_dats();
   #pragma omp parallel for
   for (int i = 0; i < ops_loop_over_blocks; i++) {

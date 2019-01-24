@@ -147,7 +147,7 @@ void ops_execute();
 /////////////////////////////////////////////////////////////////////////
 
 void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
-  if (OPS_instance::getOPSInstance()->ops_enable_tiling && OPS_instance::getOPSInstance()->tiling_instance == NULL)
+  if ((OPS_instance::getOPSInstance()->ops_enable_tiling || OPS_instance::getOPSInstance()->ops_loop_over_blocks) && OPS_instance::getOPSInstance()->tiling_instance == NULL)
     OPS_instance::getOPSInstance()->tiling_instance = new OPS_instance_tiling();
 
   if (OPS_instance::getOPSInstance()->ops_enable_tiling || OPS_instance::getOPSInstance()->ops_loop_over_blocks)

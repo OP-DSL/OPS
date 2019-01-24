@@ -178,6 +178,13 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type,
   return ops_decl_reduction_handle_core(size, type, name);
 }
 
+ops_reduction ops_decl_reduction_handle_batch(int size, const char *type,
+                                        const char *name, int batchsize) {
+  ops_reduction r =  ops_decl_reduction_handle(size, type, name);
+  r->batchsize = batchsize;
+  r->data = (char*)ops_realloc(r->data,size * batchsize * sizeof(char));
+  return r;
+}
 void ops_execute_reduction(ops_reduction handle) { (void)handle; }
 
 int ops_is_root() { return 1; }

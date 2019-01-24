@@ -309,7 +309,7 @@ ops_block ops_decl_block(int dims, const char *name) {
   return block;
 }
 
-ops_block ops_decl_block(int dims, const char *name, int count) {
+ops_block ops_decl_block_batch(int dims, const char *name, int count) {
   ops_block block = ops_decl_block(dims, name);
   block->count = count;
 }
@@ -608,8 +608,11 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
   if (handle->initialized == 0) {
     handle->initialized = 1;
     handle->acc = acc;
+//    if (OPS_instance::getOPSInstance()->ops_loop_over_blocks) handle->multithreaded = 1;
+//    else handle->multithreaded = 0;
+#warning doing this different now!
     if (acc == OPS_INC)
-      memset(handle->data, 0, handle->size);
+      memset(handle->data, 0, handle->size * handle->batchsize);
     if (strcmp(type, "double") == 0 ||
         strcmp(type, "real(8)") == 0) { // TODO: handle other types
       if (acc == OPS_MIN)
@@ -639,7 +642,12 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
       OPSException ex(OPS_INVALID_ARGUMENT);
       ex << "Error: ops_reduction handle " << handle->name << " was aleady used with a different access type";
       throw ex;
+  } else if (OPS_instance::getOPSInstance()->ops_loop_over_blocks && handle->multithreaded == 0) {
+      OPSException ex(OPS_INVALID_ARGUMENT);
+      ex << "Error: ops_reduction handle " << handle->name << "  was already used but not queried outside of an ops_par_loop_blocks region";
+      throw ex;
   }
+
   return arg;
 }
 
@@ -778,6 +786,7 @@ ops_arg ops_arg_gbl_core(char *data, int dim, int size, ops_access acc) {
   arg.stencil = NULL;
   arg.dim = dim;
   arg.data = data;
+  arg.typesize = size;
   arg.acc = acc;
   return arg;
 }
@@ -812,6 +821,8 @@ ops_reduction ops_decl_reduction_handle_core(int size, const char *type,
   red->data = (char *)ops_malloc(size * sizeof(char));
   red->name = copy_str(name);
   red->type = copy_str(type);
+  red->multithreaded = 0;
+  red->batchsize = 1;
   OPS_instance::getOPSInstance()->OPS_reduction_list[OPS_instance::getOPSInstance()->OPS_reduction_index] = red;
   red->index = OPS_instance::getOPSInstance()->OPS_reduction_index++;
   return red;

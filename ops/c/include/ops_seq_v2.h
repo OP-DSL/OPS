@@ -111,14 +111,14 @@ using param_remove_cvref_t = typename param_remove_cvref<T>::type;
 
 // helper struct to create, pass and free parameters to the kernel
 template <typename ParamT> struct param_handler {
-  static char *construct(const ops_arg &arg, int dim, int ndim, int start[], ops_block block) { 
+  static char *construct(const ops_arg &arg, int dim, int ndim, int start[], ops_block block, int batch) { 
     if (arg.argtype == OPS_ARG_GBL) {
       if (arg.acc == OPS_READ) return arg.data;
       else
   #ifdef OPS_MPI
-        return ((ops_reduction)arg.data)->data + ((ops_reduction)arg.data)->size * block->index;
+        return ((ops_reduction)arg.data)->data + ((ops_reduction)arg.data)->size * block->index + ((ops_reduction)arg.data)->size * batch;// multi-block and batched blocks mutually exclusive
   #else //OPS_MPI
-        return ((ops_reduction)arg.data)->data;
+        return ((ops_reduction)arg.data)->data + ((ops_reduction)arg.data)->size * batch;
   #endif //OPS_MPI
     } else if (arg.argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
@@ -156,7 +156,7 @@ static void shift_arg(const ops_arg &arg, char *p, int m, const int* start,
 };
 
 template <typename T> struct param_handler<ACC<T>> {
-  static char *construct(const ops_arg &arg, int dim, int ndim, int start[], ops_block block) { 
+  static char *construct(const ops_arg &arg, int dim, int ndim, int start[], ops_block block, int batch) { 
     if (arg.argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
@@ -175,7 +175,7 @@ template <typename T> struct param_handler<ACC<T>> {
 #else
       return (char *) ((arg.dat->data //TODO
 #endif
-      + address(ndim, OPS_instance::getOPSInstance()->OPS_soa ? arg.dat->type_size : arg.dat->elem_size, &start[0], 
+      + (arg.dat->mem/arg.dat->block->count)*batch + address(ndim, OPS_instance::getOPSInstance()->OPS_soa ? arg.dat->type_size : arg.dat->elem_size, &start[0], 
         arg.dat->size, arg.stencil->stride, arg.dat->base,
         d_m))); //TODO
     } 
@@ -253,8 +253,14 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
   ops_register_args(args, name);
   #endif
 
+  ops_H_D_exchanges_host(args, N);
+  ops_halo_exchanges(args,N,range);
+  ops_H_D_exchanges_host(args, N);
+
+  for (int batch = 0; batch < block->count; batch++) {
+
   char *p_a[N] = 
-    {param_handler<param_remove_cvref_t<ParamType>>::construct(arguments, dim, ndim, start, block)...};
+    {param_handler<param_remove_cvref_t<ParamType>>::construct(arguments, dim, ndim, start, block, batch)...};
   //Offs decl
   int offs[N][OPS_MAX_DIM];
   (void) std::initializer_list<int>{(initoffs(arguments, offs[I], ndim, start, end), 0)...};
@@ -267,9 +273,6 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
   }
   count[dim-1]++;     // extra in last to ensure correct termination
 
-  ops_H_D_exchanges_host(args, N);
-  ops_halo_exchanges(args,N,range);
-  ops_H_D_exchanges_host(args, N);
 
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -295,6 +298,10 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
   #endif //OPS_MPI
   }
 
+  (void) std::initializer_list<int>{
+    (param_handler<param_remove_cvref_t<ParamType>>::free(p_a[I]),0)...};
+  }  //batches
+
   #ifdef OPS_DEBUG_DUMP
   (void) std::initializer_list<int>{(
     arguments.argtype == OPS_ARG_DAT && arguments.acc != OPS_READ? ops_dump3(arguments.dat,name),0:0)...};
@@ -303,8 +310,6 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
   (arguments.argtype == OPS_ARG_DAT && arguments.acc != OPS_READ)?  ops_set_halo_dirtybit3(&arguments,range),0:0)...};
   ops_set_dirtybit_host(args, N);
 
-  (void) std::initializer_list<int>{
-    (param_handler<param_remove_cvref_t<ParamType>>::free(p_a[I]),0)...};
 }
 
 #endif /*DOXYGEN_SHOULD_SKIP_THIS*/

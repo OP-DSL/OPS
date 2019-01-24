@@ -283,6 +283,14 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type,
   return red;
 }
 
+ops_reduction ops_decl_reduction_handle_batch(int size, const char *type,
+                                        const char *name, int batchsize) {
+  ops_reduction r =  ops_decl_reduction_handle(size, type, name);
+  r->batchsize = batchsize;
+  r->data = (char*)ops_realloc(r->data,size * batchsize * sizeof(char));
+  return r;
+}
+
 bool ops_checkpointing_filename(const char *file_name, char *filename_out,
                                 char *filename_out2) {
   sprintf(filename_out, "%s.%d", file_name, ops_my_global_rank);

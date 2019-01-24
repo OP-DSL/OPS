@@ -45,6 +45,17 @@ void ops_init(const int argc, char **argv, const int diags) {
 
 void ops_exit() { ops_exit_core(); }
 
+ops_dat ops_decl_amrdat_char(ops_block block, int size, int *dat_size, int *base,
+                          int *d_m, int *d_p, char *data, int type_size,
+                          char const *type, char const *name) {
+  int stride[OPS_MAX_DIM];
+  for (int i =0; i < OPS_MAX_DIM; i++) stride[i] = 1;
+  ops_dat dat = ops_decl_dat_char(block, size, dat_size, base, d_m, d_p,
+                                       stride, data, type_size, type, name);
+  dat->amr = 1;
+  return dat;
+}
+
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
                           int *d_m, int *d_p, int *stride, char *data, int type_size,
                           char const *type, char const *name) {
@@ -64,12 +75,11 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     int bytes = size * type_size;
     for (int i = 0; i < block->dims; i++)
       bytes = bytes * dat->size[i];
-    dat->mem = bytes;
+    dat->mem = bytes * block->count;
   } else {
     // Allocate memory immediately
-    int bytes = size * type_size;
+    int bytes = size * type_size * block->count;
 
-    //nx_pad    = (1+((nx-1)/SIMD_VEC))*SIMD_VEC; // Compute padding for vecotrization (in adi_cpu tridiagonal library)
     // Compute    padding x-dim for vecotrization
     int x_pad = (1+((dat->size[0]-1)/SIMD_VEC))*SIMD_VEC - dat->size[0];
     dat->size[0] += x_pad;
@@ -86,11 +96,13 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
       int sizeprod = 1; 
       for (int d = 1; d < block->dims; d++) sizeprod *= (dat->size[d]);
       int xlen_orig = (-d_m[0]+d_p[0]+dat_size[0]) * size * type_size;
-      for (int i = 0; i < sizeprod; i++) {
+      for (int i = 0; i < sizeprod * block->count; i++) {
         memcpy(&dat->data[i*dat->size[0] * size * type_size],&data[i*xlen_orig],xlen_orig);
       }
     }
   }
+
+  if (block->count>1) dat->amr = 1;
 
   // Compute offset in bytes to the base index
   dat->base_offset = 0;
@@ -445,10 +457,41 @@ ops_arg ops_arg_gbl_char(char *data, int dim, int size, ops_access acc) {
   return ops_arg_gbl_core(data, dim, size, acc);
 }
 
+ops_arg ops_arg_dat2(ops_dat dat, int idx, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc) {
+  ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
+  temp.dim = dim;
+  temp.idx = idx;
+  temp.argtype = OPS_ARG_DAT2;
+  return temp;
+}
+
+ops_arg ops_arg_restrict(ops_dat dat, int idx, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc) {
+  ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
+  temp.argtype = OPS_ARG_RESTRICT;
+  temp.dim = dim;
+  temp.idx = idx;
+  if (stencil->type != 2) {ops_printf("Error, ops_arg_restrict used, but stencil is not restrict stencil\n");exit(-1);}
+  return temp;
+}
+
+ops_arg ops_arg_prolong(ops_dat dat, int idx, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc) {
+  ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
+  temp.argtype = OPS_ARG_PROLONG;
+  temp.dim = dim;
+  temp.idx = idx;
+  if (stencil->type != 2) {ops_printf("Error, ops_arg_prolong used, but stencil is not prolong stencil\n");exit(-1);}
+  return temp;
+}
+
+
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
   ops_execute();
   ops_checkpointing_reduction(handle);
-  memcpy(ptr, handle->data, handle->size);
+  ops_amr_reduction_result(handle);
+  memcpy(ptr, handle->data, handle->size * handle->batchsize);
   handle->initialized = 0;
 }
 
