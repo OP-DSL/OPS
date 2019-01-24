@@ -163,6 +163,7 @@ typedef struct {
   int index;        /**< index */
   int dims;         /**< dimension of block, 2D,3D .. etc*/
   char const *name; /**< name of block */
+  int count;        /**< batch size*/
 } ops_block_core;
 
 typedef ops_block_core *ops_block;
@@ -398,6 +399,15 @@ ops_dat ops_decl_amrdat_mpi_char(ops_block block, int size, int *dat_size,
  */
 ops_block ops_decl_block(int dims, const char *name);
 
+/**
+ * This routine defines a collection of structured grid blocks.
+ *
+ * @param dims  dimension of the block
+ * @param name  a name used for output diagnostics
+ * @param count batch size
+ * @return
+ */
+ops_block ops_decl_block_batch(int dims, const char *name, int count);
 
 /**
  * Deallocates an OPS dataset

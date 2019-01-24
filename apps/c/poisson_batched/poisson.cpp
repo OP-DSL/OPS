@@ -66,6 +66,7 @@ int main(int argc, const char **argv)
   int n_iter = 100;
   int itertile = n_iter;
   int non_copy = 0;
+  int num_systems = 100;
 
   const char* pch;
   for ( int n = 1; n < argc; n++ ) {
@@ -89,9 +90,13 @@ int main(int argc, const char **argv)
     if(pch != NULL) {
       non_copy = 1; continue;
     }
+    pch = strstr(argv[n], "-batch=");
+    if(pch != NULL) {
+      num_systems = atoi ( argv[n] + 7 ); continue;
+    }
   }
 
-  ops_printf("Grid: %dx%d, %d iterations, %d tile height\n",logical_size_x,logical_size_y,n_iter,itertile);
+  ops_printf("Grid: %dx%d, %d batch size %d iterations, %d tile height\n",logical_size_x,logical_size_y,num_systems, n_iter,itertile);
   dx = 0.01;
   dy = 0.01;
   ops_decl_const("dx",1,"double",&dx);

@@ -281,12 +281,18 @@ ops_block ops_decl_block(int dims, const char *name) {
   block->index = OPS_instance::getOPSInstance()->OPS_block_index;
   block->dims = dims;
   block->name = copy_str(name);
+  block->count = 1;
   OPS_instance::getOPSInstance()->OPS_block_list[OPS_instance::getOPSInstance()->OPS_block_index].block = block;
   OPS_instance::getOPSInstance()->OPS_block_list[OPS_instance::getOPSInstance()->OPS_block_index].num_datasets = 0;
   TAILQ_INIT(&(OPS_instance::getOPSInstance()->OPS_block_list[OPS_instance::getOPSInstance()->OPS_block_index].datasets));
   OPS_instance::getOPSInstance()->OPS_block_index++;
 
   return block;
+}
+
+ops_block ops_decl_block(int dims, const char *name, int count) {
+  ops_block block = ops_decl_block(dims, name);
+  block->count = count;
 }
 
 void ops_decl_const_core(int dim, char const *type, int typeSize, char *data,
