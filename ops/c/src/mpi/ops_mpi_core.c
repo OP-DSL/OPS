@@ -247,8 +247,8 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type,
       declaring at least one ops_block\n -- Aborting\n");
     MPI_Abort(OPS_MPI_GLOBAL, 2);
   }
-  red->data =
-      (char *)realloc(red->data, red->size * (OPS_block_index) * sizeof(char));
+  red->data = (char *)ops_realloc(red->data,
+                                  red->size * (OPS_block_index) * sizeof(char));
   return red;
 }
 
@@ -319,8 +319,8 @@ void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems,
            1000 + OPS_dat_index + dat->index, OPS_MPI_GLOBAL, &statuses[0]);
   if (recv_stats[1] * bytesize > OPS_checkpoiting_dup_buffer_size) {
     OPS_checkpoiting_dup_buffer =
-        (char *)realloc(OPS_checkpoiting_dup_buffer,
-                        recv_stats[1] * bytesize * 2 * sizeof(char));
+        (char *)ops_realloc(OPS_checkpoiting_dup_buffer,
+                            recv_stats[1] * bytesize * 2 * sizeof(char));
     OPS_checkpoiting_dup_buffer_size = recv_stats[1] * bytesize * 2;
   }
   *rm_data = OPS_checkpoiting_dup_buffer;

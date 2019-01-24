@@ -53,6 +53,10 @@
 #include "ops_macros.h"
 #include "ops_util.h"
 
+#ifndef OPS_ALIGNMENT
+#define OPS_ALIGNMENT 64
+#endif
+
 /*
 * enum list for ops_par_loop
 */
@@ -149,6 +153,7 @@ typedef struct {
                             end)*/
   int d_p[OPS_MAX_DIM];  /* halo depth in each dimension, positive direction (at
                             size end)*/
+  int x_pad;             /* padding in x-dimension for allocating aligned memory */
   char *data;            /* data on host */
   char *data_d;          /* data on device */
   char const *name;      /* name of dataset */
@@ -327,11 +332,12 @@ extern double OPS_checkpointing_time;
 * Core lib function prototypes
 *******************************************************************************/
 
-void ops_init(int argc, char **argv, int diags_level);
+void ops_init(const int argc, const char **argv, const int diags_level);
 void ops_exit();
 
 ops_dat ops_decl_dat_char(ops_block, int, int *, int *, int *, int *, char *,
                           int, char const *, char const *);
+void ops_free_dat(ops_dat dat);
 ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size,
                               int *base, int *d_m, int *d_p, char *data,
                               int type_size, char const *type,
@@ -357,7 +363,7 @@ ops_arg ops_arg_gbl_char(char *data, int dim, int size, ops_access acc);
 void ops_decl_const_char(int, char const *, int, char *, char const *);
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr);
 
-void ops_init_core(int argc, char **argv, int diags_level);
+void ops_init_core(const int argc, const char **argv, const int diags_level);
 
 void ops_exit_core(void);
 
@@ -403,6 +409,9 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name);
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name);
 
 void ops_get_data(ops_dat dat);
+
+int* ops_fetch_data_size(ops_dat dat);
+void ops_fetch_data_ptr(ops_dat dat, char *ptr);
 
 void ops_timing_realloc(int, const char *);
 void ops_timers_core(double *cpu, double *et);
@@ -473,11 +482,20 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data);
 void ops_dat_set_data(ops_dat dat, int part, char *data);
 int ops_dat_get_global_npartitions(ops_dat dat);
 
+/*******************************************************************************
+* Memory allocation functions
+*******************************************************************************/
+void* ops_malloc (size_t size);
+void* ops_realloc (void *ptr, size_t size);
+void  ops_free (void *ptr);
+void* ops_calloc (size_t num, size_t size);
+
 #ifdef __cplusplus
 }
 #endif
 
 #include "ops_checkpointing.h"
 #include "ops_hdf5.h"
+#include "ops_tridiag.h"
 
 #endif /* __OP_LIB_CORE_H */

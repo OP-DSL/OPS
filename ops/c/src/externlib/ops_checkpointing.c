@@ -289,7 +289,7 @@ void ops_reallocate_ramdisk(long size) {
     usleep(20000);
   ops_ramdisk_size = ROUND64L(size);
   ops_ramdisk_buffer =
-      (char *)realloc(ops_ramdisk_buffer, ops_ramdisk_size * sizeof(char));
+      (char *)ops_realloc(ops_ramdisk_buffer, ops_ramdisk_size * sizeof(char));
   ops_ramdisk_tail = 0;
   ops_ramdisk_head = 0;
 }
@@ -298,11 +298,11 @@ void ops_ramdisk_init(long size) {
   if (ops_ramdisk_initialised)
     return;
   ops_ramdisk_size = ROUND64L(size);
-  ops_ramdisk_buffer = (char *)malloc(ops_ramdisk_size * sizeof(char));
+  ops_ramdisk_buffer = (char *)ops_malloc(ops_ramdisk_size * sizeof(char));
   ops_ramdisk_tail = 0;
   ops_ramdisk_head = 0;
-  ops_ramdisk_item_queue =
-      (ops_ramdisk_item *)malloc(3 * OPS_dat_index * sizeof(ops_ramdisk_item));
+  ops_ramdisk_item_queue = (ops_ramdisk_item *)ops_malloc(
+      3 * OPS_dat_index * sizeof(ops_ramdisk_item));
   ops_ramdisk_item_queue_head = 0;
   ops_ramdisk_item_queue_tail = 0;
   ops_ramdisk_item_queue_size = 3 * OPS_dat_index;
@@ -384,7 +384,7 @@ void ops_inmemory_save(ops_dat dat, hid_t outfile, int size, int *saved_range,
     memcpy(ops_ramdisk_item_queue[head].saved_range, saved_range,
            2 * OPS_MAX_DIM * sizeof(int));
   ops_ramdisk_item_queue[head].data =
-      (char *)malloc((dat->elem_size / dat->dim) * size * sizeof(char));
+      (char *)ops_malloc((dat->elem_size / dat->dim) * size * sizeof(char));
   memcpy(ops_ramdisk_item_queue[head].data, data,
          (dat->elem_size / dat->dim) * size * sizeof(char));
   ops_ramdisk_item_queue[head].partial = partial;
@@ -554,7 +554,7 @@ void save_dat_partial(ops_dat dat, int *range) {
 
   if (OPS_partial_buffer_size < dims[0]) {
     OPS_partial_buffer_size = 2 * dims[0];
-    OPS_partial_buffer = (char *)realloc(
+    OPS_partial_buffer = (char *)ops_realloc(
         OPS_partial_buffer, OPS_partial_buffer_size * sizeof(char));
   }
 
@@ -660,7 +660,7 @@ void ops_restore_dataset(ops_dat dat) {
 
     if (OPS_partial_buffer_size < dims[0]) {
       OPS_partial_buffer_size = 2 * dims[0];
-      OPS_partial_buffer = (char *)realloc(
+      OPS_partial_buffer = (char *)ops_realloc(
           OPS_partial_buffer, OPS_partial_buffer_size * sizeof(char));
     }
 
@@ -884,7 +884,8 @@ bool ops_checkpointing_initstate() {
       // restore reduction storage
       check_hdf5_error(H5LTread_dataset(file, "OPS_chk_red_offset",
                                         H5T_NATIVE_INT, &OPS_chk_red_offset));
-      OPS_chk_red_storage = (char *)malloc(OPS_chk_red_offset * sizeof(char));
+      OPS_chk_red_storage =
+          (char *)ops_malloc(OPS_chk_red_offset * sizeof(char));
       OPS_chk_red_size = OPS_chk_red_offset;
       OPS_chk_red_offset = 0;
       check_hdf5_error(H5LTread_dataset(file, "OPS_chk_red_storage",
@@ -934,7 +935,7 @@ bool ops_checkpointing_init(const char *file_name, double interval,
              "checkpointing\n");
       MPI_Abort(MPI_COMM_WORLD, -1);
     }
-    ops_ramdisk_item_queue = (ops_ramdisk_item *)malloc(
+    ops_ramdisk_item_queue = (ops_ramdisk_item *)ops_malloc(
         3 * OPS_dat_index * sizeof(ops_ramdisk_item));
     ops_ramdisk_item_queue_head = 0;
     ops_ramdisk_item_queue_tail = 0;
@@ -951,9 +952,9 @@ bool ops_checkpointing_init(const char *file_name, double interval,
   ops_duplicate_backup =
       ops_checkpointing_filename(file_name, filename, filename_dup);
 
-  OPS_dat_ever_written = (char *)malloc(OPS_dat_index * sizeof(char));
-  OPS_dat_status = (ops_checkpoint_types *)malloc(OPS_dat_index *
-                                                  sizeof(ops_checkpoint_types));
+  OPS_dat_ever_written = (char *)ops_malloc(OPS_dat_index * sizeof(char));
+  OPS_dat_status = (ops_checkpoint_types *)ops_malloc(
+      OPS_dat_index * sizeof(ops_checkpoint_types));
 
   if (diagnostics) {
     diagf = fopen("checkp_diags.txt", "w");
@@ -998,7 +999,7 @@ void ops_checkpointing_save_control(hid_t file_out) {
   for (int i = 0; i < OPS_reduction_index; i++)
     if (OPS_reduction_list[i]->initialized == 1)
       total_size += OPS_reduction_list[i]->size;
-  char *reduction_state = (char *)malloc(total_size * sizeof(char));
+  char *reduction_state = (char *)ops_malloc(total_size * sizeof(char));
   total_size = 0;
   for (int i = 0; i < OPS_reduction_index; i++) {
     if (OPS_reduction_list[i]->initialized == 1) {
@@ -1016,8 +1017,8 @@ void ops_checkpointing_save_control(hid_t file_out) {
   // Save payload if specified by user
   if ((ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
     ops_inm_ctrl.OPS_checkpointing_payload =
-        (char *)realloc(ops_inm_ctrl.OPS_checkpointing_payload,
-                        OPS_checkpointing_payload_nbytes * sizeof(char));
+        (char *)ops_realloc(ops_inm_ctrl.OPS_checkpointing_payload,
+                            OPS_checkpointing_payload_nbytes * sizeof(char));
     memcpy(ops_inm_ctrl.OPS_checkpointing_payload, OPS_checkpointing_payload,
            OPS_checkpointing_payload_nbytes * sizeof(char));
     ops_inm_ctrl.OPS_checkpointing_payload_nbytes =
@@ -1026,7 +1027,7 @@ void ops_checkpointing_save_control(hid_t file_out) {
 
   // save reduction history
   ops_inm_ctrl.OPS_chk_red_offset = OPS_chk_red_offset;
-  ops_inm_ctrl.OPS_chk_red_storage = (char *)realloc(
+  ops_inm_ctrl.OPS_chk_red_storage = (char *)ops_realloc(
       ops_inm_ctrl.OPS_chk_red_storage, OPS_chk_red_offset * sizeof(char));
   memcpy(ops_inm_ctrl.OPS_chk_red_storage, OPS_chk_red_storage,
          OPS_chk_red_offset * sizeof(char));
@@ -1220,8 +1221,8 @@ void ops_checkpointing_reduction(ops_reduction red) {
       !(ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
     OPS_chk_red_size *= 2;
     OPS_chk_red_size = MAX(OPS_chk_red_size, 100 * red->size);
-    OPS_chk_red_storage =
-        (char *)realloc(OPS_chk_red_storage, OPS_chk_red_size * sizeof(char));
+    OPS_chk_red_storage = (char *)ops_realloc(OPS_chk_red_storage,
+                                              OPS_chk_red_size * sizeof(char));
   }
   if (backup_state == OPS_BACKUP_LEADIN) {
     if (!(ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
@@ -1329,7 +1330,7 @@ bool ops_checkpointing_name_before(ops_arg *args, int nargs, int *range,
     // %d\n",ops_loop_max);
     ops_loop_max += 100;
     ops_loops_hashmap =
-        (int *)realloc(ops_loops_hashmap, ops_loop_max * sizeof(int));
+        (int *)ops_realloc(ops_loops_hashmap, ops_loop_max * sizeof(int));
     for (int i = ops_loop_max - 100; i < ops_loop_max; i++) {
       ops_loops_hashmap[i] = -1;
     }
@@ -1438,7 +1439,7 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range,
     for (int i = 0; i < OPS_reduction_index; i++)
       if (OPS_reduction_list[i]->initialized == 1)
         total_size += OPS_reduction_list[i]->size;
-    char *reduction_state = (char *)malloc(total_size * sizeof(char));
+    char *reduction_state = (char *)ops_malloc(total_size * sizeof(char));
     check_hdf5_error(H5LTread_dataset(file, "reduction_state", H5T_NATIVE_CHAR,
                                       reduction_state));
     total_size = 0;

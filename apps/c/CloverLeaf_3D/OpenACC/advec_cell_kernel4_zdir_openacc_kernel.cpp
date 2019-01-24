@@ -80,11 +80,12 @@ void ops_par_loop_advec_cell_kernel4_zdir(char const *name, ops_block block, int
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,11,range,120)) return;
+  if (!ops_checkpointing_before(args, 11, range, 120))
+    return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(120,"advec_cell_kernel4_zdir");
+    ops_timing_realloc(120, "advec_cell_kernel4_zdir");
     OPS_kernels[120].count++;
     ops_timers_core(&c1,&t1);
   }
@@ -366,7 +367,7 @@ void ops_par_loop_advec_cell_kernel4_zdir(char const *name, ops_block block, int
   #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[120].mpi_time += t2-t1;
+    OPS_kernels[120].mpi_time += t2 - t1;
   }
 
   advec_cell_kernel4_zdir_c_wrapper(
@@ -385,7 +386,7 @@ void ops_par_loop_advec_cell_kernel4_zdir(char const *name, ops_block block, int
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[120].time += t1-t2;
+    OPS_kernels[120].time += t1 - t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 11);
@@ -402,7 +403,7 @@ void ops_par_loop_advec_cell_kernel4_zdir(char const *name, ops_block block, int
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[120].mpi_time += t2-t1;
+    OPS_kernels[120].mpi_time += t2 - t1;
     OPS_kernels[120].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[120].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[120].transfer += ops_compute_transfer(dim, start, end, &arg2);

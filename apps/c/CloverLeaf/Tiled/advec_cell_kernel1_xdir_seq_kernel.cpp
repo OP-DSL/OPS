@@ -29,7 +29,8 @@ void ops_par_loop_advec_cell_kernel1_xdir_execute(ops_kernel_descriptor *desc) {
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,5,range,61)) return;
+  if (!ops_checkpointing_before(args, 5, range, 61))
+    return;
   #endif
 
   if (OPS_diags > 1) {
@@ -77,7 +78,7 @@ void ops_par_loop_advec_cell_kernel1_xdir_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[61].mpi_time += t1-t2;
+    OPS_kernels[61].mpi_time += t1 - t2;
   }
 
   #pragma omp parallel for
@@ -100,13 +101,13 @@ void ops_par_loop_advec_cell_kernel1_xdir_execute(ops_kernel_descriptor *desc) {
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[61].time += t2-t1;
+    OPS_kernels[61].time += t2 - t1;
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[61].mpi_time += t1-t2;
+    OPS_kernels[61].mpi_time += t1 - t2;
     OPS_kernels[61].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[61].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[61].transfer += ops_compute_transfer(dim, start, end, &arg2);
@@ -151,7 +152,7 @@ void ops_par_loop_advec_cell_kernel1_xdir(char const *name, ops_block block, int
   desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->function = ops_par_loop_advec_cell_kernel1_xdir_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(61,"advec_cell_kernel1_xdir");
+    ops_timing_realloc(61, "advec_cell_kernel1_xdir");
   }
   ops_enqueue_kernel(desc);
   }

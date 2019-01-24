@@ -35,11 +35,12 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block block, int dim, i
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,4,range,11)) return;
+  if (!ops_checkpointing_before(args, 4, range, 11))
+    return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(11,"ideal_gas_kernel");
+    ops_timing_realloc(11, "ideal_gas_kernel");
     OPS_kernels[11].count++;
     ops_timers_core(&c2,&t2);
   }
@@ -180,7 +181,7 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block block, int dim, i
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[11].mpi_time += t1-t2;
+    OPS_kernels[11].mpi_time += t1 - t2;
   }
 
   int n_x;
@@ -230,7 +231,7 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block block, int dim, i
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[11].time += t2-t1;
+    OPS_kernels[11].time += t2 - t1;
   }
   ops_set_dirtybit_host(args, 4);
   ops_set_halo_dirtybit3(&args[2],range);
@@ -239,7 +240,7 @@ void ops_par_loop_ideal_gas_kernel(char const *name, ops_block block, int dim, i
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[11].mpi_time += t1-t2;
+    OPS_kernels[11].mpi_time += t1 - t2;
     OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg2);

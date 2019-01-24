@@ -29,11 +29,12 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,2,range,52)) return;
+  if (!ops_checkpointing_before(args, 2, range, 52))
+    return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(52,"calc_dt_kernel_min");
+    ops_timing_realloc(52, "calc_dt_kernel_min");
     OPS_kernels[52].count++;
     ops_timers_core(&c1,&t1);
   }
@@ -113,7 +114,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[52].mpi_time += t2-t1;
+    OPS_kernels[52].mpi_time += t2 - t1;
   }
 
   calc_dt_kernel_min_c_wrapper(
@@ -123,7 +124,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[52].time += t1-t2;
+    OPS_kernels[52].time += t1 - t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 2);
@@ -134,7 +135,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[52].mpi_time += t2-t1;
+    OPS_kernels[52].mpi_time += t2 - t1;
     OPS_kernels[52].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

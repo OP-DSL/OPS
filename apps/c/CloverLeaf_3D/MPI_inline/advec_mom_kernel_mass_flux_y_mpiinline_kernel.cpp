@@ -31,10 +31,11 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,2,range,131)) return;
+  if (!ops_checkpointing_before(args, 2, range, 131))
+    return;
   #endif
 
-  ops_timing_realloc(131,"advec_mom_kernel_mass_flux_y");
+  ops_timing_realloc(131, "advec_mom_kernel_mass_flux_y");
   OPS_kernels[131].count++;
 
   //compute localy allocated range for the sub-block
@@ -135,7 +136,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
   ops_halo_exchanges(args,2,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[131].mpi_time += t1-t2;
+  OPS_kernels[131].mpi_time += t1 - t2;
 
   advec_mom_kernel_mass_flux_y_c_wrapper(
     p_a0,
@@ -143,7 +144,7 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name, ops_block block
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[131].time += t2-t1;
+  OPS_kernels[131].time += t2 - t1;
   ops_set_dirtybit_host(args, 2);
   ops_set_halo_dirtybit3(&args[0],range);
 

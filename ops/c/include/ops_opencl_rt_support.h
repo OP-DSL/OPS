@@ -87,7 +87,7 @@ extern int OPS_block_size_z;
 
 #define clSafeCall(ret) __clSafeCall(ret, __FILE__, __LINE__)
 
-void openclDeviceInit(int argc, char **argv);
+void openclDeviceInit(const int argc, const char **argv);
 void __clSafeCall(cl_int ret, const char *file, const int line);
 void ops_opencl_get_data(ops_dat dat);
 void reallocConstArrays(int consts_bytes);

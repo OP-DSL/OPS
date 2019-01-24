@@ -41,10 +41,11 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,4,range,110)) return;
+  if (!ops_checkpointing_before(args, 4, range, 110))
+    return;
   #endif
 
-  ops_timing_realloc(110,"advec_cell_kernel2_xdir");
+  ops_timing_realloc(110, "advec_cell_kernel2_xdir");
   OPS_kernels[110].count++;
 
   //compute localy allocated range for the sub-block
@@ -191,7 +192,7 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
   ops_halo_exchanges(args,4,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[110].mpi_time += t1-t2;
+  OPS_kernels[110].mpi_time += t1 - t2;
 
   advec_cell_kernel2_xdir_c_wrapper(
     p_a0,
@@ -201,7 +202,7 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[110].time += t2-t1;
+  OPS_kernels[110].time += t2 - t1;
   ops_set_dirtybit_host(args, 4);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);

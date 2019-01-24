@@ -32,10 +32,11 @@ void ops_par_loop_update_halo_kernel4_plus_2_b(char const *name, ops_block block
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,3,range,79)) return;
+  if (!ops_checkpointing_before(args, 3, range, 79))
+    return;
   #endif
 
-  ops_timing_realloc(79,"update_halo_kernel4_plus_2_b");
+  ops_timing_realloc(79, "update_halo_kernel4_plus_2_b");
   OPS_kernels[79].count++;
 
   //compute localy allocated range for the sub-block
@@ -138,7 +139,7 @@ void ops_par_loop_update_halo_kernel4_plus_2_b(char const *name, ops_block block
   ops_halo_exchanges(args,3,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[79].mpi_time += t1-t2;
+  OPS_kernels[79].mpi_time += t1 - t2;
 
   update_halo_kernel4_plus_2_b_c_wrapper(
     p_a0,
@@ -147,7 +148,7 @@ void ops_par_loop_update_halo_kernel4_plus_2_b(char const *name, ops_block block
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[79].time += t2-t1;
+  OPS_kernels[79].time += t2 - t1;
   ops_set_dirtybit_host(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);

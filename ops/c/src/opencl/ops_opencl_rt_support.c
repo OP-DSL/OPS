@@ -203,7 +203,7 @@ void pfn_notify(const char *errinfo, const void *private_info, size_t cb,
 }
 
 /**adapted from ocl_tools.c by Dan Curran (dancrn.com)*/
-void openclDeviceInit(int argc, char **argv) {
+void openclDeviceInit(const int argc, const char **argv) {
   (void)argc;
   (void)argv;
 
@@ -236,7 +236,7 @@ void openclDeviceInit(int argc, char **argv) {
          (int)OPS_opencl_core.n_platforms);
 
   // alloc space for platform ids
-  OPS_opencl_core.platform_id = (cl_platform_id *)calloc(
+  OPS_opencl_core.platform_id = (cl_platform_id *)ops_calloc(
       OPS_opencl_core.n_platforms, sizeof(cl_platform_id));
 
   // read in platform ids from runtime
@@ -257,8 +257,8 @@ void openclDeviceInit(int argc, char **argv) {
              OPS_opencl_core.n_devices);
 
     // alloc space for device ids
-    OPS_opencl_core.devices =
-        (cl_device_id *)calloc(OPS_opencl_core.n_devices, sizeof(cl_device_id));
+    OPS_opencl_core.devices = (cl_device_id *)ops_calloc(
+        OPS_opencl_core.n_devices, sizeof(cl_device_id));
 
     // get device IDs for this platform
     clSafeCall(clGetDeviceIDs(OPS_opencl_core.platform_id[p], dev_type_flag,
@@ -309,7 +309,7 @@ void openclDeviceInit(int argc, char **argv) {
       }
 
       // alloc space for device name and '\0'
-      dev_name = (char *)calloc(dev_name_len + 1, sizeof(char));
+      dev_name = (char *)ops_calloc(dev_name_len + 1, sizeof(char));
       // attempt to get device name
       ret = clGetDeviceInfo(OPS_opencl_core.device_id, CL_DEVICE_NAME,
                             dev_name_len, dev_name, NULL);
@@ -434,7 +434,7 @@ void reallocConstArrays(int consts_bytes) {
       clSafeCall(clReleaseMemObject((cl_mem)OPS_consts_d));
     }
     OPS_consts_bytes = 4 * consts_bytes; // 4 is arbitrary, more than needed
-    OPS_consts_h = (char *)malloc(OPS_consts_bytes);
+    OPS_consts_h = (char *)ops_malloc(OPS_consts_bytes);
     OPS_consts_d =
         (char *)clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE,
                                OPS_consts_bytes, NULL, &ret);
@@ -450,7 +450,7 @@ void reallocReductArrays(int reduct_bytes) {
       clSafeCall(clReleaseMemObject((cl_mem)OPS_reduct_d));
     }
     OPS_reduct_bytes = 4 * reduct_bytes; // 4 is arbitrary, more than needed
-    OPS_reduct_h = (char *)malloc(OPS_reduct_bytes);
+    OPS_reduct_h = (char *)ops_malloc(OPS_reduct_bytes);
     OPS_reduct_d =
         (char *)clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE,
                                OPS_reduct_bytes, NULL, &ret);
@@ -471,7 +471,7 @@ void mvConstArraysToDevice(int consts_bytes) {
     }
   else {
     OPS_gbl_changed = 1;
-    OPS_gbl_prev = (char *)malloc(consts_bytes);
+    OPS_gbl_prev = (char *)ops_malloc(consts_bytes);
   }
 
   if (OPS_gbl_changed) {

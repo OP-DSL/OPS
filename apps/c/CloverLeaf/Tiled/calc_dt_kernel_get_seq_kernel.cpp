@@ -25,7 +25,8 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,4,range,53)) return;
+  if (!ops_checkpointing_before(args, 4, range, 53))
+    return;
   #endif
 
   if (OPS_diags > 1) {
@@ -75,7 +76,7 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[53].mpi_time += t1-t2;
+    OPS_kernels[53].mpi_time += t1 - t2;
   }
 
   double p_a2_0 = p_a2[0];
@@ -101,13 +102,13 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   p_a3[0] = p_a3_0;
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[53].time += t2-t1;
+    OPS_kernels[53].time += t2 - t1;
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[53].mpi_time += t1-t2;
+    OPS_kernels[53].mpi_time += t1 - t2;
     OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
@@ -141,7 +142,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   desc->args[3] = arg3;
   desc->function = ops_par_loop_calc_dt_kernel_get_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(53,"calc_dt_kernel_get");
+    ops_timing_realloc(53, "calc_dt_kernel_get");
   }
   ops_enqueue_kernel(desc);
   }

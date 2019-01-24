@@ -81,10 +81,11 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,12,range,97)) return;
+  if (!ops_checkpointing_before(args, 12, range, 97))
+    return;
   #endif
 
-  ops_timing_realloc(97,"viscosity_kernel");
+  ops_timing_realloc(97, "viscosity_kernel");
   OPS_kernels[97].count++;
 
   //compute localy allocated range for the sub-block
@@ -415,7 +416,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   ops_halo_exchanges(args,12,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[97].mpi_time += t1-t2;
+  OPS_kernels[97].mpi_time += t1 - t2;
 
   viscosity_kernel_c_wrapper(
     p_a0,
@@ -433,7 +434,7 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[97].time += t2-t1;
+  OPS_kernels[97].time += t2 - t1;
   ops_set_dirtybit_host(args, 12);
   ops_set_halo_dirtybit3(&args[6],range);
 

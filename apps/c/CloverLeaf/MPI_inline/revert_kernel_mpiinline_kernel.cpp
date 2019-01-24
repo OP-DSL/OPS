@@ -33,10 +33,11 @@ void ops_par_loop_revert_kernel(char const *name, ops_block block, int dim, int*
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,4,range,57)) return;
+  if (!ops_checkpointing_before(args, 4, range, 57))
+    return;
   #endif
 
-  ops_timing_realloc(57,"revert_kernel");
+  ops_timing_realloc(57, "revert_kernel");
   OPS_kernels[57].count++;
 
   //compute localy allocated range for the sub-block
@@ -154,7 +155,7 @@ void ops_par_loop_revert_kernel(char const *name, ops_block block, int dim, int*
   ops_halo_exchanges(args,4,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[57].mpi_time += t1-t2;
+  OPS_kernels[57].mpi_time += t1 - t2;
 
   revert_kernel_c_wrapper(
     p_a0,
@@ -164,7 +165,7 @@ void ops_par_loop_revert_kernel(char const *name, ops_block block, int dim, int*
     x_size, y_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[57].time += t2-t1;
+  OPS_kernels[57].time += t2 - t1;
   ops_set_dirtybit_host(args, 4);
   ops_set_halo_dirtybit3(&args[1],range);
   ops_set_halo_dirtybit3(&args[3],range);

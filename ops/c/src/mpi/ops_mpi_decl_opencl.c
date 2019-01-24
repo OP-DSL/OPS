@@ -47,7 +47,7 @@ extern char *ops_buffer_recv_1;
 extern char *ops_buffer_send_2;
 extern char *ops_buffer_recv_2;
 
-void ops_init_opencl(int argc, char **argv, int diags) {
+void ops_init_opencl(const int argc, const char **argv, const int diags) {
   ops_init_core(argc, argv, diags);
 
   if ((OPS_block_size_x * OPS_block_size_y * OPS_block_size_z) > 1024) {
@@ -65,11 +65,11 @@ void ops_init_opencl(int argc, char **argv, int diags) {
   openclDeviceInit(argc, argv);
 }
 
-void ops_init(int argc, char **argv, int diags) {
+void ops_init(const int argc, const char **argv, const int diags) {
   int flag = 0;
   MPI_Initialized(&flag);
   if (!flag) {
-    MPI_Init(&argc, &argv);
+    MPI_Init((int *)(&argc), (char ***)&argv);
   }
 
   MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_GLOBAL);
@@ -115,19 +115,19 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
 
   // TODO: proper allocation and TAILQ
   // create list to hold sub-grid decomposition geometries for each mpi process
-  OPS_sub_dat_list = (sub_dat_list *)xrealloc(
+  OPS_sub_dat_list = (sub_dat_list *)ops_realloc(
       OPS_sub_dat_list, OPS_dat_index * sizeof(sub_dat_list));
 
   // store away product array prod[] and MPI_Types for this ops_dat
-  sub_dat_list sd = (sub_dat_list)xmalloc(sizeof(sub_dat));
+  sub_dat_list sd = (sub_dat_list)ops_malloc(sizeof(sub_dat));
   sd->dat = dat;
   sd->dirtybit = 1;
   sd->dirty_dir_send =
-      (int *)xmalloc(sizeof(int) * 2 * block->dims * MAX_DEPTH);
+      (int *)ops_malloc(sizeof(int) * 2 * block->dims * MAX_DEPTH);
   for (int i = 0; i < 2 * block->dims * MAX_DEPTH; i++)
     sd->dirty_dir_send[i] = 1;
   sd->dirty_dir_recv =
-      (int *)xmalloc(sizeof(int) * 2 * block->dims * MAX_DEPTH);
+      (int *)ops_malloc(sizeof(int) * 2 * block->dims * MAX_DEPTH);
   for (int i = 0; i < 2 * block->dims * MAX_DEPTH; i++)
     sd->dirty_dir_recv[i] = 1;
   for (int i = 0; i < OPS_MAX_DIM; i++) {

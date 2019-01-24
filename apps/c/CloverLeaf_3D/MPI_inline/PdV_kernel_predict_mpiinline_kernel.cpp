@@ -91,10 +91,11 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,14,range,102)) return;
+  if (!ops_checkpointing_before(args, 14, range, 102))
+    return;
   #endif
 
-  ops_timing_realloc(102,"PdV_kernel_predict");
+  ops_timing_realloc(102, "PdV_kernel_predict");
   OPS_kernels[102].count++;
 
   //compute localy allocated range for the sub-block
@@ -471,7 +472,7 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
   ops_halo_exchanges(args,14,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[102].mpi_time += t1-t2;
+  OPS_kernels[102].mpi_time += t1 - t2;
 
   PdV_kernel_predict_c_wrapper(
     p_a0,
@@ -491,7 +492,7 @@ void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim,
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[102].time += t2-t1;
+  OPS_kernels[102].time += t2 - t1;
   ops_set_dirtybit_host(args, 14);
   ops_set_halo_dirtybit3(&args[4],range);
   ops_set_halo_dirtybit3(&args[8],range);

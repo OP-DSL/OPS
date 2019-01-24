@@ -57,10 +57,11 @@ void ops_par_loop_update_halo_kernel1_fr1(char const *name, ops_block block, int
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,8,range,23)) return;
+  if (!ops_checkpointing_before(args, 8, range, 23))
+    return;
   #endif
 
-  ops_timing_realloc(23,"update_halo_kernel1_fr1");
+  ops_timing_realloc(23, "update_halo_kernel1_fr1");
   OPS_kernels[23].count++;
 
   //compute localy allocated range for the sub-block
@@ -278,7 +279,7 @@ void ops_par_loop_update_halo_kernel1_fr1(char const *name, ops_block block, int
   ops_halo_exchanges(args,8,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[23].mpi_time += t1-t2;
+  OPS_kernels[23].mpi_time += t1 - t2;
 
   update_halo_kernel1_fr1_c_wrapper(
     p_a0,
@@ -292,7 +293,7 @@ void ops_par_loop_update_halo_kernel1_fr1(char const *name, ops_block block, int
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[23].time += t2-t1;
+  OPS_kernels[23].time += t2 - t1;
   ops_set_dirtybit_host(args, 8);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);

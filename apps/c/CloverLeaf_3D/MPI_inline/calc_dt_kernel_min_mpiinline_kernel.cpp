@@ -27,10 +27,11 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,2,range,99)) return;
+  if (!ops_checkpointing_before(args, 2, range, 99))
+    return;
   #endif
 
-  ops_timing_realloc(99,"calc_dt_kernel_min");
+  ops_timing_realloc(99, "calc_dt_kernel_min");
   OPS_kernels[99].count++;
 
   //compute localy allocated range for the sub-block
@@ -114,7 +115,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   ops_halo_exchanges(args,2,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[99].mpi_time += t1-t2;
+  OPS_kernels[99].mpi_time += t1 - t2;
 
   calc_dt_kernel_min_c_wrapper(
     p_a0,
@@ -122,7 +123,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[99].time += t2-t1;
+  OPS_kernels[99].time += t2 - t1;
   ops_set_dirtybit_host(args, 2);
 
   //Update kernel record

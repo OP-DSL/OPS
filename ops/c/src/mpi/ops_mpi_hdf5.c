@@ -69,7 +69,7 @@ sub_dat_list *OPS_sub_dat_list; // pointer to list holding sub-dat
 
 extern void (*ops_read_dat_hdf5_dynamic)(ops_dat dat);
 /*******************************************************************************
-* Routine to remove the intra-block halos from the flattend 1D dat
+* Routine to remove the intra-block (i.e. MPI) halos from the flattend 1D dat
 * before writing to HDF5 files - Maximum dimension of block is 1
 *******************************************************************************/
 void remove_mpi_halos1D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
@@ -113,7 +113,7 @@ void remove_mpi_halos1D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 }
 
 /*******************************************************************************
-* Routine to remove the intra-block halos from the flattend 1D dat
+* Routine to remove the intra-block (i.e. MPI) halos from the flattend 1D dat
 * before writing to HDF5 files - Maximum dimension of block is 2
 *******************************************************************************/
 void remove_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
@@ -156,7 +156,7 @@ void remove_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 }
 
 /*******************************************************************************
-* Routine to remove the intra-block halos from the flattend 1D dat
+* Routine to remove the intra-block (i.e. MPI) halos from the flattend 1D dat
 * before writing to HDF5 files - Maximum dimension of block is 3
 *******************************************************************************/
 void remove_mpi_halos3D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
@@ -184,21 +184,21 @@ void remove_mpi_halos3D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 }
 
 /*******************************************************************************
-* Routine to remove the intra-block halos from the flattend 1D dat
+* Routine to remove the intra-block (i.e. MPI) halos from the flattend 1D dat
 * before writing to HDF5 files - Maximum dimension of block is 4
 *******************************************************************************/
 void remove_mpi_halos4D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 }
 
 /*******************************************************************************
-* Routine to remove the intra-block halos from the flattend 1D dat
+* Routine to remove the intra-block (i.e. MPI) halos from the flattend 1D dat
 * before writing to HDF5 files - Maximum dimension of block is 5
 *******************************************************************************/
 void remove_mpi_halos5D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 }
 
 /*******************************************************************************
-* Routine to add the intra-block halos from the flattend 1D data
+* Routine to add the intra-block halos (i.e. MPI) from the flattend 1D data
 * after reading from an HDF5 file - Maximum dimension of block is 2
 *******************************************************************************/
 void add_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
@@ -570,7 +570,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     for (int d = 0; d < dat->block->dims; d++)
       t_size *= size[d];
     // printf("t_size = %d ",t_size);
-    char *data = (char *)malloc(t_size * dat->elem_size);
+    char *data = (char *)ops_malloc(t_size * dat->elem_size);
 
     // create new communicator
     int my_rank, comm_size;
@@ -1563,8 +1563,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
     int t_size = 1;
     for (int d = 0; d < dat->block->dims; d++)
       t_size *= size[d];
-
-    char *data = (char *)malloc(t_size * dat->elem_size);
+    char *data = (char *)ops_malloc(t_size * dat->elem_size);
     dat->mem = t_size * dat->elem_size;
 
     // make sure we multiply by the number of
@@ -1783,7 +1782,7 @@ char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
     int t_size = 1;
     for (int d = 0; d < dat->block->dims; d++)
       t_size *= size[d];
-    u_dat = (char *)malloc(t_size * dat->elem_size);
+    u_dat = (char *)ops_malloc(t_size * dat->elem_size);
 
     // create new communicator
     int my_rank, comm_size;

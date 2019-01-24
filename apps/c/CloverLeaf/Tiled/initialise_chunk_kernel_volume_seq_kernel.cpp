@@ -29,7 +29,8 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,5,range,6)) return;
+  if (!ops_checkpointing_before(args, 5, range, 6))
+    return;
   #endif
 
   if (OPS_diags > 1) {
@@ -77,7 +78,7 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[6].mpi_time += t1-t2;
+    OPS_kernels[6].mpi_time += t1 - t2;
   }
 
   #pragma omp parallel for
@@ -104,13 +105,13 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[6].time += t2-t1;
+    OPS_kernels[6].time += t2 - t1;
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[6].mpi_time += t1-t2;
+    OPS_kernels[6].mpi_time += t1 - t2;
     OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg2);
@@ -155,7 +156,7 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->function = ops_par_loop_initialise_chunk_kernel_volume_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(6,"initialise_chunk_kernel_volume");
+    ops_timing_realloc(6, "initialise_chunk_kernel_volume");
   }
   ops_enqueue_kernel(desc);
   }

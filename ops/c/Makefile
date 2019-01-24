@@ -33,9 +33,13 @@ else
   CHKCC			:= $(CC)
 endif
 
+TRID_INSTALL_PATH ?= /home/mudalige/TriDiagonal/Tridiag-Git/tridsolver/scalar/build
+TRID_INC := -I$(TRID_INSTALL_PATH)/include
+TRID_LIB := -L$(TRID_INSTALL_PATH)/lib
+
 .PHONY: clean mklib
 
-TARGETS = clean core seq mpi 
+TARGETS = clean core seq mpi
 
 ifdef HDF5_INSTALL_PATH
 	TARGETS += hdf5_seq hdf5_mpi
@@ -49,12 +53,20 @@ ifdef OPENCL_INSTALL_PATH
 	TARGETS += opencl mpi_opencl
 endif
 
+ifeq ($(OPS_COMPILER),intel)
+ifdef TRID_INSTALL_PATH
+		TRID = 1
+		TARGETS += trid
+endif
+endif
+
 all: $(TARGETS)
 
 mklib:
 	@mkdir -p $(LIB) $(OBJ)
 
 core: mklib $(INC)/ops_lib_core.h $(SRC)/core/ops_lib_core.c $(SRC)/externlib/ops_util.c
+	@echo "$(TARGETS)"
 	$(CC) $(CCFLAGS) -I$(INC) -c $(SRC)/core/ops_lib_core.c -o $(OBJ)/ops_lib_core.o
 	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_lazy.cpp -o $(OBJ)/ops_lazy.o
 	$(CC) $(CCFLAGS) -I$(INC) -c $(SRC)/externlib/ops_util.c -o $(OBJ)/ops_util.o
@@ -65,13 +77,23 @@ hdf5_seq: mklib core $(OBJ)/ops_lib_core.o
 	$(MPICC) $(MPIFLAGS) -I$(INC)  $(HDF5_INC) $(HDF5_LIB) -c $(SRC)/externlib/ops_hdf5.c -o $(OBJ)/ops_hdf5.o
 	ar -r $(LIB)/libops_hdf5_seq.a $(OBJ)/ops_hdf5.o
 
-seq: mklib core $(OBJ)/ops_lib_core.o
+trid: mklib core $(OBJ)/ops_lib_core.o
+ifdef TRID
+	$(MPICXX) $(MPIFLAGS) -I$(INC) $(TRID_INC) $(TRID_LIB) -c $(SRC)/tridiag/ops_tridiag.c -o $(OBJ)/ops_tridiag.o
+	$(MPICXX) $(MPIFLAGS) -I$(INC) -I$(CUDA_INC) $(TRID_INC) $(TRID_LIB) -c $(SRC)/tridiag/ops_tridiag_cuda.c -o $(OBJ)/ops_tridiag_cuda.o
+	$(MPICXX) $(MPIFLAGS) -I$(INC) $(CUDA_INC) $(TRID_INC) $(TRID_LIB) -c $(SRC)/tridiag/ops_tridiag_mpi.c -o $(OBJ)/ops_tridiag_mpi.o
+endif
+
+seq: mklib core trid $(OBJ)/ops_lib_core.o
 	$(CC) $(CCFLAGS) -I$(INC) -c $(SRC)/sequential/ops_seq.c -o $(OBJ)/ops_seq.o
 	$(CC) $(CCFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c -o $(OBJ)/ops_dummy_singlenode.o
 	ar -r $(LIB)/libops_seq.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
 	$(OBJ)/ops_util.o $(OBJ)/ops_seq.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o
+ifdef TRID
+	ar -r $(LIB)/libops_seq.a $(OBJ)/ops_tridiag.o
+endif
 
-cuda: mklib core $(SRC)/cuda/ops_cuda_decl.c $(OBJ)/ops_lib_core.o
+cuda: mklib core trid $(SRC)/cuda/ops_cuda_decl.c $(OBJ)/ops_lib_core.o
 	$(CC) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(CUDA_INC) -I$(INC) \
         -c $(SRC)/cuda/ops_cuda_decl.c -o $(OBJ)/ops_cuda_decl.o
 	$(CC) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(CUDA_INC) -I$(INC) \
@@ -81,8 +103,11 @@ cuda: mklib core $(SRC)/cuda/ops_cuda_decl.c $(OBJ)/ops_lib_core.o
 	ar -r $(LIB)/libops_cuda.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
 	$(OBJ)/ops_util.o $(OBJ)/ops_cuda_rt_support.o $(OBJ)/ops_cuda_rt_support_cuda.o \
 	$(OBJ)/ops_cuda_decl.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o
+ifdef TRID
+	ar -r $(LIB)/libops_cuda.a $(OBJ)/ops_tridiag_cuda.o
+endif
 
-mpi: mklib core $(OBJ)/ops_lib_core.o
+mpi: mklib core trid $(OBJ)/ops_lib_core.o
 	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_decl.c -o $(OBJ)/ops_mpi_decl.o
 	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_partition.c -o $(OBJ)/ops_mpi_partition.o
 	$(MPICC) $(MPIFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_core.c -o $(OBJ)/ops_mpi_core.o
@@ -91,6 +116,9 @@ mpi: mklib core $(OBJ)/ops_lib_core.o
 	ar -r $(LIB)/libops_mpi.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
 	$(OBJ)/ops_util.o $(OBJ)/ops_mpi_decl.o $(OBJ)/ops_mpi_rt_support.o $(OBJ)/ops_checkpointing_strategy.o \
 	$(OBJ)/ops_mpi_core.o $(OBJ)/ops_mpi_rt_support_host.o $(OBJ)/ops_mpi_partition.o
+ifdef TRID
+	ar -r $(LIB)/libops_mpi.a $(OBJ)/ops_tridiag_mpi.o
+endif
 
 hdf5_mpi: mklib core $(OBJ)/ops_lib_core.o
 	$(MPICC) $(MPIFLAGS) -I$(INC)  $(HDF5_INC) $(HDF5_LIB) -c $(SRC)/mpi/ops_mpi_hdf5.c -o $(OBJ)/ops_mpi_hdf5.o
@@ -136,6 +164,7 @@ mpi_opencl: mklib opencl $(OBJ)/ops_opencl_rt_support.o
 
 
 clean:
+	-rm -if $(OBJ)/*.optrpt #remove optimization output files from intel compiler
 	-rm -if $(OBJ)/*.o
 	-rm -if $(OBJ)/*~
 	-rm -if $(LIB)/*.a

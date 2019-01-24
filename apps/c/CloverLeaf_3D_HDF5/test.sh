@@ -5,9 +5,9 @@ source ../../scripts/source_intel
 make
 cd -
 make clean
-rm -f .generated
-rm -rf generate_file generate_file_mpi
 
+rm -rf .generated
+rm -rf generate_file generate_file_mpi
 make IEEE=1
 make generate_file generate_file_mpi
 
@@ -25,10 +25,12 @@ then
 else
      echo "Seq and MPI files match"
 fi
-rm cloverdata_seq.h5
+rm cloverdata_seq.h5 cloverdata.h5
+./generate_file
+
+
 
 #============================ Test Cloverleaf 3D With Intel Compilers==========================================================
-#<<COMMENT
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./cloverleaf_openmp > perf_out
 grep "Total Wall time" clover.out

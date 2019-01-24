@@ -11,10 +11,13 @@ USE ISO_C_BINDING
 
 INTEGER(KIND=4) multi_d1
 INTEGER(KIND=4) xdim1
+INTEGER(KIND=4) ydim1
+INTEGER(KIND=4) zdim1
 #define OPS_ACC_MD1(d,x,y,z) ((x)*3+(d)+(xdim1*(y)*3)+(xdim1*ydim1*(z)*3))
 
 contains
 
+!$ACC ROUTINE(multidim_print_kernel) SEQ
 !user function
 subroutine multidim_print_kernel(val)
   IMPLICIT NONE
@@ -41,8 +44,9 @@ subroutine multidim_print_kernel_wrap( &
   integer(4) end(3)
   integer n_x, n_y, n_z
 
-  !$acc parallel deviceptr(opsDat1Local)
-  !$acc loop
+
+  !$acc parallel deviceptr(opsDat1Local)  
+  !$acc loop 
   DO n_z = 1, end(3)-start(3)+1
     !$acc loop
     DO n_y = 1, end(2)-start(2)+1
@@ -54,6 +58,7 @@ subroutine multidim_print_kernel_wrap( &
     END DO
   END DO
   !$acc end parallel
+
 end subroutine
 
 !host subroutine
@@ -72,6 +77,7 @@ subroutine multidim_print_kernel_host( userSubroutine, block, dim, range, &
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
+  integer zdim1
 
   integer start(3)
   integer end(3)

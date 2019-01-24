@@ -31,7 +31,8 @@ void ops_par_loop_reset_field_kernel2_execute(ops_kernel_descriptor *desc) {
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,6,range,140)) return;
+  if (!ops_checkpointing_before(args, 6, range, 140))
+    return;
   #endif
 
   if (OPS_diags > 1) {
@@ -89,7 +90,7 @@ void ops_par_loop_reset_field_kernel2_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[140].mpi_time += t1-t2;
+    OPS_kernels[140].mpi_time += t1 - t2;
   }
 
   #pragma omp parallel for collapse(2)
@@ -113,13 +114,13 @@ void ops_par_loop_reset_field_kernel2_execute(ops_kernel_descriptor *desc) {
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[140].time += t2-t1;
+    OPS_kernels[140].time += t2 - t1;
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[140].mpi_time += t1-t2;
+    OPS_kernels[140].mpi_time += t1 - t2;
     OPS_kernels[140].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[140].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[140].transfer += ops_compute_transfer(dim, start, end, &arg2);
@@ -168,7 +169,7 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block block, int dim
   desc->hash = ((desc->hash << 5) + desc->hash) + arg5.dat->index;
   desc->function = ops_par_loop_reset_field_kernel2_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(140,"reset_field_kernel2");
+    ops_timing_realloc(140, "reset_field_kernel2");
   }
   ops_enqueue_kernel(desc);
   }

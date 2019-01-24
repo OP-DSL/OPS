@@ -41,10 +41,11 @@ void ops_par_loop_reset_field_kernel1(char const *name, ops_block block, int dim
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,4,range,139)) return;
+  if (!ops_checkpointing_before(args, 4, range, 139))
+    return;
   #endif
 
-  ops_timing_realloc(139,"reset_field_kernel1");
+  ops_timing_realloc(139, "reset_field_kernel1");
   OPS_kernels[139].count++;
 
   //compute localy allocated range for the sub-block
@@ -191,7 +192,7 @@ void ops_par_loop_reset_field_kernel1(char const *name, ops_block block, int dim
   ops_halo_exchanges(args,4,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[139].mpi_time += t1-t2;
+  OPS_kernels[139].mpi_time += t1 - t2;
 
   reset_field_kernel1_c_wrapper(
     p_a0,
@@ -201,7 +202,7 @@ void ops_par_loop_reset_field_kernel1(char const *name, ops_block block, int dim
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[139].time += t2-t1;
+  OPS_kernels[139].time += t2 - t1;
   ops_set_dirtybit_host(args, 4);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[2],range);

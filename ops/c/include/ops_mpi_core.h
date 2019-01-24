@@ -58,6 +58,8 @@ typedef struct {
   ops_block block;
   // number of dimensions;
   int ndim;
+  // number of processors in each dimension
+  int *pdims;
   // my MPI rank in each dimension (in cart cords)
   int coords[OPS_MAX_DIM];
   // previous neighbor in each dimension (in cart cords)

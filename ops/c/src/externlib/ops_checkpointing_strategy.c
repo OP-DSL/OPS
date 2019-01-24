@@ -114,24 +114,24 @@ void ops_strat_gather_statistics(ops_arg *args, int nargs, int loop_id,
   if (loop_id >= ops_strat_max_loop_counter) {
     int ops_strat_max_loop_counter_old = ops_strat_max_loop_counter;
     ops_strat_max_loop_counter = MAX(50, loop_id * 2);
-    ops_strat_min_saved = (long *)realloc(
+    ops_strat_min_saved = (long *)ops_realloc(
         ops_strat_min_saved, ops_strat_max_loop_counter * sizeof(long));
-    ops_strat_max_saved = (long *)realloc(
+    ops_strat_max_saved = (long *)ops_realloc(
         ops_strat_max_saved, ops_strat_max_loop_counter * sizeof(long));
-    ops_strat_avg_saved = (long *)realloc(
+    ops_strat_avg_saved = (long *)ops_realloc(
         ops_strat_avg_saved, ops_strat_max_loop_counter * sizeof(long));
-    ops_strat_saved_counter = (long *)realloc(
+    ops_strat_saved_counter = (long *)ops_realloc(
         ops_strat_saved_counter, ops_strat_max_loop_counter * sizeof(long));
 
-    ops_strat_timescalled = (int *)realloc(
+    ops_strat_timescalled = (int *)ops_realloc(
         ops_strat_timescalled, ops_strat_max_loop_counter * sizeof(int));
-    ops_strat_maxcalled = (int *)realloc(
+    ops_strat_maxcalled = (int *)ops_realloc(
         ops_strat_maxcalled, ops_strat_max_loop_counter * sizeof(int));
-    ops_strat_lastcalled = (int *)realloc(
+    ops_strat_lastcalled = (int *)ops_realloc(
         ops_strat_lastcalled, ops_strat_max_loop_counter * sizeof(int));
-    ops_strat_in_progress = (int *)realloc(
+    ops_strat_in_progress = (int *)ops_realloc(
         ops_strat_in_progress, ops_strat_max_loop_counter * sizeof(int));
-    ops_strat_dat_status = (int **)realloc(
+    ops_strat_dat_status = (int **)ops_realloc(
         ops_strat_dat_status, ops_strat_max_loop_counter * sizeof(int *));
 
     for (int i = ops_strat_max_loop_counter_old; i < ops_strat_max_loop_counter;
@@ -143,7 +143,7 @@ void ops_strat_gather_statistics(ops_arg *args, int nargs, int loop_id,
       ops_strat_timescalled[i] = 0;
       ops_strat_maxcalled[i] = 0;
       ops_strat_lastcalled[i] = 0;
-      ops_strat_dat_status[i] = (int *)malloc(OPS_dat_index * sizeof(int));
+      ops_strat_dat_status[i] = (int *)ops_malloc(OPS_dat_index * sizeof(int));
       ops_strat_in_progress[i] = 0;
     }
   }
@@ -252,8 +252,8 @@ int comp2(const void *a, const void *b) {
 bool ops_strat_should_backup(ops_arg *args, int nargs, int loop_id,
                              int *range) {
   if (ops_best_backup_point == -1) {
-    ops_keyvalue *kv = (ops_keyvalue *)malloc(ops_strat_max_loop_counter *
-                                              sizeof(ops_keyvalue));
+    ops_keyvalue *kv = (ops_keyvalue *)ops_malloc(ops_strat_max_loop_counter *
+                                                  sizeof(ops_keyvalue));
     for (int i = 0; i < ops_strat_max_loop_counter; i++) {
       if (ops_strat_timescalled[i] > 2) {
         kv[i].key = ops_strat_avg_saved[i];

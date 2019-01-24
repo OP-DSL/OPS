@@ -123,11 +123,12 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,11,range,10)) return;
+  if (!ops_checkpointing_before(args, 11, range, 10))
+    return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(10,"generate_chunk_kernel");
+    ops_timing_realloc(10, "generate_chunk_kernel");
     OPS_kernels[10].count++;
     ops_timers_core(&c1,&t1);
   }
@@ -316,7 +317,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[10].mpi_time += t2-t1;
+    OPS_kernels[10].mpi_time += t2 - t1;
   }
 
 
@@ -590,7 +591,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[10].time += t1-t2;
+    OPS_kernels[10].time += t1 - t2;
   }
 
   ops_set_dirtybit_host(args, 11);
@@ -604,7 +605,7 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[10].mpi_time += t2-t1;
+    OPS_kernels[10].mpi_time += t2 - t1;
     OPS_kernels[10].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[10].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[10].transfer += ops_compute_transfer(dim, start, end, &arg2);

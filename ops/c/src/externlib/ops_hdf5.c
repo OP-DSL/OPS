@@ -255,6 +255,69 @@ void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
 }
 
 /*******************************************************************************
+* Routine to remove x-dimension padding introduced when creating dats to be
+* x-dimension memory aligned
+* this needs to be removed when writing to HDF5 files  - dimension of block is 1
+********************************************************************************/
+void remove_padding1D(ops_dat dat, hsize_t *size, char *data) {
+  int index = 0;
+  int count = 0;
+  for (int i = 0; i < size[0]; i++) {
+    index = i;
+    memcpy(&data[count * dat->elem_size], &dat->data[index * dat->elem_size],
+           dat->elem_size);
+    count++;
+  }
+  return;
+}
+
+/*******************************************************************************
+* Routine to remove x-dimension padding introduced when creating dats to be
+* x-dimension memory aligned
+* this needs to be removed when writing to HDF5 files  - dimension of block is 2
+********************************************************************************/
+void remove_padding2D(ops_dat dat, hsize_t *size, char *data) {
+  int index = 0;
+  int count = 0;
+  for (int k = 0; k < size[2]; k++) {
+    for (int j = 0; j < size[1]; j++) {
+      for (int i = 0; i < size[0]; i++) {
+        index = i + j * dat->size[0];
+        memcpy(&data[count * dat->elem_size],
+               &dat->data[index * dat->elem_size], dat->elem_size);
+        count++;
+      }
+    }
+  }
+  return;
+}
+
+/*******************************************************************************
+* Routine to remove x-dimension padding introduced when creating dats to be
+* x-dimension memory aligned
+* this needs to be removed when writing to HDF5 files  - dimension of block is 3
+********************************************************************************/
+void remove_padding3D(ops_dat dat, hsize_t *size, char *data) {
+  int index = 0;
+  int count = 0;
+
+  for (int k = 0; k < size[2]; k++) {
+    for (int j = 0; j < size[1]; j++) {
+      for (int i = 0; i < size[0]; i++) {
+        index = i + j * dat->size[0] + // need to stride in dat->size as data
+                                       // block includes intra-block halos
+                k * dat->size[0] * dat->size[1]; // +
+
+        memcpy(&data[count * dat->elem_size],
+               &dat->data[index * dat->elem_size], dat->elem_size);
+        count++;
+      }
+    }
+  }
+  return;
+}
+
+/*******************************************************************************
 * Routine to write an ops_dat to a named hdf5 file,
 * if file does not exist, creates it
 * if the data set does not exists in file creates data set
@@ -285,6 +348,20 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     // the number of elements thats actually written
     g_size[d] = dat->size[d];
   }
+
+  /* Need to strip out the padding from the x-dimension*/
+  g_size[0] = g_size[0] - dat->x_pad;
+  int t_size = 1;
+  for (int d = 0; d < block->dims; d++)
+    t_size *= g_size[d];
+  char *data = (char *)ops_malloc(t_size * dat->elem_size);
+
+  if (block->dims == 1)
+    remove_padding1D(dat, g_size, data);
+  if (block->dims == 2)
+    remove_padding2D(dat, g_size, data);
+  if (block->dims == 3)
+    remove_padding3D(dat, g_size, data);
 
   // make sure we multiply by the number of data values per element (i.e.
   // dat->dim)
@@ -346,23 +423,23 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0)
         H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_DOUBLE, dat->data);
+                         H5T_NATIVE_DOUBLE, data);
       else if (strcmp(dat->type, "float") == 0 ||
                strcmp(dat->type, "real(4)") == 0 ||
                strcmp(dat->type, "real") == 0)
         H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_FLOAT, dat->data);
+                         H5T_NATIVE_FLOAT, data);
       else if (strcmp(dat->type, "int") == 0 ||
                strcmp(dat->type, "int(4)") == 0 ||
                strcmp(dat->type, "integer(4)") == 0)
         H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_INT, dat->data);
+                         H5T_NATIVE_INT, data);
       else if (strcmp(dat->type, "long") == 0)
         H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_LONG, dat->data);
+                         H5T_NATIVE_LONG, data);
       else if (strcmp(dat->type, "long long") == 0)
         H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_LLONG, dat->data);
+                         H5T_NATIVE_LLONG, data);
       else {
         printf("Error: Unknown type in ops_fetch_dat_hdf5_file()\n");
         exit(-2);
@@ -380,8 +457,16 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
                             block->dims); // size
       H5LTset_attribute_int(group_id, dat->name, "d_m", dat->d_m,
                             block->dims); // d_m
-      H5LTset_attribute_int(group_id, dat->name, "d_p", dat->d_p,
+
+      // need to substract x_pad from d_p before writing attribute to file
+      int orig_d_p[block->dims];
+      for (int d = 0; d < block->dims; d++) orig_d_p[d] = dat->d_p[d];
+      orig_d_p[0] = dat->d_p[0] - dat->x_pad;
+
+      H5LTset_attribute_int(group_id, dat->name, "d_p", orig_d_p,
                             block->dims); // d_p
+
+
       H5LTset_attribute_int(group_id, dat->name, "base", dat->base,
                             block->dims);                               // base
       H5LTset_attribute_string(group_id, dat->name, "type", dat->type); // type
@@ -831,7 +916,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   int t_size = 1;
   for (int d = 0; d < block->dims; d++)
     t_size *= read_size[d] - read_d_m[d] + read_d_p[d];
-  char *data = (char *)malloc(t_size * dat_dim * type_size);
+  char *data = (char *)ops_malloc(t_size * dat_dim * type_size);
 
   if (strcmp(read_type, "double") == 0)
     H5LTread_dataset(group_id, dat_name, H5T_NATIVE_DOUBLE, data);
@@ -910,7 +995,7 @@ char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
   int t_size = 1;
   for (int d = 0; d < dat->block->dims; d++)
     t_size *= dat->size[d];
-  u_dat = (char *)malloc(t_size * dat->elem_size);
+  u_dat = (char *)ops_malloc(t_size * dat->elem_size);
   memcpy(u_dat, dat->data, t_size * dat->elem_size);
   return (u_dat);
 }

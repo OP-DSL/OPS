@@ -53,7 +53,8 @@ void ops_par_loop_PdV_kernel_nopredict_execute(ops_kernel_descriptor *desc) {
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,17,range,103)) return;
+  if (!ops_checkpointing_before(args, 17, range, 103))
+    return;
   #endif
 
   if (OPS_diags > 1) {
@@ -166,7 +167,7 @@ void ops_par_loop_PdV_kernel_nopredict_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[103].mpi_time += t1-t2;
+    OPS_kernels[103].mpi_time += t1 - t2;
   }
 
   #pragma omp parallel for collapse(2)
@@ -226,13 +227,13 @@ void ops_par_loop_PdV_kernel_nopredict_execute(ops_kernel_descriptor *desc) {
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[103].time += t2-t1;
+    OPS_kernels[103].time += t2 - t1;
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[103].mpi_time += t1-t2;
+    OPS_kernels[103].mpi_time += t1 - t2;
     OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg2);
@@ -328,7 +329,7 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   desc->hash = ((desc->hash << 5) + desc->hash) + arg16.dat->index;
   desc->function = ops_par_loop_PdV_kernel_nopredict_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(103,"PdV_kernel_nopredict");
+    ops_timing_realloc(103, "PdV_kernel_nopredict");
   }
   ops_enqueue_kernel(desc);
   }

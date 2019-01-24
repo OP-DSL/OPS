@@ -24,7 +24,8 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_left_execute(ops_kernel_descri
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,3,range,40)) return;
+  if (!ops_checkpointing_before(args, 3, range, 40))
+    return;
   #endif
 
   if (OPS_diags > 1) {
@@ -65,7 +66,7 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_left_execute(ops_kernel_descri
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[40].mpi_time += t1-t2;
+    OPS_kernels[40].mpi_time += t1 - t2;
   }
 
   #pragma omp parallel for collapse(2)
@@ -87,13 +88,13 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_left_execute(ops_kernel_descri
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[40].time += t2-t1;
+    OPS_kernels[40].time += t2 - t1;
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[40].mpi_time += t1-t2;
+    OPS_kernels[40].mpi_time += t1 - t2;
     OPS_kernels[40].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[40].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
@@ -129,7 +130,7 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_left(char const *name, ops_blo
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel2_yvel_plus_4_left_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(40,"update_halo_kernel2_yvel_plus_4_left");
+    ops_timing_realloc(40, "update_halo_kernel2_yvel_plus_4_left");
   }
   ops_enqueue_kernel(desc);
   }

@@ -36,10 +36,11 @@ void ops_par_loop_advec_mom_kernel1_y_nonvector(char const *name, ops_block bloc
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,5,range,79)) return;
+  if (!ops_checkpointing_before(args, 5, range, 79))
+    return;
   #endif
 
-  ops_timing_realloc(79,"advec_mom_kernel1_y_nonvector");
+  ops_timing_realloc(79, "advec_mom_kernel1_y_nonvector");
   OPS_kernels[79].count++;
 
   //compute localy allocated range for the sub-block
@@ -173,7 +174,7 @@ void ops_par_loop_advec_mom_kernel1_y_nonvector(char const *name, ops_block bloc
   ops_halo_exchanges(args,5,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[79].mpi_time += t1-t2;
+  OPS_kernels[79].mpi_time += t1 - t2;
 
   advec_mom_kernel1_y_nonvector_c_wrapper(
     p_a0,
@@ -184,7 +185,7 @@ void ops_par_loop_advec_mom_kernel1_y_nonvector(char const *name, ops_block bloc
     x_size, y_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[79].time += t2-t1;
+  OPS_kernels[79].time += t2 - t1;
   ops_set_dirtybit_host(args, 5);
   ops_set_halo_dirtybit3(&args[2],range);
 

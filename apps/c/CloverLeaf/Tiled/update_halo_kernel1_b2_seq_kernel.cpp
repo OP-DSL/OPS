@@ -34,7 +34,8 @@ void ops_par_loop_update_halo_kernel1_b2_execute(ops_kernel_descriptor *desc) {
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,8,range,9)) return;
+  if (!ops_checkpointing_before(args, 8, range, 9))
+    return;
   #endif
 
   if (OPS_diags > 1) {
@@ -93,7 +94,7 @@ void ops_par_loop_update_halo_kernel1_b2_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[9].mpi_time += t1-t2;
+    OPS_kernels[9].mpi_time += t1 - t2;
   }
 
   #pragma omp parallel for
@@ -119,13 +120,13 @@ void ops_par_loop_update_halo_kernel1_b2_execute(ops_kernel_descriptor *desc) {
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[9].time += t2-t1;
+    OPS_kernels[9].time += t2 - t1;
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[9].mpi_time += t1-t2;
+    OPS_kernels[9].mpi_time += t1 - t2;
     OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg2);
@@ -182,7 +183,7 @@ void ops_par_loop_update_halo_kernel1_b2(char const *name, ops_block block, int 
   desc->args[7].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel1_b2_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(9,"update_halo_kernel1_b2");
+    ops_timing_realloc(9, "update_halo_kernel1_b2");
   }
   ops_enqueue_kernel(desc);
   }

@@ -11,13 +11,16 @@ USE ISO_C_BINDING
 
 INTEGER(KIND=4) multi_d1
 INTEGER(KIND=4) xdim1
+INTEGER(KIND=4) ydim1
 #define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim1*(y)*2))
 INTEGER(KIND=4) multi_d2
 INTEGER(KIND=4) xdim2
+INTEGER(KIND=4) ydim2
 #define OPS_ACC_MD2(d,x,y) ((x)*2+(d)+(xdim2*(y)*2))
 
 contains
 
+!$ACC ROUTINE(multidim_copy_kernel) SEQ
 !user function
 subroutine multidim_copy_kernel(val1, val2)
   IMPLICIT NONE
@@ -48,8 +51,9 @@ subroutine multidim_copy_kernel_wrap( &
   integer(4) end(2)
   integer n_x, n_y
 
-  !$acc parallel deviceptr(opsDat1Local,opsDat2Local)
-  !$acc loop
+
+  !$acc parallel deviceptr(opsDat1Local,opsDat2Local)  
+  !$acc loop 
   DO n_y = 1, end(2)-start(2)+1
     !$acc loop
     DO n_x = 1, end(1)-start(1)+1
@@ -59,6 +63,7 @@ subroutine multidim_copy_kernel_wrap( &
     END DO
   END DO
   !$acc end parallel
+
 end subroutine
 
 !host subroutine

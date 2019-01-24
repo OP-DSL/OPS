@@ -72,11 +72,12 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,12,range,96)) return;
+  if (!ops_checkpointing_before(args, 12, range, 96))
+    return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(96,"field_summary_kernel");
+    ops_timing_realloc(96, "field_summary_kernel");
     OPS_kernels[96].count++;
     ops_timers_core(&c2,&t2);
   }
@@ -318,7 +319,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[96].mpi_time += t1-t2;
+    OPS_kernels[96].mpi_time += t1 - t2;
   }
 
   int n_x;
@@ -383,14 +384,14 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[96].time += t2-t1;
+    OPS_kernels[96].time += t2 - t1;
   }
   ops_set_dirtybit_host(args, 12);
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[96].mpi_time += t1-t2;
+    OPS_kernels[96].mpi_time += t1 - t2;
     OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg2);

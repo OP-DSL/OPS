@@ -41,10 +41,11 @@ void ops_par_loop_advec_mom_kernel2_y(char const *name, ops_block block, int dim
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,4,range,134)) return;
+  if (!ops_checkpointing_before(args, 4, range, 134))
+    return;
   #endif
 
-  ops_timing_realloc(134,"advec_mom_kernel2_y");
+  ops_timing_realloc(134, "advec_mom_kernel2_y");
   OPS_kernels[134].count++;
 
   //compute localy allocated range for the sub-block
@@ -191,7 +192,7 @@ void ops_par_loop_advec_mom_kernel2_y(char const *name, ops_block block, int dim
   ops_halo_exchanges(args,4,range);
 
   ops_timers_core(&c1,&t1);
-  OPS_kernels[134].mpi_time += t1-t2;
+  OPS_kernels[134].mpi_time += t1 - t2;
 
   advec_mom_kernel2_y_c_wrapper(
     p_a0,
@@ -201,7 +202,7 @@ void ops_par_loop_advec_mom_kernel2_y(char const *name, ops_block block, int dim
     x_size, y_size, z_size);
 
   ops_timers_core(&c2,&t2);
-  OPS_kernels[134].time += t2-t1;
+  OPS_kernels[134].time += t2 - t1;
   ops_set_dirtybit_host(args, 4);
   ops_set_halo_dirtybit3(&args[0],range);
 

@@ -11,10 +11,12 @@ USE ISO_C_BINDING
 
 INTEGER(KIND=4) multi_d1
 INTEGER(KIND=4) xdim1
+INTEGER(KIND=4) ydim1
 #define OPS_ACC_MD1(d,x,y) ((x)*2+(d)+(xdim1*(y)*2))
 
 contains
 
+!$ACC ROUTINE(multidim_reduce_kernel) SEQ
 !user function
 subroutine multidim_reduce_kernel(val, redu_dat1)
   IMPLICIT NONE
@@ -38,24 +40,36 @@ subroutine multidim_reduce_kernel_wrap( &
 & end )
   IMPLICIT NONE
   real(8), INTENT(IN) :: opsDat1Local(*)
-  real(8) :: opsDat2Local
+  real(8) :: opsDat2Local(2)
+  real(8) :: opsDat2LocalAcc(2)
+  real(8) :: opsDat2Local_1
+  real(8) :: opsDat2Local_2
   integer :: dat1_base
   integer :: dat2_base
   integer(4) start(2)
   integer(4) end(2)
   integer n_x, n_y
 
-  !$acc parallel deviceptr(opsDat1Local) reduction(+:opsDat2Local)
-  !$acc loop reduction(+:opsDat2Local)
+  opsDat2LocalAcc = opsDat2Local
+  opsDat2Local_1 = opsDat2Local(1)
+  opsDat2Local_2 = opsDat2Local(2)
+
+  !$acc parallel deviceptr(opsDat1Local)  private(opsDat2LocalAcc)  reduction(+:opsDat2Local_1) reduction(+:opsDat2Local_2)
+  !$acc loop  reduction(+:opsDat2Local_1) reduction(+:opsDat2Local_2)
   DO n_y = 1, end(2)-start(2)+1
     !$acc loop
     DO n_x = 1, end(1)-start(1)+1
       call multidim_reduce_kernel( &
       & opsDat1Local(dat1_base+(n_x-1)*2 + (n_y-1)*xdim1*2), &
-      & opsDat2Local )
+      & opsDat2LocalAcc )
+      opsDat2Local_1 = opsDat2LocalAcc(1)
+      opsDat2Local_2 = opsDat2LocalAcc(2)
     END DO
   END DO
   !$acc end parallel
+  opsDat2Local(1) = opsDat2Local_1
+  opsDat2Local(2) = opsDat2Local_2
+
 end subroutine
 
 !host subroutine

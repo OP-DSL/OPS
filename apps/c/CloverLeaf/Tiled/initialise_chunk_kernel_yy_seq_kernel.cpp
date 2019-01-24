@@ -22,7 +22,8 @@ void ops_par_loop_initialise_chunk_kernel_yy_execute(ops_kernel_descriptor *desc
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,2,range,1)) return;
+  if (!ops_checkpointing_before(args, 2, range, 1))
+    return;
   #endif
 
   if (OPS_diags > 1) {
@@ -64,7 +65,7 @@ void ops_par_loop_initialise_chunk_kernel_yy_execute(ops_kernel_descriptor *desc
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[1].mpi_time += t1-t2;
+    OPS_kernels[1].mpi_time += t1 - t2;
   }
 
   #pragma omp parallel for
@@ -84,13 +85,13 @@ void ops_par_loop_initialise_chunk_kernel_yy_execute(ops_kernel_descriptor *desc
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[1].time += t2-t1;
+    OPS_kernels[1].time += t2 - t1;
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[1].mpi_time += t1-t2;
+    OPS_kernels[1].mpi_time += t1 - t2;
     OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
@@ -119,7 +120,7 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
   desc->args[1] = arg1;
   desc->function = ops_par_loop_initialise_chunk_kernel_yy_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(1,"initialise_chunk_kernel_yy");
+    ops_timing_realloc(1, "initialise_chunk_kernel_yy");
   }
   ops_enqueue_kernel(desc);
   }

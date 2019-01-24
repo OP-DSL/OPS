@@ -24,7 +24,8 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_4_front_execute(ops_kernel_desc
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,3,range,58)) return;
+  if (!ops_checkpointing_before(args, 3, range, 58))
+    return;
   #endif
 
   if (OPS_diags > 1) {
@@ -65,7 +66,7 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_4_front_execute(ops_kernel_desc
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[58].mpi_time += t1-t2;
+    OPS_kernels[58].mpi_time += t1 - t2;
   }
 
   #pragma omp parallel for collapse(2)
@@ -87,13 +88,13 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_4_front_execute(ops_kernel_desc
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[58].time += t2-t1;
+    OPS_kernels[58].time += t2 - t1;
   }
 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[58].mpi_time += t1-t2;
+    OPS_kernels[58].mpi_time += t1 - t2;
     OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[58].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
@@ -129,7 +130,7 @@ void ops_par_loop_update_halo_kernel2_zvel_minus_4_front(char const *name, ops_b
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel2_zvel_minus_4_front_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(58,"update_halo_kernel2_zvel_minus_4_front");
+    ops_timing_realloc(58, "update_halo_kernel2_zvel_minus_4_front");
   }
   ops_enqueue_kernel(desc);
   }

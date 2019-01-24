@@ -11,13 +11,18 @@ USE ISO_C_BINDING
 
 INTEGER(KIND=4) multi_d1
 INTEGER(KIND=4) xdim1
+INTEGER(KIND=4) ydim1
+INTEGER(KIND=4) zdim1
 #define OPS_ACC_MD1(d,x,y,z) ((x)*3+(d)+(xdim1*(y)*3)+(xdim1*ydim1*(z)*3))
 INTEGER(KIND=4) multi_d2
 INTEGER(KIND=4) xdim2
+INTEGER(KIND=4) ydim2
+INTEGER(KIND=4) zdim2
 #define OPS_ACC_MD2(d,x,y,z) ((x)*3+(d)+(xdim2*(y)*3)+(xdim2*ydim2*(z)*3))
 
 contains
 
+!$ACC ROUTINE(multidim_copy_kernel) SEQ
 !user function
 subroutine multidim_copy_kernel(val1, val2)
   IMPLICIT NONE
@@ -50,8 +55,9 @@ subroutine multidim_copy_kernel_wrap( &
   integer(4) end(3)
   integer n_x, n_y, n_z
 
-  !$acc parallel deviceptr(opsDat1Local,opsDat2Local)
-  !$acc loop
+
+  !$acc parallel deviceptr(opsDat1Local,opsDat2Local)  
+  !$acc loop 
   DO n_z = 1, end(3)-start(3)+1
     !$acc loop
     DO n_y = 1, end(2)-start(2)+1
@@ -64,6 +70,7 @@ subroutine multidim_copy_kernel_wrap( &
     END DO
   END DO
   !$acc end parallel
+
 end subroutine
 
 !host subroutine
@@ -83,12 +90,14 @@ subroutine multidim_copy_kernel_host( userSubroutine, block, dim, range, &
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
+  integer zdim1
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
   real(8), DIMENSION(:), POINTER :: opsDat2Local
   integer(kind=4) :: opsDat2Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat2_size
   integer(kind=4) :: dat2_base
+  integer zdim2
 
   integer start(3)
   integer end(3)

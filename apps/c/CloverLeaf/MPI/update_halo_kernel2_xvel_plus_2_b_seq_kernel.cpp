@@ -27,11 +27,12 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b(char const *name, ops_block 
 
 
   #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args,3,range,20)) return;
+  if (!ops_checkpointing_before(args, 3, range, 20))
+    return;
   #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(20,"update_halo_kernel2_xvel_plus_2_b");
+    ops_timing_realloc(20, "update_halo_kernel2_xvel_plus_2_b");
     OPS_kernels[20].count++;
     ops_timers_core(&c2,&t2);
   }
@@ -115,7 +116,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b(char const *name, ops_block 
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[20].mpi_time += t1-t2;
+    OPS_kernels[20].mpi_time += t1 - t2;
   }
 
   int n_x;
@@ -150,7 +151,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b(char const *name, ops_block 
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[20].time += t2-t1;
+    OPS_kernels[20].time += t2 - t1;
   }
   ops_set_dirtybit_host(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
@@ -159,7 +160,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b(char const *name, ops_block 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c1,&t1);
-    OPS_kernels[20].mpi_time += t1-t2;
+    OPS_kernels[20].mpi_time += t1 - t2;
     OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
