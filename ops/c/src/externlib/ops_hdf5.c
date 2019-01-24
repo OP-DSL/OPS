@@ -257,7 +257,45 @@ void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
 /*******************************************************************************
 * Routine to remove x-dimension padding introduced when creating dats to be
 * x-dimension memory aligned
-* this needs to be removed when writing to HDF5 files
+* this needs to be removed when writing to HDF5 files  - dimension of block is 1
+********************************************************************************/
+void remove_padding1D(ops_dat dat, hsize_t *size, char *data) {
+  int index = 0;
+  int count = 0;
+  for (int i = 0; i < size[0]; i++) {
+    index = i;
+    memcpy(&data[count * dat->elem_size], &dat->data[index * dat->elem_size],
+           dat->elem_size);
+    count++;
+  }
+  return;
+}
+
+/*******************************************************************************
+* Routine to remove x-dimension padding introduced when creating dats to be
+* x-dimension memory aligned
+* this needs to be removed when writing to HDF5 files  - dimension of block is 2
+********************************************************************************/
+void remove_padding2D(ops_dat dat, hsize_t *size, char *data) {
+  int index = 0;
+  int count = 0;
+  for (int k = 0; k < size[2]; k++) {
+    for (int j = 0; j < size[1]; j++) {
+      for (int i = 0; i < size[0]; i++) {
+        index = i + j * dat->size[0];
+        memcpy(&data[count * dat->elem_size],
+               &dat->data[index * dat->elem_size], dat->elem_size);
+        count++;
+      }
+    }
+  }
+  return;
+}
+
+/*******************************************************************************
+* Routine to remove x-dimension padding introduced when creating dats to be
+* x-dimension memory aligned
+* this needs to be removed when writing to HDF5 files  - dimension of block is 3
 ********************************************************************************/
 void remove_padding3D(ops_dat dat, hsize_t *size, char *data) {
   int index = 0;
@@ -276,7 +314,6 @@ void remove_padding3D(ops_dat dat, hsize_t *size, char *data) {
       }
     }
   }
-
   return;
 }
 
@@ -318,8 +355,13 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
   for (int d = 0; d < block->dims; d++)
     t_size *= g_size[d];
   char *data = (char *)ops_malloc(t_size * dat->elem_size);
-  remove_padding3D(dat, g_size, data);
 
+  if (block->dims == 1)
+    remove_padding1D(dat, g_size, data);
+  if (block->dims == 2)
+    remove_padding2D(dat, g_size, data);
+  if (block->dims == 3)
+    remove_padding3D(dat, g_size, data);
 
   // make sure we multiply by the number of data values per element (i.e.
   // dat->dim)

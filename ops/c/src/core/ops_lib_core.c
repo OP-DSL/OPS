@@ -526,6 +526,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   dat->hdf5_file = "none";
   dat->type = copy_str(type);
   dat->name = copy_str(name);
+  dat->x_pad = 0; // initialize padding for data alignment to zero
 
   /* Create a pointer to an item in the ops_dats doubly linked list */
   ops_dat_entry *item;

@@ -57,7 +57,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
                                        data, type_size, type, name);
 
   if (data != NULL && !OPS_realloc) {
-    //printf("Data read in from HDF5 file or is allocated by the user\n");
+    // printf("Data read in from HDF5 file or is allocated by the user\n");
     dat->user_managed =
         1; // will be reset to 0 if called from ops_decl_dat_hdf5()
     dat->is_hdf5 = 0;
@@ -67,14 +67,14 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     // Allocate memory immediately
     int bytes = size * type_size;
 
-    //nx_pad    = (1+((nx-1)/SIMD_VEC))*SIMD_VEC; // Compute padding for vecotrization (in adi_cpu tridiagonal library)
+    // nx_pad    = (1+((nx-1)/SIMD_VEC))*SIMD_VEC; // Compute padding for
+    // vecotrization (in adi_cpu tridiagonal library)
     // Compute    padding x-dim for vecotrization
     int x_pad = (1+((dat->size[0]-1)/SIMD_VEC))*SIMD_VEC - dat->size[0];
     dat->size[0] += x_pad;
     dat->d_p[0] += x_pad;
     dat->x_pad = x_pad;
-    printf("\nPadded size is %d total size =%d \n",x_pad,dat->size[0]);
-
+    // printf("\nPadded size is %d total size =%d \n",x_pad,dat->size[0]);
 
     for (int i = 0; i < block->dims; i++)
       bytes = bytes * dat->size[i];
