@@ -312,6 +312,7 @@ ops_block ops_decl_block(int dims, const char *name) {
 ops_block ops_decl_block_batch(int dims, const char *name, int count) {
   ops_block block = ops_decl_block(dims, name);
   block->count = count;
+  return block;
 }
 
 void ops_decl_const_core(int dim, char const *type, int typeSize, char *data,
