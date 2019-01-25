@@ -103,9 +103,11 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p,
                                        stride, data, type_size, type, name);
 
-  int bytes = size * type_size;
+  int bytes = size * type_size * block->count;
   for (int i = 0; i < block->dims; i++)
     bytes = bytes * dat->size[i];
+
+  dat->mem = bytes;
 
   if (data != NULL) {
     // printf("Data read in from HDF5 file or is allocated by the user\n");
@@ -125,7 +127,6 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
             ( void ** ) NULL, bytes );
   }
 
-  dat->mem = bytes;
 
   // Compute offset in bytes to the base index
   dat->base_offset = 0;
@@ -144,7 +145,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
   ops_execute();
   ops_checkpointing_reduction(handle);
-  memcpy(ptr, handle->data, handle->size);
+  memcpy(ptr, handle->data, handle->size * handle->batchsize);
   handle->initialized = 0;
 }
 

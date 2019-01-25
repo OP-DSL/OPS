@@ -344,10 +344,30 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
 
     code('')
+
+    code('#ifndef OPS_LAZY')
+    comm('Halo Exchanges')
+    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
+    code('ops_halo_exchanges(args,'+str(nargs)+',range);')
+    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
+    code('#endif')
+    code('')
+    if gen_full_code==1:
+      IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
+      code('ops_timers_core(&__c1,&__t1);')
+      code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].mpi_time += __t1-__t2;')
+      ENDIF()
+      code('')
+
+    code('#if defined(_OPENMP) && defined(OPS_BATCHED)')
+    code('#pragma omp parallel for')
+    code('#endif')
+    FOR('batch','0','block->count')
+    code('')
     comm('set up initial pointers and exchange halos if necessary')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-          code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset;')
+          code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + batch * (args['+str(n)+'].dat->mem/block->count);')
           code(typs[n]+' * __restrict__ '+clean_type(arg_list[n])+'_p = ('+typs[n]+' *)(args['+str(n)+'].data + base'+str(n)+');')
           if restrict[n] == 1 or prolong[n] == 1:
             code('#ifdef OPS_MPI')
@@ -372,29 +392,14 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
           code(typs[n]+' * __restrict__ '+clean_type(arg_list[n])+' = ('+typs[n]+' *)args['+str(n)+'].data;')
         else:
           code('#ifdef OPS_MPI')
-          code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index);')
+          code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index + ((ops_reduction)args['+str(n)+'].data)->size * batch);')
           code('#else //OPS_MPI')
-          code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)((ops_reduction)args['+str(n)+'].data)->data;')
+          code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * batch);')
           code('#endif //OPS_MPI')
         code('')
       code('')
     code('')
 
-    code('')
-
-    code('#ifndef OPS_LAZY')
-    comm('Halo Exchanges')
-    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
-    code('ops_halo_exchanges(args,'+str(nargs)+',range);')
-    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
-    code('#endif')
-    code('')
-    if gen_full_code==1:
-      IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
-      code('ops_timers_core(&__c1,&__t1);')
-      code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].mpi_time += __t1-__t2;')
-      ENDIF()
-      code('')
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
@@ -421,7 +426,9 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       line2 = ' collapse(2)'
     else:
       line2 = line
+    code('#if defined(_OPENMP) && !defined(OPS_BATCHED)')
     code('#pragma omp parallel for'+line2)
+    code('#endif')
     if NDIM>2:
       FOR('n_z','start[2]','end[2]')
     if NDIM>1:
@@ -530,11 +537,15 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     if NDIM>2:
       ENDFOR()
 
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'['+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
+
+
+    ENDFOR() #batches
 
     if gen_full_code==1:
       IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
