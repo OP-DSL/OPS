@@ -1197,11 +1197,10 @@ typedef struct ptrm_int {
 #endif // end debug checks
 
 #endif // end macros for 1D application
-#endif // end OPS_ACC_MACROS
 
 /**---------Multi-D ops_dats macros (multiple elements per grid point)-------**/
 #ifndef OPS_ACC_MD_MACROS
-#define OPS_ACC_MACROS
+#define OPS_ACC_MD_MACROS
 #ifdef OPS_5D
 #ifndef OPS_DEBUG
 #ifndef OPS_SOA
@@ -2740,6 +2739,7 @@ extern int multi_d0, multi_d1, multi_d2, multi_d3, multi_d4, multi_d5, multi_d6,
     multi_d98, multi_d99;
 #endif /* OPS_SOA */
 #endif /* OPS_NO_GLOBALS */
+#endif // end OPS_ACC_MD_MACROS
 #endif /* OPS_API */
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif // OPS_MACROS_H
