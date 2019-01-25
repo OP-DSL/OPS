@@ -194,13 +194,14 @@ int main(int argc, const char **argv)
   ops_timing_output(stdout);
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
   double err_diff = 0.0;
-  for (int i = 0; i < num_systems; i++) {
+  int i = 0;
+  for (i = 0; i < num_systems; i++) {
     err_diff=fabs((100.0*(err[i]/2008.72990634426))-100.0);
     if (err_diff > 0.001) {
       break;
     }
   }
-  ops_printf("Total error: %3.15g\n",err[0]);
+  ops_printf("Total error: %3.15g\n",err[MIN(num_systems-1,i)]);
   ops_printf("Total error is within %3.15E %% of the expected error\n",err_diff);
   delete[] err;
 
