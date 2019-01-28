@@ -738,7 +738,7 @@ void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc);
 
  * @param dat   the dataset
  * @param part  the chunk index (has to be 0)
- * @param data  pointer to memory which should be filled by OPS
+ * @param data  pointer to CPU memory which should be filled by OPS
  */
 void ops_dat_fetch_data(ops_dat dat, int part, char *data);
 
@@ -751,7 +751,7 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data);
  *
  * @param dat   the dataset
  * @param part  the chunk index (has to be 0)
- * @param data  pointer to memory which should be copied to OPS
+ * @param data  pointer to CPU memory which should be copied to OPS
  */
 void ops_dat_set_data(ops_dat dat, int part, char *data);
 
