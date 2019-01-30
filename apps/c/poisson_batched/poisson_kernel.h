@@ -8,7 +8,6 @@ void poisson_kernel_populate(const int *idx, ACC<double> &u, ACC<double> &f, ACC
   u(0,0) = myfun(sin(M_PI*x),cos(2.0*M_PI*y))-1.0;
   f(0,0) = -5.0*M_PI*M_PI*sin(M_PI*x)*cos(2.0*M_PI*y);
   ref(0,0) = sin(M_PI*x)*cos(2.0*M_PI*y);
-
 }
 
 void poisson_kernel_initialguess(ACC<double> &u) {

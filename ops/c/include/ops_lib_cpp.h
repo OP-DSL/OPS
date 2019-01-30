@@ -357,20 +357,44 @@ public:
   /////////////////////////////////////////////////
 #if defined(OPS_2D)
   __host__ __device__
-  ACC(int _sizex, T *_ptr) : sizex(_sizex), ptr(_ptr) {}
+  ACC(int _sizex, int _sizey, T *_ptr) : sizex(_sizex), ptr(_ptr)
+#ifdef OPS_BATCHED
+     , sizey(_sizey)
+#endif
+  {}
   __host__ __device__
   ACC(int _mdim, int _sizex, int _sizey, T *_ptr) : sizex(_sizex),
-#ifdef OPS_SOA
+#if defined(OPS_SOA) || defined(OPS_BATCHED)
     sizey(_sizey),
-#else
+#endif
+#ifndef OPS_SOA
     mdim(_mdim),
 #endif
     ptr(_ptr)
   {}
+
   __host__ __device__
-  const T& operator()(int xoff, int yoff) const {return *(ptr + xoff + yoff*sizex);}
+  const T& operator()(int xoff, int yoff) const {
+#if defined(OPS_BATCHED) && OPS_BATCHED==0
+    return *(ptr + xoff * sizex + yoff *sizex * sizey);
+#elif defined(OPS_BATCHED) && OPS_BATCHED==1
+    return *(ptr + xoff + yoff *sizex * sizey);
+#else
+    return *(ptr + xoff + yoff*sizex);
+#endif
+  }
   __host__ __device__
-  T& operator()(int xoff, int yoff) {return *(ptr + xoff + yoff*sizex);}
+  T& operator()(int xoff, int yoff) {
+#if defined(OPS_BATCHED) && OPS_BATCHED==0
+    return *(ptr + xoff * sizex + yoff *sizex * sizey);
+#elif defined(OPS_BATCHED) && OPS_BATCHED==1
+    return *(ptr + xoff + yoff *sizex * sizey);
+#else
+    return *(ptr + xoff + yoff*sizex);
+#endif
+  }
+
+
   __host__ __device__
   const T& operator()(int d, int xoff, int yoff) const {
 #ifdef OPS_SOA
@@ -471,19 +495,19 @@ public:
 
 
 private:
-#if defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_1D) && defined(OPS_SOA))
+#if defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_1D) && (defined(OPS_SOA) || defined(OPS_BATCHED))) 
   int sizex;
 #endif
-#if defined(OPS_3D) || defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_2D) && defined(OPS_SOA))
+#if defined(OPS_3D) || defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_2D) && (defined(OPS_SOA) || defined(OPS_BATCHED)))
   int sizey;
 #endif
-#if defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_3D) && defined(OPS_SOA))
+#if defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_3D) && (defined(OPS_SOA) || defined(OPS_BATCHED)))
   int sizez;
 #endif
-#if defined (OPS_5D) || (defined(OPS_4D) && defined(OPS_SOA))
+#if defined (OPS_5D) || (defined(OPS_4D) && (defined(OPS_SOA) || defined(OPS_BATCHED)))
   int sizeu;
 #endif
-#if defined(OPS_5D) && defined(OPS_SOA)
+#if defined(OPS_5D) && (defined(OPS_SOA) || defined(OPS_BATCHED))
   int sizev;
 #endif
 #ifndef OPS_SOA

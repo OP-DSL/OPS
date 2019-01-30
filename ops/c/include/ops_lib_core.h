@@ -103,7 +103,9 @@
 #define OPS_ARG_PROLONG 4
 #define OPS_ARG_RESTRICT 5
 
-
+#ifndef OPS_BATCH_SIZE
+#define OPS_BATCH_SIZE OPS_instance::getOPSInstance()->ops_batch_size
+#endif
 
 /*
  * * zero constants
@@ -164,6 +166,7 @@ typedef struct {
   int dims;         /**< dimension of block, 2D,3D .. etc*/
   char const *name; /**< name of block */
   int count;        /**< batch size*/
+  int batchdim;     /**< batching dimension */
 } ops_block_core;
 
 typedef ops_block_core *ops_block;
@@ -316,7 +319,7 @@ typedef struct ops_kernel_descriptor {
   int range[2 * OPS_MAX_DIM]; /**< process local execution range */
   int orig_range[2 * OPS_MAX_DIM]; /**< original execution range */
   ops_block block;            /**< block to execute on */
-  void (*function)(const char *, ops_block, int, int, int *, int, ops_arg*);
+  void (*function)(const char *, ops_block, int, int, int, int *, int, ops_arg*);
                               /**< Function pointer to a wrapper to be called */
 } ops_kernel_descriptor;
 
@@ -408,9 +411,10 @@ ops_block ops_decl_block(int dims, const char *name);
  * @param dims  dimension of the block
  * @param name  a name used for output diagnostics
  * @param count batch size
+ * @param the batching dimension
  * @return
  */
-ops_block ops_decl_block_batch(int dims, const char *name, int count);
+ops_block ops_decl_block_batch(int dims, const char *name, int count, int batchdim);
 
 /**
  * Deallocates an OPS dataset
@@ -906,7 +910,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int buf_strides_y, int buf_strides_z);
 
 /* lazy execution */
-ops_kernel_descriptor * ops_create_kernel_descriptor(const char *name, ops_block block, int blockidx, int idx, int dim, int *range,     int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int*, int, ops_arg*));
+ops_kernel_descriptor * ops_create_kernel_descriptor(const char *name, ops_block block, int blockidx, int idx, int dim, int *range,     int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int, int*, int, ops_arg*));
 void ops_enqueue_kernel(ops_kernel_descriptor *desc);
 void ops_execute();
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp);

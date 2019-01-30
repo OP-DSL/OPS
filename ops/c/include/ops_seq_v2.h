@@ -46,8 +46,8 @@ inline int off(int ndim, int dim , int* start, int* end, int* size, int* stride)
   for(i=dim; i<ndim; i++) c2[i] = start[i];
 
   for (i = 0; i < ndim; i++) {
-    c1[i] *= stride[i];
-    c2[i] *= stride[i];
+    c1[i] *= (i==OPS_BATCHED?1:stride[i-(OPS_BATCHED<i)]);
+    c2[i] *= (i==OPS_BATCHED?1:stride[i-(OPS_BATCHED<i)]);
   }
   int off =  add(c1, size, dim) - add(c2, size, dim);
 
@@ -58,7 +58,7 @@ inline int address(int ndim, int dat_size, int* start, int* size, int* stride, i
 {
   int base = 0;
   for(int i=0; i<ndim; i++) {
-    base = base + dat_size * mult(size, i) * (start[i] * stride[i] - base_off[i] - d_m[i]);
+    base = base + dat_size * mult(size, i) * (start[i] * (i==OPS_BATCHED?1:stride[i-(OPS_BATCHED<i)]) - base_off[i] - d_m[i]);
   }
   return base;
 }
@@ -111,21 +111,24 @@ using param_remove_cvref_t = typename param_remove_cvref<T>::type;
 
 // helper struct to create, pass and free parameters to the kernel
 template <typename ParamT> struct param_handler {
-  static char *construct(const ops_arg &arg, int dim, int ndim, int start[], ops_block block, int batch) { 
+  static char *construct(const ops_arg &arg, int ndim, int start[], ops_block block) { 
     if (arg.argtype == OPS_ARG_GBL) {
       if (arg.acc == OPS_READ) return arg.data;
       else
   #ifdef OPS_MPI
-        return ((ops_reduction)arg.data)->data + ((ops_reduction)arg.data)->size * block->index + ((ops_reduction)arg.data)->size * batch;// multi-block and batched blocks mutually exclusive
+        return ((ops_reduction)arg.data)->data + ((ops_reduction)arg.data)->size * block->index;
   #else //OPS_MPI
-        return ((ops_reduction)arg.data)->data + ((ops_reduction)arg.data)->size * batch;
+        return ((ops_reduction)arg.data)->data;
   #endif //OPS_MPI
     } else if (arg.argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       sub_block_list sb = OPS_sub_block_list[block->index]; //TODO: Multigrid
-      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+      for (int d = 0; d < ndim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
-      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+      for (int d = 0; d < block->batchdim; d++) arg_idx[d] = start[d];
+      for (int d = block->batchdim; d < ndim-1; d++) arg_idx[d] = start[d+1];
+      arg_idx[ndim-1] = start[block->batchdim];
+
   #endif //OPS_MPI
       return (char *)arg_idx;
     }
@@ -135,20 +138,28 @@ template <typename ParamT> struct param_handler {
   static ParamT get(char *data) { return (ParamT)data; } 
 
 #ifdef OPS_MPI 
-static void shift_arg(const ops_arg &arg, char *p, int m, const int* start,
+static void shift_arg(const ops_arg &arg, char **p, int m, const int* start,
                       const int offs[], const sub_block_list &sb)
 #else //OPS_MPI
-static void shift_arg(const ops_arg &arg, char *p, int m, const int* start, 
-                      const int offs[])
+static void shift_arg(const ops_arg &arg, char **p, int m, const int* start, 
+                      const int offs[], int ndim)
 #endif
 {
   if (arg.argtype == OPS_ARG_IDX) {
-    arg_idx[m]++;
+    if (m == OPS_BATCHED) arg_idx[ndim-1]++;
+    else arg_idx[m-(OPS_BATCHED<m)]++;
 #ifdef OPS_MPI
     for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
 #else //OPS_MPI
-    for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+    for (int d = 0; d < m; d++) {
+      if (d == OPS_BATCHED) arg_idx[ndim-1] = start[d];
+      else arg_idx[d-(OPS_BATCHED<d)] = start[d];
+    }
 #endif //OPS_MPI
+  }
+  else if (arg.argtype == OPS_ARG_GBL && arg.acc != OPS_READ) {
+    if (m == OPS_BATCHED) *p += ((ops_reduction)arg.data)->size;
+    else if (m > OPS_BATCHED) *p = ((ops_reduction)arg.data)->data;
   }
 }
 
@@ -156,13 +167,13 @@ static void shift_arg(const ops_arg &arg, char *p, int m, const int* start,
 };
 
 template <typename T> struct param_handler<ACC<T>> {
-  static char *construct(const ops_arg &arg, int dim, int ndim, int start[], ops_block block, int batch) { 
+  static char *construct(const ops_arg &arg, int ndim, int start[], ops_block block) { 
     if (arg.argtype == OPS_ARG_DAT) {
       int d_m[OPS_MAX_DIM];
   #ifdef OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = arg.dat->d_m[d] + OPS_sub_dat_list[arg.dat->index]->d_im[d];
+      for (int d = 0; d < ndim; d++) d_m[d] = arg.dat->d_m[d] + OPS_sub_dat_list[arg.dat->index]->d_im[d];
   #else //OPS_MPI
-      for (int d = 0; d < dim; d++) d_m[d] = arg.dat->d_m[d];
+      for (int d = 0; d < ndim; d++) d_m[d] = arg.dat->d_m[d];
   #endif //OPS_MPI
 #ifdef OPS_1D
       return (char *) new ACC<T>(arg.dim, arg.dat->size[0], (T*)(arg.data //base of 2D array
@@ -175,7 +186,7 @@ template <typename T> struct param_handler<ACC<T>> {
 #else
       return (char *) ((arg.dat->data //TODO
 #endif
-      + (arg.dat->mem/arg.dat->block->count)*batch + address(ndim, OPS_instance::getOPSInstance()->OPS_soa ? arg.dat->type_size : arg.dat->elem_size, &start[0], 
+      + address(ndim, OPS_instance::getOPSInstance()->OPS_soa ? arg.dat->type_size : arg.dat->elem_size, &start[0], 
         arg.dat->size, arg.stencil->stride, arg.dat->base,
         d_m))); //TODO
     } 
@@ -185,17 +196,17 @@ template <typename T> struct param_handler<ACC<T>> {
   static ACC<T>& get(char *data) { return *((ACC<T> *)data); }
 
 #ifdef OPS_MPI 
-static void shift_arg(const ops_arg &arg, char *p, int m, const int* start,
-                      const int offs[], const sub_block_list &sb)
+static void shift_arg(const ops_arg &arg, char **p, int m, const int* start,
+                      const int offs[], int ndim, const sub_block_list &sb)
 #else //OPS_MPI
-static void shift_arg(const ops_arg &arg, char *p, int m, const int* start, 
-                      const int offs[])
+static void shift_arg(const ops_arg &arg, char **p, int m, const int* start, 
+                      const int offs[], int ndim)
 #endif
 {
   if (arg.argtype == OPS_ARG_DAT) {
     int offset = (OPS_instance::getOPSInstance()->OPS_soa ? 1 : arg.dat->dim) * offs[m];
     //p = p + ((OPS_soa ? arg.dat->type_size : arg.dat->elem_size) * offs[i][m]);
-    ((ACC<T>*)p)->next(offset); // T must be ACC<type> we need to set to the next element
+    ((ACC<T>*)*p)->next(offset); // T must be ACC<type> we need to set to the next element
   } 
 }
 
@@ -217,7 +228,7 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
                       OPSARG... arguments) {
   constexpr int N = sizeof...(OPSARG);
 
-  int  count[dim];
+  int  count[dim+1];
   ops_arg args[N] = {arguments...};
   
   #ifdef CHECKPOINTING
@@ -243,9 +254,11 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
       end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
-  int ndim = block->dims;
+  int ndim = block->dims + (block->count>1 || OPS_BATCHED < block->dims);
   for (int n=0; n<ndim; n++) {
-    start[n] = range[2*n];end[n] = range[2*n+1];
+    if (n==block->batchdim) {start[n] = 0; end[n]=block->count;}
+    else if (n<block->batchdim) {start[n] = range[2*n]; end[n] = range[2*n+1];}
+    else {start[n] = range[2*(n-1)];end[n] = range[2*(n-1)+1];}
   }
   #endif //OPS_MPI
 
@@ -257,10 +270,8 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
   ops_halo_exchanges(args,N,range);
   ops_H_D_exchanges_host(args, N);
 
-  for (int batch = 0; batch < block->count; batch++) {
-
   char *p_a[N] = 
-    {param_handler<param_remove_cvref_t<ParamType>>::construct(arguments, dim, ndim, start, block, batch)...};
+    {param_handler<param_remove_cvref_t<ParamType>>::construct(arguments, ndim, start, block)...};
   //Offs decl
   int offs[N][OPS_MAX_DIM];
   (void) std::initializer_list<int>{(initoffs(arguments, offs[I], ndim, start, end), 0)...};
@@ -271,8 +282,7 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
     total_range *= count[n];
     total_range *= (count[n]<0?0:1);
   }
-  count[dim-1]++;     // extra in last to ensure correct termination
-
+  count[ndim-1]++;     // extra in last to ensure correct termination
 
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
@@ -291,16 +301,15 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
   #ifdef OPS_MPI
     (void) std::initializer_list<int>{(
       //shift_arg<param_remove_cvref_t<ParamType>>(arguments, p_a[I], m, start, offs[I], sb),0)...};
-      param_handler<param_remove_cvref_t<ParamType>>::shift_arg(arguments, p_a[I], m, start, offs[I], sb),0)...};
+      param_handler<param_remove_cvref_t<ParamType>>::shift_arg(arguments, &p_a[I], m, start, offs[I], ndim, sb),0)...};
   #else //OPS_MPI
     (void) std::initializer_list<int>{(
-      param_handler<param_remove_cvref_t<ParamType>>::shift_arg(arguments, p_a[I], m, start, offs[I]),0)...};
+      param_handler<param_remove_cvref_t<ParamType>>::shift_arg(arguments, &p_a[I], m, start, offs[I], ndim),0)...};
   #endif //OPS_MPI
   }
 
   (void) std::initializer_list<int>{
     (param_handler<param_remove_cvref_t<ParamType>>::free(p_a[I]),0)...};
-  }  //batches
 
   #ifdef OPS_DEBUG_DUMP
   (void) std::initializer_list<int>{(

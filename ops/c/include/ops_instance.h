@@ -110,6 +110,10 @@ class OPS_instance {
 	OPS_instance_tiling *tiling_instance;
 	OPS_instance_checkpointing *checkpointing_instance;
   int ops_loop_over_blocks;
+  int *ops_loop_over_blocks_predicate;
+  int ops_loop_over_blocks_condition;
+
+  int ops_batch_size;
 
 	//Other runtime configuration args
 	int ops_force_decomp[OPS_MAX_DIM];

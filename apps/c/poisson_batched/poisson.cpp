@@ -103,7 +103,7 @@ int main(int argc, const char **argv)
   ops_decl_const("dy",1,"double",&dy);
 
   //declare block
-  ops_block block = ops_decl_block_batch(2,"block",num_systems);
+  ops_block block = ops_decl_block_batch(2,"block",num_systems,OPS_BATCHED);
 
   //declare stencils
   int s2D_00[]         = {0,0};
@@ -188,6 +188,7 @@ int main(int argc, const char **argv)
   ops_par_loop_blocks_end();
 
   double *err = new double[num_systems];
+  memset(err, 0, num_systems*sizeof(double));
   ops_reduction_result(red_err,err);
 
   ops_timers(&ct1, &et1);

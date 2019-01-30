@@ -174,7 +174,7 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     if (OPS_instance::getOPSInstance()->OPS_diags > 1)
       ops_timers_core(&c,&t2);
     //Run the kernel
-    desc->function(desc->name, desc->block, desc->blockidx, desc->dim, desc->range, desc->nargs, desc->args);
+    desc->function(desc->name, desc->block, 0, desc->block->count, desc->dim, desc->range, desc->nargs, desc->args);
 
     //Dirtybits
     if (desc->device) ops_set_dirtybit_device(desc->args,desc->nargs);
@@ -877,7 +877,7 @@ void ops_execute() {
                ops_kernel_list[i]->range[0], ops_kernel_list[i]->range[1],
                ops_kernel_list[i]->range[2], ops_kernel_list[i]->range[3],
                ops_kernel_list[i]->range[4], ops_kernel_list[i]->range[5]);
-      ops_kernel_list[i]->function(ops_kernel_list[i]->name, ops_kernel_list[i]->block, ops_kernel_list[i]->blockidx, ops_kernel_list[i]->dim, ops_kernel_list[i]->range, ops_kernel_list[i]->nargs, ops_kernel_list[i]->args);
+      ops_kernel_list[i]->function(ops_kernel_list[i]->name, ops_kernel_list[i]->block, 0, ops_kernel_list[i]->block->count, ops_kernel_list[i]->dim, ops_kernel_list[i]->range, ops_kernel_list[i]->nargs, ops_kernel_list[i]->args);
     }
   }
 
@@ -910,7 +910,7 @@ static char *copy_str(char const *src) {
   return strncpy(dest, src, len);
 }
 
-ops_kernel_descriptor * ops_create_kernel_descriptor(const char *name, ops_block block, int blockidx, int idx, int dim, int *range, int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int*, int, ops_arg*)) {
+ops_kernel_descriptor * ops_create_kernel_descriptor(const char *name, ops_block block, int blockidx, int idx, int dim, int *range, int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int, int*, int, ops_arg*)) {
    ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
    desc->name = copy_str(name);
    if (block == NULL) {
@@ -951,13 +951,13 @@ ops_kernel_descriptor * ops_create_kernel_descriptor(const char *name, ops_block
    return desc;
 }
 
-void ops_enqueue_f(const char *name, ops_block block, int idx, int dim, int *range, int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int*, int, ops_arg*)) {
+void ops_enqueue_f(const char *name, ops_block block, int idx, int dim, int *range, int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int, int*, int, ops_arg*)) {
   ops_kernel_descriptor * desc = ops_create_kernel_descriptor(name, block, 0, idx, dim, range, nargs, args, fun);
   ops_enqueue_kernel(desc);
   //fun(name, block, 0, dim, range, nargs, args);
 }
 
-void ops_enqueue_amr_f(const char *name, int blockidx, int idx, int dim, int *range, int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int*, int, ops_arg*)) {
+void ops_enqueue_amr_f(const char *name, int blockidx, int idx, int dim, int *range, int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int, int*, int, ops_arg*)) {
   ops_kernel_descriptor * desc = ops_create_kernel_descriptor(name, NULL, blockidx, idx, dim, range, nargs, args, fun);
   ops_enqueue_kernel(desc);
   //fun(name, NULL, blockidx, dim, range, nargs, args);

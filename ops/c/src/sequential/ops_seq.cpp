@@ -37,6 +37,8 @@
   */
 
 #include <ops_lib_core.h>
+#include <ops_exceptions.h>
+
 int posix_memalign(void **memptr, size_t alignment, size_t size);
 
 void ops_init(const int argc, char **argv, const int diags) {
@@ -62,6 +64,38 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
 
   /** ----             allocate an empty dat             ---- **/
 
+  int d_m2[OPS_MAX_DIM];
+  int d_p2[OPS_MAX_DIM];
+  int base2[OPS_MAX_DIM];
+  int stride2[OPS_MAX_DIM];
+  int size2[OPS_MAX_DIM];
+
+  if (block->count > 1) {
+    for (int d = 0; d < block->batchdim; d++) {
+      d_m2[d] = d_m[d];
+      d_p2[d] = d_p[d];
+      base2[d] = base[d];
+      stride2[d] = stride[d];
+      size2[d] = dat_size[d];
+    }
+    d_m2[block->batchdim] = 0;
+    d_p2[block->batchdim] = 0;
+    base2[block->batchdim] = 0;
+    stride2[block->batchdim] = 1;
+    size2[block->batchdim] = block->count;
+    for (int d = block->batchdim+1; d < block->dims+1; d++) {
+      d_m2[d] = d_m[d-1];
+      d_p2[d] = d_p[d-1];
+      base2[d] = base[d-1];
+      stride2[d] = stride[d-1];
+      size2[d] = dat_size[d-1];
+    }
+    d_m = d_m2;
+    d_p = d_p2;
+    stride = stride2;
+    base = base2;
+    dat_size = size2;
+  }
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p,
                                        stride, data, type_size, type, name);
 
@@ -73,26 +107,28 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->hdf5_file = "none"; // will be set to an hdf5 file if called from
                              // ops_decl_dat_hdf5()
     int bytes = size * type_size;
-    for (int i = 0; i < block->dims; i++)
+    for (int i = 0; i < block->dims+1; i++)
       bytes = bytes * dat->size[i];
-    dat->mem = bytes * block->count;
   } else {
     // Allocate memory immediately
-    int bytes = size * type_size * block->count;
+    int bytes = size * type_size;
 
-    // Compute    padding x-dim for vecotrization
-    int x_pad = (1+((dat->size[0]-1)/SIMD_VEC))*SIMD_VEC - dat->size[0];
-    dat->size[0] += x_pad;
-    dat->d_p[0] += x_pad;
-    //printf("\nPadded size is %d total size =%d \n",x_pad,dat->size[0]);
+    if (block->batchdim !=0) {
+      // Compute    padding x-dim for vecotrization
+      int x_pad = (1+((dat->size[0]-1)/SIMD_VEC))*SIMD_VEC - dat->size[0];
+      dat->size[0] += x_pad;
+      dat->d_p[0] += x_pad;
+      //printf("\nPadded size is %d total size =%d \n",x_pad,dat->size[0]);
+    }
 
 
-    for (int i = 0; i < block->dims; i++)
+    for (int i = 0; i < block->dims+1; i++)
       bytes = bytes * dat->size[i];
     dat->data = (char *)ops_calloc(bytes, 1); // initialize data bits to 0
     dat->user_managed = 0;
     dat->mem = bytes;
     if (data != NULL && OPS_instance::getOPSInstance()->OPS_realloc) {
+      if (block->count > 1 && block->batchdim != block->dims) throw OPSException(OPS_INVALID_ARGUMENT, "Realloc does not work with batching in the non-last dimension"); 
       int sizeprod = 1; 
       for (int d = 1; d < block->dims; d++) sizeprod *= (dat->size[d]);
       int xlen_orig = (-d_m[0]+d_p[0]+dat_size[0]) * size * type_size;
@@ -102,19 +138,14 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     }
   }
 
-  if (block->count>1) {
-    dat->amr = 1;
-    dat->size[block->dims] = block->count;
-  }
-
   // Compute offset in bytes to the base index
   dat->base_offset = 0;
   long cumsize = 1;
-  for (int i = 0; i < block->dims; i++) {
+  for (int i = 0; i < block->dims+1; i++) {
     dat->base_offset +=
         (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size)
         * cumsize * (-dat->base[i] - dat->d_m[i]);
-    cumsize *= dat->size[i];
+    cumsize *= (i == block->batchdim ? OPS_instance::getOPSInstance()->ops_batch_size : dat->size[i]);
   }
 
   return dat;

@@ -237,9 +237,10 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       if n%n_per_line == 3 and n <> nargs-1:
          text = text +'\n'
     code(text);
+    code('int blockidx_start = 0; int blockidx_end = block->count;')
     code('#else')
     #code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
-    code('void ops_par_loop_'+name+'_execute(const char *name, ops_block block, int blockidx, int dim, int *range, int nargs, ops_arg* args) {')
+    code('void ops_par_loop_'+name+'_execute(const char *name, ops_block block, int blockidx_start, int blockidx_end, int dim, int *range, int nargs, ops_arg* args) {')
     config.depth = 2
     #code('char const *name = "'+name+'";')
     #code('ops_block block = desc->block;')
@@ -332,15 +333,35 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
 
     code('')
-    comm("initialize global variable with the dimension of dats")
+    comm("initialize variable with the dimension of dats")
+    code('#if OPS_BATCHED>=0')
+    code('int batchdim = OPS_BATCHED;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if NDIM>1 or (NDIM==1 and (not dims[n].isdigit() or int(dims[n])>1)):
-          code('int xdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
-        if NDIM>2 or (NDIM==2 and (not dims[n].isdigit() or int(dims[n])>1)):
-          code('int ydim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[1];')
-        if NDIM>3 or (NDIM==3 and (not dims[n].isdigit() or int(dims[n])>1)):
-          code('int zdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[2];')
+        if NDIM>0:
+          code('const int xdim'+str(n)+'_'+name+' = OPS_BATCHED == 0 ? OPS_BATCH_SIZE : args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
+        if NDIM>1:
+          code('const int ydim'+str(n)+'_'+name+' = OPS_BATCHED == 1 ? OPS_BATCH_SIZE : args['+str(n)+'].dat->size[1];')
+        if NDIM>2:
+          code('const int zdim'+str(n)+'_'+name+' = OPS_BATCHED == 2 ? OPS_BATCH_SIZE : args['+str(n)+'].dat->size[2];')
+    for d in range(0,NDIM+1):
+      code('const int bounds_'+str(d)+'_l = OPS_BATCHED == '+str(d)+' ? 0 : start[(OPS_BATCHED>'+str(d)+')+'+str(d-1)+'];')
+      code('const int bounds_'+str(d)+'_u = OPS_BATCHED == '+str(d)+' ? MIN(OPS_BATCH_SIZE,block->count-blockidx_start) : end[(OPS_BATCHED>'+str(d)+')+'+str(d-1)+'];')
+    code('#else')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if NDIM>0:
+          code('const int xdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
+        if NDIM>1:
+          code('const int ydim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[1];')
+        if NDIM>2:
+          code('const int zdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[2];')
+    for d in range(0,NDIM):
+      code('const int bounds_'+str(d)+'_l = start['+str(d)+'];')
+      code('const int bounds_'+str(d)+'_u = end['+str(d)+'];')
+    code('const int bounds_'+str(NDIM)+'_l = 0;')
+    code('const int bounds_'+str(NDIM)+'_u = blockidx_end-blockidx_start;')
+    code('#endif')
 
 
     code('')
@@ -359,15 +380,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       ENDIF()
       code('')
 
-    code('#if defined(_OPENMP) && defined(OPS_BATCHED)')
-    code('#pragma omp parallel for')
-    code('#endif')
-    FOR('batch','0','block->count')
     code('')
     comm('set up initial pointers and exchange halos if necessary')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-          code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + batch * (args['+str(n)+'].dat->mem/block->count);')
+          code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + blockidx_start * (args['+str(n)+'].dat->mem/block->count);')
           code(typs[n]+' * __restrict__ '+clean_type(arg_list[n])+'_p = ('+typs[n]+' *)(args['+str(n)+'].data + base'+str(n)+');')
           if restrict[n] == 1 or prolong[n] == 1:
             code('#ifdef OPS_MPI')
@@ -392,20 +409,27 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
           code(typs[n]+' * __restrict__ '+clean_type(arg_list[n])+' = ('+typs[n]+' *)args['+str(n)+'].data;')
         else:
           code('#ifdef OPS_MPI')
-          code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index + ((ops_reduction)args['+str(n)+'].data)->size * batch);')
+          code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index + ((ops_reduction)args['+str(n)+'].data)->size * blockidx_start);')
           code('#else //OPS_MPI')
-          code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * batch);')
+          code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * blockidx_start);')
           code('#endif //OPS_MPI')
         code('')
       code('')
     code('')
 
+    code('#if defined(_OPENMP) && defined(OPS_BATCHED) && !defined(OPS_LAZY)')
+    code('#pragma omp parallel for')
+    code('#endif')
+    FOR('n_'+str(NDIM),'bounds_'+str(NDIM)+'_l','bounds_'+str(NDIM)+'_u')
 
-    for n in range (0,nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] <> OPS_READ:
-          for d in range(0,int(dims[n])):
-            code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'['+str(d)+'];')
+    if reduction:
+      code('#if OPS_BATCHED=='+str(NDIM))
+      for n in range (0,nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          if accs[n] <> OPS_READ:
+            for d in range(0,int(dims[n])):
+              code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(NDIM)+'*'+dims[d]+'+'+str(d)+'];')
+      code('#endif')
 
     line = ''
     for n in range (0,nargs):
@@ -430,18 +454,28 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('#pragma omp parallel for'+line2)
     code('#endif')
     if NDIM>2:
-      FOR('n_z','start[2]','end[2]')
+      FOR('n_2','bounds_2_l','bounds_2_u')
+
+      if reduction:
+        code('#if OPS_BATCHED==2')
+        for n in range (0,nargs):
+          if arg_typ[n] == 'ops_arg_gbl':
+            if accs[n] <> OPS_READ:
+              for d in range(0,int(dims[n])):
+                code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(2)+'*'+dims[d]+'+'+str(d)+'];')
+        code('#endif')
     if NDIM>1:
-      FOR('n_y','start[1]','end[1]')
+      FOR('n_1','bounds_1_l','bounds_1_u')
+      if reduction:
+        code('#if OPS_BATCHED==1')
+        for n in range (0,nargs):
+          if arg_typ[n] == 'ops_arg_gbl':
+            if accs[n] <> OPS_READ:
+              for d in range(0,int(dims[n])):
+                code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(1)+'*'+dims[d]+'+'+str(d)+'];')
+        code('#endif')
 
-    if arg_idx <> -1:
-      if NDIM==1:
-        code('int '+clean_type(arg_list[arg_idx])+'[] = {0};')
-      elif NDIM==2:
-        code('int '+clean_type(arg_list[arg_idx])+'[] = {0, arg_idx[1]+n_y};')
-      elif NDIM==3:
-        code('int '+clean_type(arg_list[arg_idx])+'[] = {0, arg_idx[1]+n_y, arg_idx[2]+n_z};')
-
+      code('#ifdef __INTEL_COMPILER')
     line3 = ''
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -449,7 +483,14 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     if NDIM>1:
       code('#ifdef __INTEL_COMPILER')
       code('#pragma loop_count(10000)')
-      code('#pragma omp simd'+line) #+' aligned('+clean_type(line3[:-1])+')')
+      if reduction:
+        code('#if OPS_BATCHED==0')
+        code('#pragma omp simd') #+' aligned('+clean_type(line3[:-1])+')')
+        code('#else')
+        code('#pragma omp simd'+line) #+' aligned('+clean_type(line3[:-1])+')')
+        code('#endif')
+      else:
+        code('#pragma omp simd'+line) #+' aligned('+clean_type(line3[:-1])+')')
       code('#elif defined(__clang__)')
       code('#pragma clang loop vectorize(assume_safety)')
       code('#elif defined(__GNUC__)')
@@ -458,9 +499,40 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       code('#else')
       code('#pragma simd')
       code('#endif')
-    FOR('n_x','start[0]','end[0]')
+    FOR('n_0','bounds_0_l','bounds_0_u')
+    if reduction:
+      code('#if OPS_BATCHED==0')
+      for n in range (0,nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          if accs[n] <> OPS_READ:
+            for d in range(0,int(dims[n])):
+              code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(0)+'*'+dims[d]+'+'+str(d)+'];')
+      code('#endif')
     if arg_idx <> -1:
-      code(clean_type(arg_list[arg_idx])+'[0] = arg_idx[0]+n_x;')
+      if NDIM==1:
+        code('#if OPS_BATCHED==0')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_1, blockidx_start + n_0};')
+        code('#else')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_0, blockidx_start + n_1};')
+        code('#endif')
+      elif NDIM==2:
+        code('#if OPS_BATCHED==0')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_1, arg_idx[1]+n_2, blockidx_start + n_0};')
+        code('#elif OPS_BATCHED==1')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_0, arg_idx[1]+n_2, blockidx_start + n_1};')
+        code('#else')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_0, arg_idx[1]+n_1, blockidx_start + n_2};')
+        code('#endif')
+      elif NDIM==3:
+        code('#if OPS_BATCHED==0')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_1, arg_idx[1]+n_2, arg_idx[2]+n_3, blockidx_start + n_0};')
+        code('#elif OPS_BATCHED==1')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_0, arg_idx[1]+n_2, arg_idx[2]+n_3, blockidx_start + n_1};')
+        code('#elif OPS_BATCHED==2')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_0, arg_idx[1]+n_1, arg_idx[2]+n_3, blockidx_start + n_2};')
+        code('#else')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_0, arg_idx[1]+n_1, arg_idx[2]+n_2, blockidx_start + n_3};')
+        code('#endif')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -470,21 +542,20 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         offset = ''
         dim = ''
         sizelist = ''
-        extradim = 0
         if dims[n].isdigit() and int(dims[n])>1:
             dim = dims[n]+', '
-            extradim = 1
         elif not dims[n].isdigit():
             dim = 'arg'+str(n)+'.dim, '
-            extradim = 1
-        if NDIM > 0:
-          offset = offset + 'n_x*'+str(stride[NDIM*n])
-        if NDIM > 1:
-          offset = offset + ' + n_y * xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])
-        if NDIM > 2:
-          offset = offset + ' + n_z * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
+        if NDIM >= 0:
+          offset = offset + 'n_0*'+str(stride[NDIM*n])
+        if NDIM >= 1:
+          offset = offset + ' + n_1 * xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])
+        if NDIM >= 2:
+          offset = offset + ' + n_2 * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
+        if NDIM >= 3:
+          offset = offset + ' + n_3 * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])+' * zdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
         dimlabels = 'xyzuv'
-        for i in range(1,NDIM+extradim):
+        for i in range(1,NDIM+1):
           sizelist = sizelist + dimlabels[i-1]+'dim'+str(n)+'_'+name+', '
 
         if not dims[n].isdigit() or int(dims[n])>1:
@@ -531,18 +602,45 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'_'+str(d)+' +='+arg_list[n]+'['+str(d)+'];')
 
+    if reduction:
+      code('#if OPS_BATCHED==0')
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_gbl':
+          if accs[n] <> OPS_READ:
+            for d in range(0,int(dims[n])):
+              code('p_a'+str(n)+'[n_'+str(0)+'*'+dims[d]+'+'+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
+      code('#endif')
     ENDFOR()
     if NDIM>1:
+      if reduction:
+        code('#if OPS_BATCHED==1')
+        for n in range (0, nargs):
+          if arg_typ[n] == 'ops_arg_gbl':
+            if accs[n] <> OPS_READ:
+              for d in range(0,int(dims[n])):
+                code('p_a'+str(n)+'[n_'+str(1)+'*'+dims[d]+'+'+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
+        code('#endif')
       ENDFOR()
     if NDIM>2:
+      if reduction:
+        code('#if OPS_BATCHED==2')
+        for n in range (0, nargs):
+          if arg_typ[n] == 'ops_arg_gbl':
+            if accs[n] <> OPS_READ:
+              for d in range(0,int(dims[n])):
+                code('p_a'+str(n)+'[n_'+str(2)+'*'+dims[d]+'+'+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
+        code('#endif')
+
       ENDFOR()
 
 
+    code('#if OPS_BATCHED=='+str(NDIM))
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
           for d in range(0,int(dims[n])):
-            code('p_a'+str(n)+'['+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
+            code('p_a'+str(n)+'[n_'+str(NDIM)+'*'+dims[d]+'+'+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
+    code('#endif')
 
 
     ENDFOR() #batches

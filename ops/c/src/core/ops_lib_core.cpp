@@ -147,6 +147,13 @@ void ops_set_args(const int argc, const char *argv) {
     OPS_instance::getOPSInstance()->ops_tiling_mpidepth = atoi(temp + 20);
     ops_printf("\n Max tiling depth across processes = %d \n", OPS_instance::getOPSInstance()->ops_tiling_mpidepth);
   }
+  pch = strstr(argv, "OPS_BATCH_SIZE=");
+  if (pch != NULL) {
+    strncpy(temp, pch, 25);
+    OPS_instance::getOPSInstance()->ops_batch_size = atoi(temp + 15);
+    ops_printf("\n Batch size = %d \n", OPS_instance::getOPSInstance()->ops_batch_size);
+  }
+
   pch = strstr(argv, "OPS_FORCE_DECOMP_X=");
   if (pch != NULL) {
     strncpy(temp, pch, 25);
@@ -301,6 +308,7 @@ ops_block ops_decl_block(int dims, const char *name) {
   block->dims = dims;
   block->name = copy_str(name);
   block->count = 1;
+  block->batchdim = dims;
   OPS_instance::getOPSInstance()->OPS_block_list[OPS_instance::getOPSInstance()->OPS_block_index].block = block;
   OPS_instance::getOPSInstance()->OPS_block_list[OPS_instance::getOPSInstance()->OPS_block_index].num_datasets = 0;
   TAILQ_INIT(&(OPS_instance::getOPSInstance()->OPS_block_list[OPS_instance::getOPSInstance()->OPS_block_index].datasets));
@@ -309,9 +317,10 @@ ops_block ops_decl_block(int dims, const char *name) {
   return block;
 }
 
-ops_block ops_decl_block_batch(int dims, const char *name, int count) {
+ops_block ops_decl_block_batch(int dims, const char *name, int count, int batchdim) {
   ops_block block = ops_decl_block(dims, name);
   block->count = count;
+  block->batchdim = batchdim;
   return block;
 }
 
@@ -351,7 +360,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
 
   dat->e_dat = 0; // default to non-edge dat
 
-  for (int n = 0; n < block->dims; n++) {
+  for (int n = 0; n < block->dims + (block->count>1); n++) {
     if (dataset_size[n] != 1) {
       // compute total size - which includes the block halo
       dat->size[n] = dataset_size[n] - d_m[n] + d_p[n];
@@ -361,10 +370,10 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
     }
   }
 
-  for (int n = 0; n < block->dims; n++)
+  for (int n = 0; n < block->dims + (block->count>1); n++)
     dat->base[n] = base[n];
 
-  for (int n = 0; n < block->dims; n++) {
+  for (int n = 0; n < block->dims + (block->count>1); n++) {
     if (d_m[n] <= 0)
       dat->d_m[n] = d_m[n];
     else {
@@ -374,7 +383,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
     }
   }
 
-  for (int n = 0; n < block->dims; n++) {
+  for (int n = 0; n < block->dims + (block->count>1); n++) {
     if (d_p[n] >= 0)
       dat->d_p[n] = d_p[n];
     else {
@@ -383,11 +392,11 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
       throw ex;
     }
   }
-  for(int n=0;n<block->dims;n++)
+  for(int n=0;n<block->dims + (block->count>1);n++)
     dat->stride[n] = stride[n];
 
   // set the size of higher dimensions to 1
-  for (int n = block->dims; n < OPS_MAX_DIM; n++) {
+  for (int n = block->dims + (block->count>1); n < OPS_MAX_DIM; n++) {
     dat->size[n] = 1;
     dat->base[n] = 0;
     dat->d_m[n] = 0;

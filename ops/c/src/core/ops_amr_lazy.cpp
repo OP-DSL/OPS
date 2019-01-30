@@ -89,9 +89,9 @@ public:
 
 };
 
-int ops_loop_over_blocks = 0;
-int *ops_loop_over_blocks_predicate = NULL;
-int ops_loop_over_blocks_condition = 0;
+#define ops_loop_over_blocks OPS_instance::getOPSInstance()->ops_loop_over_blocks
+#define ops_loop_over_blocks_predicate OPS_instance::getOPSInstance()->ops_loop_over_blocks_predicate
+#define ops_loop_over_blocks_condition OPS_instance::getOPSInstance()->ops_loop_over_blocks_condition
 #define ops_kernel_list OPS_instance::getOPSInstance()->tiling_instance->ops_kernel_list
 std::vector<int> replicated;
 std::vector<char *> orig_ptrs;
@@ -161,25 +161,27 @@ void ops_execute_amr() {
   if (OPS_instance::getOPSInstance()->tiling_instance == NULL || ops_kernel_list.size() == 0) return; //nothing queued
   replicate_dats();
   #pragma omp parallel for
-  for (int i = 0; i < ops_loop_over_blocks; i++) {
-    if (ops_loop_over_blocks_predicate != NULL &&
-        ops_loop_over_blocks_predicate[i] != ops_loop_over_blocks_condition) continue;
-    for (unsigned int k = 0; k < ops_kernel_list.size(); k++) {
-      //WARNING: fortran block index
-      ops_kernel_list[k]->function(ops_kernel_list[k]->name, ops_kernel_list[k]->block, i+1,
-          ops_kernel_list[k]->dim, ops_kernel_list[k]->range, ops_kernel_list[k]->nargs, ops_kernel_list[k]->args);
+  for (int b = 0; b < ops_loop_over_blocks; b+=OPS_instance::getOPSInstance()->ops_batch_size) {
+//    for (int i = b; i < MIN(b+OPS_instance::getOPSInstance()->ops_batch_size; ops_loop_over_blocks) {
+//        if (ops_loop_over_blocks_predicate != NULL &&
+//            ops_loop_over_blocks_predicate[i] != ops_loop_over_blocks_condition) continue;
+        for (unsigned int k = 0; k < ops_kernel_list.size(); k++) {
+#warning C indexing
+        ops_kernel_list[k]->function(ops_kernel_list[k]->name, ops_kernel_list[k]->block, b, b+OPS_instance::getOPSInstance()->ops_batch_size,
+            ops_kernel_list[k]->dim, ops_kernel_list[k]->range, ops_kernel_list[k]->nargs, ops_kernel_list[k]->args);
+        }
+//      }
     }
-  }
-  for (unsigned int k = 0; k < ops_kernel_list.size(); k++) {
-    if (ops_kernel_list[k]->name != NULL) free((char*)ops_kernel_list[k]->name);
+//    for (unsigned int k = 0; k < ops_kernel_list.size(); k++) {
+    //if (ops_kernel_list[k]->name != NULL) free((char*)ops_kernel_list[k]->name);
     /*for (int i = 0; i < ops_kernel_list[k]->nargs; i++) {
-     ops_arg* args = ops_kernel_list[k]->args;
-     if (args[i].argtype == OPS_ARG_GBL and args[i].acc == OPS_READ)
-       free(args[i].data);
-    }*/
-    free(ops_kernel_list[k]->args);
-    free(ops_kernel_list[k]);
-  }
+      ops_arg* args = ops_kernel_list[k]->args;
+      if (args[i].argtype == OPS_ARG_GBL and args[i].acc == OPS_READ)
+      free(args[i].data);
+      }*/
+//    free(ops_kernel_list[k]->args);
+//    free(ops_kernel_list[k]);
+//  }
   ops_kernel_list.clear();
   restore_dat_ptrs();
 }

@@ -73,7 +73,7 @@ core: mklib $(INC)/ops_lib_core.h $(SRC)/core/ops_lib_core.cpp $(SRC)/externlib/
 	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_lib_core.cpp -o $(OBJ)/ops_lib_core.o
 	$(CXX) $(CXXFLAGS) $(THREADING_FLAGS) -I$(INC) -c $(SRC)/core/ops_instance.cpp -o $(OBJ)/ops_instance.o
 	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_lazy.cpp -o $(OBJ)/ops_lazy.o
-	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/core/ops_amr_lazy.cpp -o $(OBJ)/ops_amr_lazy.o
+	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(INC) -c $(SRC)/core/ops_amr_lazy.cpp -o $(OBJ)/ops_amr_lazy.o
 	$(CXX) $(CXXFLAGS) -I$(INC) -c $(SRC)/externlib/ops_util.cpp -o $(OBJ)/ops_util.o
 	$(CHKCXX) $(CXXFLAGS) -I$(INC) $(HDF5_INC) -c $(SRC)/externlib/ops_checkpointing.cpp -o $(OBJ)/ops_checkpointing.o
 	$(CHKCXX) $(CXXFLAGS) -I$(INC) $(HDF5_INC) -c $(SRC)/externlib/ops_checkpointing_strategy.cpp -o $(OBJ)/ops_checkpointing_strategy.o

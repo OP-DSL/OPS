@@ -41,6 +41,11 @@ OPS_instance::OPS_instance() {
 	tiling_instance=NULL;
 	checkpointing_instance=NULL;
   ops_loop_over_blocks = 0;
+  ops_loop_over_blocks_predicate = NULL;
+  ops_loop_over_blocks_condition = 0;
+
+  //Batching
+  ops_batch_size = 1;
 
 	//Other runtime configuration args
 	for (int i = 0; i < OPS_MAX_DIM; i++) ops_force_decomp[i] = 0;
