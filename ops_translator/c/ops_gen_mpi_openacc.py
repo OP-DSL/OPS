@@ -815,9 +815,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     #array sizes
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
+        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
         if NDIM==3:
-          code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
+          code('int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
 
     #array sizes - upload to GPU
     condition = ''
