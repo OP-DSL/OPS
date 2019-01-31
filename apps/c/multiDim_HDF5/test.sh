@@ -32,16 +32,16 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 
 echo '============> Running DEV_MPI'
 rm -rf write_data.h5 read_data.h5;
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./write_dev_mpi
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./read_dev_mpi
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./write_dev_mpi
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./read_dev_mpi
 $HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 
 
 echo '============> Running MPI'
 rm -rf write_data.h5 read_data.h5;
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./write_mpi
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./read_mpi
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./write_mpi
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./read_mpi
 $HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 
@@ -89,8 +89,8 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 
 echo '============> Running MPI+OpenCL on CPU'
 rm -rf write_data.h5 read_data.h5;
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./write_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./read_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./write_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./read_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1
 $HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 
@@ -135,16 +135,16 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 
 echo '============> Running DEV_MPI'
 rm -rf write_data.h5 read_data.h5;
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./write_dev_mpi
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./read_dev_mpi
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./write_dev_mpi
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./read_dev_mpi
 $HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 
 
 echo '============> Running MPI'
 rm -rf write_data.h5 read_data.h5;
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./write_mpi
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./read_mpi
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./write_mpi
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./read_mpi
 $HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 
@@ -193,8 +193,8 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 
 #echo '============> Running MPI+OpenCL on CPU'
 #rm write_data.h5 read_data.h5;
-#$MPI_INSTALL_PATH/bin/mpirun -np 20 ./write_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1
-#$MPI_INSTALL_PATH/bin/mpirun -np 20 ./write_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1
+#$MPI_INSTALL_PATH/bin/mpirun -np 4 ./write_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1
+#$MPI_INSTALL_PATH/bin/mpirun -np 4 ./write_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1
 #grep "Total error:
 #grep "Total Wall time
 #grep "PASSED

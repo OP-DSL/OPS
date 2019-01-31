@@ -12,7 +12,7 @@ void ops_init_backend();
 #include <stdlib.h>
 #include <string.h>
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
 
   ops_init(argc, argv, 5);
   ops_init_backend();

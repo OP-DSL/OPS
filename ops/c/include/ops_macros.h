@@ -38,10 +38,160 @@
   * @author Gihan Mudalige, Istvan Reguly
   * @details Declares the OPS macros
   */
+#if OPS_API > 1
 
-/**--------------1-D ops_dats macros (one element per grid point)------------**/
-#ifndef OPS_ACC_MACROS
-#define OPS_ACC_MACROS
+#ifdef OPS_1D 
+#define OPS_ACCS(dat, x) (*(dat.ptr + (x)))
+#ifdef OPS_SOA
+#define OPS_ACCM(dat, d, x) (*(dat.ptr + (x) + (d) * dat.xdim))
+#else
+#define OPS_ACCM(dat, d, x) (*(dat.ptr + (x) * dat.dim + (d)))
+#endif
+#ifndef __OPENCL_VERSION__
+#define GET_MACRO(_1,_2,_3,NAME,...) NAME
+#define OPS_ACC(...) GET_MACRO(__VA_ARGS__, OPS_ACCM, OPS_ACCS)(__VA_ARGS__)
+#endif
+#endif
+
+
+#ifdef OPS_2D 
+#define OPS_ACCS(dat, x, y) (*(dat.ptr + (x) + (y)*dat.xdim))
+#ifdef OPS_SOA
+#define OPS_ACCM(dat, d, x, y) (*(dat.ptr + (x) + (y)*dat.xdim + (d) * dat.xdim * dat.ydim))
+#else
+#define OPS_ACCM(dat, d, x, y) (*(dat.ptr + (x) * dat.dim + (y)*dat.dim*dat.xdim + (d)))
+#endif
+#ifndef __OPENCL_VERSION__
+#define GET_MACRO(_1,_2,_3,_4,NAME,...) NAME
+#define OPS_ACC(...) GET_MACRO(__VA_ARGS__, OPS_ACCM, OPS_ACCS)(__VA_ARGS__)
+#endif
+#endif
+
+#ifdef OPS_3D 
+#define OPS_ACCS(dat, x, y, z) (*(dat.ptr + (x) + (y)*dat.xdim + (z)*dat.xdim*dat.ydim))
+#ifdef OPS_SOA
+#define OPS_ACCM(dat, d, x, y, z) (*(dat.ptr + (x) + (y)*dat.xdim + (z)*dat.xdim*dat.ydim + (d) * dat.xdim * dat.ydim * dat. zdim))
+#else
+#define OPS_ACCM(dat, d, x, y, z) (*(dat.ptr + (x) * dat.dim + (y)*dat.dim*dat.xdim + (z)*dat.dim*dat.xdim*dat.ydim + (d)))
+#endif
+#ifndef __OPENCL_VERSION__
+#define GET_MACRO(_1,_2,_3,_4,_5,NAME,...) NAME
+#define OPS_ACC(...) GET_MACRO(__VA_ARGS__, OPS_ACCM, OPS_ACCS)(__VA_ARGS__)
+#endif
+#endif
+
+#ifdef OPS_4D 
+#define OPS_ACCS(dat, x, y, z, u) (*(dat.ptr + (x) + (y)*dat.xdim + (z)*dat.xdim*dat.ydim + (u)*dat.xdim*dat.ydim*dat.zdim))
+#ifdef OPS_SOA
+#define OPS_ACCM(dat, d, x, y, z, u) (*(dat.ptr + (x) + (y)*dat.xdim + (z)*dat.xdim*dat.ydim + (u)*dat.xdim*dat.ydim*dat.zdim + (d) * dat.xdim * dat.ydim * dat.zdim * dat.udim))
+#else
+#define OPS_ACCM(dat, d, x, y, z, u) (*(dat.ptr + (x) * dat.dim + (y)*dat.dim*dat.xdim + (z)*dat.dim*dat.xdim*dat.ydim + (u)*dat.dim+dat.xdim*dat.ydim*dat.zdim + (d)))
+#endif
+#ifndef __OPENCL_VERSION__
+#define GET_MACRO(_1,_2,_3,_4,_5,_6,NAME,...) NAME
+#define OPS_ACC(...) GET_MACRO(__VA_ARGS__, OPS_ACCM, OPS_ACCS)(__VA_ARGS__)
+#endif
+#endif
+
+#ifdef OPS_5D 
+#define OPS_ACCS(dat, x, y, z, u, v) (*(dat.ptr + (x) + (y)*dat.xdim + (z)*dat.xdim*dat.ydim + (u)*dat.xdim*dat.ydim*dat.zdim + (v)*dat.xdim*dat.ydim*dat.zdim*dat.udim))
+#ifdef OPS_SOA
+#define OPS_ACCM(dat, d, x, y, z, u, v) (*(dat.ptr + (x) + (y)*dat.xdim + (z)*dat.xdim*dat.ydim + (u)*dat.xdim*dat.ydim*dat.zdim + (v)*dat.xdim*dat.ydim*dat.zdim*dat.udim + (d) * dat.xdim * dat.ydim * dat.zdim * dat.udim * dat.vdim))
+#else
+#define OPS_ACCM(dat, d, x, y, z, u, v) (*(dat.ptr + (x) * dat.dim + (y)*dat.dim*dat.xdim + (z)*dat.dim*dat.xdim*dat.ydim + (u)*dat.dim+dat.xdim*dat.ydim*dat.zdim + (v)*dat.dim*dat.xdim*dat.ydim*dat.zdim*dat.udim + (d)))
+#endif
+#ifndef __OPENCL_VERSION__
+#define GET_MACRO(_1,_2,_3,_4,_5,_6,_7,NAME,...) NAME
+#define OPS_ACC(...) GET_MACRO(__VA_ARGS__, OPS_ACCM, OPS_ACCS)(__VA_ARGS__)
+#endif
+#endif
+
+#ifndef __cplusplus
+typedef struct ptr_double {
+#ifdef __OPENCL_VERSION__
+  __global
+#endif
+  double *restrict ptr;
+#if defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
+  int xdim;
+#endif
+#if defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
+  int ydim;
+#endif
+#if defined(OPS_4D) || defined(OPS_5D)
+  int zdim;
+#endif
+#if defined(OPS_5D)
+  int udim;
+#endif
+} ptr_double;
+
+typedef struct ptr_int {
+#ifdef __OPENCL_VERSION__
+  __global
+#endif
+  int *restrict ptr;
+#if defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
+  int xdim;
+#endif
+#if defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
+  int ydim;
+#endif
+#if defined(OPS_4D) || defined(OPS_5D)
+  int zdim;
+#endif
+#if defined(OPS_5D)
+  int udim;
+#endif
+} ptr_int;
+
+typedef struct ptrm_double {
+#ifdef __OPENCL_VERSION__
+  __global
+#endif
+  double *restrict ptr;
+#if (defined(OPS_1D) && defined(OPS_SOA)) || defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
+  int xdim;
+#endif
+#if (defined(OPS_2D) && defined(OPS_SOA)) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
+  int ydim;
+#endif
+#if (defined(OPS_3D) && defined(OPS_SOA)) || defined(OPS_4D) || defined(OPS_5D)
+  int zdim;
+#endif
+#if (defined(OPS_4D) && defined(OPS_SOA)) || defined(OPS_5D)
+  int udim;
+#endif
+#ifndef OPS_SOA
+  int dim;
+#endif
+} ptrm_double;
+
+typedef struct ptrm_int {
+#ifdef __OPENCL_VERSION__
+  __global
+#endif
+  int *restrict ptr;
+#if (defined(OPS_1D) && defined(OPS_SOA)) || defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
+  int xdim;
+#endif
+#if (defined(OPS_2D) && defined(OPS_SOA)) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
+  int ydim;
+#endif
+#if (defined(OPS_3D) && defined(OPS_SOA)) || defined(OPS_4D) || defined(OPS_5D)
+  int zdim;
+#endif
+#if (defined(OPS_4D) && defined(OPS_SOA)) || defined(OPS_5D)
+  int udim;
+#endif
+#ifndef OPS_SOA
+  int dim;
+#endif
+} ptrm_int;
+
+#endif
+
+#else /* OPS_API */
 
 #if defined OPS_5D
 #ifndef OPS_DEBUG // no debug checks
@@ -1069,11 +1219,10 @@
 #endif // end debug checks
 
 #endif // end macros for 1D application
-#endif // end OPS_ACC_MACROS
 
 /**---------Multi-D ops_dats macros (multiple elements per grid point)-------**/
 #ifndef OPS_ACC_MD_MACROS
-#define OPS_ACC_MACROS
+#define OPS_ACC_MD_MACROS
 #ifdef OPS_5D
 #ifndef OPS_DEBUG
 #ifndef OPS_SOA
@@ -2510,9 +2659,10 @@
 #define OPS_ACC_MD99(d, x) (ops_stencil_check_1d_md(99, x, multi_d99, d))
 #endif
 #endif
-#endif
 
-/**--------------------------Set SIMD Vector lenght--------------------------**/
+#ifndef OPS_NO_GLOBALS
+
+/**--------------------------Set SIMD Vector length--------------------------**/
 #ifndef SIMD_VEC
 #define SIMD_VEC 4
 #endif
@@ -2609,8 +2759,10 @@ extern int multi_d0, multi_d1, multi_d2, multi_d3, multi_d4, multi_d5, multi_d6,
     multi_d84, multi_d85, multi_d86, multi_d87, multi_d88, multi_d89, multi_d90,
     multi_d91, multi_d92, multi_d93, multi_d94, multi_d95, multi_d96, multi_d97,
     multi_d98, multi_d99;
-#endif
-
+#endif /* OPS_SOA */
+#endif /* OPS_NO_GLOBALS */
+#endif // end OPS_ACC_MD_MACROS
+#endif /* OPS_API */
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif // OPS_MACROS_H
 

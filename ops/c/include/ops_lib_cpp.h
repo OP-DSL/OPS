@@ -40,6 +40,7 @@
 #define __OPS_LIB_CPP_H
 
 #include <ops_lib_core.h>
+#include <ops_exceptions.h>
 
 /*
 * run-time type-checking routines
@@ -96,8 +97,9 @@ ops_arg ops_arg_gbl(T *data, int dim, char const *type, ops_access acc) {
 template <class T>
 void ops_decl_const2(char const *name, int dim, char const *type, T *data) {
   if (type_error(data, type)) {
-    printf("Error: incorrect type specified for constant \"%s\" \n", name);
-    exit(1);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: incorrect type specified for constant " << name;
+    throw ex;
   }
 
   ops_decl_const_char(dim, type, sizeof(T), (char *)data, name);
@@ -113,9 +115,9 @@ void ops_decl_const2(char const *name, int dim, char const *type, T *data) {
  */
 template <class T> void ops_reduction_result(ops_reduction handle, T *ptr) {
   if (type_error(ptr, handle->type)) {
-    printf(
-        "Error: incorrect type specified for constant in ops_reduction_result");
-    exit(1);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: incorrect type specified for constant " << handle->name << " in ops_reduction_result";
+    throw ex;
   }
   ops_reduction_result_char(handle, sizeof(T), (char *)ptr);
 }
@@ -134,8 +136,9 @@ template <class T>
 void ops_update_const(char const *name, int dim, char const *type, T *data) {
   (void)dim;
   if (type_error(data, type)) {
-    printf("Error: incorrect type specified for constant in ops_update_const");
-    exit(1);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: incorrect type specified for constant " << name << " in ops_update_const";
+    throw ex;
   }
   ops_execute();
   ops_decl_const_char(dim, type, sizeof(T), (char *)data, name);
@@ -159,8 +162,9 @@ template <class T>
 void ops_decl_const(char const *name, int dim, char const *type, T *data) {
   (void)dim;
   if (type_error(data, type)) {
-    printf("Error: incorrect type specified for constant in op_decl_const");
-    exit(1);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: incorrect type specified for constant " << name << " in ops_decl_const";
+    throw ex;
   }
 }
 
@@ -211,8 +215,9 @@ ops_dat ops_decl_dat(ops_block block, int data_size, int *block_size, int *base,
                      char const *name) {
 
   if (type_error(data, type)) {
-    printf("Error: incorrect type specified for dataset \"%s\" \n", name);
-    exit(1);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: incorrect type specified for dataset " << name;
+    throw ex;
   }
 
   return ops_decl_dat_char(block, data_size, block_size, base, d_m, d_p,
@@ -274,5 +279,196 @@ inline void ops_mpi_reduce(ops_arg *args, int *data) {
 template <class T> void ops_mpi_reduce(ops_arg *args, T *data) {
   // printf("should not be here\n");
 }
+
+#ifndef __CUDACC__
+#define __host__ 
+#define __device__ 
+#endif
+
+#ifndef __CUDACC__
+#define __host__ 
+#define __device__ 
+#endif
+
+template<typename T>
+class ACC {
+public:
+  //////////////////////////////////////////////////
+  // 1D
+  /////////////////////////////////////////////////
+#if defined(OPS_1D)
+  __host__ __device__
+  ACC(T *_ptr) : ptr(_ptr) {}
+  __host__ __device__
+  ACC(int _mdim, int _sizex, T *_ptr) : 
+#ifdef OPS_SOA
+    sizex(_sizex),
+#else
+    mdim(_mdim),
+#endif
+    ptr(_ptr)
+  {}
+  __host__ __device__
+  const T& operator()(int xoff) const {return *(ptr + xoff);}
+  __host__ __device__
+  T& operator()(int xoff) {return *(ptr + xoff);}
+  __host__ __device__
+  const T& operator()(int d, int xoff) const {
+#ifdef OPS_SOA
+    return *(ptr + xoff + d * sizex);
+#else
+    return *(ptr + d + xoff*mdim );
+#endif
+  }
+  __host__ __device__
+  T& operator()(int d, int xoff) {
+#ifdef OPS_SOA
+    return *(ptr + xoff + d * sizex);
+#else
+    return *(ptr + d + xoff*mdim );
+#endif
+  }
+#endif
+
+  //////////////////////////////////////////////////
+  // 2D
+  /////////////////////////////////////////////////
+#if defined(OPS_2D)
+  __host__ __device__
+  ACC(int _sizex, T *_ptr) : sizex(_sizex), ptr(_ptr) {}
+  __host__ __device__
+  ACC(int _mdim, int _sizex, int _sizey, T *_ptr) : sizex(_sizex),
+#ifdef OPS_SOA
+    sizey(_sizey),
+#else
+    mdim(_mdim),
+#endif
+    ptr(_ptr)
+  {}
+  __host__ __device__
+  const T& operator()(int xoff, int yoff) const {return *(ptr + xoff + yoff*sizex);}
+  __host__ __device__
+  T& operator()(int xoff, int yoff) {return *(ptr + xoff + yoff*sizex);}
+  __host__ __device__
+  const T& operator()(int d, int xoff, int yoff) const {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + d * sizex*sizey);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim );
+#endif
+  }
+  __host__ __device__
+  T& operator()(int d, int xoff, int yoff) {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + d * sizex*sizey);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim );
+#endif
+  }
+#endif
+  //////////////////////////////////////////////////
+  // 3D
+  /////////////////////////////////////////////////
+#if defined(OPS_3D)
+  __host__ __device__
+  ACC(int _sizex, int _sizey, T *_ptr) : sizex(_sizex), sizey(_sizey), ptr(_ptr) {}
+  __host__ __device__
+  ACC(int _mdim, int _sizex, int _sizey, int _sizez, T *_ptr) : sizex(_sizex), sizey(_sizey),
+#ifdef OPS_SOA
+    sizez(_sizez),
+#else
+    mdim(_mdim),
+#endif
+    ptr(_ptr)
+  {}
+  __host__ __device__
+  const T& operator()(int xoff, int yoff, int zoff) const {return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey);}
+  __host__ __device__
+  T& operator()(int xoff, int yoff, int zoff) {return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey);}
+  __host__ __device__
+  const T& operator()(int d, int xoff, int yoff, int zoff) const {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + d * sizex*sizey*sizez);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim + zoff*sizex*sizey*mdim);
+#endif
+  }
+  __host__ __device__
+  T& operator()(int d, int xoff, int yoff, int zoff) {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + d * sizex*sizey*sizez);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim + zoff*sizex*sizey*mdim);
+#endif
+  }
+#endif
+
+  //////////////////////////////////////////////////
+  // 4D
+  /////////////////////////////////////////////////
+#if defined(OPS_4D)
+  __host__ __device__
+  ACC(int _sizex, int _sizey, int _sizez, T *_ptr) : sizex(_sizex), sizey(_sizey), sizez(_sizez), ptr(_ptr) {}
+  __host__ __device__
+  ACC(int _mdim, int _sizex, int _sizey, int _sizez, int _sizeu, T *_ptr) : sizex(_sizex), sizey(_sizey), sizez(_sizez),
+#ifdef OPS_SOA
+    sizeu(_sizeu),
+#else
+    mdim(_mdim),
+#endif
+    ptr(_ptr)
+  {}
+  __host__ __device__
+  const T& operator()(int xoff, int yoff, int zoff, int uoff) const {return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + uoff*sizex*sizey*sizez);}
+  __host__ __device__
+  T& operator()(int xoff, int yoff, int zoff, int uoff) {return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + uoff*sizex*sizey*sizez);}
+  __host__ __device__
+  const T& operator()(int d, int xoff, int yoff, int zoff, int uoff) const {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + uoff*sizex*sizey*sizez + d * sizex*sizey*sizez*sizeu);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim + zoff*sizex*sizey*mdim + uoff*sizex*sizey*sizez*mdim);
+#endif
+  }
+  __host__ __device__
+  T& operator()(int d, int xoff, int yoff, int zoff, int uoff) {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + uoff*sizex*sizey*sizez + d * sizex*sizey*sizez*sizeu);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim + zoff*sizex*sizey*mdim + uoff*sizex*sizey*sizez*mdim);
+#endif
+  }
+#endif
+
+
+
+  __host__ __device__
+  void next(int offset) {
+    ptr += offset;
+  }
+
+
+private:
+#if defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_1D) && defined(OPS_SOA))
+  int sizex;
+#endif
+#if defined(OPS_3D) || defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_2D) && defined(OPS_SOA))
+  int sizey;
+#endif
+#if defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_3D) && defined(OPS_SOA))
+  int sizez;
+#endif
+#if defined (OPS_5D) || (defined(OPS_4D) && defined(OPS_SOA))
+  int sizeu;
+#endif
+#if defined(OPS_5D) && defined(OPS_SOA)
+  int sizev;
+#endif
+#ifndef OPS_SOA
+  int mdim;
+#endif
+  T *__restrict__ ptr;
+};
+
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_LIB_CPP_H */

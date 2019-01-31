@@ -7,19 +7,23 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_fp64:enable
 
-#include "ops_opencl_reduction.h"
 #include "user_types.h"
+#define OPS_3D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
+#include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a, b) ((a < b) ? (a) : (b))
+#define MIN(a,b) ((a<b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a, b) ((a > b) ? (a) : (b))
+#define MAX(a,b) ((a>b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
+#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -41,186 +45,136 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-#undef OPS_ACC11
-#undef OPS_ACC12
-#undef OPS_ACC13
+//user function
 
-#define OPS_ACC0(x, y, z)                                                      \
-  (x + xdim0_calc_dt_kernel * (y) +                                            \
-   xdim0_calc_dt_kernel * ydim0_calc_dt_kernel * (z))
-#define OPS_ACC1(x, y, z)                                                      \
-  (x + xdim1_calc_dt_kernel * (y) +                                            \
-   xdim1_calc_dt_kernel * ydim1_calc_dt_kernel * (z))
-#define OPS_ACC2(x, y, z)                                                      \
-  (x + xdim2_calc_dt_kernel * (y) +                                            \
-   xdim2_calc_dt_kernel * ydim2_calc_dt_kernel * (z))
-#define OPS_ACC3(x, y, z)                                                      \
-  (x + xdim3_calc_dt_kernel * (y) +                                            \
-   xdim3_calc_dt_kernel * ydim3_calc_dt_kernel * (z))
-#define OPS_ACC4(x, y, z)                                                      \
-  (x + xdim4_calc_dt_kernel * (y) +                                            \
-   xdim4_calc_dt_kernel * ydim4_calc_dt_kernel * (z))
-#define OPS_ACC5(x, y, z)                                                      \
-  (x + xdim5_calc_dt_kernel * (y) +                                            \
-   xdim5_calc_dt_kernel * ydim5_calc_dt_kernel * (z))
-#define OPS_ACC6(x, y, z)                                                      \
-  (x + xdim6_calc_dt_kernel * (y) +                                            \
-   xdim6_calc_dt_kernel * ydim6_calc_dt_kernel * (z))
-#define OPS_ACC7(x, y, z)                                                      \
-  (x + xdim7_calc_dt_kernel * (y) +                                            \
-   xdim7_calc_dt_kernel * ydim7_calc_dt_kernel * (z))
-#define OPS_ACC8(x, y, z)                                                      \
-  (x + xdim8_calc_dt_kernel * (y) +                                            \
-   xdim8_calc_dt_kernel * ydim8_calc_dt_kernel * (z))
-#define OPS_ACC9(x, y, z)                                                      \
-  (x + xdim9_calc_dt_kernel * (y) +                                            \
-   xdim9_calc_dt_kernel * ydim9_calc_dt_kernel * (z))
-#define OPS_ACC10(x, y, z)                                                     \
-  (x + xdim10_calc_dt_kernel * (y) +                                           \
-   xdim10_calc_dt_kernel * ydim10_calc_dt_kernel * (z))
-#define OPS_ACC11(x, y, z)                                                     \
-  (x + xdim11_calc_dt_kernel * (y) +                                           \
-   xdim11_calc_dt_kernel * ydim11_calc_dt_kernel * (z))
-#define OPS_ACC12(x, y, z)                                                     \
-  (x + xdim12_calc_dt_kernel * (y) +                                           \
-   xdim12_calc_dt_kernel * ydim12_calc_dt_kernel * (z))
-#define OPS_ACC13(x, y, z)                                                     \
-  (x + xdim13_calc_dt_kernel * (y) +                                           \
-   xdim13_calc_dt_kernel * ydim13_calc_dt_kernel * (z))
-
-// user function
-void calc_dt_kernel(const __global double *restrict celldx,
-                    const __global double *restrict celldy,
-                    const __global double *restrict soundspeed,
-                    const __global double *restrict viscosity,
-                    const __global double *restrict density0,
-                    const __global double *restrict xvel0,
-                    const __global double *restrict xarea,
-                    const __global double *restrict volume,
-                    const __global double *restrict yvel0,
-                    const __global double *restrict yarea,
-                    __global double *restrict dt_min,
-                    const __global double *restrict celldz,
-                    const __global double *restrict zvel0,
-                    const __global double *restrict zarea, const double g_small,
-                    const double dtc_safe, const double dtu_safe,
-                    const double dtv_safe, const double dtw_safe,
-                    const double dtdiv_safe)
-
+void calc_dt_kernel(const ptr_double celldx,
+  const ptr_double celldy,
+  const ptr_double soundspeed,
+  const ptr_double viscosity,
+  const ptr_double density0,
+  const ptr_double xvel0,
+  const ptr_double xarea,
+  const ptr_double volume,
+  const ptr_double yvel0,
+  const ptr_double yarea,
+  ptr_double dt_min,
+  const ptr_double celldz,
+  const ptr_double zvel0,
+  const ptr_double zarea, const double g_small, const double dtc_safe, const double dtu_safe, const double dtv_safe, const double dtw_safe, const double dtdiv_safe)
 {
 
-  double div, ds, dtut, dtvt, dtct, dtwt, dtdivt, cc, dv1, dv2, du1, du2, dw1,
-      dw2;
+  double div, ds, dtut, dtvt, dtct, dtwt, dtdivt, cc, dv1, dv2, du1, du2, dw1, dw2;
 
-  ds = MIN(MIN(celldx[OPS_ACC0(0, 0, 0)], celldy[OPS_ACC1(0, 0, 0)]),
-           celldz[OPS_ACC11(0, 0, 0)]);
-  ds = 1.0 / (ds * ds);
+  ds = MIN(MIN(OPS_ACCS(celldx, 0,0,0), OPS_ACCS(celldy, 0,0,0)), OPS_ACCS(celldz, 0,0,0));
+  ds = 1.0/(ds*ds);
 
-  cc = soundspeed[OPS_ACC2(0, 0, 0)] * soundspeed[OPS_ACC2(0, 0, 0)];
-  cc = cc + 2.0 * viscosity[OPS_ACC3(0, 0, 0)] / density0[OPS_ACC4(0, 0, 0)];
+  cc = OPS_ACCS(soundspeed, 0,0,0) * OPS_ACCS(soundspeed, 0,0,0);
+  cc = cc + 2.0 * OPS_ACCS(viscosity, 0,0,0)/OPS_ACCS(density0, 0,0,0);
 
-  dtct = ds * cc;
-  dtct = dtc_safe * 1.0 / MAX(sqrt(dtct), g_small);
+  dtct=ds*cc;
+  dtct = dtc_safe*1.0/MAX(sqrt(dtct),g_small);
 
-  du1 = (xvel0[OPS_ACC5(0, 0, 0)] + xvel0[OPS_ACC5(0, 1, 0)] +
-         xvel0[OPS_ACC5(0, 0, 1)] + xvel0[OPS_ACC5(0, 1, 1)]) *
-        xarea[OPS_ACC6(0, 0, 0)];
-  du2 = (xvel0[OPS_ACC5(1, 0, 0)] + xvel0[OPS_ACC5(1, 1, 0)] +
-         xvel0[OPS_ACC5(1, 0, 1)] + xvel0[OPS_ACC5(1, 1, 1)]) *
-        xarea[OPS_ACC6(0, 0, 0)];
+  du1=(OPS_ACCS(xvel0, 0,0,0)+OPS_ACCS(xvel0, 0,1,0)+OPS_ACCS(xvel0, 0,0,1)+OPS_ACCS(xvel0, 0,1,1))*OPS_ACCS(xarea, 0,0,0);
+  du2=(OPS_ACCS(xvel0, 1,0,0)+OPS_ACCS(xvel0, 1,1,0)+OPS_ACCS(xvel0, 1,0,1)+OPS_ACCS(xvel0, 1,1,1))*OPS_ACCS(xarea, 0,0,0);
 
-  dtut = dtu_safe * 4.0 * volume[OPS_ACC7(0, 0, 0)] /
-         MAX(MAX(fabs(du1), fabs(du2)), 1.0e-5 * volume[OPS_ACC7(0, 0, 0)]);
+  dtut = dtu_safe * 4.0 * OPS_ACCS(volume, 0,0,0)/MAX(MAX(fabs(du1), fabs(du2)), 1.0e-5 * OPS_ACCS(volume, 0,0,0));
 
-  dv1 = (yvel0[OPS_ACC8(0, 0, 0)] + yvel0[OPS_ACC8(1, 0, 0)] +
-         yvel0[OPS_ACC8(0, 0, 1)] + yvel0[OPS_ACC8(1, 0, 1)]) *
-        yarea[OPS_ACC9(0, 0, 0)];
-  dv2 = (yvel0[OPS_ACC8(0, 1, 0)] + yvel0[OPS_ACC8(1, 1, 0)] +
-         yvel0[OPS_ACC8(0, 1, 1)] + yvel0[OPS_ACC8(1, 1, 1)]) *
-        yarea[OPS_ACC9(0, 0, 0)];
+  dv1=(OPS_ACCS(yvel0, 0,0,0)+OPS_ACCS(yvel0, 1,0,0)+OPS_ACCS(yvel0, 0,0,1)+OPS_ACCS(yvel0, 1,0,1))*OPS_ACCS(yarea, 0,0,0);
+  dv2=(OPS_ACCS(yvel0, 0,1,0)+OPS_ACCS(yvel0, 1,1,0)+OPS_ACCS(yvel0, 0,1,1)+OPS_ACCS(yvel0, 1,1,1))*OPS_ACCS(yarea, 0,0,0);
 
-  dtvt = dtv_safe * 4.0 * volume[OPS_ACC7(0, 0, 0)] /
-         MAX(MAX(fabs(dv1), fabs(dv2)), 1.0e-5 * volume[OPS_ACC7(0, 0, 0)]);
+  dtvt = dtv_safe * 4.0 * OPS_ACCS(volume, 0,0,0)/MAX(MAX(fabs(dv1),fabs(dv2)), 1.0e-5 * OPS_ACCS(volume, 0,0,0));
 
-  dw1 = (zvel0[OPS_ACC12(0, 0, 0)] + zvel0[OPS_ACC12(0, 1, 0)] +
-         zvel0[OPS_ACC12(1, 0, 0)] + zvel0[OPS_ACC12(1, 1, 0)]) *
-        zarea[OPS_ACC13(0, 0, 0)];
-  dw2 = (zvel0[OPS_ACC12(0, 0, 1)] + zvel0[OPS_ACC12(0, 1, 1)] +
-         zvel0[OPS_ACC12(1, 0, 1)] + zvel0[OPS_ACC12(1, 1, 1)]) *
-        zarea[OPS_ACC13(0, 0, 0)];
+  dw1=(OPS_ACCS(zvel0, 0,0,0)+OPS_ACCS(zvel0, 0,1,0)+OPS_ACCS(zvel0, 1,0,0)+OPS_ACCS(zvel0, 1,1,0))*OPS_ACCS(zarea, 0,0,0);
+  dw2=(OPS_ACCS(zvel0, 0,0,1)+OPS_ACCS(zvel0, 0,1,1)+OPS_ACCS(zvel0, 1,0,1)+OPS_ACCS(zvel0, 1,1,1))*OPS_ACCS(zarea, 0,0,0);
 
-  dtwt = dtw_safe * 4.0 * volume[OPS_ACC7(0, 0, 0)] /
-         MAX(MAX(fabs(dw1), fabs(dw2)), 1.0e-5 * volume[OPS_ACC7(0, 0, 0)]);
+  dtwt = dtw_safe * 4.0 * OPS_ACCS(volume, 0,0,0)/MAX(MAX(fabs(dw1),fabs(dw2)), 1.0e-5 * OPS_ACCS(volume, 0,0,0));
 
-  div = du2 - du1 + dv2 - dv1 + dw2 - dw1;
-  dtdivt = dtdiv_safe * 4.0 * (volume[OPS_ACC7(0, 0, 0)]) /
-           MAX(volume[OPS_ACC7(0, 0, 0)] * 1.0e-05, fabs(div));
+  div = du2-du1+dv2-dv1+dw2-dw1;
+  dtdivt=dtdiv_safe*4.0*(OPS_ACCS(volume, 0,0,0))/MAX(OPS_ACCS(volume, 0,0,0)*1.0e-05,fabs(div));
 
-  dt_min[OPS_ACC10(0, 0, 0)] =
-      MIN(MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt)), dtwt);
+  OPS_ACCS(dt_min, 0,0,0) = MIN(MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt)),dtwt);
 }
 
+
 __kernel void ops_calc_dt_kernel(
-    __global const double *restrict arg0, __global const double *restrict arg1,
-    __global const double *restrict arg2, __global const double *restrict arg3,
-    __global const double *restrict arg4, __global const double *restrict arg5,
-    __global const double *restrict arg6, __global const double *restrict arg7,
-    __global const double *restrict arg8, __global const double *restrict arg9,
-    __global double *restrict arg10, __global const double *restrict arg11,
-    __global const double *restrict arg12,
-    __global const double *restrict arg13, const double g_small,
-    const double dtc_safe, const double dtu_safe, const double dtv_safe,
-    const double dtw_safe, const double dtdiv_safe, const int base0,
-    const int base1, const int base2, const int base3, const int base4,
-    const int base5, const int base6, const int base7, const int base8,
-    const int base9, const int base10, const int base11, const int base12,
-    const int base13, const int size0, const int size1, const int size2) {
+__global const double* restrict arg0,
+__global const double* restrict arg1,
+__global const double* restrict arg2,
+__global const double* restrict arg3,
+__global const double* restrict arg4,
+__global const double* restrict arg5,
+__global const double* restrict arg6,
+__global const double* restrict arg7,
+__global const double* restrict arg8,
+__global const double* restrict arg9,
+__global double* restrict arg10,
+__global const double* restrict arg11,
+__global const double* restrict arg12,
+__global const double* restrict arg13,
+const double g_small,
+const double dtc_safe,
+const double dtu_safe,
+const double dtv_safe,
+const double dtw_safe,
+const double dtdiv_safe,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int base4,
+const int base5,
+const int base6,
+const int base7,
+const int base8,
+const int base9,
+const int base10,
+const int base11,
+const int base12,
+const int base13,
+const int size0,
+const int size1,
+const int size2 ){
+
 
   int idx_y = get_global_id(1);
   int idx_z = get_global_id(2);
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    calc_dt_kernel(
-        &arg0[base0 + idx_x * 1 * 1 + idx_y * 0 * 1 * xdim0_calc_dt_kernel +
-              idx_z * 0 * 1 * xdim0_calc_dt_kernel * ydim0_calc_dt_kernel],
-        &arg1[base1 + idx_x * 0 * 1 + idx_y * 1 * 1 * xdim1_calc_dt_kernel +
-              idx_z * 0 * 1 * xdim1_calc_dt_kernel * ydim1_calc_dt_kernel],
-        &arg2[base2 + idx_x * 1 * 1 + idx_y * 1 * 1 * xdim2_calc_dt_kernel +
-              idx_z * 1 * 1 * xdim2_calc_dt_kernel * ydim2_calc_dt_kernel],
-        &arg3[base3 + idx_x * 1 * 1 + idx_y * 1 * 1 * xdim3_calc_dt_kernel +
-              idx_z * 1 * 1 * xdim3_calc_dt_kernel * ydim3_calc_dt_kernel],
-        &arg4[base4 + idx_x * 1 * 1 + idx_y * 1 * 1 * xdim4_calc_dt_kernel +
-              idx_z * 1 * 1 * xdim4_calc_dt_kernel * ydim4_calc_dt_kernel],
-        &arg5[base5 + idx_x * 1 * 1 + idx_y * 1 * 1 * xdim5_calc_dt_kernel +
-              idx_z * 1 * 1 * xdim5_calc_dt_kernel * ydim5_calc_dt_kernel],
-        &arg6[base6 + idx_x * 1 * 1 + idx_y * 1 * 1 * xdim6_calc_dt_kernel +
-              idx_z * 1 * 1 * xdim6_calc_dt_kernel * ydim6_calc_dt_kernel],
-        &arg7[base7 + idx_x * 1 * 1 + idx_y * 1 * 1 * xdim7_calc_dt_kernel +
-              idx_z * 1 * 1 * xdim7_calc_dt_kernel * ydim7_calc_dt_kernel],
-        &arg8[base8 + idx_x * 1 * 1 + idx_y * 1 * 1 * xdim8_calc_dt_kernel +
-              idx_z * 1 * 1 * xdim8_calc_dt_kernel * ydim8_calc_dt_kernel],
-        &arg9[base9 + idx_x * 1 * 1 + idx_y * 1 * 1 * xdim9_calc_dt_kernel +
-              idx_z * 1 * 1 * xdim9_calc_dt_kernel * ydim9_calc_dt_kernel],
-        &arg10[base10 + idx_x * 1 * 1 + idx_y * 1 * 1 * xdim10_calc_dt_kernel +
-               idx_z * 1 * 1 * xdim10_calc_dt_kernel * ydim10_calc_dt_kernel],
-        &arg11[base11 + idx_x * 0 * 1 + idx_y * 0 * 1 * xdim11_calc_dt_kernel +
-               idx_z * 1 * 1 * xdim11_calc_dt_kernel * ydim11_calc_dt_kernel],
-        &arg12[base12 + idx_x * 1 * 1 + idx_y * 1 * 1 * xdim12_calc_dt_kernel +
-               idx_z * 1 * 1 * xdim12_calc_dt_kernel * ydim12_calc_dt_kernel],
-        &arg13[base13 + idx_x * 1 * 1 + idx_y * 1 * 1 * xdim13_calc_dt_kernel +
-               idx_z * 1 * 1 * xdim13_calc_dt_kernel * ydim13_calc_dt_kernel],
-        g_small, dtc_safe, dtu_safe, dtv_safe, dtw_safe, dtdiv_safe);
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 0*1 * xdim0_calc_dt_kernel + idx_z * 0*1 * xdim0_calc_dt_kernel * ydim0_calc_dt_kernel], xdim0_calc_dt_kernel, ydim0_calc_dt_kernel};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 0*1 + idx_y * 1*1 * xdim1_calc_dt_kernel + idx_z * 0*1 * xdim1_calc_dt_kernel * ydim1_calc_dt_kernel], xdim1_calc_dt_kernel, ydim1_calc_dt_kernel};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_calc_dt_kernel + idx_z * 1*1 * xdim2_calc_dt_kernel * ydim2_calc_dt_kernel], xdim2_calc_dt_kernel, ydim2_calc_dt_kernel};
+    const ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_calc_dt_kernel + idx_z * 1*1 * xdim3_calc_dt_kernel * ydim3_calc_dt_kernel], xdim3_calc_dt_kernel, ydim3_calc_dt_kernel};
+    const ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_calc_dt_kernel + idx_z * 1*1 * xdim4_calc_dt_kernel * ydim4_calc_dt_kernel], xdim4_calc_dt_kernel, ydim4_calc_dt_kernel};
+    const ptr_double ptr5 = { &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_calc_dt_kernel + idx_z * 1*1 * xdim5_calc_dt_kernel * ydim5_calc_dt_kernel], xdim5_calc_dt_kernel, ydim5_calc_dt_kernel};
+    const ptr_double ptr6 = { &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_calc_dt_kernel + idx_z * 1*1 * xdim6_calc_dt_kernel * ydim6_calc_dt_kernel], xdim6_calc_dt_kernel, ydim6_calc_dt_kernel};
+    const ptr_double ptr7 = { &arg7[base7 + idx_x * 1*1 + idx_y * 1*1 * xdim7_calc_dt_kernel + idx_z * 1*1 * xdim7_calc_dt_kernel * ydim7_calc_dt_kernel], xdim7_calc_dt_kernel, ydim7_calc_dt_kernel};
+    const ptr_double ptr8 = { &arg8[base8 + idx_x * 1*1 + idx_y * 1*1 * xdim8_calc_dt_kernel + idx_z * 1*1 * xdim8_calc_dt_kernel * ydim8_calc_dt_kernel], xdim8_calc_dt_kernel, ydim8_calc_dt_kernel};
+    const ptr_double ptr9 = { &arg9[base9 + idx_x * 1*1 + idx_y * 1*1 * xdim9_calc_dt_kernel + idx_z * 1*1 * xdim9_calc_dt_kernel * ydim9_calc_dt_kernel], xdim9_calc_dt_kernel, ydim9_calc_dt_kernel};
+    ptr_double ptr10 = { &arg10[base10 + idx_x * 1*1 + idx_y * 1*1 * xdim10_calc_dt_kernel + idx_z * 1*1 * xdim10_calc_dt_kernel * ydim10_calc_dt_kernel], xdim10_calc_dt_kernel, ydim10_calc_dt_kernel};
+    const ptr_double ptr11 = { &arg11[base11 + idx_x * 0*1 + idx_y * 0*1 * xdim11_calc_dt_kernel + idx_z * 1*1 * xdim11_calc_dt_kernel * ydim11_calc_dt_kernel], xdim11_calc_dt_kernel, ydim11_calc_dt_kernel};
+    const ptr_double ptr12 = { &arg12[base12 + idx_x * 1*1 + idx_y * 1*1 * xdim12_calc_dt_kernel + idx_z * 1*1 * xdim12_calc_dt_kernel * ydim12_calc_dt_kernel], xdim12_calc_dt_kernel, ydim12_calc_dt_kernel};
+    const ptr_double ptr13 = { &arg13[base13 + idx_x * 1*1 + idx_y * 1*1 * xdim13_calc_dt_kernel + idx_z * 1*1 * xdim13_calc_dt_kernel * ydim13_calc_dt_kernel], xdim13_calc_dt_kernel, ydim13_calc_dt_kernel};
+    calc_dt_kernel(ptr0,
+                   ptr1,
+                   ptr2,
+                   ptr3,
+                   ptr4,
+                   ptr5,
+                   ptr6,
+                   ptr7,
+                   ptr8,
+                   ptr9,
+                   ptr10,
+                   ptr11,
+                   ptr12,
+                   ptr13,
+                   g_small,
+                   dtc_safe,
+                   dtu_safe,
+                   dtv_safe,
+                   dtw_safe,
+                   dtdiv_safe);
   }
+
 }

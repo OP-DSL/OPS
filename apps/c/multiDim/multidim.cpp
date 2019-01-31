@@ -43,15 +43,18 @@
 // OPS header file
 #define OPS_2D
 #define OPS_SOA
-#include "ops_seq.h"
+#include "ops_seq_v2.h"
 
 #include "multidim_kernel.h"
 #include "multidim_print_kernel.h"
 #include "multidim_copy_kernel.h"
 #include "multidim_reduce_kernel.h"
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
+#pragma omp parallel
+{
+  try {
   //initialize sizes using global values
   int x_cells = 4;
   int y_cells = 4;
@@ -60,7 +63,7 @@ int main(int argc, char **argv)
 
   // OPS initialisation
   ops_init(argc,argv,1);
-  OPS_soa = 1;
+  OPS_instance::getOPSInstance()->OPS_soa = 1;
 
   /**----------------------------OPS Declarations----------------------------**/
 
@@ -148,6 +151,14 @@ int main(int argc, char **argv)
     ops_printf("This test is considered FAILED\n");
   }
 
-
   ops_exit();
+  }
+  catch (OPSException &e) {
+    std::cout << e.what() << std::endl;
+    ops_printf("This test is considered FAILED\n");
+    ops_exit();
+    exit(-1);
+  }
+}
+  exit(0);
 }

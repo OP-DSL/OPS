@@ -3,7 +3,7 @@ set -e
 cd ../../../ops/c
 #<<COMMENT
 source ../../scripts/source_intel
-make
+make THREADED=1
 cd -
 make clean
 rm -f .generated
@@ -12,7 +12,7 @@ make IEEE=1
 
 #============================ Test multidim with Intel Compilers ==========================================
 echo '============> Running OpenMP'
-KMP_AFFINITY=compact OMP_NUM_THREADS=12 ./multidim_openmp > perf_out
+KMP_AFFINITY=compact OMP_NUM_THREADS=1,12 ./multidim_openmp > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -20,7 +20,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+OpenMP'
-export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 12 ./multidim_mpi_openmp > perf_out
+export OMP_NUM_THREADS=1,2;$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_openmp > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -28,7 +28,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running DEV_MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./multidim_dev_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_dev_mpi > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -36,7 +36,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./multidim_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -85,8 +85,8 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+OpenCL on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./multidim_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./multidim_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -109,14 +109,14 @@ cd -
 source ../../scripts/source_pgi_18
 
 make clean
-make
+make THREADED=1
 cd -
 make clean
 make
 
 #============================ Test multidim with PGI Compilers ==========================================
 echo '============> Running OpenMP'
-KMP_AFFINITY=compact OMP_NUM_THREADS=12 ./multidim_openmp > perf_out
+KMP_AFFINITY=compact OMP_NUM_THREADS=1,12 ./multidim_openmp > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -124,7 +124,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+OpenMP'
-export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 12 ./multidim_mpi_openmp > perf_out
+export OMP_NUM_THREADS=1,2;$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_openmp > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -132,7 +132,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running DEV_MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./multidim_dev_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_dev_mpi > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -140,7 +140,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./multidim_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out

@@ -47,7 +47,6 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
-#include <device_functions.h>
 #include <device_launch_parameters.h>
 
 #include <ops_lib_core.h>
@@ -63,13 +62,9 @@ extern "C" {
 /*
 * Global variables actually defined in the corresponding c file
 */
-extern char *OPS_consts_h, *OPS_consts_d, *OPS_reduct_h, *OPS_reduct_d;
+
 
 extern void __syncthreads();
-
-extern int OPS_block_size_x;
-extern int OPS_block_size_y;
-extern int OPS_block_size_z;
 
 /*
 * personal stripped-down version of cutil_inline.h

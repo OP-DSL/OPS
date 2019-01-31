@@ -59,11 +59,13 @@ import config
 para_parse = util.para_parse
 comment_remover = util.comment_remover
 remove_trailing_w_space = util.remove_trailing_w_space
-parse_signature = util.parse_signature_opencl
+parse_signature = util.parse_signature
 check_accs = util.check_accs
 arg_parse = util.arg_parse
 find_consts = util.find_consts
 mult = util.mult
+replace_ACC_kernel_body = util.replace_ACC_kernel_body
+parse_replace_ACC_signature = util.parse_replace_ACC_signature
 
 comm = util.comm
 code = util.code
@@ -184,6 +186,10 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
     code('')
     if os.path.exists(os.path.join(src_dir,'user_types.h')):
       code('#include "user_types.h"')
+    code('#define OPS_'+str(NDIM)+'D')
+    code('#define OPS_API 2')
+    code('#define OPS_NO_GLOBALS')
+    code('#include "ops_macros.h"')
     code('#include "ops_opencl_reduction.h"')
     #generate MACROS
     comm('')
@@ -219,49 +225,6 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
     code('#define ZERO_bool 0;')
 
     code('')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) == 1:
-          code('#undef OPS_ACC'+str(n))
-    code('')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
-          code('#undef OPS_ACC_MD'+str(n))
-    code('')
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) == 1:
-          if NDIM==1:
-            code('#define OPS_ACC'+str(n)+'(x) (x)')
-          if NDIM==2:
-            code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
-          if NDIM==3:
-            code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
-    code('')
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
-          if NDIM==1:
-            if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)+(d)*xdim'+str(n)+'_'+name+')')
-            else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+dims[n]+'+(d))')
-          if NDIM==2:
-            if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)+(xdim'+str(n)+'_'+name+'*(y))+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+')')
-            else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+dims[n]+'))')
-          if NDIM==3:
-            if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)+(xdim'+str(n)+'_'+name+'*(y))+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*zdim'+str(n)+'_'+name+')')
-            else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+dims[n]+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+dims[n]+'))')
-
-
-    code('')
     comm('user function')
     found = 0
     for files in glob.glob( os.path.join(src_dir,"*.h") ):
@@ -294,65 +257,41 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
 
 
     i = text[0:i].rfind('\n') #reverse find
-    #find function signature
-    loc = arg_parse(text, i + 1)
-    sig = text[i:loc]+','
-    sig_name= sig[0:sig.find('(')]
-    #print sig_name
-    sig_arg = sig[sig.find('(')+1:]
-    #print sig_arg
-    sig = sig_name+'('+parse_signature(sig_arg)
-    sig = sig[:-1]
 
-    # detect global variables and remove __global from the function signature for these
-    sig2 = ''
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] != OPS_READ:
-          sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+','
+    text = text[i:]
+    j = text.find('{')
+    k = para_parse(text, j, '{', '}')
+    text = text[0:k+1]
+    #convert to new API if in old
+    text = util.convert_ACC(text,arg_typ)
+    j = text.find('{')
+    k = para_parse(text, j, '{', '}')
+    m = text.find(name)
+    arg_list = parse_signature(text[m+len(name):j])
+
+
+    part_name = text[0:m+len(name)]
+    part_args = text[m+len(name):j]
+    part_body = text[j:]
+    found_consts = find_consts(part_body,consts)
+    if len(found_consts) != 0:
+      text = part_args[0:part_args.rfind(')')]
+      for c in range(0, len(found_consts)):
+        if (consts[found_consts[c]]['dim']).isdigit() and int(consts[found_consts[c]]['dim'])==1:
+          text = text + ', const '+consts[found_consts[c]]['type']+' '+consts[found_consts[c]]['name'][1:-1]
         else:
-          if dims[n].isdigit() and int(dims[n]) == 1:
-            sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+','
-          else:
-            sig2 = sig2 + sig.split(',')[n].strip()+','
-      elif arg_typ[n] == 'ops_arg_idx':
-        sig2 = sig2 + sig.split(',')[n].strip().replace('__global','')+','
-      else:
-        sig2 = sig2 + sig.split(',')[n].strip()+','
-      if n%4 == 2:
-        sig2 = sig2 + '\n'
+          text = text + ', __constant const'+consts[found_consts[c]]['type']+' *'+consts[found_consts[c]]['name'][1:-1]
+        if c == len(found_consts)-1:
+          text = text + ')\n'
+      part_args = text
 
 
-    #find body of function
-    j2 = text[loc+1:].find('{')
-    k2 = para_parse(text, loc+j2, '{', '}')
-
-    body = text[loc+1:k2+2] # body of function
-
-    found_consts = find_consts(body,consts)
-    #print found_consts
-
-    j = sig2.rfind(',')
-    if len(found_consts) == 0:
-      sig2 = sig2[0:j]+')'
-    code(sig2) # function signature
-
-    config.depth = config.depth +2
-    text = ''
-    for c in range(0, len(found_consts)):
-      if (consts[found_consts[c]]['dim']).isdigit() and int(consts[found_consts[c]]['dim'])==1:
-        text = text + 'const '+consts[found_consts[c]]['type']+' '+consts[found_consts[c]]['name'][1:-1]
-      else:
-        text = text + '__constant const'+consts[found_consts[c]]['type']+' *'+consts[found_consts[c]]['name'][1:-1]
-      if c < len(found_consts)-1:
-        text = text + ',\n'
-      else:
-        text = text + ')\n'
-
+    text = part_name + \
+            parse_replace_ACC_signature(part_args, arg_typ, dims, 1, accs, typs) + \
+            replace_ACC_kernel_body(part_body, arg_list, arg_typ, nargs, 1, dims)
+ 
 
     code(text)
-    config.depth =config.depth-2
-    code(body)
     code('')
     code('')
 
@@ -454,8 +393,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
       IF('idx_x < size0 && idx_y < size1')
     elif NDIM==3:
       IF('idx_x < size0 && idx_y < size1 && idx_z < size2')
-    text = name+'('
     for n in range (0, nargs):
+      text = ''
       if arg_typ[n] == 'ops_arg_dat':
         if NDIM==1:
           if soa_set:
@@ -484,7 +423,39 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
                 ' + idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+ \
                 ' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+ \
                 ' + idx_z * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+']'
+        pre = ''
+        if accs[n] == OPS_READ:
+          pre = 'const '
+        dim = ''
+        sizelist = ''
+        extradim = 0
+        if dims[n].isdigit() and int(dims[n])>1:
+            dim = dims[n]
+            extradim = 1
+        elif not dims[n].isdigit():
+            dim = 'arg'+str(n)+'.dim'
+            extradim = 1
+        dimlabels = 'xyzuv'
+        for i in range(1,NDIM):
+          sizelist = sizelist + dimlabels[i-1]+'dim'+str(n)+'_'+name+', '
+        extradim = dimlabels[NDIM+extradim-2]+'dim'+str(n)+'_'+name
+        if dim == '':
+          if NDIM==1:
+            code(pre+'ptr_'+typs[n]+' ptr'+str(n)+' = { '+text+' };')
+          else:
+            code(pre+'ptr_'+typs[n]+' ptr'+str(n)+' = { '+text+', '+sizelist[:-2]+'};')
+        else:
+          code('#ifdef OPS_SOA')
+          code(pre+'ptrm_'+typs[n]+' ptr'+str(n)+' = { '+text+', '+sizelist + extradim+'};')
+          code('#else')
+          code(pre+'ptrm_'+typs[n]+' ptr'+str(n)+' = { '+text+', '+sizelist+dim+'};')
+          code('#endif')
 
+
+    text = name+'('
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+          text = text + 'ptr'+str(n)
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         if dims[n].isdigit() and int(dims[n]) == 1:
           text = text +'&arg'+str(n)
@@ -625,7 +596,7 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     printf("Compiling """+name+""" %d source -- start \\n",OCL_FMA);
 
       // Create a program from the source
-      OPS_opencl_core.program = clCreateProgramWithSource(OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
+      OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
       clSafeCall( ret );
 
       // Build the program
@@ -642,14 +613,14 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
         exit(EXIT_FAILURE);
       }
 
-      ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
+      ret = clBuildProgram(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, 1, &OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id, buildOpts, NULL, NULL);
 
       if(ret != CL_SUCCESS) {
         char* build_log;
         size_t log_size;
-        clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
+        clSafeCall( clGetProgramBuildInfo(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
         build_log = (char*) malloc(log_size+1);
-        clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
+        clSafeCall( clGetProgramBuildInfo(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
         build_log[log_size] = '\\0';
         fprintf(stderr, "=============== OpenCL Program Build Info ================\\n\\n%s", build_log);
         fprintf(stderr, "\\n========================================================= \\n");
@@ -659,7 +630,7 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
       printf("compiling """+name+""" -- done\\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel["""+str(nk)+"""] = clCreateKernel(OPS_opencl_core.program, "ops_"""+name+"""", &ret);
+    OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel["""+str(nk)+"""] = clCreateKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, "ops_"""+name+"""", &ret);
     clSafeCall( ret );\n
     isbuilt_"""+name+""" = true;
   }
@@ -715,9 +686,9 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     code('#endif')
     code('')
 
-    IF('OPS_diags > 1')
+    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
     code('ops_timing_realloc('+str(nk)+',"'+name+'");')
-    code('OPS_kernels['+str(nk)+'].count++;')
+    code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].count++;')
     code('ops_timers_core(&c1,&t1);')
     ENDIF()
     code('')
@@ -808,16 +779,16 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     #set up OpenCL grid and thread blocks
     comm('set up OpenCL thread blocks')
     if NDIM==1:
-      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, 1, 1};')
+      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1)*OPS_instance::getOPSInstance()->OPS_block_size_x, 1, 1};')
     if NDIM==2:
-      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};')
+      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1)*OPS_instance::getOPSInstance()->OPS_block_size_x, ((y_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_y + 1)*OPS_instance::getOPSInstance()->OPS_block_size_y, 1};')
     if NDIM==3:
-      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, ((z_size-1)/OPS_block_size_z+ 1)*OPS_block_size_z};')
+      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1)*OPS_instance::getOPSInstance()->OPS_block_size_x, ((y_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_y + 1)*OPS_instance::getOPSInstance()->OPS_block_size_y, ((z_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_z+ 1)*OPS_instance::getOPSInstance()->OPS_block_size_z};')
 
     if NDIM>1:
-      code('size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,OPS_block_size_z};')
+      code('size_t localWorkSize[3] =  {OPS_instance::getOPSInstance()->OPS_block_size_x,OPS_instance::getOPSInstance()->OPS_block_size_y,OPS_instance::getOPSInstance()->OPS_block_size_z};')
     else:
-      code('size_t localWorkSize[3] =  {OPS_block_size_x,1,1};')
+      code('size_t localWorkSize[3] =  {OPS_instance::getOPSInstance()->OPS_block_size_x,1,1};')
     code('')
 
     #setup reduction variables
@@ -860,11 +831,11 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
 
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       if NDIM==1:
-        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1);')
+        code('int nblocks = ((x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1);')
       elif NDIM==2:
-        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
+        code('int nblocks = ((x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1)*((y_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_y + 1);')
       elif NDIM==3:
-        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*((z_size-1)/OPS_block_size_z + 1);')
+        code('int nblocks = ((x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1)*((y_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_y + 1)*((z_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_z + 1);')
       code('int maxblocks = nblocks;')
       code('int reduct_bytes = 0;')
       code('')
@@ -892,8 +863,8 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code('int r_bytes'+str(n)+' = reduct_bytes/sizeof('+(str(typs[n]).replace('"','')).strip()+');')
-        code('arg'+str(n)+'.data = OPS_reduct_h + reduct_bytes;')
-        code('arg'+str(n)+'.data_d = OPS_reduct_d;// + reduct_bytes;')
+        code('arg'+str(n)+'.data = OPS_instance::getOPSInstance()->OPS_reduct_h + reduct_bytes;')
+        code('arg'+str(n)+'.data_d = OPS_instance::getOPSInstance()->OPS_reduct_d;// + reduct_bytes;')
         code('for (int b=0; b<maxblocks; b++)')
         if accs[n] == OPS_INC:
           code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = ZERO_'+(str(typs[n]).replace('"','')).strip()+';')
@@ -910,8 +881,8 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           code('consts_bytes = 0;')
-          code('arg'+str(n)+'.data = OPS_consts_h + consts_bytes;')
-          code('arg'+str(n)+'.data_d = OPS_consts_d + consts_bytes;')
+          code('arg'+str(n)+'.data = OPS_instance::getOPSInstance()->OPS_consts_h + consts_bytes;')
+          code('arg'+str(n)+'.data_d = OPS_instance::getOPSInstance()->OPS_consts_d + consts_bytes;')
           code('for (int d=0; d<'+str(dims[n])+'; d++) (('+(str(typs[n]).replace('"','')).strip()+' *)arg'+str(n)+'.data)[d] = arg'+str(n)+'h[d];')
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
     if GBL_READ == True and GBL_READ_MDIM == True:
@@ -960,16 +931,16 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
     code('ops_H_D_exchanges_device(args, '+str(nargs)+');')
     code('')
-    IF('OPS_diags > 1')
+    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
     code('ops_timers_core(&c2,&t2);')
-    code('OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
+    code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
     ENDIF()
     code('')
 
 
     #set up shared memory for reduction
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
-       code('int nthread = OPS_block_size_x*OPS_block_size_y*OPS_block_size_z;')
+       code('int nthread = OPS_instance::getOPSInstance()->OPS_block_size_x*OPS_instance::getOPSInstance()->OPS_block_size_y*OPS_instance::getOPSInstance()->OPS_block_size_z;')
        code('')
 
     IF('globalWorkSize[0]>0 && globalWorkSize[1]>0 && globalWorkSize[2]>0')
@@ -978,88 +949,88 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
       const_type = consts[found_consts[c]]['type']
       const_dim = consts[found_consts[c]]['dim']
       #if const_dim.isdigit() and int(const_dim)==1:
-        #code('clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant['+str(found_consts[c])+'], CL_TRUE, 0, sizeof('+const_type+')*'+const_dim+', (void*) &'+consts[found_consts[c]]['name'][1:-1]+', 0, NULL, NULL) );')
+        #code('clSafeCall( clEnqueueWriteBuffer(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.constant['+str(found_consts[c])+'], CL_TRUE, 0, sizeof('+const_type+')*'+const_dim+', (void*) &'+consts[found_consts[c]]['name'][1:-1]+', 0, NULL, NULL) );')
       #  code('')
       #else:
       if not (consts[found_consts[c]]['type'] == 'int' or consts[found_consts[c]]['type'] == 'double' or consts[found_consts[c]]['type'] == 'float'):
-        code('clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant['+str(found_consts[c])+'], CL_TRUE, 0, sizeof('+const_type+')*'+const_dim+', (void*) &'+consts[found_consts[c]]['name'][1:-1]+', 0, NULL, NULL) );')
-        code('clSafeCall( clFlush(OPS_opencl_core.command_queue) );')
+        code('clSafeCall( clEnqueueWriteBuffer(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.constant['+str(found_consts[c])+'], CL_TRUE, 0, sizeof('+const_type+')*'+const_dim+', (void*) &'+consts[found_consts[c]]['name'][1:-1]+', 0, NULL, NULL) );')
+        code('clSafeCall( clFlush(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue) );')
     code('')
 
     #set up arguments in order to do the kernel call
     nkernel_args = 0
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
+        code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
         nkernel_args = nkernel_args+1
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         if dims[n].isdigit() and int(dims[n]) == 1:
-          code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_'+typs[n]+'), (void*) arg'+str(n)+'.data ));')
+          code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_'+typs[n]+'), (void*) arg'+str(n)+'.data ));')
           nkernel_args = nkernel_args+1
         else:
-          code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
+          code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
           nkernel_args = nkernel_args+1
       elif arg_typ[n] == 'ops_arg_gbl':
-        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
+        code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &arg'+str(n)+'.data_d ));')
         nkernel_args = nkernel_args+1
-        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', nthread*sizeof('+(str(typs[n]).replace('"','')).strip()+'), NULL));')
+        code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', nthread*sizeof('+(str(typs[n]).replace('"','')).strip()+'), NULL));')
         nkernel_args = nkernel_args+1
-        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &r_bytes'+str(n)+' ));')
+        code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &r_bytes'+str(n)+' ));')
         nkernel_args = nkernel_args+1
 
     for c in range(0, len(found_consts)):
       if consts[found_consts[c]]['type'] == 'int' or consts[found_consts[c]]['type'] == 'double' or consts[found_consts[c]]['type'] == 'float':
-        #code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem'+\
+        #code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem'+\
         #     consts[found_consts[c]]['type']+'), (void*) &'+consts[found_consts[c]]['name'][1:-1]+' ));')
-        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_'+consts[found_consts[c]]['type']+\
+        code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_'+consts[found_consts[c]]['type']+\
              '), (void*) &'+consts[found_consts[c]]['name'][1:-1]+' ));')
       else:
-        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &OPS_opencl_core.constant['+str(found_consts[c])+']) );')
-        #code(consts[found_consts[c]]['type']+'clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &'+consts[found_consts[c]]['name'][1:-1]+') );')
+        code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.constant['+str(found_consts[c])+']) );')
+        #code(consts[found_consts[c]]['type']+'clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &'+consts[found_consts[c]]['name'][1:-1]+') );')
 
       nkernel_args = nkernel_args+1
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &base'+str(n)+' ));')
+        code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &base'+str(n)+' ));')
         nkernel_args = nkernel_args+1
 
     if arg_idx:
-      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[0] ));')
+      code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[0] ));')
       nkernel_args = nkernel_args+1
       if NDIM==2:
-        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[1] ));')
+        code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[1] ));')
         nkernel_args = nkernel_args+1
       if NDIM==3:
-        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[1] ));')
+        code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[1] ));')
         nkernel_args = nkernel_args+1
-        code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[2] ));')
+        code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &arg_idx[2] ));')
         nkernel_args = nkernel_args+1
 
-    code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &x_size ));')
+    code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &x_size ));')
     nkernel_args = nkernel_args+1
     if NDIM==2:
-      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
+      code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
       nkernel_args = nkernel_args+1
     if NDIM==3:
-      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
+      code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &y_size ));')
       nkernel_args = nkernel_args+1
-      code('clSafeCall( clSetKernelArg(OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &z_size ));')
+      code('clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_int), (void*) &z_size ));')
       nkernel_args = nkernel_args+1
 
     #kernel call
     code('')
     comm('call/enque opencl kernel wrapper function')
-    code('clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel['+str(nk)+'], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );')
+    code('clSafeCall( clEnqueueNDRangeKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );')
     ENDIF()
-    IF('OPS_diags>1')
-    code('clSafeCall( clFinish(OPS_opencl_core.command_queue) );')
+    IF('OPS_instance::getOPSInstance()->OPS_diags>1')
+    code('clSafeCall( clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue) );')
     ENDIF()
     code('')
 
-    IF('OPS_diags > 1')
+    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
     code('ops_timers_core(&c1,&t1);')
-    code('OPS_kernels['+str(nk)+'].time += t1-t2;')
+    code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].time += t1-t2;')
     ENDIF()
     code('')
 
@@ -1087,13 +1058,13 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
         code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
 
     code('')
-    IF('OPS_diags > 1')
+    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
     comm('Update kernel record')
     code('ops_timers_core(&c2,&t2);')
-    code('OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
+    code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, start, end, &arg'+str(n)+');')
+        code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, start, end, &arg'+str(n)+');')
     ENDIF()
     config.depth = config.depth - 2
     code('}')
@@ -1117,7 +1088,9 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
   config.depth = 0
   config.file_text =''
   comm('header')
-  code('#define OPS_ACC_MD_MACROS')
+  code('#define OPS_API 2')
+  if NDIM==1:
+    code('#define OPS_1D')
   if NDIM==2:
     code('#define OPS_2D')
   if NDIM==3:
@@ -1147,7 +1120,6 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
 
   code('')
 
-  code('extern ops_opencl_core OPS_opencl_core;')
   code('')
   code('void ops_init_backend() {}')
   code('')
@@ -1155,23 +1127,23 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
   code('void ops_decl_const_char( int dim, char const * type, int typeSize, char * dat, char const * name ) {')
   config.depth =config.depth + 2
   code('cl_int ret = 0;')
-  IF('OPS_opencl_core.constant == NULL')
-  code('OPS_opencl_core.constant = (cl_mem*) malloc(('+str(len(consts))+')*sizeof(cl_mem));')
+  IF('OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.constant == NULL')
+  code('OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.constant = (cl_mem*) malloc(('+str(len(consts))+')*sizeof(cl_mem));')
   FOR('i','0',str(len(consts)))
-  code('OPS_opencl_core.constant[i] = NULL;')
+  code('OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.constant[i] = NULL;')
   ENDFOR()
   ENDIF()
 
   for nc in range(0,len(consts)):
     IF('!strcmp(name,"'+(str(consts[nc]['name']).replace('"','')).strip()+'")')
-    IF('OPS_opencl_core.constant['+str(nc)+'] == NULL')
-    code('OPS_opencl_core.constant['+str(nc)+'] = clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_ONLY, dim*typeSize, NULL, &ret);')
+    IF('OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.constant['+str(nc)+'] == NULL')
+    code('OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.constant['+str(nc)+'] = clCreateBuffer(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context, CL_MEM_READ_ONLY, dim*typeSize, NULL, &ret);')
     code('clSafeCall( ret );')
     ENDIF()
     comm('Write the new constant to the memory of the device')
-    code('clSafeCall( clEnqueueWriteBuffer(OPS_opencl_core.command_queue, OPS_opencl_core.constant['+str(nc)+'], CL_TRUE, 0, dim*typeSize, (void*) dat, 0, NULL, NULL) );')
-    code('clSafeCall( clFlush(OPS_opencl_core.command_queue) );')
-    code('clSafeCall( clFinish(OPS_opencl_core.command_queue) );')
+    code('clSafeCall( clEnqueueWriteBuffer(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.constant['+str(nc)+'], CL_TRUE, 0, dim*typeSize, (void*) dat, 0, NULL, NULL) );')
+    code('clSafeCall( clFlush(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue) );')
+    code('clSafeCall( clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue) );')
     ENDIF()
     code('else')
 
@@ -1199,12 +1171,12 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
       if nk != len(kernels)-1:
         kernel_list_text = kernel_list_text+',\n'+indent
       kernel_list__build_text = kernel_list__build_text + \
-      'OPS_opencl_core.kernel['+str(nk)+'] = clCreateKernel(OPS_opencl_core.program, "ops_'+kernel_name_list[nk]+'", &ret);\n      '+\
+      'OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'] = clCreateKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, "ops_'+kernel_name_list[nk]+'", &ret);\n      '+\
       'clSafeCall( ret );\n      '
 
 
   opencl_build = """
-extern ops_opencl_core OPS_opencl_core;
+
 
 void buildOpenCLKernels() {
   static bool isbuilt = false;
@@ -1212,8 +1184,8 @@ void buildOpenCLKernels() {
   if(!isbuilt) {
     //clSafeCall( clUnloadCompiler() );
 
-    OPS_opencl_core.n_kernels = """+str(len(kernels))+""";
-    OPS_opencl_core.kernel = (cl_kernel*) malloc("""+str(len(kernels))+"""*sizeof(cl_kernel));
+    OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.n_kernels = """+str(len(kernels))+""";
+    OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel = (cl_kernel*) malloc("""+str(len(kernels))+"""*sizeof(cl_kernel));
   }
   isbuilt = true;
 }

@@ -9,6 +9,9 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_2D
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,21 +43,11 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+xdim0_copy*(y))
-#define OPS_ACC1(x,y) (x+xdim1_copy*(y))
-
-
 //user function
-void copy(__global double * restrict A,const __global double * restrict Anew)
 
- {
-  A[OPS_ACC0(0,0)] = Anew[OPS_ACC1(0,0)];
+void copy(ptr_double A, const ptr_double Anew) {
+  OPS_ACCS(A, 0,0) = OPS_ACCS(Anew, 0,0);
 }
-
 
 
 __kernel void ops_copy(
@@ -70,8 +63,10 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    copy(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_copy],
-              &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_copy]);
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_copy], xdim0_copy};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_copy], xdim1_copy};
+    copy(ptr0,
+              ptr1);
   }
 
 }

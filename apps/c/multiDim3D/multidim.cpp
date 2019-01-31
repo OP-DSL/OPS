@@ -43,14 +43,14 @@
 // OPS header file
 #define OPS_3D
 #define OPS_SOA
-#include "ops_seq.h"
+#include "ops_seq_v2.h"
 
 #include "multidim_kernel.h"
 #include "multidim_print_kernel.h"
 #include "multidim_copy_kernel.h"
 #include "multidim_reduce_kernel.h"
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
   //initialize sizes using global values
   int x_cells = 4;
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 
   // OPS initialisation
   ops_init(argc,argv,1);
-  OPS_soa = 1;
+  OPS_instance::getOPSInstance()->OPS_soa = 1;
 
   /**----------------------------OPS Declarations----------------------------**/
 

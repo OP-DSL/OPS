@@ -41,13 +41,13 @@ void process_profile()
   FILE* prof_out;
   char line[100];
 
-  if ((OPS_diags > 1) && ops_is_root() && (prof_out = fopen(out_file,"w")) == NULL ) {
+  if ((OPS_instance::getOPSInstance()->OPS_diags > 1) && ops_is_root() && (prof_out = fopen(out_file,"w")) == NULL ) {
     printf("can't open file %s\n",out_file); exit(-1);
   }
   ops_timing_output(prof_out);
-  if (OPS_diags > 1 && ops_is_root()) fclose(prof_out);
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1 && ops_is_root()) fclose(prof_out);
 
-  if (ops_is_root() && OPS_diags > 1) {
+  if (ops_is_root() && OPS_instance::getOPSInstance()->OPS_diags > 1) {
     if ((prof_out = fopen(out_file,"r")) == NULL) {
       printf("can't open file %s\n",out_file); exit(-1);
     }

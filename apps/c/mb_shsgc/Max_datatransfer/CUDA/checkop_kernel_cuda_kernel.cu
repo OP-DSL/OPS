@@ -4,38 +4,26 @@
 __constant__ int dims_checkop_kernel[6][1];
 static int dims_checkop_kernel_h[6][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-
 // user function
 __device__
 
     void
-    checkop_kernel_gpu(const double *rho_new, const double *x,
-                       const double *rhoin, double *pre, double *post,
+    checkop_kernel_gpu(const ACC<double> &rho_new, const ACC<double> &x,
+                       const ACC<double> &rhoin, double *pre, double *post,
                        int *num) {
   double diff;
-  diff = (rho_new[OPS_ACC0(0)] - rhoin[OPS_ACC2(0)]);
-  if (fabs(diff) < 0.01 && x[OPS_ACC1(0)] > -4.1) {
+  diff = (rho_new(0) - rhoin(0));
+  if (fabs(diff) < 0.01 && x(0) > -4.1) {
     *post = *post + diff * diff;
     *num = *num + 1;
 
   } else
-    *pre = *pre + (rho_new[OPS_ACC0(0)] - rhol) * (rho_new[OPS_ACC0(0)] - rhol);
+    *pre = *pre + (rho_new(0) - rhol) * (rho_new(0) - rhol);
 }
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
 __global__ void
-ops_checkop_kernel(const double *__restrict arg0, const double *__restrict arg1,
-                   const double *__restrict arg2, double *__restrict arg3,
+ops_checkop_kernel(double *__restrict arg0, double *__restrict arg1,
+                   double *__restrict arg2, double *__restrict arg3,
                    double *__restrict arg4, int *__restrict arg5, int size0) {
 
   double arg3_l[1];
@@ -55,7 +43,10 @@ ops_checkop_kernel(const double *__restrict arg0, const double *__restrict arg1,
   arg2 += idx_x * 1 * 1;
 
   if (idx_x < size0) {
-    checkop_kernel_gpu(arg0, arg1, arg2, arg3_l, arg4_l, arg5_l);
+    const ACC<double> argp0(arg0);
+    const ACC<double> argp1(arg1);
+    const ACC<double> argp2(arg2);
+    checkop_kernel_gpu(argp0, argp1, argp2, arg3_l, arg4_l, arg5_l);
   }
   for (int d = 0; d < 1; d++)
     ops_reduction_cuda<OPS_INC>(
@@ -99,9 +90,9 @@ void ops_par_loop_checkop_kernel_execute(ops_kernel_descriptor *desc) {
     return;
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(14, "checkop_kernel");
-    OPS_kernels[14].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[14].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -167,10 +158,12 @@ void ops_par_loop_checkop_kernel_execute(ops_kernel_descriptor *desc) {
 
   int x_size = MAX(0, end[0] - start[0]);
 
-  dim3 grid((x_size - 1) / OPS_block_size_x + 1, 1, 1);
-  dim3 tblock(OPS_block_size_x, 1, 1);
+  dim3 grid((x_size - 1) / OPS_instance::getOPSInstance()->OPS_block_size_x + 1,
+            1, 1);
+  dim3 tblock(OPS_instance::getOPSInstance()->OPS_block_size_x, 1, 1);
 
-  int nblocks = ((x_size - 1) / OPS_block_size_x + 1);
+  int nblocks =
+      ((x_size - 1) / OPS_instance::getOPSInstance()->OPS_block_size_x + 1);
   int maxblocks = nblocks;
   int reduct_bytes = 0;
   int reduct_size = 0;
@@ -185,31 +178,34 @@ void ops_par_loop_checkop_kernel_execute(ops_kernel_descriptor *desc) {
   reallocReductArrays(reduct_bytes);
   reduct_bytes = 0;
 
-  arg3.data = OPS_reduct_h + reduct_bytes;
-  arg3.data_d = OPS_reduct_d + reduct_bytes;
+  arg3.data = OPS_instance::getOPSInstance()->OPS_reduct_h + reduct_bytes;
+  arg3.data_d = OPS_instance::getOPSInstance()->OPS_reduct_d + reduct_bytes;
   for (int b = 0; b < maxblocks; b++)
     for (int d = 0; d < 1; d++)
       ((double *)arg3.data)[d + b * 1] = ZERO_double;
   reduct_bytes += ROUND_UP(maxblocks * 1 * sizeof(double));
 
-  arg4.data = OPS_reduct_h + reduct_bytes;
-  arg4.data_d = OPS_reduct_d + reduct_bytes;
+  arg4.data = OPS_instance::getOPSInstance()->OPS_reduct_h + reduct_bytes;
+  arg4.data_d = OPS_instance::getOPSInstance()->OPS_reduct_d + reduct_bytes;
   for (int b = 0; b < maxblocks; b++)
     for (int d = 0; d < 1; d++)
       ((double *)arg4.data)[d + b * 1] = ZERO_double;
   reduct_bytes += ROUND_UP(maxblocks * 1 * sizeof(double));
 
-  arg5.data = OPS_reduct_h + reduct_bytes;
-  arg5.data_d = OPS_reduct_d + reduct_bytes;
+  arg5.data = OPS_instance::getOPSInstance()->OPS_reduct_h + reduct_bytes;
+  arg5.data_d = OPS_instance::getOPSInstance()->OPS_reduct_d + reduct_bytes;
   for (int b = 0; b < maxblocks; b++)
     for (int d = 0; d < 1; d++)
       ((int *)arg5.data)[d + b * 1] = ZERO_int;
   reduct_bytes += ROUND_UP(maxblocks * 1 * sizeof(int));
 
   mvReductArraysToDevice(reduct_bytes);
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
-  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
+  int dat0 = (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size
+                                                      : args[0].dat->elem_size);
+  int dat1 = (OPS_instance::getOPSInstance()->OPS_soa ? args[1].dat->type_size
+                                                      : args[1].dat->elem_size);
+  int dat2 = (OPS_instance::getOPSInstance()->OPS_soa ? args[2].dat->type_size
+                                                      : args[2].dat->elem_size);
 
   char *p_a[6];
 
@@ -231,13 +227,15 @@ void ops_par_loop_checkop_kernel_execute(ops_kernel_descriptor *desc) {
   ops_halo_exchanges(args, 6, range);
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[14].mpi_time += t2 - t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[14].mpi_time += t2 - t1;
   }
 
   int nshared = 0;
-  int nthread = OPS_block_size_x * OPS_block_size_y * OPS_block_size_z;
+  int nthread = OPS_instance::getOPSInstance()->OPS_block_size_x *
+                OPS_instance::getOPSInstance()->OPS_block_size_y *
+                OPS_instance::getOPSInstance()->OPS_block_size_z;
 
   nshared = MAX(nshared, sizeof(double) * 1);
   nshared = MAX(nshared, sizeof(double) * 1);
@@ -276,23 +274,26 @@ void ops_par_loop_checkop_kernel_execute(ops_kernel_descriptor *desc) {
   }
   arg5.data = (char *)arg5h;
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);
-    OPS_kernels[14].time += t1 - t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[14].time += t1 - t2;
   }
 
 #ifndef OPS_LAZY
   ops_set_dirtybit_device(args, 6);
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[14].mpi_time += t2 - t1;
-    OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_instance::getOPSInstance()->OPS_kernels[14].mpi_time += t2 - t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[14].transfer +=
+        ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[14].transfer +=
+        ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[14].transfer +=
+        ops_compute_transfer(dim, start, end, &arg2);
   }
 }
 
@@ -327,7 +328,7 @@ void ops_par_loop_checkop_kernel(char const *name, ops_block block, int dim,
   desc->args[4] = arg4;
   desc->args[5] = arg5;
   desc->function = ops_par_loop_checkop_kernel_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(14, "checkop_kernel");
   }
   ops_enqueue_kernel(desc);

@@ -7,18 +7,22 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_1D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a, b) ((a < b) ? (a) : (b))
+#define MIN(a,b) ((a<b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a, b) ((a > b) ? (a) : (b))
+#define MAX(a,b) ((a>b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
+#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -40,42 +44,45 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
+//user function
 
-#undef OPS_ACC_MD3
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-
-#define OPS_ACC_MD3(d, x) ((x)*3 + (d))
-
-// user function
-void update_kernel(__global double *restrict rho_new,
-                   __global double *restrict rhou_new,
-                   __global double *restrict rhoE_new,
-                   const __global double *restrict s)
-
-{
-  rho_new[OPS_ACC0(0)] = rho_new[OPS_ACC0(0)] + s[OPS_ACC_MD3(0, 0)];
-  rhou_new[OPS_ACC1(0)] = rhou_new[OPS_ACC1(0)] + s[OPS_ACC_MD3(1, 0)];
-  rhoE_new[OPS_ACC2(0)] = rhoE_new[OPS_ACC2(0)] + s[OPS_ACC_MD3(2, 0)];
+void update_kernel(ptr_double rho_new,
+  ptr_double rhou_new,
+  ptr_double rhoE_new,
+  const ptrm_double s) {
+		OPS_ACCS(rho_new, 0)  = OPS_ACCS(rho_new, 0)  + OPS_ACCM(s, 0,0);
+		OPS_ACCS(rhou_new, 0) = OPS_ACCS(rhou_new, 0) + OPS_ACCM(s, 1,0);
+		OPS_ACCS(rhoE_new, 0) = OPS_ACCS(rhoE_new, 0) + OPS_ACCM(s, 2,0);
 }
 
-__kernel void ops_update_kernel(__global double *restrict arg0,
-                                __global double *restrict arg1,
-                                __global double *restrict arg2,
-                                __global const double *restrict arg3,
-                                const int base0, const int base1,
-                                const int base2, const int base3,
-                                const int size0) {
+
+__kernel void ops_update_kernel(
+__global double* restrict arg0,
+__global double* restrict arg1,
+__global double* restrict arg2,
+__global const double* restrict arg3,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int size0 ){
+
 
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    update_kernel(&arg0[base0 + idx_x * 1 * 1], &arg1[base1 + idx_x * 1 * 1],
-                  &arg2[base2 + idx_x * 1 * 1], &arg3[base3 + idx_x * 1 * 3]);
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1], };
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1], };
+    ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1], };
+    #ifdef OPS_SOA
+    const ptrm_double ptr3 = { &arg3[base3 + idx_x * 1*3], xdim3_update_kernel};
+    #else
+    const ptrm_double ptr3 = { &arg3[base3 + idx_x * 1*3], 3};
+    #endif
+    update_kernel(ptr0,
+                  ptr1,
+                  ptr2,
+                  ptr3);
   }
+
 }

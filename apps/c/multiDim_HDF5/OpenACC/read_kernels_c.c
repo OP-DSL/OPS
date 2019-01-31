@@ -5,4 +5,4 @@
 
 #include <openacc.h>
 
-//user kernel files
+// user kernel files

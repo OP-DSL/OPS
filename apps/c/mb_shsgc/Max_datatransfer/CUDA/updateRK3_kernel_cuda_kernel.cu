@@ -4,62 +4,28 @@
 __constant__ int dims_updateRK3_kernel[11][1];
 static int dims_updateRK3_kernel_h[11][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-#define OPS_ACC3(x) (x)
-#define OPS_ACC4(x) (x)
-#define OPS_ACC5(x) (x)
-#define OPS_ACC6(x) (x)
-#define OPS_ACC7(x) (x)
-#define OPS_ACC8(x) (x)
-
 // user function
 __device__
 
     void
-    updateRK3_kernel_gpu(double *rho_new, double *rhou_new, double *rhoE_new,
-                         double *rho_old, double *rhou_old, double *rhoE_old,
-                         double *rho_res, double *rhou_res, double *rhoE_res,
-                         const double *a1, const double *a2) {
+    updateRK3_kernel_gpu(ACC<double> &rho_new, ACC<double> &rhou_new,
+                         ACC<double> &rhoE_new, ACC<double> &rho_old,
+                         ACC<double> &rhou_old, ACC<double> &rhoE_old,
+                         ACC<double> &rho_res, ACC<double> &rhou_res,
+                         ACC<double> &rhoE_res, const double *a1,
+                         const double *a2) {
 
-  rho_new[OPS_ACC0(0)] =
-      rho_old[OPS_ACC3(0)] + dt * a1[0] * (-rho_res[OPS_ACC6(0)]);
-  rhou_new[OPS_ACC1(0)] =
-      rhou_old[OPS_ACC4(0)] + dt * a1[0] * (-rhou_res[OPS_ACC7(0)]);
-  rhoE_new[OPS_ACC2(0)] =
-      rhoE_old[OPS_ACC5(0)] + dt * a1[0] * (-rhoE_res[OPS_ACC8(0)]);
+  rho_new(0) = rho_old(0) + dt * a1[0] * (-rho_res(0));
+  rhou_new(0) = rhou_old(0) + dt * a1[0] * (-rhou_res(0));
+  rhoE_new(0) = rhoE_old(0) + dt * a1[0] * (-rhoE_res(0));
 
-  rho_old[OPS_ACC3(0)] =
-      rho_old[OPS_ACC3(0)] + dt * a2[0] * (-rho_res[OPS_ACC6(0)]);
-  rhou_old[OPS_ACC4(0)] =
-      rhou_old[OPS_ACC4(0)] + dt * a2[0] * (-rhou_res[OPS_ACC7(0)]);
-  rhoE_old[OPS_ACC5(0)] =
-      rhoE_old[OPS_ACC5(0)] + dt * a2[0] * (-rhoE_res[OPS_ACC8(0)]);
-  rho_res[OPS_ACC6(0)] = 0;
-  rhou_res[OPS_ACC7(0)] = 0;
-  rhoE_res[OPS_ACC8(0)] = 0;
+  rho_old(0) = rho_old(0) + dt * a2[0] * (-rho_res(0));
+  rhou_old(0) = rhou_old(0) + dt * a2[0] * (-rhou_res(0));
+  rhoE_old(0) = rhoE_old(0) + dt * a2[0] * (-rhoE_res(0));
+  rho_res(0) = 0;
+  rhou_res(0) = 0;
+  rhoE_res(0) = 0;
 }
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
 
 __global__ void ops_updateRK3_kernel(
     double *__restrict arg0, double *__restrict arg1, double *__restrict arg2,
@@ -80,8 +46,17 @@ __global__ void ops_updateRK3_kernel(
   arg8 += idx_x * 1 * 1;
 
   if (idx_x < size0) {
-    updateRK3_kernel_gpu(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8,
-                         &arg9, &arg10);
+    ACC<double> argp0(arg0);
+    ACC<double> argp1(arg1);
+    ACC<double> argp2(arg2);
+    ACC<double> argp3(arg3);
+    ACC<double> argp4(arg4);
+    ACC<double> argp5(arg5);
+    ACC<double> argp6(arg6);
+    ACC<double> argp7(arg7);
+    ACC<double> argp8(arg8);
+    updateRK3_kernel_gpu(argp0, argp1, argp2, argp3, argp4, argp5, argp6, argp7,
+                         argp8, &arg9, &arg10);
   }
 }
 
@@ -123,9 +98,9 @@ void ops_par_loop_updateRK3_kernel_execute(ops_kernel_descriptor *desc) {
     return;
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(6, "updateRK3_kernel");
-    OPS_kernels[6].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[6].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -189,18 +164,28 @@ void ops_par_loop_updateRK3_kernel_execute(ops_kernel_descriptor *desc) {
 
   int x_size = MAX(0, end[0] - start[0]);
 
-  dim3 grid((x_size - 1) / OPS_block_size_x + 1, 1, 1);
-  dim3 tblock(OPS_block_size_x, 1, 1);
+  dim3 grid((x_size - 1) / OPS_instance::getOPSInstance()->OPS_block_size_x + 1,
+            1, 1);
+  dim3 tblock(OPS_instance::getOPSInstance()->OPS_block_size_x, 1, 1);
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
-  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
-  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
-  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
-  int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
-  int dat6 = (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size);
-  int dat7 = (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size);
-  int dat8 = (OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size);
+  int dat0 = (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size
+                                                      : args[0].dat->elem_size);
+  int dat1 = (OPS_instance::getOPSInstance()->OPS_soa ? args[1].dat->type_size
+                                                      : args[1].dat->elem_size);
+  int dat2 = (OPS_instance::getOPSInstance()->OPS_soa ? args[2].dat->type_size
+                                                      : args[2].dat->elem_size);
+  int dat3 = (OPS_instance::getOPSInstance()->OPS_soa ? args[3].dat->type_size
+                                                      : args[3].dat->elem_size);
+  int dat4 = (OPS_instance::getOPSInstance()->OPS_soa ? args[4].dat->type_size
+                                                      : args[4].dat->elem_size);
+  int dat5 = (OPS_instance::getOPSInstance()->OPS_soa ? args[5].dat->type_size
+                                                      : args[5].dat->elem_size);
+  int dat6 = (OPS_instance::getOPSInstance()->OPS_soa ? args[6].dat->type_size
+                                                      : args[6].dat->elem_size);
+  int dat7 = (OPS_instance::getOPSInstance()->OPS_soa ? args[7].dat->type_size
+                                                      : args[7].dat->elem_size);
+  int dat8 = (OPS_instance::getOPSInstance()->OPS_soa ? args[8].dat->type_size
+                                                      : args[8].dat->elem_size);
 
   char *p_a[11];
 
@@ -246,9 +231,9 @@ void ops_par_loop_updateRK3_kernel_execute(ops_kernel_descriptor *desc) {
   ops_halo_exchanges(args, 11, range);
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[6].mpi_time += t2 - t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[6].mpi_time += t2 - t1;
   }
 
   // call kernel wrapper function, passing in pointers to data
@@ -260,10 +245,10 @@ void ops_par_loop_updateRK3_kernel_execute(ops_kernel_descriptor *desc) {
 
   cutilSafeCall(cudaGetLastError());
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);
-    OPS_kernels[6].time += t1 - t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[6].time += t1 - t2;
   }
 
 #ifndef OPS_LAZY
@@ -279,19 +264,28 @@ void ops_par_loop_updateRK3_kernel_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[8], range);
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[6].mpi_time += t2 - t1;
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    OPS_instance::getOPSInstance()->OPS_kernels[6].mpi_time += t2 - t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[6].transfer +=
+        ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[6].transfer +=
+        ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[6].transfer +=
+        ops_compute_transfer(dim, start, end, &arg2);
+    OPS_instance::getOPSInstance()->OPS_kernels[6].transfer +=
+        ops_compute_transfer(dim, start, end, &arg3);
+    OPS_instance::getOPSInstance()->OPS_kernels[6].transfer +=
+        ops_compute_transfer(dim, start, end, &arg4);
+    OPS_instance::getOPSInstance()->OPS_kernels[6].transfer +=
+        ops_compute_transfer(dim, start, end, &arg5);
+    OPS_instance::getOPSInstance()->OPS_kernels[6].transfer +=
+        ops_compute_transfer(dim, start, end, &arg6);
+    OPS_instance::getOPSInstance()->OPS_kernels[6].transfer +=
+        ops_compute_transfer(dim, start, end, &arg7);
+    OPS_instance::getOPSInstance()->OPS_kernels[6].transfer +=
+        ops_compute_transfer(dim, start, end, &arg8);
   }
 }
 
@@ -344,7 +338,7 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim,
   memcpy(tmp, arg10.data, 1 * sizeof(double));
   desc->args[10].data = tmp;
   desc->function = ops_par_loop_updateRK3_kernel_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(6, "updateRK3_kernel");
   }
   ops_enqueue_kernel(desc);

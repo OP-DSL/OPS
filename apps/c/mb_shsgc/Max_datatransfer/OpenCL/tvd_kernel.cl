@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
+#define OPS_1D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,24 +44,16 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-
-#define OPS_ACC_MD0(d, x) ((x)*3 + (d))
-#define OPS_ACC_MD1(d, x) ((x)*3 + (d))
-
 // user function
-void tvd_kernel(const __global double *restrict tht,
-                __global double *restrict ep2, const double akap2)
 
-{
+void tvd_kernel(const ptrm_double tht, ptrm_double ep2, const double akap2) {
   double maxim;
   for (int m = 0; m < 3; m++) {
-    if (tht[OPS_ACC_MD0(m, 0)] > tht[OPS_ACC_MD0(m, 1)])
-      maxim = tht[OPS_ACC_MD0(m, 0)];
+    if (OPS_ACCM(tht, m, 0) > OPS_ACCM(tht, m, 1))
+      maxim = OPS_ACCM(tht, m, 0);
     else
-      maxim = tht[OPS_ACC_MD0(m, 1)];
-    ep2[OPS_ACC_MD1(m, 0)] = akap2 * maxim;
+      maxim = OPS_ACCM(tht, m, 1);
+    OPS_ACCM(ep2, m, 0) = akap2 * maxim;
   }
 }
 
@@ -69,7 +65,16 @@ __kernel void ops_tvd_kernel(__global const double *restrict arg0,
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    tvd_kernel(&arg0[base0 + idx_x * 1 * 3], &arg1[base1 + idx_x * 1 * 3],
-               akap2);
+#ifdef OPS_SOA
+    const ptrm_double ptr0 = {&arg0[base0 + idx_x * 1 * 3], xdim0_tvd_kernel};
+#else
+    const ptrm_double ptr0 = {&arg0[base0 + idx_x * 1 * 3], 3};
+#endif
+#ifdef OPS_SOA
+    ptrm_double ptr1 = {&arg1[base1 + idx_x * 1 * 3], xdim1_tvd_kernel};
+#else
+    ptrm_double ptr1 = {&arg1[base1 + idx_x * 1 * 3], 3};
+#endif
+    tvd_kernel(ptr0, ptr1, akap2);
   }
 }

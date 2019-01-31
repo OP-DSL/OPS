@@ -52,9 +52,11 @@ void buildOpenCLKernels_init_kernel(int xdim0, int xdim1, int xdim2, int xdim3,
     printf("Compiling init_kernel %d source -- start \n", OCL_FMA);
 
     // Create a program from the source
-    OPS_opencl_core.program = clCreateProgramWithSource(
-        OPS_opencl_core.context, 1, (const char **)&source_str,
-        (const size_t *)&source_size, &ret);
+    OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program =
+        clCreateProgramWithSource(
+            OPS_instance::getOPSInstance()
+                ->opencl_instance->OPS_opencl_core.context,
+            1, (const char **)&source_str, (const size_t *)&source_size, &ret);
     clSafeCall(ret);
 
     // Build the program
@@ -84,18 +86,27 @@ void buildOpenCLKernels_init_kernel(int xdim0, int xdim1, int xdim2, int xdim3,
       exit(EXIT_FAILURE);
     }
 
-    ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id,
+    ret = clBuildProgram(OPS_instance::getOPSInstance()
+                             ->opencl_instance->OPS_opencl_core.program,
+                         1, &OPS_instance::getOPSInstance()
+                                 ->opencl_instance->OPS_opencl_core.device_id,
                          buildOpts, NULL, NULL);
 
     if (ret != CL_SUCCESS) {
       char *build_log;
       size_t log_size;
       clSafeCall(clGetProgramBuildInfo(
-          OPS_opencl_core.program, OPS_opencl_core.device_id,
+          OPS_instance::getOPSInstance()
+              ->opencl_instance->OPS_opencl_core.program,
+          OPS_instance::getOPSInstance()
+              ->opencl_instance->OPS_opencl_core.device_id,
           CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
       build_log = (char *)malloc(log_size + 1);
       clSafeCall(clGetProgramBuildInfo(
-          OPS_opencl_core.program, OPS_opencl_core.device_id,
+          OPS_instance::getOPSInstance()
+              ->opencl_instance->OPS_opencl_core.program,
+          OPS_instance::getOPSInstance()
+              ->opencl_instance->OPS_opencl_core.device_id,
           CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
       build_log[log_size] = '\0';
       fprintf(
@@ -110,8 +121,10 @@ void buildOpenCLKernels_init_kernel(int xdim0, int xdim1, int xdim2, int xdim3,
     printf("compiling init_kernel -- done\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[1] =
-        clCreateKernel(OPS_opencl_core.program, "ops_init_kernel", &ret);
+    OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[1] =
+        clCreateKernel(OPS_instance::getOPSInstance()
+                           ->opencl_instance->OPS_opencl_core.program,
+                       "ops_init_kernel", &ret);
     clSafeCall(ret);
 
     isbuilt_init_kernel = true;
@@ -134,9 +147,9 @@ void ops_par_loop_init_kernel(char const *name, ops_block block, int dim,
     return;
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(1, "init_kernel");
-    OPS_kernels[1].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[1].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -191,8 +204,11 @@ void ops_par_loop_init_kernel(char const *name, ops_block block, int dim,
 
   // set up OpenCL thread blocks
   size_t globalWorkSize[3] = {
-      ((x_size - 1) / OPS_block_size_x + 1) * OPS_block_size_x, 1, 1};
-  size_t localWorkSize[3] = {OPS_block_size_x, 1, 1};
+      ((x_size - 1) / OPS_instance::getOPSInstance()->OPS_block_size_x + 1) *
+          OPS_instance::getOPSInstance()->OPS_block_size_x,
+      1, 1};
+  size_t localWorkSize[3] = {OPS_instance::getOPSInstance()->OPS_block_size_x,
+                             1, 1};
 
   // set up initial pointers
   int d_m[OPS_MAX_DIM];
@@ -288,76 +304,105 @@ void ops_par_loop_init_kernel(char const *name, ops_block block, int dim,
   ops_halo_exchanges(args, 8, range);
   ops_H_D_exchanges_device(args, 8);
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[1].mpi_time += t2 - t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[1].mpi_time += t2 - t1;
   }
 
   if (globalWorkSize[0] > 0 && globalWorkSize[1] > 0 && globalWorkSize[2] > 0) {
 
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 0, sizeof(cl_mem),
-                              (void *)&arg0.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 1, sizeof(cl_mem),
-                              (void *)&arg1.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 2, sizeof(cl_mem),
-                              (void *)&arg2.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 3, sizeof(cl_mem),
-                              (void *)&arg3.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 4, sizeof(cl_mem),
-                              (void *)&arg4.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 5, sizeof(cl_mem),
-                              (void *)&arg5.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 6, sizeof(cl_mem),
-                              (void *)&arg6.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 7, sizeof(cl_mem),
-                              (void *)&arg7.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 8, sizeof(cl_double),
-                              (void *)&pl));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 9, sizeof(cl_double),
-                              (void *)&pr));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 10, sizeof(cl_double),
-                              (void *)&rhol));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 11, sizeof(cl_double),
-                              (void *)&ul));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 12, sizeof(cl_double),
-                              (void *)&ur));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 13, sizeof(cl_double),
-                              (void *)&gam1));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 14, sizeof(cl_double),
-                              (void *)&eps));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 15, sizeof(cl_double),
-                              (void *)&lambda));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 16, sizeof(cl_int),
-                              (void *)&base0));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 17, sizeof(cl_int),
-                              (void *)&base1));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 18, sizeof(cl_int),
-                              (void *)&base2));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 19, sizeof(cl_int),
-                              (void *)&base3));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 20, sizeof(cl_int),
-                              (void *)&base4));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 21, sizeof(cl_int),
-                              (void *)&base5));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 22, sizeof(cl_int),
-                              (void *)&base6));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 23, sizeof(cl_int),
-                              (void *)&base7));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[1], 24, sizeof(cl_int),
-                              (void *)&x_size));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              0, sizeof(cl_mem), (void *)&arg0.data_d));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              1, sizeof(cl_mem), (void *)&arg1.data_d));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              2, sizeof(cl_mem), (void *)&arg2.data_d));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              3, sizeof(cl_mem), (void *)&arg3.data_d));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              4, sizeof(cl_mem), (void *)&arg4.data_d));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              5, sizeof(cl_mem), (void *)&arg5.data_d));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              6, sizeof(cl_mem), (void *)&arg6.data_d));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              7, sizeof(cl_mem), (void *)&arg7.data_d));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              8, sizeof(cl_double), (void *)&pl));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              9, sizeof(cl_double), (void *)&pr));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              10, sizeof(cl_double), (void *)&rhol));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              11, sizeof(cl_double), (void *)&ul));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              12, sizeof(cl_double), (void *)&ur));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              13, sizeof(cl_double), (void *)&gam1));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              14, sizeof(cl_double), (void *)&eps));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              15, sizeof(cl_double), (void *)&lambda));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              16, sizeof(cl_int), (void *)&base0));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              17, sizeof(cl_int), (void *)&base1));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              18, sizeof(cl_int), (void *)&base2));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              19, sizeof(cl_int), (void *)&base3));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              20, sizeof(cl_int), (void *)&base4));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              21, sizeof(cl_int), (void *)&base5));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              22, sizeof(cl_int), (void *)&base6));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              23, sizeof(cl_int), (void *)&base7));
+    clSafeCall(clSetKernelArg(OPS_instance::getOPSInstance()
+                                  ->opencl_instance->OPS_opencl_core.kernel[1],
+                              24, sizeof(cl_int), (void *)&x_size));
 
     // call/enque opencl kernel wrapper function
     clSafeCall(clEnqueueNDRangeKernel(
-        OPS_opencl_core.command_queue, OPS_opencl_core.kernel[1], 3, NULL,
-        globalWorkSize, localWorkSize, 0, NULL, NULL));
+        OPS_instance::getOPSInstance()
+            ->opencl_instance->OPS_opencl_core.command_queue,
+        OPS_instance::getOPSInstance()
+            ->opencl_instance->OPS_opencl_core.kernel[1],
+        3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL));
   }
-  if (OPS_diags > 1) {
-    clSafeCall(clFinish(OPS_opencl_core.command_queue));
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+    clSafeCall(clFinish(OPS_instance::getOPSInstance()
+                            ->opencl_instance->OPS_opencl_core.command_queue));
   }
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[1].time += t1 - t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[1].time += t1 - t2;
   }
 
   ops_set_dirtybit_device(args, 8);
@@ -369,17 +414,25 @@ void ops_par_loop_init_kernel(char const *name, ops_block block, int dim,
   ops_set_halo_dirtybit3(&args[6], range);
   ops_set_halo_dirtybit3(&args[7], range);
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[1].mpi_time += t2 - t1;
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    OPS_instance::getOPSInstance()->OPS_kernels[1].mpi_time += t2 - t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer +=
+        ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer +=
+        ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer +=
+        ops_compute_transfer(dim, start, end, &arg2);
+    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer +=
+        ops_compute_transfer(dim, start, end, &arg3);
+    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer +=
+        ops_compute_transfer(dim, start, end, &arg4);
+    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer +=
+        ops_compute_transfer(dim, start, end, &arg5);
+    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer +=
+        ops_compute_transfer(dim, start, end, &arg6);
+    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer +=
+        ops_compute_transfer(dim, start, end, &arg7);
   }
 }

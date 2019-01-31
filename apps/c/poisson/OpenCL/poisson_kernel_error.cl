@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,21 +45,13 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+xdim0_poisson_kernel_error*(y))
-#define OPS_ACC1(x,y) (x+xdim1_poisson_kernel_error*(y))
-
-
 //user function
-void poisson_kernel_error(const __global double * restrict u,const __global double * restrict ref, double * restrict err)
 
- {
-  *err = *err + (u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)])*(u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)]);
+void poisson_kernel_error(const ptr_double u,
+  const ptr_double ref,
+  double *err) {
+  *err = *err + (OPS_ACCS(u, 0,0)-OPS_ACCS(ref, 0,0))*(OPS_ACCS(u, 0,0)-OPS_ACCS(ref, 0,0));
 }
-
 
 
 __kernel void ops_poisson_kernel_error(
@@ -77,8 +73,10 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    poisson_kernel_error(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_poisson_kernel_error],
-                   &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_poisson_kernel_error],
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_poisson_kernel_error], xdim0_poisson_kernel_error};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_poisson_kernel_error], xdim1_poisson_kernel_error};
+    poisson_kernel_error(ptr0,
+                   ptr1,
                    arg2_l);
   }
   int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);

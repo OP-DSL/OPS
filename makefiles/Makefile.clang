@@ -7,3 +7,7 @@ else
 	CCFLAGS   := -O3 -std=c99 -fPIC -DUNIX -Wall -g #-ffloat-store
 	CXXFLAGS  := -O3 -fPIC -DUNIX -Wall -g
 endif
+OMPFLAGS=-fopenmp
+ifdef THREADED
+	THREADING_FLAGS ?= -fopenmp
+endif

@@ -45,7 +45,7 @@
 
 
 // OPS header file
-#include "ops_seq.h"
+#include "ops_seq_v2.h"
 
 // Cloverleaf constants
 #include "data.h"
@@ -133,7 +133,7 @@ void start();
 /******************************************************************************
 * Main program
 ******************************************************************************/
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
   /**-------------------------- OPS Initialisation --------------------------**/
 

@@ -5,6 +5,8 @@
 # OPS_COMPILER (gnu,intel,etc)
 #
 
+THREADED=1
+
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.common
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
@@ -20,7 +22,6 @@ OPS_FILES=multidim.cpp
 OPS_GENERATED=multidim_ops.cpp
 
 OTHER_FILES=
-
 
 APP=multidim
 MAIN_SRC=multidim

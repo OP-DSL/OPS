@@ -11,10 +11,10 @@
 #include <string.h> 
 #include <math.h>
 #define OPS_3D
-#include "ops_seq.h"
+#include "ops_seq_v2.h"
 #include "lowdim_kernels.h"
 
-int main(int argc, char **argv) 
+int main(int argc, const char **argv) 
 {
   // Initializing OPS 
   ops_init(argc,argv,1);
