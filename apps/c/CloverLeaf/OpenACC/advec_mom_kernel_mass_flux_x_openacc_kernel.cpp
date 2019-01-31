@@ -92,8 +92,8 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
   int y_size = MAX(0,end[1]-start[1]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
   if (xdim0 != xdim0_advec_mom_kernel_mass_flux_x_h || xdim1 != xdim1_advec_mom_kernel_mass_flux_x_h) {
     xdim0_advec_mom_kernel_mass_flux_x = xdim0;
     xdim0_advec_mom_kernel_mass_flux_x_h = xdim0;

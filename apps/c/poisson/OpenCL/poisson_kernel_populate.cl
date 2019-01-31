@@ -11,6 +11,7 @@
 
 #include "user_types.h"
 #define OPS_2D
+#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -46,7 +47,12 @@
 
 //user function
 
-void poisson_kernel_populate(const int *dispx, const int *dispy, const int *idx, ptr_double u, ptr_double f, ptr_double ref, const double dx, const double dy)
+void poisson_kernel_populate(const int *dispx,
+  const int *dispy,
+  const int *idx,
+  ptr_double u,
+  ptr_double f,
+  ptr_double ref, const double dx, const double dy)
 {
   double x = dx * (double)(idx[0]+dispx[0]);
   double y = dy * (double)(idx[1]+dispy[0]);

@@ -120,10 +120,10 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
   int y_size = MAX(0,end[1]-start[1]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
-  xdim2 = args[2].dat->size[0];
-  xdim3 = args[3].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
+  int xdim2 = args[2].dat->size[0];
+  int xdim3 = args[3].dat->size[0];
   if (xdim0 != xdim0_advec_cell_kernel2_xdir_h || xdim1 != xdim1_advec_cell_kernel2_xdir_h || xdim2 != xdim2_advec_cell_kernel2_xdir_h || xdim3 != xdim3_advec_cell_kernel2_xdir_h) {
     xdim0_advec_cell_kernel2_xdir = xdim0;
     xdim0_advec_cell_kernel2_xdir_h = xdim0;

@@ -976,6 +976,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
   config.depth = 0
   comm('header')
   code('#define OPS_API 2')
+  if NDIM==1:
+    code('#define OPS_1D')
   if NDIM==2:
     code('#define OPS_2D')
   if NDIM==3:

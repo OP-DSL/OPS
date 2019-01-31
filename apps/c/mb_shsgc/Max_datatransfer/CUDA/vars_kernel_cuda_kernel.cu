@@ -4,46 +4,28 @@
 __constant__ int dims_vars_kernel[5][1];
 static int dims_vars_kernel_h[5][1] = {0};
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
-#undef OPS_ACC_MD4
-
-#define OPS_ACC_MD0(d, x) ((x)*3 + (d))
-#define OPS_ACC_MD1(d, x) ((x)*3 + (d))
-#define OPS_ACC_MD2(d, x) ((x)*3 + (d))
-#define OPS_ACC_MD3(d, x) ((x)*3 + (d))
-#define OPS_ACC_MD4(d, x) ((x)*3 + (d))
 // user function
 __device__
 
     void
-    vars_kernel_gpu(const double *alam, const double *al, const double *gt,
-                    double *cmp, double *cf) {
+    vars_kernel_gpu(const ACC<double> &alam, const ACC<double> &al,
+                    const ACC<double> &gt, ACC<double> &cmp, ACC<double> &cf) {
   double anu, aaa, ga, qf, ww;
   for (int m = 0; m < 3; m++) {
-    anu = alam[OPS_ACC_MD0(m, 0)];
-    aaa = al[OPS_ACC_MD1(m, 0)];
-    ga = aaa * (gt[OPS_ACC_MD2(m, 1)] - gt[OPS_ACC_MD2(m, 0)]) /
-         (pow(aaa, 2.0) + del2);
+    anu = alam(m, 0);
+    aaa = al(m, 0);
+    ga = aaa * (gt(m, 1) - gt(m, 0)) / (pow(aaa, 2.0) + del2);
     qf = sqrt(con + pow(anu, 2.0));
-    cmp[OPS_ACC_MD3(m, 0)] = 0.50 * qf;
-    ww = anu + cmp[OPS_ACC_MD3(m, 0)] * ga;
+    cmp(m, 0) = 0.50 * qf;
+    ww = anu + cmp(m, 0) * ga;
     qf = sqrt(con + pow(ww, 2.0));
-    cf[OPS_ACC_MD4(m, 0)] = qf;
+    cf(m, 0) = qf;
   }
 }
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
-#undef OPS_ACC_MD4
-
-__global__ void ops_vars_kernel(const double *__restrict arg0,
-                                const double *__restrict arg1,
-                                const double *__restrict arg2,
+__global__ void ops_vars_kernel(double *__restrict arg0,
+                                double *__restrict arg1,
+                                double *__restrict arg2,
                                 double *__restrict arg3,
                                 double *__restrict arg4, int size0) {
 
@@ -56,7 +38,12 @@ __global__ void ops_vars_kernel(const double *__restrict arg0,
   arg4 += idx_x * 1 * 3;
 
   if (idx_x < size0) {
-    vars_kernel_gpu(arg0, arg1, arg2, arg3, arg4);
+    const ACC<double> argp0(3, dims_vars_kernel[0][0], arg0);
+    const ACC<double> argp1(3, dims_vars_kernel[1][0], arg1);
+    const ACC<double> argp2(3, dims_vars_kernel[2][0], arg2);
+    ACC<double> argp3(3, dims_vars_kernel[3][0], arg3);
+    ACC<double> argp4(3, dims_vars_kernel[4][0], arg4);
+    vars_kernel_gpu(argp0, argp1, argp2, argp3, argp4);
   }
 }
 
@@ -89,9 +76,9 @@ void ops_par_loop_vars_kernel_execute(ops_kernel_descriptor *desc) {
     return;
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(10, "vars_kernel");
-    OPS_kernels[10].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[10].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -140,14 +127,20 @@ void ops_par_loop_vars_kernel_execute(ops_kernel_descriptor *desc) {
 
   int x_size = MAX(0, end[0] - start[0]);
 
-  dim3 grid((x_size - 1) / OPS_block_size_x + 1, 1, 1);
-  dim3 tblock(OPS_block_size_x, 1, 1);
+  dim3 grid((x_size - 1) / OPS_instance::getOPSInstance()->OPS_block_size_x + 1,
+            1, 1);
+  dim3 tblock(OPS_instance::getOPSInstance()->OPS_block_size_x, 1, 1);
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
-  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
-  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
-  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
+  int dat0 = (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size
+                                                      : args[0].dat->elem_size);
+  int dat1 = (OPS_instance::getOPSInstance()->OPS_soa ? args[1].dat->type_size
+                                                      : args[1].dat->elem_size);
+  int dat2 = (OPS_instance::getOPSInstance()->OPS_soa ? args[2].dat->type_size
+                                                      : args[2].dat->elem_size);
+  int dat3 = (OPS_instance::getOPSInstance()->OPS_soa ? args[3].dat->type_size
+                                                      : args[3].dat->elem_size);
+  int dat4 = (OPS_instance::getOPSInstance()->OPS_soa ? args[4].dat->type_size
+                                                      : args[4].dat->elem_size);
 
   char *p_a[5];
 
@@ -177,9 +170,9 @@ void ops_par_loop_vars_kernel_execute(ops_kernel_descriptor *desc) {
   ops_halo_exchanges(args, 5, range);
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[10].mpi_time += t2 - t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[10].mpi_time += t2 - t1;
   }
 
   // call kernel wrapper function, passing in pointers to data
@@ -190,10 +183,10 @@ void ops_par_loop_vars_kernel_execute(ops_kernel_descriptor *desc) {
 
   cutilSafeCall(cudaGetLastError());
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);
-    OPS_kernels[10].time += t1 - t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[10].time += t1 - t2;
   }
 
 #ifndef OPS_LAZY
@@ -202,15 +195,20 @@ void ops_par_loop_vars_kernel_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[4], range);
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[10].mpi_time += t2 - t1;
-    OPS_kernels[10].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[10].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[10].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[10].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[10].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_instance::getOPSInstance()->OPS_kernels[10].mpi_time += t2 - t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[10].transfer +=
+        ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[10].transfer +=
+        ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[10].transfer +=
+        ops_compute_transfer(dim, start, end, &arg2);
+    OPS_instance::getOPSInstance()->OPS_kernels[10].transfer +=
+        ops_compute_transfer(dim, start, end, &arg3);
+    OPS_instance::getOPSInstance()->OPS_kernels[10].transfer +=
+        ops_compute_transfer(dim, start, end, &arg4);
   }
 }
 
@@ -245,7 +243,7 @@ void ops_par_loop_vars_kernel(char const *name, ops_block block, int dim,
   desc->args[4] = arg4;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->function = ops_par_loop_vars_kernel_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(10, "vars_kernel");
   }
   ops_enqueue_kernel(desc);

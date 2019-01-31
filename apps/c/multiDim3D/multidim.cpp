@@ -61,7 +61,7 @@ int main(int argc, const char **argv)
 
   // OPS initialisation
   ops_init(argc,argv,1);
-  OPS_soa = 1;
+  OPS_instance::getOPSInstance()->OPS_soa = 1;
 
   /**----------------------------OPS Declarations----------------------------**/
 

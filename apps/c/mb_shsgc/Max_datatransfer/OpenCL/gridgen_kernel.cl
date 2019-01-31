@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
+#define OPS_1D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,17 +44,12 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-
-#define OPS_ACC0(x) (x)
-
 // user function
-void gridgen_kernel(__global double *restrict x, const int *restrict id,
-                    const double dx, const double xt)
 
-{
+void gridgen_kernel(ptr_double x, const int *id, const double dx,
+                    const double xt) {
 
-  x[OPS_ACC0(0)] = xt + id[0] * dx;
+  OPS_ACCS(x, 0) = xt + id[0] * dx;
 }
 
 __kernel void ops_gridgen_kernel(__global double *restrict arg0,
@@ -63,6 +62,7 @@ __kernel void ops_gridgen_kernel(__global double *restrict arg0,
   int arg_idx[1];
   arg_idx[0] = arg_idx0 + idx_x;
   if (idx_x < size0) {
-    gridgen_kernel(&arg0[base0 + idx_x * 1 * 1], arg_idx, dx, xt);
+    ptr_double ptr0 = {&arg0[base0 + idx_x * 1 * 1]};
+    gridgen_kernel(ptr0, arg_idx, dx, xt);
   }
 }

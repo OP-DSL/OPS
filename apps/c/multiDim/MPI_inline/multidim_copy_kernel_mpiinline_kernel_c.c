@@ -36,6 +36,3 @@ void multidim_copy_kernel_c_wrapper(
     }
   }
 }
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1

@@ -4,41 +4,21 @@
 __constant__ int dims_residue_eval[6][1];
 static int dims_residue_eval_h[6][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-#define OPS_ACC3(x) (x)
-#define OPS_ACC4(x) (x)
-#define OPS_ACC5(x) (x)
-
 // user function
 __device__
 
     void
-    residue_eval_gpu(const double *der1, const double *der2, const double *der3,
-                     double *rho_res, double *rhou_res, double *rhoE_res) {
-  rho_res[OPS_ACC3(0)] = der1[OPS_ACC0(0)];
-  rhou_res[OPS_ACC4(0)] = der2[OPS_ACC1(0)];
-  rhoE_res[OPS_ACC5(0)] = der3[OPS_ACC2(0)];
+    residue_eval_gpu(const ACC<double> &der1, const ACC<double> &der2,
+                     const ACC<double> &der3, ACC<double> &rho_res,
+                     ACC<double> &rhou_res, ACC<double> &rhoE_res) {
+  rho_res(0) = der1(0);
+  rhou_res(0) = der2(0);
+  rhoE_res(0) = der3(0);
 }
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
 __global__ void
-ops_residue_eval(const double *__restrict arg0, const double *__restrict arg1,
-                 const double *__restrict arg2, double *__restrict arg3,
+ops_residue_eval(double *__restrict arg0, double *__restrict arg1,
+                 double *__restrict arg2, double *__restrict arg3,
                  double *__restrict arg4, double *__restrict arg5, int size0) {
 
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
@@ -51,7 +31,13 @@ ops_residue_eval(const double *__restrict arg0, const double *__restrict arg1,
   arg5 += idx_x * 1 * 1;
 
   if (idx_x < size0) {
-    residue_eval_gpu(arg0, arg1, arg2, arg3, arg4, arg5);
+    const ACC<double> argp0(arg0);
+    const ACC<double> argp1(arg1);
+    const ACC<double> argp2(arg2);
+    ACC<double> argp3(arg3);
+    ACC<double> argp4(arg4);
+    ACC<double> argp5(arg5);
+    residue_eval_gpu(argp0, argp1, argp2, argp3, argp4, argp5);
   }
 }
 
@@ -86,9 +72,9 @@ void ops_par_loop_residue_eval_execute(ops_kernel_descriptor *desc) {
     return;
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(5, "residue_eval");
-    OPS_kernels[5].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[5].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -142,15 +128,22 @@ void ops_par_loop_residue_eval_execute(ops_kernel_descriptor *desc) {
 
   int x_size = MAX(0, end[0] - start[0]);
 
-  dim3 grid((x_size - 1) / OPS_block_size_x + 1, 1, 1);
-  dim3 tblock(OPS_block_size_x, 1, 1);
+  dim3 grid((x_size - 1) / OPS_instance::getOPSInstance()->OPS_block_size_x + 1,
+            1, 1);
+  dim3 tblock(OPS_instance::getOPSInstance()->OPS_block_size_x, 1, 1);
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
-  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
-  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
-  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
-  int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
+  int dat0 = (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size
+                                                      : args[0].dat->elem_size);
+  int dat1 = (OPS_instance::getOPSInstance()->OPS_soa ? args[1].dat->type_size
+                                                      : args[1].dat->elem_size);
+  int dat2 = (OPS_instance::getOPSInstance()->OPS_soa ? args[2].dat->type_size
+                                                      : args[2].dat->elem_size);
+  int dat3 = (OPS_instance::getOPSInstance()->OPS_soa ? args[3].dat->type_size
+                                                      : args[3].dat->elem_size);
+  int dat4 = (OPS_instance::getOPSInstance()->OPS_soa ? args[4].dat->type_size
+                                                      : args[4].dat->elem_size);
+  int dat5 = (OPS_instance::getOPSInstance()->OPS_soa ? args[5].dat->type_size
+                                                      : args[5].dat->elem_size);
 
   char *p_a[6];
 
@@ -184,9 +177,9 @@ void ops_par_loop_residue_eval_execute(ops_kernel_descriptor *desc) {
   ops_halo_exchanges(args, 6, range);
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[5].mpi_time += t2 - t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[5].mpi_time += t2 - t1;
   }
 
   // call kernel wrapper function, passing in pointers to data
@@ -197,10 +190,10 @@ void ops_par_loop_residue_eval_execute(ops_kernel_descriptor *desc) {
 
   cutilSafeCall(cudaGetLastError());
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);
-    OPS_kernels[5].time += t1 - t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[5].time += t1 - t2;
   }
 
 #ifndef OPS_LAZY
@@ -210,16 +203,22 @@ void ops_par_loop_residue_eval_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[5], range);
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[5].mpi_time += t2 - t1;
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_instance::getOPSInstance()->OPS_kernels[5].mpi_time += t2 - t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[5].transfer +=
+        ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[5].transfer +=
+        ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[5].transfer +=
+        ops_compute_transfer(dim, start, end, &arg2);
+    OPS_instance::getOPSInstance()->OPS_kernels[5].transfer +=
+        ops_compute_transfer(dim, start, end, &arg3);
+    OPS_instance::getOPSInstance()->OPS_kernels[5].transfer +=
+        ops_compute_transfer(dim, start, end, &arg4);
+    OPS_instance::getOPSInstance()->OPS_kernels[5].transfer +=
+        ops_compute_transfer(dim, start, end, &arg5);
   }
 }
 
@@ -257,7 +256,7 @@ void ops_par_loop_residue_eval(char const *name, ops_block block, int dim,
   desc->args[5] = arg5;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg5.dat->index;
   desc->function = ops_par_loop_residue_eval_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(5, "residue_eval");
   }
   ops_enqueue_kernel(desc);

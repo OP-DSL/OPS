@@ -4,28 +4,19 @@
 __constant__ int dims_fact_kernel[2][1];
 static int dims_fact_kernel_h[2][1] = {0};
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-
-#define OPS_ACC_MD0(d, x) ((x)*3 + (d))
-#define OPS_ACC_MD1(d, x) ((x)*3 + (d))
 // user function
 __device__
 
     void
-    fact_kernel_gpu(const double *eff, double *s) {
+    fact_kernel_gpu(const ACC<double> &eff, ACC<double> &s) {
   double fact;
   for (int m = 0; m < 3; m++) {
     fact = 0.50 * dt / dx;
-    s[OPS_ACC_MD1(m, 0)] =
-        -fact * (eff[OPS_ACC_MD0(m, 0)] - eff[OPS_ACC_MD0(m, -1)]);
+    s(m, 0) = -fact * (eff(m, 0) - eff(m, -1));
   }
 }
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-
-__global__ void ops_fact_kernel(const double *__restrict arg0,
+__global__ void ops_fact_kernel(double *__restrict arg0,
                                 double *__restrict arg1, int size0) {
 
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
@@ -34,7 +25,9 @@ __global__ void ops_fact_kernel(const double *__restrict arg0,
   arg1 += idx_x * 1 * 3;
 
   if (idx_x < size0) {
-    fact_kernel_gpu(arg0, arg1);
+    const ACC<double> argp0(3, dims_fact_kernel[0][0], arg0);
+    ACC<double> argp1(3, dims_fact_kernel[1][0], arg1);
+    fact_kernel_gpu(argp0, argp1);
   }
 }
 
@@ -63,9 +56,9 @@ void ops_par_loop_fact_kernel_execute(ops_kernel_descriptor *desc) {
     return;
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(12, "fact_kernel");
-    OPS_kernels[12].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[12].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -106,11 +99,14 @@ void ops_par_loop_fact_kernel_execute(ops_kernel_descriptor *desc) {
 
   int x_size = MAX(0, end[0] - start[0]);
 
-  dim3 grid((x_size - 1) / OPS_block_size_x + 1, 1, 1);
-  dim3 tblock(OPS_block_size_x, 1, 1);
+  dim3 grid((x_size - 1) / OPS_instance::getOPSInstance()->OPS_block_size_x + 1,
+            1, 1);
+  dim3 tblock(OPS_instance::getOPSInstance()->OPS_block_size_x, 1, 1);
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat0 = (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size
+                                                      : args[0].dat->elem_size);
+  int dat1 = (OPS_instance::getOPSInstance()->OPS_soa ? args[1].dat->type_size
+                                                      : args[1].dat->elem_size);
 
   char *p_a[2];
 
@@ -128,9 +124,9 @@ void ops_par_loop_fact_kernel_execute(ops_kernel_descriptor *desc) {
   ops_halo_exchanges(args, 2, range);
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[12].mpi_time += t2 - t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[12].mpi_time += t2 - t1;
   }
 
   // call kernel wrapper function, passing in pointers to data
@@ -140,10 +136,10 @@ void ops_par_loop_fact_kernel_execute(ops_kernel_descriptor *desc) {
 
   cutilSafeCall(cudaGetLastError());
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);
-    OPS_kernels[12].time += t1 - t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[12].time += t1 - t2;
   }
 
 #ifndef OPS_LAZY
@@ -151,12 +147,14 @@ void ops_par_loop_fact_kernel_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[1], range);
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[12].mpi_time += t2 - t1;
-    OPS_kernels[12].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[12].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[12].mpi_time += t2 - t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[12].transfer +=
+        ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[12].transfer +=
+        ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 
@@ -184,7 +182,7 @@ void ops_par_loop_fact_kernel(char const *name, ops_block block, int dim,
   desc->args[1] = arg1;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->function = ops_par_loop_fact_kernel_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(12, "fact_kernel");
   }
   ops_enqueue_kernel(desc);

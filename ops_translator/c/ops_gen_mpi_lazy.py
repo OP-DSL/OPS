@@ -333,11 +333,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     comm("initialize global variable with the dimension of dats")
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if NDIM>1:
+        if NDIM>1 or (NDIM==1 and (not dims[n].isdigit() or int(dims[n])>1)):
           code('int xdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
-        if NDIM>2 or (NDIM==2 and soa_set):
+        if NDIM>2 or (NDIM==2 and (not dims[n].isdigit() or int(dims[n])>1)):
           code('int ydim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[1];')
-        if NDIM>3 or (NDIM==3 and soa_set):
+        if NDIM>3 or (NDIM==3 and (not dims[n].isdigit() or int(dims[n])>1)):
           code('int zdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[2];')
 
 
@@ -425,19 +425,12 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     if NDIM>1:
       FOR('n_y','start[1]','end[1]')
 
-      if arg_idx <> -1:
-        if NDIM==1:
-          code('int '+clean_type(arg_list[arg_idx])+'[] = {0};')
-        elif NDIM==2:
-          code('int '+clean_type(arg_list[arg_idx])+'[] = {0, arg_idx[1]+n_y};')
-        elif NDIM==3:
-          code('int '+clean_type(arg_list[arg_idx])+'[] = {0, arg_idx[1]+n_y, arg_idx[2]+n_z};')
-      code('#ifdef __INTEL_COMPILER')
     line3 = ''
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
         line3 = line3 +arg_list[n]+','
     if NDIM>1:
+      code('#ifdef __INTEL_COMPILER')
       code('#pragma loop_count(10000)')
       code('#pragma omp simd'+line) #+' aligned('+clean_type(line3[:-1])+')')
       code('#elif defined(__clang__)')
@@ -450,7 +443,12 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       code('#endif')
     FOR('n_x','start[0]','end[0]')
     if arg_idx <> -1:
-      code(clean_type(arg_list[arg_idx])+'[0] = arg_idx[0]+n_x;')
+      if NDIM==1:
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_x};')
+      elif NDIM==2:
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_x, arg_idx[1]+n_y};')
+      elif NDIM==3:
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_x, arg_idx[1]+n_y, arg_idx[2]+n_z};')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -634,6 +632,8 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
   config.depth = 0
   config.file_text =''
   comm('header')
+  if NDIM==1:
+    code('#define OPS_1D')
   if NDIM==2:
     code('#define OPS_2D')
   if NDIM==3:

@@ -21,7 +21,7 @@ void ops_par_loop_write_kernel(char const *, ops_block, int, int *, ops_arg,
 
 //#include "write_kernel.h"
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
 
   ops_init(argc, argv, 5);
   ops_init_backend();

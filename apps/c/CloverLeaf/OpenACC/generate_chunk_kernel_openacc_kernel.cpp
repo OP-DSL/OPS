@@ -176,14 +176,14 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   int y_size = MAX(0,end[1]-start[1]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
-  xdim2 = args[2].dat->size[0];
-  xdim3 = args[3].dat->size[0];
-  xdim4 = args[4].dat->size[0];
-  xdim5 = args[5].dat->size[0];
-  xdim6 = args[6].dat->size[0];
-  xdim7 = args[7].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
+  int xdim2 = args[2].dat->size[0];
+  int xdim3 = args[3].dat->size[0];
+  int xdim4 = args[4].dat->size[0];
+  int xdim5 = args[5].dat->size[0];
+  int xdim6 = args[6].dat->size[0];
+  int xdim7 = args[7].dat->size[0];
   if (xdim0 != xdim0_generate_chunk_kernel_h || xdim1 != xdim1_generate_chunk_kernel_h || xdim2 != xdim2_generate_chunk_kernel_h || xdim3 != xdim3_generate_chunk_kernel_h || xdim4 != xdim4_generate_chunk_kernel_h || xdim5 != xdim5_generate_chunk_kernel_h || xdim6 != xdim6_generate_chunk_kernel_h || xdim7 != xdim7_generate_chunk_kernel_h) {
     xdim0_generate_chunk_kernel = xdim0;
     xdim0_generate_chunk_kernel_h = xdim0;

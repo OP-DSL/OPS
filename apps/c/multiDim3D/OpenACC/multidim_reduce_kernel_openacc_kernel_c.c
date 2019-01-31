@@ -9,8 +9,10 @@ int ydim0_multidim_reduce_kernel;
 int zdim0_multidim_reduce_kernel;
 
 //user function
+#pragma acc routine
 inline 
-void multidim_reduce_kernel(const ptrm_double val, double *redu_dat1) {
+void multidim_reduce_kernel(const ptrm_double val,
+  double *redu_dat1) {
 
   redu_dat1[0] = redu_dat1[0] + OPS_ACC(val, 0,0,0,0);
   redu_dat1[1] = redu_dat1[1] + OPS_ACC(val, 1,0,0,0);

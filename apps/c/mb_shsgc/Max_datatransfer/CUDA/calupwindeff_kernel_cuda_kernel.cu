@@ -4,67 +4,31 @@
 __constant__ int dims_calupwindeff_kernel[7][1];
 static int dims_calupwindeff_kernel_h[7][1] = {0};
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
-#undef OPS_ACC_MD4
-#undef OPS_ACC_MD5
-#undef OPS_ACC_MD6
-
-#define OPS_ACC_MD0(d, x) ((x)*3 + (d))
-#define OPS_ACC_MD1(d, x) ((x)*3 + (d))
-#define OPS_ACC_MD2(d, x) ((x)*3 + (d))
-#define OPS_ACC_MD3(d, x) ((x)*3 + (d))
-#define OPS_ACC_MD4(d, x) ((x)*3 + (d))
-#define OPS_ACC_MD5(d, x) ((x)*9 + (d))
-#define OPS_ACC_MD6(d, x) ((x)*3 + (d))
 // user function
 __device__
 
     void
-    calupwindeff_kernel_gpu(const double *cmp, const double *gt,
-                            const double *cf, const double *al,
-                            const double *ep2, const double *r, double *eff) {
-  double e1 = (cmp[OPS_ACC_MD0(0, 0)] *
-                   (gt[OPS_ACC_MD1(0, 0)] + gt[OPS_ACC_MD1(0, 1)]) -
-               cf[OPS_ACC_MD2(0, 0)] * al[OPS_ACC_MD3(0, 0)]) *
-              ep2[OPS_ACC_MD4(0, 0)];
-  double e2 = (cmp[OPS_ACC_MD0(1, 0)] *
-                   (gt[OPS_ACC_MD1(1, 0)] + gt[OPS_ACC_MD1(1, 1)]) -
-               cf[OPS_ACC_MD2(1, 0)] * al[OPS_ACC_MD3(1, 0)]) *
-              ep2[OPS_ACC_MD4(1, 0)];
-  double e3 = (cmp[OPS_ACC_MD0(2, 0)] *
-                   (gt[OPS_ACC_MD1(2, 0)] + gt[OPS_ACC_MD1(2, 1)]) -
-               cf[OPS_ACC_MD2(2, 0)] * al[OPS_ACC_MD3(2, 0)]) *
-              ep2[OPS_ACC_MD4(2, 0)];
+    calupwindeff_kernel_gpu(const ACC<double> &cmp, const ACC<double> &gt,
+                            const ACC<double> &cf, const ACC<double> &al,
+                            const ACC<double> &ep2, const ACC<double> &r,
+                            ACC<double> &eff) {
+  double e1 =
+      (cmp(0, 0) * (gt(0, 0) + gt(0, 1)) - cf(0, 0) * al(0, 0)) * ep2(0, 0);
+  double e2 =
+      (cmp(1, 0) * (gt(1, 0) + gt(1, 1)) - cf(1, 0) * al(1, 0)) * ep2(1, 0);
+  double e3 =
+      (cmp(2, 0) * (gt(2, 0) + gt(2, 1)) - cf(2, 0) * al(2, 0)) * ep2(2, 0);
 
-  eff[OPS_ACC_MD6(0, 0)] = e1 * r[OPS_ACC_MD5(0, 0)] +
-                           e2 * r[OPS_ACC_MD5(1, 0)] +
-                           e3 * r[OPS_ACC_MD5(2, 0)];
-  eff[OPS_ACC_MD6(1, 0)] = e1 * r[OPS_ACC_MD5(3, 0)] +
-                           e2 * r[OPS_ACC_MD5(4, 0)] +
-                           e3 * r[OPS_ACC_MD5(5, 0)];
-  eff[OPS_ACC_MD6(2, 0)] = e1 * r[OPS_ACC_MD5(6, 0)] +
-                           e2 * r[OPS_ACC_MD5(7, 0)] +
-                           e3 * r[OPS_ACC_MD5(8, 0)];
+  eff(0, 0) = e1 * r(0, 0) + e2 * r(1, 0) + e3 * r(2, 0);
+  eff(1, 0) = e1 * r(3, 0) + e2 * r(4, 0) + e3 * r(5, 0);
+  eff(2, 0) = e1 * r(6, 0) + e2 * r(7, 0) + e3 * r(8, 0);
 }
 
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
-#undef OPS_ACC_MD4
-#undef OPS_ACC_MD5
-#undef OPS_ACC_MD6
-
-__global__ void ops_calupwindeff_kernel(const double *__restrict arg0,
-                                        const double *__restrict arg1,
-                                        const double *__restrict arg2,
-                                        const double *__restrict arg3,
-                                        const double *__restrict arg4,
-                                        const double *__restrict arg5,
-                                        double *__restrict arg6, int size0) {
+__global__ void
+ops_calupwindeff_kernel(double *__restrict arg0, double *__restrict arg1,
+                        double *__restrict arg2, double *__restrict arg3,
+                        double *__restrict arg4, double *__restrict arg5,
+                        double *__restrict arg6, int size0) {
 
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -77,7 +41,14 @@ __global__ void ops_calupwindeff_kernel(const double *__restrict arg0,
   arg6 += idx_x * 1 * 3;
 
   if (idx_x < size0) {
-    calupwindeff_kernel_gpu(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+    const ACC<double> argp0(3, dims_calupwindeff_kernel[0][0], arg0);
+    const ACC<double> argp1(3, dims_calupwindeff_kernel[1][0], arg1);
+    const ACC<double> argp2(3, dims_calupwindeff_kernel[2][0], arg2);
+    const ACC<double> argp3(3, dims_calupwindeff_kernel[3][0], arg3);
+    const ACC<double> argp4(3, dims_calupwindeff_kernel[4][0], arg4);
+    const ACC<double> argp5(9, dims_calupwindeff_kernel[5][0], arg5);
+    ACC<double> argp6(3, dims_calupwindeff_kernel[6][0], arg6);
+    calupwindeff_kernel_gpu(argp0, argp1, argp2, argp3, argp4, argp5, argp6);
   }
 }
 
@@ -114,9 +85,9 @@ void ops_par_loop_calupwindeff_kernel_execute(ops_kernel_descriptor *desc) {
     return;
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(11, "calupwindeff_kernel");
-    OPS_kernels[11].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[11].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -174,16 +145,24 @@ void ops_par_loop_calupwindeff_kernel_execute(ops_kernel_descriptor *desc) {
 
   int x_size = MAX(0, end[0] - start[0]);
 
-  dim3 grid((x_size - 1) / OPS_block_size_x + 1, 1, 1);
-  dim3 tblock(OPS_block_size_x, 1, 1);
+  dim3 grid((x_size - 1) / OPS_instance::getOPSInstance()->OPS_block_size_x + 1,
+            1, 1);
+  dim3 tblock(OPS_instance::getOPSInstance()->OPS_block_size_x, 1, 1);
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
-  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
-  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
-  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
-  int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
-  int dat6 = (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size);
+  int dat0 = (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size
+                                                      : args[0].dat->elem_size);
+  int dat1 = (OPS_instance::getOPSInstance()->OPS_soa ? args[1].dat->type_size
+                                                      : args[1].dat->elem_size);
+  int dat2 = (OPS_instance::getOPSInstance()->OPS_soa ? args[2].dat->type_size
+                                                      : args[2].dat->elem_size);
+  int dat3 = (OPS_instance::getOPSInstance()->OPS_soa ? args[3].dat->type_size
+                                                      : args[3].dat->elem_size);
+  int dat4 = (OPS_instance::getOPSInstance()->OPS_soa ? args[4].dat->type_size
+                                                      : args[4].dat->elem_size);
+  int dat5 = (OPS_instance::getOPSInstance()->OPS_soa ? args[5].dat->type_size
+                                                      : args[5].dat->elem_size);
+  int dat6 = (OPS_instance::getOPSInstance()->OPS_soa ? args[6].dat->type_size
+                                                      : args[6].dat->elem_size);
 
   char *p_a[7];
 
@@ -221,9 +200,9 @@ void ops_par_loop_calupwindeff_kernel_execute(ops_kernel_descriptor *desc) {
   ops_halo_exchanges(args, 7, range);
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[11].mpi_time += t2 - t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[11].mpi_time += t2 - t1;
   }
 
   // call kernel wrapper function, passing in pointers to data
@@ -234,10 +213,10 @@ void ops_par_loop_calupwindeff_kernel_execute(ops_kernel_descriptor *desc) {
 
   cutilSafeCall(cudaGetLastError());
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);
-    OPS_kernels[11].time += t1 - t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[11].time += t1 - t2;
   }
 
 #ifndef OPS_LAZY
@@ -245,17 +224,24 @@ void ops_par_loop_calupwindeff_kernel_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[6], range);
 #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[11].mpi_time += t2 - t1;
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    OPS_instance::getOPSInstance()->OPS_kernels[11].mpi_time += t2 - t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[11].transfer +=
+        ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[11].transfer +=
+        ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[11].transfer +=
+        ops_compute_transfer(dim, start, end, &arg2);
+    OPS_instance::getOPSInstance()->OPS_kernels[11].transfer +=
+        ops_compute_transfer(dim, start, end, &arg3);
+    OPS_instance::getOPSInstance()->OPS_kernels[11].transfer +=
+        ops_compute_transfer(dim, start, end, &arg4);
+    OPS_instance::getOPSInstance()->OPS_kernels[11].transfer +=
+        ops_compute_transfer(dim, start, end, &arg5);
+    OPS_instance::getOPSInstance()->OPS_kernels[11].transfer +=
+        ops_compute_transfer(dim, start, end, &arg6);
   }
 }
 
@@ -296,7 +282,7 @@ void ops_par_loop_calupwindeff_kernel(char const *name, ops_block block,
   desc->args[6] = arg6;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg6.dat->index;
   desc->function = ops_par_loop_calupwindeff_kernel_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(11, "calupwindeff_kernel");
   }
   ops_enqueue_kernel(desc);

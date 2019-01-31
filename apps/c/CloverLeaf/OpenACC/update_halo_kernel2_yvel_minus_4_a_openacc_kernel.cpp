@@ -111,8 +111,8 @@ void ops_par_loop_update_halo_kernel2_yvel_minus_4_a(char const *name, ops_block
   int y_size = MAX(0,end[1]-start[1]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
   if (xdim0 != xdim0_update_halo_kernel2_yvel_minus_4_a_h || xdim1 != xdim1_update_halo_kernel2_yvel_minus_4_a_h) {
     xdim0_update_halo_kernel2_yvel_minus_4_a = xdim0;
     xdim0_update_halo_kernel2_yvel_minus_4_a_h = xdim0;

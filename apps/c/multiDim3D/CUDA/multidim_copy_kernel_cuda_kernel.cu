@@ -7,7 +7,8 @@ static int dims_multidim_copy_kernel_h [2][3] = {0};
 //user function
 __device__
 
-void multidim_copy_kernel_gpu(const ACC<double> &src, ACC<double> &dest){
+void multidim_copy_kernel_gpu(const ACC<double> &src,
+  ACC<double> &dest){
   dest(0,0,0,0) = src(0,0,0,0);
   dest(1,0,0,0) = src(1,0,0,0);
   dest(2,0,0,0) = src(2,0,0,0);
@@ -64,9 +65,9 @@ void ops_par_loop_multidim_copy_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,2,range,1)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(1,"multidim_copy_kernel");
-    OPS_kernels[1].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[1].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -115,13 +116,13 @@ void ops_par_loop_multidim_copy_kernel_execute(ops_kernel_descriptor *desc) {
   int y_size = MAX(0,end[1]-start[1]);
   int z_size = MAX(0,end[2]-start[2]);
 
-  dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, (z_size-1)/OPS_block_size_z +1);
-  dim3 tblock(OPS_block_size_x,OPS_block_size_y,OPS_block_size_z);
+  dim3 grid( (x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1, (y_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_y + 1, (z_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_z +1);
+  dim3 tblock(OPS_instance::getOPSInstance()->OPS_block_size_x,OPS_instance::getOPSInstance()->OPS_block_size_y,OPS_instance::getOPSInstance()->OPS_block_size_z);
 
 
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat0 = (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_instance::getOPSInstance()->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   char *p_a[2];
 
@@ -154,9 +155,9 @@ void ops_par_loop_multidim_copy_kernel_execute(ops_kernel_descriptor *desc) {
   ops_halo_exchanges(args,2,range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[1].mpi_time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[1].mpi_time += t2-t1;
   }
 
 
@@ -166,10 +167,10 @@ void ops_par_loop_multidim_copy_kernel_execute(ops_kernel_descriptor *desc) {
 
   cutilSafeCall(cudaGetLastError());
 
-  if (OPS_diags>1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
-    OPS_kernels[1].time += t1-t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[1].time += t1-t2;
   }
 
   #ifndef OPS_LAZY
@@ -177,12 +178,12 @@ void ops_par_loop_multidim_copy_kernel_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[1],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[1].mpi_time += t2-t1;
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_instance::getOPSInstance()->OPS_kernels[1].mpi_time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 
@@ -209,7 +210,7 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   desc->args[1] = arg1;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->function = ops_par_loop_multidim_copy_kernel_execute;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(1,"multidim_copy_kernel");
   }
   ops_enqueue_kernel(desc);

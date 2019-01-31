@@ -440,12 +440,15 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
           sizelist = sizelist + dimlabels[i-1]+'dim'+str(n)+'_'+name+', '
         extradim = dimlabels[NDIM+extradim-2]+'dim'+str(n)+'_'+name
         if dim == '':
-          code(pre+'ptr_'+typs[n]+' ptr'+str(n)+' = { '+text+', '+sizelist[:-2]+'};')
+          if NDIM==1:
+            code(pre+'ptr_'+typs[n]+' ptr'+str(n)+' = { '+text+' };')
+          else:
+            code(pre+'ptr_'+typs[n]+' ptr'+str(n)+' = { '+text+', '+sizelist[:-2]+'};')
         else:
           code('#ifdef OPS_SOA')
           code(pre+'ptrm_'+typs[n]+' ptr'+str(n)+' = { '+text+', '+sizelist + extradim+'};')
           code('#else')
-          code(pre+'ptrm_'+typs[n]+' ptr'+str(n)+' = { '+text+', '+sizelist[:-2]+', '+dim+'};')
+          code(pre+'ptrm_'+typs[n]+' ptr'+str(n)+' = { '+text+', '+sizelist+dim+'};')
           code('#endif')
 
 
@@ -1086,6 +1089,8 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
   config.file_text =''
   comm('header')
   code('#define OPS_API 2')
+  if NDIM==1:
+    code('#define OPS_1D')
   if NDIM==2:
     code('#define OPS_2D')
   if NDIM==3:

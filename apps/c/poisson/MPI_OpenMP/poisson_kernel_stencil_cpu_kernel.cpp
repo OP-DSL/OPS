@@ -119,8 +119,6 @@ void ops_par_loop_poisson_kernel_stencil_execute(ops_kernel_descriptor *desc) {
     OPS_instance::getOPSInstance()->OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 #ifdef OPS_LAZY

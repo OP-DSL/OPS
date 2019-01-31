@@ -7,7 +7,12 @@ static int dims_poisson_kernel_populate_h [6][1] = {0};
 //user function
 __device__
 
-void poisson_kernel_populate_gpu(const int *dispx, const int *dispy, const int *idx, ACC<double> &u, ACC<double> &f, ACC<double> &ref) {
+void poisson_kernel_populate_gpu(const int *dispx,
+  const int *dispy,
+  const int *idx,
+  ACC<double> &u,
+  ACC<double> &f,
+  ACC<double> &ref) {
   double x = dx * (double)(idx[0]+dispx[0]);
   double y = dy * (double)(idx[1]+dispy[0]);
 

@@ -7,7 +7,8 @@ static int dims_poisson_kernel_update_h [2][1] = {0};
 //user function
 __device__
 
-void poisson_kernel_update_gpu(const ACC<double> &u2, ACC<double> &u) {
+void poisson_kernel_update_gpu(const ACC<double> &u2,
+  ACC<double> &u) {
   u(0,0) = u2(0,0);
 }
 

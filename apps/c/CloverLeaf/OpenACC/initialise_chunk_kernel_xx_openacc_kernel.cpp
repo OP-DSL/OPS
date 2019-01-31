@@ -82,7 +82,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
   int y_size = MAX(0,end[1]-start[1]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
   if (xdim0 != xdim0_initialise_chunk_kernel_xx_h) {
     xdim0_initialise_chunk_kernel_xx = xdim0;
     xdim0_initialise_chunk_kernel_xx_h = xdim0;

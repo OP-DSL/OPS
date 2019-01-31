@@ -176,14 +176,14 @@ void ops_par_loop_advec_cell_kernel3_xdir(char const *name, ops_block block, int
   int y_size = MAX(0,end[1]-start[1]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
-  xdim2 = args[2].dat->size[0];
-  xdim3 = args[3].dat->size[0];
-  xdim4 = args[4].dat->size[0];
-  xdim5 = args[5].dat->size[0];
-  xdim6 = args[6].dat->size[0];
-  xdim7 = args[7].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
+  int xdim2 = args[2].dat->size[0];
+  int xdim3 = args[3].dat->size[0];
+  int xdim4 = args[4].dat->size[0];
+  int xdim5 = args[5].dat->size[0];
+  int xdim6 = args[6].dat->size[0];
+  int xdim7 = args[7].dat->size[0];
   if (xdim0 != xdim0_advec_cell_kernel3_xdir_h || xdim1 != xdim1_advec_cell_kernel3_xdir_h || xdim2 != xdim2_advec_cell_kernel3_xdir_h || xdim3 != xdim3_advec_cell_kernel3_xdir_h || xdim4 != xdim4_advec_cell_kernel3_xdir_h || xdim5 != xdim5_advec_cell_kernel3_xdir_h || xdim6 != xdim6_advec_cell_kernel3_xdir_h || xdim7 != xdim7_advec_cell_kernel3_xdir_h) {
     xdim0_advec_cell_kernel3_xdir = xdim0;
     xdim0_advec_cell_kernel3_xdir_h = xdim0;

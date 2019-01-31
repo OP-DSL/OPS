@@ -47,5 +47,3 @@ void multidim_reduce_kernel_c_wrapper(
   redu_dat1_g[1] = redu_dat1_1;
   redu_dat1_g[2] = redu_dat1_2;
 }
-
-#undef OPS_ACC_MD0

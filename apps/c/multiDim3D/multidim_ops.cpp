@@ -47,7 +47,7 @@ int main(int argc, const char **argv)
 
   ops_init(argc,argv,1);
   ops_init_backend();
-  OPS_soa = 1;
+  OPS_instance::getOPSInstance()->OPS_soa = 1;
 
 
   ops_block grid3D = ops_decl_block(3, "grid3D");

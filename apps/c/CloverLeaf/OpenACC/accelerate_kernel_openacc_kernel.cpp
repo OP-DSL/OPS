@@ -218,17 +218,17 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim, 
   int y_size = MAX(0,end[1]-start[1]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
-  xdim2 = args[2].dat->size[0];
-  xdim3 = args[3].dat->size[0];
-  xdim4 = args[4].dat->size[0];
-  xdim5 = args[5].dat->size[0];
-  xdim6 = args[6].dat->size[0];
-  xdim7 = args[7].dat->size[0];
-  xdim8 = args[8].dat->size[0];
-  xdim9 = args[9].dat->size[0];
-  xdim10 = args[10].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
+  int xdim2 = args[2].dat->size[0];
+  int xdim3 = args[3].dat->size[0];
+  int xdim4 = args[4].dat->size[0];
+  int xdim5 = args[5].dat->size[0];
+  int xdim6 = args[6].dat->size[0];
+  int xdim7 = args[7].dat->size[0];
+  int xdim8 = args[8].dat->size[0];
+  int xdim9 = args[9].dat->size[0];
+  int xdim10 = args[10].dat->size[0];
   if (xdim0 != xdim0_accelerate_kernel_h || xdim1 != xdim1_accelerate_kernel_h || xdim2 != xdim2_accelerate_kernel_h || xdim3 != xdim3_accelerate_kernel_h || xdim4 != xdim4_accelerate_kernel_h || xdim5 != xdim5_accelerate_kernel_h || xdim6 != xdim6_accelerate_kernel_h || xdim7 != xdim7_accelerate_kernel_h || xdim8 != xdim8_accelerate_kernel_h || xdim9 != xdim9_accelerate_kernel_h || xdim10 != xdim10_accelerate_kernel_h) {
     xdim0_accelerate_kernel = xdim0;
     xdim0_accelerate_kernel_h = xdim0;

@@ -33,9 +33,9 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
   if (!ops_checkpointing_before(args,2,range,0)) return;
   #endif
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timing_realloc(0,"multidim_kernel");
-    OPS_kernels[0].count++;
+    OPS_instance::getOPSInstance()->OPS_kernels[0].count++;
   }
 
   //compute localy allocated range for the sub-block
@@ -63,7 +63,7 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
   }
 
@@ -77,14 +77,14 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
   }
 
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat0 = (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0+ (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0+ (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
-  base0 = base0+ (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  base0 = base0+ (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     args[0].dat->size[1] *
     start[2] * args[0].stencil->stride[2];
@@ -97,9 +97,9 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
   ops_H_D_exchanges_host(args, 2);
   ops_halo_exchanges(args,2,range);
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[0].mpi_time += t1-t2;
+    OPS_instance::getOPSInstance()->OPS_kernels[0].mpi_time += t1-t2;
   }
 
   multidim_kernel_c_wrapper(
@@ -108,15 +108,15 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
     arg_idx[0], arg_idx[1], arg_idx[2],
     x_size, y_size, z_size);
 
-  if (OPS_diags > 1) {
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[0].time += t2-t1;
+    OPS_instance::getOPSInstance()->OPS_kernels[0].time += t2-t1;
   }
   ops_set_dirtybit_host(args, 2);
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  if (OPS_diags > 1) {
-    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+    OPS_instance::getOPSInstance()->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

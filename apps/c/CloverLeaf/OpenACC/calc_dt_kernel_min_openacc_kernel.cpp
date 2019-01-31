@@ -85,7 +85,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   int y_size = MAX(0,end[1]-start[1]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
   if (xdim0 != xdim0_calc_dt_kernel_min_h) {
     xdim0_calc_dt_kernel_min = xdim0;
     xdim0_calc_dt_kernel_min_h = xdim0;
