@@ -11,6 +11,8 @@
 #include "ops_mpi_core.h"
 #endif
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
 static int arg_idx[OPS_MAX_DIM];
 
 inline int mult(int* size, int dim)
@@ -304,9 +306,27 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
   (void) std::initializer_list<int>{
     (param_handler<param_remove_cvref_t<ParamType>>::free(p_a[I]),0)...};
 }
-//
-// ops_par_loop routine wrapper to create index sequence
-//
+
+#endif /*DOXYGEN_SHOULD_SKIP_THIS*/
+
+/**
+ * Performs a parallel loop, executing the user-defined function kernel,
+ * passing data as specified by the list arguments. The iteration space
+ * is dim dimensional, and the bounds are specified by range
+ *
+ * Arguments to kernel are passed through as ACC<datatype>& references
+ * for ops_dats, and need to be accessed with the overloaded () operator.
+ * For other types of arguments, pointers are passed that can be
+ * dereferenced directly 
+ *
+ * @param kernel   user kernel, #of arguments must match the ops_arg parameters
+ * @param name     a name for the parallel loop
+ * @param block    the ops_block to iterate on
+ * @param dim      dimensionality of the block
+ * @param range    loop bounds in the following order: {dim0_lower,
+ *                 dim0_upper_exclusive, dim1_lower, ...}
+ * @param arguments a list of ops_arg arguments
+ */
 template <typename... ParamType, typename... OPSARG>
 void ops_par_loop(void (*kernel)(ParamType...), char const *name,
                   ops_block block, int dim, int *range,
