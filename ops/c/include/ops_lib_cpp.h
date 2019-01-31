@@ -285,6 +285,22 @@ template <class T> void ops_mpi_reduce(ops_arg *args, T *data) {
 #define __device__ 
 #endif
 
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
+
+/**
+ * This class is an accessor to data stored in ops_dats. It is
+ * only to be used in user kernels and functions called from within 
+ * user kernels. The user should never explicitly construct such an 
+ * object, these are constucted by OPS and passed by reference to 
+ * the user kernel.
+ *
+ * Data can be accessed using the overloaded () operator - with as many
+ * arguments as many dimensional the dataset is (i.e. 2 in 2D). An extra
+ * argument is used for datasets that have multiple values at each gridpoint.
+ * Arguments are always relative offsets w.r.t. the current grid point.
+ *
+ */
+
 template<typename T>
 class ACC {
 public:
@@ -465,5 +481,4 @@ private:
   T *__restrict__ ptr;
 };
 
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_LIB_CPP_H */
