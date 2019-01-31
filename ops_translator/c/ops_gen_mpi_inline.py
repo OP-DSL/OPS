@@ -402,12 +402,15 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
           sizelist = sizelist + dimlabels[i-1]+'dim'+str(n)+'_'+name+', '
         extradim = dimlabels[NDIM+extradim-2]+'dim'+str(n)+'_'+name
         if dim == '':
-          code(pre+'ptr_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+', '+sizelist[:-2]+'};')
+          if NDIM==1:
+            code(pre+'ptr_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+'};')
+          else:
+            code(pre+'ptr_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+', '+sizelist[:-2]+'};')
         else:
           code('#ifdef OPS_SOA')
           code(pre+'ptrm_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+', '+sizelist + extradim+'};')
           code('#else')
-          code(pre+'ptrm_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+', '+sizelist[:-2]+', '+dim+'};')
+          code(pre+'ptrm_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+', '+sizelist+dim+'};')
           code('#endif')
 
 
@@ -822,7 +825,9 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
   config.file_text =''
   config.depth = 0
   comm('header')
-  code('#define OPS_ACC_MD_MACROS')
+  code('#define OPS_API 2')
+  if NDIM==1:
+    code('#define OPS_1D')
   if NDIM==2:
     code('#define OPS_2D')
   if NDIM==3:
@@ -902,6 +907,12 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
   fid.write(config.file_text)
   fid.close()
   config.file_text =''
+  if NDIM==1:
+    code('#define OPS_1D')
+  if NDIM==2:
+    code('#define OPS_2D')
+  if NDIM==3:
+    code('#define OPS_3D')
   code('#include "./MPI_inline/'+master_basename[0]+'_common.h"')
   comm('user kernel files')
 

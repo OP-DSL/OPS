@@ -39,12 +39,26 @@
   * @details Declares the OPS macros
   */
 
+#ifdef OPS_1D 
+#define OPS_ACCS(dat, x) (*(dat.ptr + (x)))
+#ifdef OPS_SOA
+#define OPS_ACCM(dat, d, x) (*(dat.ptr + (x) + (d) * dat.xdim))
+#else
+#define OPS_ACCM(dat, d, x) (*(dat.ptr + (x) * dat.dim + (d)))
+#endif
+#ifndef __OPENCL_VERSION__
+#define GET_MACRO(_1,_2,_3,NAME,...) NAME
+#define OPS_ACC(...) GET_MACRO(__VA_ARGS__, OPS_ACCM, OPS_ACCS)(__VA_ARGS__)
+#endif
+#endif
+
+
 #ifdef OPS_2D 
 #define OPS_ACCS(dat, x, y) (*(dat.ptr + (x) + (y)*dat.xdim))
 #ifdef OPS_SOA
 #define OPS_ACCM(dat, d, x, y) (*(dat.ptr + (x) + (y)*dat.xdim + (d) * dat.xdim * dat.ydim))
 #else
-#define OPS_ACCM(dat, d, x, y) (*(dat.ptr + (x) * dat.dim + (y)*dat.dim*dat.xdim))
+#define OPS_ACCM(dat, d, x, y) (*(dat.ptr + (x) * dat.dim + (y)*dat.dim*dat.xdim + (d)))
 #endif
 #ifndef __OPENCL_VERSION__
 #define GET_MACRO(_1,_2,_3,_4,NAME,...) NAME
@@ -57,7 +71,7 @@
 #ifdef OPS_SOA
 #define OPS_ACCM(dat, d, x, y, z) (*(dat.ptr + (x) + (y)*dat.xdim + (z)*dat.xdim*dat.ydim + (d) * dat.xdim * dat.ydim * dat. zdim))
 #else
-#define OPS_ACCM(dat, d, x, y, z) (*(dat.ptr + (x) * dat.dim + (y)*dat.dim*dat.xdim + (z)*dat.dim*dat.xdim*dat.ydim))
+#define OPS_ACCM(dat, d, x, y, z) (*(dat.ptr + (x) * dat.dim + (y)*dat.dim*dat.xdim + (z)*dat.dim*dat.xdim*dat.ydim + (d)))
 #endif
 #ifndef __OPENCL_VERSION__
 #define GET_MACRO(_1,_2,_3,_4,_5,NAME,...) NAME
@@ -70,7 +84,7 @@
 #ifdef OPS_SOA
 #define OPS_ACCM(dat, d, x, y, z, u) (*(dat.ptr + (x) + (y)*dat.xdim + (z)*dat.xdim*dat.ydim + (u)*dat.xdim*dat.ydim*dat.zdim + (d) * dat.xdim * dat.ydim * dat.zdim * dat.udim))
 #else
-#define OPS_ACCM(dat, d, x, y, z, u) (*(dat.ptr + (x) * dat.dim + (y)*dat.dim*dat.xdim + (z)*dat.dim*dat.xdim*dat.ydim + (u)*dat.dim+dat.xdim*dat.ydim*dat.zdim))
+#define OPS_ACCM(dat, d, x, y, z, u) (*(dat.ptr + (x) * dat.dim + (y)*dat.dim*dat.xdim + (z)*dat.dim*dat.xdim*dat.ydim + (u)*dat.dim+dat.xdim*dat.ydim*dat.zdim + (d)))
 #endif
 #ifndef __OPENCL_VERSION__
 #define GET_MACRO(_1,_2,_3,_4,_5,_6,NAME,...) NAME
@@ -83,7 +97,7 @@
 #ifdef OPS_SOA
 #define OPS_ACCM(dat, d, x, y, z, u, v) (*(dat.ptr + (x) + (y)*dat.xdim + (z)*dat.xdim*dat.ydim + (u)*dat.xdim*dat.ydim*dat.zdim + (v)*dat.xdim*dat.ydim*dat.zdim*dat.udim + (d) * dat.xdim * dat.ydim * dat.zdim * dat.udim * dat.vdim))
 #else
-#define OPS_ACCM(dat, d, x, y, z, u, v) (*(dat.ptr + (x) * dat.dim + (y)*dat.dim*dat.xdim + (z)*dat.dim*dat.xdim*dat.ydim + (u)*dat.dim+dat.xdim*dat.ydim*dat.zdim + (v)*dat.dim*dat.xdim*dat.ydim*dat.zdim*dat.udim))
+#define OPS_ACCM(dat, d, x, y, z, u, v) (*(dat.ptr + (x) * dat.dim + (y)*dat.dim*dat.xdim + (z)*dat.dim*dat.xdim*dat.ydim + (u)*dat.dim+dat.xdim*dat.ydim*dat.zdim + (v)*dat.dim*dat.xdim*dat.ydim*dat.zdim*dat.udim + (d)))
 #endif
 #ifndef __OPENCL_VERSION__
 #define GET_MACRO(_1,_2,_3,_4,_5,_6,_7,NAME,...) NAME
@@ -97,7 +111,9 @@ typedef struct ptr_double {
   __global
 #endif
   double *restrict ptr;
+#if defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
   int xdim;
+#endif
 #if defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
   int ydim;
 #endif
@@ -114,7 +130,9 @@ typedef struct ptr_int {
   __global
 #endif
   int *restrict ptr;
+#if defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
   int xdim;
+#endif
 #if defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
   int ydim;
 #endif
@@ -131,7 +149,9 @@ typedef struct ptrm_double {
   __global
 #endif
   double *restrict ptr;
+#if (defined(OPS_1D) && defined(OPS_SOA)) || defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
   int xdim;
+#endif
 #if (defined(OPS_2D) && defined(OPS_SOA)) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
   int ydim;
 #endif
@@ -151,7 +171,9 @@ typedef struct ptrm_int {
   __global
 #endif
   int *restrict ptr;
+#if (defined(OPS_1D) && defined(OPS_SOA)) || defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
   int xdim;
+#endif
 #if (defined(OPS_2D) && defined(OPS_SOA)) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
   int ydim;
 #endif
