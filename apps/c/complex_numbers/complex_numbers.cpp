@@ -20,7 +20,7 @@ double deltat;
 #include "complex_numbers_block_0_kernel.h"
 
 // main program start
-int main (int argc, const char **argv) 
+int main (int argc, char **argv) 
 {
 
    c0 = 0.500000000000000;

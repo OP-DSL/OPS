@@ -366,7 +366,7 @@ typedef struct ops_kernel_descriptor {
  * |  > 5        | check if intra-block halo MPI sends depth match MPI receives depth (for OPS internal development only)|
  *
  */
-void ops_init(const int argc, const char **argv, const int diags_level);
+void ops_init(const int argc, char **argv, const int diags_level);
 
 /**
  * This routine must be called last to cleanly terminate the OPS computation.
@@ -760,7 +760,7 @@ ops_arg ops_arg_gbl_char(char *data, int dim, int size, ops_access acc);
 void ops_decl_const_char(int, char const *, int, char *, char const *);
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr);
 
-void ops_init_core(const int argc, const char **argv, const int diags_level);
+void ops_init_core(const int argc, char **argv, const int diags_level);
 
 void ops_exit_core(void);
 

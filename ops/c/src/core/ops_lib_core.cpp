@@ -191,7 +191,7 @@ void ops_set_args(const int argc, const char *argv) {
 /*
 * OPS core functions
 */
-void ops_init_core(const int argc, const char **argv, const int diags) {
+void ops_init_core(const int argc, char **argv, const int diags) {
   OPS_instance::getOPSInstance()->OPS_diags = diags;
   for (int d = 0; d < OPS_MAX_DIM; d++) OPS_instance::getOPSInstance()->ops_force_decomp[d] = 0;
   for (int n = 1; n < argc; n++) {
