@@ -33,9 +33,12 @@ if (CHECKPOINTING)
 endif()
 
 
+# In case we're called without our higher-level CMake file
 if(NOT OPS_C_INCLUDE_DIR)
     set(OPS_C_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 endif()
+
+
 file(GLOB _OPS_C_HEADERS ${OPS_C_INCLUDE_DIR}/*.h)
 install(FILES ${_OPS_C_HEADERS} DESTINATION include)
 

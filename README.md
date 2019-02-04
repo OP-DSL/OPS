@@ -25,35 +25,26 @@ and the pre-processor, and is structured as follows:
 
 1. Set up environmental variables:
 
-  * `OPS_COMPILER` - compiler to be used (Currently supports Intel, PGI and Cray compilers, but others can be easily incorporated by extending the Makefiles used in step 2 and 3)
-  * `OPS_INSTALL_PATH` - Installation directory of `OPS/ops`
-  * `CUDA_INSTALL_PATH` - Installation directory of CUDA, usually `/usr/local/cuda` (to build CUDA libs and applications)
-  * `OPENCL_INSTALL_PATH` - Installation directory of OpenCL, usually `/usr/local/cuda` for NVIDIA OpenCL implementation (to build OpenCL libs and applications)
-  * `MPI_INSTALL_PATH` - Installation directory of MPI (to build MPI based distributed memory libs and applications)
-  * `HDF5_INSTALL_PATH` - Installation directory of HDF5 (to support HDF5 based File I/O)
+  * `CUDA_PATH` - Installation directory of CUDA, usually `/usr/local/cuda` (to build CUDA libs and applications, only needed if CUDA cannot be found in standard locations, or to enable OpenCL)
+  * `MPI_HOME` - Installation directory of MPI (to build MPI based distributed memory libs and applications) only needed if MPI not installed in standard locations
+  * `HDF5_ROOT` - Installation directory of HDF5 (to support HDF5 based File I/O) if HDF5 not installed in standard location
 
-  See example scripts (e.g. source_intel, source_pgi_15.10, source_cray) under `OPS/ops/` that
-  sets up the environment for building with various compilers (Intel, PGI, Cray).
 
 2. Build OPS back-end libraries.
 
-  For C/C++ back-end use Makefile under `OPS/ops/c` (modify Makefile if required). The libraries will be built in `OPS/ops/c/lib`
-  ```
-  cd $OPS_INSTALL_PATH/c
-  make
 
+  Create a build directory, and run CMake (version 3.9 or newer)
   ```
-  For Fortran back-end use Makefile under `OPS/ops/fortran` (modify Makefile if required). The libraries will be built in `OPS/ops/fortran/lib`
-  ```
-  cd $OPS_INSTALL_PATH/fortran
+  mkdir build
+  cd build
+  cmake ${PATH_TO_OPS}
   make
   ```
 
+  Options of interest to specify to `cmake` include:
 
-3. Build OPS example applications
+  * `-DCMAKE_BUILD_TYPE=Release` - enable optimizations
+  * `-DBUILD_OPS_FROTRAN=ON` - enable building OPS Fortran libraries.
+  * `-DBUILD_OPS_APPS=ON` - build example applications
+  * `-DHDF5_PREFER_PARALLEL=ON` - build using parallel HDF5, rather than serial HDF5 libraries
 
-  For example to build CloverLeaf_3D under `OPS/apps/c/CloverLeaf_3D`
-  ```
-  cd ../apps/c/Cloverleaf_3D/
-  make
-  ```
