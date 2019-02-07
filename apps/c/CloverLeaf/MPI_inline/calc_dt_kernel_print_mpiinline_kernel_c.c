@@ -9,50 +9,47 @@ int xdim3_calc_dt_kernel_print;
 int xdim4_calc_dt_kernel_print;
 int xdim5_calc_dt_kernel_print;
 
-#define OPS_ACC0(x, y)                                                         \
-  (n_x * 1 + n_y * xdim0_calc_dt_kernel_print * 1 + x +                        \
-   xdim0_calc_dt_kernel_print * (y))
-#define OPS_ACC1(x, y)                                                         \
-  (n_x * 1 + n_y * xdim1_calc_dt_kernel_print * 1 + x +                        \
-   xdim1_calc_dt_kernel_print * (y))
-#define OPS_ACC2(x, y)                                                         \
-  (n_x * 1 + n_y * xdim2_calc_dt_kernel_print * 1 + x +                        \
-   xdim2_calc_dt_kernel_print * (y))
-#define OPS_ACC3(x, y)                                                         \
-  (n_x * 1 + n_y * xdim3_calc_dt_kernel_print * 1 + x +                        \
-   xdim3_calc_dt_kernel_print * (y))
-#define OPS_ACC4(x, y)                                                         \
-  (n_x * 1 + n_y * xdim4_calc_dt_kernel_print * 1 + x +                        \
-   xdim4_calc_dt_kernel_print * (y))
-#define OPS_ACC5(x, y)                                                         \
-  (n_x * 1 + n_y * xdim5_calc_dt_kernel_print * 1 + x +                        \
-   xdim5_calc_dt_kernel_print * (y))
 
-// user function
+#define OPS_ACC0(x,y) (n_x*1+n_y*xdim0_calc_dt_kernel_print*1+x+xdim0_calc_dt_kernel_print*(y))
+#define OPS_ACC1(x,y) (n_x*1+n_y*xdim1_calc_dt_kernel_print*1+x+xdim1_calc_dt_kernel_print*(y))
+#define OPS_ACC2(x,y) (n_x*1+n_y*xdim2_calc_dt_kernel_print*1+x+xdim2_calc_dt_kernel_print*(y))
+#define OPS_ACC3(x,y) (n_x*1+n_y*xdim3_calc_dt_kernel_print*1+x+xdim3_calc_dt_kernel_print*(y))
+#define OPS_ACC4(x,y) (n_x*1+n_y*xdim4_calc_dt_kernel_print*1+x+xdim4_calc_dt_kernel_print*(y))
+#define OPS_ACC5(x,y) (n_x*1+n_y*xdim5_calc_dt_kernel_print*1+x+xdim5_calc_dt_kernel_print*(y))
+
+//user function
+
+
 
 void calc_dt_kernel_print_c_wrapper(
-    const double *restrict xvel0, const double *restrict yvel0,
-    const double *restrict density0, const double *restrict energy0,
-    const double *restrict pressure, const double *restrict soundspeed,
-    double *restrict output_g, int x_size, int y_size) {
+  const double * restrict xvel0,
+  const double * restrict yvel0,
+  const double * restrict density0,
+  const double * restrict energy0,
+  const double * restrict pressure,
+  const double * restrict soundspeed,
+  double * restrict output_g,
+  int x_size, int y_size) {
   double output_v = *output_g;
-#pragma omp parallel for reduction(+ : output_v)
-  for (int n_y = 0; n_y < y_size; n_y++) {
-    for (int n_x = 0; n_x < x_size; n_x++) {
-      double *restrict output = &output_v;
+  #pragma omp parallel for reduction(+:output_v)
+  for ( int n_y=0; n_y<y_size; n_y++ ){
+    for ( int n_x=0; n_x<x_size; n_x++ ){
+      double * restrict output = &output_v;
+      
+  output[0] = xvel0[OPS_ACC0(1,0)];
+  output[1] = yvel0[OPS_ACC1(1,0)];
+  output[2] = xvel0[OPS_ACC0(-1,0)];
+  output[3] = yvel0[OPS_ACC1(-1,0)];
+  output[4] = xvel0[OPS_ACC0(0,1)];
+  output[5] = yvel0[OPS_ACC1(0,1)];
+  output[6] = xvel0[OPS_ACC0(0,-1)];
+  output[7] = yvel0[OPS_ACC1(0,-1)];
+  output[8] = density0[OPS_ACC2(0,0)];
+  output[9] = energy0[OPS_ACC3(0,0)];
+  output[10]= pressure[OPS_ACC4(0,0)];
+  output[11]= soundspeed[OPS_ACC5(0,0)];
 
-      output[0] = xvel0[OPS_ACC0(1, 0)];
-      output[1] = yvel0[OPS_ACC1(1, 0)];
-      output[2] = xvel0[OPS_ACC0(-1, 0)];
-      output[3] = yvel0[OPS_ACC1(-1, 0)];
-      output[4] = xvel0[OPS_ACC0(0, 1)];
-      output[5] = yvel0[OPS_ACC1(0, 1)];
-      output[6] = xvel0[OPS_ACC0(0, -1)];
-      output[7] = yvel0[OPS_ACC1(0, -1)];
-      output[8] = density0[OPS_ACC2(0, 0)];
-      output[9] = energy0[OPS_ACC3(0, 0)];
-      output[10] = pressure[OPS_ACC4(0, 0)];
-      output[11] = soundspeed[OPS_ACC5(0, 0)];
+
     }
   }
   *output_g = output_v;
@@ -63,3 +60,4 @@ void calc_dt_kernel_print_c_wrapper(
 #undef OPS_ACC3
 #undef OPS_ACC4
 #undef OPS_ACC5
+
