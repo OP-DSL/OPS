@@ -28,26 +28,38 @@ int ydim4_advec_cell_kernel1_ydir_h = -1;
 #undef OPS_ACC3
 #undef OPS_ACC4
 
+#define OPS_ACC0(x, y, z)                                                      \
+  (x + xdim0_advec_cell_kernel1_ydir * (y) +                                   \
+   xdim0_advec_cell_kernel1_ydir * ydim0_advec_cell_kernel1_ydir * (z))
+#define OPS_ACC1(x, y, z)                                                      \
+  (x + xdim1_advec_cell_kernel1_ydir * (y) +                                   \
+   xdim1_advec_cell_kernel1_ydir * ydim1_advec_cell_kernel1_ydir * (z))
+#define OPS_ACC2(x, y, z)                                                      \
+  (x + xdim2_advec_cell_kernel1_ydir * (y) +                                   \
+   xdim2_advec_cell_kernel1_ydir * ydim2_advec_cell_kernel1_ydir * (z))
+#define OPS_ACC3(x, y, z)                                                      \
+  (x + xdim3_advec_cell_kernel1_ydir * (y) +                                   \
+   xdim3_advec_cell_kernel1_ydir * ydim3_advec_cell_kernel1_ydir * (z))
+#define OPS_ACC4(x, y, z)                                                      \
+  (x + xdim4_advec_cell_kernel1_ydir * (y) +                                   \
+   xdim4_advec_cell_kernel1_ydir * ydim4_advec_cell_kernel1_ydir * (z))
 
-#define OPS_ACC0(x,y,z) (x+xdim0_advec_cell_kernel1_ydir*(y)+xdim0_advec_cell_kernel1_ydir*ydim0_advec_cell_kernel1_ydir*(z))
-#define OPS_ACC1(x,y,z) (x+xdim1_advec_cell_kernel1_ydir*(y)+xdim1_advec_cell_kernel1_ydir*ydim1_advec_cell_kernel1_ydir*(z))
-#define OPS_ACC2(x,y,z) (x+xdim2_advec_cell_kernel1_ydir*(y)+xdim2_advec_cell_kernel1_ydir*ydim2_advec_cell_kernel1_ydir*(z))
-#define OPS_ACC3(x,y,z) (x+xdim3_advec_cell_kernel1_ydir*(y)+xdim3_advec_cell_kernel1_ydir*ydim3_advec_cell_kernel1_ydir*(z))
-#define OPS_ACC4(x,y,z) (x+xdim4_advec_cell_kernel1_ydir*(y)+xdim4_advec_cell_kernel1_ydir*ydim4_advec_cell_kernel1_ydir*(z))
-
-//user function
+// user function
 __device__
 
-inline void advec_cell_kernel1_ydir_gpu( double *pre_vol, double *post_vol, const double *volume,
-                        const double *vol_flux_z, const double *vol_flux_y) {
+    inline void
+    advec_cell_kernel1_ydir_gpu(double *pre_vol, double *post_vol,
+                                const double *volume, const double *vol_flux_z,
+                                const double *vol_flux_y) {
 
-  pre_vol[OPS_ACC0(0,0,0)] = volume[OPS_ACC2(0,0,0)] +  vol_flux_y[OPS_ACC4(0,1,0)] - vol_flux_y[OPS_ACC4(0,0,0)] +
-                                                        vol_flux_z[OPS_ACC3(0,0,1)] - vol_flux_z[OPS_ACC3(0,0,0)];
-  post_vol[OPS_ACC1(0,0,0)] = pre_vol[OPS_ACC0(0,0,0)]-(vol_flux_y[OPS_ACC4(0,1,0)] - vol_flux_y[OPS_ACC4(0,0,0)]);
-
+  pre_vol[OPS_ACC0(0, 0, 0)] =
+      volume[OPS_ACC2(0, 0, 0)] + vol_flux_y[OPS_ACC4(0, 1, 0)] -
+      vol_flux_y[OPS_ACC4(0, 0, 0)] + vol_flux_z[OPS_ACC3(0, 0, 1)] -
+      vol_flux_z[OPS_ACC3(0, 0, 0)];
+  post_vol[OPS_ACC1(0, 0, 0)] =
+      pre_vol[OPS_ACC0(0, 0, 0)] -
+      (vol_flux_y[OPS_ACC4(0, 1, 0)] - vol_flux_y[OPS_ACC4(0, 0, 0)]);
 }
-
-
 
 #undef OPS_ACC0
 #undef OPS_ACC1
@@ -55,40 +67,44 @@ inline void advec_cell_kernel1_ydir_gpu( double *pre_vol, double *post_vol, cons
 #undef OPS_ACC3
 #undef OPS_ACC4
 
-
-__global__ void ops_advec_cell_kernel1_ydir(
-double* __restrict arg0,
-double* __restrict arg1,
-const double* __restrict arg2,
-const double* __restrict arg3,
-const double* __restrict arg4,
-int size0,
-int size1,
-int size2 ){
-
+__global__ void ops_advec_cell_kernel1_ydir(double *__restrict arg0,
+                                            double *__restrict arg1,
+                                            const double *__restrict arg2,
+                                            const double *__restrict arg3,
+                                            const double *__restrict arg4,
+                                            int size0, int size1, int size2) {
 
   int idx_z = blockDim.z * blockIdx.z + threadIdx.z;
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
-  arg0 += idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_cell_kernel1_ydir + idx_z * 1*1 * xdim0_advec_cell_kernel1_ydir * ydim0_advec_cell_kernel1_ydir;
-  arg1 += idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_cell_kernel1_ydir + idx_z * 1*1 * xdim1_advec_cell_kernel1_ydir * ydim1_advec_cell_kernel1_ydir;
-  arg2 += idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_cell_kernel1_ydir + idx_z * 1*1 * xdim2_advec_cell_kernel1_ydir * ydim2_advec_cell_kernel1_ydir;
-  arg3 += idx_x * 1*1 + idx_y * 1*1 * xdim3_advec_cell_kernel1_ydir + idx_z * 1*1 * xdim3_advec_cell_kernel1_ydir * ydim3_advec_cell_kernel1_ydir;
-  arg4 += idx_x * 1*1 + idx_y * 1*1 * xdim4_advec_cell_kernel1_ydir + idx_z * 1*1 * xdim4_advec_cell_kernel1_ydir * ydim4_advec_cell_kernel1_ydir;
+  arg0 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim0_advec_cell_kernel1_ydir +
+          idx_z * 1 * 1 * xdim0_advec_cell_kernel1_ydir *
+              ydim0_advec_cell_kernel1_ydir;
+  arg1 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim1_advec_cell_kernel1_ydir +
+          idx_z * 1 * 1 * xdim1_advec_cell_kernel1_ydir *
+              ydim1_advec_cell_kernel1_ydir;
+  arg2 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim2_advec_cell_kernel1_ydir +
+          idx_z * 1 * 1 * xdim2_advec_cell_kernel1_ydir *
+              ydim2_advec_cell_kernel1_ydir;
+  arg3 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim3_advec_cell_kernel1_ydir +
+          idx_z * 1 * 1 * xdim3_advec_cell_kernel1_ydir *
+              ydim3_advec_cell_kernel1_ydir;
+  arg4 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim4_advec_cell_kernel1_ydir +
+          idx_z * 1 * 1 * xdim4_advec_cell_kernel1_ydir *
+              ydim4_advec_cell_kernel1_ydir;
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    advec_cell_kernel1_ydir_gpu(arg0, arg1, arg2, arg3,
-                   arg4);
+    advec_cell_kernel1_ydir_gpu(arg0, arg1, arg2, arg3, arg4);
   }
-
 }
 
 // host stub function
 #ifndef OPS_LAZY
-void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block block, int dim, int* range,
- ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
- ops_arg arg4) {
+void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block block,
+                                          int dim, int *range, ops_arg arg0,
+                                          ops_arg arg1, ops_arg arg2,
+                                          ops_arg arg3, ops_arg arg4) {
 #else
 void ops_par_loop_advec_cell_kernel1_ydir_execute(ops_kernel_descriptor *desc) {
   int dim = desc->dim;
@@ -98,57 +114,60 @@ void ops_par_loop_advec_cell_kernel1_ydir_execute(ops_kernel_descriptor *desc) {
   ops_arg arg2 = desc->args[2];
   ops_arg arg3 = desc->args[3];
   ops_arg arg4 = desc->args[4];
-  #endif
+#endif
 
-  //Timing
-  double t1,t2,c1,c2;
+  // Timing
+  double t1, t2, c1, c2;
 
-  ops_arg args[5] = { arg0, arg1, arg2, arg3, arg4};
+  ops_arg args[5] = {arg0, arg1, arg2, arg3, arg4};
 
-
-  #if CHECKPOINTING && !OPS_LAZY
-  if (!ops_checkpointing_before(args,5,range,112)) return;
-  #endif
+#if CHECKPOINTING && !OPS_LAZY
+  if (!ops_checkpointing_before(args, 5, range, 112))
+    return;
+#endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(112,"advec_cell_kernel1_ydir");
+    ops_timing_realloc(112, "advec_cell_kernel1_ydir");
     OPS_kernels[112].count++;
-    ops_timers_core(&c1,&t1);
+    ops_timers_core(&c1, &t1);
   }
 
-  //compute locally allocated range for the sub-block
+  // compute locally allocated range for the sub-block
   int start[3];
   int end[3];
-  #if OPS_MPI && !OPS_LAZY
+#if OPS_MPI && !OPS_LAZY
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned) return;
-  for ( int n=0; n<3; n++ ){
-    start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
-    if (start[n] >= range[2*n]) {
+  if (!sb->owned)
+    return;
+  for (int n = 0; n < 3; n++) {
+    start[n] = sb->decomp_disp[n];
+    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
+    if (start[n] >= range[2 * n]) {
       start[n] = 0;
+    } else {
+      start[n] = range[2 * n] - start[n];
     }
-    else {
-      start[n] = range[2*n] - start[n];
-    }
-    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
-    if (end[n] >= range[2*n+1]) {
-      end[n] = range[2*n+1] - sb->decomp_disp[n];
-    }
-    else {
+    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
+      start[n] = range[2 * n];
+    if (end[n] >= range[2 * n + 1]) {
+      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
+    } else {
       end[n] = sb->decomp_size[n];
     }
-    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
-      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
+    if (sb->id_p[n] == MPI_PROC_NULL &&
+        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
+      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
   }
-  #else
-  for ( int n=0; n<3; n++ ){
-    start[n] = range[2*n];end[n] = range[2*n+1];
+#else
+  for (int n = 0; n < 3; n++) {
+    start[n] = range[2 * n];
+    end[n] = range[2 * n + 1];
   }
-  #endif
+#endif
 
-  int x_size = MAX(0,end[0]-start[0]);
-  int y_size = MAX(0,end[1]-start[1]);
-  int z_size = MAX(0,end[2]-start[2]);
+  int x_size = MAX(0, end[0] - start[0]);
+  int y_size = MAX(0, end[1] - start[1]);
+  int z_size = MAX(0, end[2] - start[2]);
 
   int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
@@ -161,35 +180,42 @@ void ops_par_loop_advec_cell_kernel1_ydir_execute(ops_kernel_descriptor *desc) {
   int xdim4 = args[4].dat->size[0];
   int ydim4 = args[4].dat->size[1];
 
-  if (xdim0 != xdim0_advec_cell_kernel1_ydir_h || ydim0 != ydim0_advec_cell_kernel1_ydir_h || xdim1 != xdim1_advec_cell_kernel1_ydir_h || ydim1 != ydim1_advec_cell_kernel1_ydir_h || xdim2 != xdim2_advec_cell_kernel1_ydir_h || ydim2 != ydim2_advec_cell_kernel1_ydir_h || xdim3 != xdim3_advec_cell_kernel1_ydir_h || ydim3 != ydim3_advec_cell_kernel1_ydir_h || xdim4 != xdim4_advec_cell_kernel1_ydir_h || ydim4 != ydim4_advec_cell_kernel1_ydir_h) {
-    cudaMemcpyToSymbol( xdim0_advec_cell_kernel1_ydir, &xdim0, sizeof(int) );
+  if (xdim0 != xdim0_advec_cell_kernel1_ydir_h ||
+      ydim0 != ydim0_advec_cell_kernel1_ydir_h ||
+      xdim1 != xdim1_advec_cell_kernel1_ydir_h ||
+      ydim1 != ydim1_advec_cell_kernel1_ydir_h ||
+      xdim2 != xdim2_advec_cell_kernel1_ydir_h ||
+      ydim2 != ydim2_advec_cell_kernel1_ydir_h ||
+      xdim3 != xdim3_advec_cell_kernel1_ydir_h ||
+      ydim3 != ydim3_advec_cell_kernel1_ydir_h ||
+      xdim4 != xdim4_advec_cell_kernel1_ydir_h ||
+      ydim4 != ydim4_advec_cell_kernel1_ydir_h) {
+    cudaMemcpyToSymbol(xdim0_advec_cell_kernel1_ydir, &xdim0, sizeof(int));
     xdim0_advec_cell_kernel1_ydir_h = xdim0;
-    cudaMemcpyToSymbol( ydim0_advec_cell_kernel1_ydir, &ydim0, sizeof(int) );
+    cudaMemcpyToSymbol(ydim0_advec_cell_kernel1_ydir, &ydim0, sizeof(int));
     ydim0_advec_cell_kernel1_ydir_h = ydim0;
-    cudaMemcpyToSymbol( xdim1_advec_cell_kernel1_ydir, &xdim1, sizeof(int) );
+    cudaMemcpyToSymbol(xdim1_advec_cell_kernel1_ydir, &xdim1, sizeof(int));
     xdim1_advec_cell_kernel1_ydir_h = xdim1;
-    cudaMemcpyToSymbol( ydim1_advec_cell_kernel1_ydir, &ydim1, sizeof(int) );
+    cudaMemcpyToSymbol(ydim1_advec_cell_kernel1_ydir, &ydim1, sizeof(int));
     ydim1_advec_cell_kernel1_ydir_h = ydim1;
-    cudaMemcpyToSymbol( xdim2_advec_cell_kernel1_ydir, &xdim2, sizeof(int) );
+    cudaMemcpyToSymbol(xdim2_advec_cell_kernel1_ydir, &xdim2, sizeof(int));
     xdim2_advec_cell_kernel1_ydir_h = xdim2;
-    cudaMemcpyToSymbol( ydim2_advec_cell_kernel1_ydir, &ydim2, sizeof(int) );
+    cudaMemcpyToSymbol(ydim2_advec_cell_kernel1_ydir, &ydim2, sizeof(int));
     ydim2_advec_cell_kernel1_ydir_h = ydim2;
-    cudaMemcpyToSymbol( xdim3_advec_cell_kernel1_ydir, &xdim3, sizeof(int) );
+    cudaMemcpyToSymbol(xdim3_advec_cell_kernel1_ydir, &xdim3, sizeof(int));
     xdim3_advec_cell_kernel1_ydir_h = xdim3;
-    cudaMemcpyToSymbol( ydim3_advec_cell_kernel1_ydir, &ydim3, sizeof(int) );
+    cudaMemcpyToSymbol(ydim3_advec_cell_kernel1_ydir, &ydim3, sizeof(int));
     ydim3_advec_cell_kernel1_ydir_h = ydim3;
-    cudaMemcpyToSymbol( xdim4_advec_cell_kernel1_ydir, &xdim4, sizeof(int) );
+    cudaMemcpyToSymbol(xdim4_advec_cell_kernel1_ydir, &xdim4, sizeof(int));
     xdim4_advec_cell_kernel1_ydir_h = xdim4;
-    cudaMemcpyToSymbol( ydim4_advec_cell_kernel1_ydir, &ydim4, sizeof(int) );
+    cudaMemcpyToSymbol(ydim4_advec_cell_kernel1_ydir, &ydim4, sizeof(int));
     ydim4_advec_cell_kernel1_ydir_h = ydim4;
   }
 
-
-
-  dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, (z_size-1)/OPS_block_size_z +1);
-  dim3 tblock(OPS_block_size_x,OPS_block_size_y,OPS_block_size_z);
-
-
+  dim3 grid((x_size - 1) / OPS_block_size_x + 1,
+            (y_size - 1) / OPS_block_size_y + 1,
+            (z_size - 1) / OPS_block_size_z + 1);
+  dim3 tblock(OPS_block_size_x, OPS_block_size_y, OPS_block_size_z);
 
   int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
   int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
@@ -199,98 +225,86 @@ void ops_par_loop_advec_cell_kernel1_ydir_execute(ops_kernel_descriptor *desc) {
 
   char *p_a[5];
 
-  //set up initial pointers
-  int base0 = args[0].dat->base_offset + 
-           dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
-  base0 = base0+ dat0 *
-    args[0].dat->size[0] *
-    (start[1] * args[0].stencil->stride[1]);
-  base0 = base0+ dat0 *
-    args[0].dat->size[0] *
-    args[0].dat->size[1] *
-    (start[2] * args[0].stencil->stride[2]);
+  // set up initial pointers
+  int base0 = args[0].dat->base_offset +
+              dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
+  base0 = base0 +
+          dat0 * args[0].dat->size[0] * (start[1] * args[0].stencil->stride[1]);
+  base0 = base0 +
+          dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
+              (start[2] * args[0].stencil->stride[2]);
   p_a[0] = (char *)args[0].data_d + base0;
 
-  int base1 = args[1].dat->base_offset + 
-           dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
-  base1 = base1+ dat1 *
-    args[1].dat->size[0] *
-    (start[1] * args[1].stencil->stride[1]);
-  base1 = base1+ dat1 *
-    args[1].dat->size[0] *
-    args[1].dat->size[1] *
-    (start[2] * args[1].stencil->stride[2]);
+  int base1 = args[1].dat->base_offset +
+              dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
+  base1 = base1 +
+          dat1 * args[1].dat->size[0] * (start[1] * args[1].stencil->stride[1]);
+  base1 = base1 +
+          dat1 * args[1].dat->size[0] * args[1].dat->size[1] *
+              (start[2] * args[1].stencil->stride[2]);
   p_a[1] = (char *)args[1].data_d + base1;
 
-  int base2 = args[2].dat->base_offset + 
-           dat2 * 1 * (start[0] * args[2].stencil->stride[0]);
-  base2 = base2+ dat2 *
-    args[2].dat->size[0] *
-    (start[1] * args[2].stencil->stride[1]);
-  base2 = base2+ dat2 *
-    args[2].dat->size[0] *
-    args[2].dat->size[1] *
-    (start[2] * args[2].stencil->stride[2]);
+  int base2 = args[2].dat->base_offset +
+              dat2 * 1 * (start[0] * args[2].stencil->stride[0]);
+  base2 = base2 +
+          dat2 * args[2].dat->size[0] * (start[1] * args[2].stencil->stride[1]);
+  base2 = base2 +
+          dat2 * args[2].dat->size[0] * args[2].dat->size[1] *
+              (start[2] * args[2].stencil->stride[2]);
   p_a[2] = (char *)args[2].data_d + base2;
 
-  int base3 = args[3].dat->base_offset + 
-           dat3 * 1 * (start[0] * args[3].stencil->stride[0]);
-  base3 = base3+ dat3 *
-    args[3].dat->size[0] *
-    (start[1] * args[3].stencil->stride[1]);
-  base3 = base3+ dat3 *
-    args[3].dat->size[0] *
-    args[3].dat->size[1] *
-    (start[2] * args[3].stencil->stride[2]);
+  int base3 = args[3].dat->base_offset +
+              dat3 * 1 * (start[0] * args[3].stencil->stride[0]);
+  base3 = base3 +
+          dat3 * args[3].dat->size[0] * (start[1] * args[3].stencil->stride[1]);
+  base3 = base3 +
+          dat3 * args[3].dat->size[0] * args[3].dat->size[1] *
+              (start[2] * args[3].stencil->stride[2]);
   p_a[3] = (char *)args[3].data_d + base3;
 
-  int base4 = args[4].dat->base_offset + 
-           dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
-  base4 = base4+ dat4 *
-    args[4].dat->size[0] *
-    (start[1] * args[4].stencil->stride[1]);
-  base4 = base4+ dat4 *
-    args[4].dat->size[0] *
-    args[4].dat->size[1] *
-    (start[2] * args[4].stencil->stride[2]);
+  int base4 = args[4].dat->base_offset +
+              dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
+  base4 = base4 +
+          dat4 * args[4].dat->size[0] * (start[1] * args[4].stencil->stride[1]);
+  base4 = base4 +
+          dat4 * args[4].dat->size[0] * args[4].dat->size[1] *
+              (start[2] * args[4].stencil->stride[2]);
   p_a[4] = (char *)args[4].data_d + base4;
 
-
-  #ifndef OPS_LAZY
+#ifndef OPS_LAZY
   ops_H_D_exchanges_device(args, 5);
-  ops_halo_exchanges(args,5,range);
-  #endif
+  ops_halo_exchanges(args, 5, range);
+#endif
 
   if (OPS_diags > 1) {
-    ops_timers_core(&c2,&t2);
-    OPS_kernels[112].mpi_time += t2-t1;
+    ops_timers_core(&c2, &t2);
+    OPS_kernels[112].mpi_time += t2 - t1;
   }
 
-
-  //call kernel wrapper function, passing in pointers to data
+  // call kernel wrapper function, passing in pointers to data
   if (x_size > 0 && y_size > 0 && z_size > 0)
-    ops_advec_cell_kernel1_ydir<<<grid, tblock >>> (  (double *)p_a[0], (double *)p_a[1],
-           (double *)p_a[2], (double *)p_a[3],
-           (double *)p_a[4],x_size, y_size, z_size);
+    ops_advec_cell_kernel1_ydir<<<grid, tblock>>>(
+        (double *)p_a[0], (double *)p_a[1], (double *)p_a[2], (double *)p_a[3],
+        (double *)p_a[4], x_size, y_size, z_size);
 
   cutilSafeCall(cudaGetLastError());
 
-  if (OPS_diags>1) {
+  if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
-    ops_timers_core(&c1,&t1);
-    OPS_kernels[112].time += t1-t2;
+    ops_timers_core(&c1, &t1);
+    OPS_kernels[112].time += t1 - t2;
   }
 
-  #ifndef OPS_LAZY
+#ifndef OPS_LAZY
   ops_set_dirtybit_device(args, 5);
-  ops_set_halo_dirtybit3(&args[0],range);
-  ops_set_halo_dirtybit3(&args[1],range);
-  #endif
+  ops_set_halo_dirtybit3(&args[0], range);
+  ops_set_halo_dirtybit3(&args[1], range);
+#endif
 
   if (OPS_diags > 1) {
-    //Update kernel record
-    ops_timers_core(&c2,&t2);
-    OPS_kernels[112].mpi_time += t2-t1;
+    // Update kernel record
+    ops_timers_core(&c2, &t2);
+    OPS_kernels[112].mpi_time += t2 - t1;
     OPS_kernels[112].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[112].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[112].transfer += ops_compute_transfer(dim, start, end, &arg2);
@@ -300,9 +314,12 @@ void ops_par_loop_advec_cell_kernel1_ydir_execute(ops_kernel_descriptor *desc) {
 }
 
 #ifdef OPS_LAZY
-void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block block, int dim, int* range,
- ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block block,
+                                          int dim, int *range, ops_arg arg0,
+                                          ops_arg arg1, ops_arg arg2,
+                                          ops_arg arg3, ops_arg arg4) {
+  ops_kernel_descriptor *desc =
+      (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -310,13 +327,13 @@ void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block block, int
   desc->index = 112;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 112;
-  for ( int i=0; i<6; i++ ){
+  for (int i = 0; i < 6; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 5;
-  desc->args = (ops_arg*)malloc(5*sizeof(ops_arg));
+  desc->args = (ops_arg *)malloc(5 * sizeof(ops_arg));
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
@@ -329,7 +346,7 @@ void ops_par_loop_advec_cell_kernel1_ydir(char const *name, ops_block block, int
   desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->function = ops_par_loop_advec_cell_kernel1_ydir_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(112,"advec_cell_kernel1_ydir");
+    ops_timing_realloc(112, "advec_cell_kernel1_ydir");
   }
   ops_enqueue_kernel(desc);
 }
