@@ -34,13 +34,13 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_4_left(
   ops_arg args[3] = {arg0, arg1, arg2};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 3, range, 73))
+  if (!ops_checkpointing_before(args, 3, range, 28))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(73, "update_halo_kernel2_xvel_minus_4_left");
-    OPS_kernels[73].count++;
+    ops_timing_realloc(28, "update_halo_kernel2_xvel_minus_4_left");
+    OPS_kernels[28].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -168,7 +168,7 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_4_left(
 #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[73].mpi_time += t2 - t1;
+    OPS_kernels[28].mpi_time += t2 - t1;
   }
 
   update_halo_kernel2_xvel_minus_4_left_c_wrapper(p_a0, p_a1, p_a2, x_size,
@@ -176,7 +176,7 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_4_left(
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[73].time += t1 - t2;
+    OPS_kernels[28].time += t1 - t2;
   }
 #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 3);
@@ -189,8 +189,8 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_4_left(
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[73].mpi_time += t2 - t1;
-    OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[28].mpi_time += t2 - t1;
+    OPS_kernels[28].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[28].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

@@ -109,7 +109,7 @@ void buildOpenCLKernels_update_halo_kernel5_plus_2_left(int xdim0, int ydim0,
     printf("compiling update_halo_kernel5_plus_2_left -- done\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[134] = clCreateKernel(
+    OPS_opencl_core.kernel[89] = clCreateKernel(
         OPS_opencl_core.program, "ops_update_halo_kernel5_plus_2_left", &ret);
     clSafeCall(ret);
 
@@ -129,13 +129,13 @@ void ops_par_loop_update_halo_kernel5_plus_2_left(char const *name,
   ops_arg args[3] = {arg0, arg1, arg2};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 3, range, 134))
+  if (!ops_checkpointing_before(args, 3, range, 89))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(134, "update_halo_kernel5_plus_2_left");
-    OPS_kernels[134].count++;
+    ops_timing_realloc(89, "update_halo_kernel5_plus_2_left");
+    OPS_kernels[89].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -254,31 +254,31 @@ void ops_par_loop_update_halo_kernel5_plus_2_left(char const *name,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[134].mpi_time += t2 - t1;
+    OPS_kernels[89].mpi_time += t2 - t1;
   }
 
   if (globalWorkSize[0] > 0 && globalWorkSize[1] > 0 && globalWorkSize[2] > 0) {
 
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[134], 0, sizeof(cl_mem),
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[89], 0, sizeof(cl_mem),
                               (void *)&arg0.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[134], 1, sizeof(cl_mem),
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[89], 1, sizeof(cl_mem),
                               (void *)&arg1.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[134], 2, sizeof(cl_mem),
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[89], 2, sizeof(cl_mem),
                               (void *)&arg2.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[134], 3, sizeof(cl_int),
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[89], 3, sizeof(cl_int),
                               (void *)&base0));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[134], 4, sizeof(cl_int),
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[89], 4, sizeof(cl_int),
                               (void *)&base1));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[134], 5, sizeof(cl_int),
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[89], 5, sizeof(cl_int),
                               (void *)&x_size));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[134], 6, sizeof(cl_int),
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[89], 6, sizeof(cl_int),
                               (void *)&y_size));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[134], 7, sizeof(cl_int),
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[89], 7, sizeof(cl_int),
                               (void *)&z_size));
 
     // call/enque opencl kernel wrapper function
     clSafeCall(clEnqueueNDRangeKernel(
-        OPS_opencl_core.command_queue, OPS_opencl_core.kernel[134], 3, NULL,
+        OPS_opencl_core.command_queue, OPS_opencl_core.kernel[89], 3, NULL,
         globalWorkSize, localWorkSize, 0, NULL, NULL));
   }
   if (OPS_diags > 1) {
@@ -287,7 +287,7 @@ void ops_par_loop_update_halo_kernel5_plus_2_left(char const *name,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[134].time += t1 - t2;
+    OPS_kernels[89].time += t1 - t2;
   }
 
   ops_set_dirtybit_device(args, 3);
@@ -297,8 +297,8 @@ void ops_par_loop_update_halo_kernel5_plus_2_left(char const *name,
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[134].mpi_time += t2 - t1;
-    OPS_kernels[134].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[134].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[89].mpi_time += t2 - t1;
+    OPS_kernels[89].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[89].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
