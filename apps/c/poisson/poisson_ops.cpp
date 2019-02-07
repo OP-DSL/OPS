@@ -213,9 +213,6 @@ int main(int argc, char **argv)
   for (int j = 0; j < ngrid_y; j++) {
     for (int i = 0; i < ngrid_x; i++) {
       int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
-
-
-
       ops_par_loop_poisson_kernel_initialguess("poisson_kernel_initialguess", blocks[i+ngrid_x*j], 2, iter_range,
                    ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
     }
