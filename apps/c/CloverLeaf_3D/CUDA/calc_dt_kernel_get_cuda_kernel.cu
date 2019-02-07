@@ -120,13 +120,13 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   ops_arg args[6] = {arg0, arg1, arg2, arg3, arg4, arg5};
 
 #if CHECKPOINTING && !OPS_LAZY
-  if (!ops_checkpointing_before(args, 6, range, 39))
+  if (!ops_checkpointing_before(args, 6, range, 100))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(39, "calc_dt_kernel_get");
-    OPS_kernels[39].count++;
+    ops_timing_realloc(100, "calc_dt_kernel_get");
+    OPS_kernels[100].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -304,7 +304,7 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[39].mpi_time += t2 - t1;
+    OPS_kernels[100].mpi_time += t2 - t1;
   }
 
   int nshared = 0;
@@ -350,7 +350,7 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);
-    OPS_kernels[39].time += t1 - t2;
+    OPS_kernels[100].time += t1 - t2;
   }
 
 #ifndef OPS_LAZY
@@ -360,10 +360,10 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[39].mpi_time += t2 - t1;
-    OPS_kernels[39].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[39].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[39].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[100].mpi_time += t2 - t1;
+    OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }
 
@@ -378,9 +378,9 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 39;
+  desc->index = 100;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 39;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 100;
   for (int i = 0; i < 6; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -399,7 +399,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   desc->args[5] = arg5;
   desc->function = ops_par_loop_calc_dt_kernel_get_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(39, "calc_dt_kernel_get");
+    ops_timing_realloc(100, "calc_dt_kernel_get");
   }
   ops_enqueue_kernel(desc);
 }

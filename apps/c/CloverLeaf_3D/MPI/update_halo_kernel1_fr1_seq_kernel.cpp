@@ -39,13 +39,13 @@ void ops_par_loop_update_halo_kernel1_fr1(char const *name, ops_block block,
   ops_arg args[8] = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 8, range, 68))
+  if (!ops_checkpointing_before(args, 8, range, 23))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(68, "update_halo_kernel1_fr1");
-    OPS_kernels[68].count++;
+    ops_timing_realloc(23, "update_halo_kernel1_fr1");
+    OPS_kernels[23].count++;
     ops_timers_core(&c2, &t2);
   }
 
@@ -281,7 +281,7 @@ void ops_par_loop_update_halo_kernel1_fr1(char const *name, ops_block block,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[68].mpi_time += t1 - t2;
+    OPS_kernels[23].mpi_time += t1 - t2;
   }
 
   int n_x;
@@ -349,7 +349,7 @@ void ops_par_loop_update_halo_kernel1_fr1(char const *name, ops_block block,
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[68].time += t2 - t1;
+    OPS_kernels[23].time += t2 - t1;
   }
   ops_set_dirtybit_host(args, 8);
   ops_set_halo_dirtybit3(&args[0], range);
@@ -363,13 +363,13 @@ void ops_par_loop_update_halo_kernel1_fr1(char const *name, ops_block block,
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c1, &t1);
-    OPS_kernels[68].mpi_time += t1 - t2;
-    OPS_kernels[68].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[68].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[68].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[68].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[68].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[68].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[68].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    OPS_kernels[23].mpi_time += t1 - t2;
+    OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_kernels[23].transfer += ops_compute_transfer(dim, start, end, &arg6);
   }
 }
