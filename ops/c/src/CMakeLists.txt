@@ -20,9 +20,16 @@ find_package(MPI)
 
 # WARNING:  This is a hack.  Eventually, Cmake will have MPI::MPI_CUDA.  Until then, we need
 # to remove '-pthread' from the INTERFACE_LINK_LIBRARIES, or else 'nvcc' gets mad
+if(CMAKE_VERSION VERSION_LESS "3.14.0")
 get_property(_prop TARGET MPI::MPI_CXX PROPERTY INTERFACE_LINK_LIBRARIES)
 string(REPLACE " -pthread" "" _prop2 "${_prop}")
 set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_LINK_LIBRARIES "${_prop2}")
+if(CMAKE_VERSION VERSION_LESS "3.13.0")
+get_property(_prop TARGET MPI::MPI_CXX PROPERTY INTERFACE_COMPILE_OPTIONS)
+string(REPLACE " -pthread" "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler >-pthread" _prop2 "${_prop}")
+set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_COMPILE_OPTIONS "${_prop2}")
+endif()
+endif()
 
 find_package(HDF5 COMPONENTS C HL)
 if (CHECKPOINTING)
