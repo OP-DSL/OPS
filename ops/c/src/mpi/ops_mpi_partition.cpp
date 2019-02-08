@@ -359,7 +359,7 @@ void ops_decomp_dats(sub_block *sb) {
         // TODO: compute this properly, or lazy or something
         sd->d_ip[d] = dat->d_p[d]; // intra-block (MPI) halos are set to be
                                    // equal to block halos
- 
+
         if (OPS_instance::getOPSInstance()->ops_enable_tiling && OPS_instance::getOPSInstance()->ops_tiling_mpidepth>0)
 					sd->d_ip[d] = OPS_instance::getOPSInstance()->ops_tiling_mpidepth;
 
@@ -971,6 +971,8 @@ void ops_mpi_exit() {
       free(OPS_sub_dat_list[dat->index]);
     }
   }*/
+
+
 
   int i;
   ops_dat_entry *item;
