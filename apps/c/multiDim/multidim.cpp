@@ -50,7 +50,7 @@
 #include "multidim_copy_kernel.h"
 #include "multidim_reduce_kernel.h"
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 {
 #pragma omp parallel
 {

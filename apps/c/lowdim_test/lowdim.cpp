@@ -14,7 +14,7 @@
 #include "ops_seq_v2.h"
 #include "lowdim_kernels.h"
 
-int main(int argc, const char **argv) 
+int main(int argc, char **argv) 
 {
   // Initializing OPS 
   ops_init(argc,argv,1);
