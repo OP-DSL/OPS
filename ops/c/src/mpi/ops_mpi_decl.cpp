@@ -39,7 +39,7 @@
 #include <mpi.h>
 #include <ops_mpi_core.h>
 
-void ops_init(const int argc, const char **argv, const int diags) {
+void ops_init(const int argc, char **argv, const int diags) {
   int flag = 0;
   MPI_Initialized(&flag);
   if (!flag) {

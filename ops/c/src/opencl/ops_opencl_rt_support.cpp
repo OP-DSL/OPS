@@ -189,7 +189,7 @@ void pfn_notify(const char *errinfo, const void *private_info, size_t cb,
 }
 
 /**adapted from ocl_tools.c by Dan Curran (dancrn.com)*/
-void openclDeviceInit(const int argc, const char **argv) {
+void openclDeviceInit(const int argc, char **argv) {
   (void)argc;
   (void)argv;
 

@@ -46,7 +46,7 @@
 #include <ops_lib_core.h>
 #include <ops_exceptions.h>
 
-void ops_init(const int argc, const char **argv, const int diags) {
+void ops_init(const int argc, char **argv, const int diags) {
   ops_init_core(argc, argv, diags);
 
   if ((OPS_instance::getOPSInstance()->OPS_block_size_x * 
