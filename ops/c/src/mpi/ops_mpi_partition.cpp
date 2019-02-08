@@ -392,7 +392,7 @@ void ops_decomp_dats(sub_block *sb) {
     }
 
     // Allocate datasets
-    if (dat->data == NULL){
+    if (dat->data == NULL)
       if (dat->is_hdf5 == 0) {
         dat->data = (char *)ops_calloc(prod[sb->ndim-1]*dat->elem_size,1);
         //dat->data = (char *)ops_malloc(prod[sb->ndim - 1] * dat->elem_size * 1);
@@ -1015,11 +1015,11 @@ void ops_mpi_exit() {
     free(OPS_checkpoiting_dup_buffer);
 
   //printf("OPS_block_index = %d\n",OPS_block_index);
-  for (int b = 0; b < OPS_block_index; b++) { // for each block
+  for (int b = 0; b < OPS_instance::getOPSInstance()->OPS_block_index; b++) { // for each block
     sub_block *sb = OPS_sub_block_list[b];
 
     if (sb->owned) {
-      printf("Owned OPS_block_index = %d\n",OPS_block_index);
+      printf("Owned OPS_block_index = %d\n",OPS_instance::getOPSInstance()->OPS_block_index);
       MPI_Comm_free(&(sb->comm));
       MPI_Comm_free(&(sb->comm1));
     }
