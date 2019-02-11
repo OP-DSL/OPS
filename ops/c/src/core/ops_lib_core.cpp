@@ -267,14 +267,33 @@ ops_block ops_decl_block(int dims, const char *name) {
 
   if (OPS_instance::getOPSInstance()->OPS_block_index == OPS_instance::getOPSInstance()->OPS_block_max) {
     if (OPS_instance::getOPSInstance()->OPS_block_max > 0) printf("Warning: potential realloc issue in ops_lib_core.c detected, please modify ops_decl_block to allocate more blocks initially!\n");
-    OPS_instance::getOPSInstance()->OPS_block_max += 30;
-    OPS_instance::getOPSInstance()->OPS_block_list = (ops_block_descriptor *)ops_realloc(
-        OPS_instance::getOPSInstance()->OPS_block_list, 
+    OPS_instance::getOPSInstance()->OPS_block_max += 20;
+
+    ops_block_descriptor *OPS_block_list_new = (ops_block_descriptor *)ops_malloc(
         OPS_instance::getOPSInstance()->OPS_block_max * sizeof(ops_block_descriptor));
 
-    if (OPS_instance::getOPSInstance()->OPS_block_list == NULL) {
+    if (OPS_block_list_new == NULL) {
       throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_block -- error reallocating memory");
     }
+
+    //copy old blocks
+    for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_block_index; i++) {
+      OPS_block_list_new[i].block = OPS_instance::getOPSInstance()->OPS_block_list[i].block;
+
+      TAILQ_INIT(&(OPS_block_list_new[i].datasets));
+      //remove ops_dats from old queue and add to new queue
+      ops_dat_entry *item;
+      while ((item = TAILQ_FIRST(&(OPS_instance::getOPSInstance()->OPS_block_list[i].datasets)))) {
+        TAILQ_REMOVE(&(OPS_instance::getOPSInstance()->OPS_block_list[i].datasets), item, entries);
+        TAILQ_INSERT_TAIL(&OPS_block_list_new[i].datasets, item, entries);
+      }
+
+      OPS_block_list_new[i].num_datasets = OPS_instance::getOPSInstance()->OPS_block_list[i].num_datasets;
+
+    }
+    free(OPS_instance::getOPSInstance()->OPS_block_list);
+    OPS_instance::getOPSInstance()->OPS_block_list = OPS_block_list_new;
+
   }
 
   ops_block block = (ops_block)ops_malloc(sizeof(ops_block_core));
@@ -1037,7 +1056,7 @@ void ops_timing_output(FILE *stream) {
                          &moments_time[1]);
       ops_compute_moment(OPS_instance::getOPSInstance()->OPS_kernels[k].mpi_time, &moments_mpi_time[0],
                          &moments_mpi_time[1]);
-                             
+
       if (OPS_instance::getOPSInstance()->OPS_kernels[k].count < 1)
         continue;
       sprintf(buf, "%s", OPS_instance::getOPSInstance()->OPS_kernels[k].name);
@@ -1144,7 +1163,7 @@ int ops_stencil_check_1d(int arg_idx, int idx0, int dim0) {
     }
     if (match == 0) {
       OPSException ex(OPS_INVALID_ARGUMENT);
-      ex << "Error: stencil point (" << idx0 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name 
+      ex << "Error: stencil point (" << idx0 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name
          << " in loop " << OPS_instance::getOPSInstance()->OPS_curr_name << " arg " << arg_idx << " : " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].dat->name;
       throw ex;
     }
@@ -1163,7 +1182,7 @@ int ops_stencil_check_1d_md(int arg_idx, int idx0, int mult_d, int d) {
     }
     if (match == 0) {
       OPSException ex(OPS_INVALID_ARGUMENT);
-      ex << "Error: stencil point (" << idx0 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name 
+      ex << "Error: stencil point (" << idx0 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name
          << " in loop " << OPS_instance::getOPSInstance()->OPS_curr_name << " arg " << arg_idx << " : " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].dat->name;
       throw ex;
     }
@@ -1183,7 +1202,7 @@ int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1) {
     }
     if (match == 0) {
       OPSException ex(OPS_INVALID_ARGUMENT);
-      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name 
+      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name
          << " in loop " << OPS_instance::getOPSInstance()->OPS_curr_name << " arg " << arg_idx;
       throw ex;
     }
@@ -1204,7 +1223,7 @@ int ops_stencil_check_3d(int arg_idx, int idx0, int idx1, int idx2, int dim0,
     }
     if (match == 0) {
       OPSException ex(OPS_INVALID_ARGUMENT);
-      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ", " << idx2 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name 
+      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ", " << idx2 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name
          << " in loop " << OPS_instance::getOPSInstance()->OPS_curr_name << " arg " << arg_idx;
       throw ex;
     }
@@ -1227,7 +1246,7 @@ int ops_stencil_check_4d(int arg_idx, int idx0, int idx1, int idx2, int idx3, in
     }
     if (match == 0) {
       OPSException ex(OPS_INVALID_ARGUMENT);
-      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ", " << idx2 << ", " << idx3 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name 
+      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ", " << idx2 << ", " << idx3 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name
          << " in loop " << OPS_instance::getOPSInstance()->OPS_curr_name << " arg " << arg_idx;
       throw ex;
     }
@@ -1251,7 +1270,7 @@ int ops_stencil_check_5d(int arg_idx, int idx0, int idx1, int idx2, int idx3, in
     }
     if (match == 0) {
       OPSException ex(OPS_INVALID_ARGUMENT);
-      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ", " << idx2 << ", " << idx3 << ", " << idx4 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name 
+      ex << "Error: stencil point (" << idx0 << ", "<< idx1 << ", " << idx2 << ", " << idx3 << ", " << idx4 << ") not found in declaration " << OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->name
          << " in loop " << OPS_instance::getOPSInstance()->OPS_curr_name << " arg " << arg_idx;
       throw ex;
     }

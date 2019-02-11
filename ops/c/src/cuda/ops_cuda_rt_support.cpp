@@ -60,6 +60,7 @@
 
 typedef struct cudaDeviceProp cudaDeviceProp_t;
 
+int ops_device_initialised_externally = 0;
 //
 // CUDA utility functions
 //
@@ -332,6 +333,14 @@ void ops_cuda_exit() {
   TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
     cutilSafeCall(cudaFree((item->dat)->data_d));
   }
-
-//  cudaDeviceReset();
+  if (OPS_instance::getOPSInstance()->OPS_consts_bytes > 0) {
+    free(OPS_instance::getOPSInstance()->OPS_consts_h);
+    cudaFreeHost(OPS_instance::getOPSInstance()->OPS_gbl_prev);
+    cutilSafeCall(cudaFree(OPS_instance::getOPSInstance()->OPS_consts_d));
+  }
+  if (OPS_instance::getOPSInstance()->OPS_reduct_bytes > 0) {
+    free(OPS_instance::getOPSInstance()->OPS_reduct_h);
+    cutilSafeCall(cudaFree(OPS_instance::getOPSInstance()->OPS_reduct_d));
+  }
+  if (!ops_device_initialised_externally) cudaDeviceReset();
 }

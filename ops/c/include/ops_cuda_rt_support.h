@@ -66,6 +66,8 @@ extern "C" {
 
 extern void __syncthreads();
 
+extern int ops_device_initialised_externally;
+
 /*
 * personal stripped-down version of cutil_inline.h
 */
