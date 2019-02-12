@@ -237,7 +237,8 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       if n%n_per_line == 3 and n <> nargs-1:
          text = text +'\n'
     code(text);
-    code('int blockidx_start = 0; int blockidx_end = block->count;')
+    code('const int blockidx_start = 0; const int blockidx_end = block->count;')
+    code('const int batch_size = block->count;')
     code('#else')
     #code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
     code('void ops_par_loop_'+name+'_execute(const char *name, ops_block block, int blockidx_start, int blockidx_end, int dim, int *range, int nargs, ops_arg* args) {')
@@ -246,6 +247,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     #code('ops_block block = desc->block;')
     #code('int dim = desc->dim;')
     #code('int *range = desc->range;')
+    code('const int batch_size = OPS_BATCH_SIZE;')
     
     for n in range (0, nargs):
       code('ops_arg arg'+str(n)+' = args['+str(n)+'];')
@@ -339,14 +341,14 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if NDIM>0:
-          code('const int xdim'+str(n)+'_'+name+' = OPS_BATCHED == 0 ? OPS_BATCH_SIZE : args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
+          code('const int xdim'+str(n)+'_'+name+' = OPS_BATCHED == 0 ? batch_size : args['+str(n)+'].dat->size[(OPS_BATCHED>'+str(0)+')+'+str(0-1)+'];')#*args['+str(n)+'].dat->dim;')
         if NDIM>1:
-          code('const int ydim'+str(n)+'_'+name+' = OPS_BATCHED == 1 ? OPS_BATCH_SIZE : args['+str(n)+'].dat->size[1];')
+          code('const int ydim'+str(n)+'_'+name+' = OPS_BATCHED == 1 ? batch_size : args['+str(n)+'].dat->size[(OPS_BATCHED>'+str(1)+')+'+str(1-1)+'];')
         if NDIM>2:
-          code('const int zdim'+str(n)+'_'+name+' = OPS_BATCHED == 2 ? OPS_BATCH_SIZE : args['+str(n)+'].dat->size[2];')
+          code('const int zdim'+str(n)+'_'+name+' = OPS_BATCHED == 2 ? batch_size : args['+str(n)+'].dat->size[(OPS_BATCHED>'+str(2)+')+'+str(2-1)+'];')
     for d in range(0,NDIM+1):
       code('const int bounds_'+str(d)+'_l = OPS_BATCHED == '+str(d)+' ? 0 : start[(OPS_BATCHED>'+str(d)+')+'+str(d-1)+'];')
-      code('const int bounds_'+str(d)+'_u = OPS_BATCHED == '+str(d)+' ? MIN(OPS_BATCH_SIZE,block->count-blockidx_start) : end[(OPS_BATCHED>'+str(d)+')+'+str(d-1)+'];')
+      code('const int bounds_'+str(d)+'_u = OPS_BATCHED == '+str(d)+' ? MIN(batch_size,block->count-blockidx_start) : end[(OPS_BATCHED>'+str(d)+')+'+str(d-1)+'];')
     code('#else')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
