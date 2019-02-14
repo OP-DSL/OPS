@@ -71,7 +71,7 @@ macro(OPS_C_TARGET Name OpsInput OpsTargetDir)
     add_custom_command(
             OUTPUT ${OPS_${Name}_TARGET_outputs}
             COMMAND ${OPS_C_TRANSLATOR_EXECUTABLE} ${Sources}
-            DEPENDS ${${OpsInput}}
+            DEPENDS ${Sources}
             BYPRODUCTS ${OPS_${Name}_TARGET_outputs}
             COMMENT "[OPS][${Name}] Building OPS sources"
             WORKING_DIRECTORY ${OpsTargetDir})
