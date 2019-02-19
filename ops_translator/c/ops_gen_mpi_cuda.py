@@ -405,8 +405,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         elif not dims[n].isdigit():
             dim = 'arg'+str(n)+'.dim, '
             extradim = 1
-        for i in range(1,NDIM+extradim):
-          sizelist = sizelist + 'dims_'+name+'['+str(n)+']['+str(i-1)+'], '
+        for i in range(0,NDIM):
+          sizelist = sizelist + 'dims_'+name+'['+str(n)+']['+str(i)+'], '
         if accs[n] == OPS_READ:
             pre = 'const '
 

@@ -99,6 +99,38 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
                           char const *type, char const *name) {
 
   /** ----             allocate an empty dat             ---- **/
+  int d_m2[OPS_MAX_DIM];
+  int d_p2[OPS_MAX_DIM];
+  int base2[OPS_MAX_DIM];
+  int stride2[OPS_MAX_DIM];
+  int size2[OPS_MAX_DIM];
+
+  if (block->count > 1) {
+    for (int d = 0; d < block->batchdim; d++) {
+      d_m2[d] = d_m[d];
+      d_p2[d] = d_p[d];
+      base2[d] = base[d];
+      stride2[d] = stride[d];
+      size2[d] = dat_size[d];
+    }
+    d_m2[block->batchdim] = 0;
+    d_p2[block->batchdim] = 0;
+    base2[block->batchdim] = 0;
+    stride2[block->batchdim] = 1;
+    size2[block->batchdim] = block->count;
+    for (int d = block->batchdim+1; d < block->dims+1; d++) {
+      d_m2[d] = d_m[d-1];
+      d_p2[d] = d_p[d-1];
+      base2[d] = base[d-1];
+      stride2[d] = stride[d-1];
+      size2[d] = dat_size[d-1];
+    }
+    d_m = d_m2;
+    d_p = d_p2;
+    stride = stride2;
+    base = base2;
+    dat_size = size2;
+  }
 
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p,
                                        stride, data, type_size, type, name);
@@ -139,7 +171,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->base_offset +=
         (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size)
         * cumsize * (-dat->base[i] - dat->d_m[i]);
-    cumsize *= dat->size[i];
+    cumsize *= (i == block->batchdim ? OPS_instance::getOPSInstance()->ops_batch_size : dat->size[i]);
   }
 
 

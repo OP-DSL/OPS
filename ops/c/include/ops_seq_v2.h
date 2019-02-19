@@ -46,8 +46,13 @@ inline int off(int ndim, int dim , int* start, int* end, int* size, int* stride)
   for(i=dim; i<ndim; i++) c2[i] = start[i];
 
   for (i = 0; i < ndim; i++) {
+#ifdef OPS_BATCHED
     c1[i] *= (i==OPS_BATCHED?1:stride[i-(OPS_BATCHED<i)]);
     c2[i] *= (i==OPS_BATCHED?1:stride[i-(OPS_BATCHED<i)]);
+#else
+    c1[i] *= stride[i];
+    c2[i] *= stride[i];
+#endif
   }
   int off =  add(c1, size, dim) - add(c2, size, dim);
 
@@ -58,7 +63,11 @@ inline int address(int ndim, int dat_size, int* start, int* size, int* stride, i
 {
   int base = 0;
   for(int i=0; i<ndim; i++) {
+#ifdef OPS_BATCHED
     base = base + dat_size * mult(size, i) * (start[i] * (i==OPS_BATCHED?1:stride[i-(OPS_BATCHED<i)]) - base_off[i] - d_m[i]);
+#else
+    base = base + dat_size * mult(size, i) * (start[i] * (stride[i]) - base_off[i] - d_m[i]);
+#endif
   }
   return base;
 }
@@ -146,20 +155,30 @@ static void shift_arg(const ops_arg &arg, char **p, int m, const int* start,
 #endif
 {
   if (arg.argtype == OPS_ARG_IDX) {
+#ifdef OPS_BATCHED
     if (m == OPS_BATCHED) arg_idx[ndim-1]++;
     else arg_idx[m-(OPS_BATCHED<m)]++;
+#else
+    arg_idx[m]++;
+#endif
 #ifdef OPS_MPI
     for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
 #else //OPS_MPI
     for (int d = 0; d < m; d++) {
+#ifdef OPS_BATCHED
       if (d == OPS_BATCHED) arg_idx[ndim-1] = start[d];
       else arg_idx[d-(OPS_BATCHED<d)] = start[d];
+#else
+      arg_idx[d] = start[d];
+#endif
     }
 #endif //OPS_MPI
   }
   else if (arg.argtype == OPS_ARG_GBL && arg.acc != OPS_READ) {
+#ifdef OPS_BATCHED
     if (m == OPS_BATCHED) *p += ((ops_reduction)arg.data)->size;
     else if (m > OPS_BATCHED) *p = ((ops_reduction)arg.data)->data;
+#endif
   }
 }
 
@@ -254,7 +273,11 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
       end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
   }
   #else //!OPS_MPI
+#ifdef OPS_BATCHED
   int ndim = block->dims + (block->count>1 || OPS_BATCHED < block->dims);
+#else
+  int ndim = block->dims;
+#endif
   for (int n=0; n<ndim; n++) {
     if (n==block->batchdim) {start[n] = 0; end[n]=block->count;}
     else if (n<block->batchdim) {start[n] = range[2*n]; end[n] = range[2*n+1];}
