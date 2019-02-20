@@ -134,9 +134,13 @@ template <typename ParamT> struct param_handler {
       sub_block_list sb = OPS_sub_block_list[block->index]; //TODO: Multigrid
       for (int d = 0; d < ndim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
+#ifdef OPS_BATCHED
       for (int d = 0; d < block->batchdim; d++) arg_idx[d] = start[d];
       for (int d = block->batchdim; d < ndim-1; d++) arg_idx[d] = start[d+1];
-      arg_idx[ndim-1] = start[block->batchdim];
+      if (block->count > 1) arg_idx[ndim-1] = start[block->batchdim];
+#else
+      for (int d = 0; d < ndim; d++) arg_idx[d] = start[d];
+#endif
 
   #endif //OPS_MPI
       return (char *)arg_idx;

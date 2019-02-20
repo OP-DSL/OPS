@@ -384,13 +384,13 @@ int ops_dat_get_local_npartitions(ops_dat dat) {
 void ops_dat_get_raw_metadata(ops_dat dat, int part, int *disp, int *size, int *stride, int *d_m, int *d_p) {
   ops_dat_get_extents(dat, part, disp, size);
   if (stride != NULL)
-    for (int d = 0; d < dat->block->dims; d++)
+    for (int d = 0; d < dat->block->dims + (dat->block->count>1?1:0); d++)
       stride[d] = dat->size[d];
   if (d_m != NULL)
-    for (int d = 0; d < dat->block->dims; d++)
+    for (int d = 0; d < dat->block->dims + (dat->block->count>1?1:0); d++)
       d_m[d] = dat->d_m[d];
   if (d_p != NULL)
-    for (int d = 0; d < dat->block->dims; d++)
+    for (int d = 0; d < dat->block->dims + (dat->block->count>1?1:0); d++)
       d_p[d] = dat->d_p[d];
 
 }
@@ -419,7 +419,7 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
   int lsize[OPS_MAX_DIM] = {1};
   int ldisp[OPS_MAX_DIM] = {0};
   ops_dat_get_extents(dat, part, ldisp, lsize);
-  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
+  for (int d = dat->block->dims + (dat->block->count>1?1:0); d < OPS_MAX_DIM; d++) {
     lsize[d] = 1;
     ldisp[d] = 0;
   }
@@ -437,7 +437,7 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
   int lsize[OPS_MAX_DIM] = {1};
   int ldisp[OPS_MAX_DIM] = {0};
   ops_dat_get_extents(dat, part, ldisp, lsize);
-  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
+  for (int d = dat->block->dims + (dat->block->count>1?1:0); d < OPS_MAX_DIM; d++) {
     lsize[d] = 1;
     ldisp[d] = 0;
   }
@@ -460,10 +460,10 @@ int ops_dat_get_global_npartitions(ops_dat dat) {
 
 void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size) {
   if (disp != NULL)
-    for (int d = 0; d < dat->block->dims; d++)
+    for (int d = 0; d < dat->block->dims + (dat->block->count>1?1:0); d++)
       disp[d] = 0;
   if (size != NULL)
-    for (int d = 0; d < dat->block->dims; d++)
+    for (int d = 0; d < dat->block->dims + (dat->block->count>1?1:0); d++)
       size[d] = dat->size[d] + dat->d_m[d] - dat->d_p[d];
 }
 
