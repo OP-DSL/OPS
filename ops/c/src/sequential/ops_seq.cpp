@@ -138,9 +138,10 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     }
   }
 
-  if (block->count > 1) {
+  if (block->count > 1)
     dat->amr = 1;
-  }
+  else
+    dat->amr = 0;
 
   // Compute offset in bytes to the base index
   dat->base_offset = 0;

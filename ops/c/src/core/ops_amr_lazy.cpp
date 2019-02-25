@@ -99,6 +99,7 @@ std::vector<char *> new_ptrs;
 std::vector<ops_dat> free_queue;
 
 void replicate_dats() {
+  if (omp_get_max_threads() == 1) return;
   replicated.resize(MAX((int)replicated.size(),  OPS_instance::getOPSInstance()->OPS_dat_index));
   orig_ptrs.resize(MAX((int)replicated.size(),  OPS_instance::getOPSInstance()->OPS_dat_index));
   fill(replicated.begin(), replicated.end(), 0);
@@ -110,7 +111,7 @@ void replicate_dats() {
       ops_arg *args = ops_kernel_list[k]->args;
       if (args[i].opt && (args[i].argtype == OPS_ARG_DAT || args[i].argtype == OPS_ARG_PROLONG || 
           args[i].argtype == OPS_ARG_RESTRICT || args[i].argtype == OPS_ARG_DAT2)) {
-        if (args[i].acc != OPS_READ && args[i].dat->amr == 0)
+        if (args[i].acc != OPS_READ && args[i].dat->amr == 0 && args[i].dat->block->count>1)
           replicated[args[i].dat->index] = 1;
       }
     }
@@ -145,6 +146,7 @@ void replicate_dats() {
 }
 
 void restore_dat_ptrs() {
+  if (omp_get_max_threads() == 1) return;
  ops_dat_entry *item;
   TAILQ_FOREACH(item, & OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
     ops_dat dat = item->dat;

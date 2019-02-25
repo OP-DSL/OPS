@@ -613,6 +613,7 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
   arg.data_d = NULL;
   arg.stencil = NULL;
   arg.dim = dim;
+  arg.opt = 1;
   arg.data = (char *)handle;
   arg.acc = acc;
   if (handle->initialized == 0) {
@@ -798,6 +799,7 @@ ops_arg ops_arg_gbl_core(char *data, int dim, int size, ops_access acc) {
   arg.data = data;
   arg.typesize = size;
   arg.acc = acc;
+  arg.opt = 1;
   return arg;
 }
 
@@ -810,6 +812,7 @@ ops_arg ops_arg_idx() {
   arg.dim = 0;
   arg.data = NULL;
   arg.acc = 0;
+  arg.opt = 1;
   return arg;
 }
 
