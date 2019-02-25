@@ -341,11 +341,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if NDIM>0:
-          code('const int xdim'+str(n)+'_'+name+' = OPS_BATCHED == 0 ? batch_size : args['+str(n)+'].dat->size[(OPS_BATCHED>'+str(0)+')+'+str(0-1)+'];')#*args['+str(n)+'].dat->dim;')
+          code('const int xdim'+str(n)+'_'+name+' = OPS_BATCHED == 0 ? batch_size : args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
         if NDIM>1:
-          code('const int ydim'+str(n)+'_'+name+' = OPS_BATCHED == 1 ? batch_size : args['+str(n)+'].dat->size[(OPS_BATCHED>'+str(1)+')+'+str(1-1)+'];')
+          code('const int ydim'+str(n)+'_'+name+' = OPS_BATCHED == 1 ? batch_size : args['+str(n)+'].dat->size[1];')
         if NDIM>2:
-          code('const int zdim'+str(n)+'_'+name+' = OPS_BATCHED == 2 ? batch_size : args['+str(n)+'].dat->size[(OPS_BATCHED>'+str(2)+')+'+str(2-1)+'];')
+          code('const int zdim'+str(n)+'_'+name+' = OPS_BATCHED == 2 ? batch_size : args['+str(n)+'].dat->size[2];')
     for d in range(0,NDIM+1):
       code('const int bounds_'+str(d)+'_l = OPS_BATCHED == '+str(d)+' ? 0 : start[(OPS_BATCHED>'+str(d)+')+'+str(d-1)+'];')
       code('const int bounds_'+str(d)+'_u = OPS_BATCHED == '+str(d)+' ? MIN(batch_size,block->count-blockidx_start) : end[(OPS_BATCHED>'+str(d)+')+'+str(d-1)+'];')
