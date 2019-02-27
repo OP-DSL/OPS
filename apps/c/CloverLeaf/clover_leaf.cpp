@@ -216,10 +216,10 @@ int main(int argc, char **argv)
       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
       //exit(0);
      //}
-    if(step == 200) {
-      printf("In here ********************************\n");
-      ops_NaNcheck(density0);
-    }
+    //if(step == 200) {
+    //  printf("In here ********************************\n");
+    //  ops_NaNcheck(density0);
+    //}
 
   }
 

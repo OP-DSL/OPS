@@ -136,11 +136,6 @@ int main(int argc, char **argv) {
       ops_fprintf(g_out, "\n Clover is finishing\n");
       break;
     }
-
-    if (step == 200) {
-      printf("In here ********************************\n");
-      ops_NaNcheck(density0);
-    }
   }
 
   ops_timers(&ct1, &et1);
