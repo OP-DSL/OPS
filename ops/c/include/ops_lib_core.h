@@ -408,6 +408,9 @@ void ops_timers(double *cpu, double *et);
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name);
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name);
 
+void ops_NaNcheck(ops_dat dat);
+void ops_NaNcheck_core(ops_dat dat);
+
 void ops_get_data(ops_dat dat);
 
 int* ops_fetch_data_size(ops_dat dat);

@@ -1366,6 +1366,89 @@ int ops_stencil_check_5d(int arg_idx, int idx0, int idx1, int idx2, int idx3, in
 }
 
 
+void ops_NaNcheck_core(ops_dat dat) {
+
+  size_t prod[OPS_MAX_DIM+1];
+  prod[0] = dat->size[0];
+  for (int d = 1; d < OPS_MAX_DIM; d++) {
+    prod[d] = prod[d-1] * dat->size[d];
+  }
+  for (int d = OPS_MAX_DIM; d <= OPS_MAX_DIM; d++)
+    prod[d] = prod[d-1];
+
+#if OPS_MAX_DIM > 5
+  for (int n = 0; n < dat->size[5]; n++) {
+#else
+  {
+  int n = 0;
+#endif
+  #if OPS_MAX_DIM > 4
+    for (int m = 0; m < dat->size[4]; m++) {
+  #else
+    {
+    int m = 0;
+  #endif
+    #if OPS_MAX_DIM > 3
+      for (int l = 0; l < dat->size[3]; l++) {
+    #else
+      {
+      int l = 0;
+    #endif
+      #if OPS_MAX_DIM > 2
+        for (int k = 0; k < dat->size[2]; k++) {
+      #else
+        {
+        int k = 0;
+      #endif
+        #if OPS_MAX_DIM > 1
+          for (int j = 0; j < dat->size[1]; j++) {
+        #else
+          {
+          int j = 0;
+        #endif
+          #if OPS_MAX_DIM > 0
+            for (int i = 0; i < dat->size[0]; i++) {
+          #else
+            {
+            int i = 0;
+          #endif
+
+              for (int d = 0; d < dat->dim; d++) {
+
+                size_t offset = OPS_soa ?
+                        (n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i + d * prod[5])
+                      :((n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i)*dat->dim + d);
+                if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
+                    strcmp(dat->type, "double precision") == 0) {
+                  if (  isnan(((double *)dat->data)[offset])  ) {
+                    printf("Error: NaN detected at element %d\n", offset);
+                    exit(2);
+                  }
+                } else if (strcmp(dat->type, "float") == 0 ||
+                           strcmp(dat->type, "real") == 0) {
+                  if (  isnan(((float *)dat->data)[offset])  ) {
+                    printf("Error: NaN detected at element %d\n", offset);
+                    exit(2);
+                  }
+                } else if (strcmp(dat->type, "int") == 0 ||
+                           strcmp(dat->type, "integer") == 0 ||
+                           strcmp(dat->type, "integer(4)") == 0 ||
+                          strcmp(dat->type, "int(4)") == 0) {
+                  // do nothing
+                } else {
+                  printf("Error: Unknown type %s, cannot check for NaNs\n", dat->type);
+                  exit(2);
+                }
+              } //d
+            } //i
+          }//j
+        }//k
+      }//l
+    }//m
+  }//n
+}
+
+
 /* Called from Fortran to set the indices to C*/
 ops_halo ops_decl_halo_convert(ops_dat from, ops_dat to, int *iter_size,
                                int *from_base, int *to_base, int *from_dir,

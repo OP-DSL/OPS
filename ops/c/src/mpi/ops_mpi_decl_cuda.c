@@ -184,6 +184,14 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
   }
 }
 
+void ops_NaNcheck(ops_dat dat) {
+  if (OPS_sub_block_list[dat->block->index]->owned == 1) {
+    ops_cuda_get_data(dat);
+    ops_NaNcheck_core(dat);
+  }
+}
+
+
 /************* Functions only use in the Fortran Backend ************/
 
 int getOPS_block_size_x() { return OPS_block_size_x; }
