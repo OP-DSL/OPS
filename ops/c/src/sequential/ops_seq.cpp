@@ -37,6 +37,7 @@
   */
 
 #include <ops_lib_core.h>
+#include <ops_util.h>
 #include <ops_exceptions.h>
 
 int posix_memalign(void **memptr, size_t alignment, size_t size);
@@ -46,6 +47,7 @@ void ops_init(const int argc, char **argv, const int diags) {
 }
 
 void ops_exit() { ops_exit_core(); }
+
 
 ops_dat ops_decl_amrdat_char(ops_block block, int size, int *dat_size, int *base,
                           int *d_m, int *d_p, char *data, int type_size,
@@ -63,12 +65,12 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
                           char const *type, char const *name) {
 
   /** ----             allocate an empty dat             ---- **/
-
   int d_m2[OPS_MAX_DIM];
   int d_p2[OPS_MAX_DIM];
   int base2[OPS_MAX_DIM];
   int stride2[OPS_MAX_DIM];
   int size2[OPS_MAX_DIM];
+  int *dat_size_orig = dat_size;
 
   if (block->count > 1) {
     for (int d = 0; d < block->batchdim; d++) {
@@ -128,13 +130,40 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->user_managed = 0;
     dat->mem = bytes;
     if (data != NULL && OPS_instance::getOPSInstance()->OPS_realloc) {
-      if (block->count > 1 && block->batchdim != block->dims) throw OPSException(OPS_INVALID_ARGUMENT, "Realloc does not work with batching in the non-last dimension"); 
-      int sizeprod = 1; 
-      for (int d = 1; d < block->dims; d++) sizeprod *= (dat->size[d]);
-      int xlen_orig = (-d_m[0]+d_p[0]+dat_size[0]) * size * type_size;
-      for (int i = 0; i < sizeprod * block->count; i++) {
-        memcpy(&dat->data[i*dat->size[0] * size * type_size],&data[i*xlen_orig],xlen_orig);
+      const int num_dims = block->dims + ((size>1)?1:0) + (block->count>1?1:0);
+      int size_in[num_dims];
+      int size_out[num_dims];
+      int dim_perm[num_dims];
+      
+      int s1 = (size>1 && !OPS_instance::getOPSInstance()->OPS_soa)?1:0;
+      int s2 = (size>1)?1:0;
+
+      if (size>1) {
+        size_in[0] = size;
+        int idx_dim = (OPS_instance::getOPSInstance()->OPS_soa)?
+            ((block->count>1?1:0)+block->dims):0;
+        dim_perm[0] = idx_dim; 
+        size_out[idx_dim] = size;
       }
+
+      for (int d = 0; d < block->batchdim; d++) {
+        size_in[s2+d] = dat_size_orig[d];
+        size_out[s1+d] = dat->size[d];
+        dim_perm[s2+d] = s1+d;
+      }
+      if (block->count>1) {
+        size_in[s2+block->dims] = block->count;
+        size_out[s1+block->batchdim] = block->count;
+        dim_perm[s2+block->dims] = s1+block->batchdim;
+      }
+      for (int d = block->batchdim; d < block->dims; d++) {
+        size_in[s2+d] = dat_size_orig[d];
+        size_out[s1+d+1] = dat_size_orig[d];
+        dim_perm[s2+d] = s1+d+1;
+      }
+
+      ops_transpose_data(data, dat->data, type_size, num_dims, size_in, size_out, dim_perm);
+
     }
   }
 
@@ -150,7 +179,8 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->base_offset +=
         (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size)
         * cumsize * (-dat->base[i] - dat->d_m[i]);
-    cumsize *= (i == block->batchdim ? OPS_instance::getOPSInstance()->ops_batch_size : dat->size[i]);
+    cumsize *= dat->size[i];//(i == block->batchdim ? OPS_instance::getOPSInstance()->ops_batch_size : dat->size[i]);
+    //printf("cumsize %d\n", cumsize);
   }
 
   return dat;

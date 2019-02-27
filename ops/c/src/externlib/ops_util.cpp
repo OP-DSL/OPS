@@ -47,6 +47,7 @@
 #include <unistd.h>
 
 #include <ops_util.h>
+#include <ops_lib_core.h>
 
 /*******************************************************************************
 * Wrapper for malloc from www.gnu.org/
@@ -185,3 +186,44 @@ int file_exist(char const *filename) {
   struct stat buffer;
   return (stat(filename, &buffer) == 0);
 }
+
+/*******************************************************************************
+* Transpose an array, with potentially different padding - out has to be no smaller
+*******************************************************************************/
+void ops_transpose_data(char *in, char* out, int type_size, int ndim, int* size_in, int *size_out, int* dim_perm) {
+
+  int total = 1;
+  int count_in[OPS_MAX_DIM];
+  int prod_out[OPS_MAX_DIM+1];
+  prod_out[0] = 1;
+  for (int d = 0; d < ndim; d++) {
+    total *= size_in[d];
+    count_in[d] = size_in[d];
+    prod_out[d+1] = prod_out[d]*size_out[d];
+  }
+
+  for (int i = 0; i < total; i++) {
+
+
+    int idx_in = i;
+    int idx_out = 0;
+    for (int d = 0; d < ndim; d++) {
+      int idx_in_d = size_in[d]-count_in[d];
+      int d_out = dim_perm[d];
+      idx_out += idx_in_d * prod_out[d_out];
+    }
+
+    memcpy(out+type_size*idx_out, in+type_size*i, type_size);
+
+    count_in[0]--;
+    int m = 0;
+    while(count_in[m] == 0 && i < total-1) { //Can skip the very last iteration
+      count_in[m] = size_in[m];
+      m++;
+      count_in[m]--;
+    }
+
+  }
+}
+
+
