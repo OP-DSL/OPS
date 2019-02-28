@@ -1366,7 +1366,7 @@ int ops_stencil_check_5d(int arg_idx, int idx0, int idx1, int idx2, int idx3, in
 }
 
 
-void ops_NaNcheck_core(ops_dat dat) {
+void ops_NaNcheck_core(ops_dat dat, char *buffer) {
 
   size_t prod[OPS_MAX_DIM+1];
   prod[0] = dat->size[0];
@@ -1421,13 +1421,13 @@ void ops_NaNcheck_core(ops_dat dat) {
                 if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
                     strcmp(dat->type, "double precision") == 0) {
                   if (  isnan(((double *)dat->data)[offset])  ) {
-                    printf("Error: NaN detected at element %d\n", offset);
+                    printf("%sError: NaN detected at element %d\n", buffer, offset);
                     exit(2);
                   }
                 } else if (strcmp(dat->type, "float") == 0 ||
                            strcmp(dat->type, "real") == 0) {
                   if (  isnan(((float *)dat->data)[offset])  ) {
-                    printf("Error: NaN detected at element %d\n", offset);
+                    printf("%sError: NaN detected at element %d\n", buffer, offset);
                     exit(2);
                   }
                 } else if (strcmp(dat->type, "int") == 0 ||
