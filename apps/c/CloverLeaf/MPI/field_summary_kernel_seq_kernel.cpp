@@ -51,13 +51,13 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block,
                       arg6, arg7, arg8, arg9, arg10};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 11, range, 49))
+  if (!ops_checkpointing_before(args, 11, range, 31))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(49, "field_summary_kernel");
-    OPS_kernels[49].count++;
+    ops_timing_realloc(31, "field_summary_kernel");
+    OPS_kernels[31].count++;
     ops_timers_core(&c2, &t2);
   }
 
@@ -246,7 +246,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[49].mpi_time += t1 - t2;
+    OPS_kernels[31].mpi_time += t1 - t2;
   }
 
   int n_x;
@@ -301,19 +301,19 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block,
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[49].time += t2 - t1;
+    OPS_kernels[31].time += t2 - t1;
   }
   ops_set_dirtybit_host(args, 11);
 
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c1, &t1);
-    OPS_kernels[49].mpi_time += t1 - t2;
-    OPS_kernels[49].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[49].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[49].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[49].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[49].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[49].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_kernels[31].mpi_time += t1 - t2;
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg5);
   }
 }

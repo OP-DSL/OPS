@@ -30,13 +30,13 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name,
   ops_arg args[2] = {arg0, arg1};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 2, range, 73))
+  if (!ops_checkpointing_before(args, 2, range, 19))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(73, "advec_mom_kernel_mass_flux_x");
-    OPS_kernels[73].count++;
+    ops_timing_realloc(19, "advec_mom_kernel_mass_flux_x");
+    OPS_kernels[19].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -126,14 +126,14 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name,
 #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[73].mpi_time += t2 - t1;
+    OPS_kernels[19].mpi_time += t2 - t1;
   }
 
   advec_mom_kernel_mass_flux_x_c_wrapper(p_a0, p_a1, x_size, y_size);
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[73].time += t1 - t2;
+    OPS_kernels[19].time += t1 - t2;
   }
 #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 2);
@@ -145,8 +145,8 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name,
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[73].mpi_time += t2 - t1;
-    OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[19].mpi_time += t2 - t1;
+    OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

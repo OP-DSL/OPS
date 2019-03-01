@@ -76,13 +76,13 @@ void ops_par_loop_revert_kernel_execute(ops_kernel_descriptor *desc) {
   ops_arg args[4] = {arg0, arg1, arg2, arg3};
 
 #if CHECKPOINTING && !OPS_LAZY
-  if (!ops_checkpointing_before(args, 4, range, 57))
+  if (!ops_checkpointing_before(args, 4, range, 0))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(57, "revert_kernel");
-    OPS_kernels[57].count++;
+    ops_timing_realloc(0, "revert_kernel");
+    OPS_kernels[0].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -182,7 +182,7 @@ void ops_par_loop_revert_kernel_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[57].mpi_time += t2 - t1;
+    OPS_kernels[0].mpi_time += t2 - t1;
   }
 
   // call kernel wrapper function, passing in pointers to data
@@ -196,7 +196,7 @@ void ops_par_loop_revert_kernel_execute(ops_kernel_descriptor *desc) {
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);
-    OPS_kernels[57].time += t1 - t2;
+    OPS_kernels[0].time += t1 - t2;
   }
 
 #ifndef OPS_LAZY
@@ -208,11 +208,11 @@ void ops_par_loop_revert_kernel_execute(ops_kernel_descriptor *desc) {
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[57].mpi_time += t2 - t1;
-    OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[0].mpi_time += t2 - t1;
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg3);
   }
 }
 
@@ -226,9 +226,9 @@ void ops_par_loop_revert_kernel(char const *name, ops_block block, int dim,
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 57;
+  desc->index = 0;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 57;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 0;
   for (int i = 0; i < 4; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -246,7 +246,7 @@ void ops_par_loop_revert_kernel(char const *name, ops_block block, int dim,
   desc->hash = ((desc->hash << 5) + desc->hash) + arg3.dat->index;
   desc->function = ops_par_loop_revert_kernel_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(57, "revert_kernel");
+    ops_timing_realloc(0, "revert_kernel");
   }
   ops_enqueue_kernel(desc);
 }
