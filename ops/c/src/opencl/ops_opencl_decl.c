@@ -149,6 +149,12 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
   ops_print_dat_to_txtfile_core(dat, file_name);
 }
 
+void ops_NaNcheck(ops_dat dat){
+  // need to get data from GPU
+  ops_opencl_get_data(dat);
+  ops_NaNcheck_core(dat, "");
+}
+
 // routine to fetch data from device
 void ops_get_data(ops_dat dat) { ops_opencl_get_data(dat); }
 

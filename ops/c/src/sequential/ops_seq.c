@@ -440,6 +440,10 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
   ops_print_dat_to_txtfile_core(dat, file_name);
 }
 
+void ops_NaNcheck(ops_dat dat) {
+  ops_NaNcheck_core(dat, "");
+}
+
 void ops_get_data(ops_dat dat) {
   // data already on the host .. do nothing
   (void)dat;

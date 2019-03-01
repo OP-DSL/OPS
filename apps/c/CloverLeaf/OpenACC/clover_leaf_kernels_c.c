@@ -5,7 +5,7 @@
 
 #include <openacc.h>
 
-//user kernel files
+// user kernel files
 #include "PdV_kernel_nopredict_openacc_kernel_c.c"
 #include "PdV_kernel_predict_openacc_kernel_c.c"
 #include "accelerate_kernel_openacc_kernel_c.c"
