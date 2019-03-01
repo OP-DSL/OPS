@@ -99,7 +99,7 @@ void buildOpenCLKernels_calc_dt_kernel_min(int xdim0) {
     printf("compiling calc_dt_kernel_min -- done\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[28] =
+    OPS_opencl_core.kernel[52] =
         clCreateKernel(OPS_opencl_core.program, "ops_calc_dt_kernel_min", &ret);
     clSafeCall(ret);
 
@@ -117,13 +117,13 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   ops_arg args[2] = {arg0, arg1};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 2, range, 28))
+  if (!ops_checkpointing_before(args, 2, range, 52))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(28, "calc_dt_kernel_min");
-    OPS_kernels[28].count++;
+    ops_timing_realloc(52, "calc_dt_kernel_min");
+    OPS_kernels[52].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -226,31 +226,31 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[28].mpi_time += t2 - t1;
+    OPS_kernels[52].mpi_time += t2 - t1;
   }
 
   int nthread = OPS_block_size_x * OPS_block_size_y * OPS_block_size_z;
 
   if (globalWorkSize[0] > 0 && globalWorkSize[1] > 0 && globalWorkSize[2] > 0) {
 
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[28], 0, sizeof(cl_mem),
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[52], 0, sizeof(cl_mem),
                               (void *)&arg0.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[28], 1, sizeof(cl_mem),
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[52], 1, sizeof(cl_mem),
                               (void *)&arg1.data_d));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[28], 2,
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[52], 2,
                               nthread * sizeof(double), NULL));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[28], 3, sizeof(cl_int),
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[52], 3, sizeof(cl_int),
                               (void *)&r_bytes1));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[28], 4, sizeof(cl_int),
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[52], 4, sizeof(cl_int),
                               (void *)&base0));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[28], 5, sizeof(cl_int),
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[52], 5, sizeof(cl_int),
                               (void *)&x_size));
-    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[28], 6, sizeof(cl_int),
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[52], 6, sizeof(cl_int),
                               (void *)&y_size));
 
     // call/enque opencl kernel wrapper function
     clSafeCall(clEnqueueNDRangeKernel(
-        OPS_opencl_core.command_queue, OPS_opencl_core.kernel[28], 3, NULL,
+        OPS_opencl_core.command_queue, OPS_opencl_core.kernel[52], 3, NULL,
         globalWorkSize, localWorkSize, 0, NULL, NULL));
   }
   if (OPS_diags > 1) {
@@ -259,7 +259,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[28].time += t1 - t2;
+    OPS_kernels[52].time += t1 - t2;
   }
 
   mvReductArraysToHost(reduct_bytes);
@@ -275,7 +275,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[28].mpi_time += t2 - t1;
-    OPS_kernels[28].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[52].mpi_time += t2 - t1;
+    OPS_kernels[52].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

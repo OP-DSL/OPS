@@ -156,13 +156,13 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
                       arg6, arg7, arg8, arg9, arg10};
 
 #if CHECKPOINTING && !OPS_LAZY
-  if (!ops_checkpointing_before(args, 11, range, 31))
+  if (!ops_checkpointing_before(args, 11, range, 49))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(31, "field_summary_kernel");
-    OPS_kernels[31].count++;
+    ops_timing_realloc(49, "field_summary_kernel");
+    OPS_kernels[49].count++;
     ops_timers_core(&c1, &t1);
   }
 
@@ -381,7 +381,7 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[31].mpi_time += t2 - t1;
+    OPS_kernels[49].mpi_time += t2 - t1;
   }
 
   int nshared = 0;
@@ -444,7 +444,7 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1, &t1);
-    OPS_kernels[31].time += t1 - t2;
+    OPS_kernels[49].time += t1 - t2;
   }
 
 #ifndef OPS_LAZY
@@ -454,13 +454,13 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c2, &t2);
-    OPS_kernels[31].mpi_time += t2 - t1;
-    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_kernels[49].mpi_time += t2 - t1;
+    OPS_kernels[49].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[49].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[49].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[49].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[49].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[49].transfer += ops_compute_transfer(dim, start, end, &arg5);
   }
 }
 
@@ -477,9 +477,9 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block,
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 31;
+  desc->index = 49;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 31;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 49;
   for (int i = 0; i < 4; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -506,7 +506,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block,
   desc->args[10] = arg10;
   desc->function = ops_par_loop_field_summary_kernel_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(31, "field_summary_kernel");
+    ops_timing_realloc(49, "field_summary_kernel");
   }
   ops_enqueue_kernel(desc);
 }

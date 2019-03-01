@@ -45,12 +45,12 @@ void ops_par_loop_update_halo_kernel1_l2_execute(ops_kernel_descriptor *desc) {
   ops_arg args[8] = {arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
 
 #ifdef CHECKPOINTING
-  if (!ops_checkpointing_before(args, 8, range, 47))
+  if (!ops_checkpointing_before(args, 8, range, 13))
     return;
 #endif
 
   if (OPS_diags > 1) {
-    OPS_kernels[47].count++;
+    OPS_kernels[13].count++;
     ops_timers_core(&c2, &t2);
   }
 
@@ -102,7 +102,7 @@ void ops_par_loop_update_halo_kernel1_l2_execute(ops_kernel_descriptor *desc) {
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[47].mpi_time += t1 - t2;
+    OPS_kernels[13].mpi_time += t1 - t2;
   }
 
 #pragma omp parallel for
@@ -134,20 +134,20 @@ void ops_par_loop_update_halo_kernel1_l2_execute(ops_kernel_descriptor *desc) {
   }
   if (OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[47].time += t2 - t1;
+    OPS_kernels[13].time += t2 - t1;
   }
 
   if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&c1, &t1);
-    OPS_kernels[47].mpi_time += t1 - t2;
-    OPS_kernels[47].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[47].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[47].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[47].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[47].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[47].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[47].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    OPS_kernels[13].mpi_time += t1 - t2;
+    OPS_kernels[13].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[13].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[13].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[13].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[13].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[13].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_kernels[13].transfer += ops_compute_transfer(dim, start, end, &arg6);
   }
 }
 #undef OPS_ACC0
@@ -170,9 +170,9 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block,
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 47;
+  desc->index = 13;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 47;
+  desc->hash = ((desc->hash << 5) + desc->hash) + 13;
   for (int i = 0; i < 4; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
@@ -200,7 +200,7 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block,
   desc->args[7].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel1_l2_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(47, "update_halo_kernel1_l2");
+    ops_timing_realloc(13, "update_halo_kernel1_l2");
   }
   ops_enqueue_kernel(desc);
 }
