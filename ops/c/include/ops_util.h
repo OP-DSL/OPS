@@ -61,7 +61,6 @@ int removeDups(int a[], int array_size);
 
 int file_exist(char const *filename);
 
-void ops_transpose_data(char *in, char* out, int type_size, int ndim, int* size_in, int *size_out, int* dim_perm);
 
 inline int mult2(int *size, int dim) {
   int result = 1;

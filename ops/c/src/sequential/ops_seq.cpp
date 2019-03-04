@@ -130,40 +130,8 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->user_managed = 0;
     dat->mem = bytes;
     if (data != NULL && OPS_instance::getOPSInstance()->OPS_realloc) {
-      const int num_dims = block->dims + ((size>1)?1:0) + (block->count>1?1:0);
-      int size_in[num_dims];
-      int size_out[num_dims];
-      int dim_perm[num_dims];
-      
-      int s1 = (size>1 && !OPS_instance::getOPSInstance()->OPS_soa)?1:0;
-      int s2 = (size>1)?1:0;
-
-      if (size>1) {
-        size_in[0] = size;
-        int idx_dim = (OPS_instance::getOPSInstance()->OPS_soa)?
-            ((block->count>1?1:0)+block->dims):0;
-        dim_perm[0] = idx_dim; 
-        size_out[idx_dim] = size;
-      }
-
-      for (int d = 0; d < block->batchdim; d++) {
-        size_in[s2+d] = dat_size_orig[d];
-        size_out[s1+d] = dat->size[d];
-        dim_perm[s2+d] = s1+d;
-      }
-      if (block->count>1) {
-        size_in[s2+block->dims] = block->count;
-        size_out[s1+block->batchdim] = block->count;
-        dim_perm[s2+block->dims] = s1+block->batchdim;
-      }
-      for (int d = block->batchdim; d < block->dims; d++) {
-        size_in[s2+d] = dat_size_orig[d];
-        size_out[s1+d+1] = dat_size_orig[d];
-        dim_perm[s2+d] = s1+d+1;
-      }
-
-      ops_transpose_data(data, dat->data, type_size, num_dims, size_in, size_out, dim_perm);
-
+      ops_convert_layout(data, dat->data, block, size,
+                            dat->size, dat_size_orig, type_size);
     }
   }
 

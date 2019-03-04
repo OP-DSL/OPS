@@ -118,34 +118,9 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     typs  = kernels[nk]['typs']
     NDIM = int(dim)
     #parse stencil to locate strided access
-    stride = [1] * (nargs+4) * NDIM
+    stride = [''] * (nargs+4) * (NDIM+1)
     restrict = [1] * nargs
     prolong = [1] * nargs
-
-    if NDIM == 2:
-      for n in range (0, nargs):
-        if str(stens[n]).find('STRID2D_X') > 0:
-          stride[NDIM*n+1] = 0
-        elif str(stens[n]).find('STRID2D_Y') > 0:
-          stride[NDIM*n] = 0
-
-    if NDIM == 3:
-      for n in range (0, nargs):
-        if str(stens[n]).find('STRID3D_XY') > 0:
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_YZ') > 0:
-          stride[NDIM*n] = 0
-        elif str(stens[n]).find('STRID3D_XZ') > 0:
-          stride[NDIM*n+1] = 0
-        elif str(stens[n]).find('STRID3D_X') > 0:
-          stride[NDIM*n+1] = 0
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_Y') > 0:
-          stride[NDIM*n] = 0
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_Z') > 0:
-          stride[NDIM*n] = 0
-          stride[NDIM*n+1] = 0
 
     ### Determine if this is a MULTI_GRID LOOP with
     ### either restrict or prolong
@@ -366,6 +341,13 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('#endif')
 
 
+    for n in range (0, nargs):
+      if str(stens[n]).find('STRID') > 0:
+        for d in range(0,NDIM+1):
+          code('const int stride'+str(n)+'_'+str(d)+' = OPS_BATCHED=='+str(d)+' ? 1 : args['+str(n)+'].stencil->stride[(OPS_BATCHED>'+str(d)+')+'+str(d-1)+'];')
+          stride[(NDIM+1)*n+d] = '*stride'+str(n)+'_'+str(d)
+
+
     code('')
 
     code('#ifndef OPS_LAZY')
@@ -551,13 +533,13 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         elif not dims[n].isdigit():
             dim = 'arg'+str(n)+'.dim, '
         if NDIM >= 0:
-          offset = offset + 'n_0*'+str(stride[NDIM*n])
+          offset = offset + 'n_0'+str(stride[(NDIM+1)*n])
         if NDIM >= 1:
-          offset = offset + ' + n_1 * xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])
+          offset = offset + ' + n_1 * xdim'+str(n)+'_'+name+str(stride[(NDIM+1)*n+1])
         if NDIM >= 2:
-          offset = offset + ' + n_2 * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
+          offset = offset + ' + n_2 * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+str(stride[(NDIM+1)*n+2])
         if NDIM >= 3:
-          offset = offset + ' + n_3 * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])+' * zdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
+          offset = offset + ' + n_3 * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+' * zdim'+str(n)+'_'+name+str(stride[(NDIM+1)*n+2])
         dimlabels = 'xyzuv'
         for i in range(1,NDIM+1):
           sizelist = sizelist + dimlabels[i-1]+'dim'+str(n)+'_'+name+', '

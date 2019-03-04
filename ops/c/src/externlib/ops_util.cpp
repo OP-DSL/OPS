@@ -226,4 +226,46 @@ void ops_transpose_data(char *in, char* out, int type_size, int ndim, int* size_
   }
 }
 
+void ops_convert_layout(char *in, char *out, ops_block block, int size, int *dat_size, int *dat_size_orig, int type_size) {
+
+      const int num_dims = block->dims + ((size>1)?1:0) + (block->count>1?1:0);
+      int size_in[num_dims];
+      int size_out[num_dims];
+      int dim_perm[num_dims];
+      
+      int s1 = (size>1 && !OPS_instance::getOPSInstance()->OPS_soa)?1:0;
+      int s2 = (size>1)?1:0;
+
+      if (size>1) {
+        size_in[0] = size;
+        int idx_dim = (OPS_instance::getOPSInstance()->OPS_soa)?
+            ((block->count>1?1:0)+block->dims):0;
+        dim_perm[0] = idx_dim; 
+        size_out[idx_dim] = size;
+      }
+
+      for (int d = 0; d < block->batchdim; d++) {
+        size_in[s2+d] = dat_size_orig[d];
+        size_out[s1+d] = dat_size[d];
+        dim_perm[s2+d] = s1+d;
+      }
+      if (block->count>1) {
+        size_in[s2+block->dims] = block->count;
+        size_out[s1+block->batchdim] = block->count;
+        dim_perm[s2+block->dims] = s1+block->batchdim;
+      }
+      for (int d = block->batchdim; d < block->dims; d++) {
+        size_in[s2+d] = dat_size_orig[d];
+        size_out[s1+d+1] = dat_size_orig[d];
+        dim_perm[s2+d] = s1+d+1;
+      }
+
+      ops_transpose_data(in, out, type_size, num_dims, size_in, size_out, dim_perm);
+
+}
+
+void ops_revert_layout(char *in, char *out, ops_block block, int size, int *dat_size, int *dat_size_orig, int type_size) {
+
+}
+
 
