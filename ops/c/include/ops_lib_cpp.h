@@ -419,6 +419,8 @@ public:
   __host__ __device__
   ACC(int _sizex, int _sizey, T *_ptr) : sizex(_sizex), sizey(_sizey), ptr(_ptr) {}
   __host__ __device__
+  ACC(int _sizex, int _sizey, int _sizez, T *_ptr) : sizex(_sizex), sizey(_sizey), ptr(_ptr) {}
+  __host__ __device__
   ACC(int _mdim, int _sizex, int _sizey, int _sizez, T *_ptr) : sizex(_sizex), sizey(_sizey),
 #ifdef OPS_SOA
     sizez(_sizez),

@@ -126,6 +126,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     ### either restrict or prolong
     MULTI_GRID = 0
     for n in range (0, nargs):
+      dims[n] = str(dims[n])
       restrict[n] = 0
       prolong[n] = 0
       if str(stens[n]).find('RESTRICT') > 0:
@@ -311,7 +312,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     code('')
     comm("initialize variable with the dimension of dats")
-    code('#if OPS_BATCHED>=0')
+    code('#ifdef OPS_BATCHED')
     code('int batchdim = OPS_BATCHED;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -343,9 +344,15 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     for n in range (0, nargs):
       if str(stens[n]).find('STRID') > 0:
+        code('#ifdef OPS_BATCHED')
         for d in range(0,NDIM+1):
           code('const int stride'+str(n)+'_'+str(d)+' = OPS_BATCHED=='+str(d)+' ? 1 : args['+str(n)+'].stencil->stride[(OPS_BATCHED>'+str(d)+')+'+str(d-1)+'];')
           stride[(NDIM+1)*n+d] = '*stride'+str(n)+'_'+str(d)
+        code('#else')
+        for d in range(0,NDIM+1):
+          code('const int stride'+str(n)+'_'+str(d)+' = args['+str(n)+'].stencil->stride['+str(d)+'];')
+          stride[(NDIM+1)*n+d] = '*stride'+str(n)+'_'+str(d)
+        code('#endif')
 
 
     code('')
@@ -409,7 +416,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     FOR('n_'+str(NDIM),'bounds_'+str(NDIM)+'_l','bounds_'+str(NDIM)+'_u')
 
     if reduction:
-      code('#if OPS_BATCHED=='+str(NDIM))
+      code('#if OPS_BATCHED=='+str(NDIM)+' || !defined(OPS_BATCHED)')
       for n in range (0,nargs):
         if arg_typ[n] == 'ops_arg_gbl':
           if accs[n] <> OPS_READ:
@@ -546,10 +553,10 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
         if not dims[n].isdigit() or int(dims[n])>1:
           code('#ifdef OPS_SOA')
-        code(pre + 'ACC<'+typs[n]+'> '+arg_list[n]+'('+dim+sizelist+arg_list[n]+'_p + '+offset+');')
+        code(pre + 'ACC<'+typs[n]+'> '+clean_type(arg_list[n])+'('+dim+sizelist+arg_list[n]+'_p + '+offset+');')
         if not dims[n].isdigit() or int(dims[n])>1:
           code('#else')
-          code(pre + 'ACC<'+typs[n]+'> '+arg_list[n]+'('+dim+sizelist+arg_list[n]+'_p + '+dim[:-2]+'*('+offset+'));')
+          code(pre + 'ACC<'+typs[n]+'> '+clean_type(arg_list[n])+'('+dim+sizelist+arg_list[n]+'_p + '+dim[:-2]+'*('+offset+'));')
           code('#endif')
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':

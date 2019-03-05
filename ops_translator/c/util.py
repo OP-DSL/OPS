@@ -223,6 +223,7 @@ def convert_ACC(text, arg_typ):
 
 def parse_signature(text):
   text2 = text.replace('const','')
+  text2 = text2.replace('RESTRICT','')
   text2 = text2.replace('ACC<','')
   text2 = text2.replace('>','')
   text2 = text2.replace('int','')
