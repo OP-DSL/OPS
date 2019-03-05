@@ -118,9 +118,34 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     typs  = kernels[nk]['typs']
     NDIM = int(dim)
     #parse stencil to locate strided access
-    stride = [''] * (nargs+4) * (NDIM+1)
+    stride = [1] * (nargs+4) * (NDIM+1)
     restrict = [1] * nargs
     prolong = [1] * nargs
+
+    if NDIM == 2:
+      for n in range (0, nargs):
+        if str(stens[n]).find('STRID2D_X') > 0:
+          stride[(NDIM+1)*n+1] = 0
+        elif str(stens[n]).find('STRID2D_Y') > 0:
+          stride[(NDIM+1)*n] = 0
+
+    if NDIM == 3:
+      for n in range (0, nargs):
+        if str(stens[n]).find('STRID3D_XY') > 0:
+          stride[(NDIM+1)*n+2] = 0
+        elif str(stens[n]).find('STRID3D_YZ') > 0:
+          stride[(NDIM+1)*n] = 0
+        elif str(stens[n]).find('STRID3D_XZ') > 0:
+          stride[(NDIM+1)*n+1] = 0
+        elif str(stens[n]).find('STRID3D_X') > 0:
+          stride[(NDIM+1)*n+1] = 0
+          stride[(NDIM+1)*n+2] = 0
+        elif str(stens[n]).find('STRID3D_Y') > 0:
+          stride[(NDIM+1)*n] = 0
+          stride[(NDIM+1)*n+2] = 0
+        elif str(stens[n]).find('STRID3D_Z') > 0:
+          stride[(NDIM+1)*n] = 0
+          stride[(NDIM+1)*n+1] = 0
 
     ### Determine if this is a MULTI_GRID LOOP with
     ### either restrict or prolong
@@ -344,15 +369,48 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     for n in range (0, nargs):
       if str(stens[n]).find('STRID') > 0:
-        code('#ifdef OPS_BATCHED')
-        for d in range(0,NDIM+1):
-          code('const int stride'+str(n)+'_'+str(d)+' = OPS_BATCHED=='+str(d)+' ? 1 : args['+str(n)+'].stencil->stride[(OPS_BATCHED>'+str(d)+')+'+str(d-1)+'];')
-          stride[(NDIM+1)*n+d] = '*stride'+str(n)+'_'+str(d)
+        code('#if defined(OPS_BATCHED) && OPS_BATCHED==0')
+        code('const int stride'+str(n)+'_0 = 1;')
+        code('const int stride'+str(n)+'_1 = '+str(stride[(NDIM+1)*n+0])+';')
+        if NDIM>1:
+          code('const int stride'+str(n)+'_2 = '+str(stride[(NDIM+1)*n+1])+';')
+        if NDIM>2:
+          code('const int stride'+str(n)+'_3 = '+str(stride[(NDIM+1)*n+2])+';')
+        code('#elif OPS_BATCHED==1')
+        code('const int stride'+str(n)+'_0 = '+str(stride[(NDIM+1)*n+0])+';')
+        code('const int stride'+str(n)+'_1 = 1;')
+        if NDIM>1:
+          code('const int stride'+str(n)+'_2 = '+str(stride[(NDIM+1)*n+1])+';')
+        if NDIM>2:
+          code('const int stride'+str(n)+'_3 = '+str(stride[(NDIM+1)*n+2])+';')
+        if NDIM>1:
+          code('#elif OPS_BATCHED==2')
+          code('const int stride'+str(n)+'_0 = '+str(stride[(NDIM+1)*n+0])+';')
+          code('const int stride'+str(n)+'_1 = '+str(stride[(NDIM+1)*n+1])+';')
+          code('const int stride'+str(n)+'_2 = 1;')
+          if NDIM>2:
+            code('const int stride'+str(n)+'_3 = '+str(stride[(NDIM+1)*n+2])+';')
+        if NDIM>2:
+          code('#elif OPS_BATCHED==3')
+          code('const int stride'+str(n)+'_0 = '+str(stride[(NDIM+1)*n+0])+';')
+          code('const int stride'+str(n)+'_1 = '+str(stride[(NDIM+1)*n+1])+';')
+          code('const int stride'+str(n)+'_2 = '+str(stride[(NDIM+1)*n+2])+';')
+          code('const int stride'+str(n)+'_3 = 1;')
         code('#else')
-        for d in range(0,NDIM+1):
-          code('const int stride'+str(n)+'_'+str(d)+' = args['+str(n)+'].stencil->stride['+str(d)+'];')
-          stride[(NDIM+1)*n+d] = '*stride'+str(n)+'_'+str(d)
+        code('const int stride'+str(n)+'_0 = '+str(stride[(NDIM+1)*n+0])+';')
+        if NDIM>1:
+          code('const int stride'+str(n)+'_1 = '+str(stride[(NDIM+1)*n+1])+';')
+        if NDIM>2:
+          code('const int stride'+str(n)+'_2 = '+str(stride[(NDIM+1)*n+2])+';')
+        code('const int stride'+str(n)+'_3 = 1;')
+
         code('#endif')
+        for d in range(0,NDIM+1):
+          stride[(NDIM+1)*n+d] = '*stride'+str(n)+'_'+str(d)
+      else:
+        for d in range(0,NDIM+1):
+          stride[(NDIM+1)*n+d] = '' 
+
 
 
     code('')
@@ -474,7 +532,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       code('#ifdef __INTEL_COMPILER')
       code('#pragma loop_count(10000)')
       if reduction:
-        code('#if OPS_BATCHED==0')
+        code('#if defined(OPS_BATCHED) && OPS_BATCHED==0')
         code('#pragma omp simd') #+' aligned('+clean_type(line3[:-1])+')')
         code('#else')
         code('#pragma omp simd'+line) #+' aligned('+clean_type(line3[:-1])+')')
@@ -491,7 +549,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       code('#endif')
     FOR('n_0','bounds_0_l','bounds_0_u')
     if reduction:
-      code('#if OPS_BATCHED==0')
+      code('#if defined(OPS_BATCHED) && OPS_BATCHED==0')
       for n in range (0,nargs):
         if arg_typ[n] == 'ops_arg_gbl':
           if accs[n] <> OPS_READ:
@@ -500,13 +558,13 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       code('#endif')
     if arg_idx <> -1:
       if NDIM==1:
-        code('#if OPS_BATCHED==0')
+        code('#if defined(OPS_BATCHED) && OPS_BATCHED==0')
         code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_1, blockidx_start + n_0};')
         code('#else')
         code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_0, blockidx_start + n_1};')
         code('#endif')
       elif NDIM==2:
-        code('#if OPS_BATCHED==0')
+        code('#if defined(OPS_BATCHED) && OPS_BATCHED==0')
         code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_1, arg_idx[1]+n_2, blockidx_start + n_0};')
         code('#elif OPS_BATCHED==1')
         code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_0, arg_idx[1]+n_2, blockidx_start + n_1};')
@@ -514,7 +572,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_0, arg_idx[1]+n_1, blockidx_start + n_2};')
         code('#endif')
       elif NDIM==3:
-        code('#if OPS_BATCHED==0')
+        code('#if defined(OPS_BATCHED) && OPS_BATCHED==0')
         code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_1, arg_idx[1]+n_2, arg_idx[2]+n_3, blockidx_start + n_0};')
         code('#elif OPS_BATCHED==1')
         code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_0, arg_idx[1]+n_2, arg_idx[2]+n_3, blockidx_start + n_1};')
@@ -593,7 +651,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
             code('p_a'+str(n)+'_'+str(d)+' +='+arg_list[n]+'['+str(d)+'];')
 
     if reduction:
-      code('#if OPS_BATCHED==0')
+      code('#if defined(OPS_BATCHED) && OPS_BATCHED==0')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
           if accs[n] <> OPS_READ:
