@@ -352,6 +352,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   dat->index = OPS_instance::getOPSInstance()->OPS_dat_index;
   dat->block = block;
   dat->dim = dim;
+  dat->batch_offset = 1;
 
   dat->type_size = type_size;
   // note here that the element size is taken to

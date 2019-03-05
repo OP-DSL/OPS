@@ -201,6 +201,7 @@ typedef struct {
                           *   this will be memory held on a single MPI proc) */
   long base_offset;      /**< computed quantity, giving offset in bytes to the
                           *   base index */
+  long batch_offset;
   int stride[OPS_MAX_DIM];/**< stride[*] > 1 if this dat is a coarse dat under
                            *   multi-grid*/
   int amr; /**< flag indicating wheter AMR dataset */

@@ -167,11 +167,12 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   // Compute offset in bytes to the base index
   dat->base_offset = 0;
   long cumsize = 1;
-  for (int i = 0; i < block->dims; i++) {
+  for (int i = 0; i < block->dims+1; i++) {
+    if (i == block->batchdim) dat->batch_offset = cumsize * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
     dat->base_offset +=
         (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size)
         * cumsize * (-dat->base[i] - dat->d_m[i]);
-    cumsize *= (i == block->batchdim ? OPS_instance::getOPSInstance()->ops_batch_size : dat->size[i]);
+    cumsize *= dat->size[i];
   }
 
 

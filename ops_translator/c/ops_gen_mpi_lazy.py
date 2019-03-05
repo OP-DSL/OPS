@@ -373,12 +373,9 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     code('')
     comm('set up initial pointers and exchange halos if necessary')
-    code('int cumsize;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-          code('cumsize = 1;')
-          code('for (int d = 0; d < block->batchdim; d++) cumsize *= args['+str(n)+'].dat->size[d];')
-          code(typs[n]+' * __restrict__ '+clean_type(arg_list[n])+'_p = ('+typs[n]+' *)(args['+str(n)+'].data + args['+str(n)+'].dat->base_offset) + blockidx_start * cumsize;')
+          code(typs[n]+' * __restrict__ '+clean_type(arg_list[n])+'_p = ('+typs[n]+' *)(args['+str(n)+'].data + args['+str(n)+'].dat->base_offset + blockidx_start * args['+str(n)+'].dat->batch_offset);')
           if restrict[n] == 1 or prolong[n] == 1:
             code('#ifdef OPS_MPI')
             code('sub_dat_list sd'+str(n)+' = OPS_sub_dat_list[args['+str(n)+'].dat->index];')
