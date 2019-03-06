@@ -358,8 +358,6 @@ typedef struct ops_kernel_descriptor {
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
-
 /*******************************************************************************
 * Core lib function prototypes
 *******************************************************************************/

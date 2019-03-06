@@ -48,7 +48,7 @@ void ops_par_loop_poisson_kernel_error(char const *, ops_block, int , int*,
 #include "user_types.h"
 //#include "poisson_kernel.h"
 
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 {
 
 

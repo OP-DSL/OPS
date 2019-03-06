@@ -190,7 +190,7 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
       if (desc->args[i].argtype == OPS_ARG_GBL && desc->args[i].acc == OPS_READ)
         free(desc->args[i].data);
     //Free up memory
-    if (desc->name != NULL) free((char*)desc->name);
+    //if (desc->name != NULL) free((char*)desc->name);
     free(desc->args);
     free(desc);
   }

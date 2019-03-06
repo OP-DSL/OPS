@@ -9,8 +9,11 @@
 void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5) {
+const int blockidx_start = 0; const int blockidx_end = block->count;
+const int batch_size = block->count;
 #else
-void ops_par_loop_poisson_kernel_populate_execute(const char *name, ops_block block, int blockidx, int dim, int *range, int nargs, ops_arg* args) {
+void ops_par_loop_poisson_kernel_populate_execute(const char *name, ops_block block, int blockidx_start, int blockidx_end, int dim, int *range, int nargs, ops_arg* args) {
+  const int batch_size = OPS_BATCH_SIZE;
   ops_arg arg0 = args[0];
   ops_arg arg1 = args[1];
   ops_arg arg2 = args[2];
@@ -64,29 +67,35 @@ void ops_par_loop_poisson_kernel_populate_execute(const char *name, ops_block bl
   arg_idx[1] = 0;
   #endif //OPS_MPI
 
-  //initialize global variable with the dimension of dats
-  int xdim3_poisson_kernel_populate = args[3].dat->size[0];
-  int xdim4_poisson_kernel_populate = args[4].dat->size[0];
-  int xdim5_poisson_kernel_populate = args[5].dat->size[0];
-
-  //set up initial pointers and exchange halos if necessary
-  int * __restrict__ dispx = (int *)args[0].data;
-
-
-  int * __restrict__ dispy = (int *)args[1].data;
-
-
-
-  int base3 = args[3].dat->base_offset;
-  double * __restrict__ u_p = (double *)(args[3].data + base3);
-
-  int base4 = args[4].dat->base_offset;
-  double * __restrict__ f_p = (double *)(args[4].data + base4);
-
-  int base5 = args[5].dat->base_offset;
-  double * __restrict__ ref_p = (double *)(args[5].data + base5);
-
-
+  //initialize variable with the dimension of dats
+  #ifdef OPS_BATCHED
+  int batchdim = OPS_BATCHED;
+  const int xdim3_poisson_kernel_populate = OPS_BATCHED == 0 ? block->count : args[3].dat->size[0];
+  const int ydim3_poisson_kernel_populate = OPS_BATCHED == 1 ? block->count : args[3].dat->size[1];
+  const int xdim4_poisson_kernel_populate = OPS_BATCHED == 0 ? block->count : args[4].dat->size[0];
+  const int ydim4_poisson_kernel_populate = OPS_BATCHED == 1 ? block->count : args[4].dat->size[1];
+  const int xdim5_poisson_kernel_populate = OPS_BATCHED == 0 ? block->count : args[5].dat->size[0];
+  const int ydim5_poisson_kernel_populate = OPS_BATCHED == 1 ? block->count : args[5].dat->size[1];
+  const int bounds_0_l = OPS_BATCHED == 0 ? 0 : start[(OPS_BATCHED>0)+-1];
+  const int bounds_0_u = OPS_BATCHED == 0 ? MIN(batch_size,block->count-blockidx_start) : end[(OPS_BATCHED>0)+-1];
+  const int bounds_1_l = OPS_BATCHED == 1 ? 0 : start[(OPS_BATCHED>1)+0];
+  const int bounds_1_u = OPS_BATCHED == 1 ? MIN(batch_size,block->count-blockidx_start) : end[(OPS_BATCHED>1)+0];
+  const int bounds_2_l = OPS_BATCHED == 2 ? 0 : start[(OPS_BATCHED>2)+1];
+  const int bounds_2_u = OPS_BATCHED == 2 ? MIN(batch_size,block->count-blockidx_start) : end[(OPS_BATCHED>2)+1];
+  #else
+  const int xdim3_poisson_kernel_populate = args[3].dat->size[0];
+  const int ydim3_poisson_kernel_populate = args[3].dat->size[1];
+  const int xdim4_poisson_kernel_populate = args[4].dat->size[0];
+  const int ydim4_poisson_kernel_populate = args[4].dat->size[1];
+  const int xdim5_poisson_kernel_populate = args[5].dat->size[0];
+  const int ydim5_poisson_kernel_populate = args[5].dat->size[1];
+  const int bounds_0_l = start[0];
+  const int bounds_0_u = end[0];
+  const int bounds_1_l = start[1];
+  const int bounds_1_u = end[1];
+  const int bounds_2_l = 0;
+  const int bounds_2_u = blockidx_end-blockidx_start;
+  #endif
 
   #ifndef OPS_LAZY
   //Halo Exchanges
@@ -100,25 +109,53 @@ void ops_par_loop_poisson_kernel_populate_execute(const char *name, ops_block bl
     OPS_instance::getOPSInstance()->OPS_kernels[0].mpi_time += __t1-__t2;
   }
 
+
+  //set up initial pointers and exchange halos if necessary
+  int * __restrict__ dispx = (int *)args[0].data;
+
+
+  int * __restrict__ dispy = (int *)args[1].data;
+
+
+
+  double * __restrict__ u_p = (double *)(args[3].data + args[3].dat->base_offset + blockidx_start * args[3].dat->batch_offset);
+
+  double * __restrict__ f_p = (double *)(args[4].data + args[4].dat->base_offset + blockidx_start * args[4].dat->batch_offset);
+
+  double * __restrict__ ref_p = (double *)(args[5].data + args[5].dat->base_offset + blockidx_start * args[5].dat->batch_offset);
+
+
+  #if defined(_OPENMP) && defined(OPS_BATCHED) && !defined(OPS_LAZY)
   #pragma omp parallel for
-  for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
-    #ifdef __INTEL_COMPILER
-    #pragma loop_count(10000)
-    #pragma omp simd
-    #elif defined(__clang__)
-    #pragma clang loop vectorize(assume_safety)
-    #elif defined(__GNUC__)
-    #pragma simd
-    #pragma GCC ivdep
-    #else
-    #pragma simd
+  #endif
+  for ( int n_2=bounds_2_l; n_2<bounds_2_u; n_2++ ){
+    #if defined(_OPENMP) && !defined(OPS_BATCHED)
+    #pragma omp parallel for
     #endif
-    for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-      int idx[] = {arg_idx[0]+n_x, arg_idx[1]+n_y};
-      ACC<double> u(xdim3_poisson_kernel_populate, u_p + n_x*1 + n_y * xdim3_poisson_kernel_populate*1);
-      ACC<double> f(xdim4_poisson_kernel_populate, f_p + n_x*1 + n_y * xdim4_poisson_kernel_populate*1);
-      ACC<double> ref(xdim5_poisson_kernel_populate, ref_p + n_x*1 + n_y * xdim5_poisson_kernel_populate*1);
-      
+    for ( int n_1=bounds_1_l; n_1<bounds_1_u; n_1++ ){
+      #ifdef __INTEL_COMPILER
+      #pragma loop_count(10000)
+      #pragma omp simd
+      #elif defined(__clang__)
+      #pragma clang loop vectorize(assume_safety)
+      #elif defined(__GNUC__)
+      #pragma simd
+      #pragma GCC ivdep
+      #else
+      #pragma simd
+      #endif
+      for ( int n_0=bounds_0_l; n_0<bounds_0_u; n_0++ ){
+        #if defined(OPS_BATCHED) && OPS_BATCHED==0
+        int idx[] = {arg_idx[0]+n_1, arg_idx[1]+n_2, blockidx_start + n_0};
+        #elif OPS_BATCHED==1
+        int idx[] = {arg_idx[0]+n_0, arg_idx[1]+n_2, blockidx_start + n_1};
+        #else
+        int idx[] = {arg_idx[0]+n_0, arg_idx[1]+n_1, blockidx_start + n_2};
+        #endif
+        ACC<double> u(xdim3_poisson_kernel_populate, ydim3_poisson_kernel_populate, u_p + n_0 + n_1 * xdim3_poisson_kernel_populate + n_2 * xdim3_poisson_kernel_populate * ydim3_poisson_kernel_populate);
+        ACC<double> f(xdim4_poisson_kernel_populate, ydim4_poisson_kernel_populate, f_p + n_0 + n_1 * xdim4_poisson_kernel_populate + n_2 * xdim4_poisson_kernel_populate * ydim4_poisson_kernel_populate);
+        ACC<double> ref(xdim5_poisson_kernel_populate, ydim5_poisson_kernel_populate, ref_p + n_0 + n_1 * xdim5_poisson_kernel_populate + n_2 * xdim5_poisson_kernel_populate * ydim5_poisson_kernel_populate);
+        
   double x = dx * (double)(idx[0]+dispx[0]);
   double y = dy * (double)(idx[1]+dispy[0]);
 
@@ -127,7 +164,10 @@ void ops_par_loop_poisson_kernel_populate_execute(const char *name, ops_block bl
   ref(0,0) = sin(M_PI*x)*cos(2.0*M_PI*y);
 
 
+      }
     }
+    #if OPS_BATCHED==2 || !defined(OPS_BATCHED)
+    #endif
   }
   if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);

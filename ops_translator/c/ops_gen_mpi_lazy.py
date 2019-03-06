@@ -465,7 +465,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       code('')
     code('')
 
-    code('#if defined(_OPENMP) && defined(OPS_BATCHED) && !defined(OPS_LAZY)')
+    code('#if defined(_OPENMP) && defined(OPS_BATCHED) && !defined(OPS_LAZY) && OPS_BATCHED=='+str(NDIM))
     code('#pragma omp parallel for')
     code('#endif')
     FOR('n_'+str(NDIM),'bounds_'+str(NDIM)+'_l','bounds_'+str(NDIM)+'_u')
@@ -523,7 +523,6 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
                 code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(1)+'*'+dims[d]+'+'+str(d)+'];')
         code('#endif')
 
-      code('#ifdef __INTEL_COMPILER')
     line3 = ''
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -682,7 +681,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       ENDFOR()
 
 
-    code('#if OPS_BATCHED=='+str(NDIM))
+    code('#if OPS_BATCHED=='+str(NDIM)+' || !defined(OPS_BATCHED)')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
