@@ -60,6 +60,7 @@ add_library(ops_core STATIC
     core/ops_lib_core.cpp
     core/ops_instance.cpp
     core/ops_lazy.cpp
+    core/ops_amr_lazy.cpp
     externlib/ops_util.cpp
     externlib/ops_checkpointing.cpp
     externlib/ops_checkpointing_strategy.cpp
