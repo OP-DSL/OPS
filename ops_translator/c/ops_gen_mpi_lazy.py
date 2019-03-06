@@ -337,28 +337,20 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     code('')
     comm("initialize variable with the dimension of dats")
-    code('#ifdef OPS_BATCHED')
-    code('int batchdim = OPS_BATCHED;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if NDIM>0:
-          code('const int xdim'+str(n)+'_'+name+' = OPS_BATCHED == 0 ? block->count : args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
+          code('const int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
         if NDIM>1:
-          code('const int ydim'+str(n)+'_'+name+' = OPS_BATCHED == 1 ? block->count : args['+str(n)+'].dat->size[1];')
+          code('const int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
         if NDIM>2:
-          code('const int zdim'+str(n)+'_'+name+' = OPS_BATCHED == 2 ? block->count : args['+str(n)+'].dat->size[2];')
+          code('const int zdim'+str(n)+' = args['+str(n)+'].dat->size[2];')
+
+    code('#ifdef OPS_BATCHED')
     for d in range(0,NDIM+1):
       code('const int bounds_'+str(d)+'_l = OPS_BATCHED == '+str(d)+' ? 0 : start[(OPS_BATCHED>'+str(d)+')+'+str(d-1)+'];')
       code('const int bounds_'+str(d)+'_u = OPS_BATCHED == '+str(d)+' ? MIN(batch_size,block->count-blockidx_start) : end[(OPS_BATCHED>'+str(d)+')+'+str(d-1)+'];')
     code('#else')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if NDIM>0:
-          code('const int xdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
-        if NDIM>1:
-          code('const int ydim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[1];')
-        if NDIM>2:
-          code('const int zdim'+str(n)+'_'+name+' = args['+str(n)+'].dat->size[2];')
     for d in range(0,NDIM):
       code('const int bounds_'+str(d)+'_l = start['+str(d)+'];')
       code('const int bounds_'+str(d)+'_u = end['+str(d)+'];')
@@ -440,15 +432,15 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
           if restrict[n] == 1:
             code(clean_type(arg_list[n])+' += arg_idx[0]*args['+str(n)+'].stencil->mgrid_stride[0] - sd'+str(n)+'->decomp_disp[0] + args['+str(n)+'].dat->d_m[0];')
             if NDIM>1:
-              code(clean_type(arg_list[n])+' += (arg_idx[1]*args['+str(n)+'].stencil->mgrid_stride[1] - sd'+str(n)+'->decomp_disp[1] + args['+str(n)+'].dat->d_m[1])*xdim'+str(n)+'_'+name+';')
+              code(clean_type(arg_list[n])+' += (arg_idx[1]*args['+str(n)+'].stencil->mgrid_stride[1] - sd'+str(n)+'->decomp_disp[1] + args['+str(n)+'].dat->d_m[1])*xdim'+str(n)+';')
             if NDIM>2:
-              code(clean_type(arg_list[n])+' += (arg_idx[2]*args['+str(n)+'].stencil->mgrid_stride[2] - sd'+str(n)+'->decomp_disp[2] + args['+str(n)+'].dat->d_m[2])*xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
+              code(clean_type(arg_list[n])+' += (arg_idx[2]*args['+str(n)+'].stencil->mgrid_stride[2] - sd'+str(n)+'->decomp_disp[2] + args['+str(n)+'].dat->d_m[2])*xdim'+str(n)+' * ydim'+str(n)+';')
           if prolong[n] == 1:
             code(clean_type(arg_list[n])+' += arg_idx[0]/args['+str(n)+'].stencil->mgrid_stride[0] - sd'+str(n)+'->decomp_disp[0] + args['+str(n)+'].dat->d_m[0];')
             if NDIM>1:
-              code(clean_type(arg_list[n])+' += (arg_idx[1]/args['+str(n)+'].stencil->mgrid_stride[1] - sd'+str(n)+'->decomp_disp[1] + args['+str(n)+'].dat->d_m[1])*xdim'+str(n)+'_'+name+';')
+              code(clean_type(arg_list[n])+' += (arg_idx[1]/args['+str(n)+'].stencil->mgrid_stride[1] - sd'+str(n)+'->decomp_disp[1] + args['+str(n)+'].dat->d_m[1])*xdim'+str(n)+';')
             if NDIM>2:
-              code(clean_type(arg_list[n])+' += (arg_idx[2]/args['+str(n)+'].stencil->mgrid_stride[2] - sd'+str(n)+'->decomp_disp[2] + args['+str(n)+'].dat->d_m[2])*xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
+              code(clean_type(arg_list[n])+' += (arg_idx[2]/args['+str(n)+'].stencil->mgrid_stride[2] - sd'+str(n)+'->decomp_disp[2] + args['+str(n)+'].dat->d_m[2])*xdim'+str(n)+' * ydim'+str(n)+';')
 
           if restrict[n] == 1 or prolong[n] == 1:
             code('#endif')
@@ -596,14 +588,14 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         if NDIM >= 0:
           offset = offset + 'n_0'+str(stride[(NDIM+1)*n])
         if NDIM >= 1:
-          offset = offset + ' + n_1 * xdim'+str(n)+'_'+name+str(stride[(NDIM+1)*n+1])
+          offset = offset + ' + n_1 * xdim'+str(n)+str(stride[(NDIM+1)*n+1])
         if NDIM >= 2:
-          offset = offset + ' + n_2 * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+str(stride[(NDIM+1)*n+2])
+          offset = offset + ' + n_2 * xdim'+str(n)+' * ydim'+str(n)+str(stride[(NDIM+1)*n+2])
         if NDIM >= 3:
-          offset = offset + ' + n_3 * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+' * zdim'+str(n)+'_'+name+str(stride[(NDIM+1)*n+2])
+          offset = offset + ' + n_3 * xdim'+str(n)+' * ydim'+str(n)+' * zdim'+str(n)+str(stride[(NDIM+1)*n+2])
         dimlabels = 'xyzuv'
         for i in range(1,NDIM+1):
-          sizelist = sizelist + dimlabels[i-1]+'dim'+str(n)+'_'+name+', '
+          sizelist = sizelist + dimlabels[i-1]+'dim'+str(n)+', '
 
         if not dims[n].isdigit() or int(dims[n])>1:
           code('#ifdef OPS_SOA')
