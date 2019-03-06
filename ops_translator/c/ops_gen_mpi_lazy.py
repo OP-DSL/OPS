@@ -394,7 +394,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
           code('const int stride'+str(n)+'_1 = '+str(stride[(NDIM+1)*n+1])+';')
         if NDIM>2:
           code('const int stride'+str(n)+'_2 = '+str(stride[(NDIM+1)*n+2])+';')
-        code('const int stride'+str(n)+'_3 = 1;')
+        code('const int stride'+str(n)+'_'+str(NDIM)+' = 1;')
 
         code('#endif')
         for d in range(0,NDIM+1):
@@ -609,13 +609,13 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         if accs[n] == OPS_MIN:
           code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):
-            code(arg_list[n]+'['+str(d)+'] = p_a'+str(n)+'['+str(d)+'];') #need +INFINITY_ change to
+            code(arg_list[n]+'['+str(d)+'] = p_a'+str(n)+'_'+str(d)+';') #need +INFINITY_ change to
         if accs[n] == OPS_MAX:
           code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):
-            code(arg_list[n]+'['+str(d)+'] = p_a'+str(n)+'['+str(d)+'];') #need -INFINITY_ change to
+            code(arg_list[n]+'['+str(d)+'] = p_a'+str(n)+'_'+str(d)+';') #need -INFINITY_ change to
         if accs[n] == OPS_INC:
-          code(typs[n]+' '+arg_list[n]+'_'+str(dims[n])+';')
+          code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):
             code(arg_list[n]+'['+str(d)+'] = ZERO_'+typs[n]+';')
         if accs[n] == OPS_WRITE: #this may not be correct
