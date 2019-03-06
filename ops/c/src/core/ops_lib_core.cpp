@@ -96,19 +96,19 @@ void ops_set_args(const int argc, const char *argv) {
   const char *pch;
   pch = strstr(argv, "OPS_BLOCK_SIZE_X=");
   if (pch != NULL) {
-    strncpy(temp, pch, 20);
+    strncpy(temp, pch, strlen(argv)+1);
     OPS_instance::getOPSInstance()->OPS_block_size_x = atoi(temp + 17);
     ops_printf("\n OPS_block_size_x = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_x);
   }
   pch = strstr(argv, "OPS_BLOCK_SIZE_Y=");
   if (pch != NULL) {
-    strncpy(temp, pch, 20);
+    strncpy(temp, pch, strlen(argv)+1);
     OPS_instance::getOPSInstance()->OPS_block_size_y = atoi(temp + 17);
     ops_printf("\n OPS_block_size_y = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_y);
   }
   pch = strstr(argv, "OPS_BLOCK_SIZE_Z=");
   if (pch != NULL) {
-    strncpy(temp, pch, 20);
+    strncpy(temp, pch, strlen(argv)+1);
     OPS_instance::getOPSInstance()->OPS_block_size_z = atoi(temp + 17);
     ops_printf("\n OPS_block_size_z = %d \n", OPS_instance::getOPSInstance()->OPS_block_size_z);
   }
@@ -119,19 +119,19 @@ void ops_set_args(const int argc, const char *argv) {
   }
   pch = strstr(argv, "-OPS_DIAGS=");
   if (pch != NULL) {
-    strncpy(temp, pch, 12);
+    strncpy(temp, pch, strlen(argv)+1);
     OPS_instance::getOPSInstance()->OPS_diags = atoi(temp + 11);
     ops_printf("\n OPS_diags = %d \n", OPS_instance::getOPSInstance()->OPS_diags);
   }
   pch = strstr(argv, "OPS_CACHE_SIZE=");
   if (pch != NULL) {
-    strncpy(temp, pch, 20);
+    strncpy(temp, pch, strlen(argv)+1);
     OPS_instance::getOPSInstance()->ops_cache_size = atoi(temp + 15);
     ops_printf("\n Cache size per process = %d \n", OPS_instance::getOPSInstance()->ops_cache_size);
   }
   pch = strstr(argv, "OPS_REALLOC=");
   if (pch != NULL) {
-    strncpy(temp, pch, 20);
+    strncpy(temp, pch, strlen(argv)+1);
     OPS_instance::getOPSInstance()->OPS_realloc = atoi(temp + 12);
     ops_printf("\n Reallocating = %d \n", OPS_instance::getOPSInstance()->OPS_realloc);
   }
@@ -143,7 +143,7 @@ void ops_set_args(const int argc, const char *argv) {
   }
 	pch = strstr(argv, "OPS_TILING_MAXDEPTH=");
   if (pch != NULL) {
-    strncpy(temp, pch, 25);
+    strncpy(temp, pch, strlen(argv)+1);
     OPS_instance::getOPSInstance()->ops_tiling_mpidepth = atoi(temp + 20);
     ops_printf("\n Max tiling depth across processes = %d \n", OPS_instance::getOPSInstance()->ops_tiling_mpidepth);
   }
@@ -156,19 +156,19 @@ void ops_set_args(const int argc, const char *argv) {
 
   pch = strstr(argv, "OPS_FORCE_DECOMP_X=");
   if (pch != NULL) {
-    strncpy(temp, pch, 25);
+    strncpy(temp, pch, strlen(argv)+1);
     OPS_instance::getOPSInstance()->ops_force_decomp[0] = atoi(temp + 19);
     ops_printf("\n Forced decomposition in x direction = %d \n", OPS_instance::getOPSInstance()->ops_force_decomp[0]);
   }
   pch = strstr(argv, "OPS_FORCE_DECOMP_Y=");
   if (pch != NULL) {
-    strncpy(temp, pch, 25);
+    strncpy(temp, pch, strlen(argv)+1);
     OPS_instance::getOPSInstance()->ops_force_decomp[1] = atoi(temp + 19);
     ops_printf("\n Forced decomposition in y direction = %d \n", OPS_instance::getOPSInstance()->ops_force_decomp[1]);
   }
   pch = strstr(argv, "OPS_FORCE_DECOMP_Z=");
   if (pch != NULL) {
-    strncpy(temp, pch, 25);
+    strncpy(temp, pch, strlen(argv)+1);
     OPS_instance::getOPSInstance()->ops_force_decomp[2] = atoi(temp + 19);
     ops_printf("\n Forced decomposition in z direction = %d \n", OPS_instance::getOPSInstance()->ops_force_decomp[2]);
   }
@@ -185,7 +185,7 @@ void ops_set_args(const int argc, const char *argv) {
   } else if (strstr(argv, "OPS_CHECKPOINT=") != NULL) {
     pch = strstr(argv, "OPS_CHECKPOINT=");
     OPS_instance::getOPSInstance()->OPS_enable_checkpointing = 2;
-    strncpy(temp, pch, 20);
+    strncpy(temp, pch, strlen(argv)+1);
     OPS_instance::getOPSInstance()->OPS_ranks_per_node = atoi(temp + 15);
     ops_printf("\n OPS Checkpointing with mirroring offset %d\n",
                OPS_instance::getOPSInstance()->OPS_ranks_per_node);
@@ -628,24 +628,24 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
     if (strcmp(type, "double") == 0 ||
         strcmp(type, "real(8)") == 0) { // TODO: handle other types
       if (acc == OPS_MIN)
-        for (int i = 0; i < handle->size / 8; i++)
+        for (int i = 0; i < handle->size * handle->batchsize / 8; i++)
           ((double *)handle->data)[i] = DBL_MAX;
       if (acc == OPS_MAX)
-        for (int i = 0; i < handle->size / 8; i++)
+        for (int i = 0; i < handle->size * handle->batchsize / 8; i++)
           ((double *)handle->data)[i] = -1.0 * DBL_MAX;
     } else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0) {
       if (acc == OPS_MIN)
-        for (int i = 0; i < handle->size / 4; i++)
+        for (int i = 0; i < handle->size * handle->batchsize / 4; i++)
           ((float *)handle->data)[i] = FLT_MAX;
       if (acc == OPS_MAX)
-        for (int i = 0; i < handle->size / 4; i++)
+        for (int i = 0; i < handle->size * handle->batchsize / 4; i++)
           ((float *)handle->data)[i] = -1.0f * FLT_MAX;
     } else if (strcmp(type, "int") == 0 || strcmp(type, "integer") == 0) {
       if (acc == OPS_MIN)
-        for (int i = 0; i < handle->size / 4; i++)
+        for (int i = 0; i < handle->size * handle->batchsize / 4; i++)
           ((int *)handle->data)[i] = INT_MAX;
       if (acc == OPS_MAX)
-        for (int i = 0; i < handle->size / 4; i++)
+        for (int i = 0; i < handle->size * handle->batchsize / 4; i++)
           ((int *)handle->data)[i] = -1 * INT_MAX;
     } else {
       throw OPSException(OPS_NOT_IMPLEMENTED, "Error, reduction type not recognised, please add in ops_lib_core.c");

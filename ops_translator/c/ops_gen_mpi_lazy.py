@@ -615,7 +615,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
           for d in range(0,int(dims[n])):
             code(arg_list[n]+'['+str(d)+'] = p_a'+str(n)+'['+str(d)+'];') #need -INFINITY_ change to
         if accs[n] == OPS_INC:
-          code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
+          code(typs[n]+' '+arg_list[n]+'_'+str(dims[n])+';')
           for d in range(0,int(dims[n])):
             code(arg_list[n]+'['+str(d)+'] = ZERO_'+typs[n]+';')
         if accs[n] == OPS_WRITE: #this may not be correct
