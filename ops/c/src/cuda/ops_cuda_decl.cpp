@@ -104,6 +104,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   int base2[OPS_MAX_DIM];
   int stride2[OPS_MAX_DIM];
   int size2[OPS_MAX_DIM];
+  int *dat_size_orig = dat_size;
 
   if (block->count > 1) {
     for (int d = 0; d < block->batchdim; d++) {
@@ -135,28 +136,36 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p,
                                        stride, data, type_size, type, name);
 
-  int bytes = size * type_size * block->count;
-  for (int i = 0; i < block->dims; i++)
-    bytes = bytes * dat->size[i];
-
-  dat->mem = bytes;
-
-  if (data != NULL) {
+  if (data != NULL && !OPS_instance::getOPSInstance()->OPS_realloc) {
     // printf("Data read in from HDF5 file or is allocated by the user\n");
     dat->user_managed =
         1; // will be reset to 0 if called from ops_decl_dat_hdf5()
     dat->is_hdf5 = 0;
     dat->hdf5_file = "none"; // will be set to an hdf5 file if called from
-    ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
-            ( void ** ) &( dat->data ), bytes );
                              // ops_decl_dat_hdf5()
+    int bytes = size * type_size;
+    for (int i = 0; i < block->dims+1; i++)
+      bytes = bytes * dat->size[i];
+    ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
+            ( void ** ) &(dat->data), bytes );
   } else {
     // Allocate memory immediately
-    dat->data = (char*) ops_calloc(bytes, 1); //initialize data bits to 0
+    int bytes = size * type_size;
+
+    for (int i = 0; i < block->dims+1; i++)
+      bytes = bytes * dat->size[i];
+    dat->data = (char *)ops_calloc(bytes, 1); // initialize data bits to 0
     dat->user_managed = 0;
-    dat->data_d = NULL;
-    ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
+    dat->mem = bytes;
+    if (data != NULL && OPS_instance::getOPSInstance()->OPS_realloc) {
+      ops_convert_layout(data, dat->data, block, size,
+                            dat->size, dat_size_orig, type_size);
+      ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
+            ( void ** ) &(dat->data), bytes );
+    } else {
+      ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
             ( void ** ) NULL, bytes );
+    }
   }
 
   if (block->count > 1)

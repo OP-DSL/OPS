@@ -291,21 +291,31 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
     #reduction across blocks
     if NDIM==1:
-      cont = '((blockIdx.x + blockIdx.y*gridDim.x) + n_1*gridDim.x )*'
+      cont = '(blockIdx.x + blockIdx.y*gridDim.x)*'
     if NDIM==2:
-      cont = '((blockIdx.x + blockIdx.y*gridDim.x) + n_2*gridDim.x*gridDim.y )*'
+      cont = '(blockIdx.x + blockIdx.y*gridDim.x)*'
     elif NDIM==3:
-      cont = '((blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y) + n_3*gridDim.x*gridDim.y*(gridDim.z/(bounds_3_u-bounds_3_l)) )*'
+      cont = '(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*'# + n_3*gridDim.x*gridDim.y*(gridDim.z/(bounds_3_u-bounds_3_l)) )*'
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction_cuda<OPS_INC>(&'+clean_type(arg_list[n])+'_p[d+'+cont+str(dims[n])+'],'+clean_type(arg_list[n])+'[d]);')
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
-        code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction_cuda<OPS_MIN>(&'+clean_type(arg_list[n])+'_p[d+'+cont+str(dims[n])+'],'+clean_type(arg_list[n])+'[d]);')
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
-        code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction_cuda<OPS_MAX>(&'+clean_type(arg_list[n])+'_p[d+'+cont+str(dims[n])+'],'+clean_type(arg_list[n])+'[d]);')
+        code('#if defined(OPS_BATCHED) && OPS_BATCHED==0')
+        count = ''
+        dimlabels='xyzuv'
+        for d in range(1,NDIM+1):
+          count = count + 'blockDim.'+dimlabels[d]+'*'
+        code('  ops_reduction_cuda<'+accsstring[accs[n]-1]+'>(&'+clean_type(arg_list[n])+'_p[d+n_0*'+str(dims[n])+'],'+clean_type(arg_list[n])+'[d],'+count[:-1]+', blockDim.x, 0);')
+        code('#elif defined(OPS_BATCHED) && OPS_BATCHED=='+str(NDIM))
+        count = ''
+        dimlabels='xyzuv'
+        for d in range(0,NDIM):
+          count = count + 'blockDim.'+dimlabels[d]+'*'
+        code('  ops_reduction_cuda<'+accsstring[accs[n]-1]+'>(&'+clean_type(arg_list[n])+'_p[d+n_'+str(NDIM)+'*'+str(dims[n])+'],'+clean_type(arg_list[n])+'[d],'+count[:-1]+', 1, 0);')
+        code('#elif defined(OPS_BATCHED)')
+        code('#error CUDA Reductions only implemented for OPS_BATCHED=0 or '+str(NDIM))
+        code('#else')
+        code('  ops_reduction_cuda<'+accsstring[accs[n]-1]+'>(&'+clean_type(arg_list[n])+'_p[d+'+cont+str(dims[n])+'],'+clean_type(arg_list[n])+'[d]);')
+        code('#endif')
 
 
     code('')
@@ -394,7 +404,11 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
           GBL_WRITE = True
 
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+      code('#ifdef OPS_BATCHED')
+      code('int nblocks = blockidx_end-blockidx_start;')
+      code('#else')
       code('int nblocks = grid.x * grid.y * grid.z;')
+      code('#endif')
       code('int reduct_bytes = 0;')
       code('int reduct_size = 0;')
       code('')
@@ -535,12 +549,22 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
         FOR('b','0','nblocks')
         FOR('d','0',str(dims[n]))
+        code('#ifdef OPS_BATCHED')
         if accs[n] == OPS_INC:
-          code('p_a'+str(n)+'[(b/(nblocks/block->count))*'+str(dims[n])+' + d] = p_a'+str(n)+'[(b/(nblocks/block->count))*'+str(dims[n])+' + d] + (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'];')
+          code('p_a'+str(n)+'[b*'+str(dims[n])+' + d] = p_a'+str(n)+'[b*'+str(dims[n])+' + d] + (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'];')
         elif accs[n] == OPS_MAX:
-          code('p_a'+str(n)+'[(b/(nblocks/block->count))*'+str(dims[n])+' + d] = MAX(p_a'+str(n)+'[(b/(nblocks/block->count))*'+str(dims[n])+' + d],(('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+']);')
+          code('p_a'+str(n)+'[b*'+str(dims[n])+' + d] = MAX(p_a'+str(n)+'[b*'+str(dims[n])+' + d],(('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+']);')
         elif accs[n] == OPS_MIN:
-          code('p_a'+str(n)+'[(b/(nblocks/block->count))*'+str(dims[n])+' + d] = MIN(p_a'+str(n)+'[(b/(nblocks/block->count))*'+str(dims[n])+' + d],(('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+']);')
+          code('p_a'+str(n)+'[b*'+str(dims[n])+' + d] = MIN(p_a'+str(n)+'[b*'+str(dims[n])+' + d],(('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+']);')
+
+        code('#else')
+        if accs[n] == OPS_INC:
+          code('p_a'+str(n)+'[d] = p_a'+str(n)+'[d] + (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'];')
+        elif accs[n] == OPS_MAX:
+          code('p_a'+str(n)+'[d] = MAX(p_a'+str(n)+'[d],(('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+']);')
+        elif accs[n] == OPS_MIN:
+          code('p_a'+str(n)+'[d] = MIN(p_a'+str(n)+'[d],(('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+']);')
+        code('#endif')
         ENDFOR()
         ENDFOR()
         code('arg'+str(n)+'.data = (char *)p_a'+str(n)+';')

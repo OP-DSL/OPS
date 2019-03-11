@@ -11,7 +11,7 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
 
-BATCHED=2
+BATCHED=0
 
 HEADERS=poisson_kernel.h
 

@@ -161,6 +161,179 @@ __inline__ __device__ void ops_reduction_cuda(volatile T *dat_g, T dat_l) {
   }
 }
 
+__device__ __forceinline__ float atomicMin(float *address, float val)
+{
+    int ret = __float_as_int(*address);
+    while(val < __int_as_float(ret))
+    {
+        int old = ret;
+        if((ret = atomicCAS((int *)address, old, __float_as_int(val))) == old)
+            break;
+    }
+    return __int_as_float(ret);
+}
+
+// float atomicMax
+__device__ __forceinline__ float atomicMax(float *address, float val)
+{
+    int ret = __float_as_int(*address);
+    while(val > __int_as_float(ret))
+    {
+        int old = ret;
+        if((ret = atomicCAS((int *)address, old, __float_as_int(val))) == old)
+            break;
+    }
+    return __int_as_float(ret);
+}
+
+__device__ __forceinline__ double atomicMin(double *address, double val)
+{
+    unsigned long long ret = __double_as_longlong(*address);
+    while(val < __longlong_as_double(ret))
+    {
+        unsigned long long old = ret;
+        if((ret = atomicCAS((unsigned long long *)address, old, __double_as_longlong(val))) == old)
+            break;
+    }
+    return __longlong_as_double(ret);
+}
+
+// double atomicMax
+__device__ __forceinline__ double atomicMax(double *address, double val)
+{
+    unsigned long long ret = __double_as_longlong(*address);
+    while(val > __longlong_as_double(ret))
+    {
+        unsigned long long old = ret;
+        if((ret = atomicCAS((unsigned long long *)address, old, __double_as_longlong(val))) == old)
+            break;
+    }
+    return __longlong_as_double(ret);
+}
+
+template <ops_access reduction, class T>
+__inline__ __device__ void ops_reduction_cuda(T *dat_g, T dat_l, int count, int stride, int out_stride) {
+  extern __shared__ volatile char temp2[];
+  __shared__ volatile T *temp;
+  temp = (T *)temp2;
+
+  T dat_t;
+
+  __syncthreads(); /* important to finish all previous activity */
+
+  int tid = threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y;
+  temp[tid] = dat_l;
+
+  // first, cope with blockDim.x perhaps not being a power of 2
+
+  __syncthreads();
+
+  // d = blockDim.x/2 rounded up to nearest power of 2
+  int d = 1 << (31 - __clz(((int)count - 1)));
+  int batches = (blockDim.x * blockDim.y * blockDim.z)/count;
+  int my_batch_lane = stride==1 ? tid%count : tid/stride;
+  int my_batch = stride==1 ? tid/count : tid%stride;
+  int my_batch_end = tid + (count-my_batch_lane)*stride;
+
+  d *= stride;
+
+  if (tid + d < my_batch_end ) {
+    dat_t = temp[tid+d];
+
+    switch (reduction) {
+    case OPS_INC:
+      dat_l = dat_l + dat_t;
+      break;
+    case OPS_MIN:
+      if (dat_t < dat_l)
+        dat_l = dat_t;
+      break;
+    case OPS_MAX:
+      if (dat_t > dat_l)
+        dat_l = dat_t;
+      break;
+    }
+
+    temp[tid] = dat_l;
+  }
+
+  // second, do reductions involving more than one warp
+  for (d >>= 1; d > MAX(warpSize,stride); d >>= 1) {
+    __syncthreads();
+
+    if (tid < d) {
+      dat_t = temp[tid + d];
+
+      switch (reduction) {
+      case OPS_INC:
+        dat_l = dat_l + dat_t;
+        break;
+      case OPS_MIN:
+        if (dat_t < dat_l)
+          dat_l = dat_t;
+        break;
+      case OPS_MAX:
+        if (dat_t > dat_l)
+          dat_l = dat_t;
+        break;
+      }
+
+      temp[tid] = dat_l;
+    }
+  }
+
+  // third, do reductions involving just one warp
+
+  __syncthreads();
+
+  if (tid < warpSize) {
+    for (; d >= stride; d >>= 1) {
+      if (tid < d) {
+        dat_t = temp[tid + d];
+
+        switch (reduction) {
+        case OPS_INC:
+          dat_l = dat_l + dat_t;
+          break;
+        case OPS_MIN:
+          if (dat_t < dat_l)
+            dat_l = dat_t;
+          break;
+        case OPS_MAX:
+          if (dat_t > dat_l)
+            dat_l = dat_t;
+          break;
+        }
+
+        temp[tid] = dat_l;
+      }
+    }
+    // finally, update global reduction variable
+
+    if (my_batch_lane == 0) {
+      dat_g += my_batch * out_stride;
+      switch (reduction) {
+      case OPS_INC:
+        atomicAdd(dat_g, dat_l);
+        //*dat_g = *dat_g + dat_l;
+        break;
+      case OPS_MIN:
+        atomicMin(dat_g, dat_l);
+        //if (dat_l < *dat_g)
+          //*dat_g = dat_l;
+        break;
+      case OPS_MAX:
+        atomicMax(dat_g, dat_l);
+        //if (dat_l > *dat_g)
+        //  *dat_g = dat_l;
+        break;
+      }
+    }
+  }
+}
+
+
+
 /*
  * reduction routine for arbitrary datatypes
  * (alternative version using just one warp)
