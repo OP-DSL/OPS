@@ -186,7 +186,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         if arg_typ[n] == 'ops_arg_gbl':
           if accs[n] <> OPS_READ:
             for d in range(0,int(dims[n])):
-              code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(NDIM)+'*'+dims[d]+'+'+str(d)+'];')
+                code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(NDIM)+'*'+dims[n]+'+'+str(d)+'];')
       code('#endif')
 
     line = ''
@@ -220,7 +220,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
           if arg_typ[n] == 'ops_arg_gbl':
             if accs[n] <> OPS_READ:
               for d in range(0,int(dims[n])):
-                code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(2)+'*'+dims[d]+'+'+str(d)+'];')
+                code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(2)+'*'+dims[n]+'+'+str(d)+'];')
         code('#endif')
     if NDIM>1:
       FOR('n_1','bounds_1_l','bounds_1_u')
@@ -230,7 +230,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
           if arg_typ[n] == 'ops_arg_gbl':
             if accs[n] <> OPS_READ:
               for d in range(0,int(dims[n])):
-                code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(1)+'*'+dims[d]+'+'+str(d)+'];')
+                code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(1)+'*'+dims[n]+'+'+str(d)+'];')
         code('#endif')
 
     line3 = ''
@@ -263,7 +263,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         if arg_typ[n] == 'ops_arg_gbl':
           if accs[n] <> OPS_READ:
             for d in range(0,int(dims[n])):
-              code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(0)+'*'+dims[d]+'+'+str(d)+'];')
+              code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(0)+'*'+dims[n]+'+'+str(d)+'];')
       code('#endif')
     if arg_idx <> -1:
       ops_gen_common.generate_arg_idx(arg_idx, arg_list, NDIM)
@@ -300,7 +300,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         if arg_typ[n] == 'ops_arg_gbl':
           if accs[n] <> OPS_READ:
             for d in range(0,int(dims[n])):
-              code('p_a'+str(n)+'[n_'+str(0)+'*'+dims[d]+'+'+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
+              code('p_a'+str(n)+'[n_'+str(0)+'*'+dims[n]+'+'+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
       code('#endif')
     ENDFOR()
     if NDIM>1:
@@ -310,7 +310,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
           if arg_typ[n] == 'ops_arg_gbl':
             if accs[n] <> OPS_READ:
               for d in range(0,int(dims[n])):
-                code('p_a'+str(n)+'[n_'+str(1)+'*'+dims[d]+'+'+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
+                code('p_a'+str(n)+'[n_'+str(1)+'*'+dims[n]+'+'+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
         code('#endif')
       ENDFOR()
     if NDIM>2:
@@ -320,7 +320,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
           if arg_typ[n] == 'ops_arg_gbl':
             if accs[n] <> OPS_READ:
               for d in range(0,int(dims[n])):
-                code('p_a'+str(n)+'[n_'+str(2)+'*'+dims[d]+'+'+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
+                code('p_a'+str(n)+'[n_'+str(2)+'*'+dims[n]+'+'+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
         code('#endif')
 
       ENDFOR()
@@ -331,7 +331,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] <> OPS_READ:
           for d in range(0,int(dims[n])):
-            code('p_a'+str(n)+'[n_'+str(NDIM)+'*'+dims[d]+'+'+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
+            code('p_a'+str(n)+'[n_'+str(NDIM)+'*'+dims[n]+'+'+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
     code('#endif')
 
 

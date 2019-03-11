@@ -222,13 +222,14 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
           code('int stride_'+str(n)+'0, int stride_'+str(n)+'1, int stride_'+str(n)+'2,')
 
     if arg_idx>=0 or any_prolong:
+        code('int blockidx_start,')
         code('#ifdef OPS_MPI')
         if NDIM==1:
           code('int arg_idx0,')
         elif NDIM==2:
           code('int arg_idx0, int arg_idx1,')
         elif NDIM==3:
-          code('int arg_idx0, int arg_idx1, int arg_idx2,')
+          code('int arg_idx0, int arg_idx1, int arg_idx2, ')
         code('#endif')
 
     if NDIM==1:
@@ -263,22 +264,16 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code('int n_1 = bounds_1_l + blockDim.y * blockIdx.y + threadIdx.y;')
     code('int n_0 = bounds_0_l + blockDim.x * blockIdx.x + threadIdx.x;')
     code('')
-    if arg_idx>=0:
-      code('int '+arg_list[arg_idx]+'['+str(NDIM+1)+']={0};')
+    if arg_idx>=0 or any_prolong:
+      code('int arg_idx['+str(NDIM+1)+']={0};')
       code('#ifdef OPS_MPI')
-      code(arg_list[arg_idx]+'[0] = arg_idx0+n_0;')
+      code('arg_idx[0] = arg_idx0;')
       if NDIM>1:
-        code(arg_list[arg_idx]+'[1] = arg_idx1+n_1;')
+        code('arg_idx[1] = arg_idx1;')
       if NDIM>2:
-        code(arg_list[arg_idx]+'[2] = arg_idx2+n_2;')
-      code('#else')
-      code(arg_list[arg_idx]+'[0] = n_0;')
-      code(arg_list[arg_idx]+'[1] = n_1;')
-      if NDIM>1:
-        code(arg_list[arg_idx]+'[2] = n_2;')
-      if NDIM>2:
-        code(arg_list[arg_idx]+'[3] = n_3;')
+        code('arg_idx[2] = arg_idx2;')
       code('#endif')
+      ops_gen_common.generate_arg_idx(arg_idx, arg_list, NDIM)
 
 
     if NDIM==1:
@@ -504,13 +499,14 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       if n%n_per_line == 1 and n <> nargs-1:
         text = text +'\n        '
     if arg_idx>=0 or any_prolong:
+        text = text + config.depth*' '+'     blockidx_start,'
         text = text + '\n#ifdef OPS_MPI\n'
         if NDIM==1:
-          text = text + config.depth*' '+'     arg_idx[0],'
+          text = text + config.depth*' '+'     arg_idx[0], '
         elif NDIM==2:
-          text = text + config.depth*' '+'     arg_idx[0], arg_idx[1],'
+          text = text + config.depth*' '+'     arg_idx[0], arg_idx[1], blockidx_start,'
         elif NDIM==3:
-          text = text + config.depth*' '+'     arg_idx[0], arg_idx[1], arg_idx[2],'
+          text = text + config.depth*' '+'     arg_idx[0], arg_idx[1], arg_idx[2], blockidx_start,'
         text = text + '\n#endif\n'
 
     if NDIM==1:

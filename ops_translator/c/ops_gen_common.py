@@ -331,6 +331,8 @@ def generate_pointers(nargs, arg_typ, accs, typs, arg_list, restrict, prolong, d
         if accs[n] == OPS_READ:
           if decl_read_1d or (dims[n].isdigit() and int(dims[n])==1):
             code(typs[n]+' * __restrict__ '+clean_type(arg_list[n])+' = ('+typs[n]+' *)args['+str(n)+'].data;')
+          else:
+            code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)args['+str(n)+'].data;')
         else:
           code('#ifdef OPS_MPI')
           code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index + ((ops_reduction)args['+str(n)+'].data)->size * blockidx_start);')
@@ -477,11 +479,11 @@ def generate_gbl_locals(nargs, arg_typ, accs, dims, typs, arg_list):
         if accs[n] == OPS_MIN:
           code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):
-            code(arg_list[n]+'['+str(d)+'] = p_a'+str(n)+'_'+str(d)+';') #need +INFINITY_ change to
+            code(arg_list[n]+'['+str(d)+'] = INFINITY_'+typs[n]+';')
         if accs[n] == OPS_MAX:
           code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):
-            code(arg_list[n]+'['+str(d)+'] = p_a'+str(n)+'_'+str(d)+';') #need -INFINITY_ change to
+            code(arg_list[n]+'['+str(d)+'] = -INFINITY_'+typs[n]+';') 
         if accs[n] == OPS_INC:
           code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):

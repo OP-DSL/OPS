@@ -13,6 +13,7 @@ const int dispy_p,
 double* __restrict u_p,
 double* __restrict f_p,
 double* __restrict ref_p,
+int blockidx_start,
 #ifdef OPS_MPI
 int arg_idx0, int arg_idx1,
 #endif
@@ -27,14 +28,17 @@ int bounds_2_l, int bounds_2_u) {
   int n_1 = bounds_1_l + blockDim.y * blockIdx.y + threadIdx.y;
   int n_0 = bounds_0_l + blockDim.x * blockIdx.x + threadIdx.x;
 
-  int idx[3]={0};
+  int arg_idx[3]={0};
   #ifdef OPS_MPI
-  idx[0] = arg_idx0+n_0;
-  idx[1] = arg_idx1+n_1;
+  arg_idx[0] = arg_idx0;
+  arg_idx[1] = arg_idx1;
+  #endif
+  #if defined(OPS_BATCHED) && OPS_BATCHED==0
+  int idx[] = {arg_idx[0]+n_1, arg_idx[1]+n_2, blockidx_start + n_0};
+  #elif OPS_BATCHED==1
+  int idx[] = {arg_idx[0]+n_0, arg_idx[1]+n_2, blockidx_start + n_1};
   #else
-  idx[0] = n_0;
-  idx[1] = n_1;
-  idx[2] = n_2;
+  int idx[] = {arg_idx[0]+n_0, arg_idx[1]+n_1, blockidx_start + n_2};
   #endif
   if (n_0 < bounds_0_u && n_1 < bounds_1_u && n_2 < bounds_2_u) {
     ACC<double> u(dims_poisson_kernel_populate[3][0], dims_poisson_kernel_populate[3][1], u_p + n_0 + n_1 * dims_poisson_kernel_populate[3][0] + n_2 * dims_poisson_kernel_populate[3][0] * dims_poisson_kernel_populate[3][1]);
@@ -189,9 +193,9 @@ void ops_par_loop_poisson_kernel_populate_execute(const char *name, ops_block bl
   //call kernel wrapper function, passing in pointers to data
   if (x_size > 0 && y_size > 0)
     ops_poisson_kernel_populate<<<grid, tblock >>> (  *dispx, *dispy,
-         u_p, f_p, ref_p,
+         u_p, f_p, ref_p,         blockidx_start,
 #ifdef OPS_MPI
-         arg_idx[0], arg_idx[1],
+         arg_idx[0], arg_idx[1], blockidx_start,
 #endif
          bounds_0_l, bounds_0_u, bounds_1_l, bounds_1_u,
          bounds_2_l, bounds_2_u);
