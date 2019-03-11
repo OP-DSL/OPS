@@ -99,6 +99,11 @@ def mult(text, i, n):
 
   return text
 
+def clean_type(arg):
+    for qual in ['__restrict__', 'RESTRICT', '__volatile__']:
+        arg = arg.replace(qual, '')
+    return arg
+
 def para_parse(text, j, op_b, cl_b):
     """Parsing code block, i.e. text to find the correct closing brace"""
 

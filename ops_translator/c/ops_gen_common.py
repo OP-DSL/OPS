@@ -62,6 +62,7 @@ check_accs = util.check_accs
 mult = util.mult
 convert_ACC_body = util.convert_ACC_body
 
+clean_type = util.clean_type
 comm = util.comm
 code = util.code
 FOR = util.FOR
@@ -85,6 +86,35 @@ def clean_type(arg):
         arg = arg.replace(qual, '')
     return arg
 
+def parse_strides(stens, nargs, stride, NDIM):
+    if NDIM == 2:
+      for n in range (0, nargs):
+        if str(stens[n]).find('STRID2D_X') > 0:
+          stride[(NDIM+1)*n+1] = 0
+        elif str(stens[n]).find('STRID2D_Y') > 0:
+          stride[(NDIM+1)*n] = 0
+
+    if NDIM == 3:
+      for n in range (0, nargs):
+        if str(stens[n]).find('STRID3D_XY') > 0:
+          stride[(NDIM+1)*n+2] = 0
+        elif str(stens[n]).find('STRID3D_YZ') > 0:
+          stride[(NDIM+1)*n] = 0
+        elif str(stens[n]).find('STRID3D_XZ') > 0:
+          stride[(NDIM+1)*n+1] = 0
+        elif str(stens[n]).find('STRID3D_X') > 0:
+          stride[(NDIM+1)*n+1] = 0
+          stride[(NDIM+1)*n+2] = 0
+        elif str(stens[n]).find('STRID3D_Y') > 0:
+          stride[(NDIM+1)*n] = 0
+          stride[(NDIM+1)*n+2] = 0
+        elif str(stens[n]).find('STRID3D_Z') > 0:
+          stride[(NDIM+1)*n] = 0
+          stride[(NDIM+1)*n+1] = 0
+    return stride
+
+
+
 def generate_header(nk, name, nargs, arg_typ, accs, arg_idx, NDIM, MULTI_GRID, gen_full_code):
     global g_m, file_text, depth
     n_per_line = 4
@@ -104,7 +134,9 @@ def generate_header(nk, name, nargs, arg_typ, accs, arg_idx, NDIM, MULTI_GRID, g
          text = text +'\n'
     code(text);
     code('const int blockidx_start = 0; const int blockidx_end = block->count;')
+    code('#ifdef OPS_BATCHED')
     code('const int batch_size = block->count;')
+    code('#endif')
     code('#else')
     #code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
     code('void ops_par_loop_'+name+'_execute(const char *name, ops_block block, int blockidx_start, int blockidx_end, int dim, int *range, int nargs, ops_arg* args) {')
@@ -113,7 +145,9 @@ def generate_header(nk, name, nargs, arg_typ, accs, arg_idx, NDIM, MULTI_GRID, g
     #code('ops_block block = desc->block;')
     #code('int dim = desc->dim;')
     #code('int *range = desc->range;')
+    code('#ifdef OPS_BATCHED')
     code('const int batch_size = OPS_BATCH_SIZE;')
+    code('#endif')
 
     for n in range (0, nargs):
       code('ops_arg arg'+str(n)+' = args['+str(n)+'];')
@@ -197,18 +231,19 @@ def generate_header(nk, name, nargs, arg_typ, accs, arg_idx, NDIM, MULTI_GRID, g
         code('arg_idx['+str(n)+'] = 0;')
       code('#endif //OPS_MPI')
 
-def generate_sizes_bounds(nargs, arg_typ, NDIM):
+def generate_sizes_bounds(nargs, arg_typ, NDIM, generate_dims=1):
     global g_m, file_text, depth
     code('')
-    comm("initialize variable with the dimension of dats")
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if NDIM>0:
-          code('const int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
-        if NDIM>1:
-          code('const int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
-        if NDIM>2:
-          code('const int zdim'+str(n)+' = args['+str(n)+'].dat->size[2];')
+    if generate_dims:
+      comm("initialize variable with the dimension of dats")
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_dat':
+          if NDIM>0:
+            code('const int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
+          if NDIM>1:
+            code('const int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
+          if NDIM>2:
+            code('const int zdim'+str(n)+' = args['+str(n)+'].dat->size[2];')
 
     code('#ifdef OPS_BATCHED')
     for d in range(0,NDIM+1):
@@ -269,11 +304,11 @@ def generate_strides(nargs, stens, stride, NDIM):
           stride[(NDIM+1)*n+d] = ''
     return stride
 
-def generate_pointers(nargs, arg_typ, accs, typs, arg_list, restrict, prolong):
+def generate_pointers(nargs, arg_typ, accs, typs, arg_list, restrict, prolong, dims, decl_read_1d=1, device = ''):
     comm('set up initial pointers')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-          code(typs[n]+' * __restrict__ '+clean_type(arg_list[n])+'_p = ('+typs[n]+' *)(args['+str(n)+'].data + args['+str(n)+'].dat->base_offset + blockidx_start * args['+str(n)+'].dat->batch_offset);')
+          code(typs[n]+' * __restrict__ '+clean_type(arg_list[n])+'_p = ('+typs[n]+' *)(args['+str(n)+'].data'+device+' + args['+str(n)+'].dat->base_offset + blockidx_start * args['+str(n)+'].dat->batch_offset);')
           if restrict[n] == 1 or prolong[n] == 1:
             code('#ifdef OPS_MPI')
             code('sub_dat_list sd'+str(n)+' = OPS_sub_dat_list[args['+str(n)+'].dat->index];')
@@ -294,7 +329,8 @@ def generate_pointers(nargs, arg_typ, accs, typs, arg_list, restrict, prolong):
             code('#endif')
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
-          code(typs[n]+' * __restrict__ '+clean_type(arg_list[n])+' = ('+typs[n]+' *)args['+str(n)+'].data;')
+          if decl_read_1d or (dims[n].isdigit() and int(dims[n])==1):
+            code(typs[n]+' * __restrict__ '+clean_type(arg_list[n])+' = ('+typs[n]+' *)args['+str(n)+'].data;')
         else:
           code('#ifdef OPS_MPI')
           code(typs[n]+' * __restrict__ p_a'+str(n)+' = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index + ((ops_reduction)args['+str(n)+'].data)->size * blockidx_start);')
@@ -303,4 +339,183 @@ def generate_pointers(nargs, arg_typ, accs, typs, arg_list, restrict, prolong):
           code('#endif //OPS_MPI')
         code('')
       code('')
+    code('')
+
+
+def generate_exchanges(nargs, nk, gen_full_code, HD):
+    code('#ifndef OPS_LAZY')
+    comm('Halo Exchanges')
+    code('ops_H_D_exchanges_'+HD+'(args, '+str(nargs)+');')
+    code('ops_halo_exchanges(args,'+str(nargs)+',range);')
+    code('ops_H_D_exchanges_'+HD+'(args, '+str(nargs)+');')
+    code('#endif')
+    code('')
+    if gen_full_code==1:
+      IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
+      code('ops_timers_core(&__c1,&__t1);')
+      code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].mpi_time += __t1-__t2;')
+      ENDIF()
+      code('')
+
+def get_user_function(name, arg_typ, src_dir):
+    found = 0
+    for files in glob.glob( os.path.join(src_dir,"*.h") ):
+      f = open( files, 'r' )
+      for line in f:
+        if name in line:
+          file_name = f.name
+          found = 1;
+          break
+      if found == 1:
+        break;
+
+    if found == 0:
+      print "COUND NOT FIND KERNEL", name
+
+    fid = open(file_name, 'r')
+    text = fid.read()
+
+    fid.close()
+    text = comment_remover(text)
+    text = remove_trailing_w_space(text)
+
+    p = re.compile('void\\s+\\b'+name+'\\b')
+
+    i = p.search(text).start()
+
+    if(i < 0):
+      print "\n********"
+      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      exit(2)
+
+    i2 = text[i:].find(name)
+    i2 = i+i2
+    j = text[i:].find('{')
+    k = para_parse(text, i+j, '{', '}')
+    full_text = util.convert_ACC(text[i:k+1], arg_typ)
+    kernel_text = text[i+j+1:k]
+    kernel_text = convert_ACC_body(kernel_text)
+    arg_list = parse_signature(text[i2+len(name):i+j]) 
+
+    return [kernel_text, arg_list, full_text]
+
+def generate_arg_idx(arg_idx, arg_list, NDIM):
+      if NDIM==1:
+        code('#if defined(OPS_BATCHED) && OPS_BATCHED==0')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_1, blockidx_start + n_0};')
+        code('#else')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_0, blockidx_start + n_1};')
+        code('#endif')
+      elif NDIM==2:
+        code('#if defined(OPS_BATCHED) && OPS_BATCHED==0')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_1, arg_idx[1]+n_2, blockidx_start + n_0};')
+        code('#elif OPS_BATCHED==1')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_0, arg_idx[1]+n_2, blockidx_start + n_1};')
+        code('#else')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_0, arg_idx[1]+n_1, blockidx_start + n_2};')
+        code('#endif')
+      elif NDIM==3:
+        code('#if defined(OPS_BATCHED) && OPS_BATCHED==0')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_1, arg_idx[1]+n_2, arg_idx[2]+n_3, blockidx_start + n_0};')
+        code('#elif OPS_BATCHED==1')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_0, arg_idx[1]+n_2, arg_idx[2]+n_3, blockidx_start + n_1};')
+        code('#elif OPS_BATCHED==2')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_0, arg_idx[1]+n_1, arg_idx[2]+n_3, blockidx_start + n_2};')
+        code('#else')
+        code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_0, arg_idx[1]+n_1, arg_idx[2]+n_2, blockidx_start + n_3};')
+        code('#endif')
+
+
+def generate_accessors(nargs, arg_typ, dims, NDIM, stride, typs, accs, arg_list, restrict, prolong, dimstr):
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        if restrict[n] == 1:
+          n_0 = 'n_0*stride_'+str(n)+'0'
+          n_1 = 'n_1*stride_'+str(n)+'1'
+          n_2 = 'n_2*stride_'+str(n)+'2'
+        elif prolong[n] == 1:
+          n_0 = '(n_0+global_idx0%stride_'+str(n)+'0)/stride_'+str(n)+'0'
+          n_1 = '(n_1+global_idx1%stride_'+str(n)+'1)/stride_'+str(n)+'1'
+          n_2 = '(n_2+global_idx2%stride_'+str(n)+'2)/stride_'+str(n)+'2'
+        else:
+          n_0 = 'n_0'
+          n_1 = 'n_1'
+          n_2 = 'n_2'
+        pre = ''
+        if accs[n] == OPS_READ:
+          pre = 'const '
+        offset = ''
+        dim = ''
+        sizelist = ''
+        if dims[n].isdigit() and int(dims[n])>1:
+            dim = dims[n]+', '
+        elif not dims[n].isdigit():
+            dim = 'arg'+str(n)+'.dim, '
+        if NDIM >= 0:
+          offset = offset + n_0 +str(stride[(NDIM+1)*n])
+        if NDIM >= 1:
+          offset = offset + ' + '+n_1+' * '+dimstr(n,0)+str(stride[(NDIM+1)*n+1])
+        if NDIM >= 2:
+          offset = offset + ' + '+n_2+' * '+dimstr(n,0)+' * '+dimstr(n,1)+str(stride[(NDIM+1)*n+2])
+        if NDIM >= 3:
+          offset = offset + ' + '+n_3+' * '+dimstr(n,0)+' * '+dimstr(n,1)+' * '+dimstr(n,2)+str(stride[(NDIM+1)*n+2])
+        dimlabels = 'xyzuv'
+        for i in range(0,NDIM):
+          sizelist = sizelist + dimstr(n,i)+', '
+
+        if not dims[n].isdigit() or int(dims[n])>1:
+          code('#ifdef OPS_SOA')
+        code(pre + 'ACC<'+typs[n]+'> '+clean_type(arg_list[n])+'('+dim+sizelist+arg_list[n]+'_p + '+offset+');')
+        if not dims[n].isdigit() or int(dims[n])>1:
+          code('#else')
+          code(pre + 'ACC<'+typs[n]+'> '+clean_type(arg_list[n])+'('+dim+sizelist+arg_list[n]+'_p + '+dim[:-2]+'*('+offset+'));')
+          code('#endif')
+
+def generate_gbl_locals(nargs, arg_typ, accs, dims, typs, arg_list):
+    for n in range (0,nargs):
+      if arg_typ[n] == 'ops_arg_gbl':
+        if accs[n] == OPS_MIN:
+          code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
+          for d in range(0,int(dims[n])):
+            code(arg_list[n]+'['+str(d)+'] = p_a'+str(n)+'_'+str(d)+';') #need +INFINITY_ change to
+        if accs[n] == OPS_MAX:
+          code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
+          for d in range(0,int(dims[n])):
+            code(arg_list[n]+'['+str(d)+'] = p_a'+str(n)+'_'+str(d)+';') #need -INFINITY_ change to
+        if accs[n] == OPS_INC:
+          code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
+          for d in range(0,int(dims[n])):
+            code(arg_list[n]+'['+str(d)+'] = ZERO_'+typs[n]+';')
+        if accs[n] == OPS_WRITE: #this may not be correct
+          code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
+          for d in range(0,int(dims[n])):
+            code(arg_list[n]+'['+str(d)+'] = ZERO_'+typs[n]+';')
+
+def generate_tail(nk, nargs, arg_typ, accs, gen_full_code, HD):
+
+    if gen_full_code==1:
+      IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
+      code('ops_timers_core(&__c2,&__t2);')
+      code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].time += __t2-__t1;')
+      ENDIF()
+
+    code('#ifndef OPS_LAZY')
+    code('ops_set_dirtybit_'+HD+'(args, '+str(nargs)+');')
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
+        code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
+    code('#endif')
+
+    if gen_full_code==1:
+      code('')
+      IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
+      comm('Update kernel record')
+      code('ops_timers_core(&__c1,&__t1);')
+      code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].mpi_time += __t1-__t2;')
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_dat':
+          code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, start, end, &arg'+str(n)+');')
+      ENDIF()
+    config.depth = config.depth - 2
+    code('}')
     code('')
