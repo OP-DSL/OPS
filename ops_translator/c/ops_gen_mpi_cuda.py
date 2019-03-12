@@ -370,7 +370,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     #set up CUDA grid and thread blocks for kernel call
     if NDIM==1:
       code('dim3 grid( (x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1, (y_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_y + 1, 1);')
-    if NDIM==2:
+    else:
       code('dim3 grid( (x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1, (y_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_y + 1, (z_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_z+1);')
 
     if NDIM==1:

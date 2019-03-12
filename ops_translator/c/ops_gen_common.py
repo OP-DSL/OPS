@@ -443,6 +443,7 @@ def generate_accessors(nargs, arg_typ, dims, NDIM, stride, typs, accs, arg_list,
           n_0 = 'n_0'
           n_1 = 'n_1'
           n_2 = 'n_2'
+          n_3 = 'n_3'
         pre = ''
         if accs[n] == OPS_READ:
           pre = 'const '
@@ -460,7 +461,7 @@ def generate_accessors(nargs, arg_typ, dims, NDIM, stride, typs, accs, arg_list,
         if NDIM >= 2:
           offset = offset + ' + '+n_2+' * '+dimstr(n,0)+' * '+dimstr(n,1)+str(stride[(NDIM+1)*n+2])
         if NDIM >= 3:
-          offset = offset + ' + '+n_3+' * '+dimstr(n,0)+' * '+dimstr(n,1)+' * '+dimstr(n,2)+str(stride[(NDIM+1)*n+2])
+          offset = offset + ' + '+n_3+' * '+dimstr(n,0)+' * '+dimstr(n,1)+' * '+dimstr(n,2)+str(stride[(NDIM+1)*n+3])
         dimlabels = 'xyzuv'
         for i in range(0,NDIM):
           sizelist = sizelist + dimstr(n,i)+', '
