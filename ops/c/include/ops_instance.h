@@ -61,9 +61,10 @@ class OPS_instance_opencl;
 
 class OPS_instance {
   private:
-  	OPS_instance();
+	OPS_instance();
   public:
-  	static OPS_instance* getOPSInstance();
+	static OPS_instance* getOPSInstance();
+	static void destroyOPSInstance();
 
 	/*******************************************************************************
 	* Global constants

@@ -263,6 +263,7 @@ void ops_exit_core() {
   OPS_instance::getOPSInstance()->OPS_block_index = 0;
   OPS_instance::getOPSInstance()->OPS_dat_index = 0;
   OPS_instance::getOPSInstance()->OPS_block_max = 0;
+  OPS_instance::destroyOPSInstance();
 }
 
 ops_block ops_decl_block(int dims, const char *name) {
