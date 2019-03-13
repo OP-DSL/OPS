@@ -175,7 +175,10 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     ops_gen_common.generate_pointers(nargs, arg_typ, accs, typs, arg_list, restrict, prolong, dims)
 
-    code('#if defined(_OPENMP) && defined(OPS_BATCHED) && !defined(OPS_LAZY) && OPS_BATCHED=='+str(NDIM))
+    if reduction:
+      code('#if defined(_OPENMP) && defined(OPS_BATCHED) && !defined(OPS_LAZY) && OPS_BATCHED=='+str(NDIM))
+    else:
+      code('#if defined(_OPENMP) && defined(OPS_BATCHED) && !defined(OPS_LAZY)')
     code('#pragma omp parallel for')
     code('#endif')
     FOR('n_'+str(NDIM),'bounds_'+str(NDIM)+'_l','bounds_'+str(NDIM)+'_u')
