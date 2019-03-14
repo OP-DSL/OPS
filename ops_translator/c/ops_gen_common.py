@@ -236,10 +236,17 @@ def generate_sizes_bounds(nargs, arg_typ, NDIM, generate_dims=1):
     code('')
     if generate_dims:
       comm("initialize variable with the dimension of dats")
+      code('#if defined(OPS_BATCHED) && OPS_BATCHED==0 && defined(OPS_HYBRID_LAYOUT)')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_dat':
-          if NDIM>0:
-            code('const int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
+          code('const int xdim'+str(n)+' = OPS_BATCH_SIZE;')
+      code('#else')
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_dat':
+          code('const int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')
+      code('#endif')
+      for n in range (0, nargs):
+        if arg_typ[n] == 'ops_arg_dat':
           if NDIM>1:
             code('const int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
           if NDIM>2:

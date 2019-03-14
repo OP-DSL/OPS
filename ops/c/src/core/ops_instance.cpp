@@ -46,6 +46,7 @@ OPS_instance::OPS_instance() {
 
   //Batching
   ops_batch_size = 1;
+  OPS_hybrid_layout = 0;
 
 	//Other runtime configuration args
 	for (int i = 0; i < OPS_MAX_DIM; i++) ops_force_decomp[i] = 0;

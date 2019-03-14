@@ -159,7 +159,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->mem = bytes;
     if (data != NULL && OPS_instance::getOPSInstance()->OPS_realloc) {
       ops_convert_layout(data, dat->data, block, size,
-                            dat->size, dat_size_orig, type_size);
+                            dat->size, dat_size_orig, type_size, 0);
       ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
             ( void ** ) &(dat->data), bytes );
     } else {

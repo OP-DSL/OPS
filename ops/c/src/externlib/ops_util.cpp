@@ -48,6 +48,7 @@
 
 #include <ops_util.h>
 #include <ops_lib_core.h>
+#include <ops_exceptions.h>
 
 /*******************************************************************************
 * Wrapper for malloc from www.gnu.org/
@@ -226,9 +227,9 @@ void ops_transpose_data(char *in, char* out, int type_size, int ndim, int* size_
   }
 }
 
-void ops_convert_layout(char *in, char *out, ops_block block, int size, int *dat_size, int *dat_size_orig, int type_size) {
+void ops_convert_layout(char *in, char *out, ops_block block, int size, int *dat_size, int *dat_size_orig, int type_size, int hybrid_layout) {
 
-      const int num_dims = block->dims + ((size>1)?1:0) + (block->count>1?1:0);
+      const int num_dims = block->dims + ((size>1)?1:0) + (block->count>1?1:0) + (hybrid_layout>0?1:0);
       int size_in[num_dims];
       int size_out[num_dims];
       int dim_perm[num_dims];
@@ -258,6 +259,17 @@ void ops_convert_layout(char *in, char *out, ops_block block, int size, int *dat
         size_in[s2+d] = dat_size_orig[d];
         size_out[s1+d+1] = dat_size_orig[d];
         dim_perm[s2+d] = s1+d+1;
+      }
+
+      //Split batchdim in two
+      if (hybrid_layout && block->count>1) {
+        size_in[s2+block->dims] = hybrid_layout;
+        size_in[s2+block->dims+1] = block->count/hybrid_layout;
+        size_out[s1+block->batchdim] = hybrid_layout;
+        size_out[s2+block->dims+1] = block->count/hybrid_layout;
+        dim_perm[s2+block->dims+1] = s2+block->dims+1;
+        if (size_in[s2+block->dims] * size_in[s2+block->dims+1] != block->count)
+          throw OPSException(OPS_INVALID_ARGUMENT, "Error:  ops_decl_dat -- when batching, the number of systems must be a multiple of the batch size ");
       }
 
       ops_transpose_data(in, out, type_size, num_dims, size_in, size_out, dim_perm);

@@ -131,7 +131,9 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->mem = bytes;
     if (data != NULL && OPS_instance::getOPSInstance()->OPS_realloc) {
       ops_convert_layout(data, dat->data, block, size,
-                            dat->size, dat_size_orig, type_size);
+                            dat->size, dat_size_orig, type_size,
+                            OPS_instance::getOPSInstance()->OPS_hybrid_layout ? 
+                              OPS_instance::getOPSInstance()->ops_batch_size : 0);
     }
   }
 
@@ -148,8 +150,13 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->base_offset +=
         (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size)
         * cumsize * (-dat->base[i] - dat->d_m[i]);
-    cumsize *= dat->size[i];//(i == block->batchdim ? OPS_instance::getOPSInstance()->ops_batch_size : dat->size[i]);
-    //printf("cumsize %d\n", cumsize);
+    cumsize *= ((i == block->batchdim && OPS_instance::getOPSInstance()->OPS_hybrid_layout!=0) ?
+                 OPS_instance::getOPSInstance()->ops_batch_size : dat->size[i]);
+  }
+
+  if (OPS_instance::getOPSInstance()->OPS_hybrid_layout && block->count > 1) {
+    cumsize /= OPS_instance::getOPSInstance()->ops_batch_size;
+    dat->batch_offset = cumsize * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
   }
 
   return dat;

@@ -149,9 +149,14 @@ void ops_set_args(const int argc, const char *argv) {
   }
   pch = strstr(argv, "OPS_BATCH_SIZE=");
   if (pch != NULL) {
-    strncpy(temp, pch, 25);
+    strncpy(temp, pch, strlen(argv)+1);
     OPS_instance::getOPSInstance()->ops_batch_size = atoi(temp + 15);
     ops_printf("\n Batch size = %d \n", OPS_instance::getOPSInstance()->ops_batch_size);
+  }
+  pch = strstr(argv, "OPS_HYBRID_LAYOUT");
+  if (pch != NULL) {
+    OPS_instance::getOPSInstance()->OPS_hybrid_layout = 1;
+    ops_printf("\n Enabling hybrid batch layout\n");
   }
 
   pch = strstr(argv, "OPS_FORCE_DECOMP_X=");

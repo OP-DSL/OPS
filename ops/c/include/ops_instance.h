@@ -114,6 +114,7 @@ class OPS_instance {
   int ops_loop_over_blocks_condition;
 
   int ops_batch_size;
+  int OPS_hybrid_layout;
 
 	//Other runtime configuration args
 	int ops_force_decomp[OPS_MAX_DIM];
