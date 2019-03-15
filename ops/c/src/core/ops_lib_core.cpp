@@ -250,6 +250,7 @@ void ops_exit_core() {
     free((char *)OPS_instance::getOPSInstance()->OPS_stencil_list[i]->name);
     free(OPS_instance::getOPSInstance()->OPS_stencil_list[i]->stencil);
     free(OPS_instance::getOPSInstance()->OPS_stencil_list[i]->stride);
+    free(OPS_instance::getOPSInstance()->OPS_stencil_list[i]->mgrid_stride);
     free(OPS_instance::getOPSInstance()->OPS_stencil_list[i]);
   }
   free(OPS_instance::getOPSInstance()->OPS_stencil_list);
@@ -268,6 +269,7 @@ void ops_exit_core() {
   OPS_instance::getOPSInstance()->OPS_block_index = 0;
   OPS_instance::getOPSInstance()->OPS_dat_index = 0;
   OPS_instance::getOPSInstance()->OPS_block_max = 0;
+  OPS_instance::destroyOPSInstance();
 }
 
 ops_block ops_decl_block(int dims, const char *name) {
@@ -465,15 +467,22 @@ void ops_free_dat(ops_dat dat) {
   TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
     if (item->dat->index == dat->index) {
       TAILQ_REMOVE(&OPS_instance::getOPSInstance()->OPS_dat_list, item, entries);
+      free(item);
       break;
     }
   }
   TAILQ_FOREACH(item, &(OPS_instance::getOPSInstance()->OPS_block_list[dat->block->index].datasets), entries) {
     if (item->dat->index == dat->index) {
       TAILQ_REMOVE(&(OPS_instance::getOPSInstance()->OPS_block_list[dat->block->index].datasets), item, entries);
+      free(item);
       break;
     }
   }
+  if(dat->user_managed == 0)
+      free(dat->data);
+  free((char*)dat->name);
+  free((char*)dat->type);
+  free(dat);
 }
 
 ops_stencil ops_decl_stencil(int dims, int points, int *sten,
@@ -499,6 +508,7 @@ ops_stencil ops_decl_stencil(int dims, int points, int *sten,
   memcpy(stencil->stencil, sten, sizeof(int) * dims * points);
 
   stencil->stride = (int *)ops_malloc(dims * sizeof(int));
+  stencil->mgrid_stride = 0;
   for (int i = 0; i < dims; i++)
     stencil->stride[i] = 1;
 

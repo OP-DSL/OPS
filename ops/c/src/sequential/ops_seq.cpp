@@ -36,11 +36,11 @@
   * @details Implements the OPS API calls for the sequential backend
   */
 
+#include <stdlib.h>           // for posix_memalign()
 #include <ops_lib_core.h>
 #include <ops_util.h>
 #include <ops_exceptions.h>
 
-int posix_memalign(void **memptr, size_t alignment, size_t size);
 
 void ops_init(const int argc, char **argv, const int diags) {
   ops_init_core(argc, argv, diags);

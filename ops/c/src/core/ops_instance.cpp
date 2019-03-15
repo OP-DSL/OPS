@@ -72,13 +72,33 @@ OPS_instance::OPS_instance() {
 }
 
 OPS_instance* OPS_instance::getOPSInstance() {
-	OPS_instance **ptr;
-		#if defined(_OPENMP)
-	ptr = &ops_instances[omp_get_thread_num()];
-		#else
-	ptr = &ops_instances[0];
-		#endif
+#pragma omp critical
+	{
+		OPS_instance **ptr;
+#if defined(_OPENMP)
+		ptr = &ops_instances[omp_get_thread_num()];
+#else
+		ptr = &ops_instances[0];
+#endif
 
-	if (*ptr == 0) *ptr = new OPS_instance();
-	return *ptr;
+		if (*ptr == 0) *ptr = new OPS_instance();
+        return *ptr;
+    }
+}
+
+void OPS_instance::destroyOPSInstance() {
+#pragma omp critical
+	{
+		OPS_instance **ptr;
+#if defined(_OPENMP)
+		ptr = &ops_instances[omp_get_thread_num()];
+#else
+		ptr = &ops_instances[0];
+#endif
+
+		if (*ptr != 0) {
+			delete *ptr;
+			*ptr = 0;
+		}
+	}
 }
