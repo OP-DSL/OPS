@@ -643,15 +643,26 @@ This section describes APIS that give the user access to internal data structure
 \item[sizes]       an array populated with the spatial extents
 \end{routine}
 
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_get\_raw\_metadata}
+\begin{routine} {char* ops\_dat\_get\_raw\_metadata(ops\_dat dat, int part, int *disp, int *size, int *stride, int *d\_m, int *d\_p)}
+{This routine returns array shape metadata corresponding to the ops\_dat. Any of the arguments that are not of interest, may be NULL.}
+\item[dat]         the dataset
+\item[part]        the chunk index (has to be 0)
+\item[disp]        an array populated with the displacement of the chunk within the ``global'' distributed array
+\item[size]       an array populated with the spatial extents
+\item[stride]      an array populated strides in spatial dimensions needed for column-major indexing
+\item[d\_m]      an array populated with padding on the left in each dimension. Note that these are negative values
+\item[d\_p]      an array populated with padding on the right in each dimension
+\end{routine}
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_get\_raw\_pointer}
-\begin{routine} {char* ops\_dat\_get\_raw\_pointer(ops\_dat dat, int part, ops\_stencil stencil, int *stride)}
-{This routine returns a pointer to the internally stored data, with MPI halo regions automatically updated as required by the supplied stencil. The strides required to index into the dataset are also given}
+\begin{routine} {char* ops\_dat\_get\_raw\_pointer(ops\_dat dat, int part, ops\_stencil stencil, ops\_memspace *memspace)}
+{This routine returns a pointer to the internally stored data, with MPI halo regions automatically updated as required by the supplied stencil. The strides required to index into the dataset are also given.}
 \item[dat]         the dataset
 \item[part]        the chunk index (has to be 0)
 \item[stencil]     a stencil used to determine required MPI halo exchange depths 
-\item[stride]      an array populated strides in spatial dimensions needed for column-major indexing
-\end{routine}
+\item[memspace]       when set to OPS\_HOST or OPS\_DEVICE, returns a pointer to data in that memory space, otherwise must be set to 0, and returns
+ whether data is in the host or on the device\end{routine}
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_release\_raw\_data}
 \begin{routine} {void ops\_dat\_release\_raw\_data(ops\_dat dat, int part, ops\_access acc)}
