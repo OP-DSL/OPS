@@ -707,7 +707,7 @@ typedef int ops_memspace;
  * @param stencil  a stencil used to determine required MPI halo exchange depths
  * @param memspace when set to OPS_HOST or OPS_DEVICE, returns a pointer to data in
  *                 that memory space, otherwise must be set to 0, and returns
- *                 wheter data is in the host or on the device
+ *                 whether data is in the host or on the device
  *
  * @return
  */
