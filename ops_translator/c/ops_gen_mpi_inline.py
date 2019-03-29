@@ -738,7 +738,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
       code('extern '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
 #      code('#pragma acc declare create('+(str(consts[nc]['name']).replace('"','')).strip()+')')
     else:
-      if consts[nc]['dim'].isdigit() and consts[nc]['dim'] > 0:
+      if consts[nc]['dim'].isdigit() and int(consts[nc]['dim']) > 0:
         num = str(consts[nc]['dim'])
         code('extern '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
 #        code('#pragma acc declare create('+(str(consts[nc]['name']).replace('"','')).strip()+')')

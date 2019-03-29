@@ -938,7 +938,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
       code('__constant__ '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
     else:
-      if consts[nc]['dim'].isdigit() and consts[nc]['dim'] > 0:
+      if consts[nc]['dim'].isdigit() and int(consts[nc]['dim']) > 0:
         num = str(consts[nc]['dim'])
         code('__constant__ '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
       else:
