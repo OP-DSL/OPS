@@ -360,3 +360,5 @@ void ops_halo_transfer(ops_halo_group group) {
 int getOPS_block_size_x() { return OPS_instance::getOPSInstance()->OPS_block_size_x; }
 int getOPS_block_size_y() { return OPS_instance::getOPSInstance()->OPS_block_size_y; }
 int getOPS_block_size_z() { return OPS_instance::getOPSInstance()->OPS_block_size_z; }
+
+void ops_free_device(char *data_d) {cutilSafeCall(cudaFree(data_d));}

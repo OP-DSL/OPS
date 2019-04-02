@@ -594,3 +594,5 @@ void ops_download_dat(ops_dat dat) { (void)dat; }
 void ops_upload_dat(ops_dat dat) { (void)dat; }
 
 void ops_timers(double *cpu, double *et) { ops_timers_core(cpu, et); }
+
+void ops_free_device(char *data_d) {}

@@ -462,6 +462,8 @@ ops_dat ops_decl_dat_temp_core(ops_block block, int dim, int *dataset_size,
                            type_size, type, name);
 }
 
+void ops_free_device(char *data_d);
+
 void ops_free_dat(ops_dat dat) {
   ops_dat_entry *item;
   TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
@@ -480,6 +482,8 @@ void ops_free_dat(ops_dat dat) {
   }
   if(dat->user_managed == 0)
       free(dat->data);
+  if (dat->data_d != NULL)
+    ops_free_device(dat->data_d);
   free((char*)dat->name);
   free((char*)dat->type);
   free(dat);

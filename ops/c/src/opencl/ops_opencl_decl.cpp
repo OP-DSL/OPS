@@ -284,3 +284,7 @@ void ops_timers(double *cpu, double *et) {
   clSafeCall(clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue));
   ops_timers_core(cpu, et);
 }
+
+void ops_free_device(char *data_d) {
+    clReleaseMemObject((cl_mem)data_d);
+}
