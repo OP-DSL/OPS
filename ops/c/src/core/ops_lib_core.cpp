@@ -1068,7 +1068,7 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name_in)
 }
 
 void ops_timing_output_stdout() { ops_timing_output(stdout); }
-
+extern double conv_time;
 void ops_timing_output(FILE *stream) {
   if (stream == NULL)
     stream = stdout;
@@ -1130,6 +1130,7 @@ void ops_timing_output(FILE *stream) {
       sumtime_mpi += moments_mpi_time[0];
     }
     ops_fprintf(stream, "Total kernel time: %g\n", sumtime);
+    ops_fprintf(stream, "Total conversion time: %g\n", conv_time);
     if (OPS_instance::getOPSInstance()->ops_tiled_halo_exchange_time > 0.0) {
       double moments_time[2] = {0.0};
       ops_compute_moment(OPS_instance::getOPSInstance()->ops_tiled_halo_exchange_time, &moments_time[0], &moments_time[1]);
