@@ -154,7 +154,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
 
     for (int i = 0; i < block->dims+1; i++)
       bytes = bytes * dat->size[i];
-    dat->data = (char *)ops_calloc(bytes, 1); // initialize data bits to 0
+    dat->data = (char *)ops_malloc(bytes); // initialize data bits to 0
     dat->user_managed = 0;
     dat->mem = bytes;
     if (data != NULL && OPS_instance::getOPSInstance()->OPS_realloc) {

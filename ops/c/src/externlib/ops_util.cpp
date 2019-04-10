@@ -329,4 +329,9 @@ void ops_revert_layout(char *in, char *out, ops_block block, int size, int *dat_
 
 }
 
-
+void ops_init_zero(char *data, size_t bytes) {
+#pragma omp parallel for
+  for (size_t i = 0; i < bytes; i++) {
+    data[i] = 0;
+  }
+}

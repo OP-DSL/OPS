@@ -911,6 +911,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 void ops_transpose_data(char *in, char* out, int type_size, int ndim, int* size_in, int *size_out, int* dim_perm);
 void ops_convert_layout(char *in, char *out, ops_block block, int size, int *dat_size, int     *dat_size_orig, int type_size, int hybrid_layout);
 void ops_revert_layout(char *in, char *out, ops_block block, int size, int *dat_size, int     *dat_size_orig, int type_size);
+void ops_init_zero(char *data, size_t bytes);
 
 /* lazy execution */
 ops_kernel_descriptor * ops_create_kernel_descriptor(const char *name, ops_block block, int blockidx, int idx, int dim, int *range,     int nargs, ops_arg *args, void (*fun)(const char*, ops_block, int, int, int, int*, int, ops_arg*));
