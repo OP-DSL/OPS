@@ -191,16 +191,64 @@ int file_exist(char const *filename) {
 /*******************************************************************************
 * Transpose an array, with potentially different padding - out has to be no smaller
 *******************************************************************************/
+double conv_time = 0;
 void ops_transpose_data(char *in, char* out, int type_size, int ndim, int* size_in, int *size_out, int* dim_perm) {
 
+  double t1 = omp_get_wtime();
   int total = 1;
   int count_in[OPS_MAX_DIM];
   int prod_out[OPS_MAX_DIM+1];
+  int prod_in[OPS_MAX_DIM+1];
   prod_out[0] = 1;
+  prod_in[0] = 1;
   for (int d = 0; d < ndim; d++) {
     total *= size_in[d];
     count_in[d] = size_in[d];
     prod_out[d+1] = prod_out[d]*size_out[d];
+    prod_in[d+1] = prod_in[d]*size_in[d];
+  }
+
+  if (ndim == 3) {
+#pragma omp parallel for collapse(3)
+    for (int k = 0; k < size_in[2]; k++) {
+      for (int j = 0; j < size_in[1]; j++) {
+        for (int i = 0; i < size_in[0]; i++) {
+          int idx_out = i*prod_out[dim_perm[0]] +
+            j*prod_out[dim_perm[1]] +
+            k*prod_out[dim_perm[2]];
+          int idx_in = i + j * size_in[0] + k * size_in[0] * size_in[1];
+          memcpy(out + type_size * idx_out,
+              in  + type_size * idx_in,
+              type_size);
+
+        }
+      }
+    }
+    conv_time += omp_get_wtime()-t1;
+    return;
+  }
+  if (ndim == 4) {
+#pragma omp parallel for collapse(4)
+    for (int u = 0; u < size_in[3]; u++) {
+      for (int k = 0; k < size_in[2]; k++) {
+        for (int j = 0; j < size_in[1]; j++) {
+          for (int i = 0; i < size_in[0]; i++) {
+            int idx_out = i*prod_out[dim_perm[0]] +
+              j*prod_out[dim_perm[1]] +
+              k*prod_out[dim_perm[2]] +
+              u*prod_out[dim_perm[3]];
+            int idx_in = i + j * size_in[0] + k * size_in[0] * size_in[1] +
+              u * size_in[0] * size_in[1] * size_in[2];
+            memcpy(out + type_size * idx_out,
+                in  + type_size * idx_in,
+                type_size);
+
+          }
+        }
+      }
+    }
+    conv_time += omp_get_wtime()-t1;
+    return;
   }
 
   for (int i = 0; i < total; i++) {
@@ -225,6 +273,7 @@ void ops_transpose_data(char *in, char* out, int type_size, int ndim, int* size_
     }
 
   }
+    conv_time += omp_get_wtime()-t1;
 }
 
 void ops_convert_layout(char *in, char *out, ops_block block, int size, int *dat_size, int *dat_size_orig, int type_size, int hybrid_layout) {
