@@ -351,6 +351,18 @@ void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
   clSafeCall(clFinish(OPS_opencl_core.command_queue));
 }
 
+void ops_cpConstToSymbol(void *data_d, void *data_h, int size) {
+  // printf("Copying constant data from host to device\n");
+  cl_int ret = 0;
+  data_d = (cl_mem)clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE,
+                                   size, NULL, &ret);
+  clSafeCall(ret);
+  clSafeCall(clEnqueueWriteBuffer(OPS_opencl_core.command_queue,
+                                  (cl_mem)data_d, CL_TRUE, 0, size, data_h, 0,
+                                  NULL, NULL));
+  clSafeCall(clFinish(OPS_opencl_core.command_queue));
+}
+
 void ops_download_dat(ops_dat dat) {
 
   // if (!OPS_hybrid_gpu) return;
