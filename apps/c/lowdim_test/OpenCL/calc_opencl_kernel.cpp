@@ -64,24 +64,12 @@ void buildOpenCLKernels_calc(int xdim0, int ydim0, int xdim1, int ydim1,
     pPath = getenv("OPS_INSTALL_PATH");
     if (pPath != NULL)
       if (OCL_FMA)
-        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/c/include "
-                           "-DOPS_WARPSIZE=%d  -Dxdim0_calc=%d  "
-                           "-Dydim0_calc=%d  -Dxdim1_calc=%d  -Dydim1_calc=%d  "
-                           "-Dxdim2_calc=%d  -Dydim2_calc=%d  -Dxdim3_calc=%d  "
-                           "-Dydim3_calc=%d  -Dxdim4_calc=%d  -Dydim4_calc=%d  "
-                           "-Dxdim5_calc=%d  -Dydim5_calc=%d  -Dxdim6_calc=%d  "
-                           "-Dydim6_calc=%d ",
-                pPath, 32, xdim0, ydim0, xdim1, ydim1, xdim2, ydim2, xdim3,
-                ydim3, xdim4, ydim4, xdim5, ydim5, xdim6, ydim6);
+        sprintf(buildOpts,
+                "-cl-mad-enable -DOCL_FMA -I%s/c/include -DOPS_WARPSIZE=%d",
+                pPath, 32);
       else
-        sprintf(buildOpts, "-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_calc=%d  -Dydim0_calc=%d  -Dxdim1_calc=%d  "
-                           "-Dydim1_calc=%d  -Dxdim2_calc=%d  -Dydim2_calc=%d  "
-                           "-Dxdim3_calc=%d  -Dydim3_calc=%d  -Dxdim4_calc=%d  "
-                           "-Dydim4_calc=%d  -Dxdim5_calc=%d  -Dydim5_calc=%d  "
-                           "-Dxdim6_calc=%d  -Dydim6_calc=%d ",
-                pPath, 32, xdim0, ydim0, xdim1, ydim1, xdim2, ydim2, xdim3,
-                ydim3, xdim4, ydim4, xdim5, ydim5, xdim6, ydim6);
+        sprintf(buildOpts, "-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d",
+                pPath, 32);
     else {
       sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
       exit(EXIT_FAILURE);
@@ -120,6 +108,35 @@ void buildOpenCLKernels_calc(int xdim0, int ydim0, int xdim1, int ydim1,
     isbuilt_calc = true;
   }
 }
+
+int xdim0_calc;
+int xdim0_calc_h = -1;
+int ydim0_calc;
+int ydim0_calc_h = -1;
+int xdim1_calc;
+int xdim1_calc_h = -1;
+int ydim1_calc;
+int ydim1_calc_h = -1;
+int xdim2_calc;
+int xdim2_calc_h = -1;
+int ydim2_calc;
+int ydim2_calc_h = -1;
+int xdim3_calc;
+int xdim3_calc_h = -1;
+int ydim3_calc;
+int ydim3_calc_h = -1;
+int xdim4_calc;
+int xdim4_calc_h = -1;
+int ydim4_calc;
+int ydim4_calc_h = -1;
+int xdim5_calc;
+int xdim5_calc_h = -1;
+int ydim5_calc;
+int ydim5_calc_h = -1;
+int xdim6_calc;
+int xdim6_calc_h = -1;
+int ydim6_calc;
+int ydim6_calc_h = -1;
 
 // host stub function
 void ops_par_loop_calc(char const *name, ops_block block, int dim, int *range,
@@ -194,8 +211,41 @@ void ops_par_loop_calc(char const *name, ops_block block, int dim, int *range,
   int xdim6 = args[6].dat->size[0];
   int ydim6 = args[6].dat->size[1];
 
+  if (xdim0 != xdim0_calc_h || ydim0 != ydim0_calc_h || xdim1 != xdim1_calc_h ||
+      ydim1 != ydim1_calc_h || xdim2 != xdim2_calc_h || ydim2 != ydim2_calc_h ||
+      xdim3 != xdim3_calc_h || ydim3 != ydim3_calc_h || xdim4 != xdim4_calc_h ||
+      ydim4 != ydim4_calc_h || xdim5 != xdim5_calc_h || ydim5 != ydim5_calc_h ||
+      xdim6 != xdim6_calc_h || ydim6 != ydim6_calc_h) {
+    ops_cpConstToSymbol(&xdim0_calc, &xdim0, sizeof(int));
+    xdim0_calc_h = xdim0;
+    ops_cpConstToSymbol(&ydim0_calc, &ydim0, sizeof(int));
+    ydim0_calc_h = ydim0;
+    ops_cpConstToSymbol(&xdim1_calc, &xdim1, sizeof(int));
+    xdim1_calc_h = xdim1;
+    ops_cpConstToSymbol(&ydim1_calc, &ydim1, sizeof(int));
+    ydim1_calc_h = ydim1;
+    ops_cpConstToSymbol(&xdim2_calc, &xdim2, sizeof(int));
+    xdim2_calc_h = xdim2;
+    ops_cpConstToSymbol(&ydim2_calc, &ydim2, sizeof(int));
+    ydim2_calc_h = ydim2;
+    ops_cpConstToSymbol(&xdim3_calc, &xdim3, sizeof(int));
+    xdim3_calc_h = xdim3;
+    ops_cpConstToSymbol(&ydim3_calc, &ydim3, sizeof(int));
+    ydim3_calc_h = ydim3;
+    ops_cpConstToSymbol(&xdim4_calc, &xdim4, sizeof(int));
+    xdim4_calc_h = xdim4;
+    ops_cpConstToSymbol(&ydim4_calc, &ydim4, sizeof(int));
+    ydim4_calc_h = ydim4;
+    ops_cpConstToSymbol(&xdim5_calc, &xdim5, sizeof(int));
+    xdim5_calc_h = xdim5;
+    ops_cpConstToSymbol(&ydim5_calc, &ydim5, sizeof(int));
+    ydim5_calc_h = ydim5;
+    ops_cpConstToSymbol(&xdim6_calc, &xdim6, sizeof(int));
+    xdim6_calc_h = xdim6;
+    ops_cpConstToSymbol(&ydim6_calc, &ydim6, sizeof(int));
+    ydim6_calc_h = ydim6;
+  }
   // build opencl kernel if not already built
-
   buildOpenCLKernels_calc(xdim0, ydim0, xdim1, ydim1, xdim2, ydim2, xdim3,
                           ydim3, xdim4, ydim4, xdim5, ydim5, xdim6, ydim6);
 
