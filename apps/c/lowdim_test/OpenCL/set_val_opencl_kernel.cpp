@@ -8,12 +8,6 @@
 #define OCL_FMA 0
 #endif
 
-int xdim0_set_val;
-int xdim0_set_val_h = -1;
-int ydim0_set_val;
-int ydim0_set_val_h = -1;
-
-
 static bool isbuilt_set_val = false;
 
 void buildOpenCLKernels_set_val(int xdim0, int ydim0) {
@@ -67,11 +61,12 @@ void buildOpenCLKernels_set_val(int xdim0, int ydim0) {
     pPath = getenv("OPS_INSTALL_PATH");
     if (pPath != NULL)
       if (OCL_FMA)
-        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/c/include -DOPS_WARPSIZE=%d",
-                           pPath, 32);
+        sprintf(buildOpts,
+                "-cl-mad-enable -DOCL_FMA -I%s/c/include -DOPS_WARPSIZE=%d",
+                pPath, 32);
       else
-        sprintf(buildOpts, "-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  ",
-                           pPath, 32);
+        sprintf(buildOpts, "-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d",
+                pPath, 32);
     else {
       sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
       exit(EXIT_FAILURE);
@@ -110,6 +105,11 @@ void buildOpenCLKernels_set_val(int xdim0, int ydim0) {
     isbuilt_set_val = true;
   }
 }
+
+int xdim0_set_val;
+int xdim0_set_val_h = -1;
+int ydim0_set_val;
+int ydim0_set_val_h = -1;
 
 // host stub function
 void ops_par_loop_set_val(char const *name, ops_block block, int dim,
@@ -177,9 +177,7 @@ void ops_par_loop_set_val(char const *name, ops_block block, int dim,
     ops_cpConstToSymbol(&ydim0_set_val, &ydim0, sizeof(int));
     ydim0_set_val_h = ydim0;
   }
-
   // build opencl kernel if not already built
-
   buildOpenCLKernels_set_val(xdim0, ydim0);
 
   // set up OpenCL thread blocks

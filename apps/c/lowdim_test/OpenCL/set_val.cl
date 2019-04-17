@@ -48,6 +48,7 @@
 __constant int xdim0_set_val = 0;
 __constant int ydim0_set_val = 0;
 
+
 //user function
 void set_val(__global double * restrict dat,const  double * restrict val)
 
