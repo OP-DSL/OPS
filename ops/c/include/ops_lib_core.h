@@ -444,6 +444,7 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs);
 void ops_H_D_exchanges_host(ops_arg *args, int nargs);
 void ops_H_D_exchanges_device(ops_arg *args, int nargs);
 void ops_cpHostToDevice(void **data_d, void **data_h, int size);
+void ops_cpConstToSymbol(void *data_d, void *data_h, int size);
 
 int ops_is_root();
 
