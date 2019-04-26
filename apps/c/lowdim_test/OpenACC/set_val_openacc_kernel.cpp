@@ -89,13 +89,12 @@ void ops_par_loop_set_val(char const *name, ops_block block, int dim,
   int base0 = args[0].dat->base_offset +
               (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
                   start[0] * args[0].stencil->stride[0];
-  base0 = base0 +
-          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
-              args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
-  base0 = base0 +
-          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
-              args[0].dat->size[0] * args[0].dat->size[1] * start[2] *
-              args[0].stencil->stride[2];
+  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+                      args[0].dat->size[0] * start[1] *
+                      args[0].stencil->stride[1];
+  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+                      args[0].dat->size[0] * args[0].dat->size[1] * start[2] *
+                      args[0].stencil->stride[2];
 #ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
 #else

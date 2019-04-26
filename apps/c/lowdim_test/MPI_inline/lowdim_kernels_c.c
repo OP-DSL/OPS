@@ -3,6 +3,6 @@
 //
 
 #include "./MPI_inline/lowdim_common.h"
-//user kernel files
-#include "set_val_mpiinline_kernel_c.c"
+// user kernel files
 #include "calc_mpiinline_kernel_c.c"
+#include "set_val_mpiinline_kernel_c.c"

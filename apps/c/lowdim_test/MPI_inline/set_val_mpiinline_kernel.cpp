@@ -94,15 +94,15 @@ void ops_par_loop_set_val(char const *name, ops_block block, int dim,
   for (int d = 0; d < dim; d++)
     d_m[d] = args[0].dat->d_m[d];
 #endif
-  int base0 = dat0 * 1 * (start[0] * args[0].stencil->stride[0] -
-                          args[0].dat->base[0] - d_m[0]);
-  base0 = base0 +
-          dat0 * args[0].dat->size[0] * (start[1] * args[0].stencil->stride[1] -
-                                         args[0].dat->base[1] - d_m[1]);
-  base0 = base0 +
-          dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
-              (start[2] * args[0].stencil->stride[2] - args[0].dat->base[2] -
-               d_m[2]);
+  int base0 =
+      dat0 * 1 *
+      (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
+  base0 = base0 + dat0 * args[0].dat->size[0] *
+                      (start[1] * args[0].stencil->stride[1] -
+                       args[0].dat->base[1] - d_m[1]);
+  base0 = base0 + dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
+                      (start[2] * args[0].stencil->stride[2] -
+                       args[0].dat->base[2] - d_m[2]);
   double *p_a0 = (double *)((char *)args[0].data + base0);
 
   double *p_a1 = (double *)args[1].data;

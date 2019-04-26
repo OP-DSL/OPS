@@ -198,15 +198,15 @@ void ops_par_loop_set_val(char const *name, ops_block block, int dim,
   for (int d = 0; d < dim; d++)
     d_m[d] = args[0].dat->d_m[d];
 #endif
-  int base0 = 1 * 1 * (start[0] * args[0].stencil->stride[0] -
-                       args[0].dat->base[0] - d_m[0]);
-  base0 = base0 +
-          args[0].dat->size[0] * 1 * (start[1] * args[0].stencil->stride[1] -
-                                      args[0].dat->base[1] - d_m[1]);
-  base0 = base0 +
-          args[0].dat->size[0] * 1 * args[0].dat->size[1] * 1 *
-              (start[2] * args[0].stencil->stride[2] - args[0].dat->base[2] -
-               d_m[2]);
+  int base0 =
+      1 * 1 *
+      (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
+  base0 = base0 + args[0].dat->size[0] * 1 *
+                      (start[1] * args[0].stencil->stride[1] -
+                       args[0].dat->base[1] - d_m[1]);
+  base0 = base0 + args[0].dat->size[0] * 1 * args[0].dat->size[1] * 1 *
+                      (start[2] * args[0].stencil->stride[2] -
+                       args[0].dat->base[2] - d_m[2]);
 
   ops_H_D_exchanges_device(args, 2);
   ops_halo_exchanges(args, 2, range);
