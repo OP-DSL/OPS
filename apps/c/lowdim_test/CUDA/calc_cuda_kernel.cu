@@ -238,63 +238,56 @@ void ops_par_loop_calc_execute(ops_kernel_descriptor *desc) {
               dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
   base0 = base0 +
           dat0 * args[0].dat->size[0] * (start[1] * args[0].stencil->stride[1]);
-  base0 = base0 +
-          dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
-              (start[2] * args[0].stencil->stride[2]);
+  base0 = base0 + dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
+                      (start[2] * args[0].stencil->stride[2]);
   p_a[0] = (char *)args[0].data_d + base0;
 
   int base1 = args[1].dat->base_offset +
               dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
   base1 = base1 +
           dat1 * args[1].dat->size[0] * (start[1] * args[1].stencil->stride[1]);
-  base1 = base1 +
-          dat1 * args[1].dat->size[0] * args[1].dat->size[1] *
-              (start[2] * args[1].stencil->stride[2]);
+  base1 = base1 + dat1 * args[1].dat->size[0] * args[1].dat->size[1] *
+                      (start[2] * args[1].stencil->stride[2]);
   p_a[1] = (char *)args[1].data_d + base1;
 
   int base2 = args[2].dat->base_offset +
               dat2 * 1 * (start[0] * args[2].stencil->stride[0]);
   base2 = base2 +
           dat2 * args[2].dat->size[0] * (start[1] * args[2].stencil->stride[1]);
-  base2 = base2 +
-          dat2 * args[2].dat->size[0] * args[2].dat->size[1] *
-              (start[2] * args[2].stencil->stride[2]);
+  base2 = base2 + dat2 * args[2].dat->size[0] * args[2].dat->size[1] *
+                      (start[2] * args[2].stencil->stride[2]);
   p_a[2] = (char *)args[2].data_d + base2;
 
   int base3 = args[3].dat->base_offset +
               dat3 * 1 * (start[0] * args[3].stencil->stride[0]);
   base3 = base3 +
           dat3 * args[3].dat->size[0] * (start[1] * args[3].stencil->stride[1]);
-  base3 = base3 +
-          dat3 * args[3].dat->size[0] * args[3].dat->size[1] *
-              (start[2] * args[3].stencil->stride[2]);
+  base3 = base3 + dat3 * args[3].dat->size[0] * args[3].dat->size[1] *
+                      (start[2] * args[3].stencil->stride[2]);
   p_a[3] = (char *)args[3].data_d + base3;
 
   int base4 = args[4].dat->base_offset +
               dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
   base4 = base4 +
           dat4 * args[4].dat->size[0] * (start[1] * args[4].stencil->stride[1]);
-  base4 = base4 +
-          dat4 * args[4].dat->size[0] * args[4].dat->size[1] *
-              (start[2] * args[4].stencil->stride[2]);
+  base4 = base4 + dat4 * args[4].dat->size[0] * args[4].dat->size[1] *
+                      (start[2] * args[4].stencil->stride[2]);
   p_a[4] = (char *)args[4].data_d + base4;
 
   int base5 = args[5].dat->base_offset +
               dat5 * 1 * (start[0] * args[5].stencil->stride[0]);
   base5 = base5 +
           dat5 * args[5].dat->size[0] * (start[1] * args[5].stencil->stride[1]);
-  base5 = base5 +
-          dat5 * args[5].dat->size[0] * args[5].dat->size[1] *
-              (start[2] * args[5].stencil->stride[2]);
+  base5 = base5 + dat5 * args[5].dat->size[0] * args[5].dat->size[1] *
+                      (start[2] * args[5].stencil->stride[2]);
   p_a[5] = (char *)args[5].data_d + base5;
 
   int base6 = args[6].dat->base_offset +
               dat6 * 1 * (start[0] * args[6].stencil->stride[0]);
   base6 = base6 +
           dat6 * args[6].dat->size[0] * (start[1] * args[6].stencil->stride[1]);
-  base6 = base6 +
-          dat6 * args[6].dat->size[0] * args[6].dat->size[1] *
-              (start[2] * args[6].stencil->stride[2]);
+  base6 = base6 + dat6 * args[6].dat->size[0] * args[6].dat->size[1] *
+                      (start[2] * args[6].stencil->stride[2]);
   p_a[6] = (char *)args[6].data_d + base6;
 
 #ifndef OPS_LAZY

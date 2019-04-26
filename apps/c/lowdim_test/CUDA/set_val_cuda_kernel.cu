@@ -126,9 +126,8 @@ void ops_par_loop_set_val_execute(ops_kernel_descriptor *desc) {
               dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
   base0 = base0 +
           dat0 * args[0].dat->size[0] * (start[1] * args[0].stencil->stride[1]);
-  base0 = base0 +
-          dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
-              (start[2] * args[0].stencil->stride[2]);
+  base0 = base0 + dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
+                      (start[2] * args[0].stencil->stride[2]);
   p_a[0] = (char *)args[0].data_d + base0;
 
 #ifndef OPS_LAZY

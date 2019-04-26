@@ -215,15 +215,15 @@ void ops_par_loop_calc(char const *name, ops_block block, int dim, int *range,
     for (int d = 0; d < dim; d++)
       d_m[d] = args[0].dat->d_m[d];
 #endif
-    int base0 = dat0 * 1 * (start0 * args[0].stencil->stride[0] -
-                            args[0].dat->base[0] - d_m[0]);
-    base0 = base0 +
-            dat0 * args[0].dat->size[0] * (start1 * args[0].stencil->stride[1] -
-                                           args[0].dat->base[1] - d_m[1]);
-    base0 = base0 +
-            dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
-                (start2 * args[0].stencil->stride[2] - args[0].dat->base[2] -
-                 d_m[2]);
+    int base0 =
+        dat0 * 1 *
+        (start0 * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
+    base0 = base0 + dat0 * args[0].dat->size[0] *
+                        (start1 * args[0].stencil->stride[1] -
+                         args[0].dat->base[1] - d_m[1]);
+    base0 = base0 + dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
+                        (start2 * args[0].stencil->stride[2] -
+                         args[0].dat->base[2] - d_m[2]);
     p_a[0] = (char *)args[0].data + base0;
 
 #ifdef OPS_MPI
@@ -234,15 +234,15 @@ void ops_par_loop_calc(char const *name, ops_block block, int dim, int *range,
     for (int d = 0; d < dim; d++)
       d_m[d] = args[1].dat->d_m[d];
 #endif
-    int base1 = dat1 * 1 * (start0 * args[1].stencil->stride[0] -
-                            args[1].dat->base[0] - d_m[0]);
-    base1 = base1 +
-            dat1 * args[1].dat->size[0] * (start1 * args[1].stencil->stride[1] -
-                                           args[1].dat->base[1] - d_m[1]);
-    base1 = base1 +
-            dat1 * args[1].dat->size[0] * args[1].dat->size[1] *
-                (start2 * args[1].stencil->stride[2] - args[1].dat->base[2] -
-                 d_m[2]);
+    int base1 =
+        dat1 * 1 *
+        (start0 * args[1].stencil->stride[0] - args[1].dat->base[0] - d_m[0]);
+    base1 = base1 + dat1 * args[1].dat->size[0] *
+                        (start1 * args[1].stencil->stride[1] -
+                         args[1].dat->base[1] - d_m[1]);
+    base1 = base1 + dat1 * args[1].dat->size[0] * args[1].dat->size[1] *
+                        (start2 * args[1].stencil->stride[2] -
+                         args[1].dat->base[2] - d_m[2]);
     p_a[1] = (char *)args[1].data + base1;
 
 #ifdef OPS_MPI
@@ -253,15 +253,15 @@ void ops_par_loop_calc(char const *name, ops_block block, int dim, int *range,
     for (int d = 0; d < dim; d++)
       d_m[d] = args[2].dat->d_m[d];
 #endif
-    int base2 = dat2 * 1 * (start0 * args[2].stencil->stride[0] -
-                            args[2].dat->base[0] - d_m[0]);
-    base2 = base2 +
-            dat2 * args[2].dat->size[0] * (start1 * args[2].stencil->stride[1] -
-                                           args[2].dat->base[1] - d_m[1]);
-    base2 = base2 +
-            dat2 * args[2].dat->size[0] * args[2].dat->size[1] *
-                (start2 * args[2].stencil->stride[2] - args[2].dat->base[2] -
-                 d_m[2]);
+    int base2 =
+        dat2 * 1 *
+        (start0 * args[2].stencil->stride[0] - args[2].dat->base[0] - d_m[0]);
+    base2 = base2 + dat2 * args[2].dat->size[0] *
+                        (start1 * args[2].stencil->stride[1] -
+                         args[2].dat->base[1] - d_m[1]);
+    base2 = base2 + dat2 * args[2].dat->size[0] * args[2].dat->size[1] *
+                        (start2 * args[2].stencil->stride[2] -
+                         args[2].dat->base[2] - d_m[2]);
     p_a[2] = (char *)args[2].data + base2;
 
 #ifdef OPS_MPI
@@ -272,15 +272,15 @@ void ops_par_loop_calc(char const *name, ops_block block, int dim, int *range,
     for (int d = 0; d < dim; d++)
       d_m[d] = args[3].dat->d_m[d];
 #endif
-    int base3 = dat3 * 1 * (start0 * args[3].stencil->stride[0] -
-                            args[3].dat->base[0] - d_m[0]);
-    base3 = base3 +
-            dat3 * args[3].dat->size[0] * (start1 * args[3].stencil->stride[1] -
-                                           args[3].dat->base[1] - d_m[1]);
-    base3 = base3 +
-            dat3 * args[3].dat->size[0] * args[3].dat->size[1] *
-                (start2 * args[3].stencil->stride[2] - args[3].dat->base[2] -
-                 d_m[2]);
+    int base3 =
+        dat3 * 1 *
+        (start0 * args[3].stencil->stride[0] - args[3].dat->base[0] - d_m[0]);
+    base3 = base3 + dat3 * args[3].dat->size[0] *
+                        (start1 * args[3].stencil->stride[1] -
+                         args[3].dat->base[1] - d_m[1]);
+    base3 = base3 + dat3 * args[3].dat->size[0] * args[3].dat->size[1] *
+                        (start2 * args[3].stencil->stride[2] -
+                         args[3].dat->base[2] - d_m[2]);
     p_a[3] = (char *)args[3].data + base3;
 
 #ifdef OPS_MPI
@@ -291,15 +291,15 @@ void ops_par_loop_calc(char const *name, ops_block block, int dim, int *range,
     for (int d = 0; d < dim; d++)
       d_m[d] = args[4].dat->d_m[d];
 #endif
-    int base4 = dat4 * 1 * (start0 * args[4].stencil->stride[0] -
-                            args[4].dat->base[0] - d_m[0]);
-    base4 = base4 +
-            dat4 * args[4].dat->size[0] * (start1 * args[4].stencil->stride[1] -
-                                           args[4].dat->base[1] - d_m[1]);
-    base4 = base4 +
-            dat4 * args[4].dat->size[0] * args[4].dat->size[1] *
-                (start2 * args[4].stencil->stride[2] - args[4].dat->base[2] -
-                 d_m[2]);
+    int base4 =
+        dat4 * 1 *
+        (start0 * args[4].stencil->stride[0] - args[4].dat->base[0] - d_m[0]);
+    base4 = base4 + dat4 * args[4].dat->size[0] *
+                        (start1 * args[4].stencil->stride[1] -
+                         args[4].dat->base[1] - d_m[1]);
+    base4 = base4 + dat4 * args[4].dat->size[0] * args[4].dat->size[1] *
+                        (start2 * args[4].stencil->stride[2] -
+                         args[4].dat->base[2] - d_m[2]);
     p_a[4] = (char *)args[4].data + base4;
 
 #ifdef OPS_MPI
@@ -310,15 +310,15 @@ void ops_par_loop_calc(char const *name, ops_block block, int dim, int *range,
     for (int d = 0; d < dim; d++)
       d_m[d] = args[5].dat->d_m[d];
 #endif
-    int base5 = dat5 * 1 * (start0 * args[5].stencil->stride[0] -
-                            args[5].dat->base[0] - d_m[0]);
-    base5 = base5 +
-            dat5 * args[5].dat->size[0] * (start1 * args[5].stencil->stride[1] -
-                                           args[5].dat->base[1] - d_m[1]);
-    base5 = base5 +
-            dat5 * args[5].dat->size[0] * args[5].dat->size[1] *
-                (start2 * args[5].stencil->stride[2] - args[5].dat->base[2] -
-                 d_m[2]);
+    int base5 =
+        dat5 * 1 *
+        (start0 * args[5].stencil->stride[0] - args[5].dat->base[0] - d_m[0]);
+    base5 = base5 + dat5 * args[5].dat->size[0] *
+                        (start1 * args[5].stencil->stride[1] -
+                         args[5].dat->base[1] - d_m[1]);
+    base5 = base5 + dat5 * args[5].dat->size[0] * args[5].dat->size[1] *
+                        (start2 * args[5].stencil->stride[2] -
+                         args[5].dat->base[2] - d_m[2]);
     p_a[5] = (char *)args[5].data + base5;
 
 #ifdef OPS_MPI
@@ -329,15 +329,15 @@ void ops_par_loop_calc(char const *name, ops_block block, int dim, int *range,
     for (int d = 0; d < dim; d++)
       d_m[d] = args[6].dat->d_m[d];
 #endif
-    int base6 = dat6 * 1 * (start0 * args[6].stencil->stride[0] -
-                            args[6].dat->base[0] - d_m[0]);
-    base6 = base6 +
-            dat6 * args[6].dat->size[0] * (start1 * args[6].stencil->stride[1] -
-                                           args[6].dat->base[1] - d_m[1]);
-    base6 = base6 +
-            dat6 * args[6].dat->size[0] * args[6].dat->size[1] *
-                (start2 * args[6].stencil->stride[2] - args[6].dat->base[2] -
-                 d_m[2]);
+    int base6 =
+        dat6 * 1 *
+        (start0 * args[6].stencil->stride[0] - args[6].dat->base[0] - d_m[0]);
+    base6 = base6 + dat6 * args[6].dat->size[0] *
+                        (start1 * args[6].stencil->stride[1] -
+                         args[6].dat->base[1] - d_m[1]);
+    base6 = base6 + dat6 * args[6].dat->size[0] * args[6].dat->size[1] *
+                        (start2 * args[6].stencil->stride[2] -
+                         args[6].dat->base[2] - d_m[2]);
     p_a[6] = (char *)args[6].data + base6;
 
     for (int n_z = start_i; n_z < finish_i; n_z++) {
