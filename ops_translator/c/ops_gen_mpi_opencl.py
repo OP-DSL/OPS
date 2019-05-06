@@ -246,14 +246,6 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
             else:
               code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+dims[n]+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+dims[n]+'))')
 
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('__constant int xdim'+str(n)+'_'+name+' = 0;')
-        if NDIM>2 or (NDIM==2 and soa_set):
-          code('__constant int ydim'+str(n)+'_'+name+' = 0;')
-        if NDIM>3 or (NDIM==3 and soa_set):
-          code('__constant int zdim'+str(n)+'_'+name+' = 0;')
-    code('')
 
     code('')
     comm('user function')
@@ -628,9 +620,9 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/c/include -DOPS_WARPSIZE=%d", pPath, 32);
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/c/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d", pPath, 32);
+          sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
       else {
         sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\\n",pPath);
         exit(EXIT_FAILURE);
@@ -669,20 +661,6 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
 ##########################################################################
 
     config.file_text = opencl_build_kernel
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('int xdim'+str(n)+'_'+name+';')
-        code('int xdim'+str(n)+'_'+name+'_h = -1;')
-        if NDIM>2 or (NDIM==2 and soa_set):
-          code('int ydim'+str(n)+'_'+name+';')
-          code('int ydim'+str(n)+'_'+name+'_h = -1;')
-        if NDIM>3 or (NDIM==3 and soa_set):
-          code('int zdim'+str(n)+'_'+name+';')
-          code('int zdim'+str(n)+'_'+name+'_h = -1;')
-    code('')
-
-
     config.depth = 0
     code('')
     comm(' host stub function')
@@ -793,29 +771,8 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
           code('int zdim'+str(n)+' = args['+str(n)+'].dat->size[2];')
     code('')
 
-    condition = ''
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        condition = condition + 'xdim'+str(n)+' != xdim'+str(n)+'_'+name+'_h || '
-        if NDIM>2 or (NDIM==2 and soa_set):
-          condition = condition + 'ydim'+str(n)+' != ydim'+str(n)+'_'+name+'_h || '
-        if NDIM>3 or (NDIM==3 and soa_set):
-          condition = condition + 'zdim'+str(n)+' != zdim'+str(n)+'_'+name+'_h || '
-    condition = condition[:-4]
-    IF(condition)
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('ops_cpConstToSymbol( &xdim'+str(n)+'_'+name+', &xdim'+str(n)+', sizeof(int) );')
-        code('xdim'+str(n)+'_'+name+'_h = xdim'+str(n)+';')
-        if NDIM>2 or (NDIM==2 and soa_set):
-          code('ops_cpConstToSymbol( &ydim'+str(n)+'_'+name+', &ydim'+str(n)+', sizeof(int) );')
-          code('ydim'+str(n)+'_'+name+'_h = ydim'+str(n)+';')
-        if NDIM>3 or (NDIM==3 and soa_set):
-          code('ops_cpConstToSymbol( &zdim'+str(n)+'_'+name+', &zdim'+str(n)+', sizeof(int) );')
-          code('zdim'+str(n)+'_'+name+'_h = zdim'+str(n)+';')
-    ENDIF()
-
     comm('build opencl kernel if not already built')
+    code('');
     code('buildOpenCLKernels_'+name+'(')
     arg_text = ''
     for n in range (0, nargs):
