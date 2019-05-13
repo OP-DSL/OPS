@@ -490,6 +490,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     config.depth = 2
     #code('char const *name = "'+name+'";')
     code('int dim = desc->dim;')
+    code('#if OPS_MPI')
+    code('ops_block block = desc->block;')
+    code('#endif')
     code('int *range = desc->range;')
 
     for n in range (0, nargs):
@@ -598,7 +601,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     #setup reduction variables
     code('')
     if reduct and not arg_idx:
-      code('#ifdef OPS_LAZY')
+      code('#if defined(OPS_LAZY) && !defined(OPS_MPI)')
       code('ops_block block = desc->block;')
       code('#endif')
     for n in range (0, nargs):
