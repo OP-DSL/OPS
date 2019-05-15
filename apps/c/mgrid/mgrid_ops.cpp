@@ -155,7 +155,6 @@ int main(int argc, const char **argv) {
       "mgrid_populate_kernel_1", grid0, 2, iter_range_small,
       ops_arg_dat(data1, 1, S2D_00, "double", OPS_WRITE), ops_arg_idx());
   ops_halo_transfer(halos[2]);
-  ops_print_dat_to_txtfile(data1, "data.txt");
 
   ops_par_loop_mgrid_prolong_kernel(
       "mgrid_prolong_kernel", grid0, 2, iter_range,
@@ -186,6 +185,11 @@ int main(int argc, const char **argv) {
   ops_timing_output(stdout);
 
   ops_printf("\nTotal Wall time %lf\n", et1 - et0);
+
+  ops_fetch_block_hdf5_file(grid0, "data.h5");
+  ops_fetch_dat_hdf5_file(data3, "data.h5");
+  ops_fetch_dat_hdf5_file(data5, "data.h5");
+  ops_fetch_dat_hdf5_file(data6, "data.h5");
 
   ops_printf("\nPASSED\n");
 
