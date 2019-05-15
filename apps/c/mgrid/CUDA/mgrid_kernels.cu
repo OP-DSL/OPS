@@ -31,3 +31,5 @@ void ops_decl_const_char(int dim, char const *type, int size, char *dat,
 #include "mgrid_populate_kernel_3_cuda_kernel.cu"
 #include "mgrid_prolong_kernel_cuda_kernel.cu"
 #include "mgrid_restrict_kernel_cuda_kernel.cu"
+#include "prolong_check_cuda_kernel.cu"
+#include "restrict_check_cuda_kernel.cu"

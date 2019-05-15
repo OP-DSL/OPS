@@ -24,6 +24,9 @@ void ops_par_loop_mgrid_prolong_kernel(char const *, ops_block, int, int *,
 void ops_par_loop_mgrid_prolong_kernel(char const *, ops_block, int, int *,
                                        ops_arg, ops_arg, ops_arg);
 
+void ops_par_loop_prolong_check(char const *, ops_block, int, int *, ops_arg,
+                                ops_arg, ops_arg, ops_arg, ops_arg);
+
 void ops_par_loop_mgrid_populate_kernel_3(char const *, ops_block, int, int *,
                                           ops_arg, ops_arg);
 
@@ -32,6 +35,9 @@ void ops_par_loop_mgrid_restrict_kernel(char const *, ops_block, int, int *,
 
 void ops_par_loop_mgrid_restrict_kernel(char const *, ops_block, int, int *,
                                         ops_arg, ops_arg, ops_arg);
+
+void ops_par_loop_restrict_check(char const *, ops_block, int, int *, ops_arg,
+                                 ops_arg, ops_arg, ops_arg);
 
 //#include "mgrid_populate_kernel.h"
 //#include "mgrid_restrict_kernel.h"
@@ -46,9 +52,11 @@ int main(int argc, const char **argv) {
 
   int s2D_00[] = {0, 0};
   int s2D_00_M10_P10[] = {0, 0, -1, 0, 1, 0};
+  int s2D_5pt[] = {0, 0, -1, 0, 1, 0, 0, -1, 0, 1};
   ops_stencil S2D_00 = ops_decl_stencil(2, 1, s2D_00, "00");
+  ops_stencil S2D_5pt = ops_decl_stencil(2, 5, s2D_5pt, "5pt");
 
-  int fac = 100;
+  int fac = 1;
 
   int d_p[2] = {2, 2};
 
@@ -96,6 +104,9 @@ int main(int argc, const char **argv) {
   ops_dat data3 = ops_decl_dat(grid0, 1, size1, base, d_m, d_p, stride3, temp,
                                "double", "data3");
 
+  ops_reduction reduct_err =
+      ops_decl_reduction_handle(sizeof(int), "int", "reduct_err");
+
   ops_halo_group halos[3];
   {
     int halo_iter[] = {2, size4[1] + 4};
@@ -108,8 +119,17 @@ int main(int argc, const char **argv) {
     to_base[0] = -2;
     ops_halo halo2 =
         ops_decl_halo(data5, data5, halo_iter, from_base, to_base, dir, dir);
-    ops_halo halog1[] = {halo1, halo2};
-    halos[0] = ops_decl_halo_group(2, halog1);
+    int halo_iter2[] = {size4[0] + 4, 2};
+    int from_base2[] = {-2, 0};
+    int to_base2[] = {-2, size4[1]};
+    ops_halo halo1_2 =
+        ops_decl_halo(data5, data5, halo_iter2, from_base2, to_base2, dir, dir);
+    from_base2[1] = size4[1] - 2;
+    to_base2[1] = -2;
+    ops_halo halo2_2 =
+        ops_decl_halo(data5, data5, halo_iter2, from_base2, to_base2, dir, dir);
+    ops_halo halog1[] = {halo1, halo2, halo1_2, halo2_2};
+    halos[0] = ops_decl_halo_group(4, halog1);
 
     halo_iter[1] = size0[1] + 4;
     from_base[0] = 0;
@@ -168,6 +188,16 @@ int main(int argc, const char **argv) {
       ops_arg_dat(data5, 1, S2D_00, "double", OPS_WRITE), ops_arg_idx());
   ops_halo_transfer(halos[0]);
 
+  ops_par_loop_prolong_check("prolong_check", grid0, 2, iter_range_large,
+                             ops_arg_dat(data5, 1, S2D_5pt, "double", OPS_READ),
+                             ops_arg_idx(),
+                             ops_arg_reduce(reduct_err, 1, "int", OPS_MAX),
+                             ops_arg_gbl(&size4[0], 1, "int", OPS_READ),
+                             ops_arg_gbl(&size4[1], 1, "int", OPS_READ));
+
+  int err_prolong = 0;
+  ops_reduction_result(reduct_err, &err_prolong);
+
   ops_par_loop_mgrid_populate_kernel_3(
       "mgrid_populate_kernel_3", grid0, 2, iter_range_large,
       ops_arg_dat(data5, 1, S2D_00, "double", OPS_WRITE), ops_arg_idx());
@@ -181,6 +211,15 @@ int main(int argc, const char **argv) {
       ops_arg_dat(data6, 1, S2D_RESTRICT_00_M10_P10, "double", OPS_READ),
       ops_arg_dat(data3, 1, S2D_00, "double", OPS_WRITE), ops_arg_idx());
 
+  ops_par_loop_restrict_check("prolong_check", grid0, 2, iter_range_small,
+                              ops_arg_dat(data3, 1, S2D_00, "double", OPS_READ),
+                              ops_arg_idx(),
+                              ops_arg_reduce(reduct_err, 1, "int", OPS_MAX),
+                              ops_arg_gbl(&size4[0], 1, "int", OPS_READ));
+
+  int err_restrict = 0;
+  ops_reduction_result(reduct_err, &err_restrict);
+
   ops_timers_core(&ct1, &et1);
   ops_timing_output(stdout);
 
@@ -191,7 +230,10 @@ int main(int argc, const char **argv) {
   ops_fetch_dat_hdf5_file(data5, "data.h5");
   ops_fetch_dat_hdf5_file(data6, "data.h5");
 
-  ops_printf("\nPASSED\n");
+  if (err_prolong == 0 && err_restrict == 0)
+    ops_printf("\nPASSED\n");
+  else
+    ops_printf("\nFAILED\n");
 
   ops_exit();
 }

@@ -18,3 +18,5 @@ void ops_init_backend() {}
 #include "mgrid_populate_kernel_3_seq_kernel.cpp"
 #include "mgrid_prolong_kernel_seq_kernel.cpp"
 #include "mgrid_restrict_kernel_seq_kernel.cpp"
+#include "prolong_check_seq_kernel.cpp"
+#include "restrict_check_seq_kernel.cpp"

@@ -24,3 +24,5 @@ void ops_decl_const_char(int dim, char const *type, int size, char *dat,
 #include "mgrid_populate_kernel_3_openacc_kernel.cpp"
 #include "mgrid_prolong_kernel_openacc_kernel.cpp"
 #include "mgrid_restrict_kernel_openacc_kernel.cpp"
+#include "prolong_check_openacc_kernel.cpp"
+#include "restrict_check_openacc_kernel.cpp"
