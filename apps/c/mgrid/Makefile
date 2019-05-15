@@ -14,7 +14,7 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
 
 
-HEADERS=mgrid_populate_kernel.h mgrid_restrict_kernel.h mgrid_prolong_kernel.h
+HEADERS=mgrid_kernels.h
 
 OPS_FILES=mgrid.cpp
 

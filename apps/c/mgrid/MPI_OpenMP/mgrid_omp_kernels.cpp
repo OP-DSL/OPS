@@ -22,3 +22,5 @@ void ops_init_backend() {}
 #include "mgrid_populate_kernel_3_omp_kernel.cpp"
 #include "mgrid_prolong_kernel_omp_kernel.cpp"
 #include "mgrid_restrict_kernel_omp_kernel.cpp"
+#include "prolong_check_omp_kernel.cpp"
+#include "restrict_check_omp_kernel.cpp"
