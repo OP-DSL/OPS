@@ -51,7 +51,7 @@
 /******************************************************************************
 * Main program
 /******************************************************************************/
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
   /**-------------------------- Initialisation --------------------------**/
 
@@ -67,17 +67,19 @@ int main(int argc, char **argv)
   int s2D_00_M10_P10[]         = {0,0,-1,0,1,0};
   ops_stencil S2D_00 = ops_decl_stencil( 2, 1, s2D_00, "00");
 
+  int fac = 100;
+
   //declare datasets
   int d_p[2] = {2,2};
   //int d_p[2] = {0,0};
   int d_m[2] = {-2,-2};
   //int d_m[2] = {0,0};
-  int size4[2] = {24, 24};
-  int size0[2] = {12, 12};
-  int size1[2] = {6, 6};
-  int size2[2] = {4, 4};
+  int size4[2] = {24*fac, 24*fac};
+  int size0[2] = {12*fac, 12*fac};
+  int size1[2] = {6*fac, 6*fac};
+  int size2[2] = {4*fac, 4*fac};
 
-  int size3[2] = {6, 6};
+  int size3[2] = {6*fac, 6*fac};
 
   int stride0[2] = {1, 1};
   int stride1[2] = {2, 2};
@@ -163,7 +165,7 @@ int main(int argc, char **argv)
                ops_arg_dat(data1, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
   ops_halo_transfer(halos[2]);
-  ops_print_dat_to_txtfile(data1, "data.txt");
+  //ops_print_dat_to_txtfile(data1, "data.txt");
   /*ops_par_loop(mgrid_populate_kernel_2, "mgrid_populate_kernel_2", grid0, 2, iter_range_tiny,
                ops_arg_dat(data2, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());*/
@@ -183,9 +185,9 @@ int main(int argc, char **argv)
   ops_halo_transfer(halos[0]);
 
   //ops_print_dat_to_txtfile(data2, "data.txt");
-  ops_print_dat_to_txtfile(data0, "data.txt");
-  ops_print_dat_to_txtfile(data5, "data.txt");
-  
+  //ops_print_dat_to_txtfile(data0, "data.txt");
+  //ops_print_dat_to_txtfile(data5, "data.txt");
+
   ops_par_loop(mgrid_populate_kernel_3, "mgrid_populate_kernel_3", grid0, 2, iter_range_large,
                ops_arg_dat(data5, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
@@ -204,10 +206,9 @@ int main(int argc, char **argv)
                ops_arg_dat(data4, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());*/
 
-  ops_print_dat_to_txtfile(data5, "data.txt");
+  /*ops_print_dat_to_txtfile(data5, "data.txt");
   ops_print_dat_to_txtfile(data6, "data.txt");
-  ops_print_dat_to_txtfile(data3, "data.txt");
-
+  ops_print_dat_to_txtfile(data3, "data.txt");*/
 
 
   ops_timers_core(&ct1, &et1);
@@ -215,5 +216,12 @@ int main(int argc, char **argv)
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 
-  //ops_exit();
+  /*ops_fetch_block_hdf5_file(grid0, "data.h5");
+  ops_fetch_dat_hdf5_file(data3, "data.h5");
+  ops_fetch_dat_hdf5_file(data5, "data.h5");
+  ops_fetch_dat_hdf5_file(data6, "data.h5");*/
+
+  ops_printf("\nPASSED\n");
+
+  ops_exit();
 }

@@ -65,79 +65,29 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name,
   int end[3];
 #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
+#endif // OPS_MPI
+
+  int arg_idx[3];
+  int arg_idx_base[3];
+#ifdef OPS_MPI
+  if (compute_ranges(args, 5, block, range, start, end, arg_idx) < 0)
     return;
-  for (int n = 0; n < 3; n++) {
-    start[n] = sb->decomp_disp[n];
-    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (start[n] >= range[2 * n]) {
-      start[n] = 0;
-    } else {
-      start[n] = range[2 * n] - start[n];
-    }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      start[n] = range[2 * n];
-    if (end[n] >= range[2 * n + 1]) {
-      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
-  }
-#else
+#else // OPS_MPI
   for (int n = 0; n < 3; n++) {
     start[n] = range[2 * n];
     end[n] = range[2 * n + 1];
+    arg_idx[n] = start[n];
   }
 #endif
-
-  int x_size = MAX(0, end[0] - start[0]);
-  int y_size = MAX(0, end[1] - start[1]);
-  int z_size = MAX(0, end[2] - start[2]);
-
-  xdim0 = args[0].dat->size[0];
-  ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0];
-  ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0];
-  ydim2 = args[2].dat->size[1];
-  xdim3 = args[3].dat->size[0];
-  ydim3 = args[3].dat->size[1];
-  xdim4 = args[4].dat->size[0];
-  ydim4 = args[4].dat->size[1];
-  if (xdim0 != xdim0_advec_mom_kernel1_x_nonvector_h ||
-      ydim0 != ydim0_advec_mom_kernel1_x_nonvector_h ||
-      xdim1 != xdim1_advec_mom_kernel1_x_nonvector_h ||
-      ydim1 != ydim1_advec_mom_kernel1_x_nonvector_h ||
-      xdim2 != xdim2_advec_mom_kernel1_x_nonvector_h ||
-      ydim2 != ydim2_advec_mom_kernel1_x_nonvector_h ||
-      xdim3 != xdim3_advec_mom_kernel1_x_nonvector_h ||
-      ydim3 != ydim3_advec_mom_kernel1_x_nonvector_h ||
-      xdim4 != xdim4_advec_mom_kernel1_x_nonvector_h ||
-      ydim4 != ydim4_advec_mom_kernel1_x_nonvector_h) {
-    xdim0_advec_mom_kernel1_x_nonvector = xdim0;
-    xdim0_advec_mom_kernel1_x_nonvector_h = xdim0;
-    ydim0_advec_mom_kernel1_x_nonvector = ydim0;
-    ydim0_advec_mom_kernel1_x_nonvector_h = ydim0;
-    xdim1_advec_mom_kernel1_x_nonvector = xdim1;
-    xdim1_advec_mom_kernel1_x_nonvector_h = xdim1;
-    ydim1_advec_mom_kernel1_x_nonvector = ydim1;
-    ydim1_advec_mom_kernel1_x_nonvector_h = ydim1;
-    xdim2_advec_mom_kernel1_x_nonvector = xdim2;
-    xdim2_advec_mom_kernel1_x_nonvector_h = xdim2;
-    ydim2_advec_mom_kernel1_x_nonvector = ydim2;
-    ydim2_advec_mom_kernel1_x_nonvector_h = ydim2;
-    xdim3_advec_mom_kernel1_x_nonvector = xdim3;
-    xdim3_advec_mom_kernel1_x_nonvector_h = xdim3;
-    ydim3_advec_mom_kernel1_x_nonvector = ydim3;
-    ydim3_advec_mom_kernel1_x_nonvector_h = ydim3;
-    xdim4_advec_mom_kernel1_x_nonvector = xdim4;
-    xdim4_advec_mom_kernel1_x_nonvector_h = xdim4;
-    ydim4_advec_mom_kernel1_x_nonvector = ydim4;
-    ydim4_advec_mom_kernel1_x_nonvector_h = ydim4;
+  for (int n = 0; n < 3; n++) {
+    arg_idx_base[n] = arg_idx[n];
   }
+
+  int dat0 = args[0].dat->elem_size;
+  int dat1 = args[1].dat->elem_size;
+  int dat2 = args[2].dat->elem_size;
+  int dat3 = args[3].dat->elem_size;
+  int dat4 = args[4].dat->elem_size;
 
   // set up initial pointers
   int base0 = args[0].dat->base_offset +
@@ -219,6 +169,55 @@ void ops_par_loop_advec_mom_kernel1_x_nonvector(char const *name,
 #else
   double *p_a4 = (double *)((char *)args[4].data + base4);
 #endif
+
+  int x_size = MAX(0, end[0] - start[0]);
+  int y_size = MAX(0, end[1] - start[1]);
+  int z_size = MAX(0, end[2] - start[2]);
+
+  // initialize global variable with the dimension of dats
+  xdim0 = args[0].dat->size[0];
+  ydim0 = args[0].dat->size[1];
+  xdim1 = args[1].dat->size[0];
+  ydim1 = args[1].dat->size[1];
+  xdim2 = args[2].dat->size[0];
+  ydim2 = args[2].dat->size[1];
+  xdim3 = args[3].dat->size[0];
+  ydim3 = args[3].dat->size[1];
+  xdim4 = args[4].dat->size[0];
+  ydim4 = args[4].dat->size[1];
+  if (xdim0 != xdim0_advec_mom_kernel1_x_nonvector_h ||
+      ydim0 != ydim0_advec_mom_kernel1_x_nonvector_h ||
+      xdim1 != xdim1_advec_mom_kernel1_x_nonvector_h ||
+      ydim1 != ydim1_advec_mom_kernel1_x_nonvector_h ||
+      xdim2 != xdim2_advec_mom_kernel1_x_nonvector_h ||
+      ydim2 != ydim2_advec_mom_kernel1_x_nonvector_h ||
+      xdim3 != xdim3_advec_mom_kernel1_x_nonvector_h ||
+      ydim3 != ydim3_advec_mom_kernel1_x_nonvector_h ||
+      xdim4 != xdim4_advec_mom_kernel1_x_nonvector_h ||
+      ydim4 != ydim4_advec_mom_kernel1_x_nonvector_h) {
+    xdim0_advec_mom_kernel1_x_nonvector = xdim0;
+    xdim0_advec_mom_kernel1_x_nonvector_h = xdim0;
+    ydim0_advec_mom_kernel1_x_nonvector = ydim0;
+    ydim0_advec_mom_kernel1_x_nonvector_h = ydim0;
+    xdim1_advec_mom_kernel1_x_nonvector = xdim1;
+    xdim1_advec_mom_kernel1_x_nonvector_h = xdim1;
+    ydim1_advec_mom_kernel1_x_nonvector = ydim1;
+    ydim1_advec_mom_kernel1_x_nonvector_h = ydim1;
+    xdim2_advec_mom_kernel1_x_nonvector = xdim2;
+    xdim2_advec_mom_kernel1_x_nonvector_h = xdim2;
+    ydim2_advec_mom_kernel1_x_nonvector = ydim2;
+    ydim2_advec_mom_kernel1_x_nonvector_h = ydim2;
+    xdim3_advec_mom_kernel1_x_nonvector = xdim3;
+    xdim3_advec_mom_kernel1_x_nonvector_h = xdim3;
+    ydim3_advec_mom_kernel1_x_nonvector = ydim3;
+    ydim3_advec_mom_kernel1_x_nonvector_h = ydim3;
+    xdim4_advec_mom_kernel1_x_nonvector = xdim4;
+    xdim4_advec_mom_kernel1_x_nonvector_h = xdim4;
+    ydim4_advec_mom_kernel1_x_nonvector = ydim4;
+    ydim4_advec_mom_kernel1_x_nonvector_h = ydim4;
+  }
+
+// Halo Exchanges
 
 #ifdef OPS_GPU
   ops_H_D_exchanges_device(args, 5);

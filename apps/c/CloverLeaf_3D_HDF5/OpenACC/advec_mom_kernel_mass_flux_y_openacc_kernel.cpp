@@ -50,55 +50,26 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name,
   int end[3];
 #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
+#endif // OPS_MPI
+
+  int arg_idx[3];
+  int arg_idx_base[3];
+#ifdef OPS_MPI
+  if (compute_ranges(args, 2, block, range, start, end, arg_idx) < 0)
     return;
-  for (int n = 0; n < 3; n++) {
-    start[n] = sb->decomp_disp[n];
-    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (start[n] >= range[2 * n]) {
-      start[n] = 0;
-    } else {
-      start[n] = range[2 * n] - start[n];
-    }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      start[n] = range[2 * n];
-    if (end[n] >= range[2 * n + 1]) {
-      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
-  }
-#else
+#else // OPS_MPI
   for (int n = 0; n < 3; n++) {
     start[n] = range[2 * n];
     end[n] = range[2 * n + 1];
+    arg_idx[n] = start[n];
   }
 #endif
-
-  int x_size = MAX(0, end[0] - start[0]);
-  int y_size = MAX(0, end[1] - start[1]);
-  int z_size = MAX(0, end[2] - start[2]);
-
-  xdim0 = args[0].dat->size[0];
-  ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0];
-  ydim1 = args[1].dat->size[1];
-  if (xdim0 != xdim0_advec_mom_kernel_mass_flux_y_h ||
-      ydim0 != ydim0_advec_mom_kernel_mass_flux_y_h ||
-      xdim1 != xdim1_advec_mom_kernel_mass_flux_y_h ||
-      ydim1 != ydim1_advec_mom_kernel_mass_flux_y_h) {
-    xdim0_advec_mom_kernel_mass_flux_y = xdim0;
-    xdim0_advec_mom_kernel_mass_flux_y_h = xdim0;
-    ydim0_advec_mom_kernel_mass_flux_y = ydim0;
-    ydim0_advec_mom_kernel_mass_flux_y_h = ydim0;
-    xdim1_advec_mom_kernel_mass_flux_y = xdim1;
-    xdim1_advec_mom_kernel_mass_flux_y_h = xdim1;
-    ydim1_advec_mom_kernel_mass_flux_y = ydim1;
-    ydim1_advec_mom_kernel_mass_flux_y_h = ydim1;
+  for (int n = 0; n < 3; n++) {
+    arg_idx_base[n] = arg_idx[n];
   }
+
+  int dat0 = args[0].dat->elem_size;
+  int dat1 = args[1].dat->elem_size;
 
   // set up initial pointers
   int base0 = args[0].dat->base_offset +
@@ -132,6 +103,31 @@ void ops_par_loop_advec_mom_kernel_mass_flux_y(char const *name,
 #else
   double *p_a1 = (double *)((char *)args[1].data + base1);
 #endif
+
+  int x_size = MAX(0, end[0] - start[0]);
+  int y_size = MAX(0, end[1] - start[1]);
+  int z_size = MAX(0, end[2] - start[2]);
+
+  // initialize global variable with the dimension of dats
+  xdim0 = args[0].dat->size[0];
+  ydim0 = args[0].dat->size[1];
+  xdim1 = args[1].dat->size[0];
+  ydim1 = args[1].dat->size[1];
+  if (xdim0 != xdim0_advec_mom_kernel_mass_flux_y_h ||
+      ydim0 != ydim0_advec_mom_kernel_mass_flux_y_h ||
+      xdim1 != xdim1_advec_mom_kernel_mass_flux_y_h ||
+      ydim1 != ydim1_advec_mom_kernel_mass_flux_y_h) {
+    xdim0_advec_mom_kernel_mass_flux_y = xdim0;
+    xdim0_advec_mom_kernel_mass_flux_y_h = xdim0;
+    ydim0_advec_mom_kernel_mass_flux_y = ydim0;
+    ydim0_advec_mom_kernel_mass_flux_y_h = ydim0;
+    xdim1_advec_mom_kernel_mass_flux_y = xdim1;
+    xdim1_advec_mom_kernel_mass_flux_y_h = xdim1;
+    ydim1_advec_mom_kernel_mass_flux_y = ydim1;
+    ydim1_advec_mom_kernel_mass_flux_y_h = ydim1;
+  }
+
+// Halo Exchanges
 
 #ifdef OPS_GPU
   ops_H_D_exchanges_device(args, 2);
