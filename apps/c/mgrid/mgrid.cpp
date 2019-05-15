@@ -216,10 +216,10 @@ int main(int argc, const char **argv)
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 
-  /*ops_fetch_block_hdf5_file(grid0, "data.h5");
+  ops_fetch_block_hdf5_file(grid0, "data.h5");
   ops_fetch_dat_hdf5_file(data3, "data.h5");
   ops_fetch_dat_hdf5_file(data5, "data.h5");
-  ops_fetch_dat_hdf5_file(data6, "data.h5");*/
+  ops_fetch_dat_hdf5_file(data6, "data.h5");
 
   ops_printf("\nPASSED\n");
 
