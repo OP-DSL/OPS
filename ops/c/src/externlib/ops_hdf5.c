@@ -279,7 +279,6 @@ void remove_padding1D(ops_dat dat, hsize_t *size, char *data) {
 void remove_padding2D(ops_dat dat, hsize_t *size, char *data) {
   int index = 0;
   int count = 0;
-  for (int k = 0; k < size[2]; k++) {
     for (int j = 0; j < size[1]; j++) {
       for (int i = 0; i < size[0]; i++) {
         index = i + j * dat->size[0];
@@ -288,7 +287,6 @@ void remove_padding2D(ops_dat dat, hsize_t *size, char *data) {
         count++;
       }
     }
-  }
   return;
 }
 
