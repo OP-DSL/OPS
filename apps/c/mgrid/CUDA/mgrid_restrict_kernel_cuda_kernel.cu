@@ -52,6 +52,9 @@ void ops_par_loop_mgrid_restrict_kernel(char const *name, ops_block block,
 #else
 void ops_par_loop_mgrid_restrict_kernel_execute(ops_kernel_descriptor *desc) {
   int dim = desc->dim;
+#if OPS_MPI
+  ops_block block = desc->block;
+#endif
   int *range = desc->range;
   ops_arg arg0 = desc->args[0];
   ops_arg arg1 = desc->args[1];
@@ -121,7 +124,7 @@ void ops_par_loop_mgrid_restrict_kernel_execute(ops_kernel_descriptor *desc) {
 
   dim3 grid((x_size - 1) / OPS_block_size_x + 1,
             (y_size - 1) / OPS_block_size_y + 1, 1);
-  dim3 tblock(OPS_block_size_x, OPS_block_size_y, 1);
+  dim3 tblock(OPS_block_size_x, OPS_block_size_y, OPS_block_size_z);
 
   int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
   int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
@@ -177,9 +180,12 @@ void ops_par_loop_mgrid_restrict_kernel_execute(ops_kernel_descriptor *desc) {
   }
 
   // call kernel wrapper function, passing in pointers to data
-  ops_mgrid_restrict_kernel<<<grid, tblock>>>(
-      (double *)p_a[0], stride_0[0], stride_0[1], (double *)p_a[1], arg_idx[0],
-      arg_idx[1], x_size, y_size);
+  if (x_size > 0 && y_size > 0)
+    ops_mgrid_restrict_kernel<<<grid, tblock>>>(
+        (double *)p_a[0], stride_0[0], stride_0[1], (double *)p_a[1],
+        arg_idx[0], arg_idx[1], x_size, y_size);
+
+  cutilSafeCall(cudaGetLastError());
 
   if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());

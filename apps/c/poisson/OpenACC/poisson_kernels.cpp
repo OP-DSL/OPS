@@ -3,7 +3,6 @@
 
 #include "./OpenACC/poisson_common.h"
 
-
 #include <openacc.h>
 
 void ops_init_backend() {
@@ -12,24 +11,21 @@ void ops_init_backend() {
   ops_device_initialised_externally = 1;
 }
 
-void ops_decl_const_char(int dim, char const *type,
-int size, char *dat, char const *name){
-  if (!strcmp(name,"dx")) {
-    dx = *(double*)dat;
-  }
-  else
-  if (!strcmp(name,"dy")) {
-    dy = *(double*)dat;
-  }
-  else
-  {
-    printf("error: unknown const name\n"); exit(1);
+void ops_decl_const_char(int dim, char const *type, int size, char *dat,
+                         char const *name) {
+  if (!strcmp(name, "dx")) {
+    dx = *(double *)dat;
+  } else if (!strcmp(name, "dy")) {
+    dy = *(double *)dat;
+  } else {
+    printf("error: unknown const name\n");
+    exit(1);
   }
 }
 
-//user kernel files
-#include "poisson_kernel_populate_openacc_kernel.cpp"
-#include "poisson_kernel_update_openacc_kernel.cpp"
-#include "poisson_kernel_initialguess_openacc_kernel.cpp"
-#include "poisson_kernel_stencil_openacc_kernel.cpp"
+// user kernel files
 #include "poisson_kernel_error_openacc_kernel.cpp"
+#include "poisson_kernel_initialguess_openacc_kernel.cpp"
+#include "poisson_kernel_populate_openacc_kernel.cpp"
+#include "poisson_kernel_stencil_openacc_kernel.cpp"
+#include "poisson_kernel_update_openacc_kernel.cpp"

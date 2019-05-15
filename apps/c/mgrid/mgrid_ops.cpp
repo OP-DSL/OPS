@@ -37,7 +37,7 @@ void ops_par_loop_mgrid_restrict_kernel(char const *, ops_block, int, int *,
 //#include "mgrid_restrict_kernel.h"
 //#include "mgrid_prolong_kernel.h"
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
 
   ops_init(argc, argv, 2);
   ops_init_backend();
@@ -48,16 +48,18 @@ int main(int argc, char **argv) {
   int s2D_00_M10_P10[] = {0, 0, -1, 0, 1, 0};
   ops_stencil S2D_00 = ops_decl_stencil(2, 1, s2D_00, "00");
 
+  int fac = 100;
+
   int d_p[2] = {2, 2};
 
   int d_m[2] = {-2, -2};
 
-  int size4[2] = {24, 24};
-  int size0[2] = {12, 12};
-  int size1[2] = {6, 6};
-  int size2[2] = {4, 4};
+  int size4[2] = {24 * fac, 24 * fac};
+  int size0[2] = {12 * fac, 12 * fac};
+  int size1[2] = {6 * fac, 6 * fac};
+  int size2[2] = {4 * fac, 4 * fac};
 
-  int size3[2] = {6, 6};
+  int size3[2] = {6 * fac, 6 * fac};
 
   int stride0[2] = {1, 1};
   int stride1[2] = {2, 2};
@@ -167,9 +169,6 @@ int main(int argc, char **argv) {
       ops_arg_dat(data5, 1, S2D_00, "double", OPS_WRITE), ops_arg_idx());
   ops_halo_transfer(halos[0]);
 
-  ops_print_dat_to_txtfile(data0, "data.txt");
-  ops_print_dat_to_txtfile(data5, "data.txt");
-
   ops_par_loop_mgrid_populate_kernel_3(
       "mgrid_populate_kernel_3", grid0, 2, iter_range_large,
       ops_arg_dat(data5, 1, S2D_00, "double", OPS_WRITE), ops_arg_idx());
@@ -183,12 +182,12 @@ int main(int argc, char **argv) {
       ops_arg_dat(data6, 1, S2D_RESTRICT_00_M10_P10, "double", OPS_READ),
       ops_arg_dat(data3, 1, S2D_00, "double", OPS_WRITE), ops_arg_idx());
 
-  ops_print_dat_to_txtfile(data5, "data.txt");
-  ops_print_dat_to_txtfile(data6, "data.txt");
-  ops_print_dat_to_txtfile(data3, "data.txt");
-
   ops_timers_core(&ct1, &et1);
   ops_timing_output(stdout);
 
   ops_printf("\nTotal Wall time %lf\n", et1 - et0);
+
+  ops_printf("\nPASSED\n");
+
+  ops_exit();
 }

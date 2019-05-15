@@ -12,67 +12,64 @@ int xdim5_poisson_kernel_populate_h = -1;
 #undef OPS_ACC4
 #undef OPS_ACC5
 
+#define OPS_ACC3(x, y) (x + xdim3_poisson_kernel_populate * (y))
+#define OPS_ACC4(x, y) (x + xdim4_poisson_kernel_populate * (y))
+#define OPS_ACC5(x, y) (x + xdim5_poisson_kernel_populate * (y))
 
-#define OPS_ACC3(x,y) (x+xdim3_poisson_kernel_populate*(y))
-#define OPS_ACC4(x,y) (x+xdim4_poisson_kernel_populate*(y))
-#define OPS_ACC5(x,y) (x+xdim5_poisson_kernel_populate*(y))
-
-//user function
+// user function
 __device__
 
-void poisson_kernel_populate_gpu(const int *dispx, const int *dispy, const int *idx, double *u, double *f, double *ref) {
-  double x = dx * (double)(idx[0]+dispx[0]);
-  double y = dy * (double)(idx[1]+dispy[0]);
+    void
+    poisson_kernel_populate_gpu(const int *dispx, const int *dispy,
+                                const int *idx, double *u, double *f,
+                                double *ref) {
+  double x = dx * (double)(idx[0] + dispx[0]);
+  double y = dy * (double)(idx[1] + dispy[0]);
 
-  u[OPS_ACC3(0,0)] = myfun(sin(M_PI*x),cos(2.0*M_PI*y))-1.0;
-  f[OPS_ACC4(0,0)] = -5.0*M_PI*M_PI*sin(M_PI*x)*cos(2.0*M_PI*y);
-  ref[OPS_ACC5(0,0)] = sin(M_PI*x)*cos(2.0*M_PI*y);
-
+  u[OPS_ACC3(0, 0)] = myfun(sin(M_PI * x), cos(2.0 * M_PI * y)) - 1.0;
+  f[OPS_ACC4(0, 0)] = -5.0 * M_PI * M_PI * sin(M_PI * x) * cos(2.0 * M_PI * y);
+  ref[OPS_ACC5(0, 0)] = sin(M_PI * x) * cos(2.0 * M_PI * y);
 }
-
-
 
 #undef OPS_ACC3
 #undef OPS_ACC4
 #undef OPS_ACC5
 
-
-__global__ void ops_poisson_kernel_populate(
-const int arg0,
-const int arg1,
-int arg_idx0, int arg_idx1,
-double* __restrict arg3,
-double* __restrict arg4,
-double* __restrict arg5,
-int size0,
-int size1 ){
-
+__global__ void ops_poisson_kernel_populate(const int arg0, const int arg1,
+                                            int arg_idx0, int arg_idx1,
+                                            double *__restrict arg3,
+                                            double *__restrict arg4,
+                                            double *__restrict arg5, int size0,
+                                            int size1) {
 
   int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
   int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
 
   int arg_idx[2];
-  arg_idx[0] = arg_idx0+idx_x;
-  arg_idx[1] = arg_idx1+idx_y;
-  arg3 += idx_x * 1*1 + idx_y * 1*1 * xdim3_poisson_kernel_populate;
-  arg4 += idx_x * 1*1 + idx_y * 1*1 * xdim4_poisson_kernel_populate;
-  arg5 += idx_x * 1*1 + idx_y * 1*1 * xdim5_poisson_kernel_populate;
+  arg_idx[0] = arg_idx0 + idx_x;
+  arg_idx[1] = arg_idx1 + idx_y;
+  arg3 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim3_poisson_kernel_populate;
+  arg4 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim4_poisson_kernel_populate;
+  arg5 += idx_x * 1 * 1 + idx_y * 1 * 1 * xdim5_poisson_kernel_populate;
 
   if (idx_x < size0 && idx_y < size1) {
-    poisson_kernel_populate_gpu(&arg0, &arg1, arg_idx, arg3,
-                   arg4, arg5);
+    poisson_kernel_populate_gpu(&arg0, &arg1, arg_idx, arg3, arg4, arg5);
   }
-
 }
 
 // host stub function
 #ifndef OPS_LAZY
-void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int dim, int* range,
- ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
- ops_arg arg4, ops_arg arg5) {
+void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block,
+                                          int dim, int *range, ops_arg arg0,
+                                          ops_arg arg1, ops_arg arg2,
+                                          ops_arg arg3, ops_arg arg4,
+                                          ops_arg arg5) {
 #else
 void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
   int dim = desc->dim;
+#if OPS_MPI
+  ops_block block = desc->block;
+#endif
   int *range = desc->range;
   ops_arg arg0 = desc->args[0];
   ops_arg arg1 = desc->args[1];
@@ -80,88 +77,67 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
   ops_arg arg3 = desc->args[3];
   ops_arg arg4 = desc->args[4];
   ops_arg arg5 = desc->args[5];
-  #endif
+#endif
 
-  //Timing
-  double t1,t2,c1,c2;
+  // Timing
+  double t1, t2, c1, c2;
 
-  ops_arg args[6] = { arg0, arg1, arg2, arg3, arg4, arg5};
+  ops_arg args[6] = {arg0, arg1, arg2, arg3, arg4, arg5};
 
-
-  #if CHECKPOINTING && !OPS_LAZY
-  if (!ops_checkpointing_before(args,6,range,0)) return;
-  #endif
+#if CHECKPOINTING && !OPS_LAZY
+  if (!ops_checkpointing_before(args, 6, range, 0))
+    return;
+#endif
 
   if (OPS_diags > 1) {
-    ops_timing_realloc(0,"poisson_kernel_populate");
+    ops_timing_realloc(0, "poisson_kernel_populate");
     OPS_kernels[0].count++;
-    ops_timers_core(&c1,&t1);
+    ops_timers_core(&c1, &t1);
   }
 
-  //compute locally allocated range for the sub-block
+  // compute locally allocated range for the sub-block
   int start[2];
   int end[2];
-  #if OPS_MPI && !OPS_LAZY
+#if OPS_MPI && !OPS_LAZY
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned) return;
-  for ( int n=0; n<2; n++ ){
-    start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
-    if (start[n] >= range[2*n]) {
-      start[n] = 0;
-    }
-    else {
-      start[n] = range[2*n] - start[n];
-    }
-    if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];
-    if (end[n] >= range[2*n+1]) {
-      end[n] = range[2*n+1] - sb->decomp_disp[n];
-    }
-    else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
-      end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
-  }
-  #else
-  for ( int n=0; n<2; n++ ){
-    start[n] = range[2*n];end[n] = range[2*n+1];
-  }
-  #endif
-
-  int x_size = MAX(0,end[0]-start[0]);
-  int y_size = MAX(0,end[1]-start[1]);
+#endif // OPS_MPI
 
   int arg_idx[2];
-  #ifdef OPS_MPI
-  #ifdef OPS_LAZY
-  ops_block block = desc->block;
-  sub_block_list sb = OPS_sub_block_list[block->index];
-  #endif
-  arg_idx[0] = sb->decomp_disp[0]+start[0];
-  arg_idx[1] = sb->decomp_disp[1]+start[1];
-  #else
-  arg_idx[0] = start[0];
-  arg_idx[1] = start[1];
-  #endif
+  int arg_idx_base[2];
+#ifdef OPS_MPI
+  if (compute_ranges(args, 6, block, range, start, end, arg_idx) < 0)
+    return;
+#else // OPS_MPI
+  for (int n = 0; n < 2; n++) {
+    start[n] = range[2 * n];
+    end[n] = range[2 * n + 1];
+    arg_idx[n] = start[n];
+  }
+#endif
+  for (int n = 0; n < 2; n++) {
+    arg_idx_base[n] = arg_idx[n];
+  }
   int xdim3 = args[3].dat->size[0];
   int xdim4 = args[4].dat->size[0];
   int xdim5 = args[5].dat->size[0];
 
-  if (xdim3 != xdim3_poisson_kernel_populate_h || xdim4 != xdim4_poisson_kernel_populate_h || xdim5 != xdim5_poisson_kernel_populate_h) {
-    cudaMemcpyToSymbol( xdim3_poisson_kernel_populate, &xdim3, sizeof(int) );
+  if (xdim3 != xdim3_poisson_kernel_populate_h ||
+      xdim4 != xdim4_poisson_kernel_populate_h ||
+      xdim5 != xdim5_poisson_kernel_populate_h) {
+    cudaMemcpyToSymbol(xdim3_poisson_kernel_populate, &xdim3, sizeof(int));
     xdim3_poisson_kernel_populate_h = xdim3;
-    cudaMemcpyToSymbol( xdim4_poisson_kernel_populate, &xdim4, sizeof(int) );
+    cudaMemcpyToSymbol(xdim4_poisson_kernel_populate, &xdim4, sizeof(int));
     xdim4_poisson_kernel_populate_h = xdim4;
-    cudaMemcpyToSymbol( xdim5_poisson_kernel_populate, &xdim5, sizeof(int) );
+    cudaMemcpyToSymbol(xdim5_poisson_kernel_populate, &xdim5, sizeof(int));
     xdim5_poisson_kernel_populate_h = xdim5;
   }
 
+  int x_size = MAX(0, end[0] - start[0]);
+  int y_size = MAX(0, end[1] - start[1]);
 
-
-  dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);
-  dim3 tblock(OPS_block_size_x,OPS_block_size_y,OPS_block_size_z);
-
-
+  dim3 grid((x_size - 1) / OPS_block_size_x + 1,
+            (y_size - 1) / OPS_block_size_y + 1, 1);
+  dim3 tblock(OPS_block_size_x, OPS_block_size_y, OPS_block_size_z);
 
   int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
   int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
@@ -169,65 +145,60 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
 
   char *p_a[6];
 
-  //set up initial pointers
-  int base3 = args[3].dat->base_offset + 
-           dat3 * 1 * (start[0] * args[3].stencil->stride[0]);
-  base3 = base3+ dat3 *
-    args[3].dat->size[0] *
-    (start[1] * args[3].stencil->stride[1]);
+  // set up initial pointers
+  int base3 = args[3].dat->base_offset +
+              dat3 * 1 * (start[0] * args[3].stencil->stride[0]);
+  base3 = base3 +
+          dat3 * args[3].dat->size[0] * (start[1] * args[3].stencil->stride[1]);
   p_a[3] = (char *)args[3].data_d + base3;
 
-  int base4 = args[4].dat->base_offset + 
-           dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
-  base4 = base4+ dat4 *
-    args[4].dat->size[0] *
-    (start[1] * args[4].stencil->stride[1]);
+  int base4 = args[4].dat->base_offset +
+              dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
+  base4 = base4 +
+          dat4 * args[4].dat->size[0] * (start[1] * args[4].stencil->stride[1]);
   p_a[4] = (char *)args[4].data_d + base4;
 
-  int base5 = args[5].dat->base_offset + 
-           dat5 * 1 * (start[0] * args[5].stencil->stride[0]);
-  base5 = base5+ dat5 *
-    args[5].dat->size[0] *
-    (start[1] * args[5].stencil->stride[1]);
+  int base5 = args[5].dat->base_offset +
+              dat5 * 1 * (start[0] * args[5].stencil->stride[0]);
+  base5 = base5 +
+          dat5 * args[5].dat->size[0] * (start[1] * args[5].stencil->stride[1]);
   p_a[5] = (char *)args[5].data_d + base5;
 
-
-  #ifndef OPS_LAZY
+#ifndef OPS_LAZY
   ops_H_D_exchanges_device(args, 6);
-  ops_halo_exchanges(args,6,range);
-  #endif
+  ops_halo_exchanges(args, 6, range);
+#endif
 
   if (OPS_diags > 1) {
-    ops_timers_core(&c2,&t2);
-    OPS_kernels[0].mpi_time += t2-t1;
+    ops_timers_core(&c2, &t2);
+    OPS_kernels[0].mpi_time += t2 - t1;
   }
 
-
-  //call kernel wrapper function, passing in pointers to data
+  // call kernel wrapper function, passing in pointers to data
   if (x_size > 0 && y_size > 0)
-    ops_poisson_kernel_populate<<<grid, tblock >>> (  *(int *)arg0.data, *(int *)arg1.data,
-           arg_idx[0], arg_idx[1], (double *)p_a[3],
-           (double *)p_a[4], (double *)p_a[5],x_size, y_size);
+    ops_poisson_kernel_populate<<<grid, tblock>>>(
+        *(int *)arg0.data, *(int *)arg1.data, arg_idx[0], arg_idx[1],
+        (double *)p_a[3], (double *)p_a[4], (double *)p_a[5], x_size, y_size);
 
   cutilSafeCall(cudaGetLastError());
 
-  if (OPS_diags>1) {
+  if (OPS_diags > 1) {
     cutilSafeCall(cudaDeviceSynchronize());
-    ops_timers_core(&c1,&t1);
-    OPS_kernels[0].time += t1-t2;
+    ops_timers_core(&c1, &t1);
+    OPS_kernels[0].time += t1 - t2;
   }
 
-  #ifndef OPS_LAZY
+#ifndef OPS_LAZY
   ops_set_dirtybit_device(args, 6);
-  ops_set_halo_dirtybit3(&args[3],range);
-  ops_set_halo_dirtybit3(&args[4],range);
-  ops_set_halo_dirtybit3(&args[5],range);
-  #endif
+  ops_set_halo_dirtybit3(&args[3], range);
+  ops_set_halo_dirtybit3(&args[4], range);
+  ops_set_halo_dirtybit3(&args[5], range);
+#endif
 
   if (OPS_diags > 1) {
-    //Update kernel record
-    ops_timers_core(&c2,&t2);
-    OPS_kernels[0].mpi_time += t2-t1;
+    // Update kernel record
+    ops_timers_core(&c2, &t2);
+    OPS_kernels[0].mpi_time += t2 - t1;
     OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg3);
     OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg4);
     OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg5);
@@ -235,9 +206,13 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
 }
 
 #ifdef OPS_LAZY
-void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int dim, int* range,
- ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4, ops_arg arg5) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block,
+                                          int dim, int *range, ops_arg arg0,
+                                          ops_arg arg1, ops_arg arg2,
+                                          ops_arg arg3, ops_arg arg4,
+                                          ops_arg arg5) {
+  ops_kernel_descriptor *desc =
+      (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -245,20 +220,20 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   desc->index = 0;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 0;
-  for ( int i=0; i<4; i++ ){
+  for (int i = 0; i < 4; i++) {
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 6;
-  desc->args = (ops_arg*)malloc(6*sizeof(ops_arg));
+  desc->args = (ops_arg *)malloc(6 * sizeof(ops_arg));
   desc->args[0] = arg0;
-  char *tmp = (char*)malloc(1*sizeof(int));
-  memcpy(tmp, arg0.data,1*sizeof(int));
+  char *tmp = (char *)malloc(1 * sizeof(int));
+  memcpy(tmp, arg0.data, 1 * sizeof(int));
   desc->args[0].data = tmp;
   desc->args[1] = arg1;
-  tmp = (char*)malloc(1*sizeof(int));
-  memcpy(tmp, arg1.data,1*sizeof(int));
+  tmp = (char *)malloc(1 * sizeof(int));
+  memcpy(tmp, arg1.data, 1 * sizeof(int));
   desc->args[1].data = tmp;
   desc->args[2] = arg2;
   desc->args[3] = arg3;
@@ -269,7 +244,7 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   desc->hash = ((desc->hash << 5) + desc->hash) + arg5.dat->index;
   desc->function = ops_par_loop_poisson_kernel_populate_execute;
   if (OPS_diags > 1) {
-    ops_timing_realloc(0,"poisson_kernel_populate");
+    ops_timing_realloc(0, "poisson_kernel_populate");
   }
   ops_enqueue_kernel(desc);
 }
