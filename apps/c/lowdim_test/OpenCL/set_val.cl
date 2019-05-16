@@ -45,9 +45,6 @@
 
 #define OPS_ACC0(x,y,z) (x+xdim0_set_val*(y)+xdim0_set_val*ydim0_set_val*(z))
 
-__constant int xdim0_set_val = 0;
-__constant int ydim0_set_val = 0;
-
 
 //user function
 void set_val(__global double * restrict dat,const  double * restrict val)

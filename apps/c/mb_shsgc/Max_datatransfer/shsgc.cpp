@@ -67,7 +67,7 @@ ops_stencil S1D_0, S1D_01,S1D_0M1M2P1P2, S1D_0M1;
 * Main program
 ******************************************************************************/
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
   // rk3 variables
   a1[0] = 2.0/3.0;
   a1[1] = 5.0/12.0;

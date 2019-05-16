@@ -61,12 +61,14 @@ void buildOpenCLKernels_set_val(int xdim0, int ydim0) {
     pPath = getenv("OPS_INSTALL_PATH");
     if (pPath != NULL)
       if (OCL_FMA)
-        sprintf(buildOpts,
-                "-cl-mad-enable -DOCL_FMA -I%s/c/include -DOPS_WARPSIZE=%d",
-                pPath, 32);
+        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/c/include "
+                           "-DOPS_WARPSIZE=%d  -Dxdim0_set_val=%d  "
+                           "-Dydim0_set_val=%d ",
+                pPath, 32, xdim0, ydim0);
       else
-        sprintf(buildOpts, "-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d",
-                pPath, 32);
+        sprintf(buildOpts, "-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  "
+                           "-Dxdim0_set_val=%d  -Dydim0_set_val=%d ",
+                pPath, 32, xdim0, ydim0);
     else {
       sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
       exit(EXIT_FAILURE);
@@ -105,11 +107,6 @@ void buildOpenCLKernels_set_val(int xdim0, int ydim0) {
     isbuilt_set_val = true;
   }
 }
-
-int xdim0_set_val;
-int xdim0_set_val_h = -1;
-int ydim0_set_val;
-int ydim0_set_val_h = -1;
 
 // host stub function
 void ops_par_loop_set_val(char const *name, ops_block block, int dim,
@@ -171,13 +168,8 @@ void ops_par_loop_set_val(char const *name, ops_block block, int dim,
   int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
 
-  if (xdim0 != xdim0_set_val_h || ydim0 != ydim0_set_val_h) {
-    ops_cpConstToSymbol(&xdim0_set_val, &xdim0, sizeof(int));
-    xdim0_set_val_h = xdim0;
-    ops_cpConstToSymbol(&ydim0_set_val, &ydim0, sizeof(int));
-    ydim0_set_val_h = ydim0;
-  }
   // build opencl kernel if not already built
+
   buildOpenCLKernels_set_val(xdim0, ydim0);
 
   // set up OpenCL thread blocks
@@ -198,15 +190,15 @@ void ops_par_loop_set_val(char const *name, ops_block block, int dim,
   for (int d = 0; d < dim; d++)
     d_m[d] = args[0].dat->d_m[d];
 #endif
-  int base0 =
-      1 * 1 *
-      (start[0] * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
-  base0 = base0 + args[0].dat->size[0] * 1 *
-                      (start[1] * args[0].stencil->stride[1] -
-                       args[0].dat->base[1] - d_m[1]);
-  base0 = base0 + args[0].dat->size[0] * 1 * args[0].dat->size[1] * 1 *
-                      (start[2] * args[0].stencil->stride[2] -
-                       args[0].dat->base[2] - d_m[2]);
+  int base0 = 1 * 1 * (start[0] * args[0].stencil->stride[0] -
+                       args[0].dat->base[0] - d_m[0]);
+  base0 = base0 +
+          args[0].dat->size[0] * 1 * (start[1] * args[0].stencil->stride[1] -
+                                      args[0].dat->base[1] - d_m[1]);
+  base0 = base0 +
+          args[0].dat->size[0] * 1 * args[0].dat->size[1] * 1 *
+              (start[2] * args[0].stencil->stride[2] - args[0].dat->base[2] -
+               d_m[2]);
 
   ops_H_D_exchanges_device(args, 2);
   ops_halo_exchanges(args, 2, range);

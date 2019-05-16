@@ -56,62 +56,30 @@ void ops_par_loop_update_halo_kernel1_l1(char const *name, ops_block block,
   int end[2];
 #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
+#endif // OPS_MPI
+
+  int arg_idx[2];
+  int arg_idx_base[2];
+#ifdef OPS_MPI
+  if (compute_ranges(args, 7, block, range, start, end, arg_idx) < 0)
     return;
-  for (int n = 0; n < 2; n++) {
-    start[n] = sb->decomp_disp[n];
-    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (start[n] >= range[2 * n]) {
-      start[n] = 0;
-    } else {
-      start[n] = range[2 * n] - start[n];
-    }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      start[n] = range[2 * n];
-    if (end[n] >= range[2 * n + 1]) {
-      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
-  }
-#else
+#else // OPS_MPI
   for (int n = 0; n < 2; n++) {
     start[n] = range[2 * n];
     end[n] = range[2 * n + 1];
+    arg_idx[n] = start[n];
   }
 #endif
-
-  int x_size = MAX(0, end[0] - start[0]);
-  int y_size = MAX(0, end[1] - start[1]);
-
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
-  xdim2 = args[2].dat->size[0];
-  xdim3 = args[3].dat->size[0];
-  xdim4 = args[4].dat->size[0];
-  xdim5 = args[5].dat->size[0];
-  if (xdim0 != xdim0_update_halo_kernel1_l1_h ||
-      xdim1 != xdim1_update_halo_kernel1_l1_h ||
-      xdim2 != xdim2_update_halo_kernel1_l1_h ||
-      xdim3 != xdim3_update_halo_kernel1_l1_h ||
-      xdim4 != xdim4_update_halo_kernel1_l1_h ||
-      xdim5 != xdim5_update_halo_kernel1_l1_h) {
-    xdim0_update_halo_kernel1_l1 = xdim0;
-    xdim0_update_halo_kernel1_l1_h = xdim0;
-    xdim1_update_halo_kernel1_l1 = xdim1;
-    xdim1_update_halo_kernel1_l1_h = xdim1;
-    xdim2_update_halo_kernel1_l1 = xdim2;
-    xdim2_update_halo_kernel1_l1_h = xdim2;
-    xdim3_update_halo_kernel1_l1 = xdim3;
-    xdim3_update_halo_kernel1_l1_h = xdim3;
-    xdim4_update_halo_kernel1_l1 = xdim4;
-    xdim4_update_halo_kernel1_l1_h = xdim4;
-    xdim5_update_halo_kernel1_l1 = xdim5;
-    xdim5_update_halo_kernel1_l1_h = xdim5;
+  for (int n = 0; n < 2; n++) {
+    arg_idx_base[n] = arg_idx[n];
   }
+
+  int dat0 = args[0].dat->elem_size;
+  int dat1 = args[1].dat->elem_size;
+  int dat2 = args[2].dat->elem_size;
+  int dat3 = args[3].dat->elem_size;
+  int dat4 = args[4].dat->elem_size;
+  int dat5 = args[5].dat->elem_size;
 
   int *arg6h = (int *)arg6.data;
 // Upload large globals
@@ -206,6 +174,38 @@ void ops_par_loop_update_halo_kernel1_l1(char const *name, ops_block block,
 #else
   int *p_a6 = arg6h;
 #endif
+
+  int x_size = MAX(0, end[0] - start[0]);
+  int y_size = MAX(0, end[1] - start[1]);
+
+  // initialize global variable with the dimension of dats
+  xdim0 = args[0].dat->size[0];
+  xdim1 = args[1].dat->size[0];
+  xdim2 = args[2].dat->size[0];
+  xdim3 = args[3].dat->size[0];
+  xdim4 = args[4].dat->size[0];
+  xdim5 = args[5].dat->size[0];
+  if (xdim0 != xdim0_update_halo_kernel1_l1_h ||
+      xdim1 != xdim1_update_halo_kernel1_l1_h ||
+      xdim2 != xdim2_update_halo_kernel1_l1_h ||
+      xdim3 != xdim3_update_halo_kernel1_l1_h ||
+      xdim4 != xdim4_update_halo_kernel1_l1_h ||
+      xdim5 != xdim5_update_halo_kernel1_l1_h) {
+    xdim0_update_halo_kernel1_l1 = xdim0;
+    xdim0_update_halo_kernel1_l1_h = xdim0;
+    xdim1_update_halo_kernel1_l1 = xdim1;
+    xdim1_update_halo_kernel1_l1_h = xdim1;
+    xdim2_update_halo_kernel1_l1 = xdim2;
+    xdim2_update_halo_kernel1_l1_h = xdim2;
+    xdim3_update_halo_kernel1_l1 = xdim3;
+    xdim3_update_halo_kernel1_l1_h = xdim3;
+    xdim4_update_halo_kernel1_l1 = xdim4;
+    xdim4_update_halo_kernel1_l1_h = xdim4;
+    xdim5_update_halo_kernel1_l1 = xdim5;
+    xdim5_update_halo_kernel1_l1_h = xdim5;
+  }
+
+// Halo Exchanges
 
 #ifdef OPS_GPU
   ops_H_D_exchanges_device(args, 7);

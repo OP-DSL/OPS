@@ -41,37 +41,26 @@ void ops_par_loop_calc(char const *name, ops_block block, int dim, int *range,
 
 #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
-    return;
-  for (int n = 0; n < 3; n++) {
-    start[n] = sb->decomp_disp[n];
-    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (start[n] >= range[2 * n]) {
-      start[n] = 0;
-    } else {
-      start[n] = range[2 * n] - start[n];
-    }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      start[n] = range[2 * n];
-    if (end[n] >= range[2 * n + 1]) {
-      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
-  }
-#else
-  for (int n = 0; n < 3; n++) {
-    start[n] = range[2 * n];
-    end[n] = range[2 * n + 1];
-  }
 #endif
 #ifdef OPS_DEBUG
   ops_register_args(args, "calc");
 #endif
 
+  int arg_idx[3];
+  int arg_idx_base[3];
+#ifdef OPS_MPI
+  if (compute_ranges(args, 7, block, range, start, end, arg_idx) < 0)
+    return;
+#else  // OPS_MPI
+  for (int n = 0; n < 3; n++) {
+    start[n] = range[2 * n];
+    end[n] = range[2 * n + 1];
+    arg_idx[n] = start[n];
+  }
+#endif // OPS_MPI
+  for (int n = 0; n < 3; n++) {
+    arg_idx_base[n] = arg_idx[n];
+  }
   offs[0][0] = args[0].stencil->stride[0] * 1; // unit step in x dimension
   offs[0][1] =
       off3D(1, &start[0], &end[0], args[0].dat->size, args[0].stencil->stride) -
@@ -161,78 +150,85 @@ void ops_par_loop_calc(char const *name, ops_block block, int dim, int *range,
   int base0 = args[0].dat->base_offset +
               (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
                   start[0] * args[0].stencil->stride[0];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
-                      args[0].dat->size[0] * start[1] *
-                      args[0].stencil->stride[1];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
-                      args[0].dat->size[0] * args[0].dat->size[1] * start[2] *
-                      args[0].stencil->stride[2];
+  base0 = base0 +
+          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+              args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
+  base0 = base0 +
+          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+              args[0].dat->size[0] * args[0].dat->size[1] * start[2] *
+              args[0].stencil->stride[2];
   p_a[0] = (char *)args[0].data + base0;
 
   int base1 = args[1].dat->base_offset +
               (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
                   start[0] * args[1].stencil->stride[0];
-  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
-                      args[1].dat->size[0] * start[1] *
-                      args[1].stencil->stride[1];
-  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
-                      args[1].dat->size[0] * args[1].dat->size[1] * start[2] *
-                      args[1].stencil->stride[2];
+  base1 = base1 +
+          (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+              args[1].dat->size[0] * start[1] * args[1].stencil->stride[1];
+  base1 = base1 +
+          (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+              args[1].dat->size[0] * args[1].dat->size[1] * start[2] *
+              args[1].stencil->stride[2];
   p_a[1] = (char *)args[1].data + base1;
 
   int base2 = args[2].dat->base_offset +
               (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
                   start[0] * args[2].stencil->stride[0];
-  base2 = base2 + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
-                      args[2].dat->size[0] * start[1] *
-                      args[2].stencil->stride[1];
-  base2 = base2 + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
-                      args[2].dat->size[0] * args[2].dat->size[1] * start[2] *
-                      args[2].stencil->stride[2];
+  base2 = base2 +
+          (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+              args[2].dat->size[0] * start[1] * args[2].stencil->stride[1];
+  base2 = base2 +
+          (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+              args[2].dat->size[0] * args[2].dat->size[1] * start[2] *
+              args[2].stencil->stride[2];
   p_a[2] = (char *)args[2].data + base2;
 
   int base3 = args[3].dat->base_offset +
               (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
                   start[0] * args[3].stencil->stride[0];
-  base3 = base3 + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
-                      args[3].dat->size[0] * start[1] *
-                      args[3].stencil->stride[1];
-  base3 = base3 + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
-                      args[3].dat->size[0] * args[3].dat->size[1] * start[2] *
-                      args[3].stencil->stride[2];
+  base3 = base3 +
+          (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+              args[3].dat->size[0] * start[1] * args[3].stencil->stride[1];
+  base3 = base3 +
+          (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+              args[3].dat->size[0] * args[3].dat->size[1] * start[2] *
+              args[3].stencil->stride[2];
   p_a[3] = (char *)args[3].data + base3;
 
   int base4 = args[4].dat->base_offset +
               (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
                   start[0] * args[4].stencil->stride[0];
-  base4 = base4 + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
-                      args[4].dat->size[0] * start[1] *
-                      args[4].stencil->stride[1];
-  base4 = base4 + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
-                      args[4].dat->size[0] * args[4].dat->size[1] * start[2] *
-                      args[4].stencil->stride[2];
+  base4 = base4 +
+          (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+              args[4].dat->size[0] * start[1] * args[4].stencil->stride[1];
+  base4 = base4 +
+          (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+              args[4].dat->size[0] * args[4].dat->size[1] * start[2] *
+              args[4].stencil->stride[2];
   p_a[4] = (char *)args[4].data + base4;
 
   int base5 = args[5].dat->base_offset +
               (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
                   start[0] * args[5].stencil->stride[0];
-  base5 = base5 + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
-                      args[5].dat->size[0] * start[1] *
-                      args[5].stencil->stride[1];
-  base5 = base5 + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
-                      args[5].dat->size[0] * args[5].dat->size[1] * start[2] *
-                      args[5].stencil->stride[2];
+  base5 = base5 +
+          (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+              args[5].dat->size[0] * start[1] * args[5].stencil->stride[1];
+  base5 = base5 +
+          (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+              args[5].dat->size[0] * args[5].dat->size[1] * start[2] *
+              args[5].stencil->stride[2];
   p_a[5] = (char *)args[5].data + base5;
 
   int base6 = args[6].dat->base_offset +
               (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
                   start[0] * args[6].stencil->stride[0];
-  base6 = base6 + (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
-                      args[6].dat->size[0] * start[1] *
-                      args[6].stencil->stride[1];
-  base6 = base6 + (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
-                      args[6].dat->size[0] * args[6].dat->size[1] * start[2] *
-                      args[6].stencil->stride[2];
+  base6 = base6 +
+          (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
+              args[6].dat->size[0] * start[1] * args[6].stencil->stride[1];
+  base6 = base6 +
+          (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
+              args[6].dat->size[0] * args[6].dat->size[1] * start[2] *
+              args[6].stencil->stride[2];
   p_a[6] = (char *)args[6].data + base6;
 
   // initialize global variable with the dimension of dats

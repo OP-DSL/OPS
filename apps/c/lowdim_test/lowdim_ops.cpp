@@ -39,7 +39,7 @@ void ops_par_loop_calc(char const *, ops_block, int, int *, ops_arg, ops_arg,
 
 #include "lowdim_kernels.h"
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
 
   ops_init(argc, argv, 1);
   ops_init_backend();

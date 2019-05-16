@@ -7,18 +7,18 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64:enable
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a,b) ((a<b) ? (a) : (b))
+#define MIN(a, b) ((a < b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a,b) ((a>b) ? (a) : (b))
+#define MAX(a, b) ((a > b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
+#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -43,43 +43,33 @@
 #undef OPS_ACC0
 #undef OPS_ACC1
 
-
 #define OPS_ACC0(x) (x)
 #define OPS_ACC1(x) (x)
 
+// user function
+void drhoudx_kernel(const __global double *restrict rhou_new,
+                    __global double *restrict rho_res, const double dx)
 
-//user function
-void drhoudx_kernel(const __global double * restrict rhou_new,__global double * restrict rho_res,
-  const double dx)
+{
 
- {
+  double fnim1 = rhou_new[OPS_ACC0(-1)];
+  double fnim2 = rhou_new[OPS_ACC0(-2)];
+  double fnip1 = rhou_new[OPS_ACC0(1)];
+  double fnip2 = rhou_new[OPS_ACC0(2)];
 
-        double fnim1 = rhou_new[OPS_ACC0(-1)];
-        double fnim2 = rhou_new[OPS_ACC0(-2)];
-        double fnip1 = rhou_new[OPS_ACC0(1)];
-        double fnip2 = rhou_new[OPS_ACC0(2)];
-
-        double deriv = (fnim2 - fnip2 + 8.0* (fnip1 - fnim1))/(12.00*dx);
-        rho_res[OPS_ACC1(0)] = deriv;
+  double deriv = (fnim2 - fnip2 + 8.0 * (fnip1 - fnim1)) / (12.00 * dx);
+  rho_res[OPS_ACC1(0)] = deriv;
 }
 
-
-
-__kernel void ops_drhoudx_kernel(
-__global const double* restrict arg0,
-__global double* restrict arg1,
-const double dx,
-const int base0,
-const int base1,
-const int size0 ){
-
+__kernel void ops_drhoudx_kernel(__global const double *restrict arg0,
+                                 __global double *restrict arg1,
+                                 const double dx, const int base0,
+                                 const int base1, const int size0) {
 
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    drhoudx_kernel(&arg0[base0 + idx_x * 1*1],
-                   &arg1[base1 + idx_x * 1*1],
+    drhoudx_kernel(&arg0[base0 + idx_x * 1 * 1], &arg1[base1 + idx_x * 1 * 1],
                    dx);
   }
-
 }

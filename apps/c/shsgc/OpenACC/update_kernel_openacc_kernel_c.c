@@ -9,7 +9,6 @@ int xdim1_update_kernel;
 int xdim2_update_kernel;
 int xdim3_update_kernel;
 
-
 #undef OPS_ACC0
 #undef OPS_ACC1
 #undef OPS_ACC2
@@ -20,15 +19,14 @@ int xdim3_update_kernel;
 #define OPS_ACC1(x) (x)
 #define OPS_ACC2(x) (x)
 
-#define OPS_ACC_MD3(d,x) ((x)*3+(d))
-//user function
-inline 
-void update_kernel(double *rho_new, double *rhou_new, double *rhoE_new, const double *s) {
-		rho_new[OPS_ACC0(0)]  = rho_new[OPS_ACC0(0)]  + s[OPS_ACC_MD3(0,0)];
-		rhou_new[OPS_ACC1(0)] = rhou_new[OPS_ACC1(0)] + s[OPS_ACC_MD3(1,0)];
-		rhoE_new[OPS_ACC2(0)] = rhoE_new[OPS_ACC2(0)] + s[OPS_ACC_MD3(2,0)];
+#define OPS_ACC_MD3(d, x) ((x)*3 + (d))
+// user function
+inline void update_kernel(double *rho_new, double *rhou_new, double *rhoE_new,
+                          const double *s) {
+  rho_new[OPS_ACC0(0)] = rho_new[OPS_ACC0(0)] + s[OPS_ACC_MD3(0, 0)];
+  rhou_new[OPS_ACC1(0)] = rhou_new[OPS_ACC1(0)] + s[OPS_ACC_MD3(1, 0)];
+  rhoE_new[OPS_ACC2(0)] = rhoE_new[OPS_ACC2(0)] + s[OPS_ACC_MD3(2, 0)];
 }
-
 
 #undef OPS_ACC0
 #undef OPS_ACC1
@@ -36,21 +34,14 @@ void update_kernel(double *rho_new, double *rhou_new, double *rhoE_new, const do
 
 #undef OPS_ACC_MD3
 
-
-void update_kernel_c_wrapper(
-  double *p_a0,
-  double *p_a1,
-  double *p_a2,
-  double *p_a3,
-  int x_size) {
-  #ifdef OPS_GPU
-  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3)
-  #pragma acc loop
-  #endif
-  for ( int n_x=0; n_x<x_size; n_x++ ){
-    update_kernel(  p_a0 + n_x*1*1,
-           p_a1 + n_x*1*1, p_a2 + n_x*1*1,
-           p_a3 + n_x*1*3 );
-
+void update_kernel_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
+                             double *p_a3, int x_size) {
+#ifdef OPS_GPU
+#pragma acc parallel deviceptr(p_a0, p_a1, p_a2, p_a3)
+#pragma acc loop
+#endif
+  for (int n_x = 0; n_x < x_size; n_x++) {
+    update_kernel(p_a0 + n_x * 1 * 1, p_a1 + n_x * 1 * 1, p_a2 + n_x * 1 * 1,
+                  p_a3 + n_x * 1 * 3);
   }
 }

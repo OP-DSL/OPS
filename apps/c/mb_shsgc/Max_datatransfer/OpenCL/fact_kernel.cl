@@ -7,18 +7,18 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64:enable
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a,b) ((a<b) ? (a) : (b))
+#define MIN(a, b) ((a < b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a,b) ((a>b) ? (a) : (b))
+#define MAX(a, b) ((a > b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
+#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -40,46 +40,34 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-
 #undef OPS_ACC_MD0
 #undef OPS_ACC_MD1
 
+#define OPS_ACC_MD0(d, x) ((x)*3 + (d))
+#define OPS_ACC_MD1(d, x) ((x)*3 + (d))
 
-#define OPS_ACC_MD0(d,x) ((x)*3+(d))
-#define OPS_ACC_MD1(d,x) ((x)*3+(d))
+// user function
+void fact_kernel(const __global double *restrict eff,
+                 __global double *restrict s, const double dx, const double dt)
 
-//user function
-void fact_kernel(const __global double* restrict  eff,__global double * restrict s,
-  const double dx,
-const double dt)
-
- {
+{
   double fact;
-  for (int m=0; m < 3 ;m++) {
-    fact  = 0.50 * dt / dx ;
-    s[OPS_ACC_MD1(m,0)] = -fact * (eff[OPS_ACC_MD0(m,0)] - eff[OPS_ACC_MD0(m,-1)]);
+  for (int m = 0; m < 3; m++) {
+    fact = 0.50 * dt / dx;
+    s[OPS_ACC_MD1(m, 0)] =
+        -fact * (eff[OPS_ACC_MD0(m, 0)] - eff[OPS_ACC_MD0(m, -1)]);
   }
 }
 
-
-
-__kernel void ops_fact_kernel(
-__global const double* restrict arg0,
-__global double* restrict arg1,
-const double dx,
-const double dt,
-const int base0,
-const int base1,
-const int size0 ){
-
+__kernel void ops_fact_kernel(__global const double *restrict arg0,
+                              __global double *restrict arg1, const double dx,
+                              const double dt, const int base0, const int base1,
+                              const int size0) {
 
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    fact_kernel(&arg0[base0 + idx_x * 1*3],
-                &arg1[base1 + idx_x * 1*3],
-                dx,
+    fact_kernel(&arg0[base0 + idx_x * 1 * 3], &arg1[base1 + idx_x * 1 * 3], dx,
                 dt);
   }
-
 }
