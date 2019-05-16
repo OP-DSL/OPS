@@ -39,9 +39,7 @@ void ops_par_loop_mgrid_restrict_kernel(char const *, ops_block, int, int *,
 void ops_par_loop_restrict_check(char const *, ops_block, int, int *, ops_arg,
                                  ops_arg, ops_arg, ops_arg);
 
-//#include "mgrid_populate_kernel.h"
-//#include "mgrid_restrict_kernel.h"
-//#include "mgrid_prolong_kernel.h"
+#include "mgrid_kernels.h"
 
 int main(int argc, const char **argv) {
 

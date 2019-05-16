@@ -44,9 +44,10 @@
 #define OPS_2D
 #include "ops_seq.h"
 
-#include "mgrid_populate_kernel.h"
-#include "mgrid_restrict_kernel.h"
-#include "mgrid_prolong_kernel.h"
+//#include "mgrid_populate_kernel.h"
+//#include "mgrid_restrict_kernel.h"
+//#include "mgrid_prolong_kernel.h"
+#include "mgrid_kernels.h"
 
 /******************************************************************************
 * Main program
