@@ -71,7 +71,7 @@ void start();
 #include "cloverleaf_ops_vars.h"
 #include "profile.cpp"
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
 
   ops_init(argc, argv, 1);
   ops_init_backend();
