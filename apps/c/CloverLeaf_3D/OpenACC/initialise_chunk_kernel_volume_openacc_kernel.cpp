@@ -75,95 +75,31 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name,
   int end[3];
 #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
+#endif // OPS_MPI
+
+  int arg_idx[3];
+  int arg_idx_base[3];
+#ifdef OPS_MPI
+  if (compute_ranges(args, 7, block, range, start, end, arg_idx) < 0)
     return;
-  for (int n = 0; n < 3; n++) {
-    start[n] = sb->decomp_disp[n];
-    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (start[n] >= range[2 * n]) {
-      start[n] = 0;
-    } else {
-      start[n] = range[2 * n] - start[n];
-    }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      start[n] = range[2 * n];
-    if (end[n] >= range[2 * n + 1]) {
-      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
-  }
-#else
+#else // OPS_MPI
   for (int n = 0; n < 3; n++) {
     start[n] = range[2 * n];
     end[n] = range[2 * n + 1];
+    arg_idx[n] = start[n];
   }
 #endif
-
-  int x_size = MAX(0, end[0] - start[0]);
-  int y_size = MAX(0, end[1] - start[1]);
-  int z_size = MAX(0, end[2] - start[2]);
-
-  xdim0 = args[0].dat->size[0];
-  ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0];
-  ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0];
-  ydim2 = args[2].dat->size[1];
-  xdim3 = args[3].dat->size[0];
-  ydim3 = args[3].dat->size[1];
-  xdim4 = args[4].dat->size[0];
-  ydim4 = args[4].dat->size[1];
-  xdim5 = args[5].dat->size[0];
-  ydim5 = args[5].dat->size[1];
-  xdim6 = args[6].dat->size[0];
-  ydim6 = args[6].dat->size[1];
-  if (xdim0 != xdim0_initialise_chunk_kernel_volume_h ||
-      ydim0 != ydim0_initialise_chunk_kernel_volume_h ||
-      xdim1 != xdim1_initialise_chunk_kernel_volume_h ||
-      ydim1 != ydim1_initialise_chunk_kernel_volume_h ||
-      xdim2 != xdim2_initialise_chunk_kernel_volume_h ||
-      ydim2 != ydim2_initialise_chunk_kernel_volume_h ||
-      xdim3 != xdim3_initialise_chunk_kernel_volume_h ||
-      ydim3 != ydim3_initialise_chunk_kernel_volume_h ||
-      xdim4 != xdim4_initialise_chunk_kernel_volume_h ||
-      ydim4 != ydim4_initialise_chunk_kernel_volume_h ||
-      xdim5 != xdim5_initialise_chunk_kernel_volume_h ||
-      ydim5 != ydim5_initialise_chunk_kernel_volume_h ||
-      xdim6 != xdim6_initialise_chunk_kernel_volume_h ||
-      ydim6 != ydim6_initialise_chunk_kernel_volume_h) {
-    xdim0_initialise_chunk_kernel_volume = xdim0;
-    xdim0_initialise_chunk_kernel_volume_h = xdim0;
-    ydim0_initialise_chunk_kernel_volume = ydim0;
-    ydim0_initialise_chunk_kernel_volume_h = ydim0;
-    xdim1_initialise_chunk_kernel_volume = xdim1;
-    xdim1_initialise_chunk_kernel_volume_h = xdim1;
-    ydim1_initialise_chunk_kernel_volume = ydim1;
-    ydim1_initialise_chunk_kernel_volume_h = ydim1;
-    xdim2_initialise_chunk_kernel_volume = xdim2;
-    xdim2_initialise_chunk_kernel_volume_h = xdim2;
-    ydim2_initialise_chunk_kernel_volume = ydim2;
-    ydim2_initialise_chunk_kernel_volume_h = ydim2;
-    xdim3_initialise_chunk_kernel_volume = xdim3;
-    xdim3_initialise_chunk_kernel_volume_h = xdim3;
-    ydim3_initialise_chunk_kernel_volume = ydim3;
-    ydim3_initialise_chunk_kernel_volume_h = ydim3;
-    xdim4_initialise_chunk_kernel_volume = xdim4;
-    xdim4_initialise_chunk_kernel_volume_h = xdim4;
-    ydim4_initialise_chunk_kernel_volume = ydim4;
-    ydim4_initialise_chunk_kernel_volume_h = ydim4;
-    xdim5_initialise_chunk_kernel_volume = xdim5;
-    xdim5_initialise_chunk_kernel_volume_h = xdim5;
-    ydim5_initialise_chunk_kernel_volume = ydim5;
-    ydim5_initialise_chunk_kernel_volume_h = ydim5;
-    xdim6_initialise_chunk_kernel_volume = xdim6;
-    xdim6_initialise_chunk_kernel_volume_h = xdim6;
-    ydim6_initialise_chunk_kernel_volume = ydim6;
-    ydim6_initialise_chunk_kernel_volume_h = ydim6;
+  for (int n = 0; n < 3; n++) {
+    arg_idx_base[n] = arg_idx[n];
   }
+
+  int dat0 = args[0].dat->elem_size;
+  int dat1 = args[1].dat->elem_size;
+  int dat2 = args[2].dat->elem_size;
+  int dat3 = args[3].dat->elem_size;
+  int dat4 = args[4].dat->elem_size;
+  int dat5 = args[5].dat->elem_size;
+  int dat6 = args[6].dat->elem_size;
 
   // set up initial pointers
   int base0 = args[0].dat->base_offset +
@@ -277,6 +213,71 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name,
 #else
   double *p_a6 = (double *)((char *)args[6].data + base6);
 #endif
+
+  int x_size = MAX(0, end[0] - start[0]);
+  int y_size = MAX(0, end[1] - start[1]);
+  int z_size = MAX(0, end[2] - start[2]);
+
+  // initialize global variable with the dimension of dats
+  xdim0 = args[0].dat->size[0];
+  ydim0 = args[0].dat->size[1];
+  xdim1 = args[1].dat->size[0];
+  ydim1 = args[1].dat->size[1];
+  xdim2 = args[2].dat->size[0];
+  ydim2 = args[2].dat->size[1];
+  xdim3 = args[3].dat->size[0];
+  ydim3 = args[3].dat->size[1];
+  xdim4 = args[4].dat->size[0];
+  ydim4 = args[4].dat->size[1];
+  xdim5 = args[5].dat->size[0];
+  ydim5 = args[5].dat->size[1];
+  xdim6 = args[6].dat->size[0];
+  ydim6 = args[6].dat->size[1];
+  if (xdim0 != xdim0_initialise_chunk_kernel_volume_h ||
+      ydim0 != ydim0_initialise_chunk_kernel_volume_h ||
+      xdim1 != xdim1_initialise_chunk_kernel_volume_h ||
+      ydim1 != ydim1_initialise_chunk_kernel_volume_h ||
+      xdim2 != xdim2_initialise_chunk_kernel_volume_h ||
+      ydim2 != ydim2_initialise_chunk_kernel_volume_h ||
+      xdim3 != xdim3_initialise_chunk_kernel_volume_h ||
+      ydim3 != ydim3_initialise_chunk_kernel_volume_h ||
+      xdim4 != xdim4_initialise_chunk_kernel_volume_h ||
+      ydim4 != ydim4_initialise_chunk_kernel_volume_h ||
+      xdim5 != xdim5_initialise_chunk_kernel_volume_h ||
+      ydim5 != ydim5_initialise_chunk_kernel_volume_h ||
+      xdim6 != xdim6_initialise_chunk_kernel_volume_h ||
+      ydim6 != ydim6_initialise_chunk_kernel_volume_h) {
+    xdim0_initialise_chunk_kernel_volume = xdim0;
+    xdim0_initialise_chunk_kernel_volume_h = xdim0;
+    ydim0_initialise_chunk_kernel_volume = ydim0;
+    ydim0_initialise_chunk_kernel_volume_h = ydim0;
+    xdim1_initialise_chunk_kernel_volume = xdim1;
+    xdim1_initialise_chunk_kernel_volume_h = xdim1;
+    ydim1_initialise_chunk_kernel_volume = ydim1;
+    ydim1_initialise_chunk_kernel_volume_h = ydim1;
+    xdim2_initialise_chunk_kernel_volume = xdim2;
+    xdim2_initialise_chunk_kernel_volume_h = xdim2;
+    ydim2_initialise_chunk_kernel_volume = ydim2;
+    ydim2_initialise_chunk_kernel_volume_h = ydim2;
+    xdim3_initialise_chunk_kernel_volume = xdim3;
+    xdim3_initialise_chunk_kernel_volume_h = xdim3;
+    ydim3_initialise_chunk_kernel_volume = ydim3;
+    ydim3_initialise_chunk_kernel_volume_h = ydim3;
+    xdim4_initialise_chunk_kernel_volume = xdim4;
+    xdim4_initialise_chunk_kernel_volume_h = xdim4;
+    ydim4_initialise_chunk_kernel_volume = ydim4;
+    ydim4_initialise_chunk_kernel_volume_h = ydim4;
+    xdim5_initialise_chunk_kernel_volume = xdim5;
+    xdim5_initialise_chunk_kernel_volume_h = xdim5;
+    ydim5_initialise_chunk_kernel_volume = ydim5;
+    ydim5_initialise_chunk_kernel_volume_h = ydim5;
+    xdim6_initialise_chunk_kernel_volume = xdim6;
+    xdim6_initialise_chunk_kernel_volume_h = xdim6;
+    ydim6_initialise_chunk_kernel_volume = ydim6;
+    ydim6_initialise_chunk_kernel_volume_h = ydim6;
+  }
+
+// Halo Exchanges
 
 #ifdef OPS_GPU
   ops_H_D_exchanges_device(args, 7);
