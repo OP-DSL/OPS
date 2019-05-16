@@ -113,7 +113,7 @@ int main(int argc, const char **argv)
 
   ops_reduction reduct_err = ops_decl_reduction_handle(sizeof(int), "int", "reduct_err");
 
-  ops_halo_group halos[3];
+  ops_halo_group halos[4];
   {
     int halo_iter[] = {2, size4[1]+4};
     int from_base[] = {0,-2};
@@ -123,6 +123,9 @@ int main(int argc, const char **argv)
     from_base[0] = size4[0]-2;
     to_base[0] = -2;
     ops_halo halo2 = ops_decl_halo(data5, data5, halo_iter, from_base, to_base, dir, dir);
+    ops_halo halog1[] = {halo1,halo2};
+    halos[0] = ops_decl_halo_group(2,halog1);
+
     int halo_iter2[] = {size4[0]+4,2};
     int from_base2[] = {-2,0};
     int to_base2[] = {-2,size4[1]};
@@ -130,8 +133,8 @@ int main(int argc, const char **argv)
     from_base2[1] = size4[1]-2;
     to_base2[1] = -2;
     ops_halo halo2_2 = ops_decl_halo(data5, data5, halo_iter2, from_base2, to_base2, dir, dir);
-    ops_halo halog1[] = {halo1,halo2,halo1_2,halo2_2};
-    halos[0] = ops_decl_halo_group(4,halog1);
+    ops_halo halog1_2[] = {halo1_2,halo2_2};
+    halos[1] = ops_decl_halo_group(2,halog1_2);
 
     halo_iter[1] = size0[1]+4;
     from_base[0] = 0;
@@ -141,7 +144,7 @@ int main(int argc, const char **argv)
     to_base[0] = -2;
     ops_halo halo4 = ops_decl_halo(data0, data0, halo_iter, from_base, to_base, dir, dir);
     ops_halo halog2[] = {halo3,halo4};
-    halos[1] = ops_decl_halo_group(2,halog2);
+    halos[2] = ops_decl_halo_group(2,halog2);
 
     halo_iter[1] = size1[1]+4;
     from_base[0] = 0;
@@ -151,7 +154,7 @@ int main(int argc, const char **argv)
     to_base[0] = -2;
     ops_halo halo6 = ops_decl_halo(data1, data1, halo_iter, from_base, to_base, dir, dir);
     ops_halo halog3[] = {halo5,halo6};
-    halos[2] = ops_decl_halo_group(2,halog3);
+    halos[3] = ops_decl_halo_group(2,halog3);
   }
   ops_partition("");
 
@@ -175,7 +178,7 @@ int main(int argc, const char **argv)
   ops_par_loop(mgrid_populate_kernel_1, "mgrid_populate_kernel_1", grid0, 2, iter_range_small,
                ops_arg_dat(data1, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
-  ops_halo_transfer(halos[2]);
+  ops_halo_transfer(halos[3]);
   //ops_print_dat_to_txtfile(data1, "data.txt");
   /*ops_par_loop(mgrid_populate_kernel_2, "mgrid_populate_kernel_2", grid0, 2, iter_range_tiny,
                ops_arg_dat(data2, 1, S2D_00, "double", OPS_WRITE),
@@ -186,7 +189,7 @@ int main(int argc, const char **argv)
                ops_arg_dat(data1, 1, S2D_PROLONG_00_M10_P10, "double", OPS_READ),
                ops_arg_dat(data0, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
-  ops_halo_transfer(halos[1]);
+  ops_halo_transfer(halos[2]);
 
   ops_par_loop(mgrid_prolong_kernel, "mgrid_prolong_kernel", grid0, 2, iter_range_large,
                //ops_arg_dat(data2, 1, S2D_PROLONG_00, "double", OPS_READ),
@@ -194,6 +197,7 @@ int main(int argc, const char **argv)
                ops_arg_dat(data5, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
   ops_halo_transfer(halos[0]);
+  ops_halo_transfer(halos[1]);
 
   ops_par_loop(prolong_check, "prolong_check", grid0, 2, iter_range_large,
                ops_arg_dat(data5, 1, S2D_5pt, "double", OPS_READ),
@@ -205,6 +209,8 @@ int main(int argc, const char **argv)
   int err_prolong = 0;
   ops_reduction_result(reduct_err, &err_prolong);
       
+  ops_fetch_block_hdf5_file(grid0, "data.h5");
+  ops_fetch_dat_hdf5_file(data5, "data.h5");
 
   //ops_print_dat_to_txtfile(data2, "data.txt");
   //ops_print_dat_to_txtfile(data0, "data.txt");
@@ -247,10 +253,8 @@ int main(int argc, const char **argv)
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 
-  ops_fetch_block_hdf5_file(grid0, "data.h5");
-  ops_fetch_dat_hdf5_file(data3, "data.h5");
-  ops_fetch_dat_hdf5_file(data5, "data.h5");
   ops_fetch_dat_hdf5_file(data6, "data.h5");
+  ops_fetch_dat_hdf5_file(data3, "data.h5");
 
   if (err_prolong==0 && err_restrict ==0) ops_printf("\nPASSED\n");
   else ops_printf("\nFAILED\n");
