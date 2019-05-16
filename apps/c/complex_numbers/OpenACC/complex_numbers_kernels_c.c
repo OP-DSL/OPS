@@ -5,11 +5,11 @@
 
 #include <openacc.h>
 
-//user kernel files
-#include "complex_numbers_block0_5_kernel_openacc_kernel_c.c"
-#include "complex_numbers_block0_4_kernel_openacc_kernel_c.c"
+// user kernel files
 #include "complex_numbers_block0_0_kernel_openacc_kernel_c.c"
 #include "complex_numbers_block0_1_kernel_openacc_kernel_c.c"
 #include "complex_numbers_block0_2_kernel_openacc_kernel_c.c"
 #include "complex_numbers_block0_3_kernel_openacc_kernel_c.c"
+#include "complex_numbers_block0_4_kernel_openacc_kernel_c.c"
+#include "complex_numbers_block0_5_kernel_openacc_kernel_c.c"
 #include "complex_numbers_block0_cn_kernel_openacc_kernel_c.c"

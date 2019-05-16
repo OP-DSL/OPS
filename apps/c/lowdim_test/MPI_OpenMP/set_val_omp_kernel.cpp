@@ -32,13 +32,17 @@ void ops_par_loop_set_val(char const *name, ops_block block, int dim,
     ops_timers_core(&c1, &t1);
   }
 
+#ifdef OPS_MPI
+  sub_block_list sb = OPS_sub_block_list[block->index];
+#endif
+
   // compute locally allocated range for the sub-block
 
   int start[3];
   int end[3];
+  int arg_idx[3];
 
 #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
   if (!sb->owned)
     return;
   for (int n = 0; n < 3; n++) {
@@ -59,6 +63,8 @@ void ops_par_loop_set_val(char const *name, ops_block block, int dim,
     if (sb->id_p[n] == MPI_PROC_NULL &&
         (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
       end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
+    if (end[n] < start[n])
+      end[n] = start[n];
   }
 #else
   for (int n = 0; n < 3; n++) {
@@ -126,15 +132,15 @@ void ops_par_loop_set_val(char const *name, ops_block block, int dim,
     for (int d = 0; d < dim; d++)
       d_m[d] = args[0].dat->d_m[d];
 #endif
-    int base0 =
-        dat0 * 1 *
-        (start0 * args[0].stencil->stride[0] - args[0].dat->base[0] - d_m[0]);
-    base0 = base0 + dat0 * args[0].dat->size[0] *
-                        (start1 * args[0].stencil->stride[1] -
-                         args[0].dat->base[1] - d_m[1]);
-    base0 = base0 + dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
-                        (start2 * args[0].stencil->stride[2] -
-                         args[0].dat->base[2] - d_m[2]);
+    int base0 = dat0 * 1 * (start0 * args[0].stencil->stride[0] -
+                            args[0].dat->base[0] - d_m[0]);
+    base0 = base0 +
+            dat0 * args[0].dat->size[0] * (start1 * args[0].stencil->stride[1] -
+                                           args[0].dat->base[1] - d_m[1]);
+    base0 = base0 +
+            dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
+                (start2 * args[0].stencil->stride[2] - args[0].dat->base[2] -
+                 d_m[2]);
     p_a[0] = (char *)args[0].data + base0;
 
     p_a[1] = (char *)args[1].data;

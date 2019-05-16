@@ -63,6 +63,9 @@ void ops_par_loop_initialise_chunk_kernel_y(char const *name, ops_block block,
 void ops_par_loop_initialise_chunk_kernel_y_execute(
     ops_kernel_descriptor *desc) {
   int dim = desc->dim;
+#if OPS_MPI
+  ops_block block = desc->block;
+#endif
   int *range = desc->range;
   ops_arg arg0 = desc->args[0];
   ops_arg arg1 = desc->args[1];
@@ -90,37 +93,23 @@ void ops_par_loop_initialise_chunk_kernel_y_execute(
   int end[2];
 #if OPS_MPI && !OPS_LAZY
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
+#endif // OPS_MPI
+
+  int arg_idx[2];
+  int arg_idx_base[2];
+#ifdef OPS_MPI
+  if (compute_ranges(args, 3, block, range, start, end, arg_idx) < 0)
     return;
-  for (int n = 0; n < 2; n++) {
-    start[n] = sb->decomp_disp[n];
-    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (start[n] >= range[2 * n]) {
-      start[n] = 0;
-    } else {
-      start[n] = range[2 * n] - start[n];
-    }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      start[n] = range[2 * n];
-    if (end[n] >= range[2 * n + 1]) {
-      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
-  }
-#else
+#else // OPS_MPI
   for (int n = 0; n < 2; n++) {
     start[n] = range[2 * n];
     end[n] = range[2 * n + 1];
+    arg_idx[n] = start[n];
   }
 #endif
-
-  int x_size = MAX(0, end[0] - start[0]);
-  int y_size = MAX(0, end[1] - start[1]);
-
+  for (int n = 0; n < 2; n++) {
+    arg_idx_base[n] = arg_idx[n];
+  }
   int xdim0 = args[0].dat->size[0];
   int xdim1 = args[1].dat->size[0];
   int xdim2 = args[2].dat->size[0];
@@ -135,6 +124,9 @@ void ops_par_loop_initialise_chunk_kernel_y_execute(
     cudaMemcpyToSymbol(xdim2_initialise_chunk_kernel_y, &xdim2, sizeof(int));
     xdim2_initialise_chunk_kernel_y_h = xdim2;
   }
+
+  int x_size = MAX(0, end[0] - start[0]);
+  int y_size = MAX(0, end[1] - start[1]);
 
   dim3 grid((x_size - 1) / OPS_block_size_x + 1,
             (y_size - 1) / OPS_block_size_y + 1, 1);

@@ -19,7 +19,7 @@ void ops_init_backend();
 void initialise();
 void diffuse();
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
   ops_init(argc, argv, 1);
   ops_init_backend();
   initialise();

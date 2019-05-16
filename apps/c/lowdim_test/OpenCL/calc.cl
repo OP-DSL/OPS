@@ -57,21 +57,6 @@
 #define OPS_ACC5(x,y,z) (x+xdim5_calc*(y)+xdim5_calc*ydim5_calc*(z))
 #define OPS_ACC6(x,y,z) (x+xdim6_calc*(y)+xdim6_calc*ydim6_calc*(z))
 
-__constant int xdim0_calc = 0;
-__constant int ydim0_calc = 0;
-__constant int xdim1_calc = 0;
-__constant int ydim1_calc = 0;
-__constant int xdim2_calc = 0;
-__constant int ydim2_calc = 0;
-__constant int xdim3_calc = 0;
-__constant int ydim3_calc = 0;
-__constant int xdim4_calc = 0;
-__constant int ydim4_calc = 0;
-__constant int xdim5_calc = 0;
-__constant int ydim5_calc = 0;
-__constant int xdim6_calc = 0;
-__constant int ydim6_calc = 0;
-
 
 //user function
 void calc(__global double * restrict dat3D,const __global double * restrict dat2D_xy,const __global double * restrict dat2D_yz,

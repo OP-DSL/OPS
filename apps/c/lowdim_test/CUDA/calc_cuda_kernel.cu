@@ -105,6 +105,9 @@ void ops_par_loop_calc(char const *name, ops_block block, int dim, int *range,
 #else
 void ops_par_loop_calc_execute(ops_kernel_descriptor *desc) {
   int dim = desc->dim;
+#if OPS_MPI
+  ops_block block = desc->block;
+#endif
   int *range = desc->range;
   ops_arg arg0 = desc->args[0];
   ops_arg arg1 = desc->args[1];
@@ -136,38 +139,23 @@ void ops_par_loop_calc_execute(ops_kernel_descriptor *desc) {
   int end[3];
 #if OPS_MPI && !OPS_LAZY
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
+#endif // OPS_MPI
+
+  int arg_idx[3];
+  int arg_idx_base[3];
+#ifdef OPS_MPI
+  if (compute_ranges(args, 7, block, range, start, end, arg_idx) < 0)
     return;
-  for (int n = 0; n < 3; n++) {
-    start[n] = sb->decomp_disp[n];
-    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (start[n] >= range[2 * n]) {
-      start[n] = 0;
-    } else {
-      start[n] = range[2 * n] - start[n];
-    }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      start[n] = range[2 * n];
-    if (end[n] >= range[2 * n + 1]) {
-      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
-  }
-#else
+#else // OPS_MPI
   for (int n = 0; n < 3; n++) {
     start[n] = range[2 * n];
     end[n] = range[2 * n + 1];
+    arg_idx[n] = start[n];
   }
 #endif
-
-  int x_size = MAX(0, end[0] - start[0]);
-  int y_size = MAX(0, end[1] - start[1]);
-  int z_size = MAX(0, end[2] - start[2]);
-
+  for (int n = 0; n < 3; n++) {
+    arg_idx_base[n] = arg_idx[n];
+  }
   int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
   int xdim1 = args[1].dat->size[0];
@@ -218,6 +206,10 @@ void ops_par_loop_calc_execute(ops_kernel_descriptor *desc) {
     ydim6_calc_h = ydim6;
   }
 
+  int x_size = MAX(0, end[0] - start[0]);
+  int y_size = MAX(0, end[1] - start[1]);
+  int z_size = MAX(0, end[2] - start[2]);
+
   dim3 grid((x_size - 1) / OPS_block_size_x + 1,
             (y_size - 1) / OPS_block_size_y + 1,
             (z_size - 1) / OPS_block_size_z + 1);
@@ -238,56 +230,63 @@ void ops_par_loop_calc_execute(ops_kernel_descriptor *desc) {
               dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
   base0 = base0 +
           dat0 * args[0].dat->size[0] * (start[1] * args[0].stencil->stride[1]);
-  base0 = base0 + dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
-                      (start[2] * args[0].stencil->stride[2]);
+  base0 = base0 +
+          dat0 * args[0].dat->size[0] * args[0].dat->size[1] *
+              (start[2] * args[0].stencil->stride[2]);
   p_a[0] = (char *)args[0].data_d + base0;
 
   int base1 = args[1].dat->base_offset +
               dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
   base1 = base1 +
           dat1 * args[1].dat->size[0] * (start[1] * args[1].stencil->stride[1]);
-  base1 = base1 + dat1 * args[1].dat->size[0] * args[1].dat->size[1] *
-                      (start[2] * args[1].stencil->stride[2]);
+  base1 = base1 +
+          dat1 * args[1].dat->size[0] * args[1].dat->size[1] *
+              (start[2] * args[1].stencil->stride[2]);
   p_a[1] = (char *)args[1].data_d + base1;
 
   int base2 = args[2].dat->base_offset +
               dat2 * 1 * (start[0] * args[2].stencil->stride[0]);
   base2 = base2 +
           dat2 * args[2].dat->size[0] * (start[1] * args[2].stencil->stride[1]);
-  base2 = base2 + dat2 * args[2].dat->size[0] * args[2].dat->size[1] *
-                      (start[2] * args[2].stencil->stride[2]);
+  base2 = base2 +
+          dat2 * args[2].dat->size[0] * args[2].dat->size[1] *
+              (start[2] * args[2].stencil->stride[2]);
   p_a[2] = (char *)args[2].data_d + base2;
 
   int base3 = args[3].dat->base_offset +
               dat3 * 1 * (start[0] * args[3].stencil->stride[0]);
   base3 = base3 +
           dat3 * args[3].dat->size[0] * (start[1] * args[3].stencil->stride[1]);
-  base3 = base3 + dat3 * args[3].dat->size[0] * args[3].dat->size[1] *
-                      (start[2] * args[3].stencil->stride[2]);
+  base3 = base3 +
+          dat3 * args[3].dat->size[0] * args[3].dat->size[1] *
+              (start[2] * args[3].stencil->stride[2]);
   p_a[3] = (char *)args[3].data_d + base3;
 
   int base4 = args[4].dat->base_offset +
               dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
   base4 = base4 +
           dat4 * args[4].dat->size[0] * (start[1] * args[4].stencil->stride[1]);
-  base4 = base4 + dat4 * args[4].dat->size[0] * args[4].dat->size[1] *
-                      (start[2] * args[4].stencil->stride[2]);
+  base4 = base4 +
+          dat4 * args[4].dat->size[0] * args[4].dat->size[1] *
+              (start[2] * args[4].stencil->stride[2]);
   p_a[4] = (char *)args[4].data_d + base4;
 
   int base5 = args[5].dat->base_offset +
               dat5 * 1 * (start[0] * args[5].stencil->stride[0]);
   base5 = base5 +
           dat5 * args[5].dat->size[0] * (start[1] * args[5].stencil->stride[1]);
-  base5 = base5 + dat5 * args[5].dat->size[0] * args[5].dat->size[1] *
-                      (start[2] * args[5].stencil->stride[2]);
+  base5 = base5 +
+          dat5 * args[5].dat->size[0] * args[5].dat->size[1] *
+              (start[2] * args[5].stencil->stride[2]);
   p_a[5] = (char *)args[5].data_d + base5;
 
   int base6 = args[6].dat->base_offset +
               dat6 * 1 * (start[0] * args[6].stencil->stride[0]);
   base6 = base6 +
           dat6 * args[6].dat->size[0] * (start[1] * args[6].stencil->stride[1]);
-  base6 = base6 + dat6 * args[6].dat->size[0] * args[6].dat->size[1] *
-                      (start[2] * args[6].stencil->stride[2]);
+  base6 = base6 +
+          dat6 * args[6].dat->size[0] * args[6].dat->size[1] *
+              (start[2] * args[6].stencil->stride[2]);
   p_a[6] = (char *)args[6].data_d + base6;
 
 #ifndef OPS_LAZY

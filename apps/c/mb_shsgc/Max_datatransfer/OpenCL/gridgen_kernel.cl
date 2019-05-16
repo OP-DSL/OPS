@@ -7,18 +7,18 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64:enable
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a,b) ((a<b) ? (a) : (b))
+#define MIN(a, b) ((a < b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a,b) ((a>b) ? (a) : (b))
+#define MAX(a, b) ((a > b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
+#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -42,41 +42,27 @@
 
 #undef OPS_ACC0
 
-
 #define OPS_ACC0(x) (x)
 
+// user function
+void gridgen_kernel(__global double *restrict x, const int *restrict id,
+                    const double dx, const double xt)
 
-//user function
-void gridgen_kernel(__global double * restrict x,const  int * restrict id,
-  const double dx,
-const double xt)
+{
 
- {
-
-  x[OPS_ACC0(0)] = xt +  id[0] *dx;
-
+  x[OPS_ACC0(0)] = xt + id[0] * dx;
 }
 
-
-
-__kernel void ops_gridgen_kernel(
-__global double* restrict arg0,
-const double dx,
-const double xt,
-const int base0,
-int arg_idx0,
-const int size0 ){
-
+__kernel void ops_gridgen_kernel(__global double *restrict arg0,
+                                 const double dx, const double xt,
+                                 const int base0, int arg_idx0,
+                                 const int size0) {
 
   int idx_x = get_global_id(0);
 
   int arg_idx[1];
-  arg_idx[0] = arg_idx0+idx_x;
+  arg_idx[0] = arg_idx0 + idx_x;
   if (idx_x < size0) {
-    gridgen_kernel(&arg0[base0 + idx_x * 1*1],
-                   arg_idx,
-                   dx,
-                   xt);
+    gridgen_kernel(&arg0[base0 + idx_x * 1 * 1], arg_idx, dx, xt);
   }
-
 }
