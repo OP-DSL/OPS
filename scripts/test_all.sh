@@ -30,6 +30,8 @@ cd ../../multiDim_HDF5
 ./test.sh
 cd ../adi
 ./test.sh
+cd ../mgrid
+./test.sh
 
 echo "************Testing Fortran Applications *****************"
 cd $OPS_INSTALL_PATH
