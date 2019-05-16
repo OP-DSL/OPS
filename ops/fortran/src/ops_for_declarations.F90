@@ -90,7 +90,7 @@ module OPS_Fortran_Declarations
     type(c_ptr)         :: hdf5_file   ! name of hdf5 file from which this dataset was read
     integer(kind=c_int) :: e_dat       ! is this an edge dat?
     integer(kind=c_long) :: mem        ! memory in bytes allocated to this dat (under MPI, this will be memory held on a single MPI proc)
-
+    type(c_ptr)         :: stride      ! multigrid stride
   end type ops_dat_core
 
   type :: ops_dat
@@ -106,6 +106,8 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: points       ! number of stencil elements
     type(c_ptr)         :: stencil      ! elements in the stencil
     type(c_ptr)         :: stride       ! stride of the stencil
+    type(c_ptr)         :: mgrid_stride ! mutlgrid stride
+    integer(kind=c_int) :: type         ! 0 for regular, 1 for prolongate, 2 for restrict 
   end type ops_stencil_core
 
   type :: ops_stencil
@@ -210,7 +212,7 @@ module OPS_Fortran_Declarations
       character(kind=c_char,len=1), intent(in)  :: name(*)
     end function ops_decl_block_c
 
-    type(c_ptr) function ops_decl_dat_c ( block, dim, size, base, d_m, d_p, data, type_size, type, name ) BIND(C,name='ops_decl_dat_char')
+    type(c_ptr) function ops_decl_dat_c ( block, dim, size, base, d_m, d_p, stride, data, type_size, type, name ) BIND(C,name='ops_decl_dat_char')
 
       use, intrinsic :: ISO_C_BINDING
 
@@ -224,6 +226,7 @@ module OPS_Fortran_Declarations
       type(c_ptr), intent(in), value           :: base
       type(c_ptr), intent(in), value           :: d_m
       type(c_ptr), intent(in), value           :: d_p
+      type(c_ptr), intent(in), value           :: stride
       character(kind=c_char,len=1), intent(in) :: name(*)
 
     end function ops_decl_dat_c
@@ -598,13 +601,15 @@ module OPS_Fortran_Declarations
     type(ops_dat)                                :: dat
     character(kind=c_char,len=*)                 :: name
     character(kind=c_char,len=*)                 :: typ
+    integer(4), dimension(5), target :: stride
 
     integer d;
     DO d = 1, block%blockPtr%dims
       base(d) = base(d)-1
+      stride(d) = 1
     end DO
 
-    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc(stride), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
 
     DO d = 1, block%blockPtr%dims
       base(d) = base(d)+1
@@ -627,13 +632,15 @@ module OPS_Fortran_Declarations
     type(ops_dat)                                :: dat
     character(kind=c_char,len=*)                 :: name
     character(kind=c_char,len=*)                 :: typ
+    integer(4), dimension(5), target :: stride
 
     integer d;
     DO d = 1, block%blockPtr%dims
       base(d) = base(d)-1
+      stride(d) = 1
     end DO
 
-    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( data ), 4, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc(stride), c_loc ( data ), 4, typ//C_NULL_CHAR, name//C_NULL_CHAR )
 
     DO d = 1, block%blockPtr%dims
       base(d) = base(d)+1
