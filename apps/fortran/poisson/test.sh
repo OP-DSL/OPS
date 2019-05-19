@@ -35,7 +35,7 @@ rm perf_out
 
 
 cd $OPS_INSTALL_PATH/fortran
-source ../../scripts/source_pgi_18
+source ../../scripts/source_pgi_19
 make clean
 make
 cd -
