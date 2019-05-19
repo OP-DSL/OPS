@@ -40,7 +40,7 @@ rm perf_out
 echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
 
 cd $OPS_INSTALL_PATH/fortran
-source ../../scripts/source_pgi_18
+source ../../scripts/source_pgi_19
 make
 cd -
 make clean
