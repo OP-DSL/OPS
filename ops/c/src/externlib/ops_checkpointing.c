@@ -43,7 +43,6 @@
 #include <ops_lib_core.h>
 #include <signal.h>
 #include <stdio.h>
-#include <unistd.h>
 
 ops_backup_state backup_state = OPS_NONE;
 char *OPS_dat_ever_written = NULL;

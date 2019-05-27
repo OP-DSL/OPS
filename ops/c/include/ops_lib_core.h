@@ -47,11 +47,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
-#include <sys/queue.h> //contains double linked list implementation
-
-#include "ops_macros.h"
-#include "ops_util.h"
+#include "queue.h" //contains double linked list implementation
 
 #ifndef OPS_ALIGNMENT
 #define OPS_ALIGNMENT 64
@@ -108,6 +104,10 @@
 #define INFINITY_ull ULLONG_MAX;
 
 #define ZERO_bool 0;
+
+#include "ops_macros.h"
+#include "ops_util.h"
+
 
 #ifdef __cplusplus
 extern "C" {

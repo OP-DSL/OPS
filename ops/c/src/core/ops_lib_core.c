@@ -40,8 +40,11 @@
 #include <float.h>
 #include <limits.h>
 #include <malloc.h>
+#ifdef __unix__
 #include <sys/time.h>
-#include <sys/time.h>
+#elif defined (_WIN32) || defined(WIN32)
+#include <windows.h>
+#endif
 
 int OPS_diags = 0;
 
@@ -1256,11 +1259,16 @@ void ops_timing_output(FILE *stream) {
 }
 
 void ops_timers_core(double *cpu, double *et) {
+#ifdef __unix__
   (void)cpu;
   struct timeval t;
 
   gettimeofday(&t, (struct timezone *)0);
   *et = t.tv_sec + t.tv_usec * 1.0e-6;
+#elif defined(_WIN32) || defined(WIN32)
+  DWORD time = GetTickCount();
+  *et = ((double)time)/1000.0;
+#endif
 }
 
 void ops_timing_realloc(int kernel, const char *name) {

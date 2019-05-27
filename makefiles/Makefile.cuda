@@ -18,7 +18,7 @@ ifeq ($(NV_ARCH),Fermi)
 				PGI_CUDA_FORT_FLAGS=-Mcuda=cc20
 else
 ifeq ($(NV_ARCH),Kepler)
-        NVCCFLAGS+=-gencode arch=compute_35,code=sm_35
+        NVCCFLAGS+=-gencode arch=compute_52,code=sm_52
 				PGI_CUDA_FORT_FLAGS=-Mcuda=cc35
 else
 ifeq ($(NV_ARCH),Pascal)
