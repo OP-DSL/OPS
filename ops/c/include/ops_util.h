@@ -78,8 +78,8 @@ inline int add2(int *coords, int *size, int dim) {
 inline int off2(int ndim, int dim, int *start, int *end, int *size,
                 int *stride) {
   int i = 0;
-  int c1[ndim];
-  int c2[ndim];
+  int c1[OPS_MAX_DIM];
+  int c2[OPS_MAX_DIM];
 
   for (i = 0; i <= dim; i++)
     c1[i] = start[i] + 1;

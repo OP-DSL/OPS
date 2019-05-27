@@ -2519,6 +2519,9 @@
 #define ROUND_DOWN(N, step) (((N) / (step)) * (step))
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern int xdim0, xdim1, xdim2, xdim3, xdim4, xdim5, xdim6, xdim7, xdim8, xdim9,
     xdim10, xdim11, xdim12, xdim13, xdim14, xdim15, xdim16, xdim17, xdim18,
     xdim19, xdim20, xdim21, xdim22, xdim23, xdim24, xdim25, xdim26, xdim27,
@@ -2530,8 +2533,14 @@ extern int xdim0, xdim1, xdim2, xdim3, xdim4, xdim5, xdim6, xdim7, xdim8, xdim9,
     xdim73, xdim74, xdim75, xdim76, xdim77, xdim78, xdim79, xdim80, xdim81,
     xdim82, xdim83, xdim84, xdim85, xdim86, xdim87, xdim88, xdim89, xdim90,
     xdim91, xdim92, xdim93, xdim94, xdim95, xdim96, xdim97, xdim98, xdim99;
+#ifdef __cplusplus
+}
+#endif
 
 #if defined OPS_3D || defined OPS_4D || defined OPS_5D || defined OPS_SOA
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern int ydim0, ydim1, ydim2, ydim3, ydim4, ydim5, ydim6, ydim7, ydim8, ydim9,
     ydim10, ydim11, ydim12, ydim13, ydim14, ydim15, ydim16, ydim17, ydim18,
     ydim19, ydim20, ydim21, ydim22, ydim23, ydim24, ydim25, ydim26, ydim27,
@@ -2544,9 +2553,15 @@ extern int ydim0, ydim1, ydim2, ydim3, ydim4, ydim5, ydim6, ydim7, ydim8, ydim9,
     ydim82, ydim83, ydim84, ydim85, ydim86, ydim87, ydim88, ydim89, ydim90,
     ydim91, ydim92, ydim93, ydim94, ydim95, ydim96, ydim97, ydim98, ydim99;
 
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 #if (defined OPS_3D && defined OPS_SOA) || defined OPS_4D || defined OPS_5D
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern int zdim0, zdim1, zdim2, zdim3, zdim4, zdim5, zdim6, zdim7, zdim8, zdim9,
     zdim10, zdim11, zdim12, zdim13, zdim14, zdim15, zdim16, zdim17, zdim18,
     zdim19, zdim20, zdim21, zdim22, zdim23, zdim24, zdim25, zdim26, zdim27,
@@ -2558,7 +2573,9 @@ extern int zdim0, zdim1, zdim2, zdim3, zdim4, zdim5, zdim6, zdim7, zdim8, zdim9,
     zdim73, zdim74, zdim75, zdim76, zdim77, zdim78, zdim79, zdim80, zdim81,
     zdim82, zdim83, zdim84, zdim85, zdim86, zdim87, zdim88, zdim89, zdim90,
     zdim91, zdim92, zdim93, zdim94, zdim95, zdim96, zdim97, zdim98, zdim99;
-
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 #if (defined OPS_4D && defined OPS_SOA) || defined OPS_5D
@@ -2592,6 +2609,9 @@ extern int vdim0, vdim1, vdim2, vdim3, vdim4, vdim5, vdim6, vdim7, vdim8, vdim9,
 #endif
 
 #ifndef OPS_SOA
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern int multi_d0, multi_d1, multi_d2, multi_d3, multi_d4, multi_d5, multi_d6,
     multi_d7, multi_d8, multi_d9, multi_d10, multi_d11, multi_d12, multi_d13,
     multi_d14, multi_d15, multi_d16, multi_d17, multi_d18, multi_d19, multi_d20,
@@ -2607,6 +2627,9 @@ extern int multi_d0, multi_d1, multi_d2, multi_d3, multi_d4, multi_d5, multi_d6,
     multi_d84, multi_d85, multi_d86, multi_d87, multi_d88, multi_d89, multi_d90,
     multi_d91, multi_d92, multi_d93, multi_d94, multi_d95, multi_d96, multi_d97,
     multi_d98, multi_d99;
+#ifdef __cplusplus
+}
+#endif
 #endif
 #endif // OPS_MACROS_H
 

@@ -43,9 +43,8 @@
 #include <limits.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
 
-#include <ops_util.h>
+#include <ops_lib_core.h>
 
 /*******************************************************************************
 * Wrapper for malloc from www.gnu.org/
@@ -90,7 +89,7 @@ void *xcalloc(size_t number, size_t size) {
 /*******************************************************************************
 * Return the index of the min value in an array
 *******************************************************************************/
-int min(int array[], int size) {
+int min_element(int *array, int size) {
   int min = INT_MAX;
   int index = -1;
   for (int i = 0; i < size; i++) {

@@ -36,7 +36,6 @@
  * backends
   */
 #include <stdlib.h>
-#include <sys/time.h>
 #include "ops_lib_core.h"
 #include "ops_hdf5.h"
 
@@ -58,10 +57,12 @@ using namespace std;
 #define LOOPARG ops_kernel_list[loop]->args[arg]
 #define LOOPRANGE ops_kernel_list[loop]->range
 
+extern "C" {
 extern int ops_enable_tiling;
 extern int ops_cache_size;
 
 double ops_tiled_halo_exchange_time = 0.0;
+}
 
 /////////////////////////////////////////////////////////////////////////
 // Data structures
