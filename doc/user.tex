@@ -12,7 +12,7 @@
 \setlength{\textheight}{9.0in}
 \setlength{\textwidth}{6.5 in}
 
-\date{December 2015}
+\date{May 2019}
 
 %  \topmargin 0.in  \headheight 0pt  \headsep 0pt  \raggedbottom
 %  \oddsidemargin 0.1in
@@ -750,11 +750,19 @@ the \texttt{OPS\_BLOCK\_SIZE\_X, OPS\_BLOCK\_SIZE\_Y} and
 \noindent\texttt{./cloverleaf\_cuda OPS\_BLOCK\_SIZE\_X=64 
 OPS\_BLOCK\_SIZE\_Y=4}\\
 
-\noindent NVIDIA GPU-direct is enabled with \texttt{-gpudirect} runtime flag. \\
-
 \noindent \texttt{OPS\_CL\_DEVICE=XX} runtime flag sets the OpenCL device to 
 execute the code on. \\Usually \texttt{OPS\_CL\_DEVICE=0} selects the CPU and 
 \texttt{OPS\_CL\_DEVICE=1} selects GPUs. 
+
+\section{Executing with GPUDirect}
+
+GPU direct support for MPI+CUDA, to enable (on the OPS side) add 
+\textbf{-gpudirect} when running the executable. You may also have to use 
+certain environmental flags when using different MPI distributions. For an 
+example of the required flags and environmental settings on the Cambridge 
+Wilkes2 GPU cluster
+see: \\
+\url{https://docs.hpc.cam.ac.uk/hpc/user-guide/performance-tips.html}
 
 \newpage
 \section{OPS User Kernels}
