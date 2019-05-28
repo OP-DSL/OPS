@@ -139,7 +139,7 @@ OPS takes responsibility for all data, its movement and the execution of paralle
 \newpage
 \section{OPS C++ API}
 
-\subsection{Initialisation and termination routines}
+\subsection{Initialisation declaration and termination routines}
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_init}
 \begin{routine} {void ops\_init(int argc, char **argv, int diags\_level)}
@@ -298,6 +298,14 @@ and ops\_halo ops\_decl\_dat statements have been declared}
 is simply a place-holder to indicate different partitioning methods in the future.
 \end{routine}
 
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_exit}
+\begin{routine} {void ops\_exit()}
+{This routine must be called last to cleanly terminate the OPS computation.}
+\item \vspace{-0.3in}
+\end{routine}
+
+\subsection{Diagnostics and output routines}
+
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_diagnostic\_output}
 \begin{routine} {void ops\_diagnostic\_output()}
 {This routine prints out various useful bits of diagnostic info about sets, mappings and datasets. Usually used right 
@@ -362,12 +370,16 @@ a simple text editor }
 \item[os]    output stream, use stdout to print to standard out
 \end{routine}
 
-
-\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_exit}
-\begin{routine} {void ops\_exit()}
-{This routine must be called last to cleanly terminate the OPS computation.}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_NaNcheck}
+\begin{routine} {void ops\_NaNcheck(ops\_dat dat)}
+{Check if any of the values held in the \texttt{dat} is a NaN. If a NaN 
+is found, prints an error message and exits.}
+\item[dat] 	ops\_dat to to be checked 
 \item \vspace{-0.3in}
 \end{routine}
+
+
+
 
 
 
