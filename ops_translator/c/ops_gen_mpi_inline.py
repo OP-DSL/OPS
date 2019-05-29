@@ -426,7 +426,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
             code(arg_list[n]+'_'+str(d)+' = MIN('+arg_list[n]+'_'+str(d)+','+arg_list[n]+'['+str(d)+']);')
         if accs[n] == OPS_MAX:
           for d in range(0,int(dims[n])):
-            code(arg_list[n]+'_'+str(d)+' = MAX('+arg_list[n]+'_'+str(d)+''+arg_list[n]+'['+str(d)+']);')
+            code(arg_list[n]+'_'+str(d)+' = MAX('+arg_list[n]+'_'+str(d)+','+arg_list[n]+'['+str(d)+']);')
         if accs[n] == OPS_INC:
           for d in range(0,int(dims[n])):
             code(arg_list[n]+'_'+str(d)+' +='+arg_list[n]+'['+str(d)+'];')
