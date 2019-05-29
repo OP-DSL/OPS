@@ -506,7 +506,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
             code('p_a'+str(n)+'_'+str(d)+' = MIN(p_a'+str(n)+'_'+str(d)+','+arg_list[n]+'['+str(d)+']);')
         if accs[n] == OPS_MAX:
           for d in range(0,int(dims[n])):
-            code('p_a'+str(n)+'_'+str(d)+' = MAX(p_a'+str(n)+'_'+str(d)+''+arg_list[n]+'['+str(d)+']);')
+            code('p_a'+str(n)+'_'+str(d)+' = MAX(p_a'+str(n)+'_'+str(d)+','+arg_list[n]+'['+str(d)+']);')
         if accs[n] == OPS_INC:
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'_'+str(d)+' +='+arg_list[n]+'['+str(d)+'];')
