@@ -3,11 +3,11 @@ set -e
 cd ../../../ops/c
 #<<COMMENT
 source ../../scripts/source_intel
-make
+make -j
 cd -
 make clean
 rm -f .generated
-make IEEE=1
+make IEEE=1 -j
 
 
 
@@ -124,10 +124,10 @@ cd -
 source ../../scripts/source_pgi_19
 
 make clean
-make
+make -j
 cd -
 make clean
-make
+make 
 
 #============================ Test Poisson with PGI Compilers==========================================================
 echo '============> Running OpenMP'

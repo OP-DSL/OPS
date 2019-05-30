@@ -3,11 +3,11 @@ set -e
 cd ../../../ops/c
 #<<COMMENT
 source ../../scripts/source_intel
-make
+make -j
 cd -
 make clean
 rm -f .generated
-make IEEE=1
+make IEEE=1 -j
 
 #============================ Test SHSGC With Intel Compilers==========================================================
 echo '============> Running OpenMP'
@@ -108,10 +108,10 @@ cd -
 source ../../scripts/source_pgi_19
 
 make clean
-make
+make -j
 cd -
 make clean
-make
+make 
 
 #============================ Test SHSGC With PGI Compilers==========================================================
 echo '============> Running OpenMP'
