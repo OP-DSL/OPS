@@ -580,7 +580,7 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
                stencil_name);
 
   // ops_stencil exists .. now check ops_type and dims
-  char read_ops_type[10];
+  char read_ops_type[20];
   if (H5LTget_attribute_string(file_id, stencil_name, "ops_type",
                                read_ops_type) < 0) {
     ops_printf("Error: ops_decl_stencil_hdf5: Attribute \"ops_type\" not found "
