@@ -2,13 +2,13 @@
 set -e
 cd ../../../ops/c
 source ../../scripts/source_intel
-make
+make -j
 cd -
 make clean
 
 rm -rf .generated
 rm -rf generate_file generate_file_mpi
-make IEEE=1
+make IEEE=1 -j
 make generate_file generate_file_mpi
 
 #============================ Generate HDF5 file ==========================================================
@@ -152,7 +152,7 @@ source ../../scripts/source_pgi_19
 #source ../../scripts/source_pgi_15.10
 
 make clean
-make
+make -j
 cd -
 make clean
 make IEEE=1

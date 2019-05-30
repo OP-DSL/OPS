@@ -2,11 +2,11 @@
 set -e
 cd ../../../ops/c
 source ../../scripts/source_intel
-make
+make -j
 cd -
 ./generate.sh
 make clean
-make IEEE=1
+make IEEE=1 -j
 
 #============================ Test Cloverleaf 2D With Intel Compilers==========================================================
 #<<COMMENT
@@ -148,7 +148,7 @@ cd -
 source ../../scripts/source_pgi_19
 
 make clean
-make
+make -j
 cd -
 make clean
 make IEEE=1

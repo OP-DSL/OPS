@@ -385,7 +385,6 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
           code('__assume_aligned('+arg_list[n]+',2*1024*1024);')
         else:
           code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset;')
-<<<<<<< HEAD
           code(pre + typs[n]+' * __restrict__ '+clean_type(arg_list[n])+' = ('+typs[n]+' *)(args['+str(n)+'].data + base'+str(n)+');')
           if restrict[n] == 1 or prolong[n] == 1:
             code('#ifdef OPS_MPI')

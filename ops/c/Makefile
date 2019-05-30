@@ -92,13 +92,12 @@ seq: mklib core
 	$(AR)$(LIB)/libops_seq.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
 	$(OBJ)/ops_util.o $(OBJ)/ops_seq.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o 
 
-cuda: mklib core $(SRC)/cuda/ops_cuda_decl.c
+cuda: mklib core seq $(SRC)/cuda/ops_cuda_decl.c
 	$(CC) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(CUDA_INC) -I$(INC) \
         -c $(SRC)/cuda/ops_cuda_decl.c $(OUT)$(OBJ)/ops_cuda_decl.o
 	$(CC) -DSET_CUDA_CACHE_CONFIG $(CCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(CUDA_INC) -I$(INC) \
         -c $(SRC)/cuda/ops_cuda_rt_support.c $(OUT)$(OBJ)/ops_cuda_rt_support.o
 	$(NVCC) $(NVCCFLAGS) -I$(INC) -c $(SRC)/cuda/ops_cuda_rt_support.cu $(OUT)$(OBJ)/ops_cuda_rt_support_cuda.o
-	$(CC) $(CCFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c $(OUT)$(OBJ)/ops_dummy_singlenode.o
 	$(AR)$(LIB)/libops_cuda.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
 	$(OBJ)/ops_util.o $(OBJ)/ops_cuda_rt_support.o $(OBJ)/ops_cuda_rt_support_cuda.o \
 	$(OBJ)/ops_cuda_decl.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o
@@ -117,20 +116,17 @@ hdf5_mpi: mklib core
 	$(MPICC) $(CCFLAGS) -I$(INC)  $(HDF5_INC) $(HDF5_LIB) -c $(SRC)/mpi/ops_mpi_hdf5.c $(OUT)$(OBJ)/ops_mpi_hdf5.o
 	$(AR)$(LIB)/libops_hdf5_mpi.a $(OBJ)/ops_mpi_hdf5.o
 
-mpi_cuda: mklib cuda
+mpi_cuda: mklib cuda mpi
 	$(MPICC) $(CCFLAGS) $(CUDA_ALIGNE_FLAG) \
 	-I$(INC) -I$(CUDA_INC) -c $(SRC)/mpi/ops_mpi_decl_cuda.c $(OUT)$(OBJ)/ops_mpi_decl_cuda.o
-	$(MPICC) $(CCFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_partition.c $(OUT)$(OBJ)/ops_mpi_partition.o
-	$(MPICC) $(CCFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_core.c $(OUT)$(OBJ)/ops_mpi_core.o
-	$(MPICC) $(CCFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support.c $(OUT)$(OBJ)/ops_mpi_rt_support.o
 	$(NVCC) $(NVCCFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support_cuda.cu $(OUT)\
-	$(OBJ)/ops_mpi_rt_support_cuda.o -I$(MPI_INSTALL_PATH)/include
+    $(OBJ)/ops_mpi_rt_support_cuda.o -I$(MPI_INSTALL_PATH)/include
 	$(AR)$(LIB)/libops_mpi_cuda.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_lazy.o \
 	$(OBJ)/ops_checkpointing.o $(OBJ)/ops_util.o $(OBJ)/ops_mpi_decl_cuda.o $(OBJ)/ops_mpi_rt_support.o \
 	$(OBJ)/ops_mpi_core.o $(OBJ)/ops_mpi_rt_support_cuda.o $(OBJ)/ops_mpi_partition.o \
 	$(OBJ)/ops_cuda_rt_support.o $(OBJ)/ops_checkpointing_strategy.o
 
-opencl: mklib core $(SRC)/opencl/ops_opencl_decl.c
+opencl: mklib core seq $(SRC)/opencl/ops_opencl_decl.c
 	$(CC) $(CCFLAGS) $(OPENCL_INC) -I$(INC) \
         -c $(SRC)/opencl/ops_opencl_decl.c $(OUT)$(OBJ)/ops_opencl_decl.o
 	$(CC) $(CCFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c $(OUT)$(OBJ)/ops_dummy_singlenode.o
@@ -138,16 +134,12 @@ opencl: mklib core $(SRC)/opencl/ops_opencl_decl.c
         -c $(SRC)/opencl/ops_opencl_rt_support.c $(OUT)$(OBJ)/ops_opencl_rt_support.o
 	$(CXX) $(CXXFLAGS) $(OPENCL_INC) -I$(INC) \
         -c $(SRC)/opencl/ops_opencl_rt_support.cpp $(OUT)$(OBJ)/ops_opencl_rt_support_cpp.o
-	$(CC) $(CCFLAGS) -I$(INC) -c $(SRC)/core/ops_dummy_singlenode.c $(OUT)$(OBJ)/ops_dummy_singlenode.o
 	$(AR)$(LIB)/libops_opencl.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
 	$(OBJ)/ops_util.o $(OBJ)/ops_opencl_rt_support.o $(OBJ)/ops_opencl_rt_support_cpp.o \
 	$(OBJ)/ops_opencl_decl.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o
 
-mpi_opencl: mklib opencl
+mpi_opencl: mklib opencl mpi
 	$(MPICC) $(CCFLAGS) -I$(INC) $(OPENCL_INC) -c $(SRC)/mpi/ops_mpi_decl_opencl.c $(OUT)$(OBJ)/ops_mpi_decl_opencl.o
-	$(MPICC) $(CCFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_partition.c $(OUT)$(OBJ)/ops_mpi_partition.o
-	$(MPICC) $(CCFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_core.c $(OUT)$(OBJ)/ops_mpi_core.o
-	$(MPICC) $(CCFLAGS) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support.c $(OUT)$(OBJ)/ops_mpi_rt_support.o
 	$(MPICPP) $(CXXFLAGS) $(OPENCL_INC) -I$(INC) -c $(SRC)/mpi/ops_mpi_rt_support_opencl.cpp $(OUT)\
 	$(OBJ)/ops_mpi_rt_support_opencl.o -I$(MPI_INSTALL_PATH)/include
 	$(AR)$(LIB)/libops_mpi_opencl.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_util.o $(OBJ)/ops_lazy.o \
