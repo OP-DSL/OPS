@@ -358,21 +358,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     code('')
     if arg_idx!=-1 or MULTI_GRID:
-      code('#ifdef OPS_MPI')
-      arg_write = -1
-      for n in range(0,nargs):
-        if arg_typ[n] == 'ops_arg_dat' and accs[n] != OPS_READ:
-          arg_write = n
-      if arg_write == -1:
-        code('sub_block_list sb = OPS_sub_block_list[block->index];')
-        for n in range (0,NDIM):
-          code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+'];')
-      else:
-        code('sub_dat_list sd = OPS_sub_dat_list[args['+str(arg_write)+'].dat->index];')
-        for n in range (0,NDIM):
-          code('arg_idx['+str(n)+'] = MAX(0,sd->decomp_disp['+str(n)+']);')
-
-      code('#else //OPS_MPI')
+      code('#ifndef OPS_MPI')
       for n in range (0,NDIM):
         code('arg_idx['+str(n)+'] = 0;')
       code('#endif //OPS_MPI')

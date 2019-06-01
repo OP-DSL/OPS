@@ -239,7 +239,7 @@ int main(int argc, const char **argv)
   ops_print_dat_to_txtfile(data6, "data.txt");
   ops_print_dat_to_txtfile(data3, "data.txt");*/
 
-  ops_par_loop(restrict_check, "prolong_check", grid0, 2, iter_range_small,
+  ops_par_loop(restrict_check, "restrict_check", grid0, 2, iter_range_small,
                ops_arg_dat(data3, 1, S2D_00, "double", OPS_READ),
                ops_arg_idx(),
                ops_arg_reduce(reduct_err, 1, "int", OPS_MAX),

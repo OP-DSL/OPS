@@ -41,6 +41,32 @@
 
 #define FP double // doubles when calling thomas should be FPs
 #define N_MAX 1024
+void thomas_forward(
+    const FP *__restrict__ a,
+    const FP *__restrict__ b,
+    const FP *__restrict__ c,
+    const FP *__restrict__ d,
+    const FP *__restrict__ u,
+          FP *__restrict__ aa,
+          FP *__restrict__ cc,
+          FP *__restrict__ dd,
+    int N,
+    int stride);
+
+void thomas_backward(
+    const FP *__restrict__ aa, 
+    const FP *__restrict__ cc, 
+    const FP *__restrict__ dd, 
+          FP *__restrict__ d, 
+    int N, 
+    int stride); 
+
+void thomas_on_reduced(
+    const FP* __restrict__ aa_r,
+    const FP* __restrict__ cc_r,
+          FP* __restrict__ dd_r,
+    int N,
+    int stride);
 
 #ifdef __cplusplus
 extern "C" {
