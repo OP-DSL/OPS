@@ -358,7 +358,10 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     code('')
     if arg_idx!=-1 or MULTI_GRID:
-      code('#ifndef OPS_MPI')
+      code('#ifdef OPS_MPI')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] -= start['+str(n)+'];')
+      code('#else')
       for n in range (0,NDIM):
         code('arg_idx['+str(n)+'] = 0;')
       code('#endif //OPS_MPI')

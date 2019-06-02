@@ -636,7 +636,6 @@ module OPS_Fortran_Declarations
     character(kind=c_char,len=*)                 :: typ
     integer(4), dimension(5), target :: stride
 
-    integer(4), target :: stride(5)
     integer d;
     DO d = 1, block%blockPtr%dims
       base(d) = base(d)-1
