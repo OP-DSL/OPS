@@ -53,15 +53,14 @@ void ops_par_loop_initialise_chunk_kernel_xx_execute(ops_kernel_descriptor *desc
   #endif
 
   #ifdef OPS_MPI
-  sub_dat_list sd = OPS_sub_dat_list[args[0].dat->index];
-  arg_idx[0] = MAX(0,sd->decomp_disp[0]);
-  arg_idx[1] = MAX(0,sd->decomp_disp[1]);
-  arg_idx[2] = MAX(0,sd->decomp_disp[2]);
-  #else //OPS_MPI
+  arg_idx[0] -= start[0];
+  arg_idx[1] -= start[1];
+  arg_idx[2] -= start[2];
+#else
   arg_idx[0] = 0;
   arg_idx[1] = 0;
   arg_idx[2] = 0;
-  #endif //OPS_MPI
+#endif // OPS_MPI
 
   //initialize global variable with the dimension of dats
   int xdim0_initialise_chunk_kernel_xx = args[0].dat->size[0];
