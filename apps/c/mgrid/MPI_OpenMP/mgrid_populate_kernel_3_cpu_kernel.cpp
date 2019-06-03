@@ -53,13 +53,12 @@ void ops_par_loop_mgrid_populate_kernel_3_execute(ops_kernel_descriptor *desc) {
   #endif
 
   #ifdef OPS_MPI
-  sub_dat_list sd = OPS_sub_dat_list[args[0].dat->index];
-  arg_idx[0] = MAX(0,sd->decomp_disp[0]);
-  arg_idx[1] = MAX(0,sd->decomp_disp[1]);
-  #else //OPS_MPI
+  arg_idx[0] -= start[0];
+  arg_idx[1] -= start[1];
+#else
   arg_idx[0] = 0;
   arg_idx[1] = 0;
-  #endif //OPS_MPI
+#endif // OPS_MPI
 
   //initialize global variable with the dimension of dats
   int xdim0_mgrid_populate_kernel_3 = args[0].dat->size[0];
