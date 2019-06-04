@@ -232,13 +232,11 @@ int main(int argc, const char **argv)
                ops_arg_dat(data3, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
 
-
-
-  ops_par_loop_restrict_check("prolong_check", grid0, 2, iter_range_small,
-               ops_arg_dat(data3, 1, S2D_00, "double", OPS_READ),
-               ops_arg_idx(),
-               ops_arg_reduce(reduct_err, 1, "int", OPS_MAX),
-               ops_arg_gbl(&size4[0], 1, "int", OPS_READ));
+  ops_par_loop_restrict_check("restrict_check", grid0, 2, iter_range_small,
+                              ops_arg_dat(data3, 1, S2D_00, "double", OPS_READ),
+                              ops_arg_idx(),
+                              ops_arg_reduce(reduct_err, 1, "int", OPS_MAX),
+                              ops_arg_gbl(&size4[0], 1, "int", OPS_READ));
 
   int err_restrict = 0;
   ops_reduction_result(reduct_err, &err_restrict);

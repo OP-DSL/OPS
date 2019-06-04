@@ -57,13 +57,12 @@ void ops_par_loop_prolong_check_execute(ops_kernel_descriptor *desc) {
   #endif
 
   #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
-  arg_idx[0] = sb->decomp_disp[0];
-  arg_idx[1] = sb->decomp_disp[1];
-  #else //OPS_MPI
+  arg_idx[0] -= start[0];
+  arg_idx[1] -= start[1];
+#else
   arg_idx[0] = 0;
   arg_idx[1] = 0;
-  #endif //OPS_MPI
+#endif // OPS_MPI
 
   //initialize global variable with the dimension of dats
   int xdim0_prolong_check = args[0].dat->size[0];
