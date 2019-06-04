@@ -57,5 +57,6 @@ real(8) :: del2
 real(8) :: akap2
 real(8) :: tvdsmu
 real(8) :: con
+!$acc declare create(nxp,nyp,xhalo,yhalo,xmin,xmax,ymin,ymax,dx,dy,pl,pr,rhol,rhorr,ul,ur,gam,gam1,eps,lambda,dt,del2,akap2,tvdsmu,con)
 #endif
 END MODULE OPS_CONSTANTS
