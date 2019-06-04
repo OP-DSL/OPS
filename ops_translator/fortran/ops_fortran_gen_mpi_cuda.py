@@ -276,12 +276,12 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
 ##########################################################################
     if reduct_1dim:
       comm('Reduction cuda kernel')
-      code('attributes (device) SUBROUTINE ReductionFloat8(reductionResult,inputValue,reductionOperation)')
+      code('attributes (device) SUBROUTINE ReductionFloat8(sharedDouble8, reductionResult,inputValue,reductionOperation)')
       config.depth = config.depth +2;
       code('REAL(kind=8), DIMENSION(:), DEVICE :: reductionResult')
       code('REAL(kind=8) :: inputValue')
       code('INTEGER(kind=4), VALUE :: reductionOperation')
-      code('REAL(kind=8), DIMENSION(0:*), SHARED :: sharedDouble8')
+      code('REAL(kind=8), DIMENSION(0:*) :: sharedDouble8')
       code('INTEGER(kind=4) :: i1')
       code('INTEGER(kind=4) :: threadID')
       code('threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)')
@@ -329,11 +329,11 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       code('END SUBROUTINE')
       code('')
 
-      code('attributes (device) SUBROUTINE ReductionInt4(reductionResult,inputValue,reductionOperation)')
+      code('attributes (device) SUBROUTINE ReductionInt4(sharedInt4, reductionResult,inputValue,reductionOperation)')
       code('INTEGER(kind=4), DIMENSION(:), DEVICE :: reductionResult')
       code('INTEGER(kind=4) :: inputValue')
       code('INTEGER(kind=4), VALUE :: reductionOperation')
-      code('INTEGER(kind=4), DIMENSION(0:*), SHARED :: sharedInt4')
+      code('INTEGER(kind=4), DIMENSION(0:*) :: sharedInt4')
       code('INTEGER(kind=4) :: i1')
       code('INTEGER(kind=4) :: threadID')
       code('threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)')
@@ -384,13 +384,13 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
 
     if reduct_mdim:
       comm('Multidimensional reduction cuda kernel')
-      code('attributes (device) SUBROUTINE ReductionFloat8Mdim(reductionResult,inputValue,reductionOperation,dim)')
+      code('attributes (device) SUBROUTINE ReductionFloat8Mdim(sharedDouble8, reductionResult,inputValue,reductionOperation,dim)')
       config.depth = config.depth +2;
       code('REAL(kind=8), DIMENSION(:), DEVICE :: reductionResult')
       code('REAL(kind=8), DIMENSION(:) :: inputValue')
       code('INTEGER(kind=4), VALUE :: reductionOperation')
       code('INTEGER(kind=4), VALUE :: dim')
-      code('REAL(kind=8), DIMENSION(0:*), SHARED :: sharedDouble8')
+      code('REAL(kind=8), DIMENSION(0:*) :: sharedDouble8')
       code('INTEGER(kind=4) :: i1')
       code('INTEGER(kind=4) :: d')
       code('INTEGER(kind=4) :: threadID')
@@ -450,13 +450,13 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       code('')
 
       comm('Multidimensional reduction cuda kernel')
-      code('attributes (device) SUBROUTINE ReductionInt4Mdim(reductionResult,inputValue,reductionOperation,dim)')
+      code('attributes (device) SUBROUTINE ReductionInt4Mdim(sharedInt4, reductionResult,inputValue,reductionOperation,dim)')
       config.depth = config.depth +2;
       code('INTEGER(kind=4), DIMENSION(:), DEVICE :: reductionResult')
       code('INTEGER(kind=4), DIMENSION(:) :: inputValue')
       code('INTEGER(kind=4), VALUE :: reductionOperation')
       code('INTEGER(kind=4), VALUE :: dim')
-      code('INTEGER(kind=4), DIMENSION(0:*), SHARED :: sharedInt4')
+      code('INTEGER(kind=4), DIMENSION(0:*) :: sharedInt4')
       code('INTEGER(kind=4) :: i1')
       code('INTEGER(kind=4) :: d')
       code('INTEGER(kind=4) :: threadID')
@@ -609,6 +609,8 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
             code(typs[n]+' :: opsGblDat'+str(n+1)+'Device')
           else:
             code(typs[n]+', DIMENSION(0:'+dims[n]+'-1) :: opsGblDat'+str(n+1)+'Device')
+
+          code(typs[n]+', DIMENSION(0:*), SHARED :: sharedMem')
         else:
           #if it's not  a global reduction, and multidimensional then we pass in a device array
           if dims[n].isdigit() and int(dims[n]) == 1:
@@ -713,17 +715,17 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
           operation = '2'
         if 'real' in typs[n].lower():
           if dims[n].isdigit() and int(dims[n])==1:
-            code('call ReductionFloat8(reductionArrayDevice'+str(n+1)+
+            code('call ReductionFloat8(sharedMem, reductionArrayDevice'+str(n+1)+
                  '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat'+str(n+1)+'Device,'+operation+')')
           else:
-            code('call ReductionFloat8Mdim(reductionArrayDevice'+str(n+1)+ '(' +
+            code('call ReductionFloat8Mdim(sharedMem, reductionArrayDevice'+str(n+1)+ '(' +
                  '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,'+operation+','+dims[n]+')')
         elif 'integer' in typs[n].lower():
           if dims[n].isdigit() and int(dims[n])==1:
-            code('call ReductionInt4(reductionArrayDevice'+str(n+1)+
+            code('call ReductionInt4(sharedMem, reductionArrayDevice'+str(n+1)+
                  '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat'+str(n+1)+'Device,'+operation+')')
           else:
-            code('call ReductionInt4Mdim(reductionArrayDevice'+str(n+1)+ '(' +
+            code('call ReductionInt4Mdim(sharedMem, reductionArrayDevice'+str(n+1)+ '(' +
                  '((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1))*('+dims[n]+') + 1:),opsGblDat'+str(n+1)+'Device,'+operation+','+dims[n]+')')
     code('')
 

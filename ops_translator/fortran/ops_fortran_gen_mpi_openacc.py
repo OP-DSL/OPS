@@ -256,7 +256,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
     code('')
 
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ and int(dims[n])>1:
         code('opsDat'+str(n+1)+'LocalAcc = opsDat'+str(n+1)+'Local')
         for i in range(0, int(dims[n])):
           code('opsDat'+str(n+1)+'Local_'+str(i+1)+' = opsDat'+str(n+1)+'Local('+str(i+1)+')')
@@ -350,7 +350,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
 
     code(line)
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ and int(dims[n])>1:
         for i in range(0, int(dims[n])):
           code('opsDat'+str(n+1)+'Local_'+str(i+1)+' = opsDat'+str(n+1)+'LocalAcc('+str(i+1)+')')
 
@@ -365,7 +365,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
       ENDDO()
     code('!$acc end parallel')
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ and int(dims[n])>1:
         for i in range(0, int(dims[n])):
           code('opsDat'+str(n+1)+'Local('+str(i+1)+') = opsDat'+str(n+1)+'Local_'+str(i+1))
     code('')
