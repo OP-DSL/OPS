@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops mpi+cuda declaration
+/** @file
+  * @brief OPS mpi+cuda declaration
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the OPS API calls for the mpi+cuda backend
   */
@@ -199,3 +200,19 @@ void ops_NaNcheck(ops_dat dat) {
 int getOPS_block_size_x() { return OPS_block_size_x; }
 int getOPS_block_size_y() { return OPS_block_size_y; }
 int getOPS_block_size_z() { return OPS_block_size_z; }
+
+void ops_pack_cuda_internal(ops_dat dat, const int src_offset, char *__restrict dest,
+              const int halo_blocklength, const int halo_stride, const int halo_count);
+
+void ops_unpack_cuda_internal(ops_dat dat, const int dest_offset, const char *__restrict src,
+                const int halo_blocklength, const int halo_stride, const int halo_count);
+
+
+void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
+              const ops_int_halo *__restrict halo) {
+  ops_pack_cuda_internal(dat,  src_offset, dest, halo->blocklength, halo->stride, halo->count);
+}
+void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
+                const ops_int_halo *__restrict halo) {
+  ops_unpack_cuda_internal(dat,  dest_offset, src, halo->blocklength, halo->stride, halo->count);
+}

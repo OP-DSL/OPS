@@ -3,7 +3,7 @@
 //
 
 #include "./MPI_inline/tea_leaf_common.h"
-// user kernel files
+//user kernel files
 #include "field_summary_kernel_mpiinline_kernel_c.c"
 #include "generate_chunk_kernel_mpiinline_kernel_c.c"
 #include "initialise_chunk_kernel_cellx_mpiinline_kernel_c.c"

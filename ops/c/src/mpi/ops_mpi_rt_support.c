@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops mpi run-time support routines
+/** @file
+  * @brief OPS mpi run-time support routines
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the runtime support routines for the OPS mpi backend
   */
@@ -202,6 +203,10 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     printf("Error: trying to exchange a %d-deep halo for %s, but halo is only %d deep. Please set d_m and d_p accordingly\n",actual_depth_recv, dat->name, abs(d_m[dim]));
     MPI_Abort(sb->comm, -1);
   }
+  if (actual_depth_send > sd->decomp_size[dim]) {
+    printf("Error: overpartitioning! Trying to exchange a %d-deep halo for %s, but dataset is only %d wide on this process.\n",actual_depth_send, dat->name, sd->decomp_size[dim]);
+    MPI_Abort(sb->comm, -1);
+  }
 
   // set up initial pointers
   int i2 = (-d_m[dim]) * prod[dim - 1];
@@ -276,6 +281,11 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     printf("Error: trying to exchange a %d-deep halo for %s, but halo is only %d deep. Please set d_m and d_p accordingly\n",actual_depth_recv, dat->name, d_p[dim]);
     MPI_Abort(sb->comm, -1);
   }
+  if (actual_depth_send > sd->decomp_size[dim]) {
+    printf("Error: overpartitioning! Trying to exchange a %d-deep halo for %s, but dataset is only %d wide on this process.\n",actual_depth_send, dat->name, sd->decomp_size[dim]);
+    MPI_Abort(sb->comm, -1);
+  }
+
       
   // set up initial pointers
   // int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim-1];
@@ -354,6 +364,15 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
     printf("Error, requested %d depth halo exchange, only has %d deep halo. Please set OPS_TILING_MAXDEPTH.\n", right_recv_depth, sd->d_ip[dim]);
     MPI_Abort(sb->comm,-1);
   }
+  if (right_send_depth > sd->decomp_size[dim]) {
+    printf("Error: overpartitioning! Trying to exchange a %d-deep halo for %s, but dataset is only %d wide on this process.\n",right_send_depth, dat->name, sd->decomp_size[dim]);
+    MPI_Abort(sb->comm, -1);
+  }
+  if (left_send_depth > sd->decomp_size[dim]) {
+    printf("Error: overpartitioning! Trying to exchange a %d-deep halo for %s, but dataset is only %d wide on this process.\n",left_send_depth, dat->name, sd->decomp_size[dim]);
+    MPI_Abort(sb->comm, -1);
+  }
+
 
   int *prod = sd->prod;
 
@@ -690,7 +709,10 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
 
       int range[2*OPS_MAX_DIM];
       for (int d2 = 0; d2 < dat_ndim; d2++) {
-        if (args[i].stencil->type ==2) {
+        if (args[i].stencil->type ==1) {
+          range[2*d2+0] = range_in[2*d2+0]/args[i].stencil->mgrid_stride[d2];
+          range[2*d2+1] = (range_in[2*d2+1]-1)/args[i].stencil->mgrid_stride[d2]+1;
+        } else if (args[i].stencil->type ==2) {
           range[2*d2+0] = range_in[2*d2+0]*args[i].stencil->mgrid_stride[d2];
           range[2*d2+1] = range_in[2*d2+1]*args[i].stencil->mgrid_stride[d2];
         } else {
@@ -779,7 +801,10 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
 
       int range[2*OPS_MAX_DIM];
       for (int d2 = 0; d2 < dat_ndim; d2++) {
-        if (args[i].stencil->type ==2) {
+        if (args[i].stencil->type ==1) {
+          range[2*d2+0] = range_in[2*d2+0]/args[i].stencil->mgrid_stride[d2];
+          range[2*d2+1] = (range_in[2*d2+1]-1)/args[i].stencil->mgrid_stride[d2]+1;
+        } else if (args[i].stencil->type ==2) {
           range[2*d2+0] = range_in[2*d2+0]*args[i].stencil->mgrid_stride[d2];
           range[2*d2+1] = range_in[2*d2+1]*args[i].stencil->mgrid_stride[d2];
         } else {

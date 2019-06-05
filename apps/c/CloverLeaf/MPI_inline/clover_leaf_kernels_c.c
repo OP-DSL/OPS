@@ -3,7 +3,7 @@
 //
 
 #include "./MPI_inline/clover_leaf_common.h"
-// user kernel files
+//user kernel files
 #include "PdV_kernel_nopredict_mpiinline_kernel_c.c"
 #include "PdV_kernel_predict_mpiinline_kernel_c.c"
 #include "accelerate_kernel_mpiinline_kernel_c.c"

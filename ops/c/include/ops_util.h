@@ -1,5 +1,6 @@
 #ifndef __OP_UTIL_H
 #define __OP_UTIL_H
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 /*
 * Open source copyright declaration based on BSD open source template:
@@ -33,7 +34,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief Header file for the utility functions used in op_util.c
+/** @file
+ *  @brief Header file for the utility functions used in op_util.c
  *  @author Gihan R. Mudalige, (Started 23-08-2013)
  */
 
@@ -163,5 +165,5 @@ inline int off3D(int dim, int *start, int *end, int *size, int *stride) {
 #ifdef __cplusplus
 }
 #endif
-
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OP_UTIL_H */

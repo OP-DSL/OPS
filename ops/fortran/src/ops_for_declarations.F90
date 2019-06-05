@@ -29,11 +29,12 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 
-! @brief ops fortran back-end library functions declarations
-! @author Gihan Mudalige
-! @details Defines the interoperable data types between OPS-C and OPS-Fortran
-! and the Fortran interface for OPS declaration functions
-!
+!> @file
+!! @brief OPS fortran back-end library functions declarations
+!! @author Gihan Mudalige
+!! @details Defines the interoperable data types between OPS-C and OPS-Fortran
+!! and the Fortran interface for OPS declaration functions
+!!
 
 
 module OPS_Fortran_Declarations
@@ -90,7 +91,9 @@ module OPS_Fortran_Declarations
     type(c_ptr)         :: hdf5_file   ! name of hdf5 file from which this dataset was read
     integer(kind=c_int) :: e_dat       ! is this an edge dat?
     integer(kind=c_long) :: mem        ! memory in bytes allocated to this dat (under MPI, this will be memory held on a single MPI proc)
-    type(c_ptr)         :: stride      ! multigrid stride
+    integer(kind=c_long) :: base_offset ! computed quantity, giving offset in bytes to the base index
+    type(c_ptr)         :: stride       ! stride[*] > 1 if this dat is a coarse dat under multi-grid
+
   end type ops_dat_core
 
   type :: ops_dat

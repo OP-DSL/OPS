@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops tridiagonal API header file
+/** @file
+  * @brief OPS tridiagonal API header file
   * @author Gihan Mudalige
   * @details This header file should be included by all C++
   * OPS applications using the OPS Tridiagonal API

@@ -1,6 +1,6 @@
 #ifndef __OPS_CUDA_RT_SUPPORT_H
 #define __OPS_CUDA_RT_SUPPORT_H
-
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 /*
 * Open source copyright declaration based on BSD open source template:
 * http://www.opensource.org/licenses/bsd-license.php
@@ -33,7 +33,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops cuda specific runtime support functions
+/** @file
+  * @brief OPS cuda specific runtime support functions
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements cuda backend runtime support functions
   */
@@ -99,5 +100,5 @@ void ops_halo_copy_hd(const char *src, char *dest, int size);
 #ifdef __cplusplus
 }
 #endif
-
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_CUDA_RT_SUPPORT_H */

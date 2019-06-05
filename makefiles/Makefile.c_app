@@ -31,44 +31,44 @@ $(APP)_dev_seq: Makefile $(HEADERS) $(OPS_FILES_PLAIN) $(OPS_INSTALL_PATH)/c/lib
 
 $(APP)_dev_mpi: Makefile $(OPS_FILES_PLAIN) \
                 $(HEADERS) $(OPS_INSTALL_PATH)/c/lib/libops_mpi.a
-	        $(MPICPP) $(MPIFLAGS) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_PLAIN) $(OPS_LIB_MPI) $(HDF5_LIB_MPI) -o $(APP)_dev_mpi
+	        $(MPICPP) $(CXXFLAGS) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_PLAIN) $(OPS_LIB_MPI) $(HDF5_LIB_MPI) -o $(APP)_dev_mpi
 
 #
 # mpi version
 #
 
-SEQ_KERNELS = $(MAIN_SRC)_seq_kernels.cpp
+SEQ_KERNELS = $(MAIN_SRC)_cpu_kernels.cpp
 
 $(APP)_mpi: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_mpi.a
-	        $(MPICPP) $(MPIFLAGS) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI/$(SEQ_KERNELS) $(OPS_LIB_MPI) $(HDF5_LIB_MPI) -o $(APP)_mpi
+	        $(MPICPP) $(CXXFLAGS) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(OPS_LIB_MPI) $(HDF5_LIB_MPI) -o $(APP)_mpi
 
 #
 # OpenMP version
 #
-OMP_KERNELS = $(MAIN_SRC)_omp_kernels.cpp
 
-$(APP)_mpi_openmp: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_mpi.a
-	        $(MPICPP) $(MPIFLAGS) $(OMPFLAGS) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(OMP_KERNELS) $(OPS_LIB_MPI) $(HDF5_LIB_MPI) -o $(APP)_mpi_openmp
+$(APP)_mpi_openmp: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_mpi.a $(OPS_FILES_GEN) $(HEADERS)
+	        $(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(OPS_LIB_MPI) $(HDF5_LIB_MPI) -o $(APP)_mpi_openmp
 
 
-$(APP)_openmp: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_seq.a
-	        $(MPICPP) $(OMPFLAGS) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(OMP_KERNELS) $(OPS_LIB_SEQ) $(HDF5_LIB_SEQ) -o $(APP)_openmp
+$(APP)_openmp: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_seq.a $(OPS_FILES_GEN) $(HEADERS)
+	        $(MPICPP) $(OMPFLAGS) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(OPS_LIB_SEQ) $(HDF5_LIB_SEQ) -o $(APP)_openmp
+
 
 #
 # Sequential version
 #
-$(APP)_seq: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_seq.a 
-		$(MPICPP) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI/$(SEQ_KERNELS) $(OPS_LIB_SEQ) $(HDF5_LIB_SEQ) -o $(APP)_seq 
+$(APP)_seq: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_seq.a $(OPS_FILES_GEN) $(HEADERS) 
+		$(MPICPP) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(OPS_LIB_SEQ) $(HDF5_LIB_SEQ) -o $(APP)_seq 
 
 #
 # Tiled version
 #
-$(APP)_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_seq.a
-		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -D$(OPS_COMPILER) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) $(OPS_LIB_SEQ) $(HDF5_LIB_SEQ) -o $(APP)_tiled
+$(APP)_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_seq.a $(OPS_FILES_GEN) $(HEADERS)
+		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -D$(OPS_COMPILER) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(OPS_LIB_SEQ) $(HDF5_LIB_SEQ) -o $(APP)_tiled
 
-$(APP)_mpi_tiled: $(OPS_FILES_GEN) \
+$(APP)_mpi_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_mpi.a $(OPS_FILES_GEN) \
                 $(HEADERS)
-		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -DOPS_MPI -D$(OPS_COMPILER) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./Tiled/$(SEQ_KERNELS) $(OPS_LIB_MPI) $(HDF5_LIB_MPI) -o $(APP)_mpi_tiled
+		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -DOPS_MPI -D$(OPS_COMPILER) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(OPS_LIB_MPI) $(HDF5_LIB_MPI) -o $(APP)_mpi_tiled
  
 #
 # CUDA version
@@ -96,14 +96,13 @@ $(APP)_mpi_cuda_tiled: ./CUDA/$(APP)_kernels_mpi_tiled_cu.o Makefile .generated 
 				$(NVCC) $(VAR) $(INC) $(NVCCFLAGS) -DOPS_MPI -DOPS_LAZY $(CODE_GEN_CUDA) -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK -I$(MPI_INSTALL_PATH)/include \
 				-c -o ./CUDA/$(APP)_kernels_mpi_tiled_cu.o ./CUDA/$(MAIN_SRC)_kernels.cu
 
-$(APP)_mpi_inline: .generated $(mpiinline_obj_list) $(mpiinline_c_obj_list) $(OPS_FILES_GEN) $(HEADERS) Makefile $(OPS_INSTALL_PATH)/c/lib/libops_mpi.a
-				$(MPICC) $(MPIFLAGS) $(OMPFLAGS) -DOPS_MPI  -I$(C_OPS_INC) $(HDF5_INC) \
+$(APP)_mpi_inline: .generated $(OPS_FILES_GEN) $(HEADERS) Makefile $(OPS_INSTALL_PATH)/c/lib/libops_mpi.a
+				$(MPICC) $(CCFLAGS) $(OMPFLAGS) -DOPS_MPI  -I$(C_OPS_INC) $(HDF5_INC) \
 			        -I. MPI_inline/$(MAIN_SRC)_kernels_c.c -c -o MPI_inline/$(MAIN_SRC)_kernels_c.o
-				$(MPICPP) $(MPIFLAGS) $(OMPFLAGS) -DOPS_MPI -I$(C_OPS_INC) $(HDF5_INC) \
+				$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -DOPS_MPI -I$(C_OPS_INC) $(HDF5_INC) \
 				-I. MPI_inline/$(MAIN_SRC)_kernels.cpp -c -o MPI_inline/$(MAIN_SRC)_kernels.o
-				$(MPICPP) $(MPIFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) $(HDF5_INC) -L$(C_OPS_LIB)  -DOPS_MPI \
+				$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) $(HDF5_INC) -L$(C_OPS_LIB)  -DOPS_MPI \
 					$(OPS_FILES_GEN) -I. MPI_inline/$(MAIN_SRC)_kernels_c.o MPI_inline/$(MAIN_SRC)_kernels.o $(OPS_LIB_MPI) $(HDF5_LIB_MPI) -o $(APP)_mpi_inline
-
 
 $(APP)_openacc: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_cuda.a
 	$(CC) $(OpenACCFLAGS) $(CCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -I$(CUDA_INC) \
@@ -121,10 +120,10 @@ $(APP)_mpi_openacc: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_mpi_cud
 	        $(MPICPP) $(OpenACCFLAGS) $(CUDA_ALIGNE_FLAG) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) -I$(CUDA_INC) -L$(CUDA_LIB) \
 	        $(OPS_FILES_GEN) -I. OpenACC/$(MAIN_SRC)_kernels_c_mpi.o OpenACC/$(MAIN_SRC)_kernels_mpi.o -lcudart -lops_mpi_cuda $(HDF5_LIB_MPI) -o $(APP)_mpi_openacc
 
-
+CL_SEQ_KERNELS = $(MAIN_SRC)_seq_kernels.cpp
 
 $(APP)_opencl: ./OpenCL/$(MAIN_SRC)_opencl_kernels.o Makefile .generated $(OPS_INSTALL_PATH)/c/lib/libops_opencl.a
-	        $(MPICPP) $(MPIFLAGS) $(OCL_FLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) -L$(OPENCL_LIB) -lOpenCL $(OPS_FILES_GEN) ./OpenCL/$(MAIN_SRC)_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) -lops_opencl $(HDF5_LIB_SEQ) -o $(APP)_opencl
+	        $(MPICPP) $(CXXFLAGS) $(OCL_FLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) -L$(OPENCL_LIB) -lOpenCL $(OPS_FILES_GEN) ./OpenCL/$(MAIN_SRC)_opencl_kernels.o -I. ./OpenCL/$(CL_SEQ_KERNELS) -lops_opencl $(HDF5_LIB_SEQ) -o $(APP)_opencl
 
 ./OpenCL/$(MAIN_SRC)_opencl_kernels.o: .generated Makefile
 		$(MPICPP) $(CXXFLAGS) $(OCL_FLAGS) $(VAR) -I$(OPENCL_INC) $(INC) -I$(C_OPS_INC) -I. \
@@ -132,10 +131,10 @@ $(APP)_opencl: ./OpenCL/$(MAIN_SRC)_opencl_kernels.o Makefile .generated $(OPS_I
 
 
 $(APP)_mpi_opencl: ./OpenCL/$(MAIN_SRC)_mpi_opencl_kernels.o .generated Makefile $(OPS_INSTALL_PATH)/c/lib/libops_opencl.a
-		$(MPICPP) $(MPIFLAGS) -DOPS_MPI $(OCL_FLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) -L$(OPENCL_LIB) -lOpenCL $(OPS_FILES_GEN) ./OpenCL/$(MAIN_SRC)_mpi_opencl_kernels.o -I. ./OpenCL/$(SEQ_KERNELS) $(OPS_LIB_MPI)_opencl $(HDF5_LIB_MPI) -o $(APP)_mpi_opencl
+		$(MPICPP) $(CXXFLAGS) -DOPS_MPI $(OCL_FLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) -L$(OPENCL_LIB) -lOpenCL $(OPS_FILES_GEN) ./OpenCL/$(MAIN_SRC)_mpi_opencl_kernels.o -I. ./OpenCL/$(CL_SEQ_KERNELS) $(OPS_LIB_MPI)_opencl $(HDF5_LIB_MPI) -o $(APP)_mpi_opencl
 
 ./OpenCL/$(MAIN_SRC)_mpi_opencl_kernels.o: .generated ./OpenCL/$(MAIN_SRC)_opencl_kernels.cpp Makefile
-	        $(MPICPP) $(MPIFLAGS) $(VAR) -I$(OPENCL_INC) $(INC) -I$(C_OPS_INC) -I. -DOPS_MPI \
+	        $(MPICPP) $(CXXFLAGS) $(VAR) -I$(OPENCL_INC) $(INC) -I$(C_OPS_INC) -I. -DOPS_MPI \
                 -c -o ./OpenCL/$(MAIN_SRC)_mpi_opencl_kernels.o ./OpenCL/$(MAIN_SRC)_opencl_kernels.cpp
 
 

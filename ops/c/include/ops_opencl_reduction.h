@@ -1,5 +1,6 @@
 #ifndef __OPS_OPENCL_REDUCTION_H
 #define __OPS_OPENCL_REDUCTION_H
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 /*
 * Open source copyright declaration based on BSD open source template:
 * http://www.opensource.org/licenses/bsd-license.php
@@ -32,7 +33,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief Core header file for the ops cuda reductions - adapted from OP2
+/** @file
+  * @brief Core header file for the ops cuda reductions - adapted from OP2
   * @author Gihan Mudalige, Istvan Reguly
   * @details This file provides an optimised implementation for reduction of
   * OPS global variables. It is separated from the op_cuda_rt_support.h file
@@ -145,5 +147,5 @@ void reduce_int(int value, __local int *scratch, __global int *result,
     result[0] = scratch[0];
   }
 }
-
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_OPENCL_REDUCTION_H */

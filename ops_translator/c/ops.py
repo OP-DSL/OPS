@@ -29,6 +29,34 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+## @file
+## @brief
+#
+#  OPS source code transformation tool (for the C/C++ API)
+#
+#  This tool parses the user's original source code to produce
+#  target-specific code to execute the user's kernel functions.
+#
+#  This prototype is written in Python
+#
+#  usage: ./ops.py file1, file2 ,...
+#
+#  This takes as input
+#
+#  file1.cpp, file2.cpp, ...
+#
+#  and produces as output modified versions
+#
+#  file1_ops.cpp, file2_ops.cpp, ...
+#
+#  then calls a number of target-specific code generators
+#  to produce individual kernel files of the form
+#
+#  xxx_seq_kernel.cpp -- for single threaded x86 execution (also used for MPI)
+#  xxx_omp_kernel.cpp -- for OpenMP x86 execution
+#  xxx_kernel.cu -- for CUDA execution
+#
+
 """
 OPS source code transformation tool (for the C/C++ API)
 
@@ -61,10 +89,8 @@ import re
 import datetime
 
 """import SEQ/MPI, OpenMP, CUDA, OpenACC and OpenCL code generation functions"""
-from ops_gen_mpi import ops_gen_mpi
 from ops_gen_mpi_inline import ops_gen_mpi_inline
 from ops_gen_mpi_lazy import ops_gen_mpi_lazy
-from ops_gen_mpi_openmp import ops_gen_mpi_openmp
 from ops_gen_mpi_cuda import ops_gen_mpi_cuda
 from ops_gen_mpi_openacc import ops_gen_mpi_openacc
 from ops_gen_mpi_opencl import ops_gen_mpi_opencl
@@ -232,7 +258,7 @@ def get_arg_dat(arg_string, j, macro_defs):
 
     # check for syntax errors
     if not(len(dat_args_string.split(',')) == 5 or len(dat_args_string.split(',')) == 6 ):
-      print 'Error parsing op_arg_dat(%s): must have five or six arguments' % dat_args_string
+      print('Error parsing op_arg_dat(%s): must have five or six arguments' % dat_args_string)
       return
 
     if len(dat_args_string.split(',')) == 5:
@@ -796,10 +822,8 @@ def main(source_files):
   #
 
 
-  ops_gen_mpi(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_inline(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_lazy(str(source_files[0]), date, consts, kernels, soa_set)
-  ops_gen_mpi_openmp(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_cuda(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_openacc(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_opencl(str(source_files[0]), date, consts, kernels, soa_set)
@@ -807,7 +831,7 @@ def main(source_files):
   import subprocess
   retcode = subprocess.call("which clang-format > /dev/null", shell=True)
   if retcode == 0:
-    retcode = subprocess.call("$OPS_INSTALL_PATH/../ops_translator/c/format.sh", shell=True)
+    retcode = 0 #subprocess.call("$OPS_INSTALL_PATH/../ops_translator/c/format.sh", shell=True)
   else:
     print('Cannot find clang-format in PATH')
     print('Install and add clang-format to PATH to format generated code to conform to code formatting guidelines')

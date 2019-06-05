@@ -32,9 +32,11 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 
-! @brief header file declaring the functions for the ops mpi backend (Fortran API)
-! @author Gihan Mudalige, Istvan Reguly
-! @details Declares the OPS macros
+!> @file
+!! @brief header file declaring the functions for the ops mpi backend (Fortran API)
+!! @author Gihan Mudalige, Istvan Reguly
+!! @details Declares the OPS macros
+!!
 
 
 #define OPS_ACC_MD0(d,x,y) ((x)*multi_d0+(d)+(xdim0*(y)*multi_d0))

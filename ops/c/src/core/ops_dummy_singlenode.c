@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief dummy function for CPU backend
+/** @file
+  * @brief dummy function for CPU backend
   * @author Gihan Mudalige
   * @details Implements dummy functions from the MPI backend for the sequential
   * cpu backend (OpenMP and Sequential)
@@ -244,6 +245,15 @@ void ops_checkpointing_calc_range(ops_dat dat, const int *range,
     discarded_range[2 * d + 1] =
         discarded_range[2 * d] + range[2 * d + 1] - range[2 * d];
   }
+}
+
+int compute_ranges(ops_arg *args, int nargs, ops_block block, int *range, int * start, int * end, int *arg_idx) {
+  for (int n = 0; n < block->dims; n++) {
+    start[n] = range[2 * n];
+    end[n] = range[2 * n + 1];
+    arg_idx[n] = range[2 * n];
+  }
+  return true;
 }
 
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp) {

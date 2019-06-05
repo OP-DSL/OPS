@@ -30,18 +30,44 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/* @brief OPS API calls and wrapper routins for Tridiagonal solvers
-* @author Gihan Mudalige, Istvan Reguly
-* @details Implementations of the OPS API calls, wrapper routines and other
-* functions for interfacing with external Tridiagonal libraries
-*/
+/** @file
+  * @brief OPS API calls and wrapper routins for Tridiagonal solvers
+  * @author Gihan Mudalige, Istvan Reguly
+  * @details Implementations of the OPS API calls, wrapper routines and other
+  * functions for interfacing with external Tridiagonal libraries
+  */
 
 #include <ops_lib_core.h>
 #include <ops_mpi_core.h>
 
 #define FP double // doubles when calling thomas should be FPs
 #define N_MAX 1024
-#include "trid_mpi_cpu.hpp"
+void thomas_forward(
+    const FP *__restrict__ a,
+    const FP *__restrict__ b,
+    const FP *__restrict__ c,
+    const FP *__restrict__ d,
+    const FP *__restrict__ u,
+          FP *__restrict__ aa,
+          FP *__restrict__ cc,
+          FP *__restrict__ dd,
+    int N,
+    int stride);
+
+void thomas_backward(
+    const FP *__restrict__ aa, 
+    const FP *__restrict__ cc, 
+    const FP *__restrict__ dd, 
+          FP *__restrict__ d, 
+    int N, 
+    int stride); 
+
+void thomas_on_reduced(
+    const FP* __restrict__ aa_r,
+    const FP* __restrict__ cc_r,
+          FP* __restrict__ dd_r,
+    int N,
+    int stride);
 
 #ifdef __cplusplus
 extern "C" {

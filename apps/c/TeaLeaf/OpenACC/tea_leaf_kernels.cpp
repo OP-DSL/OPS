@@ -11,73 +11,86 @@ void ops_init_backend() {
   ops_device_initialised_externally = 1;
 }
 
-void ops_decl_const_char(int dim, char const *type, int size, char *dat,
-                         char const *name) {
-  if (!strcmp(name, "field")) {
-    field = *(field_type *)dat;
-  } else if (!strcmp(name, "grid")) {
-    grid = *(grid_type *)dat;
-  } else if (!strcmp(name, "number_of_states")) {
-    number_of_states = *(int *)dat;
-  } else if (!strcmp(name, "states")) {
-    states = (state_type *)dat;
-  } else if (!strcmp(name, "g_circ")) {
-    g_circ = *(int *)dat;
-  } else if (!strcmp(name, "g_point")) {
-    g_point = *(int *)dat;
-  } else if (!strcmp(name, "g_rect")) {
-    g_rect = *(int *)dat;
-  } else {
-    printf("error: unknown const name\n");
-    exit(1);
+void ops_decl_const_char(int dim, char const *type,
+int size, char *dat, char const *name){
+  if (!strcmp(name,"field")) {
+    field = *(field_type*)dat;
+  }
+  else
+  if (!strcmp(name,"grid")) {
+    grid = *(grid_type*)dat;
+  }
+  else
+  if (!strcmp(name,"number_of_states")) {
+    number_of_states = *(int*)dat;
+  }
+  else
+  if (!strcmp(name,"states")) {
+    states = (state_type*)dat;
+  }
+  else
+  if (!strcmp(name,"g_circ")) {
+    g_circ = *(int*)dat;
+  }
+  else
+  if (!strcmp(name,"g_point")) {
+    g_point = *(int*)dat;
+  }
+  else
+  if (!strcmp(name,"g_rect")) {
+    g_rect = *(int*)dat;
+  }
+  else
+  {
+    printf("error: unknown const name\n"); exit(1);
   }
 }
 
-// user kernel files
+//user kernel files
 #include "field_summary_kernel_openacc_kernel.cpp"
 #include "generate_chunk_kernel_openacc_kernel.cpp"
-#include "initialise_chunk_kernel_cellx_openacc_kernel.cpp"
-#include "initialise_chunk_kernel_celly_openacc_kernel.cpp"
-#include "initialise_chunk_kernel_volume_openacc_kernel.cpp"
-#include "initialise_chunk_kernel_x_openacc_kernel.cpp"
-#include "initialise_chunk_kernel_xx_openacc_kernel.cpp"
-#include "initialise_chunk_kernel_y_openacc_kernel.cpp"
-#include "initialise_chunk_kernel_yy_openacc_kernel.cpp"
 #include "initialise_chunk_kernel_zero_openacc_kernel.cpp"
 #include "initialise_chunk_kernel_zero_x_openacc_kernel.cpp"
 #include "initialise_chunk_kernel_zero_y_openacc_kernel.cpp"
+#include "initialise_chunk_kernel_xx_openacc_kernel.cpp"
+#include "initialise_chunk_kernel_yy_openacc_kernel.cpp"
+#include "initialise_chunk_kernel_x_openacc_kernel.cpp"
+#include "initialise_chunk_kernel_y_openacc_kernel.cpp"
+#include "initialise_chunk_kernel_cellx_openacc_kernel.cpp"
+#include "initialise_chunk_kernel_celly_openacc_kernel.cpp"
+#include "initialise_chunk_kernel_volume_openacc_kernel.cpp"
 #include "set_field_kernel_openacc_kernel.cpp"
-#include "tea_leaf_axpby_kernel_openacc_kernel.cpp"
+#include "tea_leaf_init_zero2_kernel_openacc_kernel.cpp"
+#include "tea_leaf_yeqx_kernel_openacc_kernel.cpp"
+#include "tea_leaf_dot_kernel_openacc_kernel.cpp"
+#include "tea_leaf_cg_calc_w_reduce_kernel_openacc_kernel.cpp"
 #include "tea_leaf_axpy_kernel_openacc_kernel.cpp"
 #include "tea_leaf_cg_calc_ur_r_reduce_kernel_openacc_kernel.cpp"
-#include "tea_leaf_cg_calc_w_reduce_kernel_openacc_kernel.cpp"
+#include "tea_leaf_axpby_kernel_openacc_kernel.cpp"
 #include "tea_leaf_cheby_init_kernel_openacc_kernel.cpp"
-#include "tea_leaf_common_init_Kx_Ky_kernel_openacc_kernel.cpp"
-#include "tea_leaf_common_init_diag_init_kernel_openacc_kernel.cpp"
-#include "tea_leaf_common_init_kernel_openacc_kernel.cpp"
+#include "tea_leaf_recip3_kernel_openacc_kernel.cpp"
+#include "tea_leaf_xpy_kernel_openacc_kernel.cpp"
 #include "tea_leaf_common_init_u_u0_kernel_openacc_kernel.cpp"
-#include "tea_leaf_common_residual_kernel_openacc_kernel.cpp"
-#include "tea_leaf_dot_kernel_openacc_kernel.cpp"
-#include "tea_leaf_init_zero2_kernel_openacc_kernel.cpp"
+#include "tea_leaf_recip_kernel_openacc_kernel.cpp"
+#include "tea_leaf_common_init_Kx_Ky_kernel_openacc_kernel.cpp"
 #include "tea_leaf_init_zero_kernel_openacc_kernel.cpp"
-#include "tea_leaf_jacobi_kernel_openacc_kernel.cpp"
+#include "tea_leaf_common_init_kernel_openacc_kernel.cpp"
+#include "tea_leaf_recip2_kernel_openacc_kernel.cpp"
+#include "tea_leaf_common_residual_kernel_openacc_kernel.cpp"
 #include "tea_leaf_norm2_kernel_openacc_kernel.cpp"
+#include "tea_leaf_common_init_diag_init_kernel_openacc_kernel.cpp"
+#include "tea_leaf_zeqxty_kernel_openacc_kernel.cpp"
+#include "tea_leaf_jacobi_kernel_openacc_kernel.cpp"
 #include "tea_leaf_ppcg_init1_kernel_openacc_kernel.cpp"
 #include "tea_leaf_ppcg_init2_kernel_openacc_kernel.cpp"
 #include "tea_leaf_ppcg_inner1_kernel_openacc_kernel.cpp"
 #include "tea_leaf_ppcg_inner2_kernel_openacc_kernel.cpp"
 #include "tea_leaf_ppcg_reduce_kernel_openacc_kernel.cpp"
-#include "tea_leaf_recip2_kernel_openacc_kernel.cpp"
-#include "tea_leaf_recip3_kernel_openacc_kernel.cpp"
-#include "tea_leaf_recip_kernel_openacc_kernel.cpp"
-#include "tea_leaf_xpy_kernel_openacc_kernel.cpp"
-#include "tea_leaf_yeqx_kernel_openacc_kernel.cpp"
-#include "tea_leaf_zeqxty_kernel_openacc_kernel.cpp"
-#include "update_halo_kernel1_b1_openacc_kernel.cpp"
 #include "update_halo_kernel1_b2_openacc_kernel.cpp"
-#include "update_halo_kernel1_l1_openacc_kernel.cpp"
-#include "update_halo_kernel1_l2_openacc_kernel.cpp"
-#include "update_halo_kernel1_r1_openacc_kernel.cpp"
-#include "update_halo_kernel1_r2_openacc_kernel.cpp"
-#include "update_halo_kernel1_t1_openacc_kernel.cpp"
+#include "update_halo_kernel1_b1_openacc_kernel.cpp"
 #include "update_halo_kernel1_t2_openacc_kernel.cpp"
+#include "update_halo_kernel1_t1_openacc_kernel.cpp"
+#include "update_halo_kernel1_l2_openacc_kernel.cpp"
+#include "update_halo_kernel1_l1_openacc_kernel.cpp"
+#include "update_halo_kernel1_r2_openacc_kernel.cpp"
+#include "update_halo_kernel1_r1_openacc_kernel.cpp"

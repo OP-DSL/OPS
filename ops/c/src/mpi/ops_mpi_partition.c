@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops mpi partitioning
+/** @file
+  * @brief OPS mpi partitioning
   * @author Gihan Mudalige, adopted from Parallel OCCF routines by Mike Giles
   * @details Implements the single block structured mesh partitioning
   * for distributed memort (MPI) parallelization
@@ -395,8 +396,8 @@ void ops_decomp_dats(sub_block *sb) {
     // Allocate datasets
     if (dat->data == NULL){
       if (dat->is_hdf5 == 0) {
-        // dat->data = (char *)ops_calloc(prod[sb->ndim-1]*dat->elem_size,1);
-        dat->data = (char *)ops_malloc(prod[sb->ndim - 1] * dat->elem_size * 1);
+        dat->data = (char *)ops_calloc(prod[sb->ndim-1]*dat->elem_size,1);
+        //dat->data = (char *)ops_malloc(prod[sb->ndim - 1] * dat->elem_size * 1);
         dat->hdf5_file = "none";
         dat->mem =
             prod[sb->ndim - 1] * dat->elem_size; // this includes the halo sizes

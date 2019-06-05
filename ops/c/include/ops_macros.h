@@ -1,5 +1,6 @@
 #ifndef OPS_MACROS_H
 #define OPS_MACROS_H
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 /*
 * Open source copyright declaration based on BSD open source template:
 * http://www.opensource.org/licenses/bsd-license.php
@@ -32,7 +33,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief header file declaring the functions for the ops mpi backend
+/** @file
+  * @brief header file declaring the functions for the ops mpi backend
   * @author Gihan Mudalige, Istvan Reguly
   * @details Declares the OPS macros
   */
@@ -2631,5 +2633,7 @@ extern int multi_d0, multi_d1, multi_d2, multi_d3, multi_d4, multi_d5, multi_d6,
 }
 #endif
 #endif
+
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif // OPS_MACROS_H
 
