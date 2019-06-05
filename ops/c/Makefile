@@ -83,10 +83,12 @@ hdf5_seq: mklib core
 
 trid: mklib core
 	$(CXX) $(CXXFLAGS) -I$(INC) $(TRID_INC) $(TRID_LIB) -c $(SRC)/tridiag/ops_tridiag.c $(OUT)$(OBJ)/ops_tridiag.o
-	$(CXX) $(CXXFLAGS) -I$(INC) -I$(CUDA_INC) $(TRID_INC) $(TRID_LIB) -c $(SRC)/tridiag/ops_tridiag_cuda.c $(OUT)$(OBJ)/ops_tridiag_cuda.o
-	$(MPICXX) $(CXXFLAGS) -I$(INC) $(CUDA_INC) $(TRID_INC) $(TRID_LIB) -c $(SRC)/tridiag/ops_tridiag_mpi.c $(OUT)$(OBJ)/ops_tridiag_mpi.o
 	$(AR)$(LIB)/libops_trid_seq.a $(OBJ)/ops_tridiag.o
+ifdef CUDA_INSTALL_PATH
+	$(CXX) $(CXXFLAGS) -I$(INC) -I$(CUDA_INC) $(TRID_INC) $(TRID_LIB) -c $(SRC)/tridiag/ops_tridiag_cuda.c $(OUT)$(OBJ)/ops_tridiag_cuda.o
 	$(AR)$(LIB)/libops_trid_cuda.a $(OBJ)/ops_tridiag_cuda.o
+endif
+	$(MPICXX) $(CXXFLAGS) -I$(INC) $(CUDA_INC) $(TRID_INC) $(TRID_LIB) -c $(SRC)/tridiag/ops_tridiag_mpi.c $(OUT)$(OBJ)/ops_tridiag_mpi.o
 	$(AR)$(LIB)/libops_trid_mpi.a $(OBJ)/ops_tridiag_mpi.o
 
 seq: mklib core
