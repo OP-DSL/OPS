@@ -414,6 +414,8 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
           code('#endif')
 
 
+    code(kernel_text)
+
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_MIN:
