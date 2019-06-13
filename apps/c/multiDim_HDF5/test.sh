@@ -108,7 +108,7 @@ echo "All Intel complied applications PASSED"
 rm integers.txt*
 
 cd -
-source ../../scripts/source_pgi_19
+source ../../scripts/source_pgi_19_istvan
 
 make clean
 make -j
