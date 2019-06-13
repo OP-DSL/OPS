@@ -21,11 +21,11 @@ INTEGER(KIND=4):: xdim2_poisson_error_kernel_h  = -1
 contains
 
 !Reduction cuda kernel
-attributes (device) SUBROUTINE ReductionFloat8(reductionResult,inputValue,reductionOperation)
+attributes (device) SUBROUTINE ReductionFloat8(sharedDouble8, reductionResult,inputValue,reductionOperation)
   REAL(kind=8), DIMENSION(:), DEVICE :: reductionResult
   REAL(kind=8) :: inputValue
   INTEGER(kind=4), VALUE :: reductionOperation
-  REAL(kind=8), DIMENSION(0:*), SHARED :: sharedDouble8
+  REAL(kind=8), DIMENSION(0:*) :: sharedDouble8
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: threadID
   threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)
@@ -68,11 +68,11 @@ attributes (device) SUBROUTINE ReductionFloat8(reductionResult,inputValue,reduct
   CALL syncthreads()
   END SUBROUTINE
 
-  attributes (device) SUBROUTINE ReductionInt4(reductionResult,inputValue,reductionOperation)
+  attributes (device) SUBROUTINE ReductionInt4(sharedInt4, reductionResult,inputValue,reductionOperation)
   INTEGER(kind=4), DIMENSION(:), DEVICE :: reductionResult
   INTEGER(kind=4) :: inputValue
   INTEGER(kind=4), VALUE :: reductionOperation
-  INTEGER(kind=4), DIMENSION(0:*), SHARED :: sharedInt4
+  INTEGER(kind=4), DIMENSION(0:*) :: sharedInt4
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: threadID
   threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)
@@ -148,6 +148,7 @@ attributes (global) subroutine poisson_error_kernel_wrap( &
   integer(4) arg2
   real(8), DIMENSION(:), DEVICE :: reductionArrayDevice3
   real(8) :: opsGblDat3Device
+  real(8), DIMENSION(0:*), SHARED :: sharedMem
   integer(4), value :: dat1_base
   integer(4), value :: dat2_base
   integer(4) start(2)
@@ -170,7 +171,7 @@ attributes (global) subroutine poisson_error_kernel_wrap( &
 
   ENDIF
 
-  call ReductionFloat8(reductionArrayDevice3((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat3Device,0)
+  call ReductionFloat8(sharedMem, reductionArrayDevice3((blockIdx%z - 1)*gridDim%y*gridDim%x + (blockIdx%y - 1)*gridDim%x + (blockIdx%x-1) + 1:),opsGblDat3Device,0)
 
 end subroutine
 

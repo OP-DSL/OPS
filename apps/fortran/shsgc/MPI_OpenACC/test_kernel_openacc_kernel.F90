@@ -45,8 +45,6 @@ subroutine test_kernel_wrap( &
   integer(4) end(1)
   integer n_x
 
-  opsDat2LocalAcc = opsDat2Local
-  opsDat2Local_1 = opsDat2Local(1)
 
   !$acc parallel deviceptr(opsDat1Local)   reduction(+:opsDat2Local)
   !$acc loop  reduction(+:opsDat2Local)
@@ -54,10 +52,8 @@ subroutine test_kernel_wrap( &
     call test_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*1), &
     & opsDat2Local )
-    opsDat2Local_1 = opsDat2LocalAcc(1)
   END DO
   !$acc end parallel
-  opsDat2Local(1) = opsDat2Local_1
 
 end subroutine
 
