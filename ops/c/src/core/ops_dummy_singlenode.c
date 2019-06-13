@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief dummy function for CPU backend
+/** @file
+  * @brief dummy function for CPU backend
   * @author Gihan Mudalige
   * @details Implements dummy functions from the MPI backend for the sequential
   * cpu backend (OpenMP and Sequential)
@@ -82,6 +83,36 @@ int zdim0, zdim1, zdim2, zdim3, zdim4, zdim5, zdim6, zdim7, zdim8, zdim9,
     zdim82, zdim83, zdim84, zdim85, zdim86, zdim87, zdim88, zdim89, zdim90,
     zdim91, zdim92, zdim93, zdim94, zdim95, zdim96, zdim97, zdim98, zdim99;
 #endif /* __ZDIMS__ */
+
+#ifndef __UDIMS__
+#define __UDIMS__
+int udim0, udim1, udim2, udim3, udim4, udim5, udim6, udim7, udim8, udim9,
+    udim10, udim11, udim12, udim13, udim14, udim15, udim16, udim17, udim18,
+    udim19, udim20, udim21, udim22, udim23, udim24, udim25, udim26, udim27,
+    udim28, udim29, udim30, udim31, udim32, udim33, udim34, udim35, udim36,
+    udim37, udim38, udim39, udim40, udim41, udim42, udim43, udim44, udim45,
+    udim46, udim47, udim48, udim49, udim50, udim51, udim52, udim53, udim54,
+    udim55, udim56, udim57, udim58, udim59, udim60, udim61, udim62, udim63,
+    udim64, udim65, udim66, udim67, udim68, udim69, udim70, udim71, udim72,
+    udim73, udim74, udim75, udim76, udim77, udim78, udim79, udim80, udim81,
+    udim82, udim83, udim84, udim85, udim86, udim87, udim88, udim89, udim90,
+    udim91, udim92, udim93, udim94, udim95, udim96, udim97, udim98, udim99;
+#endif /* __UDIMS__ */
+
+#ifndef __VDIMS__
+#define __VDIMS__
+int vdim0, vdim1, vdim2, vdim3, vdim4, vdim5, vdim6, vdim7, vdim8, vdim9,
+    vdim10, vdim11, vdim12, vdim13, vdim14, vdim15, vdim16, vdim17, vdim18,
+    vdim19, vdim20, vdim21, vdim22, vdim23, vdim24, vdim25, vdim26, vdim27,
+    vdim28, vdim29, vdim30, vdim31, vdim32, vdim33, vdim34, vdim35, vdim36,
+    vdim37, vdim38, vdim39, vdim40, vdim41, vdim42, vdim43, vdim44, vdim45,
+    vdim46, vdim47, vdim48, vdim49, vdim50, vdim51, vdim52, vdim53, vdim54,
+    vdim55, vdim56, vdim57, vdim58, vdim59, vdim60, vdim61, vdim62, vdim63,
+    vdim64, vdim65, vdim66, vdim67, vdim68, vdim69, vdim70, vdim71, vdim72,
+    vdim73, vdim74, vdim75, vdim76, vdim77, vdim78, vdim79, vdim80, vdim81,
+    vdim82, vdim83, vdim84, vdim85, vdim86, vdim87, vdim88, vdim89, vdim90,
+    vdim91, vdim92, vdim93, vdim94, vdim95, vdim96, vdim97, vdim98, vdim99;
+#endif /* __VDIMS__ */
 
 #ifndef __MULTIDIMS__
 #define __MULTIDIMS__
@@ -216,6 +247,15 @@ void ops_checkpointing_calc_range(ops_dat dat, const int *range,
   }
 }
 
+int compute_ranges(ops_arg *args, int nargs, ops_block block, int *range, int * start, int * end, int *arg_idx) {
+  for (int n = 0; n < block->dims; n++) {
+    start[n] = range[2 * n];
+    end[n] = range[2 * n + 1];
+    arg_idx[n] = range[2 * n];
+  }
+  return true;
+}
+
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp) {
   for (int n = 0; n < block->dims; n++) {
     start[n] = range[2 * n];
@@ -326,4 +366,65 @@ void getIdx(ops_block block, int *start, int *idx) {
   for (int n = 0; n < block_dim; n++) {
     idx[n] = start[n];
   }
+}
+
+int ops_dat_get_local_npartitions(ops_dat dat) {
+  return 1;
+}
+
+char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, int *stride) {
+  ops_get_data(dat);
+  if (stride != NULL)
+    for (int d = 0; d < dat->block->dims; d++)
+      stride[d] = dat->size[d];
+  return dat->data + dat->base_offset;
+}
+void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc) {
+  if (acc != OPS_READ)
+    dat->dirty_hd = 1;
+}
+
+void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
+  ops_get_data(dat);
+  int lsize[OPS_MAX_DIM] = {1};
+  int ldisp[OPS_MAX_DIM] = {1};
+  ops_dat_get_extents(dat, part, ldisp, lsize);
+  lsize[0] *= dat->elem_size/dat->dim; //now in bytes
+  if (dat->block->dims>3) {ops_printf("Error, ops_dat_fetch_data not implemented for dims>3\n"); exit(-1);}
+  if (OPS_soa && dat->dim > 1) {ops_printf("Error, ops_dat_fetch_data not implemented for SoA\n"); exit(-1);}
+
+  for (int k = 0; k < lsize[2]; k++)
+    for (int j = 0; j < lsize[1]; j++)
+      memcpy(&data[k*lsize[0]*lsize[1]+j*lsize[0]],
+             &dat->data[((j-dat->d_m[1] + (k-dat->d_m[2])*dat->size[1])*dat->size[0] - dat->d_m[0])* dat->elem_size],
+             lsize[0]);
+}
+void ops_dat_set_data(ops_dat dat, int part, char *data) {
+  int lsize[OPS_MAX_DIM] = {1};
+  int ldisp[OPS_MAX_DIM] = {1};
+  ops_dat_get_extents(dat, part, ldisp, lsize);
+  lsize[0] *= dat->elem_size/dat->dim; //now in bytes
+  if (dat->block->dims>3) {ops_printf("Error, ops_dat_set_data not implemented for dims>3\n"); exit(-1);}
+  if (OPS_soa && dat->dim > 1) {ops_printf("Error, ops_dat_set_data not implemented for SoA\n"); exit(-1);}
+
+  for (int k = 0; k < lsize[2]; k++)
+    for (int j = 0; j < lsize[1]; j++)
+      memcpy(&dat->data[((j-dat->d_m[1] + (k-dat->d_m[2])*dat->size[1])*dat->size[0] - dat->d_m[0])* dat->elem_size],
+             &data[k*lsize[0]*lsize[1]+j*lsize[0]],
+             lsize[0]);
+
+  dat->dirty_hd = 1;
+}
+
+int ops_dat_get_global_npartitions(ops_dat dat) {
+  return 1;
+}
+
+void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size) {
+  for (int d = 0; d < dat->block->dims; d++) {
+    disp[d] = 0;
+    size[d] = dat->size[d] + dat->d_m[d] - dat->d_p[d];
+  }
+  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++)
+    size[d] = 1;
 }

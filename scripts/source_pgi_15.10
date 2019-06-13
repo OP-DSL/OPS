@@ -3,11 +3,11 @@
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
 unset LD_LIBRARY_PATH
 . ~/.bashrc
-export PATH=/home/mgiles/mudalige/numawrap:$PATH
+export PATH=/home/mudalige/numawrap:$PATH
 
 #OPS specifics
 export OPS_COMPILER=pgi
-export OPS_INSTALL_PATH=/home/mgiles/mudalige/OPS-GIT/OPS/ops
+export OPS_INSTALL_PATH=`git rev-parse --show-toplevel`/ops
 
 #CUDA and NVIDIA OpenCL
 export PATH=/usr/local/cuda/bin:$PATH
@@ -35,6 +35,6 @@ export MPIF90_F90=/opt/pgi/linux86-64/15.10/bin/pgfortran
 export MPICH_FC=/opt/pgi/linux86-64/15.10/bin/pgfortran
 #PGI based HDF5
 unset HDF5_INSTALL_PATH
-export HDF5_INSTALL_PATH=/home/mgiles/mudalige/hdf5-pgi-mpich/
-export LD_LIBRARY_PATH=/home/mgiles/mudalige/hdf5-pgi-mpich/lib:$LD_LIBRARY_PATH
+export HDF5_INSTALL_PATH=/home/mudalige/hdf5-pgi-mpich/
+export LD_LIBRARY_PATH=/home/mudalige/hdf5-pgi-mpich/lib:$LD_LIBRARY_PATH
 export NV_ARCH=Kepler

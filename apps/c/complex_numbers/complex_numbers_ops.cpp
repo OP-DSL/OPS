@@ -51,7 +51,7 @@ void ops_par_loop_complex_numbers_block0_cn_kernel(char const *, ops_block, int,
 
 //#include "complex_numbers_block_0_kernel.h"
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
 
   c0 = 0.500000000000000;
   rc0 = 1.0 / 280.0;

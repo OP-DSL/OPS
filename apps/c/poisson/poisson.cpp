@@ -257,7 +257,7 @@ int main(int argc, char **argv)
                  ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
       }
     }
-		
+
 		if (non_copy) {
 			for (int j = 0; j < ngrid_y; j++) {
 				for (int i = 0; i < ngrid_x; i++) {
@@ -313,6 +313,19 @@ int main(int argc, char **argv)
   }
 
   ops_printf("%lf\n",it1-it0);
+
+
+  free(coordx);
+  free(coordy);
+  free(u);
+  free(u2);
+  free(f);
+  free(ref);
+  free(sizes);
+  free(disps);
+
+  free(blocks);
+  free(halos);
 
   ops_exit();
   return 0;

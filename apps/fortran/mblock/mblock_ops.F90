@@ -58,6 +58,10 @@ program MBLOCK
 
   integer iter_range(4)
 
+  integer npartitions_l, npartitions_g
+  integer d_disp(2), d_size(2)
+  real(8), dimension(:,:), allocatable :: temp2
+
 
 
   call ops_init(2)
@@ -192,6 +196,19 @@ program MBLOCK
 
   call ops_print_dat_to_txtfile(data1, "data0.txt")
   call ops_print_dat_to_txtfile(data2, "data1.txt")
+
+  npartitions_l = ops_dat_get_local_npartitions( data1 )
+  print *, ops_dat_get_local_npartitions( data1 )
+  npartitions_g = ops_dat_get_global_npartitions( data1 )
+  print *,"npartitions l and g ", npartitions_l, npartitions_g
+  call ops_dat_get_extents(data1, 1, d_disp, d_size)
+  print *,"extents: ", d_disp, d_size
+  allocate(temp2(d_size(1), d_size(2)))
+  call ops_dat_fetch_data( data1, 1, temp2 )
+  print *,temp2
+  temp2(5,5) = -100
+  call ops_dat_set_data( data1, 1, temp2 )
+  call ops_print_dat_to_txtfile(data1, "data0_modified.txt")
 
   call ops_exit( )
 end program MBLOCK

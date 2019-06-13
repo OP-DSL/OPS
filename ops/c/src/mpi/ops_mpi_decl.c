@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops mpi declaration
+/** @file
+  * @brief OPS mpi declaration
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the OPS API calls for the mpi backend
   */
@@ -38,11 +39,11 @@
 #include <mpi.h>
 #include <ops_mpi_core.h>
 
-void ops_init(int argc, char **argv, int diags) {
+void ops_init(const int argc, const char **argv, const int diags) {
   int flag = 0;
   MPI_Initialized(&flag);
   if (!flag) {
-    MPI_Init(&argc, &argv);
+    MPI_Init((int *)(&argc), (char ***)&argv);
   }
 
   MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_GLOBAL);
@@ -64,7 +65,7 @@ void ops_exit() {
 }
 
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
-                          int *d_m, int *d_p, char *data, int type_size,
+                          int *d_m, int *d_p, int *stride, char *data, int type_size,
                           char const *type, char const *name) {
 
   /** ---- allocate an empty dat based on the local array sizes computed
@@ -72,7 +73,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
      **/
 
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p,
-                                       data, type_size, type, name);
+                                       stride, data, type_size, type, name);
 
   // dat->user_managed = 0;
   dat->is_hdf5 = 0;
@@ -80,22 +81,21 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   // note that currently we assume replicated dats are read only or initialized
   // just once
   // what to do if not ?? How will the halos be handled
-
   // TODO: proper allocation and TAILQ
   // create list to hold sub-grid decomposition geometries for each mpi process
-  OPS_sub_dat_list = (sub_dat_list *)xrealloc(
+  OPS_sub_dat_list = (sub_dat_list *)ops_realloc(
       OPS_sub_dat_list, OPS_dat_index * sizeof(sub_dat_list));
 
   // store away product array prod[] and MPI_Types for this ops_dat
-  sub_dat_list sd = (sub_dat_list)xmalloc(sizeof(sub_dat));
+  sub_dat_list sd = (sub_dat_list)ops_malloc(sizeof(sub_dat));
   sd->dat = dat;
   sd->dirtybit = 1;
   sd->dirty_dir_send =
-      (int *)xmalloc(sizeof(int) * 2 * block->dims * MAX_DEPTH);
+      (int *)ops_malloc(sizeof(int) * 2 * block->dims * MAX_DEPTH);
   for (int i = 0; i < 2 * block->dims * MAX_DEPTH; i++)
     sd->dirty_dir_send[i] = 1;
   sd->dirty_dir_recv =
-      (int *)xmalloc(sizeof(int) * 2 * block->dims * MAX_DEPTH);
+      (int *)ops_malloc(sizeof(int) * 2 * block->dims * MAX_DEPTH);
   for (int i = 0; i < 2 * block->dims * MAX_DEPTH; i++)
     sd->dirty_dir_recv[i] = 1;
   for (int i = 0; i < OPS_MAX_DIM; i++) {
@@ -120,6 +120,15 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
     ops_print_dat_to_txtfile_core(dat, buf);
   }
 }
+
+void ops_NaNcheck(ops_dat dat) {
+  if (OPS_sub_block_list[dat->block->index]->owned == 1) {
+    char buffer[30];
+    sprintf(buffer, "On rank %d \0", ops_my_global_rank);
+    ops_NaNcheck_core(dat, buffer);
+  }
+}
+
 
 void ops_decl_const_char(int dim, char const *type, int typeSize, char *data,
                          char const *name) {

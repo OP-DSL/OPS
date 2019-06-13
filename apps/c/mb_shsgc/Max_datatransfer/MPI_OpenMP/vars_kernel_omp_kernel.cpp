@@ -55,13 +55,17 @@ void ops_par_loop_vars_kernel(char const *name, ops_block block, int dim,
     ops_timers_core(&c1, &t1);
   }
 
+#ifdef OPS_MPI
+  sub_block_list sb = OPS_sub_block_list[block->index];
+#endif
+
   // compute locally allocated range for the sub-block
 
   int start[1];
   int end[1];
+  int arg_idx[1];
 
 #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
   if (!sb->owned)
     return;
   for (int n = 0; n < 1; n++) {
@@ -82,6 +86,8 @@ void ops_par_loop_vars_kernel(char const *name, ops_block block, int dim,
     if (sb->id_p[n] == MPI_PROC_NULL &&
         (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
       end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
+    if (end[n] < start[n])
+      end[n] = start[n];
   }
 #else
   for (int n = 0; n < 1; n++) {

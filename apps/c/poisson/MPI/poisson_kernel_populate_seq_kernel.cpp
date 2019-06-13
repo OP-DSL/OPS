@@ -45,37 +45,26 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block,
 
 #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
-    return;
-  for (int n = 0; n < 2; n++) {
-    start[n] = sb->decomp_disp[n];
-    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (start[n] >= range[2 * n]) {
-      start[n] = 0;
-    } else {
-      start[n] = range[2 * n] - start[n];
-    }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      start[n] = range[2 * n];
-    if (end[n] >= range[2 * n + 1]) {
-      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
-  }
-#else
-  for (int n = 0; n < 2; n++) {
-    start[n] = range[2 * n];
-    end[n] = range[2 * n + 1];
-  }
 #endif
 #ifdef OPS_DEBUG
   ops_register_args(args, "poisson_kernel_populate");
 #endif
 
+  int arg_idx[2];
+  int arg_idx_base[2];
+#ifdef OPS_MPI
+  if (compute_ranges(args, 6, block, range, start, end, arg_idx) < 0)
+    return;
+#else  // OPS_MPI
+  for (int n = 0; n < 2; n++) {
+    start[n] = range[2 * n];
+    end[n] = range[2 * n + 1];
+    arg_idx[n] = start[n];
+  }
+#endif // OPS_MPI
+  for (int n = 0; n < 2; n++) {
+    arg_idx_base[n] = arg_idx[n];
+  }
   offs[3][0] = args[3].stencil->stride[0] * 1; // unit step in x dimension
   offs[3][1] =
       off2D(1, &start[0], &end[0], args[3].dat->size, args[3].stencil->stride) -
@@ -90,15 +79,6 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block,
   offs[5][1] =
       off2D(1, &start[0], &end[0], args[5].dat->size, args[5].stencil->stride) -
       offs[5][0];
-
-  int arg_idx[2];
-#ifdef OPS_MPI
-  arg_idx[0] = sb->decomp_disp[0] + start[0];
-  arg_idx[1] = sb->decomp_disp[1] + start[1];
-#else
-  arg_idx[0] = start[0];
-  arg_idx[1] = start[1];
-#endif
 
   int off3_0 = offs[3][0];
   int off3_1 = offs[3][1];
@@ -196,11 +176,7 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block,
     p_a[3] = p_a[3] + (dat3 * off3_1);
     p_a[4] = p_a[4] + (dat4 * off4_1);
     p_a[5] = p_a[5] + (dat5 * off5_1);
-#ifdef OPS_MPI
-    arg_idx[0] = sb->decomp_disp[0] + start[0];
-#else
-    arg_idx[0] = start[0];
-#endif
+    arg_idx[0] = arg_idx_base[0];
     arg_idx[1]++;
   }
   if (OPS_diags > 1) {

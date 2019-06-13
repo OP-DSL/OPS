@@ -30,10 +30,13 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops cuda backend implementation
+/** @file
+  * @brief OPS cuda backend implementation
   * @author Gihan Mudalige
   * @details Implements the OPS API calls for the cuda backend
   */
+
+#include <sys/mman.h>
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -46,11 +49,11 @@ char *ops_halo_buffer = NULL;
 char *ops_halo_buffer_d = NULL;
 int ops_halo_buffer_size = 0;
 
-void ops_init(int argc, char **argv, int diags) {
+void ops_init(const int argc, const char **argv, const int diags) {
   ops_init_core(argc, argv, diags);
 
-  if ((OPS_block_size_x * OPS_block_size_y) > 1024) {
-    printf("Error: OPS_block_size_x*OPS_block_size_y should be less than 1024 "
+  if ((OPS_block_size_x * OPS_block_size_y * OPS_block_size_z) > 1024) {
+    printf("Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 "
            "-- error OPS_block_size_*\n");
     exit(-1);
   }
@@ -84,13 +87,13 @@ void ops_exit() {
 }
 
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
-                          int *d_m, int *d_p, char *data, int type_size,
+                          int *d_m, int *d_p, int *stride, char *data, int type_size,
                           char const *type, char const *name) {
 
   /** ----             allocate an empty dat             ---- **/
 
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p,
-                                       data, type_size, type, name);
+                                       stride, data, type_size, type, name);
 
   int bytes = size * type_size;
   for (int i = 0; i < block->dims; i++)
@@ -102,12 +105,17 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
         1; // will be reset to 0 if called from ops_decl_dat_hdf5()
     dat->is_hdf5 = 0;
     dat->hdf5_file = "none"; // will be set to an hdf5 file if called from
+    ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
+            ( void ** ) &( dat->data ), bytes );
                              // ops_decl_dat_hdf5()
   } else {
     // Allocate memory immediately
-    dat->data = (char *)calloc(bytes, 1); // initialize data bits to 0
+    dat->data = (char *)ops_calloc(bytes, 1); // initialize data bits to 0
     dat->user_managed = 0;
     dat->mem = bytes;
+    dat->data_d = NULL;
+    ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
+            ( void ** ) NULL, bytes );
   }
 
   // Compute offset in bytes to the base index
@@ -120,8 +128,8 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     cumsize *= dat->size[i];
   }
 
-  ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
-    ( void ** ) &( dat->data ), bytes );
+
+  dat->x_pad = 0; // no padding for data alignment
 
   return dat;
 }
@@ -164,6 +172,12 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
   // need to get data from GPU
   ops_cuda_get_data(dat);
   ops_print_dat_to_txtfile_core(dat, file_name);
+}
+
+void ops_NaNcheck(ops_dat dat) {
+  // need to get data from GPU
+  ops_cuda_get_data(dat);
+  ops_NaNcheck_core(dat, "");
 }
 
 void ops_partition(const char *routine) {
@@ -296,3 +310,4 @@ void ops_halo_transfer(ops_halo_group group) {
 
 int getOPS_block_size_x() { return OPS_block_size_x; }
 int getOPS_block_size_y() { return OPS_block_size_y; }
+int getOPS_block_size_z() { return OPS_block_size_z; }

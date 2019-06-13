@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief HDF5 file I/O backend implementation for none-MPI parallelisations
+/** @file
+  * @brief HDF5 file I/O backend implementation for none-MPI parallelisations
   * @author Gihan Mudalige (started 28-08-2015)
   * @details Implements the OPS API calls for the HDF5 file I/O functionality
   */
@@ -255,6 +256,67 @@ void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
 }
 
 /*******************************************************************************
+* Routine to remove x-dimension padding introduced when creating dats to be
+* x-dimension memory aligned
+* this needs to be removed when writing to HDF5 files  - dimension of block is 1
+********************************************************************************/
+void remove_padding1D(ops_dat dat, hsize_t *size, char *data) {
+  int index = 0;
+  int count = 0;
+  for (int i = 0; i < size[0]; i++) {
+    index = i;
+    memcpy(&data[count * dat->elem_size], &dat->data[index * dat->elem_size],
+           dat->elem_size);
+    count++;
+  }
+  return;
+}
+
+/*******************************************************************************
+* Routine to remove x-dimension padding introduced when creating dats to be
+* x-dimension memory aligned
+* this needs to be removed when writing to HDF5 files  - dimension of block is 2
+********************************************************************************/
+void remove_padding2D(ops_dat dat, hsize_t *size, char *data) {
+  int index = 0;
+  int count = 0;
+    for (int j = 0; j < size[1]; j++) {
+      for (int i = 0; i < size[0]; i++) {
+        index = i + j * dat->size[0];
+        memcpy(&data[count * dat->elem_size],
+               &dat->data[index * dat->elem_size], dat->elem_size);
+        count++;
+      }
+    }
+  return;
+}
+
+/*******************************************************************************
+* Routine to remove x-dimension padding introduced when creating dats to be
+* x-dimension memory aligned
+* this needs to be removed when writing to HDF5 files  - dimension of block is 3
+********************************************************************************/
+void remove_padding3D(ops_dat dat, hsize_t *size, char *data) {
+  int index = 0;
+  int count = 0;
+
+  for (int k = 0; k < size[2]; k++) {
+    for (int j = 0; j < size[1]; j++) {
+      for (int i = 0; i < size[0]; i++) {
+        index = i + j * dat->size[0] + // need to stride in dat->size as data
+                                       // block includes intra-block halos
+                k * dat->size[0] * dat->size[1]; // +
+
+        memcpy(&data[count * dat->elem_size],
+               &dat->data[index * dat->elem_size], dat->elem_size);
+        count++;
+      }
+    }
+  }
+  return;
+}
+
+/*******************************************************************************
 * Routine to write an ops_dat to a named hdf5 file,
 * if file does not exist, creates it
 * if the data set does not exists in file creates data set
@@ -285,6 +347,20 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     // the number of elements thats actually written
     g_size[d] = dat->size[d];
   }
+
+  /* Need to strip out the padding from the x-dimension*/
+  g_size[0] = g_size[0] - dat->x_pad;
+  int t_size = 1;
+  for (int d = 0; d < block->dims; d++)
+    t_size *= g_size[d];
+  char *data = (char *)ops_malloc(t_size * dat->elem_size);
+
+  if (block->dims == 1)
+    remove_padding1D(dat, g_size, data);
+  if (block->dims == 2)
+    remove_padding2D(dat, g_size, data);
+  if (block->dims == 3)
+    remove_padding3D(dat, g_size, data);
 
   // make sure we multiply by the number of data values per element (i.e.
   // dat->dim)
@@ -346,23 +422,23 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0)
         H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_DOUBLE, dat->data);
+                         H5T_NATIVE_DOUBLE, data);
       else if (strcmp(dat->type, "float") == 0 ||
                strcmp(dat->type, "real(4)") == 0 ||
                strcmp(dat->type, "real") == 0)
         H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_FLOAT, dat->data);
+                         H5T_NATIVE_FLOAT, data);
       else if (strcmp(dat->type, "int") == 0 ||
                strcmp(dat->type, "int(4)") == 0 ||
                strcmp(dat->type, "integer(4)") == 0)
         H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_INT, dat->data);
+                         H5T_NATIVE_INT, data);
       else if (strcmp(dat->type, "long") == 0)
         H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_LONG, dat->data);
+                         H5T_NATIVE_LONG, data);
       else if (strcmp(dat->type, "long long") == 0)
         H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_LLONG, dat->data);
+                         H5T_NATIVE_LLONG, data);
       else {
         printf("Error: Unknown type in ops_fetch_dat_hdf5_file()\n");
         exit(-2);
@@ -380,8 +456,16 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
                             block->dims); // size
       H5LTset_attribute_int(group_id, dat->name, "d_m", dat->d_m,
                             block->dims); // d_m
-      H5LTset_attribute_int(group_id, dat->name, "d_p", dat->d_p,
+
+      // need to substract x_pad from d_p before writing attribute to file
+      int orig_d_p[block->dims];
+      for (int d = 0; d < block->dims; d++) orig_d_p[d] = dat->d_p[d];
+      orig_d_p[0] = dat->d_p[0] - dat->x_pad;
+
+      H5LTset_attribute_int(group_id, dat->name, "d_p", orig_d_p,
                             block->dims); // d_p
+
+
       H5LTset_attribute_int(group_id, dat->name, "base", dat->base,
                             block->dims);                               // base
       H5LTset_attribute_string(group_id, dat->name, "type", dat->type); // type
@@ -497,7 +581,7 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
                stencil_name);
 
   // ops_stencil exists .. now check ops_type and dims
-  char read_ops_type[10];
+  char read_ops_type[20];
   if (H5LTget_attribute_string(file_id, stencil_name, "ops_type",
                                read_ops_type) < 0) {
     ops_printf("Error: ops_decl_stencil_hdf5: Attribute \"ops_type\" not found "
@@ -831,7 +915,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   int t_size = 1;
   for (int d = 0; d < block->dims; d++)
     t_size *= read_size[d] - read_d_m[d] + read_d_p[d];
-  char *data = (char *)malloc(t_size * dat_dim * type_size);
+  char *data = (char *)ops_malloc(t_size * dat_dim * type_size);
 
   if (strcmp(read_type, "double") == 0)
     H5LTread_dataset(group_id, dat_name, H5T_NATIVE_DOUBLE, data);
@@ -848,10 +932,11 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
     exit(-2);
   }
 
+  int stride[] = {1,1,1,1,1};
   ops_dat created_dat = ops_decl_dat_char(
       block, dat_dim, read_size /*global dat size in each dimension*/,
-      read_base, read_d_m, read_d_p, data, type_size /*size of(type)*/, type,
-      dat_name);
+      read_base, read_d_m, read_d_p, stride, data, type_size /*size of(type)*/, type,
+      dat_name); //TODO: multigridgrid stride support
 
   created_dat->is_hdf5 = 1;
   created_dat->hdf5_file = copy_str(file_name);
@@ -892,7 +977,7 @@ void ops_dump_to_hdf5(char const *file_name) {
     ops_fetch_stencil_hdf5_file(OPS_stencil_list[i], file_name);
   }
 
-  printf("halo index = %d \n", OPS_halo_index);
+  // printf("halo index = %d \n", OPS_halo_index);
   for (int i = 0; i < OPS_halo_index; i++) {
     printf("Dumping halo %15s--%15s to HDF5 file %s\n",
            OPS_halo_list[i]->from->name, OPS_halo_list[i]->to->name, file_name);
@@ -910,7 +995,257 @@ char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
   int t_size = 1;
   for (int d = 0; d < dat->block->dims; d++)
     t_size *= dat->size[d];
-  u_dat = (char *)malloc(t_size * dat->elem_size);
+  u_dat = (char *)ops_malloc(t_size * dat->elem_size);
   memcpy(u_dat, dat->data, t_size * dat->elem_size);
   return (u_dat);
+}
+
+/*******************************************************************************
+* Routine to read in a constant from a named hdf5 file
+*******************************************************************************/
+
+void ops_get_const_hdf5(char const *name, int dim, char const *type,
+                       char *const_data, char const *file_name) {
+  // HDF5 APIs definitions
+  hid_t file_id;   // file identifier
+  hid_t dset_id;   // dataset identifier
+  hid_t dataspace; // data space identifier
+  hid_t attr;      // attribute identifier
+
+  if (file_exist(file_name) == 0) {
+    ops_printf("File %s does not exist .... aborting ops_get_const_hdf5()\n",
+              file_name);
+    exit(2);
+  }
+
+  file_id = H5Fopen(file_name, H5F_ACC_RDONLY, H5P_DEFAULT);
+
+  /// find dimension of this constant with available attributes
+  int const_dim = 0;
+
+  // open existing data set
+  dset_id = H5Dopen(file_id, name, H5P_DEFAULT);
+  if (dset_id < 0) {
+    ops_printf("dataset '%s' not found in file '%s'\n", name, file_name);
+    H5Fclose(file_id);
+    const_data = NULL;
+    return;
+  }
+
+  // get OID of the dim attribute
+  attr = H5Aopen(dset_id, "dim", H5P_DEFAULT);
+  H5Aread(attr, H5T_NATIVE_INT, &const_dim);
+  H5Aclose(attr);
+  H5Dclose(dset_id);
+  if (const_dim != dim) {
+    ops_printf("dim of constant %d in file %s and requested dim %d do not match\n",
+              const_dim, file_name, dim);
+    exit(2);
+  }
+
+  // find type with available attributes
+  dataspace = H5Screate(H5S_SCALAR);
+  hid_t atype = H5Tcopy(H5T_C_S1);
+  dset_id = H5Dopen(file_id, name, H5P_DEFAULT);
+  attr = H5Aopen(dset_id, "type", H5P_DEFAULT);
+
+  int attlen = H5Aget_storage_size(attr);
+  H5Tset_size(atype, attlen + 1);
+
+  // read attribute
+  char typ[attlen + 1];
+  H5Aread(attr, atype, typ);
+  H5Aclose(attr);
+  H5Sclose(dataspace);
+  H5Dclose(dset_id);
+  if (strcmp(typ, type)!=0) {
+    ops_printf(
+        "type of constant %s in file %s and requested type %s do not match, performing automatic type conversion\n",
+        typ, file_name, type);
+    strcpy(typ,type);
+  }
+
+  // Create the dataset with default properties and close dataspace.
+  dset_id = H5Dopen(file_id, name, H5P_DEFAULT);
+  dataspace = H5Dget_space(dset_id);
+
+  char *data;
+  // initialize data buffer and read data
+  if (strcmp(typ, "int") == 0 || strcmp(typ, "int(4)") == 0 ||
+      strcmp(typ, "integer") == 0 || strcmp(typ, "integer(4)") == 0) {
+    data = (char *)xmalloc(sizeof(int) * const_dim);
+    H5Dread(dset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+    memcpy((void *)const_data, (void *)data, sizeof(int) * const_dim);
+  } else if (strcmp(typ, "long") == 0) {
+    data = (char *)xmalloc(sizeof(long) * const_dim);
+    H5Dread(dset_id, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+    memcpy((void *)const_data, (void *)data, sizeof(long) * const_dim);
+  } else if (strcmp(typ, "long long") == 0) {
+    data = (char *)xmalloc(sizeof(long long) * const_dim);
+    H5Dread(dset_id, H5T_NATIVE_LLONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+    memcpy((void *)const_data, (void *)data, sizeof(long long) * const_dim);
+  } else if (strcmp(typ, "float") == 0 || strcmp(typ, "real(4)") == 0 ||
+             strcmp(typ, "real") == 0) {
+    data = (char *)xmalloc(sizeof(float) * const_dim);
+    H5Dread(dset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+    memcpy((void *)const_data, (void *)data, sizeof(float) * const_dim);
+  } else if (strcmp(typ, "double") == 0 ||
+             strcmp(typ, "double precision") == 0 ||
+             strcmp(typ, "real(8)") == 0) {
+    data = (char *)xmalloc(sizeof(double) * const_dim);
+    H5Dread(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+    memcpy((void *)const_data, (void *)data, sizeof(double) * const_dim);
+  } else if (strcmp(typ, "char") == 0) {
+    data = (char *)xmalloc(sizeof(char) * const_dim);
+    H5Dread(dset_id, H5T_NATIVE_CHAR, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+    memcpy((void *)const_data, (void *)data, sizeof(char) * const_dim);
+  } else {
+    ops_printf("Unknown type in file %s for constant %s\n", file_name, name);
+    exit(2);
+  }
+
+  free(data);
+
+  H5Dclose(dset_id);
+  H5Fclose(file_id);
+}
+
+/*******************************************************************************
+* Routine to write a constant to a named hdf5 file
+*******************************************************************************/
+
+void ops_write_const_hdf5(char const *name, int dim, char const *type,
+                         char *const_data, char const *file_name) {
+  // letting know that writing is happening ...
+  ops_printf("Writing '%s' to file '%s'\n", name, file_name);
+
+  // HDF5 APIs definitions
+  hid_t file_id;   // file identifier
+  hid_t dset_id;   // dataset identifier
+  hid_t dataspace; // data space identifier
+
+  if (file_exist(file_name) == 0) {
+    if (OPS_diags > 3) {
+      ops_printf("File %s does not exist .... creating file\n", file_name);
+    }
+    file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    H5Fclose(file_id);
+  }
+
+  ops_printf("Writing constant to %s\n", file_name);
+
+  /* Open the existing file. */
+  file_id = H5Fopen(file_name, H5F_ACC_RDWR, H5P_DEFAULT);
+
+  // Create the dataspace for the dataset.
+  hsize_t dims_of_const = {dim};
+  dataspace = H5Screate_simple(1, &dims_of_const, NULL);
+
+  // Create the dataset with default properties
+  if (strcmp(type, "double") == 0 || strcmp(type, "double:soa") == 0 ||
+      strcmp(type, "double precision") == 0 || strcmp(type, "real(8)") == 0) {
+    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_DOUBLE, dataspace,
+                        H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    // write data
+    H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, dataspace, H5P_DEFAULT,
+             const_data);
+    H5Dclose(dset_id);
+  } else if (strcmp(type, "float") == 0 || strcmp(type, "float:soa") == 0 ||
+             strcmp(type, "real(4)") == 0 || strcmp(type, "real") == 0) {
+    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_FLOAT, dataspace, H5P_DEFAULT,
+                        H5P_DEFAULT, H5P_DEFAULT);
+    // write data
+    H5Dwrite(dset_id, H5T_NATIVE_FLOAT, H5S_ALL, dataspace, H5P_DEFAULT,
+             const_data);
+    H5Dclose(dset_id);
+  } else if (strcmp(type, "int") == 0 || strcmp(type, "int:soa") == 0 ||
+             strcmp(type, "int(4)") == 0 || strcmp(type, "integer") == 0 ||
+             strcmp(type, "integer(4)") == 0) {
+    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_INT, dataspace, H5P_DEFAULT,
+                        H5P_DEFAULT, H5P_DEFAULT);
+    // write data
+    H5Dwrite(dset_id, H5T_NATIVE_INT, H5S_ALL, dataspace, H5P_DEFAULT,
+             const_data);
+    H5Dclose(dset_id);
+  } else if ((strcmp(type, "long") == 0) || (strcmp(type, "long:soa") == 0)) {
+    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_LONG, dataspace, H5P_DEFAULT,
+                        H5P_DEFAULT, H5P_DEFAULT);
+    // write data
+    H5Dwrite(dset_id, H5T_NATIVE_LONG, H5S_ALL, dataspace, H5P_DEFAULT,
+             const_data);
+    H5Dclose(dset_id);
+  } else if ((strcmp(type, "long long") == 0) ||
+             (strcmp(type, "long long:soa") == 0)) {
+    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_LLONG, dataspace, H5P_DEFAULT,
+                        H5P_DEFAULT, H5P_DEFAULT);
+    // write data
+    H5Dwrite(dset_id, H5T_NATIVE_LLONG, H5S_ALL, dataspace, H5P_DEFAULT,
+             const_data);
+    H5Dclose(dset_id);
+  } else if (strcmp(type, "char") == 0) {
+    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_CHAR, dataspace, H5P_DEFAULT,
+                        H5P_DEFAULT, H5P_DEFAULT);
+    // write data
+    H5Dwrite(dset_id, H5T_NATIVE_CHAR, H5S_ALL, dataspace, H5P_DEFAULT,
+             const_data);
+    H5Dclose(dset_id);
+  } else {
+    ops_printf("Unknown type for write_const\n");
+    exit(2);
+  }
+
+  H5Sclose(dataspace);
+
+  /*attach attributes to constant*/
+
+  // open existing data set
+  dset_id = H5Dopen(file_id, name, H5P_DEFAULT);
+  // create the data space for the attribute
+  dims_of_const = 1;
+  dataspace = H5Screate_simple(1, &dims_of_const, NULL);
+
+  // Create an int attribute - dimension
+  hid_t attribute = H5Acreate(dset_id, "dim", H5T_NATIVE_INT, dataspace,
+                              H5P_DEFAULT, H5P_DEFAULT);
+  // Write the attribute data.
+  H5Awrite(attribute, H5T_NATIVE_INT, &dim);
+  // Close the attribute.
+  H5Aclose(attribute);
+  H5Sclose(dataspace);
+
+  // Create a string attribute - type
+  dataspace = H5Screate(H5S_SCALAR);
+  hid_t atype = H5Tcopy(H5T_C_S1);
+
+  int attlen = strlen(type);
+  H5Tset_size(atype, attlen);
+  attribute =
+      H5Acreate(dset_id, "type", atype, dataspace, H5P_DEFAULT, H5P_DEFAULT);
+
+  if (strcmp(type, "double") == 0 || strcmp(type, "double precision") == 0 ||
+      strcmp(type, "real(8)") == 0)
+    H5Awrite(attribute, atype, "double");
+  else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 ||
+           strcmp(type, "integer") == 0 || strcmp(type, "integer(4)") == 0)
+    H5Awrite(attribute, atype, "int");
+  else if (strcmp(type, "long") == 0)
+    H5Awrite(attribute, atype, "long");
+  else if (strcmp(type, "long long") == 0)
+    H5Awrite(attribute, atype, "long long");
+  else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0 ||
+           strcmp(type, "real") == 0)
+    H5Awrite(attribute, atype, "float");
+  else if (strcmp(type, "char") == 0)
+    H5Awrite(attribute, atype, "char");
+  else {
+    ops_printf("Unknown type %s for constant %s: cannot write constant to file\n",
+              type, name);
+    exit(2);
+  }
+
+  H5Aclose(attribute);
+  H5Sclose(dataspace);
+  H5Dclose(dset_id);
+
+  H5Fclose(file_id);
 }

@@ -7,7 +7,7 @@ unset LD_LIBRARY_PATH
 
 #OPS specifics
 export OPS_COMPILER=intel
-export OPS_INSTALL_PATH=/home/mgiles/mudalige/OPS-GIT/OPS/ops
+export OPS_INSTALL_PATH=`git rev-parse --show-toplevel`/ops
 
 #CUDA and NVIDIA OpenCL
 export PATH=/usr/local/cuda-6.5.14/bin:$PATH
@@ -18,6 +18,6 @@ export OPENCL_INSTALL_PATH=/usr/local/cuda-6.5.14/
 #Intel MPI and Compilers
 module load intel-compilers
 module load intel-mpi
-export PATH=/home/mgiles/mudalige/mvapich2/intel-15/bin:$PATH
-export LD_LIBRARY_PATH=/home/mgiles/mudalige/mvapich2/intel-15/lib:$LD_LIBRARY_PATH
-export MPI_INSTALL_PATH=/home/mgiles/mudalige/mvapich2/intel-15/
+export PATH=/home/mudalige/mvapich2/intel-15/bin:$PATH
+export LD_LIBRARY_PATH=/home/mudalige/mvapich2/intel-15/lib:$LD_LIBRARY_PATH
+export MPI_INSTALL_PATH=/home/mudalige/mvapich2/intel-15/

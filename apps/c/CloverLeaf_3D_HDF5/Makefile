@@ -36,10 +36,10 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app
 
 generate_file: generate_file.cpp build_field_hdf5.cpp read_input.cpp initialise_chunk.cpp \
                 initialise.cpp generate_hdf5.cpp initialise_chunk_kernel.h generate_chunk_kernel.h
-		$(MPICPP) $(MPIFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) generate_file.cpp build_field_hdf5.cpp read_input.cpp \
+		$(MPICPP) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) generate_file.cpp build_field_hdf5.cpp read_input.cpp \
                 initialise_chunk.cpp initialise.cpp generate_hdf5.cpp -lops_seq -lops_hdf5_seq $(HDF5_LIB_SEQ) -o generate_file
 
 generate_file_mpi: generate_file.cpp build_field_hdf5.cpp read_input.cpp initialise_chunk.cpp \
                 initialise.cpp generate_hdf5.cpp initialise_chunk_kernel.h generate_chunk_kernel.h
-	        $(MPICPP) $(MPIFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) -DOPS_MPI generate_file.cpp build_field_hdf5.cpp read_input.cpp \
+	        $(MPICPP) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) -DOPS_MPI generate_file.cpp build_field_hdf5.cpp read_input.cpp \
                 initialise_chunk.cpp initialise.cpp generate_hdf5.cpp -lops_mpi -lops_hdf5_mpi $(HDF5_LIB_MPI) -o generate_file_mpi

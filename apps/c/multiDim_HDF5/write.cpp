@@ -45,7 +45,7 @@
 
 #include "write_kernel.h"
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
 
   //*******************************************************************
   // INITIALISE OPS
@@ -95,6 +95,13 @@ int main(int argc, char **argv) {
   ops_fetch_dat_hdf5_file(multi, "write_data.h5");
   ops_fetch_dat_hdf5_file(single, "write_data.h5");
   ops_fetch_dat_hdf5_file(integ, "write_data.h5");
+
+  int my_const = 42;
+  ops_write_const_hdf5("my_const", 1, "int", (char*)&my_const, "write_data.h5");
+
+  const char *my_text = "fourty-two";
+  ops_write_const_hdf5("my_text", 11, "char", (char*)my_text, "write_data.h5");
+
 
   ops_print_dat_to_txtfile(integ, "integers.txt");
 

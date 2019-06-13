@@ -1,5 +1,6 @@
 #ifndef __OP_UTIL_H
 #define __OP_UTIL_H
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 /*
 * Open source copyright declaration based on BSD open source template:
@@ -33,7 +34,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief Header file for the utility functions used in op_util.c
+/** @file
+ *  @brief Header file for the utility functions used in op_util.c
  *  @author Gihan R. Mudalige, (Started 23-08-2013)
  */
 
@@ -45,7 +47,9 @@ void *xmalloc(size_t size);
 
 void *xrealloc(void *ptr, size_t size);
 
-// int min(int array[], int size);
+void* xcalloc (size_t number, size_t size);
+
+//int min(int array[], int size);
 
 int binary_search(int a[], int value, int low, int high);
 
@@ -76,8 +80,8 @@ inline int add2(int *coords, int *size, int dim) {
 inline int off2(int ndim, int dim, int *start, int *end, int *size,
                 int *stride) {
   int i = 0;
-  int c1[ndim];
-  int c2[ndim];
+  int c1[OPS_MAX_DIM];
+  int c2[OPS_MAX_DIM];
 
   for (i = 0; i <= dim; i++)
     c1[i] = start[i] + 1;
@@ -161,5 +165,5 @@ inline int off3D(int dim, int *start, int *end, int *size, int *stride) {
 #ifdef __cplusplus
 }
 #endif
-
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OP_UTIL_H */

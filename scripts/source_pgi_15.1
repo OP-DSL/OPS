@@ -6,7 +6,7 @@ unset LD_LIBRARY_PATH
 
 #OPS specifics
 export OPS_COMPILER=pgi
-export OPS_INSTALL_PATH=/home/mgiles/mudalige/OPS-GIT/OPS/ops
+export OPS_INSTALL_PATH=`git rev-parse --show-toplevel`/ops
 
 #CUDA and NVIDIA OpenCL
 export PATH=/usr/local/cuda/bin:$PATH
@@ -37,5 +37,5 @@ export MPIF90_F90=/opt/pgi/linux86-64/15.1/bin/pgfortran
 export MPICH_FC=/opt/pgi/linux86-64/15.1/bin/pgfortran
 #PGI based HDF5
 unset HDF5_INSTALL_PATH
-export HDF5_INSTALL_PATH=/home/mgiles/mudalige/hdf5-pgi-mpich/
-export LD_LIBRARY_PATH=/home/mgiles/mudalige/hdf5-pgi-mpich/lib:$LD_LIBRARY_PATH
+export HDF5_INSTALL_PATH=/home/mudalige/hdf5-pgi-mpich/
+export LD_LIBRARY_PATH=/home/mudalige/hdf5-pgi-mpich/lib:$LD_LIBRARY_PATH

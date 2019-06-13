@@ -21,6 +21,7 @@ INTEGER(KIND=4) xdim3
 
 contains
 
+!$ACC ROUTINE(limiter_kernel) SEQ
 !user function
 subroutine limiter_kernel(al, tht, gt)
 
@@ -69,8 +70,9 @@ subroutine limiter_kernel_wrap( &
   integer(4) end(1)
   integer n_x
 
-  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local)
-  !$acc loop
+
+  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local)  
+  !$acc loop 
   DO n_x = 1, end(1)-start(1)+1
     call limiter_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*3), &
@@ -78,6 +80,7 @@ subroutine limiter_kernel_wrap( &
     & opsDat3Local(dat3_base+(n_x-1)*3) )
   END DO
   !$acc end parallel
+
 end subroutine
 
 !host subroutine

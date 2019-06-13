@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops mpi+cuda declaration
+/** @file
+  * @brief OPS mpi+cuda declaration
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the OPS API calls for the mpi+cuda backend
   */
@@ -48,11 +49,11 @@ extern char *ops_buffer_recv_1;
 extern char *ops_buffer_send_2;
 extern char *ops_buffer_recv_2;
 
-void ops_init_cuda(int argc, char **argv, int diags) {
+void ops_init_cuda(const int argc, const char **argv, const int diags) {
   ops_init_core(argc, argv, diags);
 
-  if ((OPS_block_size_x * OPS_block_size_y) > 1024) {
-    printf("Error: OPS_block_size_x*OPS_block_size_y should be less than 1024 "
+  if ((OPS_block_size_x * OPS_block_size_y * OPS_block_size_z) > 1024) {
+    printf("Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 "
            "-- error OPS_block_size_*\n");
     exit(-1);
   }
@@ -80,11 +81,11 @@ void ops_init_cuda(int argc, char **argv, int diags) {
   ops_printf("\n 16/48 L1/shared \n");
 }
 
-void ops_init(int argc, char **argv, int diags) {
+void ops_init(const int argc, const char **argv, const int diags) {
   int flag = 0;
   MPI_Initialized(&flag);
   if (!flag) {
-    MPI_Init(&argc, &argv);
+    MPI_Init((int *)(&argc), (char ***)&argv);
   }
 
   MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_GLOBAL);
@@ -118,7 +119,7 @@ void ops_exit() {
 }
 
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
-                          int *d_m, int *d_p, char *data, int type_size,
+                          int *d_m, int *d_p, int *stride, char *data, int type_size,
                           char const *type, char const *name) {
 
   /** ---- allocate an empty dat based on the local array sizes computed
@@ -126,7 +127,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
      **/
 
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p,
-                                       data, type_size, type, name);
+                                       stride, data, type_size, type, name);
 
   dat->user_managed = 0;
 
@@ -136,19 +137,19 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
 
   // TODO: proper allocation and TAILQ
   // create list to hold sub-grid decomposition geometries for each mpi process
-  OPS_sub_dat_list = (sub_dat_list *)xrealloc(
+  OPS_sub_dat_list = (sub_dat_list *)ops_realloc(
       OPS_sub_dat_list, OPS_dat_index * sizeof(sub_dat_list));
 
   // store away product array prod[] and MPI_Types for this ops_dat
-  sub_dat_list sd = (sub_dat_list)xmalloc(sizeof(sub_dat));
+  sub_dat_list sd = (sub_dat_list)ops_malloc(sizeof(sub_dat));
   sd->dat = dat;
   sd->dirtybit = 1;
   sd->dirty_dir_send =
-      (int *)xmalloc(sizeof(int) * 2 * block->dims * MAX_DEPTH);
+      (int *)ops_malloc(sizeof(int) * 2 * block->dims * MAX_DEPTH);
   for (int i = 0; i < 2 * block->dims * MAX_DEPTH; i++)
     sd->dirty_dir_send[i] = 1;
   sd->dirty_dir_recv =
-      (int *)xmalloc(sizeof(int) * 2 * block->dims * MAX_DEPTH);
+      (int *)ops_malloc(sizeof(int) * 2 * block->dims * MAX_DEPTH);
   for (int i = 0; i < 2 * block->dims * MAX_DEPTH; i++)
     sd->dirty_dir_recv[i] = 1;
   for (int i = 0; i < OPS_MAX_DIM; i++) {
@@ -184,7 +185,34 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
   }
 }
 
+void ops_NaNcheck(ops_dat dat) {
+  if (OPS_sub_block_list[dat->block->index]->owned == 1) {
+    ops_cuda_get_data(dat);
+    char buffer[30];
+    sprintf(buffer, "On rank %d \0", ops_my_global_rank);
+    ops_NaNcheck_core(dat, buffer);
+  }
+}
+
+
 /************* Functions only use in the Fortran Backend ************/
 
 int getOPS_block_size_x() { return OPS_block_size_x; }
 int getOPS_block_size_y() { return OPS_block_size_y; }
+int getOPS_block_size_z() { return OPS_block_size_z; }
+
+void ops_pack_cuda_internal(ops_dat dat, const int src_offset, char *__restrict dest,
+              const int halo_blocklength, const int halo_stride, const int halo_count);
+
+void ops_unpack_cuda_internal(ops_dat dat, const int dest_offset, const char *__restrict src,
+                const int halo_blocklength, const int halo_stride, const int halo_count);
+
+
+void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
+              const ops_int_halo *__restrict halo) {
+  ops_pack_cuda_internal(dat,  src_offset, dest, halo->blocklength, halo->stride, halo->count);
+}
+void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
+                const ops_int_halo *__restrict halo) {
+  ops_unpack_cuda_internal(dat,  dest_offset, src, halo->blocklength, halo->stride, halo->count);
+}

@@ -27,6 +27,7 @@ INTEGER(KIND=4) xdim5
 
 contains
 
+!$ACC ROUTINE(vars_kernel) SEQ
 !user function
 subroutine vars_kernel(alam, al, gt, cmp, cf)
 
@@ -85,8 +86,9 @@ subroutine vars_kernel_wrap( &
   integer(4) end(1)
   integer n_x
 
-  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local,opsDat4Local,opsDat5Local)
-  !$acc loop
+
+  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local,opsDat4Local,opsDat5Local)  
+  !$acc loop 
   DO n_x = 1, end(1)-start(1)+1
     call vars_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*3), &
@@ -96,6 +98,7 @@ subroutine vars_kernel_wrap( &
     & opsDat5Local(dat5_base+(n_x-1)*3) )
   END DO
   !$acc end parallel
+
 end subroutine
 
 !host subroutine

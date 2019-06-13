@@ -2,11 +2,11 @@
 set -e
 cd ../../../../ops/c
 source ../../scripts/source_intel
-make
+make -j
 cd -
 make clean
 rm -f .generated
-make IEEE=1
+make IEEE=1 -j
 
 
 
@@ -128,10 +128,10 @@ rm perf_out
 rm rhoin1.* x1.* rhoout1.*  rhoin1 rhoout1 x1
 
 cd -
-source ../../scripts/source_pgi_18
+source ../../scripts/source_pgi_19
 
 make clean
-make
+make -j
 cd -
 make clean
 make

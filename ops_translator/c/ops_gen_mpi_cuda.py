@@ -28,6 +28,15 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+## @file
+## @brief OPS CUDA code generator
+#
+#  This routine is called by ops.py which parses the input files
+#
+#  It produces a file xxx_cuda_kernel.cpp for each kernel,
+#  plus a master kernel file
+#
+
 """
 OPS CUDA code generator
 
@@ -96,6 +105,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     NDIM = int(dim)
     #parse stencil to locate strided access
     stride = [1] * nargs * NDIM
+    restrict = [1] * nargs
+    prolong = [1] * nargs
 
 
     if NDIM == 2:
@@ -107,7 +118,13 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
     if NDIM == 3:
       for n in range (0, nargs):
-        if str(stens[n]).find('STRID3D_X') > 0:
+        if str(stens[n]).find('STRID3D_XY') > 0:
+          stride[NDIM*n+2] = 0
+        elif str(stens[n]).find('STRID3D_YZ') > 0:
+          stride[NDIM*n] = 0
+        elif str(stens[n]).find('STRID3D_XZ') > 0:
+          stride[NDIM*n+1] = 0
+        elif str(stens[n]).find('STRID3D_X') > 0:
           stride[NDIM*n+1] = 0
           stride[NDIM*n+2] = 0
         elif str(stens[n]).find('STRID3D_Y') > 0:
@@ -117,10 +134,24 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
           stride[NDIM*n] = 0
           stride[NDIM*n+1] = 0
 
+    ### Determine if this is a MULTI_GRID LOOP with
+    ### either restrict or prolong
+    MULTI_GRID = 0
+    any_prolong = 0
+    for n in range (0, nargs):
+      restrict[n] = 0
+      prolong[n] = 0
+      if str(stens[n]).find('RESTRICT') > 0:
+        restrict[n] = 1
+        MULTI_GRID = 1
+      if str(stens[n]).find('PROLONG') > 0 :
+        prolong[n] = 1
+        MULTI_GRID = 1
+        any_prolong = 1
 
     reduct = 0
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduct = 1
 
     config.file_text = ''
@@ -135,7 +166,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     ng_args = 0
 
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduction = True
       else:
         ng_args = ng_args + 1
@@ -151,16 +182,22 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
 
 
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        code('__constant__ int xdim'+str(n)+'_'+name+';')
-        code('int xdim'+str(n)+'_'+name+'_h = -1;')
-        if NDIM>2 or (NDIM==2 and soa_set):
-          code('__constant__ int ydim'+str(n)+'_'+name+';')
-          code('int ydim'+str(n)+'_'+name+'_h = -1;')
-        if NDIM>3 or (NDIM==3 and soa_set):
-          code('__constant__ int zdim'+str(n)+'_'+name+';')
-          code('int zdim'+str(n)+'_'+name+'_h = -1;')
+
+#    for n in range (0, nargs):
+#      if arg_typ[n] == 'ops_arg_dat':
+#        code('__constant__ int xdim'+str(n)+'_'+name+';')
+#        code('int xdim'+str(n)+'_'+name+'_h = -1;')
+#        if NDIM>2 or (NDIM==2 and soa_set):
+#          code('__constant__ int ydim'+str(n)+'_'+name+';')
+#          code('int ydim'+str(n)+'_'+name+'_h = -1;')
+#        if NDIM>3 or (NDIM==3 and soa_set):
+#          code('__constant__ int zdim'+str(n)+'_'+name+';')
+#          code('int zdim'+str(n)+'_'+name+'_h = -1;')
+    num_dims = max(1, NDIM -1)
+    if NDIM > 1 and soa_set:
+        num_dims += 1;
+    code('__constant__ int dims_'+name+' ['+str(nargs)+']['+str(num_dims)+'];')
+    code('static int dims_'+name+'_h ['+str(nargs)+']['+str(num_dims)+'] = {0};')
     code('')
 
     for n in range (0, nargs):
@@ -181,9 +218,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
           if NDIM==1:
             code('#define OPS_ACC'+str(n)+'(x) (x)')
           if NDIM==2:
-            code('#define OPS_ACC'+str(n)+'(x,y) (x+xdim'+str(n)+'_'+name+'*(y))')
+            code('#define OPS_ACC'+str(n)+'(x,y) (x+dims_'+name+'['+str(n)+'][0]'+'*(y))')
           if NDIM==3:
-            code('#define OPS_ACC'+str(n)+'(x,y,z) (x+xdim'+str(n)+'_'+name+'*(y)+xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))')
+            code('#define OPS_ACC'+str(n)+'(x,y,z) (x+dims_'+name+'['+str(n)+'][0]'+'*(y)+dims_'+name+'['+str(n)+'][0]'+'*dims_'+name+'['+str(n)+'][1]'+'*(z))')
     code('')
 
     for n in range (0, nargs):
@@ -191,19 +228,19 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         if int(dims[n]) > 1:
           if NDIM==1:
             if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)+(d)*xdim'+str(n)+'_'+name+')')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)+(d)*dims_'+name+'['+str(n)+'][0]'+')')
             else:
               code('#define OPS_ACC_MD'+str(n)+'(d,x) ((x)*'+dims[n]+'+(d))')
           if NDIM==2:
             if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)+(xdim'+str(n)+'_'+name+'*(y))+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+')')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)+(dims_'+name+'['+str(n)+'][0]'+'*(y))+(d)*dims_'+name+'['+str(n)+'][0]'+'*dims_'+name+'['+str(n)+'][1]'+')')
             else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+dims[n]+'))')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ((x)*'+dims[n]+'+(d)+(dims_'+name+'['+str(n)+'][0]'+'*(y)*'+dims[n]+'))')
           if NDIM==3:
             if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)+(xdim'+str(n)+'_'+name+'*(y))+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z))+(d)*xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*zdim'+str(n)+'_'+name+')')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)+(dims_'+name+'['+str(n)+'][0]'+'*(y))+(dims_'+name+'['+str(n)+'][0]'+'*dims_'+name+'['+str(n)+'][1]'+'*(z))+(d)*dims_'+name+'['+str(n)+'][0]'+'*dims_'+name+'['+str(n)+'][1]'+'*dims_'+name+'['+str(n)+'][2]'+')')
             else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+dims[n]+'+(d)+(xdim'+str(n)+'_'+name+'*(y)*'+dims[n]+')+(xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*(z)*'+dims[n]+'))')
+              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ((x)*'+dims[n]+'+(d)+(dims_'+name+'['+str(n)+'][0]'+'*(y)*'+dims[n]+')+(dims_'+name+'['+str(n)+'][0]'+'*dims_'+name+'['+str(n)+'][1]'+'*(z)*'+dims[n]+'))')
 
 ##########################################################################
 #  generate header
@@ -223,7 +260,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         break;
 
     if found == 0:
-      print "COUND NOT FIND KERNEL", name
+      print("COUND NOT FIND KERNEL", name)
 
     fid = open(file_name, 'r')
     text = fid.read()
@@ -239,8 +276,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
 
     if(i < 0):
-      print "\n********"
-      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      print("\n********")
+      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
       exit(2)
 
     i2 = i
@@ -287,6 +324,14 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
             code('const '+typs[n]+'* __restrict arg'+str(n)+',')
         else:
           code(typs[n]+'* __restrict arg'+str(n)+',')
+      if restrict[n] or prolong[n]:
+        if NDIM == 1:
+          code('int stride_'+str(n)+'0,')
+        if NDIM == 2:
+          code('int stride_'+str(n)+'0, int stride_'+str(n)+'1,')
+        if NDIM == 3:
+          code('int stride_'+str(n)+'0, int stride_'+str(n)+'1, int stride_'+str(n)+'2,')
+
       elif arg_typ[n] == 'ops_arg_idx':
         if NDIM==1:
           code('int arg_idx0,')
@@ -295,7 +340,13 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         elif NDIM==3:
           code('int arg_idx0, int arg_idx1, int arg_idx2,')
 
-
+    if any_prolong:
+      if NDIM == 1:
+        code('int global_idx0,')
+      elif NDIM == 2:
+        code('int global_idx0, int global_idx1,')
+      elif NDIM == 3:
+        code('int global_idx0, int global_idx1, int global_idx2,')
     if NDIM==1:
       code('int size0 ){')
     elif NDIM==2:
@@ -311,7 +362,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     #local variable to hold reductions on GPU
     code('')
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code(typs[n]+' arg'+str(n)+'_l['+str(dims[n])+'];')
 
     # set local variables to 0 if OPS_INC, INF if OPS_MIN, -INF
@@ -343,21 +394,34 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
+        if restrict[n] == 1:
+          n_x = 'idx_x*stride_'+str(n)+'0'
+          n_y = 'idx_y*stride_'+str(n)+'1'
+          n_z = 'idx_z*stride_'+str(n)+'2'
+        elif prolong[n] == 1:
+          n_x = '(idx_x+global_idx0%stride_'+str(n)+'0)/stride_'+str(n)+'0'
+          n_y = '(idx_y+global_idx1%stride_'+str(n)+'1)/stride_'+str(n)+'1'
+          n_z = '(idx_z+global_idx2%stride_'+str(n)+'2)/stride_'+str(n)+'2'
+        else:
+          n_x = 'idx_x'
+          n_y = 'idx_y'
+          n_z = 'idx_z'
+
         if NDIM == 1:
           if soa_set:
-            code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+';')
+            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+';')
           else:
-            code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+';')
+            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+str(dims[n])+';')
         elif NDIM == 2:
           if soa_set:
-            code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+' + idx_y * '+str(stride[NDIM*n+1])+' * xdim'+str(n)+'_'+name+';')
+            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+' + '+n_y+' * '+str(stride[NDIM*n+1])+' * dims_'+name+'['+str(n)+'][0]'+';')
           else:
-            code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+';')
+            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + '+n_y+' * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * dims_'+name+'['+str(n)+'][0]'+';')
         elif NDIM==3:
           if soa_set:
-            code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+'+ idx_y * '+str(stride[NDIM*n+1])+'* xdim'+str(n)+'_'+name+' + idx_z * '+str(stride[NDIM*n+2])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
+            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'+ '+n_y+' * '+str(stride[NDIM*n+1])+'* dims_'+name+'['+str(n)+'][0]'+' + '+n_z+' * '+str(stride[NDIM*n+2])+' * dims_'+name+'['+str(n)+'][0]'+' * dims_'+name+'['+str(n)+'][1]'+';')
           else:
-            code('arg'+str(n)+' += idx_x * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + idx_y * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' + idx_z * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
+            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + '+n_y+' * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * dims_'+name+'['+str(n)+'][0]'+' + '+n_z+' * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * dims_'+name+'['+str(n)+'][0]'+' * dims_'+name+'['+str(n)+'][1]'+';')
 
     code('')
     n_per_line = 5
@@ -376,20 +440,20 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
           text = text +'&arg'+str(n)
         else:
           text = text +'arg'+str(n)
-      elif arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      elif arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         text = text +'arg'+str(n)+'_l'
       elif arg_typ[n] == 'ops_arg_idx':
         text = text +'arg_idx'
 
 
-      if nargs <> 1 and n <> nargs-1:
-        if n%n_per_line <> 3:
+      if nargs != 1 and n != nargs-1:
+        if n%n_per_line != 3:
           text = text +', '
         else:
           text = text +','
       else:
         text = text +');'
-      if n%n_per_line == 3 and n <> nargs-1:
+      if n%n_per_line == 3 and n != nargs-1:
          text = text +'\n                   '
     code(text)
     ENDIF()
@@ -429,11 +493,11 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
 
       text = text +' ops_arg arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +') {'
-      if n%n_per_line == 3 and n <> nargs-1:
+      if n%n_per_line == 3 and n != nargs-1:
          text = text +'\n'
     code(text);
     code('#else')
@@ -441,6 +505,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     config.depth = 2
     #code('char const *name = "'+name+'";')
     code('int dim = desc->dim;')
+    code('#if OPS_MPI')
+    code('ops_block block = desc->block;')
+    code('#endif')
     code('int *range = desc->range;')
 
     for n in range (0, nargs):
@@ -455,11 +522,11 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):
       text = text +' arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +'};\n'
-      if n%n_per_line == 5 and n <> nargs-1:
+      if n%n_per_line == 5 and n != nargs-1:
         text = text +'\n                    '
     code(text);
     code('')
@@ -482,54 +549,37 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
     code('#if OPS_MPI && !OPS_LAZY')
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
-    code('if (!sb->owned) return;')
-    FOR('n','0',str(NDIM))
-    code('start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];')
-    IF('start[n] >= range[2*n]')
-    code('start[n] = 0;')
-    ENDIF()
-    ELSE()
-    code('start[n] = range[2*n] - start[n];')
-    ENDIF()
-    code('if (sb->id_m[n]==MPI_PROC_NULL && range[2*n] < 0) start[n] = range[2*n];')
-    IF('end[n] >= range[2*n+1]')
-    code('end[n] = range[2*n+1] - sb->decomp_disp[n];')
-    ENDIF()
-    ELSE()
-    code('end[n] = sb->decomp_size[n];')
-    ENDIF()
-    code('if (sb->id_p[n]==MPI_PROC_NULL && (range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))')
-    code('  end[n] += (range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);')
-    ENDFOR()
-    code('#else')
+    code('#endif //OPS_MPI')
+
+    code('')
+    if not arg_idx:
+      code('#ifdef OPS_MPI')
+    code('int arg_idx['+str(NDIM)+'];')
+    if not arg_idx:
+      code('#endif')
+
+
+
+    code('#ifdef OPS_MPI')
+    code('if (compute_ranges(args, '+str(nargs)+',block, range, start, end, arg_idx) < 0) return;')
+    code('#else //OPS_MPI')
     FOR('n','0',str(NDIM))
     code('start[n] = range[2*n];end[n] = range[2*n+1];')
+    if arg_idx:
+      code('arg_idx[n] = start[n];')
     ENDFOR()
     code('#endif')
 
-    code('')
-    code('int x_size = MAX(0,end[0]-start[0]);')
-    if NDIM==2:
-      code('int y_size = MAX(0,end[1]-start[1]);')
-    if NDIM==3:
-      code('int y_size = MAX(0,end[1]-start[1]);')
-      code('int z_size = MAX(0,end[2]-start[2]);')
-    code('')
-
-
-    if arg_idx:
-      code('int arg_idx['+str(NDIM)+'];')
+    if MULTI_GRID:
+      code('int global_idx['+str(NDIM)+'];')
       code('#ifdef OPS_MPI')
-      code('#ifdef OPS_LAZY')
-      code('ops_block block = desc->block;')
-      code('sub_block_list sb = OPS_sub_block_list[block->index];')
-      code('#endif')
       for n in range (0,NDIM):
-        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+        code('global_idx['+str(n)+'] = arg_idx['+str(n)+'];')
       code('#else')
       for n in range (0,NDIM):
-        code('arg_idx['+str(n)+'] = start['+str(n)+'];')
+        code('global_idx['+str(n)+'] = start['+str(n)+'];')
       code('#endif')
+      code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -543,24 +593,32 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     condition = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        condition = condition + 'xdim'+str(n)+' != xdim'+str(n)+'_'+name+'_h || '
+        condition = condition + 'xdim'+str(n)+' != dims_'+name+'_h['+str(n)+'][0] || '
         if NDIM>2 or (NDIM==2 and soa_set):
-          condition = condition + 'ydim'+str(n)+' != ydim'+str(n)+'_'+name+'_h || '
+          condition = condition + 'ydim'+str(n)+' != dims_'+name+'_h['+str(n)+'][1] || '
         if NDIM>3 or (NDIM==3 and soa_set):
-          condition = condition + 'zdim'+str(n)+' != zdim'+str(n)+'_'+name+'_h || '
+          condition = condition + 'zdim'+str(n)+' != dims_'+name+'_h['+str(n)+'][2] || '
     condition = condition[:-4]
     IF(condition)
 
+#    for n in range (0, nargs):
+#      if arg_typ[n] == 'ops_arg_dat':
+#        code('cudaMemcpyToSymbol( dims_'+name+'['+str(n)+'][0]'+', &xdim'+str(n)+', sizeof(int) );')
+#        code('dims_'+name+'_h['+str(n)+'][0] = xdim'+str(n)+';')
+#        if NDIM>2 or (NDIM==2 and soa_set):
+#          code('cudaMemcpyToSymbol( dims_'+name+'['+str(n)+'][1]'+', &ydim'+str(n)+', sizeof(int) );')
+#          code('dims_'+name+'_h['+str(n)+'][1] = ydim'+str(n)+';')
+#        if NDIM>3 or (NDIM==3 and soa_set):
+#          code('cudaMemcpyToSymbol( dims_'+name+'['+str(n)+'][2]'+', &zdim'+str(n)+', sizeof(int) );')
+#          code('dims_'+name+'_h['+str(n)+'][2] = zdim'+str(n)+';')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('cudaMemcpyToSymbol( xdim'+str(n)+'_'+name+', &xdim'+str(n)+', sizeof(int) );')
-        code('xdim'+str(n)+'_'+name+'_h = xdim'+str(n)+';')
+        code('dims_'+name+'_h['+str(n)+'][0] = xdim'+str(n)+';')
         if NDIM>2 or (NDIM==2 and soa_set):
-          code('cudaMemcpyToSymbol( ydim'+str(n)+'_'+name+', &ydim'+str(n)+', sizeof(int) );')
-          code('ydim'+str(n)+'_'+name+'_h = ydim'+str(n)+';')
+          code('dims_'+name+'_h['+str(n)+'][1] = ydim'+str(n)+';')
         if NDIM>3 or (NDIM==3 and soa_set):
-          code('cudaMemcpyToSymbol( zdim'+str(n)+'_'+name+', &zdim'+str(n)+', sizeof(int) );')
-          code('zdim'+str(n)+'_'+name+'_h = zdim'+str(n)+';')
+          code('dims_'+name+'_h['+str(n)+'][2] = zdim'+str(n)+';')
+    code('cutilSafeCall(cudaMemcpyToSymbol( dims_'+name+', dims_'+name+'_h, sizeof(dims_'+name+')));')
     ENDIF()
 
     code('')
@@ -568,11 +626,11 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     #setup reduction variables
     code('')
     if reduct and not arg_idx:
-      code('#ifdef OPS_LAZY')
+      code('#if defined(OPS_LAZY) && !defined(OPS_MPI)')
       code('ops_block block = desc->block;')
       code('#endif')
     for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl' and (accs[n] <> OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
+        if arg_typ[n] == 'ops_arg_gbl' and (accs[n] != OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
           if (accs[n] == OPS_READ):
             code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
           else:
@@ -583,6 +641,13 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
             code('#endif')
 
     code('')
+    code('int x_size = MAX(0,end[0]-start[0]);')
+    if NDIM==2:
+      code('int y_size = MAX(0,end[1]-start[1]);')
+    if NDIM==3:
+      code('int y_size = MAX(0,end[1]-start[1]);')
+      code('int z_size = MAX(0,end[2]-start[2]);')
+    code('')
 
     #set up CUDA grid and thread blocks for kernel call
     if NDIM==1:
@@ -590,10 +655,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     if NDIM==2:
       code('dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);')
     if NDIM==3:
-      code('dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, z_size);')
+      code('dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, (z_size-1)/OPS_block_size_z +1);')
 
     if NDIM>1:
-      code('dim3 tblock(OPS_block_size_x,OPS_block_size_y,1);')
+      code('dim3 tblock(OPS_block_size_x,OPS_block_size_y,OPS_block_size_z);')
     else:
       code('dim3 tblock(OPS_block_size_x,1,1);')
 
@@ -628,7 +693,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       elif NDIM==2:
         code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
       elif NDIM==3:
-        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*z_size;')
+        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*((z_size-1)/OPS_block_size_z +1);')
       code('int maxblocks = nblocks;')
       code('int reduct_bytes = 0;')
       code('int reduct_size = 0;')
@@ -642,7 +707,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+typs[n]+'));')
-        elif accs[n] <> OPS_READ:
+        elif accs[n] != OPS_READ:
           code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
           code('reduct_size = MAX(reduct_size,sizeof('+typs[n]+')*'+str(dims[n])+');')
     code('')
@@ -655,7 +720,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       code('')
 
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code('arg'+str(n)+'.data = OPS_reduct_h + reduct_bytes;')
         code('arg'+str(n)+'.data_d = OPS_reduct_d + reduct_bytes;')
         code('for (int b=0; b<maxblocks; b++)')
@@ -691,20 +756,53 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code('')
     code('char *p_a['+str(nargs)+'];')
 
+    #some custom logic for multigrid
+    if MULTI_GRID:
+      for n in range (0, nargs):
+        if prolong[n] == 1 or restrict[n] == 1:
+          comm('This arg has a prolong stencil - so create different ranges')
+          code('int start_'+str(n)+'['+str(NDIM)+']; int end_'+str(n)+'['+str(NDIM)+']; int stride_'+str(n)+'['+str(NDIM)+'];int d_size_'+str(n)+'['+str(NDIM)+'];')
+          code('#ifdef OPS_MPI')
+          FOR('n','0',str(NDIM))
+          code('sub_dat *sd'+str(n)+' = OPS_sub_dat_list[args['+str(n)+'].dat->index];')
+          code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
+          code('d_size_'+str(n)+'[n] = args['+str(n)+'].dat->d_m[n] + sd'+str(n)+'->decomp_size[n] - args['+str(n)+'].dat->d_p[n];')
+          if restrict[n] == 1:
+            code('start_'+str(n)+'[n] = global_idx[n]*stride_'+str(n)+'[n] - sd'+str(n)+'->decomp_disp[n] + args['+str(n)+'].dat->d_m[n];')
+          else:
+            code('start_'+str(n)+'[n] = global_idx[n]/stride_'+str(n)+'[n] - sd'+str(n)+'->decomp_disp[n] + args['+str(n)+'].dat->d_m[n];')
+          code('end_'+str(n)+'[n] = start_'+str(n)+'[n] + d_size_'+str(n)+'[n];')
+          ENDFOR()
+          code('#else')
+          FOR('n','0',str(NDIM))
+          code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
+          code('d_size_'+str(n)+'[n] = args['+str(n)+'].dat->d_m[n] + args['+str(n)+'].dat->size[n] - args['+str(n)+'].dat->d_p[n];')
+          if restrict[n] == 1:
+            code('start_'+str(n)+'[n] = global_idx[n]*stride_'+str(n)+'[n];')
+          else:
+            code('start_'+str(n)+'[n] = global_idx[n]/stride_'+str(n)+'[n];')
+          code('end_'+str(n)+'[n] = start_'+str(n)+'[n] + d_size_'+str(n)+'[n];')
+          ENDFOR()
+          code('#endif')
 
 
     comm('')
     comm('set up initial pointers')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
+        if prolong[n] == 1 or restrict[n] == 1:
+          starttext = 'start_'+str(n)
+        else:
+          starttext = 'start'
         code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + ')
-        code('         dat'+str(n)+' * 1 * (start[0] * args['+str(n)+'].stencil->stride[0]);')
+        code('         dat'+str(n)+' * 1 * ('+starttext+'[0] * args['+str(n)+'].stencil->stride[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
           for d2 in range (0,d):
             line = line + config.depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
-          code('  (start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+']);')
+          code('  ('+starttext+'['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+']);')
+
         code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data_d + base'+str(n)+';')
         code('')
 
@@ -725,10 +823,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     #set up shared memory for reduction
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
        code('int nshared = 0;')
-       code('int nthread = OPS_block_size_x*OPS_block_size_y;')
+       code('int nthread = OPS_block_size_x*OPS_block_size_y*OPS_block_size_z;')
        code('')
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code('nshared = MAX(nshared,sizeof('+typs[n]+')*'+str(dims[n])+');')
     code('')
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
@@ -765,9 +863,24 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
           text = text + ' arg_idx[0], arg_idx[1],'
         elif NDIM==3:
           text = text + ' arg_idx[0], arg_idx[1], arg_idx[2],'
+      if restrict[n] or prolong[n]:
+        if NDIM==1:
+          text = text + 'stride_'+str(n)+'[0],'
+        if NDIM==2:
+          text = text + 'stride_'+str(n)+'[0],stride_'+str(n)+'[1],'
+        if NDIM==3:
+          text = text + 'stride_'+str(n)+'[0],stride_'+str(n)+'[1],stride_'+str(n)+'[2],'
 
-      if n%n_per_line == 1 and n <> nargs-1:
-        text = text +'\n          '
+      if n%n_per_line == 1 and n != nargs-1:
+        text = text +'\n        '
+    if any_prolong:
+      if NDIM==1:
+        text = text + 'global_idx[0],'
+      elif NDIM==2:
+        text = text + 'global_idx[0], global_idx[1],'
+      elif NDIM==3:
+        text = text + 'global_idx[0], global_idx[1], global_idx[2],'
+
     if NDIM==1:
       text = text +'x_size);'
     if NDIM==2:
@@ -789,7 +902,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       code('mvReductArraysToHost(reduct_bytes);')
 
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         FOR('b','0','maxblocks')
         FOR('d','0',str(dims[n]))
         if accs[n] == OPS_INC:
@@ -843,11 +956,11 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
 
       text = text +' ops_arg arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +') {'
-      if n%n_per_line == 3 and n <> nargs-1:
+      if n%n_per_line == 3 and n != nargs-1:
          text = text +'\n'
     code(text);
     config.depth = 2
@@ -938,7 +1051,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
       code('__constant__ '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
     else:
-      if consts[nc]['dim'].isdigit() and consts[nc]['dim'] > 0:
+      if consts[nc]['dim'].isdigit() and int(consts[nc]['dim']) > 0:
         num = str(consts[nc]['dim'])
         code('__constant__ '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
       else:

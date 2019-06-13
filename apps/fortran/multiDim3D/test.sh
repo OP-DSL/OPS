@@ -34,7 +34,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 cd $OPS_INSTALL_PATH/fortran
-source ../../scripts/source_pgi_18
+source ../../scripts/source_pgi_16.9
 make clean
 make 
 cd -
@@ -89,3 +89,5 @@ grep "Max total runtime" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
+
+echo "All PGI tests PASSED ... exiting script"

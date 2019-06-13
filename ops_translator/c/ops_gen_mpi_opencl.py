@@ -27,6 +27,17 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+## @file
+## @brief
+#
+#  OPS OpenCL code generator
+#
+#  This routine is called by ops.py which parses the input files
+#
+#  It produces a file xxx_opencl_kernel.cpp and a XX_kernel.cl for each kernel,
+#  plus a master kernel file
+#
+
 """
 OPS OpenCL code generator
 
@@ -102,7 +113,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
     typs  = kernels[nk]['typs']
 
     if ('initialise' in name) or ('generate' in name):
-      print 'WARNING: skipping kernel '+name+' due to OpenCL compiler bugs: this kernel will run sequentially on the host'
+      print('WARNING: skipping kernel '+name+' due to OpenCL compiler bugs: this kernel will run sequentially on the host')
       continue
 
     #reset dimension of the application
@@ -120,7 +131,13 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
 
     if NDIM == 3:
       for n in range (0, nargs):
-        if str(stens[n]).find('STRID3D_X') > 0:
+        if str(stens[n]).find('STRID3D_XY') > 0:
+          stride[NDIM*n+2] = 0
+        elif str(stens[n]).find('STRID3D_YZ') > 0:
+          stride[NDIM*n] = 0
+        elif str(stens[n]).find('STRID3D_XZ') > 0:
+          stride[NDIM*n+1] = 0
+        elif str(stens[n]).find('STRID3D_X') > 0:
           stride[NDIM*n+1] = 0
           stride[NDIM*n+2] = 0
         elif str(stens[n]).find('STRID3D_Y') > 0:
@@ -130,10 +147,9 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
           stride[NDIM*n] = 0
           stride[NDIM*n+1] = 0
 
-
     reduction = 0
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduction = 1
 
 
@@ -256,7 +272,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
         break;
 
     if found == 0:
-      print "COUND NOT FIND KERNEL", name
+      print("COUND NOT FIND KERNEL", name)
 
     fid = open(file_name, 'r')
     text = fid.read()
@@ -269,8 +285,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
 
     i = p.search(text).start()
     if(i < 0):
-      print "\n********"
-      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      print("\n********")
+      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
       exit(2)
 
 
@@ -476,7 +492,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
       elif arg_typ[n] == 'ops_arg_idx':
         text = text +'arg_idx'
 
-      if n <> nargs-1 :
+      if n != nargs-1 :
         text = text+',\n  '+indent
       elif len(found_consts) > 0:
         text = text +',\n  '+indent
@@ -665,11 +681,11 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     for n in range (0, nargs):
 
       text = text +' ops_arg arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +') {'
-      if n%n_per_line == 3 and n <> nargs-1:
+      if n%n_per_line == 3 and n != nargs-1:
          text = text +'\n'
     code(text);
     config.depth = 2
@@ -683,11 +699,11 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):
       text = text +' arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +'};\n'
-      if n%n_per_line == 5 and n <> nargs-1:
+      if n%n_per_line == 5 and n != nargs-1:
         text = text +'\n                    '
     code(text);
     code('')
@@ -793,10 +809,10 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     if NDIM==2:
       code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};')
     if NDIM==3:
-      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, MAX(1,end[2]-start[2])};')
+      code('size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, ((z_size-1)/OPS_block_size_z+ 1)*OPS_block_size_z};')
 
     if NDIM>1:
-      code('size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,1};')
+      code('size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,OPS_block_size_z};')
     else:
       code('size_t localWorkSize[3] =  {OPS_block_size_x,1,1};')
     code('')
@@ -804,7 +820,7 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     #setup reduction variables
     code('')
     for n in range (0, nargs):
-        if arg_typ[n] == 'ops_arg_gbl' and (accs[n] <> OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
+        if arg_typ[n] == 'ops_arg_gbl' and (accs[n] != OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
           if (accs[n] == OPS_READ):
             code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
           else:
@@ -845,7 +861,7 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
       elif NDIM==2:
         code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);')
       elif NDIM==3:
-        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*z_size;')
+        code('int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1)*((z_size-1)/OPS_block_size_z + 1);')
       code('int maxblocks = nblocks;')
       code('int reduct_bytes = 0;')
       code('')
@@ -858,7 +874,7 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
             code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
-        elif accs[n] <> OPS_READ:
+        elif accs[n] != OPS_READ:
           #code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+')*64);')
           code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
     code('')
@@ -950,10 +966,10 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
 
     #set up shared memory for reduction
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
-       code('int nthread = OPS_block_size_x*OPS_block_size_y;')
+       code('int nthread = OPS_block_size_x*OPS_block_size_y*OPS_block_size_z;')
        code('')
 
-
+    IF('globalWorkSize[0]>0 && globalWorkSize[1]>0 && globalWorkSize[2]>0')
     #upload gloabal constants to device
     for c in range(0, len(found_consts)):
       const_type = consts[found_consts[c]]['type']
@@ -1032,6 +1048,7 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
     code('')
     comm('call/enque opencl kernel wrapper function')
     code('clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel['+str(nk)+'], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );')
+    ENDIF()
     IF('OPS_diags>1')
     code('clSafeCall( clFinish(OPS_opencl_core.command_queue) );')
     ENDIF()

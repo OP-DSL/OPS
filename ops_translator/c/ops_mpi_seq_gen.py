@@ -29,10 +29,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+## @file
+## @brief
 #######################################################################
-#                                                                     #
-#       This Python routine generates the header file ops_seq.h       #
-#                                                                     #
+#
+#       This Python routine generates the header file ops_seq.h
+#
 #######################################################################
 
 
@@ -152,8 +154,8 @@ inline int off(int ndim, int dim , int* start, int* end, int* size, int* stride)
 {
 
   int i = 0;
-  int c1[3];
-  int c2[3];
+  int c1[OPS_MAX_DIM];
+  int c2[OPS_MAX_DIM];
 
   for(i=0; i<=dim; i++) c1[i] = start[i]+1;
   for(i=dim+1; i<ndim; i++) c1[i] = start[i];
@@ -214,21 +216,21 @@ for nargs in range (1,maxargs+1):
     f.write('template <')
     for n in range (0, nargs):
         f.write('class T'+str(n))
-        if nargs <> 1 and n != nargs-1:
+        if nargs != 1 and n != nargs-1:
           f.write(',')
         else:
           f.write('>\n')
-        if n%n_per_line == 3 and n <> nargs-1:
+        if n%n_per_line == 3 and n != nargs-1:
           f.write('\n')
 
     f.write('void ops_par_loop(void (*kernel)(')
     for n in range (0, nargs):
         f.write('T'+str(n)+'*')
-        if nargs <> 1 and n != nargs-1:
+        if nargs != 1 and n != nargs-1:
           f.write(',')
         else:
           f.write('),\n')
-        if n%n_per_line == 3 and n <> nargs-1:
+        if n%n_per_line == 3 and n != nargs-1:
           f.write('\n                           ')
         else:
           f.write(' ')
@@ -237,11 +239,11 @@ for nargs in range (1,maxargs+1):
     f.write('    char const * name, ops_block block, int dim, int *range,\n    ')
     for n in range (0, nargs):
         f.write(' ops_arg arg'+str(n))
-        if nargs <> 1 and n != nargs-1:
+        if nargs != 1 and n != nargs-1:
           f.write(',')
         else:
           f.write(') {\n')
-        if n%n_per_line == 3 and n <> nargs-1:
+        if n%n_per_line == 3 and n != nargs-1:
          f.write('\n    ')
 
     f.write('\n  char *p_a['+str(nargs)+'];')
@@ -251,11 +253,11 @@ for nargs in range (1,maxargs+1):
     f.write('  ops_arg args['+str(nargs)+'] = {')
     for n in range (0, nargs):
         f.write(' arg'+str(n))
-        if nargs <> 1 and n != nargs-1:
+        if nargs != 1 and n != nargs-1:
           f.write(',')
         else:
           f.write('};\n\n')
-        if n%n_per_line == 3 and n <> nargs-1:
+        if n%n_per_line == 3 and n != nargs-1:
           f.write('\n                    ')
 
     f.write('\n  #ifdef CHECKPOINTING\n')
@@ -352,11 +354,17 @@ for nargs in range (1,maxargs+1):
       f.write('    #ifndef OPS_SOA\n')
       f.write('    multi_d'+str(n)+' = args['+str(n)+'].dat->dim;\n')
       f.write('    #endif\n')
-      f.write('    #if defined OPS_3D || defined OPS_SOA\n')
+      f.write('    #if defined OPS_3D || defined OPS_4D || defined OPS_5D || defined OPS_SOA\n')
       f.write('    ydim'+str(n)+' = args['+str(n)+'].dat->size[1];\n')
       f.write('    #endif\n')
-      f.write('    #if defined OPS_3D && defined OPS_SOA\n')
+      f.write('    #if (defined OPS_3D && defined OPS_SOA) || defined OPS_4D || defined OPS_5D\n')
       f.write('    zdim'+str(n)+' = args['+str(n)+'].dat->size[2];\n')
+      f.write('    #endif\n')
+      f.write('    #if (defined OPS_4D && defined OPS_SOA) || defined OPS_5D\n')
+      f.write('    udim'+str(n)+' = args['+str(n)+'].dat->size[3];\n')
+      f.write('    #endif\n')
+      f.write('    #if defined OPS_5D && defined OPS_SOA\n')
+      f.write('    vdim'+str(n)+' = args['+str(n)+'].dat->size[4];\n')
       f.write('    #endif\n')
       f.write('  }\n')
     f.write('\n')
@@ -397,11 +405,11 @@ for nargs in range (1,maxargs+1):
     f.write('\n    kernel( ')
     for n in range (0, nargs):
         f.write(' (T'+str(n)+' *)p_a['+str(n)+']')
-        if nargs <> 1 and n != nargs-1:
+        if nargs != 1 and n != nargs-1:
           f.write(',')
         else:
           f.write(' );\n\n')
-        if n%n_per_line == 3 and n <> nargs-1:
+        if n%n_per_line == 3 and n != nargs-1:
           f.write('\n          ')
 
     f.write('    count[0]--;   // decrement counter\n')

@@ -29,6 +29,16 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+## @file
+## @brief
+#
+#  OPS MPI_seq code generator for Fortran applications
+#
+#  This routine is called by ops_fortran.py which parses the input files
+#
+#  It produces a file xxx_seq_kernel.F90 for each kernel
+#
+
 """
 OPS MPI_seq code generator for Fortran applications
 
@@ -89,7 +99,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
 
     reduction = 0
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduction = 1
 
     arg_idx = 0
@@ -158,7 +168,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
 ##########################################################################
     comm('user function')
     code('!DEC$ ATTRIBUTES FORCEINLINE :: ' + name )
-    print name2
+    print(name2)
     fid = open(name2+'_kernel.inc', 'r')
     text = fid.read()
     fid.close()
@@ -166,8 +176,8 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
     text = remove_trailing_w_space(text)
     i = text.find(name)
     if(i < 0):
-      print "\n********"
-      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      print("\n********")
+      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
       exit(2)
 
     # need to check accs here - under fortran the
@@ -199,7 +209,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
       else:
         code('& opsDat'+str(n+1)+'Local, &')
     for n in range (0, nargs):
-      if arg_typ[n] <> 'ops_arg_idx':
+      if arg_typ[n] != 'ops_arg_idx':
         code('& dat'+str(n+1)+'_base, &')
     code('& start, &')
     code('& end )')
@@ -217,7 +227,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
         code('integer(4) idx('+str(NDIM)+'),idx_local('+str(NDIM)+')' )
 
     for n in range (0, nargs):
-      if arg_typ[n] <> 'ops_arg_idx':
+      if arg_typ[n] != 'ops_arg_idx':
         code('integer dat' + str(n+1)+'_base')
     code('integer(4) start('+str(NDIM)+')')
     code('integer(4) end('+str(NDIM)+')')
@@ -230,7 +240,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
     code('')
 
     if NDIM==1:
-      if reduction <> 1 and arg_idx <> 1:
+      if reduction != 1 and arg_idx != 1:
         code('!DIR$ SIMD')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
@@ -239,7 +249,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
       DO('n_y','1','end(2)-start(2)+1')
       if arg_idx == 1:
         code('idx_local(2) = idx(2) + n_y - 1')
-      if reduction <> 1:
+      if reduction != 1:
         code('!DIR$ SIMD')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
@@ -251,7 +261,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
       DO('n_y','1','end(2)-start(2)+1')
       if arg_idx == 1:
         code('idx_local(2) = idx(2) + n_y - 1')
-      if reduction <> 1:
+      if reduction != 1:
         code('!DIR$ SIMD')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
@@ -411,7 +421,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
           code('ydim'+str(n+1)+' = dat'+str(n+1)+'_size(2)')
           code('zdim'+str(n+1)+' = dat'+str(n+1)+'_size(3)')
           code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+' * ydim'+str(n+1)+' * zdim'+str(n+1))
-        if int(dims[n]) <> 1:
+        if int(dims[n]) != 1:
           code('multi_d'+str(n+1)+' = getDatDimFromOpsArg(opsArg'+str(n+1)+') ! dimension of the dat')
           code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+')')
         else:
@@ -443,7 +453,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
       else:
         code('& opsDat'+str(n+1)+'Local, &')
     for n in range (0, nargs):
-      if arg_typ[n] <> 'ops_arg_idx':
+      if arg_typ[n] != 'ops_arg_idx':
         code('& dat'+str(n+1)+'_base, &')
     code('& start, &')
     code('& end )')
