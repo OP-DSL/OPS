@@ -613,6 +613,10 @@ void buildOpenCLKernels_"""+name+"""("""+arg_text+""") {
         exit(EXIT_FAILURE);
       }
 
+      #ifdef OPS_SOA
+      sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
+      #endif
+
       ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
 
       if(ret != CL_SUCCESS) {
