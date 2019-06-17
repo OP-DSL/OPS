@@ -56,8 +56,6 @@ subroutine poisson_error_kernel_wrap( &
   integer(4) end(2)
   integer n_x, n_y
 
-  opsDat3LocalAcc = opsDat3Local
-  opsDat3Local_1 = opsDat3Local(1)
 
   !$acc parallel deviceptr(opsDat1Local,opsDat2Local)   reduction(+:opsDat3Local)
   !$acc loop  reduction(+:opsDat3Local)
@@ -68,11 +66,9 @@ subroutine poisson_error_kernel_wrap( &
       & opsDat1Local(dat1_base+(n_x-1)*1 + (n_y-1)*xdim1*1), &
       & opsDat2Local(dat2_base+(n_x-1)*1 + (n_y-1)*xdim2*1), &
       & opsDat3Local )
-      opsDat3Local_1 = opsDat3LocalAcc(1)
     END DO
   END DO
   !$acc end parallel
-  opsDat3Local(1) = opsDat3Local_1
 
 end subroutine
 

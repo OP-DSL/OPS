@@ -12,7 +12,7 @@
 \setlength{\textheight}{9.0in}
 \setlength{\textwidth}{6.5 in}
 
-\date{December 2015}
+\date{May 2019}
 
 %  \topmargin 0.in  \headheight 0pt  \headsep 0pt  \raggedbottom
 %  \oddsidemargin 0.1in
@@ -139,7 +139,7 @@ OPS takes responsibility for all data, its movement and the execution of paralle
 \newpage
 \section{OPS C++ API}
 
-\subsection{Initialisation and termination routines}
+\subsection{Initialisation declaration and termination routines}
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_init}
 \begin{routine} {void ops\_init(int argc, char **argv, int diags\_level)}
@@ -298,6 +298,14 @@ and ops\_halo ops\_decl\_dat statements have been declared}
 is simply a place-holder to indicate different partitioning methods in the future.
 \end{routine}
 
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_exit}
+\begin{routine} {void ops\_exit()}
+{This routine must be called last to cleanly terminate the OPS computation.}
+\item \vspace{-0.3in}
+\end{routine}
+
+\subsection{Diagnostics and output routines}
+
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_diagnostic\_output}
 \begin{routine} {void ops\_diagnostic\_output()}
 {This routine prints out various useful bits of diagnostic info about sets, mappings and datasets. Usually used right 
@@ -362,12 +370,16 @@ a simple text editor }
 \item[os]    output stream, use stdout to print to standard out
 \end{routine}
 
-
-\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_exit}
-\begin{routine} {void ops\_exit()}
-{This routine must be called last to cleanly terminate the OPS computation.}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_NaNcheck}
+\begin{routine} {void ops\_NaNcheck(ops\_dat dat)}
+{Check if any of the values held in the \texttt{dat} is a NaN. If a NaN 
+is found, prints an error message and exits.}
+\item[dat] 	ops\_dat to to be checked 
 \item \vspace{-0.3in}
 \end{routine}
+
+
+
 
 
 
@@ -495,7 +507,7 @@ used to generate initial geometry. }
 \item[points]     number of points in the stencil
 \item[stencil]    stencil for accessing data
 \item[stride]     stride for accessing data
-\item[name] string representing the name of the stencil
+\item[name] string representing the name of the stencil\\
 \end{routine}
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_stencil\_hdf5}
@@ -510,14 +522,16 @@ used to generate initial geometry. }
 
 \vspace{0.2in}
 
-\noindent In the strided case, the semantics for the index of data to be accessed, for stencil point {\tt p}, in dimension \texttt{m} are defined as:\\
+\noindent In the strided case, the semantics for the index of data to be 
+accessed, for stencil point {\tt p}, in dimension \texttt{m} are defined as:\\
 
 \noindent {\tt stride[m]*loop\_index[m] + stencil[p*dims+m]},\\
 
-\noindent where \texttt{loop\_index[m]} is the iteration index (within the user-defined iteration space) in the different dimensions.
+\noindent where \texttt{loop\_index[m]} is the iteration index (within the 
+user-defined iteration space) in the different dimensions.
 
-\noindent If, for one or more dimensions, both {\tt stride[m]} and {\tt stencil[p*dims+m]} are zero, then one of the
-following must be true;
+\noindent If, for one or more dimensions, both {\tt stride[m]} and 
+{\tt stencil[p*dims+m]} are zero, then one of the following must be true;
 \begin{itemize}
 \item
 the dataset being referenced has size 1 for these dimensions
@@ -526,10 +540,18 @@ these dimensions are to be omitted and so the dataset has
 dimension equal to the number of remaining dimensions.
 \end{itemize}
 
-\noindent These two stencil definitions probably take care of all of the cases in the Introduction except for 
-multiblock applications with interfaces with different orientations -- this will need a third, even more general, 
-stencil specification. \noindent The strided stencil will handle both multigrid (with a stride of 2 for example) and 
-the boundary condition and reduced dimension applications (with a stride of 0 for the relevant dimensions).
+\noindent See \texttt{OPS/apps/c/CloverLeaf/build\_field.cpp} and 
+\texttt{OPS/apps/c/CloverLeaf/generate.cpp} for an example 
+\texttt{ops\_decl\_strided\_stencil} declaration and its use in a loop, 
+respectively. \\
+
+\noindent These two stencil definitions probably take care of all of the 
+cases in the Introduction except for multiblock applications with interfaces 
+with different orientations -- this will need a third, even more general, 
+stencil specification. \noindent The strided stencil will handle both multigrid 
+(with a stride of 2 for example) and the boundary condition and reduced 
+dimension applications (with a stride of 0 for the relevant dimensions).
+
 
 \subsection{Checkpointing}
 OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the file name for the 
@@ -643,15 +665,26 @@ This section describes APIS that give the user access to internal data structure
 \item[sizes]       an array populated with the spatial extents
 \end{routine}
 
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_get\_raw\_metadata}
+\begin{routine} {char* ops\_dat\_get\_raw\_metadata(ops\_dat dat, int part, int *disp, int *size, int *stride, int *d\_m, int *d\_p)}
+{This routine returns array shape metadata corresponding to the ops\_dat. Any of the arguments that are not of interest, may be NULL.}
+\item[dat]         the dataset
+\item[part]        the chunk index (has to be 0)
+\item[disp]        an array populated with the displacement of the chunk within the ``global'' distributed array
+\item[size]       an array populated with the spatial extents
+\item[stride]      an array populated strides in spatial dimensions needed for column-major indexing
+\item[d\_m]      an array populated with padding on the left in each dimension. Note that these are negative values
+\item[d\_p]      an array populated with padding on the right in each dimension
+\end{routine}
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_get\_raw\_pointer}
-\begin{routine} {char* ops\_dat\_get\_raw\_pointer(ops\_dat dat, int part, ops\_stencil stencil, int *stride)}
-{This routine returns a pointer to the internally stored data, with MPI halo regions automatically updated as required by the supplied stencil. The strides required to index into the dataset are also given}
+\begin{routine} {char* ops\_dat\_get\_raw\_pointer(ops\_dat dat, int part, ops\_stencil stencil, ops\_memspace *memspace)}
+{This routine returns a pointer to the internally stored data, with MPI halo regions automatically updated as required by the supplied stencil. The strides required to index into the dataset are also given.}
 \item[dat]         the dataset
 \item[part]        the chunk index (has to be 0)
 \item[stencil]     a stencil used to determine required MPI halo exchange depths 
-\item[stride]      an array populated strides in spatial dimensions needed for column-major indexing
-\end{routine}
+\item[memspace]       when set to OPS\_HOST or OPS\_DEVICE, returns a pointer to data in that memory space, otherwise must be set to 0, and returns
+ whether data is in the host or on the device\end{routine}
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_release\_raw\_data}
 \begin{routine} {void ops\_dat\_release\_raw\_data(ops\_dat dat, int part, ops\_access acc)}
@@ -680,14 +713,56 @@ This section describes APIS that give the user access to internal data structure
 \newpage
 
 \section{Tiling for Cache-blocking}
-OPS has a code generation (ops\_gen\_mpi\_lazy) and build target for tiling. Currently this is only supported on a single
-node with OpenMP. Once compiled, to enable, use the OPS\_TILING runtime parameter - this will look at the L3 cache size
-of your CPU and guess the correct tile size. If you want to alter the amount of cache to be used for the guess, use the
-OPS\_CACHE\_SIZE=XX runtime parameter, where the value is in Megabytes. To manually specify the tile sizes, use the 
-T1, T2, and T3 environment variables.
+OPS has a code generation (ops\_gen\_mpi\_lazy) and build target for tiling.  
+Once compiled, to enable, use the \texttt{OPS\_TILING} runtime parameter - this 
+will look at the L3 cache size of your CPU and guess the correct tile size. If 
+you want to alter the amount of cache to be used for the guess, use the 
+\texttt{OPS\_CACHE\_SIZE=XX} runtime parameter, where the value is in Megabytes. 
+When MPI is combined with OpenMP tiling can be extended to the MPI halos. 
+Set \texttt{OPS\_TILING\_MAXDEPTH} to increase the the halo depths so that 
+halos for multiple \texttt{ops\_par\_loops} can be exchanged with a 
+single MPI message (see \cite{TPDS2017} for more details)\\
 
-To test, please compile CloverLeaf under apps/c/CloverLeaf, modify clover.in to use a $6144^2$ mesh, then run as follows:
-OMP\_NUM\_THREADS=xx numactl -physnodebind=0 ./cloverleaf\_tiled OPS\_TILING
+\noindent To test, compile CloverLeaf under \texttt{apps/c/CloverLeaf}, modify 
+clover.in to use a $6144^2$ mesh, then run as follows: \\
+
+\noindent For OpenMP with tiling:\\
+\texttt{export OMP\_NUM\_THREADS=xx;\\
+numactl -physnodebind=0 ./cloverleaf\_tiled OPS\_TILING}\\
+
+\noindent For MPI+OpenMP with tiling:\\
+\texttt{export OMP\_NUM\_THREADS=xx;\\
+mpirun -np xx ./cloverleaf\_mpi\_tiled OPS\_TILING 
+OPS\_TILING\_MAXDEPTH=6} \\
+
+\noindent To manually specify the tile sizes (in MB), use the T1, T2, and T3 
+environment variables:\\
+\texttt{export T1=600; export T2=200; \\
+export OMP\_NUM\_THREADS=xx; \\
+numactl -physnodebind=0 ./cloverleaf\_tiled OPS\_TILING
+}
+
+\section{CUDA and OpenCL Runtime Arguments}
+\noindent The CUDA (and OpenCL) thread block sizes can be controlled by setting 
+the \texttt{OPS\_BLOCK\_SIZE\_X, OPS\_BLOCK\_SIZE\_Y} and 
+\texttt{OPS\_BLOCK\_SIZE\_Z} runtime arguments. For example :\\
+
+\noindent\texttt{./cloverleaf\_cuda OPS\_BLOCK\_SIZE\_X=64 
+OPS\_BLOCK\_SIZE\_Y=4}\\
+
+\noindent \texttt{OPS\_CL\_DEVICE=XX} runtime flag sets the OpenCL device to 
+execute the code on. \\Usually \texttt{OPS\_CL\_DEVICE=0} selects the CPU and 
+\texttt{OPS\_CL\_DEVICE=1} selects GPUs. 
+
+\section{Executing with GPUDirect}
+
+GPU direct support for MPI+CUDA, to enable (on the OPS side) add 
+\textbf{-gpudirect} when running the executable. You may also have to use 
+certain environmental flags when using different MPI distributions. For an 
+example of the required flags and environmental settings on the Cambridge 
+Wilkes2 GPU cluster
+see: \\
+\url{https://docs.hpc.cam.ac.uk/hpc/user-guide/performance-tips.html}
 
 \newpage
 \section{OPS User Kernels}
@@ -770,7 +845,14 @@ time these macros will be expanded to give the correct array index
 
 
 \begin{thebibliography}{1}
-\bibitem{op2} OP2 for Many-Core Platforms, 2013. \url{http://www.oerc.ox.ac.uk/projects/op2}
+\bibitem{op2} OP2 for Many-Core Platforms, 2013. 
+\url{http://www.oerc.ox.ac.uk/projects/op2}
+
+\bibitem{TPDS2017} Istvan Z. Reguly, G.R. Mudalige, Mike B. Giles. Loop Tiling 
+in Large-Scale Stencil Codes at Run-time with OPS. (2017) IEEE Transactions on 
+Parallel and Distributed Systems. 
+\url{http://dx.doi.org/10.1109/TPDS.2017.2778161}
+
 \end{thebibliography}
 
 \end{document}

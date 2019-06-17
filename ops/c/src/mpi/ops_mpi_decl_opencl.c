@@ -173,3 +173,4 @@ void ops_NaNcheck(ops_dat dat) {
 
 // routine to fetch data from device
 void ops_get_data(ops_dat dat) { ops_opencl_get_data(dat); }
+void ops_put_data(ops_dat dat) { ops_opencl_put_data(dat); }
