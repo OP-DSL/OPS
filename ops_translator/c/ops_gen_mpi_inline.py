@@ -393,12 +393,24 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
         elif not dims[n].isdigit():
             dim = 'arg'+str(n)+'.dim'
             extradim = 1
+        if restrict[n] == 1:
+          n_x = 'n_x*stride_'+str(n)+'[0]'
+          n_y = 'n_y*stride_'+str(n)+'[1]'
+          n_z = 'n_z*stride_'+str(n)+'[2]'
+        elif prolong[n] == 1:
+          n_x = '(n_x+global_idx[0]%stride_'+str(n)+'[0])/stride_'+str(n)+'[0]'
+          n_y = '(n_y+global_idx[1]%stride_'+str(n)+'[1])/stride_'+str(n)+'[1]'
+          n_z = '(n_z+global_idx[2]%stride_'+str(n)+'[2])/stride_'+str(n)+'[2]'            
+        else:
+          n_x = 'n_x'
+          n_y = 'n_y'
+          n_z = 'n_z'
         if NDIM > 0:
-          offset = offset + 'n_x*'+str(stride[NDIM*n])
+          offset = offset + n_x+'*'+str(stride[NDIM*n])
         if NDIM > 1:
-          offset = offset + ' + n_y * xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])
+          offset = offset + ' + '+n_y+' * xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])
         if NDIM > 2:
-          offset = offset + ' + n_z * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
+          offset = offset + ' + '+n_z+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
         dimlabels = 'xyzuv'
         for i in range(1,NDIM):
           sizelist = sizelist + dimlabels[i-1]+'dim'+str(n)+'_'+name+', '
