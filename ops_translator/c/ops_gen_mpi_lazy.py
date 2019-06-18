@@ -125,9 +125,9 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     if NDIM == 2:
       for n in range (0, nargs):
         if str(stens[n]).find('STRID2D_X') > 0:
-          stride[NDIM*n+1] = 0
+          stride[NDIM*n+1] = '0'
         elif str(stens[n]).find('STRID2D_Y') > 0:
-          stride[NDIM*n] = 0
+          stride[NDIM*n] = '0'
 
     if NDIM == 3:
       for n in range (0, nargs):
