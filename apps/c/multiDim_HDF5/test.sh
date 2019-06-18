@@ -9,7 +9,7 @@ cd -
 ../../../ops_translator/c/ops.py read.cpp
 make clean
 rm -f .generated
-make IEEE=1 -j
+make IEEE=1 
 
 
 

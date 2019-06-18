@@ -138,7 +138,7 @@ void ops_set_args(const int argc, const char *argv) {
   char *pch;
   pch = strstr(argv, "OPS_BLOCK_SIZE_X=");
   if (pch != NULL) {
-    strncpy(temp, pch, 20);
+    strncpy(temp, pch, strlen(pch)+1);
     OPS_block_size_x = atoi(temp + 17);
     ops_printf("\n OPS_block_size_x = %d \n", OPS_block_size_x);
   }

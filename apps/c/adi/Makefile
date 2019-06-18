@@ -158,15 +158,15 @@ adi_dev_mpi: Makefile adi.cpp preproc_kernel.h init_kernel.h $(OPS_INSTALL_PATH)
 # mpi version
 #
 
-SEQ_KERNELS = adi_seq_kernels.cpp
+SEQ_KERNELS = adi_cpu_kernels.cpp
 
 adi_mpi: Makefile .generated adi_ops.cpp preproc_kernel.h init_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
-	$(MPICPP) $(CXXFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI/$(SEQ_KERNELS) $(TRID_LIB) -ltridcpu -lops_mpi -lops_hdf5_mpi -lops_trid_mpi $(HDF5_LIB) -o adi_mpi
+	$(MPICPP) $(CXXFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(TRID_LIB) -ltridcpu -lops_mpi -lops_hdf5_mpi -lops_trid_mpi $(HDF5_LIB) -o adi_mpi
 
 #
 # OpenMP version
 #
-OMP_KERNELS = adi_omp_kernels.cpp
+OMP_KERNELS = adi_cpu_kernels.cpp
 
 adi_mpi_openmp: Makefile .generated adi_ops.cpp adi_kernel.h adi_print_kernel.h adi_copy_kernel.h $(OPS_INSTALL_PATH)/lib/libops_mpi.a
 	$(MPICPP) $(OMPFLAGS) $(CXXFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi -lops_hdf5_mpi -lops_trid_mpi $(HDF5_LIB) -o adi_mpi_openmp
@@ -179,7 +179,7 @@ adi_openmp: Makefile .generated adi_ops.cpp init_kernel.h preproc_kernel.h $(OPS
 # Sequential version
 #
 adi_seq: Makefile .generated adi_ops.cpp init_kernel.h preproc_kernel.h $(OPS_INSTALL_PATH)/lib/libops_seq.a
-	$(MPICPP) $(CXXFLAGS) $(OPS_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI/$(SEQ_KERNELS) -lops_seq -lops_hdf5_seq -lops_trid_seq $(TRID_LIB) -ltridcpu  $(HDF5_LIB) -o adi_seq
+	$(MPICPP) $(CXXFLAGS) $(OPS_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI_OpenMP/$(SEQ_KERNELS) -lops_seq -lops_hdf5_seq -lops_trid_seq $(TRID_LIB) -ltridcpu  $(HDF5_LIB) -o adi_seq
 
 #
 # CUDA version
