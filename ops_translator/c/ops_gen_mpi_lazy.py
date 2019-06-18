@@ -118,7 +118,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     typs  = kernels[nk]['typs']
     NDIM = int(dim)
     #parse stencil to locate strided access
-    stride = [1] * (nargs+4) * NDIM
+    stride = ['1'] * (nargs+4) * NDIM
     restrict = [1] * nargs
     prolong = [1] * nargs
 
@@ -132,20 +132,20 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     if NDIM == 3:
       for n in range (0, nargs):
         if str(stens[n]).find('STRID3D_XY') > 0:
-          stride[NDIM*n+2] = 0
+          stride[NDIM*n+2] = '0'
         elif str(stens[n]).find('STRID3D_YZ') > 0:
-          stride[NDIM*n] = 0
+          stride[NDIM*n] = '0'
         elif str(stens[n]).find('STRID3D_XZ') > 0:
-          stride[NDIM*n+1] = 0
+          stride[NDIM*n+1] = '0'
         elif str(stens[n]).find('STRID3D_X') > 0:
-          stride[NDIM*n+1] = 0
-          stride[NDIM*n+2] = 0
+          stride[NDIM*n+1] = '0'
+          stride[NDIM*n+2] = '0'
         elif str(stens[n]).find('STRID3D_Y') > 0:
-          stride[NDIM*n] = 0
-          stride[NDIM*n+2] = 0
+          stride[NDIM*n] = '0'
+          stride[NDIM*n+2] = '0'
         elif str(stens[n]).find('STRID3D_Z') > 0:
-          stride[NDIM*n] = 0
-          stride[NDIM*n+1] = 0
+          stride[NDIM*n] = '0'
+          stride[NDIM*n+1] = '0'
 
     ### Determine if this is a MULTI_GRID LOOP with
     ### either restrict or prolong
@@ -339,17 +339,17 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
             code('#ifdef OPS_MPI')
             code('sub_dat_list sd'+str(n)+' = OPS_sub_dat_list[args['+str(n)+'].dat->index];')
           if restrict[n] == 1:
-            code(clean_type(arg_list[n])+' += arg_idx[0]*args['+str(n)+'].stencil->mgrid_stride[0] - sd'+str(n)+'->decomp_disp[0] + args['+str(n)+'].dat->d_m[0];')
+            code(clean_type(arg_list[n])+'_p += arg_idx[0]*args['+str(n)+'].stencil->mgrid_stride[0] - sd'+str(n)+'->decomp_disp[0] + args['+str(n)+'].dat->d_m[0];')
             if NDIM>1:
-              code(clean_type(arg_list[n])+' += (arg_idx[1]*args['+str(n)+'].stencil->mgrid_stride[1] - sd'+str(n)+'->decomp_disp[1] + args['+str(n)+'].dat->d_m[1])*xdim'+str(n)+'_'+name+';')
+              code(clean_type(arg_list[n])+'_p += (arg_idx[1]*args['+str(n)+'].stencil->mgrid_stride[1] - sd'+str(n)+'->decomp_disp[1] + args['+str(n)+'].dat->d_m[1])*xdim'+str(n)+'_'+name+';')
             if NDIM>2:
-              code(clean_type(arg_list[n])+' += (arg_idx[2]*args['+str(n)+'].stencil->mgrid_stride[2] - sd'+str(n)+'->decomp_disp[2] + args['+str(n)+'].dat->d_m[2])*xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
+              code(clean_type(arg_list[n])+'_p += (arg_idx[2]*args['+str(n)+'].stencil->mgrid_stride[2] - sd'+str(n)+'->decomp_disp[2] + args['+str(n)+'].dat->d_m[2])*xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
           if prolong[n] == 1:
-            code(clean_type(arg_list[n])+' += arg_idx[0]/args['+str(n)+'].stencil->mgrid_stride[0] - sd'+str(n)+'->decomp_disp[0] + args['+str(n)+'].dat->d_m[0];')
+            code(clean_type(arg_list[n])+'_p += arg_idx[0]/args['+str(n)+'].stencil->mgrid_stride[0] - sd'+str(n)+'->decomp_disp[0] + args['+str(n)+'].dat->d_m[0];')
             if NDIM>1:
-              code(clean_type(arg_list[n])+' += (arg_idx[1]/args['+str(n)+'].stencil->mgrid_stride[1] - sd'+str(n)+'->decomp_disp[1] + args['+str(n)+'].dat->d_m[1])*xdim'+str(n)+'_'+name+';')
+              code(clean_type(arg_list[n])+'_p += (arg_idx[1]/args['+str(n)+'].stencil->mgrid_stride[1] - sd'+str(n)+'->decomp_disp[1] + args['+str(n)+'].dat->d_m[1])*xdim'+str(n)+'_'+name+';')
             if NDIM>2:
-              code(clean_type(arg_list[n])+' += (arg_idx[2]/args['+str(n)+'].stencil->mgrid_stride[2] - sd'+str(n)+'->decomp_disp[2] + args['+str(n)+'].dat->d_m[2])*xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
+              code(clean_type(arg_list[n])+'_p += (arg_idx[2]/args['+str(n)+'].stencil->mgrid_stride[2] - sd'+str(n)+'->decomp_disp[2] + args['+str(n)+'].dat->d_m[2])*xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+';')
 
           if restrict[n] == 1 or prolong[n] == 1:
             code('#endif')
@@ -453,12 +453,25 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         elif not dims[n].isdigit():
             dim = 'arg'+str(n)+'.dim, '
             extradim = 1
+        if restrict[n] == 1:
+          n_x = 'n_x*args['+str(n)+'].stencil->mgrid_stride[0]'
+          n_y = 'n_y*args['+str(n)+'].stencil->mgrid_stride[1]'
+          n_z = 'n_z*args['+str(n)+'].stencil->mgrid_stride[2]'
+        elif prolong[n] == 1:
+          n_x = '(n_x+arg_idx[0]%args['+str(n)+'].stencil->mgrid_stride[0])/args['+str(n)+'].stencil->mgrid_stride[0]'
+          n_y = '(n_y+arg_idx[1]%args['+str(n)+'].stencil->mgrid_stride[1])/args['+str(n)+'].stencil->mgrid_stride[1]'
+          n_z = '(n_z+arg_idx[2]%args['+str(n)+'].stencil->mgrid_stride[2])/args['+str(n)+'].stencil->mgrid_stride[2]'
+        else:
+          n_x = 'n_x'
+          n_y = 'n_y'
+          n_z = 'n_z'
+
         if NDIM > 0:
-          offset = offset + 'n_x*'+str(stride[NDIM*n])
+          offset = offset + n_x+'*'+stride[NDIM*n]
         if NDIM > 1:
-          offset = offset + ' + n_y * xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])
+          offset = offset + ' + '+n_y+' * xdim'+str(n)+'_'+name+'*'+stride[NDIM*n+1]
         if NDIM > 2:
-          offset = offset + ' + n_z * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
+          offset = offset + ' + '+n_z+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+'*'+stride[NDIM*n+2]
         dimlabels = 'xyzuv'
         for i in range(1,NDIM+extradim):
           sizelist = sizelist + dimlabels[i-1]+'dim'+str(n)+'_'+name+', '
