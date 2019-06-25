@@ -35,9 +35,9 @@ void ops_par_loop_init_kernel_execute(ops_kernel_descriptor *desc) {
     return;
 #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(1, "init_kernel");
-    OPS_instance::getOPSInstance()->OPS_kernels[1].count++;
+    OPS_kernels[1].count++;
     ops_timers_core(&__c2, &__t2);
   }
 
@@ -95,9 +95,9 @@ void ops_par_loop_init_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 8);
 #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&__c1, &__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[1].mpi_time += __t1 - __t2;
+    OPS_kernels[1].mpi_time += __t1 - __t2;
   }
 
 #pragma omp parallel for
@@ -126,9 +126,9 @@ void ops_par_loop_init_kernel_execute(ops_kernel_descriptor *desc) {
 
     rhoin(0) = rho_new(0);
   }
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&__c2, &__t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[1].time += __t2 - __t1;
+    OPS_kernels[1].time += __t2 - __t1;
   }
 #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 8);
@@ -141,26 +141,18 @@ void ops_par_loop_init_kernel_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[7], range);
 #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&__c1, &__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[1].mpi_time += __t1 - __t2;
-    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer +=
-        ops_compute_transfer(dim, start, end, &arg0);
-    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer +=
-        ops_compute_transfer(dim, start, end, &arg1);
-    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer +=
-        ops_compute_transfer(dim, start, end, &arg2);
-    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer +=
-        ops_compute_transfer(dim, start, end, &arg3);
-    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer +=
-        ops_compute_transfer(dim, start, end, &arg4);
-    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer +=
-        ops_compute_transfer(dim, start, end, &arg5);
-    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer +=
-        ops_compute_transfer(dim, start, end, &arg6);
-    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer +=
-        ops_compute_transfer(dim, start, end, &arg7);
+    OPS_kernels[1].mpi_time += __t1 - __t2;
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg7);
   }
 }
 
@@ -202,7 +194,7 @@ void ops_par_loop_init_kernel(char const *name, ops_block block, int dim,
   desc->args[7] = arg7;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg7.dat->index;
   desc->function = ops_par_loop_init_kernel_execute;
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(1, "init_kernel");
   }
   ops_enqueue_kernel(desc);

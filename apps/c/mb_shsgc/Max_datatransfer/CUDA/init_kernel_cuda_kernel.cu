@@ -4,63 +4,39 @@
 __constant__ int dims_init_kernel [8][1];
 static int dims_init_kernel_h [8][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-#define OPS_ACC3(x) (x)
-#define OPS_ACC4(x) (x)
-#define OPS_ACC5(x) (x)
-#define OPS_ACC6(x) (x)
-#define OPS_ACC7(x) (x)
-
 //user function
 __device__
 
-void init_kernel_gpu(const double *x,double *rho_new, double *rhou_new, double *rhoE_new,
-                       double* rhoin, double *rho_old, double *rhou_old,
-                       double *rhoE_old) {
-  if (x[OPS_ACC0(0)] >= -4.0){
-    rho_new[OPS_ACC1(0)] = 1.0 + eps * sin(lambda *x[OPS_ACC0(0)]);
-    rhou_new[OPS_ACC2(0)] = ur * rho_new[OPS_ACC1(0)];
-    rhoE_new[OPS_ACC3(0)] = (pr / gam1) + 0.5 * pow(rhou_new[OPS_ACC2(0)],2)/rho_new[OPS_ACC1(0)];
+void init_kernel_gpu(const ACC<double> &x,
+  ACC<double> &rho_new,
+  ACC<double> &rhou_new,
+  ACC<double> &rhoE_new,
+  ACC<double>& rhoin,
+  ACC<double> &rho_old,
+  ACC<double> &rhou_old,
+  ACC<double> &rhoE_old) {
+  if (x(0) >= -4.0){
+    rho_new(0) = 1.0 + eps * sin(lambda *x(0));
+    rhou_new(0) = ur * rho_new(0);
+    rhoE_new(0) = (pr / gam1) + 0.5 * pow(rhou_new(0),2)/rho_new(0);
   }
   else {
-    rho_new[OPS_ACC1(0)] = rhol;
-    rhou_new[OPS_ACC2(0)] = ul * rho_new[OPS_ACC1(0)];
-    rhoE_new[OPS_ACC3(0)] = (pl / gam1) + 0.5 * pow(rhou_new[OPS_ACC2(0)],2)/rho_new[OPS_ACC1(0)];
+    rho_new(0) = rhol;
+    rhou_new(0) = ul * rho_new(0);
+    rhoE_new(0) = (pl / gam1) + 0.5 * pow(rhou_new(0),2)/rho_new(0);
   }
-  rho_old[OPS_ACC5(0)]  = rho_new[OPS_ACC1(0)];
-  rhou_old[OPS_ACC6(0)] = rhou_new[OPS_ACC2(0)];
-  rhoE_old[OPS_ACC7(0)] = rhoE_new[OPS_ACC3(0)];
+  rho_old(0)  = rho_new(0);
+  rhou_old(0) = rhou_new(0);
+  rhoE_old(0) = rhoE_new(0);
 
-  rhoin[OPS_ACC4(0)] = rho_new[OPS_ACC1(0)];
+  rhoin(0) = rho_new(0);
 
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-
-
 __global__ void ops_init_kernel(
-const double* __restrict arg0,
+double* __restrict arg0,
 double* __restrict arg1,
 double* __restrict arg2,
 double* __restrict arg3,
@@ -83,8 +59,16 @@ int size0 ){
   arg7 += idx_x * 1*1;
 
   if (idx_x < size0) {
-    init_kernel_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6, arg7);
+    const ACC<double> argp0(arg0);
+    ACC<double> argp1(arg1);
+    ACC<double> argp2(arg2);
+    ACC<double> argp3(arg3);
+    ACC<double> argp4(arg4);
+    ACC<double> argp5(arg5);
+    ACC<double> argp6(arg6);
+    ACC<double> argp7(arg7);
+    init_kernel_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5, argp6, argp7);
   }
 
 }

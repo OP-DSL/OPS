@@ -4,27 +4,19 @@
 __constant__ int dims_calc_dt_kernel_min [2][2];
 static int dims_calc_dt_kernel_min_h [2][2] = {0};
 
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y,z) (x+dims_calc_dt_kernel_min[0][0]*(y)+dims_calc_dt_kernel_min[0][0]*dims_calc_dt_kernel_min[0][1]*(z))
-
 //user function
 __device__
 
-void calc_dt_kernel_min_gpu(const double* dt_min ,
-                    double* dt_min_val) {
-  *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0,0,0)]);
+void calc_dt_kernel_min_gpu(const ACC<double>& dt_min,
+  double* dt_min_val) {
+  *dt_min_val = MIN(*dt_min_val, dt_min(0,0,0));
 
 }
 
 
 
-#undef OPS_ACC0
-
-
 __global__ void ops_calc_dt_kernel_min(
-const double* __restrict arg0,
+double* __restrict arg0,
 double* __restrict arg1,
 int size0,
 int size1,
@@ -40,7 +32,8 @@ int size2 ){
   arg0 += idx_x * 1*1 + idx_y * 1*1 * dims_calc_dt_kernel_min[0][0] + idx_z * 1*1 * dims_calc_dt_kernel_min[0][0] * dims_calc_dt_kernel_min[0][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    calc_dt_kernel_min_gpu(arg0, arg1_l);
+    const ACC<double> argp0(dims_calc_dt_kernel_min[0][0], dims_calc_dt_kernel_min[0][1], arg0);
+    calc_dt_kernel_min_gpu(argp0, arg1_l);
   }
   for (int d=0; d<1; d++)
     ops_reduction_cuda<OPS_MIN>(&arg1[d+(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*1],arg1_l[d]);

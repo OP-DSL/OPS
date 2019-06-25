@@ -19,6 +19,8 @@ void initialise_chunk_kernel_xx_c_wrapper(
     for ( int n_x=0; n_x<x_size; n_x++ ){
       int idx[] = {arg_idx0+n_x, arg_idx1+n_y};
       ptr_int xx = { xx_p + n_x*1 + n_y * xdim0_initialise_chunk_kernel_xx*0, xdim0_initialise_chunk_kernel_xx};
+
+      OPS_ACC(xx, 0, 0) = idx[0] - 2;
     }
   }
 }

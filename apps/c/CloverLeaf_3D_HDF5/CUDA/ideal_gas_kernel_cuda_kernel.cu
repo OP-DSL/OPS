@@ -4,45 +4,30 @@
 __constant__ int dims_ideal_gas_kernel [4][2];
 static int dims_ideal_gas_kernel_h [4][2] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x,y,z) (x+dims_ideal_gas_kernel[0][0]*(y)+dims_ideal_gas_kernel[0][0]*dims_ideal_gas_kernel[0][1]*(z))
-#define OPS_ACC1(x,y,z) (x+dims_ideal_gas_kernel[1][0]*(y)+dims_ideal_gas_kernel[1][0]*dims_ideal_gas_kernel[1][1]*(z))
-#define OPS_ACC2(x,y,z) (x+dims_ideal_gas_kernel[2][0]*(y)+dims_ideal_gas_kernel[2][0]*dims_ideal_gas_kernel[2][1]*(z))
-#define OPS_ACC3(x,y,z) (x+dims_ideal_gas_kernel[3][0]*(y)+dims_ideal_gas_kernel[3][0]*dims_ideal_gas_kernel[3][1]*(z))
-
 //user function
 __device__
 
-void ideal_gas_kernel_gpu( const double *density, const double *energy,
-                     double *pressure, double *soundspeed) {
+void ideal_gas_kernel_gpu(const ACC<double> &density,
+  const ACC<double> &energy,
+  ACC<double> &pressure,
+  ACC<double> &soundspeed) {
 
   double sound_speed_squared, v, pressurebyenergy, pressurebyvolume;
 
-  v = 1.0 / density[OPS_ACC0(0,0,0)];
-  pressure[OPS_ACC2(0,0,0)] = (1.4 - 1.0) * density[OPS_ACC0(0,0,0)] * energy[OPS_ACC1(0,0,0)];
+  v = 1.0 / density(0,0,0);
+  pressure(0,0,0) = (1.4 - 1.0) * density(0,0,0) * energy(0,0,0);
 
-  pressurebyenergy = (1.4 - 1.0) * density[OPS_ACC0(0,0,0)];
-  pressurebyvolume = -1.0*density[OPS_ACC0(0,0,0)] * pressure[OPS_ACC2(0,0,0)];
-  sound_speed_squared = v*v*(pressure[OPS_ACC2(0,0,0)] * pressurebyenergy-pressurebyvolume);
-  soundspeed[OPS_ACC3(0,0,0)] = sqrt(sound_speed_squared);
+  pressurebyenergy = (1.4 - 1.0) * density(0,0,0);
+  pressurebyvolume = -1.0*density(0,0,0) * pressure(0,0,0);
+  sound_speed_squared = v*v*(pressure(0,0,0) * pressurebyenergy-pressurebyvolume);
+  soundspeed(0,0,0) = sqrt(sound_speed_squared);
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
 __global__ void ops_ideal_gas_kernel(
-const double* __restrict arg0,
-const double* __restrict arg1,
+double* __restrict arg0,
+double* __restrict arg1,
 double* __restrict arg2,
 double* __restrict arg3,
 int size0,
@@ -60,7 +45,11 @@ int size2 ){
   arg3 += idx_x * 1*1 + idx_y * 1*1 * dims_ideal_gas_kernel[3][0] + idx_z * 1*1 * dims_ideal_gas_kernel[3][0] * dims_ideal_gas_kernel[3][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    ideal_gas_kernel_gpu(arg0, arg1, arg2, arg3);
+    const ACC<double> argp0(dims_ideal_gas_kernel[0][0], dims_ideal_gas_kernel[0][1], arg0);
+    const ACC<double> argp1(dims_ideal_gas_kernel[1][0], dims_ideal_gas_kernel[1][1], arg1);
+    ACC<double> argp2(dims_ideal_gas_kernel[2][0], dims_ideal_gas_kernel[2][1], arg2);
+    ACC<double> argp3(dims_ideal_gas_kernel[3][0], dims_ideal_gas_kernel[3][1], arg3);
+    ideal_gas_kernel_gpu(argp0, argp1, argp2, argp3);
   }
 
 }

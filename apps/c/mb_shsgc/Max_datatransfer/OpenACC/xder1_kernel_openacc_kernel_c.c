@@ -7,26 +7,13 @@
 int xdim0_xder1_kernel;
 int xdim1_xder1_kernel;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-
 //user function
-inline 
-void xder1_kernel(const double *inp, double *out) {
+inline void xder1_kernel(const ptr_double inp, ptr_double out) {
   double dix = 1/(12.00*dx);
-  out[OPS_ACC1(0)] = (inp[OPS_ACC0(-2)] - inp[OPS_ACC0(2)]  + 8.0 *(
-  inp[OPS_ACC0(1)] - inp[OPS_ACC0(-1)] )) * dix;
+  OPS_ACC(out, 0) = (OPS_ACC(inp, -2) - OPS_ACC(inp, 2) +
+                     8.0 * (OPS_ACC(inp, 1) - OPS_ACC(inp, -1))) *
+                    dix;
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
 
 
 void xder1_kernel_c_wrapper(
@@ -38,8 +25,8 @@ void xder1_kernel_c_wrapper(
   #pragma acc loop
   #endif
   for ( int n_x=0; n_x<x_size; n_x++ ){
-    xder1_kernel(  p_a0 + n_x*1*1,
-           p_a1 + n_x*1*1 );
-
+    const ptr_double ptr0 = {p_a0 + n_x * 1 * 1};
+    ptr_double ptr1 = {p_a1 + n_x * 1 * 1};
+    xder1_kernel(ptr0, ptr1);
   }
 }

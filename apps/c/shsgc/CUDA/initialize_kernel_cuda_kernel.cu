@@ -4,47 +4,31 @@
 __constant__ int dims_initialize_kernel [6][1];
 static int dims_initialize_kernel_h [6][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-#define OPS_ACC3(x) (x)
-#define OPS_ACC4(x) (x)
-
 //user function
 __device__
 
-void initialize_kernel_gpu(double *x,double *rho_new, double *rhou_new, double *rhoE_new,
-                       double* rhoin, int *idx) {
-  x[OPS_ACC0(0)] = xmin + (idx[0]-2) * dx;
-  if (x[OPS_ACC0(0)] >= -4.0){
-		rho_new[OPS_ACC1(0)] = 1.0 + eps * sin(lambda *x[OPS_ACC0(0)]);
-		rhou_new[OPS_ACC2(0)] = ur * rho_new[OPS_ACC1(0)];
-		rhoE_new[OPS_ACC3(0)] = (pr / gam1) + 0.5 * pow(rhou_new[OPS_ACC2(0)],2)/rho_new[OPS_ACC1(0)];
+void initialize_kernel_gpu(ACC<double> &x,
+  ACC<double> &rho_new,
+  ACC<double> &rhou_new,
+  ACC<double> &rhoE_new,
+  ACC<double>& rhoin,
+  int *idx) {
+  x(0) = xmin + (idx[0]-2) * dx;
+  if (x(0) >= -4.0){
+		rho_new(0) = 1.0 + eps * sin(lambda *x(0));
+		rhou_new(0) = ur * rho_new(0);
+		rhoE_new(0) = (pr / gam1) + 0.5 * pow(rhou_new(0),2)/rho_new(0);
 	}
 	else {
-		rho_new[OPS_ACC1(0)] = rhol;
-		rhou_new[OPS_ACC2(0)] = ul * rho_new[OPS_ACC1(0)];
-		rhoE_new[OPS_ACC3(0)] = (pl / gam1) + 0.5 * pow(rhou_new[OPS_ACC2(0)],2)/rho_new[OPS_ACC1(0)];
+		rho_new(0) = rhol;
+		rhou_new(0) = ul * rho_new(0);
+		rhoE_new(0) = (pl / gam1) + 0.5 * pow(rhou_new(0),2)/rho_new(0);
 	}
 
-	rhoin[OPS_ACC4(0)] = gam1 * (rhoE_new[OPS_ACC3(0)] - 0.5 * rhou_new[OPS_ACC2(0)] * rhou_new[OPS_ACC2(0)] / rho_new[OPS_ACC1(0)]);
+	rhoin(0) = gam1 * (rhoE_new(0) - 0.5 * rhou_new(0) * rhou_new(0) / rho_new(0));
 
 }
 
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
 
 
 __global__ void ops_initialize_kernel(
@@ -68,8 +52,13 @@ int size0 ){
   arg4 += idx_x * 1*1;
 
   if (idx_x < size0) {
-    initialize_kernel_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg_idx);
+    ACC<double> argp0(arg0);
+    ACC<double> argp1(arg1);
+    ACC<double> argp2(arg2);
+    ACC<double> argp3(arg3);
+    ACC<double> argp4(arg4);
+    initialize_kernel_gpu(argp0, argp1, argp2, argp3,
+                   argp4, arg_idx);
   }
 
 }

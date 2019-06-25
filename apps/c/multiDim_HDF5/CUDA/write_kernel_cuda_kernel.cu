@@ -4,35 +4,24 @@
 __constant__ int dims_write_kernel [4][2];
 static int dims_write_kernel_h [4][2] = {0};
 
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-#undef OPS_ACC_MD0
-
-#define OPS_ACC1(x,y,z) (x+dims_write_kernel[1][0]*(y)+dims_write_kernel[1][0]*dims_write_kernel[1][1]*(z))
-#define OPS_ACC2(x,y,z) (x+dims_write_kernel[2][0]*(y)+dims_write_kernel[2][0]*dims_write_kernel[2][1]*(z))
-
-#define OPS_ACC_MD0(d,x,y,z) ((x)*2+(d)+(dims_write_kernel[0][0]*(y)*2)+(dims_write_kernel[0][0]*dims_write_kernel[0][1]*(z)*2))
 //user function
 __device__
 
-void write_kernel_gpu(double *mult, double *single, int *digit, const int *idx) {
+void write_kernel_gpu(ACC<double> &mult,
+  ACC<double> &single,
+  ACC<int> &digit,
+  const int *idx) {
 
-  mult[OPS_ACC_MD0(0, 0, 0, 0)] = 1;
+  mult(0, 0, 0, 0) = 1;
 
-  mult[OPS_ACC_MD0(1, 0, 0, 0)] = 2;
+  mult(1, 0, 0, 0) = 2;
 
-  single[OPS_ACC1(0, 0, 0)] = 3;
+  single(0, 0, 0) = 3;
 
-  digit[OPS_ACC2(0, 0, 0)] = idx[0] * 100 + idx[1] * 10 + idx[2];
+  digit(0, 0, 0) = idx[0] * 100 + idx[1] * 10 + idx[2];
 }
 
 
-
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-#undef OPS_ACC_MD0
 
 __global__ void ops_write_kernel(
 double* __restrict arg0,
@@ -57,7 +46,10 @@ int size2 ){
   arg2 += idx_x * 1*1 + idx_y * 1*1 * dims_write_kernel[2][0] + idx_z * 1*1 * dims_write_kernel[2][0] * dims_write_kernel[2][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    write_kernel_gpu(arg0, arg1, arg2, arg_idx);
+    ACC<double> argp0(2, dims_write_kernel[0][0], dims_write_kernel[0][1], dims_write_kernel[0][2], arg0);
+    ACC<double> argp1(dims_write_kernel[1][0], dims_write_kernel[1][1], arg1);
+    ACC<int> argp2(dims_write_kernel[2][0], dims_write_kernel[2][1], arg2);
+    write_kernel_gpu(argp0, argp1, argp2, arg_idx);
   }
 
 }

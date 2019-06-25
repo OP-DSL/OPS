@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,36 +45,23 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
-
-#define OPS_ACC0(x,y) (x+xdim0_update_halo_kernel1_t2*(y))
-#define OPS_ACC1(x,y) (x+xdim1_update_halo_kernel1_t2*(y))
-#define OPS_ACC2(x,y) (x+xdim2_update_halo_kernel1_t2*(y))
-#define OPS_ACC3(x,y) (x+xdim3_update_halo_kernel1_t2*(y))
-#define OPS_ACC4(x,y) (x+xdim4_update_halo_kernel1_t2*(y))
-#define OPS_ACC5(x,y) (x+xdim5_update_halo_kernel1_t2*(y))
-
-
 //user function
-inline void update_halo_kernel1_t2(__global double * restrict density0,__global double * restrict energy0,__global double * restrict energy1,
-__global double * restrict u,__global double * restrict p,__global double * restrict sd,const __global int* restrict  fields)
 
- {
-  if(fields[FIELD_DENSITY] == 1) density0[OPS_ACC0(0,0)] = density0[OPS_ACC0(0,-3)];
-  if(fields[FIELD_ENERGY0] == 1) energy0[OPS_ACC1(0,0)] = energy0[OPS_ACC1(0,-3)];
-  if(fields[FIELD_ENERGY1] == 1) energy1[OPS_ACC2(0,0)] = energy1[OPS_ACC2(0,-3)];
-  if(fields[FIELD_U] == 1) u[OPS_ACC3(0,0)] = u[OPS_ACC3(0,-3)];
-  if(fields[FIELD_P] == 1) p[OPS_ACC4(0,0)] = p[OPS_ACC4(0,-3)];
-  if(fields[FIELD_SD] == 1) sd[OPS_ACC5(0,0)] = sd[OPS_ACC5(0,-3)];
+inline void update_halo_kernel1_t2(ptr_double density0, 
+  ptr_double energy0, 
+  ptr_double energy1, 
+  ptr_double u, 
+  ptr_double p, 
+  ptr_double sd, 
+  const __global int* restrict  fields) {
+  if(fields[FIELD_DENSITY] == 1) OPS_ACCS(density0, 0,0) = OPS_ACCS(density0, 0,-3);
+  if(fields[FIELD_ENERGY0] == 1) OPS_ACCS(energy0, 0,0) = OPS_ACCS(energy0, 0,-3);
+  if(fields[FIELD_ENERGY1] == 1) OPS_ACCS(energy1, 0,0) = OPS_ACCS(energy1, 0,-3);
+  if(fields[FIELD_U] == 1) OPS_ACCS(u, 0,0) = OPS_ACCS(u, 0,-3);
+  if(fields[FIELD_P] == 1) OPS_ACCS(p, 0,0) = OPS_ACCS(p, 0,-3);
+  if(fields[FIELD_SD] == 1) OPS_ACCS(sd, 0,0) = OPS_ACCS(sd, 0,-3);
 
 }
-
 
 
 __kernel void ops_update_halo_kernel1_t2(
@@ -95,12 +86,18 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    update_halo_kernel1_t2(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel1_t2],
-                       &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel1_t2],
-                       &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_update_halo_kernel1_t2],
-                       &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_update_halo_kernel1_t2],
-                       &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_update_halo_kernel1_t2],
-                       &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_update_halo_kernel1_t2],
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel1_t2], xdim0_update_halo_kernel1_t2};
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel1_t2], xdim1_update_halo_kernel1_t2};
+    ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_update_halo_kernel1_t2], xdim2_update_halo_kernel1_t2};
+    ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_update_halo_kernel1_t2], xdim3_update_halo_kernel1_t2};
+    ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_update_halo_kernel1_t2], xdim4_update_halo_kernel1_t2};
+    ptr_double ptr5 = { &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_update_halo_kernel1_t2], xdim5_update_halo_kernel1_t2};
+    update_halo_kernel1_t2(ptr0,
+                       ptr1,
+                       ptr2,
+                       ptr3,
+                       ptr4,
+                       ptr5,
                        arg6);
   }
 

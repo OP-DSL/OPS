@@ -17,84 +17,50 @@ int ydim5_field_summary_kernel;
 int xdim6_field_summary_kernel;
 int ydim6_field_summary_kernel;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_field_summary_kernel*(y)+xdim0_field_summary_kernel*ydim0_field_summary_kernel*(z))
-#define OPS_ACC1(x,y,z) (x+xdim1_field_summary_kernel*(y)+xdim1_field_summary_kernel*ydim1_field_summary_kernel*(z))
-#define OPS_ACC2(x,y,z) (x+xdim2_field_summary_kernel*(y)+xdim2_field_summary_kernel*ydim2_field_summary_kernel*(z))
-#define OPS_ACC3(x,y,z) (x+xdim3_field_summary_kernel*(y)+xdim3_field_summary_kernel*ydim3_field_summary_kernel*(z))
-#define OPS_ACC4(x,y,z) (x+xdim4_field_summary_kernel*(y)+xdim4_field_summary_kernel*ydim4_field_summary_kernel*(z))
-#define OPS_ACC5(x,y,z) (x+xdim5_field_summary_kernel*(y)+xdim5_field_summary_kernel*ydim5_field_summary_kernel*(z))
-#define OPS_ACC6(x,y,z) (x+xdim6_field_summary_kernel*(y)+xdim6_field_summary_kernel*ydim6_field_summary_kernel*(z))
-
 //user function
-inline 
-void field_summary_kernel( const double *volume, const double *density0,
-                     const double *energy0, const double *pressure,
-                     const double *xvel0,
-                     const double *yvel0,
-                     const double *zvel0,
-                     double *vol,
-                     double *mass,
-                     double *ie,
-                     double *ke,
-                     double *press) {
+inline void
+field_summary_kernel(const ptr_double volume, const ptr_double density0,
+                     const ptr_double energy0, const ptr_double pressure,
+                     const ptr_double xvel0, const ptr_double yvel0,
+                     const ptr_double zvel0, double *vol, double *mass,
+                     double *ie, double *ke, double *press) {
 
   double vsqrd, cell_vol, cell_mass;
 
   vsqrd = 0.0;
-  vsqrd+=0.125*( xvel0[OPS_ACC4(0,0,0)] * xvel0[OPS_ACC4(0,0,0)] +
-                 yvel0[OPS_ACC5(0,0,0)] * yvel0[OPS_ACC5(0,0,0)] +
-                 zvel0[OPS_ACC6(0,0,0)] * zvel0[OPS_ACC6(0,0,0)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(1,0,0)] * xvel0[OPS_ACC4(1,0,0)] +
-                 yvel0[OPS_ACC5(1,0,0)] * yvel0[OPS_ACC5(1,0,0)] +
-                 zvel0[OPS_ACC6(1,0,0)] * zvel0[OPS_ACC6(1,0,0)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(0,1,0)] * xvel0[OPS_ACC4(0,1,0)] +
-                 yvel0[OPS_ACC5(0,1,0)] * yvel0[OPS_ACC5(0,1,0)] +
-                 zvel0[OPS_ACC6(0,1,0)] * zvel0[OPS_ACC6(0,1,0)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(1,1,0)] * xvel0[OPS_ACC4(1,1,0)] +
-                 yvel0[OPS_ACC5(1,1,0)] * yvel0[OPS_ACC5(1,1,0)] +
-                 zvel0[OPS_ACC6(1,1,0)] * zvel0[OPS_ACC6(1,1,0)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(0,0,1)] * xvel0[OPS_ACC4(0,0,1)] +
-                 yvel0[OPS_ACC5(0,0,1)] * yvel0[OPS_ACC5(0,0,1)] +
-                 zvel0[OPS_ACC6(0,0,1)] * zvel0[OPS_ACC6(0,0,1)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(1,0,1)] * xvel0[OPS_ACC4(1,0,1)] +
-                 yvel0[OPS_ACC5(1,0,1)] * yvel0[OPS_ACC5(1,0,1)] +
-                 zvel0[OPS_ACC6(1,0,1)] * zvel0[OPS_ACC6(1,0,1)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(0,1,1)] * xvel0[OPS_ACC4(0,1,1)] +
-                 yvel0[OPS_ACC5(0,1,1)] * yvel0[OPS_ACC5(0,1,1)] +
-                 zvel0[OPS_ACC6(0,1,1)] * zvel0[OPS_ACC6(0,1,1)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(1,1,1)] * xvel0[OPS_ACC4(1,1,1)] +
-                 yvel0[OPS_ACC5(1,1,1)] * yvel0[OPS_ACC5(1,1,1)] +
-                 zvel0[OPS_ACC6(1,1,1)] * zvel0[OPS_ACC6(1,1,1)]);
+  vsqrd += 0.125 * (OPS_ACC(xvel0, 0, 0, 0) * OPS_ACC(xvel0, 0, 0, 0) +
+                    OPS_ACC(yvel0, 0, 0, 0) * OPS_ACC(yvel0, 0, 0, 0) +
+                    OPS_ACC(zvel0, 0, 0, 0) * OPS_ACC(zvel0, 0, 0, 0));
+  vsqrd += 0.125 * (OPS_ACC(xvel0, 1, 0, 0) * OPS_ACC(xvel0, 1, 0, 0) +
+                    OPS_ACC(yvel0, 1, 0, 0) * OPS_ACC(yvel0, 1, 0, 0) +
+                    OPS_ACC(zvel0, 1, 0, 0) * OPS_ACC(zvel0, 1, 0, 0));
+  vsqrd += 0.125 * (OPS_ACC(xvel0, 0, 1, 0) * OPS_ACC(xvel0, 0, 1, 0) +
+                    OPS_ACC(yvel0, 0, 1, 0) * OPS_ACC(yvel0, 0, 1, 0) +
+                    OPS_ACC(zvel0, 0, 1, 0) * OPS_ACC(zvel0, 0, 1, 0));
+  vsqrd += 0.125 * (OPS_ACC(xvel0, 1, 1, 0) * OPS_ACC(xvel0, 1, 1, 0) +
+                    OPS_ACC(yvel0, 1, 1, 0) * OPS_ACC(yvel0, 1, 1, 0) +
+                    OPS_ACC(zvel0, 1, 1, 0) * OPS_ACC(zvel0, 1, 1, 0));
+  vsqrd += 0.125 * (OPS_ACC(xvel0, 0, 0, 1) * OPS_ACC(xvel0, 0, 0, 1) +
+                    OPS_ACC(yvel0, 0, 0, 1) * OPS_ACC(yvel0, 0, 0, 1) +
+                    OPS_ACC(zvel0, 0, 0, 1) * OPS_ACC(zvel0, 0, 0, 1));
+  vsqrd += 0.125 * (OPS_ACC(xvel0, 1, 0, 1) * OPS_ACC(xvel0, 1, 0, 1) +
+                    OPS_ACC(yvel0, 1, 0, 1) * OPS_ACC(yvel0, 1, 0, 1) +
+                    OPS_ACC(zvel0, 1, 0, 1) * OPS_ACC(zvel0, 1, 0, 1));
+  vsqrd += 0.125 * (OPS_ACC(xvel0, 0, 1, 1) * OPS_ACC(xvel0, 0, 1, 1) +
+                    OPS_ACC(yvel0, 0, 1, 1) * OPS_ACC(yvel0, 0, 1, 1) +
+                    OPS_ACC(zvel0, 0, 1, 1) * OPS_ACC(zvel0, 0, 1, 1));
+  vsqrd += 0.125 * (OPS_ACC(xvel0, 1, 1, 1) * OPS_ACC(xvel0, 1, 1, 1) +
+                    OPS_ACC(yvel0, 1, 1, 1) * OPS_ACC(yvel0, 1, 1, 1) +
+                    OPS_ACC(zvel0, 1, 1, 1) * OPS_ACC(zvel0, 1, 1, 1));
 
-  cell_vol = volume[OPS_ACC0(0,0,0)];
-  cell_mass = cell_vol * density0[OPS_ACC1(0,0,0)];
+  cell_vol = OPS_ACC(volume, 0, 0, 0);
+  cell_mass = cell_vol * OPS_ACC(density0, 0, 0, 0);
   *vol = *vol + cell_vol;
   *mass = *mass + cell_mass;
-  *ie = *ie + cell_mass * energy0[OPS_ACC2(0,0,0)];
+  *ie = *ie + cell_mass * OPS_ACC(energy0, 0, 0, 0);
   *ke = *ke + cell_mass * 0.5 * vsqrd;
-  *press = *press + cell_vol * pressure[OPS_ACC3(0,0,0)];
-
+  *press = *press + cell_vol * OPS_ACC(pressure, 0, 0, 0);
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
 
 
 void field_summary_kernel_c_wrapper(
@@ -129,19 +95,43 @@ void field_summary_kernel_c_wrapper(
       #pragma acc loop reduction(+:p_a7_0) reduction(+:p_a8_0) reduction(+:p_a9_0) reduction(+:p_a10_0) reduction(+:p_a11_0)
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        field_summary_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_field_summary_kernel*1*1 + n_z*xdim0_field_summary_kernel*ydim0_field_summary_kernel*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_field_summary_kernel*1*1 + n_z*xdim1_field_summary_kernel*ydim1_field_summary_kernel*1*1,
-           p_a2 + n_x*1*1 + n_y*xdim2_field_summary_kernel*1*1 + n_z*xdim2_field_summary_kernel*ydim2_field_summary_kernel*1*1,
-           p_a3 + n_x*1*1 + n_y*xdim3_field_summary_kernel*1*1 + n_z*xdim3_field_summary_kernel*ydim3_field_summary_kernel*1*1,
-           p_a4 + n_x*1*1 + n_y*xdim4_field_summary_kernel*1*1 + n_z*xdim4_field_summary_kernel*ydim4_field_summary_kernel*1*1,
-           p_a5 + n_x*1*1 + n_y*xdim5_field_summary_kernel*1*1 + n_z*xdim5_field_summary_kernel*ydim5_field_summary_kernel*1*1,
-           p_a6 + n_x*1*1 + n_y*xdim6_field_summary_kernel*1*1 + n_z*xdim6_field_summary_kernel*ydim6_field_summary_kernel*1*1,
-           &p_a7_0,
-           &p_a8_0,
-           &p_a9_0,
-           &p_a10_0,
-           &p_a11_0 );
-
+        const ptr_double ptr0 = {
+            p_a0 + n_x * 1 * 1 + n_y * xdim0_field_summary_kernel * 1 * 1 +
+                n_z * xdim0_field_summary_kernel * ydim0_field_summary_kernel *
+                    1 * 1,
+            xdim0_field_summary_kernel, ydim0_field_summary_kernel};
+        const ptr_double ptr1 = {
+            p_a1 + n_x * 1 * 1 + n_y * xdim1_field_summary_kernel * 1 * 1 +
+                n_z * xdim1_field_summary_kernel * ydim1_field_summary_kernel *
+                    1 * 1,
+            xdim1_field_summary_kernel, ydim1_field_summary_kernel};
+        const ptr_double ptr2 = {
+            p_a2 + n_x * 1 * 1 + n_y * xdim2_field_summary_kernel * 1 * 1 +
+                n_z * xdim2_field_summary_kernel * ydim2_field_summary_kernel *
+                    1 * 1,
+            xdim2_field_summary_kernel, ydim2_field_summary_kernel};
+        const ptr_double ptr3 = {
+            p_a3 + n_x * 1 * 1 + n_y * xdim3_field_summary_kernel * 1 * 1 +
+                n_z * xdim3_field_summary_kernel * ydim3_field_summary_kernel *
+                    1 * 1,
+            xdim3_field_summary_kernel, ydim3_field_summary_kernel};
+        const ptr_double ptr4 = {
+            p_a4 + n_x * 1 * 1 + n_y * xdim4_field_summary_kernel * 1 * 1 +
+                n_z * xdim4_field_summary_kernel * ydim4_field_summary_kernel *
+                    1 * 1,
+            xdim4_field_summary_kernel, ydim4_field_summary_kernel};
+        const ptr_double ptr5 = {
+            p_a5 + n_x * 1 * 1 + n_y * xdim5_field_summary_kernel * 1 * 1 +
+                n_z * xdim5_field_summary_kernel * ydim5_field_summary_kernel *
+                    1 * 1,
+            xdim5_field_summary_kernel, ydim5_field_summary_kernel};
+        const ptr_double ptr6 = {
+            p_a6 + n_x * 1 * 1 + n_y * xdim6_field_summary_kernel * 1 * 1 +
+                n_z * xdim6_field_summary_kernel * ydim6_field_summary_kernel *
+                    1 * 1,
+            xdim6_field_summary_kernel, ydim6_field_summary_kernel};
+        field_summary_kernel(ptr0, ptr1, ptr2, ptr3, ptr4, ptr5, ptr6, &p_a7_0,
+                             &p_a8_0, &p_a9_0, &p_a10_0, &p_a11_0);
       }
     }
   }

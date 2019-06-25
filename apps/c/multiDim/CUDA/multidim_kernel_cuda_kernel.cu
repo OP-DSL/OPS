@@ -7,7 +7,8 @@ static int dims_multidim_kernel_h [2][2] = {0};
 //user function
 __device__
 
-void multidim_kernel_gpu(ACC<double> &val, int *idx){
+void multidim_kernel_gpu(ACC<double> &val,
+  int *idx){
   val(0,0,0) = (double)(idx[0]);
   val(1,0,0) = (double)(idx[1]);
 

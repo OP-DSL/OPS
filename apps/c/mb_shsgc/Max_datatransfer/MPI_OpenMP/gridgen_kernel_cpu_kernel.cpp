@@ -27,9 +27,9 @@ void ops_par_loop_gridgen_kernel_execute(ops_kernel_descriptor *desc) {
     return;
 #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(0, "gridgen_kernel");
-    OPS_instance::getOPSInstance()->OPS_kernels[0].count++;
+    OPS_kernels[0].count++;
     ops_timers_core(&__c2, &__t2);
   }
 
@@ -52,9 +52,8 @@ void ops_par_loop_gridgen_kernel_execute(ops_kernel_descriptor *desc) {
 #endif
 
 #ifdef OPS_MPI
-  sub_dat_list sd = OPS_sub_dat_list[args[0].dat->index];
-  arg_idx[0] = MAX(0, sd->decomp_disp[0]);
-#else  // OPS_MPI
+  arg_idx[0] -= start[0];
+#else
   arg_idx[0] = 0;
 #endif // OPS_MPI
 
@@ -71,9 +70,9 @@ void ops_par_loop_gridgen_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 2);
 #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&__c1, &__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[0].mpi_time += __t1 - __t2;
+    OPS_kernels[0].mpi_time += __t1 - __t2;
   }
 
 #pragma omp parallel for
@@ -83,21 +82,20 @@ void ops_par_loop_gridgen_kernel_execute(ops_kernel_descriptor *desc) {
 
     x(0) = xt + id[0] * dx;
   }
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&__c2, &__t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[0].time += __t2 - __t1;
+    OPS_kernels[0].time += __t2 - __t1;
   }
 #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 2);
   ops_set_halo_dirtybit3(&args[0], range);
 #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&__c1, &__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[0].mpi_time += __t1 - __t2;
-    OPS_instance::getOPSInstance()->OPS_kernels[0].transfer +=
-        ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[0].mpi_time += __t1 - __t2;
+    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
 
@@ -124,7 +122,7 @@ void ops_par_loop_gridgen_kernel(char const *name, ops_block block, int dim,
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
   desc->function = ops_par_loop_gridgen_kernel_execute;
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(0, "gridgen_kernel");
   }
   ops_enqueue_kernel(desc);

@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_1D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,50 +44,37 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-#define OPS_ACC3(x) (x)
-
-
 //user function
-void drhoEpudx_kernel(const __global double * restrict rhou_new,const __global double* restrict  rho_new,const __global double* restrict  rhoE_new,
-__global double * restrict rhoE_res,
-  const double dx,
-const double gam1)
 
- {
+void drhoEpudx_kernel(const ptr_double rhou_new,
+  const ptr_double  rho_new,
+  const ptr_double  rhoE_new,
+  ptr_double rhoE_res, const double dx, const double gam1)
+{
 
-			double fni = rhou_new[OPS_ACC0(0)] * rhou_new[OPS_ACC0(0)] / rho_new[OPS_ACC1(0)] ;
-			double p = gam1 * (rhoE_new[OPS_ACC2(0)] - 0.5 * fni);
-			fni = (rhoE_new[OPS_ACC2(0)] + p) * rhou_new[OPS_ACC0(0)] / rho_new[OPS_ACC1(0)] ;
+			double fni = OPS_ACCS(rhou_new, 0) * OPS_ACCS(rhou_new, 0) / OPS_ACCS(rho_new, 0) ;
+			double p = gam1 * (OPS_ACCS(rhoE_new, 0) - 0.5 * fni);
+			fni = (OPS_ACCS(rhoE_new, 0) + p) * OPS_ACCS(rhou_new, 0) / OPS_ACCS(rho_new, 0) ;
 
-			double fnim1 = rhou_new[OPS_ACC0(-1)] * rhou_new[OPS_ACC0(-1)] / rho_new[OPS_ACC1(-1)];
-			p = gam1 * (rhoE_new[OPS_ACC2(-1)] - 0.5 * fnim1);
-			fnim1 = (rhoE_new[OPS_ACC2(-1)] + p) * rhou_new[OPS_ACC0(-1)] / rho_new[OPS_ACC1(-1)];
+			double fnim1 = OPS_ACCS(rhou_new, -1) * OPS_ACCS(rhou_new, -1) / OPS_ACCS(rho_new, -1);
+			p = gam1 * (OPS_ACCS(rhoE_new, -1) - 0.5 * fnim1);
+			fnim1 = (OPS_ACCS(rhoE_new, -1) + p) * OPS_ACCS(rhou_new, -1) / OPS_ACCS(rho_new, -1);
 
-			double fnim2 = rhou_new[OPS_ACC0(-2)] * rhou_new[OPS_ACC0(-2)] / rho_new[OPS_ACC1(-2)];
-			p = gam1 * (rhoE_new[OPS_ACC2(-2)] - 0.5 * fnim2);
-			fnim2 = (rhoE_new[OPS_ACC2(-2)] + p ) * rhou_new[OPS_ACC0(-2)] / rho_new[OPS_ACC1(-2)];
+			double fnim2 = OPS_ACCS(rhou_new, -2) * OPS_ACCS(rhou_new, -2) / OPS_ACCS(rho_new, -2);
+			p = gam1 * (OPS_ACCS(rhoE_new, -2) - 0.5 * fnim2);
+			fnim2 = (OPS_ACCS(rhoE_new, -2) + p ) * OPS_ACCS(rhou_new, -2) / OPS_ACCS(rho_new, -2);
 
-			double fnip1 = rhou_new[OPS_ACC0(1)] * rhou_new[OPS_ACC0(1)] / rho_new[OPS_ACC1(1)];
-			p = gam1 * (rhoE_new[OPS_ACC2(1)] - 0.5 * fnip1);
-			fnip1 = (rhoE_new[OPS_ACC2(1)] + p) * rhou_new[OPS_ACC0(1)] / rho_new[OPS_ACC1(1)];
+			double fnip1 = OPS_ACCS(rhou_new, 1) * OPS_ACCS(rhou_new, 1) / OPS_ACCS(rho_new, 1);
+			p = gam1 * (OPS_ACCS(rhoE_new, 1) - 0.5 * fnip1);
+			fnip1 = (OPS_ACCS(rhoE_new, 1) + p) * OPS_ACCS(rhou_new, 1) / OPS_ACCS(rho_new, 1);
 
-			double fnip2 = rhou_new[OPS_ACC0(2)] * rhou_new[OPS_ACC0(2)] / rho_new[OPS_ACC1(2)];
-			p = gam1 * (rhoE_new[OPS_ACC2(2)] - 0.5 * fnip2);
-			fnip2 = (rhoE_new[OPS_ACC2(2)] + p) * rhou_new[OPS_ACC0(2)] / rho_new[OPS_ACC1(2)];
+			double fnip2 = OPS_ACCS(rhou_new, 2) * OPS_ACCS(rhou_new, 2) / OPS_ACCS(rho_new, 2);
+			p = gam1 * (OPS_ACCS(rhoE_new, 2) - 0.5 * fnip2);
+			fnip2 = (OPS_ACCS(rhoE_new, 2) + p) * OPS_ACCS(rhou_new, 2) / OPS_ACCS(rho_new, 2);
 
 			double deriv = (fnim2 - fnip2 + 8.0* (fnip1 - fnim1))/(12.00*dx);
-			rhoE_res[OPS_ACC3(0)] = deriv;
+			OPS_ACCS(rhoE_res, 0) = deriv;
 }
-
 
 
 __kernel void ops_drhoEpudx_kernel(
@@ -103,10 +94,14 @@ const int size0 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    drhoEpudx_kernel(&arg0[base0 + idx_x * 1*1],
-                     &arg1[base1 + idx_x * 1*1],
-                     &arg2[base2 + idx_x * 1*1],
-                     &arg3[base3 + idx_x * 1*1],
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1] };
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1] };
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1] };
+    ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1] };
+    drhoEpudx_kernel(ptr0,
+                     ptr1,
+                     ptr2,
+                     ptr3,
                      dx,
                      gam1);
   }

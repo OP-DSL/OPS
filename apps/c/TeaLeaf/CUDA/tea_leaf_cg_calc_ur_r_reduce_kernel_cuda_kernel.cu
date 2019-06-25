@@ -4,30 +4,22 @@
 __constant__ int dims_tea_leaf_cg_calc_ur_r_reduce_kernel [4][1];
 static int dims_tea_leaf_cg_calc_ur_r_reduce_kernel_h [4][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+dims_tea_leaf_cg_calc_ur_r_reduce_kernel[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_tea_leaf_cg_calc_ur_r_reduce_kernel[1][0]*(y))
-
 //user function
 __device__
 
-void tea_leaf_cg_calc_ur_r_reduce_kernel_gpu(double * r, const double * w, const double * alpha, double *rnn) {
-  r[OPS_ACC0(0,0)] = r[OPS_ACC0(0,0)] - (*alpha)*w[OPS_ACC1(0,0)];
-  *rnn = *rnn +  r[OPS_ACC0(0,0)]*r[OPS_ACC0(0,0)];
+void tea_leaf_cg_calc_ur_r_reduce_kernel_gpu(ACC<double> & r,
+  const ACC<double> & w,
+  const double * alpha,
+  double *rnn) {
+  r(0,0) = r(0,0) - (*alpha)*w(0,0);
+  *rnn = *rnn +  r(0,0)*r(0,0);
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
 __global__ void ops_tea_leaf_cg_calc_ur_r_reduce_kernel(
 double* __restrict arg0,
-const double* __restrict arg1,
+double* __restrict arg1,
 const double arg2,
 double* __restrict arg3,
 int size0,
@@ -43,7 +35,9 @@ int size1 ){
   arg1 += idx_x * 1*1 + idx_y * 1*1 * dims_tea_leaf_cg_calc_ur_r_reduce_kernel[1][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    tea_leaf_cg_calc_ur_r_reduce_kernel_gpu(arg0, arg1, &arg2, arg3_l);
+    ACC<double> argp0(dims_tea_leaf_cg_calc_ur_r_reduce_kernel[0][0], arg0);
+    const ACC<double> argp1(dims_tea_leaf_cg_calc_ur_r_reduce_kernel[1][0], arg1);
+    tea_leaf_cg_calc_ur_r_reduce_kernel_gpu(argp0, argp1, &arg2, arg3_l);
   }
   for (int d=0; d<1; d++)
     ops_reduction_cuda<OPS_INC>(&arg3[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg3_l[d]);

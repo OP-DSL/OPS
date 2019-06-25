@@ -4,77 +4,44 @@
 __constant__ int dims_advec_cell_kernel4_zdir [11][2];
 static int dims_advec_cell_kernel4_zdir_h [11][2] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-
-
-#define OPS_ACC0(x,y,z) (x+dims_advec_cell_kernel4_zdir[0][0]*(y)+dims_advec_cell_kernel4_zdir[0][0]*dims_advec_cell_kernel4_zdir[0][1]*(z))
-#define OPS_ACC1(x,y,z) (x+dims_advec_cell_kernel4_zdir[1][0]*(y)+dims_advec_cell_kernel4_zdir[1][0]*dims_advec_cell_kernel4_zdir[1][1]*(z))
-#define OPS_ACC2(x,y,z) (x+dims_advec_cell_kernel4_zdir[2][0]*(y)+dims_advec_cell_kernel4_zdir[2][0]*dims_advec_cell_kernel4_zdir[2][1]*(z))
-#define OPS_ACC3(x,y,z) (x+dims_advec_cell_kernel4_zdir[3][0]*(y)+dims_advec_cell_kernel4_zdir[3][0]*dims_advec_cell_kernel4_zdir[3][1]*(z))
-#define OPS_ACC4(x,y,z) (x+dims_advec_cell_kernel4_zdir[4][0]*(y)+dims_advec_cell_kernel4_zdir[4][0]*dims_advec_cell_kernel4_zdir[4][1]*(z))
-#define OPS_ACC5(x,y,z) (x+dims_advec_cell_kernel4_zdir[5][0]*(y)+dims_advec_cell_kernel4_zdir[5][0]*dims_advec_cell_kernel4_zdir[5][1]*(z))
-#define OPS_ACC6(x,y,z) (x+dims_advec_cell_kernel4_zdir[6][0]*(y)+dims_advec_cell_kernel4_zdir[6][0]*dims_advec_cell_kernel4_zdir[6][1]*(z))
-#define OPS_ACC7(x,y,z) (x+dims_advec_cell_kernel4_zdir[7][0]*(y)+dims_advec_cell_kernel4_zdir[7][0]*dims_advec_cell_kernel4_zdir[7][1]*(z))
-#define OPS_ACC8(x,y,z) (x+dims_advec_cell_kernel4_zdir[8][0]*(y)+dims_advec_cell_kernel4_zdir[8][0]*dims_advec_cell_kernel4_zdir[8][1]*(z))
-#define OPS_ACC9(x,y,z) (x+dims_advec_cell_kernel4_zdir[9][0]*(y)+dims_advec_cell_kernel4_zdir[9][0]*dims_advec_cell_kernel4_zdir[9][1]*(z))
-#define OPS_ACC10(x,y,z) (x+dims_advec_cell_kernel4_zdir[10][0]*(y)+dims_advec_cell_kernel4_zdir[10][0]*dims_advec_cell_kernel4_zdir[10][1]*(z))
-
 //user function
 __device__
 
-inline void advec_cell_kernel4_zdir_gpu( double *density1, double *energy1,
-                         const double *mass_flux_z, const double *vol_flux_z,
-                         const double *pre_vol, const double *post_vol,
-                         double *pre_mass, double *post_mass,
-                         double *advec_vol, double *post_ener,
-                         const double *ener_flux) {
+inline void advec_cell_kernel4_zdir_gpu(ACC<double> &density1,
+  ACC<double> &energy1,
+  const ACC<double> &mass_flux_z,
+  const ACC<double> &vol_flux_z,
+  const ACC<double> &pre_vol,
+  const ACC<double> &post_vol,
+  ACC<double> &pre_mass,
+  ACC<double> &post_mass,
+  ACC<double> &advec_vol,
+  ACC<double> &post_ener,
+  const ACC<double> &ener_flux) {
 
-  pre_mass[OPS_ACC6(0,0,0)] = density1[OPS_ACC0(0,0,0)] * pre_vol[OPS_ACC4(0,0,0)];
-  post_mass[OPS_ACC7(0,0,0)] = pre_mass[OPS_ACC6(0,0,0)] + mass_flux_z[OPS_ACC2(0,0,0)] - mass_flux_z[OPS_ACC2(0,0,1)];
-  post_ener[OPS_ACC9(0,0,0)] = ( energy1[OPS_ACC1(0,0,0)] * pre_mass[OPS_ACC6(0,0,0)] + ener_flux[OPS_ACC10(0,0,0)] - ener_flux[OPS_ACC10(0,0,1)])/post_mass[OPS_ACC7(0,0,0)];
-  advec_vol[OPS_ACC8(0,0,0)] = pre_vol[OPS_ACC4(0,0,0)] + vol_flux_z[OPS_ACC3(0,0,0)] - vol_flux_z[OPS_ACC3(0,0,1)];
-  density1[OPS_ACC0(0,0,0)] = post_mass[OPS_ACC7(0,0,0)]/advec_vol[OPS_ACC8(0,0,0)];
-  energy1[OPS_ACC1(0,0,0)] = post_ener[OPS_ACC9(0,0,0)];
+  pre_mass(0,0,0) = density1(0,0,0) * pre_vol(0,0,0);
+  post_mass(0,0,0) = pre_mass(0,0,0) + mass_flux_z(0,0,0) - mass_flux_z(0,0,1);
+  post_ener(0,0,0) = ( energy1(0,0,0) * pre_mass(0,0,0) + ener_flux(0,0,0) - ener_flux(0,0,1))/post_mass(0,0,0);
+  advec_vol(0,0,0) = pre_vol(0,0,0) + vol_flux_z(0,0,0) - vol_flux_z(0,0,1);
+  density1(0,0,0) = post_mass(0,0,0)/advec_vol(0,0,0);
+  energy1(0,0,0) = post_ener(0,0,0);
 
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-
-
 __global__ void ops_advec_cell_kernel4_zdir(
 double* __restrict arg0,
 double* __restrict arg1,
-const double* __restrict arg2,
-const double* __restrict arg3,
-const double* __restrict arg4,
-const double* __restrict arg5,
+double* __restrict arg2,
+double* __restrict arg3,
+double* __restrict arg4,
+double* __restrict arg5,
 double* __restrict arg6,
 double* __restrict arg7,
 double* __restrict arg8,
 double* __restrict arg9,
-const double* __restrict arg10,
+double* __restrict arg10,
 int size0,
 int size1,
 int size2 ){
@@ -97,9 +64,20 @@ int size2 ){
   arg10 += idx_x * 1*1 + idx_y * 1*1 * dims_advec_cell_kernel4_zdir[10][0] + idx_z * 1*1 * dims_advec_cell_kernel4_zdir[10][0] * dims_advec_cell_kernel4_zdir[10][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    advec_cell_kernel4_zdir_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6, arg7, arg8,
-                   arg9, arg10);
+    ACC<double> argp0(dims_advec_cell_kernel4_zdir[0][0], dims_advec_cell_kernel4_zdir[0][1], arg0);
+    ACC<double> argp1(dims_advec_cell_kernel4_zdir[1][0], dims_advec_cell_kernel4_zdir[1][1], arg1);
+    const ACC<double> argp2(dims_advec_cell_kernel4_zdir[2][0], dims_advec_cell_kernel4_zdir[2][1], arg2);
+    const ACC<double> argp3(dims_advec_cell_kernel4_zdir[3][0], dims_advec_cell_kernel4_zdir[3][1], arg3);
+    const ACC<double> argp4(dims_advec_cell_kernel4_zdir[4][0], dims_advec_cell_kernel4_zdir[4][1], arg4);
+    const ACC<double> argp5(dims_advec_cell_kernel4_zdir[5][0], dims_advec_cell_kernel4_zdir[5][1], arg5);
+    ACC<double> argp6(dims_advec_cell_kernel4_zdir[6][0], dims_advec_cell_kernel4_zdir[6][1], arg6);
+    ACC<double> argp7(dims_advec_cell_kernel4_zdir[7][0], dims_advec_cell_kernel4_zdir[7][1], arg7);
+    ACC<double> argp8(dims_advec_cell_kernel4_zdir[8][0], dims_advec_cell_kernel4_zdir[8][1], arg8);
+    ACC<double> argp9(dims_advec_cell_kernel4_zdir[9][0], dims_advec_cell_kernel4_zdir[9][1], arg9);
+    const ACC<double> argp10(dims_advec_cell_kernel4_zdir[10][0], dims_advec_cell_kernel4_zdir[10][1], arg10);
+    advec_cell_kernel4_zdir_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5, argp6, argp7, argp8,
+                   argp9, argp10);
   }
 
 }

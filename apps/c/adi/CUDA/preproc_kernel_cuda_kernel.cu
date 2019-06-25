@@ -4,37 +4,21 @@
 __constant__ int dims_preproc_kernel [12][2];
 static int dims_preproc_kernel_h [12][2] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-
-
-#define OPS_ACC0(x,y,z) (x+dims_preproc_kernel[0][0]*(y)+dims_preproc_kernel[0][0]*dims_preproc_kernel[0][1]*(z))
-#define OPS_ACC1(x,y,z) (x+dims_preproc_kernel[1][0]*(y)+dims_preproc_kernel[1][0]*dims_preproc_kernel[1][1]*(z))
-#define OPS_ACC2(x,y,z) (x+dims_preproc_kernel[2][0]*(y)+dims_preproc_kernel[2][0]*dims_preproc_kernel[2][1]*(z))
-#define OPS_ACC3(x,y,z) (x+dims_preproc_kernel[3][0]*(y)+dims_preproc_kernel[3][0]*dims_preproc_kernel[3][1]*(z))
-#define OPS_ACC4(x,y,z) (x+dims_preproc_kernel[4][0]*(y)+dims_preproc_kernel[4][0]*dims_preproc_kernel[4][1]*(z))
-#define OPS_ACC5(x,y,z) (x+dims_preproc_kernel[5][0]*(y)+dims_preproc_kernel[5][0]*dims_preproc_kernel[5][1]*(z))
-#define OPS_ACC6(x,y,z) (x+dims_preproc_kernel[6][0]*(y)+dims_preproc_kernel[6][0]*dims_preproc_kernel[6][1]*(z))
-#define OPS_ACC7(x,y,z) (x+dims_preproc_kernel[7][0]*(y)+dims_preproc_kernel[7][0]*dims_preproc_kernel[7][1]*(z))
-#define OPS_ACC8(x,y,z) (x+dims_preproc_kernel[8][0]*(y)+dims_preproc_kernel[8][0]*dims_preproc_kernel[8][1]*(z))
-#define OPS_ACC9(x,y,z) (x+dims_preproc_kernel[9][0]*(y)+dims_preproc_kernel[9][0]*dims_preproc_kernel[9][1]*(z))
-#define OPS_ACC10(x,y,z) (x+dims_preproc_kernel[10][0]*(y)+dims_preproc_kernel[10][0]*dims_preproc_kernel[10][1]*(z))
-
 //user function
 __device__
 
-void preproc_kernel_gpu(const double *u, double *du,
-double *ax, double *bx, double *cx, double *ay, double *by, double *cy,
-double *az, double *bz, double *cz, int *idx){
+void preproc_kernel_gpu(const ACC<double> &u,
+  ACC<double> &du,
+  ACC<double> &ax,
+  ACC<double> &bx,
+  ACC<double> &cx,
+  ACC<double> &ay,
+  ACC<double> &by,
+  ACC<double> &cy,
+  ACC<double> &az,
+  ACC<double> &bz,
+  ACC<double> &cz,
+  int *idx){
 
   double a, b, c, d;
 
@@ -44,45 +28,32 @@ double *az, double *bz, double *cz, int *idx){
     b = 1.0f;
     c = 0.0f;
   } else {
-    d = lambda*( u[OPS_ACC0(-1,0,0)] + u[OPS_ACC0(1,0,0)]
-               + u[OPS_ACC0(0,-1,0)] + u[OPS_ACC0(0,1,0)]
-               + u[OPS_ACC0(0,0,-1)] + u[OPS_ACC0(0,0,1)]
-               - 6.0f*u[OPS_ACC0(0,0,0)]);
+    d = lambda*( u(-1,0,0) + u(1,0,0)
+               + u(0,-1,0) + u(0,1,0)
+               + u(0,0,-1) + u(0,0,1)
+               - 6.0f*u(0,0,0));
     a = -0.5f * lambda;
     b =  1.0f + lambda;
     c = -0.5f * lambda;
 
   }
 
-  du[OPS_ACC1(0,0,0)] = d;
-  ax[OPS_ACC2(0,0,0)] = a;
-  bx[OPS_ACC3(0,0,0)] = b;
-  cx[OPS_ACC4(0,0,0)] = c;
-  ay[OPS_ACC5(0,0,0)] = a;
-  by[OPS_ACC6(0,0,0)] = b;
-  cy[OPS_ACC7(0,0,0)] = c;
-  az[OPS_ACC8(0,0,0)] = a;
-  bz[OPS_ACC9(0,0,0)] = b;
-  cz[OPS_ACC10(0,0,0)] = c;
+  du(0,0,0) = d;
+  ax(0,0,0) = a;
+  bx(0,0,0) = b;
+  cx(0,0,0) = c;
+  ay(0,0,0) = a;
+  by(0,0,0) = b;
+  cy(0,0,0) = c;
+  az(0,0,0) = a;
+  bz(0,0,0) = b;
+  cz(0,0,0) = c;
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-
-
 __global__ void ops_preproc_kernel(
-const double* __restrict arg0,
+double* __restrict arg0,
 double* __restrict arg1,
 double* __restrict arg2,
 double* __restrict arg3,
@@ -120,9 +91,20 @@ int size2 ){
   arg10 += idx_x * 1*1 + idx_y * 1*1 * dims_preproc_kernel[10][0] + idx_z * 1*1 * dims_preproc_kernel[10][0] * dims_preproc_kernel[10][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    preproc_kernel_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6, arg7, arg8,
-                   arg9, arg10, arg_idx);
+    const ACC<double> argp0(dims_preproc_kernel[0][0], dims_preproc_kernel[0][1], arg0);
+    ACC<double> argp1(dims_preproc_kernel[1][0], dims_preproc_kernel[1][1], arg1);
+    ACC<double> argp2(dims_preproc_kernel[2][0], dims_preproc_kernel[2][1], arg2);
+    ACC<double> argp3(dims_preproc_kernel[3][0], dims_preproc_kernel[3][1], arg3);
+    ACC<double> argp4(dims_preproc_kernel[4][0], dims_preproc_kernel[4][1], arg4);
+    ACC<double> argp5(dims_preproc_kernel[5][0], dims_preproc_kernel[5][1], arg5);
+    ACC<double> argp6(dims_preproc_kernel[6][0], dims_preproc_kernel[6][1], arg6);
+    ACC<double> argp7(dims_preproc_kernel[7][0], dims_preproc_kernel[7][1], arg7);
+    ACC<double> argp8(dims_preproc_kernel[8][0], dims_preproc_kernel[8][1], arg8);
+    ACC<double> argp9(dims_preproc_kernel[9][0], dims_preproc_kernel[9][1], arg9);
+    ACC<double> argp10(dims_preproc_kernel[10][0], dims_preproc_kernel[10][1], arg10);
+    preproc_kernel_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5, argp6, argp7, argp8,
+                   argp9, argp10, arg_idx);
   }
 
 }

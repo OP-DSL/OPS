@@ -8,24 +8,13 @@ int xdim2_field_summary_kernel;
 int xdim3_field_summary_kernel;
 
 
-#define OPS_ACC0(x,y) (n_x*1 + x + (n_y*1+(y))*xdim0_field_summary_kernel)
-#define OPS_ACC1(x,y) (n_x*1 + x + (n_y*1+(y))*xdim1_field_summary_kernel)
-#define OPS_ACC2(x,y) (n_x*1 + x + (n_y*1+(y))*xdim2_field_summary_kernel)
-#define OPS_ACC3(x,y) (n_x*1 + x + (n_y*1+(y))*xdim3_field_summary_kernel)
 //user function
 
-
-
 void field_summary_kernel_c_wrapper(
-  const double * restrict volume,
-  const double * restrict density,
-  const double * restrict energy,
-  const double * restrict u,
-  double * restrict vol_g,
-  double * restrict mass_g,
-  double * restrict ie_g,
-  double * restrict temp_g,
-  int x_size, int y_size) {
+    double *restrict volume_p, double *restrict density_p,
+    double *restrict energy_p, double *restrict u_p, double *restrict vol_g,
+    double *restrict mass_g, double *restrict ie_g, double *restrict temp_g,
+    int x_size, int y_size) {
   double vol_0 = vol_g[0];
   double mass_0 = mass_g[0];
   double ie_0 = ie_g[0];
@@ -41,16 +30,27 @@ void field_summary_kernel_c_wrapper(
       ie[0] = ZERO_double;
       double temp[1];
       temp[0] = ZERO_double;
-      
+      const ptr_double volume = {volume_p + n_x * 1 +
+                                     n_y * xdim0_field_summary_kernel * 1,
+                                 xdim0_field_summary_kernel};
+      const ptr_double density = {density_p + n_x * 1 +
+                                      n_y * xdim1_field_summary_kernel * 1,
+                                  xdim1_field_summary_kernel};
+      const ptr_double energy = {energy_p + n_x * 1 +
+                                     n_y * xdim2_field_summary_kernel * 1,
+                                 xdim2_field_summary_kernel};
+      const ptr_double u = {u_p + n_x * 1 +
+                                n_y * xdim3_field_summary_kernel * 1,
+                            xdim3_field_summary_kernel};
 
-  double cell_vol, cell_mass;
+      double cell_vol, cell_mass;
 
-  cell_vol = volume[OPS_ACC0(0,0)];
-  cell_mass = cell_vol * density[OPS_ACC1(0,0)];
-  *vol = *vol + cell_vol;
-  *mass = *mass + cell_mass;
-  *ie = *ie + cell_mass * energy[OPS_ACC2(0,0)];
-  *temp = *temp + cell_mass * u[OPS_ACC3(0,0)];
+      cell_vol = OPS_ACC(volume, 0, 0);
+      cell_mass = cell_vol * OPS_ACC(density, 0, 0);
+      *vol = *vol + cell_vol;
+      *mass = *mass + cell_mass;
+      *ie = *ie + cell_mass * OPS_ACC(energy, 0, 0);
+      *temp = *temp + cell_mass * OPS_ACC(u, 0, 0);
 
       vol_0 +=vol[0];
       mass_0 +=mass[0];
@@ -63,8 +63,3 @@ void field_summary_kernel_c_wrapper(
   ie_g[0] = ie_0;
   temp_g[0] = temp_0;
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-

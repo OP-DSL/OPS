@@ -25,6 +25,9 @@ void reset_field_kernel2_c_wrapper(
       const ptr_double xvel1 = { xvel1_p + n_x*1 + n_y * xdim1_reset_field_kernel2*1, xdim1_reset_field_kernel2};
       ptr_double yvel0 = { yvel0_p + n_x*1 + n_y * xdim2_reset_field_kernel2*1, xdim2_reset_field_kernel2};
       const ptr_double yvel1 = { yvel1_p + n_x*1 + n_y * xdim3_reset_field_kernel2*1, xdim3_reset_field_kernel2};
+
+      OPS_ACC(xvel0, 0, 0) = OPS_ACC(xvel1, 0, 0);
+      OPS_ACC(yvel0, 0, 0) = OPS_ACC(yvel1, 0, 0);
     }
   }
 }

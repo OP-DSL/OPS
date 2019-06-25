@@ -31,6 +31,11 @@ void multidim_reduce_kernel_c_wrapper(
         #else
         const ptrm_double val = { val_p + n_x*1 + n_y * xdim0_multidim_reduce_kernel*1 + n_z * xdim0_multidim_reduce_kernel * ydim0_multidim_reduce_kernel*1, xdim0_multidim_reduce_kernel, ydim0_multidim_reduce_kernel, 3};
         #endif
+
+        redu_dat1[0] = redu_dat1[0] + OPS_ACC(val, 0, 0, 0, 0);
+        redu_dat1[1] = redu_dat1[1] + OPS_ACC(val, 1, 0, 0, 0);
+        redu_dat1[2] = redu_dat1[2] + OPS_ACC(val, 2, 0, 0, 0);
+
         redu_dat1_0 +=redu_dat1[0];
         redu_dat1_1 +=redu_dat1[1];
         redu_dat1_2 +=redu_dat1[2];
@@ -41,5 +46,3 @@ void multidim_reduce_kernel_c_wrapper(
   redu_dat1_g[1] = redu_dat1_1;
   redu_dat1_g[2] = redu_dat1_2;
 }
-
-#undef OPS_ACC_MD0

@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,24 +45,14 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
-#define OPS_ACC0(x,y) (x+xdim0_tea_leaf_ppcg_reduce_kernel*(y))
-#define OPS_ACC1(x,y) (x+xdim1_tea_leaf_ppcg_reduce_kernel*(y))
-#define OPS_ACC2(x,y) (x+xdim2_tea_leaf_ppcg_reduce_kernel*(y))
-
-
 //user function
-void tea_leaf_ppcg_reduce_kernel(const __global double * restrict rstore,const __global double * restrict r,const __global double * restrict z,
- double * restrict rnn)
 
- {
-  *rnn = *rnn + (r[OPS_ACC1(0,0)] - rstore[OPS_ACC0(0,0)]) * z[OPS_ACC2(0,0)];
+void tea_leaf_ppcg_reduce_kernel(const ptr_double rstore,
+  const ptr_double r,
+  const ptr_double z,
+  double *rnn) {
+  *rnn = *rnn + (OPS_ACCS(r, 0,0) - OPS_ACCS(rstore, 0,0)) * OPS_ACCS(z, 0,0);
 }
-
 
 
 __kernel void ops_tea_leaf_ppcg_reduce_kernel(
@@ -82,9 +76,12 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    tea_leaf_ppcg_reduce_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_tea_leaf_ppcg_reduce_kernel],
-                                &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_tea_leaf_ppcg_reduce_kernel],
-                                &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_tea_leaf_ppcg_reduce_kernel],
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_tea_leaf_ppcg_reduce_kernel], xdim0_tea_leaf_ppcg_reduce_kernel};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_tea_leaf_ppcg_reduce_kernel], xdim1_tea_leaf_ppcg_reduce_kernel};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_tea_leaf_ppcg_reduce_kernel], xdim2_tea_leaf_ppcg_reduce_kernel};
+    tea_leaf_ppcg_reduce_kernel(ptr0,
+                                ptr1,
+                                ptr2,
                                 arg3_l);
   }
   int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);

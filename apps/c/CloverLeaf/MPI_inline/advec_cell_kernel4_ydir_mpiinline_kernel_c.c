@@ -46,6 +46,22 @@ void advec_cell_kernel4_ydir_c_wrapper(
       ptr_double advec_vol = { advec_vol_p + n_x*1 + n_y * xdim8_advec_cell_kernel4_ydir*1, xdim8_advec_cell_kernel4_ydir};
       ptr_double post_ener = { post_ener_p + n_x*1 + n_y * xdim9_advec_cell_kernel4_ydir*1, xdim9_advec_cell_kernel4_ydir};
       const ptr_double ener_flux = { ener_flux_p + n_x*1 + n_y * xdim10_advec_cell_kernel4_ydir*1, xdim10_advec_cell_kernel4_ydir};
+
+      OPS_ACC(pre_mass, 0, 0) =
+          OPS_ACC(density1, 0, 0) * OPS_ACC(pre_vol, 0, 0);
+      OPS_ACC(post_mass, 0, 0) = OPS_ACC(pre_mass, 0, 0) +
+                                 OPS_ACC(mass_flux_y, 0, 0) -
+                                 OPS_ACC(mass_flux_y, 0, 1);
+      OPS_ACC(post_ener, 0, 0) =
+          (OPS_ACC(energy1, 0, 0) * OPS_ACC(pre_mass, 0, 0) +
+           OPS_ACC(ener_flux, 0, 0) - OPS_ACC(ener_flux, 0, 1)) /
+          OPS_ACC(post_mass, 0, 0);
+      OPS_ACC(advec_vol, 0, 0) = OPS_ACC(pre_vol, 0, 0) +
+                                 OPS_ACC(vol_flux_y, 0, 0) -
+                                 OPS_ACC(vol_flux_y, 0, 1);
+      OPS_ACC(density1, 0, 0) =
+          OPS_ACC(post_mass, 0, 0) / OPS_ACC(advec_vol, 0, 0);
+      OPS_ACC(energy1, 0, 0) = OPS_ACC(post_ener, 0, 0);
     }
   }
 }

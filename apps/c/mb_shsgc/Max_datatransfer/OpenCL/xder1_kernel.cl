@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_1D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,24 +44,15 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-
-
 //user function
-void xder1_kernel(const __global double * restrict inp,__global double * restrict out,
-  const double dx)
 
- {
+void xder1_kernel(const ptr_double inp,
+  ptr_double out, const double dx)
+{
   double dix = 1/(12.00*dx);
-  out[OPS_ACC1(0)] = (inp[OPS_ACC0(-2)] - inp[OPS_ACC0(2)]  + 8.0 *(
-  inp[OPS_ACC0(1)] - inp[OPS_ACC0(-1)] )) * dix;
+  OPS_ACCS(out, 0) = (OPS_ACCS(inp, -2) - OPS_ACCS(inp, 2)  + 8.0 *(
+  OPS_ACCS(inp, 1) - OPS_ACCS(inp, -1) )) * dix;
 }
-
 
 
 __kernel void ops_xder1_kernel(
@@ -72,8 +67,10 @@ const int size0 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    xder1_kernel(&arg0[base0 + idx_x * 1*1],
-                 &arg1[base1 + idx_x * 1*1],
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1] };
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1] };
+    xder1_kernel(ptr0,
+                 ptr1,
                  dx);
   }
 

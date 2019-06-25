@@ -4,45 +4,26 @@
 __constant__ int dims_residue_eval [6][1];
 static int dims_residue_eval_h [6][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-#define OPS_ACC3(x) (x)
-#define OPS_ACC4(x) (x)
-#define OPS_ACC5(x) (x)
-
 //user function
 __device__
 
-void residue_eval_gpu(const double *der1, const double *der2, const double *der3,
-                  double *rho_res, double *rhou_res, double *rhoE_res) {
-  rho_res[OPS_ACC3(0)] = der1[OPS_ACC0(0)];
-  rhou_res[OPS_ACC4(0)] = der2[OPS_ACC1(0)];
-  rhoE_res[OPS_ACC5(0)] = der3[OPS_ACC2(0)];
+void residue_eval_gpu(const ACC<double> &der1,
+  const ACC<double> &der2,
+  const ACC<double> &der3,
+  ACC<double> &rho_res,
+  ACC<double> &rhou_res,
+  ACC<double> &rhoE_res) {
+  rho_res(0) = der1(0);
+  rhou_res(0) = der2(0);
+  rhoE_res(0) = der3(0);
   }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
-
 __global__ void ops_residue_eval(
-const double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
+double* __restrict arg0,
+double* __restrict arg1,
+double* __restrict arg2,
 double* __restrict arg3,
 double* __restrict arg4,
 double* __restrict arg5,
@@ -59,8 +40,14 @@ int size0 ){
   arg5 += idx_x * 1*1;
 
   if (idx_x < size0) {
-    residue_eval_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5);
+    const ACC<double> argp0(arg0);
+    const ACC<double> argp1(arg1);
+    const ACC<double> argp2(arg2);
+    ACC<double> argp3(arg3);
+    ACC<double> argp4(arg4);
+    ACC<double> argp5(arg5);
+    residue_eval_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5);
   }
 
 }

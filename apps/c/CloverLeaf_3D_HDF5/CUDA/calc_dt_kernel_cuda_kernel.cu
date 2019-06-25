@@ -4,111 +4,73 @@
 __constant__ int dims_calc_dt_kernel [14][2];
 static int dims_calc_dt_kernel_h [14][2] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-#undef OPS_ACC11
-#undef OPS_ACC12
-#undef OPS_ACC13
-
-
-#define OPS_ACC0(x,y,z) (x+dims_calc_dt_kernel[0][0]*(y)+dims_calc_dt_kernel[0][0]*dims_calc_dt_kernel[0][1]*(z))
-#define OPS_ACC1(x,y,z) (x+dims_calc_dt_kernel[1][0]*(y)+dims_calc_dt_kernel[1][0]*dims_calc_dt_kernel[1][1]*(z))
-#define OPS_ACC2(x,y,z) (x+dims_calc_dt_kernel[2][0]*(y)+dims_calc_dt_kernel[2][0]*dims_calc_dt_kernel[2][1]*(z))
-#define OPS_ACC3(x,y,z) (x+dims_calc_dt_kernel[3][0]*(y)+dims_calc_dt_kernel[3][0]*dims_calc_dt_kernel[3][1]*(z))
-#define OPS_ACC4(x,y,z) (x+dims_calc_dt_kernel[4][0]*(y)+dims_calc_dt_kernel[4][0]*dims_calc_dt_kernel[4][1]*(z))
-#define OPS_ACC5(x,y,z) (x+dims_calc_dt_kernel[5][0]*(y)+dims_calc_dt_kernel[5][0]*dims_calc_dt_kernel[5][1]*(z))
-#define OPS_ACC6(x,y,z) (x+dims_calc_dt_kernel[6][0]*(y)+dims_calc_dt_kernel[6][0]*dims_calc_dt_kernel[6][1]*(z))
-#define OPS_ACC7(x,y,z) (x+dims_calc_dt_kernel[7][0]*(y)+dims_calc_dt_kernel[7][0]*dims_calc_dt_kernel[7][1]*(z))
-#define OPS_ACC8(x,y,z) (x+dims_calc_dt_kernel[8][0]*(y)+dims_calc_dt_kernel[8][0]*dims_calc_dt_kernel[8][1]*(z))
-#define OPS_ACC9(x,y,z) (x+dims_calc_dt_kernel[9][0]*(y)+dims_calc_dt_kernel[9][0]*dims_calc_dt_kernel[9][1]*(z))
-#define OPS_ACC10(x,y,z) (x+dims_calc_dt_kernel[10][0]*(y)+dims_calc_dt_kernel[10][0]*dims_calc_dt_kernel[10][1]*(z))
-#define OPS_ACC11(x,y,z) (x+dims_calc_dt_kernel[11][0]*(y)+dims_calc_dt_kernel[11][0]*dims_calc_dt_kernel[11][1]*(z))
-#define OPS_ACC12(x,y,z) (x+dims_calc_dt_kernel[12][0]*(y)+dims_calc_dt_kernel[12][0]*dims_calc_dt_kernel[12][1]*(z))
-#define OPS_ACC13(x,y,z) (x+dims_calc_dt_kernel[13][0]*(y)+dims_calc_dt_kernel[13][0]*dims_calc_dt_kernel[13][1]*(z))
-
 //user function
 __device__
 
-void calc_dt_kernel_gpu(const double *celldx, const double *celldy, const double *soundspeed,
-                    const double *viscosity, const double *density0, const double *xvel0,
-                    const double *xarea, const double *volume, const double *yvel0,
-                    const double *yarea, double *dt_min ,
-                    const double *celldz, const double *zvel0, const double *zarea) {
+void calc_dt_kernel_gpu(const ACC<double> &celldx,
+  const ACC<double> &celldy,
+  const ACC<double> &soundspeed,
+  const ACC<double> &viscosity,
+  const ACC<double> &density0,
+  const ACC<double> &xvel0,
+  const ACC<double> &xarea,
+  const ACC<double> &volume,
+  const ACC<double> &yvel0,
+  const ACC<double> &yarea,
+  ACC<double> &dt_min,
+  const ACC<double> &celldz,
+  const ACC<double> &zvel0,
+  const ACC<double> &zarea) {
 
   double div, ds, dtut, dtvt, dtct, dtwt, dtdivt, cc, dv1, dv2, du1, du2, dw1, dw2;
 
-  ds = MIN(MIN(celldx[OPS_ACC0(0,0,0)], celldy[OPS_ACC1(0,0,0)]), celldz[OPS_ACC11(0,0,0)]);
+  ds = MIN(MIN(celldx(0,0,0), celldy(0,0,0)), celldz(0,0,0));
   ds = 1.0/(ds*ds);
 
-  cc = soundspeed[OPS_ACC2(0,0,0)] * soundspeed[OPS_ACC2(0,0,0)];
-  cc = cc + 2.0 * viscosity[OPS_ACC3(0,0,0)]/density0[OPS_ACC4(0,0,0)];
+  cc = soundspeed(0,0,0) * soundspeed(0,0,0);
+  cc = cc + 2.0 * viscosity(0,0,0)/density0(0,0,0);
 
   dtct=ds*cc;
   dtct = dtc_safe*1.0/MAX(sqrt(dtct),g_small);
 
-  du1=(xvel0[OPS_ACC5(0,0,0)]+xvel0[OPS_ACC5(0,1,0)]+xvel0[OPS_ACC5(0,0,1)]+xvel0[OPS_ACC5(0,1,1)])*xarea[OPS_ACC6(0,0,0)];
-  du2=(xvel0[OPS_ACC5(1,0,0)]+xvel0[OPS_ACC5(1,1,0)]+xvel0[OPS_ACC5(1,0,1)]+xvel0[OPS_ACC5(1,1,1)])*xarea[OPS_ACC6(0,0,0)];
+  du1=(xvel0(0,0,0)+xvel0(0,1,0)+xvel0(0,0,1)+xvel0(0,1,1))*xarea(0,0,0);
+  du2=(xvel0(1,0,0)+xvel0(1,1,0)+xvel0(1,0,1)+xvel0(1,1,1))*xarea(0,0,0);
 
-  dtut = dtu_safe * 4.0 * volume[OPS_ACC7(0,0,0)]/MAX(MAX(fabs(du1), fabs(du2)), 1.0e-5 * volume[OPS_ACC7(0,0,0)]);
+  dtut = dtu_safe * 4.0 * volume(0,0,0)/MAX(MAX(fabs(du1), fabs(du2)), 1.0e-5 * volume(0,0,0));
 
-  dv1=(yvel0[OPS_ACC8(0,0,0)]+yvel0[OPS_ACC8(1,0,0)]+yvel0[OPS_ACC8(0,0,1)]+yvel0[OPS_ACC8(1,0,1)])*yarea[OPS_ACC9(0,0,0)];
-  dv2=(yvel0[OPS_ACC8(0,1,0)]+yvel0[OPS_ACC8(1,1,0)]+yvel0[OPS_ACC8(0,1,1)]+yvel0[OPS_ACC8(1,1,1)])*yarea[OPS_ACC9(0,0,0)];
+  dv1=(yvel0(0,0,0)+yvel0(1,0,0)+yvel0(0,0,1)+yvel0(1,0,1))*yarea(0,0,0);
+  dv2=(yvel0(0,1,0)+yvel0(1,1,0)+yvel0(0,1,1)+yvel0(1,1,1))*yarea(0,0,0);
 
-  dtvt = dtv_safe * 4.0 * volume[OPS_ACC7(0,0,0)]/MAX(MAX(fabs(dv1),fabs(dv2)), 1.0e-5 * volume[OPS_ACC7(0,0,0)]);
+  dtvt = dtv_safe * 4.0 * volume(0,0,0)/MAX(MAX(fabs(dv1),fabs(dv2)), 1.0e-5 * volume(0,0,0));
 
-  dw1=(zvel0[OPS_ACC12(0,0,0)]+zvel0[OPS_ACC12(0,1,0)]+zvel0[OPS_ACC12(1,0,0)]+zvel0[OPS_ACC12(1,1,0)])*zarea[OPS_ACC13(0,0,0)];
-  dw2=(zvel0[OPS_ACC12(0,0,1)]+zvel0[OPS_ACC12(0,1,1)]+zvel0[OPS_ACC12(1,0,1)]+zvel0[OPS_ACC12(1,1,1)])*zarea[OPS_ACC13(0,0,0)];
+  dw1=(zvel0(0,0,0)+zvel0(0,1,0)+zvel0(1,0,0)+zvel0(1,1,0))*zarea(0,0,0);
+  dw2=(zvel0(0,0,1)+zvel0(0,1,1)+zvel0(1,0,1)+zvel0(1,1,1))*zarea(0,0,0);
 
-  dtwt = dtw_safe * 4.0 * volume[OPS_ACC7(0,0,0)]/MAX(MAX(fabs(dw1),fabs(dw2)), 1.0e-5 * volume[OPS_ACC7(0,0,0)]);
+  dtwt = dtw_safe * 4.0 * volume(0,0,0)/MAX(MAX(fabs(dw1),fabs(dw2)), 1.0e-5 * volume(0,0,0));
 
   div = du2-du1+dv2-dv1+dw2-dw1;
-  dtdivt=dtdiv_safe*4.0*(volume[OPS_ACC7(0,0,0)])/MAX(volume[OPS_ACC7(0,0,0)]*1.0e-05,fabs(div));
+  dtdivt=dtdiv_safe*4.0*(volume(0,0,0))/MAX(volume(0,0,0)*1.0e-05,fabs(div));
 
-  dt_min[OPS_ACC10(0,0,0)] = MIN(MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt)),dtwt);
+  dt_min(0,0,0) = MIN(MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt)),dtwt);
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-#undef OPS_ACC11
-#undef OPS_ACC12
-#undef OPS_ACC13
-
-
 __global__ void ops_calc_dt_kernel(
-const double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
-const double* __restrict arg3,
-const double* __restrict arg4,
-const double* __restrict arg5,
-const double* __restrict arg6,
-const double* __restrict arg7,
-const double* __restrict arg8,
-const double* __restrict arg9,
+double* __restrict arg0,
+double* __restrict arg1,
+double* __restrict arg2,
+double* __restrict arg3,
+double* __restrict arg4,
+double* __restrict arg5,
+double* __restrict arg6,
+double* __restrict arg7,
+double* __restrict arg8,
+double* __restrict arg9,
 double* __restrict arg10,
-const double* __restrict arg11,
-const double* __restrict arg12,
-const double* __restrict arg13,
+double* __restrict arg11,
+double* __restrict arg12,
+double* __restrict arg13,
 int size0,
 int size1,
 int size2 ){
@@ -134,9 +96,23 @@ int size2 ){
   arg13 += idx_x * 1*1 + idx_y * 1*1 * dims_calc_dt_kernel[13][0] + idx_z * 1*1 * dims_calc_dt_kernel[13][0] * dims_calc_dt_kernel[13][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    calc_dt_kernel_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6, arg7, arg8,
-                   arg9, arg10, arg11, arg12, arg13);
+    const ACC<double> argp0(dims_calc_dt_kernel[0][0], dims_calc_dt_kernel[0][1], arg0);
+    const ACC<double> argp1(dims_calc_dt_kernel[1][0], dims_calc_dt_kernel[1][1], arg1);
+    const ACC<double> argp2(dims_calc_dt_kernel[2][0], dims_calc_dt_kernel[2][1], arg2);
+    const ACC<double> argp3(dims_calc_dt_kernel[3][0], dims_calc_dt_kernel[3][1], arg3);
+    const ACC<double> argp4(dims_calc_dt_kernel[4][0], dims_calc_dt_kernel[4][1], arg4);
+    const ACC<double> argp5(dims_calc_dt_kernel[5][0], dims_calc_dt_kernel[5][1], arg5);
+    const ACC<double> argp6(dims_calc_dt_kernel[6][0], dims_calc_dt_kernel[6][1], arg6);
+    const ACC<double> argp7(dims_calc_dt_kernel[7][0], dims_calc_dt_kernel[7][1], arg7);
+    const ACC<double> argp8(dims_calc_dt_kernel[8][0], dims_calc_dt_kernel[8][1], arg8);
+    const ACC<double> argp9(dims_calc_dt_kernel[9][0], dims_calc_dt_kernel[9][1], arg9);
+    ACC<double> argp10(dims_calc_dt_kernel[10][0], dims_calc_dt_kernel[10][1], arg10);
+    const ACC<double> argp11(dims_calc_dt_kernel[11][0], dims_calc_dt_kernel[11][1], arg11);
+    const ACC<double> argp12(dims_calc_dt_kernel[12][0], dims_calc_dt_kernel[12][1], arg12);
+    const ACC<double> argp13(dims_calc_dt_kernel[13][0], dims_calc_dt_kernel[13][1], arg13);
+    calc_dt_kernel_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5, argp6, argp7, argp8,
+                   argp9, argp10, argp11, argp12, argp13);
   }
 
 }

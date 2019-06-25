@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_3D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,28 +45,16 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_revert_kernel*(y)+xdim0_revert_kernel*ydim0_revert_kernel*(z))
-#define OPS_ACC1(x,y,z) (x+xdim1_revert_kernel*(y)+xdim1_revert_kernel*ydim1_revert_kernel*(z))
-#define OPS_ACC2(x,y,z) (x+xdim2_revert_kernel*(y)+xdim2_revert_kernel*ydim2_revert_kernel*(z))
-#define OPS_ACC3(x,y,z) (x+xdim3_revert_kernel*(y)+xdim3_revert_kernel*ydim3_revert_kernel*(z))
-
-
 //user function
-void revert_kernel( const __global double * restrict density0,__global double * restrict density1,const __global double * restrict energy0,
-__global double * restrict energy1)
 
- {
+void revert_kernel(const ptr_double density0,
+  ptr_double density1,
+  const ptr_double energy0,
+  ptr_double energy1) {
 
-  density1[OPS_ACC1(0,0,0)] = density0[OPS_ACC0(0,0,0)];
-  energy1[OPS_ACC3(0,0,0)] = energy0[OPS_ACC2(0,0,0)];
+  OPS_ACCS(density1, 0,0,0) = OPS_ACCS(density0, 0,0,0);
+  OPS_ACCS(energy1, 0,0,0) = OPS_ACCS(energy0, 0,0,0);
 }
-
 
 
 __kernel void ops_revert_kernel(
@@ -84,10 +76,14 @@ const int size2 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    revert_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_revert_kernel + idx_z * 1*1 * xdim0_revert_kernel * ydim0_revert_kernel],
-                  &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_revert_kernel + idx_z * 1*1 * xdim1_revert_kernel * ydim1_revert_kernel],
-                  &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_revert_kernel + idx_z * 1*1 * xdim2_revert_kernel * ydim2_revert_kernel],
-                  &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_revert_kernel + idx_z * 1*1 * xdim3_revert_kernel * ydim3_revert_kernel]);
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_revert_kernel + idx_z * 1*1 * xdim0_revert_kernel * ydim0_revert_kernel], xdim0_revert_kernel, ydim0_revert_kernel};
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_revert_kernel + idx_z * 1*1 * xdim1_revert_kernel * ydim1_revert_kernel], xdim1_revert_kernel, ydim1_revert_kernel};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_revert_kernel + idx_z * 1*1 * xdim2_revert_kernel * ydim2_revert_kernel], xdim2_revert_kernel, ydim2_revert_kernel};
+    ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_revert_kernel + idx_z * 1*1 * xdim3_revert_kernel * ydim3_revert_kernel], xdim3_revert_kernel, ydim3_revert_kernel};
+    revert_kernel(ptr0,
+                  ptr1,
+                  ptr2,
+                  ptr3);
   }
 
 }

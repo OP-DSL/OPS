@@ -220,17 +220,6 @@ void ops_par_loop_calc_dt_kernel_execute(ops_kernel_descriptor *desc) {
     OPS_kernels[51].transfer += ops_compute_transfer(dim, start, end, &arg10);
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
 
 
 #ifdef OPS_LAZY

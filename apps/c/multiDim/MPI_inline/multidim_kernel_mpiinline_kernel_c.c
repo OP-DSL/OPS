@@ -24,8 +24,9 @@ void multidim_kernel_c_wrapper(
       #else
       ptrm_double val = { val_p + n_x*1 + n_y * xdim0_multidim_kernel*1, xdim0_multidim_kernel, 2};
       #endif
+
+      OPS_ACC(val, 0, 0, 0) = (double)(idx[0]);
+      OPS_ACC(val, 1, 0, 0) = (double)(idx[1]);
     }
   }
 }
-
-#undef OPS_ACC_MD0

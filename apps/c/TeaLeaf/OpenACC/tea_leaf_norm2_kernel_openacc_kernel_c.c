@@ -6,21 +6,10 @@
 
 int xdim0_tea_leaf_norm2_kernel;
 
-
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y) (x+xdim0_tea_leaf_norm2_kernel*(y))
-
 //user function
-inline 
-void tea_leaf_norm2_kernel(const double *x, double * norm) {
-	*norm = *norm + x[OPS_ACC0(0,0)]*x[OPS_ACC0(0,0)];
+inline void tea_leaf_norm2_kernel(const ptr_double x, double *norm) {
+  *norm = *norm + OPS_ACC(x, 0, 0) * OPS_ACC(x, 0, 0);
 }
-
-
-#undef OPS_ACC0
-
 
 
 void tea_leaf_norm2_kernel_c_wrapper(
@@ -37,9 +26,10 @@ void tea_leaf_norm2_kernel_c_wrapper(
     #pragma acc loop reduction(+:p_a1_0)
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      tea_leaf_norm2_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_tea_leaf_norm2_kernel*1*1,
-           &p_a1_0 );
-
+      const ptr_double ptr0 = {p_a0 + n_x * 1 * 1 +
+                                   n_y * xdim0_tea_leaf_norm2_kernel * 1 * 1,
+                               xdim0_tea_leaf_norm2_kernel};
+      tea_leaf_norm2_kernel(ptr0, &p_a1_0);
     }
   }
   p_a1[0] = p_a1_0;

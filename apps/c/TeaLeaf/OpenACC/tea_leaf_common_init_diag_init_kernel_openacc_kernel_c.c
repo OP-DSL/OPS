@@ -8,30 +8,16 @@ int xdim0_tea_leaf_common_init_diag_init_kernel;
 int xdim1_tea_leaf_common_init_diag_init_kernel;
 int xdim2_tea_leaf_common_init_diag_init_kernel;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
-#define OPS_ACC0(x,y) (x+xdim0_tea_leaf_common_init_diag_init_kernel*(y))
-#define OPS_ACC1(x,y) (x+xdim1_tea_leaf_common_init_diag_init_kernel*(y))
-#define OPS_ACC2(x,y) (x+xdim2_tea_leaf_common_init_diag_init_kernel*(y))
-
 //user function
-inline 
-void tea_leaf_common_init_diag_init_kernel(double *Mi, const double *Kx, const double *Ky,
-	const double *rx, const double *ry) {
-	Mi[OPS_ACC0(0,0)] = 1.0/(1.0
-			+(*ry)*(Ky[OPS_ACC2(0,1)] + Ky[OPS_ACC2(0,0)])
-			+(*rx)*(Kx[OPS_ACC1(1,0)] + Kx[OPS_ACC1(0,0)]));
+inline void tea_leaf_common_init_diag_init_kernel(ptr_double Mi,
+                                                  const ptr_double Kx,
+                                                  const ptr_double Ky,
+                                                  const double *rx,
+                                                  const double *ry) {
+  OPS_ACC(Mi, 0, 0) =
+      1.0 / (1.0 + (*ry) * (OPS_ACC(Ky, 0, 1) + OPS_ACC(Ky, 0, 0)) +
+             (*rx) * (OPS_ACC(Kx, 1, 0) + OPS_ACC(Kx, 0, 0)));
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
 
 
 void tea_leaf_common_init_diag_init_kernel_c_wrapper(
@@ -50,10 +36,19 @@ void tea_leaf_common_init_diag_init_kernel_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      tea_leaf_common_init_diag_init_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_tea_leaf_common_init_diag_init_kernel*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_tea_leaf_common_init_diag_init_kernel*1*1, p_a2 + n_x*1*1 + n_y*xdim2_tea_leaf_common_init_diag_init_kernel*1*1,
-           &p_a3, &p_a4 );
-
+      ptr_double ptr0 = {p_a0 + n_x * 1 * 1 +
+                             n_y * xdim0_tea_leaf_common_init_diag_init_kernel *
+                                 1 * 1,
+                         xdim0_tea_leaf_common_init_diag_init_kernel};
+      const ptr_double ptr1 = {
+          p_a1 + n_x * 1 * 1 +
+              n_y * xdim1_tea_leaf_common_init_diag_init_kernel * 1 * 1,
+          xdim1_tea_leaf_common_init_diag_init_kernel};
+      const ptr_double ptr2 = {
+          p_a2 + n_x * 1 * 1 +
+              n_y * xdim2_tea_leaf_common_init_diag_init_kernel * 1 * 1,
+          xdim2_tea_leaf_common_init_diag_init_kernel};
+      tea_leaf_common_init_diag_init_kernel(ptr0, ptr1, ptr2, &p_a3, &p_a4);
     }
   }
 }

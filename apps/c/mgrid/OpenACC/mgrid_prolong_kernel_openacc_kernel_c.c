@@ -7,24 +7,11 @@
 int xdim0_mgrid_prolong_kernel;
 int xdim1_mgrid_prolong_kernel;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+xdim0_mgrid_prolong_kernel*(y))
-#define OPS_ACC1(x,y) (x+xdim1_mgrid_prolong_kernel*(y))
-
 //user function
-inline 
-void mgrid_prolong_kernel(const double *coarse, double *fine, int *idx) {
-  fine[OPS_ACC1(0,0)] = coarse[OPS_ACC0(0,0)];
+inline void mgrid_prolong_kernel(const ptr_double coarse, ptr_double fine,
+                                 int *idx) {
+  OPS_ACC(fine, 0, 0) = OPS_ACC(coarse, 0, 0);
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
 
 
 void mgrid_prolong_kernel_c_wrapper(
@@ -47,9 +34,15 @@ void mgrid_prolong_kernel_c_wrapper(
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
       int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};
-      mgrid_prolong_kernel(  p_a0 + (n_x+global_idx0%stride_00)/stride_00*1*1 + (n_y+global_idx1%stride_01)/stride_01*xdim0_mgrid_prolong_kernel*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_mgrid_prolong_kernel*1*1,arg_idx );
-
+      const ptr_double ptr0 = {
+          p_a0 + (n_x + global_idx0 % stride_00) / stride_00 * 1 * 1 +
+              (n_y + global_idx1 % stride_01) / stride_01 *
+                  xdim0_mgrid_prolong_kernel * 1 * 1,
+          xdim0_mgrid_prolong_kernel};
+      ptr_double ptr1 = {p_a1 + n_x * 1 * 1 +
+                             n_y * xdim1_mgrid_prolong_kernel * 1 * 1,
+                         xdim1_mgrid_prolong_kernel};
+      mgrid_prolong_kernel(ptr0, ptr1, arg_idx);
     }
   }
 }

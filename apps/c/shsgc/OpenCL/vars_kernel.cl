@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_1D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,41 +44,27 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
-#undef OPS_ACC_MD4
-
-
-#define OPS_ACC_MD0(d,x) ((x)*3+(d))
-#define OPS_ACC_MD1(d,x) ((x)*3+(d))
-#define OPS_ACC_MD2(d,x) ((x)*3+(d))
-#define OPS_ACC_MD3(d,x) ((x)*3+(d))
-#define OPS_ACC_MD4(d,x) ((x)*3+(d))
-
 //user function
-void vars_kernel(const __global double* restrict  alam,const __global double* restrict  al,const __global double * restrict gt,
-__global double* restrict  cmp,__global double* restrict  cf,
-  const double del2,
-const double con)
 
- {
+void vars_kernel(const ptrm_double  alam,
+  const ptrm_double  al,
+  const ptrm_double gt,
+  ptrm_double  cmp,
+  ptrm_double  cf, const double del2, const double con)
+{
 
   double  anu, aaa, ga, qf, ww;
   for (int m=0; m < 3 ;m++) {
-			anu = alam[OPS_ACC_MD0(m,0)];
-			aaa = al[OPS_ACC_MD1(m,0)];
-			ga = aaa * ( gt[OPS_ACC_MD2(m,1)] - gt[OPS_ACC_MD2(m,0)]) / (pow(aaa,2.0) + del2);
+			anu = OPS_ACCM(alam, m,0);
+			aaa = OPS_ACCM(al, m,0);
+			ga = aaa * ( OPS_ACCM(gt, m,1) - OPS_ACCM(gt, m,0)) / (pow(aaa,2.0) + del2);
 			qf = sqrt ( con + pow(anu,2.0));
-			cmp[OPS_ACC_MD3(m,0)] = 0.50 * qf;
-			ww = anu + cmp[OPS_ACC_MD3(m,0)] * ga;
+			OPS_ACCM(cmp, m,0) = 0.50 * qf;
+			ww = anu + OPS_ACCM(cmp, m,0) * ga;
 			qf = sqrt(con + pow(ww,2.0));
-			cf[OPS_ACC_MD4(m,0)] = qf;
+			OPS_ACCM(cf, m,0) = qf;
 		}
 }
-
 
 
 __kernel void ops_vars_kernel(
@@ -96,11 +86,36 @@ const int size0 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    vars_kernel(&arg0[base0 + idx_x * 1*3],
-                &arg1[base1 + idx_x * 1*3],
-                &arg2[base2 + idx_x * 1*3],
-                &arg3[base3 + idx_x * 1*3],
-                &arg4[base4 + idx_x * 1*3],
+    #ifdef OPS_SOA
+    const ptrm_double ptr0 = { &arg0[base0 + idx_x * 1*3], xdim0_vars_kernel};
+    #else
+    const ptrm_double ptr0 = { &arg0[base0 + idx_x * 1*3], 3};
+    #endif
+    #ifdef OPS_SOA
+    const ptrm_double ptr1 = { &arg1[base1 + idx_x * 1*3], xdim1_vars_kernel};
+    #else
+    const ptrm_double ptr1 = { &arg1[base1 + idx_x * 1*3], 3};
+    #endif
+    #ifdef OPS_SOA
+    const ptrm_double ptr2 = { &arg2[base2 + idx_x * 1*3], xdim2_vars_kernel};
+    #else
+    const ptrm_double ptr2 = { &arg2[base2 + idx_x * 1*3], 3};
+    #endif
+    #ifdef OPS_SOA
+    ptrm_double ptr3 = { &arg3[base3 + idx_x * 1*3], xdim3_vars_kernel};
+    #else
+    ptrm_double ptr3 = { &arg3[base3 + idx_x * 1*3], 3};
+    #endif
+    #ifdef OPS_SOA
+    ptrm_double ptr4 = { &arg4[base4 + idx_x * 1*3], xdim4_vars_kernel};
+    #else
+    ptrm_double ptr4 = { &arg4[base4 + idx_x * 1*3], 3};
+    #endif
+    vars_kernel(ptr0,
+                ptr1,
+                ptr2,
+                ptr3,
+                ptr4,
                 del2,
                 con);
   }

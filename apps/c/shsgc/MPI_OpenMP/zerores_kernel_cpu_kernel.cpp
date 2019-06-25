@@ -29,9 +29,9 @@ void ops_par_loop_zerores_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,3,range,2)) return;
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(2,"zerores_kernel");
-    OPS_instance::getOPSInstance()->OPS_kernels[2].count++;
+    OPS_kernels[2].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -76,9 +76,9 @@ void ops_par_loop_zerores_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 3);
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[2].mpi_time += __t1-__t2;
+    OPS_kernels[2].mpi_time += __t1 - __t2;
   }
 
   #pragma omp parallel for
@@ -92,9 +92,9 @@ void ops_par_loop_zerores_kernel_execute(ops_kernel_descriptor *desc) {
       rhoE_res(0) = 0.0;
 
   }
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[2].time += __t2-__t1;
+    OPS_kernels[2].time += __t2 - __t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 3);
@@ -103,13 +103,13 @@ void ops_par_loop_zerores_kernel_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[2],range);
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[2].mpi_time += __t1-__t2;
-    OPS_instance::getOPSInstance()->OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_instance::getOPSInstance()->OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_instance::getOPSInstance()->OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[2].mpi_time += __t1 - __t2;
+    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg2);
   }
 }
 
@@ -139,7 +139,7 @@ void ops_par_loop_zerores_kernel(char const *name, ops_block block, int dim, int
   desc->args[2] = arg2;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg2.dat->index;
   desc->function = ops_par_loop_zerores_kernel_execute;
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(2,"zerores_kernel");
   }
   ops_enqueue_kernel(desc);

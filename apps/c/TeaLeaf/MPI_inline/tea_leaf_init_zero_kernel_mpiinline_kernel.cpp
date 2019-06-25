@@ -50,7 +50,7 @@ void ops_par_loop_tea_leaf_init_zero_kernel(char const *name, ops_block block, i
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  xdim0 = args[0].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
 
   //Timing
   double t1,t2,c1,c2;
