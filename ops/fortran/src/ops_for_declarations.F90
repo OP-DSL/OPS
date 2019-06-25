@@ -195,9 +195,9 @@ module OPS_Fortran_Declarations
       integer(kind=c_int), intent(in), value :: diags
     end subroutine ops_init_c
 
-    subroutine ops_set_args_c ( argc, argv ) BIND(C,name='ops_set_args')
+    subroutine ops_set_args_c ( argc, argv, len ) BIND(C,name='ops_set_args_ftn')
       use, intrinsic :: ISO_C_BINDING
-      integer(kind=c_int), intent(in), value :: argc
+      integer(kind=c_int), intent(in), value :: argc, len
       character(len=1, kind=C_CHAR) :: argv
     end subroutine ops_set_args_c
 
@@ -529,15 +529,15 @@ module OPS_Fortran_Declarations
     subroutine ops_init ( diags )
       integer(4) :: diags
       integer(kind=c_int) :: argc
-      integer :: i
+      integer :: i,len
       character(kind=c_char,len=64)           :: temp
 
       !Get the command line arguments - needs to be handled using Fortrn
       argc = command_argument_count()
 
       do i = 1, argc
-        call get_command_argument(i, temp)
-        call ops_set_args_c (argc, temp) !special function to set args
+        call get_command_argument(i, temp, len)
+        call ops_set_args_c (argc, temp, len) !special function to set args
       end do
 
       call ops_init_c (0, C_NULL_PTR, diags)
