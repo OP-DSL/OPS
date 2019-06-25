@@ -128,6 +128,7 @@ ops_dat search_dat(ops_block block, int elem_size, int *dat_size, int *offset,
   return NULL;
 }
 
+
 /* Special function only called by fortran backend to get
 commandline arguments as argv is not easy to pass through from
 frotran to C
@@ -239,6 +240,11 @@ void ops_set_args(const int argc, const char *argv) {
   }*/
 
 
+}
+
+void ops_set_args_ftn(const int argc, char *argv, int len) {
+  argv[len]='\0';
+  ops_set_args(argc, argv);
 }
 
 /*
