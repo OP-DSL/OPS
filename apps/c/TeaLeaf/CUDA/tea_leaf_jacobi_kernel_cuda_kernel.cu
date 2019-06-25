@@ -4,49 +4,35 @@
 __constant__ int dims_tea_leaf_jacobi_kernel [8][1];
 static int dims_tea_leaf_jacobi_kernel_h [8][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
-#define OPS_ACC0(x,y) (x+dims_tea_leaf_jacobi_kernel[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_tea_leaf_jacobi_kernel[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_tea_leaf_jacobi_kernel[2][0]*(y))
-#define OPS_ACC3(x,y) (x+dims_tea_leaf_jacobi_kernel[3][0]*(y))
-#define OPS_ACC4(x,y) (x+dims_tea_leaf_jacobi_kernel[4][0]*(y))
-
 //user function
 __device__
 
-void tea_leaf_jacobi_kernel_gpu(double *u1, const double *Kx, const double *Ky,
-		const double *un,const double *u0,const double *rx,const double *ry, double *error) {
-	u1[OPS_ACC0(0,0)] = (u0[OPS_ACC4(0,0)]
-		+ (*rx)*(Kx[OPS_ACC1(1, 0)] *un[OPS_ACC3(1, 0)] + Kx[OPS_ACC1(0,0)]*un[OPS_ACC3(-1, 0)])
-		+ (*ry)*(Ky[OPS_ACC2(0, 1)] *un[OPS_ACC3(0, 1)] + Ky[OPS_ACC2(0,0)]*un[OPS_ACC3(0, -1)]))
+void tea_leaf_jacobi_kernel_gpu(ACC<double> &u1,
+  const ACC<double> &Kx,
+  const ACC<double> &Ky,
+  const ACC<double> &un,
+  const ACC<double> &u0,
+  const double *rx,
+  const double *ry,
+  double *error) {
+	u1(0,0) = (u0(0,0)
+		+ (*rx)*(Kx(1, 0) *un(1, 0) + Kx(0,0)*un(-1, 0))
+		+ (*ry)*(Ky(0, 1) *un(0, 1) + Ky(0,0)*un(0, -1)))
 			/(1.0
-				+ (*rx)*(Kx[OPS_ACC1(1, 0)] + Kx[OPS_ACC1(0,0)])
-				+ (*ry)*(Ky[OPS_ACC2(0, 1)] + Ky[OPS_ACC2(0,0)]));
+				+ (*rx)*(Kx(1, 0) + Kx(0,0))
+				+ (*ry)*(Ky(0, 1) + Ky(0,0)));
 
-    *error = *error + fabs(u1[OPS_ACC0(0,0)] - un[OPS_ACC3(0,0)]);
+    *error = *error + fabs(u1(0,0) - un(0,0));
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
 __global__ void ops_tea_leaf_jacobi_kernel(
 double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
-const double* __restrict arg3,
-const double* __restrict arg4,
+double* __restrict arg1,
+double* __restrict arg2,
+double* __restrict arg3,
+double* __restrict arg4,
 const double arg5,
 const double arg6,
 double* __restrict arg7,
@@ -66,8 +52,13 @@ int size1 ){
   arg4 += idx_x * 1*1 + idx_y * 1*1 * dims_tea_leaf_jacobi_kernel[4][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    tea_leaf_jacobi_kernel_gpu(arg0, arg1, arg2, arg3,
-                   arg4, &arg5, &arg6, arg7_l);
+    ACC<double> argp0(dims_tea_leaf_jacobi_kernel[0][0], arg0);
+    const ACC<double> argp1(dims_tea_leaf_jacobi_kernel[1][0], arg1);
+    const ACC<double> argp2(dims_tea_leaf_jacobi_kernel[2][0], arg2);
+    const ACC<double> argp3(dims_tea_leaf_jacobi_kernel[3][0], arg3);
+    const ACC<double> argp4(dims_tea_leaf_jacobi_kernel[4][0], arg4);
+    tea_leaf_jacobi_kernel_gpu(argp0, argp1, argp2, argp3,
+                   argp4, &arg5, &arg6, arg7_l);
   }
   for (int d=0; d<1; d++)
     ops_reduction_cuda<OPS_INC>(&arg7[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg7_l[d]);

@@ -123,7 +123,6 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
     OPS_kernels[52].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
-#undef OPS_ACC0
 
 
 #ifdef OPS_LAZY

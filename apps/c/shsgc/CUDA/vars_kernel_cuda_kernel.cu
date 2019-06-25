@@ -4,50 +4,34 @@
 __constant__ int dims_vars_kernel [5][1];
 static int dims_vars_kernel_h [5][1] = {0};
 
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
-#undef OPS_ACC_MD4
-
-
-#define OPS_ACC_MD0(d,x) ((x)*3+(d))
-#define OPS_ACC_MD1(d,x) ((x)*3+(d))
-#define OPS_ACC_MD2(d,x) ((x)*3+(d))
-#define OPS_ACC_MD3(d,x) ((x)*3+(d))
-#define OPS_ACC_MD4(d,x) ((x)*3+(d))
 //user function
 __device__
 
-void vars_kernel_gpu(const double* alam, const double* al, const double *gt, double* cmp,  double* cf) {
+void vars_kernel_gpu(const ACC<double>& alam,
+  const ACC<double>& al,
+  const ACC<double> &gt,
+  ACC<double>& cmp,
+  ACC<double>& cf) {
 
   double  anu, aaa, ga, qf, ww;
   for (int m=0; m < 3 ;m++) {
-			anu = alam[OPS_ACC_MD0(m,0)];
-			aaa = al[OPS_ACC_MD1(m,0)];
-			ga = aaa * ( gt[OPS_ACC_MD2(m,1)] - gt[OPS_ACC_MD2(m,0)]) / (pow(aaa,2.0) + del2);
+			anu = alam(m,0);
+			aaa = al(m,0);
+			ga = aaa * ( gt(m,1) - gt(m,0)) / (pow(aaa,2.0) + del2);
 			qf = sqrt ( con + pow(anu,2.0));
-			cmp[OPS_ACC_MD3(m,0)] = 0.50 * qf;
-			ww = anu + cmp[OPS_ACC_MD3(m,0)] * ga;
+			cmp(m,0) = 0.50 * qf;
+			ww = anu + cmp(m,0) * ga;
 			qf = sqrt(con + pow(ww,2.0));
-			cf[OPS_ACC_MD4(m,0)] = qf;
+			cf(m,0) = qf;
 		}
 }
 
 
 
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-#undef OPS_ACC_MD3
-#undef OPS_ACC_MD4
-
 __global__ void ops_vars_kernel(
-const double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
+double* __restrict arg0,
+double* __restrict arg1,
+double* __restrict arg2,
 double* __restrict arg3,
 double* __restrict arg4,
 int size0 ){
@@ -62,8 +46,13 @@ int size0 ){
   arg4 += idx_x * 1*3;
 
   if (idx_x < size0) {
-    vars_kernel_gpu(arg0, arg1, arg2, arg3,
-                   arg4);
+    const ACC<double> argp0(3, dims_vars_kernel[0][0], arg0);
+    const ACC<double> argp1(3, dims_vars_kernel[1][0], arg1);
+    const ACC<double> argp2(3, dims_vars_kernel[2][0], arg2);
+    ACC<double> argp3(3, dims_vars_kernel[3][0], arg3);
+    ACC<double> argp4(3, dims_vars_kernel[4][0], arg4);
+    vars_kernel_gpu(argp0, argp1, argp2, argp3,
+                   argp4);
   }
 
 }

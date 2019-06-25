@@ -28,6 +28,15 @@ void initialise_chunk_kernel_volume_c_wrapper(
       ptr_double xarea = { xarea_p + n_x*1 + n_y * xdim2_initialise_chunk_kernel_volume*1, xdim2_initialise_chunk_kernel_volume};
       const ptr_double celldx = { celldx_p + n_x*1 + n_y * xdim3_initialise_chunk_kernel_volume*0, xdim3_initialise_chunk_kernel_volume};
       ptr_double yarea = { yarea_p + n_x*1 + n_y * xdim4_initialise_chunk_kernel_volume*1, xdim4_initialise_chunk_kernel_volume};
+
+      double d_x, d_y;
+
+      d_x = (grid.xmax - grid.xmin) / (double)grid.x_cells;
+      d_y = (grid.ymax - grid.ymin) / (double)grid.y_cells;
+
+      OPS_ACC(volume, 0, 0) = d_x * d_y;
+      OPS_ACC(xarea, 0, 0) = OPS_ACC(celldy, 0, 0);
+      OPS_ACC(yarea, 0, 0) = OPS_ACC(celldx, 0, 0);
     }
   }
 }

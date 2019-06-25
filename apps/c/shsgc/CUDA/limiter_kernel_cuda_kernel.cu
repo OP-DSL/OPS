@@ -4,41 +4,29 @@
 __constant__ int dims_limiter_kernel [3][1];
 static int dims_limiter_kernel_h [3][1] = {0};
 
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-
-
-#define OPS_ACC_MD0(d,x) ((x)*3+(d))
-#define OPS_ACC_MD1(d,x) ((x)*3+(d))
-#define OPS_ACC_MD2(d,x) ((x)*3+(d))
 //user function
 __device__
 
-void limiter_kernel_gpu(const double* al, double *tht, double* gt) {
+void limiter_kernel_gpu(const ACC<double>& al,
+  ACC<double> &tht,
+  ACC<double>& gt) {
 
   double aalm, aal, all, ar, gtt;
   for (int m=0; m < 3 ;m++) {
-    aalm = fabs(al[OPS_ACC_MD0(m,-1)]);
-    aal = fabs(al[OPS_ACC_MD0(m,0)]);
-    tht[OPS_ACC_MD1(m,0)] = fabs (aal - aalm) / (aal + aalm + del2);
-    all = al[OPS_ACC_MD0(m,-1)];
-    ar = al[OPS_ACC_MD0(m,0)];
+    aalm = fabs(al(m,-1));
+    aal = fabs(al(m,0));
+    tht(m,0) = fabs (aal - aalm) / (aal + aalm + del2);
+    all = al(m,-1);
+    ar = al(m,0);
     gtt = all * ( ar * ar + del2 ) + ar * (all * all + del2);
-    gt[OPS_ACC_MD2(m,0)]= gtt / (ar * ar + all * all + 2.00 * del2);
+    gt(m,0)= gtt / (ar * ar + all * all + 2.00 * del2);
   }
 }
 
 
 
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-
 __global__ void ops_limiter_kernel(
-const double* __restrict arg0,
+double* __restrict arg0,
 double* __restrict arg1,
 double* __restrict arg2,
 int size0 ){
@@ -51,7 +39,10 @@ int size0 ){
   arg2 += idx_x * 1*3;
 
   if (idx_x < size0) {
-    limiter_kernel_gpu(arg0, arg1, arg2);
+    const ACC<double> argp0(3, dims_limiter_kernel[0][0], arg0);
+    ACC<double> argp1(3, dims_limiter_kernel[1][0], arg1);
+    ACC<double> argp2(3, dims_limiter_kernel[2][0], arg2);
+    limiter_kernel_gpu(argp0, argp1, argp2);
   }
 
 }

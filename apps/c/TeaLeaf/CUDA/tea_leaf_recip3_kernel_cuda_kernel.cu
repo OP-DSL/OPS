@@ -4,29 +4,20 @@
 __constant__ int dims_tea_leaf_recip3_kernel [3][1];
 static int dims_tea_leaf_recip3_kernel_h [3][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+dims_tea_leaf_recip3_kernel[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_tea_leaf_recip3_kernel[1][0]*(y))
-
 //user function
 __device__
 
-void tea_leaf_recip3_kernel_gpu(double *z, const double *x, const double *theta) {
-	z[OPS_ACC0(0,0)] = x[OPS_ACC1(0,0)]/(*theta);
+void tea_leaf_recip3_kernel_gpu(ACC<double> &z,
+  const ACC<double> &x,
+  const double *theta) {
+	z(0,0) = x(0,0)/(*theta);
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
 __global__ void ops_tea_leaf_recip3_kernel(
 double* __restrict arg0,
-const double* __restrict arg1,
+double* __restrict arg1,
 const double arg2,
 int size0,
 int size1 ){
@@ -39,7 +30,9 @@ int size1 ){
   arg1 += idx_x * 1*1 + idx_y * 1*1 * dims_tea_leaf_recip3_kernel[1][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    tea_leaf_recip3_kernel_gpu(arg0, arg1, &arg2);
+    ACC<double> argp0(dims_tea_leaf_recip3_kernel[0][0], arg0);
+    const ACC<double> argp1(dims_tea_leaf_recip3_kernel[1][0], arg1);
+    tea_leaf_recip3_kernel_gpu(argp0, argp1, &arg2);
   }
 
 }

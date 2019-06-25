@@ -219,18 +219,6 @@ void ops_par_loop_PdV_kernel_predict_execute(ops_kernel_descriptor *desc) {
     OPS_kernels[55].transfer += ops_compute_transfer(dim, start, end, &arg11);
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-#undef OPS_ACC11
 
 
 #ifdef OPS_LAZY

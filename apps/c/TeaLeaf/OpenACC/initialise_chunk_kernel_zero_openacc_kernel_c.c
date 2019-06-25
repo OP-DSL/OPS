@@ -6,21 +6,10 @@
 
 int xdim0_initialise_chunk_kernel_zero;
 
-
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y) (x+xdim0_initialise_chunk_kernel_zero*(y))
-
 //user function
-inline 
-void initialise_chunk_kernel_zero(double *var) {
-  *var = 0.0;
+inline void initialise_chunk_kernel_zero(ptr_double var) {
+  OPS_ACC(var, 0, 0) = 0.0;
 }
-
-
-#undef OPS_ACC0
-
 
 
 void initialise_chunk_kernel_zero_c_wrapper(
@@ -35,8 +24,10 @@ void initialise_chunk_kernel_zero_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      initialise_chunk_kernel_zero(  p_a0 + n_x*1*1 + n_y*xdim0_initialise_chunk_kernel_zero*1*1 );
-
+      ptr_double ptr0 = {p_a0 + n_x * 1 * 1 +
+                             n_y * xdim0_initialise_chunk_kernel_zero * 1 * 1,
+                         xdim0_initialise_chunk_kernel_zero};
+      initialise_chunk_kernel_zero(ptr0);
     }
   }
 }

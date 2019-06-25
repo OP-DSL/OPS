@@ -4,38 +4,24 @@
 __constant__ int dims_generate_chunk_kernel [7][1];
 static int dims_generate_chunk_kernel_h [7][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
-
-#define OPS_ACC0(x,y) (x+dims_generate_chunk_kernel[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_generate_chunk_kernel[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_generate_chunk_kernel[2][0]*(y))
-#define OPS_ACC3(x,y) (x+dims_generate_chunk_kernel[3][0]*(y))
-#define OPS_ACC4(x,y) (x+dims_generate_chunk_kernel[4][0]*(y))
-#define OPS_ACC5(x,y) (x+dims_generate_chunk_kernel[5][0]*(y))
-#define OPS_ACC6(x,y) (x+dims_generate_chunk_kernel[6][0]*(y))
-
 //user function
 __device__
 
-void generate_chunk_kernel_gpu( const double *vertexx, const double *vertexy,
-                     double *energy0, double *density0,
-                     double *u0,
-                     const double *cellx, const double *celly) {
+void generate_chunk_kernel_gpu(const ACC<double> &vertexx,
+  const ACC<double> &vertexy,
+  ACC<double> &energy0,
+  ACC<double> &density0,
+  ACC<double> &u0,
+  const ACC<double> &cellx,
+  const ACC<double> &celly) {
 
   double radius, x_cent, y_cent;
   int is_in = 0;
   int is_in2 = 0;
 
 
-  energy0[OPS_ACC2(0,0)]= states[0].energy;
-  density0[OPS_ACC3(0,0)]= states[0].density;
+  energy0(0,0)= states[0].energy;
+  density0(0,0)= states[0].density;
 
   for(int i = 1; i<number_of_states; i++) {
 
@@ -47,28 +33,28 @@ void generate_chunk_kernel_gpu( const double *vertexx, const double *vertexy,
     if (states[i].geometry == g_rect) {
       for (int i1 = -1; i1 <= 0; i1++) {
         for (int j1 = -1; j1 <= 0; j1++) {
-          if(vertexx[OPS_ACC0(1+i1,0)] >= states[i].xmin  && vertexx[OPS_ACC0(0+i1,0)] < states[i].xmax) {
-            if(vertexy[OPS_ACC1(0,1+j1)] >= states[i].ymin && vertexy[OPS_ACC1(0,0+j1)] < states[i].ymax) {
+          if(vertexx(1+i1,0) >= states[i].xmin  && vertexx(0+i1,0) < states[i].xmax) {
+            if(vertexy(0,1+j1) >= states[i].ymin && vertexy(0,0+j1) < states[i].ymax) {
               is_in = 1;
             }
           }
         }
       }
-      if(vertexx[OPS_ACC0(1,0)] >= states[i].xmin  && vertexx[OPS_ACC0(0,0)] < states[i].xmax) {
-        if(vertexy[OPS_ACC1(0,1)] >= states[i].ymin && vertexy[OPS_ACC1(0,0)] < states[i].ymax) {
+      if(vertexx(1,0) >= states[i].xmin  && vertexx(0,0) < states[i].xmax) {
+        if(vertexy(0,1) >= states[i].ymin && vertexy(0,0) < states[i].ymax) {
           is_in2 = 1;
         }
       }
       if (is_in2) {
-        energy0[OPS_ACC2(0,0)] = states[i].energy;
-        density0[OPS_ACC3(0,0)] = states[i].density;
+        energy0(0,0) = states[i].energy;
+        density0(0,0) = states[i].density;
       }
     }
     else if(states[i].geometry == g_circ) {
       for (int i1 = -1; i1 <= 0; i1++) {
         for (int j1 = -1; j1 <= 0; j1++) {
-          radius = sqrt ((cellx[OPS_ACC5(i1,0)] - x_cent) * (cellx[OPS_ACC5(i1,0)] - x_cent) +
-                     (celly[OPS_ACC6(0,j1)] - y_cent) * (celly[OPS_ACC6(0,j1)] - y_cent));
+          radius = sqrt ((cellx(i1,0) - x_cent) * (cellx(i1,0) - x_cent) +
+                     (celly(0,j1) - y_cent) * (celly(0,j1) - y_cent));
           if (radius <= states[i].radius) {
             is_in = 1;
           }
@@ -77,39 +63,30 @@ void generate_chunk_kernel_gpu( const double *vertexx, const double *vertexy,
       if (radius <= states[i].radius) is_in2 = 1;
 
       if (is_in2) {
-        energy0[OPS_ACC2(0,0)] = states[i].energy;
-        density0[OPS_ACC3(0,0)] = states[i].density;
+        energy0(0,0) = states[i].energy;
+        density0(0,0) = states[i].density;
       }
     }
     else if(states[i].geometry == g_point) {
-      if(vertexx[OPS_ACC0(0,0)] == x_cent && vertexy[OPS_ACC1(0,0)] == y_cent) {
-        energy0[OPS_ACC2(0,0)] = states[i].energy;
-        density0[OPS_ACC3(0,0)] = states[i].density;
+      if(vertexx(0,0) == x_cent && vertexy(0,0) == y_cent) {
+        energy0(0,0) = states[i].energy;
+        density0(0,0) = states[i].density;
       }
     }
   }
-  u0[OPS_ACC4(0,0)] = energy0[OPS_ACC2(0,0)] * density0[OPS_ACC3(0,0)];
+  u0(0,0) = energy0(0,0) * density0(0,0);
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
-
 __global__ void ops_generate_chunk_kernel(
-const double* __restrict arg0,
-const double* __restrict arg1,
+double* __restrict arg0,
+double* __restrict arg1,
 double* __restrict arg2,
 double* __restrict arg3,
 double* __restrict arg4,
-const double* __restrict arg5,
-const double* __restrict arg6,
+double* __restrict arg5,
+double* __restrict arg6,
 int size0,
 int size1 ){
 
@@ -126,8 +103,15 @@ int size1 ){
   arg6 += idx_x * 0*1 + idx_y * 1*1 * dims_generate_chunk_kernel[6][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    generate_chunk_kernel_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6);
+    const ACC<double> argp0(dims_generate_chunk_kernel[0][0], arg0);
+    const ACC<double> argp1(dims_generate_chunk_kernel[1][0], arg1);
+    ACC<double> argp2(dims_generate_chunk_kernel[2][0], arg2);
+    ACC<double> argp3(dims_generate_chunk_kernel[3][0], arg3);
+    ACC<double> argp4(dims_generate_chunk_kernel[4][0], arg4);
+    const ACC<double> argp5(dims_generate_chunk_kernel[5][0], arg5);
+    const ACC<double> argp6(dims_generate_chunk_kernel[6][0], arg6);
+    generate_chunk_kernel_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5, argp6);
   }
 
 }

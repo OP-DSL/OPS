@@ -31,9 +31,9 @@ void ops_par_loop_calvar_kernel_execute(ops_kernel_descriptor *desc) {
     return;
 #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(3, "calvar_kernel");
-    OPS_instance::getOPSInstance()->OPS_kernels[3].count++;
+    OPS_kernels[3].count++;
     ops_timers_core(&__c2, &__t2);
   }
 
@@ -82,9 +82,9 @@ void ops_par_loop_calvar_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 5);
 #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&__c1, &__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[3].mpi_time += __t1 - __t2;
+    OPS_kernels[3].mpi_time += __t1 - __t2;
   }
 
 #pragma omp parallel for
@@ -103,9 +103,9 @@ void ops_par_loop_calvar_kernel_execute(ops_kernel_descriptor *desc) {
     workarray2(0) = p + rhou_new(0) * u;
     workarray3(0) = (p + rhoE_new(0)) * u;
   }
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&__c2, &__t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[3].time += __t2 - __t1;
+    OPS_kernels[3].time += __t2 - __t1;
   }
 #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 5);
@@ -113,20 +113,15 @@ void ops_par_loop_calvar_kernel_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[4], range);
 #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     // Update kernel record
     ops_timers_core(&__c1, &__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[3].mpi_time += __t1 - __t2;
-    OPS_instance::getOPSInstance()->OPS_kernels[3].transfer +=
-        ops_compute_transfer(dim, start, end, &arg0);
-    OPS_instance::getOPSInstance()->OPS_kernels[3].transfer +=
-        ops_compute_transfer(dim, start, end, &arg1);
-    OPS_instance::getOPSInstance()->OPS_kernels[3].transfer +=
-        ops_compute_transfer(dim, start, end, &arg2);
-    OPS_instance::getOPSInstance()->OPS_kernels[3].transfer +=
-        ops_compute_transfer(dim, start, end, &arg3);
-    OPS_instance::getOPSInstance()->OPS_kernels[3].transfer +=
-        ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[3].mpi_time += __t1 - __t2;
+    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }
 
@@ -161,7 +156,7 @@ void ops_par_loop_calvar_kernel(char const *name, ops_block block, int dim,
   desc->args[4] = arg4;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->function = ops_par_loop_calvar_kernel_execute;
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(3, "calvar_kernel");
   }
   ops_enqueue_kernel(desc);

@@ -32,9 +32,9 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   if (!ops_checkpointing_before(args,4,range,53)) return;
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(53,"calc_dt_kernel_get");
-    OPS_instance::getOPSInstance()->OPS_kernels[53].count++;
+    OPS_kernels[53].count++;
   }
 
   //compute localy allocated range for the sub-block
@@ -60,7 +60,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
   }
 
@@ -82,20 +82,24 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   #else
   double *arg3h = (double *)(((ops_reduction)args[3].data)->data);
   #endif
-  int dat0 = (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_instance::getOPSInstance()->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
-  int base0 = args[0].dat->base_offset + (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0+ (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
-    args[0].dat->size[0] *
-    start[1] * args[0].stencil->stride[1];
+  int base0 = args[0].dat->base_offset +
+              (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+                  start[0] * args[0].stencil->stride[0];
+  base0 = base0 +
+          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+              args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
   double *p_a0 = (double *)(args[0].data + base0);
 
-  int base1 = args[1].dat->base_offset + (OPS_instance::getOPSInstance()->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
-  base1 = base1+ (OPS_instance::getOPSInstance()->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
-    args[1].dat->size[0] *
-    start[1] * args[1].stencil->stride[1];
+  int base1 = args[1].dat->base_offset +
+              (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+                  start[0] * args[1].stencil->stride[0];
+  base1 = base1 +
+          (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+              args[1].dat->size[0] * start[1] * args[1].stencil->stride[1];
   double *p_a1 = (double *)(args[1].data + base1);
 
   #ifdef OPS_MPI
@@ -117,9 +121,9 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   ops_H_D_exchanges_host(args, 4);
   ops_halo_exchanges(args,4,range);
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[53].mpi_time += t1-t2;
+    OPS_kernels[53].mpi_time += t1 - t2;
   }
 
   calc_dt_kernel_get_c_wrapper(
@@ -129,15 +133,15 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
     p_a3,
     x_size, y_size);
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[53].time += t2-t1;
+    OPS_kernels[53].time += t2 - t1;
   }
   ops_set_dirtybit_host(args, 4);
 
   //Update kernel record
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
-    OPS_instance::getOPSInstance()->OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_instance::getOPSInstance()->OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg1);
+  if (OPS_diags > 1) {
+    OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

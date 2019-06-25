@@ -6,21 +6,10 @@
 
 int xdim0_mgrid_populate_kernel_3;
 
-
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y) (x+xdim0_mgrid_populate_kernel_3*(y))
-
 //user function
-inline 
-void mgrid_populate_kernel_3(double *val, int *idx) {
-  val[OPS_ACC0(0,0)] = (double)(idx[0]+24*idx[1]);
+inline void mgrid_populate_kernel_3(ptr_double val, int *idx) {
+  OPS_ACC(val, 0, 0) = (double)(idx[0] + 24 * idx[1]);
 }
-
-
-#undef OPS_ACC0
-
 
 
 void mgrid_populate_kernel_3_c_wrapper(
@@ -38,9 +27,10 @@ void mgrid_populate_kernel_3_c_wrapper(
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
       int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};
-      mgrid_populate_kernel_3(  p_a0 + n_x*1*1 + n_y*xdim0_mgrid_populate_kernel_3*1*1,
-          arg_idx );
-
+      ptr_double ptr0 = {p_a0 + n_x * 1 * 1 +
+                             n_y * xdim0_mgrid_populate_kernel_3 * 1 * 1,
+                         xdim0_mgrid_populate_kernel_3};
+      mgrid_populate_kernel_3(ptr0, arg_idx);
     }
   }
 }

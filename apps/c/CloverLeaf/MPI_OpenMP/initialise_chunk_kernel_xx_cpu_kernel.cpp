@@ -83,7 +83,6 @@ void ops_par_loop_initialise_chunk_kernel_xx_execute(ops_kernel_descriptor *desc
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
-    int idx[] = {0, arg_idx[1]+n_y};
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
     #pragma omp simd
@@ -96,7 +95,7 @@ void ops_par_loop_initialise_chunk_kernel_xx_execute(ops_kernel_descriptor *desc
     #pragma simd
     #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-      idx[0] = arg_idx[0]+n_x;
+      int idx[] = {arg_idx[0] + n_x, arg_idx[1] + n_y};
       ACC<int> xx(xdim0_initialise_chunk_kernel_xx, xx_p + n_x*1 + n_y * xdim0_initialise_chunk_kernel_xx*0);
       
   xx(0,0) = idx[0]-2;
@@ -119,7 +118,6 @@ void ops_par_loop_initialise_chunk_kernel_xx_execute(ops_kernel_descriptor *desc
     OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
-#undef OPS_ACC0
 
 
 #ifdef OPS_LAZY

@@ -10,47 +10,27 @@ int xdim2_initialize_kernel;
 int xdim3_initialize_kernel;
 int xdim4_initialize_kernel;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-#define OPS_ACC3(x) (x)
-#define OPS_ACC4(x) (x)
-
 //user function
-inline 
-void initialize_kernel(double *x,double *rho_new, double *rhou_new, double *rhoE_new,
-                       double* rhoin, int *idx) {
-  x[OPS_ACC0(0)] = xmin + (idx[0]-2) * dx;
-  if (x[OPS_ACC0(0)] >= -4.0){
-		rho_new[OPS_ACC1(0)] = 1.0 + eps * sin(lambda *x[OPS_ACC0(0)]);
-		rhou_new[OPS_ACC2(0)] = ur * rho_new[OPS_ACC1(0)];
-		rhoE_new[OPS_ACC3(0)] = (pr / gam1) + 0.5 * pow(rhou_new[OPS_ACC2(0)],2)/rho_new[OPS_ACC1(0)];
-	}
-	else {
-		rho_new[OPS_ACC1(0)] = rhol;
-		rhou_new[OPS_ACC2(0)] = ul * rho_new[OPS_ACC1(0)];
-		rhoE_new[OPS_ACC3(0)] = (pl / gam1) + 0.5 * pow(rhou_new[OPS_ACC2(0)],2)/rho_new[OPS_ACC1(0)];
-	}
+inline void initialize_kernel(ptr_double x, ptr_double rho_new,
+                              ptr_double rhou_new, ptr_double rhoE_new,
+                              ptr_double rhoin, int *idx) {
+  OPS_ACC(x, 0) = xmin + (idx[0] - 2) * dx;
+  if (OPS_ACC(x, 0) >= -4.0) {
+    OPS_ACC(rho_new, 0) = 1.0 + eps * sin(lambda * OPS_ACC(x, 0));
+    OPS_ACC(rhou_new, 0) = ur * OPS_ACC(rho_new, 0);
+    OPS_ACC(rhoE_new, 0) =
+        (pr / gam1) + 0.5 * pow(OPS_ACC(rhou_new, 0), 2) / OPS_ACC(rho_new, 0);
+  } else {
+    OPS_ACC(rho_new, 0) = rhol;
+    OPS_ACC(rhou_new, 0) = ul * OPS_ACC(rho_new, 0);
+    OPS_ACC(rhoE_new, 0) =
+        (pl / gam1) + 0.5 * pow(OPS_ACC(rhou_new, 0), 2) / OPS_ACC(rho_new, 0);
+  }
 
-	rhoin[OPS_ACC4(0)] = gam1 * (rhoE_new[OPS_ACC3(0)] - 0.5 * rhou_new[OPS_ACC2(0)] * rhou_new[OPS_ACC2(0)] / rho_new[OPS_ACC1(0)]);
-
+  OPS_ACC(rhoin, 0) = gam1 * (OPS_ACC(rhoE_new, 0) -
+                              0.5 * OPS_ACC(rhou_new, 0) *
+                                  OPS_ACC(rhou_new, 0) / OPS_ACC(rho_new, 0));
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
 
 
 void initialize_kernel_c_wrapper(
@@ -68,10 +48,11 @@ void initialize_kernel_c_wrapper(
   #endif
   for ( int n_x=0; n_x<x_size; n_x++ ){
     int arg_idx[] = {arg_idx0+n_x};
-    initialize_kernel(  p_a0 + n_x*1*1,
-           p_a1 + n_x*1*1, p_a2 + n_x*1*1,
-           p_a3 + n_x*1*1, p_a4 + n_x*1*1,
-          arg_idx );
-
+    ptr_double ptr0 = {p_a0 + n_x * 1 * 1};
+    ptr_double ptr1 = {p_a1 + n_x * 1 * 1};
+    ptr_double ptr2 = {p_a2 + n_x * 1 * 1};
+    ptr_double ptr3 = {p_a3 + n_x * 1 * 1};
+    ptr_double ptr4 = {p_a4 + n_x * 1 * 1};
+    initialize_kernel(ptr0, ptr1, ptr2, ptr3, ptr4, arg_idx);
   }
 }

@@ -4,134 +4,88 @@
 __constant__ int dims_PdV_kernel_nopredict [17][2];
 static int dims_PdV_kernel_nopredict_h [17][2] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-#undef OPS_ACC11
-#undef OPS_ACC12
-#undef OPS_ACC13
-#undef OPS_ACC14
-#undef OPS_ACC15
-#undef OPS_ACC16
-
-
-#define OPS_ACC0(x,y,z) (x+dims_PdV_kernel_nopredict[0][0]*(y)+dims_PdV_kernel_nopredict[0][0]*dims_PdV_kernel_nopredict[0][1]*(z))
-#define OPS_ACC1(x,y,z) (x+dims_PdV_kernel_nopredict[1][0]*(y)+dims_PdV_kernel_nopredict[1][0]*dims_PdV_kernel_nopredict[1][1]*(z))
-#define OPS_ACC2(x,y,z) (x+dims_PdV_kernel_nopredict[2][0]*(y)+dims_PdV_kernel_nopredict[2][0]*dims_PdV_kernel_nopredict[2][1]*(z))
-#define OPS_ACC3(x,y,z) (x+dims_PdV_kernel_nopredict[3][0]*(y)+dims_PdV_kernel_nopredict[3][0]*dims_PdV_kernel_nopredict[3][1]*(z))
-#define OPS_ACC4(x,y,z) (x+dims_PdV_kernel_nopredict[4][0]*(y)+dims_PdV_kernel_nopredict[4][0]*dims_PdV_kernel_nopredict[4][1]*(z))
-#define OPS_ACC5(x,y,z) (x+dims_PdV_kernel_nopredict[5][0]*(y)+dims_PdV_kernel_nopredict[5][0]*dims_PdV_kernel_nopredict[5][1]*(z))
-#define OPS_ACC6(x,y,z) (x+dims_PdV_kernel_nopredict[6][0]*(y)+dims_PdV_kernel_nopredict[6][0]*dims_PdV_kernel_nopredict[6][1]*(z))
-#define OPS_ACC7(x,y,z) (x+dims_PdV_kernel_nopredict[7][0]*(y)+dims_PdV_kernel_nopredict[7][0]*dims_PdV_kernel_nopredict[7][1]*(z))
-#define OPS_ACC8(x,y,z) (x+dims_PdV_kernel_nopredict[8][0]*(y)+dims_PdV_kernel_nopredict[8][0]*dims_PdV_kernel_nopredict[8][1]*(z))
-#define OPS_ACC9(x,y,z) (x+dims_PdV_kernel_nopredict[9][0]*(y)+dims_PdV_kernel_nopredict[9][0]*dims_PdV_kernel_nopredict[9][1]*(z))
-#define OPS_ACC10(x,y,z) (x+dims_PdV_kernel_nopredict[10][0]*(y)+dims_PdV_kernel_nopredict[10][0]*dims_PdV_kernel_nopredict[10][1]*(z))
-#define OPS_ACC11(x,y,z) (x+dims_PdV_kernel_nopredict[11][0]*(y)+dims_PdV_kernel_nopredict[11][0]*dims_PdV_kernel_nopredict[11][1]*(z))
-#define OPS_ACC12(x,y,z) (x+dims_PdV_kernel_nopredict[12][0]*(y)+dims_PdV_kernel_nopredict[12][0]*dims_PdV_kernel_nopredict[12][1]*(z))
-#define OPS_ACC13(x,y,z) (x+dims_PdV_kernel_nopredict[13][0]*(y)+dims_PdV_kernel_nopredict[13][0]*dims_PdV_kernel_nopredict[13][1]*(z))
-#define OPS_ACC14(x,y,z) (x+dims_PdV_kernel_nopredict[14][0]*(y)+dims_PdV_kernel_nopredict[14][0]*dims_PdV_kernel_nopredict[14][1]*(z))
-#define OPS_ACC15(x,y,z) (x+dims_PdV_kernel_nopredict[15][0]*(y)+dims_PdV_kernel_nopredict[15][0]*dims_PdV_kernel_nopredict[15][1]*(z))
-#define OPS_ACC16(x,y,z) (x+dims_PdV_kernel_nopredict[16][0]*(y)+dims_PdV_kernel_nopredict[16][0]*dims_PdV_kernel_nopredict[16][1]*(z))
-
 //user function
 __device__
 
-void PdV_kernel_nopredict_gpu(const double *xarea, const double *xvel0, const double *xvel1,
-                const double *yarea, const double *yvel0, const double *yvel1,
-                double *volume_change, const double *volume,
-                const double *pressure,
-                const double *density0, double *density1,
-                const double *viscosity,
-                const double *energy0, double *energy1, const double *zarea, const double *zvel0, const double *zvel1) {
+void PdV_kernel_nopredict_gpu(const ACC<double> &xarea,
+  const ACC<double> &xvel0,
+  const ACC<double> &xvel1,
+  const ACC<double> &yarea,
+  const ACC<double> &yvel0,
+  const ACC<double> &yvel1,
+  ACC<double> &volume_change,
+  const ACC<double> &volume,
+  const ACC<double> &pressure,
+  const ACC<double> &density0,
+  ACC<double> &density1,
+  const ACC<double> &viscosity,
+  const ACC<double> &energy0,
+  ACC<double> &energy1,
+  const ACC<double> &zarea,
+  const ACC<double> &zvel0,
+  const ACC<double> &zvel1) {
 
   double recip_volume, energy_change;
   double right_flux, left_flux, top_flux, bottom_flux, back_flux, front_flux, total_flux;
 
-  left_flux = ( xarea[OPS_ACC0(0,0,0)] * ( xvel0[OPS_ACC1(0,0,0)] + xvel0[OPS_ACC1(0,1,0)] +
-                                           xvel0[OPS_ACC1(0,0,1)] + xvel0[OPS_ACC1(0,1,1)] +
-                                           xvel1[OPS_ACC2(0,0,0)] + xvel1[OPS_ACC2(0,1,0)] +
-                                           xvel1[OPS_ACC2(0,0,1)] + xvel1[OPS_ACC2(0,1,1)] ) ) * 0.125 * dt;
-  right_flux = ( xarea[OPS_ACC0(1,0,0)] * ( xvel0[OPS_ACC1(1,0,0)] + xvel0[OPS_ACC1(1,1,0)] +
-                                            xvel0[OPS_ACC1(1,0,1)] + xvel0[OPS_ACC1(1,1,1)] +
-                                            xvel1[OPS_ACC2(1,0,0)] + xvel1[OPS_ACC2(1,1,0)] +
-                                            xvel1[OPS_ACC2(1,0,1)] + xvel1[OPS_ACC2(1,1,1)] ) ) * 0.125 * dt;
+  left_flux = ( xarea(0,0,0) * ( xvel0(0,0,0) + xvel0(0,1,0) +
+                                           xvel0(0,0,1) + xvel0(0,1,1) +
+                                           xvel1(0,0,0) + xvel1(0,1,0) +
+                                           xvel1(0,0,1) + xvel1(0,1,1) ) ) * 0.125 * dt;
+  right_flux = ( xarea(1,0,0) * ( xvel0(1,0,0) + xvel0(1,1,0) +
+                                            xvel0(1,0,1) + xvel0(1,1,1) +
+                                            xvel1(1,0,0) + xvel1(1,1,0) +
+                                            xvel1(1,0,1) + xvel1(1,1,1) ) ) * 0.125 * dt;
 
-  bottom_flux = ( yarea[OPS_ACC3(0,0,0)] * ( yvel0[OPS_ACC4(0,0,0)] + yvel0[OPS_ACC4(1,0,0)] +
-                                             yvel0[OPS_ACC4(0,0,1)] + yvel0[OPS_ACC4(1,0,1)] +
-                                             yvel1[OPS_ACC5(0,0,0)] + yvel1[OPS_ACC5(1,0,0)] +
-                                             yvel1[OPS_ACC5(0,0,1)] + yvel1[OPS_ACC5(1,0,1)] ) ) * 0.125* dt;
-  top_flux = ( yarea[OPS_ACC3(0,1,0)] * ( yvel0[OPS_ACC4(0,1,0)] + yvel0[OPS_ACC4(1,1,0)] +
-                                          yvel0[OPS_ACC4(0,1,1)] + yvel0[OPS_ACC4(1,1,1)] +
-                                          yvel1[OPS_ACC5(0,1,0)] + yvel1[OPS_ACC5(1,1,0)] +
-                                          yvel1[OPS_ACC5(0,1,1)] + yvel1[OPS_ACC5(1,1,1)]) ) * 0.125 * dt;
+  bottom_flux = ( yarea(0,0,0) * ( yvel0(0,0,0) + yvel0(1,0,0) +
+                                             yvel0(0,0,1) + yvel0(1,0,1) +
+                                             yvel1(0,0,0) + yvel1(1,0,0) +
+                                             yvel1(0,0,1) + yvel1(1,0,1) ) ) * 0.125* dt;
+  top_flux = ( yarea(0,1,0) * ( yvel0(0,1,0) + yvel0(1,1,0) +
+                                          yvel0(0,1,1) + yvel0(1,1,1) +
+                                          yvel1(0,1,0) + yvel1(1,1,0) +
+                                          yvel1(0,1,1) + yvel1(1,1,1)) ) * 0.125 * dt;
 
-  back_flux = ( zarea[OPS_ACC14(0,0,0)] * ( zvel0[OPS_ACC15(0,0,0)] + zvel0[OPS_ACC15(1,0,0)] +
-                                            zvel0[OPS_ACC15(0,1,0)] + zvel0[OPS_ACC15(1,1,0)] +
-                                            zvel1[OPS_ACC16(0,0,0)] + zvel1[OPS_ACC16(1,0,0)] +
-                                            zvel1[OPS_ACC16(0,1,0)] + zvel1[OPS_ACC16(1,1,0)] ) ) * 0.125* dt;
-  front_flux = ( zarea[OPS_ACC14(0,0,1)] * ( zvel0[OPS_ACC15(0,0,1)] + zvel0[OPS_ACC15(1,0,1)] +
-                                             zvel0[OPS_ACC15(0,1,1)] + zvel0[OPS_ACC15(1,1,1)] +
-                                             zvel1[OPS_ACC16(0,0,1)] + zvel1[OPS_ACC16(1,0,1)] +
-                                             zvel1[OPS_ACC16(0,1,1)] + zvel1[OPS_ACC16(1,1,1)]) ) * 0.125 * dt;
+  back_flux = ( zarea(0,0,0) * ( zvel0(0,0,0) + zvel0(1,0,0) +
+                                            zvel0(0,1,0) + zvel0(1,1,0) +
+                                            zvel1(0,0,0) + zvel1(1,0,0) +
+                                            zvel1(0,1,0) + zvel1(1,1,0) ) ) * 0.125* dt;
+  front_flux = ( zarea(0,0,1) * ( zvel0(0,0,1) + zvel0(1,0,1) +
+                                             zvel0(0,1,1) + zvel0(1,1,1) +
+                                             zvel1(0,0,1) + zvel1(1,0,1) +
+                                             zvel1(0,1,1) + zvel1(1,1,1)) ) * 0.125 * dt;
 
   total_flux = right_flux - left_flux + top_flux - bottom_flux + front_flux - back_flux;
 
-  volume_change[OPS_ACC6(0,0,0)] = (volume[OPS_ACC7(0,0,0)])/(volume[OPS_ACC7(0,0,0)] + total_flux);
-  recip_volume = 1.0/volume[OPS_ACC7(0,0,0)];
-  energy_change = ( pressure[OPS_ACC8(0,0,0)]/density0[OPS_ACC9(0,0,0)] +
-                    viscosity[OPS_ACC11(0,0,0)]/density0[OPS_ACC9(0,0,0)] ) * total_flux * recip_volume;
-  energy1[OPS_ACC13(0,0,0)] = energy0[OPS_ACC12(0,0,0)] - energy_change;
-  density1[OPS_ACC10(0,0,0)] = density0[OPS_ACC9(0,0,0)] * volume_change[OPS_ACC6(0,0,0)];
+  volume_change(0,0,0) = (volume(0,0,0))/(volume(0,0,0) + total_flux);
+  recip_volume = 1.0/volume(0,0,0);
+  energy_change = ( pressure(0,0,0)/density0(0,0,0) +
+                    viscosity(0,0,0)/density0(0,0,0) ) * total_flux * recip_volume;
+  energy1(0,0,0) = energy0(0,0,0) - energy_change;
+  density1(0,0,0) = density0(0,0,0) * volume_change(0,0,0);
 
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-#undef OPS_ACC11
-#undef OPS_ACC12
-#undef OPS_ACC13
-#undef OPS_ACC14
-#undef OPS_ACC15
-#undef OPS_ACC16
-
-
 __global__ void ops_PdV_kernel_nopredict(
-const double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
-const double* __restrict arg3,
-const double* __restrict arg4,
-const double* __restrict arg5,
+double* __restrict arg0,
+double* __restrict arg1,
+double* __restrict arg2,
+double* __restrict arg3,
+double* __restrict arg4,
+double* __restrict arg5,
 double* __restrict arg6,
-const double* __restrict arg7,
-const double* __restrict arg8,
-const double* __restrict arg9,
+double* __restrict arg7,
+double* __restrict arg8,
+double* __restrict arg9,
 double* __restrict arg10,
-const double* __restrict arg11,
-const double* __restrict arg12,
+double* __restrict arg11,
+double* __restrict arg12,
 double* __restrict arg13,
-const double* __restrict arg14,
-const double* __restrict arg15,
-const double* __restrict arg16,
+double* __restrict arg14,
+double* __restrict arg15,
+double* __restrict arg16,
 int size0,
 int size1,
 int size2 ){
@@ -160,10 +114,27 @@ int size2 ){
   arg16 += idx_x * 1*1 + idx_y * 1*1 * dims_PdV_kernel_nopredict[16][0] + idx_z * 1*1 * dims_PdV_kernel_nopredict[16][0] * dims_PdV_kernel_nopredict[16][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    PdV_kernel_nopredict_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6, arg7, arg8,
-                   arg9, arg10, arg11, arg12, arg13,
-                   arg14, arg15, arg16);
+    const ACC<double> argp0(dims_PdV_kernel_nopredict[0][0], dims_PdV_kernel_nopredict[0][1], arg0);
+    const ACC<double> argp1(dims_PdV_kernel_nopredict[1][0], dims_PdV_kernel_nopredict[1][1], arg1);
+    const ACC<double> argp2(dims_PdV_kernel_nopredict[2][0], dims_PdV_kernel_nopredict[2][1], arg2);
+    const ACC<double> argp3(dims_PdV_kernel_nopredict[3][0], dims_PdV_kernel_nopredict[3][1], arg3);
+    const ACC<double> argp4(dims_PdV_kernel_nopredict[4][0], dims_PdV_kernel_nopredict[4][1], arg4);
+    const ACC<double> argp5(dims_PdV_kernel_nopredict[5][0], dims_PdV_kernel_nopredict[5][1], arg5);
+    ACC<double> argp6(dims_PdV_kernel_nopredict[6][0], dims_PdV_kernel_nopredict[6][1], arg6);
+    const ACC<double> argp7(dims_PdV_kernel_nopredict[7][0], dims_PdV_kernel_nopredict[7][1], arg7);
+    const ACC<double> argp8(dims_PdV_kernel_nopredict[8][0], dims_PdV_kernel_nopredict[8][1], arg8);
+    const ACC<double> argp9(dims_PdV_kernel_nopredict[9][0], dims_PdV_kernel_nopredict[9][1], arg9);
+    ACC<double> argp10(dims_PdV_kernel_nopredict[10][0], dims_PdV_kernel_nopredict[10][1], arg10);
+    const ACC<double> argp11(dims_PdV_kernel_nopredict[11][0], dims_PdV_kernel_nopredict[11][1], arg11);
+    const ACC<double> argp12(dims_PdV_kernel_nopredict[12][0], dims_PdV_kernel_nopredict[12][1], arg12);
+    ACC<double> argp13(dims_PdV_kernel_nopredict[13][0], dims_PdV_kernel_nopredict[13][1], arg13);
+    const ACC<double> argp14(dims_PdV_kernel_nopredict[14][0], dims_PdV_kernel_nopredict[14][1], arg14);
+    const ACC<double> argp15(dims_PdV_kernel_nopredict[15][0], dims_PdV_kernel_nopredict[15][1], arg15);
+    const ACC<double> argp16(dims_PdV_kernel_nopredict[16][0], dims_PdV_kernel_nopredict[16][1], arg16);
+    PdV_kernel_nopredict_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5, argp6, argp7, argp8,
+                   argp9, argp10, argp11, argp12, argp13,
+                   argp14, argp15, argp16);
   }
 
 }

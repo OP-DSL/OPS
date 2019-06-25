@@ -66,6 +66,10 @@ void buildOpenCLKernels_reset_field_kernel2(int xdim0, int ydim0, int xdim1, int
         exit(EXIT_FAILURE);
       }
 
+#ifdef OPS_SOA
+      sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
+#endif
+
       ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
 
       if(ret != CL_SUCCESS) {

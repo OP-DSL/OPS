@@ -7,7 +7,8 @@ static int dims_multidim_copy_kernel_h [2][3] = {0};
 //user function
 __device__
 
-void multidim_copy_kernel_gpu(const ACC<double> &src, ACC<double> &dest){
+void multidim_copy_kernel_gpu(const ACC<double> &src,
+  ACC<double> &dest){
   dest(0,0,0,0) = src(0,0,0,0);
   dest(1,0,0,0) = src(1,0,0,0);
   dest(2,0,0,0) = src(2,0,0,0);

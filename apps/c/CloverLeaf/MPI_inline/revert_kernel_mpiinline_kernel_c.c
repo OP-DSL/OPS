@@ -25,6 +25,9 @@ void revert_kernel_c_wrapper(
       ptr_double density1 = { density1_p + n_x*1 + n_y * xdim1_revert_kernel*1, xdim1_revert_kernel};
       const ptr_double energy0 = { energy0_p + n_x*1 + n_y * xdim2_revert_kernel*1, xdim2_revert_kernel};
       ptr_double energy1 = { energy1_p + n_x*1 + n_y * xdim3_revert_kernel*1, xdim3_revert_kernel};
+
+      OPS_ACC(density1, 0, 0) = OPS_ACC(density0, 0, 0);
+      OPS_ACC(energy1, 0, 0) = OPS_ACC(energy0, 0, 0);
     }
   }
 }

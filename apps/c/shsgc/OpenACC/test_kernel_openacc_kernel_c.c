@@ -6,22 +6,11 @@
 
 int xdim0_test_kernel;
 
-
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x) (x)
-
 //user function
-inline 
-void test_kernel(const double *rho_new, double *rms) {
+inline void test_kernel(const ptr_double rho_new, double *rms) {
 
-  rms[0] = rms[0] + pow (rho_new[OPS_ACC0(0)], 2.0);
+  rms[0] = rms[0] + pow(OPS_ACC(rho_new, 0), 2.0);
 }
-
-
-#undef OPS_ACC0
-
 
 
 void test_kernel_c_wrapper(
@@ -34,9 +23,8 @@ void test_kernel_c_wrapper(
   #pragma acc loop reduction(+:p_a1_0)
   #endif
   for ( int n_x=0; n_x<x_size; n_x++ ){
-    test_kernel(  p_a0 + n_x*1*1,
-           &p_a1_0 );
-
+    const ptr_double ptr0 = {p_a0 + n_x * 1 * 1};
+    test_kernel(ptr0, &p_a1_0);
   }
   p_a1[0] = p_a1_0;
 }

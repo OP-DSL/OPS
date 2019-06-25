@@ -4,30 +4,20 @@
 __constant__ int dims_xder1_kernel [2][1];
 static int dims_xder1_kernel_h [2][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-
 //user function
 __device__
 
-void xder1_kernel_gpu(const double *inp, double *out) {
+void xder1_kernel_gpu(const ACC<double> &inp,
+  ACC<double> &out) {
   double dix = 1/(12.00*dx);
-  out[OPS_ACC1(0)] = (inp[OPS_ACC0(-2)] - inp[OPS_ACC0(2)]  + 8.0 *(
-  inp[OPS_ACC0(1)] - inp[OPS_ACC0(-1)] )) * dix;
+  out(0) = (inp(-2) - inp(2)  + 8.0 *(
+  inp(1) - inp(-1) )) * dix;
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
 __global__ void ops_xder1_kernel(
-const double* __restrict arg0,
+double* __restrict arg0,
 double* __restrict arg1,
 int size0 ){
 
@@ -38,7 +28,9 @@ int size0 ){
   arg1 += idx_x * 1*1;
 
   if (idx_x < size0) {
-    xder1_kernel_gpu(arg0, arg1);
+    const ACC<double> argp0(arg0);
+    ACC<double> argp1(arg1);
+    xder1_kernel_gpu(argp0, argp1);
   }
 
 }

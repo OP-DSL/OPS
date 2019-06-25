@@ -19,9 +19,8 @@ void poisson_kernel_update_c_wrapper(
     for ( int n_x=0; n_x<x_size; n_x++ ){
       const ptr_double u2 = { u2_p + n_x*1 + n_y * xdim0_poisson_kernel_update*1, xdim0_poisson_kernel_update};
       ptr_double u = { u_p + n_x*1 + n_y * xdim1_poisson_kernel_update*1, xdim1_poisson_kernel_update};
+
+      OPS_ACC(u, 0, 0) = OPS_ACC(u2, 0, 0);
     }
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-

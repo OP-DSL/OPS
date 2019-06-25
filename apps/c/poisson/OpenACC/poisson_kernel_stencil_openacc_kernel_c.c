@@ -8,8 +8,7 @@ int xdim0_poisson_kernel_stencil;
 int xdim1_poisson_kernel_stencil;
 
 //user function
-inline 
-void poisson_kernel_stencil(const ptr_double u, ptr_double u2) {
+inline void poisson_kernel_stencil(const ptr_double u, ptr_double u2) {
   OPS_ACC(u2, 0,0) = ((OPS_ACC(u, -1,0)-2.0f*OPS_ACC(u, 0,0)+OPS_ACC(u, 1,0))*0.125f
                      + (OPS_ACC(u, 0,-1)-2.0f*OPS_ACC(u, 0,0)+OPS_ACC(u, 0,1))*0.125f
                      + OPS_ACC(u, 0,0));

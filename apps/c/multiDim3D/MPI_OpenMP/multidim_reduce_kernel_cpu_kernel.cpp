@@ -141,7 +141,6 @@ void ops_par_loop_multidim_reduce_kernel_execute(ops_kernel_descriptor *desc) {
     OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
-#undef OPS_ACC_MD0
 
 
 #ifdef OPS_LAZY

@@ -29,9 +29,9 @@ void multidim_copy_kernel_c_wrapper(
       #else
       ptrm_double dest = { dest_p + n_x*1 + n_y * xdim1_multidim_copy_kernel*1, xdim1_multidim_copy_kernel, 2};
       #endif
+
+      OPS_ACC(dest, 0, 0, 0) = OPS_ACC(src, 0, 0, 0);
+      OPS_ACC(dest, 1, 0, 0) = OPS_ACC(src, 1, 0, 0);
     }
   }
 }
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1

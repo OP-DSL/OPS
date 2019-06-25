@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_3D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,20 +45,13 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_calc_dt_kernel_min*(y)+xdim0_calc_dt_kernel_min*ydim0_calc_dt_kernel_min*(z))
-
-
 //user function
-void calc_dt_kernel_min(const __global double* restrict  dt_min, double* restrict  dt_min_val)
 
- {
-  *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0,0,0)]);
+void calc_dt_kernel_min(const ptr_double  dt_min,
+  double* dt_min_val) {
+  *dt_min_val = MIN(*dt_min_val, OPS_ACCS(dt_min, 0,0,0));
 
 }
-
 
 
 __kernel void ops_calc_dt_kernel_min(
@@ -76,7 +73,8 @@ const int size2 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    calc_dt_kernel_min(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_calc_dt_kernel_min + idx_z * 1*1 * xdim0_calc_dt_kernel_min * ydim0_calc_dt_kernel_min],
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_calc_dt_kernel_min + idx_z * 1*1 * xdim0_calc_dt_kernel_min * ydim0_calc_dt_kernel_min], xdim0_calc_dt_kernel_min, ydim0_calc_dt_kernel_min};
+    calc_dt_kernel_min(ptr0,
                    arg1_l);
   }
   int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);

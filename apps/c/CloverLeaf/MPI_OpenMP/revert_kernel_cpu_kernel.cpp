@@ -134,10 +134,6 @@ void ops_par_loop_revert_kernel_execute(ops_kernel_descriptor *desc) {
     OPS_kernels[57].transfer += ops_compute_transfer(dim, start, end, &arg3);
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
 
 
 #ifdef OPS_LAZY

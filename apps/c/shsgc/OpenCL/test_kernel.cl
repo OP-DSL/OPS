@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_1D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,20 +44,13 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x) (x)
-
-
 //user function
-void test_kernel(const __global double * restrict rho_new, double * restrict rms)
 
- {
+void test_kernel(const ptr_double rho_new,
+  double *rms) {
 
-  rms[0] = rms[0] + pow (rho_new[OPS_ACC0(0)], 2.0);
+  rms[0] = rms[0] + pow (OPS_ACCS(rho_new, 0), 2.0);
 }
-
 
 
 __kernel void ops_test_kernel(
@@ -71,7 +68,8 @@ const int size0 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    test_kernel(&arg0[base0 + idx_x * 1*1],
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1] };
+    test_kernel(ptr0,
                 arg1_l);
   }
   int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);

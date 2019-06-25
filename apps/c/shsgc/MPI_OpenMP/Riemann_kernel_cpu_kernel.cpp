@@ -33,9 +33,9 @@ void ops_par_loop_Riemann_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,6,range,7)) return;
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(7,"Riemann_kernel");
-    OPS_instance::getOPSInstance()->OPS_kernels[7].count++;
+    OPS_kernels[7].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -92,9 +92,9 @@ void ops_par_loop_Riemann_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 6);
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[7].mpi_time += __t1-__t2;
+    OPS_kernels[7].mpi_time += __t1 - __t2;
   }
 
   #pragma omp parallel for
@@ -171,9 +171,9 @@ void ops_par_loop_Riemann_kernel_execute(ops_kernel_descriptor *desc) {
     al(m,0) = al(m,0) * csq;
 
   }
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[7].time += __t2-__t1;
+    OPS_kernels[7].time += __t2 - __t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 6);
@@ -182,16 +182,16 @@ void ops_par_loop_Riemann_kernel_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[5],range);
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[7].mpi_time += __t1-__t2;
-    OPS_instance::getOPSInstance()->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_instance::getOPSInstance()->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_instance::getOPSInstance()->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_instance::getOPSInstance()->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_instance::getOPSInstance()->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_instance::getOPSInstance()->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    OPS_kernels[7].mpi_time += __t1 - __t2;
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg5);
   }
 }
 
@@ -228,7 +228,7 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
   desc->args[5] = arg5;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg5.dat->index;
   desc->function = ops_par_loop_Riemann_kernel_execute;
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(7,"Riemann_kernel");
   }
   ops_enqueue_kernel(desc);

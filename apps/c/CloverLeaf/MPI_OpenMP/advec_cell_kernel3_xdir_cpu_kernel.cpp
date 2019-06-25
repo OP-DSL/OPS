@@ -222,14 +222,6 @@ void ops_par_loop_advec_cell_kernel3_xdir_execute(ops_kernel_descriptor *desc) {
     OPS_kernels[63].transfer += ops_compute_transfer(dim, start, end, &arg7);
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
 
 
 #ifdef OPS_LAZY

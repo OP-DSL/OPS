@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_3D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,70 +45,58 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_field_summary_kernel*(y)+xdim0_field_summary_kernel*ydim0_field_summary_kernel*(z))
-#define OPS_ACC1(x,y,z) (x+xdim1_field_summary_kernel*(y)+xdim1_field_summary_kernel*ydim1_field_summary_kernel*(z))
-#define OPS_ACC2(x,y,z) (x+xdim2_field_summary_kernel*(y)+xdim2_field_summary_kernel*ydim2_field_summary_kernel*(z))
-#define OPS_ACC3(x,y,z) (x+xdim3_field_summary_kernel*(y)+xdim3_field_summary_kernel*ydim3_field_summary_kernel*(z))
-#define OPS_ACC4(x,y,z) (x+xdim4_field_summary_kernel*(y)+xdim4_field_summary_kernel*ydim4_field_summary_kernel*(z))
-#define OPS_ACC5(x,y,z) (x+xdim5_field_summary_kernel*(y)+xdim5_field_summary_kernel*ydim5_field_summary_kernel*(z))
-#define OPS_ACC6(x,y,z) (x+xdim6_field_summary_kernel*(y)+xdim6_field_summary_kernel*ydim6_field_summary_kernel*(z))
-
-
 //user function
-void field_summary_kernel( const __global double * restrict volume,const __global double * restrict density0,const __global double * restrict energy0,
-const __global double * restrict pressure,const __global double * restrict xvel0,const __global double * restrict yvel0,const __global double * restrict zvel0,
- double * restrict vol, double * restrict mass, double * restrict ie, double * restrict ke,
- double * restrict press)
 
- {
+void field_summary_kernel(const ptr_double volume,
+  const ptr_double density0,
+  const ptr_double energy0,
+  const ptr_double pressure,
+  const ptr_double xvel0,
+  const ptr_double yvel0,
+  const ptr_double zvel0,
+  double *vol,
+  double *mass,
+  double *ie,
+  double *ke,
+  double *press) {
 
   double vsqrd, cell_vol, cell_mass;
 
   vsqrd = 0.0;
-  vsqrd+=0.125*( xvel0[OPS_ACC4(0,0,0)] * xvel0[OPS_ACC4(0,0,0)] +
-                 yvel0[OPS_ACC5(0,0,0)] * yvel0[OPS_ACC5(0,0,0)] +
-                 zvel0[OPS_ACC6(0,0,0)] * zvel0[OPS_ACC6(0,0,0)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(1,0,0)] * xvel0[OPS_ACC4(1,0,0)] +
-                 yvel0[OPS_ACC5(1,0,0)] * yvel0[OPS_ACC5(1,0,0)] +
-                 zvel0[OPS_ACC6(1,0,0)] * zvel0[OPS_ACC6(1,0,0)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(0,1,0)] * xvel0[OPS_ACC4(0,1,0)] +
-                 yvel0[OPS_ACC5(0,1,0)] * yvel0[OPS_ACC5(0,1,0)] +
-                 zvel0[OPS_ACC6(0,1,0)] * zvel0[OPS_ACC6(0,1,0)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(1,1,0)] * xvel0[OPS_ACC4(1,1,0)] +
-                 yvel0[OPS_ACC5(1,1,0)] * yvel0[OPS_ACC5(1,1,0)] +
-                 zvel0[OPS_ACC6(1,1,0)] * zvel0[OPS_ACC6(1,1,0)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(0,0,1)] * xvel0[OPS_ACC4(0,0,1)] +
-                 yvel0[OPS_ACC5(0,0,1)] * yvel0[OPS_ACC5(0,0,1)] +
-                 zvel0[OPS_ACC6(0,0,1)] * zvel0[OPS_ACC6(0,0,1)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(1,0,1)] * xvel0[OPS_ACC4(1,0,1)] +
-                 yvel0[OPS_ACC5(1,0,1)] * yvel0[OPS_ACC5(1,0,1)] +
-                 zvel0[OPS_ACC6(1,0,1)] * zvel0[OPS_ACC6(1,0,1)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(0,1,1)] * xvel0[OPS_ACC4(0,1,1)] +
-                 yvel0[OPS_ACC5(0,1,1)] * yvel0[OPS_ACC5(0,1,1)] +
-                 zvel0[OPS_ACC6(0,1,1)] * zvel0[OPS_ACC6(0,1,1)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(1,1,1)] * xvel0[OPS_ACC4(1,1,1)] +
-                 yvel0[OPS_ACC5(1,1,1)] * yvel0[OPS_ACC5(1,1,1)] +
-                 zvel0[OPS_ACC6(1,1,1)] * zvel0[OPS_ACC6(1,1,1)]);
+  vsqrd+=0.125*( OPS_ACCS(xvel0, 0,0,0) * OPS_ACCS(xvel0, 0,0,0) +
+                 OPS_ACCS(yvel0, 0,0,0) * OPS_ACCS(yvel0, 0,0,0) +
+                 OPS_ACCS(zvel0, 0,0,0) * OPS_ACCS(zvel0, 0,0,0));
+  vsqrd+=0.125*( OPS_ACCS(xvel0, 1,0,0) * OPS_ACCS(xvel0, 1,0,0) +
+                 OPS_ACCS(yvel0, 1,0,0) * OPS_ACCS(yvel0, 1,0,0) +
+                 OPS_ACCS(zvel0, 1,0,0) * OPS_ACCS(zvel0, 1,0,0));
+  vsqrd+=0.125*( OPS_ACCS(xvel0, 0,1,0) * OPS_ACCS(xvel0, 0,1,0) +
+                 OPS_ACCS(yvel0, 0,1,0) * OPS_ACCS(yvel0, 0,1,0) +
+                 OPS_ACCS(zvel0, 0,1,0) * OPS_ACCS(zvel0, 0,1,0));
+  vsqrd+=0.125*( OPS_ACCS(xvel0, 1,1,0) * OPS_ACCS(xvel0, 1,1,0) +
+                 OPS_ACCS(yvel0, 1,1,0) * OPS_ACCS(yvel0, 1,1,0) +
+                 OPS_ACCS(zvel0, 1,1,0) * OPS_ACCS(zvel0, 1,1,0));
+  vsqrd+=0.125*( OPS_ACCS(xvel0, 0,0,1) * OPS_ACCS(xvel0, 0,0,1) +
+                 OPS_ACCS(yvel0, 0,0,1) * OPS_ACCS(yvel0, 0,0,1) +
+                 OPS_ACCS(zvel0, 0,0,1) * OPS_ACCS(zvel0, 0,0,1));
+  vsqrd+=0.125*( OPS_ACCS(xvel0, 1,0,1) * OPS_ACCS(xvel0, 1,0,1) +
+                 OPS_ACCS(yvel0, 1,0,1) * OPS_ACCS(yvel0, 1,0,1) +
+                 OPS_ACCS(zvel0, 1,0,1) * OPS_ACCS(zvel0, 1,0,1));
+  vsqrd+=0.125*( OPS_ACCS(xvel0, 0,1,1) * OPS_ACCS(xvel0, 0,1,1) +
+                 OPS_ACCS(yvel0, 0,1,1) * OPS_ACCS(yvel0, 0,1,1) +
+                 OPS_ACCS(zvel0, 0,1,1) * OPS_ACCS(zvel0, 0,1,1));
+  vsqrd+=0.125*( OPS_ACCS(xvel0, 1,1,1) * OPS_ACCS(xvel0, 1,1,1) +
+                 OPS_ACCS(yvel0, 1,1,1) * OPS_ACCS(yvel0, 1,1,1) +
+                 OPS_ACCS(zvel0, 1,1,1) * OPS_ACCS(zvel0, 1,1,1));
 
-  cell_vol = volume[OPS_ACC0(0,0,0)];
-  cell_mass = cell_vol * density0[OPS_ACC1(0,0,0)];
+  cell_vol = OPS_ACCS(volume, 0,0,0);
+  cell_mass = cell_vol * OPS_ACCS(density0, 0,0,0);
   *vol = *vol + cell_vol;
   *mass = *mass + cell_mass;
-  *ie = *ie + cell_mass * energy0[OPS_ACC2(0,0,0)];
+  *ie = *ie + cell_mass * OPS_ACCS(energy0, 0,0,0);
   *ke = *ke + cell_mass * 0.5 * vsqrd;
-  *press = *press + cell_vol * pressure[OPS_ACC3(0,0,0)];
+  *press = *press + cell_vol * OPS_ACCS(pressure, 0,0,0);
 
 }
-
 
 
 __kernel void ops_field_summary_kernel(
@@ -162,13 +154,20 @@ const int size2 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    field_summary_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_field_summary_kernel + idx_z * 1*1 * xdim0_field_summary_kernel * ydim0_field_summary_kernel],
-                         &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_field_summary_kernel + idx_z * 1*1 * xdim1_field_summary_kernel * ydim1_field_summary_kernel],
-                         &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_field_summary_kernel + idx_z * 1*1 * xdim2_field_summary_kernel * ydim2_field_summary_kernel],
-                         &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_field_summary_kernel + idx_z * 1*1 * xdim3_field_summary_kernel * ydim3_field_summary_kernel],
-                         &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_field_summary_kernel + idx_z * 1*1 * xdim4_field_summary_kernel * ydim4_field_summary_kernel],
-                         &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_field_summary_kernel + idx_z * 1*1 * xdim5_field_summary_kernel * ydim5_field_summary_kernel],
-                         &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_field_summary_kernel + idx_z * 1*1 * xdim6_field_summary_kernel * ydim6_field_summary_kernel],
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_field_summary_kernel + idx_z * 1*1 * xdim0_field_summary_kernel * ydim0_field_summary_kernel], xdim0_field_summary_kernel, ydim0_field_summary_kernel};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_field_summary_kernel + idx_z * 1*1 * xdim1_field_summary_kernel * ydim1_field_summary_kernel], xdim1_field_summary_kernel, ydim1_field_summary_kernel};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_field_summary_kernel + idx_z * 1*1 * xdim2_field_summary_kernel * ydim2_field_summary_kernel], xdim2_field_summary_kernel, ydim2_field_summary_kernel};
+    const ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_field_summary_kernel + idx_z * 1*1 * xdim3_field_summary_kernel * ydim3_field_summary_kernel], xdim3_field_summary_kernel, ydim3_field_summary_kernel};
+    const ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_field_summary_kernel + idx_z * 1*1 * xdim4_field_summary_kernel * ydim4_field_summary_kernel], xdim4_field_summary_kernel, ydim4_field_summary_kernel};
+    const ptr_double ptr5 = { &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_field_summary_kernel + idx_z * 1*1 * xdim5_field_summary_kernel * ydim5_field_summary_kernel], xdim5_field_summary_kernel, ydim5_field_summary_kernel};
+    const ptr_double ptr6 = { &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_field_summary_kernel + idx_z * 1*1 * xdim6_field_summary_kernel * ydim6_field_summary_kernel], xdim6_field_summary_kernel, ydim6_field_summary_kernel};
+    field_summary_kernel(ptr0,
+                         ptr1,
+                         ptr2,
+                         ptr3,
+                         ptr4,
+                         ptr5,
+                         ptr6,
                          arg7_l,
                          arg8_l,
                          arg9_l,

@@ -34,9 +34,9 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
   if (!ops_checkpointing_before(args,2,range,73)) return;
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(73,"advec_mom_kernel_mass_flux_x");
-    OPS_instance::getOPSInstance()->OPS_kernels[73].count++;
+    OPS_kernels[73].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -115,9 +115,9 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
   #else
   ops_H_D_exchanges_host(args, 2);
   #endif
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[73].mpi_time += t2-t1;
+    OPS_kernels[73].mpi_time += t2 - t1;
   }
 
   advec_mom_kernel_mass_flux_x_c_wrapper(
@@ -125,9 +125,9 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
     p_a1,
     x_size, y_size);
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[73].time += t1-t2;
+    OPS_kernels[73].time += t1 - t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 2);
@@ -136,11 +136,11 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x(char const *name, ops_block block
   #endif
   ops_set_halo_dirtybit3(&args[0],range);
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[73].mpi_time += t2-t1;
-    OPS_instance::getOPSInstance()->OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_instance::getOPSInstance()->OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[73].mpi_time += t2 - t1;
+    OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

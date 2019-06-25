@@ -120,8 +120,6 @@ void ops_par_loop_advec_mom_kernel_mass_flux_x_execute(ops_kernel_descriptor *de
     OPS_kernels[73].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 #ifdef OPS_LAZY

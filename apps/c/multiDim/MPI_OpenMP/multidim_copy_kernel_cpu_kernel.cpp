@@ -128,8 +128,6 @@ void ops_par_loop_multidim_copy_kernel_execute(ops_kernel_descriptor *desc) {
     OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
 
 
 #ifdef OPS_LAZY

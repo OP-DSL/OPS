@@ -28,9 +28,9 @@ void ops_par_loop_test_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,2,range,14)) return;
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(14,"test_kernel");
-    OPS_instance::getOPSInstance()->OPS_kernels[14].count++;
+    OPS_kernels[14].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
@@ -76,9 +76,9 @@ void ops_par_loop_test_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 2);
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[14].mpi_time += __t1-__t2;
+    OPS_kernels[14].mpi_time += __t1 - __t2;
   }
 
   double p_a1_0 = p_a1[0];
@@ -94,19 +94,19 @@ void ops_par_loop_test_kernel_execute(ops_kernel_descriptor *desc) {
     p_a1_0 +=rms[0];
   }
   p_a1[0] = p_a1_0;
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[14].time += __t2-__t1;
+    OPS_kernels[14].time += __t2 - __t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 2);
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[14].mpi_time += __t1-__t2;
-    OPS_instance::getOPSInstance()->OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[14].mpi_time += __t1 - __t2;
+    OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
 
@@ -133,7 +133,7 @@ void ops_par_loop_test_kernel(char const *name, ops_block block, int dim, int* r
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
   desc->function = ops_par_loop_test_kernel_execute;
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(14,"test_kernel");
   }
   ops_enqueue_kernel(desc);

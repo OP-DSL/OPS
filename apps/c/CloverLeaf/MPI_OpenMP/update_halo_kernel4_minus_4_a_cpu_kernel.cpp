@@ -123,8 +123,6 @@ void ops_par_loop_update_halo_kernel4_minus_4_a_execute(ops_kernel_descriptor *d
     OPS_kernels[41].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 #ifdef OPS_LAZY

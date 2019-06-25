@@ -23,11 +23,13 @@ void poisson_kernel_error_c_wrapper(
       err[0] = ZERO_double;
       const ptr_double u = { u_p + n_x*1 + n_y * xdim0_poisson_kernel_error*1, xdim0_poisson_kernel_error};
       const ptr_double ref = { ref_p + n_x*1 + n_y * xdim1_poisson_kernel_error*1, xdim1_poisson_kernel_error};
+
+      *err = *err +
+             (OPS_ACC(u, 0, 0) - OPS_ACC(ref, 0, 0)) *
+                 (OPS_ACC(u, 0, 0) - OPS_ACC(ref, 0, 0));
+
       err_0 +=err[0];
     }
   }
   err_g[0] = err_0;
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-

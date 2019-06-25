@@ -4,38 +4,24 @@
 __constant__ int dims_tea_leaf_common_init_u_u0_kernel [4][1];
 static int dims_tea_leaf_common_init_u_u0_kernel_h [4][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x,y) (x+dims_tea_leaf_common_init_u_u0_kernel[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_tea_leaf_common_init_u_u0_kernel[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_tea_leaf_common_init_u_u0_kernel[2][0]*(y))
-#define OPS_ACC3(x,y) (x+dims_tea_leaf_common_init_u_u0_kernel[3][0]*(y))
-
 //user function
 __device__
 
-void tea_leaf_common_init_u_u0_kernel_gpu(double *u, double *u0, const double *energy, const double *density) {
-	u [OPS_ACC0(0,0)]=energy[OPS_ACC2(0,0)]*density[OPS_ACC3(0,0)];
-	u0[OPS_ACC1(0,0)]=energy[OPS_ACC2(0,0)]*density[OPS_ACC3(0,0)];
+void tea_leaf_common_init_u_u0_kernel_gpu(ACC<double> &u,
+  ACC<double> &u0,
+  const ACC<double> &energy,
+  const ACC<double> &density) {
+	u (0,0)=energy(0,0)*density(0,0);
+	u0(0,0)=energy(0,0)*density(0,0);
 }
 
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
 
 
 __global__ void ops_tea_leaf_common_init_u_u0_kernel(
 double* __restrict arg0,
 double* __restrict arg1,
-const double* __restrict arg2,
-const double* __restrict arg3,
+double* __restrict arg2,
+double* __restrict arg3,
 int size0,
 int size1 ){
 
@@ -49,7 +35,11 @@ int size1 ){
   arg3 += idx_x * 1*1 + idx_y * 1*1 * dims_tea_leaf_common_init_u_u0_kernel[3][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    tea_leaf_common_init_u_u0_kernel_gpu(arg0, arg1, arg2, arg3);
+    ACC<double> argp0(dims_tea_leaf_common_init_u_u0_kernel[0][0], arg0);
+    ACC<double> argp1(dims_tea_leaf_common_init_u_u0_kernel[1][0], arg1);
+    const ACC<double> argp2(dims_tea_leaf_common_init_u_u0_kernel[2][0], arg2);
+    const ACC<double> argp3(dims_tea_leaf_common_init_u_u0_kernel[3][0], arg3);
+    tea_leaf_common_init_u_u0_kernel_gpu(argp0, argp1, argp2, argp3);
   }
 
 }

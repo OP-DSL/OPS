@@ -4,39 +4,25 @@
 __constant__ int dims_update_kernel [4][1];
 static int dims_update_kernel_h [4][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-#undef OPS_ACC_MD3
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-
-#define OPS_ACC_MD3(d,x) ((x)*3+(d))
 //user function
 __device__
 
-void update_kernel_gpu(double *rho_new, double *rhou_new, double *rhoE_new, const double *s) {
-		rho_new[OPS_ACC0(0)]  = rho_new[OPS_ACC0(0)]  + s[OPS_ACC_MD3(0,0)];
-		rhou_new[OPS_ACC1(0)] = rhou_new[OPS_ACC1(0)] + s[OPS_ACC_MD3(1,0)];
-		rhoE_new[OPS_ACC2(0)] = rhoE_new[OPS_ACC2(0)] + s[OPS_ACC_MD3(2,0)];
+void update_kernel_gpu(ACC<double> &rho_new,
+  ACC<double> &rhou_new,
+  ACC<double> &rhoE_new,
+  const ACC<double> &s) {
+		rho_new(0)  = rho_new(0)  + s(0,0);
+		rhou_new(0) = rhou_new(0) + s(1,0);
+		rhoE_new(0) = rhoE_new(0) + s(2,0);
 }
 
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-#undef OPS_ACC_MD3
 
 __global__ void ops_update_kernel(
 double* __restrict arg0,
 double* __restrict arg1,
 double* __restrict arg2,
-const double* __restrict arg3,
+double* __restrict arg3,
 int size0 ){
 
 
@@ -48,7 +34,11 @@ int size0 ){
   arg3 += idx_x * 1*3;
 
   if (idx_x < size0) {
-    update_kernel_gpu(arg0, arg1, arg2, arg3);
+    ACC<double> argp0(arg0);
+    ACC<double> argp1(arg1);
+    ACC<double> argp2(arg2);
+    const ACC<double> argp3(3, dims_update_kernel[3][0], arg3);
+    update_kernel_gpu(argp0, argp1, argp2, argp3);
   }
 
 }

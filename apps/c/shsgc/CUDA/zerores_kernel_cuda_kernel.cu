@@ -4,29 +4,17 @@
 __constant__ int dims_zerores_kernel [3][1];
 static int dims_zerores_kernel_h [3][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-
 //user function
 __device__
 
-void zerores_kernel_gpu(double *rho_res, double *rhou_res, double *rhoE_res) {
-      rho_res[OPS_ACC0(0)] = 0.0;
-      rhou_res[OPS_ACC1(0)] = 0.0;
-      rhoE_res[OPS_ACC2(0)] = 0.0;
+void zerores_kernel_gpu(ACC<double> &rho_res,
+  ACC<double> &rhou_res,
+  ACC<double> &rhoE_res) {
+      rho_res(0) = 0.0;
+      rhou_res(0) = 0.0;
+      rhoE_res(0) = 0.0;
 }
 
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
 
 
 __global__ void ops_zerores_kernel(
@@ -43,7 +31,10 @@ int size0 ){
   arg2 += idx_x * 1*1;
 
   if (idx_x < size0) {
-    zerores_kernel_gpu(arg0, arg1, arg2);
+    ACC<double> argp0(arg0);
+    ACC<double> argp1(arg1);
+    ACC<double> argp2(arg2);
+    zerores_kernel_gpu(argp0, argp1, argp2);
   }
 
 }

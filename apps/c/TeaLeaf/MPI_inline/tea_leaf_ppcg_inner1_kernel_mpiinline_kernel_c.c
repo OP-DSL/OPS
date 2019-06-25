@@ -8,39 +8,37 @@ int xdim2_tea_leaf_ppcg_inner1_kernel;
 int xdim3_tea_leaf_ppcg_inner1_kernel;
 
 
-#define OPS_ACC0(x,y) (n_x*1 + x + (n_y*1+(y))*xdim0_tea_leaf_ppcg_inner1_kernel)
-#define OPS_ACC1(x,y) (n_x*1 + x + (n_y*1+(y))*xdim1_tea_leaf_ppcg_inner1_kernel)
-#define OPS_ACC2(x,y) (n_x*1 + x + (n_y*1+(y))*xdim2_tea_leaf_ppcg_inner1_kernel)
-#define OPS_ACC3(x,y) (n_x*1 + x + (n_y*1+(y))*xdim3_tea_leaf_ppcg_inner1_kernel)
 //user function
 
-
-
 void tea_leaf_ppcg_inner1_kernel_c_wrapper(
-  double * restrict rtemp,
-  const double * restrict Kx,
-  const double * restrict Ky,
-  const double * restrict sd,
-  const double * restrict rx,
-  const double * restrict ry,
-  int x_size, int y_size) {
-  #pragma omp parallel for
+    double *restrict rtemp_p, double *restrict Kx_p, double *restrict Ky_p,
+    double *restrict sd_p, const double *restrict rx, const double *restrict ry,
+    int x_size, int y_size) {
+#pragma omp parallel for
   for ( int n_y=0; n_y<y_size; n_y++ ){
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      
-	double smvp = 0.0;
-  smvp = (1.0
-    + (*ry)*(Ky[OPS_ACC2(0, 1)] + Ky[OPS_ACC2(0,0)])
-    + (*rx)*(Kx[OPS_ACC1(1, 0)] + Kx[OPS_ACC1(0,0)]))*sd[OPS_ACC3(0,0)]
-    - (*ry)*(Ky[OPS_ACC2(0, 1)] *sd[OPS_ACC3(0, 1)] + Ky[OPS_ACC2(0,0)]*sd[OPS_ACC3(0, -1)])
-    - (*rx)*(Kx[OPS_ACC1(1, 0)] *sd[OPS_ACC3(1, 0)] + Kx[OPS_ACC1(0,0)]*sd[OPS_ACC3(-1, 0)]);
-  rtemp[OPS_ACC0(0,0)] = rtemp[OPS_ACC0(0,0)] - smvp;
+      ptr_double rtemp = {rtemp_p + n_x * 1 +
+                              n_y * xdim0_tea_leaf_ppcg_inner1_kernel * 1,
+                          xdim0_tea_leaf_ppcg_inner1_kernel};
+      const ptr_double Kx = {Kx_p + n_x * 1 +
+                                 n_y * xdim1_tea_leaf_ppcg_inner1_kernel * 1,
+                             xdim1_tea_leaf_ppcg_inner1_kernel};
+      const ptr_double Ky = {Ky_p + n_x * 1 +
+                                 n_y * xdim2_tea_leaf_ppcg_inner1_kernel * 1,
+                             xdim2_tea_leaf_ppcg_inner1_kernel};
+      const ptr_double sd = {sd_p + n_x * 1 +
+                                 n_y * xdim3_tea_leaf_ppcg_inner1_kernel * 1,
+                             xdim3_tea_leaf_ppcg_inner1_kernel};
 
+      double smvp = 0.0;
+      smvp = (1.0 + (*ry) * (OPS_ACC(Ky, 0, 1) + OPS_ACC(Ky, 0, 0)) +
+              (*rx) * (OPS_ACC(Kx, 1, 0) + OPS_ACC(Kx, 0, 0))) *
+                 OPS_ACC(sd, 0, 0) -
+             (*ry) * (OPS_ACC(Ky, 0, 1) * OPS_ACC(sd, 0, 1) +
+                      OPS_ACC(Ky, 0, 0) * OPS_ACC(sd, 0, -1)) -
+             (*rx) * (OPS_ACC(Kx, 1, 0) * OPS_ACC(sd, 1, 0) +
+                      OPS_ACC(Kx, 0, 0) * OPS_ACC(sd, -1, 0));
+      OPS_ACC(rtemp, 0, 0) = OPS_ACC(rtemp, 0, 0) - smvp;
     }
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-

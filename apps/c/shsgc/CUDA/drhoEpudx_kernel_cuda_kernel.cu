@@ -4,58 +4,44 @@
 __constant__ int dims_drhoEpudx_kernel [4][1];
 static int dims_drhoEpudx_kernel_h [4][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-#define OPS_ACC3(x) (x)
-
 //user function
 __device__
 
-void drhoEpudx_kernel_gpu(const double *rhou_new, const double* rho_new, const double* rhoE_new, double *rhoE_res) {
+void drhoEpudx_kernel_gpu(const ACC<double> &rhou_new,
+  const ACC<double>& rho_new,
+  const ACC<double>& rhoE_new,
+  ACC<double> &rhoE_res) {
 
-			double fni = rhou_new[OPS_ACC0(0)] * rhou_new[OPS_ACC0(0)] / rho_new[OPS_ACC1(0)] ;
-			double p = gam1 * (rhoE_new[OPS_ACC2(0)] - 0.5 * fni);
-			fni = (rhoE_new[OPS_ACC2(0)] + p) * rhou_new[OPS_ACC0(0)] / rho_new[OPS_ACC1(0)] ;
+			double fni = rhou_new(0) * rhou_new(0) / rho_new(0) ;
+			double p = gam1 * (rhoE_new(0) - 0.5 * fni);
+			fni = (rhoE_new(0) + p) * rhou_new(0) / rho_new(0) ;
 
-			double fnim1 = rhou_new[OPS_ACC0(-1)] * rhou_new[OPS_ACC0(-1)] / rho_new[OPS_ACC1(-1)];
-			p = gam1 * (rhoE_new[OPS_ACC2(-1)] - 0.5 * fnim1);
-			fnim1 = (rhoE_new[OPS_ACC2(-1)] + p) * rhou_new[OPS_ACC0(-1)] / rho_new[OPS_ACC1(-1)];
+			double fnim1 = rhou_new(-1) * rhou_new(-1) / rho_new(-1);
+			p = gam1 * (rhoE_new(-1) - 0.5 * fnim1);
+			fnim1 = (rhoE_new(-1) + p) * rhou_new(-1) / rho_new(-1);
 
-			double fnim2 = rhou_new[OPS_ACC0(-2)] * rhou_new[OPS_ACC0(-2)] / rho_new[OPS_ACC1(-2)];
-			p = gam1 * (rhoE_new[OPS_ACC2(-2)] - 0.5 * fnim2);
-			fnim2 = (rhoE_new[OPS_ACC2(-2)] + p ) * rhou_new[OPS_ACC0(-2)] / rho_new[OPS_ACC1(-2)];
+			double fnim2 = rhou_new(-2) * rhou_new(-2) / rho_new(-2);
+			p = gam1 * (rhoE_new(-2) - 0.5 * fnim2);
+			fnim2 = (rhoE_new(-2) + p ) * rhou_new(-2) / rho_new(-2);
 
-			double fnip1 = rhou_new[OPS_ACC0(1)] * rhou_new[OPS_ACC0(1)] / rho_new[OPS_ACC1(1)];
-			p = gam1 * (rhoE_new[OPS_ACC2(1)] - 0.5 * fnip1);
-			fnip1 = (rhoE_new[OPS_ACC2(1)] + p) * rhou_new[OPS_ACC0(1)] / rho_new[OPS_ACC1(1)];
+			double fnip1 = rhou_new(1) * rhou_new(1) / rho_new(1);
+			p = gam1 * (rhoE_new(1) - 0.5 * fnip1);
+			fnip1 = (rhoE_new(1) + p) * rhou_new(1) / rho_new(1);
 
-			double fnip2 = rhou_new[OPS_ACC0(2)] * rhou_new[OPS_ACC0(2)] / rho_new[OPS_ACC1(2)];
-			p = gam1 * (rhoE_new[OPS_ACC2(2)] - 0.5 * fnip2);
-			fnip2 = (rhoE_new[OPS_ACC2(2)] + p) * rhou_new[OPS_ACC0(2)] / rho_new[OPS_ACC1(2)];
+			double fnip2 = rhou_new(2) * rhou_new(2) / rho_new(2);
+			p = gam1 * (rhoE_new(2) - 0.5 * fnip2);
+			fnip2 = (rhoE_new(2) + p) * rhou_new(2) / rho_new(2);
 
 			double deriv = (fnim2 - fnip2 + 8.0* (fnip1 - fnim1))/(12.00*dx);
-			rhoE_res[OPS_ACC3(0)] = deriv;
+			rhoE_res(0) = deriv;
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
 __global__ void ops_drhoEpudx_kernel(
-const double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
+double* __restrict arg0,
+double* __restrict arg1,
+double* __restrict arg2,
 double* __restrict arg3,
 int size0 ){
 
@@ -68,7 +54,11 @@ int size0 ){
   arg3 += idx_x * 1*1;
 
   if (idx_x < size0) {
-    drhoEpudx_kernel_gpu(arg0, arg1, arg2, arg3);
+    const ACC<double> argp0(arg0);
+    const ACC<double> argp1(arg1);
+    const ACC<double> argp2(arg2);
+    ACC<double> argp3(arg3);
+    drhoEpudx_kernel_gpu(argp0, argp1, argp2, argp3);
   }
 
 }

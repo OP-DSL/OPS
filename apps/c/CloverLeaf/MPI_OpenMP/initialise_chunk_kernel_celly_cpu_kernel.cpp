@@ -132,9 +132,6 @@ void ops_par_loop_initialise_chunk_kernel_celly_execute(ops_kernel_descriptor *d
     OPS_kernels[5].transfer += ops_compute_transfer(dim, start, end, &arg2);
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
 
 
 #ifdef OPS_LAZY

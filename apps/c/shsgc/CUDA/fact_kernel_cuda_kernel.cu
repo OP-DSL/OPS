@@ -4,32 +4,22 @@
 __constant__ int dims_fact_kernel [2][1];
 static int dims_fact_kernel_h [2][1] = {0};
 
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-
-
-#define OPS_ACC_MD0(d,x) ((x)*3+(d))
-#define OPS_ACC_MD1(d,x) ((x)*3+(d))
 //user function
 __device__
 
-void fact_kernel_gpu(const double* eff, double *s) {
+void fact_kernel_gpu(const ACC<double>& eff,
+  ACC<double>& s) {
   double fact;
   for (int m=0; m < 3 ;m++) {
     fact  = 0.50 * dt / dx ;
-    s[OPS_ACC_MD1(m,0)] = -fact * (eff[OPS_ACC_MD0(m,0)] - eff[OPS_ACC_MD0(m,-1)]);
+    s(m,0) = -fact * (eff(m,0) - eff(m,-1));
   }
 }
 
 
 
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-
 __global__ void ops_fact_kernel(
-const double* __restrict arg0,
+double* __restrict arg0,
 double* __restrict arg1,
 int size0 ){
 
@@ -40,7 +30,9 @@ int size0 ){
   arg1 += idx_x * 1*3;
 
   if (idx_x < size0) {
-    fact_kernel_gpu(arg0, arg1);
+    const ACC<double> argp0(3, dims_fact_kernel[0][0], arg0);
+    ACC<double> argp1(3, dims_fact_kernel[1][0], arg1);
+    fact_kernel_gpu(argp0, argp1);
   }
 
 }

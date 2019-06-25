@@ -49,31 +49,49 @@ void buildOpenCLKernels_update_halo_kernel2_xvel_plus_2_b(int xdim0, int xdim1) 
     printf("Compiling update_halo_kernel2_xvel_plus_2_b %d source -- start \n",OCL_FMA);
 
       // Create a program from the source
-      OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
-      clSafeCall( ret );
+    OPS_opencl_core.program = clCreateProgramWithSource(
+        OPS_opencl_core.context, 1, (const char **)&source_str,
+        (const size_t *)&source_size, &ret);
+    clSafeCall(ret);
 
-      // Build the program
-      char buildOpts[255*3];
-      char* pPath = NULL;
-      pPath = getenv ("OPS_INSTALL_PATH");
-      if (pPath!=NULL)
-        if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel2_xvel_plus_2_b=%d  -Dxdim1_update_halo_kernel2_xvel_plus_2_b=%d ", pPath, 32,xdim0,xdim1);
-        else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel2_xvel_plus_2_b=%d  -Dxdim1_update_halo_kernel2_xvel_plus_2_b=%d ", pPath, 32,xdim0,xdim1);
-      else {
-        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
-        exit(EXIT_FAILURE);
+    // Build the program
+    char buildOpts[255 * 3];
+    char *pPath = NULL;
+    pPath = getenv("OPS_INSTALL_PATH");
+    if (pPath != NULL)
+      if (OCL_FMA)
+        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/c/include "
+                           "-DOPS_WARPSIZE=%d  "
+                           "-Dxdim0_update_halo_kernel2_xvel_plus_2_b=%d  "
+                           "-Dxdim1_update_halo_kernel2_xvel_plus_2_b=%d ",
+                pPath, 32, xdim0, xdim1);
+      else
+        sprintf(buildOpts, "-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  "
+                           "-Dxdim0_update_halo_kernel2_xvel_plus_2_b=%d  "
+                           "-Dxdim1_update_halo_kernel2_xvel_plus_2_b=%d ",
+                pPath, 32, xdim0, xdim1);
+    else {
+      sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
+      exit(EXIT_FAILURE);
       }
 
-      ret = clBuildProgram(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, 1, &OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id, buildOpts, NULL, NULL);
+#ifdef OPS_SOA
+      sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
+#endif
+
+      ret = clBuildProgram(OPS_opencl_core.program, 1,
+                           &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
 
       if(ret != CL_SUCCESS) {
         char* build_log;
         size_t log_size;
-        clSafeCall( clGetProgramBuildInfo(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
+        clSafeCall(clGetProgramBuildInfo(
+            OPS_opencl_core.program, OPS_opencl_core.device_id,
+            CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
         build_log = (char*) malloc(log_size+1);
-        clSafeCall( clGetProgramBuildInfo(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
+        clSafeCall(clGetProgramBuildInfo(
+            OPS_opencl_core.program, OPS_opencl_core.device_id,
+            CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
         build_log[log_size] = '\0';
         fprintf(stderr, "=============== OpenCL Program Build Info ================\n\n%s", build_log);
         fprintf(stderr, "\n========================================================= \n");
@@ -83,10 +101,12 @@ void buildOpenCLKernels_update_halo_kernel2_xvel_plus_2_b(int xdim0, int xdim1) 
       printf("compiling update_halo_kernel2_xvel_plus_2_b -- done\n");
 
     // Create the OpenCL kernel
-    OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[20] = clCreateKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, "ops_update_halo_kernel2_xvel_plus_2_b", &ret);
-    clSafeCall( ret );
+      OPS_opencl_core.kernel[20] =
+          clCreateKernel(OPS_opencl_core.program,
+                         "ops_update_halo_kernel2_xvel_plus_2_b", &ret);
+      clSafeCall(ret);
 
-    isbuilt_update_halo_kernel2_xvel_plus_2_b = true;
+      isbuilt_update_halo_kernel2_xvel_plus_2_b = true;
   }
 
 }
@@ -106,9 +126,9 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b(char const *name, ops_block 
   if (!ops_checkpointing_before(args,3,range,20)) return;
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(20,"update_halo_kernel2_xvel_plus_2_b");
-    OPS_instance::getOPSInstance()->OPS_kernels[20].count++;
+    OPS_kernels[20].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -155,9 +175,11 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b(char const *name, ops_block 
   xdim0,xdim1);
 
   //set up OpenCL thread blocks
-  size_t globalWorkSize[3] = {((x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1)*OPS_instance::getOPSInstance()->OPS_block_size_x, ((y_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_y + 1)*OPS_instance::getOPSInstance()->OPS_block_size_y, 1};
-  size_t localWorkSize[3] =  {OPS_instance::getOPSInstance()->OPS_block_size_x,OPS_instance::getOPSInstance()->OPS_block_size_y,OPS_instance::getOPSInstance()->OPS_block_size_z};
-
+  size_t globalWorkSize[3] = {
+      ((x_size - 1) / OPS_block_size_x + 1) * OPS_block_size_x,
+      ((y_size - 1) / OPS_block_size_y + 1) * OPS_block_size_y, 1};
+  size_t localWorkSize[3] = {OPS_block_size_x, OPS_block_size_y,
+                             OPS_block_size_z};
 
   int *arg2h = (int *)arg2.data;
 
@@ -168,8 +190,8 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b(char const *name, ops_block 
   reallocConstArrays(consts_bytes);
 
   consts_bytes = 0;
-  arg2.data = OPS_instance::getOPSInstance()->OPS_consts_h + consts_bytes;
-  arg2.data_d = OPS_instance::getOPSInstance()->OPS_consts_d + consts_bytes;
+  arg2.data = OPS_consts_h + consts_bytes;
+  arg2.data_d = OPS_consts_d + consts_bytes;
   for (int d=0; d<NUM_FIELDS; d++) ((int *)arg2.data)[d] = arg2h[d];
   consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
   mvConstArraysToDevice(consts_bytes);
@@ -201,42 +223,51 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b(char const *name, ops_block 
   ops_halo_exchanges(args,3,range);
   ops_H_D_exchanges_device(args, 3);
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[20].mpi_time += t2-t1;
+    OPS_kernels[20].mpi_time += t2 - t1;
   }
 
   if (globalWorkSize[0]>0 && globalWorkSize[1]>0 && globalWorkSize[2]>0) {
 
-    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[20], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
-    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[20], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
-    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[20], 2, sizeof(cl_mem), (void*) &arg2.data_d ));
-    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[20], 3, sizeof(cl_int), (void*) &base0 ));
-    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[20], 4, sizeof(cl_int), (void*) &base1 ));
-    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[20], 5, sizeof(cl_int), (void*) &x_size ));
-    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[20], 6, sizeof(cl_int), (void*) &y_size ));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[20], 0, sizeof(cl_mem),
+                              (void *)&arg0.data_d));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[20], 1, sizeof(cl_mem),
+                              (void *)&arg1.data_d));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[20], 2, sizeof(cl_mem),
+                              (void *)&arg2.data_d));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[20], 3, sizeof(cl_int),
+                              (void *)&base0));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[20], 4, sizeof(cl_int),
+                              (void *)&base1));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[20], 5, sizeof(cl_int),
+                              (void *)&x_size));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[20], 6, sizeof(cl_int),
+                              (void *)&y_size));
 
     //call/enque opencl kernel wrapper function
-    clSafeCall( clEnqueueNDRangeKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[20], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+    clSafeCall(clEnqueueNDRangeKernel(
+        OPS_opencl_core.command_queue, OPS_opencl_core.kernel[20], 3, NULL,
+        globalWorkSize, localWorkSize, 0, NULL, NULL));
   }
-  if (OPS_instance::getOPSInstance()->OPS_diags>1) {
-    clSafeCall( clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue) );
+  if (OPS_diags > 1) {
+    clSafeCall(clFinish(OPS_opencl_core.command_queue));
   }
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[20].time += t1-t2;
+    OPS_kernels[20].time += t1 - t2;
   }
 
   ops_set_dirtybit_device(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[20].mpi_time += t2-t1;
-    OPS_instance::getOPSInstance()->OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_instance::getOPSInstance()->OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[20].mpi_time += t2 - t1;
+    OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

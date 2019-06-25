@@ -65,9 +65,9 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b_execute(ops_kernel_descripto
   if (!ops_checkpointing_before(args,3,range,20)) return;
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(20,"update_halo_kernel2_xvel_plus_2_b");
-    OPS_instance::getOPSInstance()->OPS_kernels[20].count++;
+    OPS_kernels[20].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -103,8 +103,8 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b_execute(ops_kernel_descripto
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  dim3 grid( (x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1, (y_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_y + 1, 1);
-  dim3 tblock(OPS_instance::getOPSInstance()->OPS_block_size_x,OPS_instance::getOPSInstance()->OPS_block_size_y,OPS_instance::getOPSInstance()->OPS_block_size_z);
+  dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);
+  dim3 tblock(OPS_block_size_x,OPS_block_size_y,OPS_block_size_z);
 
   int consts_bytes = 0;
 
@@ -113,13 +113,13 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b_execute(ops_kernel_descripto
   reallocConstArrays(consts_bytes);
 
   consts_bytes = 0;
-  arg2.data = OPS_instance::getOPSInstance()->OPS_consts_h + consts_bytes;
-  arg2.data_d = OPS_instance::getOPSInstance()->OPS_consts_d + consts_bytes;
+  arg2.data = OPS_consts_h + consts_bytes;
+  arg2.data_d = OPS_consts_d + consts_bytes;
   for (int d=0; d<NUM_FIELDS; d++) ((int *)arg2.data)[d] = arg2h[d];
   consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
   mvConstArraysToDevice(consts_bytes);
-  int dat0 = (OPS_instance::getOPSInstance()->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_instance::getOPSInstance()->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   char *p_a[3];
 
@@ -144,9 +144,9 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b_execute(ops_kernel_descripto
   ops_halo_exchanges(args,3,range);
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[20].mpi_time += t2-t1;
+    OPS_kernels[20].mpi_time += t2-t1;
   }
 
 
@@ -157,10 +157,10 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b_execute(ops_kernel_descripto
 
   cutilSafeCall(cudaGetLastError());
 
-  if (OPS_instance::getOPSInstance()->OPS_diags>1) {
+  if (OPS_diags>1) {
     cutilSafeCall(cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[20].time += t1-t2;
+    OPS_kernels[20].time += t1-t2;
   }
 
   #ifndef OPS_LAZY
@@ -169,12 +169,12 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b_execute(ops_kernel_descripto
   ops_set_halo_dirtybit3(&args[1],range);
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[20].mpi_time += t2-t1;
-    OPS_instance::getOPSInstance()->OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_instance::getOPSInstance()->OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    OPS_kernels[20].mpi_time += t2-t1;
+    OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    OPS_kernels[20].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 
@@ -205,7 +205,7 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_b(char const *name, ops_block 
   memcpy(tmp, arg2.data,NUM_FIELDS*sizeof(int));
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel2_xvel_plus_2_b_execute;
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (OPS_diags > 1) {
     ops_timing_realloc(20,"update_halo_kernel2_xvel_plus_2_b");
   }
   ops_enqueue_kernel(desc);

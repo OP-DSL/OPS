@@ -143,11 +143,6 @@ void ops_par_loop_advec_mom_kernel_x1_execute(ops_kernel_descriptor *desc) {
     OPS_kernels[69].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
 
 
 #ifdef OPS_LAZY

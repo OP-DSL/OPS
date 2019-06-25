@@ -11,6 +11,7 @@
 
 #include "user_types.h"
 #define OPS_2D
+#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -46,7 +47,8 @@
 
 //user function
 
-void poisson_kernel_update(const ptr_double u2, ptr_double u) {
+void poisson_kernel_update(const ptr_double u2,
+  ptr_double u) {
   OPS_ACCS(u, 0,0) = OPS_ACCS(u2, 0,0);
 }
 

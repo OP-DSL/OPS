@@ -7,7 +7,8 @@ static int dims_multidim_reduce_kernel_h [2][3] = {0};
 //user function
 __device__
 
-void multidim_reduce_kernel_gpu(const ACC<double> &val, double *redu_dat1) {
+void multidim_reduce_kernel_gpu(const ACC<double> &val,
+  double *redu_dat1) {
 
   redu_dat1[0] = redu_dat1[0] + val(0,0,0,0);
   redu_dat1[1] = redu_dat1[1] + val(1,0,0,0);

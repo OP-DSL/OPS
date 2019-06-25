@@ -6,23 +6,11 @@
 
 int xdim0_gridgen_kernel;
 
-
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x) (x)
-
 //user function
-inline 
-void gridgen_kernel(double *x, const int *id) {
+inline void gridgen_kernel(ptr_double x, const int *id) {
 
-  x[OPS_ACC0(0)] = xt +  id[0] *dx;
-
+  OPS_ACC(x, 0) = xt + id[0] * dx;
 }
-
-
-#undef OPS_ACC0
-
 
 
 void gridgen_kernel_c_wrapper(
@@ -36,8 +24,7 @@ void gridgen_kernel_c_wrapper(
   #endif
   for ( int n_x=0; n_x<x_size; n_x++ ){
     int arg_idx[] = {arg_idx0+n_x};
-    gridgen_kernel(  p_a0 + n_x*1*1,
-          arg_idx );
-
+    ptr_double ptr0 = {p_a0 + n_x * 1 * 1};
+    gridgen_kernel(ptr0, arg_idx);
   }
 }

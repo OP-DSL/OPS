@@ -46,6 +46,48 @@ void calc_dt_kernel_c_wrapper(
       const ptr_double yvel0 = { yvel0_p + n_x*1 + n_y * xdim8_calc_dt_kernel*1, xdim8_calc_dt_kernel};
       const ptr_double yarea = { yarea_p + n_x*1 + n_y * xdim9_calc_dt_kernel*1, xdim9_calc_dt_kernel};
       ptr_double dt_min = { dt_min_p + n_x*1 + n_y * xdim10_calc_dt_kernel*1, xdim10_calc_dt_kernel};
+
+      double div, dsx, dsy, dtut, dtvt, dtct, dtdivt, cc, dv1, dv2;
+
+      dsx = OPS_ACC(celldx, 0, 0);
+      dsy = OPS_ACC(celldy, 0, 0);
+
+      cc = OPS_ACC(soundspeed, 0, 0) * OPS_ACC(soundspeed, 0, 0);
+      cc = cc + 2.0 * OPS_ACC(viscosity, 0, 0) / OPS_ACC(density0, 0, 0);
+      cc = MAX(sqrt(cc), g_small);
+
+      dtct = dtc_safe * MIN(dsx, dsy) / cc;
+
+      div = 0.0;
+
+      dv1 =
+          (OPS_ACC(xvel0, 0, 0) + OPS_ACC(xvel0, 0, 1)) * OPS_ACC(xarea, 0, 0);
+      dv2 =
+          (OPS_ACC(xvel0, 1, 0) + OPS_ACC(xvel0, 1, 1)) * OPS_ACC(xarea, 1, 0);
+
+      div = div + dv2 - dv1;
+
+      dtut = dtu_safe * 2.0 * OPS_ACC(volume, 0, 0) /
+             MAX(MAX(fabs(dv1), fabs(dv2)), g_small * OPS_ACC(volume, 0, 0));
+
+      dv1 =
+          (OPS_ACC(yvel0, 0, 0) + OPS_ACC(yvel0, 1, 0)) * OPS_ACC(yarea, 0, 0);
+      dv2 =
+          (OPS_ACC(yvel0, 0, 1) + OPS_ACC(yvel0, 1, 1)) * OPS_ACC(yarea, 0, 1);
+
+      div = div + dv2 - dv1;
+
+      dtvt = dtv_safe * 2.0 * OPS_ACC(volume, 0, 0) /
+             MAX(MAX(fabs(dv1), fabs(dv2)), g_small * OPS_ACC(volume, 0, 0));
+
+      div = div / (2.0 * OPS_ACC(volume, 0, 0));
+
+      if (div < -g_small)
+        dtdivt = dtdiv_safe * (-1.0 / div);
+      else
+        dtdivt = g_big;
+
+      OPS_ACC(dt_min, 0, 0) = MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt));
     }
   }
 }
