@@ -201,7 +201,7 @@ void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
 if (H5Lexists(file_id, halo_name, H5P_DEFAULT) == 0) {
   if (halo->from->block->instance->OPS_diags > 2) 
     if (halo->from->block->instance->is_root()) halo->from->block->instance->ostream() << "ops_halo "<<halo_name<<" does not exists in the file ... creating group to hold halo\n";
-    group_id =
+  group_id =
   H5Gcreate(file_id, halo_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   H5Gclose(group_id);
 }
@@ -401,7 +401,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
           if (dat->block->instance->OPS_diags>2) 
             if (dat->block->instance->is_root()) dat->block->instance->ostream() << "ops_fetch_dat_hdf5_file: ops_dat "<<dat->name<<" does not exists in the ops_block "<<block->name<<" ... creating ops_dat\n";
 
-            if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0)
+          if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0)
               H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
                H5T_NATIVE_DOUBLE, dat->data);
             else if (strcmp(dat->type, "float") == 0 ||
@@ -896,7 +896,7 @@ void ops_dump_to_hdf5(char const *file_name) {
   for (int n = 0; n < OPS_instance::getOPSInstance()->OPS_block_index; n++) {
     if (OPS_instance::getOPSInstance()->OPS_diags>2)
       if (OPS_instance::getOPSInstance()->is_root()) OPS_instance::getOPSInstance()->ostream() << "Dumping block "<<OPS_instance::getOPSInstance()->OPS_block_list[n].block->name<<" to HDF5 file " << file_name << "\n";
-      ops_fetch_block_hdf5_file(OPS_instance::getOPSInstance()->OPS_block_list[n].block, file_name);
+    ops_fetch_block_hdf5_file(OPS_instance::getOPSInstance()->OPS_block_list[n].block, file_name);
   }
 
   TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
@@ -910,13 +910,13 @@ void ops_dump_to_hdf5(char const *file_name) {
   for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_stencil_index; i++) {
     if (OPS_instance::getOPSInstance()->OPS_diags>2) 
       if (OPS_instance::getOPSInstance()->is_root()) OPS_instance::getOPSInstance()->ostream() << "Dumping stencil " << OPS_instance::getOPSInstance()->OPS_stencil_list[i]->name << " to HDF5 file " << file_name << "\n";
-      ops_fetch_stencil_hdf5_file(OPS_instance::getOPSInstance()->OPS_stencil_list[i], file_name);
+    ops_fetch_stencil_hdf5_file(OPS_instance::getOPSInstance()->OPS_stencil_list[i], file_name);
   }
 
   for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_halo_index; i++) {
     if (OPS_instance::getOPSInstance()->OPS_diags>2)
       if (OPS_instance::getOPSInstance()->is_root()) OPS_instance::getOPSInstance()->ostream() << "Dumping halo "<<OPS_instance::getOPSInstance()->OPS_halo_list[i]->from->name<<"--"<<OPS_instance::getOPSInstance()->OPS_halo_list[i]->to->name<<" to HDF5 file " << file_name << "\n";
-      ops_fetch_halo_hdf5_file(OPS_instance::getOPSInstance()->OPS_halo_list[i], file_name);
+    ops_fetch_halo_hdf5_file(OPS_instance::getOPSInstance()->OPS_halo_list[i], file_name);
   }
 }
 
