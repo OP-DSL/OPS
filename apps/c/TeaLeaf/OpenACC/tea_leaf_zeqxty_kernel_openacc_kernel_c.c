@@ -8,36 +8,34 @@ int xdim0_tea_leaf_zeqxty_kernel;
 int xdim1_tea_leaf_zeqxty_kernel;
 int xdim2_tea_leaf_zeqxty_kernel;
 
-//user function
+// user function
 #pragma acc routine
-inline 
-void tea_leaf_zeqxty_kernel(ptr_double  z,
-  const ptr_double  x,
-  const ptr_double  y) {
-  OPS_ACC(z, 0,0) = OPS_ACC(x, 0,0) * OPS_ACC(y, 0,0);
+inline void tea_leaf_zeqxty_kernel(ptr_double z, const ptr_double x,
+                                   const ptr_double y) {
+  OPS_ACC(z, 0, 0) = OPS_ACC(x, 0, 0) * OPS_ACC(y, 0, 0);
 }
 
-
-void tea_leaf_zeqxty_kernel_c_wrapper(
-  double *p_a0,
-  double *p_a1,
-  double *p_a2,
-  int x_size, int y_size) {
-  #ifdef OPS_GPU
-  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2)
-  #pragma acc loop
-  #endif
-  for ( int n_y=0; n_y<y_size; n_y++ ){
-    #ifdef OPS_GPU
-    #pragma acc loop
-    #endif
-    for ( int n_x=0; n_x<x_size; n_x++ ){
-      ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_tea_leaf_zeqxty_kernel*1*1, xdim0_tea_leaf_zeqxty_kernel};
-      const ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_tea_leaf_zeqxty_kernel*1*1, xdim1_tea_leaf_zeqxty_kernel};
-      const ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_tea_leaf_zeqxty_kernel*1*1, xdim2_tea_leaf_zeqxty_kernel};
-      tea_leaf_zeqxty_kernel( ptr0,
-          ptr1,ptr2 );
-
+void tea_leaf_zeqxty_kernel_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
+                                      int x_size, int y_size) {
+#ifdef OPS_GPU
+#pragma acc parallel deviceptr(p_a0, p_a1, p_a2)
+#pragma acc loop
+#endif
+  for (int n_y = 0; n_y < y_size; n_y++) {
+#ifdef OPS_GPU
+#pragma acc loop
+#endif
+    for (int n_x = 0; n_x < x_size; n_x++) {
+      ptr_double ptr0 = {p_a0 + n_x * 1 * 1 +
+                             n_y * xdim0_tea_leaf_zeqxty_kernel * 1 * 1,
+                         xdim0_tea_leaf_zeqxty_kernel};
+      const ptr_double ptr1 = {p_a1 + n_x * 1 * 1 +
+                                   n_y * xdim1_tea_leaf_zeqxty_kernel * 1 * 1,
+                               xdim1_tea_leaf_zeqxty_kernel};
+      const ptr_double ptr2 = {p_a2 + n_x * 1 * 1 +
+                                   n_y * xdim2_tea_leaf_zeqxty_kernel * 1 * 1,
+                               xdim2_tea_leaf_zeqxty_kernel};
+      tea_leaf_zeqxty_kernel(ptr0, ptr1, ptr2);
     }
   }
 }

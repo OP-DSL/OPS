@@ -1,7 +1,7 @@
 ##OPS
 
 OPS is an API with associated libraries and pre-processors to generate
-parallel executables for applications on mulit-block structured grids.
+parallel executables for applications on multi-block structured grids.
 
 
 This repository contains the implementation of the run-time library

@@ -46,6 +46,8 @@
 
 #include "access_populate_kernel.h"
 
+void fetch_test(ops_dat data);
+
 /******************************************************************************
 * Main program
 *******************************************************************************/
@@ -89,6 +91,10 @@ int main(int argc, char **argv)
                ops_arg_idx());
 
   int sizes[2], disp[2], strides[2];
+  int test_slab_range[] = {6, 8, 6, 8};
+  size_t bytes = ops_dat_get_slab_extents(data0, 0, disp, sizes, test_slab_range);
+  printf("hyperslab local displacement %d,%d, size %d,%d, bytes: %ld\n",disp[0], disp[1], sizes[0], sizes[1], bytes);
+
   ops_memspace memspace = OPS_HOST;
   ops_dat_get_raw_metadata(data0, 0, disp, sizes, strides, NULL, NULL);
 
@@ -107,6 +113,14 @@ int main(int argc, char **argv)
   ops_dat_release_raw_data(data0, 0, OPS_RW);
 
   ops_print_dat_to_txtfile(data0, "data0.txt");
+
+  fetch_test(data0);
+
+  double *slab = (double*)malloc(4*sizeof(double));
+  int slab_range[] = {10,12,10,12};
+  ops_dat_fetch_data_slab_memspace(data0, 0, (char*)slab, slab_range, OPS_HOST);
+  ops_printf("2D slab extracted on HOST:\n%g %g\n%g %g\n", slab[0], slab[1], slab[2], slab[3]);
+  free(slab);
 
   ops_timers(&ct1, &et1);
   ops_timing_output(std::cout);

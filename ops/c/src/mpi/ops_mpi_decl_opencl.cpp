@@ -83,7 +83,7 @@ extern OPS_instance *global_ops_instance;
 void _ops_init(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
   //We do not have thread safety across MPI
   if ( OPS_instance::numInstances() != 1 ) {
-    OPSException ex(OPS_RUNTIME_ERROR, "ERROR: multiple OPS instances are not suppoerted over MPI");
+    OPSException ex(OPS_RUNTIME_ERROR, "ERROR: multiple OPS instances are not supported over MPI");
     throw ex;
   }
   // So the MPI backend is not thread safe - that's fine.  It currently does not pass 
@@ -133,6 +133,34 @@ void _ops_exit(OPS_instance *instance) {
 
 void ops_exit() {
   _ops_exit(OPS_instance::getOPSInstance());
+}
+
+ops_dat ops_dat_copy(ops_dat orig_dat) {
+  ops_dat dat = ops_dat_copy_mpi_core(orig_dat);
+  ops_dat_deep_copy(dat, orig_dat);
+  return dat;
+}
+
+void ops_dat_deep_copy(ops_dat target, ops_dat source) {
+  // Copy the metadata.  This will reallocate target->data if necessary
+  int realloc = ops_dat_copy_metadata_core(target, source);
+  if(realloc) {
+    if(target->data_d != nullptr) {
+      clSafeCall(clReleaseMemObject((cl_mem)target->data_d));
+      target->data_d = nullptr;
+    }
+    cl_int ret = 0;
+    target->data_d = (char*)clCreateBuffer(target->block->instance->opencl_instance->OPS_opencl_core.context,
+        CL_MEM_READ_WRITE, target->mem, NULL, &ret);
+    clSafeCall(ret);
+    clSafeCall(clFinish(target->block->instance->opencl_instance->OPS_opencl_core.command_queue));
+  }
+
+  ops_kernel_descriptor *desc = ops_dat_deep_copy_mpi_core(target, source);
+  desc->name = "ops_internal_copy_opencl";
+  desc->device = 1;
+  desc->function = ops_internal_copy_opencl;
+  ops_enqueue_kernel(desc);
 }
 
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,

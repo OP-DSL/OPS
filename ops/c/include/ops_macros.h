@@ -38,6 +38,7 @@
   * @author Gihan Mudalige, Istvan Reguly
   * @details Declares the OPS macros
   */
+
 #if OPS_API > 1
 
 #ifdef OPS_1D 
@@ -153,88 +154,92 @@
 #define ZERO_bool 0;
 #endif
 
-
-typedef struct ptr_double {
 #ifdef __OPENCL_VERSION__
-  __global
-#endif
-  double *restrict ptr;
-#if defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
-  int xdim;
-#endif
-#if defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
-  int ydim;
-#endif
-#if defined(OPS_4D) || defined(OPS_5D)
-  int zdim;
-#endif
-#if defined(OPS_5D)
-  int udim;
-#endif
-} ptr_double;
+#define gen_ptr1(type) __global type *restrict ptr;
+#else
+#define gen_ptr1(type) type *restrict ptr;
+#endif 
 
-typedef struct ptr_int {
-#ifdef __OPENCL_VERSION__
-  __global
+#if defined(OPS_2D)
+#define DIMS int xdim;
+#elif defined(OPS_3D)
+#define DIMS int xdim, ydim;
+#elif defined(OPS_4D)
+#define DIMS int xdim, ydim, zdim;
+#elif defined(OPS_5D)
+#define DIMS int xdim, ydim, zdim, udim;
 #endif
-  int *restrict ptr;
-#if defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
-  int xdim;
-#endif
-#if defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
-  int ydim;
-#endif
-#if defined(OPS_4D) || defined(OPS_5D)
-  int zdim;
-#endif
-#if defined(OPS_5D)
-  int udim;
-#endif
-} ptr_int;
 
-typedef struct ptrm_double {
-#ifdef __OPENCL_VERSION__
-  __global
-#endif
-  double *restrict ptr;
-#if (defined(OPS_1D) && defined(OPS_SOA)) || defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
-  int xdim;
-#endif
-#if (defined(OPS_2D) && defined(OPS_SOA)) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
-  int ydim;
-#endif
-#if (defined(OPS_3D) && defined(OPS_SOA)) || defined(OPS_4D) || defined(OPS_5D)
-  int zdim;
-#endif
-#if (defined(OPS_4D) && defined(OPS_SOA)) || defined(OPS_5D)
-  int udim;
-#endif
-#ifndef OPS_SOA
-  int dim;
-#endif
-} ptrm_double;
 
-typedef struct ptrm_int {
-#ifdef __OPENCL_VERSION__
-  __global
+#define gen_ptr(type1, type2) \
+typedef struct ptr_##type1 { \
+  gen_ptr1(type2) \
+  DIMS \
+} ptr_##type1; 
+
+#ifndef __PGI
+typedef unsigned int uint;
 #endif
-  int *restrict ptr;
-#if (defined(OPS_1D) && defined(OPS_SOA)) || defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
-  int xdim;
+typedef long long ll;
+typedef unsigned long long ull;
+typedef unsigned long ul;
+
+
+gen_ptr(double, double) 
+gen_ptr(int, int) 
+gen_ptr(uint, unsigned int) 
+gen_ptr(char, char) 
+gen_ptr(short, short) 
+gen_ptr(long, long) 
+gen_ptr(ll, long long) 
+gen_ptr(ull, unsigned long long) 
+gen_ptr(ul, unsigned long) 
+gen_ptr(float, float) 
+//gen_ptr(complexf, complexf) 
+//gen_ptr(complexd, complexd) 
+
+#ifdef OPS_SOA
+#if defined(OPS_1D)
+#define MDIMS int xdim;
+#elif defined(OPS_2D)
+#define MDIMS int xdim, ydim;
+#elif defined(OPS_3D)
+#define MDIMS int xdim, ydim, zdim;
+#elif defined(OPS_4D)
+#define MDIMS int xdim, ydim, zdim, udim;
+#elif defined(OPS_5D)
+#define MDIMS int xdim, ydim, zdim, udim, vdim;
 #endif
-#if (defined(OPS_2D) && defined(OPS_SOA)) || defined(OPS_3D) || defined(OPS_4D) || defined(OPS_5D)
-  int ydim;
+#else
+#if defined(OPS_2D)
+#define MDIMS int xdim, dim;
+#elif defined(OPS_3D)
+#define MDIMS int xdim, ydim, dim;
+#elif defined(OPS_4D)
+#define MDIMS int xdim, ydim, zdim, dim;
+#elif defined(OPS_5D)
+#define MDIMS int xdim, ydim, zdim, udim, dim;
 #endif
-#if (defined(OPS_3D) && defined(OPS_SOA)) || defined(OPS_4D) || defined(OPS_5D)
-  int zdim;
 #endif
-#if (defined(OPS_4D) && defined(OPS_SOA)) || defined(OPS_5D)
-  int udim;
-#endif
-#ifndef OPS_SOA
-  int dim;
-#endif
-} ptrm_int;
+
+#define gen_ptrm(type1, type2) \
+typedef struct ptrm_##type1 { \
+  gen_ptr1(type2) \
+  MDIMS \
+} ptrm_##type1; 
+
+
+gen_ptrm(double, double) 
+gen_ptrm(int, int) 
+gen_ptrm(uint, unsigned int) 
+gen_ptrm(char, char) 
+gen_ptrm(short, short) 
+gen_ptrm(long, long) 
+gen_ptrm(ll, long long) 
+gen_ptrm(ull, unsigned long long) 
+gen_ptrm(ul, unsigned long) 
+gen_ptrm(float, float) 
+
 
 #endif
 

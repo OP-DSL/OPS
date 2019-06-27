@@ -71,7 +71,7 @@ extern sub_dat_list *OPS_sub_dat_list; // pointer to list holding sub-dat
 
 extern void (*ops_read_dat_hdf5_dynamic)(ops_dat dat);
 /*******************************************************************************
- * Routine to remove the intra-block (i.e. MPI) halos from the flattend 1D dat
+ * Routine to remove the intra-block (i.e. MPI) halos from the flattened 1D dat
  * before writing to HDF5 files - Maximum dimension of block is 1
  *******************************************************************************/
 void remove_mpi_halos1D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
@@ -115,7 +115,7 @@ void remove_mpi_halos1D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 }
 
 /*******************************************************************************
- * Routine to remove the intra-block (i.e. MPI) halos from the flattend 1D dat
+ * Routine to remove the intra-block (i.e. MPI) halos from the flattened 1D dat
  * before writing to HDF5 files - Maximum dimension of block is 2
  *******************************************************************************/
 void remove_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
@@ -158,7 +158,7 @@ void remove_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 }
 
 /*******************************************************************************
- * Routine to remove the intra-block (i.e. MPI) halos from the flattend 1D dat
+ * Routine to remove the intra-block (i.e. MPI) halos from the flattened 1D dat
  * before writing to HDF5 files - Maximum dimension of block is 3
  *******************************************************************************/
 void remove_mpi_halos3D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
@@ -186,21 +186,21 @@ void remove_mpi_halos3D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 }
 
 /*******************************************************************************
- * Routine to remove the intra-block (i.e. MPI) halos from the flattend 1D dat
+ * Routine to remove the intra-block (i.e. MPI) halos from the flattened 1D dat
  * before writing to HDF5 files - Maximum dimension of block is 4
  *******************************************************************************/
 void remove_mpi_halos4D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 }
 
 /*******************************************************************************
- * Routine to remove the intra-block (i.e. MPI) halos from the flattend 1D dat
+ * Routine to remove the intra-block (i.e. MPI) halos from the flattened 1D dat
  * before writing to HDF5 files - Maximum dimension of block is 5
  *******************************************************************************/
 void remove_mpi_halos5D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 }
 
 /*******************************************************************************
- * Routine to add the intra-block halos (i.e. MPI) from the flattend 1D data
+ * Routine to add the intra-block halos (i.e. MPI) from the flattened 1D data
  * after reading from an HDF5 file - Maximum dimension of block is 2
  *******************************************************************************/
 void add_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
@@ -266,12 +266,7 @@ void ops_fetch_block_hdf5_file(ops_block block, char const *file_name) {
     // HDF5 APIs definitions
     hid_t file_id;   // file identifier
     hid_t group_id;  // group identifier
-    hid_t dset_id;   // dataset identifier
-    hid_t filespace; // data space identifier
     hid_t plist_id;  // property list identifier
-    hid_t memspace;  // memory space identifier
-    hid_t attr;      // attribute identifier
-    herr_t err;      // error code
 
     // create new communicator
     int my_rank, comm_size;
@@ -339,11 +334,7 @@ void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name) {
   // HDF5 APIs definitions
   hid_t file_id;   // file identifier
   hid_t dset_id;   // dataset identifier
-  hid_t filespace; // data space identifier
   hid_t plist_id;  // property list identifier
-  hid_t memspace;  // memory space identifier
-  hid_t attr;      // attribute identifier
-  herr_t err;      // error code
 
   // create new communicator
   int my_rank, comm_size;
@@ -414,12 +405,7 @@ void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
   // HDF5 APIs definitions
   hid_t file_id;   // file identifier
   hid_t group_id;  // group identifier
-  hid_t dset_id;   // dataset identifier
-  hid_t filespace; // data space identifier
   hid_t plist_id;  // property list identifier
-  hid_t memspace;  // memory space identifier
-  hid_t attr;      // attribute identifier
-  herr_t err;      // error code
 
   // create new communicator
   int my_rank, comm_size;
@@ -512,7 +498,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     // fetch data onto the host ( if needed ) based on the backend
     ops_get_data(dat);
 
-    // complute the number of elements that this process will write to the final
+    // compute the number of elements that this process will write to the final
     // file
     // also compute the correct offsets on the final file that this process
     // should begin from to write
@@ -538,7 +524,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     hsize_t stride[block->dims]; // parameters for for hdf5 file chuck writing
 
     for (int d = 0; d < block->dims; d++) {
-      // remove left MPI halo to get start disp from begining of dat
+      // remove left MPI halo to get start disp from beginning of dat
       // include left block halo
       disp[d] = sd->decomp_disp[d] - sd->gbl_d_m[d]; // global displacements of the data set
       l_disp[d] = 0 - sd->d_im[d];  // local displacements of the data set (i.e.
@@ -623,8 +609,6 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     hid_t filespace; // data space identifier
     hid_t plist_id;  // property list identifier
     hid_t memspace;  // memory space identifier
-    hid_t attr;      // attribute identifier
-    herr_t err;      // error code
 
     hsize_t CHUNK_SIZE[block->dims];
 
@@ -720,12 +704,17 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
             strcmp(dat->type, "integer(4)") == 0) {
           dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_INT, filespace,
               H5P_DEFAULT, plist_id, H5P_DEFAULT);
-
         } else if (strcmp(dat->type, "long") == 0)
           dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_LONG, filespace,
               H5P_DEFAULT, plist_id, H5P_DEFAULT);
-        else if (strcmp(dat->type, "long long") == 0)
+        else if ((strcmp(dat->type, "long long") == 0) || (strcmp(dat->type, "ll") == 0))
           dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_LLONG, filespace,
+              H5P_DEFAULT, plist_id, H5P_DEFAULT);
+        else if (strcmp(dat->type, "short") == 0)
+          dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_SHORT, filespace,
+              H5P_DEFAULT, plist_id, H5P_DEFAULT);
+        else if (strcmp(dat->type, "char") == 0)
+          dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_CHAR, filespace,
               H5P_DEFAULT, plist_id, H5P_DEFAULT);
         else {
           OPSException ex(OPS_HDF5_ERROR);
@@ -945,8 +934,12 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         H5Dwrite(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id, data);
       } else if (strcmp(dat->type, "long") == 0)
         H5Dwrite(dset_id, H5T_NATIVE_LONG, memspace, filespace, plist_id, data);
-      else if (strcmp(dat->type, "long long") == 0)
+      else if ((strcmp(dat->type, "long long") == 0) || (strcmp(dat->type, "ll") == 0))
         H5Dwrite(dset_id, H5T_NATIVE_LLONG, memspace, filespace, plist_id, data);
+      else if (strcmp(dat->type, "short") == 0)
+        H5Dwrite(dset_id, H5T_NATIVE_SHORT, memspace, filespace, plist_id, data);
+      else if (strcmp(dat->type, "char") == 0)
+        H5Dwrite(dset_id, H5T_NATIVE_CHAR, memspace, filespace, plist_id, data);
       else {
         OPSException ex(OPS_HDF5_ERROR);
         ex << "Error: Unknown type in ops_fetch_dat_hdf5_file(): " << dat->type;
@@ -986,7 +979,6 @@ ops_block ops_decl_block_hdf5(int dims, const char *block_name,
   // HDF5 APIs definitions
   hid_t file_id;  // file identifier
   hid_t plist_id; // property list identifier
-  herr_t err;     // error code
 
   // open given hdf5 file .. if it exists
   if (file_exist(file_name) == 0) {
@@ -1050,7 +1042,7 @@ ops_block ops_decl_block_hdf5(int dims, const char *block_name,
 }
 
 /*******************************************************************************
- * Routine to read an ops_stemcil from an hdf5 file
+ * Routine to read an ops_stencil from an hdf5 file
  *******************************************************************************/
 ops_stencil ops_decl_stencil_hdf5(int dims, int points,
     const char *stencil_name,
@@ -1068,7 +1060,6 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
   // HDF5 APIs definitions
   hid_t file_id;  // file identifier
   hid_t plist_id; // property list identifier
-  herr_t err;     // error code
 
   // open given hdf5 file .. if it exists
   if (file_exist(file_name) == 0) {
@@ -1165,7 +1156,6 @@ ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
   // HDF5 APIs definitions
   hid_t file_id;  // file identifier
   hid_t plist_id; // property list identifier
-  herr_t err;     // error code
 
   // open given hdf5 file .. if it exists
   if (file_exist(file_name) == 0) {
@@ -1281,12 +1271,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   // HDF5 APIs definitions
   hid_t file_id;   // file identifier
   hid_t group_id;  // group identifier
-  hid_t dset_id;   // dataset identifier
-  hid_t filespace; // data space identifier
   hid_t plist_id;  // property list identifier
-  hid_t memspace;  // memory space identifier
-  hid_t attr;      // attribute identifier
-  herr_t err;      // error code
 
   // open given hdf5 file .. if it exists
   if (file_exist(file_name) == 0) {
@@ -1409,8 +1394,12 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
     type_size = sizeof(int);
   else if (strcmp(read_type, "long") == 0)
     type_size = sizeof(long);
-  else if (strcmp(read_type, "long long") == 0)
+  else if ((strcmp(read_type, "long long") == 0) || (strcmp(read_type, "ll") == 0))
     type_size = sizeof(long long);
+  else if (strcmp(read_type, "short") == 0)
+    type_size = sizeof(short);
+  else if (strcmp(read_type, "char") == 0)
+    type_size = sizeof(char);
   else {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: Unknown type in ops_decl_dat_hdf5(): " << read_type;
@@ -1451,7 +1440,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
   sub_block *sb = OPS_sub_block_list[dat->block->index];
   if (sb->owned == 1) {
 
-    // complute the number of elements that this process will read from file
+    // compute the number of elements that this process will read from file
     // also compute the correct offsets on the file that this process should
     // begin from to read
     sub_dat *sd = OPS_sub_dat_list[dat->index];
@@ -1476,7 +1465,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
     hsize_t stride[block->dims]; // parameters for for hdf5 file chuck reading
 
     for (int d = 0; d < block->dims; d++) {
-      // remove left MPI halo to get start disp from begining of dat
+      // remove left MPI halo to get start disp from beginning of dat
       // include left block halo
       disp[d] = sd->decomp_disp[d] - sd->gbl_d_m[d]; // global displacements of the data set
       l_disp[d] = 0 - sd->d_im[d];  // local displacements of the data set (i.e.
@@ -1542,8 +1531,6 @@ void ops_read_dat_hdf5(ops_dat dat) {
     hid_t filespace; // data space identifier
     hid_t plist_id;  // property list identifier
     hid_t memspace;  // memory space identifier
-    hid_t attr;      // attribute identifier
-    herr_t err;      // error code
 
     // open given hdf5 file .. if it exists
     if (file_exist(dat->hdf5_file) == 0) {
@@ -1628,8 +1615,12 @@ void ops_read_dat_hdf5(ops_dat dat) {
       H5Dread(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id, data);
     else if (strcmp(dat->type, "long") == 0)
       H5Dread(dset_id, H5T_NATIVE_LONG, memspace, filespace, plist_id, data);
-    else if (strcmp(dat->type, "long long") == 0)
+    else if ((strcmp(dat->type, "long long") == 0) || (strcmp(dat->type, "ll") == 0))
       H5Dread(dset_id, H5T_NATIVE_LLONG, memspace, filespace, plist_id, data);
+    else if (strcmp(dat->type, "char") == 0)
+      H5Dread(dset_id, H5T_NATIVE_CHAR, memspace, filespace, plist_id, data);
+    else if (strcmp(dat->type, "short") == 0)
+      H5Dread(dset_id, H5T_NATIVE_SHORT, memspace, filespace, plist_id, data);
     else {
       OPSException ex(OPS_HDF5_ERROR);
       ex << "Error: Unknown type in ops_read_dat_hdf5(): " << dat->type;
@@ -1705,7 +1696,7 @@ extern "C" char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
     // fetch data onto the host ( if needed ) based on the backend
     ops_get_data(dat);
 
-    // complute the number of elements that this process will copy over to the
+    // compute the number of elements that this process will copy over to the
     // user space
     sub_dat *sd = OPS_sub_dat_list[dat->index];
     ops_block block = dat->block;

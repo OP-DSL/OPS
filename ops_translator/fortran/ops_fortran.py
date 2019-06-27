@@ -524,7 +524,7 @@ def main(source_files):
       for n in range(0, n_loops):
           loc_loops[n] = loop_args[n]['loc']
 
-      #get locations of all kernel.inc headder file declarations
+      #get locations of all kernel.inc header file declarations
       loc_kernel_headers = []
 
       p = re.compile('#include *kernel.inc')
@@ -607,7 +607,7 @@ def main(source_files):
           loc_old = endofcall + 1
           continue
 
-        # stripping the ops_decl_consts -- as there is no implentation required
+        # stripping the ops_decl_consts -- as there is no implementation required
         if locs[loc] in loc_consts:
           line = ''
           fid.write(line);

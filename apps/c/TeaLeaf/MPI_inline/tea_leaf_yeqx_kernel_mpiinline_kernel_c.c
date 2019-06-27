@@ -5,23 +5,20 @@
 int xdim0_tea_leaf_yeqx_kernel;
 int xdim1_tea_leaf_yeqx_kernel;
 
+// user function
 
-//user function
+void tea_leaf_yeqx_kernel_c_wrapper(double *restrict p_p, double *restrict x_p,
+                                    int x_size, int y_size) {
+#pragma omp parallel for
+  for (int n_y = 0; n_y < y_size; n_y++) {
+    for (int n_x = 0; n_x < x_size; n_x++) {
+      ptr_double p = {p_p + n_x * 1 + n_y * xdim0_tea_leaf_yeqx_kernel * 1,
+                      xdim0_tea_leaf_yeqx_kernel};
+      const ptr_double x = {x_p + n_x * 1 +
+                                n_y * xdim1_tea_leaf_yeqx_kernel * 1,
+                            xdim1_tea_leaf_yeqx_kernel};
 
-
-
-void tea_leaf_yeqx_kernel_c_wrapper(
-  double * restrict p_p,
-  double * restrict x_p,
-  int x_size, int y_size) {
-  #pragma omp parallel for
-  for ( int n_y=0; n_y<y_size; n_y++ ){
-    for ( int n_x=0; n_x<x_size; n_x++ ){
-      ptr_double p = { p_p + n_x*1 + n_y * xdim0_tea_leaf_yeqx_kernel*1, xdim0_tea_leaf_yeqx_kernel};
-      const ptr_double x = { x_p + n_x*1 + n_y * xdim1_tea_leaf_yeqx_kernel*1, xdim1_tea_leaf_yeqx_kernel};
-      
-  OPS_ACC(p, 0,0) = OPS_ACC(x, 0,0);
-
+      OPS_ACC(p, 0, 0) = OPS_ACC(x, 0, 0);
     }
   }
 }

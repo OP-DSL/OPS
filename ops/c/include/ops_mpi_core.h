@@ -163,6 +163,8 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
 void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
                 const ops_int_halo *__restrict halo);
 char* OPS_realloc_fast(char *ptr, size_t old_size, size_t new_size);
+ops_dat ops_dat_copy_mpi_core(ops_dat orig_dat);
+ops_kernel_descriptor * ops_dat_deep_copy_mpi_core(ops_dat target, ops_dat orig_dat);
 
 /*******************************************************************************
 * Other External functions

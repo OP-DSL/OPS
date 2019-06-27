@@ -52,7 +52,7 @@ extern int ops_buffer_recv_1_size;
 extern int ops_buffer_send_2_size;
 extern int ops_buffer_recv_2_size;
 extern int *mpi_neigh_size;
-extern char *OPS_checkpoiting_dup_buffer;
+extern char *OPS_checkpointing_dup_buffer;
 
 MPI_Comm OPS_MPI_GLOBAL; // comm world
 ops_mpi_halo *OPS_mpi_halo_list = NULL;
@@ -308,7 +308,7 @@ void ops_decomp_dats(sub_block *sb) {
       sd->gbl_size[d] = dat->size[d]; // global size of data elements in this
                                       // dat (i.e. pure data)
       sd->gbl_d_m[d] =
-          dat->d_m[d]; // global dat halo at the begning (minus size)
+          dat->d_m[d]; // global dat halo at the beginning (minus size)
       sd->gbl_d_p[d] = dat->d_p[d]; // global dat halo at the end (positive
                                     // size)
 
@@ -365,7 +365,7 @@ void ops_decomp_dats(sub_block *sb) {
 
         dat->d_p[d] = 0;
 
-        /*if (d == 0) { // Compute x-dim padding for vecotrization
+        /*if (d == 0) { // Compute x-dim padding for vectorization
           int temp_size = sd->decomp_size[0] - sd->d_im[0] + sd->d_ip[0];
           int x_pad = (1+((temp_size-1)/32))*32 - temp_size;
           sd->d_ip[0] = x_pad;
@@ -376,7 +376,7 @@ void ops_decomp_dats(sub_block *sb) {
                                            // with left block halo size
         sd->d_ip[d] = 0;                   // no intra-block halo
 
-        /*if (d == 0) { // Compute x-dim padding for vecotrization
+        /*if (d == 0) { // Compute x-dim padding for vectorization
           int x_pad = (1+((sd->decomp_size[0]-1)/32))*32 - sd->decomp_size[0] ;
           sd->decomp_size[0] += x_pad;
           dat->d_p[0] += x_pad;
@@ -1012,7 +1012,7 @@ void ops_mpi_exit(OPS_instance *instance) {
   free(OPS_mpi_halo_group_list);
   free(mpi_neigh_size);
   if (OPS_instance::getOPSInstance()->OPS_enable_checkpointing)
-    free(OPS_checkpoiting_dup_buffer);
+    free(OPS_checkpointing_dup_buffer);
 
   //printf("OPS_block_index = %d\n",OPS_block_index);
   for (int b = 0; b < OPS_instance::getOPSInstance()->OPS_block_index; b++) { // for each block

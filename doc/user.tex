@@ -99,7 +99,7 @@ correspond to the $j,k$ face of another block.  This is awkward and hard to hand
 
 \section{Key concepts and structure}
 
-An OPS applicaiton can generally be divided into two key parts: initialisation and parallel execution. During the 
+An OPS application can generally be divided into two key parts: initialisation and parallel execution. During the
 initialisation phase, one or more blocks ({\texttt ops\_block) are defined: these only have a dimensionality (i.e. 1D, 2D,
 etc.), and serve to group datasets together. Datasets are defined on a block, and have a specific size (in each dimension of the block), which may be
 slightly different across different datasets (e.g. staggered grids), in some directions they may be degenerate (a
@@ -681,7 +681,9 @@ This section describes APIS that give the user access to internal data structure
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_get\_raw\_pointer}
 \begin{routine} {char* ops\_dat\_get\_raw\_pointer(ops\_dat dat, int part, ops\_stencil stencil, ops\_memspace *memspace)}
-{This routine returns a pointer to the internally stored data, with MPI halo regions automatically updated as required by the supplied stencil. The strides required to index into the dataset are also given.}
+{This routine returns a pointer to the internally stored data, with MPI halo regions automatically updated as required by the supplied stencil. The strides required to index into the dataset are also given.
+
+}
 \item[dat]         the dataset
 \item[part]        the chunk index (has to be 0)
 \item[stencil]     a stencil used to determine required MPI halo exchange depths 
@@ -690,10 +692,23 @@ This section describes APIS that give the user access to internal data structure
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_release\_raw\_data}
 \begin{routine} {void ops\_dat\_release\_raw\_data(ops\_dat dat, int part, ops\_access acc)}
-{Indicates to OPS that a dataset previously accessed with ops\_dat\_get\_raw\_pointer is released by the user, and also tells OPS how it was accessed}
+{Indicates to OPS that a dataset previously accessed with ops\_dat\_get\_raw\_pointer is released by the user, and also tells OPS how it was accessed.
+
+A single call to ops\_dat\_release\_raw\_data() releases all pointers obtained by previous calls to ops\_dat\_get\_raw\_pointer() calls on the same dat and with the same *memspace argument, i.e. calls do not nest.}
 \item[dat]         the dataset
 \item[part]        the chunk index (has to be 0)
 \item[acc]     the kind of access that was used by the user (OPS\_READ if it was read only, OPS\_WRITE if it was overwritten, OPS\_RW if it was read and written)
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_release\_raw\_data}
+\begin{routine} {void ops\_dat\_release\_raw\_data\_memspace(ops\_dat dat, int part, ops\_access acc, ops\_memspace *memspace)}
+{Indicates to OPS that a dataset previously accessed with ops\_dat\_get\_raw\_pointer is released by the user, and also tells OPS how it was accessed, and which memory space was used.
+
+A single call to ops\_dat\_release\_raw\_data() releases all pointers obtained by previous calls to ops\_dat\_get\_raw\_pointer() calls on the same dat and with the same *memspace argument, i.e. calls do not nest.}
+\item[dat]         the dataset
+\item[part]        the chunk index (has to be 0)
+\item[acc]     the kind of access that was used by the user (OPS\_READ if it was read only, OPS\_WRITE if it was overwritten, OPS\_RW if it was read and written)
+\item[memspace]       set to OPS\_HOST or OPS\_DEVICE
 \end{routine}
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_fetch\_data}

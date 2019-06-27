@@ -33,7 +33,7 @@
 /** @file
   * @brief OPS core library function declarations
   * @author Gihan Mudalige
-  * @details function declarations headder file for the core library functions
+  * @details function declarations header file for the core library functions
   * utilized by all OPS backends
   */
 
@@ -263,6 +263,8 @@ class ops_dat_core {
   char const *name;      /**< name of dataset */
   char const *type;      /**< datatype */
   int dirty_hd;          /**< flag to indicate dirty status on host and device*/
+  int locked_hd;         /**< flag to indicate that the user has obtained a raw data pointer,
+                          *   and whether the raw pointer is held on the host or device */
   int user_managed;      /**< indicates whether the user is managing memory */
   int is_hdf5;           /**< indicates whether the data is to read from an
                           *   hdf5 file */
@@ -276,11 +278,14 @@ class ops_dat_core {
   int stride[OPS_MAX_DIM];/**< stride[*] > 1 if this dat is a coarse dat under
                            *   multi-grid*/
 
+
+  // Default constructor zeros out all data in the struct
+  ops_dat_core() { memset(this, 0, sizeof(ops_dat_core)); }
+  ~ops_dat_core();
+
+
+
 #ifdef OPS_CPP_API
-/**
- * Deallocates an OPS dataset
- */
-  void free();
 /**
  * Write the details of an ::ops_block to a named text file.
  *
@@ -305,14 +310,24 @@ class ops_dat_core {
  * This routine returns the MPI displacement and size of a given chunk of the
  * given dataset on the current process.
  *
- * @param dat   the dataset
  * @param part  the chunk index (has to be 0)
  * @param disp  an array populated with the displacement of the chunk within the
  *              "global" distributed array
  * @param size  an array populated with the spatial extents
  */
   void get_extents(int part, int *disp, int *size);
-
+/**
+ * This routine returns the MPI displacement and size of the intersection of a 
+ * hyper-slab with the given dataset on the current process.
+ *
+ * @param part  the chunk index (has to be 0)
+ * @param disp  an array populated with the displacement of the chunk within the
+ *              "global" distributed array
+ * @param size  an array populated with the spatial extents
+ * @param slab  index ranges of the hyperslab. Ordering: {begin_0, end_0, begin_1, end_1,...}
+ * @return the size in bytes of the intersection between the dataset and the slab on this process 
+ */
+  size_t get_slab_extents(int part, int *disp, int *size, int *slab);
 /**
  * This routine returns array shape metadata corresponding to the ops_dat.
  * Any of the arguments may be NULL.
@@ -332,6 +347,8 @@ class ops_dat_core {
  * This routine returns a pointer to the internally stored data, with MPI halo
  * regions automatically updated as required by the supplied stencil.
  * The strides required to index into the dataset are also given.
+ * You may have to call ops_execute before calling this to make sure all
+ * computations have finished.
  *
  * @param part     the chunk index (has to be 0)
  * @param stencil  a stencil used to determine required MPI halo exchange depths
@@ -344,8 +361,14 @@ class ops_dat_core {
   char* get_raw_pointer(int part, ops_stencil_core *stencil, ops_memspace *memspace);
 /**
  * Indicates to OPS that a dataset previously accessed with
- * ops_dat_get_raw_pointer() is released by the user, and also tells OPS how it
+ * get_raw_pointer() is released by the user, and also tells OPS how it
  * was accessed.
+ * A single call to release_raw_data() releases all pointers obtained by previous calls to
+ * get_raw_pointer() calls on the same dat. Calls to release_raw_data() must be separated by calls to 
+ * get_raw_pointer(), i.e. it is illegal to release raw data access multiple times without first
+ * starting raw data access. The data that the user wishes keep is in the memory 
+ * space (buffer) indicated by the LAST call to get_raw_pointer().  Data in any other memory spaces 
+ * is discarded.
  *
  * @param dat   the dataset
  * @param part  the chunk index (has to be 0
@@ -356,14 +379,46 @@ class ops_dat_core {
  */
   void release_raw_data(int part, ops_access acc);
 /**
+ * Indicates to OPS that a dataset previously accessed with
+ * ops_dat_get_raw_pointer() is released by the user, and also tells OPS how it
+ * was accessed, and where it was accessed.
+ * A single call to release_raw_data() releases all pointers obtained by previous calls to
+ * get_raw_pointer() calls on the same dat. Calls to release_raw_data() must be separated by calls to 
+ * get_raw_pointer(), i.e. it is illegal to release raw data access multiple times without first
+ * starting raw data access.
+ * The *memspace argument tells OPS in which memory space the data is that the user wants to keep.
+ * Data in all other memory spaces will be discarded. 
+ *
+ * @param dat   the dataset
+ * @param part  the chunk index (has to be 0
+ * @param acc   the kind of access that was used by the user
+ *              (::OPS_READ if it was read only,
+ *              ::OPS_WRITE if it was overwritten,
+ *              ::OPS_RW if it was read and written)
+ * @param memspace has to be set to either OPS_HOST or OPS_DEVICE to indicate where the data was modified
+ */
+  void release_raw_data(int part, ops_access acc, ops_memspace *memspace);
+/**
  * This routine copies the data held by OPS to the user-specified
  * memory location, which needs to be at least as large as indicated
  * by the `sizes` parameter of ops_dat_get_extents().
 
  * @param part  the chunk index (has to be 0)
- * @param data  pointer to CPU memory which should be filled by OPS
+ * @param data  pointer to memory which should be filled by OPS
+ * @param memspace the memory space where the data pointer is
  */
-  void fetch_data(int part, char *data);
+  void fetch_data(int part, char *data, ops_memspace memspace = OPS_HOST);
+/**
+ * This routine copies a hyperslab of the data held by OPS to the user-specified
+ * memory location, which needs to be at least as large as the product of ranges
+ * defined by the `range` parameter
+
+ * @param part  the chunk index (has to be 0)
+ * @param data  pointer to memory which should be filled by OPS
+ * @param range index ranges of the hyperslab. Ordering: {begin_0, end_0, begin_1, end_1,...}
+ * @param memspace the memory space where the data pointer is
+ */
+  void fetch_data_slab(int part, char *data, int *range, ops_memspace memspace = OPS_HOST);
 /**
  * This routine copies the data given by the user to the internal data structure
  * used by OPS.
@@ -371,11 +426,22 @@ class ops_dat_core {
  * User data needs to be laid out in column-major order and strided as indicated
  * by the `sizes` parameter of ops_dat_get_extents().
  *
- * @param dat   the dataset
  * @param part  the chunk index (has to be 0)
  * @param data  pointer to CPU memory which should be copied to OPS
+ * @param memspace the memory space where the data pointer is
  */
-  void set_data(int part, char *data);
+  void set_data(int part, char *data, ops_memspace memspace = OPS_HOST);
+/**
+ * This routine copies to a hyperslab of the data held by OPS from the user-specified
+ * memory location, which needs to be at least as large as the product of ranges
+ * defined by the `range` parameter
+
+ * @param part  the chunk index (has to be 0)
+ * @param data  pointer to memory which should be read by OPS
+ * @param range index ranges of the hyperslab. Ordering: {begin_0, end_0, begin_1, end_1,...}
+ * @param memspace the memory space where the data pointer is
+ */
+  void set_data_slab(int part, char *data, int *range, ops_memspace memspace = OPS_HOST);
 /**
  * This routine returns the number of chunks of the given dataset held by all
  * processes.
@@ -383,9 +449,7 @@ class ops_dat_core {
  * @return
  */
   int get_global_npartitions();
-  ~ops_dat_core() {
-    this->free();
-  }
+
 #endif
 };
 
@@ -415,7 +479,7 @@ struct ops_arg {
   char *data_d;         /**< data on device (for CUDA)*/
   ops_access acc;       /**< access type */
   ops_arg_type argtype; /**< arg type */
-  int opt;              /**< falg to indicate whether this is an optional arg,
+  int opt;              /**< flag to indicate whether this is an optional arg,
                          *   0 - optional, 1 - not optional */
 };
 
@@ -596,7 +660,21 @@ ops_dat ops_decl_dat(ops_block block, int data_size, int *block_size, int *base,
  * Deallocates an OPS dataset
  * @param dat     dataset to deallocate
  */
-void ops_free_dat(ops_dat dat); 
+void ops_free_dat(ops_dat dat);
+
+/**
+ * Makes a copy of a dataset
+ * @param orig_dat the dataset to be copied
+ * @return the copy
+ */
+ops_dat ops_dat_copy(ops_dat orig_dat);
+
+/**
+ * Makes a deep copy of the data held in source
+ * @param source the dataset to be copied
+ * @param target the target of the copy
+ */
+void ops_dat_deep_copy(ops_dat target, ops_dat orig_dat);
 #endif
 
 /**
@@ -806,6 +884,11 @@ template <class T> void ops_reduction_result(ops_reduction handle, T *ptr) {
     ex << "Error: incorrect type specified for constant " << handle->name << " in ops_reduction_result";
     throw ex;
   }
+  if (!handle->initialized) {
+    OPSException ex(OPS_INVALID_ARGUMENT);
+    ex << "Error: ops_reduction_result called for " << handle->name << " but the handle was not previously used in a reduction since the last ops_reduction_result call.";
+    throw ex;
+  }
   ops_reduction_result_char(handle, sizeof(T), (char *)ptr);
 }
 
@@ -980,6 +1063,21 @@ OPS_FTN_INTEROP
 void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size);
 
 /**
+ * This routine returns the MPI displacement and size of the intersection of a 
+ * hyper-slab with the given dataset on the current process.
+ *
+ * @param dat   the dataset
+ * @param part  the chunk index (has to be 0)
+ * @param disp  an array populated with the displacement of the chunk within the
+ *              "global" distributed array
+ * @param size  an array populated with the spatial extents
+ * @param slab  index ranges of the hyperslab. Ordering: {begin_0, end_0, begin_1, end_1,...}
+ * @return the size in bytes of the intersection between the dataset and the slab on this process 
+ */
+OPS_FTN_INTEROP
+size_t ops_dat_get_slab_extents(ops_dat dat, int part, int *disp, int *size, int *slab);
+
+/**
  * This routine returns array shape metadata corresponding to the ops_dat.
  * Any of the arguments may be NULL.
  *
@@ -1002,6 +1100,9 @@ void ops_dat_get_raw_metadata(ops_dat dat, int part, int *disp, int *size, int *
  * regions automatically updated as required by the supplied stencil.
  * The strides required to index into the dataset are also given.
  *
+ * You may have to call ops_execute before calling this to make sure all
+ * computations have finished.
+ *
  * @param dat      the dataset
  * @param part     the chunk index (has to be 0)
  * @param stencil  a stencil used to determine required MPI halo exchange depths
@@ -1019,6 +1120,13 @@ char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_me
  * ops_dat_get_raw_pointer() is released by the user, and also tells OPS how it
  * was accessed.
  *
+ * A single call to ops_dat_release_raw_data() releases all pointers obtained by previous calls to
+ * ops_dat_get_raw_pointer() calls on the same dat. Calls to ops_dat_release_raw_data() must be separated by calls to 
+ * ops_dat_get_raw_pointer(), i.e. it is illegal to release raw data access multiple times without first
+ * starting raw data access. The data that the user wishes keep is in the memory 
+ * space (buffer) indicated by the LAST call to ops_dat_get_raw_pointer().  Data in any other memory spaces 
+ * is discarded.
+ *
  * @param dat   the dataset
  * @param part  the chunk index (has to be 0
  * @param acc   the kind of access that was used by the user
@@ -1028,6 +1136,30 @@ char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_me
  */
 OPS_FTN_INTEROP
 void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc);
+
+/**
+ * Indicates to OPS that a dataset previously accessed with
+ * ops_dat_get_raw_pointer() is released by the user, and also tells OPS how it
+ * was accessed.
+ *
+ * A single call to ops_dat_release_raw_data_memspace() releases all pointers obtained by previous calls to
+ * ops_dat_get_raw_pointer() calls on the same dat. Calls to ops_dat_release_raw_data_memspace() must be separated by calls to 
+ * ops_dat_get_raw_pointer(), i.e. it is illegal to release raw data access multiple times without first
+ * starting raw data access.
+ * The *memspace argument tells OPS in which memory space the data is that the user wants to keep.
+ * Data in all other memory spaces will be discarded. 
+ *
+ * @param dat   the dataset
+ * @param part  the chunk index (has to be 0
+ * @param acc   the kind of access that was used by the user
+ *              (::OPS_READ if it was read only,
+ *              ::OPS_WRITE if it was overwritten,
+ *              ::OPS_RW if it was read and written)
+ * @param memspace has to be set to either OPS_HOST or OPS_DEVICE to indicate where the data was modified
+ */
+OPS_FTN_INTEROP
+void ops_dat_release_raw_data_memspace(ops_dat dat, int part, ops_access acc, ops_memspace *memspace);
+
 
 /**
  * This routine copies the data held by OPS to the user-specified
@@ -1042,6 +1174,33 @@ OPS_FTN_INTEROP
 void ops_dat_fetch_data(ops_dat dat, int part, char *data);
 
 /**
+ * This routine copies the data held by OPS to the user-specified
+ * memory location, which needs to be at least as large as indicated
+ * by the `sizes` parameter of ops_dat_get_extents().
+
+ * @param dat   the dataset
+ * @param part  the chunk index (has to be 0)
+ * @param data  pointer to memory which should be filled by OPS
+ * @param memspace the memory space where the data pointer is
+ */
+OPS_FTN_INTEROP
+void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace);
+
+/**
+ * This routine copies a hyperslab of the data held by OPS to the user-specified
+ * memory location, which needs to be at least as large as the product of ranges
+ * defined by the `range` parameter
+
+ * @param dat   the dataset
+ * @param part  the chunk index (has to be 0)
+ * @param data  pointer to memory which should be filled by OPS
+ * @param range index ranges of the hyperslab. Ordering: {begin_0, end_0, begin_1, end_1,...}
+ * @param memspace the memory space where the data pointer is
+ */
+OPS_FTN_INTEROP
+void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *range, ops_memspace memspace);
+
+/**
  * This routine copies the data given by the user to the internal data structure
  * used by OPS.
  *
@@ -1054,6 +1213,35 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data);
  */
 OPS_FTN_INTEROP
 void ops_dat_set_data(ops_dat dat, int part, char *data);
+
+/**
+ * This routine copies the data from the user-specified
+ * memory location, which needs to be at least as large as indicated
+ * by the `sizes` parameter of ops_dat_get_extents(), to the OPS-held
+ * memory space
+
+ * @param dat   the dataset to be filled
+ * @param part  the chunk index (has to be 0)
+ * @param data  pointer to memory which should be read by OPS
+ * @param memspace the memory space where the data pointer is
+ */
+OPS_FTN_INTEROP
+void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace);
+
+/**
+ * This routine copies to a hyperslab of the data held by OPS from the user-specified
+ * memory location, which needs to be at least as large as the product of ranges
+ * defined by the `range` parameter
+
+ * @param dat   the dataset
+ * @param part  the chunk index (has to be 0)
+ * @param data  pointer to memory which should be read by OPS
+ * @param range index ranges of the hyperslab. Ordering: {begin_0, end_0, begin_1, end_1,...}
+ * @param memspace the memory space where the data pointer is
+ */
+OPS_FTN_INTEROP
+void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *range, ops_memspace memspace);
+
 
 /**
  * This routine returns the number of chunks of the given dataset held by all

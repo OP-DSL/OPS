@@ -74,7 +74,7 @@ void mvReductArraysToHost(OPS_instance *instance, int reduct_bytes);
 void ops_cuda_exit(OPS_instance *instance);
 void ops_upload_dat(ops_dat dat);
 void ops_download_dat(ops_dat dat);
-
+void ops_internal_copy_cuda(ops_kernel_descriptor *desc);
 void ops_set_dirtybit_device_dat(ops_dat dat);
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */

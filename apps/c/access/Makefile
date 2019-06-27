@@ -19,7 +19,7 @@ OPS_FILES=access.cpp
 
 OPS_GENERATED=access_ops.cpp
 
-OTHER_FILES=
+OTHER_FILES = fetch_data.cpp
 
 
 APP=access

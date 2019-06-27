@@ -7,33 +7,30 @@
 int xdim0_set_field_kernel;
 int xdim1_set_field_kernel;
 
-//user function
+// user function
 #pragma acc routine
-inline 
-void set_field_kernel(const ptr_double energy0,
-  ptr_double energy1) {
-	OPS_ACC(energy1, 0,0) = OPS_ACC(energy0, 0,0);
+inline void set_field_kernel(const ptr_double energy0, ptr_double energy1) {
+  OPS_ACC(energy1, 0, 0) = OPS_ACC(energy0, 0, 0);
 }
 
-
-void set_field_kernel_c_wrapper(
-  double *p_a0,
-  double *p_a1,
-  int x_size, int y_size) {
-  #ifdef OPS_GPU
-  #pragma acc parallel deviceptr(p_a0,p_a1)
-  #pragma acc loop
-  #endif
-  for ( int n_y=0; n_y<y_size; n_y++ ){
-    #ifdef OPS_GPU
-    #pragma acc loop
-    #endif
-    for ( int n_x=0; n_x<x_size; n_x++ ){
-      const ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_set_field_kernel*1*1, xdim0_set_field_kernel};
-      ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_set_field_kernel*1*1, xdim1_set_field_kernel};
-      set_field_kernel( ptr0,
-          ptr1 );
-
+void set_field_kernel_c_wrapper(double *p_a0, double *p_a1, int x_size,
+                                int y_size) {
+#ifdef OPS_GPU
+#pragma acc parallel deviceptr(p_a0, p_a1)
+#pragma acc loop
+#endif
+  for (int n_y = 0; n_y < y_size; n_y++) {
+#ifdef OPS_GPU
+#pragma acc loop
+#endif
+    for (int n_x = 0; n_x < x_size; n_x++) {
+      const ptr_double ptr0 = {p_a0 + n_x * 1 * 1 +
+                                   n_y * xdim0_set_field_kernel * 1 * 1,
+                               xdim0_set_field_kernel};
+      ptr_double ptr1 = {p_a1 + n_x * 1 * 1 +
+                             n_y * xdim1_set_field_kernel * 1 * 1,
+                         xdim1_set_field_kernel};
+      set_field_kernel(ptr0, ptr1);
     }
   }
 }

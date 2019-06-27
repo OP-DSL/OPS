@@ -47,10 +47,10 @@
 #include "../MPI_OpenMP/advec_mom_kernel_y1_cpu_kernel.cpp"
 #include "../MPI_OpenMP/advec_mom_kernel_y2_cpu_kernel.cpp"
 
+#include "../MPI_OpenMP/calc_dt_kernel_cpu_kernel.cpp"
 #include "../MPI_OpenMP/calc_dt_kernel_get_cpu_kernel.cpp"
 #include "../MPI_OpenMP/calc_dt_kernel_min_cpu_kernel.cpp"
 #include "../MPI_OpenMP/calc_dt_kernel_print_cpu_kernel.cpp"
-#include "../MPI_OpenMP/calc_dt_kernel_cpu_kernel.cpp"
 #include "../MPI_OpenMP/field_summary_kernel_cpu_kernel.cpp"
 #include "../MPI_OpenMP/flux_calc_kernelx_cpu_kernel.cpp"
 #include "../MPI_OpenMP/flux_calc_kernely_cpu_kernel.cpp"

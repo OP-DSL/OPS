@@ -60,8 +60,10 @@ class OPS_instance;
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-#ifndef __cuda_cuda_h__
+#if !defined(__cuda_cuda_h__) && !defined(__CUDACC__) && !defined(__host__)
 #define __host__
+#endif
+#if !defined(__cuda_cuda_h__) && !defined(__CUDACC__) && !defined(__device__)
 #define __device__
 #endif
 
@@ -70,6 +72,7 @@ typedef unsigned int uint;
 #endif
 typedef long long ll;
 typedef unsigned long long ull;
+typedef unsigned long ul;
 
 
 
@@ -87,31 +90,47 @@ void ops_reduction_result_char(ops_reduction_core *handle, int type_size, char *
 */
 inline int type_error(const double *a, const char *type) {
   (void)a;
-  return (strcmp(type, "double") && strcmp(type, "double:soa"));
+  return strcmp(type, "double");
 }
 inline int type_error(const float *a, const char *type) {
   (void)a;
-  return (strcmp(type, "float") && strcmp(type, "float:soa"));
+  return strcmp(type, "float");
 }
 inline int type_error(const int *a, const char *type) {
   (void)a;
-  return (strcmp(type, "int") && strcmp(type, "int:soa"));
+  return strcmp(type, "int");
 }
 inline int type_error(const uint *a, const char *type) {
   (void)a;
-  return (strcmp(type, "uint") && strcmp(type, "uint:soa"));
+  return  !(strcmp(type, "uint")==0 || strcmp(type, "unsigned int")==0);
+}
+inline int type_error(const long *a, const char *type) {
+  (void)a;
+  return strcmp(type, "long");
+}
+inline int type_error(const short *a, const char *type) {
+  (void)a;
+  return strcmp(type, "short");
+}
+inline int type_error(const char *a, const char *type) {
+  (void)a;
+  return strcmp(type, "char");
 }
 inline int type_error(const ll *a, const char *type) {
   (void)a;
-  return (strcmp(type, "ll") && strcmp(type, "ll:soa"));
+  return !(strcmp(type, "ll")==0 || strcmp(type, "long long")==0) ;
+}
+inline int type_error(const ul *a, const char *type) {
+  (void)a;
+  return !(strcmp(type, "ul")==0 || strcmp(type, "unsigned long")==0) ;
 }
 inline int type_error(const ull *a, const char *type) {
   (void)a;
-  return (strcmp(type, "ull") && strcmp(type, "ull:soa"));
+  return !(strcmp(type, "ull")==0 || strcmp(type, "unsigned long long")==0);
 }
 inline int type_error(const bool *a, const char *type) {
   (void)a;
-  return (strcmp(type, "bool") && strcmp(type, "bool:soa"));
+  return strcmp(type, "bool");
 }
 inline int type_error(const std::complex<float> *a, const char *type) {
   (void)a;
@@ -121,6 +140,7 @@ inline int type_error(const std::complex<double> *a, const char *type) {
   (void)a;
   return strcmp(type, "complexd");
 }
+
 #endif
 
 

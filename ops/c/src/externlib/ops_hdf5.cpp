@@ -417,9 +417,15 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
             else if (strcmp(dat->type, "long") == 0)
               H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
                H5T_NATIVE_LONG, data);
-            else if (strcmp(dat->type, "long long") == 0)
+            else if ((strcmp(dat->type, "long long") == 0) || (strcmp(dat->type, "ll") == 0))
               H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
                H5T_NATIVE_LLONG, data);
+            else if (strcmp(dat->type, "short") == 0)
+              H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
+               H5T_NATIVE_SHORT, data);
+            else if (strcmp(dat->type, "char") == 0)
+              H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
+               H5T_NATIVE_CHAR, data);
             else {
               OPSException ex(OPS_HDF5_ERROR);
               ex << "Error: Unknown type in ops_fetch_dat_hdf5_file(): " << dat->type;
@@ -835,8 +841,12 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
     type_size = sizeof(int);
   else if (strcmp(read_type, "long") == 0)
     type_size = sizeof(long);
-  else if (strcmp(read_type, "long long") == 0)
+  else if ((strcmp(read_type, "long long") == 0) || (strcmp(read_type, "ll") == 0))
     type_size = sizeof(long long);
+  else if (strcmp(read_type, "char") == 0)
+    type_size = sizeof(char);
+  else if (strcmp(read_type, "short") == 0)
+    type_size = sizeof(short);
   else {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: Unknown type in ops_decl_dat_hdf5(): " << type;
@@ -857,8 +867,12 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
     H5LTread_dataset(group_id, dat_name, H5T_NATIVE_INT, data);
   else if (strcmp(read_type, "long") == 0)
     H5LTread_dataset(group_id, dat_name, H5T_NATIVE_LONG, data);
-  else if (strcmp(read_type, "long long") == 0)
+  else if ((strcmp(read_type, "long long") == 0) || (strcmp(read_type, "ll") == 0))
     H5LTread_dataset(group_id, dat_name, H5T_NATIVE_LLONG, data);
+  else if (strcmp(read_type, "char") == 0)
+    H5LTread_dataset(group_id, dat_name, H5T_NATIVE_CHAR, data);
+  else if (strcmp(read_type, "short") == 0)
+    H5LTread_dataset(group_id, dat_name, H5T_NATIVE_SHORT, data);
   else {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: Unknown type in ops_decl_dat_hdf5(): " << type;
@@ -869,7 +883,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   ops_dat created_dat = ops_decl_dat_char(
       block, dat_dim, read_size /*global dat size in each dimension*/,
       read_base, read_d_m, read_d_p, stride, data, type_size /*size of(type)*/, type,
-      dat_name); //TODO: multigridgrid stride support
+      dat_name); //TODO: multigrid stride support
 
   created_dat->is_hdf5 = 1;
   created_dat->hdf5_file = copy_str(file_name);

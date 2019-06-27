@@ -47,7 +47,7 @@ extern OPS_instance *global_ops_instance;
 void _ops_init(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
   //We do not have thread safety across MPI
   if ( OPS_instance::numInstances() != 1 ) {
-    OPSException ex(OPS_RUNTIME_ERROR, "ERROR: multiple OPS instances are not suppoerted over MPI");
+    OPSException ex(OPS_RUNTIME_ERROR, "ERROR: multiple OPS instances are not supported over MPI");
     throw ex;
   }
   
@@ -91,6 +91,24 @@ void _ops_exit(OPS_instance *instance) {
 void ops_exit() {
   _ops_exit(OPS_instance::getOPSInstance());
 }
+
+ops_dat ops_dat_copy(ops_dat orig_dat) {
+  ops_dat dat = ops_dat_copy_mpi_core(orig_dat);
+  ops_dat_deep_copy(dat, orig_dat);
+  return dat;
+}
+
+void ops_dat_deep_copy(ops_dat target, ops_dat source) {
+  ops_dat_copy_metadata_core(target, source);
+
+  ops_kernel_descriptor *desc = ops_dat_deep_copy_mpi_core(target, source);
+  desc->name = "ops_internal_copy_seq";
+  desc->device = 0;
+  desc->function = ops_internal_copy_seq;
+  ops_enqueue_kernel(desc);
+}
+
+
 
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
                           int *d_m, int *d_p, int *stride, char *data, int type_size,
@@ -175,13 +193,23 @@ void ops_decl_const_char(int dim, char const *type, int typeSize, char *data,
 }
 
 void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
-  (void)nargs;
-  (void)args;
+  for (int i = 0; i < nargs; i++) {
+    if (args[i].argtype == OPS_ARG_DAT &&
+        args[i].dat->locked_hd > 0) {
+      OPSException ex(OPS_RUNTIME_ERROR, "ERROR: ops_par_loops involving datasets for which raw pointers have not been released are not allowed");
+      throw ex;
+    }
+  }
 }
 
 void ops_H_D_exchanges_device(ops_arg *args, int nargs) {
-  (void)nargs;
-  (void)args;
+  for (int i = 0; i < nargs; i++) {
+    if (args[i].argtype == OPS_ARG_DAT &&
+        args[i].dat->locked_hd > 0) {
+      OPSException ex(OPS_RUNTIME_ERROR, "ERROR: ops_par_loops involving datasets for which raw pointers have not been released are not allowed");
+      throw ex;
+    }
+  }
 }
 
 void ops_set_dirtybit_device(ops_arg *args, int nargs) {

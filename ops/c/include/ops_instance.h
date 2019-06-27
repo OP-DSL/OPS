@@ -32,7 +32,7 @@
 
 /** @brief ops core library function declarations
   * @author Gihan Mudalige
-  * @details function declarations headder file for the core library functions
+  * @details function declarations header file for the core library functions
   * utilized by all OPS backends
   */
 
@@ -325,6 +325,7 @@ class OPS_instance {
 
   int is_initialised;
 
+  ops_stencil OPS_internal_0[OPS_MAX_DIM];
 private:
 	void init_globals();
   std::ostream *_ostream;

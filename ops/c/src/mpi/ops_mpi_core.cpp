@@ -43,7 +43,7 @@
 #include <ops_exceptions.h>
 #include <string>
 
-#ifndef __XDIMS__ // perhaps put this into a separate headder file
+#ifndef __XDIMS__ // perhaps put this into a separate header file
 #define __XDIMS__
 int xdim0, xdim1, xdim2, xdim3, xdim4, xdim5, xdim6, xdim7, xdim8, xdim9,
     xdim10, xdim11, xdim12, xdim13, xdim14, xdim15, xdim16, xdim17, xdim18,
@@ -358,8 +358,8 @@ void ops_checkpointing_calc_range(ops_dat dat, const int *range,
   }
 }
 
-char *OPS_checkpoiting_dup_buffer = NULL;
-int OPS_checkpoiting_dup_buffer_size = 0;
+char *OPS_checkpointing_dup_buffer = NULL;
+int OPS_checkpointing_dup_buffer_size = 0;
 int recv_stats[2 + 2 * OPS_MAX_DIM];
 
 void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems,
@@ -385,13 +385,13 @@ void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems,
            (ops_comm_global_size + ops_my_global_rank - OPS_instance::getOPSInstance()->OPS_ranks_per_node) %
                ops_comm_global_size,
            1000 + OPS_instance::getOPSInstance()->OPS_dat_index + dat->index, OPS_MPI_GLOBAL, &statuses[0]);
-  if (recv_stats[1] * bytesize > OPS_checkpoiting_dup_buffer_size) {
-    OPS_checkpoiting_dup_buffer =
-        (char *)ops_realloc(OPS_checkpoiting_dup_buffer,
+  if (recv_stats[1] * bytesize > OPS_checkpointing_dup_buffer_size) {
+      OPS_checkpointing_dup_buffer =
+        (char *)ops_realloc(OPS_checkpointing_dup_buffer,
                             recv_stats[1] * bytesize * 2 * sizeof(char));
-    OPS_checkpoiting_dup_buffer_size = recv_stats[1] * bytesize * 2;
+      OPS_checkpointing_dup_buffer_size = recv_stats[1] * bytesize * 2;
   }
-  *rm_data = OPS_checkpoiting_dup_buffer;
+  *rm_data = OPS_checkpointing_dup_buffer;
   MPI_Recv(*rm_data, recv_stats[1] * bytesize, MPI_CHAR,
            (ops_comm_global_size + ops_my_global_rank - OPS_instance::getOPSInstance()->OPS_ranks_per_node) %
                ops_comm_global_size,
@@ -495,7 +495,7 @@ extern "C" int *getDatSizeFromOpsArg(ops_arg *arg) { return arg->dat->size; }
 
 extern "C" int getDatDimFromOpsArg(ops_arg *arg) { return arg->dat->dim; }
 
-// need differet routines for 1D, 2D 3D etc.
+// need different routines for 1D, 2D 3D etc.
 extern "C" int getDatBaseFromOpsArg1D(ops_arg *arg, int *start, int dim) {
 
   /*convert to C indexing*/
@@ -584,3 +584,48 @@ extern "C" char *getReductionPtrFromOpsArg(ops_arg *arg, ops_block block) {
 
 extern "C" char *getGblPtrFromOpsArg(ops_arg *arg) { return (char *)(arg->data); }
 
+ops_dat ops_dat_copy_mpi_core(ops_dat orig_dat) {
+   // So MPI I'm not going to try change ...
+  ops_dat dat = ops_dat_alloc_core(orig_dat->block);
+  OPS_sub_dat_list = (sub_dat_list *)ops_realloc(
+      OPS_sub_dat_list, OPS_instance::getOPSInstance()->OPS_dat_index * sizeof(sub_dat_list));
+
+  sub_dat_list sd = (sub_dat_list)ops_calloc(1, sizeof(sub_dat));
+  sd->dirtybit = 1;
+  sd->dirty_dir_send =
+      (int *)ops_malloc(sizeof(int) * 2 * dat->block->dims * MAX_DEPTH);
+  sd->dirty_dir_recv =
+      (int *)ops_malloc(sizeof(int) * 2 * dat->block->dims * MAX_DEPTH);
+  OPS_sub_dat_list[dat->index] = sd;
+  int *dirt1 = sd->dirty_dir_send;
+  int *dirt2 = sd->dirty_dir_recv;
+  memcpy(OPS_sub_dat_list[dat->index], OPS_sub_dat_list[orig_dat->index], sizeof(sub_dat));
+  sd->dat = dat;
+  sd->dirty_dir_send = dirt1;
+  sd->dirty_dir_recv = dirt2;
+  int *prod_t = (int *)ops_malloc((orig_dat->block->dims + 1) * sizeof(int));
+  memcpy(prod_t, &OPS_sub_dat_list[orig_dat->index]->prod[-1], (orig_dat->block->dims + 1) * sizeof(int));
+  sd->prod = &prod_t[1];
+  memcpy(dirt1, OPS_sub_dat_list[orig_dat->index]->dirty_dir_send, sizeof(int) * 2 * dat->block->dims * MAX_DEPTH);
+  memcpy(dirt2, OPS_sub_dat_list[orig_dat->index]->dirty_dir_recv, sizeof(int) * 2 * dat->block->dims * MAX_DEPTH);
+  sd->halos = (ops_int_halo *)ops_calloc(MAX_DEPTH * orig_dat->block->dims , sizeof(ops_int_halo));
+  memcpy(sd->halos, OPS_sub_dat_list[orig_dat->index]->halos, MAX_DEPTH * orig_dat->block->dims* sizeof(ops_int_halo));
+
+  return dat;
+}
+
+ops_kernel_descriptor * ops_dat_deep_copy_mpi_core(ops_dat target, ops_dat source) {
+  int range[2*OPS_MAX_DIM];
+  sub_dat_list sdo = OPS_sub_dat_list[source->index];
+  for (int i = 0; i < source->block->dims; i++) {
+    range[2*i] = sdo->gbl_base[i] + sdo->gbl_d_m[i];
+    range[2*i+1] = range[2*i] + sdo->gbl_size[i];
+  }
+  for (int i = source->block->dims; i < OPS_MAX_DIM; i++) {
+    range[2*i] = 0;
+    range[2*i+1] = 1;
+  }
+  ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, source, range);
+
+  return desc;
+}

@@ -4,9 +4,9 @@
 
 #define OPS_2D
 #include "./MPI_inline/poisson_common.h"
-//user kernel files
-#include "poisson_kernel_populate_mpiinline_kernel_c.c"
-#include "poisson_kernel_update_mpiinline_kernel_c.c"
-#include "poisson_kernel_initialguess_mpiinline_kernel_c.c"
-#include "poisson_kernel_stencil_mpiinline_kernel_c.c"
+// user kernel files
 #include "poisson_kernel_error_mpiinline_kernel_c.c"
+#include "poisson_kernel_initialguess_mpiinline_kernel_c.c"
+#include "poisson_kernel_populate_mpiinline_kernel_c.c"
+#include "poisson_kernel_stencil_mpiinline_kernel_c.c"
+#include "poisson_kernel_update_mpiinline_kernel_c.c"

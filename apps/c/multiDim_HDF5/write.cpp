@@ -58,11 +58,15 @@ int main(int argc, char **argv) {
 
   int d_p[3] = {1, 1, 0};
   int d_m[3] = {-1, -1, 0};
-  int size[3] = {4, 5, 1}; // size of the dat
+  int size[3] = {4, 5, 2}; // size of the dat
   int base[3] = {0, 0, 0};
 
   double *temp = NULL;
   int *tempi = NULL;
+  char *tempc = NULL;
+  short *temps = NULL;
+  long *templ = NULL;
+  ll *templl = NULL;
 
   ops_dat single =
       ops_decl_dat(grid0, 1, size, base, d_m, d_p, temp, "double", "single");
@@ -70,6 +74,14 @@ int main(int argc, char **argv) {
       ops_decl_dat(grid0, 2, size, base, d_m, d_p, temp, "double", "multi");
   ops_dat integ =
       ops_decl_dat(grid0, 1, size, base, d_m, d_p, tempi, "int", "integ");
+  ops_dat dat_char =
+      ops_decl_dat(grid0, 1, size, base, d_m, d_p, tempc, "char", "dat_char");
+  ops_dat dat_short =
+      ops_decl_dat(grid0, 1, size, base, d_m, d_p, temps, "short", "dat_short");
+  ops_dat dat_long =
+      ops_decl_dat(grid0, 1, size, base, d_m, d_p, templ, "long", "dat_long");
+  ops_dat dat_ll =
+      ops_decl_dat(grid0, 1, size, base, d_m, d_p, templl, "ll", "dat_ll");
 
   int range_full[6];
   range_full[0] = 0;
@@ -77,7 +89,7 @@ int main(int argc, char **argv) {
   range_full[2] = 0;
   range_full[3] = 5;
   range_full[4] = 0;
-  range_full[5] = 1;
+  range_full[5] = 2;
 
   int s3D_000[] = {0, 0, 0};
   ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "0,0,0");
@@ -88,13 +100,22 @@ int main(int argc, char **argv) {
   ops_par_loop(write_kernel, "write_kernel", grid0, 3, range_full,
                ops_arg_dat(multi, 2, S3D_000, "double", OPS_WRITE),
                ops_arg_dat(single, 1, S3D_000, "double", OPS_WRITE),
-               ops_arg_dat(integ, 1, S3D_000, "int", OPS_WRITE), ops_arg_idx());
+               ops_arg_dat(integ, 1, S3D_000, "int", OPS_WRITE),
+               ops_arg_dat(dat_char, 1, S3D_000, "char", OPS_WRITE),
+               ops_arg_dat(dat_short, 1, S3D_000, "short", OPS_WRITE),
+               ops_arg_dat(dat_long, 1, S3D_000, "long", OPS_WRITE),
+               ops_arg_dat(dat_ll, 1, S3D_000, "ll", OPS_WRITE),
+               ops_arg_idx());
 
   ops_fetch_block_hdf5_file(grid0, "write_data.h5");
 
   ops_fetch_dat_hdf5_file(multi, "write_data.h5");
   ops_fetch_dat_hdf5_file(single, "write_data.h5");
   ops_fetch_dat_hdf5_file(integ, "write_data.h5");
+  ops_fetch_dat_hdf5_file(dat_char, "write_data.h5");
+  ops_fetch_dat_hdf5_file(dat_short, "write_data.h5");
+  ops_fetch_dat_hdf5_file(dat_long, "write_data.h5");
+  ops_fetch_dat_hdf5_file(dat_ll, "write_data.h5");
 
   int my_const = 42;
   ops_write_const_hdf5("my_const", 1, "int", (char*)&my_const, "write_data.h5");
