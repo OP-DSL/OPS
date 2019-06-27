@@ -40,8 +40,9 @@
 #include "ops_lib_core.h"
 #include <ops_exceptions.h>
 #include <string>
+#include <assert.h>
 
-#ifndef __XDIMS__ // perhaps put this into a separate headder file
+#ifndef __XDIMS__ // perhaps put this into a separate header file
 #define __XDIMS__
 int xdim0, xdim1, xdim2, xdim3, xdim4, xdim5, xdim6, xdim7, xdim8, xdim9,
     xdim10, xdim11, xdim12, xdim13, xdim14, xdim15, xdim16, xdim17, xdim18,
@@ -421,6 +422,23 @@ int ops_dat_get_local_npartitions(ops_dat dat) {
   return 1;
 }
 
+size_t ops_dat_get_slab_extents(ops_dat dat, int part, int *disp, int *size, int *slab) {
+  int sizel[OPS_MAX_DIM], displ[OPS_MAX_DIM];
+  ops_dat_get_extents(dat, part, displ, sizel);
+  size_t bytes = dat->elem_size;
+  for (int d = 0; d < dat->block->dims; d++) {
+    if (slab[2*d]<0 || slab[2*d+1]>sizel[d]) {
+      OPSException ex(OPS_RUNTIME_ERROR);
+      ex << "Error: ops_dat_get_slab_extents() called on " << dat->name << " with slab ranges in dimension "<<d<<": "<<slab[2*d]<<"-"<<slab[2*d+1]<<" beyond data size 0-" <<sizel[d];
+    throw ex;
+    }
+    disp[d] = slab[2*d];
+    size[d] = slab[2*d+1]-slab[2*d];
+    bytes *= size[d];
+  }
+  return bytes;
+}
+
 void ops_dat_get_raw_metadata(ops_dat dat, int part, int *disp, int *size, int *stride, int *d_m, int *d_p) {
   ops_dat_get_extents(dat, part, disp, size);
   if (stride != NULL)
@@ -436,25 +454,157 @@ void ops_dat_get_raw_metadata(ops_dat dat, int part, int *disp, int *size, int *
 }
 
 char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_memspace *memspace) {
-  if (*memspace == OPS_HOST) {
-    if (dat->data_d != NULL && dat->dirty_hd == 2) ops_get_data(dat);
-  } else if (*memspace == OPS_DEVICE) {
-    if (dat->data_d != NULL && dat->dirty_hd == 1) ops_put_data(dat);
-  } else if (dat->dirty_hd == 2 && dat->data_d != NULL) *memspace = OPS_DEVICE;
-  else if (dat->dirty_hd == 1) *memspace = OPS_HOST;
-  else if (dat->data_d != NULL) *memspace = OPS_DEVICE;
-  else *memspace = OPS_HOST;
-  return (*memspace == OPS_HOST ? dat->data : dat->data_d) + dat->base_offset;
+    if (dat->dirty_hd == OPS_DEVICE || *memspace == OPS_DEVICE) {
+        if(dat->data_d == NULL) {
+            OPSException ex(OPS_RUNTIME_ERROR);
+            ex << "Error: ops_dat_get_raw_pointer() sees a NULL device buffer when the buffer should not "
+                "be NULL.   This should never happen.  ops_dat name: " << dat->name;
+            throw ex;
+        }
+    }
+
+    if (*memspace == OPS_HOST) {
+        if (dat->dirty_hd == OPS_DEVICE) {
+            // User wants raw pointer on host, and data is dirty on the device
+            // Fetch the data from device to host
+            ops_get_data(dat);
+        }
+        else {
+            // Data is diry on host - nothing to do
+        }
+    } else if (*memspace == OPS_DEVICE) {
+        if (dat->dirty_hd == OPS_HOST) {
+            // User wants raw pointer on device, and data is dirty on the host
+            // Upload the data from host to device
+            ops_put_data(dat);
+        }
+        else {
+            // Data is dirty on device - nothing to do
+        }
+    } 
+    else {
+        // User has not specified where they want the pointer
+        // We need a default behaviour:
+        if (dat->dirty_hd == OPS_DEVICE)        *memspace = OPS_DEVICE;
+        else if (dat->dirty_hd == OPS_HOST)     *memspace = OPS_HOST;
+        else if (dat->data_d != NULL)           *memspace = OPS_DEVICE;
+        else                                    *memspace = OPS_HOST;
+    }
+
+    assert(*memspace==OPS_HOST || *memspace==OPS_DEVICE);
+    // Lock the ops_dat with the current memspace
+    dat->locked_hd = *memspace;
+    return (*memspace == OPS_HOST ? dat->data : dat->data_d) + dat->base_offset;
 }
 
 void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc) {
-  ops_memspace memspace = 0;
-  ops_dat_get_raw_pointer(dat, part, NULL, &memspace);
-  if (acc != OPS_READ)
-    dat->dirty_hd = (memspace == OPS_HOST ? 1 : 2);
+    if (dat->locked_hd==0) {
+        // Dat is unlocked
+        OPSException ex(OPS_RUNTIME_ERROR);
+        ex << "Error: ops_dat_release_raw_data() called, but with no matching ops_dat_get_raw_pointer() beforehand: " << dat->name;
+        throw ex;
+    }
+    if (acc != OPS_READ)
+        dat->dirty_hd = dat->locked_hd; // dirty on host or device depending on where the pointer was obtained
+
+    // Unlock the ops_dat
+    dat->locked_hd = 0;
 }
 
+void ops_dat_release_raw_data_memspace(ops_dat dat, int part, ops_access acc, ops_memspace *memspace) {
+    if (dat->locked_hd==0) {
+        OPSException ex(OPS_RUNTIME_ERROR);
+        ex << "Error: ops_dat_release_raw_data_memspace() called, but with no matching ops_dat_get_raw_pointer() beforehand: " << dat->name;
+        throw ex;
+    }
+    if (acc != OPS_READ)
+        dat->dirty_hd = *memspace; // dirty on host or device depending on argument
+
+    // Unlock the ops_dat
+    dat->locked_hd = 0;
+}
+
+template <int dir>
+void copy_loop(char *data, char *ddata, int *lsize, int *dsize, int *d_m, int elem_size) {
+  //TODO: add OpenMP here if needed
+#if OPS_MAX_DIM>4
+  for (int m = 0; m < lsize[4]; m++) {
+    size_t moff = m * lsize[0] * lsize[1] * lsize[2] * lsize[3];
+    size_t moff2 = (m-d_m[4])*dsize[3]*dsize[2]*dsize[1]*dsize[0];
+#else
+  size_t moff = 0;
+  size_t moff2 = 0;
+#endif
+#if OPS_MAX_DIM>3
+  for (int l = 0; l < lsize[3]; l++) {
+    size_t loff = l * lsize[0] * lsize[1] * lsize[2];
+    size_t loff2 = (l-d_m[3])*dsize[2]*dsize[1]*dsize[0];
+#else
+  size_t loff = 0;
+  size_t loff2 = 0;
+#endif
+  for (int k = 0; k < lsize[2]; k++)
+    for (int j = 0; j < lsize[1]; j++)
+      if (dir == 0)
+        memcpy(&data[moff + loff + k*lsize[0]*lsize[1]+j*lsize[0]],
+            &ddata[(moff2+loff2+(k-d_m[2])*dsize[1]*dsize[0] + (j-d_m[1])*dsize[0] - d_m[0])* elem_size],
+             lsize[0]);
+      else
+        memcpy(&ddata[(moff2+loff2+(k-d_m[2])*dsize[1]*dsize[0] + (j-d_m[1])*dsize[0] - d_m[0])* elem_size],
+             &data[moff + loff + k*lsize[0]*lsize[1]+j*lsize[0]],
+             lsize[0]);
+#if OPS_MAX_DIM>3
+  }
+#endif
+#if OPS_MAX_DIM>4
+  }
+#endif
+}
+
+template <int dir>
+void copy_loop_slab(char *data, char *ddata, int *lsize, int *dsize, int *d_m, int elem_size, int *range2) {
+  //TODO: add OpenMP here if needed
+#if OPS_MAX_DIM>4
+  for (int m = 0; m < lsize[4]; m++) {
+    size_t moff = m * lsize[0] * lsize[1] * lsize[2] * lsize[3];
+    size_t moff2 = (range2[2*4]+m-d_m[4])*dsize[3]*dsize[2]*dsize[1]*dsize[0];
+#else
+  size_t moff = 0;
+  size_t moff2 = 0;
+#endif
+#if OPS_MAX_DIM>3
+  for (int l = 0; l < lsize[3]; l++) {
+    size_t loff = l * lsize[0] * lsize[1] * lsize[2];
+    size_t loff2 = (range2[2*3]+l-d_m[3])*dsize[2]*dsize[1]*dsize[0];
+#else
+  size_t loff = 0;
+  size_t loff2 = 0;
+#endif
+  for (int k = 0; k < lsize[2]; k++)
+    for (int j = 0; j < lsize[1]; j++)
+      if (dir == 0)
+      memcpy(&data[moff + loff + k*lsize[0]*lsize[1]+j*lsize[0]],
+             &ddata[(moff2+loff2+(range2[2*2]+k-d_m[2])*dsize[1]*dsize[0] + (range2[2*1]+j-d_m[1])*dsize[0] + range2[2*0] - d_m[0])* elem_size],
+             lsize[0]);
+      else
+      memcpy(&ddata[(moff2+loff2+(range2[2*2]+k-d_m[2])*dsize[1]*dsize[0] + (range2[2*1]+j-d_m[1])*dsize[0] + range2[2*0] - d_m[0])* elem_size],
+          &data[moff + loff + k*lsize[0]*lsize[1]+j*lsize[0]],
+             lsize[0]);
+#if OPS_MAX_DIM>3
+  }
+#endif
+#if OPS_MAX_DIM>4
+  }
+#endif
+}
+
+
 void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
+  ops_dat_fetch_data_memspace(dat, part, data, OPS_HOST);
+}
+
+void ops_dat_fetch_data_host(ops_dat dat, int part, char *data) {
+  ops_execute(dat->block->instance);
   ops_get_data(dat);
   int lsize[OPS_MAX_DIM] = {1};
   int ldisp[OPS_MAX_DIM] = {0};
@@ -463,17 +613,42 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
     lsize[d] = 1;
     ldisp[d] = 0;
   }
-  lsize[0] *= dat->elem_size/dat->dim; //now in bytes
-  if (dat->block->dims>3) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for dims>3");
+  lsize[0] *= dat->elem_size; //now in bytes
+  if (dat->block->dims>5) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for dims>5");
   if (dat->block->instance->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for SoA");
-
-  for (int k = 0; k < lsize[2]; k++)
-    for (int j = 0; j < lsize[1]; j++)
-      memcpy(&data[k*lsize[0]*lsize[1]+j*lsize[0]],
-             &dat->data[((j-dat->d_m[1] + (k-dat->d_m[2])*dat->size[1])*dat->size[0] - dat->d_m[0])* dat->elem_size],
-             lsize[0]);
+  copy_loop<0>(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size);
 }
+
+
+void ops_dat_fetch_data_slab_host(ops_dat dat, int part, char *data, int *range) {
+  ops_execute(dat->block->instance);
+  ops_get_data(dat);
+  int lsize[OPS_MAX_DIM] = {1};
+  int range2[2*OPS_MAX_DIM] = {0};
+  for (int d = 0; d < dat->block->dims; d++) {
+    lsize[d] = range[2*d+1]-range[2*d+0];
+    range2[2*d] = range[2*d];
+    range2[2*d+1] = range[2*d+1];
+  }
+  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
+    lsize[d] = 1;
+    range2[2*d] = 0;
+    range2[2*d+1] = 1;
+  }
+  lsize[0] *= dat->elem_size; //now in bytes
+  if (dat->block->dims>5) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for dims>5");
+  if (dat->block->instance->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for SoA");
+  copy_loop_slab<0>(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size, range2);
+}
+
+
 void ops_dat_set_data(ops_dat dat, int part, char *data) {
+  ops_dat_set_data_memspace(dat, part, data, OPS_HOST);
+}
+
+
+void ops_dat_set_data_host(ops_dat dat, int part, char *data) {
+  ops_execute(dat->block->instance);
   int lsize[OPS_MAX_DIM] = {1};
   int ldisp[OPS_MAX_DIM] = {0};
   ops_dat_get_extents(dat, part, ldisp, lsize);
@@ -482,17 +657,34 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
     ldisp[d] = 0;
   }
   lsize[0] *= dat->elem_size; //now in bytes
-  if (dat->block->dims>3) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for dims>3");
+  if (dat->block->dims>5) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for dims>5");
   if (dat->block->instance->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for SoA");
-
-  for (int k = 0; k < lsize[2]; k++)
-    for (int j = 0; j < lsize[1]; j++)
-      memcpy(&dat->data[((j-dat->d_m[1] + (k-dat->d_m[2])*dat->size[1])*dat->size[0] - dat->d_m[0])* dat->elem_size],
-             &data[k*lsize[0]*lsize[1]+j*lsize[0]],
-             lsize[0]);
-
+  copy_loop<1>(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size);
   dat->dirty_hd = 1;
 }
+
+void ops_dat_set_data_slab_host(ops_dat dat, int part, char *data, int *range) {
+  ops_execute(dat->block->instance);
+  ops_get_data(dat);
+  int lsize[OPS_MAX_DIM] = {1};
+  int range2[2*OPS_MAX_DIM] = {0};
+  for (int d = 0; d < dat->block->dims; d++) {
+    lsize[d] = range[2*d+1]-range[2*d+0];
+    range2[2*d] = range[2*d];
+    range2[2*d+1] = range[2*d+1];
+  }
+  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
+    lsize[d] = 1;
+    range2[2*d] = 0;
+    range2[2*d+1] = 1;
+  }
+  lsize[0] *= dat->elem_size; //now in bytes
+  if (dat->block->dims>5) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for dims>5");
+  if (dat->block->instance->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for SoA");
+  copy_loop_slab<1>(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size, range2);
+  dat->dirty_hd = 1;
+}
+
 
 int ops_dat_get_global_npartitions(ops_dat dat) {
   return 1;

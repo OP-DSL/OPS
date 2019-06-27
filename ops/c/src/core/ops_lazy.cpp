@@ -156,14 +156,14 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     ops_kernel_list.push_back(desc);
   else {
     //Prepare the local execution ranges
-    int start[OPS_MAX_DIM], end[OPS_MAX_DIM], arg_idx[OPS_MAX_DIM];
+    int start[OPS_MAX_DIM]={0}, end[OPS_MAX_DIM]={1}, arg_idx[OPS_MAX_DIM];
     if (compute_ranges(desc->args, desc->nargs,desc->block, desc->range, start, end, arg_idx) < 0) return;
     for (int d = 0; d < desc->block->dims; d++){
       desc->range[2*d+0] = start[d];
       desc->range[2*d+1] = end[d];
     }
     //If not tiling, I have to do the halo exchanges here
-    double t1,t2,c;
+    double t1=0,t2=0,c;
     if (instance->OPS_diags > 1)
       ops_timers_core(&c,&t1);
 
@@ -838,7 +838,7 @@ void ops_execute(OPS_instance *instance) {
   int total_tiles = tiling_plans[match].ntiles;
 
   //Do halo exchanges
-  double c,t1,t2;
+  double c,t1=0,t2=0;
   if (instance->OPS_diags>1)
     ops_timers_core(&c,&t1);
   

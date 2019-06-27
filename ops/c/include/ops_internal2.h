@@ -88,6 +88,12 @@
 #define ZERO_ull 0;
 #define INFINITY_ull ULLONG_MAX;
 
+#define ZERO_char 0;
+#define INFINITY_char CHAR_MAX;
+
+#define ZERO_short 0;
+#define INFINITY_short SHRT_MAX;
+
 #define ZERO_bool 0;
 
 /*
@@ -243,6 +249,13 @@ void ops_mpi_reduce_float(ops_arg *args, float *data);
 void ops_mpi_reduce_double(ops_arg *args, double *data);
 void ops_mpi_reduce_int(ops_arg *args, int *data);
 
+void ops_dat_fetch_data_host(ops_dat dat, int part, char *data);
+void ops_dat_fetch_data_slab_host(ops_dat dat, int part, char *data, int *range);
+
+void ops_dat_set_data_host(ops_dat dat, int part, char *data);
+void ops_dat_set_data_slab_host(ops_dat dat, int part, char *data, int *range);
+
+
 void ops_compute_moment(double t, double *first, double *second);
 
 void ops_dump3(ops_dat dat, const char *name);
@@ -292,6 +305,7 @@ ops_halo _ops_decl_halo(OPS_instance *instance, ops_dat from, ops_dat to, int *i
 ops_halo_group _ops_decl_halo_group(OPS_instance *instance, int nhalos, ops_halo *halos);
 ops_reduction _ops_decl_reduction_handle(OPS_instance *instance, int size, const char *type,
                                         const char *name);
+void ops_free_dat_core(ops_dat dat);
 void _ops_free_dat(ops_dat dat);
 void _ops_diagnostic_output(OPS_instance *instance);
 void _ops_timing_output(OPS_instance *instance,std::ostream &stream);
@@ -307,6 +321,10 @@ void printf2(OPS_instance *instance, const char *format, ...);
 void ops_fprintf2(std::ostream &, const char *format, ...);
 void fprintf2(std::ostream &, const char *format, ...);
 
+ops_dat ops_dat_alloc_core(ops_block block);
+int ops_dat_copy_metadata_core(ops_dat target, ops_dat orig_dat);
+ops_kernel_descriptor * ops_dat_deep_copy_core(ops_dat target, ops_dat orig_dat, int *range);
+void ops_internal_copy_seq(ops_kernel_descriptor *desc);
 
 //
 // wrapper functions to handle MPI global reductions

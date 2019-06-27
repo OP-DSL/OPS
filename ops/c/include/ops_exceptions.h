@@ -32,7 +32,7 @@
 
 /** @brief OPS exceptions
   * @author Istvan Reguly
-  * @details declarations for throwing and queriying exceptions in OPS
+  * @details declarations for throwing and querying exceptions in OPS
   */
 
 #ifndef __OPS_EXCEPTIONS_H
@@ -60,6 +60,17 @@ struct OPSException : public std::exception
     int cursize;
     int ridx;
     std::stringstream msg;
+
+    /* The copy of the underlying string returned by stringstream::str() is a temporary 
+     * object that will be destructed at the end of the expression, so directly calling 
+     * c_str() on the result of str() (for example in auto *ptr = out.str().c_str();) 
+     * results in a dangling pointer.  Hence we need to get the message out of 'msg'
+     * and stick it in heap memory somewhere before we return it via what(), otherwise
+     * programs that catch the exception will get a dangling pointer which may or may 
+     * not point at a valid string.  I caught this via gtest, where I got a garbage
+     * message.
+     */
+    mutable std::string persistentMsg;
 
     virtual ~OPSException() throw() {}
     OPSException(int code) : code(code), cursize(0), ridx(0) { }
@@ -101,7 +112,8 @@ struct OPSException : public std::exception
     }
 
     virtual const char* what() const throw() {
-       return msg.str().c_str();
+       persistentMsg = msg.str();
+       return persistentMsg.c_str();
     }
 
     template<class T>

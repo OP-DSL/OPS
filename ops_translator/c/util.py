@@ -41,6 +41,8 @@ utility functions for code generator
 import re
 import config
 
+verbose = False
+
 def comm(line):
   prefix = ' '*config.depth
   if len(line) == 0:
@@ -200,9 +202,16 @@ def convert_ACC_signature(text, arg_typ):
   arg_list = arg_parse_list(text,0)
   for i in range(0,len(arg_list)):
       if arg_typ[i] == 'ops_arg_dat' and not ('ACC' in arg_list[i]):
-          arg_list[i] = arg_list[i].replace('int','ACC<int>')
-          arg_list[i] = arg_list[i].replace('float','ACC<float>')
-          arg_list[i] = arg_list[i].replace('double','ACC<double>')
+          arg_list[i] = re.sub(r'\bint\b','ACC<int>',arg_list[i])
+          arg_list[i] = re.sub(r'\bfloat\b','ACC<float>',arg_list[i])
+          arg_list[i] = re.sub(r'\bdouble\b','ACC<double>',arg_list[i])
+          arg_list[i] = re.sub(r'\blong long\b','ACC<long long>',arg_list[i])
+          arg_list[i] = re.sub(r'[^<]\blong\b','ACC<long>',arg_list[i])
+          arg_list[i] = re.sub(r'\bll\b','ACC<ll>',arg_list[i])
+          arg_list[i] = re.sub(r'\bshort\b','ACC<short>',arg_list[i])
+          arg_list[i] = re.sub(r'\bchar\b','ACC<char>',arg_list[i])
+          arg_list[i] = re.sub(r'\bcomplexf\b','ACC<complexf>',arg_list[i])
+          arg_list[i] = re.sub(r'\bcomplexd\b','ACC<complexd>',arg_list[i])
           arg_list[i] = arg_list[i].replace('*','&')
   signature = ''
   for i in range(0,len(arg_list)):
@@ -223,15 +232,19 @@ def convert_ACC(text, arg_typ):
   return text
 
 def parse_signature(text):
-  text2 = text.replace('const','')
-  text2 = text2.replace('ACC<','')
-  text2 = text2.replace('>','')
-  text2 = text2.replace('int','')
-  text2 = text2.replace('long','')
-  text2 = text2.replace('float','')
-  text2 = text2.replace('double','')
-  text2 = text2.replace('complexf','')
-  text2 = text2.replace('complexd','')
+  text2 = re.sub(r'\bll\b','',text)
+  text2 = re.sub(r'\bconst\b','',text2)
+  text2 = re.sub(r'\bACC<','',text2)
+  text2 = re.sub(r'>','',text2)
+  text2 = re.sub(r'\bint\b','',text2)
+  text2 = re.sub(r'\blong long\b','',text2)
+  text2 = re.sub(r'\blong\b','',text2)
+  text2 = re.sub(r'\bshort\b','',text2)
+  text2 = re.sub(r'\bchar\b','',text2)
+  text2 = re.sub(r'\bfloat\b','',text2)
+  text2 = re.sub(r'\bdouble\b','',text2)
+  text2 = re.sub(r'\bcomplexf\b','',text2)
+  text2 = re.sub(r'\bcomplexd\b','',text2)
   text2 = text2.replace('*','')
   text2 = text2.replace('&','')
   text2 = text2.replace(')','')
@@ -250,7 +263,7 @@ def find_consts(text, consts):
   for cn in range(0,len(consts)):
     pattern = consts[cn]['name'][1:-1]
     if re.search('\\b'+pattern+'\\b', text):
-      print(("found " + consts[cn]['name'][1:-1]))
+#      print(("found " + consts[cn]['name'][1:-1]))
       found_consts.append(cn)
 
   return found_consts
@@ -260,6 +273,10 @@ def parse_signature_opencl(text2):
 
   #text2 = text2.replace('const','')
   text2 = text2.replace('*','* restrict ')
+  text2 = text2.replace('ll','__global long long')
+  text2 = text2.replace('long','__global long')
+  text2 = text2.replace('short','__global short')
+  text2 = text2.replace('char','__global char')
   text2 = text2.replace('int','__global int')
   #text2 = re.sub('[\s]int','__global int',text2)
   text2 = text2.replace('float','__global float')

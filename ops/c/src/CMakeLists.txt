@@ -47,7 +47,9 @@ endif()
 
 
 file(GLOB _OPS_C_HEADERS ${OPS_C_INCLUDE_DIR}/*.h)
+if (OPS_INSTALL_HEADERS)
 install(FILES ${_OPS_C_HEADERS} DESTINATION include)
+endif()
 
 if ( OpenMP_CXX_FOUND )
     set_source_files_properties(
@@ -67,9 +69,11 @@ add_library(ops_core STATIC
     externlib/ops_checkpointing_strategy.cpp
 )
 set_property(TARGET ops_core PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(ops_core
-    PUBLIC
-        OpenMP::OpenMP_CXX)
+
+if( OpenMP_CXX_FOUND )
+    target_link_libraries(ops_core PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
 target_compile_definitions(ops_core PRIVATE ${CHECKPOINT_FLAG})
 if (CHECKPOINTING)
     target_link_libraries(ops_core
@@ -85,10 +89,7 @@ add_library(ops_seq STATIC
     sequential/ops_seq.cpp
     core/ops_dummy_singlenode.cpp)
 set_property(TARGET ops_seq PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(ops_seq
-    PUBLIC
-        ops_core
-        OpenMP::OpenMP_CXX)
+target_link_libraries(ops_seq PUBLIC ops_core)
 
 if(MPI_CXX_FOUND)
     add_library(ops_mpi STATIC
@@ -102,8 +103,10 @@ if(MPI_CXX_FOUND)
         PUBLIC
             ops_core
             MPI::MPI_CXX
-            OpenMP::OpenMP_CXX)
+            )
+	if (OPS_INSTALL_LIBS)
     install(TARGETS ops_mpi DESTINATION lib)
+	endif()
 endif()
 
 if(CUDA_FOUND)
@@ -119,7 +122,9 @@ if(CUDA_FOUND)
     target_link_libraries(ops_cuda
         PUBLIC ops_core)
 
+	if (OPS_INSTALL_LIBS)
     install(TARGETS ops_cuda DESTINATION lib)
+	endif()
 endif()
 
 if(MPI_CXX_FOUND AND CUDA_FOUND)
@@ -139,7 +144,9 @@ if(MPI_CXX_FOUND AND CUDA_FOUND)
             ops_core
             MPI::MPI_CXX
     )
+	if (OPS_INSTALL_LIBS)
     install(TARGETS ops_mpi_cuda DESTINATION lib)
+	endif()
 endif()
 
 if(OPENCL_FOUND)
@@ -154,7 +161,9 @@ if(OPENCL_FOUND)
             ops_core
             OpenCL::OpenCL
     )
+	if (OPS_INSTALL_LIBS)
     install(TARGETS ops_opencl DESTINATION lib)
+	endif()
 endif()
 
 if(MPI_CXX_FOUND AND OPENCL_FOUND)
@@ -173,7 +182,9 @@ if(MPI_CXX_FOUND AND OPENCL_FOUND)
             OpenCL::OpenCL
             MPI::MPI_CXX
     )
+	if (OPS_INSTALL_LIBS)
     install(TARGETS ops_mpi_opencl DESTINATION lib)
+	endif()
 endif()
 
 if(HDF5_FOUND AND NOT HDF5_IS_PARALLEL)
@@ -186,7 +197,9 @@ if(HDF5_FOUND AND NOT HDF5_IS_PARALLEL)
         PUBLIC
             ${HDF5_C_LIBRARIES} ${HDF5_C_HL_LIBRARIES}
     )
+	if (OPS_INSTALL_LIBS)
     install(TARGETS ops_hdf5_seq DESTINATION lib)
+	endif()
 endif()
 
 if(MPI_CXX_FOUND AND HDF5_FOUND AND HDF5_IS_PARALLEL)
@@ -200,5 +213,7 @@ if(MPI_CXX_FOUND AND HDF5_FOUND AND HDF5_IS_PARALLEL)
             MPI::MPI_CXX
             ${HDF5_C_LIBRARIES} ${HDF5_C_HL_LIBRARIES}
     )
+	if (OPS_INSTALL_LIBS)
     install(TARGETS ops_hdf5_mpi DESTINATION lib)
+	endif()
 endif()

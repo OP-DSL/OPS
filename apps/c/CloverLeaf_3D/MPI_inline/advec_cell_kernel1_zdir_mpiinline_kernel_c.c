@@ -15,38 +15,58 @@ int ydim4_advec_cell_kernel1_zdir;
 int xdim5_advec_cell_kernel1_zdir;
 int ydim5_advec_cell_kernel1_zdir;
 
+// user function
 
-//user function
+void advec_cell_kernel1_zdir_c_wrapper(double *restrict pre_vol_p,
+                                       double *restrict post_vol_p,
+                                       double *restrict volume_p,
+                                       double *restrict vol_flux_x_p,
+                                       double *restrict vol_flux_y_p,
+                                       double *restrict vol_flux_z_p,
+                                       int x_size, int y_size, int z_size) {
+#pragma omp parallel for
+  for (int n_z = 0; n_z < z_size; n_z++) {
+    for (int n_y = 0; n_y < y_size; n_y++) {
+      for (int n_x = 0; n_x < x_size; n_x++) {
+        ptr_double pre_vol = {
+            pre_vol_p + n_x * 1 + n_y * xdim0_advec_cell_kernel1_zdir * 1 +
+                n_z * xdim0_advec_cell_kernel1_zdir *
+                    ydim0_advec_cell_kernel1_zdir * 1,
+            xdim0_advec_cell_kernel1_zdir, ydim0_advec_cell_kernel1_zdir};
+        ptr_double post_vol = {
+            post_vol_p + n_x * 1 + n_y * xdim1_advec_cell_kernel1_zdir * 1 +
+                n_z * xdim1_advec_cell_kernel1_zdir *
+                    ydim1_advec_cell_kernel1_zdir * 1,
+            xdim1_advec_cell_kernel1_zdir, ydim1_advec_cell_kernel1_zdir};
+        const ptr_double volume = {
+            volume_p + n_x * 1 + n_y * xdim2_advec_cell_kernel1_zdir * 1 +
+                n_z * xdim2_advec_cell_kernel1_zdir *
+                    ydim2_advec_cell_kernel1_zdir * 1,
+            xdim2_advec_cell_kernel1_zdir, ydim2_advec_cell_kernel1_zdir};
+        const ptr_double vol_flux_x = {
+            vol_flux_x_p + n_x * 1 + n_y * xdim3_advec_cell_kernel1_zdir * 1 +
+                n_z * xdim3_advec_cell_kernel1_zdir *
+                    ydim3_advec_cell_kernel1_zdir * 1,
+            xdim3_advec_cell_kernel1_zdir, ydim3_advec_cell_kernel1_zdir};
+        const ptr_double vol_flux_y = {
+            vol_flux_y_p + n_x * 1 + n_y * xdim4_advec_cell_kernel1_zdir * 1 +
+                n_z * xdim4_advec_cell_kernel1_zdir *
+                    ydim4_advec_cell_kernel1_zdir * 1,
+            xdim4_advec_cell_kernel1_zdir, ydim4_advec_cell_kernel1_zdir};
+        const ptr_double vol_flux_z = {
+            vol_flux_z_p + n_x * 1 + n_y * xdim5_advec_cell_kernel1_zdir * 1 +
+                n_z * xdim5_advec_cell_kernel1_zdir *
+                    ydim5_advec_cell_kernel1_zdir * 1,
+            xdim5_advec_cell_kernel1_zdir, ydim5_advec_cell_kernel1_zdir};
 
-
-
-void advec_cell_kernel1_zdir_c_wrapper(
-  double * restrict pre_vol_p,
-  double * restrict post_vol_p,
-  double * restrict volume_p,
-  double * restrict vol_flux_x_p,
-  double * restrict vol_flux_y_p,
-  double * restrict vol_flux_z_p,
-  int x_size, int y_size, int z_size) {
-  #pragma omp parallel for
-  for ( int n_z=0; n_z<z_size; n_z++ ){
-    for ( int n_y=0; n_y<y_size; n_y++ ){
-      for ( int n_x=0; n_x<x_size; n_x++ ){
-        ptr_double pre_vol = { pre_vol_p + n_x*1 + n_y * xdim0_advec_cell_kernel1_zdir*1 + n_z * xdim0_advec_cell_kernel1_zdir * ydim0_advec_cell_kernel1_zdir*1, xdim0_advec_cell_kernel1_zdir, ydim0_advec_cell_kernel1_zdir};
-        ptr_double post_vol = { post_vol_p + n_x*1 + n_y * xdim1_advec_cell_kernel1_zdir*1 + n_z * xdim1_advec_cell_kernel1_zdir * ydim1_advec_cell_kernel1_zdir*1, xdim1_advec_cell_kernel1_zdir, ydim1_advec_cell_kernel1_zdir};
-        const ptr_double volume = { volume_p + n_x*1 + n_y * xdim2_advec_cell_kernel1_zdir*1 + n_z * xdim2_advec_cell_kernel1_zdir * ydim2_advec_cell_kernel1_zdir*1, xdim2_advec_cell_kernel1_zdir, ydim2_advec_cell_kernel1_zdir};
-        const ptr_double vol_flux_x = { vol_flux_x_p + n_x*1 + n_y * xdim3_advec_cell_kernel1_zdir*1 + n_z * xdim3_advec_cell_kernel1_zdir * ydim3_advec_cell_kernel1_zdir*1, xdim3_advec_cell_kernel1_zdir, ydim3_advec_cell_kernel1_zdir};
-        const ptr_double vol_flux_y = { vol_flux_y_p + n_x*1 + n_y * xdim4_advec_cell_kernel1_zdir*1 + n_z * xdim4_advec_cell_kernel1_zdir * ydim4_advec_cell_kernel1_zdir*1, xdim4_advec_cell_kernel1_zdir, ydim4_advec_cell_kernel1_zdir};
-        const ptr_double vol_flux_z = { vol_flux_z_p + n_x*1 + n_y * xdim5_advec_cell_kernel1_zdir*1 + n_z * xdim5_advec_cell_kernel1_zdir * ydim5_advec_cell_kernel1_zdir*1, xdim5_advec_cell_kernel1_zdir, ydim5_advec_cell_kernel1_zdir};
-        
-
-  OPS_ACC(pre_vol, 0,0,0) = OPS_ACC(volume, 0,0,0) +
-                         ( OPS_ACC(vol_flux_x, 1,0,0) - OPS_ACC(vol_flux_x, 0,0,0) +
-                           OPS_ACC(vol_flux_y, 0,1,0) - OPS_ACC(vol_flux_y, 0,0,0) +
-                           OPS_ACC(vol_flux_z, 0,0,1) - OPS_ACC(vol_flux_z, 0,0,0));
-  OPS_ACC(post_vol, 0,0,0) = OPS_ACC(pre_vol, 0,0,0) - ( OPS_ACC(vol_flux_z, 0,0,1) - OPS_ACC(vol_flux_z, 0,0,0));
-
-
+        OPS_ACC(pre_vol, 0, 0, 0) =
+            OPS_ACC(volume, 0, 0, 0) +
+            (OPS_ACC(vol_flux_x, 1, 0, 0) - OPS_ACC(vol_flux_x, 0, 0, 0) +
+             OPS_ACC(vol_flux_y, 0, 1, 0) - OPS_ACC(vol_flux_y, 0, 0, 0) +
+             OPS_ACC(vol_flux_z, 0, 0, 1) - OPS_ACC(vol_flux_z, 0, 0, 0));
+        OPS_ACC(post_vol, 0, 0, 0) =
+            OPS_ACC(pre_vol, 0, 0, 0) -
+            (OPS_ACC(vol_flux_z, 0, 0, 1) - OPS_ACC(vol_flux_z, 0, 0, 0));
       }
     }
   }

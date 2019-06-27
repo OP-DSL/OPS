@@ -88,6 +88,8 @@ module OPS_Fortran_Declarations
     type(c_ptr)         :: name        ! name if the dat
     type(c_ptr)         :: type        ! data type
     integer(kind=c_int) :: dirty_hd    ! flag to indicate dirty status on host and device
+    integer(kind=c_int) :: locked_hd   ! flag to indicate that the user has obtained a raw data pointer,
+                                       ! and whether the raw pointer is held on the host or device
     integer(kind=c_int) :: user_managed! indicates whether the user is managing memory
     integer(kind=c_int) :: is_hdf5     ! indicates whether the data is to read from an hdf5 file
     type(c_ptr)         :: hdf5_file   ! name of hdf5 file from which this dataset was read

@@ -31,7 +31,7 @@
 */
 
 /** @file
-  * @brief OPS API calls and wrapper routins for Tridiagonal solvers
+  * @brief OPS API calls and wrapper routines for Tridiagonal solvers
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implementations of the OPS API calls, wrapper routines and other
   * functions for interfacing with external Tridiagonal libraries
@@ -50,7 +50,7 @@ void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
 }
 
 void ops_tridMultiDimBatch(
-    int ndim,      // number of dimsnsions, ndim <= MAXDIM = 8
+    int ndim,      // number of dimensions, ndim <= MAXDIM = 8
     int solvedim,  // user chosen dimension to perform solve
     int *dims,     // array containing the sizes of each ndim dimensions
     ops_dat a, ops_dat b, ops_dat c,  // left hand side coefficients of a
@@ -75,7 +75,7 @@ void ops_tridMultiDimBatch(
   in the x-lines and so is inefficient.
 
   In the ADI example currently the mesh size is 256^3 and so we are
-  32/54 bit alighed, thus we do not see any performance definiencies
+  32/64 bit aligned, thus we do not see any performance deficiencies
   but other sizes will show this issue
 
   As such we will need to think on how to pad arrays.
@@ -85,7 +85,7 @@ void ops_tridMultiDimBatch(
 }
 
 void ops_tridMultiDimBatch_Inc(
-    int ndim,      // number of dimsnsions, ndim <= MAXDIM = 8
+    int ndim,      // number of dimensions, ndim <= MAXDIM = 8
     int solvedim,  // user chosen dimension to perform solve
     int *dims,     // array containing the sizes of each ndim dimensions
     ops_dat a, ops_dat b, ops_dat c,  // left hand side coefficients of a

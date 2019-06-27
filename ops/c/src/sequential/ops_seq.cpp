@@ -54,6 +54,61 @@ void _ops_exit(OPS_instance *instance) {
 
 void ops_exit() { ops_exit_core(OPS_instance::getOPSInstance()); }
 
+
+/**
+ * Make a new dat identical to orig_dat and enqueue a kernel to do the 
+ * data copy
+ */
+ops_dat ops_dat_copy(ops_dat orig_dat) 
+{
+   // Allocate an empty dat on a block
+   // The block has no internal data buffers
+  ops_dat dat = ops_dat_alloc_core(orig_dat->block);
+  // Do a deep copy from orig_dat into the new dat
+  ops_dat_deep_copy(dat, orig_dat);
+  return dat;
+}
+
+void ops_dat_deep_copy(ops_dat target, ops_dat source) 
+{
+   /* The constraint is that OPS makes it very easy for users to alias ops_dats.  A deep copy
+    * should work even if dats have been aliased.  Suppose a user has written something like
+    *
+    *    ops_dat x = ops_decl_dat( ... );
+    *    ops_dat y = ops_decl_dat( ... );
+    *    ops_dat z = x;
+    *    ops_dat_deep_copy(x, y);
+    *
+    * In this case we cannot call ops_free_dat(x) since that would leave 'z' pointing at invalid memory.
+    * OPS has no knowledge of 'z' - there is no entry in any internal tables corresponding to 'z'.
+    * Hence the only way this function can work is if we leave (*x) intact (i.e the ops_dat_core pointed at
+    * by x) and change the entries inside the ops_dat_core.  Then 'z' will continue to point at valid data.
+    *
+    * If the blocks in source and target are different, then the deep copy could entail MPI re-distribution of 
+    * data. For the moment, perhaps we ignore this ... ?
+    */
+
+   // Copy the metadata.  This will reallocate target->data if necessary
+   ops_dat_copy_metadata_core(target, source);
+   // Metadata and buffers are set up
+   // Enqueue a lazy copy of data from source to target
+
+  int range[2*OPS_MAX_DIM];
+  for (int i = 0; i < source->block->dims; i++) {
+    range[2*i] = source->base[i] + source->d_m[i];
+    range[2*i+1] = range[2*i] + source->size[i];
+  }
+  for (int i = source->block->dims; i < OPS_MAX_DIM; i++) {
+    range[2*i] = 0;
+    range[2*i+1] = 1;
+  }
+  ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, source, range);
+  desc->name = "ops_internal_copy_seq";
+  desc->device = 0;
+  desc->function = ops_internal_copy_seq;
+  ops_enqueue_kernel(desc);
+}
+
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
                           int *d_m, int *d_p, int *stride, char *data, int type_size,
                           char const *type, char const *name) {
@@ -77,7 +132,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     // Allocate memory immediately
     size_t bytes = size * type_size;
 
-    // Compute    padding x-dim for vecotrization
+    // Compute    padding x-dim for vectorization
     int x_pad = (1+((dat->size[0]-1)/SIMD_VEC))*SIMD_VEC - dat->size[0];
     dat->size[0] += x_pad;
     dat->d_p[0] += x_pad;
@@ -465,6 +520,15 @@ void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
   handle->initialized = 0;
 }
 
+void ops_free_dat(ops_dat dat) {
+   // This just delegates to _ops_free_dat
+  delete dat;
+}
+
+void _ops_free_dat(ops_dat dat) {
+  ops_free_dat_core(dat);
+}
+
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
   ops_print_dat_to_txtfile_core(dat, file_name);
 }
@@ -481,6 +545,21 @@ void ops_get_data(ops_dat dat) {
 void ops_put_data(ops_dat dat) {
   // data already on the host .. do nothing
   (void)dat;
+}
+
+void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace) {
+  ops_dat_fetch_data_host(dat, part, data);
+}
+
+void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *range, ops_memspace memspace) {
+  ops_dat_fetch_data_slab_host(dat, part, data, range);
+}
+void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace) {
+  ops_dat_set_data_host(dat, part, data);
+}
+
+void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *range, ops_memspace memspace) {
+  ops_dat_set_data_slab_host(dat, part, data, range);
 }
 
 void ops_decl_const_char(int dim, char const *type, int typeSize, char *data,
@@ -502,13 +581,23 @@ void ops_partition(const char *routine) {
 }
 
 void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
-  (void)nargs;
-  (void)args;
+  for (int i = 0; i < nargs; i++) {
+    if (args[i].argtype == OPS_ARG_DAT &&
+        args[i].dat->locked_hd > 0) {
+      OPSException ex(OPS_RUNTIME_ERROR, "ERROR: ops_par_loops involving datasets for which raw pointers have not been released are not allowed");
+      throw ex;
+    }
+  }
 }
 
 void ops_H_D_exchanges_device(ops_arg *args, int nargs) {
-  (void)nargs;
-  (void)args;
+  for (int i = 0; i < nargs; i++) {
+    if (args[i].argtype == OPS_ARG_DAT &&
+        args[i].dat->locked_hd > 0) {
+      OPSException ex(OPS_RUNTIME_ERROR, "ERROR: ops_par_loops involving datasets for which raw pointers have not been released are not allowed");
+      throw ex;
+    }
+  }
 }
 
 void ops_set_dirtybit_device(ops_arg *args, int nargs) {

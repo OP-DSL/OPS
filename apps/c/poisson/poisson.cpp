@@ -249,6 +249,7 @@ int main(int argc, char **argv)
     if (ngrid_x>1 || ngrid_y>1) ops_halo_transfer(u_halos);
     if (iter%itertile == 0) ops_execute(blocks[0]->instance);
 
+
     for (int j = 0; j < ngrid_y; j++) {
       for (int i = 0; i < ngrid_x; i++) {
         int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
@@ -277,6 +278,7 @@ int main(int argc, char **argv)
 				}
 			}
 		}
+    if (iter == 5) u[0] = ops_dat_copy(u[0]); //TESTING
   }
 	ops_execute(blocks[0]->instance);
   ops_timers(&ct0, &it1);

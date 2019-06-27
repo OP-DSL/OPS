@@ -31,7 +31,7 @@
 */
 
 /** @file
-  * @brief OPS API calls and wrapper routins for Tridiagonal solvers
+  * @brief OPS API calls and wrapper routines for Tridiagonal solvers
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implementations of the OPS API calls, wrapper routines and other
   * functions for interfacing with external Tridiagonal libraries
@@ -48,7 +48,7 @@ extern "C" {
 #endif
 
 void ops_tridMultiDimBatch_Inc(
-    int ndim,     // number of dimsnsions, ndim <= MAXDIM = 8
+    int ndim,     // number of dimensions, ndim <= MAXDIM = 8
     int solvedim, // user chosen dimension to perform solve
     int *dims,    // array containing the sizes of each ndim dimensions
     ops_dat a, ops_dat b, ops_dat c, // left hand side coefficients of a
@@ -73,7 +73,7 @@ void ops_tridMultiDimBatch_Inc(
 }
 
 void ops_tridMultiDimBatch(
-    int ndim,     // number of dimsnsions, ndim <= MAXDIM = 8
+    int ndim,     // number of dimensions, ndim <= MAXDIM = 8
     int solvedim, // user chosen dimension to perform solve
     int *dims,    // array containing the sizes of each ndim dimensions
     ops_dat a, ops_dat b, ops_dat c, // left hand side coefficients of a

@@ -7,7 +7,7 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64:enable
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 #include "user_types.h"
 #define OPS_2D
@@ -17,13 +17,13 @@
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a,b) ((a<b) ? (a) : (b))
+#define MIN(a, b) ((a < b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a,b) ((a>b) ? (a) : (b))
+#define MAX(a, b) ((a > b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
+#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -45,122 +45,116 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-//user function
+// user function
 
-void PdV_kernel_nopredict(const ptr_double xarea,
-  const ptr_double xvel0,
-  const ptr_double xvel1,
-  const ptr_double yarea,
-  const ptr_double yvel0,
-  const ptr_double yvel1,
-  ptr_double volume_change,
-  const ptr_double volume,
-  const ptr_double pressure,
-  const ptr_double density0,
-  ptr_double density1,
-  const ptr_double viscosity,
-  const ptr_double energy0,
-  ptr_double energy1, const double dt)
-{
-
+void PdV_kernel_nopredict(const ptr_double xarea, const ptr_double xvel0,
+                          const ptr_double xvel1, const ptr_double yarea,
+                          const ptr_double yvel0, const ptr_double yvel1,
+                          ptr_double volume_change, const ptr_double volume,
+                          const ptr_double pressure, const ptr_double density0,
+                          ptr_double density1, const ptr_double viscosity,
+                          const ptr_double energy0, ptr_double energy1,
+                          const double dt) {
 
   double recip_volume, energy_change;
   double right_flux, left_flux, top_flux, bottom_flux, total_flux;
 
-  left_flux = ( OPS_ACCS(xarea, 0,0) * ( OPS_ACCS(xvel0, 0,0) + OPS_ACCS(xvel0, 0,1) +
-                                OPS_ACCS(xvel1, 0,0) + OPS_ACCS(xvel1, 0,1) ) ) * 0.25 * dt;
-  right_flux = ( OPS_ACCS(xarea, 1,0) * ( OPS_ACCS(xvel0, 1,0) + OPS_ACCS(xvel0, 1,1) +
-                                 OPS_ACCS(xvel1, 1,0) + OPS_ACCS(xvel1, 1,1) ) ) * 0.25 * dt;
+  left_flux = (OPS_ACCS(xarea, 0, 0) *
+               (OPS_ACCS(xvel0, 0, 0) + OPS_ACCS(xvel0, 0, 1) +
+                OPS_ACCS(xvel1, 0, 0) + OPS_ACCS(xvel1, 0, 1))) *
+              0.25 * dt;
+  right_flux = (OPS_ACCS(xarea, 1, 0) *
+                (OPS_ACCS(xvel0, 1, 0) + OPS_ACCS(xvel0, 1, 1) +
+                 OPS_ACCS(xvel1, 1, 0) + OPS_ACCS(xvel1, 1, 1))) *
+               0.25 * dt;
 
-  bottom_flux = ( OPS_ACCS(yarea, 0,0) * ( OPS_ACCS(yvel0, 0,0) + OPS_ACCS(yvel0, 1,0) +
-                                  OPS_ACCS(yvel1, 0,0) + OPS_ACCS(yvel1, 1,0) ) ) * 0.25* dt;
-  top_flux = ( OPS_ACCS(yarea, 0,1) * ( OPS_ACCS(yvel0, 0,1) + OPS_ACCS(yvel0, 1,1) +
-                               OPS_ACCS(yvel1, 0,1) + OPS_ACCS(yvel1, 1,1) ) ) * 0.25 * dt;
+  bottom_flux = (OPS_ACCS(yarea, 0, 0) *
+                 (OPS_ACCS(yvel0, 0, 0) + OPS_ACCS(yvel0, 1, 0) +
+                  OPS_ACCS(yvel1, 0, 0) + OPS_ACCS(yvel1, 1, 0))) *
+                0.25 * dt;
+  top_flux = (OPS_ACCS(yarea, 0, 1) *
+              (OPS_ACCS(yvel0, 0, 1) + OPS_ACCS(yvel0, 1, 1) +
+               OPS_ACCS(yvel1, 0, 1) + OPS_ACCS(yvel1, 1, 1))) *
+             0.25 * dt;
 
   total_flux = right_flux - left_flux + top_flux - bottom_flux;
 
-  OPS_ACCS(volume_change, 0,0) = (OPS_ACCS(volume, 0,0))/(OPS_ACCS(volume, 0,0) + total_flux);
+  OPS_ACCS(volume_change, 0, 0) =
+      (OPS_ACCS(volume, 0, 0)) / (OPS_ACCS(volume, 0, 0) + total_flux);
 
+  recip_volume = 1.0 / OPS_ACCS(volume, 0, 0);
 
-
-
-  recip_volume = 1.0/OPS_ACCS(volume, 0,0);
-
-  energy_change = ( OPS_ACCS(pressure, 0,0)/OPS_ACCS(density0, 0,0) +
-                    OPS_ACCS(viscosity, 0,0)/OPS_ACCS(density0, 0,0) ) * total_flux * recip_volume;
-  OPS_ACCS(energy1, 0,0) = OPS_ACCS(energy0, 0,0) - energy_change;
-  OPS_ACCS(density1, 0,0) = OPS_ACCS(density0, 0,0) * OPS_ACCS(volume_change, 0,0);
-
+  energy_change = (OPS_ACCS(pressure, 0, 0) / OPS_ACCS(density0, 0, 0) +
+                   OPS_ACCS(viscosity, 0, 0) / OPS_ACCS(density0, 0, 0)) *
+                  total_flux * recip_volume;
+  OPS_ACCS(energy1, 0, 0) = OPS_ACCS(energy0, 0, 0) - energy_change;
+  OPS_ACCS(density1, 0, 0) =
+      OPS_ACCS(density0, 0, 0) * OPS_ACCS(volume_change, 0, 0);
 }
 
-
 __kernel void ops_PdV_kernel_nopredict(
-__global const double* restrict arg0,
-__global const double* restrict arg1,
-__global const double* restrict arg2,
-__global const double* restrict arg3,
-__global const double* restrict arg4,
-__global const double* restrict arg5,
-__global double* restrict arg6,
-__global const double* restrict arg7,
-__global const double* restrict arg8,
-__global const double* restrict arg9,
-__global double* restrict arg10,
-__global const double* restrict arg11,
-__global const double* restrict arg12,
-__global double* restrict arg13,
-const double dt,
-const int base0,
-const int base1,
-const int base2,
-const int base3,
-const int base4,
-const int base5,
-const int base6,
-const int base7,
-const int base8,
-const int base9,
-const int base10,
-const int base11,
-const int base12,
-const int base13,
-const int size0,
-const int size1 ){
-
+    __global const double *restrict arg0, __global const double *restrict arg1,
+    __global const double *restrict arg2, __global const double *restrict arg3,
+    __global const double *restrict arg4, __global const double *restrict arg5,
+    __global double *restrict arg6, __global const double *restrict arg7,
+    __global const double *restrict arg8, __global const double *restrict arg9,
+    __global double *restrict arg10, __global const double *restrict arg11,
+    __global const double *restrict arg12, __global double *restrict arg13,
+    const double dt, const int base0, const int base1, const int base2,
+    const int base3, const int base4, const int base5, const int base6,
+    const int base7, const int base8, const int base9, const int base10,
+    const int base11, const int base12, const int base13, const int size0,
+    const int size1) {
 
   int idx_y = get_global_id(1);
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_PdV_kernel_nopredict], xdim0_PdV_kernel_nopredict};
-    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_PdV_kernel_nopredict], xdim1_PdV_kernel_nopredict};
-    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_PdV_kernel_nopredict], xdim2_PdV_kernel_nopredict};
-    const ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_PdV_kernel_nopredict], xdim3_PdV_kernel_nopredict};
-    const ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_PdV_kernel_nopredict], xdim4_PdV_kernel_nopredict};
-    const ptr_double ptr5 = { &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_PdV_kernel_nopredict], xdim5_PdV_kernel_nopredict};
-    ptr_double ptr6 = { &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_PdV_kernel_nopredict], xdim6_PdV_kernel_nopredict};
-    const ptr_double ptr7 = { &arg7[base7 + idx_x * 1*1 + idx_y * 1*1 * xdim7_PdV_kernel_nopredict], xdim7_PdV_kernel_nopredict};
-    const ptr_double ptr8 = { &arg8[base8 + idx_x * 1*1 + idx_y * 1*1 * xdim8_PdV_kernel_nopredict], xdim8_PdV_kernel_nopredict};
-    const ptr_double ptr9 = { &arg9[base9 + idx_x * 1*1 + idx_y * 1*1 * xdim9_PdV_kernel_nopredict], xdim9_PdV_kernel_nopredict};
-    ptr_double ptr10 = { &arg10[base10 + idx_x * 1*1 + idx_y * 1*1 * xdim10_PdV_kernel_nopredict], xdim10_PdV_kernel_nopredict};
-    const ptr_double ptr11 = { &arg11[base11 + idx_x * 1*1 + idx_y * 1*1 * xdim11_PdV_kernel_nopredict], xdim11_PdV_kernel_nopredict};
-    const ptr_double ptr12 = { &arg12[base12 + idx_x * 1*1 + idx_y * 1*1 * xdim12_PdV_kernel_nopredict], xdim12_PdV_kernel_nopredict};
-    ptr_double ptr13 = { &arg13[base13 + idx_x * 1*1 + idx_y * 1*1 * xdim13_PdV_kernel_nopredict], xdim13_PdV_kernel_nopredict};
-    PdV_kernel_nopredict(ptr0,
-               ptr1,
-               ptr2,
-               ptr3,
-               ptr4,
-               ptr5,
-               ptr6,
-               ptr7,
-               ptr8,
-               ptr9,
-               ptr10,
-               ptr11,
-               ptr12,
-               ptr13,
-               dt);
+    const ptr_double ptr0 = {&arg0[base0 + idx_x * 1 * 1 +
+                                   idx_y * 1 * 1 * xdim0_PdV_kernel_nopredict],
+                             xdim0_PdV_kernel_nopredict};
+    const ptr_double ptr1 = {&arg1[base1 + idx_x * 1 * 1 +
+                                   idx_y * 1 * 1 * xdim1_PdV_kernel_nopredict],
+                             xdim1_PdV_kernel_nopredict};
+    const ptr_double ptr2 = {&arg2[base2 + idx_x * 1 * 1 +
+                                   idx_y * 1 * 1 * xdim2_PdV_kernel_nopredict],
+                             xdim2_PdV_kernel_nopredict};
+    const ptr_double ptr3 = {&arg3[base3 + idx_x * 1 * 1 +
+                                   idx_y * 1 * 1 * xdim3_PdV_kernel_nopredict],
+                             xdim3_PdV_kernel_nopredict};
+    const ptr_double ptr4 = {&arg4[base4 + idx_x * 1 * 1 +
+                                   idx_y * 1 * 1 * xdim4_PdV_kernel_nopredict],
+                             xdim4_PdV_kernel_nopredict};
+    const ptr_double ptr5 = {&arg5[base5 + idx_x * 1 * 1 +
+                                   idx_y * 1 * 1 * xdim5_PdV_kernel_nopredict],
+                             xdim5_PdV_kernel_nopredict};
+    ptr_double ptr6 = {&arg6[base6 + idx_x * 1 * 1 +
+                             idx_y * 1 * 1 * xdim6_PdV_kernel_nopredict],
+                       xdim6_PdV_kernel_nopredict};
+    const ptr_double ptr7 = {&arg7[base7 + idx_x * 1 * 1 +
+                                   idx_y * 1 * 1 * xdim7_PdV_kernel_nopredict],
+                             xdim7_PdV_kernel_nopredict};
+    const ptr_double ptr8 = {&arg8[base8 + idx_x * 1 * 1 +
+                                   idx_y * 1 * 1 * xdim8_PdV_kernel_nopredict],
+                             xdim8_PdV_kernel_nopredict};
+    const ptr_double ptr9 = {&arg9[base9 + idx_x * 1 * 1 +
+                                   idx_y * 1 * 1 * xdim9_PdV_kernel_nopredict],
+                             xdim9_PdV_kernel_nopredict};
+    ptr_double ptr10 = {&arg10[base10 + idx_x * 1 * 1 +
+                               idx_y * 1 * 1 * xdim10_PdV_kernel_nopredict],
+                        xdim10_PdV_kernel_nopredict};
+    const ptr_double ptr11 = {
+        &arg11[base11 + idx_x * 1 * 1 +
+               idx_y * 1 * 1 * xdim11_PdV_kernel_nopredict],
+        xdim11_PdV_kernel_nopredict};
+    const ptr_double ptr12 = {
+        &arg12[base12 + idx_x * 1 * 1 +
+               idx_y * 1 * 1 * xdim12_PdV_kernel_nopredict],
+        xdim12_PdV_kernel_nopredict};
+    ptr_double ptr13 = {&arg13[base13 + idx_x * 1 * 1 +
+                               idx_y * 1 * 1 * xdim13_PdV_kernel_nopredict],
+                        xdim13_PdV_kernel_nopredict};
+    PdV_kernel_nopredict(ptr0, ptr1, ptr2, ptr3, ptr4, ptr5, ptr6, ptr7, ptr8,
+                         ptr9, ptr10, ptr11, ptr12, ptr13, dt);
   }
-
 }

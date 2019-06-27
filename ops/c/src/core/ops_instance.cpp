@@ -113,6 +113,12 @@ void OPS_instance::init_globals() {
 	opencl_instance = NULL;
 
   is_initialised = 1;
+  char buf[20];
+  int points[OPS_MAX_DIM] = {0};
+  for (int i = 0; i < OPS_MAX_DIM; i++) {
+    sprintf(buf, "OPS_internal_0_%d\n", i+1);
+    OPS_internal_0[i] = this->decl_stencil(i+1, 1, points, buf);
+  }
 }
 
 OPS_instance::OPS_instance(const int argc, const char * const argv[], const int diags_level, std::ostream &s) {
@@ -191,8 +197,7 @@ void OPS_instance::exit() {
 
 
 //Forwarding calls for ops_dat
-
-void ops_dat_core::free() {_ops_free_dat(this);}
+ops_dat_core::~ops_dat_core() {_ops_free_dat(this);}
 void ops_dat_core::print_to_txtfile(const char *file_name) {ops_print_dat_to_txtfile(this, file_name);}
 void ops_dat_core::get_data() {ops_get_data(this);}
 int  ops_dat_core::get_local_npartitions() { return ops_dat_get_local_npartitions(this); }
@@ -200,8 +205,12 @@ void ops_dat_core::get_extents(int part, int *disp, int *size) { ops_dat_get_ext
 void ops_dat_core::get_raw_metadata(int part, int *disp, int *size, int *stride, int *d_m, int *d_p) { ops_dat_get_raw_metadata(this, part, disp, size, stride, d_m, d_p); }
 char* ops_dat_core::get_raw_pointer(int part, ops_stencil stencil, ops_memspace *memspace) { return ops_dat_get_raw_pointer(this, part, stencil, memspace); }
 void ops_dat_core::release_raw_data(int part, ops_access acc) { ops_dat_release_raw_data(this, part, acc); }
-void ops_dat_core::fetch_data(int part, char *data) { ops_dat_fetch_data(this, part, data); }
-void ops_dat_core::set_data(int part, char *data) { ops_dat_set_data(this, part, data); }
+void ops_dat_core::release_raw_data(int part, ops_access acc, ops_memspace *memspace) { ops_dat_release_raw_data_memspace(this, part, acc, memspace); }
+void ops_dat_core::fetch_data(int part, char *data, ops_memspace memspace) {ops_dat_fetch_data_memspace(this, part, data, memspace);}
+void ops_dat_core::fetch_data_slab(int part, char *data, int *range, ops_memspace memspace) {ops_dat_fetch_data_slab_memspace(this, part, data, range, memspace);}
+void ops_dat_core::set_data(int part, char *data, ops_memspace memspace) { ops_dat_set_data_memspace(this, part, data, memspace); }
+void ops_dat_core::set_data_slab(int part, char *data, int *range, ops_memspace memspace) { ops_dat_set_data_slab_memspace(this, part, data, range, memspace); }
+size_t ops_dat_core::get_slab_extents(int part, int *disp, int *size, int *slab) {return ops_dat_get_slab_extents(this, part, disp, size, slab);}
 int ops_dat_core::get_global_npartitions() { return ops_dat_get_global_npartitions(this); }
 
 void ops_halo_group_core::halo_transfer() {ops_halo_transfer(this);}

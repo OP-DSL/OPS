@@ -42,6 +42,7 @@
 #include <mpi.h>
 #include <ops_mpi_core.h>
 #include <ops_exceptions.h>
+#include <cassert>
 
 #define AGGREGATE
 int ops_buffer_size = 0;
@@ -742,7 +743,7 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
       id_m = OPS_sub_block_list[dat->block->index]
                  ->id_m[dim]; // neighbor in negative direction
       id_p = OPS_sub_block_list[dat->block->index]
-                 ->id_p[dim]; // neighbor in possitive direction
+                 ->id_p[dim]; // neighbor in positive direction
       int d_pos = 0, d_neg = 0;
       for (int p = 0; p < args[i].stencil->points; p++) {
         d_pos = MAX(d_pos, args[i].stencil->stencil[dat_ndim * p + dim]);
@@ -854,7 +855,7 @@ void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
       id_m = OPS_sub_block_list[dat->block->index]
                  ->id_m[dim]; // neighbor in negative direction
       id_p = OPS_sub_block_list[dat->block->index]
-                 ->id_p[dim]; // neighbor in possitive direction
+                 ->id_p[dim]; // neighbor in positive direction
       
       ops_exchange_halo_packer_given(dat, &depths[OPS_MAX_DIM*4*i + dim*4], dim,
                                  send_recv_offsets);
@@ -903,319 +904,155 @@ void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
   }
 }
 
-void ops_mpi_reduce_double(ops_arg *arg, double *data) {
-  (void)data;
-  // if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
-  std::vector<double> result(arg->dim * ops_comm_global_size);
-
-  if (arg->acc == OPS_INC) // global reduction
-    MPI_Allreduce((double *)arg->data, result.data(), arg->dim, MPI_DOUBLE, MPI_SUM,
-                  OPS_MPI_GLOBAL);
-  else if (arg->acc == OPS_MAX) // global maximum
-    MPI_Allreduce((double *)arg->data, result.data(), arg->dim, MPI_DOUBLE, MPI_MAX,
-                  OPS_MPI_GLOBAL);
-  else if (arg->acc == OPS_MIN) // global minimum
-    MPI_Allreduce((double *)arg->data, result.data(), arg->dim, MPI_DOUBLE, MPI_MIN,
-                  OPS_MPI_GLOBAL);
-  else if (arg->acc == OPS_WRITE) { // any
-    MPI_Allgather((double *)arg->data, arg->dim, MPI_DOUBLE, result.data(), arg->dim,
-                  MPI_DOUBLE, OPS_MPI_GLOBAL);
-    for (int i = 1; i < ops_comm_global_size; i++) {
-      for (int j = 0; j < arg->dim; j++) {
-        if (result[i * arg->dim + j] != 0.0)
-          result[j] = result[i * arg->dim + j];
-      }
-    }
-  }
-  memcpy(arg->data, result.data(), sizeof(double) * arg->dim);
-  //}
+#define ops_reduce_gen(type, mpi_type, zero) \
+void ops_mpi_reduce_##type (ops_arg *arg, type *data) { \
+  std::vector< type > result(arg->dim * ops_comm_global_size); \
+\
+  if (arg->acc == OPS_INC) \
+    MPI_Allreduce((type *)arg->data, result.data(), arg->dim, mpi_type, MPI_SUM, \
+                  OPS_MPI_GLOBAL); \
+  else if (arg->acc == OPS_MAX) \
+    MPI_Allreduce((type *)arg->data, result.data(), arg->dim, mpi_type, MPI_MAX, \
+                  OPS_MPI_GLOBAL); \
+  else if (arg->acc == OPS_MIN) \
+    MPI_Allreduce((type *)arg->data, result.data(), arg->dim, mpi_type, MPI_MIN, \
+                  OPS_MPI_GLOBAL); \
+  else if (arg->acc == OPS_WRITE) { \
+    MPI_Allgather((type *)arg->data, arg->dim, mpi_type, result.data(), arg->dim, \
+                  MPI_DOUBLE, OPS_MPI_GLOBAL); \
+    for (int i = 1; i < ops_comm_global_size; i++) { \
+      for (int j = 0; j < arg->dim; j++) { \
+        if (result[i * arg->dim + j] != zero) \
+          result[j] = result[i * arg->dim + j]; \
+      } \
+    } \
+  } \
+  memcpy(arg->data, result.data(), sizeof(type) * arg->dim); \
 }
 
-void ops_mpi_reduce_float(ops_arg *arg, float *data) {
-  (void)data;
+ops_reduce_gen(double, MPI_DOUBLE, 0.0)
+ops_reduce_gen(float, MPI_FLOAT, 0.0f)
+ops_reduce_gen(int, MPI_INT, 0)
+ops_reduce_gen(char, MPI_CHAR, 0)
+ops_reduce_gen(short, MPI_SHORT, 0)
+ops_reduce_gen(long, MPI_LONG, 0)
+ops_reduce_gen(ll, MPI_LONG_LONG, 0)
+ops_reduce_gen(ull, MPI_UNSIGNED_LONG_LONG, 0)
+ops_reduce_gen(ul, MPI_UNSIGNED_LONG, 0)
+ops_reduce_gen(uint, MPI_UNSIGNED, 0)
+ops_reduce_gen(complexd, MPI_C_DOUBLE_COMPLEX, complexd(0.0,0.0))
+ops_reduce_gen(complexf, MPI_C_FLOAT_COMPLEX, complexf(0.0f,0.0f))
 
-  // if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
-  std::vector<float> result(arg->dim * ops_comm_global_size);
 
-  if (arg->acc == OPS_INC) // global reduction
-    MPI_Allreduce((float *)arg->data, result.data(), arg->dim, MPI_FLOAT, MPI_SUM,
-                  OPS_MPI_GLOBAL);
-  else if (arg->acc == OPS_MAX) // global maximum
-    MPI_Allreduce((float *)arg->data, result.data(), arg->dim, MPI_FLOAT, MPI_MAX,
-                  OPS_MPI_GLOBAL);
-  else if (arg->acc == OPS_MIN) // global minimum
-    MPI_Allreduce((float *)arg->data, result.data(), arg->dim, MPI_FLOAT, MPI_MIN,
-                  OPS_MPI_GLOBAL);
-  else if (arg->acc == OPS_WRITE) { // any
-    MPI_Allgather((float *)arg->data, arg->dim, MPI_FLOAT, result.data(), arg->dim,
-                  MPI_FLOAT, OPS_MPI_GLOBAL);
-    for (int i = 1; i < ops_comm_global_size; i++) {
-      for (int j = 0; j < arg->dim; j++) {
-        if (result[i * arg->dim + j] != 0.0f)
-          result[j] = result[i * arg->dim + j];
-      }
-    }
-  }
-  memcpy(arg->data, result.data(), sizeof(float) * arg->dim);
-  //}
-}
 
-void ops_mpi_reduce_int(ops_arg *arg, int *data) {
-  (void)data;
+#define ops_reduce_exec(type, zero) \
+    std::vector< type > local(handle->size); \
+    memcpy(local.data(), handle->data, handle->size); \
+    for (int i = 1; i < OPS_instance::getOPSInstance()->OPS_block_index; i++) { \
+      if (!OPS_sub_block_list[i]->owned) \
+        continue; \
+      if (handle->acc == OPS_MAX) \
+        for (unsigned int d = 0; d < handle->size / sizeof(type); d++) \
+          local[d] = MAX( \
+              local[d], ((type *)(handle->data + i * handle->size))[d]); \
+      if (handle->acc == OPS_MIN) \
+        for (unsigned int d = 0; d < handle->size / sizeof(type); d++) \
+          local[d] = MIN( \
+              local[d], ((type *)(handle->data + i * handle->size))[d]); \
+      if (handle->acc == OPS_INC) \
+        for (unsigned int d = 0; d < handle->size / sizeof(type); d++) \
+          local[d] += ((type *)(handle->data + i * handle->size))[d]; \
+      if (handle->acc == OPS_WRITE) \
+        for (unsigned int d = 0; d < handle->size / sizeof(type); d++) \
+          local[d] = \
+              ((type *)(handle->data + i * handle->size))[d] != zero \
+                  ? ((type *)(handle->data + i * handle->size))[d] \
+                  : local[d];\
+    } \
+    ops_arg arg; \
+    arg.data = (char*)local.data(); \
+    arg.acc = handle->acc; \
+    arg.dim = handle->size / sizeof(type); \
+    ops_mpi_reduce_##type (&arg, local.data()); \
+    memcpy(handle->data, local.data(), handle->size);
 
-  // if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
-  std::vector<int> result(arg->dim * ops_comm_global_size);
+#define MINC(a,b) (std::abs(a) < std::abs(b) ? (a) : (b))
+#define MAXC(a,b) (std::abs(a) < std::abs(b) ? (b) : (a))
 
-  if (arg->acc == OPS_INC) // global reduction
-    MPI_Allreduce((int *)arg->data, result.data(), arg->dim, MPI_INT, MPI_SUM,
-                  OPS_MPI_GLOBAL);
-  else if (arg->acc == OPS_MAX) // global maximum
-    MPI_Allreduce((int *)arg->data, result.data(), arg->dim, MPI_INT, MPI_MAX,
-                  OPS_MPI_GLOBAL);
-  else if (arg->acc == OPS_MIN) // global minimum
-    MPI_Allreduce((int *)arg->data, result.data(), arg->dim, MPI_INT, MPI_MIN,
-                  OPS_MPI_GLOBAL);
-  else if (arg->acc == OPS_WRITE) { // any
-    MPI_Allgather((int *)arg->data, arg->dim, MPI_INT, result.data(), arg->dim,
-                  MPI_INT, OPS_MPI_GLOBAL);
-    for (int i = 1; i < ops_comm_global_size; i++) {
-      for (int j = 0; j < arg->dim; j++) {
-        if (result[i * arg->dim + j] != 0)
-          result[j] = result[i * arg->dim + j];
-      }
-    }
-  }
-  memcpy(arg->data, result.data(), sizeof(int) * arg->dim);
-}
-
-void ops_mpi_reduce_complexd(ops_arg *arg, complexd *data) {
-  (void)data;
-  // if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
-  std::vector<complexd> result(arg->dim * ops_comm_global_size);
-
-  if (arg->acc == OPS_INC) // global reduction
-    MPI_Allreduce((complexd *)arg->data, result.data(), arg->dim, MPI_DOUBLE_COMPLEX, MPI_SUM,
-                  OPS_MPI_GLOBAL);
-  else if (arg->acc == OPS_MAX) // global maximum
-    MPI_Allreduce((complexd *)arg->data, result.data(), arg->dim, MPI_DOUBLE_COMPLEX, MPI_MAX,
-                  OPS_MPI_GLOBAL);
-  else if (arg->acc == OPS_MIN) // global minimum
-    MPI_Allreduce((complexd *)arg->data, result.data(), arg->dim, MPI_DOUBLE_COMPLEX, MPI_MIN,
-                  OPS_MPI_GLOBAL);
-  else if (arg->acc == OPS_WRITE) { // any
-    MPI_Allgather((complexd *)arg->data, arg->dim, MPI_DOUBLE_COMPLEX, result.data(), arg->dim,
-                  MPI_DOUBLE_COMPLEX, OPS_MPI_GLOBAL);
-    for (int i = 1; i < ops_comm_global_size; i++) {
-      for (int j = 0; j < arg->dim; j++) {
-        if (result[i * arg->dim + j] != complexd(0.0,0.0))
-          result[j] = result[i * arg->dim + j];
-      }
-    }
-  }
-  memcpy(arg->data, result.data(), sizeof(complexd) * arg->dim);
-  //}
-}
-
-void ops_mpi_reduce_complexf(ops_arg *arg, complexf *data) {
-  (void)data;
-  // if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
-  std::vector<complexf> result(arg->dim * ops_comm_global_size);
-
-  if (arg->acc == OPS_INC) // global reduction
-    MPI_Allreduce((complexf *)arg->data, result.data(), arg->dim, MPI_COMPLEX, MPI_SUM,
-                  OPS_MPI_GLOBAL);
-  else if (arg->acc == OPS_MAX) // global maximum
-    MPI_Allreduce((complexf *)arg->data, result.data(), arg->dim, MPI_COMPLEX, MPI_MAX,
-                  OPS_MPI_GLOBAL);
-  else if (arg->acc == OPS_MIN) // global minimum
-    MPI_Allreduce((complexf *)arg->data, result.data(), arg->dim, MPI_COMPLEX, MPI_MIN,
-                  OPS_MPI_GLOBAL);
-  else if (arg->acc == OPS_WRITE) { // any
-    MPI_Allgather((complexf *)arg->data, arg->dim, MPI_COMPLEX, result.data(), arg->dim,
-                  MPI_COMPLEX, OPS_MPI_GLOBAL);
-    for (int i = 1; i < ops_comm_global_size; i++) {
-      for (int j = 0; j < arg->dim; j++) {
-        if (result[i * arg->dim + j] != complexf(0.0f,0.0f))
-          result[j] = result[i * arg->dim + j];
-      }
-    }
-  }
-  memcpy(arg->data, result.data(), sizeof(complexf) * arg->dim);
-  //}
-}
+#define ops_reduce_exec_complex(type, zero) \
+    std::vector< type > local(handle->size); \
+    memcpy(local.data(), handle->data, handle->size); \
+    for (int i = 1; i < OPS_instance::getOPSInstance()->OPS_block_index; i++) { \
+      if (!OPS_sub_block_list[i]->owned) \
+        continue; \
+      if (handle->acc == OPS_MAX) \
+        for (unsigned int d = 0; d < handle->size / sizeof(type); d++) \
+          local[d] = MAXC( \
+              local[d], ((type *)(handle->data + i * handle->size))[d]); \
+      if (handle->acc == OPS_MIN) \
+        for (unsigned int d = 0; d < handle->size / sizeof(type); d++) \
+          local[d] = MINC( \
+              local[d], ((type *)(handle->data + i * handle->size))[d]); \
+      if (handle->acc == OPS_INC) \
+        for (unsigned int d = 0; d < handle->size / sizeof(type); d++) \
+          local[d] += ((type *)(handle->data + i * handle->size))[d]; \
+      if (handle->acc == OPS_WRITE) \
+        for (unsigned int d = 0; d < handle->size / sizeof(type); d++) \
+          local[d] = \
+              ((type *)(handle->data + i * handle->size))[d] != zero \
+                  ? ((type *)(handle->data + i * handle->size))[d] \
+                  : local[d];\
+    } \
+    ops_arg arg; \
+    arg.data = (char*)local.data(); \
+    arg.acc = handle->acc; \
+    arg.dim = handle->size / sizeof(type); \
+    ops_mpi_reduce_##type (&arg, local.data()); \
+    memcpy(handle->data, local.data(), handle->size);
 
 void ops_execute_reduction(ops_reduction handle) {
   if (strcmp(handle->type, "int") == 0 || strcmp(handle->type, "int(4)") == 0 ||
       strcmp(handle->type, "integer(4)") == 0 ||
       strcmp(handle->type, "integer") == 0) {
-    std::vector<int> local(handle->size);
-    memcpy(local.data(), handle->data, handle->size);
-    for (int i = 1; i < OPS_instance::getOPSInstance()->OPS_block_index; i++) {
-      if (!OPS_sub_block_list[i]->owned)
-        continue;
-      if (handle->acc == OPS_MAX)
-        for (unsigned int d = 0; d < handle->size / sizeof(int); d++)
-          local[d] = MAX(
-              local[d], ((int *)(handle->data + i * handle->size))[d]);
-      if (handle->acc == OPS_MIN)
-        for (unsigned int d = 0; d < handle->size / sizeof(int); d++)
-          local[d] = MIN(
-              local[d], ((int *)(handle->data + i * handle->size))[d]);
-      if (handle->acc == OPS_INC)
-        for (unsigned int d = 0; d < handle->size / sizeof(int); d++)
-          local[d] += ((int *)(handle->data + i * handle->size))[d];
-      if (handle->acc == OPS_WRITE)
-        for (unsigned int d = 0; d < handle->size / sizeof(int); d++)
-          local[d] =
-              ((int *)(handle->data + i * handle->size))[d] != 0
-                  ? ((int *)(handle->data + i * handle->size))[d]
-                  : local[d];
-    }
-    ops_arg arg;
-    arg.data = (char*)local.data();
-    arg.acc = handle->acc;
-    arg.dim = handle->size / sizeof(int);
-    ops_mpi_reduce_int(&arg, local.data());
+    ops_reduce_exec(int, 0)
   }
   if (strcmp(handle->type, "float") == 0 || strcmp(handle->type, "real") == 0) {
-    std::vector<float> local(handle->size);
-    memcpy(local.data(), handle->data, handle->size);
-    for (int i = 1; i < OPS_instance::getOPSInstance()->OPS_block_index; i++) {
-      if (!OPS_sub_block_list[i]->owned)
-        continue;
-      if (handle->acc == OPS_MAX)
-        for (unsigned int d = 0; d < handle->size / sizeof(float); d++)
-          local[d] =
-              MAX(local[d],
-                  ((float *)(handle->data + i * handle->size))[d]);
-      if (handle->acc == OPS_MIN)
-        for (unsigned int d = 0; d < handle->size / sizeof(float); d++)
-          local[d] =
-              MIN(local[d],
-                  ((float *)(handle->data + i * handle->size))[d]);
-      if (handle->acc == OPS_INC)
-        for (unsigned int d = 0; d < handle->size / sizeof(float); d++)
-          local[d] +=
-              ((float *)(handle->data + i * handle->size))[d];
-      if (handle->acc == OPS_WRITE)
-        for (unsigned int d = 0; d < handle->size / sizeof(float); d++)
-          local[d] =
-              ((float *)(handle->data + i * handle->size))[d] != 0.0f
-                  ? ((float *)(handle->data + i * handle->size))[d]
-                  : local[d];
-    }
-    ops_arg arg;
-    arg.data = (char*)local.data();
-    arg.acc = handle->acc;
-    arg.dim = handle->size / sizeof(float);
-    ops_mpi_reduce_float(&arg, local.data());
-    memcpy(handle->data, local.data(), handle->size);
+    ops_reduce_exec(float, 0.0f)
   }
   if (strcmp(handle->type, "double") == 0 ||
       strcmp(handle->type, "real(8)") == 0 ||
       strcmp(handle->type, "double precision") == 0) {
-    std::vector<double> local(handle->size);
-    memcpy(local.data(), handle->data, handle->size);
-    for (int i = 1; i < OPS_instance::getOPSInstance()->OPS_block_index; i++) {
-      if (!OPS_sub_block_list[i]->owned)
-        continue;
-      if (handle->acc == OPS_MAX)
-        for (unsigned int d = 0; d < handle->size / sizeof(double); d++)
-          local[d] =
-              MAX(local[d],
-                  ((double *)(handle->data + i * handle->size))[d]);
-      if (handle->acc == OPS_MIN)
-        for (unsigned int d = 0; d < handle->size / sizeof(double); d++)
-          local[d] =
-              MIN(local[d],
-                  ((double *)(handle->data + i * handle->size))[d]);
-      if (handle->acc == OPS_INC)
-        for (unsigned int d = 0; d < handle->size / sizeof(double); d++)
-          local[d] +=
-              ((double *)(handle->data + i * handle->size))[d];
-      if (handle->acc == OPS_WRITE)
-        for (unsigned int d = 0; d < handle->size / sizeof(double); d++)
-          local[d] =
-              ((double *)(handle->data + i * handle->size))[d] != 0.0
-                  ? ((double *)(handle->data + i * handle->size))[d]
-                  : local[d];
-    }
-    ops_arg arg;
-    arg.data = (char*)local.data();
-    arg.acc = handle->acc;
-    arg.dim = handle->size / sizeof(double);
-    ops_mpi_reduce_double(&arg, local.data());
-    memcpy(handle->data, local.data(), handle->size);
+    ops_reduce_exec(double, 0.0)
   }
-    if (strcmp(handle->type, "complexd") == 0) {
-    std::vector<complexd> local(handle->size);
-    memcpy(local.data(), handle->data, handle->size);
-    for (int i = 1; i < OPS_instance::getOPSInstance()->OPS_block_index; i++) {
-      if (!OPS_sub_block_list[i]->owned)
-        continue;
-      if (handle->acc == OPS_MAX)
-        for (unsigned int d = 0; d < handle->size / sizeof(complexd); d++)
-          local[d] =
-              MAX(std::abs(local[d]),
-                  std::abs(((complexd *)(handle->data + i * handle->size))[d]));
-      if (handle->acc == OPS_MIN)
-        for (unsigned int d = 0; d < handle->size / sizeof(complexd); d++)
-          local[d] =
-              MIN(std::abs(local[d]),
-                  std::abs(((complexd *)(handle->data + i * handle->size))[d]));
-      if (handle->acc == OPS_INC)
-        for (unsigned int d = 0; d < handle->size / sizeof(complexd); d++)
-          local[d] +=
-              ((complexd *)(handle->data + i * handle->size))[d];
-      if (handle->acc == OPS_WRITE)
-        for (unsigned int d = 0; d < handle->size / sizeof(complexd); d++)
-          local[d] =
-              ((complexd *)(handle->data + i * handle->size))[d] != complexd(0.0,0.0)
-                  ? ((complexd *)(handle->data + i * handle->size))[d]
-                  : local[d];
-    }
-    ops_arg arg;
-    arg.data = (char*)local.data();
-    arg.acc = handle->acc;
-    arg.dim = handle->size / sizeof(complexd);
-    ops_mpi_reduce_complexd(&arg, local.data());
-    memcpy(handle->data, local.data(), handle->size);
+  if (strcmp(handle->type, "complexd") == 0) {
+    ops_reduce_exec_complex(complexd, complexd(0.0,0.0))
+  }
+  if (strcmp(handle->type, "complexf") == 0) {
+    ops_reduce_exec_complex(complexf, complexf(0.0f,0.0f))
+  }
+  if (strcmp(handle->type, "char") == 0) {
+    ops_reduce_exec(char, 0)
+  }
+  if (strcmp(handle->type, "short") == 0) {
+    ops_reduce_exec(short, 0)
+  }
+  if (strcmp(handle->type, "long") == 0) {
+    ops_reduce_exec(long, 0)
+  }
+  if ((strcmp(handle->type, "long long") == 0) || (strcmp(handle->type, "ll") == 0)) {
+    ops_reduce_exec(ll, 0)
+  }
+  if ((strcmp(handle->type, "unsigned long long") == 0) || (strcmp(handle->type, "ull") == 0)) {
+    ops_reduce_exec(ull, 0)
+  }
+  if ((strcmp(handle->type, "unsigned long") == 0) || (strcmp(handle->type, "ul") == 0)) {
+    ops_reduce_exec(ul, 0)
+  }
+  if ((strcmp(handle->type, "unsigned int") == 0) || (strcmp(handle->type, "uint") == 0)) {
+    ops_reduce_exec(uint, 0)
   }
 
-    if (strcmp(handle->type, "complexf") == 0) {
-    std::vector<complexf> local(handle->size);
-    memcpy(local.data(), handle->data, handle->size);
-    for (int i = 1; i < OPS_instance::getOPSInstance()->OPS_block_index; i++) {
-      if (!OPS_sub_block_list[i]->owned)
-        continue;
-      if (handle->acc == OPS_MAX)
-        for (unsigned int d = 0; d < handle->size / sizeof(complexf); d++)
-          local[d] =
-              MAX(std::abs(local[d]),
-                  std::abs(((complexf *)(handle->data + i * handle->size))[d]));
-      if (handle->acc == OPS_MIN)
-        for (unsigned int d = 0; d < handle->size / sizeof(complexf); d++)
-          local[d] =
-              MIN(std::abs(local[d]),
-                  std::abs(((complexf *)(handle->data + i * handle->size))[d]));
-      if (handle->acc == OPS_INC)
-        for (unsigned int d = 0; d < handle->size / sizeof(complexf); d++)
-          local[d] +=
-              ((complexf *)(handle->data + i * handle->size))[d];
-      if (handle->acc == OPS_WRITE)
-        for (unsigned int d = 0; d < handle->size / sizeof(complexf); d++)
-          local[d] =
-              ((complexf *)(handle->data + i * handle->size))[d] != complexf(0.0f,0.0f)
-                  ? ((complexf *)(handle->data + i * handle->size))[d]
-                  : local[d];
-    }
-    ops_arg arg;
-    arg.data = (char*)local.data();
-    arg.acc = handle->acc;
-    arg.dim = handle->size / sizeof(complexf);
-    ops_mpi_reduce_complexf(&arg, local.data());
-    memcpy(handle->data, local.data(), handle->size);
-  }
+
 }
 
 void ops_set_halo_dirtybit(ops_arg *arg) {
@@ -1485,35 +1322,88 @@ void ops_dat_get_raw_metadata(ops_dat dat, int part, int *disp, int *size, int *
 
 char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_memspace *memspace) {
   ops_force_halo_exchange(dat, stencil);
+  if (dat->dirty_hd == OPS_DEVICE || *memspace == OPS_DEVICE) {
+    if(dat->data_d == NULL) {
+      OPSException ex(OPS_RUNTIME_ERROR);
+      ex << "Error: ops_dat_get_raw_pointer() sees a NULL device buffer when the buffer should not "
+        "be NULL.   This should never happen.  ops_dat name: " << dat->name;
+      throw ex;
+    }
+  }
+
   if (*memspace == OPS_HOST) {
-    if (dat->data_d != NULL && dat->dirty_hd == 2) ops_get_data(dat);
+    if (dat->dirty_hd == OPS_DEVICE) {
+      // User wants raw pointer on host, and data is dirty on the device
+      // Fetch the data from device to host
+      ops_get_data(dat);
+    }
+    else {
+      // Data is diry on host - nothing to do
+    }
   } else if (*memspace == OPS_DEVICE) {
-    if (dat->data_d != NULL && dat->dirty_hd == 1) ops_put_data(dat);
-  } else if (dat->dirty_hd == 2 && dat->data_d != NULL) *memspace = OPS_DEVICE;
-  else if (dat->dirty_hd == 1) *memspace = OPS_HOST;
-  else if (dat->data_d != NULL) *memspace = OPS_DEVICE;
-  else *memspace = OPS_HOST;
+    if (dat->dirty_hd == OPS_HOST) {
+      // User wants raw pointer on device, and data is dirty on the host
+      // Upload the data from host to device
+      ops_put_data(dat);
+    }
+    else {
+      // Data is dirty on device - nothing to do
+    }
+  }
+  else {
+    // User has not specified where they want the pointer
+    // We need a default behaviour:
+    if (dat->dirty_hd == OPS_DEVICE)        *memspace = OPS_DEVICE;
+    else if (dat->dirty_hd == OPS_HOST)     *memspace = OPS_HOST;
+    else if (dat->data_d != NULL)           *memspace = OPS_DEVICE;
+    else                                    *memspace = OPS_HOST;
+  }
+
+  assert(*memspace==OPS_HOST || *memspace==OPS_DEVICE);
+  // Lock the ops_dat with the current memspace
+  dat->locked_hd = *memspace;
   return (*memspace == OPS_HOST ? dat->data : dat->data_d) + dat->base_offset;
 }
 
 void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc) {
+  if (dat->locked_hd==0) {
+    // Dat is unlocked
+    OPSException ex(OPS_RUNTIME_ERROR);
+    ex << "Error: ops_dat_release_raw_data() called, but with no matching ops_dat_get_raw_pointer() beforehand: " << dat->name;
+    throw ex;
+  }
   if (acc != OPS_READ) {
-    ops_memspace memspace;
-    if (dat->dirty_hd == 2 && dat->data_d != NULL) memspace = OPS_DEVICE;
-    else if (dat->dirty_hd == 1) memspace = OPS_HOST;
-    else if (dat->data_d != NULL) memspace = OPS_DEVICE;
-    else memspace = OPS_HOST;
+    dat->dirty_hd = dat->locked_hd; // dirty on host or device depending on where the pointer was obtained
     sub_dat_list sd = OPS_sub_dat_list[dat->index];
-    dat->dirty_hd = (memspace == OPS_HOST ? 1 : 2); 
     sd->dirtybit = 1;
     for (int i = 0; i < 2 * dat->block->dims * MAX_DEPTH; i++) {
       sd->dirty_dir_send[i] = 1;
       sd->dirty_dir_recv[i] = 1;
     }
   }
+  dat->locked_hd = 0;
+}
+
+void ops_dat_release_raw_data_memspace(ops_dat dat, int part, ops_access acc, ops_memspace *memspace) {
+  if (dat->locked_hd==0) {
+    OPSException ex(OPS_RUNTIME_ERROR);
+    ex << "Error: ops_dat_release_raw_data_memspace() called, but with no matching ops_dat_get_raw_pointer() beforehand: " << dat->name;
+    throw ex;
+  }
+  if (acc != OPS_READ) {
+    dat->dirty_hd = *memspace; // dirty on host or device depending on argument
+    sub_dat_list sd = OPS_sub_dat_list[dat->index];
+    sd->dirtybit = 1;
+    for (int i = 0; i < 2 * dat->block->dims * MAX_DEPTH; i++) {
+      sd->dirty_dir_send[i] = 1;
+      sd->dirty_dir_recv[i] = 1;
+    }
+  }
+  dat->locked_hd = 0;
 }
 
 void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
+  ops_execute(dat->block->instance);
   ops_get_data(dat);
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
   int lsize[OPS_MAX_DIM] = {1};
@@ -1535,6 +1425,7 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
 }
 
 void ops_dat_set_data(ops_dat dat, int part, char *data) {
+  ops_execute(dat->block->instance);
   int lsize[OPS_MAX_DIM] = {1};
   int ldisp[OPS_MAX_DIM] = {1};
   sub_dat_list sd = OPS_sub_dat_list[dat->index];

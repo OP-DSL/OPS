@@ -144,10 +144,10 @@
 #include "../MPI_OpenMP/update_halo_kernel5_plus_4_right_cpu_kernel.cpp"
 #include "../MPI_OpenMP/viscosity_kernel_cpu_kernel.cpp"
 
+#include "../MPI_OpenMP/calc_dt_kernel_cpu_kernel.cpp"
 #include "../MPI_OpenMP/calc_dt_kernel_get_cpu_kernel.cpp"
 #include "../MPI_OpenMP/calc_dt_kernel_min_cpu_kernel.cpp"
 #include "../MPI_OpenMP/calc_dt_kernel_print_cpu_kernel.cpp"
-#include "../MPI_OpenMP/calc_dt_kernel_cpu_kernel.cpp"
 #include "../MPI_OpenMP/field_summary_kernel_cpu_kernel.cpp"
 */
 

@@ -75,9 +75,11 @@ public:
 
   cl_kernel *copy_tobuf_kernel;
   cl_kernel *copy_frombuf_kernel;
+  cl_kernel *copy_opencl_kernel;
 
   bool isbuilt_copy_tobuf_kernel;
   bool isbuilt_copy_frombuf_kernel;
+  bool isbuilt_copy_opencl_kernel;
 };
 
 #define clSafeCall(ret) __clSafeCall(ret, __FILE__, __LINE__)
@@ -94,6 +96,7 @@ void mvReductArraysToHost(OPS_instance *instance,int reduct_bytes);
 void ops_opencl_exit(OPS_instance *instance);
 void ops_upload_dat(ops_dat dat);
 void ops_download_dat(ops_dat dat);
+void ops_internal_copy_opencl(ops_kernel_descriptor *desc);
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_OPENCL_RT_SUPPORT_H */

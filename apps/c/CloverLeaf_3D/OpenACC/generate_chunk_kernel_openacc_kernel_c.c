@@ -27,45 +27,41 @@ int ydim9_generate_chunk_kernel;
 int xdim10_generate_chunk_kernel;
 int ydim10_generate_chunk_kernel;
 
-//user function
+// user function
 #pragma acc routine
-inline 
-void generate_chunk_kernel(const ptr_double vertexx,
-  const ptr_double vertexy,
-  const ptr_double vertexz,
-  ptr_double energy0,
-  ptr_double density0,
-  ptr_double xvel0,
-  ptr_double yvel0,
-  ptr_double zvel0,
-  const ptr_double cellx,
-  const ptr_double celly,
-  const ptr_double cellz) {
+inline void
+generate_chunk_kernel(const ptr_double vertexx, const ptr_double vertexy,
+                      const ptr_double vertexz, ptr_double energy0,
+                      ptr_double density0, ptr_double xvel0, ptr_double yvel0,
+                      ptr_double zvel0, const ptr_double cellx,
+                      const ptr_double celly, const ptr_double cellz) {
 
   double radius, x_cent, y_cent, z_cent;
   int is_in = 0;
 
+  OPS_ACC(energy0, 0, 0, 0) = states[0].energy;
+  OPS_ACC(density0, 0, 0, 0) = states[0].density;
+  OPS_ACC(xvel0, 0, 0, 0) = states[0].xvel;
+  OPS_ACC(yvel0, 0, 0, 0) = states[0].yvel;
+  OPS_ACC(zvel0, 0, 0, 0) = states[0].zvel;
 
-  OPS_ACC(energy0, 0,0,0)= states[0].energy;
-  OPS_ACC(density0, 0,0,0)= states[0].density;
-  OPS_ACC(xvel0, 0,0,0)=states[0].xvel;
-  OPS_ACC(yvel0, 0,0,0)=states[0].yvel;
-  OPS_ACC(zvel0, 0,0,0)=states[0].zvel;
+  for (int i = 1; i < number_of_states; i++) {
 
-  for(int i = 1; i<number_of_states; i++) {
-
-    x_cent=states[i].xmin;
-    y_cent=states[i].ymin;
-    z_cent=states[i].zmin;
+    x_cent = states[i].xmin;
+    y_cent = states[i].ymin;
+    z_cent = states[i].zmin;
 
     if (states[i].geometry == g_cube) {
       for (int i1 = -1; i1 <= 0; i1++) {
         for (int j1 = -1; j1 <= 0; j1++) {
           for (int k1 = -1; k1 <= 0; k1++) {
-            if(OPS_ACC(vertexx, 1+i1,0,0) >= states[i].xmin  && OPS_ACC(vertexx, 0+i1,0,0) < states[i].xmax) {
-              if(OPS_ACC(vertexy, 0,1+j1,0) >= states[i].ymin && OPS_ACC(vertexy, 0,0+j1,0) < states[i].ymax) {
-                if(OPS_ACC(vertexz, 0,0,1+k1) >= states[i].zmin && OPS_ACC(vertexz, 0,0,0+k1) < states[i].zmax) {
-                  is_in=1;
+            if (OPS_ACC(vertexx, 1 + i1, 0, 0) >= states[i].xmin &&
+                OPS_ACC(vertexx, 0 + i1, 0, 0) < states[i].xmax) {
+              if (OPS_ACC(vertexy, 0, 1 + j1, 0) >= states[i].ymin &&
+                  OPS_ACC(vertexy, 0, 0 + j1, 0) < states[i].ymax) {
+                if (OPS_ACC(vertexz, 0, 0, 1 + k1) >= states[i].zmin &&
+                    OPS_ACC(vertexz, 0, 0, 0 + k1) < states[i].zmax) {
+                  is_in = 1;
                 }
               }
             }
@@ -73,116 +69,150 @@ void generate_chunk_kernel(const ptr_double vertexx,
         }
       }
 
-      if(OPS_ACC(vertexx, 1,0,0) >= states[i].xmin  && OPS_ACC(vertexx, 0,0,0) < states[i].xmax) {
-        if(OPS_ACC(vertexy, 0,1,0) >= states[i].ymin && OPS_ACC(vertexy, 0,0,0) < states[i].ymax) {
-          if(OPS_ACC(vertexz, 0,0,1) >= states[i].zmin && OPS_ACC(vertexz, 0,0,0) < states[i].zmax) {
-            OPS_ACC(energy0, 0,0,0) = states[i].energy;
-            OPS_ACC(density0, 0,0,0) = states[i].density;
+      if (OPS_ACC(vertexx, 1, 0, 0) >= states[i].xmin &&
+          OPS_ACC(vertexx, 0, 0, 0) < states[i].xmax) {
+        if (OPS_ACC(vertexy, 0, 1, 0) >= states[i].ymin &&
+            OPS_ACC(vertexy, 0, 0, 0) < states[i].ymax) {
+          if (OPS_ACC(vertexz, 0, 0, 1) >= states[i].zmin &&
+              OPS_ACC(vertexz, 0, 0, 0) < states[i].zmax) {
+            OPS_ACC(energy0, 0, 0, 0) = states[i].energy;
+            OPS_ACC(density0, 0, 0, 0) = states[i].density;
           }
         }
       }
 
       if (is_in) {
-        OPS_ACC(xvel0, 0,0,0) = states[i].xvel;
-        OPS_ACC(yvel0, 0,0,0) = states[i].yvel;
-        OPS_ACC(zvel0, 0,0,0) = states[i].zvel;
+        OPS_ACC(xvel0, 0, 0, 0) = states[i].xvel;
+        OPS_ACC(yvel0, 0, 0, 0) = states[i].yvel;
+        OPS_ACC(zvel0, 0, 0, 0) = states[i].zvel;
       }
-    }
-    else if(states[i].geometry == g_sphe) {
+    } else if (states[i].geometry == g_sphe) {
       for (int i1 = -1; i1 <= 0; i1++) {
         for (int j1 = -1; j1 <= 0; j1++) {
           for (int k1 = -1; k1 <= 0; k1++) {
-            radius = sqrt ((OPS_ACC(cellx, 0,0,0) - x_cent) * (OPS_ACC(cellx, 0,0,0) - x_cent) +
-                     (OPS_ACC(celly, 0,0,0) - y_cent) * (OPS_ACC(celly, 0,0,0) - y_cent) +
-                     (OPS_ACC(cellz, 0,0,0) - z_cent) * (OPS_ACC(cellz, 0,0,0) - z_cent));
-            if(radius <= states[i].radius) is_in = 1;
+            radius = sqrt((OPS_ACC(cellx, 0, 0, 0) - x_cent) *
+                              (OPS_ACC(cellx, 0, 0, 0) - x_cent) +
+                          (OPS_ACC(celly, 0, 0, 0) - y_cent) *
+                              (OPS_ACC(celly, 0, 0, 0) - y_cent) +
+                          (OPS_ACC(cellz, 0, 0, 0) - z_cent) *
+                              (OPS_ACC(cellz, 0, 0, 0) - z_cent));
+            if (radius <= states[i].radius)
+              is_in = 1;
           }
         }
       }
-      if(radius <= states[i].radius) {
-        OPS_ACC(energy0, 0,0,0) = states[i].energy;
-        OPS_ACC(density0, 0,0,0) = states[i].density;
+      if (radius <= states[i].radius) {
+        OPS_ACC(energy0, 0, 0, 0) = states[i].energy;
+        OPS_ACC(density0, 0, 0, 0) = states[i].density;
       }
       if (is_in) {
-        OPS_ACC(xvel0, 0,0,0) = states[i].xvel;
-        OPS_ACC(yvel0, 0,0,0) = states[i].yvel;
-        OPS_ACC(zvel0, 0,0,0) = states[i].zvel;
-
+        OPS_ACC(xvel0, 0, 0, 0) = states[i].xvel;
+        OPS_ACC(yvel0, 0, 0, 0) = states[i].yvel;
+        OPS_ACC(zvel0, 0, 0, 0) = states[i].zvel;
       }
-    }
-    else if(states[i].geometry == g_point) {
+    } else if (states[i].geometry == g_point) {
       for (int i1 = -1; i1 <= 0; i1++) {
         for (int j1 = -1; j1 <= 0; j1++) {
           for (int k1 = -1; k1 <= 0; k1++) {
-            if(OPS_ACC(vertexx, 0+i1,0,0) == x_cent && OPS_ACC(vertexy, 0,0+j1,0) == y_cent && OPS_ACC(vertexz, 0,0,0+k1) == z_cent)
+            if (OPS_ACC(vertexx, 0 + i1, 0, 0) == x_cent &&
+                OPS_ACC(vertexy, 0, 0 + j1, 0) == y_cent &&
+                OPS_ACC(vertexz, 0, 0, 0 + k1) == z_cent)
               is_in = 1;
           }
         }
       }
 
-      if(OPS_ACC(vertexx, 0,0,0) == x_cent && OPS_ACC(vertexy, 0,0,0) == y_cent && OPS_ACC(vertexz, 0,0,0) == z_cent) {
-        OPS_ACC(energy0, 0,0,0) = states[i].energy;
-        OPS_ACC(density0, 0,0,0) = states[i].density;
+      if (OPS_ACC(vertexx, 0, 0, 0) == x_cent &&
+          OPS_ACC(vertexy, 0, 0, 0) == y_cent &&
+          OPS_ACC(vertexz, 0, 0, 0) == z_cent) {
+        OPS_ACC(energy0, 0, 0, 0) = states[i].energy;
+        OPS_ACC(density0, 0, 0, 0) = states[i].density;
       }
       if (is_in) {
-        OPS_ACC(xvel0, 0,0,0) = states[i].xvel;
-        OPS_ACC(yvel0, 0,0,0) = states[i].yvel;
-        OPS_ACC(zvel0, 0,0,0) = states[i].zvel;
+        OPS_ACC(xvel0, 0, 0, 0) = states[i].xvel;
+        OPS_ACC(yvel0, 0, 0, 0) = states[i].yvel;
+        OPS_ACC(zvel0, 0, 0, 0) = states[i].zvel;
       }
     }
   }
 }
 
-
-void generate_chunk_kernel_c_wrapper(
-  double *p_a0,
-  double *p_a1,
-  double *p_a2,
-  double *p_a3,
-  double *p_a4,
-  double *p_a5,
-  double *p_a6,
-  double *p_a7,
-  double *p_a8,
-  double *p_a9,
-  double *p_a10,
-  int x_size, int y_size, int z_size) {
-  #ifdef OPS_GPU
-  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3,p_a4,p_a5,p_a6,p_a7,p_a8,p_a9,p_a10)
-  #pragma acc loop
-  #endif
-  for ( int n_z=0; n_z<z_size; n_z++ ){
-    #ifdef OPS_GPU
-    #pragma acc loop
-    #endif
-    for ( int n_y=0; n_y<y_size; n_y++ ){
-      #ifdef OPS_GPU
-      #pragma acc loop
-      #endif
-      for ( int n_x=0; n_x<x_size; n_x++ ){
-        const ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_generate_chunk_kernel*0*1 + n_z*xdim0_generate_chunk_kernel*ydim0_generate_chunk_kernel*0*1, xdim0_generate_chunk_kernel, ydim0_generate_chunk_kernel};
-        const ptr_double ptr1 = {  p_a1 + n_x*0*1 + n_y*xdim1_generate_chunk_kernel*1*1 + n_z*xdim1_generate_chunk_kernel*ydim1_generate_chunk_kernel*0*1, xdim1_generate_chunk_kernel, ydim1_generate_chunk_kernel};
-        const ptr_double ptr2 = {  p_a2 + n_x*0*1 + n_y*xdim2_generate_chunk_kernel*0*1 + n_z*xdim2_generate_chunk_kernel*ydim2_generate_chunk_kernel*1*1, xdim2_generate_chunk_kernel, ydim2_generate_chunk_kernel};
-        ptr_double ptr3 = {  p_a3 + n_x*1*1 + n_y*xdim3_generate_chunk_kernel*1*1 + n_z*xdim3_generate_chunk_kernel*ydim3_generate_chunk_kernel*1*1, xdim3_generate_chunk_kernel, ydim3_generate_chunk_kernel};
-        ptr_double ptr4 = {  p_a4 + n_x*1*1 + n_y*xdim4_generate_chunk_kernel*1*1 + n_z*xdim4_generate_chunk_kernel*ydim4_generate_chunk_kernel*1*1, xdim4_generate_chunk_kernel, ydim4_generate_chunk_kernel};
-        ptr_double ptr5 = {  p_a5 + n_x*1*1 + n_y*xdim5_generate_chunk_kernel*1*1 + n_z*xdim5_generate_chunk_kernel*ydim5_generate_chunk_kernel*1*1, xdim5_generate_chunk_kernel, ydim5_generate_chunk_kernel};
-        ptr_double ptr6 = {  p_a6 + n_x*1*1 + n_y*xdim6_generate_chunk_kernel*1*1 + n_z*xdim6_generate_chunk_kernel*ydim6_generate_chunk_kernel*1*1, xdim6_generate_chunk_kernel, ydim6_generate_chunk_kernel};
-        ptr_double ptr7 = {  p_a7 + n_x*1*1 + n_y*xdim7_generate_chunk_kernel*1*1 + n_z*xdim7_generate_chunk_kernel*ydim7_generate_chunk_kernel*1*1, xdim7_generate_chunk_kernel, ydim7_generate_chunk_kernel};
-        const ptr_double ptr8 = {  p_a8 + n_x*1*1 + n_y*xdim8_generate_chunk_kernel*0*1 + n_z*xdim8_generate_chunk_kernel*ydim8_generate_chunk_kernel*0*1, xdim8_generate_chunk_kernel, ydim8_generate_chunk_kernel};
-        const ptr_double ptr9 = {  p_a9 + n_x*0*1 + n_y*xdim9_generate_chunk_kernel*1*1 + n_z*xdim9_generate_chunk_kernel*ydim9_generate_chunk_kernel*0*1, xdim9_generate_chunk_kernel, ydim9_generate_chunk_kernel};
-        const ptr_double ptr10 = {  p_a10 + n_x*0*1 + n_y*xdim10_generate_chunk_kernel*0*1 + n_z*xdim10_generate_chunk_kernel*ydim10_generate_chunk_kernel*1*1, xdim10_generate_chunk_kernel, ydim10_generate_chunk_kernel};
-        generate_chunk_kernel( ptr0,
-          ptr1,
-          ptr2,
-          ptr3,
-          ptr4,
-          ptr5,
-          ptr6,
-          ptr7,
-          ptr8,
-          ptr9,
-          ptr10 );
-
+void generate_chunk_kernel_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
+                                     double *p_a3, double *p_a4, double *p_a5,
+                                     double *p_a6, double *p_a7, double *p_a8,
+                                     double *p_a9, double *p_a10, int x_size,
+                                     int y_size, int z_size) {
+#ifdef OPS_GPU
+#pragma acc parallel deviceptr(p_a0, p_a1, p_a2, p_a3, p_a4, p_a5, p_a6, p_a7, \
+                               p_a8, p_a9, p_a10)
+#pragma acc loop
+#endif
+  for (int n_z = 0; n_z < z_size; n_z++) {
+#ifdef OPS_GPU
+#pragma acc loop
+#endif
+    for (int n_y = 0; n_y < y_size; n_y++) {
+#ifdef OPS_GPU
+#pragma acc loop
+#endif
+      for (int n_x = 0; n_x < x_size; n_x++) {
+        const ptr_double ptr0 = {
+            p_a0 + n_x * 1 * 1 + n_y * xdim0_generate_chunk_kernel * 0 * 1 +
+                n_z * xdim0_generate_chunk_kernel *
+                    ydim0_generate_chunk_kernel * 0 * 1,
+            xdim0_generate_chunk_kernel, ydim0_generate_chunk_kernel};
+        const ptr_double ptr1 = {
+            p_a1 + n_x * 0 * 1 + n_y * xdim1_generate_chunk_kernel * 1 * 1 +
+                n_z * xdim1_generate_chunk_kernel *
+                    ydim1_generate_chunk_kernel * 0 * 1,
+            xdim1_generate_chunk_kernel, ydim1_generate_chunk_kernel};
+        const ptr_double ptr2 = {
+            p_a2 + n_x * 0 * 1 + n_y * xdim2_generate_chunk_kernel * 0 * 1 +
+                n_z * xdim2_generate_chunk_kernel *
+                    ydim2_generate_chunk_kernel * 1 * 1,
+            xdim2_generate_chunk_kernel, ydim2_generate_chunk_kernel};
+        ptr_double ptr3 = {
+            p_a3 + n_x * 1 * 1 + n_y * xdim3_generate_chunk_kernel * 1 * 1 +
+                n_z * xdim3_generate_chunk_kernel *
+                    ydim3_generate_chunk_kernel * 1 * 1,
+            xdim3_generate_chunk_kernel, ydim3_generate_chunk_kernel};
+        ptr_double ptr4 = {
+            p_a4 + n_x * 1 * 1 + n_y * xdim4_generate_chunk_kernel * 1 * 1 +
+                n_z * xdim4_generate_chunk_kernel *
+                    ydim4_generate_chunk_kernel * 1 * 1,
+            xdim4_generate_chunk_kernel, ydim4_generate_chunk_kernel};
+        ptr_double ptr5 = {
+            p_a5 + n_x * 1 * 1 + n_y * xdim5_generate_chunk_kernel * 1 * 1 +
+                n_z * xdim5_generate_chunk_kernel *
+                    ydim5_generate_chunk_kernel * 1 * 1,
+            xdim5_generate_chunk_kernel, ydim5_generate_chunk_kernel};
+        ptr_double ptr6 = {
+            p_a6 + n_x * 1 * 1 + n_y * xdim6_generate_chunk_kernel * 1 * 1 +
+                n_z * xdim6_generate_chunk_kernel *
+                    ydim6_generate_chunk_kernel * 1 * 1,
+            xdim6_generate_chunk_kernel, ydim6_generate_chunk_kernel};
+        ptr_double ptr7 = {
+            p_a7 + n_x * 1 * 1 + n_y * xdim7_generate_chunk_kernel * 1 * 1 +
+                n_z * xdim7_generate_chunk_kernel *
+                    ydim7_generate_chunk_kernel * 1 * 1,
+            xdim7_generate_chunk_kernel, ydim7_generate_chunk_kernel};
+        const ptr_double ptr8 = {
+            p_a8 + n_x * 1 * 1 + n_y * xdim8_generate_chunk_kernel * 0 * 1 +
+                n_z * xdim8_generate_chunk_kernel *
+                    ydim8_generate_chunk_kernel * 0 * 1,
+            xdim8_generate_chunk_kernel, ydim8_generate_chunk_kernel};
+        const ptr_double ptr9 = {
+            p_a9 + n_x * 0 * 1 + n_y * xdim9_generate_chunk_kernel * 1 * 1 +
+                n_z * xdim9_generate_chunk_kernel *
+                    ydim9_generate_chunk_kernel * 0 * 1,
+            xdim9_generate_chunk_kernel, ydim9_generate_chunk_kernel};
+        const ptr_double ptr10 = {
+            p_a10 + n_x * 0 * 1 + n_y * xdim10_generate_chunk_kernel * 0 * 1 +
+                n_z * xdim10_generate_chunk_kernel *
+                    ydim10_generate_chunk_kernel * 1 * 1,
+            xdim10_generate_chunk_kernel, ydim10_generate_chunk_kernel};
+        generate_chunk_kernel(ptr0, ptr1, ptr2, ptr3, ptr4, ptr5, ptr6, ptr7,
+                              ptr8, ptr9, ptr10);
       }
     }
   }

@@ -90,7 +90,7 @@ extern OPS_instance *global_ops_instance;
 void _ops_init(OPS_instance *instance, const int argc, const char * const argv[], const int diags) {
   //We do not have thread safety across MPI
   if ( OPS_instance::numInstances() != 1 ) {
-    OPSException ex(OPS_RUNTIME_ERROR, "ERROR: multiple OPS instances are not suppoerted over MPI");
+    OPSException ex(OPS_RUNTIME_ERROR, "ERROR: multiple OPS instances are not supported over MPI");
     throw ex;
   }
   // So the MPI backend is not thread safe - that's fine.  It currently does not pass 
@@ -229,6 +229,28 @@ void ops_NaNcheck(ops_dat dat) {
   }
 }
 
+ops_dat ops_dat_copy(ops_dat orig_dat) {
+  ops_dat dat = ops_dat_copy_mpi_core(orig_dat);
+  ops_dat_deep_copy(dat, orig_dat);
+  return dat;
+}
+
+void ops_dat_deep_copy(ops_dat target, ops_dat source) {
+  int realloc = ops_dat_copy_metadata_core(target, source);
+  if(realloc) {
+    if(target->data_d != nullptr) {
+      cutilSafeCall(source->block->instance->ostream(), cudaFree(target->data_d) );
+      target->data_d = nullptr;
+    }
+    cutilSafeCall(target->block->instance->ostream(), cudaMalloc((void**)&(target->data_d), target->mem));
+  }
+
+  ops_kernel_descriptor *desc = ops_dat_deep_copy_mpi_core(target, source);
+  desc->name = "ops_internal_copy_cuda";
+  desc->device = 1;
+  desc->function = ops_internal_copy_cuda;
+  ops_enqueue_kernel(desc);
+}
 
 /************* Functions only use in the Fortran Backend ************/
 

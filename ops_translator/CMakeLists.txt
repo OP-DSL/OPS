@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 project(OPS_TRANSLATOR)
 
+if(INSTALL_OPS_TRANSLATOR)
 install(PROGRAMS
     ${CMAKE_CURRENT_SOURCE_DIR}/c/ops.py
     ${CMAKE_CURRENT_SOURCE_DIR}/c/format.sh
@@ -15,9 +16,11 @@ install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/c/ops_mpi_seq_gen.py
     ${CMAKE_CURRENT_SOURCE_DIR}/c/util.py
     DESTINATION bin/ops_translator/c)
+endif()
 set(OPS_C_TRANSLATOR_EXECUTABLE "${CMAKE_CURRENT_SOURCE_DIR}/c/ops.py" CACHE FILEPATH "OPS C Translator path")
 
 if(BUILD_OPS_FORTRAN)
+	if (INSTALL_OPS_TRANSLATOR)
     install(PROGRAMS
         ${CMAKE_CURRENT_SOURCE_DIR}/fortran/ops_fortran.py
         DESTINATION bin/ops_translator/fortran)
@@ -29,6 +32,7 @@ if(BUILD_OPS_FORTRAN)
         ${CMAKE_CURRENT_SOURCE_DIR}/fortran/ops_fortran_gen_mpi.py
         ${CMAKE_CURRENT_SOURCE_DIR}/fortran/util_fortran.py
         DESTINATION bin/ops_translator/fortran)
+	endif()
 set(OPS_Fortran_TRANSLATOR_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/fortran/ops_fortran.py CACHE FILEPATH "OPS Fortran Translator")
 endif()
 

@@ -1144,3 +1144,220 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
 
   dest->dirty_hd = 2;
 }
+
+
+const char copy_opencl_kernel_src[] =
+"__kernel void ops_copy_opencl_kernel(\n"
+"__global char * restrict dat0_p, __global char * restrict dat1_p,\n"
+"        int base0, int base1,\n"
+"        int dim, int type_size, int OPS_soa,\n"
+"         int s0, int start0, int end0\n"
+"#if OPS_MAX_DIM>1\n"
+"        , int s1, int start1, int end1\n"
+"#if OPS_MAX_DIM>2\n"
+"        , int s2, int start2, int end2\n"
+"#if OPS_MAX_DIM>3\n"
+"        , int s3, int start3, int end3\n"
+"#if OPS_MAX_DIM>4\n"
+"        , int s4, int start4, int end4\n"
+"#endif\n"
+"#endif\n"
+"#endif\n"
+"#endif\n"
+"        ) {\n"
+"  int i = start0 + get_global_id(0);\n"
+"  int j = start1 + get_global_id(1);\n"
+"  int rest = get_global_id(2);\n"
+"  int mult = OPS_soa ? type_size : dim*type_size;\n"
+"\n"
+"    long fullsize = s0;\n"
+"    long idx = i*mult;\n"
+"#if OPS_MAX_DIM>1\n"
+"    fullsize *= s1;\n"
+"    idx += j * s0 * mult;\n"
+"#endif\n"
+"#if OPS_MAX_DIM>2\n"
+"    fullsize *= s2;\n"
+"    int k = start2+rest%s2;\n"
+"    idx += k * s0 * s1 * mult;\n"
+"#endif\n"
+"#if OPS_MAX_DIM>3\n"
+"    fullsize *= s3;\n"
+"    int l = start3+rest/s2;\n"
+"    idx += l * s0 * s1 * s2 * mult;\n"
+"#endif\n"
+"#if OPS_MAX_DIM>3\n"
+"    fullsize *= s4;\n"
+"    int m = start4+rest/(s2*s3);\n"
+"    idx += m * s0 * s1 * s2 * s3 * mult;\n"
+"#endif\n"
+"    if (i<end0\n"
+"#if OPS_MAX_DIM>1\n"
+"        && j < end1\n"
+"#if OPS_MAX_DIM>2\n"
+"        && k < end2\n"
+"#if OPS_MAX_DIM>3\n"
+"        && l < end3\n"
+"#if OPS_MAX_DIM>4\n"
+"        && m < end4\n"
+"#endif\n"
+"#endif\n"
+"#endif\n"
+"#endif\n"
+"       )\n"
+"    if (OPS_soa) { \n"
+"      for (int d = 0; d < dim; d++)\n"
+"        for (int c = 0; c < type_size; d++)\n"
+"          dat1_p[base1+idx+d*fullsize*type_size+c] = dat0_p[base0+idx+d*fullsize*type_size+c];\n"
+"    } else\n"
+"      for (int d = 0; d < dim*type_size; d++)\n"
+"        dat1_p[base1+idx+d] = dat0_p[base0+idx+d];\n"
+"\n"
+"}\n";
+
+void ops_internal_copy_opencl(ops_kernel_descriptor *desc) {
+  int range[2*OPS_MAX_DIM]={0};
+  for (int d = 0; d < desc->dim; d++) {
+    range[2*d] = desc->range[2*d];
+    range[2*d+1] = desc->range[2*d+1];
+  }
+  for (int d = desc->dim; d < OPS_MAX_DIM; d++) {
+    range[2*d] = 0;
+    range[2*d+1] = 1;
+  }
+  ops_dat dat0 = desc->args[0].dat;
+  double __t1,__t2,__c1,__c2;
+  if (dat0->block->instance->OPS_diags>1) {
+    dat0->block->instance->OPS_kernels[-1].count++;
+    ops_timers_core(&__c1,&__t1);
+  }
+  char *dat0_p = desc->args[0].data_d;
+  char *dat1_p = desc->args[1].data_d;
+  int s0 = dat0->size[0];
+#if OPS_MAX_DIM>1
+  int s1 = dat0->size[1];
+#if OPS_MAX_DIM>2
+  int s2 = dat0->size[2];
+#if OPS_MAX_DIM>3
+  int s3 = dat0->size[3];
+#if OPS_MAX_DIM>4
+  int s4 = dat0->size[4];
+#endif
+#endif
+#endif
+#endif
+  ops_block block = dat0->block;
+
+  cl_int ret = 0;
+  if (!block->instance->opencl_instance->isbuilt_copy_opencl_kernel) {
+    char *source_str[1];
+    size_t source_size[1];
+    source_size[0] = strlen(copy_opencl_kernel_src) + 1;
+    source_str[0] = (char *)ops_malloc(source_size[0]);
+    strcpy(source_str[0], copy_opencl_kernel_src);
+
+    if (block->instance->opencl_instance->copy_opencl_kernel == NULL)
+      block->instance->opencl_instance->copy_opencl_kernel = (cl_kernel *)ops_calloc(1 , sizeof(cl_kernel));
+
+    // attempt to attach sources to program (not compile)
+    block->instance->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(
+        block->instance->opencl_instance->OPS_opencl_core.context, 1, (const char **)&source_str,
+        (const size_t *)&source_size, &ret);
+
+    if (ret != CL_SUCCESS) {
+      clSafeCall(ret);
+      return;
+    }
+    char buildOpts[16];
+    sprintf(buildOpts,"-DOPS_MAX_DIM=%d",OPS_MAX_DIM);
+    ret = clBuildProgram(block->instance->opencl_instance->OPS_opencl_core.program, 1, &block->instance->opencl_instance->OPS_opencl_core.device_id,
+                         buildOpts, NULL, NULL);
+    if (ret != CL_SUCCESS) {
+      char *build_log;
+      size_t log_size;
+      clSafeCall(clGetProgramBuildInfo(
+          block->instance->opencl_instance->OPS_opencl_core.program, block->instance->opencl_instance->OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
+      build_log = (char *)ops_malloc(log_size + 1);
+      clSafeCall(clGetProgramBuildInfo(
+          block->instance->opencl_instance->OPS_opencl_core.program, block->instance->opencl_instance->OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
+      build_log[log_size] = '\0';
+      block->instance->ostream() <<
+          "=============== OpenCL Program Build Info ================\n\n" <<
+          build_log;
+      block->instance->ostream() <<
+              "\n========================================================= \n";
+      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
+      free(build_log);
+    }
+
+    // Create the OpenCL kernel
+    *block->instance->opencl_instance->copy_opencl_kernel = clCreateKernel(block->instance->opencl_instance->OPS_opencl_core.program,
+                                          "ops_copy_opencl_kernel", &ret);
+    clSafeCall(ret);
+    free(source_str[0]);
+    block->instance->opencl_instance->isbuilt_copy_opencl_kernel = true;
+    if (block->instance->OPS_diags>5 && block->instance->is_root()) block->instance->ostream() << "in copy_opencl_kernel build\n";
+  }
+
+
+
+  size_t thr_x = dat0->block->instance->OPS_block_size_x;
+  size_t thr_y = dat0->block->instance->OPS_block_size_y;
+  size_t thr_z = dat0->block->instance->OPS_block_size_z;
+  size_t blk_x = (range[2*0+1]-range[2*0] - 1) / dat0->block->instance->OPS_block_size_x + 1;
+  size_t blk_y = (range[2*1+1]-range[2*1] - 1) / dat0->block->instance->OPS_block_size_y + 1;
+  size_t blk_z = ((range[2*2+1]-range[2*2] - 1) / dat0->block->instance->OPS_block_size_z + 1) *
+            (range[2*3+1]-range[2*3]) *
+            (range[2*4+1]-range[2*4]);
+  size_t globalWorkSize[3] = {blk_x * thr_x, blk_y * thr_y, blk_z * thr_z};
+  size_t localWorkSize[3] = {thr_x, thr_y, thr_z};
+
+  if (blk_x>0 && blk_y>0 && blk_z>0) {
+
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 0, sizeof(cl_mem), (void *)&dat0_p));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 1, sizeof(cl_mem), (void *)&dat1_p));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 2, sizeof(cl_int), (void*) &desc->args[0].dat->base_offset ));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 3, sizeof(cl_int), (void*) &desc->args[1].dat->base_offset ));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 4, sizeof(cl_int), (void*) &dat0->dim ));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 5, sizeof(cl_int), (void*) &dat0->type_size ));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 6, sizeof(cl_int), (void*) &dat0->block->instance->OPS_soa ));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 7, sizeof(cl_int), (void*) &s0 ));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 8, sizeof(cl_int), (void*) &range[2*0] ));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 9, sizeof(cl_int), (void*) &range[2*0+1] ));
+#if OPS_MAX_DIM>1
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 10, sizeof(cl_int), (void*) &s1 ));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 11, sizeof(cl_int), (void*) &range[2*1] ));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 12, sizeof(cl_int), (void*) &range[2*1+1] ));
+#if OPS_MAX_DIM>2
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 13, sizeof(cl_int), (void*) &s2 ));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 14, sizeof(cl_int), (void*) &range[2*2] ));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 15, sizeof(cl_int), (void*) &range[2*2+1] ));
+#if OPS_MAX_DIM>3
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 16, sizeof(cl_int), (void*) &s3 ));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 17, sizeof(cl_int), (void*) &range[2*3] ));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 18, sizeof(cl_int), (void*) &range[2*3+1] ));
+#if OPS_MAX_DIM>4
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 19, sizeof(cl_int), (void*) &s4 ));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 20, sizeof(cl_int), (void*) &range[2*4] ));
+    clSafeCall(clSetKernelArg(block->instance->opencl_instance->copy_opencl_kernel[0], 21, sizeof(cl_int), (void*) &range[2*4+1] ));
+#endif
+#endif
+#endif
+#endif
+    clSafeCall( clEnqueueNDRangeKernel(block->instance->opencl_instance->OPS_opencl_core.command_queue, block->instance->opencl_instance->copy_opencl_kernel[0], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+    clSafeCall( clFinish(block->instance->opencl_instance->OPS_opencl_core.command_queue) );
+  }
+  if (dat0->block->instance->OPS_diags>1) {
+    ops_timers_core(&__c2,&__t2);
+    int start[OPS_MAX_DIM];
+    int end[OPS_MAX_DIM];
+    for ( int n=0; n<desc->dim; n++ ){
+      start[n] = range[2*n];end[n] = range[2*n+1];
+    }
+    dat0->block->instance->OPS_kernels[-1].time += __t2-__t1;
+    dat0->block->instance->OPS_kernels[-1].transfer += ops_compute_transfer(desc->dim, start, end, &desc->args[0]);
+    dat0->block->instance->OPS_kernels[-1].transfer += ops_compute_transfer(desc->dim, start, end, &desc->args[1]);
+  }
+}

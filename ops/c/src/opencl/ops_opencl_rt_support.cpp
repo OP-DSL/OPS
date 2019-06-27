@@ -46,6 +46,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Turn off warnings about deprecated APIs
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
+
 #if defined(__APPLE__) || defined(__MACOSX)
 #include <OpenCL/cl.h>
 #else
@@ -202,7 +205,7 @@ void openclDeviceInit(OPS_instance *instance, const int argc, const char * const
   cl_int ret = 0;
   cl_uint dev_type_flag = CL_DEVICE_TYPE_CPU;
 
-  // determin the user requested device type
+  // determine the user requested device type
   int device_type = instance->OPS_cl_device;
   switch (device_type) {
   case 0: // CPU:
@@ -264,7 +267,7 @@ void openclDeviceInit(OPS_instance *instance, const int argc, const char * const
       instance->opencl_instance->OPS_opencl_core.command_queue = clCreateCommandQueue(
           instance->opencl_instance->OPS_opencl_core.context, instance->opencl_instance->OPS_opencl_core.devices[d], 0, &ret);
       if (CL_SUCCESS != ret) {
-        // if we've failed, release the context we just accquired
+        // if we've failed, release the context we just acquired
         clReleaseContext(instance->opencl_instance->OPS_opencl_core.context);
         instance->opencl_instance->OPS_opencl_core.context = NULL;
         continue;
@@ -367,21 +370,31 @@ void ops_upload_dat(ops_dat dat) {
 }
 
 void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
-  // printf("in ops_H_D_exchanges\n");
-  for (int n = 0; n < nargs; n++)
+  for (int n = 0; n < nargs; n++) {
+    if (args[n].argtype == OPS_ARG_DAT &&
+        args[n].dat->locked_hd > 0) {
+      OPSException ex(OPS_RUNTIME_ERROR, "ERROR: ops_par_loops involving datasets for which raw pointers have not been released are not allowed");
+      throw ex;
+    }
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
       ops_download_dat(args[n].dat);
-      // printf("halo exchanges on host\n");
       args[n].dat->dirty_hd = 0;
     }
+  }
 }
 
 void ops_H_D_exchanges_device(ops_arg *args, int nargs) {
-  for (int n = 0; n < nargs; n++)
+  for (int n = 0; n < nargs; n++) {
+    if (args[n].argtype == OPS_ARG_DAT &&
+        args[n].dat->locked_hd > 0) {
+      OPSException ex(OPS_RUNTIME_ERROR, "ERROR: ops_par_loops involving datasets for which raw pointers have not been released are not allowed");
+      throw ex;
+    }
     if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
       ops_upload_dat(args[n].dat);
       args[n].dat->dirty_hd = 0;
     }
+  }
 }
 
 void ops_set_dirtybit_device(ops_arg *args, int nargs) {
@@ -500,13 +513,19 @@ void mvReductArraysToHost(OPS_instance *instance, int reduct_bytes) {
 void ops_opencl_exit(OPS_instance *instance) {
   if (!instance->OPS_hybrid_gpu)
     return;
-  ops_dat_entry *item;
-  TAILQ_FOREACH(item, &instance->OPS_dat_list, entries) {
-    clReleaseMemObject((cl_mem)(item->dat)->data_d);
-  }
   // clSafeCall( clFlush(instance->opencl_instance->OPS_opencl_core.command_queue) );
   clSafeCall(clFinish(instance->opencl_instance->OPS_opencl_core.command_queue));
   clSafeCall(clReleaseCommandQueue(instance->opencl_instance->OPS_opencl_core.command_queue));
   clSafeCall(clReleaseContext(instance->opencl_instance->OPS_opencl_core.context));
   free(instance->opencl_instance->OPS_opencl_core.platform_id);
+}
+
+void ops_free_dat(ops_dat dat) {
+  delete dat; 
+}
+
+// _ops_free_dat is called directly from ~ops_dat_core
+void _ops_free_dat(ops_dat dat) {
+  clReleaseMemObject((cl_mem)dat->data_d);
+  ops_free_dat_core(dat);
 }

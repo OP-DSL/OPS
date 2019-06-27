@@ -143,7 +143,7 @@ int main(int argc, char **argv)
 //  ops_fetch_dat_hdf5_file(dat0, "multidim.h5");
 
   if (instance->is_root()) instance->ostream() << "\nTotal Wall time " << et1-et0 << '\n';
-  double result_diff=fabs((100.0*((reduct_result[0]+reduct_result[0])/(2*24.000000)))-100.0);
+  double result_diff=fabs((100.0*((reduct_result[0]+reduct_result[1])/(2*24.000000)))-100.0);
   if (instance->is_root()) instance->ostream() << "Reduction result = " << reduct_result[0] << ", " << reduct_result[1] << '\n';
   if (instance->is_root()) instance->ostream() << "Result is within " << result_diff << "% of the expected result\n";
 

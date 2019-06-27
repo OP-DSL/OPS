@@ -5,24 +5,21 @@
 int xdim0_tea_leaf_axpy_kernel;
 int xdim1_tea_leaf_axpy_kernel;
 
+// user function
 
-//user function
+void tea_leaf_axpy_kernel_c_wrapper(double *restrict u_p, double *restrict p_p,
+                                    const double *restrict alpha, int x_size,
+                                    int y_size) {
+#pragma omp parallel for
+  for (int n_y = 0; n_y < y_size; n_y++) {
+    for (int n_x = 0; n_x < x_size; n_x++) {
+      ptr_double u = {u_p + n_x * 1 + n_y * xdim0_tea_leaf_axpy_kernel * 1,
+                      xdim0_tea_leaf_axpy_kernel};
+      const ptr_double p = {p_p + n_x * 1 +
+                                n_y * xdim1_tea_leaf_axpy_kernel * 1,
+                            xdim1_tea_leaf_axpy_kernel};
 
-
-
-void tea_leaf_axpy_kernel_c_wrapper(
-  double * restrict u_p,
-  double * restrict p_p,
-  const double * restrict alpha,
-  int x_size, int y_size) {
-  #pragma omp parallel for
-  for ( int n_y=0; n_y<y_size; n_y++ ){
-    for ( int n_x=0; n_x<x_size; n_x++ ){
-      ptr_double u = { u_p + n_x*1 + n_y * xdim0_tea_leaf_axpy_kernel*1, xdim0_tea_leaf_axpy_kernel};
-      const ptr_double p = { p_p + n_x*1 + n_y * xdim1_tea_leaf_axpy_kernel*1, xdim1_tea_leaf_axpy_kernel};
-      
-  OPS_ACC(u, 0,0) = OPS_ACC(u, 0,0) + (*alpha)*OPS_ACC(p, 0,0);
-
+      OPS_ACC(u, 0, 0) = OPS_ACC(u, 0, 0) + (*alpha) * OPS_ACC(p, 0, 0);
     }
   }
 }

@@ -31,78 +31,131 @@ int ydim12_calc_dt_kernel;
 int xdim13_calc_dt_kernel;
 int ydim13_calc_dt_kernel;
 
-
-//user function
-
-
+// user function
 
 void calc_dt_kernel_c_wrapper(
-  double * restrict celldx_p,
-  double * restrict celldy_p,
-  double * restrict soundspeed_p,
-  double * restrict viscosity_p,
-  double * restrict density0_p,
-  double * restrict xvel0_p,
-  double * restrict xarea_p,
-  double * restrict volume_p,
-  double * restrict yvel0_p,
-  double * restrict yarea_p,
-  double * restrict dt_min_p,
-  double * restrict celldz_p,
-  double * restrict zvel0_p,
-  double * restrict zarea_p,
-  int x_size, int y_size, int z_size) {
-  #pragma omp parallel for
-  for ( int n_z=0; n_z<z_size; n_z++ ){
-    for ( int n_y=0; n_y<y_size; n_y++ ){
-      for ( int n_x=0; n_x<x_size; n_x++ ){
-        const ptr_double celldx = { celldx_p + n_x*1 + n_y * xdim0_calc_dt_kernel*0 + n_z * xdim0_calc_dt_kernel * ydim0_calc_dt_kernel*0, xdim0_calc_dt_kernel, ydim0_calc_dt_kernel};
-        const ptr_double celldy = { celldy_p + n_x*0 + n_y * xdim1_calc_dt_kernel*1 + n_z * xdim1_calc_dt_kernel * ydim1_calc_dt_kernel*0, xdim1_calc_dt_kernel, ydim1_calc_dt_kernel};
-        const ptr_double soundspeed = { soundspeed_p + n_x*1 + n_y * xdim2_calc_dt_kernel*1 + n_z * xdim2_calc_dt_kernel * ydim2_calc_dt_kernel*1, xdim2_calc_dt_kernel, ydim2_calc_dt_kernel};
-        const ptr_double viscosity = { viscosity_p + n_x*1 + n_y * xdim3_calc_dt_kernel*1 + n_z * xdim3_calc_dt_kernel * ydim3_calc_dt_kernel*1, xdim3_calc_dt_kernel, ydim3_calc_dt_kernel};
-        const ptr_double density0 = { density0_p + n_x*1 + n_y * xdim4_calc_dt_kernel*1 + n_z * xdim4_calc_dt_kernel * ydim4_calc_dt_kernel*1, xdim4_calc_dt_kernel, ydim4_calc_dt_kernel};
-        const ptr_double xvel0 = { xvel0_p + n_x*1 + n_y * xdim5_calc_dt_kernel*1 + n_z * xdim5_calc_dt_kernel * ydim5_calc_dt_kernel*1, xdim5_calc_dt_kernel, ydim5_calc_dt_kernel};
-        const ptr_double xarea = { xarea_p + n_x*1 + n_y * xdim6_calc_dt_kernel*1 + n_z * xdim6_calc_dt_kernel * ydim6_calc_dt_kernel*1, xdim6_calc_dt_kernel, ydim6_calc_dt_kernel};
-        const ptr_double volume = { volume_p + n_x*1 + n_y * xdim7_calc_dt_kernel*1 + n_z * xdim7_calc_dt_kernel * ydim7_calc_dt_kernel*1, xdim7_calc_dt_kernel, ydim7_calc_dt_kernel};
-        const ptr_double yvel0 = { yvel0_p + n_x*1 + n_y * xdim8_calc_dt_kernel*1 + n_z * xdim8_calc_dt_kernel * ydim8_calc_dt_kernel*1, xdim8_calc_dt_kernel, ydim8_calc_dt_kernel};
-        const ptr_double yarea = { yarea_p + n_x*1 + n_y * xdim9_calc_dt_kernel*1 + n_z * xdim9_calc_dt_kernel * ydim9_calc_dt_kernel*1, xdim9_calc_dt_kernel, ydim9_calc_dt_kernel};
-        ptr_double dt_min = { dt_min_p + n_x*1 + n_y * xdim10_calc_dt_kernel*1 + n_z * xdim10_calc_dt_kernel * ydim10_calc_dt_kernel*1, xdim10_calc_dt_kernel, ydim10_calc_dt_kernel};
-        const ptr_double celldz = { celldz_p + n_x*0 + n_y * xdim11_calc_dt_kernel*0 + n_z * xdim11_calc_dt_kernel * ydim11_calc_dt_kernel*1, xdim11_calc_dt_kernel, ydim11_calc_dt_kernel};
-        const ptr_double zvel0 = { zvel0_p + n_x*1 + n_y * xdim12_calc_dt_kernel*1 + n_z * xdim12_calc_dt_kernel * ydim12_calc_dt_kernel*1, xdim12_calc_dt_kernel, ydim12_calc_dt_kernel};
-        const ptr_double zarea = { zarea_p + n_x*1 + n_y * xdim13_calc_dt_kernel*1 + n_z * xdim13_calc_dt_kernel * ydim13_calc_dt_kernel*1, xdim13_calc_dt_kernel, ydim13_calc_dt_kernel};
-        
+    double *restrict celldx_p, double *restrict celldy_p,
+    double *restrict soundspeed_p, double *restrict viscosity_p,
+    double *restrict density0_p, double *restrict xvel0_p,
+    double *restrict xarea_p, double *restrict volume_p,
+    double *restrict yvel0_p, double *restrict yarea_p,
+    double *restrict dt_min_p, double *restrict celldz_p,
+    double *restrict zvel0_p, double *restrict zarea_p, int x_size, int y_size,
+    int z_size) {
+#pragma omp parallel for
+  for (int n_z = 0; n_z < z_size; n_z++) {
+    for (int n_y = 0; n_y < y_size; n_y++) {
+      for (int n_x = 0; n_x < x_size; n_x++) {
+        const ptr_double celldx = {
+            celldx_p + n_x * 1 + n_y * xdim0_calc_dt_kernel * 0 +
+                n_z * xdim0_calc_dt_kernel * ydim0_calc_dt_kernel * 0,
+            xdim0_calc_dt_kernel, ydim0_calc_dt_kernel};
+        const ptr_double celldy = {
+            celldy_p + n_x * 0 + n_y * xdim1_calc_dt_kernel * 1 +
+                n_z * xdim1_calc_dt_kernel * ydim1_calc_dt_kernel * 0,
+            xdim1_calc_dt_kernel, ydim1_calc_dt_kernel};
+        const ptr_double soundspeed = {
+            soundspeed_p + n_x * 1 + n_y * xdim2_calc_dt_kernel * 1 +
+                n_z * xdim2_calc_dt_kernel * ydim2_calc_dt_kernel * 1,
+            xdim2_calc_dt_kernel, ydim2_calc_dt_kernel};
+        const ptr_double viscosity = {
+            viscosity_p + n_x * 1 + n_y * xdim3_calc_dt_kernel * 1 +
+                n_z * xdim3_calc_dt_kernel * ydim3_calc_dt_kernel * 1,
+            xdim3_calc_dt_kernel, ydim3_calc_dt_kernel};
+        const ptr_double density0 = {
+            density0_p + n_x * 1 + n_y * xdim4_calc_dt_kernel * 1 +
+                n_z * xdim4_calc_dt_kernel * ydim4_calc_dt_kernel * 1,
+            xdim4_calc_dt_kernel, ydim4_calc_dt_kernel};
+        const ptr_double xvel0 = {
+            xvel0_p + n_x * 1 + n_y * xdim5_calc_dt_kernel * 1 +
+                n_z * xdim5_calc_dt_kernel * ydim5_calc_dt_kernel * 1,
+            xdim5_calc_dt_kernel, ydim5_calc_dt_kernel};
+        const ptr_double xarea = {
+            xarea_p + n_x * 1 + n_y * xdim6_calc_dt_kernel * 1 +
+                n_z * xdim6_calc_dt_kernel * ydim6_calc_dt_kernel * 1,
+            xdim6_calc_dt_kernel, ydim6_calc_dt_kernel};
+        const ptr_double volume = {
+            volume_p + n_x * 1 + n_y * xdim7_calc_dt_kernel * 1 +
+                n_z * xdim7_calc_dt_kernel * ydim7_calc_dt_kernel * 1,
+            xdim7_calc_dt_kernel, ydim7_calc_dt_kernel};
+        const ptr_double yvel0 = {
+            yvel0_p + n_x * 1 + n_y * xdim8_calc_dt_kernel * 1 +
+                n_z * xdim8_calc_dt_kernel * ydim8_calc_dt_kernel * 1,
+            xdim8_calc_dt_kernel, ydim8_calc_dt_kernel};
+        const ptr_double yarea = {
+            yarea_p + n_x * 1 + n_y * xdim9_calc_dt_kernel * 1 +
+                n_z * xdim9_calc_dt_kernel * ydim9_calc_dt_kernel * 1,
+            xdim9_calc_dt_kernel, ydim9_calc_dt_kernel};
+        ptr_double dt_min = {
+            dt_min_p + n_x * 1 + n_y * xdim10_calc_dt_kernel * 1 +
+                n_z * xdim10_calc_dt_kernel * ydim10_calc_dt_kernel * 1,
+            xdim10_calc_dt_kernel, ydim10_calc_dt_kernel};
+        const ptr_double celldz = {
+            celldz_p + n_x * 0 + n_y * xdim11_calc_dt_kernel * 0 +
+                n_z * xdim11_calc_dt_kernel * ydim11_calc_dt_kernel * 1,
+            xdim11_calc_dt_kernel, ydim11_calc_dt_kernel};
+        const ptr_double zvel0 = {
+            zvel0_p + n_x * 1 + n_y * xdim12_calc_dt_kernel * 1 +
+                n_z * xdim12_calc_dt_kernel * ydim12_calc_dt_kernel * 1,
+            xdim12_calc_dt_kernel, ydim12_calc_dt_kernel};
+        const ptr_double zarea = {
+            zarea_p + n_x * 1 + n_y * xdim13_calc_dt_kernel * 1 +
+                n_z * xdim13_calc_dt_kernel * ydim13_calc_dt_kernel * 1,
+            xdim13_calc_dt_kernel, ydim13_calc_dt_kernel};
 
-  double div, ds, dtut, dtvt, dtct, dtwt, dtdivt, cc, dv1, dv2, du1, du2, dw1, dw2;
+        double div, ds, dtut, dtvt, dtct, dtwt, dtdivt, cc, dv1, dv2, du1, du2,
+            dw1, dw2;
 
-  ds = MIN(MIN(OPS_ACC(celldx, 0,0,0), OPS_ACC(celldy, 0,0,0)), OPS_ACC(celldz, 0,0,0));
-  ds = 1.0/(ds*ds);
+        ds = MIN(MIN(OPS_ACC(celldx, 0, 0, 0), OPS_ACC(celldy, 0, 0, 0)),
+                 OPS_ACC(celldz, 0, 0, 0));
+        ds = 1.0 / (ds * ds);
 
-  cc = OPS_ACC(soundspeed, 0,0,0) * OPS_ACC(soundspeed, 0,0,0);
-  cc = cc + 2.0 * OPS_ACC(viscosity, 0,0,0)/OPS_ACC(density0, 0,0,0);
+        cc = OPS_ACC(soundspeed, 0, 0, 0) * OPS_ACC(soundspeed, 0, 0, 0);
+        cc =
+            cc + 2.0 * OPS_ACC(viscosity, 0, 0, 0) / OPS_ACC(density0, 0, 0, 0);
 
-  dtct=ds*cc;
-  dtct = dtc_safe*1.0/MAX(sqrt(dtct),g_small);
+        dtct = ds * cc;
+        dtct = dtc_safe * 1.0 / MAX(sqrt(dtct), g_small);
 
-  du1=(OPS_ACC(xvel0, 0,0,0)+OPS_ACC(xvel0, 0,1,0)+OPS_ACC(xvel0, 0,0,1)+OPS_ACC(xvel0, 0,1,1))*OPS_ACC(xarea, 0,0,0);
-  du2=(OPS_ACC(xvel0, 1,0,0)+OPS_ACC(xvel0, 1,1,0)+OPS_ACC(xvel0, 1,0,1)+OPS_ACC(xvel0, 1,1,1))*OPS_ACC(xarea, 0,0,0);
+        du1 = (OPS_ACC(xvel0, 0, 0, 0) + OPS_ACC(xvel0, 0, 1, 0) +
+               OPS_ACC(xvel0, 0, 0, 1) + OPS_ACC(xvel0, 0, 1, 1)) *
+              OPS_ACC(xarea, 0, 0, 0);
+        du2 = (OPS_ACC(xvel0, 1, 0, 0) + OPS_ACC(xvel0, 1, 1, 0) +
+               OPS_ACC(xvel0, 1, 0, 1) + OPS_ACC(xvel0, 1, 1, 1)) *
+              OPS_ACC(xarea, 0, 0, 0);
 
-  dtut = dtu_safe * 4.0 * OPS_ACC(volume, 0,0,0)/MAX(MAX(fabs(du1), fabs(du2)), 1.0e-5 * OPS_ACC(volume, 0,0,0));
+        dtut =
+            dtu_safe * 4.0 * OPS_ACC(volume, 0, 0, 0) /
+            MAX(MAX(fabs(du1), fabs(du2)), 1.0e-5 * OPS_ACC(volume, 0, 0, 0));
 
-  dv1=(OPS_ACC(yvel0, 0,0,0)+OPS_ACC(yvel0, 1,0,0)+OPS_ACC(yvel0, 0,0,1)+OPS_ACC(yvel0, 1,0,1))*OPS_ACC(yarea, 0,0,0);
-  dv2=(OPS_ACC(yvel0, 0,1,0)+OPS_ACC(yvel0, 1,1,0)+OPS_ACC(yvel0, 0,1,1)+OPS_ACC(yvel0, 1,1,1))*OPS_ACC(yarea, 0,0,0);
+        dv1 = (OPS_ACC(yvel0, 0, 0, 0) + OPS_ACC(yvel0, 1, 0, 0) +
+               OPS_ACC(yvel0, 0, 0, 1) + OPS_ACC(yvel0, 1, 0, 1)) *
+              OPS_ACC(yarea, 0, 0, 0);
+        dv2 = (OPS_ACC(yvel0, 0, 1, 0) + OPS_ACC(yvel0, 1, 1, 0) +
+               OPS_ACC(yvel0, 0, 1, 1) + OPS_ACC(yvel0, 1, 1, 1)) *
+              OPS_ACC(yarea, 0, 0, 0);
 
-  dtvt = dtv_safe * 4.0 * OPS_ACC(volume, 0,0,0)/MAX(MAX(fabs(dv1),fabs(dv2)), 1.0e-5 * OPS_ACC(volume, 0,0,0));
+        dtvt =
+            dtv_safe * 4.0 * OPS_ACC(volume, 0, 0, 0) /
+            MAX(MAX(fabs(dv1), fabs(dv2)), 1.0e-5 * OPS_ACC(volume, 0, 0, 0));
 
-  dw1=(OPS_ACC(zvel0, 0,0,0)+OPS_ACC(zvel0, 0,1,0)+OPS_ACC(zvel0, 1,0,0)+OPS_ACC(zvel0, 1,1,0))*OPS_ACC(zarea, 0,0,0);
-  dw2=(OPS_ACC(zvel0, 0,0,1)+OPS_ACC(zvel0, 0,1,1)+OPS_ACC(zvel0, 1,0,1)+OPS_ACC(zvel0, 1,1,1))*OPS_ACC(zarea, 0,0,0);
+        dw1 = (OPS_ACC(zvel0, 0, 0, 0) + OPS_ACC(zvel0, 0, 1, 0) +
+               OPS_ACC(zvel0, 1, 0, 0) + OPS_ACC(zvel0, 1, 1, 0)) *
+              OPS_ACC(zarea, 0, 0, 0);
+        dw2 = (OPS_ACC(zvel0, 0, 0, 1) + OPS_ACC(zvel0, 0, 1, 1) +
+               OPS_ACC(zvel0, 1, 0, 1) + OPS_ACC(zvel0, 1, 1, 1)) *
+              OPS_ACC(zarea, 0, 0, 0);
 
-  dtwt = dtw_safe * 4.0 * OPS_ACC(volume, 0,0,0)/MAX(MAX(fabs(dw1),fabs(dw2)), 1.0e-5 * OPS_ACC(volume, 0,0,0));
+        dtwt =
+            dtw_safe * 4.0 * OPS_ACC(volume, 0, 0, 0) /
+            MAX(MAX(fabs(dw1), fabs(dw2)), 1.0e-5 * OPS_ACC(volume, 0, 0, 0));
 
-  div = du2-du1+dv2-dv1+dw2-dw1;
-  dtdivt=dtdiv_safe*4.0*(OPS_ACC(volume, 0,0,0))/MAX(OPS_ACC(volume, 0,0,0)*1.0e-05,fabs(div));
+        div = du2 - du1 + dv2 - dv1 + dw2 - dw1;
+        dtdivt = dtdiv_safe * 4.0 * (OPS_ACC(volume, 0, 0, 0)) /
+                 MAX(OPS_ACC(volume, 0, 0, 0) * 1.0e-05, fabs(div));
 
-  OPS_ACC(dt_min, 0,0,0) = MIN(MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt)),dtwt);
-
+        OPS_ACC(dt_min, 0, 0, 0) =
+            MIN(MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt)), dtwt);
       }
     }
   }

@@ -174,3 +174,12 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
 void ops_download_dat(ops_dat dat) { (void)dat; }
 
 void ops_upload_dat(ops_dat dat) { (void)dat; }
+
+void ops_free_dat(ops_dat dat) {
+  ops_free_dat_core(dat);
+  free(dat);
+}
+
+void _ops_free_dat(ops_dat dat) {
+  ops_free_dat_core(dat);
+}
