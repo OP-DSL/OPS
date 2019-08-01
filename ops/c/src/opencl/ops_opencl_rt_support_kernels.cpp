@@ -134,7 +134,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
     size_t source_size[1];
     source_size[0] = strlen(copy_tobuf_kernel_src) + 1;
     source_str[0] = (char *)ops_malloc(source_size[0]);
-    strcpy(source_str[0], copy_tobuf_kernel_src);
+    strncpy_s(source_str[0], source_size[0], copy_tobuf_kernel_src, source_size[0]);
 
     if (src->block->instance->opencl_instance->copy_tobuf_kernel == NULL)
       src->block->instance->opencl_instance->copy_tobuf_kernel = (cl_kernel *)ops_calloc(1 , sizeof(cl_kernel));
@@ -152,30 +152,29 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
     ret = clBuildProgram(src->block->instance->opencl_instance->OPS_opencl_core.program, 1, &src->block->instance->opencl_instance->OPS_opencl_core.device_id,
                          buildOpts, NULL, NULL);
     if (ret != CL_SUCCESS) {
-      char *build_log;
       size_t log_size;
       clSafeCall(clGetProgramBuildInfo(
           src->block->instance->opencl_instance->OPS_opencl_core.program, src->block->instance->opencl_instance->OPS_opencl_core.device_id,
           CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
-      build_log = (char *)ops_malloc(log_size + 1);
+      std::string build_log;
+      build_log.resize(log_size + 1);
       clSafeCall(clGetProgramBuildInfo(
           src->block->instance->opencl_instance->OPS_opencl_core.program, src->block->instance->opencl_instance->OPS_opencl_core.device_id,
-          CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
+          CL_PROGRAM_BUILD_LOG, log_size, (void*)build_log.c_str(), NULL));
       build_log[log_size] = '\0';
       src->block->instance->ostream() <<
           "=============== OpenCL Program Build Info ================\n\n" <<
           build_log;
       src->block->instance->ostream() <<
               "\n========================================================= \n";
-      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
-      free(build_log);
+      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log.c_str());
     }
 
     // Create the OpenCL kernel
     *src->block->instance->opencl_instance->copy_tobuf_kernel =
         clCreateKernel(src->block->instance->opencl_instance->OPS_opencl_core.program, "ops_opencl_copy_tobuf", &ret);
     clSafeCall(ret);
-    free(source_str[0]);
+    ops_free(source_str[0]);
     src->block->instance->opencl_instance->isbuilt_copy_tobuf_kernel = true;
     if (src->block->instance->OPS_diags>5 && src->block->instance->is_root()) src->block->instance->ostream() << "in copy_tobuf_kernel build\n";
   }
@@ -260,7 +259,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
     size_t source_size[1];
     source_size[0] = strlen(copy_frombuf_kernel_src) + 1;
     source_str[0] = (char *)ops_malloc(source_size[0]);
-    strcpy(source_str[0], copy_frombuf_kernel_src);
+    strncpy_s(source_str[0], source_size[0], copy_frombuf_kernel_src, source_size[0]);
 
     if (dest->block->instance->opencl_instance->copy_frombuf_kernel == NULL)
       dest->block->instance->opencl_instance->copy_frombuf_kernel = (cl_kernel *)ops_calloc(1 , sizeof(cl_kernel));
@@ -278,30 +277,29 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
     ret = clBuildProgram(dest->block->instance->opencl_instance->OPS_opencl_core.program, 1, &dest->block->instance->opencl_instance->OPS_opencl_core.device_id,
                          buildOpts, NULL, NULL);
     if (ret != CL_SUCCESS) {
-      char *build_log;
       size_t log_size;
       clSafeCall(clGetProgramBuildInfo(
           dest->block->instance->opencl_instance->OPS_opencl_core.program, dest->block->instance->opencl_instance->OPS_opencl_core.device_id,
           CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
-      build_log = (char *)ops_malloc(log_size + 1);
+      std::string build_log;
+      build_log.resize(log_size + 1);
       clSafeCall(clGetProgramBuildInfo(
           dest->block->instance->opencl_instance->OPS_opencl_core.program, dest->block->instance->opencl_instance->OPS_opencl_core.device_id,
-          CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
+          CL_PROGRAM_BUILD_LOG, log_size, (void*)build_log.c_str(), NULL));
       build_log[log_size] = '\0';
       dest->block->instance->ostream() <<
           "=============== OpenCL Program Build Info ================\n\n" <<
           build_log;
       dest->block->instance->ostream() <<
               "\n========================================================= \n";
-      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
-      free(build_log);
+      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log.c_str());
     }
 
     // Create the OpenCL kernel
     *dest->block->instance->opencl_instance->copy_frombuf_kernel = clCreateKernel(dest->block->instance->opencl_instance->OPS_opencl_core.program,
                                           "ops_opencl_copy_frombuf", &ret);
     clSafeCall(ret);
-    free(source_str[0]);
+    ops_free(source_str[0]);
     dest->block->instance->opencl_instance->isbuilt_copy_frombuf_kernel = true;
     if (dest->block->instance->OPS_diags>5 && dest->block->instance->is_root()) dest->block->instance->ostream() << "in copy_frombuf_kernel build\n";
   }
@@ -483,7 +481,7 @@ void ops_internal_copy_opencl(ops_kernel_descriptor *desc) {
   }
   ops_dat dat0 = desc->args[0].dat;
   ops_dat dat1 = desc->args[1].dat;
-  double __t1,__t2,__c1,__c2;
+  double __t1=0.0,__t2=0.0,__c1,__c2;
   if (dat0->block->instance->OPS_diags>1) {
     dat0->block->instance->OPS_kernels[-1].count++;
     ops_timers_core(&__c1,&__t1);
@@ -516,7 +514,7 @@ void ops_internal_copy_opencl(ops_kernel_descriptor *desc) {
     size_t source_size[1];
     source_size[0] = strlen(copy_opencl_kernel_src) + 1;
     source_str[0] = (char *)ops_malloc(source_size[0]);
-    strcpy(source_str[0], copy_opencl_kernel_src);
+    strncpy_s(source_str[0], source_size[0], copy_opencl_kernel_src, source_size[0]);
 
     if (block->instance->opencl_instance->copy_opencl_kernel == NULL)
       block->instance->opencl_instance->copy_opencl_kernel = (cl_kernel *)ops_calloc(1 , sizeof(cl_kernel));
@@ -531,34 +529,33 @@ void ops_internal_copy_opencl(ops_kernel_descriptor *desc) {
       return;
     }
     char buildOpts[16];
-    sprintf(buildOpts,"-DOPS_MAX_DIM=%d",OPS_MAX_DIM);
+    snprintf(buildOpts,16,"-DOPS_MAX_DIM=%d",OPS_MAX_DIM);
     ret = clBuildProgram(block->instance->opencl_instance->OPS_opencl_core.program, 1, &block->instance->opencl_instance->OPS_opencl_core.device_id,
                          buildOpts, NULL, NULL);
     if (ret != CL_SUCCESS) {
-      char *build_log;
       size_t log_size;
       clSafeCall(clGetProgramBuildInfo(
           block->instance->opencl_instance->OPS_opencl_core.program, block->instance->opencl_instance->OPS_opencl_core.device_id,
           CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
-      build_log = (char *)ops_malloc(log_size + 1);
+      std::string build_log;
+      build_log.resize(log_size + 1);
       clSafeCall(clGetProgramBuildInfo(
           block->instance->opencl_instance->OPS_opencl_core.program, block->instance->opencl_instance->OPS_opencl_core.device_id,
-          CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
+          CL_PROGRAM_BUILD_LOG, log_size, (void*)build_log.c_str(), NULL));
       build_log[log_size] = '\0';
       block->instance->ostream() <<
           "=============== OpenCL Program Build Info ================\n\n" <<
           build_log;
       block->instance->ostream() <<
               "\n========================================================= \n";
-      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
-      free(build_log);
+      throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log.c_str());
     }
 
     // Create the OpenCL kernel
     *block->instance->opencl_instance->copy_opencl_kernel = clCreateKernel(block->instance->opencl_instance->OPS_opencl_core.program,
                                           "ops_copy_opencl_kernel", &ret);
     clSafeCall(ret);
-    free(source_str[0]);
+    ops_free(source_str[0]);
     block->instance->opencl_instance->isbuilt_copy_opencl_kernel = true;
     if (block->instance->OPS_diags>5 && block->instance->is_root()) block->instance->ostream() << "in copy_opencl_kernel build\n";
   }

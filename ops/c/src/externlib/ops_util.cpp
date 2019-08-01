@@ -209,7 +209,7 @@ void ops_transpose_data(char *in, char* out, int type_size, int ndim, int* size_
   }
 
   if (ndim == 2) {
-#pragma omp parallel for collapse(2)
+#pragma omp parallel for OMP_COLLAPSE(2)
     for (int j = 0; j < size_in[1]; j++) {
       for (int i = 0; i < size_in[0]; i++) {
         int idx_out = i*prod_out[dim_perm[0]] +
@@ -225,7 +225,7 @@ void ops_transpose_data(char *in, char* out, int type_size, int ndim, int* size_
     return;
   }
   if (ndim == 3) {
-#pragma omp parallel for collapse(3)
+#pragma omp parallel for OMP_COLLAPSE(3)
     for (int k = 0; k < size_in[2]; k++) {
       for (int j = 0; j < size_in[1]; j++) {
         for (int i = 0; i < size_in[0]; i++) {
@@ -244,7 +244,7 @@ void ops_transpose_data(char *in, char* out, int type_size, int ndim, int* size_
     return;
   }
   if (ndim == 4) {
-#pragma omp parallel for collapse(4)
+#pragma omp parallel for OMP_COLLAPSE(4)
     for (int u = 0; u < size_in[3]; u++) {
       for (int k = 0; k < size_in[2]; k++) {
         for (int j = 0; j < size_in[1]; j++) {
@@ -342,7 +342,7 @@ void ops_convert_layout(char *in, char *out, ops_block block, int size, int *dat
 
 void ops_init_zero(char *data, size_t bytes) {
 #pragma omp parallel for
-  for (size_t i = 0; i < bytes; i++) {
+  for (long long i = 0; i < (long long)bytes; i++) {
     data[i] = 0;
   }
 }

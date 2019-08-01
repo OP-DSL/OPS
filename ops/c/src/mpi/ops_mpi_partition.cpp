@@ -283,7 +283,7 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps,
     n == ndim - 1 ? ops_printf(" ") : ops_printf("x ");
   }
   ops_printf("\n");
-  free(periodic);
+  ops_free(periodic);
 }
 
 void ops_decomp_dats(sub_block *sb) {
@@ -868,8 +868,8 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
 		       total_size * sizeof(char));
   }
   mpi_neigh_size = (int *)ops_malloc(max_neigh * sizeof(int));
-  free(neighbor_array_recv);
-  free(neighbor_array_send);
+  ops_free(neighbor_array_recv);
+  ops_free(neighbor_array_send);
 }
 
 void _ops_partition(OPS_instance *instance, const char *routine) {
@@ -939,11 +939,11 @@ void _ops_partition(OPS_instance *instance, const char *routine) {
   ops_partition_halos(processes, proc_offsets, proc_disps, proc_sizes,
                       proc_dimsplit);
 
-  free(processes);
-  free(proc_offsets);
-  free(proc_disps);
-  free(proc_sizes);
-  free(proc_dimsplit);
+  ops_free(processes);
+  ops_free(proc_offsets);
+  ops_free(proc_disps);
+  ops_free(proc_sizes);
+  ops_free(proc_dimsplit);
 }
 
 // special case where iterating in 2D and accessing 1D edge, then all procs will
@@ -964,55 +964,54 @@ void ops_mpi_exit(OPS_instance *instance) {
       ops_dat dat = item->dat;
       sub_dat *sd = OPS_sub_dat_list[dat->index];
 
-      free(sd->halos);
-      free(&sd->prod[-1]);
-      free(sd->dirty_dir_send);
-      free(sd->dirty_dir_recv);
-      free(OPS_sub_dat_list[dat->index]);
+      ops_free(sd->halos);
+      ops_free(&sd->prod[-1]);
+      ops_free(sd->dirty_dir_send);
+      ops_free(sd->dirty_dir_recv);
+      ops_free(OPS_sub_dat_list[dat->index]);
     }
   }*/
 
-  int i;
   ops_dat_entry *item;
   TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
-    i = (item->dat)->index;
-    free(OPS_sub_dat_list[i]->halos);
-    free(&OPS_sub_dat_list[i]->prod[-1]);
-    free(OPS_sub_dat_list[i]->dirty_dir_send);
-    free(OPS_sub_dat_list[i]->dirty_dir_recv);
-    free(OPS_sub_dat_list[i]);
+    int i = (item->dat)->index;
+    ops_free(OPS_sub_dat_list[i]->halos);
+    ops_free(&OPS_sub_dat_list[i]->prod[-1]);
+    ops_free(OPS_sub_dat_list[i]->dirty_dir_send);
+    ops_free(OPS_sub_dat_list[i]->dirty_dir_recv);
+    ops_free(OPS_sub_dat_list[i]);
   }
 
-  free(OPS_sub_dat_list);
+  ops_free(OPS_sub_dat_list);
   //OPS_sub_dat_list = NULL;
 
   for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_halo_index; i++) {
     if (OPS_mpi_halo_list[i].nproc_from > 0 ||
         OPS_mpi_halo_list[i].nproc_to > 0) {
-      free(OPS_mpi_halo_list[i].proclist);
-      free(OPS_mpi_halo_list[i].local_from_base);
-      free(OPS_mpi_halo_list[i].local_to_base);
-      free(OPS_mpi_halo_list[i].local_iter_size);
+      ops_free(OPS_mpi_halo_list[i].proclist);
+      ops_free(OPS_mpi_halo_list[i].local_from_base);
+      ops_free(OPS_mpi_halo_list[i].local_to_base);
+      ops_free(OPS_mpi_halo_list[i].local_iter_size);
     }
   }
-  free(OPS_mpi_halo_list);
+  ops_free(OPS_mpi_halo_list);
   for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_halo_group_index; i++) {
     if (OPS_mpi_halo_group_list[i].nhalos > 0) {
-      //free(OPS_mpi_halo_group_list[i].num_neighbors_send);
-      //free(OPS_mpi_halo_group_list[i].num_neighbors_recv);
-      free(OPS_mpi_halo_group_list[i].mpi_halos);
-      free(OPS_mpi_halo_group_list[i].neighbors_send);
-      free(OPS_mpi_halo_group_list[i].neighbors_recv);
-      free(OPS_mpi_halo_group_list[i].send_sizes);
-      free(OPS_mpi_halo_group_list[i].recv_sizes);
-      free(OPS_mpi_halo_group_list[i].statuses);
-      free(OPS_mpi_halo_group_list[i].requests);
+      //ops_free(OPS_mpi_halo_group_list[i].num_neighbors_send);
+      //ops_free(OPS_mpi_halo_group_list[i].num_neighbors_recv);
+      ops_free(OPS_mpi_halo_group_list[i].mpi_halos);
+      ops_free(OPS_mpi_halo_group_list[i].neighbors_send);
+      ops_free(OPS_mpi_halo_group_list[i].neighbors_recv);
+      ops_free(OPS_mpi_halo_group_list[i].send_sizes);
+      ops_free(OPS_mpi_halo_group_list[i].recv_sizes);
+      ops_free(OPS_mpi_halo_group_list[i].statuses);
+      ops_free(OPS_mpi_halo_group_list[i].requests);
     }
   }
-  free(OPS_mpi_halo_group_list);
-  free(mpi_neigh_size);
+  ops_free(OPS_mpi_halo_group_list);
+  ops_free(mpi_neigh_size);
   if (OPS_instance::getOPSInstance()->OPS_enable_checkpointing)
-    free(OPS_checkpointing_dup_buffer);
+    ops_free(OPS_checkpointing_dup_buffer);
 
   //printf("OPS_block_index = %d\n",OPS_block_index);
   for (int b = 0; b < OPS_instance::getOPSInstance()->OPS_block_index; b++) { // for each block
@@ -1024,9 +1023,9 @@ void ops_mpi_exit(OPS_instance *instance) {
     }
 
     MPI_Group_free(&(sb->grp));
-    free(OPS_sub_block_list[b]);
+    ops_free(OPS_sub_block_list[b]);
   }
-  free(OPS_sub_block_list);
+  ops_free(OPS_sub_block_list);
   MPI_Comm_free(&OPS_MPI_GLOBAL);
 }
 

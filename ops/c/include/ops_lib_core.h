@@ -41,10 +41,14 @@
 #define __OPS_LIB_CORE_H
 
 // Needed for size_t
+#include <string>
+#include <cstring>
+#ifdef __unix__
 #include <string.h>
 #include "queue.h" //contains double linked list implementation
 #include <strings.h>
-#include <complex.h>
+#endif
+#include <complex>
 
 /** default byte alignment for allocations made by OPS */
 #ifndef OPS_ALIGNMENT
@@ -64,6 +68,10 @@
  * Can reduce to save on size of metadata
  */
 #define OPS_MAX_DIM 5
+
+#ifndef __unix__
+#define __restrict__ __restrict
+#endif
 
 /*
 * essential typedefs

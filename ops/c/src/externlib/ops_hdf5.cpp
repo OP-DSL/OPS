@@ -59,7 +59,7 @@
 
 static char *copy_str(char const *src) {
   const size_t len = strlen(src) + 1;
-  char *dest = (char *)calloc(len+16, sizeof(char));
+  char *dest = (char *)ops_calloc(len+16, sizeof(char));
   return strncpy(dest, src, len);
 }
 

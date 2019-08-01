@@ -217,7 +217,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
               "\n========================================================= \n");
       OPSException ex(OPS_OPENCL_BUILD_ERROR);
       ex << build_log;
-      free(build_log);
+      ops_free(build_log);
       throw ex;
     }
 
@@ -225,7 +225,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
     *packer1_kernel =
         clCreateKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, "ops_opencl_packer1", &ret);
     clSafeCall(ret);
-    free(source_str[0]);
+    ops_free(source_str[0]);
     isbuilt_packer1_kernel = true;
     if (OPS_instance::getOPSInstance()->OPS_diags>5) ops_printf("in packer1 build\n");
   }
@@ -235,11 +235,11 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
     char *source_str[1];
     size_t source_size[1];
     source_size[0] = strlen(packer1_soa_kernel_src) + 1;
-    source_str[0] = (char *)malloc(source_size[0]);
+    source_str[0] = (char *)ops_malloc(source_size[0]);
     strcpy(source_str[0], packer1_soa_kernel_src);
 
     if (packer1_soa_kernel == NULL)
-      packer1_soa_kernel = (cl_kernel *)malloc(1 * sizeof(cl_kernel));
+      packer1_soa_kernel = (cl_kernel *)ops_malloc(1 * sizeof(cl_kernel));
 
     // attempt to attach sources to program (not compile)
     OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(
@@ -259,7 +259,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
       clSafeCall(clGetProgramBuildInfo(
           OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id,
           CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
-      build_log = (char *)malloc(log_size + 1);
+      build_log = (char *)ops_malloc(log_size + 1);
       clSafeCall(clGetProgramBuildInfo(
           OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id,
           CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
@@ -272,7 +272,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
               "\n========================================================= \n");
       OPSException ex(OPS_OPENCL_BUILD_ERROR);
       ex << build_log;
-      free(build_log);
+      ops_free(build_log);
       throw ex;
     }
 
@@ -280,7 +280,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
     *packer1_soa_kernel =
         clCreateKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, "ops_opencl_packer1_soa", &ret);
     clSafeCall(ret);
-    free(source_str[0]);
+    ops_free(source_str[0]);
     isbuilt_packer1_soa_kernel = true;
     if (OPS_instance::getOPSInstance()->OPS_diags>5) ops_printf("in packer1 soa build\n");
   }
@@ -327,14 +327,14 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
               "\n========================================================= \n");
       OPSException ex(OPS_OPENCL_BUILD_ERROR);
       ex << build_log;
-      free(build_log);
+      ops_free(build_log);
       throw ex;
     }
     // Create the OpenCL kernel
     *packer4_kernel =
         clCreateKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, "ops_opencl_packer4", &ret);
     clSafeCall(ret);
-    free(source_str[0]);
+    ops_free(source_str[0]);
     isbuilt_packer4_kernel = true;
     if (OPS_instance::getOPSInstance()->OPS_diags>5) ops_printf("in packer4 build\n");
   }
@@ -461,11 +461,11 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
     char *source_str[1];
     size_t source_size[1];
     source_size[0] = strlen(unpacker1_soa_kernel_src) + 1;
-    source_str[0] = (char *)malloc(source_size[0]);
+    source_str[0] = (char *)ops_malloc(source_size[0]);
     strcpy(source_str[0], unpacker1_soa_kernel_src);
 
     if (unpacker1_soa_kernel == NULL)
-      unpacker1_soa_kernel = (cl_kernel *)malloc(1 * sizeof(cl_kernel));
+      unpacker1_soa_kernel = (cl_kernel *)ops_malloc(1 * sizeof(cl_kernel));
 
     // attempt to attach sources to program (not compile)
     OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(
@@ -485,7 +485,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
       clSafeCall(clGetProgramBuildInfo(
           OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id,
           CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
-      build_log = (char *)malloc(log_size + 1);
+      build_log = (char *)ops_malloc(log_size + 1);
       clSafeCall(clGetProgramBuildInfo(
           OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id,
           CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
@@ -498,7 +498,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
               "\n========================================================= \n");
       OPSException ex(OPS_OPENCL_BUILD_ERROR);
       ex << build_log;
-      free(build_log);
+      ops_free(build_log);
       throw ex;
     }
 
@@ -507,7 +507,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
         clCreateKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, "ops_opencl_unpacker1_soa", &ret);
     clSafeCall(ret);
     isbuilt_unpacker1_soa_kernel = true;
-    free(source_str[0]);
+    ops_free(source_str[0]);
   }
 
   if (!isbuilt_unpacker1_kernel && !OPS_instance::getOPSInstance()->OPS_soa) {
@@ -552,7 +552,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
               "\n========================================================= \n");
       OPSException ex(OPS_OPENCL_BUILD_ERROR);
       ex << build_log;
-      free(build_log);
+      ops_free(build_log);
       throw ex;
     }
 
@@ -561,7 +561,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
         clCreateKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, "ops_opencl_unpacker1", &ret);
     clSafeCall(ret);
     isbuilt_unpacker1_kernel = true;
-    free(source_str[0]);
+    ops_free(source_str[0]);
   }
 
   if (!isbuilt_unpacker4_kernel && !OPS_instance::getOPSInstance()->OPS_soa) {
@@ -605,7 +605,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
               "\n========================================================= \n");
       OPSException ex(OPS_OPENCL_BUILD_ERROR);
       ex << build_log;
-      free(build_log);
+      ops_free(build_log);
       throw ex;
     }
 
@@ -613,7 +613,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
     *unpacker4_kernel =
         clCreateKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, "ops_opencl_unpacker4", &ret);
     clSafeCall(ret);
-    free(source_str[0]);
+    ops_free(source_str[0]);
     isbuilt_unpacker4_kernel = true;
   }
 
@@ -886,7 +886,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
               "\n========================================================= \n");
       OPSException ex(OPS_OPENCL_BUILD_ERROR);
       ex << build_log;
-      free(build_log);
+      ops_free(build_log);
       throw ex;
     }
 
@@ -894,7 +894,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
     *OPS_instance::getOPSInstance()->opencl_instance->copy_tobuf_kernel =
         clCreateKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, "ops_opencl_copy_tobuf", &ret);
     clSafeCall(ret);
-    free(source_str[0]);
+    ops_free(source_str[0]);
     OPS_instance::getOPSInstance()->opencl_instance->isbuilt_copy_tobuf_kernel = true;
     if (OPS_instance::getOPSInstance()->OPS_diags>5) ops_printf("in mpi OPS_instance::getOPSInstance()->opencl_instance->copy_tobuf_kernel build\n");
   }
@@ -1039,7 +1039,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
               "\n========================================================= \n");
       OPSException ex(OPS_OPENCL_BUILD_ERROR);
       ex << build_log;
-      free(build_log);
+      ops_free(build_log);
       throw ex;
     }
 
@@ -1047,7 +1047,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
     *OPS_instance::getOPSInstance()->opencl_instance->copy_frombuf_kernel = clCreateKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program,
                                           "ops_opencl_copy_frombuf", &ret);
     clSafeCall(ret);
-    free(source_str[0]);
+    ops_free(source_str[0]);
     OPS_instance::getOPSInstance()->opencl_instance->isbuilt_copy_frombuf_kernel = true;
     if (OPS_instance::getOPSInstance()->OPS_diags>5) ops_printf("in mpi OPS_instance::getOPSInstance()->opencl_instance->copy_frombuf_kernel build\n");
   }
@@ -1226,7 +1226,7 @@ void ops_internal_copy_opencl(ops_kernel_descriptor *desc) {
     range[2*d+1] = 1;
   }
   ops_dat dat0 = desc->args[0].dat;
-  double __t1,__t2,__c1,__c2;
+  double __t1 = 0.,__t2 = 0.,__c1 = 0.,__c2 = 0.;
   if (dat0->block->instance->OPS_diags>1) {
     dat0->block->instance->OPS_kernels[-1].count++;
     ops_timers_core(&__c1,&__t1);
@@ -1289,14 +1289,14 @@ void ops_internal_copy_opencl(ops_kernel_descriptor *desc) {
       block->instance->ostream() <<
               "\n========================================================= \n";
       throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
-      free(build_log);
+      ops_free(build_log);
     }
 
     // Create the OpenCL kernel
     *block->instance->opencl_instance->copy_opencl_kernel = clCreateKernel(block->instance->opencl_instance->OPS_opencl_core.program,
                                           "ops_copy_opencl_kernel", &ret);
     clSafeCall(ret);
-    free(source_str[0]);
+    ops_free(source_str[0]);
     block->instance->opencl_instance->isbuilt_copy_opencl_kernel = true;
     if (block->instance->OPS_diags>5 && block->instance->is_root()) block->instance->ostream() << "in copy_opencl_kernel build\n";
   }

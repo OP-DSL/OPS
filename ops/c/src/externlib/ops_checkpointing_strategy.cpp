@@ -331,16 +331,16 @@ bool ops_strat_should_backup(ops_arg *args, int nargs, int loop_id,
 
 void ops_statistics_exit() {
   for (int i = 0; i < ops_strat_max_loop_counter; i++)
-    free(ops_strat_dat_status[i]);
-  free(ops_strat_dat_status);
-  free(ops_strat_min_saved);
-  free(ops_strat_max_saved);
-  free(ops_strat_timescalled);
-  free(ops_strat_avg_saved);
-  free(ops_strat_maxcalled);
-  free(ops_strat_in_progress);
-  free(ops_strat_lastcalled);
-  free(ops_strat_saved_counter);
+    ops_free(ops_strat_dat_status[i]);
+  ops_free(ops_strat_dat_status);
+  ops_free(ops_strat_min_saved);
+  ops_free(ops_strat_max_saved);
+  ops_free(ops_strat_timescalled);
+  ops_free(ops_strat_avg_saved);
+  ops_free(ops_strat_maxcalled);
+  ops_free(ops_strat_in_progress);
+  ops_free(ops_strat_lastcalled);
+  ops_free(ops_strat_saved_counter);
   ops_strat_max_loop_counter = 0;
   ops_best_backup_point = -1;
   delete OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat;
@@ -349,9 +349,12 @@ void ops_statistics_exit() {
 #else
 
 void ops_strat_gather_statistics(ops_arg *args, int nargs, int loop_id,
-                                 int *range) {}
+    int* range) {
+    (void)args;(void)nargs;(void)loop_id;(void)range;
+}
 bool ops_strat_should_backup(ops_arg *args, int nargs, int loop_id,
                              int *range) {
+    (void)args;(void)nargs;(void)loop_id;(void)range;
   return false;
 }
 void ops_statistics_exit() {}

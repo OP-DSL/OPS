@@ -2,6 +2,7 @@ CC    := icl
 CXX     := icl
 MPICC := mpicc.bat
 MPICPP := mpicxx.bat
+>>>>>>> 001f6ec39... Builds with Intel+bash on windows
 FC		:= ifort
 ifdef DEBUG
 	CCFLAGS   := -O0 -g -std=c99

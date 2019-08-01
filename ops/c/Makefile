@@ -3,7 +3,6 @@
 #
 # OPS_COMPILER (gnu,intel,etc)
 #
-
 #
 # set paths for various files
 #
@@ -18,10 +17,10 @@ OPENCL_INC = -I$(OPENCL_INSTALL_PATH)/include
 # compiler settings
 #
 
-OPS_INSTALL_PATH = $(subst /ops/c,/ops,$(shell pwd))
-include $(OPS_INSTALL_PATH)/../makefiles/Makefile.common
-include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
-include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
+OPS_INSTALL_PATH ?= $(subst /ops/c,/ops,$(shell pwd))
+include ../../makefiles/Makefile.common
+include ../../makefiles/Makefile.mpi
+include ../../makefiles/Makefile.cuda
 
 ifdef HDF5_INSTALL_PATH
   HDF5_INC 	  	:= -I$(HDF5_INSTALL_PATH)/include

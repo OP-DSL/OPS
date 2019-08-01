@@ -41,6 +41,10 @@
 #include "ops_hdf5.h"
 #include <ops_exceptions.h>
 
+#if defined(_WIN32) || defined(WIN32)
+#include <Windows.h>
+#endif
+
 #if defined(_OPENMP)
 #include <omp.h>
 #else
@@ -125,13 +129,32 @@ inline int intersection(int range1_beg, int range1_end, int range2_beg,
 }
 
 //Queries L3 cache size
+#if defined(_WIN32) || defined(WIN32)
+size_t ops_internal_get_cache_size(OPS_instance *instance) {
+  if (instance->OPS_hybrid_gpu) return 0;
+  DWORD ReturnLength = 0;
+  GetLogicalProcessorInformation(nullptr, &ReturnLength);
+  std::vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> procInfo;
+  procInfo.resize(ReturnLength / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION));
+  if ( GetLogicalProcessorInformation(procInfo.data(), &ReturnLength) ) {
+    for ( DWORD i = 0 ; i < procInfo.size() ; i++ ) {
+      if ( procInfo[i].Relationship == RelationCache ) {
+        const CACHE_DESCRIPTOR& Cache= procInfo[i].Cache;
+        if ( Cache.Level == 3 ) {
+          return Cache.Size / 1024; /* Linux returns size in KB */
+        }
+      }
+    }
+  }
+  return 0;
+}
+#else
 size_t ops_internal_get_cache_size(OPS_instance *instance) {
   if (instance->OPS_hybrid_gpu) return 0;
   FILE *p = 0;
-  p = fopen("/sys/devices/system/cpu/cpu0/cache/index3/size", "r");
   unsigned int i = 0;
-  if (p) {
-    if ( fscanf(p, "%u", &i) != 1 ) {
+  if (fopen_s(&p, "/sys/devices/system/cpu/cpu0/cache/index3/size", "r")==0) {
+    if ( fscanf_s(p, "%u", &i) != 1 ) {
         /* Failed... leave i at 0? */
         i = 0;
     }
@@ -139,6 +162,7 @@ size_t ops_internal_get_cache_size(OPS_instance *instance) {
   }
   return i;
 }
+#endif
 
 /////////////////////////////////////////////////////////////////////////
 // Enqueueing loops
@@ -194,12 +218,12 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     if (desc->cleanup_function) desc->cleanup_function(desc);
     for (int i = 0; i < desc->nargs; i++)
       if (desc->args[i].argtype == OPS_ARG_GBL && desc->args[i].acc == OPS_READ) {
-        free(desc->args[i].data);
+        ops_free(desc->args[i].data);
         desc->args[i].data = nullptr;
       }
-    free(desc->args);
+    ops_free(desc->args);
     desc->args = nullptr;
-    free(desc);
+    ops_free(desc);
     desc = nullptr;
   }
 }
@@ -306,7 +330,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   std::vector<int> &depths_to_exchange = 
       tiling_plans[tiling_plans.size() - 1].depths_to_exchange;
 
-  tiling_plans[tiling_plans.size() - 1].nloops = ops_kernel_list.size();
+  tiling_plans[tiling_plans.size() - 1].nloops = (int)ops_kernel_list.size();
   tiling_plans[tiling_plans.size() - 1].loop_sequence.resize(
       ops_kernel_list.size());
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++)
@@ -365,7 +389,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   // If no tile sizes specified, compute it
   //
   if (instance->ops_cache_size == 0)
-    instance->ops_cache_size = ops_internal_get_cache_size(instance) / 1000;
+    instance->ops_cache_size = (int)ops_internal_get_cache_size(instance) / 1000;
   // If tile sizes undefined, make an educated guess
   if (tile_sizes[0] == -1 && tile_sizes[1] == -1 && tile_sizes[2] == -1 &&
       instance->ops_cache_size != 0) {
@@ -384,11 +408,11 @@ int ops_construct_tile_plan(OPS_instance *instance) {
     }
 
     double data_per_point = (double)total_mem / (double)full_owned_size;
-    int points_per_tile = (double)instance->ops_cache_size * 1000000.0 / data_per_point;
+    int points_per_tile = int((double)instance->ops_cache_size * 1000000.0 / data_per_point);
     if (dims == 2) {
       // aim for an X size twice as much as the Y size, and the Y size an
       // integer multiple of the #of threads
-      int M = sqrt(points_per_tile /
+      int M = (int)sqrt(points_per_tile /
                    (3 * omp_get_max_threads() * omp_get_max_threads()));
       tile_sizes[0] = 3 * M * omp_get_max_threads();
       tile_sizes[1] = M * omp_get_max_threads();
@@ -401,7 +425,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
       while ((double)points_per_tile / (double)tile_sizes[0] <
              10.0 * omp_get_max_threads())
         tile_sizes[0] = tile_sizes[0] / 2;
-      tile_sizes[2] = sqrt((double)points_per_tile / (double)tile_sizes[0]);
+      tile_sizes[2] = (int)sqrt((double)points_per_tile / (double)tile_sizes[0]);
       tile_sizes[1] = points_per_tile / (tile_sizes[0] * tile_sizes[2]);
       // Sanity check
       if (tile_sizes[0] <= 0 || tile_sizes[1] <= 0 || tile_sizes[2] <= 0)
@@ -432,9 +456,9 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   if (tile_sizes[4] > 0)
     ntiles[4]=(biggest_range[2*4+1]-biggest_range[2*4]-1)/tile_sizes[4]+1;
 #endif
-  if (OPS_MAX_DIM > 5) {
+#if OPS_MAX_DIM > 5
     throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: Tiling not supported dims>5");
-  }
+#endif
 
   int tiles_prod[OPS_MAX_DIM + 1];
   tiles_prod[0] = 1;
@@ -477,7 +501,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   //
   // Main tiling dependency analysis loop
   //
-  for (int loop = ops_kernel_list.size() - 1; loop >= 0; loop--) {
+  for (int loop = (int)ops_kernel_list.size() - 1; loop >= 0; loop--) {
     int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM];
     ops_get_abs_owned_range(ops_kernel_list[loop]->block, LOOPRANGE, start, end, disp);
 
@@ -795,7 +819,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
     printf2(instance,"Created tiling plan for %d loops in %g seconds, with tile size: %dx%dx%d\n", int(ops_kernel_list.size()), t2 - t1, tile_sizes[0], tile_sizes[1], tile_sizes[2]);
 
   // return index to newly created tiling plan
-  return tiling_plans.size() - 1;
+  return (int)tiling_plans.size() - 1;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -843,7 +867,7 @@ void ops_execute(OPS_instance *instance) {
     ops_timers_core(&c,&t1);
   
   ops_halo_exchanges_datlist(&tiling_plans[match].dats_to_exchange[0],
-                             tiling_plans[match].dats_to_exchange.size(),
+                             (int)tiling_plans[match].dats_to_exchange.size(),
                              &tiling_plans[match].depths_to_exchange[0]);
 
   if (instance->OPS_diags>1) {
@@ -902,12 +926,12 @@ void ops_execute(OPS_instance *instance) {
     for (int j = 0; j < ops_kernel_list[i]->nargs; j++)
       if (ops_kernel_list[i]->args[j].argtype == OPS_ARG_GBL && 
           ops_kernel_list[i]->args[j].acc == OPS_READ) {
-        free(ops_kernel_list[i]->args[j].data);
+        ops_free(ops_kernel_list[i]->args[j].data);
         ops_kernel_list[i]->args[j].data = nullptr;
       }
-    free(ops_kernel_list[i]->args);
+    ops_free(ops_kernel_list[i]->args);
     ops_kernel_list[i]->args = nullptr;
-    free(ops_kernel_list[i]);
+    ops_free(ops_kernel_list[i]);
     ops_kernel_list[i] = nullptr;
   }
   ops_kernel_list.clear();
@@ -922,9 +946,9 @@ void ops_exit_lazy(OPS_instance *instance) {
     for (int j = 0; j < ops_kernel_list[i]->nargs; j++)
       if (ops_kernel_list[i]->args[j].argtype == OPS_ARG_GBL && 
           ops_kernel_list[i]->args[j].acc == OPS_READ)
-        free(ops_kernel_list[i]->args[j].data);
-    free(ops_kernel_list[i]->args);
-    free(ops_kernel_list[i]);
+        ops_free(ops_kernel_list[i]->args[j].data);
+    ops_free(ops_kernel_list[i]->args);
+    ops_free(ops_kernel_list[i]);
   }
   ops_kernel_list.clear();
   delete instance->tiling_instance;

@@ -13,6 +13,14 @@ F_OPS_MOD = $(F_OPS)/mod
 F_INC_MOD = $(F_OPS_MOD)/$(OPS_COMPILER)
 
 OPS_MPI	= -DOPS_MPI
+OUT := -o 
+AR := ar -r 
+OPS_LIB_SEQ=-lops_seq
+OPS_LIB_CUDA=-lops_cuda
+OPS_LIB_OPENCL=-lops_opencl
+OPS_LIB_MPI=-lops_mpi
+OPS_LIB_MPI_CUDA=-lops_mpi_cuda
+CUDART=-lcudart
 
 
 OUT := -o 

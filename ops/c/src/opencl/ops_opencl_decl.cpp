@@ -158,9 +158,9 @@ void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *ra
     desc->function = ops_internal_copy_opencl;
     ops_internal_copy_opencl(desc);
     target->data_d = NULL;
-    free(target);
-    free(desc->args);
-    free(desc);
+    ops_free(target);
+    ops_free(desc->args);
+    ops_free(desc);
   }
 }
 
@@ -196,9 +196,9 @@ void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *rang
     desc->function = ops_internal_copy_opencl;
     ops_internal_copy_opencl(desc);
     target->data_d = NULL;
-    free(target);
-    free(desc->args);
-    free(desc);
+    ops_free(target);
+    ops_free(desc->args);
+    ops_free(desc);
     dat->dirty_hd = 2;
   }
 }
@@ -234,9 +234,9 @@ void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace
     desc->function = ops_internal_copy_opencl;
     ops_internal_copy_opencl(desc);
     target->data_d = NULL;
-    free(target);
-    free(desc->args);
-    free(desc);
+    ops_free(target);
+    ops_free(desc->args);
+    ops_free(desc);
   }
 }
 
@@ -269,9 +269,9 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
     desc->function = ops_internal_copy_opencl;
     ops_internal_copy_opencl(desc);
     target->data_d = NULL;
-    free(target);
-    free(desc->args);
-    free(desc);
+    ops_free(target);
+    ops_free(desc->args);
+    ops_free(desc);
     dat->dirty_hd = 2;
   }
 }
@@ -339,11 +339,13 @@ ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int *from_base,
 
 ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
                     ops_access acc) {
+    (void)type;(void)dim;
   return ops_arg_dat_core(dat, stencil, acc);
 }
 
 ops_arg ops_arg_dat_opt(ops_dat dat, int dim, ops_stencil stencil,
                         char const *type, ops_access acc, int flag) {
+    (void)type;(void)dim;
   ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
   (&temp)->opt = flag;
   return temp;
@@ -354,6 +356,7 @@ ops_arg ops_arg_gbl_char(char *data, int dim, int size, ops_access acc) {
 }
 
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
+    (void)type_size;
   ops_execute(handle->instance);
   ops_checkpointing_reduction(handle);
   memcpy(ptr, handle->data, handle->size);
@@ -379,7 +382,7 @@ void ops_get_data(ops_dat dat) { ops_opencl_get_data(dat); }
 void ops_put_data(ops_dat dat) { ops_opencl_put_data(dat); }
 
 void _ops_partition(OPS_instance *instance, const char *routine) {
-  (void)routine;
+    (void)routine;(void)instance;
 }
 
 void ops_partition(const char *routine) {
