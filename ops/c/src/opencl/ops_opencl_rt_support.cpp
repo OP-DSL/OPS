@@ -186,6 +186,7 @@ void __clSafeCall(cl_int ret, const char *file, const int line) {
 
 void pfn_notify(const char *errinfo, const void *private_info, size_t cb,
                 void *user_data) {
+    (void)user_data;(void)cb;
   OPSException ex(OPS_OPENCL_ERROR);
   ex << "OpenCL Error (via pfn_notify) errinfo : " << errinfo << " private info: " << (const char *)private_info;
   throw ex;
@@ -276,8 +277,8 @@ void openclDeviceInit(OPS_instance *instance, const int argc, const char * const
       // this is definitely the device id we'll be using
       instance->opencl_instance->OPS_opencl_core.device_id = instance->opencl_instance->OPS_opencl_core.devices[d];
 
-      // free the rest of them.
-      free(instance->opencl_instance->OPS_opencl_core.devices);
+      // ops_free the rest of them.
+      ops_free(instance->opencl_instance->OPS_opencl_core.devices);
 
       size_t dev_name_len = 0;
       ret = clGetDeviceInfo(instance->opencl_instance->OPS_opencl_core.device_id, CL_DEVICE_NAME, 0, NULL,
@@ -440,7 +441,7 @@ void reallocConstArrays(OPS_instance *instance, int consts_bytes) {
   cl_int ret;
   if (consts_bytes > instance->OPS_consts_bytes) {
     if (instance->OPS_consts_bytes > 0) {
-      free(instance->OPS_consts_h);
+      ops_free(instance->OPS_consts_h);
       clSafeCall(clReleaseMemObject((cl_mem)instance->OPS_consts_d));
     }
     instance->OPS_consts_bytes = 4 * consts_bytes; // 4 is arbitrary, more than needed
@@ -456,7 +457,7 @@ void reallocReductArrays(OPS_instance *instance, int reduct_bytes) {
   cl_int ret;
   if (reduct_bytes > instance->OPS_reduct_bytes) {
     if (instance->OPS_reduct_bytes > 0) {
-      free(instance->OPS_reduct_h);
+      ops_free(instance->OPS_reduct_h);
       clSafeCall(clReleaseMemObject((cl_mem)instance->OPS_reduct_d));
     }
     instance->OPS_reduct_bytes = 4 * reduct_bytes; // 4 is arbitrary, more than needed
@@ -517,7 +518,7 @@ void ops_opencl_exit(OPS_instance *instance) {
   clSafeCall(clFinish(instance->opencl_instance->OPS_opencl_core.command_queue));
   clSafeCall(clReleaseCommandQueue(instance->opencl_instance->OPS_opencl_core.command_queue));
   clSafeCall(clReleaseContext(instance->opencl_instance->OPS_opencl_core.context));
-  free(instance->opencl_instance->OPS_opencl_core.platform_id);
+  ops_free(instance->opencl_instance->OPS_opencl_core.platform_id);
 }
 
 void ops_free_dat(ops_dat dat) {

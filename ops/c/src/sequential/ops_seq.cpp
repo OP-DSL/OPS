@@ -48,7 +48,7 @@ void _ops_init(OPS_instance *instance, const int argc, const char *const argv[],
 
 void _ops_exit(OPS_instance *instance) {
   if (instance->is_initialised == 0) return;
-  if (instance->ops_halo_buffer!=NULL) free(instance->ops_halo_buffer);
+  if (instance->ops_halo_buffer!=NULL) ops_free(instance->ops_halo_buffer);
   ops_exit_core(instance);
 }
 
@@ -234,7 +234,7 @@ void ops_halo_transfer(ops_halo_group group) {
   #if OPS_MAX_DIM>4
     #if OPS_MAX_DIM == 5
     #ifdef _OPENMP
-    #pragma omp parallel for collapse(5)
+    #pragma omp parallel for OMP_COLLAPSE(5)
     #endif
     #endif
     for (int m = MIN(ranges[8], ranges[9] + 1);
@@ -246,7 +246,7 @@ void ops_halo_transfer(ops_halo_group group) {
     #if OPS_MAX_DIM>3
       #if OPS_MAX_DIM == 4
       #ifdef _OPENMP
-      #pragma omp parallel for collapse(4)
+      #pragma omp parallel for OMP_COLLAPSE(4)
       #endif
       #endif
       for (int l = MIN(ranges[6], ranges[7] + 1);
@@ -258,7 +258,7 @@ void ops_halo_transfer(ops_halo_group group) {
       #if OPS_MAX_DIM>2
         #if OPS_MAX_DIM == 3
         #ifdef _OPENMP
-        #pragma omp parallel for collapse(3)
+        #pragma omp parallel for OMP_COLLAPSE(3)
         #endif
         #endif
         for (int k = MIN(ranges[4], ranges[5] + 1);
@@ -270,7 +270,7 @@ void ops_halo_transfer(ops_halo_group group) {
         #if OPS_MAX_DIM>1
           #if OPS_MAX_DIM == 2
           #ifdef _OPENMP
-          #pragma omp parallel for collapse(2)
+          #pragma omp parallel for OMP_COLLAPSE(2)
           #endif
           #endif
           for (int j = MIN(ranges[2], ranges[3] + 1);
@@ -375,7 +375,7 @@ void ops_halo_transfer(ops_halo_group group) {
   #if OPS_MAX_DIM>4
     #if OPS_MAX_DIM == 5
     #ifdef _OPENMP
-    #pragma omp parallel for collapse(5)
+    #pragma omp parallel for OMP_COLLAPSE(5)
     #endif
     #endif
     for (int m = MIN(ranges[8], ranges[9] + 1);
@@ -387,7 +387,7 @@ void ops_halo_transfer(ops_halo_group group) {
     #if OPS_MAX_DIM>3
       #if OPS_MAX_DIM == 4
       #ifdef _OPENMP
-      #pragma omp parallel for collapse(4)
+      #pragma omp parallel for OMP_COLLAPSE(4)
       #endif
       #endif
       for (int l = MIN(ranges[6], ranges[7] + 1);
@@ -399,7 +399,7 @@ void ops_halo_transfer(ops_halo_group group) {
       #if OPS_MAX_DIM>2
         #if OPS_MAX_DIM == 3
         #ifdef _OPENMP
-        #pragma omp parallel for collapse(3)
+        #pragma omp parallel for OMP_COLLAPSE(3)
         #endif
         #endif
         for (int k = MIN(ranges[4], ranges[5] + 1);
@@ -411,7 +411,7 @@ void ops_halo_transfer(ops_halo_group group) {
         #if OPS_MAX_DIM>1
           #if OPS_MAX_DIM == 2
           #ifdef _OPENMP
-          #pragma omp parallel for collapse(2)
+          #pragma omp parallel for OMP_COLLAPSE(2)
           #endif
           #endif
           for (int j = MIN(ranges[2], ranges[3] + 1);
@@ -498,6 +498,7 @@ ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
                     ops_access acc) {
   ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
   (&temp)->dim = dim;
+  (void)type;
   return temp;
 }
 
@@ -506,6 +507,7 @@ ops_arg ops_arg_dat_opt(ops_dat dat, int dim, ops_stencil stencil,
   ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
   (&temp)->dim = dim;
   (&temp)->opt = flag;
+  (void)type;
   return temp;
 }
 
@@ -517,6 +519,7 @@ void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
   ops_execute(handle->instance);
   ops_checkpointing_reduction(handle);
   memcpy(ptr, handle->data, handle->size);
+  (void)type_size;
   handle->initialized = 0;
 }
 
@@ -575,6 +578,7 @@ void ops_decl_const_char(int dim, char const *type, int typeSize, char *data,
 }
 
 void _ops_partition(OPS_instance *instance, const char *routine) {
+    (void)instance;
   (void)routine;
 }
 

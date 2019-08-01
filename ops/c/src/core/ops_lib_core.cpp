@@ -58,35 +58,41 @@
 #endif
 #endif
 
+#if defined (_WIN32) || defined(WIN32)
+#include <malloc.h>
+int posix_memalign(void **memptr, size_t alignment, size_t size) {
+  *memptr = _aligned_malloc(size, alignment);
+  return *memptr == NULL;
+}
+#endif
 /*
 * Utility functions
 */
 static char *copy_str(char const *src) {
   const size_t len = strlen(src) + 1;
   char *dest = (char *)ops_calloc(len, sizeof(char));
-  return strncpy(dest, src, len);
+  snprintf(dest, len, "%s", src);
+  return dest;
 }
 
-
-void _ops_set_args(OPS_instance *instance, const int argc, const char *argv) {
-
+void _ops_set_args(OPS_instance *instance, const char *argv) {
   char temp[64];
   const char *pch;
   pch = strstr(argv, "OPS_BLOCK_SIZE_X=");
   if (pch != NULL) {
-    strncpy(temp, pch, strlen(pch)+1);
+    snprintf(temp, 64, "%s", pch);
     instance->OPS_block_size_x = atoi(temp + 17);
     if (instance->is_root()) instance->ostream() << "\n OPS_block_size_x = " << instance->OPS_block_size_x << '\n';
   }
   pch = strstr(argv, "OPS_BLOCK_SIZE_Y=");
   if (pch != NULL) {
-    strncpy(temp, pch, strlen(pch)+1);
+    snprintf(temp, 64, "%s", pch);
     instance->OPS_block_size_y = atoi(temp + 17);
     if (instance->is_root()) instance->ostream() <<"\n OPS_block_size_y = " << instance->OPS_block_size_y  << '\n';
   }
   pch = strstr(argv, "OPS_BLOCK_SIZE_Z=");
   if (pch != NULL) {
-    strncpy(temp, pch, strlen(pch)+1);
+    snprintf(temp, 64, "%s", pch);
     instance->OPS_block_size_z = atoi(temp + 17);
     if (instance->is_root()) instance->ostream() << "\n OPS_block_size_z = " << instance->OPS_block_size_z  << '\n';
   }
@@ -97,19 +103,19 @@ void _ops_set_args(OPS_instance *instance, const int argc, const char *argv) {
   }
   pch = strstr(argv, "-OPS_DIAGS=");
   if (pch != NULL) {
-    strncpy(temp, pch, strlen(pch)+1);
+    snprintf(temp, 64, "%s", pch);
     instance->OPS_diags = atoi(temp + strlen("-OPS_DIAGS="));
     if (instance->is_root()) instance->ostream() << "\n OPS_diags = " << instance->OPS_diags << '\n';
   }
   pch = strstr(argv, "OPS_CACHE_SIZE=");
   if (pch != NULL) {
-    strncpy(temp, pch, strlen(pch)+1);
+    snprintf(temp, 64, "%s", pch);
     instance->ops_cache_size = atoi(temp + 15);
     if (instance->is_root()) instance->ostream() << "\n Cache size per process = " << instance->ops_cache_size << '\n';
   }
   pch = strstr(argv, "OPS_REALLOC=");
   if (pch != NULL) {
-    strncpy(temp, pch, strlen(pch)+1);
+    snprintf(temp, 64, "%s", pch);
     instance->OPS_realloc = atoi(temp + 12);
     if (instance->is_root()) instance->ostream() << "\n Reallocating = " << instance->OPS_realloc << '\n';
   }
@@ -121,44 +127,44 @@ void _ops_set_args(OPS_instance *instance, const int argc, const char *argv) {
   }
 	pch = strstr(argv, "OPS_TILING_MAXDEPTH=");
   if (pch != NULL) {
-    strncpy(temp, pch, strlen(pch)+1);
+    snprintf(temp, 64, "%s", pch);
     instance->ops_tiling_mpidepth = atoi(temp + 20);
     if (instance->is_root()) instance->ostream() << "\n Max tiling depth across processes = " << instance->ops_tiling_mpidepth << '\n';
   }
 	pch = strstr(argv, "OPS_TILESIZE_X=");
   if (pch != NULL) {
-    strncpy(temp, pch, strlen(pch)+1);
+    snprintf(temp, 64, "%s", pch);
     instance->tilesize_x = atoi(temp + 15);
     if (instance->is_root()) instance->ostream() << "\n Tile size in X = " << instance->tilesize_x << '\n';
   }
 	pch = strstr(argv, "OPS_TILESIZE_Y=");
   if (pch != NULL) {
-    strncpy(temp, pch, strlen(pch)+1);
+    snprintf(temp, 64, "%s", pch);
     instance->tilesize_y = atoi(temp + 15);
     if (instance->is_root()) instance->ostream() << "\n Tile size in Y = " << instance->tilesize_y << '\n';
   }
 	pch = strstr(argv, "OPS_TILESIZE_Z=");
   if (pch != NULL) {
-    strncpy(temp, pch, strlen(pch)+1);
+    snprintf(temp, 64, "%s", pch);
     instance->tilesize_z = atoi(temp + 15);
     if (instance->is_root()) instance->ostream() << "\n Tile size in Z = " << instance->tilesize_z << '\n';
   }
 
   pch = strstr(argv, "OPS_FORCE_DECOMP_X=");
   if (pch != NULL) {
-    strncpy(temp, pch, strlen(pch)+1);
+    snprintf(temp, 64, "%s", pch);
     instance->ops_force_decomp[0] = atoi(temp + 19);
     if (instance->is_root()) instance->ostream() << "\n Forced decomposition in x direction = " << instance->ops_force_decomp[0] << '\n';
   }
   pch = strstr(argv, "OPS_FORCE_DECOMP_Y=");
   if (pch != NULL) {
-    strncpy(temp, pch, strlen(pch)+1);
+    snprintf(temp, 64, "%s", pch);
     instance->ops_force_decomp[1] = atoi(temp + 19);
     if (instance->is_root()) instance->ostream() << "\n Forced decomposition in y direction = " << instance->ops_force_decomp[1] << '\n';
   }
   pch = strstr(argv, "OPS_FORCE_DECOMP_Z=");
   if (pch != NULL) {
-    strncpy(temp, pch, strlen(pch)+1);
+    snprintf(temp, 64, "%s", pch);
     instance->ops_force_decomp[2] = atoi(temp + 19);
     if (instance->is_root()) instance->ostream() << "\n Forced decomposition in z direction = " << instance->ops_force_decomp[2] << '\n';
   }
@@ -175,7 +181,7 @@ void _ops_set_args(OPS_instance *instance, const int argc, const char *argv) {
   } else if (strstr(argv, "OPS_CHECKPOINT=") != NULL) {
     pch = strstr(argv, "OPS_CHECKPOINT=");
     instance->OPS_enable_checkpointing = 2;
-    strncpy(temp, pch, strlen(pch)+1);
+    snprintf(temp, 64, "%s", pch);
     instance->OPS_ranks_per_node = atoi(temp + 15);
     if (instance->is_root()) instance->ostream() << "\n OPS Checkpointing with mirroring offset " <<
                instance->OPS_ranks_per_node << '\n';
@@ -205,8 +211,8 @@ extern "C" void ops_set_args_ftn(const int argc, char *argv, int len) {
 commandline arguments as argv is not easy to pass through from
 Fortran to C
 */
-extern "C" void ops_set_args(const int argc, const char *argv) {
-  _ops_set_args(OPS_instance::getOPSInstance(), argc, argv);
+extern "C" void ops_set_args(const char *argv) {
+  _ops_set_args(OPS_instance::getOPSInstance(), argv);
 }
 
 /*
@@ -216,7 +222,7 @@ void ops_init_core(OPS_instance *instance, const int argc, const char *const arg
   instance->OPS_diags = diags;
   for (int d = 0; d < OPS_MAX_DIM; d++) instance->ops_force_decomp[d] = 0;
   for (int n = 1; n < argc; n++) {
-    _ops_set_args(instance, argc, argv[n]);
+    _ops_set_args(instance, argv[n]);
   }
 
   /*Initialize the double linked list to hold ops_dats*/
@@ -226,58 +232,61 @@ void ops_init_core(OPS_instance *instance, const int argc, const char *const arg
 void ops_exit_core(OPS_instance *instance) {
   ops_checkpointing_exit(instance);
   ops_exit_lazy(instance);
-  ops_dat_entry *item;
+  ops_dat_entry *item = TAILQ_FIRST(&instance->OPS_dat_list);
 
   /*free doubly linked list holding the ops_dats */
 
-  while ((item = TAILQ_FIRST(&instance->OPS_dat_list))) {
+  while (item) {
     TAILQ_REMOVE(&instance->OPS_dat_list, item, entries);
     delete item->dat;
-    free(item);
+    ops_free(item);
+    item = TAILQ_FIRST(&instance->OPS_dat_list);
   }
 
   // free storage and pointers for blocks
   for (int i = 0; i < instance->OPS_block_index; i++) {
-    free((char *)(instance->OPS_block_list[i].block->name));
-    while ((item = TAILQ_FIRST(&(instance->OPS_block_list[i].datasets)))) {
+    ops_free((char *)(instance->OPS_block_list[i].block->name));
+    item = TAILQ_FIRST(&(instance->OPS_block_list[i].datasets));
+    while (item) {
       TAILQ_REMOVE(&(instance->OPS_block_list[i].datasets), item, entries);
-      free(item);
+      ops_free(item);
+      item = TAILQ_FIRST(&(instance->OPS_block_list[i].datasets));
     }
-    free(instance->OPS_block_list[i].block);
+    ops_free(instance->OPS_block_list[i].block);
   }
-  free(instance->OPS_block_list);
+  ops_free(instance->OPS_block_list);
   instance->OPS_block_list = NULL;
 
 
   // free stencils
   for (int i = 0; i < instance->OPS_stencil_index; i++) {
-    free((char *)instance->OPS_stencil_list[i]->name);
-    free(instance->OPS_stencil_list[i]->stencil);
-    free(instance->OPS_stencil_list[i]->stride);
-    free(instance->OPS_stencil_list[i]->mgrid_stride);
-    free(instance->OPS_stencil_list[i]);
+    ops_free((char *)instance->OPS_stencil_list[i]->name);
+    ops_free(instance->OPS_stencil_list[i]->stencil);
+    ops_free(instance->OPS_stencil_list[i]->stride);
+    ops_free(instance->OPS_stencil_list[i]->mgrid_stride);
+    ops_free(instance->OPS_stencil_list[i]);
   }
-  free(instance->OPS_stencil_list);
+  ops_free(instance->OPS_stencil_list);
   instance->OPS_stencil_list = NULL;
 
   for (int i = 0; i < instance->OPS_halo_index; i++) {
-    free(instance->OPS_halo_list[i]);
+    ops_free(instance->OPS_halo_list[i]);
   }
-  free(instance->OPS_halo_list);
+  ops_free(instance->OPS_halo_list);
 
   for (int i = 0; i < instance->OPS_halo_group_index; i++) {
-    free(instance->OPS_halo_group_list[i]->halos);
-    free(instance->OPS_halo_group_list[i]);
+    ops_free(instance->OPS_halo_group_list[i]->halos);
+    ops_free(instance->OPS_halo_group_list[i]);
   }
-  free(instance->OPS_halo_group_list);
+  ops_free(instance->OPS_halo_group_list);
 
   for (int i = 0; i < instance->OPS_reduction_index; i++) {
-    free(instance->OPS_reduction_list[i]->data);
-    free(instance->OPS_reduction_list[i]->type);
-    free(instance->OPS_reduction_list[i]->name);
-    free(instance->OPS_reduction_list[i]);
+    ops_free(instance->OPS_reduction_list[i]->data);
+    ops_free(instance->OPS_reduction_list[i]->type);
+    ops_free(instance->OPS_reduction_list[i]->name);
+    ops_free(instance->OPS_reduction_list[i]);
   }
-  free(instance->OPS_reduction_list);
+  ops_free(instance->OPS_reduction_list);
 
   // reset initial values
   instance->OPS_block_index = 0;
@@ -288,9 +297,9 @@ void ops_exit_core(OPS_instance *instance) {
      assert(instance->OPS_kernels);
      for (int n = -1; n < instance->OPS_kern_max; n++) {
         if (instance->OPS_kernels[n].name != NULL)
-           free(instance->OPS_kernels[n].name);
+           ops_free(instance->OPS_kernels[n].name);
      }
-     free(instance->OPS_kernels-1);
+     ops_free(instance->OPS_kernels-1);
      instance->OPS_kern_max=0;
   }
 
@@ -325,16 +334,17 @@ ops_block _ops_decl_block(OPS_instance *instance, int dims, const char *name) {
 
       TAILQ_INIT(&(OPS_block_list_new[i].datasets));
       //remove ops_dats from old queue and add to new queue
-      ops_dat_entry *item;
-      while ((item = TAILQ_FIRST(&(instance->OPS_block_list[i].datasets)))) {
+      ops_dat_entry *item= TAILQ_FIRST(&(instance->OPS_block_list[i].datasets));
+      while (item) {
         TAILQ_REMOVE(&(instance->OPS_block_list[i].datasets), item, entries);
         TAILQ_INSERT_TAIL(&OPS_block_list_new[i].datasets, item, entries);
+        item = TAILQ_FIRST(&(instance->OPS_block_list[i].datasets));
       }
 
       OPS_block_list_new[i].num_datasets = instance->OPS_block_list[i].num_datasets;
 
     }
-    free(instance->OPS_block_list);
+    ops_free(instance->OPS_block_list);
     instance->OPS_block_list = OPS_block_list_new;
 
   }
@@ -439,14 +449,14 @@ void ops_dat_init_metadata_core(
      dat->hdf5_file = "none";
   }
   if( dat->type != nullptr) {
-     free(  (void*)dat->type );
+     ops_free(  (void*)dat->type );
      dat->type = nullptr;
   }
   if(type != nullptr ) {
      dat->type = copy_str(type);
   }
   if(dat->name != nullptr) {
-     free( (void*)dat->name);
+     ops_free( (void*)dat->name);
      dat->name = nullptr;
   }
   if(name != nullptr) {
@@ -527,24 +537,24 @@ void ops_free_dat_core(ops_dat dat) {
   TAILQ_FOREACH(item, &dat->block->instance->OPS_dat_list, entries) {
     if (item->dat->index == dat->index) {
       TAILQ_REMOVE(&dat->block->instance->OPS_dat_list, item, entries);
-      free(item);
+      ops_free(item);
       break;
     }
   }
   TAILQ_FOREACH(item, &(dat->block->instance->OPS_block_list[dat->block->index].datasets), entries) {
     if (item->dat->index == dat->index) {
       TAILQ_REMOVE(&(dat->block->instance->OPS_block_list[dat->block->index].datasets), item, entries);
-      free(item);
+      ops_free(item);
       break;
     }
   }
   if(dat->user_managed == 0) {
-      free(dat->data);
+      ops_free(dat->data);
       dat->data = nullptr;
   }
-  free((char*)dat->name);
+  ops_free((char*)dat->name);
   dat->name = nullptr;
-  free((char*)dat->type);
+  ops_free((char*)dat->type);
   dat->type = nullptr;
 }
 
@@ -926,6 +936,7 @@ ops_arg ops_arg_gbl_core(char *data, int dim, int size, ops_access acc) {
   arg.dim = dim;
   arg.data = data;
   arg.acc = acc;
+  (void)size;
   return arg;
 }
 
@@ -1022,19 +1033,21 @@ void ops_diagnostic_output() {
 
 void ops_dump3(ops_dat dat, const char *name) {
   // TODO: this has to be backend-specific
+    (void)name;
+    (void)dat;
 }
 
 bool ops_checkpointing_filename(const char *file_name, std::string &filename_out,
                                 std::string &filename_out2);
+
 
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name_in)
 {
   //printf("file %s, name %s type = %s\n",file_name, dat->name, dat->type);
    std::string file_name, ignored;
   ops_checkpointing_filename(file_name_in, file_name, ignored);
-  //TODO: this has to be backend-specific
   FILE *fp;
-  if ((fp = fopen(file_name.c_str(), "a")) == NULL) {
+  if (fopen_s(&fp,file_name.c_str(), "a") != 0) {
     OPSException ex(OPS_RUNTIME_ERROR);
     ex << "Error: can't open file " << file_name;
     throw ex;
@@ -1205,7 +1218,7 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
       ops_fprintf2(stream, "\nTotal time spent in checkpointing: %g seconds\n",
                  instance->OPS_checkpointing_time);
   if (instance->OPS_diags > 1 && instance->OPS_kernels != NULL) {
-    unsigned int maxlen = 0;
+    size_t maxlen = 0;
     for (int i = -1; i < instance->OPS_kern_max; i++) {
       if (instance->OPS_kernels[i].count > 0)
         maxlen = MAX(maxlen, strlen(instance->OPS_kernels[i].name));
@@ -1215,14 +1228,14 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
     }
     char *buf = (char *)ops_malloc((maxlen + 180) * sizeof(char));
     char buf2[180];
-    sprintf(buf, "Name");
+    snprintf(buf, 5, "Name");
     for (unsigned int i = 4; i < maxlen; i++)
-      strcat(buf, " ");
+      strncat_s(buf, (maxlen + 180), " ", 1);
     ops_fprintf2(stream, "\n\n%s  Count Time     MPI-time     Bandwidth(GB/s)\n",
                 buf);
 
     for (unsigned int i = 0; i < maxlen + 31; i++)
-      strcat(buf, "-");
+      strncat_s(buf, (maxlen + 180), "-", 1);
     ops_fprintf2(stream, "%s\n", buf);
     double sumtime = 0.0f;
     double sumtime_mpi = 0.0f;
@@ -1236,12 +1249,12 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
 
       if (instance->OPS_kernels[k].count < 1)
         continue;
-      sprintf(buf, "%s", instance->OPS_kernels[k].name);
-      for (unsigned int i = strlen(instance->OPS_kernels[k].name); i < maxlen + 2; i++)
-        strcat(buf, " ");
+      snprintf(buf, (maxlen + 180), "%s", instance->OPS_kernels[k].name);
+      for (size_t i = strlen(instance->OPS_kernels[k].name); i < maxlen + 2; i++)
+        strncat_s(buf, (maxlen + 180), " ",1);
 
-      sprintf(
-          buf2, "%-5d %-6f (%-6f) %-6f (%-6f)  %-13.2f", instance->OPS_kernels[k].count,
+      snprintf(
+          buf2, 180, "%-5d %-6f (%-6f) %-6f (%-6f)  %-13.2f", instance->OPS_kernels[k].count,
           moments_time[0],
           sqrt(moments_time[1] - moments_time[0] * moments_time[0]),
           moments_mpi_time[0],
@@ -1266,7 +1279,7 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
     }
     // printf("Times: %g %g %g\n",ops_gather_time, ops_sendrecv_time,
     // ops_scatter_time);
-    free(buf);
+    ops_free(buf);
   }
 }
 
@@ -1286,6 +1299,7 @@ void ops_timers_core(double *cpu, double *et) {
   gettimeofday(&t, (struct timezone *)0);
   *et = t.tv_sec + t.tv_usec * 1.0e-6;
 #elif defined(_WIN32) || defined(WIN32)
+  (void)cpu;
   DWORD time = GetTickCount();
   *et = ((double)time)/1000.0;
 #endif
@@ -1321,7 +1335,7 @@ void ops_timing_realloc(OPS_instance *instance, int kernel, const char *name) {
 
   if (instance->OPS_kernels[kernel].count == -1) {
     instance->OPS_kernels[kernel].name = (char *)ops_malloc((strlen(name) + 1) * sizeof(char));
-    strcpy(instance->OPS_kernels[kernel].name, name);
+    strcpy_s(instance->OPS_kernels[kernel].name, strlen(name)+1, name);
     instance->OPS_kernels[kernel].count = 0;
   }
 }
@@ -1350,6 +1364,7 @@ void ops_register_args(OPS_instance *instance, ops_arg *args, const char *name) 
 }
 
 int ops_stencil_check_1d(int arg_idx, int idx0, int dim0) {
+  (void)dim0;
   if (OPS_instance::getOPSInstance()->OPS_curr_args) {
     int match = 0;
     for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->points; i++) {
@@ -1388,6 +1403,7 @@ int ops_stencil_check_1d_md(int arg_idx, int idx0, int mult_d, int d) {
 }
 
 int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1) {
+  (void)dim1;
   if (OPS_instance::getOPSInstance()->OPS_curr_args) {
     int match = 0;
     for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_curr_args[arg_idx].stencil->points; i++) {
@@ -1599,7 +1615,8 @@ extern "C" ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
         instance->OPS_halo_group_list, instance->OPS_halo_group_max * sizeof(ops_halo_group));
 
     if (instance->OPS_halo_group_list == NULL) {
-      throw OPSException(OPS_RUNTIME_ERROR, "Error, ops_decl_halo_group -- error reallocating memory");
+      printf( "Error, ops_decl_halo_group -- error reallocating memory");
+      exit(-1);
     }
   }
 
@@ -1666,7 +1683,11 @@ void *ops_calloc(size_t num, size_t size) {
 
 void *ops_realloc(void *ptr, size_t size) {
 //#ifdef __INTEL_COMPILER
+#if defined (_WIN32) || defined(WIN32)
+  void* newptr = _aligned_realloc(ptr, size, OPS_ALIGNMENT);
+#else
   void *newptr = realloc(ptr, size);
+#endif
   static_assert(sizeof(size_t) == sizeof(void*), "size_t is not big enough to hold pointer address");
   if (((size_t)newptr & (OPS_ALIGNMENT - 1)) != 0) {
     void *newptr2=NULL;
@@ -1677,7 +1698,7 @@ void *ops_realloc(void *ptr, size_t size) {
     }
     // void *newptr2 = _mm_malloc(size, OPS_ALIGNMENT);
     memcpy(newptr2, newptr, size);
-    free(newptr);
+    ops_free(newptr);
     return newptr2;
   } else {
     return newptr;
@@ -1688,12 +1709,11 @@ void *ops_realloc(void *ptr, size_t size) {
 }
 
 void ops_free(void *ptr) {
-//#ifdef __INTEL_COMPILER
-  //_mm_free(ptr);
+#if defined (_WIN32) || defined(WIN32)
+  _aligned_free(ptr);
+#else
   free(ptr);
-//#else
-//  free(ptr);
-//#endif
+#endif
 }
 
 void ops_internal_copy_seq(ops_kernel_descriptor *desc) {
@@ -1721,14 +1741,14 @@ void ops_internal_copy_seq(ops_kernel_descriptor *desc) {
 
 
 #if OPS_MAX_DIM>4
-#pragma omp parallel for collapse(5)
+#pragma omp parallel for OMP_COLLAPSE(5)
     for (long m = (long)range[2*4]; m < (long)range[2*4+1]; m++)
 #else
         long m = 0;
 #endif
 #if OPS_MAX_DIM>3
 #if OPS_MAX_DIM==4
-#pragma omp parallel for collapse(4)
+#pragma omp parallel for OMP_COLLAPSE(4)
 #endif
     for (long l = (long)range[2*3]; l < (long)range[2*3+1]; l++)
 #else
@@ -1736,7 +1756,7 @@ void ops_internal_copy_seq(ops_kernel_descriptor *desc) {
 #endif
 #if OPS_MAX_DIM>2
 #if OPS_MAX_DIM==3
-#pragma omp parallel for collapse(3)
+#pragma omp parallel for OMP_COLLAPSE(3)
 #endif
     for (long k = (long)range[2*2]; k < (long)range[2*2+1]; k++)
 #else
@@ -1744,7 +1764,7 @@ void ops_internal_copy_seq(ops_kernel_descriptor *desc) {
 #endif
 #if OPS_MAX_DIM>1
 #if OPS_MAX_DIM==2
-#pragma omp parallel for collapse(2)
+#pragma omp parallel for OMP_COLLAPSE(2)
 #endif
     for (long j = (long)range[2*1]; j < (long)range[2*1+1]; j++)
 #else
@@ -1797,7 +1817,7 @@ void ops_internal_copy_seq(ops_kernel_descriptor *desc) {
 ops_kernel_descriptor * ops_dat_deep_copy_core(ops_dat target, ops_dat orig_dat, int *range) 
 {
     ops_kernel_descriptor *desc =
-        (ops_kernel_descriptor *)calloc(1, sizeof(ops_kernel_descriptor));
+        (ops_kernel_descriptor *)ops_calloc(1, sizeof(ops_kernel_descriptor));
     //  desc->name = "ops_internal_copy_seq";
     desc->block = orig_dat->block;
     desc->dim = orig_dat->block->dims;
@@ -1812,7 +1832,7 @@ ops_kernel_descriptor * ops_dat_deep_copy_core(ops_dat target, ops_dat orig_dat,
         desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
     }
     desc->nargs = 2;
-    desc->args = (ops_arg *)malloc(2 * sizeof(ops_arg));
+    desc->args = (ops_arg *)ops_malloc(2 * sizeof(ops_arg));
     desc->args[0] = ops_arg_dat(orig_dat, orig_dat->dim, desc->block->instance->OPS_internal_0[orig_dat->block->dims -1], orig_dat->type, OPS_READ);
     desc->hash = ((desc->hash << 5) + desc->hash) + desc->args[0].dat->index;
     desc->args[1] = ops_arg_dat(target, orig_dat->dim, desc->block->instance->OPS_internal_0[orig_dat->block->dims -1], orig_dat->type, OPS_WRITE);
@@ -1854,7 +1874,7 @@ int ops_dat_copy_metadata_core(ops_dat target, ops_dat orig_dat)
   {
      // We need to reallocate
      realloc = 1;
-     free(target->data);
+     ops_free(target->data);
      target->data = nullptr;
      target->data = (char*)ops_malloc(orig_dat->mem);
      target->mem = orig_dat->mem;
@@ -1867,7 +1887,7 @@ int ops_dat_copy_metadata_core(ops_dat target, ops_dat orig_dat)
     dat_size[i] = orig_dat->size[i] + orig_dat->d_m[i] - orig_dat->d_p[i];
   }
   char *name2 = (char*)ops_malloc(strlen(orig_dat->name)+5+1);
-  sprintf(name2, "%s_copy", orig_dat->name);
+  snprintf(name2, strlen(orig_dat->name) + 5, "%s_copy", orig_dat->name);
 
   ops_dat_init_metadata_core(target, orig_dat->dim, dat_size,
                                       orig_dat->base, orig_dat->d_m, orig_dat->d_p,

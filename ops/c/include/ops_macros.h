@@ -39,6 +39,64 @@
   * @details Declares the OPS macros
   */
 
+#ifndef MIN
+#define MIN(a, b) ((a < b) ? (a) : (b))
+#endif
+#ifndef MIN3
+#define MIN3(a, b, c) MIN(a,MIN(b,c))
+#endif
+#ifndef MAX
+#define MAX(a, b) ((a > b) ? (a) : (b))
+#endif
+#ifndef MAX3
+#define MAX3(a, b, c) MAX(a,MAX(b,c))
+#endif
+#ifndef SIGN
+#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
+#endif
+
+
+/* MS Visual Studio is unaware of OpenMP Collapse.
+ * Hopefully, eventually this can check versions and
+ * enable it if they ever get around to implementing it.
+ */
+#ifdef _MSC_VER
+#define OMP_COLLAPSE(n)
+#else
+#define OMP_COLLAPSE(n) collapse(n)
+#endif
+
+
+/*
+ * * zero constants
+ * */
+
+#define ZERO_double 0.0;
+#define INFINITY_double DBL_MAX;
+
+#define ZERO_float 0.0f;
+#define INFINITY_float FLT_MAX;
+
+#define ZERO_int 0;
+#define INFINITY_int INT_MAX;
+
+#define ZERO_long 0;
+#define INFINITY_long LONG_MAX;
+
+#define ZERO_ll 0;
+#define INFINITY_ll LLONG_MAX;
+
+#define ZERO_uint 0;
+#define INFINITY_uint UINT_MAX;
+
+#define ZERO_ulong 0;
+#define INFINITY_ulong ULONG_MAX;
+
+#define ZERO_ull 0;
+#define INFINITY_ull ULLONG_MAX;
+
+#define ZERO_bool 0;
+
 #if OPS_API > 1
 
 #ifdef OPS_1D 

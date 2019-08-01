@@ -488,7 +488,7 @@ void ops_internal_copy_cuda(ops_kernel_descriptor *desc) {
     range[2*d+1] = 1;
   }
   ops_dat dat0 = desc->args[0].dat;
-  double __t1,__t2,__c1,__c2;
+  double __t1 = 0.,__t2 = 0.,__c1 = 0.,__c2 = 0.;
   if (dat0->block->instance->OPS_diags>1) {
     dat0->block->instance->OPS_kernels[-1].count++;
     ops_timers_core(&__c1,&__t1);

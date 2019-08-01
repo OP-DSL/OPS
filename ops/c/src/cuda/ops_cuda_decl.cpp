@@ -332,6 +332,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
 }
 
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
+    (void)type_size;
   ops_execute(handle->instance);
   ops_checkpointing_reduction(handle);
   memcpy(ptr, handle->data, handle->size);
@@ -353,6 +354,7 @@ ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int *from_base,
 
 ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
                     ops_access acc) {
+    (void)type;
   // return ops_arg_dat_core( dat, stencil, acc );
   ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
   (&temp)->dim = dim;
@@ -361,6 +363,7 @@ ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
 
 ops_arg ops_arg_dat_opt(ops_dat dat, int dim, ops_stencil stencil,
                         char const *type, ops_access acc, int flag) {
+    (void)type;(void)dim;
   ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
   (&temp)->opt = flag;
   return temp;
@@ -386,6 +389,7 @@ void ops_NaNcheck(ops_dat dat) {
 }
 
 void _ops_partition(OPS_instance *instance, const char *routine) {
+    (void)instance;
   (void)routine;
 }
 

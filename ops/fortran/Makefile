@@ -32,6 +32,8 @@ else
   CHKCC			:= $(CC)
 endif
 
+CXXFLAGS += -DOPS_FTN
+
 .PHONY: clean mkdir
 
 all:	$(TARGETS)

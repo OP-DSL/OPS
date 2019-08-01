@@ -172,7 +172,7 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type,
 
 void ops_execute_reduction(ops_reduction handle) { (void)handle; }
 
-int _ops_is_root(OPS_instance *instance) { return 1; }
+int _ops_is_root(OPS_instance* instance) { (void)instance; return 1; }
 
 int ops_is_root() { return 1; }
 
@@ -188,11 +188,13 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
 void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
   (void)dats;
   (void)depths;
+  (void)ndats;
 }
 
 void ops_halo_exchanges(ops_arg *args, int nargs, int *range) {
   (void)args;
   (void)range;
+  (void)nargs;
 }
 
 void ops_mpi_reduce_float(ops_arg *args, float *data) {
@@ -226,7 +228,7 @@ void printf2(OPS_instance *instance, const char *format, ...) {
   char buf[1000];
   va_list argptr;
   va_start(argptr, format);
-  vsprintf(buf,format, argptr);
+  vsnprintf(buf,1000, format, argptr);
   va_end(argptr);
   instance->ostream() << buf;
 }
@@ -235,7 +237,7 @@ void ops_printf2(OPS_instance *instance, const char *format, ...) {
   char buf[1000];
   va_list argptr;
   va_start(argptr, format);
-  vsprintf(buf,format, argptr);
+  vsnprintf(buf,1000,format, argptr);
   va_end(argptr);
   instance->ostream() << buf;
 }
@@ -245,7 +247,7 @@ void fprintf2(std::ostream &stream, const char *format, ...) {
   char buf[1000];
   va_list argptr;
   va_start(argptr, format);
-  vsprintf(buf, format, argptr);
+  vsnprintf(buf, 1000, format, argptr);
   va_end(argptr);
   stream << buf;
 }
@@ -254,7 +256,7 @@ void ops_fprintf2(std::ostream &stream, const char *format, ...) {
   char buf[1000];
   va_list argptr;
   va_start(argptr, format);
-  vsprintf(buf, format, argptr);
+  vsnprintf(buf, 1000,format, argptr);
   va_end(argptr);
   stream << buf;
 }
@@ -269,6 +271,7 @@ void ops_fprintf(FILE *stream, const char *format, ...) {
 bool ops_checkpointing_filename(const char *file_name, std::string &filename_out,
                                 std::string &filename_out2) {
   filename_out = file_name;
+  (void)filename_out2;
   //if (filename_out2!=NULL) *filename_out2='\0';
   return false;
 }
@@ -279,6 +282,14 @@ void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems,
                                       char **rm_data, int **rm_range) {
   *rm_type = 0;
   *rm_elems = 0;
+  (void)dat;
+  (void)my_type;
+  (void)my_nelems;
+  (void)my_data;
+  (void)my_range;
+  (void)rm_data;
+  (void)rm_range;
+  
 }
 
 void ops_get_dat_full_range(ops_dat dat, int **full_range) {
@@ -295,6 +306,7 @@ void ops_checkpointing_calc_range(ops_dat dat, const int *range,
 }
 
 int compute_ranges(ops_arg *args, int nargs, ops_block block, int *range, int * start, int * end, int *arg_idx) {
+  (void)args; (void)nargs;
   for (int n = 0; n < block->dims; n++) {
     start[n] = range[2 * n];
     end[n] = range[2 * n + 1];
@@ -325,7 +337,7 @@ int getDatDimFromOpsArg(ops_arg *arg) { return arg->dat->dim; }
 
 // need differet routines for 1D, 2D 3D etc.
 int getDatBaseFromOpsArg1D(ops_arg *arg, int *start, int dim) {
-
+    (void)dim;
   /*convert to C indexing*/
   start[0] -= 1;
 
@@ -348,6 +360,7 @@ int getDatBaseFromOpsArg1D(ops_arg *arg, int *start, int dim) {
 }
 
 int getDatBaseFromOpsArg2D(ops_arg *arg, int *start, int dim) {
+    (void)dim;
   /*convert to C indexing*/
   start[0] -= 1;
   start[1] -= 1;
@@ -373,6 +386,7 @@ int getDatBaseFromOpsArg2D(ops_arg *arg, int *start, int dim) {
 }
 
 int getDatBaseFromOpsArg3D(ops_arg *arg, int *start, int dim) {
+    (void)dim;
   /*convert to C indexing*/
   start[0] -= 1;
   start[1] -= 1;
@@ -402,12 +416,13 @@ int getDatBaseFromOpsArg3D(ops_arg *arg, int *start, int dim) {
 }
 
 char *getReductionPtrFromOpsArg(ops_arg *arg, ops_block block) {
+    (void)block;
   return (char *)((ops_reduction)arg->data)->data;
 }
 
 char *getGblPtrFromOpsArg(ops_arg *arg) { return (char *)(arg->data); }
 
-int getRange(ops_block block, int *start, int *end, int *range) { return 1; }
+int getRange(ops_block block, int* start, int* end, int* range) { (void)block;(void)start;(void)end;(void)range; return 1; }
 
 void getIdx(ops_block block, int *start, int *idx) {
   int block_dim = block->dims;
@@ -419,6 +434,7 @@ void getIdx(ops_block block, int *start, int *idx) {
 }
 
 int ops_dat_get_local_npartitions(ops_dat dat) {
+    (void)dat;
   return 1;
 }
 
@@ -454,6 +470,7 @@ void ops_dat_get_raw_metadata(ops_dat dat, int part, int *disp, int *size, int *
 }
 
 char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_memspace *memspace) {
+    (void)stencil; (void)part;
     if (dat->dirty_hd == OPS_DEVICE || *memspace == OPS_DEVICE) {
         if(dat->data_d == NULL) {
             OPSException ex(OPS_RUNTIME_ERROR);
@@ -498,6 +515,7 @@ char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_me
 }
 
 void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc) {
+    (void)part;
     if (dat->locked_hd==0) {
         // Dat is unlocked
         OPSException ex(OPS_RUNTIME_ERROR);
@@ -512,6 +530,7 @@ void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc) {
 }
 
 void ops_dat_release_raw_data_memspace(ops_dat dat, int part, ops_access acc, ops_memspace *memspace) {
+    (void)part;
     if (dat->locked_hd==0) {
         OPSException ex(OPS_RUNTIME_ERROR);
         ex << "Error: ops_dat_release_raw_data_memspace() called, but with no matching ops_dat_get_raw_pointer() beforehand: " << dat->name;
@@ -687,10 +706,12 @@ void ops_dat_set_data_slab_host(ops_dat dat, int part, char *data, int *range) {
 
 
 int ops_dat_get_global_npartitions(ops_dat dat) {
+    (void)dat;
   return 1;
 }
 
 void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size) {
+    (void)part;
   if (disp != NULL)
     for (int d = 0; d < dat->block->dims; d++)
       disp[d] = 0;

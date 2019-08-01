@@ -44,7 +44,6 @@
 #include <ops_lib_core.h>
 #include <signal.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <ops_exceptions.h>
 
 #include <chrono>
@@ -731,7 +730,7 @@ void ops_checkpoint_prepare_files() {
       if (ops_is_root()) OPS_instance::getOPSInstance()->ostream() << "New inmemory checkpoint, purging previous\n";
     for (int i = ops_ramdisk_item_queue_tail; i < ops_ramdisk_item_queue_head;
          i++) {
-      free(ops_ramdisk_item_queue[i].data);
+      ops_free(ops_ramdisk_item_queue[i].data);
       ops_ramdisk_item_queue[i].data = NULL;
       ops_ramdisk_item_queue[i].dat = NULL;
     }
@@ -808,7 +807,7 @@ void ops_ctrldump(hid_t file_out) {
   check_hdf5_error(H5LTmake_dataset(file_out, "reduction_state", 1, dims,
                                     H5T_NATIVE_CHAR,
                                     ops_inm_ctrl.reduction_state));
-  free(ops_inm_ctrl.reduction_state);
+  ops_free(ops_inm_ctrl.reduction_state);
   ops_inm_ctrl.reduction_state = NULL;
   if ((ops_checkpointing_options & OPS_CHECKPOINT_FASTFW)) {
     dims[0] = ops_inm_ctrl.OPS_checkpointing_payload_nbytes;
@@ -864,9 +863,9 @@ void ops_chkp_sig_handler(int signo) {
         ops_ramdisk_item_queue[i].size, ops_ramdisk_item_queue[i].saved_range,
         ops_ramdisk_item_queue[i].data, ops_ramdisk_item_queue[i].partial,
         ops_ramdisk_item_queue[i].dup);
-    free(ops_ramdisk_item_queue[i].data);
+    ops_free(ops_ramdisk_item_queue[i].data);
   }
-  free(ops_ramdisk_item_queue);
+  ops_free(ops_ramdisk_item_queue);
 
   // Close files
   ops_checkpoint_complete();
@@ -1031,7 +1030,7 @@ void ops_checkpointing_save_control(hid_t file_out) {
   }
 
   if (ops_inm_ctrl.reduction_state != NULL)
-    free(ops_inm_ctrl.reduction_state);
+    ops_free(ops_inm_ctrl.reduction_state);
   ops_inm_ctrl.reduction_state = reduction_state;
   ops_inm_ctrl.reduction_state_size = total_size;
 
@@ -1474,7 +1473,7 @@ bool ops_checkpointing_before(ops_arg *args, int nargs, int *range,
         total_size += OPS_instance::getOPSInstance()->OPS_reduction_list[i]->size;
       }
     }
-    free(reduction_state);
+    ops_free(reduction_state);
     check_hdf5_error(H5Fclose(file));
     ops_timers_core(&cpu, &t2);
     if (OPS_instance::getOPSInstance()->OPS_diags > 1)
@@ -1648,16 +1647,16 @@ void ops_checkpointing_exit(OPS_instance *instance) {
     if (OPS_instance::getOPSInstance()->ops_thread_offload && ops_ramdisk_initialised) {
       ops_ramdisk_ctrl_exit = 1;
       pthread_join(thread, NULL);
-      free(ops_ramdisk_buffer);
-      free(ops_ramdisk_item_queue);
+      ops_free(ops_ramdisk_buffer);
+      ops_free(ops_ramdisk_item_queue);
     }
 #endif
 
     if (OPS_instance::getOPSInstance()->ops_checkpoint_inmemory) {
       for (int i = ops_ramdisk_item_queue_tail; i < ops_ramdisk_item_queue_head;
            i++)
-        free(ops_ramdisk_item_queue[i].data);
-      free(ops_ramdisk_item_queue);
+        ops_free(ops_ramdisk_item_queue[i].data);
+      ops_free(ops_ramdisk_item_queue);
     }
 
     if (OPS_instance::getOPSInstance()->backup_state == OPS_BACKUP_IN_PROCESS) {
@@ -1714,18 +1713,18 @@ void ops_checkpointing_exit(OPS_instance *instance) {
     ops_pre_backup_phase = false;
     OPS_instance::getOPSInstance()->backup_state = OPS_NONE;
     ops_loop_max = 0;
-    free(ops_loops_hashmap);
+    ops_free(ops_loops_hashmap);
     ops_loops_hashmap = NULL;
-    free(OPS_instance::getOPSInstance()->OPS_dat_ever_written);
+    ops_free(OPS_instance::getOPSInstance()->OPS_dat_ever_written);
     OPS_instance::getOPSInstance()->OPS_dat_ever_written = NULL;
-    free(OPS_instance::getOPSInstance()->OPS_dat_status);
+    ops_free(OPS_instance::getOPSInstance()->OPS_dat_status);
     OPS_instance::getOPSInstance()->OPS_dat_status = NULL;
     OPS_partial_buffer_size = 0;
-    free(OPS_partial_buffer);
+    ops_free(OPS_partial_buffer);
     OPS_partial_buffer = NULL;
-    free(ops_inm_ctrl.reduction_state);
-    free(ops_inm_ctrl.OPS_checkpointing_payload);
-    free(ops_inm_ctrl.OPS_chk_red_storage);
+    ops_free(ops_inm_ctrl.reduction_state);
+    ops_free(ops_inm_ctrl.OPS_checkpointing_payload);
+    ops_free(ops_inm_ctrl.OPS_chk_red_storage);
 
     // filename =  "";
   }
@@ -1738,13 +1737,15 @@ class OPS_instance_checkpointing {};
 
 bool ops_checkpointing_before(ops_arg *args, int nargs, int *range,
                               int loop_id) {
+    (void)args;(void)nargs;(void)range;(void)loop_id;
   return true;
 }
 bool ops_checkpointing_name_before(ops_arg *args, int nargs, int *range,
                                    const char *s) {
+    (void)args;(void)nargs;(void)range;(void)s;
   return true;
 }
-void ops_checkpointing_exit(OPS_instance *instance) {}
+void ops_checkpointing_exit(OPS_instance* instance) { (void)instance; }
 
 void ops_checkpointing_reduction(ops_reduction red) {
   ops_execute_reduction(red);
@@ -1754,14 +1755,16 @@ void ops_checkpointing_reduction(ops_reduction red) {
 
 bool ops_checkpointing_init(const char *filename, double interval,
                             int options) {
+    (void)filename;(void)interval;(void)options;
   return false;
 }
 void ops_checkpointing_initphase_done() {}
 
-void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist) {}
-bool ops_checkpointing_fastfw(int nbytes, char *payload) { return false; }
+void ops_checkpointing_manual_datlist(int ndats, ops_dat* datlist) { (void)ndats;(void)datlist; }
+bool ops_checkpointing_fastfw(int nbytes, char* payload) { (void)nbytes;(void)payload;return false; }
 bool ops_checkpointing_manual_datlist_fastfw(int ndats, ops_dat *datlist,
                                              int nbytes, char *payload) {
+    (void)ndats;(void)datlist;(void)nbytes;(void)payload;
   return false;
 }
 
@@ -1769,6 +1772,7 @@ bool ops_checkpointing_manual_datlist_fastfw_trigger(int ndats,
                                                      ops_dat *datlist,
                                                      int nbytes,
                                                      char *payload) {
+    (void)ndats;(void)datlist;(void)nbytes;(void)payload;
   return false;
 }
 

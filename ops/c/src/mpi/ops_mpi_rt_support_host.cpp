@@ -45,7 +45,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
   if (OPS_instance::getOPSInstance()->OPS_soa) {
     const char *__restrict src = dat->data + src_offset * dat->type_size;
   #ifdef _OPENMP
-  #pragma omp parallel for collapse(3) shared(src,dest)
+  #pragma omp parallel for OMP_COLLAPSE(3) shared(src,dest)
   #endif
     for (int i = 0; i < halo->count; i++) {
       for (int d = 0; d < dat->dim; d++)
@@ -70,7 +70,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
   if (OPS_instance::getOPSInstance()->OPS_soa) {
   char *__restrict dest = dat->data + dest_offset * dat->type_size;
   #ifdef _OPENMP
-  #pragma omp parallel for collapse(3) shared(src,dest)
+  #pragma omp parallel for OMP_COLLAPSE(3) shared(src,dest)
 #endif
     for (int i = 0; i < halo->count; i++) {
       for (int d = 0; d < dat->dim; d++)
@@ -120,7 +120,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int buf_strides_y, int buf_strides_z) {
   int OPS_soa = OPS_instance::getOPSInstance()->OPS_soa;
 #ifdef _OPENMP
-#pragma omp parallel for collapse(3)
+#pragma omp parallel for OMP_COLLAPSE(3)
 #endif
   for (int k = MIN(rz_s,rz_e+1); k < MAX(rz_s+1,rz_e); k ++) {
     for (int j = MIN(ry_s,ry_e+1); j < MAX(ry_s+1,ry_e); j ++) {
@@ -149,7 +149,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                            int buf_strides_z) {
   int OPS_soa = OPS_instance::getOPSInstance()->OPS_soa;
 #ifdef _OPENMP
-#pragma omp parallel for collapse(3)
+#pragma omp parallel for OMP_COLLAPSE(3)
 #endif
   for (int k = MIN(rz_s,rz_e+1); k < MAX(rz_s+1,rz_e); k ++) {
     for (int j = MIN(ry_s,ry_e+1); j < MAX(ry_s+1,ry_e); j ++) {
@@ -177,7 +177,7 @@ void ops_upload_dat(ops_dat dat) { (void)dat; }
 
 void ops_free_dat(ops_dat dat) {
   ops_free_dat_core(dat);
-  free(dat);
+  ops_free(dat);
 }
 
 void _ops_free_dat(ops_dat dat) {

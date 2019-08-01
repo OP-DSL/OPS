@@ -46,15 +46,28 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
-#include <sys/queue.h> //contains double linked list implementation
-#include <complex.h>
+#include <string>
+#include <cstring>
+#include <queue.h> //contains double linked list implementation
+#include <complex>
 
 #include "ops_macros.h"
 #include "ops_util.h"
 #include "ops_exceptions.h"
 
+#ifdef OPS_FTN
 #define OPS_FTN_INTEROP extern "C"
+#else
+#define OPS_FTN_INTEROP 
+#endif
+
+#if defined(__unix__) || defined(__APPLE__)
+#define fopen_s(pFile,filename,mode) (((*(pFile))=fopen((filename),(mode)))==NULL)
+#define strncat_s(buf, size1, buf2, count) strcat(buf, buf2)
+#define strcpy_s(dest, len, src) strcpy(dest,src)
+#define strncpy_s(dest, len, src, len2) strcpy(dest,src)
+#define fscanf_s(file,str,args) fscanf(file,str,args)
+#endif
 
 class OPS_instance;
 

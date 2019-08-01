@@ -89,8 +89,8 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
   for (int i = 0; i < deviceCount; i++) {
     cudaError_t err = cudaSetDevice((i+my_id)%deviceCount);
     if (err == cudaSuccess) {
-      cudaError_t err = cudaMalloc((void **)&test, sizeof(float));
-      if (err == cudaSuccess) {
+      cudaError_t err2 = cudaMalloc((void **)&test, sizeof(float));
+      if (err2 == cudaSuccess) {
         instance->OPS_hybrid_gpu = 1;
         break;
       }

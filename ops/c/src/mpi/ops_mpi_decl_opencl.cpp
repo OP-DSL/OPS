@@ -117,10 +117,10 @@ void _ops_exit(OPS_instance *instance) {
   ops_mpi_exit(instance);
   if (halo_buffer_d != NULL)
     clReleaseMemObject((cl_mem)(halo_buffer_d));
-  free(ops_buffer_send_1);
-  free(ops_buffer_recv_1);
-  free(ops_buffer_send_2);
-  free(ops_buffer_recv_2);
+  ops_free(ops_buffer_send_1);
+  ops_free(ops_buffer_recv_1);
+  ops_free(ops_buffer_send_2);
+  ops_free(ops_buffer_recv_2);
 
   int flag = 0;
   MPI_Finalized(&flag);
