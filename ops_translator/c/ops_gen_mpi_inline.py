@@ -233,7 +233,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
         break;
 
     if found == 0:
-      print("COUND NOT FIND KERNEL", name)
+      print(("COUND NOT FIND KERNEL", name))
 
     fid = open(file_name, 'r')
     text = fid.read()
@@ -248,7 +248,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
     if(i < 0):
       print("\n********")
-      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
+      print(("Error: cannot locate user kernel function: "+name+" - Aborting code generation"))
       exit(2)
 
     i2 = text[i:].find(name)
@@ -325,7 +325,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] <> OPS_READ:
+        if accs[n] != OPS_READ:
           for d in range(0,int(dims[n])):
             code(typs[n]+' '+arg_list[n]+'_'+str(d)+' = '+arg_list[n]+'_g['+str(d)+'];')
 
@@ -454,7 +454,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
       ENDFOR()
 
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         for d in range(0,int(dims[n])):
           code(arg_list[n]+'_g['+str(d)+'] = '+arg_list[n]+'_'+str(d)+';')
 
