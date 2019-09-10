@@ -4,25 +4,16 @@
 __constant__ int dims_update_halo_kernel4_plus_4_b [3][1];
 static int dims_update_halo_kernel4_plus_4_b_h [3][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+dims_update_halo_kernel4_plus_4_b[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_update_halo_kernel4_plus_4_b[1][0]*(y))
-
 //user function
 __device__
 
-inline void update_halo_kernel4_plus_4_b_gpu(double *vol_flux_y, double *mass_flux_y, const int* fields) {
-  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y[OPS_ACC0(0,0)] = vol_flux_y[OPS_ACC0(-4,0)];
-  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y[OPS_ACC1(0,0)] = mass_flux_y[OPS_ACC1(-4,0)];
+inline void update_halo_kernel4_plus_4_b_gpu(ACC<double> &vol_flux_y,
+  ACC<double> &mass_flux_y,
+  const int* fields) {
+  if(fields[FIELD_VOL_FLUX_Y] == 1) vol_flux_y(0,0) = vol_flux_y(-4,0);
+  if(fields[FIELD_MASS_FLUX_Y] == 1) mass_flux_y(0,0) = mass_flux_y(-4,0);
 }
 
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 __global__ void ops_update_halo_kernel4_plus_4_b(
@@ -40,7 +31,9 @@ int size1 ){
   arg1 += idx_x * 1*1 + idx_y * 1*1 * dims_update_halo_kernel4_plus_4_b[1][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    update_halo_kernel4_plus_4_b_gpu(arg0, arg1, arg2);
+    ACC<double> argp0(dims_update_halo_kernel4_plus_4_b[0][0], arg0);
+    ACC<double> argp1(dims_update_halo_kernel4_plus_4_b[1][0], arg1);
+    update_halo_kernel4_plus_4_b_gpu(argp0, argp1, arg2);
   }
 
 }

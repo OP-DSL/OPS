@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_3D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,31 +44,21 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-#undef OPS_ACC_MD0
-
-#define OPS_ACC1(x,y,z) (x+xdim1_write_kernel*(y)+xdim1_write_kernel*ydim1_write_kernel*(z))
-#define OPS_ACC2(x,y,z) (x+xdim2_write_kernel*(y)+xdim2_write_kernel*ydim2_write_kernel*(z))
-
-#define OPS_ACC_MD0(d,x,y,z) ((x)*2+(d)+(xdim0_write_kernel*(y)*2)+(xdim0_write_kernel*ydim0_write_kernel*(z)*2))
-
 //user function
-void write_kernel(__global double * restrict mult,__global double * restrict single,__global int * restrict digit,
-const  int * restrict idx)
 
- {
+void write_kernel(ptrm_double mult,
+  ptr_double single,
+  ptr_int digit,
+  const int *idx) {
 
-  mult[OPS_ACC_MD0(0, 0, 0, 0)] = 1;
+  OPS_ACCM(mult, 0, 0, 0, 0) = 1;
 
-  mult[OPS_ACC_MD0(1, 0, 0, 0)] = 2;
+  OPS_ACCM(mult, 1, 0, 0, 0) = 2;
 
-  single[OPS_ACC1(0, 0, 0)] = 3;
+  OPS_ACCS(single, 0, 0, 0) = 3;
 
-  digit[OPS_ACC2(0, 0, 0)] = idx[0] * 100 + idx[1] * 10 + idx[2];
+  OPS_ACCS(digit, 0, 0, 0) = idx[0] * 100 + idx[1] * 10 + idx[2];
 }
-
 
 
 __kernel void ops_write_kernel(
@@ -89,9 +83,16 @@ const int size2 ){
   arg_idx[1] = arg_idx1+idx_y;
   arg_idx[2] = arg_idx2+idx_z;
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    write_kernel(&arg0[base0 + idx_x * 1*2 + idx_y * 1*2 * xdim0_write_kernel + idx_z * 1*2 * xdim0_write_kernel * ydim0_write_kernel],
-                 &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_write_kernel + idx_z * 1*1 * xdim1_write_kernel * ydim1_write_kernel],
-                 &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_write_kernel + idx_z * 1*1 * xdim2_write_kernel * ydim2_write_kernel],
+    #ifdef OPS_SOA
+    ptrm_double ptr0 = { &arg0[base0 + idx_x * 1*2 + idx_y * 1*2 * xdim0_write_kernel + idx_z * 1*2 * xdim0_write_kernel * ydim0_write_kernel], xdim0_write_kernel, ydim0_write_kernel, zdim0_write_kernel};
+    #else
+    ptrm_double ptr0 = { &arg0[base0 + idx_x * 1*2 + idx_y * 1*2 * xdim0_write_kernel + idx_z * 1*2 * xdim0_write_kernel * ydim0_write_kernel], xdim0_write_kernel, ydim0_write_kernel, 2};
+    #endif
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_write_kernel + idx_z * 1*1 * xdim1_write_kernel * ydim1_write_kernel], xdim1_write_kernel, ydim1_write_kernel};
+    ptr_int ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_write_kernel + idx_z * 1*1 * xdim2_write_kernel * ydim2_write_kernel], xdim2_write_kernel, ydim2_write_kernel};
+    write_kernel(ptr0,
+                 ptr1,
+                 ptr2,
                  arg_idx);
   }
 

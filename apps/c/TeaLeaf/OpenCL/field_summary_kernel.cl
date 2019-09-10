@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,35 +45,26 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x,y) (x+xdim0_field_summary_kernel*(y))
-#define OPS_ACC1(x,y) (x+xdim1_field_summary_kernel*(y))
-#define OPS_ACC2(x,y) (x+xdim2_field_summary_kernel*(y))
-#define OPS_ACC3(x,y) (x+xdim3_field_summary_kernel*(y))
-
-
 //user function
-void field_summary_kernel( const __global double * restrict volume,const __global double * restrict density,const __global double * restrict energy,
-const __global double * restrict u, double * restrict vol, double * restrict mass, double * restrict ie,
- double * restrict temp)
 
- {
+void field_summary_kernel(const ptr_double volume,
+  const ptr_double density,
+  const ptr_double energy,
+  const ptr_double u,
+  double *vol,
+  double *mass,
+  double *ie,
+  double *temp) {
 
   double cell_vol, cell_mass;
 
-  cell_vol = volume[OPS_ACC0(0,0)];
-  cell_mass = cell_vol * density[OPS_ACC1(0,0)];
+  cell_vol = OPS_ACCS(volume, 0,0);
+  cell_mass = cell_vol * OPS_ACCS(density, 0,0);
   *vol = *vol + cell_vol;
   *mass = *mass + cell_mass;
-  *ie = *ie + cell_mass * energy[OPS_ACC2(0,0)];
-  *temp = *temp + cell_mass * u[OPS_ACC3(0,0)];
+  *ie = *ie + cell_mass * OPS_ACCS(energy, 0,0);
+  *temp = *temp + cell_mass * OPS_ACCS(u, 0,0);
 }
-
 
 
 __kernel void ops_field_summary_kernel(
@@ -113,10 +108,14 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    field_summary_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_field_summary_kernel],
-                         &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_field_summary_kernel],
-                         &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_field_summary_kernel],
-                         &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_field_summary_kernel],
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_field_summary_kernel], xdim0_field_summary_kernel};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_field_summary_kernel], xdim1_field_summary_kernel};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_field_summary_kernel], xdim2_field_summary_kernel};
+    const ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_field_summary_kernel], xdim3_field_summary_kernel};
+    field_summary_kernel(ptr0,
+                         ptr1,
+                         ptr2,
+                         ptr3,
                          arg4_l,
                          arg5_l,
                          arg6_l,

@@ -50,7 +50,7 @@ void ops_par_loop_initialise_chunk_kernel_zero_x(char const *name, ops_block blo
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  xdim0 = args[0].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
 
   //Timing
   double t1,t2,c1,c2;

@@ -52,7 +52,7 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  xdim0 = args[0].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
 
   //Timing
   double t1,t2,c1,c2;
@@ -65,14 +65,15 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
     xdim0_initialise_chunk_kernel_yy_h = xdim0;
   }
 
-
   int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0+ (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
-    args[0].dat->size[0] *
-    start[1] * args[0].stencil->stride[1];
+  int base0 = args[0].dat->base_offset +
+              (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+                  start[0] * args[0].stencil->stride[0];
+  base0 = base0 +
+          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+              args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
   int *p_a0 = (int *)(args[0].data + base0);
 
   int *p_a1 = NULL;
@@ -84,7 +85,7 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[1].mpi_time += t1-t2;
+    OPS_kernels[1].mpi_time += t1 - t2;
   }
 
   initialise_chunk_kernel_yy_c_wrapper(
@@ -95,7 +96,7 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[1].time += t2-t1;
+    OPS_kernels[1].time += t2 - t1;
   }
   ops_set_dirtybit_host(args, 2);
   ops_set_halo_dirtybit3(&args[0],range);

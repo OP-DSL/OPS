@@ -7,21 +7,12 @@
 int xdim0_initialise_chunk_kernel_zz;
 int ydim0_initialise_chunk_kernel_zz;
 
-
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_initialise_chunk_kernel_zz*(y)+xdim0_initialise_chunk_kernel_zz*ydim0_initialise_chunk_kernel_zz*(z))
-
 //user function
 inline 
-void initialise_chunk_kernel_zz(int *zz, int *idx) {
-  zz[OPS_ACC0(0,0,0)] = idx[2]-2;
+void initialise_chunk_kernel_zz(ptr_int zz,
+  int *idx) {
+  OPS_ACC(zz, 0,0,0) = idx[2]-2;
 }
-
-
-#undef OPS_ACC0
-
 
 
 void initialise_chunk_kernel_zz_c_wrapper(
@@ -43,7 +34,8 @@ void initialise_chunk_kernel_zz_c_wrapper(
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
         int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y, arg_idx2+n_z};
-        initialise_chunk_kernel_zz(  p_a0 + n_x*0*1 + n_y*xdim0_initialise_chunk_kernel_zz*0*1 + n_z*xdim0_initialise_chunk_kernel_zz*ydim0_initialise_chunk_kernel_zz*1*1,
+        ptr_int ptr0 = {  p_a0 + n_x*0*1 + n_y*xdim0_initialise_chunk_kernel_zz*0*1 + n_z*xdim0_initialise_chunk_kernel_zz*ydim0_initialise_chunk_kernel_zz*1*1, xdim0_initialise_chunk_kernel_zz, ydim0_initialise_chunk_kernel_zz};
+        initialise_chunk_kernel_zz( ptr0,
           arg_idx );
 
       }

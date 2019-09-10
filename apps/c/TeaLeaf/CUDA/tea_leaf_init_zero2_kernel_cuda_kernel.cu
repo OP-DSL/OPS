@@ -4,25 +4,15 @@
 __constant__ int dims_tea_leaf_init_zero2_kernel [2][1];
 static int dims_tea_leaf_init_zero2_kernel_h [2][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+dims_tea_leaf_init_zero2_kernel[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_tea_leaf_init_zero2_kernel[1][0]*(y))
-
 //user function
 __device__
 
-void tea_leaf_init_zero2_kernel_gpu (double * p, double * z) {
-  p[OPS_ACC0(0,0)] = 0.0;
-  z[OPS_ACC1(0,0)] = 0.0;
+void tea_leaf_init_zero2_kernel_gpu (ACC<double> & p,
+  ACC<double> & z) {
+  p(0,0) = 0.0;
+  z(0,0) = 0.0;
 }
 
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 __global__ void ops_tea_leaf_init_zero2_kernel(
@@ -39,7 +29,9 @@ int size1 ){
   arg1 += idx_x * 1*1 + idx_y * 1*1 * dims_tea_leaf_init_zero2_kernel[1][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    tea_leaf_init_zero2_kernel_gpu(arg0, arg1);
+    ACC<double> argp0(dims_tea_leaf_init_zero2_kernel[0][0], arg0);
+    ACC<double> argp1(dims_tea_leaf_init_zero2_kernel[1][0], arg1);
+    tea_leaf_init_zero2_kernel_gpu(argp0, argp1);
   }
 
 }

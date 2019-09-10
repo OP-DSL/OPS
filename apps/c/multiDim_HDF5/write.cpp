@@ -35,7 +35,7 @@
   */
 
 #define OPS_3D
-#include "ops_seq.h"
+#include "ops_seq_v2.h"
 
 #include <math.h>
 #include <stdbool.h>

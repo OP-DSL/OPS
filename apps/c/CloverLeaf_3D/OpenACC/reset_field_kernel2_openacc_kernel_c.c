@@ -17,41 +17,19 @@ int ydim4_reset_field_kernel2;
 int xdim5_reset_field_kernel2;
 int ydim5_reset_field_kernel2;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_reset_field_kernel2*(y)+xdim0_reset_field_kernel2*ydim0_reset_field_kernel2*(z))
-#define OPS_ACC1(x,y,z) (x+xdim1_reset_field_kernel2*(y)+xdim1_reset_field_kernel2*ydim1_reset_field_kernel2*(z))
-#define OPS_ACC2(x,y,z) (x+xdim2_reset_field_kernel2*(y)+xdim2_reset_field_kernel2*ydim2_reset_field_kernel2*(z))
-#define OPS_ACC3(x,y,z) (x+xdim3_reset_field_kernel2*(y)+xdim3_reset_field_kernel2*ydim3_reset_field_kernel2*(z))
-#define OPS_ACC4(x,y,z) (x+xdim4_reset_field_kernel2*(y)+xdim4_reset_field_kernel2*ydim4_reset_field_kernel2*(z))
-#define OPS_ACC5(x,y,z) (x+xdim5_reset_field_kernel2*(y)+xdim5_reset_field_kernel2*ydim5_reset_field_kernel2*(z))
-
 //user function
 inline 
-void reset_field_kernel2( double *xvel0, const double *xvel1,
-                          double *yvel0, const double *yvel1,
-                          double *zvel0, const double *zvel1) {
+void reset_field_kernel2(ptr_double xvel0,
+  const ptr_double xvel1,
+  ptr_double yvel0,
+  const ptr_double yvel1,
+  ptr_double zvel0,
+  const ptr_double zvel1) {
 
-  xvel0[OPS_ACC0(0,0,0)]  = xvel1[OPS_ACC1(0,0,0)] ;
-  yvel0[OPS_ACC2(0,0,0)]  = yvel1[OPS_ACC3(0,0,0)] ;
-  zvel0[OPS_ACC4(0,0,0)]  = zvel1[OPS_ACC5(0,0,0)] ;
+  OPS_ACC(xvel0, 0,0,0)  = OPS_ACC(xvel1, 0,0,0) ;
+  OPS_ACC(yvel0, 0,0,0)  = OPS_ACC(yvel1, 0,0,0) ;
+  OPS_ACC(zvel0, 0,0,0)  = OPS_ACC(zvel1, 0,0,0) ;
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
 
 
 void reset_field_kernel2_c_wrapper(
@@ -75,12 +53,18 @@ void reset_field_kernel2_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        reset_field_kernel2(  p_a0 + n_x*1*1 + n_y*xdim0_reset_field_kernel2*1*1 + n_z*xdim0_reset_field_kernel2*ydim0_reset_field_kernel2*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_reset_field_kernel2*1*1 + n_z*xdim1_reset_field_kernel2*ydim1_reset_field_kernel2*1*1,
-           p_a2 + n_x*1*1 + n_y*xdim2_reset_field_kernel2*1*1 + n_z*xdim2_reset_field_kernel2*ydim2_reset_field_kernel2*1*1,
-           p_a3 + n_x*1*1 + n_y*xdim3_reset_field_kernel2*1*1 + n_z*xdim3_reset_field_kernel2*ydim3_reset_field_kernel2*1*1,
-           p_a4 + n_x*1*1 + n_y*xdim4_reset_field_kernel2*1*1 + n_z*xdim4_reset_field_kernel2*ydim4_reset_field_kernel2*1*1,
-           p_a5 + n_x*1*1 + n_y*xdim5_reset_field_kernel2*1*1 + n_z*xdim5_reset_field_kernel2*ydim5_reset_field_kernel2*1*1 );
+        ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_reset_field_kernel2*1*1 + n_z*xdim0_reset_field_kernel2*ydim0_reset_field_kernel2*1*1, xdim0_reset_field_kernel2, ydim0_reset_field_kernel2};
+        const ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_reset_field_kernel2*1*1 + n_z*xdim1_reset_field_kernel2*ydim1_reset_field_kernel2*1*1, xdim1_reset_field_kernel2, ydim1_reset_field_kernel2};
+        ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_reset_field_kernel2*1*1 + n_z*xdim2_reset_field_kernel2*ydim2_reset_field_kernel2*1*1, xdim2_reset_field_kernel2, ydim2_reset_field_kernel2};
+        const ptr_double ptr3 = {  p_a3 + n_x*1*1 + n_y*xdim3_reset_field_kernel2*1*1 + n_z*xdim3_reset_field_kernel2*ydim3_reset_field_kernel2*1*1, xdim3_reset_field_kernel2, ydim3_reset_field_kernel2};
+        ptr_double ptr4 = {  p_a4 + n_x*1*1 + n_y*xdim4_reset_field_kernel2*1*1 + n_z*xdim4_reset_field_kernel2*ydim4_reset_field_kernel2*1*1, xdim4_reset_field_kernel2, ydim4_reset_field_kernel2};
+        const ptr_double ptr5 = {  p_a5 + n_x*1*1 + n_y*xdim5_reset_field_kernel2*1*1 + n_z*xdim5_reset_field_kernel2*ydim5_reset_field_kernel2*1*1, xdim5_reset_field_kernel2, ydim5_reset_field_kernel2};
+        reset_field_kernel2( ptr0,
+          ptr1,
+          ptr2,
+          ptr3,
+          ptr4,
+          ptr5 );
 
       }
     }

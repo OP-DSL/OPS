@@ -4,29 +4,20 @@
 __constant__ int dims_poisson_kernel_error [3][1];
 static int dims_poisson_kernel_error_h [3][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+dims_poisson_kernel_error[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_poisson_kernel_error[1][0]*(y))
-
 //user function
 __device__
 
-void poisson_kernel_error_gpu(const double *u, const double *ref, double *err) {
-  *err = *err + (u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)])*(u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)]);
+void poisson_kernel_error_gpu(const ACC<double> &u,
+  const ACC<double> &ref,
+  double *err) {
+  *err = *err + (u(0,0)-ref(0,0))*(u(0,0)-ref(0,0));
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
 __global__ void ops_poisson_kernel_error(
-const double* __restrict arg0,
-const double* __restrict arg1,
+double* __restrict arg0,
+double* __restrict arg1,
 double* __restrict arg2,
 int size0,
 int size1 ){
@@ -41,7 +32,9 @@ int size1 ){
   arg1 += idx_x * 1*1 + idx_y * 1*1 * dims_poisson_kernel_error[1][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    poisson_kernel_error_gpu(arg0, arg1, arg2_l);
+    const ACC<double> argp0(dims_poisson_kernel_error[0][0], arg0);
+    const ACC<double> argp1(dims_poisson_kernel_error[1][0], arg1);
+    poisson_kernel_error_gpu(argp0, argp1, arg2_l);
   }
   for (int d=0; d<1; d++)
     ops_reduction_cuda<OPS_INC>(&arg2[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg2_l[d]);

@@ -7,25 +7,14 @@
 int xdim0_update_halo_kernel2_yvel_minus_2_b;
 int xdim1_update_halo_kernel2_yvel_minus_2_b;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+xdim0_update_halo_kernel2_yvel_minus_2_b*(y))
-#define OPS_ACC1(x,y) (x+xdim1_update_halo_kernel2_yvel_minus_2_b*(y))
-
 //user function
 
-inline void update_halo_kernel2_yvel_minus_2_b(double *yvel0, double *yvel1, const int* fields) {
-  if(fields[FIELD_YVEL0] == 1) yvel0[OPS_ACC0(0,0)] = -yvel0[OPS_ACC0(0,-2)];
-  if(fields[FIELD_YVEL1] == 1) yvel1[OPS_ACC1(0,0)] = -yvel1[OPS_ACC1(0,-2)];
+inline void update_halo_kernel2_yvel_minus_2_b(ptr_double yvel0,
+  ptr_double yvel1,
+  const int* fields) {
+  if(fields[FIELD_YVEL0] == 1) OPS_ACC(yvel0, 0,0) = -OPS_ACC(yvel0, 0,-2);
+  if(fields[FIELD_YVEL1] == 1) OPS_ACC(yvel1, 0,0) = -OPS_ACC(yvel1, 0,-2);
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
 
 
 void update_halo_kernel2_yvel_minus_2_b_c_wrapper(
@@ -42,8 +31,10 @@ void update_halo_kernel2_yvel_minus_2_b_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      update_halo_kernel2_yvel_minus_2_b(  p_a0 + n_x*1*1 + n_y*xdim0_update_halo_kernel2_yvel_minus_2_b*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_update_halo_kernel2_yvel_minus_2_b*1*1, p_a2 );
+      ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_update_halo_kernel2_yvel_minus_2_b*1*1, xdim0_update_halo_kernel2_yvel_minus_2_b};
+      ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_update_halo_kernel2_yvel_minus_2_b*1*1, xdim1_update_halo_kernel2_yvel_minus_2_b};
+      update_halo_kernel2_yvel_minus_2_b( ptr0,
+          ptr1, p_a2 );
 
     }
   }

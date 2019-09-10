@@ -405,9 +405,9 @@ ops_block ops_decl_block(int dims, const char *name);
 void ops_free_dat(ops_dat dat); 
 
 /**
- * Passes a pointer to the value(s) at the current grid point to the user kernel.
+ * Passes an accessor to the value(s) at the current grid point to the user kernel.
  *
- * The ::OPS_ACC macro has to be used for dereferencing the pointer.
+ * The ACC<type>& reference and its () operator has to be used for accessing data
  *
  * @param dat      dataset
  * @param dim
@@ -420,9 +420,9 @@ ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
                     ops_access acc);
 
 /**
- * Passes a pointer to the value(s) at the current grid point to the user kernel if flag is true
+ * Passes an accessor to the value(s) at the current grid point to the user kernel if flag is true
  *
- * The ::OPS_ACC macro has to be used for dereferencing the pointer.
+ * The ACC<type>& reference and its () operator has to be used for accessing data
  *
  * @param dat      dataset
  * @param dim

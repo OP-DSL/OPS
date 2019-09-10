@@ -8,32 +8,32 @@ int xdim2_tea_leaf_common_init_u_u0_kernel;
 int xdim3_tea_leaf_common_init_u_u0_kernel;
 
 
-#define OPS_ACC0(x,y) (n_x*1 + x + (n_y*1+(y))*xdim0_tea_leaf_common_init_u_u0_kernel)
-#define OPS_ACC1(x,y) (n_x*1 + x + (n_y*1+(y))*xdim1_tea_leaf_common_init_u_u0_kernel)
-#define OPS_ACC2(x,y) (n_x*1 + x + (n_y*1+(y))*xdim2_tea_leaf_common_init_u_u0_kernel)
-#define OPS_ACC3(x,y) (n_x*1 + x + (n_y*1+(y))*xdim3_tea_leaf_common_init_u_u0_kernel)
 //user function
 
-
-
-void tea_leaf_common_init_u_u0_kernel_c_wrapper(
-  double * restrict u,
-  double * restrict u0,
-  const double * restrict energy,
-  const double * restrict density,
-  int x_size, int y_size) {
-  #pragma omp parallel for
+void tea_leaf_common_init_u_u0_kernel_c_wrapper(double *restrict u_p,
+                                                double *restrict u0_p,
+                                                double *restrict energy_p,
+                                                double *restrict density_p,
+                                                int x_size, int y_size) {
+#pragma omp parallel for
   for ( int n_y=0; n_y<y_size; n_y++ ){
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      
-	u [OPS_ACC0(0,0)]=energy[OPS_ACC2(0,0)]*density[OPS_ACC3(0,0)];
-	u0[OPS_ACC1(0,0)]=energy[OPS_ACC2(0,0)]*density[OPS_ACC3(0,0)];
+      ptr_double u = {u_p + n_x * 1 +
+                          n_y * xdim0_tea_leaf_common_init_u_u0_kernel * 1,
+                      xdim0_tea_leaf_common_init_u_u0_kernel};
+      ptr_double u0 = {u0_p + n_x * 1 +
+                           n_y * xdim1_tea_leaf_common_init_u_u0_kernel * 1,
+                       xdim1_tea_leaf_common_init_u_u0_kernel};
+      const ptr_double energy = {
+          energy_p + n_x * 1 + n_y * xdim2_tea_leaf_common_init_u_u0_kernel * 1,
+          xdim2_tea_leaf_common_init_u_u0_kernel};
+      const ptr_double density = {
+          density_p + n_x * 1 +
+              n_y * xdim3_tea_leaf_common_init_u_u0_kernel * 1,
+          xdim3_tea_leaf_common_init_u_u0_kernel};
 
+      OPS_ACC(u, 0, 0) = OPS_ACC(energy, 0, 0) * OPS_ACC(density, 0, 0);
+      OPS_ACC(u0, 0, 0) = OPS_ACC(energy, 0, 0) * OPS_ACC(density, 0, 0);
     }
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-

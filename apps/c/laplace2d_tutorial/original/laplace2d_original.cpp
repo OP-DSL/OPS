@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int main(int argc, char** argv)
+int main(int argc, const char** argv)
 {
   //Size along y
   int jmax = 4094;

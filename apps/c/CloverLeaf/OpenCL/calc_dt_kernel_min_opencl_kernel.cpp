@@ -49,31 +49,46 @@ void buildOpenCLKernels_calc_dt_kernel_min(int xdim0) {
     printf("Compiling calc_dt_kernel_min %d source -- start \n",OCL_FMA);
 
       // Create a program from the source
-      OPS_opencl_core.program = clCreateProgramWithSource(OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
-      clSafeCall( ret );
+    OPS_opencl_core.program = clCreateProgramWithSource(
+        OPS_opencl_core.context, 1, (const char **)&source_str,
+        (const size_t *)&source_size, &ret);
+    clSafeCall(ret);
 
-      // Build the program
-      char buildOpts[255*2];
-      char* pPath = NULL;
-      pPath = getenv ("OPS_INSTALL_PATH");
-      if (pPath!=NULL)
-        if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel_min=%d ", pPath, 32,xdim0);
-        else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel_min=%d ", pPath, 32,xdim0);
-      else {
-        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
-        exit(EXIT_FAILURE);
+    // Build the program
+    char buildOpts[255 * 2];
+    char *pPath = NULL;
+    pPath = getenv("OPS_INSTALL_PATH");
+    if (pPath != NULL)
+      if (OCL_FMA)
+        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/c/include "
+                           "-DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel_min=%d ",
+                pPath, 32, xdim0);
+      else
+        sprintf(buildOpts, "-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  "
+                           "-Dxdim0_calc_dt_kernel_min=%d ",
+                pPath, 32, xdim0);
+    else {
+      sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
+      exit(EXIT_FAILURE);
       }
 
-      ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
+#ifdef OPS_SOA
+      sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
+#endif
+
+      ret = clBuildProgram(OPS_opencl_core.program, 1,
+                           &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
 
       if(ret != CL_SUCCESS) {
         char* build_log;
         size_t log_size;
-        clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
+        clSafeCall(clGetProgramBuildInfo(
+            OPS_opencl_core.program, OPS_opencl_core.device_id,
+            CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
         build_log = (char*) malloc(log_size+1);
-        clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
+        clSafeCall(clGetProgramBuildInfo(
+            OPS_opencl_core.program, OPS_opencl_core.device_id,
+            CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
         build_log[log_size] = '\0';
         fprintf(stderr, "=============== OpenCL Program Build Info ================\n\n%s", build_log);
         fprintf(stderr, "\n========================================================= \n");
@@ -83,10 +98,11 @@ void buildOpenCLKernels_calc_dt_kernel_min(int xdim0) {
       printf("compiling calc_dt_kernel_min -- done\n");
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[52] = clCreateKernel(OPS_opencl_core.program, "ops_calc_dt_kernel_min", &ret);
-    clSafeCall( ret );
+      OPS_opencl_core.kernel[52] = clCreateKernel(
+          OPS_opencl_core.program, "ops_calc_dt_kernel_min", &ret);
+      clSafeCall(ret);
 
-    isbuilt_calc_dt_kernel_min = true;
+      isbuilt_calc_dt_kernel_min = true;
   }
 
 }
@@ -154,9 +170,11 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   xdim0);
 
   //set up OpenCL thread blocks
-  size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};
-  size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,OPS_block_size_z};
-
+  size_t globalWorkSize[3] = {
+      ((x_size - 1) / OPS_block_size_x + 1) * OPS_block_size_x,
+      ((y_size - 1) / OPS_block_size_y + 1) * OPS_block_size_y, 1};
+  size_t localWorkSize[3] = {OPS_block_size_x, OPS_block_size_y,
+                             OPS_block_size_z};
 
   #ifdef OPS_MPI
   double *arg1h = (double *)(((ops_reduction)args[1].data)->data + ((ops_reduction)args[1].data)->size * block->index);
@@ -164,7 +182,8 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   double *arg1h = (double *)(((ops_reduction)args[1].data)->data);
   #endif
 
-  int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);
+  int nblocks = ((x_size - 1) / OPS_block_size_x + 1) *
+                ((y_size - 1) / OPS_block_size_y + 1);
   int maxblocks = nblocks;
   int reduct_bytes = 0;
 
@@ -175,7 +194,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
   int r_bytes1 = reduct_bytes/sizeof(double);
   arg1.data = OPS_reduct_h + reduct_bytes;
-  arg1.data_d = OPS_reduct_d;// + reduct_bytes;
+  arg1.data_d = OPS_reduct_d; // + reduct_bytes;
   for (int b=0; b<maxblocks; b++)
   for (int d=0; d<1; d++) ((double *)arg1.data)[d+b*1] = INFINITY_double;
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
@@ -202,31 +221,40 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[52].mpi_time += t2-t1;
+    OPS_kernels[52].mpi_time += t2 - t1;
   }
 
-  int nthread = OPS_block_size_x*OPS_block_size_y*OPS_block_size_z;
+  int nthread = OPS_block_size_x * OPS_block_size_y * OPS_block_size_z;
 
   if (globalWorkSize[0]>0 && globalWorkSize[1]>0 && globalWorkSize[2]>0) {
 
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[52], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[52], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[52], 2, nthread*sizeof(double), NULL));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[52], 3, sizeof(cl_int), (void*) &r_bytes1 ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[52], 4, sizeof(cl_int), (void*) &base0 ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[52], 5, sizeof(cl_int), (void*) &x_size ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[52], 6, sizeof(cl_int), (void*) &y_size ));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[52], 0, sizeof(cl_mem),
+                              (void *)&arg0.data_d));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[52], 1, sizeof(cl_mem),
+                              (void *)&arg1.data_d));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[52], 2,
+                              nthread * sizeof(double), NULL));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[52], 3, sizeof(cl_int),
+                              (void *)&r_bytes1));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[52], 4, sizeof(cl_int),
+                              (void *)&base0));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[52], 5, sizeof(cl_int),
+                              (void *)&x_size));
+    clSafeCall(clSetKernelArg(OPS_opencl_core.kernel[52], 6, sizeof(cl_int),
+                              (void *)&y_size));
 
     //call/enque opencl kernel wrapper function
-    clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[52], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+    clSafeCall(clEnqueueNDRangeKernel(
+        OPS_opencl_core.command_queue, OPS_opencl_core.kernel[52], 3, NULL,
+        globalWorkSize, localWorkSize, 0, NULL, NULL));
   }
-  if (OPS_diags>1) {
-    clSafeCall( clFinish(OPS_opencl_core.command_queue) );
+  if (OPS_diags > 1) {
+    clSafeCall(clFinish(OPS_opencl_core.command_queue));
   }
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[52].time += t1-t2;
+    OPS_kernels[52].time += t1 - t2;
   }
 
   mvReductArraysToHost(reduct_bytes);
@@ -242,7 +270,7 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[52].mpi_time += t2-t1;
+    OPS_kernels[52].mpi_time += t2 - t1;
     OPS_kernels[52].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

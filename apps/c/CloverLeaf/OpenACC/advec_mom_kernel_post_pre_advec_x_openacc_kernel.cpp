@@ -168,7 +168,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
   #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[74].mpi_time += t2-t1;
+    OPS_kernels[74].mpi_time += t2 - t1;
   }
 
   advec_mom_kernel_post_pre_advec_x_c_wrapper(
@@ -181,7 +181,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[74].time += t1-t2;
+    OPS_kernels[74].time += t1 - t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 5);
@@ -194,7 +194,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[74].mpi_time += t2-t1;
+    OPS_kernels[74].mpi_time += t2 - t1;
     OPS_kernels[74].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[74].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[74].transfer += ops_compute_transfer(dim, start, end, &arg2);

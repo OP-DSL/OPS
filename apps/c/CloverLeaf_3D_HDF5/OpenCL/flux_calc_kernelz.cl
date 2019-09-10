@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_3D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,30 +45,18 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_flux_calc_kernelz*(y)+xdim0_flux_calc_kernelz*ydim0_flux_calc_kernelz*(z))
-#define OPS_ACC1(x,y,z) (x+xdim1_flux_calc_kernelz*(y)+xdim1_flux_calc_kernelz*ydim1_flux_calc_kernelz*(z))
-#define OPS_ACC2(x,y,z) (x+xdim2_flux_calc_kernelz*(y)+xdim2_flux_calc_kernelz*ydim2_flux_calc_kernelz*(z))
-#define OPS_ACC3(x,y,z) (x+xdim3_flux_calc_kernelz*(y)+xdim3_flux_calc_kernelz*ydim3_flux_calc_kernelz*(z))
-
-
 //user function
-void flux_calc_kernelz( __global double * restrict vol_flux_z,const __global double * restrict zarea,const __global double * restrict zvel0,
-const __global double * restrict zvel1,
-  const double dt)
 
- {
+void flux_calc_kernelz(ptr_double vol_flux_z,
+  const ptr_double zarea,
+  const ptr_double zvel0,
+  const ptr_double zvel1, const double dt)
+{
 
-  vol_flux_z[OPS_ACC0(0,0,0)] = 0.125 * dt * (zarea[OPS_ACC1(0,0,0)]) *
-  ( zvel0[OPS_ACC2(0,0,0)] + zvel0[OPS_ACC2(1,0,0)] + zvel0[OPS_ACC2(1,0,0)] + zvel0[OPS_ACC2(1,1,0)] +
-    zvel1[OPS_ACC3(0,0,0)] + zvel1[OPS_ACC3(1,0,0)] + zvel1[OPS_ACC3(0,1,0)] + zvel1[OPS_ACC3(1,1,0)]);
+  OPS_ACCS(vol_flux_z, 0,0,0) = 0.125 * dt * (OPS_ACCS(zarea, 0,0,0)) *
+  ( OPS_ACCS(zvel0, 0,0,0) + OPS_ACCS(zvel0, 1,0,0) + OPS_ACCS(zvel0, 1,0,0) + OPS_ACCS(zvel0, 1,1,0) +
+    OPS_ACCS(zvel1, 0,0,0) + OPS_ACCS(zvel1, 1,0,0) + OPS_ACCS(zvel1, 0,1,0) + OPS_ACCS(zvel1, 1,1,0));
 }
-
 
 
 __kernel void ops_flux_calc_kernelz(
@@ -87,10 +79,14 @@ const int size2 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    flux_calc_kernelz(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_flux_calc_kernelz + idx_z * 1*1 * xdim0_flux_calc_kernelz * ydim0_flux_calc_kernelz],
-                     &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_flux_calc_kernelz + idx_z * 1*1 * xdim1_flux_calc_kernelz * ydim1_flux_calc_kernelz],
-                     &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_flux_calc_kernelz + idx_z * 1*1 * xdim2_flux_calc_kernelz * ydim2_flux_calc_kernelz],
-                     &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_flux_calc_kernelz + idx_z * 1*1 * xdim3_flux_calc_kernelz * ydim3_flux_calc_kernelz],
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_flux_calc_kernelz + idx_z * 1*1 * xdim0_flux_calc_kernelz * ydim0_flux_calc_kernelz], xdim0_flux_calc_kernelz, ydim0_flux_calc_kernelz};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_flux_calc_kernelz + idx_z * 1*1 * xdim1_flux_calc_kernelz * ydim1_flux_calc_kernelz], xdim1_flux_calc_kernelz, ydim1_flux_calc_kernelz};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_flux_calc_kernelz + idx_z * 1*1 * xdim2_flux_calc_kernelz * ydim2_flux_calc_kernelz], xdim2_flux_calc_kernelz, ydim2_flux_calc_kernelz};
+    const ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_flux_calc_kernelz + idx_z * 1*1 * xdim3_flux_calc_kernelz * ydim3_flux_calc_kernelz], xdim3_flux_calc_kernelz, ydim3_flux_calc_kernelz};
+    flux_calc_kernelz(ptr0,
+                     ptr1,
+                     ptr2,
+                     ptr3,
                      dt);
   }
 

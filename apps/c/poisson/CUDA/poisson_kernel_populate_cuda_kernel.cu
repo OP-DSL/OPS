@@ -4,33 +4,24 @@
 __constant__ int dims_poisson_kernel_populate [6][1];
 static int dims_poisson_kernel_populate_h [6][1] = {0};
 
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
-
-#define OPS_ACC3(x,y) (x+dims_poisson_kernel_populate[3][0]*(y))
-#define OPS_ACC4(x,y) (x+dims_poisson_kernel_populate[4][0]*(y))
-#define OPS_ACC5(x,y) (x+dims_poisson_kernel_populate[5][0]*(y))
-
 //user function
 __device__
 
-void poisson_kernel_populate_gpu(const int *dispx, const int *dispy, const int *idx, double *u, double *f, double *ref) {
+void poisson_kernel_populate_gpu(const int *dispx,
+  const int *dispy,
+  const int *idx,
+  ACC<double> &u,
+  ACC<double> &f,
+  ACC<double> &ref) {
   double x = dx * (double)(idx[0]+dispx[0]);
   double y = dy * (double)(idx[1]+dispy[0]);
 
-  u[OPS_ACC3(0,0)] = myfun(sin(M_PI*x),cos(2.0*M_PI*y))-1.0;
-  f[OPS_ACC4(0,0)] = -5.0*M_PI*M_PI*sin(M_PI*x)*cos(2.0*M_PI*y);
-  ref[OPS_ACC5(0,0)] = sin(M_PI*x)*cos(2.0*M_PI*y);
+  u(0,0) = myfun(sin(M_PI*x),cos(2.0*M_PI*y))-1.0;
+  f(0,0) = -5.0*M_PI*M_PI*sin(M_PI*x)*cos(2.0*M_PI*y);
+  ref(0,0) = sin(M_PI*x)*cos(2.0*M_PI*y);
 
 }
 
-
-
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
 
 
 __global__ void ops_poisson_kernel_populate(
@@ -55,8 +46,11 @@ int size1 ){
   arg5 += idx_x * 1*1 + idx_y * 1*1 * dims_poisson_kernel_populate[5][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    poisson_kernel_populate_gpu(&arg0, &arg1, arg_idx, arg3,
-                   arg4, arg5);
+    ACC<double> argp3(dims_poisson_kernel_populate[3][0], arg3);
+    ACC<double> argp4(dims_poisson_kernel_populate[4][0], arg4);
+    ACC<double> argp5(dims_poisson_kernel_populate[5][0], arg5);
+    poisson_kernel_populate_gpu(&arg0, &arg1, arg_idx, argp3,
+                   argp4, argp5);
   }
 
 }

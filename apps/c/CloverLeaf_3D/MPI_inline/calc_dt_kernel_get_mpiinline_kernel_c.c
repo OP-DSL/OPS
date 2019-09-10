@@ -10,19 +10,16 @@ int xdim4_calc_dt_kernel_get;
 int ydim4_calc_dt_kernel_get;
 
 
-#define OPS_ACC0(x,y,z) (n_x*1 + x + (n_y*0+(y))*xdim0_calc_dt_kernel_get + (n_z*0+(z))*xdim0_calc_dt_kernel_get*ydim0_calc_dt_kernel_get)
-#define OPS_ACC1(x,y,z) (n_x*0 + x + (n_y*1+(y))*xdim1_calc_dt_kernel_get + (n_z*0+(z))*xdim1_calc_dt_kernel_get*ydim1_calc_dt_kernel_get)
-#define OPS_ACC4(x,y,z) (n_x*0 + x + (n_y*0+(y))*xdim4_calc_dt_kernel_get + (n_z*1+(z))*xdim4_calc_dt_kernel_get*ydim4_calc_dt_kernel_get)
 //user function
 
 
 
 void calc_dt_kernel_get_c_wrapper(
-  const double * restrict cellx,
-  const double * restrict celly,
+  double * restrict cellx_p,
+  double * restrict celly_p,
   double * restrict xl_pos_g,
   double * restrict yl_pos_g,
-  const double * restrict cellz,
+  double * restrict cellz_p,
   double * restrict zl_pos_g,
   int x_size, int y_size, int z_size) {
   double xl_pos_0 = xl_pos_g[0];
@@ -38,10 +35,13 @@ void calc_dt_kernel_get_c_wrapper(
         yl_pos[0] = ZERO_double;
         double zl_pos[1];
         zl_pos[0] = ZERO_double;
+        const ptr_double cellx = { cellx_p + n_x*1 + n_y * xdim0_calc_dt_kernel_get*0 + n_z * xdim0_calc_dt_kernel_get * ydim0_calc_dt_kernel_get*0, xdim0_calc_dt_kernel_get, ydim0_calc_dt_kernel_get};
+        const ptr_double celly = { celly_p + n_x*0 + n_y * xdim1_calc_dt_kernel_get*1 + n_z * xdim1_calc_dt_kernel_get * ydim1_calc_dt_kernel_get*0, xdim1_calc_dt_kernel_get, ydim1_calc_dt_kernel_get};
+        const ptr_double cellz = { cellz_p + n_x*0 + n_y * xdim4_calc_dt_kernel_get*0 + n_z * xdim4_calc_dt_kernel_get * ydim4_calc_dt_kernel_get*1, xdim4_calc_dt_kernel_get, ydim4_calc_dt_kernel_get};
         
-  *xl_pos = cellx[OPS_ACC0(0,0,0)];
-  *yl_pos = celly[OPS_ACC1(0,0,0)];
-  *zl_pos = cellz[OPS_ACC4(0,0,0)];
+  *xl_pos = OPS_ACC(cellx, 0,0,0);
+  *yl_pos = OPS_ACC(celly, 0,0,0);
+  *zl_pos = OPS_ACC(cellz, 0,0,0);
 
         xl_pos_0 +=xl_pos[0];
         yl_pos_0 +=yl_pos[0];
@@ -53,7 +53,3 @@ void calc_dt_kernel_get_c_wrapper(
   yl_pos_g[0] = yl_pos_0;
   zl_pos_g[0] = zl_pos_0;
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC4
-

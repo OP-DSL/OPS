@@ -4,94 +4,70 @@
 __constant__ int dims_field_summary_kernel [12][2];
 static int dims_field_summary_kernel_h [12][2] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
-
-#define OPS_ACC0(x,y,z) (x+dims_field_summary_kernel[0][0]*(y)+dims_field_summary_kernel[0][0]*dims_field_summary_kernel[0][1]*(z))
-#define OPS_ACC1(x,y,z) (x+dims_field_summary_kernel[1][0]*(y)+dims_field_summary_kernel[1][0]*dims_field_summary_kernel[1][1]*(z))
-#define OPS_ACC2(x,y,z) (x+dims_field_summary_kernel[2][0]*(y)+dims_field_summary_kernel[2][0]*dims_field_summary_kernel[2][1]*(z))
-#define OPS_ACC3(x,y,z) (x+dims_field_summary_kernel[3][0]*(y)+dims_field_summary_kernel[3][0]*dims_field_summary_kernel[3][1]*(z))
-#define OPS_ACC4(x,y,z) (x+dims_field_summary_kernel[4][0]*(y)+dims_field_summary_kernel[4][0]*dims_field_summary_kernel[4][1]*(z))
-#define OPS_ACC5(x,y,z) (x+dims_field_summary_kernel[5][0]*(y)+dims_field_summary_kernel[5][0]*dims_field_summary_kernel[5][1]*(z))
-#define OPS_ACC6(x,y,z) (x+dims_field_summary_kernel[6][0]*(y)+dims_field_summary_kernel[6][0]*dims_field_summary_kernel[6][1]*(z))
-
 //user function
 __device__
 
-void field_summary_kernel_gpu( const double *volume, const double *density0,
-                     const double *energy0, const double *pressure,
-                     const double *xvel0,
-                     const double *yvel0,
-                     const double *zvel0,
-                     double *vol,
-                     double *mass,
-                     double *ie,
-                     double *ke,
-                     double *press) {
+void field_summary_kernel_gpu(const ACC<double> &volume,
+  const ACC<double> &density0,
+  const ACC<double> &energy0,
+  const ACC<double> &pressure,
+  const ACC<double> &xvel0,
+  const ACC<double> &yvel0,
+  const ACC<double> &zvel0,
+  double *vol,
+  double *mass,
+  double *ie,
+  double *ke,
+  double *press) {
 
   double vsqrd, cell_vol, cell_mass;
 
   vsqrd = 0.0;
-  vsqrd+=0.125*( xvel0[OPS_ACC4(0,0,0)] * xvel0[OPS_ACC4(0,0,0)] +
-                 yvel0[OPS_ACC5(0,0,0)] * yvel0[OPS_ACC5(0,0,0)] +
-                 zvel0[OPS_ACC6(0,0,0)] * zvel0[OPS_ACC6(0,0,0)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(1,0,0)] * xvel0[OPS_ACC4(1,0,0)] +
-                 yvel0[OPS_ACC5(1,0,0)] * yvel0[OPS_ACC5(1,0,0)] +
-                 zvel0[OPS_ACC6(1,0,0)] * zvel0[OPS_ACC6(1,0,0)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(0,1,0)] * xvel0[OPS_ACC4(0,1,0)] +
-                 yvel0[OPS_ACC5(0,1,0)] * yvel0[OPS_ACC5(0,1,0)] +
-                 zvel0[OPS_ACC6(0,1,0)] * zvel0[OPS_ACC6(0,1,0)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(1,1,0)] * xvel0[OPS_ACC4(1,1,0)] +
-                 yvel0[OPS_ACC5(1,1,0)] * yvel0[OPS_ACC5(1,1,0)] +
-                 zvel0[OPS_ACC6(1,1,0)] * zvel0[OPS_ACC6(1,1,0)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(0,0,1)] * xvel0[OPS_ACC4(0,0,1)] +
-                 yvel0[OPS_ACC5(0,0,1)] * yvel0[OPS_ACC5(0,0,1)] +
-                 zvel0[OPS_ACC6(0,0,1)] * zvel0[OPS_ACC6(0,0,1)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(1,0,1)] * xvel0[OPS_ACC4(1,0,1)] +
-                 yvel0[OPS_ACC5(1,0,1)] * yvel0[OPS_ACC5(1,0,1)] +
-                 zvel0[OPS_ACC6(1,0,1)] * zvel0[OPS_ACC6(1,0,1)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(0,1,1)] * xvel0[OPS_ACC4(0,1,1)] +
-                 yvel0[OPS_ACC5(0,1,1)] * yvel0[OPS_ACC5(0,1,1)] +
-                 zvel0[OPS_ACC6(0,1,1)] * zvel0[OPS_ACC6(0,1,1)]);
-  vsqrd+=0.125*( xvel0[OPS_ACC4(1,1,1)] * xvel0[OPS_ACC4(1,1,1)] +
-                 yvel0[OPS_ACC5(1,1,1)] * yvel0[OPS_ACC5(1,1,1)] +
-                 zvel0[OPS_ACC6(1,1,1)] * zvel0[OPS_ACC6(1,1,1)]);
+  vsqrd+=0.125*( xvel0(0,0,0) * xvel0(0,0,0) +
+                 yvel0(0,0,0) * yvel0(0,0,0) +
+                 zvel0(0,0,0) * zvel0(0,0,0));
+  vsqrd+=0.125*( xvel0(1,0,0) * xvel0(1,0,0) +
+                 yvel0(1,0,0) * yvel0(1,0,0) +
+                 zvel0(1,0,0) * zvel0(1,0,0));
+  vsqrd+=0.125*( xvel0(0,1,0) * xvel0(0,1,0) +
+                 yvel0(0,1,0) * yvel0(0,1,0) +
+                 zvel0(0,1,0) * zvel0(0,1,0));
+  vsqrd+=0.125*( xvel0(1,1,0) * xvel0(1,1,0) +
+                 yvel0(1,1,0) * yvel0(1,1,0) +
+                 zvel0(1,1,0) * zvel0(1,1,0));
+  vsqrd+=0.125*( xvel0(0,0,1) * xvel0(0,0,1) +
+                 yvel0(0,0,1) * yvel0(0,0,1) +
+                 zvel0(0,0,1) * zvel0(0,0,1));
+  vsqrd+=0.125*( xvel0(1,0,1) * xvel0(1,0,1) +
+                 yvel0(1,0,1) * yvel0(1,0,1) +
+                 zvel0(1,0,1) * zvel0(1,0,1));
+  vsqrd+=0.125*( xvel0(0,1,1) * xvel0(0,1,1) +
+                 yvel0(0,1,1) * yvel0(0,1,1) +
+                 zvel0(0,1,1) * zvel0(0,1,1));
+  vsqrd+=0.125*( xvel0(1,1,1) * xvel0(1,1,1) +
+                 yvel0(1,1,1) * yvel0(1,1,1) +
+                 zvel0(1,1,1) * zvel0(1,1,1));
 
-  cell_vol = volume[OPS_ACC0(0,0,0)];
-  cell_mass = cell_vol * density0[OPS_ACC1(0,0,0)];
+  cell_vol = volume(0,0,0);
+  cell_mass = cell_vol * density0(0,0,0);
   *vol = *vol + cell_vol;
   *mass = *mass + cell_mass;
-  *ie = *ie + cell_mass * energy0[OPS_ACC2(0,0,0)];
+  *ie = *ie + cell_mass * energy0(0,0,0);
   *ke = *ke + cell_mass * 0.5 * vsqrd;
-  *press = *press + cell_vol * pressure[OPS_ACC3(0,0,0)];
+  *press = *press + cell_vol * pressure(0,0,0);
 
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
-
 __global__ void ops_field_summary_kernel(
-const double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
-const double* __restrict arg3,
-const double* __restrict arg4,
-const double* __restrict arg5,
-const double* __restrict arg6,
+double* __restrict arg0,
+double* __restrict arg1,
+double* __restrict arg2,
+double* __restrict arg3,
+double* __restrict arg4,
+double* __restrict arg5,
+double* __restrict arg6,
 double* __restrict arg7,
 double* __restrict arg8,
 double* __restrict arg9,
@@ -125,8 +101,15 @@ int size2 ){
   arg6 += idx_x * 1*1 + idx_y * 1*1 * dims_field_summary_kernel[6][0] + idx_z * 1*1 * dims_field_summary_kernel[6][0] * dims_field_summary_kernel[6][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    field_summary_kernel_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6, arg7_l, arg8_l,
+    const ACC<double> argp0(dims_field_summary_kernel[0][0], dims_field_summary_kernel[0][1], arg0);
+    const ACC<double> argp1(dims_field_summary_kernel[1][0], dims_field_summary_kernel[1][1], arg1);
+    const ACC<double> argp2(dims_field_summary_kernel[2][0], dims_field_summary_kernel[2][1], arg2);
+    const ACC<double> argp3(dims_field_summary_kernel[3][0], dims_field_summary_kernel[3][1], arg3);
+    const ACC<double> argp4(dims_field_summary_kernel[4][0], dims_field_summary_kernel[4][1], arg4);
+    const ACC<double> argp5(dims_field_summary_kernel[5][0], dims_field_summary_kernel[5][1], arg5);
+    const ACC<double> argp6(dims_field_summary_kernel[6][0], dims_field_summary_kernel[6][1], arg6);
+    field_summary_kernel_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5, argp6, arg7_l, arg8_l,
                    arg9_l, arg10_l, arg11_l);
   }
   for (int d=0; d<1; d++)

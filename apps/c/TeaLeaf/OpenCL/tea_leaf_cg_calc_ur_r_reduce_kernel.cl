@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,23 +45,15 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+xdim0_tea_leaf_cg_calc_ur_r_reduce_kernel*(y))
-#define OPS_ACC1(x,y) (x+xdim1_tea_leaf_cg_calc_ur_r_reduce_kernel*(y))
-
-
 //user function
-void tea_leaf_cg_calc_ur_r_reduce_kernel(__global double * restrict  r,const __global double * restrict  w,const  double * restrict  alpha,
- double * restrict rnn)
 
- {
-  r[OPS_ACC0(0,0)] = r[OPS_ACC0(0,0)] - (*alpha)*w[OPS_ACC1(0,0)];
-  *rnn = *rnn +  r[OPS_ACC0(0,0)]*r[OPS_ACC0(0,0)];
+void tea_leaf_cg_calc_ur_r_reduce_kernel(ptr_double  r,
+  const ptr_double  w,
+  const double * alpha,
+  double *rnn) {
+  OPS_ACCS(r, 0,0) = OPS_ACCS(r, 0,0) - (*alpha)*OPS_ACCS(w, 0,0);
+  *rnn = *rnn +  OPS_ACCS(r, 0,0)*OPS_ACCS(r, 0,0);
 }
-
 
 
 __kernel void ops_tea_leaf_cg_calc_ur_r_reduce_kernel(
@@ -80,8 +76,10 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    tea_leaf_cg_calc_ur_r_reduce_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_tea_leaf_cg_calc_ur_r_reduce_kernel],
-                                        &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_tea_leaf_cg_calc_ur_r_reduce_kernel],
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_tea_leaf_cg_calc_ur_r_reduce_kernel], xdim0_tea_leaf_cg_calc_ur_r_reduce_kernel};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_tea_leaf_cg_calc_ur_r_reduce_kernel], xdim1_tea_leaf_cg_calc_ur_r_reduce_kernel};
+    tea_leaf_cg_calc_ur_r_reduce_kernel(ptr0,
+                                        ptr1,
                                         &arg2,
                                         arg3_l);
   }

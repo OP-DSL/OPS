@@ -27,20 +27,11 @@
 
 // OPS header file
 #define OPS_2D
-#include "ops_seq.h"
+#include "ops_seq_v2.h"
 
 
 #include "data.h"
 #include "definitions.h"
-
-
-void test_kernel(double *volume, double *xarea, double *yarea) {
-
-  printf("%lf ",volume[OPS_ACC0(0,0)]);
-  printf("%lf ",xarea[OPS_ACC1(0,0)]);
-  printf("%lf ",yarea[OPS_ACC2(0,0)]);
-
-}
 
 
 void build_field()

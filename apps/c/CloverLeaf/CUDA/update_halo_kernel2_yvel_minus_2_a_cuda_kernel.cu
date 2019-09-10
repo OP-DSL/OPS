@@ -4,25 +4,16 @@
 __constant__ int dims_update_halo_kernel2_yvel_minus_2_a [3][1];
 static int dims_update_halo_kernel2_yvel_minus_2_a_h [3][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+dims_update_halo_kernel2_yvel_minus_2_a[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_update_halo_kernel2_yvel_minus_2_a[1][0]*(y))
-
 //user function
 __device__
 
-inline void update_halo_kernel2_yvel_minus_2_a_gpu(double *yvel0, double *yvel1, const int* fields) {
-  if(fields[FIELD_YVEL0] == 1) yvel0[OPS_ACC0(0,0)] = -yvel0[OPS_ACC0(0,2)];
-  if(fields[FIELD_YVEL1] == 1) yvel1[OPS_ACC1(0,0)] = -yvel1[OPS_ACC1(0,2)];
+inline void update_halo_kernel2_yvel_minus_2_a_gpu(ACC<double> &yvel0,
+  ACC<double> &yvel1,
+  const int* fields) {
+  if(fields[FIELD_YVEL0] == 1) yvel0(0,0) = -yvel0(0,2);
+  if(fields[FIELD_YVEL1] == 1) yvel1(0,0) = -yvel1(0,2);
 }
 
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 __global__ void ops_update_halo_kernel2_yvel_minus_2_a(
@@ -40,7 +31,9 @@ int size1 ){
   arg1 += idx_x * 1*1 + idx_y * 1*1 * dims_update_halo_kernel2_yvel_minus_2_a[1][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    update_halo_kernel2_yvel_minus_2_a_gpu(arg0, arg1, arg2);
+    ACC<double> argp0(dims_update_halo_kernel2_yvel_minus_2_a[0][0], arg0);
+    ACC<double> argp1(dims_update_halo_kernel2_yvel_minus_2_a[1][0], arg1);
+    update_halo_kernel2_yvel_minus_2_a_gpu(argp0, argp1, arg2);
   }
 
 }

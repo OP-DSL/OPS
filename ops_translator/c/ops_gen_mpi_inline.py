@@ -60,9 +60,11 @@ import config
 para_parse = util.para_parse
 comment_remover = util.comment_remover
 remove_trailing_w_space = util.remove_trailing_w_space
-parse_signature = util.parse_signature_openacc
+parse_signature = util.parse_signature
+replace_ACC_kernel_body = util.replace_ACC_kernel_body
 check_accs = util.check_accs
 mult = util.mult
+convert_ACC_body = util.convert_ACC_body
 
 comm = util.comm
 code = util.code
@@ -213,36 +215,6 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
         s_z = 'xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name
         s_u = 'xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*zdim'+str(n)+'_'+name
 
-        if int(dims[n]) == 1:
-          #DIM 1
-          if NDIM==1:
-            code('#define OPS_ACC'+str(n)+'(x) ('+n_x+' + x)')
-          #DIM 2
-          if NDIM==2:
-            code('#define OPS_ACC'+str(n)+'(x,y) ('+n_x+' + x + ('+n_y+'+(y))*'+s_y+')')
-          #DIM 3
-          if NDIM==3:
-            code('#define OPS_ACC'+str(n)+'(x,y,z) ('+n_x+' + x + ('+n_y+'+(y))*'+s_y+' + ('+n_z+'+(z))*'+s_z+')')
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
-          if NDIM==1:
-            if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x) ('+ n_x +'+(x)+(d)*'+s_y+')')
-            else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x) (('+ n_x +' + x)*'+str(dims[n])+'+(d))')
-          if NDIM==2:
-            if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) ('+n_x+' + x + ('+n_y+'+(y))*'+s_y+' + (d) * '+s_z+')')
-            else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y) (('+n_x+' + x + ('+n_y+'+(y))*'+s_y+')*'+str(dims[n])+' + (d))')
-          if NDIM==3:
-            if soa_set:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ('+n_x+' + x + ('+n_y+'+(y))*'+s_y+' + ('+n_z+'+(z))*'+s_z+'+(d)*'+s_u+')')
-            else:
-              code('#define OPS_ACC_MD'+str(n)+'(d,x,y,z) ('+n_x+' + x + ('+n_y+'+(y))*'+s_y+' + ('+n_z+'+(z))*'+str(dims[n])+'+(d))')
-
 
 ##########################################################################
 #  generate headder
@@ -284,11 +256,11 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     j = text[i:].find('{')
     k = para_parse(text, i+j, '{', '}')
     kernel_text = text[i+j+1:k]
+    kernel_text = convert_ACC_body(kernel_text)
     m = text.find(name)
     arg_list = parse_signature(text[i2+len(name):i+j])
 
-    print(arg_list)
-    check_accs(name, arg_list, arg_typ, text[i+j:k])
+    kernel_text = replace_ACC_kernel_body(kernel_text, arg_list, arg_typ, nargs)
 
     l = text[i:m].find('inline')
     if(l<0):
@@ -327,7 +299,10 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code(pre+typs[n]+' * restrict '+arg_list[n]+'_g,')
       else:
-        code(pre+typs[n]+' * restrict '+arg_list[n]+',')
+        if arg_typ[n] == 'ops_arg_dat':
+          code(typs[n]+' * restrict '+arg_list[n]+'_p,')
+        else:
+          code(pre+typs[n]+' * restrict '+arg_list[n]+',')
     if MULTI_GRID:
       code('const int * restrict global_idx,')
     for n in range(0,nargs):
@@ -403,34 +378,57 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
         elif NDIM==3:
           code('int '+arg_list[n]+'[] = {arg_idx0+n_x, arg_idx1+n_y, arg_idx2+n_z};')
 
-    text = name+'( '
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' p_a'+str(n)+''
-      elif arg_typ[n] == 'ops_arg_gbl':
+        pre = ''
         if accs[n] == OPS_READ:
-          text = text +' p_a'+str(n)+''
+          pre = 'const '
+        offset = ''
+        dim = ''
+        sizelist = ''
+        extradim = 0
+        if dims[n].isdigit() and int(dims[n])>1:
+            dim = dims[n]
+            extradim = 1
+        elif not dims[n].isdigit():
+            dim = 'arg'+str(n)+'.dim'
+            extradim = 1
+        if restrict[n] == 1:
+          n_x = 'n_x*stride_'+str(n)+'[0]'
+          n_y = 'n_y*stride_'+str(n)+'[1]'
+          n_z = 'n_z*stride_'+str(n)+'[2]'
+        elif prolong[n] == 1:
+          n_x = '(n_x+global_idx[0]%stride_'+str(n)+'[0])/stride_'+str(n)+'[0]'
+          n_y = '(n_y+global_idx[1]%stride_'+str(n)+'[1])/stride_'+str(n)+'[1]'
+          n_z = '(n_z+global_idx[2]%stride_'+str(n)+'[2])/stride_'+str(n)+'[2]'            
         else:
-          if dims[n].isdigit() and int(dims[n]) == 1:
-            text = text +' &p_a'+str(n)+'_l'
+          n_x = 'n_x'
+          n_y = 'n_y'
+          n_z = 'n_z'
+        if NDIM > 0:
+          offset = offset + n_x+'*'+str(stride[NDIM*n])
+        if NDIM > 1:
+          offset = offset + ' + '+n_y+' * xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])
+        if NDIM > 2:
+          offset = offset + ' + '+n_z+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
+        dimlabels = 'xyzuv'
+        for i in range(1,NDIM):
+          sizelist = sizelist + dimlabels[i-1]+'dim'+str(n)+'_'+name+', '
+        extradim = dimlabels[NDIM+extradim-2]+'dim'+str(n)+'_'+name
+        if dim == '':
+          if NDIM==1:
+            code(pre+'ptr_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+'};')
           else:
-            text = text +' p_a'+str(n)+'_l'
-      elif arg_typ[n] == 'ops_arg_idx':
-        text = text +'arg_idx'
+            code(pre+'ptr_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+', '+sizelist[:-2]+'};')
+        else:
+          code('#ifdef OPS_SOA')
+          code(pre+'ptrm_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+', '+sizelist + extradim+'};')
+          code('#else')
+          code(pre+'ptrm_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+', '+sizelist+dim+'};')
+          code('#endif')
 
-      if nargs != 1 and n != nargs-1:
-        text = text + ','
-      else:
-        if NDIM==1:
-          text = text +', n_x);\n'
-        if NDIM==2:
-          text = text +',n_x, n_y );\n'
-        if NDIM==3:
-          text = text +', n_x, n_y, n_z );\n'
-      if n%n_per_line == 0 and n != nargs-1:
-        text = text +'\n          '
+
     code(kernel_text)
-
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
@@ -462,15 +460,6 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
     config.depth = config.depth-2
     code('}')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) == 1:
-          code('#undef OPS_ACC'+str(n))
-    code('')
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
-          code('#undef OPS_ACC_MD'+str(n))
 
 ##########################################################################
 #  output individual kernel file
@@ -598,11 +587,11 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
+        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
         if NDIM>2 or (NDIM==2 and soa_set):
-          code('ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
+          code('int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
         if NDIM>3 or (NDIM==3 and soa_set):
-          code('zdim'+str(n)+' = args['+str(n)+'].dat->size[2];')
+          code('int zdim'+str(n)+' = args['+str(n)+'].dat->size[2];')
     #timing structs
     code('')
     comm('Timing')
@@ -843,7 +832,9 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
   config.file_text =''
   config.depth = 0
   comm('header')
-  code('#define OPS_ACC_MD_MACROS')
+  code('#define OPS_API 2')
+  if NDIM==1:
+    code('#define OPS_1D')
   if NDIM==2:
     code('#define OPS_2D')
   if NDIM==3:
@@ -923,6 +914,12 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
   fid.write(config.file_text)
   fid.close()
   config.file_text =''
+  if NDIM==1:
+    code('#define OPS_1D')
+  if NDIM==2:
+    code('#define OPS_2D')
+  if NDIM==3:
+    code('#define OPS_3D')
   code('#include "./MPI_inline/'+master_basename[0]+'_common.h"')
   comm('user kernel files')
 

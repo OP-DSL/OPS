@@ -4,36 +4,25 @@
 __constant__ int dims_tea_leaf_common_init_diag_init_kernel [5][1];
 static int dims_tea_leaf_common_init_diag_init_kernel_h [5][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
-#define OPS_ACC0(x,y) (x+dims_tea_leaf_common_init_diag_init_kernel[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_tea_leaf_common_init_diag_init_kernel[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_tea_leaf_common_init_diag_init_kernel[2][0]*(y))
-
 //user function
 __device__
 
-void tea_leaf_common_init_diag_init_kernel_gpu(double *Mi, const double *Kx, const double *Ky,
-	const double *rx, const double *ry) {
-	Mi[OPS_ACC0(0,0)] = 1.0/(1.0
-			+(*ry)*(Ky[OPS_ACC2(0,1)] + Ky[OPS_ACC2(0,0)])
-			+(*rx)*(Kx[OPS_ACC1(1,0)] + Kx[OPS_ACC1(0,0)]));
+void tea_leaf_common_init_diag_init_kernel_gpu(ACC<double> &Mi,
+  const ACC<double> &Kx,
+  const ACC<double> &Ky,
+  const double *rx,
+  const double *ry) {
+	Mi(0,0) = 1.0/(1.0
+			+(*ry)*(Ky(0,1) + Ky(0,0))
+			+(*rx)*(Kx(1,0) + Kx(0,0)));
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
 __global__ void ops_tea_leaf_common_init_diag_init_kernel(
 double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
+double* __restrict arg1,
+double* __restrict arg2,
 const double arg3,
 const double arg4,
 int size0,
@@ -48,7 +37,10 @@ int size1 ){
   arg2 += idx_x * 1*1 + idx_y * 1*1 * dims_tea_leaf_common_init_diag_init_kernel[2][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    tea_leaf_common_init_diag_init_kernel_gpu(arg0, arg1, arg2, &arg3,
+    ACC<double> argp0(dims_tea_leaf_common_init_diag_init_kernel[0][0], arg0);
+    const ACC<double> argp1(dims_tea_leaf_common_init_diag_init_kernel[1][0], arg1);
+    const ACC<double> argp2(dims_tea_leaf_common_init_diag_init_kernel[2][0], arg2);
+    tea_leaf_common_init_diag_init_kernel_gpu(argp0, argp1, argp2, &arg3,
                    &arg4);
   }
 

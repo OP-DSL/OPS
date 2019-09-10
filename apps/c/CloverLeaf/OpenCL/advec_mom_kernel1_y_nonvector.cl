@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,25 +45,13 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
-#define OPS_ACC0(x,y) (x+xdim0_advec_mom_kernel1_y_nonvector*(y))
-#define OPS_ACC1(x,y) (x+xdim1_advec_mom_kernel1_y_nonvector*(y))
-#define OPS_ACC2(x,y) (x+xdim2_advec_mom_kernel1_y_nonvector*(y))
-#define OPS_ACC3(x,y) (x+xdim3_advec_mom_kernel1_y_nonvector*(y))
-#define OPS_ACC4(x,y) (x+xdim4_advec_mom_kernel1_y_nonvector*(y))
-
-
 //user function
-inline void advec_mom_kernel1_y_nonvector( const __global double * restrict node_flux,const __global double * restrict node_mass_pre,__global double * restrict mom_flux,
-const __global double * restrict celldy,const __global double * restrict vel1)
 
- {
+inline void advec_mom_kernel1_y_nonvector(const ptr_double node_flux,
+  const ptr_double node_mass_pre,
+  ptr_double mom_flux,
+  const ptr_double celldy,
+  const ptr_double vel1) {
 
 
 
@@ -70,7 +62,7 @@ const __global double * restrict celldy,const __global double * restrict vel1)
   int upwind, donor, downwind, dif;
   double advec_vel_temp;
 
-  if( (node_flux[OPS_ACC0(0,0)]) < 0.0) {
+  if( (OPS_ACCS(node_flux, 0,0)) < 0.0) {
     upwind = 2;
     donor = 1;
     downwind = 0;
@@ -82,22 +74,21 @@ const __global double * restrict celldy,const __global double * restrict vel1)
     dif = upwind;
   }
 
-  sigma = fabs(node_flux[OPS_ACC0(0,0)])/node_mass_pre[OPS_ACC1(0,donor)];
-  width = celldy[OPS_ACC3(0,0)];
-  vdiffuw = vel1[OPS_ACC4(0,donor)] - vel1[OPS_ACC4(0,upwind)];
-  vdiffdw = vel1[OPS_ACC4(0,downwind)] - vel1[OPS_ACC4(0,donor)];
+  sigma = fabs(OPS_ACCS(node_flux, 0,0))/OPS_ACCS(node_mass_pre, 0,donor);
+  width = OPS_ACCS(celldy, 0,0);
+  vdiffuw = OPS_ACCS(vel1, 0,donor) - OPS_ACCS(vel1, 0,upwind);
+  vdiffdw = OPS_ACCS(vel1, 0,downwind) - OPS_ACCS(vel1, 0,donor);
   limiter = 0.0;
   if(vdiffuw*vdiffdw > 0.0) {
     auw = fabs(vdiffuw);
     adw = fabs(vdiffdw);
     wind = 1.0;
     if(vdiffdw <= 0.0) wind = -1.0;
-    limiter=wind*MIN(width*((2.0-sigma)*adw/width+(1.0+sigma)*auw/celldy[OPS_ACC3(0,dif)])/6.0,MIN(auw,adw));
+    limiter=wind*MIN(width*((2.0-sigma)*adw/width+(1.0+sigma)*auw/OPS_ACCS(celldy, 0,dif))/6.0,MIN(auw,adw));
   }
-  advec_vel_temp= vel1[OPS_ACC4(0,donor)] + (1.0 - sigma) * limiter;
-  mom_flux[OPS_ACC2(0,0)] = advec_vel_temp * node_flux[OPS_ACC0(0,0)];
+  advec_vel_temp= OPS_ACCS(vel1, 0,donor) + (1.0 - sigma) * limiter;
+  OPS_ACCS(mom_flux, 0,0) = advec_vel_temp * OPS_ACCS(node_flux, 0,0);
 }
-
 
 
 __kernel void ops_advec_mom_kernel1_y_nonvector(
@@ -119,11 +110,16 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    advec_mom_kernel1_y_nonvector(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel1_y_nonvector],
-                     &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel1_y_nonvector],
-                     &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_mom_kernel1_y_nonvector],
-                     &arg3[base3 + idx_x * 0*1 + idx_y * 1*1 * xdim3_advec_mom_kernel1_y_nonvector],
-                     &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_advec_mom_kernel1_y_nonvector]);
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel1_y_nonvector], xdim0_advec_mom_kernel1_y_nonvector};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel1_y_nonvector], xdim1_advec_mom_kernel1_y_nonvector};
+    ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_mom_kernel1_y_nonvector], xdim2_advec_mom_kernel1_y_nonvector};
+    const ptr_double ptr3 = { &arg3[base3 + idx_x * 0*1 + idx_y * 1*1 * xdim3_advec_mom_kernel1_y_nonvector], xdim3_advec_mom_kernel1_y_nonvector};
+    const ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_advec_mom_kernel1_y_nonvector], xdim4_advec_mom_kernel1_y_nonvector};
+    advec_mom_kernel1_y_nonvector(ptr0,
+                     ptr1,
+                     ptr2,
+                     ptr3,
+                     ptr4);
   }
 
 }

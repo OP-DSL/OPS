@@ -7,24 +7,11 @@
 int xdim0_poisson_kernel_error;
 int xdim1_poisson_kernel_error;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+xdim0_poisson_kernel_error*(y))
-#define OPS_ACC1(x,y) (x+xdim1_poisson_kernel_error*(y))
-
 //user function
-inline 
-void poisson_kernel_error(const double *u, const double *ref, double *err) {
-  *err = *err + (u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)])*(u[OPS_ACC0(0,0)]-ref[OPS_ACC1(0,0)]);
+inline void poisson_kernel_error(const ptr_double u, const ptr_double ref,
+                                 double *err) {
+  *err = *err + (OPS_ACC(u, 0,0)-OPS_ACC(ref, 0,0))*(OPS_ACC(u, 0,0)-OPS_ACC(ref, 0,0));
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
 
 
 void poisson_kernel_error_c_wrapper(
@@ -42,8 +29,10 @@ void poisson_kernel_error_c_wrapper(
     #pragma acc loop reduction(+:p_a2_0)
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      poisson_kernel_error(  p_a0 + n_x*1*1 + n_y*xdim0_poisson_kernel_error*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_poisson_kernel_error*1*1, &p_a2_0 );
+      const ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_poisson_kernel_error*1*1, xdim0_poisson_kernel_error};
+      const ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_poisson_kernel_error*1*1, xdim1_poisson_kernel_error};
+      poisson_kernel_error( ptr0,
+          ptr1, &p_a2_0 );
 
     }
   }

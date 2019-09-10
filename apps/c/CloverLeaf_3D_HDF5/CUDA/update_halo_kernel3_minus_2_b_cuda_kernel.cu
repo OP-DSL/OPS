@@ -4,25 +4,16 @@
 __constant__ int dims_update_halo_kernel3_minus_2_b [3][2];
 static int dims_update_halo_kernel3_minus_2_b_h [3][2] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y,z) (x+dims_update_halo_kernel3_minus_2_b[0][0]*(y)+dims_update_halo_kernel3_minus_2_b[0][0]*dims_update_halo_kernel3_minus_2_b[0][1]*(z))
-#define OPS_ACC1(x,y,z) (x+dims_update_halo_kernel3_minus_2_b[1][0]*(y)+dims_update_halo_kernel3_minus_2_b[1][0]*dims_update_halo_kernel3_minus_2_b[1][1]*(z))
-
 //user function
 __device__
 
-inline void update_halo_kernel3_minus_2_b_gpu(double *vol_flux_x, double *mass_flux_x, const int* fields) {
-  if(fields[FIELD_VOL_FLUX_X] == 1)  vol_flux_x[OPS_ACC0(0,0,0)]  = -(vol_flux_x[OPS_ACC0(-2,0,0)]);
-  if(fields[FIELD_MASS_FLUX_X] == 1) mass_flux_x[OPS_ACC1(0,0,0)] = -(mass_flux_x[OPS_ACC1(-2,0,0)]);
+inline void update_halo_kernel3_minus_2_b_gpu(ACC<double> &vol_flux_x,
+  ACC<double> &mass_flux_x,
+  const int* fields) {
+  if(fields[FIELD_VOL_FLUX_X] == 1)  vol_flux_x(0,0,0)  = -(vol_flux_x(-2,0,0));
+  if(fields[FIELD_MASS_FLUX_X] == 1) mass_flux_x(0,0,0) = -(mass_flux_x(-2,0,0));
 }
 
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 __global__ void ops_update_halo_kernel3_minus_2_b(
@@ -42,7 +33,9 @@ int size2 ){
   arg1 += idx_x * 1*1 + idx_y * 1*1 * dims_update_halo_kernel3_minus_2_b[1][0] + idx_z * 1*1 * dims_update_halo_kernel3_minus_2_b[1][0] * dims_update_halo_kernel3_minus_2_b[1][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    update_halo_kernel3_minus_2_b_gpu(arg0, arg1, arg2);
+    ACC<double> argp0(dims_update_halo_kernel3_minus_2_b[0][0], dims_update_halo_kernel3_minus_2_b[0][1], arg0);
+    ACC<double> argp1(dims_update_halo_kernel3_minus_2_b[1][0], dims_update_halo_kernel3_minus_2_b[1][1], arg1);
+    update_halo_kernel3_minus_2_b_gpu(argp0, argp1, arg2);
   }
 
 }

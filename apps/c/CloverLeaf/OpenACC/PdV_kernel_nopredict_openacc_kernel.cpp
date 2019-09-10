@@ -321,7 +321,7 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[56].mpi_time += t2-t1;
+    OPS_kernels[56].mpi_time += t2 - t1;
   }
 
   PdV_kernel_nopredict_c_wrapper(
@@ -343,7 +343,7 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[56].time += t1-t2;
+    OPS_kernels[56].time += t1 - t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 14);
@@ -357,7 +357,7 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[56].mpi_time += t2-t1;
+    OPS_kernels[56].mpi_time += t2 - t1;
     OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[56].transfer += ops_compute_transfer(dim, start, end, &arg2);

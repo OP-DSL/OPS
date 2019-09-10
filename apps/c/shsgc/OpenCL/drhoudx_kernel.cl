@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_1D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,29 +44,20 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-
-
 //user function
-void drhoudx_kernel(const __global double * restrict rhou_new,__global double * restrict rho_res,
-  const double dx)
 
- {
+void drhoudx_kernel(const ptr_double rhou_new,
+  ptr_double rho_res, const double dx)
+{
 
-        double fnim1 = rhou_new[OPS_ACC0(-1)];
-        double fnim2 = rhou_new[OPS_ACC0(-2)];
-        double fnip1 = rhou_new[OPS_ACC0(1)];
-        double fnip2 = rhou_new[OPS_ACC0(2)];
+        double fnim1 = OPS_ACCS(rhou_new, -1);
+        double fnim2 = OPS_ACCS(rhou_new, -2);
+        double fnip1 = OPS_ACCS(rhou_new, 1);
+        double fnip2 = OPS_ACCS(rhou_new, 2);
 
         double deriv = (fnim2 - fnip2 + 8.0* (fnip1 - fnim1))/(12.00*dx);
-        rho_res[OPS_ACC1(0)] = deriv;
+        OPS_ACCS(rho_res, 0) = deriv;
 }
-
 
 
 __kernel void ops_drhoudx_kernel(
@@ -77,8 +72,10 @@ const int size0 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    drhoudx_kernel(&arg0[base0 + idx_x * 1*1],
-                   &arg1[base1 + idx_x * 1*1],
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1] };
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1] };
+    drhoudx_kernel(ptr0,
+                   ptr1,
                    dx);
   }
 

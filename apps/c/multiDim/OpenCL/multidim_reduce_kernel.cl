@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,21 +44,14 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-
-#undef OPS_ACC_MD0
-
-
-#define OPS_ACC_MD0(d,x,y) ((x)+(xdim0_multidim_reduce_kernel*(y))+(d)*xdim0_multidim_reduce_kernel*ydim0_multidim_reduce_kernel)
-
 //user function
-void multidim_reduce_kernel(const __global double * restrict val, double * restrict redu_dat1)
 
- {
+void multidim_reduce_kernel(const ptrm_double val,
+  double *redu_dat1) {
 
-  redu_dat1[0] = redu_dat1[0] + val[OPS_ACC_MD0(0,0,0)];
-  redu_dat1[1] = redu_dat1[1] + val[OPS_ACC_MD0(1,0,0)];
+  redu_dat1[0] = redu_dat1[0] + OPS_ACCM(val, 0,0,0);
+  redu_dat1[1] = redu_dat1[1] + OPS_ACCM(val, 1,0,0);
 }
-
 
 
 __kernel void ops_multidim_reduce_kernel(
@@ -74,7 +71,12 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    multidim_reduce_kernel(&arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_multidim_reduce_kernel],
+    #ifdef OPS_SOA
+    const ptrm_double ptr0 = { &arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_multidim_reduce_kernel], xdim0_multidim_reduce_kernel, ydim0_multidim_reduce_kernel};
+    #else
+    const ptrm_double ptr0 = { &arg0[base0 + idx_x * 1 + idx_y * 1 * xdim0_multidim_reduce_kernel], xdim0_multidim_reduce_kernel, 2};
+    #endif
+    multidim_reduce_kernel(ptr0,
                            arg1_l);
   }
   int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);

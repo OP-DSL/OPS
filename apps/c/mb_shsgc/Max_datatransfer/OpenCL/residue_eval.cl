@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_1D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,32 +44,18 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-#define OPS_ACC3(x) (x)
-#define OPS_ACC4(x) (x)
-#define OPS_ACC5(x) (x)
-
-
 //user function
-void residue_eval(const __global double * restrict der1,const __global double * restrict der2,const __global double * restrict der3,
-__global double * restrict rho_res,__global double * restrict rhou_res,__global double * restrict rhoE_res)
 
- {
-  rho_res[OPS_ACC3(0)] = der1[OPS_ACC0(0)];
-  rhou_res[OPS_ACC4(0)] = der2[OPS_ACC1(0)];
-  rhoE_res[OPS_ACC5(0)] = der3[OPS_ACC2(0)];
+void residue_eval(const ptr_double der1,
+  const ptr_double der2,
+  const ptr_double der3,
+  ptr_double rho_res,
+  ptr_double rhou_res,
+  ptr_double rhoE_res) {
+  OPS_ACCS(rho_res, 0) = OPS_ACCS(der1, 0);
+  OPS_ACCS(rhou_res, 0) = OPS_ACCS(der2, 0);
+  OPS_ACCS(rhoE_res, 0) = OPS_ACCS(der3, 0);
   }
-
 
 
 __kernel void ops_residue_eval(
@@ -87,12 +77,18 @@ const int size0 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    residue_eval(&arg0[base0 + idx_x * 1*1],
-                      &arg1[base1 + idx_x * 1*1],
-                      &arg2[base2 + idx_x * 1*1],
-                      &arg3[base3 + idx_x * 1*1],
-                      &arg4[base4 + idx_x * 1*1],
-                      &arg5[base5 + idx_x * 1*1]);
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1] };
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1] };
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1] };
+    ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1] };
+    ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1] };
+    ptr_double ptr5 = { &arg5[base5 + idx_x * 1*1] };
+    residue_eval(ptr0,
+                      ptr1,
+                      ptr2,
+                      ptr3,
+                      ptr4,
+                      ptr5);
   }
 
 }

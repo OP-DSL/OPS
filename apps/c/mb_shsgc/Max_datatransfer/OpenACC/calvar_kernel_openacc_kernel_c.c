@@ -10,40 +10,18 @@ int xdim2_calvar_kernel;
 int xdim3_calvar_kernel;
 int xdim4_calvar_kernel;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-#define OPS_ACC3(x) (x)
-#define OPS_ACC4(x) (x)
-
 //user function
-inline 
-void calvar_kernel(const double *rho_new, const double *rhou_new, const double *rhoE_new,
-                       double *workarray2, double *workarray3) {
+inline void calvar_kernel(const ptr_double rho_new, const ptr_double rhou_new,
+                          const ptr_double rhoE_new, ptr_double workarray2,
+                          ptr_double workarray3) {
   double p, rhoi, u;
-  rhoi = 1/rho_new[OPS_ACC0(0)];
-  u = rhou_new[OPS_ACC1(0)] * rhoi;
-  p = gam1 * (rhoE_new[OPS_ACC2(0)] - 0.5 * rho_new[OPS_ACC0(0)]* u * u);
+  rhoi = 1 / OPS_ACC(rho_new, 0);
+  u = OPS_ACC(rhou_new, 0) * rhoi;
+  p = gam1 * (OPS_ACC(rhoE_new, 0) - 0.5 * OPS_ACC(rho_new, 0) * u * u);
 
-  workarray2[OPS_ACC3(0)] = p + rhou_new[OPS_ACC1(0)] * u ;
-  workarray3[OPS_ACC4(0)] = (p + rhoE_new[OPS_ACC2(0)]) * u ;
+  OPS_ACC(workarray2, 0) = p + OPS_ACC(rhou_new, 0) * u;
+  OPS_ACC(workarray3, 0) = (p + OPS_ACC(rhoE_new, 0)) * u;
   }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
 
 
 void calvar_kernel_c_wrapper(
@@ -58,9 +36,11 @@ void calvar_kernel_c_wrapper(
   #pragma acc loop
   #endif
   for ( int n_x=0; n_x<x_size; n_x++ ){
-    calvar_kernel(  p_a0 + n_x*1*1,
-           p_a1 + n_x*1*1, p_a2 + n_x*1*1,
-           p_a3 + n_x*1*1, p_a4 + n_x*1*1 );
-
+    const ptr_double ptr0 = {p_a0 + n_x * 1 * 1};
+    const ptr_double ptr1 = {p_a1 + n_x * 1 * 1};
+    const ptr_double ptr2 = {p_a2 + n_x * 1 * 1};
+    ptr_double ptr3 = {p_a3 + n_x * 1 * 1};
+    ptr_double ptr4 = {p_a4 + n_x * 1 * 1};
+    calvar_kernel(ptr0, ptr1, ptr2, ptr3, ptr4);
   }
 }

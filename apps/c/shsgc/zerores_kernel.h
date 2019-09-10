@@ -4,9 +4,9 @@
 #include "vars.h"
 
 
-void zerores_kernel(double *rho_res, double *rhou_res, double *rhoE_res) {
-      rho_res[OPS_ACC0(0)] = 0.0;
-      rhou_res[OPS_ACC1(0)] = 0.0;
-      rhoE_res[OPS_ACC2(0)] = 0.0;
+void zerores_kernel(ACC<double> &rho_res, ACC<double> &rhou_res, ACC<double> &rhoE_res) {
+      rho_res(0) = 0.0;
+      rhou_res(0) = 0.0;
+      rhoE_res(0) = 0.0;
 }
 #endif

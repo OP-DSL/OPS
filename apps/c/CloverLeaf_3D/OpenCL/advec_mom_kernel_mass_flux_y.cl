@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_3D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,26 +45,17 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_advec_mom_kernel_mass_flux_y*(y)+xdim0_advec_mom_kernel_mass_flux_y*ydim0_advec_mom_kernel_mass_flux_y*(z))
-#define OPS_ACC1(x,y,z) (x+xdim1_advec_mom_kernel_mass_flux_y*(y)+xdim1_advec_mom_kernel_mass_flux_y*ydim1_advec_mom_kernel_mass_flux_y*(z))
-
-
 //user function
-inline void advec_mom_kernel_mass_flux_y( __global double * restrict node_flux,const __global double * restrict mass_flux_y)
 
- {
+inline void advec_mom_kernel_mass_flux_y(ptr_double node_flux,
+  const ptr_double mass_flux_y) {
 
 
-  node_flux[OPS_ACC0(0,0,0)] = 0.125 * ( mass_flux_y[OPS_ACC1(-1,0,0)] + mass_flux_y[OPS_ACC1(0,0,0)] +
-                                         mass_flux_y[OPS_ACC1(-1,1,0)] + mass_flux_y[OPS_ACC1(0,1,0)] +
-                                         mass_flux_y[OPS_ACC1(-1,0,-1)] + mass_flux_y[OPS_ACC1(0,0,-1)] +
-                                         mass_flux_y[OPS_ACC1(-1,1,-1)] + mass_flux_y[OPS_ACC1(0,1,-1)] );
+  OPS_ACCS(node_flux, 0,0,0) = 0.125 * ( OPS_ACCS(mass_flux_y, -1,0,0) + OPS_ACCS(mass_flux_y, 0,0,0) +
+                                         OPS_ACCS(mass_flux_y, -1,1,0) + OPS_ACCS(mass_flux_y, 0,1,0) +
+                                         OPS_ACCS(mass_flux_y, -1,0,-1) + OPS_ACCS(mass_flux_y, 0,0,-1) +
+                                         OPS_ACCS(mass_flux_y, -1,1,-1) + OPS_ACCS(mass_flux_y, 0,1,-1) );
 }
-
 
 
 __kernel void ops_advec_mom_kernel_mass_flux_y(
@@ -78,8 +73,10 @@ const int size2 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    advec_mom_kernel_mass_flux_y(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel_mass_flux_y + idx_z * 1*1 * xdim0_advec_mom_kernel_mass_flux_y * ydim0_advec_mom_kernel_mass_flux_y],
-                     &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel_mass_flux_y + idx_z * 1*1 * xdim1_advec_mom_kernel_mass_flux_y * ydim1_advec_mom_kernel_mass_flux_y]);
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_mom_kernel_mass_flux_y + idx_z * 1*1 * xdim0_advec_mom_kernel_mass_flux_y * ydim0_advec_mom_kernel_mass_flux_y], xdim0_advec_mom_kernel_mass_flux_y, ydim0_advec_mom_kernel_mass_flux_y};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_mom_kernel_mass_flux_y + idx_z * 1*1 * xdim1_advec_mom_kernel_mass_flux_y * ydim1_advec_mom_kernel_mass_flux_y], xdim1_advec_mom_kernel_mass_flux_y, ydim1_advec_mom_kernel_mass_flux_y};
+    advec_mom_kernel_mass_flux_y(ptr0,
+                     ptr1);
   }
 
 }

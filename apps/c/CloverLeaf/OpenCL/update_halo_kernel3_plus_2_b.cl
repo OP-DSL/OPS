@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,22 +45,14 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+xdim0_update_halo_kernel3_plus_2_b*(y))
-#define OPS_ACC1(x,y) (x+xdim1_update_halo_kernel3_plus_2_b*(y))
-
-
 //user function
-inline void update_halo_kernel3_plus_2_b(__global double * restrict vol_flux_x,__global double * restrict mass_flux_x,const __global int* restrict  fields)
 
- {
-  if(fields[FIELD_VOL_FLUX_X] == 1)  vol_flux_x[OPS_ACC0(0,0)]  = vol_flux_x[OPS_ACC0(0,-2)];
-  if(fields[FIELD_MASS_FLUX_X] == 1) mass_flux_x[OPS_ACC1(0,0)] = mass_flux_x[OPS_ACC1(0,-2)];
+inline void update_halo_kernel3_plus_2_b(ptr_double vol_flux_x, 
+  ptr_double mass_flux_x, 
+  const __global int* restrict  fields) {
+  if(fields[FIELD_VOL_FLUX_X] == 1)  OPS_ACCS(vol_flux_x, 0,0)  = OPS_ACCS(vol_flux_x, 0,-2);
+  if(fields[FIELD_MASS_FLUX_X] == 1) OPS_ACCS(mass_flux_x, 0,0) = OPS_ACCS(mass_flux_x, 0,-2);
 }
-
 
 
 __kernel void ops_update_halo_kernel3_plus_2_b(
@@ -73,8 +69,10 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    update_halo_kernel3_plus_2_b(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel3_plus_2_b],
-                       &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel3_plus_2_b],
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel3_plus_2_b], xdim0_update_halo_kernel3_plus_2_b};
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel3_plus_2_b], xdim1_update_halo_kernel3_plus_2_b};
+    update_halo_kernel3_plus_2_b(ptr0,
+                       ptr1,
                        arg2);
   }
 

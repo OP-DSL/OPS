@@ -4,40 +4,21 @@
 __constant__ int dims_viscosity_kernel [12][2];
 static int dims_viscosity_kernel_h [12][2] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-#undef OPS_ACC11
-
-
-#define OPS_ACC0(x,y,z) (x+dims_viscosity_kernel[0][0]*(y)+dims_viscosity_kernel[0][0]*dims_viscosity_kernel[0][1]*(z))
-#define OPS_ACC1(x,y,z) (x+dims_viscosity_kernel[1][0]*(y)+dims_viscosity_kernel[1][0]*dims_viscosity_kernel[1][1]*(z))
-#define OPS_ACC2(x,y,z) (x+dims_viscosity_kernel[2][0]*(y)+dims_viscosity_kernel[2][0]*dims_viscosity_kernel[2][1]*(z))
-#define OPS_ACC3(x,y,z) (x+dims_viscosity_kernel[3][0]*(y)+dims_viscosity_kernel[3][0]*dims_viscosity_kernel[3][1]*(z))
-#define OPS_ACC4(x,y,z) (x+dims_viscosity_kernel[4][0]*(y)+dims_viscosity_kernel[4][0]*dims_viscosity_kernel[4][1]*(z))
-#define OPS_ACC5(x,y,z) (x+dims_viscosity_kernel[5][0]*(y)+dims_viscosity_kernel[5][0]*dims_viscosity_kernel[5][1]*(z))
-#define OPS_ACC6(x,y,z) (x+dims_viscosity_kernel[6][0]*(y)+dims_viscosity_kernel[6][0]*dims_viscosity_kernel[6][1]*(z))
-#define OPS_ACC7(x,y,z) (x+dims_viscosity_kernel[7][0]*(y)+dims_viscosity_kernel[7][0]*dims_viscosity_kernel[7][1]*(z))
-#define OPS_ACC8(x,y,z) (x+dims_viscosity_kernel[8][0]*(y)+dims_viscosity_kernel[8][0]*dims_viscosity_kernel[8][1]*(z))
-#define OPS_ACC9(x,y,z) (x+dims_viscosity_kernel[9][0]*(y)+dims_viscosity_kernel[9][0]*dims_viscosity_kernel[9][1]*(z))
-#define OPS_ACC10(x,y,z) (x+dims_viscosity_kernel[10][0]*(y)+dims_viscosity_kernel[10][0]*dims_viscosity_kernel[10][1]*(z))
-#define OPS_ACC11(x,y,z) (x+dims_viscosity_kernel[11][0]*(y)+dims_viscosity_kernel[11][0]*dims_viscosity_kernel[11][1]*(z))
-
 //user function
 __device__
 
-void viscosity_kernel_gpu( const double *xvel0, const double *yvel0,
-                       const double *celldx, const double *celldy,
-                       const double *pressure, const double *density0,
-                       double *viscosity, const double *zvel0, const double *celldz, const double *xarea, const double *yarea, const double *zarea) {
+void viscosity_kernel_gpu(const ACC<double> &xvel0,
+  const ACC<double> &yvel0,
+  const ACC<double> &celldx,
+  const ACC<double> &celldy,
+  const ACC<double> &pressure,
+  const ACC<double> &density0,
+  ACC<double> &viscosity,
+  const ACC<double> &zvel0,
+  const ACC<double> &celldz,
+  const ACC<double> &xarea,
+  const ACC<double> &yarea,
+  const ACC<double> &zarea) {
 
   double grad2,
          pgradx,pgrady,pgradz,
@@ -48,40 +29,40 @@ void viscosity_kernel_gpu( const double *xvel0, const double *yvel0,
          limiter,
          pgrad;
 
-  double ugradx1=xvel0[OPS_ACC0(0,0,0)]+xvel0[OPS_ACC0(0,1,0)]+xvel0[OPS_ACC0(0,0,1)]+xvel0[OPS_ACC0(0,1,1)];
-  double ugradx2=xvel0[OPS_ACC0(1,0,0)]+xvel0[OPS_ACC0(1,1,0)]+xvel0[OPS_ACC0(1,0,1)]+xvel0[OPS_ACC0(1,1,1)];
-  double ugrady1=xvel0[OPS_ACC0(0,0,0)]+xvel0[OPS_ACC0(1,0,0)]+xvel0[OPS_ACC0(0,0,1)]+xvel0[OPS_ACC0(1,0,1)];
-  double ugrady2=xvel0[OPS_ACC0(0,1,0)]+xvel0[OPS_ACC0(1,1,0)]+xvel0[OPS_ACC0(0,1,1)]+xvel0[OPS_ACC0(1,1,1)];
-  double ugradz1=xvel0[OPS_ACC0(0,0,0)]+xvel0[OPS_ACC0(1,0,0)]+xvel0[OPS_ACC0(0,1,0)]+xvel0[OPS_ACC0(1,1,0)];
-  double ugradz2=xvel0[OPS_ACC0(0,0,1)]+xvel0[OPS_ACC0(1,0,1)]+xvel0[OPS_ACC0(0,1,1)]+xvel0[OPS_ACC0(1,1,1)];
+  double ugradx1=xvel0(0,0,0)+xvel0(0,1,0)+xvel0(0,0,1)+xvel0(0,1,1);
+  double ugradx2=xvel0(1,0,0)+xvel0(1,1,0)+xvel0(1,0,1)+xvel0(1,1,1);
+  double ugrady1=xvel0(0,0,0)+xvel0(1,0,0)+xvel0(0,0,1)+xvel0(1,0,1);
+  double ugrady2=xvel0(0,1,0)+xvel0(1,1,0)+xvel0(0,1,1)+xvel0(1,1,1);
+  double ugradz1=xvel0(0,0,0)+xvel0(1,0,0)+xvel0(0,1,0)+xvel0(1,1,0);
+  double ugradz2=xvel0(0,0,1)+xvel0(1,0,1)+xvel0(0,1,1)+xvel0(1,1,1);
 
-  double vgradx1=yvel0[OPS_ACC1(0,0,0)]+yvel0[OPS_ACC1(0,1,0)]+yvel0[OPS_ACC1(0,0,1)]+yvel0[OPS_ACC1(0,1,1)];
-  double vgradx2=yvel0[OPS_ACC1(1,0,0)]+yvel0[OPS_ACC1(1,1,0)]+yvel0[OPS_ACC1(1,0,1)]+yvel0[OPS_ACC1(1,1,1)];
-  double vgrady1=yvel0[OPS_ACC1(0,0,0)]+yvel0[OPS_ACC1(1,0,0)]+yvel0[OPS_ACC1(0,0,1)]+yvel0[OPS_ACC1(1,0,1)];
-  double vgrady2=yvel0[OPS_ACC1(0,1,0)]+yvel0[OPS_ACC1(1,1,0)]+yvel0[OPS_ACC1(0,1,1)]+yvel0[OPS_ACC1(1,1,1)];
-  double vgradz1=yvel0[OPS_ACC1(0,0,0)]+yvel0[OPS_ACC1(1,0,0)]+yvel0[OPS_ACC1(0,1,0)]+yvel0[OPS_ACC1(1,1,0)];
-  double vgradz2=yvel0[OPS_ACC1(0,0,1)]+yvel0[OPS_ACC1(1,0,1)]+yvel0[OPS_ACC1(0,1,1)]+yvel0[OPS_ACC1(1,1,1)];
+  double vgradx1=yvel0(0,0,0)+yvel0(0,1,0)+yvel0(0,0,1)+yvel0(0,1,1);
+  double vgradx2=yvel0(1,0,0)+yvel0(1,1,0)+yvel0(1,0,1)+yvel0(1,1,1);
+  double vgrady1=yvel0(0,0,0)+yvel0(1,0,0)+yvel0(0,0,1)+yvel0(1,0,1);
+  double vgrady2=yvel0(0,1,0)+yvel0(1,1,0)+yvel0(0,1,1)+yvel0(1,1,1);
+  double vgradz1=yvel0(0,0,0)+yvel0(1,0,0)+yvel0(0,1,0)+yvel0(1,1,0);
+  double vgradz2=yvel0(0,0,1)+yvel0(1,0,1)+yvel0(0,1,1)+yvel0(1,1,1);
 
-  double wgradx1=zvel0[OPS_ACC7(0,0,0)]+zvel0[OPS_ACC7(0,1,0)]+zvel0[OPS_ACC7(0,0,1)]+zvel0[OPS_ACC7(0,1,1)];
-  double wgradx2=zvel0[OPS_ACC7(1,0,0)]+zvel0[OPS_ACC7(1,1,0)]+zvel0[OPS_ACC7(1,0,1)]+zvel0[OPS_ACC7(1,1,1)];
-  double wgrady1=zvel0[OPS_ACC7(0,0,0)]+zvel0[OPS_ACC7(1,0,0)]+zvel0[OPS_ACC7(0,0,1)]+zvel0[OPS_ACC7(1,0,1)];
-  double wgrady2=zvel0[OPS_ACC7(0,1,0)]+zvel0[OPS_ACC7(1,1,0)]+zvel0[OPS_ACC7(0,1,1)]+zvel0[OPS_ACC7(1,1,1)];
-  double wgradz1=zvel0[OPS_ACC7(0,0,0)]+zvel0[OPS_ACC7(1,0,0)]+zvel0[OPS_ACC7(0,1,0)]+zvel0[OPS_ACC7(1,1,0)];
-  double wgradz2=zvel0[OPS_ACC7(0,0,1)]+zvel0[OPS_ACC7(1,0,1)]+zvel0[OPS_ACC7(0,1,1)]+zvel0[OPS_ACC7(1,1,1)];
+  double wgradx1=zvel0(0,0,0)+zvel0(0,1,0)+zvel0(0,0,1)+zvel0(0,1,1);
+  double wgradx2=zvel0(1,0,0)+zvel0(1,1,0)+zvel0(1,0,1)+zvel0(1,1,1);
+  double wgrady1=zvel0(0,0,0)+zvel0(1,0,0)+zvel0(0,0,1)+zvel0(1,0,1);
+  double wgrady2=zvel0(0,1,0)+zvel0(1,1,0)+zvel0(0,1,1)+zvel0(1,1,1);
+  double wgradz1=zvel0(0,0,0)+zvel0(1,0,0)+zvel0(0,1,0)+zvel0(1,1,0);
+  double wgradz2=zvel0(0,0,1)+zvel0(1,0,1)+zvel0(0,1,1)+zvel0(1,1,1);
 
-  div = xarea[OPS_ACC9(0,0,0)]*(ugradx2-ugradx1) + yarea[OPS_ACC10(0,0,0)]*(vgrady2-vgrady1) + zarea[OPS_ACC11(0,0,0)]*(wgradz2-wgradz1);
+  div = xarea(0,0,0)*(ugradx2-ugradx1) + yarea(0,0,0)*(vgrady2-vgrady1) + zarea(0,0,0)*(wgradz2-wgradz1);
 
-  double xx = 0.25*(ugradx2-ugradx1)/(celldx[OPS_ACC2(0,0,0)]);
-  double yy = 0.25*(vgrady2-vgrady1)/(celldy[OPS_ACC3(0,0,0)]);
-  double zz = 0.25*(wgradz2-wgradz1)/(celldz[OPS_ACC8(0,0,0)]);
-  double xy = 0.25*(ugrady2-ugrady1)/(celldy[OPS_ACC3(0,0,0)])+0.25*(vgradx2-vgradx1)/(celldx[OPS_ACC2(0,0,0)]);
-  double xz = 0.25*(ugradz2-ugradz1)/(celldz[OPS_ACC8(0,0,0)])+0.25*(wgradx2-wgradx1)/(celldx[OPS_ACC2(0,0,0)]);
-  double yz = 0.25*(vgradz2-vgradz1)/(celldz[OPS_ACC8(0,0,0)])+0.25*(wgrady2-wgrady1)/(celldy[OPS_ACC3(0,0,0)]);
+  double xx = 0.25*(ugradx2-ugradx1)/(celldx(0,0,0));
+  double yy = 0.25*(vgrady2-vgrady1)/(celldy(0,0,0));
+  double zz = 0.25*(wgradz2-wgradz1)/(celldz(0,0,0));
+  double xy = 0.25*(ugrady2-ugrady1)/(celldy(0,0,0))+0.25*(vgradx2-vgradx1)/(celldx(0,0,0));
+  double xz = 0.25*(ugradz2-ugradz1)/(celldz(0,0,0))+0.25*(wgradx2-wgradx1)/(celldx(0,0,0));
+  double yz = 0.25*(vgradz2-vgradz1)/(celldz(0,0,0))+0.25*(wgrady2-wgrady1)/(celldy(0,0,0));
 
 
-  pgradx = (pressure[OPS_ACC4(1,0,0)] - pressure[OPS_ACC4(-1,0,0)])/(celldx[OPS_ACC2(0,0,0)]+ celldx[OPS_ACC2(1,0,0)]);
-  pgrady = (pressure[OPS_ACC4(0,1,0)] - pressure[OPS_ACC4(0,-1,0)])/(celldy[OPS_ACC3(0,0,0)]+ celldy[OPS_ACC3(0,1,0)]);
-  pgradz = (pressure[OPS_ACC4(0,0,1)] - pressure[OPS_ACC4(0,0,-1)])/(celldz[OPS_ACC8(0,0,0)]+ celldz[OPS_ACC8(0,0,1)]);
+  pgradx = (pressure(1,0,0) - pressure(-1,0,0))/(celldx(0,0,0)+ celldx(1,0,0));
+  pgrady = (pressure(0,1,0) - pressure(0,-1,0))/(celldy(0,0,0)+ celldy(0,1,0));
+  pgradz = (pressure(0,0,1) - pressure(0,0,-1))/(celldz(0,0,0)+ celldz(0,0,1));
 
   pgradx2 = pgradx * pgradx;
   pgrady2 = pgrady * pgrady;
@@ -91,52 +72,38 @@ void viscosity_kernel_gpu( const double *xvel0, const double *yvel0,
                 / MAX(pgradx2+pgrady2+pgradz2,1.0e-16);
 
   if( (limiter > 0.0) || (div >= 0.0)) {
-        viscosity[OPS_ACC6(0,0,0)] = 0.0;
+        viscosity(0,0,0) = 0.0;
   }
   else {
     pgradx = SIGN( MAX(1.0e-16, fabs(pgradx)), pgradx);
     pgrady = SIGN( MAX(1.0e-16, fabs(pgrady)), pgrady);
     pgradz = SIGN( MAX(1.0e-16, fabs(pgradz)), pgradz);
     pgrad = sqrt(pgradx*pgradx + pgrady*pgrady + pgradz*pgradz);
-    xgrad = fabs(celldx[OPS_ACC2(0,0,0)] * pgrad/pgradx);
-    ygrad = fabs(celldy[OPS_ACC3(0,0,0)] * pgrad/pgrady);
-    zgrad = fabs(celldz[OPS_ACC8(0,0,0)] * pgrad/pgradz);
+    xgrad = fabs(celldx(0,0,0) * pgrad/pgradx);
+    ygrad = fabs(celldy(0,0,0) * pgrad/pgrady);
+    zgrad = fabs(celldz(0,0,0) * pgrad/pgradz);
     grad  = MIN(xgrad,MIN(ygrad,zgrad));
     grad2 = grad*grad;
 
-    viscosity[OPS_ACC6(0,0,0)] = 2.0 * (density0[OPS_ACC5(0,0,0)]) * grad2 * limiter * limiter;
+    viscosity(0,0,0) = 2.0 * (density0(0,0,0)) * grad2 * limiter * limiter;
   }
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-#undef OPS_ACC11
-
-
 __global__ void ops_viscosity_kernel(
-const double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
-const double* __restrict arg3,
-const double* __restrict arg4,
-const double* __restrict arg5,
+double* __restrict arg0,
+double* __restrict arg1,
+double* __restrict arg2,
+double* __restrict arg3,
+double* __restrict arg4,
+double* __restrict arg5,
 double* __restrict arg6,
-const double* __restrict arg7,
-const double* __restrict arg8,
-const double* __restrict arg9,
-const double* __restrict arg10,
-const double* __restrict arg11,
+double* __restrict arg7,
+double* __restrict arg8,
+double* __restrict arg9,
+double* __restrict arg10,
+double* __restrict arg11,
 int size0,
 int size1,
 int size2 ){
@@ -160,9 +127,21 @@ int size2 ){
   arg11 += idx_x * 1*1 + idx_y * 1*1 * dims_viscosity_kernel[11][0] + idx_z * 1*1 * dims_viscosity_kernel[11][0] * dims_viscosity_kernel[11][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    viscosity_kernel_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6, arg7, arg8,
-                   arg9, arg10, arg11);
+    const ACC<double> argp0(dims_viscosity_kernel[0][0], dims_viscosity_kernel[0][1], arg0);
+    const ACC<double> argp1(dims_viscosity_kernel[1][0], dims_viscosity_kernel[1][1], arg1);
+    const ACC<double> argp2(dims_viscosity_kernel[2][0], dims_viscosity_kernel[2][1], arg2);
+    const ACC<double> argp3(dims_viscosity_kernel[3][0], dims_viscosity_kernel[3][1], arg3);
+    const ACC<double> argp4(dims_viscosity_kernel[4][0], dims_viscosity_kernel[4][1], arg4);
+    const ACC<double> argp5(dims_viscosity_kernel[5][0], dims_viscosity_kernel[5][1], arg5);
+    ACC<double> argp6(dims_viscosity_kernel[6][0], dims_viscosity_kernel[6][1], arg6);
+    const ACC<double> argp7(dims_viscosity_kernel[7][0], dims_viscosity_kernel[7][1], arg7);
+    const ACC<double> argp8(dims_viscosity_kernel[8][0], dims_viscosity_kernel[8][1], arg8);
+    const ACC<double> argp9(dims_viscosity_kernel[9][0], dims_viscosity_kernel[9][1], arg9);
+    const ACC<double> argp10(dims_viscosity_kernel[10][0], dims_viscosity_kernel[10][1], arg10);
+    const ACC<double> argp11(dims_viscosity_kernel[11][0], dims_viscosity_kernel[11][1], arg11);
+    viscosity_kernel_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5, argp6, argp7, argp8,
+                   argp9, argp10, argp11);
   }
 
 }

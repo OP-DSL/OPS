@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,19 +45,11 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y) (x+xdim0_poisson_kernel_initialguess*(y))
-
-
 //user function
-void poisson_kernel_initialguess(__global double * restrict u)
 
- {
-  u[OPS_ACC0(0,0)] = 0.0;
+void poisson_kernel_initialguess(ptr_double u) {
+  OPS_ACCS(u, 0,0) = 0.0;
 }
-
 
 
 __kernel void ops_poisson_kernel_initialguess(
@@ -67,7 +63,8 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    poisson_kernel_initialguess(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_poisson_kernel_initialguess]);
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_poisson_kernel_initialguess], xdim0_poisson_kernel_initialguess};
+    poisson_kernel_initialguess(ptr0);
   }
 
 }

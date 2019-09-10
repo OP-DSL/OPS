@@ -4,28 +4,18 @@
 __constant__ int dims_set_field_kernel [2][1];
 static int dims_set_field_kernel_h [2][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+dims_set_field_kernel[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_set_field_kernel[1][0]*(y))
-
 //user function
 __device__
 
-void set_field_kernel_gpu(const double *energy0, double *energy1) {
-	energy1[OPS_ACC1(0,0)] = energy0[OPS_ACC0(0,0)];
+void set_field_kernel_gpu(const ACC<double> &energy0,
+  ACC<double> &energy1) {
+	energy1(0,0) = energy0(0,0);
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
 __global__ void ops_set_field_kernel(
-const double* __restrict arg0,
+double* __restrict arg0,
 double* __restrict arg1,
 int size0,
 int size1 ){
@@ -38,7 +28,9 @@ int size1 ){
   arg1 += idx_x * 1*1 + idx_y * 1*1 * dims_set_field_kernel[1][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    set_field_kernel_gpu(arg0, arg1);
+    const ACC<double> argp0(dims_set_field_kernel[0][0], arg0);
+    ACC<double> argp1(dims_set_field_kernel[1][0], arg1);
+    set_field_kernel_gpu(argp0, argp1);
   }
 
 }

@@ -9,6 +9,9 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_2D
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,23 +43,13 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+xdim0_apply_stencil*(y))
-#define OPS_ACC1(x,y) (x+xdim1_apply_stencil*(y))
-
-
 //user function
-void apply_stencil(const __global double * restrict A,__global double * restrict Anew, double * restrict error)
 
- {
-  Anew[OPS_ACC1(0,0)] = 0.25f * ( A[OPS_ACC0(1,0)] + A[OPS_ACC0(-1,0)]
-      + A[OPS_ACC0(0,-1)] + A[OPS_ACC0(0,1)]);
-  *error = fmax( *error, fabs(Anew[OPS_ACC1(0,0)]-A[OPS_ACC0(0,0)]));
+void apply_stencil(const ptr_double A, ptr_double Anew, double *error) {
+  OPS_ACCS(Anew, 0,0) = 0.25f * ( OPS_ACCS(A, 1,0) + OPS_ACCS(A, -1,0)
+      + OPS_ACCS(A, 0,-1) + OPS_ACCS(A, 0,1));
+  *error = fmax( *error, fabs(OPS_ACCS(Anew, 0,0)-OPS_ACCS(A, 0,0)));
 }
-
 
 
 __kernel void ops_apply_stencil(
@@ -78,8 +71,10 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    apply_stencil(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_apply_stencil],
-                       &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_apply_stencil],
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_apply_stencil], xdim0_apply_stencil};
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_apply_stencil], xdim1_apply_stencil};
+    apply_stencil(ptr0,
+                       ptr1,
                        arg2_l);
   }
   int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);

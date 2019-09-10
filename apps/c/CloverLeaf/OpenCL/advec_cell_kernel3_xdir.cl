@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,33 +45,17 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-
-
-#define OPS_ACC0(x,y) (x+xdim0_advec_cell_kernel3_xdir*(y))
-#define OPS_ACC1(x,y) (x+xdim1_advec_cell_kernel3_xdir*(y))
-#define OPS_ACC2(x,y) (x+xdim2_advec_cell_kernel3_xdir*(y))
-#define OPS_ACC3(x,y) (x+xdim3_advec_cell_kernel3_xdir*(y))
-#define OPS_ACC4(x,y) (x+xdim4_advec_cell_kernel3_xdir*(y))
-#define OPS_ACC5(x,y) (x+xdim5_advec_cell_kernel3_xdir*(y))
-#define OPS_ACC6(x,y) (x+xdim6_advec_cell_kernel3_xdir*(y))
-#define OPS_ACC7(x,y) (x+xdim7_advec_cell_kernel3_xdir*(y))
-
-
 //user function
-inline void advec_cell_kernel3_xdir( const __global double * restrict vol_flux_x,const __global double * restrict pre_vol,const __global int * restrict xx,
-const __global double * restrict vertexdx,const __global double * restrict density1,const __global double * restrict energy1,__global double * restrict mass_flux_x,
-__global double * restrict ener_flux,
-  const field_type field)
 
- {
+inline void advec_cell_kernel3_xdir(const ptr_double vol_flux_x,
+  const ptr_double pre_vol,
+  const ptr_int xx,
+  const ptr_double vertexdx,
+  const ptr_double density1,
+  const ptr_double energy1,
+  ptr_double mass_flux_x,
+  ptr_double ener_flux, const field_type field)
+{
 
   double sigmat, sigmav, sigmam, sigma3, sigma4;
   double diffuw, diffdw, limiter;
@@ -81,13 +69,13 @@ __global double * restrict ener_flux,
 
 
 
-  if(vol_flux_x[OPS_ACC0(0,0)] > 0.0) {
+  if(OPS_ACCS(vol_flux_x, 0,0) > 0.0) {
     upwind   = -2;
     donor    = -1;
     downwind = 0;
     dif      = donor;
   }
-  else if (xx[OPS_ACC2(1,0)] < x_max+2-2) {
+  else if (OPS_ACCS(xx, 1,0) < x_max+2-2) {
     upwind   = 1;
     donor    = 0;
     downwind = -1;
@@ -100,14 +88,14 @@ __global double * restrict ener_flux,
   }
 
 
-  sigmat = fabs(vol_flux_x[OPS_ACC0(0,0)])/pre_vol[OPS_ACC1(donor,0)];
-  sigma3 = (1.0 + sigmat)*(vertexdx[OPS_ACC3(0,0)]/vertexdx[OPS_ACC3(dif,0)]);
+  sigmat = fabs(OPS_ACCS(vol_flux_x, 0,0))/OPS_ACCS(pre_vol, donor,0);
+  sigma3 = (1.0 + sigmat)*(OPS_ACCS(vertexdx, 0,0)/OPS_ACCS(vertexdx, dif,0));
   sigma4 = 2.0 - sigmat;
 
   sigmav = sigmat;
 
-  diffuw = density1[OPS_ACC4(donor,0)] - density1[OPS_ACC4(upwind,0)];
-  diffdw = density1[OPS_ACC4(downwind,0)] - density1[OPS_ACC4(donor,0)];
+  diffuw = OPS_ACCS(density1, donor,0) - OPS_ACCS(density1, upwind,0);
+  diffdw = OPS_ACCS(density1, downwind,0) - OPS_ACCS(density1, donor,0);
 
   if( (diffuw*diffdw) > 0.0)
     limiter=(1.0 - sigmav) * SIGN(1.0 , diffdw) *
@@ -116,11 +104,11 @@ __global double * restrict ener_flux,
   else
     limiter=0.0;
 
-  mass_flux_x[OPS_ACC6(0,0)] = (vol_flux_x[OPS_ACC0(0,0)]) * ( density1[OPS_ACC4(donor,0)] + limiter );
+  OPS_ACCS(mass_flux_x, 0,0) = (OPS_ACCS(vol_flux_x, 0,0)) * ( OPS_ACCS(density1, donor,0) + limiter );
 
-  sigmam = fabs(mass_flux_x[OPS_ACC6(0,0)])/( density1[OPS_ACC4(donor,0)] * pre_vol[OPS_ACC1(donor,0)]);
-  diffuw = energy1[OPS_ACC5(donor,0)] - energy1[OPS_ACC5(upwind,0)];
-  diffdw = energy1[OPS_ACC5(downwind,0)] - energy1[OPS_ACC5(donor,0)];
+  sigmam = fabs(OPS_ACCS(mass_flux_x, 0,0))/( OPS_ACCS(density1, donor,0) * OPS_ACCS(pre_vol, donor,0));
+  diffuw = OPS_ACCS(energy1, donor,0) - OPS_ACCS(energy1, upwind,0);
+  diffdw = OPS_ACCS(energy1, downwind,0) - OPS_ACCS(energy1, donor,0);
 
   if( (diffuw*diffdw) > 0.0)
     limiter = (1.0 - sigmam) * SIGN(1.0,diffdw) *
@@ -129,9 +117,8 @@ __global double * restrict ener_flux,
   else
     limiter=0.0;
 
-  ener_flux[OPS_ACC7(0,0)] = mass_flux_x[OPS_ACC6(0,0)] * ( energy1[OPS_ACC5(donor,0)] + limiter );
+  OPS_ACCS(ener_flux, 0,0) = OPS_ACCS(mass_flux_x, 0,0) * ( OPS_ACCS(energy1, donor,0) + limiter );
 }
-
 
 
 __kernel void ops_advec_cell_kernel3_xdir(
@@ -160,14 +147,22 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    advec_cell_kernel3_xdir(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_cell_kernel3_xdir],
-                      &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_cell_kernel3_xdir],
-                      &arg2[base2 + idx_x * 1*1 + idx_y * 0*1 * xdim2_advec_cell_kernel3_xdir],
-                      &arg3[base3 + idx_x * 1*1 + idx_y * 0*1 * xdim3_advec_cell_kernel3_xdir],
-                      &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_advec_cell_kernel3_xdir],
-                      &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_advec_cell_kernel3_xdir],
-                      &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_advec_cell_kernel3_xdir],
-                      &arg7[base7 + idx_x * 1*1 + idx_y * 1*1 * xdim7_advec_cell_kernel3_xdir],
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_cell_kernel3_xdir], xdim0_advec_cell_kernel3_xdir};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_cell_kernel3_xdir], xdim1_advec_cell_kernel3_xdir};
+    const ptr_int ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 0*1 * xdim2_advec_cell_kernel3_xdir], xdim2_advec_cell_kernel3_xdir};
+    const ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 0*1 * xdim3_advec_cell_kernel3_xdir], xdim3_advec_cell_kernel3_xdir};
+    const ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_advec_cell_kernel3_xdir], xdim4_advec_cell_kernel3_xdir};
+    const ptr_double ptr5 = { &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_advec_cell_kernel3_xdir], xdim5_advec_cell_kernel3_xdir};
+    ptr_double ptr6 = { &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_advec_cell_kernel3_xdir], xdim6_advec_cell_kernel3_xdir};
+    ptr_double ptr7 = { &arg7[base7 + idx_x * 1*1 + idx_y * 1*1 * xdim7_advec_cell_kernel3_xdir], xdim7_advec_cell_kernel3_xdir};
+    advec_cell_kernel3_xdir(ptr0,
+                      ptr1,
+                      ptr2,
+                      ptr3,
+                      ptr4,
+                      ptr5,
+                      ptr6,
+                      ptr7,
                       *field);
   }
 

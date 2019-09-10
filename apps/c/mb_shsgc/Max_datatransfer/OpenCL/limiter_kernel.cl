@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_1D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,35 +44,24 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-#undef OPS_ACC_MD2
-
-
-#define OPS_ACC_MD0(d,x) ((x)*3+(d))
-#define OPS_ACC_MD1(d,x) ((x)*3+(d))
-#define OPS_ACC_MD2(d,x) ((x)*3+(d))
-
 //user function
-void limiter_kernel(const __global double* restrict  al,__global double * restrict tht,__global double* restrict  gt,
 
-  const double del2)
-
- {
+void limiter_kernel(const ptrm_double  al,
+  ptrm_double tht,
+  ptrm_double  gt, const double del2)
+{
 
   double aalm, aal, all, ar, gtt;
   for (int m=0; m < 3 ;m++) {
-    aalm = fabs(al[OPS_ACC_MD0(m,-1)]);
-    aal = fabs(al[OPS_ACC_MD0(m,0)]);
-    tht[OPS_ACC_MD1(m,0)] = fabs (aal - aalm) / (aal + aalm + del2);
-    all = al[OPS_ACC_MD0(m,-1)];
-    ar = al[OPS_ACC_MD0(m,0)];
+    aalm = fabs(OPS_ACCM(al, m,-1));
+    aal = fabs(OPS_ACCM(al, m,0));
+    OPS_ACCM(tht, m,0) = fabs (aal - aalm) / (aal + aalm + del2);
+    all = OPS_ACCM(al, m,-1);
+    ar = OPS_ACCM(al, m,0);
     gtt = all * ( ar * ar + del2 ) + ar * (all * all + del2);
-    gt[OPS_ACC_MD2(m,0)]= gtt / (ar * ar + all * all + 2.00 * del2);
+    OPS_ACCM(gt, m,0)= gtt / (ar * ar + all * all + 2.00 * del2);
   }
 }
-
 
 
 __kernel void ops_limiter_kernel(
@@ -85,9 +78,24 @@ const int size0 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    limiter_kernel(&arg0[base0 + idx_x * 1*3],
-                   &arg1[base1 + idx_x * 1*3],
-                   &arg2[base2 + idx_x * 1*3],
+    #ifdef OPS_SOA
+    const ptrm_double ptr0 = { &arg0[base0 + idx_x * 1*3], xdim0_limiter_kernel};
+    #else
+    const ptrm_double ptr0 = { &arg0[base0 + idx_x * 1*3], 3};
+    #endif
+    #ifdef OPS_SOA
+    ptrm_double ptr1 = { &arg1[base1 + idx_x * 1*3], xdim1_limiter_kernel};
+    #else
+    ptrm_double ptr1 = { &arg1[base1 + idx_x * 1*3], 3};
+    #endif
+    #ifdef OPS_SOA
+    ptrm_double ptr2 = { &arg2[base2 + idx_x * 1*3], xdim2_limiter_kernel};
+    #else
+    ptrm_double ptr2 = { &arg2[base2 + idx_x * 1*3], 3};
+    #endif
+    limiter_kernel(ptr0,
+                   ptr1,
+                   ptr2,
                    del2);
   }
 

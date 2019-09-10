@@ -20,32 +20,32 @@ int xdim7_advec_cell_kernel3_zdir;
 int ydim7_advec_cell_kernel3_zdir;
 
 
-#define OPS_ACC0(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim0_advec_cell_kernel3_zdir + (n_z*1+(z))*xdim0_advec_cell_kernel3_zdir*ydim0_advec_cell_kernel3_zdir)
-#define OPS_ACC1(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim1_advec_cell_kernel3_zdir + (n_z*1+(z))*xdim1_advec_cell_kernel3_zdir*ydim1_advec_cell_kernel3_zdir)
-#define OPS_ACC2(x,y,z) (n_x*0 + x + (n_y*0+(y))*xdim2_advec_cell_kernel3_zdir + (n_z*1+(z))*xdim2_advec_cell_kernel3_zdir*ydim2_advec_cell_kernel3_zdir)
-#define OPS_ACC3(x,y,z) (n_x*0 + x + (n_y*0+(y))*xdim3_advec_cell_kernel3_zdir + (n_z*1+(z))*xdim3_advec_cell_kernel3_zdir*ydim3_advec_cell_kernel3_zdir)
-#define OPS_ACC4(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim4_advec_cell_kernel3_zdir + (n_z*1+(z))*xdim4_advec_cell_kernel3_zdir*ydim4_advec_cell_kernel3_zdir)
-#define OPS_ACC5(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim5_advec_cell_kernel3_zdir + (n_z*1+(z))*xdim5_advec_cell_kernel3_zdir*ydim5_advec_cell_kernel3_zdir)
-#define OPS_ACC6(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim6_advec_cell_kernel3_zdir + (n_z*1+(z))*xdim6_advec_cell_kernel3_zdir*ydim6_advec_cell_kernel3_zdir)
-#define OPS_ACC7(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim7_advec_cell_kernel3_zdir + (n_z*1+(z))*xdim7_advec_cell_kernel3_zdir*ydim7_advec_cell_kernel3_zdir)
 //user function
 
 
 
 void advec_cell_kernel3_zdir_c_wrapper(
-  const double * restrict vol_flux_z,
-  const double * restrict pre_vol,
-  const int * restrict zz,
-  const double * restrict vertexdz,
-  const double * restrict density1,
-  const double * restrict energy1,
-  double * restrict mass_flux_z,
-  double * restrict ener_flux,
+  double * restrict vol_flux_z_p,
+  double * restrict pre_vol_p,
+  int * restrict zz_p,
+  double * restrict vertexdz_p,
+  double * restrict density1_p,
+  double * restrict energy1_p,
+  double * restrict mass_flux_z_p,
+  double * restrict ener_flux_p,
   int x_size, int y_size, int z_size) {
   #pragma omp parallel for
   for ( int n_z=0; n_z<z_size; n_z++ ){
     for ( int n_y=0; n_y<y_size; n_y++ ){
       for ( int n_x=0; n_x<x_size; n_x++ ){
+        const ptr_double vol_flux_z = { vol_flux_z_p + n_x*1 + n_y * xdim0_advec_cell_kernel3_zdir*1 + n_z * xdim0_advec_cell_kernel3_zdir * ydim0_advec_cell_kernel3_zdir*1, xdim0_advec_cell_kernel3_zdir, ydim0_advec_cell_kernel3_zdir};
+        const ptr_double pre_vol = { pre_vol_p + n_x*1 + n_y * xdim1_advec_cell_kernel3_zdir*1 + n_z * xdim1_advec_cell_kernel3_zdir * ydim1_advec_cell_kernel3_zdir*1, xdim1_advec_cell_kernel3_zdir, ydim1_advec_cell_kernel3_zdir};
+        const ptr_int zz = { zz_p + n_x*0 + n_y * xdim2_advec_cell_kernel3_zdir*0 + n_z * xdim2_advec_cell_kernel3_zdir * ydim2_advec_cell_kernel3_zdir*1, xdim2_advec_cell_kernel3_zdir, ydim2_advec_cell_kernel3_zdir};
+        const ptr_double vertexdz = { vertexdz_p + n_x*0 + n_y * xdim3_advec_cell_kernel3_zdir*0 + n_z * xdim3_advec_cell_kernel3_zdir * ydim3_advec_cell_kernel3_zdir*1, xdim3_advec_cell_kernel3_zdir, ydim3_advec_cell_kernel3_zdir};
+        const ptr_double density1 = { density1_p + n_x*1 + n_y * xdim4_advec_cell_kernel3_zdir*1 + n_z * xdim4_advec_cell_kernel3_zdir * ydim4_advec_cell_kernel3_zdir*1, xdim4_advec_cell_kernel3_zdir, ydim4_advec_cell_kernel3_zdir};
+        const ptr_double energy1 = { energy1_p + n_x*1 + n_y * xdim5_advec_cell_kernel3_zdir*1 + n_z * xdim5_advec_cell_kernel3_zdir * ydim5_advec_cell_kernel3_zdir*1, xdim5_advec_cell_kernel3_zdir, ydim5_advec_cell_kernel3_zdir};
+        ptr_double mass_flux_z = { mass_flux_z_p + n_x*1 + n_y * xdim6_advec_cell_kernel3_zdir*1 + n_z * xdim6_advec_cell_kernel3_zdir * ydim6_advec_cell_kernel3_zdir*1, xdim6_advec_cell_kernel3_zdir, ydim6_advec_cell_kernel3_zdir};
+        ptr_double ener_flux = { ener_flux_p + n_x*1 + n_y * xdim7_advec_cell_kernel3_zdir*1 + n_z * xdim7_advec_cell_kernel3_zdir * ydim7_advec_cell_kernel3_zdir*1, xdim7_advec_cell_kernel3_zdir, ydim7_advec_cell_kernel3_zdir};
         
 
   double sigmat, sigmav, sigmam, sigma3, sigma4;
@@ -56,13 +56,13 @@ void advec_cell_kernel3_zdir_c_wrapper(
 
   int upwind,donor,downwind,dif;
 
-  if(vol_flux_z[OPS_ACC0(0,0,0)] > 0.0) {
+  if(OPS_ACC(vol_flux_z, 0,0,0) > 0.0) {
     upwind   = -2;
     donor    = -1;
     downwind = 0;
     dif      = donor;
   }
-  else if (zz[OPS_ACC2(0,0,1)] < z_max+2-2) {
+  else if (OPS_ACC(zz, 0,0,1) < z_max+2-2) {
     upwind   = 1;
     donor    = 0;
     downwind = -1;
@@ -74,14 +74,14 @@ void advec_cell_kernel3_zdir_c_wrapper(
     dif      = upwind;
   }
 
-  sigmat = fabs(vol_flux_z[OPS_ACC0(0,0,0)])/pre_vol[OPS_ACC1(0,0,donor)];
-  sigma3 = (1.0 + sigmat)*(vertexdz[OPS_ACC3(0,0,0)]/vertexdz[OPS_ACC3(0,0,dif)]);
+  sigmat = fabs(OPS_ACC(vol_flux_z, 0,0,0))/OPS_ACC(pre_vol, 0,0,donor);
+  sigma3 = (1.0 + sigmat)*(OPS_ACC(vertexdz, 0,0,0)/OPS_ACC(vertexdz, 0,0,dif));
   sigma4 = 2.0 - sigmat;
 
   sigmav = sigmat;
 
-  diffuw = density1[OPS_ACC4(0,0,donor)] - density1[OPS_ACC4(0,0,upwind)];
-  diffdw = density1[OPS_ACC4(0,0,downwind)] - density1[OPS_ACC4(0,0,donor)];
+  diffuw = OPS_ACC(density1, 0,0,donor) - OPS_ACC(density1, 0,0,upwind);
+  diffdw = OPS_ACC(density1, 0,0,downwind) - OPS_ACC(density1, 0,0,donor);
 
   if( (diffuw*diffdw) > 0.0)
     limiter=(1.0 - sigmav) * SIGN(1.0 , diffdw) *
@@ -90,11 +90,11 @@ void advec_cell_kernel3_zdir_c_wrapper(
   else
     limiter=0.0;
 
-  mass_flux_z[OPS_ACC6(0,0,0)] = vol_flux_z[OPS_ACC0(0,0,0)] * ( density1[OPS_ACC4(0,0,donor)] + limiter );
+  OPS_ACC(mass_flux_z, 0,0,0) = OPS_ACC(vol_flux_z, 0,0,0) * ( OPS_ACC(density1, 0,0,donor) + limiter );
 
-  sigmam = fabs(mass_flux_z[OPS_ACC6(0,0,0)])/( density1[OPS_ACC4(0,0,donor)] * pre_vol[OPS_ACC1(0,0,donor)]);
-  diffuw = energy1[OPS_ACC5(0,0,donor)] - energy1[OPS_ACC5(0,0,upwind)];
-  diffdw = energy1[OPS_ACC5(0,0,downwind)] - energy1[OPS_ACC5(0,0,donor)];
+  sigmam = fabs(OPS_ACC(mass_flux_z, 0,0,0))/( OPS_ACC(density1, 0,0,donor) * OPS_ACC(pre_vol, 0,0,donor));
+  diffuw = OPS_ACC(energy1, 0,0,donor) - OPS_ACC(energy1, 0,0,upwind);
+  diffdw = OPS_ACC(energy1, 0,0,downwind) - OPS_ACC(energy1, 0,0,donor);
 
   if( (diffuw*diffdw) > 0.0)
     limiter = (1.0 - sigmam) * SIGN(1.0,diffdw) *
@@ -103,18 +103,9 @@ void advec_cell_kernel3_zdir_c_wrapper(
   else
     limiter=0.0;
 
-  ener_flux[OPS_ACC7(0,0,0)] = mass_flux_z[OPS_ACC6(0,0,0)] * ( energy1[OPS_ACC5(0,0,donor)] + limiter );
+  OPS_ACC(ener_flux, 0,0,0) = OPS_ACC(mass_flux_z, 0,0,0) * ( OPS_ACC(energy1, 0,0,donor) + limiter );
 
       }
     }
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-

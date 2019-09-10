@@ -5,11 +5,11 @@
 
 //Including main OPS header file, and setting 2D
 #define OPS_2D
-#include <ops_seq.h>
+#include <ops_seq_v2.h>
 //Including applicaiton-specific "user kernels"
 #include "laplace_kernels.h" 
 
-int main(int argc, char** argv)
+int main(int argc, const char** argv)
 {
   //Initialise the OPS library, passing runtime args, and setting diagnostics level to low (1)
   ops_init(argc, argv,1);

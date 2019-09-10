@@ -4,26 +4,19 @@
 __constant__ int dims_test_kernel [2][1];
 static int dims_test_kernel_h [2][1] = {0};
 
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x) (x)
-
 //user function
 __device__
 
-void test_kernel_gpu(const double *rho_new, double *rms) {
+void test_kernel_gpu(const ACC<double> &rho_new,
+  double *rms) {
 
-  rms[0] = rms[0] + pow (rho_new[OPS_ACC0(0)], 2.0);
+  rms[0] = rms[0] + pow (rho_new(0), 2.0);
 }
 
 
 
-#undef OPS_ACC0
-
-
 __global__ void ops_test_kernel(
-const double* __restrict arg0,
+double* __restrict arg0,
 double* __restrict arg1,
 int size0 ){
 
@@ -35,7 +28,8 @@ int size0 ){
   arg0 += idx_x * 1*1;
 
   if (idx_x < size0) {
-    test_kernel_gpu(arg0, arg1_l);
+    const ACC<double> argp0(arg0);
+    test_kernel_gpu(argp0, arg1_l);
   }
   for (int d=0; d<1; d++)
     ops_reduction_cuda<OPS_INC>(&arg1[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg1_l[d]);

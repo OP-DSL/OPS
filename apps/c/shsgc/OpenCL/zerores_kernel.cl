@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_1D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,25 +44,15 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-
-
 //user function
-void zerores_kernel(__global double * restrict rho_res,__global double * restrict rhou_res,__global double * restrict rhoE_res)
 
- {
-      rho_res[OPS_ACC0(0)] = 0.0;
-      rhou_res[OPS_ACC1(0)] = 0.0;
-      rhoE_res[OPS_ACC2(0)] = 0.0;
+void zerores_kernel(ptr_double rho_res,
+  ptr_double rhou_res,
+  ptr_double rhoE_res) {
+      OPS_ACCS(rho_res, 0) = 0.0;
+      OPS_ACCS(rhou_res, 0) = 0.0;
+      OPS_ACCS(rhoE_res, 0) = 0.0;
 }
-
 
 
 __kernel void ops_zerores_kernel(
@@ -74,9 +68,12 @@ const int size0 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    zerores_kernel(&arg0[base0 + idx_x * 1*1],
-                   &arg1[base1 + idx_x * 1*1],
-                   &arg2[base2 + idx_x * 1*1]);
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1] };
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1] };
+    ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1] };
+    zerores_kernel(ptr0,
+                   ptr1,
+                   ptr2);
   }
 
 }

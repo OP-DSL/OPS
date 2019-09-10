@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,21 +45,12 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+xdim0_tea_leaf_yeqx_kernel*(y))
-#define OPS_ACC1(x,y) (x+xdim1_tea_leaf_yeqx_kernel*(y))
-
-
 //user function
-void tea_leaf_yeqx_kernel (__global double * restrict  p,const __global double * restrict  x)
 
- {
-  p[OPS_ACC0(0,0)] = x[OPS_ACC1(0,0)];
+void tea_leaf_yeqx_kernel (ptr_double  p,
+  const ptr_double  x) {
+  OPS_ACCS(p, 0,0) = OPS_ACCS(x, 0,0);
 }
-
 
 
 __kernel void ops_tea_leaf_yeqx_kernel(
@@ -71,8 +66,10 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    tea_leaf_yeqx_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_tea_leaf_yeqx_kernel],
-                         &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_tea_leaf_yeqx_kernel]);
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_tea_leaf_yeqx_kernel], xdim0_tea_leaf_yeqx_kernel};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_tea_leaf_yeqx_kernel], xdim1_tea_leaf_yeqx_kernel};
+    tea_leaf_yeqx_kernel(ptr0,
+                         ptr1);
   }
 
 }

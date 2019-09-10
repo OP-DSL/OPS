@@ -56,9 +56,9 @@ void ops_par_loop_tea_leaf_zeqxty_kernel(char const *name, ops_block block, int 
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
-  xdim2 = args[2].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
+  int xdim2 = args[2].dat->size[0];
 
   //Timing
   double t1,t2,c1,c2;

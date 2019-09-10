@@ -8,29 +8,13 @@ int xdim0_zerores_kernel;
 int xdim1_zerores_kernel;
 int xdim2_zerores_kernel;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-
 //user function
-inline 
-void zerores_kernel(double *rho_res, double *rhou_res, double *rhoE_res) {
-      rho_res[OPS_ACC0(0)] = 0.0;
-      rhou_res[OPS_ACC1(0)] = 0.0;
-      rhoE_res[OPS_ACC2(0)] = 0.0;
+inline void zerores_kernel(ptr_double rho_res, ptr_double rhou_res,
+                           ptr_double rhoE_res) {
+  OPS_ACC(rho_res, 0) = 0.0;
+  OPS_ACC(rhou_res, 0) = 0.0;
+  OPS_ACC(rhoE_res, 0) = 0.0;
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
 
 
 void zerores_kernel_c_wrapper(
@@ -43,8 +27,9 @@ void zerores_kernel_c_wrapper(
   #pragma acc loop
   #endif
   for ( int n_x=0; n_x<x_size; n_x++ ){
-    zerores_kernel(  p_a0 + n_x*1*1,
-           p_a1 + n_x*1*1, p_a2 + n_x*1*1 );
-
+    ptr_double ptr0 = {p_a0 + n_x * 1 * 1};
+    ptr_double ptr1 = {p_a1 + n_x * 1 * 1};
+    ptr_double ptr2 = {p_a2 + n_x * 1 * 1};
+    zerores_kernel(ptr0, ptr1, ptr2);
   }
 }

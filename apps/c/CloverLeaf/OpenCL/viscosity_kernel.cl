@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,29 +45,15 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
-
-#define OPS_ACC0(x,y) (x+xdim0_viscosity_kernel*(y))
-#define OPS_ACC1(x,y) (x+xdim1_viscosity_kernel*(y))
-#define OPS_ACC2(x,y) (x+xdim2_viscosity_kernel*(y))
-#define OPS_ACC3(x,y) (x+xdim3_viscosity_kernel*(y))
-#define OPS_ACC4(x,y) (x+xdim4_viscosity_kernel*(y))
-#define OPS_ACC5(x,y) (x+xdim5_viscosity_kernel*(y))
-#define OPS_ACC6(x,y) (x+xdim6_viscosity_kernel*(y))
-
-
 //user function
-void viscosity_kernel( const __global double * restrict xvel0,const __global double * restrict yvel0,const __global double * restrict celldx,
-const __global double * restrict celldy,const __global double * restrict pressure,const __global double * restrict density0,__global double * restrict viscosity)
 
- {
+void viscosity_kernel(const ptr_double xvel0,
+  const ptr_double yvel0,
+  const ptr_double celldx,
+  const ptr_double celldy,
+  const ptr_double pressure,
+  const ptr_double density0,
+  ptr_double viscosity) {
 
   double ugrad, vgrad,
          grad2,
@@ -77,41 +67,40 @@ const __global double * restrict celldy,const __global double * restrict pressur
          pgrad;
 
 
-  ugrad = (xvel0[OPS_ACC0(1,0)] + xvel0[OPS_ACC0(1,1)]) - (xvel0[OPS_ACC0(0,0)] + xvel0[OPS_ACC0(0,1)]);
-  vgrad = (yvel0[OPS_ACC1(0,1)] + yvel0[OPS_ACC1(1,1)]) - (yvel0[OPS_ACC1(0,0)] + yvel0[OPS_ACC1(1,0)]);
+  ugrad = (OPS_ACCS(xvel0, 1,0) + OPS_ACCS(xvel0, 1,1)) - (OPS_ACCS(xvel0, 0,0) + OPS_ACCS(xvel0, 0,1));
+  vgrad = (OPS_ACCS(yvel0, 0,1) + OPS_ACCS(yvel0, 1,1)) - (OPS_ACCS(yvel0, 0,0) + OPS_ACCS(yvel0, 1,0));
 
-  div = (celldx[OPS_ACC2(0,0)])*(ugrad) + (celldy[OPS_ACC3(0,0)])*(vgrad);
+  div = (OPS_ACCS(celldx, 0,0))*(ugrad) + (OPS_ACCS(celldy, 0,0))*(vgrad);
 
-  strain2 = 0.5*(xvel0[OPS_ACC0(0,1)] + xvel0[OPS_ACC0(1,1)] - xvel0[OPS_ACC0(0,0)] - xvel0[OPS_ACC0(1,0)])/(celldy[OPS_ACC3(0,0)]) +
-            0.5*(yvel0[OPS_ACC1(1,0)] + yvel0[OPS_ACC1(1,1)] - yvel0[OPS_ACC1(0,0)] - yvel0[OPS_ACC1(0,1)])/(celldx[OPS_ACC2(0,0)]);
+  strain2 = 0.5*(OPS_ACCS(xvel0, 0,1) + OPS_ACCS(xvel0, 1,1) - OPS_ACCS(xvel0, 0,0) - OPS_ACCS(xvel0, 1,0))/(OPS_ACCS(celldy, 0,0)) +
+            0.5*(OPS_ACCS(yvel0, 1,0) + OPS_ACCS(yvel0, 1,1) - OPS_ACCS(yvel0, 0,0) - OPS_ACCS(yvel0, 0,1))/(OPS_ACCS(celldx, 0,0));
 
 
-  pgradx  = (pressure[OPS_ACC4(1,0)] - pressure[OPS_ACC4(-1,0)])/(celldx[OPS_ACC2(0,0)]+ celldx[OPS_ACC2(1,0)]);
-  pgrady = (pressure[OPS_ACC4(0,1)] - pressure[OPS_ACC4(0,-1)])/(celldy[OPS_ACC3(0,0)]+ celldy[OPS_ACC3(0,1)]);
+  pgradx  = (OPS_ACCS(pressure, 1,0) - OPS_ACCS(pressure, -1,0))/(OPS_ACCS(celldx, 0,0)+ OPS_ACCS(celldx, 1,0));
+  pgrady = (OPS_ACCS(pressure, 0,1) - OPS_ACCS(pressure, 0,-1))/(OPS_ACCS(celldy, 0,0)+ OPS_ACCS(celldy, 0,1));
 
   pgradx2 = pgradx * pgradx;
   pgrady2 = pgrady * pgrady;
 
-  limiter = ((0.5*(ugrad)/celldx[OPS_ACC2(0,0)]) * pgradx2 +
-             (0.5*(vgrad)/celldy[OPS_ACC3(0,0)]) * pgrady2 +
+  limiter = ((0.5*(ugrad)/OPS_ACCS(celldx, 0,0)) * pgradx2 +
+             (0.5*(vgrad)/OPS_ACCS(celldy, 0,0)) * pgrady2 +
               strain2 * pgradx * pgrady)/ MAX(pgradx2 + pgrady2 , 1.0e-16);
 
   if( (limiter > 0.0) || (div >= 0.0)) {
-        viscosity[OPS_ACC6(0,0)] = 0.0;
+        OPS_ACCS(viscosity, 0,0) = 0.0;
   }
   else {
     pgradx = SIGN( MAX(1.0e-16, fabs(pgradx)), pgradx);
     pgrady = SIGN( MAX(1.0e-16, fabs(pgrady)), pgrady);
     pgrad = sqrt(pgradx*pgradx + pgrady*pgrady);
-    xgrad = fabs(celldx[OPS_ACC2(0,0)] * pgrad/pgradx);
-    ygrad = fabs(celldy[OPS_ACC3(0,0)] * pgrad/pgrady);
+    xgrad = fabs(OPS_ACCS(celldx, 0,0) * pgrad/pgradx);
+    ygrad = fabs(OPS_ACCS(celldy, 0,0) * pgrad/pgrady);
     grad  = MIN(xgrad,ygrad);
     grad2 = grad*grad;
 
-    viscosity[OPS_ACC6(0,0)] = 2.0 * (density0[OPS_ACC5(0,0)]) * grad2 * limiter * limiter;
+    OPS_ACCS(viscosity, 0,0) = 2.0 * (OPS_ACCS(density0, 0,0)) * grad2 * limiter * limiter;
   }
 }
-
 
 
 __kernel void ops_viscosity_kernel(
@@ -137,13 +126,20 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    viscosity_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_viscosity_kernel],
-                     &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_viscosity_kernel],
-                     &arg2[base2 + idx_x * 1*1 + idx_y * 0*1 * xdim2_viscosity_kernel],
-                     &arg3[base3 + idx_x * 0*1 + idx_y * 1*1 * xdim3_viscosity_kernel],
-                     &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_viscosity_kernel],
-                     &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_viscosity_kernel],
-                     &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_viscosity_kernel]);
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_viscosity_kernel], xdim0_viscosity_kernel};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_viscosity_kernel], xdim1_viscosity_kernel};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 0*1 * xdim2_viscosity_kernel], xdim2_viscosity_kernel};
+    const ptr_double ptr3 = { &arg3[base3 + idx_x * 0*1 + idx_y * 1*1 * xdim3_viscosity_kernel], xdim3_viscosity_kernel};
+    const ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_viscosity_kernel], xdim4_viscosity_kernel};
+    const ptr_double ptr5 = { &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_viscosity_kernel], xdim5_viscosity_kernel};
+    ptr_double ptr6 = { &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_viscosity_kernel], xdim6_viscosity_kernel};
+    viscosity_kernel(ptr0,
+                     ptr1,
+                     ptr2,
+                     ptr3,
+                     ptr4,
+                     ptr5,
+                     ptr6);
   }
 
 }
