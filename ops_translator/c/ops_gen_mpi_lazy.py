@@ -196,7 +196,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         break;
 
     if found == 0:
-      print("COUND NOT FIND KERNEL", name)
+      print(("COUND NOT FIND KERNEL", name))
 
     fid = open(file_name, 'r')
     text = fid.read()
@@ -211,7 +211,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     if(i < 0):
       print("\n********")
-      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
+      print(("Error: cannot locate user kernel function: "+name+" - Aborting code generation"))
       exit(2)
 
     i2 = text[i:].find(name)
@@ -230,11 +230,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     text = ''
     for n in range (0, nargs):
       text = text +' ops_arg arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +') {'
-      if n%n_per_line == 3 and n <> nargs-1:
+      if n%n_per_line == 3 and n != nargs-1:
          text = text +'\n'
     code(text);
     code('#else')
@@ -292,10 +292,10 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     comm('compute locally allocated range for the sub-block')
     code('int start['+str(NDIM)+'];')
     code('int end['+str(NDIM)+'];')
-    if not (arg_idx<>-1 or MULTI_GRID):
+    if not (arg_idx!=-1 or MULTI_GRID):
       code('#ifdef OPS_MPI')
     code('int arg_idx['+str(NDIM)+'];')
-    if not (arg_idx<>-1 or MULTI_GRID):
+    if not (arg_idx!=-1 or MULTI_GRID):
       code('#endif')
 
     code('#if defined(OPS_LAZY) || !defined(OPS_MPI)')
@@ -430,7 +430,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       code('#pragma simd')
       code('#endif')
     FOR('n_x','start[0]','end[0]')
-    if arg_idx <> -1:
+    if arg_idx != -1:
       if NDIM==1:
         code('int '+clean_type(arg_list[arg_idx])+'[] = {arg_idx[0]+n_x};')
       elif NDIM==2:

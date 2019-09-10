@@ -247,7 +247,7 @@ def find_consts(text, consts):
   for cn in range(0,len(consts)):
     pattern = consts[cn]['name'][1:-1]
     if re.search('\\b'+pattern+'\\b', text):
-      print("found " + consts[cn]['name'][1:-1])
+      print(("found " + consts[cn]['name'][1:-1]))
       found_consts.append(cn)
 
   return found_consts
@@ -373,7 +373,7 @@ def check_accs(name, arg_list, arg_typ, text):
               pos2 = text[pos+7:].find('(')
               num = int(text[pos+7:pos+7+pos2])
               if num != n:
-                print('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num))
+                print(('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)))
               pos = pos+7+pos2
             elif match0.start(0) < match1.start(0):
               match = re.search('OPS_ACC_MD\d',text[pos:])
@@ -381,7 +381,7 @@ def check_accs(name, arg_list, arg_typ, text):
               pos2 = text[pos+10:].find('(')
               num = int(text[pos+10:pos+10+pos2])
               if num != n:
-                print('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num))
+                print(('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)))
               pos = pos+10+pos2
           else:
             match = re.search('OPS_ACC_MD\d',text[pos:])
@@ -389,7 +389,7 @@ def check_accs(name, arg_list, arg_typ, text):
             pos2 = text[pos+10:].find('(')
             num = int(text[pos+10:pos+10+pos2])
             if num != n:
-              print('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num))
+              print(('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)))
             pos = pos+10+pos2
         else:
           if match1 != None:
@@ -398,7 +398,7 @@ def check_accs(name, arg_list, arg_typ, text):
             pos2 = text[pos+7:].find('(')
             num = int(text[pos+7:pos+7+pos2])
             if num != n:
-              print('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num))
+              print(('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)))
             pos = pos+7+pos2
           else:
             break
