@@ -119,7 +119,7 @@ def find_function_calls(text):
     #find the file containing the implementation
     subr_file =  os.popen('grep -Rilw --include "*.F9*" --exclude "*kernel.*" "subroutine '+fun_name+'" . | head -n1').read().strip()
     if (len(subr_file) == 0) or (not os.path.exists(subr_file)):
-      print('Error, subroutine '+fun_name+' implementation not found in files, check parser!')
+      print(('Error, subroutine '+fun_name+' implementation not found in files, check parser!'))
       exit(1)
     #read the file and find the implementation
     subr_fileh = open(subr_file,'r')
@@ -131,12 +131,12 @@ def find_function_calls(text):
     fun_name = subr_fileh_text[subr_begin+11:subr_begin+11+len(fun_name)]
     subr_end = subr_fileh_text[subr_begin:].lower().find('end subroutine')
     if subr_end<0:
-      print('Error, could not find string "end subroutine" for implemenatation of '+fun_name+' in '+subr_file)
+      print(('Error, could not find string "end subroutine" for implemenatation of '+fun_name+' in '+subr_file))
       exit(-1)
     subr_end= subr_begin+subr_end
     subr_text =  subr_fileh_text[subr_begin:subr_end+14]
     if subr_text[10:len(subr_text)-20].lower().find('subroutine')>=0:
-      print('Error, could not properly parse subroutine, more than one encompassed '+fun_name+' in '+subr_file)
+      print(('Error, could not properly parse subroutine, more than one encompassed '+fun_name+' in '+subr_file))
       #print subr_text
       exit(-1)
 
@@ -538,7 +538,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     i = text.find(name)
     if(i < 0):
       print("\n********")
-      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
+      print(("Error: cannot locate user kernel function: "+name+" - Aborting code generation"))
       exit(2)
 
     # need to check accs here - under fortran the

@@ -118,7 +118,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
     typs  = kernels[nk]['typs']
 
     if ('initialise' in name) or ('generate' in name):
-      print('WARNING: skipping kernel '+name+' due to OpenCL compiler bugs: this kernel will run sequentially on the host')
+      print(('WARNING: skipping kernel '+name+' due to OpenCL compiler bugs: this kernel will run sequentially on the host'))
       continue
 
     #reset dimension of the application
@@ -238,7 +238,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
         break;
 
     if found == 0:
-      print("COUND NOT FIND KERNEL", name)
+      print(("COUND NOT FIND KERNEL", name))
 
     fid = open(file_name, 'r')
     text = fid.read()
@@ -252,7 +252,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
     i = p.search(text).start()
     if(i < 0):
       print("\n********")
-      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
+      print(("Error: cannot locate user kernel function: "+name+" - Aborting code generation"))
       exit(2)
 
 

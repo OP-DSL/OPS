@@ -119,7 +119,7 @@ def ops_decl_const_parse(text):
   consts = []
   for m in re.finditer('(.*)call(.+)ops_decl_const(.*)\((.*)\)', text):
     args = m.group(4).split(',')
-    print(m.group(4))
+    print((m.group(4)))
     # check for syntax errors
     if len(args) != 4:
       print('Error in ops_decl_const : must have four arguments')
@@ -162,7 +162,7 @@ def get_arg_dat(arg_string, j):
 
     # check for syntax errors
     if not(len(dat_args_string.split(',')) == 5 or len(dat_args_string.split(',')) == 6 ):
-      print('Error parsing op_arg_dat(%s): must have four or five arguments' % dat_args_string)
+      print(('Error parsing op_arg_dat(%s): must have four or five arguments' % dat_args_string))
       return
 
     if len(dat_args_string.split(',')) == 5:
@@ -198,8 +198,8 @@ def get_arg_gbl(arg_string, k):
 
     # check for syntax errors
     if len(gbl_args_string.split(',')) != 4:
-        print('Error parsing op_arg_gbl(%s): must have four arguments' \
-              % gbl_args_string)
+        print(('Error parsing op_arg_gbl(%s): must have four arguments' \
+              % gbl_args_string))
         return
 
     # split the gbl_args_string into  4 and create a struct with the elements
@@ -323,8 +323,8 @@ def main(source_files):
 
   kernels_in_files = [[] for _ in range(len(source_files))]
   for a in range(0, len(source_files)):
-      print('processing file ' + str(a) + ' of ' + str(len(source_files)) + \
-            ' ' + str(source_files[a]))
+      print(('processing file ' + str(a) + ' of ' + str(len(source_files)) + \
+            ' ' + str(source_files[a])))
 
       src_file = str(source_files[a])
       f = open(src_file, 'r')
@@ -356,7 +356,7 @@ def main(source_files):
       #
 
       const_args = ops_decl_const_parse(text)
-      print(str(len(const_args)))
+      print((str(len(const_args))))
 
 
       #
@@ -370,9 +370,9 @@ def main(source_files):
         dim   = loop_args[i]['dim']
         block = loop_args[i]['block']
         _range   = loop_args[i]['range']
-        print('\nprocessing kernel ' + name + ' with ' + str(nargs) + ' arguments')
-        print('dim: '+dim)
-        print('range: '+str(_range))
+        print(('\nprocessing kernel ' + name + ' with ' + str(nargs) + ' arguments'))
+        print(('dim: '+dim))
+        print(('range: '+str(_range)))
 
         #
         # process arguments
@@ -401,11 +401,11 @@ def main(source_files):
                   break
 
             if l == -1:
-                print('unknown access type for argument ' + str(m))
+                print(('unknown access type for argument ' + str(m)))
             else:
                 accs[m] = l + 1
 
-            print(var[m]+' '+str(dims[m]) +' '+str(stens[m])+' '+str(accs[m]))
+            print((var[m]+' '+str(dims[m]) +' '+str(stens[m])+' '+str(accs[m])))
 
 
           if arg_type.strip() == 'ops_arg_gbl':
@@ -419,11 +419,11 @@ def main(source_files):
                 if args['acc'].strip() == OPS_accs_labels[l].strip():
                     break
             if l == -1:
-                print('unknown access type for argument ' + str(m))
+                print(('unknown access type for argument ' + str(m)))
             else:
                 accs[m] = l + 1
 
-            print(var[m]+' '+ str(dims[m]) +' '+str(accs[m]))
+            print((var[m]+' '+ str(dims[m]) +' '+str(accs[m])))
 
           if arg_type.strip() == 'ops_arg_idx':
             var[m] = ''
@@ -454,8 +454,8 @@ def main(source_files):
                     kernels[nk]['typs'][arg] == typs[arg] and \
                     kernels[nk]['accs'][arg] == accs[arg]
             if rep2:
-              print('repeated kernel with compatible arguments: ' + \
-                    kernels[nk]['name'])
+              print(('repeated kernel with compatible arguments: ' + \
+                    kernels[nk]['name']))
               repeat = True
               which_file = nk
             else:

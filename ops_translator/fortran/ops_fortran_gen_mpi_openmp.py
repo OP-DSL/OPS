@@ -195,7 +195,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
     i = text.find(name)
     if(i < 0):
       print("\n********")
-      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
+      print(("Error: cannot locate user kernel function: "+name+" - Aborting code generation"))
       exit(2)
 
     # need to check accs here - under fortran the

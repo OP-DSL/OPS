@@ -2,12 +2,21 @@
 set -e
 cd ../../../ops/c
 source ../../scripts/source_intel
+make
 
 #==== Build and copy Referance application from the TDMA Library ====
-cd $TDMA_INSTALL_PATH/../../apps/adi/build/
+#build lib first
+cd $TDMA_INSTALL_PATH/
 rm -rf ./*
 cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON
 make
+make install
+
+#now build application
+cd $TDMA_INSTALL_PATH/../../apps/adi/build/
+rm -rf ./*
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON
+make adi_orig compare
 cp compare adi_orig $OPS_INSTALL_PATH/../apps/c/adi
 cd -
 make
