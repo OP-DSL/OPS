@@ -40,6 +40,8 @@ utility functions for code generator
 
 import re
 import config
+import glob
+import os
 
 def comm(line):
   prefix = ' '*config.depth
@@ -441,3 +443,46 @@ def replace_ACC_kernel_body(kernel_text, arg_list, arg_typ, nargs, opencl=0, dim
           kernel_text = kernel_text[0:match.start()] + acc + kernel_text[closeb:]
           match = pattern.search(kernel_text,match.start()+10)
     return kernel_text
+
+def find_user_function(name, src_dir):
+    found = 0
+    file_name = ''
+    for files in glob.glob( os.path.join(src_dir, "*.h") ):
+      f = open( files, 'r' )
+      ftext = f.read()
+      pos = 0
+      i = re.search('void\\s+\\b'+name+'\\b',ftext[pos:])
+      while (i):
+          funstart = pos + i.start()
+          endsignature = arg_parse(ftext, funstart)
+          loc1 = ftext[endsignature:].find('{')
+          loc2 = ftext[endsignature:].find(';')
+          if loc1 != -1 and (loc1 < loc2 and loc2 != -1):
+              found = 1
+              file_name = files
+              break
+          pos = pos + i.start() + 5
+
+      if found == 1:
+        break;
+
+    if found == 0:
+      for files in glob.glob( os.path.join(src_dir, "*.cpp") ):
+        f = open( files, 'r' )
+        ftext = f.read()
+        pos = 0
+        i = re.search('void\\s+\\b'+name+'\\b',ftext[pos:])
+        while (i):
+            funstart = pos + i.start()
+            endsignature = arg_parse(ftext, funstart)
+            loc1 = ftext[endsignature:].find('{')
+            loc2 = ftext[endsignature:].find(';')
+            if loc1 != -1 and (loc1 < loc2 and loc2 != -1):
+                found = 1
+                file_name = files
+                break
+            pos = pos + i.start() + 5
+ 
+        if found == 1:
+          break;
+    return file_name

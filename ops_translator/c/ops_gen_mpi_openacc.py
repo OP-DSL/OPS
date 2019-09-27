@@ -205,19 +205,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
 ##########################################################################
 
     comm('user function')
-    found = 0
-    for files in glob.glob( os.path.join(src_dir, "*.h") ):
-      f = open( files, 'r' )
-      for line in f:
-        if name in line:
-          file_name = f.name
-          found = 1;
-          break
-      if found == 1:
-        break;
-
-    if found == 0:
-      print(("COUND NOT FIND KERNEL", name))
+    file_name = util.find_user_function(name, src_dir)
+    if file_name == '':
+      print(("COULD NOT FIND KERNEL", name))
 
     fid = open(file_name, 'r')
     text = fid.read()
