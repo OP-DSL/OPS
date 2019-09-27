@@ -83,7 +83,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base, i
 
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p, stride,
     data, type_size, type, name );
-  int bytes = size*type_size;
+  size_t bytes = size*type_size;
   for (int i=0; i<block->dims; i++) bytes = bytes*dat->size[i];
 
   if(data != NULL) {
@@ -168,7 +168,7 @@ void ops_halo_transfer(ops_halo_group group) {
 
   for (int h = 0; h < group->nhalos; h++) {
     ops_halo halo = group->halos[h];
-    int size = halo->from->elem_size * halo->iter_size[0];
+    size_t size = halo->from->elem_size * halo->iter_size[0];
     for (int i = 1; i < halo->from->block->dims; i++)
       size *= halo->iter_size[i];
     if (size > ops_halo_buffer_size) {

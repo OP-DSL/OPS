@@ -179,7 +179,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     d_p[d] = dat->d_p[d] + sd->d_ip[d];
   }
 
-  int *prod = sd->prod;
+  size_t *prod = sd->prod;
 
   if (!ops_compute_intersections(dat, d_pos,d_neg, iter_range, dim,
           &left_send_depth, &left_recv_depth, &right_send_depth, &right_recv_depth)) return;
@@ -209,7 +209,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
   }
 
   // set up initial pointers
-  int i2 = (-d_m[dim]) * prod[dim - 1];
+  size_t i2 = (-d_m[dim]) * prod[dim - 1];
   // int i4 = (prod[dim]/prod[dim-1] - (d_p[dim])    ) * prod[dim-1];
   // printf("block %s, dat %s, prod[dim-1] %d, prod[dim]
   // %d\n",dat->block->name,dat->name, prod[dim-1],prod[dim]);
@@ -289,7 +289,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
       
   // set up initial pointers
   // int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim-1];
-  int i3 = (prod[dim] / prod[dim - 1] - (d_p[dim]) - actual_depth_send) *
+  size_t i3 = (prod[dim] / prod[dim - 1] - (d_p[dim]) - actual_depth_send) *
            prod[dim - 1];
 
   if (OPS_diags > 5) { // Consistency checking
@@ -374,7 +374,7 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   }
 
 
-  int *prod = sd->prod;
+  size_t *prod = sd->prod;
 
   //
   // negative direction
@@ -399,7 +399,7 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   }
 
   // set up initial pointers
-  int i2 = (-d_m[dim]) * prod[dim - 1];
+  size_t i2 = (-d_m[dim]) * prod[dim - 1];
   // int i4 = (prod[dim]/prod[dim-1] - (d_p[dim])    ) * prod[dim-1];
   // printf("block %s, dat %s, prod[dim-1] %d, prod[dim]
   // %d\n",dat->block->name,dat->name, prod[dim-1],prod[dim]);
@@ -473,7 +473,7 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
 
   // set up initial pointers
   // int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim-1];
-  int i3 = (prod[dim] / prod[dim - 1] - (d_p[dim]) - actual_depth_send) *
+  size_t i3 = (prod[dim] / prod[dim - 1] - (d_p[dim]) - actual_depth_send) *
            prod[dim - 1];
 
   if (OPS_diags > 5) { // Consistency checking
@@ -532,7 +532,7 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg,
   int right_recv_depth = 0;
   int left_send_depth = 0;
   int right_send_depth = 0;
-  int *prod = sd->prod;
+  size_t *prod = sd->prod;
 
   int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
   for (int d = 0; d < OPS_MAX_DIM; d++) {
@@ -554,7 +554,7 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg,
       actual_depth_recv = d;
 
   // set up initial pointers
-  int i4 = (prod[dim] / prod[dim - 1] - (d_p[dim])) * prod[dim - 1];
+  size_t i4 = (prod[dim] / prod[dim - 1] - (d_p[dim])) * prod[dim - 1];
 
   // Compute size of packed data
   int recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
@@ -581,7 +581,7 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg,
       actual_depth_recv = d;
 
   // set up initial pointers
-  int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim - 1];
+  size_t i1 = (-d_m[dim] - actual_depth_recv) * prod[dim - 1];
 
   // Compute size of packed data
   recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
@@ -608,7 +608,7 @@ void ops_exchange_halo_unpacker_given(ops_dat dat, int *depths, int dim,
   int right_send_depth = depths[2];
   int right_recv_depth = depths[3];
 
-  int *prod = sd->prod;
+  size_t *prod = sd->prod;
 
   int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
   for (int d = 0; d < OPS_MAX_DIM; d++) {
@@ -630,7 +630,7 @@ void ops_exchange_halo_unpacker_given(ops_dat dat, int *depths, int dim,
   }
 
   // set up initial pointers
-  int i4 = (prod[dim] / prod[dim - 1] - (d_p[dim])) * prod[dim - 1];
+  size_t i4 = (prod[dim] / prod[dim - 1] - (d_p[dim])) * prod[dim - 1];
 
   // Compute size of packed data
   int recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
@@ -661,7 +661,7 @@ void ops_exchange_halo_unpacker_given(ops_dat dat, int *depths, int dim,
   }
 
   // set up initial pointers
-  int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim - 1];
+  size_t i1 = (-d_m[dim] - actual_depth_recv) * prod[dim - 1];
 
   // Compute size of packed data
   recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
@@ -1222,7 +1222,7 @@ void ops_halo_transfer(ops_halo_group group) {
       int ranges[OPS_MAX_DIM * 2];
       int step[OPS_MAX_DIM];
       int buf_strides[OPS_MAX_DIM];
-      int fragment_size = halo->halo->from->elem_size;
+      size_t fragment_size = halo->halo->from->elem_size;
       for (int i = 0; i < OPS_MAX_DIM; i++) {
         if (halo->halo->from_dir[i] > 0) {
           ranges[2 * i] =
@@ -1291,7 +1291,7 @@ void ops_halo_transfer(ops_halo_group group) {
       int ranges[OPS_MAX_DIM * 2];
       int step[OPS_MAX_DIM];
       int buf_strides[OPS_MAX_DIM];
-      int fragment_size = halo->halo->to->elem_size;
+      size_t fragment_size = halo->halo->to->elem_size;
       for (int i = 0; i < OPS_MAX_DIM; i++) {
         if (halo->halo->to_dir[i] > 0) {
           ranges[2 * i] =

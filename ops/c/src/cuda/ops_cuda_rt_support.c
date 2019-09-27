@@ -142,7 +142,7 @@ void cutilDeviceInit(const int argc, const char **argv) {
   }
 }
 
-void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
+void ops_cpHostToDevice(void **data_d, void **data_h, size_t size) {
   // if (!OPS_hybrid_gpu) return;
 
 
@@ -180,7 +180,7 @@ void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
 void ops_download_dat(ops_dat dat) {
 
   // if (!OPS_hybrid_gpu) return;
-  int bytes = dat->elem_size;
+  size_t bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];
   // printf("downloading to host from device %d bytes\n",bytes);
@@ -191,7 +191,7 @@ void ops_download_dat(ops_dat dat) {
 void ops_upload_dat(ops_dat dat) {
 
   // if (!OPS_hybrid_gpu) return;
-  int bytes = dat->elem_size;
+  size_t bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];
   // printf("uploading to device from host %d bytes\n",bytes);
@@ -242,7 +242,7 @@ void ops_cuda_get_data(ops_dat dat) {
     dat->dirty_hd = 0;
   else
     return;
-  int bytes = dat->elem_size;
+  size_t bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];
   cutilSafeCall(
@@ -259,7 +259,7 @@ void ops_cuda_put_data(ops_dat dat) {
     dat->dirty_hd = 0;
   else
     return;
-  int bytes = dat->elem_size;
+  size_t bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];
   cutilSafeCall(

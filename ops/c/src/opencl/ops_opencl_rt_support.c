@@ -340,7 +340,7 @@ void openclDeviceInit(const int argc, const char **argv) {
   return;
 }
 
-void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
+void ops_cpHostToDevice(void **data_d, void **data_h, size_t size) {
   // printf("Copying data from host to device\n");
   cl_int ret = 0;
   *data_d = (cl_mem)clCreateBuffer(OPS_opencl_core.context, CL_MEM_READ_WRITE,
@@ -367,7 +367,7 @@ void ops_cpConstToSymbol(void *data_d, void *data_h, int size) {
 void ops_download_dat(ops_dat dat) {
 
   // if (!OPS_hybrid_gpu) return;
-  int bytes = dat->elem_size;
+  size_t bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];
 
@@ -382,7 +382,7 @@ void ops_download_dat(ops_dat dat) {
 void ops_upload_dat(ops_dat dat) {
 
   // if (!OPS_hybrid_gpu) return;
-  int bytes = dat->elem_size;
+  size_t bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];
   printf("uploading to device from host %d bytes\n", bytes);

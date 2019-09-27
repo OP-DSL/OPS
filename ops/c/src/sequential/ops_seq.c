@@ -68,7 +68,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
                              // ops_decl_dat_hdf5()
   } else {
     // Allocate memory immediately
-    int bytes = size * type_size;
+    size_t bytes = size * type_size;
 
     // nx_pad    = (1+((nx-1)/SIMD_VEC))*SIMD_VEC; // Compute padding for
     // vecotrization (in adi_cpu tridiagonal library)
@@ -85,7 +85,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->user_managed = 0;
     dat->mem = bytes;
     if (data != NULL && OPS_realloc) {
-      int sizeprod = 1;
+      size_t sizeprod = 1;
       for (int d = 1; d < block->dims; d++) sizeprod *= (dat->size[d]);
       int xlen_orig = (-d_m[0]+d_p[0]+dat_size[0]) * size * type_size;
       for (int i = 0; i < sizeprod; i++) {
@@ -96,7 +96,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
 
   // Compute offset in bytes to the base index
   dat->base_offset = 0;
-  long cumsize = 1;
+  size_t cumsize = 1;
   for (int i = 0; i < block->dims; i++) {
     dat->base_offset +=
         (OPS_soa ? dat->type_size : dat->elem_size)
@@ -133,7 +133,7 @@ void ops_halo_transfer(ops_halo_group group) {
   // printf("group->nhalos %d\n",group->nhalos);
   for (int h = 0; h < group->nhalos; h++) {
     ops_halo halo = group->halos[h];
-    int size = halo->from->elem_size * halo->iter_size[0];
+    size_t size = halo->from->elem_size * halo->iter_size[0];
     for (int i = 1; i < halo->from->block->dims; i++)
       size *= halo->iter_size[i];
     if (size > ops_halo_buffer_size) {
@@ -481,7 +481,7 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs) {
   (void)args;
 }
 
-void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
+void ops_cpHostToDevice(void **data_d, void **data_h, size_t size) {
   (void)data_d;
   (void)data_h;
   (void)size;

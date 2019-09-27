@@ -75,8 +75,8 @@ extern void (*ops_read_dat_hdf5_dynamic)(ops_dat dat);
 *******************************************************************************/
 void remove_mpi_halos1D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 
-  int index = 0;
-  int count = 0;
+  size_t index = 0;
+  size_t count = 0;
   // for(int m = disp[4]; m < size[4]; m++) {
   //  for(int l = disp[3]; l < size[3]; l++) {
   //  for(int k = disp[2]; k < disp[2]+size[2]; k++) {
@@ -119,8 +119,8 @@ void remove_mpi_halos1D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 *******************************************************************************/
 void remove_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 
-  int index = 0;
-  int count = 0;
+  size_t index = 0;
+  size_t count = 0;
   // for(int m = disp[4]; m < size[4]; m++) {
   //  for(int l = disp[3]; l < size[3]; l++) {
   //  for(int k = disp[2]; k < disp[2]+size[2]; k++) {
@@ -161,8 +161,8 @@ void remove_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 * before writing to HDF5 files - Maximum dimension of block is 3
 *******************************************************************************/
 void remove_mpi_halos3D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
-  int index = 0;
-  int count = 0;
+  size_t index = 0;
+  size_t count = 0;
   // for(int m = disp[4]; m < size[4]; m++) {
   //  for(int l = disp[3]; l < size[3]; l++) {
   for (int k = disp[2]; k < disp[2] + size[2]; k++) {
@@ -203,8 +203,8 @@ void remove_mpi_halos5D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 * after reading from an HDF5 file - Maximum dimension of block is 2
 *******************************************************************************/
 void add_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
-  int index = 0;
-  int count = 0;
+  size_t index = 0;
+  size_t count = 0;
   // for(int m = disp[4]; m < size[4]; m++) {
   //  for(int l = disp[3]; l < size[3]; l++) {
   //  for(int k = disp[2]; k < disp[2]+size[2]; k++) {
@@ -227,8 +227,8 @@ void add_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 }
 
 void add_mpi_halos3D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
-  int index = 0;
-  int count = 0;
+  size_t index = 0;
+  size_t count = 0;
   // for(int m = disp[4]; m < size[4]; m++) {
   //  for(int l = disp[3]; l < size[3]; l++) {
   for (int k = disp[2]; k < disp[2] + size[2]; k++) {
@@ -567,7 +567,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       // printf("dat->d_p[%d] = %d ",d,g_d_p[d]);
     }
 
-    int t_size = 1;
+    size_t t_size = 1;
     for (int d = 0; d < dat->block->dims; d++)
       t_size *= size[d];
     // printf("t_size = %d ",t_size);
@@ -1562,7 +1562,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
       // printf("dat->d_p[%d] = %d ",d,g_d_p[d]);
     }
 
-    int t_size = 1;
+    size_t t_size = 1;
     for (int d = 0; d < dat->block->dims; d++)
       t_size *= size[d];
     char *data = (char *)ops_malloc(t_size * dat->elem_size);
@@ -1781,7 +1781,7 @@ char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
                                     // dimensions
     }
 
-    int t_size = 1;
+    size_t t_size = 1;
     for (int d = 0; d < dat->block->dims; d++)
       t_size *= size[d];
     u_dat = (char *)ops_malloc(t_size * dat->elem_size);

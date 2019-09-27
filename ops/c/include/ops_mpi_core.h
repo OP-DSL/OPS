@@ -99,7 +99,7 @@ typedef struct {
   /// the decomposition is for this dat
   ops_dat dat;
   /// product array -- used for MPI send/Receives
-  int *prod;
+  size_t *prod;
   /// MPI Types for send/receive -- these should be defined for the dat, not the
   /// block
   MPI_Datatype *mpidat;
