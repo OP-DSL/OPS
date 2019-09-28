@@ -78,9 +78,9 @@ const char copy_tobuf_kernel_src[] =
     "const int type_size, const int dim, const int OPS_soa"
     ") {"
 
-    "  int idx_z = rz_s + z_step*get_global_id(2);"
-    "  int idx_y = ry_s + y_step*get_global_id(1);"
-    "  int idx_x = rx_s + x_step*get_global_id(0);"
+    "  long idx_z = rz_s + z_step*get_global_id(2);"
+    "  long idx_y = ry_s + y_step*get_global_id(1);"
+    "  long idx_x = rx_s + x_step*get_global_id(0);"
 
     "  if((x_step ==1 ? idx_x < rx_e : idx_x > rx_e) &&"
     "    (y_step ==1 ? idx_y < ry_e : idx_y > ry_e) &&"
@@ -110,9 +110,9 @@ const char copy_frombuf_kernel_src[] =
     "const int buf_strides_x, const int buf_strides_y, const int buf_strides_z,"
     "const int type_size, const int dim, const int OPS_soa"
     "){"
-    "  int idx_z = rz_s + z_step*get_global_id(2);"
-    "  int idx_y = ry_s + y_step*get_global_id(1);"
-    "  int idx_x = rx_s + x_step*get_global_id(0);"
+    "  long idx_z = rz_s + z_step*get_global_id(2);"
+    "  long idx_y = ry_s + y_step*get_global_id(1);"
+    "  long idx_x = rx_s + x_step*get_global_id(0);"
 
     "  if((x_step ==1 ? idx_x < rx_e : idx_x > rx_e) &&"
     "    (y_step ==1 ? idx_y < ry_e : idx_y > ry_e) &&"
@@ -191,20 +191,20 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   }
 
   dest += dest_offset;
-  int thr_x = abs(rx_s - rx_e);
-  int blk_x = 1;
+  long thr_x = abs(rx_s - rx_e);
+  long blk_x = 1;
   if (abs(rx_s - rx_e) > 8) {
     blk_x = (thr_x - 1) / 8 + 1;
     thr_x = 8;
   }
-  int thr_y = abs(ry_s - ry_e);
-  int blk_y = 1;
+  long thr_y = abs(ry_s - ry_e);
+  long blk_y = 1;
   if (abs(ry_s - ry_e) > 8) {
     blk_y = (thr_y - 1) / 8 + 1;
     thr_y = 8;
   }
-  int thr_z = abs(rz_s - rz_e);
-  int blk_z = 1;
+  long thr_z = abs(rz_s - rz_e);
+  long blk_z = 1;
   if (abs(rz_s - rz_e) > 8) {
     blk_z = (thr_z - 1) / 8 + 1;
     thr_z = 8;
@@ -319,20 +319,20 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   }
 
   src += src_offset;
-  int thr_x = abs(rx_s - rx_e);
-  int blk_x = 1;
+  long thr_x = abs(rx_s - rx_e);
+  long blk_x = 1;
   if (abs(rx_s - rx_e) > 8) {
     blk_x = (thr_x - 1) / 8 + 1;
     thr_x = 8;
   }
-  int thr_y = abs(ry_s - ry_e);
-  int blk_y = 1;
+  long thr_y = abs(ry_s - ry_e);
+  long blk_y = 1;
   if (abs(ry_s - ry_e) > 8) {
     blk_y = (thr_y - 1) / 8 + 1;
     thr_y = 8;
   }
-  int thr_z = abs(rz_s - rz_e);
-  int blk_z = 1;
+  long thr_z = abs(rz_s - rz_e);
+  long blk_z = 1;
   if (abs(rz_s - rz_e) > 8) {
     blk_z = (thr_z - 1) / 8 + 1;
     thr_z = 8;

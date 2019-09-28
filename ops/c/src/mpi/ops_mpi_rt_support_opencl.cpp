@@ -62,8 +62,8 @@ const char packer1_kernel_src[] =
     "const int src_offset,"
     "const int elem_size"
     ") {"
-    "  int idx = get_global_id(0);"
-    "  int block = idx/blk_len;"
+    "  long idx = get_global_id(0);"
+    "  long block = idx/blk_len;"
     "  if (idx < count*blk_len) {"
     "    dest[idx] = src[src_offset*elem_size + stride*block + idx%blk_len];"
     "  }"
@@ -80,8 +80,8 @@ const char packer1_soa_kernel_src[] =
     "const int dim,"
     "const int size"
     ") {"
-    "  int idx = get_global_id(0);"
-    "  int block = idx/blk_len;"
+    "  long idx = get_global_id(0);"
+    "  long block = idx/blk_len;"
     "  if (idx < count*blk_len) {"
     "    for (int d = 0; d < dim; d++)"
     "      dest[idx*dim + d] = src[src_offset*type_size + stride*block + idx%blk_len + d * size];"
@@ -97,8 +97,8 @@ const char unpacker1_kernel_src[] =
     "const int dest_offset,"
     "const int elem_size"
     ") {"
-    "  int idx = get_global_id(0);"
-    "  int block = idx/blk_len;"
+    "  long idx = get_global_id(0);"
+    "  long block = idx/blk_len;"
     "  if (idx < count*blk_len) {"
     "    dest[dest_offset*elem_size +stride*block + idx%blk_len] = src[idx];"
     "  }"
@@ -115,8 +115,8 @@ const char unpacker1_soa_kernel_src[] =
     "const int dim,"
     "const int size"
     ") {"
-    "  int idx = get_global_id(0);"
-    "  int block = idx/blk_len;"
+    "  long idx = get_global_id(0);"
+    "  long block = idx/blk_len;"
     "  if (idx < count*blk_len) {"
     "    for (int d = 0; d < dim; d++)"
     "      dest[dest_offset*type_size +stride*block + idx%blk_len + d * size] = src[idx*dim + d];"
@@ -133,8 +133,8 @@ const char packer4_kernel_src[] =
     "const int src_offset,"
     "const int elem_size"
     ") {"
-    "  int idx = get_global_id(0);"
-    "  int block = idx/blk_len;"
+    "  long idx = get_global_id(0);"
+    "  long block = idx/blk_len;"
     "  if (idx < count*blk_len) {"
     "    dest[idx] = src[src_offset*elem_size/sizeof(int) + stride*block + "
     "idx%blk_len];"
@@ -150,8 +150,8 @@ const char unpacker4_kernel_src[] =
     "const int dest_offset,"
     "const int elem_size"
     ") {"
-    "  int idx = get_global_id(0);"
-    "  int block = idx/blk_len;"
+    "  long idx = get_global_id(0);"
+    "  long block = idx/blk_len;"
     "  if (idx < count*blk_len) {"
     "    dest[dest_offset*elem_size/sizeof(int) +stride*block + idx%blk_len] = "
     "src[idx];"
@@ -374,7 +374,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
                               (void *)&dat->type_size));
     clSafeCall(clSetKernelArg(packer1_soa_kernel[0], 7, sizeof(cl_int),
                               (void *)&dat->dim));
-    int full_size = dat->type_size * dat->size[0] * dat->size[1] * dat->size[2];
+    long full_size = dat->type_size * dat->size[0] * dat->size[1] * dat->size[2];
     clSafeCall(clSetKernelArg(packer1_soa_kernel[0], 8, sizeof(cl_int),
                               (void *)&full_size));
     clSafeCall(clEnqueueNDRangeKernel(OPS_opencl_core.command_queue,
@@ -395,7 +395,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
                               (void *)&device_buf));
     clSafeCall(clSetKernelArg(packer4_kernel[0], 2, sizeof(cl_int),
                               (void *)&halo->count));
-    int blk_length = halo->blocklength * dat->dim / 4;
+    long blk_length = halo->blocklength * dat->dim / 4;
     int stride = halo->stride * dat->dim / 4;
     clSafeCall(clSetKernelArg(packer4_kernel[0], 3, sizeof(cl_int),
                               (void *)&blk_length));
@@ -664,7 +664,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
                               (void *)&dat->type_size));
     clSafeCall(clSetKernelArg(*unpacker1_soa_kernel, 7, sizeof(cl_int),
                               (void *)&dat->dim));
-    int full_size = dat->type_size * dat->size[0] * dat->size[1] * dat->size[2];
+    long full_size = dat->type_size * dat->size[0] * dat->size[1] * dat->size[2];
     clSafeCall(clSetKernelArg(*unpacker1_soa_kernel, 8, sizeof(cl_int),
                               (void *)&full_size));
     clSafeCall(clEnqueueNDRangeKernel(
@@ -785,9 +785,9 @@ const char copy_tobuf_kernel_src[] =
     "const int type_size, const int dim, const int OPS_soa"
     ") {"
 
-    "  int idx_z = rz_s + z_step*get_global_id(2);"
-    "  int idx_y = ry_s + y_step*get_global_id(1);"
-    "  int idx_x = rx_s + x_step*get_global_id(0);"
+    "  long idx_z = rz_s + z_step*get_global_id(2);"
+    "  long idx_y = ry_s + y_step*get_global_id(1);"
+    "  long idx_x = rx_s + x_step*get_global_id(0);"
 
     "  if((x_step ==1 ? idx_x < rx_e : idx_x > rx_e) &&"
     "     (y_step ==1 ? idx_y < ry_e : idx_y > ry_e) &&"
@@ -817,9 +817,9 @@ const char copy_frombuf_kernel_src[] =
     "const int buf_strides_x, const int buf_strides_y, const int buf_strides_z,"
     "const int type_size, const int dim, const int OPS_soa"
     "){"
-    "  int idx_z = rz_s + z_step*get_global_id(2);"
-    "  int idx_y = ry_s + y_step*get_global_id(1);"
-    "  int idx_x = rx_s + x_step*get_global_id(0);"
+    "  long idx_z = rz_s + z_step*get_global_id(2);"
+    "  long idx_y = ry_s + y_step*get_global_id(1);"
+    "  long idx_x = rx_s + x_step*get_global_id(0);"
 
     "  if((x_step ==1 ? idx_x < rx_e : idx_x > rx_e) &&"
     "     (y_step ==1 ? idx_y < ry_e : idx_y > ry_e) &&"
@@ -898,26 +898,26 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   }
 
   dest += dest_offset;
-  int thr_x = abs(rx_s - rx_e);
-  int blk_x = 1;
+  long thr_x = abs(rx_s - rx_e);
+  long blk_x = 1;
   if (abs(rx_s - rx_e) > 8) {
     blk_x = (thr_x - 1) / 8 + 1;
     thr_x = 8;
   }
-  int thr_y = abs(ry_s - ry_e);
-  int blk_y = 1;
+  long thr_y = abs(ry_s - ry_e);
+  long blk_y = 1;
   if (abs(ry_s - ry_e) > 8) {
     blk_y = (thr_y - 1) / 8 + 1;
     thr_y = 8;
   }
-  int thr_z = abs(rz_s - rz_e);
-  int blk_z = 1;
+  long thr_z = abs(rz_s - rz_e);
+  long blk_z = 1;
   if (abs(rz_s - rz_e) > 8) {
     blk_z = (thr_z - 1) / 8 + 1;
     thr_z = 8;
   }
 
-  int size =
+  long size =
       abs(src->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
 
   if (halo_buffer_size2 < size) {
@@ -1050,26 +1050,26 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   }
 
   src += src_offset;
-  int thr_x = abs(rx_s - rx_e);
-  int blk_x = 1;
+  long thr_x = abs(rx_s - rx_e);
+  long blk_x = 1;
   if (abs(rx_s - rx_e) > 8) {
     blk_x = (thr_x - 1) / 8 + 1;
     thr_x = 8;
   }
-  int thr_y = abs(ry_s - ry_e);
-  int blk_y = 1;
+  long thr_y = abs(ry_s - ry_e);
+  long blk_y = 1;
   if (abs(ry_s - ry_e) > 8) {
     blk_y = (thr_y - 1) / 8 + 1;
     thr_y = 8;
   }
-  int thr_z = abs(rz_s - rz_e);
-  int blk_z = 1;
+  long thr_z = abs(rz_s - rz_e);
+  long blk_z = 1;
   if (abs(rz_s - rz_e) > 8) {
     blk_z = (thr_z - 1) / 8 + 1;
     thr_z = 8;
   }
 
-  int size =
+  long size =
       abs(dest->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
   cl_mem gpu_ptr;
   if (halo_buffer_size2 < size) {

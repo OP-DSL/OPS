@@ -142,9 +142,9 @@ void ops_halo_transfer(ops_halo_group group) {
     }
 
     // copy to linear buffer from source
-    int ranges[OPS_MAX_DIM * 2] = {0};
-    int step[OPS_MAX_DIM] = {0};
-    int buf_strides[OPS_MAX_DIM] = {0};
+    long ranges[OPS_MAX_DIM * 2] = {0};
+    long step[OPS_MAX_DIM] = {0};
+    long buf_strides[OPS_MAX_DIM] = {0};
     for (int i = 0; i < OPS_MAX_DIM; i++) {
       if (halo->from_dir[i] > 0) {
         ranges[2 * i] =
@@ -167,45 +167,45 @@ void ops_halo_transfer(ops_halo_group group) {
     #if OPS_MAX_DIM == 5
     #pragma omp parallel for collapse(5)
     #endif
-    for (int m = MIN(ranges[8], ranges[9] + 1);
+    for (long m = MIN(ranges[8], ranges[9] + 1);
          m < MAX(ranges[8] + 1, ranges[9]); m++) {
   #else
-    int m = 0;
+    long m = 0;
     {
   #endif
     #if OPS_MAX_DIM>3
       #if OPS_MAX_DIM == 4
       #pragma omp parallel for collapse(4)
       #endif
-      for (int l = MIN(ranges[6], ranges[7] + 1);
+      for (long l = MIN(ranges[6], ranges[7] + 1);
            l < MAX(ranges[6] + 1, ranges[7]); l++) {
     #else
-      int l = 0;
+      long l = 0;
       {
     #endif
       #if OPS_MAX_DIM>2
         #if OPS_MAX_DIM == 3
         #pragma omp parallel for collapse(3)
         #endif
-        for (int k = MIN(ranges[4], ranges[5] + 1);
+        for (long k = MIN(ranges[4], ranges[5] + 1);
              k < MAX(ranges[4] + 1, ranges[5]); k++) {
       #else
-        int k = 0;
+        long k = 0;
         {
       #endif
         #if OPS_MAX_DIM>1
           #if OPS_MAX_DIM == 2
           #pragma omp parallel for collapse(2)
           #endif
-          for (int j = MIN(ranges[2], ranges[3] + 1);
+          for (long j = MIN(ranges[2], ranges[3] + 1);
                j < MAX(ranges[2] + 1, ranges[3]); j++) {
         #else
-          int j = 0;
+          long j = 0;
           {
         #endif
-            for (int i = MIN(ranges[0], ranges[1] + 1);
+            for (long i = MIN(ranges[0], ranges[1] + 1);
                  i < MAX(ranges[0] + 1, ranges[1]); i++) {
-              for (int d = 0; d < halo->from->dim; d++) {
+              for (long d = 0; d < halo->from->dim; d++) {
                 memcpy(ops_halo_buffer +
                          (
                         #if OPS_MAX_DIM > 4
@@ -298,45 +298,45 @@ void ops_halo_transfer(ops_halo_group group) {
     #if OPS_MAX_DIM == 5
     #pragma omp parallel for collapse(5)
     #endif
-    for (int m = MIN(ranges[8], ranges[9] + 1);
+    for (long m = MIN(ranges[8], ranges[9] + 1);
          m < MAX(ranges[8] + 1, ranges[9]); m++) {
   #else
-    int m = 0;
+    long m = 0;
     {
   #endif
     #if OPS_MAX_DIM>3
       #if OPS_MAX_DIM == 4
       #pragma omp parallel for collapse(4)
       #endif
-      for (int l = MIN(ranges[6], ranges[7] + 1);
+      for (long l = MIN(ranges[6], ranges[7] + 1);
            l < MAX(ranges[6] + 1, ranges[7]); l++) {
     #else
-      int l = 0;
+      long l = 0;
       {
     #endif
       #if OPS_MAX_DIM>2
         #if OPS_MAX_DIM == 3
         #pragma omp parallel for collapse(3)
         #endif
-        for (int k = MIN(ranges[4], ranges[5] + 1);
+        for (long k = MIN(ranges[4], ranges[5] + 1);
              k < MAX(ranges[4] + 1, ranges[5]); k++) {
       #else
-        int k = 0;
+        long k = 0;
         {
       #endif
         #if OPS_MAX_DIM>1
           #if OPS_MAX_DIM == 2
           #pragma omp parallel for collapse(2)
           #endif
-          for (int j = MIN(ranges[2], ranges[3] + 1);
+          for (long j = MIN(ranges[2], ranges[3] + 1);
                j < MAX(ranges[2] + 1, ranges[3]); j++) {
         #else
-          int j = 0;
+          long j = 0;
           {
         #endif
-            for (int i = MIN(ranges[0], ranges[1] + 1);
+            for (long i = MIN(ranges[0], ranges[1] + 1);
                  i < MAX(ranges[0] + 1, ranges[1]); i++) {
-              for (int d = 0; d < halo->to->dim; d++) {
+              for (long d = 0; d < halo->to->dim; d++) {
                 memcpy(halo->to->data +
                        (OPS_soa ?
                          (

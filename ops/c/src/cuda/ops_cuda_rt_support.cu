@@ -64,9 +64,9 @@ __global__ void copy_kernel_tobuf(char *dest, char *src, int rx_s, int rx_e,
                                   int buf_strides_x, int buf_strides_y,
                                   int buf_strides_z, int type_size, int dim, int OPS_soa) {
 
-  int idx_z = rz_s + z_step * (blockDim.z * blockIdx.z + threadIdx.z);
-  int idx_y = ry_s + y_step * (blockDim.y * blockIdx.y + threadIdx.y);
-  int idx_x = rx_s + x_step * (blockDim.x * blockIdx.x + threadIdx.x);
+  long idx_z = rz_s + z_step * (blockDim.z * blockIdx.z + threadIdx.z);
+  long idx_y = ry_s + y_step * (blockDim.y * blockIdx.y + threadIdx.y);
+  long idx_x = rx_s + x_step * (blockDim.x * blockIdx.x + threadIdx.x);
 
   if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
       (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
@@ -93,9 +93,9 @@ __global__ void copy_kernel_frombuf(char *dest, char *src, int rx_s, int rx_e,
                                     int buf_strides_x, int buf_strides_y,
                                     int buf_strides_z, int type_size, int dim, int OPS_soa) {
 
-  int idx_z = rz_s + z_step * (blockDim.z * blockIdx.z + threadIdx.z);
-  int idx_y = ry_s + y_step * (blockDim.y * blockIdx.y + threadIdx.y);
-  int idx_x = rx_s + x_step * (blockDim.x * blockIdx.x + threadIdx.x);
+  long idx_z = rz_s + z_step * (blockDim.z * blockIdx.z + threadIdx.z);
+  long idx_y = ry_s + y_step * (blockDim.y * blockIdx.y + threadIdx.y);
+  long idx_x = rx_s + x_step * (blockDim.x * blockIdx.x + threadIdx.x);
 
   if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
       (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
@@ -121,20 +121,20 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int buf_strides_y, int buf_strides_z) {
 
   dest += dest_offset;
-  int thr_x = abs(rx_s - rx_e);
-  int blk_x = 1;
+  long thr_x = abs(rx_s - rx_e);
+  long blk_x = 1;
   if (abs(rx_s - rx_e) > 8) {
     blk_x = (thr_x - 1) / 8 + 1;
     thr_x = 8;
   }
-  int thr_y = abs(ry_s - ry_e);
-  int blk_y = 1;
+  long thr_y = abs(ry_s - ry_e);
+  long blk_y = 1;
   if (abs(ry_s - ry_e) > 8) {
     blk_y = (thr_y - 1) / 8 + 1;
     thr_y = 8;
   }
-  int thr_z = abs(rz_s - rz_e);
-  int blk_z = 1;
+  long thr_z = abs(rz_s - rz_e);
+  long blk_z = 1;
   if (abs(rz_s - rz_e) > 8) {
     blk_z = (thr_z - 1) / 8 + 1;
     thr_z = 8;
@@ -157,20 +157,20 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                            int buf_strides_z) {
 
   src += src_offset;
-  int thr_x = abs(rx_s - rx_e);
-  int blk_x = 1;
+  long thr_x = abs(rx_s - rx_e);
+  long blk_x = 1;
   if (abs(rx_s - rx_e) > 8) {
     blk_x = (thr_x - 1) / 8 + 1;
     thr_x = 8;
   }
-  int thr_y = abs(ry_s - ry_e);
-  int blk_y = 1;
+  long thr_y = abs(ry_s - ry_e);
+  long blk_y = 1;
   if (abs(ry_s - ry_e) > 8) {
     blk_y = (thr_y - 1) / 8 + 1;
     thr_y = 8;
   }
-  int thr_z = abs(rz_s - rz_e);
-  int blk_z = 1;
+  long thr_z = abs(rz_s - rz_e);
+  long blk_z = 1;
   if (abs(rz_s - rz_e) > 8) {
     blk_z = (thr_z - 1) / 8 + 1;
     thr_z = 8;

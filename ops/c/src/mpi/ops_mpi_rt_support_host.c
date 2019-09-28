@@ -111,9 +111,9 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int x_step, int y_step, int z_step, int buf_strides_x,
                          int buf_strides_y, int buf_strides_z) {
 #pragma omp parallel for collapse(3)
-  for (int k = MIN(rz_s,rz_e+1); k < MAX(rz_s+1,rz_e); k ++) {
-    for (int j = MIN(ry_s,ry_e+1); j < MAX(ry_s+1,ry_e); j ++) {
-      for (int i = MIN(rx_s,rx_e+1); i < MAX(rx_s+1,rx_e); i ++) {
+  for (long k = MIN(rz_s,rz_e+1); k < MAX(rz_s+1,rz_e); k ++) {
+    for (long j = MIN(ry_s,ry_e+1); j < MAX(ry_s+1,ry_e); j ++) {
+      for (long i = MIN(rx_s,rx_e+1); i < MAX(rx_s+1,rx_e); i ++) {
         for (int d = 0; d < src->dim; d++) 
         memcpy(dest + dest_offset +
                    ((k - rz_s) * z_step * buf_strides_z +
@@ -137,9 +137,9 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                            int buf_strides_x, int buf_strides_y,
                            int buf_strides_z) {
 #pragma omp parallel for collapse(3)
-  for (int k = MIN(rz_s,rz_e+1); k < MAX(rz_s+1,rz_e); k ++) {
-    for (int j = MIN(ry_s,ry_e+1); j < MAX(ry_s+1,ry_e); j ++) {
-      for (int i = MIN(rx_s,rx_e+1); i < MAX(rx_s+1,rx_e); i ++) {
+  for (long k = MIN(rz_s,rz_e+1); k < MAX(rz_s+1,rz_e); k ++) {
+    for (long j = MIN(ry_s,ry_e+1); j < MAX(ry_s+1,ry_e); j ++) {
+      for (long i = MIN(rx_s,rx_e+1); i < MAX(rx_s+1,rx_e); i ++) {
         for (int d = 0; d < dest->dim; d++) 
         memcpy(dest->data +
                    (OPS_soa ? ((k * dest->size[0] * dest->size[1] + j * dest->size[0] + i)
