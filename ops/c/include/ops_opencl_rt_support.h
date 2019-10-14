@@ -1,5 +1,6 @@
 #ifndef __OPS_OPENCL_RT_SUPPORT_H
 #define __OPS_OPENCL_RT_SUPPORT_H
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 /*
 * Open source copyright declaration based on BSD open source template:
 * http://www.opensource.org/licenses/bsd-license.php
@@ -32,7 +33,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops cuda specific runtime support functions
+/** @file
+  * @brief OPS cuda specific runtime support functions
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements cuda backend runtime support functions
   */
@@ -83,12 +85,14 @@ extern char *OPS_consts_h, *OPS_consts_d, *OPS_reduct_h, *OPS_reduct_d;
 
 extern int OPS_block_size_x;
 extern int OPS_block_size_y;
+extern int OPS_block_size_z;
 
 #define clSafeCall(ret) __clSafeCall(ret, __FILE__, __LINE__)
 
-void openclDeviceInit(int argc, char **argv);
+void openclDeviceInit(const int argc, const char **argv);
 void __clSafeCall(cl_int ret, const char *file, const int line);
 void ops_opencl_get_data(ops_dat dat);
+void ops_opencl_put_data(ops_dat dat);
 void reallocConstArrays(int consts_bytes);
 void reallocReductArrays(int reduct_bytes);
 void mvConstArraysToDevice(int consts_bytes);
@@ -101,5 +105,5 @@ void ops_download_dat(ops_dat dat);
 #ifdef __cplusplus
 }
 #endif
-
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_OPENCL_RT_SUPPORT_H */

@@ -7,19 +7,23 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_fp64:enable
 
-#include "ops_opencl_reduction.h"
 #include "user_types.h"
+#define OPS_3D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
+#include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a, b) ((a < b) ? (a) : (b))
+#define MIN(a,b) ((a<b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a, b) ((a > b) ? (a) : (b))
+#define MAX(a,b) ((a>b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
+#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -41,44 +45,40 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
+//user function
 
-#define OPS_ACC0(x, y, z)                                                      \
-  (x + xdim0_calc_dt_kernel_min * (y) +                                        \
-   xdim0_calc_dt_kernel_min * ydim0_calc_dt_kernel_min * (z))
+void calc_dt_kernel_min(const ptr_double  dt_min,
+  double* dt_min_val) {
+  *dt_min_val = MIN(*dt_min_val, OPS_ACCS(dt_min, 0,0,0));
 
-// user function
-void calc_dt_kernel_min(const __global double *restrict dt_min,
-                        double *restrict dt_min_val)
-
-{
-  *dt_min_val = MIN(*dt_min_val, dt_min[OPS_ACC0(0, 0, 0)]);
 }
 
-__kernel void ops_calc_dt_kernel_min(__global const double *restrict arg0,
-                                     __global double *restrict arg1,
-                                     __local double *scratch1, int r_bytes1,
-                                     const int base0, const int size0,
-                                     const int size1, const int size2) {
+
+__kernel void ops_calc_dt_kernel_min(
+__global const double* restrict arg0,
+__global double* restrict arg1,
+__local double* scratch1,
+int r_bytes1,
+const int base0,
+const int size0,
+const int size1,
+const int size2 ){
 
   arg1 += r_bytes1;
   double arg1_l[1];
-  for (int d = 0; d < 1; d++)
-    arg1_l[d] = INFINITY_double;
+  for (int d=0; d<1; d++) arg1_l[d] = INFINITY_double;
 
   int idx_y = get_global_id(1);
   int idx_z = get_global_id(2);
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    calc_dt_kernel_min(
-        &arg0[base0 + idx_x * 1 * 1 + idx_y * 1 * 1 * xdim0_calc_dt_kernel_min +
-              idx_z * 1 * 1 * xdim0_calc_dt_kernel_min *
-                  ydim0_calc_dt_kernel_min],
-        arg1_l);
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_calc_dt_kernel_min + idx_z * 1*1 * xdim0_calc_dt_kernel_min * ydim0_calc_dt_kernel_min], xdim0_calc_dt_kernel_min, ydim0_calc_dt_kernel_min};
+    calc_dt_kernel_min(ptr0,
+                   arg1_l);
   }
-  int group_index = get_group_id(0) + get_group_id(1) * get_num_groups(0) +
-                    get_group_id(2) * get_num_groups(0) * get_num_groups(1);
-  for (int d = 0; d < 1; d++)
-    reduce_double(arg1_l[d], scratch1, &arg1[group_index * 1 + d], OPS_MIN);
+  int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);
+  for (int d=0; d<1; d++)
+    reduce_double(arg1_l[d], scratch1, &arg1[group_index*1+d], OPS_MIN);
+
 }

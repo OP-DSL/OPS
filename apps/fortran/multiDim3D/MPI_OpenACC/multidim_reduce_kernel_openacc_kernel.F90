@@ -11,10 +11,13 @@ USE ISO_C_BINDING
 
 INTEGER(KIND=4) multi_d1
 INTEGER(KIND=4) xdim1
+INTEGER(KIND=4) ydim1
+INTEGER(KIND=4) zdim1
 #define OPS_ACC_MD1(d,x,y,z) ((x)*3+(d)+(xdim1*(y)*3)+(xdim1*ydim1*(z)*3))
 
 contains
 
+!$ACC ROUTINE(multidim_reduce_kernel) SEQ
 !user function
 subroutine multidim_reduce_kernel(val, redu_dat1)
   IMPLICIT NONE
@@ -39,15 +42,24 @@ subroutine multidim_reduce_kernel_wrap( &
 & end )
   IMPLICIT NONE
   real(8), INTENT(IN) :: opsDat1Local(*)
-  real(8) :: opsDat2Local
+  real(8) :: opsDat2Local(3)
+  real(8) :: opsDat2LocalAcc(3)
+  real(8) :: opsDat2Local_1
+  real(8) :: opsDat2Local_2
+  real(8) :: opsDat2Local_3
   integer :: dat1_base
   integer :: dat2_base
   integer(4) start(3)
   integer(4) end(3)
   integer n_x, n_y, n_z
 
-  !$acc parallel deviceptr(opsDat1Local) reduction(+:opsDat2Local)
-  !$acc loop reduction(+:opsDat2Local)
+  opsDat2LocalAcc = opsDat2Local
+  opsDat2Local_1 = opsDat2Local(1)
+  opsDat2Local_2 = opsDat2Local(2)
+  opsDat2Local_3 = opsDat2Local(3)
+
+  !$acc parallel deviceptr(opsDat1Local)  private(opsDat2LocalAcc)  reduction(+:opsDat2Local_1) reduction(+:opsDat2Local_2) reduction(+:opsDat2Local_3)
+  !$acc loop  reduction(+:opsDat2Local_1) reduction(+:opsDat2Local_2) reduction(+:opsDat2Local_3)
   DO n_z = 1, end(3)-start(3)+1
     !$acc loop
     DO n_y = 1, end(2)-start(2)+1
@@ -55,11 +67,18 @@ subroutine multidim_reduce_kernel_wrap( &
       DO n_x = 1, end(1)-start(1)+1
         call multidim_reduce_kernel( &
         & opsDat1Local(dat1_base+(n_x-1)*3 + (n_y-1)*xdim1*3  + (n_z-1)*ydim1*xdim1*3), &
-        & opsDat2Local )
+        & opsDat2LocalAcc )
+        opsDat2Local_1 = opsDat2LocalAcc(1)
+        opsDat2Local_2 = opsDat2LocalAcc(2)
+        opsDat2Local_3 = opsDat2LocalAcc(3)
       END DO
     END DO
   END DO
   !$acc end parallel
+  opsDat2Local(1) = opsDat2Local_1
+  opsDat2Local(2) = opsDat2Local_2
+  opsDat2Local(3) = opsDat2Local_3
+
 end subroutine
 
 !host subroutine
@@ -79,6 +98,7 @@ subroutine multidim_reduce_kernel_host( userSubroutine, block, dim, range, &
   integer(kind=4) :: opsDat1Cardinality
   integer(kind=4), POINTER, DIMENSION(:)  :: dat1_size
   integer(kind=4) :: dat1_base
+  integer zdim1
 
   type ( ops_arg )  , INTENT(IN) :: opsArg2
   real(8), POINTER, DIMENSION(:) :: opsDat2Local

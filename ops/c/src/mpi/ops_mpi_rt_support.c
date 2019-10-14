@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops mpi run-time support routines
+/** @file
+  * @brief OPS mpi run-time support routines
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the runtime support routines for the OPS mpi backend
   */
@@ -202,6 +203,10 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     printf("Error: trying to exchange a %d-deep halo for %s, but halo is only %d deep. Please set d_m and d_p accordingly\n",actual_depth_recv, dat->name, abs(d_m[dim]));
     MPI_Abort(sb->comm, -1);
   }
+  if (actual_depth_send > sd->decomp_size[dim]) {
+    printf("Error: overpartitioning! Trying to exchange a %d-deep halo for %s, but dataset is only %d wide on this process.\n",actual_depth_send, dat->name, sd->decomp_size[dim]);
+    MPI_Abort(sb->comm, -1);
+  }
 
   // set up initial pointers
   int i2 = (-d_m[dim]) * prod[dim - 1];
@@ -239,7 +244,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     ops_buffer_recv_1 = (char *)ops_realloc_fast(ops_buffer_recv_1, send_recv_offsets[1],
                                         send_recv_offsets[1] + 4 * recv_size);
     ops_buffer_recv_1_size = send_recv_offsets[0] + 4 * recv_size;
-  }
+ }
 
   // Pack data
   if (actual_depth_send > 0)
@@ -276,6 +281,11 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     printf("Error: trying to exchange a %d-deep halo for %s, but halo is only %d deep. Please set d_m and d_p accordingly\n",actual_depth_recv, dat->name, d_p[dim]);
     MPI_Abort(sb->comm, -1);
   }
+  if (actual_depth_send > sd->decomp_size[dim]) {
+    printf("Error: overpartitioning! Trying to exchange a %d-deep halo for %s, but dataset is only %d wide on this process.\n",actual_depth_send, dat->name, sd->decomp_size[dim]);
+    MPI_Abort(sb->comm, -1);
+  }
+
       
   // set up initial pointers
   // int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim-1];
@@ -312,7 +322,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     ops_buffer_recv_2 = (char *)ops_realloc_fast(ops_buffer_recv_2,  send_recv_offsets[3],
                                         send_recv_offsets[3] + 4 * recv_size);
     ops_buffer_recv_2_size = send_recv_offsets[3] + 4 * recv_size;
-  }
+ }
 
   // pack data
   if (actual_depth_send > 0)
@@ -354,6 +364,15 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
     printf("Error, requested %d depth halo exchange, only has %d deep halo. Please set OPS_TILING_MAXDEPTH.\n", right_recv_depth, sd->d_ip[dim]);
     MPI_Abort(sb->comm,-1);
   }
+  if (right_send_depth > sd->decomp_size[dim]) {
+    printf("Error: overpartitioning! Trying to exchange a %d-deep halo for %s, but dataset is only %d wide on this process.\n",right_send_depth, dat->name, sd->decomp_size[dim]);
+    MPI_Abort(sb->comm, -1);
+  }
+  if (left_send_depth > sd->decomp_size[dim]) {
+    printf("Error: overpartitioning! Trying to exchange a %d-deep halo for %s, but dataset is only %d wide on this process.\n",left_send_depth, dat->name, sd->decomp_size[dim]);
+    MPI_Abort(sb->comm, -1);
+  }
+
 
   int *prod = sd->prod;
 
@@ -660,7 +679,7 @@ void ops_exchange_halo_unpacker_given(ops_dat dat, int *depths, int dim,
 
 }
 
-void ops_halo_exchanges(ops_arg *args, int nargs, int *range) {
+void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
   // double c1,c2,t1,t2;
   // printf("*************** range[i] %d %d %d %d\n",range[0],range[1],range[2],
   // range[3]);
@@ -681,16 +700,28 @@ void ops_halo_exchanges(ops_arg *args, int nargs, int *range) {
         continue;
       ops_dat dat = args[i].dat;
       int dat_ndim = OPS_sub_block_list[dat->block->index]->ndim;
+
       if (dat_ndim <= dim || dat->size[dim] <= 1)
         continue; // dimension of the sub-block is less than current dim OR has
                   // a size of 1 (edge dat)
       comm = OPS_sub_block_list[dat->block->index]
                  ->comm; // use communicator for this sub-block
 
-      // check if there is an intersection of dependency range with my full
-      // range
-      // in *other* dimensions (i.e. any other dimension d2 ,but the current one
-      // dim)
+      int range[2*OPS_MAX_DIM];
+      for (int d2 = 0; d2 < dat_ndim; d2++) {
+        if (args[i].stencil->type ==1) {
+          range[2*d2+0] = range_in[2*d2+0]/args[i].stencil->mgrid_stride[d2];
+          range[2*d2+1] = (range_in[2*d2+1]-1)/args[i].stencil->mgrid_stride[d2]+1;
+        } else if (args[i].stencil->type ==2) {
+          range[2*d2+0] = range_in[2*d2+0]*args[i].stencil->mgrid_stride[d2];
+          range[2*d2+1] = range_in[2*d2+1]*args[i].stencil->mgrid_stride[d2];
+        } else {
+          range[2*d2+0] = range_in[2*d2+0];
+          range[2*d2+1] = range_in[2*d2+1];
+        }
+      }
+      //check if there is an intersection of dependency range with my full range
+      //in *other* dimensions (i.e. any other dimension d2 ,but the current one dim)
       for (int d2 = 0; d2 < dat_ndim; d2++) {
         if (dim != d2)
           other_dims =
@@ -717,9 +748,13 @@ void ops_halo_exchanges(ops_arg *args, int nargs, int *range) {
         d_pos = MAX(d_pos, args[i].stencil->stencil[dat_ndim * p + dim]);
         d_neg = MIN(d_neg, args[i].stencil->stencil[dat_ndim * p + dim]);
       }
+
+      if (args[i].stencil->type == 1) d_neg--;
+
       if (d_pos > 0 || d_neg < 0)
         ops_exchange_halo_packer(dat, d_pos, d_neg, range, dim,
                                  send_recv_offsets);
+
     }
     //  ops_timers_core(&c2,&t2);
     //  ops_gather_time += t2-t1;
@@ -763,11 +798,27 @@ void ops_halo_exchanges(ops_arg *args, int nargs, int *range) {
       int dat_ndim = OPS_sub_block_list[dat->block->index]->ndim;
       if (dat_ndim <= dim || dat->size[dim] <= 1)
         continue;
-      int d_pos = 0, d_neg = 0;
+
+      int range[2*OPS_MAX_DIM];
+      for (int d2 = 0; d2 < dat_ndim; d2++) {
+        if (args[i].stencil->type ==1) {
+          range[2*d2+0] = range_in[2*d2+0]/args[i].stencil->mgrid_stride[d2];
+          range[2*d2+1] = (range_in[2*d2+1]-1)/args[i].stencil->mgrid_stride[d2]+1;
+        } else if (args[i].stencil->type ==2) {
+          range[2*d2+0] = range_in[2*d2+0]*args[i].stencil->mgrid_stride[d2];
+          range[2*d2+1] = range_in[2*d2+1]*args[i].stencil->mgrid_stride[d2];
+        } else {
+          range[2*d2+0] = range_in[2*d2+0];
+          range[2*d2+1] = range_in[2*d2+1];
+        }
+      }
+
+      int d_pos=0,d_neg=0;
       for (int p = 0; p < args[i].stencil->points; p++) {
         d_pos = MAX(d_pos, args[i].stencil->stencil[dat_ndim * p + dim]);
         d_neg = MIN(d_neg, args[i].stencil->stencil[dat_ndim * p + dim]);
       }
+      if (args[i].stencil->type == 1) d_neg--;
       if (d_pos > 0 || d_neg < 0)
         ops_exchange_halo_unpacker(dat, d_pos, d_neg, range, dim,
                                    send_recv_offsets);
@@ -852,10 +903,11 @@ void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
   }
 }
 
+
 void ops_mpi_reduce_double(ops_arg *arg, double *data) {
   (void)data;
   // if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
-  double result[arg->dim * ops_comm_global_size];
+  double *result = (double*)malloc(arg->dim * ops_comm_global_size * sizeof(double));
 
   if (arg->acc == OPS_INC) // global reduction
     MPI_Allreduce((double *)arg->data, result, arg->dim, MPI_DOUBLE, MPI_SUM,
@@ -877,6 +929,7 @@ void ops_mpi_reduce_double(ops_arg *arg, double *data) {
     }
   }
   memcpy(arg->data, result, sizeof(double) * arg->dim);
+  free(result);
   //}
 }
 
@@ -884,7 +937,7 @@ void ops_mpi_reduce_float(ops_arg *arg, float *data) {
   (void)data;
 
   // if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
-  float result[arg->dim * ops_comm_global_size];
+  float *result = (float*)malloc(arg->dim * ops_comm_global_size * sizeof(float));
 
   if (arg->acc == OPS_INC) // global reduction
     MPI_Allreduce((float *)arg->data, result, arg->dim, MPI_FLOAT, MPI_SUM,
@@ -906,6 +959,7 @@ void ops_mpi_reduce_float(ops_arg *arg, float *data) {
     }
   }
   memcpy(arg->data, result, sizeof(float) * arg->dim);
+  free(result);
   //}
 }
 
@@ -913,7 +967,7 @@ void ops_mpi_reduce_int(ops_arg *arg, int *data) {
   (void)data;
 
   // if(arg->argtype == OPS_ARG_GBL && arg->acc != OPS_READ) {
-  int result[arg->dim * ops_comm_global_size];
+  int *result = (int*)malloc(arg->dim * ops_comm_global_size * sizeof(int));
 
   if (arg->acc == OPS_INC) // global reduction
     MPI_Allreduce((int *)arg->data, result, arg->dim, MPI_INT, MPI_SUM,
@@ -935,11 +989,12 @@ void ops_mpi_reduce_int(ops_arg *arg, int *data) {
     }
   }
   memcpy(arg->data, result, sizeof(int) * arg->dim);
+  free(result);
   //}
 }
 
 void ops_execute_reduction(ops_reduction handle) {
-  char local[handle->size];
+  char *local = (char*)malloc(handle->size*sizeof(char));
   memcpy(local, handle->data, handle->size);
   if (strcmp(handle->type, "int") == 0 || strcmp(handle->type, "int(4)") == 0 ||
       strcmp(handle->type, "integer(4)") == 0 ||
@@ -1036,6 +1091,7 @@ void ops_execute_reduction(ops_reduction handle) {
     ops_mpi_reduce_double(&arg, (double *)local);
   }
   memcpy(handle->data, local, handle->size);
+  free(local);
 }
 
 void ops_set_halo_dirtybit(ops_arg *arg) {
@@ -1289,23 +1345,47 @@ int ops_dat_get_local_npartitions(ops_dat dat) {
   return 1;
 }
 
-char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, int *stride) {
-  ops_get_data(dat);
-  ops_force_halo_exchange(dat, stencil);
+void ops_dat_get_raw_metadata(ops_dat dat, int part, int *disp, int *size, int *stride, int *d_m, int *d_p) {
+  ops_dat_get_extents(dat, part, disp, size);
   if (stride != NULL)
     for (int d = 0; d < dat->block->dims; d++)
       stride[d] = dat->size[d];
-  return dat->data + dat->base_offset;
+  if (d_m != NULL)
+    for (int d = 0; d < dat->block->dims; d++)
+      d_m[d] = dat->d_m[d];
+  if (d_p != NULL)
+    for (int d = 0; d < dat->block->dims; d++)
+      d_p[d] = dat->d_p[d];
+
+}
+
+char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_memspace *memspace) {
+  ops_force_halo_exchange(dat, stencil);
+  if (*memspace == OPS_HOST) {
+    if (dat->data_d != NULL && dat->dirty_hd == 2) ops_get_data(dat);
+  } else if (*memspace == OPS_DEVICE) {
+    if (dat->data_d != NULL && dat->dirty_hd == 1) ops_put_data(dat);
+  } else if (dat->dirty_hd == 2 && dat->data_d != NULL) *memspace = OPS_DEVICE;
+  else if (dat->dirty_hd == 1) *memspace = OPS_HOST;
+  else if (dat->data_d != NULL) *memspace = OPS_DEVICE;
+  else *memspace = OPS_HOST;
+  return (*memspace == OPS_HOST ? dat->data : dat->data_d) + dat->base_offset;
 }
 
 void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc) {
-  sub_dat_list sd = OPS_sub_dat_list[dat->index];
-  if (acc != OPS_READ)
-  dat->dirty_hd = 1; 
-  sd->dirtybit = 1;
-  for (int i = 0; i < 2 * dat->block->dims * MAX_DEPTH; i++) {
-    sd->dirty_dir_send[i] = 1;
-    sd->dirty_dir_recv[i] = 1;
+  if (acc != OPS_READ) {
+    ops_memspace memspace;
+    if (dat->dirty_hd == 2 && dat->data_d != NULL) memspace = OPS_DEVICE;
+    else if (dat->dirty_hd == 1) memspace = OPS_HOST;
+    else if (dat->data_d != NULL) memspace = OPS_DEVICE;
+    else memspace = OPS_HOST;
+    sub_dat_list sd = OPS_sub_dat_list[dat->index];
+    dat->dirty_hd = (memspace == OPS_HOST ? 1 : 2); 
+    sd->dirtybit = 1;
+    for (int i = 0; i < 2 * dat->block->dims * MAX_DEPTH; i++) {
+      sd->dirty_dir_send[i] = 1;
+      sd->dirty_dir_recv[i] = 1;
+    }
   }
 }
 
@@ -1313,8 +1393,12 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
   ops_get_data(dat);
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
   int lsize[OPS_MAX_DIM] = {1};
-  int ldisp[OPS_MAX_DIM] = {1};
+  int ldisp[OPS_MAX_DIM] = {0};
   ops_dat_get_extents(dat, part, ldisp, lsize);
+  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
+    lsize[d] = 1;
+    ldisp[d] = 0;
+  }
   lsize[0] *= dat->elem_size/dat->dim; //now in bytes
   if (dat->block->dims>3) {ops_printf("Error, ops_dat_fetch_data not implemented for dims>3\n"); exit(-1);}
   if (OPS_soa && dat->dim > 1) {ops_printf("Error, ops_dat_fetch_data not implemented for SoA\n"); exit(-1);}
@@ -1331,6 +1415,10 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
   int ldisp[OPS_MAX_DIM] = {1};
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
   ops_dat_get_extents(dat, part, ldisp, lsize);
+  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
+    lsize[d] = 1;
+    ldisp[d] = 0;
+  }
   lsize[0] *= dat->elem_size/dat->dim; //now in bytes
   if (dat->block->dims>3) {ops_printf("Error, ops_dat_set_data not implemented for dims>3\n"); exit(-1);}
   if (OPS_soa && dat->dim > 1) {ops_printf("Error, ops_dat_set_data not implemented for SoA\n"); exit(-1);}
@@ -1362,11 +1450,11 @@ int ops_dat_get_global_npartitions(ops_dat dat) {
 void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size) {
   //TODO: part?? local or global?
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
-  for (int d = 0; d < dat->block->dims; d++) {
-    disp[d] = sd->decomp_disp[d] - dat->d_m[d];
-    size[d] = sd->decomp_size[d] + dat->d_m[d] - dat->d_p[d];
-  }
-  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++)
-    size[d] = 1;
+  if (disp != NULL)
+    for (int d = 0; d < dat->block->dims; d++) 
+      disp[d] = sd->decomp_disp[d] - dat->d_m[d];
+  if (size != NULL)
+    for (int d = 0; d < dat->block->dims; d++) 
+      size[d] = sd->decomp_size[d] + dat->d_m[d] - dat->d_p[d];
 }
 

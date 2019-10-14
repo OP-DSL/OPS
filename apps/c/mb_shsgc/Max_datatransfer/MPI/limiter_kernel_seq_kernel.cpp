@@ -53,37 +53,26 @@ void ops_par_loop_limiter_kernel(char const *name, ops_block block, int dim,
 
 #ifdef OPS_MPI
   sub_block_list sb = OPS_sub_block_list[block->index];
-  if (!sb->owned)
-    return;
-  for (int n = 0; n < 1; n++) {
-    start[n] = sb->decomp_disp[n];
-    end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
-    if (start[n] >= range[2 * n]) {
-      start[n] = 0;
-    } else {
-      start[n] = range[2 * n] - start[n];
-    }
-    if (sb->id_m[n] == MPI_PROC_NULL && range[2 * n] < 0)
-      start[n] = range[2 * n];
-    if (end[n] >= range[2 * n + 1]) {
-      end[n] = range[2 * n + 1] - sb->decomp_disp[n];
-    } else {
-      end[n] = sb->decomp_size[n];
-    }
-    if (sb->id_p[n] == MPI_PROC_NULL &&
-        (range[2 * n + 1] > sb->decomp_disp[n] + sb->decomp_size[n]))
-      end[n] += (range[2 * n + 1] - sb->decomp_disp[n] - sb->decomp_size[n]);
-  }
-#else
-  for (int n = 0; n < 1; n++) {
-    start[n] = range[2 * n];
-    end[n] = range[2 * n + 1];
-  }
 #endif
 #ifdef OPS_DEBUG
   ops_register_args(args, "limiter_kernel");
 #endif
 
+  int arg_idx[1];
+  int arg_idx_base[1];
+#ifdef OPS_MPI
+  if (compute_ranges(args, 3, block, range, start, end, arg_idx) < 0)
+    return;
+#else  // OPS_MPI
+  for (int n = 0; n < 1; n++) {
+    start[n] = range[2 * n];
+    end[n] = range[2 * n + 1];
+    arg_idx[n] = start[n];
+  }
+#endif // OPS_MPI
+  for (int n = 0; n < 1; n++) {
+    arg_idx_base[n] = arg_idx[n];
+  }
   offs[0][0] = args[0].stencil->stride[0] * 1; // unit step in x dimension
 
   offs[1][0] = args[1].stencil->stride[0] * 1; // unit step in x dimension

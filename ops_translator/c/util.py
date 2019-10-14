@@ -28,6 +28,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+## @file
+## @brief
+#
+#  utility functions for code generator
+#
 """
 utility functions for code generator
 
@@ -142,13 +147,90 @@ def remove_trailing_w_space(text):
     if line_end < 0:
       return striped_test[:-1]
 
+def arg_parse_list(text, j):
+    """Parsing arguments in function to find the correct closing brace"""
+
+    depth = 0
+    loc2 = j
+    arglist = []
+    prev_start = j
+    while 1:
+        if text[loc2] == '(':
+            if depth == 0:
+                prev_start = loc2+1
+            depth = depth + 1
+
+        elif text[loc2] == ')':
+            depth = depth - 1
+            if depth == 0:
+                arglist.append(text[prev_start:loc2].strip())
+                return arglist
+
+        elif text[loc2] == ',':
+            if depth == 1:
+                arglist.append(text[prev_start:loc2].strip())
+                prev_start = loc2+1
+        elif text[loc2] == '{':
+            depth = depth + 1
+        elif text[loc2] == '}':
+            depth = depth - 1
+        loc2 = loc2 + 1
+
+def parse_replace_ACC_signature(text, arg_typ, dims, opencl=0, accs=[], typs=[]):
+  for i in range(0,len(dims)):
+    if arg_typ[i] == 'ops_arg_dat':
+      if not dims[i].isdigit() or int(dims[i])>1:
+        text = re.sub(r'ACC<([a-zA-Z0-9]*)>\s*&', r'ptrm_\1 ',text, 1)
+      else:
+        text = re.sub(r'ACC<([a-zA-Z0-9]*)>\s*&', r'ptr_\1 ',text, 1)
+    elif opencl == 1 and arg_typ[i] == 'ops_arg_gbl' and accs[i] == 1 and (not dims[i].isdigit() or int(dims[i])>1):
+        #if multidim global read, then it is passed in as a global pointer, otherwise it's local
+        args = text.split(',')
+        text = ''
+        for j in range(0,len(args)):
+            if j == i:
+              text = text + args[j].replace(typs[j],'__global '+typs[j]).replace('*', '* restrict ')+', '
+            else:    
+              text = text + args[j]+', '
+        text = text[:-2]
+
+  return text
+
+def convert_ACC_signature(text, arg_typ):
+  arg_list = arg_parse_list(text,0)
+  for i in range(0,len(arg_list)):
+      if arg_typ[i] == 'ops_arg_dat' and not ('ACC' in arg_list[i]):
+          arg_list[i] = arg_list[i].replace('int','ACC<int>')
+          arg_list[i] = arg_list[i].replace('float','ACC<float>')
+          arg_list[i] = arg_list[i].replace('double','ACC<double>')
+          arg_list[i] = arg_list[i].replace('*','&')
+  signature = ''
+  for i in range(0,len(arg_list)):
+      signature = signature + arg_list[i] + ',\n  '
+  return signature[:-4]
+
+def convert_ACC_body(text):
+  text = re.sub('\[OPS_ACC_MD[0-9]+(\([ -A-Za-z0-9,+]*\))\]', r'\1', text)
+  text = re.sub('\[OPS_ACC[0-9]+(\([ -A-Za-z0-9,+]*\))\]', r'\1', text)
+  return text
+
+def convert_ACC(text, arg_typ):
+  openb = text.find('(')
+  closeb = text[0:text.find('{')].rfind(')')+1
+  text = text[0:openb]+'('+convert_ACC_signature(text[openb:closeb], arg_typ)+')'+text[closeb:]
+  body_start = text.find('{')
+  text = text[0:body_start]+convert_ACC_body(text[body_start:])
+  return text
 
 def parse_signature(text):
   text2 = text.replace('const','')
+  text2 = text2.replace('ACC<','')
+  text2 = text2.replace('>','')
   text2 = text2.replace('int','')
   text2 = text2.replace('float','')
   text2 = text2.replace('double','')
   text2 = text2.replace('*','')
+  text2 = text2.replace('&','')
   text2 = text2.replace(')','')
   text2 = text2.replace('(','')
   text2 = text2.replace('\n','')
@@ -165,7 +247,7 @@ def find_consts(text, consts):
   for cn in range(0,len(consts)):
     pattern = consts[cn]['name'][1:-1]
     if re.search('\\b'+pattern+'\\b', text):
-      print "found " + consts[cn]['name'][1:-1]
+      print(("found " + consts[cn]['name'][1:-1]))
       found_consts.append(cn)
 
   return found_consts
@@ -181,38 +263,6 @@ def parse_signature_opencl(text2):
   text2 = text2.replace('double','__global double')
   #text2 = re.sub('double','__global double',text2)
   return text2
-
-def parse_signature_openacc(text):
-  text2 = text.replace('const','')
-  text2 = text2.replace('int','')
-  text2 = text2.replace('float','')
-  text2 = text2.replace('double','')
-  text2 = text2.replace('*','')
-  text2 = text2.replace(')','')
-  text2 = text2.replace('(','')
-  text2 = text2.replace('\n','')
-  text2 = re.sub('\[[0-9]*\]','',text2)
-  arg_list = []
-  args = text2.split(',')
-  for n in range(0,len(args)):
-    arg_list.append(args[n].strip())
-  return arg_list
-
-def parse_signature_cuda(text):
-  text2 = text.replace('const','')
-  text2 = text2.replace('int','')
-  text2 = text2.replace('float','')
-  text2 = text2.replace('double','')
-  text2 = text2.replace('*','')
-  text2 = text2.replace(')','')
-  text2 = text2.replace('(','')
-  text2 = text2.replace('\n','')
-  text2 = re.sub('\[[0-9]*\]','',text2)
-  arg_list = []
-  args = text2.split(',')
-  for n in range(0,len(args)):
-    arg_list.append(args[n].strip())
-  return arg_list
 
 def complex_numbers_cuda(text):
     """ Handle complex numbers, and translate to the relevant CUDA function in cuComplex.h """
@@ -315,40 +365,40 @@ def check_accs(name, arg_list, arg_typ, text):
         match0 = re.search('OPS_ACC_MD\d',text[pos:])
         match1 = re.search('OPS_ACC\d',text[pos:])
 
-        if match0 <> None :
-          if match1 <> None:
+        if match0 != None :
+          if match1 != None:
             if match0.start(0) > match1.start(0):
               match = re.search('OPS_ACC\d',text[pos:])
               pos = pos + match.start(0)
               pos2 = text[pos+7:].find('(')
               num = int(text[pos+7:pos+7+pos2])
-              if num <> n:
-                print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)
+              if num != n:
+                print(('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)))
               pos = pos+7+pos2
             elif match0.start(0) < match1.start(0):
               match = re.search('OPS_ACC_MD\d',text[pos:])
               pos = pos + match.start(0)
               pos2 = text[pos+10:].find('(')
               num = int(text[pos+10:pos+10+pos2])
-              if num <> n:
-                print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)
+              if num != n:
+                print(('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)))
               pos = pos+10+pos2
           else:
             match = re.search('OPS_ACC_MD\d',text[pos:])
             pos = pos + match.start(0)
             pos2 = text[pos+10:].find('(')
             num = int(text[pos+10:pos+10+pos2])
-            if num <> n:
-              print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)
+            if num != n:
+              print(('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)))
             pos = pos+10+pos2
         else:
-          if match1 <> None:
+          if match1 != None:
             match = re.search('OPS_ACC\d',text[pos:])
             pos = pos + match.start(0)
             pos2 = text[pos+7:].find('(')
             num = int(text[pos+7:pos+7+pos2])
-            if num <> n:
-              print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)
+            if num != n:
+              print(('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)))
             pos = pos+7+pos2
           else:
             break
@@ -371,3 +421,23 @@ def check_accs(name, arg_list, arg_typ, text):
         #    if num <> n:
         #      print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)
         #    pos = pos+10+pos2
+
+def replace_ACC_kernel_body(kernel_text, arg_list, arg_typ, nargs, opencl=0, dims=[]):
+    # replace all data args with macros
+    for n in range(0,nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        pattern = re.compile(r'\b'+arg_list[n]+r'\b')
+        match = pattern.search(kernel_text,0)
+        while match:
+          closeb = para_parse(kernel_text,match.start(),'(',')')+1
+          openb = kernel_text.find('(',match.start())
+          if opencl == 1:
+            if not dims[n].isdigit() or int(dims[n])>1:
+              acc = 'OPS_ACCM('+arg_list[n]+', '+kernel_text[openb+1:closeb-1]+')'
+            else:
+              acc = 'OPS_ACCS('+arg_list[n]+', '+kernel_text[openb+1:closeb-1]+')'
+          else:
+            acc = 'OPS_ACC('+arg_list[n]+', '+kernel_text[openb+1:closeb-1]+')'
+          kernel_text = kernel_text[0:match.start()] + acc + kernel_text[closeb:]
+          match = pattern.search(kernel_text,match.start()+10)
+    return kernel_text

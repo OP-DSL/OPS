@@ -14,6 +14,15 @@ F_INC_MOD = $(F_OPS_MOD)/$(OPS_COMPILER)
 
 OPS_MPI	= -DOPS_MPI
 
+
+OUT := -o 
+AR := ar -r 
+OPS_LIB_SEQ=-lops_seq
+OPS_LIB_CUDA=-lops_cuda
+OPS_LIB_MPI=-lops_mpi
+OPS_LIB_MPI_CUDA=-lops_mpi_cuda
+CUDART=-lcudart
+
 ifeq ($(OPS_COMPILER),clang)
 	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.clang
 else
@@ -22,6 +31,9 @@ ifeq ($(OPS_COMPILER),gnu)
 else
 ifeq ($(OPS_COMPILER),intel)
 	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.intel
+else
+ifeq ($(OPS_COMPILER),intel_win)
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.intel_win
 else
 ifeq ($(OPS_COMPILER),mic)
 	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mic
@@ -40,6 +52,7 @@ ifeq ($(OPS_COMPILER),xlp8)
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 endif

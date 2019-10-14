@@ -24,6 +24,7 @@ INTEGER(KIND=4) xdim6
 
 contains
 
+!$ACC ROUTINE(save_kernel) SEQ
 !user function
 subroutine save_kernel(rho_old, rhou_old, rhoE_old, rho_new, rhou_new, rhoE_new)
 
@@ -77,8 +78,9 @@ subroutine save_kernel_wrap( &
   integer(4) end(1)
   integer n_x
 
-  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local,opsDat4Local,opsDat5Local,opsDat6Local)
-  !$acc loop
+
+  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local,opsDat4Local,opsDat5Local,opsDat6Local)  
+  !$acc loop 
   DO n_x = 1, end(1)-start(1)+1
     call save_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*1), &
@@ -89,6 +91,7 @@ subroutine save_kernel_wrap( &
     & opsDat6Local(dat6_base+(n_x-1)*1) )
   END DO
   !$acc end parallel
+
 end subroutine
 
 !host subroutine

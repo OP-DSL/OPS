@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops cuda specific runtime support functions
+/** @file
+  * @brief OPS cuda specific runtime support functions
   * @author Gihan Mudalige
   * @details Implements cuda backend runtime support functions
   */
@@ -43,6 +44,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <sys/mman.h>
 
 #include <cuda.h>
 #include <cuda_runtime_api.h>
@@ -63,6 +66,7 @@ char *OPS_consts_h, *OPS_consts_d, *OPS_reduct_h, *OPS_reduct_d;
 int OPS_gbl_changed = 1;
 char *OPS_gbl_prev = NULL;
 
+int ops_device_initialised_externally = 0;
 //
 // CUDA utility functions
 //
@@ -76,7 +80,7 @@ void __cudaSafeCall(cudaError_t err, const char *file, const int line) {
   }
 }
 
-void cutilDeviceInit(int argc, char **argv) {
+void cutilDeviceInit(const int argc, const char **argv) {
   (void)argc;
   (void)argv;
   int deviceCount;
@@ -140,8 +144,36 @@ void cutilDeviceInit(int argc, char **argv) {
 
 void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
   // if (!OPS_hybrid_gpu) return;
-  cutilSafeCall(cudaMalloc(data_d, size));
-  cutilSafeCall(cudaMemcpy(*data_d, *data_h, size, cudaMemcpyHostToDevice));
+
+
+  if ( *data_d == NULL )
+      cutilSafeCall(cudaMalloc(data_d, size));
+
+  if (data_h == NULL || *data_h == NULL) {
+    cutilSafeCall(cudaMalloc(data_d, size));
+    cutilSafeCall(cudaMemset(*data_d, 0, size));
+    cutilSafeCall(cudaDeviceSynchronize());
+    return;
+  }
+
+  static void* stage = NULL;
+  static size_t stage_size = 0;
+
+  void *src = NULL;
+  if ( size < 4*1024*1024 ) {
+      if ( size > stage_size ) {
+          if ( stage ) cudaFreeHost(stage);
+          stage_size = size;
+          cutilSafeCall(cudaMallocHost(&stage, stage_size));
+      }
+
+      memcpy(stage, *data_h, size);
+      src = stage;
+  } else {
+      src = *data_h;
+  }
+
+  cutilSafeCall(cudaMemcpy(*data_d, src, size, cudaMemcpyHostToDevice));
   cutilSafeCall(cudaDeviceSynchronize());
 }
 
@@ -195,6 +227,12 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs) {
   }
 }
 
+
+//set dirty bit for single ops_arg dat
+void ops_set_dirtybit_device_dat(ops_dat dat) {
+  dat->dirty_hd = 2;
+}
+
 //
 // routine to fetch data from GPU to CPU (with transposing SoA to AoS if needed)
 //
@@ -213,6 +251,24 @@ void ops_cuda_get_data(ops_dat dat) {
 }
 
 //
+// routine to upload data from CPU to GPU (with transposing SoA to AoS if needed)
+//
+
+void ops_cuda_put_data(ops_dat dat) {
+  if (dat->dirty_hd == 1)
+    dat->dirty_hd = 0;
+  else
+    return;
+  int bytes = dat->elem_size;
+  for (int i = 0; i < dat->block->dims; i++)
+    bytes = bytes * dat->size[i];
+  cutilSafeCall(
+      cudaMemcpy(dat->data_d, dat->data, bytes, cudaMemcpyHostToDevice));
+  cutilSafeCall(cudaDeviceSynchronize());
+}
+
+
+//
 // routines to resize constant/reduct arrays, if necessary
 //
 
@@ -226,7 +282,7 @@ void reallocConstArrays(int consts_bytes) {
     OPS_consts_bytes = 4 * consts_bytes; // 4 is arbitrary, more than needed
     cudaMallocHost((void **)&OPS_gbl_prev, OPS_consts_bytes);
     memset(OPS_gbl_prev, 0 , OPS_consts_bytes);
-    OPS_consts_h = (char *)malloc(OPS_consts_bytes);
+    OPS_consts_h = (char *)ops_malloc(OPS_consts_bytes);
     memset(OPS_consts_h, 0 , OPS_consts_bytes);
     cutilSafeCall(cudaMalloc((void **)&OPS_consts_d, OPS_consts_bytes));
   }
@@ -239,7 +295,7 @@ void reallocReductArrays(int reduct_bytes) {
       cutilSafeCall(cudaFree(OPS_reduct_d));
     }
     OPS_reduct_bytes = 4 * reduct_bytes; // 4 is arbitrary, more than needed
-    OPS_reduct_h = (char *)malloc(OPS_reduct_bytes);
+    OPS_reduct_h = (char *)ops_malloc(OPS_reduct_bytes);
     cutilSafeCall(cudaMalloc((void **)&OPS_reduct_d, OPS_reduct_bytes));
   }
 }
@@ -284,6 +340,14 @@ void ops_cuda_exit() {
   TAILQ_FOREACH(item, &OPS_dat_list, entries) {
     cutilSafeCall(cudaFree((item->dat)->data_d));
   }
-
-//  cudaDeviceReset();
+  if (OPS_consts_bytes > 0) {
+    free(OPS_consts_h);
+    cudaFreeHost(OPS_gbl_prev);
+    cutilSafeCall(cudaFree(OPS_consts_d));
+  }
+  if (OPS_reduct_bytes > 0) {
+    free(OPS_reduct_h);
+    cutilSafeCall(cudaFree(OPS_reduct_d));
+  }
+  if (!ops_device_initialised_externally) cudaDeviceReset();
 }

@@ -7,19 +7,23 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_fp64:enable
 
-#include "ops_opencl_reduction.h"
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
+#include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a, b) ((a < b) ? (a) : (b))
+#define MIN(a,b) ((a<b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a, b) ((a > b) ? (a) : (b))
+#define MAX(a,b) ((a>b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
+#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -41,50 +45,53 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
+//user function
 
-#define OPS_ACC0(x, y) (x + xdim0_calc_dt_kernel_get * (y))
-#define OPS_ACC1(x, y) (x + xdim1_calc_dt_kernel_get * (y))
-
-// user function
-void calc_dt_kernel_get(const __global double *restrict cellx,
-                        const __global double *restrict celly,
-                        double *restrict xl_pos, double *restrict yl_pos)
-
-{
-  *xl_pos = cellx[OPS_ACC0(0, 0)];
-  *yl_pos = celly[OPS_ACC1(0, 0)];
+void calc_dt_kernel_get(const ptr_double cellx,
+  const ptr_double celly,
+  double* xl_pos,
+  double* yl_pos) {
+  *xl_pos = OPS_ACCS(cellx, 0,0);
+  *yl_pos = OPS_ACCS(celly, 0,0);
 }
 
+
 __kernel void ops_calc_dt_kernel_get(
-    __global const double *restrict arg0, __global const double *restrict arg1,
-    __global double *restrict arg2, __local double *scratch2, int r_bytes2,
-    __global double *restrict arg3, __local double *scratch3, int r_bytes3,
-    const int base0, const int base1, const int size0, const int size1) {
+__global const double* restrict arg0,
+__global const double* restrict arg1,
+__global double* restrict arg2,
+__local double* scratch2,
+int r_bytes2,
+__global double* restrict arg3,
+__local double* scratch3,
+int r_bytes3,
+const int base0,
+const int base1,
+const int size0,
+const int size1 ){
 
   arg2 += r_bytes2;
   double arg2_l[1];
   arg3 += r_bytes3;
   double arg3_l[1];
-  for (int d = 0; d < 1; d++)
-    arg2_l[d] = ZERO_double;
-  for (int d = 0; d < 1; d++)
-    arg3_l[d] = ZERO_double;
+  for (int d=0; d<1; d++) arg2_l[d] = ZERO_double;
+  for (int d=0; d<1; d++) arg3_l[d] = ZERO_double;
 
   int idx_y = get_global_id(1);
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    calc_dt_kernel_get(
-        &arg0[base0 + idx_x * 1 * 1 + idx_y * 0 * 1 * xdim0_calc_dt_kernel_get],
-        &arg1[base1 + idx_x * 0 * 1 + idx_y * 1 * 1 * xdim1_calc_dt_kernel_get],
-        arg2_l, arg3_l);
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 0*1 * xdim0_calc_dt_kernel_get], xdim0_calc_dt_kernel_get};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 0*1 + idx_y * 1*1 * xdim1_calc_dt_kernel_get], xdim1_calc_dt_kernel_get};
+    calc_dt_kernel_get(ptr0,
+                   ptr1,
+                   arg2_l,
+                   arg3_l);
   }
-  int group_index = get_group_id(0) + get_group_id(1) * get_num_groups(0) +
-                    get_group_id(2) * get_num_groups(0) * get_num_groups(1);
-  for (int d = 0; d < 1; d++)
-    reduce_double(arg2_l[d], scratch2, &arg2[group_index * 1 + d], OPS_INC);
-  for (int d = 0; d < 1; d++)
-    reduce_double(arg3_l[d], scratch3, &arg3[group_index * 1 + d], OPS_INC);
+  int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);
+  for (int d=0; d<1; d++)
+    reduce_double(arg2_l[d], scratch2, &arg2[group_index*1+d], OPS_INC);
+  for (int d=0; d<1; d++)
+    reduce_double(arg3_l[d], scratch3, &arg3[group_index*1+d], OPS_INC);
+
 }

@@ -9,6 +9,9 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_2D
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,21 +43,12 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y) (x+xdim0_right_bndcon*(y))
-
-
 //user function
-void right_bndcon(__global double * restrict A,const  int * restrict idx,
-  const int jmax,
-const double pi)
 
- {
-  A[OPS_ACC0(0,0)] = sin(pi * (idx[1]+1) / (jmax+1))*exp(-pi);
+void right_bndcon(ptr_double A, const int *idx, const int jmax, const double pi)
+{
+  OPS_ACCS(A, 0,0) = sin(pi * (idx[1]+1) / (jmax+1))*exp(-pi);
 }
-
 
 
 __kernel void ops_right_bndcon(
@@ -74,7 +68,8 @@ const int size1 ){
   arg_idx[0] = arg_idx0+idx_x;
   arg_idx[1] = arg_idx1+idx_y;
   if (idx_x < size0 && idx_y < size1) {
-    right_bndcon(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_right_bndcon],
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_right_bndcon], xdim0_right_bndcon};
+    right_bndcon(ptr0,
                       arg_idx,
                       jmax,
                       pi);

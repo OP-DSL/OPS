@@ -9,13 +9,16 @@ USE OPS_CONSTANTS
 USE ISO_C_BINDING
 
 INTEGER(KIND=4) xdim1
+INTEGER(KIND=4) ydim1
 #define OPS_ACC1(x,y) (x+xdim1*(y)+1)
 INTEGER(KIND=4) xdim2
+INTEGER(KIND=4) ydim2
 #define OPS_ACC2(x,y) (x+xdim2*(y)+1)
 
 
 contains
 
+!$ACC ROUTINE(poisson_error_kernel) SEQ
 !user function
 subroutine poisson_error_kernel(u, ref, err)
 
@@ -53,8 +56,9 @@ subroutine poisson_error_kernel_wrap( &
   integer(4) end(2)
   integer n_x, n_y
 
-  !$acc parallel deviceptr(opsDat1Local,opsDat2Local) reduction(+:opsDat3Local)
-  !$acc loop reduction(+:opsDat3Local)
+
+  !$acc parallel deviceptr(opsDat1Local,opsDat2Local)   reduction(+:opsDat3Local)
+  !$acc loop  reduction(+:opsDat3Local)
   DO n_y = 1, end(2)-start(2)+1
     !$acc loop
     DO n_x = 1, end(1)-start(1)+1
@@ -65,6 +69,7 @@ subroutine poisson_error_kernel_wrap( &
     END DO
   END DO
   !$acc end parallel
+
 end subroutine
 
 !host subroutine

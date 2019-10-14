@@ -98,8 +98,8 @@ void field_summary()
       }
       else
       {
-        ops_printf(" This test is considered NOT PASSED\n");
-        ops_fprintf(g_out," This test is considered NOT PASSED\n");
+        ops_printf(" This test is considered FAILED\n");
+        ops_fprintf(g_out," This test is considered FAILED\n");
       }
     }
   }

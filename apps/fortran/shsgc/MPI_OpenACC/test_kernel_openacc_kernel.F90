@@ -14,6 +14,7 @@ INTEGER(KIND=4) xdim1
 
 contains
 
+!$ACC ROUTINE(test_kernel) SEQ
 !user function
 subroutine test_kernel(rho_new, rms)
 
@@ -44,14 +45,16 @@ subroutine test_kernel_wrap( &
   integer(4) end(1)
   integer n_x
 
-  !$acc parallel deviceptr(opsDat1Local) reduction(+:opsDat2Local)
-  !$acc loop reduction(+:opsDat2Local)
+
+  !$acc parallel deviceptr(opsDat1Local)   reduction(+:opsDat2Local)
+  !$acc loop  reduction(+:opsDat2Local)
   DO n_x = 1, end(1)-start(1)+1
     call test_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*1), &
     & opsDat2Local )
   END DO
   !$acc end parallel
+
 end subroutine
 
 !host subroutine

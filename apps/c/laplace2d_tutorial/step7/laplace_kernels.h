@@ -1,21 +1,23 @@
-void set_zero(double *A) {
-  A[OPS_ACC0(0,0)] = 0.0;
+//Kernels for Laplace demo app
+//
+void set_zero(ACC<double> &A) {
+  A(0,0) = 0.0;
 }
 
-void copy(double *A, const double *Anew) {
-  A[OPS_ACC0(0,0)] = Anew[OPS_ACC1(0,0)];
+void copy(ACC<double> &A, const ACC<double> &Anew) {
+  A(0,0) = Anew(0,0);
 }
 
-void left_bndcon(double *A, const int *idx) {
-  A[OPS_ACC0(0,0)] = sin(pi * (idx[1]+1) / (jmax+1));
+void left_bndcon(ACC<double> &A, const int *idx) {
+  A(0,0) = sin(pi * (idx[1]+1) / (jmax+1));
 }
 
-void right_bndcon(double *A, const int *idx) {
-  A[OPS_ACC0(0,0)] = sin(pi * (idx[1]+1) / (jmax+1))*exp(-pi);
+void right_bndcon(ACC<double> &A, const int *idx) {
+  A(0,0) = sin(pi * (idx[1]+1) / (jmax+1))*exp(-pi);
 }
 
-void apply_stencil(const double *A, double *Anew, double *error) {
-  Anew[OPS_ACC1(0,0)] = 0.25f * ( A[OPS_ACC0(1,0)] + A[OPS_ACC0(-1,0)]
-      + A[OPS_ACC0(0,-1)] + A[OPS_ACC0(0,1)]);
-  *error = fmax( *error, fabs(Anew[OPS_ACC1(0,0)]-A[OPS_ACC0(0,0)]));
+void apply_stencil(const ACC<double> &A, ACC<double> &Anew, double *error) {
+  Anew(0,0) = 0.25f * ( A(1,0) + A(-1,0)
+      + A(0,-1) + A(0,1));
+  *error = fmax( *error, fabs(Anew(0,0)-A(0,0)));
 }

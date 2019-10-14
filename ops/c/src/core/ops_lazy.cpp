@@ -30,13 +30,13 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief OPS core library functions
+/** @file
+  * @brief OPS core library functions
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implementations of the core library functions utilized by all OPS
  * backends
   */
 #include <stdlib.h>
-#include <sys/time.h>
 #include "ops_lib_core.h"
 #include "ops_hdf5.h"
 
@@ -58,10 +58,12 @@ using namespace std;
 #define LOOPARG ops_kernel_list[loop]->args[arg]
 #define LOOPRANGE ops_kernel_list[loop]->range
 
+extern "C" {
 extern int ops_enable_tiling;
 extern int ops_cache_size;
 
 double ops_tiled_halo_exchange_time = 0.0;
+}
 
 /////////////////////////////////////////////////////////////////////////
 // Data structures
@@ -140,11 +142,11 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     ops_kernel_list.push_back(desc);
   else {
     //Prepare the local execution ranges
-    int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM];
-    if (!ops_get_abs_owned_range(desc->block, desc->range, start, end, disp)) return;
+    int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM], arg_idx[OPS_MAX_DIM];
+    if (compute_ranges(desc->args, desc->nargs,desc->block, desc->range, start, end, arg_idx) < 0) return;
     for (int d = 0; d < desc->block->dims; d++){
-      desc->range[2*d+0] = start[d] - disp[d];
-      desc->range[2*d+1] = end[d] - disp[d];
+      desc->range[2*d+0] = start[d];
+      desc->range[2*d+1] = end[d];
     }
     //If not tiling, I have to do the halo exchanges here
     double t1,t2,c;
@@ -171,6 +173,12 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     }
     if (OPS_diags > 1)
       OPS_kernels[desc->index].mpi_time += t2-t1;
+
+    for (int i = 0; i < desc->nargs; i++)
+      if (desc->args[i].argtype == OPS_ARG_GBL && desc->args[i].acc == OPS_READ)
+        free(desc->args[i].data);
+    free(desc->args);
+    free(desc);
   }
 //ops_execute();
 }
@@ -773,7 +781,7 @@ int ops_construct_tile_plan() {
 
   ops_timers_core(&c2, &t2);
   if (OPS_diags > 2)
-    printf("Created tiling plan for %d loops in %g seconds, with tile size: %dx%dx%d\n", ops_kernel_list.size(), t2 - t1, tile_sizes[0], tile_sizes[1], tile_sizes[2]);
+    printf("Created tiling plan for %zu loops in %g seconds, with tile size: %dx%dx%d\n", ops_kernel_list.size(), t2 - t1, tile_sizes[0], tile_sizes[1], tile_sizes[2]);
 
   // return index to newly created tiling plan
   return tiling_plans.size() - 1;
@@ -868,8 +876,12 @@ void ops_execute() {
   }
 
   for (int i = 0; i < ops_kernel_list.size(); i++) {
-    // free(ops_kernel_list[i]->args);
-    // free(ops_kernel_list[i]);
+    for (int j = 0; j < ops_kernel_list[i]->nargs; j++)
+      if (ops_kernel_list[i]->args[j].argtype == OPS_ARG_GBL && 
+          ops_kernel_list[i]->args[j].acc == OPS_READ)
+        free(ops_kernel_list[i]->args[j].data);
+    free(ops_kernel_list[i]->args);
+    free(ops_kernel_list[i]);
   }
   ops_kernel_list.clear();
 }

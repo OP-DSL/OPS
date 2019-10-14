@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops mpi partitioning
+/** @file
+  * @brief OPS mpi partitioning
   * @author Gihan Mudalige, adopted from Parallel OCCF routines by Mike Giles
   * @details Implements the single block structured mesh partitioning
   * for distributed memort (MPI) parallelization
@@ -86,11 +87,14 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
   // partitioning strategy 1. many blocks, few MPI processes, no splitting, just
   // spread around
   if (ops_comm_global_size <= OPS_block_index) {
-    *processes = (int *)malloc(OPS_block_index * sizeof(int));
-    *proc_offsets = (int *)malloc((1 + OPS_block_index) * sizeof(int));
-    *proc_disps = (int *)malloc(OPS_MAX_DIM * OPS_block_index * sizeof(int));
-    *proc_sizes = (int *)malloc(OPS_MAX_DIM * OPS_block_index * sizeof(int));
-    *proc_dimsplit = (int *)malloc(OPS_MAX_DIM * OPS_block_index * sizeof(int));
+    *processes = (int *)ops_malloc(OPS_block_index * sizeof(int));
+    *proc_offsets = (int *)ops_malloc((1 + OPS_block_index) * sizeof(int));
+    *proc_disps =
+        (int *)ops_malloc(OPS_MAX_DIM * OPS_block_index * sizeof(int));
+    *proc_sizes =
+        (int *)ops_malloc(OPS_MAX_DIM * OPS_block_index * sizeof(int));
+    *proc_dimsplit =
+        (int *)ops_malloc(OPS_MAX_DIM * OPS_block_index * sizeof(int));
 
     for (int i = 0; i < OPS_block_index; i++) {
       (*processes)[i] = i % ops_comm_global_size;
@@ -119,13 +123,14 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
     int nproc_each_block =
         ops_comm_global_size / OPS_block_index; // leftovers will be idle!
     *processes =
-        (int *)malloc(nproc_each_block * OPS_block_index * sizeof(int));
-    *proc_offsets = (int *)malloc((1 + OPS_block_index) * sizeof(int));
-    *proc_disps = (int *)malloc(OPS_MAX_DIM * nproc_each_block *
-                                OPS_block_index * sizeof(int));
-    *proc_sizes = (int *)malloc(OPS_MAX_DIM * nproc_each_block *
-                                OPS_block_index * sizeof(int));
-    *proc_dimsplit = (int *)malloc(OPS_MAX_DIM * OPS_block_index * sizeof(int));
+        (int *)ops_malloc(nproc_each_block * OPS_block_index * sizeof(int));
+    *proc_offsets = (int *)ops_malloc((1 + OPS_block_index) * sizeof(int));
+    *proc_disps = (int *)ops_malloc(OPS_MAX_DIM * nproc_each_block *
+                                    OPS_block_index * sizeof(int));
+    *proc_sizes = (int *)ops_malloc(OPS_MAX_DIM * nproc_each_block *
+                                    OPS_block_index * sizeof(int));
+    *proc_dimsplit =
+        (int *)ops_malloc(OPS_MAX_DIM * OPS_block_index * sizeof(int));
 
     for (int i = 0; i < OPS_block_index; i++) {
       ops_block block = OPS_block_list[i].block;
@@ -197,10 +202,14 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps,
   // g_sizes - global dimension sizes, i.e. size in each dimension of the global
   // mesh
 
-  sub_block *sb = (sub_block *)xmalloc(sizeof(sub_block));
+  sub_block *sb = (sub_block *)ops_malloc(sizeof(sub_block));
   sb->block = block;
   sb->ndim = g_ndim;
   sb->owned = 0;
+  sb->comm = MPI_COMM_NULL;
+  sb->comm1 = MPI_COMM_NULL;
+  sb->grp = MPI_GROUP_NULL;
+
   int my_local_rank = -1;
   for (int i = 0; i < num_proc; i++) {
     if (processes[i] == ops_my_global_rank) {
@@ -213,7 +222,7 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps,
 
   int ndim = g_ndim;
   int *pdims = proc_dimsplit;
-  int *periodic = (int *)xmalloc(ndim * sizeof(int));
+  int *periodic = (int *)ops_malloc(ndim * sizeof(int));
   for (int n = 0; n < ndim; n++) {
     periodic[n] = 0; // false .. for now
   }
@@ -223,6 +232,11 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps,
   MPI_Comm_create(OPS_MPI_GLOBAL, sb->grp, &(sb->comm1));
   if (sb->owned)
     MPI_Cart_create(sb->comm1, ndim, pdims, periodic, 0, &(sb->comm));
+
+  // Store number of procs in each dimension for latter use
+  sb->pdims = (int *)ops_malloc(ndim * sizeof(int));
+  for (int n = 0; n < ndim; n++)
+    sb->pdims[n] = pdims[n];
 
   /** ---- get IDs of neighbours ---- **/
 
@@ -284,10 +298,11 @@ void ops_decomp_dats(sub_block *sb) {
     sub_dat *sd = OPS_sub_dat_list[dat->index];
 
     // aggregate size and prod array
-    int *prod_t = (int *)xmalloc((sb->ndim + 1) * sizeof(int));
+    int *prod_t = (int *)ops_malloc((sb->ndim + 1) * sizeof(int));
     int *prod = &prod_t[1];
     prod[-1] = 1;
     sd->prod = prod;
+    sd->halos = NULL;
 
     for (int d = 0; d < block->dims; d++) {
       // first store away the details of the dat (i.e global dat details)
@@ -318,9 +333,10 @@ void ops_decomp_dats(sub_block *sb) {
       int zerobase_gbl_size =
           dat->size[d] + dat->d_m[d] - dat->d_p[d] + dat->base[d];
 
-      sd->decomp_disp[d] = sb->decomp_disp[d];
-      sd->decomp_size[d] = MAX(
-          0, MIN(sb->decomp_size[d], zerobase_gbl_size - sb->decomp_disp[d]));
+      sd->decomp_disp[d] = sb->decomp_disp[d]/dat->stride[d] + (sb->decomp_disp[d]%dat->stride[d] == 0 ? 0:1);
+      int next_block = (sb->decomp_disp[d]+sb->decomp_size[d]);
+      sd->decomp_size[d] = MAX(0,MIN(next_block/dat->stride[d] + (next_block%dat->stride[d] == 0 ? 0:1) - sd->decomp_disp[d],
+                                      zerobase_gbl_size - sd->decomp_disp[d]));
       if (sb->id_m[d] != MPI_PROC_NULL) {
         // if not negative end, then there is no block-level left padding, but
         // intra-block halo padding
@@ -345,17 +361,29 @@ void ops_decomp_dats(sub_block *sb) {
         // TODO: compute this properly, or lazy or something
         sd->d_ip[d] = dat->d_p[d]; // intra-block (MPI) halos are set to be
                                    // equal to block halos
- 
+
         if (ops_enable_tiling && ops_tiling_mpidepth>0)
 					sd->d_ip[d] = ops_tiling_mpidepth;
 
         dat->d_p[d] = 0;
+
+        /*if (d == 0) { // Compute x-dim padding for vecotrization
+          int temp_size = sd->decomp_size[0] - sd->d_im[0] + sd->d_ip[0];
+          int x_pad = (1+((temp_size-1)/32))*32 - temp_size;
+          sd->d_ip[0] = x_pad;
+        }*/
+
       } else {
         sd->decomp_size[d] += dat->d_p[d]; // if last in this dimension, extend
                                            // with left block halo size
         sd->d_ip[d] = 0;                   // no intra-block halo
-      }
 
+        /*if (d == 0) { // Compute x-dim padding for vecotrization
+          int x_pad = (1+((sd->decomp_size[0]-1)/32))*32 - sd->decomp_size[0] ;
+          sd->decomp_size[0] += x_pad;
+          dat->d_p[0] += x_pad;
+        }*/
+      }
       dat->size[d] = sd->decomp_size[d] - sd->d_im[d] + sd->d_ip[d];
       prod[d] = prod[d - 1] * dat->size[d];
     }
@@ -366,26 +394,27 @@ void ops_decomp_dats(sub_block *sb) {
     }
 
     // Allocate datasets
-    if (dat->data == NULL)
+    if (dat->data == NULL){
       if (dat->is_hdf5 == 0) {
-        dat->data = (char *)calloc(prod[sb->ndim - 1] * dat->elem_size, 1);
+        dat->data = (char *)ops_calloc(prod[sb->ndim-1]*dat->elem_size,1);
+        //dat->data = (char *)ops_malloc(prod[sb->ndim - 1] * dat->elem_size * 1);
         dat->hdf5_file = "none";
         dat->mem =
             prod[sb->ndim - 1] * dat->elem_size; // this includes the halo sizes
       } else {
-        dat->data = (char *)calloc(prod[sb->ndim - 1] * dat->elem_size, 1);
+        dat->data = (char *)ops_calloc(prod[sb->ndim - 1] * dat->elem_size, 1);
         dat->mem =
             prod[sb->ndim - 1] * dat->elem_size; // this includes the halo sizes
-	if (ops_read_dat_hdf5_dynamic == NULL) {
+	      if (ops_read_dat_hdf5_dynamic == NULL) {
           printf("Error: using ops_decl_dat_hdf5, but lib_ops_hdf5_mpi.so was not linked\n");
           exit(-1);
-	}
+        }
         ops_read_dat_hdf5_dynamic(dat);
       }
-    else {
-      dat->user_managed = 1;
-      dat->is_hdf5 = 0;
-      dat->hdf5_file = "none";
+    } else {
+        dat->user_managed = 1;
+        dat->is_hdf5 = 0;
+        dat->hdf5_file = "none";
     }
 
     // Compute offset in bytes to the base index
@@ -406,14 +435,14 @@ void ops_decomp_dats(sub_block *sb) {
 
     /// MPI data types are no longer used as the manual data types were found to
     /// be more optimal
-    // sd->mpidat = (MPI_Datatype *) xmalloc(sizeof(MPI_Datatype)*sb->ndim *
+    // sd->mpidat = (MPI_Datatype *) ops_malloc(sizeof(MPI_Datatype)*sb->ndim *
     // MAX_DEPTH);
     // MPI_Datatype new_type_p; //create generic type for MPI comms
     // MPI_Type_contiguous(dat->elem_size, MPI_CHAR, &new_type_p);
     // MPI_Type_commit(&new_type_p);
 
     sd->halos =
-        (ops_int_halo *)xmalloc(MAX_DEPTH * sb->ndim * sizeof(ops_int_halo));
+        (ops_int_halo *)ops_malloc(MAX_DEPTH * sb->ndim * sizeof(ops_int_halo));
 
     for (int n = 0; n < sb->ndim; n++) {
       for (int d = 0; d < MAX_DEPTH; d++) {
@@ -441,8 +470,21 @@ void ops_decomp_dats(sub_block *sb) {
   }
 }
 
+void ops_calc_disp_size_for_dat_and_proc(ops_dat dat, int d, int proc, int *proc_disp, int *proc_size, int *proc_disps, int *proc_sizes) {
+  sub_dat *sd = OPS_sub_dat_list[dat->index];
+  int zerobase_gbl_size =
+    sd->gbl_size[d] + sd->gbl_d_m[d] - sd->gbl_d_p[d] + sd->gbl_base[d];
+
+  *proc_disp = proc_disps[proc * OPS_MAX_DIM + d]/dat->stride[d] + (proc_disps[proc * OPS_MAX_DIM + d]%dat->stride[d] == 0 ? 0:1);
+  int next_block = proc_disps[proc * OPS_MAX_DIM + d] + proc_sizes[proc * OPS_MAX_DIM + d];
+  next_block = next_block/dat->stride[d] + (next_block%dat->stride[d] == 0 ? 0:1);
+  *proc_size = MAX(0,MIN(next_block - *proc_disp, zerobase_gbl_size - *proc_disp));
+}
+
 void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
                          int *proc_sizes, int *proc_dimsplit) {
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   for (int i = 0; i < OPS_halo_index; i++) {
     ops_halo halo = OPS_halo_list[i];
     OPS_mpi_halo_list[i].halo = halo;
@@ -501,13 +543,14 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
         // processes that hold parts of the destination dataset
         int max_dest = proc_offsets[halo->to->block->index + 1] -
                        proc_offsets[halo->to->block->index];
-        OPS_mpi_halo_list[i].proclist = (int *)malloc(max_dest * sizeof(int));
+        OPS_mpi_halo_list[i].proclist =
+            (int *)ops_malloc(max_dest * sizeof(int));
         OPS_mpi_halo_list[i].local_from_base =
-            (int *)calloc(OPS_MAX_DIM * max_dest, sizeof(int));
+            (int *)ops_calloc(OPS_MAX_DIM * max_dest, sizeof(int));
         OPS_mpi_halo_list[i].local_to_base =
-            (int *)calloc(OPS_MAX_DIM * max_dest, sizeof(int));
+            (int *)ops_calloc(OPS_MAX_DIM * max_dest, sizeof(int));
         OPS_mpi_halo_list[i].local_iter_size =
-            (int *)malloc(OPS_MAX_DIM * max_dest * sizeof(int));
+            (int *)ops_malloc(OPS_MAX_DIM * max_dest * sizeof(int));
         for (int k = 0; k < OPS_MAX_DIM * max_dest; k++)
           OPS_mpi_halo_list[i].local_iter_size[k] = 1;
 
@@ -518,21 +561,25 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
           int to_base[OPS_MAX_DIM], from_relative_base[OPS_MAX_DIM],
               owned_range_for_proc[OPS_MAX_DIM];
           for (int d = 0; d < sb_to->ndim; ++d) {
-            int proc_disp = proc_disps[j * OPS_MAX_DIM + d];
-            int proc_size = proc_sizes[j * OPS_MAX_DIM + d];
+            int proc_disp_j;// = proc_disps[j * OPS_MAX_DIM + d];
+            int proc_size_j;// = proc_sizes[j * OPS_MAX_DIM + d];
+            ops_calc_disp_size_for_dat_and_proc(halo->to, d, j, &proc_disp_j, &proc_size_j, proc_disps, proc_sizes);
             int left_pad =
-                (proc_disp == 0 ? (sd_to->gbl_base[d] + sd_to->gbl_d_m[d]) : 0);
+                (proc_disp_j == 0 ? (sd_to->gbl_base[d] + sd_to->gbl_d_m[d]) : 0);
             // determine if target partition is at the end in the current
             // dimension
             int is_last = 1;
             for (int k = proc_offsets[halo->to->block->index];
-                 k < proc_offsets[halo->to->block->index + 1]; ++k)
-              is_last = is_last && (proc_disps[k * OPS_MAX_DIM + d] <=
-                                    proc_disps[j * OPS_MAX_DIM + d]);
+                 k < proc_offsets[halo->to->block->index + 1]; ++k) {
+              int proc_disp_k, proc_size_k;
+              ops_calc_disp_size_for_dat_and_proc(halo->to, d, k, &proc_disp_k, &proc_size_k, proc_disps, proc_sizes);
+              is_last = is_last && (proc_disp_k/*proc_disps[k * OPS_MAX_DIM + d]*/ <=
+                                    proc_disp_j/*proc_disps[j * OPS_MAX_DIM + d]*/);
+            }
             int right_pad = is_last ? sd_to->gbl_d_p[d] : 0;
 
             int intersection_local = intersection(
-                proc_disp + left_pad, proc_disp + proc_size + right_pad,
+                proc_disp_j + left_pad, proc_disp_j + proc_size_j + right_pad,
                 halo->to_base[d] + relative_base[abs(halo->to_dir[d]) - 1],
                 halo->to_base[d] + relative_base[abs(halo->to_dir[d]) - 1] +
                     intersection_range[abs(halo->to_dir[d]) - 1]);
@@ -542,14 +589,14 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
             owned_range_for_proc[d2] = intersection_local;
             to_base[d] =
                 (halo->to_base[d] + relative_base[abs(halo->to_dir[d]) - 1] -
-                 proc_disp) >= left_pad
+                 proc_disp_j) >= left_pad
                     ? (halo->to_base[d] +
-                       relative_base[abs(halo->to_dir[d]) - 1] - proc_disp)
+                       relative_base[abs(halo->to_dir[d]) - 1] - proc_disp_j)
                     : 0;
             from_relative_base[d2] =
-                (proc_disp + left_pad - halo->to_base[d] -
+                (proc_disp_j + left_pad - halo->to_base[d] -
                  relative_base[abs(halo->to_dir[d]) - 1]) > 0
-                    ? (proc_disp + left_pad - halo->to_base[d] -
+                    ? (proc_disp_j + left_pad - halo->to_base[d] -
                        relative_base[abs(halo->to_dir[d]) - 1])
                     : 0;
             all_dims = all_dims && (intersection_local > 0);
@@ -619,23 +666,23 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
         int max_src = proc_offsets[halo->from->block->index + 1] -
                       proc_offsets[halo->from->block->index];
         int existing = OPS_mpi_halo_list[i].nproc_from;
-        OPS_mpi_halo_list[i].proclist = (int *)realloc(
+        OPS_mpi_halo_list[i].proclist = (int *)ops_realloc(
             OPS_mpi_halo_list[i].proclist, (max_src + existing) * sizeof(int));
-        OPS_mpi_halo_list[i].local_from_base =
-            (int *)realloc(OPS_mpi_halo_list[i].local_from_base,
-                           OPS_MAX_DIM * (max_src + existing) * sizeof(int));
+        OPS_mpi_halo_list[i].local_from_base = (int *)ops_realloc(
+            OPS_mpi_halo_list[i].local_from_base,
+            OPS_MAX_DIM * (max_src + existing) * sizeof(int));
         for (int k = OPS_MAX_DIM * existing;
              k < OPS_MAX_DIM * (max_src + existing); k++)
           OPS_mpi_halo_list[i].local_from_base[k] = 0;
-        OPS_mpi_halo_list[i].local_to_base =
-            (int *)realloc(OPS_mpi_halo_list[i].local_to_base,
-                           OPS_MAX_DIM * (max_src + existing) * sizeof(int));
+        OPS_mpi_halo_list[i].local_to_base = (int *)ops_realloc(
+            OPS_mpi_halo_list[i].local_to_base,
+            OPS_MAX_DIM * (max_src + existing) * sizeof(int));
         for (int k = OPS_MAX_DIM * existing;
              k < OPS_MAX_DIM * (max_src + existing); k++)
           OPS_mpi_halo_list[i].local_to_base[k] = 0;
-        OPS_mpi_halo_list[i].local_iter_size =
-            (int *)realloc(OPS_mpi_halo_list[i].local_iter_size,
-                           OPS_MAX_DIM * (max_src + existing) * sizeof(int));
+        OPS_mpi_halo_list[i].local_iter_size = (int *)ops_realloc(
+            OPS_mpi_halo_list[i].local_iter_size,
+            OPS_MAX_DIM * (max_src + existing) * sizeof(int));
         for (int k = OPS_MAX_DIM * existing;
              k < OPS_MAX_DIM * (max_src + existing); k++)
           OPS_mpi_halo_list[i].local_iter_size[k] = 1;
@@ -647,18 +694,22 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
           int from_base[OPS_MAX_DIM], to_relative_base[OPS_MAX_DIM],
               owned_range_for_proc[OPS_MAX_DIM];
           for (int d = 0; d < sb_from->ndim; ++d) {
-            int proc_disp = proc_disps[j * OPS_MAX_DIM + d];
-            int proc_size = proc_sizes[j * OPS_MAX_DIM + d];
+            int proc_disp_j;// = proc_disps[j * OPS_MAX_DIM + d];
+            int proc_size_j;// = proc_sizes[j * OPS_MAX_DIM + d];
+            ops_calc_disp_size_for_dat_and_proc(halo->from, d, j, &proc_disp_j, &proc_size_j, proc_disps, proc_sizes);
             int left_pad =
-                (proc_disp == 0 ? sd_to->gbl_base[d] + sd_to->gbl_d_m[d] : 0);
+                (proc_disp_j == 0 ? sd_to->gbl_base[d] + sd_to->gbl_d_m[d] : 0);
             int is_last = 1;
             for (int k = proc_offsets[halo->from->block->index];
-                 k < proc_offsets[halo->from->block->index + 1]; ++k)
-              is_last = is_last && (proc_disps[k * OPS_MAX_DIM + d] <=
-                                    proc_disps[j * OPS_MAX_DIM + d]);
+                 k < proc_offsets[halo->from->block->index + 1]; ++k) {
+              int proc_disp_k, proc_size_k;
+              ops_calc_disp_size_for_dat_and_proc(halo->from, d, k, &proc_disp_k, &proc_size_k, proc_disps, proc_sizes);
+              is_last = is_last && (proc_disp_k /*proc_disps[k * OPS_MAX_DIM + d]*/ <=
+                                    proc_disp_j /*proc_disps[j * OPS_MAX_DIM + d]*/);
+            }
             int right_pad = is_last ? sd_from->gbl_d_p[d] : 0;
             int intersection_local = intersection(
-                proc_disp + left_pad, proc_disp + proc_size + right_pad,
+                proc_disp_j + left_pad, proc_disp_j + proc_size_j + right_pad,
                 halo->from_base[d] + relative_base[abs(halo->from_dir[d]) - 1],
                 halo->from_base[d] + relative_base[abs(halo->from_dir[d]) - 1] +
                     intersection_range[abs(halo->from_dir[d]) - 1]);
@@ -668,15 +719,15 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
             owned_range_for_proc[d2] = intersection_local;
             from_base[d] =
                 (halo->from_base[d] +
-                 relative_base[abs(halo->from_dir[d]) - 1] - proc_disp) >=
+                 relative_base[abs(halo->from_dir[d]) - 1] - proc_disp_j) >=
                         left_pad
                     ? (halo->from_base[d] +
-                       relative_base[abs(halo->from_dir[d]) - 1] - proc_disp)
+                       relative_base[abs(halo->from_dir[d]) - 1] - proc_disp_j)
                     : 0;
             to_relative_base[d2] =
-                (proc_disp + left_pad - halo->from_base[d] -
+                (proc_disp_j + left_pad - halo->from_base[d] -
                  relative_base[abs(halo->from_dir[d]) - 1]) > 0
-                    ? (proc_disp + left_pad - halo->from_base[d] -
+                    ? (proc_disp_j + left_pad - halo->from_base[d] -
                        relative_base[abs(halo->from_dir[d]) - 1])
                     : 0;
             all_dims = all_dims && (intersection_local > 0);
@@ -705,9 +756,10 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
     }
   }
 
-  int *neighbor_array_send = (int *)malloc(
+  int *neighbor_array_send = (int *)ops_malloc(
       ops_comm_global_size * sizeof(int)); // Arrays for mapping out neighbors
-  int *neighbor_array_recv = (int *)malloc(ops_comm_global_size * sizeof(int));
+  int *neighbor_array_recv =
+      (int *)ops_malloc(ops_comm_global_size * sizeof(int));
   int max_neigh = 1; // maximum number of MPI neighbors in any given group
 
   // Create halo groups with only the relevant entries
@@ -725,7 +777,7 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
     mpi_group->nhalos = owned;
     mpi_group->index = i;
     mpi_group->mpi_halos =
-        (ops_mpi_halo **)malloc(owned * sizeof(ops_mpi_halo *));
+        (ops_mpi_halo **)ops_malloc(owned * sizeof(ops_mpi_halo *));
     // Add all halos we own a part of to the list
     owned = 0;
     for (int j = 0; j < group->nhalos; j++) {
@@ -772,17 +824,17 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
                                    mpi_group->num_neighbors_recv);
 
     mpi_group->neighbors_send =
-        (int *)malloc(mpi_group->num_neighbors_send * sizeof(int));
+        (int *)ops_malloc(mpi_group->num_neighbors_send * sizeof(int));
     mpi_group->neighbors_recv =
-        (int *)malloc(mpi_group->num_neighbors_recv * sizeof(int));
+        (int *)ops_malloc(mpi_group->num_neighbors_recv * sizeof(int));
     mpi_group->send_sizes =
-        (int *)malloc(mpi_group->num_neighbors_send * sizeof(int));
+        (int *)ops_malloc(mpi_group->num_neighbors_send * sizeof(int));
     mpi_group->recv_sizes =
-        (int *)malloc(mpi_group->num_neighbors_recv * sizeof(int));
-    mpi_group->requests = (MPI_Request *)malloc(
+        (int *)ops_malloc(mpi_group->num_neighbors_recv * sizeof(int));
+    mpi_group->requests = (MPI_Request *)ops_malloc(
         (mpi_group->num_neighbors_send + mpi_group->num_neighbors_recv) *
         sizeof(MPI_Request));
-    mpi_group->statuses = (MPI_Status *)malloc(
+    mpi_group->statuses = (MPI_Status *)ops_malloc(
         (mpi_group->num_neighbors_send + mpi_group->num_neighbors_recv) *
         sizeof(MPI_Status));
 
@@ -817,12 +869,14 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
 		       total_size * sizeof(char));
   }
   mpi_neigh_size = (int *)malloc(max_neigh * sizeof(int));
+  free(neighbor_array_recv);
+  free(neighbor_array_send);
 }
 
 void ops_partition(const char *routine) {
   // create list to hold sub-grid decomposition geometries for each mpi process
   OPS_sub_block_list =
-      (sub_block_list *)xmalloc(OPS_block_index * sizeof(sub_block_list));
+      (sub_block_list *)ops_malloc(OPS_block_index * sizeof(sub_block_list));
 
   int max_block_dim = 0;
   int max_block_dims = 0;
@@ -880,8 +934,8 @@ void ops_partition(const char *routine) {
   ops_buffer_recv_2_size = ops_buffer_size;
 
   OPS_mpi_halo_list =
-      (ops_mpi_halo *)malloc(OPS_halo_index * sizeof(ops_mpi_halo));
-  OPS_mpi_halo_group_list = (ops_mpi_halo_group *)malloc(
+      (ops_mpi_halo *)ops_malloc(OPS_halo_index * sizeof(ops_mpi_halo));
+  OPS_mpi_halo_group_list = (ops_mpi_halo_group *)ops_malloc(
       OPS_halo_group_index * sizeof(ops_mpi_halo_group));
   ops_partition_halos(processes, proc_offsets, proc_disps, proc_sizes,
                       proc_dimsplit);
@@ -899,27 +953,39 @@ void ops_partition(const char *routine) {
 // and perhaps will need to be allocated on-the-fly.
 
 void ops_mpi_exit() {
-  ops_dat_entry *item;
+
+  /*for (int b = 0; b < OPS_block_index; b++) { // for each block
+    ops_block block = OPS_block_list[b].block;
+
+    int i;
+    ops_dat_entry *item, *tmp_item;
+    for (item = TAILQ_FIRST(&(OPS_block_list[block->index].datasets));
+         item != NULL; item = tmp_item) {
+      tmp_item = TAILQ_NEXT(item, entries);
+      ops_dat dat = item->dat;
+      sub_dat *sd = OPS_sub_dat_list[dat->index];
+
+      free(sd->halos);
+      free(&sd->prod[-1]);
+      free(sd->dirty_dir_send);
+      free(sd->dirty_dir_recv);
+      free(OPS_sub_dat_list[dat->index]);
+    }
+  }*/
+
   int i;
+  ops_dat_entry *item;
   TAILQ_FOREACH(item, &OPS_dat_list, entries) {
     i = (item->dat)->index;
-    if (OPS_sub_dat_list[i]->mpidat != NULL) {
-      free(OPS_sub_dat_list[i]->halos);
-      /*for(int n = 0; n<OPS_sub_dat_list[i]->dat->block->dims; n++) {
-        for(int d = 0; d<MAX_DEPTH; d++) {
-          MPI_Type_free(&(OPS_sub_dat_list[i]->mpidat[MAX_DEPTH*n+d]));
-        }
-      }
-      free(OPS_sub_dat_list[i]->mpidat);
-      */
-    }
+    free(OPS_sub_dat_list[i]->halos);
     free(&OPS_sub_dat_list[i]->prod[-1]);
     free(OPS_sub_dat_list[i]->dirty_dir_send);
     free(OPS_sub_dat_list[i]->dirty_dir_recv);
     free(OPS_sub_dat_list[i]);
   }
+
   free(OPS_sub_dat_list);
-  OPS_sub_dat_list = NULL;
+  //OPS_sub_dat_list = NULL;
 
   for (int i = 0; i < OPS_halo_index; i++) {
     if (OPS_mpi_halo_list[i].nproc_from > 0 ||
@@ -933,6 +999,8 @@ void ops_mpi_exit() {
   free(OPS_mpi_halo_list);
   for (int i = 0; i < OPS_halo_group_index; i++) {
     if (OPS_mpi_halo_group_list[i].nhalos > 0) {
+      //free(OPS_mpi_halo_group_list[i].num_neighbors_send);
+      //free(OPS_mpi_halo_group_list[i].num_neighbors_recv);
       free(OPS_mpi_halo_group_list[i].mpi_halos);
       free(OPS_mpi_halo_group_list[i].neighbors_send);
       free(OPS_mpi_halo_group_list[i].neighbors_recv);
@@ -946,4 +1014,62 @@ void ops_mpi_exit() {
   free(mpi_neigh_size);
   if (OPS_enable_checkpointing)
     free(OPS_checkpoiting_dup_buffer);
+
+  //printf("OPS_block_index = %d\n",OPS_block_index);
+  for (int b = 0; b < OPS_block_index; b++) { // for each block
+    sub_block *sb = OPS_sub_block_list[b];
+
+    if (sb->owned) {
+      // printf("Owned OPS_block_index = %d\n",OPS_block_index);
+      MPI_Comm_free(&(sb->comm));
+      MPI_Comm_free(&(sb->comm1));
+    }
+
+    MPI_Group_free(&(sb->grp));
+    free(OPS_sub_block_list[b]);
+  }
+  free(OPS_sub_block_list);
+  MPI_Comm_free(&OPS_MPI_GLOBAL);
+
+}
+
+static inline int intersection2(int range1_beg, int range1_end, int range2_beg,
+                 int range2_end, int *intersect_begin)
+{
+  if (range1_beg >= range1_end || range2_beg >= range2_end) return 0;
+  int i_min = MAX(range1_beg, range2_beg);
+  int i_max = MIN(range1_end, range2_end);
+  *intersect_begin = i_min;
+  return i_max > i_min ? i_max - i_min : 0;
+}
+
+int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx) {
+  //determine the correct range to iterate over, based on the dats that are written to
+  int fine_grid_dat_idx = -1;
+  for(int i = 0; i<nargs; i++){
+    if (args[i].argtype == OPS_ARG_DAT) {
+      fine_grid_dat_idx = args[i].dat->index;
+      if(args[i].acc != OPS_READ)
+        break;
+    }
+  }
+
+  sub_dat *sd = OPS_sub_dat_list[fine_grid_dat_idx];
+  sub_block_list sb = OPS_sub_block_list[block->index];
+  if (!sb->owned) return -1;
+
+  for ( int n=0; n < block->dims; n++ ){
+    int starti = sd->decomp_disp[n];
+    int length = intersection2(range[2*n], range[2*n+1], sd->decomp_disp[n], sd->decomp_disp[n]+sd->decomp_size[n], &starti);
+    arg_idx[n] = starti;
+    if (sb->id_m[n]!=MPI_PROC_NULL)
+      starti -= sd->decomp_disp[n];
+    if (sd->gbl_size[n] == 1) {
+      starti = sb->decomp_disp[n];
+      length = intersection2(range[2*n], range[2*n+1], sb->decomp_disp[n], sb->decomp_disp[n]+sb->decomp_size[n], &starti);
+    }
+    start[n] = starti;
+    end[n] = starti + length;
+  }
+  return 1;
 }

@@ -18,6 +18,7 @@ INTEGER(KIND=4) xdim3
 
 contains
 
+!$ACC ROUTINE(zerores_kernel) SEQ
 !user function
 subroutine zerores_kernel(rho_res, rhou_res, rhoE_res)
 
@@ -55,8 +56,9 @@ subroutine zerores_kernel_wrap( &
   integer(4) end(1)
   integer n_x
 
-  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local)
-  !$acc loop
+
+  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local)  
+  !$acc loop 
   DO n_x = 1, end(1)-start(1)+1
     call zerores_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*1), &
@@ -64,6 +66,7 @@ subroutine zerores_kernel_wrap( &
     & opsDat3Local(dat3_base+(n_x-1)*1) )
   END DO
   !$acc end parallel
+
 end subroutine
 
 !host subroutine

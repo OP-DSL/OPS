@@ -29,11 +29,12 @@
 ! SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !
 
-! @brief ops fortran back-end library functions declarations
-! @author Gihan Mudalige
-! @details Defines the interoperable data types between OPS-C and OPS-Fortran
-! and the Fortran interface for OPS declaration functions
-!
+!> @file
+!! @brief OPS fortran back-end library functions declarations
+!! @author Gihan Mudalige
+!! @details Defines the interoperable data types between OPS-C and OPS-Fortran
+!! and the Fortran interface for OPS declaration functions
+!!
 
 
 module OPS_Fortran_Declarations
@@ -72,21 +73,27 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: dims        ! number of elements per grid point
     integer(kind=c_int) :: type_size;  ! bytes per primitive = elem_size/dim
     integer(kind=c_int) :: elem_size;  ! number of bytes per grid point
+    type(c_ptr)         :: size        ! size of the array in each block dimension -- including halo
+    type(c_ptr)         :: base        ! base offset to 0,0,... from the start of each dimension
+    type(c_ptr)         :: d_m         ! halo depth in each dimension, negative direction (at 0 end)
+    type(c_ptr)         :: d_p         ! halo depth in each dimension, positive direction (at size end)
     type(c_ptr)         :: data        ! data on host
 #ifdef OPS_WITH_CUDAFOR
     type(c_devptr)      :: data_d      ! data on device
 #else
     type(c_ptr)         :: data_d      ! data on device
 #endif
-    type(c_ptr)         :: size        ! size of the array in each block dimension -- including halo
-    type(c_ptr)         :: base        ! base offset to 0,0,... from the start of each dimension
-    type(c_ptr)         :: d_m         ! halo depth in each dimension, negative direction (at 0 end)
-    type(c_ptr)         :: d_p         ! halo depth in each dimension, positive direction (at size end)
     type(c_ptr)         :: name        ! name if the dat
     type(c_ptr)         :: type        ! data type
     integer(kind=c_int) :: dirty_hd    ! flag to indicate dirty status on host and device
     integer(kind=c_int) :: user_managed! indicates whether the user is managing memory
+    integer(kind=c_int) :: is_hdf5     ! indicates whether the data is to read from an hdf5 file
+    type(c_ptr)         :: hdf5_file   ! name of hdf5 file from which this dataset was read
     integer(kind=c_int) :: e_dat       ! is this an edge dat?
+    integer(kind=c_long) :: mem        ! memory in bytes allocated to this dat (under MPI, this will be memory held on a single MPI proc)
+    integer(kind=c_long) :: base_offset ! computed quantity, giving offset in bytes to the base index
+    type(c_ptr)         :: stride       ! stride[*] > 1 if this dat is a coarse dat under multi-grid
+
   end type ops_dat_core
 
   type :: ops_dat
@@ -102,6 +109,8 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: points       ! number of stencil elements
     type(c_ptr)         :: stencil      ! elements in the stencil
     type(c_ptr)         :: stride       ! stride of the stencil
+    type(c_ptr)         :: mgrid_stride ! mutlgrid stride
+    integer(kind=c_int) :: type         ! 0 for regular, 1 for prolongate, 2 for restrict 
   end type ops_stencil_core
 
   type :: ops_stencil
@@ -186,9 +195,9 @@ module OPS_Fortran_Declarations
       integer(kind=c_int), intent(in), value :: diags
     end subroutine ops_init_c
 
-    subroutine ops_set_args_c ( argc, argv ) BIND(C,name='ops_set_args')
+    subroutine ops_set_args_c ( argc, argv, len ) BIND(C,name='ops_set_args_ftn')
       use, intrinsic :: ISO_C_BINDING
-      integer(kind=c_int), intent(in), value :: argc
+      integer(kind=c_int), intent(in), value :: argc, len
       character(len=1, kind=C_CHAR) :: argv
     end subroutine ops_set_args_c
 
@@ -206,7 +215,7 @@ module OPS_Fortran_Declarations
       character(kind=c_char,len=1), intent(in)  :: name(*)
     end function ops_decl_block_c
 
-    type(c_ptr) function ops_decl_dat_c ( block, dim, size, base, d_m, d_p, data, type_size, type, name ) BIND(C,name='ops_decl_dat_char')
+    type(c_ptr) function ops_decl_dat_c ( block, dim, size, base, d_m, d_p, stride, data, type_size, type, name ) BIND(C,name='ops_decl_dat_char')
 
       use, intrinsic :: ISO_C_BINDING
 
@@ -220,6 +229,7 @@ module OPS_Fortran_Declarations
       type(c_ptr), intent(in), value           :: base
       type(c_ptr), intent(in), value           :: d_m
       type(c_ptr), intent(in), value           :: d_p
+      type(c_ptr), intent(in), value           :: stride
       character(kind=c_char,len=1), intent(in) :: name(*)
 
     end function ops_decl_dat_c
@@ -519,15 +529,15 @@ module OPS_Fortran_Declarations
     subroutine ops_init ( diags )
       integer(4) :: diags
       integer(kind=c_int) :: argc
-      integer :: i
+      integer :: i,len
       character(kind=c_char,len=64)           :: temp
 
       !Get the command line arguments - needs to be handled using Fortrn
       argc = command_argument_count()
 
       do i = 1, argc
-        call get_command_argument(i, temp)
-        call ops_set_args_c (argc, temp) !special function to set args
+        call get_command_argument(i, temp, len)
+        call ops_set_args_c (argc, temp, len) !special function to set args
       end do
 
       call ops_init_c (0, C_NULL_PTR, diags)
@@ -594,13 +604,15 @@ module OPS_Fortran_Declarations
     type(ops_dat)                                :: dat
     character(kind=c_char,len=*)                 :: name
     character(kind=c_char,len=*)                 :: typ
+    integer(4), dimension(5), target :: stride
 
     integer d;
     DO d = 1, block%blockPtr%dims
       base(d) = base(d)-1
+      stride(d) = 1
     end DO
 
-    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc(stride), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
 
     DO d = 1, block%blockPtr%dims
       base(d) = base(d)+1
@@ -623,13 +635,15 @@ module OPS_Fortran_Declarations
     type(ops_dat)                                :: dat
     character(kind=c_char,len=*)                 :: name
     character(kind=c_char,len=*)                 :: typ
+    integer(4), dimension(5), target :: stride
 
     integer d;
     DO d = 1, block%blockPtr%dims
       base(d) = base(d)-1
+      stride(d) = 1
     end DO
 
-    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc ( data ), 4, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc(stride), c_loc ( data ), 4, typ//C_NULL_CHAR, name//C_NULL_CHAR )
 
     DO d = 1, block%blockPtr%dims
       base(d) = base(d)+1

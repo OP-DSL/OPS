@@ -45,7 +45,7 @@
 
 
 // OPS header file
-#include "ops_seq.h"
+#include "ops_seq_v2.h"
 
 // Cloverleaf constants
 #include "data.h"
@@ -133,7 +133,7 @@ void start();
 /******************************************************************************
 * Main program
 ******************************************************************************/
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
   /**-------------------------- OPS Initialisation --------------------------**/
 
@@ -216,6 +216,10 @@ int main(int argc, char **argv)
       //ops_print_dat_to_txtfile_core(viscosity, "cloverdats.dat");
       //exit(0);
      //}
+    //if(step == 200) {
+    //  printf("In here ********************************\n");
+    //  ops_NaNcheck(density0);
+    //}
 
   }
 

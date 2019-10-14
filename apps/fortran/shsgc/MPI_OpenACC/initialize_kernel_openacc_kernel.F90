@@ -22,6 +22,7 @@ INTEGER(KIND=4) xdim5
 
 contains
 
+!$ACC ROUTINE(initialize_kernel) SEQ
 !user function
 subroutine initialize_kernel(x, rho_new, rhou_new, rhoE_new, rhoin, idx)
   real (kind=8) , DIMENSION(1) :: x, rho_new, rhou_new, rhoE_new, rhoin
@@ -81,8 +82,9 @@ subroutine initialize_kernel_wrap( &
   integer(4) end(1)
   integer n_x
 
-  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local,opsDat4Local,opsDat5Local)
-  !$acc loop
+
+  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local,opsDat4Local,opsDat5Local)  
+  !$acc loop 
   DO n_x = 1, end(1)-start(1)+1
     idx_local(1) = idx(1) + n_x - 1
     call initialize_kernel( &
@@ -94,6 +96,7 @@ subroutine initialize_kernel_wrap( &
     & idx_local )
   END DO
   !$acc end parallel
+
 end subroutine
 
 !host subroutine

@@ -35,7 +35,7 @@
   */
 
 #define OPS_3D
-#include "ops_seq.h"
+#include "ops_seq_v2.h"
 
 #include <math.h>
 #include <stdbool.h>
@@ -43,7 +43,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
 
   //*******************************************************************
   // INITIALISE OPS
@@ -68,6 +68,18 @@ int main(int argc, char **argv) {
   ops_fetch_dat_hdf5_file(multi, "read_data.h5");
   ops_fetch_dat_hdf5_file(single, "read_data.h5");
   ops_fetch_dat_hdf5_file(integ, "read_data.h5");
+
+  int my_const;
+  ops_get_const_hdf5("my_const", 1, "int", (char*)&my_const, "write_data.h5");
+  printf("Read const: %d\n", my_const);
+
+  char buffer[50];
+  ops_get_const_hdf5("my_text", 11, "char", buffer, "write_data.h5");
+  printf("Read text: %s\n", buffer);
+
+  ops_write_const_hdf5("my_const", 1, "int", (char*)&my_const, "read_data.h5");
+  ops_write_const_hdf5("my_text", 11, "char", (char*)buffer, "read_data.h5");
+
 
   //*******************************************************************
   // EXIT OPS AND PRINT TIMING INFO

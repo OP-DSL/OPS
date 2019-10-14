@@ -7,19 +7,23 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_fp64:enable
 
-#include "ops_opencl_reduction.h"
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
+#include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a, b) ((a < b) ? (a) : (b))
+#define MIN(a,b) ((a<b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a, b) ((a > b) ? (a) : (b))
+#define MAX(a,b) ((a>b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
+#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -41,77 +45,74 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
+//user function
 
-#define OPS_ACC0(x, y) (x + xdim0_calc_dt_kernel_print * (y))
-#define OPS_ACC1(x, y) (x + xdim1_calc_dt_kernel_print * (y))
-#define OPS_ACC2(x, y) (x + xdim2_calc_dt_kernel_print * (y))
-#define OPS_ACC3(x, y) (x + xdim3_calc_dt_kernel_print * (y))
-#define OPS_ACC4(x, y) (x + xdim4_calc_dt_kernel_print * (y))
-#define OPS_ACC5(x, y) (x + xdim5_calc_dt_kernel_print * (y))
+void calc_dt_kernel_print(const ptr_double xvel0,
+  const ptr_double yvel0,
+  const ptr_double density0,
+  const ptr_double energy0,
+  const ptr_double pressure,
+  const ptr_double soundspeed,
+  double *output) {
+  output[0] = OPS_ACCS(xvel0, 1,0);
+  output[1] = OPS_ACCS(yvel0, 1,0);
+  output[2] = OPS_ACCS(xvel0, -1,0);
+  output[3] = OPS_ACCS(yvel0, -1,0);
+  output[4] = OPS_ACCS(xvel0, 0,1);
+  output[5] = OPS_ACCS(yvel0, 0,1);
+  output[6] = OPS_ACCS(xvel0, 0,-1);
+  output[7] = OPS_ACCS(yvel0, 0,-1);
+  output[8] = OPS_ACCS(density0, 0,0);
+  output[9] = OPS_ACCS(energy0, 0,0);
+  output[10]= OPS_ACCS(pressure, 0,0);
+  output[11]= OPS_ACCS(soundspeed, 0,0);
 
-// user function
-void calc_dt_kernel_print(const __global double *restrict xvel0,
-                          const __global double *restrict yvel0,
-                          const __global double *restrict density0,
-                          const __global double *restrict energy0,
-                          const __global double *restrict pressure,
-                          const __global double *restrict soundspeed,
-                          double *restrict output)
-
-{
-  output[0] = xvel0[OPS_ACC0(1, 0)];
-  output[1] = yvel0[OPS_ACC1(1, 0)];
-  output[2] = xvel0[OPS_ACC0(-1, 0)];
-  output[3] = yvel0[OPS_ACC1(-1, 0)];
-  output[4] = xvel0[OPS_ACC0(0, 1)];
-  output[5] = yvel0[OPS_ACC1(0, 1)];
-  output[6] = xvel0[OPS_ACC0(0, -1)];
-  output[7] = yvel0[OPS_ACC1(0, -1)];
-  output[8] = density0[OPS_ACC2(0, 0)];
-  output[9] = energy0[OPS_ACC3(0, 0)];
-  output[10] = pressure[OPS_ACC4(0, 0)];
-  output[11] = soundspeed[OPS_ACC5(0, 0)];
 }
 
+
 __kernel void ops_calc_dt_kernel_print(
-    __global const double *restrict arg0, __global const double *restrict arg1,
-    __global const double *restrict arg2, __global const double *restrict arg3,
-    __global const double *restrict arg4, __global const double *restrict arg5,
-    __global double *restrict arg6, __local double *scratch6, int r_bytes6,
-    const int base0, const int base1, const int base2, const int base3,
-    const int base4, const int base5, const int size0, const int size1) {
+__global const double* restrict arg0,
+__global const double* restrict arg1,
+__global const double* restrict arg2,
+__global const double* restrict arg3,
+__global const double* restrict arg4,
+__global const double* restrict arg5,
+__global double* restrict arg6,
+__local double* scratch6,
+int r_bytes6,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int base4,
+const int base5,
+const int size0,
+const int size1 ){
 
   arg6 += r_bytes6;
   double arg6_l[12];
-  for (int d = 0; d < 12; d++)
-    arg6_l[d] = ZERO_double;
+  for (int d=0; d<12; d++) arg6_l[d] = ZERO_double;
 
   int idx_y = get_global_id(1);
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    calc_dt_kernel_print(&arg0[base0 + idx_x * 1 * 1 +
-                               idx_y * 1 * 1 * xdim0_calc_dt_kernel_print],
-                         &arg1[base1 + idx_x * 1 * 1 +
-                               idx_y * 1 * 1 * xdim1_calc_dt_kernel_print],
-                         &arg2[base2 + idx_x * 1 * 1 +
-                               idx_y * 1 * 1 * xdim2_calc_dt_kernel_print],
-                         &arg3[base3 + idx_x * 1 * 1 +
-                               idx_y * 1 * 1 * xdim3_calc_dt_kernel_print],
-                         &arg4[base4 + idx_x * 1 * 1 +
-                               idx_y * 1 * 1 * xdim4_calc_dt_kernel_print],
-                         &arg5[base5 + idx_x * 1 * 1 +
-                               idx_y * 1 * 1 * xdim5_calc_dt_kernel_print],
-                         arg6_l);
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_calc_dt_kernel_print], xdim0_calc_dt_kernel_print};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_calc_dt_kernel_print], xdim1_calc_dt_kernel_print};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_calc_dt_kernel_print], xdim2_calc_dt_kernel_print};
+    const ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_calc_dt_kernel_print], xdim3_calc_dt_kernel_print};
+    const ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_calc_dt_kernel_print], xdim4_calc_dt_kernel_print};
+    const ptr_double ptr5 = { &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_calc_dt_kernel_print], xdim5_calc_dt_kernel_print};
+    calc_dt_kernel_print(ptr0,
+                   ptr1,
+                   ptr2,
+                   ptr3,
+                   ptr4,
+                   ptr5,
+                   arg6_l);
   }
-  int group_index = get_group_id(0) + get_group_id(1) * get_num_groups(0) +
-                    get_group_id(2) * get_num_groups(0) * get_num_groups(1);
-  for (int d = 0; d < 12; d++)
-    reduce_double(arg6_l[d], scratch6, &arg6[group_index * 12 + d], OPS_INC);
+  int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);
+  for (int d=0; d<12; d++)
+    reduce_double(arg6_l[d], scratch6, &arg6[group_index*12+d], OPS_INC);
+
 }

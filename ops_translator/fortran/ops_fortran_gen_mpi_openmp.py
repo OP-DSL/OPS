@@ -29,6 +29,16 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+## @file
+## @brief
+#
+#  OPS MPI_OpenMP code generator for Fortran applications
+#
+#  This routine is called by ops_fortran.py which parses the input files
+#
+#  It produces a file xxx_omp_kernel.F90 for each kernel
+#
+
 """
 OPS MPI_OpenMP code generator for Fortran applications
 
@@ -91,7 +101,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
     reduction_vars = ''
     reduct_op = ''
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
 
         if accs[n] == OPS_INC:
           reduct_op = 'REDUCTION(+:'
@@ -101,7 +111,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
           reduct_op = 'REDUCTION(MAX:'
 
         reduction_vars = reduction_vars + reduct_op +'opsDat'+str(n+1)+'Local'
-        if n <> nargs-1:
+        if n != nargs-1:
           reduction_vars = reduction_vars + '),'
         else:
           reduction_vars = reduction_vars + ')'
@@ -184,8 +194,8 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
     text = remove_trailing_w_space(text)
     i = text.find(name)
     if(i < 0):
-      print "\n********"
-      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      print("\n********")
+      print(("Error: cannot locate user kernel function: "+name+" - Aborting code generation"))
       exit(2)
 
     # need to check accs here - under fortran the
@@ -217,7 +227,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
       else:
         code('& opsDat'+str(n+1)+'Local, &')
     for n in range (0, nargs):
-      if arg_typ[n] <> 'ops_arg_idx':
+      if arg_typ[n] != 'ops_arg_idx':
         code('& dat'+str(n+1)+'_base, &')
     code('& start, &')
     code('& end )')
@@ -235,7 +245,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
         code('integer(4) idx('+str(NDIM)+'),idx_local('+str(NDIM)+')' )
 
     for n in range (0, nargs):
-      if arg_typ[n] <> 'ops_arg_idx':
+      if arg_typ[n] != 'ops_arg_idx':
         code('integer dat' + str(n+1)+'_base')
     code('integer(4) start('+str(NDIM)+')')
     code('integer(4) end('+str(NDIM)+')')
@@ -248,7 +258,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
     code('')
 
     if NDIM==1:
-      if reduction <> 1 and arg_idx <> 1:
+      if reduction != 1 and arg_idx != 1:
         code('!$OMP PARALLEL DO')
         code('!DIR$ IVDEP')
       elif reduction == 1:
@@ -258,7 +268,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
         code('idx_local(1) = idx(1) + n_x - 1')
 
     elif NDIM==2:
-      if reduction <> 1 and arg_idx <> 1:
+      if reduction != 1 and arg_idx != 1:
         code('!$OMP PARALLEL DO PRIVATE(n_x)')
       elif reduction == 1:
         code('!$OMP PARALLEL DO PRIVATE(n_x) '+reduction_vars)
@@ -271,7 +281,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
         code('idx_local(1) = idx(1) + n_x - 1')
 
     elif NDIM==3:
-      if reduction <> 1 and arg_idx <> 1:
+      if reduction != 1 and arg_idx != 1:
         code('!$OMP PARALLEL DO PRIVATE(n_x,n_y)')
       elif reduction == 1:
         code('!$OMP PARALLEL DO PRIVATE(n_x,n_y) '+reduction_vars)
@@ -443,7 +453,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
           code('ydim'+str(n+1)+' = dat'+str(n+1)+'_size(2)')
           code('zdim'+str(n+1)+' = dat'+str(n+1)+'_size(3)')
           code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+' * ydim'+str(n+1)+' * zdim'+str(n+1))
-        if int(dims[n]) <> 1:
+        if int(dims[n]) != 1:
           code('multi_d'+str(n+1)+' = getDatDimFromOpsArg(opsArg'+str(n+1)+') ! dimension of the dat')
           code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+')')
         else:
@@ -475,7 +485,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
       else:
         code('& opsDat'+str(n+1)+'Local, &')
     for n in range (0, nargs):
-      if arg_typ[n] <> 'ops_arg_idx':
+      if arg_typ[n] != 'ops_arg_idx':
         code('& dat'+str(n+1)+'_base, &')
     code('& start, &')
     code('& end )')

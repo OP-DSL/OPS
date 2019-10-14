@@ -30,6 +30,7 @@ INTEGER(KIND=4) xdim9
 
 contains
 
+!$ACC ROUTINE(updateRK3_kernel) SEQ
 !user function
 subroutine updateRK3_kernel(rho_new, rhou_new, rhoE_new, rho_old, &
                              & rhou_old, rhoE_old, rho_res, rhou_res, rhoE_res, a1, a2)
@@ -113,8 +114,9 @@ subroutine updateRK3_kernel_wrap( &
   integer(4) end(1)
   integer n_x
 
-  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local,opsDat4Local,opsDat5Local,opsDat6Local,opsDat7Local,opsDat8Local,opsDat9Local)
-  !$acc loop
+
+  !$acc parallel deviceptr(opsDat1Local,opsDat2Local,opsDat3Local,opsDat4Local,opsDat5Local,opsDat6Local,opsDat7Local,opsDat8Local,opsDat9Local)  
+  !$acc loop 
   DO n_x = 1, end(1)-start(1)+1
     call updateRK3_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*1), &
@@ -130,6 +132,7 @@ subroutine updateRK3_kernel_wrap( &
     & opsDat11Local )
   END DO
   !$acc end parallel
+
 end subroutine
 
 !host subroutine

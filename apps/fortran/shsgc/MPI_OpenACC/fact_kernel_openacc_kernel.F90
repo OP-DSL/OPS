@@ -18,6 +18,7 @@ INTEGER(KIND=4) xdim2
 
 contains
 
+!$ACC ROUTINE(fact_kernel) SEQ
 !user function
 subroutine fact_kernel(eff, s)
 
@@ -55,14 +56,16 @@ subroutine fact_kernel_wrap( &
   integer(4) end(1)
   integer n_x
 
-  !$acc parallel deviceptr(opsDat1Local,opsDat2Local)
-  !$acc loop
+
+  !$acc parallel deviceptr(opsDat1Local,opsDat2Local)  
+  !$acc loop 
   DO n_x = 1, end(1)-start(1)+1
     call fact_kernel( &
     & opsDat1Local(dat1_base+(n_x-1)*3), &
     & opsDat2Local(dat2_base+(n_x-1)*3) )
   END DO
   !$acc end parallel
+
 end subroutine
 
 !host subroutine

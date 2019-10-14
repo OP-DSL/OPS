@@ -30,7 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief OPS core library functions
+/** @file
+  * @brief OPS core library functions
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implementations of the core library functions utilized by all OPS
   * backends
@@ -39,8 +40,12 @@
 #include "ops_lib_core.h"
 #include <float.h>
 #include <limits.h>
+#include <stdlib.h>
+#ifdef __unix__
 #include <sys/time.h>
-#include <sys/time.h>
+#elif defined (_WIN32) || defined(WIN32)
+#include <windows.h>
+#endif
 
 int OPS_diags = 0;
 
@@ -65,6 +70,9 @@ int OPS_soa = 0;
 int ops_tiling_mpidepth = -1;
 extern double ops_tiled_halo_exchange_time;
 int ops_force_decomp[OPS_MAX_DIM] = {0};
+int OPS_realloc = 0;
+
+//int ops_hdf5_chunk_size[OPS_MAX_DIM] = {0};
 
 /*
 * Lists of blocks and dats declared in an OPS programs
@@ -78,6 +86,7 @@ Double_linked_list OPS_dat_list; // Head of the double linked list
 
 int OPS_block_size_x = 32;
 int OPS_block_size_y = 4;
+int OPS_block_size_z = 1;
 
 double ops_gather_time = 0.0;
 double ops_scatter_time = 0.0;
@@ -87,7 +96,7 @@ double ops_sendrecv_time = 0.0;
 */
 static char *copy_str(char const *src) {
   const size_t len = strlen(src) + 1;
-  char *dest = (char *)calloc(len+16, sizeof(char));
+  char *dest = (char *)ops_calloc(len, sizeof(char));
   return strncpy(dest, src, len);
 }
 
@@ -119,17 +128,18 @@ ops_dat search_dat(ops_block block, int elem_size, int *dat_size, int *offset,
   return NULL;
 }
 
+
 /* Special function only called by fortran backend to get
 commandline arguments as argv is not easy to pass through from
 frotran to C
 */
-void ops_set_args(int argc, char *argv) {
+void ops_set_args(const int argc, const char *argv) {
 
   char temp[64];
   char *pch;
   pch = strstr(argv, "OPS_BLOCK_SIZE_X=");
   if (pch != NULL) {
-    strncpy(temp, pch, 20);
+    strncpy(temp, pch, strlen(pch)+1);
     OPS_block_size_x = atoi(temp + 17);
     ops_printf("\n OPS_block_size_x = %d \n", OPS_block_size_x);
   }
@@ -138,6 +148,12 @@ void ops_set_args(int argc, char *argv) {
     strncpy(temp, pch, 20);
     OPS_block_size_y = atoi(temp + 17);
     ops_printf("\n OPS_block_size_y = %d \n", OPS_block_size_y);
+  }
+  pch = strstr(argv, "OPS_BLOCK_SIZE_Z=");
+  if (pch != NULL) {
+    strncpy(temp, pch, 20);
+    OPS_block_size_z = atoi(temp + 17);
+    ops_printf("\n OPS_block_size_z = %d \n", OPS_block_size_z);
   }
   pch = strstr(argv, "-gpudirect");
   if (pch != NULL) {
@@ -156,6 +172,13 @@ void ops_set_args(int argc, char *argv) {
     ops_cache_size = atoi(temp + 15);
     ops_printf("\n Cache size per process = %d \n", ops_cache_size);
   }
+  pch = strstr(argv, "OPS_REALLOC=");
+  if (pch != NULL) {
+    strncpy(temp, pch, 20);
+    OPS_realloc = atoi(temp + 12);
+    ops_printf("\n Reallocating = %d \n", OPS_realloc);
+  }
+
   pch = strstr(argv, "OPS_TILING");
   if (pch != NULL) {
     ops_enable_tiling = 1;
@@ -206,12 +229,28 @@ void ops_set_args(int argc, char *argv) {
     OPS_enable_checkpointing = 1;
     ops_printf("\n OPS Checkpointing enabled\n");
   }
+
+  /*pch = strstr(argv, "OPS_HDF5_CHUNK_SIZE=");
+  if (pch != NULL) {
+    strncpy(temp, pch, 25);
+    for (int i = 0; i < OPS_MAX_DIM; i++)
+      ops_hdf5_chunk_size[i] = MAX(atoi(temp + 20),1);
+    ops_printf("\n HDF5 write chunck size = (%d)^%s \n",
+      ops_hdf5_chunk_size[0],OPS_MAX_DIM);
+  }*/
+
+
+}
+
+void ops_set_args_ftn(const int argc, char *argv, int len) {
+  argv[len]='\0';
+  ops_set_args(argc, argv);
 }
 
 /*
 * OPS core functions
 */
-void ops_init_core(int argc, char **argv, int diags) {
+void ops_init_core(const int argc, const char **argv, const int diags) {
   OPS_diags = diags;
   for (int d = 0; d < OPS_MAX_DIM; d++) ops_force_decomp[d] = 0;
   for (int n = 1; n < argc; n++) {
@@ -318,8 +357,9 @@ void ops_exit_core() {
     free(OPS_halo_list[i]);
   }
 
+  // free block halos
   for (int i = 0; i < OPS_halo_group_index; i++) {
-    // free(OPS_halo_group_list[i]->halos); //TODO: we didn't make a copy
+    free(OPS_halo_group_list[i]->halos);
     free(OPS_halo_group_list[i]);
   }
 
@@ -328,6 +368,38 @@ void ops_exit_core() {
   OPS_dat_index = 0;
   OPS_block_max = 0;
 }
+
+/*ops_block ops_decl_block(int dims, const char *name) {
+  if (dims < 0) {
+    printf(
+        "Error: ops_decl_block -- negative/zero dimension size for block: %s\n",
+        name);
+    exit(-1);
+  }
+
+  if (OPS_block_index == OPS_block_max) {
+    if (OPS_block_max > 0) printf("Warning: potential realloc issue in ops_lib_core.c detected, please modify ops_decl_block to allocate more blocks initially!\n");
+    OPS_block_max += 15;
+    OPS_block_list = (ops_block_descriptor *)realloc(
+        OPS_block_list, OPS_block_max * sizeof(ops_block_descriptor));
+
+    if (OPS_block_list == NULL) {
+      printf("Error: ops_decl_block -- error reallocating memory\n");
+      exit(-1);
+    }
+  }
+
+  ops_block block = (ops_block)ops_malloc(sizeof(ops_block_core));
+  block->index = OPS_block_index;
+  block->dims = dims;
+  block->name = copy_str(name);
+  OPS_block_list[OPS_block_index].block = block;
+  OPS_block_list[OPS_block_index].num_datasets = 0;
+  TAILQ_INIT(&(OPS_block_list[OPS_block_index].datasets));
+  OPS_block_index++;
+
+  return block;
+}*/
 
 ops_block ops_decl_block(int dims, const char *name) {
   if (dims < 0) {
@@ -339,14 +411,33 @@ ops_block ops_decl_block(int dims, const char *name) {
 
   if (OPS_block_index == OPS_block_max) {
     if (OPS_block_max > 0) printf("Warning: potential realloc issue in ops_lib_core.c detected, please modify ops_decl_block to allocate more blocks initially!\n");
-    OPS_block_max += 30;
-    OPS_block_list = (ops_block_descriptor *)realloc(
-        OPS_block_list, OPS_block_max * sizeof(ops_block_descriptor));
 
-    if (OPS_block_list == NULL) {
+    OPS_block_max += 20;
+    ops_block_descriptor *OPS_block_list_new = (ops_block_descriptor *)xmalloc(
+        OPS_block_max * sizeof(ops_block_descriptor));
+    if (OPS_block_list_new == NULL) {
       printf("Error: ops_decl_block -- error reallocating memory\n");
       exit(-1);
     }
+
+    //copy old blocks
+    for (int i = 0; i < OPS_block_index; i++) {
+      OPS_block_list_new[i].block = OPS_block_list[i].block;
+
+      TAILQ_INIT(&(OPS_block_list_new[i].datasets));
+      //remove ops_dats from old queue and add to new queue
+      ops_dat_entry *item;
+      while ((item = TAILQ_FIRST(&(OPS_block_list[i].datasets)))) {
+        TAILQ_REMOVE(&(OPS_block_list[i].datasets), item, entries);
+        TAILQ_INSERT_TAIL(&OPS_block_list_new[i].datasets, item, entries);
+      }
+
+      OPS_block_list_new[i].num_datasets = OPS_block_list[i].num_datasets;
+
+    }
+    free(OPS_block_list);
+    OPS_block_list = OPS_block_list_new;
+
   }
 
   ops_block block = (ops_block)xmalloc(sizeof(ops_block_core));
@@ -361,6 +452,7 @@ ops_block ops_decl_block(int dims, const char *name) {
   return block;
 }
 
+
 void ops_decl_const_core(int dim, char const *type, int typeSize, char *data,
                          char const *name) {
   (void)dim;
@@ -371,7 +463,7 @@ void ops_decl_const_core(int dim, char const *type, int typeSize, char *data,
 }
 
 ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
-                          int *base, int *d_m, int *d_p, char *data,
+                          int *base, int *d_m, int *d_p, int *stride, char *data,
                           int type_size, char const *type, char const *name) {
   if (block == NULL) {
     printf("Error: ops_decl_dat -- invalid block for data: %s\n", name);
@@ -385,7 +477,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
     exit(-1);
   }
 
-  ops_dat dat = (ops_dat)xmalloc(sizeof(ops_dat_core));
+  ops_dat dat = (ops_dat)ops_malloc(sizeof(ops_dat_core));
   dat->index = OPS_dat_index;
   dat->block = block;
   dat->dim = dim;
@@ -410,10 +502,25 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   for (int n = 0; n < block->dims; n++)
     dat->base[n] = base[n];
 
-  for (int n = 0; n < block->dims; n++)
-    dat->d_m[n] = d_m[n];
-  for (int n = 0; n < block->dims; n++)
-    dat->d_p[n] = d_p[n];
+  for (int n = 0; n < block->dims; n++) {
+    if (d_m[n] <= 0)
+      dat->d_m[n] = d_m[n];
+    else {
+      ops_printf("Error: Non negative d_m during declaration of %s\n", name);
+      exit(2);
+    }
+  }
+
+  for (int n = 0; n < block->dims; n++) {
+    if (d_p[n] >= 0)
+      dat->d_p[n] = d_p[n];
+    else {
+      ops_printf("Error: Non positive d_p during declaration of %s\n", name);
+      exit(2);
+    }
+  }
+  for(int n=0;n<block->dims;n++)
+    dat->stride[n] = stride[n];
 
   // set the size of higher dimensions to 1
   for (int n = block->dims; n < OPS_MAX_DIM; n++) {
@@ -431,12 +538,13 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   dat->hdf5_file = "none";
   dat->type = copy_str(type);
   dat->name = copy_str(name);
+  dat->x_pad = 0; // initialize padding for data alignment to zero
 
   /* Create a pointer to an item in the ops_dats doubly linked list */
   ops_dat_entry *item;
 
   // add the newly created ops_dat to list
-  item = (ops_dat_entry *)malloc(sizeof(ops_dat_entry));
+  item = (ops_dat_entry *)ops_malloc(sizeof(ops_dat_entry));
   if (item == NULL) {
     printf("Error: op_decl_dat -- error allocating memory to double linked "
            "list entry\n");
@@ -449,7 +557,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
   OPS_dat_index++;
 
   // Another entry for a different list
-  item = (ops_dat_entry *)malloc(sizeof(ops_dat_entry));
+  item = (ops_dat_entry *)ops_malloc(sizeof(ops_dat_entry));
   if (item == NULL) {
     printf("Error: op_decl_dat -- error allocating memory to double linked "
            "list entry\n");
@@ -463,7 +571,7 @@ ops_dat ops_decl_dat_core(ops_block block, int dim, int *dataset_size,
 }
 
 ops_dat ops_decl_dat_temp_core(ops_block block, int dim, int *dataset_size,
-                               int *base, int *d_m, int *d_p, char *data,
+                               int *base, int *d_m, int *d_p, int *stride, char *data,
                                int type_size, char const *type,
                                char const *name) {
   // Check if this dat already exists in the double linked list
@@ -475,8 +583,24 @@ ops_dat ops_decl_dat_temp_core(ops_block block, int dim, int *dataset_size,
     exit(2);
   }
   // if not found ...
-  return ops_decl_dat_core(block, dim, dataset_size, base, d_m, d_p, data,
+  return ops_decl_dat_core(block, dim, dataset_size, base, d_m, d_p, stride, data,
                            type_size, type, name);
+}
+
+void ops_free_dat(ops_dat dat) {
+  ops_dat_entry *item;
+  TAILQ_FOREACH(item, &OPS_dat_list, entries) {
+    if (item->dat->index == dat->index) {
+      TAILQ_REMOVE(&OPS_dat_list, item, entries);
+      break;
+    }
+  }
+  TAILQ_FOREACH(item, &(OPS_block_list[dat->block->index].datasets), entries) {
+    if (item->dat->index == dat->index) {
+      TAILQ_REMOVE(&(OPS_block_list[dat->block->index].datasets), item, entries);
+      break;
+    }
+  }
 }
 
 ops_stencil ops_decl_stencil(int dims, int points, int *sten,
@@ -484,7 +608,7 @@ ops_stencil ops_decl_stencil(int dims, int points, int *sten,
 
   if (OPS_stencil_index == OPS_stencil_max) {
     OPS_stencil_max += 10;
-    OPS_stencil_list = (ops_stencil *)realloc(
+    OPS_stencil_list = (ops_stencil *)ops_realloc(
         OPS_stencil_list, OPS_stencil_max * sizeof(ops_stencil));
 
     if (OPS_stencil_list == NULL) {
@@ -493,18 +617,20 @@ ops_stencil ops_decl_stencil(int dims, int points, int *sten,
     }
   }
 
-  ops_stencil stencil = (ops_stencil)xmalloc(sizeof(ops_stencil_core));
+  ops_stencil stencil = (ops_stencil)ops_malloc(sizeof(ops_stencil_core));
   stencil->index = OPS_stencil_index;
   stencil->points = points;
   stencil->dims = dims;
   stencil->name = copy_str(name);
 
-  stencil->stencil = (int *)xmalloc(dims * points * sizeof(int));
+  stencil->stencil = (int *)ops_malloc(dims * points * sizeof(int));
   memcpy(stencil->stencil, sten, sizeof(int) * dims * points);
 
-  stencil->stride = (int *)xmalloc(dims * sizeof(int));
+  stencil->stride = (int *)ops_malloc(dims * sizeof(int));
   for (int i = 0; i < dims; i++)
     stencil->stride[i] = 1;
+
+  stencil->type = 0;
 
   OPS_stencil_list[OPS_stencil_index++] = stencil;
 
@@ -516,12 +642,47 @@ ops_stencil ops_decl_strided_stencil(int dims, int points, int *sten,
 
   if (OPS_stencil_index == OPS_stencil_max) {
     OPS_stencil_max += 10;
-    OPS_stencil_list = (ops_stencil *)realloc(
+    OPS_stencil_list = (ops_stencil *)ops_realloc(
         OPS_stencil_list, OPS_stencil_max * sizeof(ops_stencil));
 
     if (OPS_stencil_list == NULL) {
       printf("Error: ops_decl_stencil -- error reallocating memory\n");
       exit(-1);
+    }
+  }
+
+  ops_stencil stencil = (ops_stencil)ops_malloc(sizeof(ops_stencil_core));
+  stencil->index = OPS_stencil_index;
+  stencil->points = points;
+  stencil->dims = dims;
+  stencil->name = copy_str(name);
+
+  stencil->stencil = (int *)ops_malloc(dims * points * sizeof(int));
+  memcpy(stencil->stencil, sten, sizeof(int) * dims * points);
+
+  stencil->stride = (int *)ops_malloc(dims * sizeof(int));
+  memcpy(stencil->stride, stride, sizeof(int) * dims);
+
+  stencil->mgrid_stride = (int *)xmalloc(dims*sizeof(int));
+  for (int i = 0; i < dims; i++) stencil->mgrid_stride[i] = 1;
+
+  OPS_stencil_list[OPS_stencil_index++] = stencil;
+
+  stencil->type = 0;
+
+  return stencil;
+}
+
+ops_stencil ops_decl_restrict_stencil ( int dims, int points, int *sten, int *stride, char const * name)
+{
+
+  if ( OPS_stencil_index == OPS_stencil_max ) {
+    OPS_stencil_max += 10;
+    OPS_stencil_list = (ops_stencil *) realloc(OPS_stencil_list,OPS_stencil_max * sizeof(ops_stencil));
+
+    if ( OPS_stencil_list == NULL ) {
+      printf ( " ops_decl_stencil error -- error reallocating memory\n" );
+      exit ( -1 );
     }
   }
 
@@ -531,11 +692,51 @@ ops_stencil ops_decl_strided_stencil(int dims, int points, int *sten,
   stencil->dims = dims;
   stencil->name = copy_str(name);
 
-  stencil->stencil = (int *)xmalloc(dims * points * sizeof(int));
-  memcpy(stencil->stencil, sten, sizeof(int) * dims * points);
+  stencil->stencil = (int *)xmalloc(dims*points*sizeof(int));
+  memcpy(stencil->stencil,sten,sizeof(int)*dims*points);
 
-  stencil->stride = (int *)xmalloc(dims * sizeof(int));
-  memcpy(stencil->stride, stride, sizeof(int) * dims);
+  stencil->stride = (int *)xmalloc(dims*sizeof(int));
+  for (int i = 0; i < dims; i++) stencil->stride[i] = 1;
+
+  stencil->mgrid_stride = (int *)xmalloc(dims*sizeof(int));
+  memcpy(stencil->mgrid_stride,stride,sizeof(int)*dims);
+
+  stencil->type = 2;
+
+  OPS_stencil_list[OPS_stencil_index++] = stencil;
+
+  return stencil;
+}
+
+ops_stencil ops_decl_prolong_stencil ( int dims, int points, int *sten, int *stride, char const * name)
+{
+
+  if ( OPS_stencil_index == OPS_stencil_max ) {
+    OPS_stencil_max += 10;
+    OPS_stencil_list = (ops_stencil *) realloc(OPS_stencil_list,OPS_stencil_max * sizeof(ops_stencil));
+
+    if ( OPS_stencil_list == NULL ) {
+      printf ( " ops_decl_stencil error -- error reallocating memory\n" );
+      exit ( -1 );
+    }
+  }
+
+  ops_stencil stencil = (ops_stencil)xmalloc(sizeof(ops_stencil_core));
+  stencil->index = OPS_stencil_index;
+  stencil->points = points;
+  stencil->dims = dims;
+  stencil->name = copy_str(name);
+
+  stencil->stencil = (int *)xmalloc(dims*points*sizeof(int));
+  memcpy(stencil->stencil,sten,sizeof(int)*dims*points);
+
+  stencil->stride = (int *)xmalloc(dims*sizeof(int));
+  for (int i = 0; i < dims; i++) stencil->stride[i] = 1;
+
+  stencil->mgrid_stride = (int *)xmalloc(dims*sizeof(int));
+  memcpy(stencil->mgrid_stride,stride,sizeof(int)*dims);
+
+  stencil->type = 1;
 
   OPS_stencil_list[OPS_stencil_index++] = stencil;
   return stencil;
@@ -594,7 +795,7 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
 ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[nhalos]) {
   if (OPS_halo_group_index == OPS_halo_group_max) {
     OPS_halo_group_max += 10;
-    OPS_halo_group_list = (ops_halo_group *)realloc(
+    OPS_halo_group_list = (ops_halo_group *)ops_realloc(
         OPS_halo_group_list, OPS_halo_group_max * sizeof(ops_halo_group));
 
     if (OPS_halo_group_list == NULL) {
@@ -603,12 +804,12 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo halos[nhalos]) {
     }
   }
 
-  ops_halo_group grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
+  ops_halo_group grp = (ops_halo_group)ops_malloc(sizeof(ops_halo_group_core));
   grp->nhalos = nhalos;
 
-  // make a copy
-  ops_halo *halos_temp = (ops_halo *)xmalloc(nhalos * sizeof(ops_halo));
-  memcpy(halos_temp, &halos[0], nhalos * sizeof(ops_halo));
+  //make a copy
+  ops_halo* halos_temp = (ops_halo *)ops_malloc(nhalos*sizeof(ops_halo));
+  memcpy(halos_temp, &halos[0], nhalos*sizeof(ops_halo));
   grp->halos = halos_temp;
 
   grp->index = OPS_halo_group_index;
@@ -622,7 +823,7 @@ ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
 
   if (OPS_halo_group_index == OPS_halo_group_max) {
     OPS_halo_group_max += 10;
-    OPS_halo_group_list = (ops_halo_group *)realloc(
+    OPS_halo_group_list = (ops_halo_group *)ops_realloc(
         OPS_halo_group_list, OPS_halo_group_max * sizeof(ops_halo_group));
 
     if (OPS_halo_group_list == NULL) {
@@ -645,11 +846,11 @@ ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
   }*/
 
   if (grp == NULL) {
-    grp = (ops_halo_group)xmalloc(sizeof(ops_halo_group_core));
+    grp = (ops_halo_group)ops_malloc(sizeof(ops_halo_group_core));
     grp->nhalos = 0;
     // printf("null grp, grp->nhalos = %d\n",grp->nhalos);
     if (nhalos != 0) {
-      ops_halo *halos_temp = (ops_halo *)xmalloc(1 * sizeof(ops_halo_core));
+      ops_halo *halos_temp = (ops_halo *)ops_malloc(1 * sizeof(ops_halo_core));
       memcpy(halos_temp, halos, 1 * sizeof(ops_halo_core));
       grp->halos = halos_temp;
       grp->nhalos++;
@@ -658,8 +859,8 @@ ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
     OPS_halo_group_list[OPS_halo_group_index++] = grp;
   } else {
     // printf("NON null grp, grp->nhalos = %d\n",grp->nhalos);
-    grp->halos = (ops_halo *)xrealloc(grp->halos, (grp->nhalos + 1) *
-                                                      sizeof(ops_halo_core));
+    grp->halos = (ops_halo *)ops_realloc(grp->halos, (grp->nhalos + 1) *
+                                                         sizeof(ops_halo_core));
     memcpy(&grp->halos[grp->nhalos], &halos[0], 1 * sizeof(ops_halo_core));
     grp->nhalos++;
   }
@@ -672,7 +873,7 @@ ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size,
   if (OPS_halo_index == OPS_halo_max) {
     OPS_halo_max += 10;
     OPS_halo_list =
-        (ops_halo *)realloc(OPS_halo_list, OPS_halo_max * sizeof(ops_halo));
+        (ops_halo *)ops_realloc(OPS_halo_list, OPS_halo_max * sizeof(ops_halo));
 
     if (OPS_halo_list == NULL) {
       printf("Error: ops_decl_halo_core -- error reallocating memory\n");
@@ -680,7 +881,7 @@ ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size,
     }
   }
 
-  ops_halo halo = (ops_halo)xmalloc(sizeof(ops_halo_core));
+  ops_halo halo = (ops_halo)ops_malloc(sizeof(ops_halo_core));
   halo->index = OPS_halo_index;
   halo->from = from;
   halo->to = to;
@@ -753,7 +954,7 @@ ops_reduction ops_decl_reduction_handle_core(int size, const char *type,
                                              const char *name) {
   if (OPS_reduction_index == OPS_reduction_max) {
     OPS_reduction_max += 10;
-    OPS_reduction_list = (ops_reduction *)realloc(
+    OPS_reduction_list = (ops_reduction *)ops_realloc(
         OPS_reduction_list, OPS_reduction_max * sizeof(ops_reduction));
 
     if (OPS_reduction_list == NULL) {
@@ -762,10 +963,10 @@ ops_reduction ops_decl_reduction_handle_core(int size, const char *type,
     }
   }
 
-  ops_reduction red = (ops_reduction)malloc(sizeof(ops_reduction_core));
+  ops_reduction red = (ops_reduction)ops_malloc(sizeof(ops_reduction_core));
   red->initialized = 0;
   red->size = size;
-  red->data = (char *)malloc(size * sizeof(char));
+  red->data = (char *)ops_malloc(size * sizeof(char));
   red->name = copy_str(name);
   red->type = copy_str(type);
   OPS_reduction_list[OPS_reduction_index] = red;
@@ -855,10 +1056,13 @@ void ops_dump3(ops_dat dat, const char *name) {
     */
 }
 
-void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name) {
-  // printf("file %s, name %s type = %s\n",file_name, dat->name, dat->type);
-
-  // TODO: this has to be backend-specific
+bool ops_checkpointing_filename(const char *file_name, char *filename_out, char *filename_out2);
+void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name_in)
+{
+  //printf("file %s, name %s type = %s\n",file_name, dat->name, dat->type);
+  char file_name[100];
+  ops_checkpointing_filename(file_name_in, file_name, NULL);
+  //TODO: this has to be backend-specific
   FILE *fp;
   if ((fp = fopen(file_name, "a")) == NULL) {
     printf("Error: can't open file %s\n", file_name);
@@ -892,185 +1096,95 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name) {
     exit(2);
   }
 
-  if (dat->block->dims == 3) {
-    if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
-        strcmp(dat->type, "double precision") == 0) {
-      for (int i = 0; i < dat->size[2]; i++) {
-        for (int j = 0; j < dat->size[1]; j++) {
-          for (int k = 0; k < dat->size[0]; k++) {
-            for (int d = 0; d < dat->dim; d++) {
-              if (fprintf(fp, " %3.10lf",
-                          ((double *)dat->data)
-                          [OPS_soa ? i * dat->size[1] * dat->size[0] + j * dat->size[0] + k + d * dat->size[2] * dat->size[1] * dat->size[0]
-                                   :(i * dat->size[1] * dat->size[0] + j * dat->size[0] + k)*dat->dim + d]) < 0) {
-                printf("Error: error writing to %s\n", file_name);
-                exit(2);
-              }
-            }
-          }
-          fprintf(fp, "\n");
-        }
-        fprintf(fp, "\n");
-      }
-    } else if (strcmp(dat->type, "float") == 0 ||
-               strcmp(dat->type, "real") == 0) {
-      for (int i = 0; i < dat->size[2]; i++) {
-        for (int j = 0; j < dat->size[1]; j++) {
-          for (int k = 0; k < dat->size[0]; k++) {
-            for (int d = 0; d < dat->dim; d++) {
-              if (fprintf(fp, "%e ",
-                          ((float *)dat->data)
-                          [OPS_soa ? i * dat->size[1] * dat->size[0] + j * dat->size[0] + k + d * dat->size[2] * dat->size[1] * dat->size[0]
-                                   :(i * dat->size[1] * dat->size[0] + j * dat->size[0] + k)*dat->dim + d]) < 0) {
-                printf("Error: error writing to %s\n", file_name);
-                exit(2);
-              }
-            }
-          }
-          fprintf(fp, "\n");
-        }
-        fprintf(fp, "\n");
-      }
-    } else if (strcmp(dat->type, "int") == 0 ||
-               strcmp(dat->type, "integer") == 0 ||
-               strcmp(dat->type, "integer(4)") == 0 ||
-               strcmp(dat->type, "int(4)") == 0) {
-      for (int i = 0; i < dat->size[2]; i++) {
-        for (int j = 0; j < dat->size[1]; j++) {
-          for (int k = 0; k < dat->size[0]; k++) {
-            for (int d = 0; d < dat->dim; d++) {
-              if (fprintf(fp, "%d ",
-                          ((int *)dat->data)
-                          [OPS_soa ? i * dat->size[1] * dat->size[0] + j * dat->size[0] + k + d * dat->size[2] * dat->size[1] * dat->size[0]
-                                   :(i * dat->size[1] * dat->size[0] + j * dat->size[0] + k)*dat->dim + d]) < 0) {
-                printf("Error: error writing to %s\n", file_name);
-                exit(2);
-              }
-            }
-          }
-          fprintf(fp, "\n");
-        }
-        fprintf(fp, "\n");
-      }
-    } else {
-      printf("Error: Unknown type %s, cannot be written to file %s\n",
-             dat->type, file_name);
-      exit(2);
-    }
-    fprintf(fp, "\n");
-  } else if (dat->block->dims == 2) {
-    if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
-        strcmp(dat->type, "double precision") == 0) {
-      for (int i = 0; i < dat->size[1]; i++) {
-        for (int j = 0; j < dat->size[0]; j++) {
-          for (int d = 0; d < dat->dim; d++) {
-            if (fprintf(fp, " %3.10lf",
-                        ((double *)dat->data)
-                        [OPS_soa ? (i * dat->size[0] + j) + d * dat->size[1]*dat->size[0]
-                                 : (i * dat->size[0] + j) * dat->dim + d]) <
-                0) {
-              printf("Error: error writing to %s\n", file_name);
-              exit(2);
-            }
-          }
-        }
-        fprintf(fp, "\n");
-      }
-    } else if (strcmp(dat->type, "float") == 0 ||
-               strcmp(dat->type, "real") == 0) {
-      for (int i = 0; i < dat->size[1]; i++) {
-        for (int j = 0; j < dat->size[0]; j++) {
-          for (int d = 0; d < dat->dim; d++) {
-            if (fprintf(fp, " %e",
-                        ((float *)dat->data)
-                        [OPS_soa ? (i * dat->size[0] + j) + d * dat->size[1]*dat->size[0]
-                                 : (i * dat->size[0] + j) * dat->dim + d]) < 0) {
-              printf("Error: error writing to %s\n", file_name);
-              exit(2);
-            }
-          }
-        }
-        fprintf(fp, "\n");
-      }
-    } else if (strcmp(dat->type, "int") == 0 ||
-               strcmp(dat->type, "integer") == 0 ||
-               strcmp(dat->type, "integer(4)") == 0 ||
-               strcmp(dat->type, "int(4)") == 0) {
-      for (int i = 0; i < dat->size[1]; i++) {
-        for (int j = 0; j < dat->size[0]; j++) {
-          for (int d = 0; d < dat->dim; d++) {
-            if (fprintf(
-                    fp, "%d ",
-                    ((int *)dat->data)
-                        [OPS_soa ? (i * dat->size[0] + j) + d * dat->size[1]*dat->size[0]
-                                 : (i * dat->size[0] + j) * dat->dim + d]) <
-                0) {
-              printf("Error: error writing to %s\n", file_name);
-              exit(2);
-            }
-          }
-        }
-        fprintf(fp, "\n");
-      }
-    } else {
-      printf("Error: Unknown type %s, cannot be written to file %s\n",
-             dat->type, file_name);
-      exit(2);
-    }
-    fprintf(fp, "\n");
-  } else if (dat->block->dims == 1) {
-
-    if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
-        strcmp(dat->type, "double precision") == 0) {
-      for (int j = 0; j < dat->size[0]; j++) {
-        for (int d = 0; d < dat->dim; d++) {
-          if (fprintf(fp, "%3.10lf", ((double *)dat->data)
-            [OPS_soa ? j + d * dat->size[0]
-                     : j * dat->dim + d]) <
-              0) {
-            printf("Error: error writing to %s\n", file_name);
-            exit(2);
-          }
-          if (d < dat->dim - 1)
-            fprintf(fp, " ");
-        }
-        fprintf(fp, "\n");
-      }
-    } else if (strcmp(dat->type, "float") == 0 ||
-               strcmp(dat->type, "real") == 0) {
-      for (int j = 0; j < dat->size[0]; j++) {
-        for (int d = 0; d < dat->dim; d++) {
-          if (fprintf(fp, "%e\n", ((float *)dat->data)
-            [OPS_soa ? j + d * dat->size[0]
-                     : j * dat->dim + d]) < 0) {
-            printf("Error: error writing to %s\n", file_name);
-            exit(2);
-          }
-        }
-      }
-      fprintf(fp, "\n");
-    } else if (strcmp(dat->type, "int") == 0 ||
-               strcmp(dat->type, "integer") == 0 ||
-               strcmp(dat->type, "integer(4)") == 0 ||
-               strcmp(dat->type, "int(4)") == 0) {
-      for (int j = 0; j < dat->size[0]; j++) {
-        for (int d = 0; d < dat->dim; d++) {
-          if (fprintf(fp, "%d\n", ((int *)dat->data)
-            [OPS_soa ? j + d * dat->size[0]
-                     : j * dat->dim + d]) < 0) {
-            printf("Error: error writing to %s\n", file_name);
-            exit(2);
-          }
-        }
-      }
-      fprintf(fp, "\n");
-    } else {
-      printf("Error: Unknown type %s, cannot be written to file %s\n",
-             dat->type, file_name);
-      exit(2);
-    }
-    fprintf(fp, "\n");
+  size_t prod[OPS_MAX_DIM+1];
+  prod[0] = dat->size[0];
+  for (int d = 1; d < OPS_MAX_DIM; d++) {
+    prod[d] = prod[d-1] * dat->size[d];
   }
+  for (int d = OPS_MAX_DIM; d <= OPS_MAX_DIM; d++)
+    prod[d] = prod[d-1];
+
+#if OPS_MAX_DIM > 5
+  for (int n = 0; n < dat->size[5]; n++) {
+#else
+  {
+  int n = 0;
+#endif
+  #if OPS_MAX_DIM > 4
+    for (int m = 0; m < dat->size[4]; m++) {
+  #else
+    {
+    int m = 0;
+  #endif
+    #if OPS_MAX_DIM > 3
+      for (int l = 0; l < dat->size[3]; l++) {
+    #else
+      {
+      int l = 0;
+    #endif
+      #if OPS_MAX_DIM > 2
+        for (int k = 0; k < dat->size[2]; k++) {
+      #else
+        {
+        int k = 0;
+      #endif
+        #if OPS_MAX_DIM > 1
+          for (int j = 0; j < dat->size[1]; j++) {
+        #else
+          {
+          int j = 0;
+        #endif
+          #if OPS_MAX_DIM > 0
+            for (int i = 0; i < dat->size[0]; i++) {
+          #else
+            {
+            int i = 0;
+          #endif
+
+              for (int d = 0; d < dat->dim; d++) {
+
+                size_t offset = OPS_soa ?
+                        (n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i + d * prod[5])
+                      :((n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i)*dat->dim + d);
+                if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
+                    strcmp(dat->type, "double precision") == 0) {
+                  if (fprintf(fp, " %3.10lf", ((double *)dat->data)[offset]) < 0) {
+                    printf("Error: error writing to %s\n", file_name);
+                    exit(2);
+                  }
+                } else if (strcmp(dat->type, "float") == 0 ||
+                           strcmp(dat->type, "real") == 0) {
+                  if (fprintf(fp, "%e ", ((float *)dat->data)[offset]) < 0) {
+                    printf("Error: error writing to %s\n", file_name);
+                    exit(2);
+                  }
+                } else if (strcmp(dat->type, "int") == 0 ||
+                           strcmp(dat->type, "integer") == 0 ||
+                           strcmp(dat->type, "integer(4)") == 0 ||
+                          strcmp(dat->type, "int(4)") == 0) {
+                  if (fprintf(fp, "%d ", ((int *)dat->data)[offset]) < 0) {
+                    printf("Error: error writing to %s\n", file_name);
+                    exit(2);
+                  }
+                } else {
+                  printf("Error: Unknown type %s, cannot be written to file %s\n",
+                         dat->type, file_name);
+                  exit(2);
+                }
+              } //d
+            } //i
+            if (dat->size[0] > 1) fprintf(fp, "\n");
+          }//j
+          if (dat->size[1] > 1) fprintf(fp, "\n");
+        }//k
+        if (dat->size[2] > 1) fprintf(fp, "\n");
+      }//l
+      if (dat->size[3] > 1) fprintf(fp, "\n");
+    }//m
+    if (dat->size[4] > 1) fprintf(fp, "\n");
+  }//n
+  if (dat->size[5] > 1) fprintf(fp, "\n");
+
   fclose(fp);
 }
 
@@ -1093,7 +1207,7 @@ void ops_timing_output(FILE *stream) {
         printf("Too long\n");
       }
     }
-    char *buf = (char *)malloc((maxlen + 180) * sizeof(char));
+    char *buf = (char *)ops_malloc((maxlen + 180) * sizeof(char));
     char buf2[180];
     sprintf(buf, "Name");
     for (int i = 4; i < maxlen; i++)
@@ -1114,7 +1228,7 @@ void ops_timing_output(FILE *stream) {
                          &moments_time[1]);
       ops_compute_moment(OPS_kernels[k].mpi_time, &moments_mpi_time[0],
                          &moments_mpi_time[1]);
-                             
+
       if (OPS_kernels[k].count < 1)
         continue;
       sprintf(buf, "%s", OPS_kernels[k].name);
@@ -1152,11 +1266,16 @@ void ops_timing_output(FILE *stream) {
 }
 
 void ops_timers_core(double *cpu, double *et) {
+#ifdef __unix__
   (void)cpu;
   struct timeval t;
 
   gettimeofday(&t, (struct timezone *)0);
   *et = t.tv_sec + t.tv_usec * 1.0e-6;
+#elif defined(_WIN32) || defined(WIN32)
+  DWORD time = GetTickCount();
+  *et = ((double)time)/1000.0;
+#endif
 }
 
 void ops_timing_realloc(int kernel, const char *name) {
@@ -1165,8 +1284,8 @@ void ops_timing_realloc(int kernel, const char *name) {
 
   if (kernel >= OPS_kern_max) {
     OPS_kern_max_new = kernel + 10;
-    OPS_kernels = (ops_kernel *)realloc(OPS_kernels,
-                                        OPS_kern_max_new * sizeof(ops_kernel));
+    OPS_kernels = (ops_kernel *)ops_realloc(
+        OPS_kernels, OPS_kern_max_new * sizeof(ops_kernel));
     if (OPS_kernels == NULL) {
       printf("Error: ops_timing_realloc error \n");
       exit(-1);
@@ -1183,22 +1302,11 @@ void ops_timing_realloc(int kernel, const char *name) {
 
   if (OPS_kernels[kernel].count == -1) {
     OPS_kernels[kernel].name =
-        (char *)malloc((strlen(name) + 1) * sizeof(char));
+        (char *)ops_malloc((strlen(name) + 1) * sizeof(char));
     strcpy(OPS_kernels[kernel].name, name);
     OPS_kernels[kernel].count = 0;
   }
 }
-
-/*float ops_compute_transfer(int dims, int *range, ops_arg *arg) {
-  float size = 1.0f;
-  for (int i = 0; i < dims; i++) {
-    if (arg->stencil->stride[i] != 0)
-      size *= (range[2*i+1]-range[2*i]);
-  }
-  size *= arg->dat->elem_size*((arg->argtype==OPS_READ ||
-arg->argtype==OPS_WRITE) ? 1.0f : 2.0f);
-  return size;
-}*/
 
 float ops_compute_transfer(int dims, int *start, int *end, ops_arg *arg) {
   float size = 1.0f;
@@ -1305,6 +1413,139 @@ int ops_stencil_check_3d(int arg_idx, int idx0, int idx1, int idx2, int dim0,
   return idx0 + dim0 * (idx1) + dim0 * dim1 * (idx2);
 }
 
+int ops_stencil_check_4d(int arg_idx, int idx0, int idx1, int idx2, int idx3, int dim0,
+                         int dim1, int dim2) {
+  if (OPS_curr_args) {
+    int match = 0;
+    for (int i = 0; i < OPS_curr_args[arg_idx].stencil->points; i++) {
+      if (OPS_curr_args[arg_idx].stencil->stencil[4 * i] == idx0 &&
+          OPS_curr_args[arg_idx].stencil->stencil[4 * i + 1] == idx1 &&
+          OPS_curr_args[arg_idx].stencil->stencil[4 * i + 2] == idx2 &&
+          OPS_curr_args[arg_idx].stencil->stencil[4 * i + 3] == idx3) {
+        match = 1;
+        break;
+      }
+    }
+    if (match == 0) {
+      printf("Error: stencil point (%d,%d,%d,%d) not found in declaration %s in "
+             "loop %s arg %d\n",
+             idx0, idx1, idx2, idx3, OPS_curr_args[arg_idx].stencil->name,
+             OPS_curr_name, arg_idx);
+      exit(-1);
+    }
+  }
+  return idx0 + dim0 * (idx1) + dim0 * dim1 * (idx2) + dim0 * dim1 * dim2 * idx3;
+}
+
+int ops_stencil_check_5d(int arg_idx, int idx0, int idx1, int idx2, int idx3, int idx4, int dim0,
+                         int dim1, int dim2, int dim3) {
+  if (OPS_curr_args) {
+    int match = 0;
+    for (int i = 0; i < OPS_curr_args[arg_idx].stencil->points; i++) {
+      if (OPS_curr_args[arg_idx].stencil->stencil[5 * i] == idx0 &&
+          OPS_curr_args[arg_idx].stencil->stencil[5 * i + 1] == idx1 &&
+          OPS_curr_args[arg_idx].stencil->stencil[5 * i + 2] == idx2 &&
+          OPS_curr_args[arg_idx].stencil->stencil[5 * i + 3] == idx3 &&
+          OPS_curr_args[arg_idx].stencil->stencil[5 * i + 4] == idx4) {
+        match = 1;
+        break;
+      }
+    }
+    if (match == 0) {
+      printf("Error: stencil point (%d,%d,%d,%d,%d) not found in declaration %s in "
+             "loop %s arg %d\n",
+             idx0, idx1, idx2, idx3, idx4, OPS_curr_args[arg_idx].stencil->name,
+             OPS_curr_name, arg_idx);
+      exit(-1);
+    }
+  }
+  return idx0 + dim0 * (idx1) + dim0 * dim1 * (idx2) + dim0 * dim1 * dim2 * idx3 + dim0 * dim1 * dim2 * dim3 * idx4;
+}
+
+
+void ops_NaNcheck_core(ops_dat dat, char *buffer) {
+
+  size_t prod[OPS_MAX_DIM+1];
+  prod[0] = dat->size[0];
+  for (int d = 1; d < OPS_MAX_DIM; d++) {
+    prod[d] = prod[d-1] * dat->size[d];
+  }
+  for (int d = OPS_MAX_DIM; d <= OPS_MAX_DIM; d++)
+    prod[d] = prod[d-1];
+
+#if OPS_MAX_DIM > 5
+  for (int n = 0; n < dat->size[5]; n++) {
+#else
+  {
+  int n = 0;
+#endif
+  #if OPS_MAX_DIM > 4
+    for (int m = 0; m < dat->size[4]; m++) {
+  #else
+    {
+    int m = 0;
+  #endif
+    #if OPS_MAX_DIM > 3
+      for (int l = 0; l < dat->size[3]; l++) {
+    #else
+      {
+      int l = 0;
+    #endif
+      #if OPS_MAX_DIM > 2
+        for (int k = 0; k < dat->size[2]; k++) {
+      #else
+        {
+        int k = 0;
+      #endif
+        #if OPS_MAX_DIM > 1
+          for (int j = 0; j < dat->size[1]; j++) {
+        #else
+          {
+          int j = 0;
+        #endif
+          #if OPS_MAX_DIM > 0
+            for (int i = 0; i < dat->size[0]; i++) {
+          #else
+            {
+            int i = 0;
+          #endif
+
+              for (int d = 0; d < dat->dim; d++) {
+
+                size_t offset = OPS_soa ?
+                        (n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i + d * prod[5])
+                      :((n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i)*dat->dim + d);
+                if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
+                    strcmp(dat->type, "double precision") == 0) {
+                  if (  isnan(((double *)dat->data)[offset])  ) {
+                    printf("%sError: NaN detected at element %d\n", buffer, offset);
+                    exit(2);
+                  }
+                } else if (strcmp(dat->type, "float") == 0 ||
+                           strcmp(dat->type, "real") == 0) {
+                  if (  isnan(((float *)dat->data)[offset])  ) {
+                    printf("%sError: NaN detected at element %d\n", buffer, offset);
+                    exit(2);
+                  }
+                } else if (strcmp(dat->type, "int") == 0 ||
+                           strcmp(dat->type, "integer") == 0 ||
+                           strcmp(dat->type, "integer(4)") == 0 ||
+                          strcmp(dat->type, "int(4)") == 0) {
+                  // do nothing
+                } else {
+                  printf("Error: Unknown type %s, cannot check for NaNs\n", dat->type);
+                  exit(2);
+                }
+              } //d
+            } //i
+          }//j
+        }//k
+      }//l
+    }//m
+  }//n
+}
+
+
 /* Called from Fortran to set the indices to C*/
 ops_halo ops_decl_halo_convert(ops_dat from, ops_dat to, int *iter_size,
                                int *from_base, int *to_base, int *from_dir,
@@ -1334,4 +1575,55 @@ void setKernelTime(int id, char name[], double kernelTime, double mpiTime,
   OPS_kernels[id].time += (float)kernelTime;
   OPS_kernels[id].mpi_time += (float)mpiTime;
   OPS_kernels[id].transfer += transfer;
+}
+
+void *ops_malloc(size_t size) {
+//#ifdef __INTEL_COMPILER
+  // return _mm_malloc(size, OPS_ALIGNMENT);
+  void *ptr;
+  posix_memalign((void**)&(ptr), OPS_ALIGNMENT, size);
+  return ptr;
+//memalign(OPS_ALIGNMENT, size);
+//#else
+//  return xmalloc(size);
+//#endif
+}
+
+void *ops_calloc(size_t num, size_t size) {
+//#ifdef __INTEL_COMPILER
+  // void * ptr = _mm_malloc(num*size, OPS_ALIGNMENT);
+  void *ptr;
+  posix_memalign((void**)&(ptr), OPS_ALIGNMENT, num*size);
+  memset(ptr, 0, num * size);
+  return ptr;
+//#else
+//  return xcalloc(num, size);
+//#endif
+}
+
+void *ops_realloc(void *ptr, size_t size) {
+//#ifdef __INTEL_COMPILER
+  void *newptr = xrealloc(ptr, size);
+  if (((unsigned long)newptr & (OPS_ALIGNMENT - 1)) != 0) {
+    void *newptr2;
+    posix_memalign((void**)&(newptr2), OPS_ALIGNMENT, size);
+    // void *newptr2 = _mm_malloc(size, OPS_ALIGNMENT);
+    memcpy(newptr2, newptr, size);
+    free(newptr);
+    return newptr2;
+  } else {
+    return newptr;
+  }
+//#else
+//  return xrealloc(ptr, size);
+//#endif
+}
+
+void ops_free(void *ptr) {
+//#ifdef __INTEL_COMPILER
+  //_mm_free(ptr);
+  free(ptr);
+//#else
+//  free(ptr);
+//#endif
 }
