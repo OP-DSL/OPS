@@ -829,11 +829,11 @@ def main(source_files):
   #
 
 
-  ops_gen_mpi_inline(str(source_files[0]), date, consts, kernels, soa_set)
-  ops_gen_mpi_lazy(str(source_files[0]), date, consts, kernels, soa_set)
+  # ops_gen_mpi_inline(str(source_files[0]), date, consts, kernels, soa_set)
+  # ops_gen_mpi_lazy(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_cuda(str(source_files[0]), date, consts, kernels, soa_set)
-  ops_gen_mpi_openacc(str(source_files[0]), date, consts, kernels, soa_set)
-  ops_gen_mpi_opencl(str(source_files[0]), date, consts, kernels, soa_set)
+  # ops_gen_mpi_openacc(str(source_files[0]), date, consts, kernels, soa_set)
+  # ops_gen_mpi_opencl(str(source_files[0]), date, consts, kernels, soa_set)
 
   import subprocess
   retcode = subprocess.call("which clang-format > /dev/null", shell=True)
