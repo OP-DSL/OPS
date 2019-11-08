@@ -51,7 +51,7 @@ ifdef HDF5_INSTALL_PATH
 endif
 
 ifdef CUDA_INSTALL_PATH
-	TARGETS += cuda mpi_cuda
+	TARGETS += cuda
 endif
 
 ifdef OPENCL_INSTALL_PATH
