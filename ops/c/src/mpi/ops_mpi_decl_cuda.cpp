@@ -37,12 +37,12 @@
   */
 
 #include <mpi.h>
-#include <ops_mpi_core.h>
-
 #include <cuda.h>
 #include <cuda_runtime_api.h>
-#include <math_constants.h>
 #include <ops_cuda_rt_support.h>
+#include <ops_mpi_core.h>
+
+#include <math_constants.h>
 #include <ops_exceptions.h>
 
 extern char *halo_buffer_d;
@@ -51,11 +51,11 @@ extern char *ops_buffer_recv_1;
 extern char *ops_buffer_send_2;
 extern char *ops_buffer_recv_2;
 
-void ops_init_cuda(const int argc, const char **argv, const int diags) {
-  ops_init_core(argc, argv, diags);
+void ops_init_cuda(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
+  ops_init_core(instance, argc, argv, diags);
 
-  if ((OPS_instance::getOPSInstance()->OPS_block_size_x * OPS_instance::getOPSInstance()->OPS_block_size_y * OPS_instance::getOPSInstance()->OPS_block_size_z) > 1024) {
-    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_instance::getOPSInstance()->OPS_block_size_x*OPS_instance::getOPSInstance()->OPS_block_size_y*OPS_instance::getOPSInstance()->OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
+  if ((instance->OPS_block_size_x * instance->OPS_block_size_y * instance->OPS_block_size_z) > 1024) {
+    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
   }
 
 #if CUDART_VERSION < 3020
@@ -66,22 +66,41 @@ void ops_init_cuda(const int argc, const char **argv, const int diags) {
 #warning : " *** no support for double precision arithmetic *** "
 #endif
 
-  cutilDeviceInit(argc, argv);
+  cutilDeviceInit(instance, argc, argv);
 
 // \warning add -DSET_CUDA_CACHE_CONFIG to compiling line
 // for this file when implementing C OPS.
 //
 
 #ifdef SET_CUDA_CACHE_CONFIG
-  cutilSafeCall(cudaDeviceSetCacheConfig(cudaFuncCachePreferShared));
+  cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaDeviceSetCacheConfig(cudaFuncCachePreferShared));
 #else
-  cutilSafeCall(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
+  cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 #endif
 
   ops_printf("\n 16/48 L1/shared \n");
 }
 
-void ops_init(const int argc, const char **argv, const int diags) {
+
+// The one and only non-threads safe global OPS_instance
+// Declared in ops_instance.cpp
+extern OPS_instance *global_ops_instance;
+
+
+void _ops_init(OPS_instance *instance, const int argc, const char * const argv[], const int diags) {
+  //We do not have thread safety across MPI
+  if ( OPS_instance::numInstances() != 1 ) {
+    OPSException ex(OPS_RUNTIME_ERROR, "ERROR: multiple OPS instances are not suppoerted over MPI");
+    throw ex;
+  }
+  // So the MPI backend is not thread safe - that's fine.  It currently does not pass 
+  // OPS_instance pointers around, but rather uses the global instance exclusively.
+  // The only feasible use-case for MPI is that there is one OPS_instance.  Ideally that
+  // would not be created via thread-safe API, but we kinda want to support that.  So we 
+  // drill a back door into our own safety system: provided there is only one OPS_instance,
+  // we assign that to the global non-thread safe var and carry on.
+  global_ops_instance = instance;
+
   int flag = 0;
   MPI_Initialized(&flag);
   if (!flag) {
@@ -92,30 +111,39 @@ void ops_init(const int argc, const char **argv, const int diags) {
   MPI_Comm_rank(OPS_MPI_GLOBAL, &ops_my_global_rank);
   MPI_Comm_size(OPS_MPI_GLOBAL, &ops_comm_global_size);
 
-  ops_init_cuda(argc, argv, diags);
+  ops_init_cuda(instance, argc, argv, diags);
 }
 
-void ops_exit() {
-  ops_mpi_exit();
+void ops_init(const int argc, const char *const argv[], const int diags) {
+  _ops_init(OPS_instance::getOPSInstance(), argc, argv, diags);
+}
+
+void _ops_exit(OPS_instance *instance) {
+  if (instance->is_initialised == 0) return;
+  ops_mpi_exit(instance);
   if (halo_buffer_d != NULL)
-    cutilSafeCall(cudaFree(halo_buffer_d));
+    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(halo_buffer_d));
   if (OPS_instance::getOPSInstance()->OPS_gpu_direct) {
-    cutilSafeCall(cudaFree(ops_buffer_send_1));
-    cutilSafeCall(cudaFree(ops_buffer_recv_1));
-    cutilSafeCall(cudaFree(ops_buffer_send_2));
-    cutilSafeCall(cudaFree(ops_buffer_recv_2));
+    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(ops_buffer_send_1));
+    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(ops_buffer_recv_1));
+    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(ops_buffer_send_2));
+    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(ops_buffer_recv_2));
   } else {
-    cutilSafeCall(cudaFreeHost(ops_buffer_send_1));
-    cutilSafeCall(cudaFreeHost(ops_buffer_recv_1));
-    cutilSafeCall(cudaFreeHost(ops_buffer_send_2));
-    cutilSafeCall(cudaFreeHost(ops_buffer_recv_2));
+    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ops_buffer_send_1));
+    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ops_buffer_recv_1));
+    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ops_buffer_send_2));
+    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ops_buffer_recv_2));
   }
   int flag = 0;
   MPI_Finalized(&flag);
   if (!flag)
     MPI_Finalize();
-  ops_cuda_exit();
-  ops_exit_core();
+  ops_cuda_exit(instance);
+  ops_exit_core(instance);
+}
+
+void ops_exit() {
+  _ops_exit(OPS_instance::getOPSInstance());
 }
 
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
@@ -141,7 +169,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
       OPS_sub_dat_list, OPS_instance::getOPSInstance()->OPS_dat_index * sizeof(sub_dat_list));
 
   // store away product array prod[] and MPI_Types for this ops_dat
-  sub_dat_list sd = (sub_dat_list)ops_malloc(sizeof(sub_dat));
+  sub_dat_list sd = (sub_dat_list)ops_calloc(1, sizeof(sub_dat));
   sd->dat = dat;
   sd->dirtybit = 1;
   sd->dirty_dir_send =
@@ -163,7 +191,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
 }
 
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
-  ops_execute();
+  ops_execute(handle->instance);
   ops_checkpointing_reduction(handle);
   memcpy(ptr, handle->data, handle->size);
   handle->initialized = 0;
@@ -173,9 +201,15 @@ void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
 void ops_get_data(ops_dat dat) { ops_cuda_get_data(dat); }
 void ops_put_data(ops_dat dat) { ops_cuda_put_data(dat); }
 
+ops_halo _ops_decl_halo(OPS_instance *instance, ops_dat from, ops_dat to, int *iter_size, int *from_base,
+                       int *to_base, int *from_dir, int *to_dir) {
+  return ops_decl_halo_core(instance, from, to, iter_size, from_base, to_base, from_dir,
+                            to_dir);
+}
+
 ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int *from_base,
                        int *to_base, int *from_dir, int *to_dir) {
-  return ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir,
+  return ops_decl_halo_core(from->block->instance, from, to, iter_size, from_base, to_base, from_dir,
                             to_dir);
 }
 
@@ -202,10 +236,10 @@ int getOPS_block_size_x() { return OPS_instance::getOPSInstance()->OPS_block_siz
 int getOPS_block_size_y() { return OPS_instance::getOPSInstance()->OPS_block_size_y; }
 int getOPS_block_size_z() { return OPS_instance::getOPSInstance()->OPS_block_size_z; }
 
-extern "C" void ops_pack_cuda_internal(ops_dat dat, const int src_offset, char *__restrict dest,
+void ops_pack_cuda_internal(ops_dat dat, const int src_offset, char *__restrict dest,
               const int halo_blocklength, const int halo_stride, const int halo_count);
 
-extern "C" void ops_unpack_cuda_internal(ops_dat dat, const int dest_offset, const char *__restrict src,
+void ops_unpack_cuda_internal(ops_dat dat, const int dest_offset, const char *__restrict src,
                 const int halo_blocklength, const int halo_stride, const int halo_count);
 
 

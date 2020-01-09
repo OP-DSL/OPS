@@ -52,7 +52,7 @@ double dx,dy;
 /******************************************************************************
 * Main program
 *******************************************************************************/
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 {
   /**-------------------------- Initialisation --------------------------**/
 
@@ -247,7 +247,7 @@ int main(int argc, const char **argv)
 
   for (int iter = 0; iter < n_iter; iter++) {
     if (ngrid_x>1 || ngrid_y>1) ops_halo_transfer(u_halos);
-    if (iter%itertile == 0) ops_execute();
+    if (iter%itertile == 0) ops_execute(blocks[0]->instance);
 
     for (int j = 0; j < ngrid_y; j++) {
       for (int i = 0; i < ngrid_x; i++) {
@@ -278,7 +278,7 @@ int main(int argc, const char **argv)
 			}
 		}
   }
-	ops_execute();
+	ops_execute(blocks[0]->instance);
   ops_timers(&ct0, &it1);
 
   //ops_print_dat_to_txtfile(u[0], "poisson.dat");
@@ -299,7 +299,7 @@ int main(int argc, const char **argv)
   ops_reduction_result(red_err,&err);
 
   ops_timers(&ct1, &et1);
-  ops_timing_output(stdout);
+  ops_timing_output(std::cout);
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
   double err_diff=fabs((100.0*(err/20.727007094619303))-100.0);
   ops_printf("Total error: %3.15g\n",err);

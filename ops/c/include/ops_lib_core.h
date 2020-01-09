@@ -40,20 +40,11 @@
 #ifndef __OPS_LIB_CORE_H
 #define __OPS_LIB_CORE_H
 
-#include <float.h>
-#include <limits.h>
-#include <math.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
+// Needed for size_t
 #include <string.h>
 #include "queue.h" //contains double linked list implementation
 #include <strings.h>
-#include <stdexcept>
-
-#include "ops_macros.h"
-#include "ops_util.h"
+#include <complex.h>
 
 /** default byte alignment for allocations made by OPS */
 #ifndef OPS_ALIGNMENT
@@ -74,22 +65,8 @@
  */
 #define OPS_MAX_DIM 5
 
-/**
- * maximum number of simulataneous OPS instances 
- * in a shared memory environment
- */
-#ifndef OPS_MAX_INSTANCES
-#define OPS_MAX_INSTANCES 64
-#endif 
-
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-
-#include "ops_macros.h"
-#include "ops_util.h"
-
 /*
-* enum list for ops_par_loop
+* essential typedefs
 */
 
 #define OPS_READ 0
@@ -132,41 +109,131 @@
 #define INFINITY_ull ULLONG_MAX;
 
 #define ZERO_bool 0;
+typedef std::complex<double> complexd;
+typedef std::complex<float> complexf;
 
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/*
-* essential typedefs
-*/
-#ifndef __PGI
-typedef unsigned int uint;
-#endif
-typedef long long ll;
-typedef unsigned long long ull;
+/**
+ * type for memory space flags - 1 for host, 2 for device
+ */
+typedef int ops_memspace;
+#define OPS_HOST 1
+#define OPS_DEVICE 2
 
 typedef int ops_access;   // holds OP_READ, OP_WRITE, OP_RW, OP_INC, OP_MIN,
                           // OP_MAX
 typedef int ops_arg_type; // holds OP_ARG_GBL, OP_ARG_DAT
 
+
 /*
-* structures
+* Forward declarations of structures
 */
+class OPS_instance;
+class ops_block_core;
+class ops_dat_core;
+struct ops_reduction_core;
+struct ops_arg;
+
 
 /** Storage for OPS blocks */
-typedef struct {
+class ops_block_core {
+public:
   int index;        /**< index */
   int dims;         /**< dimension of block, 2D,3D .. etc*/
   char const *name; /**< name of block */
-} ops_block_core;
+  OPS_instance *instance; /**<< pointer the the OPS_instance*/
+
+#ifdef OPS_CPP_API
+/**
+ * This routine defines a dataset.
+ *
+ * The @p size allows to declare different sized data arrays on a given block.
+ * @p d_m and @p d_p are depth of the "block halos" that are used to indicate
+ * the offset from the edge of a block (in both the negative and positive
+ * directions of each dimension).
+ *
+ * @tparam T
+ * @param data_size   dimension of dataset (number of items per grid element)
+ * @param block_size  size in each dimension of the block
+ * @param base        base indices in each dimension of the block
+ * @param d_m         padding from the face in the negative direction for each
+ *                    dimension (used for block halo)
+ * @param d_p         padding from the face in the positive direction for each
+ *                    dimension (used for block halo)
+ * @param stride
+ * @param data        input data of type @p T
+ * @param type        the name of type used for output diagnostics
+ *                    (e.g. "double", "float")
+ * @param name        a name used for output diagnostics
+ * @return
+ */
+  template <class T>
+  ops_dat_core* decl_dat(int data_size, int *block_size, int *base,
+        int *d_m, int *d_p, int *stride, T *data, char const *type,
+        char const *name);
+/**
+ * This routine defines a dataset.
+ *
+ * The @p size allows to declare different sized data arrays on a given block.
+ * @p d_m and @p d_p are depth of the "block halos" that are used to indicate
+ * the offset from the edge of a block (in both the negative and positive
+ * directions of each dimension).
+ *
+ * @tparam T
+ * @param data_size   dimension of dataset (number of items per grid element)
+ * @param block_size  size in each dimension of the block
+ * @param base        base indices in each dimension of the block
+ * @param d_m         padding from the face in the negative direction for each
+ *                    dimension (used for block halo)
+ * @param d_p         padding from the face in the positive direction for each
+ *                    dimension (used for block halo)
+ * @param data        input data of type @p T
+ * @param type        the name of type used for output diagnostics
+ *                    (e.g. "double", "float")
+ * @param name        a name used for output diagnostics
+ * @return
+ */
+  template <class T>
+  ops_dat_core* decl_dat(int data_size, int *block_size, int *base,
+        int *d_m, int *d_p, T *data, char const *type,
+        char const *name);
+#endif
+};
 
 typedef ops_block_core *ops_block;
 
+/** Storage for OPS reduction handles */
+struct ops_reduction_core {
+  char *data;       /**< The data */
+  int size;         /**< size of data in bytes */
+  int initialized;  /**< flag indicating whether data has been initialized */
+  int index;        /**< unique identifier */
+  ops_access acc;   /**< Type of reduction it was used for last time */
+  char *type; /**< Type */
+  char *name; /**< Name */
+  OPS_instance *instance;
+#ifdef OPS_CPP_API
+
+/**
+ * This routine returns the reduced value held by a reduction handle. During lazy execution,
+ * this will trigger the execution of all preceding queued operations
+ *
+ * @tparam T
+ * @param handle  the ::ops_reduction handle
+ * @param ptr     a pointer to write the results to, memory size has to match
+ *                the declared
+ */
+  template <class T> void get_result(T *ptr);
+#endif
+};
+
+typedef ops_reduction_core *ops_reduction;
+
+
+class ops_stencil_core;
+
 /** Storage for OPS datasets */
-typedef struct {
+class ops_dat_core {
+  public:
   int index;             /**< index */
   ops_block block;       /**< block on which data is defined */
   int dim;               /**< number of elements per grid point */
@@ -192,37 +259,131 @@ typedef struct {
   char const *hdf5_file; /**< name of hdf5 file from which this dataset was
                           *   read */
   int e_dat;             /**< flag to indicate if this is an edge dat */
-  long mem;              /**< memory in bytes allocated to this dat (under MPI,
+  size_t mem;              /**< memory in bytes allocated to this dat (under MPI,
                           *   this will be memory held on a single MPI proc) */
-  long base_offset;      /**< computed quantity, giving offset in bytes to the
+  size_t base_offset;      /**< computed quantity, giving offset in bytes to the
                           *   base index */
   int stride[OPS_MAX_DIM];/**< stride[*] > 1 if this dat is a coarse dat under
                            *   multi-grid*/
-} ops_dat_core;
+
+#ifdef OPS_CPP_API
+/**
+ * Deallocates an OPS dataset
+ */
+  void free();
+/**
+ * Write the details of an ::ops_block to a named text file.
+ *
+ * When used under an MPI parallelization each MPI process will write its own
+ * data set separately to the text file. As such it does not use MPI I/O.
+ * The data can be viewed using a simple text editor
+ * @param file_name  text file to write to
+ */
+  void print_to_txtfile(const char *file_name);
+/**
+ * Makes sure OPS has downloaded data from the device
+ */
+  void get_data();
+/**
+ * This routine returns the number of chunks of the given dataset held by the
+ * current process.
+ *
+ * @return
+ */
+  int  get_local_npartitions();
+/**
+ * This routine returns the MPI displacement and size of a given chunk of the
+ * given dataset on the current process.
+ *
+ * @param dat   the dataset
+ * @param part  the chunk index (has to be 0)
+ * @param disp  an array populated with the displacement of the chunk within the
+ *              "global" distributed array
+ * @param size  an array populated with the spatial extents
+ */
+  void get_extents(int part, int *disp, int *size);
+
+/**
+ * This routine returns array shape metadata corresponding to the ops_dat.
+ * Any of the arguments may be NULL.
+ *
+ * @param part     the chunk index (has to be 0)
+ * @param disp     an array populated with the displacement of the chunk within the
+ *                 "global" distributed array
+ * @param size     an array populated with the spatial extents
+ * @param stride   an array populated strides in spatial dimensions needed for
+ *                 column-major indexing
+ * @param d_m      an array populated with padding on the left in each dimension
+ *                 note that these are negative values
+ * @param d_p      an array populated with padding on the right in each dimension
+ */
+  void get_raw_metadata(int part, int *disp, int *size, int *stride, int *d_m, int *d_p);
+/**
+ * This routine returns a pointer to the internally stored data, with MPI halo
+ * regions automatically updated as required by the supplied stencil.
+ * The strides required to index into the dataset are also given.
+ *
+ * @param part     the chunk index (has to be 0)
+ * @param stencil  a stencil used to determine required MPI halo exchange depths
+ * @param memspace when set to OPS_HOST or OPS_DEVICE, returns a pointer to data in
+ *                 that memory space, otherwise must be set to 0, and returns
+ *                 whether data is in the host or on the device
+ *
+ * @return
+ */  
+  char* get_raw_pointer(int part, ops_stencil_core *stencil, ops_memspace *memspace);
+/**
+ * Indicates to OPS that a dataset previously accessed with
+ * ops_dat_get_raw_pointer() is released by the user, and also tells OPS how it
+ * was accessed.
+ *
+ * @param dat   the dataset
+ * @param part  the chunk index (has to be 0
+ * @param acc   the kind of access that was used by the user
+ *              (::OPS_READ if it was read only,
+ *              ::OPS_WRITE if it was overwritten,
+ *              ::OPS_RW if it was read and written)
+ */
+  void release_raw_data(int part, ops_access acc);
+/**
+ * This routine copies the data held by OPS to the user-specified
+ * memory location, which needs to be at least as large as indicated
+ * by the `sizes` parameter of ops_dat_get_extents().
+
+ * @param part  the chunk index (has to be 0)
+ * @param data  pointer to CPU memory which should be filled by OPS
+ */
+  void fetch_data(int part, char *data);
+/**
+ * This routine copies the data given by the user to the internal data structure
+ * used by OPS.
+ *
+ * User data needs to be laid out in column-major order and strided as indicated
+ * by the `sizes` parameter of ops_dat_get_extents().
+ *
+ * @param dat   the dataset
+ * @param part  the chunk index (has to be 0)
+ * @param data  pointer to CPU memory which should be copied to OPS
+ */
+  void set_data(int part, char *data);
+/**
+ * This routine returns the number of chunks of the given dataset held by all
+ * processes.
+ *
+ * @return
+ */
+  int get_global_npartitions();
+  ~ops_dat_core() {
+    this->free();
+  }
+#endif
+};
 
 typedef ops_dat_core *ops_dat;
 
-// struct definition for a double linked list entry to hold an ops_dat
-struct ops_dat_entry_core {
-  ops_dat dat;
-  TAILQ_ENTRY(ops_dat_entry_core)
-  entries; /**< holds pointers to next and previous entries in the list*/
-};
-
-typedef struct ops_dat_entry_core ops_dat_entry;
-
-typedef TAILQ_HEAD(, ops_dat_entry_core) Double_linked_list;
-
-/** Storage for OPS block - OPS dataset associations */
-typedef struct {
-  ops_block_core *block;        /**< pointer to the block */
-  Double_linked_list datasets;  /**< list of datasets associated with this block */
-  int num_datasets;             /**< number of datasets */
-
-} ops_block_descriptor;
-
 /** Storage for OPS stencils */
-typedef struct {
+class ops_stencil_core {
+public:
   int index;        /**< index */
   int dims;         /**< dimensionality of the stencil */
   int points;       /**< number of stencil elements */
@@ -231,12 +392,12 @@ typedef struct {
   int *stride;      /**< stride of the stencil */
   int *mgrid_stride;/**< stride of the stencil under multi_grid */
   int type;         /**< 0 for regular, 1 for prolongate, 2 for restrict */
-} ops_stencil_core;
+};
 
 typedef ops_stencil_core *ops_stencil;
 
 /** Storage for OPS parallel loop arguments */
-typedef struct {
+struct ops_arg {
   ops_dat dat;          /**< dataset */
   ops_stencil stencil;  /**< the stencil */
   int dim;              /**< dimension of data */
@@ -246,35 +407,10 @@ typedef struct {
   ops_arg_type argtype; /**< arg type */
   int opt;              /**< falg to indicate whether this is an optional arg,
                          *   0 - optional, 1 - not optional */
-} ops_arg;
-
-/** Storage for OPS reduction handles */
-typedef struct {
-  char *data;       /**< The data */
-  int size;         /**< size of data in bytes */
-  int initialized;  /**< flag indicating whether data has been initialized */
-  int index;        /**< unique identifier */
-  ops_access acc;   /**< Type of reduction it was used for last time */
-  const char *type; /**< Type */
-  const char *name; /**< Name */
-} ops_reduction_core;
-typedef ops_reduction_core *ops_reduction;
-
-/** Storage for OPS parallel loop statistics */
-typedef struct {
-  char *name;      /**< name of kernel function */
-  int count;       /**< number of times called */
-  double time;     /**< total execution time */
-  float transfer;  /**< bytes of data transfer (used) */
-  double mpi_time; /**< time spent in MPI calls */
-  //  double       mpi_gather;
-  //  double       mpi_scatter;
-  //  double       mpi_sendrecv;
-  //  double       mpi_reduct;
-} ops_kernel;
+};
 
 /** Storage for OPS halos */
-typedef struct {
+struct ops_halo_core {
   ops_dat from;                   /**< dataset from which the halo is read */
   ops_dat to;                     /**< dataset to which the halo is written */
   int iter_size[OPS_MAX_DIM];     /**< size of halo region */
@@ -283,7 +419,7 @@ typedef struct {
   int from_dir[OPS_MAX_DIM];      /**< copy from orientation */
   int to_dir[OPS_MAX_DIM];        /**< size to orientation */
   int index;                      /**< index of halo */
-} ops_halo_core;
+};
 
 typedef ops_halo_core *ops_halo;
 
@@ -292,25 +428,18 @@ typedef struct {
   int nhalos;                     /**< number of halos */
   ops_halo *halos;                /**< list of halos */
   int index;                      /**< index of halo group */
+  OPS_instance *instance;
+#ifdef OPS_CPP_API
+/**
+ * This routine exchanges all halos in a halo group and will block execution
+ * of subsequent computations that depend on the exchanged data.
+ *
+ */
+  void halo_transfer();
+#endif
 } ops_halo_group_core;
 
 typedef ops_halo_group_core *ops_halo_group;
-
-/** Storage for OPS parallel handles */
-typedef struct ops_kernel_descriptor {
-  const char *name;           /**< name of kernel */
-  unsigned long hash;         /**< hash of loop */
-  ops_arg *args;              /**< list of arguments to pass in */
-  int nargs;                  /**< number of arguments */
-  int index;                  /**< index of the loop */
-  int dim;                    /**< number of dimensions */
-  int device;                 /**< flag to indicate if loop runs on device */
-  int range[2 * OPS_MAX_DIM]; /**< process local execution range */
-  int orig_range[2 * OPS_MAX_DIM]; /**< original execution range */
-  ops_block block;            /**< block to execute on */
-  void (*function)(struct ops_kernel_descriptor
-                      *desc); /**< Function pointer to a wrapper to be called */
-} ops_kernel_descriptor;
 
 /*
 * min / max definitions
@@ -332,24 +461,14 @@ typedef struct ops_kernel_descriptor {
 #define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
 #endif
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-/*
- * alignment macro based on example on page 50 of CUDA Programming Guide version
- * 3.0
- * rounds up to nearest multiple of 16 bytes
- */
-
-#define ROUND_UP(bytes) (((bytes) + 15) & ~15)
-#define ROUND_UP_64(bytes) (((bytes) + 63) & ~63)
-
-
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
+#include <ops_internal1.h>
 
 /*******************************************************************************
-* Core lib function prototypes
+* C API
 *******************************************************************************/
 
+#if !defined(OPS_CPP_API) || defined(OPS_INTERNAL_API)
 /**
  * This routine must be called before all other OPS routines.
  *
@@ -369,11 +488,13 @@ typedef struct ops_kernel_descriptor {
  * |  > 5        | check if intra-block halo MPI sends depth match MPI receives depth (for OPS internal development only)|
  *
  */
-void ops_init(const int argc, const char **argv, const int diags_level);
+OPS_FTN_INTEROP
+void ops_init(const int argc, const char *const argv[], const int diags_level);
 
 /**
  * This routine must be called last to cleanly terminate the OPS computation.
  */
+OPS_FTN_INTEROP
 void ops_exit();
 
 /**
@@ -383,7 +504,82 @@ void ops_exit();
  * @param name  a name used for output diagnostics
  * @return
  */
+OPS_FTN_INTEROP
 ops_block ops_decl_block(int dims, const char *name);
+
+/**
+ * This routine defines a dataset.
+ *
+ * The @p size allows to declare different sized data arrays on a given block.
+ * @p d_m and @p d_p are depth of the "block halos" that are used to indicate
+ * the offset from the edge of a block (in both the negative and positive
+ * directions of each dimension).
+ *
+ * @tparam T
+ * @param block       structured block
+ * @param data_size   dimension of dataset (number of items per grid element)
+ * @param block_size  size in each dimension of the block
+ * @param base        base indices in each dimension of the block
+ * @param d_m         padding from the face in the negative direction for each
+ *                    dimension (used for block halo)
+ * @param d_p         padding from the face in the positive direction for each
+ *                    dimension (used for block halo)
+ * @param stride
+ * @param data        input data of type @p T
+ * @param type        the name of type used for output diagnostics
+ *                    (e.g. "double", "float")
+ * @param name        a name used for output diagnostics
+ * @return
+ */
+template <class T>
+ops_dat ops_decl_dat(ops_block block, int data_size, int *block_size, int *base,
+                     int *d_m, int *d_p, int *stride, T *data, char const *type,
+                     char const *name) {
+
+  if (type_error(data, type)) {
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: incorrect type specified for dataset " << name;
+    throw ex;
+  }
+
+  return ops_decl_dat_char(block, data_size, block_size, base, d_m, d_p,
+                           stride, (char *)data, sizeof(T), type, name);
+}
+
+/**
+ * This routine defines a dataset.
+ *
+ * The @p size allows to declare different sized data arrays on a given block.
+ * @p d_m and @p d_p are depth of the "block halos" that are used to indicate
+ * the offset from the edge of a block (in both the negative and positive
+ * directions of each dimension).
+ *
+ * @tparam T
+ * @param block       structured block
+ * @param data_size   dimension of dataset (number of items per grid element)
+ * @param block_size  size in each dimension of the block
+ * @param base        base indices in each dimension of the block
+ * @param d_m         padding from the face in the negative direction for each
+ *                    dimension (used for block halo)
+ * @param d_p         padding from the face in the positive direction for each
+ *                    dimension (used for block halo)
+ * @param data        input data of type @p T
+ * @param type        the name of type used for output diagnostics
+ *                    (e.g. "double", "float")
+ * @param name        a name used for output diagnostics
+ * @return
+ */
+template <class T>
+ops_dat ops_decl_dat(ops_block block, int data_size, int *block_size, int *base,
+                     int *d_m, int *d_p, T *data, char const *type,
+                     char const *name) {
+
+  int stride[OPS_MAX_DIM];
+  for (int i = 0; i < OPS_MAX_DIM; i++) stride[i] = 1;
+  return ops_decl_dat_char(block, data_size, block_size, base, d_m, d_p,
+                           stride, (char *)data, sizeof(T), type, name);
+}
+
 
 
 /**
@@ -391,6 +587,7 @@ ops_block ops_decl_block(int dims, const char *name);
  * @param dat     dataset to deallocate
  */
 void ops_free_dat(ops_dat dat); 
+#endif
 
 /**
  * Passes an accessor to the value(s) at the current grid point to the user kernel.
@@ -404,6 +601,7 @@ void ops_free_dat(ops_dat dat);
  * @param acc      access type
  * @return
  */
+OPS_FTN_INTEROP
 ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
                     ops_access acc);
 
@@ -420,6 +618,7 @@ ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
  * @param flag     indicates whether the optional argument is enabled (non-0) or not (0)
  * @return
  */
+OPS_FTN_INTEROP
 ops_arg ops_arg_dat_opt(ops_dat dat, int dim, ops_stencil stencil,
                         char const *type, ops_access acc, int flag);
 /**
@@ -432,6 +631,7 @@ ops_arg ops_arg_dat_opt(ops_dat dat, int dim, ops_stencil stencil,
  *
  * @return
  */
+OPS_FTN_INTEROP
 ops_arg ops_arg_idx();
 
 /**
@@ -444,10 +644,31 @@ ops_arg ops_arg_idx();
  * @param acc     access type
  * @return
  */
+OPS_FTN_INTEROP
 ops_arg ops_arg_reduce(ops_reduction handle, int dim, const char *type,
                        ops_access acc);
 
+/**
+ * Passes a scalar or small array that is invariant of the iteration space.
+ *
+ * (not to be confused with ::ops_decl_const, which facilitates
+ * global scope variables).
+ *
+ * @tparam T
+ * @param data  data array
+ * @param dim   array dimension
+ * @param type  string representing the type of data held in data
+ * @param acc   access type
+ * @return
+ */
+template <class T>
+ops_arg ops_arg_gbl(T *data, int dim, char const *type, ops_access acc) {
+  return ops_arg_gbl_char((char *)data, dim, sizeof(T), acc);
+}
 
+
+
+#if !defined(OPS_CPP_API) || defined(OPS_INTERNAL_API)
 /**
  * This routine defines a reduction handle to be used in a parallel loop.
  *
@@ -457,6 +678,7 @@ ops_arg ops_arg_reduce(ops_reduction handle, int dim, const char *type,
  * @param name  name of the dat used for output diagnostics
  * @return
  */
+OPS_FTN_INTEROP
 ops_reduction ops_decl_reduction_handle(int size, const char *type,
                                         const char *name);
 
@@ -470,6 +692,7 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type,
  * @param name     string representing the name of the stencil
  * @return
  */
+OPS_FTN_INTEROP
 ops_stencil ops_decl_stencil(int dims, int points, int *stencil,
                              char const *name);
 
@@ -496,10 +719,13 @@ ops_stencil ops_decl_stencil(int dims, int points, int *stencil,
  * @param name     string representing the name of the stencil
  * @return
  */
+OPS_FTN_INTEROP
 ops_stencil ops_decl_strided_stencil(int dims, int points, int *sten,
                                      int *stride, char const *name);
+OPS_FTN_INTEROP
 ops_stencil ops_decl_restrict_stencil( int dims, int points, int *sten,
                                        int *stride, char const * name);
+OPS_FTN_INTEROP
 ops_stencil ops_decl_prolong_stencil( int dims, int points, int *sten,
                                       int *stride, char const * name);
 
@@ -543,6 +769,7 @@ ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int *from_base,
  * @param halos   array of halos
  * @return
  */
+OPS_FTN_INTEROP
 ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos);
 
 /**
@@ -551,7 +778,74 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos);
  *
  * @param group  the halo group
  */
+OPS_FTN_INTEROP
 void ops_halo_transfer(ops_halo_group group);
+
+/**
+ * This routine returns the reduced value held by a reduction handle. During lazy execution,
+ * this will trigger the execution of all preceding queued operations
+ *
+ * @tparam T
+ * @param handle  the ::ops_reduction handle
+ * @param ptr     a pointer to write the results to, memory size has to match
+ *                the declared
+ */
+template <class T> void ops_reduction_result(ops_reduction handle, T *ptr) {
+  if (type_error(ptr, handle->type)) {
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: incorrect type specified for constant " << handle->name << " in ops_reduction_result";
+    throw ex;
+  }
+  ops_reduction_result_char(handle, sizeof(T), (char *)ptr);
+}
+
+/**
+ * This routine updates/changes the value of a constant.
+ *
+ * @tparam T
+ * @param name  a name used to identify the constant
+ * @param dim   dimension of dataset (number of items per element)
+ * @param type  the name of type used for output diagnostics
+ *              (e.g. "double", "float")
+ * @param data  pointer to new values for constant of type @p T
+ */
+template <class T>
+void ops_update_const(char const *name, int dim, char const *type, T *data) {
+  (void)dim;
+  if (type_error(data, type)) {
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: incorrect type specified for constant " << name << " in ops_update_const";
+    throw ex;
+  }
+  ops_decl_const_char(dim, type, sizeof(T), (char *)data, name);
+}
+
+/**
+ * This routine defines a global constant: a variable in global scope.
+ *
+ * Global constants need to be declared upfront so that they can be correctly
+ * handled for different parallelizations. For e.g. CUDA on GPUs.
+ * Once defined they remain unchanged throughout the program, unless changed
+ * by a call to ops_update_const().
+ * @tparam T
+ * @param name  a name used to identify the constant
+ * @param dim   dimension of dataset (number of items per element)
+ * @param type  the name of type used for output diagnostics
+ *              (e.g. "double", "float")
+ * @param data  pointer to input data of type @p T
+ */
+template <class T>
+void ops_decl_const(char const *name, int dim, char const *type, T *data) {
+  (void)dim;
+  if (type_error(data, type)) {
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: incorrect type specified for constant " << name << " in ops_decl_const";
+    throw ex;
+  }
+  ops_decl_const_char(dim, type, sizeof(T), (char*)data, name);
+}
+
+#endif
 
 /**
  * This routine simply prints a variable number of arguments on the root process;
@@ -561,6 +855,7 @@ void ops_halo_transfer(ops_halo_group group);
  * @param format
  * @param ...
  */
+OPS_FTN_INTEROP
 void ops_printf(const char *format, ...);
 
 /**
@@ -572,8 +867,10 @@ void ops_printf(const char *format, ...);
  * @param format
  * @param ...
  */
+OPS_FTN_INTEROP
 void ops_fprintf(FILE *stream, const char *format, ...);
 
+#if !defined(OPS_CPP_API) || defined(OPS_INTERNAL_API)
 /**
  * This routine prints out various useful bits of diagnostic info about sets,
  * mappings and datasets.
@@ -581,15 +878,18 @@ void ops_fprintf(FILE *stream, const char *format, ...);
  * Usually used right after an @p ops partition() call to print out the details
  * of the decomposition.
  */
+OPS_FTN_INTEROP
 void ops_diagnostic_output();
 
 /**
  * Print OPS performance performance details to output stream.
  *
- * @param stream  output stream, use stdout to print to standard out
+ * @param stream  output stream, use std::cout to print to standard out
  */
-void ops_timing_output(FILE *stream);
+void ops_timing_output(std::ostream &stream);
+OPS_FTN_INTEROP
 void ops_timing_output_stdout();
+#endif
 
 /**
  * gettimeofday() based timer to start/end timing blocks of code.
@@ -598,8 +898,10 @@ void ops_timing_output_stdout();
  * @param cpu  variable to hold the CPU time at the time of invocation
  * @param et   variable to hold the elapsed time at the time of invocation
  */
+OPS_FTN_INTEROP
 void ops_timers(double *cpu, double *et);
 
+#if !defined(OPS_CPP_API) || defined(OPS_INTERNAL_API)
 /**
  * Write the details of an ::ops_block to a named text file.
  *
@@ -610,6 +912,7 @@ void ops_timers(double *cpu, double *et);
  * @param dat        ::ops_dat to to be written
  * @param file_name  text file to write to
  */
+OPS_FTN_INTEROP
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name);
 
 /**
@@ -620,6 +923,7 @@ void ops_get_data(ops_dat dat);
 /**
  * Returns one one the root MPI process
  */
+OPS_FTN_INTEROP
 int ops_is_root();
 
 /**
@@ -635,6 +939,7 @@ int ops_is_root();
  *                 a place-holder to indicate different partitioning methods
  *                 in the future.
  */
+OPS_FTN_INTEROP
 void ops_partition(const char *routine);
 
 /*******************************************************************************
@@ -648,6 +953,7 @@ void ops_partition(const char *routine);
  * @param dat  the dataset
  * @return
  */
+OPS_FTN_INTEROP
 int ops_dat_get_local_npartitions(ops_dat dat);
 
 /**
@@ -660,6 +966,7 @@ int ops_dat_get_local_npartitions(ops_dat dat);
  *              "global" distributed array
  * @param size  an array populated with the spatial extents
  */
+OPS_FTN_INTEROP
 void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size);
 
 /**
@@ -677,14 +984,9 @@ void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size);
  *                 note that these are negative values
  * @param d_p      an array populated with padding on the right in each dimension
  */
+OPS_FTN_INTEROP
 void ops_dat_get_raw_metadata(ops_dat dat, int part, int *disp, int *size, int *stride, int *d_m, int *d_p);
 
-/**
- * type for memory space flags - 1 for host, 2 for device
- */
-typedef int ops_memspace;
-#define OPS_HOST 1
-#define OPS_DEVICE 2
 /**
  * This routine returns a pointer to the internally stored data, with MPI halo
  * regions automatically updated as required by the supplied stencil.
@@ -699,6 +1001,7 @@ typedef int ops_memspace;
  *
  * @return
  */
+OPS_FTN_INTEROP
 char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_memspace *memspace);
 
 /**
@@ -713,6 +1016,7 @@ char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_me
  *              ::OPS_WRITE if it was overwritten,
  *              ::OPS_RW if it was read and written)
  */
+OPS_FTN_INTEROP
 void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc);
 
 /**
@@ -724,6 +1028,7 @@ void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc);
  * @param part  the chunk index (has to be 0)
  * @param data  pointer to CPU memory which should be filled by OPS
  */
+OPS_FTN_INTEROP
 void ops_dat_fetch_data(ops_dat dat, int part, char *data);
 
 /**
@@ -737,6 +1042,7 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data);
  * @param part  the chunk index (has to be 0)
  * @param data  pointer to CPU memory which should be copied to OPS
  */
+OPS_FTN_INTEROP
 void ops_dat_set_data(ops_dat dat, int part, char *data);
 
 /**
@@ -746,144 +1052,204 @@ void ops_dat_set_data(ops_dat dat, int part, char *data);
  * @param dat  the dataset
  * @return
  */
+OPS_FTN_INTEROP
 int ops_dat_get_global_npartitions(ops_dat dat);
-
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-
-ops_reduction ops_decl_reduction_handle_core(int size, const char *type,
-                                             const char *name);
-void ops_execute_reduction(ops_reduction handle);
-
-ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
-                            ops_access acc);
-ops_arg ops_arg_gbl_char(char *data, int dim, int size, ops_access acc);
-void ops_decl_const_char(int, char const *, int, char *, char const *);
-void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr);
-
-void ops_init_core(const int argc, const char **argv, const int diags_level);
-
-void ops_exit_core(void);
-
-
-
-ops_dat ops_decl_dat_char(ops_block, int, int *, int *, int *, int *, int *, char *,
-                          int, char const *, char const *);
-
-ops_dat ops_decl_dat_core(ops_block block, int data_size, int *block_size,
-                          int *base, int *d_m, int *d_p, int *stride, char *data,
-                          int type_size, char const *type, char const *name);
-
-ops_dat ops_decl_dat_temp_core(ops_block block, int data_size, int *block_size,
-                               int *base, int *d_m, int *d_p, int *stride, char *data,
-                               int type_size, char const *type,
-                               char const *name);
-
-ops_dat ops_decl_dat_mpi_char(ops_block block, int size, int *dat_size,
-                              int *base, int *d_m, int *d_p, int *stride, char *data,
-                              int type_size, char const *type,
-                              char const *name);
-
-void ops_decl_const_core(int dim, char const *type, int typeSize, char *data,
-                         char const *name);
-
-ops_halo ops_decl_halo_core(ops_dat from, ops_dat to, int *iter_size,
-                            int *from_base, int *to_base, int *from_dir,
-                            int *to_dir);
-
-
-
-ops_arg ops_arg_dat_core(ops_dat dat, ops_stencil stencil, ops_access acc);
-ops_arg ops_arg_gbl_core(char *data, int dim, int size, ops_access acc);
-
-
-void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name);
-
-void ops_NaNcheck(ops_dat dat);
-void ops_NaNcheck_core(ops_dat dat, char *buffer);
-
-void ops_get_data(ops_dat dat);
-
-int* ops_fetch_data_size(ops_dat dat);
-void ops_fetch_data_ptr(ops_dat dat, char *ptr);
-void ops_timing_realloc(int, const char *);
-void ops_timers_core(double *cpu, double *et);
-float ops_compute_transfer(int dims, int *start, int *end, ops_arg *arg);
-
-void ops_register_args(ops_arg *args, const char *name);
-int ops_stencil_check_1d(int arg_idx, int idx0, int dim0);
-int ops_stencil_check_2d(int arg_idx, int idx0, int idx1, int dim0, int dim1);
-int ops_stencil_check_3d(int arg_idx, int idx0, int idx1, int idx2, int dim0,
-                         int dim1);
-
-int ops_stencil_check_1d_md(int arg_idx, int idx0, int mult_d, int d);
-int ops_stencil_check_2d_md(int arg_idx, int idx0, int idx1, int dim0, int dim1,
-                            int mult_d, int d);
-int ops_stencil_check_3d_md(int arg_idx, int idx0, int idx1, int idx2, int dim0,
-                            int dim1, int mult_d, int d);
-
-/* check if these should be placed here */
-void ops_set_dirtybit_host(
-    ops_arg *args, int nargs); // data updated on host .. i.e. dirty on host
-void ops_set_halo_dirtybit(ops_arg *arg);
-void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range);
-void ops_halo_exchanges(ops_arg *args, int nargs, int *range);
-void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths);
-
-void ops_set_dirtybit_device(ops_arg *args, int nargs);
-void ops_H_D_exchanges_host(ops_arg *args, int nargs);
-void ops_H_D_exchanges_device(ops_arg *args, int nargs);
-void ops_cpHostToDevice(void **data_d, void **data_h, int size);
-
-void ops_init_arg_idx(int *arg_idx, int ndims, ops_arg *args, int nargs);
-
-void ops_mpi_reduce_float(ops_arg *args, float *data);
-void ops_mpi_reduce_double(ops_arg *args, double *data);
-void ops_mpi_reduce_int(ops_arg *args, int *data);
-
-void ops_compute_moment(double t, double *first, double *second);
-
-void ops_dump3(ops_dat dat, const char *name);
-
-void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
-                           int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
-                           int x_step, int y_step, int z_step,
-                           int buf_strides_x, int buf_strides_y,
-                           int buf_strides_z);
-void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
-                         int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
-                         int x_step, int y_step, int z_step, int buf_strides_x,
-                         int buf_strides_y, int buf_strides_z);
-
-/* lazy execution */
-void ops_enqueue_kernel(ops_kernel_descriptor *desc);
-void ops_execute();
-bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp);
-int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx);
-int ops_get_proc();
-int ops_num_procs();
-void ops_put_data(ops_dat dat);
-
-/*******************************************************************************
-* Memory allocation functions
-*******************************************************************************/
-void* ops_malloc (size_t size);
-void* ops_realloc (void *ptr, size_t size);
-void  ops_free (void *ptr);
-void* ops_calloc (size_t num, size_t size);
-
-
-#ifdef __cplusplus
-}
 #endif
 
-class OPS_instance;
-extern OPS_instance *ops_instances[];
+/**
+ * This class is an accessor to data stored in ops_dats. It is
+ * only to be used in user kernels and functions called from within 
+ * user kernels. The user should never explicitly construct such an 
+ * object, these are constucted by OPS and passed by reference to 
+ * the user kernel.
+ *
+ * Data can be accessed using the overloaded () operator - with as many
+ * arguments as many dimensional the dataset is (i.e. 2 in 2D). An extra
+ * argument is used for datasets that have multiple values at each gridpoint.
+ * Arguments are always relative offsets w.r.t. the current grid point.
+ *
+ */
 
-#include "ops_checkpointing.h"
-#include "ops_hdf5.h"
-#include "ops_tridiag.h"
-#include "ops_instance.h"
+template<typename T>
+class ACC {
+public:
+  //////////////////////////////////////////////////
+  // 1D
+  /////////////////////////////////////////////////
+#if defined(OPS_1D)
+  __host__ __device__
+  ACC(T *_ptr) : ptr(_ptr) {}
+  __host__ __device__
+  ACC(int _mdim, int _sizex, T *_ptr) : 
+#ifdef OPS_SOA
+    sizex(_sizex),
+#else
+    mdim(_mdim),
+#endif
+    ptr(_ptr)
+  {}
+  __host__ __device__
+  const T& operator()(int xoff) const {return *(ptr + xoff);}
+  __host__ __device__
+  T& operator()(int xoff) {return *(ptr + xoff);}
+  __host__ __device__
+  const T& operator()(int d, int xoff) const {
+#ifdef OPS_SOA
+    return *(ptr + xoff + d * sizex);
+#else
+    return *(ptr + d + xoff*mdim );
+#endif
+  }
+  __host__ __device__
+  T& operator()(int d, int xoff) {
+#ifdef OPS_SOA
+    return *(ptr + xoff + d * sizex);
+#else
+    return *(ptr + d + xoff*mdim );
+#endif
+  }
+#endif
 
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
+  //////////////////////////////////////////////////
+  // 2D
+  /////////////////////////////////////////////////
+#if defined(OPS_2D)
+  __host__ __device__
+  ACC(int _sizex, T *_ptr) : sizex(_sizex), ptr(_ptr) {}
+  __host__ __device__
+  ACC(int _mdim, int _sizex, int _sizey, T *_ptr) : sizex(_sizex),
+#ifdef OPS_SOA
+    sizey(_sizey),
+#else
+    mdim(_mdim),
+#endif
+    ptr(_ptr)
+  {}
+  __host__ __device__
+  const T& operator()(int xoff, int yoff) const {return *(ptr + xoff + yoff*sizex);}
+  __host__ __device__
+  T& operator()(int xoff, int yoff) {return *(ptr + xoff + yoff*sizex);}
+  __host__ __device__
+  const T& operator()(int d, int xoff, int yoff) const {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + d * sizex*sizey);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim );
+#endif
+  }
+  __host__ __device__
+  T& operator()(int d, int xoff, int yoff) {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + d * sizex*sizey);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim );
+#endif
+  }
+#endif
+  //////////////////////////////////////////////////
+  // 3D
+  /////////////////////////////////////////////////
+#if defined(OPS_3D)
+  __host__ __device__
+  ACC(int _sizex, int _sizey, T *_ptr) : sizex(_sizex), sizey(_sizey), ptr(_ptr) {}
+  __host__ __device__
+  ACC(int _mdim, int _sizex, int _sizey, int _sizez, T *_ptr) : sizex(_sizex), sizey(_sizey),
+#ifdef OPS_SOA
+    sizez(_sizez),
+#else
+    mdim(_mdim),
+#endif
+    ptr(_ptr)
+  {}
+  __host__ __device__
+  const T& operator()(int xoff, int yoff, int zoff) const {return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey);}
+  __host__ __device__
+  T& operator()(int xoff, int yoff, int zoff) {return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey);}
+  __host__ __device__
+  const T& operator()(int d, int xoff, int yoff, int zoff) const {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + d * sizex*sizey*sizez);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim + zoff*sizex*sizey*mdim);
+#endif
+  }
+  __host__ __device__
+  T& operator()(int d, int xoff, int yoff, int zoff) {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + d * sizex*sizey*sizez);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim + zoff*sizex*sizey*mdim);
+#endif
+  }
+#endif
+
+  //////////////////////////////////////////////////
+  // 4D
+  /////////////////////////////////////////////////
+#if defined(OPS_4D)
+  __host__ __device__
+  ACC(int _sizex, int _sizey, int _sizez, T *_ptr) : sizex(_sizex), sizey(_sizey), sizez(_sizez), ptr(_ptr) {}
+  __host__ __device__
+  ACC(int _mdim, int _sizex, int _sizey, int _sizez, int _sizeu, T *_ptr) : sizex(_sizex), sizey(_sizey), sizez(_sizez),
+#ifdef OPS_SOA
+    sizeu(_sizeu),
+#else
+    mdim(_mdim),
+#endif
+    ptr(_ptr)
+  {}
+  __host__ __device__
+  const T& operator()(int xoff, int yoff, int zoff, int uoff) const {return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + uoff*sizex*sizey*sizez);}
+  __host__ __device__
+  T& operator()(int xoff, int yoff, int zoff, int uoff) {return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + uoff*sizex*sizey*sizez);}
+  __host__ __device__
+  const T& operator()(int d, int xoff, int yoff, int zoff, int uoff) const {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + uoff*sizex*sizey*sizez + d * sizex*sizey*sizez*sizeu);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim + zoff*sizex*sizey*mdim + uoff*sizex*sizey*sizez*mdim);
+#endif
+  }
+  __host__ __device__
+  T& operator()(int d, int xoff, int yoff, int zoff, int uoff) {
+#ifdef OPS_SOA
+    return *(ptr + xoff + yoff*sizex + zoff*sizex*sizey + uoff*sizex*sizey*sizez + d * sizex*sizey*sizez*sizeu);
+#else
+    return *(ptr + d + xoff*mdim + yoff*sizex*mdim + zoff*sizex*sizey*mdim + uoff*sizex*sizey*sizez*mdim);
+#endif
+  }
+#endif
+
+
+
+  __host__ __device__
+  void next(int offset) {
+    ptr += offset;
+  }
+
+
+private:
+#if defined(OPS_2D) || defined(OPS_3D) || defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_1D) && defined(OPS_SOA))
+  int sizex;
+#endif
+#if defined(OPS_3D) || defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_2D) && defined(OPS_SOA))
+  int sizey;
+#endif
+#if defined(OPS_4D) || defined (OPS_5D) || (defined(OPS_3D) && defined(OPS_SOA))
+  int sizez;
+#endif
+#if defined (OPS_5D) || (defined(OPS_4D) && defined(OPS_SOA))
+  int sizeu;
+#endif
+#if defined(OPS_5D) && defined(OPS_SOA)
+  int sizev;
+#endif
+#ifndef OPS_SOA
+  int mdim;
+#endif
+  T *__restrict__ ptr;
+};
+
+#include <ops_internal2.h>
+
 #endif /* __OP_LIB_CORE_H */

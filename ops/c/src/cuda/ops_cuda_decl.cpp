@@ -36,8 +36,6 @@
   * @details Implements the OPS API calls for the cuda backend
   */
 
-#include <sys/mman.h>
-
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
@@ -46,12 +44,12 @@
 #include <ops_lib_core.h>
 #include <ops_exceptions.h>
 
-void ops_init(const int argc, const char **argv, const int diags) {
-  ops_init_core(argc, argv, diags);
+void _ops_init(OPS_instance *instance, const int argc, const char * const argv[], const int diags) {
+  ops_init_core(instance, argc, argv, diags);
 
-  if ((OPS_instance::getOPSInstance()->OPS_block_size_x * 
-       OPS_instance::getOPSInstance()->OPS_block_size_y * 
-       OPS_instance::getOPSInstance()->OPS_block_size_z) > 1024) {
+  if ((instance->OPS_block_size_x * 
+       instance->OPS_block_size_y * 
+       instance->OPS_block_size_z) > 1024) {
     throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024");
   }
 
@@ -63,24 +61,23 @@ void ops_init(const int argc, const char **argv, const int diags) {
 #warning : " *** no support for double precision arithmetic *** "
 #endif
 
-  cutilDeviceInit(argc, argv);
+  cutilDeviceInit(instance, argc, argv);
 
-// \warning add -DSET_CUDA_CACHE_CONFIG to compiling line
-// for this file when implementing C OPS.
-//
+  cutilSafeCall(instance->ostream(), cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
+}
 
-#ifndef SET_CUDA_CACHE_CONFIG
-  cutilSafeCall(cudaDeviceSetCacheConfig(cudaFuncCachePreferShared));
-#else
-  cutilSafeCall(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
-#endif
+void ops_init(const int argc, const char *const argv[], const int diags) {
+  _ops_init(OPS_instance::getOPSInstance(), argc, argv, diags);
+}
 
-  ops_printf("\n 16/48 L1/shared \n");
+void _ops_exit(OPS_instance *instance) {
+  if (instance->is_initialised == 0) return;
+  ops_cuda_exit(instance); // frees dat_d memory
+  ops_exit_core(instance); // frees lib core variables
 }
 
 void ops_exit() {
-  ops_cuda_exit(); // frees dat_d memory
-  ops_exit_core(); // frees lib core variables
+  _ops_exit(OPS_instance::getOPSInstance());
 }
 
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
@@ -92,36 +89,45 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p,
                                        stride, data, type_size, type, name);
 
-  int bytes = size * type_size;
+  size_t bytes = size * type_size;
   for (int i = 0; i < block->dims; i++)
     bytes = bytes * dat->size[i];
 
-  if (data != NULL) {
+  if (data != NULL && !block->instance->OPS_realloc) {
     // printf("Data read in from HDF5 file or is allocated by the user\n");
     dat->user_managed =
         1; // will be reset to 0 if called from ops_decl_dat_hdf5()
     dat->is_hdf5 = 0;
     dat->mem = bytes;
     dat->hdf5_file = "none"; // will be set to an hdf5 file if called from
-    ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
+    ops_cpHostToDevice ( block->instance, ( void ** ) &( dat->data_d ),
             ( void ** ) &( dat->data ), bytes );
                              // ops_decl_dat_hdf5()
   } else {
     // Allocate memory immediately
-    dat->data = (char *)ops_calloc(bytes, 1); // initialize data bits to 0
+    dat->data = (char*) ops_malloc(bytes);
     dat->user_managed = 0;
     dat->mem = bytes;
     dat->data_d = NULL;
-    ops_cpHostToDevice ( ( void ** ) &( dat->data_d ),
-            ( void ** ) NULL, bytes );
+    if (data != NULL && block->instance->OPS_realloc) {
+      ops_convert_layout(data, dat->data, block, size,
+          dat->size, dat_size, type_size, 0);
+//          dat->size, dat_size_orig, type_size, 0);
+//          block->instance->OPS_hybrid_layout ? //TODO: comes in when batching
+//          block->instance->ops_batch_size : 0);
+    } else
+      ops_init_zero(dat->data, bytes);
+
+    ops_cpHostToDevice ( block->instance, ( void ** ) &( dat->data_d ),
+            ( void ** ) &(data), bytes );
   }
 
   // Compute offset in bytes to the base index
   dat->base_offset = 0;
-  long cumsize = 1;
+  size_t cumsize = 1;
   for (int i = 0; i < block->dims; i++) {
     dat->base_offset +=
-        (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size)
+        (block->instance->OPS_soa ? dat->type_size : dat->elem_size)
         * cumsize * (-dat->base[i] - dat->d_m[i]);
     cumsize *= dat->size[i];
   }
@@ -133,15 +139,21 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
 }
 
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
-  ops_execute();
+  ops_execute(handle->instance);
   ops_checkpointing_reduction(handle);
   memcpy(ptr, handle->data, handle->size);
   handle->initialized = 0;
 }
 
+ops_halo _ops_decl_halo(OPS_instance *instance, ops_dat from, ops_dat to, int *iter_size, int *from_base,
+                       int *to_base, int *from_dir, int *to_dir) {
+  return ops_decl_halo_core(instance, from, to, iter_size, from_base, to_base, from_dir,
+                            to_dir);
+}
+
 ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int *from_base,
                        int *to_base, int *from_dir, int *to_dir) {
-  ops_halo halo = ops_decl_halo_core(from, to, iter_size, from_base, to_base,
+  ops_halo halo = ops_decl_halo_core(from->block->instance, from, to, iter_size, from_base, to_base,
                                      from_dir, to_dir);
   return halo;
 }
@@ -178,9 +190,12 @@ void ops_NaNcheck(ops_dat dat) {
   ops_NaNcheck_core(dat, "");
 }
 
-void ops_partition(const char *routine) {
+void _ops_partition(OPS_instance *instance, const char *routine) {
   (void)routine;
-  // printf("Partitioning ops_dats\n");
+}
+
+void ops_partition(const char *routine) {
+  _ops_partition(OPS_instance::getOPSInstance(), routine);
 }
 
 void ops_timers(double *cpu, double *et) {
@@ -200,11 +215,11 @@ void ops_halo_transfer(ops_halo_group group) {
     int size = halo->from->elem_size * halo->iter_size[0];
     for (int i = 1; i < halo->from->block->dims; i++)
       size *= halo->iter_size[i];
-    if (size > OPS_instance::getOPSInstance()->ops_halo_buffer_size) {
-      cutilSafeCall(cudaFree(OPS_instance::getOPSInstance()->ops_halo_buffer_d));
-      cutilSafeCall(cudaMalloc((void **)&OPS_instance::getOPSInstance()->ops_halo_buffer_d, size));
-      OPS_instance::getOPSInstance()->ops_halo_buffer_size = size;
-      cutilSafeCall(cudaDeviceSynchronize());
+    if (size > group->instance->ops_halo_buffer_size) {
+      cutilSafeCall(group->instance->ostream(), cudaFree(group->instance->ops_halo_buffer_d));
+      cutilSafeCall(group->instance->ostream(),cudaMalloc((void **)&group->instance->ops_halo_buffer_d, size));
+      group->instance->ops_halo_buffer_size = size;
+      //cutilSafeCall(cudaDeviceSynchronize());
     }
 
     // copy to linear buffer from source
@@ -236,7 +251,7 @@ void ops_halo_transfer(ops_halo_group group) {
     step[1]) {
         for (int i = ranges[0]; (step[0]==1 ? i < ranges[1] : i > ranges[1]); i
     += step[0]) {
-          ops_cuda_halo_copy(OPS_instance::getOPSInstance()->ops_halo_buffer_d +
+          ops_cuda_halo_copy(group->instance->ops_halo_buffer_d +
     ((k-ranges[4])*step[2]*buf_strides[2]+ (j-ranges[2])*step[1]*buf_strides[1]
     + (i-ranges[0])*step[0]*buf_strides[0])*halo->from->elem_size,
                  halo->from->data_d +
@@ -249,12 +264,12 @@ void ops_halo_transfer(ops_halo_group group) {
       ops_upload_dat(halo->from);
       halo->from->dirty_hd = 0;
     }
-    ops_halo_copy_tobuf(OPS_instance::getOPSInstance()->ops_halo_buffer_d, 0, halo->from, ranges[0], ranges[1],
+    ops_halo_copy_tobuf(group->instance->ops_halo_buffer_d, 0, halo->from, ranges[0], ranges[1],
                         ranges[2], ranges[3], ranges[4], ranges[5], step[0],
                         step[1], step[2], buf_strides[0], buf_strides[1],
                         buf_strides[2]);
 
-    cutilSafeCall(cudaDeviceSynchronize());
+    //cutilSafeCall(cudaDeviceSynchronize());
 
     // copy from linear buffer to target
     for (int i = 0; i < OPS_MAX_DIM; i++) {
@@ -283,7 +298,7 @@ void ops_halo_transfer(ops_halo_group group) {
     += step[0]) {
           ops_cuda_halo_copy(halo->to->data_d +
     (k*halo->to->size[0]*halo->to->size[1]+j*halo->to->size[0]+i)*halo->to->elem_size,
-               OPS_instance::getOPSInstance()->ops_halo_buffer_d + ((k-ranges[4])*step[2]*buf_strides[2]+
+               group->instance->ops_halo_buffer_d + ((k-ranges[4])*step[2]*buf_strides[2]+
     (j-ranges[2])*step[1]*buf_strides[1] +
     (i-ranges[0])*step[0]*buf_strides[0])*halo->to->elem_size,
     halo->to->elem_size);
@@ -295,18 +310,18 @@ void ops_halo_transfer(ops_halo_group group) {
       ops_upload_dat(halo->to);
       halo->to->dirty_hd = 0;
     }
-    ops_halo_copy_frombuf(halo->to, OPS_instance::getOPSInstance()->ops_halo_buffer_d, 0, ranges[0], ranges[1],
+    ops_halo_copy_frombuf(halo->to, group->instance->ops_halo_buffer_d, 0, ranges[0], ranges[1],
                           ranges[2], ranges[3], ranges[4], ranges[5], step[0],
                           step[1], step[2], buf_strides[0], buf_strides[1],
                           buf_strides[2]);
 
-    cutilSafeCall(cudaDeviceSynchronize());
+    //cutilSafeCall(cudaDeviceSynchronize());
     halo->to->dirty_hd = 2;
   }
 }
 
 /************* Functions only use in the Fortran Backend ************/
 
-int getOPS_block_size_x() { return OPS_instance::getOPSInstance()->OPS_block_size_x; }
-int getOPS_block_size_y() { return OPS_instance::getOPSInstance()->OPS_block_size_y; }
-int getOPS_block_size_z() { return OPS_instance::getOPSInstance()->OPS_block_size_z; }
+extern "C" int getOPS_block_size_x() { return OPS_instance::getOPSInstance()->OPS_block_size_x; }
+extern "C" int getOPS_block_size_y() { return OPS_instance::getOPSInstance()->OPS_block_size_y; }
+extern "C" int getOPS_block_size_z() { return OPS_instance::getOPSInstance()->OPS_block_size_z; }

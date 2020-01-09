@@ -50,7 +50,8 @@
 #include "multidim_copy_kernel.h"
 #include "multidim_reduce_kernel.h"
 
-int main(int argc, const char **argv) {
+int main(int argc, char **argv)
+{
   //initialize sizes using global values
   int x_cells = 4;
   int y_cells = 4;
@@ -60,7 +61,7 @@ int main(int argc, const char **argv) {
 
   // OPS initialisation
   ops_init(argc,argv,1);
-  OPS_soa = 1;
+  OPS_instance::getOPSInstance()->OPS_soa = 1;
 
   /**----------------------------OPS Declarations----------------------------**/
 

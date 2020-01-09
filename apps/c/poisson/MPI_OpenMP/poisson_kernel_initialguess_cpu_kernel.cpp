@@ -27,14 +27,14 @@ void ops_par_loop_poisson_kernel_initialguess_execute(ops_kernel_descriptor *des
   if (!ops_checkpointing_before(args,1,range,2)) return;
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
-    ops_timing_realloc(2,"poisson_kernel_initialguess");
-    OPS_instance::getOPSInstance()->OPS_kernels[2].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,2,"poisson_kernel_initialguess");
+    block->instance->OPS_kernels[2].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "poisson_kernel_initialguess");
+  ops_register_args(block->instance, args, "poisson_kernel_initialguess");
   #endif
 
 
@@ -69,9 +69,9 @@ void ops_par_loop_poisson_kernel_initialguess_execute(ops_kernel_descriptor *des
   ops_H_D_exchanges_host(args, 1);
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[2].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[2].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
@@ -82,7 +82,6 @@ void ops_par_loop_poisson_kernel_initialguess_execute(ops_kernel_descriptor *des
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)
-    #pragma simd
     #pragma GCC ivdep
     #else
     #pragma simd
@@ -94,20 +93,20 @@ void ops_par_loop_poisson_kernel_initialguess_execute(ops_kernel_descriptor *des
 
     }
   }
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[2].time += __t2-__t1;
+    block->instance->OPS_kernels[2].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 1);
   ops_set_halo_dirtybit3(&args[0],range);
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[2].mpi_time += __t1-__t2;
-    OPS_instance::getOPSInstance()->OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[2].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
 
@@ -133,8 +132,8 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->function = ops_par_loop_poisson_kernel_initialguess_execute;
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
-    ops_timing_realloc(2,"poisson_kernel_initialguess");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,2,"poisson_kernel_initialguess");
   }
   ops_enqueue_kernel(desc);
 }

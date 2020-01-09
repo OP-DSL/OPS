@@ -51,33 +51,42 @@
 #define defaultTimeout 10.0
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void ops_get_dat_full_range(ops_dat dat, int **full_range);
 
+struct ops_strat_data {
+//Strategy
+  int   ops_strat_max_loop_counter;
+  size_t *ops_strat_min_saved;
+  size_t *ops_strat_max_saved;
+  size_t *ops_strat_avg_saved;
+  size_t *ops_strat_saved_counter;
+  int * ops_strat_timescalled;
+  int * ops_strat_maxcalled;
+  int * ops_strat_lastcalled;
+  int **ops_strat_dat_status;
+  int * ops_strat_in_progress;
+};
 
+#include "ops_checkpointing_class.h"
 
-#define OPS_dat_ever_written OPS_instance::getOPSInstance()->checkpointing_instance->OPS_dat_ever_written
 #define ops_call_counter OPS_instance::getOPSInstance()->checkpointing_instance->ops_call_counter
-#define ops_best_backup_point OPS_instance::getOPSInstance()->checkpointing_instance->ops_best_backup_point
-#define ops_best_backup_point_size OPS_instance::getOPSInstance()->checkpointing_instance->ops_best_backup_point_size
+#define ops_best_backup_point OPS_instance::getOPSInstance()->checkpointing_instance->ops_best_backup_point_g
+#define ops_best_backup_point_size OPS_instance::getOPSInstance()->checkpointing_instance->ops_best_backup_point_size_g
 
 
-#define ops_strat_max_loop_counter OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat_max_loop_counter
-#define ops_strat_min_saved        OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat_min_saved       
-#define ops_strat_max_saved        OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat_max_saved       
-#define ops_strat_avg_saved        OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat_avg_saved       
-#define ops_strat_saved_counter    OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat_saved_counter   
-#define ops_strat_timescalled      OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat_timescalled     
-#define ops_strat_maxcalled        OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat_maxcalled       
-#define ops_strat_lastcalled       OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat_lastcalled      
-#define *ops_strat_dat_status      OPS_instance::getOPSInstance()->checkpointing_instance->*ops_strat_dat_status     
-#define ops_strat_in_progress      OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat_in_progress     
+#define ops_strat_max_loop_counter OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat->ops_strat_max_loop_counter
+#define ops_strat_min_saved        OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat->ops_strat_min_saved       
+#define ops_strat_max_saved        OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat->ops_strat_max_saved       
+#define ops_strat_avg_saved        OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat->ops_strat_avg_saved       
+#define ops_strat_saved_counter    OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat->ops_strat_saved_counter   
+#define ops_strat_timescalled      OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat->ops_strat_timescalled     
+#define ops_strat_maxcalled        OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat->ops_strat_maxcalled       
+#define ops_strat_lastcalled       OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat->ops_strat_lastcalled      
+#define ops_strat_dat_status       OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat->ops_strat_dat_status     
+#define ops_strat_in_progress      OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat->ops_strat_in_progress     
 
 
-long ops_strat_calc_saved_amount_full(ops_dat dat) {
+size_t ops_strat_calc_saved_amount_full(ops_dat dat) {
 
   int *full_range;
   ops_get_dat_full_range(dat, &full_range);
@@ -87,7 +96,7 @@ long ops_strat_calc_saved_amount_full(ops_dat dat) {
   return this_saved;
 }
 
-long ops_strat_calc_saved_amount_partial(ops_dat dat, int *range) {
+size_t ops_strat_calc_saved_amount_partial(ops_dat dat, int *range) {
   int *full_range;
   ops_get_dat_full_range(dat, &full_range);
   int this_saved = 0;
@@ -117,17 +126,32 @@ void ops_strat_gather_statistics(ops_arg *args, int nargs, int loop_id,
   if (ops_best_backup_point != -1)
     return;
 
+  if (OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat == NULL) {
+    OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat = new ops_strat_data();
+
+    ops_strat_max_loop_counter = 0;
+    ops_strat_min_saved        = NULL;
+    ops_strat_max_saved        = NULL;
+    ops_strat_avg_saved        = NULL;
+    ops_strat_saved_counter    = NULL;
+    ops_strat_timescalled      = NULL;
+    ops_strat_maxcalled        = NULL;
+    ops_strat_lastcalled       = NULL;
+    ops_strat_dat_status      = NULL;
+    ops_strat_in_progress      = NULL;
+  }
+
   if (loop_id >= ops_strat_max_loop_counter) {
     int ops_strat_max_loop_counter_old = ops_strat_max_loop_counter;
     ops_strat_max_loop_counter = MAX(50, loop_id * 2);
-    ops_strat_min_saved = (long *)ops_realloc(
-        ops_strat_min_saved, ops_strat_max_loop_counter * sizeof(long));
-    ops_strat_max_saved = (long *)ops_realloc(
-        ops_strat_max_saved, ops_strat_max_loop_counter * sizeof(long));
-    ops_strat_avg_saved = (long *)ops_realloc(
-        ops_strat_avg_saved, ops_strat_max_loop_counter * sizeof(long));
-    ops_strat_saved_counter = (long *)ops_realloc(
-        ops_strat_saved_counter, ops_strat_max_loop_counter * sizeof(long));
+    ops_strat_min_saved = (size_t *)ops_realloc(
+        ops_strat_min_saved, ops_strat_max_loop_counter * sizeof(size_t));
+    ops_strat_max_saved = (size_t *)ops_realloc(
+        ops_strat_max_saved, ops_strat_max_loop_counter * sizeof(size_t));
+    ops_strat_avg_saved = (size_t *)ops_realloc(
+        ops_strat_avg_saved, ops_strat_max_loop_counter * sizeof(size_t));
+    ops_strat_saved_counter = (size_t *)ops_realloc(
+        ops_strat_saved_counter, ops_strat_max_loop_counter * sizeof(size_t));
 
     ops_strat_timescalled = (int *)ops_realloc(
         ops_strat_timescalled, ops_strat_max_loop_counter * sizeof(int));
@@ -167,7 +191,7 @@ void ops_strat_gather_statistics(ops_arg *args, int nargs, int loop_id,
         args[i].opt == 1) {
 
       // if dataset is not written, it will have to be saved
-      long tosave = ops_strat_calc_saved_amount_full(args[i].dat);
+      size_t tosave = ops_strat_calc_saved_amount_full(args[i].dat);
       for (int loop = 0; loop < ops_strat_max_loop_counter; ++loop) {
         if (ops_strat_in_progress[loop] &&
             ops_strat_dat_status[loop][args[i].dat->index] == OPS_UNDECIDED) {
@@ -181,7 +205,7 @@ void ops_strat_gather_statistics(ops_arg *args, int nargs, int loop_id,
 
       // if dataset is written, only a part of it (the edges that are not) has
       // to be saved
-      long tosave = ops_strat_calc_saved_amount_partial(args[i].dat, range);
+      size_t tosave = ops_strat_calc_saved_amount_partial(args[i].dat, range);
       for (int loop = 0; loop < ops_strat_max_loop_counter; ++loop) {
         if (ops_strat_in_progress[loop] &&
             ops_strat_dat_status[loop][args[i].dat->index] == OPS_UNDECIDED) {
@@ -241,7 +265,7 @@ void ops_strat_gather_statistics(ops_arg *args, int nargs, int loop_id,
 }
 
 typedef struct {
-  long key;
+  size_t key;
   int value;
 } ops_keyvalue;
 
@@ -258,7 +282,7 @@ int comp2(const void *a, const void *b) {
 bool ops_strat_should_backup(ops_arg *args, int nargs, int loop_id,
                              int *range) {
   if (ops_best_backup_point == -1) {
-    ops_keyvalue *kv = (ops_keyvalue *)ops_malloc(ops_strat_max_loop_counter *
+    ops_keyvalue *kv = (ops_keyvalue *)ops_calloc(ops_strat_max_loop_counter ,
                                                   sizeof(ops_keyvalue));
     for (int i = 0; i < ops_strat_max_loop_counter; i++) {
       if (ops_strat_timescalled[i] > 2) {
@@ -277,7 +301,7 @@ bool ops_strat_should_backup(ops_arg *args, int nargs, int loop_id,
               ops_call_counter - ops_strat_lastcalled[idx]) <
           ops_call_counter / 10) {
         if (OPS_instance::getOPSInstance()->OPS_diags > 3)
-          ops_printf(
+          ops_printf2(OPS_instance::getOPSInstance(),
               "Using kernel %d (%s) as backup point, will save ~%d kBytes\n",
               idx, OPS_instance::getOPSInstance()->OPS_kernels[idx].name, ops_strat_avg_saved[idx] / 1024);
         // ops_best_backup_point_size = ops_strat_avg_saved[idx];
@@ -291,7 +315,7 @@ bool ops_strat_should_backup(ops_arg *args, int nargs, int loop_id,
         break;
       } else {
         if (OPS_instance::getOPSInstance()->OPS_diags > 3)
-          ops_printf("Discarding candidate %d (%s) as backup point %d kBytes\n",
+          ops_printf2(OPS_instance::getOPSInstance(),"Discarding candidate %d (%s) as backup point %d kBytes\n",
                      idx, OPS_instance::getOPSInstance()->OPS_kernels[idx].name,
                      ops_strat_avg_saved[idx] / 1024);
       }
@@ -319,17 +343,10 @@ void ops_statistics_exit() {
   free(ops_strat_saved_counter);
   ops_strat_max_loop_counter = 0;
   ops_best_backup_point = -1;
+  delete OPS_instance::getOPSInstance()->checkpointing_instance->ops_strat;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #else
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void ops_strat_gather_statistics(ops_arg *args, int nargs, int loop_id,
                                  int *range) {}
@@ -338,8 +355,5 @@ bool ops_strat_should_backup(ops_arg *args, int nargs, int loop_id,
   return false;
 }
 void ops_statistics_exit() {}
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -189,21 +189,21 @@ void pfn_notify(const char *errinfo, const void *private_info, size_t cb,
 }
 
 /**adapted from ocl_tools.c by Dan Curran (dancrn.com)*/
-void openclDeviceInit(const int argc, const char **argv) {
+void openclDeviceInit(OPS_instance *instance, const int argc, const char * const argv[]) {
   (void)argc;
   (void)argv;
 
   char *dev_name;
-  OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.n_constants = 0;
-  OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.n_platforms = 0;
-  OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.n_devices = 0;
-  OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.platform_id = NULL;
-  OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.devices = NULL;
+  instance->opencl_instance->OPS_opencl_core.n_constants = 0;
+  instance->opencl_instance->OPS_opencl_core.n_platforms = 0;
+  instance->opencl_instance->OPS_opencl_core.n_devices = 0;
+  instance->opencl_instance->OPS_opencl_core.platform_id = NULL;
+  instance->opencl_instance->OPS_opencl_core.devices = NULL;
   cl_int ret = 0;
   cl_uint dev_type_flag = CL_DEVICE_TYPE_CPU;
 
   // determin the user requested device type
-  int device_type = OPS_instance::getOPSInstance()->OPS_cl_device;
+  int device_type = instance->OPS_cl_device;
   switch (device_type) {
   case 0: // CPU:
     dev_type_flag = CL_DEVICE_TYPE_CPU;
@@ -217,79 +217,79 @@ void openclDeviceInit(const int argc, const char **argv) {
   }
 
   // get number of platforms on current system (cast is intentional)
-  clSafeCall(clGetPlatformIDs(0, NULL, &OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.n_platforms));
-  printf("Number of OpenCL platforms = %i \n",
-         (int)OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.n_platforms);
+  clSafeCall(clGetPlatformIDs(0, NULL, &instance->opencl_instance->OPS_opencl_core.n_platforms));
+  instance->ostream() << "Number of OpenCL platforms = " <<
+         (int)instance->opencl_instance->OPS_opencl_core.n_platforms << '\n';
 
   // alloc space for platform ids
-  OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.platform_id = (cl_platform_id *)ops_calloc(
-      OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.n_platforms, sizeof(cl_platform_id));
+  instance->opencl_instance->OPS_opencl_core.platform_id = (cl_platform_id *)ops_calloc(
+      instance->opencl_instance->OPS_opencl_core.n_platforms, sizeof(cl_platform_id));
 
   // read in platform ids from runtime
-  clSafeCall(clGetPlatformIDs(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.n_platforms,
-                              OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.platform_id, NULL));
+  clSafeCall(clGetPlatformIDs(instance->opencl_instance->OPS_opencl_core.n_platforms,
+                              instance->opencl_instance->OPS_opencl_core.platform_id, NULL));
 
-  for (int p = 0; p < OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.n_platforms; p++) {
+  for (unsigned int p = 0; p < instance->opencl_instance->OPS_opencl_core.n_platforms; p++) {
     // search for requested device : CPU, GPUs and ACCELERATORS (i.e Xeon Phi)
     // get number of devices on this platform
-    ret = clGetDeviceIDs(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.platform_id[p], dev_type_flag, 0, NULL,
-                         &OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.n_devices);
+    ret = clGetDeviceIDs(instance->opencl_instance->OPS_opencl_core.platform_id[p], dev_type_flag, 0, NULL,
+                         &instance->opencl_instance->OPS_opencl_core.n_devices);
 
     // this platform may not have the requested type of devices
-    if (CL_DEVICE_NOT_FOUND == ret || 0 == OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.n_devices)
+    if (CL_DEVICE_NOT_FOUND == ret || 0 == instance->opencl_instance->OPS_opencl_core.n_devices)
       continue;
     else
-      printf("Number of devices on platform %d = %d\n", p,
-             OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.n_devices);
+      instance->ostream() << "Number of devices on platform "<<p<<" = " <<
+             instance->opencl_instance->OPS_opencl_core.n_devices << '\n';
 
     // alloc space for device ids
-    OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.devices = (cl_device_id *)ops_calloc(
-        OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.n_devices, sizeof(cl_device_id));
+    instance->opencl_instance->OPS_opencl_core.devices = (cl_device_id *)ops_calloc(
+        instance->opencl_instance->OPS_opencl_core.n_devices, sizeof(cl_device_id));
 
     // get device IDs for this platform
-    clSafeCall(clGetDeviceIDs(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.platform_id[p], dev_type_flag,
-                              OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.n_devices,
-                              OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.devices, NULL));
+    clSafeCall(clGetDeviceIDs(instance->opencl_instance->OPS_opencl_core.platform_id[p], dev_type_flag,
+                              instance->opencl_instance->OPS_opencl_core.n_devices,
+                              instance->opencl_instance->OPS_opencl_core.devices, NULL));
 
-    for (int d = 0; d < OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.n_devices; d++) {
+    for (unsigned int d = 0; d < instance->opencl_instance->OPS_opencl_core.n_devices; d++) {
       // attempt to create context from device id
-      OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context = clCreateContext(
-          NULL, 1, &OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.devices[d], NULL, NULL, &ret);
+      instance->opencl_instance->OPS_opencl_core.context = clCreateContext(
+          NULL, 1, &instance->opencl_instance->OPS_opencl_core.devices[d], NULL, NULL, &ret);
 
       // check other devices if it failed
       if (CL_SUCCESS != ret)
         continue;
 
       // attempt to create a command queue
-      OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue = clCreateCommandQueue(
-          OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.devices[d], 0, &ret);
+      instance->opencl_instance->OPS_opencl_core.command_queue = clCreateCommandQueue(
+          instance->opencl_instance->OPS_opencl_core.context, instance->opencl_instance->OPS_opencl_core.devices[d], 0, &ret);
       if (CL_SUCCESS != ret) {
         // if we've failed, release the context we just accquired
-        clReleaseContext(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context);
-        OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context = NULL;
+        clReleaseContext(instance->opencl_instance->OPS_opencl_core.context);
+        instance->opencl_instance->OPS_opencl_core.context = NULL;
         continue;
       }
 
       // this is definitely the device id we'll be using
-      OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id = OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.devices[d];
+      instance->opencl_instance->OPS_opencl_core.device_id = instance->opencl_instance->OPS_opencl_core.devices[d];
 
       // free the rest of them.
-      free(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.devices);
+      free(instance->opencl_instance->OPS_opencl_core.devices);
 
       size_t dev_name_len = 0;
-      ret = clGetDeviceInfo(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id, CL_DEVICE_NAME, 0, NULL,
+      ret = clGetDeviceInfo(instance->opencl_instance->OPS_opencl_core.device_id, CL_DEVICE_NAME, 0, NULL,
                             &dev_name_len);
 
       // it's unlikely this will happen
       if (ret != CL_SUCCESS) {
         // cleanup after ourselves
-        clReleaseCommandQueue(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue);
-        clReleaseContext(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context);
+        clReleaseCommandQueue(instance->opencl_instance->OPS_opencl_core.command_queue);
+        clReleaseContext(instance->opencl_instance->OPS_opencl_core.context);
 
-        OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context = NULL;
-        OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue = NULL;
+        instance->opencl_instance->OPS_opencl_core.context = NULL;
+        instance->opencl_instance->OPS_opencl_core.command_queue = NULL;
 
-        fprintf(stderr, "Error: Unable to get device name length.\n");
+        instance->ostream() << "Error: Unable to get device name length.\n";
         clSafeCall(ret);
         return;
       }
@@ -297,73 +297,73 @@ void openclDeviceInit(const int argc, const char **argv) {
       // alloc space for device name and '\0'
       dev_name = (char *)ops_calloc(dev_name_len + 1, sizeof(char));
       // attempt to get device name
-      ret = clGetDeviceInfo(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id, CL_DEVICE_NAME,
+      ret = clGetDeviceInfo(instance->opencl_instance->OPS_opencl_core.device_id, CL_DEVICE_NAME,
                             dev_name_len, dev_name, NULL);
       if (CL_SUCCESS != ret) {
         // cleanup after ourselves
-        clReleaseCommandQueue(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue);
-        clReleaseContext(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context);
+        clReleaseCommandQueue(instance->opencl_instance->OPS_opencl_core.command_queue);
+        clReleaseContext(instance->opencl_instance->OPS_opencl_core.context);
 
-        OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context = NULL;
-        OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue = NULL;
+        instance->opencl_instance->OPS_opencl_core.context = NULL;
+        instance->opencl_instance->OPS_opencl_core.command_queue = NULL;
 
-        fprintf(stderr, "Error: Unable to get device name.\n");
+        instance->ostream() << "Error: Unable to get device name.\n";
         clSafeCall(ret);
         return;
       }
 
       // at this point, we've got a device, it's name, a context and a queue
-      printf("OpenCL Running on platform %d device %d : %s\n", p, d, dev_name);
+      instance->ostream() << "OpenCL Running on platform "<<p<<" device "<<d<<" : "<<dev_name<<"\n";
       return;
     }
 
-    OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.devices = NULL;
-    printf("\n");
+    instance->opencl_instance->OPS_opencl_core.devices = NULL;
+    instance->ostream() << "\n";
   }
 
-  fprintf(stderr, "Error: No available devices found.\n");
+  instance->ostream() << "Error: No available devices found.\n";
   return;
 }
 
-void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
+void ops_cpHostToDevice(OPS_instance *instance, void **data_d, void **data_h, size_t size) {
   // printf("Copying data from host to device\n");
   cl_int ret = 0;
-  *data_d = (cl_mem)clCreateBuffer(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context, CL_MEM_READ_WRITE,
+  *data_d = (cl_mem)clCreateBuffer(instance->opencl_instance->OPS_opencl_core.context, CL_MEM_READ_WRITE,
                                    size, NULL, &ret);
   clSafeCall(ret);
-  clSafeCall(clEnqueueWriteBuffer(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue,
+  clSafeCall(clEnqueueWriteBuffer(instance->opencl_instance->OPS_opencl_core.command_queue,
                                   (cl_mem)*data_d, CL_TRUE, 0, size, *data_h, 0,
                                   NULL, NULL));
-  clSafeCall(clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue));
+  clSafeCall(clFinish(instance->opencl_instance->OPS_opencl_core.command_queue));
 }
 
 void ops_download_dat(ops_dat dat) {
 
-  // if (!OPS_instance::getOPSInstance()->OPS_hybrid_gpu) return;
-  int bytes = dat->elem_size;
+  // if (!instance->OPS_hybrid_gpu) return;
+  size_t bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];
 
   // printf("downloading to host from device %d bytes\n",bytes);
-  clSafeCall(clEnqueueReadBuffer(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue,
+  clSafeCall(clEnqueueReadBuffer(dat->block->instance->opencl_instance->OPS_opencl_core.command_queue,
                                  (cl_mem)dat->data_d, CL_TRUE, 0, bytes,
                                  dat->data, 0, NULL, NULL));
-  // clSafeCall( clFlush(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue) );
-  clSafeCall(clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue));
+  // clSafeCall( clFlush(instance->opencl_instance->OPS_opencl_core.command_queue) );
+  clSafeCall(clFinish(dat->block->instance->opencl_instance->OPS_opencl_core.command_queue));
 }
 
 void ops_upload_dat(ops_dat dat) {
 
-  // if (!OPS_instance::getOPSInstance()->OPS_hybrid_gpu) return;
-  int bytes = dat->elem_size;
+  // if (!instance->OPS_hybrid_gpu) return;
+  size_t bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];
 
-  clSafeCall(clEnqueueWriteBuffer(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue,
+  clSafeCall(clEnqueueWriteBuffer(dat->block->instance->opencl_instance->OPS_opencl_core.command_queue,
                                   (cl_mem)dat->data_d, CL_TRUE, 0, bytes,
                                   dat->data, 0, NULL, NULL));
-  // clSafeCall( clFlush(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue) );
-  clSafeCall(clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue));
+  // clSafeCall( clFlush(instance->opencl_instance->OPS_opencl_core.command_queue) );
+  clSafeCall(clFinish(dat->block->instance->opencl_instance->OPS_opencl_core.command_queue));
 }
 
 void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
@@ -399,7 +399,7 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs) {
 //
 
 void ops_opencl_get_data(ops_dat dat) {
-  // if (!OPS_instance::getOPSInstance()->OPS_hybrid_gpu) return;
+  // if (!instance->OPS_hybrid_gpu) return;
   if (dat->dirty_hd == 2)
     dat->dirty_hd = 0;
   else
@@ -423,34 +423,34 @@ void ops_opencl_put_data(ops_dat dat) {
 // routines to resize constant/reduct arrays, if necessary
 //
 
-void reallocConstArrays(int consts_bytes) {
+void reallocConstArrays(OPS_instance *instance, int consts_bytes) {
   cl_int ret;
-  if (consts_bytes > OPS_instance::getOPSInstance()->OPS_consts_bytes) {
-    if (OPS_instance::getOPSInstance()->OPS_consts_bytes > 0) {
-      free(OPS_instance::getOPSInstance()->OPS_consts_h);
-      clSafeCall(clReleaseMemObject((cl_mem)OPS_instance::getOPSInstance()->OPS_instance::getOPSInstance()->OPS_consts_d));
+  if (consts_bytes > instance->OPS_consts_bytes) {
+    if (instance->OPS_consts_bytes > 0) {
+      free(instance->OPS_consts_h);
+      clSafeCall(clReleaseMemObject((cl_mem)instance->OPS_consts_d));
     }
-    OPS_instance::getOPSInstance()->OPS_consts_bytes = 4 * consts_bytes; // 4 is arbitrary, more than needed
-    OPS_instance::getOPSInstance()->OPS_consts_h = (char *)ops_malloc(OPS_instance::getOPSInstance()->OPS_consts_bytes);
-    OPS_instance::getOPSInstance()->OPS_instance::getOPSInstance()->OPS_consts_d =
-        (char *)clCreateBuffer(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context, CL_MEM_READ_WRITE,
-                               OPS_instance::getOPSInstance()->OPS_consts_bytes, NULL, &ret);
+    instance->OPS_consts_bytes = 4 * consts_bytes; // 4 is arbitrary, more than needed
+    instance->OPS_consts_h = (char *)ops_malloc(instance->OPS_consts_bytes);
+    instance->OPS_consts_d =
+        (char *)clCreateBuffer(instance->opencl_instance->OPS_opencl_core.context, CL_MEM_READ_WRITE,
+                               instance->OPS_consts_bytes, NULL, &ret);
     clSafeCall(ret);
   }
 }
 
-void reallocReductArrays(int reduct_bytes) {
+void reallocReductArrays(OPS_instance *instance, int reduct_bytes) {
   cl_int ret;
-  if (reduct_bytes > OPS_instance::getOPSInstance()->OPS_reduct_bytes) {
-    if (OPS_instance::getOPSInstance()->OPS_reduct_bytes > 0) {
-      free(OPS_instance::getOPSInstance()->OPS_reduct_h);
-      clSafeCall(clReleaseMemObject((cl_mem)OPS_instance::getOPSInstance()->OPS_reduct_d));
+  if (reduct_bytes > instance->OPS_reduct_bytes) {
+    if (instance->OPS_reduct_bytes > 0) {
+      free(instance->OPS_reduct_h);
+      clSafeCall(clReleaseMemObject((cl_mem)instance->OPS_reduct_d));
     }
-    OPS_instance::getOPSInstance()->OPS_reduct_bytes = 4 * reduct_bytes; // 4 is arbitrary, more than needed
-    OPS_instance::getOPSInstance()->OPS_reduct_h = (char *)ops_malloc(OPS_instance::getOPSInstance()->OPS_reduct_bytes);
-    OPS_instance::getOPSInstance()->OPS_reduct_d =
-        (char *)clCreateBuffer(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context, CL_MEM_READ_WRITE,
-                               OPS_instance::getOPSInstance()->OPS_reduct_bytes, NULL, &ret);
+    instance->OPS_reduct_bytes = 4 * reduct_bytes; // 4 is arbitrary, more than needed
+    instance->OPS_reduct_h = (char *)ops_malloc(instance->OPS_reduct_bytes);
+    instance->OPS_reduct_d =
+        (char *)clCreateBuffer(instance->opencl_instance->OPS_opencl_core.context, CL_MEM_READ_WRITE,
+                               instance->OPS_reduct_bytes, NULL, &ret);
     clSafeCall(ret);
   }
 }
@@ -459,54 +459,54 @@ void reallocReductArrays(int reduct_bytes) {
 // routines to move constant/reduct arrays
 //
 
-void mvConstArraysToDevice(int consts_bytes) {
-  OPS_instance::getOPSInstance()->OPS_gbl_changed = 0;
-  if (OPS_instance::getOPSInstance()->OPS_gbl_prev != NULL)
+void mvConstArraysToDevice(OPS_instance *instance, int consts_bytes) {
+  instance->OPS_gbl_changed = 0;
+  if (instance->OPS_gbl_prev != NULL)
     for (int i = 0; i < consts_bytes; i++) {
-      if (OPS_instance::getOPSInstance()->OPS_consts_h[i] != OPS_instance::getOPSInstance()->OPS_gbl_prev[i])
-        OPS_instance::getOPSInstance()->OPS_gbl_changed = 1;
+      if (instance->OPS_consts_h[i] != instance->OPS_gbl_prev[i])
+        instance->OPS_gbl_changed = 1;
     }
   else {
-    OPS_instance::getOPSInstance()->OPS_gbl_changed = 1;
-    OPS_instance::getOPSInstance()->OPS_gbl_prev = (char *)ops_malloc(consts_bytes);
+    instance->OPS_gbl_changed = 1;
+    instance->OPS_gbl_prev = (char *)ops_malloc(consts_bytes);
   }
 
-  if (OPS_instance::getOPSInstance()->OPS_gbl_changed) {
+  if (instance->OPS_gbl_changed) {
     clSafeCall(clEnqueueWriteBuffer(
-        OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue, (cl_mem)OPS_instance::getOPSInstance()->OPS_instance::getOPSInstance()->OPS_consts_d, CL_TRUE, 0,
-        consts_bytes, (void *)OPS_instance::getOPSInstance()->OPS_consts_h, 0, NULL, NULL));
-    // clSafeCall( clFlush(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue) );
-    // clSafeCall( clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue) );
-    memcpy(OPS_instance::getOPSInstance()->OPS_gbl_prev, OPS_instance::getOPSInstance()->OPS_consts_h, consts_bytes);
+        instance->opencl_instance->OPS_opencl_core.command_queue, (cl_mem)instance->OPS_consts_d, CL_TRUE, 0,
+        consts_bytes, (void *)instance->OPS_consts_h, 0, NULL, NULL));
+    // clSafeCall( clFlush(instance->opencl_instance->OPS_opencl_core.command_queue) );
+    // clSafeCall( clFinish(instance->opencl_instance->OPS_opencl_core.command_queue) );
+    memcpy(instance->OPS_gbl_prev, instance->OPS_consts_h, consts_bytes);
   }
 }
 
-void mvReductArraysToDevice(int reduct_bytes) {
+void mvReductArraysToDevice(OPS_instance *instance, int reduct_bytes) {
   clSafeCall(clEnqueueWriteBuffer(
-      OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue, (cl_mem)OPS_instance::getOPSInstance()->OPS_reduct_d, CL_FALSE, 0,
-      reduct_bytes, (void *)OPS_instance::getOPSInstance()->OPS_reduct_h, 0, NULL, NULL));
-  // clSafeCall( clFlush(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue) );
-  // clSafeCall( clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue) );
+      instance->opencl_instance->OPS_opencl_core.command_queue, (cl_mem)instance->OPS_reduct_d, CL_FALSE, 0,
+      reduct_bytes, (void *)instance->OPS_reduct_h, 0, NULL, NULL));
+  // clSafeCall( clFlush(instance->opencl_instance->OPS_opencl_core.command_queue) );
+  // clSafeCall( clFinish(instance->opencl_instance->OPS_opencl_core.command_queue) );
 }
 
-void mvReductArraysToHost(int reduct_bytes) {
-  clSafeCall(clEnqueueReadBuffer(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue,
-                                 (cl_mem)OPS_instance::getOPSInstance()->OPS_reduct_d, CL_TRUE, 0, reduct_bytes,
-                                 (void *)OPS_instance::getOPSInstance()->OPS_reduct_h, 0, NULL, NULL));
-  // clSafeCall( clFlush(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue) );
-  // clSafeCall( clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue) );
+void mvReductArraysToHost(OPS_instance *instance, int reduct_bytes) {
+  clSafeCall(clEnqueueReadBuffer(instance->opencl_instance->OPS_opencl_core.command_queue,
+                                 (cl_mem)instance->OPS_reduct_d, CL_TRUE, 0, reduct_bytes,
+                                 (void *)instance->OPS_reduct_h, 0, NULL, NULL));
+  // clSafeCall( clFlush(instance->opencl_instance->OPS_opencl_core.command_queue) );
+  // clSafeCall( clFinish(instance->opencl_instance->OPS_opencl_core.command_queue) );
 }
 
-void ops_opencl_exit() {
-  if (!OPS_instance::getOPSInstance()->OPS_hybrid_gpu)
+void ops_opencl_exit(OPS_instance *instance) {
+  if (!instance->OPS_hybrid_gpu)
     return;
   ops_dat_entry *item;
-  TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
+  TAILQ_FOREACH(item, &instance->OPS_dat_list, entries) {
     clReleaseMemObject((cl_mem)(item->dat)->data_d);
   }
-  // clSafeCall( clFlush(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue) );
-  clSafeCall(clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue));
-  clSafeCall(clReleaseCommandQueue(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue));
-  clSafeCall(clReleaseContext(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context));
-  free(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.platform_id);
+  // clSafeCall( clFlush(instance->opencl_instance->OPS_opencl_core.command_queue) );
+  clSafeCall(clFinish(instance->opencl_instance->OPS_opencl_core.command_queue));
+  clSafeCall(clReleaseCommandQueue(instance->opencl_instance->OPS_opencl_core.command_queue));
+  clSafeCall(clReleaseContext(instance->opencl_instance->OPS_opencl_core.context));
+  free(instance->opencl_instance->OPS_opencl_core.platform_id);
 }

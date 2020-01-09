@@ -45,7 +45,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <ops_util.h>
 #include <ops_lib_core.h>
+
+#include <vector>
 
 /*******************************************************************************
 * Wrapper for malloc from www.gnu.org/
@@ -53,7 +56,7 @@
 void *xmalloc(size_t size) {
   if (size == 0)
     return (void *)NULL;
-  register void *value = malloc(size);
+  void *value = malloc(size);
   if (value == 0)
     printf("Virtual memory exhausted at malloc\n");
   return value;
@@ -68,7 +71,7 @@ void *xrealloc(void *ptr, size_t size) {
     return (void *)NULL;
   }
 
-  register void *value = realloc(ptr, size);
+  void *value = realloc(ptr, size);
   if (value == 0)
     printf("Virtual memory exhausted at realloc\n");
   return value;
@@ -81,7 +84,7 @@ void *xcalloc(size_t number, size_t size) {
   if (size == 0)
     return (void *)NULL;
 
-  register void *value = calloc(number, size);
+  void *value = calloc(number, size);
   if (value == 0)
     printf("Virtual memory exhausted at calloc\n");
   return value;
@@ -184,3 +187,163 @@ int file_exist(char const *filename) {
   struct stat buffer;
   return (stat(filename, &buffer) == 0);
 }
+
+/*******************************************************************************
+* Transpose an array, with potentially different padding - out has to be no smaller
+*******************************************************************************/
+//double conv_time = 0;
+void ops_transpose_data(char *in, char* out, int type_size, int ndim, int* size_in, int *size_out, int* dim_perm) {
+
+//  double t1 = omp_get_wtime();
+  int total = 1;
+  int count_in[OPS_MAX_DIM];
+  int prod_out[OPS_MAX_DIM+1];
+  int prod_in[OPS_MAX_DIM+1];
+  prod_out[0] = 1;
+  prod_in[0] = 1;
+  for (int d = 0; d < ndim; d++) {
+    total *= size_in[d];
+    count_in[d] = size_in[d];
+    prod_out[d+1] = prod_out[d]*size_out[d];
+    prod_in[d+1] = prod_in[d]*size_in[d];
+  }
+
+  if (ndim == 2) {
+#pragma omp parallel for collapse(2)
+    for (int j = 0; j < size_in[1]; j++) {
+      for (int i = 0; i < size_in[0]; i++) {
+        int idx_out = i*prod_out[dim_perm[0]] +
+          j*prod_out[dim_perm[1]];
+        int idx_in = i + j * size_in[0];
+        memcpy(out + type_size * idx_out,
+            in  + type_size * idx_in,
+            type_size);
+
+      }
+    }
+    //conv_time += omp_get_wtime()-t1;
+    return;
+  }
+  if (ndim == 3) {
+#pragma omp parallel for collapse(3)
+    for (int k = 0; k < size_in[2]; k++) {
+      for (int j = 0; j < size_in[1]; j++) {
+        for (int i = 0; i < size_in[0]; i++) {
+          int idx_out = i*prod_out[dim_perm[0]] +
+            j*prod_out[dim_perm[1]] +
+            k*prod_out[dim_perm[2]];
+          int idx_in = i + j * size_in[0] + k * size_in[0] * size_in[1];
+          memcpy(out + type_size * idx_out,
+              in  + type_size * idx_in,
+              type_size);
+
+        }
+      }
+    }
+    //conv_time += omp_get_wtime()-t1;
+    return;
+  }
+  if (ndim == 4) {
+#pragma omp parallel for collapse(4)
+    for (int u = 0; u < size_in[3]; u++) {
+      for (int k = 0; k < size_in[2]; k++) {
+        for (int j = 0; j < size_in[1]; j++) {
+          for (int i = 0; i < size_in[0]; i++) {
+            int idx_out = i*prod_out[dim_perm[0]] +
+              j*prod_out[dim_perm[1]] +
+              k*prod_out[dim_perm[2]] +
+              u*prod_out[dim_perm[3]];
+            int idx_in = i + j * size_in[0] + k * size_in[0] * size_in[1] +
+              u * size_in[0] * size_in[1] * size_in[2];
+            memcpy(out + type_size * idx_out,
+                in  + type_size * idx_in,
+                type_size);
+
+          }
+        }
+      }
+    }
+    //conv_time += omp_get_wtime()-t1;
+    return;
+  }
+
+  for (int i = 0; i < total; i++) {
+
+
+    int idx_out = 0;
+    for (int d = 0; d < ndim; d++) {
+      int idx_in_d = size_in[d]-count_in[d];
+      int d_out = dim_perm[d];
+      idx_out += idx_in_d * prod_out[d_out];
+    }
+
+    memcpy(out+type_size*idx_out, in+type_size*i, type_size);
+
+    count_in[0]--;
+    int m = 0;
+    while(count_in[m] == 0 && i < total-1) { //Can skip the very last iteration
+      count_in[m] = size_in[m];
+      m++;
+      count_in[m]--;
+    }
+
+  }
+    //conv_time += omp_get_wtime()-t1;
+}
+
+void ops_convert_layout(char *in, char *out, ops_block block, int size, int *dat_size, int *dat_size_orig, int type_size, int hybrid_layout) {
+
+      const int num_dims = block->dims + ((size>1)?1:0) + /*(block->count>1?1:0)*/ + (hybrid_layout>0?1:0);
+      std::vector<int> size_in(num_dims);
+      std::vector<int> size_out(num_dims);
+      std::vector<int> dim_perm(num_dims);
+      
+      int s1 = (size>1 && !block->instance->OPS_soa)?1:0;
+      int s2 = (size>1)?1:0;
+
+      if (size>1) {
+        size_in[0] = size;
+        int idx_dim = (block->instance->OPS_soa)?
+            (/*(block->count>1?1:0)+*/block->dims):0;
+        dim_perm[0] = idx_dim; 
+        size_out[idx_dim] = size;
+      }
+
+      for (int d = 0; d < block->dims/*block->batchdim*/; d++) {
+        size_in[s2+d] = dat_size_orig[d];
+        size_out[s1+d] = dat_size[d];
+        dim_perm[s2+d] = s1+d;
+      }
+      /*if (block->count>1) {
+        size_in[s2+block->dims] = block->count;
+        size_out[s1+block->batchdim] = block->count;
+        dim_perm[s2+block->dims] = s1+block->batchdim;
+      }
+      for (int d = block->batchdim; d < block->dims; d++) {
+        size_in[s2+d] = dat_size_orig[d];
+        size_out[s1+d+1] = dat_size_orig[d];
+        dim_perm[s2+d] = s1+d+1;
+      }
+
+      //Split batchdim in two
+      if (hybrid_layout && block->count>1) {
+        size_in[s2+block->dims] = hybrid_layout;
+        size_in[s2+block->dims+1] = block->count/hybrid_layout;
+        size_out[s1+block->batchdim] = hybrid_layout;
+        size_out[s2+block->dims+1] = block->count/hybrid_layout;
+        dim_perm[s2+block->dims+1] = s2+block->dims+1;
+        if (size_in[s2+block->dims] * size_in[s2+block->dims+1] != block->count)
+          throw OPSException(OPS_INVALID_ARGUMENT, "Error:  ops_decl_dat -- when batching, the number of systems must be a multiple of the batch size ");
+      }*/
+
+      ops_transpose_data(in, out, type_size, num_dims, size_in.data(), size_out.data(), dim_perm.data());
+}
+
+
+void ops_init_zero(char *data, size_t bytes) {
+#pragma omp parallel for
+  for (size_t i = 0; i < bytes; i++) {
+    data[i] = 0;
+  }
+}
+

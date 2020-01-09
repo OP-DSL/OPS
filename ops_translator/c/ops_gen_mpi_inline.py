@@ -363,11 +363,11 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
         if accs[n] == OPS_INC:
           code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):
-            code(arg_list[n]+'['+str(d)+'] = ZERO_'+typs[n]+';')
+            code(arg_list[n]+'['+str(d)+'] = 0;')#ZERO_'+typs[n]+';')
         if accs[n] == OPS_WRITE: #this may not be correct
           code(typs[n]+' '+arg_list[n]+'['+str(dims[n])+'];')
           for d in range(0,int(dims[n])):
-            code(arg_list[n]+'['+str(d)+'] = ZERO_'+typs[n]+';')
+            code(arg_list[n]+'['+str(d)+'] = 0;')#ZERO_'+typs[n]+';')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
@@ -554,9 +554,9 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     code('if (!ops_checkpointing_before(args,'+str(nargs)+',range,'+str(nk)+')) return;')
     code('#endif')
     code('')
-    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
-    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
-    code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].count++;')
+    IF('block->instance->OPS_diags > 1')
+    code('ops_timing_realloc(block->instance,'+str(nk)+',"'+name+'");')
+    code('block->instance->OPS_kernels['+str(nk)+'].count++;')
     ENDIF()
     code('')
     comm('compute localy allocated range for the sub-block')
@@ -596,7 +596,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     code('')
     comm('Timing')
     code('double t1,t2,c1,c2;')
-    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
+    IF('block->instance->OPS_diags > 1')
     code('ops_timers_core(&c2,&t2);')
     ENDIF()
     code('')
@@ -663,7 +663,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int dat'+str(n)+' = (OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size);')
+        code('int dat'+str(n)+' = (block->instance->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size);')
 
     if MULTI_GRID:
       code('int global_idx['+str(NDIM)+'];')
@@ -712,10 +712,10 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
           starttext = 'start_'+str(n)
         else:
           starttext = 'start'
-        code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + (OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) * '+starttext+'[0] * args['+str(n)+'].stencil->stride[0];')
+        code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + (block->instance->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) * '+starttext+'[0] * args['+str(n)+'].stencil->stride[0];')
 
         for d in range (1, NDIM):
-          line = 'base'+str(n)+' = base'+str(n)+'+ (OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) *\n'
+          line = 'base'+str(n)+' = base'+str(n)+'+ (block->instance->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) *\n'
           for d2 in range (0,d):
             line = line + config.depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])
@@ -742,9 +742,9 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
     code('')
-    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
+    IF('block->instance->OPS_diags > 1')
     code('ops_timers_core(&c1,&t1);')
-    code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
+    code('block->instance->OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
     ENDIF()
     code('')
 
@@ -784,9 +784,9 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     #     if accs[n] <> OPS_READ:
     #       code('*('+typs[n]+' *)args['+str(n)+'].data = *p_a'+str(n)+';')
     code('')
-    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
+    IF('block->instance->OPS_diags > 1')
     code('ops_timers_core(&c2,&t2);')
-    code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].time += t2-t1;')
+    code('block->instance->OPS_kernels['+str(nk)+'].time += t2-t1;')
     ENDIF()
 
     # if reduction == 1 :
@@ -794,7 +794,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     #     if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
     #       #code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)args['+str(n)+'].data);')
     #   code('ops_timers_core(&c1,&t1);')
-    #   code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
+    #   code('block->instance->OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
 
     code('ops_set_dirtybit_host(args, '+str(nargs)+');')
     for n in range (0, nargs):
@@ -803,10 +803,10 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
     code('')
     comm('Update kernel record')
-    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
+    IF('block->instance->OPS_diags > 1')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, start, end, &arg'+str(n)+');')
+        code('block->instance->OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, start, end, &arg'+str(n)+');')
     ENDIF()
     config.depth = config.depth - 2
     code('}')
@@ -841,18 +841,16 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     code('#define OPS_3D')
   if soa_set:
     code('#define OPS_SOA')
+  code('#include "ops_macros.h"')
   code('#ifdef __cplusplus')
-  code('#include "ops_lib_cpp.h"')
+  code('#include "ops_lib_core.h"')
   code('#endif')
-  code('#ifdef OPS_MPI')
+  code('#if defined(OPS_MPI) && defined(__cplusplus)')
   code('#include "ops_mpi_core.h"')
   code('#endif')
   if os.path.exists(os.path.join(src_dir,'user_types.h')):
     code('#include "user_types.h"')
   code('')
-
-  for n in range(0,17):
-    code('#undef OPS_ACC'+str(n))
 
   comm(' global constants')
   for nc in range (0,len(consts)):
@@ -893,7 +891,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
   code('{')
   config.depth = config.depth + 2
-  code('printf("error: unknown const name\\n"); exit(1);')
+  code('throw OPSException(OPS_RUNTIME_ERROR, "error: unknown const name");')
   ENDIF()
 
   config.depth = config.depth - 2

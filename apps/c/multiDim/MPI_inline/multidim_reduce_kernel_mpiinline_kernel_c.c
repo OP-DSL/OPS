@@ -20,8 +20,8 @@ void multidim_reduce_kernel_c_wrapper(
   for ( int n_y=0; n_y<y_size; n_y++ ){
     for ( int n_x=0; n_x<x_size; n_x++ ){
       double redu_dat1[2];
-      redu_dat1[0] = ZERO_double;
-      redu_dat1[1] = ZERO_double;
+      redu_dat1[0] = 0;
+      redu_dat1[1] = 0;
       #ifdef OPS_SOA
       const ptrm_double val = { val_p + n_x*1 + n_y * xdim0_multidim_reduce_kernel*1, xdim0_multidim_reduce_kernel, ydim0_multidim_reduce_kernel};
       #else

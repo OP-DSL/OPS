@@ -39,10 +39,6 @@
  *  @author Gihan R. Mudalige, (Started 23-08-2013)
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void *xmalloc(size_t size);
 
 void *xrealloc(void *ptr, size_t size);
@@ -75,31 +71,6 @@ inline int add2(int *coords, int *size, int dim) {
   for (int i = 1; i <= dim; i++)
     result += coords[i] * mult2(size, i);
   return result;
-}
-
-inline int off2(int ndim, int dim, int *start, int *end, int *size,
-                int *stride) {
-  int i = 0;
-  int c1[OPS_MAX_DIM];
-  int c2[OPS_MAX_DIM];
-
-  for (i = 0; i <= dim; i++)
-    c1[i] = start[i] + 1;
-  for (i = dim + 1; i < ndim; i++)
-    c1[i] = start[i];
-
-  for (i = 0; i < dim; i++)
-    c2[i] = end[i];
-  for (i = dim; i < ndim; i++)
-    c2[i] = start[i];
-
-  for (i = 0; i < ndim; i++) {
-    c1[i] *= stride[i];
-    c2[i] *= stride[i];
-  }
-  int off = add2(c1, size, dim) - add2(c2, size, dim);
-
-  return off;
 }
 
 inline int address2(int ndim, int dat_size, int *start, int *size, int *stride,
@@ -162,8 +133,5 @@ inline int off3D(int dim, int *start, int *end, int *size, int *stride) {
   return off;
 }
 
-#ifdef __cplusplus
-}
-#endif
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OP_UTIL_H */

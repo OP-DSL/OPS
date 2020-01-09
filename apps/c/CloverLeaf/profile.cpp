@@ -26,6 +26,7 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+#include <fstream>
 
 char* strip(char *c) {
     char * e = c + strlen(c) - 1;
@@ -37,18 +38,19 @@ char* strip(char *c) {
 void process_profile()
 {
 
-  char out_file[] = "prof.out";
-  FILE* prof_out=NULL;
+  const char *out_file = "prof.out";
+  std::ofstream prof_out (out_file, std::ofstream::out);
   char line[100];
 
-  if ((OPS_diags > 1) && ops_is_root() && (prof_out = fopen(out_file,"w")) == NULL) {
+  if ((OPS_instance::getOPSInstance()->OPS_diags > 1) && ops_is_root() && prof_out.fail()) {
     printf("can't open file %s\n",out_file); exit(-1);
   }
   ops_timing_output(prof_out);
-  if (OPS_diags > 1 && ops_is_root()) fclose(prof_out);
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1 && ops_is_root()) prof_out.close();
 
-  if (ops_is_root() && OPS_diags > 1) {
-    if ((prof_out = fopen(out_file,"r")) == NULL) {
+  FILE *prof_out2;
+  if (ops_is_root() && OPS_instance::getOPSInstance()->OPS_diags > 1) {
+    if ((prof_out2 = fopen(out_file,"r")) == NULL) {
       printf("can't open file %s\n",out_file); exit(-1);
     }
 
@@ -88,7 +90,7 @@ void process_profile()
     double BW_Field_Summary = 0.0;
     double BW_Others = 0.0;
 
-    while (fgets(line, 100, prof_out) != NULL) {
+    while (fgets(line, 100, prof_out2) != NULL) {
        sscanf(line,"%s %d %lf %s %lf %s %lf\n",name, &count, &time, std1, &mpi, std2, &bw);
        if(strncmp(strip(name),"advec_cell",10)==0) {
          Time_Cell_Advection = Time_Cell_Advection + time;
@@ -195,6 +197,6 @@ void process_profile()
     printf("Communication Time    :     %10.2f   %10.2f   \n",Comm_time, Comm_time*precentage);
     printf("Total Time            :     %10.2f   %10.2f   \n",Comp_time+Comm_time, (Comp_time+Comm_time)*precentage);
 
-    fclose(prof_out);
+    fclose(prof_out2);
   }
 }

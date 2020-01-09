@@ -39,7 +39,18 @@
 #include <mpi.h>
 #include <ops_mpi_core.h>
 
-void ops_init(const int argc, const char **argv, const int diags) {
+// The one and only non-threads safe global OPS_instance
+// Declared in ops_instance.cpp
+extern OPS_instance *global_ops_instance;
+
+
+void _ops_init(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
+  //We do not have thread safety across MPI
+  if ( OPS_instance::numInstances() != 1 ) {
+    OPSException ex(OPS_RUNTIME_ERROR, "ERROR: multiple OPS instances are not suppoerted over MPI");
+    throw ex;
+  }
+  
   int flag = 0;
   MPI_Initialized(&flag);
   if (!flag) {
@@ -50,18 +61,35 @@ void ops_init(const int argc, const char **argv, const int diags) {
   MPI_Comm_rank(OPS_MPI_GLOBAL, &ops_my_global_rank);
   MPI_Comm_size(OPS_MPI_GLOBAL, &ops_comm_global_size);
 
-  ops_init_core(argc, argv, diags);
+  // So the MPI backend is not thread safe - that's fine.  It currently does not pass 
+  // OPS_instance pointers around, but rather uses the global instance exclusively.
+  // The only feasible use-case for MPI is that there is one OPS_instance.  Ideally that
+  // would not be created via thread-safe API, but we kinda want to support that.  So we 
+  // drill a back door into our own safety system: provided there is only one OPS_instance,
+  // we assign that to the global non-thread safe var and carry on.
+  global_ops_instance = instance;
+
+  ops_init_core(instance, argc, argv, diags);
 }
 
-void ops_exit() {
-  ops_mpi_exit();
+void ops_init(const int argc, const char *const argv[], const int diags) {
+  _ops_init(OPS_instance::getOPSInstance(), argc, argv, diags);
+}
+
+void _ops_exit(OPS_instance *instance) {
+  if (instance->is_initialised == 0) return;
+  ops_mpi_exit(instance);
   // ops_rt_exit();
-  ops_exit_core();
+  ops_exit_core(instance);
 
   int flag = 0;
   MPI_Finalized(&flag);
   if (!flag)
     MPI_Finalize();
+}
+
+void ops_exit() {
+  _ops_exit(OPS_instance::getOPSInstance());
 }
 
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
@@ -87,7 +115,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
       OPS_sub_dat_list, OPS_instance::getOPSInstance()->OPS_dat_index * sizeof(sub_dat_list));
 
   // store away product array prod[] and MPI_Types for this ops_dat
-  sub_dat_list sd = (sub_dat_list)ops_malloc(sizeof(sub_dat));
+  sub_dat_list sd = (sub_dat_list)ops_calloc(1, sizeof(sub_dat));
   sd->dat = dat;
   sd->dirtybit = 1;
   sd->dirty_dir_send =
@@ -107,9 +135,15 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   return dat;
 }
 
+ops_halo _ops_decl_halo(OPS_instance *instance, ops_dat from, ops_dat to, int *iter_size, int *from_base,
+                       int *to_base, int *from_dir, int *to_dir) {
+  return ops_decl_halo_core(instance, from, to, iter_size, from_base, to_base, from_dir,
+                            to_dir);
+}
+
 ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int *from_base,
                        int *to_base, int *from_dir, int *to_dir) {
-  return ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir,
+  return ops_decl_halo_core(from->block->instance, from, to, iter_size, from_base, to_base, from_dir,
                             to_dir);
 }
 
@@ -137,6 +171,7 @@ void ops_decl_const_char(int dim, char const *type, int typeSize, char *data,
   (void)typeSize;
   (void)data;
   (void)name;
+  ops_execute(OPS_instance::getOPSInstance());
 }
 
 void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
@@ -156,7 +191,7 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs) {
 
 
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
-  ops_execute();
+  ops_execute(handle->instance);
   ops_checkpointing_reduction(handle);
   memcpy(ptr, handle->data, handle->size);
   handle->initialized = 0;

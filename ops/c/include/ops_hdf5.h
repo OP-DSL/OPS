@@ -39,10 +39,6 @@
 #ifndef __OPS_HDF5_H
 #define __OPS_HDF5_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * This routine defines a dataset to be read in from a named hdf5 file.
  *
@@ -55,6 +51,7 @@ extern "C" {
  * @param file_name  HDF5 file to read and obtain the data from
  * @return
  */
+OPS_FTN_INTEROP
 ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size, char const *type,
                           char const *dat_name, char const *file_name);
 
@@ -73,6 +70,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_size, char const *type,
  * @param file_name   HDF5 file to read and obtain the block information from
  * @return
  */
+OPS_FTN_INTEROP
 ops_block ops_decl_block_hdf5(int dims, const char *block_name,
                               char const *file_name);
 
@@ -84,6 +82,7 @@ ops_block ops_decl_block_hdf5(int dims, const char *block_name,
  * @param file_name     HDF5 file to read from 
  * @return
  */
+OPS_FTN_INTEROP
 ops_stencil ops_decl_stencil_hdf5(int dims, int points,
                                   const char *stencil_name,
                                   char const *file_name);
@@ -96,6 +95,7 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
  * @param file_name     HDF5 file to read from
  * @return
  */
+OPS_FTN_INTEROP
 ops_stencil ops_decl_strided_stencil_hdf5(int dims, int points,
                                           const char *stencil_name,
                                           char const *file_name);
@@ -109,6 +109,7 @@ ops_stencil ops_decl_strided_stencil_hdf5(int dims, int points,
  * @param file_name  HDF5 file to read and obtain the data from
  * @return
  */
+OPS_FTN_INTEROP
 ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name);
 
 /**
@@ -119,6 +120,7 @@ ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name);
  * @param dat
  * @param file_name
  */
+OPS_FTN_INTEROP
 void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name);
 
 /**
@@ -130,6 +132,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name);
  * @param block      ops block to be written
  * @param file_name  HDF5 file to write to
  */
+OPS_FTN_INTEROP
 void ops_fetch_block_hdf5_file(ops_block block, char const *file_name);
 
 /**
@@ -141,6 +144,7 @@ void ops_fetch_block_hdf5_file(ops_block block, char const *file_name);
  * @param stencil    ::ops_stencil to be written
  * @param file_name  HDF5 file to write to
  */
+OPS_FTN_INTEROP
 void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name);
 
 /**
@@ -152,9 +156,11 @@ void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name);
  * @param halo    ::ops_halo to be written
  * @param file_name  HDF5 file to write to
  */
+OPS_FTN_INTEROP
 void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name);
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
+OPS_FTN_INTEROP
 void ops_read_dat_hdf5(ops_dat dat);
 #endif /* DOXYGEN_SHOULD_SKIP_THIS*/
 
@@ -163,6 +169,7 @@ void ops_read_dat_hdf5(ops_dat dat);
  *
  * @param file_name  HDF5 file to write to
  */
+OPS_FTN_INTEROP
 void ops_dump_to_hdf5(char const *file_name);
 
 void ops_write_const_hdf5(char const *name, int dim, char const *type,
@@ -170,8 +177,5 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
 void ops_get_const_hdf5(char const *name, int dim, char const *type,
                        char *const_data, char const *file_name);
 
-#ifdef __cplusplus
-}
-#endif
 #endif
 /* __OPS_HDF5_H */

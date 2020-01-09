@@ -275,15 +275,15 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('')
 
     if gen_full_code:
-      IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
-      code('ops_timing_realloc('+str(nk)+',"'+name+'");')
-      code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].count++;')
+      IF('block->instance->OPS_diags > 1')
+      code('ops_timing_realloc(block->instance,'+str(nk)+',"'+name+'");')
+      code('block->instance->OPS_kernels['+str(nk)+'].count++;')
       code('ops_timers_core(&__c2,&__t2);')
       ENDIF()
       code('')
 
     code('#ifdef OPS_DEBUG')
-    code('ops_register_args(args, "'+name+'");')
+    code('ops_register_args(block->instance, args, "'+name+'");')
     code('#endif')
     code('')
 
@@ -376,9 +376,9 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('#endif')
     code('')
     if gen_full_code==1:
-      IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
+      IF('block->instance->OPS_diags > 1')
       code('ops_timers_core(&__c1,&__t1);')
-      code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].mpi_time += __t1-__t2;')
+      code('block->instance->OPS_kernels['+str(nk)+'].mpi_time += __t1-__t2;')
       ENDIF()
       code('')
 
@@ -424,7 +424,6 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       code('#elif defined(__clang__)')
       code('#pragma clang loop vectorize(assume_safety)')
       code('#elif defined(__GNUC__)')
-      code('#pragma simd')
       code('#pragma GCC ivdep')
       code('#else')
       code('#pragma simd')
@@ -533,9 +532,9 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
             code('p_a'+str(n)+'['+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
 
     if gen_full_code==1:
-      IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
+      IF('block->instance->OPS_diags > 1')
       code('ops_timers_core(&__c2,&__t2);')
-      code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].time += __t2-__t1;')
+      code('block->instance->OPS_kernels['+str(nk)+'].time += __t2-__t1;')
       ENDIF()
 
     code('#ifndef OPS_LAZY')
@@ -547,13 +546,13 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     if gen_full_code==1:
       code('')
-      IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
+      IF('block->instance->OPS_diags > 1')
       comm('Update kernel record')
       code('ops_timers_core(&__c1,&__t1);')
-      code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].mpi_time += __t1-__t2;')
+      code('block->instance->OPS_kernels['+str(nk)+'].mpi_time += __t1-__t2;')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_dat':
-          code('OPS_instance::getOPSInstance()->OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, start, end, &arg'+str(n)+');')
+          code('block->instance->OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, start, end, &arg'+str(n)+');')
       ENDIF()
     config.depth = config.depth - 2
     code('}')
@@ -574,7 +573,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
          text = text +'\n'
     code(text);
     config.depth = 2
-    code('ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));')
+    code('ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));')
     #code('desc->name = (char *)malloc(strlen(name)+1);')
     #code('strcpy(desc->name, name);')
     code('desc->name = name;')
@@ -606,8 +605,8 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         code('memcpy(tmp, arg'+str(n)+'.data,'+dims[n]+'*sizeof('+typs[n]+'));')
         code('desc->args['+str(n)+'].data = tmp;')
     code('desc->function = ops_par_loop_'+name+'_execute;')
-    IF('OPS_instance::getOPSInstance()->OPS_diags > 1')
-    code('ops_timing_realloc('+str(nk)+',"'+name+'");')
+    IF('block->instance->OPS_diags > 1')
+    code('ops_timing_realloc(block->instance,'+str(nk)+',"'+name+'");')
     ENDIF()
     code('ops_enqueue_kernel(desc);')
     config.depth = 0
@@ -642,7 +641,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
   if soa_set:
     code('#define OPS_SOA')
   code('#define OPS_API 2')
-  code('#include "ops_lib_cpp.h"')
+  code('#include "ops_lib_core.h"')
   code('#ifdef OPS_MPI')
   code('#include "ops_mpi_core.h"')
   code('#endif')

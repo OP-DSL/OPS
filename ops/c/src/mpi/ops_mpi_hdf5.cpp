@@ -63,10 +63,10 @@ static char *copy_str(char const *src) {
 
 MPI_Comm OPS_MPI_HDF5_WORLD;
 
-sub_block_list *OPS_sub_block_list; // pointer to list holding sub-block
+extern sub_block_list *OPS_sub_block_list; // pointer to list holding sub-block
 // geometries
 
-sub_dat_list *OPS_sub_dat_list; // pointer to list holding sub-dat
+extern sub_dat_list *OPS_sub_dat_list; // pointer to list holding sub-dat
 // details
 
 extern void (*ops_read_dat_hdf5_dynamic)(ops_dat dat);

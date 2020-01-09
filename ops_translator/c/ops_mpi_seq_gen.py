@@ -88,7 +88,7 @@ top =  """
   * @details Declares the OPS API calls for the sequential backend
   */
 
-#include "ops_lib_cpp.h"
+#include "ops_lib_core.h"
 #ifdef OPS_MPI
 #include "ops_mpi_core.h"
 #endif

@@ -134,6 +134,8 @@ Reductions in loops are done using the ops\_arg\_reduce argument, which takes a 
 
 OPS takes responsibility for all data, its movement and the execution of parallel loops. With different execution hardware and optimisations, this means OPS will re-organise data as well as execution (potentially across different loops), and therefore any data accesses or manipulation may only be done through the OPS API.
 
+This restriction is exploited by a lazy execution mechanism in OPS. The idea is that OPS API calls that do not return a result can be not executed immediately, rather queued, and once an API call requires returning some data, operations in the queue are executed, and the result is returned. This allows OPS to analyse and optimise operations in the queue together. This mechanism is fully automated by OPS, and is used with the various \_tiled executables. For more information on how to use this mechanism for improving CPU performance, see Section \ref{sec:tiling}. Some API calls triggering the execution of queued operations include ops\_reduction\_result, and the functions in the data access API.
+
 \clearpage
 
 \newpage
@@ -282,7 +284,7 @@ there is no order defined in which they are carried out.}
 \end{routine}
 
 \begin{routine} {void ops\_reduction\_result(ops\_reduction handle, T *result)}
-{This routine returns the reduced value held by a reduction handle}
+{This routine returns the reduced value held by a reduction handle. When OPS uses lazy execution, this will trigger the execution of all previously queued OPS operations.}
 
 \item[handle]        the {\tt ops\_reduction} handle
 \item[result]          a pointer to write the results to, memory size has to match the declared
@@ -718,6 +720,9 @@ Once compiled, to enable, use the \texttt{OPS\_TILING} runtime parameter - this
 will look at the L3 cache size of your CPU and guess the correct tile size. If 
 you want to alter the amount of cache to be used for the guess, use the 
 \texttt{OPS\_CACHE\_SIZE=XX} runtime parameter, where the value is in Megabytes. 
+To manually specify the tile sizes, use the 
+OPS\_TILESIZE\_X, OPS\_TILESIZE\_Y, and OPS\_TILESIZE\_Z runtime arguments.
+ 
 When MPI is combined with OpenMP tiling can be extended to the MPI halos. 
 Set \texttt{OPS\_TILING\_MAXDEPTH} to increase the the halo depths so that 
 halos for multiple \texttt{ops\_par\_loops} can be exchanged with a 
@@ -735,11 +740,11 @@ numactl -physnodebind=0 ./cloverleaf\_tiled OPS\_TILING}\\
 mpirun -np xx ./cloverleaf\_mpi\_tiled OPS\_TILING 
 OPS\_TILING\_MAXDEPTH=6} \\
 
-\noindent To manually specify the tile sizes (in MB), use the T1, T2, and T3 
-environment variables:\\
-\texttt{export T1=600; export T2=200; \\
-export OMP\_NUM\_THREADS=xx; \\
-numactl -physnodebind=0 ./cloverleaf\_tiled OPS\_TILING
+\noindent To manually specify the tile sizes (in number of grid points), use the 
+OPS\_TILESIZE\_X, OPS\_TILESIZE\_Y, and OPS\_TILESIZE\_Z
+runtime arguments:\\
+\texttt{export OMP\_NUM\_THREADS=xx; \\
+numactl -physnodebind=0 ./cloverleaf\_tiled OPS\_TILING OPS\_TILESIZE\_X=600 OPS\_TILESIZE\_Y=200
 }
 
 \section{CUDA and OpenCL Runtime Arguments}

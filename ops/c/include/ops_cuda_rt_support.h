@@ -55,47 +55,27 @@
 
 #define OPS_WARPSIZE 32
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/*
-* Global variables actually defined in the corresponding c file
-*/
-
-
-extern void __syncthreads();
-
-extern int ops_device_initialised_externally;
-
 /*
 * personal stripped-down version of cutil_inline.h
 */
 
-#define cutilSafeCall(err) __cudaSafeCall(err, __FILE__, __LINE__)
-#define cutilCheckMsg(msg) __cutilCheckMsg(msg, __FILE__, __LINE__)
+#define cutilSafeCall(stream, err) __cudaSafeCall(stream, err, __FILE__, __LINE__)
+#define cutilCheckMsg(stream, msg) __cutilCheckMsg(stream, msg, __FILE__, __LINE__)
 
-void cutilDeviceInit(const int argc, const char **argv);
-void __cudaSafeCall(cudaError_t err, const char *file, const int line);
+void cutilDeviceInit(OPS_instance *instance, const int argc, const char *const argv[]);
+void __cudaSafeCall(std::ostream &stream, cudaError_t err, const char *file, const int line);
 void ops_cuda_get_data(ops_dat dat);
 void ops_cuda_put_data(ops_dat dat);
-void reallocConstArrays(int consts_bytes);
-void reallocReductArrays(int reduct_bytes);
-void mvConstArraysToDevice(int consts_bytes);
-void mvReductArraysToDevice(int reduct_bytes);
-void mvReductArraysToHost(int reduct_bytes);
-void ops_cuda_exit();
+void reallocConstArrays(OPS_instance *instance, int consts_bytes);
+void reallocReductArrays(OPS_instance *instance, int reduct_bytes);
+void mvConstArraysToDevice(OPS_instance *instance, int consts_bytes);
+void mvReductArraysToDevice(OPS_instance *instance, int reduct_bytes);
+void mvReductArraysToHost(OPS_instance *instance, int reduct_bytes);
+void ops_cuda_exit(OPS_instance *instance);
 void ops_upload_dat(ops_dat dat);
 void ops_download_dat(ops_dat dat);
 
 void ops_set_dirtybit_device_dat(ops_dat dat);
 
-void ops_halo_copy_dh(const char *src, char *dest, int size);
-void ops_halo_copy_hd(const char *src, char *dest, int size);
-// void ops_cuda_halo_copy(char * dest, char * src, int size);
-
-#ifdef __cplusplus
-}
-#endif
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_CUDA_RT_SUPPORT_H */

@@ -5,7 +5,7 @@ NVCCFLAGS := -Xcompiler="-std=c99 -fPIC"
 ifndef DEBUG
     NVCCFLAGS += -O3 -g
 else
-    NVCCFLAGS += -O0 -g -G
+    NVCCFLAGS += -O0 -g -G -std=c++11
 endif
 
 ifndef NV_ARCH

@@ -4,5 +4,5 @@
 
 #define OPS_3D
 #include "./MPI_inline/write_common.h"
-//user kernel files
+// user kernel files
 #include "write_kernel_mpiinline_kernel_c.c"

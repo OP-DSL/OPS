@@ -41,6 +41,7 @@
 #include <mpi.h>
 #include <ops_mpi_core.h>
 #include <ops_exceptions.h>
+#include <string>
 
 #ifndef __XDIMS__ // perhaps put this into a separate headder file
 #define __XDIMS__
@@ -159,6 +160,52 @@ void ops_fprintf(FILE *stream, const char *format, ...) {
   }
 }
 
+void printf2(OPS_instance *instance, const char *format, ...) {
+  if (ops_my_global_rank == MPI_ROOT) {
+    char buf[1000];
+    va_list argptr;
+    va_start(argptr, format);
+    vsprintf(buf,format, argptr);
+    va_end(argptr);
+    instance->ostream() << buf;
+  }
+}
+
+void ops_printf2(OPS_instance *instance, const char *format, ...) {
+  if (ops_my_global_rank == MPI_ROOT) {
+    char buf[1000];
+    va_list argptr;
+    va_start(argptr, format);
+    vsprintf(buf,format, argptr);
+    va_end(argptr);
+    instance->ostream() << buf;
+  }
+}
+
+
+void fprintf2(std::ostream &stream, const char *format, ...) {
+  if (ops_my_global_rank == MPI_ROOT) {
+    char buf[1000];
+    va_list argptr;
+    va_start(argptr, format);
+    vsprintf(buf, format, argptr);
+    va_end(argptr);
+    stream << buf;
+  }
+}
+
+void ops_fprintf2(std::ostream &stream, const char *format, ...) {
+  if (ops_my_global_rank == MPI_ROOT) {
+    char buf[1000];
+    va_list argptr;
+    va_start(argptr, format);
+    vsprintf(buf, format, argptr);
+    va_end(argptr);
+    stream << buf;
+  }
+}
+
+
 void ops_compute_moment(double t, double *first, double *second) {
   double times[2] = {0.0};
   double times_reduced[2] = {0.0};
@@ -172,11 +219,17 @@ void ops_compute_moment(double t, double *first, double *second) {
   *second = times_reduced[1] / (double)comm_size;
 }
 
-int ops_is_root() {
+int _ops_is_root(OPS_instance *instance) {
   int my_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
   return (my_rank == MPI_ROOT);
 }
+
+
+int ops_is_root() {
+  return _ops_is_root(OPS_instance::getOPSInstance());
+}
+
 
 int ops_get_proc() {
   int my_rank;
@@ -231,7 +284,7 @@ ops_arg ops_arg_reduce(ops_reduction handle, int dim, const char *type,
   return temp;
 }
 
-ops_reduction ops_decl_reduction_handle(int size, const char *type,
+ops_reduction _ops_decl_reduction_handle(OPS_instance *instance, int size, const char *type,
                                         const char *name) {
 
   if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 ||
@@ -243,21 +296,35 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type,
            strcmp(type, "integer(4)") == 0 || strcmp(type, "int(4)") == 0)
     type = "int";
 
-  ops_reduction red = ops_decl_reduction_handle_core(size, type, name);
-  if (OPS_instance::getOPSInstance()->OPS_block_index < 1)
+  ops_reduction red = ops_decl_reduction_handle_core(instance, size, type, name);
+  if (instance->OPS_block_index < 1)
     throw OPSException(OPS_RUNTIME_ERROR, "Error: ops_decl_reduction_handle() should only be called after \
                                            declaring at least one ops_block");
   
   red->data = (char *)ops_realloc(red->data,
-                                  red->size * (OPS_instance::getOPSInstance()->OPS_block_index) * sizeof(char));
+                                  red->size * (instance->OPS_block_index) * sizeof(char));
   return red;
 }
 
-bool ops_checkpointing_filename(const char *file_name, char *filename_out,
-                                char *filename_out2) {
-  sprintf(filename_out, "%s.%d", file_name, ops_my_global_rank);
-  if (filename_out2) sprintf(filename_out2, "%s.%d.dup", file_name,
-          (ops_my_global_rank + OPS_instance::getOPSInstance()->OPS_ranks_per_node) % ops_comm_global_size);
+ops_reduction ops_decl_reduction_handle(int size, const char *type,
+                                        const char *name) {
+  return _ops_decl_reduction_handle(OPS_instance::getOPSInstance(), size, type, name);
+}
+
+
+bool ops_checkpointing_filename(const char *file_name, std::string &filename_out,
+                                std::string &filename_out2)
+{
+  filename_out = file_name;
+  filename_out += ".";
+  filename_out += ops_my_global_rank;
+
+  filename_out2 = file_name;
+  filename_out2 += ".";
+  filename_out2 += 
+       (ops_my_global_rank + OPS_instance::getOPSInstance()->OPS_ranks_per_node) % ops_comm_global_size;
+  filename_out2 += ".dup";
+
   return (OPS_instance::getOPSInstance()->OPS_enable_checkpointing > 1);
 }
 
@@ -368,7 +435,7 @@ bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, 
 
 /************* Functions only use in the Fortran Backend ************/
 
-int getRange(ops_block block, int *start, int *end, int *range) {
+extern "C" int getRange(ops_block block, int *start, int *end, int *range) {
 
   int owned = -1;
   int block_dim = block->dims;
@@ -415,7 +482,7 @@ int getRange(ops_block block, int *start, int *end, int *range) {
   return owned;
 }
 
-void getIdx(ops_block block, int *start, int *idx) {
+extern "C" void getIdx(ops_block block, int *start, int *idx) {
   int block_dim = block->dims;
   sub_block_list sb = OPS_sub_block_list[block->index];
   for (int n = 0; n < block_dim; n++) {
@@ -424,12 +491,12 @@ void getIdx(ops_block block, int *start, int *idx) {
   // printf("start[0] = %d, idx[0] = %d\n",start[0], idx[0]);
 }
 
-int *getDatSizeFromOpsArg(ops_arg *arg) { return arg->dat->size; }
+extern "C" int *getDatSizeFromOpsArg(ops_arg *arg) { return arg->dat->size; }
 
-int getDatDimFromOpsArg(ops_arg *arg) { return arg->dat->dim; }
+extern "C" int getDatDimFromOpsArg(ops_arg *arg) { return arg->dat->dim; }
 
 // need differet routines for 1D, 2D 3D etc.
-int getDatBaseFromOpsArg1D(ops_arg *arg, int *start, int dim) {
+extern "C" int getDatBaseFromOpsArg1D(ops_arg *arg, int *start, int dim) {
 
   /*convert to C indexing*/
   start[0] -= 1;
@@ -452,7 +519,7 @@ int getDatBaseFromOpsArg1D(ops_arg *arg, int *start, int dim) {
   return base / (arg->dat->type_size) + 1;
 }
 
-int getDatBaseFromOpsArg2D(ops_arg *arg, int *start, int dim) {
+extern "C" int getDatBaseFromOpsArg2D(ops_arg *arg, int *start, int dim) {
   /*convert to C indexing*/
   start[0] -= 1;
   start[1] -= 1;
@@ -477,7 +544,7 @@ int getDatBaseFromOpsArg2D(ops_arg *arg, int *start, int dim) {
   return base / (arg->dat->type_size) + 1;
 }
 
-int getDatBaseFromOpsArg3D(ops_arg *arg, int *start, int dim) {
+extern "C" int getDatBaseFromOpsArg3D(ops_arg *arg, int *start, int dim) {
   /*convert to C indexing*/
   start[0] -= 1;
   start[1] -= 1;
@@ -507,7 +574,7 @@ int getDatBaseFromOpsArg3D(ops_arg *arg, int *start, int dim) {
   return base / (arg->dat->type_size) + 1;
 }
 
-char *getReductionPtrFromOpsArg(ops_arg *arg, ops_block block) {
+extern "C" char *getReductionPtrFromOpsArg(ops_arg *arg, ops_block block) {
   // return (char *)((ops_reduction)arg->data)->data;
   // printf("block->index %d ((ops_reduction)arg->data)->size =
   // %d\n",block->index, ((ops_reduction)arg->data)->size);
@@ -515,5 +582,5 @@ char *getReductionPtrFromOpsArg(ops_arg *arg, ops_block block) {
          ((ops_reduction)arg->data)->size * block->index;
 }
 
-char *getGblPtrFromOpsArg(ops_arg *arg) { return (char *)(arg->data); }
+extern "C" char *getGblPtrFromOpsArg(ops_arg *arg) { return (char *)(arg->data); }
 

@@ -47,10 +47,6 @@
 #endif
 #define MPI_ROOT 0
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 ///
 /// Struct for holding the decomposition details of a block on an MPI process
 ///
@@ -157,7 +153,7 @@ typedef struct {
   MPI_Status *statuses;
 } ops_mpi_halo_group;
 
-void ops_mpi_exit();
+void ops_mpi_exit(OPS_instance *instance);
 
 /*******************************************************************************
 * External functions defined in ops_mpi_(cuda)_rt_support.c
@@ -172,10 +168,6 @@ char* OPS_realloc_fast(char *ptr, size_t old_size, size_t new_size);
 * Other External functions
 *******************************************************************************/
 
-
-#ifdef __cplusplus
-}
-#endif
 
 //
 // MPI Communicator for halo creation and exchange

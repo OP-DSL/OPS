@@ -45,8 +45,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <sys/mman.h>
-
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <math_constants.h>
@@ -64,130 +62,102 @@ typedef struct cudaDeviceProp cudaDeviceProp_t;
 // CUDA utility functions
 //
 
-void __cudaSafeCall(cudaError_t err, const char *file, const int line) {
+void __cudaSafeCall(std::ostream &stream, cudaError_t err, const char *file, const int line) {
   if (cudaSuccess != err) {
-    fprintf(stderr, "%s(%i) : cutilSafeCall() Runtime API error : %s.\n", file,
+    fprintf2(stream, "%s(%i) : cutilSafeCall() Runtime API error : %s.\n", file,
             line, cudaGetErrorString(err));
     if (err == cudaErrorNoKernelImageForDevice) 
     throw OPSException(OPS_RUNTIME_ERROR, "Please make sure the OPS CUDA/MPI+CUDA backends were compiled for your GPU");
+    else throw OPSException(OPS_RUNTIME_ERROR, cudaGetErrorString(err));
   }
 }
 
-void cutilDeviceInit(const int argc, const char **argv) {
+void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const argv[]) {
   (void)argc;
   (void)argv;
   int deviceCount;
-  cutilSafeCall(cudaGetDeviceCount(&deviceCount));
+  cutilSafeCall(instance->ostream(), cudaGetDeviceCount(&deviceCount));
   if (deviceCount == 0) {
     throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: no available CUDA devices");
   }
 
   // Test we have access to a device
 
-  // This commented out test does not work with CUDA versions above 6.5
-  /*float *test;
-  cudaError_t err = cudaMalloc((void **)&test, sizeof(float));
-  if (err != cudaSuccess) {
-    OPS_instance::getOPSInstance()->OPS_hybrid_gpu = 0;
-  } else {
-    OPS_instance::getOPSInstance()->OPS_hybrid_gpu = 1;
-  }
-  if (OPS_instance::getOPSInstance()->OPS_hybrid_gpu) {
-    cudaFree(test);
-
-    cutilSafeCall(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
-
-    int deviceId = -1;
-    cudaGetDevice(&deviceId);
-    cudaDeviceProp_t deviceProp;
-    cutilSafeCall ( cudaGetDeviceProperties ( &deviceProp, deviceId ) );
-    printf ( "\n Using CUDA device: %d %s\n",deviceId, deviceProp.name );
-  } else {
-    //printf ( "\n Using CPU\n" );
-  }*/
-
   float *test;
   int my_id = ops_get_proc();
-  OPS_instance::getOPSInstance()->OPS_hybrid_gpu = 0;
+  instance->OPS_hybrid_gpu = 0;
   for (int i = 0; i < deviceCount; i++) {
     cudaError_t err = cudaSetDevice((i+my_id)%deviceCount);
     if (err == cudaSuccess) {
       cudaError_t err = cudaMalloc((void **)&test, sizeof(float));
       if (err == cudaSuccess) {
-        OPS_instance::getOPSInstance()->OPS_hybrid_gpu = 1;
+        instance->OPS_hybrid_gpu = 1;
         break;
       }
     }
   }
-  if (OPS_instance::getOPSInstance()->OPS_hybrid_gpu) {
+  if (instance->OPS_hybrid_gpu) {
     cudaFree(test);
-
-    cutilSafeCall(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 
     int deviceId = -1;
     cudaGetDevice(&deviceId);
     cudaDeviceProp_t deviceProp;
-    cutilSafeCall(cudaGetDeviceProperties(&deviceProp, deviceId));
-    if (OPS_instance::getOPSInstance()->OPS_diags>2) printf("\n Using CUDA device: %d %s\n", deviceId, deviceProp.name);
+    cutilSafeCall(instance->ostream(), cudaGetDeviceProperties(&deviceProp, deviceId));
+    if (instance->OPS_diags>2) instance->ostream() << "\n Using CUDA device: " <<
+      deviceId << " " << deviceProp.name;
   } else {
-    // printf ( "\n Using CPU on rank %d\n",rank );
+    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: no available CUDA devices");
   }
 }
 
-void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
-  // if (!OPS_instance::getOPSInstance()->OPS_hybrid_gpu) return;
-
+void ops_cpHostToDevice(OPS_instance *instance, void **data_d, void **data_h, size_t size) {
 
   if ( *data_d == NULL )
-      cutilSafeCall(cudaMalloc(data_d, size));
+      cutilSafeCall(instance->ostream(), cudaMalloc(data_d, size));
 
   if (data_h == NULL || *data_h == NULL) {
-    cutilSafeCall(cudaMalloc(data_d, size));
-    cutilSafeCall(cudaMemset(*data_d, 0, size));
-    cutilSafeCall(cudaDeviceSynchronize());
+    cutilSafeCall(instance->ostream(), cudaMalloc(data_d, size));
+    cutilSafeCall(instance->ostream(), cudaMemset(*data_d, 0, size));
     return;
   }
 
-  static void* stage = NULL;
+  /*static void* stage = NULL;
   static size_t stage_size = 0;
 
   void *src = NULL;
   if ( size < 4*1024*1024 ) {
-      if ( size > stage_size ) {
+      if ( (size_t)size > stage_size ) {
           if ( stage ) cudaFreeHost(stage);
           stage_size = size;
-          cutilSafeCall(cudaMallocHost(&stage, stage_size));
+          cutilSafeCall(instance->ostream(), cudaMallocHost(&stage, stage_size));
       }
 
       memcpy(stage, *data_h, size);
       src = stage;
   } else {
       src = *data_h;
-  }
+  }*/
 
-  cutilSafeCall(cudaMemcpy(*data_d, src, size, cudaMemcpyHostToDevice));
-  cutilSafeCall(cudaDeviceSynchronize());
+  cutilSafeCall(instance->ostream(), cudaMemcpy(*data_d, *data_h, size, cudaMemcpyHostToDevice));
 }
 
 void ops_download_dat(ops_dat dat) {
 
-  // if (!OPS_instance::getOPSInstance()->OPS_hybrid_gpu) return;
-  int bytes = dat->elem_size;
+  size_t bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];
   // printf("downloading to host from device %d bytes\n",bytes);
-  cutilSafeCall(
+  cutilSafeCall(dat->block->instance->ostream(), 
       cudaMemcpy(dat->data, dat->data_d, bytes, cudaMemcpyDeviceToHost));
 }
 
 void ops_upload_dat(ops_dat dat) {
 
-  // if (!OPS_instance::getOPSInstance()->OPS_hybrid_gpu) return;
-  int bytes = dat->elem_size;
+  size_t bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];
   // printf("uploading to device from host %d bytes\n",bytes);
-  cutilSafeCall(
+  cutilSafeCall(dat->block->instance->ostream(), 
       cudaMemcpy(dat->data_d, dat->data, bytes, cudaMemcpyHostToDevice));
 }
 
@@ -234,12 +204,12 @@ void ops_cuda_get_data(ops_dat dat) {
     dat->dirty_hd = 0;
   else
     return;
-  int bytes = dat->elem_size;
+  size_t bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];
-  cutilSafeCall(
+  cutilSafeCall(dat->block->instance->ostream(), 
       cudaMemcpy(dat->data, dat->data_d, bytes, cudaMemcpyDeviceToHost));
-  cutilSafeCall(cudaDeviceSynchronize());
+  cutilSafeCall(dat->block->instance->ostream(), cudaDeviceSynchronize());
 }
 
 //
@@ -251,12 +221,12 @@ void ops_cuda_put_data(ops_dat dat) {
     dat->dirty_hd = 0;
   else
     return;
-  int bytes = dat->elem_size;
+  size_t bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];
-  cutilSafeCall(
+  cutilSafeCall(dat->block->instance->ostream(), 
       cudaMemcpy(dat->data_d, dat->data, bytes, cudaMemcpyHostToDevice));
-  cutilSafeCall(cudaDeviceSynchronize());
+  cutilSafeCall(dat->block->instance->ostream(), cudaDeviceSynchronize());
 }
 
 
@@ -264,31 +234,29 @@ void ops_cuda_put_data(ops_dat dat) {
 // routines to resize constant/reduct arrays, if necessary
 //
 
-void reallocConstArrays(int consts_bytes) {
-  if (consts_bytes > OPS_instance::getOPSInstance()->OPS_consts_bytes) {
-    if (OPS_instance::getOPSInstance()->OPS_consts_bytes > 0) {
-      free(OPS_instance::getOPSInstance()->OPS_consts_h);
-      cudaFreeHost(OPS_instance::getOPSInstance()->OPS_gbl_prev);
-      cutilSafeCall(cudaFree(OPS_instance::getOPSInstance()->OPS_instance::getOPSInstance()->OPS_consts_d));
+void reallocConstArrays(OPS_instance *instance, int consts_bytes) {
+  if (consts_bytes > instance->OPS_consts_bytes) {
+    if (instance->OPS_consts_bytes > 0) {
+      free(instance->OPS_consts_h);
+      cudaFreeHost(instance->OPS_gbl_prev);
+      cutilSafeCall(instance->ostream(), cudaFree(instance->OPS_consts_d));
     }
-    OPS_instance::getOPSInstance()->OPS_consts_bytes = 4 * consts_bytes; // 4 is arbitrary, more than needed
-    cudaMallocHost((void **)&OPS_instance::getOPSInstance()->OPS_gbl_prev, OPS_instance::getOPSInstance()->OPS_consts_bytes);
-    memset(OPS_instance::getOPSInstance()->OPS_gbl_prev, 0 , OPS_instance::getOPSInstance()->OPS_consts_bytes);
-    OPS_instance::getOPSInstance()->OPS_consts_h = (char *)ops_malloc(OPS_instance::getOPSInstance()->OPS_consts_bytes);
-    memset(OPS_instance::getOPSInstance()->OPS_consts_h, 0 , OPS_instance::getOPSInstance()->OPS_consts_bytes);
-    cutilSafeCall(cudaMalloc((void **)&OPS_instance::getOPSInstance()->OPS_instance::getOPSInstance()->OPS_consts_d, OPS_instance::getOPSInstance()->OPS_consts_bytes));
+    instance->OPS_consts_bytes = 4 * consts_bytes; // 4 is arbitrary, more than needed
+    cudaMallocHost((void **)&instance->OPS_gbl_prev, instance->OPS_consts_bytes);
+    instance->OPS_consts_h = (char *)ops_malloc(instance->OPS_consts_bytes);
+    cutilSafeCall(instance->ostream(), cudaMalloc((void **)&instance->OPS_consts_d, instance->OPS_consts_bytes));
   }
 }
 
-void reallocReductArrays(int reduct_bytes) {
-  if (reduct_bytes > OPS_instance::getOPSInstance()->OPS_reduct_bytes) {
-    if (OPS_instance::getOPSInstance()->OPS_reduct_bytes > 0) {
-      free(OPS_instance::getOPSInstance()->OPS_reduct_h);
-      cutilSafeCall(cudaFree(OPS_instance::getOPSInstance()->OPS_reduct_d));
+void reallocReductArrays(OPS_instance *instance, int reduct_bytes) {
+  if (reduct_bytes > instance->OPS_reduct_bytes) {
+    if (instance->OPS_reduct_bytes > 0) {
+      free(instance->OPS_reduct_h);
+      cutilSafeCall(instance->ostream(), cudaFree(instance->OPS_reduct_d));
     }
-    OPS_instance::getOPSInstance()->OPS_reduct_bytes = 4 * reduct_bytes; // 4 is arbitrary, more than needed
-    OPS_instance::getOPSInstance()->OPS_reduct_h = (char *)ops_malloc(OPS_instance::getOPSInstance()->OPS_reduct_bytes);
-    cutilSafeCall(cudaMalloc((void **)&OPS_instance::getOPSInstance()->OPS_reduct_d, OPS_instance::getOPSInstance()->OPS_reduct_bytes));
+    instance->OPS_reduct_bytes = 4 * reduct_bytes; // 4 is arbitrary, more than needed
+    instance->OPS_reduct_h = (char *)ops_malloc(instance->OPS_reduct_bytes);
+    cutilSafeCall(instance->ostream(), cudaMalloc((void **)&instance->OPS_reduct_d, instance->OPS_reduct_bytes));
   }
 }
 
@@ -296,50 +264,47 @@ void reallocReductArrays(int reduct_bytes) {
 // routines to move constant/reduct arrays
 //
 
-void mvConstArraysToDevice(int consts_bytes) {
-  OPS_instance::getOPSInstance()->OPS_gbl_changed = 0;
+void mvConstArraysToDevice(OPS_instance *instance, int consts_bytes) {
+  instance->OPS_gbl_changed = 0;
   for (int i = 0; i < consts_bytes; i++) {
-    if (OPS_instance::getOPSInstance()->OPS_consts_h[i] != OPS_instance::getOPSInstance()->OPS_gbl_prev[i])
-      OPS_instance::getOPSInstance()->OPS_gbl_changed = 1;
+    if (instance->OPS_consts_h[i] != instance->OPS_gbl_prev[i])
+      instance->OPS_gbl_changed = 1;
   }
-  if (OPS_instance::getOPSInstance()->OPS_gbl_changed) {
-    // memcpy(OPS_instance::getOPSInstance()->OPS_gbl_prev,OPS_instance::getOPSInstance()->OPS_consts_h,consts_bytes);
-    // cutilSafeCall ( cudaMemcpyAsync ( OPS_instance::getOPSInstance()->OPS_instance::getOPSInstance()->OPS_consts_d, OPS_instance::getOPSInstance()->OPS_gbl_prev,
+  if (instance->OPS_gbl_changed) {
+    // memcpy(instance->OPS_gbl_prev,instance->OPS_consts_h,consts_bytes);
+    // cutilSafeCall ( cudaMemcpyAsync ( instance->OPS_consts_d, instance->OPS_gbl_prev,
     // consts_bytes,
     //                             cudaMemcpyHostToDevice ) );
-    cutilSafeCall(cudaMemcpy(OPS_instance::getOPSInstance()->OPS_instance::getOPSInstance()->OPS_consts_d, OPS_instance::getOPSInstance()->OPS_consts_h, consts_bytes,
+    cutilSafeCall(instance->ostream(), cudaMemcpy(instance->OPS_consts_d, instance->OPS_consts_h, consts_bytes,
                              cudaMemcpyHostToDevice));
-    memcpy(OPS_instance::getOPSInstance()->OPS_gbl_prev, OPS_instance::getOPSInstance()->OPS_consts_h, consts_bytes);
+    memcpy(instance->OPS_gbl_prev, instance->OPS_consts_h, consts_bytes);
   }
 }
 
-void mvReductArraysToDevice(int reduct_bytes) {
-  cutilSafeCall(cudaMemcpy(OPS_instance::getOPSInstance()->OPS_reduct_d, OPS_instance::getOPSInstance()->OPS_reduct_h, reduct_bytes,
+void mvReductArraysToDevice(OPS_instance *instance, int reduct_bytes) {
+  cutilSafeCall(instance->ostream(), cudaMemcpy(instance->OPS_reduct_d, instance->OPS_reduct_h, reduct_bytes,
                            cudaMemcpyHostToDevice));
-  cutilSafeCall(cudaDeviceSynchronize());
 }
 
-void mvReductArraysToHost(int reduct_bytes) {
-  cutilSafeCall(cudaMemcpy(OPS_instance::getOPSInstance()->OPS_reduct_h, OPS_instance::getOPSInstance()->OPS_reduct_d, reduct_bytes,
+void mvReductArraysToHost(OPS_instance *instance, int reduct_bytes) {
+  cutilSafeCall(instance->ostream(), cudaMemcpy(instance->OPS_reduct_h, instance->OPS_reduct_d, reduct_bytes,
                            cudaMemcpyDeviceToHost));
-  cutilSafeCall(cudaDeviceSynchronize());
 }
 
-void ops_cuda_exit() {
-  if (!OPS_instance::getOPSInstance()->OPS_hybrid_gpu)
+void ops_cuda_exit(OPS_instance *instance) {
+  if (!instance->OPS_hybrid_gpu)
     return;
   ops_dat_entry *item;
-  TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
-    cutilSafeCall(cudaFree((item->dat)->data_d));
+  TAILQ_FOREACH(item, &instance->OPS_dat_list, entries) {
+    cutilSafeCall(instance->ostream(), cudaFree((item->dat)->data_d));
   }
-  if (OPS_consts_bytes > 0) {
-    free(OPS_consts_h);
-    cudaFreeHost(OPS_gbl_prev);
-    cutilSafeCall(cudaFree(OPS_consts_d));
+  if (instance->OPS_consts_bytes > 0) {
+    free(instance->OPS_consts_h);
+    cudaFreeHost(instance->OPS_gbl_prev);
+    cutilSafeCall(instance->ostream(), cudaFree(instance->OPS_consts_d));
   }
-  if (OPS_reduct_bytes > 0) {
-    free(OPS_reduct_h);
-    cutilSafeCall(cudaFree(OPS_reduct_d));
+  if (instance->OPS_reduct_bytes > 0) {
+    free(instance->OPS_reduct_h);
+    cutilSafeCall(instance->ostream(), cudaFree(instance->OPS_reduct_d));
   }
-  if (!ops_device_initialised_externally) cudaDeviceReset();
 }
