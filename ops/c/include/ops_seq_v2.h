@@ -5,15 +5,13 @@
 #define OPS_API 2
 #endif
 
-#include "ops_lib_cpp.h"
+#include "ops_lib_core.h"
 
 #ifdef OPS_MPI
 #include "ops_mpi_core.h"
 #endif
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-
-static int arg_idx[OPS_MAX_DIM];
 
 inline int mult(int* size, int dim)
 {
@@ -123,11 +121,11 @@ template <typename ParamT> struct param_handler {
     } else if (arg.argtype == OPS_ARG_IDX) {
   #ifdef OPS_MPI
       sub_block_list sb = OPS_sub_block_list[block->index]; //TODO: Multigrid
-      for (int d = 0; d < dim; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+      for (int d = 0; d < dim && d < OPS_MAX_DIM; d++) block->instance->arg_idx[d] = sb->decomp_disp[d] + start[d];
   #else //OPS_MPI
-      for (int d = 0; d < dim; d++) arg_idx[d] = start[d];
+      for (int d = 0; d < dim && d < OPS_MAX_DIM; d++) block->instance->arg_idx[d] = start[d];
   #endif //OPS_MPI
-      return (char *)arg_idx;
+      return (char *)block->instance->arg_idx;
     }
     //assert(false && "Arg should be one of OPS_ARG_GBL or OPS_ARG_IDX");
     return nullptr;
@@ -136,18 +134,18 @@ template <typename ParamT> struct param_handler {
 
 #ifdef OPS_MPI 
 static void shift_arg(const ops_arg &arg, char *p, int m, const int* start,
-                      const int offs[], const sub_block_list &sb)
+                      const int offs[], const sub_block_list &sb, OPS_instance *instance)
 #else //OPS_MPI
 static void shift_arg(const ops_arg &arg, char *p, int m, const int* start, 
-                      const int offs[])
+                      const int offs[], OPS_instance *instance)
 #endif
 {
-  if (arg.argtype == OPS_ARG_IDX) {
-    arg_idx[m]++;
+  if (arg.argtype == OPS_ARG_IDX && m < OPS_MAX_DIM) {
+    instance->arg_idx[m]++;
 #ifdef OPS_MPI
-    for (int d = 0; d < m; d++) arg_idx[d] = sb->decomp_disp[d] + start[d];
+    for (int d = 0; d < m && d < OPS_MAX_DIM; d++) instance->arg_idx[d] = sb->decomp_disp[d] + start[d];
 #else //OPS_MPI
-    for (int d = 0; d < m; d++) arg_idx[d] = start[d];
+    for (int d = 0; d < m && d < OPS_MAX_DIM; d++) instance->arg_idx[d] = start[d];
 #endif //OPS_MPI
   }
 }
@@ -175,7 +173,7 @@ template <typename T> struct param_handler<ACC<T>> {
 #else
       return (char *) ((arg.dat->data //TODO
 #endif
-      + address(ndim, OPS_instance::getOPSInstance()->OPS_soa ? arg.dat->type_size : arg.dat->elem_size, &start[0], 
+      + address(ndim, arg.dat->block->instance->OPS_soa ? arg.dat->type_size : arg.dat->elem_size, &start[0], 
         arg.dat->size, arg.stencil->stride, arg.dat->base,
         d_m))); //TODO
     } 
@@ -186,14 +184,14 @@ template <typename T> struct param_handler<ACC<T>> {
 
 #ifdef OPS_MPI 
 static void shift_arg(const ops_arg &arg, char *p, int m, const int* start,
-                      const int offs[], const sub_block_list &sb)
+                      const int offs[], const sub_block_list &sb, OPS_instance *instance)
 #else //OPS_MPI
 static void shift_arg(const ops_arg &arg, char *p, int m, const int* start, 
-                      const int offs[])
+                      const int offs[], OPS_instance *instance)
 #endif
 {
   if (arg.argtype == OPS_ARG_DAT) {
-    int offset = (OPS_instance::getOPSInstance()->OPS_soa ? 1 : arg.dat->dim) * offs[m];
+    int offset = (arg.dat->block->instance->OPS_soa ? 1 : arg.dat->dim) * offs[m];
     //p = p + ((OPS_soa ? arg.dat->type_size : arg.dat->elem_size) * offs[i][m]);
     ((ACC<T>*)p)->next(offset); // T must be ACC<type> we need to set to the next element
   } 
@@ -211,13 +209,13 @@ static void initoffs(const ops_arg &arg, int *offs, const int &ndim, int *start,
   }
 }
 
-template <typename... ParamType, typename... OPSARG, size_t... I>
-void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...), 
+template <typename... ParamType, typename... OPSARG, size_t... J>
+void ops_par_loop_impl(indices<J...>, void (*kernel)(ParamType...),
                       char const *name, ops_block block, int dim, int *range,
                       OPSARG... arguments) {
   constexpr int N = sizeof...(OPSARG);
 
-  int  count[dim];
+  int  count[OPS_MAX_DIM] = {0};
   ops_arg args[N] = {arguments...};
   
   #ifdef CHECKPOINTING
@@ -250,14 +248,14 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
   #endif //OPS_MPI
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, name);
+  ops_register_args(block->instance, args, name);
   #endif
 
   char *p_a[N] = 
     {param_handler<param_remove_cvref_t<ParamType>>::construct(arguments, dim, ndim, start, block)...};
   //Offs decl
   int offs[N][OPS_MAX_DIM];
-  (void) std::initializer_list<int>{(initoffs(arguments, offs[I], ndim, start, end), 0)...};
+  (void) std::initializer_list<int>{(initoffs(arguments, offs[J], ndim, start, end), 0)...};
 
   int total_range = 1;
   for (int n=0; n<ndim; n++) {
@@ -274,7 +272,7 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
   for (int nt=0; nt<total_range; nt++) {
     // call kernel function, passing in pointers to data
 
-    kernel((param_handler<param_remove_cvref_t<ParamType>>::get(p_a[I]))... );
+    kernel((param_handler<param_remove_cvref_t<ParamType>>::get(p_a[J]))... );
 
     count[0]--;   // decrement counter
     int m = 0;    // max dimension with changed index
@@ -287,11 +285,10 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
     // shift pointers to data
   #ifdef OPS_MPI
     (void) std::initializer_list<int>{(
-      //shift_arg<param_remove_cvref_t<ParamType>>(arguments, p_a[I], m, start, offs[I], sb),0)...};
-      param_handler<param_remove_cvref_t<ParamType>>::shift_arg(arguments, p_a[I], m, start, offs[I], sb),0)...};
+      param_handler<param_remove_cvref_t<ParamType>>::shift_arg(arguments, p_a[J], m, start, offs[J], sb, block->instance),0)...};
   #else //OPS_MPI
     (void) std::initializer_list<int>{(
-      param_handler<param_remove_cvref_t<ParamType>>::shift_arg(arguments, p_a[I], m, start, offs[I]),0)...};
+      param_handler<param_remove_cvref_t<ParamType>>::shift_arg(arguments, p_a[J], m, start, offs[J], block->instance),0)...};
   #endif //OPS_MPI
   }
 
@@ -304,7 +301,7 @@ void ops_par_loop_impl(indices<I...>, void (*kernel)(ParamType...),
   ops_set_dirtybit_host(args, N);
 
   (void) std::initializer_list<int>{
-    (param_handler<param_remove_cvref_t<ParamType>>::free(p_a[I]),0)...};
+    (param_handler<param_remove_cvref_t<ParamType>>::free(p_a[J]),0)...};
 }
 
 #endif /*DOXYGEN_SHOULD_SKIP_THIS*/
@@ -338,6 +335,6 @@ void ops_par_loop(void (*kernel)(ParamType...), char const *name,
 }
 
 
-#endif
+#endif /* C++11 */
 
 #endif /* ifndef __OPS_SEQ_V2_H */

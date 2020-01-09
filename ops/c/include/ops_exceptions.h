@@ -100,8 +100,8 @@ struct OPSException : public std::exception
        msg << val;
     }
 
-    std::string what() {
-       return msg.str();
+    virtual const char* what() const throw() {
+       return msg.str().c_str();
     }
 
     template<class T>

@@ -42,15 +42,13 @@
   * only includes C routines.
   */
 
-#include <cuda.h>
-
 /*
  * reduction routine for arbitrary datatypes
  */
 
 template <ops_access reduction, class T>
 __inline__ __device__ void ops_reduction_cuda(volatile T *dat_g, T dat_l) {
-  extern __shared__ volatile char temp2[];
+  extern __shared__ volatile double2 temp2[];
   __shared__ volatile T *temp;
   temp = (T *)temp2;
 
@@ -169,7 +167,9 @@ __inline__ __device__ void ops_reduction_cuda(volatile T *dat_g, T dat_l) {
 
 template <ops_access reduction, class T>
 __inline__ __device__ void ops_reduction_alt(volatile T *dat_g, T dat_l) {
-  extern __shared__ volatile T temp[];
+  extern __shared__ volatile double2 temp2[];
+  __shared__ volatile T *temp;
+  temp = (T *)temp2;
   T dat_t;
 
   __syncthreads(); /* important to finish all previous activity */

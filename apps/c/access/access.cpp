@@ -109,7 +109,7 @@ int main(int argc, char **argv)
   ops_print_dat_to_txtfile(data0, "data0.txt");
 
   ops_timers(&ct1, &et1);
-  ops_timing_output(stdout);
+  ops_timing_output(std::cout);
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 

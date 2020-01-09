@@ -227,6 +227,7 @@ def parse_signature(text):
   text2 = text2.replace('ACC<','')
   text2 = text2.replace('>','')
   text2 = text2.replace('int','')
+  text2 = text2.replace('long','')
   text2 = text2.replace('float','')
   text2 = text2.replace('double','')
   text2 = text2.replace('*','')

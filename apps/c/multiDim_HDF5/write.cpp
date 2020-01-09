@@ -45,7 +45,7 @@
 
 #include "write_kernel.h"
 
-int main(int argc, const char **argv) {
+int main(int argc, char **argv) {
 
   //*******************************************************************
   // INITIALISE OPS
@@ -108,7 +108,7 @@ int main(int argc, const char **argv) {
   //*******************************************************************
   // EXIT OPS AND PRINT TIMING INFO
   //---------------------------------------
-  ops_timing_output(stdout);
+  ops_timing_output(std::cout);
   ops_printf("\nSucessful Exit from OPS!\n");
   ops_exit();
   // return 0;

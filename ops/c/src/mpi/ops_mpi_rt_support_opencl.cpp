@@ -42,7 +42,7 @@
 #include <ops_exceptions.h>
 
 int halo_buffer_size = 0;
-int halo_buffer_size2 = 0;
+size_t halo_buffer_size2 = 0;
 cl_mem halo_buffer_d = NULL;
 cl_mem halo_buffer_d2 = NULL;
 
@@ -183,7 +183,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
     strcpy(source_str[0], packer1_kernel_src);
 
     if (packer1_kernel == NULL)
-      packer1_kernel = (cl_kernel *)ops_malloc(1 * sizeof(cl_kernel));
+      packer1_kernel = (cl_kernel *)ops_calloc(1 , sizeof(cl_kernel));
 
     // attempt to attach sources to program (not compile)
     OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(
@@ -295,7 +295,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
     strcpy(source_str[0], packer4_kernel_src);
 
     if (packer4_kernel == NULL)
-      packer4_kernel = (cl_kernel *)ops_malloc(1 * sizeof(cl_kernel));
+      packer4_kernel = (cl_kernel *)ops_calloc(1 , sizeof(cl_kernel));
 
     // attempt to attach sources to program (not compile)
     OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(
@@ -354,8 +354,8 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
   cl_mem device_buf = halo_buffer_d;
 
   if (OPS_instance::getOPSInstance()->OPS_soa) {
-    int num_threads = 128;
-    int num_blocks = ((halo->blocklength * halo->count) - 1) / num_threads + 1;
+    size_t num_threads = 128;
+    size_t num_blocks = ((halo->blocklength * halo->count) - 1) / num_threads + 1;
 
     size_t globalWorkSize[3] = {num_threads * num_blocks, 1, 1};
     size_t localWorkSize[3] = {num_threads, 1, 1};
@@ -386,8 +386,8 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
                                       localWorkSize, 0, NULL, NULL));
 
   } else if (halo->blocklength % 4 == 0) {
-    int num_threads = 128;
-    int num_blocks =
+    size_t num_threads = 128;
+    size_t num_blocks =
         (((halo->blocklength * dat->dim / 4) * halo->count) - 1) / num_threads + 1;
 
     size_t globalWorkSize[3] = {num_threads * num_blocks, 1, 1};
@@ -414,8 +414,8 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
                                       localWorkSize, 0, NULL, NULL));
 
   } else {
-    int num_threads = 128;
-    int num_blocks = ((halo->blocklength * dat->dim * halo->count) - 1) / num_threads + 1;
+    size_t num_threads = 128;
+    size_t num_blocks = ((halo->blocklength * dat->dim * halo->count) - 1) / num_threads + 1;
 
     size_t globalWorkSize[3] = {num_threads * num_blocks, 1, 1};
     size_t localWorkSize[3] = {num_threads, 1, 1};
@@ -519,7 +519,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
     strcpy(source_str[0], unpacker1_kernel_src);
 
     if (unpacker1_kernel == NULL)
-      unpacker1_kernel = (cl_kernel *)ops_malloc(1 * sizeof(cl_kernel));
+      unpacker1_kernel = (cl_kernel *)ops_calloc(1 , sizeof(cl_kernel));
 
     // attempt to attach sources to program (not compile)
     OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(
@@ -573,7 +573,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
     strcpy(source_str[0], unpacker4_kernel_src);
 
     if (unpacker4_kernel == NULL)
-      unpacker4_kernel = (cl_kernel *)ops_malloc(1 * sizeof(cl_kernel));
+      unpacker4_kernel = (cl_kernel *)ops_calloc(1 , sizeof(cl_kernel));
 
     // attempt to attach sources to program (not compile)
     OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(
@@ -647,8 +647,8 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
   clSafeCall(clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue));
 
   if (OPS_instance::getOPSInstance()->OPS_soa) {
-    int num_threads = 128;
-    int num_blocks = ((halo->blocklength * halo->count) - 1) / num_threads + 1;
+    size_t num_threads = 128;
+    size_t num_blocks = ((halo->blocklength * halo->count) - 1) / num_threads + 1;
 
     size_t globalWorkSize[3] = {num_threads * num_blocks, 1, 1};
     size_t localWorkSize[3] = {num_threads, 1, 1};
@@ -679,8 +679,8 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
         globalWorkSize, localWorkSize, 0, NULL, NULL));
     clSafeCall(clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue));
   } else  if (halo->blocklength % 4 == 0) {
-    int num_threads = 128;
-    int num_blocks =
+    size_t num_threads = 128;
+    size_t num_blocks =
         (((halo->blocklength * dat->dim / 4) * halo->count) - 1) / num_threads + 1;
 
     size_t globalWorkSize[3] = {num_threads * num_blocks, 1, 1};
@@ -707,8 +707,8 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
         globalWorkSize, localWorkSize, 0, NULL, NULL));
 
   } else {
-    int num_threads = 128;
-    int num_blocks = ((halo->blocklength * dat->dim * halo->count) - 1) / num_threads + 1;
+    size_t num_threads = 128;
+    size_t num_blocks = ((halo->blocklength * dat->dim * halo->count) - 1) / num_threads + 1;
 
     size_t globalWorkSize[3] = {num_threads * num_blocks, 1, 1};
     size_t localWorkSize[3] = {num_threads, 1, 1};
@@ -746,7 +746,7 @@ void ops_pack3(ops_dat dat, const int src_offset, char *__restrict dest,
     ops_download_dat(dat);
     dat->dirty_hd = 0;
   }
-  for (unsigned int i = 0; i < halo->count; i++) {
+  for (int i = 0; i < halo->count; i++) {
     memcpy(dest, src, halo->blocklength);
     src += halo->stride;
     dest += halo->blocklength;
@@ -761,7 +761,7 @@ void ops_unpack3(ops_dat dat, const int dest_offset, const char *__restrict src,
     ops_download_dat(dat);
     dat->dirty_hd = 0;
   }
-  for (unsigned int i = 0; i < halo->count; i++) {
+  for (int i = 0; i < halo->count; i++) {
     memcpy(dest, src, halo->blocklength);
     src += halo->blocklength;
     dest += halo->stride;
@@ -853,7 +853,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
     strcpy(source_str[0], copy_tobuf_kernel_src);
 
     if (OPS_instance::getOPSInstance()->opencl_instance->copy_tobuf_kernel == NULL)
-      OPS_instance::getOPSInstance()->opencl_instance->copy_tobuf_kernel = (cl_kernel *)ops_malloc(1 * sizeof(cl_kernel));
+      OPS_instance::getOPSInstance()->opencl_instance->copy_tobuf_kernel = (cl_kernel *)ops_calloc(1 , sizeof(cl_kernel));
 
     // attempt to attach sources to program (not compile)
     OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(
@@ -900,26 +900,26 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   }
 
   dest += dest_offset;
-  int thr_x = abs(rx_s - rx_e);
-  int blk_x = 1;
+  size_t thr_x = abs(rx_s - rx_e);
+  size_t blk_x = 1;
   if (abs(rx_s - rx_e) > 8) {
     blk_x = (thr_x - 1) / 8 + 1;
     thr_x = 8;
   }
-  int thr_y = abs(ry_s - ry_e);
-  int blk_y = 1;
+  size_t thr_y = abs(ry_s - ry_e);
+  size_t blk_y = 1;
   if (abs(ry_s - ry_e) > 8) {
     blk_y = (thr_y - 1) / 8 + 1;
     thr_y = 8;
   }
-  int thr_z = abs(rz_s - rz_e);
-  int blk_z = 1;
+  size_t thr_z = abs(rz_s - rz_e);
+  size_t blk_z = 1;
   if (abs(rz_s - rz_e) > 8) {
     blk_z = (thr_z - 1) / 8 + 1;
     thr_z = 8;
   }
 
-  int size =
+  size_t size =
       abs(src->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
 
   if (halo_buffer_size2 < size) {
@@ -1006,7 +1006,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
     strcpy(source_str[0], copy_frombuf_kernel_src);
 
     if (OPS_instance::getOPSInstance()->opencl_instance->copy_frombuf_kernel == NULL)
-      OPS_instance::getOPSInstance()->opencl_instance->copy_frombuf_kernel = (cl_kernel *)ops_malloc(1 * sizeof(cl_kernel));
+      OPS_instance::getOPSInstance()->opencl_instance->copy_frombuf_kernel = (cl_kernel *)ops_calloc(1 , sizeof(cl_kernel));
 
     // attempt to attach sources to program (not compile)
     OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(
@@ -1053,26 +1053,26 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   }
 
   src += src_offset;
-  int thr_x = abs(rx_s - rx_e);
-  int blk_x = 1;
+  size_t thr_x = abs(rx_s - rx_e);
+  size_t blk_x = 1;
   if (abs(rx_s - rx_e) > 8) {
     blk_x = (thr_x - 1) / 8 + 1;
     thr_x = 8;
   }
-  int thr_y = abs(ry_s - ry_e);
-  int blk_y = 1;
+  size_t thr_y = abs(ry_s - ry_e);
+  size_t blk_y = 1;
   if (abs(ry_s - ry_e) > 8) {
     blk_y = (thr_y - 1) / 8 + 1;
     thr_y = 8;
   }
-  int thr_z = abs(rz_s - rz_e);
-  int blk_z = 1;
+  size_t thr_z = abs(rz_s - rz_e);
+  size_t blk_z = 1;
   if (abs(rz_s - rz_e) > 8) {
     blk_z = (thr_z - 1) / 8 + 1;
     thr_z = 8;
   }
 
-  int size =
+  size_t size =
       abs(dest->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
   cl_mem gpu_ptr;
   if (halo_buffer_size2 < size) {

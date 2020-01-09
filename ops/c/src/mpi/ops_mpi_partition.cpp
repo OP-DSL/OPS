@@ -200,7 +200,7 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps,
   // g_sizes - global dimension sizes, i.e. size in each dimension of the global
   // mesh
 
-  sub_block *sb = (sub_block *)ops_malloc(sizeof(sub_block));
+  sub_block *sb = (sub_block *)ops_calloc(1, sizeof(sub_block));
   sb->block = block;
   sb->ndim = g_ndim;
   sb->owned = 0;
@@ -359,7 +359,7 @@ void ops_decomp_dats(sub_block *sb) {
         // TODO: compute this properly, or lazy or something
         sd->d_ip[d] = dat->d_p[d]; // intra-block (MPI) halos are set to be
                                    // equal to block halos
- 
+
         if (OPS_instance::getOPSInstance()->ops_enable_tiling && OPS_instance::getOPSInstance()->ops_tiling_mpidepth>0)
 					sd->d_ip[d] = OPS_instance::getOPSInstance()->ops_tiling_mpidepth;
 
@@ -418,7 +418,7 @@ void ops_decomp_dats(sub_block *sb) {
 
     // Compute offset in bytes to the base index
     dat->base_offset = 0;
-    long cumsize = 1;
+    size_t cumsize = 1;
     for (int i = 0; i < block->dims; i++) {
       dat->base_offset += (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size)
                           * cumsize *
@@ -426,7 +426,7 @@ void ops_decomp_dats(sub_block *sb) {
       cumsize *= dat->size[i];
     }
 
-    ops_cpHostToDevice((void **)&(dat->data_d), (void **)&(dat->data),
+    ops_cpHostToDevice(dat->block->instance, (void **)&(dat->data_d), (void **)&(dat->data),
                        prod[sb->ndim - 1] * dat->elem_size);
 
     // TODO: halo exchanges should not include the block halo part for
@@ -441,7 +441,7 @@ void ops_decomp_dats(sub_block *sb) {
     // MPI_Type_commit(&new_type_p);
 
     sd->halos =
-        (ops_int_halo *)ops_malloc(MAX_DEPTH * sb->ndim * sizeof(ops_int_halo));
+        (ops_int_halo *)ops_calloc(MAX_DEPTH * sb->ndim , sizeof(ops_int_halo));
 
     for (int n = 0; n < sb->ndim; n++) {
       for (int d = 0; d < MAX_DEPTH; d++) {
@@ -830,11 +830,11 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
         (int *)ops_malloc(mpi_group->num_neighbors_send * sizeof(int));
     mpi_group->recv_sizes =
         (int *)ops_malloc(mpi_group->num_neighbors_recv * sizeof(int));
-    mpi_group->requests = (MPI_Request *)ops_malloc(
-        (mpi_group->num_neighbors_send + mpi_group->num_neighbors_recv) *
+    mpi_group->requests = (MPI_Request *)ops_calloc(
+        (mpi_group->num_neighbors_send + mpi_group->num_neighbors_recv) ,
         sizeof(MPI_Request));
-    mpi_group->statuses = (MPI_Status *)ops_malloc(
-        (mpi_group->num_neighbors_send + mpi_group->num_neighbors_recv) *
+    mpi_group->statuses = (MPI_Status *)ops_calloc(
+        (mpi_group->num_neighbors_send + mpi_group->num_neighbors_recv) ,
         sizeof(MPI_Status));
 
     int total_size = 0;
@@ -867,15 +867,15 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
                        ops_buffer_recv_1_size,
 		       total_size * sizeof(char));
   }
-  mpi_neigh_size = (int *)malloc(max_neigh * sizeof(int));
+  mpi_neigh_size = (int *)ops_malloc(max_neigh * sizeof(int));
   free(neighbor_array_recv);
   free(neighbor_array_send);
 }
 
-void ops_partition(const char *routine) {
+void _ops_partition(OPS_instance *instance, const char *routine) {
   // create list to hold sub-grid decomposition geometries for each mpi process
   OPS_sub_block_list =
-      (sub_block_list *)ops_malloc(OPS_instance::getOPSInstance()->OPS_block_index * sizeof(sub_block_list));
+      (sub_block_list *)ops_calloc(OPS_instance::getOPSInstance()->OPS_block_index , sizeof(sub_block_list));
 
   int max_block_dim = 0;
   int max_block_dims = 0;
@@ -933,9 +933,9 @@ void ops_partition(const char *routine) {
   ops_buffer_recv_2_size = ops_buffer_size;
 
   OPS_mpi_halo_list =
-      (ops_mpi_halo *)ops_malloc(OPS_instance::getOPSInstance()->OPS_halo_index * sizeof(ops_mpi_halo));
-  OPS_mpi_halo_group_list = (ops_mpi_halo_group *)ops_malloc(
-      OPS_instance::getOPSInstance()->OPS_halo_group_index * sizeof(ops_mpi_halo_group));
+      (ops_mpi_halo *)ops_calloc(OPS_instance::getOPSInstance()->OPS_halo_index , sizeof(ops_mpi_halo));
+  OPS_mpi_halo_group_list = (ops_mpi_halo_group *)ops_calloc(
+      OPS_instance::getOPSInstance()->OPS_halo_group_index , sizeof(ops_mpi_halo_group));
   ops_partition_halos(processes, proc_offsets, proc_disps, proc_sizes,
                       proc_dimsplit);
 
@@ -951,7 +951,7 @@ void ops_partition(const char *routine) {
 // have a new special halo created... this will only be known at loop runtime
 // and perhaps will need to be allocated on-the-fly.
 
-void ops_mpi_exit() {
+void ops_mpi_exit(OPS_instance *instance) {
 
   /*for (int b = 0; b < OPS_block_index; b++) { // for each block
     ops_block block = OPS_block_list[b].block;
@@ -973,6 +973,7 @@ void ops_mpi_exit() {
   }*/
 
   int i;
+  ops_dat_entry *item;
   TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
     i = (item->dat)->index;
     free(OPS_sub_dat_list[i]->halos);
@@ -1014,11 +1015,10 @@ void ops_mpi_exit() {
     free(OPS_checkpoiting_dup_buffer);
 
   //printf("OPS_block_index = %d\n",OPS_block_index);
-  for (int b = 0; b < OPS_block_index; b++) { // for each block
+  for (int b = 0; b < OPS_instance::getOPSInstance()->OPS_block_index; b++) { // for each block
     sub_block *sb = OPS_sub_block_list[b];
 
     if (sb->owned) {
-      // printf("Owned OPS_block_index = %d\n",OPS_block_index);
       MPI_Comm_free(&(sb->comm));
       MPI_Comm_free(&(sb->comm1));
     }
@@ -1028,7 +1028,10 @@ void ops_mpi_exit() {
   }
   free(OPS_sub_block_list);
   MPI_Comm_free(&OPS_MPI_GLOBAL);
+}
 
+void ops_partition(const char *routine) {
+  _ops_partition(OPS_instance::getOPSInstance(), routine);
 }
 
 static inline int intersection2(int range1_beg, int range1_end, int range2_beg,

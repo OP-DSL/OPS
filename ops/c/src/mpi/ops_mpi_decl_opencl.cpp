@@ -49,32 +49,51 @@ extern char *ops_buffer_recv_1;
 extern char *ops_buffer_send_2;
 extern char *ops_buffer_recv_2;
 
-void ops_init_opencl(const int argc, const char **argv, const int diags) {
-  ops_init_core(argc, argv, diags);
+void ops_init_opencl(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
+  ops_init_core(instance, argc, argv, diags);
 
-  if ((OPS_instance::getOPSInstance()->OPS_block_size_x * OPS_instance::getOPSInstance()->OPS_block_size_y * OPS_instance::getOPSInstance()->OPS_block_size_z) > 1024) {
+  if ((instance->OPS_block_size_x * instance->OPS_block_size_y * instance->OPS_block_size_z) > 1024) {
     throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
       OPSException ex(OPS_RUNTIME_CONFIGURATION_ERROR);
-      ex <<  "Error: OPS_instance::getOPSInstance()->OPS_block_size_x*OPS_instance::getOPSInstance()->OPS_block_size_y*OPS_instance::getOPSInstance()->OPS_block_size_z should be less than 1024 -- error OPS_block_size_* ";
-      ex << " Current settings: " << OPS_instance::getOPSInstance()->OPS_block_size_x << " " << OPS_instance::getOPSInstance()->OPS_block_size_y << " " << OPS_instance::getOPSInstance()->OPS_block_size_z;
+      ex <<  "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 -- error OPS_block_size_* ";
+      ex << " Current settings: " << instance->OPS_block_size_x << " " << instance->OPS_block_size_y << " " << instance->OPS_block_size_z;
       throw ex;
   }
   for (int n = 1; n < argc; n++) {
     if (strncmp(argv[n], "OPS_CL_DEVICE=", 14) == 0) {
-      OPS_instance::getOPSInstance()->OPS_cl_device = atoi(argv[n] + 14);
-      printf("\n OPS_CL_DEVICE = %d \n", OPS_instance::getOPSInstance()->OPS_cl_device);
+      instance->OPS_cl_device = atoi(argv[n] + 14);
+      printf("\n OPS_CL_DEVICE = %d \n", instance->OPS_cl_device);
     }
   }
 
-  OPS_instance::getOPSInstance()->opencl_instance = new OPS_instance_opencl();
-  OPS_instance::getOPSInstance()->opencl_instance->copy_tobuf_kernel = NULL;
-  OPS_instance::getOPSInstance()->opencl_instance->copy_frombuf_kernel = NULL;
-  OPS_instance::getOPSInstance()->opencl_instance->isbuilt_copy_tobuf_kernel = false;
-  OPS_instance::getOPSInstance()->opencl_instance->isbuilt_copy_frombuf_kernel = false;
-  openclDeviceInit(argc, argv);
+  instance->opencl_instance = new OPS_instance_opencl();
+  instance->opencl_instance->copy_tobuf_kernel = NULL;
+  instance->opencl_instance->copy_frombuf_kernel = NULL;
+  instance->opencl_instance->isbuilt_copy_tobuf_kernel = false;
+  instance->opencl_instance->isbuilt_copy_frombuf_kernel = false;
+  openclDeviceInit(instance, argc, argv);
 }
 
-void ops_init(const int argc, const char **argv, const int diags) {
+
+// The one and only non-threads safe global OPS_instance
+// Declared in ops_instance.cpp
+extern OPS_instance *global_ops_instance;
+
+
+void _ops_init(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
+  //We do not have thread safety across MPI
+  if ( OPS_instance::numInstances() != 1 ) {
+    OPSException ex(OPS_RUNTIME_ERROR, "ERROR: multiple OPS instances are not suppoerted over MPI");
+    throw ex;
+  }
+  // So the MPI backend is not thread safe - that's fine.  It currently does not pass 
+  // OPS_instance pointers around, but rather uses the global instance exclusively.
+  // The only feasible use-case for MPI is that there is one OPS_instance.  Ideally that
+  // would not be created via thread-safe API, but we kinda want to support that.  So we 
+  // drill a back door into our own safety system: provided there is only one OPS_instance,
+  // we assign that to the global non-thread safe var and carry on.
+  global_ops_instance = instance;
+
   int flag = 0;
   MPI_Initialized(&flag);
   if (!flag) {
@@ -85,11 +104,17 @@ void ops_init(const int argc, const char **argv, const int diags) {
   MPI_Comm_rank(OPS_MPI_GLOBAL, &ops_my_global_rank);
   MPI_Comm_size(OPS_MPI_GLOBAL, &ops_comm_global_size);
 
-  ops_init_opencl(argc, argv, diags);
+  ops_init_opencl(instance, argc, argv, diags);
 }
 
-void ops_exit() {
-  ops_mpi_exit();
+void ops_init(const int argc, const char *const argv[], const int diags) {
+  _ops_init(OPS_instance::getOPSInstance(), argc, argv, diags);
+}
+
+
+void _ops_exit(OPS_instance *instance) {
+  if (instance->is_initialised == 0) return;
+  ops_mpi_exit(instance);
   if (halo_buffer_d != NULL)
     clReleaseMemObject((cl_mem)(halo_buffer_d));
   free(ops_buffer_send_1);
@@ -101,9 +126,13 @@ void ops_exit() {
   MPI_Finalized(&flag);
   if (!flag)
     MPI_Finalize();
-  ops_opencl_exit();
-  delete OPS_instance::getOPSInstance()->opencl_instance;
-  ops_exit_core();
+  ops_opencl_exit(instance);
+  delete instance->opencl_instance;
+  ops_exit_core(instance);
+}
+
+void ops_exit() {
+  _ops_exit(OPS_instance::getOPSInstance());
 }
 
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
@@ -126,10 +155,10 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   // TODO: proper allocation and TAILQ
   // create list to hold sub-grid decomposition geometries for each mpi process
   OPS_sub_dat_list = (sub_dat_list *)ops_realloc(
-      OPS_sub_dat_list, OPS_instance::getOPSInstance()->OPS_dat_index * sizeof(sub_dat_list));
+      OPS_sub_dat_list, block->instance->OPS_dat_index * sizeof(sub_dat_list));
 
   // store away product array prod[] and MPI_Types for this ops_dat
-  sub_dat_list sd = (sub_dat_list)ops_malloc(sizeof(sub_dat));
+  sub_dat_list sd = (sub_dat_list)ops_calloc(1, sizeof(sub_dat));
   sd->dat = dat;
   sd->dirtybit = 1;
   sd->dirty_dir_send =
@@ -151,15 +180,21 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
 }
 
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
-  ops_execute();
+  ops_execute(handle->instance);
   ops_checkpointing_reduction(handle);
   memcpy(ptr, handle->data, handle->size);
   handle->initialized = 0;
 }
 
+ops_halo _ops_decl_halo(OPS_instance *instance, ops_dat from, ops_dat to, int *iter_size, int *from_base,
+                       int *to_base, int *from_dir, int *to_dir) {
+  return ops_decl_halo_core(instance, from, to, iter_size, from_base, to_base, from_dir,
+                            to_dir);
+}
+
 ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int *from_base,
                        int *to_base, int *from_dir, int *to_dir) {
-  return ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir,
+  return ops_decl_halo_core(from->block->instance, from, to, iter_size, from_base, to_base, from_dir,
                             to_dir);
 }
 

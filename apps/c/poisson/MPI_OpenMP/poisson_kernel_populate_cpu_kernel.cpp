@@ -33,14 +33,14 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,6,range,0)) return;
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
-    ops_timing_realloc(0,"poisson_kernel_populate");
-    OPS_instance::getOPSInstance()->OPS_kernels[0].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,0,"poisson_kernel_populate");
+    block->instance->OPS_kernels[0].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "poisson_kernel_populate");
+  ops_register_args(block->instance, args, "poisson_kernel_populate");
   #endif
 
 
@@ -95,9 +95,9 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 6);
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[0].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[0].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
@@ -108,7 +108,6 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)
-    #pragma simd
     #pragma GCC ivdep
     #else
     #pragma simd
@@ -129,9 +128,9 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
 
     }
   }
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[0].time += __t2-__t1;
+    block->instance->OPS_kernels[0].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 6);
@@ -140,13 +139,13 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[5],range);
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[0].mpi_time += __t1-__t2;
-    OPS_instance::getOPSInstance()->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_instance::getOPSInstance()->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_instance::getOPSInstance()->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[0].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg5);
   }
 }
 
@@ -186,8 +185,8 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   desc->args[5] = arg5;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg5.dat->index;
   desc->function = ops_par_loop_poisson_kernel_populate_execute;
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
-    ops_timing_realloc(0,"poisson_kernel_populate");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,0,"poisson_kernel_populate");
   }
   ops_enqueue_kernel(desc);
 }

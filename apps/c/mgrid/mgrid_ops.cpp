@@ -242,7 +242,7 @@ int main(int argc, const char **argv)
   ops_reduction_result(reduct_err, &err_restrict);
 
   ops_timers_core(&ct1, &et1);
-  ops_timing_output(stdout);
+  ops_timing_output(std::cout);
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
 

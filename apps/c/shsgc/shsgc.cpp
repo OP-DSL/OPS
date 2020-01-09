@@ -103,7 +103,7 @@ FILE *fp;
 * Main program
 *******************************************************************************/
 
-int main(int argc, const char **argv) {
+int main(int argc, char **argv) {
 
   double totaltime =0.0f;
   // Initialize rk3 co-efficient's

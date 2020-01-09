@@ -37,13 +37,22 @@
   */
 
 #include <ops_lib_core.h>
-int posix_memalign(void **memptr, size_t alignment, size_t size);
 
-void ops_init(const int argc, const char **argv, const int diags) {
-  ops_init_core(argc, argv, diags);
+void ops_init(const int argc, const char *const argv[], const int diags) {
+  ops_init_core(OPS_instance::getOPSInstance(), argc, argv, diags);
 }
 
-void ops_exit() { ops_exit_core(); }
+void _ops_init(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
+  ops_init_core(instance, argc, argv, diags);
+}
+
+void _ops_exit(OPS_instance *instance) {
+  if (instance->is_initialised == 0) return;
+  if (instance->ops_halo_buffer!=NULL) free(instance->ops_halo_buffer);
+  ops_exit_core(instance);
+}
+
+void ops_exit() { ops_exit_core(OPS_instance::getOPSInstance()); }
 
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
                           int *d_m, int *d_p, int *stride, char *data, int type_size,
@@ -54,23 +63,20 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p,
                                        stride, data, type_size, type, name);
 
-  if (data != NULL && !OPS_instance::getOPSInstance()->OPS_realloc) {
-    // printf("Data read in from HDF5 file or is allocated by the user\n");
+  if (data != NULL && !block->instance->OPS_realloc) {
     dat->user_managed =
         1; // will be reset to 0 if called from ops_decl_dat_hdf5()
     dat->is_hdf5 = 0;
     dat->hdf5_file = "none"; // will be set to an hdf5 file if called from
                              // ops_decl_dat_hdf5()
-    int bytes = size * type_size;
+    size_t bytes = size * type_size;
     for (int i = 0; i < block->dims; i++)
       bytes = bytes * dat->size[i];
     dat->mem = bytes;
   } else {
     // Allocate memory immediately
-    int bytes = size * type_size;
+    size_t bytes = size * type_size;
 
-    // nx_pad    = (1+((nx-1)/SIMD_VEC))*SIMD_VEC; // Compute padding for
-    // vecotrization (in adi_cpu tridiagonal library)
     // Compute    padding x-dim for vecotrization
     int x_pad = (1+((dat->size[0]-1)/SIMD_VEC))*SIMD_VEC - dat->size[0];
     dat->size[0] += x_pad;
@@ -80,25 +86,25 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
 
     for (int i = 0; i < block->dims; i++)
       bytes = bytes * dat->size[i];
-    dat->data = (char *)ops_calloc(bytes, 1); // initialize data bits to 0
+    dat->data = (char *)ops_malloc(bytes);
     dat->user_managed = 0;
     dat->mem = bytes;
-    if (data != NULL && OPS_instance::getOPSInstance()->OPS_realloc) {
-      int sizeprod = 1; 
-      for (int d = 1; d < block->dims; d++) sizeprod *= (dat->size[d]);
-      int xlen_orig = (-d_m[0]+d_p[0]+dat_size[0]) * size * type_size;
-      for (int i = 0; i < sizeprod; i++) {
-        memcpy(&dat->data[i*dat->size[0] * size * type_size],&data[i*xlen_orig],xlen_orig);
-      }
-    }
+    if (data != NULL && block->instance->OPS_realloc) {
+      ops_convert_layout(data, dat->data, block, size,
+          dat->size, dat_size, type_size, 0);
+//          dat->size, dat_size_orig, type_size, 0);
+//          block->instance->OPS_hybrid_layout ? //TODO: comes in when batching
+//          block->instance->ops_batch_size : 0);
+    } else
+      ops_init_zero(dat->data, bytes);
   }
 
   // Compute offset in bytes to the base index
   dat->base_offset = 0;
-  long cumsize = 1;
+  size_t cumsize = 1;
   for (int i = 0; i < block->dims; i++) {
     dat->base_offset +=
-        (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size)
+        (block->instance->OPS_soa ? dat->type_size : dat->elem_size)
         * cumsize * (-dat->base[i] - dat->d_m[i]);
     cumsize *= dat->size[i];
   }
@@ -106,14 +112,20 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   return dat;
 }
 
+ops_halo _ops_decl_halo(OPS_instance *instance, ops_dat from, ops_dat to, int *iter_size, int *from_base,
+                       int *to_base, int *from_dir, int *to_dir) {
+  return ops_decl_halo_core(instance, from, to, iter_size, from_base, to_base, from_dir,
+                            to_dir);
+}
+
 ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int *from_base,
                        int *to_base, int *from_dir, int *to_dir) {
-  return ops_decl_halo_core(from, to, iter_size, from_base, to_base, from_dir,
+  return ops_decl_halo_core(OPS_instance::getOPSInstance(), from, to, iter_size, from_base, to_base, from_dir,
                             to_dir);
 }
 
 void ops_halo_transfer(ops_halo_group group) {
-  ops_execute();
+  ops_execute(group->instance);
   // Test contents of halo group
   /*ops_halo halo;
   for(int i = 0; i<group->nhalos; i++) {
@@ -135,9 +147,9 @@ void ops_halo_transfer(ops_halo_group group) {
     int size = halo->from->elem_size * halo->iter_size[0];
     for (int i = 1; i < halo->from->block->dims; i++)
       size *= halo->iter_size[i];
-    if (size > OPS_instance::getOPSInstance()->ops_halo_buffer_size) {
-      OPS_instance::getOPSInstance()->ops_halo_buffer = (char *)ops_realloc(OPS_instance::getOPSInstance()->ops_halo_buffer, size);
-      OPS_instance::getOPSInstance()->ops_halo_buffer_size = size;
+    if (size > group->instance->ops_halo_buffer_size) {
+      group->instance->ops_halo_buffer = (char *)ops_realloc(group->instance->ops_halo_buffer, size);
+      group->instance->ops_halo_buffer_size = size;
     }
 
     // copy to linear buffer from source
@@ -162,8 +174,8 @@ void ops_halo_transfer(ops_halo_group group) {
       for (int j = 0; j != abs(halo->from_dir[i]) - 1; j++)
         buf_strides[i] *= halo->iter_size[j];
     }
-    int OPS_soa = OPS_instance::getOPSInstance()->OPS_soa;
-    char *ops_halo_buffer =  OPS_instance::getOPSInstance()->ops_halo_buffer;
+    int OPS_soa = group->instance->OPS_soa;
+    char *ops_halo_buffer =  group->instance->ops_halo_buffer;
   #if OPS_MAX_DIM>4
     #if OPS_MAX_DIM == 5
     #ifdef _OPENMP
@@ -303,8 +315,8 @@ void ops_halo_transfer(ops_halo_group group) {
       for (int j = 0; j != abs(halo->to_dir[i]) - 1; j++)
         buf_strides[i] *= halo->iter_size[j];
     }
-    OPS_soa = OPS_instance::getOPSInstance()->OPS_soa;
-    ops_halo_buffer =  OPS_instance::getOPSInstance()->ops_halo_buffer;
+    OPS_soa = group->instance->OPS_soa;
+    ops_halo_buffer =  group->instance->ops_halo_buffer;
   #if OPS_MAX_DIM>4
     #if OPS_MAX_DIM == 5
     #ifdef _OPENMP
@@ -447,7 +459,7 @@ ops_arg ops_arg_gbl_char(char *data, int dim, int size, ops_access acc) {
 }
 
 void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
-  ops_execute();
+  ops_execute(handle->instance);
   ops_checkpointing_reduction(handle);
   memcpy(ptr, handle->data, handle->size);
   handle->initialized = 0;
@@ -478,11 +490,15 @@ void ops_decl_const_char(int dim, char const *type, int typeSize, char *data,
   (void)typeSize;
   (void)data;
   (void)name;
+  ops_execute(OPS_instance::getOPSInstance());
+}
+
+void _ops_partition(OPS_instance *instance, const char *routine) {
+  (void)routine;
 }
 
 void ops_partition(const char *routine) {
   (void)routine;
-  // printf("Partitioning ops_dats\n");
 }
 
 void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
@@ -500,7 +516,7 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs) {
   (void)args;
 }
 
-void ops_cpHostToDevice(void **data_d, void **data_h, int size) {
+void ops_cpHostToDevice(void **data_d, void **data_h, size_t size) {
   (void)data_d;
   (void)data_h;
   (void)size;

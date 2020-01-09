@@ -28,7 +28,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running DEV_MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_dev_mpi > perf_out
+OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_dev_mpi > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -36,7 +36,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi > perf_out
+OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -62,7 +62,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+CUDA'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -78,7 +78,7 @@ rm perf_out
 #rm perf_out
 
 echo '============> Running OpenCL on CPU'
-./multidim_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
+OMP_NUM_THREADS=1 ./multidim_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -86,8 +86,8 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running OpenCL on GPU'
-./multidim_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-./multidim_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+OMP_NUM_THREADS=1 ./multidim_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+OMP_NUM_THREADS=1 ./multidim_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -95,8 +95,8 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+OpenCL on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
+OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
+OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -104,8 +104,8 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+OpenCL on GPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -142,7 +142,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running DEV_MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_dev_mpi > perf_out
+OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_dev_mpi > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -150,7 +150,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi > perf_out
+OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -166,7 +166,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+CUDA'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -190,8 +190,8 @@ rm perf_out
 #rm perf_out
 
 echo '============> Running OpenCL on GPU'
-./multidim_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-./multidim_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+OMP_NUM_THREADS=1 ./multidim_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+OMP_NUM_THREADS=1 ./multidim_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -208,8 +208,8 @@ rm perf_out
 #rm perf_out
 
 echo '============> Running MPI+OpenCL on GPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -225,7 +225,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 #COMMENT
 echo '============> Running MPI+OpenACC'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_openacc numawrap2 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_openacc numawrap2 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out

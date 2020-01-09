@@ -85,10 +85,7 @@ typedef enum {
   OPS_CHECKPOINT_MANUAL = 8
 } ops_checkpoint_options;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+#ifndef OPS_CPP_API
 /**
  * Initialises the checkpointing system, has to be called after ops_partition().
  *
@@ -99,13 +96,15 @@ extern "C" {
  * @return          `true` if the application launches in restore mode,
  *                  `false` otherwise.
  */
+OPS_FTN_INTEROP
 bool ops_checkpointing_init(const char *filename, double interval, int options);
+OPS_FTN_INTEROP
 void ops_checkpointing_initphase_done();
 bool ops_checkpointing_before(ops_arg *args, int nargs, int *range,
                               int loop_id);
 bool ops_checkpointing_name_before(ops_arg *args, int nargs, int *range,
                                    const char *s);
-void ops_checkpointing_exit();
+void ops_checkpointing_exit(OPS_instance *);
 void ops_checkpointing_reduction(ops_reduction red);
 
 /**
@@ -121,6 +120,7 @@ void ops_checkpointing_reduction(ops_reduction red);
  * @param ndats    number of datasets to be saved
  * @param datlist  arrays of ::ops_dat handles to be saved
  */
+OPS_FTN_INTEROP
 void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist);
 
 /**
@@ -140,6 +140,7 @@ void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist);
  * @param payload  pointer to memory into which the payload is packed
  * @return
  */
+OPS_FTN_INTEROP
 bool ops_checkpointing_fastfw(int nbytes, char *payload);
 
 /**
@@ -152,6 +153,7 @@ bool ops_checkpointing_fastfw(int nbytes, char *payload);
  * @param payload  pointer to memory into which the payload is packed
  * @return
  */
+OPS_FTN_INTEROP
 bool ops_checkpointing_manual_datlist_fastfw(int ndats, ops_dat *datlist,
                                              int nbytes, char *payload);
 
@@ -169,12 +171,9 @@ bool ops_checkpointing_manual_datlist_fastfw(int ndats, ops_dat *datlist,
  * @param payload  pointer to memory into which the payload is packed
  * @return
  */
+OPS_FTN_INTEROP
 bool ops_checkpointing_manual_datlist_fastfw_trigger(int ndats,
                                                      ops_dat *datlist,
                                                      int nbytes, char *payload);
-
-#ifdef __cplusplus
-}
-#endif
-
+#endif /* OPS_CPP_API */
 #endif /* __OPS_CHECKPOINTING_H */

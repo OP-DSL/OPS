@@ -40,20 +40,17 @@
 #ifndef __OPS_TRIDIAG_H
 #define __OPS_TRIDIAG_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "ops_lib_core.h"
 
+OPS_FTN_INTEROP
 void ops_tridMultiDimBatch(int ndim, int solvedim, int* dims, ops_dat a,
                            ops_dat b, ops_dat c, ops_dat d, ops_dat u);
 
+OPS_FTN_INTEROP
 void ops_tridMultiDimBatch_Inc(int ndim, int solvedim, int* dims, ops_dat a,
                                ops_dat b, ops_dat c, ops_dat d, ops_dat u);
 
+OPS_FTN_INTEROP
 void ops_initTridMultiDimBatchSolve(int ndim, int* dims);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

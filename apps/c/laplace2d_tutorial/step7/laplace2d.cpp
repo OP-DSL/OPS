@@ -117,7 +117,7 @@ int main(int argc, const char** argv)
 
   ops_printf("%5d, %0.6f\n", iter, error);        
 
-  ops_timing_output(stdout);
+  ops_timing_output(std::cout);
 
   double err_diff = fabs((100.0*(error/2.421354960840227e-03))-100.0);
   printf("Total error is within %3.15E %% of the expected error\n",err_diff);

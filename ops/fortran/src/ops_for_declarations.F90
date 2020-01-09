@@ -60,6 +60,7 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: index        ! index
     integer(kind=c_int) :: dims         ! dimension of vlock, 2D, 3D .. etc
     type(c_ptr)         :: name         ! name if the block
+    type(c_ptr)         :: instance     ! pointer to the OPS_instance
   end type ops_block_core
 
   type :: ops_block
@@ -105,8 +106,8 @@ module OPS_Fortran_Declarations
   type, BIND(C) :: ops_stencil_core
     integer(kind=c_int) :: index        ! index
     integer(kind=c_int) :: dims         ! dimensionality of the stencil
-    type(c_ptr)         :: name         ! name of stencil
     integer(kind=c_int) :: points       ! number of stencil elements
+    type(c_ptr)         :: name         ! name of stencil
     type(c_ptr)         :: stencil      ! elements in the stencil
     type(c_ptr)         :: stride       ! stride of the stencil
     type(c_ptr)         :: mgrid_stride ! mutlgrid stride
@@ -142,6 +143,7 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: acc          ! Type of reduction it was used for last time
     integer(kind=c_int) :: type         ! Type
     type(c_ptr)         :: name         ! Name
+    type(c_ptr)         :: instance     ! Pointer to the OPS_instance
   end type ops_reduction_core
 
   type :: ops_reduction
@@ -172,6 +174,7 @@ module OPS_Fortran_Declarations
     !type (ops_halo), pointer :: halos => null()
     !type (ops_halo), dimension(*) :: halos
     integer             :: index
+    type(c_ptr)         :: instance 
   end type ops_halo_group_core
 
   type :: ops_halo_group

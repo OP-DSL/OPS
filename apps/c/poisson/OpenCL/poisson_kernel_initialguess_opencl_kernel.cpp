@@ -11,11 +11,11 @@
 
 static bool isbuilt_poisson_kernel_initialguess = false;
 
-void buildOpenCLKernels_poisson_kernel_initialguess(int xdim0) {
+void buildOpenCLKernels_poisson_kernel_initialguess(OPS_instance *instance, int xdim0) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_poisson_kernel_initialguess) {
-    buildOpenCLKernels();
+    buildOpenCLKernels(instance);
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
     char* source_filename[1] = {(char*)"./OpenCL/poisson_kernel_initialguess.cl"};
@@ -49,7 +49,7 @@ void buildOpenCLKernels_poisson_kernel_initialguess(int xdim0) {
     printf("Compiling poisson_kernel_initialguess %d source -- start \n",OCL_FMA);
 
       // Create a program from the source
-      OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
+      instance->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(instance->opencl_instance->OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
       clSafeCall( ret );
 
       // Build the program
@@ -66,14 +66,14 @@ void buildOpenCLKernels_poisson_kernel_initialguess(int xdim0) {
         exit(EXIT_FAILURE);
       }
 
-      ret = clBuildProgram(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, 1, &OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id, buildOpts, NULL, NULL);
+      ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1, &instance->opencl_instance->OPS_opencl_core.device_id, buildOpts, NULL, NULL);
 
       if(ret != CL_SUCCESS) {
         char* build_log;
         size_t log_size;
-        clSafeCall( clGetProgramBuildInfo(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
+        clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
         build_log = (char*) malloc(log_size+1);
-        clSafeCall( clGetProgramBuildInfo(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
+        clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
         build_log[log_size] = '\0';
         fprintf(stderr, "=============== OpenCL Program Build Info ================\n\n%s", build_log);
         fprintf(stderr, "\n========================================================= \n");
@@ -83,7 +83,7 @@ void buildOpenCLKernels_poisson_kernel_initialguess(int xdim0) {
       printf("compiling poisson_kernel_initialguess -- done\n");
 
     // Create the OpenCL kernel
-    OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[2] = clCreateKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.program, "ops_poisson_kernel_initialguess", &ret);
+    instance->opencl_instance->OPS_opencl_core.kernel[2] = clCreateKernel(instance->opencl_instance->OPS_opencl_core.program, "ops_poisson_kernel_initialguess", &ret);
     clSafeCall( ret );
 
     isbuilt_poisson_kernel_initialguess = true;
@@ -106,9 +106,9 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
   if (!ops_checkpointing_before(args,1,range,2)) return;
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
-    ops_timing_realloc(2,"poisson_kernel_initialguess");
-    OPS_instance::getOPSInstance()->OPS_kernels[2].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,2,"poisson_kernel_initialguess");
+    block->instance->OPS_kernels[2].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -150,12 +150,12 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
 
   //build opencl kernel if not already built
 
-  buildOpenCLKernels_poisson_kernel_initialguess(
+  buildOpenCLKernels_poisson_kernel_initialguess(block->instance,
   xdim0);
 
   //set up OpenCL thread blocks
-  size_t globalWorkSize[3] = {((x_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_x+ 1)*OPS_instance::getOPSInstance()->OPS_block_size_x, ((y_size-1)/OPS_instance::getOPSInstance()->OPS_block_size_y + 1)*OPS_instance::getOPSInstance()->OPS_block_size_y, 1};
-  size_t localWorkSize[3] =  {OPS_instance::getOPSInstance()->OPS_block_size_x,OPS_instance::getOPSInstance()->OPS_block_size_y,OPS_instance::getOPSInstance()->OPS_block_size_z};
+  size_t globalWorkSize[3] = {((x_size-1)/block->instance->OPS_block_size_x+ 1)*block->instance->OPS_block_size_x, ((y_size-1)/block->instance->OPS_block_size_y + 1)*block->instance->OPS_block_size_y, 1};
+  size_t localWorkSize[3] =  {block->instance->OPS_block_size_x,block->instance->OPS_block_size_y,block->instance->OPS_block_size_z};
 
 
 
@@ -179,37 +179,37 @@ void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block,
   ops_halo_exchanges(args,1,range);
   ops_H_D_exchanges_device(args, 1);
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[2].mpi_time += t2-t1;
+    block->instance->OPS_kernels[2].mpi_time += t2-t1;
   }
 
   if (globalWorkSize[0]>0 && globalWorkSize[1]>0 && globalWorkSize[2]>0) {
 
-    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[2], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
-    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[2], 1, sizeof(cl_int), (void*) &base0 ));
-    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[2], 2, sizeof(cl_int), (void*) &x_size ));
-    clSafeCall( clSetKernelArg(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[2], 3, sizeof(cl_int), (void*) &y_size ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[2], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[2], 1, sizeof(cl_int), (void*) &base0 ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[2], 2, sizeof(cl_int), (void*) &x_size ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[2], 3, sizeof(cl_int), (void*) &y_size ));
 
     //call/enque opencl kernel wrapper function
-    clSafeCall( clEnqueueNDRangeKernel(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue, OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.kernel[2], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+    clSafeCall( clEnqueueNDRangeKernel(block->instance->opencl_instance->OPS_opencl_core.command_queue, block->instance->opencl_instance->OPS_opencl_core.kernel[2], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   }
-  if (OPS_instance::getOPSInstance()->OPS_diags>1) {
-    clSafeCall( clFinish(OPS_instance::getOPSInstance()->opencl_instance->OPS_opencl_core.command_queue) );
+  if (block->instance->OPS_diags>1) {
+    clSafeCall( clFinish(block->instance->opencl_instance->OPS_opencl_core.command_queue) );
   }
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[2].time += t1-t2;
+    block->instance->OPS_kernels[2].time += t1-t2;
   }
 
   ops_set_dirtybit_device(args, 1);
   ops_set_halo_dirtybit3(&args[0],range);
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[2].mpi_time += t2-t1;
-    OPS_instance::getOPSInstance()->OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[2].mpi_time += t2-t1;
+    block->instance->OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

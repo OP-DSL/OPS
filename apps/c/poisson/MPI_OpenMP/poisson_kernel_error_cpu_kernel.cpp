@@ -29,14 +29,14 @@ void ops_par_loop_poisson_kernel_error_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,3,range,4)) return;
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
-    ops_timing_realloc(4,"poisson_kernel_error");
-    OPS_instance::getOPSInstance()->OPS_kernels[4].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,4,"poisson_kernel_error");
+    block->instance->OPS_kernels[4].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "poisson_kernel_error");
+  ops_register_args(block->instance, args, "poisson_kernel_error");
   #endif
 
 
@@ -82,9 +82,9 @@ void ops_par_loop_poisson_kernel_error_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 3);
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[4].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[4].mpi_time += __t1-__t2;
   }
 
   double p_a2_0 = p_a2[0];
@@ -96,7 +96,6 @@ void ops_par_loop_poisson_kernel_error_execute(ops_kernel_descriptor *desc) {
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)
-    #pragma simd
     #pragma GCC ivdep
     #else
     #pragma simd
@@ -113,20 +112,20 @@ void ops_par_loop_poisson_kernel_error_execute(ops_kernel_descriptor *desc) {
     }
   }
   p_a2[0] = p_a2_0;
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[4].time += __t2-__t1;
+    block->instance->OPS_kernels[4].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 3);
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[4].mpi_time += __t1-__t2;
-    OPS_instance::getOPSInstance()->OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_instance::getOPSInstance()->OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[4].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 
@@ -155,8 +154,8 @@ void ops_par_loop_poisson_kernel_error(char const *name, ops_block block, int di
   desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->args[2] = arg2;
   desc->function = ops_par_loop_poisson_kernel_error_execute;
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
-    ops_timing_realloc(4,"poisson_kernel_error");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,4,"poisson_kernel_error");
   }
   ops_enqueue_kernel(desc);
 }

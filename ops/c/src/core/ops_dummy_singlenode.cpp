@@ -39,6 +39,7 @@
 
 #include "ops_lib_core.h"
 #include <ops_exceptions.h>
+#include <string>
 
 // #ifndef __XDIMS__ // perhaps put this into a separate headder file
 // #define __XDIMS__
@@ -149,7 +150,7 @@ ops_arg ops_arg_reduce(ops_reduction handle, int dim, const char *type,
   return ops_arg_reduce_core(handle, dim, type, acc);
 }
 
-ops_reduction ops_decl_reduction_handle(int size, const char *type,
+ops_reduction _ops_decl_reduction_handle(OPS_instance *instance, int size, const char *type,
                                         const char *name) {
   if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 ||
       strcmp(type, "double precision") == 0)
@@ -160,10 +161,17 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type,
            strcmp(type, "integer(4)") == 0 || strcmp(type, "int(4)") == 0)
     type = "int";
 
-  return ops_decl_reduction_handle_core(size, type, name);
+  return ops_decl_reduction_handle_core(instance, size, type, name);
+}
+
+ops_reduction ops_decl_reduction_handle(int size, const char *type,
+                                        const char *name) {
+  return _ops_decl_reduction_handle(OPS_instance::getOPSInstance(), size, type, name);
 }
 
 void ops_execute_reduction(ops_reduction handle) { (void)handle; }
+
+int _ops_is_root(OPS_instance *instance) { return 1; }
 
 int ops_is_root() { return 1; }
 
@@ -213,6 +221,43 @@ void ops_printf(const char *format, ...) {
   va_end(argptr);
 }
 
+void printf2(OPS_instance *instance, const char *format, ...) {
+  char buf[1000];
+  va_list argptr;
+  va_start(argptr, format);
+  vsprintf(buf,format, argptr);
+  va_end(argptr);
+  instance->ostream() << buf;
+}
+
+void ops_printf2(OPS_instance *instance, const char *format, ...) {
+  char buf[1000];
+  va_list argptr;
+  va_start(argptr, format);
+  vsprintf(buf,format, argptr);
+  va_end(argptr);
+  instance->ostream() << buf;
+}
+
+
+void fprintf2(std::ostream &stream, const char *format, ...) {
+  char buf[1000];
+  va_list argptr;
+  va_start(argptr, format);
+  vsprintf(buf, format, argptr);
+  va_end(argptr);
+  stream << buf;
+}
+
+void ops_fprintf2(std::ostream &stream, const char *format, ...) {
+  char buf[1000];
+  va_list argptr;
+  va_start(argptr, format);
+  vsprintf(buf, format, argptr);
+  va_end(argptr);
+  stream << buf;
+}
+
 void ops_fprintf(FILE *stream, const char *format, ...) {
   va_list argptr;
   va_start(argptr, format);
@@ -220,10 +265,10 @@ void ops_fprintf(FILE *stream, const char *format, ...) {
   va_end(argptr);
 }
 
-bool ops_checkpointing_filename(const char *file_name, char *filename_out,
-                                char *filename_out2) {
-  strcpy(filename_out, file_name);
-  filename_out2 = "";
+bool ops_checkpointing_filename(const char *file_name, std::string &filename_out,
+                                std::string &filename_out2) {
+  filename_out = file_name;
+  //if (filename_out2!=NULL) *filename_out2='\0';
   return false;
 }
 
@@ -271,6 +316,7 @@ int ops_get_proc() {
 }
 
 /************* Functions only use in the Fortran Backend ************/
+extern "C" {
 
 int *getDatSizeFromOpsArg(ops_arg *arg) { return arg->dat->size; }
 
@@ -369,6 +415,8 @@ void getIdx(ops_block block, int *start, int *idx) {
   }
 }
 
+}
+
 int ops_dat_get_local_npartitions(ops_dat dat) {
   return 1;
 }
@@ -417,7 +465,7 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
   }
   lsize[0] *= dat->elem_size/dat->dim; //now in bytes
   if (dat->block->dims>3) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for dims>3");
-  if (OPS_instance::getOPSInstance()->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for SoA");
+  if (dat->block->instance->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for SoA");
 
   for (int k = 0; k < lsize[2]; k++)
     for (int j = 0; j < lsize[1]; j++)
@@ -433,9 +481,9 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
     lsize[d] = 1;
     ldisp[d] = 0;
   }
-  lsize[0] *= dat->elem_size/dat->dim; //now in bytes
+  lsize[0] *= dat->elem_size; //now in bytes
   if (dat->block->dims>3) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for dims>3");
-  if (OPS_instance::getOPSInstance()->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for SoA");
+  if (dat->block->instance->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for SoA");
 
   for (int k = 0; k < lsize[2]; k++)
     for (int j = 0; j < lsize[1]; j++)

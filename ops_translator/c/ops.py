@@ -682,7 +682,7 @@ def main(source_files):
       loc_header = [text.find("ops_seq.h")]
       if loc_header[0] == -1:
         header_len = 13
-        loc_header = [text.find("ops_lib_cpp.h")]
+        loc_header = [text.find("ops_lib_core.h")]
 
       if loc_header[0] == -1:
         header_len = 12
@@ -728,7 +728,7 @@ def main(source_files):
             ind = ind + 1
 
         if (locs[loc] in loc_header) and (locs[loc] != -1):
-            fid.write(' "ops_lib_cpp.h"\n\n')
+            fid.write(' "ops_lib_core.h"\n\n')
             if len(kernels_in_files[a - 1]) > 0:
               fid.write('//\n// ops_par_loop declarations\n//\n')
             for k_iter in range(0, len(kernels_in_files[a - 1])):

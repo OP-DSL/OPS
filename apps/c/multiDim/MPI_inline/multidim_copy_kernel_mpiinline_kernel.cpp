@@ -34,9 +34,9 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   if (!ops_checkpointing_before(args,2,range,1)) return;
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
-    ops_timing_realloc(1,"multidim_copy_kernel");
-    OPS_instance::getOPSInstance()->OPS_kernels[1].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,1,"multidim_copy_kernel");
+    block->instance->OPS_kernels[1].count++;
   }
 
   //compute localy allocated range for the sub-block
@@ -64,7 +64,7 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
   }
 
@@ -80,18 +80,18 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   }
 
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0+ (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0+ (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
   double *p_a0 = (double *)(args[0].data + base0);
 
-  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
-  base1 = base1+ (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  base1 = base1+ (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
     start[1] * args[1].stencil->stride[1];
   double *p_a1 = (double *)(args[1].data + base1);
@@ -101,9 +101,9 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   ops_H_D_exchanges_host(args, 2);
   ops_halo_exchanges(args,2,range);
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[1].mpi_time += t1-t2;
+    block->instance->OPS_kernels[1].mpi_time += t1-t2;
   }
 
   multidim_copy_kernel_c_wrapper(
@@ -111,16 +111,16 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
     p_a1,
     x_size, y_size);
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[1].time += t2-t1;
+    block->instance->OPS_kernels[1].time += t2-t1;
   }
   ops_set_dirtybit_host(args, 2);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
-    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_instance::getOPSInstance()->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg1);
+  if (block->instance->OPS_diags > 1) {
+    block->instance->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

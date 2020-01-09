@@ -133,7 +133,7 @@ void start();
 /******************************************************************************
 * Main program
 ******************************************************************************/
-int main(int argc, const char **argv)
+int main(int argc, char **argv)
 {
   /**-------------------------- OPS Initialisation --------------------------**/
 
@@ -225,7 +225,7 @@ int main(int argc, const char **argv)
 
   ops_timers(&ct1, &et1);
 
-    ops_timing_output(stdout); // print output to STDOUT
+    ops_timing_output(std::cout); // print output to STDOUT
     //ops_timing_output(g_out);
     process_profile();
 
