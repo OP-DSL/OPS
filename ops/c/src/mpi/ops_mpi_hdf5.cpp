@@ -1908,7 +1908,7 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
 
   const char* typ = dset_props.type_str;
   if (strcmp(typ, type)!=0) {
-    if (OPS_diags>1) ops_printf(
+    if (OPS_instance::getOPSInstance()->OPS_diags>1) ops_printf(
         "type of constant %s in file %s and requested type %s do not match, performing automatic type conversion\n",
         typ, file_name, type);
     typ = type;
@@ -1992,7 +1992,7 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_WORLD, info);
 
   if (file_exist(file_name) == 0) {
-    if (OPS_diags > 3) {
+    if (OPS_instance::getOPSInstance()->OPS_diags > 3) {
       ops_printf("File %s does not exist .... creating file\n", file_name);
     }
     file_id = H5Fcreate(file_name, H5F_ACC_EXCL, H5P_DEFAULT, plist_id);

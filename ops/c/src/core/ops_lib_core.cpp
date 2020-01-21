@@ -195,7 +195,7 @@ void _ops_set_args(OPS_instance *instance, const int argc, const char *argv) {
 
 void ops_set_args_ftn(const int argc, char *argv, int len) {
   argv[len]='\0';
-  ops_set_args(argc, argv);
+  _ops_set_args(OPS_instance::getOPSInstance(), argc, argv);
 }
 
 /* Special function only called by fortran backend to get
@@ -341,57 +341,6 @@ ops_block _ops_decl_block(OPS_instance *instance, int dims, const char *name) {
   instance->OPS_block_list[instance->OPS_block_index].num_datasets = 0;
   TAILQ_INIT(&(instance->OPS_block_list[instance->OPS_block_index].datasets));
   instance->OPS_block_index++;
-
-  return block;
-}*/
-
-ops_block ops_decl_block(int dims, const char *name) {
-  if (dims < 0) {
-    printf(
-        "Error: ops_decl_block -- negative/zero dimension size for block: %s\n",
-        name);
-    exit(-1);
-  }
-
-  if (OPS_block_index == OPS_block_max) {
-    if (OPS_block_max > 0) printf("Warning: potential realloc issue in ops_lib_core.c detected, please modify ops_decl_block to allocate more blocks initially!\n");
-
-    OPS_block_max += 20;
-    ops_block_descriptor *OPS_block_list_new = (ops_block_descriptor *)xmalloc(
-        OPS_block_max * sizeof(ops_block_descriptor));
-    if (OPS_block_list_new == NULL) {
-      printf("Error: ops_decl_block -- error reallocating memory\n");
-      exit(-1);
-    }
-
-    //copy old blocks
-    for (int i = 0; i < OPS_block_index; i++) {
-      OPS_block_list_new[i].block = OPS_block_list[i].block;
-
-      TAILQ_INIT(&(OPS_block_list_new[i].datasets));
-      //remove ops_dats from old queue and add to new queue
-      ops_dat_entry *item;
-      while ((item = TAILQ_FIRST(&(OPS_block_list[i].datasets)))) {
-        TAILQ_REMOVE(&(OPS_block_list[i].datasets), item, entries);
-        TAILQ_INSERT_TAIL(&OPS_block_list_new[i].datasets, item, entries);
-      }
-
-      OPS_block_list_new[i].num_datasets = OPS_block_list[i].num_datasets;
-
-    }
-    free(OPS_block_list);
-    OPS_block_list = OPS_block_list_new;
-
-  }
-
-  ops_block block = (ops_block)xmalloc(sizeof(ops_block_core));
-  block->index = OPS_block_index;
-  block->dims = dims;
-  block->name = copy_str(name);
-  OPS_block_list[OPS_block_index].block = block;
-  OPS_block_list[OPS_block_index].num_datasets = 0;
-  TAILQ_INIT(&(OPS_block_list[OPS_block_index].datasets));
-  OPS_block_index++;
 
   return block;
 }
@@ -1488,7 +1437,7 @@ void ops_NaNcheck_core(ops_dat dat, char *buffer) {
 
               for (int d = 0; d < dat->dim; d++) {
 
-                size_t offset = OPS_soa ?
+                size_t offset = dat->block->instance->OPS_soa ?
                         (n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i + d * prod[5])
                       :((n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i)*dat->dim + d);
                 if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
