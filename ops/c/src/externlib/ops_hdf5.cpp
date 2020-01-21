@@ -1060,7 +1060,7 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   hid_t dataspace; // data space identifier
 
   if (file_exist(file_name) == 0) {
-    if (OPS_diags > 3) {
+    if (OPS_instance::getOPSInstance()->OPS_diags > 3) {
       ops_printf("File %s does not exist .... creating file\n", file_name);
     }
     file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
