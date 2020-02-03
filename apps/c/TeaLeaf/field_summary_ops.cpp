@@ -9,7 +9,7 @@
 #include <math.h>
 
  #define OPS_2D
-#include  "ops_lib_cpp.h"
+#include  "ops_lib_core.h"
 
 //
 // ops_par_loop declarations

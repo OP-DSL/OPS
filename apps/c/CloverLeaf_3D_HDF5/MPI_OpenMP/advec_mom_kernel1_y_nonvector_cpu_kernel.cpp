@@ -32,14 +32,14 @@ void ops_par_loop_advec_mom_kernel1_y_nonvector_execute(ops_kernel_descriptor *d
   if (!ops_checkpointing_before(args,5,range,132)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(132,"advec_mom_kernel1_y_nonvector");
-    OPS_kernels[132].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,132,"advec_mom_kernel1_y_nonvector");
+    block->instance->OPS_kernels[132].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "advec_mom_kernel1_y_nonvector");
+  ops_register_args(block->instance, args, "advec_mom_kernel1_y_nonvector");
   #endif
 
 
@@ -72,19 +72,21 @@ void ops_par_loop_advec_mom_kernel1_y_nonvector_execute(ops_kernel_descriptor *d
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ node_flux_p = (double *)(args[0].data + base0);
+  double * __restrict__ node_flux_p = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset;
-  double *__restrict__ node_mass_pre_p = (double *)(args[1].data + base1);
+  double * __restrict__ node_mass_pre_p = (double *)(args[1].data + base1);
 
   int base2 = args[2].dat->base_offset;
-  double *__restrict__ mom_flux_p = (double *)(args[2].data + base2);
+  double * __restrict__ mom_flux_p = (double *)(args[2].data + base2);
 
   int base3 = args[3].dat->base_offset;
-  double *__restrict__ celldy_p = (double *)(args[3].data + base3);
+  double * __restrict__ celldy_p = (double *)(args[3].data + base3);
 
   int base4 = args[4].dat->base_offset;
-  double *__restrict__ vel1_p = (double *)(args[4].data + base4);
+  double * __restrict__ vel1_p = (double *)(args[4].data + base4);
+
+
 
   #ifndef OPS_LAZY
   //Halo Exchanges
@@ -93,9 +95,9 @@ void ops_par_loop_advec_mom_kernel1_y_nonvector_execute(ops_kernel_descriptor *d
   ops_H_D_exchanges_host(args, 5);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[132].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[132].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for collapse(2)
@@ -103,59 +105,32 @@ void ops_par_loop_advec_mom_kernel1_y_nonvector_execute(ops_kernel_descriptor *d
     for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
       #ifdef __INTEL_COMPILER
       #pragma loop_count(10000)
-#pragma omp simd
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+      #pragma omp simd
+      #elif defined(__clang__)
+      #pragma clang loop vectorize(assume_safety)
+      #elif defined(__GNUC__)
+      #pragma GCC ivdep
+      #else
+      #pragma simd
+      #endif
       for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-        const ACC<double> node_flux(
-            xdim0_advec_mom_kernel1_y_nonvector,
-            ydim0_advec_mom_kernel1_y_nonvector,
-            node_flux_p + n_x * 1 +
-                n_y * xdim0_advec_mom_kernel1_y_nonvector * 1 +
-                n_z * xdim0_advec_mom_kernel1_y_nonvector *
-                    ydim0_advec_mom_kernel1_y_nonvector * 1);
-        const ACC<double> node_mass_pre(
-            xdim1_advec_mom_kernel1_y_nonvector,
-            ydim1_advec_mom_kernel1_y_nonvector,
-            node_mass_pre_p + n_x * 1 +
-                n_y * xdim1_advec_mom_kernel1_y_nonvector * 1 +
-                n_z * xdim1_advec_mom_kernel1_y_nonvector *
-                    ydim1_advec_mom_kernel1_y_nonvector * 1);
-        ACC<double> mom_flux(xdim2_advec_mom_kernel1_y_nonvector,
-                             ydim2_advec_mom_kernel1_y_nonvector,
-                             mom_flux_p + n_x * 1 +
-                                 n_y * xdim2_advec_mom_kernel1_y_nonvector * 1 +
-                                 n_z * xdim2_advec_mom_kernel1_y_nonvector *
-                                     ydim2_advec_mom_kernel1_y_nonvector * 1);
-        const ACC<double> celldy(
-            xdim3_advec_mom_kernel1_y_nonvector,
-            ydim3_advec_mom_kernel1_y_nonvector,
-            celldy_p + n_x * 0 + n_y * xdim3_advec_mom_kernel1_y_nonvector * 1 +
-                n_z * xdim3_advec_mom_kernel1_y_nonvector *
-                    ydim3_advec_mom_kernel1_y_nonvector * 0);
-        const ACC<double> vel1(
-            xdim4_advec_mom_kernel1_y_nonvector,
-            ydim4_advec_mom_kernel1_y_nonvector,
-            vel1_p + n_x * 1 + n_y * xdim4_advec_mom_kernel1_y_nonvector * 1 +
-                n_z * xdim4_advec_mom_kernel1_y_nonvector *
-                    ydim4_advec_mom_kernel1_y_nonvector * 1);
+        const ACC<double> node_flux(xdim0_advec_mom_kernel1_y_nonvector, ydim0_advec_mom_kernel1_y_nonvector, node_flux_p + n_x*1 + n_y * xdim0_advec_mom_kernel1_y_nonvector*1 + n_z * xdim0_advec_mom_kernel1_y_nonvector * ydim0_advec_mom_kernel1_y_nonvector*1);
+        const ACC<double> node_mass_pre(xdim1_advec_mom_kernel1_y_nonvector, ydim1_advec_mom_kernel1_y_nonvector, node_mass_pre_p + n_x*1 + n_y * xdim1_advec_mom_kernel1_y_nonvector*1 + n_z * xdim1_advec_mom_kernel1_y_nonvector * ydim1_advec_mom_kernel1_y_nonvector*1);
+        ACC<double> mom_flux(xdim2_advec_mom_kernel1_y_nonvector, ydim2_advec_mom_kernel1_y_nonvector, mom_flux_p + n_x*1 + n_y * xdim2_advec_mom_kernel1_y_nonvector*1 + n_z * xdim2_advec_mom_kernel1_y_nonvector * ydim2_advec_mom_kernel1_y_nonvector*1);
+        const ACC<double> celldy(xdim3_advec_mom_kernel1_y_nonvector, ydim3_advec_mom_kernel1_y_nonvector, celldy_p + n_x*0 + n_y * xdim3_advec_mom_kernel1_y_nonvector*1 + n_z * xdim3_advec_mom_kernel1_y_nonvector * ydim3_advec_mom_kernel1_y_nonvector*0);
+        const ACC<double> vel1(xdim4_advec_mom_kernel1_y_nonvector, ydim4_advec_mom_kernel1_y_nonvector, vel1_p + n_x*1 + n_y * xdim4_advec_mom_kernel1_y_nonvector*1 + n_z * xdim4_advec_mom_kernel1_y_nonvector * ydim4_advec_mom_kernel1_y_nonvector*1);
+        
 
-        double sigma, wind, width;
-        double vdiffuw, vdiffdw, auw, adw, limiter;
-        int upwind, donor, downwind, dif;
-        double advec_vel_temp;
+  double sigma, wind, width;
+  double vdiffuw, vdiffdw, auw, adw, limiter;
+  int upwind, donor, downwind, dif;
+  double advec_vel_temp;
 
-        if ((node_flux(0, 0, 0)) < 0.0) {
-          upwind = 2;
-          donor = 1;
-          downwind = 0;
-          dif = donor;
+  if( (node_flux(0,0,0)) < 0.0) {
+    upwind = 2;
+    donor = 1;
+    downwind = 0;
+    dif = donor;
   } else {
     upwind = -1;
     donor = 0;
@@ -163,44 +138,42 @@ void ops_par_loop_advec_mom_kernel1_y_nonvector_execute(ops_kernel_descriptor *d
     dif = upwind;
   }
 
-  sigma = fabs(node_flux(0, 0, 0)) / node_mass_pre(0, donor, 0);
-  width = celldy(0, 0, 0);
-  vdiffuw = vel1(0, donor, 0) - vel1(0, upwind, 0);
-  vdiffdw = vel1(0, downwind, 0) - vel1(0, donor, 0);
+  sigma = fabs(node_flux(0,0,0))/node_mass_pre(0,donor,0);
+  width = celldy(0,0,0);
+  vdiffuw = vel1(0,donor,0) - vel1(0,upwind,0);
+  vdiffdw = vel1(0,downwind,0) - vel1(0,donor,0);
   limiter = 0.0;
   if(vdiffuw*vdiffdw > 0.0) {
     auw = fabs(vdiffuw);
     adw = fabs(vdiffdw);
     wind = 1.0;
     if(vdiffdw <= 0.0) wind = -1.0;
-    limiter = wind * MIN(width * ((2.0 - sigma) * adw / width +
-                                  (1.0 + sigma) * auw / celldy(0, dif, 0)) /
-                             6.0,
-                         MIN(auw, adw));
+    limiter=wind*MIN(width*((2.0-sigma)*adw/width+(1.0+sigma)*auw/celldy(0,dif,0))/6.0,MIN(auw,adw));
   }
-  advec_vel_temp = vel1(0, donor, 0) + (1.0 - sigma) * limiter;
-  mom_flux(0, 0, 0) = advec_vel_temp * node_flux(0, 0, 0);
+  advec_vel_temp= vel1(0,donor,0) + (1.0 - sigma) * limiter;
+  mom_flux(0,0,0) = advec_vel_temp * node_flux(0,0,0);
+
       }
     }
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[132].time += __t2-__t1;
+    block->instance->OPS_kernels[132].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 5);
   ops_set_halo_dirtybit3(&args[2],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[132].mpi_time += __t1-__t2;
-    OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[132].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[132].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }
 
@@ -209,7 +182,7 @@ void ops_par_loop_advec_mom_kernel1_y_nonvector_execute(ops_kernel_descriptor *d
 void ops_par_loop_advec_mom_kernel1_y_nonvector(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -235,8 +208,8 @@ void ops_par_loop_advec_mom_kernel1_y_nonvector(char const *name, ops_block bloc
   desc->args[4] = arg4;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->function = ops_par_loop_advec_mom_kernel1_y_nonvector_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(132,"advec_mom_kernel1_y_nonvector");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,132,"advec_mom_kernel1_y_nonvector");
   }
   ops_enqueue_kernel(desc);
 }

@@ -11,32 +11,29 @@ int xdim4_tea_leaf_ppcg_init1_kernel;
 
 //user function
 
+
+
 void tea_leaf_ppcg_init1_kernel_c_wrapper(
-    double *restrict sd_p, double *restrict rtemp_p, double *restrict utemp_p,
-    double *restrict z_p, double *restrict r_p, const double *restrict theta_r,
-    int x_size, int y_size) {
-#pragma omp parallel for
+  double * restrict sd_p,
+  double * restrict rtemp_p,
+  double * restrict utemp_p,
+  double * restrict z_p,
+  double * restrict r_p,
+  const double * restrict theta_r,
+  int x_size, int y_size) {
+  #pragma omp parallel for
   for ( int n_y=0; n_y<y_size; n_y++ ){
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      ptr_double sd = {sd_p + n_x * 1 +
-                           n_y * xdim0_tea_leaf_ppcg_init1_kernel * 1,
-                       xdim0_tea_leaf_ppcg_init1_kernel};
-      ptr_double rtemp = {rtemp_p + n_x * 1 +
-                              n_y * xdim1_tea_leaf_ppcg_init1_kernel * 1,
-                          xdim1_tea_leaf_ppcg_init1_kernel};
-      ptr_double utemp = {utemp_p + n_x * 1 +
-                              n_y * xdim2_tea_leaf_ppcg_init1_kernel * 1,
-                          xdim2_tea_leaf_ppcg_init1_kernel};
-      const ptr_double z = {z_p + n_x * 1 +
-                                n_y * xdim3_tea_leaf_ppcg_init1_kernel * 1,
-                            xdim3_tea_leaf_ppcg_init1_kernel};
-      const ptr_double r = {r_p + n_x * 1 +
-                                n_y * xdim4_tea_leaf_ppcg_init1_kernel * 1,
-                            xdim4_tea_leaf_ppcg_init1_kernel};
+      ptr_double sd = { sd_p + n_x*1 + n_y * xdim0_tea_leaf_ppcg_init1_kernel*1, xdim0_tea_leaf_ppcg_init1_kernel};
+      ptr_double rtemp = { rtemp_p + n_x*1 + n_y * xdim1_tea_leaf_ppcg_init1_kernel*1, xdim1_tea_leaf_ppcg_init1_kernel};
+      ptr_double utemp = { utemp_p + n_x*1 + n_y * xdim2_tea_leaf_ppcg_init1_kernel*1, xdim2_tea_leaf_ppcg_init1_kernel};
+      const ptr_double z = { z_p + n_x*1 + n_y * xdim3_tea_leaf_ppcg_init1_kernel*1, xdim3_tea_leaf_ppcg_init1_kernel};
+      const ptr_double r = { r_p + n_x*1 + n_y * xdim4_tea_leaf_ppcg_init1_kernel*1, xdim4_tea_leaf_ppcg_init1_kernel};
+      
+	OPS_ACC(sd, 0,0) = OPS_ACC(z, 0,0)*(*theta_r);
+	OPS_ACC(rtemp, 0,0) = OPS_ACC(r, 0,0);
+	OPS_ACC(utemp, 0,0) = OPS_ACC(sd, 0,0);
 
-      OPS_ACC(sd, 0, 0) = OPS_ACC(z, 0, 0) * (*theta_r);
-      OPS_ACC(rtemp, 0, 0) = OPS_ACC(r, 0, 0);
-      OPS_ACC(utemp, 0, 0) = OPS_ACC(sd, 0, 0);
     }
   }
 }

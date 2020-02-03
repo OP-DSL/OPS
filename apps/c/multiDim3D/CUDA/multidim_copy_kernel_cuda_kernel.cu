@@ -64,9 +64,9 @@ void ops_par_loop_multidim_copy_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,2,range,1)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(1,"multidim_copy_kernel");
-    OPS_kernels[1].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,1,"multidim_copy_kernel");
+    block->instance->OPS_kernels[1].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -101,7 +101,7 @@ void ops_par_loop_multidim_copy_kernel_execute(ops_kernel_descriptor *desc) {
     dims_multidim_copy_kernel_h[1][0] = xdim1;
     dims_multidim_copy_kernel_h[1][1] = ydim1;
     dims_multidim_copy_kernel_h[1][2] = zdim1;
-    cutilSafeCall(cudaMemcpyToSymbol( dims_multidim_copy_kernel, dims_multidim_copy_kernel_h, sizeof(dims_multidim_copy_kernel)));
+    cutilSafeCall(block->instance->ostream(), cudaMemcpyToSymbol( dims_multidim_copy_kernel, dims_multidim_copy_kernel_h, sizeof(dims_multidim_copy_kernel)));
   }
 
 
@@ -110,13 +110,13 @@ void ops_par_loop_multidim_copy_kernel_execute(ops_kernel_descriptor *desc) {
   int y_size = MAX(0,end[1]-start[1]);
   int z_size = MAX(0,end[2]-start[2]);
 
-  dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, (z_size-1)/OPS_block_size_z +1);
-  dim3 tblock(OPS_block_size_x,OPS_block_size_y,OPS_block_size_z);
+  dim3 grid( (x_size-1)/block->instance->OPS_block_size_x+ 1, (y_size-1)/block->instance->OPS_block_size_y + 1, (z_size-1)/block->instance->OPS_block_size_z +1);
+  dim3 tblock(block->instance->OPS_block_size_x,block->instance->OPS_block_size_y,block->instance->OPS_block_size_z);
 
 
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   char *p_a[2];
 
@@ -149,9 +149,9 @@ void ops_par_loop_multidim_copy_kernel_execute(ops_kernel_descriptor *desc) {
   ops_halo_exchanges(args,2,range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[1].mpi_time += t2-t1;
+    block->instance->OPS_kernels[1].mpi_time += t2-t1;
   }
 
 
@@ -159,12 +159,12 @@ void ops_par_loop_multidim_copy_kernel_execute(ops_kernel_descriptor *desc) {
   if (x_size > 0 && y_size > 0 && z_size > 0)
     ops_multidim_copy_kernel<<<grid, tblock >>> (  (double *)p_a[0], (double *)p_a[1],x_size, y_size, z_size);
 
-  cutilSafeCall(cudaGetLastError());
+  cutilSafeCall(block->instance->ostream(), cudaGetLastError());
 
-  if (OPS_diags>1) {
-    cutilSafeCall(cudaDeviceSynchronize());
+  if (block->instance->OPS_diags>1) {
+    cutilSafeCall(block->instance->ostream(), cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
-    OPS_kernels[1].time += t1-t2;
+    block->instance->OPS_kernels[1].time += t1-t2;
   }
 
   #ifndef OPS_LAZY
@@ -172,19 +172,19 @@ void ops_par_loop_multidim_copy_kernel_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[1],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[1].mpi_time += t2-t1;
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[1].mpi_time += t2-t1;
+    block->instance->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 
 #ifdef OPS_LAZY
 void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -204,8 +204,8 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   desc->args[1] = arg1;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->function = ops_par_loop_multidim_copy_kernel_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(1,"multidim_copy_kernel");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,1,"multidim_copy_kernel");
   }
   ops_enqueue_kernel(desc);
 }

@@ -14,11 +14,15 @@ int xdim3_revert_kernel;
 int ydim3_revert_kernel;
 
 //user function
-inline void revert_kernel(const ptr_double density0, ptr_double density1,
-                          const ptr_double energy0, ptr_double energy1) {
+#pragma acc routine
+inline 
+void revert_kernel(const ptr_double density0,
+  ptr_double density1,
+  const ptr_double energy0,
+  ptr_double energy1) {
 
-  OPS_ACC(density1, 0, 0, 0) = OPS_ACC(density0, 0, 0, 0);
-  OPS_ACC(energy1, 0, 0, 0) = OPS_ACC(energy0, 0, 0, 0);
+  OPS_ACC(density1, 0,0,0) = OPS_ACC(density0, 0,0,0);
+  OPS_ACC(energy1, 0,0,0) = OPS_ACC(energy0, 0,0,0);
 }
 
 
@@ -41,23 +45,15 @@ void revert_kernel_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        const ptr_double ptr0 = {
-            p_a0 + n_x * 1 * 1 + n_y * xdim0_revert_kernel * 1 * 1 +
-                n_z * xdim0_revert_kernel * ydim0_revert_kernel * 1 * 1,
-            xdim0_revert_kernel, ydim0_revert_kernel};
-        ptr_double ptr1 = {
-            p_a1 + n_x * 1 * 1 + n_y * xdim1_revert_kernel * 1 * 1 +
-                n_z * xdim1_revert_kernel * ydim1_revert_kernel * 1 * 1,
-            xdim1_revert_kernel, ydim1_revert_kernel};
-        const ptr_double ptr2 = {
-            p_a2 + n_x * 1 * 1 + n_y * xdim2_revert_kernel * 1 * 1 +
-                n_z * xdim2_revert_kernel * ydim2_revert_kernel * 1 * 1,
-            xdim2_revert_kernel, ydim2_revert_kernel};
-        ptr_double ptr3 = {
-            p_a3 + n_x * 1 * 1 + n_y * xdim3_revert_kernel * 1 * 1 +
-                n_z * xdim3_revert_kernel * ydim3_revert_kernel * 1 * 1,
-            xdim3_revert_kernel, ydim3_revert_kernel};
-        revert_kernel(ptr0, ptr1, ptr2, ptr3);
+        const ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_revert_kernel*1*1 + n_z*xdim0_revert_kernel*ydim0_revert_kernel*1*1, xdim0_revert_kernel, ydim0_revert_kernel};
+        ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_revert_kernel*1*1 + n_z*xdim1_revert_kernel*ydim1_revert_kernel*1*1, xdim1_revert_kernel, ydim1_revert_kernel};
+        const ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_revert_kernel*1*1 + n_z*xdim2_revert_kernel*ydim2_revert_kernel*1*1, xdim2_revert_kernel, ydim2_revert_kernel};
+        ptr_double ptr3 = {  p_a3 + n_x*1*1 + n_y*xdim3_revert_kernel*1*1 + n_z*xdim3_revert_kernel*ydim3_revert_kernel*1*1, xdim3_revert_kernel, ydim3_revert_kernel};
+        revert_kernel( ptr0,
+          ptr1,
+          ptr2,
+          ptr3 );
+
       }
     }
   }

@@ -11,7 +11,7 @@ void ops_init_backend();
 #include <math.h>
 
 
-#include  "ops_lib_cpp.h"
+#include  "ops_lib_core.h"
 
 
 
@@ -187,7 +187,7 @@ int main(int argc, const char **argv) {
 
   ops_timers(&ct1, &et1);
   if(profiler_on == 1) {
-    ops_timing_output(stdout);
+    ops_timing_output(std::cout);
 
     process_profile();
   }

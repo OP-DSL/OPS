@@ -88,9 +88,9 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   if (!ops_checkpointing_before(args,12,range,97)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(97,"viscosity_kernel");
-    OPS_kernels[97].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,97,"viscosity_kernel");
+    block->instance->OPS_kernels[97].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -131,11 +131,11 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
 
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     args[0].dat->size[1] *
     start[2] * args[0].stencil->stride[2];
@@ -145,11 +145,11 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
-  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  base1 = base1 + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
     start[1] * args[1].stencil->stride[1];
-  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+  base1 = base1 + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
     args[1].dat->size[1] *
     start[2] * args[1].stencil->stride[2];
@@ -159,11 +159,11 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   double *p_a1 = (double *)((char *)args[1].data + base1);
   #endif
 
-  int base2 = args[2].dat->base_offset + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
-  base2 = base2 + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+  int base2 = args[2].dat->base_offset + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
+  base2 = base2 + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
     args[2].dat->size[0] *
     start[1] * args[2].stencil->stride[1];
-  base2 = base2 + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+  base2 = base2 + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
     args[2].dat->size[0] *
     args[2].dat->size[1] *
     start[2] * args[2].stencil->stride[2];
@@ -173,11 +173,11 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   double *p_a2 = (double *)((char *)args[2].data + base2);
   #endif
 
-  int base3 = args[3].dat->base_offset + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
-  base3 = base3 + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+  int base3 = args[3].dat->base_offset + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
+  base3 = base3 + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
     args[3].dat->size[0] *
     start[1] * args[3].stencil->stride[1];
-  base3 = base3 + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+  base3 = base3 + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
     args[3].dat->size[0] *
     args[3].dat->size[1] *
     start[2] * args[3].stencil->stride[2];
@@ -187,11 +187,11 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   double *p_a3 = (double *)((char *)args[3].data + base3);
   #endif
 
-  int base4 = args[4].dat->base_offset + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) * start[0] * args[4].stencil->stride[0];
-  base4 = base4 + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+  int base4 = args[4].dat->base_offset + (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) * start[0] * args[4].stencil->stride[0];
+  base4 = base4 + (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
     args[4].dat->size[0] *
     start[1] * args[4].stencil->stride[1];
-  base4 = base4 + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+  base4 = base4 + (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
     args[4].dat->size[0] *
     args[4].dat->size[1] *
     start[2] * args[4].stencil->stride[2];
@@ -201,11 +201,11 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   double *p_a4 = (double *)((char *)args[4].data + base4);
   #endif
 
-  int base5 = args[5].dat->base_offset + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) * start[0] * args[5].stencil->stride[0];
-  base5 = base5 + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+  int base5 = args[5].dat->base_offset + (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) * start[0] * args[5].stencil->stride[0];
+  base5 = base5 + (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
     args[5].dat->size[0] *
     start[1] * args[5].stencil->stride[1];
-  base5 = base5 + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+  base5 = base5 + (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
     args[5].dat->size[0] *
     args[5].dat->size[1] *
     start[2] * args[5].stencil->stride[2];
@@ -215,11 +215,11 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   double *p_a5 = (double *)((char *)args[5].data + base5);
   #endif
 
-  int base6 = args[6].dat->base_offset + (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) * start[0] * args[6].stencil->stride[0];
-  base6 = base6 + (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
+  int base6 = args[6].dat->base_offset + (block->instance->OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) * start[0] * args[6].stencil->stride[0];
+  base6 = base6 + (block->instance->OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
     args[6].dat->size[0] *
     start[1] * args[6].stencil->stride[1];
-  base6 = base6 + (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
+  base6 = base6 + (block->instance->OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
     args[6].dat->size[0] *
     args[6].dat->size[1] *
     start[2] * args[6].stencil->stride[2];
@@ -229,11 +229,11 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   double *p_a6 = (double *)((char *)args[6].data + base6);
   #endif
 
-  int base7 = args[7].dat->base_offset + (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) * start[0] * args[7].stencil->stride[0];
-  base7 = base7 + (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) *
+  int base7 = args[7].dat->base_offset + (block->instance->OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) * start[0] * args[7].stencil->stride[0];
+  base7 = base7 + (block->instance->OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) *
     args[7].dat->size[0] *
     start[1] * args[7].stencil->stride[1];
-  base7 = base7 + (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) *
+  base7 = base7 + (block->instance->OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) *
     args[7].dat->size[0] *
     args[7].dat->size[1] *
     start[2] * args[7].stencil->stride[2];
@@ -243,11 +243,11 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   double *p_a7 = (double *)((char *)args[7].data + base7);
   #endif
 
-  int base8 = args[8].dat->base_offset + (OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size) * start[0] * args[8].stencil->stride[0];
-  base8 = base8 + (OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size) *
+  int base8 = args[8].dat->base_offset + (block->instance->OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size) * start[0] * args[8].stencil->stride[0];
+  base8 = base8 + (block->instance->OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size) *
     args[8].dat->size[0] *
     start[1] * args[8].stencil->stride[1];
-  base8 = base8 + (OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size) *
+  base8 = base8 + (block->instance->OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size) *
     args[8].dat->size[0] *
     args[8].dat->size[1] *
     start[2] * args[8].stencil->stride[2];
@@ -257,11 +257,11 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   double *p_a8 = (double *)((char *)args[8].data + base8);
   #endif
 
-  int base9 = args[9].dat->base_offset + (OPS_soa ? args[9].dat->type_size : args[9].dat->elem_size) * start[0] * args[9].stencil->stride[0];
-  base9 = base9 + (OPS_soa ? args[9].dat->type_size : args[9].dat->elem_size) *
+  int base9 = args[9].dat->base_offset + (block->instance->OPS_soa ? args[9].dat->type_size : args[9].dat->elem_size) * start[0] * args[9].stencil->stride[0];
+  base9 = base9 + (block->instance->OPS_soa ? args[9].dat->type_size : args[9].dat->elem_size) *
     args[9].dat->size[0] *
     start[1] * args[9].stencil->stride[1];
-  base9 = base9 + (OPS_soa ? args[9].dat->type_size : args[9].dat->elem_size) *
+  base9 = base9 + (block->instance->OPS_soa ? args[9].dat->type_size : args[9].dat->elem_size) *
     args[9].dat->size[0] *
     args[9].dat->size[1] *
     start[2] * args[9].stencil->stride[2];
@@ -271,11 +271,11 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   double *p_a9 = (double *)((char *)args[9].data + base9);
   #endif
 
-  int base10 = args[10].dat->base_offset + (OPS_soa ? args[10].dat->type_size : args[10].dat->elem_size) * start[0] * args[10].stencil->stride[0];
-  base10 = base10 + (OPS_soa ? args[10].dat->type_size : args[10].dat->elem_size) *
+  int base10 = args[10].dat->base_offset + (block->instance->OPS_soa ? args[10].dat->type_size : args[10].dat->elem_size) * start[0] * args[10].stencil->stride[0];
+  base10 = base10 + (block->instance->OPS_soa ? args[10].dat->type_size : args[10].dat->elem_size) *
     args[10].dat->size[0] *
     start[1] * args[10].stencil->stride[1];
-  base10 = base10 + (OPS_soa ? args[10].dat->type_size : args[10].dat->elem_size) *
+  base10 = base10 + (block->instance->OPS_soa ? args[10].dat->type_size : args[10].dat->elem_size) *
     args[10].dat->size[0] *
     args[10].dat->size[1] *
     start[2] * args[10].stencil->stride[2];
@@ -285,11 +285,11 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   double *p_a10 = (double *)((char *)args[10].data + base10);
   #endif
 
-  int base11 = args[11].dat->base_offset + (OPS_soa ? args[11].dat->type_size : args[11].dat->elem_size) * start[0] * args[11].stencil->stride[0];
-  base11 = base11 + (OPS_soa ? args[11].dat->type_size : args[11].dat->elem_size) *
+  int base11 = args[11].dat->base_offset + (block->instance->OPS_soa ? args[11].dat->type_size : args[11].dat->elem_size) * start[0] * args[11].stencil->stride[0];
+  base11 = base11 + (block->instance->OPS_soa ? args[11].dat->type_size : args[11].dat->elem_size) *
     args[11].dat->size[0] *
     start[1] * args[11].stencil->stride[1];
-  base11 = base11 + (OPS_soa ? args[11].dat->type_size : args[11].dat->elem_size) *
+  base11 = base11 + (block->instance->OPS_soa ? args[11].dat->type_size : args[11].dat->elem_size) *
     args[11].dat->size[0] *
     args[11].dat->size[1] *
     start[2] * args[11].stencil->stride[2];
@@ -305,30 +305,30 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   int z_size = MAX(0,end[2]-start[2]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0];
-  ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0];
-  ydim2 = args[2].dat->size[1];
-  xdim3 = args[3].dat->size[0];
-  ydim3 = args[3].dat->size[1];
-  xdim4 = args[4].dat->size[0];
-  ydim4 = args[4].dat->size[1];
-  xdim5 = args[5].dat->size[0];
-  ydim5 = args[5].dat->size[1];
-  xdim6 = args[6].dat->size[0];
-  ydim6 = args[6].dat->size[1];
-  xdim7 = args[7].dat->size[0];
-  ydim7 = args[7].dat->size[1];
-  xdim8 = args[8].dat->size[0];
-  ydim8 = args[8].dat->size[1];
-  xdim9 = args[9].dat->size[0];
-  ydim9 = args[9].dat->size[1];
-  xdim10 = args[10].dat->size[0];
-  ydim10 = args[10].dat->size[1];
-  xdim11 = args[11].dat->size[0];
-  ydim11 = args[11].dat->size[1];
+  int xdim0 = args[0].dat->size[0];
+  int ydim0 = args[0].dat->size[1];
+  int xdim1 = args[1].dat->size[0];
+  int ydim1 = args[1].dat->size[1];
+  int xdim2 = args[2].dat->size[0];
+  int ydim2 = args[2].dat->size[1];
+  int xdim3 = args[3].dat->size[0];
+  int ydim3 = args[3].dat->size[1];
+  int xdim4 = args[4].dat->size[0];
+  int ydim4 = args[4].dat->size[1];
+  int xdim5 = args[5].dat->size[0];
+  int ydim5 = args[5].dat->size[1];
+  int xdim6 = args[6].dat->size[0];
+  int ydim6 = args[6].dat->size[1];
+  int xdim7 = args[7].dat->size[0];
+  int ydim7 = args[7].dat->size[1];
+  int xdim8 = args[8].dat->size[0];
+  int ydim8 = args[8].dat->size[1];
+  int xdim9 = args[9].dat->size[0];
+  int ydim9 = args[9].dat->size[1];
+  int xdim10 = args[10].dat->size[0];
+  int ydim10 = args[10].dat->size[1];
+  int xdim11 = args[11].dat->size[0];
+  int ydim11 = args[11].dat->size[1];
   if (xdim0 != xdim0_viscosity_kernel_h || ydim0 != ydim0_viscosity_kernel_h || xdim1 != xdim1_viscosity_kernel_h || ydim1 != ydim1_viscosity_kernel_h || xdim2 != xdim2_viscosity_kernel_h || ydim2 != ydim2_viscosity_kernel_h || xdim3 != xdim3_viscosity_kernel_h || ydim3 != ydim3_viscosity_kernel_h || xdim4 != xdim4_viscosity_kernel_h || ydim4 != ydim4_viscosity_kernel_h || xdim5 != xdim5_viscosity_kernel_h || ydim5 != ydim5_viscosity_kernel_h || xdim6 != xdim6_viscosity_kernel_h || ydim6 != ydim6_viscosity_kernel_h || xdim7 != xdim7_viscosity_kernel_h || ydim7 != ydim7_viscosity_kernel_h || xdim8 != xdim8_viscosity_kernel_h || ydim8 != ydim8_viscosity_kernel_h || xdim9 != xdim9_viscosity_kernel_h || ydim9 != ydim9_viscosity_kernel_h || xdim10 != xdim10_viscosity_kernel_h || ydim10 != ydim10_viscosity_kernel_h || xdim11 != xdim11_viscosity_kernel_h || ydim11 != ydim11_viscosity_kernel_h) {
     xdim0_viscosity_kernel = xdim0;
     xdim0_viscosity_kernel_h = xdim0;
@@ -394,9 +394,9 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   #else
   ops_H_D_exchanges_host(args, 12);
   #endif
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[97].mpi_time += t2-t1;
+    block->instance->OPS_kernels[97].mpi_time += t2-t1;
   }
 
   viscosity_kernel_c_wrapper(
@@ -414,9 +414,9 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
     p_a11,
     x_size, y_size, z_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[97].time += t1-t2;
+    block->instance->OPS_kernels[97].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 12);
@@ -425,21 +425,21 @@ void ops_par_loop_viscosity_kernel(char const *name, ops_block block, int dim, i
   #endif
   ops_set_halo_dirtybit3(&args[6],range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[97].mpi_time += t2-t1;
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg8);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg9);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg10);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg11);
+    block->instance->OPS_kernels[97].mpi_time += t2-t1;
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg9);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg10);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg11);
   }
 }

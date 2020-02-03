@@ -41,9 +41,9 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   if (!ops_checkpointing_before(args,6,range,0)) return;
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
-    ops_timing_realloc(0,"poisson_kernel_populate");
-    OPS_instance::getOPSInstance()->OPS_kernels[0].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,0,"poisson_kernel_populate");
+    block->instance->OPS_kernels[0].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -79,8 +79,8 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   int *p_a1 = (int *)args[1].data;
   int *p_a2 = NULL;
 
-  int base3 = args[3].dat->base_offset + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
-  base3 = base3 + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+  int base3 = args[3].dat->base_offset + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
+  base3 = base3 + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
     args[3].dat->size[0] *
     start[1] * args[3].stencil->stride[1];
   #ifdef OPS_GPU
@@ -89,8 +89,8 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   double *p_a3 = (double *)((char *)args[3].data + base3);
   #endif
 
-  int base4 = args[4].dat->base_offset + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) * start[0] * args[4].stencil->stride[0];
-  base4 = base4 + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+  int base4 = args[4].dat->base_offset + (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) * start[0] * args[4].stencil->stride[0];
+  base4 = base4 + (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
     args[4].dat->size[0] *
     start[1] * args[4].stencil->stride[1];
   #ifdef OPS_GPU
@@ -99,8 +99,8 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   double *p_a4 = (double *)((char *)args[4].data + base4);
   #endif
 
-  int base5 = args[5].dat->base_offset + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) * start[0] * args[5].stencil->stride[0];
-  base5 = base5 + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+  int base5 = args[5].dat->base_offset + (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) * start[0] * args[5].stencil->stride[0];
+  base5 = base5 + (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
     args[5].dat->size[0] *
     start[1] * args[5].stencil->stride[1];
   #ifdef OPS_GPU
@@ -114,9 +114,9 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   int y_size = MAX(0,end[1]-start[1]);
 
   //initialize global variable with the dimension of dats
-  xdim3 = args[3].dat->size[0];
-  xdim4 = args[4].dat->size[0];
-  xdim5 = args[5].dat->size[0];
+  int xdim3 = args[3].dat->size[0];
+  int xdim4 = args[4].dat->size[0];
+  int xdim5 = args[5].dat->size[0];
   if (xdim3 != xdim3_poisson_kernel_populate_h || xdim4 != xdim4_poisson_kernel_populate_h || xdim5 != xdim5_poisson_kernel_populate_h) {
     xdim3_poisson_kernel_populate = xdim3;
     xdim3_poisson_kernel_populate_h = xdim3;
@@ -140,9 +140,9 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   #else
   ops_H_D_exchanges_host(args, 6);
   #endif
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[0].mpi_time += t2-t1;
+    block->instance->OPS_kernels[0].mpi_time += t2-t1;
   }
 
   poisson_kernel_populate_c_wrapper(
@@ -155,9 +155,9 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
     arg_idx[0], arg_idx[1],
     x_size, y_size);
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[0].time += t1-t2;
+    block->instance->OPS_kernels[0].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 6);
@@ -168,12 +168,12 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   ops_set_halo_dirtybit3(&args[4],range);
   ops_set_halo_dirtybit3(&args[5],range);
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[0].mpi_time += t2-t1;
-    OPS_instance::getOPSInstance()->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_instance::getOPSInstance()->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_instance::getOPSInstance()->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[0].mpi_time += t2-t1;
+    block->instance->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg5);
   }
 }

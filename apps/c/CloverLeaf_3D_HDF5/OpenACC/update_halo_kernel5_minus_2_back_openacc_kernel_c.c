@@ -10,14 +10,13 @@ int xdim1_update_halo_kernel5_minus_2_back;
 int ydim1_update_halo_kernel5_minus_2_back;
 
 //user function
+#pragma acc routine
 
 inline void update_halo_kernel5_minus_2_back(ptr_double vol_flux_z,
-                                             ptr_double mass_flux_z,
-                                             const int *fields) {
-  if (fields[FIELD_VOL_FLUX_Z] == 1)
-    OPS_ACC(vol_flux_z, 0, 0, 0) = -OPS_ACC(vol_flux_z, 0, 0, 2);
-  if (fields[FIELD_MASS_FLUX_Z] == 1)
-    OPS_ACC(mass_flux_z, 0, 0, 0) = -OPS_ACC(mass_flux_z, 0, 0, 2);
+  ptr_double mass_flux_z,
+  const int* fields) {
+  if(fields[FIELD_VOL_FLUX_Z] == 1)  OPS_ACC(vol_flux_z, 0,0,0)  = -OPS_ACC(vol_flux_z, 0,0,2);
+  if(fields[FIELD_MASS_FLUX_Z] == 1) OPS_ACC(mass_flux_z, 0,0,0) = -OPS_ACC(mass_flux_z, 0,0,2);
 }
 
 
@@ -39,21 +38,12 @@ void update_halo_kernel5_minus_2_back_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        ptr_double ptr0 = {
-            p_a0 + n_x * 1 * 1 +
-                n_y * xdim0_update_halo_kernel5_minus_2_back * 1 * 1 +
-                n_z * xdim0_update_halo_kernel5_minus_2_back *
-                    ydim0_update_halo_kernel5_minus_2_back * 1 * 1,
-            xdim0_update_halo_kernel5_minus_2_back,
-            ydim0_update_halo_kernel5_minus_2_back};
-        ptr_double ptr1 = {
-            p_a1 + n_x * 1 * 1 +
-                n_y * xdim1_update_halo_kernel5_minus_2_back * 1 * 1 +
-                n_z * xdim1_update_halo_kernel5_minus_2_back *
-                    ydim1_update_halo_kernel5_minus_2_back * 1 * 1,
-            xdim1_update_halo_kernel5_minus_2_back,
-            ydim1_update_halo_kernel5_minus_2_back};
-        update_halo_kernel5_minus_2_back(ptr0, ptr1, p_a2);
+        ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_update_halo_kernel5_minus_2_back*1*1 + n_z*xdim0_update_halo_kernel5_minus_2_back*ydim0_update_halo_kernel5_minus_2_back*1*1, xdim0_update_halo_kernel5_minus_2_back, ydim0_update_halo_kernel5_minus_2_back};
+        ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_update_halo_kernel5_minus_2_back*1*1 + n_z*xdim1_update_halo_kernel5_minus_2_back*ydim1_update_halo_kernel5_minus_2_back*1*1, xdim1_update_halo_kernel5_minus_2_back, ydim1_update_halo_kernel5_minus_2_back};
+        update_halo_kernel5_minus_2_back( ptr0,
+          ptr1,
+           p_a2 );
+
       }
     }
   }

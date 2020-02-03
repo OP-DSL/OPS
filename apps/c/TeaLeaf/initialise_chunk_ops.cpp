@@ -9,7 +9,7 @@
 #include <math.h>
 
 #define OPS_2D
-#include  "ops_lib_cpp.h"
+#include  "ops_lib_core.h"
 
 //
 // ops_par_loop declarations
@@ -160,7 +160,7 @@ void initialise_chunk()
 
 
   int rangefull[] = {x_min-2, x_max+3, y_min-2, y_max+3};
-  ops_execute();
+  ops_execute(vertexy->block->instance);
 
 
 

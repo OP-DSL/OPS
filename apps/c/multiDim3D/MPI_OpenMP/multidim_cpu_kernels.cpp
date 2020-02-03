@@ -5,7 +5,7 @@
 #define OPS_3D
 #define OPS_SOA
 #define OPS_API 2
-#include "ops_lib_cpp.h"
+#include "ops_lib_core.h"
 #ifdef OPS_MPI
 #include "ops_mpi_core.h"
 #endif

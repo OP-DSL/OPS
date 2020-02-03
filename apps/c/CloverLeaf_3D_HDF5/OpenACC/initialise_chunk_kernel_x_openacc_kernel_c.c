@@ -12,16 +12,24 @@ int xdim2_initialise_chunk_kernel_x;
 int ydim2_initialise_chunk_kernel_x;
 
 //user function
-inline void initialise_chunk_kernel_x(ptr_double vertexx, const ptr_int xx,
-                                      ptr_double vertexdx) {
+#pragma acc routine
+inline 
+void initialise_chunk_kernel_x(ptr_double vertexx,
+  const ptr_int xx,
+  ptr_double vertexdx) {
   int x_min=field.x_min-2;
 
   double min_x, d_x;
   d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;
   min_x=grid.xmin+d_x*field.left;
 
-  OPS_ACC(vertexx, 0, 0, 0) = min_x + d_x * (OPS_ACC(xx, 0, 0, 0) - x_min);
-  OPS_ACC(vertexdx, 0, 0, 0) = (double)d_x;
+  OPS_ACC(vertexx, 0,0,0) = min_x + d_x * (OPS_ACC(xx, 0,0,0) - x_min);
+  OPS_ACC(vertexdx, 0,0,0) = (double)d_x;
+
+
+
+
+
 }
 
 
@@ -43,22 +51,13 @@ void initialise_chunk_kernel_x_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        ptr_double ptr0 = {
-            p_a0 + n_x * 1 * 1 + n_y * xdim0_initialise_chunk_kernel_x * 0 * 1 +
-                n_z * xdim0_initialise_chunk_kernel_x *
-                    ydim0_initialise_chunk_kernel_x * 0 * 1,
-            xdim0_initialise_chunk_kernel_x, ydim0_initialise_chunk_kernel_x};
-        const ptr_int ptr1 = {
-            p_a1 + n_x * 1 * 1 + n_y * xdim1_initialise_chunk_kernel_x * 0 * 1 +
-                n_z * xdim1_initialise_chunk_kernel_x *
-                    ydim1_initialise_chunk_kernel_x * 0 * 1,
-            xdim1_initialise_chunk_kernel_x, ydim1_initialise_chunk_kernel_x};
-        ptr_double ptr2 = {
-            p_a2 + n_x * 1 * 1 + n_y * xdim2_initialise_chunk_kernel_x * 0 * 1 +
-                n_z * xdim2_initialise_chunk_kernel_x *
-                    ydim2_initialise_chunk_kernel_x * 0 * 1,
-            xdim2_initialise_chunk_kernel_x, ydim2_initialise_chunk_kernel_x};
-        initialise_chunk_kernel_x(ptr0, ptr1, ptr2);
+        ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_initialise_chunk_kernel_x*0*1 + n_z*xdim0_initialise_chunk_kernel_x*ydim0_initialise_chunk_kernel_x*0*1, xdim0_initialise_chunk_kernel_x, ydim0_initialise_chunk_kernel_x};
+        const ptr_int ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_initialise_chunk_kernel_x*0*1 + n_z*xdim1_initialise_chunk_kernel_x*ydim1_initialise_chunk_kernel_x*0*1, xdim1_initialise_chunk_kernel_x, ydim1_initialise_chunk_kernel_x};
+        ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_initialise_chunk_kernel_x*0*1 + n_z*xdim2_initialise_chunk_kernel_x*ydim2_initialise_chunk_kernel_x*0*1, xdim2_initialise_chunk_kernel_x, ydim2_initialise_chunk_kernel_x};
+        initialise_chunk_kernel_x( ptr0,
+          ptr1,
+          ptr2 );
+
       }
     }
   }

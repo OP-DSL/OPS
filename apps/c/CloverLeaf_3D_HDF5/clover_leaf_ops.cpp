@@ -11,7 +11,7 @@ void ops_init_backend();
 #include <math.h>
 
 
-#include  "ops_lib_cpp.h"
+#include  "ops_lib_core.h"
 
 
 

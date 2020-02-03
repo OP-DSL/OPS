@@ -43,9 +43,9 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel(char const *name, ops_block b
   if (!ops_checkpointing_before(args,7,range,19)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(19,"tea_leaf_cg_calc_w_reduce_kernel");
-    OPS_kernels[19].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,19,"tea_leaf_cg_calc_w_reduce_kernel");
+    block->instance->OPS_kernels[19].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -83,8 +83,8 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel(char const *name, ops_block b
   #endif
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
   #ifdef OPS_GPU
@@ -93,8 +93,8 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel(char const *name, ops_block b
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
-  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  base1 = base1 + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
     start[1] * args[1].stencil->stride[1];
   #ifdef OPS_GPU
@@ -103,8 +103,8 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel(char const *name, ops_block b
   double *p_a1 = (double *)((char *)args[1].data + base1);
   #endif
 
-  int base2 = args[2].dat->base_offset + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
-  base2 = base2 + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+  int base2 = args[2].dat->base_offset + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
+  base2 = base2 + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
     args[2].dat->size[0] *
     start[1] * args[2].stencil->stride[1];
   #ifdef OPS_GPU
@@ -113,8 +113,8 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel(char const *name, ops_block b
   double *p_a2 = (double *)((char *)args[2].data + base2);
   #endif
 
-  int base3 = args[3].dat->base_offset + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
-  base3 = base3 + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+  int base3 = args[3].dat->base_offset + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
+  base3 = base3 + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
     args[3].dat->size[0] *
     start[1] * args[3].stencil->stride[1];
   #ifdef OPS_GPU
@@ -131,10 +131,10 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel(char const *name, ops_block b
   int y_size = MAX(0,end[1]-start[1]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
-  xdim2 = args[2].dat->size[0];
-  xdim3 = args[3].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
+  int xdim2 = args[2].dat->size[0];
+  int xdim3 = args[3].dat->size[0];
   if (xdim0 != xdim0_tea_leaf_cg_calc_w_reduce_kernel_h || xdim1 != xdim1_tea_leaf_cg_calc_w_reduce_kernel_h || xdim2 != xdim2_tea_leaf_cg_calc_w_reduce_kernel_h || xdim3 != xdim3_tea_leaf_cg_calc_w_reduce_kernel_h) {
     xdim0_tea_leaf_cg_calc_w_reduce_kernel = xdim0;
     xdim0_tea_leaf_cg_calc_w_reduce_kernel_h = xdim0;
@@ -160,9 +160,9 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel(char const *name, ops_block b
   #else
   ops_H_D_exchanges_host(args, 7);
   #endif
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[19].mpi_time += t2-t1;
+    block->instance->OPS_kernels[19].mpi_time += t2-t1;
   }
 
   tea_leaf_cg_calc_w_reduce_kernel_c_wrapper(
@@ -175,9 +175,9 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel(char const *name, ops_block b
     p_a6,
     x_size, y_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[19].time += t1-t2;
+    block->instance->OPS_kernels[19].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 7);
@@ -186,13 +186,13 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel(char const *name, ops_block b
   #endif
   ops_set_halo_dirtybit3(&args[0],range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[19].mpi_time += t2-t1;
-    OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[19].mpi_time += t2-t1;
+    block->instance->OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg3);
   }
 }

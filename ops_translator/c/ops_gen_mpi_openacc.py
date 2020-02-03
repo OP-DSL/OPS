@@ -723,7 +723,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+typs[n]+'));')
     if GBL_READ == True and GBL_READ_MDIM == True:
-      code('reallocConstArrays(consts_bytes);')
+      code('reallocConstArrays(block->instance,consts_bytes);')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
@@ -733,7 +733,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
           code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)args['+str(n)+'].data)[d] = arg'+str(n)+'h[d];')
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
     if GBL_READ == True and GBL_READ_MDIM == True:
-      code('mvConstArraysToDevice(consts_bytes);')
+      code('mvConstArraysToDevice(block->instance,consts_bytes);')
       code('#endif //OPS_GPU')
 
     #some custom logic for multigrid
@@ -971,14 +971,16 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     code('#define OPS_3D')
   if soa_set:
     code('#define OPS_SOA')
+  code('#include <math.h>')
+  code('#include "ops_macros.h"')
   code('#ifdef __cplusplus')
   code('#include "ops_lib_core.h"')
+  code('#include "ops_cuda_rt_support.h"')
   code('#endif')
-  code('#ifdef OPS_MPI')
+  code('#if defined(OPS_MPI) && defined(__cplusplus)')
   code('#include "ops_mpi_core.h"')
   code('#endif')
   #code('#ifdef OPS_GPU')
-  code('#include "ops_cuda_rt_support.h"')
   #code('#endif')
   if os.path.exists(os.path.join(src_dir,'user_types.h')):
     code('#include "user_types.h"')
@@ -1006,7 +1008,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
   code('')
   code('#include <openacc.h>')
   code('')
-  code('void ops_init_backend() {acc_set_device_num(ops_get_proc()%acc_get_num_devices(acc_device_nvidia),acc_device_nvidia); ops_device_initialised_externally = 1;}')
+  code('void ops_init_backend() {acc_set_device_num(ops_get_proc()%acc_get_num_devices(acc_device_nvidia),acc_device_nvidia); }')
   code('')
   code('void ops_decl_const_char(int dim, char const *type,')
   code('int size, char *dat, char const *name){')

@@ -20,11 +20,10 @@ void update_halo_kernel4_plus_2_b_c_wrapper(
     for ( int n_x=0; n_x<x_size; n_x++ ){
       ptr_double vol_flux_y = { vol_flux_y_p + n_x*1 + n_y * xdim0_update_halo_kernel4_plus_2_b*1, xdim0_update_halo_kernel4_plus_2_b};
       ptr_double mass_flux_y = { mass_flux_y_p + n_x*1 + n_y * xdim1_update_halo_kernel4_plus_2_b*1, xdim1_update_halo_kernel4_plus_2_b};
+      
+  if(fields[FIELD_VOL_FLUX_Y] == 1) OPS_ACC(vol_flux_y, 0,0) = OPS_ACC(vol_flux_y, -2,0);
+  if(fields[FIELD_MASS_FLUX_Y] == 1) OPS_ACC(mass_flux_y, 0,0) = OPS_ACC(mass_flux_y, -2,0);
 
-      if (fields[FIELD_VOL_FLUX_Y] == 1)
-        OPS_ACC(vol_flux_y, 0, 0) = OPS_ACC(vol_flux_y, -2, 0);
-      if (fields[FIELD_MASS_FLUX_Y] == 1)
-        OPS_ACC(mass_flux_y, 0, 0) = OPS_ACC(mass_flux_y, -2, 0);
     }
   }
 }

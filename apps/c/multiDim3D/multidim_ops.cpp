@@ -12,7 +12,7 @@ void ops_init_backend();
 
 #define OPS_3D
 #define OPS_SOA
-#include  "ops_lib_cpp.h"
+#include  "ops_lib_core.h"
 
 //
 // ops_par_loop declarations
@@ -37,7 +37,8 @@ void ops_par_loop_multidim_reduce_kernel(char const *, ops_block, int , int*,
 //#include "multidim_copy_kernel.h"
 //#include "multidim_reduce_kernel.h"
 
-int main(int argc, const char **argv) {
+int main(int argc, char **argv)
+{
 
   int x_cells = 4;
   int y_cells = 4;
@@ -46,7 +47,7 @@ int main(int argc, const char **argv) {
 
   ops_init(argc,argv,1);
   ops_init_backend();
-  OPS_soa = 1;
+  OPS_instance::getOPSInstance()->OPS_soa = 1;
 
 
   ops_block grid3D = ops_decl_block(3, "grid3D");

@@ -16,6 +16,7 @@ int xdim4_advec_mom_kernel_post_pre_advec_y;
 int ydim4_advec_mom_kernel_post_pre_advec_y;
 
 //user function
+#pragma acc routine
 
 inline void advec_mom_kernel_post_pre_advec_y(ptr_double node_mass_post,
   const ptr_double post_vol,

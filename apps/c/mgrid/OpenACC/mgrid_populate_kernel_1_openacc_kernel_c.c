@@ -7,8 +7,11 @@
 int xdim0_mgrid_populate_kernel_1;
 
 //user function
-inline void mgrid_populate_kernel_1(ptr_double val, int *idx) {
-  OPS_ACC(val, 0, 0) = (double)(idx[0] + 6 * idx[1]);
+#pragma acc routine
+inline 
+void mgrid_populate_kernel_1(ptr_double val,
+  int *idx) {
+  OPS_ACC(val, 0,0) = (double)(idx[0]+6*idx[1]);
 }
 
 
@@ -27,10 +30,10 @@ void mgrid_populate_kernel_1_c_wrapper(
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
       int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};
-      ptr_double ptr0 = {p_a0 + n_x * 1 * 1 +
-                             n_y * xdim0_mgrid_populate_kernel_1 * 1 * 1,
-                         xdim0_mgrid_populate_kernel_1};
-      mgrid_populate_kernel_1(ptr0, arg_idx);
+      ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_mgrid_populate_kernel_1*1*1, xdim0_mgrid_populate_kernel_1};
+      mgrid_populate_kernel_1( ptr0,
+          arg_idx );
+
     }
   }
 }

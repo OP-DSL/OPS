@@ -11,39 +11,34 @@ int xdim4_initialise_chunk_kernel_volume;
 
 //user function
 
-void initialise_chunk_kernel_volume_c_wrapper(double *restrict volume_p,
-                                              double *restrict celldy_p,
-                                              double *restrict xarea_p,
-                                              double *restrict celldx_p,
-                                              double *restrict yarea_p,
-                                              int x_size, int y_size) {
-#pragma omp parallel for
+
+
+void initialise_chunk_kernel_volume_c_wrapper(
+  double * restrict volume_p,
+  double * restrict celldy_p,
+  double * restrict xarea_p,
+  double * restrict celldx_p,
+  double * restrict yarea_p,
+  int x_size, int y_size) {
+  #pragma omp parallel for
   for ( int n_y=0; n_y<y_size; n_y++ ){
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      ptr_double volume = {volume_p + n_x * 1 +
-                               n_y * xdim0_initialise_chunk_kernel_volume * 1,
-                           xdim0_initialise_chunk_kernel_volume};
-      const ptr_double celldy = {
-          celldy_p + n_x * 0 + n_y * xdim1_initialise_chunk_kernel_volume * 1,
-          xdim1_initialise_chunk_kernel_volume};
-      ptr_double xarea = {xarea_p + n_x * 1 +
-                              n_y * xdim2_initialise_chunk_kernel_volume * 1,
-                          xdim2_initialise_chunk_kernel_volume};
-      const ptr_double celldx = {
-          celldx_p + n_x * 1 + n_y * xdim3_initialise_chunk_kernel_volume * 0,
-          xdim3_initialise_chunk_kernel_volume};
-      ptr_double yarea = {yarea_p + n_x * 1 +
-                              n_y * xdim4_initialise_chunk_kernel_volume * 1,
-                          xdim4_initialise_chunk_kernel_volume};
+      ptr_double volume = { volume_p + n_x*1 + n_y * xdim0_initialise_chunk_kernel_volume*1, xdim0_initialise_chunk_kernel_volume};
+      const ptr_double celldy = { celldy_p + n_x*0 + n_y * xdim1_initialise_chunk_kernel_volume*1, xdim1_initialise_chunk_kernel_volume};
+      ptr_double xarea = { xarea_p + n_x*1 + n_y * xdim2_initialise_chunk_kernel_volume*1, xdim2_initialise_chunk_kernel_volume};
+      const ptr_double celldx = { celldx_p + n_x*1 + n_y * xdim3_initialise_chunk_kernel_volume*0, xdim3_initialise_chunk_kernel_volume};
+      ptr_double yarea = { yarea_p + n_x*1 + n_y * xdim4_initialise_chunk_kernel_volume*1, xdim4_initialise_chunk_kernel_volume};
+      
 
-      double d_x, d_y;
+  double d_x, d_y;
 
-      d_x = (grid.xmax - grid.xmin) / (double)grid.x_cells;
-      d_y = (grid.ymax - grid.ymin) / (double)grid.y_cells;
+  d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;
+  d_y = (grid.ymax - grid.ymin)/(double)grid.y_cells;
 
-      OPS_ACC(volume, 0, 0) = d_x * d_y;
-      OPS_ACC(xarea, 0, 0) = OPS_ACC(celldy, 0, 0);
-      OPS_ACC(yarea, 0, 0) = OPS_ACC(celldx, 0, 0);
+  OPS_ACC(volume, 0,0) = d_x*d_y;
+  OPS_ACC(xarea, 0,0) = OPS_ACC(celldy, 0,0);
+  OPS_ACC(yarea, 0,0) = OPS_ACC(celldx, 0,0);
+
     }
   }
 }

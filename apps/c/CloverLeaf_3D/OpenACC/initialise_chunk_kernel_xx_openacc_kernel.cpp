@@ -35,9 +35,9 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
   if (!ops_checkpointing_before(args,2,range,0)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(0,"initialise_chunk_kernel_xx");
-    OPS_kernels[0].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,0,"initialise_chunk_kernel_xx");
+    block->instance->OPS_kernels[0].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -67,11 +67,11 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
 
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     args[0].dat->size[1] *
     start[2] * args[0].stencil->stride[2];
@@ -89,8 +89,8 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
   int z_size = MAX(0,end[2]-start[2]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  ydim0 = args[0].dat->size[1];
+  int xdim0 = args[0].dat->size[0];
+  int ydim0 = args[0].dat->size[1];
   if (xdim0 != xdim0_initialise_chunk_kernel_xx_h || ydim0 != ydim0_initialise_chunk_kernel_xx_h) {
     xdim0_initialise_chunk_kernel_xx = xdim0;
     xdim0_initialise_chunk_kernel_xx_h = xdim0;
@@ -112,9 +112,9 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
   #else
   ops_H_D_exchanges_host(args, 2);
   #endif
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[0].mpi_time += t2-t1;
+    block->instance->OPS_kernels[0].mpi_time += t2-t1;
   }
 
   initialise_chunk_kernel_xx_c_wrapper(
@@ -123,9 +123,9 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
     arg_idx[0], arg_idx[1], arg_idx[2],
     x_size, y_size, z_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[0].time += t1-t2;
+    block->instance->OPS_kernels[0].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 2);
@@ -134,10 +134,10 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
   #endif
   ops_set_halo_dirtybit3(&args[0],range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[0].mpi_time += t2-t1;
-    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[0].mpi_time += t2-t1;
+    block->instance->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

@@ -28,9 +28,9 @@ void ops_par_loop_tea_leaf_norm2_kernel(char const *name, ops_block block, int d
   if (!ops_checkpointing_before(args,2,range,39)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(39,"tea_leaf_norm2_kernel");
-    OPS_kernels[39].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,39,"tea_leaf_norm2_kernel");
+    block->instance->OPS_kernels[39].count++;
   }
 
   //compute localy allocated range for the sub-block
@@ -55,7 +55,7 @@ void ops_par_loop_tea_leaf_norm2_kernel(char const *name, ops_block block, int d
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
   }
 
@@ -70,11 +70,11 @@ void ops_par_loop_tea_leaf_norm2_kernel(char const *name, ops_block block, int d
   #else
   double *arg1h = (double *)(((ops_reduction)args[1].data)->data);
   #endif
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0+ (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0+ (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
   double *p_a0 = (double *)(args[0].data + base0);
@@ -91,9 +91,9 @@ void ops_par_loop_tea_leaf_norm2_kernel(char const *name, ops_block block, int d
   ops_H_D_exchanges_host(args, 2);
   ops_halo_exchanges(args,2,range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[39].mpi_time += t1-t2;
+    block->instance->OPS_kernels[39].mpi_time += t1-t2;
   }
 
   tea_leaf_norm2_kernel_c_wrapper(
@@ -101,14 +101,14 @@ void ops_par_loop_tea_leaf_norm2_kernel(char const *name, ops_block block, int d
     p_a1,
     x_size, y_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[39].time += t2-t1;
+    block->instance->OPS_kernels[39].time += t2-t1;
   }
   ops_set_dirtybit_host(args, 2);
 
   //Update kernel record
-  if (OPS_diags > 1) {
-    OPS_kernels[39].transfer += ops_compute_transfer(dim, start, end, &arg0);
+  if (block->instance->OPS_diags > 1) {
+    block->instance->OPS_kernels[39].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

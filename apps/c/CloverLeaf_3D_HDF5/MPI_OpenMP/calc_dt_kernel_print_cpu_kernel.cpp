@@ -35,14 +35,14 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,8,range,100)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(100,"calc_dt_kernel_print");
-    OPS_kernels[100].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,100,"calc_dt_kernel_print");
+    block->instance->OPS_kernels[100].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "calc_dt_kernel_print");
+  ops_register_args(block->instance, args, "calc_dt_kernel_print");
   #endif
 
 
@@ -79,25 +79,25 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ xvel0_p = (double *)(args[0].data + base0);
+  double * __restrict__ xvel0_p = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset;
-  double *__restrict__ yvel0_p = (double *)(args[1].data + base1);
+  double * __restrict__ yvel0_p = (double *)(args[1].data + base1);
 
   int base2 = args[2].dat->base_offset;
-  double *__restrict__ zvel0_p = (double *)(args[2].data + base2);
+  double * __restrict__ zvel0_p = (double *)(args[2].data + base2);
 
   int base3 = args[3].dat->base_offset;
-  double *__restrict__ density0_p = (double *)(args[3].data + base3);
+  double * __restrict__ density0_p = (double *)(args[3].data + base3);
 
   int base4 = args[4].dat->base_offset;
-  double *__restrict__ energy0_p = (double *)(args[4].data + base4);
+  double * __restrict__ energy0_p = (double *)(args[4].data + base4);
 
   int base5 = args[5].dat->base_offset;
-  double *__restrict__ pressure_p = (double *)(args[5].data + base5);
+  double * __restrict__ pressure_p = (double *)(args[5].data + base5);
 
   int base6 = args[6].dat->base_offset;
-  double *__restrict__ soundspeed_p = (double *)(args[6].data + base6);
+  double * __restrict__ soundspeed_p = (double *)(args[6].data + base6);
 
   #ifdef OPS_MPI
   double * __restrict__ p_a7 = (double *)(((ops_reduction)args[7].data)->data + ((ops_reduction)args[7].data)->size * block->index);
@@ -115,9 +115,9 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 8);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[100].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[100].mpi_time += __t1-__t2;
   }
 
   double p_a7_0 = p_a7[0];
@@ -153,68 +153,22 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
     for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
       #ifdef __INTEL_COMPILER
       #pragma loop_count(10000)
-#pragma omp simd reduction(+ : p_a7_0) reduction(+ : p_a7_1) reduction(         \
-    + : p_a7_2) reduction(+ : p_a7_3) reduction(+ : p_a7_4) reduction(          \
-        + : p_a7_5) reduction(+ : p_a7_6) reduction(+ : p_a7_7) reduction(      \
-            + : p_a7_8) reduction(+ : p_a7_9) reduction(                        \
-                + : p_a7_10) reduction(+ : p_a7_11) reduction(                  \
-                    + : p_a7_12) reduction(+ : p_a7_13) reduction(              \
-                        + : p_a7_14) reduction(+ : p_a7_15) reduction(          \
-                            + : p_a7_16) reduction(+ : p_a7_17) reduction(      \
-                                + : p_a7_18) reduction(+ : p_a7_19) reduction(  \
-                                    + : p_a7_20)                                \
-                                        reduction(+ : p_a7_21) reduction(       \
-                                            + : p_a7_22) reduction(             \
-                                                + : p_a7_23) reduction(         \
-                                                    + : p_a7_24) reduction(     \
-                                                        + : p_a7_25) reduction( \
-                                                            + : p_a7_26)        \
-                                                                reduction(      \
-                                                                    + : p_a7_27)
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+      #pragma omp simd reduction(+:p_a7_0) reduction(+:p_a7_1) reduction(+:p_a7_2) reduction(+:p_a7_3) reduction(+:p_a7_4) reduction(+:p_a7_5) reduction(+:p_a7_6) reduction(+:p_a7_7) reduction(+:p_a7_8) reduction(+:p_a7_9) reduction(+:p_a7_10) reduction(+:p_a7_11) reduction(+:p_a7_12) reduction(+:p_a7_13) reduction(+:p_a7_14) reduction(+:p_a7_15) reduction(+:p_a7_16) reduction(+:p_a7_17) reduction(+:p_a7_18) reduction(+:p_a7_19) reduction(+:p_a7_20) reduction(+:p_a7_21) reduction(+:p_a7_22) reduction(+:p_a7_23) reduction(+:p_a7_24) reduction(+:p_a7_25) reduction(+:p_a7_26) reduction(+:p_a7_27)
+      #elif defined(__clang__)
+      #pragma clang loop vectorize(assume_safety)
+      #elif defined(__GNUC__)
+      #pragma GCC ivdep
+      #else
+      #pragma simd
+      #endif
       for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-        const ACC<double> xvel0(
-            xdim0_calc_dt_kernel_print, ydim0_calc_dt_kernel_print,
-            xvel0_p + n_x * 1 + n_y * xdim0_calc_dt_kernel_print * 1 +
-                n_z * xdim0_calc_dt_kernel_print * ydim0_calc_dt_kernel_print *
-                    1);
-        const ACC<double> yvel0(
-            xdim1_calc_dt_kernel_print, ydim1_calc_dt_kernel_print,
-            yvel0_p + n_x * 1 + n_y * xdim1_calc_dt_kernel_print * 1 +
-                n_z * xdim1_calc_dt_kernel_print * ydim1_calc_dt_kernel_print *
-                    1);
-        const ACC<double> zvel0(
-            xdim2_calc_dt_kernel_print, ydim2_calc_dt_kernel_print,
-            zvel0_p + n_x * 1 + n_y * xdim2_calc_dt_kernel_print * 1 +
-                n_z * xdim2_calc_dt_kernel_print * ydim2_calc_dt_kernel_print *
-                    1);
-        const ACC<double> density0(
-            xdim3_calc_dt_kernel_print, ydim3_calc_dt_kernel_print,
-            density0_p + n_x * 1 + n_y * xdim3_calc_dt_kernel_print * 1 +
-                n_z * xdim3_calc_dt_kernel_print * ydim3_calc_dt_kernel_print *
-                    1);
-        const ACC<double> energy0(
-            xdim4_calc_dt_kernel_print, ydim4_calc_dt_kernel_print,
-            energy0_p + n_x * 1 + n_y * xdim4_calc_dt_kernel_print * 1 +
-                n_z * xdim4_calc_dt_kernel_print * ydim4_calc_dt_kernel_print *
-                    1);
-        const ACC<double> pressure(
-            xdim5_calc_dt_kernel_print, ydim5_calc_dt_kernel_print,
-            pressure_p + n_x * 1 + n_y * xdim5_calc_dt_kernel_print * 1 +
-                n_z * xdim5_calc_dt_kernel_print * ydim5_calc_dt_kernel_print *
-                    1);
-        const ACC<double> soundspeed(
-            xdim6_calc_dt_kernel_print, ydim6_calc_dt_kernel_print,
-            soundspeed_p + n_x * 1 + n_y * xdim6_calc_dt_kernel_print * 1 +
-                n_z * xdim6_calc_dt_kernel_print * ydim6_calc_dt_kernel_print *
-                    1);
+        const ACC<double> xvel0(xdim0_calc_dt_kernel_print, ydim0_calc_dt_kernel_print, xvel0_p + n_x*1 + n_y * xdim0_calc_dt_kernel_print*1 + n_z * xdim0_calc_dt_kernel_print * ydim0_calc_dt_kernel_print*1);
+        const ACC<double> yvel0(xdim1_calc_dt_kernel_print, ydim1_calc_dt_kernel_print, yvel0_p + n_x*1 + n_y * xdim1_calc_dt_kernel_print*1 + n_z * xdim1_calc_dt_kernel_print * ydim1_calc_dt_kernel_print*1);
+        const ACC<double> zvel0(xdim2_calc_dt_kernel_print, ydim2_calc_dt_kernel_print, zvel0_p + n_x*1 + n_y * xdim2_calc_dt_kernel_print*1 + n_z * xdim2_calc_dt_kernel_print * ydim2_calc_dt_kernel_print*1);
+        const ACC<double> density0(xdim3_calc_dt_kernel_print, ydim3_calc_dt_kernel_print, density0_p + n_x*1 + n_y * xdim3_calc_dt_kernel_print*1 + n_z * xdim3_calc_dt_kernel_print * ydim3_calc_dt_kernel_print*1);
+        const ACC<double> energy0(xdim4_calc_dt_kernel_print, ydim4_calc_dt_kernel_print, energy0_p + n_x*1 + n_y * xdim4_calc_dt_kernel_print*1 + n_z * xdim4_calc_dt_kernel_print * ydim4_calc_dt_kernel_print*1);
+        const ACC<double> pressure(xdim5_calc_dt_kernel_print, ydim5_calc_dt_kernel_print, pressure_p + n_x*1 + n_y * xdim5_calc_dt_kernel_print*1 + n_z * xdim5_calc_dt_kernel_print * ydim5_calc_dt_kernel_print*1);
+        const ACC<double> soundspeed(xdim6_calc_dt_kernel_print, ydim6_calc_dt_kernel_print, soundspeed_p + n_x*1 + n_y * xdim6_calc_dt_kernel_print*1 + n_z * xdim6_calc_dt_kernel_print * ydim6_calc_dt_kernel_print*1);
         double output[28];
         output[0] = ZERO_double;
         output[1] = ZERO_double;
@@ -244,35 +198,36 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
         output[25] = ZERO_double;
         output[26] = ZERO_double;
         output[27] = ZERO_double;
+        
+  output[0] = xvel0(0,0,0);
+  output[1] = yvel0(0,0,0);
+  output[2] = zvel0(0,0,0);
+  output[3] = xvel0(1,0,0);
+  output[4] = yvel0(1,0,0);
+  output[5] = zvel0(0,0,0);
+  output[6] = xvel0(1,1,0);
+  output[7] = yvel0(1,1,0);
+  output[8] = zvel0(0,0,0);
+  output[9] = xvel0(0,1,0);
+  output[10] = yvel0(0,1,0);
+  output[11] = zvel0(0,0,0);
+  output[12] = xvel0(0,0,1);
+  output[13] = yvel0(0,0,1);
+  output[14] = zvel0(0,0,1);
+  output[15] = xvel0(1,0,1);
+  output[16] = yvel0(1,0,1);
+  output[17] = zvel0(0,0,1);
+  output[18] = xvel0(1,1,1);
+  output[19] = yvel0(1,1,1);
+  output[20] = zvel0(0,0,1);
+  output[21] = xvel0(0,1,1);
+  output[22] = yvel0(0,1,1);
+  output[23] = zvel0(0,0,1);
+  output[24] = density0(0,0,0);
+  output[25] = energy0(0,0,0);
+  output[26] = pressure(0,0,0);
+  output[27] = soundspeed(0,0,0);
 
-        output[0] = xvel0(0, 0, 0);
-        output[1] = yvel0(0, 0, 0);
-        output[2] = zvel0(0, 0, 0);
-        output[3] = xvel0(1, 0, 0);
-        output[4] = yvel0(1, 0, 0);
-        output[5] = zvel0(0, 0, 0);
-        output[6] = xvel0(1, 1, 0);
-        output[7] = yvel0(1, 1, 0);
-        output[8] = zvel0(0, 0, 0);
-        output[9] = xvel0(0, 1, 0);
-        output[10] = yvel0(0, 1, 0);
-        output[11] = zvel0(0, 0, 0);
-        output[12] = xvel0(0, 0, 1);
-        output[13] = yvel0(0, 0, 1);
-        output[14] = zvel0(0, 0, 1);
-        output[15] = xvel0(1, 0, 1);
-        output[16] = yvel0(1, 0, 1);
-        output[17] = zvel0(0, 0, 1);
-        output[18] = xvel0(1, 1, 1);
-        output[19] = yvel0(1, 1, 1);
-        output[20] = zvel0(0, 0, 1);
-        output[21] = xvel0(0, 1, 1);
-        output[22] = yvel0(0, 1, 1);
-        output[23] = zvel0(0, 0, 1);
-        output[24] = density0(0, 0, 0);
-        output[25] = energy0(0, 0, 0);
-        output[26] = pressure(0, 0, 0);
-        output[27] = soundspeed(0, 0, 0);
 
         p_a7_0 +=output[0];
         p_a7_1 +=output[1];
@@ -333,25 +288,25 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   p_a7[25] = p_a7_25;
   p_a7[26] = p_a7_26;
   p_a7[27] = p_a7_27;
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[100].time += __t2-__t1;
+    block->instance->OPS_kernels[100].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 8);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[100].mpi_time += __t1-__t2;
-    OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[100].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[100].transfer += ops_compute_transfer(dim, start, end, &arg6);
   }
 }
 
@@ -360,7 +315,7 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
 void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -391,8 +346,8 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int di
   desc->hash = ((desc->hash << 5) + desc->hash) + arg6.dat->index;
   desc->args[7] = arg7;
   desc->function = ops_par_loop_calc_dt_kernel_print_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(100,"calc_dt_kernel_print");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,100,"calc_dt_kernel_print");
   }
   ops_enqueue_kernel(desc);
 }

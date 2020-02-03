@@ -36,9 +36,9 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   if (!ops_checkpointing_before(args,4,range,53)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(53,"calc_dt_kernel_get");
-    OPS_kernels[53].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,53,"calc_dt_kernel_get");
+    block->instance->OPS_kernels[53].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -79,8 +79,8 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   #endif
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
   #ifdef OPS_GPU
@@ -89,8 +89,8 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
-  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  base1 = base1 + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
     start[1] * args[1].stencil->stride[1];
   #ifdef OPS_GPU
@@ -106,8 +106,8 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   int y_size = MAX(0,end[1]-start[1]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
   if (xdim0 != xdim0_calc_dt_kernel_get_h || xdim1 != xdim1_calc_dt_kernel_get_h) {
     xdim0_calc_dt_kernel_get = xdim0;
     xdim0_calc_dt_kernel_get_h = xdim0;
@@ -129,9 +129,9 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   #else
   ops_H_D_exchanges_host(args, 4);
   #endif
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[53].mpi_time += t2 - t1;
+    block->instance->OPS_kernels[53].mpi_time += t2-t1;
   }
 
   calc_dt_kernel_get_c_wrapper(
@@ -141,9 +141,9 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
     p_a3,
     x_size, y_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[53].time += t1 - t2;
+    block->instance->OPS_kernels[53].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 4);
@@ -151,11 +151,11 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   ops_set_dirtybit_host(args, 4);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[53].mpi_time += t2 - t1;
-    OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[53].mpi_time += t2-t1;
+    block->instance->OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

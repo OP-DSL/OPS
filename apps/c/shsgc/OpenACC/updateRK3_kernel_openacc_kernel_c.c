@@ -15,27 +15,27 @@ int xdim7_updateRK3_kernel;
 int xdim8_updateRK3_kernel;
 
 //user function
-inline void updateRK3_kernel(ptr_double rho_new, ptr_double rhou_new,
-                             ptr_double rhoE_new, ptr_double rho_old,
-                             ptr_double rhou_old, ptr_double rhoE_old,
-                             const ptr_double rho_res,
-                             const ptr_double rhou_res,
-                             const ptr_double rhoE_res, const double *a1,
-                             const double *a2) {
+#pragma acc routine
+inline 
+void updateRK3_kernel(ptr_double rho_new,
+  ptr_double  rhou_new,
+  ptr_double  rhoE_new,
+  ptr_double rho_old,
+  ptr_double  rhou_old,
+  ptr_double  rhoE_old,
+  const ptr_double rho_res,
+  const ptr_double rhou_res,
+  const ptr_double rhoE_res,
+  const double* a1,
+  const double* a2) {
 
-  OPS_ACC(rho_new, 0) =
-      OPS_ACC(rho_old, 0) + dt * a1[0] * (-OPS_ACC(rho_res, 0));
-  OPS_ACC(rhou_new, 0) =
-      OPS_ACC(rhou_old, 0) + dt * a1[0] * (-OPS_ACC(rhou_res, 0));
-  OPS_ACC(rhoE_new, 0) =
-      OPS_ACC(rhoE_old, 0) + dt * a1[0] * (-OPS_ACC(rhoE_res, 0));
+			OPS_ACC(rho_new, 0) = OPS_ACC(rho_old, 0) + dt * a1[0] * (-OPS_ACC(rho_res, 0));
+			OPS_ACC(rhou_new, 0) = OPS_ACC(rhou_old, 0) + dt * a1[0] * (-OPS_ACC(rhou_res, 0));
+			OPS_ACC(rhoE_new, 0) = OPS_ACC(rhoE_old, 0) + dt * a1[0] * (-OPS_ACC(rhoE_res, 0));
 
-  OPS_ACC(rho_old, 0) =
-      OPS_ACC(rho_old, 0) + dt * a2[0] * (-OPS_ACC(rho_res, 0));
-  OPS_ACC(rhou_old, 0) =
-      OPS_ACC(rhou_old, 0) + dt * a2[0] * (-OPS_ACC(rhou_res, 0));
-  OPS_ACC(rhoE_old, 0) =
-      OPS_ACC(rhoE_old, 0) + dt * a2[0] * (-OPS_ACC(rhoE_res, 0));
+			OPS_ACC(rho_old, 0) = OPS_ACC(rho_old, 0) + dt * a2[0] * (-OPS_ACC(rho_res, 0));
+			OPS_ACC(rhou_old, 0) = OPS_ACC(rhou_old, 0) + dt * a2[0] * (-OPS_ACC(rhou_res, 0));
+			OPS_ACC(rhoE_old, 0) = OPS_ACC(rhoE_old, 0) + dt * a2[0] * (-OPS_ACC(rhoE_res, 0));
 }
 
 
@@ -57,16 +57,21 @@ void updateRK3_kernel_c_wrapper(
   #pragma acc loop
   #endif
   for ( int n_x=0; n_x<x_size; n_x++ ){
-    ptr_double ptr0 = {p_a0 + n_x * 1 * 1};
-    ptr_double ptr1 = {p_a1 + n_x * 1 * 1};
-    ptr_double ptr2 = {p_a2 + n_x * 1 * 1};
-    ptr_double ptr3 = {p_a3 + n_x * 1 * 1};
-    ptr_double ptr4 = {p_a4 + n_x * 1 * 1};
-    ptr_double ptr5 = {p_a5 + n_x * 1 * 1};
-    const ptr_double ptr6 = {p_a6 + n_x * 1 * 1};
-    const ptr_double ptr7 = {p_a7 + n_x * 1 * 1};
-    const ptr_double ptr8 = {p_a8 + n_x * 1 * 1};
-    updateRK3_kernel(ptr0, ptr1, ptr2, ptr3, ptr4, ptr5, ptr6, ptr7, ptr8,
-                     &p_a9, &p_a10);
+    ptr_double ptr0 = {  p_a0 + n_x*1*1 };
+    ptr_double ptr1 = {  p_a1 + n_x*1*1 };
+    ptr_double ptr2 = {  p_a2 + n_x*1*1 };
+    ptr_double ptr3 = {  p_a3 + n_x*1*1 };
+    ptr_double ptr4 = {  p_a4 + n_x*1*1 };
+    ptr_double ptr5 = {  p_a5 + n_x*1*1 };
+    const ptr_double ptr6 = {  p_a6 + n_x*1*1 };
+    const ptr_double ptr7 = {  p_a7 + n_x*1*1 };
+    const ptr_double ptr8 = {  p_a8 + n_x*1*1 };
+    updateRK3_kernel( ptr0,
+          ptr1,ptr2,
+          ptr3,ptr4,
+          ptr5,ptr6,
+          ptr7,ptr8,
+           &p_a9, &p_a10 );
+
   }
 }

@@ -43,14 +43,14 @@ void ops_par_loop_calc_dt_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,14,range,98)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(98,"calc_dt_kernel");
-    OPS_kernels[98].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,98,"calc_dt_kernel");
+    block->instance->OPS_kernels[98].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "calc_dt_kernel");
+  ops_register_args(block->instance, args, "calc_dt_kernel");
   #endif
 
 
@@ -151,9 +151,9 @@ void ops_par_loop_calc_dt_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 14);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[98].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[98].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for collapse(2)
@@ -165,7 +165,6 @@ void ops_par_loop_calc_dt_kernel_execute(ops_kernel_descriptor *desc) {
       #elif defined(__clang__)
       #pragma clang loop vectorize(assume_safety)
       #elif defined(__GNUC__)
-      #pragma simd
       #pragma GCC ivdep
       #else
       #pragma simd
@@ -221,33 +220,33 @@ void ops_par_loop_calc_dt_kernel_execute(ops_kernel_descriptor *desc) {
       }
     }
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[98].time += __t2-__t1;
+    block->instance->OPS_kernels[98].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 14);
   ops_set_halo_dirtybit3(&args[10],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[98].mpi_time += __t1-__t2;
-    OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg8);
-    OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg9);
-    OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg10);
-    OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg11);
-    OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg12);
-    OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg13);
+    block->instance->OPS_kernels[98].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    block->instance->OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    block->instance->OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg9);
+    block->instance->OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg10);
+    block->instance->OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg11);
+    block->instance->OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg12);
+    block->instance->OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg13);
   }
 }
 
@@ -258,7 +257,7 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block block, int dim, int
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7,
  ops_arg arg8, ops_arg arg9, ops_arg arg10, ops_arg arg11,
  ops_arg arg12, ops_arg arg13) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -302,8 +301,8 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block block, int dim, int
   desc->args[13] = arg13;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg13.dat->index;
   desc->function = ops_par_loop_calc_dt_kernel_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(98,"calc_dt_kernel");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,98,"calc_dt_kernel");
   }
   ops_enqueue_kernel(desc);
 }

@@ -8,8 +8,11 @@ int xdim0_poisson_kernel_error;
 int xdim1_poisson_kernel_error;
 
 //user function
-inline void poisson_kernel_error(const ptr_double u, const ptr_double ref,
-                                 double *err) {
+#pragma acc routine
+inline 
+void poisson_kernel_error(const ptr_double u,
+  const ptr_double ref,
+  double *err) {
   *err = *err + (OPS_ACC(u, 0,0)-OPS_ACC(ref, 0,0))*(OPS_ACC(u, 0,0)-OPS_ACC(ref, 0,0));
 }
 

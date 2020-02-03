@@ -34,14 +34,14 @@ void ops_par_loop_update_halo_kernel1_l2_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,7,range,53)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(53,"update_halo_kernel1_l2");
-    OPS_kernels[53].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,53,"update_halo_kernel1_l2");
+    block->instance->OPS_kernels[53].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "update_halo_kernel1_l2");
+  ops_register_args(block->instance, args, "update_halo_kernel1_l2");
   #endif
 
 
@@ -70,24 +70,27 @@ void ops_par_loop_update_halo_kernel1_l2_execute(ops_kernel_descriptor *desc) {
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ density0_p = (double *)(args[0].data + base0);
+  double * __restrict__ density0_p = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset;
-  double *__restrict__ energy0_p = (double *)(args[1].data + base1);
+  double * __restrict__ energy0_p = (double *)(args[1].data + base1);
 
   int base2 = args[2].dat->base_offset;
-  double *__restrict__ energy1_p = (double *)(args[2].data + base2);
+  double * __restrict__ energy1_p = (double *)(args[2].data + base2);
 
   int base3 = args[3].dat->base_offset;
-  double *__restrict__ u_p = (double *)(args[3].data + base3);
+  double * __restrict__ u_p = (double *)(args[3].data + base3);
 
   int base4 = args[4].dat->base_offset;
-  double *__restrict__ p_p = (double *)(args[4].data + base4);
+  double * __restrict__ p_p = (double *)(args[4].data + base4);
 
   int base5 = args[5].dat->base_offset;
-  double *__restrict__ sd_p = (double *)(args[5].data + base5);
+  double * __restrict__ sd_p = (double *)(args[5].data + base5);
 
-  int *__restrict__ fields = (int *)args[6].data;
+  int * __restrict__ fields = (int *)args[6].data;
+
+
+
 
   #ifndef OPS_LAZY
   //Halo Exchanges
@@ -96,58 +99,44 @@ void ops_par_loop_update_halo_kernel1_l2_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 7);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[53].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[53].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-#pragma omp simd
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+    #pragma omp simd
+    #elif defined(__clang__)
+    #pragma clang loop vectorize(assume_safety)
+    #elif defined(__GNUC__)
+    #pragma GCC ivdep
+    #else
+    #pragma simd
+    #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-      ACC<double> density0(xdim0_update_halo_kernel1_l2,
-                           density0_p + n_x * 1 +
-                               n_y * xdim0_update_halo_kernel1_l2 * 1);
-      ACC<double> energy0(xdim1_update_halo_kernel1_l2,
-                          energy0_p + n_x * 1 +
-                              n_y * xdim1_update_halo_kernel1_l2 * 1);
-      ACC<double> energy1(xdim2_update_halo_kernel1_l2,
-                          energy1_p + n_x * 1 +
-                              n_y * xdim2_update_halo_kernel1_l2 * 1);
-      ACC<double> u(xdim3_update_halo_kernel1_l2,
-                    u_p + n_x * 1 + n_y * xdim3_update_halo_kernel1_l2 * 1);
-      ACC<double> p(xdim4_update_halo_kernel1_l2,
-                    p_p + n_x * 1 + n_y * xdim4_update_halo_kernel1_l2 * 1);
-      ACC<double> sd(xdim5_update_halo_kernel1_l2,
-                     sd_p + n_x * 1 + n_y * xdim5_update_halo_kernel1_l2 * 1);
+      ACC<double> density0(xdim0_update_halo_kernel1_l2, density0_p + n_x*1 + n_y * xdim0_update_halo_kernel1_l2*1);
+      ACC<double> energy0(xdim1_update_halo_kernel1_l2, energy0_p + n_x*1 + n_y * xdim1_update_halo_kernel1_l2*1);
+      ACC<double> energy1(xdim2_update_halo_kernel1_l2, energy1_p + n_x*1 + n_y * xdim2_update_halo_kernel1_l2*1);
+      ACC<double> u(xdim3_update_halo_kernel1_l2, u_p + n_x*1 + n_y * xdim3_update_halo_kernel1_l2*1);
+      ACC<double> p(xdim4_update_halo_kernel1_l2, p_p + n_x*1 + n_y * xdim4_update_halo_kernel1_l2*1);
+      ACC<double> sd(xdim5_update_halo_kernel1_l2, sd_p + n_x*1 + n_y * xdim5_update_halo_kernel1_l2*1);
+      
+  if(fields[FIELD_DENSITY] == 1) density0(0,0) = density0(3,0);
+  if(fields[FIELD_ENERGY0] == 1) energy0(0,0) = energy0(3,0);
+  if(fields[FIELD_ENERGY1] == 1) energy1(0,0) = energy1(3,0);
+  if(fields[FIELD_U] == 1) u(0,0) = u(3,0);
+  if(fields[FIELD_P] == 1) p(0,0) = p(3,0);
+  if(fields[FIELD_SD] == 1) sd(0,0) = sd(3,0);
 
-      if (fields[FIELD_DENSITY] == 1)
-        density0(0, 0) = density0(3, 0);
-      if (fields[FIELD_ENERGY0] == 1)
-        energy0(0, 0) = energy0(3, 0);
-      if (fields[FIELD_ENERGY1] == 1)
-        energy1(0, 0) = energy1(3, 0);
-      if (fields[FIELD_U] == 1)
-        u(0, 0) = u(3, 0);
-      if (fields[FIELD_P] == 1)
-        p(0, 0) = p(3, 0);
-      if (fields[FIELD_SD] == 1)
-        sd(0, 0) = sd(3, 0);
+
     }
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[53].time += __t2-__t1;
+    block->instance->OPS_kernels[53].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 7);
@@ -159,16 +148,16 @@ void ops_par_loop_update_halo_kernel1_l2_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[5],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[53].mpi_time += __t1-__t2;
-    OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[53].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[53].transfer += ops_compute_transfer(dim, start, end, &arg5);
   }
 }
 
@@ -177,7 +166,7 @@ void ops_par_loop_update_halo_kernel1_l2_execute(ops_kernel_descriptor *desc) {
 void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -209,8 +198,8 @@ void ops_par_loop_update_halo_kernel1_l2(char const *name, ops_block block, int 
   memcpy(tmp, arg6.data,NUM_FIELDS*sizeof(int));
   desc->args[6].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel1_l2_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(53,"update_halo_kernel1_l2");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,53,"update_halo_kernel1_l2");
   }
   ops_enqueue_kernel(desc);
 }

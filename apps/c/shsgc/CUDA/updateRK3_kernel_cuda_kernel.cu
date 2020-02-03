@@ -110,9 +110,9 @@ void ops_par_loop_updateRK3_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,11,range,6)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(6,"updateRK3_kernel");
-    OPS_kernels[6].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,6,"updateRK3_kernel");
+    block->instance->OPS_kernels[6].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -153,27 +153,27 @@ void ops_par_loop_updateRK3_kernel_execute(ops_kernel_descriptor *desc) {
     dims_updateRK3_kernel_h[6][0] = xdim6;
     dims_updateRK3_kernel_h[7][0] = xdim7;
     dims_updateRK3_kernel_h[8][0] = xdim8;
-    cutilSafeCall(cudaMemcpyToSymbol( dims_updateRK3_kernel, dims_updateRK3_kernel_h, sizeof(dims_updateRK3_kernel)));
+    cutilSafeCall(block->instance->ostream(), cudaMemcpyToSymbol( dims_updateRK3_kernel, dims_updateRK3_kernel_h, sizeof(dims_updateRK3_kernel)));
   }
 
 
 
   int x_size = MAX(0,end[0]-start[0]);
 
-  dim3 grid( (x_size-1)/OPS_block_size_x+ 1, 1, 1);
-  dim3 tblock(OPS_block_size_x,1,1);
+  dim3 grid( (x_size-1)/block->instance->OPS_block_size_x+ 1, 1, 1);
+  dim3 tblock(block->instance->OPS_block_size_x,1,1);
 
 
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
-  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
-  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
-  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
-  int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
-  int dat6 = (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size);
-  int dat7 = (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size);
-  int dat8 = (OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size);
+  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat2 = (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
+  int dat3 = (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
+  int dat4 = (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
+  int dat5 = (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
+  int dat6 = (block->instance->OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size);
+  int dat7 = (block->instance->OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size);
+  int dat8 = (block->instance->OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size);
 
   char *p_a[11];
 
@@ -220,9 +220,9 @@ void ops_par_loop_updateRK3_kernel_execute(ops_kernel_descriptor *desc) {
   ops_halo_exchanges(args,11,range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[6].mpi_time += t2-t1;
+    block->instance->OPS_kernels[6].mpi_time += t2-t1;
   }
 
 
@@ -235,12 +235,12 @@ void ops_par_loop_updateRK3_kernel_execute(ops_kernel_descriptor *desc) {
          (double *)p_a[8], *(double *)arg9.data,
          *(double *)arg10.data,x_size);
 
-  cutilSafeCall(cudaGetLastError());
+  cutilSafeCall(block->instance->ostream(), cudaGetLastError());
 
-  if (OPS_diags>1) {
-    cutilSafeCall(cudaDeviceSynchronize());
+  if (block->instance->OPS_diags>1) {
+    cutilSafeCall(block->instance->ostream(), cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
-    OPS_kernels[6].time += t1-t2;
+    block->instance->OPS_kernels[6].time += t1-t2;
   }
 
   #ifndef OPS_LAZY
@@ -253,26 +253,26 @@ void ops_par_loop_updateRK3_kernel_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[5],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[6].mpi_time += t2-t1;
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    block->instance->OPS_kernels[6].mpi_time += t2-t1;
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg8);
   }
 }
 
 #ifdef OPS_LAZY
 void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7, ops_arg arg8, ops_arg arg9, ops_arg arg10) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -314,8 +314,8 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
   memcpy(tmp, arg10.data,1*sizeof(double));
   desc->args[10].data = tmp;
   desc->function = ops_par_loop_updateRK3_kernel_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(6,"updateRK3_kernel");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,6,"updateRK3_kernel");
   }
   ops_enqueue_kernel(desc);
 }

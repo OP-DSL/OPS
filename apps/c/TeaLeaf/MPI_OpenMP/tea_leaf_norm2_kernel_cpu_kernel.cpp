@@ -28,14 +28,14 @@ void ops_par_loop_tea_leaf_norm2_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,2,range,39)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(39,"tea_leaf_norm2_kernel");
-    OPS_kernels[39].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,39,"tea_leaf_norm2_kernel");
+    block->instance->OPS_kernels[39].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "tea_leaf_norm2_kernel");
+  ops_register_args(block->instance, args, "tea_leaf_norm2_kernel");
   #endif
 
 
@@ -59,7 +59,7 @@ void ops_par_loop_tea_leaf_norm2_kernel_execute(ops_kernel_descriptor *desc) {
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ x_p = (double *)(args[0].data + base0);
+  double * __restrict__ x_p = (double *)(args[0].data + base0);
 
   #ifdef OPS_MPI
   double * __restrict__ p_a1 = (double *)(((ops_reduction)args[1].data)->data + ((ops_reduction)args[1].data)->size * block->index);
@@ -77,9 +77,9 @@ void ops_par_loop_tea_leaf_norm2_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 2);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[39].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[39].mpi_time += __t1-__t2;
   }
 
   double p_a1_0 = p_a1[0];
@@ -87,41 +87,38 @@ void ops_par_loop_tea_leaf_norm2_kernel_execute(ops_kernel_descriptor *desc) {
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-#pragma omp simd reduction(+ : p_a1_0)
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+    #pragma omp simd reduction(+:p_a1_0)
+    #elif defined(__clang__)
+    #pragma clang loop vectorize(assume_safety)
+    #elif defined(__GNUC__)
+    #pragma GCC ivdep
+    #else
+    #pragma simd
+    #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-      const ACC<double> x(xdim0_tea_leaf_norm2_kernel,
-                          x_p + n_x * 1 +
-                              n_y * xdim0_tea_leaf_norm2_kernel * 1);
+      const ACC<double> x(xdim0_tea_leaf_norm2_kernel, x_p + n_x*1 + n_y * xdim0_tea_leaf_norm2_kernel*1);
       double norm[1];
       norm[0] = ZERO_double;
-
-      *norm = *norm + x(0, 0) * x(0, 0);
+      
+	*norm = *norm + x(0,0)*x(0,0);
 
       p_a1_0 +=norm[0];
     }
   }
   p_a1[0] = p_a1_0;
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[39].time += __t2-__t1;
+    block->instance->OPS_kernels[39].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 2);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[39].mpi_time += __t1-__t2;
-    OPS_kernels[39].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[39].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[39].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
 
@@ -129,7 +126,7 @@ void ops_par_loop_tea_leaf_norm2_kernel_execute(ops_kernel_descriptor *desc) {
 #ifdef OPS_LAZY
 void ops_par_loop_tea_leaf_norm2_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -148,8 +145,8 @@ void ops_par_loop_tea_leaf_norm2_kernel(char const *name, ops_block block, int d
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
   desc->function = ops_par_loop_tea_leaf_norm2_kernel_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(39,"tea_leaf_norm2_kernel");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,39,"tea_leaf_norm2_kernel");
   }
   ops_enqueue_kernel(desc);
 }

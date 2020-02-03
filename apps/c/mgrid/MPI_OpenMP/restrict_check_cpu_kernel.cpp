@@ -30,14 +30,14 @@ void ops_par_loop_restrict_check_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,4,range,7)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(7,"restrict_check");
-    OPS_kernels[7].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,7,"restrict_check");
+    block->instance->OPS_kernels[7].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "restrict_check");
+  ops_register_args(block->instance, args, "restrict_check");
   #endif
 
 
@@ -56,17 +56,18 @@ void ops_par_loop_restrict_check_execute(ops_kernel_descriptor *desc) {
   #ifdef OPS_MPI
   arg_idx[0] -= start[0];
   arg_idx[1] -= start[1];
-#else
+  #else
   arg_idx[0] = 0;
   arg_idx[1] = 0;
-#endif // OPS_MPI
+  #endif //OPS_MPI
 
   //initialize global variable with the dimension of dats
   int xdim0_restrict_check = args[0].dat->size[0];
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ val_p = (double *)(args[0].data + base0);
+  double * __restrict__ val_p = (double *)(args[0].data + base0);
+
 
   #ifdef OPS_MPI
   int * __restrict__ p_a2 = (int *)(((ops_reduction)args[2].data)->data + ((ops_reduction)args[2].data)->size * block->index);
@@ -74,7 +75,11 @@ void ops_par_loop_restrict_check_execute(ops_kernel_descriptor *desc) {
   int * __restrict__ p_a2 = (int *)((ops_reduction)args[2].data)->data;
   #endif //OPS_MPI
 
-  int *__restrict__ sizex = (int *)args[3].data;
+
+  int * __restrict__ sizex = (int *)args[3].data;
+
+
+
 
   #ifndef OPS_LAZY
   //Halo Exchanges
@@ -83,9 +88,9 @@ void ops_par_loop_restrict_check_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 4);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[7].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[7].mpi_time += __t1-__t2;
   }
 
   int p_a2_0 = p_a2[0];
@@ -93,24 +98,20 @@ void ops_par_loop_restrict_check_execute(ops_kernel_descriptor *desc) {
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-#pragma omp simd reduction(max : p_a2_0)
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+    #pragma omp simd reduction(max:p_a2_0)
+    #elif defined(__clang__)
+    #pragma clang loop vectorize(assume_safety)
+    #elif defined(__GNUC__)
+    #pragma GCC ivdep
+    #else
+    #pragma simd
+    #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
       int idx[] = {arg_idx[0]+n_x, arg_idx[1]+n_y};
-      const ACC<double> val(xdim0_restrict_check,
-                            val_p + n_x * 1 + n_y * xdim0_restrict_check * 1);
+      const ACC<double> val(xdim0_restrict_check, val_p + n_x*1 + n_y * xdim0_restrict_check*1);
       int err[1];
       err[0] = p_a2[0];
-
       if (val(0, 0) != idx[0] * 4 + idx[1] * 4 * *sizex) {
-
         *err = 1;
   } else
     *err = 0;
@@ -119,19 +120,19 @@ void ops_par_loop_restrict_check_execute(ops_kernel_descriptor *desc) {
     }
   }
   p_a2[0] = p_a2_0;
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[7].time += __t2-__t1;
+    block->instance->OPS_kernels[7].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 4);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[7].mpi_time += __t1-__t2;
-    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[7].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
 
@@ -139,7 +140,7 @@ void ops_par_loop_restrict_check_execute(ops_kernel_descriptor *desc) {
 #ifdef OPS_LAZY
 void ops_par_loop_restrict_check(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -163,8 +164,8 @@ void ops_par_loop_restrict_check(char const *name, ops_block block, int dim, int
   memcpy(tmp, arg3.data,1*sizeof(int));
   desc->args[3].data = tmp;
   desc->function = ops_par_loop_restrict_check_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(7,"restrict_check");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,7,"restrict_check");
   }
   ops_enqueue_kernel(desc);
 }

@@ -18,40 +18,45 @@ int xdim6_calc_dt_kernel_print;
 int ydim6_calc_dt_kernel_print;
 
 //user function
-inline void calc_dt_kernel_print(const ptr_double xvel0, const ptr_double yvel0,
-                                 const ptr_double zvel0,
-                                 const ptr_double density0,
-                                 const ptr_double energy0,
-                                 const ptr_double pressure,
-                                 const ptr_double soundspeed, double *output) {
-  output[0] = OPS_ACC(xvel0, 0, 0, 0);
-  output[1] = OPS_ACC(yvel0, 0, 0, 0);
-  output[2] = OPS_ACC(zvel0, 0, 0, 0);
-  output[3] = OPS_ACC(xvel0, 1, 0, 0);
-  output[4] = OPS_ACC(yvel0, 1, 0, 0);
-  output[5] = OPS_ACC(zvel0, 0, 0, 0);
-  output[6] = OPS_ACC(xvel0, 1, 1, 0);
-  output[7] = OPS_ACC(yvel0, 1, 1, 0);
-  output[8] = OPS_ACC(zvel0, 0, 0, 0);
-  output[9] = OPS_ACC(xvel0, 0, 1, 0);
-  output[10] = OPS_ACC(yvel0, 0, 1, 0);
-  output[11] = OPS_ACC(zvel0, 0, 0, 0);
-  output[12] = OPS_ACC(xvel0, 0, 0, 1);
-  output[13] = OPS_ACC(yvel0, 0, 0, 1);
-  output[14] = OPS_ACC(zvel0, 0, 0, 1);
-  output[15] = OPS_ACC(xvel0, 1, 0, 1);
-  output[16] = OPS_ACC(yvel0, 1, 0, 1);
-  output[17] = OPS_ACC(zvel0, 0, 0, 1);
-  output[18] = OPS_ACC(xvel0, 1, 1, 1);
-  output[19] = OPS_ACC(yvel0, 1, 1, 1);
-  output[20] = OPS_ACC(zvel0, 0, 0, 1);
-  output[21] = OPS_ACC(xvel0, 0, 1, 1);
-  output[22] = OPS_ACC(yvel0, 0, 1, 1);
-  output[23] = OPS_ACC(zvel0, 0, 0, 1);
-  output[24] = OPS_ACC(density0, 0, 0, 0);
-  output[25] = OPS_ACC(energy0, 0, 0, 0);
-  output[26] = OPS_ACC(pressure, 0, 0, 0);
-  output[27] = OPS_ACC(soundspeed, 0, 0, 0);
+#pragma acc routine
+inline 
+void calc_dt_kernel_print(const ptr_double xvel0,
+  const ptr_double yvel0,
+  const ptr_double zvel0,
+  const ptr_double density0,
+  const ptr_double energy0,
+  const ptr_double pressure,
+  const ptr_double soundspeed,
+  double *output) {
+  output[0] = OPS_ACC(xvel0, 0,0,0);
+  output[1] = OPS_ACC(yvel0, 0,0,0);
+  output[2] = OPS_ACC(zvel0, 0,0,0);
+  output[3] = OPS_ACC(xvel0, 1,0,0);
+  output[4] = OPS_ACC(yvel0, 1,0,0);
+  output[5] = OPS_ACC(zvel0, 0,0,0);
+  output[6] = OPS_ACC(xvel0, 1,1,0);
+  output[7] = OPS_ACC(yvel0, 1,1,0);
+  output[8] = OPS_ACC(zvel0, 0,0,0);
+  output[9] = OPS_ACC(xvel0, 0,1,0);
+  output[10] = OPS_ACC(yvel0, 0,1,0);
+  output[11] = OPS_ACC(zvel0, 0,0,0);
+  output[12] = OPS_ACC(xvel0, 0,0,1);
+  output[13] = OPS_ACC(yvel0, 0,0,1);
+  output[14] = OPS_ACC(zvel0, 0,0,1);
+  output[15] = OPS_ACC(xvel0, 1,0,1);
+  output[16] = OPS_ACC(yvel0, 1,0,1);
+  output[17] = OPS_ACC(zvel0, 0,0,1);
+  output[18] = OPS_ACC(xvel0, 1,1,1);
+  output[19] = OPS_ACC(yvel0, 1,1,1);
+  output[20] = OPS_ACC(zvel0, 0,0,1);
+  output[21] = OPS_ACC(xvel0, 0,1,1);
+  output[22] = OPS_ACC(yvel0, 0,1,1);
+  output[23] = OPS_ACC(zvel0, 0,0,1);
+  output[24] = OPS_ACC(density0, 0,0,0);
+  output[25] = OPS_ACC(energy0, 0,0,0);
+  output[26] = OPS_ACC(pressure, 0,0,0);
+  output[27] = OPS_ACC(soundspeed, 0,0,0);
+
 }
 
 
@@ -135,43 +140,21 @@ void calc_dt_kernel_print_c_wrapper(
         p_a7_local[25] = ZERO_double;
         p_a7_local[26] = ZERO_double;
         p_a7_local[27] = ZERO_double;
-        const ptr_double ptr0 = {
-            p_a0 + n_x * 1 * 1 + n_y * xdim0_calc_dt_kernel_print * 1 * 1 +
-                n_z * xdim0_calc_dt_kernel_print * ydim0_calc_dt_kernel_print *
-                    1 * 1,
-            xdim0_calc_dt_kernel_print, ydim0_calc_dt_kernel_print};
-        const ptr_double ptr1 = {
-            p_a1 + n_x * 1 * 1 + n_y * xdim1_calc_dt_kernel_print * 1 * 1 +
-                n_z * xdim1_calc_dt_kernel_print * ydim1_calc_dt_kernel_print *
-                    1 * 1,
-            xdim1_calc_dt_kernel_print, ydim1_calc_dt_kernel_print};
-        const ptr_double ptr2 = {
-            p_a2 + n_x * 1 * 1 + n_y * xdim2_calc_dt_kernel_print * 1 * 1 +
-                n_z * xdim2_calc_dt_kernel_print * ydim2_calc_dt_kernel_print *
-                    1 * 1,
-            xdim2_calc_dt_kernel_print, ydim2_calc_dt_kernel_print};
-        const ptr_double ptr3 = {
-            p_a3 + n_x * 1 * 1 + n_y * xdim3_calc_dt_kernel_print * 1 * 1 +
-                n_z * xdim3_calc_dt_kernel_print * ydim3_calc_dt_kernel_print *
-                    1 * 1,
-            xdim3_calc_dt_kernel_print, ydim3_calc_dt_kernel_print};
-        const ptr_double ptr4 = {
-            p_a4 + n_x * 1 * 1 + n_y * xdim4_calc_dt_kernel_print * 1 * 1 +
-                n_z * xdim4_calc_dt_kernel_print * ydim4_calc_dt_kernel_print *
-                    1 * 1,
-            xdim4_calc_dt_kernel_print, ydim4_calc_dt_kernel_print};
-        const ptr_double ptr5 = {
-            p_a5 + n_x * 1 * 1 + n_y * xdim5_calc_dt_kernel_print * 1 * 1 +
-                n_z * xdim5_calc_dt_kernel_print * ydim5_calc_dt_kernel_print *
-                    1 * 1,
-            xdim5_calc_dt_kernel_print, ydim5_calc_dt_kernel_print};
-        const ptr_double ptr6 = {
-            p_a6 + n_x * 1 * 1 + n_y * xdim6_calc_dt_kernel_print * 1 * 1 +
-                n_z * xdim6_calc_dt_kernel_print * ydim6_calc_dt_kernel_print *
-                    1 * 1,
-            xdim6_calc_dt_kernel_print, ydim6_calc_dt_kernel_print};
-        calc_dt_kernel_print(ptr0, ptr1, ptr2, ptr3, ptr4, ptr5, ptr6,
-                             p_a7_local);
+        const ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_calc_dt_kernel_print*1*1 + n_z*xdim0_calc_dt_kernel_print*ydim0_calc_dt_kernel_print*1*1, xdim0_calc_dt_kernel_print, ydim0_calc_dt_kernel_print};
+        const ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_calc_dt_kernel_print*1*1 + n_z*xdim1_calc_dt_kernel_print*ydim1_calc_dt_kernel_print*1*1, xdim1_calc_dt_kernel_print, ydim1_calc_dt_kernel_print};
+        const ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_calc_dt_kernel_print*1*1 + n_z*xdim2_calc_dt_kernel_print*ydim2_calc_dt_kernel_print*1*1, xdim2_calc_dt_kernel_print, ydim2_calc_dt_kernel_print};
+        const ptr_double ptr3 = {  p_a3 + n_x*1*1 + n_y*xdim3_calc_dt_kernel_print*1*1 + n_z*xdim3_calc_dt_kernel_print*ydim3_calc_dt_kernel_print*1*1, xdim3_calc_dt_kernel_print, ydim3_calc_dt_kernel_print};
+        const ptr_double ptr4 = {  p_a4 + n_x*1*1 + n_y*xdim4_calc_dt_kernel_print*1*1 + n_z*xdim4_calc_dt_kernel_print*ydim4_calc_dt_kernel_print*1*1, xdim4_calc_dt_kernel_print, ydim4_calc_dt_kernel_print};
+        const ptr_double ptr5 = {  p_a5 + n_x*1*1 + n_y*xdim5_calc_dt_kernel_print*1*1 + n_z*xdim5_calc_dt_kernel_print*ydim5_calc_dt_kernel_print*1*1, xdim5_calc_dt_kernel_print, ydim5_calc_dt_kernel_print};
+        const ptr_double ptr6 = {  p_a6 + n_x*1*1 + n_y*xdim6_calc_dt_kernel_print*1*1 + n_z*xdim6_calc_dt_kernel_print*ydim6_calc_dt_kernel_print*1*1, xdim6_calc_dt_kernel_print, ydim6_calc_dt_kernel_print};
+        calc_dt_kernel_print( ptr0,
+          ptr1,
+          ptr2,
+          ptr3,
+          ptr4,
+          ptr5,
+          ptr6,
+           p_a7_local );
 
         p_a7_0 +=p_a7_local[0];
         p_a7_1 +=p_a7_local[1];

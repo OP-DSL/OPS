@@ -29,14 +29,14 @@ void ops_par_loop_initialise_chunk_kernel_y_execute(ops_kernel_descriptor *desc)
   if (!ops_checkpointing_before(args,3,range,3)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(3,"initialise_chunk_kernel_y");
-    OPS_kernels[3].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,3,"initialise_chunk_kernel_y");
+    block->instance->OPS_kernels[3].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "initialise_chunk_kernel_y");
+  ops_register_args(block->instance, args, "initialise_chunk_kernel_y");
   #endif
 
 
@@ -79,9 +79,9 @@ void ops_par_loop_initialise_chunk_kernel_y_execute(ops_kernel_descriptor *desc)
   ops_H_D_exchanges_host(args, 3);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[3].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[3].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
@@ -92,7 +92,6 @@ void ops_par_loop_initialise_chunk_kernel_y_execute(ops_kernel_descriptor *desc)
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)
-    #pragma simd
     #pragma GCC ivdep
     #else
     #pragma simd
@@ -114,9 +113,9 @@ void ops_par_loop_initialise_chunk_kernel_y_execute(ops_kernel_descriptor *desc)
 
     }
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[3].time += __t2-__t1;
+    block->instance->OPS_kernels[3].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 3);
@@ -124,13 +123,13 @@ void ops_par_loop_initialise_chunk_kernel_y_execute(ops_kernel_descriptor *desc)
   ops_set_halo_dirtybit3(&args[2],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[3].mpi_time += __t1-__t2;
-    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[3].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg2);
   }
 }
 
@@ -138,7 +137,7 @@ void ops_par_loop_initialise_chunk_kernel_y_execute(ops_kernel_descriptor *desc)
 #ifdef OPS_LAZY
 void ops_par_loop_initialise_chunk_kernel_y(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -160,8 +159,8 @@ void ops_par_loop_initialise_chunk_kernel_y(char const *name, ops_block block, i
   desc->args[2] = arg2;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg2.dat->index;
   desc->function = ops_par_loop_initialise_chunk_kernel_y_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(3,"initialise_chunk_kernel_y");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,3,"initialise_chunk_kernel_y");
   }
   ops_enqueue_kernel(desc);
 }

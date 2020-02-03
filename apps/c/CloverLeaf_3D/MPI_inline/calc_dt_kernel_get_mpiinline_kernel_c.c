@@ -30,11 +30,11 @@ void calc_dt_kernel_get_c_wrapper(
     for ( int n_y=0; n_y<y_size; n_y++ ){
       for ( int n_x=0; n_x<x_size; n_x++ ){
         double xl_pos[1];
-        xl_pos[0] = ZERO_double;
+        xl_pos[0] = 0;
         double yl_pos[1];
-        yl_pos[0] = ZERO_double;
+        yl_pos[0] = 0;
         double zl_pos[1];
-        zl_pos[0] = ZERO_double;
+        zl_pos[0] = 0;
         const ptr_double cellx = { cellx_p + n_x*1 + n_y * xdim0_calc_dt_kernel_get*0 + n_z * xdim0_calc_dt_kernel_get * ydim0_calc_dt_kernel_get*0, xdim0_calc_dt_kernel_get, ydim0_calc_dt_kernel_get};
         const ptr_double celly = { celly_p + n_x*0 + n_y * xdim1_calc_dt_kernel_get*1 + n_z * xdim1_calc_dt_kernel_get * ydim1_calc_dt_kernel_get*0, xdim1_calc_dt_kernel_get, ydim1_calc_dt_kernel_get};
         const ptr_double cellz = { cellz_p + n_x*0 + n_y * xdim4_calc_dt_kernel_get*0 + n_z * xdim4_calc_dt_kernel_get * ydim4_calc_dt_kernel_get*1, xdim4_calc_dt_kernel_get, ydim4_calc_dt_kernel_get};

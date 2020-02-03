@@ -35,14 +35,14 @@ void ops_par_loop_advec_cell_kernel3_zdir_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,8,range,118)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(118,"advec_cell_kernel3_zdir");
-    OPS_kernels[118].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,118,"advec_cell_kernel3_zdir");
+    block->instance->OPS_kernels[118].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "advec_cell_kernel3_zdir");
+  ops_register_args(block->instance, args, "advec_cell_kernel3_zdir");
   #endif
 
 
@@ -81,28 +81,30 @@ void ops_par_loop_advec_cell_kernel3_zdir_execute(ops_kernel_descriptor *desc) {
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ vol_flux_z_p = (double *)(args[0].data + base0);
+  double * __restrict__ vol_flux_z_p = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset;
-  double *__restrict__ pre_vol_p = (double *)(args[1].data + base1);
+  double * __restrict__ pre_vol_p = (double *)(args[1].data + base1);
 
   int base2 = args[2].dat->base_offset;
-  int *__restrict__ zz_p = (int *)(args[2].data + base2);
+  int * __restrict__ zz_p = (int *)(args[2].data + base2);
 
   int base3 = args[3].dat->base_offset;
-  double *__restrict__ vertexdz_p = (double *)(args[3].data + base3);
+  double * __restrict__ vertexdz_p = (double *)(args[3].data + base3);
 
   int base4 = args[4].dat->base_offset;
-  double *__restrict__ density1_p = (double *)(args[4].data + base4);
+  double * __restrict__ density1_p = (double *)(args[4].data + base4);
 
   int base5 = args[5].dat->base_offset;
-  double *__restrict__ energy1_p = (double *)(args[5].data + base5);
+  double * __restrict__ energy1_p = (double *)(args[5].data + base5);
 
   int base6 = args[6].dat->base_offset;
-  double *__restrict__ mass_flux_z_p = (double *)(args[6].data + base6);
+  double * __restrict__ mass_flux_z_p = (double *)(args[6].data + base6);
 
   int base7 = args[7].dat->base_offset;
-  double *__restrict__ ener_flux_p = (double *)(args[7].data + base7);
+  double * __restrict__ ener_flux_p = (double *)(args[7].data + base7);
+
+
 
   #ifndef OPS_LAZY
   //Halo Exchanges
@@ -111,9 +113,9 @@ void ops_par_loop_advec_cell_kernel3_zdir_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 8);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[118].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[118].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for collapse(2)
@@ -121,75 +123,44 @@ void ops_par_loop_advec_cell_kernel3_zdir_execute(ops_kernel_descriptor *desc) {
     for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
       #ifdef __INTEL_COMPILER
       #pragma loop_count(10000)
-#pragma omp simd
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+      #pragma omp simd
+      #elif defined(__clang__)
+      #pragma clang loop vectorize(assume_safety)
+      #elif defined(__GNUC__)
+      #pragma GCC ivdep
+      #else
+      #pragma simd
+      #endif
       for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-        const ACC<double> vol_flux_z(
-            xdim0_advec_cell_kernel3_zdir, ydim0_advec_cell_kernel3_zdir,
-            vol_flux_z_p + n_x * 1 + n_y * xdim0_advec_cell_kernel3_zdir * 1 +
-                n_z * xdim0_advec_cell_kernel3_zdir *
-                    ydim0_advec_cell_kernel3_zdir * 1);
-        const ACC<double> pre_vol(
-            xdim1_advec_cell_kernel3_zdir, ydim1_advec_cell_kernel3_zdir,
-            pre_vol_p + n_x * 1 + n_y * xdim1_advec_cell_kernel3_zdir * 1 +
-                n_z * xdim1_advec_cell_kernel3_zdir *
-                    ydim1_advec_cell_kernel3_zdir * 1);
-        const ACC<int> zz(
-            xdim2_advec_cell_kernel3_zdir, ydim2_advec_cell_kernel3_zdir,
-            zz_p + n_x * 0 + n_y * xdim2_advec_cell_kernel3_zdir * 0 +
-                n_z * xdim2_advec_cell_kernel3_zdir *
-                    ydim2_advec_cell_kernel3_zdir * 1);
-        const ACC<double> vertexdz(
-            xdim3_advec_cell_kernel3_zdir, ydim3_advec_cell_kernel3_zdir,
-            vertexdz_p + n_x * 0 + n_y * xdim3_advec_cell_kernel3_zdir * 0 +
-                n_z * xdim3_advec_cell_kernel3_zdir *
-                    ydim3_advec_cell_kernel3_zdir * 1);
-        const ACC<double> density1(
-            xdim4_advec_cell_kernel3_zdir, ydim4_advec_cell_kernel3_zdir,
-            density1_p + n_x * 1 + n_y * xdim4_advec_cell_kernel3_zdir * 1 +
-                n_z * xdim4_advec_cell_kernel3_zdir *
-                    ydim4_advec_cell_kernel3_zdir * 1);
-        const ACC<double> energy1(
-            xdim5_advec_cell_kernel3_zdir, ydim5_advec_cell_kernel3_zdir,
-            energy1_p + n_x * 1 + n_y * xdim5_advec_cell_kernel3_zdir * 1 +
-                n_z * xdim5_advec_cell_kernel3_zdir *
-                    ydim5_advec_cell_kernel3_zdir * 1);
-        ACC<double> mass_flux_z(
-            xdim6_advec_cell_kernel3_zdir, ydim6_advec_cell_kernel3_zdir,
-            mass_flux_z_p + n_x * 1 + n_y * xdim6_advec_cell_kernel3_zdir * 1 +
-                n_z * xdim6_advec_cell_kernel3_zdir *
-                    ydim6_advec_cell_kernel3_zdir * 1);
-        ACC<double> ener_flux(
-            xdim7_advec_cell_kernel3_zdir, ydim7_advec_cell_kernel3_zdir,
-            ener_flux_p + n_x * 1 + n_y * xdim7_advec_cell_kernel3_zdir * 1 +
-                n_z * xdim7_advec_cell_kernel3_zdir *
-                    ydim7_advec_cell_kernel3_zdir * 1);
+        const ACC<double> vol_flux_z(xdim0_advec_cell_kernel3_zdir, ydim0_advec_cell_kernel3_zdir, vol_flux_z_p + n_x*1 + n_y * xdim0_advec_cell_kernel3_zdir*1 + n_z * xdim0_advec_cell_kernel3_zdir * ydim0_advec_cell_kernel3_zdir*1);
+        const ACC<double> pre_vol(xdim1_advec_cell_kernel3_zdir, ydim1_advec_cell_kernel3_zdir, pre_vol_p + n_x*1 + n_y * xdim1_advec_cell_kernel3_zdir*1 + n_z * xdim1_advec_cell_kernel3_zdir * ydim1_advec_cell_kernel3_zdir*1);
+        const ACC<int> zz(xdim2_advec_cell_kernel3_zdir, ydim2_advec_cell_kernel3_zdir, zz_p + n_x*0 + n_y * xdim2_advec_cell_kernel3_zdir*0 + n_z * xdim2_advec_cell_kernel3_zdir * ydim2_advec_cell_kernel3_zdir*1);
+        const ACC<double> vertexdz(xdim3_advec_cell_kernel3_zdir, ydim3_advec_cell_kernel3_zdir, vertexdz_p + n_x*0 + n_y * xdim3_advec_cell_kernel3_zdir*0 + n_z * xdim3_advec_cell_kernel3_zdir * ydim3_advec_cell_kernel3_zdir*1);
+        const ACC<double> density1(xdim4_advec_cell_kernel3_zdir, ydim4_advec_cell_kernel3_zdir, density1_p + n_x*1 + n_y * xdim4_advec_cell_kernel3_zdir*1 + n_z * xdim4_advec_cell_kernel3_zdir * ydim4_advec_cell_kernel3_zdir*1);
+        const ACC<double> energy1(xdim5_advec_cell_kernel3_zdir, ydim5_advec_cell_kernel3_zdir, energy1_p + n_x*1 + n_y * xdim5_advec_cell_kernel3_zdir*1 + n_z * xdim5_advec_cell_kernel3_zdir * ydim5_advec_cell_kernel3_zdir*1);
+        ACC<double> mass_flux_z(xdim6_advec_cell_kernel3_zdir, ydim6_advec_cell_kernel3_zdir, mass_flux_z_p + n_x*1 + n_y * xdim6_advec_cell_kernel3_zdir*1 + n_z * xdim6_advec_cell_kernel3_zdir * ydim6_advec_cell_kernel3_zdir*1);
+        ACC<double> ener_flux(xdim7_advec_cell_kernel3_zdir, ydim7_advec_cell_kernel3_zdir, ener_flux_p + n_x*1 + n_y * xdim7_advec_cell_kernel3_zdir*1 + n_z * xdim7_advec_cell_kernel3_zdir * ydim7_advec_cell_kernel3_zdir*1);
+        
 
-        double sigmat, sigmav, sigmam, sigma3, sigma4;
-        double diffuw, diffdw, limiter;
-        double one_by_six = 1.0 / 6.0;
+  double sigmat, sigmav, sigmam, sigma3, sigma4;
+  double diffuw, diffdw, limiter;
+  double one_by_six = 1.0/6.0;
 
-        int z_max = field.z_max;
+  int z_max=field.z_max;
 
-        int upwind, donor, downwind, dif;
+  int upwind,donor,downwind,dif;
 
-        if (vol_flux_z(0, 0, 0) > 0.0) {
-          upwind = -2;
-          donor = -1;
-          downwind = 0;
-          dif = donor;
-        } else if (zz(0, 0, 1) < z_max + 2 - 2) {
-          upwind = 1;
-          donor = 0;
-          downwind = -1;
-          dif = upwind;
+  if(vol_flux_z(0,0,0) > 0.0) {
+    upwind   = -2;
+    donor    = -1;
+    downwind = 0;
+    dif      = donor;
+  }
+  else if (zz(0,0,1) < z_max+2-2) {
+    upwind   = 1;
+    donor    = 0;
+    downwind = -1;
+    dif      = upwind;
   } else {
     upwind   = 0;
     donor    = 0;
@@ -197,14 +168,14 @@ void ops_par_loop_advec_cell_kernel3_zdir_execute(ops_kernel_descriptor *desc) {
     dif      = upwind;
   }
 
-  sigmat = fabs(vol_flux_z(0, 0, 0)) / pre_vol(0, 0, donor);
-  sigma3 = (1.0 + sigmat) * (vertexdz(0, 0, 0) / vertexdz(0, 0, dif));
+  sigmat = fabs(vol_flux_z(0,0,0))/pre_vol(0,0,donor);
+  sigma3 = (1.0 + sigmat)*(vertexdz(0,0,0)/vertexdz(0,0,dif));
   sigma4 = 2.0 - sigmat;
 
   sigmav = sigmat;
 
-  diffuw = density1(0, 0, donor) - density1(0, 0, upwind);
-  diffdw = density1(0, 0, downwind) - density1(0, 0, donor);
+  diffuw = density1(0,0,donor) - density1(0,0,upwind);
+  diffdw = density1(0,0,downwind) - density1(0,0,donor);
 
   if( (diffuw*diffdw) > 0.0)
     limiter=(1.0 - sigmav) * SIGN(1.0 , diffdw) *
@@ -213,13 +184,11 @@ void ops_par_loop_advec_cell_kernel3_zdir_execute(ops_kernel_descriptor *desc) {
   else
     limiter=0.0;
 
-  mass_flux_z(0, 0, 0) =
-      vol_flux_z(0, 0, 0) * (density1(0, 0, donor) + limiter);
+  mass_flux_z(0,0,0) = vol_flux_z(0,0,0) * ( density1(0,0,donor) + limiter );
 
-  sigmam = fabs(mass_flux_z(0, 0, 0)) /
-           (density1(0, 0, donor) * pre_vol(0, 0, donor));
-  diffuw = energy1(0, 0, donor) - energy1(0, 0, upwind);
-  diffdw = energy1(0, 0, downwind) - energy1(0, 0, donor);
+  sigmam = fabs(mass_flux_z(0,0,0))/( density1(0,0,donor) * pre_vol(0,0,donor));
+  diffuw = energy1(0,0,donor) - energy1(0,0,upwind);
+  diffdw = energy1(0,0,downwind) - energy1(0,0,donor);
 
   if( (diffuw*diffdw) > 0.0)
     limiter = (1.0 - sigmam) * SIGN(1.0,diffdw) *
@@ -228,13 +197,14 @@ void ops_par_loop_advec_cell_kernel3_zdir_execute(ops_kernel_descriptor *desc) {
   else
     limiter=0.0;
 
-  ener_flux(0, 0, 0) = mass_flux_z(0, 0, 0) * (energy1(0, 0, donor) + limiter);
+  ener_flux(0,0,0) = mass_flux_z(0,0,0) * ( energy1(0,0,donor) + limiter );
+
       }
     }
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[118].time += __t2-__t1;
+    block->instance->OPS_kernels[118].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 8);
@@ -242,18 +212,18 @@ void ops_par_loop_advec_cell_kernel3_zdir_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[7],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[118].mpi_time += __t1-__t2;
-    OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    block->instance->OPS_kernels[118].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg7);
   }
 }
 
@@ -262,7 +232,7 @@ void ops_par_loop_advec_cell_kernel3_zdir_execute(ops_kernel_descriptor *desc) {
 void ops_par_loop_advec_cell_kernel3_zdir(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -294,8 +264,8 @@ void ops_par_loop_advec_cell_kernel3_zdir(char const *name, ops_block block, int
   desc->args[7] = arg7;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg7.dat->index;
   desc->function = ops_par_loop_advec_cell_kernel3_zdir_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(118,"advec_cell_kernel3_zdir");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,118,"advec_cell_kernel3_zdir");
   }
   ops_enqueue_kernel(desc);
 }

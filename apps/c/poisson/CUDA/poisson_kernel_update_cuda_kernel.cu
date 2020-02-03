@@ -89,7 +89,7 @@ void ops_par_loop_poisson_kernel_update_execute(ops_kernel_descriptor *desc) {
   if (xdim0 != dims_poisson_kernel_update_h[0][0] || xdim1 != dims_poisson_kernel_update_h[1][0]) {
     dims_poisson_kernel_update_h[0][0] = xdim0;
     dims_poisson_kernel_update_h[1][0] = xdim1;
-    cutilSafeCall(cudaMemcpyToSymbol( dims_poisson_kernel_update, dims_poisson_kernel_update_h, sizeof(dims_poisson_kernel_update)));
+    cutilSafeCall(block->instance->ostream(), cudaMemcpyToSymbol( dims_poisson_kernel_update, dims_poisson_kernel_update_h, sizeof(dims_poisson_kernel_update)));
   }
 
 
@@ -138,10 +138,10 @@ void ops_par_loop_poisson_kernel_update_execute(ops_kernel_descriptor *desc) {
   if (x_size > 0 && y_size > 0)
     ops_poisson_kernel_update<<<grid, tblock >>> (  (double *)p_a[0], (double *)p_a[1],x_size, y_size);
 
-  cutilSafeCall(cudaGetLastError());
+  cutilSafeCall(block->instance->ostream(), cudaGetLastError());
 
   if (block->instance->OPS_diags>1) {
-    cutilSafeCall(cudaDeviceSynchronize());
+    cutilSafeCall(block->instance->ostream(), cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
     block->instance->OPS_kernels[1].time += t1-t2;
   }
@@ -163,7 +163,7 @@ void ops_par_loop_poisson_kernel_update_execute(ops_kernel_descriptor *desc) {
 #ifdef OPS_LAZY
 void ops_par_loop_poisson_kernel_update(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;

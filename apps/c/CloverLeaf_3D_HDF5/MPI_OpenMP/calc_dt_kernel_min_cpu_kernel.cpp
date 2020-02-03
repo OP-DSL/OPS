@@ -28,14 +28,14 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,2,range,98)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(98,"calc_dt_kernel_min");
-    OPS_kernels[98].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,98,"calc_dt_kernel_min");
+    block->instance->OPS_kernels[98].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "calc_dt_kernel_min");
+  ops_register_args(block->instance, args, "calc_dt_kernel_min");
   #endif
 
 
@@ -60,7 +60,7 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ dt_min_p = (double *)(args[0].data + base0);
+  double * __restrict__ dt_min_p = (double *)(args[0].data + base0);
 
   #ifdef OPS_MPI
   double * __restrict__ p_a1 = (double *)(((ops_reduction)args[1].data)->data + ((ops_reduction)args[1].data)->size * block->index);
@@ -78,9 +78,9 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 2);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[98].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[98].mpi_time += __t1-__t2;
   }
 
   double p_a1_0 = p_a1[0];
@@ -89,43 +89,40 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
     for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
       #ifdef __INTEL_COMPILER
       #pragma loop_count(10000)
-#pragma omp simd reduction(min : p_a1_0)
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+      #pragma omp simd reduction(min:p_a1_0)
+      #elif defined(__clang__)
+      #pragma clang loop vectorize(assume_safety)
+      #elif defined(__GNUC__)
+      #pragma GCC ivdep
+      #else
+      #pragma simd
+      #endif
       for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-        const ACC<double> dt_min(
-            xdim0_calc_dt_kernel_min, ydim0_calc_dt_kernel_min,
-            dt_min_p + n_x * 1 + n_y * xdim0_calc_dt_kernel_min * 1 +
-                n_z * xdim0_calc_dt_kernel_min * ydim0_calc_dt_kernel_min * 1);
+        const ACC<double> dt_min(xdim0_calc_dt_kernel_min, ydim0_calc_dt_kernel_min, dt_min_p + n_x*1 + n_y * xdim0_calc_dt_kernel_min*1 + n_z * xdim0_calc_dt_kernel_min * ydim0_calc_dt_kernel_min*1);
         double dt_min_val[1];
         dt_min_val[0] = p_a1[0];
+        
+  *dt_min_val = MIN(*dt_min_val, dt_min(0,0,0));
 
-        *dt_min_val = MIN(*dt_min_val, dt_min(0, 0, 0));
 
         p_a1_0 = MIN(p_a1_0,dt_min_val[0]);
       }
     }
   }
   p_a1[0] = p_a1_0;
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[98].time += __t2-__t1;
+    block->instance->OPS_kernels[98].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 2);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[98].mpi_time += __t1-__t2;
-    OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[98].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[98].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
 
@@ -133,7 +130,7 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
 #ifdef OPS_LAZY
 void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -152,8 +149,8 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
   desc->function = ops_par_loop_calc_dt_kernel_min_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(98,"calc_dt_kernel_min");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,98,"calc_dt_kernel_min");
   }
   ops_enqueue_kernel(desc);
 }

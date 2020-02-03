@@ -9,18 +9,21 @@ int xdim1_limiter_kernel;
 int xdim2_limiter_kernel;
 
 //user function
-inline void limiter_kernel(const ptrm_double al, ptrm_double tht,
-                           ptrm_double gt) {
+#pragma acc routine
+inline 
+void limiter_kernel(const ptrm_double  al,
+  ptrm_double tht,
+  ptrm_double  gt) {
 
   double aalm, aal, all, ar, gtt;
   for (int m=0; m < 3 ;m++) {
-    aalm = fabs(OPS_ACC(al, m, -1));
-    aal = fabs(OPS_ACC(al, m, 0));
-    OPS_ACC(tht, m, 0) = fabs(aal - aalm) / (aal + aalm + del2);
-    all = OPS_ACC(al, m, -1);
-    ar = OPS_ACC(al, m, 0);
+    aalm = fabs(OPS_ACC(al, m,-1));
+    aal = fabs(OPS_ACC(al, m,0));
+    OPS_ACC(tht, m,0) = fabs (aal - aalm) / (aal + aalm + del2);
+    all = OPS_ACC(al, m,-1);
+    ar = OPS_ACC(al, m,0);
     gtt = all * ( ar * ar + del2 ) + ar * (all * all + del2);
-    OPS_ACC(gt, m, 0) = gtt / (ar * ar + all * all + 2.00 * del2);
+    OPS_ACC(gt, m,0)= gtt / (ar * ar + all * all + 2.00 * del2);
   }
 }
 
@@ -35,21 +38,23 @@ void limiter_kernel_c_wrapper(
   #pragma acc loop
   #endif
   for ( int n_x=0; n_x<x_size; n_x++ ){
-#ifdef OPS_SOA
-    const ptrm_double ptr0 = {p_a0 + n_x * 1 * 3, xdim0_limiter_kernel};
-#else
-    const ptrm_double ptr0 = {p_a0 + n_x * 1 * 3, 3};
-#endif
-#ifdef OPS_SOA
-    ptrm_double ptr1 = {p_a1 + n_x * 1 * 3, xdim1_limiter_kernel};
-#else
-    ptrm_double ptr1 = {p_a1 + n_x * 1 * 3, 3};
-#endif
-#ifdef OPS_SOA
-    ptrm_double ptr2 = {p_a2 + n_x * 1 * 3, xdim2_limiter_kernel};
-#else
-    ptrm_double ptr2 = {p_a2 + n_x * 1 * 3, 3};
-#endif
-    limiter_kernel(ptr0, ptr1, ptr2);
+    #ifdef OPS_SOA
+    const ptrm_double ptr0 = {  p_a0 + n_x*1*3, xdim0_limiter_kernel};
+    #else
+    const ptrm_double ptr0 = {  p_a0 + n_x*1*3, 3};
+    #endif
+    #ifdef OPS_SOA
+    ptrm_double ptr1 = {  p_a1 + n_x*1*3, xdim1_limiter_kernel};
+    #else
+    ptrm_double ptr1 = {  p_a1 + n_x*1*3, 3};
+    #endif
+    #ifdef OPS_SOA
+    ptrm_double ptr2 = {  p_a2 + n_x*1*3, xdim2_limiter_kernel};
+    #else
+    ptrm_double ptr2 = {  p_a2 + n_x*1*3, 3};
+    #endif
+    limiter_kernel( ptr0,
+          ptr1,ptr2 );
+
   }
 }

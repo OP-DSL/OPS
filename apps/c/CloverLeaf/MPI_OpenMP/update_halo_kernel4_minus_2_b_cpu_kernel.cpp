@@ -29,14 +29,14 @@ void ops_par_loop_update_halo_kernel4_minus_2_b_execute(ops_kernel_descriptor *d
   if (!ops_checkpointing_before(args,3,range,44)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(44,"update_halo_kernel4_minus_2_b");
-    OPS_kernels[44].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,44,"update_halo_kernel4_minus_2_b");
+    block->instance->OPS_kernels[44].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "update_halo_kernel4_minus_2_b");
+  ops_register_args(block->instance, args, "update_halo_kernel4_minus_2_b");
   #endif
 
 
@@ -78,9 +78,9 @@ void ops_par_loop_update_halo_kernel4_minus_2_b_execute(ops_kernel_descriptor *d
   ops_H_D_exchanges_host(args, 3);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[44].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[44].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
@@ -91,7 +91,6 @@ void ops_par_loop_update_halo_kernel4_minus_2_b_execute(ops_kernel_descriptor *d
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)
-    #pragma simd
     #pragma GCC ivdep
     #else
     #pragma simd
@@ -105,9 +104,9 @@ void ops_par_loop_update_halo_kernel4_minus_2_b_execute(ops_kernel_descriptor *d
 
     }
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[44].time += __t2-__t1;
+    block->instance->OPS_kernels[44].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 3);
@@ -115,12 +114,12 @@ void ops_par_loop_update_halo_kernel4_minus_2_b_execute(ops_kernel_descriptor *d
   ops_set_halo_dirtybit3(&args[1],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[44].mpi_time += __t1-__t2;
-    OPS_kernels[44].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[44].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[44].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[44].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[44].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 
@@ -128,7 +127,7 @@ void ops_par_loop_update_halo_kernel4_minus_2_b_execute(ops_kernel_descriptor *d
 #ifdef OPS_LAZY
 void ops_par_loop_update_halo_kernel4_minus_2_b(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -152,8 +151,8 @@ void ops_par_loop_update_halo_kernel4_minus_2_b(char const *name, ops_block bloc
   memcpy(tmp, arg2.data,NUM_FIELDS*sizeof(int));
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel4_minus_2_b_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(44,"update_halo_kernel4_minus_2_b");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,44,"update_halo_kernel4_minus_2_b");
   }
   ops_enqueue_kernel(desc);
 }

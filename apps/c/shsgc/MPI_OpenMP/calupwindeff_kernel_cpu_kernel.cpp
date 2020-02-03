@@ -34,14 +34,14 @@ void ops_par_loop_calupwindeff_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,7,range,11)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(11,"calupwindeff_kernel");
-    OPS_kernels[11].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,11,"calupwindeff_kernel");
+    block->instance->OPS_kernels[11].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "calupwindeff_kernel");
+  ops_register_args(block->instance, args, "calupwindeff_kernel");
   #endif
 
 
@@ -100,9 +100,9 @@ void ops_par_loop_calupwindeff_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 7);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[11].mpi_time += __t1 - __t2;
+    block->instance->OPS_kernels[11].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
@@ -153,26 +153,26 @@ void ops_par_loop_calupwindeff_kernel_execute(ops_kernel_descriptor *desc) {
 		eff(2,0)=e1 * r(6,0) + e2 * r(7,0) + e3 * r(8,0);
 
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[11].time += __t2 - __t1;
+    block->instance->OPS_kernels[11].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 7);
   ops_set_halo_dirtybit3(&args[6],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[11].mpi_time += __t1 - __t2;
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[11].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg6);
   }
 }
 
@@ -181,7 +181,7 @@ void ops_par_loop_calupwindeff_kernel_execute(ops_kernel_descriptor *desc) {
 void ops_par_loop_calupwindeff_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -211,8 +211,8 @@ void ops_par_loop_calupwindeff_kernel(char const *name, ops_block block, int dim
   desc->args[6] = arg6;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg6.dat->index;
   desc->function = ops_par_loop_calupwindeff_kernel_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(11,"calupwindeff_kernel");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,11,"calupwindeff_kernel");
   }
   ops_enqueue_kernel(desc);
 }

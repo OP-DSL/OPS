@@ -10,6 +10,7 @@ int xdim2_advec_mom_kernel_y2;
 int xdim3_advec_mom_kernel_y2;
 
 //user function
+#pragma acc routine
 
 inline void advec_mom_kernel_y2(ptr_double pre_vol,
   ptr_double post_vol,

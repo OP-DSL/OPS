@@ -45,9 +45,9 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim, int* 
   if (!ops_checkpointing_before(args,4,range,0)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(0,"write_kernel");
-    OPS_kernels[0].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,0,"write_kernel");
+    block->instance->OPS_kernels[0].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -79,11 +79,11 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim, int* 
 
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     args[0].dat->size[1] *
     start[2] * args[0].stencil->stride[2];
@@ -93,11 +93,11 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim, int* 
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
-  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  base1 = base1 + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
     start[1] * args[1].stencil->stride[1];
-  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+  base1 = base1 + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
     args[1].dat->size[1] *
     start[2] * args[1].stencil->stride[2];
@@ -107,11 +107,11 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim, int* 
   double *p_a1 = (double *)((char *)args[1].data + base1);
   #endif
 
-  int base2 = args[2].dat->base_offset + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
-  base2 = base2 + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+  int base2 = args[2].dat->base_offset + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
+  base2 = base2 + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
     args[2].dat->size[0] *
     start[1] * args[2].stencil->stride[1];
-  base2 = base2 + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+  base2 = base2 + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
     args[2].dat->size[0] *
     args[2].dat->size[1] *
     start[2] * args[2].stencil->stride[2];
@@ -129,12 +129,12 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim, int* 
   int z_size = MAX(0,end[2]-start[2]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0];
-  ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0];
-  ydim2 = args[2].dat->size[1];
+  int xdim0 = args[0].dat->size[0];
+  int ydim0 = args[0].dat->size[1];
+  int xdim1 = args[1].dat->size[0];
+  int ydim1 = args[1].dat->size[1];
+  int xdim2 = args[2].dat->size[0];
+  int ydim2 = args[2].dat->size[1];
   if (xdim0 != xdim0_write_kernel_h || ydim0 != ydim0_write_kernel_h || xdim1 != xdim1_write_kernel_h || ydim1 != ydim1_write_kernel_h || xdim2 != xdim2_write_kernel_h || ydim2 != ydim2_write_kernel_h) {
     xdim0_write_kernel = xdim0;
     xdim0_write_kernel_h = xdim0;
@@ -164,9 +164,9 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim, int* 
   #else
   ops_H_D_exchanges_host(args, 4);
   #endif
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[0].mpi_time += t2-t1;
+    block->instance->OPS_kernels[0].mpi_time += t2-t1;
   }
 
   write_kernel_c_wrapper(
@@ -177,9 +177,9 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim, int* 
     arg_idx[0], arg_idx[1], arg_idx[2],
     x_size, y_size, z_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[0].time += t1-t2;
+    block->instance->OPS_kernels[0].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 4);
@@ -190,12 +190,12 @@ void ops_par_loop_write_kernel(char const *name, ops_block block, int dim, int* 
   ops_set_halo_dirtybit3(&args[1],range);
   ops_set_halo_dirtybit3(&args[2],range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[0].mpi_time += t2-t1;
-    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[0].mpi_time += t2-t1;
+    block->instance->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg2);
   }
 }

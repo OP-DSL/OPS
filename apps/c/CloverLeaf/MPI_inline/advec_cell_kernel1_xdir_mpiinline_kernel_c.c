@@ -28,14 +28,13 @@ void advec_cell_kernel1_xdir_c_wrapper(
       const ptr_double volume = { volume_p + n_x*1 + n_y * xdim2_advec_cell_kernel1_xdir*1, xdim2_advec_cell_kernel1_xdir};
       const ptr_double vol_flux_x = { vol_flux_x_p + n_x*1 + n_y * xdim3_advec_cell_kernel1_xdir*1, xdim3_advec_cell_kernel1_xdir};
       const ptr_double vol_flux_y = { vol_flux_y_p + n_x*1 + n_y * xdim4_advec_cell_kernel1_xdir*1, xdim4_advec_cell_kernel1_xdir};
+      
 
-      OPS_ACC(pre_vol, 0, 0) =
-          OPS_ACC(volume, 0, 0) +
-          (OPS_ACC(vol_flux_x, 1, 0) - OPS_ACC(vol_flux_x, 0, 0) +
-           OPS_ACC(vol_flux_y, 0, 1) - OPS_ACC(vol_flux_y, 0, 0));
-      OPS_ACC(post_vol, 0, 0) =
-          OPS_ACC(pre_vol, 0, 0) -
-          (OPS_ACC(vol_flux_x, 1, 0) - OPS_ACC(vol_flux_x, 0, 0));
+  OPS_ACC(pre_vol, 0,0) = OPS_ACC(volume, 0,0) + ( OPS_ACC(vol_flux_x, 1,0) - OPS_ACC(vol_flux_x, 0,0) +
+                           OPS_ACC(vol_flux_y, 0,1) - OPS_ACC(vol_flux_y, 0,0));
+  OPS_ACC(post_vol, 0,0) = OPS_ACC(pre_vol, 0,0) - ( OPS_ACC(vol_flux_x, 1,0) - OPS_ACC(vol_flux_x, 0,0));
+
+
     }
   }
 }

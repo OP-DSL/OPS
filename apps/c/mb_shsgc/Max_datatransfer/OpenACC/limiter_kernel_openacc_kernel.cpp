@@ -37,9 +37,9 @@ void ops_par_loop_limiter_kernel(char const *name, ops_block block, int dim, int
   if (!ops_checkpointing_before(args,3,range,8)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(8,"limiter_kernel");
-    OPS_kernels[8].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,8,"limiter_kernel");
+    block->instance->OPS_kernels[8].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -71,21 +71,21 @@ void ops_par_loop_limiter_kernel(char const *name, ops_block block, int dim, int
 
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
   #else
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a1 = (double *)((char *)args[1].data_d + base1);
   #else
   double *p_a1 = (double *)((char *)args[1].data + base1);
   #endif
 
-  int base2 = args[2].dat->base_offset + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
+  int base2 = args[2].dat->base_offset + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a2 = (double *)((char *)args[2].data_d + base2);
   #else
@@ -96,9 +96,9 @@ void ops_par_loop_limiter_kernel(char const *name, ops_block block, int dim, int
   int x_size = MAX(0,end[0]-start[0]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
-  xdim2 = args[2].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
+  int xdim2 = args[2].dat->size[0];
   if (xdim0 != xdim0_limiter_kernel_h || xdim1 != xdim1_limiter_kernel_h || xdim2 != xdim2_limiter_kernel_h) {
     xdim0_limiter_kernel = xdim0;
     xdim0_limiter_kernel_h = xdim0;
@@ -122,9 +122,9 @@ void ops_par_loop_limiter_kernel(char const *name, ops_block block, int dim, int
   #else
   ops_H_D_exchanges_host(args, 3);
   #endif
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[8].mpi_time += t2-t1;
+    block->instance->OPS_kernels[8].mpi_time += t2-t1;
   }
 
   limiter_kernel_c_wrapper(
@@ -133,9 +133,9 @@ void ops_par_loop_limiter_kernel(char const *name, ops_block block, int dim, int
     p_a2,
     x_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[8].time += t1-t2;
+    block->instance->OPS_kernels[8].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 3);
@@ -145,12 +145,12 @@ void ops_par_loop_limiter_kernel(char const *name, ops_block block, int dim, int
   ops_set_halo_dirtybit3(&args[1],range);
   ops_set_halo_dirtybit3(&args[2],range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[8].mpi_time += t2-t1;
-    OPS_kernels[8].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[8].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[8].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[8].mpi_time += t2-t1;
+    block->instance->OPS_kernels[8].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[8].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[8].transfer += ops_compute_transfer(dim, start, end, &arg2);
   }
 }

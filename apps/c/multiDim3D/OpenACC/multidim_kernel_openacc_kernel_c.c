@@ -9,7 +9,10 @@ int ydim0_multidim_kernel;
 int zdim0_multidim_kernel;
 
 //user function
-inline void multidim_kernel(ptrm_double val, int *idx) {
+#pragma acc routine
+inline 
+void multidim_kernel(ptrm_double val,
+  int *idx){
   OPS_ACC(val, 0,0,0,0) = (double)(idx[0]);
   OPS_ACC(val, 1,0,0,0) = (double)(idx[1]);
   OPS_ACC(val, 2,0,0,0) = (double)(idx[2]);

@@ -28,25 +28,26 @@ void buildOpenCLKernels_poisson_kernel_stencil(OPS_instance *instance, int xdim0
     for(int i=0; i<1; i++) {
       fid = fopen(source_filename[i], "r");
       if (!fid) {
-        fprintf(stderr, "Can't open the kernel source file!\n");
-        exit(1);
+        OPSException e(OPS_RUNTIME_ERROR, "Can't open the kernel source file: ");
+        e << source_filename[i] << "\n";
+        throw e;
       }
 
       source_str[i] = (char*)malloc(4*0x1000000);
       source_size[i] = fread(source_str[i], 1, 4*0x1000000, fid);
       if(source_size[i] != 4*0x1000000) {
         if (ferror(fid)) {
-          printf ("Error while reading kernel source file %s\n", source_filename[i]);
-          exit(-1);
+          OPSException e(OPS_RUNTIME_ERROR, "Error while reading kernel source file ");
+          e << source_filename[i] << "\n";
+          throw e;
         }
         if (feof(fid))
-          printf ("Kernel source file %s succesfuly read.\n", source_filename[i]);
-          //printf("%s\n",source_str[i]);
+          instance->ostream() << "Kernel source file "<< source_filename[i] <<" succesfuly read.\n";
       }
       fclose(fid);
     }
 
-    printf("Compiling poisson_kernel_stencil %d source -- start \n",OCL_FMA);
+    instance->ostream() <<"Compiling poisson_kernel_stencil "<<OCL_FMA<<" source -- start \n";
 
       // Create a program from the source
       instance->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(instance->opencl_instance->OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
@@ -66,6 +67,9 @@ void buildOpenCLKernels_poisson_kernel_stencil(OPS_instance *instance, int xdim0
         exit(EXIT_FAILURE);
       }
 
+      #ifdef OPS_SOA
+      sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
+      #endif
       ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1, &instance->opencl_instance->OPS_opencl_core.device_id, buildOpts, NULL, NULL);
 
       if(ret != CL_SUCCESS) {
@@ -75,12 +79,12 @@ void buildOpenCLKernels_poisson_kernel_stencil(OPS_instance *instance, int xdim0
         build_log = (char*) malloc(log_size+1);
         clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
         build_log[log_size] = '\0';
-        fprintf(stderr, "=============== OpenCL Program Build Info ================\n\n%s", build_log);
-        fprintf(stderr, "\n========================================================= \n");
+        instance->ostream() << "=============== OpenCL Program Build Info ================\n\n" << build_log;
+        instance->ostream() << "\n========================================================= \n";
         free(build_log);
         exit(EXIT_FAILURE);
       }
-      printf("compiling poisson_kernel_stencil -- done\n");
+      instance->ostream() << "compiling poisson_kernel_stencil -- done\n";
 
     // Create the OpenCL kernel
     instance->opencl_instance->OPS_opencl_core.kernel[3] = clCreateKernel(instance->opencl_instance->OPS_opencl_core.program, "ops_poisson_kernel_stencil", &ret);

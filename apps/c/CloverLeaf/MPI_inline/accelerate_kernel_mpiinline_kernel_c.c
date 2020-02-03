@@ -46,48 +46,42 @@ void accelerate_kernel_c_wrapper(
       ptr_double yvel1 = { yvel1_p + n_x*1 + n_y * xdim8_accelerate_kernel*1, xdim8_accelerate_kernel};
       const ptr_double yarea = { yarea_p + n_x*1 + n_y * xdim9_accelerate_kernel*1, xdim9_accelerate_kernel};
       const ptr_double viscosity = { viscosity_p + n_x*1 + n_y * xdim10_accelerate_kernel*1, xdim10_accelerate_kernel};
+      
 
-      double nodal_mass;
+  double nodal_mass;
 
-      nodal_mass = (OPS_ACC(density0, -1, -1) * OPS_ACC(volume, -1, -1) +
-                    OPS_ACC(density0, 0, -1) * OPS_ACC(volume, 0, -1) +
-                    OPS_ACC(density0, 0, 0) * OPS_ACC(volume, 0, 0) +
-                    OPS_ACC(density0, -1, 0) * OPS_ACC(volume, -1, 0)) *
-                   0.25;
+  nodal_mass = ( OPS_ACC(density0, -1,-1) * OPS_ACC(volume, -1,-1)
+    + OPS_ACC(density0, 0,-1) * OPS_ACC(volume, 0,-1)
+    + OPS_ACC(density0, 0,0) * OPS_ACC(volume, 0,0)
+    + OPS_ACC(density0, -1,0) * OPS_ACC(volume, -1,0) ) * 0.25;
 
-      OPS_ACC(stepbymass, 0, 0) = 0.5 * dt / nodal_mass;
+  OPS_ACC(stepbymass, 0,0) = 0.5*dt/ nodal_mass;
 
-      OPS_ACC(xvel1, 0, 0) =
-          OPS_ACC(xvel0, 0, 0) -
-          OPS_ACC(stepbymass, 0, 0) *
-              (OPS_ACC(xarea, 0, 0) *
-                   (OPS_ACC(pressure, 0, 0) - OPS_ACC(pressure, -1, 0)) +
-               OPS_ACC(xarea, 0, -1) *
-                   (OPS_ACC(pressure, 0, -1) - OPS_ACC(pressure, -1, -1)));
 
-      OPS_ACC(yvel1, 0, 0) =
-          OPS_ACC(yvel0, 0, 0) -
-          OPS_ACC(stepbymass, 0, 0) *
-              (OPS_ACC(yarea, 0, 0) *
-                   (OPS_ACC(pressure, 0, 0) - OPS_ACC(pressure, 0, -1)) +
-               OPS_ACC(yarea, -1, 0) *
-                   (OPS_ACC(pressure, -1, 0) - OPS_ACC(pressure, -1, -1)));
 
-      OPS_ACC(xvel1, 0, 0) =
-          OPS_ACC(xvel1, 0, 0) -
-          OPS_ACC(stepbymass, 0, 0) *
-              (OPS_ACC(xarea, 0, 0) *
-                   (OPS_ACC(viscosity, 0, 0) - OPS_ACC(viscosity, -1, 0)) +
-               OPS_ACC(xarea, 0, -1) *
-                   (OPS_ACC(viscosity, 0, -1) - OPS_ACC(viscosity, -1, -1)));
+  OPS_ACC(xvel1, 0,0) = OPS_ACC(xvel0, 0,0) - OPS_ACC(stepbymass, 0,0) *
+            ( OPS_ACC(xarea, 0,0)  * ( OPS_ACC(pressure, 0,0) - OPS_ACC(pressure, -1,0) ) +
+              OPS_ACC(xarea, 0,-1) * ( OPS_ACC(pressure, 0,-1) - OPS_ACC(pressure, -1,-1) ) );
 
-      OPS_ACC(yvel1, 0, 0) =
-          OPS_ACC(yvel1, 0, 0) -
-          OPS_ACC(stepbymass, 0, 0) *
-              (OPS_ACC(yarea, 0, 0) *
-                   (OPS_ACC(viscosity, 0, 0) - OPS_ACC(viscosity, 0, -1)) +
-               OPS_ACC(yarea, -1, 0) *
-                   (OPS_ACC(viscosity, -1, 0) - OPS_ACC(viscosity, -1, -1)));
+
+
+  OPS_ACC(yvel1, 0,0) = OPS_ACC(yvel0, 0,0) - OPS_ACC(stepbymass, 0,0) *
+            ( OPS_ACC(yarea, 0,0)  * ( OPS_ACC(pressure, 0,0) - OPS_ACC(pressure, 0,-1) ) +
+              OPS_ACC(yarea, -1,0) * ( OPS_ACC(pressure, -1,0) - OPS_ACC(pressure, -1,-1) ) );
+
+
+
+  OPS_ACC(xvel1, 0,0) = OPS_ACC(xvel1, 0,0) - OPS_ACC(stepbymass, 0,0) *
+            ( OPS_ACC(xarea, 0,0) * ( OPS_ACC(viscosity, 0,0) - OPS_ACC(viscosity, -1,0) ) +
+              OPS_ACC(xarea, 0,-1) * ( OPS_ACC(viscosity, 0,-1) - OPS_ACC(viscosity, -1,-1) ) );
+
+
+
+  OPS_ACC(yvel1, 0,0) = OPS_ACC(yvel1, 0,0) - OPS_ACC(stepbymass, 0,0) *
+            ( OPS_ACC(yarea, 0,0) * ( OPS_ACC(viscosity, 0,0) - OPS_ACC(viscosity, 0,-1) ) +
+              OPS_ACC(yarea, -1,0) * ( OPS_ACC(viscosity, -1,0) - OPS_ACC(viscosity, -1,-1) ) );
+
+
     }
   }
 }

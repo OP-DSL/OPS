@@ -23,18 +23,19 @@ void multidim_reduce_kernel_c_wrapper(
     for ( int n_y=0; n_y<y_size; n_y++ ){
       for ( int n_x=0; n_x<x_size; n_x++ ){
         double redu_dat1[3];
-        redu_dat1[0] = ZERO_double;
-        redu_dat1[1] = ZERO_double;
-        redu_dat1[2] = ZERO_double;
+        redu_dat1[0] = 0;
+        redu_dat1[1] = 0;
+        redu_dat1[2] = 0;
         #ifdef OPS_SOA
         const ptrm_double val = { val_p + n_x*1 + n_y * xdim0_multidim_reduce_kernel*1 + n_z * xdim0_multidim_reduce_kernel * ydim0_multidim_reduce_kernel*1, xdim0_multidim_reduce_kernel, ydim0_multidim_reduce_kernel, zdim0_multidim_reduce_kernel};
         #else
         const ptrm_double val = { val_p + n_x*1 + n_y * xdim0_multidim_reduce_kernel*1 + n_z * xdim0_multidim_reduce_kernel * ydim0_multidim_reduce_kernel*1, xdim0_multidim_reduce_kernel, ydim0_multidim_reduce_kernel, 3};
         #endif
+        
 
-        redu_dat1[0] = redu_dat1[0] + OPS_ACC(val, 0, 0, 0, 0);
-        redu_dat1[1] = redu_dat1[1] + OPS_ACC(val, 1, 0, 0, 0);
-        redu_dat1[2] = redu_dat1[2] + OPS_ACC(val, 2, 0, 0, 0);
+  redu_dat1[0] = redu_dat1[0] + OPS_ACC(val, 0,0,0,0);
+  redu_dat1[1] = redu_dat1[1] + OPS_ACC(val, 1,0,0,0);
+  redu_dat1[2] = redu_dat1[2] + OPS_ACC(val, 2,0,0,0);
 
         redu_dat1_0 +=redu_dat1[0];
         redu_dat1_1 +=redu_dat1[1];

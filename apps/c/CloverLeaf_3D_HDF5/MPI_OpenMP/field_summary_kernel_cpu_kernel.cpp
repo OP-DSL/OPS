@@ -40,14 +40,14 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,12,range,95)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(95,"field_summary_kernel");
-    OPS_kernels[95].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,95,"field_summary_kernel");
+    block->instance->OPS_kernels[95].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "field_summary_kernel");
+  ops_register_args(block->instance, args, "field_summary_kernel");
   #endif
 
 
@@ -84,25 +84,25 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ volume_p = (double *)(args[0].data + base0);
+  double * __restrict__ volume_p = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset;
-  double *__restrict__ density0_p = (double *)(args[1].data + base1);
+  double * __restrict__ density0_p = (double *)(args[1].data + base1);
 
   int base2 = args[2].dat->base_offset;
-  double *__restrict__ energy0_p = (double *)(args[2].data + base2);
+  double * __restrict__ energy0_p = (double *)(args[2].data + base2);
 
   int base3 = args[3].dat->base_offset;
-  double *__restrict__ pressure_p = (double *)(args[3].data + base3);
+  double * __restrict__ pressure_p = (double *)(args[3].data + base3);
 
   int base4 = args[4].dat->base_offset;
-  double *__restrict__ xvel0_p = (double *)(args[4].data + base4);
+  double * __restrict__ xvel0_p = (double *)(args[4].data + base4);
 
   int base5 = args[5].dat->base_offset;
-  double *__restrict__ yvel0_p = (double *)(args[5].data + base5);
+  double * __restrict__ yvel0_p = (double *)(args[5].data + base5);
 
   int base6 = args[6].dat->base_offset;
-  double *__restrict__ zvel0_p = (double *)(args[6].data + base6);
+  double * __restrict__ zvel0_p = (double *)(args[6].data + base6);
 
   #ifdef OPS_MPI
   double * __restrict__ p_a7 = (double *)(((ops_reduction)args[7].data)->data + ((ops_reduction)args[7].data)->size * block->index);
@@ -148,9 +148,9 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 12);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[95].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[95].mpi_time += __t1-__t2;
   }
 
   double p_a7_0 = p_a7[0];
@@ -163,52 +163,22 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
     for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
       #ifdef __INTEL_COMPILER
       #pragma loop_count(10000)
-#pragma omp simd reduction(+ : p_a7_0) reduction(+ : p_a8_0) reduction(        \
-    + : p_a9_0) reduction(+ : p_a10_0) reduction(+ : p_a11_0)
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+      #pragma omp simd reduction(+:p_a7_0) reduction(+:p_a8_0) reduction(+:p_a9_0) reduction(+:p_a10_0) reduction(+:p_a11_0)
+      #elif defined(__clang__)
+      #pragma clang loop vectorize(assume_safety)
+      #elif defined(__GNUC__)
+      #pragma GCC ivdep
+      #else
+      #pragma simd
+      #endif
       for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-        const ACC<double> volume(
-            xdim0_field_summary_kernel, ydim0_field_summary_kernel,
-            volume_p + n_x * 1 + n_y * xdim0_field_summary_kernel * 1 +
-                n_z * xdim0_field_summary_kernel * ydim0_field_summary_kernel *
-                    1);
-        const ACC<double> density0(
-            xdim1_field_summary_kernel, ydim1_field_summary_kernel,
-            density0_p + n_x * 1 + n_y * xdim1_field_summary_kernel * 1 +
-                n_z * xdim1_field_summary_kernel * ydim1_field_summary_kernel *
-                    1);
-        const ACC<double> energy0(
-            xdim2_field_summary_kernel, ydim2_field_summary_kernel,
-            energy0_p + n_x * 1 + n_y * xdim2_field_summary_kernel * 1 +
-                n_z * xdim2_field_summary_kernel * ydim2_field_summary_kernel *
-                    1);
-        const ACC<double> pressure(
-            xdim3_field_summary_kernel, ydim3_field_summary_kernel,
-            pressure_p + n_x * 1 + n_y * xdim3_field_summary_kernel * 1 +
-                n_z * xdim3_field_summary_kernel * ydim3_field_summary_kernel *
-                    1);
-        const ACC<double> xvel0(
-            xdim4_field_summary_kernel, ydim4_field_summary_kernel,
-            xvel0_p + n_x * 1 + n_y * xdim4_field_summary_kernel * 1 +
-                n_z * xdim4_field_summary_kernel * ydim4_field_summary_kernel *
-                    1);
-        const ACC<double> yvel0(
-            xdim5_field_summary_kernel, ydim5_field_summary_kernel,
-            yvel0_p + n_x * 1 + n_y * xdim5_field_summary_kernel * 1 +
-                n_z * xdim5_field_summary_kernel * ydim5_field_summary_kernel *
-                    1);
-        const ACC<double> zvel0(
-            xdim6_field_summary_kernel, ydim6_field_summary_kernel,
-            zvel0_p + n_x * 1 + n_y * xdim6_field_summary_kernel * 1 +
-                n_z * xdim6_field_summary_kernel * ydim6_field_summary_kernel *
-                    1);
+        const ACC<double> volume(xdim0_field_summary_kernel, ydim0_field_summary_kernel, volume_p + n_x*1 + n_y * xdim0_field_summary_kernel*1 + n_z * xdim0_field_summary_kernel * ydim0_field_summary_kernel*1);
+        const ACC<double> density0(xdim1_field_summary_kernel, ydim1_field_summary_kernel, density0_p + n_x*1 + n_y * xdim1_field_summary_kernel*1 + n_z * xdim1_field_summary_kernel * ydim1_field_summary_kernel*1);
+        const ACC<double> energy0(xdim2_field_summary_kernel, ydim2_field_summary_kernel, energy0_p + n_x*1 + n_y * xdim2_field_summary_kernel*1 + n_z * xdim2_field_summary_kernel * ydim2_field_summary_kernel*1);
+        const ACC<double> pressure(xdim3_field_summary_kernel, ydim3_field_summary_kernel, pressure_p + n_x*1 + n_y * xdim3_field_summary_kernel*1 + n_z * xdim3_field_summary_kernel * ydim3_field_summary_kernel*1);
+        const ACC<double> xvel0(xdim4_field_summary_kernel, ydim4_field_summary_kernel, xvel0_p + n_x*1 + n_y * xdim4_field_summary_kernel*1 + n_z * xdim4_field_summary_kernel * ydim4_field_summary_kernel*1);
+        const ACC<double> yvel0(xdim5_field_summary_kernel, ydim5_field_summary_kernel, yvel0_p + n_x*1 + n_y * xdim5_field_summary_kernel*1 + n_z * xdim5_field_summary_kernel * ydim5_field_summary_kernel*1);
+        const ACC<double> zvel0(xdim6_field_summary_kernel, ydim6_field_summary_kernel, zvel0_p + n_x*1 + n_y * xdim6_field_summary_kernel*1 + n_z * xdim6_field_summary_kernel * ydim6_field_summary_kernel*1);
         double vol[1];
         vol[0] = ZERO_double;
         double mass[1];
@@ -224,44 +194,45 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
   double vsqrd, cell_vol, cell_mass;
 
   vsqrd = 0.0;
-  vsqrd += 0.125 *
-           (xvel0(0, 0, 0) * xvel0(0, 0, 0) + yvel0(0, 0, 0) * yvel0(0, 0, 0) +
-            zvel0(0, 0, 0) * zvel0(0, 0, 0));
-  vsqrd += 0.125 *
-           (xvel0(1, 0, 0) * xvel0(1, 0, 0) + yvel0(1, 0, 0) * yvel0(1, 0, 0) +
-            zvel0(1, 0, 0) * zvel0(1, 0, 0));
-  vsqrd += 0.125 *
-           (xvel0(0, 1, 0) * xvel0(0, 1, 0) + yvel0(0, 1, 0) * yvel0(0, 1, 0) +
-            zvel0(0, 1, 0) * zvel0(0, 1, 0));
-  vsqrd += 0.125 *
-           (xvel0(1, 1, 0) * xvel0(1, 1, 0) + yvel0(1, 1, 0) * yvel0(1, 1, 0) +
-            zvel0(1, 1, 0) * zvel0(1, 1, 0));
-  vsqrd += 0.125 *
-           (xvel0(0, 0, 1) * xvel0(0, 0, 1) + yvel0(0, 0, 1) * yvel0(0, 0, 1) +
-            zvel0(0, 0, 1) * zvel0(0, 0, 1));
-  vsqrd += 0.125 *
-           (xvel0(1, 0, 1) * xvel0(1, 0, 1) + yvel0(1, 0, 1) * yvel0(1, 0, 1) +
-            zvel0(1, 0, 1) * zvel0(1, 0, 1));
-  vsqrd += 0.125 *
-           (xvel0(0, 1, 1) * xvel0(0, 1, 1) + yvel0(0, 1, 1) * yvel0(0, 1, 1) +
-            zvel0(0, 1, 1) * zvel0(0, 1, 1));
-  vsqrd += 0.125 *
-           (xvel0(1, 1, 1) * xvel0(1, 1, 1) + yvel0(1, 1, 1) * yvel0(1, 1, 1) +
-            zvel0(1, 1, 1) * zvel0(1, 1, 1));
+  vsqrd+=0.125*( xvel0(0,0,0) * xvel0(0,0,0) +
+                 yvel0(0,0,0) * yvel0(0,0,0) +
+                 zvel0(0,0,0) * zvel0(0,0,0));
+  vsqrd+=0.125*( xvel0(1,0,0) * xvel0(1,0,0) +
+                 yvel0(1,0,0) * yvel0(1,0,0) +
+                 zvel0(1,0,0) * zvel0(1,0,0));
+  vsqrd+=0.125*( xvel0(0,1,0) * xvel0(0,1,0) +
+                 yvel0(0,1,0) * yvel0(0,1,0) +
+                 zvel0(0,1,0) * zvel0(0,1,0));
+  vsqrd+=0.125*( xvel0(1,1,0) * xvel0(1,1,0) +
+                 yvel0(1,1,0) * yvel0(1,1,0) +
+                 zvel0(1,1,0) * zvel0(1,1,0));
+  vsqrd+=0.125*( xvel0(0,0,1) * xvel0(0,0,1) +
+                 yvel0(0,0,1) * yvel0(0,0,1) +
+                 zvel0(0,0,1) * zvel0(0,0,1));
+  vsqrd+=0.125*( xvel0(1,0,1) * xvel0(1,0,1) +
+                 yvel0(1,0,1) * yvel0(1,0,1) +
+                 zvel0(1,0,1) * zvel0(1,0,1));
+  vsqrd+=0.125*( xvel0(0,1,1) * xvel0(0,1,1) +
+                 yvel0(0,1,1) * yvel0(0,1,1) +
+                 zvel0(0,1,1) * zvel0(0,1,1));
+  vsqrd+=0.125*( xvel0(1,1,1) * xvel0(1,1,1) +
+                 yvel0(1,1,1) * yvel0(1,1,1) +
+                 zvel0(1,1,1) * zvel0(1,1,1));
 
-  cell_vol = volume(0, 0, 0);
-  cell_mass = cell_vol * density0(0, 0, 0);
+  cell_vol = volume(0,0,0);
+  cell_mass = cell_vol * density0(0,0,0);
   *vol = *vol + cell_vol;
   *mass = *mass + cell_mass;
-  *ie = *ie + cell_mass * energy0(0, 0, 0);
+  *ie = *ie + cell_mass * energy0(0,0,0);
   *ke = *ke + cell_mass * 0.5 * vsqrd;
-  *press = *press + cell_vol * pressure(0, 0, 0);
+  *press = *press + cell_vol * pressure(0,0,0);
 
-  p_a7_0 += vol[0];
-  p_a8_0 += mass[0];
-  p_a9_0 += ie[0];
-  p_a10_0 += ke[0];
-  p_a11_0 += press[0];
+
+        p_a7_0 +=vol[0];
+        p_a8_0 +=mass[0];
+        p_a9_0 +=ie[0];
+        p_a10_0 +=ke[0];
+        p_a11_0 +=press[0];
       }
     }
   }
@@ -270,25 +241,25 @@ void ops_par_loop_field_summary_kernel_execute(ops_kernel_descriptor *desc) {
   p_a9[0] = p_a9_0;
   p_a10[0] = p_a10_0;
   p_a11[0] = p_a11_0;
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[95].time += __t2-__t1;
+    block->instance->OPS_kernels[95].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 12);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[95].mpi_time += __t1-__t2;
-    OPS_kernels[95].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[95].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[95].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[95].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[95].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[95].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[95].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[95].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[95].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[95].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[95].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[95].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[95].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[95].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[95].transfer += ops_compute_transfer(dim, start, end, &arg6);
   }
 }
 
@@ -298,7 +269,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7,
  ops_arg arg8, ops_arg arg9, ops_arg arg10, ops_arg arg11) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -333,8 +304,8 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   desc->args[10] = arg10;
   desc->args[11] = arg11;
   desc->function = ops_par_loop_field_summary_kernel_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(95,"field_summary_kernel");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,95,"field_summary_kernel");
   }
   ops_enqueue_kernel(desc);
 }

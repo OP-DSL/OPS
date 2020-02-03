@@ -29,14 +29,14 @@ void ops_par_loop_tea_leaf_common_init_Kx_Ky_kernel_execute(ops_kernel_descripto
   if (!ops_checkpointing_before(args,3,range,31)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(31,"tea_leaf_common_init_Kx_Ky_kernel");
-    OPS_kernels[31].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,31,"tea_leaf_common_init_Kx_Ky_kernel");
+    block->instance->OPS_kernels[31].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "tea_leaf_common_init_Kx_Ky_kernel");
+  ops_register_args(block->instance, args, "tea_leaf_common_init_Kx_Ky_kernel");
   #endif
 
 
@@ -62,13 +62,15 @@ void ops_par_loop_tea_leaf_common_init_Kx_Ky_kernel_execute(ops_kernel_descripto
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ Kx_p = (double *)(args[0].data + base0);
+  double * __restrict__ Kx_p = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset;
-  double *__restrict__ Ky_p = (double *)(args[1].data + base1);
+  double * __restrict__ Ky_p = (double *)(args[1].data + base1);
 
   int base2 = args[2].dat->base_offset;
-  double *__restrict__ w_p = (double *)(args[2].data + base2);
+  double * __restrict__ w_p = (double *)(args[2].data + base2);
+
+
 
   #ifndef OPS_LAZY
   //Halo Exchanges
@@ -77,42 +79,36 @@ void ops_par_loop_tea_leaf_common_init_Kx_Ky_kernel_execute(ops_kernel_descripto
   ops_H_D_exchanges_host(args, 3);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[31].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[31].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-#pragma omp simd
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+    #pragma omp simd
+    #elif defined(__clang__)
+    #pragma clang loop vectorize(assume_safety)
+    #elif defined(__GNUC__)
+    #pragma GCC ivdep
+    #else
+    #pragma simd
+    #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-      ACC<double> Kx(xdim0_tea_leaf_common_init_Kx_Ky_kernel,
-                     Kx_p + n_x * 1 +
-                         n_y * xdim0_tea_leaf_common_init_Kx_Ky_kernel * 1);
-      ACC<double> Ky(xdim1_tea_leaf_common_init_Kx_Ky_kernel,
-                     Ky_p + n_x * 1 +
-                         n_y * xdim1_tea_leaf_common_init_Kx_Ky_kernel * 1);
-      const ACC<double> w(
-          xdim2_tea_leaf_common_init_Kx_Ky_kernel,
-          w_p + n_x * 1 + n_y * xdim2_tea_leaf_common_init_Kx_Ky_kernel * 1);
+      ACC<double> Kx(xdim0_tea_leaf_common_init_Kx_Ky_kernel, Kx_p + n_x*1 + n_y * xdim0_tea_leaf_common_init_Kx_Ky_kernel*1);
+      ACC<double> Ky(xdim1_tea_leaf_common_init_Kx_Ky_kernel, Ky_p + n_x*1 + n_y * xdim1_tea_leaf_common_init_Kx_Ky_kernel*1);
+      const ACC<double> w(xdim2_tea_leaf_common_init_Kx_Ky_kernel, w_p + n_x*1 + n_y * xdim2_tea_leaf_common_init_Kx_Ky_kernel*1);
+      
+	Kx(0,0)=(w(-1,0 )+w(0,0))/(2.0*w(-1,0 )*w(0,0));
+	Ky(0,0)=(w( 0,-1)+w(0,0))/(2.0*w( 0,-1)*w(0,0));
 
-      Kx(0, 0) = (w(-1, 0) + w(0, 0)) / (2.0 * w(-1, 0) * w(0, 0));
-      Ky(0, 0) = (w(0, -1) + w(0, 0)) / (2.0 * w(0, -1) * w(0, 0));
     }
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[31].time += __t2-__t1;
+    block->instance->OPS_kernels[31].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 3);
@@ -120,13 +116,13 @@ void ops_par_loop_tea_leaf_common_init_Kx_Ky_kernel_execute(ops_kernel_descripto
   ops_set_halo_dirtybit3(&args[1],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[31].mpi_time += __t1-__t2;
-    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[31].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[31].transfer += ops_compute_transfer(dim, start, end, &arg2);
   }
 }
 
@@ -134,7 +130,7 @@ void ops_par_loop_tea_leaf_common_init_Kx_Ky_kernel_execute(ops_kernel_descripto
 #ifdef OPS_LAZY
 void ops_par_loop_tea_leaf_common_init_Kx_Ky_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -156,8 +152,8 @@ void ops_par_loop_tea_leaf_common_init_Kx_Ky_kernel(char const *name, ops_block 
   desc->args[2] = arg2;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg2.dat->index;
   desc->function = ops_par_loop_tea_leaf_common_init_Kx_Ky_kernel_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(31,"tea_leaf_common_init_Kx_Ky_kernel");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,31,"tea_leaf_common_init_Kx_Ky_kernel");
   }
   ops_enqueue_kernel(desc);
 }

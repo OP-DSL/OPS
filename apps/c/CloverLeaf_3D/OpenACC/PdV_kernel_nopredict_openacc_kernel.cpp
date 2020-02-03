@@ -113,9 +113,9 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   if (!ops_checkpointing_before(args,17,range,103)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(103,"PdV_kernel_nopredict");
-    OPS_kernels[103].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,103,"PdV_kernel_nopredict");
+    block->instance->OPS_kernels[103].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -161,11 +161,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
 
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     args[0].dat->size[1] *
     start[2] * args[0].stencil->stride[2];
@@ -175,11 +175,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
-  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  base1 = base1 + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
     start[1] * args[1].stencil->stride[1];
-  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+  base1 = base1 + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
     args[1].dat->size[1] *
     start[2] * args[1].stencil->stride[2];
@@ -189,11 +189,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double *p_a1 = (double *)((char *)args[1].data + base1);
   #endif
 
-  int base2 = args[2].dat->base_offset + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
-  base2 = base2 + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+  int base2 = args[2].dat->base_offset + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
+  base2 = base2 + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
     args[2].dat->size[0] *
     start[1] * args[2].stencil->stride[1];
-  base2 = base2 + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+  base2 = base2 + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
     args[2].dat->size[0] *
     args[2].dat->size[1] *
     start[2] * args[2].stencil->stride[2];
@@ -203,11 +203,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double *p_a2 = (double *)((char *)args[2].data + base2);
   #endif
 
-  int base3 = args[3].dat->base_offset + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
-  base3 = base3 + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+  int base3 = args[3].dat->base_offset + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
+  base3 = base3 + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
     args[3].dat->size[0] *
     start[1] * args[3].stencil->stride[1];
-  base3 = base3 + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+  base3 = base3 + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
     args[3].dat->size[0] *
     args[3].dat->size[1] *
     start[2] * args[3].stencil->stride[2];
@@ -217,11 +217,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double *p_a3 = (double *)((char *)args[3].data + base3);
   #endif
 
-  int base4 = args[4].dat->base_offset + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) * start[0] * args[4].stencil->stride[0];
-  base4 = base4 + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+  int base4 = args[4].dat->base_offset + (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) * start[0] * args[4].stencil->stride[0];
+  base4 = base4 + (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
     args[4].dat->size[0] *
     start[1] * args[4].stencil->stride[1];
-  base4 = base4 + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+  base4 = base4 + (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
     args[4].dat->size[0] *
     args[4].dat->size[1] *
     start[2] * args[4].stencil->stride[2];
@@ -231,11 +231,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double *p_a4 = (double *)((char *)args[4].data + base4);
   #endif
 
-  int base5 = args[5].dat->base_offset + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) * start[0] * args[5].stencil->stride[0];
-  base5 = base5 + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+  int base5 = args[5].dat->base_offset + (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) * start[0] * args[5].stencil->stride[0];
+  base5 = base5 + (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
     args[5].dat->size[0] *
     start[1] * args[5].stencil->stride[1];
-  base5 = base5 + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+  base5 = base5 + (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
     args[5].dat->size[0] *
     args[5].dat->size[1] *
     start[2] * args[5].stencil->stride[2];
@@ -245,11 +245,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double *p_a5 = (double *)((char *)args[5].data + base5);
   #endif
 
-  int base6 = args[6].dat->base_offset + (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) * start[0] * args[6].stencil->stride[0];
-  base6 = base6 + (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
+  int base6 = args[6].dat->base_offset + (block->instance->OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) * start[0] * args[6].stencil->stride[0];
+  base6 = base6 + (block->instance->OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
     args[6].dat->size[0] *
     start[1] * args[6].stencil->stride[1];
-  base6 = base6 + (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
+  base6 = base6 + (block->instance->OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
     args[6].dat->size[0] *
     args[6].dat->size[1] *
     start[2] * args[6].stencil->stride[2];
@@ -259,11 +259,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double *p_a6 = (double *)((char *)args[6].data + base6);
   #endif
 
-  int base7 = args[7].dat->base_offset + (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) * start[0] * args[7].stencil->stride[0];
-  base7 = base7 + (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) *
+  int base7 = args[7].dat->base_offset + (block->instance->OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) * start[0] * args[7].stencil->stride[0];
+  base7 = base7 + (block->instance->OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) *
     args[7].dat->size[0] *
     start[1] * args[7].stencil->stride[1];
-  base7 = base7 + (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) *
+  base7 = base7 + (block->instance->OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) *
     args[7].dat->size[0] *
     args[7].dat->size[1] *
     start[2] * args[7].stencil->stride[2];
@@ -273,11 +273,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double *p_a7 = (double *)((char *)args[7].data + base7);
   #endif
 
-  int base8 = args[8].dat->base_offset + (OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size) * start[0] * args[8].stencil->stride[0];
-  base8 = base8 + (OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size) *
+  int base8 = args[8].dat->base_offset + (block->instance->OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size) * start[0] * args[8].stencil->stride[0];
+  base8 = base8 + (block->instance->OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size) *
     args[8].dat->size[0] *
     start[1] * args[8].stencil->stride[1];
-  base8 = base8 + (OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size) *
+  base8 = base8 + (block->instance->OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size) *
     args[8].dat->size[0] *
     args[8].dat->size[1] *
     start[2] * args[8].stencil->stride[2];
@@ -287,11 +287,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double *p_a8 = (double *)((char *)args[8].data + base8);
   #endif
 
-  int base9 = args[9].dat->base_offset + (OPS_soa ? args[9].dat->type_size : args[9].dat->elem_size) * start[0] * args[9].stencil->stride[0];
-  base9 = base9 + (OPS_soa ? args[9].dat->type_size : args[9].dat->elem_size) *
+  int base9 = args[9].dat->base_offset + (block->instance->OPS_soa ? args[9].dat->type_size : args[9].dat->elem_size) * start[0] * args[9].stencil->stride[0];
+  base9 = base9 + (block->instance->OPS_soa ? args[9].dat->type_size : args[9].dat->elem_size) *
     args[9].dat->size[0] *
     start[1] * args[9].stencil->stride[1];
-  base9 = base9 + (OPS_soa ? args[9].dat->type_size : args[9].dat->elem_size) *
+  base9 = base9 + (block->instance->OPS_soa ? args[9].dat->type_size : args[9].dat->elem_size) *
     args[9].dat->size[0] *
     args[9].dat->size[1] *
     start[2] * args[9].stencil->stride[2];
@@ -301,11 +301,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double *p_a9 = (double *)((char *)args[9].data + base9);
   #endif
 
-  int base10 = args[10].dat->base_offset + (OPS_soa ? args[10].dat->type_size : args[10].dat->elem_size) * start[0] * args[10].stencil->stride[0];
-  base10 = base10 + (OPS_soa ? args[10].dat->type_size : args[10].dat->elem_size) *
+  int base10 = args[10].dat->base_offset + (block->instance->OPS_soa ? args[10].dat->type_size : args[10].dat->elem_size) * start[0] * args[10].stencil->stride[0];
+  base10 = base10 + (block->instance->OPS_soa ? args[10].dat->type_size : args[10].dat->elem_size) *
     args[10].dat->size[0] *
     start[1] * args[10].stencil->stride[1];
-  base10 = base10 + (OPS_soa ? args[10].dat->type_size : args[10].dat->elem_size) *
+  base10 = base10 + (block->instance->OPS_soa ? args[10].dat->type_size : args[10].dat->elem_size) *
     args[10].dat->size[0] *
     args[10].dat->size[1] *
     start[2] * args[10].stencil->stride[2];
@@ -315,11 +315,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double *p_a10 = (double *)((char *)args[10].data + base10);
   #endif
 
-  int base11 = args[11].dat->base_offset + (OPS_soa ? args[11].dat->type_size : args[11].dat->elem_size) * start[0] * args[11].stencil->stride[0];
-  base11 = base11 + (OPS_soa ? args[11].dat->type_size : args[11].dat->elem_size) *
+  int base11 = args[11].dat->base_offset + (block->instance->OPS_soa ? args[11].dat->type_size : args[11].dat->elem_size) * start[0] * args[11].stencil->stride[0];
+  base11 = base11 + (block->instance->OPS_soa ? args[11].dat->type_size : args[11].dat->elem_size) *
     args[11].dat->size[0] *
     start[1] * args[11].stencil->stride[1];
-  base11 = base11 + (OPS_soa ? args[11].dat->type_size : args[11].dat->elem_size) *
+  base11 = base11 + (block->instance->OPS_soa ? args[11].dat->type_size : args[11].dat->elem_size) *
     args[11].dat->size[0] *
     args[11].dat->size[1] *
     start[2] * args[11].stencil->stride[2];
@@ -329,11 +329,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double *p_a11 = (double *)((char *)args[11].data + base11);
   #endif
 
-  int base12 = args[12].dat->base_offset + (OPS_soa ? args[12].dat->type_size : args[12].dat->elem_size) * start[0] * args[12].stencil->stride[0];
-  base12 = base12 + (OPS_soa ? args[12].dat->type_size : args[12].dat->elem_size) *
+  int base12 = args[12].dat->base_offset + (block->instance->OPS_soa ? args[12].dat->type_size : args[12].dat->elem_size) * start[0] * args[12].stencil->stride[0];
+  base12 = base12 + (block->instance->OPS_soa ? args[12].dat->type_size : args[12].dat->elem_size) *
     args[12].dat->size[0] *
     start[1] * args[12].stencil->stride[1];
-  base12 = base12 + (OPS_soa ? args[12].dat->type_size : args[12].dat->elem_size) *
+  base12 = base12 + (block->instance->OPS_soa ? args[12].dat->type_size : args[12].dat->elem_size) *
     args[12].dat->size[0] *
     args[12].dat->size[1] *
     start[2] * args[12].stencil->stride[2];
@@ -343,11 +343,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double *p_a12 = (double *)((char *)args[12].data + base12);
   #endif
 
-  int base13 = args[13].dat->base_offset + (OPS_soa ? args[13].dat->type_size : args[13].dat->elem_size) * start[0] * args[13].stencil->stride[0];
-  base13 = base13 + (OPS_soa ? args[13].dat->type_size : args[13].dat->elem_size) *
+  int base13 = args[13].dat->base_offset + (block->instance->OPS_soa ? args[13].dat->type_size : args[13].dat->elem_size) * start[0] * args[13].stencil->stride[0];
+  base13 = base13 + (block->instance->OPS_soa ? args[13].dat->type_size : args[13].dat->elem_size) *
     args[13].dat->size[0] *
     start[1] * args[13].stencil->stride[1];
-  base13 = base13 + (OPS_soa ? args[13].dat->type_size : args[13].dat->elem_size) *
+  base13 = base13 + (block->instance->OPS_soa ? args[13].dat->type_size : args[13].dat->elem_size) *
     args[13].dat->size[0] *
     args[13].dat->size[1] *
     start[2] * args[13].stencil->stride[2];
@@ -357,11 +357,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double *p_a13 = (double *)((char *)args[13].data + base13);
   #endif
 
-  int base14 = args[14].dat->base_offset + (OPS_soa ? args[14].dat->type_size : args[14].dat->elem_size) * start[0] * args[14].stencil->stride[0];
-  base14 = base14 + (OPS_soa ? args[14].dat->type_size : args[14].dat->elem_size) *
+  int base14 = args[14].dat->base_offset + (block->instance->OPS_soa ? args[14].dat->type_size : args[14].dat->elem_size) * start[0] * args[14].stencil->stride[0];
+  base14 = base14 + (block->instance->OPS_soa ? args[14].dat->type_size : args[14].dat->elem_size) *
     args[14].dat->size[0] *
     start[1] * args[14].stencil->stride[1];
-  base14 = base14 + (OPS_soa ? args[14].dat->type_size : args[14].dat->elem_size) *
+  base14 = base14 + (block->instance->OPS_soa ? args[14].dat->type_size : args[14].dat->elem_size) *
     args[14].dat->size[0] *
     args[14].dat->size[1] *
     start[2] * args[14].stencil->stride[2];
@@ -371,11 +371,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double *p_a14 = (double *)((char *)args[14].data + base14);
   #endif
 
-  int base15 = args[15].dat->base_offset + (OPS_soa ? args[15].dat->type_size : args[15].dat->elem_size) * start[0] * args[15].stencil->stride[0];
-  base15 = base15 + (OPS_soa ? args[15].dat->type_size : args[15].dat->elem_size) *
+  int base15 = args[15].dat->base_offset + (block->instance->OPS_soa ? args[15].dat->type_size : args[15].dat->elem_size) * start[0] * args[15].stencil->stride[0];
+  base15 = base15 + (block->instance->OPS_soa ? args[15].dat->type_size : args[15].dat->elem_size) *
     args[15].dat->size[0] *
     start[1] * args[15].stencil->stride[1];
-  base15 = base15 + (OPS_soa ? args[15].dat->type_size : args[15].dat->elem_size) *
+  base15 = base15 + (block->instance->OPS_soa ? args[15].dat->type_size : args[15].dat->elem_size) *
     args[15].dat->size[0] *
     args[15].dat->size[1] *
     start[2] * args[15].stencil->stride[2];
@@ -385,11 +385,11 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   double *p_a15 = (double *)((char *)args[15].data + base15);
   #endif
 
-  int base16 = args[16].dat->base_offset + (OPS_soa ? args[16].dat->type_size : args[16].dat->elem_size) * start[0] * args[16].stencil->stride[0];
-  base16 = base16 + (OPS_soa ? args[16].dat->type_size : args[16].dat->elem_size) *
+  int base16 = args[16].dat->base_offset + (block->instance->OPS_soa ? args[16].dat->type_size : args[16].dat->elem_size) * start[0] * args[16].stencil->stride[0];
+  base16 = base16 + (block->instance->OPS_soa ? args[16].dat->type_size : args[16].dat->elem_size) *
     args[16].dat->size[0] *
     start[1] * args[16].stencil->stride[1];
-  base16 = base16 + (OPS_soa ? args[16].dat->type_size : args[16].dat->elem_size) *
+  base16 = base16 + (block->instance->OPS_soa ? args[16].dat->type_size : args[16].dat->elem_size) *
     args[16].dat->size[0] *
     args[16].dat->size[1] *
     start[2] * args[16].stencil->stride[2];
@@ -405,40 +405,40 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   int z_size = MAX(0,end[2]-start[2]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0];
-  ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0];
-  ydim2 = args[2].dat->size[1];
-  xdim3 = args[3].dat->size[0];
-  ydim3 = args[3].dat->size[1];
-  xdim4 = args[4].dat->size[0];
-  ydim4 = args[4].dat->size[1];
-  xdim5 = args[5].dat->size[0];
-  ydim5 = args[5].dat->size[1];
-  xdim6 = args[6].dat->size[0];
-  ydim6 = args[6].dat->size[1];
-  xdim7 = args[7].dat->size[0];
-  ydim7 = args[7].dat->size[1];
-  xdim8 = args[8].dat->size[0];
-  ydim8 = args[8].dat->size[1];
-  xdim9 = args[9].dat->size[0];
-  ydim9 = args[9].dat->size[1];
-  xdim10 = args[10].dat->size[0];
-  ydim10 = args[10].dat->size[1];
-  xdim11 = args[11].dat->size[0];
-  ydim11 = args[11].dat->size[1];
-  xdim12 = args[12].dat->size[0];
-  ydim12 = args[12].dat->size[1];
-  xdim13 = args[13].dat->size[0];
-  ydim13 = args[13].dat->size[1];
-  xdim14 = args[14].dat->size[0];
-  ydim14 = args[14].dat->size[1];
-  xdim15 = args[15].dat->size[0];
-  ydim15 = args[15].dat->size[1];
-  xdim16 = args[16].dat->size[0];
-  ydim16 = args[16].dat->size[1];
+  int xdim0 = args[0].dat->size[0];
+  int ydim0 = args[0].dat->size[1];
+  int xdim1 = args[1].dat->size[0];
+  int ydim1 = args[1].dat->size[1];
+  int xdim2 = args[2].dat->size[0];
+  int ydim2 = args[2].dat->size[1];
+  int xdim3 = args[3].dat->size[0];
+  int ydim3 = args[3].dat->size[1];
+  int xdim4 = args[4].dat->size[0];
+  int ydim4 = args[4].dat->size[1];
+  int xdim5 = args[5].dat->size[0];
+  int ydim5 = args[5].dat->size[1];
+  int xdim6 = args[6].dat->size[0];
+  int ydim6 = args[6].dat->size[1];
+  int xdim7 = args[7].dat->size[0];
+  int ydim7 = args[7].dat->size[1];
+  int xdim8 = args[8].dat->size[0];
+  int ydim8 = args[8].dat->size[1];
+  int xdim9 = args[9].dat->size[0];
+  int ydim9 = args[9].dat->size[1];
+  int xdim10 = args[10].dat->size[0];
+  int ydim10 = args[10].dat->size[1];
+  int xdim11 = args[11].dat->size[0];
+  int ydim11 = args[11].dat->size[1];
+  int xdim12 = args[12].dat->size[0];
+  int ydim12 = args[12].dat->size[1];
+  int xdim13 = args[13].dat->size[0];
+  int ydim13 = args[13].dat->size[1];
+  int xdim14 = args[14].dat->size[0];
+  int ydim14 = args[14].dat->size[1];
+  int xdim15 = args[15].dat->size[0];
+  int ydim15 = args[15].dat->size[1];
+  int xdim16 = args[16].dat->size[0];
+  int ydim16 = args[16].dat->size[1];
   if (xdim0 != xdim0_PdV_kernel_nopredict_h || ydim0 != ydim0_PdV_kernel_nopredict_h || xdim1 != xdim1_PdV_kernel_nopredict_h || ydim1 != ydim1_PdV_kernel_nopredict_h || xdim2 != xdim2_PdV_kernel_nopredict_h || ydim2 != ydim2_PdV_kernel_nopredict_h || xdim3 != xdim3_PdV_kernel_nopredict_h || ydim3 != ydim3_PdV_kernel_nopredict_h || xdim4 != xdim4_PdV_kernel_nopredict_h || ydim4 != ydim4_PdV_kernel_nopredict_h || xdim5 != xdim5_PdV_kernel_nopredict_h || ydim5 != ydim5_PdV_kernel_nopredict_h || xdim6 != xdim6_PdV_kernel_nopredict_h || ydim6 != ydim6_PdV_kernel_nopredict_h || xdim7 != xdim7_PdV_kernel_nopredict_h || ydim7 != ydim7_PdV_kernel_nopredict_h || xdim8 != xdim8_PdV_kernel_nopredict_h || ydim8 != ydim8_PdV_kernel_nopredict_h || xdim9 != xdim9_PdV_kernel_nopredict_h || ydim9 != ydim9_PdV_kernel_nopredict_h || xdim10 != xdim10_PdV_kernel_nopredict_h || ydim10 != ydim10_PdV_kernel_nopredict_h || xdim11 != xdim11_PdV_kernel_nopredict_h || ydim11 != ydim11_PdV_kernel_nopredict_h || xdim12 != xdim12_PdV_kernel_nopredict_h || ydim12 != ydim12_PdV_kernel_nopredict_h || xdim13 != xdim13_PdV_kernel_nopredict_h || ydim13 != ydim13_PdV_kernel_nopredict_h || xdim14 != xdim14_PdV_kernel_nopredict_h || ydim14 != ydim14_PdV_kernel_nopredict_h || xdim15 != xdim15_PdV_kernel_nopredict_h || ydim15 != ydim15_PdV_kernel_nopredict_h || xdim16 != xdim16_PdV_kernel_nopredict_h || ydim16 != ydim16_PdV_kernel_nopredict_h) {
     xdim0_PdV_kernel_nopredict = xdim0;
     xdim0_PdV_kernel_nopredict_h = xdim0;
@@ -524,9 +524,9 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   #else
   ops_H_D_exchanges_host(args, 17);
   #endif
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[103].mpi_time += t2-t1;
+    block->instance->OPS_kernels[103].mpi_time += t2-t1;
   }
 
   PdV_kernel_nopredict_c_wrapper(
@@ -549,9 +549,9 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
     p_a16,
     x_size, y_size, z_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[103].time += t1-t2;
+    block->instance->OPS_kernels[103].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 17);
@@ -562,26 +562,26 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   ops_set_halo_dirtybit3(&args[10],range);
   ops_set_halo_dirtybit3(&args[13],range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[103].mpi_time += t2-t1;
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg8);
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg9);
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg10);
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg11);
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg12);
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg13);
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg14);
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg15);
-    OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg16);
+    block->instance->OPS_kernels[103].mpi_time += t2-t1;
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg9);
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg10);
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg11);
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg12);
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg13);
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg14);
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg15);
+    block->instance->OPS_kernels[103].transfer += ops_compute_transfer(dim, start, end, &arg16);
   }
 }

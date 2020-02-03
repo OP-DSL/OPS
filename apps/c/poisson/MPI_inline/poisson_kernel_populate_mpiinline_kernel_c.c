@@ -27,14 +27,15 @@ void poisson_kernel_populate_c_wrapper(
       ptr_double u = { u_p + n_x*1 + n_y * xdim3_poisson_kernel_populate*1, xdim3_poisson_kernel_populate};
       ptr_double f = { f_p + n_x*1 + n_y * xdim4_poisson_kernel_populate*1, xdim4_poisson_kernel_populate};
       ptr_double ref = { ref_p + n_x*1 + n_y * xdim5_poisson_kernel_populate*1, xdim5_poisson_kernel_populate};
+      
+  double x = dx * (double)(idx[0]+dispx[0]);
+  double y = dy * (double)(idx[1]+dispy[0]);
 
-      double x = dx * (double)(idx[0] + dispx[0]);
-      double y = dy * (double)(idx[1] + dispy[0]);
+  OPS_ACC(u, 0,0) = myfun(sin(M_PI*x),cos(2.0*M_PI*y))-1.0;
+  OPS_ACC(f, 0,0) = -5.0*M_PI*M_PI*sin(M_PI*x)*cos(2.0*M_PI*y);
+  OPS_ACC(ref, 0,0) = sin(M_PI*x)*cos(2.0*M_PI*y);
 
-      OPS_ACC(u, 0, 0) = myfun(sin(M_PI * x), cos(2.0 * M_PI * y)) - 1.0;
-      OPS_ACC(f, 0, 0) =
-          -5.0 * M_PI * M_PI * sin(M_PI * x) * cos(2.0 * M_PI * y);
-      OPS_ACC(ref, 0, 0) = sin(M_PI * x) * cos(2.0 * M_PI * y);
+
     }
   }
 }

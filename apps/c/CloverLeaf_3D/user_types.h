@@ -56,6 +56,7 @@ typedef struct field_type
 } field_type;
 
 #ifdef __cplusplus
+#ifndef __OPENCL_VERSION__
 inline int type_error (const field_type * a, const char *type ) {
   (void)a; return (strcmp ( type, "field_type" ) && strcmp ( type, "field_type:soa" ));
 }
@@ -67,5 +68,6 @@ inline int type_error (const grid_type * a, const char *type ) {
 inline int type_error (const state_type * a, const char *type ) {
   (void)a; return (strcmp ( type, "state_type" ) && strcmp ( type, "state_type:soa" ));
 }
+#endif
 #endif
 #endif

@@ -9,12 +9,13 @@ int xdim1_tea_leaf_common_init_Kx_Ky_kernel;
 int xdim2_tea_leaf_common_init_Kx_Ky_kernel;
 
 //user function
-inline void tea_leaf_common_init_Kx_Ky_kernel(ptr_double Kx, ptr_double Ky,
-                                              const ptr_double w) {
-  OPS_ACC(Kx, 0, 0) = (OPS_ACC(w, -1, 0) + OPS_ACC(w, 0, 0)) /
-                      (2.0 * OPS_ACC(w, -1, 0) * OPS_ACC(w, 0, 0));
-  OPS_ACC(Ky, 0, 0) = (OPS_ACC(w, 0, -1) + OPS_ACC(w, 0, 0)) /
-                      (2.0 * OPS_ACC(w, 0, -1) * OPS_ACC(w, 0, 0));
+#pragma acc routine
+inline 
+void tea_leaf_common_init_Kx_Ky_kernel(ptr_double Kx,
+  ptr_double Ky,
+  const ptr_double w) {
+	OPS_ACC(Kx, 0,0)=(OPS_ACC(w, -1,0 )+OPS_ACC(w, 0,0))/(2.0*OPS_ACC(w, -1,0 )*OPS_ACC(w, 0,0));
+	OPS_ACC(Ky, 0,0)=(OPS_ACC(w,  0,-1)+OPS_ACC(w, 0,0))/(2.0*OPS_ACC(w,  0,-1)*OPS_ACC(w, 0,0));
 }
 
 
@@ -32,19 +33,12 @@ void tea_leaf_common_init_Kx_Ky_kernel_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      ptr_double ptr0 = {p_a0 + n_x * 1 * 1 +
-                             n_y * xdim0_tea_leaf_common_init_Kx_Ky_kernel * 1 *
-                                 1,
-                         xdim0_tea_leaf_common_init_Kx_Ky_kernel};
-      ptr_double ptr1 = {p_a1 + n_x * 1 * 1 +
-                             n_y * xdim1_tea_leaf_common_init_Kx_Ky_kernel * 1 *
-                                 1,
-                         xdim1_tea_leaf_common_init_Kx_Ky_kernel};
-      const ptr_double ptr2 = {
-          p_a2 + n_x * 1 * 1 +
-              n_y * xdim2_tea_leaf_common_init_Kx_Ky_kernel * 1 * 1,
-          xdim2_tea_leaf_common_init_Kx_Ky_kernel};
-      tea_leaf_common_init_Kx_Ky_kernel(ptr0, ptr1, ptr2);
+      ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_tea_leaf_common_init_Kx_Ky_kernel*1*1, xdim0_tea_leaf_common_init_Kx_Ky_kernel};
+      ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_tea_leaf_common_init_Kx_Ky_kernel*1*1, xdim1_tea_leaf_common_init_Kx_Ky_kernel};
+      const ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_tea_leaf_common_init_Kx_Ky_kernel*1*1, xdim2_tea_leaf_common_init_Kx_Ky_kernel};
+      tea_leaf_common_init_Kx_Ky_kernel( ptr0,
+          ptr1,ptr2 );
+
     }
   }
 }
