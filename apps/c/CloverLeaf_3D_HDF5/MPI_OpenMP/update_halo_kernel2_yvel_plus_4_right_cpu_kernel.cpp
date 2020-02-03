@@ -29,14 +29,14 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_right_execute(ops_kernel_descr
   if (!ops_checkpointing_before(args,3,range,41)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(41,"update_halo_kernel2_yvel_plus_4_right");
-    OPS_kernels[41].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,41,"update_halo_kernel2_yvel_plus_4_right");
+    block->instance->OPS_kernels[41].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "update_halo_kernel2_yvel_plus_4_right");
+  ops_register_args(block->instance, args, "update_halo_kernel2_yvel_plus_4_right");
   #endif
 
 
@@ -63,12 +63,15 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_right_execute(ops_kernel_descr
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ yvel0_p = (double *)(args[0].data + base0);
+  double * __restrict__ yvel0_p = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset;
-  double *__restrict__ yvel1_p = (double *)(args[1].data + base1);
+  double * __restrict__ yvel1_p = (double *)(args[1].data + base1);
 
-  int *__restrict__ fields = (int *)args[2].data;
+  int * __restrict__ fields = (int *)args[2].data;
+
+
+
 
   #ifndef OPS_LAZY
   //Halo Exchanges
@@ -77,9 +80,9 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_right_execute(ops_kernel_descr
   ops_H_D_exchanges_host(args, 3);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[41].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[41].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for collapse(2)
@@ -87,41 +90,27 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_right_execute(ops_kernel_descr
     for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
       #ifdef __INTEL_COMPILER
       #pragma loop_count(10000)
-#pragma omp simd
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+      #pragma omp simd
+      #elif defined(__clang__)
+      #pragma clang loop vectorize(assume_safety)
+      #elif defined(__GNUC__)
+      #pragma GCC ivdep
+      #else
+      #pragma simd
+      #endif
       for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-        ACC<double> yvel0(
-            xdim0_update_halo_kernel2_yvel_plus_4_right,
-            ydim0_update_halo_kernel2_yvel_plus_4_right,
-            yvel0_p + n_x * 1 +
-                n_y * xdim0_update_halo_kernel2_yvel_plus_4_right * 1 +
-                n_z * xdim0_update_halo_kernel2_yvel_plus_4_right *
-                    ydim0_update_halo_kernel2_yvel_plus_4_right * 1);
-        ACC<double> yvel1(
-            xdim1_update_halo_kernel2_yvel_plus_4_right,
-            ydim1_update_halo_kernel2_yvel_plus_4_right,
-            yvel1_p + n_x * 1 +
-                n_y * xdim1_update_halo_kernel2_yvel_plus_4_right * 1 +
-                n_z * xdim1_update_halo_kernel2_yvel_plus_4_right *
-                    ydim1_update_halo_kernel2_yvel_plus_4_right * 1);
+        ACC<double> yvel0(xdim0_update_halo_kernel2_yvel_plus_4_right, ydim0_update_halo_kernel2_yvel_plus_4_right, yvel0_p + n_x*1 + n_y * xdim0_update_halo_kernel2_yvel_plus_4_right*1 + n_z * xdim0_update_halo_kernel2_yvel_plus_4_right * ydim0_update_halo_kernel2_yvel_plus_4_right*1);
+        ACC<double> yvel1(xdim1_update_halo_kernel2_yvel_plus_4_right, ydim1_update_halo_kernel2_yvel_plus_4_right, yvel1_p + n_x*1 + n_y * xdim1_update_halo_kernel2_yvel_plus_4_right*1 + n_z * xdim1_update_halo_kernel2_yvel_plus_4_right * ydim1_update_halo_kernel2_yvel_plus_4_right*1);
+        
+  if(fields[FIELD_YVEL0] == 1) yvel0(0,0,0) = yvel0(-4,0,0);
+  if(fields[FIELD_YVEL1] == 1) yvel1(0,0,0) = yvel1(-4,0,0);
 
-        if (fields[FIELD_YVEL0] == 1)
-          yvel0(0, 0, 0) = yvel0(-4, 0, 0);
-        if (fields[FIELD_YVEL1] == 1)
-          yvel1(0, 0, 0) = yvel1(-4, 0, 0);
       }
     }
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[41].time += __t2-__t1;
+    block->instance->OPS_kernels[41].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 3);
@@ -129,12 +118,12 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_right_execute(ops_kernel_descr
   ops_set_halo_dirtybit3(&args[1],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[41].mpi_time += __t1-__t2;
-    OPS_kernels[41].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[41].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[41].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[41].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[41].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
 
@@ -142,7 +131,7 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_right_execute(ops_kernel_descr
 #ifdef OPS_LAZY
 void ops_par_loop_update_halo_kernel2_yvel_plus_4_right(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -166,8 +155,8 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_right(char const *name, ops_bl
   memcpy(tmp, arg2.data,NUM_FIELDS*sizeof(int));
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel2_yvel_plus_4_right_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(41,"update_halo_kernel2_yvel_plus_4_right");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,41,"update_halo_kernel2_yvel_plus_4_right");
   }
   ops_enqueue_kernel(desc);
 }

@@ -31,9 +31,9 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block bloc
   if (!ops_checkpointing_before(args,3,range,38)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(38,"update_halo_kernel3_minus_2_a");
-    OPS_kernels[38].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,38,"update_halo_kernel3_minus_2_a");
+    block->instance->OPS_kernels[38].count++;
   }
 
   //compute localy allocated range for the sub-block
@@ -59,7 +59,7 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block bloc
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
   }
 
@@ -72,24 +72,20 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block bloc
 
 
   int *arg2h = (int *)arg2.data;
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
-  int base0 = args[0].dat->base_offset +
-              (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
-                  start[0] * args[0].stencil->stride[0];
-  base0 = base0 +
-          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
-              args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0+ (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+    args[0].dat->size[0] *
+    start[1] * args[0].stencil->stride[1];
   double *p_a0 = (double *)(args[0].data + base0);
 
-  int base1 = args[1].dat->base_offset +
-              (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
-                  start[0] * args[1].stencil->stride[0];
-  base1 = base1 +
-          (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
-              args[1].dat->size[0] * start[1] * args[1].stencil->stride[1];
+  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  base1 = base1+ (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+    args[1].dat->size[0] *
+    start[1] * args[1].stencil->stride[1];
   double *p_a1 = (double *)(args[1].data + base1);
 
   int *p_a2 = (int *)args[2].data;
@@ -100,9 +96,9 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block bloc
   ops_H_D_exchanges_host(args, 3);
   ops_halo_exchanges(args,3,range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[38].mpi_time += t1 - t2;
+    block->instance->OPS_kernels[38].mpi_time += t1-t2;
   }
 
   update_halo_kernel3_minus_2_a_c_wrapper(
@@ -111,17 +107,17 @@ void ops_par_loop_update_halo_kernel3_minus_2_a(char const *name, ops_block bloc
     p_a2,
     x_size, y_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[38].time += t2 - t1;
+    block->instance->OPS_kernels[38].time += t2-t1;
   }
   ops_set_dirtybit_host(args, 3);
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
   //Update kernel record
-  if (OPS_diags > 1) {
-    OPS_kernels[38].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[38].transfer += ops_compute_transfer(dim, start, end, &arg1);
+  if (block->instance->OPS_diags > 1) {
+    block->instance->OPS_kernels[38].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[38].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

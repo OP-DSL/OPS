@@ -39,14 +39,14 @@ void ops_par_loop_updateRK3_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,11,range,6)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(6,"updateRK3_kernel");
-    OPS_kernels[6].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,6,"updateRK3_kernel");
+    block->instance->OPS_kernels[6].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "updateRK3_kernel");
+  ops_register_args(block->instance, args, "updateRK3_kernel");
   #endif
 
 
@@ -110,9 +110,9 @@ void ops_par_loop_updateRK3_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 11);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[6].mpi_time += __t1 - __t2;
+    block->instance->OPS_kernels[6].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
@@ -137,9 +137,9 @@ void ops_par_loop_updateRK3_kernel_execute(ops_kernel_descriptor *desc) {
 			rhoE_old(0) = rhoE_old(0) + dt * a2[0] * (-rhoE_res(0));
 
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[6].time += __t2 - __t1;
+    block->instance->OPS_kernels[6].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 11);
@@ -151,19 +151,19 @@ void ops_par_loop_updateRK3_kernel_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[5],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[6].mpi_time += __t1 - __t2;
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    block->instance->OPS_kernels[6].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg8);
   }
 }
 
@@ -173,7 +173,7 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7,
  ops_arg arg8, ops_arg arg9, ops_arg arg10) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -215,8 +215,8 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
   memcpy(tmp, arg10.data,1*sizeof(double));
   desc->args[10].data = tmp;
   desc->function = ops_par_loop_updateRK3_kernel_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(6,"updateRK3_kernel");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,6,"updateRK3_kernel");
   }
   ops_enqueue_kernel(desc);
 }

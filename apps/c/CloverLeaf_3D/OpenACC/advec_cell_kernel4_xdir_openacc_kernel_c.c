@@ -28,6 +28,7 @@ int xdim10_advec_cell_kernel4_xdir;
 int ydim10_advec_cell_kernel4_xdir;
 
 //user function
+#pragma acc routine
 
 inline void advec_cell_kernel4_xdir(ptr_double density1,
   ptr_double energy1,

@@ -119,7 +119,7 @@ cd -
 source ../../scripts/$SOURCE_PGI
 
 make clean
-make -j
+make 
 cd -
 make clean
 make

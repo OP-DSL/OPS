@@ -46,9 +46,9 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
   if (!ops_checkpointing_before(args,6,range,7)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(7,"Riemann_kernel");
-    OPS_kernels[7].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,7,"Riemann_kernel");
+    block->instance->OPS_kernels[7].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -83,42 +83,42 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
 
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
   #else
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a1 = (double *)((char *)args[1].data_d + base1);
   #else
   double *p_a1 = (double *)((char *)args[1].data + base1);
   #endif
 
-  int base2 = args[2].dat->base_offset + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
+  int base2 = args[2].dat->base_offset + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a2 = (double *)((char *)args[2].data_d + base2);
   #else
   double *p_a2 = (double *)((char *)args[2].data + base2);
   #endif
 
-  int base3 = args[3].dat->base_offset + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
+  int base3 = args[3].dat->base_offset + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a3 = (double *)((char *)args[3].data_d + base3);
   #else
   double *p_a3 = (double *)((char *)args[3].data + base3);
   #endif
 
-  int base4 = args[4].dat->base_offset + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) * start[0] * args[4].stencil->stride[0];
+  int base4 = args[4].dat->base_offset + (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) * start[0] * args[4].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a4 = (double *)((char *)args[4].data_d + base4);
   #else
   double *p_a4 = (double *)((char *)args[4].data + base4);
   #endif
 
-  int base5 = args[5].dat->base_offset + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) * start[0] * args[5].stencil->stride[0];
+  int base5 = args[5].dat->base_offset + (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) * start[0] * args[5].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a5 = (double *)((char *)args[5].data_d + base5);
   #else
@@ -129,12 +129,12 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
   int x_size = MAX(0,end[0]-start[0]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
-  xdim2 = args[2].dat->size[0];
-  xdim3 = args[3].dat->size[0];
-  xdim4 = args[4].dat->size[0];
-  xdim5 = args[5].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
+  int xdim2 = args[2].dat->size[0];
+  int xdim3 = args[3].dat->size[0];
+  int xdim4 = args[4].dat->size[0];
+  int xdim5 = args[5].dat->size[0];
   if (xdim0 != xdim0_Riemann_kernel_h || xdim1 != xdim1_Riemann_kernel_h || xdim2 != xdim2_Riemann_kernel_h || xdim3 != xdim3_Riemann_kernel_h || xdim4 != xdim4_Riemann_kernel_h || xdim5 != xdim5_Riemann_kernel_h) {
     xdim0_Riemann_kernel = xdim0;
     xdim0_Riemann_kernel_h = xdim0;
@@ -164,9 +164,9 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
   #else
   ops_H_D_exchanges_host(args, 6);
   #endif
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[7].mpi_time += t2-t1;
+    block->instance->OPS_kernels[7].mpi_time += t2-t1;
   }
 
   Riemann_kernel_c_wrapper(
@@ -178,9 +178,9 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
     p_a5,
     x_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[7].time += t1-t2;
+    block->instance->OPS_kernels[7].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 6);
@@ -191,15 +191,15 @@ void ops_par_loop_Riemann_kernel(char const *name, ops_block block, int dim, int
   ops_set_halo_dirtybit3(&args[4],range);
   ops_set_halo_dirtybit3(&args[5],range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[7].mpi_time += t2-t1;
-    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[7].mpi_time += t2-t1;
+    block->instance->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg5);
   }
 }

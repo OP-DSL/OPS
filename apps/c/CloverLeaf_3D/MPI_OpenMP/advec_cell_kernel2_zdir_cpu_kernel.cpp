@@ -30,14 +30,14 @@ void ops_par_loop_advec_cell_kernel2_zdir_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,4,range,118)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(118,"advec_cell_kernel2_zdir");
-    OPS_kernels[118].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,118,"advec_cell_kernel2_zdir");
+    block->instance->OPS_kernels[118].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "advec_cell_kernel2_zdir");
+  ops_register_args(block->instance, args, "advec_cell_kernel2_zdir");
   #endif
 
 
@@ -88,9 +88,9 @@ void ops_par_loop_advec_cell_kernel2_zdir_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 4);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[118].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[118].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for collapse(2)
@@ -102,7 +102,6 @@ void ops_par_loop_advec_cell_kernel2_zdir_execute(ops_kernel_descriptor *desc) {
       #elif defined(__clang__)
       #pragma clang loop vectorize(assume_safety)
       #elif defined(__GNUC__)
-      #pragma simd
       #pragma GCC ivdep
       #else
       #pragma simd
@@ -121,9 +120,9 @@ void ops_par_loop_advec_cell_kernel2_zdir_execute(ops_kernel_descriptor *desc) {
       }
     }
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[118].time += __t2-__t1;
+    block->instance->OPS_kernels[118].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 4);
@@ -131,14 +130,14 @@ void ops_par_loop_advec_cell_kernel2_zdir_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[1],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[118].mpi_time += __t1-__t2;
-    OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[118].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[118].transfer += ops_compute_transfer(dim, start, end, &arg3);
   }
 }
 
@@ -146,7 +145,7 @@ void ops_par_loop_advec_cell_kernel2_zdir_execute(ops_kernel_descriptor *desc) {
 #ifdef OPS_LAZY
 void ops_par_loop_advec_cell_kernel2_zdir(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -170,8 +169,8 @@ void ops_par_loop_advec_cell_kernel2_zdir(char const *name, ops_block block, int
   desc->args[3] = arg3;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg3.dat->index;
   desc->function = ops_par_loop_advec_cell_kernel2_zdir_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(118,"advec_cell_kernel2_zdir");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,118,"advec_cell_kernel2_zdir");
   }
   ops_enqueue_kernel(desc);
 }

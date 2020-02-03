@@ -35,9 +35,9 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
   if (!ops_checkpointing_before(args,2,range,0)) return;
   #endif
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
-    ops_timing_realloc(0,"multidim_kernel");
-    OPS_instance::getOPSInstance()->OPS_kernels[0].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,0,"multidim_kernel");
+    block->instance->OPS_kernels[0].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -67,8 +67,8 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
 
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
   #ifdef OPS_GPU
@@ -84,7 +84,7 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
   int y_size = MAX(0,end[1]-start[1]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
   if (xdim0 != xdim0_multidim_kernel_h) {
     xdim0_multidim_kernel = xdim0;
     xdim0_multidim_kernel_h = xdim0;
@@ -104,9 +104,9 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
   #else
   ops_H_D_exchanges_host(args, 2);
   #endif
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[0].mpi_time += t2-t1;
+    block->instance->OPS_kernels[0].mpi_time += t2-t1;
   }
 
   multidim_kernel_c_wrapper(
@@ -115,9 +115,9 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
     arg_idx[0], arg_idx[1],
     x_size, y_size);
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_instance::getOPSInstance()->OPS_kernels[0].time += t1-t2;
+    block->instance->OPS_kernels[0].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 2);
@@ -126,10 +126,10 @@ void ops_par_loop_multidim_kernel(char const *name, ops_block block, int dim, in
   #endif
   ops_set_halo_dirtybit3(&args[0],range);
 
-  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_instance::getOPSInstance()->OPS_kernels[0].mpi_time += t2-t1;
-    OPS_instance::getOPSInstance()->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[0].mpi_time += t2-t1;
+    block->instance->OPS_kernels[0].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

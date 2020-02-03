@@ -11,7 +11,7 @@ void ops_init_backend();
 #include <string.h>
 
 #define OPS_3D
-#include  "ops_lib_cpp.h"
+#include  "ops_lib_core.h"
 
 //
 // ops_par_loop declarations
@@ -64,8 +64,11 @@ void dump_data(FP *data, const int nx, const int ny, const int nz,
         for (int i = 0; i < nx; i++) {
           int ind = i + j * ldim + k * ldim * ny;
 
+
+
           fwrite(&data[ind], sizeof(FP), 1, fout);
         }
+
       }
     }
 

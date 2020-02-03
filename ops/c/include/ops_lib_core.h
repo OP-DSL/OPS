@@ -84,6 +84,8 @@
  * * zero constants
  * */
 
+#ifndef ZERO_INF
+#define ZERO_INF
 #define ZERO_double 0.0;
 #define INFINITY_double DBL_MAX;
 
@@ -109,6 +111,7 @@
 #define INFINITY_ull ULLONG_MAX;
 
 #define ZERO_bool 0;
+#endif
 typedef std::complex<double> complexd;
 typedef std::complex<float> complexf;
 

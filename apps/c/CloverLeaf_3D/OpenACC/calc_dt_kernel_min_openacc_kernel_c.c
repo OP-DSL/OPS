@@ -8,6 +8,7 @@ int xdim0_calc_dt_kernel_min;
 int ydim0_calc_dt_kernel_min;
 
 //user function
+#pragma acc routine
 inline 
 void calc_dt_kernel_min(const ptr_double  dt_min,
   double* dt_min_val) {

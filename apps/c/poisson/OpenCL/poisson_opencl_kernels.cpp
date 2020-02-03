@@ -6,7 +6,7 @@
 #define OPS_2D
 #include "stdlib.h"
 #include "stdio.h"
-#include "ops_lib_cpp.h"
+#include "ops_lib_core.h"
 #include "ops_opencl_rt_support.h"
 #include "user_types.h"
 #ifdef OPS_MPI
@@ -20,7 +20,9 @@ extern double dy;
 void ops_init_backend() {}
 
 //this needs to be a platform specific copy symbol to device function
-void ops_decl_const_char(OPS_instance *instance, int dim, char const * type, int typeSize, char * dat, char const * name ) {
+void ops_decl_const_char(int dim, char const * type, int typeSize, char * dat, char const * name ) {
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+  ops_execute(instance);
   cl_int ret = 0;
   if (instance->opencl_instance->OPS_opencl_core.constant == NULL) {
     instance->opencl_instance->OPS_opencl_core.constant = (cl_mem*) malloc((2)*sizeof(cl_mem));
@@ -51,7 +53,7 @@ void ops_decl_const_char(OPS_instance *instance, int dim, char const * type, int
   }
   else
   {
-    printf("error: unknown const name\n"); exit(1);
+    throw OPSException(OPS_RUNTIME_ERROR, "error: unknown const name");
   }
 }
 

@@ -47,14 +47,14 @@ void ops_par_loop_PdV_kernel_nopredict_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,17,range,102)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(102,"PdV_kernel_nopredict");
-    OPS_kernels[102].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,102,"PdV_kernel_nopredict");
+    block->instance->OPS_kernels[102].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "PdV_kernel_nopredict");
+  ops_register_args(block->instance, args, "PdV_kernel_nopredict");
   #endif
 
 
@@ -111,55 +111,57 @@ void ops_par_loop_PdV_kernel_nopredict_execute(ops_kernel_descriptor *desc) {
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ xarea_p = (double *)(args[0].data + base0);
+  double * __restrict__ xarea_p = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset;
-  double *__restrict__ xvel0_p = (double *)(args[1].data + base1);
+  double * __restrict__ xvel0_p = (double *)(args[1].data + base1);
 
   int base2 = args[2].dat->base_offset;
-  double *__restrict__ xvel1_p = (double *)(args[2].data + base2);
+  double * __restrict__ xvel1_p = (double *)(args[2].data + base2);
 
   int base3 = args[3].dat->base_offset;
-  double *__restrict__ yarea_p = (double *)(args[3].data + base3);
+  double * __restrict__ yarea_p = (double *)(args[3].data + base3);
 
   int base4 = args[4].dat->base_offset;
-  double *__restrict__ yvel0_p = (double *)(args[4].data + base4);
+  double * __restrict__ yvel0_p = (double *)(args[4].data + base4);
 
   int base5 = args[5].dat->base_offset;
-  double *__restrict__ yvel1_p = (double *)(args[5].data + base5);
+  double * __restrict__ yvel1_p = (double *)(args[5].data + base5);
 
   int base6 = args[6].dat->base_offset;
-  double *__restrict__ volume_change_p = (double *)(args[6].data + base6);
+  double * __restrict__ volume_change_p = (double *)(args[6].data + base6);
 
   int base7 = args[7].dat->base_offset;
-  double *__restrict__ volume_p = (double *)(args[7].data + base7);
+  double * __restrict__ volume_p = (double *)(args[7].data + base7);
 
   int base8 = args[8].dat->base_offset;
-  double *__restrict__ pressure_p = (double *)(args[8].data + base8);
+  double * __restrict__ pressure_p = (double *)(args[8].data + base8);
 
   int base9 = args[9].dat->base_offset;
-  double *__restrict__ density0_p = (double *)(args[9].data + base9);
+  double * __restrict__ density0_p = (double *)(args[9].data + base9);
 
   int base10 = args[10].dat->base_offset;
-  double *__restrict__ density1_p = (double *)(args[10].data + base10);
+  double * __restrict__ density1_p = (double *)(args[10].data + base10);
 
   int base11 = args[11].dat->base_offset;
-  double *__restrict__ viscosity_p = (double *)(args[11].data + base11);
+  double * __restrict__ viscosity_p = (double *)(args[11].data + base11);
 
   int base12 = args[12].dat->base_offset;
-  double *__restrict__ energy0_p = (double *)(args[12].data + base12);
+  double * __restrict__ energy0_p = (double *)(args[12].data + base12);
 
   int base13 = args[13].dat->base_offset;
-  double *__restrict__ energy1_p = (double *)(args[13].data + base13);
+  double * __restrict__ energy1_p = (double *)(args[13].data + base13);
 
   int base14 = args[14].dat->base_offset;
-  double *__restrict__ zarea_p = (double *)(args[14].data + base14);
+  double * __restrict__ zarea_p = (double *)(args[14].data + base14);
 
   int base15 = args[15].dat->base_offset;
-  double *__restrict__ zvel0_p = (double *)(args[15].data + base15);
+  double * __restrict__ zvel0_p = (double *)(args[15].data + base15);
 
   int base16 = args[16].dat->base_offset;
-  double *__restrict__ zvel1_p = (double *)(args[16].data + base16);
+  double * __restrict__ zvel1_p = (double *)(args[16].data + base16);
+
+
 
   #ifndef OPS_LAZY
   //Halo Exchanges
@@ -168,9 +170,9 @@ void ops_par_loop_PdV_kernel_nopredict_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 17);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[102].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[102].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for collapse(2)
@@ -178,156 +180,80 @@ void ops_par_loop_PdV_kernel_nopredict_execute(ops_kernel_descriptor *desc) {
     for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
       #ifdef __INTEL_COMPILER
       #pragma loop_count(10000)
-#pragma omp simd
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+      #pragma omp simd
+      #elif defined(__clang__)
+      #pragma clang loop vectorize(assume_safety)
+      #elif defined(__GNUC__)
+      #pragma GCC ivdep
+      #else
+      #pragma simd
+      #endif
       for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-        const ACC<double> xarea(
-            xdim0_PdV_kernel_nopredict, ydim0_PdV_kernel_nopredict,
-            xarea_p + n_x * 1 + n_y * xdim0_PdV_kernel_nopredict * 1 +
-                n_z * xdim0_PdV_kernel_nopredict * ydim0_PdV_kernel_nopredict *
-                    1);
-        const ACC<double> xvel0(
-            xdim1_PdV_kernel_nopredict, ydim1_PdV_kernel_nopredict,
-            xvel0_p + n_x * 1 + n_y * xdim1_PdV_kernel_nopredict * 1 +
-                n_z * xdim1_PdV_kernel_nopredict * ydim1_PdV_kernel_nopredict *
-                    1);
-        const ACC<double> xvel1(
-            xdim2_PdV_kernel_nopredict, ydim2_PdV_kernel_nopredict,
-            xvel1_p + n_x * 1 + n_y * xdim2_PdV_kernel_nopredict * 1 +
-                n_z * xdim2_PdV_kernel_nopredict * ydim2_PdV_kernel_nopredict *
-                    1);
-        const ACC<double> yarea(
-            xdim3_PdV_kernel_nopredict, ydim3_PdV_kernel_nopredict,
-            yarea_p + n_x * 1 + n_y * xdim3_PdV_kernel_nopredict * 1 +
-                n_z * xdim3_PdV_kernel_nopredict * ydim3_PdV_kernel_nopredict *
-                    1);
-        const ACC<double> yvel0(
-            xdim4_PdV_kernel_nopredict, ydim4_PdV_kernel_nopredict,
-            yvel0_p + n_x * 1 + n_y * xdim4_PdV_kernel_nopredict * 1 +
-                n_z * xdim4_PdV_kernel_nopredict * ydim4_PdV_kernel_nopredict *
-                    1);
-        const ACC<double> yvel1(
-            xdim5_PdV_kernel_nopredict, ydim5_PdV_kernel_nopredict,
-            yvel1_p + n_x * 1 + n_y * xdim5_PdV_kernel_nopredict * 1 +
-                n_z * xdim5_PdV_kernel_nopredict * ydim5_PdV_kernel_nopredict *
-                    1);
-        ACC<double> volume_change(
-            xdim6_PdV_kernel_nopredict, ydim6_PdV_kernel_nopredict,
-            volume_change_p + n_x * 1 + n_y * xdim6_PdV_kernel_nopredict * 1 +
-                n_z * xdim6_PdV_kernel_nopredict * ydim6_PdV_kernel_nopredict *
-                    1);
-        const ACC<double> volume(
-            xdim7_PdV_kernel_nopredict, ydim7_PdV_kernel_nopredict,
-            volume_p + n_x * 1 + n_y * xdim7_PdV_kernel_nopredict * 1 +
-                n_z * xdim7_PdV_kernel_nopredict * ydim7_PdV_kernel_nopredict *
-                    1);
-        const ACC<double> pressure(
-            xdim8_PdV_kernel_nopredict, ydim8_PdV_kernel_nopredict,
-            pressure_p + n_x * 1 + n_y * xdim8_PdV_kernel_nopredict * 1 +
-                n_z * xdim8_PdV_kernel_nopredict * ydim8_PdV_kernel_nopredict *
-                    1);
-        const ACC<double> density0(
-            xdim9_PdV_kernel_nopredict, ydim9_PdV_kernel_nopredict,
-            density0_p + n_x * 1 + n_y * xdim9_PdV_kernel_nopredict * 1 +
-                n_z * xdim9_PdV_kernel_nopredict * ydim9_PdV_kernel_nopredict *
-                    1);
-        ACC<double> density1(
-            xdim10_PdV_kernel_nopredict, ydim10_PdV_kernel_nopredict,
-            density1_p + n_x * 1 + n_y * xdim10_PdV_kernel_nopredict * 1 +
-                n_z * xdim10_PdV_kernel_nopredict *
-                    ydim10_PdV_kernel_nopredict * 1);
-        const ACC<double> viscosity(
-            xdim11_PdV_kernel_nopredict, ydim11_PdV_kernel_nopredict,
-            viscosity_p + n_x * 1 + n_y * xdim11_PdV_kernel_nopredict * 1 +
-                n_z * xdim11_PdV_kernel_nopredict *
-                    ydim11_PdV_kernel_nopredict * 1);
-        const ACC<double> energy0(
-            xdim12_PdV_kernel_nopredict, ydim12_PdV_kernel_nopredict,
-            energy0_p + n_x * 1 + n_y * xdim12_PdV_kernel_nopredict * 1 +
-                n_z * xdim12_PdV_kernel_nopredict *
-                    ydim12_PdV_kernel_nopredict * 1);
-        ACC<double> energy1(
-            xdim13_PdV_kernel_nopredict, ydim13_PdV_kernel_nopredict,
-            energy1_p + n_x * 1 + n_y * xdim13_PdV_kernel_nopredict * 1 +
-                n_z * xdim13_PdV_kernel_nopredict *
-                    ydim13_PdV_kernel_nopredict * 1);
-        const ACC<double> zarea(
-            xdim14_PdV_kernel_nopredict, ydim14_PdV_kernel_nopredict,
-            zarea_p + n_x * 1 + n_y * xdim14_PdV_kernel_nopredict * 1 +
-                n_z * xdim14_PdV_kernel_nopredict *
-                    ydim14_PdV_kernel_nopredict * 1);
-        const ACC<double> zvel0(
-            xdim15_PdV_kernel_nopredict, ydim15_PdV_kernel_nopredict,
-            zvel0_p + n_x * 1 + n_y * xdim15_PdV_kernel_nopredict * 1 +
-                n_z * xdim15_PdV_kernel_nopredict *
-                    ydim15_PdV_kernel_nopredict * 1);
-        const ACC<double> zvel1(
-            xdim16_PdV_kernel_nopredict, ydim16_PdV_kernel_nopredict,
-            zvel1_p + n_x * 1 + n_y * xdim16_PdV_kernel_nopredict * 1 +
-                n_z * xdim16_PdV_kernel_nopredict *
-                    ydim16_PdV_kernel_nopredict * 1);
+        const ACC<double> xarea(xdim0_PdV_kernel_nopredict, ydim0_PdV_kernel_nopredict, xarea_p + n_x*1 + n_y * xdim0_PdV_kernel_nopredict*1 + n_z * xdim0_PdV_kernel_nopredict * ydim0_PdV_kernel_nopredict*1);
+        const ACC<double> xvel0(xdim1_PdV_kernel_nopredict, ydim1_PdV_kernel_nopredict, xvel0_p + n_x*1 + n_y * xdim1_PdV_kernel_nopredict*1 + n_z * xdim1_PdV_kernel_nopredict * ydim1_PdV_kernel_nopredict*1);
+        const ACC<double> xvel1(xdim2_PdV_kernel_nopredict, ydim2_PdV_kernel_nopredict, xvel1_p + n_x*1 + n_y * xdim2_PdV_kernel_nopredict*1 + n_z * xdim2_PdV_kernel_nopredict * ydim2_PdV_kernel_nopredict*1);
+        const ACC<double> yarea(xdim3_PdV_kernel_nopredict, ydim3_PdV_kernel_nopredict, yarea_p + n_x*1 + n_y * xdim3_PdV_kernel_nopredict*1 + n_z * xdim3_PdV_kernel_nopredict * ydim3_PdV_kernel_nopredict*1);
+        const ACC<double> yvel0(xdim4_PdV_kernel_nopredict, ydim4_PdV_kernel_nopredict, yvel0_p + n_x*1 + n_y * xdim4_PdV_kernel_nopredict*1 + n_z * xdim4_PdV_kernel_nopredict * ydim4_PdV_kernel_nopredict*1);
+        const ACC<double> yvel1(xdim5_PdV_kernel_nopredict, ydim5_PdV_kernel_nopredict, yvel1_p + n_x*1 + n_y * xdim5_PdV_kernel_nopredict*1 + n_z * xdim5_PdV_kernel_nopredict * ydim5_PdV_kernel_nopredict*1);
+        ACC<double> volume_change(xdim6_PdV_kernel_nopredict, ydim6_PdV_kernel_nopredict, volume_change_p + n_x*1 + n_y * xdim6_PdV_kernel_nopredict*1 + n_z * xdim6_PdV_kernel_nopredict * ydim6_PdV_kernel_nopredict*1);
+        const ACC<double> volume(xdim7_PdV_kernel_nopredict, ydim7_PdV_kernel_nopredict, volume_p + n_x*1 + n_y * xdim7_PdV_kernel_nopredict*1 + n_z * xdim7_PdV_kernel_nopredict * ydim7_PdV_kernel_nopredict*1);
+        const ACC<double> pressure(xdim8_PdV_kernel_nopredict, ydim8_PdV_kernel_nopredict, pressure_p + n_x*1 + n_y * xdim8_PdV_kernel_nopredict*1 + n_z * xdim8_PdV_kernel_nopredict * ydim8_PdV_kernel_nopredict*1);
+        const ACC<double> density0(xdim9_PdV_kernel_nopredict, ydim9_PdV_kernel_nopredict, density0_p + n_x*1 + n_y * xdim9_PdV_kernel_nopredict*1 + n_z * xdim9_PdV_kernel_nopredict * ydim9_PdV_kernel_nopredict*1);
+        ACC<double> density1(xdim10_PdV_kernel_nopredict, ydim10_PdV_kernel_nopredict, density1_p + n_x*1 + n_y * xdim10_PdV_kernel_nopredict*1 + n_z * xdim10_PdV_kernel_nopredict * ydim10_PdV_kernel_nopredict*1);
+        const ACC<double> viscosity(xdim11_PdV_kernel_nopredict, ydim11_PdV_kernel_nopredict, viscosity_p + n_x*1 + n_y * xdim11_PdV_kernel_nopredict*1 + n_z * xdim11_PdV_kernel_nopredict * ydim11_PdV_kernel_nopredict*1);
+        const ACC<double> energy0(xdim12_PdV_kernel_nopredict, ydim12_PdV_kernel_nopredict, energy0_p + n_x*1 + n_y * xdim12_PdV_kernel_nopredict*1 + n_z * xdim12_PdV_kernel_nopredict * ydim12_PdV_kernel_nopredict*1);
+        ACC<double> energy1(xdim13_PdV_kernel_nopredict, ydim13_PdV_kernel_nopredict, energy1_p + n_x*1 + n_y * xdim13_PdV_kernel_nopredict*1 + n_z * xdim13_PdV_kernel_nopredict * ydim13_PdV_kernel_nopredict*1);
+        const ACC<double> zarea(xdim14_PdV_kernel_nopredict, ydim14_PdV_kernel_nopredict, zarea_p + n_x*1 + n_y * xdim14_PdV_kernel_nopredict*1 + n_z * xdim14_PdV_kernel_nopredict * ydim14_PdV_kernel_nopredict*1);
+        const ACC<double> zvel0(xdim15_PdV_kernel_nopredict, ydim15_PdV_kernel_nopredict, zvel0_p + n_x*1 + n_y * xdim15_PdV_kernel_nopredict*1 + n_z * xdim15_PdV_kernel_nopredict * ydim15_PdV_kernel_nopredict*1);
+        const ACC<double> zvel1(xdim16_PdV_kernel_nopredict, ydim16_PdV_kernel_nopredict, zvel1_p + n_x*1 + n_y * xdim16_PdV_kernel_nopredict*1 + n_z * xdim16_PdV_kernel_nopredict * ydim16_PdV_kernel_nopredict*1);
+        
 
-        double recip_volume, energy_change;
-        double right_flux, left_flux, top_flux, bottom_flux, back_flux,
-            front_flux, total_flux;
+  double recip_volume, energy_change;
+  double right_flux, left_flux, top_flux, bottom_flux, back_flux, front_flux, total_flux;
 
-        left_flux = (xarea(0, 0, 0) *
-                     (xvel0(0, 0, 0) + xvel0(0, 1, 0) + xvel0(0, 0, 1) +
-                      xvel0(0, 1, 1) + xvel1(0, 0, 0) + xvel1(0, 1, 0) +
-                      xvel1(0, 0, 1) + xvel1(0, 1, 1))) *
-                    0.125 * dt;
-        right_flux = (xarea(1, 0, 0) *
-                      (xvel0(1, 0, 0) + xvel0(1, 1, 0) + xvel0(1, 0, 1) +
-                       xvel0(1, 1, 1) + xvel1(1, 0, 0) + xvel1(1, 1, 0) +
-                       xvel1(1, 0, 1) + xvel1(1, 1, 1))) *
-                     0.125 * dt;
+  left_flux = ( xarea(0,0,0) * ( xvel0(0,0,0) + xvel0(0,1,0) +
+                                           xvel0(0,0,1) + xvel0(0,1,1) +
+                                           xvel1(0,0,0) + xvel1(0,1,0) +
+                                           xvel1(0,0,1) + xvel1(0,1,1) ) ) * 0.125 * dt;
+  right_flux = ( xarea(1,0,0) * ( xvel0(1,0,0) + xvel0(1,1,0) +
+                                            xvel0(1,0,1) + xvel0(1,1,1) +
+                                            xvel1(1,0,0) + xvel1(1,1,0) +
+                                            xvel1(1,0,1) + xvel1(1,1,1) ) ) * 0.125 * dt;
 
-        bottom_flux = (yarea(0, 0, 0) *
-                       (yvel0(0, 0, 0) + yvel0(1, 0, 0) + yvel0(0, 0, 1) +
-                        yvel0(1, 0, 1) + yvel1(0, 0, 0) + yvel1(1, 0, 0) +
-                        yvel1(0, 0, 1) + yvel1(1, 0, 1))) *
-                      0.125 * dt;
-        top_flux = (yarea(0, 1, 0) *
-                    (yvel0(0, 1, 0) + yvel0(1, 1, 0) + yvel0(0, 1, 1) +
-                     yvel0(1, 1, 1) + yvel1(0, 1, 0) + yvel1(1, 1, 0) +
-                     yvel1(0, 1, 1) + yvel1(1, 1, 1))) *
-                   0.125 * dt;
+  bottom_flux = ( yarea(0,0,0) * ( yvel0(0,0,0) + yvel0(1,0,0) +
+                                             yvel0(0,0,1) + yvel0(1,0,1) +
+                                             yvel1(0,0,0) + yvel1(1,0,0) +
+                                             yvel1(0,0,1) + yvel1(1,0,1) ) ) * 0.125* dt;
+  top_flux = ( yarea(0,1,0) * ( yvel0(0,1,0) + yvel0(1,1,0) +
+                                          yvel0(0,1,1) + yvel0(1,1,1) +
+                                          yvel1(0,1,0) + yvel1(1,1,0) +
+                                          yvel1(0,1,1) + yvel1(1,1,1)) ) * 0.125 * dt;
 
-        back_flux = (zarea(0, 0, 0) *
-                     (zvel0(0, 0, 0) + zvel0(1, 0, 0) + zvel0(0, 1, 0) +
-                      zvel0(1, 1, 0) + zvel1(0, 0, 0) + zvel1(1, 0, 0) +
-                      zvel1(0, 1, 0) + zvel1(1, 1, 0))) *
-                    0.125 * dt;
-        front_flux = (zarea(0, 0, 1) *
-                      (zvel0(0, 0, 1) + zvel0(1, 0, 1) + zvel0(0, 1, 1) +
-                       zvel0(1, 1, 1) + zvel1(0, 0, 1) + zvel1(1, 0, 1) +
-                       zvel1(0, 1, 1) + zvel1(1, 1, 1))) *
-                     0.125 * dt;
+  back_flux = ( zarea(0,0,0) * ( zvel0(0,0,0) + zvel0(1,0,0) +
+                                            zvel0(0,1,0) + zvel0(1,1,0) +
+                                            zvel1(0,0,0) + zvel1(1,0,0) +
+                                            zvel1(0,1,0) + zvel1(1,1,0) ) ) * 0.125* dt;
+  front_flux = ( zarea(0,0,1) * ( zvel0(0,0,1) + zvel0(1,0,1) +
+                                             zvel0(0,1,1) + zvel0(1,1,1) +
+                                             zvel1(0,0,1) + zvel1(1,0,1) +
+                                             zvel1(0,1,1) + zvel1(1,1,1)) ) * 0.125 * dt;
 
-        total_flux = right_flux - left_flux + top_flux - bottom_flux +
-                     front_flux - back_flux;
+  total_flux = right_flux - left_flux + top_flux - bottom_flux + front_flux - back_flux;
 
-        volume_change(0, 0, 0) =
-            (volume(0, 0, 0)) / (volume(0, 0, 0) + total_flux);
-        recip_volume = 1.0 / volume(0, 0, 0);
-        energy_change = (pressure(0, 0, 0) / density0(0, 0, 0) +
-                         viscosity(0, 0, 0) / density0(0, 0, 0)) *
-                        total_flux * recip_volume;
-        energy1(0, 0, 0) = energy0(0, 0, 0) - energy_change;
-        density1(0, 0, 0) = density0(0, 0, 0) * volume_change(0, 0, 0);
+  volume_change(0,0,0) = (volume(0,0,0))/(volume(0,0,0) + total_flux);
+  recip_volume = 1.0/volume(0,0,0);
+  energy_change = ( pressure(0,0,0)/density0(0,0,0) +
+                    viscosity(0,0,0)/density0(0,0,0) ) * total_flux * recip_volume;
+  energy1(0,0,0) = energy0(0,0,0) - energy_change;
+  density1(0,0,0) = density0(0,0,0) * volume_change(0,0,0);
+
+
       }
     }
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[102].time += __t2-__t1;
+    block->instance->OPS_kernels[102].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 17);
@@ -336,27 +262,27 @@ void ops_par_loop_PdV_kernel_nopredict_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[13],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[102].mpi_time += __t1-__t2;
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg8);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg9);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg10);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg11);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg12);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg13);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg14);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg15);
-    OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg16);
+    block->instance->OPS_kernels[102].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg9);
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg10);
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg11);
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg12);
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg13);
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg14);
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg15);
+    block->instance->OPS_kernels[102].transfer += ops_compute_transfer(dim, start, end, &arg16);
   }
 }
 
@@ -368,7 +294,7 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
  ops_arg arg8, ops_arg arg9, ops_arg arg10, ops_arg arg11,
  ops_arg arg12, ops_arg arg13, ops_arg arg14, ops_arg arg15,
  ops_arg arg16) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -418,8 +344,8 @@ void ops_par_loop_PdV_kernel_nopredict(char const *name, ops_block block, int di
   desc->args[16] = arg16;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg16.dat->index;
   desc->function = ops_par_loop_PdV_kernel_nopredict_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(102,"PdV_kernel_nopredict");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,102,"PdV_kernel_nopredict");
   }
   ops_enqueue_kernel(desc);
 }

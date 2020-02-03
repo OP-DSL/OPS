@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
-<<COMMENT
+#<<COMMENT
 source ../../scripts/$SOURCE_INTEL
 make clean
 make -j
@@ -143,14 +143,12 @@ echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
 #exit
 
 cd -
-COMMENT
+#COMMENT
 source ../../scripts/$SOURCE_PGI
 
-make clean
-make
 cd -
 make clean
-make IEEE=1
+make IEEE=1 
 
 
 #============================ Test Cloverleaf 2D With PGI Compilers==========================================================

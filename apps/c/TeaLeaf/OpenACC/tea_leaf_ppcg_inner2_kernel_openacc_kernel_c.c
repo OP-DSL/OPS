@@ -9,11 +9,15 @@ int xdim1_tea_leaf_ppcg_inner2_kernel;
 int xdim2_tea_leaf_ppcg_inner2_kernel;
 
 //user function
-inline void tea_leaf_ppcg_inner2_kernel(ptr_double sd, ptr_double utemp,
-                                        const ptr_double z, const double *alpha,
-                                        const double *beta) {
-  OPS_ACC(sd, 0, 0) = (*alpha) * OPS_ACC(sd, 0, 0) + (*beta) * OPS_ACC(z, 0, 0);
-  OPS_ACC(utemp, 0, 0) = OPS_ACC(utemp, 0, 0) + OPS_ACC(sd, 0, 0);
+#pragma acc routine
+inline 
+void tea_leaf_ppcg_inner2_kernel(ptr_double sd,
+  ptr_double utemp,
+  const ptr_double z,
+  const double *alpha,
+  const double *beta) {
+  OPS_ACC(sd, 0,0) = (*alpha) * OPS_ACC(sd, 0,0) + (*beta)*OPS_ACC(z, 0,0);
+  OPS_ACC(utemp, 0,0) = OPS_ACC(utemp, 0,0) + OPS_ACC(sd, 0,0);
 }
 
 
@@ -33,16 +37,13 @@ void tea_leaf_ppcg_inner2_kernel_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      ptr_double ptr0 = {p_a0 + n_x * 1 * 1 +
-                             n_y * xdim0_tea_leaf_ppcg_inner2_kernel * 1 * 1,
-                         xdim0_tea_leaf_ppcg_inner2_kernel};
-      ptr_double ptr1 = {p_a1 + n_x * 1 * 1 +
-                             n_y * xdim1_tea_leaf_ppcg_inner2_kernel * 1 * 1,
-                         xdim1_tea_leaf_ppcg_inner2_kernel};
-      const ptr_double ptr2 = {
-          p_a2 + n_x * 1 * 1 + n_y * xdim2_tea_leaf_ppcg_inner2_kernel * 1 * 1,
-          xdim2_tea_leaf_ppcg_inner2_kernel};
-      tea_leaf_ppcg_inner2_kernel(ptr0, ptr1, ptr2, &p_a3, &p_a4);
+      ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_tea_leaf_ppcg_inner2_kernel*1*1, xdim0_tea_leaf_ppcg_inner2_kernel};
+      ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_tea_leaf_ppcg_inner2_kernel*1*1, xdim1_tea_leaf_ppcg_inner2_kernel};
+      const ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_tea_leaf_ppcg_inner2_kernel*1*1, xdim2_tea_leaf_ppcg_inner2_kernel};
+      tea_leaf_ppcg_inner2_kernel( ptr0,
+          ptr1,ptr2,
+           &p_a3, &p_a4 );
+
     }
   }
 }

@@ -35,9 +35,9 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_a(char const *name, ops_block 
   if (!ops_checkpointing_before(args,3,range,30)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(30,"update_halo_kernel2_yvel_plus_2_a");
-    OPS_kernels[30].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,30,"update_halo_kernel2_yvel_plus_2_a");
+    block->instance->OPS_kernels[30].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -71,18 +71,18 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_a(char const *name, ops_block 
   #ifdef OPS_GPU
   int consts_bytes = 0;
   consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
-  reallocConstArrays(consts_bytes);
+  reallocConstArrays(block->instance,consts_bytes);
   consts_bytes = 0;
-  args[2].data = OPS_consts_h + consts_bytes;
-  args[2].data_d = OPS_consts_d + consts_bytes;
+  args[2].data = block->instance->OPS_consts_h + consts_bytes;
+  args[2].data_d = block->instance->OPS_consts_d + consts_bytes;
   for (int d=0; d<NUM_FIELDS; d++) ((int *)args[2].data)[d] = arg2h[d];
   consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
-  mvConstArraysToDevice(consts_bytes);
+  mvConstArraysToDevice(block->instance,consts_bytes);
   #endif //OPS_GPU
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
   #ifdef OPS_GPU
@@ -91,8 +91,8 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_a(char const *name, ops_block 
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
-  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  base1 = base1 + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
     start[1] * args[1].stencil->stride[1];
   #ifdef OPS_GPU
@@ -111,8 +111,8 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_a(char const *name, ops_block 
   int y_size = MAX(0,end[1]-start[1]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
   if (xdim0 != xdim0_update_halo_kernel2_yvel_plus_2_a_h || xdim1 != xdim1_update_halo_kernel2_yvel_plus_2_a_h) {
     xdim0_update_halo_kernel2_yvel_plus_2_a = xdim0;
     xdim0_update_halo_kernel2_yvel_plus_2_a_h = xdim0;
@@ -134,9 +134,9 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_a(char const *name, ops_block 
   #else
   ops_H_D_exchanges_host(args, 3);
   #endif
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[30].mpi_time += t2 - t1;
+    block->instance->OPS_kernels[30].mpi_time += t2-t1;
   }
 
   update_halo_kernel2_yvel_plus_2_a_c_wrapper(
@@ -145,9 +145,9 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_a(char const *name, ops_block 
     p_a2,
     x_size, y_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[30].time += t1 - t2;
+    block->instance->OPS_kernels[30].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 3);
@@ -157,11 +157,11 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_a(char const *name, ops_block 
   ops_set_halo_dirtybit3(&args[0],range);
   ops_set_halo_dirtybit3(&args[1],range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[30].mpi_time += t2 - t1;
-    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[30].mpi_time += t2-t1;
+    block->instance->OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[30].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

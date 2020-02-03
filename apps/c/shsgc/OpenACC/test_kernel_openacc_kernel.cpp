@@ -32,9 +32,9 @@ void ops_par_loop_test_kernel(char const *name, ops_block block, int dim, int* r
   if (!ops_checkpointing_before(args,2,range,14)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(14,"test_kernel");
-    OPS_kernels[14].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,14,"test_kernel");
+    block->instance->OPS_kernels[14].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -69,7 +69,7 @@ void ops_par_loop_test_kernel(char const *name, ops_block block, int dim, int* r
   #endif
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
   #else
@@ -81,7 +81,7 @@ void ops_par_loop_test_kernel(char const *name, ops_block block, int dim, int* r
   int x_size = MAX(0,end[0]-start[0]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
   if (xdim0 != xdim0_test_kernel_h) {
     xdim0_test_kernel = xdim0;
     xdim0_test_kernel_h = xdim0;
@@ -101,9 +101,9 @@ void ops_par_loop_test_kernel(char const *name, ops_block block, int dim, int* r
   #else
   ops_H_D_exchanges_host(args, 2);
   #endif
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[14].mpi_time += t2-t1;
+    block->instance->OPS_kernels[14].mpi_time += t2-t1;
   }
 
   test_kernel_c_wrapper(
@@ -111,9 +111,9 @@ void ops_par_loop_test_kernel(char const *name, ops_block block, int dim, int* r
     p_a1,
     x_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[14].time += t1-t2;
+    block->instance->OPS_kernels[14].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 2);
@@ -121,10 +121,10 @@ void ops_par_loop_test_kernel(char const *name, ops_block block, int dim, int* r
   ops_set_dirtybit_host(args, 2);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[14].mpi_time += t2-t1;
-    OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[14].mpi_time += t2-t1;
+    block->instance->OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

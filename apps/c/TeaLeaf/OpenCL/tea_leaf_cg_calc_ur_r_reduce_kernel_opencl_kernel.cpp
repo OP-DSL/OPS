@@ -11,11 +11,11 @@
 
 static bool isbuilt_tea_leaf_cg_calc_ur_r_reduce_kernel = false;
 
-void buildOpenCLKernels_tea_leaf_cg_calc_ur_r_reduce_kernel(int xdim0, int xdim1) {
+void buildOpenCLKernels_tea_leaf_cg_calc_ur_r_reduce_kernel(OPS_instance *instance, int xdim0, int xdim1) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_tea_leaf_cg_calc_ur_r_reduce_kernel) {
-    buildOpenCLKernels();
+    buildOpenCLKernels(instance);
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
     char* source_filename[1] = {(char*)"./OpenCL/tea_leaf_cg_calc_ur_r_reduce_kernel.cl"};
@@ -28,28 +28,29 @@ void buildOpenCLKernels_tea_leaf_cg_calc_ur_r_reduce_kernel(int xdim0, int xdim1
     for(int i=0; i<1; i++) {
       fid = fopen(source_filename[i], "r");
       if (!fid) {
-        fprintf(stderr, "Can't open the kernel source file!\n");
-        exit(1);
+        OPSException e(OPS_RUNTIME_ERROR, "Can't open the kernel source file: ");
+        e << source_filename[i] << "\n";
+        throw e;
       }
 
       source_str[i] = (char*)malloc(4*0x1000000);
       source_size[i] = fread(source_str[i], 1, 4*0x1000000, fid);
       if(source_size[i] != 4*0x1000000) {
         if (ferror(fid)) {
-          printf ("Error while reading kernel source file %s\n", source_filename[i]);
-          exit(-1);
+          OPSException e(OPS_RUNTIME_ERROR, "Error while reading kernel source file ");
+          e << source_filename[i] << "\n";
+          throw e;
         }
         if (feof(fid))
-          printf ("Kernel source file %s succesfuly read.\n", source_filename[i]);
-          //printf("%s\n",source_str[i]);
+          instance->ostream() << "Kernel source file "<< source_filename[i] <<" succesfuly read.\n";
       }
       fclose(fid);
     }
 
-    printf("Compiling tea_leaf_cg_calc_ur_r_reduce_kernel %d source -- start \n",OCL_FMA);
+    instance->ostream() <<"Compiling tea_leaf_cg_calc_ur_r_reduce_kernel "<<OCL_FMA<<" source -- start \n";
 
       // Create a program from the source
-      OPS_opencl_core.program = clCreateProgramWithSource(OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
+      instance->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(instance->opencl_instance->OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
       clSafeCall( ret );
 
       // Build the program
@@ -66,28 +67,27 @@ void buildOpenCLKernels_tea_leaf_cg_calc_ur_r_reduce_kernel(int xdim0, int xdim1
         exit(EXIT_FAILURE);
       }
 
-#ifdef OPS_SOA
+      #ifdef OPS_SOA
       sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
-#endif
-
-      ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
+      #endif
+      ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1, &instance->opencl_instance->OPS_opencl_core.device_id, buildOpts, NULL, NULL);
 
       if(ret != CL_SUCCESS) {
         char* build_log;
         size_t log_size;
-        clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
+        clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
         build_log = (char*) malloc(log_size+1);
-        clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
+        clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
         build_log[log_size] = '\0';
-        fprintf(stderr, "=============== OpenCL Program Build Info ================\n\n%s", build_log);
-        fprintf(stderr, "\n========================================================= \n");
+        instance->ostream() << "=============== OpenCL Program Build Info ================\n\n" << build_log;
+        instance->ostream() << "\n========================================================= \n";
         free(build_log);
         exit(EXIT_FAILURE);
       }
-      printf("compiling tea_leaf_cg_calc_ur_r_reduce_kernel -- done\n");
+      instance->ostream() << "compiling tea_leaf_cg_calc_ur_r_reduce_kernel -- done\n";
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[21] = clCreateKernel(OPS_opencl_core.program, "ops_tea_leaf_cg_calc_ur_r_reduce_kernel", &ret);
+    instance->opencl_instance->OPS_opencl_core.kernel[21] = clCreateKernel(instance->opencl_instance->OPS_opencl_core.program, "ops_tea_leaf_cg_calc_ur_r_reduce_kernel", &ret);
     clSafeCall( ret );
 
     isbuilt_tea_leaf_cg_calc_ur_r_reduce_kernel = true;
@@ -110,9 +110,9 @@ void ops_par_loop_tea_leaf_cg_calc_ur_r_reduce_kernel(char const *name, ops_bloc
   if (!ops_checkpointing_before(args,4,range,21)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(21,"tea_leaf_cg_calc_ur_r_reduce_kernel");
-    OPS_kernels[21].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,21,"tea_leaf_cg_calc_ur_r_reduce_kernel");
+    block->instance->OPS_kernels[21].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -155,12 +155,12 @@ void ops_par_loop_tea_leaf_cg_calc_ur_r_reduce_kernel(char const *name, ops_bloc
 
   //build opencl kernel if not already built
 
-  buildOpenCLKernels_tea_leaf_cg_calc_ur_r_reduce_kernel(
+  buildOpenCLKernels_tea_leaf_cg_calc_ur_r_reduce_kernel(block->instance,
   xdim0,xdim1);
 
   //set up OpenCL thread blocks
-  size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};
-  size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,OPS_block_size_z};
+  size_t globalWorkSize[3] = {((x_size-1)/block->instance->OPS_block_size_x+ 1)*block->instance->OPS_block_size_x, ((y_size-1)/block->instance->OPS_block_size_y + 1)*block->instance->OPS_block_size_y, 1};
+  size_t localWorkSize[3] =  {block->instance->OPS_block_size_x,block->instance->OPS_block_size_y,block->instance->OPS_block_size_z};
 
 
   #ifdef OPS_MPI
@@ -169,24 +169,24 @@ void ops_par_loop_tea_leaf_cg_calc_ur_r_reduce_kernel(char const *name, ops_bloc
   double *arg3h = (double *)(((ops_reduction)args[3].data)->data);
   #endif
 
-  int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);
+  int nblocks = ((x_size-1)/block->instance->OPS_block_size_x+ 1)*((y_size-1)/block->instance->OPS_block_size_y + 1);
   int maxblocks = nblocks;
   int reduct_bytes = 0;
 
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
 
-  reallocReductArrays(reduct_bytes);
+  reallocReductArrays(block->instance,reduct_bytes);
   reduct_bytes = 0;
 
   int r_bytes3 = reduct_bytes/sizeof(double);
-  arg3.data = OPS_reduct_h + reduct_bytes;
-  arg3.data_d = OPS_reduct_d;// + reduct_bytes;
+  arg3.data = block->instance->OPS_reduct_h + reduct_bytes;
+  arg3.data_d = block->instance->OPS_reduct_d;// + reduct_bytes;
   for (int b=0; b<maxblocks; b++)
   for (int d=0; d<1; d++) ((double *)arg3.data)[d+b*1] = ZERO_double;
   reduct_bytes += ROUND_UP(maxblocks*1*sizeof(double));
 
 
-  mvReductArraysToDevice(reduct_bytes);
+  mvReductArraysToDevice(block->instance,reduct_bytes);
 
   //set up initial pointers
   int d_m[OPS_MAX_DIM];
@@ -215,39 +215,39 @@ void ops_par_loop_tea_leaf_cg_calc_ur_r_reduce_kernel(char const *name, ops_bloc
   ops_halo_exchanges(args,4,range);
   ops_H_D_exchanges_device(args, 4);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[21].mpi_time += t2-t1;
+    block->instance->OPS_kernels[21].mpi_time += t2-t1;
   }
 
-  int nthread = OPS_block_size_x*OPS_block_size_y*OPS_block_size_z;
+  int nthread = block->instance->OPS_block_size_x*block->instance->OPS_block_size_y*block->instance->OPS_block_size_z;
 
   if (globalWorkSize[0]>0 && globalWorkSize[1]>0 && globalWorkSize[2]>0) {
 
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 2, sizeof(cl_double), (void*) arg2.data ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 3, sizeof(cl_mem), (void*) &arg3.data_d ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 4, nthread*sizeof(double), NULL));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 5, sizeof(cl_int), (void*) &r_bytes3 ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 6, sizeof(cl_int), (void*) &base0 ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 7, sizeof(cl_int), (void*) &base1 ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 8, sizeof(cl_int), (void*) &x_size ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[21], 9, sizeof(cl_int), (void*) &y_size ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[21], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[21], 1, sizeof(cl_mem), (void*) &arg1.data_d ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[21], 2, sizeof(cl_double), (void*) arg2.data ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[21], 3, sizeof(cl_mem), (void*) &arg3.data_d ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[21], 4, nthread*sizeof(double), NULL));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[21], 5, sizeof(cl_int), (void*) &r_bytes3 ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[21], 6, sizeof(cl_int), (void*) &base0 ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[21], 7, sizeof(cl_int), (void*) &base1 ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[21], 8, sizeof(cl_int), (void*) &x_size ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[21], 9, sizeof(cl_int), (void*) &y_size ));
 
     //call/enque opencl kernel wrapper function
-    clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[21], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+    clSafeCall( clEnqueueNDRangeKernel(block->instance->opencl_instance->OPS_opencl_core.command_queue, block->instance->opencl_instance->OPS_opencl_core.kernel[21], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   }
-  if (OPS_diags>1) {
-    clSafeCall( clFinish(OPS_opencl_core.command_queue) );
+  if (block->instance->OPS_diags>1) {
+    clSafeCall( clFinish(block->instance->opencl_instance->OPS_opencl_core.command_queue) );
   }
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[21].time += t1-t2;
+    block->instance->OPS_kernels[21].time += t1-t2;
   }
 
-  mvReductArraysToHost(reduct_bytes);
+  mvReductArraysToHost(block->instance,reduct_bytes);
   for ( int b=0; b<maxblocks; b++ ){
     for ( int d=0; d<1; d++ ){
       arg3h[d] = arg3h[d] + ((double *)arg3.data)[d+b*1];
@@ -258,11 +258,11 @@ void ops_par_loop_tea_leaf_cg_calc_ur_r_reduce_kernel(char const *name, ops_bloc
   ops_set_dirtybit_device(args, 4);
   ops_set_halo_dirtybit3(&args[0],range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[21].mpi_time += t2-t1;
-    OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[21].mpi_time += t2-t1;
+    block->instance->OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[21].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

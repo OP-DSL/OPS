@@ -43,14 +43,14 @@ void ops_par_loop_calc_dt_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,14,range,97)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(97,"calc_dt_kernel");
-    OPS_kernels[97].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,97,"calc_dt_kernel");
+    block->instance->OPS_kernels[97].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "calc_dt_kernel");
+  ops_register_args(block->instance, args, "calc_dt_kernel");
   #endif
 
 
@@ -101,46 +101,48 @@ void ops_par_loop_calc_dt_kernel_execute(ops_kernel_descriptor *desc) {
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ celldx_p = (double *)(args[0].data + base0);
+  double * __restrict__ celldx_p = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset;
-  double *__restrict__ celldy_p = (double *)(args[1].data + base1);
+  double * __restrict__ celldy_p = (double *)(args[1].data + base1);
 
   int base2 = args[2].dat->base_offset;
-  double *__restrict__ soundspeed_p = (double *)(args[2].data + base2);
+  double * __restrict__ soundspeed_p = (double *)(args[2].data + base2);
 
   int base3 = args[3].dat->base_offset;
-  double *__restrict__ viscosity_p = (double *)(args[3].data + base3);
+  double * __restrict__ viscosity_p = (double *)(args[3].data + base3);
 
   int base4 = args[4].dat->base_offset;
-  double *__restrict__ density0_p = (double *)(args[4].data + base4);
+  double * __restrict__ density0_p = (double *)(args[4].data + base4);
 
   int base5 = args[5].dat->base_offset;
-  double *__restrict__ xvel0_p = (double *)(args[5].data + base5);
+  double * __restrict__ xvel0_p = (double *)(args[5].data + base5);
 
   int base6 = args[6].dat->base_offset;
-  double *__restrict__ xarea_p = (double *)(args[6].data + base6);
+  double * __restrict__ xarea_p = (double *)(args[6].data + base6);
 
   int base7 = args[7].dat->base_offset;
-  double *__restrict__ volume_p = (double *)(args[7].data + base7);
+  double * __restrict__ volume_p = (double *)(args[7].data + base7);
 
   int base8 = args[8].dat->base_offset;
-  double *__restrict__ yvel0_p = (double *)(args[8].data + base8);
+  double * __restrict__ yvel0_p = (double *)(args[8].data + base8);
 
   int base9 = args[9].dat->base_offset;
-  double *__restrict__ yarea_p = (double *)(args[9].data + base9);
+  double * __restrict__ yarea_p = (double *)(args[9].data + base9);
 
   int base10 = args[10].dat->base_offset;
-  double *__restrict__ dt_min_p = (double *)(args[10].data + base10);
+  double * __restrict__ dt_min_p = (double *)(args[10].data + base10);
 
   int base11 = args[11].dat->base_offset;
-  double *__restrict__ celldz_p = (double *)(args[11].data + base11);
+  double * __restrict__ celldz_p = (double *)(args[11].data + base11);
 
   int base12 = args[12].dat->base_offset;
-  double *__restrict__ zvel0_p = (double *)(args[12].data + base12);
+  double * __restrict__ zvel0_p = (double *)(args[12].data + base12);
 
   int base13 = args[13].dat->base_offset;
-  double *__restrict__ zarea_p = (double *)(args[13].data + base13);
+  double * __restrict__ zarea_p = (double *)(args[13].data + base13);
+
+
 
   #ifndef OPS_LAZY
   //Halo Exchanges
@@ -149,9 +151,9 @@ void ops_par_loop_calc_dt_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 14);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[97].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[97].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for collapse(2)
@@ -159,150 +161,92 @@ void ops_par_loop_calc_dt_kernel_execute(ops_kernel_descriptor *desc) {
     for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
       #ifdef __INTEL_COMPILER
       #pragma loop_count(10000)
-#pragma omp simd
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+      #pragma omp simd
+      #elif defined(__clang__)
+      #pragma clang loop vectorize(assume_safety)
+      #elif defined(__GNUC__)
+      #pragma GCC ivdep
+      #else
+      #pragma simd
+      #endif
       for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-        const ACC<double> celldx(
-            xdim0_calc_dt_kernel, ydim0_calc_dt_kernel,
-            celldx_p + n_x * 1 + n_y * xdim0_calc_dt_kernel * 0 +
-                n_z * xdim0_calc_dt_kernel * ydim0_calc_dt_kernel * 0);
-        const ACC<double> celldy(
-            xdim1_calc_dt_kernel, ydim1_calc_dt_kernel,
-            celldy_p + n_x * 0 + n_y * xdim1_calc_dt_kernel * 1 +
-                n_z * xdim1_calc_dt_kernel * ydim1_calc_dt_kernel * 0);
-        const ACC<double> soundspeed(
-            xdim2_calc_dt_kernel, ydim2_calc_dt_kernel,
-            soundspeed_p + n_x * 1 + n_y * xdim2_calc_dt_kernel * 1 +
-                n_z * xdim2_calc_dt_kernel * ydim2_calc_dt_kernel * 1);
-        const ACC<double> viscosity(
-            xdim3_calc_dt_kernel, ydim3_calc_dt_kernel,
-            viscosity_p + n_x * 1 + n_y * xdim3_calc_dt_kernel * 1 +
-                n_z * xdim3_calc_dt_kernel * ydim3_calc_dt_kernel * 1);
-        const ACC<double> density0(
-            xdim4_calc_dt_kernel, ydim4_calc_dt_kernel,
-            density0_p + n_x * 1 + n_y * xdim4_calc_dt_kernel * 1 +
-                n_z * xdim4_calc_dt_kernel * ydim4_calc_dt_kernel * 1);
-        const ACC<double> xvel0(
-            xdim5_calc_dt_kernel, ydim5_calc_dt_kernel,
-            xvel0_p + n_x * 1 + n_y * xdim5_calc_dt_kernel * 1 +
-                n_z * xdim5_calc_dt_kernel * ydim5_calc_dt_kernel * 1);
-        const ACC<double> xarea(
-            xdim6_calc_dt_kernel, ydim6_calc_dt_kernel,
-            xarea_p + n_x * 1 + n_y * xdim6_calc_dt_kernel * 1 +
-                n_z * xdim6_calc_dt_kernel * ydim6_calc_dt_kernel * 1);
-        const ACC<double> volume(
-            xdim7_calc_dt_kernel, ydim7_calc_dt_kernel,
-            volume_p + n_x * 1 + n_y * xdim7_calc_dt_kernel * 1 +
-                n_z * xdim7_calc_dt_kernel * ydim7_calc_dt_kernel * 1);
-        const ACC<double> yvel0(
-            xdim8_calc_dt_kernel, ydim8_calc_dt_kernel,
-            yvel0_p + n_x * 1 + n_y * xdim8_calc_dt_kernel * 1 +
-                n_z * xdim8_calc_dt_kernel * ydim8_calc_dt_kernel * 1);
-        const ACC<double> yarea(
-            xdim9_calc_dt_kernel, ydim9_calc_dt_kernel,
-            yarea_p + n_x * 1 + n_y * xdim9_calc_dt_kernel * 1 +
-                n_z * xdim9_calc_dt_kernel * ydim9_calc_dt_kernel * 1);
-        ACC<double> dt_min(
-            xdim10_calc_dt_kernel, ydim10_calc_dt_kernel,
-            dt_min_p + n_x * 1 + n_y * xdim10_calc_dt_kernel * 1 +
-                n_z * xdim10_calc_dt_kernel * ydim10_calc_dt_kernel * 1);
-        const ACC<double> celldz(
-            xdim11_calc_dt_kernel, ydim11_calc_dt_kernel,
-            celldz_p + n_x * 0 + n_y * xdim11_calc_dt_kernel * 0 +
-                n_z * xdim11_calc_dt_kernel * ydim11_calc_dt_kernel * 1);
-        const ACC<double> zvel0(
-            xdim12_calc_dt_kernel, ydim12_calc_dt_kernel,
-            zvel0_p + n_x * 1 + n_y * xdim12_calc_dt_kernel * 1 +
-                n_z * xdim12_calc_dt_kernel * ydim12_calc_dt_kernel * 1);
-        const ACC<double> zarea(
-            xdim13_calc_dt_kernel, ydim13_calc_dt_kernel,
-            zarea_p + n_x * 1 + n_y * xdim13_calc_dt_kernel * 1 +
-                n_z * xdim13_calc_dt_kernel * ydim13_calc_dt_kernel * 1);
+        const ACC<double> celldx(xdim0_calc_dt_kernel, ydim0_calc_dt_kernel, celldx_p + n_x*1 + n_y * xdim0_calc_dt_kernel*0 + n_z * xdim0_calc_dt_kernel * ydim0_calc_dt_kernel*0);
+        const ACC<double> celldy(xdim1_calc_dt_kernel, ydim1_calc_dt_kernel, celldy_p + n_x*0 + n_y * xdim1_calc_dt_kernel*1 + n_z * xdim1_calc_dt_kernel * ydim1_calc_dt_kernel*0);
+        const ACC<double> soundspeed(xdim2_calc_dt_kernel, ydim2_calc_dt_kernel, soundspeed_p + n_x*1 + n_y * xdim2_calc_dt_kernel*1 + n_z * xdim2_calc_dt_kernel * ydim2_calc_dt_kernel*1);
+        const ACC<double> viscosity(xdim3_calc_dt_kernel, ydim3_calc_dt_kernel, viscosity_p + n_x*1 + n_y * xdim3_calc_dt_kernel*1 + n_z * xdim3_calc_dt_kernel * ydim3_calc_dt_kernel*1);
+        const ACC<double> density0(xdim4_calc_dt_kernel, ydim4_calc_dt_kernel, density0_p + n_x*1 + n_y * xdim4_calc_dt_kernel*1 + n_z * xdim4_calc_dt_kernel * ydim4_calc_dt_kernel*1);
+        const ACC<double> xvel0(xdim5_calc_dt_kernel, ydim5_calc_dt_kernel, xvel0_p + n_x*1 + n_y * xdim5_calc_dt_kernel*1 + n_z * xdim5_calc_dt_kernel * ydim5_calc_dt_kernel*1);
+        const ACC<double> xarea(xdim6_calc_dt_kernel, ydim6_calc_dt_kernel, xarea_p + n_x*1 + n_y * xdim6_calc_dt_kernel*1 + n_z * xdim6_calc_dt_kernel * ydim6_calc_dt_kernel*1);
+        const ACC<double> volume(xdim7_calc_dt_kernel, ydim7_calc_dt_kernel, volume_p + n_x*1 + n_y * xdim7_calc_dt_kernel*1 + n_z * xdim7_calc_dt_kernel * ydim7_calc_dt_kernel*1);
+        const ACC<double> yvel0(xdim8_calc_dt_kernel, ydim8_calc_dt_kernel, yvel0_p + n_x*1 + n_y * xdim8_calc_dt_kernel*1 + n_z * xdim8_calc_dt_kernel * ydim8_calc_dt_kernel*1);
+        const ACC<double> yarea(xdim9_calc_dt_kernel, ydim9_calc_dt_kernel, yarea_p + n_x*1 + n_y * xdim9_calc_dt_kernel*1 + n_z * xdim9_calc_dt_kernel * ydim9_calc_dt_kernel*1);
+        ACC<double> dt_min(xdim10_calc_dt_kernel, ydim10_calc_dt_kernel, dt_min_p + n_x*1 + n_y * xdim10_calc_dt_kernel*1 + n_z * xdim10_calc_dt_kernel * ydim10_calc_dt_kernel*1);
+        const ACC<double> celldz(xdim11_calc_dt_kernel, ydim11_calc_dt_kernel, celldz_p + n_x*0 + n_y * xdim11_calc_dt_kernel*0 + n_z * xdim11_calc_dt_kernel * ydim11_calc_dt_kernel*1);
+        const ACC<double> zvel0(xdim12_calc_dt_kernel, ydim12_calc_dt_kernel, zvel0_p + n_x*1 + n_y * xdim12_calc_dt_kernel*1 + n_z * xdim12_calc_dt_kernel * ydim12_calc_dt_kernel*1);
+        const ACC<double> zarea(xdim13_calc_dt_kernel, ydim13_calc_dt_kernel, zarea_p + n_x*1 + n_y * xdim13_calc_dt_kernel*1 + n_z * xdim13_calc_dt_kernel * ydim13_calc_dt_kernel*1);
+        
 
-        double div, ds, dtut, dtvt, dtct, dtwt, dtdivt, cc, dv1, dv2, du1, du2,
-            dw1, dw2;
+  double div, ds, dtut, dtvt, dtct, dtwt, dtdivt, cc, dv1, dv2, du1, du2, dw1, dw2;
 
-        ds = MIN(MIN(celldx(0, 0, 0), celldy(0, 0, 0)), celldz(0, 0, 0));
-        ds = 1.0 / (ds * ds);
+  ds = MIN(MIN(celldx(0,0,0), celldy(0,0,0)), celldz(0,0,0));
+  ds = 1.0/(ds*ds);
 
-        cc = soundspeed(0, 0, 0) * soundspeed(0, 0, 0);
-        cc = cc + 2.0 * viscosity(0, 0, 0) / density0(0, 0, 0);
+  cc = soundspeed(0,0,0) * soundspeed(0,0,0);
+  cc = cc + 2.0 * viscosity(0,0,0)/density0(0,0,0);
 
-        dtct = ds * cc;
-        dtct = dtc_safe * 1.0 / MAX(sqrt(dtct), g_small);
+  dtct=ds*cc;
+  dtct = dtc_safe*1.0/MAX(sqrt(dtct),g_small);
 
-        du1 = (xvel0(0, 0, 0) + xvel0(0, 1, 0) + xvel0(0, 0, 1) +
-               xvel0(0, 1, 1)) *
-              xarea(0, 0, 0);
-        du2 = (xvel0(1, 0, 0) + xvel0(1, 1, 0) + xvel0(1, 0, 1) +
-               xvel0(1, 1, 1)) *
-              xarea(0, 0, 0);
+  du1=(xvel0(0,0,0)+xvel0(0,1,0)+xvel0(0,0,1)+xvel0(0,1,1))*xarea(0,0,0);
+  du2=(xvel0(1,0,0)+xvel0(1,1,0)+xvel0(1,0,1)+xvel0(1,1,1))*xarea(0,0,0);
 
-        dtut = dtu_safe * 4.0 * volume(0, 0, 0) /
-               MAX(MAX(fabs(du1), fabs(du2)), 1.0e-5 * volume(0, 0, 0));
+  dtut = dtu_safe * 4.0 * volume(0,0,0)/MAX(MAX(fabs(du1), fabs(du2)), 1.0e-5 * volume(0,0,0));
 
-        dv1 = (yvel0(0, 0, 0) + yvel0(1, 0, 0) + yvel0(0, 0, 1) +
-               yvel0(1, 0, 1)) *
-              yarea(0, 0, 0);
-        dv2 = (yvel0(0, 1, 0) + yvel0(1, 1, 0) + yvel0(0, 1, 1) +
-               yvel0(1, 1, 1)) *
-              yarea(0, 0, 0);
+  dv1=(yvel0(0,0,0)+yvel0(1,0,0)+yvel0(0,0,1)+yvel0(1,0,1))*yarea(0,0,0);
+  dv2=(yvel0(0,1,0)+yvel0(1,1,0)+yvel0(0,1,1)+yvel0(1,1,1))*yarea(0,0,0);
 
-        dtvt = dtv_safe * 4.0 * volume(0, 0, 0) /
-               MAX(MAX(fabs(dv1), fabs(dv2)), 1.0e-5 * volume(0, 0, 0));
+  dtvt = dtv_safe * 4.0 * volume(0,0,0)/MAX(MAX(fabs(dv1),fabs(dv2)), 1.0e-5 * volume(0,0,0));
 
-        dw1 = (zvel0(0, 0, 0) + zvel0(0, 1, 0) + zvel0(1, 0, 0) +
-               zvel0(1, 1, 0)) *
-              zarea(0, 0, 0);
-        dw2 = (zvel0(0, 0, 1) + zvel0(0, 1, 1) + zvel0(1, 0, 1) +
-               zvel0(1, 1, 1)) *
-              zarea(0, 0, 0);
+  dw1=(zvel0(0,0,0)+zvel0(0,1,0)+zvel0(1,0,0)+zvel0(1,1,0))*zarea(0,0,0);
+  dw2=(zvel0(0,0,1)+zvel0(0,1,1)+zvel0(1,0,1)+zvel0(1,1,1))*zarea(0,0,0);
 
-        dtwt = dtw_safe * 4.0 * volume(0, 0, 0) /
-               MAX(MAX(fabs(dw1), fabs(dw2)), 1.0e-5 * volume(0, 0, 0));
+  dtwt = dtw_safe * 4.0 * volume(0,0,0)/MAX(MAX(fabs(dw1),fabs(dw2)), 1.0e-5 * volume(0,0,0));
 
-        div = du2 - du1 + dv2 - dv1 + dw2 - dw1;
-        dtdivt = dtdiv_safe * 4.0 * (volume(0, 0, 0)) /
-                 MAX(volume(0, 0, 0) * 1.0e-05, fabs(div));
+  div = du2-du1+dv2-dv1+dw2-dw1;
+  dtdivt=dtdiv_safe*4.0*(volume(0,0,0))/MAX(volume(0,0,0)*1.0e-05,fabs(div));
 
-        dt_min(0, 0, 0) = MIN(MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt)), dtwt);
+  dt_min(0,0,0) = MIN(MIN(MIN(dtct, dtut), MIN(dtvt, dtdivt)),dtwt);
+
       }
     }
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[97].time += __t2-__t1;
+    block->instance->OPS_kernels[97].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 14);
   ops_set_halo_dirtybit3(&args[10],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[97].mpi_time += __t1-__t2;
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg8);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg9);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg10);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg11);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg12);
-    OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg13);
+    block->instance->OPS_kernels[97].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg9);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg10);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg11);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg12);
+    block->instance->OPS_kernels[97].transfer += ops_compute_transfer(dim, start, end, &arg13);
   }
 }
 
@@ -313,7 +257,7 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block block, int dim, int
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7,
  ops_arg arg8, ops_arg arg9, ops_arg arg10, ops_arg arg11,
  ops_arg arg12, ops_arg arg13) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -357,8 +301,8 @@ void ops_par_loop_calc_dt_kernel(char const *name, ops_block block, int dim, int
   desc->args[13] = arg13;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg13.dat->index;
   desc->function = ops_par_loop_calc_dt_kernel_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(97,"calc_dt_kernel");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,97,"calc_dt_kernel");
   }
   ops_enqueue_kernel(desc);
 }

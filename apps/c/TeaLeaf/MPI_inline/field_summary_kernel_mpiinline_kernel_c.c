@@ -10,11 +10,18 @@ int xdim3_field_summary_kernel;
 
 //user function
 
+
+
 void field_summary_kernel_c_wrapper(
-    double *restrict volume_p, double *restrict density_p,
-    double *restrict energy_p, double *restrict u_p, double *restrict vol_g,
-    double *restrict mass_g, double *restrict ie_g, double *restrict temp_g,
-    int x_size, int y_size) {
+  double * restrict volume_p,
+  double * restrict density_p,
+  double * restrict energy_p,
+  double * restrict u_p,
+  double * restrict vol_g,
+  double * restrict mass_g,
+  double * restrict ie_g,
+  double * restrict temp_g,
+  int x_size, int y_size) {
   double vol_0 = vol_g[0];
   double mass_0 = mass_g[0];
   double ie_0 = ie_g[0];
@@ -23,34 +30,27 @@ void field_summary_kernel_c_wrapper(
   for ( int n_y=0; n_y<y_size; n_y++ ){
     for ( int n_x=0; n_x<x_size; n_x++ ){
       double vol[1];
-      vol[0] = ZERO_double;
+      vol[0] = 0;
       double mass[1];
-      mass[0] = ZERO_double;
+      mass[0] = 0;
       double ie[1];
-      ie[0] = ZERO_double;
+      ie[0] = 0;
       double temp[1];
-      temp[0] = ZERO_double;
-      const ptr_double volume = {volume_p + n_x * 1 +
-                                     n_y * xdim0_field_summary_kernel * 1,
-                                 xdim0_field_summary_kernel};
-      const ptr_double density = {density_p + n_x * 1 +
-                                      n_y * xdim1_field_summary_kernel * 1,
-                                  xdim1_field_summary_kernel};
-      const ptr_double energy = {energy_p + n_x * 1 +
-                                     n_y * xdim2_field_summary_kernel * 1,
-                                 xdim2_field_summary_kernel};
-      const ptr_double u = {u_p + n_x * 1 +
-                                n_y * xdim3_field_summary_kernel * 1,
-                            xdim3_field_summary_kernel};
+      temp[0] = 0;
+      const ptr_double volume = { volume_p + n_x*1 + n_y * xdim0_field_summary_kernel*1, xdim0_field_summary_kernel};
+      const ptr_double density = { density_p + n_x*1 + n_y * xdim1_field_summary_kernel*1, xdim1_field_summary_kernel};
+      const ptr_double energy = { energy_p + n_x*1 + n_y * xdim2_field_summary_kernel*1, xdim2_field_summary_kernel};
+      const ptr_double u = { u_p + n_x*1 + n_y * xdim3_field_summary_kernel*1, xdim3_field_summary_kernel};
+      
 
-      double cell_vol, cell_mass;
+  double cell_vol, cell_mass;
 
-      cell_vol = OPS_ACC(volume, 0, 0);
-      cell_mass = cell_vol * OPS_ACC(density, 0, 0);
-      *vol = *vol + cell_vol;
-      *mass = *mass + cell_mass;
-      *ie = *ie + cell_mass * OPS_ACC(energy, 0, 0);
-      *temp = *temp + cell_mass * OPS_ACC(u, 0, 0);
+  cell_vol = OPS_ACC(volume, 0,0);
+  cell_mass = cell_vol * OPS_ACC(density, 0,0);
+  *vol = *vol + cell_vol;
+  *mass = *mass + cell_mass;
+  *ie = *ie + cell_mass * OPS_ACC(energy, 0,0);
+  *temp = *temp + cell_mass * OPS_ACC(u, 0,0);
 
       vol_0 +=vol[0];
       mass_0 +=mass[0];

@@ -36,9 +36,9 @@ void ops_par_loop_advec_mom_kernel2_y(char const *name, ops_block block, int dim
   if (!ops_checkpointing_before(args,4,range,80)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(80,"advec_mom_kernel2_y");
-    OPS_kernels[80].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,80,"advec_mom_kernel2_y");
+    block->instance->OPS_kernels[80].count++;
   }
 
   //compute localy allocated range for the sub-block
@@ -66,7 +66,7 @@ void ops_par_loop_advec_mom_kernel2_y(char const *name, ops_block block, int dim
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
   }
 
@@ -81,42 +81,35 @@ void ops_par_loop_advec_mom_kernel2_y(char const *name, ops_block block, int dim
     xdim3_advec_mom_kernel2_y_h = xdim3;
   }
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
-  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
-  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
+
+  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat2 = (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
+  int dat3 = (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
-  int base0 = args[0].dat->base_offset +
-              (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
-                  start[0] * args[0].stencil->stride[0];
-  base0 = base0 +
-          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
-              args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0+ (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+    args[0].dat->size[0] *
+    start[1] * args[0].stencil->stride[1];
   double *p_a0 = (double *)(args[0].data + base0);
 
-  int base1 = args[1].dat->base_offset +
-              (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
-                  start[0] * args[1].stencil->stride[0];
-  base1 = base1 +
-          (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
-              args[1].dat->size[0] * start[1] * args[1].stencil->stride[1];
+  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  base1 = base1+ (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+    args[1].dat->size[0] *
+    start[1] * args[1].stencil->stride[1];
   double *p_a1 = (double *)(args[1].data + base1);
 
-  int base2 = args[2].dat->base_offset +
-              (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
-                  start[0] * args[2].stencil->stride[0];
-  base2 = base2 +
-          (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
-              args[2].dat->size[0] * start[1] * args[2].stencil->stride[1];
+  int base2 = args[2].dat->base_offset + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
+  base2 = base2+ (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+    args[2].dat->size[0] *
+    start[1] * args[2].stencil->stride[1];
   double *p_a2 = (double *)(args[2].data + base2);
 
-  int base3 = args[3].dat->base_offset +
-              (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
-                  start[0] * args[3].stencil->stride[0];
-  base3 = base3 +
-          (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
-              args[3].dat->size[0] * start[1] * args[3].stencil->stride[1];
+  int base3 = args[3].dat->base_offset + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
+  base3 = base3+ (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+    args[3].dat->size[0] *
+    start[1] * args[3].stencil->stride[1];
   double *p_a3 = (double *)(args[3].data + base3);
 
 
@@ -124,9 +117,9 @@ void ops_par_loop_advec_mom_kernel2_y(char const *name, ops_block block, int dim
   ops_H_D_exchanges_host(args, 4);
   ops_halo_exchanges(args,4,range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[80].mpi_time += t1 - t2;
+    block->instance->OPS_kernels[80].mpi_time += t1-t2;
   }
 
   advec_mom_kernel2_y_c_wrapper(
@@ -136,18 +129,18 @@ void ops_par_loop_advec_mom_kernel2_y(char const *name, ops_block block, int dim
     p_a3,
     x_size, y_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[80].time += t2 - t1;
+    block->instance->OPS_kernels[80].time += t2-t1;
   }
   ops_set_dirtybit_host(args, 4);
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  if (OPS_diags > 1) {
-    OPS_kernels[80].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[80].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[80].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[80].transfer += ops_compute_transfer(dim, start, end, &arg3);
+  if (block->instance->OPS_diags > 1) {
+    block->instance->OPS_kernels[80].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[80].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[80].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[80].transfer += ops_compute_transfer(dim, start, end, &arg3);
   }
 }

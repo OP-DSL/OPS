@@ -43,14 +43,14 @@ void ops_par_loop_accelerate_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,14,range,104)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(104,"accelerate_kernel");
-    OPS_kernels[104].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,104,"accelerate_kernel");
+    block->instance->OPS_kernels[104].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "accelerate_kernel");
+  ops_register_args(block->instance, args, "accelerate_kernel");
   #endif
 
 
@@ -101,46 +101,48 @@ void ops_par_loop_accelerate_kernel_execute(ops_kernel_descriptor *desc) {
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ density0_p = (double *)(args[0].data + base0);
+  double * __restrict__ density0_p = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset;
-  double *__restrict__ volume_p = (double *)(args[1].data + base1);
+  double * __restrict__ volume_p = (double *)(args[1].data + base1);
 
   int base2 = args[2].dat->base_offset;
-  double *__restrict__ stepbymass_p = (double *)(args[2].data + base2);
+  double * __restrict__ stepbymass_p = (double *)(args[2].data + base2);
 
   int base3 = args[3].dat->base_offset;
-  double *__restrict__ xvel0_p = (double *)(args[3].data + base3);
+  double * __restrict__ xvel0_p = (double *)(args[3].data + base3);
 
   int base4 = args[4].dat->base_offset;
-  double *__restrict__ xvel1_p = (double *)(args[4].data + base4);
+  double * __restrict__ xvel1_p = (double *)(args[4].data + base4);
 
   int base5 = args[5].dat->base_offset;
-  double *__restrict__ xarea_p = (double *)(args[5].data + base5);
+  double * __restrict__ xarea_p = (double *)(args[5].data + base5);
 
   int base6 = args[6].dat->base_offset;
-  double *__restrict__ pressure_p = (double *)(args[6].data + base6);
+  double * __restrict__ pressure_p = (double *)(args[6].data + base6);
 
   int base7 = args[7].dat->base_offset;
-  double *__restrict__ yvel0_p = (double *)(args[7].data + base7);
+  double * __restrict__ yvel0_p = (double *)(args[7].data + base7);
 
   int base8 = args[8].dat->base_offset;
-  double *__restrict__ yvel1_p = (double *)(args[8].data + base8);
+  double * __restrict__ yvel1_p = (double *)(args[8].data + base8);
 
   int base9 = args[9].dat->base_offset;
-  double *__restrict__ yarea_p = (double *)(args[9].data + base9);
+  double * __restrict__ yarea_p = (double *)(args[9].data + base9);
 
   int base10 = args[10].dat->base_offset;
-  double *__restrict__ viscosity_p = (double *)(args[10].data + base10);
+  double * __restrict__ viscosity_p = (double *)(args[10].data + base10);
 
   int base11 = args[11].dat->base_offset;
-  double *__restrict__ zvel0_p = (double *)(args[11].data + base11);
+  double * __restrict__ zvel0_p = (double *)(args[11].data + base11);
 
   int base12 = args[12].dat->base_offset;
-  double *__restrict__ zvel1_p = (double *)(args[12].data + base12);
+  double * __restrict__ zvel1_p = (double *)(args[12].data + base12);
 
   int base13 = args[13].dat->base_offset;
-  double *__restrict__ zarea_p = (double *)(args[13].data + base13);
+  double * __restrict__ zarea_p = (double *)(args[13].data + base13);
+
+
 
   #ifndef OPS_LAZY
   //Halo Exchanges
@@ -149,9 +151,9 @@ void ops_par_loop_accelerate_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 14);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[104].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[104].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for collapse(2)
@@ -159,151 +161,85 @@ void ops_par_loop_accelerate_kernel_execute(ops_kernel_descriptor *desc) {
     for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
       #ifdef __INTEL_COMPILER
       #pragma loop_count(10000)
-#pragma omp simd
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+      #pragma omp simd
+      #elif defined(__clang__)
+      #pragma clang loop vectorize(assume_safety)
+      #elif defined(__GNUC__)
+      #pragma GCC ivdep
+      #else
+      #pragma simd
+      #endif
       for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-        const ACC<double> density0(
-            xdim0_accelerate_kernel, ydim0_accelerate_kernel,
-            density0_p + n_x * 1 + n_y * xdim0_accelerate_kernel * 1 +
-                n_z * xdim0_accelerate_kernel * ydim0_accelerate_kernel * 1);
-        const ACC<double> volume(
-            xdim1_accelerate_kernel, ydim1_accelerate_kernel,
-            volume_p + n_x * 1 + n_y * xdim1_accelerate_kernel * 1 +
-                n_z * xdim1_accelerate_kernel * ydim1_accelerate_kernel * 1);
-        ACC<double> stepbymass(
-            xdim2_accelerate_kernel, ydim2_accelerate_kernel,
-            stepbymass_p + n_x * 1 + n_y * xdim2_accelerate_kernel * 1 +
-                n_z * xdim2_accelerate_kernel * ydim2_accelerate_kernel * 1);
-        const ACC<double> xvel0(
-            xdim3_accelerate_kernel, ydim3_accelerate_kernel,
-            xvel0_p + n_x * 1 + n_y * xdim3_accelerate_kernel * 1 +
-                n_z * xdim3_accelerate_kernel * ydim3_accelerate_kernel * 1);
-        ACC<double> xvel1(
-            xdim4_accelerate_kernel, ydim4_accelerate_kernel,
-            xvel1_p + n_x * 1 + n_y * xdim4_accelerate_kernel * 1 +
-                n_z * xdim4_accelerate_kernel * ydim4_accelerate_kernel * 1);
-        const ACC<double> xarea(
-            xdim5_accelerate_kernel, ydim5_accelerate_kernel,
-            xarea_p + n_x * 1 + n_y * xdim5_accelerate_kernel * 1 +
-                n_z * xdim5_accelerate_kernel * ydim5_accelerate_kernel * 1);
-        const ACC<double> pressure(
-            xdim6_accelerate_kernel, ydim6_accelerate_kernel,
-            pressure_p + n_x * 1 + n_y * xdim6_accelerate_kernel * 1 +
-                n_z * xdim6_accelerate_kernel * ydim6_accelerate_kernel * 1);
-        const ACC<double> yvel0(
-            xdim7_accelerate_kernel, ydim7_accelerate_kernel,
-            yvel0_p + n_x * 1 + n_y * xdim7_accelerate_kernel * 1 +
-                n_z * xdim7_accelerate_kernel * ydim7_accelerate_kernel * 1);
-        ACC<double> yvel1(
-            xdim8_accelerate_kernel, ydim8_accelerate_kernel,
-            yvel1_p + n_x * 1 + n_y * xdim8_accelerate_kernel * 1 +
-                n_z * xdim8_accelerate_kernel * ydim8_accelerate_kernel * 1);
-        const ACC<double> yarea(
-            xdim9_accelerate_kernel, ydim9_accelerate_kernel,
-            yarea_p + n_x * 1 + n_y * xdim9_accelerate_kernel * 1 +
-                n_z * xdim9_accelerate_kernel * ydim9_accelerate_kernel * 1);
-        const ACC<double> viscosity(
-            xdim10_accelerate_kernel, ydim10_accelerate_kernel,
-            viscosity_p + n_x * 1 + n_y * xdim10_accelerate_kernel * 1 +
-                n_z * xdim10_accelerate_kernel * ydim10_accelerate_kernel * 1);
-        const ACC<double> zvel0(
-            xdim11_accelerate_kernel, ydim11_accelerate_kernel,
-            zvel0_p + n_x * 1 + n_y * xdim11_accelerate_kernel * 1 +
-                n_z * xdim11_accelerate_kernel * ydim11_accelerate_kernel * 1);
-        ACC<double> zvel1(
-            xdim12_accelerate_kernel, ydim12_accelerate_kernel,
-            zvel1_p + n_x * 1 + n_y * xdim12_accelerate_kernel * 1 +
-                n_z * xdim12_accelerate_kernel * ydim12_accelerate_kernel * 1);
-        const ACC<double> zarea(
-            xdim13_accelerate_kernel, ydim13_accelerate_kernel,
-            zarea_p + n_x * 1 + n_y * xdim13_accelerate_kernel * 1 +
-                n_z * xdim13_accelerate_kernel * ydim13_accelerate_kernel * 1);
+        const ACC<double> density0(xdim0_accelerate_kernel, ydim0_accelerate_kernel, density0_p + n_x*1 + n_y * xdim0_accelerate_kernel*1 + n_z * xdim0_accelerate_kernel * ydim0_accelerate_kernel*1);
+        const ACC<double> volume(xdim1_accelerate_kernel, ydim1_accelerate_kernel, volume_p + n_x*1 + n_y * xdim1_accelerate_kernel*1 + n_z * xdim1_accelerate_kernel * ydim1_accelerate_kernel*1);
+        ACC<double> stepbymass(xdim2_accelerate_kernel, ydim2_accelerate_kernel, stepbymass_p + n_x*1 + n_y * xdim2_accelerate_kernel*1 + n_z * xdim2_accelerate_kernel * ydim2_accelerate_kernel*1);
+        const ACC<double> xvel0(xdim3_accelerate_kernel, ydim3_accelerate_kernel, xvel0_p + n_x*1 + n_y * xdim3_accelerate_kernel*1 + n_z * xdim3_accelerate_kernel * ydim3_accelerate_kernel*1);
+        ACC<double> xvel1(xdim4_accelerate_kernel, ydim4_accelerate_kernel, xvel1_p + n_x*1 + n_y * xdim4_accelerate_kernel*1 + n_z * xdim4_accelerate_kernel * ydim4_accelerate_kernel*1);
+        const ACC<double> xarea(xdim5_accelerate_kernel, ydim5_accelerate_kernel, xarea_p + n_x*1 + n_y * xdim5_accelerate_kernel*1 + n_z * xdim5_accelerate_kernel * ydim5_accelerate_kernel*1);
+        const ACC<double> pressure(xdim6_accelerate_kernel, ydim6_accelerate_kernel, pressure_p + n_x*1 + n_y * xdim6_accelerate_kernel*1 + n_z * xdim6_accelerate_kernel * ydim6_accelerate_kernel*1);
+        const ACC<double> yvel0(xdim7_accelerate_kernel, ydim7_accelerate_kernel, yvel0_p + n_x*1 + n_y * xdim7_accelerate_kernel*1 + n_z * xdim7_accelerate_kernel * ydim7_accelerate_kernel*1);
+        ACC<double> yvel1(xdim8_accelerate_kernel, ydim8_accelerate_kernel, yvel1_p + n_x*1 + n_y * xdim8_accelerate_kernel*1 + n_z * xdim8_accelerate_kernel * ydim8_accelerate_kernel*1);
+        const ACC<double> yarea(xdim9_accelerate_kernel, ydim9_accelerate_kernel, yarea_p + n_x*1 + n_y * xdim9_accelerate_kernel*1 + n_z * xdim9_accelerate_kernel * ydim9_accelerate_kernel*1);
+        const ACC<double> viscosity(xdim10_accelerate_kernel, ydim10_accelerate_kernel, viscosity_p + n_x*1 + n_y * xdim10_accelerate_kernel*1 + n_z * xdim10_accelerate_kernel * ydim10_accelerate_kernel*1);
+        const ACC<double> zvel0(xdim11_accelerate_kernel, ydim11_accelerate_kernel, zvel0_p + n_x*1 + n_y * xdim11_accelerate_kernel*1 + n_z * xdim11_accelerate_kernel * ydim11_accelerate_kernel*1);
+        ACC<double> zvel1(xdim12_accelerate_kernel, ydim12_accelerate_kernel, zvel1_p + n_x*1 + n_y * xdim12_accelerate_kernel*1 + n_z * xdim12_accelerate_kernel * ydim12_accelerate_kernel*1);
+        const ACC<double> zarea(xdim13_accelerate_kernel, ydim13_accelerate_kernel, zarea_p + n_x*1 + n_y * xdim13_accelerate_kernel*1 + n_z * xdim13_accelerate_kernel * ydim13_accelerate_kernel*1);
+        
 
-        double nodal_mass = 0.0;
-        nodal_mass = (density0(-1, -1, 0) * volume(-1, -1, 0) +
-                      density0(0, -1, 0) * volume(0, -1, 0) +
-                      density0(0, 0, 0) * volume(0, 0, 0) +
-                      density0(-1, 0, 0) * volume(-1, 0, 0) +
-                      density0(-1, -1, -1) * volume(-1, -1, -1) +
-                      density0(0, -1, -1) * volume(0, -1, -1) +
-                      density0(0, 0, -1) * volume(0, 0, -1) +
-                      density0(-1, 0, -1) * volume(-1, 0, -1)) *
-                     0.125;
+  double nodal_mass = 0.0;
+  nodal_mass =(density0(-1,-1, 0) * volume(-1,-1, 0) +
+               density0( 0,-1, 0) * volume( 0,-1, 0) +
+               density0( 0, 0, 0) * volume( 0, 0, 0) +
+               density0(-1, 0, 0) * volume(-1, 0, 0) +
+               density0(-1,-1,-1) * volume(-1,-1,-1) +
+               density0( 0,-1,-1) * volume( 0,-1,-1) +
+               density0( 0, 0,-1) * volume( 0, 0,-1) +
+               density0(-1, 0,-1) * volume(-1, 0,-1)) * 0.125;
 
-        stepbymass(0, 0, 0) = 0.25 * dt / nodal_mass;
+  stepbymass(0,0,0) = 0.25*dt / nodal_mass;
 
-        xvel1(0, 0, 0) =
-            xvel0(0, 0, 0) -
-            stepbymass(0, 0, 0) *
-                (xarea(0, 0, 0) * (pressure(0, 0, 0) - pressure(-1, 0, 0)) +
-                 xarea(0, -1, 0) * (pressure(0, -1, 0) - pressure(-1, -1, 0)) +
-                 xarea(0, 0, -1) * (pressure(0, 0, -1) - pressure(-1, 0, -1)) +
-                 xarea(0, -1, -1) *
-                     (pressure(0, -1, -1) - pressure(-1, -1, -1)));
+  xvel1(0,0,0) = xvel0(0,0,0) - stepbymass(0,0,0) *
+            ( xarea(0,0,0)  * ( pressure(0,0,0) - pressure(-1,0,0) ) +
+              xarea(0,-1,0) * ( pressure(0,-1,0) - pressure(-1,-1,0) ) +
+              xarea(0,0,-1) * ( pressure(0,0,-1) - pressure(-1,0,-1) ) +
+              xarea(0,-1,-1) * ( pressure(0,-1,-1) - pressure(-1,-1,-1) ) );
 
-        yvel1(0, 0, 0) =
-            yvel0(0, 0, 0) -
-            stepbymass(0, 0, 0) *
-                (yarea(0, 0, 0) * (pressure(0, 0, 0) - pressure(0, -1, 0)) +
-                 yarea(-1, 0, 0) * (pressure(-1, 0, 0) - pressure(-1, -1, 0)) +
-                 yarea(0, 0, -1) * (pressure(0, 0, -1) - pressure(0, -1, -1)) +
-                 yarea(-1, 0, -1) *
-                     (pressure(-1, 0, -1) - pressure(-1, -1, -1)));
+  yvel1(0,0,0) = yvel0(0,0,0) - stepbymass(0,0,0) *
+            ( yarea(0,0,0)  * ( pressure(0,0,0) - pressure(0,-1,0) ) +
+              yarea(-1,0,0) * ( pressure(-1,0,0) - pressure(-1,-1,0) ) +
+              yarea(0,0,-1) * ( pressure(0,0,-1) - pressure(0,-1,-1) ) +
+              yarea(-1,0,-1)* ( pressure(-1,0,-1) - pressure(-1,-1,-1) ) );
 
-        zvel1(0, 0, 0) =
-            zvel0(0, 0, 0) -
-            stepbymass(0, 0, 0) *
-                (zarea(0, 0, 0) * (pressure(0, 0, 0) - pressure(0, 0, -1)) +
-                 zarea(0, -1, 0) * (pressure(0, -1, 0) - pressure(0, -1, -1)) +
-                 zarea(-1, 0, 0) * (pressure(-1, 0, 0) - pressure(-1, 0, -1)) +
-                 zarea(-1, -1, 0) *
-                     (pressure(-1, -1, 0) - pressure(-1, -1, -1)));
+  zvel1(0,0,0) = zvel0(0,0,0) - stepbymass(0,0,0) *
+            ( zarea(0,0,0)  * ( pressure(0,0,0) - pressure(0,0,-1) ) +
+              zarea(0,-1,0) * ( pressure(0,-1,0) - pressure(0,-1,-1) ) +
+              zarea(-1,0,0) * ( pressure(-1,0,0) - pressure(-1,0,-1) ) +
+              zarea(-1,-1,0)* ( pressure(-1,-1,0) - pressure(-1,-1,-1) ) );
 
-        xvel1(0, 0, 0) =
-            xvel1(0, 0, 0) -
-            stepbymass(0, 0, 0) *
-                (xarea(0, 0, 0) * (viscosity(0, 0, 0) - viscosity(-1, 0, 0)) +
-                 xarea(0, -1, 0) *
-                     (viscosity(0, -1, 0) - viscosity(-1, -1, 0)) +
-                 xarea(0, 0, -1) *
-                     (viscosity(0, 0, -1) - viscosity(-1, 0, -1)) +
-                 xarea(0, -1, -1) *
-                     (viscosity(0, -1, -1) - viscosity(-1, -1, -1)));
+  xvel1(0,0,0) = xvel1(0,0,0) - stepbymass(0,0,0) *
+            ( xarea(0,0,0)  * ( viscosity(0,0,0) - viscosity(-1,0,0) ) +
+              xarea(0,-1,0) * ( viscosity(0,-1,0) - viscosity(-1,-1,0) ) +
+              xarea(0,0,-1) * ( viscosity(0,0,-1) - viscosity(-1,0,-1) ) +
+              xarea(0,-1,-1)* ( viscosity(0,-1,-1) - viscosity(-1,-1,-1) ) );
 
-        yvel1(0, 0, 0) =
-            yvel1(0, 0, 0) -
-            stepbymass(0, 0, 0) *
-                (yarea(0, 0, 0) * (viscosity(0, 0, 0) - viscosity(0, -1, 0)) +
-                 yarea(-1, 0, 0) *
-                     (viscosity(-1, 0, 0) - viscosity(-1, -1, 0)) +
-                 yarea(0, 0, -1) *
-                     (viscosity(0, 0, -1) - viscosity(0, -1, -1)) +
-                 yarea(-1, 0, -1) *
-                     (viscosity(-1, 0, -1) - viscosity(-1, -1, -1)));
+  yvel1(0,0,0) = yvel1(0,0,0) - stepbymass(0,0,0) *
+            ( yarea(0,0,0)  * ( viscosity(0,0,0)  - viscosity(0,-1,0) ) +
+              yarea(-1,0,0) * ( viscosity(-1,0,0) - viscosity(-1,-1,0) ) +
+              yarea(0,0,-1) * ( viscosity(0,0,-1) - viscosity(0,-1,-1) ) +
+              yarea(-1,0,-1)* ( viscosity(-1,0,-1)- viscosity(-1,-1,-1) ) );
 
-        zvel1(0, 0, 0) =
-            zvel1(0, 0, 0) -
-            stepbymass(0, 0, 0) *
-                (zarea(0, 0, 0) * (viscosity(0, 0, 0) - viscosity(0, 0, -1)) +
-                 zarea(0, -1, 0) *
-                     (viscosity(0, -1, 0) - viscosity(0, -1, -1)) +
-                 zarea(-1, 0, 0) *
-                     (viscosity(-1, 0, 0) - viscosity(-1, 0, -1)) +
-                 zarea(-1, -1, 0) *
-                     (viscosity(-1, -1, 0) - viscosity(-1, -1, -1)));
+  zvel1(0,0,0) = zvel1(0,0,0) - stepbymass(0,0,0) *
+            ( zarea(0,0,0)  * ( viscosity(0,0,0)  - viscosity(0,0,-1) ) +
+              zarea(0,-1,0) * ( viscosity(0,-1,0) - viscosity(0,-1,-1) ) +
+              zarea(-1,0,0) * ( viscosity(-1,0,0) - viscosity(-1,0,-1) ) +
+              zarea(-1,-1,0)* ( viscosity(-1,-1,0)- viscosity(-1,-1,-1) ) );
+
       }
     }
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[104].time += __t2-__t1;
+    block->instance->OPS_kernels[104].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 14);
@@ -313,24 +249,24 @@ void ops_par_loop_accelerate_kernel_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[12],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[104].mpi_time += __t1-__t2;
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg8);
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg9);
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg10);
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg11);
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg12);
-    OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg13);
+    block->instance->OPS_kernels[104].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    block->instance->OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    block->instance->OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg9);
+    block->instance->OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg10);
+    block->instance->OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg11);
+    block->instance->OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg12);
+    block->instance->OPS_kernels[104].transfer += ops_compute_transfer(dim, start, end, &arg13);
   }
 }
 
@@ -341,7 +277,7 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim, 
  ops_arg arg4, ops_arg arg5, ops_arg arg6, ops_arg arg7,
  ops_arg arg8, ops_arg arg9, ops_arg arg10, ops_arg arg11,
  ops_arg arg12, ops_arg arg13) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -385,8 +321,8 @@ void ops_par_loop_accelerate_kernel(char const *name, ops_block block, int dim, 
   desc->args[13] = arg13;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg13.dat->index;
   desc->function = ops_par_loop_accelerate_kernel_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(104,"accelerate_kernel");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,104,"accelerate_kernel");
   }
   ops_enqueue_kernel(desc);
 }

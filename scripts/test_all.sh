@@ -14,35 +14,35 @@ cd $OPS_INSTALL_PATH
 echo "************Testing C Applications *****************"
 echo "~~~~~~~~~~~~~~~CloverLeaf 2D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../apps/c/CloverLeaf/
-cd ../CloverLeaf/
-./test.sh
+#cd ../CloverLeaf/
+#./test.sh
 echo "~~~~~~~~~~~~~~~CloverLeaf 3D~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../CloverLeaf_3D/
-./test.sh
+#cd ../CloverLeaf_3D/
+#./test.sh
 echo "~~~~~~~~~~~~~~~CloverLeaf 3D HDF5~~~~~~~~~~~~~~~~~~~"
-cd ../CloverLeaf_3D_HDF5/
-./test.sh
+#cd ../CloverLeaf_3D_HDF5/
+#./test.sh
 echo "~~~~~~~~~~~~~~~TeaLeaf 3D ~~~~~~~~~~~~~~~~~~~~~~"
-cd ../TeaLeaf/
-./test.sh
+#cd ../TeaLeaf/
+#./test.sh
 echo "~~~~~~~~~~~~~~~Poisson~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../poisson/
-./test.sh
+#cd ../poisson/
+#./test.sh
 echo "~~~~~~~~~~~~~~~multiDim~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../multiDim/
-./test.sh
+#cd ../multiDim/
+#./test.sh
 echo "~~~~~~~~~~~~~~~multiDim3D~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../multiDim3D/
-./test.sh
+#cd ../multiDim3D/
+#./test.sh
 echo "~~~~~~~~~~~~~~~shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../shsgc/
-./test.sh
+#cd ../shsgc/
+#./test.sh
 echo "~~~~~~~~~~~~~~~mb_shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../mb_shsgc/Max_datatransfer
-./test.sh
+#cd ../mb_shsgc/Max_datatransfer
+#./test.sh
 echo "~~~~~~~~~~~~~~~multiDim_HDF5~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../../multiDim_HDF5
-./test.sh
+#cd ../../multiDim_HDF5
+#./test.sh
 echo "~~~~~~~~~~~~~~~adi~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../adi
 ./test.sh

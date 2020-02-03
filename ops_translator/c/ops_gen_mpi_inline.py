@@ -832,6 +832,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
   config.file_text =''
   config.depth = 0
   comm('header')
+  code('#include <math.h>')
   code('#define OPS_API 2')
   if NDIM==1:
     code('#define OPS_1D')

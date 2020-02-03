@@ -8,12 +8,14 @@ int xdim0_tea_leaf_cg_calc_ur_r_reduce_kernel;
 int xdim1_tea_leaf_cg_calc_ur_r_reduce_kernel;
 
 //user function
-inline void tea_leaf_cg_calc_ur_r_reduce_kernel(ptr_double r,
-                                                const ptr_double w,
-                                                const double *alpha,
-                                                double *rnn) {
-  OPS_ACC(r, 0, 0) = OPS_ACC(r, 0, 0) - (*alpha) * OPS_ACC(w, 0, 0);
-  *rnn = *rnn + OPS_ACC(r, 0, 0) * OPS_ACC(r, 0, 0);
+#pragma acc routine
+inline 
+void tea_leaf_cg_calc_ur_r_reduce_kernel(ptr_double  r,
+  const ptr_double  w,
+  const double * alpha,
+  double *rnn) {
+  OPS_ACC(r, 0,0) = OPS_ACC(r, 0,0) - (*alpha)*OPS_ACC(w, 0,0);
+  *rnn = *rnn +  OPS_ACC(r, 0,0)*OPS_ACC(r, 0,0);
 }
 
 
@@ -33,15 +35,12 @@ void tea_leaf_cg_calc_ur_r_reduce_kernel_c_wrapper(
     #pragma acc loop reduction(+:p_a3_0)
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      ptr_double ptr0 = {p_a0 + n_x * 1 * 1 +
-                             n_y * xdim0_tea_leaf_cg_calc_ur_r_reduce_kernel *
-                                 1 * 1,
-                         xdim0_tea_leaf_cg_calc_ur_r_reduce_kernel};
-      const ptr_double ptr1 = {
-          p_a1 + n_x * 1 * 1 +
-              n_y * xdim1_tea_leaf_cg_calc_ur_r_reduce_kernel * 1 * 1,
-          xdim1_tea_leaf_cg_calc_ur_r_reduce_kernel};
-      tea_leaf_cg_calc_ur_r_reduce_kernel(ptr0, ptr1, &p_a2, &p_a3_0);
+      ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_tea_leaf_cg_calc_ur_r_reduce_kernel*1*1, xdim0_tea_leaf_cg_calc_ur_r_reduce_kernel};
+      const ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_tea_leaf_cg_calc_ur_r_reduce_kernel*1*1, xdim1_tea_leaf_cg_calc_ur_r_reduce_kernel};
+      tea_leaf_cg_calc_ur_r_reduce_kernel( ptr0,
+          ptr1, &p_a2,
+           &p_a3_0 );
+
     }
   }
   p_a3[0] = p_a3_0;

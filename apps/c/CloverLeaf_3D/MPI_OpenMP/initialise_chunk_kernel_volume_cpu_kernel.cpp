@@ -34,14 +34,14 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
   if (!ops_checkpointing_before(args,7,range,9)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(9,"initialise_chunk_kernel_volume");
-    OPS_kernels[9].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,9,"initialise_chunk_kernel_volume");
+    block->instance->OPS_kernels[9].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "initialise_chunk_kernel_volume");
+  ops_register_args(block->instance, args, "initialise_chunk_kernel_volume");
   #endif
 
 
@@ -107,9 +107,9 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
   ops_H_D_exchanges_host(args, 7);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[9].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[9].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for collapse(2)
@@ -121,7 +121,6 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
       #elif defined(__clang__)
       #pragma clang loop vectorize(assume_safety)
       #elif defined(__GNUC__)
-      #pragma simd
       #pragma GCC ivdep
       #else
       #pragma simd
@@ -150,9 +149,9 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
       }
     }
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[9].time += __t2-__t1;
+    block->instance->OPS_kernels[9].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 7);
@@ -162,17 +161,17 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
   ops_set_halo_dirtybit3(&args[6],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[9].mpi_time += __t1-__t2;
-    OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[9].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[9].transfer += ops_compute_transfer(dim, start, end, &arg6);
   }
 }
 
@@ -181,7 +180,7 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
 void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -211,8 +210,8 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   desc->args[6] = arg6;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg6.dat->index;
   desc->function = ops_par_loop_initialise_chunk_kernel_volume_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(9,"initialise_chunk_kernel_volume");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,9,"initialise_chunk_kernel_volume");
   }
   ops_enqueue_kernel(desc);
 }

@@ -32,10 +32,11 @@ void multidim_copy_kernel_c_wrapper(
         #else
         ptrm_double dest = { dest_p + n_x*1 + n_y * xdim1_multidim_copy_kernel*1 + n_z * xdim1_multidim_copy_kernel * ydim1_multidim_copy_kernel*1, xdim1_multidim_copy_kernel, ydim1_multidim_copy_kernel, 3};
         #endif
+        
+  OPS_ACC(dest, 0,0,0,0) = OPS_ACC(src, 0,0,0,0);
+  OPS_ACC(dest, 1,0,0,0) = OPS_ACC(src, 1,0,0,0);
+  OPS_ACC(dest, 2,0,0,0) = OPS_ACC(src, 2,0,0,0);
 
-        OPS_ACC(dest, 0, 0, 0, 0) = OPS_ACC(src, 0, 0, 0, 0);
-        OPS_ACC(dest, 1, 0, 0, 0) = OPS_ACC(src, 1, 0, 0, 0);
-        OPS_ACC(dest, 2, 0, 0, 0) = OPS_ACC(src, 2, 0, 0, 0);
       }
     }
   }

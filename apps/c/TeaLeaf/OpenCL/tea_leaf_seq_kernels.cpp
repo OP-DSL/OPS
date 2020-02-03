@@ -4,7 +4,7 @@
 // header
 #define OPS_2D
 #define OPS_ACC_MD_MACROS
-#include "ops_lib_cpp.h"
+#include "ops_lib_core.h"
 #ifdef OPS_MPI
 #include "ops_mpi_core.h"
 #endif

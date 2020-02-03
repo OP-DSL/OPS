@@ -66,9 +66,9 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   if (!ops_checkpointing_before(args,12,range,96)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(96,"field_summary_kernel");
-    OPS_kernels[96].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,96,"field_summary_kernel");
+    block->instance->OPS_kernels[96].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -129,11 +129,11 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   #endif
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     args[0].dat->size[1] *
     start[2] * args[0].stencil->stride[2];
@@ -143,11 +143,11 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
-  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  base1 = base1 + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
     start[1] * args[1].stencil->stride[1];
-  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+  base1 = base1 + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
     args[1].dat->size[1] *
     start[2] * args[1].stencil->stride[2];
@@ -157,11 +157,11 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   double *p_a1 = (double *)((char *)args[1].data + base1);
   #endif
 
-  int base2 = args[2].dat->base_offset + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
-  base2 = base2 + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+  int base2 = args[2].dat->base_offset + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
+  base2 = base2 + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
     args[2].dat->size[0] *
     start[1] * args[2].stencil->stride[1];
-  base2 = base2 + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+  base2 = base2 + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
     args[2].dat->size[0] *
     args[2].dat->size[1] *
     start[2] * args[2].stencil->stride[2];
@@ -171,11 +171,11 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   double *p_a2 = (double *)((char *)args[2].data + base2);
   #endif
 
-  int base3 = args[3].dat->base_offset + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
-  base3 = base3 + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+  int base3 = args[3].dat->base_offset + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
+  base3 = base3 + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
     args[3].dat->size[0] *
     start[1] * args[3].stencil->stride[1];
-  base3 = base3 + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+  base3 = base3 + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
     args[3].dat->size[0] *
     args[3].dat->size[1] *
     start[2] * args[3].stencil->stride[2];
@@ -185,11 +185,11 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   double *p_a3 = (double *)((char *)args[3].data + base3);
   #endif
 
-  int base4 = args[4].dat->base_offset + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) * start[0] * args[4].stencil->stride[0];
-  base4 = base4 + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+  int base4 = args[4].dat->base_offset + (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) * start[0] * args[4].stencil->stride[0];
+  base4 = base4 + (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
     args[4].dat->size[0] *
     start[1] * args[4].stencil->stride[1];
-  base4 = base4 + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+  base4 = base4 + (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
     args[4].dat->size[0] *
     args[4].dat->size[1] *
     start[2] * args[4].stencil->stride[2];
@@ -199,11 +199,11 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   double *p_a4 = (double *)((char *)args[4].data + base4);
   #endif
 
-  int base5 = args[5].dat->base_offset + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) * start[0] * args[5].stencil->stride[0];
-  base5 = base5 + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+  int base5 = args[5].dat->base_offset + (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) * start[0] * args[5].stencil->stride[0];
+  base5 = base5 + (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
     args[5].dat->size[0] *
     start[1] * args[5].stencil->stride[1];
-  base5 = base5 + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+  base5 = base5 + (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
     args[5].dat->size[0] *
     args[5].dat->size[1] *
     start[2] * args[5].stencil->stride[2];
@@ -213,11 +213,11 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   double *p_a5 = (double *)((char *)args[5].data + base5);
   #endif
 
-  int base6 = args[6].dat->base_offset + (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) * start[0] * args[6].stencil->stride[0];
-  base6 = base6 + (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
+  int base6 = args[6].dat->base_offset + (block->instance->OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) * start[0] * args[6].stencil->stride[0];
+  base6 = base6 + (block->instance->OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
     args[6].dat->size[0] *
     start[1] * args[6].stencil->stride[1];
-  base6 = base6 + (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
+  base6 = base6 + (block->instance->OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
     args[6].dat->size[0] *
     args[6].dat->size[1] *
     start[2] * args[6].stencil->stride[2];
@@ -238,20 +238,20 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   int z_size = MAX(0,end[2]-start[2]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0];
-  ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0];
-  ydim2 = args[2].dat->size[1];
-  xdim3 = args[3].dat->size[0];
-  ydim3 = args[3].dat->size[1];
-  xdim4 = args[4].dat->size[0];
-  ydim4 = args[4].dat->size[1];
-  xdim5 = args[5].dat->size[0];
-  ydim5 = args[5].dat->size[1];
-  xdim6 = args[6].dat->size[0];
-  ydim6 = args[6].dat->size[1];
+  int xdim0 = args[0].dat->size[0];
+  int ydim0 = args[0].dat->size[1];
+  int xdim1 = args[1].dat->size[0];
+  int ydim1 = args[1].dat->size[1];
+  int xdim2 = args[2].dat->size[0];
+  int ydim2 = args[2].dat->size[1];
+  int xdim3 = args[3].dat->size[0];
+  int ydim3 = args[3].dat->size[1];
+  int xdim4 = args[4].dat->size[0];
+  int ydim4 = args[4].dat->size[1];
+  int xdim5 = args[5].dat->size[0];
+  int ydim5 = args[5].dat->size[1];
+  int xdim6 = args[6].dat->size[0];
+  int ydim6 = args[6].dat->size[1];
   if (xdim0 != xdim0_field_summary_kernel_h || ydim0 != ydim0_field_summary_kernel_h || xdim1 != xdim1_field_summary_kernel_h || ydim1 != ydim1_field_summary_kernel_h || xdim2 != xdim2_field_summary_kernel_h || ydim2 != ydim2_field_summary_kernel_h || xdim3 != xdim3_field_summary_kernel_h || ydim3 != ydim3_field_summary_kernel_h || xdim4 != xdim4_field_summary_kernel_h || ydim4 != ydim4_field_summary_kernel_h || xdim5 != xdim5_field_summary_kernel_h || ydim5 != ydim5_field_summary_kernel_h || xdim6 != xdim6_field_summary_kernel_h || ydim6 != ydim6_field_summary_kernel_h) {
     xdim0_field_summary_kernel = xdim0;
     xdim0_field_summary_kernel_h = xdim0;
@@ -297,9 +297,9 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   #else
   ops_H_D_exchanges_host(args, 12);
   #endif
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[96].mpi_time += t2-t1;
+    block->instance->OPS_kernels[96].mpi_time += t2-t1;
   }
 
   field_summary_kernel_c_wrapper(
@@ -317,9 +317,9 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
     p_a11,
     x_size, y_size, z_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[96].time += t1-t2;
+    block->instance->OPS_kernels[96].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 12);
@@ -327,16 +327,16 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   ops_set_dirtybit_host(args, 12);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[96].mpi_time += t2-t1;
-    OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[96].mpi_time += t2-t1;
+    block->instance->OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[96].transfer += ops_compute_transfer(dim, start, end, &arg6);
   }
 }

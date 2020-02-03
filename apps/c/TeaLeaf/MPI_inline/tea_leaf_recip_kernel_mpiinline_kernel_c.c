@@ -8,18 +8,20 @@ int xdim1_tea_leaf_recip_kernel;
 
 //user function
 
-void tea_leaf_recip_kernel_c_wrapper(double *restrict u_p, double *restrict p_p,
-                                     int x_size, int y_size) {
-#pragma omp parallel for
+
+
+void tea_leaf_recip_kernel_c_wrapper(
+  double * restrict u_p,
+  double * restrict p_p,
+  int x_size, int y_size) {
+  #pragma omp parallel for
   for ( int n_y=0; n_y<y_size; n_y++ ){
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      ptr_double u = {u_p + n_x * 1 + n_y * xdim0_tea_leaf_recip_kernel * 1,
-                      xdim0_tea_leaf_recip_kernel};
-      const ptr_double p = {p_p + n_x * 1 +
-                                n_y * xdim1_tea_leaf_recip_kernel * 1,
-                            xdim1_tea_leaf_recip_kernel};
+      ptr_double u = { u_p + n_x*1 + n_y * xdim0_tea_leaf_recip_kernel*1, xdim0_tea_leaf_recip_kernel};
+      const ptr_double p = { p_p + n_x*1 + n_y * xdim1_tea_leaf_recip_kernel*1, xdim1_tea_leaf_recip_kernel};
+      
+  OPS_ACC(u, 0,0) = 1.0/OPS_ACC(p, 0,0);
 
-      OPS_ACC(u, 0, 0) = 1.0 / OPS_ACC(p, 0, 0);
     }
   }
 }

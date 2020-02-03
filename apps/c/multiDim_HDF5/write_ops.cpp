@@ -5,7 +5,7 @@
 
 #define OPS_3D
 void ops_init_backend();
-#include  "ops_lib_cpp.h"
+#include  "ops_lib_core.h"
 
 //
 // ops_par_loop declarations
@@ -27,7 +27,7 @@ void ops_par_loop_write_kernel(char const *, ops_block, int , int*,
 
 //#include "write_kernel.h"
 
-int main(int argc, const char **argv) {
+int main(int argc, char **argv) {
 
 
 
@@ -89,7 +89,7 @@ int main(int argc, const char **argv) {
 
 
 
-  ops_timing_output(stdout);
+  ops_timing_output(std::cout);
   ops_printf("\nSucessful Exit from OPS!\n");
   ops_exit();
 

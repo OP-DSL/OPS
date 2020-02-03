@@ -32,14 +32,14 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
   if (!ops_checkpointing_before(args,5,range,14)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(14,"initialise_chunk_kernel_volume");
-    OPS_kernels[14].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,14,"initialise_chunk_kernel_volume");
+    block->instance->OPS_kernels[14].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "initialise_chunk_kernel_volume");
+  ops_register_args(block->instance, args, "initialise_chunk_kernel_volume");
   #endif
 
 
@@ -67,19 +67,21 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ volume_p = (double *)(args[0].data + base0);
+  double * __restrict__ volume_p = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset;
-  double *__restrict__ celldy_p = (double *)(args[1].data + base1);
+  double * __restrict__ celldy_p = (double *)(args[1].data + base1);
 
   int base2 = args[2].dat->base_offset;
-  double *__restrict__ xarea_p = (double *)(args[2].data + base2);
+  double * __restrict__ xarea_p = (double *)(args[2].data + base2);
 
   int base3 = args[3].dat->base_offset;
-  double *__restrict__ celldx_p = (double *)(args[3].data + base3);
+  double * __restrict__ celldx_p = (double *)(args[3].data + base3);
 
   int base4 = args[4].dat->base_offset;
-  double *__restrict__ yarea_p = (double *)(args[4].data + base4);
+  double * __restrict__ yarea_p = (double *)(args[4].data + base4);
+
+
 
   #ifndef OPS_LAZY
   //Halo Exchanges
@@ -88,54 +90,45 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
   ops_H_D_exchanges_host(args, 5);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[14].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[14].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-#pragma omp simd
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+    #pragma omp simd
+    #elif defined(__clang__)
+    #pragma clang loop vectorize(assume_safety)
+    #elif defined(__GNUC__)
+    #pragma GCC ivdep
+    #else
+    #pragma simd
+    #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-      ACC<double> volume(xdim0_initialise_chunk_kernel_volume,
-                         volume_p + n_x * 1 +
-                             n_y * xdim0_initialise_chunk_kernel_volume * 1);
-      const ACC<double> celldy(
-          xdim1_initialise_chunk_kernel_volume,
-          celldy_p + n_x * 0 + n_y * xdim1_initialise_chunk_kernel_volume * 1);
-      ACC<double> xarea(xdim2_initialise_chunk_kernel_volume,
-                        xarea_p + n_x * 1 +
-                            n_y * xdim2_initialise_chunk_kernel_volume * 1);
-      const ACC<double> celldx(
-          xdim3_initialise_chunk_kernel_volume,
-          celldx_p + n_x * 1 + n_y * xdim3_initialise_chunk_kernel_volume * 0);
-      ACC<double> yarea(xdim4_initialise_chunk_kernel_volume,
-                        yarea_p + n_x * 1 +
-                            n_y * xdim4_initialise_chunk_kernel_volume * 1);
+      ACC<double> volume(xdim0_initialise_chunk_kernel_volume, volume_p + n_x*1 + n_y * xdim0_initialise_chunk_kernel_volume*1);
+      const ACC<double> celldy(xdim1_initialise_chunk_kernel_volume, celldy_p + n_x*0 + n_y * xdim1_initialise_chunk_kernel_volume*1);
+      ACC<double> xarea(xdim2_initialise_chunk_kernel_volume, xarea_p + n_x*1 + n_y * xdim2_initialise_chunk_kernel_volume*1);
+      const ACC<double> celldx(xdim3_initialise_chunk_kernel_volume, celldx_p + n_x*1 + n_y * xdim3_initialise_chunk_kernel_volume*0);
+      ACC<double> yarea(xdim4_initialise_chunk_kernel_volume, yarea_p + n_x*1 + n_y * xdim4_initialise_chunk_kernel_volume*1);
+      
 
-      double d_x, d_y;
+  double d_x, d_y;
 
-      d_x = (grid.xmax - grid.xmin) / (double)grid.x_cells;
-      d_y = (grid.ymax - grid.ymin) / (double)grid.y_cells;
+  d_x = (grid.xmax - grid.xmin)/(double)grid.x_cells;
+  d_y = (grid.ymax - grid.ymin)/(double)grid.y_cells;
 
-      volume(0, 0) = d_x * d_y;
-      xarea(0, 0) = celldy(0, 0);
-      yarea(0, 0) = celldx(0, 0);
+  volume(0,0) = d_x*d_y;
+  xarea(0,0) = celldy(0,0);
+  yarea(0,0) = celldx(0,0);
+
     }
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[14].time += __t2-__t1;
+    block->instance->OPS_kernels[14].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 5);
@@ -144,15 +137,15 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
   ops_set_halo_dirtybit3(&args[4],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[14].mpi_time += __t1-__t2;
-    OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[14].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[14].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }
 
@@ -161,7 +154,7 @@ void ops_par_loop_initialise_chunk_kernel_volume_execute(ops_kernel_descriptor *
 void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -187,8 +180,8 @@ void ops_par_loop_initialise_chunk_kernel_volume(char const *name, ops_block blo
   desc->args[4] = arg4;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->function = ops_par_loop_initialise_chunk_kernel_volume_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(14,"initialise_chunk_kernel_volume");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,14,"initialise_chunk_kernel_volume");
   }
   ops_enqueue_kernel(desc);
 }

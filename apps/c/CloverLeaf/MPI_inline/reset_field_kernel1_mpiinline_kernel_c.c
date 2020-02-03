@@ -25,9 +25,12 @@ void reset_field_kernel1_c_wrapper(
       const ptr_double density1 = { density1_p + n_x*1 + n_y * xdim1_reset_field_kernel1*1, xdim1_reset_field_kernel1};
       ptr_double energy0 = { energy0_p + n_x*1 + n_y * xdim2_reset_field_kernel1*1, xdim2_reset_field_kernel1};
       const ptr_double energy1 = { energy1_p + n_x*1 + n_y * xdim3_reset_field_kernel1*1, xdim3_reset_field_kernel1};
+      
 
-      OPS_ACC(density0, 0, 0) = OPS_ACC(density1, 0, 0);
-      OPS_ACC(energy0, 0, 0) = OPS_ACC(energy1, 0, 0);
+  OPS_ACC(density0, 0,0)  = OPS_ACC(density1, 0,0) ;
+  OPS_ACC(energy0, 0,0)  = OPS_ACC(energy1, 0,0) ;
+
+
     }
   }
 }

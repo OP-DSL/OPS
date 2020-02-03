@@ -5,11 +5,13 @@
 #define OPS_API 2
 #define OPS_3D
 #define OPS_SOA
+#include <math.h>
+#include "ops_macros.h"
 #ifdef __cplusplus
-#include "ops_lib_cpp.h"
+#include "ops_lib_core.h"
+#include "ops_cuda_rt_support.h"
 #endif
-#ifdef OPS_MPI
+#if defined(OPS_MPI) && defined(__cplusplus)
 #include "ops_mpi_core.h"
 #endif
-#include "ops_cuda_rt_support.h"
 // global constants

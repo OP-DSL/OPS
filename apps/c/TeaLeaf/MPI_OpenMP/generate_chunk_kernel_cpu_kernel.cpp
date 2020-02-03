@@ -34,14 +34,14 @@ void ops_par_loop_generate_chunk_kernel_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,7,range,1)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(1,"generate_chunk_kernel");
-    OPS_kernels[1].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,1,"generate_chunk_kernel");
+    block->instance->OPS_kernels[1].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "generate_chunk_kernel");
+  ops_register_args(block->instance, args, "generate_chunk_kernel");
   #endif
 
 
@@ -71,25 +71,27 @@ void ops_par_loop_generate_chunk_kernel_execute(ops_kernel_descriptor *desc) {
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ vertexx_p = (double *)(args[0].data + base0);
+  double * __restrict__ vertexx_p = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset;
-  double *__restrict__ vertexy_p = (double *)(args[1].data + base1);
+  double * __restrict__ vertexy_p = (double *)(args[1].data + base1);
 
   int base2 = args[2].dat->base_offset;
-  double *__restrict__ energy0_p = (double *)(args[2].data + base2);
+  double * __restrict__ energy0_p = (double *)(args[2].data + base2);
 
   int base3 = args[3].dat->base_offset;
-  double *__restrict__ density0_p = (double *)(args[3].data + base3);
+  double * __restrict__ density0_p = (double *)(args[3].data + base3);
 
   int base4 = args[4].dat->base_offset;
-  double *__restrict__ u0_p = (double *)(args[4].data + base4);
+  double * __restrict__ u0_p = (double *)(args[4].data + base4);
 
   int base5 = args[5].dat->base_offset;
-  double *__restrict__ cellx_p = (double *)(args[5].data + base5);
+  double * __restrict__ cellx_p = (double *)(args[5].data + base5);
 
   int base6 = args[6].dat->base_offset;
-  double *__restrict__ celly_p = (double *)(args[6].data + base6);
+  double * __restrict__ celly_p = (double *)(args[6].data + base6);
+
+
 
   #ifndef OPS_LAZY
   //Halo Exchanges
@@ -98,113 +100,99 @@ void ops_par_loop_generate_chunk_kernel_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 7);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[1].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[1].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-#pragma omp simd
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+    #pragma omp simd
+    #elif defined(__clang__)
+    #pragma clang loop vectorize(assume_safety)
+    #elif defined(__GNUC__)
+    #pragma GCC ivdep
+    #else
+    #pragma simd
+    #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-      const ACC<double> vertexx(xdim0_generate_chunk_kernel,
-                                vertexx_p + n_x * 1 +
-                                    n_y * xdim0_generate_chunk_kernel * 0);
-      const ACC<double> vertexy(xdim1_generate_chunk_kernel,
-                                vertexy_p + n_x * 0 +
-                                    n_y * xdim1_generate_chunk_kernel * 1);
-      ACC<double> energy0(xdim2_generate_chunk_kernel,
-                          energy0_p + n_x * 1 +
-                              n_y * xdim2_generate_chunk_kernel * 1);
-      ACC<double> density0(xdim3_generate_chunk_kernel,
-                           density0_p + n_x * 1 +
-                               n_y * xdim3_generate_chunk_kernel * 1);
-      ACC<double> u0(xdim4_generate_chunk_kernel,
-                     u0_p + n_x * 1 + n_y * xdim4_generate_chunk_kernel * 1);
-      const ACC<double> cellx(xdim5_generate_chunk_kernel,
-                              cellx_p + n_x * 1 +
-                                  n_y * xdim5_generate_chunk_kernel * 0);
-      const ACC<double> celly(xdim6_generate_chunk_kernel,
-                              celly_p + n_x * 0 +
-                                  n_y * xdim6_generate_chunk_kernel * 1);
+      const ACC<double> vertexx(xdim0_generate_chunk_kernel, vertexx_p + n_x*1 + n_y * xdim0_generate_chunk_kernel*0);
+      const ACC<double> vertexy(xdim1_generate_chunk_kernel, vertexy_p + n_x*0 + n_y * xdim1_generate_chunk_kernel*1);
+      ACC<double> energy0(xdim2_generate_chunk_kernel, energy0_p + n_x*1 + n_y * xdim2_generate_chunk_kernel*1);
+      ACC<double> density0(xdim3_generate_chunk_kernel, density0_p + n_x*1 + n_y * xdim3_generate_chunk_kernel*1);
+      ACC<double> u0(xdim4_generate_chunk_kernel, u0_p + n_x*1 + n_y * xdim4_generate_chunk_kernel*1);
+      const ACC<double> cellx(xdim5_generate_chunk_kernel, cellx_p + n_x*1 + n_y * xdim5_generate_chunk_kernel*0);
+      const ACC<double> celly(xdim6_generate_chunk_kernel, celly_p + n_x*0 + n_y * xdim6_generate_chunk_kernel*1);
+      
 
-      double radius, x_cent, y_cent;
-      int is_in = 0;
-      int is_in2 = 0;
+  double radius, x_cent, y_cent;
+  int is_in = 0;
+  int is_in2 = 0;
 
-      energy0(0, 0) = states[0].energy;
-      density0(0, 0) = states[0].density;
 
-      for (int i = 1; i < number_of_states; i++) {
+  energy0(0,0)= states[0].energy;
+  density0(0,0)= states[0].density;
 
-        x_cent = states[i].xmin;
-        y_cent = states[i].ymin;
-        is_in = 0;
-        is_in2 = 0;
+  for(int i = 1; i<number_of_states; i++) {
 
-        if (states[i].geometry == g_rect) {
-          for (int i1 = -1; i1 <= 0; i1++) {
-            for (int j1 = -1; j1 <= 0; j1++) {
-              if (vertexx(1 + i1, 0) >= states[i].xmin &&
-                  vertexx(0 + i1, 0) < states[i].xmax) {
-                if (vertexy(0, 1 + j1) >= states[i].ymin &&
-                    vertexy(0, 0 + j1) < states[i].ymax) {
-                  is_in = 1;
-                }
-              }
+    x_cent=states[i].xmin;
+    y_cent=states[i].ymin;
+    is_in = 0;
+    is_in2 = 0;
+
+    if (states[i].geometry == g_rect) {
+      for (int i1 = -1; i1 <= 0; i1++) {
+        for (int j1 = -1; j1 <= 0; j1++) {
+          if(vertexx(1+i1,0) >= states[i].xmin  && vertexx(0+i1,0) < states[i].xmax) {
+            if(vertexy(0,1+j1) >= states[i].ymin && vertexy(0,0+j1) < states[i].ymax) {
+              is_in = 1;
             }
-          }
-          if (vertexx(1, 0) >= states[i].xmin &&
-              vertexx(0, 0) < states[i].xmax) {
-            if (vertexy(0, 1) >= states[i].ymin &&
-                vertexy(0, 0) < states[i].ymax) {
-              is_in2 = 1;
-            }
-          }
-          if (is_in2) {
-            energy0(0, 0) = states[i].energy;
-            density0(0, 0) = states[i].density;
-          }
-        } else if (states[i].geometry == g_circ) {
-          for (int i1 = -1; i1 <= 0; i1++) {
-            for (int j1 = -1; j1 <= 0; j1++) {
-              radius = sqrt((cellx(i1, 0) - x_cent) * (cellx(i1, 0) - x_cent) +
-                            (celly(0, j1) - y_cent) * (celly(0, j1) - y_cent));
-              if (radius <= states[i].radius) {
-                is_in = 1;
-              }
-            }
-          }
-          if (radius <= states[i].radius)
-            is_in2 = 1;
-
-          if (is_in2) {
-            energy0(0, 0) = states[i].energy;
-            density0(0, 0) = states[i].density;
-          }
-        } else if (states[i].geometry == g_point) {
-          if (vertexx(0, 0) == x_cent && vertexy(0, 0) == y_cent) {
-            energy0(0, 0) = states[i].energy;
-            density0(0, 0) = states[i].density;
           }
         }
-  }
-  u0(0, 0) = energy0(0, 0) * density0(0, 0);
+      }
+      if(vertexx(1,0) >= states[i].xmin  && vertexx(0,0) < states[i].xmax) {
+        if(vertexy(0,1) >= states[i].ymin && vertexy(0,0) < states[i].ymax) {
+          is_in2 = 1;
+        }
+      }
+      if (is_in2) {
+        energy0(0,0) = states[i].energy;
+        density0(0,0) = states[i].density;
+      }
+    }
+    else if(states[i].geometry == g_circ) {
+      for (int i1 = -1; i1 <= 0; i1++) {
+        for (int j1 = -1; j1 <= 0; j1++) {
+          radius = sqrt ((cellx(i1,0) - x_cent) * (cellx(i1,0) - x_cent) +
+                     (celly(0,j1) - y_cent) * (celly(0,j1) - y_cent));
+          if (radius <= states[i].radius) {
+            is_in = 1;
+          }
+        }
+      }
+      if (radius <= states[i].radius) is_in2 = 1;
+
+      if (is_in2) {
+        energy0(0,0) = states[i].energy;
+        density0(0,0) = states[i].density;
+      }
+    }
+    else if(states[i].geometry == g_point) {
+      if(vertexx(0,0) == x_cent && vertexy(0,0) == y_cent) {
+        energy0(0,0) = states[i].energy;
+        density0(0,0) = states[i].density;
+      }
     }
   }
-  if (OPS_diags > 1) {
+  u0(0,0) = energy0(0,0) * density0(0,0);
+
+    }
+  }
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[1].time += __t2-__t1;
+    block->instance->OPS_kernels[1].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 7);
@@ -213,17 +201,17 @@ void ops_par_loop_generate_chunk_kernel_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[4],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[1].mpi_time += __t1-__t2;
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[1].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg6);
   }
 }
 
@@ -232,7 +220,7 @@ void ops_par_loop_generate_chunk_kernel_execute(ops_kernel_descriptor *desc) {
 void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -262,8 +250,8 @@ void ops_par_loop_generate_chunk_kernel(char const *name, ops_block block, int d
   desc->args[6] = arg6;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg6.dat->index;
   desc->function = ops_par_loop_generate_chunk_kernel_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(1,"generate_chunk_kernel");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,1,"generate_chunk_kernel");
   }
   ops_enqueue_kernel(desc);
 }

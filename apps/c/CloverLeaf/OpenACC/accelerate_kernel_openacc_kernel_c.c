@@ -17,6 +17,7 @@ int xdim9_accelerate_kernel;
 int xdim10_accelerate_kernel;
 
 //user function
+#pragma acc routine
 inline 
 void accelerate_kernel(const ptr_double density0,
   const ptr_double volume,

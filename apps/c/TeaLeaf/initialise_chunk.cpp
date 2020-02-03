@@ -126,7 +126,7 @@ void initialise_chunk()
 
 
   int rangefull[] = {x_min-2, x_max+3, y_min-2, y_max+3};
-  ops_execute(); //The following 4 loops slightly break the 
+  ops_execute(vertexy->block->instance); //The following 4 loops slightly break the 
                  //abstraction to initialise edge datasets
                  //tiling dependency analysis does not like that
 

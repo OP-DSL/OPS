@@ -14,21 +14,22 @@ int xdim3_ideal_gas_kernel;
 int ydim3_ideal_gas_kernel;
 
 //user function
-inline void ideal_gas_kernel(const ptr_double density, const ptr_double energy,
-                             ptr_double pressure, ptr_double soundspeed) {
+#pragma acc routine
+inline 
+void ideal_gas_kernel(const ptr_double density,
+  const ptr_double energy,
+  ptr_double pressure,
+  ptr_double soundspeed) {
 
   double sound_speed_squared, v, pressurebyenergy, pressurebyvolume;
 
-  v = 1.0 / OPS_ACC(density, 0, 0, 0);
-  OPS_ACC(pressure, 0, 0, 0) =
-      (1.4 - 1.0) * OPS_ACC(density, 0, 0, 0) * OPS_ACC(energy, 0, 0, 0);
+  v = 1.0 / OPS_ACC(density, 0,0,0);
+  OPS_ACC(pressure, 0,0,0) = (1.4 - 1.0) * OPS_ACC(density, 0,0,0) * OPS_ACC(energy, 0,0,0);
 
-  pressurebyenergy = (1.4 - 1.0) * OPS_ACC(density, 0, 0, 0);
-  pressurebyvolume =
-      -1.0 * OPS_ACC(density, 0, 0, 0) * OPS_ACC(pressure, 0, 0, 0);
-  sound_speed_squared = v * v * (OPS_ACC(pressure, 0, 0, 0) * pressurebyenergy -
-                                 pressurebyvolume);
-  OPS_ACC(soundspeed, 0, 0, 0) = sqrt(sound_speed_squared);
+  pressurebyenergy = (1.4 - 1.0) * OPS_ACC(density, 0,0,0);
+  pressurebyvolume = -1.0*OPS_ACC(density, 0,0,0) * OPS_ACC(pressure, 0,0,0);
+  sound_speed_squared = v*v*(OPS_ACC(pressure, 0,0,0) * pressurebyenergy-pressurebyvolume);
+  OPS_ACC(soundspeed, 0,0,0) = sqrt(sound_speed_squared);
 }
 
 
@@ -51,23 +52,15 @@ void ideal_gas_kernel_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        const ptr_double ptr0 = {
-            p_a0 + n_x * 1 * 1 + n_y * xdim0_ideal_gas_kernel * 1 * 1 +
-                n_z * xdim0_ideal_gas_kernel * ydim0_ideal_gas_kernel * 1 * 1,
-            xdim0_ideal_gas_kernel, ydim0_ideal_gas_kernel};
-        const ptr_double ptr1 = {
-            p_a1 + n_x * 1 * 1 + n_y * xdim1_ideal_gas_kernel * 1 * 1 +
-                n_z * xdim1_ideal_gas_kernel * ydim1_ideal_gas_kernel * 1 * 1,
-            xdim1_ideal_gas_kernel, ydim1_ideal_gas_kernel};
-        ptr_double ptr2 = {
-            p_a2 + n_x * 1 * 1 + n_y * xdim2_ideal_gas_kernel * 1 * 1 +
-                n_z * xdim2_ideal_gas_kernel * ydim2_ideal_gas_kernel * 1 * 1,
-            xdim2_ideal_gas_kernel, ydim2_ideal_gas_kernel};
-        ptr_double ptr3 = {
-            p_a3 + n_x * 1 * 1 + n_y * xdim3_ideal_gas_kernel * 1 * 1 +
-                n_z * xdim3_ideal_gas_kernel * ydim3_ideal_gas_kernel * 1 * 1,
-            xdim3_ideal_gas_kernel, ydim3_ideal_gas_kernel};
-        ideal_gas_kernel(ptr0, ptr1, ptr2, ptr3);
+        const ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_ideal_gas_kernel*1*1 + n_z*xdim0_ideal_gas_kernel*ydim0_ideal_gas_kernel*1*1, xdim0_ideal_gas_kernel, ydim0_ideal_gas_kernel};
+        const ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_ideal_gas_kernel*1*1 + n_z*xdim1_ideal_gas_kernel*ydim1_ideal_gas_kernel*1*1, xdim1_ideal_gas_kernel, ydim1_ideal_gas_kernel};
+        ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_ideal_gas_kernel*1*1 + n_z*xdim2_ideal_gas_kernel*ydim2_ideal_gas_kernel*1*1, xdim2_ideal_gas_kernel, ydim2_ideal_gas_kernel};
+        ptr_double ptr3 = {  p_a3 + n_x*1*1 + n_y*xdim3_ideal_gas_kernel*1*1 + n_z*xdim3_ideal_gas_kernel*ydim3_ideal_gas_kernel*1*1, xdim3_ideal_gas_kernel, ydim3_ideal_gas_kernel};
+        ideal_gas_kernel( ptr0,
+          ptr1,
+          ptr2,
+          ptr3 );
+
       }
     }
   }

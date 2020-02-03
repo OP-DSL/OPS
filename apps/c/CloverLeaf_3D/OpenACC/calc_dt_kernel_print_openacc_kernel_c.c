@@ -18,6 +18,7 @@ int xdim6_calc_dt_kernel_print;
 int ydim6_calc_dt_kernel_print;
 
 //user function
+#pragma acc routine
 inline 
 void calc_dt_kernel_print(const ptr_double xvel0,
   const ptr_double yvel0,

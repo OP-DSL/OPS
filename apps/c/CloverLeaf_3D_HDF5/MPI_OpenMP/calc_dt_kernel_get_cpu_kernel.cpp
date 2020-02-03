@@ -33,14 +33,14 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,6,range,99)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(99,"calc_dt_kernel_get");
-    OPS_kernels[99].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,99,"calc_dt_kernel_get");
+    block->instance->OPS_kernels[99].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "calc_dt_kernel_get");
+  ops_register_args(block->instance, args, "calc_dt_kernel_get");
   #endif
 
 
@@ -69,10 +69,10 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ cellx_p = (double *)(args[0].data + base0);
+  double * __restrict__ cellx_p = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset;
-  double *__restrict__ celly_p = (double *)(args[1].data + base1);
+  double * __restrict__ celly_p = (double *)(args[1].data + base1);
 
   #ifdef OPS_MPI
   double * __restrict__ p_a2 = (double *)(((ops_reduction)args[2].data)->data + ((ops_reduction)args[2].data)->size * block->index);
@@ -89,7 +89,7 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
 
 
   int base4 = args[4].dat->base_offset;
-  double *__restrict__ cellz_p = (double *)(args[4].data + base4);
+  double * __restrict__ cellz_p = (double *)(args[4].data + base4);
 
   #ifdef OPS_MPI
   double * __restrict__ p_a5 = (double *)(((ops_reduction)args[5].data)->data + ((ops_reduction)args[5].data)->size * block->index);
@@ -107,9 +107,9 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 6);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[99].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[99].mpi_time += __t1-__t2;
   }
 
   double p_a2_0 = p_a2[0];
@@ -120,39 +120,28 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
     for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
       #ifdef __INTEL_COMPILER
       #pragma loop_count(10000)
-#pragma omp simd reduction(+ : p_a2_0) reduction(+ : p_a3_0)                   \
-                                                     reduction(+ : p_a5_0)
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+      #pragma omp simd reduction(+:p_a2_0) reduction(+:p_a3_0) reduction(+:p_a5_0)
+      #elif defined(__clang__)
+      #pragma clang loop vectorize(assume_safety)
+      #elif defined(__GNUC__)
+      #pragma GCC ivdep
+      #else
+      #pragma simd
+      #endif
       for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-        const ACC<double> cellx(
-            xdim0_calc_dt_kernel_get, ydim0_calc_dt_kernel_get,
-            cellx_p + n_x * 1 + n_y * xdim0_calc_dt_kernel_get * 0 +
-                n_z * xdim0_calc_dt_kernel_get * ydim0_calc_dt_kernel_get * 0);
-        const ACC<double> celly(
-            xdim1_calc_dt_kernel_get, ydim1_calc_dt_kernel_get,
-            celly_p + n_x * 0 + n_y * xdim1_calc_dt_kernel_get * 1 +
-                n_z * xdim1_calc_dt_kernel_get * ydim1_calc_dt_kernel_get * 0);
-        const ACC<double> cellz(
-            xdim4_calc_dt_kernel_get, ydim4_calc_dt_kernel_get,
-            cellz_p + n_x * 0 + n_y * xdim4_calc_dt_kernel_get * 0 +
-                n_z * xdim4_calc_dt_kernel_get * ydim4_calc_dt_kernel_get * 1);
+        const ACC<double> cellx(xdim0_calc_dt_kernel_get, ydim0_calc_dt_kernel_get, cellx_p + n_x*1 + n_y * xdim0_calc_dt_kernel_get*0 + n_z * xdim0_calc_dt_kernel_get * ydim0_calc_dt_kernel_get*0);
+        const ACC<double> celly(xdim1_calc_dt_kernel_get, ydim1_calc_dt_kernel_get, celly_p + n_x*0 + n_y * xdim1_calc_dt_kernel_get*1 + n_z * xdim1_calc_dt_kernel_get * ydim1_calc_dt_kernel_get*0);
+        const ACC<double> cellz(xdim4_calc_dt_kernel_get, ydim4_calc_dt_kernel_get, cellz_p + n_x*0 + n_y * xdim4_calc_dt_kernel_get*0 + n_z * xdim4_calc_dt_kernel_get * ydim4_calc_dt_kernel_get*1);
         double xl_pos[1];
         xl_pos[0] = ZERO_double;
         double yl_pos[1];
         yl_pos[0] = ZERO_double;
         double zl_pos[1];
         zl_pos[0] = ZERO_double;
-
-        *xl_pos = cellx(0, 0, 0);
-        *yl_pos = celly(0, 0, 0);
-        *zl_pos = cellz(0, 0, 0);
+        
+  *xl_pos = cellx(0,0,0);
+  *yl_pos = celly(0,0,0);
+  *zl_pos = cellz(0,0,0);
 
         p_a2_0 +=xl_pos[0];
         p_a3_0 +=yl_pos[0];
@@ -163,21 +152,21 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
   p_a2[0] = p_a2_0;
   p_a3[0] = p_a3_0;
   p_a5[0] = p_a5_0;
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[99].time += __t2-__t1;
+    block->instance->OPS_kernels[99].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 6);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[99].mpi_time += __t1-__t2;
-    OPS_kernels[99].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[99].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[99].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[99].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[99].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[99].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[99].transfer += ops_compute_transfer(dim, start, end, &arg4);
   }
 }
 
@@ -186,7 +175,7 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
 void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -211,8 +200,8 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   desc->hash = ((desc->hash << 5) + desc->hash) + arg4.dat->index;
   desc->args[5] = arg5;
   desc->function = ops_par_loop_calc_dt_kernel_get_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(99,"calc_dt_kernel_get");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,99,"calc_dt_kernel_get");
   }
   ops_enqueue_kernel(desc);
 }

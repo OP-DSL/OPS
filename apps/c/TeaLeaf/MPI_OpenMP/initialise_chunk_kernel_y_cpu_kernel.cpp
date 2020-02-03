@@ -29,14 +29,14 @@ void ops_par_loop_initialise_chunk_kernel_y_execute(ops_kernel_descriptor *desc)
   if (!ops_checkpointing_before(args,3,range,11)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(11,"initialise_chunk_kernel_y");
-    OPS_kernels[11].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,11,"initialise_chunk_kernel_y");
+    block->instance->OPS_kernels[11].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "initialise_chunk_kernel_y");
+  ops_register_args(block->instance, args, "initialise_chunk_kernel_y");
   #endif
 
 
@@ -62,13 +62,15 @@ void ops_par_loop_initialise_chunk_kernel_y_execute(ops_kernel_descriptor *desc)
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ vertexy_p = (double *)(args[0].data + base0);
+  double * __restrict__ vertexy_p = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset;
-  int *__restrict__ yy_p = (int *)(args[1].data + base1);
+  int * __restrict__ yy_p = (int *)(args[1].data + base1);
 
   int base2 = args[2].dat->base_offset;
-  double *__restrict__ vertexdy_p = (double *)(args[2].data + base2);
+  double * __restrict__ vertexdy_p = (double *)(args[2].data + base2);
+
+
 
   #ifndef OPS_LAZY
   //Halo Exchanges
@@ -77,48 +79,43 @@ void ops_par_loop_initialise_chunk_kernel_y_execute(ops_kernel_descriptor *desc)
   ops_H_D_exchanges_host(args, 3);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[11].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[11].mpi_time += __t1-__t2;
   }
 
   #pragma omp parallel for
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-#pragma omp simd
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+    #pragma omp simd
+    #elif defined(__clang__)
+    #pragma clang loop vectorize(assume_safety)
+    #elif defined(__GNUC__)
+    #pragma GCC ivdep
+    #else
+    #pragma simd
+    #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-      ACC<double> vertexy(xdim0_initialise_chunk_kernel_y,
-                          vertexy_p + n_x * 0 +
-                              n_y * xdim0_initialise_chunk_kernel_y * 1);
-      const ACC<int> yy(xdim1_initialise_chunk_kernel_y,
-                        yy_p + n_x * 0 +
-                            n_y * xdim1_initialise_chunk_kernel_y * 1);
-      ACC<double> vertexdy(xdim2_initialise_chunk_kernel_y,
-                           vertexdy_p + n_x * 0 +
-                               n_y * xdim2_initialise_chunk_kernel_y * 1);
+      ACC<double> vertexy(xdim0_initialise_chunk_kernel_y, vertexy_p + n_x*0 + n_y * xdim0_initialise_chunk_kernel_y*1);
+      const ACC<int> yy(xdim1_initialise_chunk_kernel_y, yy_p + n_x*0 + n_y * xdim1_initialise_chunk_kernel_y*1);
+      ACC<double> vertexdy(xdim2_initialise_chunk_kernel_y, vertexdy_p + n_x*0 + n_y * xdim2_initialise_chunk_kernel_y*1);
+      
 
-      int y_min = field.y_min - 2;
-      double min_y, d_y;
+  int y_min=field.y_min-2;
+  double min_y, d_y;
 
-      d_y = (grid.ymax - grid.ymin) / (double)grid.y_cells;
-      min_y = grid.ymin + d_y * field.bottom;
+  d_y = (grid.ymax - grid.ymin)/(double)grid.y_cells;
+  min_y=grid.ymin+d_y*field.bottom;
 
-      vertexy(0, 0) = min_y + d_y * (yy(0, 0) - y_min);
-      vertexdy(0, 0) = (double)d_y;
+  vertexy(0,0) = min_y + d_y * (yy(0,0) - y_min);
+  vertexdy(0,0) = (double)d_y;
+
     }
   }
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[11].time += __t2-__t1;
+    block->instance->OPS_kernels[11].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 3);
@@ -126,13 +123,13 @@ void ops_par_loop_initialise_chunk_kernel_y_execute(ops_kernel_descriptor *desc)
   ops_set_halo_dirtybit3(&args[2],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[11].mpi_time += __t1-__t2;
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[11].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[11].transfer += ops_compute_transfer(dim, start, end, &arg2);
   }
 }
 
@@ -140,7 +137,7 @@ void ops_par_loop_initialise_chunk_kernel_y_execute(ops_kernel_descriptor *desc)
 #ifdef OPS_LAZY
 void ops_par_loop_initialise_chunk_kernel_y(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -162,8 +159,8 @@ void ops_par_loop_initialise_chunk_kernel_y(char const *name, ops_block block, i
   desc->args[2] = arg2;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg2.dat->index;
   desc->function = ops_par_loop_initialise_chunk_kernel_y_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(11,"initialise_chunk_kernel_y");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,11,"initialise_chunk_kernel_y");
   }
   ops_enqueue_kernel(desc);
 }

@@ -110,7 +110,7 @@ int size, char *dat, char const *name){
   }
   else
   {
-    printf("error: unknown const name\n"); exit(1);
+    throw OPSException(OPS_RUNTIME_ERROR, "error: unknown const name");
   }
 }
 

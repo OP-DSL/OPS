@@ -101,9 +101,9 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,7,range,54)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(54,"calc_dt_kernel_print");
-    OPS_kernels[54].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,54,"calc_dt_kernel_print");
+    block->instance->OPS_kernels[54].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -138,7 +138,7 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
     dims_calc_dt_kernel_print_h[3][0] = xdim3;
     dims_calc_dt_kernel_print_h[4][0] = xdim4;
     dims_calc_dt_kernel_print_h[5][0] = xdim5;
-    cutilSafeCall(cudaMemcpyToSymbol( dims_calc_dt_kernel_print, dims_calc_dt_kernel_print_h, sizeof(dims_calc_dt_kernel_print)));
+    cutilSafeCall(block->instance->ostream(), cudaMemcpyToSymbol( dims_calc_dt_kernel_print, dims_calc_dt_kernel_print_h, sizeof(dims_calc_dt_kernel_print)));
   }
 
 
@@ -154,34 +154,34 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);
-  dim3 tblock(OPS_block_size_x,OPS_block_size_y,OPS_block_size_z);
+  dim3 grid( (x_size-1)/block->instance->OPS_block_size_x+ 1, (y_size-1)/block->instance->OPS_block_size_y + 1, 1);
+  dim3 tblock(block->instance->OPS_block_size_x,block->instance->OPS_block_size_y,block->instance->OPS_block_size_z);
 
-  int nblocks = ((x_size-1)/OPS_block_size_x+ 1)*((y_size-1)/OPS_block_size_y + 1);
+  int nblocks = ((x_size-1)/block->instance->OPS_block_size_x+ 1)*((y_size-1)/block->instance->OPS_block_size_y + 1);
   int maxblocks = nblocks;
   int reduct_bytes = 0;
-  int reduct_size = 0;
+  size_t reduct_size = 0;
 
   reduct_bytes += ROUND_UP(maxblocks*12*sizeof(double));
   reduct_size = MAX(reduct_size,sizeof(double)*12);
 
-  reallocReductArrays(reduct_bytes);
+  reallocReductArrays(block->instance,reduct_bytes);
   reduct_bytes = 0;
 
-  arg6.data = OPS_reduct_h + reduct_bytes;
-  arg6.data_d = OPS_reduct_d + reduct_bytes;
+  arg6.data = block->instance->OPS_reduct_h + reduct_bytes;
+  arg6.data_d = block->instance->OPS_reduct_d + reduct_bytes;
   for (int b=0; b<maxblocks; b++)
   for (int d=0; d<12; d++) ((double *)arg6.data)[d+b*12] = ZERO_double;
   reduct_bytes += ROUND_UP(maxblocks*12*sizeof(double));
 
 
-  mvReductArraysToDevice(reduct_bytes);
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
-  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
-  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
-  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
-  int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
+  mvReductArraysToDevice(block->instance,reduct_bytes);
+  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat2 = (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
+  int dat3 = (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
+  int dat4 = (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
+  int dat5 = (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
 
   char *p_a[7];
 
@@ -234,13 +234,13 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   ops_halo_exchanges(args,7,range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[54].mpi_time += t2-t1;
+    block->instance->OPS_kernels[54].mpi_time += t2-t1;
   }
 
-  int nshared = 0;
-  int nthread = OPS_block_size_x*OPS_block_size_y*OPS_block_size_z;
+  size_t nshared = 0;
+  int nthread = block->instance->OPS_block_size_x*block->instance->OPS_block_size_y*block->instance->OPS_block_size_z;
 
   nshared = MAX(nshared,sizeof(double)*12);
 
@@ -253,9 +253,9 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
          (double *)p_a[4], (double *)p_a[5],
          (double *)arg6.data_d,x_size, y_size);
 
-  cutilSafeCall(cudaGetLastError());
+  cutilSafeCall(block->instance->ostream(), cudaGetLastError());
 
-  mvReductArraysToHost(reduct_bytes);
+  mvReductArraysToHost(block->instance,reduct_bytes);
   for ( int b=0; b<maxblocks; b++ ){
     for ( int d=0; d<12; d++ ){
       arg6h[d] = arg6h[d] + ((double *)arg6.data)[d+b*12];
@@ -263,33 +263,33 @@ void ops_par_loop_calc_dt_kernel_print_execute(ops_kernel_descriptor *desc) {
   }
   arg6.data = (char *)arg6h;
 
-  if (OPS_diags>1) {
-    cutilSafeCall(cudaDeviceSynchronize());
+  if (block->instance->OPS_diags>1) {
+    cutilSafeCall(block->instance->ostream(), cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
-    OPS_kernels[54].time += t1-t2;
+    block->instance->OPS_kernels[54].time += t1-t2;
   }
 
   #ifndef OPS_LAZY
   ops_set_dirtybit_device(args, 7);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[54].mpi_time += t2-t1;
-    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[54].mpi_time += t2-t1;
+    block->instance->OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[54].transfer += ops_compute_transfer(dim, start, end, &arg5);
   }
 }
 
 #ifdef OPS_LAZY
 void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4, ops_arg arg5, ops_arg arg6) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -318,8 +318,8 @@ void ops_par_loop_calc_dt_kernel_print(char const *name, ops_block block, int di
   desc->hash = ((desc->hash << 5) + desc->hash) + arg5.dat->index;
   desc->args[6] = arg6;
   desc->function = ops_par_loop_calc_dt_kernel_print_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(54,"calc_dt_kernel_print");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,54,"calc_dt_kernel_print");
   }
   ops_enqueue_kernel(desc);
 }

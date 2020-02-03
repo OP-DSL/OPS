@@ -20,11 +20,10 @@ void update_halo_kernel2_yvel_minus_4_a_c_wrapper(
     for ( int n_x=0; n_x<x_size; n_x++ ){
       ptr_double yvel0 = { yvel0_p + n_x*1 + n_y * xdim0_update_halo_kernel2_yvel_minus_4_a*1, xdim0_update_halo_kernel2_yvel_minus_4_a};
       ptr_double yvel1 = { yvel1_p + n_x*1 + n_y * xdim1_update_halo_kernel2_yvel_minus_4_a*1, xdim1_update_halo_kernel2_yvel_minus_4_a};
+      
+  if(fields[FIELD_YVEL0] == 1) OPS_ACC(yvel0, 0,0) = -OPS_ACC(yvel0, 0,4);
+  if(fields[FIELD_YVEL1] == 1) OPS_ACC(yvel1, 0,0) = -OPS_ACC(yvel1, 0,4);
 
-      if (fields[FIELD_YVEL0] == 1)
-        OPS_ACC(yvel0, 0, 0) = -OPS_ACC(yvel0, 0, 4);
-      if (fields[FIELD_YVEL1] == 1)
-        OPS_ACC(yvel1, 0, 0) = -OPS_ACC(yvel1, 0, 4);
     }
   }
 }

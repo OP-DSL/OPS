@@ -114,7 +114,7 @@ void ops_par_loop_poisson_kernel_initialguess_execute(ops_kernel_descriptor *des
 #ifdef OPS_LAZY
 void ops_par_loop_poisson_kernel_initialguess(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;

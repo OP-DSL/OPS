@@ -57,9 +57,9 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
   if (!ops_checkpointing_before(args,11,range,6)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(6,"updateRK3_kernel");
-    OPS_kernels[6].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,6,"updateRK3_kernel");
+    block->instance->OPS_kernels[6].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -97,63 +97,63 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
 
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
   #else
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a1 = (double *)((char *)args[1].data_d + base1);
   #else
   double *p_a1 = (double *)((char *)args[1].data + base1);
   #endif
 
-  int base2 = args[2].dat->base_offset + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
+  int base2 = args[2].dat->base_offset + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a2 = (double *)((char *)args[2].data_d + base2);
   #else
   double *p_a2 = (double *)((char *)args[2].data + base2);
   #endif
 
-  int base3 = args[3].dat->base_offset + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
+  int base3 = args[3].dat->base_offset + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a3 = (double *)((char *)args[3].data_d + base3);
   #else
   double *p_a3 = (double *)((char *)args[3].data + base3);
   #endif
 
-  int base4 = args[4].dat->base_offset + (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) * start[0] * args[4].stencil->stride[0];
+  int base4 = args[4].dat->base_offset + (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) * start[0] * args[4].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a4 = (double *)((char *)args[4].data_d + base4);
   #else
   double *p_a4 = (double *)((char *)args[4].data + base4);
   #endif
 
-  int base5 = args[5].dat->base_offset + (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) * start[0] * args[5].stencil->stride[0];
+  int base5 = args[5].dat->base_offset + (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) * start[0] * args[5].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a5 = (double *)((char *)args[5].data_d + base5);
   #else
   double *p_a5 = (double *)((char *)args[5].data + base5);
   #endif
 
-  int base6 = args[6].dat->base_offset + (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) * start[0] * args[6].stencil->stride[0];
+  int base6 = args[6].dat->base_offset + (block->instance->OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) * start[0] * args[6].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a6 = (double *)((char *)args[6].data_d + base6);
   #else
   double *p_a6 = (double *)((char *)args[6].data + base6);
   #endif
 
-  int base7 = args[7].dat->base_offset + (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) * start[0] * args[7].stencil->stride[0];
+  int base7 = args[7].dat->base_offset + (block->instance->OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) * start[0] * args[7].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a7 = (double *)((char *)args[7].data_d + base7);
   #else
   double *p_a7 = (double *)((char *)args[7].data + base7);
   #endif
 
-  int base8 = args[8].dat->base_offset + (OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size) * start[0] * args[8].stencil->stride[0];
+  int base8 = args[8].dat->base_offset + (block->instance->OPS_soa ? args[8].dat->type_size : args[8].dat->elem_size) * start[0] * args[8].stencil->stride[0];
   #ifdef OPS_GPU
   double *p_a8 = (double *)((char *)args[8].data_d + base8);
   #else
@@ -166,15 +166,15 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
   int x_size = MAX(0,end[0]-start[0]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
-  xdim2 = args[2].dat->size[0];
-  xdim3 = args[3].dat->size[0];
-  xdim4 = args[4].dat->size[0];
-  xdim5 = args[5].dat->size[0];
-  xdim6 = args[6].dat->size[0];
-  xdim7 = args[7].dat->size[0];
-  xdim8 = args[8].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
+  int xdim2 = args[2].dat->size[0];
+  int xdim3 = args[3].dat->size[0];
+  int xdim4 = args[4].dat->size[0];
+  int xdim5 = args[5].dat->size[0];
+  int xdim6 = args[6].dat->size[0];
+  int xdim7 = args[7].dat->size[0];
+  int xdim8 = args[8].dat->size[0];
   if (xdim0 != xdim0_updateRK3_kernel_h || xdim1 != xdim1_updateRK3_kernel_h || xdim2 != xdim2_updateRK3_kernel_h || xdim3 != xdim3_updateRK3_kernel_h || xdim4 != xdim4_updateRK3_kernel_h || xdim5 != xdim5_updateRK3_kernel_h || xdim6 != xdim6_updateRK3_kernel_h || xdim7 != xdim7_updateRK3_kernel_h || xdim8 != xdim8_updateRK3_kernel_h) {
     xdim0_updateRK3_kernel = xdim0;
     xdim0_updateRK3_kernel_h = xdim0;
@@ -210,9 +210,9 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
   #else
   ops_H_D_exchanges_host(args, 11);
   #endif
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[6].mpi_time += t2-t1;
+    block->instance->OPS_kernels[6].mpi_time += t2-t1;
   }
 
   updateRK3_kernel_c_wrapper(
@@ -229,9 +229,9 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
     *p_a10,
     x_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[6].time += t1-t2;
+    block->instance->OPS_kernels[6].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 11);
@@ -248,18 +248,18 @@ void ops_par_loop_updateRK3_kernel(char const *name, ops_block block, int dim, i
   ops_set_halo_dirtybit3(&args[7],range);
   ops_set_halo_dirtybit3(&args[8],range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[6].mpi_time += t2-t1;
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg7);
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg8);
+    block->instance->OPS_kernels[6].mpi_time += t2-t1;
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg7);
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg8);
   }
 }

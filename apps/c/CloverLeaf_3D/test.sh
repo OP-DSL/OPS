@@ -5,9 +5,6 @@ cd ../../../ops/c
 source ../../scripts/$SOURCE_INTEL
 make -j
 cd -
-make clean
-rm -f .generated
-make IEEE=1 -j
 
 #<<COMMENT
 
@@ -157,7 +154,7 @@ cd -
 source ../../scripts/$SOURCE_PGI
 
 make clean
-make -j
+make
 cd -
 make clean
 make IEEE=1

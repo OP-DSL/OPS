@@ -9,6 +9,7 @@ int xdim1_initialise_chunk_kernel_x;
 int xdim2_initialise_chunk_kernel_x;
 
 //user function
+#pragma acc routine
 inline 
 void initialise_chunk_kernel_x(ptr_double vertexx,
   const ptr_int xx,

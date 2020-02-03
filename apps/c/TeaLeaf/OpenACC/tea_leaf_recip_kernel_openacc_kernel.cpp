@@ -34,9 +34,9 @@ void ops_par_loop_tea_leaf_recip_kernel(char const *name, ops_block block, int d
   if (!ops_checkpointing_before(args,2,range,29)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(29,"tea_leaf_recip_kernel");
-    OPS_kernels[29].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,29,"tea_leaf_recip_kernel");
+    block->instance->OPS_kernels[29].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -67,8 +67,8 @@ void ops_par_loop_tea_leaf_recip_kernel(char const *name, ops_block block, int d
 
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
   #ifdef OPS_GPU
@@ -77,8 +77,8 @@ void ops_par_loop_tea_leaf_recip_kernel(char const *name, ops_block block, int d
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
-  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  base1 = base1 + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
     start[1] * args[1].stencil->stride[1];
   #ifdef OPS_GPU
@@ -92,8 +92,8 @@ void ops_par_loop_tea_leaf_recip_kernel(char const *name, ops_block block, int d
   int y_size = MAX(0,end[1]-start[1]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
   if (xdim0 != xdim0_tea_leaf_recip_kernel_h || xdim1 != xdim1_tea_leaf_recip_kernel_h) {
     xdim0_tea_leaf_recip_kernel = xdim0;
     xdim0_tea_leaf_recip_kernel_h = xdim0;
@@ -115,9 +115,9 @@ void ops_par_loop_tea_leaf_recip_kernel(char const *name, ops_block block, int d
   #else
   ops_H_D_exchanges_host(args, 2);
   #endif
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[29].mpi_time += t2-t1;
+    block->instance->OPS_kernels[29].mpi_time += t2-t1;
   }
 
   tea_leaf_recip_kernel_c_wrapper(
@@ -125,9 +125,9 @@ void ops_par_loop_tea_leaf_recip_kernel(char const *name, ops_block block, int d
     p_a1,
     x_size, y_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[29].time += t1-t2;
+    block->instance->OPS_kernels[29].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 2);
@@ -136,11 +136,11 @@ void ops_par_loop_tea_leaf_recip_kernel(char const *name, ops_block block, int d
   #endif
   ops_set_halo_dirtybit3(&args[0],range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[29].mpi_time += t2-t1;
-    OPS_kernels[29].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[29].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[29].mpi_time += t2-t1;
+    block->instance->OPS_kernels[29].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[29].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

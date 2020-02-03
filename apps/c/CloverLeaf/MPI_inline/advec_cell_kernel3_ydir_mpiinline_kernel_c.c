@@ -37,68 +37,70 @@ void advec_cell_kernel3_ydir_c_wrapper(
       const ptr_double energy1 = { energy1_p + n_x*1 + n_y * xdim5_advec_cell_kernel3_ydir*1, xdim5_advec_cell_kernel3_ydir};
       ptr_double mass_flux_y = { mass_flux_y_p + n_x*1 + n_y * xdim6_advec_cell_kernel3_ydir*1, xdim6_advec_cell_kernel3_ydir};
       ptr_double ener_flux = { ener_flux_p + n_x*1 + n_y * xdim7_advec_cell_kernel3_ydir*1, xdim7_advec_cell_kernel3_ydir};
+      
 
-      double sigmat, sigmav, sigmam, sigma3, sigma4;
-      double diffuw, diffdw, limiter;
-      double one_by_six = 1.0 / 6.0;
+  double sigmat, sigmav, sigmam, sigma3, sigma4;
+  double diffuw, diffdw, limiter;
+  double one_by_six = 1.0/6.0;
 
-      int y_max = field.y_max;
+  int y_max=field.y_max;
 
-      int upwind, donor, downwind, dif;
+  int upwind,donor,downwind,dif;
 
-      if (OPS_ACC(vol_flux_y, 0, 0) > 0.0) {
-        upwind = -2;
-        donor = -1;
-        downwind = 0;
-        dif = donor;
-      } else if (OPS_ACC(yy, 0, 1) < y_max + 2 - 2) {
-        upwind = 1;
-        donor = 0;
-        downwind = -1;
-        dif = upwind;
-      } else {
-        upwind = 0;
-        donor = 0;
-        downwind = -1;
-        dif = upwind;
-      }
 
-      sigmat = fabs(OPS_ACC(vol_flux_y, 0, 0)) / OPS_ACC(pre_vol, 0, donor);
-      sigma3 = (1.0 + sigmat) *
-               (OPS_ACC(vertexdy, 0, 0) / OPS_ACC(vertexdy, 0, dif));
-      sigma4 = 2.0 - sigmat;
 
-      sigmav = sigmat;
 
-      diffuw = OPS_ACC(density1, 0, donor) - OPS_ACC(density1, 0, upwind);
-      diffdw = OPS_ACC(density1, 0, downwind) - OPS_ACC(density1, 0, donor);
 
-      if ((diffuw * diffdw) > 0.0)
-        limiter =
-            (1.0 - sigmav) * SIGN(1.0, diffdw) *
-            MIN(MIN(fabs(diffuw), fabs(diffdw)),
-                one_by_six * (sigma3 * fabs(diffuw) + sigma4 * fabs(diffdw)));
-      else
-        limiter = 0.0;
+  if(OPS_ACC(vol_flux_y, 0,0) > 0.0) {
+    upwind   = -2;
+    donor    = -1;
+    downwind = 0;
+    dif      = donor;
+  }
+  else if (OPS_ACC(yy, 0,1) < y_max+2-2) {
+    upwind   = 1;
+    donor    = 0;
+    downwind = -1;
+    dif      = upwind;
+  } else {
+    upwind   = 0;
+    donor    = 0;
+    downwind = -1;
+    dif      = upwind;
+  }
 
-      OPS_ACC(mass_flux_y, 0, 0) =
-          (OPS_ACC(vol_flux_y, 0, 0)) * (OPS_ACC(density1, 0, donor) + limiter);
 
-      sigmam = fabs(OPS_ACC(mass_flux_y, 0, 0)) /
-               (OPS_ACC(density1, 0, donor) * OPS_ACC(pre_vol, 0, donor));
-      diffuw = OPS_ACC(energy1, 0, donor) - OPS_ACC(energy1, 0, upwind);
-      diffdw = OPS_ACC(energy1, 0, downwind) - OPS_ACC(energy1, 0, donor);
+  sigmat = fabs(OPS_ACC(vol_flux_y, 0,0))/OPS_ACC(pre_vol, 0,donor);
+  sigma3 = (1.0 + sigmat)*(OPS_ACC(vertexdy, 0,0)/OPS_ACC(vertexdy, 0,dif));
+  sigma4 = 2.0 - sigmat;
 
-      if ((diffuw * diffdw) > 0.0)
-        limiter =
-            (1.0 - sigmam) * SIGN(1.0, diffdw) *
-            MIN(MIN(fabs(diffuw), fabs(diffdw)),
-                one_by_six * (sigma3 * fabs(diffuw) + sigma4 * fabs(diffdw)));
-      else
-        limiter = 0.0;
+  sigmav = sigmat;
 
-      OPS_ACC(ener_flux, 0, 0) =
-          OPS_ACC(mass_flux_y, 0, 0) * (OPS_ACC(energy1, 0, donor) + limiter);
+  diffuw = OPS_ACC(density1, 0,donor) - OPS_ACC(density1, 0,upwind);
+  diffdw = OPS_ACC(density1, 0,downwind) - OPS_ACC(density1, 0,donor);
+
+  if( (diffuw*diffdw) > 0.0)
+    limiter=(1.0 - sigmav) * SIGN(1.0 , diffdw) *
+    MIN( MIN(fabs(diffuw), fabs(diffdw)),
+    one_by_six * (sigma3*fabs(diffuw) + sigma4 * fabs(diffdw)));
+  else
+    limiter=0.0;
+
+  OPS_ACC(mass_flux_y, 0,0) = (OPS_ACC(vol_flux_y, 0,0)) * ( OPS_ACC(density1, 0,donor) + limiter );
+
+  sigmam = fabs(OPS_ACC(mass_flux_y, 0,0))/( OPS_ACC(density1, 0,donor) * OPS_ACC(pre_vol, 0,donor));
+  diffuw = OPS_ACC(energy1, 0,donor) - OPS_ACC(energy1, 0,upwind);
+  diffdw = OPS_ACC(energy1, 0,downwind) - OPS_ACC(energy1, 0,donor);
+
+  if( (diffuw*diffdw) > 0.0)
+    limiter = (1.0 - sigmam) * SIGN(1.0,diffdw) *
+    MIN( MIN(fabs(diffuw), fabs(diffdw)),
+    one_by_six * (sigma3 * fabs(diffuw) + sigma4 * fabs(diffdw)));
+  else
+    limiter=0.0;
+
+  OPS_ACC(ener_flux, 0,0) = OPS_ACC(mass_flux_y, 0,0) * ( OPS_ACC(energy1, 0,donor) + limiter );
+
     }
   }
 }

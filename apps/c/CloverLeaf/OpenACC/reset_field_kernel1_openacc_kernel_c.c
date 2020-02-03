@@ -10,6 +10,7 @@ int xdim2_reset_field_kernel1;
 int xdim3_reset_field_kernel1;
 
 //user function
+#pragma acc routine
 inline 
 void reset_field_kernel1(ptr_double density0,
   const ptr_double density1,

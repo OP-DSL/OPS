@@ -34,14 +34,14 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel_execute(ops_kernel_descriptor
   if (!ops_checkpointing_before(args,7,range,19)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(19,"tea_leaf_cg_calc_w_reduce_kernel");
-    OPS_kernels[19].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,19,"tea_leaf_cg_calc_w_reduce_kernel");
+    block->instance->OPS_kernels[19].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "tea_leaf_cg_calc_w_reduce_kernel");
+  ops_register_args(block->instance, args, "tea_leaf_cg_calc_w_reduce_kernel");
   #endif
 
 
@@ -68,20 +68,22 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel_execute(ops_kernel_descriptor
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset;
-  double *__restrict__ w_p = (double *)(args[0].data + base0);
+  double * __restrict__ w_p = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset;
-  double *__restrict__ Kx_p = (double *)(args[1].data + base1);
+  double * __restrict__ Kx_p = (double *)(args[1].data + base1);
 
   int base2 = args[2].dat->base_offset;
-  double *__restrict__ Ky_p = (double *)(args[2].data + base2);
+  double * __restrict__ Ky_p = (double *)(args[2].data + base2);
 
   int base3 = args[3].dat->base_offset;
-  double *__restrict__ p_p = (double *)(args[3].data + base3);
+  double * __restrict__ p_p = (double *)(args[3].data + base3);
 
-  double *__restrict__ rx = (double *)args[4].data;
+  double * __restrict__ rx = (double *)args[4].data;
 
-  double *__restrict__ ry = (double *)args[5].data;
+
+  double * __restrict__ ry = (double *)args[5].data;
+
 
   #ifdef OPS_MPI
   double * __restrict__ p_a6 = (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * block->index);
@@ -99,9 +101,9 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel_execute(ops_kernel_descriptor
   ops_H_D_exchanges_host(args, 7);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[19].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[19].mpi_time += __t1-__t2;
   }
 
   double p_a6_0 = p_a6[0];
@@ -109,59 +111,50 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel_execute(ops_kernel_descriptor
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-#pragma omp simd reduction(+ : p_a6_0)
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma simd
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+    #pragma omp simd reduction(+:p_a6_0)
+    #elif defined(__clang__)
+    #pragma clang loop vectorize(assume_safety)
+    #elif defined(__GNUC__)
+    #pragma GCC ivdep
+    #else
+    #pragma simd
+    #endif
     for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-      ACC<double> w(xdim0_tea_leaf_cg_calc_w_reduce_kernel,
-                    w_p + n_x * 1 +
-                        n_y * xdim0_tea_leaf_cg_calc_w_reduce_kernel * 1);
-      const ACC<double> Kx(
-          xdim1_tea_leaf_cg_calc_w_reduce_kernel,
-          Kx_p + n_x * 1 + n_y * xdim1_tea_leaf_cg_calc_w_reduce_kernel * 1);
-      const ACC<double> Ky(
-          xdim2_tea_leaf_cg_calc_w_reduce_kernel,
-          Ky_p + n_x * 1 + n_y * xdim2_tea_leaf_cg_calc_w_reduce_kernel * 1);
-      const ACC<double> p(xdim3_tea_leaf_cg_calc_w_reduce_kernel,
-                          p_p + n_x * 1 +
-                              n_y * xdim3_tea_leaf_cg_calc_w_reduce_kernel * 1);
+      ACC<double> w(xdim0_tea_leaf_cg_calc_w_reduce_kernel, w_p + n_x*1 + n_y * xdim0_tea_leaf_cg_calc_w_reduce_kernel*1);
+      const ACC<double> Kx(xdim1_tea_leaf_cg_calc_w_reduce_kernel, Kx_p + n_x*1 + n_y * xdim1_tea_leaf_cg_calc_w_reduce_kernel*1);
+      const ACC<double> Ky(xdim2_tea_leaf_cg_calc_w_reduce_kernel, Ky_p + n_x*1 + n_y * xdim2_tea_leaf_cg_calc_w_reduce_kernel*1);
+      const ACC<double> p(xdim3_tea_leaf_cg_calc_w_reduce_kernel, p_p + n_x*1 + n_y * xdim3_tea_leaf_cg_calc_w_reduce_kernel*1);
       double pw[1];
       pw[0] = ZERO_double;
-
-      w(0, 0) = (1.0 + (*ry) * (Ky(0, 1) + Ky(0, 0)) +
-                 (*rx) * (Kx(1, 0) + Kx(0, 0))) *
-                    p(0, 0) -
-                (*ry) * (Ky(0, 1) * p(0, 1) + Ky(0, 0) * p(0, -1)) -
-                (*rx) * (Kx(1, 0) * p(1, 0) + Kx(0, 0) * p(-1, 0));
-      *pw = *pw + w(0, 0) * p(0, 0);
+      
+  w(0,0) = (1.0
+                + (*ry)*(Ky(0,1) + Ky(0,0))
+                + (*rx)*(Kx(1,0) + Kx(0,0)))*p(0,0)
+                - (*ry)*(Ky(0,1)*p(0,1) + Ky(0,0)*p(0,-1))
+                - (*rx)*(Kx(1,0)*p(1,0) + Kx(0,0)*p(-1,0));
+  *pw = *pw + w(0,0)*p(0,0);
 
       p_a6_0 +=pw[0];
     }
   }
   p_a6[0] = p_a6_0;
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[19].time += __t2-__t1;
+    block->instance->OPS_kernels[19].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 7);
   ops_set_halo_dirtybit3(&args[0],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[19].mpi_time += __t1-__t2;
-    OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[19].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[19].transfer += ops_compute_transfer(dim, start, end, &arg3);
   }
 }
 
@@ -170,7 +163,7 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel_execute(ops_kernel_descriptor
 void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3,
  ops_arg arg4, ops_arg arg5, ops_arg arg6) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -203,8 +196,8 @@ void ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel(char const *name, ops_block b
   desc->args[5].data = tmp;
   desc->args[6] = arg6;
   desc->function = ops_par_loop_tea_leaf_cg_calc_w_reduce_kernel_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(19,"tea_leaf_cg_calc_w_reduce_kernel");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,19,"tea_leaf_cg_calc_w_reduce_kernel");
   }
   ops_enqueue_kernel(desc);
 }

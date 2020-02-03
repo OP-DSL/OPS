@@ -14,15 +14,16 @@ int xdim3_flux_calc_kernelx;
 int ydim3_flux_calc_kernelx;
 
 //user function
-inline void flux_calc_kernelx(ptr_double vol_flux_x, const ptr_double xarea,
-                              const ptr_double xvel0, const ptr_double xvel1) {
+#pragma acc routine
+inline 
+void flux_calc_kernelx(ptr_double vol_flux_x,
+  const ptr_double xarea,
+  const ptr_double xvel0,
+  const ptr_double xvel1) {
 
-  OPS_ACC(vol_flux_x, 0, 0, 0) =
-      0.125 * dt * (OPS_ACC(xarea, 0, 0, 0)) *
-      (OPS_ACC(xvel0, 0, 0, 0) + OPS_ACC(xvel0, 0, 1, 0) +
-       OPS_ACC(xvel0, 0, 0, 1) + OPS_ACC(xvel0, 0, 1, 1) +
-       OPS_ACC(xvel1, 0, 0, 0) + OPS_ACC(xvel1, 0, 1, 0) +
-       OPS_ACC(xvel1, 0, 0, 1) + OPS_ACC(xvel1, 0, 1, 1));
+  OPS_ACC(vol_flux_x, 0,0,0) = 0.125 * dt * (OPS_ACC(xarea, 0,0,0)) *
+  ( OPS_ACC(xvel0, 0,0,0) + OPS_ACC(xvel0, 0,1,0) + OPS_ACC(xvel0, 0,0,1) + OPS_ACC(xvel0, 0,1,1) +
+    OPS_ACC(xvel1, 0,0,0) + OPS_ACC(xvel1, 0,1,0) + OPS_ACC(xvel1, 0,0,1) + OPS_ACC(xvel1, 0,1,1));
 }
 
 
@@ -45,23 +46,15 @@ void flux_calc_kernelx_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        ptr_double ptr0 = {
-            p_a0 + n_x * 1 * 1 + n_y * xdim0_flux_calc_kernelx * 1 * 1 +
-                n_z * xdim0_flux_calc_kernelx * ydim0_flux_calc_kernelx * 1 * 1,
-            xdim0_flux_calc_kernelx, ydim0_flux_calc_kernelx};
-        const ptr_double ptr1 = {
-            p_a1 + n_x * 1 * 1 + n_y * xdim1_flux_calc_kernelx * 1 * 1 +
-                n_z * xdim1_flux_calc_kernelx * ydim1_flux_calc_kernelx * 1 * 1,
-            xdim1_flux_calc_kernelx, ydim1_flux_calc_kernelx};
-        const ptr_double ptr2 = {
-            p_a2 + n_x * 1 * 1 + n_y * xdim2_flux_calc_kernelx * 1 * 1 +
-                n_z * xdim2_flux_calc_kernelx * ydim2_flux_calc_kernelx * 1 * 1,
-            xdim2_flux_calc_kernelx, ydim2_flux_calc_kernelx};
-        const ptr_double ptr3 = {
-            p_a3 + n_x * 1 * 1 + n_y * xdim3_flux_calc_kernelx * 1 * 1 +
-                n_z * xdim3_flux_calc_kernelx * ydim3_flux_calc_kernelx * 1 * 1,
-            xdim3_flux_calc_kernelx, ydim3_flux_calc_kernelx};
-        flux_calc_kernelx(ptr0, ptr1, ptr2, ptr3);
+        ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_flux_calc_kernelx*1*1 + n_z*xdim0_flux_calc_kernelx*ydim0_flux_calc_kernelx*1*1, xdim0_flux_calc_kernelx, ydim0_flux_calc_kernelx};
+        const ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_flux_calc_kernelx*1*1 + n_z*xdim1_flux_calc_kernelx*ydim1_flux_calc_kernelx*1*1, xdim1_flux_calc_kernelx, ydim1_flux_calc_kernelx};
+        const ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_flux_calc_kernelx*1*1 + n_z*xdim2_flux_calc_kernelx*ydim2_flux_calc_kernelx*1*1, xdim2_flux_calc_kernelx, ydim2_flux_calc_kernelx};
+        const ptr_double ptr3 = {  p_a3 + n_x*1*1 + n_y*xdim3_flux_calc_kernelx*1*1 + n_z*xdim3_flux_calc_kernelx*ydim3_flux_calc_kernelx*1*1, xdim3_flux_calc_kernelx, ydim3_flux_calc_kernelx};
+        flux_calc_kernelx( ptr0,
+          ptr1,
+          ptr2,
+          ptr3 );
+
       }
     }
   }
