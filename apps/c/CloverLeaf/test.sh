@@ -146,9 +146,11 @@ cd -
 #COMMENT
 source ../../scripts/$SOURCE_PGI
 
+make clean
+make
 cd -
 make clean
-make IEEE=1 
+make IEEE=1
 
 
 #============================ Test Cloverleaf 2D With PGI Compilers==========================================================
