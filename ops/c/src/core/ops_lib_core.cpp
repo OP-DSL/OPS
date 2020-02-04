@@ -193,7 +193,7 @@ void _ops_set_args(OPS_instance *instance, const int argc, const char *argv) {
 
 }
 
-void ops_set_args_ftn(const int argc, char *argv, int len) {
+extern "C" void ops_set_args_ftn(const int argc, char *argv, int len) {
   argv[len]='\0';
   _ops_set_args(OPS_instance::getOPSInstance(), argc, argv);
 }

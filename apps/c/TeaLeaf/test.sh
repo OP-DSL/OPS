@@ -4,7 +4,7 @@ cd ../../../ops/c
 source ../../scripts/$SOURCE_INTEL
 make -j
 cd -
-#./generate.sh
+./generate.sh
 make clean
 make IEEE=1 -j
 
