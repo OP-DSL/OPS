@@ -12,7 +12,7 @@
 \setlength{\textheight}{9.0in}
 \setlength{\textwidth}{6.5 in}
 
-\date{December 2015}
+\date{May 2019}
 
 %  \topmargin 0.in  \headheight 0pt  \headsep 0pt  \raggedbottom
 %  \oddsidemargin 0.1in
@@ -126,7 +126,7 @@ to {\tt ops\_decl\_const}.
 
 The initialisation phase is terminated by a call to {\tt ops\_partition}.
 
-The bulk of the application consists of parallel loops, implemented using calls to {\tt ops\_par\_loop}. These constructs work with datasets, passed through the opaque {\tt ops\_dat} handles declared during the initialisation phase. The iterations of parallel loops are semantically independent, and it is the responsibility of the user to enforce this: the order in which iterations are executed cannot affect the result (within the limits of floating point precision). Parallel loops are defined on a block, with a prescribed iteration range that is always defined from the perspective of the dataset written/modified (the sizes of datasets, particularly in multigrid situations, may be very different). Datasets are passed in using {\tt ops\_arg\_dat}, and during execution, a pointer to the values at the current grid point will be passed to the user kernel. This pointer needs to be dereferenced using the {\tt OPS\_ACC} macros, where the user may specify the relative offset to access the grid point's neighbours (which accesses have to match the the declared stencil). Datasets written may only be accessed with a one-point, zero-offset stencil (otherwise the parallel semantics may be violated).
+The bulk of the application consists of parallel loops, implemented using calls to {\tt ops\_par\_loop}. These constructs work with datasets, passed through the opaque {\tt ops\_dat} handles declared during the initialisation phase. The iterations of parallel loops are semantically independent, and it is the responsibility of the user to enforce this: the order in which iterations are executed cannot affect the result (within the limits of floating point precision). Parallel loops are defined on a block, with a prescribed iteration range that is always defined from the perspective of the dataset written/modified (the sizes of datasets, particularly in multigrid situations, may be very different). Datasets are passed in using {\tt ops\_arg\_dat}, and during execution, values at the current grid point will be passed to the user kernel. These values are passed wrapped in a templated {\tt ACC<>} object (templated on the type of the data), whose parentheses operator is overloaded, which the user must use to specify the relative offset to access the grid point's neighbours (which accesses have to match the the declared stencil). Datasets written may only be accessed with a one-point, zero-offset stencil (otherwise the parallel semantics may be violated).
 
 Other than datasets, one can pass in read-only scalars or small arrays that are iteration space invariant with {\tt ops\_arg\_gbl} (typically weights, $\delta t$, etc. which may be different in different loops). The current iteration index can also be passed in with {\tt ops\_arg\_idx}, which will pass a globally consistent index to the user kernel (i.e. also under MPI).
 
@@ -139,7 +139,7 @@ OPS takes responsibility for all data, its movement and the execution of paralle
 \newpage
 \section{OPS C++ API}
 
-\subsection{Initialisation and termination routines}
+\subsection{Initialisation declaration and termination routines}
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_init}
 \begin{routine} {void ops\_init(int argc, char **argv, int diags\_level)}
@@ -298,6 +298,14 @@ and ops\_halo ops\_decl\_dat statements have been declared}
 is simply a place-holder to indicate different partitioning methods in the future.
 \end{routine}
 
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_exit}
+\begin{routine} {void ops\_exit()}
+{This routine must be called last to cleanly terminate the OPS computation.}
+\item \vspace{-0.3in}
+\end{routine}
+
+\subsection{Diagnostics and output routines}
+
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_diagnostic\_output}
 \begin{routine} {void ops\_diagnostic\_output()}
 {This routine prints out various useful bits of diagnostic info about sets, mappings and datasets. Usually used right 
@@ -362,12 +370,16 @@ a simple text editor }
 \item[os]    output stream, use stdout to print to standard out
 \end{routine}
 
-
-\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_exit}
-\begin{routine} {void ops\_exit()}
-{This routine must be called last to cleanly terminate the OPS computation.}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_NaNcheck}
+\begin{routine} {void ops\_NaNcheck(ops\_dat dat)}
+{Check if any of the values held in the \texttt{dat} is a NaN. If a NaN 
+is found, prints an error message and exits.}
+\item[dat] 	ops\_dat to to be checked 
 \item \vspace{-0.3in}
 \end{routine}
+
+
+
 
 
 
@@ -458,7 +470,7 @@ for OPS datasets.
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_arg\_dat}
 \begin{routine} {ops\_arg ops\_arg\_dat(ops\_dat dat, ops\_stencil stencil, char *type,
-                 ops\_access acc)}{Passes a pointer to the value(s) at the current grid point to the user kernel. the OPS\_ACC macro has to be used for dereferencing the pointer.}
+                 ops\_access acc)}{Passes a pointer wrapped in ac ACC<> object to the value(s) at the current grid point to the user kernel. The ACC object's parentheses operator has to be used for dereferencing the pointer.}
 \item[dat]        dataset
 \item[stencil]    stencil for accessing data
 \item[type]       string representing the type of data held in dataset
@@ -495,7 +507,7 @@ used to generate initial geometry. }
 \item[points]     number of points in the stencil
 \item[stencil]    stencil for accessing data
 \item[stride]     stride for accessing data
-\item[name] string representing the name of the stencil
+\item[name] string representing the name of the stencil\\
 \end{routine}
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_stencil\_hdf5}
@@ -510,14 +522,16 @@ used to generate initial geometry. }
 
 \vspace{0.2in}
 
-\noindent In the strided case, the semantics for the index of data to be accessed, for stencil point {\tt p}, in dimension \texttt{m} are defined as:\\
+\noindent In the strided case, the semantics for the index of data to be 
+accessed, for stencil point {\tt p}, in dimension \texttt{m} are defined as:\\
 
 \noindent {\tt stride[m]*loop\_index[m] + stencil[p*dims+m]},\\
 
-\noindent where \texttt{loop\_index[m]} is the iteration index (within the user-defined iteration space) in the different dimensions.
+\noindent where \texttt{loop\_index[m]} is the iteration index (within the 
+user-defined iteration space) in the different dimensions.
 
-\noindent If, for one or more dimensions, both {\tt stride[m]} and {\tt stencil[p*dims+m]} are zero, then one of the
-following must be true;
+\noindent If, for one or more dimensions, both {\tt stride[m]} and 
+{\tt stencil[p*dims+m]} are zero, then one of the following must be true;
 \begin{itemize}
 \item
 the dataset being referenced has size 1 for these dimensions
@@ -526,10 +540,18 @@ these dimensions are to be omitted and so the dataset has
 dimension equal to the number of remaining dimensions.
 \end{itemize}
 
-\noindent These two stencil definitions probably take care of all of the cases in the Introduction except for 
-multiblock applications with interfaces with different orientations -- this will need a third, even more general, 
-stencil specification. \noindent The strided stencil will handle both multigrid (with a stride of 2 for example) and 
-the boundary condition and reduced dimension applications (with a stride of 0 for the relevant dimensions).
+\noindent See \texttt{OPS/apps/c/CloverLeaf/build\_field.cpp} and 
+\texttt{OPS/apps/c/CloverLeaf/generate.cpp} for an example 
+\texttt{ops\_decl\_strided\_stencil} declaration and its use in a loop, 
+respectively. \\
+
+\noindent These two stencil definitions probably take care of all of the 
+cases in the Introduction except for multiblock applications with interfaces 
+with different orientations -- this will need a third, even more general, 
+stencil specification. \noindent The strided stencil will handle both multigrid 
+(with a stride of 2 for example) and the boundary condition and reduced 
+dimension applications (with a stride of 0 for the relevant dimensions).
+
 
 \subsection{Checkpointing}
 OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the file name for the 
@@ -643,15 +665,26 @@ This section describes APIS that give the user access to internal data structure
 \item[sizes]       an array populated with the spatial extents
 \end{routine}
 
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_get\_raw\_metadata}
+\begin{routine} {char* ops\_dat\_get\_raw\_metadata(ops\_dat dat, int part, int *disp, int *size, int *stride, int *d\_m, int *d\_p)}
+{This routine returns array shape metadata corresponding to the ops\_dat. Any of the arguments that are not of interest, may be NULL.}
+\item[dat]         the dataset
+\item[part]        the chunk index (has to be 0)
+\item[disp]        an array populated with the displacement of the chunk within the ``global'' distributed array
+\item[size]       an array populated with the spatial extents
+\item[stride]      an array populated strides in spatial dimensions needed for column-major indexing
+\item[d\_m]      an array populated with padding on the left in each dimension. Note that these are negative values
+\item[d\_p]      an array populated with padding on the right in each dimension
+\end{routine}
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_get\_raw\_pointer}
-\begin{routine} {char* ops\_dat\_get\_raw\_pointer(ops\_dat dat, int part, ops\_stencil stencil, int *stride)}
-{This routine returns a pointer to the internally stored data, with MPI halo regions automatically updated as required by the supplied stencil. The strides required to index into the dataset are also given}
+\begin{routine} {char* ops\_dat\_get\_raw\_pointer(ops\_dat dat, int part, ops\_stencil stencil, ops\_memspace *memspace)}
+{This routine returns a pointer to the internally stored data, with MPI halo regions automatically updated as required by the supplied stencil. The strides required to index into the dataset are also given.}
 \item[dat]         the dataset
 \item[part]        the chunk index (has to be 0)
 \item[stencil]     a stencil used to determine required MPI halo exchange depths 
-\item[stride]      an array populated strides in spatial dimensions needed for column-major indexing
-\end{routine}
+\item[memspace]       when set to OPS\_HOST or OPS\_DEVICE, returns a pointer to data in that memory space, otherwise must be set to 0, and returns
+ whether data is in the host or on the device\end{routine}
 
 \subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_release\_raw\_data}
 \begin{routine} {void ops\_dat\_release\_raw\_data(ops\_dat dat, int part, ops\_access acc)}
@@ -680,14 +713,56 @@ This section describes APIS that give the user access to internal data structure
 \newpage
 
 \section{Tiling for Cache-blocking}
-OPS has a code generation (ops\_gen\_mpi\_lazy) and build target for tiling. Currently this is only supported on a single
-node with OpenMP. Once compiled, to enable, use the OPS\_TILING runtime parameter - this will look at the L3 cache size
-of your CPU and guess the correct tile size. If you want to alter the amount of cache to be used for the guess, use the
-OPS\_CACHE\_SIZE=XX runtime parameter, where the value is in Megabytes. To manually specify the tile sizes, use the 
-T1, T2, and T3 environment variables.
+OPS has a code generation (ops\_gen\_mpi\_lazy) and build target for tiling.  
+Once compiled, to enable, use the \texttt{OPS\_TILING} runtime parameter - this 
+will look at the L3 cache size of your CPU and guess the correct tile size. If 
+you want to alter the amount of cache to be used for the guess, use the 
+\texttt{OPS\_CACHE\_SIZE=XX} runtime parameter, where the value is in Megabytes. 
+When MPI is combined with OpenMP tiling can be extended to the MPI halos. 
+Set \texttt{OPS\_TILING\_MAXDEPTH} to increase the the halo depths so that 
+halos for multiple \texttt{ops\_par\_loops} can be exchanged with a 
+single MPI message (see \cite{TPDS2017} for more details)\\
 
-To test, please compile CloverLeaf under apps/c/CloverLeaf, modify clover.in to use a $6144^2$ mesh, then run as follows:
-OMP\_NUM\_THREADS=xx numactl -physnodebind=0 ./cloverleaf\_tiled OPS\_TILING
+\noindent To test, compile CloverLeaf under \texttt{apps/c/CloverLeaf}, modify 
+clover.in to use a $6144^2$ mesh, then run as follows: \\
+
+\noindent For OpenMP with tiling:\\
+\texttt{export OMP\_NUM\_THREADS=xx;\\
+numactl -physnodebind=0 ./cloverleaf\_tiled OPS\_TILING}\\
+
+\noindent For MPI+OpenMP with tiling:\\
+\texttt{export OMP\_NUM\_THREADS=xx;\\
+mpirun -np xx ./cloverleaf\_mpi\_tiled OPS\_TILING 
+OPS\_TILING\_MAXDEPTH=6} \\
+
+\noindent To manually specify the tile sizes (in MB), use the T1, T2, and T3 
+environment variables:\\
+\texttt{export T1=600; export T2=200; \\
+export OMP\_NUM\_THREADS=xx; \\
+numactl -physnodebind=0 ./cloverleaf\_tiled OPS\_TILING
+}
+
+\section{CUDA and OpenCL Runtime Arguments}
+\noindent The CUDA (and OpenCL) thread block sizes can be controlled by setting 
+the \texttt{OPS\_BLOCK\_SIZE\_X, OPS\_BLOCK\_SIZE\_Y} and 
+\texttt{OPS\_BLOCK\_SIZE\_Z} runtime arguments. For example :\\
+
+\noindent\texttt{./cloverleaf\_cuda OPS\_BLOCK\_SIZE\_X=64 
+OPS\_BLOCK\_SIZE\_Y=4}\\
+
+\noindent \texttt{OPS\_CL\_DEVICE=XX} runtime flag sets the OpenCL device to 
+execute the code on. \\Usually \texttt{OPS\_CL\_DEVICE=0} selects the CPU and 
+\texttt{OPS\_CL\_DEVICE=1} selects GPUs. 
+
+\section{Executing with GPUDirect}
+
+GPU direct support for MPI+CUDA, to enable (on the OPS side) add 
+\textbf{-gpudirect} when running the executable. You may also have to use 
+certain environmental flags when using different MPI distributions. For an 
+example of the required flags and environmental settings on the Cambridge 
+Wilkes2 GPU cluster
+see: \\
+\url{https://docs.hpc.cam.ac.uk/hpc/user-guide/performance-tips.html}
 
 \newpage
 \section{OPS User Kernels}
@@ -696,45 +771,52 @@ OMP\_NUM\_THREADS=xx numactl -physnodebind=0 ./cloverleaf\_tiled OPS\_TILING
 a \textit{user kernel}. An example taken from the Cloverleaf application is given in \figurename{ \ref{fig:example}}.\\
 \begin{figure}[!h]\small
 \begin{minted}[mathescape, linenos, firstnumber=1,numbersep=0pt, gobble=2, frame=lines, framesep=1mm]{cpp}
-   void accelerate_kernel( const double *density0, const double *volume,
-                double *stepbymass, const double *xvel0, double *xvel1,
-                const double *xarea, const double *pressure,
-                const double *yvel0, double *yvel1,
-                const double *yarea, const double *viscosity) {
+void accelerate_kernel( const ACC<double> &density0, const ACC<double> &volume,
+                ACC<double> &stepbymass, const ACC<double> &xvel0, ACC<double> &xvel1,
+                const ACC<double> &xarea, const ACC<double> &pressure,
+                const ACC<double> &yvel0, ACC<double> &yvel1,
+                const ACC<double> &yarea, const ACC<double> &viscosity) {
 
-   double nodal_mass;
-   //{0,0, -1,0, 0,-1, -1,-1};
-   nodal_mass = ( density0[OPS_ACC0(-1,-1)] * volume[OPS_ACC1(-1,-1)]
-   + density0[OPS_ACC0(0,-1)] * volume[OPS_ACC1(0,-1)]
-   + density0[OPS_ACC0(0,0)] * volume[OPS_ACC1(0,0)]
-   + density0[OPS_ACC0(-1,0)] * volume[OPS_ACC1(-1,0)] ) * 0.25;
+  double nodal_mass;
 
-   stepbymass[OPS_ACC2(0,0)] = 0.5*dt/ nodal_mass;
+  //{0,0, -1,0, 0,-1, -1,-1};
+  nodal_mass = ( density0(-1,-1) * volume(-1,-1)
+    + density0(0,-1) * volume(0,-1)
+    + density0(0,0) * volume(0,0)
+    + density0(-1,0) * volume(-1,0) ) * 0.25;
 
-   //{0,0, -1,0, 0,-1, -1,-1};
-   //{0,0, 0,-1};
-   xvel1[OPS_ACC4(0,0)] = xvel0[OPS_ACC3(0,0)] - stepbymass[OPS_ACC2(0,0)] *
-   ( xarea[OPS_ACC5(0,0)]  * ( pressure[OPS_ACC6(0,0)] - pressure[OPS_ACC6(-1,0)] ) +
-   xarea[OPS_ACC5(0,-1)] * ( pressure[OPS_ACC6(0,-1)] - pressure[OPS_ACC6(-1,-1)] ) );
+  stepbymass(0,0) = 0.5*dt/ nodal_mass;
 
-   //{0,0, -1,0, 0,-1, -1,-1};
-   //{0,0, -1,0};
-   yvel1[OPS_ACC8(0,0)] = yvel0[OPS_ACC7(0,0)] - stepbymass[OPS_ACC2(0,0)] *
-   ( yarea[OPS_ACC9(0,0)]  * ( pressure[OPS_ACC6(0,0)] - pressure[OPS_ACC6(0,-1)] ) +
-   yarea[OPS_ACC9(-1,0)] * ( pressure[OPS_ACC6(-1,0)] - pressure[OPS_ACC6(-1,-1)] ) );
+  //{0,0, -1,0, 0,-1, -1,-1};
+  //{0,0, 0,-1};
 
-   //{0,0, -1,0, 0,-1, -1,-1};
-   //{0,0, 0,-1};
-   xvel1[OPS_ACC4(0,0)] = xvel1[OPS_ACC4(0,0)] - stepbymass[OPS_ACC2(0,0)] *
-   ( xarea[OPS_ACC5(0,0)] * ( viscosity[OPS_ACC10(0,0)] - viscosity[OPS_ACC10(-1,0)] ) +
-   xarea[OPS_ACC5(0,-1)] * ( viscosity[OPS_ACC10(0,-1)] - viscosity[OPS_ACC10(-1,-1)] ) );
+  xvel1(0,0) = xvel0(0,0) - stepbymass(0,0) *
+            ( xarea(0,0)  * ( pressure(0,0) - pressure(-1,0) ) +
+              xarea(0,-1) * ( pressure(0,-1) - pressure(-1,-1) ) );
 
-   //{0,0, -1,0, 0,-1, -1,-1};
-   //{0,0, -1,0};
-   yvel1[OPS_ACC8(0,0)] = yvel1[OPS_ACC8(0,0)] - stepbymass[OPS_ACC2(0,0)] *
-   ( yarea[OPS_ACC9(0,0)] * ( viscosity[OPS_ACC10(0,0)] - viscosity[OPS_ACC10(0,-1)] ) +
-   yarea[OPS_ACC9(-1,0)] * ( viscosity[OPS_ACC10(-1,0)] - viscosity[OPS_ACC10(-1,-1)] ) );
-   }
+  //{0,0, -1,0, 0,-1, -1,-1};
+  //{0,0, -1,0};
+
+  yvel1(0,0) = yvel0(0,0) - stepbymass(0,0) *
+            ( yarea(0,0)  * ( pressure(0,0) - pressure(0,-1) ) +
+              yarea(-1,0) * ( pressure(-1,0) - pressure(-1,-1) ) );
+
+  //{0,0, -1,0, 0,-1, -1,-1};
+  //{0,0, 0,-1};
+
+  xvel1(0,0) = xvel1(0,0) - stepbymass(0,0) *
+            ( xarea(0,0) * ( viscosity(0,0) - viscosity(-1,0) ) +
+              xarea(0,-1) * ( viscosity(0,-1) - viscosity(-1,-1) ) );
+
+  //{0,0, -1,0, 0,-1, -1,-1};
+  //{0,0, -1,0};
+
+  yvel1(0,0) = yvel1(0,0) - stepbymass(0,0) *
+            ( yarea(0,0) * ( viscosity(0,0) - viscosity(0,-1) ) +
+              yarea(-1,0) * ( viscosity(-1,0) - viscosity(-1,-1) ) );
+
+
+}
 \end{minted}
 \caption{\small example user kernel}
 \normalsize\vspace{-0pt}\label{fig:example}
@@ -742,10 +824,7 @@ a \textit{user kernel}. An example taken from the Cloverleaf application is give
 
 
 \noindent This user kernel is then used in an \texttt{ops\_par\_loop} (\figurename{ \ref{fig:parloop}}). The key aspect
-to note in the user kernel in \figurename{ \ref{fig:example}} is the use of the macros \texttt{OPS\_ACC0}, \texttt{OPS\_ACC1}, 
-\texttt{OPS\_ACC2} etc. These specify the stencil in accessing the elements of the respective data arrays. For example in 
-\texttt{OPS\_ACC2}, \texttt{2} denotes the third function argument (argument number starts from 0) and (0, 0) denotes stencil. At compile 
-time these macros will be expanded to give the correct array index 
+to note in the user kernel in \figurename{ \ref{fig:example}} is the use of the ACC<> objects and their parentheses operator. These specify the stencil in accessing the elements of the respective data arrays. 
 
 \begin{figure}[!h]\small
 \begin{minted}[mathescape, linenos, firstnumber=1,numbersep=0pt, gobble=2, frame=lines, framesep=2mm]{cpp}
@@ -770,7 +849,14 @@ time these macros will be expanded to give the correct array index
 
 
 \begin{thebibliography}{1}
-\bibitem{op2} OP2 for Many-Core Platforms, 2013. \url{http://www.oerc.ox.ac.uk/projects/op2}
+\bibitem{op2} OP2 for Many-Core Platforms, 2013. 
+\url{http://www.oerc.ox.ac.uk/projects/op2}
+
+\bibitem{TPDS2017} Istvan Z. Reguly, G.R. Mudalige, Mike B. Giles. Loop Tiling 
+in Large-Scale Stencil Codes at Run-time with OPS. (2017) IEEE Transactions on 
+Parallel and Distributed Systems. 
+\url{http://dx.doi.org/10.1109/TPDS.2017.2778161}
+
 \end{thebibliography}
 
 \end{document}

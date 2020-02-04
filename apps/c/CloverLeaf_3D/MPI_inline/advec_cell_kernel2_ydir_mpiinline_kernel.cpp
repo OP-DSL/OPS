@@ -73,16 +73,16 @@ void ops_par_loop_advec_cell_kernel2_ydir(char const *name, ops_block block, int
   int y_size = MAX(0,end[1]-start[1]);
   int z_size = MAX(0,end[2]-start[2]);
 
-  xdim0 = args[0].dat->size[0];
-  ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0];
-  ydim1 = args[1].dat->size[1];
-  xdim2 = args[2].dat->size[0];
-  ydim2 = args[2].dat->size[1];
-  xdim3 = args[3].dat->size[0];
-  ydim3 = args[3].dat->size[1];
-  xdim4 = args[4].dat->size[0];
-  ydim4 = args[4].dat->size[1];
+  int xdim0 = args[0].dat->size[0];
+  int ydim0 = args[0].dat->size[1];
+  int xdim1 = args[1].dat->size[0];
+  int ydim1 = args[1].dat->size[1];
+  int xdim2 = args[2].dat->size[0];
+  int ydim2 = args[2].dat->size[1];
+  int xdim3 = args[3].dat->size[0];
+  int ydim3 = args[3].dat->size[1];
+  int xdim4 = args[4].dat->size[0];
+  int ydim4 = args[4].dat->size[1];
 
   //Timing
   double t1,t2,c1,c2;

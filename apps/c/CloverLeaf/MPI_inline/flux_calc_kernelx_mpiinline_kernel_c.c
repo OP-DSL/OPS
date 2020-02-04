@@ -8,34 +8,28 @@ int xdim2_flux_calc_kernelx;
 int xdim3_flux_calc_kernelx;
 
 
-#define OPS_ACC0(x,y) (n_x*1 + x + (n_y*1+(y))*xdim0_flux_calc_kernelx)
-#define OPS_ACC1(x,y) (n_x*1 + x + (n_y*1+(y))*xdim1_flux_calc_kernelx)
-#define OPS_ACC2(x,y) (n_x*1 + x + (n_y*1+(y))*xdim2_flux_calc_kernelx)
-#define OPS_ACC3(x,y) (n_x*1 + x + (n_y*1+(y))*xdim3_flux_calc_kernelx)
 //user function
 
 
 
 void flux_calc_kernelx_c_wrapper(
-  double * restrict vol_flux_x,
-  const double * restrict xarea,
-  const double * restrict xvel0,
-  const double * restrict xvel1,
+  double * restrict vol_flux_x_p,
+  double * restrict xarea_p,
+  double * restrict xvel0_p,
+  double * restrict xvel1_p,
   int x_size, int y_size) {
   #pragma omp parallel for
   for ( int n_y=0; n_y<y_size; n_y++ ){
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      
+      ptr_double vol_flux_x = { vol_flux_x_p + n_x*1 + n_y * xdim0_flux_calc_kernelx*1, xdim0_flux_calc_kernelx};
+      const ptr_double xarea = { xarea_p + n_x*1 + n_y * xdim1_flux_calc_kernelx*1, xdim1_flux_calc_kernelx};
+      const ptr_double xvel0 = { xvel0_p + n_x*1 + n_y * xdim2_flux_calc_kernelx*1, xdim2_flux_calc_kernelx};
+      const ptr_double xvel1 = { xvel1_p + n_x*1 + n_y * xdim3_flux_calc_kernelx*1, xdim3_flux_calc_kernelx};
 
-  vol_flux_x[OPS_ACC0(0,0)] = 0.25 * dt * (xarea[OPS_ACC1(0,0)]) *
-  ( (xvel0[OPS_ACC2(0,0)]) + (xvel0[OPS_ACC2(0,1)]) + (xvel1[OPS_ACC3(0,0)]) + (xvel1[OPS_ACC3(0,1)]) );
-
-
+      OPS_ACC(vol_flux_x, 0, 0) =
+          0.25 * dt * (OPS_ACC(xarea, 0, 0)) *
+          ((OPS_ACC(xvel0, 0, 0)) + (OPS_ACC(xvel0, 0, 1)) +
+           (OPS_ACC(xvel1, 0, 0)) + (OPS_ACC(xvel1, 0, 1)));
     }
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-

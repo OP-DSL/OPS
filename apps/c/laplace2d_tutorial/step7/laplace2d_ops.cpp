@@ -44,7 +44,7 @@ void ops_par_loop_copy(char const *, ops_block, int , int*,
 
 #include "laplace_kernels.h"
 
-int main(int argc, char** argv)
+int main(int argc, const char** argv)
 {
 
   ops_init(argc, argv,1);

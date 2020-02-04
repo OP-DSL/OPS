@@ -59,10 +59,10 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_2_back(char const *name, ops_blo
   int y_size = MAX(0,end[1]-start[1]);
   int z_size = MAX(0,end[2]-start[2]);
 
-  xdim0 = args[0].dat->size[0];
-  ydim0 = args[0].dat->size[1];
-  xdim1 = args[1].dat->size[0];
-  ydim1 = args[1].dat->size[1];
+  int xdim0 = args[0].dat->size[0];
+  int ydim0 = args[0].dat->size[1];
+  int xdim1 = args[1].dat->size[0];
+  int ydim1 = args[1].dat->size[1];
 
   //Timing
   double t1,t2,c1,c2;

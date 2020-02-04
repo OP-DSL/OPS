@@ -278,7 +278,7 @@ First off, we need to include the appropriate header files, then initialise OPS,
 \item Define that this application is 2D, include the OPS header file, and create a header file where the outlined ``user kernels'' will live
 \begin{lstlisting}
 #define OPS_2D
-#include <ops_seq.h>
+#include <ops_seq_v2.h>
 #include "laplace_kernels.h"
 \end{lstlisting}
 \item Initialise and finalise OPS
@@ -351,10 +351,10 @@ First off, we need to include the appropriate header files, then initialise OPS,
   \begin{lstlisting}
   int bottom_range[] = {-1, imax+1, -1, 0};
 \end{lstlisting}
-\item Next, we need to outline the ``user kernel'' into \texttt{laplace\_kernels.h}, and place the appropriate access macro - $OPS\_ACCN(i,j)$, where $N$ is the index of the argument in the kernel's formal parameter list, and $(i,j)$ are the stencil offsets in the X and Y directions respectively.
+\item Next, we need to outline the ``user kernel'' into \texttt{laplace\_kernels.h}, modifying it so arrays are passed in using the templated ACC<> objects, which overload the () operator - $(i,j)$ are the stencil offsets in the X and Y directions respectively.
 \begin{lstlisting}
-void set_zero(double *A) {
-  A[OPS_ACC0(0,0)] = 0.0;
+void set_zero(ACC<double> &A) {
+  A(0,0) = 0.0;
 }
 \end{lstlisting}
 \end{itemize}
@@ -384,10 +384,10 @@ ops_par_loop(copy, "copy", block, 2, interior_range,
    ops_arg_dat(d_A,    1, S2D_00, "double", OPS_WRITE),
    ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_READ));
 \end{lstlisting}  
-  \item And the corresponding outlined user kernel is as follows. Observe how for \texttt{Anew} the \texttt{OPS\_ACC1} macro is used, as it is the second argument
+  \item And the corresponding outlined user kernel is as follows. 
 \begin{lstlisting}
-void copy(double *A, const double *Anew) {
-  A[OPS_ACC0(0,0)] = Anew[OPS_ACC1(0,0)];
+void copy(ACC<double> &A, const ACC<double> Anew) {
+  A(0,0) = Anew(0,0);
 }
 \end{lstlisting}  
 \end{itemize}
@@ -406,8 +406,8 @@ ops_par_loop(left_bndcon, "left_bndcon", block, 2, left_range,
 \end{lstlisting}  
   \item And the corresponding outlined user kernel is as follows. Observe the \texttt{idx} argument and the $+1$ offset due to the difference in indexing:
 \begin{lstlisting}
-void left_bndcon(double *A, const int *idx) {
-  A[OPS_ACC0(0,0)] = sin(pi * (idx[1]+1) / (jmax+1));
+void left_bndcon(ACC<double> &A, const int *idx) {
+  A(0,0) = sin(pi * (idx[1]+1) / (jmax+1));
 }
 \end{lstlisting}  
 \end{itemize}
@@ -443,12 +443,12 @@ ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
 \end{lstlisting}  
   \item And the corresponding outlined user kernel is as follows. Observe the stencil offsets used to access the adjacent 4 points:
 \begin{lstlisting}
-void apply_stencil(const double *A, double *Anew, double *error) {
-  Anew[OPS_ACC1(0,0)] = 0.25f * ( A[OPS_ACC0(1,0)] 
-      + A[OPS_ACC0(-1,0)]
-      + A[OPS_ACC0(0,-1)] + A[OPS_ACC0(0,1)]);
-  *error = fmax( *error, fabs(Anew[OPS_ACC1(0,0)]
-                             -A[OPS_ACC0(0,0)]));
+void apply_stencil(const ACC<double> &A, ACC<double> &Anew, double *error) {
+  Anew(0,0) = 0.25f * ( A(1,0) 
+      + A(-1,0)
+      + A(0,-1) + A(0,1)];
+  *error = fmax( *error, fabs(Anew(0,0)
+                             -A(0,0)));
 }
 \end{lstlisting}  
 \end{itemize}

@@ -4,59 +4,40 @@
 __constant__ int dims_calc_dt_kernel_print [7][1];
 static int dims_calc_dt_kernel_print_h [7][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
-
-#define OPS_ACC0(x,y) (x+dims_calc_dt_kernel_print[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_calc_dt_kernel_print[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_calc_dt_kernel_print[2][0]*(y))
-#define OPS_ACC3(x,y) (x+dims_calc_dt_kernel_print[3][0]*(y))
-#define OPS_ACC4(x,y) (x+dims_calc_dt_kernel_print[4][0]*(y))
-#define OPS_ACC5(x,y) (x+dims_calc_dt_kernel_print[5][0]*(y))
-
 //user function
 __device__
 
-void calc_dt_kernel_print_gpu(const double *xvel0, const double *yvel0,
-                        const double *density0, const double *energy0,
-                        const double *pressure, const double *soundspeed, double *output) {
-  output[0] = xvel0[OPS_ACC0(1,0)];
-  output[1] = yvel0[OPS_ACC1(1,0)];
-  output[2] = xvel0[OPS_ACC0(-1,0)];
-  output[3] = yvel0[OPS_ACC1(-1,0)];
-  output[4] = xvel0[OPS_ACC0(0,1)];
-  output[5] = yvel0[OPS_ACC1(0,1)];
-  output[6] = xvel0[OPS_ACC0(0,-1)];
-  output[7] = yvel0[OPS_ACC1(0,-1)];
-  output[8] = density0[OPS_ACC2(0,0)];
-  output[9] = energy0[OPS_ACC3(0,0)];
-  output[10]= pressure[OPS_ACC4(0,0)];
-  output[11]= soundspeed[OPS_ACC5(0,0)];
+void calc_dt_kernel_print_gpu(const ACC<double> &xvel0,
+  const ACC<double> &yvel0,
+  const ACC<double> &density0,
+  const ACC<double> &energy0,
+  const ACC<double> &pressure,
+  const ACC<double> &soundspeed,
+  double *output) {
+  output[0] = xvel0(1,0);
+  output[1] = yvel0(1,0);
+  output[2] = xvel0(-1,0);
+  output[3] = yvel0(-1,0);
+  output[4] = xvel0(0,1);
+  output[5] = yvel0(0,1);
+  output[6] = xvel0(0,-1);
+  output[7] = yvel0(0,-1);
+  output[8] = density0(0,0);
+  output[9] = energy0(0,0);
+  output[10]= pressure(0,0);
+  output[11]= soundspeed(0,0);
 
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
-
 __global__ void ops_calc_dt_kernel_print(
-const double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
-const double* __restrict arg3,
-const double* __restrict arg4,
-const double* __restrict arg5,
+double* __restrict arg0,
+double* __restrict arg1,
+double* __restrict arg2,
+double* __restrict arg3,
+double* __restrict arg4,
+double* __restrict arg5,
 double* __restrict arg6,
 int size0,
 int size1 ){
@@ -75,8 +56,14 @@ int size1 ){
   arg5 += idx_x * 1*1 + idx_y * 1*1 * dims_calc_dt_kernel_print[5][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    calc_dt_kernel_print_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6_l);
+    const ACC<double> argp0(dims_calc_dt_kernel_print[0][0], arg0);
+    const ACC<double> argp1(dims_calc_dt_kernel_print[1][0], arg1);
+    const ACC<double> argp2(dims_calc_dt_kernel_print[2][0], arg2);
+    const ACC<double> argp3(dims_calc_dt_kernel_print[3][0], arg3);
+    const ACC<double> argp4(dims_calc_dt_kernel_print[4][0], arg4);
+    const ACC<double> argp5(dims_calc_dt_kernel_print[5][0], arg5);
+    calc_dt_kernel_print_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5, arg6_l);
   }
   for (int d=0; d<12; d++)
     ops_reduction_cuda<OPS_INC>(&arg6[d+(blockIdx.x + blockIdx.y*gridDim.x)*12],arg6_l[d]);

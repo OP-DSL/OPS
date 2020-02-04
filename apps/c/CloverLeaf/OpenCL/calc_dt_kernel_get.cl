@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,23 +45,15 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+xdim0_calc_dt_kernel_get*(y))
-#define OPS_ACC1(x,y) (x+xdim1_calc_dt_kernel_get*(y))
-
-
 //user function
-void calc_dt_kernel_get(const __global double* restrict  cellx,const __global double* restrict  celly, double* restrict  xl_pos,
- double* restrict  yl_pos)
 
- {
-  *xl_pos = cellx[OPS_ACC0(0,0)];
-  *yl_pos = celly[OPS_ACC1(0,0)];
+void calc_dt_kernel_get(const ptr_double cellx,
+  const ptr_double celly,
+  double* xl_pos,
+  double* yl_pos) {
+  *xl_pos = OPS_ACCS(cellx, 0,0);
+  *yl_pos = OPS_ACCS(celly, 0,0);
 }
-
 
 
 __kernel void ops_calc_dt_kernel_get(
@@ -85,8 +81,10 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    calc_dt_kernel_get(&arg0[base0 + idx_x * 1*1 + idx_y * 0*1 * xdim0_calc_dt_kernel_get],
-                   &arg1[base1 + idx_x * 0*1 + idx_y * 1*1 * xdim1_calc_dt_kernel_get],
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 0*1 * xdim0_calc_dt_kernel_get], xdim0_calc_dt_kernel_get};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 0*1 + idx_y * 1*1 * xdim1_calc_dt_kernel_get], xdim1_calc_dt_kernel_get};
+    calc_dt_kernel_get(ptr0,
+                   ptr1,
                    arg2_l,
                    arg3_l);
   }

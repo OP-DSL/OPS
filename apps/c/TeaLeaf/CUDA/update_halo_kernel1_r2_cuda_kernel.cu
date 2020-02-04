@@ -4,45 +4,25 @@
 __constant__ int dims_update_halo_kernel1_r2 [7][1];
 static int dims_update_halo_kernel1_r2_h [7][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
-
-#define OPS_ACC0(x,y) (x+dims_update_halo_kernel1_r2[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_update_halo_kernel1_r2[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_update_halo_kernel1_r2[2][0]*(y))
-#define OPS_ACC3(x,y) (x+dims_update_halo_kernel1_r2[3][0]*(y))
-#define OPS_ACC4(x,y) (x+dims_update_halo_kernel1_r2[4][0]*(y))
-#define OPS_ACC5(x,y) (x+dims_update_halo_kernel1_r2[5][0]*(y))
-
 //user function
 __device__
 
-inline void update_halo_kernel1_r2_gpu(double *density0,
-                          double *energy0, double *energy1,
-                          double *u, double *p,
-                          double *sd , const int* fields) {
-  if(fields[FIELD_DENSITY] == 1) density0[OPS_ACC0(0,0)] = density0[OPS_ACC0(-3,0)];
-  if(fields[FIELD_ENERGY0] == 1) energy0[OPS_ACC1(0,0)] = energy0[OPS_ACC1(-3,0)];
-  if(fields[FIELD_ENERGY1] == 1) energy1[OPS_ACC2(0,0)] = energy1[OPS_ACC2(-3,0)];
-  if(fields[FIELD_U] == 1) u[OPS_ACC3(0,0)] = u[OPS_ACC3(-3,0)];
-  if(fields[FIELD_P] == 1) p[OPS_ACC4(0,0)] = p[OPS_ACC4(-3,0)];
-  if(fields[FIELD_SD] == 1) sd[OPS_ACC5(0,0)] = sd[OPS_ACC5(-3,0)];
+inline void update_halo_kernel1_r2_gpu(ACC<double> &density0,
+  ACC<double> &energy0,
+  ACC<double> &energy1,
+  ACC<double> &u,
+  ACC<double> &p,
+  ACC<double> &sd,
+  const int* fields) {
+  if(fields[FIELD_DENSITY] == 1) density0(0,0) = density0(-3,0);
+  if(fields[FIELD_ENERGY0] == 1) energy0(0,0) = energy0(-3,0);
+  if(fields[FIELD_ENERGY1] == 1) energy1(0,0) = energy1(-3,0);
+  if(fields[FIELD_U] == 1) u(0,0) = u(-3,0);
+  if(fields[FIELD_P] == 1) p(0,0) = p(-3,0);
+  if(fields[FIELD_SD] == 1) sd(0,0) = sd(-3,0);
 
 }
 
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
 
 
 __global__ void ops_update_halo_kernel1_r2(
@@ -68,8 +48,14 @@ int size1 ){
   arg5 += idx_x * 1*1 + idx_y * 1*1 * dims_update_halo_kernel1_r2[5][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    update_halo_kernel1_r2_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6);
+    ACC<double> argp0(dims_update_halo_kernel1_r2[0][0], arg0);
+    ACC<double> argp1(dims_update_halo_kernel1_r2[1][0], arg1);
+    ACC<double> argp2(dims_update_halo_kernel1_r2[2][0], arg2);
+    ACC<double> argp3(dims_update_halo_kernel1_r2[3][0], arg3);
+    ACC<double> argp4(dims_update_halo_kernel1_r2[4][0], arg4);
+    ACC<double> argp5(dims_update_halo_kernel1_r2[5][0], arg5);
+    update_halo_kernel1_r2_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5, arg6);
   }
 
 }

@@ -4,34 +4,24 @@
 __constant__ int dims_tea_leaf_ppcg_inner2_kernel [5][1];
 static int dims_tea_leaf_ppcg_inner2_kernel_h [5][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
-#define OPS_ACC0(x,y) (x+dims_tea_leaf_ppcg_inner2_kernel[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_tea_leaf_ppcg_inner2_kernel[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_tea_leaf_ppcg_inner2_kernel[2][0]*(y))
-
 //user function
 __device__
 
-void tea_leaf_ppcg_inner2_kernel_gpu(double *sd, double *utemp, const double *z, const double *alpha, const double *beta) {
-  sd[OPS_ACC0(0,0)] = (*alpha) * sd[OPS_ACC0(0,0)] + (*beta)*z[OPS_ACC2(0,0)];
-  utemp[OPS_ACC1(0,0)] = utemp[OPS_ACC1(0,0)] + sd[OPS_ACC0(0,0)];
+void tea_leaf_ppcg_inner2_kernel_gpu(ACC<double> &sd,
+  ACC<double> &utemp,
+  const ACC<double> &z,
+  const double *alpha,
+  const double *beta) {
+  sd(0,0) = (*alpha) * sd(0,0) + (*beta)*z(0,0);
+  utemp(0,0) = utemp(0,0) + sd(0,0);
 }
 
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
 
 
 __global__ void ops_tea_leaf_ppcg_inner2_kernel(
 double* __restrict arg0,
 double* __restrict arg1,
-const double* __restrict arg2,
+double* __restrict arg2,
 const double arg3,
 const double arg4,
 int size0,
@@ -46,7 +36,10 @@ int size1 ){
   arg2 += idx_x * 1*1 + idx_y * 1*1 * dims_tea_leaf_ppcg_inner2_kernel[2][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    tea_leaf_ppcg_inner2_kernel_gpu(arg0, arg1, arg2, &arg3,
+    ACC<double> argp0(dims_tea_leaf_ppcg_inner2_kernel[0][0], arg0);
+    ACC<double> argp1(dims_tea_leaf_ppcg_inner2_kernel[1][0], arg1);
+    const ACC<double> argp2(dims_tea_leaf_ppcg_inner2_kernel[2][0], arg2);
+    tea_leaf_ppcg_inner2_kernel_gpu(argp0, argp1, argp2, &arg3,
                    &arg4);
   }
 

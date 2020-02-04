@@ -16,7 +16,7 @@ double deltai0;
 double deltat;
 // OPS header file
 #define OPS_1D
-#include "ops_seq.h"
+#include "ops_seq_v2.h"
 #include "complex_numbers_block_0_kernel.h"
 
 // main program start

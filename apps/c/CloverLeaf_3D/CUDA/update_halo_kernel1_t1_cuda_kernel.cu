@@ -4,49 +4,27 @@
 __constant__ int dims_update_halo_kernel1_t1 [8][2];
 static int dims_update_halo_kernel1_t1_h [8][2] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
-
-#define OPS_ACC0(x,y,z) (x+dims_update_halo_kernel1_t1[0][0]*(y)+dims_update_halo_kernel1_t1[0][0]*dims_update_halo_kernel1_t1[0][1]*(z))
-#define OPS_ACC1(x,y,z) (x+dims_update_halo_kernel1_t1[1][0]*(y)+dims_update_halo_kernel1_t1[1][0]*dims_update_halo_kernel1_t1[1][1]*(z))
-#define OPS_ACC2(x,y,z) (x+dims_update_halo_kernel1_t1[2][0]*(y)+dims_update_halo_kernel1_t1[2][0]*dims_update_halo_kernel1_t1[2][1]*(z))
-#define OPS_ACC3(x,y,z) (x+dims_update_halo_kernel1_t1[3][0]*(y)+dims_update_halo_kernel1_t1[3][0]*dims_update_halo_kernel1_t1[3][1]*(z))
-#define OPS_ACC4(x,y,z) (x+dims_update_halo_kernel1_t1[4][0]*(y)+dims_update_halo_kernel1_t1[4][0]*dims_update_halo_kernel1_t1[4][1]*(z))
-#define OPS_ACC5(x,y,z) (x+dims_update_halo_kernel1_t1[5][0]*(y)+dims_update_halo_kernel1_t1[5][0]*dims_update_halo_kernel1_t1[5][1]*(z))
-#define OPS_ACC6(x,y,z) (x+dims_update_halo_kernel1_t1[6][0]*(y)+dims_update_halo_kernel1_t1[6][0]*dims_update_halo_kernel1_t1[6][1]*(z))
-
 //user function
 __device__
 
-inline void update_halo_kernel1_t1_gpu(double *density0, double *density1,
-                          double *energy0, double *energy1,
-                          double *pressure, double *viscosity,
-                          double *soundspeed , const int* fields) {
-  if(fields[FIELD_DENSITY0] == 1) density0[OPS_ACC0(0,0,0)] = density0[OPS_ACC0(0,-1,0)];
-  if(fields[FIELD_DENSITY1] == 1) density1[OPS_ACC1(0,0,0)] = density1[OPS_ACC1(0,-1,0)];
-  if(fields[FIELD_ENERGY0] == 1) energy0[OPS_ACC2(0,0,0)] = energy0[OPS_ACC2(0,-1,0)];
-  if(fields[FIELD_ENERGY1] == 1) energy1[OPS_ACC3(0,0,0)] = energy1[OPS_ACC3(0,-1,0)];
-  if(fields[FIELD_PRESSURE] == 1) pressure[OPS_ACC4(0,0,0)] = pressure[OPS_ACC4(0,-1,0)];
-  if(fields[FIELD_VISCOSITY] == 1) viscosity[OPS_ACC5(0,0,0)] = viscosity[OPS_ACC5(0,-1,0)];
-  if(fields[FIELD_SOUNDSPEED] == 1) soundspeed[OPS_ACC6(0,0,0)] = soundspeed[OPS_ACC6(0,-1,0)];
+inline void update_halo_kernel1_t1_gpu(ACC<double> &density0,
+  ACC<double> &density1,
+  ACC<double> &energy0,
+  ACC<double> &energy1,
+  ACC<double> &pressure,
+  ACC<double> &viscosity,
+  ACC<double> &soundspeed,
+  const int* fields) {
+  if(fields[FIELD_DENSITY0] == 1) density0(0,0,0) = density0(0,-1,0);
+  if(fields[FIELD_DENSITY1] == 1) density1(0,0,0) = density1(0,-1,0);
+  if(fields[FIELD_ENERGY0] == 1) energy0(0,0,0) = energy0(0,-1,0);
+  if(fields[FIELD_ENERGY1] == 1) energy1(0,0,0) = energy1(0,-1,0);
+  if(fields[FIELD_PRESSURE] == 1) pressure(0,0,0) = pressure(0,-1,0);
+  if(fields[FIELD_VISCOSITY] == 1) viscosity(0,0,0) = viscosity(0,-1,0);
+  if(fields[FIELD_SOUNDSPEED] == 1) soundspeed(0,0,0) = soundspeed(0,-1,0);
 
 }
 
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
 
 
 __global__ void ops_update_halo_kernel1_t1(
@@ -76,8 +54,15 @@ int size2 ){
   arg6 += idx_x * 1*1 + idx_y * 1*1 * dims_update_halo_kernel1_t1[6][0] + idx_z * 1*1 * dims_update_halo_kernel1_t1[6][0] * dims_update_halo_kernel1_t1[6][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    update_halo_kernel1_t1_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6, arg7);
+    ACC<double> argp0(dims_update_halo_kernel1_t1[0][0], dims_update_halo_kernel1_t1[0][1], arg0);
+    ACC<double> argp1(dims_update_halo_kernel1_t1[1][0], dims_update_halo_kernel1_t1[1][1], arg1);
+    ACC<double> argp2(dims_update_halo_kernel1_t1[2][0], dims_update_halo_kernel1_t1[2][1], arg2);
+    ACC<double> argp3(dims_update_halo_kernel1_t1[3][0], dims_update_halo_kernel1_t1[3][1], arg3);
+    ACC<double> argp4(dims_update_halo_kernel1_t1[4][0], dims_update_halo_kernel1_t1[4][1], arg4);
+    ACC<double> argp5(dims_update_halo_kernel1_t1[5][0], dims_update_halo_kernel1_t1[5][1], arg5);
+    ACC<double> argp6(dims_update_halo_kernel1_t1[6][0], dims_update_halo_kernel1_t1[6][1], arg6);
+    update_halo_kernel1_t1_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5, argp6, arg7);
   }
 
 }

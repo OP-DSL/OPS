@@ -4,27 +4,20 @@
 __constant__ int dims_multidim_reduce_kernel [2][2];
 static int dims_multidim_reduce_kernel_h [2][2] = {0};
 
-
-#undef OPS_ACC_MD0
-
-
-#define OPS_ACC_MD0(d,x,y) ((x)+(dims_multidim_reduce_kernel[0][0]*(y))+(d)*dims_multidim_reduce_kernel[0][0]*dims_multidim_reduce_kernel[0][1])
 //user function
 __device__
 
-void multidim_reduce_kernel_gpu(const double *val, double *redu_dat1) {
+void multidim_reduce_kernel_gpu(const ACC<double> &val,
+  double *redu_dat1) {
 
-  redu_dat1[0] = redu_dat1[0] + val[OPS_ACC_MD0(0,0,0)];
-  redu_dat1[1] = redu_dat1[1] + val[OPS_ACC_MD0(1,0,0)];
+  redu_dat1[0] = redu_dat1[0] + val(0,0,0);
+  redu_dat1[1] = redu_dat1[1] + val(1,0,0);
 }
 
 
 
-
-#undef OPS_ACC_MD0
-
 __global__ void ops_multidim_reduce_kernel(
-const double* __restrict arg0,
+double* __restrict arg0,
 double* __restrict arg1,
 int size0,
 int size1 ){
@@ -38,7 +31,8 @@ int size1 ){
   arg0 += idx_x * 1 + idx_y * 1 * dims_multidim_reduce_kernel[0][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    multidim_reduce_kernel_gpu(arg0, arg1_l);
+    const ACC<double> argp0(2, dims_multidim_reduce_kernel[0][0], dims_multidim_reduce_kernel[0][1], arg0);
+    multidim_reduce_kernel_gpu(argp0, arg1_l);
   }
   for (int d=0; d<2; d++)
     ops_reduction_cuda<OPS_INC>(&arg1[d+(blockIdx.x + blockIdx.y*gridDim.x)*2],arg1_l[d]);

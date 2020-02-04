@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,25 +45,16 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
-#define OPS_ACC0(x,y) (x+xdim0_tea_leaf_ppcg_inner2_kernel*(y))
-#define OPS_ACC1(x,y) (x+xdim1_tea_leaf_ppcg_inner2_kernel*(y))
-#define OPS_ACC2(x,y) (x+xdim2_tea_leaf_ppcg_inner2_kernel*(y))
-
-
 //user function
-void tea_leaf_ppcg_inner2_kernel(__global double * restrict sd,__global double * restrict utemp,const __global double * restrict z,
-const  double * restrict alpha,const  double * restrict beta)
 
- {
-  sd[OPS_ACC0(0,0)] = (*alpha) * sd[OPS_ACC0(0,0)] + (*beta)*z[OPS_ACC2(0,0)];
-  utemp[OPS_ACC1(0,0)] = utemp[OPS_ACC1(0,0)] + sd[OPS_ACC0(0,0)];
+void tea_leaf_ppcg_inner2_kernel(ptr_double sd,
+  ptr_double utemp,
+  const ptr_double z,
+  const double *alpha,
+  const double *beta) {
+  OPS_ACCS(sd, 0,0) = (*alpha) * OPS_ACCS(sd, 0,0) + (*beta)*OPS_ACCS(z, 0,0);
+  OPS_ACCS(utemp, 0,0) = OPS_ACCS(utemp, 0,0) + OPS_ACCS(sd, 0,0);
 }
-
 
 
 __kernel void ops_tea_leaf_ppcg_inner2_kernel(
@@ -79,9 +74,12 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    tea_leaf_ppcg_inner2_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_tea_leaf_ppcg_inner2_kernel],
-                                &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_tea_leaf_ppcg_inner2_kernel],
-                                &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_tea_leaf_ppcg_inner2_kernel],
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_tea_leaf_ppcg_inner2_kernel], xdim0_tea_leaf_ppcg_inner2_kernel};
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_tea_leaf_ppcg_inner2_kernel], xdim1_tea_leaf_ppcg_inner2_kernel};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_tea_leaf_ppcg_inner2_kernel], xdim2_tea_leaf_ppcg_inner2_kernel};
+    tea_leaf_ppcg_inner2_kernel(ptr0,
+                                ptr1,
+                                ptr2,
                                 &arg3,
                                 &arg4);
   }

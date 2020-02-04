@@ -220,7 +220,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   #endif
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[49].mpi_time += t2-t1;
+    OPS_kernels[49].mpi_time += t2 - t1;
   }
 
   field_summary_kernel_c_wrapper(
@@ -239,7 +239,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[49].time += t1-t2;
+    OPS_kernels[49].time += t1 - t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 11);
@@ -250,7 +250,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   if (OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[49].mpi_time += t2-t1;
+    OPS_kernels[49].mpi_time += t2 - t1;
     OPS_kernels[49].transfer += ops_compute_transfer(dim, start, end, &arg0);
     OPS_kernels[49].transfer += ops_compute_transfer(dim, start, end, &arg1);
     OPS_kernels[49].transfer += ops_compute_transfer(dim, start, end, &arg2);

@@ -4,46 +4,29 @@
 __constant__ int dims_calvar_kernel [5][1];
 static int dims_calvar_kernel_h [5][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-#define OPS_ACC3(x) (x)
-#define OPS_ACC4(x) (x)
-
 //user function
 __device__
 
-void calvar_kernel_gpu(const double *rho_new, const double *rhou_new, const double *rhoE_new,
-                       double *workarray2, double *workarray3) {
+void calvar_kernel_gpu(const ACC<double> &rho_new,
+  const ACC<double> &rhou_new,
+  const ACC<double> &rhoE_new,
+  ACC<double> &workarray2,
+  ACC<double> &workarray3) {
   double p, rhoi, u;
-  rhoi = 1/rho_new[OPS_ACC0(0)];
-  u = rhou_new[OPS_ACC1(0)] * rhoi;
-  p = gam1 * (rhoE_new[OPS_ACC2(0)] - 0.5 * rho_new[OPS_ACC0(0)]* u * u);
+  rhoi = 1/rho_new(0);
+  u = rhou_new(0) * rhoi;
+  p = gam1 * (rhoE_new(0) - 0.5 * rho_new(0)* u * u);
 
-  workarray2[OPS_ACC3(0)] = p + rhou_new[OPS_ACC1(0)] * u ;
-  workarray3[OPS_ACC4(0)] = (p + rhoE_new[OPS_ACC2(0)]) * u ;
+  workarray2(0) = p + rhou_new(0) * u ;
+  workarray3(0) = (p + rhoE_new(0)) * u ;
   }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
 __global__ void ops_calvar_kernel(
-const double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
+double* __restrict arg0,
+double* __restrict arg1,
+double* __restrict arg2,
 double* __restrict arg3,
 double* __restrict arg4,
 int size0 ){
@@ -58,8 +41,13 @@ int size0 ){
   arg4 += idx_x * 1*1;
 
   if (idx_x < size0) {
-    calvar_kernel_gpu(arg0, arg1, arg2, arg3,
-                   arg4);
+    const ACC<double> argp0(arg0);
+    const ACC<double> argp1(arg1);
+    const ACC<double> argp2(arg2);
+    ACC<double> argp3(arg3);
+    ACC<double> argp4(arg4);
+    calvar_kernel_gpu(argp0, argp1, argp2, argp3,
+                   argp4);
   }
 
 }

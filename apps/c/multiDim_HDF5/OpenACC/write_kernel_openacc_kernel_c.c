@@ -11,34 +11,18 @@ int ydim1_write_kernel;
 int xdim2_write_kernel;
 int ydim2_write_kernel;
 
-
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-#undef OPS_ACC_MD0
-
-#define OPS_ACC1(x,y,z) (x+xdim1_write_kernel*(y)+xdim1_write_kernel*ydim1_write_kernel*(z))
-#define OPS_ACC2(x,y,z) (x+xdim2_write_kernel*(y)+xdim2_write_kernel*ydim2_write_kernel*(z))
-
-#define OPS_ACC_MD0(d,x,y,z) ((x)*2+(d)+(xdim0_write_kernel*(y)*2)+(xdim0_write_kernel*ydim0_write_kernel*(z)*2))
 //user function
-inline 
-void write_kernel(double *mult, double *single, int *digit, const int *idx) {
+inline void write_kernel(ptrm_double mult, ptr_double single, ptr_int digit,
+                         const int *idx) {
 
-  mult[OPS_ACC_MD0(0, 0, 0, 0)] = 1;
+  OPS_ACC(mult, 0, 0, 0, 0) = 1;
 
-  mult[OPS_ACC_MD0(1, 0, 0, 0)] = 2;
+  OPS_ACC(mult, 1, 0, 0, 0) = 2;
 
-  single[OPS_ACC1(0, 0, 0)] = 3;
+  OPS_ACC(single, 0, 0, 0) = 3;
 
-  digit[OPS_ACC2(0, 0, 0)] = idx[0] * 100 + idx[1] * 10 + idx[2];
+  OPS_ACC(digit, 0, 0, 0) = idx[0] * 100 + idx[1] * 10 + idx[2];
 }
-
-
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-#undef OPS_ACC_MD0
 
 
 void write_kernel_c_wrapper(
@@ -62,11 +46,26 @@ void write_kernel_c_wrapper(
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
         int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y, arg_idx2+n_z};
-        write_kernel(  p_a0 + n_x*1*2 + n_y*xdim0_write_kernel*1*2 + n_z*xdim0_write_kernel*ydim0_write_kernel*1*2,
-           p_a1 + n_x*1*1 + n_y*xdim1_write_kernel*1*1 + n_z*xdim1_write_kernel*ydim1_write_kernel*1*1,
-           p_a2 + n_x*1*1 + n_y*xdim2_write_kernel*1*1 + n_z*xdim2_write_kernel*ydim2_write_kernel*1*1,
-          arg_idx );
-
+#ifdef OPS_SOA
+        ptrm_double ptr0 = {
+            p_a0 + n_x * 1 * 2 + n_y * xdim0_write_kernel * 1 * 2 +
+                n_z * xdim0_write_kernel * ydim0_write_kernel * 1 * 2,
+            xdim0_write_kernel, ydim0_write_kernel, zdim0_write_kernel};
+#else
+        ptrm_double ptr0 = {
+            p_a0 + n_x * 1 * 2 + n_y * xdim0_write_kernel * 1 * 2 +
+                n_z * xdim0_write_kernel * ydim0_write_kernel * 1 * 2,
+            xdim0_write_kernel, ydim0_write_kernel, 2};
+#endif
+        ptr_double ptr1 = {
+            p_a1 + n_x * 1 * 1 + n_y * xdim1_write_kernel * 1 * 1 +
+                n_z * xdim1_write_kernel * ydim1_write_kernel * 1 * 1,
+            xdim1_write_kernel, ydim1_write_kernel};
+        ptr_int ptr2 = {p_a2 + n_x * 1 * 1 + n_y * xdim2_write_kernel * 1 * 1 +
+                            n_z * xdim2_write_kernel * ydim2_write_kernel * 1 *
+                                1,
+                        xdim2_write_kernel, ydim2_write_kernel};
+        write_kernel(ptr0, ptr1, ptr2, arg_idx);
       }
     }
   }

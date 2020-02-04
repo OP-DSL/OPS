@@ -4,21 +4,14 @@
 __constant__ int dims_initialise_chunk_kernel_yy [2][2];
 static int dims_initialise_chunk_kernel_yy_h [2][2] = {0};
 
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y,z) (x+dims_initialise_chunk_kernel_yy[0][0]*(y)+dims_initialise_chunk_kernel_yy[0][0]*dims_initialise_chunk_kernel_yy[0][1]*(z))
-
 //user function
 __device__
 
-void initialise_chunk_kernel_yy_gpu(int *yy, int *idx) {
-  yy[OPS_ACC0(0,0,0)] = idx[1]-2;
+void initialise_chunk_kernel_yy_gpu(ACC<int> &yy,
+  int *idx) {
+  yy(0,0,0) = idx[1]-2;
 }
 
-
-
-#undef OPS_ACC0
 
 
 __global__ void ops_initialise_chunk_kernel_yy(
@@ -40,7 +33,8 @@ int size2 ){
   arg0 += idx_x * 0*1 + idx_y * 1*1 * dims_initialise_chunk_kernel_yy[0][0] + idx_z * 0*1 * dims_initialise_chunk_kernel_yy[0][0] * dims_initialise_chunk_kernel_yy[0][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    initialise_chunk_kernel_yy_gpu(arg0, arg_idx);
+    ACC<int> argp0(dims_initialise_chunk_kernel_yy[0][0], dims_initialise_chunk_kernel_yy[0][1], arg0);
+    initialise_chunk_kernel_yy_gpu(argp0, arg_idx);
   }
 
 }

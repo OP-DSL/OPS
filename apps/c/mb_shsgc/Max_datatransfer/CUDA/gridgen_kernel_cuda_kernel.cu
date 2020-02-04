@@ -4,23 +4,16 @@
 __constant__ int dims_gridgen_kernel [2][1];
 static int dims_gridgen_kernel_h [2][1] = {0};
 
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x) (x)
-
 //user function
 __device__
 
-void gridgen_kernel_gpu(double *x, const int *id) {
+void gridgen_kernel_gpu(ACC<double> &x,
+  const int *id) {
 
-  x[OPS_ACC0(0)] = xt +  id[0] *dx;
+  x(0) = xt +  id[0] *dx;
 
 }
 
-
-
-#undef OPS_ACC0
 
 
 __global__ void ops_gridgen_kernel(
@@ -36,7 +29,8 @@ int size0 ){
   arg0 += idx_x * 1*1;
 
   if (idx_x < size0) {
-    gridgen_kernel_gpu(arg0, arg_idx);
+    ACC<double> argp0(arg0);
+    gridgen_kernel_gpu(argp0, arg_idx);
   }
 
 }

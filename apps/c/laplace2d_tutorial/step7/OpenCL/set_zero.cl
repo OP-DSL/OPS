@@ -9,6 +9,9 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_2D
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,19 +43,11 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y) (x+xdim0_set_zero*(y))
-
-
 //user function
-()
 
- {
-  A[OPS_ACC0(0,0)] = 0.0;
+void set_zero(ptr_double A) {
+  OPS_ACCS(A, 0,0) = 0.0;
 }
-
 
 
 __kernel void ops_set_zero(
@@ -66,7 +61,8 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    set_zero(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_set_zero]);
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_set_zero], xdim0_set_zero};
+    set_zero(ptr0);
   }
 
 }

@@ -8,33 +8,18 @@ int xdim3_poisson_kernel_populate;
 int xdim4_poisson_kernel_populate;
 int xdim5_poisson_kernel_populate;
 
-
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
-
-#define OPS_ACC3(x,y) (x+xdim3_poisson_kernel_populate*(y))
-#define OPS_ACC4(x,y) (x+xdim4_poisson_kernel_populate*(y))
-#define OPS_ACC5(x,y) (x+xdim5_poisson_kernel_populate*(y))
-
 //user function
-inline 
-void poisson_kernel_populate(const int *dispx, const int *dispy, const int *idx, double *u, double *f, double *ref) {
+inline void poisson_kernel_populate(const int *dispx, const int *dispy,
+                                    const int *idx, ptr_double u, ptr_double f,
+                                    ptr_double ref) {
   double x = dx * (double)(idx[0]+dispx[0]);
   double y = dy * (double)(idx[1]+dispy[0]);
 
-  u[OPS_ACC3(0,0)] = myfun(sin(M_PI*x),cos(2.0*M_PI*y))-1.0;
-  f[OPS_ACC4(0,0)] = -5.0*M_PI*M_PI*sin(M_PI*x)*cos(2.0*M_PI*y);
-  ref[OPS_ACC5(0,0)] = sin(M_PI*x)*cos(2.0*M_PI*y);
+  OPS_ACC(u, 0,0) = myfun(sin(M_PI*x),cos(2.0*M_PI*y))-1.0;
+  OPS_ACC(f, 0,0) = -5.0*M_PI*M_PI*sin(M_PI*x)*cos(2.0*M_PI*y);
+  OPS_ACC(ref, 0,0) = sin(M_PI*x)*cos(2.0*M_PI*y);
 
 }
-
-
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
 
 
 void poisson_kernel_populate_c_wrapper(
@@ -56,10 +41,13 @@ void poisson_kernel_populate_c_wrapper(
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
       int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};
+      ptr_double ptr3 = {  p_a3 + n_x*1*1 + n_y*xdim3_poisson_kernel_populate*1*1, xdim3_poisson_kernel_populate};
+      ptr_double ptr4 = {  p_a4 + n_x*1*1 + n_y*xdim4_poisson_kernel_populate*1*1, xdim4_poisson_kernel_populate};
+      ptr_double ptr5 = {  p_a5 + n_x*1*1 + n_y*xdim5_poisson_kernel_populate*1*1, xdim5_poisson_kernel_populate};
       poisson_kernel_populate(  &p_a0,
            &p_a1,arg_idx,
-           p_a3 + n_x*1*1 + n_y*xdim3_poisson_kernel_populate*1*1, p_a4 + n_x*1*1 + n_y*xdim4_poisson_kernel_populate*1*1,
-           p_a5 + n_x*1*1 + n_y*xdim5_poisson_kernel_populate*1*1 );
+          ptr3,ptr4,
+          ptr5 );
 
     }
   }

@@ -4,43 +4,32 @@
 __constant__ int dims_checkop_kernel [6][1];
 static int dims_checkop_kernel_h [6][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-
 //user function
 __device__
 
-void checkop_kernel_gpu(const double *rho_new, const double *x,
-  const double *rhoin, double *pre, double *post,
+void checkop_kernel_gpu(const ACC<double> &rho_new,
+  const ACC<double> &x,
+  const ACC<double> &rhoin,
+  double *pre,
+  double *post,
   int *num) {
   double diff;
-  diff = (rho_new[OPS_ACC0(0)] - rhoin[OPS_ACC2(0)]);
-  if(fabs(diff)<0.01 && x[OPS_ACC1(0)] > -4.1){
+  diff = (rho_new(0) - rhoin(0));
+  if(fabs(diff)<0.01 && x(0) > -4.1){
     *post = *post + diff*diff;
     *num = *num + 1;
 
   }
   else
-    *pre = *pre + (rho_new[OPS_ACC0(0)] - rhol)* (rho_new[OPS_ACC0(0)] - rhol);
+    *pre = *pre + (rho_new(0) - rhol)* (rho_new(0) - rhol);
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
 __global__ void ops_checkop_kernel(
-const double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
+double* __restrict arg0,
+double* __restrict arg1,
+double* __restrict arg2,
 double* __restrict arg3,
 double* __restrict arg4,
 int* __restrict arg5,
@@ -60,7 +49,10 @@ int size0 ){
   arg2 += idx_x * 1*1;
 
   if (idx_x < size0) {
-    checkop_kernel_gpu(arg0, arg1, arg2, arg3_l,
+    const ACC<double> argp0(arg0);
+    const ACC<double> argp1(arg1);
+    const ACC<double> argp2(arg2);
+    checkop_kernel_gpu(argp0, argp1, argp2, arg3_l,
                    arg4_l, arg5_l);
   }
   for (int d=0; d<1; d++)

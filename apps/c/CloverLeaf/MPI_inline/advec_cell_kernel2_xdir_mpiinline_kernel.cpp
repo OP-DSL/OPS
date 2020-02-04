@@ -59,10 +59,10 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
-  xdim2 = args[2].dat->size[0];
-  xdim3 = args[3].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
+  int xdim2 = args[2].dat->size[0];
+  int xdim3 = args[3].dat->size[0];
 
   //Timing
   double t1,t2,c1,c2;
@@ -81,35 +81,42 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
     xdim3_advec_cell_kernel2_xdir_h = xdim3;
   }
 
-
   int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
   int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
   int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
   int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0+ (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
-    args[0].dat->size[0] *
-    start[1] * args[0].stencil->stride[1];
+  int base0 = args[0].dat->base_offset +
+              (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+                  start[0] * args[0].stencil->stride[0];
+  base0 = base0 +
+          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+              args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
   double *p_a0 = (double *)(args[0].data + base0);
 
-  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
-  base1 = base1+ (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
-    args[1].dat->size[0] *
-    start[1] * args[1].stencil->stride[1];
+  int base1 = args[1].dat->base_offset +
+              (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+                  start[0] * args[1].stencil->stride[0];
+  base1 = base1 +
+          (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+              args[1].dat->size[0] * start[1] * args[1].stencil->stride[1];
   double *p_a1 = (double *)(args[1].data + base1);
 
-  int base2 = args[2].dat->base_offset + (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
-  base2 = base2+ (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
-    args[2].dat->size[0] *
-    start[1] * args[2].stencil->stride[1];
+  int base2 = args[2].dat->base_offset +
+              (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+                  start[0] * args[2].stencil->stride[0];
+  base2 = base2 +
+          (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+              args[2].dat->size[0] * start[1] * args[2].stencil->stride[1];
   double *p_a2 = (double *)(args[2].data + base2);
 
-  int base3 = args[3].dat->base_offset + (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
-  base3 = base3+ (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
-    args[3].dat->size[0] *
-    start[1] * args[3].stencil->stride[1];
+  int base3 = args[3].dat->base_offset +
+              (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+                  start[0] * args[3].stencil->stride[0];
+  base3 = base3 +
+          (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+              args[3].dat->size[0] * start[1] * args[3].stencil->stride[1];
   double *p_a3 = (double *)(args[3].data + base3);
 
 
@@ -119,7 +126,7 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
 
   if (OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[62].mpi_time += t1-t2;
+    OPS_kernels[62].mpi_time += t1 - t2;
   }
 
   advec_cell_kernel2_xdir_c_wrapper(
@@ -131,7 +138,7 @@ void ops_par_loop_advec_cell_kernel2_xdir(char const *name, ops_block block, int
 
   if (OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[62].time += t2-t1;
+    OPS_kernels[62].time += t2 - t1;
   }
   ops_set_dirtybit_host(args, 4);
   ops_set_halo_dirtybit3(&args[0],range);

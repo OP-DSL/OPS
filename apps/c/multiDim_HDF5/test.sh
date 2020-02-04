@@ -9,7 +9,7 @@ cd -
 ../../../ops_translator/c/ops.py read.cpp
 make clean
 rm -f .generated
-make IEEE=1 -j
+make IEEE=1 
 
 
 
@@ -108,7 +108,7 @@ echo "All Intel complied applications PASSED"
 rm integers.txt*
 
 cd -
-source ../../scripts/source_pgi_19
+source ../../scripts/source_pgi_19_istvan
 
 make clean
 make -j

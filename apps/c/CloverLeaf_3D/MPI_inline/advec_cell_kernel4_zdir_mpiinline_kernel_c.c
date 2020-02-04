@@ -26,61 +26,49 @@ int xdim10_advec_cell_kernel4_zdir;
 int ydim10_advec_cell_kernel4_zdir;
 
 
-#define OPS_ACC0(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim0_advec_cell_kernel4_zdir + (n_z*1+(z))*xdim0_advec_cell_kernel4_zdir*ydim0_advec_cell_kernel4_zdir)
-#define OPS_ACC1(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim1_advec_cell_kernel4_zdir + (n_z*1+(z))*xdim1_advec_cell_kernel4_zdir*ydim1_advec_cell_kernel4_zdir)
-#define OPS_ACC2(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim2_advec_cell_kernel4_zdir + (n_z*1+(z))*xdim2_advec_cell_kernel4_zdir*ydim2_advec_cell_kernel4_zdir)
-#define OPS_ACC3(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim3_advec_cell_kernel4_zdir + (n_z*1+(z))*xdim3_advec_cell_kernel4_zdir*ydim3_advec_cell_kernel4_zdir)
-#define OPS_ACC4(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim4_advec_cell_kernel4_zdir + (n_z*1+(z))*xdim4_advec_cell_kernel4_zdir*ydim4_advec_cell_kernel4_zdir)
-#define OPS_ACC5(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim5_advec_cell_kernel4_zdir + (n_z*1+(z))*xdim5_advec_cell_kernel4_zdir*ydim5_advec_cell_kernel4_zdir)
-#define OPS_ACC6(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim6_advec_cell_kernel4_zdir + (n_z*1+(z))*xdim6_advec_cell_kernel4_zdir*ydim6_advec_cell_kernel4_zdir)
-#define OPS_ACC7(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim7_advec_cell_kernel4_zdir + (n_z*1+(z))*xdim7_advec_cell_kernel4_zdir*ydim7_advec_cell_kernel4_zdir)
-#define OPS_ACC8(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim8_advec_cell_kernel4_zdir + (n_z*1+(z))*xdim8_advec_cell_kernel4_zdir*ydim8_advec_cell_kernel4_zdir)
-#define OPS_ACC9(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim9_advec_cell_kernel4_zdir + (n_z*1+(z))*xdim9_advec_cell_kernel4_zdir*ydim9_advec_cell_kernel4_zdir)
-#define OPS_ACC10(x,y,z) (n_x*1 + x + (n_y*1+(y))*xdim10_advec_cell_kernel4_zdir + (n_z*1+(z))*xdim10_advec_cell_kernel4_zdir*ydim10_advec_cell_kernel4_zdir)
 //user function
 
 
 
 void advec_cell_kernel4_zdir_c_wrapper(
-  double * restrict density1,
-  double * restrict energy1,
-  const double * restrict mass_flux_z,
-  const double * restrict vol_flux_z,
-  const double * restrict pre_vol,
-  const double * restrict post_vol,
-  double * restrict pre_mass,
-  double * restrict post_mass,
-  double * restrict advec_vol,
-  double * restrict post_ener,
-  const double * restrict ener_flux,
+  double * restrict density1_p,
+  double * restrict energy1_p,
+  double * restrict mass_flux_z_p,
+  double * restrict vol_flux_z_p,
+  double * restrict pre_vol_p,
+  double * restrict post_vol_p,
+  double * restrict pre_mass_p,
+  double * restrict post_mass_p,
+  double * restrict advec_vol_p,
+  double * restrict post_ener_p,
+  double * restrict ener_flux_p,
   int x_size, int y_size, int z_size) {
   #pragma omp parallel for
   for ( int n_z=0; n_z<z_size; n_z++ ){
     for ( int n_y=0; n_y<y_size; n_y++ ){
       for ( int n_x=0; n_x<x_size; n_x++ ){
+        ptr_double density1 = { density1_p + n_x*1 + n_y * xdim0_advec_cell_kernel4_zdir*1 + n_z * xdim0_advec_cell_kernel4_zdir * ydim0_advec_cell_kernel4_zdir*1, xdim0_advec_cell_kernel4_zdir, ydim0_advec_cell_kernel4_zdir};
+        ptr_double energy1 = { energy1_p + n_x*1 + n_y * xdim1_advec_cell_kernel4_zdir*1 + n_z * xdim1_advec_cell_kernel4_zdir * ydim1_advec_cell_kernel4_zdir*1, xdim1_advec_cell_kernel4_zdir, ydim1_advec_cell_kernel4_zdir};
+        const ptr_double mass_flux_z = { mass_flux_z_p + n_x*1 + n_y * xdim2_advec_cell_kernel4_zdir*1 + n_z * xdim2_advec_cell_kernel4_zdir * ydim2_advec_cell_kernel4_zdir*1, xdim2_advec_cell_kernel4_zdir, ydim2_advec_cell_kernel4_zdir};
+        const ptr_double vol_flux_z = { vol_flux_z_p + n_x*1 + n_y * xdim3_advec_cell_kernel4_zdir*1 + n_z * xdim3_advec_cell_kernel4_zdir * ydim3_advec_cell_kernel4_zdir*1, xdim3_advec_cell_kernel4_zdir, ydim3_advec_cell_kernel4_zdir};
+        const ptr_double pre_vol = { pre_vol_p + n_x*1 + n_y * xdim4_advec_cell_kernel4_zdir*1 + n_z * xdim4_advec_cell_kernel4_zdir * ydim4_advec_cell_kernel4_zdir*1, xdim4_advec_cell_kernel4_zdir, ydim4_advec_cell_kernel4_zdir};
+        const ptr_double post_vol = { post_vol_p + n_x*1 + n_y * xdim5_advec_cell_kernel4_zdir*1 + n_z * xdim5_advec_cell_kernel4_zdir * ydim5_advec_cell_kernel4_zdir*1, xdim5_advec_cell_kernel4_zdir, ydim5_advec_cell_kernel4_zdir};
+        ptr_double pre_mass = { pre_mass_p + n_x*1 + n_y * xdim6_advec_cell_kernel4_zdir*1 + n_z * xdim6_advec_cell_kernel4_zdir * ydim6_advec_cell_kernel4_zdir*1, xdim6_advec_cell_kernel4_zdir, ydim6_advec_cell_kernel4_zdir};
+        ptr_double post_mass = { post_mass_p + n_x*1 + n_y * xdim7_advec_cell_kernel4_zdir*1 + n_z * xdim7_advec_cell_kernel4_zdir * ydim7_advec_cell_kernel4_zdir*1, xdim7_advec_cell_kernel4_zdir, ydim7_advec_cell_kernel4_zdir};
+        ptr_double advec_vol = { advec_vol_p + n_x*1 + n_y * xdim8_advec_cell_kernel4_zdir*1 + n_z * xdim8_advec_cell_kernel4_zdir * ydim8_advec_cell_kernel4_zdir*1, xdim8_advec_cell_kernel4_zdir, ydim8_advec_cell_kernel4_zdir};
+        ptr_double post_ener = { post_ener_p + n_x*1 + n_y * xdim9_advec_cell_kernel4_zdir*1 + n_z * xdim9_advec_cell_kernel4_zdir * ydim9_advec_cell_kernel4_zdir*1, xdim9_advec_cell_kernel4_zdir, ydim9_advec_cell_kernel4_zdir};
+        const ptr_double ener_flux = { ener_flux_p + n_x*1 + n_y * xdim10_advec_cell_kernel4_zdir*1 + n_z * xdim10_advec_cell_kernel4_zdir * ydim10_advec_cell_kernel4_zdir*1, xdim10_advec_cell_kernel4_zdir, ydim10_advec_cell_kernel4_zdir};
         
 
-  pre_mass[OPS_ACC6(0,0,0)] = density1[OPS_ACC0(0,0,0)] * pre_vol[OPS_ACC4(0,0,0)];
-  post_mass[OPS_ACC7(0,0,0)] = pre_mass[OPS_ACC6(0,0,0)] + mass_flux_z[OPS_ACC2(0,0,0)] - mass_flux_z[OPS_ACC2(0,0,1)];
-  post_ener[OPS_ACC9(0,0,0)] = ( energy1[OPS_ACC1(0,0,0)] * pre_mass[OPS_ACC6(0,0,0)] + ener_flux[OPS_ACC10(0,0,0)] - ener_flux[OPS_ACC10(0,0,1)])/post_mass[OPS_ACC7(0,0,0)];
-  advec_vol[OPS_ACC8(0,0,0)] = pre_vol[OPS_ACC4(0,0,0)] + vol_flux_z[OPS_ACC3(0,0,0)] - vol_flux_z[OPS_ACC3(0,0,1)];
-  density1[OPS_ACC0(0,0,0)] = post_mass[OPS_ACC7(0,0,0)]/advec_vol[OPS_ACC8(0,0,0)];
-  energy1[OPS_ACC1(0,0,0)] = post_ener[OPS_ACC9(0,0,0)];
+  OPS_ACC(pre_mass, 0,0,0) = OPS_ACC(density1, 0,0,0) * OPS_ACC(pre_vol, 0,0,0);
+  OPS_ACC(post_mass, 0,0,0) = OPS_ACC(pre_mass, 0,0,0) + OPS_ACC(mass_flux_z, 0,0,0) - OPS_ACC(mass_flux_z, 0,0,1);
+  OPS_ACC(post_ener, 0,0,0) = ( OPS_ACC(energy1, 0,0,0) * OPS_ACC(pre_mass, 0,0,0) + OPS_ACC(ener_flux, 0,0,0) - OPS_ACC(ener_flux, 0,0,1))/OPS_ACC(post_mass, 0,0,0);
+  OPS_ACC(advec_vol, 0,0,0) = OPS_ACC(pre_vol, 0,0,0) + OPS_ACC(vol_flux_z, 0,0,0) - OPS_ACC(vol_flux_z, 0,0,1);
+  OPS_ACC(density1, 0,0,0) = OPS_ACC(post_mass, 0,0,0)/OPS_ACC(advec_vol, 0,0,0);
+  OPS_ACC(energy1, 0,0,0) = OPS_ACC(post_ener, 0,0,0);
 
 
       }
     }
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-

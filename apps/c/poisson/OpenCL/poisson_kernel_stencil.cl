@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,23 +45,14 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+xdim0_poisson_kernel_stencil*(y))
-#define OPS_ACC1(x,y) (x+xdim1_poisson_kernel_stencil*(y))
-
-
 //user function
-void poisson_kernel_stencil(const __global double * restrict u,__global double * restrict u2)
 
- {
-  u2[OPS_ACC1(0,0)] = ((u[OPS_ACC0(-1,0)]-2.0f*u[OPS_ACC0(0,0)]+u[OPS_ACC0(1,0)])*0.125f
-                     + (u[OPS_ACC0(0,-1)]-2.0f*u[OPS_ACC0(0,0)]+u[OPS_ACC0(0,1)])*0.125f
-                     + u[OPS_ACC0(0,0)]);
+void poisson_kernel_stencil(const ptr_double u,
+  ptr_double u2) {
+  OPS_ACCS(u2, 0,0) = ((OPS_ACCS(u, -1,0)-2.0f*OPS_ACCS(u, 0,0)+OPS_ACCS(u, 1,0))*0.125f
+                     + (OPS_ACCS(u, 0,-1)-2.0f*OPS_ACCS(u, 0,0)+OPS_ACCS(u, 0,1))*0.125f
+                     + OPS_ACCS(u, 0,0));
 }
-
 
 
 __kernel void ops_poisson_kernel_stencil(
@@ -73,8 +68,10 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    poisson_kernel_stencil(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_poisson_kernel_stencil],
-                   &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_poisson_kernel_stencil]);
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_poisson_kernel_stencil], xdim0_poisson_kernel_stencil};
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_poisson_kernel_stencil], xdim1_poisson_kernel_stencil};
+    poisson_kernel_stencil(ptr0,
+                   ptr1);
   }
 
 }

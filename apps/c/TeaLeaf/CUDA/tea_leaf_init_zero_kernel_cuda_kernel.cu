@@ -4,21 +4,13 @@
 __constant__ int dims_tea_leaf_init_zero_kernel [1][1];
 static int dims_tea_leaf_init_zero_kernel_h [1][1] = {0};
 
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y) (x+dims_tea_leaf_init_zero_kernel[0][0]*(y))
-
 //user function
 __device__
 
-void tea_leaf_init_zero_kernel_gpu (double * p) {
-  p[OPS_ACC0(0,0)] = 0.0;
+void tea_leaf_init_zero_kernel_gpu (ACC<double> & p) {
+  p(0,0) = 0.0;
 }
 
-
-
-#undef OPS_ACC0
 
 
 __global__ void ops_tea_leaf_init_zero_kernel(
@@ -33,7 +25,8 @@ int size1 ){
   arg0 += idx_x * 1*1 + idx_y * 1*1 * dims_tea_leaf_init_zero_kernel[0][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    tea_leaf_init_zero_kernel_gpu(arg0);
+    ACC<double> argp0(dims_tea_leaf_init_zero_kernel[0][0], arg0);
+    tea_leaf_init_zero_kernel_gpu(argp0);
   }
 
 }

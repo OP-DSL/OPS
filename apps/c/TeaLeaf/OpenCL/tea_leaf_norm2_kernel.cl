@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,19 +45,12 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y) (x+xdim0_tea_leaf_norm2_kernel*(y))
-
-
 //user function
-void tea_leaf_norm2_kernel(const __global double * restrict x, double * restrict  norm)
 
- {
-	*norm = *norm + x[OPS_ACC0(0,0)]*x[OPS_ACC0(0,0)];
+void tea_leaf_norm2_kernel(const ptr_double x,
+  double * norm) {
+	*norm = *norm + OPS_ACCS(x, 0,0)*OPS_ACCS(x, 0,0);
 }
-
 
 
 __kernel void ops_tea_leaf_norm2_kernel(
@@ -73,7 +70,8 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    tea_leaf_norm2_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_tea_leaf_norm2_kernel],
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_tea_leaf_norm2_kernel], xdim0_tea_leaf_norm2_kernel};
+    tea_leaf_norm2_kernel(ptr0,
                           arg1_l);
   }
   int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);

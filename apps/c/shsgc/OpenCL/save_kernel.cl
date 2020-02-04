@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_1D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,32 +44,18 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-#define OPS_ACC3(x) (x)
-#define OPS_ACC4(x) (x)
-#define OPS_ACC5(x) (x)
-
-
 //user function
-void save_kernel(__global double * restrict rho_old,__global double * restrict rhou_old,__global double * restrict rhoE_old,
-const __global double * restrict rho_new,const __global double * restrict rhou_new,const __global double * restrict rhoE_new)
 
- {
-      rho_old[OPS_ACC0(0)]=rho_new[OPS_ACC3(0)];
-      rhou_old[OPS_ACC1(0)]=rhou_new[OPS_ACC4(0)];
-      rhoE_old[OPS_ACC2(0)]=rhoE_new[OPS_ACC5(0)];
+void save_kernel(ptr_double rho_old,
+  ptr_double rhou_old,
+  ptr_double rhoE_old,
+  const ptr_double rho_new,
+  const ptr_double rhou_new,
+  const ptr_double rhoE_new) {
+      OPS_ACCS(rho_old, 0)=OPS_ACCS(rho_new, 0);
+      OPS_ACCS(rhou_old, 0)=OPS_ACCS(rhou_new, 0);
+      OPS_ACCS(rhoE_old, 0)=OPS_ACCS(rhoE_new, 0);
 }
-
 
 
 __kernel void ops_save_kernel(
@@ -87,12 +77,18 @@ const int size0 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    save_kernel(&arg0[base0 + idx_x * 1*1],
-                &arg1[base1 + idx_x * 1*1],
-                &arg2[base2 + idx_x * 1*1],
-                &arg3[base3 + idx_x * 1*1],
-                &arg4[base4 + idx_x * 1*1],
-                &arg5[base5 + idx_x * 1*1]);
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1] };
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1] };
+    ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1] };
+    const ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1] };
+    const ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1] };
+    const ptr_double ptr5 = { &arg5[base5 + idx_x * 1*1] };
+    save_kernel(ptr0,
+                ptr1,
+                ptr2,
+                ptr3,
+                ptr4,
+                ptr5);
   }
 
 }

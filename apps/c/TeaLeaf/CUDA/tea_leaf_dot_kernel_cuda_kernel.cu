@@ -4,29 +4,20 @@
 __constant__ int dims_tea_leaf_dot_kernel [3][1];
 static int dims_tea_leaf_dot_kernel_h [3][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+dims_tea_leaf_dot_kernel[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_tea_leaf_dot_kernel[1][0]*(y))
-
 //user function
 __device__
 
-void tea_leaf_dot_kernel_gpu (const double * r, const double * p, double *rro) {
-  *rro = *rro + r[OPS_ACC0(0,0)] * p[OPS_ACC1(0,0)];
+void tea_leaf_dot_kernel_gpu (const ACC<double> & r,
+  const ACC<double> & p,
+  double *rro) {
+  *rro = *rro + r(0,0) * p(0,0);
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
 __global__ void ops_tea_leaf_dot_kernel(
-const double* __restrict arg0,
-const double* __restrict arg1,
+double* __restrict arg0,
+double* __restrict arg1,
 double* __restrict arg2,
 int size0,
 int size1 ){
@@ -41,7 +32,9 @@ int size1 ){
   arg1 += idx_x * 1*1 + idx_y * 1*1 * dims_tea_leaf_dot_kernel[1][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    tea_leaf_dot_kernel_gpu(arg0, arg1, arg2_l);
+    const ACC<double> argp0(dims_tea_leaf_dot_kernel[0][0], arg0);
+    const ACC<double> argp1(dims_tea_leaf_dot_kernel[1][0], arg1);
+    tea_leaf_dot_kernel_gpu(argp0, argp1, arg2_l);
   }
   for (int d=0; d<1; d++)
     ops_reduction_cuda<OPS_INC>(&arg2[d+(blockIdx.x + blockIdx.y*gridDim.x)*1],arg2_l[d]);

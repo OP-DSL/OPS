@@ -4,26 +4,17 @@
 __constant__ int dims_update_halo_kernel2_zvel_plus_2_right [3][2];
 static int dims_update_halo_kernel2_zvel_plus_2_right_h [3][2] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y,z) (x+dims_update_halo_kernel2_zvel_plus_2_right[0][0]*(y)+dims_update_halo_kernel2_zvel_plus_2_right[0][0]*dims_update_halo_kernel2_zvel_plus_2_right[0][1]*(z))
-#define OPS_ACC1(x,y,z) (x+dims_update_halo_kernel2_zvel_plus_2_right[1][0]*(y)+dims_update_halo_kernel2_zvel_plus_2_right[1][0]*dims_update_halo_kernel2_zvel_plus_2_right[1][1]*(z))
-
 //user function
 __device__
 
-inline void update_halo_kernel2_zvel_plus_2_right_gpu(double *zvel0, double *zvel1, const int* fields)
+inline void update_halo_kernel2_zvel_plus_2_right_gpu(ACC<double> &zvel0,
+  ACC<double> &zvel1,
+  const int* fields)
 {
-  if(fields[FIELD_ZVEL0] == 1) zvel0[OPS_ACC0(0,0,0)] = zvel0[OPS_ACC0(-2,0,0)];
-  if(fields[FIELD_ZVEL1] == 1) zvel1[OPS_ACC1(0,0,0)] = zvel1[OPS_ACC1(-2,0,0)];
+  if(fields[FIELD_ZVEL0] == 1) zvel0(0,0,0) = zvel0(-2,0,0);
+  if(fields[FIELD_ZVEL1] == 1) zvel1(0,0,0) = zvel1(-2,0,0);
 }
 
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 __global__ void ops_update_halo_kernel2_zvel_plus_2_right(
@@ -43,7 +34,9 @@ int size2 ){
   arg1 += idx_x * 1*1 + idx_y * 1*1 * dims_update_halo_kernel2_zvel_plus_2_right[1][0] + idx_z * 1*1 * dims_update_halo_kernel2_zvel_plus_2_right[1][0] * dims_update_halo_kernel2_zvel_plus_2_right[1][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    update_halo_kernel2_zvel_plus_2_right_gpu(arg0, arg1, arg2);
+    ACC<double> argp0(dims_update_halo_kernel2_zvel_plus_2_right[0][0], dims_update_halo_kernel2_zvel_plus_2_right[0][1], arg0);
+    ACC<double> argp1(dims_update_halo_kernel2_zvel_plus_2_right[1][0], dims_update_halo_kernel2_zvel_plus_2_right[1][1], arg1);
+    update_halo_kernel2_zvel_plus_2_right_gpu(argp0, argp1, arg2);
   }
 
 }

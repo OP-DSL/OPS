@@ -4,37 +4,28 @@
 __constant__ int dims_calc_dt_kernel_get [6][2];
 static int dims_calc_dt_kernel_get_h [6][2] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC4
-
-
-#define OPS_ACC0(x,y,z) (x+dims_calc_dt_kernel_get[0][0]*(y)+dims_calc_dt_kernel_get[0][0]*dims_calc_dt_kernel_get[0][1]*(z))
-#define OPS_ACC1(x,y,z) (x+dims_calc_dt_kernel_get[1][0]*(y)+dims_calc_dt_kernel_get[1][0]*dims_calc_dt_kernel_get[1][1]*(z))
-#define OPS_ACC4(x,y,z) (x+dims_calc_dt_kernel_get[4][0]*(y)+dims_calc_dt_kernel_get[4][0]*dims_calc_dt_kernel_get[4][1]*(z))
-
 //user function
 __device__
 
-void calc_dt_kernel_get_gpu(const double* cellx, const double* celly, double* xl_pos, double* yl_pos, const double *cellz, double *zl_pos) {
-  *xl_pos = cellx[OPS_ACC0(0,0,0)];
-  *yl_pos = celly[OPS_ACC1(0,0,0)];
-  *zl_pos = cellz[OPS_ACC4(0,0,0)];
+void calc_dt_kernel_get_gpu(const ACC<double>& cellx,
+  const ACC<double>& celly,
+  double* xl_pos,
+  double* yl_pos,
+  const ACC<double> &cellz,
+  double *zl_pos) {
+  *xl_pos = cellx(0,0,0);
+  *yl_pos = celly(0,0,0);
+  *zl_pos = cellz(0,0,0);
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC4
-
-
 __global__ void ops_calc_dt_kernel_get(
-const double* __restrict arg0,
-const double* __restrict arg1,
+double* __restrict arg0,
+double* __restrict arg1,
 double* __restrict arg2,
 double* __restrict arg3,
-const double* __restrict arg4,
+double* __restrict arg4,
 double* __restrict arg5,
 int size0,
 int size1,
@@ -56,8 +47,11 @@ int size2 ){
   arg4 += idx_x * 0*1 + idx_y * 0*1 * dims_calc_dt_kernel_get[4][0] + idx_z * 1*1 * dims_calc_dt_kernel_get[4][0] * dims_calc_dt_kernel_get[4][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    calc_dt_kernel_get_gpu(arg0, arg1, arg2_l, arg3_l,
-                   arg4, arg5_l);
+    const ACC<double> argp0(dims_calc_dt_kernel_get[0][0], dims_calc_dt_kernel_get[0][1], arg0);
+    const ACC<double> argp1(dims_calc_dt_kernel_get[1][0], dims_calc_dt_kernel_get[1][1], arg1);
+    const ACC<double> argp4(dims_calc_dt_kernel_get[4][0], dims_calc_dt_kernel_get[4][1], arg4);
+    calc_dt_kernel_get_gpu(argp0, argp1, arg2_l, arg3_l,
+                   argp4, arg5_l);
   }
   for (int d=0; d<1; d++)
     ops_reduction_cuda<OPS_INC>(&arg2[d+(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*1],arg2_l[d]);

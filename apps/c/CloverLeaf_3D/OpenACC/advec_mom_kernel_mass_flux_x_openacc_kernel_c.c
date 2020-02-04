@@ -9,29 +9,17 @@ int ydim0_advec_mom_kernel_mass_flux_x;
 int xdim1_advec_mom_kernel_mass_flux_x;
 int ydim1_advec_mom_kernel_mass_flux_x;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_advec_mom_kernel_mass_flux_x*(y)+xdim0_advec_mom_kernel_mass_flux_x*ydim0_advec_mom_kernel_mass_flux_x*(z))
-#define OPS_ACC1(x,y,z) (x+xdim1_advec_mom_kernel_mass_flux_x*(y)+xdim1_advec_mom_kernel_mass_flux_x*ydim1_advec_mom_kernel_mass_flux_x*(z))
-
 //user function
 
-inline void advec_mom_kernel_mass_flux_x( double *node_flux, const double *mass_flux_x) {
+inline void advec_mom_kernel_mass_flux_x(ptr_double node_flux,
+  const ptr_double mass_flux_x) {
 
 
-  node_flux[OPS_ACC0(0,0,0)] = 0.125 * ( mass_flux_x[OPS_ACC1(0,-1,0)] + mass_flux_x[OPS_ACC1(0,0,0)] +
-                                         mass_flux_x[OPS_ACC1(1,-1,0)] + mass_flux_x[OPS_ACC1(1,0,0)] +
-                                         mass_flux_x[OPS_ACC1(0,-1,-1)] + mass_flux_x[OPS_ACC1(0,0,-1)] +
-                                         mass_flux_x[OPS_ACC1(1,-1,-1)] + mass_flux_x[OPS_ACC1(1,0,-1)] );
+  OPS_ACC(node_flux, 0,0,0) = 0.125 * ( OPS_ACC(mass_flux_x, 0,-1,0) + OPS_ACC(mass_flux_x, 0,0,0) +
+                                         OPS_ACC(mass_flux_x, 1,-1,0) + OPS_ACC(mass_flux_x, 1,0,0) +
+                                         OPS_ACC(mass_flux_x, 0,-1,-1) + OPS_ACC(mass_flux_x, 0,0,-1) +
+                                         OPS_ACC(mass_flux_x, 1,-1,-1) + OPS_ACC(mass_flux_x, 1,0,-1) );
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
 
 
 void advec_mom_kernel_mass_flux_x_c_wrapper(
@@ -51,8 +39,10 @@ void advec_mom_kernel_mass_flux_x_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        advec_mom_kernel_mass_flux_x(  p_a0 + n_x*1*1 + n_y*xdim0_advec_mom_kernel_mass_flux_x*1*1 + n_z*xdim0_advec_mom_kernel_mass_flux_x*ydim0_advec_mom_kernel_mass_flux_x*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_advec_mom_kernel_mass_flux_x*1*1 + n_z*xdim1_advec_mom_kernel_mass_flux_x*ydim1_advec_mom_kernel_mass_flux_x*1*1 );
+        ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_advec_mom_kernel_mass_flux_x*1*1 + n_z*xdim0_advec_mom_kernel_mass_flux_x*ydim0_advec_mom_kernel_mass_flux_x*1*1, xdim0_advec_mom_kernel_mass_flux_x, ydim0_advec_mom_kernel_mass_flux_x};
+        const ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_advec_mom_kernel_mass_flux_x*1*1 + n_z*xdim1_advec_mom_kernel_mass_flux_x*ydim1_advec_mom_kernel_mass_flux_x*1*1, xdim1_advec_mom_kernel_mass_flux_x, ydim1_advec_mom_kernel_mass_flux_x};
+        advec_mom_kernel_mass_flux_x( ptr0,
+          ptr1 );
 
       }
     }

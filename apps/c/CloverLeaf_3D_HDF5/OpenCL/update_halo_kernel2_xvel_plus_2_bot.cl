@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_3D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,23 +45,15 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_update_halo_kernel2_xvel_plus_2_bot*(y)+xdim0_update_halo_kernel2_xvel_plus_2_bot*ydim0_update_halo_kernel2_xvel_plus_2_bot*(z))
-#define OPS_ACC1(x,y,z) (x+xdim1_update_halo_kernel2_xvel_plus_2_bot*(y)+xdim1_update_halo_kernel2_xvel_plus_2_bot*ydim1_update_halo_kernel2_xvel_plus_2_bot*(z))
-
-
 //user function
-inline void update_halo_kernel2_xvel_plus_2_bot(__global double * restrict xvel0,__global double * restrict xvel1,const __global int* restrict  fields)
 
-
+inline void update_halo_kernel2_xvel_plus_2_bot(ptr_double xvel0, 
+  ptr_double xvel1, 
+  const __global int* restrict  fields)
 {
-  if(fields[FIELD_XVEL0] == 1) xvel0[OPS_ACC0(0,0,0)] = xvel0[OPS_ACC0(0,2,0)];
-  if(fields[FIELD_XVEL1] == 1) xvel1[OPS_ACC1(0,0,0)] = xvel1[OPS_ACC1(0,2,0)];
+  if(fields[FIELD_XVEL0] == 1) OPS_ACCS(xvel0, 0,0,0) = OPS_ACCS(xvel0, 0,2,0);
+  if(fields[FIELD_XVEL1] == 1) OPS_ACCS(xvel1, 0,0,0) = OPS_ACCS(xvel1, 0,2,0);
 }
-
 
 
 __kernel void ops_update_halo_kernel2_xvel_plus_2_bot(
@@ -76,8 +72,10 @@ const int size2 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    update_halo_kernel2_xvel_plus_2_bot(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel2_xvel_plus_2_bot + idx_z * 1*1 * xdim0_update_halo_kernel2_xvel_plus_2_bot * ydim0_update_halo_kernel2_xvel_plus_2_bot],
-                       &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel2_xvel_plus_2_bot + idx_z * 1*1 * xdim1_update_halo_kernel2_xvel_plus_2_bot * ydim1_update_halo_kernel2_xvel_plus_2_bot],
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_update_halo_kernel2_xvel_plus_2_bot + idx_z * 1*1 * xdim0_update_halo_kernel2_xvel_plus_2_bot * ydim0_update_halo_kernel2_xvel_plus_2_bot], xdim0_update_halo_kernel2_xvel_plus_2_bot, ydim0_update_halo_kernel2_xvel_plus_2_bot};
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_update_halo_kernel2_xvel_plus_2_bot + idx_z * 1*1 * xdim1_update_halo_kernel2_xvel_plus_2_bot * ydim1_update_halo_kernel2_xvel_plus_2_bot], xdim1_update_halo_kernel2_xvel_plus_2_bot, ydim1_update_halo_kernel2_xvel_plus_2_bot};
+    update_halo_kernel2_xvel_plus_2_bot(ptr0,
+                       ptr1,
                        arg2);
   }
 

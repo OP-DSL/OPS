@@ -4,32 +4,17 @@
 __constant__ int dims_advec_cell_kernel3_ydir [8][1];
 static int dims_advec_cell_kernel3_ydir_h [8][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-
-
-#define OPS_ACC0(x,y) (x+dims_advec_cell_kernel3_ydir[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_advec_cell_kernel3_ydir[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_advec_cell_kernel3_ydir[2][0]*(y))
-#define OPS_ACC3(x,y) (x+dims_advec_cell_kernel3_ydir[3][0]*(y))
-#define OPS_ACC4(x,y) (x+dims_advec_cell_kernel3_ydir[4][0]*(y))
-#define OPS_ACC5(x,y) (x+dims_advec_cell_kernel3_ydir[5][0]*(y))
-#define OPS_ACC6(x,y) (x+dims_advec_cell_kernel3_ydir[6][0]*(y))
-#define OPS_ACC7(x,y) (x+dims_advec_cell_kernel3_ydir[7][0]*(y))
-
 //user function
 __device__
 
-inline void advec_cell_kernel3_ydir_gpu( const double *vol_flux_y, const double *pre_vol, const int *yy,
-                              const double *vertexdy,
-                              const double *density1, const double *energy1 ,
-                              double *mass_flux_y, double *ener_flux) {
+inline void advec_cell_kernel3_ydir_gpu(const ACC<double> &vol_flux_y,
+  const ACC<double> &pre_vol,
+  const ACC<int> &yy,
+  const ACC<double> &vertexdy,
+  const ACC<double> &density1,
+  const ACC<double> &energy1,
+  ACC<double> &mass_flux_y,
+  ACC<double> &ener_flux) {
 
   double sigmat, sigmav, sigmam, sigma3, sigma4;
   double diffuw, diffdw, limiter;
@@ -43,13 +28,13 @@ inline void advec_cell_kernel3_ydir_gpu( const double *vol_flux_y, const double 
 
 
 
-  if(vol_flux_y[OPS_ACC0(0,0)] > 0.0) {
+  if(vol_flux_y(0,0) > 0.0) {
     upwind   = -2;
     donor    = -1;
     downwind = 0;
     dif      = donor;
   }
-  else if (yy[OPS_ACC2(0,1)] < y_max+2-2) {
+  else if (yy(0,1) < y_max+2-2) {
     upwind   = 1;
     donor    = 0;
     downwind = -1;
@@ -62,14 +47,14 @@ inline void advec_cell_kernel3_ydir_gpu( const double *vol_flux_y, const double 
   }
 
 
-  sigmat = fabs(vol_flux_y[OPS_ACC0(0,0)])/pre_vol[OPS_ACC1(0,donor)];
-  sigma3 = (1.0 + sigmat)*(vertexdy[OPS_ACC3(0,0)]/vertexdy[OPS_ACC3(0,dif)]);
+  sigmat = fabs(vol_flux_y(0,0))/pre_vol(0,donor);
+  sigma3 = (1.0 + sigmat)*(vertexdy(0,0)/vertexdy(0,dif));
   sigma4 = 2.0 - sigmat;
 
   sigmav = sigmat;
 
-  diffuw = density1[OPS_ACC4(0,donor)] - density1[OPS_ACC4(0,upwind)];
-  diffdw = density1[OPS_ACC4(0,downwind)] - density1[OPS_ACC4(0,donor)];
+  diffuw = density1(0,donor) - density1(0,upwind);
+  diffdw = density1(0,downwind) - density1(0,donor);
 
   if( (diffuw*diffdw) > 0.0)
     limiter=(1.0 - sigmav) * SIGN(1.0 , diffdw) *
@@ -78,11 +63,11 @@ inline void advec_cell_kernel3_ydir_gpu( const double *vol_flux_y, const double 
   else
     limiter=0.0;
 
-  mass_flux_y[OPS_ACC6(0,0)] = (vol_flux_y[OPS_ACC0(0,0)]) * ( density1[OPS_ACC4(0,donor)] + limiter );
+  mass_flux_y(0,0) = (vol_flux_y(0,0)) * ( density1(0,donor) + limiter );
 
-  sigmam = fabs(mass_flux_y[OPS_ACC6(0,0)])/( density1[OPS_ACC4(0,donor)] * pre_vol[OPS_ACC1(0,donor)]);
-  diffuw = energy1[OPS_ACC5(0,donor)] - energy1[OPS_ACC5(0,upwind)];
-  diffdw = energy1[OPS_ACC5(0,downwind)] - energy1[OPS_ACC5(0,donor)];
+  sigmam = fabs(mass_flux_y(0,0))/( density1(0,donor) * pre_vol(0,donor));
+  diffuw = energy1(0,donor) - energy1(0,upwind);
+  diffdw = energy1(0,downwind) - energy1(0,donor);
 
   if( (diffuw*diffdw) > 0.0)
     limiter = (1.0 - sigmam) * SIGN(1.0,diffdw) *
@@ -91,28 +76,18 @@ inline void advec_cell_kernel3_ydir_gpu( const double *vol_flux_y, const double 
   else
     limiter=0.0;
 
-  ener_flux[OPS_ACC7(0,0)] = mass_flux_y[OPS_ACC6(0,0)] * ( energy1[OPS_ACC5(0,donor)] + limiter );
+  ener_flux(0,0) = mass_flux_y(0,0) * ( energy1(0,donor) + limiter );
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-
-
 __global__ void ops_advec_cell_kernel3_ydir(
-const double* __restrict arg0,
-const double* __restrict arg1,
-const int* __restrict arg2,
-const double* __restrict arg3,
-const double* __restrict arg4,
-const double* __restrict arg5,
+double* __restrict arg0,
+double* __restrict arg1,
+int* __restrict arg2,
+double* __restrict arg3,
+double* __restrict arg4,
+double* __restrict arg5,
 double* __restrict arg6,
 double* __restrict arg7,
 int size0,
@@ -132,8 +107,16 @@ int size1 ){
   arg7 += idx_x * 1*1 + idx_y * 1*1 * dims_advec_cell_kernel3_ydir[7][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    advec_cell_kernel3_ydir_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6, arg7);
+    const ACC<double> argp0(dims_advec_cell_kernel3_ydir[0][0], arg0);
+    const ACC<double> argp1(dims_advec_cell_kernel3_ydir[1][0], arg1);
+    const ACC<int> argp2(dims_advec_cell_kernel3_ydir[2][0], arg2);
+    const ACC<double> argp3(dims_advec_cell_kernel3_ydir[3][0], arg3);
+    const ACC<double> argp4(dims_advec_cell_kernel3_ydir[4][0], arg4);
+    const ACC<double> argp5(dims_advec_cell_kernel3_ydir[5][0], arg5);
+    ACC<double> argp6(dims_advec_cell_kernel3_ydir[6][0], arg6);
+    ACC<double> argp7(dims_advec_cell_kernel3_ydir[7][0], arg7);
+    advec_cell_kernel3_ydir_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5, argp6, argp7);
   }
 
 }

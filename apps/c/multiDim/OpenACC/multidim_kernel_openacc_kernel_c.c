@@ -7,24 +7,13 @@
 int xdim0_multidim_kernel;
 int ydim0_multidim_kernel;
 
-
-
-#undef OPS_ACC_MD0
-
-
-#define OPS_ACC_MD0(d,x,y) ((x)+(xdim0_multidim_kernel*(y))+(d)*xdim0_multidim_kernel*ydim0_multidim_kernel)
 //user function
-inline 
-void multidim_kernel(double *val, int *idx){
-  val[OPS_ACC_MD0(0,0,0)] = (double)(idx[0]);
-  val[OPS_ACC_MD0(1,0,0)] = (double)(idx[1]);
+inline void multidim_kernel(ptrm_double val, int *idx) {
+  OPS_ACC(val, 0,0,0) = (double)(idx[0]);
+  OPS_ACC(val, 1,0,0) = (double)(idx[1]);
 
 
 }
-
-
-
-#undef OPS_ACC_MD0
 
 
 void multidim_kernel_c_wrapper(
@@ -42,7 +31,12 @@ void multidim_kernel_c_wrapper(
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
       int arg_idx[] = {arg_idx0+n_x, arg_idx1+n_y};
-      multidim_kernel(  p_a0 + n_x*1 + n_y*xdim0_multidim_kernel*1,
+      #ifdef OPS_SOA
+      ptrm_double ptr0 = {  p_a0 + n_x*1 + n_y*xdim0_multidim_kernel*1, xdim0_multidim_kernel, ydim0_multidim_kernel};
+      #else
+      ptrm_double ptr0 = {  p_a0 + n_x*1 + n_y*xdim0_multidim_kernel*1, xdim0_multidim_kernel, 2};
+      #endif
+      multidim_kernel( ptr0,
           arg_idx );
 
     }

@@ -4,35 +4,25 @@
 __constant__ int dims_tvd_kernel [2][1];
 static int dims_tvd_kernel_h [2][1] = {0};
 
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-
-
-#define OPS_ACC_MD0(d,x) ((x)*3+(d))
-#define OPS_ACC_MD1(d,x) ((x)*3+(d))
 //user function
 __device__
 
-void tvd_kernel_gpu(const double *tht, double* ep2) {
+void tvd_kernel_gpu(const ACC<double> &tht,
+  ACC<double>& ep2) {
     double maxim;
 		for (int m=0; m < 3 ;m++) {
-			if (tht[OPS_ACC_MD0(m,0)] > tht[OPS_ACC_MD0(m,1)])
-				maxim = tht[OPS_ACC_MD0(m,0)];
+			if (tht(m,0) > tht(m,1))
+				maxim = tht(m,0);
 			else
-				maxim = tht[OPS_ACC_MD0(m,1)];
-			ep2[OPS_ACC_MD1(m,0)] = akap2 * maxim;
+				maxim = tht(m,1);
+			ep2(m,0) = akap2 * maxim;
 		}
 }
 
 
 
-
-#undef OPS_ACC_MD0
-#undef OPS_ACC_MD1
-
 __global__ void ops_tvd_kernel(
-const double* __restrict arg0,
+double* __restrict arg0,
 double* __restrict arg1,
 int size0 ){
 
@@ -43,7 +33,9 @@ int size0 ){
   arg1 += idx_x * 1*3;
 
   if (idx_x < size0) {
-    tvd_kernel_gpu(arg0, arg1);
+    const ACC<double> argp0(3, dims_tvd_kernel[0][0], arg0);
+    ACC<double> argp1(3, dims_tvd_kernel[1][0], arg1);
+    tvd_kernel_gpu(argp0, argp1);
   }
 
 }

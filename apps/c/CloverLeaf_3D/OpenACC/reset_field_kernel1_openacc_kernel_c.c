@@ -13,34 +13,17 @@ int ydim2_reset_field_kernel1;
 int xdim3_reset_field_kernel1;
 int ydim3_reset_field_kernel1;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_reset_field_kernel1*(y)+xdim0_reset_field_kernel1*ydim0_reset_field_kernel1*(z))
-#define OPS_ACC1(x,y,z) (x+xdim1_reset_field_kernel1*(y)+xdim1_reset_field_kernel1*ydim1_reset_field_kernel1*(z))
-#define OPS_ACC2(x,y,z) (x+xdim2_reset_field_kernel1*(y)+xdim2_reset_field_kernel1*ydim2_reset_field_kernel1*(z))
-#define OPS_ACC3(x,y,z) (x+xdim3_reset_field_kernel1*(y)+xdim3_reset_field_kernel1*ydim3_reset_field_kernel1*(z))
-
 //user function
 inline 
-void reset_field_kernel1( double *density0, const double *density1,
-                          double *energy0,  const double *energy1) {
+void reset_field_kernel1(ptr_double density0,
+  const ptr_double density1,
+  ptr_double energy0,
+  const ptr_double energy1) {
 
-  density0[OPS_ACC0(0,0,0)]  = density1[OPS_ACC1(0,0,0)] ;
-  energy0[OPS_ACC2(0,0,0)]  = energy1[OPS_ACC3(0,0,0)] ;
+  OPS_ACC(density0, 0,0,0)  = OPS_ACC(density1, 0,0,0) ;
+  OPS_ACC(energy0, 0,0,0)  = OPS_ACC(energy1, 0,0,0) ;
 
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
 
 
 void reset_field_kernel1_c_wrapper(
@@ -62,10 +45,14 @@ void reset_field_kernel1_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        reset_field_kernel1(  p_a0 + n_x*1*1 + n_y*xdim0_reset_field_kernel1*1*1 + n_z*xdim0_reset_field_kernel1*ydim0_reset_field_kernel1*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_reset_field_kernel1*1*1 + n_z*xdim1_reset_field_kernel1*ydim1_reset_field_kernel1*1*1,
-           p_a2 + n_x*1*1 + n_y*xdim2_reset_field_kernel1*1*1 + n_z*xdim2_reset_field_kernel1*ydim2_reset_field_kernel1*1*1,
-           p_a3 + n_x*1*1 + n_y*xdim3_reset_field_kernel1*1*1 + n_z*xdim3_reset_field_kernel1*ydim3_reset_field_kernel1*1*1 );
+        ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_reset_field_kernel1*1*1 + n_z*xdim0_reset_field_kernel1*ydim0_reset_field_kernel1*1*1, xdim0_reset_field_kernel1, ydim0_reset_field_kernel1};
+        const ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_reset_field_kernel1*1*1 + n_z*xdim1_reset_field_kernel1*ydim1_reset_field_kernel1*1*1, xdim1_reset_field_kernel1, ydim1_reset_field_kernel1};
+        ptr_double ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_reset_field_kernel1*1*1 + n_z*xdim2_reset_field_kernel1*ydim2_reset_field_kernel1*1*1, xdim2_reset_field_kernel1, ydim2_reset_field_kernel1};
+        const ptr_double ptr3 = {  p_a3 + n_x*1*1 + n_y*xdim3_reset_field_kernel1*1*1 + n_z*xdim3_reset_field_kernel1*ydim3_reset_field_kernel1*1*1, xdim3_reset_field_kernel1, ydim3_reset_field_kernel1};
+        reset_field_kernel1( ptr0,
+          ptr1,
+          ptr2,
+          ptr3 );
 
       }
     }

@@ -4,32 +4,21 @@
 __constant__ int dims_advec_mom_kernel1_z_nonvector [5][2];
 static int dims_advec_mom_kernel1_z_nonvector_h [5][2] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
-#define OPS_ACC0(x,y,z) (x+dims_advec_mom_kernel1_z_nonvector[0][0]*(y)+dims_advec_mom_kernel1_z_nonvector[0][0]*dims_advec_mom_kernel1_z_nonvector[0][1]*(z))
-#define OPS_ACC1(x,y,z) (x+dims_advec_mom_kernel1_z_nonvector[1][0]*(y)+dims_advec_mom_kernel1_z_nonvector[1][0]*dims_advec_mom_kernel1_z_nonvector[1][1]*(z))
-#define OPS_ACC2(x,y,z) (x+dims_advec_mom_kernel1_z_nonvector[2][0]*(y)+dims_advec_mom_kernel1_z_nonvector[2][0]*dims_advec_mom_kernel1_z_nonvector[2][1]*(z))
-#define OPS_ACC3(x,y,z) (x+dims_advec_mom_kernel1_z_nonvector[3][0]*(y)+dims_advec_mom_kernel1_z_nonvector[3][0]*dims_advec_mom_kernel1_z_nonvector[3][1]*(z))
-#define OPS_ACC4(x,y,z) (x+dims_advec_mom_kernel1_z_nonvector[4][0]*(y)+dims_advec_mom_kernel1_z_nonvector[4][0]*dims_advec_mom_kernel1_z_nonvector[4][1]*(z))
-
 //user function
 __device__
 
-inline void advec_mom_kernel1_z_nonvector_gpu( const double *node_flux, const double *node_mass_pre,
-                       double *mom_flux,
-                       const double *celldz, const double *vel1) {
+inline void advec_mom_kernel1_z_nonvector_gpu(const ACC<double> &node_flux,
+  const ACC<double> &node_mass_pre,
+  ACC<double> &mom_flux,
+  const ACC<double> &celldz,
+  const ACC<double> &vel1) {
 
   double sigma, wind, width;
   double vdiffuw, vdiffdw, auw, adw, limiter;
   int upwind, donor, downwind, dif;
   double advec_vel_temp;
 
-  if( (node_flux[OPS_ACC0(0,0,0)]) < 0.0) {
+  if( (node_flux(0,0,0)) < 0.0) {
     upwind = 2;
     donor = 1;
     downwind = 0;
@@ -41,37 +30,30 @@ inline void advec_mom_kernel1_z_nonvector_gpu( const double *node_flux, const do
     dif = upwind;
   }
 
-  sigma = fabs(node_flux[OPS_ACC0(0,0,0)])/node_mass_pre[OPS_ACC1(0,0,donor)];
-  width = celldz[OPS_ACC3(0,0,0)];
-  vdiffuw = vel1[OPS_ACC4(0,0,donor)] - vel1[OPS_ACC4(0,0,upwind)];
-  vdiffdw = vel1[OPS_ACC4(0,0,downwind)] - vel1[OPS_ACC4(0,0,donor)];
+  sigma = fabs(node_flux(0,0,0))/node_mass_pre(0,0,donor);
+  width = celldz(0,0,0);
+  vdiffuw = vel1(0,0,donor) - vel1(0,0,upwind);
+  vdiffdw = vel1(0,0,downwind) - vel1(0,0,donor);
   limiter = 0.0;
   if(vdiffuw*vdiffdw > 0.0) {
     auw = fabs(vdiffuw);
     adw = fabs(vdiffdw);
     wind = 1.0;
     if(vdiffdw <= 0.0) wind = -1.0;
-    limiter=wind*MIN(width*((2.0-sigma)*adw/width+(1.0+sigma)*auw/celldz[OPS_ACC3(0,0,dif)])/6.0,MIN(auw,adw));
+    limiter=wind*MIN(width*((2.0-sigma)*adw/width+(1.0+sigma)*auw/celldz(0,0,dif))/6.0,MIN(auw,adw));
   }
-  advec_vel_temp= vel1[OPS_ACC4(0,0,donor)] + (1.0 - sigma) * limiter;
-  mom_flux[OPS_ACC2(0,0,0)] = advec_vel_temp * node_flux[OPS_ACC0(0,0,0)];
+  advec_vel_temp= vel1(0,0,donor) + (1.0 - sigma) * limiter;
+  mom_flux(0,0,0) = advec_vel_temp * node_flux(0,0,0);
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
 __global__ void ops_advec_mom_kernel1_z_nonvector(
-const double* __restrict arg0,
-const double* __restrict arg1,
+double* __restrict arg0,
+double* __restrict arg1,
 double* __restrict arg2,
-const double* __restrict arg3,
-const double* __restrict arg4,
+double* __restrict arg3,
+double* __restrict arg4,
 int size0,
 int size1,
 int size2 ){
@@ -88,8 +70,13 @@ int size2 ){
   arg4 += idx_x * 1*1 + idx_y * 1*1 * dims_advec_mom_kernel1_z_nonvector[4][0] + idx_z * 1*1 * dims_advec_mom_kernel1_z_nonvector[4][0] * dims_advec_mom_kernel1_z_nonvector[4][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    advec_mom_kernel1_z_nonvector_gpu(arg0, arg1, arg2, arg3,
-                   arg4);
+    const ACC<double> argp0(dims_advec_mom_kernel1_z_nonvector[0][0], dims_advec_mom_kernel1_z_nonvector[0][1], arg0);
+    const ACC<double> argp1(dims_advec_mom_kernel1_z_nonvector[1][0], dims_advec_mom_kernel1_z_nonvector[1][1], arg1);
+    ACC<double> argp2(dims_advec_mom_kernel1_z_nonvector[2][0], dims_advec_mom_kernel1_z_nonvector[2][1], arg2);
+    const ACC<double> argp3(dims_advec_mom_kernel1_z_nonvector[3][0], dims_advec_mom_kernel1_z_nonvector[3][1], arg3);
+    const ACC<double> argp4(dims_advec_mom_kernel1_z_nonvector[4][0], dims_advec_mom_kernel1_z_nonvector[4][1], arg4);
+    advec_mom_kernel1_z_nonvector_gpu(argp0, argp1, argp2, argp3,
+                   argp4);
   }
 
 }

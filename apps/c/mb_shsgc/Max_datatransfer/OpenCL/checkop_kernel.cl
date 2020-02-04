@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_1D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,33 +44,25 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-
-
 //user function
-void checkop_kernel(const __global double * restrict rho_new,const __global double * restrict x,const __global double * restrict rhoin,
- double * restrict pre, double * restrict post, int * restrict num,
-  const double rhol)
 
- {
+void checkop_kernel(const ptr_double rho_new,
+  const ptr_double x,
+  const ptr_double rhoin,
+  double *pre,
+  double *post,
+  int *num, const double rhol)
+{
   double diff;
-  diff = (rho_new[OPS_ACC0(0)] - rhoin[OPS_ACC2(0)]);
-  if(fabs(diff)<0.01 && x[OPS_ACC1(0)] > -4.1){
+  diff = (OPS_ACCS(rho_new, 0) - OPS_ACCS(rhoin, 0));
+  if(fabs(diff)<0.01 && OPS_ACCS(x, 0) > -4.1){
     *post = *post + diff*diff;
     *num = *num + 1;
 
   }
   else
-    *pre = *pre + (rho_new[OPS_ACC0(0)] - rhol)* (rho_new[OPS_ACC0(0)] - rhol);
+    *pre = *pre + (OPS_ACCS(rho_new, 0) - rhol)* (OPS_ACCS(rho_new, 0) - rhol);
 }
-
 
 
 __kernel void ops_checkop_kernel(
@@ -101,9 +97,12 @@ const int size0 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    checkop_kernel(&arg0[base0 + idx_x * 1*1],
-                   &arg1[base1 + idx_x * 1*1],
-                   &arg2[base2 + idx_x * 1*1],
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1] };
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1] };
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1] };
+    checkop_kernel(ptr0,
+                   ptr1,
+                   ptr2,
                    arg3_l,
                    arg4_l,
                    arg5_l,

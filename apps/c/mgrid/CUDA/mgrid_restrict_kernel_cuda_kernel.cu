@@ -4,29 +4,20 @@
 __constant__ int dims_mgrid_restrict_kernel [3][1];
 static int dims_mgrid_restrict_kernel_h [3][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+dims_mgrid_restrict_kernel[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_mgrid_restrict_kernel[1][0]*(y))
-
 //user function
 __device__
 
-void mgrid_restrict_kernel_gpu(const double *fine, double *coarse, int *idx) {
+void mgrid_restrict_kernel_gpu(const ACC<double> &fine,
+  ACC<double> &coarse,
+  int *idx) {
 
-  coarse[OPS_ACC1(0,0)] = fine[OPS_ACC0(0,0)];
+  coarse(0,0) = fine(0,0);
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
 __global__ void ops_mgrid_restrict_kernel(
-const double* __restrict arg0,
+double* __restrict arg0,
 int stride_00, int stride_01,
 double* __restrict arg1,
 int arg_idx0, int arg_idx1,
@@ -44,7 +35,9 @@ int size1 ){
   arg1 += idx_x * 1*1 + idx_y * 1*1 * dims_mgrid_restrict_kernel[1][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    mgrid_restrict_kernel_gpu(arg0, arg1, arg_idx);
+    const ACC<double> argp0(dims_mgrid_restrict_kernel[0][0], arg0);
+    ACC<double> argp1(dims_mgrid_restrict_kernel[1][0], arg1);
+    mgrid_restrict_kernel_gpu(argp0, argp1, arg_idx);
   }
 
 }

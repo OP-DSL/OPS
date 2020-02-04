@@ -9,25 +9,16 @@ int ydim0_update_halo_kernel5_plus_2_a;
 int xdim1_update_halo_kernel5_plus_2_a;
 int ydim1_update_halo_kernel5_plus_2_a;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_update_halo_kernel5_plus_2_a*(y)+xdim0_update_halo_kernel5_plus_2_a*ydim0_update_halo_kernel5_plus_2_a*(z))
-#define OPS_ACC1(x,y,z) (x+xdim1_update_halo_kernel5_plus_2_a*(y)+xdim1_update_halo_kernel5_plus_2_a*ydim1_update_halo_kernel5_plus_2_a*(z))
-
 //user function
 
-inline void update_halo_kernel5_plus_2_a(double *vol_flux_z, double *mass_flux_z, const int* fields) {
-  if(fields[FIELD_VOL_FLUX_Z] == 1) vol_flux_z[OPS_ACC0(0,0,0)] = vol_flux_z[OPS_ACC0(0,2,0)];
-  if(fields[FIELD_MASS_FLUX_Z] == 1) mass_flux_z[OPS_ACC1(0,0,0)] = mass_flux_z[OPS_ACC1(0,2,0)];
+inline void update_halo_kernel5_plus_2_a(ptr_double vol_flux_z,
+                                         ptr_double mass_flux_z,
+                                         const int *fields) {
+  if (fields[FIELD_VOL_FLUX_Z] == 1)
+    OPS_ACC(vol_flux_z, 0, 0, 0) = OPS_ACC(vol_flux_z, 0, 2, 0);
+  if (fields[FIELD_MASS_FLUX_Z] == 1)
+    OPS_ACC(mass_flux_z, 0, 0, 0) = OPS_ACC(mass_flux_z, 0, 2, 0);
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-
 
 
 void update_halo_kernel5_plus_2_a_c_wrapper(
@@ -48,10 +39,21 @@ void update_halo_kernel5_plus_2_a_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        update_halo_kernel5_plus_2_a(  p_a0 + n_x*1*1 + n_y*xdim0_update_halo_kernel5_plus_2_a*1*1 + n_z*xdim0_update_halo_kernel5_plus_2_a*ydim0_update_halo_kernel5_plus_2_a*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_update_halo_kernel5_plus_2_a*1*1 + n_z*xdim1_update_halo_kernel5_plus_2_a*ydim1_update_halo_kernel5_plus_2_a*1*1,
-           p_a2 );
-
+        ptr_double ptr0 = {p_a0 + n_x * 1 * 1 +
+                               n_y * xdim0_update_halo_kernel5_plus_2_a * 1 *
+                                   1 +
+                               n_z * xdim0_update_halo_kernel5_plus_2_a *
+                                   ydim0_update_halo_kernel5_plus_2_a * 1 * 1,
+                           xdim0_update_halo_kernel5_plus_2_a,
+                           ydim0_update_halo_kernel5_plus_2_a};
+        ptr_double ptr1 = {p_a1 + n_x * 1 * 1 +
+                               n_y * xdim1_update_halo_kernel5_plus_2_a * 1 *
+                                   1 +
+                               n_z * xdim1_update_halo_kernel5_plus_2_a *
+                                   ydim1_update_halo_kernel5_plus_2_a * 1 * 1,
+                           xdim1_update_halo_kernel5_plus_2_a,
+                           ydim1_update_halo_kernel5_plus_2_a};
+        update_halo_kernel5_plus_2_a(ptr0, ptr1, p_a2);
       }
     }
   }

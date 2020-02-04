@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_1D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,35 +44,22 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-#define OPS_ACC3(x) (x)
-#define OPS_ACC4(x) (x)
-
-
 //user function
-void calvar_kernel(const __global double * restrict rho_new,const __global double * restrict rhou_new,const __global double * restrict rhoE_new,
-__global double * restrict workarray2,__global double * restrict workarray3,
-  const double gam1)
 
- {
+void calvar_kernel(const ptr_double rho_new,
+  const ptr_double rhou_new,
+  const ptr_double rhoE_new,
+  ptr_double workarray2,
+  ptr_double workarray3, const double gam1)
+{
   double p, rhoi, u;
-  rhoi = 1/rho_new[OPS_ACC0(0)];
-  u = rhou_new[OPS_ACC1(0)] * rhoi;
-  p = gam1 * (rhoE_new[OPS_ACC2(0)] - 0.5 * rho_new[OPS_ACC0(0)]* u * u);
+  rhoi = 1/OPS_ACCS(rho_new, 0);
+  u = OPS_ACCS(rhou_new, 0) * rhoi;
+  p = gam1 * (OPS_ACCS(rhoE_new, 0) - 0.5 * OPS_ACCS(rho_new, 0)* u * u);
 
-  workarray2[OPS_ACC3(0)] = p + rhou_new[OPS_ACC1(0)] * u ;
-  workarray3[OPS_ACC4(0)] = (p + rhoE_new[OPS_ACC2(0)]) * u ;
+  OPS_ACCS(workarray2, 0) = p + OPS_ACCS(rhou_new, 0) * u ;
+  OPS_ACCS(workarray3, 0) = (p + OPS_ACCS(rhoE_new, 0)) * u ;
   }
-
 
 
 __kernel void ops_calvar_kernel(
@@ -89,11 +80,16 @@ const int size0 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    calvar_kernel(&arg0[base0 + idx_x * 1*1],
-                  &arg1[base1 + idx_x * 1*1],
-                  &arg2[base2 + idx_x * 1*1],
-                  &arg3[base3 + idx_x * 1*1],
-                  &arg4[base4 + idx_x * 1*1],
+    const ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1] };
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1] };
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1] };
+    ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1] };
+    ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1] };
+    calvar_kernel(ptr0,
+                  ptr1,
+                  ptr2,
+                  ptr3,
+                  ptr4,
                   gam1);
   }
 

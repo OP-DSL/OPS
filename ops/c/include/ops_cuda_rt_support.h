@@ -82,6 +82,7 @@ extern int ops_device_initialised_externally;
 void cutilDeviceInit(const int argc, const char **argv);
 void __cudaSafeCall(cudaError_t err, const char *file, const int line);
 void ops_cuda_get_data(ops_dat dat);
+void ops_cuda_put_data(ops_dat dat);
 void reallocConstArrays(int consts_bytes);
 void reallocReductArrays(int reduct_bytes);
 void mvConstArraysToDevice(int consts_bytes);

@@ -4,35 +4,25 @@
 __constant__ int dims_drhoudx_kernel [2][1];
 static int dims_drhoudx_kernel_h [2][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-
 //user function
 __device__
 
-void drhoudx_kernel_gpu(const double *rhou_new, double *rho_res) {
+void drhoudx_kernel_gpu(const ACC<double> &rhou_new,
+  ACC<double> &rho_res) {
 
-        double fnim1 = rhou_new[OPS_ACC0(-1)];
-        double fnim2 = rhou_new[OPS_ACC0(-2)];
-        double fnip1 = rhou_new[OPS_ACC0(1)];
-        double fnip2 = rhou_new[OPS_ACC0(2)];
+        double fnim1 = rhou_new(-1);
+        double fnim2 = rhou_new(-2);
+        double fnip1 = rhou_new(1);
+        double fnip2 = rhou_new(2);
 
         double deriv = (fnim2 - fnip2 + 8.0* (fnip1 - fnim1))/(12.00*dx);
-        rho_res[OPS_ACC1(0)] = deriv;
+        rho_res(0) = deriv;
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
 __global__ void ops_drhoudx_kernel(
-const double* __restrict arg0,
+double* __restrict arg0,
 double* __restrict arg1,
 int size0 ){
 
@@ -43,7 +33,9 @@ int size0 ){
   arg1 += idx_x * 1*1;
 
   if (idx_x < size0) {
-    drhoudx_kernel_gpu(arg0, arg1);
+    const ACC<double> argp0(arg0);
+    ACC<double> argp1(arg1);
+    drhoudx_kernel_gpu(argp0, argp1);
   }
 
 }

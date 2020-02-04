@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_1D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,46 +44,29 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-#define OPS_ACC3(x) (x)
-#define OPS_ACC4(x) (x)
-#define OPS_ACC5(x) (x)
-#define OPS_ACC6(x) (x)
-#define OPS_ACC7(x) (x)
-#define OPS_ACC8(x) (x)
-
-
 //user function
-void updateRK3_kernel(__global double * restrict rho_new,__global double* restrict  rhou_new,__global double* restrict  rhoE_new,
-__global double * restrict rho_old,__global double* restrict  rhou_old,__global double* restrict  rhoE_old,const __global double * restrict rho_res,
-const __global double * restrict rhou_res,const __global double * restrict rhoE_res,const  double* restrict  a1,const  double* restrict  a2,
 
-  const double dt)
+void updateRK3_kernel(ptr_double rho_new,
+  ptr_double  rhou_new,
+  ptr_double  rhoE_new,
+  ptr_double rho_old,
+  ptr_double  rhou_old,
+  ptr_double  rhoE_old,
+  const ptr_double rho_res,
+  const ptr_double rhou_res,
+  const ptr_double rhoE_res,
+  const double* a1,
+  const double* a2, const double dt)
+{
 
- {
+			OPS_ACCS(rho_new, 0) = OPS_ACCS(rho_old, 0) + dt * a1[0] * (-OPS_ACCS(rho_res, 0));
+			OPS_ACCS(rhou_new, 0) = OPS_ACCS(rhou_old, 0) + dt * a1[0] * (-OPS_ACCS(rhou_res, 0));
+			OPS_ACCS(rhoE_new, 0) = OPS_ACCS(rhoE_old, 0) + dt * a1[0] * (-OPS_ACCS(rhoE_res, 0));
 
-			rho_new[OPS_ACC0(0)] = rho_old[OPS_ACC3(0)] + dt * a1[0] * (-rho_res[OPS_ACC6(0)]);
-			rhou_new[OPS_ACC1(0)] = rhou_old[OPS_ACC4(0)] + dt * a1[0] * (-rhou_res[OPS_ACC7(0)]);
-			rhoE_new[OPS_ACC2(0)] = rhoE_old[OPS_ACC5(0)] + dt * a1[0] * (-rhoE_res[OPS_ACC8(0)]);
-
-			rho_old[OPS_ACC3(0)] = rho_old[OPS_ACC3(0)] + dt * a2[0] * (-rho_res[OPS_ACC6(0)]);
-			rhou_old[OPS_ACC4(0)] = rhou_old[OPS_ACC4(0)] + dt * a2[0] * (-rhou_res[OPS_ACC7(0)]);
-			rhoE_old[OPS_ACC5(0)] = rhoE_old[OPS_ACC5(0)] + dt * a2[0] * (-rhoE_res[OPS_ACC8(0)]);
+			OPS_ACCS(rho_old, 0) = OPS_ACCS(rho_old, 0) + dt * a2[0] * (-OPS_ACCS(rho_res, 0));
+			OPS_ACCS(rhou_old, 0) = OPS_ACCS(rhou_old, 0) + dt * a2[0] * (-OPS_ACCS(rhou_res, 0));
+			OPS_ACCS(rhoE_old, 0) = OPS_ACCS(rhoE_old, 0) + dt * a2[0] * (-OPS_ACCS(rhoE_res, 0));
 }
-
 
 
 __kernel void ops_updateRK3_kernel(
@@ -110,15 +97,24 @@ const int size0 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-    updateRK3_kernel(&arg0[base0 + idx_x * 1*1],
-                     &arg1[base1 + idx_x * 1*1],
-                     &arg2[base2 + idx_x * 1*1],
-                     &arg3[base3 + idx_x * 1*1],
-                     &arg4[base4 + idx_x * 1*1],
-                     &arg5[base5 + idx_x * 1*1],
-                     &arg6[base6 + idx_x * 1*1],
-                     &arg7[base7 + idx_x * 1*1],
-                     &arg8[base8 + idx_x * 1*1],
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1] };
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1] };
+    ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1] };
+    ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1] };
+    ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1] };
+    ptr_double ptr5 = { &arg5[base5 + idx_x * 1*1] };
+    const ptr_double ptr6 = { &arg6[base6 + idx_x * 1*1] };
+    const ptr_double ptr7 = { &arg7[base7 + idx_x * 1*1] };
+    const ptr_double ptr8 = { &arg8[base8 + idx_x * 1*1] };
+    updateRK3_kernel(ptr0,
+                     ptr1,
+                     ptr2,
+                     ptr3,
+                     ptr4,
+                     ptr5,
+                     ptr6,
+                     ptr7,
+                     ptr8,
                      &arg9,
                      &arg10,
                      dt);

@@ -4,21 +4,14 @@
 __constant__ int dims_mgrid_populate_kernel_1 [2][1];
 static int dims_mgrid_populate_kernel_1_h [2][1] = {0};
 
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y) (x+dims_mgrid_populate_kernel_1[0][0]*(y))
-
 //user function
 __device__
 
-void mgrid_populate_kernel_1_gpu(double *val, int *idx) {
-  val[OPS_ACC0(0,0)] = (double)(idx[0]+6*idx[1]);
+void mgrid_populate_kernel_1_gpu(ACC<double> &val,
+  int *idx) {
+  val(0,0) = (double)(idx[0]+6*idx[1]);
 }
 
-
-
-#undef OPS_ACC0
 
 
 __global__ void ops_mgrid_populate_kernel_1(
@@ -37,7 +30,8 @@ int size1 ){
   arg0 += idx_x * 1*1 + idx_y * 1*1 * dims_mgrid_populate_kernel_1[0][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    mgrid_populate_kernel_1_gpu(arg0, arg_idx);
+    ACC<double> argp0(dims_mgrid_populate_kernel_1[0][0], arg0);
+    mgrid_populate_kernel_1_gpu(argp0, arg_idx);
   }
 
 }

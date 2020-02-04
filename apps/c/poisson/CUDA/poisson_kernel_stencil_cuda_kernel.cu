@@ -4,30 +4,20 @@
 __constant__ int dims_poisson_kernel_stencil [2][1];
 static int dims_poisson_kernel_stencil_h [2][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
-#define OPS_ACC0(x,y) (x+dims_poisson_kernel_stencil[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_poisson_kernel_stencil[1][0]*(y))
-
 //user function
 __device__
 
-void poisson_kernel_stencil_gpu(const double *u, double *u2) {
-  u2[OPS_ACC1(0,0)] = ((u[OPS_ACC0(-1,0)]-2.0f*u[OPS_ACC0(0,0)]+u[OPS_ACC0(1,0)])*0.125f
-                     + (u[OPS_ACC0(0,-1)]-2.0f*u[OPS_ACC0(0,0)]+u[OPS_ACC0(0,1)])*0.125f
-                     + u[OPS_ACC0(0,0)]);
+void poisson_kernel_stencil_gpu(const ACC<double> &u,
+  ACC<double> &u2) {
+  u2(0,0) = ((u(-1,0)-2.0f*u(0,0)+u(1,0))*0.125f
+                     + (u(0,-1)-2.0f*u(0,0)+u(0,1))*0.125f
+                     + u(0,0));
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-
-
 __global__ void ops_poisson_kernel_stencil(
-const double* __restrict arg0,
+double* __restrict arg0,
 double* __restrict arg1,
 int size0,
 int size1 ){
@@ -40,7 +30,9 @@ int size1 ){
   arg1 += idx_x * 1*1 + idx_y * 1*1 * dims_poisson_kernel_stencil[1][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    poisson_kernel_stencil_gpu(arg0, arg1);
+    const ACC<double> argp0(dims_poisson_kernel_stencil[0][0], arg0);
+    ACC<double> argp1(dims_poisson_kernel_stencil[1][0], arg1);
+    poisson_kernel_stencil_gpu(argp0, argp1);
   }
 
 }

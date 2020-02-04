@@ -9,6 +9,7 @@ void ops_init_backend();
 #include <string.h>
 #include <math.h>
 
+#define OPS_1D
 #include  "ops_lib_cpp.h"
 
 //
@@ -182,8 +183,7 @@ FILE *fp;
 //#include "update_kernel.h"
 //#include "test_kernel.h"
 
-
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
 
   double totaltime =0.0f;
 

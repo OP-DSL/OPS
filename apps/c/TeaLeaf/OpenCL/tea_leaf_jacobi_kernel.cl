@@ -10,6 +10,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
+#define OPS_2D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -41,36 +45,25 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-
-
-#define OPS_ACC0(x,y) (x+xdim0_tea_leaf_jacobi_kernel*(y))
-#define OPS_ACC1(x,y) (x+xdim1_tea_leaf_jacobi_kernel*(y))
-#define OPS_ACC2(x,y) (x+xdim2_tea_leaf_jacobi_kernel*(y))
-#define OPS_ACC3(x,y) (x+xdim3_tea_leaf_jacobi_kernel*(y))
-#define OPS_ACC4(x,y) (x+xdim4_tea_leaf_jacobi_kernel*(y))
-
-
 //user function
-void tea_leaf_jacobi_kernel(__global double * restrict u1,const __global double * restrict Kx,const __global double * restrict Ky,
-const __global double * restrict un,const __global double * restrict u0,const  double * restrict rx,const  double * restrict ry,
- double * restrict error)
 
- {
-	u1[OPS_ACC0(0,0)] = (u0[OPS_ACC4(0,0)]
-		+ (*rx)*(Kx[OPS_ACC1(1, 0)] *un[OPS_ACC3(1, 0)] + Kx[OPS_ACC1(0,0)]*un[OPS_ACC3(-1, 0)])
-		+ (*ry)*(Ky[OPS_ACC2(0, 1)] *un[OPS_ACC3(0, 1)] + Ky[OPS_ACC2(0,0)]*un[OPS_ACC3(0, -1)]))
+void tea_leaf_jacobi_kernel(ptr_double u1,
+  const ptr_double Kx,
+  const ptr_double Ky,
+  const ptr_double un,
+  const ptr_double u0,
+  const double *rx,
+  const double *ry,
+  double *error) {
+	OPS_ACCS(u1, 0,0) = (OPS_ACCS(u0, 0,0)
+		+ (*rx)*(OPS_ACCS(Kx, 1, 0) *OPS_ACCS(un, 1, 0) + OPS_ACCS(Kx, 0,0)*OPS_ACCS(un, -1, 0))
+		+ (*ry)*(OPS_ACCS(Ky, 0, 1) *OPS_ACCS(un, 0, 1) + OPS_ACCS(Ky, 0,0)*OPS_ACCS(un, 0, -1)))
 			/(1.0
-				+ (*rx)*(Kx[OPS_ACC1(1, 0)] + Kx[OPS_ACC1(0,0)])
-				+ (*ry)*(Ky[OPS_ACC2(0, 1)] + Ky[OPS_ACC2(0,0)]));
+				+ (*rx)*(OPS_ACCS(Kx, 1, 0) + OPS_ACCS(Kx, 0,0))
+				+ (*ry)*(OPS_ACCS(Ky, 0, 1) + OPS_ACCS(Ky, 0,0)));
 
-    *error = *error + fabs(u1[OPS_ACC0(0,0)] - un[OPS_ACC3(0,0)]);
+    *error = *error + fabs(OPS_ACCS(u1, 0,0) - OPS_ACCS(un, 0,0));
 }
-
 
 
 __kernel void ops_tea_leaf_jacobi_kernel(
@@ -100,11 +93,16 @@ const int size1 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    tea_leaf_jacobi_kernel(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_tea_leaf_jacobi_kernel],
-                           &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_tea_leaf_jacobi_kernel],
-                           &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_tea_leaf_jacobi_kernel],
-                           &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_tea_leaf_jacobi_kernel],
-                           &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_tea_leaf_jacobi_kernel],
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_tea_leaf_jacobi_kernel], xdim0_tea_leaf_jacobi_kernel};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_tea_leaf_jacobi_kernel], xdim1_tea_leaf_jacobi_kernel};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_tea_leaf_jacobi_kernel], xdim2_tea_leaf_jacobi_kernel};
+    const ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_tea_leaf_jacobi_kernel], xdim3_tea_leaf_jacobi_kernel};
+    const ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_tea_leaf_jacobi_kernel], xdim4_tea_leaf_jacobi_kernel};
+    tea_leaf_jacobi_kernel(ptr0,
+                           ptr1,
+                           ptr2,
+                           ptr3,
+                           ptr4,
                            &arg5,
                            &arg6,
                            arg7_l);

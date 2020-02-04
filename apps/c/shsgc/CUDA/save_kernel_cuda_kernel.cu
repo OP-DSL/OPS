@@ -4,48 +4,29 @@
 __constant__ int dims_save_kernel [6][1];
 static int dims_save_kernel_h [6][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-
-
-#define OPS_ACC0(x) (x)
-#define OPS_ACC1(x) (x)
-#define OPS_ACC2(x) (x)
-#define OPS_ACC3(x) (x)
-#define OPS_ACC4(x) (x)
-#define OPS_ACC5(x) (x)
-
 //user function
 __device__
 
-void save_kernel_gpu(double *rho_old, double *rhou_old, double *rhoE_old,
-                       const double *rho_new, const double *rhou_new, const double *rhoE_new) {
-      rho_old[OPS_ACC0(0)]=rho_new[OPS_ACC3(0)];
-      rhou_old[OPS_ACC1(0)]=rhou_new[OPS_ACC4(0)];
-      rhoE_old[OPS_ACC2(0)]=rhoE_new[OPS_ACC5(0)];
+void save_kernel_gpu(ACC<double> &rho_old,
+  ACC<double> &rhou_old,
+  ACC<double> &rhoE_old,
+  const ACC<double> &rho_new,
+  const ACC<double> &rhou_new,
+  const ACC<double> &rhoE_new) {
+      rho_old(0)=rho_new(0);
+      rhou_old(0)=rhou_new(0);
+      rhoE_old(0)=rhoE_new(0);
 }
 
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
 
 
 __global__ void ops_save_kernel(
 double* __restrict arg0,
 double* __restrict arg1,
 double* __restrict arg2,
-const double* __restrict arg3,
-const double* __restrict arg4,
-const double* __restrict arg5,
+double* __restrict arg3,
+double* __restrict arg4,
+double* __restrict arg5,
 int size0 ){
 
 
@@ -59,8 +40,14 @@ int size0 ){
   arg5 += idx_x * 1*1;
 
   if (idx_x < size0) {
-    save_kernel_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5);
+    ACC<double> argp0(arg0);
+    ACC<double> argp1(arg1);
+    ACC<double> argp2(arg2);
+    const ACC<double> argp3(arg3);
+    const ACC<double> argp4(arg4);
+    const ACC<double> argp5(arg5);
+    save_kernel_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5);
   }
 
 }

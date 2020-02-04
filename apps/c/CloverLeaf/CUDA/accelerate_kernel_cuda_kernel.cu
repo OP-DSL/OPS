@@ -4,102 +4,70 @@
 __constant__ int dims_accelerate_kernel [11][1];
 static int dims_accelerate_kernel_h [11][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-
-
-#define OPS_ACC0(x,y) (x+dims_accelerate_kernel[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_accelerate_kernel[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_accelerate_kernel[2][0]*(y))
-#define OPS_ACC3(x,y) (x+dims_accelerate_kernel[3][0]*(y))
-#define OPS_ACC4(x,y) (x+dims_accelerate_kernel[4][0]*(y))
-#define OPS_ACC5(x,y) (x+dims_accelerate_kernel[5][0]*(y))
-#define OPS_ACC6(x,y) (x+dims_accelerate_kernel[6][0]*(y))
-#define OPS_ACC7(x,y) (x+dims_accelerate_kernel[7][0]*(y))
-#define OPS_ACC8(x,y) (x+dims_accelerate_kernel[8][0]*(y))
-#define OPS_ACC9(x,y) (x+dims_accelerate_kernel[9][0]*(y))
-#define OPS_ACC10(x,y) (x+dims_accelerate_kernel[10][0]*(y))
-
 //user function
 __device__
 
-void accelerate_kernel_gpu( const double *density0, const double *volume,
-                double *stepbymass, const double *xvel0, double *xvel1,
-                const double *xarea, const double *pressure,
-                const double *yvel0, double *yvel1,
-                const double *yarea, const double *viscosity) {
+void accelerate_kernel_gpu(const ACC<double> &density0,
+  const ACC<double> &volume,
+  ACC<double> &stepbymass,
+  const ACC<double> &xvel0,
+  ACC<double> &xvel1,
+  const ACC<double> &xarea,
+  const ACC<double> &pressure,
+  const ACC<double> &yvel0,
+  ACC<double> &yvel1,
+  const ACC<double> &yarea,
+  const ACC<double> &viscosity) {
 
   double nodal_mass;
 
-  nodal_mass = ( density0[OPS_ACC0(-1,-1)] * volume[OPS_ACC1(-1,-1)]
-    + density0[OPS_ACC0(0,-1)] * volume[OPS_ACC1(0,-1)]
-    + density0[OPS_ACC0(0,0)] * volume[OPS_ACC1(0,0)]
-    + density0[OPS_ACC0(-1,0)] * volume[OPS_ACC1(-1,0)] ) * 0.25;
+  nodal_mass = ( density0(-1,-1) * volume(-1,-1)
+    + density0(0,-1) * volume(0,-1)
+    + density0(0,0) * volume(0,0)
+    + density0(-1,0) * volume(-1,0) ) * 0.25;
 
-  stepbymass[OPS_ACC2(0,0)] = 0.5*dt/ nodal_mass;
-
-
-
-  xvel1[OPS_ACC4(0,0)] = xvel0[OPS_ACC3(0,0)] - stepbymass[OPS_ACC2(0,0)] *
-            ( xarea[OPS_ACC5(0,0)]  * ( pressure[OPS_ACC6(0,0)] - pressure[OPS_ACC6(-1,0)] ) +
-              xarea[OPS_ACC5(0,-1)] * ( pressure[OPS_ACC6(0,-1)] - pressure[OPS_ACC6(-1,-1)] ) );
+  stepbymass(0,0) = 0.5*dt/ nodal_mass;
 
 
 
-  yvel1[OPS_ACC8(0,0)] = yvel0[OPS_ACC7(0,0)] - stepbymass[OPS_ACC2(0,0)] *
-            ( yarea[OPS_ACC9(0,0)]  * ( pressure[OPS_ACC6(0,0)] - pressure[OPS_ACC6(0,-1)] ) +
-              yarea[OPS_ACC9(-1,0)] * ( pressure[OPS_ACC6(-1,0)] - pressure[OPS_ACC6(-1,-1)] ) );
+  xvel1(0,0) = xvel0(0,0) - stepbymass(0,0) *
+            ( xarea(0,0)  * ( pressure(0,0) - pressure(-1,0) ) +
+              xarea(0,-1) * ( pressure(0,-1) - pressure(-1,-1) ) );
 
 
 
-  xvel1[OPS_ACC4(0,0)] = xvel1[OPS_ACC4(0,0)] - stepbymass[OPS_ACC2(0,0)] *
-            ( xarea[OPS_ACC5(0,0)] * ( viscosity[OPS_ACC10(0,0)] - viscosity[OPS_ACC10(-1,0)] ) +
-              xarea[OPS_ACC5(0,-1)] * ( viscosity[OPS_ACC10(0,-1)] - viscosity[OPS_ACC10(-1,-1)] ) );
+  yvel1(0,0) = yvel0(0,0) - stepbymass(0,0) *
+            ( yarea(0,0)  * ( pressure(0,0) - pressure(0,-1) ) +
+              yarea(-1,0) * ( pressure(-1,0) - pressure(-1,-1) ) );
 
 
 
-  yvel1[OPS_ACC8(0,0)] = yvel1[OPS_ACC8(0,0)] - stepbymass[OPS_ACC2(0,0)] *
-            ( yarea[OPS_ACC9(0,0)] * ( viscosity[OPS_ACC10(0,0)] - viscosity[OPS_ACC10(0,-1)] ) +
-              yarea[OPS_ACC9(-1,0)] * ( viscosity[OPS_ACC10(-1,0)] - viscosity[OPS_ACC10(-1,-1)] ) );
+  xvel1(0,0) = xvel1(0,0) - stepbymass(0,0) *
+            ( xarea(0,0) * ( viscosity(0,0) - viscosity(-1,0) ) +
+              xarea(0,-1) * ( viscosity(0,-1) - viscosity(-1,-1) ) );
+
+
+
+  yvel1(0,0) = yvel1(0,0) - stepbymass(0,0) *
+            ( yarea(0,0) * ( viscosity(0,0) - viscosity(0,-1) ) +
+              yarea(-1,0) * ( viscosity(-1,0) - viscosity(-1,-1) ) );
 
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-#undef OPS_ACC7
-#undef OPS_ACC8
-#undef OPS_ACC9
-#undef OPS_ACC10
-
-
 __global__ void ops_accelerate_kernel(
-const double* __restrict arg0,
-const double* __restrict arg1,
+double* __restrict arg0,
+double* __restrict arg1,
 double* __restrict arg2,
-const double* __restrict arg3,
+double* __restrict arg3,
 double* __restrict arg4,
-const double* __restrict arg5,
-const double* __restrict arg6,
-const double* __restrict arg7,
+double* __restrict arg5,
+double* __restrict arg6,
+double* __restrict arg7,
 double* __restrict arg8,
-const double* __restrict arg9,
-const double* __restrict arg10,
+double* __restrict arg9,
+double* __restrict arg10,
 int size0,
 int size1 ){
 
@@ -120,9 +88,20 @@ int size1 ){
   arg10 += idx_x * 1*1 + idx_y * 1*1 * dims_accelerate_kernel[10][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    accelerate_kernel_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6, arg7, arg8,
-                   arg9, arg10);
+    const ACC<double> argp0(dims_accelerate_kernel[0][0], arg0);
+    const ACC<double> argp1(dims_accelerate_kernel[1][0], arg1);
+    ACC<double> argp2(dims_accelerate_kernel[2][0], arg2);
+    const ACC<double> argp3(dims_accelerate_kernel[3][0], arg3);
+    ACC<double> argp4(dims_accelerate_kernel[4][0], arg4);
+    const ACC<double> argp5(dims_accelerate_kernel[5][0], arg5);
+    const ACC<double> argp6(dims_accelerate_kernel[6][0], arg6);
+    const ACC<double> argp7(dims_accelerate_kernel[7][0], arg7);
+    ACC<double> argp8(dims_accelerate_kernel[8][0], arg8);
+    const ACC<double> argp9(dims_accelerate_kernel[9][0], arg9);
+    const ACC<double> argp10(dims_accelerate_kernel[10][0], arg10);
+    accelerate_kernel_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5, argp6, argp7, argp8,
+                   argp9, argp10);
   }
 
 }

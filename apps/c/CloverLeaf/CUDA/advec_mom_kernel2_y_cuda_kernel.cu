@@ -4,40 +4,25 @@
 __constant__ int dims_advec_mom_kernel2_y [4][1];
 static int dims_advec_mom_kernel2_y_h [4][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x,y) (x+dims_advec_mom_kernel2_y[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_advec_mom_kernel2_y[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_advec_mom_kernel2_y[2][0]*(y))
-#define OPS_ACC3(x,y) (x+dims_advec_mom_kernel2_y[3][0]*(y))
-
 //user function
 __device__
 
-inline void advec_mom_kernel2_y_gpu( double *vel1, const double *node_mass_post,
-                        const double *node_mass_pre, const double *mom_flux) {
+inline void advec_mom_kernel2_y_gpu(ACC<double> &vel1,
+  const ACC<double> &node_mass_post,
+  const ACC<double> &node_mass_pre,
+  const ACC<double> &mom_flux) {
 
-  vel1[OPS_ACC0(0,0)] = ( vel1[OPS_ACC0(0,0)] * node_mass_pre[OPS_ACC2(0,0)]  +
-    mom_flux[OPS_ACC3(0,-1)] - mom_flux[OPS_ACC3(0,0)] ) / node_mass_post[OPS_ACC1(0,0)];
+  vel1(0,0) = ( vel1(0,0) * node_mass_pre(0,0)  +
+    mom_flux(0,-1) - mom_flux(0,0) ) / node_mass_post(0,0);
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
 __global__ void ops_advec_mom_kernel2_y(
 double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
-const double* __restrict arg3,
+double* __restrict arg1,
+double* __restrict arg2,
+double* __restrict arg3,
 int size0,
 int size1 ){
 
@@ -51,7 +36,11 @@ int size1 ){
   arg3 += idx_x * 1*1 + idx_y * 1*1 * dims_advec_mom_kernel2_y[3][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    advec_mom_kernel2_y_gpu(arg0, arg1, arg2, arg3);
+    ACC<double> argp0(dims_advec_mom_kernel2_y[0][0], arg0);
+    const ACC<double> argp1(dims_advec_mom_kernel2_y[1][0], arg1);
+    const ACC<double> argp2(dims_advec_mom_kernel2_y[2][0], arg2);
+    const ACC<double> argp3(dims_advec_mom_kernel2_y[3][0], arg3);
+    advec_mom_kernel2_y_gpu(argp0, argp1, argp2, argp3);
   }
 
 }

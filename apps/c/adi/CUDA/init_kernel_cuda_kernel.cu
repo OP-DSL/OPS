@@ -4,24 +4,17 @@
 __constant__ int dims_init_kernel [2][2];
 static int dims_init_kernel_h [2][2] = {0};
 
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y,z) (x+dims_init_kernel[0][0]*(y)+dims_init_kernel[0][0]*dims_init_kernel[0][1]*(z))
-
 //user function
 __device__
 
-void init_kernel_gpu(double *val, int *idx){
+void init_kernel_gpu(ACC<double> &val,
+  int *idx){
   if(idx[0]==0 || idx[0]==nx-1 || idx[1]==0 || idx[1]==ny-1 || idx[2]==0 || idx[2]==nz-1)
-    val[OPS_ACC0(0,0,0)] = 1.0;
+    val(0,0,0) = 1.0;
   else
-    val[OPS_ACC0(0,0,0)] = 0.0;
+    val(0,0,0) = 0.0;
 }
 
-
-
-#undef OPS_ACC0
 
 
 __global__ void ops_init_kernel(
@@ -43,7 +36,8 @@ int size2 ){
   arg0 += idx_x * 1*1 + idx_y * 1*1 * dims_init_kernel[0][0] + idx_z * 1*1 * dims_init_kernel[0][0] * dims_init_kernel[0][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    init_kernel_gpu(arg0, arg_idx);
+    ACC<double> argp0(dims_init_kernel[0][0], dims_init_kernel[0][1], arg0);
+    init_kernel_gpu(argp0, arg_idx);
   }
 
 }

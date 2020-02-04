@@ -4,41 +4,26 @@
 __constant__ int dims_reset_field_kernel2 [4][1];
 static int dims_reset_field_kernel2_h [4][1] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x,y) (x+dims_reset_field_kernel2[0][0]*(y))
-#define OPS_ACC1(x,y) (x+dims_reset_field_kernel2[1][0]*(y))
-#define OPS_ACC2(x,y) (x+dims_reset_field_kernel2[2][0]*(y))
-#define OPS_ACC3(x,y) (x+dims_reset_field_kernel2[3][0]*(y))
-
 //user function
 __device__
 
-void reset_field_kernel2_gpu( double *xvel0, const double *xvel1,
-                        double *yvel0, const double *yvel1) {
+void reset_field_kernel2_gpu(ACC<double> &xvel0,
+  const ACC<double> &xvel1,
+  ACC<double> &yvel0,
+  const ACC<double> &yvel1) {
 
-  xvel0[OPS_ACC0(0,0)]  = xvel1[OPS_ACC1(0,0)] ;
-  yvel0[OPS_ACC2(0,0)]  = yvel1[OPS_ACC3(0,0)] ;
+  xvel0(0,0)  = xvel1(0,0) ;
+  yvel0(0,0)  = yvel1(0,0) ;
 
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
 __global__ void ops_reset_field_kernel2(
 double* __restrict arg0,
-const double* __restrict arg1,
+double* __restrict arg1,
 double* __restrict arg2,
-const double* __restrict arg3,
+double* __restrict arg3,
 int size0,
 int size1 ){
 
@@ -52,7 +37,11 @@ int size1 ){
   arg3 += idx_x * 1*1 + idx_y * 1*1 * dims_reset_field_kernel2[3][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    reset_field_kernel2_gpu(arg0, arg1, arg2, arg3);
+    ACC<double> argp0(dims_reset_field_kernel2[0][0], arg0);
+    const ACC<double> argp1(dims_reset_field_kernel2[1][0], arg1);
+    ACC<double> argp2(dims_reset_field_kernel2[2][0], arg2);
+    const ACC<double> argp3(dims_reset_field_kernel2[3][0], arg3);
+    reset_field_kernel2_gpu(argp0, argp1, argp2, argp3);
   }
 
 }

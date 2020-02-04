@@ -9,32 +9,14 @@ int xdim1_tea_leaf_ppcg_init2_kernel;
 int xdim2_tea_leaf_ppcg_init2_kernel;
 int xdim3_tea_leaf_ppcg_init2_kernel;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
-
-#define OPS_ACC0(x,y) (x+xdim0_tea_leaf_ppcg_init2_kernel*(y))
-#define OPS_ACC1(x,y) (x+xdim1_tea_leaf_ppcg_init2_kernel*(y))
-#define OPS_ACC2(x,y) (x+xdim2_tea_leaf_ppcg_init2_kernel*(y))
-#define OPS_ACC3(x,y) (x+xdim3_tea_leaf_ppcg_init2_kernel*(y))
-
 //user function
-inline 
-void tea_leaf_ppcg_init2_kernel(double *sd, double *rtemp, double *utemp, const double *r, const double *theta_r) {
-	sd[OPS_ACC0(0,0)] = r[OPS_ACC3(0,0)]*(*theta_r);
-	rtemp[OPS_ACC1(0,0)] = r[OPS_ACC3(0,0)];
-	utemp[OPS_ACC2(0,0)] = sd[OPS_ACC0(0,0)];
+inline void tea_leaf_ppcg_init2_kernel(ptr_double sd, ptr_double rtemp,
+                                       ptr_double utemp, const ptr_double r,
+                                       const double *theta_r) {
+  OPS_ACC(sd, 0, 0) = OPS_ACC(r, 0, 0) * (*theta_r);
+  OPS_ACC(rtemp, 0, 0) = OPS_ACC(r, 0, 0);
+  OPS_ACC(utemp, 0, 0) = OPS_ACC(sd, 0, 0);
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-
 
 
 void tea_leaf_ppcg_init2_kernel_c_wrapper(
@@ -53,10 +35,19 @@ void tea_leaf_ppcg_init2_kernel_c_wrapper(
     #pragma acc loop
     #endif
     for ( int n_x=0; n_x<x_size; n_x++ ){
-      tea_leaf_ppcg_init2_kernel(  p_a0 + n_x*1*1 + n_y*xdim0_tea_leaf_ppcg_init2_kernel*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_tea_leaf_ppcg_init2_kernel*1*1, p_a2 + n_x*1*1 + n_y*xdim2_tea_leaf_ppcg_init2_kernel*1*1,
-           p_a3 + n_x*1*1 + n_y*xdim3_tea_leaf_ppcg_init2_kernel*1*1, &p_a4 );
-
+      ptr_double ptr0 = {p_a0 + n_x * 1 * 1 +
+                             n_y * xdim0_tea_leaf_ppcg_init2_kernel * 1 * 1,
+                         xdim0_tea_leaf_ppcg_init2_kernel};
+      ptr_double ptr1 = {p_a1 + n_x * 1 * 1 +
+                             n_y * xdim1_tea_leaf_ppcg_init2_kernel * 1 * 1,
+                         xdim1_tea_leaf_ppcg_init2_kernel};
+      ptr_double ptr2 = {p_a2 + n_x * 1 * 1 +
+                             n_y * xdim2_tea_leaf_ppcg_init2_kernel * 1 * 1,
+                         xdim2_tea_leaf_ppcg_init2_kernel};
+      const ptr_double ptr3 = {
+          p_a3 + n_x * 1 * 1 + n_y * xdim3_tea_leaf_ppcg_init2_kernel * 1 * 1,
+          xdim3_tea_leaf_ppcg_init2_kernel};
+      tea_leaf_ppcg_init2_kernel(ptr0, ptr1, ptr2, ptr3, &p_a4);
     }
   }
 }
