@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 cd ../../../../ops/c
-source ../../scripts/source_intel
+source ../../scripts/$SOURCE_INTEL
 make -j
 cd -
 make clean
@@ -128,7 +128,7 @@ rm perf_out
 rm rhoin1.* x1.* rhoout1.*  rhoin1 rhoout1 x1
 
 cd -
-source ../../scripts/source_pgi_19
+source ../../scripts/$SOURCE_PGI
 
 make clean
 make -j

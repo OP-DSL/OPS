@@ -25,7 +25,7 @@ ifdef CHECKPOINTING
 endif
 endif
 
-TRID_INSTALL_PATH ?= /home/mudalige/TriDiagonal/Tridiag-Git/tridsolver/scalar/build
+TRID_INSTALL_PATH ?= $(TDMA_INSTALL_PATH)
 TRID_INC := -I$(TRID_INSTALL_PATH)/include
 TRID_LIB := -L$(TRID_INSTALL_PATH)/lib
 
@@ -47,7 +47,7 @@ else
   CCFLAGS = -fp-model strict -fp-model source -prec-div -prec-sqrt #-xCORE_AVX2 -m64 -parallel -no-offload -O3 -ip -restrict
 endif
   CPPFLAGS  = $(CCFLAGS)
-  OMPFLAGS  = -openmp -openmp-report2
+  OMPFLAGS  = -qopenmp
   INTEL_LIB = -L/opt/compilers/intel/intelPS-2015/lib/intel64/ -limf -lintlc -lsvml -lirng -liomp5 -lcilkrts
   MPICPP  = $(MPI_INSTALL_PATH)/bin/mpicxx
 else

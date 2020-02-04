@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
-#<<COMMENT
-source ../../scripts/source_intel
+<<COMMENT
+source ../../scripts/$SOURCE_INTEL
+make clean
 make -j
 cd -
 make clean
@@ -142,7 +143,8 @@ echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
 #exit
 
 cd -
-source ../../scripts/source_pgi_19
+COMMENT
+source ../../scripts/$SOURCE_PGI
 
 make clean
 make

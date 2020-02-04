@@ -32,7 +32,7 @@ else
   CHKCC			:= $(CC)
 endif
 
-TRID_INSTALL_PATH ?= /home/mudalige/TriDiagonal/Tridiag-Git/tridsolver/scalar/build
+TRID_INSTALL_PATH ?= $(TDMA_INSTALL_PATH)
 # This refers to the location of the submodule in the "master" pdetk repo
 #TRID_INSTALL_PATH ?= ../../../tridsolver/scalar
 

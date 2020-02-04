@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
-source ../../scripts/source_intel
+source ../../scripts/$SOURCE_INTEL
+make clean
 make
 
 #==== Build and copy Referance application from the TDMA Library ====

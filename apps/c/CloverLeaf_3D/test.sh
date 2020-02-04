@@ -2,12 +2,14 @@
 set -e
 cd ../../../ops/c
 #<<COMMENT
-source ../../scripts/source_intel
+source ../../scripts/$SOURCE_INTEL
 make -j
 cd -
 make clean
 rm -f .generated
 make IEEE=1 -j
+
+<<COMMENT
 
 #============================ Test Cloverleaf 3D With Intel Compilers==========================================================
 echo '============> Running OpenMP'
@@ -148,11 +150,11 @@ rm -f clover.out
 rm perf_out
 
 echo "All Intel complied applications PASSED : Exiting Test Script "
+COMMENT
 
 cd -
 #COMMENT
-#source ../../scripts/source_pgi_15.10
-source ../../scripts/source_pgi_19
+source ../../scripts/$SOURCE_PGI
 
 make clean
 make -j
