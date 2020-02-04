@@ -446,8 +446,6 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       H5LTset_attribute_int(group_id, dat->name, "d_p", orig_d_p,
                             block->dims); // d_p
-
-
       H5LTset_attribute_int(group_id, dat->name, "base", dat->base,
                             block->dims);                               // base
       H5LTset_attribute_string(group_id, dat->name, "type", dat->type); // type
@@ -487,7 +485,7 @@ ops_block ops_decl_block_hdf5(int dims, const char *block_name,
   }
 
   // ops_block exists .. now check ops_type and dims
-  char read_ops_type[10];
+  char read_ops_type[20];
   if (H5LTget_attribute_string(file_id, block_name, "ops_type", read_ops_type) <
     0) {
     OPSException ex(OPS_HDF5_ERROR);
@@ -556,7 +554,7 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
   }
 
   // ops_stencil exists .. now check ops_type and dims
-  char read_ops_type[20];
+  char read_ops_type[10];
   if (H5LTget_attribute_string(file_id, stencil_name, "ops_type", read_ops_type) < 0) {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_stencil_hdf5: Attribute \"ops_type\" not found in stencil" << stencil_name;
@@ -948,9 +946,9 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
   hid_t attr;      // attribute identifier
 
   if (file_exist(file_name) == 0) {
-    ops_printf("File %s does not exist .... aborting ops_get_const_hdf5()\n",
-              file_name);
-    exit(2);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "File "<< file_name << " does not exist .... aborting ops_get_const_hdf5()\n";
+    throw ex;
   }
 
   file_id = H5Fopen(file_name, H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -961,7 +959,7 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
   // open existing data set
   dset_id = H5Dopen(file_id, name, H5P_DEFAULT);
   if (dset_id < 0) {
-    ops_printf("dataset '%s' not found in file '%s'\n", name, file_name);
+    OPS_instance::getOPSInstance()->ostream() << "dataset '"<<name <<"' not found in file " << file_name << "\n";
     H5Fclose(file_id);
     const_data = NULL;
     return;
@@ -973,9 +971,9 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
   H5Aclose(attr);
   H5Dclose(dset_id);
   if (const_dim != dim) {
-    ops_printf("dim of constant %d in file %s and requested dim %d do not match\n",
-              const_dim, file_name, dim);
-    exit(2);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "dim of constant "<< const_dim << " in file "<<file_name<<" and requested dim "<<dim<<"do not match\n";
+    throw ex;
   }
 
   // find type with available attributes
@@ -994,9 +992,7 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
   H5Sclose(dataspace);
   H5Dclose(dset_id);
   if (strcmp(typ, type)!=0) {
-    ops_printf(
-        "type of constant %s in file %s and requested type %s do not match, performing automatic type conversion\n",
-        typ, file_name, type);
+    OPS_instance::getOPSInstance()->ostream() << "type of constant "<<typ<<" in file "<<file_name<<" and requested type "<<type<<" do not match, performing automatic type conversion\n";
     strcpy(typ,type);
   }
 
@@ -1035,8 +1031,9 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
     H5Dread(dset_id, H5T_NATIVE_CHAR, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
     memcpy((void *)const_data, (void *)data, sizeof(char) * const_dim);
   } else {
-    ops_printf("Unknown type in file %s for constant %s\n", file_name, name);
-    exit(2);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Unknown type in file "<< file_name << " for constant "<<name<<"\n";
+    throw ex;
   }
 
   free(data);
@@ -1052,7 +1049,7 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
 void ops_write_const_hdf5(char const *name, int dim, char const *type,
                          char *const_data, char const *file_name) {
   // letting know that writing is happening ...
-  ops_printf("Writing '%s' to file '%s'\n", name, file_name);
+  OPS_instance::getOPSInstance()->ostream() << "Writing "<<name<<" to file "<<file_name<<"\n";
 
   // HDF5 APIs definitions
   hid_t file_id;   // file identifier
@@ -1061,13 +1058,11 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
 
   if (file_exist(file_name) == 0) {
     if (OPS_instance::getOPSInstance()->OPS_diags > 3) {
-      ops_printf("File %s does not exist .... creating file\n", file_name);
+      OPS_instance::getOPSInstance()->ostream() << "File "<<file_name<<" does not exist .... creating file\n";
     }
     file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     H5Fclose(file_id);
   }
-
-  ops_printf("Writing constant to %s\n", file_name);
 
   /* Open the existing file. */
   file_id = H5Fopen(file_name, H5F_ACC_RDWR, H5P_DEFAULT);
@@ -1125,8 +1120,9 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
              const_data);
     H5Dclose(dset_id);
   } else {
-    ops_printf("Unknown type for write_const\n");
-    exit(2);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Unknown type for write_const for constant "<<name<<"\n";
+    throw ex;
   }
 
   H5Sclose(dataspace);
@@ -1173,9 +1169,9 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   else if (strcmp(type, "char") == 0)
     H5Awrite(attribute, atype, "char");
   else {
-    ops_printf("Unknown type %s for constant %s: cannot write constant to file\n",
-              type, name);
-    exit(2);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Unknown type in type "<< type << " for constant "<<name<<": cannot write constant to file\n";
+    throw ex;
   }
 
   H5Aclose(attribute);
