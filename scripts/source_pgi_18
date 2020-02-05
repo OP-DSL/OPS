@@ -36,5 +36,9 @@ export MPICH_FC=/opt/pgi/licensed/18.10/linux86-64/2018/bin/pgfortran
 
 #PGI based HDF5
 unset HDF5_INSTALL_PATH
-export HDF5_INSTALL_PATH=/opt/hdf5/1.8.18/pgi/16.10/ompi/1.10.6/
-export LD_LIBRARY_PATH=/opt/hdf5/1.8.18/pgi/16.10/ompi/1.10.6/lib:$LD_LIBRARY_PATH
+export HDF5_INSTALL_PATH=/rr-home/gihan/HDF5-PGI-18
+#/opt/hdf5/1.8.12/pgi/16.10/ompi/1.10.6/
+#/opt/hdf5/1.8.18/pgi/16.10/ompi/1.10.6/
+export LD_LIBRARY_PATH=/rr-home/gihan/HDF5-PGI-18/lib:$LD_LIBRARY_PATH
+#/opt/hdf5/1.8.12/pgi/16.10/ompi/1.10.6/lib:$LD_LIBRARY_PATH
+#/opt/hdf5/1.8.18/pgi/16.10/ompi/1.10.6/lib:$LD_LIBRARY_PATH

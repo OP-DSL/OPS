@@ -195,7 +195,6 @@ int main(int argc, const char **argv)
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
   ops_fprintf(g_out,"\nTotal Wall time %lf\n",et1-et0);
 
-  ops_dump_to_hdf5("dump.h5");
 
   fclose(g_out);
   ops_exit();
