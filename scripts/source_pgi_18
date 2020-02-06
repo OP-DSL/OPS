@@ -21,12 +21,16 @@ export OPENCL_INSTALL_PATH=/opt/cuda/9.1.85/toolkit/
 #export OPENCL_INSTALL_PATH=/usr/local/cuda-6.5.14/
 
 #PGI based MPI and Compilers
-export MPI_INSTALL_PATH=/opt/mpi/openmpi/4.0.0/pgi/18.10/
-export MPICPP=mpicxx
+export MPI_INSTALL_PATH=/rr-home/gihan/MPICH-PGI-18/
+#/opt/mpi/openmpi/4.0.0/pgi/18.10/
+export MPICPP=mpic++
 export PATH=/opt/pgi/licensed/18.10/linux86-64/2018/bin/:$PATH
-export PATH=/opt/mpi/openmpi/4.0.0/pgi/18.10/bin/:$PATH
+export PATH=/rr-home/gihan/MPICH-PGI-18/bin:$PATH
+#/opt/mpi/openmpi/4.0.0/pgi/18.10/bin/:$PATH
 
-export LD_LIBRARY_PATH=/opt/mpi/openmpi/4.0.0/pgi/18.10/lib/:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/opt/pgi/licensed/18.10/linux86-64/2018/lib:/opt/mpi/openmpi/4.0.0/pgi/18.10/lib/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/rr-home/gihan/MPICH-PGI-18/lib:$LD_LIBRARY_PATH
+#/opt/mpi/openmpi/4.0.0/pgi/18.10/lib/:$LD_LIBRARY_PATH
 
 export MPICH_CXX=/opt/pgi/licensed/18.10/linux86-64/2018/bin/pgc++
 export MPICH_CC=/opt/pgi/licensed/18.10/linux86-64/2018/bin/pgcc
