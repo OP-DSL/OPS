@@ -9,7 +9,7 @@ make clean
 rm -f .generated
 make IEEE=1 -j
 
-<<COMMENT
+#<<COMMENT
 
 #============================ Test Cloverleaf 3D With Intel Compilers==========================================================
 echo '============> Running OpenMP'
@@ -150,7 +150,7 @@ rm -f clover.out
 rm perf_out
 
 echo "All Intel complied applications PASSED : Exiting Test Script "
-COMMENT
+#COMMENT
 
 cd -
 #COMMENT
