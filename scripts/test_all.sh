@@ -49,6 +49,7 @@ cd ../adi
 echo "~~~~~~~~~~~~~~~mgrid~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mgrid
 ./test.sh
+echo "All C/C++ application tests PASSED"
 
 echo "************Testing Fortran Applications *****************"
 cd $OPS_INSTALL_PATH

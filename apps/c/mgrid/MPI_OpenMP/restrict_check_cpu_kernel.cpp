@@ -110,8 +110,7 @@ void ops_par_loop_restrict_check_execute(ops_kernel_descriptor *desc) {
       err[0] = p_a2[0];
 
       if (val(0, 0) != idx[0] * 4 + idx[1] * 4 * *sizex) {
-        printf("ERR (%d, %d): value %g expected %d\n", idx[0], idx[1],
-               val(0, 0), idx[0] * 4 + idx[1] * 4 * *sizex);
+
         *err = 1;
   } else
     *err = 0;
