@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 cd ../../../ops/fortran
-source ../../scripts/source_intel
+source ../../scripts/$SOURCE_INTEL
 make
 cd -
 make clean
@@ -34,7 +34,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 cd $OPS_INSTALL_PATH/fortran
-source ../../scripts/source_pgi_16.9
+source ../../scripts/$SOURCE_PGI
 make clean
 make 
 cd -

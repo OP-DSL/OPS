@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 cd ../../../ops/fortran
-source ../../scripts/source_intel
+source ../../scripts/$SOURCE_INTEL
 make clean
 make
 cd -
@@ -40,7 +40,7 @@ rm perf_out
 echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
 
 cd $OPS_INSTALL_PATH/fortran
-source ../../scripts/source_pgi_16.9
+source ../../scripts/$SOURCE_PGI
 make
 cd -
 make clean

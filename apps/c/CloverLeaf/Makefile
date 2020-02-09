@@ -4,13 +4,10 @@
 # OPS_INSTALL_PATH
 # OPS_COMPILER (gnu,intel,etc)
 #
-
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.common
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
-
-
 
 
 HEADERS=initialise_chunk_kernel.h generate_chunk_kernel.h ideal_gas_kernel.h \

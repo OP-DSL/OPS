@@ -12,8 +12,6 @@ USE_HDF5=1
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
 
-
-
 HEADERS=initialise_chunk_kernel.h generate_chunk_kernel.h ideal_gas_kernel.h \
                 update_halo_kernel.h field_summary_kernel.h viscosity_kernel.h \
                 PdV_kernel.h revert_kernel.h accelerate_kernel.h flux_calc_kernel.h \

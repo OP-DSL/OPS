@@ -2,7 +2,7 @@
 set -e
 cd ../../../ops/c
 #<<COMMENT
-source ../../scripts/source_intel
+source ../../scripts/$SOURCE_INTEL
 make -j
 cd -
 make clean
@@ -89,7 +89,7 @@ echo "All Intel complied applications PASSED : Exiting Test Script "
 
 #COMMENT
 cd -
-source ../../scripts/source_pgi_19
+source ../../scripts/$SOURCE_PGI
 
 make clean
 make -j

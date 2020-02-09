@@ -2,7 +2,7 @@
 set -e
 cd ../../../ops/c
 #<<COMMENT
-source ../../scripts/source_intel
+source ../../scripts/$SOURCE_INTEL
 make
 cd -
 make clean
@@ -135,7 +135,7 @@ echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
 
 
 cd -
-source ../../scripts/source_pgi_19_istvan
+source ../../scripts/$SOURCE_PGI
 
 make clean
 make

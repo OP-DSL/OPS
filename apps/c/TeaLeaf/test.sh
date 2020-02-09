@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
-source ../../scripts/source_intel
+source ../../scripts/$SOURCE_INTEL
 make -j
 cd -
 ./generate.sh
@@ -145,7 +145,7 @@ echo "All Intel complied applications PASSED : Moving on to PGI compiler tests "
 
 #COMMENT
 cd -
-source ../../scripts/source_pgi_19
+source ../../scripts/$SOURCE_PGI
 
 make clean
 make -j

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 cd ../../../ops/fortran
-source ../../scripts/source_intel
+source ../../scripts/$SOURCE_INTEL
 make
 cd -
 make clean
@@ -35,7 +35,7 @@ rm perf_out
 
 
 cd $OPS_INSTALL_PATH/fortran
-source ../../scripts/source_pgi_19_istvan
+source ../../scripts/$SOURCE_PGI
 make clean
 make
 cd -

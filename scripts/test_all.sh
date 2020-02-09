@@ -1,8 +1,13 @@
 #!/bin/bash
-source ./source_intel #default source to set environment vars
+export SOURCE_INTEL=source_intel_17
+export SOURCE_PGI=source_pgi_18
+
+source ./$SOURCE_INTEL #default source to set environment vars
+
 #exit script if any error is encountered during the build or
 #application executions.
 set -e
+
 echo $OPS_INSTALL_PATH
 cd $OPS_INSTALL_PATH
 
@@ -44,6 +49,7 @@ cd ../adi
 echo "~~~~~~~~~~~~~~~mgrid~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mgrid
 ./test.sh
+echo "All C/C++ application tests PASSED"
 
 echo "************Testing Fortran Applications *****************"
 cd $OPS_INSTALL_PATH

@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
-source ../../scripts/source_intel
-make -j
+source ../../scripts/$SOURCE_INTEL
+make
 cd -
 make clean
 
@@ -148,8 +148,7 @@ echo "All Intel complied applications PASSED : Exiting Test Script "
 
 #COMMENT
 cd -
-#source ../../scripts/source_pgi_16.9
-source ../../scripts/source_pgi_19_istvan
+source ../../scripts/$SOURCE_PGI
 
 make clean
 make -j
