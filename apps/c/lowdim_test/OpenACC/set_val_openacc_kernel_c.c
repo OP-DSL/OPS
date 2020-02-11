@@ -7,23 +7,15 @@
 int xdim0_set_val;
 int ydim0_set_val;
 
-
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_set_val*(y)+xdim0_set_val*ydim0_set_val*(z))
-
 //user function
+#pragma acc routine
 inline 
-void set_val(double *dat, const double *val)
+void set_val(ptr_double dat,
+  const double *val)
 {
 
-    dat[OPS_ACC0(0,0,0)] = *val;
+    OPS_ACC(dat, 0,0,0) = *val;
 }
-
-
-#undef OPS_ACC0
-
 
 
 void set_val_c_wrapper(
@@ -43,7 +35,8 @@ void set_val_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        set_val(  p_a0 + n_x*1*1 + n_y*xdim0_set_val*1*1 + n_z*xdim0_set_val*ydim0_set_val*1*1,
+        ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_set_val*1*1 + n_z*xdim0_set_val*ydim0_set_val*1*1, xdim0_set_val, ydim0_set_val};
+        set_val( ptr0,
            &p_a1 );
 
       }

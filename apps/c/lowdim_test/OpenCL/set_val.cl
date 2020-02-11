@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_3D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,21 +44,14 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_set_val*(y)+xdim0_set_val*ydim0_set_val*(z))
-
-
 //user function
-void set_val(__global double * restrict dat,const  double * restrict val)
 
-
+void set_val(ptr_double dat,
+  const double *val)
 {
 
-    dat[OPS_ACC0(0,0,0)] = *val;
+    OPS_ACCS(dat, 0,0,0) = *val;
 }
-
 
 
 __kernel void ops_set_val(
@@ -71,7 +68,8 @@ const int size2 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    set_val(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_set_val + idx_z * 1*1 * xdim0_set_val * ydim0_set_val],
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_set_val + idx_z * 1*1 * xdim0_set_val * ydim0_set_val], xdim0_set_val, ydim0_set_val};
+    set_val(ptr0,
                  &arg1);
   }
 

@@ -37,6 +37,6 @@ export HDF5_INSTALL_PATH=/opt/hdf5/1.8.18/intel/15.0u6/impi/5.0u3/
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/hdf5/1.8.18/intel/15.0u6/impi/5.0u3/lib/
 
 #Tridiagonal LIB
-export TDMA_INSTALL_PATH=/rr-home/gihan/tridsolver/scalar/build/
+export TRID_INSTALL_PATH=/rr-home/gihan/tridsolver/scalar/build/
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/tridsolver/scalar/build/lib/
 

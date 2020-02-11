@@ -4,56 +4,35 @@
 __constant__ int dims_calc [7][2];
 static int dims_calc_h [7][2] = {0};
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
-
-#define OPS_ACC0(x,y,z) (x+dims_calc[0][0]*(y)+dims_calc[0][0]*dims_calc[0][1]*(z))
-#define OPS_ACC1(x,y,z) (x+dims_calc[1][0]*(y)+dims_calc[1][0]*dims_calc[1][1]*(z))
-#define OPS_ACC2(x,y,z) (x+dims_calc[2][0]*(y)+dims_calc[2][0]*dims_calc[2][1]*(z))
-#define OPS_ACC3(x,y,z) (x+dims_calc[3][0]*(y)+dims_calc[3][0]*dims_calc[3][1]*(z))
-#define OPS_ACC4(x,y,z) (x+dims_calc[4][0]*(y)+dims_calc[4][0]*dims_calc[4][1]*(z))
-#define OPS_ACC5(x,y,z) (x+dims_calc[5][0]*(y)+dims_calc[5][0]*dims_calc[5][1]*(z))
-#define OPS_ACC6(x,y,z) (x+dims_calc[6][0]*(y)+dims_calc[6][0]*dims_calc[6][1]*(z))
-
 //user function
 __device__
 
-void calc_gpu(double *dat3D, const double *dat2D_xy,  const double *dat2D_yz, const double *dat2D_xz,
-    const double *dat1D_x,  const double *dat1D_y, const double *dat1D_z)
+void calc_gpu(ACC<double> &dat3D,
+  const ACC<double> &dat2D_xy,
+  const ACC<double> &dat2D_yz,
+  const ACC<double> &dat2D_xz,
+  const ACC<double> &dat1D_x,
+  const ACC<double> &dat1D_y,
+  const ACC<double> &dat1D_z)
 {
-  dat3D[OPS_ACC0(0,0,0)] = dat2D_xy[OPS_ACC1(0,0,0)] +
-                           dat2D_yz[OPS_ACC2(0,0,0)] +
-                           dat2D_xz[OPS_ACC3(0,0,0)] +
-                           dat1D_x[OPS_ACC4(0,0,0)] +
-                           dat1D_y[OPS_ACC5(0,0,0)] +
-                           dat1D_z[OPS_ACC6(0,0,0)];
+  dat3D(0,0,0) = dat2D_xy(0,0,0) +
+                           dat2D_yz(0,0,0) +
+                           dat2D_xz(0,0,0) +
+                           dat1D_x(0,0,0) +
+                           dat1D_y(0,0,0) +
+                           dat1D_z(0,0,0);
 }
 
 
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
-
 __global__ void ops_calc(
 double* __restrict arg0,
-const double* __restrict arg1,
-const double* __restrict arg2,
-const double* __restrict arg3,
-const double* __restrict arg4,
-const double* __restrict arg5,
-const double* __restrict arg6,
+double* __restrict arg1,
+double* __restrict arg2,
+double* __restrict arg3,
+double* __restrict arg4,
+double* __restrict arg5,
+double* __restrict arg6,
 int size0,
 int size1,
 int size2 ){
@@ -72,8 +51,15 @@ int size2 ){
   arg6 += idx_x * 0*1 + idx_y * 0*1 * dims_calc[6][0] + idx_z * 1*1 * dims_calc[6][0] * dims_calc[6][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    calc_gpu(arg0, arg1, arg2, arg3,
-                   arg4, arg5, arg6);
+    ACC<double> argp0(dims_calc[0][0], dims_calc[0][1], arg0);
+    const ACC<double> argp1(dims_calc[1][0], dims_calc[1][1], arg1);
+    const ACC<double> argp2(dims_calc[2][0], dims_calc[2][1], arg2);
+    const ACC<double> argp3(dims_calc[3][0], dims_calc[3][1], arg3);
+    const ACC<double> argp4(dims_calc[4][0], dims_calc[4][1], arg4);
+    const ACC<double> argp5(dims_calc[5][0], dims_calc[5][1], arg5);
+    const ACC<double> argp6(dims_calc[6][0], dims_calc[6][1], arg6);
+    calc_gpu(argp0, argp1, argp2, argp3,
+                   argp4, argp5, argp6);
   }
 
 }
@@ -109,9 +95,9 @@ void ops_par_loop_calc_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,7,range,7)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(7,"calc");
-    OPS_kernels[7].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,7,"calc");
+    block->instance->OPS_kernels[7].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -162,7 +148,7 @@ void ops_par_loop_calc_execute(ops_kernel_descriptor *desc) {
     dims_calc_h[5][1] = ydim5;
     dims_calc_h[6][0] = xdim6;
     dims_calc_h[6][1] = ydim6;
-    cutilSafeCall(cudaMemcpyToSymbol( dims_calc, dims_calc_h, sizeof(dims_calc)));
+    cutilSafeCall(block->instance->ostream(), cudaMemcpyToSymbol( dims_calc, dims_calc_h, sizeof(dims_calc)));
   }
 
 
@@ -171,18 +157,18 @@ void ops_par_loop_calc_execute(ops_kernel_descriptor *desc) {
   int y_size = MAX(0,end[1]-start[1]);
   int z_size = MAX(0,end[2]-start[2]);
 
-  dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, (z_size-1)/OPS_block_size_z +1);
-  dim3 tblock(OPS_block_size_x,OPS_block_size_y,OPS_block_size_z);
+  dim3 grid( (x_size-1)/block->instance->OPS_block_size_x+ 1, (y_size-1)/block->instance->OPS_block_size_y + 1, (z_size-1)/block->instance->OPS_block_size_z +1);
+  dim3 tblock(block->instance->OPS_block_size_x,block->instance->OPS_block_size_y,block->instance->OPS_block_size_z);
 
 
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
-  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
-  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
-  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
-  int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
-  int dat6 = (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size);
+  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  int dat2 = (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
+  int dat3 = (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
+  int dat4 = (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
+  int dat5 = (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
+  int dat6 = (block->instance->OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size);
 
   char *p_a[7];
 
@@ -270,9 +256,9 @@ void ops_par_loop_calc_execute(ops_kernel_descriptor *desc) {
   ops_halo_exchanges(args,7,range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[7].mpi_time += t2-t1;
+    block->instance->OPS_kernels[7].mpi_time += t2-t1;
   }
 
 
@@ -283,12 +269,12 @@ void ops_par_loop_calc_execute(ops_kernel_descriptor *desc) {
          (double *)p_a[4], (double *)p_a[5],
          (double *)p_a[6],x_size, y_size, z_size);
 
-  cutilSafeCall(cudaGetLastError());
+  cutilSafeCall(block->instance->ostream(), cudaGetLastError());
 
-  if (OPS_diags>1) {
-    cutilSafeCall(cudaDeviceSynchronize());
+  if (block->instance->OPS_diags>1) {
+    cutilSafeCall(block->instance->ostream(), cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
-    OPS_kernels[7].time += t1-t2;
+    block->instance->OPS_kernels[7].time += t1-t2;
   }
 
   #ifndef OPS_LAZY
@@ -296,24 +282,24 @@ void ops_par_loop_calc_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[0],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[7].mpi_time += t2-t1;
-    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[7].mpi_time += t2-t1;
+    block->instance->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[7].transfer += ops_compute_transfer(dim, start, end, &arg6);
   }
 }
 
 #ifdef OPS_LAZY
 void ops_par_loop_calc(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2, ops_arg arg3, ops_arg arg4, ops_arg arg5, ops_arg arg6) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -343,8 +329,8 @@ void ops_par_loop_calc(char const *name, ops_block block, int dim, int* range,
   desc->args[6] = arg6;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg6.dat->index;
   desc->function = ops_par_loop_calc_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(7,"calc");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,7,"calc");
   }
   ops_enqueue_kernel(desc);
 }
