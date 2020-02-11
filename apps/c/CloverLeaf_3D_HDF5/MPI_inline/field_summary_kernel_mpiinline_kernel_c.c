@@ -37,15 +37,15 @@ void field_summary_kernel_c_wrapper(
     for (int n_y = 0; n_y < y_size; n_y++) {
       for (int n_x = 0; n_x < x_size; n_x++) {
         double vol[1];
-        vol[0] = ZERO_double;
+        vol[0] = 0;
         double mass[1];
-        mass[0] = ZERO_double;
+        mass[0] = 0;
         double ie[1];
-        ie[0] = ZERO_double;
+        ie[0] = 0;
         double ke[1];
-        ke[0] = ZERO_double;
+        ke[0] = 0;
         double press[1];
-        press[0] = ZERO_double;
+        press[0] = 0;
         const ptr_double volume = {
             volume_p + n_x * 1 + n_y * xdim0_field_summary_kernel * 1 +
                 n_z * xdim0_field_summary_kernel * ydim0_field_summary_kernel *

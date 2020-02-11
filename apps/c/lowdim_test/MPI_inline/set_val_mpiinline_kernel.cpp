@@ -30,9 +30,9 @@ void ops_par_loop_set_val(char const *name, ops_block block, int dim, int* range
   if (!ops_checkpointing_before(args,2,range,6)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(6,"set_val");
-    OPS_kernels[6].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,6,"set_val");
+    block->instance->OPS_kernels[6].count++;
   }
 
   //compute localy allocated range for the sub-block
@@ -54,12 +54,12 @@ void ops_par_loop_set_val(char const *name, ops_block block, int dim, int* range
   int y_size = MAX(0,end[1]-start[1]);
   int z_size = MAX(0,end[2]-start[2]);
 
-  xdim0 = args[0].dat->size[0];
-  ydim0 = args[0].dat->size[1];
+  int xdim0 = args[0].dat->size[0];
+  int ydim0 = args[0].dat->size[1];
 
   //Timing
   double t1,t2,c1,c2;
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
   }
 
@@ -71,14 +71,14 @@ void ops_par_loop_set_val(char const *name, ops_block block, int dim, int* range
   }
 
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0+ (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0+ (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
-  base0 = base0+ (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  base0 = base0+ (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     args[0].dat->size[1] *
     start[2] * args[0].stencil->stride[2];
@@ -92,9 +92,9 @@ void ops_par_loop_set_val(char const *name, ops_block block, int dim, int* range
   ops_H_D_exchanges_host(args, 2);
   ops_halo_exchanges(args,2,range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[6].mpi_time += t1-t2;
+    block->instance->OPS_kernels[6].mpi_time += t1-t2;
   }
 
   set_val_c_wrapper(
@@ -102,15 +102,15 @@ void ops_par_loop_set_val(char const *name, ops_block block, int dim, int* range
     p_a1,
     x_size, y_size, z_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[6].time += t2-t1;
+    block->instance->OPS_kernels[6].time += t2-t1;
   }
   ops_set_dirtybit_host(args, 2);
   ops_set_halo_dirtybit3(&args[0],range);
 
   //Update kernel record
-  if (OPS_diags > 1) {
-    OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg0);
+  if (block->instance->OPS_diags > 1) {
+    block->instance->OPS_kernels[6].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

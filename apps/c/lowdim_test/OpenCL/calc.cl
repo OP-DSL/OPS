@@ -9,6 +9,10 @@
 #endif
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
+#define OPS_3D
+#define OPS_API 2
+#define OPS_NO_GLOBALS
+#include "ops_macros.h"
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
@@ -40,38 +44,23 @@
 #define INFINITY_ull INFINITY;
 #define ZERO_bool 0;
 
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_calc*(y)+xdim0_calc*ydim0_calc*(z))
-#define OPS_ACC1(x,y,z) (x+xdim1_calc*(y)+xdim1_calc*ydim1_calc*(z))
-#define OPS_ACC2(x,y,z) (x+xdim2_calc*(y)+xdim2_calc*ydim2_calc*(z))
-#define OPS_ACC3(x,y,z) (x+xdim3_calc*(y)+xdim3_calc*ydim3_calc*(z))
-#define OPS_ACC4(x,y,z) (x+xdim4_calc*(y)+xdim4_calc*ydim4_calc*(z))
-#define OPS_ACC5(x,y,z) (x+xdim5_calc*(y)+xdim5_calc*ydim5_calc*(z))
-#define OPS_ACC6(x,y,z) (x+xdim6_calc*(y)+xdim6_calc*ydim6_calc*(z))
-
-
 //user function
-void calc(__global double * restrict dat3D,const __global double * restrict dat2D_xy,const __global double * restrict dat2D_yz,
-const __global double * restrict dat2D_xz,const __global double * restrict dat1D_x,const __global double * restrict dat1D_y,const __global double * restrict dat1D_z)
 
-
+void calc(ptr_double dat3D,
+  const ptr_double dat2D_xy,
+  const ptr_double dat2D_yz,
+  const ptr_double dat2D_xz,
+  const ptr_double dat1D_x,
+  const ptr_double dat1D_y,
+  const ptr_double dat1D_z)
 {
-  dat3D[OPS_ACC0(0,0,0)] = dat2D_xy[OPS_ACC1(0,0,0)] +
-                           dat2D_yz[OPS_ACC2(0,0,0)] +
-                           dat2D_xz[OPS_ACC3(0,0,0)] +
-                           dat1D_x[OPS_ACC4(0,0,0)] +
-                           dat1D_y[OPS_ACC5(0,0,0)] +
-                           dat1D_z[OPS_ACC6(0,0,0)];
+  OPS_ACCS(dat3D, 0,0,0) = OPS_ACCS(dat2D_xy, 0,0,0) +
+                           OPS_ACCS(dat2D_yz, 0,0,0) +
+                           OPS_ACCS(dat2D_xz, 0,0,0) +
+                           OPS_ACCS(dat1D_x, 0,0,0) +
+                           OPS_ACCS(dat1D_y, 0,0,0) +
+                           OPS_ACCS(dat1D_z, 0,0,0);
 }
-
 
 
 __kernel void ops_calc(
@@ -99,13 +88,20 @@ const int size2 ){
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    calc(&arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_calc + idx_z * 1*1 * xdim0_calc * ydim0_calc],
-              &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_calc + idx_z * 0*1 * xdim1_calc * ydim1_calc],
-              &arg2[base2 + idx_x * 0*1 + idx_y * 1*1 * xdim2_calc + idx_z * 1*1 * xdim2_calc * ydim2_calc],
-              &arg3[base3 + idx_x * 1*1 + idx_y * 0*1 * xdim3_calc + idx_z * 1*1 * xdim3_calc * ydim3_calc],
-              &arg4[base4 + idx_x * 1*1 + idx_y * 0*1 * xdim4_calc + idx_z * 0*1 * xdim4_calc * ydim4_calc],
-              &arg5[base5 + idx_x * 0*1 + idx_y * 1*1 * xdim5_calc + idx_z * 0*1 * xdim5_calc * ydim5_calc],
-              &arg6[base6 + idx_x * 0*1 + idx_y * 0*1 * xdim6_calc + idx_z * 1*1 * xdim6_calc * ydim6_calc]);
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_calc + idx_z * 1*1 * xdim0_calc * ydim0_calc], xdim0_calc, ydim0_calc};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_calc + idx_z * 0*1 * xdim1_calc * ydim1_calc], xdim1_calc, ydim1_calc};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 0*1 + idx_y * 1*1 * xdim2_calc + idx_z * 1*1 * xdim2_calc * ydim2_calc], xdim2_calc, ydim2_calc};
+    const ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 0*1 * xdim3_calc + idx_z * 1*1 * xdim3_calc * ydim3_calc], xdim3_calc, ydim3_calc};
+    const ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1 + idx_y * 0*1 * xdim4_calc + idx_z * 0*1 * xdim4_calc * ydim4_calc], xdim4_calc, ydim4_calc};
+    const ptr_double ptr5 = { &arg5[base5 + idx_x * 0*1 + idx_y * 1*1 * xdim5_calc + idx_z * 0*1 * xdim5_calc * ydim5_calc], xdim5_calc, ydim5_calc};
+    const ptr_double ptr6 = { &arg6[base6 + idx_x * 0*1 + idx_y * 0*1 * xdim6_calc + idx_z * 1*1 * xdim6_calc * ydim6_calc], xdim6_calc, ydim6_calc};
+    calc(ptr0,
+              ptr1,
+              ptr2,
+              ptr3,
+              ptr4,
+              ptr5,
+              ptr6);
   }
 
 }

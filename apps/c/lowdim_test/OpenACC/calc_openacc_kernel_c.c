@@ -19,46 +19,24 @@ int ydim5_calc;
 int xdim6_calc;
 int ydim6_calc;
 
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
-
-#define OPS_ACC0(x,y,z) (x+xdim0_calc*(y)+xdim0_calc*ydim0_calc*(z))
-#define OPS_ACC1(x,y,z) (x+xdim1_calc*(y)+xdim1_calc*ydim1_calc*(z))
-#define OPS_ACC2(x,y,z) (x+xdim2_calc*(y)+xdim2_calc*ydim2_calc*(z))
-#define OPS_ACC3(x,y,z) (x+xdim3_calc*(y)+xdim3_calc*ydim3_calc*(z))
-#define OPS_ACC4(x,y,z) (x+xdim4_calc*(y)+xdim4_calc*ydim4_calc*(z))
-#define OPS_ACC5(x,y,z) (x+xdim5_calc*(y)+xdim5_calc*ydim5_calc*(z))
-#define OPS_ACC6(x,y,z) (x+xdim6_calc*(y)+xdim6_calc*ydim6_calc*(z))
-
 //user function
+#pragma acc routine
 inline 
-void calc(double *dat3D, const double *dat2D_xy,  const double *dat2D_yz, const double *dat2D_xz,
-    const double *dat1D_x,  const double *dat1D_y, const double *dat1D_z)
+void calc(ptr_double dat3D,
+  const ptr_double dat2D_xy,
+  const ptr_double dat2D_yz,
+  const ptr_double dat2D_xz,
+  const ptr_double dat1D_x,
+  const ptr_double dat1D_y,
+  const ptr_double dat1D_z)
 {
-  dat3D[OPS_ACC0(0,0,0)] = dat2D_xy[OPS_ACC1(0,0,0)] +
-                           dat2D_yz[OPS_ACC2(0,0,0)] +
-                           dat2D_xz[OPS_ACC3(0,0,0)] +
-                           dat1D_x[OPS_ACC4(0,0,0)] +
-                           dat1D_y[OPS_ACC5(0,0,0)] +
-                           dat1D_z[OPS_ACC6(0,0,0)];
+  OPS_ACC(dat3D, 0,0,0) = OPS_ACC(dat2D_xy, 0,0,0) +
+                           OPS_ACC(dat2D_yz, 0,0,0) +
+                           OPS_ACC(dat2D_xz, 0,0,0) +
+                           OPS_ACC(dat1D_x, 0,0,0) +
+                           OPS_ACC(dat1D_y, 0,0,0) +
+                           OPS_ACC(dat1D_z, 0,0,0);
 }
-
-
-#undef OPS_ACC0
-#undef OPS_ACC1
-#undef OPS_ACC2
-#undef OPS_ACC3
-#undef OPS_ACC4
-#undef OPS_ACC5
-#undef OPS_ACC6
-
 
 
 void calc_c_wrapper(
@@ -83,13 +61,20 @@ void calc_c_wrapper(
       #pragma acc loop
       #endif
       for ( int n_x=0; n_x<x_size; n_x++ ){
-        calc(  p_a0 + n_x*1*1 + n_y*xdim0_calc*1*1 + n_z*xdim0_calc*ydim0_calc*1*1,
-           p_a1 + n_x*1*1 + n_y*xdim1_calc*1*1 + n_z*xdim1_calc*ydim1_calc*0*1,
-           p_a2 + n_x*0*1 + n_y*xdim2_calc*1*1 + n_z*xdim2_calc*ydim2_calc*1*1,
-           p_a3 + n_x*1*1 + n_y*xdim3_calc*0*1 + n_z*xdim3_calc*ydim3_calc*1*1,
-           p_a4 + n_x*1*1 + n_y*xdim4_calc*0*1 + n_z*xdim4_calc*ydim4_calc*0*1,
-           p_a5 + n_x*0*1 + n_y*xdim5_calc*1*1 + n_z*xdim5_calc*ydim5_calc*0*1,
-           p_a6 + n_x*0*1 + n_y*xdim6_calc*0*1 + n_z*xdim6_calc*ydim6_calc*1*1 );
+        ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_calc*1*1 + n_z*xdim0_calc*ydim0_calc*1*1, xdim0_calc, ydim0_calc};
+        const ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_calc*1*1 + n_z*xdim1_calc*ydim1_calc*0*1, xdim1_calc, ydim1_calc};
+        const ptr_double ptr2 = {  p_a2 + n_x*0*1 + n_y*xdim2_calc*1*1 + n_z*xdim2_calc*ydim2_calc*1*1, xdim2_calc, ydim2_calc};
+        const ptr_double ptr3 = {  p_a3 + n_x*1*1 + n_y*xdim3_calc*0*1 + n_z*xdim3_calc*ydim3_calc*1*1, xdim3_calc, ydim3_calc};
+        const ptr_double ptr4 = {  p_a4 + n_x*1*1 + n_y*xdim4_calc*0*1 + n_z*xdim4_calc*ydim4_calc*0*1, xdim4_calc, ydim4_calc};
+        const ptr_double ptr5 = {  p_a5 + n_x*0*1 + n_y*xdim5_calc*1*1 + n_z*xdim5_calc*ydim5_calc*0*1, xdim5_calc, ydim5_calc};
+        const ptr_double ptr6 = {  p_a6 + n_x*0*1 + n_y*xdim6_calc*0*1 + n_z*xdim6_calc*ydim6_calc*1*1, xdim6_calc, ydim6_calc};
+        calc( ptr0,
+          ptr1,
+          ptr2,
+          ptr3,
+          ptr4,
+          ptr5,
+          ptr6 );
 
       }
     }

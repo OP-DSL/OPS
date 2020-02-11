@@ -7,7 +7,7 @@ void ops_init_backend();
 #include <string.h>
 #include <math.h>
 #define OPS_3D
-#include  "ops_lib_cpp.h"
+#include  "ops_lib_core.h"
 
 //
 // ops_par_loop declarations
@@ -53,7 +53,8 @@ void ops_par_loop_calc(char const *, ops_block, int , int*,
 
 #include "lowdim_kernels.h"
 
-int main(int argc, const char **argv) {
+int main(int argc, char **argv)
+{
 
   ops_init(argc,argv,1);
   ops_init_backend();

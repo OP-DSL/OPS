@@ -39,9 +39,9 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
     return;
 #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(99, "calc_dt_kernel_get");
-    OPS_kernels[99].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance, 99, "calc_dt_kernel_get");
+    block->instance->OPS_kernels[99].count++;
   }
 
   // compute localy allocated range for the sub-block
@@ -74,7 +74,7 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 
   // Timing
   double t1, t2, c1, c2;
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
   }
 
@@ -119,31 +119,40 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 #else
   double *arg5h = (double *)(((ops_reduction)args[5].data)->data);
 #endif
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
-  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
+  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size
+                                       : args[0].dat->elem_size);
+  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size
+                                       : args[1].dat->elem_size);
+  int dat4 = (block->instance->OPS_soa ? args[4].dat->type_size
+                                       : args[4].dat->elem_size);
 
   // set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset +
-              (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+              (block->instance->OPS_soa ? args[0].dat->type_size
+                                        : args[0].dat->elem_size) *
                   start[0] * args[0].stencil->stride[0];
   base0 = base0 +
-          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+          (block->instance->OPS_soa ? args[0].dat->type_size
+                                    : args[0].dat->elem_size) *
               args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
   base0 = base0 +
-          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+          (block->instance->OPS_soa ? args[0].dat->type_size
+                                    : args[0].dat->elem_size) *
               args[0].dat->size[0] * args[0].dat->size[1] * start[2] *
               args[0].stencil->stride[2];
   double *p_a0 = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset +
-              (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+              (block->instance->OPS_soa ? args[1].dat->type_size
+                                        : args[1].dat->elem_size) *
                   start[0] * args[1].stencil->stride[0];
   base1 = base1 +
-          (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+          (block->instance->OPS_soa ? args[1].dat->type_size
+                                    : args[1].dat->elem_size) *
               args[1].dat->size[0] * start[1] * args[1].stencil->stride[1];
   base1 = base1 +
-          (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+          (block->instance->OPS_soa ? args[1].dat->type_size
+                                    : args[1].dat->elem_size) *
               args[1].dat->size[0] * args[1].dat->size[1] * start[2] *
               args[1].stencil->stride[2];
   double *p_a1 = (double *)(args[1].data + base1);
@@ -163,13 +172,16 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
 #endif
 
   int base4 = args[4].dat->base_offset +
-              (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+              (block->instance->OPS_soa ? args[4].dat->type_size
+                                        : args[4].dat->elem_size) *
                   start[0] * args[4].stencil->stride[0];
   base4 = base4 +
-          (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+          (block->instance->OPS_soa ? args[4].dat->type_size
+                                    : args[4].dat->elem_size) *
               args[4].dat->size[0] * start[1] * args[4].stencil->stride[1];
   base4 = base4 +
-          (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+          (block->instance->OPS_soa ? args[4].dat->type_size
+                                    : args[4].dat->elem_size) *
               args[4].dat->size[0] * args[4].dat->size[1] * start[2] *
               args[4].stencil->stride[2];
   double *p_a4 = (double *)(args[4].data + base4);
@@ -184,24 +196,27 @@ void ops_par_loop_calc_dt_kernel_get(char const *name, ops_block block, int dim,
   ops_H_D_exchanges_host(args, 6);
   ops_halo_exchanges(args, 6, range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[99].mpi_time += t1 - t2;
+    block->instance->OPS_kernels[99].mpi_time += t1 - t2;
   }
 
   calc_dt_kernel_get_c_wrapper(p_a0, p_a1, p_a2, p_a3, p_a4, p_a5, x_size,
                                y_size, z_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[99].time += t2 - t1;
+    block->instance->OPS_kernels[99].time += t2 - t1;
   }
   ops_set_dirtybit_host(args, 6);
 
   // Update kernel record
-  if (OPS_diags > 1) {
-    OPS_kernels[99].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[99].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[99].transfer += ops_compute_transfer(dim, start, end, &arg4);
+  if (block->instance->OPS_diags > 1) {
+    block->instance->OPS_kernels[99].transfer +=
+        ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[99].transfer +=
+        ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[99].transfer +=
+        ops_compute_transfer(dim, start, end, &arg4);
   }
 }

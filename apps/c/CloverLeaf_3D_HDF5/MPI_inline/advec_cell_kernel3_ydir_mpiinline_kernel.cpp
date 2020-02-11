@@ -62,9 +62,9 @@ void ops_par_loop_advec_cell_kernel3_ydir(char const *name, ops_block block,
     return;
 #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(114, "advec_cell_kernel3_ydir");
-    OPS_kernels[114].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance, 114, "advec_cell_kernel3_ydir");
+    block->instance->OPS_kernels[114].count++;
   }
 
   // compute localy allocated range for the sub-block
@@ -107,7 +107,7 @@ void ops_par_loop_advec_cell_kernel3_ydir(char const *name, ops_block block,
 
   // Timing
   double t1, t2, c1, c2;
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
   }
 
@@ -161,108 +161,140 @@ void ops_par_loop_advec_cell_kernel3_ydir(char const *name, ops_block block,
     ydim7_advec_cell_kernel3_ydir_h = ydim7;
   }
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
-  int dat2 = (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
-  int dat3 = (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
-  int dat4 = (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
-  int dat5 = (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
-  int dat6 = (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size);
-  int dat7 = (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size);
+  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size
+                                       : args[0].dat->elem_size);
+  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size
+                                       : args[1].dat->elem_size);
+  int dat2 = (block->instance->OPS_soa ? args[2].dat->type_size
+                                       : args[2].dat->elem_size);
+  int dat3 = (block->instance->OPS_soa ? args[3].dat->type_size
+                                       : args[3].dat->elem_size);
+  int dat4 = (block->instance->OPS_soa ? args[4].dat->type_size
+                                       : args[4].dat->elem_size);
+  int dat5 = (block->instance->OPS_soa ? args[5].dat->type_size
+                                       : args[5].dat->elem_size);
+  int dat6 = (block->instance->OPS_soa ? args[6].dat->type_size
+                                       : args[6].dat->elem_size);
+  int dat7 = (block->instance->OPS_soa ? args[7].dat->type_size
+                                       : args[7].dat->elem_size);
 
   // set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset +
-              (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+              (block->instance->OPS_soa ? args[0].dat->type_size
+                                        : args[0].dat->elem_size) *
                   start[0] * args[0].stencil->stride[0];
   base0 = base0 +
-          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+          (block->instance->OPS_soa ? args[0].dat->type_size
+                                    : args[0].dat->elem_size) *
               args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
   base0 = base0 +
-          (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+          (block->instance->OPS_soa ? args[0].dat->type_size
+                                    : args[0].dat->elem_size) *
               args[0].dat->size[0] * args[0].dat->size[1] * start[2] *
               args[0].stencil->stride[2];
   double *p_a0 = (double *)(args[0].data + base0);
 
   int base1 = args[1].dat->base_offset +
-              (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+              (block->instance->OPS_soa ? args[1].dat->type_size
+                                        : args[1].dat->elem_size) *
                   start[0] * args[1].stencil->stride[0];
   base1 = base1 +
-          (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+          (block->instance->OPS_soa ? args[1].dat->type_size
+                                    : args[1].dat->elem_size) *
               args[1].dat->size[0] * start[1] * args[1].stencil->stride[1];
   base1 = base1 +
-          (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+          (block->instance->OPS_soa ? args[1].dat->type_size
+                                    : args[1].dat->elem_size) *
               args[1].dat->size[0] * args[1].dat->size[1] * start[2] *
               args[1].stencil->stride[2];
   double *p_a1 = (double *)(args[1].data + base1);
 
   int base2 = args[2].dat->base_offset +
-              (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+              (block->instance->OPS_soa ? args[2].dat->type_size
+                                        : args[2].dat->elem_size) *
                   start[0] * args[2].stencil->stride[0];
   base2 = base2 +
-          (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+          (block->instance->OPS_soa ? args[2].dat->type_size
+                                    : args[2].dat->elem_size) *
               args[2].dat->size[0] * start[1] * args[2].stencil->stride[1];
   base2 = base2 +
-          (OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) *
+          (block->instance->OPS_soa ? args[2].dat->type_size
+                                    : args[2].dat->elem_size) *
               args[2].dat->size[0] * args[2].dat->size[1] * start[2] *
               args[2].stencil->stride[2];
   int *p_a2 = (int *)(args[2].data + base2);
 
   int base3 = args[3].dat->base_offset +
-              (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+              (block->instance->OPS_soa ? args[3].dat->type_size
+                                        : args[3].dat->elem_size) *
                   start[0] * args[3].stencil->stride[0];
   base3 = base3 +
-          (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+          (block->instance->OPS_soa ? args[3].dat->type_size
+                                    : args[3].dat->elem_size) *
               args[3].dat->size[0] * start[1] * args[3].stencil->stride[1];
   base3 = base3 +
-          (OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
+          (block->instance->OPS_soa ? args[3].dat->type_size
+                                    : args[3].dat->elem_size) *
               args[3].dat->size[0] * args[3].dat->size[1] * start[2] *
               args[3].stencil->stride[2];
   double *p_a3 = (double *)(args[3].data + base3);
 
   int base4 = args[4].dat->base_offset +
-              (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+              (block->instance->OPS_soa ? args[4].dat->type_size
+                                        : args[4].dat->elem_size) *
                   start[0] * args[4].stencil->stride[0];
   base4 = base4 +
-          (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+          (block->instance->OPS_soa ? args[4].dat->type_size
+                                    : args[4].dat->elem_size) *
               args[4].dat->size[0] * start[1] * args[4].stencil->stride[1];
   base4 = base4 +
-          (OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
+          (block->instance->OPS_soa ? args[4].dat->type_size
+                                    : args[4].dat->elem_size) *
               args[4].dat->size[0] * args[4].dat->size[1] * start[2] *
               args[4].stencil->stride[2];
   double *p_a4 = (double *)(args[4].data + base4);
 
   int base5 = args[5].dat->base_offset +
-              (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+              (block->instance->OPS_soa ? args[5].dat->type_size
+                                        : args[5].dat->elem_size) *
                   start[0] * args[5].stencil->stride[0];
   base5 = base5 +
-          (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+          (block->instance->OPS_soa ? args[5].dat->type_size
+                                    : args[5].dat->elem_size) *
               args[5].dat->size[0] * start[1] * args[5].stencil->stride[1];
   base5 = base5 +
-          (OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
+          (block->instance->OPS_soa ? args[5].dat->type_size
+                                    : args[5].dat->elem_size) *
               args[5].dat->size[0] * args[5].dat->size[1] * start[2] *
               args[5].stencil->stride[2];
   double *p_a5 = (double *)(args[5].data + base5);
 
   int base6 = args[6].dat->base_offset +
-              (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
+              (block->instance->OPS_soa ? args[6].dat->type_size
+                                        : args[6].dat->elem_size) *
                   start[0] * args[6].stencil->stride[0];
   base6 = base6 +
-          (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
+          (block->instance->OPS_soa ? args[6].dat->type_size
+                                    : args[6].dat->elem_size) *
               args[6].dat->size[0] * start[1] * args[6].stencil->stride[1];
   base6 = base6 +
-          (OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size) *
+          (block->instance->OPS_soa ? args[6].dat->type_size
+                                    : args[6].dat->elem_size) *
               args[6].dat->size[0] * args[6].dat->size[1] * start[2] *
               args[6].stencil->stride[2];
   double *p_a6 = (double *)(args[6].data + base6);
 
   int base7 = args[7].dat->base_offset +
-              (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) *
+              (block->instance->OPS_soa ? args[7].dat->type_size
+                                        : args[7].dat->elem_size) *
                   start[0] * args[7].stencil->stride[0];
   base7 = base7 +
-          (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) *
+          (block->instance->OPS_soa ? args[7].dat->type_size
+                                    : args[7].dat->elem_size) *
               args[7].dat->size[0] * start[1] * args[7].stencil->stride[1];
   base7 = base7 +
-          (OPS_soa ? args[7].dat->type_size : args[7].dat->elem_size) *
+          (block->instance->OPS_soa ? args[7].dat->type_size
+                                    : args[7].dat->elem_size) *
               args[7].dat->size[0] * args[7].dat->size[1] * start[2] *
               args[7].stencil->stride[2];
   double *p_a7 = (double *)(args[7].data + base7);
@@ -270,31 +302,39 @@ void ops_par_loop_advec_cell_kernel3_ydir(char const *name, ops_block block,
   ops_H_D_exchanges_host(args, 8);
   ops_halo_exchanges(args, 8, range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1, &t1);
-    OPS_kernels[114].mpi_time += t1 - t2;
+    block->instance->OPS_kernels[114].mpi_time += t1 - t2;
   }
 
   advec_cell_kernel3_ydir_c_wrapper(p_a0, p_a1, p_a2, p_a3, p_a4, p_a5, p_a6,
                                     p_a7, x_size, y_size, z_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2, &t2);
-    OPS_kernels[114].time += t2 - t1;
+    block->instance->OPS_kernels[114].time += t2 - t1;
   }
   ops_set_dirtybit_host(args, 8);
   ops_set_halo_dirtybit3(&args[6], range);
   ops_set_halo_dirtybit3(&args[7], range);
 
   // Update kernel record
-  if (OPS_diags > 1) {
-    OPS_kernels[114].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[114].transfer += ops_compute_transfer(dim, start, end, &arg1);
-    OPS_kernels[114].transfer += ops_compute_transfer(dim, start, end, &arg2);
-    OPS_kernels[114].transfer += ops_compute_transfer(dim, start, end, &arg3);
-    OPS_kernels[114].transfer += ops_compute_transfer(dim, start, end, &arg4);
-    OPS_kernels[114].transfer += ops_compute_transfer(dim, start, end, &arg5);
-    OPS_kernels[114].transfer += ops_compute_transfer(dim, start, end, &arg6);
-    OPS_kernels[114].transfer += ops_compute_transfer(dim, start, end, &arg7);
+  if (block->instance->OPS_diags > 1) {
+    block->instance->OPS_kernels[114].transfer +=
+        ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[114].transfer +=
+        ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[114].transfer +=
+        ops_compute_transfer(dim, start, end, &arg2);
+    block->instance->OPS_kernels[114].transfer +=
+        ops_compute_transfer(dim, start, end, &arg3);
+    block->instance->OPS_kernels[114].transfer +=
+        ops_compute_transfer(dim, start, end, &arg4);
+    block->instance->OPS_kernels[114].transfer +=
+        ops_compute_transfer(dim, start, end, &arg5);
+    block->instance->OPS_kernels[114].transfer +=
+        ops_compute_transfer(dim, start, end, &arg6);
+    block->instance->OPS_kernels[114].transfer +=
+        ops_compute_transfer(dim, start, end, &arg7);
   }
 }

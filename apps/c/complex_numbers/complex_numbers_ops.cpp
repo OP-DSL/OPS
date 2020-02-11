@@ -19,7 +19,7 @@ double deltai0;
 double deltat;
 
 #define OPS_1D
-#include "ops_lib_cpp.h"
+#include "ops_lib_core.h"
 
 //
 // ops_par_loop declarations
@@ -51,7 +51,7 @@ void ops_par_loop_complex_numbers_block0_cn_kernel(char const *, ops_block, int,
 
 //#include "complex_numbers_block_0_kernel.h"
 
-int main(int argc, const char **argv) {
+int main(int argc, char **argv) {
 
   c0 = 0.500000000000000;
   rc0 = 1.0 / 280.0;
@@ -192,6 +192,38 @@ int main(int argc, const char **argv) {
       ops_halo_transfer(halo_exchange0);
 
       ops_halo_transfer(halo_exchange1);
+    }
+
+    int iter_range0[] = {0, nx0};
+    ops_par_loop_complex_numbers_block0_0_kernel(
+        "D(phi[x0 t] x0)", complex_numbers_block, 1, iter_range0,
+        ops_arg_dat(phi, 1, stencil0, "double", OPS_READ),
+        ops_arg_dat(wk0, 1, stencil1, "double", OPS_WRITE));
+
+    int iter_range1[] = {0, nx0};
+    ops_par_loop_complex_numbers_block0_1_kernel(
+        "Residual of equation", complex_numbers_block, 1, iter_range1,
+        ops_arg_dat(wk0, 1, stencil1, "double", OPS_READ),
+        ops_arg_dat(wk1, 1, stencil1, "double", OPS_WRITE));
+
+    int iter_range2[] = {-4, nx0 + 4};
+    ops_par_loop_complex_numbers_block0_2_kernel(
+        "RK new (subloop) update", complex_numbers_block, 1, iter_range2,
+        ops_arg_dat(phi_old, 1, stencil1, "double", OPS_READ),
+        ops_arg_dat(wk1, 1, stencil1, "double", OPS_READ),
+        ops_arg_dat(phi, 1, stencil1, "double", OPS_WRITE),
+        ops_arg_gbl(&rknew[stage], 1, "double", OPS_READ));
+
+    int iter_range3[] = {-4, nx0 + 4};
+    ops_par_loop_complex_numbers_block0_3_kernel(
+        "RK old update", complex_numbers_block, 1, iter_range3,
+        ops_arg_dat(wk1, 1, stencil1, "double", OPS_READ),
+        ops_arg_dat(phi_old, 1, stencil1, "double", OPS_RW),
+        ops_arg_gbl(&rkold[stage], 1, "double", OPS_READ));
+
+    ops_halo_transfer(halo_exchange0);
+
+    ops_halo_transfer(halo_exchange1);
     }
 
     int iter_range0[] = {0, nx0};

@@ -39,8 +39,7 @@ void ops_decl_const_char2(int dim, char const *type, int size, char *dat,
   } else if (!strcmp(name, "dt")) {
     dt = *(double *)dat;
   } else {
-    printf("error: unknown const name\n");
-    exit(1);
+    throw OPSException(OPS_RUNTIME_ERROR, "error: unknown const name");
   }
 }
 
