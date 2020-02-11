@@ -43,6 +43,7 @@
 #include <float.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <cmath>
 
 #include <string>
 #if __cplusplus>=201103L
@@ -1442,13 +1443,13 @@ void ops_NaNcheck_core(ops_dat dat, char *buffer) {
                       :((n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i)*dat->dim + d);
                 if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
                     strcmp(dat->type, "double precision") == 0) {
-                  if (  isnan(((double *)dat->data)[offset])  ) {
+                  if (  std::isnan(((double *)dat->data)[offset])  ) {
                     printf("%sError: NaN detected at element %d\n", buffer, offset);
                     exit(2);
                   }
                 } else if (strcmp(dat->type, "float") == 0 ||
                            strcmp(dat->type, "real") == 0) {
-                  if (  isnan(((float *)dat->data)[offset])  ) {
+                  if (  std::isnan(((float *)dat->data)[offset])  ) {
                     printf("%sError: NaN detected at element %d\n", buffer, offset);
                     exit(2);
                   }
