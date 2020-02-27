@@ -763,7 +763,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       //
       // check attributes .. error if not equal
       //
-      char read_ops_type[10];
+      char read_ops_type[20];
       if (H5LTget_attribute_string(group_id, dat->name, "ops_type",
             read_ops_type) < 0) {
 
@@ -1009,7 +1009,7 @@ ops_block ops_decl_block_hdf5(int dims, const char *block_name,
   }
 
   // ops_block exists .. now check ops_type and dims
-  char read_ops_type[10];
+  char read_ops_type[20];
   if (H5LTget_attribute_string(file_id, block_name, "ops_type", read_ops_type) <
       0) {
     OPSException ex(OPS_HDF5_ERROR);
@@ -1091,7 +1091,7 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
   }
 
   // ops_stencil exists .. now check ops_type and dims
-  char read_ops_type[10];
+  char read_ops_type[20];
   if (H5LTget_attribute_string(file_id, stencil_name, "ops_type",
         read_ops_type) < 0) {
     OPSException ex(OPS_HDF5_ERROR);
@@ -1190,7 +1190,7 @@ ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
   }
 
   // ops_stencil exists .. now check ops_type
-  char read_ops_type[10];
+  char read_ops_type[20];
   if (H5LTget_attribute_string(file_id, halo_name, "ops_type", read_ops_type) <
       0) {
     OPSException ex(OPS_HDF5_ERROR);
@@ -1318,7 +1318,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   }
 
   // ops_dat exists .. now check ops_type, block_index, type and dim
-  char read_ops_type[10];
+  char read_ops_type[20];
   if (H5LTget_attribute_string(group_id, dat_name, "ops_type", read_ops_type) <
       0) {
     OPSException ex(OPS_HDF5_ERROR);
@@ -1763,7 +1763,7 @@ const char *ops_hdf5_type_to_string(hid_t t) {
     text = (char *)malloc(5 * sizeof(char));
     strcpy(text, "long");
   } else if (H5Tequal(t, H5T_NATIVE_LLONG)) {
-    text = (char *)malloc(10 * sizeof(char));
+    text = (char *)malloc(20 * sizeof(char));
     strcpy(text, "long long");
   } else if (H5Tequal(t, H5T_NATIVE_FLOAT)) {
     text = (char *)malloc(6 * sizeof(char));
