@@ -554,7 +554,7 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
   }
 
   // ops_stencil exists .. now check ops_type and dims
-  char read_ops_type[10];
+  char read_ops_type[20];
   if (H5LTget_attribute_string(file_id, stencil_name, "ops_type", read_ops_type) < 0) {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_stencil_hdf5: Attribute \"ops_type\" not found in stencil" << stencil_name;
@@ -642,7 +642,7 @@ ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
   }
 
     // ops_stencil exists .. now check ops_type
-  char read_ops_type[10];
+  char read_ops_type[20];
   if (H5LTget_attribute_string(file_id, halo_name, "ops_type", read_ops_type) < 0) {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_stencil_hdf5: Attribute \"ops_type\" not found in halo" << halo_name;
@@ -746,7 +746,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   }
 
   // ops_dat exists .. now check ops_type, block_index, type and dim
-  char read_ops_type[10];
+  char read_ops_type[20];
   if (H5LTget_attribute_string(group_id, dat_name, "ops_type", read_ops_type) < 0) {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_dat_hdf5: Attribute \"ops_type\" not found in data set" << dat_name;
@@ -782,7 +782,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
       throw ex;
     }
   }
-  char read_type[15];
+  char read_type[20];
   if (H5LTget_attribute_string(group_id, dat_name, "type", read_type) < 0) {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_dat_hdf5: Attribute \"type\" not found in data set " << dat_name;
