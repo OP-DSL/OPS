@@ -119,7 +119,7 @@ f_openacc: mkdir core
         $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o
 
 clean:
-	-rm -if $(F_OPS_OBJ)/*.o
+	-rm -if $(F_OPS_OBJ)/*.o $(F_OPS_OBJ)/*.optrpt
 	-rm -if $(F_OPS_LIB)/*.a
 	-rm -if $(F_OPS_SRC)/*~
 	-rm -if $(F_OPS_SRC)/*~
