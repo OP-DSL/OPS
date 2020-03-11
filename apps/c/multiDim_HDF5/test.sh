@@ -1,15 +1,16 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
-#<<COMMENT
 source ../../scripts/$SOURCE_INTEL
-make -j
+make clean
+make 
 cd -
+#<<COMMENT
+rm -f .generated
 ../../../ops_translator/c/ops.py write.cpp
 ../../../ops_translator/c/ops.py read.cpp
 make clean
-rm -f .generated
-make IEEE=1 -j
+make IEEE=1 
 
 
 
@@ -102,19 +103,21 @@ $MPI_INSTALL_PATH/bin/mpirun -np 2 ./read_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_S
 $HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 
+#COMMENT
+
 echo "All Intel complied applications PASSED"
 
 #cleanup
-rm integers.txt*
+rm -rf integers.txt*
 
 cd -
 source ../../scripts/$SOURCE_PGI
 
 make clean
-make -j
+make 
 cd -
 make clean
-make 
+make IEEE=1 
 
 #============================ Test write with PGI Compilers==========================================================
 echo '============> Running OpenMP'

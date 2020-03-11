@@ -1,6 +1,6 @@
 CC    := icc
-CXX     := icpc
-FC		:= ifort
+CXX   := icpc
+FC    := ifort
 ifdef DEBUG
 	CCFLAGS   := -O0 -xHost -g -std=c99
 	CXXFLAGS   := -O0 -g -xHost -DOPS_DEBUG -std=c++11
@@ -16,7 +16,8 @@ ifdef FAST
 	CCFLAGS += -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2
 	CXXFLAGS += -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2
 endif
-FFLAGS  = $(CXXFLAGS) -module $(F_INC_MOD)
+#FFLAGS  = $(CXXFLAGS) -module $(F_INC_MOD)
+FFLAGS  = -module $(F_INC_MOD)
 OMPFLAGS := -qopenmp
 ifdef THREADED
 	THREADING_FLAGS ?= -qopenmp

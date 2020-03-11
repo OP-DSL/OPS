@@ -111,7 +111,9 @@ void ops_par_loop_restrict_check_execute(ops_kernel_descriptor *desc) {
       const ACC<double> val(xdim0_restrict_check, val_p + n_x*1 + n_y * xdim0_restrict_check*1);
       int err[1];
       err[0] = p_a2[0];
+
       if (val(0, 0) != idx[0] * 4 + idx[1] * 4 * *sizex) {
+
         *err = 1;
   } else
     *err = 0;

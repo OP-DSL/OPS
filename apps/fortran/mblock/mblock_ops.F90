@@ -198,7 +198,6 @@ program MBLOCK
   call ops_print_dat_to_txtfile(data2, "data1.txt")
 
   npartitions_l = ops_dat_get_local_npartitions( data1 )
-  print *, ops_dat_get_local_npartitions( data1 )
   npartitions_g = ops_dat_get_global_npartitions( data1 )
   print *,"npartitions l and g ", npartitions_l, npartitions_g
   call ops_dat_get_extents(data1, 1, d_disp, d_size)

@@ -63,4 +63,5 @@ endif
 endif
 
 FLINK += -L$(F_OPS_LIB) $(CXXLINK)
+#FLINK += -L$(F_OPS_LIB)
 FMODS += -I$(F_INC_MOD) 
