@@ -789,10 +789,10 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_gbl':
         code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
         code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
-        if accs[n] == OPS_WRITE or dims[n] > 1:
+        if accs[n] == OPS_WRITE or int(dims[n]) > 1:
           code(typs[n]+', DIMENSION(:), POINTER :: opsDat'+str(n+1)+'Host')
         else:
-          code(typs[n]+', POINTER :: opsDat'+str(n+1)+'Host')
+          code(typs[n]+', DIMENSION(:), POINTER :: opsDat'+str(n+1)+'Host')
         if (accs[n] == OPS_INC or accs[n] == OPS_MAX or accs[n] == OPS_MIN):
           code(typs[n]+', DIMENSION(:), ALLOCATABLE :: reductionArrayHost'+str(n+1))
           code('INTEGER(kind=4) :: reductionCardinality'+str(n+1))

@@ -10,7 +10,7 @@
 #
 OPS_INSTALL_PATH := $(OPS_INSTALL_PATH)/c
 OPS_INC   = -I$(OPS_INSTALL_PATH)/include
-OPS_LIB   = -L$(OPS_INSTALL_PATH)/lib
+OPS_LIB   = -L$(OPS_INSTALL_PATH)/lib/$(OPS_COMPILER)
 CUDA_LIB = -L$(CUDA_INSTALL_PATH)/lib64
 CUDA_INC = -I$(CUDA_INSTALL_PATH)/include
 
@@ -32,10 +32,10 @@ else
 ifeq ($(OPS_COMPILER),intel)
   CPP   = icpc
 ifdef DEBUG
-  CCFLAGS = -O0 -g -no-prec-div $(HDF5_LIB) -qopenmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
+  CCFLAGS = -O0 -std=c++11 -g -no-prec-div $(HDF5_LIB) -qopenmp -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK #-DOPS_DEBUG
 else
   #CCFLAGS  = -O3 -ipo -no-prec-div -fp-model strict -fp-model source -prec-div -prec-sqrt -vec-report2 -xSSE4.2 -parallel #-DCOMM_PERF #-DDEBUG
-  CCFLAGS = -O3 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK#-vec-report
+  CCFLAGS = -O3 -std=c++11 -ipo -no-prec-div -restrict -fno-alias -fp-model strict -fp-model source -prec-div -prec-sqrt -DMPICH_IGNORE_CXX_SEEK#-vec-report
 endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -qopenmp
@@ -58,12 +58,12 @@ endif
   OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lintelocl -lOpenCL #for offload opencl execution on the phi
 else
 ifeq ($(OPS_COMPILER),pgi)
-  CPP     = pgCC
+  CPP     = pgc++
   CUDA_ALIGN_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
 ifdef DEBUG
-  CCFLAGS   = -O2 -Minline -Kieee -Minform=inform -Minfo=all
+  CCFLAGS   = -O2 -std=c++11 -Minline -Kieee -Minform=inform -Minfo=all
 else
-  CCFLAGS   = -O3 -Kieee -Minline -nofma #-Minform=severe -Minfo=all
+  CCFLAGS   = -O3 -std=c++11 -Kieee -Minline -nofma #-Minform=severe -Minfo=all
 endif
   CPPFLAGS  = $(CCFLAGS)
   OMPFLAGS  = -mp=nonuma
