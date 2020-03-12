@@ -921,7 +921,7 @@ void ops_dump_to_hdf5(char const *file_name) {
 /*******************************************************************************
 * Routine to copy over an ops_dat to a user specified memory pointer
 *******************************************************************************/
-char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
+extern "C" char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
 
   // fetch data onto the host ( if needed ) based on the backend
   ops_get_data(dat);

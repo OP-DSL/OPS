@@ -101,15 +101,15 @@ void ops_par_loop_write_kernel_execute(ops_kernel_descriptor *desc) {
   for ( int n_z=start[2]; n_z<end[2]; n_z++ ){
     for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
       #ifdef __INTEL_COMPILER
-#pragma loop_count(10000)
-#pragma omp simd
-#elif defined(__clang__)
-#pragma clang loop vectorize(assume_safety)
-#elif defined(__GNUC__)
-#pragma GCC ivdep
-#else
-#pragma simd
-#endif
+      #pragma loop_count(10000)
+      #pragma omp simd
+      #elif defined(__clang__)
+      #pragma clang loop vectorize(assume_safety)
+      #elif defined(__GNUC__)
+      #pragma GCC ivdep
+      #else
+      #pragma simd
+      #endif
       for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
         int idx[] = {arg_idx[0]+n_x, arg_idx[1]+n_y, arg_idx[2]+n_z};
         #ifdef OPS_SOA

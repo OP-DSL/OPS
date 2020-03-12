@@ -80,6 +80,9 @@
 #define OPS_ARG_DAT 1
 #define OPS_ARG_IDX 2
 
+typedef std::complex<double> complexd;
+typedef std::complex<float> complexf;
+
 /*
  * * zero constants
  * */
@@ -111,9 +114,13 @@
 #define INFINITY_ull ULLONG_MAX;
 
 #define ZERO_bool 0;
+
+#define ZERO_complexd complexd(0,0)
+#define INFINITY_complexd complexd(DBL_MAX,DBL_MAX)
+
+#define ZERO_complexf complexf(0,0)
+#define INFINITY_complexf complexf(FLT_MAX,FLT_MAX)
 #endif
-typedef std::complex<double> complexd;
-typedef std::complex<float> complexf;
 
 /**
  * type for memory space flags - 1 for host, 2 for device

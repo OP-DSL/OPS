@@ -230,6 +230,8 @@ def parse_signature(text):
   text2 = text2.replace('long','')
   text2 = text2.replace('float','')
   text2 = text2.replace('double','')
+  text2 = text2.replace('complexf','')
+  text2 = text2.replace('complexd','')
   text2 = text2.replace('*','')
   text2 = text2.replace('&','')
   text2 = text2.replace(')','')
