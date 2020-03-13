@@ -72,12 +72,13 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: index       ! index
     type(c_ptr)         :: block       ! block on which data is defined
     integer(kind=c_int) :: dims        ! number of elements per grid point
-    integer(kind=c_int) :: type_size;  ! bytes per primitive = elem_size/dim
-    integer(kind=c_int) :: elem_size;  ! number of bytes per grid point
+    integer(kind=c_int) :: type_size   ! bytes per primitive = elem_size/dim
+    integer(kind=c_int) :: elem_size   ! number of bytes per grid point
     type(c_ptr)         :: size        ! size of the array in each block dimension -- including halo
     type(c_ptr)         :: base        ! base offset to 0,0,... from the start of each dimension
     type(c_ptr)         :: d_m         ! halo depth in each dimension, negative direction (at 0 end)
     type(c_ptr)         :: d_p         ! halo depth in each dimension, positive direction (at size end)
+    integer(kind=c_int) :: x_pad       ! padding in x-dimension for allocating aligned memory
     type(c_ptr)         :: data        ! data on host
 #ifdef OPS_WITH_CUDAFOR
     type(c_devptr)      :: data_d      ! data on device
@@ -538,12 +539,12 @@ module OPS_Fortran_Declarations
       !Get the command line arguments - needs to be handled using Fortrn
       argc = command_argument_count()
 
+      call ops_init_c (0, C_NULL_PTR, diags)
       do i = 1, argc
         call get_command_argument(i, temp, len)
         call ops_set_args_c (argc, temp, len) !special function to set args
       end do
 
-      call ops_init_c (0, C_NULL_PTR, diags)
 
     end subroutine ops_init
 
