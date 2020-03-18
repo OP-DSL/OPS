@@ -46,3 +46,6 @@ export HDF5_INSTALL_PATH=/rr-home/gihan/HDF5-PGI-18
 export LD_LIBRARY_PATH=/rr-home/gihan/HDF5-PGI-18/lib:$LD_LIBRARY_PATH
 #/opt/hdf5/1.8.12/pgi/16.10/ompi/1.10.6/lib:$LD_LIBRARY_PATH
 #/opt/hdf5/1.8.18/pgi/16.10/ompi/1.10.6/lib:$LD_LIBRARY_PATH
+
+#OpenSBLI -- for testing app TGV only
+export OPENSBLI_INSTALL_PATH=/rr-home/gihan/OpenSBLI/OpenSBLI_OPS_TESTING/opensbli/
