@@ -49,6 +49,10 @@ cd ../adi
 echo "~~~~~~~~~~~~~~~mgrid~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mgrid
 ./test.sh
+echo "~~~~~~~~~~~~~~OpenSBLI TGV~~~~~~~~~~~~~~~~~~~~~~~~~~"
+cd $OPENSBLI_INSTALL_PATH/apps/taylor_green_vortex
+./test.sh
+cd -
 echo "All C/C++ application tests PASSED"
 
 echo "************Testing Fortran Applications *****************"
