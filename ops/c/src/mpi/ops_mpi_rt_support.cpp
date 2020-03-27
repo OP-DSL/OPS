@@ -43,9 +43,6 @@
 #include <ops_mpi_core.h>
 #include <ops_exceptions.h>
 
-// Timing
-double t1, t2, c1, c2;
-
 #define AGGREGATE
 int ops_buffer_size = 0;
 char *ops_buffer_send_1 = NULL;
