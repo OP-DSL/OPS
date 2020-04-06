@@ -21,134 +21,117 @@ int ydim6_advec_cell_kernel3_zdir;
 int xdim7_advec_cell_kernel3_zdir;
 int ydim7_advec_cell_kernel3_zdir;
 
-// user function
+//user function
 #pragma acc routine
 
-inline void
-advec_cell_kernel3_zdir(const ptr_double vol_flux_z, const ptr_double pre_vol,
-                        const ptr_int zz, const ptr_double vertexdz,
-                        const ptr_double density1, const ptr_double energy1,
-                        ptr_double mass_flux_z, ptr_double ener_flux) {
+inline void advec_cell_kernel3_zdir(const ptr_double vol_flux_z,
+  const ptr_double pre_vol,
+  const ptr_int zz,
+  const ptr_double vertexdz,
+  const ptr_double density1,
+  const ptr_double energy1,
+  ptr_double mass_flux_z,
+  ptr_double ener_flux) {
 
   double sigmat, sigmav, sigmam, sigma3, sigma4;
   double diffuw, diffdw, limiter;
-  double one_by_six = 1.0 / 6.0;
+  double one_by_six = 1.0/6.0;
 
-  int z_max = field.z_max;
+  int z_max=field.z_max;
 
-  int upwind, donor, downwind, dif;
+  int upwind,donor,downwind,dif;
 
-  if (OPS_ACC(vol_flux_z, 0, 0, 0) > 0.0) {
-    upwind = -2;
-    donor = -1;
+  if(OPS_ACC(vol_flux_z, 0,0,0) > 0.0) {
+    upwind   = -2;
+    donor    = -1;
     downwind = 0;
-    dif = donor;
-  } else if (OPS_ACC(zz, 0, 0, 1) < z_max + 2 - 2) {
-    upwind = 1;
-    donor = 0;
+    dif      = donor;
+  }
+  else if (OPS_ACC(zz, 0,0,1) < z_max+2-2) {
+    upwind   = 1;
+    donor    = 0;
     downwind = -1;
-    dif = upwind;
+    dif      = upwind;
   } else {
-    upwind = 0;
-    donor = 0;
+    upwind   = 0;
+    donor    = 0;
     downwind = -1;
-    dif = upwind;
+    dif      = upwind;
   }
 
-  sigmat = fabs(OPS_ACC(vol_flux_z, 0, 0, 0)) / OPS_ACC(pre_vol, 0, 0, donor);
-  sigma3 = (1.0 + sigmat) *
-           (OPS_ACC(vertexdz, 0, 0, 0) / OPS_ACC(vertexdz, 0, 0, dif));
+  sigmat = fabs(OPS_ACC(vol_flux_z, 0,0,0))/OPS_ACC(pre_vol, 0,0,donor);
+  sigma3 = (1.0 + sigmat)*(OPS_ACC(vertexdz, 0,0,0)/OPS_ACC(vertexdz, 0,0,dif));
   sigma4 = 2.0 - sigmat;
 
   sigmav = sigmat;
 
-  diffuw = OPS_ACC(density1, 0, 0, donor) - OPS_ACC(density1, 0, 0, upwind);
-  diffdw = OPS_ACC(density1, 0, 0, downwind) - OPS_ACC(density1, 0, 0, donor);
+  diffuw = OPS_ACC(density1, 0,0,donor) - OPS_ACC(density1, 0,0,upwind);
+  diffdw = OPS_ACC(density1, 0,0,downwind) - OPS_ACC(density1, 0,0,donor);
 
-  if ((diffuw * diffdw) > 0.0)
-    limiter = (1.0 - sigmav) * SIGN(1.0, diffdw) *
-              MIN(MIN(fabs(diffuw), fabs(diffdw)),
-                  one_by_six * (sigma3 * fabs(diffuw) + sigma4 * fabs(diffdw)));
+  if( (diffuw*diffdw) > 0.0)
+    limiter=(1.0 - sigmav) * SIGN(1.0 , diffdw) *
+    MIN( MIN(fabs(diffuw), fabs(diffdw)),
+    one_by_six * (sigma3*fabs(diffuw) + sigma4 * fabs(diffdw)));
   else
-    limiter = 0.0;
+    limiter=0.0;
 
-  OPS_ACC(mass_flux_z, 0, 0, 0) =
-      OPS_ACC(vol_flux_z, 0, 0, 0) * (OPS_ACC(density1, 0, 0, donor) + limiter);
+  OPS_ACC(mass_flux_z, 0,0,0) = OPS_ACC(vol_flux_z, 0,0,0) * ( OPS_ACC(density1, 0,0,donor) + limiter );
 
-  sigmam = fabs(OPS_ACC(mass_flux_z, 0, 0, 0)) /
-           (OPS_ACC(density1, 0, 0, donor) * OPS_ACC(pre_vol, 0, 0, donor));
-  diffuw = OPS_ACC(energy1, 0, 0, donor) - OPS_ACC(energy1, 0, 0, upwind);
-  diffdw = OPS_ACC(energy1, 0, 0, downwind) - OPS_ACC(energy1, 0, 0, donor);
+  sigmam = fabs(OPS_ACC(mass_flux_z, 0,0,0))/( OPS_ACC(density1, 0,0,donor) * OPS_ACC(pre_vol, 0,0,donor));
+  diffuw = OPS_ACC(energy1, 0,0,donor) - OPS_ACC(energy1, 0,0,upwind);
+  diffdw = OPS_ACC(energy1, 0,0,downwind) - OPS_ACC(energy1, 0,0,donor);
 
-  if ((diffuw * diffdw) > 0.0)
-    limiter = (1.0 - sigmam) * SIGN(1.0, diffdw) *
-              MIN(MIN(fabs(diffuw), fabs(diffdw)),
-                  one_by_six * (sigma3 * fabs(diffuw) + sigma4 * fabs(diffdw)));
+  if( (diffuw*diffdw) > 0.0)
+    limiter = (1.0 - sigmam) * SIGN(1.0,diffdw) *
+    MIN( MIN(fabs(diffuw), fabs(diffdw)),
+    one_by_six * (sigma3 * fabs(diffuw) + sigma4 * fabs(diffdw)));
   else
-    limiter = 0.0;
+    limiter=0.0;
 
-  OPS_ACC(ener_flux, 0, 0, 0) =
-      OPS_ACC(mass_flux_z, 0, 0, 0) * (OPS_ACC(energy1, 0, 0, donor) + limiter);
+  OPS_ACC(ener_flux, 0,0,0) = OPS_ACC(mass_flux_z, 0,0,0) * ( OPS_ACC(energy1, 0,0,donor) + limiter );
 }
 
-void advec_cell_kernel3_zdir_c_wrapper(double *p_a0, double *p_a1, int *p_a2,
-                                       double *p_a3, double *p_a4, double *p_a5,
-                                       double *p_a6, double *p_a7, int x_size,
-                                       int y_size, int z_size) {
-#ifdef OPS_GPU
-#pragma acc parallel deviceptr(p_a0, p_a1, p_a2, p_a3, p_a4, p_a5, p_a6, p_a7)
-#pragma acc loop
-#endif
-  for (int n_z = 0; n_z < z_size; n_z++) {
-#ifdef OPS_GPU
-#pragma acc loop
-#endif
-    for (int n_y = 0; n_y < y_size; n_y++) {
-#ifdef OPS_GPU
-#pragma acc loop
-#endif
-      for (int n_x = 0; n_x < x_size; n_x++) {
-        const ptr_double ptr0 = {
-            p_a0 + n_x * 1 * 1 + n_y * xdim0_advec_cell_kernel3_zdir * 1 * 1 +
-                n_z * xdim0_advec_cell_kernel3_zdir *
-                    ydim0_advec_cell_kernel3_zdir * 1 * 1,
-            xdim0_advec_cell_kernel3_zdir, ydim0_advec_cell_kernel3_zdir};
-        const ptr_double ptr1 = {
-            p_a1 + n_x * 1 * 1 + n_y * xdim1_advec_cell_kernel3_zdir * 1 * 1 +
-                n_z * xdim1_advec_cell_kernel3_zdir *
-                    ydim1_advec_cell_kernel3_zdir * 1 * 1,
-            xdim1_advec_cell_kernel3_zdir, ydim1_advec_cell_kernel3_zdir};
-        const ptr_int ptr2 = {
-            p_a2 + n_x * 0 * 1 + n_y * xdim2_advec_cell_kernel3_zdir * 0 * 1 +
-                n_z * xdim2_advec_cell_kernel3_zdir *
-                    ydim2_advec_cell_kernel3_zdir * 1 * 1,
-            xdim2_advec_cell_kernel3_zdir, ydim2_advec_cell_kernel3_zdir};
-        const ptr_double ptr3 = {
-            p_a3 + n_x * 0 * 1 + n_y * xdim3_advec_cell_kernel3_zdir * 0 * 1 +
-                n_z * xdim3_advec_cell_kernel3_zdir *
-                    ydim3_advec_cell_kernel3_zdir * 1 * 1,
-            xdim3_advec_cell_kernel3_zdir, ydim3_advec_cell_kernel3_zdir};
-        const ptr_double ptr4 = {
-            p_a4 + n_x * 1 * 1 + n_y * xdim4_advec_cell_kernel3_zdir * 1 * 1 +
-                n_z * xdim4_advec_cell_kernel3_zdir *
-                    ydim4_advec_cell_kernel3_zdir * 1 * 1,
-            xdim4_advec_cell_kernel3_zdir, ydim4_advec_cell_kernel3_zdir};
-        const ptr_double ptr5 = {
-            p_a5 + n_x * 1 * 1 + n_y * xdim5_advec_cell_kernel3_zdir * 1 * 1 +
-                n_z * xdim5_advec_cell_kernel3_zdir *
-                    ydim5_advec_cell_kernel3_zdir * 1 * 1,
-            xdim5_advec_cell_kernel3_zdir, ydim5_advec_cell_kernel3_zdir};
-        ptr_double ptr6 = {
-            p_a6 + n_x * 1 * 1 + n_y * xdim6_advec_cell_kernel3_zdir * 1 * 1 +
-                n_z * xdim6_advec_cell_kernel3_zdir *
-                    ydim6_advec_cell_kernel3_zdir * 1 * 1,
-            xdim6_advec_cell_kernel3_zdir, ydim6_advec_cell_kernel3_zdir};
-        ptr_double ptr7 = {
-            p_a7 + n_x * 1 * 1 + n_y * xdim7_advec_cell_kernel3_zdir * 1 * 1 +
-                n_z * xdim7_advec_cell_kernel3_zdir *
-                    ydim7_advec_cell_kernel3_zdir * 1 * 1,
-            xdim7_advec_cell_kernel3_zdir, ydim7_advec_cell_kernel3_zdir};
-        advec_cell_kernel3_zdir(ptr0, ptr1, ptr2, ptr3, ptr4, ptr5, ptr6, ptr7);
+
+void advec_cell_kernel3_zdir_c_wrapper(
+  double *p_a0,
+  double *p_a1,
+  int *p_a2,
+  double *p_a3,
+  double *p_a4,
+  double *p_a5,
+  double *p_a6,
+  double *p_a7,
+  int x_size, int y_size, int z_size) {
+  #ifdef OPS_GPU
+  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3,p_a4,p_a5,p_a6,p_a7)
+  #pragma acc loop
+  #endif
+  for ( int n_z=0; n_z<z_size; n_z++ ){
+    #ifdef OPS_GPU
+    #pragma acc loop
+    #endif
+    for ( int n_y=0; n_y<y_size; n_y++ ){
+      #ifdef OPS_GPU
+      #pragma acc loop
+      #endif
+      for ( int n_x=0; n_x<x_size; n_x++ ){
+        const ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_advec_cell_kernel3_zdir*1*1 + n_z*xdim0_advec_cell_kernel3_zdir*ydim0_advec_cell_kernel3_zdir*1*1, xdim0_advec_cell_kernel3_zdir, ydim0_advec_cell_kernel3_zdir};
+        const ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_advec_cell_kernel3_zdir*1*1 + n_z*xdim1_advec_cell_kernel3_zdir*ydim1_advec_cell_kernel3_zdir*1*1, xdim1_advec_cell_kernel3_zdir, ydim1_advec_cell_kernel3_zdir};
+        const ptr_int ptr2 = {  p_a2 + n_x*0*1 + n_y*xdim2_advec_cell_kernel3_zdir*0*1 + n_z*xdim2_advec_cell_kernel3_zdir*ydim2_advec_cell_kernel3_zdir*1*1, xdim2_advec_cell_kernel3_zdir, ydim2_advec_cell_kernel3_zdir};
+        const ptr_double ptr3 = {  p_a3 + n_x*0*1 + n_y*xdim3_advec_cell_kernel3_zdir*0*1 + n_z*xdim3_advec_cell_kernel3_zdir*ydim3_advec_cell_kernel3_zdir*1*1, xdim3_advec_cell_kernel3_zdir, ydim3_advec_cell_kernel3_zdir};
+        const ptr_double ptr4 = {  p_a4 + n_x*1*1 + n_y*xdim4_advec_cell_kernel3_zdir*1*1 + n_z*xdim4_advec_cell_kernel3_zdir*ydim4_advec_cell_kernel3_zdir*1*1, xdim4_advec_cell_kernel3_zdir, ydim4_advec_cell_kernel3_zdir};
+        const ptr_double ptr5 = {  p_a5 + n_x*1*1 + n_y*xdim5_advec_cell_kernel3_zdir*1*1 + n_z*xdim5_advec_cell_kernel3_zdir*ydim5_advec_cell_kernel3_zdir*1*1, xdim5_advec_cell_kernel3_zdir, ydim5_advec_cell_kernel3_zdir};
+        ptr_double ptr6 = {  p_a6 + n_x*1*1 + n_y*xdim6_advec_cell_kernel3_zdir*1*1 + n_z*xdim6_advec_cell_kernel3_zdir*ydim6_advec_cell_kernel3_zdir*1*1, xdim6_advec_cell_kernel3_zdir, ydim6_advec_cell_kernel3_zdir};
+        ptr_double ptr7 = {  p_a7 + n_x*1*1 + n_y*xdim7_advec_cell_kernel3_zdir*1*1 + n_z*xdim7_advec_cell_kernel3_zdir*ydim7_advec_cell_kernel3_zdir*1*1, xdim7_advec_cell_kernel3_zdir, ydim7_advec_cell_kernel3_zdir};
+        advec_cell_kernel3_zdir( ptr0,
+          ptr1,
+          ptr2,
+          ptr3,
+          ptr4,
+          ptr5,
+          ptr6,
+          ptr7 );
+
       }
     }
   }

@@ -6,27 +6,29 @@
 
 int xdim0_poisson_kernel_initialguess;
 
-// user function
+//user function
 #pragma acc routine
-inline void poisson_kernel_initialguess(ptr_double u) {
-  OPS_ACC(u, 0, 0) = 0.0;
+inline 
+void poisson_kernel_initialguess(ptr_double u) {
+  OPS_ACC(u, 0,0) = 0.0;
 }
 
-void poisson_kernel_initialguess_c_wrapper(double *p_a0, int x_size,
-                                           int y_size) {
-#ifdef OPS_GPU
-#pragma acc parallel deviceptr(p_a0)
-#pragma acc loop
-#endif
-  for (int n_y = 0; n_y < y_size; n_y++) {
-#ifdef OPS_GPU
-#pragma acc loop
-#endif
-    for (int n_x = 0; n_x < x_size; n_x++) {
-      ptr_double ptr0 = {p_a0 + n_x * 1 * 1 +
-                             n_y * xdim0_poisson_kernel_initialguess * 1 * 1,
-                         xdim0_poisson_kernel_initialguess};
-      poisson_kernel_initialguess(ptr0);
+
+void poisson_kernel_initialguess_c_wrapper(
+  double *p_a0,
+  int x_size, int y_size) {
+  #ifdef OPS_GPU
+  #pragma acc parallel deviceptr(p_a0)
+  #pragma acc loop
+  #endif
+  for ( int n_y=0; n_y<y_size; n_y++ ){
+    #ifdef OPS_GPU
+    #pragma acc loop
+    #endif
+    for ( int n_x=0; n_x<x_size; n_x++ ){
+      ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_poisson_kernel_initialguess*1*1, xdim0_poisson_kernel_initialguess};
+      poisson_kernel_initialguess( ptr0 );
+
     }
   }
 }

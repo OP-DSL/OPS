@@ -49,7 +49,6 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   int arg_idx[3];
 
   #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
   if (compute_ranges(args, 2,block, range, start, end, arg_idx) < 0) return;
   #else
   for ( int n=0; n<3; n++ ){
@@ -91,8 +90,6 @@ void ops_par_loop_multidim_copy_kernel(char const *name, ops_block block, int di
   }
 
 
-  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];

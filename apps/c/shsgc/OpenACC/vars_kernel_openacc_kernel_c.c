@@ -10,56 +10,69 @@ int xdim2_vars_kernel;
 int xdim3_vars_kernel;
 int xdim4_vars_kernel;
 
-// user function
+//user function
 #pragma acc routine
-inline void vars_kernel(const ptrm_double alam, const ptrm_double al,
-                        const ptrm_double gt, ptrm_double cmp, ptrm_double cf) {
+inline 
+void vars_kernel(const ptrm_double  alam,
+  const ptrm_double  al,
+  const ptrm_double gt,
+  ptrm_double  cmp,
+  ptrm_double  cf) {
 
-  double anu, aaa, ga, qf, ww;
-  for (int m = 0; m < 3; m++) {
-    anu = OPS_ACC(alam, m, 0);
-    aaa = OPS_ACC(al, m, 0);
-    ga = aaa * (OPS_ACC(gt, m, 1) - OPS_ACC(gt, m, 0)) / (pow(aaa, 2.0) + del2);
-    qf = sqrt(con + pow(anu, 2.0));
-    OPS_ACC(cmp, m, 0) = 0.50 * qf;
-    ww = anu + OPS_ACC(cmp, m, 0) * ga;
-    qf = sqrt(con + pow(ww, 2.0));
-    OPS_ACC(cf, m, 0) = qf;
-  }
+  double  anu, aaa, ga, qf, ww;
+  for (int m=0; m < 3 ;m++) {
+			anu = OPS_ACC(alam, m,0);
+			aaa = OPS_ACC(al, m,0);
+			ga = aaa * ( OPS_ACC(gt, m,1) - OPS_ACC(gt, m,0)) / (pow(aaa,2.0) + del2);
+			qf = sqrt ( con + pow(anu,2.0));
+			OPS_ACC(cmp, m,0) = 0.50 * qf;
+			ww = anu + OPS_ACC(cmp, m,0) * ga;
+			qf = sqrt(con + pow(ww,2.0));
+			OPS_ACC(cf, m,0) = qf;
+		}
 }
 
-void vars_kernel_c_wrapper(double *p_a0, double *p_a1, double *p_a2,
-                           double *p_a3, double *p_a4, int x_size) {
-#ifdef OPS_GPU
-#pragma acc parallel deviceptr(p_a0, p_a1, p_a2, p_a3, p_a4)
-#pragma acc loop
-#endif
-  for (int n_x = 0; n_x < x_size; n_x++) {
-#ifdef OPS_SOA
-    const ptrm_double ptr0 = {p_a0 + n_x * 1 * 3, xdim0_vars_kernel};
-#else
-    const ptrm_double ptr0 = {p_a0 + n_x * 1 * 3, 3};
-#endif
-#ifdef OPS_SOA
-    const ptrm_double ptr1 = {p_a1 + n_x * 1 * 3, xdim1_vars_kernel};
-#else
-    const ptrm_double ptr1 = {p_a1 + n_x * 1 * 3, 3};
-#endif
-#ifdef OPS_SOA
-    const ptrm_double ptr2 = {p_a2 + n_x * 1 * 3, xdim2_vars_kernel};
-#else
-    const ptrm_double ptr2 = {p_a2 + n_x * 1 * 3, 3};
-#endif
-#ifdef OPS_SOA
-    ptrm_double ptr3 = {p_a3 + n_x * 1 * 3, xdim3_vars_kernel};
-#else
-    ptrm_double ptr3 = {p_a3 + n_x * 1 * 3, 3};
-#endif
-#ifdef OPS_SOA
-    ptrm_double ptr4 = {p_a4 + n_x * 1 * 3, xdim4_vars_kernel};
-#else
-    ptrm_double ptr4 = {p_a4 + n_x * 1 * 3, 3};
-#endif
-    vars_kernel(ptr0, ptr1, ptr2, ptr3, ptr4);
+
+void vars_kernel_c_wrapper(
+  double *p_a0,
+  double *p_a1,
+  double *p_a2,
+  double *p_a3,
+  double *p_a4,
+  int x_size) {
+  #ifdef OPS_GPU
+  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3,p_a4)
+  #pragma acc loop
+  #endif
+  for ( int n_x=0; n_x<x_size; n_x++ ){
+    #ifdef OPS_SOA
+    const ptrm_double ptr0 = {  p_a0 + n_x*1*3, xdim0_vars_kernel};
+    #else
+    const ptrm_double ptr0 = {  p_a0 + n_x*1*3, 3};
+    #endif
+    #ifdef OPS_SOA
+    const ptrm_double ptr1 = {  p_a1 + n_x*1*3, xdim1_vars_kernel};
+    #else
+    const ptrm_double ptr1 = {  p_a1 + n_x*1*3, 3};
+    #endif
+    #ifdef OPS_SOA
+    const ptrm_double ptr2 = {  p_a2 + n_x*1*3, xdim2_vars_kernel};
+    #else
+    const ptrm_double ptr2 = {  p_a2 + n_x*1*3, 3};
+    #endif
+    #ifdef OPS_SOA
+    ptrm_double ptr3 = {  p_a3 + n_x*1*3, xdim3_vars_kernel};
+    #else
+    ptrm_double ptr3 = {  p_a3 + n_x*1*3, 3};
+    #endif
+    #ifdef OPS_SOA
+    ptrm_double ptr4 = {  p_a4 + n_x*1*3, xdim4_vars_kernel};
+    #else
+    ptrm_double ptr4 = {  p_a4 + n_x*1*3, 3};
+    #endif
+    vars_kernel( ptr0,
+          ptr1,ptr2,
+          ptr3,ptr4 );
+
   }
 }

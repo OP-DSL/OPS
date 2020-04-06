@@ -10,6 +10,14 @@ int xdim1_write_kernel;
 int ydim1_write_kernel;
 int xdim2_write_kernel;
 int ydim2_write_kernel;
+int xdim3_write_kernel;
+int ydim3_write_kernel;
+int xdim4_write_kernel;
+int ydim4_write_kernel;
+int xdim5_write_kernel;
+int ydim5_write_kernel;
+int xdim6_write_kernel;
+int ydim6_write_kernel;
 
 //user function
 #pragma acc routine
@@ -17,6 +25,10 @@ inline
 void write_kernel(ptrm_double mult,
   ptr_double single,
   ptr_int digit,
+  ptr_char dat_char,
+  ptr_short dat_short,
+  ptr_long dat_long,
+  ptr_ll dat_ll,
   const int *idx) {
 
   OPS_ACC(mult, 0, 0, 0, 0) = 1;
@@ -25,7 +37,11 @@ void write_kernel(ptrm_double mult,
 
   OPS_ACC(single, 0, 0, 0) = 3;
 
-  OPS_ACC(digit, 0, 0, 0) = idx[0] * 100 + idx[1] * 10 + idx[2];
+  OPS_ACC(digit, 0, 0, 0) = idx[0] + idx[1] * 4 + idx[2] * 20;
+  OPS_ACC(dat_char, 0, 0, 0) = idx[0] + idx[1] * 4 + idx[2] * 20;
+  OPS_ACC(dat_short, 0, 0, 0) = idx[0] + idx[1] * 4 + idx[2] * 20;
+  OPS_ACC(dat_long, 0, 0, 0) = idx[0] + idx[1] * 4 + idx[2] * 20;
+  OPS_ACC(dat_ll, 0, 0, 0) = idx[0] + idx[1] * 4 + idx[2] * 20;
 }
 
 
@@ -33,11 +49,15 @@ void write_kernel_c_wrapper(
   double *p_a0,
   double *p_a1,
   int *p_a2,
-  int *p_a3,
+  char *p_a3,
+  short *p_a4,
+  long *p_a5,
+  ll *p_a6,
+  int *p_a7,
   int arg_idx0, int arg_idx1, int arg_idx2,
   int x_size, int y_size, int z_size) {
   #ifdef OPS_GPU
-  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2)
+  #pragma acc parallel deviceptr(p_a0,p_a1,p_a2,p_a3,p_a4,p_a5,p_a6)
   #pragma acc loop
   #endif
   for ( int n_z=0; n_z<z_size; n_z++ ){
@@ -57,9 +77,17 @@ void write_kernel_c_wrapper(
         #endif
         ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_write_kernel*1*1 + n_z*xdim1_write_kernel*ydim1_write_kernel*1*1, xdim1_write_kernel, ydim1_write_kernel};
         ptr_int ptr2 = {  p_a2 + n_x*1*1 + n_y*xdim2_write_kernel*1*1 + n_z*xdim2_write_kernel*ydim2_write_kernel*1*1, xdim2_write_kernel, ydim2_write_kernel};
+        ptr_char ptr3 = {  p_a3 + n_x*1*1 + n_y*xdim3_write_kernel*1*1 + n_z*xdim3_write_kernel*ydim3_write_kernel*1*1, xdim3_write_kernel, ydim3_write_kernel};
+        ptr_short ptr4 = {  p_a4 + n_x*1*1 + n_y*xdim4_write_kernel*1*1 + n_z*xdim4_write_kernel*ydim4_write_kernel*1*1, xdim4_write_kernel, ydim4_write_kernel};
+        ptr_long ptr5 = {  p_a5 + n_x*1*1 + n_y*xdim5_write_kernel*1*1 + n_z*xdim5_write_kernel*ydim5_write_kernel*1*1, xdim5_write_kernel, ydim5_write_kernel};
+        ptr_ll ptr6 = {  p_a6 + n_x*1*1 + n_y*xdim6_write_kernel*1*1 + n_z*xdim6_write_kernel*ydim6_write_kernel*1*1, xdim6_write_kernel, ydim6_write_kernel};
         write_kernel( ptr0,
           ptr1,
           ptr2,
+          ptr3,
+          ptr4,
+          ptr5,
+          ptr6,
           arg_idx );
 
       }

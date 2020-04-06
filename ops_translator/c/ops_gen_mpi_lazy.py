@@ -294,10 +294,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('int end['+str(NDIM)+'];')
     if not (arg_idx!=-1) and not MULTI_GRID:
       code('#if defined(OPS_MPI) && !defined(OPS_LAZY)')
-    if MULTI_GRID:
-      code('#ifdef OPS_MPI')
+#    if MULTI_GRID:
+#      code('#ifdef OPS_MPI')
     code('int arg_idx['+str(NDIM)+'];')
-    if not (arg_idx!=-1 or MULTI_GRID):
+#    if not (arg_idx!=-1 and not MULTI_GRID):
+    if not (arg_idx!=-1) and not MULTI_GRID:
       code('#endif')
 
     code('#if defined(OPS_LAZY) || !defined(OPS_MPI)')
@@ -310,10 +311,16 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     code('')
     if arg_idx!=-1 or MULTI_GRID:
-      code('#ifdef OPS_MPI')
+      code('#if defined(OPS_MPI)')
+      code('#if defined(OPS_LAZY)')
+      code('sub_block_list sb = OPS_sub_block_list[block->index];')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+'];')
+      code('#else')
       for n in range (0,NDIM):
         code('arg_idx['+str(n)+'] -= start['+str(n)+'];')
-      code('#else')
+      code('#endif')
+      code('#else //OPS_MPI')
       for n in range (0,NDIM):
         code('arg_idx['+str(n)+'] = 0;')
       code('#endif //OPS_MPI')

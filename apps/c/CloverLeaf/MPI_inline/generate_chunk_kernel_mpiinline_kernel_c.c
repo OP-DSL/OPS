@@ -11,133 +11,120 @@ int xdim5_generate_chunk_kernel;
 int xdim6_generate_chunk_kernel;
 int xdim7_generate_chunk_kernel;
 
-// user function
+
+//user function
+
+
 
 void generate_chunk_kernel_c_wrapper(
-    double *restrict vertexx_p, double *restrict vertexy_p,
-    double *restrict energy0_p, double *restrict density0_p,
-    double *restrict xvel0_p, double *restrict yvel0_p,
-    double *restrict cellx_p, double *restrict celly_p, int x_size,
-    int y_size) {
-#pragma omp parallel for
-  for (int n_y = 0; n_y < y_size; n_y++) {
-    for (int n_x = 0; n_x < x_size; n_x++) {
-      const ptr_double vertexx = {vertexx_p + n_x * 1 +
-                                      n_y * xdim0_generate_chunk_kernel * 0,
-                                  xdim0_generate_chunk_kernel};
-      const ptr_double vertexy = {vertexy_p + n_x * 0 +
-                                      n_y * xdim1_generate_chunk_kernel * 1,
-                                  xdim1_generate_chunk_kernel};
-      ptr_double energy0 = {energy0_p + n_x * 1 +
-                                n_y * xdim2_generate_chunk_kernel * 1,
-                            xdim2_generate_chunk_kernel};
-      ptr_double density0 = {density0_p + n_x * 1 +
-                                 n_y * xdim3_generate_chunk_kernel * 1,
-                             xdim3_generate_chunk_kernel};
-      ptr_double xvel0 = {xvel0_p + n_x * 1 +
-                              n_y * xdim4_generate_chunk_kernel * 1,
-                          xdim4_generate_chunk_kernel};
-      ptr_double yvel0 = {yvel0_p + n_x * 1 +
-                              n_y * xdim5_generate_chunk_kernel * 1,
-                          xdim5_generate_chunk_kernel};
-      const ptr_double cellx = {cellx_p + n_x * 1 +
-                                    n_y * xdim6_generate_chunk_kernel * 0,
-                                xdim6_generate_chunk_kernel};
-      const ptr_double celly = {celly_p + n_x * 0 +
-                                    n_y * xdim7_generate_chunk_kernel * 1,
-                                xdim7_generate_chunk_kernel};
+  double * restrict vertexx_p,
+  double * restrict vertexy_p,
+  double * restrict energy0_p,
+  double * restrict density0_p,
+  double * restrict xvel0_p,
+  double * restrict yvel0_p,
+  double * restrict cellx_p,
+  double * restrict celly_p,
+  int x_size, int y_size) {
+  #pragma omp parallel for
+  for ( int n_y=0; n_y<y_size; n_y++ ){
+    for ( int n_x=0; n_x<x_size; n_x++ ){
+      const ptr_double vertexx = { vertexx_p + n_x*1 + n_y * xdim0_generate_chunk_kernel*0, xdim0_generate_chunk_kernel};
+      const ptr_double vertexy = { vertexy_p + n_x*0 + n_y * xdim1_generate_chunk_kernel*1, xdim1_generate_chunk_kernel};
+      ptr_double energy0 = { energy0_p + n_x*1 + n_y * xdim2_generate_chunk_kernel*1, xdim2_generate_chunk_kernel};
+      ptr_double density0 = { density0_p + n_x*1 + n_y * xdim3_generate_chunk_kernel*1, xdim3_generate_chunk_kernel};
+      ptr_double xvel0 = { xvel0_p + n_x*1 + n_y * xdim4_generate_chunk_kernel*1, xdim4_generate_chunk_kernel};
+      ptr_double yvel0 = { yvel0_p + n_x*1 + n_y * xdim5_generate_chunk_kernel*1, xdim5_generate_chunk_kernel};
+      const ptr_double cellx = { cellx_p + n_x*1 + n_y * xdim6_generate_chunk_kernel*0, xdim6_generate_chunk_kernel};
+      const ptr_double celly = { celly_p + n_x*0 + n_y * xdim7_generate_chunk_kernel*1, xdim7_generate_chunk_kernel};
+      
 
-      double radius, x_cent, y_cent;
-      int is_in = 0;
-      int is_in2 = 0;
+  double radius, x_cent, y_cent;
+  int is_in = 0;
+  int is_in2 = 0;
 
-      OPS_ACC(energy0, 0, 0) = states[0].energy;
-      OPS_ACC(density0, 0, 0) = states[0].density;
-      OPS_ACC(xvel0, 0, 0) = states[0].xvel;
-      OPS_ACC(yvel0, 0, 0) = states[0].yvel;
 
-      for (int i = 1; i < number_of_states; i++) {
+  OPS_ACC(energy0, 0,0)= states[0].energy;
+  OPS_ACC(density0, 0,0)= states[0].density;
+  OPS_ACC(xvel0, 0,0)=states[0].xvel;
+  OPS_ACC(yvel0, 0,0)=states[0].yvel;
 
-        x_cent = states[i].xmin;
-        y_cent = states[i].ymin;
-        is_in = 0;
-        is_in2 = 0;
+  for(int i = 1; i<number_of_states; i++) {
 
-        if (states[i].geometry == g_rect) {
-          for (int i1 = -1; i1 <= 0; i1++) {
-            for (int j1 = -1; j1 <= 0; j1++) {
-              if (OPS_ACC(vertexx, 1 + i1, 0) >= states[i].xmin &&
-                  OPS_ACC(vertexx, 0 + i1, 0) < states[i].xmax) {
-                if (OPS_ACC(vertexy, 0, 1 + j1) >= states[i].ymin &&
-                    OPS_ACC(vertexy, 0, 0 + j1) < states[i].ymax) {
-                  is_in = 1;
-                }
-              }
+    x_cent=states[i].xmin;
+    y_cent=states[i].ymin;
+    is_in = 0;
+    is_in2 = 0;
+
+    if (states[i].geometry == g_rect) {
+      for (int i1 = -1; i1 <= 0; i1++) {
+        for (int j1 = -1; j1 <= 0; j1++) {
+          if(OPS_ACC(vertexx, 1+i1,0) >= states[i].xmin  && OPS_ACC(vertexx, 0+i1,0) < states[i].xmax) {
+            if(OPS_ACC(vertexy, 0,1+j1) >= states[i].ymin && OPS_ACC(vertexy, 0,0+j1) < states[i].ymax) {
+              is_in = 1;
             }
-          }
-          if (OPS_ACC(vertexx, 1, 0) >= states[i].xmin &&
-              OPS_ACC(vertexx, 0, 0) < states[i].xmax) {
-            if (OPS_ACC(vertexy, 0, 1) >= states[i].ymin &&
-                OPS_ACC(vertexy, 0, 0) < states[i].ymax) {
-              is_in2 = 1;
-            }
-          }
-          if (is_in2) {
-            OPS_ACC(energy0, 0, 0) = states[i].energy;
-            OPS_ACC(density0, 0, 0) = states[i].density;
-          }
-          if (is_in) {
-            OPS_ACC(xvel0, 0, 0) = states[i].xvel;
-            OPS_ACC(yvel0, 0, 0) = states[i].yvel;
-          }
-        } else if (states[i].geometry == g_circ) {
-          for (int i1 = -1; i1 <= 0; i1++) {
-            for (int j1 = -1; j1 <= 0; j1++) {
-              radius = sqrt((OPS_ACC(cellx, i1, 0) - x_cent) *
-                                (OPS_ACC(cellx, i1, 0) - x_cent) +
-                            (OPS_ACC(celly, 0, j1) - y_cent) *
-                                (OPS_ACC(celly, 0, j1) - y_cent));
-              if (radius <= states[i].radius) {
-                is_in = 1;
-              }
-            }
-          }
-          if (radius <= states[i].radius)
-            is_in2 = 1;
-
-          if (is_in2) {
-            OPS_ACC(energy0, 0, 0) = states[i].energy;
-            OPS_ACC(density0, 0, 0) = states[i].density;
-          }
-
-          if (is_in) {
-            OPS_ACC(xvel0, 0, 0) = states[i].xvel;
-            OPS_ACC(yvel0, 0, 0) = states[i].yvel;
-          }
-        } else if (states[i].geometry == g_point) {
-          for (int i1 = -1; i1 <= 0; i1++) {
-            for (int j1 = -1; j1 <= 0; j1++) {
-              if (OPS_ACC(vertexx, i1, 0) == x_cent &&
-                  OPS_ACC(vertexy, 0, j1) == y_cent) {
-                is_in = 1;
-              }
-            }
-          }
-          if (OPS_ACC(vertexx, 0, 0) == x_cent &&
-              OPS_ACC(vertexy, 0, 0) == y_cent)
-            is_in2 = 1;
-
-          if (is_in2) {
-            OPS_ACC(energy0, 0, 0) = states[i].energy;
-            OPS_ACC(density0, 0, 0) = states[i].density;
-          }
-
-          if (is_in) {
-            OPS_ACC(xvel0, 0, 0) = states[i].xvel;
-            OPS_ACC(yvel0, 0, 0) = states[i].yvel;
           }
         }
       }
+      if(OPS_ACC(vertexx, 1,0) >= states[i].xmin  && OPS_ACC(vertexx, 0,0) < states[i].xmax) {
+        if(OPS_ACC(vertexy, 0,1) >= states[i].ymin && OPS_ACC(vertexy, 0,0) < states[i].ymax) {
+          is_in2 = 1;
+        }
+      }
+      if (is_in2) {
+        OPS_ACC(energy0, 0,0) = states[i].energy;
+        OPS_ACC(density0, 0,0) = states[i].density;
+      }
+      if (is_in) {
+        OPS_ACC(xvel0, 0,0) = states[i].xvel;
+        OPS_ACC(yvel0, 0,0) = states[i].yvel;
+      }
+    }
+    else if(states[i].geometry == g_circ) {
+      for (int i1 = -1; i1 <= 0; i1++) {
+        for (int j1 = -1; j1 <= 0; j1++) {
+          radius = sqrt ((OPS_ACC(cellx, i1,0) - x_cent) * (OPS_ACC(cellx, i1,0) - x_cent) +
+                     (OPS_ACC(celly, 0,j1) - y_cent) * (OPS_ACC(celly, 0,j1) - y_cent));
+          if (radius <= states[i].radius) {
+            is_in = 1;
+          }
+        }
+      }
+      if (radius <= states[i].radius) is_in2 = 1;
+
+      if (is_in2) {
+        OPS_ACC(energy0, 0,0) = states[i].energy;
+        OPS_ACC(density0, 0,0) = states[i].density;
+      }
+
+      if (is_in) {
+        OPS_ACC(xvel0, 0,0) = states[i].xvel;
+        OPS_ACC(yvel0, 0,0) = states[i].yvel;
+      }
+    }
+    else if(states[i].geometry == g_point) {
+      for (int i1 = -1; i1 <= 0; i1++) {
+        for (int j1 = -1; j1 <= 0; j1++) {
+          if(OPS_ACC(vertexx, i1,0) == x_cent && OPS_ACC(vertexy, 0,j1) == y_cent) {
+            is_in = 1;
+          }
+        }
+      }
+      if(OPS_ACC(vertexx, 0,0) == x_cent && OPS_ACC(vertexy, 0,0) == y_cent)
+        is_in2 = 1;
+
+      if (is_in2) {
+        OPS_ACC(energy0, 0,0) = states[i].energy;
+        OPS_ACC(density0, 0,0) = states[i].density;
+      }
+
+      if (is_in) {
+        OPS_ACC(xvel0, 0,0) = states[i].xvel;
+        OPS_ACC(yvel0, 0,0) = states[i].yvel;
+      }
+    }
+  }
+
     }
   }
 }

@@ -58,7 +58,6 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   int arg_idx[2];
 
   #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
   if (compute_ranges(args, 11,block, range, start, end, arg_idx) < 0) return;
   #else
   for ( int n=0; n<2; n++ ){
@@ -99,37 +98,6 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   }
 
 
-  #ifdef OPS_MPI
-  double *arg6h = (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * block->index);
-  #else
-  double *arg6h = (double *)(((ops_reduction)args[6].data)->data);
-  #endif
-  #ifdef OPS_MPI
-  double *arg7h = (double *)(((ops_reduction)args[7].data)->data + ((ops_reduction)args[7].data)->size * block->index);
-  #else
-  double *arg7h = (double *)(((ops_reduction)args[7].data)->data);
-  #endif
-  #ifdef OPS_MPI
-  double *arg8h = (double *)(((ops_reduction)args[8].data)->data + ((ops_reduction)args[8].data)->size * block->index);
-  #else
-  double *arg8h = (double *)(((ops_reduction)args[8].data)->data);
-  #endif
-  #ifdef OPS_MPI
-  double *arg9h = (double *)(((ops_reduction)args[9].data)->data + ((ops_reduction)args[9].data)->size * block->index);
-  #else
-  double *arg9h = (double *)(((ops_reduction)args[9].data)->data);
-  #endif
-  #ifdef OPS_MPI
-  double *arg10h = (double *)(((ops_reduction)args[10].data)->data + ((ops_reduction)args[10].data)->size * block->index);
-  #else
-  double *arg10h = (double *)(((ops_reduction)args[10].data)->data);
-  #endif
-  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
-  int dat2 = (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
-  int dat3 = (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
-  int dat4 = (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
-  int dat5 = (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];

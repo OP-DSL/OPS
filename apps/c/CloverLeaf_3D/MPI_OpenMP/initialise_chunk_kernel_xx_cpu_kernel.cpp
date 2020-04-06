@@ -51,11 +51,18 @@ void ops_par_loop_initialise_chunk_kernel_xx_execute(ops_kernel_descriptor *desc
   if (compute_ranges(args, 2,block, range, start, end, arg_idx) < 0) return;
   #endif
 
-  #ifdef OPS_MPI
+  #if defined(OPS_MPI)
+  #if defined(OPS_LAZY)
+  sub_block_list sb = OPS_sub_block_list[block->index];
+  arg_idx[0] = sb->decomp_disp[0];
+  arg_idx[1] = sb->decomp_disp[1];
+  arg_idx[2] = sb->decomp_disp[2];
+  #else
   arg_idx[0] -= start[0];
   arg_idx[1] -= start[1];
   arg_idx[2] -= start[2];
-  #else
+  #endif
+  #else //OPS_MPI
   arg_idx[0] = 0;
   arg_idx[1] = 0;
   arg_idx[2] = 0;
@@ -131,7 +138,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
-  desc->device = 1;
+  desc->device = 0;
   desc->index = 0;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 0;

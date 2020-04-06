@@ -160,7 +160,9 @@
 #define gen_ptr1(type) type *restrict ptr;
 #endif 
 
-#if defined(OPS_2D)
+#if defined(OPS_1D)
+#define DIMS
+#elif defined(OPS_2D)
 #define DIMS int xdim;
 #elif defined(OPS_3D)
 #define DIMS int xdim, ydim;
@@ -211,7 +213,9 @@ gen_ptr(float, float)
 #define MDIMS int xdim, ydim, zdim, udim, vdim;
 #endif
 #else
-#if defined(OPS_2D)
+#if defined(OPS_1D)
+#define MDIMS int dim;
+#elif defined(OPS_2D)
 #define MDIMS int xdim, dim;
 #elif defined(OPS_3D)
 #define MDIMS int xdim, ydim, dim;

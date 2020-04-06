@@ -3,5 +3,6 @@
 //
 
 #define OPS_2D
+#include <math.h>
 #include "./MPI_inline/read_common.h"
 //user kernel files

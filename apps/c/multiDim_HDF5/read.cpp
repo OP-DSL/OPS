@@ -87,5 +87,6 @@ int main(int argc, char **argv) {
   ops_timing_output(std::cout);
   ops_printf("\nSucessful exit from OPS!\n");
   ops_exit();
+  return 0;
   //*******************************************************************
 }

@@ -66,11 +66,11 @@ $(APP)_seq: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops
 # Tiled version
 #
 $(APP)_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_seq.a $(OPS_FILES_GEN) $(HEADERS)
-		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -D$(OPS_COMPILER) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SEQ) -o $(APP)_tiled
+		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -D$(OPS_COMPILER) -DOPS_LAZY -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SEQ) -o $(APP)_tiled
 
 $(APP)_mpi_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi.a $(OPS_FILES_GEN) \
                 $(HEADERS)
-		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -DOPS_MPI -D$(OPS_COMPILER) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(HDF5_LIB_MPI) $(OPS_LIB_MPI) -o $(APP)_mpi_tiled
+		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -DOPS_MPI -D$(OPS_COMPILER) -DOPS_LAZY -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(HDF5_LIB_MPI) $(OPS_LIB_MPI) -o $(APP)_mpi_tiled
  
 #
 # CUDA version
@@ -83,7 +83,7 @@ $(APP)_mpi_cuda: ./CUDA/$(APP)_kernels_mpi_cu.o Makefile .generated $(OPS_INSTAL
 		$(MPICPP) $(OMPFLAGS) $(CXXFLAGS) -DOPS_MPI -I$(CUDA_INC) -I$(C_OPS_INC) -L$(C_OPS_LIB) -L$(CUDA_LIB) $(OPS_FILES_GEN) ./CUDA/$(APP)_kernels_mpi_cu.o $(CUDART) $(HDF5_LIB_MPI) $(OPS_LIB_MPI_CUDA) -o $(APP)_mpi_cuda
 
 $(APP)_mpi_cuda_tiled: ./CUDA/$(APP)_kernels_mpi_tiled_cu.o Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_cuda.a
-		$(MPICPP) $(OMPFLAGS) $(CXXFLAGS) -DOPS_MPI -I$(CUDA_INC) -I$(C_OPS_INC) -L$(C_OPS_LIB) -L$(CUDA_LIB) $(OPS_FILES_GEN) ./CUDA/$(APP)_kernels_mpi_tiled_cu.o $(CUDART) $(HDF5_LIB_MPI) $(OPS_LIB_MPI_CUDA) -o $(APP)_mpi_cuda_tiled
+		$(MPICPP) $(OMPFLAGS) $(CXXFLAGS) -DOPS_MPI -DOPS_LAZY -I$(CUDA_INC) -I$(C_OPS_INC) -L$(C_OPS_LIB) -L$(CUDA_LIB) $(OPS_FILES_GEN) ./CUDA/$(APP)_kernels_mpi_tiled_cu.o $(CUDART) $(HDF5_LIB_MPI) $(OPS_LIB_MPI_CUDA) -o $(APP)_mpi_cuda_tiled
 
 
 ./CUDA/$(APP)_kernels_cu.o:	.generated Makefile

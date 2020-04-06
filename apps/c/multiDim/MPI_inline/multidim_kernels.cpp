@@ -4,14 +4,17 @@
 
 #include "./MPI_inline/multidim_common.h"
 
+
 void ops_init_backend() {}
 
-void ops_decl_const_char2(int dim, char const *type, int size, char *dat,
-                          char const *name) {
-  { throw OPSException(OPS_RUNTIME_ERROR, "error: unknown const name"); }
+void ops_decl_const_char2(int dim, char const *type,
+int size, char *dat, char const *name){
+  {
+    throw OPSException(OPS_RUNTIME_ERROR, "error: unknown const name");
+  }
 }
 
-// user kernel files
-#include "multidim_copy_kernel_mpiinline_kernel.cpp"
+//user kernel files
 #include "multidim_kernel_mpiinline_kernel.cpp"
+#include "multidim_copy_kernel_mpiinline_kernel.cpp"
 #include "multidim_reduce_kernel_mpiinline_kernel.cpp"

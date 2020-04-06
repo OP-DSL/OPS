@@ -137,7 +137,7 @@ double pl = 10.333f;
 double pr = 1.0f;
 double rhol = 3.857143;
 double rhor = 1.0f;
-double ul = 2.6293690 ;
+double ul2 = 2.6293690 ;
 double ur = 0.0f;
 double gam = 1.4;
 double gam1=gam - 1.0;
@@ -357,7 +357,7 @@ int main(int argc, const char **argv) {
   ops_decl_const2( "pr",1, "double",&pr);
   ops_decl_const2( "rhol",1, "double",&rhol);
   ops_decl_const2( "rhor",1, "double",&rhor);
-  ops_decl_const2( "ul",1, "double",&ul);
+  ops_decl_const2( "ul2",1, "double",&ul2);
   ops_decl_const2( "ur",1, "double",&ur);
   ops_decl_const2( "gam",1, "double",&gam);
   ops_decl_const2( "gam1",1, "double",&gam1);

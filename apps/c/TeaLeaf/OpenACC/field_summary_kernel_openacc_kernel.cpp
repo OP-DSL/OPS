@@ -50,7 +50,7 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
     ops_timers_core(&c1,&t1);
   }
 
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block
 
   int start[2];
   int end[2];

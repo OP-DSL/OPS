@@ -13,7 +13,7 @@ extern double pl;
 extern double pr;
 extern double rhol;
 extern double rhor;
-extern double ul;
+extern double ul2;
 extern double ur;
 extern double gam;
 extern double gam1;

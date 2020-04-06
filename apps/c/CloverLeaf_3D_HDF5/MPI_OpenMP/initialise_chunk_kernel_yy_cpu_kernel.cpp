@@ -131,7 +131,7 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
-  desc->device = 1;
+  desc->device = 0;
   desc->index = 1;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 1;

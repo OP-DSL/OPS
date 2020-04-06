@@ -51,7 +51,6 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   int arg_idx[2];
 
   #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
   if (compute_ranges(args, 8,block, range, start, end, arg_idx) < 0) return;
   #else
   for ( int n=0; n<2; n++ ){
@@ -86,30 +85,6 @@ void ops_par_loop_field_summary_kernel(char const *name, ops_block block, int di
   }
 
 
-  #ifdef OPS_MPI
-  double *arg4h = (double *)(((ops_reduction)args[4].data)->data + ((ops_reduction)args[4].data)->size * block->index);
-  #else
-  double *arg4h = (double *)(((ops_reduction)args[4].data)->data);
-  #endif
-  #ifdef OPS_MPI
-  double *arg5h = (double *)(((ops_reduction)args[5].data)->data + ((ops_reduction)args[5].data)->size * block->index);
-  #else
-  double *arg5h = (double *)(((ops_reduction)args[5].data)->data);
-  #endif
-  #ifdef OPS_MPI
-  double *arg6h = (double *)(((ops_reduction)args[6].data)->data + ((ops_reduction)args[6].data)->size * block->index);
-  #else
-  double *arg6h = (double *)(((ops_reduction)args[6].data)->data);
-  #endif
-  #ifdef OPS_MPI
-  double *arg7h = (double *)(((ops_reduction)args[7].data)->data + ((ops_reduction)args[7].data)->size * block->index);
-  #else
-  double *arg7h = (double *)(((ops_reduction)args[7].data)->data);
-  #endif
-  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
-  int dat2 = (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
-  int dat3 = (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];

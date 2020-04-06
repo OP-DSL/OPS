@@ -48,7 +48,6 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   int arg_idx[2];
 
   #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
   if (compute_ranges(args, 6,block, range, start, end, arg_idx) < 0) return;
   #else
   for ( int n=0; n<2; n++ ){
@@ -80,9 +79,6 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
   }
 
 
-  int dat3 = (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
-  int dat4 = (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
-  int dat5 = (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
   int *p_a0 = (int *)args[0].data;

@@ -3,6 +3,7 @@
 //
 
 #define OPS_1D
+#include <math.h>
 #include "./MPI_inline/shsgc_common.h"
 //user kernel files
 #include "gridgen_kernel_mpiinline_kernel_c.c"

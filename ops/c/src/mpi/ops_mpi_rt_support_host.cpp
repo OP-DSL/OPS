@@ -183,3 +183,19 @@ void ops_free_dat(ops_dat dat) {
 void _ops_free_dat(ops_dat dat) {
   ops_free_dat_core(dat);
 }
+
+void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace) {
+  ops_dat_fetch_data_host(dat, part, data);
+}
+
+void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *range, ops_memspace memspace) {
+  ops_dat_fetch_data_slab_host(dat, part, data, range);
+}
+void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace) {
+  ops_dat_set_data_host(dat, part, data);
+}
+
+void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *range, ops_memspace memspace) {
+  ops_dat_set_data_slab_host(dat, part, data, range);
+}
+

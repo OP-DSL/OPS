@@ -14,7 +14,7 @@ void initialize_kernel(ACC<double> &x,ACC<double> &rho_new, ACC<double> &rhou_ne
 	}
 	else {
 		rho_new(0) = rhol;
-		rhou_new(0) = ul * rho_new(0);
+		rhou_new(0) = ul2 * rho_new(0);
 		rhoE_new(0) = (pl / gam1) + 0.5 * pow(rhou_new(0),2)/rho_new(0);
 	}
 

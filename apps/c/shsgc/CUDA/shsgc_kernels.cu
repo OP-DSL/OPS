@@ -30,7 +30,7 @@ __constant__ double pl;
 __constant__ double pr;
 __constant__ double rhol;
 __constant__ double rhor;
-__constant__ double ul;
+__constant__ double ul2;
 __constant__ double ur;
 __constant__ double gam;
 __constant__ double gam1;
@@ -103,8 +103,8 @@ int size, char *dat, char const *name){
     cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMemcpyToSymbol(rhor, dat, dim*size));
   }
   else
-  if (!strcmp(name,"ul")) {
-    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMemcpyToSymbol(ul, dat, dim*size));
+  if (!strcmp(name,"ul2")) {
+    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMemcpyToSymbol(ul2, dat, dim*size));
   }
   else
   if (!strcmp(name,"ur")) {

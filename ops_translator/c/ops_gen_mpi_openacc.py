@@ -988,7 +988,6 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
   code('#endif')
   #code('#ifdef OPS_GPU')
   #code('#endif')
-  code('#endif')
   if os.path.exists(os.path.join(src_dir,'user_types.h')):
     code('#include "user_types.h"')
 

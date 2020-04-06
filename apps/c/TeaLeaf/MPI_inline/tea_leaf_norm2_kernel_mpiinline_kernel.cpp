@@ -39,7 +39,6 @@ void ops_par_loop_tea_leaf_norm2_kernel(char const *name, ops_block block, int d
   int arg_idx[2];
 
   #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
   if (compute_ranges(args, 2,block, range, start, end, arg_idx) < 0) return;
   #else
   for ( int n=0; n<2; n++ ){
@@ -65,12 +64,6 @@ void ops_par_loop_tea_leaf_norm2_kernel(char const *name, ops_block block, int d
   }
 
 
-  #ifdef OPS_MPI
-  double *arg1h = (double *)(((ops_reduction)args[1].data)->data + ((ops_reduction)args[1].data)->size * block->index);
-  #else
-  double *arg1h = (double *)(((ops_reduction)args[1].data)->data);
-  #endif
-  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];

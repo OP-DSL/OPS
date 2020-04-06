@@ -50,8 +50,8 @@ int size, char *dat, char const *name){
     rhor = *(double*)dat;
   }
   else
-  if (!strcmp(name,"ul")) {
-    ul = *(double*)dat;
+  if (!strcmp(name,"ul2")) {
+    ul2 = *(double*)dat;
   }
   else
   if (!strcmp(name,"ur")) {

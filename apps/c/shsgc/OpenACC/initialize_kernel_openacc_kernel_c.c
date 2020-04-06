@@ -27,7 +27,7 @@ void initialize_kernel(ptr_double x,
 	}
 	else {
 		OPS_ACC(rho_new, 0) = rhol;
-		OPS_ACC(rhou_new, 0) = ul * OPS_ACC(rho_new, 0);
+		OPS_ACC(rhou_new, 0) = ul2 * OPS_ACC(rho_new, 0);
 		OPS_ACC(rhoE_new, 0) = (pl / gam1) + 0.5 * pow(OPS_ACC(rhou_new, 0),2)/OPS_ACC(rho_new, 0);
 	}
 

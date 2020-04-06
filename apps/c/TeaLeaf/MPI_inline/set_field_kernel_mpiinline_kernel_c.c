@@ -5,22 +5,23 @@
 int xdim0_set_field_kernel;
 int xdim1_set_field_kernel;
 
-// user function
 
-void set_field_kernel_c_wrapper(double *restrict energy0_p,
-                                double *restrict energy1_p, int x_size,
-                                int y_size) {
-#pragma omp parallel for
-  for (int n_y = 0; n_y < y_size; n_y++) {
-    for (int n_x = 0; n_x < x_size; n_x++) {
-      const ptr_double energy0 = {energy0_p + n_x * 1 +
-                                      n_y * xdim0_set_field_kernel * 1,
-                                  xdim0_set_field_kernel};
-      ptr_double energy1 = {energy1_p + n_x * 1 +
-                                n_y * xdim1_set_field_kernel * 1,
-                            xdim1_set_field_kernel};
+//user function
 
-      OPS_ACC(energy1, 0, 0) = OPS_ACC(energy0, 0, 0);
+
+
+void set_field_kernel_c_wrapper(
+  double * restrict energy0_p,
+  double * restrict energy1_p,
+  int x_size, int y_size) {
+  #pragma omp parallel for
+  for ( int n_y=0; n_y<y_size; n_y++ ){
+    for ( int n_x=0; n_x<x_size; n_x++ ){
+      const ptr_double energy0 = { energy0_p + n_x*1 + n_y * xdim0_set_field_kernel*1, xdim0_set_field_kernel};
+      ptr_double energy1 = { energy1_p + n_x*1 + n_y * xdim1_set_field_kernel*1, xdim1_set_field_kernel};
+      
+	OPS_ACC(energy1, 0,0) = OPS_ACC(energy0, 0,0);
+
     }
   }
 }
