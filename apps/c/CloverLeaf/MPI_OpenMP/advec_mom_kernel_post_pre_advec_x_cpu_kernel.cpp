@@ -46,7 +46,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x_execute(ops_kernel_descripto
   //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
-  #ifdef OPS_MPI
+  #if defined(OPS_MPI) && !defined(OPS_LAZY)
   int arg_idx[2];
   #endif
   #if defined(OPS_LAZY) || !defined(OPS_MPI)
@@ -158,7 +158,7 @@ void ops_par_loop_advec_mom_kernel_post_pre_advec_x(char const *name, ops_block 
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
-  desc->device = 1;
+  desc->device = 0;
   desc->index = 74;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 74;

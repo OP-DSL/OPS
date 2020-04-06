@@ -5,24 +5,25 @@
 int xdim0_initialise_chunk_kernel_zz;
 int ydim0_initialise_chunk_kernel_zz;
 
-// user function
 
-void initialise_chunk_kernel_zz_c_wrapper(int *restrict zz_p, int *restrict idx,
-                                          int arg_idx0, int arg_idx1,
-                                          int arg_idx2, int x_size, int y_size,
-                                          int z_size) {
-#pragma omp parallel for
-  for (int n_z = 0; n_z < z_size; n_z++) {
-    for (int n_y = 0; n_y < y_size; n_y++) {
-      for (int n_x = 0; n_x < x_size; n_x++) {
-        int idx[] = {arg_idx0 + n_x, arg_idx1 + n_y, arg_idx2 + n_z};
-        ptr_int zz = {
-            zz_p + n_x * 0 + n_y * xdim0_initialise_chunk_kernel_zz * 0 +
-                n_z * xdim0_initialise_chunk_kernel_zz *
-                    ydim0_initialise_chunk_kernel_zz * 1,
-            xdim0_initialise_chunk_kernel_zz, ydim0_initialise_chunk_kernel_zz};
+//user function
 
-        OPS_ACC(zz, 0, 0, 0) = idx[2] - 2;
+
+
+void initialise_chunk_kernel_zz_c_wrapper(
+  int * restrict zz_p,
+  int * restrict idx,
+  int arg_idx0, int arg_idx1, int arg_idx2,
+  int x_size, int y_size, int z_size) {
+  #pragma omp parallel for
+  for ( int n_z=0; n_z<z_size; n_z++ ){
+    for ( int n_y=0; n_y<y_size; n_y++ ){
+      for ( int n_x=0; n_x<x_size; n_x++ ){
+        int idx[] = {arg_idx0+n_x, arg_idx1+n_y, arg_idx2+n_z};
+        ptr_int zz = { zz_p + n_x*0 + n_y * xdim0_initialise_chunk_kernel_zz*0 + n_z * xdim0_initialise_chunk_kernel_zz * ydim0_initialise_chunk_kernel_zz*1, xdim0_initialise_chunk_kernel_zz, ydim0_initialise_chunk_kernel_zz};
+        
+  OPS_ACC(zz, 0,0,0) = idx[2]-2;
+
       }
     }
   }

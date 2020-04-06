@@ -1402,6 +1402,13 @@ void ops_dat_release_raw_data_memspace(ops_dat dat, int part, ops_access acc, op
   dat->locked_hd = 0;
 }
 
+void ops_dat_fetch_data_host(ops_dat dat, int part, char *data) {
+      throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Not implemented");
+}
+void ops_dat_fetch_data_slab_host(ops_dat dat, int part, char *data, int *range) {
+  throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Not implemented");
+}
+
 void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
   ops_execute(dat->block->instance);
   ops_get_data(dat);
@@ -1424,6 +1431,12 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
              lsize[0]);
 }
 
+void ops_dat_set_data_host(ops_dat dat, int part, char *data) {
+throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Not implemented");
+}
+void ops_dat_set_data_slab_host(ops_dat dat, int part, char *data, int *range) {
+throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Not implemented");
+}
 void ops_dat_set_data(ops_dat dat, int part, char *data) {
   ops_execute(dat->block->instance);
   int lsize[OPS_MAX_DIM] = {1};
@@ -1451,6 +1464,25 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
     sd->dirty_dir_recv[i] = 1;
   }
 }
+
+size_t ops_dat_get_slab_extents(ops_dat dat, int part, int *disp, int *size, int *slab) {
+  throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Not implemented");
+/*  int sizel[OPS_MAX_DIM], displ[OPS_MAX_DIM];
+  ops_dat_get_extents(dat, part, displ, sizel);
+  size_t bytes = dat->elem_size;
+  for (int d = 0; d < dat->block->dims; d++) {
+    if (slab[2*d]<0 || slab[2*d+1]>sizel[d]) {
+      OPSException ex(OPS_RUNTIME_ERROR);
+      ex << "Error: ops_dat_get_slab_extents() called on " << dat->name << " with slab ranges in dimension "<<d<<": "<<slab[2*d]<<"-"<<slab[2*d+1]<<" beyond data size 0-" <<sizel[d];
+    throw ex;
+    }
+    disp[d] = slab[2*d];
+    size[d] = slab[2*d+1]-slab[2*d];
+    bytes *= size[d];
+  }
+  return bytes;*/
+}
+
 
 int ops_dat_get_global_npartitions(ops_dat dat) {
   //TODO: lower-rank datasets?

@@ -15,47 +15,35 @@ int ydim4_reset_field_kernel2;
 int xdim5_reset_field_kernel2;
 int ydim5_reset_field_kernel2;
 
-// user function
 
-void reset_field_kernel2_c_wrapper(double *restrict xvel0_p,
-                                   double *restrict xvel1_p,
-                                   double *restrict yvel0_p,
-                                   double *restrict yvel1_p,
-                                   double *restrict zvel0_p,
-                                   double *restrict zvel1_p, int x_size,
-                                   int y_size, int z_size) {
-#pragma omp parallel for
-  for (int n_z = 0; n_z < z_size; n_z++) {
-    for (int n_y = 0; n_y < y_size; n_y++) {
-      for (int n_x = 0; n_x < x_size; n_x++) {
-        ptr_double xvel0 = {
-            xvel0_p + n_x * 1 + n_y * xdim0_reset_field_kernel2 * 1 +
-                n_z * xdim0_reset_field_kernel2 * ydim0_reset_field_kernel2 * 1,
-            xdim0_reset_field_kernel2, ydim0_reset_field_kernel2};
-        const ptr_double xvel1 = {
-            xvel1_p + n_x * 1 + n_y * xdim1_reset_field_kernel2 * 1 +
-                n_z * xdim1_reset_field_kernel2 * ydim1_reset_field_kernel2 * 1,
-            xdim1_reset_field_kernel2, ydim1_reset_field_kernel2};
-        ptr_double yvel0 = {
-            yvel0_p + n_x * 1 + n_y * xdim2_reset_field_kernel2 * 1 +
-                n_z * xdim2_reset_field_kernel2 * ydim2_reset_field_kernel2 * 1,
-            xdim2_reset_field_kernel2, ydim2_reset_field_kernel2};
-        const ptr_double yvel1 = {
-            yvel1_p + n_x * 1 + n_y * xdim3_reset_field_kernel2 * 1 +
-                n_z * xdim3_reset_field_kernel2 * ydim3_reset_field_kernel2 * 1,
-            xdim3_reset_field_kernel2, ydim3_reset_field_kernel2};
-        ptr_double zvel0 = {
-            zvel0_p + n_x * 1 + n_y * xdim4_reset_field_kernel2 * 1 +
-                n_z * xdim4_reset_field_kernel2 * ydim4_reset_field_kernel2 * 1,
-            xdim4_reset_field_kernel2, ydim4_reset_field_kernel2};
-        const ptr_double zvel1 = {
-            zvel1_p + n_x * 1 + n_y * xdim5_reset_field_kernel2 * 1 +
-                n_z * xdim5_reset_field_kernel2 * ydim5_reset_field_kernel2 * 1,
-            xdim5_reset_field_kernel2, ydim5_reset_field_kernel2};
+//user function
 
-        OPS_ACC(xvel0, 0, 0, 0) = OPS_ACC(xvel1, 0, 0, 0);
-        OPS_ACC(yvel0, 0, 0, 0) = OPS_ACC(yvel1, 0, 0, 0);
-        OPS_ACC(zvel0, 0, 0, 0) = OPS_ACC(zvel1, 0, 0, 0);
+
+
+void reset_field_kernel2_c_wrapper(
+  double * restrict xvel0_p,
+  double * restrict xvel1_p,
+  double * restrict yvel0_p,
+  double * restrict yvel1_p,
+  double * restrict zvel0_p,
+  double * restrict zvel1_p,
+  int x_size, int y_size, int z_size) {
+  #pragma omp parallel for
+  for ( int n_z=0; n_z<z_size; n_z++ ){
+    for ( int n_y=0; n_y<y_size; n_y++ ){
+      for ( int n_x=0; n_x<x_size; n_x++ ){
+        ptr_double xvel0 = { xvel0_p + n_x*1 + n_y * xdim0_reset_field_kernel2*1 + n_z * xdim0_reset_field_kernel2 * ydim0_reset_field_kernel2*1, xdim0_reset_field_kernel2, ydim0_reset_field_kernel2};
+        const ptr_double xvel1 = { xvel1_p + n_x*1 + n_y * xdim1_reset_field_kernel2*1 + n_z * xdim1_reset_field_kernel2 * ydim1_reset_field_kernel2*1, xdim1_reset_field_kernel2, ydim1_reset_field_kernel2};
+        ptr_double yvel0 = { yvel0_p + n_x*1 + n_y * xdim2_reset_field_kernel2*1 + n_z * xdim2_reset_field_kernel2 * ydim2_reset_field_kernel2*1, xdim2_reset_field_kernel2, ydim2_reset_field_kernel2};
+        const ptr_double yvel1 = { yvel1_p + n_x*1 + n_y * xdim3_reset_field_kernel2*1 + n_z * xdim3_reset_field_kernel2 * ydim3_reset_field_kernel2*1, xdim3_reset_field_kernel2, ydim3_reset_field_kernel2};
+        ptr_double zvel0 = { zvel0_p + n_x*1 + n_y * xdim4_reset_field_kernel2*1 + n_z * xdim4_reset_field_kernel2 * ydim4_reset_field_kernel2*1, xdim4_reset_field_kernel2, ydim4_reset_field_kernel2};
+        const ptr_double zvel1 = { zvel1_p + n_x*1 + n_y * xdim5_reset_field_kernel2*1 + n_z * xdim5_reset_field_kernel2 * ydim5_reset_field_kernel2*1, xdim5_reset_field_kernel2, ydim5_reset_field_kernel2};
+        
+
+  OPS_ACC(xvel0, 0,0,0)  = OPS_ACC(xvel1, 0,0,0) ;
+  OPS_ACC(yvel0, 0,0,0)  = OPS_ACC(yvel1, 0,0,0) ;
+  OPS_ACC(zvel0, 0,0,0)  = OPS_ACC(zvel1, 0,0,0) ;
+
       }
     }
   }

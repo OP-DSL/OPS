@@ -22,7 +22,7 @@ void buildOpenCLKernels_initialize_kernel(OPS_instance *instance, int xdim0, int
 
     // Load the kernel source code into the array source_str
     FILE *fid;
-    char *source_str[1];
+    char *source_str[1] = {NULL};
     size_t source_size[1];
 
     for(int i=0; i<1; i++) {
@@ -42,7 +42,7 @@ void buildOpenCLKernels_initialize_kernel(OPS_instance *instance, int xdim0, int
           throw e;
         }
         if (feof(fid))
-          instance->ostream() << "Kernel source file "<< source_filename[i] <<" succesfuly read.\n";
+          instance->ostream() << "Kernel source file "<< source_filename[i] <<" succesfully read.\n";
       }
       fclose(fid);
     }
@@ -91,6 +91,7 @@ void buildOpenCLKernels_initialize_kernel(OPS_instance *instance, int xdim0, int
     clSafeCall( ret );
 
     isbuilt_initialize_kernel = true;
+    free(source_str[0]);
   }
 
 }
@@ -240,7 +241,7 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
     clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[0], 7, sizeof(cl_double), (void*) &pl ));
     clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[0], 8, sizeof(cl_double), (void*) &pr ));
     clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[0], 9, sizeof(cl_double), (void*) &rhol ));
-    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[0], 10, sizeof(cl_double), (void*) &ul ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[0], 10, sizeof(cl_double), (void*) &ul2 ));
     clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[0], 11, sizeof(cl_double), (void*) &ur ));
     clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[0], 12, sizeof(cl_double), (void*) &gam1 ));
     clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[0], 13, sizeof(cl_double), (void*) &eps ));
@@ -253,7 +254,7 @@ void ops_par_loop_initialize_kernel(char const *name, ops_block block, int dim, 
     clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[0], 20, sizeof(cl_int), (void*) &arg_idx[0] ));
     clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[0], 21, sizeof(cl_int), (void*) &x_size ));
 
-    //call/enque opencl kernel wrapper function
+    //call/enqueue opencl kernel wrapper function
     clSafeCall( clEnqueueNDRangeKernel(block->instance->opencl_instance->OPS_opencl_core.command_queue, block->instance->opencl_instance->OPS_opencl_core.kernel[0], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   }
   if (block->instance->OPS_diags>1) {

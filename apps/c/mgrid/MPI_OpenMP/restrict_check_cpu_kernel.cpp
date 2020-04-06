@@ -53,10 +53,16 @@ void ops_par_loop_restrict_check_execute(ops_kernel_descriptor *desc) {
   if (compute_ranges(args, 4,block, range, start, end, arg_idx) < 0) return;
   #endif
 
-  #ifdef OPS_MPI
+  #if defined(OPS_MPI)
+  #if defined(OPS_LAZY)
+  sub_block_list sb = OPS_sub_block_list[block->index];
+  arg_idx[0] = sb->decomp_disp[0];
+  arg_idx[1] = sb->decomp_disp[1];
+  #else
   arg_idx[0] -= start[0];
   arg_idx[1] -= start[1];
-  #else
+  #endif
+  #else //OPS_MPI
   arg_idx[0] = 0;
   arg_idx[1] = 0;
   #endif //OPS_MPI
@@ -111,10 +117,11 @@ void ops_par_loop_restrict_check_execute(ops_kernel_descriptor *desc) {
       const ACC<double> val(xdim0_restrict_check, val_p + n_x*1 + n_y * xdim0_restrict_check*1);
       int err[1];
       err[0] = p_a2[0];
+      
+  if (val(0,0) != idx[0]*4 + idx[1]*4**sizex) {
 
-      if (val(0, 0) != idx[0] * 4 + idx[1] * 4 * *sizex) {
 
-        *err = 1;
+    *err = 1;
   } else
     *err = 0;
 
@@ -146,7 +153,7 @@ void ops_par_loop_restrict_check(char const *name, ops_block block, int dim, int
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
-  desc->device = 1;
+  desc->device = 0;
   desc->index = 7;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 7;

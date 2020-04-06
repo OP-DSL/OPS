@@ -12,7 +12,7 @@ void init_kernel(const double *x,double *rho_new, double *rhou_new, double *rhoE
   }
   else {
     rho_new[OPS_ACC1(0)] = rhol;
-    rhou_new[OPS_ACC2(0)] = ul * rho_new[OPS_ACC1(0)];
+    rhou_new[OPS_ACC2(0)] = ul2 * rho_new[OPS_ACC1(0)];
     rhoE_new[OPS_ACC3(0)] = (pl / gam1) + 0.5 * pow(rhou_new[OPS_ACC2(0)],2)/rho_new[OPS_ACC1(0)];
   }
   rho_old[OPS_ACC5(0)]  = rho_new[OPS_ACC1(0)];

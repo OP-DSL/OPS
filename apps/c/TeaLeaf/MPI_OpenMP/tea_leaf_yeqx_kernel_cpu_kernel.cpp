@@ -42,7 +42,7 @@ void ops_par_loop_tea_leaf_yeqx_kernel_execute(ops_kernel_descriptor *desc) {
   //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
-  #ifdef OPS_MPI
+  #if defined(OPS_MPI) && !defined(OPS_LAZY)
   int arg_idx[2];
   #endif
   #if defined(OPS_LAZY) || !defined(OPS_MPI)
@@ -125,7 +125,7 @@ void ops_par_loop_tea_leaf_yeqx_kernel(char const *name, ops_block block, int di
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
-  desc->device = 1;
+  desc->device = 0;
   desc->index = 30;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 30;

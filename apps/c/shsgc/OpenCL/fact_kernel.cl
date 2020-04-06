@@ -7,7 +7,7 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #define OPS_1D
 #define OPS_API 2
@@ -16,13 +16,13 @@
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a, b) ((a < b) ? (a) : (b))
+#define MIN(a,b) ((a<b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a, b) ((a > b) ? (a) : (b))
+#define MAX(a,b) ((a>b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
+#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -30,49 +30,47 @@
 #define OPS_INC 3
 #define OPS_MIN 4
 #define OPS_MAX 5
-#define ZERO_double 0.0;
-#define INFINITY_double INFINITY;
-#define ZERO_float 0.0f;
-#define INFINITY_float INFINITY;
-#define ZERO_int 0;
-#define INFINITY_int INFINITY;
-#define ZERO_uint 0;
-#define INFINITY_uint INFINITY;
-#define ZERO_ll 0;
-#define INFINITY_ll INFINITY;
-#define ZERO_ull 0;
-#define INFINITY_ull INFINITY;
-#define ZERO_bool 0;
 
-// user function
+//user function
 
-void fact_kernel(const ptrm_double eff, ptrm_double s, const double dx,
-                 const double dt) {
+void fact_kernel(const ptrm_double  eff,
+  ptrm_double  s, const double dx, const double dt)
+{
   double fact;
-  for (int m = 0; m < 3; m++) {
-    fact = 0.50 * dt / dx;
-    OPS_ACCM(s, m, 0) = -fact * (OPS_ACCM(eff, m, 0) - OPS_ACCM(eff, m, -1));
+  for (int m=0; m < 3 ;m++) {
+    fact  = 0.50 * dt / dx ;
+    OPS_ACCM(s, m,0) = -fact * (OPS_ACCM(eff, m,0) - OPS_ACCM(eff, m,-1));
   }
 }
 
-__kernel void ops_fact_kernel(__global const double *restrict arg0,
-                              __global double *restrict arg1, const double dx,
-                              const double dt, const int base0, const int base1,
-                              const int size0) {
+
+__kernel void ops_fact_kernel(
+__global const double* restrict arg0,
+__global double* restrict arg1,
+const double dx,
+const double dt,
+const int base0,
+const int base1,
+const int size0 ){
+
 
   int idx_x = get_global_id(0);
 
   if (idx_x < size0) {
-#ifdef OPS_SOA
-    const ptrm_double ptr0 = {&arg0[base0 + idx_x * 1 * 3], xdim0_fact_kernel};
-#else
-    const ptrm_double ptr0 = {&arg0[base0 + idx_x * 1 * 3], 3};
-#endif
-#ifdef OPS_SOA
-    ptrm_double ptr1 = {&arg1[base1 + idx_x * 1 * 3], xdim1_fact_kernel};
-#else
-    ptrm_double ptr1 = {&arg1[base1 + idx_x * 1 * 3], 3};
-#endif
-    fact_kernel(ptr0, ptr1, dx, dt);
+    #ifdef OPS_SOA
+    const ptrm_double ptr0 = { &arg0[base0 + idx_x * 1*3], xdim0_fact_kernel};
+    #else
+    const ptrm_double ptr0 = { &arg0[base0 + idx_x * 1*3], 3};
+    #endif
+    #ifdef OPS_SOA
+    ptrm_double ptr1 = { &arg1[base1 + idx_x * 1*3], xdim1_fact_kernel};
+    #else
+    ptrm_double ptr1 = { &arg1[base1 + idx_x * 1*3], 3};
+    #endif
+    fact_kernel(ptr0,
+                ptr1,
+                dx,
+                dt);
   }
+
 }

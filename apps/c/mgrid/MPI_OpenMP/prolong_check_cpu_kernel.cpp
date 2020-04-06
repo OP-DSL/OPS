@@ -55,10 +55,16 @@ void ops_par_loop_prolong_check_execute(ops_kernel_descriptor *desc) {
   if (compute_ranges(args, 5,block, range, start, end, arg_idx) < 0) return;
   #endif
 
-  #ifdef OPS_MPI
+  #if defined(OPS_MPI)
+  #if defined(OPS_LAZY)
+  sub_block_list sb = OPS_sub_block_list[block->index];
+  arg_idx[0] = sb->decomp_disp[0];
+  arg_idx[1] = sb->decomp_disp[1];
+  #else
   arg_idx[0] -= start[0];
   arg_idx[1] -= start[1];
-  #else
+  #endif
+  #else //OPS_MPI
   arg_idx[0] = 0;
   arg_idx[1] = 0;
   #endif //OPS_MPI
@@ -118,19 +124,25 @@ void ops_par_loop_prolong_check_execute(ops_kernel_descriptor *desc) {
       err[0] = p_a2[0];
       
   int lerr = 0;
-  lerr |= (val(0, 0) != idx[0] / 4 + (idx[1] / 4) * (*sizex / 4));
+  lerr |= (val(0,0) != idx[0]/4 + (idx[1]/4)*(*sizex/4));
+
 
   int xm = (idx[0]-1)<0 ? *sizex-1 : idx[0]-1;
   int xp = (idx[0]+1)>=*sizex ? 0 : idx[0]+1;
   int ym = (idx[1]-1)<0 ? *sizey-1 : idx[1]-1;
   int yp = (idx[1]+1)>=*sizey ? 0 : idx[1]+1;
-  lerr |= (val(1, 0) != xp / 4 + (idx[1] / 4) * (*sizex / 4));
+  lerr |= (val(1,0) != xp/4 + (idx[1]/4)*(*sizex/4));
 
-  lerr |= (val(-1, 0) != xm / 4 + (idx[1] / 4) * (*sizex / 4));
 
-  lerr |= (val(0, 1) != idx[0] / 4 + (yp / 4) * (*sizex / 4));
+  lerr |= (val(-1,0) != xm/4 + (idx[1]/4)*(*sizex/4));
 
-  lerr |= (val(0, -1) != idx[0] / 4 + (ym / 4) * (*sizex / 4));
+
+  lerr |= (val(0,1) != idx[0]/4 + (yp/4)*(*sizex/4));
+
+
+  lerr |= (val(0,-1) != idx[0]/4 + (ym/4)*(*sizex/4));
+
+
 
   if (lerr != 0) *err = 1;
   else *err = 0;
@@ -165,7 +177,7 @@ void ops_par_loop_prolong_check(char const *name, ops_block block, int dim, int*
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
-  desc->device = 1;
+  desc->device = 0;
   desc->index = 3;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 3;

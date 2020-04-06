@@ -46,7 +46,6 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_right(char const *name, ops_bl
   int arg_idx[3];
 
   #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
   if (compute_ranges(args, 3,block, range, start, end, arg_idx) < 0) return;
   #else
   for ( int n=0; n<3; n++ ){
@@ -82,9 +81,6 @@ void ops_par_loop_update_halo_kernel2_yvel_plus_4_right(char const *name, ops_bl
   }
 
 
-  int *arg2h = (int *)arg2.data;
-  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];

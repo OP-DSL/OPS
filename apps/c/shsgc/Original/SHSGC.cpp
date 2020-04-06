@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 
   int nxp, nyp ,xhalo, yhalo,niter;
   double xmin, ymin, xmax, ymax;
-  double pl, pr, ul, ur, rhol, rhor, eps, lambda ;
+  double pl, pr, ul2, ur, rhol, rhor, eps, lambda ;
 
    // Initialisation
   nxp = 204;
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
   pr = 1.0;//  pr = 1.0f;
   rhol = 3.857143;
   rhor = 1.0;//  rhor = 1.0f;
-  ul = 2.6293690 ;
+  ul2 = 2.6293690 ;
   ur = 0.0;//  ur = 0.0f;
   gam = 1.4;
   gam1=gam - 1.0;
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 	}
 	else {
 		rho_new[i] = rhol;
-		rhou_new[i] = ul * rho_new[i];
+		rhou_new[i] = ul2 * rho_new[i];
 		rhoE_new[i] = (pl / gam1) + 0.5 * pow(rhou_new[i],2)/rho_new[i];
 	}
 
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
 //   for (int i = 0; i < 2*xhalo; i++) {
 // 	  if(i < xhalo){
 // 		  rho_halo[i] = rhol;
-// 		  rhou_halo[i] = ul*rho_halo[i];
+// 		  rhou_halo[i] = ul2*rho_halo[i];
 // 		  rhoE_halo[i] = (pl/gam1) + 0.5 * pow(rhou_halo[i],2)/rho_halo[i];
 // 		  //printf("left is %d\n",i);
 // 	  }

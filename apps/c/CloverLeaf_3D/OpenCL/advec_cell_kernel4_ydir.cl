@@ -7,7 +7,7 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
 #define OPS_3D
@@ -17,13 +17,13 @@
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a, b) ((a < b) ? (a) : (b))
+#define MIN(a,b) ((a<b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a, b) ((a > b) ? (a) : (b))
+#define MAX(a,b) ((a>b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
+#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -31,128 +31,86 @@
 #define OPS_INC 3
 #define OPS_MIN 4
 #define OPS_MAX 5
-#define ZERO_double 0.0;
-#define INFINITY_double INFINITY;
-#define ZERO_float 0.0f;
-#define INFINITY_float INFINITY;
-#define ZERO_int 0;
-#define INFINITY_int INFINITY;
-#define ZERO_uint 0;
-#define INFINITY_uint INFINITY;
-#define ZERO_ll 0;
-#define INFINITY_ll INFINITY;
-#define ZERO_ull 0;
-#define INFINITY_ull INFINITY;
-#define ZERO_bool 0;
 
-// user function
+//user function
 
-inline void advec_cell_kernel4_ydir(
-    ptr_double density1, ptr_double energy1, const ptr_double mass_flux_y,
-    const ptr_double vol_flux_y, const ptr_double pre_vol,
-    const ptr_double post_vol, ptr_double pre_mass, ptr_double post_mass,
-    ptr_double advec_vol, ptr_double post_ener, const ptr_double ener_flux) {
+inline void advec_cell_kernel4_ydir(ptr_double density1,
+  ptr_double energy1,
+  const ptr_double mass_flux_y,
+  const ptr_double vol_flux_y,
+  const ptr_double pre_vol,
+  const ptr_double post_vol,
+  ptr_double pre_mass,
+  ptr_double post_mass,
+  ptr_double advec_vol,
+  ptr_double post_ener,
+  const ptr_double ener_flux) {
 
-  OPS_ACCS(pre_mass, 0, 0, 0) =
-      OPS_ACCS(density1, 0, 0, 0) * OPS_ACCS(pre_vol, 0, 0, 0);
-  OPS_ACCS(post_mass, 0, 0, 0) = OPS_ACCS(pre_mass, 0, 0, 0) +
-                                 OPS_ACCS(mass_flux_y, 0, 0, 0) -
-                                 OPS_ACCS(mass_flux_y, 0, 1, 0);
-  OPS_ACCS(post_ener, 0, 0, 0) =
-      (OPS_ACCS(energy1, 0, 0, 0) * OPS_ACCS(pre_mass, 0, 0, 0) +
-       OPS_ACCS(ener_flux, 0, 0, 0) - OPS_ACCS(ener_flux, 0, 1, 0)) /
-      OPS_ACCS(post_mass, 0, 0, 0);
-  OPS_ACCS(advec_vol, 0, 0, 0) = OPS_ACCS(pre_vol, 0, 0, 0) +
-                                 OPS_ACCS(vol_flux_y, 0, 0, 0) -
-                                 OPS_ACCS(vol_flux_y, 0, 1, 0);
-  OPS_ACCS(density1, 0, 0, 0) =
-      OPS_ACCS(post_mass, 0, 0, 0) / OPS_ACCS(advec_vol, 0, 0, 0);
-  OPS_ACCS(energy1, 0, 0, 0) = OPS_ACCS(post_ener, 0, 0, 0);
+  OPS_ACCS(pre_mass, 0,0,0) = OPS_ACCS(density1, 0,0,0) * OPS_ACCS(pre_vol, 0,0,0);
+  OPS_ACCS(post_mass, 0,0,0) = OPS_ACCS(pre_mass, 0,0,0) + OPS_ACCS(mass_flux_y, 0,0,0) - OPS_ACCS(mass_flux_y, 0,1,0);
+  OPS_ACCS(post_ener, 0,0,0) = ( OPS_ACCS(energy1, 0,0,0) * OPS_ACCS(pre_mass, 0,0,0) + OPS_ACCS(ener_flux, 0,0,0) - OPS_ACCS(ener_flux, 0,1,0))/OPS_ACCS(post_mass, 0,0,0);
+  OPS_ACCS(advec_vol, 0,0,0) = OPS_ACCS(pre_vol, 0,0,0) + OPS_ACCS(vol_flux_y, 0,0,0) - OPS_ACCS(vol_flux_y, 0,1,0);
+  OPS_ACCS(density1, 0,0,0) = OPS_ACCS(post_mass, 0,0,0)/OPS_ACCS(advec_vol, 0,0,0);
+  OPS_ACCS(energy1, 0,0,0) = OPS_ACCS(post_ener, 0,0,0);
+
 }
 
+
 __kernel void ops_advec_cell_kernel4_ydir(
-    __global double *restrict arg0, __global double *restrict arg1,
-    __global const double *restrict arg2, __global const double *restrict arg3,
-    __global const double *restrict arg4, __global const double *restrict arg5,
-    __global double *restrict arg6, __global double *restrict arg7,
-    __global double *restrict arg8, __global double *restrict arg9,
-    __global const double *restrict arg10, const int base0, const int base1,
-    const int base2, const int base3, const int base4, const int base5,
-    const int base6, const int base7, const int base8, const int base9,
-    const int base10, const int size0, const int size1, const int size2) {
+__global double* restrict arg0,
+__global double* restrict arg1,
+__global const double* restrict arg2,
+__global const double* restrict arg3,
+__global const double* restrict arg4,
+__global const double* restrict arg5,
+__global double* restrict arg6,
+__global double* restrict arg7,
+__global double* restrict arg8,
+__global double* restrict arg9,
+__global const double* restrict arg10,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int base4,
+const int base5,
+const int base6,
+const int base7,
+const int base8,
+const int base9,
+const int base10,
+const int size0,
+const int size1,
+const int size2 ){
+
 
   int idx_y = get_global_id(1);
   int idx_z = get_global_id(2);
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    ptr_double ptr0 = {&arg0[base0 + idx_x * 1 * 1 +
-                             idx_y * 1 * 1 * xdim0_advec_cell_kernel4_ydir +
-                             idx_z * 1 * 1 * xdim0_advec_cell_kernel4_ydir *
-                                 ydim0_advec_cell_kernel4_ydir],
-                       xdim0_advec_cell_kernel4_ydir,
-                       ydim0_advec_cell_kernel4_ydir};
-    ptr_double ptr1 = {&arg1[base1 + idx_x * 1 * 1 +
-                             idx_y * 1 * 1 * xdim1_advec_cell_kernel4_ydir +
-                             idx_z * 1 * 1 * xdim1_advec_cell_kernel4_ydir *
-                                 ydim1_advec_cell_kernel4_ydir],
-                       xdim1_advec_cell_kernel4_ydir,
-                       ydim1_advec_cell_kernel4_ydir};
-    const ptr_double ptr2 = {
-        &arg2[base2 + idx_x * 1 * 1 +
-              idx_y * 1 * 1 * xdim2_advec_cell_kernel4_ydir +
-              idx_z * 1 * 1 * xdim2_advec_cell_kernel4_ydir *
-                  ydim2_advec_cell_kernel4_ydir],
-        xdim2_advec_cell_kernel4_ydir, ydim2_advec_cell_kernel4_ydir};
-    const ptr_double ptr3 = {
-        &arg3[base3 + idx_x * 1 * 1 +
-              idx_y * 1 * 1 * xdim3_advec_cell_kernel4_ydir +
-              idx_z * 1 * 1 * xdim3_advec_cell_kernel4_ydir *
-                  ydim3_advec_cell_kernel4_ydir],
-        xdim3_advec_cell_kernel4_ydir, ydim3_advec_cell_kernel4_ydir};
-    const ptr_double ptr4 = {
-        &arg4[base4 + idx_x * 1 * 1 +
-              idx_y * 1 * 1 * xdim4_advec_cell_kernel4_ydir +
-              idx_z * 1 * 1 * xdim4_advec_cell_kernel4_ydir *
-                  ydim4_advec_cell_kernel4_ydir],
-        xdim4_advec_cell_kernel4_ydir, ydim4_advec_cell_kernel4_ydir};
-    const ptr_double ptr5 = {
-        &arg5[base5 + idx_x * 1 * 1 +
-              idx_y * 1 * 1 * xdim5_advec_cell_kernel4_ydir +
-              idx_z * 1 * 1 * xdim5_advec_cell_kernel4_ydir *
-                  ydim5_advec_cell_kernel4_ydir],
-        xdim5_advec_cell_kernel4_ydir, ydim5_advec_cell_kernel4_ydir};
-    ptr_double ptr6 = {&arg6[base6 + idx_x * 1 * 1 +
-                             idx_y * 1 * 1 * xdim6_advec_cell_kernel4_ydir +
-                             idx_z * 1 * 1 * xdim6_advec_cell_kernel4_ydir *
-                                 ydim6_advec_cell_kernel4_ydir],
-                       xdim6_advec_cell_kernel4_ydir,
-                       ydim6_advec_cell_kernel4_ydir};
-    ptr_double ptr7 = {&arg7[base7 + idx_x * 1 * 1 +
-                             idx_y * 1 * 1 * xdim7_advec_cell_kernel4_ydir +
-                             idx_z * 1 * 1 * xdim7_advec_cell_kernel4_ydir *
-                                 ydim7_advec_cell_kernel4_ydir],
-                       xdim7_advec_cell_kernel4_ydir,
-                       ydim7_advec_cell_kernel4_ydir};
-    ptr_double ptr8 = {&arg8[base8 + idx_x * 1 * 1 +
-                             idx_y * 1 * 1 * xdim8_advec_cell_kernel4_ydir +
-                             idx_z * 1 * 1 * xdim8_advec_cell_kernel4_ydir *
-                                 ydim8_advec_cell_kernel4_ydir],
-                       xdim8_advec_cell_kernel4_ydir,
-                       ydim8_advec_cell_kernel4_ydir};
-    ptr_double ptr9 = {&arg9[base9 + idx_x * 1 * 1 +
-                             idx_y * 1 * 1 * xdim9_advec_cell_kernel4_ydir +
-                             idx_z * 1 * 1 * xdim9_advec_cell_kernel4_ydir *
-                                 ydim9_advec_cell_kernel4_ydir],
-                       xdim9_advec_cell_kernel4_ydir,
-                       ydim9_advec_cell_kernel4_ydir};
-    const ptr_double ptr10 = {
-        &arg10[base10 + idx_x * 1 * 1 +
-               idx_y * 1 * 1 * xdim10_advec_cell_kernel4_ydir +
-               idx_z * 1 * 1 * xdim10_advec_cell_kernel4_ydir *
-                   ydim10_advec_cell_kernel4_ydir],
-        xdim10_advec_cell_kernel4_ydir, ydim10_advec_cell_kernel4_ydir};
-    advec_cell_kernel4_ydir(ptr0, ptr1, ptr2, ptr3, ptr4, ptr5, ptr6, ptr7,
-                            ptr8, ptr9, ptr10);
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_advec_cell_kernel4_ydir + idx_z * 1*1 * xdim0_advec_cell_kernel4_ydir * ydim0_advec_cell_kernel4_ydir], xdim0_advec_cell_kernel4_ydir, ydim0_advec_cell_kernel4_ydir};
+    ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_advec_cell_kernel4_ydir + idx_z * 1*1 * xdim1_advec_cell_kernel4_ydir * ydim1_advec_cell_kernel4_ydir], xdim1_advec_cell_kernel4_ydir, ydim1_advec_cell_kernel4_ydir};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_advec_cell_kernel4_ydir + idx_z * 1*1 * xdim2_advec_cell_kernel4_ydir * ydim2_advec_cell_kernel4_ydir], xdim2_advec_cell_kernel4_ydir, ydim2_advec_cell_kernel4_ydir};
+    const ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_advec_cell_kernel4_ydir + idx_z * 1*1 * xdim3_advec_cell_kernel4_ydir * ydim3_advec_cell_kernel4_ydir], xdim3_advec_cell_kernel4_ydir, ydim3_advec_cell_kernel4_ydir};
+    const ptr_double ptr4 = { &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_advec_cell_kernel4_ydir + idx_z * 1*1 * xdim4_advec_cell_kernel4_ydir * ydim4_advec_cell_kernel4_ydir], xdim4_advec_cell_kernel4_ydir, ydim4_advec_cell_kernel4_ydir};
+    const ptr_double ptr5 = { &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_advec_cell_kernel4_ydir + idx_z * 1*1 * xdim5_advec_cell_kernel4_ydir * ydim5_advec_cell_kernel4_ydir], xdim5_advec_cell_kernel4_ydir, ydim5_advec_cell_kernel4_ydir};
+    ptr_double ptr6 = { &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_advec_cell_kernel4_ydir + idx_z * 1*1 * xdim6_advec_cell_kernel4_ydir * ydim6_advec_cell_kernel4_ydir], xdim6_advec_cell_kernel4_ydir, ydim6_advec_cell_kernel4_ydir};
+    ptr_double ptr7 = { &arg7[base7 + idx_x * 1*1 + idx_y * 1*1 * xdim7_advec_cell_kernel4_ydir + idx_z * 1*1 * xdim7_advec_cell_kernel4_ydir * ydim7_advec_cell_kernel4_ydir], xdim7_advec_cell_kernel4_ydir, ydim7_advec_cell_kernel4_ydir};
+    ptr_double ptr8 = { &arg8[base8 + idx_x * 1*1 + idx_y * 1*1 * xdim8_advec_cell_kernel4_ydir + idx_z * 1*1 * xdim8_advec_cell_kernel4_ydir * ydim8_advec_cell_kernel4_ydir], xdim8_advec_cell_kernel4_ydir, ydim8_advec_cell_kernel4_ydir};
+    ptr_double ptr9 = { &arg9[base9 + idx_x * 1*1 + idx_y * 1*1 * xdim9_advec_cell_kernel4_ydir + idx_z * 1*1 * xdim9_advec_cell_kernel4_ydir * ydim9_advec_cell_kernel4_ydir], xdim9_advec_cell_kernel4_ydir, ydim9_advec_cell_kernel4_ydir};
+    const ptr_double ptr10 = { &arg10[base10 + idx_x * 1*1 + idx_y * 1*1 * xdim10_advec_cell_kernel4_ydir + idx_z * 1*1 * xdim10_advec_cell_kernel4_ydir * ydim10_advec_cell_kernel4_ydir], xdim10_advec_cell_kernel4_ydir, ydim10_advec_cell_kernel4_ydir};
+    advec_cell_kernel4_ydir(ptr0,
+                      ptr1,
+                      ptr2,
+                      ptr3,
+                      ptr4,
+                      ptr5,
+                      ptr6,
+                      ptr7,
+                      ptr8,
+                      ptr9,
+                      ptr10);
   }
+
 }

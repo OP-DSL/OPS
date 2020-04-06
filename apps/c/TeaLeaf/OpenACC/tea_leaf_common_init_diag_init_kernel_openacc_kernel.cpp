@@ -45,7 +45,7 @@ void ops_par_loop_tea_leaf_common_init_diag_init_kernel(char const *name, ops_bl
     ops_timers_core(&c1,&t1);
   }
 
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block
 
   int start[2];
   int end[2];

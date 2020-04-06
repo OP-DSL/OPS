@@ -42,7 +42,7 @@ void ops_par_loop_tea_leaf_cg_calc_ur_r_reduce_kernel(char const *name, ops_bloc
     ops_timers_core(&c1,&t1);
   }
 
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block
 
   int start[2];
   int end[2];

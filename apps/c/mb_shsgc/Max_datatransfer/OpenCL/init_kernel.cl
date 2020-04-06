@@ -30,19 +30,6 @@
 #define OPS_INC 3
 #define OPS_MIN 4
 #define OPS_MAX 5
-#define ZERO_double 0.0;
-#define INFINITY_double INFINITY;
-#define ZERO_float 0.0f;
-#define INFINITY_float INFINITY;
-#define ZERO_int 0;
-#define INFINITY_int INFINITY;
-#define ZERO_uint 0;
-#define INFINITY_uint INFINITY;
-#define ZERO_ll 0;
-#define INFINITY_ll INFINITY;
-#define ZERO_ull 0;
-#define INFINITY_ull INFINITY;
-#define ZERO_bool 0;
 
 //user function
 
@@ -53,7 +40,7 @@ void init_kernel(const ptr_double x,
   ptr_double  rhoin,
   ptr_double rho_old,
   ptr_double rhou_old,
-  ptr_double rhoE_old, const double pl, const double pr, const double rhol, const double ul, const double ur, const double gam1, const double eps, const double lambda)
+  ptr_double rhoE_old, const double pl, const double pr, const double rhol, const double ul2, const double ur, const double gam1, const double eps, const double lambda)
 {
   if (OPS_ACCS(x, 0) >= -4.0){
     OPS_ACCS(rho_new, 0) = 1.0 + eps * sin(lambda *OPS_ACCS(x, 0));
@@ -62,7 +49,7 @@ void init_kernel(const ptr_double x,
   }
   else {
     OPS_ACCS(rho_new, 0) = rhol;
-    OPS_ACCS(rhou_new, 0) = ul * OPS_ACCS(rho_new, 0);
+    OPS_ACCS(rhou_new, 0) = ul2 * OPS_ACCS(rho_new, 0);
     OPS_ACCS(rhoE_new, 0) = (pl / gam1) + 0.5 * pow(OPS_ACCS(rhou_new, 0),2)/OPS_ACCS(rho_new, 0);
   }
   OPS_ACCS(rho_old, 0)  = OPS_ACCS(rho_new, 0);
@@ -86,7 +73,7 @@ __global double* restrict arg7,
 const double pl,
 const double pr,
 const double rhol,
-const double ul,
+const double ul2,
 const double ur,
 const double gam1,
 const double eps,
@@ -124,7 +111,7 @@ const int size0 ){
                 pl,
                 pr,
                 rhol,
-                ul,
+                ul2,
                 ur,
                 gam1,
                 eps,

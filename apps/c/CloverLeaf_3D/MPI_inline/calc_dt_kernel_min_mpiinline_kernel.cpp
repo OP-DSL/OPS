@@ -41,7 +41,6 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   int arg_idx[3];
 
   #ifdef OPS_MPI
-  sub_block_list sb = OPS_sub_block_list[block->index];
   if (compute_ranges(args, 2,block, range, start, end, arg_idx) < 0) return;
   #else
   for ( int n=0; n<3; n++ ){
@@ -71,12 +70,6 @@ void ops_par_loop_calc_dt_kernel_min(char const *name, ops_block block, int dim,
   }
 
 
-  #ifdef OPS_MPI
-  double *arg1h = (double *)(((ops_reduction)args[1].data)->data + ((ops_reduction)args[1].data)->size * block->index);
-  #else
-  double *arg1h = (double *)(((ops_reduction)args[1].data)->data);
-  #endif
-  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   //set up initial pointers and exchange halos if necessary
   int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];

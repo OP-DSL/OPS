@@ -7,30 +7,33 @@
 int xdim0_poisson_kernel_update;
 int xdim1_poisson_kernel_update;
 
-// user function
+//user function
 #pragma acc routine
-inline void poisson_kernel_update(const ptr_double u2, ptr_double u) {
-  OPS_ACC(u, 0, 0) = OPS_ACC(u2, 0, 0);
+inline 
+void poisson_kernel_update(const ptr_double u2,
+  ptr_double u) {
+  OPS_ACC(u, 0,0) = OPS_ACC(u2, 0,0);
 }
 
-void poisson_kernel_update_c_wrapper(double *p_a0, double *p_a1, int x_size,
-                                     int y_size) {
-#ifdef OPS_GPU
-#pragma acc parallel deviceptr(p_a0, p_a1)
-#pragma acc loop
-#endif
-  for (int n_y = 0; n_y < y_size; n_y++) {
-#ifdef OPS_GPU
-#pragma acc loop
-#endif
-    for (int n_x = 0; n_x < x_size; n_x++) {
-      const ptr_double ptr0 = {p_a0 + n_x * 1 * 1 +
-                                   n_y * xdim0_poisson_kernel_update * 1 * 1,
-                               xdim0_poisson_kernel_update};
-      ptr_double ptr1 = {p_a1 + n_x * 1 * 1 +
-                             n_y * xdim1_poisson_kernel_update * 1 * 1,
-                         xdim1_poisson_kernel_update};
-      poisson_kernel_update(ptr0, ptr1);
+
+void poisson_kernel_update_c_wrapper(
+  double *p_a0,
+  double *p_a1,
+  int x_size, int y_size) {
+  #ifdef OPS_GPU
+  #pragma acc parallel deviceptr(p_a0,p_a1)
+  #pragma acc loop
+  #endif
+  for ( int n_y=0; n_y<y_size; n_y++ ){
+    #ifdef OPS_GPU
+    #pragma acc loop
+    #endif
+    for ( int n_x=0; n_x<x_size; n_x++ ){
+      const ptr_double ptr0 = {  p_a0 + n_x*1*1 + n_y*xdim0_poisson_kernel_update*1*1, xdim0_poisson_kernel_update};
+      ptr_double ptr1 = {  p_a1 + n_x*1*1 + n_y*xdim1_poisson_kernel_update*1*1, xdim1_poisson_kernel_update};
+      poisson_kernel_update( ptr0,
+          ptr1 );
+
     }
   }
 }

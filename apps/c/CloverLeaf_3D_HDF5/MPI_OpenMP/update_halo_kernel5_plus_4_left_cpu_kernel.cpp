@@ -43,7 +43,7 @@ void ops_par_loop_update_halo_kernel5_plus_4_left_execute(ops_kernel_descriptor 
   //compute locally allocated range for the sub-block
   int start[3];
   int end[3];
-  #ifdef OPS_MPI
+  #if defined(OPS_MPI) && !defined(OPS_LAZY)
   int arg_idx[3];
   #endif
   #if defined(OPS_LAZY) || !defined(OPS_MPI)
@@ -135,7 +135,7 @@ void ops_par_loop_update_halo_kernel5_plus_4_left(char const *name, ops_block bl
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
-  desc->device = 1;
+  desc->device = 0;
   desc->index = 87;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 87;

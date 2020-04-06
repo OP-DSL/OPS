@@ -51,9 +51,14 @@ void ops_par_loop_gridgen_kernel_execute(ops_kernel_descriptor *desc) {
   if (compute_ranges(args, 2,block, range, start, end, arg_idx) < 0) return;
   #endif
 
-  #ifdef OPS_MPI
-  arg_idx[0] -= start[0];
+  #if defined(OPS_MPI)
+  #if defined(OPS_LAZY)
+  sub_block_list sb = OPS_sub_block_list[block->index];
+  arg_idx[0] = sb->decomp_disp[0];
   #else
+  arg_idx[0] -= start[0];
+  #endif
+  #else //OPS_MPI
   arg_idx[0] = 0;
   #endif //OPS_MPI
 
@@ -113,7 +118,7 @@ void ops_par_loop_gridgen_kernel(char const *name, ops_block block, int dim, int
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
-  desc->device = 1;
+  desc->device = 0;
   desc->index = 0;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 0;

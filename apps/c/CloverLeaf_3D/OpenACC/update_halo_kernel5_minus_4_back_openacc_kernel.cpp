@@ -45,7 +45,7 @@ void ops_par_loop_update_halo_kernel5_minus_4_back(char const *name, ops_block b
     ops_timers_core(&c1,&t1);
   }
 
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block
 
   int start[3];
   int end[3];

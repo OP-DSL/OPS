@@ -7,7 +7,7 @@
 #else
 #pragma OPENCL FP_CONTRACT OFF
 #endif
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #include "user_types.h"
 #define OPS_2D
@@ -17,13 +17,13 @@
 #include "ops_opencl_reduction.h"
 
 #ifndef MIN
-#define MIN(a, b) ((a < b) ? (a) : (b))
+#define MIN(a,b) ((a<b) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a, b) ((a > b) ? (a) : (b))
+#define MAX(a,b) ((a>b) ? (a) : (b))
 #endif
 #ifndef SIGN
-#define SIGN(a, b) ((b < 0.0) ? (a * (-1)) : (a))
+#define SIGN(a,b) ((b<0.0) ? (a*(-1)) : (a))
 #endif
 #define OPS_READ 0
 #define OPS_WRITE 1
@@ -31,73 +31,64 @@
 #define OPS_INC 3
 #define OPS_MIN 4
 #define OPS_MAX 5
-#define ZERO_double 0.0;
-#define INFINITY_double INFINITY;
-#define ZERO_float 0.0f;
-#define INFINITY_float INFINITY;
-#define ZERO_int 0;
-#define INFINITY_int INFINITY;
-#define ZERO_uint 0;
-#define INFINITY_uint INFINITY;
-#define ZERO_ll 0;
-#define INFINITY_ll INFINITY;
-#define ZERO_ull 0;
-#define INFINITY_ull INFINITY;
-#define ZERO_bool 0;
 
-// user function
+//user function
 
-void tea_leaf_cg_calc_w_reduce_kernel(ptr_double w, const ptr_double Kx,
-                                      const ptr_double Ky, const ptr_double p,
-                                      const double *rx, const double *ry,
-                                      double *pw) {
-  OPS_ACCS(w, 0, 0) = (1.0 + (*ry) * (OPS_ACCS(Ky, 0, 1) + OPS_ACCS(Ky, 0, 0)) +
-                       (*rx) * (OPS_ACCS(Kx, 1, 0) + OPS_ACCS(Kx, 0, 0))) *
-                          OPS_ACCS(p, 0, 0) -
-                      (*ry) * (OPS_ACCS(Ky, 0, 1) * OPS_ACCS(p, 0, 1) +
-                               OPS_ACCS(Ky, 0, 0) * OPS_ACCS(p, 0, -1)) -
-                      (*rx) * (OPS_ACCS(Kx, 1, 0) * OPS_ACCS(p, 1, 0) +
-                               OPS_ACCS(Kx, 0, 0) * OPS_ACCS(p, -1, 0));
-  *pw = *pw + OPS_ACCS(w, 0, 0) * OPS_ACCS(p, 0, 0);
+void tea_leaf_cg_calc_w_reduce_kernel(ptr_double w,
+  const ptr_double Kx,
+  const ptr_double Ky,
+  const ptr_double p,
+  const double *rx,
+  const double *ry,
+  double *pw) {
+  OPS_ACCS(w, 0,0) = (1.0
+                + (*ry)*(OPS_ACCS(Ky, 0,1) + OPS_ACCS(Ky, 0,0))
+                + (*rx)*(OPS_ACCS(Kx, 1,0) + OPS_ACCS(Kx, 0,0)))*OPS_ACCS(p, 0,0)
+                - (*ry)*(OPS_ACCS(Ky, 0,1)*OPS_ACCS(p, 0,1) + OPS_ACCS(Ky, 0,0)*OPS_ACCS(p, 0,-1))
+                - (*rx)*(OPS_ACCS(Kx, 1,0)*OPS_ACCS(p, 1,0) + OPS_ACCS(Kx, 0,0)*OPS_ACCS(p, -1,0));
+  *pw = *pw + OPS_ACCS(w, 0,0)*OPS_ACCS(p, 0,0);
 }
 
+
 __kernel void ops_tea_leaf_cg_calc_w_reduce_kernel(
-    __global double *restrict arg0, __global const double *restrict arg1,
-    __global const double *restrict arg2, __global const double *restrict arg3,
-    const double arg4, const double arg5, __global double *restrict arg6,
-    __local double *scratch6, int r_bytes6, const int base0, const int base1,
-    const int base2, const int base3, const int size0, const int size1) {
+__global double* restrict arg0,
+__global const double* restrict arg1,
+__global const double* restrict arg2,
+__global const double* restrict arg3,
+const double arg4,
+const double arg5,
+__global double* restrict arg6,
+__local double* scratch6,
+int r_bytes6,
+const int base0,
+const int base1,
+const int base2,
+const int base3,
+const int size0,
+const int size1 ){
 
   arg6 += r_bytes6;
   double arg6_l[1];
-  for (int d = 0; d < 1; d++)
-    arg6_l[d] = ZERO_double;
+  for (int d=0; d<1; d++) arg6_l[d] = ZERO_double;
 
   int idx_y = get_global_id(1);
   int idx_x = get_global_id(0);
 
   if (idx_x < size0 && idx_y < size1) {
-    ptr_double ptr0 = {
-        &arg0[base0 + idx_x * 1 * 1 +
-              idx_y * 1 * 1 * xdim0_tea_leaf_cg_calc_w_reduce_kernel],
-        xdim0_tea_leaf_cg_calc_w_reduce_kernel};
-    const ptr_double ptr1 = {
-        &arg1[base1 + idx_x * 1 * 1 +
-              idx_y * 1 * 1 * xdim1_tea_leaf_cg_calc_w_reduce_kernel],
-        xdim1_tea_leaf_cg_calc_w_reduce_kernel};
-    const ptr_double ptr2 = {
-        &arg2[base2 + idx_x * 1 * 1 +
-              idx_y * 1 * 1 * xdim2_tea_leaf_cg_calc_w_reduce_kernel],
-        xdim2_tea_leaf_cg_calc_w_reduce_kernel};
-    const ptr_double ptr3 = {
-        &arg3[base3 + idx_x * 1 * 1 +
-              idx_y * 1 * 1 * xdim3_tea_leaf_cg_calc_w_reduce_kernel],
-        xdim3_tea_leaf_cg_calc_w_reduce_kernel};
-    tea_leaf_cg_calc_w_reduce_kernel(ptr0, ptr1, ptr2, ptr3, &arg4, &arg5,
+    ptr_double ptr0 = { &arg0[base0 + idx_x * 1*1 + idx_y * 1*1 * xdim0_tea_leaf_cg_calc_w_reduce_kernel], xdim0_tea_leaf_cg_calc_w_reduce_kernel};
+    const ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_tea_leaf_cg_calc_w_reduce_kernel], xdim1_tea_leaf_cg_calc_w_reduce_kernel};
+    const ptr_double ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_tea_leaf_cg_calc_w_reduce_kernel], xdim2_tea_leaf_cg_calc_w_reduce_kernel};
+    const ptr_double ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_tea_leaf_cg_calc_w_reduce_kernel], xdim3_tea_leaf_cg_calc_w_reduce_kernel};
+    tea_leaf_cg_calc_w_reduce_kernel(ptr0,
+                                     ptr1,
+                                     ptr2,
+                                     ptr3,
+                                     &arg4,
+                                     &arg5,
                                      arg6_l);
   }
-  int group_index = get_group_id(0) + get_group_id(1) * get_num_groups(0) +
-                    get_group_id(2) * get_num_groups(0) * get_num_groups(1);
-  for (int d = 0; d < 1; d++)
-    reduce_double(arg6_l[d], scratch6, &arg6[group_index * 1 + d], OPS_INC);
+  int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);
+  for (int d=0; d<1; d++)
+    reduce_double(arg6_l[d], scratch6, &arg6[group_index*1+d], OPS_INC);
+
 }

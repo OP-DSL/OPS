@@ -7,36 +7,26 @@ int ydim0_update_halo_kernel4_plus_2_b;
 int xdim1_update_halo_kernel4_plus_2_b;
 int ydim1_update_halo_kernel4_plus_2_b;
 
-// user function
 
-void update_halo_kernel4_plus_2_b_c_wrapper(double *restrict vol_flux_y_p,
-                                            double *restrict mass_flux_y_p,
-                                            const int *restrict fields,
-                                            int x_size, int y_size,
-                                            int z_size) {
-#pragma omp parallel for
-  for (int n_z = 0; n_z < z_size; n_z++) {
-    for (int n_y = 0; n_y < y_size; n_y++) {
-      for (int n_x = 0; n_x < x_size; n_x++) {
-        ptr_double vol_flux_y = {vol_flux_y_p + n_x * 1 +
-                                     n_y * xdim0_update_halo_kernel4_plus_2_b *
-                                         1 +
-                                     n_z * xdim0_update_halo_kernel4_plus_2_b *
-                                         ydim0_update_halo_kernel4_plus_2_b * 1,
-                                 xdim0_update_halo_kernel4_plus_2_b,
-                                 ydim0_update_halo_kernel4_plus_2_b};
-        ptr_double mass_flux_y = {
-            mass_flux_y_p + n_x * 1 +
-                n_y * xdim1_update_halo_kernel4_plus_2_b * 1 +
-                n_z * xdim1_update_halo_kernel4_plus_2_b *
-                    ydim1_update_halo_kernel4_plus_2_b * 1,
-            xdim1_update_halo_kernel4_plus_2_b,
-            ydim1_update_halo_kernel4_plus_2_b};
+//user function
 
-        if (fields[FIELD_VOL_FLUX_Y] == 1)
-          OPS_ACC(vol_flux_y, 0, 0, 0) = OPS_ACC(vol_flux_y, -2, 0, 0);
-        if (fields[FIELD_MASS_FLUX_Y] == 1)
-          OPS_ACC(mass_flux_y, 0, 0, 0) = OPS_ACC(mass_flux_y, -2, 0, 0);
+
+
+void update_halo_kernel4_plus_2_b_c_wrapper(
+  double * restrict vol_flux_y_p,
+  double * restrict mass_flux_y_p,
+  const int * restrict fields,
+  int x_size, int y_size, int z_size) {
+  #pragma omp parallel for
+  for ( int n_z=0; n_z<z_size; n_z++ ){
+    for ( int n_y=0; n_y<y_size; n_y++ ){
+      for ( int n_x=0; n_x<x_size; n_x++ ){
+        ptr_double vol_flux_y = { vol_flux_y_p + n_x*1 + n_y * xdim0_update_halo_kernel4_plus_2_b*1 + n_z * xdim0_update_halo_kernel4_plus_2_b * ydim0_update_halo_kernel4_plus_2_b*1, xdim0_update_halo_kernel4_plus_2_b, ydim0_update_halo_kernel4_plus_2_b};
+        ptr_double mass_flux_y = { mass_flux_y_p + n_x*1 + n_y * xdim1_update_halo_kernel4_plus_2_b*1 + n_z * xdim1_update_halo_kernel4_plus_2_b * ydim1_update_halo_kernel4_plus_2_b*1, xdim1_update_halo_kernel4_plus_2_b, ydim1_update_halo_kernel4_plus_2_b};
+        
+  if(fields[FIELD_VOL_FLUX_Y] == 1) OPS_ACC(vol_flux_y, 0,0,0) = OPS_ACC(vol_flux_y, -2,0,0);
+  if(fields[FIELD_MASS_FLUX_Y] == 1) OPS_ACC(mass_flux_y, 0,0,0) = OPS_ACC(mass_flux_y, -2,0,0);
+
       }
     }
   }

@@ -278,7 +278,7 @@ int main(int argc, char **argv)
 				}
 			}
 		}
-    if (iter == 5) u[0] = ops_dat_copy(u[0]); //TESTING
+//    if (iter == 5) u[0] = ops_dat_copy(u[0]); //TESTING
   }
 	ops_execute(blocks[0]->instance);
   ops_timers(&ct0, &it1);

@@ -26,7 +26,7 @@ extern double pl;
 extern double pr;
 extern double rhol;
 extern double rhor;
-extern double ul;
+extern double ul2;
 extern double ur;
 extern double gam;
 extern double gam1;
@@ -206,7 +206,7 @@ void ops_decl_const_char(int dim, char const * type, int typeSize, char * dat, c
     clSafeCall( clFinish(instance->opencl_instance->OPS_opencl_core.command_queue) );
   }
   else
-  if (!strcmp(name,"ul")) {
+  if (!strcmp(name,"ul2")) {
     if (instance->opencl_instance->OPS_opencl_core.constant[14] == NULL) {
       instance->opencl_instance->OPS_opencl_core.constant[14] = clCreateBuffer(instance->opencl_instance->OPS_opencl_core.context, CL_MEM_READ_ONLY, dim*typeSize, NULL, &ret);
       clSafeCall( ret );

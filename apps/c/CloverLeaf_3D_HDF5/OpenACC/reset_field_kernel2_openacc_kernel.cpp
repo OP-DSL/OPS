@@ -64,7 +64,7 @@ void ops_par_loop_reset_field_kernel2(char const *name, ops_block block, int dim
     ops_timers_core(&c1,&t1);
   }
 
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block
 
   int start[3];
   int end[3];

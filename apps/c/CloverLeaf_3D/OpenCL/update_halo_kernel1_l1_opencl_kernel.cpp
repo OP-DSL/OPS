@@ -22,7 +22,7 @@ void buildOpenCLKernels_update_halo_kernel1_l1(OPS_instance *instance, int xdim0
 
     // Load the kernel source code into the array source_str
     FILE *fid;
-    char *source_str[1];
+    char *source_str[1] = {NULL};
     size_t source_size[1];
 
     for(int i=0; i<1; i++) {
@@ -42,7 +42,7 @@ void buildOpenCLKernels_update_halo_kernel1_l1(OPS_instance *instance, int xdim0
           throw e;
         }
         if (feof(fid))
-          instance->ostream() << "Kernel source file "<< source_filename[i] <<" succesfuly read.\n";
+          instance->ostream() << "Kernel source file "<< source_filename[i] <<" succesfully read.\n";
       }
       fclose(fid);
     }
@@ -91,6 +91,7 @@ void buildOpenCLKernels_update_halo_kernel1_l1(OPS_instance *instance, int xdim0
     clSafeCall( ret );
 
     isbuilt_update_halo_kernel1_l1 = true;
+    free(source_str[0]);
   }
 
 }
@@ -309,7 +310,7 @@ void ops_par_loop_update_halo_kernel1_l1(char const *name, ops_block block, int 
     clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[17], 16, sizeof(cl_int), (void*) &y_size ));
     clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[17], 17, sizeof(cl_int), (void*) &z_size ));
 
-    //call/enque opencl kernel wrapper function
+    //call/enqueue opencl kernel wrapper function
     clSafeCall( clEnqueueNDRangeKernel(block->instance->opencl_instance->OPS_opencl_core.command_queue, block->instance->opencl_instance->OPS_opencl_core.kernel[17], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   }
   if (block->instance->OPS_diags>1) {

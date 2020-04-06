@@ -30,25 +30,16 @@
 #define OPS_INC 3
 #define OPS_MIN 4
 #define OPS_MAX 5
-#define ZERO_double 0.0;
-#define INFINITY_double INFINITY;
-#define ZERO_float 0.0f;
-#define INFINITY_float INFINITY;
-#define ZERO_int 0;
-#define INFINITY_int INFINITY;
-#define ZERO_uint 0;
-#define INFINITY_uint INFINITY;
-#define ZERO_ll 0;
-#define INFINITY_ll INFINITY;
-#define ZERO_ull 0;
-#define INFINITY_ull INFINITY;
-#define ZERO_bool 0;
 
 //user function
 
 void write_kernel(ptrm_double mult,
   ptr_double single,
   ptr_int digit,
+  ptr_char dat_char,
+  ptr_short dat_short,
+  ptr_long dat_long,
+  ptr_ll dat_ll,
   const int *idx) {
 
   OPS_ACCM(mult, 0, 0, 0, 0) = 1;
@@ -57,7 +48,11 @@ void write_kernel(ptrm_double mult,
 
   OPS_ACCS(single, 0, 0, 0) = 3;
 
-  OPS_ACCS(digit, 0, 0, 0) = idx[0] * 100 + idx[1] * 10 + idx[2];
+  OPS_ACCS(digit, 0, 0, 0) = idx[0] + idx[1] * 4 + idx[2] * 20;
+  OPS_ACCS(dat_char, 0, 0, 0) = idx[0] + idx[1] * 4 + idx[2] * 20;
+  OPS_ACCS(dat_short, 0, 0, 0) = idx[0] + idx[1] * 4 + idx[2] * 20;
+  OPS_ACCS(dat_long, 0, 0, 0) = idx[0] + idx[1] * 4 + idx[2] * 20;
+  OPS_ACCS(dat_ll, 0, 0, 0) = idx[0] + idx[1] * 4 + idx[2] * 20;
 }
 
 
@@ -65,9 +60,17 @@ __kernel void ops_write_kernel(
 __global double* restrict arg0,
 __global double* restrict arg1,
 __global int* restrict arg2,
+__global char* restrict arg3,
+__global short* restrict arg4,
+__global long* restrict arg5,
+__global ll* restrict arg6,
 const int base0,
 const int base1,
 const int base2,
+const int base3,
+const int base4,
+const int base5,
+const int base6,
 int arg_idx0, int arg_idx1, int arg_idx2,
 const int size0,
 const int size1,
@@ -90,9 +93,17 @@ const int size2 ){
     #endif
     ptr_double ptr1 = { &arg1[base1 + idx_x * 1*1 + idx_y * 1*1 * xdim1_write_kernel + idx_z * 1*1 * xdim1_write_kernel * ydim1_write_kernel], xdim1_write_kernel, ydim1_write_kernel};
     ptr_int ptr2 = { &arg2[base2 + idx_x * 1*1 + idx_y * 1*1 * xdim2_write_kernel + idx_z * 1*1 * xdim2_write_kernel * ydim2_write_kernel], xdim2_write_kernel, ydim2_write_kernel};
+    ptr_char ptr3 = { &arg3[base3 + idx_x * 1*1 + idx_y * 1*1 * xdim3_write_kernel + idx_z * 1*1 * xdim3_write_kernel * ydim3_write_kernel], xdim3_write_kernel, ydim3_write_kernel};
+    ptr_short ptr4 = { &arg4[base4 + idx_x * 1*1 + idx_y * 1*1 * xdim4_write_kernel + idx_z * 1*1 * xdim4_write_kernel * ydim4_write_kernel], xdim4_write_kernel, ydim4_write_kernel};
+    ptr_long ptr5 = { &arg5[base5 + idx_x * 1*1 + idx_y * 1*1 * xdim5_write_kernel + idx_z * 1*1 * xdim5_write_kernel * ydim5_write_kernel], xdim5_write_kernel, ydim5_write_kernel};
+    ptr_ll ptr6 = { &arg6[base6 + idx_x * 1*1 + idx_y * 1*1 * xdim6_write_kernel + idx_z * 1*1 * xdim6_write_kernel * ydim6_write_kernel], xdim6_write_kernel, ydim6_write_kernel};
     write_kernel(ptr0,
                  ptr1,
                  ptr2,
+                 ptr3,
+                 ptr4,
+                 ptr5,
+                 ptr6,
                  arg_idx);
   }
 

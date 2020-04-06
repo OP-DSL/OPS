@@ -3,6 +3,7 @@
 //
 
 #define OPS_3D
+#include <math.h>
 #include "./MPI_inline/write_common.h"
 //user kernel files
 #include "write_kernel_mpiinline_kernel_c.c"

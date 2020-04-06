@@ -22,7 +22,7 @@ void init_kernel_gpu(const ACC<double> &x,
   }
   else {
     rho_new(0) = rhol;
-    rhou_new(0) = ul * rho_new(0);
+    rhou_new(0) = ul2 * rho_new(0);
     rhoE_new(0) = (pl / gam1) + 0.5 * pow(rhou_new(0),2)/rho_new(0);
   }
   rho_old(0)  = rho_new(0);
