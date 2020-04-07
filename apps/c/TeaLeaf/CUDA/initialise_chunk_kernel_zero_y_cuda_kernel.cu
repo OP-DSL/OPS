@@ -71,13 +71,14 @@ void ops_par_loop_initialise_chunk_kernel_zero_y_execute(ops_kernel_descriptor *
   #ifdef OPS_MPI
   int arg_idx[2];
   #endif
-  #ifdef OPS_MPI
-  if (compute_ranges(args, 1,block, range, start, end, arg_idx) < 0) return;
-  #else //OPS_MPI
+  #if defined(OPS_LAZY) || !defined(OPS_MPI)
   for ( int n=0; n<2; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
+  #else
+  if (compute_ranges(args, 1,block, range, start, end, arg_idx) < 0) return;
   #endif
+
   int xdim0 = args[0].dat->size[0];
 
   if (xdim0 != dims_initialise_chunk_kernel_zero_y_h[0][0]) {
