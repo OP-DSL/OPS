@@ -115,13 +115,14 @@ void ops_par_loop_update_halo_kernel1_b2_execute(ops_kernel_descriptor *desc) {
   #ifdef OPS_MPI
   int arg_idx[3];
   #endif
-  #ifdef OPS_MPI
-  if (compute_ranges(args, 8,block, range, start, end, arg_idx) < 0) return;
-  #else //OPS_MPI
+  #if defined(OPS_LAZY) || !defined(OPS_MPI)
   for ( int n=0; n<3; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
+  #else
+  if (compute_ranges(args, 8,block, range, start, end, arg_idx) < 0) return;
   #endif
+
   int xdim0 = args[0].dat->size[0];
   int ydim0 = args[0].dat->size[1];
   int xdim1 = args[1].dat->size[0];

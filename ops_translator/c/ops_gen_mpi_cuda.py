@@ -512,16 +512,27 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       code('#endif')
 
 
-
-    code('#ifdef OPS_MPI')
-    code('if (compute_ranges(args, '+str(nargs)+',block, range, start, end, arg_idx) < 0) return;')
-    code('#else //OPS_MPI')
+    code('#if defined(OPS_LAZY) || !defined(OPS_MPI)')
     FOR('n','0',str(NDIM))
     code('start[n] = range[2*n];end[n] = range[2*n+1];')
-    if arg_idx:
-      code('arg_idx[n] = start[n];')
     ENDFOR()
+    code('#else')
+    code('if (compute_ranges(args, '+str(nargs)+',block, range, start, end, arg_idx) < 0) return;')
     code('#endif')
+
+    code('')
+    if arg_idx or MULTI_GRID:
+      code('#if defined(OPS_MPI)')
+      code('#if defined(OPS_LAZY)')
+      code('sub_block_list sb = OPS_sub_block_list[block->index];')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+']+start['+str(n)+'];')
+      code('#endif')
+      code('#else //OPS_MPI')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = start['+str(n)+'];')
+      code('#endif //OPS_MPI')
+
 
     if MULTI_GRID:
       code('int global_idx['+str(NDIM)+'];')
