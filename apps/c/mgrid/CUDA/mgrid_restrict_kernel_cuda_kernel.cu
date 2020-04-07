@@ -82,14 +82,24 @@ void ops_par_loop_mgrid_restrict_kernel_execute(ops_kernel_descriptor *desc) {
   #endif //OPS_MPI
 
   int arg_idx[2];
-  #ifdef OPS_MPI
-  if (compute_ranges(args, 3,block, range, start, end, arg_idx) < 0) return;
-  #else //OPS_MPI
+  #if defined(OPS_LAZY) || !defined(OPS_MPI)
   for ( int n=0; n<2; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
-    arg_idx[n] = start[n];
   }
+  #else
+  if (compute_ranges(args, 3,block, range, start, end, arg_idx) < 0) return;
   #endif
+
+  #if defined(OPS_MPI)
+  #if defined(OPS_LAZY)
+  sub_block_list sb = OPS_sub_block_list[block->index];
+  arg_idx[0] = sb->decomp_disp[0]+start[0];
+  arg_idx[1] = sb->decomp_disp[1]+start[1];
+  #endif
+  #else //OPS_MPI
+  arg_idx[0] = start[0];
+  arg_idx[1] = start[1];
+  #endif //OPS_MPI
   int global_idx[2];
   #ifdef OPS_MPI
   global_idx[0] = arg_idx[0];
