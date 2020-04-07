@@ -4,6 +4,7 @@
 
 #define OPS_3D
 #include "./MPI_inline/lowdim_common.h"
+#include <math.h>
 //user kernel files
 #include "set_val_mpiinline_kernel_c.c"
 #include "calc_mpiinline_kernel_c.c"

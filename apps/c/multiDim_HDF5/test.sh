@@ -17,11 +17,11 @@ make IEEE=1
 #============================ Test write with Intel Compilers==========================================================
 echo '============> Running OpenMP'
 rm -rf write_data.h5 read_data.h5;
-KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./write_openmp
-KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./read_openmp
+KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./write_openmp 
+KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./read_openmp 
 $HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-
+rc=$?; if [[ $rc != 0 ]] then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
+rm out
 
 echo '============> Running MPI+OpenMP'
 rm -rf write_data.h5 read_data.h5;

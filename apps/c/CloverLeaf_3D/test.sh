@@ -109,6 +109,13 @@ rm -f clover.out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm -f clover.out
 
+echo '============> Running MPI+CUDA+Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./cloverleaf_mpi_cuda_tiled OPS_TILING OPS_TILING_MAXDEPTH=6 OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_outgrep "Total Wall time" clover.out
+#grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
+grep "PASSED" clover.out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm -f clover.out
+
 echo '============> Running OpenCL on CPU'
 ./cloverleaf_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Total Wall time" clover.out
@@ -236,6 +243,13 @@ rm -f clover.out
 #grep "PASSED" clover.out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm -f clover.out
+
+echo '============> Running MPI+CUDA+Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./cloverleaf_mpi_cuda_tiled OPS_TILING OPS_TILING_MAXDEPTH=6 OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_outgrep "Total Wall time" clover.out
+#grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
+grep "PASSED" clover.out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm -f clover.out
 
 
 #echo '============> Running OpenCL on CPU'

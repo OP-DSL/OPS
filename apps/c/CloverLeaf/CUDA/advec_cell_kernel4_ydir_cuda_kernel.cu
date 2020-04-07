@@ -132,13 +132,14 @@ void ops_par_loop_advec_cell_kernel4_ydir_execute(ops_kernel_descriptor *desc) {
   #ifdef OPS_MPI
   int arg_idx[2];
   #endif
-  #ifdef OPS_MPI
-  if (compute_ranges(args, 11,block, range, start, end, arg_idx) < 0) return;
-  #else //OPS_MPI
+  #if defined(OPS_LAZY) || !defined(OPS_MPI)
   for ( int n=0; n<2; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
+  #else
+  if (compute_ranges(args, 11,block, range, start, end, arg_idx) < 0) return;
   #endif
+
   int xdim0 = args[0].dat->size[0];
   int xdim1 = args[1].dat->size[0];
   int xdim2 = args[2].dat->size[0];
