@@ -62,7 +62,7 @@ int size2 ){
   arg6 += idx_x * 1*1 + idx_y * 1*1 * dims_write_kernel[6][0] + idx_z * 1*1 * dims_write_kernel[6][0] * dims_write_kernel[6][1];
 
   if (idx_x < size0 && idx_y < size1 && idx_z < size2) {
-    ACC<double> argp0(2, dims_write_kernel[0][0], dims_write_kernel[0][1], dims_write_kernel[0][2], arg0);
+    ACC<double> argp0(2, dims_write_kernel[0][0], dims_write_kernel[0][1], 0, arg0);
     ACC<double> argp1(dims_write_kernel[1][0], dims_write_kernel[1][1], arg1);
     ACC<int> argp2(dims_write_kernel[2][0], dims_write_kernel[2][1], arg2);
     ACC<char> argp3(dims_write_kernel[3][0], dims_write_kernel[3][1], arg3);
