@@ -69,7 +69,7 @@ void ops_par_loop_calc(char const *name, ops_block block, int dim, int* range,
     ops_timers_core(&c1,&t1);
   }
 
-  //compute localy allocated range for the sub-block
+  // compute locally allocated range for the sub-block
 
   int start[3];
   int end[3];

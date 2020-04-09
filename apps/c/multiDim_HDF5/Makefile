@@ -221,9 +221,9 @@ read_opencl: ./OpenCL/read_opencl_kernels.o read_ops.cpp Makefile $(OPS_INSTALL_
 
 
 write_mpi_opencl: ./OpenCL/write_mpi_opencl_kernels.o write_ops.cpp write_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/$(OPS_COMPILER)/libops_mpi_opencl.a
-	$(MPICPP) $(CPPFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPENCL_LIB) write_ops.cpp ./OpenCL/write_opencl_kernels.o -lops_hdf5_mpi -lops_mpi_opencl $(HDF5_LIB) -o write_mpi_opencl
+	$(MPICPP) $(CPPFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPENCL_LIB) write_ops.cpp ./OpenCL/write_mpi_opencl_kernels.o -lops_hdf5_mpi -lops_mpi_opencl $(HDF5_LIB) -o write_mpi_opencl
 read_mpi_opencl: ./OpenCL/read_mpi_opencl_kernels.o read_ops.cpp Makefile $(OPS_INSTALL_PATH)/lib/$(OPS_COMPILER)/libops_mpi_opencl.a
-	$(MPICPP) $(CPPFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPENCL_LIB) read_ops.cpp ./OpenCL/read_opencl_kernels.o -lops_hdf5_mpi -lops_mpi_opencl $(HDF5_LIB) -o read_mpi_opencl
+	$(MPICPP) $(CPPFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(OPENCL_LIB) read_ops.cpp ./OpenCL/read_mpi_opencl_kernels.o -lops_hdf5_mpi -lops_mpi_opencl $(HDF5_LIB) -o read_mpi_opencl
 
 ./OpenCL/write_opencl_kernels.o: ./OpenCL/write_opencl_kernels.cpp Makefile
 	$(CPP) $(CPPFLAGS) $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
@@ -234,10 +234,10 @@ read_mpi_opencl: ./OpenCL/read_mpi_opencl_kernels.o read_ops.cpp Makefile $(OPS_
 
 ./OpenCL/write_mpi_opencl_kernels.o: ./OpenCL/write_opencl_kernels.cpp Makefile
 	$(MPICPP) $(CPPFLAGS) -DOPS_MPI $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
-                -c -o ./OpenCL/write_opencl_kernels.o ./OpenCL/write_opencl_kernels.cpp
+                -c -o ./OpenCL/write_mpi_opencl_kernels.o ./OpenCL/write_opencl_kernels.cpp
 ./OpenCL/read_mpi_opencl_kernels.o: ./OpenCL/read_opencl_kernels.cpp Makefile
 	$(MPICPP) $(CPPFLAGS) -DOPS_MPI $(VAR) $(OPENCL_INC) $(INC) $(OPS_INC) -I. \
-                -c -o ./OpenCL/read_opencl_kernels.o ./OpenCL/read_opencl_kernels.cpp
+                -c -o ./OpenCL/read_mpi_opencl_kernels.o ./OpenCL/read_opencl_kernels.cpp
 
 #
 #error

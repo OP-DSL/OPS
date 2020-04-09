@@ -100,6 +100,15 @@ rm -f tea.out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm -f tea.out
 
+echo '============> Running MPI+CUDA+Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./tealeaf_mpi_cuda_tiled OPS_TILING OPS_TILING_MAXDEPTH=6 OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total Wall time" tea.out
+#grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" tea.out
+grep "PASSED" tea.out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm -f tea.out
+
+
 echo '============> Running OpenCL on CPU'
 ./tealeaf_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Total Wall time" tea.out
@@ -211,6 +220,13 @@ rm -f tea.out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm -f tea.out
 
+echo '============> Running MPI+CUDA+Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./tealeaf_mpi_cuda_tiled OPS_TILING OPS_TILING_MAXDEPTH=6 OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total Wall time" tea.out
+#grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" tea.out
+grep "PASSED" tea.out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm -f tea.out
 
 #echo '============> Running OpenCL on CPU'
 ./tealeaf_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
