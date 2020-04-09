@@ -11,6 +11,7 @@ rm -f .generated
 ../../../ops_translator/c/ops.py read.cpp
 make clean
 make IEEE=1 
+make -f Makefile.write IEEE=1 
 
 
 

@@ -12,16 +12,16 @@ USE_HDF5=1
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
 
-HEADERS=
+HEADERS=write_kernel.h
 
-OPS_FILES=read.cpp
+OPS_FILES=write.cpp
 
-OPS_GENERATED=read_ops.cpp
+OPS_GENERATED=write_ops.cpp
 
 OTHER_FILES=
 
-APP=read
-MAIN_SRC=read
+APP=write
+MAIN_SRC=write
 
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app
 
