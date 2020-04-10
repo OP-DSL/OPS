@@ -199,7 +199,7 @@ void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
 
   /* create and write the a group that holds the halo information */
 if (H5Lexists(file_id, halo_name, H5P_DEFAULT) == 0) {
-  if (halo->from->block->instance->OPS_diags > 2) 
+  if (halo->from->block->instance->OPS_diags > 2)
     if (halo->from->block->instance->is_root()) halo->from->block->instance->ostream() << "ops_halo "<<halo_name<<" does not exists in the file ... creating group to hold halo\n";
   group_id =
   H5Gcreate(file_id, halo_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -374,7 +374,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       plist_id = H5Pcreate(H5P_FILE_ACCESS);
 
       if (file_exist(file_name) == 0) {
-        if (dat->block->instance->OPS_diags>3) 
+        if (dat->block->instance->OPS_diags > 3)
           if (dat->block->instance->is_root()) dat->block->instance->ostream() << "File "<<file_name<<"does not exist .... creating file\n";
         FILE *fp;
         fp = fopen(file_name, "w");
@@ -398,7 +398,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         group_id = H5Gopen2(file_id, block->name, H5P_DEFAULT);
 
         if (H5Lexists(group_id, dat->name, H5P_DEFAULT) == 0) {
-          if (dat->block->instance->OPS_diags>2) 
+          if (dat->block->instance->OPS_diags > 2)
             if (dat->block->instance->is_root()) dat->block->instance->ostream() << "ops_fetch_dat_hdf5_file: ops_dat "<<dat->name<<" does not exists in the ops_block "<<block->name<<" ... creating ops_dat\n";
 
           if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0)
@@ -773,7 +773,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
     if (block->index != read_block_index) {
       OPSException ex(OPS_HDF5_ERROR);
       ex << "Error: ops_decl_dat_hdf5: Attribute \"block_index\" mismatch for data set " << dat_name << " read " << read_block_index << " versus provided: " <<  block->index;
-      throw ex; 
+      throw ex;
     }
   }
   int read_dim;
@@ -920,7 +920,7 @@ void ops_dump_to_hdf5(char const *file_name) {
   }
 
   for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_stencil_index; i++) {
-    if (OPS_instance::getOPSInstance()->OPS_diags>2) 
+    if (OPS_instance::getOPSInstance()->OPS_diags > 2)
       if (OPS_instance::getOPSInstance()->is_root()) OPS_instance::getOPSInstance()->ostream() << "Dumping stencil " << OPS_instance::getOPSInstance()->OPS_stencil_list[i]->name << " to HDF5 file " << file_name << "\n";
     ops_fetch_stencil_hdf5_file(OPS_instance::getOPSInstance()->OPS_stencil_list[i], file_name);
   }
@@ -1069,6 +1069,8 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   hid_t file_id;   // file identifier
   hid_t dset_id;   // dataset identifier
   hid_t dataspace; // data space identifier
+  htri_t status;   // status for checking return values
+  hid_t attr;      // attribute identifier
 
   if (file_exist(file_name) == 0) {
     if (OPS_instance::getOPSInstance()->OPS_diags > 3) {
@@ -1080,6 +1082,91 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
 
   /* Open the existing file. */
   file_id = H5Fopen(file_name, H5F_ACC_RDWR, H5P_DEFAULT);
+
+  // Check if const already exists in data set
+  status = H5Lexists(file_id, name, H5P_DEFAULT);
+  if (status > 0) {
+    OPS_instance::getOPSInstance()->ostream()
+        << "dataset '" << name << "' already found in file " << file_name
+        << " ...";
+
+    // open existing data set
+    dset_id = H5Dopen(file_id, name, H5P_DEFAULT);
+
+    // get OID of the dim attribute
+    int const_dim = 0;
+    attr = H5Aopen(dset_id, "dim", H5P_DEFAULT);
+    H5Aread(attr, H5T_NATIVE_INT, &const_dim);
+    H5Aclose(attr);
+    if (const_dim != dim) {
+      OPSException ex(OPS_HDF5_ERROR);
+      ex << "dim of constant " << const_dim << " in file " << file_name
+         << " and requested dim " << dim << "do not match\n";
+      throw ex;
+    }
+    // find type with available attributes
+    dataspace = H5Screate(H5S_SCALAR);
+    hid_t atype = H5Tcopy(H5T_C_S1);
+    attr = H5Aopen(dset_id, "type", H5P_DEFAULT);
+
+    int attlen = H5Aget_storage_size(attr);
+    H5Tset_size(atype, attlen + 1);
+
+    // read attribute
+    char typ[attlen + 1];
+    H5Aread(attr, atype, typ);
+    H5Aclose(attr);
+    H5Sclose(dataspace);
+    if (strcmp(typ, type) != 0) {
+      OPS_instance::getOPSInstance()->ostream()
+          << "type of constant " << typ << " in file " << file_name
+          << " and requested type " << type
+          << " do not match, performing automatic type conversion\n";
+      strcpy(typ, type);
+    }
+
+    // existing const attributes matches with const to be written .. overwrite
+    OPS_instance::getOPSInstance()->ostream() << " overwriting"
+                                              << "\n";
+    dataspace = H5Dget_space(dset_id);
+
+    // write to the existing dataset with default properties
+    if (strcmp(type, "double") == 0 || strcmp(type, "double:soa") == 0 ||
+        strcmp(type, "double precision") == 0 || strcmp(type, "real(8)") == 0) {
+      // write data
+      H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, dataspace, H5P_DEFAULT,
+               const_data);
+    } else if (strcmp(type, "float") == 0 || strcmp(type, "float:soa") == 0 ||
+               strcmp(type, "real(4)") == 0 || strcmp(type, "real") == 0) {
+      // write data
+      H5Dwrite(dset_id, H5T_NATIVE_FLOAT, H5S_ALL, dataspace, H5P_DEFAULT,
+               const_data);
+    } else if (strcmp(type, "int") == 0 || strcmp(type, "int:soa") == 0 ||
+               strcmp(type, "int(4)") == 0 || strcmp(type, "integer") == 0 ||
+               strcmp(type, "integer(4)") == 0) {
+      // write data
+      H5Dwrite(dset_id, H5T_NATIVE_INT, H5S_ALL, dataspace, H5P_DEFAULT,
+               const_data);
+    } else if ((strcmp(type, "long") == 0) || (strcmp(type, "long:soa") == 0)) {
+      // write data
+      H5Dwrite(dset_id, H5T_NATIVE_LONG, H5S_ALL, dataspace, H5P_DEFAULT,
+               const_data);
+    } else if ((strcmp(type, "long long") == 0) ||
+               (strcmp(type, "long long:soa") == 0)) {
+      // write data
+      H5Dwrite(dset_id, H5T_NATIVE_LLONG, H5S_ALL, dataspace, H5P_DEFAULT,
+               const_data);
+    } else if (strcmp(type, "char") == 0) {
+      // write data
+      H5Dwrite(dset_id, H5T_NATIVE_CHAR, H5S_ALL, dataspace, H5P_DEFAULT,
+               const_data);
+    }
+
+    H5Dclose(dset_id);
+    H5Fclose(file_id);
+
+    return;
+  }
 
   // Create the dataspace for the dataset.
   hsize_t dims_of_const = {dim};

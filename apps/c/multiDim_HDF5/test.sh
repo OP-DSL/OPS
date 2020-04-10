@@ -9,9 +9,10 @@ cd -
 rm -f .generated
 ../../../ops_translator/c/ops.py write.cpp
 ../../../ops_translator/c/ops.py read.cpp
-make clean
-make IEEE=1 
-make -f Makefile.write IEEE=1 
+make -f Makefile.write clean
+make -f Makefile clean
+make -f Makefile.write IEEE=1
+make -f Makefile IEEE=1
 
 
 
@@ -115,8 +116,10 @@ source ../../scripts/$SOURCE_PGI
 make clean
 make 
 cd -
-make clean
-make IEEE=1 
+make -f Makefile.write clean
+make -f Makefile clean
+make -f Makefile.write IEEE=1
+make -f Makefile IEEE=1
 
 #============================ Test write with PGI Compilers==========================================================
 echo '============> Running OpenMP'
