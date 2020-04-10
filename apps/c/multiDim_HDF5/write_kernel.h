@@ -7,9 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-void write_kernel(ACC<double> &mult, ACC<double> &single, ACC<int> &digit, 
-                  ACC<char> &dat_char, ACC<short> &dat_short, ACC<long> &dat_long,
-                  ACC<ll> &dat_ll, const int *idx) {
+void write_kernel(ACC<double> &mult, ACC<double> &single, ACC<int> &digit,
+                  ACC<char> &dat_char, ACC<short> &dat_short,
+                  ACC<long> &dat_long, ACC<ll> &dat_ll, const int *idx) {
   // first argument of multidim is 1
   mult(0, 0, 0, 0) = 1;
 

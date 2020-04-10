@@ -1326,7 +1326,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
     if (block->index != read_block_index) {
       OPSException ex(OPS_HDF5_ERROR);
       ex << "Error: ops_decl_dat_hdf5: Attribute \"block_index\" mismatch for data set " << dat_name << " read " << read_block_index << " versus provided: " <<  block->index;
-      throw ex; 
+      throw ex;
     }
   }
   int read_dim;
@@ -1977,6 +1977,8 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   hid_t dset_id;   // dataset identifier
   hid_t plist_id;  // property list identifier
   hid_t dataspace; // data space identifier
+  htri_t status;   // status for checking return values
+  hid_t attr;      // attribute identifier
 
   // Set up file access property list with parallel I/O access
   plist_id = H5Pcreate(H5P_FILE_ACCESS);
@@ -1993,6 +1995,103 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   /* Open the existing file. */
   file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
   H5Pclose(plist_id);
+
+  // Check if const already exists in data set
+  status = H5Lexists(file_id, name, H5P_DEFAULT);
+  if (status > 0) {
+    OPS_instance::getOPSInstance()->ostream()
+        << "dataset '" << name << "' already found in file " << file_name
+        << " ...";
+
+    // Set up file access property list with parallel I/O access
+    plist_id = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_WORLD, info);
+
+    // open existing data set
+    dset_id = H5Dopen(file_id, name, H5P_DEFAULT);
+
+    // find dimension of this constant with available attributes
+    int const_dim = 0;
+    if (dset_id < 0) {
+      ops_printf("dataset with '%s' not found in file '%s' \n", name,
+                 file_name);
+      H5Fclose(file_id);
+      const_data = NULL;
+      return;
+    }
+
+    // Create property list for collective dataset read/write.
+    plist_id = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
+
+    ops_hdf5_dataset_properties dset_props;
+    status = get_dataset_properties(dset_id, &dset_props);
+    if (status < 0) {
+      ops_printf("Could not get properties of dataset '%s' in file '%s'\n",
+                 name, file_name);
+      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    }
+
+    const_dim = dset_props.size;
+    if (const_dim != dim) {
+      ops_printf(
+          "dim of constant %d in file %s and requested dim %d do not match\n",
+          const_dim, file_name, dim);
+      MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
+    }
+
+    const char *typ = dset_props.type_str;
+    if (strcmp(typ, type) != 0) {
+      if (OPS_instance::getOPSInstance()->OPS_diags > 1)
+        ops_printf("type of constant %s in file %s and requested type %s do "
+                   "not match, performing automatic type conversion\n",
+                   typ, file_name, type);
+      typ = type;
+    }
+
+    // existing const attributes matches with const to be written .. overwriting
+    OPS_instance::getOPSInstance()->ostream() << " overwriting"
+                                              << "\n";
+    dataspace = H5Dget_space(dset_id);
+
+    // Write to the exisiting dataset with default properties
+    if (strcmp(type, "double") == 0 || strcmp(type, "double precision") == 0 ||
+        strcmp(type, "real(8)") == 0) {
+      // write data
+      H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, dataspace, plist_id,
+               const_data);
+    } else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0 ||
+               strcmp(type, "real") == 0) {
+      // write data
+      H5Dwrite(dset_id, H5T_NATIVE_FLOAT, H5S_ALL, dataspace, plist_id,
+               const_data);
+    } else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 ||
+               strcmp(type, "integer") == 0 ||
+               strcmp(type, "integer(4)") == 0) {
+      // write data
+      H5Dwrite(dset_id, H5T_NATIVE_INT, H5S_ALL, dataspace, plist_id,
+               const_data);
+    } else if ((strcmp(type, "long") == 0)) {
+      // write data
+      H5Dwrite(dset_id, H5T_NATIVE_LONG, H5S_ALL, dataspace, plist_id,
+               const_data);
+    } else if ((strcmp(type, "long long") == 0)) {
+      // write data
+      H5Dwrite(dset_id, H5T_NATIVE_LLONG, H5S_ALL, dataspace, plist_id,
+               const_data);
+    } else if (strcmp(type, "char") == 0) {
+      // write data
+      H5Dwrite(dset_id, H5T_NATIVE_CHAR, H5S_ALL, dataspace, plist_id,
+               const_data);
+    }
+
+    H5Pclose(plist_id);
+    H5Sclose(dataspace);
+    H5Dclose(dset_id);
+    H5Fclose(file_id);
+    MPI_Comm_free(&OPS_MPI_HDF5_WORLD);
+    return;
+  }
 
   // Create the dataspace for the dataset.
   hsize_t dims_of_const = {dim};
