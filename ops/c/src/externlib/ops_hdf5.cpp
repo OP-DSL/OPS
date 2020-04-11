@@ -198,48 +198,48 @@ void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
   sprintf(halo_name, "from_%s_to_%s", halo->from->name, halo->to->name);
 
   /* create and write the a group that holds the halo information */
-if (H5Lexists(file_id, halo_name, H5P_DEFAULT) == 0) {
-  if (halo->from->block->instance->OPS_diags > 2)
-    if (halo->from->block->instance->is_root()) halo->from->block->instance->ostream() << "ops_halo "<<halo_name<<" does not exists in the file ... creating group to hold halo\n";
-  group_id =
-  H5Gcreate(file_id, halo_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Gclose(group_id);
-}
-group_id = H5Gopen2(file_id, halo_name, H5P_DEFAULT);
+  if (H5Lexists(file_id, halo_name, H5P_DEFAULT) == 0) {
+    if (halo->from->block->instance->OPS_diags > 2)
+      if (halo->from->block->instance->is_root()) halo->from->block->instance->ostream() << "ops_halo "<<halo_name<<" does not exists in the file ... creating group to hold halo\n";
+    group_id =
+    H5Gcreate(file_id, halo_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Gclose(group_id);
+  }
+  group_id = H5Gopen2(file_id, halo_name, H5P_DEFAULT);
 
   // take the maximum dimension of the two blocks connected via this halo
-int dim = MAX(halo->from->block->dims, halo->to->block->dims);
+  int dim = MAX(halo->from->block->dims, halo->to->block->dims);
 
   // printf("halo name %s, from name %s, to name %s\n",halo_name,
   // halo->from->name, halo->to->name);
   // attach attributes to halo
-H5LTset_attribute_string(file_id, halo_name, "ops_type",
-                           "ops_halo"); // ops type
-H5LTset_attribute_string(file_id, halo_name, "from_dat_name",
-                           halo->from->name); // from ops_dat (name)
-H5LTset_attribute_string(file_id, halo_name, "to_dat_name",
-                           halo->to->name); // to ops_dat (name)
-H5LTset_attribute_int(file_id, halo_name, "from_dat_index",
-                        &(halo->from->index), 1); // from_dat_index
-H5LTset_attribute_int(file_id, halo_name, "to_dat_index", &(halo->to->index),
-                        1); // from_dat_index
+  H5LTset_attribute_string(file_id, halo_name, "ops_type",
+                             "ops_halo"); // ops type
+  H5LTset_attribute_string(file_id, halo_name, "from_dat_name",
+                             halo->from->name); // from ops_dat (name)
+  H5LTset_attribute_string(file_id, halo_name, "to_dat_name",
+                             halo->to->name); // to ops_dat (name)
+  H5LTset_attribute_int(file_id, halo_name, "from_dat_index",
+                          &(halo->from->index), 1); // from_dat_index
+  H5LTset_attribute_int(file_id, halo_name, "to_dat_index", &(halo->to->index),
+                          1); // from_dat_index
 
-H5LTset_attribute_int(file_id, halo_name, "iter_size", halo->iter_size,
-                        dim); // iteration size
-H5LTset_attribute_int(file_id, halo_name, "from_base", halo->from_base,
-                        dim); // base from ops_dat
-H5LTset_attribute_int(file_id, halo_name, "to_base", halo->to_base,
-                        dim); // base of to ops_dat
-H5LTset_attribute_int(file_id, halo_name, "from_dir", halo->from_dir,
-                        dim); // copy from direction
-H5LTset_attribute_int(file_id, halo_name, "to_dir", halo->to_dir,
-                        dim); // copy to direction
-H5LTset_attribute_int(file_id, halo_name, "index", &(halo->index),
-                        1); // index
+  H5LTset_attribute_int(file_id, halo_name, "iter_size", halo->iter_size,
+                          dim); // iteration size
+  H5LTset_attribute_int(file_id, halo_name, "from_base", halo->from_base,
+                          dim); // base from ops_dat
+  H5LTset_attribute_int(file_id, halo_name, "to_base", halo->to_base,
+                          dim); // base of to ops_dat
+  H5LTset_attribute_int(file_id, halo_name, "from_dir", halo->from_dir,
+                          dim); // copy from direction
+  H5LTset_attribute_int(file_id, halo_name, "to_dir", halo->to_dir,
+                          dim); // copy to direction
+  H5LTset_attribute_int(file_id, halo_name, "index", &(halo->index),
+                          1); // index
 
-H5Gclose(group_id);
-H5Pclose(plist_id);
-H5Fclose(file_id);
+  H5Gclose(group_id);
+  H5Pclose(plist_id);
+  H5Fclose(file_id);
 }
 
 /*******************************************************************************
@@ -370,7 +370,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         G_SIZE[2] = g_size[0];
       }
 
-  // Set up file access property list with parallel I/O access
+      // Set up file access property list with parallel I/O access
       plist_id = H5Pcreate(H5P_FILE_ACCESS);
 
       if (file_exist(file_name) == 0) {
@@ -380,7 +380,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         fp = fopen(file_name, "w");
         fclose(fp);
 
-    // Create a new file
+        // Create a new file
         file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
         H5Fclose(file_id);
       }
@@ -390,34 +390,38 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       if (H5Lexists(file_id, block->name, H5P_DEFAULT) == 0) {
         OPSException ex(OPS_HDF5_ERROR);
-        ex << "Error: Error: ops_fetch_dat_hdf5_file: ops_block on which this ops_dat " << dat->name << " is declared does not exist in the file";
+        ex << "Error: ops_fetch_dat_hdf5_file: ops_block on which this ops_dat " << dat->name << " is declared does not exist in the file";
         throw ex;
 
       } else {
-    // open existing group -- an ops_block is a group
+        // open existing group -- an ops_block is a group
         group_id = H5Gopen2(file_id, block->name, H5P_DEFAULT);
 
-        if (H5Lexists(group_id, dat->name, H5P_DEFAULT) == 0) {
+        if (H5Lexists(group_id, dat->name, H5P_DEFAULT) == 0) { // dat does not exisits .. create
           if (dat->block->instance->OPS_diags > 2)
-            if (dat->block->instance->is_root()) dat->block->instance->ostream() << "ops_fetch_dat_hdf5_file: ops_dat "<<dat->name<<" does not exists in the ops_block "<<block->name<<" ... creating ops_dat\n";
+            if (dat->block->instance->is_root())
+              dat->block->instance->ostream() << "ops_fetch_dat_hdf5_file: ops_dat "
+              <<dat->name<<" does not exists in the ops_block "
+              <<block->name<<" ... creating ops_dat\n";
 
           if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0)
               H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
                H5T_NATIVE_DOUBLE, data);
             else if (strcmp(dat->type, "float") == 0 ||
-             strcmp(dat->type, "real(4)") == 0 ||
-             strcmp(dat->type, "real") == 0)
+                     strcmp(dat->type, "real(4)") == 0 ||
+                     strcmp(dat->type, "real") == 0)
               H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
                H5T_NATIVE_FLOAT, data);
             else if (strcmp(dat->type, "int") == 0 ||
-             strcmp(dat->type, "int(4)") == 0 ||
-             strcmp(dat->type, "integer(4)") == 0)
+                     strcmp(dat->type, "int(4)") == 0 ||
+                     strcmp(dat->type, "integer(4)") == 0)
               H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
                H5T_NATIVE_INT, data);
             else if (strcmp(dat->type, "long") == 0)
               H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
                H5T_NATIVE_LONG, data);
-            else if ((strcmp(dat->type, "long long") == 0) || (strcmp(dat->type, "ll") == 0))
+            else if ((strcmp(dat->type, "long long") == 0) ||
+                     (strcmp(dat->type, "ll") == 0))
               H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
                H5T_NATIVE_LLONG, data);
             else if (strcmp(dat->type, "short") == 0)
@@ -432,29 +436,199 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
               throw ex;
             }
 
-      // attach attributes to dat
+            // attach attributes to dat
             H5LTset_attribute_string(group_id, dat->name, "ops_type",
                                "ops_dat"); // ops type
             H5LTset_attribute_string(group_id, dat->name, "block",
                                block->name); // block
             H5LTset_attribute_int(group_id, dat->name, "block_index", &(block->index),
                             1); // block index
-      H5LTset_attribute_int(group_id, dat->name, "dim", &(dat->dim), 1); // dim
-      H5LTset_attribute_int(group_id, dat->name, "size", gbl_size,
-                            block->dims); // size
-      H5LTset_attribute_int(group_id, dat->name, "d_m", dat->d_m,
-                            block->dims); // d_m
+            H5LTset_attribute_int(group_id, dat->name, "dim", &(dat->dim), 1); // dim
+            H5LTset_attribute_int(group_id, dat->name, "size", gbl_size,
+                                  block->dims); // size
+            H5LTset_attribute_int(group_id, dat->name, "d_m", dat->d_m,
+                                  block->dims); // d_m
 
-      // need to substract x_pad from d_p before writing attribute to file
-      int orig_d_p[block->dims];
-      for (int d = 0; d < block->dims; d++) orig_d_p[d] = dat->d_p[d];
-      orig_d_p[0] = dat->d_p[0] - dat->x_pad;
+            // need to substract x_pad from d_p before writing attribute to file
+            int orig_d_p[block->dims];
+            for (int d = 0; d < block->dims; d++) orig_d_p[d] = dat->d_p[d];
+            orig_d_p[0] = dat->d_p[0] - dat->x_pad;
 
-      H5LTset_attribute_int(group_id, dat->name, "d_p", orig_d_p,
-                            block->dims); // d_p
-      H5LTset_attribute_int(group_id, dat->name, "base", dat->base,
-                            block->dims);                               // base
-      H5LTset_attribute_string(group_id, dat->name, "type", dat->type); // type
+            H5LTset_attribute_int(group_id, dat->name, "d_p", orig_d_p,
+                                  block->dims); // d_p
+            H5LTset_attribute_int(group_id, dat->name, "base", dat->base,
+                                  block->dims);                               // base
+            H5LTset_attribute_string(group_id, dat->name, "type", dat->type); // type
+    }
+    else { // dat exisits .. check attributes and if matching .. ovewrite
+
+      dat->block->instance->ostream()
+        << "dataset '" << dat->name << "' already found in file " << file_name
+        << " ... ";
+
+      char ops_type[10], type[10];
+      char blk[40];
+      int bindex, dim, gsize[OPS_MAX_DIM], d_m[OPS_MAX_DIM],
+          d_p[OPS_MAX_DIM], base[OPS_MAX_DIM] ;
+
+      if (H5LTget_attribute_string(group_id, dat->name, "ops_type", ops_type) < 0) { // ops type
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: Attribute \"ops_type\" not found in dat" << dat->name;
+        throw ex;
+      }
+      else {
+        if (strcmp("ops_dat", ops_type) != 0) {
+          OPSException ex(OPS_HDF5_ERROR);
+          ex << "Error: ops_type " << ops_type <<" of dat " << dat->name << " is not ops_dat";
+          throw ex;
+        }
+      }
+      if (H5LTget_attribute_string(group_id, dat->name, "block", blk) < 0 ) { // block
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: Attribute \"block\" not found in dat" << dat->name;
+        throw ex;
+      }
+      else {
+        if (strcmp(block->name, blk) != 0) {
+          OPSException ex(OPS_HDF5_ERROR);
+          ex << "Error: ops_block name "<< block->name <<"of dat "
+          << dat->name << " does not match block name :"<< blk << "in file";
+          throw ex;
+        }
+      }
+      if(H5LTget_attribute_int(group_id, dat->name, "block_index", &bindex) < 0) {     // block index
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: Attribute \"block_index\" not found in dat" << dat->name;
+        throw ex;
+      }
+      else {
+        if (block->index != bindex) {
+          OPSException ex(OPS_HDF5_ERROR);
+          ex << "Error: ops_block index " << block->index << "of dat " << dat->name
+          <<" does not match block index :"<< bindex << "in file" ;
+          throw ex;
+        }
+      }
+      if(H5LTget_attribute_int(group_id, dat->name, "dim", &dim) < 0) {   // dim
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: Attribute \"dim\" not found in dat" << dat->name;
+        throw ex;
+      }
+      else {
+        if (dat->dim != dim) {
+          OPSException ex(OPS_HDF5_ERROR);
+          ex << "Error: ops_dat dim " << dat->dim << "of dat " << dat->name
+          <<" does not match dat dim :"<< dim << "in file";
+          throw ex;
+        }
+      }
+
+      if(H5LTget_attribute_int(group_id, dat->name, "size", gsize) < 0) {   // size
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: Attribute \"size\" not found in dat" << dat->name;
+        throw ex;
+      }
+      else {
+        for (int i=0; i< dat->dim ; i++){
+          if (gbl_size[i] != gsize[i]) {
+            OPSException ex(OPS_HDF5_ERROR);
+            ex << "Error: ops_dat size: " << dat->size[i] << " of dimension: " << i << " of dat " << dat->name
+            <<" does not match dat size: "<< gsize[i] << " in file ";
+            throw ex;
+          }
+        }
+      }
+
+      if(H5LTget_attribute_int(group_id, dat->name, "d_m", d_m) < 0) {   // d_m
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: Attribute \"d_m\" not found in dat" << dat->name;
+        throw ex;
+      }
+      else {
+        for (int i=0; i< dat->dim ; i++){
+          if (dat->d_m[i] != d_m[i]) {
+            OPSException ex(OPS_HDF5_ERROR);
+            ex << "Error: ops_dat d_m" << dat->size[i] << "of dimension " << i << "of dat " << dat->name
+            <<" does not match dat d_m "<< d_m[i] << "in file ";
+            throw ex;
+          }
+        }
+      }
+      if(H5LTget_attribute_int(group_id, dat->name, "d_p", d_p) < 0) {   // d_p
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: Attribute \"d_p\" not found in dat" << dat->name;
+        throw ex;
+      }
+      else {
+        for (int i=0; i< dat->dim ; i++){
+          if (dat->d_p[i] != d_p[i]) {
+            OPSException ex(OPS_HDF5_ERROR);
+            ex << "Error: ops_dat d_p" << dat->size[i] << "of dimension " << i << "of dat " << dat->name
+            <<" does not match dat d_p "<< d_p[i] << "in file ";
+            throw ex;
+          }
+        }
+      }
+      if(H5LTget_attribute_int(group_id, dat->name, "base", base) < 0) {   // base
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: Attribute \"base\" not found in dat" << dat->name;
+        throw ex;
+      }
+      else {
+        for (int i=0; i< dat->dim ; i++){
+          if (dat->base[i] != base[i]) {
+            OPSException ex(OPS_HDF5_ERROR);
+            ex << "Error: ops_dat base" << dat->size[i] << "of dimension " << i << "of dat " << dat->name
+            <<" does not match dat base "<< base[i] << "in file ";
+            throw ex;
+          }
+        }
+      }
+      if(H5LTget_attribute_string(group_id, dat->name, "type", type) < 0) {   // type
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: Attribute \"type\" not found in dat" << dat->name;
+        throw ex;
+      }
+      else {
+        if (strcmp(dat->type, type) != 0) {
+          OPSException ex(OPS_HDF5_ERROR);
+          ex << "Error: ops_dat type "<< dat->type <<"of dat "
+          << dat->name << " does not match dat type  :"<< type << "in file";
+          throw ex;
+        }
+      }
+
+      // all good , overwrite the existing dataset
+      dat->block->instance->ostream()
+        << " overwriting"<< "\n";
+
+      hid_t dset_id = H5Dopen(group_id, dat->name, H5P_DEFAULT);
+      hid_t dataspace = H5Dget_space(dset_id);
+
+      if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0)
+        H5Dwrite(dset_id,  H5T_NATIVE_DOUBLE, H5S_ALL, dataspace, H5P_DEFAULT, data);
+      else if (strcmp(dat->type, "float") == 0 ||
+               strcmp(dat->type, "real(4)") == 0 ||
+               strcmp(dat->type, "real") == 0)
+        H5Dwrite(dset_id,  H5T_NATIVE_FLOAT, H5S_ALL, dataspace, H5P_DEFAULT, data);
+      else if (strcmp(dat->type, "int") == 0 ||
+               strcmp(dat->type, "int(4)") == 0 ||
+               strcmp(dat->type, "integer(4)") == 0)
+        H5Dwrite(dset_id,  H5T_NATIVE_INT, H5S_ALL, dataspace, H5P_DEFAULT, data);
+      else if (strcmp(dat->type, "long") == 0)
+        H5Dwrite(dset_id,  H5T_NATIVE_LONG, H5S_ALL, dataspace, H5P_DEFAULT, data);
+      else if ((strcmp(dat->type, "long long") == 0) ||
+               (strcmp(dat->type, "ll") == 0))
+        H5Dwrite(dset_id,  H5T_NATIVE_LLONG, H5S_ALL, dataspace, H5P_DEFAULT, data);
+      else if (strcmp(dat->type, "short") == 0)
+        H5Dwrite(dset_id,  H5T_NATIVE_SHORT, H5S_ALL, dataspace, H5P_DEFAULT, data);
+      else if (strcmp(dat->type, "char") == 0)
+        H5Dwrite(dset_id,  H5T_NATIVE_CHAR, H5S_ALL, dataspace, H5P_DEFAULT, data);
+      else {
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: Unknown type in ops_fetch_dat_hdf5_file(): " << dat->type;
+        throw ex;
+      }
     }
 
     H5Gclose(group_id);
