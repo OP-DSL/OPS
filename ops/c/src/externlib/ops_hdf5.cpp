@@ -375,7 +375,10 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       if (file_exist(file_name) == 0) {
         if (dat->block->instance->OPS_diags > 3)
-          if (dat->block->instance->is_root()) dat->block->instance->ostream() << "File "<<file_name<<"does not exist .... creating file\n";
+          if (dat->block->instance->is_root())
+            dat->block->instance->ostream()
+                << "File " << file_name
+                << "does not exist .... creating file\n";
         FILE *fp;
         fp = fopen(file_name, "w");
         fclose(fp);
@@ -390,7 +393,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       if (H5Lexists(file_id, block->name, H5P_DEFAULT) == 0) {
         OPSException ex(OPS_HDF5_ERROR);
-        ex << "Error: ops_fetch_dat_hdf5_file: ops_block on which this ops_dat " << dat->name << " is declared does not exist in the file";
+        ex << "Error: ops_fetch_dat_hdf5_file: ops_block on which this ops_dat "
+           << dat->name << " is declared does not exist in the file";
         throw ex;
 
       } else {
@@ -462,9 +466,9 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     }
     else { // dat exisits .. check attributes and if matching .. ovewrite
 
-      dat->block->instance->ostream()
-        << "dataset '" << dat->name << "' already found in file " << file_name
-        << " ... ";
+      dat->block->instance->ostream() << "Dataset '" << dat->name
+                                      << "' already found in file " << file_name
+                                      << " ... ";
 
       char ops_type[10], type[10];
       char blk[40];
@@ -686,7 +690,8 @@ if (H5LTget_attribute_int(file_id, block_name, "dims", &read_dims) < 0) {
 } else {
   if (dims != read_dims) {
     OPSException ex(OPS_HDF5_ERROR);
-    ex << "Error: ops_decl_block_hdf5: Unequal dims of block " << block_name << ": dims on file " << read_dims << "dims specified " << dims;
+    ex << "Error: ops_decl_block_hdf5: Unequal dims of block " << block_name
+       << ": dims on file " << read_dims << "dims specified " << dims;
     throw ex;
   }
 }
@@ -757,7 +762,9 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
   } else {
     if (dims != read_dims) {
       OPSException ex(OPS_HDF5_ERROR);
-      ex << "Error: ops_decl_stencil_hdf5: Unequal dims of stencil " << stencil_name << " dims on file " << read_dims << ", dims specified " << dims;
+      ex << "Error: ops_decl_stencil_hdf5: Unequal dims of stencil "
+         << stencil_name << " dims on file " << read_dims << ", dims specified "
+         << dims;
       throw ex;
     }
   }
@@ -770,7 +777,9 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
   } else {
     if (points != read_points) {
       OPSException ex(OPS_HDF5_ERROR);
-      ex << "Error: ops_decl_stencil_hdf5: Unequal points of stencil " << stencil_name << " points on file " << read_points << ", points specified " << points;
+      ex << "Error: ops_decl_stencil_hdf5: Unequal points of stencil "
+         << stencil_name << " points on file " << read_points
+         << ", points specified " << points;
       throw ex;
     }
   }
@@ -838,7 +847,9 @@ ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
     // check whether dimensions are equal
   if (from->block->dims != to->block->dims) {
     OPSException ex(OPS_HDF5_ERROR);
-    ex << "Error: ops_decl_stencil_hdf5: dimensions of ops_dats connected by halo" << halo_name << " are not equal to each other";
+    ex << "Error: ops_decl_stencil_hdf5: dimensions of ops_dats connected by "
+          "halo"
+       << halo_name << " are not equal to each other";
     throw ex;
   }
 
@@ -921,7 +932,8 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   // check if ops_dat exists
   if (H5Lexists(group_id, dat_name, H5P_DEFAULT) == 0) {
     OPSException ex(OPS_HDF5_ERROR);
-    ex << "Error: Error: ops_decl_dat_hdf5: ops_dat " << dat_name << " does not exist in block " << block->name;
+    ex << "Error: Error: ops_decl_dat_hdf5: ops_dat " << dat_name
+       << " does not exist in block " << block->name;
     throw ex;
   }
 
@@ -946,7 +958,10 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   } else {
     if (block->index != read_block_index) {
       OPSException ex(OPS_HDF5_ERROR);
-      ex << "Error: ops_decl_dat_hdf5: Attribute \"block_index\" mismatch for data set " << dat_name << " read " << read_block_index << " versus provided: " <<  block->index;
+      ex << "Error: ops_decl_dat_hdf5: Attribute \"block_index\" mismatch for "
+            "data set "
+         << dat_name << " read " << read_block_index
+         << " versus provided: " << block->index;
       throw ex;
     }
   }
@@ -958,7 +973,8 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   } else {
     if (dat_dim != read_dim) {
       OPSException ex(OPS_HDF5_ERROR);
-      ex << "Error: ops_decl_dat_hdf5: Attribute \"dim\" mismatch for data set " << dat_name << " read " << read_dim << " versus provided: " <<  dat_dim;
+      ex << "Error: ops_decl_dat_hdf5: Attribute \"dim\" mismatch for data set "
+         << dat_name << " read " << read_dim << " versus provided: " << dat_dim;
       throw ex;
     }
   }
@@ -970,7 +986,9 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   } else {
     if (strcmp(type, read_type) != 0) {
       OPSException ex(OPS_HDF5_ERROR);
-      ex << "Error: ops_decl_dat_hdf5: Attribute \"type\" mismatch for data set " << dat_name << " read " << read_type << " versus provided: " <<  type;
+      ex << "Error: ops_decl_dat_hdf5: Attribute \"type\" mismatch for data "
+            "set "
+         << dat_name << " read " << read_type << " versus provided: " << type;
       throw ex;
     }
   }
@@ -1081,13 +1099,20 @@ void ops_dump_to_hdf5(char const *file_name) {
   ops_dat_entry *item;
   for (int n = 0; n < OPS_instance::getOPSInstance()->OPS_block_index; n++) {
     if (OPS_instance::getOPSInstance()->OPS_diags>2)
-      if (OPS_instance::getOPSInstance()->is_root()) OPS_instance::getOPSInstance()->ostream() << "Dumping block "<<OPS_instance::getOPSInstance()->OPS_block_list[n].block->name<<" to HDF5 file " << file_name << "\n";
+      if (OPS_instance::getOPSInstance()->is_root())
+        OPS_instance::getOPSInstance()->ostream()
+            << "Dumping block "
+            << OPS_instance::getOPSInstance()->OPS_block_list[n].block->name
+            << " to HDF5 file " << file_name << "\n";
     ops_fetch_block_hdf5_file(OPS_instance::getOPSInstance()->OPS_block_list[n].block, file_name);
   }
 
   TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
     if (OPS_instance::getOPSInstance()->OPS_diags>2)
-      if (OPS_instance::getOPSInstance()->is_root()) OPS_instance::getOPSInstance()->ostream() << "Dumping dat "<<(item->dat)->name<<" to HDF5 file " << file_name << "\n";
+      if (OPS_instance::getOPSInstance()->is_root())
+        OPS_instance::getOPSInstance()->ostream()
+            << "Dumping dat " << (item->dat)->name << " to HDF5 file "
+            << file_name << "\n";
     if (item->dat->e_dat !=
         1) // currently cannot write edge dats .. need to fix this
       ops_fetch_dat_hdf5_file(item->dat, file_name);
@@ -1095,13 +1120,23 @@ void ops_dump_to_hdf5(char const *file_name) {
 
   for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_stencil_index; i++) {
     if (OPS_instance::getOPSInstance()->OPS_diags > 2)
-      if (OPS_instance::getOPSInstance()->is_root()) OPS_instance::getOPSInstance()->ostream() << "Dumping stencil " << OPS_instance::getOPSInstance()->OPS_stencil_list[i]->name << " to HDF5 file " << file_name << "\n";
+      if (OPS_instance::getOPSInstance()->is_root())
+        OPS_instance::getOPSInstance()->ostream()
+            << "Dumping stencil "
+            << OPS_instance::getOPSInstance()->OPS_stencil_list[i]->name
+            << " to HDF5 file " << file_name << "\n";
     ops_fetch_stencil_hdf5_file(OPS_instance::getOPSInstance()->OPS_stencil_list[i], file_name);
   }
 
   for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_halo_index; i++) {
     if (OPS_instance::getOPSInstance()->OPS_diags>2)
-      if (OPS_instance::getOPSInstance()->is_root()) OPS_instance::getOPSInstance()->ostream() << "Dumping halo "<<OPS_instance::getOPSInstance()->OPS_halo_list[i]->from->name<<"--"<<OPS_instance::getOPSInstance()->OPS_halo_list[i]->to->name<<" to HDF5 file " << file_name << "\n";
+      if (OPS_instance::getOPSInstance()->is_root())
+        OPS_instance::getOPSInstance()->ostream()
+            << "Dumping halo "
+            << OPS_instance::getOPSInstance()->OPS_halo_list[i]->from->name
+            << "--"
+            << OPS_instance::getOPSInstance()->OPS_halo_list[i]->to->name
+            << " to HDF5 file " << file_name << "\n";
     ops_fetch_halo_hdf5_file(OPS_instance::getOPSInstance()->OPS_halo_list[i], file_name);
   }
 }
@@ -1236,8 +1271,6 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
 
 void ops_write_const_hdf5(char const *name, int dim, char const *type,
                          char *const_data, char const *file_name) {
-  // letting know that writing is happening ...
-  OPS_instance::getOPSInstance()->ostream() << "Writing "<<name<<" to file "<<file_name<<"\n";
 
   // HDF5 APIs definitions
   hid_t file_id;   // file identifier
@@ -1341,6 +1374,10 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
 
     return;
   }
+
+  OPS_instance::getOPSInstance()->ostream()
+      << "Const dataset " << name << " not found in file " << file_name
+      << " ... creating const\n";
 
   // Create the dataspace for the dataset.
   hsize_t dims_of_const = {dim};
