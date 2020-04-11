@@ -644,6 +644,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       // open existing group -- an ops_block is a group
       group_id = H5Gopen2(file_id, block->name, H5P_DEFAULT);
+      int overwriting = 0;
 
       if (H5Lexists(group_id, dat->name, H5P_DEFAULT) == 0) {
         if (OPS_instance::getOPSInstance()->OPS_diags > 2)
@@ -750,270 +751,266 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         H5LTset_attribute_string(group_id, dat->name, "type",
             dat->type); // type
       } else {
-
         ops_printf("Dataset %s already found in file %s ... ", dat->name,
                    file_name);
+        overwriting = 1;
+      }
 
-        //
-        // check attributes .. error if not equal
-        //
-        char read_ops_type[20];
-        if (H5LTget_attribute_string(group_id, dat->name, "ops_type",
-                                     read_ops_type) < 0) {
+      //
+      // check attributes .. error if not equal
+      //
+      char read_ops_type[20];
+      if (H5LTget_attribute_string(group_id, dat->name, "ops_type",
+                                   read_ops_type) < 0) {
 
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: ops_fetch_dat_hdf5_file: Attribute \"ops_type\" not "
+              "found in data set"
+           << dat->name;
+        throw ex;
+      } else {
+        if (strcmp("ops_dat", read_ops_type) != 0) {
           OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: ops_fetch_dat_hdf5_file: Attribute \"ops_type\" not "
-                "found in data set"
-             << dat->name;
+          ex << "Error: ops_fetch_dat_hdf5_file: ops_type of dat " << dat->name
+             << " is not ops_dat";
           throw ex;
-        } else {
-          if (strcmp("ops_dat", read_ops_type) != 0) {
-            OPSException ex(OPS_HDF5_ERROR);
-            ex << "Error: ops_fetch_dat_hdf5_file: ops_type of dat "
-               << dat->name << " is not ops_dat";
-            throw ex;
-          }
         }
+      }
 
-        char read_block_name[30];
-        if (H5LTget_attribute_string(group_id, dat->name, "block",
-                                     read_block_name) < 0) {
+      char read_block_name[30];
+      if (H5LTget_attribute_string(group_id, dat->name, "block",
+                                   read_block_name) < 0) {
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: ops_decl_block_hdf5: Attribute \"block\" not found in "
+              "data set "
+           << dat->name;
+        throw ex;
+      } else {
+        if (strcmp(block->name, read_block_name) != 0) {
           OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: ops_decl_block_hdf5: Attribute \"block\" not found in "
-                "data set "
+          ex << "Error: ops_decl_block_hdf5: Attribute \"block\" mismatch "
+                "for data set "
              << dat->name;
           throw ex;
-        } else {
-          if (strcmp(block->name, read_block_name) != 0) {
+        }
+      }
+
+      int read_block_index;
+      if (H5LTget_attribute_int(group_id, dat->name, "block_index",
+                                &read_block_index) < 0) {
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: ops_decl_block_hdf5: Attribute \"block_index\" not "
+              "found in data set "
+           << dat->name;
+        throw ex;
+      } else {
+        if (block->index != read_block_index) {
+          OPSException ex(OPS_HDF5_ERROR);
+          ex << "Error: ops_decl_block_hdf5: Attribute \"block_index\" "
+                "mismatch for data set "
+             << dat->name << " read " << read_block_index
+             << " versus provided: " << block->index;
+          throw ex;
+        }
+      }
+
+      int read_dim;
+      if (H5LTget_attribute_int(group_id, dat->name, "dim", &read_dim) < 0) {
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: ops_decl_block_hdf5: Attribute \"dim\" not found in "
+              "data set "
+           << dat->name;
+        throw ex;
+      } else {
+        if (dat->dim != read_dim) {
+          OPSException ex(OPS_HDF5_ERROR);
+          ex << "Error: ops_decl_block_hdf5: Attribute \"dim\" mismatch for "
+                "data set "
+             << dat->name << " read " << read_dim
+             << " versus provided: " << dat->dim;
+          throw ex;
+        }
+      }
+
+      int read_size[block->dims];
+      if (H5LTget_attribute_int(group_id, dat->name, "size", read_size) < 0) {
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: ops_decl_block_hdf5: Attribute \"size\" not found in "
+              "data set "
+           << dat->name;
+        throw ex;
+      } else {
+        for (int d = 0; d < block->dims; d++) {
+          if (g_size[d] != read_size[d]) {
             OPSException ex(OPS_HDF5_ERROR);
-            ex << "Error: ops_decl_block_hdf5: Attribute \"block\" mismatch "
+            ex << "Error: ops_decl_block_hdf5: Attribute \"size\" mismatch "
                   "for data set "
-               << dat->name;
+               << dat->name << " read " << read_size[d]
+               << " versus provided: " << g_size[d] << " in dim " << d;
             throw ex;
           }
         }
+      }
 
-        int read_block_index;
-        if (H5LTget_attribute_int(group_id, dat->name, "block_index",
-                                  &read_block_index) < 0) {
-          OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: ops_decl_block_hdf5: Attribute \"block_index\" not "
-                "found in data set "
-             << dat->name;
-          throw ex;
-        } else {
-          if (block->index != read_block_index) {
+      int read_d_m[block->dims];
+      if (H5LTget_attribute_int(group_id, dat->name, "d_m", read_d_m) < 0) {
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: ops_decl_block_hdf5: Attribute \"d_m\" not found in "
+              "data set "
+           << dat->name;
+        throw ex;
+      } else {
+        for (int d = 0; d < block->dims; d++) {
+          if (g_d_m[d] != read_d_m[d]) {
             OPSException ex(OPS_HDF5_ERROR);
-            ex << "Error: ops_decl_block_hdf5: Attribute \"block_index\" "
-                  "mismatch for data set "
-               << dat->name << " read " << read_block_index
-               << " versus provided: " << block->index;
+            ex << "Error: ops_decl_block_hdf5: Attribute \"d_m\" mismatch "
+                  "for data set "
+               << dat->name << " read " << read_d_m[d]
+               << " versus provided: " << g_d_m[d] << " in dim " << d;
             throw ex;
           }
         }
+      }
 
-        int read_dim;
-        if (H5LTget_attribute_int(group_id, dat->name, "dim", &read_dim) < 0) {
-          OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: ops_decl_block_hdf5: Attribute \"dim\" not found in "
-                "data set "
-             << dat->name;
-          throw ex;
-        } else {
-          if (dat->dim != read_dim) {
+      int read_d_p[block->dims];
+      if (H5LTget_attribute_int(group_id, dat->name, "d_p", read_d_p) < 0) {
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: ops_decl_block_hdf5: Attribute \"d_p\" not found in "
+              "data set "
+           << dat->name;
+        throw ex;
+      } else {
+        for (int d = 0; d < block->dims; d++) {
+          if (g_d_p[d] != read_d_p[d]) {
             OPSException ex(OPS_HDF5_ERROR);
-            ex << "Error: ops_decl_block_hdf5: Attribute \"dim\" mismatch for "
-                  "data set "
-               << dat->name << " read " << read_dim
-               << " versus provided: " << dat->dim;
+            ex << "Error: ops_decl_block_hdf5: Attribute \"d_p\" mismatch "
+                  "for data set "
+               << dat->name << " read " << read_d_p[d]
+               << " versus provided: " << g_d_p[d] << " in dim " << d;
             throw ex;
           }
         }
+      }
 
-        int read_size[block->dims];
-        if (H5LTget_attribute_int(group_id, dat->name, "size", read_size) < 0) {
-          OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: ops_decl_block_hdf5: Attribute \"size\" not found in "
-                "data set "
-             << dat->name;
-          throw ex;
-        } else {
-          for (int d = 0; d < block->dims; d++) {
-            if (g_size[d] != read_size[d]) {
-              OPSException ex(OPS_HDF5_ERROR);
-              ex << "Error: ops_decl_block_hdf5: Attribute \"size\" mismatch "
-                    "for data set "
-                 << dat->name << " read " << read_size[d]
-                 << " versus provided: " << g_size[d] << " in dim " << d;
-              throw ex;
-            }
-          }
-        }
-
-        int read_d_m[block->dims];
-        if (H5LTget_attribute_int(group_id, dat->name, "d_m", read_d_m) < 0) {
-          OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: ops_decl_block_hdf5: Attribute \"d_m\" not found in "
-                "data set "
-             << dat->name;
-          throw ex;
-        } else {
-          for (int d = 0; d < block->dims; d++) {
-            if (g_d_m[d] != read_d_m[d]) {
-              OPSException ex(OPS_HDF5_ERROR);
-              ex << "Error: ops_decl_block_hdf5: Attribute \"d_m\" mismatch "
-                    "for data set "
-                 << dat->name << " read " << read_d_m[d]
-                 << " versus provided: " << g_d_m[d] << " in dim " << d;
-              throw ex;
-            }
-          }
-        }
-
-        int read_d_p[block->dims];
-        if (H5LTget_attribute_int(group_id, dat->name, "d_p", read_d_p) < 0) {
-          OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: ops_decl_block_hdf5: Attribute \"d_p\" not found in "
-                "data set "
-             << dat->name;
-          throw ex;
-        } else {
-          for (int d = 0; d < block->dims; d++) {
-            if (g_d_p[d] != read_d_p[d]) {
-              OPSException ex(OPS_HDF5_ERROR);
-              ex << "Error: ops_decl_block_hdf5: Attribute \"d_p\" mismatch "
-                    "for data set "
-                 << dat->name << " read " << read_d_p[d]
-                 << " versus provided: " << g_d_p[d] << " in dim " << d;
-              throw ex;
-            }
-          }
-        }
-
-        int read_base[block->dims];
-        if (H5LTget_attribute_int(group_id, dat->name, "base", read_base) < 0) {
-          OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: ops_decl_block_hdf5: Attribute \"base\" not found in "
-                "data set "
-             << dat->name;
-          throw ex;
-        } else {
-          for (int d = 0; d < block->dims; d++) {
-            if (dat->base[d] != read_base[d]) {
-              OPSException ex(OPS_HDF5_ERROR);
-              ex << "Error: ops_decl_block_hdf5: Attribute \"base\" mismatch "
-                    "for data set "
-                 << dat->name << " read " << read_base[d]
-                 << " versus provided: " << dat->base[d] << " in dim " << d;
-              throw ex;
-            }
-          }
-        }
-
-        char read_type[15];
-        if (H5LTget_attribute_string(group_id, dat->name, "type", read_type) <
-            0) {
-          OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: ops_decl_block_hdf5: Attribute \"type\" not found in "
-                "data set "
-             << dat->name;
-          throw ex;
-        } else {
-          if (strcmp(dat->type, read_type) != 0) {
+      int read_base[block->dims];
+      if (H5LTget_attribute_int(group_id, dat->name, "base", read_base) < 0) {
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: ops_decl_block_hdf5: Attribute \"base\" not found in "
+              "data set "
+           << dat->name;
+        throw ex;
+      } else {
+        for (int d = 0; d < block->dims; d++) {
+          if (dat->base[d] != read_base[d]) {
             OPSException ex(OPS_HDF5_ERROR);
-            ex << "Error: ops_decl_block_hdf5: Attribute \"type\" mismatch for "
-                  "data set "
-               << dat->name << " read " << read_type
-               << " versus provided: " << dat->type;
+            ex << "Error: ops_decl_block_hdf5: Attribute \"base\" mismatch "
+                  "for data set "
+               << dat->name << " read " << read_base[d]
+               << " versus provided: " << dat->base[d] << " in dim " << d;
             throw ex;
           }
         }
+      }
 
-        // all good , overwrite the existing dataset
+      char read_type[15];
+      if (H5LTget_attribute_string(group_id, dat->name, "type", read_type) <
+          0) {
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: ops_decl_block_hdf5: Attribute \"type\" not found in "
+              "data set "
+           << dat->name;
+        throw ex;
+      } else {
+        if (strcmp(dat->type, read_type) != 0) {
+          OPSException ex(OPS_HDF5_ERROR);
+          ex << "Error: ops_decl_block_hdf5: Attribute \"type\" mismatch for "
+                "data set "
+             << dat->name << " read " << read_type
+             << " versus provided: " << dat->type;
+          throw ex;
+        }
+      }
+
+      // all good , overwrite the existing dataset
+      if (overwriting)
         ops_printf("overwriting\n");
 
-        // open existing dat
-        dset_id = H5Dopen(group_id, dat->name, H5P_DEFAULT);
+      // open existing dat
+      dset_id = H5Dopen(group_id, dat->name, H5P_DEFAULT);
 
-        // Need to flip the dimensions to accurately write to HDF5 chunk
-        // decomposition
-        hsize_t DISP[block->dims];
-        hsize_t SIZE[block->dims];
-        if (block->dims == 1) {
-          DISP[0] = disp[0];
-          SIZE[0] = size[0];
-        } else if (block->dims == 2) {
-          DISP[0] = disp[1];
-          DISP[1] = disp[0];
-          SIZE[0] = size[1];
-          SIZE[1] = size[0];
-        } else if (block->dims == 3) {
-          DISP[0] = disp[2];
-          DISP[1] = disp[1]; // note how dimension 1 remains the same !!
-          DISP[2] = disp[0];
-          SIZE[0] = size[2];
-          SIZE[1] = size[1]; // note how dimension 1 remains the same !!
-          SIZE[2] = size[0];
-        }
-
-        memspace = H5Screate_simple(
-            block->dims, SIZE,
-            NULL); // block of memory to write to file by each proc
-
-        // Select hyperslab
-        filespace = H5Dget_space(dset_id);
-        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, DISP, stride, count,
-                            SIZE);
-
-        // Create property list for collective dataset write.
-        plist_id = H5Pcreate(H5P_DATASET_XFER);
-        H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
-
-        // write data
-        if (strcmp(dat->type, "double") == 0 ||
-            strcmp(dat->type, "double precision") == 0 ||
-            strcmp(dat->type, "real(8)") == 0) {
-          H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, plist_id,
-                   data);
-        } else if (strcmp(dat->type, "float") == 0 ||
-                   strcmp(dat->type, "real(4)") == 0 ||
-                   strcmp(dat->type, "real") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id,
-                   data);
-        else if (strcmp(dat->type, "int") == 0 ||
-                 strcmp(dat->type, "int(4)") == 0 ||
-                 strcmp(dat->type, "integer") == 0 ||
-                 strcmp(dat->type, "integer(4)") == 0) {
-          H5Dwrite(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id,
-                   data);
-        } else if (strcmp(dat->type, "long") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_LONG, memspace, filespace, plist_id,
-                   data);
-        else if ((strcmp(dat->type, "long long") == 0) ||
-                 (strcmp(dat->type, "ll") == 0))
-          H5Dwrite(dset_id, H5T_NATIVE_LLONG, memspace, filespace, plist_id,
-                   data);
-        else if (strcmp(dat->type, "short") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_SHORT, memspace, filespace, plist_id,
-                   data);
-        else if (strcmp(dat->type, "char") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_CHAR, memspace, filespace, plist_id,
-                   data);
-        else {
-          OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: Unknown type in ops_fetch_dat_hdf5_file(): "
-             << dat->type;
-          throw ex;
-        }
-
-        MPI_Barrier(MPI_COMM_WORLD);
-        free(data);
-
-        H5Sclose(filespace);
-        H5Pclose(plist_id);
-        H5Dclose(dset_id);
-        H5Sclose(memspace);
+      // Need to flip the dimensions to accurately write to HDF5 chunk
+      // decomposition
+      hsize_t DISP[block->dims];
+      hsize_t SIZE[block->dims];
+      if (block->dims == 1) {
+        DISP[0] = disp[0];
+        SIZE[0] = size[0];
+      } else if (block->dims == 2) {
+        DISP[0] = disp[1];
+        DISP[1] = disp[0];
+        SIZE[0] = size[1];
+        SIZE[1] = size[0];
+      } else if (block->dims == 3) {
+        DISP[0] = disp[2];
+        DISP[1] = disp[1]; // note how dimension 1 remains the same !!
+        DISP[2] = disp[0];
+        SIZE[0] = size[2];
+        SIZE[1] = size[1]; // note how dimension 1 remains the same !!
+        SIZE[2] = size[0];
       }
+
+      memspace = H5Screate_simple(
+          block->dims, SIZE,
+          NULL); // block of memory to write to file by each proc
+
+      // Select hyperslab
+      filespace = H5Dget_space(dset_id);
+      H5Sselect_hyperslab(filespace, H5S_SELECT_SET, DISP, stride, count, SIZE);
+
+      // Create property list for collective dataset write.
+      plist_id = H5Pcreate(H5P_DATASET_XFER);
+      H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
+
+      // write data
+      if (strcmp(dat->type, "double") == 0 ||
+          strcmp(dat->type, "double precision") == 0 ||
+          strcmp(dat->type, "real(8)") == 0) {
+        H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, plist_id,
+                 data);
+      } else if (strcmp(dat->type, "float") == 0 ||
+                 strcmp(dat->type, "real(4)") == 0 ||
+                 strcmp(dat->type, "real") == 0)
+        H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id,
+                 data);
+      else if (strcmp(dat->type, "int") == 0 ||
+               strcmp(dat->type, "int(4)") == 0 ||
+               strcmp(dat->type, "integer") == 0 ||
+               strcmp(dat->type, "integer(4)") == 0) {
+        H5Dwrite(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id, data);
+      } else if (strcmp(dat->type, "long") == 0)
+        H5Dwrite(dset_id, H5T_NATIVE_LONG, memspace, filespace, plist_id, data);
+      else if ((strcmp(dat->type, "long long") == 0) ||
+               (strcmp(dat->type, "ll") == 0))
+        H5Dwrite(dset_id, H5T_NATIVE_LLONG, memspace, filespace, plist_id,
+                 data);
+      else if (strcmp(dat->type, "short") == 0)
+        H5Dwrite(dset_id, H5T_NATIVE_SHORT, memspace, filespace, plist_id,
+                 data);
+      else if (strcmp(dat->type, "char") == 0)
+        H5Dwrite(dset_id, H5T_NATIVE_CHAR, memspace, filespace, plist_id, data);
+      else {
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: Unknown type in ops_fetch_dat_hdf5_file(): " << dat->type;
+        throw ex;
+      }
+
+      MPI_Barrier(MPI_COMM_WORLD);
+      free(data);
+
+      H5Sclose(filespace);
+      H5Pclose(plist_id);
+      H5Dclose(dset_id);
+      H5Sclose(memspace);
 
       H5Gclose(group_id);
       H5Fclose(file_id);
