@@ -483,7 +483,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       else {
         if (strcmp("ops_dat", ops_type) != 0) {
           OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: ops_type " << ops_type <<" of dat " << dat->name << " is not ops_dat";
+          ex << "Error: ops_type: " << ops_type << " of dat: " << dat->name
+             << " is not ops_dat";
           throw ex;
         }
       }
@@ -495,8 +496,9 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       else {
         if (strcmp(block->name, blk) != 0) {
           OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: ops_block name "<< block->name <<"of dat "
-          << dat->name << " does not match block name :"<< blk << "in file";
+          ex << "Error: ops_block name: " << block->name
+             << "of dat: " << dat->name << " does not match block name :" << blk
+             << " in file";
           throw ex;
         }
       }
@@ -508,8 +510,9 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       else {
         if (block->index != bindex) {
           OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: ops_block index " << block->index << "of dat " << dat->name
-          <<" does not match block index :"<< bindex << "in file" ;
+          ex << "Error: ops_block index: " << block->index
+             << "of dat: " << dat->name
+             << " does not match block index :" << bindex << " in file";
           throw ex;
         }
       }
@@ -521,8 +524,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       else {
         if (dat->dim != dim) {
           OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: ops_dat dim " << dat->dim << "of dat " << dat->name
-          <<" does not match dat dim :"<< dim << "in file";
+          ex << "Error: ops_dat dim: " << dat->dim << "of dat: " << dat->name
+             << " does not match dat dim :" << dim << "in file";
           throw ex;
         }
       }
@@ -534,10 +537,12 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       }
       else {
         for (int i=0; i< dat->dim ; i++){
-          if (gbl_size[i] != gsize[i]) {
+          if (gbl_size[i] !=
+              gsize[i]) { // remember checking global size as computed above
             OPSException ex(OPS_HDF5_ERROR);
-            ex << "Error: ops_dat size: " << dat->size[i] << " of dimension: " << i << " of dat " << dat->name
-            <<" does not match dat size: "<< gsize[i] << " in file ";
+            ex << "Error: ops_dat size: " << dat->size[i]
+               << " of dimension: " << i << " of dat: " << dat->name
+               << " does not match dat size: " << gsize[i] << " in file ";
             throw ex;
           }
         }
@@ -552,8 +557,9 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         for (int i=0; i< dat->dim ; i++){
           if (dat->d_m[i] != d_m[i]) {
             OPSException ex(OPS_HDF5_ERROR);
-            ex << "Error: ops_dat d_m" << dat->size[i] << "of dimension " << i << "of dat " << dat->name
-            <<" does not match dat d_m "<< d_m[i] << "in file ";
+            ex << "Error: ops_dat d_m: " << dat->d_m[i] << "of dimension: " << i
+               << " of dat: " << dat->name
+               << " does not match dat d_m: " << d_m[i] << "in file ";
             throw ex;
           }
         }
@@ -564,11 +570,18 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         throw ex;
       }
       else {
+        // need to substract x_pad from d_p before checking attribute on file
+        int orig_d_p[block->dims];
+        for (int d = 0; d < block->dims; d++)
+          orig_d_p[d] = dat->d_p[d];
+        orig_d_p[0] = dat->d_p[0] - dat->x_pad;
+
         for (int i=0; i< dat->dim ; i++){
-          if (dat->d_p[i] != d_p[i]) {
+          if (orig_d_p[i] != d_p[i]) {
             OPSException ex(OPS_HDF5_ERROR);
-            ex << "Error: ops_dat d_p" << dat->size[i] << "of dimension " << i << "of dat " << dat->name
-            <<" does not match dat d_p "<< d_p[i] << "in file ";
+            ex << "Error: ops_dat d_p: " << orig_d_p[i]
+               << " of dimension: " << i << " of dat: " << dat->name
+               << " does not match dat d_p: " << d_p[i] << " in file ";
             throw ex;
           }
         }
@@ -582,8 +595,9 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         for (int i=0; i< dat->dim ; i++){
           if (dat->base[i] != base[i]) {
             OPSException ex(OPS_HDF5_ERROR);
-            ex << "Error: ops_dat base" << dat->size[i] << "of dimension " << i << "of dat " << dat->name
-            <<" does not match dat base "<< base[i] << "in file ";
+            ex << "Error: ops_dat base: " << dat->base[i]
+               << "of dimension: " << i << "of dat: " << dat->name
+               << " does not match dat base: " << base[i] << "in file ";
             throw ex;
           }
         }
@@ -596,8 +610,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       else {
         if (strcmp(dat->type, type) != 0) {
           OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: ops_dat type "<< dat->type <<"of dat "
-          << dat->name << " does not match dat type  :"<< type << "in file";
+          ex << "Error: ops_dat type: " << dat->type << " of dat: " << dat->name
+             << " does not match dat type :" << type << "in file";
           throw ex;
         }
       }

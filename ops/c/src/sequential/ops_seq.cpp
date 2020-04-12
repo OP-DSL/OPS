@@ -534,6 +534,8 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
 }
 
 void ops_NaNcheck(ops_dat dat) {
+  char buffer[1];
+  sprintf(buffer, "\0");
   ops_NaNcheck_core(dat, "");
 }
 
