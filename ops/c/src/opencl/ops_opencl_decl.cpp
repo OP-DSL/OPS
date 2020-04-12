@@ -371,7 +371,7 @@ void ops_NaNcheck(ops_dat dat){
   sprintf(buffer, "\0");
   // need to get data from GPU
   ops_opencl_get_data(dat);
-  ops_NaNcheck_core(dat, "");
+  ops_NaNcheck_core(dat, buffer);
 }
 
 // routine to fetch data from device

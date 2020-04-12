@@ -21,7 +21,7 @@ cd ../CloverLeaf_3D/
 #./test.sh
 echo "~~~~~~~~~~~~~~~CloverLeaf 3D HDF5~~~~~~~~~~~~~~~~~~~"
 cd ../CloverLeaf_3D_HDF5/
-#./test.sh
+./test.sh
 echo "~~~~~~~~~~~~~~~TeaLeaf 3D ~~~~~~~~~~~~~~~~~~~~~~"
 cd ../TeaLeaf/
 #./test.sh
