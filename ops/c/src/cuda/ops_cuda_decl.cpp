@@ -382,7 +382,7 @@ void ops_NaNcheck(ops_dat dat) {
   sprintf(buffer, "\0");
   // need to get data from GPU
   ops_cuda_get_data(dat);
-  ops_NaNcheck_core(dat, "");
+  ops_NaNcheck_core(dat, buffer);
 }
 
 void _ops_partition(OPS_instance *instance, const char *routine) {
