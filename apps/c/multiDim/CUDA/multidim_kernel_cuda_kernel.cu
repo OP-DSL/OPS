@@ -33,7 +33,7 @@ int size1 ){
   arg0 += idx_x * 1 + idx_y * 1 * dims_multidim_kernel[0][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    ACC<double> argp0(2, dims_multidim_kernel[0][0], dims_multidim_kernel[0][1], arg0);
+    ACC<double> argp0(2, dims_multidim_kernel[0][0], dims_multidim_kernel[0][2], arg0);
     multidim_kernel_gpu(argp0, arg_idx);
   }
 
