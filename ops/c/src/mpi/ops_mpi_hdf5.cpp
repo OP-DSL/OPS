@@ -610,7 +610,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     hid_t plist_id;  // property list identifier
     hid_t memspace;  // memory space identifier
 
-    hsize_t CHUNK_SIZE[block->dims];
+    // hsize_t CHUNK_SIZE[block->dims];
 
     // Set up file access property list with parallel I/O access
     plist_id = H5Pcreate(H5P_FILE_ACCESS);
@@ -1529,9 +1529,11 @@ void ops_read_dat_hdf5(ops_dat dat) {
     hsize_t gbl_size[block->dims]; // global size to compute the chunk data set
     // dimensions
 
-    int g_d_m[block->dims]; // global size of the block halo (-) depth attribute
+    // int g_d_m[block->dims]; // global size of the block halo (-) depth
+    // attribute
     // to read from hdf5 file
-    int g_d_p[block->dims]; // global size of the block halo (+) depth attribute
+    // int g_d_p[block->dims]; // global size of the block halo (+) depth
+    // attribute
     // to read from hdf5 file
 
     hsize_t count[block->dims];  // parameters for for hdf5 file chuck reading
@@ -1549,10 +1551,11 @@ void ops_read_dat_hdf5(ops_dat dat) {
       gbl_size[d] = sd->gbl_size[d]; // global size to compute the chunk data
       // set dimensions
 
-      g_d_m[d] =
+      /*g_d_m[d] =
         sd->gbl_d_m[d]; // global halo depth(-) to be read from hdf5 file
       g_d_p[d] =
         sd->gbl_d_p[d]; // global halo depth(+) to be read from hdf5 file
+      */
 
       count[d] = 1;
       stride[d] = 1;
@@ -1639,6 +1642,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
 
     dset_id = H5Dopen(group_id, dat->name, H5P_DEFAULT);
 
+    /*
     hsize_t GBL_SIZE[block->dims];
     if (block->dims == 1) {
       GBL_SIZE[0] = gbl_size[0];
@@ -1650,6 +1654,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
       GBL_SIZE[1] = gbl_size[1];
       GBL_SIZE[2] = gbl_size[0];
     }
+    */
 
     // Need to flip the dimensions to accurately read from HDF5 chunk
     // decomposition
@@ -1928,8 +1933,6 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
   hid_t file_id;   // file identifier
   hid_t plist_id;  // property list identifier
   hid_t dset_id;   // dataset identifier
-  hid_t dataspace; // data space identifier
-  hid_t attr;      // attribute identifier
   hid_t status;
 
   if (file_exist(file_name) == 0) {
@@ -1983,9 +1986,8 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
   }
   H5Dclose(dset_id);
 
-  // Create the dataset with default properties and close dataspace.
+  // open the dataset with default properties
   dset_id = H5Dopen(file_id, name, H5P_DEFAULT);
-  dataspace = H5Dget_space(dset_id);
 
   char *data;
   // initialize data buffer and read data
@@ -2055,7 +2057,6 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   hid_t plist_id;  // property list identifier
   hid_t dataspace; // data space identifier
   htri_t status;   // status for checking return values
-  hid_t attr;      // attribute identifier
 
   // Set up file access property list with parallel I/O access
   plist_id = H5Pcreate(H5P_FILE_ACCESS);
