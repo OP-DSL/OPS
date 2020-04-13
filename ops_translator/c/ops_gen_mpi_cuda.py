@@ -383,7 +383,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
           sizelist = sizelist + 'dims_'+name+'['+str(n)+']['+str(i-1)+'], '
         if extradim:
           if soa_set:
-            sizelist = sizelist + 'dims_'+name+'['+str(n)+']['+str(NDIM)+'], '
+            sizelist = sizelist + 'dims_'+name+'['+str(n)+']['+str(NDIM-1)+'], '
           else:
             sizelist = sizelist + '0, '
 
