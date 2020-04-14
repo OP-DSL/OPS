@@ -48,13 +48,13 @@ int size0 ){
   arg6 += idx_x * 1*3;
 
   if (idx_x < size0) {
-    const ACC<double> argp0(3, dims_calupwindeff_kernel[0][0], arg0);
-    const ACC<double> argp1(3, dims_calupwindeff_kernel[1][0], arg1);
-    const ACC<double> argp2(3, dims_calupwindeff_kernel[2][0], arg2);
-    const ACC<double> argp3(3, dims_calupwindeff_kernel[3][0], arg3);
-    const ACC<double> argp4(3, dims_calupwindeff_kernel[4][0], arg4);
-    const ACC<double> argp5(9, dims_calupwindeff_kernel[5][0], arg5);
-    ACC<double> argp6(3, dims_calupwindeff_kernel[6][0], arg6);
+    const ACC<double> argp0(3, 0, arg0);
+    const ACC<double> argp1(3, 0, arg1);
+    const ACC<double> argp2(3, 0, arg2);
+    const ACC<double> argp3(3, 0, arg3);
+    const ACC<double> argp4(3, 0, arg4);
+    const ACC<double> argp5(9, 0, arg5);
+    ACC<double> argp6(3, 0, arg6);
     calupwindeff_kernel_gpu(argp0, argp1, argp2, argp3,
                    argp4, argp5, argp6);
   }

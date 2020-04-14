@@ -90,9 +90,9 @@ int size0 ){
     const ACC<double> argp0(arg0);
     const ACC<double> argp1(arg1);
     const ACC<double> argp2(arg2);
-    ACC<double> argp3(3, dims_Riemann_kernel[3][0], arg3);
-    ACC<double> argp4(9, dims_Riemann_kernel[4][0], arg4);
-    ACC<double> argp5(3, dims_Riemann_kernel[5][0], arg5);
+    ACC<double> argp3(3, 0, arg3);
+    ACC<double> argp4(9, 0, arg4);
+    ACC<double> argp5(3, 0, arg5);
     Riemann_kernel_gpu(argp0, argp1, argp2, argp3,
                    argp4, argp5);
   }

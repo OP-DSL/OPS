@@ -42,7 +42,7 @@ cd ../mb_shsgc/Max_datatransfer
 ./test.sh
 echo "~~~~~~~~~~~~~~~multiDim_HDF5~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../../multiDim_HDF5
-#./test.sh
+./test.sh
 echo "~~~~~~~~~~~~~~~adi~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../adi
 ./test.sh

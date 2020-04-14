@@ -46,11 +46,11 @@ int size0 ){
   arg4 += idx_x * 1*3;
 
   if (idx_x < size0) {
-    const ACC<double> argp0(3, dims_vars_kernel[0][0], arg0);
-    const ACC<double> argp1(3, dims_vars_kernel[1][0], arg1);
-    const ACC<double> argp2(3, dims_vars_kernel[2][0], arg2);
-    ACC<double> argp3(3, dims_vars_kernel[3][0], arg3);
-    ACC<double> argp4(3, dims_vars_kernel[4][0], arg4);
+    const ACC<double> argp0(3, 0, arg0);
+    const ACC<double> argp1(3, 0, arg1);
+    const ACC<double> argp2(3, 0, arg2);
+    ACC<double> argp3(3, 0, arg3);
+    ACC<double> argp4(3, 0, arg4);
     vars_kernel_gpu(argp0, argp1, argp2, argp3,
                    argp4);
   }

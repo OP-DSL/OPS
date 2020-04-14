@@ -37,7 +37,7 @@ int size0 ){
     ACC<double> argp0(arg0);
     ACC<double> argp1(arg1);
     ACC<double> argp2(arg2);
-    const ACC<double> argp3(3, dims_update_kernel[3][0], arg3);
+    const ACC<double> argp3(3, 0, arg3);
     update_kernel_gpu(argp0, argp1, argp2, argp3);
   }
 
