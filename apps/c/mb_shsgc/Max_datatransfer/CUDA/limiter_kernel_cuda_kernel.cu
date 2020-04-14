@@ -39,9 +39,9 @@ int size0 ){
   arg2 += idx_x * 1*3;
 
   if (idx_x < size0) {
-    const ACC<double> argp0(3, dims_limiter_kernel[0][0], arg0);
-    ACC<double> argp1(3, dims_limiter_kernel[1][0], arg1);
-    ACC<double> argp2(3, dims_limiter_kernel[2][0], arg2);
+    const ACC<double> argp0(3, 0, arg0);
+    ACC<double> argp1(3, 0, arg1);
+    ACC<double> argp2(3, 0, arg2);
     limiter_kernel_gpu(argp0, argp1, argp2);
   }
 

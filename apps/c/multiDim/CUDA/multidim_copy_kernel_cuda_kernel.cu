@@ -29,8 +29,8 @@ int size1 ){
   arg1 += idx_x * 1 + idx_y * 1 * dims_multidim_copy_kernel[1][0];
 
   if (idx_x < size0 && idx_y < size1) {
-    const ACC<double> argp0(2, dims_multidim_copy_kernel[0][0], dims_multidim_copy_kernel[0][2], arg0);
-    ACC<double> argp1(2, dims_multidim_copy_kernel[1][0], dims_multidim_copy_kernel[1][2], arg1);
+    const ACC<double> argp0(2, dims_multidim_copy_kernel[0][0], dims_multidim_copy_kernel[0][1], arg0);
+    ACC<double> argp1(2, dims_multidim_copy_kernel[1][0], dims_multidim_copy_kernel[1][1], arg1);
     multidim_copy_kernel_gpu(argp0, argp1);
   }
 
