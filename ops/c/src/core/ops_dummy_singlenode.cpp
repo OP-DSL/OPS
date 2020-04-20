@@ -640,6 +640,7 @@ void ops_dat_fetch_data_host(ops_dat dat, int part, char *data) {
 
 
 void ops_dat_fetch_data_slab_host(ops_dat dat, int part, char *data, int *range) {
+    (void)part;
   ops_execute(dat->block->instance);
   ops_get_data(dat);
   int lsize[OPS_MAX_DIM] = {1};
@@ -683,6 +684,7 @@ void ops_dat_set_data_host(ops_dat dat, int part, char *data) {
 }
 
 void ops_dat_set_data_slab_host(ops_dat dat, int part, char *data, int *range) {
+    (void)part;
   ops_execute(dat->block->instance);
   ops_get_data(dat);
   int lsize[OPS_MAX_DIM] = {1};
