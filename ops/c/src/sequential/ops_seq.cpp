@@ -553,17 +553,21 @@ void ops_put_data(ops_dat dat) {
 }
 
 void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace) {
+  (void)memspace;
   ops_dat_fetch_data_host(dat, part, data);
 }
 
 void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *range, ops_memspace memspace) {
+    (void)memspace;
   ops_dat_fetch_data_slab_host(dat, part, data, range);
 }
 void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace) {
+    (void)memspace;
   ops_dat_set_data_host(dat, part, data);
 }
 
 void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *range, ops_memspace memspace) {
+    (void)memspace;
   ops_dat_set_data_slab_host(dat, part, data, range);
 }
 

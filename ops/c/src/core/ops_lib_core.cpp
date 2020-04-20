@@ -1546,13 +1546,13 @@ void ops_NaNcheck_core(ops_dat dat, char *buffer) {
                 if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
                     strcmp(dat->type, "double precision") == 0) {
                   if (  std::isnan(((double *)dat->data)[offset])  ) {
-                    printf("%sError: NaN detected at element %d\n", buffer, offset);
+                    printf("%sError: NaN detected at element %zu\n", buffer, offset);
                     exit(2);
                   }
                 } else if (strcmp(dat->type, "float") == 0 ||
                            strcmp(dat->type, "real") == 0) {
                   if (  std::isnan(((float *)dat->data)[offset])  ) {
-                    printf("%sError: NaN detected at element %d\n", buffer, offset);
+                    printf("%sError: NaN detected at element %zu\n", buffer, offset);
                     exit(2);
                   }
                 } else if (strcmp(dat->type, "int") == 0 ||

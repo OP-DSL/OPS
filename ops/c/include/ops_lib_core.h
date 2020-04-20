@@ -759,6 +759,7 @@ ops_arg ops_arg_reduce(ops_reduction handle, int dim, const char *type,
  */
 template <class T>
 ops_arg ops_arg_gbl(T *data, int dim, char const *type, ops_access acc) {
+    (void)type;
   return ops_arg_gbl_char((char *)data, dim, sizeof(T), acc);
 }
 

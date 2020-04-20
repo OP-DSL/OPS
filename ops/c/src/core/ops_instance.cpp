@@ -210,7 +210,7 @@ void ops_dat_core::fetch_data(int part, char *data2, ops_memspace memspace) {ops
 void ops_dat_core::fetch_data_slab(int part, char *data2, int *range, ops_memspace memspace) {ops_dat_fetch_data_slab_memspace(this, part, data2, range, memspace);}
 void ops_dat_core::set_data(int part, char *data2, ops_memspace memspace) { ops_dat_set_data_memspace(this, part, data2, memspace); }
 void ops_dat_core::set_data_slab(int part, char *data2, int *range, ops_memspace memspace) { ops_dat_set_data_slab_memspace(this, part, data2, range, memspace); }
-size_t ops_dat_core::get_slab_extents(int part, int *disp, int *size, int *slab) {return ops_dat_get_slab_extents(this, part, disp, size, slab);}
+size_t ops_dat_core::get_slab_extents(int part, int *disp, int *size2, int *slab) {return ops_dat_get_slab_extents(this, part, disp, size2, slab);}
 int ops_dat_core::get_global_npartitions() { return ops_dat_get_global_npartitions(this); }
 
 void ops_halo_group_core::halo_transfer() {ops_halo_transfer(this);}
