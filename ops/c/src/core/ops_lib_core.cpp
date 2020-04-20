@@ -202,9 +202,9 @@ void _ops_set_args(OPS_instance *instance, const char *argv) {
 
 }
 
-extern "C" void ops_set_args_ftn(const int argc, char *argv, int len) {
+extern "C" void ops_set_args_ftn(char *argv, int len) {
   argv[len]='\0';
-  _ops_set_args(OPS_instance::getOPSInstance(), argc, argv);
+  _ops_set_args(OPS_instance::getOPSInstance(), argv);
 }
 
 /* Special function only called by fortran backend to get
