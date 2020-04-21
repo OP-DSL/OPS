@@ -370,8 +370,7 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
 }
 
 void ops_NaNcheck(ops_dat dat){
-  char buffer[1];
-  sprintf(buffer, "");
+  char buffer[1]={'\0'};
   // need to get data from GPU
   ops_opencl_get_data(dat);
   ops_NaNcheck_core(dat, buffer);
