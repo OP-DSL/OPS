@@ -248,9 +248,9 @@ void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
 * this needs to be removed when writing to HDF5 files  - dimension of block is 1
 ********************************************************************************/
 void remove_padding1D(ops_dat dat, hsize_t *size, char *data) {
-  int index = 0;
-  int count = 0;
-  for (int i = 0; i < size[0]; i++) {
+  hsize_t index = 0;
+  hsize_t count = 0;
+  for (hsize_t i = 0; i < size[0]; i++) {
     index = i;
     memcpy(&data[count * dat->elem_size], &dat->data[index * dat->elem_size],
            dat->elem_size);
@@ -265,10 +265,10 @@ void remove_padding1D(ops_dat dat, hsize_t *size, char *data) {
 * this needs to be removed when writing to HDF5 files  - dimension of block is 2
 ********************************************************************************/
 void remove_padding2D(ops_dat dat, hsize_t *size, char *data) {
-  int index = 0;
-  int count = 0;
-    for (int j = 0; j < size[1]; j++) {
-      for (int i = 0; i < size[0]; i++) {
+  hsize_t index = 0;
+  hsize_t count = 0;
+    for (hsize_t j = 0; j < size[1]; j++) {
+      for (hsize_t i = 0; i < size[0]; i++) {
         index = i + j * dat->size[0];
         memcpy(&data[count * dat->elem_size],
                &dat->data[index * dat->elem_size], dat->elem_size);
@@ -284,12 +284,12 @@ void remove_padding2D(ops_dat dat, hsize_t *size, char *data) {
 * this needs to be removed when writing to HDF5 files  - dimension of block is 3
 ********************************************************************************/
 void remove_padding3D(ops_dat dat, hsize_t *size, char *data) {
-  int index = 0;
-  int count = 0;
+  hsize_t index = 0;
+  hsize_t count = 0;
 
-  for (int k = 0; k < size[2]; k++) {
-    for (int j = 0; j < size[1]; j++) {
-      for (int i = 0; i < size[0]; i++) {
+  for (hsize_t k = 0; k < size[2]; k++) {
+    for (hsize_t j = 0; j < size[1]; j++) {
+      for (hsize_t i = 0; i < size[0]; i++) {
         index = i + j * dat->size[0] + // need to stride in dat->size as data
                                        // block includes intra-block halos
                 k * dat->size[0] * dat->size[1]; // +
@@ -321,8 +321,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
   hid_t group_id;  // group identifier
   hid_t plist_id;  // property list identifier
 
-  hsize_t g_size[OPS_MAX_DIM];
-  int gbl_size[OPS_MAX_DIM];
+  hsize_t g_size[OPS_MAX_DIM]={0};
+  int gbl_size[OPS_MAX_DIM]={0};
   for (int d = 0; d < block->dims; d++) {
     // pure data size (i.e. without block halos) to be noted as an attribute
     gbl_size[d] = dat->size[d] + dat->d_m[d] - dat->d_p[d];
@@ -454,7 +454,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
                                   block->dims); // d_m
 
             // need to substract x_pad from d_p before writing attribute to file
-            int orig_d_p[block->dims];
+            int orig_d_p[OPS_MAX_DIM];
             for (int d = 0; d < block->dims; d++) orig_d_p[d] = dat->d_p[d];
             orig_d_p[0] = dat->d_p[0] - dat->x_pad;
 
@@ -571,7 +571,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       }
       else {
         // need to substract x_pad from d_p before checking attribute on file
-        int orig_d_p[block->dims];
+        int orig_d_p[OPS_MAX_DIM];
         for (int d = 0; d < block->dims; d++)
           orig_d_p[d] = dat->d_p[d];
         orig_d_p[0] = dat->d_p[0] - dat->x_pad;
@@ -1223,7 +1223,7 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
   H5Tset_size(atype, attlen + 1);
 
   // read attribute
-  char typ[attlen + 1];
+  char *typ = (char*)ops_malloc((attlen + 1)*sizeof(char));
   H5Aread(attr, atype, typ);
   H5Aclose(attr);
   H5Sclose(dataspace);
@@ -1272,7 +1272,7 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
     ex << "Unknown type in file "<< file_name << " for constant "<<name<<"\n";
     throw ex;
   }
-
+  ops_free(typ);
   free(data);
 
   H5Dclose(dset_id);
@@ -1334,7 +1334,7 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
     H5Tset_size(atype, attlen + 1);
 
     // read attribute
-    char typ[attlen + 1];
+    char *typ = (char*)ops_malloc((attlen + 1)*sizeof(char));
     H5Aread(attr, atype, typ);
     H5Aclose(attr);
     H5Sclose(dataspace);
@@ -1382,7 +1382,7 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
       H5Dwrite(dset_id, H5T_NATIVE_CHAR, H5S_ALL, dataspace, H5P_DEFAULT,
                const_data);
     }
-
+    ops_free(typ);
     H5Dclose(dset_id);
     H5Fclose(file_id);
 
@@ -1394,7 +1394,7 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
       << " ... creating const\n";
 
   // Create the dataspace for the dataset.
-  hsize_t dims_of_const = {dim};
+  hsize_t dims_of_const = (hsize_t)dim;
   dataspace = H5Screate_simple(1, &dims_of_const, NULL);
 
   // Create the dataset with default properties
