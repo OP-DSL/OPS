@@ -42,10 +42,8 @@
 
 #include <ops_cuda_rt_support.h>
 #include <ops_lib_core.h>
+#include <ops_tridiag.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void ops_tridMultiDimBatch_Inc(
     int ndim,     // number of dimensions, ndim <= MAXDIM = 8
@@ -104,6 +102,3 @@ void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
   initTridMultiDimBatchSolve(ndim, dims, dims);
 }
 
-#ifdef __cplusplus
-}
-#endif
