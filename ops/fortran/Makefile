@@ -33,6 +33,7 @@ else
 endif
 
 CXXFLAGS += -DOPS_FTN
+NVCXXFLAGS += -DOPS_FTN
 
 .PHONY: clean mkdir
 
