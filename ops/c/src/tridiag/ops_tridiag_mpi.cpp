@@ -40,13 +40,11 @@
 #include <ops_lib_core.h>
 #include <ops_mpi_core.h>
 #include <ops_exceptions.h>
+#include <ops_tridiag.h>
 
 #define FP double // doubles when calling thomas should be FPs
 #define N_MAX 1024
 #include <trid_mpi_cpu.hpp>
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
   // dummy routine for non-GPU backends
@@ -369,6 +367,3 @@ void ops_exitTridMultiDimBatchSolve() {
   // free memory allocated during tridiagonal solve e.g. mpi buffers
 }
 
-#ifdef __cplusplus
-}
-#endif

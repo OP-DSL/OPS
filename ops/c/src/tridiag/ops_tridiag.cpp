@@ -38,12 +38,9 @@
   */
 
 #include <ops_lib_core.h>
+#include <ops_tridiag.h>
 #include "trid_cpu.h"
 #include <ops_exceptions.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
   // dummy routine for non-GPU backends
@@ -104,6 +101,3 @@ void ops_tridMultiDimBatch_Inc(
                            (double *)u->data, ndim, solvedim, dims, a->size);
 
 }
-#ifdef __cplusplus
-}
-#endif
