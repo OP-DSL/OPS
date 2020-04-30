@@ -951,7 +951,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     ENDFOR()
 
     code('desc->nargs = '+str(nargs)+';')
-    code('desc->args = (ops_arg*)malloc('+str(nargs)+'*sizeof(ops_arg));')
+    code('desc->args = (ops_arg*)ops_malloc('+str(nargs)+'*sizeof(ops_arg));')
     declared = 0
     for n in range (0, nargs):
       code('desc->args['+str(n)+'] = arg'+str(n)+';')
@@ -959,10 +959,10 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         code('desc->hash = ((desc->hash << 5) + desc->hash) + arg'+str(n)+'.dat->index;')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         if declared == 0:
-          code('char *tmp = (char*)malloc('+dims[n]+'*sizeof('+typs[n]+'));')
+          code('char *tmp = (char*)ops_malloc('+dims[n]+'*sizeof('+typs[n]+'));')
           declared = 1
         else:
-          code('tmp = (char*)malloc('+dims[n]+'*sizeof('+typs[n]+'));')
+          code('tmp = (char*)ops_malloc('+dims[n]+'*sizeof('+typs[n]+'));')
         code('memcpy(tmp, arg'+str(n)+'.data,'+dims[n]+'*sizeof('+typs[n]+'));')
         code('desc->args['+str(n)+'].data = tmp;')
     code('desc->function = ops_par_loop_'+name+'_execute;')

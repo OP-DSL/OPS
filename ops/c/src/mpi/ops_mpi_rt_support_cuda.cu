@@ -589,9 +589,9 @@ void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *ra
     desc->function = ops_internal_copy_cuda;
     ops_internal_copy_cuda(desc);
     target->data_d = NULL;
-    free(target);
-    free(desc->args);
-    free(desc);
+    ops_free(target);
+    ops_free(desc->args);
+    ops_free(desc);
   } 
 
 }
@@ -630,9 +630,9 @@ void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *rang
     desc->function = ops_internal_copy_cuda;
     ops_internal_copy_cuda(desc);
     target->data_d = NULL;
-    free(target);
-    free(desc->args);
-    free(desc);
+    ops_free(target);
+    ops_free(desc->args);
+    ops_free(desc);
     dat->dirty_hd = 2;
   }
 
@@ -670,9 +670,9 @@ void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace
     desc->function = ops_internal_copy_cuda;
     ops_internal_copy_cuda(desc);
     target->data_d = NULL;
-    free(target);
-    free(desc->args);
-    free(desc);
+    ops_free(target);
+    ops_free(desc->args);
+    ops_free(desc);
   } 
 }
 
@@ -705,9 +705,9 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
     desc->function = ops_internal_copy_cuda;
     ops_internal_copy_cuda(desc);
     target->data_d = NULL;
-    free(target);
-    free(desc->args);
-    free(desc);
+    ops_free(target);
+    ops_free(desc->args);
+    ops_free(desc);
     dat->dirty_hd = 2;
   } 
 }

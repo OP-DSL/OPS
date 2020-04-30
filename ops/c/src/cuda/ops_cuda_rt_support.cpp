@@ -250,7 +250,7 @@ void ops_cuda_put_data(ops_dat dat) {
 void reallocConstArrays(OPS_instance *instance, int consts_bytes) {
   if (consts_bytes > instance->OPS_consts_bytes) {
     if (instance->OPS_consts_bytes > 0) {
-      free(instance->OPS_consts_h);
+      ops_free(instance->OPS_consts_h);
       cudaFreeHost(instance->OPS_gbl_prev);
       cutilSafeCall(instance->ostream(), cudaFree(instance->OPS_consts_d));
     }
@@ -264,7 +264,7 @@ void reallocConstArrays(OPS_instance *instance, int consts_bytes) {
 void reallocReductArrays(OPS_instance *instance, int reduct_bytes) {
   if (reduct_bytes > instance->OPS_reduct_bytes) {
     if (instance->OPS_reduct_bytes > 0) {
-      free(instance->OPS_reduct_h);
+      ops_free(instance->OPS_reduct_h);
       cutilSafeCall(instance->ostream(), cudaFree(instance->OPS_reduct_d));
     }
     instance->OPS_reduct_bytes = 4 * reduct_bytes; // 4 is arbitrary, more than needed
@@ -308,12 +308,12 @@ void ops_cuda_exit(OPS_instance *instance) {
   if (!instance->OPS_hybrid_gpu)
     return;
   if (instance->OPS_consts_bytes > 0) {
-    free(instance->OPS_consts_h);
+    ops_free(instance->OPS_consts_h);
     cudaFreeHost(instance->OPS_gbl_prev);
     cutilSafeCall(instance->ostream(), cudaFree(instance->OPS_consts_d));
   }
   if (instance->OPS_reduct_bytes > 0) {
-    free(instance->OPS_reduct_h);
+    ops_free(instance->OPS_reduct_h);
     cutilSafeCall(instance->ostream(), cudaFree(instance->OPS_reduct_d));
   }
 }
