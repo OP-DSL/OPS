@@ -257,7 +257,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f mblock.out *.h5 data*
 
 echo '============> Running MPI+OpenACC'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 numawrap2 ./mblock_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > mblock.out
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./mblock_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > mblock.out
 grep "Total Wall time" mblock.out
 grep "PASSED" mblock.out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi

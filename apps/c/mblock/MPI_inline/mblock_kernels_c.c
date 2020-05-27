@@ -4,5 +4,6 @@
 
 #define OPS_2D
 #include "./MPI_inline/mblock_common.h"
+#include <math.h>
 //user kernel files
 #include "mblock_populate_kernel_mpiinline_kernel_c.c"
