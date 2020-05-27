@@ -196,13 +196,13 @@ void ops_par_loop_update_halo_kernel2_xvel_minus_2_b(char const *name, ops_block
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 3;
-  desc->args = (ops_arg*)malloc(3*sizeof(ops_arg));
+  desc->args = (ops_arg*)ops_malloc(3*sizeof(ops_arg));
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->args[2] = arg2;
-  char *tmp = (char*)malloc(NUM_FIELDS*sizeof(int));
+  char *tmp = (char*)ops_malloc(NUM_FIELDS*sizeof(int));
   memcpy(tmp, arg2.data,NUM_FIELDS*sizeof(int));
   desc->args[2].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel2_xvel_minus_2_b_execute;

@@ -229,13 +229,13 @@ void ops_par_loop_tea_leaf_cg_calc_ur_r_reduce_kernel(char const *name, ops_bloc
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 4;
-  desc->args = (ops_arg*)malloc(4*sizeof(ops_arg));
+  desc->args = (ops_arg*)ops_malloc(4*sizeof(ops_arg));
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->args[2] = arg2;
-  char *tmp = (char*)malloc(1*sizeof(double));
+  char *tmp = (char*)ops_malloc(1*sizeof(double));
   memcpy(tmp, arg2.data,1*sizeof(double));
   desc->args[2].data = tmp;
   desc->args[3] = arg3;

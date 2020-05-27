@@ -162,7 +162,7 @@ void ops_par_loop_initialise_chunk_kernel_zero_x(char const *name, ops_block blo
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 1;
-  desc->args = (ops_arg*)malloc(1*sizeof(ops_arg));
+  desc->args = (ops_arg*)ops_malloc(1*sizeof(ops_arg));
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->function = ops_par_loop_initialise_chunk_kernel_zero_x_execute;

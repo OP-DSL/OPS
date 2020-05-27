@@ -187,17 +187,17 @@ void ops_par_loop_prolong_check(char const *name, ops_block block, int dim, int*
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 5;
-  desc->args = (ops_arg*)malloc(5*sizeof(ops_arg));
+  desc->args = (ops_arg *)ops_malloc(5 * sizeof(ops_arg));
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
   desc->args[2] = arg2;
   desc->args[3] = arg3;
-  char *tmp = (char*)malloc(1*sizeof(int));
+  char *tmp = (char *)ops_malloc(1 * sizeof(int));
   memcpy(tmp, arg3.data,1*sizeof(int));
   desc->args[3].data = tmp;
   desc->args[4] = arg4;
-  tmp = (char*)malloc(1*sizeof(int));
+  tmp = (char *)ops_malloc(1 * sizeof(int));
   memcpy(tmp, arg4.data,1*sizeof(int));
   desc->args[4].data = tmp;
   desc->function = ops_par_loop_prolong_check_execute;

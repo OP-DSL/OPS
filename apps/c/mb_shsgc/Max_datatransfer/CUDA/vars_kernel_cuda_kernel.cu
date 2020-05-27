@@ -223,7 +223,7 @@ void ops_par_loop_vars_kernel(char const *name, ops_block block, int dim, int* r
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 5;
-  desc->args = (ops_arg*)malloc(5*sizeof(ops_arg));
+  desc->args = (ops_arg*)ops_malloc(5*sizeof(ops_arg));
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
