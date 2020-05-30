@@ -7,12 +7,14 @@ stages:
   - clean
 
 # Stage "build"
-run-build:
+build:GNU:
   stage: build
   script:
-    - cmake --version
-
-
+    - mkdir build
+    - cd build
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=~/OPS_GNU  -DCMAKE_BUILD_TYPE=Release
+    - make
+    - make install
 # Stage "test"
 # run-test:
 #   stage: test
