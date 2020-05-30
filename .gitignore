@@ -52,3 +52,5 @@ poisson_openacc
 *_mpi_cuda
 *.lst
 tea*.in
+.clang-format
+*build/*
