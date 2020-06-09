@@ -23,7 +23,7 @@ build:Clang:
   script:
     - mkdir build
     - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=~/OPS_Clang  -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=~/OPS_Clang  -DCMAKE_BUILD_TYPE=Release #-DCMAKE_C_COMPILER=clang #-DCMAKE_CXX_COMPILER=clang++
     - make
     - make install
 # Stage "test"
