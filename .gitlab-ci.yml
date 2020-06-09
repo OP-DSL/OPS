@@ -1,5 +1,4 @@
 # Defines stages which are to be executed
-image: registry.gitlab.com/op-dsl-ci/ops-ci
 stages:
   - build
   - test
@@ -9,10 +8,22 @@ stages:
 # Stage "build"
 build:GNU:
   stage: build
+  image: registry.gitlab.com/op-dsl-ci/ops-ci
   script:
     - mkdir build
     - cd build
     - cmake ../ -DCMAKE_INSTALL_PREFIX=~/OPS_GNU  -DCMAKE_BUILD_TYPE=Release
+    - make
+    - make install
+
+build:Clang:
+  stage: build
+  tags:
+    - CPU
+  script:
+    - mkdir build
+    - cd build
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=~/OPS_Clang  -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
     - make
     - make install
 # Stage "test"
