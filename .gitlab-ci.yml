@@ -10,7 +10,7 @@ build:GNU:
   stage: build
   tags:
     - CPU
-  image: ubuntu:18.04
+  image: ubuntu:1804
   script:
     - mkdir build
     - cd build
@@ -20,7 +20,7 @@ build:GNU:
 
 build:Clang:
   stage: build
-  image: ubuntu:18.04
+  image: ubuntu:1804
   tags:
     - CPU
   script:
