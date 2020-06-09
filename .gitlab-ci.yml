@@ -8,22 +8,25 @@ stages:
 # Stage "build"
 build:GNU:
   stage: build
-  image: registry.gitlab.com/op-dsl-ci/ops-ci
+  tags:
+    - CPU
+  image: ubuntu:18.04
   script:
     - mkdir build
     - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=~/OPS_GNU  -DCMAKE_BUILD_TYPE=Release
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=~/OPS  -DCMAKE_BUILD_TYPE=Release
     - make
     - make install
 
 build:Clang:
   stage: build
+  image: ubuntu:18.04
   tags:
     - CPU
   script:
     - mkdir build
     - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=~/OPS_Clang  -DCMAKE_BUILD_TYPE=Release #-DCMAKE_C_COMPILER=clang #-DCMAKE_CXX_COMPILER=clang++
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=~/OPS  -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
     - make
     - make install
 # Stage "test"
