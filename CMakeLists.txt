@@ -63,6 +63,11 @@ if (CUDAToolkit_FOUND)
     enable_language(CUDA)
 endif ()
 
+if (OpenCL_FOUND)
+    include_directories(${OpenCL_INCLUDE_DIRS})
+endif ()
+
+
 # option(BUILD_OPS_FORTRAN "Build FORTRAN version of OPS" OFF)
 # option(BUILD_OPS_APPS "Build Sample OPS applications" OFF)
 # option(OPS_VERBOSE_WARNINGS "Turn on verbose warning messages" ON)
