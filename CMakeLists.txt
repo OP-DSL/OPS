@@ -1,7 +1,7 @@
 # To specifiy the cmake version range
 # Currenty work under 3.17.2
 cmake_minimum_required(VERSION 3.17)
-project(OPS)
+project(OPS C CXX)
 # To show the compiling process in detail
 set(CMAKE_VERBOSE_MAKEFILE on)
 # Configure Compilers
@@ -55,6 +55,12 @@ endif ()
 if (MPI_FOUND)
     include_directories(${MPI_C_INCLUDE_DIRS})
     include_directories(${MPI_CXX_INCLUDE_DIRS})
+endif ()
+
+if (CUDAToolkit_FOUND)
+    include_directories(${CUDAToolkit_INCLUDE_DIRS})
+    set(CMAKE_CUDA_COMPILER ${CUDAToolkit_NVCC_EXECUTABLE})
+    enable_language(CUDA)
 endif ()
 
 # option(BUILD_OPS_FORTRAN "Build FORTRAN version of OPS" OFF)
