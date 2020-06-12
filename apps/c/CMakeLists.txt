@@ -66,18 +66,85 @@ if (${CMAKE_PROJECT_NAME} STREQUAL APP)
     if (OpenCL_FOUND)
         include_directories(${OpenCL_INCLUDE_DIRS})
     endif ()
+    # Trying to find the OPS library
+    SET (SEARCH_PATHS
+    "${OPS_INSTALL_DIR}"
+        /usr/local/
+        /usr/
+    )
+    # Tyring to find the include directory
+    set(OPS_HEAD ops_checkpointing.h  ops_hdf5.h  ops_lib_core.h
+                  ops_opencl_reduction.h   ops_tridiag.h ops_cuda_reduction.h
+                  ops_instance.h   ops_lib_cpp.h   ops_opencl_rt_support.h
+                  ops_util.h ops_cuda_rt_support.h  ops_internal1.h  ops_macros.h
+                  ops_seq.h  queue.h ops_exceptions.h  ops_internal2.h
+                  ops_mpi_core.h  ops_seq_v2.h)
+    set(OPS_INCLUDE_DIR "")
+    foreach(head ${OPS_HEAD})
+        unset(head_inc CACHE)
+        FIND_PATH (head_inc
+        NAMES ${head}
+        PATHS ${SEARCH_PATHS}
+        PATH_SUFFIXES include)
+        if (head_inc)
+            list(APPEND OPS_INCLUDE_DIR ${head_inc})
+        else()
+            message(FATAL_ERROR "We cannot find ${head}")
+        endif()
+    endforeach()
+    list(REMOVE_DUPLICATES OPS_INCLUDE_DIR)
+    include_directories("${OPS_INCLUDE_DIR}")
+    # Trying to find the library directory
+    set(OPS_LIB ops_cuda  ops_hdf5_seq  ops_mpi_cuda
+        ops_opencl ops_hdf5_mpi  ops_mpi  ops_mpi_opencl ops_seq)
+    foreach(library ${OPS_LIB})
+        FIND_LIBRARY (${library}_FOUND
+        NAMES ${library}
+        PATHS ${SEARCH_PATHS}
+        PATH_SUFFIXES lib)
+        if (${library}_FOUND)
+            unset(dir CACHE)
+            get_filename_component(dir ${${library}_FOUND} DIRECTORY)
+            list(APPEND OPS_LIBRARY_DIR ${dir})
+        else()
+            message("We cannot find ${library}")
+        endif()
+    endforeach()
+    list(REMOVE_DUPLICATES OPS_LIBRARY_DIR)
+    link_directories("${OPS_LIBRARY_DIR}")
+
+    set(HDF5_SEQ ${HDF5_FOUND})
+    if (ops_cuda_FOUND)
+        set(CUDA ${CUDAToolkit_FOUND})
+    endif()
+    if (ops_opencl_FOUND)
+        set(OPENCL ${OpenCL_FOUND})
+    endif()
+    if (${MPI_FOUND})
+        set(MPI TRUE)
+        set(HDF5_MPI ${HDF5_FOUND})
+        if (ops_cuda_FOUND)
+            set(CUDA_MPI ${CUDAToolkit_FOUND})
+        endif()
+        if (ops_opencl_FOUND)
+            set(OPENCL_MPI ${OpenCL_FOUND})
+        endif()
+    endif()
 endif()
 
 if (${CMAKE_PROJECT_NAME} STREQUAL OPS)
     include_directories("${CMAKE_SOURCE_DIR}/ops/c/include")
-    set(DO_MPI ${MPI_FOUND})
-    set(UseHDF5 ${HDF5_FOUND})
-    set(UseCUDA ${CUDAToolkit_FOUND})
-    set(UseOpenCL ${OpenCL_FOUND})
+    set(HDF5_SEQ ${HDF5_FOUND})
+    set(CUDA ${CUDAToolkit_FOUND})
+    set(OPENCL ${OpenCL_FOUND})
+    if (${MPI_FOUND})
+        set(MPI TRUE)
+        set(HDF5_MPI ${HDF5_FOUND})
+        set(CUDA_MPI ${CUDAToolkit_FOUND})
+        set(OPENCL_MPI ${OpenCL_FOUND})
+    endif()
 endif()
 
-
-# Pass 3rd argument to use HDF5, 4th is a list of additional sources
 macro(BUILD_OPS_C_SAMPLE Name Odd)
     # Get the file to be compiled, DEV, OPS, OTHERS
     file(GLOB DEV "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
@@ -99,67 +166,61 @@ macro(BUILD_OPS_C_SAMPLE Name Odd)
     target_include_directories(${Name}_seq PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     target_link_libraries(${Name}_seq ops_seq)
     target_link_libraries(${Name}_seq_dev ops_seq)
-    if (UseHDF5)
+    if (HDF5_SEQ)
         target_link_libraries(${Name}_seq ops_hdf5_seq ${HDF5_LIBRARIES})
         target_link_libraries(${Name}_seq_dev ops_hdf5_seq ${HDF5_LIBRARIES})
     endif()
 
-    if (UseCUDA)
+    if (CUDA)
         add_executable(${Name}_cuda ${OPS} ${OTHERS} "${CMAKE_CURRENT_SOURCE_DIR}/CUDA/${Name}_kernels.cu")
         target_include_directories(${Name}_cuda PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
         target_link_libraries(${Name}_cuda CUDA::cudart_static ops_cuda)
-        if (UseHDF5)
+        if (HDF5_SEQ)
             target_link_libraries(${Name}_cuda ops_hdf5_seq ${HDF5_LIBRARIES})
         endif()
     endif()
 
-    if (UseOpenCL)
+    if (OPENCL)
         add_executable(${Name}_opencl ${OPS} ${OTHERS} "${CMAKE_CURRENT_SOURCE_DIR}/OpenCL/${Name}_opencl_kernels.cpp")
         target_include_directories(${Name}_opencl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
         target_link_libraries(${Name}_opencl  ${OpenCL_LIBRARIES} ops_opencl)
-        if (UseHDF5)
+        if (HDF5_SEQ)
             target_link_libraries(${Name}_opencl ops_hdf5_seq ${HDF5_LIBRARIES})
         endif()
     endif()
+    if (MPI)
+        add_executable(${Name}_mpi_dev ${DEV})
+        target_include_directories(${Name}_mpi_dev PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+        target_compile_definitions(${Name}_mpi_dev PRIVATE "-DOPS_MPI")
+        add_executable(${Name}_mpi ${OPS} ${OTHERS} "${CMAKE_CURRENT_SOURCE_DIR}/MPI_OpenMP/${Name}_cpu_kernels.cpp")
+        target_include_directories(${Name}_mpi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+        target_compile_definitions(${Name}_mpi PRIVATE "-DOPS_MPI")
+        target_link_libraries(${Name}_mpi ops_mpi MPI::MPI_CXX)
+        target_link_libraries(${Name}_mpi_dev ops_mpi MPI::MPI_CXX)
+        if (HDF5_MPI)
+            target_link_libraries(${Name}_mpi ops_hdf5_mpi ${HDF5_LIBRARIES} MPI::MPI_CXX)
+            target_link_libraries(${Name}_mpi_dev ops_hdf5_mpi ${HDF5_LIBRARIES} MPI::MPI_CXX)
+        endif()
+        if (CUDA_MPI)
+            add_executable(${Name}_mpi_cuda ${OPS} ${OTHERS} "${CMAKE_CURRENT_SOURCE_DIR}/CUDA/${Name}_kernels.cu")
+            target_include_directories(${Name}_mpi_cuda PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+            target_compile_definitions(${Name}_mpi_cuda PRIVATE "-DOPS_MPI")
+            target_link_libraries(${Name}_mpi_cuda CUDA::cudart_static ops_mpi_cuda MPI::MPI_CXX)
+            if (HDF5_MPI)
+                target_link_libraries(${Name}_mpi_cuda ops_hdf5_mpi ${HDF5_LIBRARIES} MPI::MPI_CXX)
+            endif()
+        endif()
 
-
-
-    # if (DO_MPI)
-    #     add_executable(${Name}_mpi
-    #         ${OPS_${Name}_BASEOUTPUT}
-    #         ${OPS_${Name}_MPI_OpenMP_KERNELS}
-    #         ${${EXTRA_SRC}}
-    #         )
-    #     target_include_directories(${Name}_mpi
-    #         PRIVATE
-    #             ${CMAKE_CURRENT_SOURCE_DIR}
-    #             ${OPS_C_INCLUDE_DIR}
-    #             )
-    #     target_link_libraries(${Name}_mpi ops_mpi)
-    #     if (UseHDF5)
-    #         target_link_libraries(${Name}_mpi ops_hdf5_mpi)
-    #     endif()
-
-    #     if (TARGET ops_mpi_cuda)
-    #         add_executable(${Name}_cuda_mpi
-    #             ${OPS_${Name}_BASEOUTPUT}
-    #             ${OPS_${Name}_CUDA_KERNELS}
-    #             ${${EXTRA_SRC}}
-    #             )
-    #         target_include_directories(${Name}_cuda_mpi
-    #             PRIVATE
-    #                 ${CMAKE_CURRENT_SOURCE_DIR}
-    #                 ${OPS_C_INCLUDE_DIR}
-    #                 )
-    #         target_link_libraries(${Name}_cuda_mpi ops_mpi_cuda)
-    #         if (UseHDF5)
-    #             target_link_libraries(${Name}_cuda_mpi ops_hdf5_mpi)
-    #         endif()
-    #     endif()
-    # endif()
-
-
-
+        if (OPENCL_MPI)
+            add_executable(${Name}_mpi_opencl ${OPS} ${OTHERS} "${CMAKE_CURRENT_SOURCE_DIR}/OpenCL/${Name}_opencl_kernels.cpp")
+            target_include_directories(${Name}_mpi_opencl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+            target_compile_definitions(${Name}_mpi_opencl PRIVATE "-DOPS_MPI")
+            target_link_libraries(${Name}_mpi_opencl  ${OpenCL_LIBRARIES} ops_mpi_opencl MPI::MPI_CXX)
+            if (HDF5_MPI)
+                target_link_libraries(${Name}_mpi_opencl ops_hdf5_mpi ${HDF5_LIBRARIES} MPI::MPI_CXX)
+            endif()
+        endif()
+    endif()
 endmacro()
 
 

@@ -109,7 +109,7 @@ endif ()
 #add_subdirectory(ops_translator)
 #Configure the C/C++ library compiling
 add_subdirectory(ops/c)
-add_subdirectory(apps/c)
+#add_subdirectory(apps/c)
 # Configure the installation of "include"
 file(GLOB_RECURSE INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/ops/c/include/*.h")
 install(FILES ${INCLUDE} DESTINATION include)
