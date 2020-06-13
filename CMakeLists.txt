@@ -2,8 +2,20 @@
 # Currenty work under 3.17.2
 cmake_minimum_required(VERSION 3.17)
 project(OPS C CXX)
-# To show the compiling process in detail
-set(CMAKE_VERBOSE_MAKEFILE on)
+# if show the compiling process in detail
+option(OPS_VERBOSE_WARNINGS "Turn on verbose warning messages" OFF)
+if (NOT OPS_VERBOSE_WARNINGS)
+    message("We show concise compiling information by defautl! Use -DOPS_VERBOSE_WARNING=ON to switch on.")
+endif()
+set(CMAKE_VERBOSE_MAKEFILE ${OPS_VERBOSE_WARNINGS})
+# Use the Release mode by default
+if ( NOT CMAKE_BUILD_TYPE )
+    message("We choose the Release mode! Please uses -DCMAKE_BUILD_TYPE to change.")
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+message("The installation directory is ${CMAKE_INSTALL_PREFIX}! Use -DCMAKE_INSTALL_PREFIX to change")
+
+
 # Configure Compilers
 # C
 set(CMAKE_C_STANDARD 99)
@@ -42,12 +54,12 @@ else ()
 endif ()
 
 # Try to find the required dependency
-find_package(MPI)
-find_package(HDF5)
-find_package(CUDAToolkit)
-find_package(OpenACC)
-find_package(OpenCL)
-find_package(OpenMP)
+find_package(MPI QUIET)
+find_package(HDF5 QUIET)
+find_package(CUDAToolkit QUIET)
+find_package(OpenACC QUIET)
+find_package(OpenCL QUIET)
+find_package(OpenMP QUIET)
 # Configure the "include" dir for compiling
 if (HDF5_FOUND)
     include_directories(${HDF5_INCLUDE_DIRS})
@@ -70,7 +82,7 @@ endif ()
 
 # option(BUILD_OPS_FORTRAN "Build FORTRAN version of OPS" OFF)
 # option(BUILD_OPS_APPS "Build Sample OPS applications" OFF)
-# option(OPS_VERBOSE_WARNINGS "Turn on verbose warning messages" ON)
+
 # option(OPS_ERROR_ON_WARNING "Error upon encountering a warning" ON)
 # option(CHECKPOINTING "Enable OPS checkpointing support" OFF)
 # option(OPS_INSTALL_TRANSLATOR "Install OPS Source Translator" ON)

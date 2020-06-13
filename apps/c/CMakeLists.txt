@@ -2,8 +2,17 @@ cmake_minimum_required(VERSION 3.17)
 project(APP C CXX)
 # if APP is compiled alone then steup compilers
 if (${CMAKE_PROJECT_NAME} STREQUAL APP)
-    # To show the compiling process in detail
-    set(CMAKE_VERBOSE_MAKEFILE on)
+    # if show the compiling process in detail
+    option(OPS_VERBOSE_WARNINGS "Turn on verbose warning messages" OFF)
+    if (NOT OPS_VERBOSE_WARNINGS)
+        message("We show concise compiling information by defautl! Use -DOPS_VERBOSE_WARNING=ON to switch on.")
+    endif()
+    set(CMAKE_VERBOSE_MAKEFILE ${OPS_VERBOSE_WARNINGS})
+    # Use the Release mode by default
+    if ( NOT CMAKE_BUILD_TYPE )
+        message("We choose the Release mode! Please uses -DCMAKE_BUILD_TYPE to change.")
+        set(CMAKE_BUILD_TYPE Release)
+    endif()
     # Configure Compilers
     # C
     set(CMAKE_C_STANDARD 99)
