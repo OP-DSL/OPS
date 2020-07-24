@@ -275,7 +275,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
     text = part_name + \
             parse_replace_ACC_signature(part_args, arg_typ, dims, 1, accs, typs) + \
             replace_ACC_kernel_body(part_body, arg_list, arg_typ, nargs, 1, dims)
- 
+
 
     code(text)
     code('')
@@ -595,9 +595,9 @@ void buildOpenCLKernels_"""+name+"""(OPS_instance *instance, """+arg_text+""") {
       pPath = getenv ("OPS_INSTALL_PATH");
       if (pPath!=NULL)
         if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/c/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
+          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
         else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
+          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
       else {
         sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\\n",pPath);
         exit(EXIT_FAILURE);
