@@ -60,6 +60,10 @@ find_package(CUDAToolkit QUIET)
 find_package(OpenACC QUIET)
 find_package(OpenCL QUIET)
 find_package(OpenMP QUIET)
+find_package(Python2 QUIET)
+if (NOT Python2_FOUND)
+  message ("We cannot find Python2 and the Python translator needs Python2!")
+endif ()
 # Configure the "include" dir for compiling
 if (HDF5_FOUND)
     include_directories(${HDF5_INCLUDE_DIRS})
@@ -123,8 +127,30 @@ endif ()
 add_subdirectory(ops/c)
 #add_subdirectory(apps/c)
 # Configure the installation of "include"
-file(GLOB_RECURSE INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/ops/c/include/*.h")
+file(GLOB_RECURSE INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/ops/c/include/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/ops/fortran/include/*.inc")
 install(FILES ${INCLUDE} DESTINATION include)
+#install python translator
+INSTALL(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/ops_translator" DESTINATION bin)
+#The following operations are OS dependent, we do UNIX first
+if (UNIX)
+INSTALL(CODE "execute_process (
+    COMMAND bash -c \"ln -s ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/c/ops.py ${CMAKE_INSTALL_PREFIX}/bin/ops_c\"
+    COMMAND bash -c \"chmod a+x ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/c/ops.py\"
+    COMMAND bash -c \"chmod a+x ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/fortran/ops_fortran.py\"
+    COMMAND bash -c \"ln -s ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/fortran/ops_fortran.py ${CMAKE_INSTALL_PREFIX}/bin/ops_fortran\"
+)")
+endif()
+#prepare the script for setting OPS environment variable variables
+if (UNIX)
+    INSTALL(
+        CODE "file(WRITE \"${CMAKE_INSTALL_PREFIX}/bin/ops_env\" \"export OPS_INSTALL_PATH=${CMAKE_INSTALL_PREFIX}\n\")"
+    )
+    if (NOT ((CMAKE_INSTALL_PREFIX STREQUAL "/usr") OR (CMAKE_INSTALL_PREFIX STREQUAL "/usr/local")))
+        INSTALL(
+            CODE "file(APPEND \"${CMAKE_INSTALL_PREFIX}/bin/ops_env\" \"export PATH=$PATH:${CMAKE_INSTALL_PREFIX}/bin\n\")"
+        )
+    endif()
+endif()
 
 # if(BUILD_OPS_FORTRAN)
 #     add_subdirectory(ops/fortran)
