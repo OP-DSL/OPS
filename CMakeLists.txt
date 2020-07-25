@@ -133,12 +133,18 @@ install(FILES ${INCLUDE} DESTINATION include)
 INSTALL(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/ops_translator" DESTINATION bin)
 #The following operations are OS dependent, we do UNIX first
 if (UNIX)
-INSTALL(CODE "execute_process (
-    COMMAND bash -c \"ln -s ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/c/ops.py ${CMAKE_INSTALL_PREFIX}/bin/ops_c\"
-    COMMAND bash -c \"chmod a+x ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/c/ops.py\"
-    COMMAND bash -c \"chmod a+x ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/fortran/ops_fortran.py\"
-    COMMAND bash -c \"ln -s ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/fortran/ops_fortran.py ${CMAKE_INSTALL_PREFIX}/bin/ops_fortran\"
-)")
+    INSTALL(CODE "execute_process (
+        COMMAND ln -s ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/c/ops.py ${CMAKE_INSTALL_PREFIX}/bin/ops_c
+    )")
+    INSTALL(CODE "execute_process (
+        COMMAND chmod a+x ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/c/ops.py
+    )")
+    INSTALL(CODE "execute_process (
+        COMMAND chmod a+x ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/fortran/ops_fortran.py
+    )")
+    INSTALL(CODE "execute_process (
+        COMMAND ln -s ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/fortran/ops_fortran.py ${CMAKE_INSTALL_PREFIX}/bin/ops_fortran
+    )")
 endif()
 #prepare the script for setting OPS environment variable variables
 if (UNIX)
