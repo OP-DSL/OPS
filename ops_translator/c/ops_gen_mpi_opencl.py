@@ -1206,9 +1206,14 @@ void buildOpenCLKernels(OPS_instance *instance) {
   #create unique set of kernel names list
   unique = list(set(kernel_name_list))
 
-  for nk in range(0,len(unique)):
+  for nk in range(0, len(unique)):
     if not (('initialise' in unique[nk]) or ('generate' in unique[nk])):
-      code('#include "'+unique[nk]+'_opencl_kernel.cpp"')
+      code('#include "' + unique[nk] + '_opencl_kernel.cpp"')
+    else:
+       code('#include "' + '../MPI_OpenMP/' + unique[nk] + '_cpu_kernel.cpp"')
+
+
+
 
 
   fid = open('./OpenCL/'+master_basename[0]+'_opencl_kernels.cpp','w')
