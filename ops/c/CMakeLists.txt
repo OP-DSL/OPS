@@ -14,7 +14,7 @@ install(TARGETS ops_seq DESTINATION lib)
 # hdf5_seq
 if (HDF5_FOUND)
     add_library(ops_hdf5_seq ${CMAKE_CURRENT_SOURCE_DIR}/src/externlib/ops_hdf5.cpp)
-    target_link_libraries(ops_hdf5_seq PRIVATE ${HDF5_LIBRARIES})
+    target_link_libraries(ops_hdf5_seq PRIVATE ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
     install(TARGETS ops_hdf5_seq DESTINATION lib)
 endif ()
 # CUDA seq
@@ -41,12 +41,12 @@ if (MPI_FOUND)
     list(FILTER MPI EXCLUDE REGEX "hdf5")
     # MPI
     add_library(ops_mpi ${MPI} ${MPICORE} ${EXTERN})
-    target_link_libraries(ops_mpi PRIVATE MPI::MPI_CXX ${HDF5_LIBRARIES})
+    target_link_libraries(ops_mpi PRIVATE MPI::MPI_CXX ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
     install(TARGETS ops_mpi DESTINATION lib)
     # HDF5_MPI
     if (HDF5_FOUND)
         add_library(ops_hdf5_mpi ${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/ops_mpi_hdf5.cpp)
-        target_link_libraries(ops_hdf5_mpi PRIVATE MPI::MPI_CXX ${HDF5_LIBRARIES})
+        target_link_libraries(ops_hdf5_mpi PRIVATE MPI::MPI_CXX ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
         install(TARGETS ops_hdf5_mpi DESTINATION lib)
     endif ()
     #MPI_CUDA

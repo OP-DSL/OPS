@@ -55,7 +55,7 @@ endif ()
 
 # Try to find the required dependency
 find_package(MPI QUIET)
-find_package(HDF5 QUIET)
+find_package(HDF5 QUIET COMPONENTS C HL)
 find_package(CUDAToolkit QUIET)
 find_package(OpenACC QUIET)
 find_package(OpenCL QUIET)
