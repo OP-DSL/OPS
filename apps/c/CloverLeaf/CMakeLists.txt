@@ -1,3 +1,3 @@
 cmake_minimum_required(VERSION 3.17)
-
-BUILD_OPS_C_SAMPLE(clover_leaf profile)
+set(others start.cpp time_step.cpp build_field.cpp read_input.cpp initialise.cpp advection.cpp)
+BUILD_OPS_C_SAMPLE(clover_leaf profile "${others}" "NONE")
