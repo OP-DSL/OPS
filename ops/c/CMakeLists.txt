@@ -41,7 +41,7 @@ if (MPI_FOUND)
     list(FILTER MPI EXCLUDE REGEX "hdf5")
     # MPI
     add_library(ops_mpi ${MPI} ${MPICORE} ${EXTERN})
-    target_link_libraries(ops_mpi PRIVATE MPI::MPI_CXX ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
+    target_link_libraries(ops_mpi PRIVATE MPI::MPI_CXX)
     install(TARGETS ops_mpi DESTINATION lib)
     # HDF5_MPI
     if (HDF5_FOUND)

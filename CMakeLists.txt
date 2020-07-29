@@ -85,7 +85,7 @@ endif ()
 
 
 # option(BUILD_OPS_FORTRAN "Build FORTRAN version of OPS" OFF)
-# option(BUILD_OPS_APPS "Build Sample OPS applications" OFF)
+option(BUILD_OPS_APPS "Build Sample OPS applications" OFF)
 
 # option(OPS_ERROR_ON_WARNING "Error upon encountering a warning" ON)
 # option(CHECKPOINTING "Enable OPS checkpointing support" OFF)
@@ -121,31 +121,13 @@ endif ()
 #     add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler >${werrorFlag}")
 # endif()
 
-
-#add_subdirectory(ops_translator)
+# install python translator
+add_subdirectory(ops_translator)
 #Configure the C/C++ library compiling
 add_subdirectory(ops/c)
-#add_subdirectory(apps/c)
 # Configure the installation of "include"
 file(GLOB_RECURSE INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/ops/c/include/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/ops/fortran/include/*.inc")
 install(FILES ${INCLUDE} DESTINATION include)
-#install python translator
-INSTALL(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/ops_translator" DESTINATION bin)
-#The following operations are OS dependent, we do UNIX first
-if (UNIX)
-    INSTALL(CODE "execute_process (
-        COMMAND ln -s ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/c/ops.py ${CMAKE_INSTALL_PREFIX}/bin/ops_c
-    )")
-    INSTALL(CODE "execute_process (
-        COMMAND chmod a+x ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/c/ops.py
-    )")
-    INSTALL(CODE "execute_process (
-        COMMAND chmod a+x ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/fortran/ops_fortran.py
-    )")
-    INSTALL(CODE "execute_process (
-        COMMAND ln -s ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/fortran/ops_fortran.py ${CMAKE_INSTALL_PREFIX}/bin/ops_fortran
-    )")
-endif()
 #prepare the script for setting OPS environment variable variables
 if (UNIX)
     INSTALL(
@@ -162,9 +144,9 @@ endif()
 #     add_subdirectory(ops/fortran)
 # endif()
 
-# if(BUILD_OPS_APPS)
-#     add_subdirectory(apps/c)
+if(BUILD_OPS_APPS)
+    add_subdirectory(apps/c)
 #     if(BUILD_OPS_FORTRAN)
 #         add_subdirectory(apps/fortran)
 #     endif()
-# endif()
+endif()
