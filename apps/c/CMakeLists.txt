@@ -324,22 +324,22 @@ endmacro()
 # TODO fetch_data.cpp cannot be found for access
 #add_subdirectory(access)
 add_subdirectory(CloverLeaf) # Compile OK
-# add_subdirectory(CloverLeaf_3D) # Compile OK
-# add_subdirectory(CloverLeaf_3D_HDF5) # Compile OK
+add_subdirectory(CloverLeaf_3D) # Compile OK
+add_subdirectory(CloverLeaf_3D_HDF5) # Compile OK
 #TODO there seem bugs in the codes of complex_numbers
 #add_subdirectory(complex_numbers)
 #TODO Need to figure out the structure
 #add_subdirectory(laplace2d_tutorial)
-# add_subdirectory(lowdim_test) # Compile OK
-# add_subdirectory(mblock) # Compile OK
+add_subdirectory(lowdim_test) # Compile OK
+add_subdirectory(mblock) # Compile OK
 #TODO there seems problem for compiling mblock4D
 #add_subdirectory(mblock4D)
-# add_subdirectory(mb_shsgc)  # Compile OK
-# add_subdirectory(mgrid)  # Compile OK
-# add_subdirectory(multiDim)  # Compile OK
-# add_subdirectory(multiDim3D)  # Compile OK
+add_subdirectory(mb_shsgc)  # Compile OK
+add_subdirectory(mgrid)  # Compile OK
+add_subdirectory(multiDim)  # Compile OK
+add_subdirectory(multiDim3D)  # Compile OK
 #TODO Find a bug of Python translators
 #add_subdirectory(multiDim_HDF5)
-# add_subdirectory(poisson) # Compile OK
-# add_subdirectory(shsgc) # Compile OK
-# add_subdirectory(TeaLeaf) # Compile OK
+add_subdirectory(poisson) # Compile OK
+add_subdirectory(shsgc) # Compile OK
+add_subdirectory(TeaLeaf) # Compile OK
