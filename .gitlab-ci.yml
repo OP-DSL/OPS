@@ -1,13 +1,14 @@
 # Defines stages which are to be executed
 stages:
-  - build
+  - API_Build
+  - APP_Build
   - test
   - docs
   - clean
 
 # Stage "build"
-build:GNU:API
-  stage: build
+build:GNU:API:
+  stage: API_Build
   tags:
     - CPU, Build
   image: ubuntu:18.04
@@ -24,8 +25,8 @@ build:GNU:API
     paths:
     - $HOME/OPS-INSTALL
 
-build:GNU:APP
-  stage: build
+build:GNU:APP:
+  stage: APP_Build
   tags:
     - CPU, Build
   image: ubuntu:18.04
