@@ -208,7 +208,7 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra)
     set(TMP_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/tmp")
     if (UNIX)
         execute_process (
-            COMMAND ls -l -h *
+            COMMAND ls
             WORKING_DIRECTORY ${TMP_SOURCE_DIR}
         )
     endif()
