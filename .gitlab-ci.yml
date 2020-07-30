@@ -29,17 +29,9 @@ build:GNU:APP:
     - CPU, Build
   image: ubuntu:18.04
   script:
-    - ls -l -h
-    - cd OPS-INSTALL
-    - ls -l -h
-    - cd ../
-    - mkdir appbuild
+    -mkdir appbuild
     - cd appbuild
     - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL/ -DAPP_INSTALL=$CI_BUILDS_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so
-    - cd CloverLeaf
-    - ls -l -h
-    - cd tmp
-    - ls -l -h
     - make IEEE=1 -j 12
     - make install
   artifacts:
