@@ -54,8 +54,8 @@ gpu_test:GNU:
     - cd OPS-INSTALL/bin
     - ops_c
     - ops_fortran
-    - export $
-    - echo $OPS_INSTALL_PATH=$CI_PROJECT_DIR/OPS-INSTALL
+    - export $OPS_INSTALL_PATH=$CI_PROJECT_DIR/OPS-INSTALL
+    - echo $OPS_INSTALL_PATH
     - cd OPS-APP/clover_leaf
     - ./clover_leaf_opencl OPS_CL_DEVICE=1
     - ./test.sh
