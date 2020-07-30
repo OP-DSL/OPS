@@ -187,10 +187,10 @@ adi_seq: Makefile .generated adi_ops.cpp init_kernel.h preproc_kernel.h $(OPS_IN
 #
 
 adi_cuda: Makefile .generated ./CUDA/adi_kernels_cu.o adi_ops.cpp preproc_kernel.h init_kernel.h $(OPS_INSTALL_PATH)/lib/$(OPS_COMPILER)/libops_cuda.a
-	$(MPICPP) $(CXXFLAGS) $(CUDA_INC) $(TRID_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_cu.o -lcudart -lops_cuda -lops_trid_cuda -lops_hdf5_seq $(TRID_LIB) -ltridcuda $(HDF5_LIB) -o adi_cuda
+	$(MPICPP) $(CXXFLAGS) $(CUDA_INC) $(TRID_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_cu.o -lcudart -lcublas -lops_cuda -lops_trid_cuda -lops_hdf5_seq $(TRID_LIB) -ltridcuda $(HDF5_LIB) -o adi_cuda
 
 adi_mpi_cuda: Makefile .generated ./CUDA/adi_kernels_mpi_cu.o adi_ops.cpp adi_kernel.h adi_print_kernel.h adi_copy_kernel.h $(OPS_INSTALL_PATH)/lib/$(OPS_COMPILER)/libops_mpi_cuda.a
-	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_mpi_cu.o -lcudart -lops_mpi_cuda -lops_hdf5_mpi $(HDF5_LIB) -o adi_mpi_cuda
+	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_mpi_cu.o -lcudart -lcublas -lops_mpi_cuda -lops_hdf5_mpi $(HDF5_LIB) -o adi_mpi_cuda
 
 ./CUDA/adi_kernels_cu.o: ./CUDA/adi_kernels.cu Makefile
 	nvcc $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) -I. -c -o ./CUDA/adi_kernels_cu.o ./CUDA/adi_kernels.cu
@@ -231,12 +231,12 @@ openacc_mpi_c_obj_list = $(shell find OpenACC/ -name "*_c.c" | sed s/\\.c/\\_mpi
 
 adi_openacc: $(openacc_obj_list) .generated ./OpenACC/adi_kernels.o adi_ops.cpp adi_kernel.h adi_print_kernel.h adi_copy_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/$(OPS_COMPILER)/libops_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(CXXFLAGS) $(OPS_INC) $(OPS_LIB) -DOPS_MPI $(CUDA_INC) $(CUDA_LIB) \
-    adi_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lops_cuda -lops_hdf5_seq $(HDF5_LIB) -o adi_openacc
+    adi_ops.cpp -I. $(openacc_obj_list) $(openacc_c_obj_list) -lcudart -lcublas -lops_cuda -lops_hdf5_seq $(HDF5_LIB) -o adi_openacc
 
 
 adi_mpi_openacc: $(openacc_mpi_obj_list) .generated ./OpenACC/adi_kernels_mpi.o adi_ops.cpp adi_kernel.h adi_print_kernel.h adi_copy_kernel.h Makefile $(OPS_INSTALL_PATH)/lib/$(OPS_COMPILER)/libops_mpi_cuda.a
 	$(MPICPP) -acc -ta=tesla:cc35 $(CXXFLAGS) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_INC) $(CUDA_LIB) -DOPS_MPI \
-    adi_ops.cpp -I. $(openacc_mpi_obj_list) $(openacc_mpi_c_obj_list) -lcudart -lops_mpi_cuda -lops_hdf5_mpi $(HDF5_LIB) -o adi_mpi_openacc
+    adi_ops.cpp -I. $(openacc_mpi_obj_list) $(openacc_mpi_c_obj_list) -lcudart -lcublas -lops_mpi_cuda -lops_hdf5_mpi $(HDF5_LIB) -o adi_mpi_openacc
 
 
 #

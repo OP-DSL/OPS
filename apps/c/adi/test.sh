@@ -8,15 +8,15 @@ make
 #==== Build and copy Referance application from the TDMA Library ====
 #build lib first
 cd $TRID_INSTALL_PATH/
-#rm -rf ./*
-#cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON
-#make
-#make install
+rm -rf ./*
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_MPI=ON -DLIBTRID_PATH=$TRID_INSTALL_PATH
+make
+make install
 
 #now build application
 cd $TRID_INSTALL_PATH/../../apps/adi/build/
 rm -rf ./*
-cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DLIBTRID_PATH=$TRID_INSTALL_PATH
 make adi_orig compare
 cp compare adi_orig $OPS_INSTALL_PATH/../apps/c/adi
 cd -
