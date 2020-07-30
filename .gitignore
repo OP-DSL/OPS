@@ -37,7 +37,8 @@ poisson_openacc
 *.h5.*
 *.mod
 *.dat
-*.txt
+# TODO this option also disables all CMakefiles
+#*.txt
 *_seq
 *_mpi
 *_openmp
@@ -53,4 +54,4 @@ poisson_openacc
 *.lst
 tea*.in
 .clang-format
-*build/*
+
