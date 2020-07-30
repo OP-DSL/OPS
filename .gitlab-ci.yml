@@ -55,7 +55,7 @@ gpu_test:GNU:
     - ls
     - source ops_env
     - echo $OPS_INSTALL_PATH
-    - export $OPS_INSTALL_PATH=$CI_PROJECT_DIR/OPS-INSTALL
+    - export OPS_INSTALL_PATH=$CI_PROJECT_DIR/OPS-INSTALL
     - echo $OPS_INSTALL_PATH
     - cd $CI_PROJECT_DIR/OPS-APP/clover_leaf
     - ./clover_leaf_opencl OPS_CL_DEVICE=1
