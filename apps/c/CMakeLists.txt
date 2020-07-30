@@ -194,6 +194,7 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra)
     endif()
     # Copy all source and head files into tmp
     file(GLOB CPP "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+    message("CPP=${CPP}")
     list(FILTER CPP EXCLUDE REGEX "ops")
     file(COPY ${CPP} DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/tmp/")
     file(GLOB HEADS "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
