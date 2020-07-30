@@ -192,6 +192,12 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra)
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
     endif()
+    if (UNIX)
+        execute_process (
+            COMMAND mkdir tmp
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+    endif()
     # Copy all source and head files into tmp
     file(GLOB CPP "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
     message("CPP=${CPP}")
@@ -202,7 +208,7 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra)
     set(TMP_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/tmp")
     if (UNIX)
         execute_process (
-            COMMAND ls -l -h *.cpp
+            COMMAND ls -l -h *
             WORKING_DIRECTORY ${TMP_SOURCE_DIR}
         )
     endif()
