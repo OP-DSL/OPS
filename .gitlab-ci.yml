@@ -15,7 +15,7 @@ build:GNU:API:
   script:
     - mkdir build
     - cd build
-    - cmake ../  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so # -DAPP_INSTALL=$HOME/OPS-APP -DBUILD_OPS_APPS=ON
+    - cmake ../  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so
     - make IEEE=1 -j 4
     - make install
   artifacts:
@@ -31,7 +31,7 @@ build:GNU:APP:
   script:
     - mkdir appbuild
     - cd appbuild
-    - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL/ -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so
+    - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so
     - make IEEE=1 -j 12
     - make install
   artifacts:
@@ -51,15 +51,10 @@ gpu_test:GNU:
     - build:GNU:APP
     - build:GNU:API
   script:
-    - cd $CI_PROJECT_DIR/OPS-INSTALL/bin
-    - ls
-    - source ops_env
-    - echo $OPS_INSTALL_PATH
     - export OPS_INSTALL_PATH=$CI_PROJECT_DIR/OPS-INSTALL
     - echo $OPS_INSTALL_PATH
     - cd $CI_PROJECT_DIR/OPS-APP/clover_leaf
     - ./clover_leaf_opencl OPS_CL_DEVICE=1
-    - ./test.sh
 
 
 # Stage "docs"
