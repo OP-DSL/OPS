@@ -51,7 +51,7 @@ gpu_test:GNU:
     - build:GNU:APP
     - build:GNU:API
   script:
-    - cd OPS-install/bin
+    - cd OPS-INSTALL/bin
     - ls -l -h
     - cd ../../
     - cd OPS-APP/clover_leaf
