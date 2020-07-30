@@ -9,31 +9,31 @@ stages:
 build:GNU:
   stage: build
   tags:
-    - CPU
-  image: ubuntu:1804
+    - CPU, Build
+  image: ubuntu:18.04
   script:
     - mkdir build
     - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=~/OPS  -DCMAKE_BUILD_TYPE=Release
-    - make
+    - cmake ../  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include -DCMAKE_INSTALL_PREFIX=$HOME/OPS-INSTALL -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so -DAPP_INSTALL=$HOME/OPS-APP -DBUILD_OPS_APPS=ON
+    - make IEEE=1 -j 12
     - make install
+  artifacts:
+    expire_in: 1 week
+    paths:
+    - $HOME/OPS-APP
+    - $HOME/OPS-INSTALL
 
-build:Clang:
-  stage: build
-  image: ubuntu:1804
+
+#Stage "test"
+gpu_test:GNU:
+  stage: test
   tags:
-    - CPU
+    - GPU,Test
+  dependencies:
+    - build:GNU
   script:
-    - mkdir build
-    - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=~/OPS  -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
-    - make
-    - make install
-# Stage "test"
-# run-test:
-#   stage: test
-#   dependencies: [run-build]
-#   script:
+    - cd OPS-APP/clover_leaf
+    - ./clover_leaf_cuda
 
 
 # Stage "docs"
@@ -48,11 +48,3 @@ build:Clang:
   #     - doc/user.pdf
   #     - doc/ops/html
   #     - doc/ops_translator/html
-
-# Stage "clean"
-# run-clean:
-#   stage: clean
-#   when: always
-#   script:
-    # - test-ops clean `git rev-parse HEAD`
-    # - cd doc && make distclean
