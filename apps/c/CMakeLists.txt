@@ -200,6 +200,12 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra)
     file(GLOB HEADS "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
     file(COPY ${HEADS} DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/tmp/")
     set(TMP_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/tmp")
+    if (UNIX)
+        execute_process (
+            COMMAND ls -l -h *.cpp
+            WORKING_DIRECTORY ${TMP_SOURCE_DIR}
+        )
+    endif()
     message("TMP Dir=${TMP_SOURCE_DIR}")
     # Get the file to be compiled,
     # DEV: non-optimised codes (full directory and filename)
