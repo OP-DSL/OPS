@@ -15,13 +15,13 @@ build:GNU:API:
   script:
     - mkdir build
     - cd build
-    - cmake ../  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include -DCMAKE_INSTALL_PREFIX=$CI_BUILDS_DIR/OPS-INSTALL -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so # -DAPP_INSTALL=$HOME/OPS-APP -DBUILD_OPS_APPS=ON
+    - cmake ../  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so # -DAPP_INSTALL=$HOME/OPS-APP -DBUILD_OPS_APPS=ON
     - make IEEE=1 -j 4
     - make install
   artifacts:
     expire_in: 1 week
     paths:
-    - $CI_BUILDS_DIR/OPS-INSTALL
+    - $CI_PROJECT_DIR/OPS-INSTALL
 
 build:GNU:APP:
   stage: APP_Build
@@ -35,14 +35,14 @@ build:GNU:APP:
     - cd ../
     - mkdir appbuild
     - cd appbuild
-    - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_BUILDS_DIR/OPS-INSTALL/ -DAPP_INSTALL=$CI_BUILDS_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so
+    - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL/ -DAPP_INSTALL=$CI_BUILDS_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so
     - ls -l -h
     - make IEEE=1 -j 12
     - make install
   artifacts:
     expire_in: 1 week
     paths:
-    - $CI_BUILDS_DIR/OPS-APP
+    - $CI_PROJECT_DIR/OPS-APP
   dependencies:
     - build:GNU:API
 
