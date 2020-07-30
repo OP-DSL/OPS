@@ -12,10 +12,12 @@ build:GNU:
     - CPU, Build
   image: ubuntu:18.04
   script:
+    - ls -l -h
     - mkdir build
     - cd build
-    - cmake ../  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include -DCMAKE_INSTALL_PREFIX=$HOME/OPS-INSTALL -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so -DAPP_INSTALL=$HOME/OPS-APP -DBUILD_OPS_APPS=ON
-    - make IEEE=1 -j 12
+    - cmake ../  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include -DCMAKE_INSTALL_PREFIX=$HOME/OPS-INSTALL -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so # -DAPP_INSTALL=$HOME/OPS-APP -DBUILD_OPS_APPS=ON
+    - ls -l -h
+    - make IEEE=1 -j 4
     - make install
   artifacts:
     expire_in: 1 week
