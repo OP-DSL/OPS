@@ -57,11 +57,7 @@ if (${CMAKE_PROJECT_NAME} STREQUAL APP)
 
      # Trying to find the OPS library
      # TODO this shall become FindOPS.cmake later
-     SET (SEARCH_PATHS
-     "${OPS_INSTALL_DIR}"
-         /usr/local/
-         /usr/
-     )
+     SET (SEARCH_PATHS "${OPS_INSTALL_DIR}" "/usr/local" "/usr")
      # Tyring to find the include directory
      set(OPS_HEAD ops_checkpointing.h  ops_hdf5.h  ops_lib_core.h
                    ops_opencl_reduction.h   ops_tridiag.h ops_cuda_reduction.h
