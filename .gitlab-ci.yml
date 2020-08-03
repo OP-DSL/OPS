@@ -23,19 +23,19 @@ build:GNU:API:
     paths:
     - $CI_PROJECT_DIR/OPS-INSTALL
 
-build:GNU:APP:
-  stage: APP_Build
-  tags:
-    - CPU, Build
-  image: ubuntu:18.04
-  script:
-    - mkdir appbuild
-    - cd appbuild
-    - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so
-    - make IEEE=1 -j 12
-    - make install
-  dependencies:
-    - build:GNU:API
+# build:GNU:APP:
+#   stage: APP_Build
+#   tags:
+#     - CPU, Build
+#   image: ubuntu:18.04
+#   script:
+#     - mkdir appbuild
+#     - cd appbuild
+#     - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so
+#     - make IEEE=1 -j 12
+#     - make install
+#   dependencies:
+#     - build:GNU:API
 
 
 #Stage "test"
@@ -49,12 +49,9 @@ test:GNU:
     #- export OPS_INSTALL_PATH=$CI_PROJECT_DIR/OPS-INSTALL
     - mkdir appbuild
     - cd appbuild
-    - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so  -DOPS_APP_TEST=on  -DGPU_NUMBER=1
+    - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so  -DOPS_APP_TEST=ON  -DGPU_NUMBER=1
     - make IEEE=1 -j 12
     - make test
-  dependencies:
-    - build:GNU:API
-
 # Stage "docs"
 # run-docs:
 #   stage: docs
