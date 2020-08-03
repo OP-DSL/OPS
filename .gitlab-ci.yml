@@ -34,28 +34,26 @@ build:GNU:APP:
     - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so
     - make IEEE=1 -j 12
     - make install
-  artifacts:
-    expire_in: 1 week
-    paths:
-    - $CI_PROJECT_DIR/OPS-APP
   dependencies:
     - build:GNU:API
 
 
 #Stage "test"
-gpu_test:GNU:
+test:GNU:
   stage: test
   tags:
     - GPU,Test
   dependencies:
-    - build:GNU:APP
     - build:GNU:API
   script:
-    - export OPS_INSTALL_PATH=$CI_PROJECT_DIR/OPS-INSTALL
-    - echo $OPS_INSTALL_PATH
-    - cd $CI_PROJECT_DIR/OPS-APP/clover_leaf
-    - ./clover_leaf_opencl OPS_CL_DEVICE=1
-
+    #- export OPS_INSTALL_PATH=$CI_PROJECT_DIR/OPS-INSTALL
+    - mkdir appbuild
+    - cd appbuild
+    - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so  -DOPS_APP_TEST=on  -DGPU_NUMBER=1
+    - make IEEE=1 -j 12
+    - make test
+  dependencies:
+    - build:GNU:API
 
 # Stage "docs"
 # run-docs:
