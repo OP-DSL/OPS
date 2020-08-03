@@ -31,7 +31,6 @@ build:GNU:APP:
   script:
     - mkdir appbuild
     - cd appbuild
-    - pwd
     - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so
     - make IEEE=1 -j 12
     - make install
@@ -50,19 +49,22 @@ test:GNU:
     #- export OPS_INSTALL_PATH=$CI_PROJECT_DIR/OPS-INSTALL
     - mkdir appbuild
     - cd appbuild
-    - pwd
     - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so  -DOPS_APP_TEST=ON  -DGPU_NUMBER=1
     - make IEEE=1 -j 12
     - make test
-# Stage "docs"
-# run-docs:
-#   stage: docs
-#   when: always
-#   script:
-    # - cd doc && make all clean
-  # artifacts:
-  #   expire_in: 1 week
-  #   paths:
-  #     - doc/user.pdf
-  #     - doc/ops/html
-  #     - doc/ops_translator/html
+#Stage "docs"
+make-docs:
+  stage: docs
+  when: always
+  tags:
+    - Test
+  script:
+    - cd doc && make all clean
+  artifacts:
+    expire_in: 2 week
+    paths:
+      - doc/user.pdf
+      - doc/ops/html
+      - doc/ops/latex/refman.pdf
+      - doc/ops_translator/html
+      - doc/ops_translator/latex/refman.pdf
