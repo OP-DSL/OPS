@@ -94,10 +94,9 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
   src_dir = os.path.dirname(master) or '.'
   master_basename = os.path.splitext(os.path.basename(master))
 
-##########################################################################
-#  create new kernel files **_kernel.cl
-##########################################################################
-
+  ##########################################################################
+  #  create new kernel files **_kernel.cl
+  ##########################################################################
   #kernel_name_list = []
   #kernel_list_text = ''
   #kernel_list__build_text = ''
@@ -105,7 +104,11 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
   #for nk in range(0,len(kernels)):
   #  if kernels[nk]['name'] not in kernel_name_list :
   #    kernel_name_list.append(kernels[nk]['name'])
-
+  try:
+    os.makedirs('./OpenCL')
+  except OSError as e:
+    if e.errno != os.errno.EEXIST:
+      raise
   for nk in range (0,len(kernels)):
     arg_typ  = kernels[nk]['arg_type']
     name  = kernels[nk]['name']
@@ -164,9 +167,9 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
         arg_idx = 1
 
 
-##########################################################################
-#  start with opencl kernel function
-##########################################################################
+    ##########################################################################
+    #  start with opencl kernel function
+    ##########################################################################
 
     config.file_text = ''
     config.depth = 0
@@ -283,9 +286,9 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
 
 
 
-##########################################################################
-#  generate opencl kernel wrapper function
-##########################################################################
+    ##########################################################################
+    #  generate opencl kernel wrapper function
+    ##########################################################################
     code('__kernel void ops_'+name+'(')
     #currently the read only vars have not been generated differently
     for n in range (0, nargs):
@@ -503,9 +506,9 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
     fid.write(config.file_text)
     fid.close()
 
-##########################################################################
-#  generate opencl kernel build function
-##########################################################################
+    ##########################################################################
+    #  generate opencl kernel build function
+    ##########################################################################
 
     kernel_list_text = '"./OpenCL/'+name+'.cl"'
     arg_text = ''
@@ -538,106 +541,106 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
 
 
     opencl_build_kernel = """
-#ifdef OCL_FMA_SWITCH_ON
-#define OCL_FMA 1
-#else
-#define OCL_FMA 0
-#endif
+    #ifdef OCL_FMA_SWITCH_ON
+    #define OCL_FMA 1
+    #else
+    #define OCL_FMA 0
+    #endif
 
 
-static bool isbuilt_"""+name+""" = false;
+    static bool isbuilt_"""+name+""" = false;
 
-void buildOpenCLKernels_"""+name+"""(OPS_instance *instance, """+arg_text+""") {
+    void buildOpenCLKernels_"""+name+"""(OPS_instance *instance, """+arg_text+""") {
 
-  //int ocl_fma = OCL_FMA;
-  if(!isbuilt_"""+name+""") {
-    buildOpenCLKernels(instance);
-    //clSafeCall( clUnloadCompiler() );
-    cl_int ret;
-    char* source_filename[1] = {(char*)"""+kernel_list_text+"""};
+      //int ocl_fma = OCL_FMA;
+      if(!isbuilt_"""+name+""") {
+        buildOpenCLKernels(instance);
+        //clSafeCall( clUnloadCompiler() );
+        cl_int ret;
+        char* source_filename[1] = {(char*)"""+kernel_list_text+"""};
 
-    // Load the kernel source code into the array source_str
-    FILE *fid;
-    char *source_str[1] = {NULL};
-    size_t source_size[1];
+        // Load the kernel source code into the array source_str
+        FILE *fid;
+        char *source_str[1] = {NULL};
+        size_t source_size[1];
 
-    for(int i=0; i<1; i++) {
-      fid = fopen(source_filename[i], "r");
-      if (!fid) {
-        OPSException e(OPS_RUNTIME_ERROR, "Can't open the kernel source file: ");
-        e << source_filename[i] << "\\n";
-        throw e;
-      }
+        for(int i=0; i<1; i++) {
+          fid = fopen(source_filename[i], "r");
+          if (!fid) {
+            OPSException e(OPS_RUNTIME_ERROR, "Can't open the kernel source file: ");
+            e << source_filename[i] << "\\n";
+            throw e;
+          }
 
-      source_str[i] = (char*)malloc(4*0x1000000);
-      source_size[i] = fread(source_str[i], 1, 4*0x1000000, fid);
-      if(source_size[i] != 4*0x1000000) {
-        if (ferror(fid)) {
-          OPSException e(OPS_RUNTIME_ERROR, "Error while reading kernel source file ");
-          e << source_filename[i] << "\\n";
-          throw e;
+          source_str[i] = (char*)malloc(4*0x1000000);
+          source_size[i] = fread(source_str[i], 1, 4*0x1000000, fid);
+          if(source_size[i] != 4*0x1000000) {
+            if (ferror(fid)) {
+              OPSException e(OPS_RUNTIME_ERROR, "Error while reading kernel source file ");
+              e << source_filename[i] << "\\n";
+              throw e;
+            }
+            if (feof(fid))
+              instance->ostream() << "Kernel source file "<< source_filename[i] <<" succesfully read.\\n";
+          }
+          fclose(fid);
         }
-        if (feof(fid))
-          instance->ostream() << "Kernel source file "<< source_filename[i] <<" succesfully read.\\n";
+
+        instance->ostream() <<"Compiling """+name+""" "<<OCL_FMA<<" source -- start \\n";
+
+          // Create a program from the source
+          instance->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(instance->opencl_instance->OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
+          clSafeCall( ret );
+
+          // Build the program
+          char buildOpts[255*"""+str(nargs)+"""];
+          char* pPath = NULL;
+          pPath = getenv ("OPS_INSTALL_PATH");
+          if (pPath!=NULL)
+            if(OCL_FMA)
+              sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
+            else
+              sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
+          else {
+            sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\\n",pPath);
+            exit(EXIT_FAILURE);
+          }
+
+          #ifdef OPS_SOA
+          sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
+          #endif
+          ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1, &instance->opencl_instance->OPS_opencl_core.device_id, buildOpts, NULL, NULL);
+
+          if(ret != CL_SUCCESS) {
+            char* build_log;
+            size_t log_size;
+            clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
+            build_log = (char*) malloc(log_size+1);
+            clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
+            build_log[log_size] = '\\0';
+            instance->ostream() << "=============== OpenCL Program Build Info ================\\n\\n" << build_log;
+            instance->ostream() << "\\n========================================================= \\n";
+            free(build_log);
+            exit(EXIT_FAILURE);
+          }
+          instance->ostream() << "compiling """+name+""" -- done\\n";
+
+        // Create the OpenCL kernel
+        instance->opencl_instance->OPS_opencl_core.kernel["""+str(nk)+"""] = clCreateKernel(instance->opencl_instance->OPS_opencl_core.program, "ops_"""+name+"""", &ret);
+        clSafeCall( ret );\n
+        isbuilt_"""+name+""" = true;
+        free(source_str[0]);
       }
-      fclose(fid);
+
     }
 
-    instance->ostream() <<"Compiling """+name+""" "<<OCL_FMA<<" source -- start \\n";
-
-      // Create a program from the source
-      instance->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(instance->opencl_instance->OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
-      clSafeCall( ret );
-
-      // Build the program
-      char buildOpts[255*"""+str(nargs)+"""];
-      char* pPath = NULL;
-      pPath = getenv ("OPS_INSTALL_PATH");
-      if (pPath!=NULL)
-        if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
-        else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d """+compile_line+""", pPath, 32,"""+arg_values+""");
-      else {
-        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\\n",pPath);
-        exit(EXIT_FAILURE);
-      }
-
-      #ifdef OPS_SOA
-      sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
-      #endif
-      ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1, &instance->opencl_instance->OPS_opencl_core.device_id, buildOpts, NULL, NULL);
-
-      if(ret != CL_SUCCESS) {
-        char* build_log;
-        size_t log_size;
-        clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
-        build_log = (char*) malloc(log_size+1);
-        clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
-        build_log[log_size] = '\\0';
-        instance->ostream() << "=============== OpenCL Program Build Info ================\\n\\n" << build_log;
-        instance->ostream() << "\\n========================================================= \\n";
-        free(build_log);
-        exit(EXIT_FAILURE);
-      }
-      instance->ostream() << "compiling """+name+""" -- done\\n";
-
-    // Create the OpenCL kernel
-    instance->opencl_instance->OPS_opencl_core.kernel["""+str(nk)+"""] = clCreateKernel(instance->opencl_instance->OPS_opencl_core.program, "ops_"""+name+"""", &ret);
-    clSafeCall( ret );\n
-    isbuilt_"""+name+""" = true;
-    free(source_str[0]);
-  }
-
-}
-
-"""
+    """
 
 
 
-##########################################################################
-#  generate opencl host stub function
-##########################################################################
+    ##########################################################################
+    #  generate opencl host stub function
+    ##########################################################################
 
     config.file_text = opencl_build_kernel
     config.depth = 0
@@ -1067,25 +1070,20 @@ void buildOpenCLKernels_"""+name+"""(OPS_instance *instance, """+arg_text+""") {
     config.depth = config.depth - 2
     code('}')
 
-##########################################################################
-#  output individual kernel file
-##########################################################################
-    try:
-      os.makedirs('./OpenCL')
-    except OSError as e:
-      if e.errno != os.errno.EEXIST:
-        raise
+    ##########################################################################
+    #  output individual kernel file
+    ##########################################################################
     fid = open('./OpenCL/'+name+'_opencl_kernel.cpp','w')
     date = datetime.datetime.now()
     fid.write('//\n// auto-generated by ops.py\n//\n')
     fid.write(config.file_text)
     fid.close()
 
-# end of main kernel call loop
+  # end of main kernel call loop
 
-##########################################################################
-#  output one master kernel file
-##########################################################################
+  ##########################################################################
+  #  output one master kernel file
+  ##########################################################################
   config.depth = 0
   config.file_text =''
   comm('header')
@@ -1181,18 +1179,18 @@ void buildOpenCLKernels_"""+name+"""(OPS_instance *instance, """+arg_text+""") {
   opencl_build = """
 
 
-void buildOpenCLKernels(OPS_instance *instance) {
-  static bool isbuilt = false;
+  void buildOpenCLKernels(OPS_instance *instance) {
+    static bool isbuilt = false;
 
-  if(!isbuilt) {
-    //clSafeCall( clUnloadCompiler() );
+    if(!isbuilt) {
+      //clSafeCall( clUnloadCompiler() );
 
-    instance->opencl_instance->OPS_opencl_core.n_kernels = """+str(len(kernels))+""";
-    instance->opencl_instance->OPS_opencl_core.kernel = (cl_kernel*) malloc("""+str(len(kernels))+"""*sizeof(cl_kernel));
+      instance->opencl_instance->OPS_opencl_core.n_kernels = """+str(len(kernels))+""";
+      instance->opencl_instance->OPS_opencl_core.kernel = (cl_kernel*) malloc("""+str(len(kernels))+"""*sizeof(cl_kernel));
+    }
+    isbuilt = true;
   }
-  isbuilt = true;
-}
-"""
+  """
 
 
   config.depth = -2
