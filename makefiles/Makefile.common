@@ -27,8 +27,10 @@ OUT := -o
 AR := ar -r 
 OPS_LIB_SEQ=-lops_seq
 OPS_LIB_CUDA=-lops_cuda
+OPS_LIB_HIP=-lops_hip
 OPS_LIB_MPI=-lops_mpi
 OPS_LIB_MPI_CUDA=-lops_mpi_cuda
+OPS_LIB_MPI_HIP=-lops_mpi_hip
 CUDART=-lcudart
 
 ifeq ($(OPS_COMPILER),clang)
