@@ -164,8 +164,8 @@ if (${CMAKE_PROJECT_NAME} STREQUAL APP)
         enable_testing()
         include(ProcessorCount)
         ProcessorCount(CPU_NUMBER)
-        if(CPU_NUMBER GREATER 12)
-            set(CPU_NUMBER 12)
+        if(CPU_NUMBER GREATER 4)
+            set(CPU_NUMBER 4)
         endif()
         if (NOT GPU_NUMBER)
             message("GPU tests are disabled since the GPU number is not specified!")
@@ -198,28 +198,20 @@ if (${CMAKE_PROJECT_NAME} STREQUAL OPS)
     endif()
 endif()
 
-
+# clean the tmp directory for the code generation
+macro(CreateTempDir)
+    file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/tmp")
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/tmp" )
+endmacro()
 
 # Prepare the macro for compiling apps
 # Name: App name
 # Odd: Key words for source files are included in other source files and need no explicit compilation
 # Others: Key words for source codes need no code generation using ops.py
 # Extra: Key words for ource codes that cannot be treated by the macro
+# GenerateTest: if generating the testings, some apps need specific testing targets.
 # TODO MPI_inline, titled OpenACC (Gnu?)
-macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra)
-    # clean the tmp directory for the code generation
-    if (UNIX)
-        execute_process (
-            COMMAND rm -r -f tmp
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        )
-    endif()
-    if (UNIX)
-        execute_process (
-            COMMAND mkdir tmp
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        )
-    endif()
+macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra GenerateTest)
     # Copy all source and head files into tmp
     file(GLOB CPP "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
     list(FILTER CPP EXCLUDE REGEX "ops.cpp")
@@ -241,13 +233,14 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra)
     endforeach()
     list(GET DEV 0 Kernel)
     get_filename_component(KernerName ${Kernel} NAME_WE)
-    if (UNIX)
-        execute_process (
-            COMMAND ${OPS_C_TRANSLATOR} ${DEV}
-            WORKING_DIRECTORY ${TMP_SOURCE_DIR}
-        )
-    endif()
+    execute_process (
+        COMMAND ${OPS_C_TRANSLATOR} ${DEV}
+        WORKING_DIRECTORY ${TMP_SOURCE_DIR}
+    )
     file(GLOB OPS "${TMP_SOURCE_DIR}/*ops*.cpp")
+    message(${OPS})
+    list(FILTER OPS EXCLUDE REGEX ${Odd})
+    message(${OPS})
     file(GLOB OTHERS "${TMP_SOURCE_DIR}/*.cpp")
     foreach(OpsFile ${OPS})
         list(REMOVE_ITEM OTHERS ${OpsFile})
@@ -278,7 +271,7 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra)
     target_link_libraries(${Name}_seq ops_seq)
     target_link_libraries(${Name}_seq_dev ops_seq)
     install(TARGETS ${Name}_seq DESTINATION ${APP_INSTALL}/${Name})
-    if (OPS_APP_TEST)
+    if ((OPS_APP_TEST) AND (${GenerateTest} STREQUAL "YES"))
         set(args " ") # here we must have a space to be parsed by the macro
         set(cmd "$<TARGET_FILE:${Name}_seq>" )
         add_test(NAME ${Name}_seq
@@ -292,12 +285,13 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra)
     if (CUDA)
         add_executable(${Name}_cuda ${OPS} ${OTHERS} "${TMP_SOURCE_DIR}/CUDA/${KernerName}_kernels.cu")
         target_include_directories(${Name}_cuda PRIVATE ${TMP_SOURCE_DIR})
-        target_link_libraries(${Name}_cuda CUDA::cudart_static ops_cuda)
+        target_link_libraries(${Name}_cuda  ops_cuda CUDA::cudart_static)
+        target_compile_options(${Name}_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>: --fmad=false>)
         if (HDF5_SEQ)
             target_link_libraries(${Name}_cuda ops_hdf5_seq ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES} MPI::MPI_CXX)
         endif()
         install(TARGETS ${Name}_cuda DESTINATION ${APP_INSTALL}/${Name})
-        if ((OPS_APP_TEST) AND (GPU_NUMBER GREATER_EQUAL 1))
+        if ((OPS_APP_TEST) AND (GPU_NUMBER GREATER_EQUAL 1) AND  (${GenerateTest} STREQUAL "YES"))
             set(args "OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1")
             set(cmd "$<TARGET_FILE:${Name}_cuda>")
             add_test(NAME ${Name}_cuda
@@ -311,12 +305,12 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra)
     if (OPENCL)
         add_executable(${Name}_opencl ${OPS} ${OTHERS} "${TMP_SOURCE_DIR}/OpenCL/${KernerName}_opencl_kernels.cpp")
         target_include_directories(${Name}_opencl PRIVATE ${TMP_SOURCE_DIR})
-        target_link_libraries(${Name}_opencl  ${OpenCL_LIBRARIES} ops_opencl)
+        target_link_libraries(${Name}_opencl  ops_opencl ${OpenCL_LIBRARIES} )
         if (HDF5_SEQ)
             target_link_libraries(${Name}_opencl ops_hdf5_seq ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES}  MPI::MPI_CXX)
         endif()
         install(TARGETS ${Name}_opencl DESTINATION ${APP_INSTALL}/${Name})
-            if ((OPS_APP_TEST) AND (GPU_NUMBER GREATER_EQUAL 1))
+            if ((OPS_APP_TEST) AND (GPU_NUMBER GREATER_EQUAL 1) AND (${GenerateTest} STREQUAL "YES"))
             set(args "OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1")
             add_test(NAME ${Name}_opencl
             COMMAND ${CMAKE_COMMAND} -DCMD=$<TARGET_FILE:${Name}_opencl>  -DARG=${args} -DOPS_INSTALL_PATH=${OPS_INSTALL_PATH}
@@ -337,13 +331,15 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra)
             target_link_libraries(${Name}_mpi_dev ops_hdf5_mpi ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES} MPI::MPI_CXX)
         endif()
         target_link_libraries(${Name}_mpi ops_mpi MPI::MPI_CXX)
-        set(args "-n ${CPU_NUMBER} $<TARGET_FILE:${Name}_mpi>")
-        set(cmd "mpirun")
-        add_test(NAME ${Name}_mpi
-        COMMAND ${CMAKE_COMMAND} -DCMD=${cmd}  -DARG=${args} -DOPS_INSTALL_PATH=${OPS_INSTALL_PATH}
-        -P ${OPS_APP_SRC}/runtests.cmake
-        WORKING_DIRECTORY "${TMP_SOURCE_DIR}"
+        if ((OPS_APP_TEST) AND (${GenerateTest} STREQUAL "YES"))
+            set(args "-n ${CPU_NUMBER} $<TARGET_FILE:${Name}_mpi>")
+            set(cmd "mpirun")
+            add_test(NAME ${Name}_mpi
+            COMMAND ${CMAKE_COMMAND} -DCMD=${cmd}  -DARG=${args} -DOPS_INSTALL_PATH=${OPS_INSTALL_PATH}
+            -P ${OPS_APP_SRC}/runtests.cmake
+            WORKING_DIRECTORY "${TMP_SOURCE_DIR}"
         )
+        endif()
         target_link_libraries(${Name}_mpi_dev ops_mpi MPI::MPI_CXX)
         install(TARGETS ${Name}_mpi DESTINATION ${APP_INSTALL}/${Name})
         install(TARGETS ${Name}_mpi_dev DESTINATION ${APP_INSTALL}/${Name})
@@ -351,10 +347,11 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra)
             add_executable(${Name}_mpi_cuda ${OPS} ${OTHERS} "${TMP_SOURCE_DIR}/CUDA/${KernerName}_kernels.cu")
             target_include_directories(${Name}_mpi_cuda PRIVATE ${TMP_SOURCE_DIR})
             target_compile_definitions(${Name}_mpi_cuda PRIVATE "-DOPS_MPI")
+            target_compile_options(${Name}_mpi_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:  --fmad=false >)
             if (HDF5_MPI)
                 target_link_libraries(${Name}_mpi_cuda ops_hdf5_mpi ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES} MPI::MPI_CXX)
             endif()
-            target_link_libraries(${Name}_mpi_cuda CUDA::cudart_static ops_mpi_cuda MPI::MPI_CXX)
+            target_link_libraries(${Name}_mpi_cuda ops_mpi_cuda CUDA::cudart_static  MPI::MPI_CXX)
 
             install(TARGETS ${Name}_mpi_cuda DESTINATION ${APP_INSTALL}/${Name})
         endif()
@@ -366,7 +363,7 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra)
             if (HDF5_MPI)
                 target_link_libraries(${Name}_mpi_opencl ops_hdf5_mpi ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES} MPI::MPI_CXX)
             endif()
-            target_link_libraries(${Name}_mpi_opencl  ${OpenCL_LIBRARIES} ops_mpi_opencl MPI::MPI_CXX)
+            target_link_libraries(${Name}_mpi_opencl ops_mpi_opencl ${OpenCL_LIBRARIES}  MPI::MPI_CXX)
             install(TARGETS ${Name}_mpi_opencl DESTINATION ${APP_INSTALL}/${Name})
         endif()
     endif()
@@ -374,25 +371,24 @@ endmacro()
 
 # TODO fetch_data.cpp cannot be found for access
 #add_subdirectory(access)
-# add_subdirectory(CloverLeaf) # Compile OK
-# add_subdirectory(CloverLeaf_3D) # Compile OK
-# add_subdirectory(CloverLeaf_3D_HDF5) # Compile OK
+add_subdirectory(CloverLeaf) # Compile OK
+add_subdirectory(CloverLeaf_3D) # Compile OK
+add_subdirectory(CloverLeaf_3D_HDF5) # Compile OK
 #TODO there seem bugs in the codes of complex_numbers
 #add_subdirectory(complex_numbers)
 #TODO Need to figure out the structure
 #add_subdirectory(laplace2d_tutorial)
-add_subdirectory(lowdim_test) # Compile OK
+add_subdirectory(lowdim_test)
 #TODO no PASSED for testing
-add_subdirectory(mblock) # Compile OK
+add_subdirectory(mblock)
 #TODO there seems problem for compiling mblock4D
-#add_subdirectory(mblock4D)
+#add_subdirectory(mblock4D) # ignored at this moment
 #TODO needs to replace  acceptable with PASSED for standard test
-#add_subdirectory(mb_shsgc)  # Compile OK
-add_subdirectory(mgrid)  # Compile OK
-add_subdirectory(multiDim)  # Compile OK
-add_subdirectory(multiDim3D)  # Compile OK
-#TODO Find a bug of Python translators
-#add_subdirectory(multiDim_HDF5)
-add_subdirectory(poisson) # Compile OK
-add_subdirectory(shsgc) # Compile OK
-# add_subdirectory(TeaLeaf) # Compile OK
+add_subdirectory(mb_shsgc)
+#add_subdirectory(mgrid)  # Compile OK
+add_subdirectory(multiDim)
+add_subdirectory(multiDim3D)
+add_subdirectory(multiDim_HDF5)
+add_subdirectory(poisson)
+add_subdirectory(shsgc)
+add_subdirectory(TeaLeaf)

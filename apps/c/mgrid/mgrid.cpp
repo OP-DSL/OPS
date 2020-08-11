@@ -209,7 +209,7 @@ int main(int argc, const char **argv)
 
   int err_prolong = 0;
   ops_reduction_result(reduct_err, &err_prolong);
-      
+
   ops_fetch_block_hdf5_file(grid0, "data.h5");
   ops_fetch_dat_hdf5_file(data5, "data.h5");
 

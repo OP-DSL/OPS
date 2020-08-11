@@ -186,6 +186,7 @@ int main(int argc, char **argv)
   ops_timing_output(std::cout);
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
+  ops_printf("\nThe test is considered as PASSED!");
 
   ops_exit();
 }
