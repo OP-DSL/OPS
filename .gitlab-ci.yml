@@ -36,7 +36,8 @@ build:GNU:APP:
     - make install
   dependencies:
     - build:GNU:API
-
+  except:
+    - master
 
 #Stage "test"
 test:GNU:
@@ -46,12 +47,17 @@ test:GNU:
   dependencies:
     - build:GNU:API
   script:
-    #- export OPS_INSTALL_PATH=$CI_PROJECT_DIR/OPS-INSTALL
     - mkdir appbuild
     - cd appbuild
     - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so  -DOPS_APP_TEST=ON  -DGPU_NUMBER=1
     - make IEEE=1 -j 12
     - make test
+  artifacts:
+    expire_in: 1 week
+    paths:
+    - appbuild/Testing/Temporary
+  only:
+    - master
 #Stage "docs"
 make-docs:
   stage: docs
