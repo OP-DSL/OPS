@@ -89,7 +89,7 @@ $(APP)_mpi_cuda_tiled: ./CUDA/$(APP)_kernels_mpi_tiled_cu.o Makefile .generated 
 		$(MPICPP) $(OMPFLAGS) $(CXXFLAGS) -DOPS_MPI -DOPS_LAZY -I$(CUDA_INC) -I$(C_OPS_INC) -L$(C_OPS_LIB) -L$(CUDA_LIB) $(OPS_FILES_GEN) ./CUDA/$(APP)_kernels_mpi_tiled_cu.o $(CUDART) $(HDF5_LIB_MPI) $(OPS_LIB_MPI_CUDA) -o $(APP)_mpi_cuda_tiled
 
 $(APP)_mpi_hip: Makefile .generated ./HIP/$(APP)_kernels_mpi.o $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_hip.a $(OPS_FILES_GEN) $(HEADERS) 
-		$(MPICPP) $(OMPFLAGS) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. -DOPS_MPI ./HIP/$(MAIN_SRC)_kernels_mpi.o $(HDF5_LIB_PAR) $(OPS_LIB_MPI_HIP) $(HIP_LINK) -o $(APP)_mpi_hip 
+		$(HIPCC) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. -DOPS_MPI ./HIP/$(MAIN_SRC)_kernels_mpi.o $(HDF5_LIB_PAR) $(OPS_LIB_MPI_HIP) $(HIP_LINK) -o $(APP)_mpi_hip $(shell mpicc --showme:link)
 
 ./HIP/$(APP)_kernels_mpi.o:	.generated Makefile
 		$(HIPCC) $(CXXFLAGS) -I$(C_OPS_INC) $(OPS_FILES_GEN) -I. -DOPS_MPI -I$(MPI_INSTALL_PATH)/include/mpi ./HIP/$(MAIN_SRC)_kernels.cpp -c -o ./HIP/$(MAIN_SRC)_kernels_mpi.o

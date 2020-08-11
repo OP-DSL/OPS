@@ -17,20 +17,28 @@
 #include "ops_mpi_core.h"
 #endif
 // global constants
-//__constant__ double dx_OPSCONSTANT;
-//__constant__ double dy_OPSCONSTANT;
+#define dx dx_OPSCONSTANT
+__constant__ double dx;
+#define dy dy_OPSCONSTANT
+__constant__ double dy;
 
 void ops_init_backend() {}
+
+//Dummy kernel to make sure constants are not optimized out
+__global__ void ops_internal_this_is_stupid() {
+((int*)&dx)[0]=0;
+((int*)&dy)[0]=0;
+}
 
 void ops_decl_const_char(int dim, char const *type,
 int size, char *dat, char const *name){
   ops_execute(OPS_instance::getOPSInstance());
   if (!strcmp(name,"dx")) {
-//    hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMemcpyToSymbol(HIP_SYMBOL(dx_OPSCONSTANT), dat, dim*size));
+    hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMemcpyToSymbol(HIP_SYMBOL(dx_OPSCONSTANT), dat, dim*size));
   }
   else
   if (!strcmp(name,"dy")) {
-//    hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMemcpyToSymbol(HIP_SYMBOL(dy_OPSCONSTANT), dat, dim*size));
+    hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMemcpyToSymbol(HIP_SYMBOL(dy_OPSCONSTANT), dat, dim*size));
   }
   else
   {

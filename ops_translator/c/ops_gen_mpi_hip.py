@@ -187,7 +187,7 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
     if NDIM > 1 and soa_set:
         num_dims += 1;
     code('__constant__ int dims_'+name+' ['+str(nargs)+']['+str(num_dims)+'];')
-    code('static int dims_'+name+'_h ['+str(nargs)+']['+str(num_dims)+'] = {0};')
+    code('static int dims_'+name+'_h ['+str(nargs)+']['+str(num_dims)+'] = {{0}};')
     code('')
 
 ##########################################################################
@@ -295,6 +295,9 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
     config.depth = config.depth + 2
 
     #local variable to hold reductions on GPU
+    code('')
+    comm('Make sure constants are not optimized out')
+    code('if (size0==-1) dims_'+name+'[0][0]=0;')
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
@@ -1006,6 +1009,7 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
 
   comm(' global constants')
   for nc in range (0,len(consts)):
+    code('#define '+(str(consts[nc]['name']).replace('"','')).strip()+' '+(str(consts[nc]['name']).replace('"','')).strip()+'_OPSCONSTANT')
     if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
       code('__constant__ '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
     else:
@@ -1020,6 +1024,12 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
   code('')
   code('void ops_init_backend() {}')
   code('')
+  comm('Dummy kernel to make sure constants are not optimized out')
+  code('__global__ void ops_internal_this_is_stupid() {')
+  for nc in range(0,len(consts)):
+    code('((int*)&'+str(consts[nc]['name']).replace('"','')+')[0]=0;')
+  code('}')
+  code('')
   code('void ops_decl_const_char(int dim, char const *type,')
   code('int size, char *dat, char const *name){')
   config.depth = config.depth + 2
@@ -1028,11 +1038,11 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
   for nc in range(0,len(consts)):
     IF('!strcmp(name,"'+(str(consts[nc]['name']).replace('"','')).strip()+'")')
     if consts[nc]['dim'].isdigit():
-      code('hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMemcpyToSymbol(HIP_SYMBOL('+(str(consts[nc]['name']).replace('"','')).strip()+'), dat, dim*size));')
+      code('hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMemcpyToSymbol(HIP_SYMBOL('+(str(consts[nc]['name']).replace('"','')).strip()+'_OPSCONSTANT), dat, dim*size));')
     else:
       code('char *temp; hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMalloc((void**)&temp,dim*size));')
       code('hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMemcpy(temp,dat,dim*size,hipMemcpyHostToDevice));')
-      code('hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMemcpyToSymbol(HIP_SYMBOL('+(str(consts[nc]['name']).replace('"','')).strip()+'), &temp, sizeof(char *)));')
+      code('hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMemcpyToSymbol(HIP_SYMBOL('+(str(consts[nc]['name']).replace('"','')).strip()+'_OPSCONSTANT), &temp, sizeof(char *)));')
     ENDIF()
     code('else')
 
