@@ -45,6 +45,7 @@
 // OPS header file
 #define OPS_3D
 #include "ops_seq.h"
+#include "ops_tridiag.h"
 
 #include "data.h"
 

@@ -9,6 +9,8 @@ option(CHECKPOINTING "Enable OPS checkpointing support" OFF)
 option(OPS_INSTALL_TRANSLATOR "Install OPS Source Translator" ON)
 option(OPS_INSTALL_HEADERS "Install OPS Dev Headers" ON)
 option(OPS_INSTALL_LIBS "Install OPS Libraries" ON)
+set(LIBTRID_PATH $ENV{TRIDSOLVER_INSTALL_PATH}
+  CACHE STRING "Tridsolver (scalar) installation directory")
 
 # Enable C++11 standard
 set(CMAKE_CXX_STANDARD 11)
