@@ -45,7 +45,6 @@
 // OPS header file
 #define OPS_3D
 #include "ops_seq.h"
-#include "ops_tridiag.h"
 
 #include "data.h"
 
@@ -129,10 +128,10 @@ int main(int argc, const char **argv) {
   ops_block heat3D = ops_decl_block(3, "Heat3D");
 
   // declare data on blocks
-  int d_p[3] = {0, 0,
-                0};  // max halo depths for the dat in the possitive direction
-  int d_m[3] = {0, 0,
-                0};  // max halo depths for the dat in the negative direction
+  int d_p[3] = {1, 1,
+                1};  // max halo depths for the dat in the possitive direction
+  int d_m[3] = {-1, -1,
+                -1};  // max halo depths for the dat in the negative direction
   int size[3] = {nx, ny, nz};  // size of the dat -- should be identical to the
                                // block on which its define on
   int pads[3] = {nx, ny, nz};
@@ -244,12 +243,12 @@ int main(int argc, const char **argv) {
   ops_timers(&ct1, &et1);
 
   /**---- dump solution to HDF5 file with OPS-**/
-  ops_fetch_block_hdf5_file(heat3D, "adi.h5");
-  ops_fetch_dat_hdf5_file(h_u, "adi.h5");
+  //ops_fetch_block_hdf5_file(heat3D, "adi.h5");
+  //ops_fetch_dat_hdf5_file(h_u, "adi.h5");
 
   ldim = nx; // non padded size along x
   // dump the whole raw matrix
-  dump_data((double *)(h_u->data), nx, ny, nz, ldim, argv[0]);
+  //dump_data((double *)(h_u->data), nx, ny, nz, ldim, argv[0]);
 
   ops_printf("\nTotal Wall time %lf\n", et1 - et0);
   ops_exit();

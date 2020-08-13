@@ -64,7 +64,7 @@ macro(BUILD_OPS_C_SAMPLE Name InputSource)
             endif()
         endif()
     endif()
-    
+
 
     if (DO_MPI)
         add_executable(${Name}_mpi
@@ -107,8 +107,7 @@ endmacro()
 macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
     OPS_C_TARGET(${Name} ${InputSource} "${CMAKE_CURRENT_BINARY_DIR}/ops")
 
-    #set(DO_MPI ${MPI_FOUND})
-    set(DO_MPI NO)
+    set(DO_MPI ${MPI_FOUND})
     set(DO_SEQ YES)
     if(${ARGC} GREATER 2)
         set(UseHDF5 ${ARGV2})
@@ -161,7 +160,7 @@ macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
             endif()
         endif()
     endif()
-    
+
 
     if (DO_MPI)
         add_executable(${Name}_mpi
@@ -175,7 +174,7 @@ macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
                 ${OPS_C_INCLUDE_DIR}
                 ${LIBTRID_PATH}/include
                 )
-        target_link_libraries(${Name}_mpi ops_mpi -L${LIBTRID_PATH}/lib -ltridcpu)
+        target_link_libraries(${Name}_mpi ops_mpi ops_trid_mpi -L${LIBTRID_PATH}/lib -ltridcpu)
         if (UseHDF5)
             target_link_libraries(${Name}_mpi ops_hdf5_mpi)
         endif()
@@ -206,7 +205,7 @@ endmacro()
 
 #add_subdirectory(access)
 add_subdirectory(adi)
-add_subdirectory(CloverLeaf)
+#add_subdirectory(CloverLeaf)
 #add_subdirectory(CloverLeaf_3D)
 #add_subdirectory(CloverLeaf_3D_HDF5)
 #add_subdirectory(complex_numbers)
