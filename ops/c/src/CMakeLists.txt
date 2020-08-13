@@ -53,7 +53,7 @@ endif()
 
 if ( OpenMP_CXX_FOUND )
     set_source_files_properties(
-        sequential/ops_seq.cpp 
+        sequential/ops_seq.cpp
         externlib/ops_util.cpp
         mpi/ops_mpi_rt_support_host.cpp
         PROPERTIES
@@ -226,5 +226,16 @@ if(LIBTRID_PATH)
     target_link_libraries(ops_trid PUBLIC ops_core -L${LIBTRID_PATH}/lib -ltridcpu)
     if (OPS_INSTALL_LIBS)
         install(TARGETS ops_trid DESTINATION lib)
+    endif()
+
+    if(MPI_CXX_FOUND)
+        add_library(ops_trid_mpi STATIC
+            tridiag/ops_tridiag_mpi)
+        set_property(TARGET ops_trid_mpi PROPERTY POSITION_INDEPENDENT_CODE ON)
+        target_include_directories(ops_trid_mpi PRIVATE ${LIBTRID_PATH}/include)
+        target_link_libraries(ops_trid_mpi PUBLIC ops_core -L${LIBTRID_PATH}/lib -ltridcpu)
+        if (OPS_INSTALL_LIBS)
+            install(TARGETS ops_trid_mpi DESTINATION lib)
+        endif()
     endif()
 endif()
