@@ -117,10 +117,25 @@ void ops_tridMultiDimBatch(
   MpiSolverParams *trid_mpi_params =
     new MpiSolverParams(sb->comm, sb->ndim, sb->pdims, TRID_BATCH_SIZE, MpiSolverParams::GATHER_SCATTER);
 
+  int host = OPS_HOST;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+
+  const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &host);
+  const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &host);
+  const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &host);
+  double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &host);
+  double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
+
   // For now do not consider adding padding
-  tridDmtsvStridedBatchMPI(*trid_mpi_params, (const double *)a->data, (const double *)b->data,
-                           (const double *)c->data, (double *)d->data, (double *)u->data,
-                           ndim, solvedim, sb->decomp_size, sb->decomp_size);
+  tridDmtsvStridedBatchMPI(*trid_mpi_params, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
+                           ndim, solvedim, a_size, a_size);
+
+  ops_dat_release_raw_data(u, 0, OPS_READ);
+  ops_dat_release_raw_data(d, 0, OPS_RW);
+  ops_dat_release_raw_data(c, 0, OPS_READ);
+  ops_dat_release_raw_data(b, 0, OPS_READ);
+  ops_dat_release_raw_data(a, 0, OPS_READ);
 
   delete trid_mpi_params;
 
@@ -196,10 +211,25 @@ void ops_tridMultiDimBatch_Inc(
       MpiSolverParams *trid_mpi_params =
         new MpiSolverParams(sb->comm, sb->ndim, sb->pdims, TRID_BATCH_SIZE, MpiSolverParams::GATHER_SCATTER);
 
+      int host = OPS_HOST;
+      int s3D_000[] = {0, 0, 0};
+      ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+
+      const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &host);
+      const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &host);
+      const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &host);
+      double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &host);
+      double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
+
       // For now do not consider adding padding
-      tridDmtsvStridedBatchIncMPI(*trid_mpi_params, (const double *)a->data, (const double *)b->data,
-                                  (const double *)c->data, (double *)d->data, (double *)u->data,
-                                  ndim, solvedim, sb->decomp_size, sb->decomp_size);
+      tridDmtsvStridedBatchIncMPI(*trid_mpi_params, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
+                                  ndim, solvedim, a_size, a_size);
+
+      ops_dat_release_raw_data(u, 0, OPS_RW);
+      ops_dat_release_raw_data(d, 0, OPS_READ);
+      ops_dat_release_raw_data(c, 0, OPS_READ);
+      ops_dat_release_raw_data(b, 0, OPS_READ);
+      ops_dat_release_raw_data(a, 0, OPS_READ);
 
       delete trid_mpi_params;
 }
