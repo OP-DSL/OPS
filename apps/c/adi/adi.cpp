@@ -50,6 +50,8 @@
 
 #include "init_kernel.h"
 #include "preproc_kernel.h"
+
+#include <mpi.h>
 //#include "print_kernel.h"
 
 typedef double FP;
@@ -128,6 +130,10 @@ int main(int argc, const char **argv) {
   ops_block heat3D = ops_decl_block(3, "Heat3D");
 
   // declare data on blocks
+  /*int d_p[3] = {0, 0,
+                0};  // max halo depths for the dat in the possitive direction
+  int d_m[3] = {0, 0,
+                0};  // max halo depths for the dat in the negative direction*/
   int d_p[3] = {1, 1,
                 1};  // max halo depths for the dat in the possitive direction
   int d_m[3] = {-1, -1,
@@ -197,6 +203,8 @@ int main(int argc, const char **argv) {
 
   ops_timers(&ct0, &et0);
 
+  ops_NaNcheck(h_u);
+
   for (int it = 0; it < iter; it++) {  // Start main iteration loop
 
     /**-----calculate r.h.s. and set tri-diagonal
@@ -220,11 +228,17 @@ int main(int argc, const char **argv) {
     ops_timers(&ct3, &et3);
     ops_printf("Elapsed preproc (sec): %lf (s)\n", et3 - et2);
 
+    ops_NaNcheck(h_u);
+    ops_NaNcheck(h_du);
+
     /**---- perform tri-diagonal solves in x-direction--**/
     ops_timers(&ct2, &et2);
     ops_tridMultiDimBatch(3, 0, size, h_ax, h_bx, h_cx, h_du, h_u);
     ops_timers(&ct3, &et3);
     ops_printf("Elapsed trid_x (sec): %lf (s)\n", et3 - et2);
+
+    ops_NaNcheck(h_u);
+    ops_NaNcheck(h_du);
 
     /**---- perform tri-diagonal solves in y-direction--**/
     ops_timers(&ct2, &et2);
@@ -232,23 +246,72 @@ int main(int argc, const char **argv) {
     ops_timers(&ct3, &et3);
     ops_printf("Elapsed trid_y (sec): %lf (s)\n", et3 - et2);
 
+    ops_NaNcheck(h_u);
+    ops_NaNcheck(h_du);
+
     /**---- perform tri-diagonal solves in z-direction--**/
     ops_timers(&ct2, &et2);
     ops_tridMultiDimBatch_Inc(3, 2, size, h_az, h_bz, h_cz, h_du, h_u);
+    //ops_tridMultiDimBatch(3, 2, size, h_az, h_bz, h_cz, h_du, h_u);
     ops_timers(&ct3, &et3);
     ops_printf("Elapsed trid_z (sec): %lf (s)\n", et3 - et2);
+
+    ops_NaNcheck(h_u);
+    ops_NaNcheck(h_du);
 
   }  // End main iteration loop
 
   ops_timers(&ct1, &et1);
 
+  /*int *dat_size = (int *)malloc(3 * sizeof(int));
+  ops_dat_get_raw_metadata(h_u, 0, NULL, dat_size, NULL, NULL, NULL);
+  //Sum the square of values in app.h_u
+  double sum = 0.0;
+  for(int k = 0; k < dat_size[2]; k++) {
+    for(int j = 0; j < dat_size[1]; j++) {
+      for(int i = 0; i < dat_size[0]; i++) {
+        int ind = k * dat_size[0] * dat_size[1] + j * dat_size[0] + i;
+        sum += (double)(h_u->data)[ind];
+      }
+    }
+  }*/
+
+  /*double sum = 0.0;
+
+  for(int k = 0; k < nz; k++) {
+    for(int j = 0; j < ny; j++) {
+      for(int i = 0; i < nx; i++) {
+        int ind = k * nx * ny + j * nx + i;
+        sum += (double)(h_u->data)[ind];
+      }
+    }
+  }
+
+  ops_printf("sum = %.15g\n", sum);*/
+
+  /*double global_sum = 0.0;
+  MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+
+  ops_printf("sum = %.15g\n", global_sum);*/
+
+  //free(dat_size);
+
+  int *dat_disp = (int *)malloc(3 * sizeof(int));
+  int *dat_sizes = (int *)malloc(3 * sizeof(int));
+  ops_dat_get_extents(h_u, 0, dat_disp, dat_sizes);
+
+  ops_printf("Disp: %d, %d, %d\n", dat_disp[0], dat_disp[1], dat_disp[2]);
+  ops_printf("Sizes: %d, %d, %d\n", dat_sizes[0], dat_sizes[1], dat_sizes[2]);
+
   /**---- dump solution to HDF5 file with OPS-**/
-  //ops_fetch_block_hdf5_file(heat3D, "adi.h5");
-  //ops_fetch_dat_hdf5_file(h_u, "adi.h5");
+  /*ops_fetch_block_hdf5_file(heat3D, "adi.h5");
+  ops_fetch_dat_hdf5_file(h_u, "adi.h5");*/
 
   ldim = nx; // non padded size along x
+  double *h_to_dump = (double *)malloc(dat_sizes[0] * dat_sizes[1] * dat_sizes[2] * sizeof(double));
+  ops_dat_fetch_data(h_u, 0, (char *)h_to_dump);
   // dump the whole raw matrix
-  //dump_data((double *)(h_u->data), nx, ny, nz, ldim, argv[0]);
+  dump_data(h_to_dump, nx, ny, nz, ldim, argv[0]);
 
   ops_printf("\nTotal Wall time %lf\n", et1 - et0);
   ops_exit();
