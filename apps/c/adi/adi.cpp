@@ -137,7 +137,7 @@ int main(int argc, const char **argv) {
   int d_p[3] = {1, 1,
                 1};  // max halo depths for the dat in the possitive direction
   int d_m[3] = {-1, -1,
-                -1};  // max halo depths for the dat in the negative direction
+                -1};  // max halo depths for the dat in the negative direction*/
   int size[3] = {nx, ny, nz};  // size of the dat -- should be identical to the
                                // block on which its define on
   int pads[3] = {nx, ny, nz};
@@ -204,6 +204,7 @@ int main(int argc, const char **argv) {
   ops_timers(&ct0, &et0);
 
   ops_NaNcheck(h_u);
+  ops_NaNcheck(h_du);
 
   for (int it = 0; it < iter; it++) {  // Start main iteration loop
 
@@ -237,12 +238,14 @@ int main(int argc, const char **argv) {
     ops_timers(&ct3, &et3);
     ops_printf("Elapsed trid_x (sec): %lf (s)\n", et3 - et2);
 
+    break;
+
     ops_NaNcheck(h_u);
     ops_NaNcheck(h_du);
 
     /**---- perform tri-diagonal solves in y-direction--**/
     ops_timers(&ct2, &et2);
-    ops_tridMultiDimBatch(3, 1, size, h_ay, h_by, h_cy, h_du, h_u);
+    //ops_tridMultiDimBatch(3, 1, size, h_ay, h_by, h_cy, h_du, h_u);
     ops_timers(&ct3, &et3);
     ops_printf("Elapsed trid_y (sec): %lf (s)\n", et3 - et2);
 
@@ -251,7 +254,7 @@ int main(int argc, const char **argv) {
 
     /**---- perform tri-diagonal solves in z-direction--**/
     ops_timers(&ct2, &et2);
-    ops_tridMultiDimBatch_Inc(3, 2, size, h_az, h_bz, h_cz, h_du, h_u);
+    //ops_tridMultiDimBatch_Inc(3, 2, size, h_az, h_bz, h_cz, h_du, h_u);
     //ops_tridMultiDimBatch(3, 2, size, h_az, h_bz, h_cz, h_du, h_u);
     ops_timers(&ct3, &et3);
     ops_printf("Elapsed trid_z (sec): %lf (s)\n", et3 - et2);
