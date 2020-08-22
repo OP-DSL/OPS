@@ -85,30 +85,17 @@ void ops_tridMultiDimBatch(
               // backends
     ) {
 
-  // This seems to include the halo padding in the size of the local
-  int a_size[3] = {a->size[0] + a->d_m[0] - a->d_p[0],
-                   a->size[1] + a->d_m[1] - a->d_p[1],
-                   a->size[2] + a->d_m[2] - a->d_p[2]};
-  int b_size[3] = {b->size[0] + b->d_m[0] - b->d_p[0],
-                   b->size[1] + b->d_m[1] - b->d_p[1],
-                   b->size[2] + b->d_m[2] - b->d_p[2]};
-  int c_size[3] = {c->size[0] + c->d_m[0] - c->d_p[0],
-                   c->size[1] + c->d_m[1] - c->d_p[1],
-                   c->size[2] + c->d_m[2] - c->d_p[2]};
-  int d_size[3] = {d->size[0] + d->d_m[0] - d->d_p[0],
-                   d->size[1] + d->d_m[1] - d->d_p[1],
-                   d->size[2] + d->d_m[2] - d->d_p[2]};
-  int u_size[3] = {u->size[0] + u->d_m[0] - u->d_p[0],
-                   u->size[1] + u->d_m[1] - u->d_p[1],
-                   u->size[2] + u->d_m[2] - u->d_p[2]};
-
   // check if sizes match
   for (int i = 0; i < 3; i++) {
-    if (a_size[i] != b_size[i] || b_size[i] != c_size[i] ||
-        c_size[i] != d_size[i] || u_size[i] != u_size[i]) {
+    if (a->size[i] != b->size[i] || b->size[i] != c->size[i] ||
+        c->size[i] != d->size[i] || d->size[i] != u->size[i]) {
       throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
     }
   }
+
+  int d_m[3] = {a->d_m[0] * -1,
+                a->d_m[1] * -1,
+                a->d_m[2] * -1};
 
   // compute tridiagonal system sizes
   ops_block block = a->block;
@@ -121,16 +108,18 @@ void ops_tridMultiDimBatch(
   int s3D_000[] = {0, 0, 0};
   ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
 
+  // Get raw pointer access to data held by OPS
+  // Points to element 0, skipping MPI halo
   const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &host);
   const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &host);
   const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &host);
   double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &host);
   double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
 
-  // For now do not consider adding padding
   tridDmtsvStridedBatchMPI(*trid_mpi_params, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
-                           ndim, solvedim, a_size, a_size);
+                           ndim, solvedim, dims, d_m, a->d_p);
 
+  // Release pointer access back to OPS
   ops_dat_release_raw_data(u, 0, OPS_READ);
   ops_dat_release_raw_data(d, 0, OPS_RW);
   ops_dat_release_raw_data(c, 0, OPS_READ);
@@ -179,30 +168,17 @@ void ops_tridMultiDimBatch_Inc(
 //              // backends
     ) {
 
-      // This seems to include the halo padding in the size of the local
-      int a_size[3] = {a->size[0] + a->d_m[0] - a->d_p[0],
-                       a->size[1] + a->d_m[1] - a->d_p[1],
-                       a->size[2] + a->d_m[2] - a->d_p[2]};
-      int b_size[3] = {b->size[0] + b->d_m[0] - b->d_p[0],
-                       b->size[1] + b->d_m[1] - b->d_p[1],
-                       b->size[2] + b->d_m[2] - b->d_p[2]};
-      int c_size[3] = {c->size[0] + c->d_m[0] - c->d_p[0],
-                       c->size[1] + c->d_m[1] - c->d_p[1],
-                       c->size[2] + c->d_m[2] - c->d_p[2]};
-      int d_size[3] = {d->size[0] + d->d_m[0] - d->d_p[0],
-                       d->size[1] + d->d_m[1] - d->d_p[1],
-                       d->size[2] + d->d_m[2] - d->d_p[2]};
-      int u_size[3] = {u->size[0] + u->d_m[0] - u->d_p[0],
-                       u->size[1] + u->d_m[1] - u->d_p[1],
-                       u->size[2] + u->d_m[2] - u->d_p[2]};
-
       // check if sizes match
       for (int i = 0; i < 3; i++) {
-        if (a_size[i] != b_size[i] || b_size[i] != c_size[i] ||
-            c_size[i] != d_size[i] || u_size[i] != u_size[i]) {
+        if (a->size[i] != b->size[i] || b->size[i] != c->size[i] ||
+            c->size[i] != d->size[i] || d->size[i] != u->size[i]) {
           throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
         }
       }
+
+      int d_m[3] = {a->d_m[0] * -1,
+                    a->d_m[1] * -1,
+                    a->d_m[2] * -1};
 
       // compute tridiagonal system sizes
       ops_block block = a->block;
@@ -223,7 +199,7 @@ void ops_tridMultiDimBatch_Inc(
 
       // For now do not consider adding padding
       tridDmtsvStridedBatchIncMPI(*trid_mpi_params, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
-                                  ndim, solvedim, a_size, a_size);
+                                  ndim, solvedim, a->size, a->d_m, a->d_p);
 
       ops_dat_release_raw_data(u, 0, OPS_RW);
       ops_dat_release_raw_data(d, 0, OPS_READ);
