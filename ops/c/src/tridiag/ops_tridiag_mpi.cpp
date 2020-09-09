@@ -42,8 +42,8 @@
 #include <ops_exceptions.h>
 #include <ops_tridiag.h>
 
-#define TRID_BATCH_SIZE 65536
-#define TRID_STRATEGY MpiSolverParams::GATHER_SCATTER
+#define TRID_MPI_CPU_BATCH_SIZE 65536
+#define TRID_MPI_CPU_STRATEGY MpiSolverParams::LATENCY_HIDING_INTERLEAVED
 
 #include <trid_common.h>
 #include <trid_mpi_cpu.h>
@@ -109,7 +109,8 @@ void ops_tridMultiDimBatch(
   sub_block *sb = OPS_sub_block_list[block->index];
 
   MpiSolverParams *trid_mpi_params =
-    new MpiSolverParams(sb->comm, sb->ndim, sb->pdims, TRID_BATCH_SIZE, TRID_STRATEGY);
+    new MpiSolverParams(sb->comm, sb->ndim, sb->pdims, TRID_MPI_CPU_BATCH_SIZE,
+                        TRID_MPI_CPU_STRATEGY);
 
   int host = OPS_HOST;
   int s3D_000[] = {0, 0, 0};
@@ -175,54 +176,55 @@ void ops_tridMultiDimBatch_Inc(
 //              // backends
     ) {
 
-      // check if sizes match
-      for (int i = 0; i < 3; i++) {
-        if (a->size[i] != b->size[i] || b->size[i] != c->size[i] ||
-            c->size[i] != d->size[i] || d->size[i] != u->size[i]) {
-          throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
-        }
-      }
+  // check if sizes match
+  for (int i = 0; i < 3; i++) {
+    if (a->size[i] != b->size[i] || b->size[i] != c->size[i] ||
+        c->size[i] != d->size[i] || d->size[i] != u->size[i]) {
+      throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
+    }
+  }
 
-      int d_m[ndim];
-      int dims_calc[ndim];
-      int pads_m[ndim];
-      int pads_p[ndim];
-      sub_dat *sd_a = OPS_sub_dat_list[a->index];
+  int d_m[ndim];
+  int dims_calc[ndim];
+  int pads_m[ndim];
+  int pads_p[ndim];
+  sub_dat *sd_a = OPS_sub_dat_list[a->index];
 
-      for(int i = 0; i < ndim; i++) {
-        pads_m[i] = -1 * (a->d_m[i] + sd_a->d_im[i]);
-        pads_p[i] = a->d_p[i] + sd_a->d_ip[i];
-        dims_calc[i] = a->size[i] - pads_m[i] - pads_p[i];
-      }
+  for(int i = 0; i < ndim; i++) {
+    pads_m[i] = -1 * (a->d_m[i] + sd_a->d_im[i]);
+    pads_p[i] = a->d_p[i] + sd_a->d_ip[i];
+    dims_calc[i] = a->size[i] - pads_m[i] - pads_p[i];
+  }
 
-      // compute tridiagonal system sizes
-      ops_block block = a->block;
-      sub_block *sb = OPS_sub_block_list[block->index];
+  // compute tridiagonal system sizes
+  ops_block block = a->block;
+  sub_block *sb = OPS_sub_block_list[block->index];
 
-      MpiSolverParams *trid_mpi_params =
-        new MpiSolverParams(sb->comm, sb->ndim, sb->pdims, TRID_BATCH_SIZE, TRID_STRATEGY);
+  MpiSolverParams *trid_mpi_params =
+    new MpiSolverParams(sb->comm, sb->ndim, sb->pdims, TRID_MPI_CPU_BATCH_SIZE,
+                        TRID_MPI_CPU_STRATEGY);
 
-      int host = OPS_HOST;
-      int s3D_000[] = {0, 0, 0};
-      ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+  int host = OPS_HOST;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
 
-      const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &host);
-      const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &host);
-      const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &host);
-      double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &host);
-      double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
+  const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &host);
+  const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &host);
+  const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &host);
+  double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &host);
+  double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
 
-      // For now do not consider adding padding
-      tridDmtsvStridedBatchIncMPI(*trid_mpi_params, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
-                                  ndim, solvedim, dims_calc, a->size);
+  // For now do not consider adding padding
+  tridDmtsvStridedBatchIncMPI(*trid_mpi_params, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
+                              ndim, solvedim, dims_calc, a->size);
 
-      ops_dat_release_raw_data(u, 0, OPS_RW);
-      ops_dat_release_raw_data(d, 0, OPS_READ);
-      ops_dat_release_raw_data(c, 0, OPS_READ);
-      ops_dat_release_raw_data(b, 0, OPS_READ);
-      ops_dat_release_raw_data(a, 0, OPS_READ);
+  ops_dat_release_raw_data(u, 0, OPS_RW);
+  ops_dat_release_raw_data(d, 0, OPS_READ);
+  ops_dat_release_raw_data(c, 0, OPS_READ);
+  ops_dat_release_raw_data(b, 0, OPS_READ);
+  ops_dat_release_raw_data(a, 0, OPS_READ);
 
-      delete trid_mpi_params;
+  delete trid_mpi_params;
 }
 
 void ops_exitTridMultiDimBatchSolve() {
