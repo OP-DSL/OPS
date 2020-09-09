@@ -92,10 +92,9 @@ void ops_tridMultiDimBatch(
     }
   }
 
-  int d_m[ndim];
-  int dims_calc[ndim];
-  int pads_m[ndim];
-  int pads_p[ndim];
+  int dims_calc[OPS_MAX_DIM];
+  int pads_m[OPS_MAX_DIM];
+  int pads_p[OPS_MAX_DIM];
   sub_dat *sd_a = OPS_sub_dat_list[a->index];
 
   for(int i = 0; i < ndim; i++) {
@@ -184,10 +183,9 @@ void ops_tridMultiDimBatch_Inc(
     }
   }
 
-  int d_m[ndim];
-  int dims_calc[ndim];
-  int pads_m[ndim];
-  int pads_p[ndim];
+  int dims_calc[OPS_MAX_DIM];
+  int pads_m[OPS_MAX_DIM];
+  int pads_p[OPS_MAX_DIM];
   sub_dat *sd_a = OPS_sub_dat_list[a->index];
 
   for(int i = 0; i < ndim; i++) {
