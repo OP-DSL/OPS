@@ -45,6 +45,7 @@
 // OPS header file
 #define OPS_3D
 #include "ops_seq.h"
+#include "ops_mpi_core.h"
 
 #include "data.h"
 
@@ -93,6 +94,110 @@ void dump_and_exit(FP *data, const int nx, const int ny, const int nz,
                    const int max_iteration) {
   dump_data(data, nx, ny, nz, ldim, filename);
   if (iteration == max_iteration) exit(0);
+}
+
+void ignore_mpi_halo_dump_data(ops_dat dat, const char *filename) {
+  // Set output filname to binary executable.dat
+  char out_filename[256];
+  strcpy(out_filename, filename);
+  strcat(out_filename, ".dat");
+  // print data to file
+  FILE *fout;
+  fout = fopen(out_filename, "w");
+  if (fout == NULL) {
+    printf(
+        "ERROR: File stream could not be opened. Data will not be written to "
+        "file!\n");
+  } else {
+
+    int dims[] = {dat->size[0] - dat->d_p[0] + dat->d_m[0],
+                  dat->size[1] - dat->d_p[1] + dat->d_m[1],
+                  dat->size[2] - dat->d_p[2] + dat->d_m[2]};
+    int numElements = dims[0] * dims[1] * dims[2];
+
+    int host = OPS_HOST;
+    int s3D_000[] = {0, 0, 0};
+    ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+    const double *ptr = (double *)ops_dat_get_raw_pointer(dat, 0, S3D_000, &host);
+
+    for(int i = 0; i < numElements; i++) {
+      int offset = (i / (dims[0] * dims[1])) * dat->size[1] * dat->size[0];
+      offset += ((i / dims[0]) % dims[1]) * dat->size[0];
+      offset += i % dims[0];
+      fwrite(&ptr[offset], sizeof(double), 1, fout);
+    }
+
+    ops_dat_release_raw_data(dat, 0, OPS_READ);
+
+    fclose(fout);
+  }
+}
+
+void ignore_mpi_halo_NaN_check(ops_dat dat) {
+  sub_dat *sd = OPS_sub_dat_list[dat->index];
+  int pads_m[] = {-1 * (dat->d_m[0] + sd->d_im[0]), -1 * (dat->d_m[1] + sd->d_im[1]), -1 * (dat->d_m[2] + sd->d_im[2])};
+  int pads_p[] = {dat->d_p[0] + sd->d_ip[0], dat->d_p[1] + sd->d_ip[1], dat->d_p[2] + sd->d_ip[2]};
+
+  int dims[] = {dat->size[0] - pads_m[0] - pads_p[0],
+                dat->size[1] - pads_m[1] - pads_p[1],
+                dat->size[2] - pads_m[2] - pads_p[2]};
+  int numElements = dims[0] * dims[1] * dims[2];
+
+  int host = OPS_HOST;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+  const double *ptr = (double *)ops_dat_get_raw_pointer(dat, 0, S3D_000, &host);
+
+  for(int z = 0; z < dims[2]; z++) {
+    for(int y = 0; y < dims[1]; y++) {
+      for(int x = 0; x < dims[0]; x++) {
+        int offset = z * dat->size[1] * dat->size[0];
+        offset += y * dat->size[0];
+        offset += x;
+        if(std::isnan(ptr[offset])) {
+          printf("Error: NaN detected at element %d\n", offset);
+          exit(2);
+        }
+      }
+    }
+  }
+
+  ops_dat_release_raw_data(dat, 0, OPS_READ);
+}
+
+void ignore_mpi_halo_rms(ops_dat dat) {
+  double sum = 0.0;
+
+  int host = OPS_HOST;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+  const double *ptr = (double *)ops_dat_get_raw_pointer(dat, 0, S3D_000, &host);
+  sub_dat *sd = OPS_sub_dat_list[dat->index];
+  int pads_m[] = {-1 * (dat->d_m[0] + sd->d_im[0]), -1 * (dat->d_m[1] + sd->d_im[1]), -1 * (dat->d_m[2] + sd->d_im[2])};
+  int pads_p[] = {dat->d_p[0] + sd->d_ip[0], dat->d_p[1] + sd->d_ip[1], dat->d_p[2] + sd->d_ip[2]};
+
+  int dims[] = {dat->size[0] - pads_m[0] - pads_p[0],
+                dat->size[1] - pads_m[1] - pads_p[1],
+                dat->size[2] - pads_m[2] - pads_p[2]};
+  int numElements = dims[0] * dims[1] * dims[2];
+
+  for(int z = 0; z < dims[2]; z++) {
+    for(int y = 0; y < dims[1]; y++) {
+      for(int x = 0; x < dims[0]; x++) {
+        int offset = z * dat->size[1] * dat->size[0];
+        offset += y * dat->size[0];
+        offset += x;
+        sum += ptr[offset];
+      }
+    }
+  }
+
+  ops_dat_release_raw_data(dat, 0, OPS_READ);
+
+  double global_sum = 0.0;
+  MPI_Allreduce(&sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+  ops_printf("Sum: %.15g\n", global_sum);
 }
 
 // declare defaults options
@@ -186,9 +291,11 @@ int main(int argc, const char **argv) {
   // decompose the block
   ops_partition("2D_BLOCK_DECOMPSE");
 
+  // compute tridiagonal system sizes
   double ct0, ct1, et0, et1, ct2, et2, ct3, et3;
 
-  printf("\nGrid dimensions: %d x %d x %d\n", nx, ny, nz);
+  ops_printf("\nGrid dimensions: %d x %d x %d\n", nx, ny, nz);
+  printf("\nLocal dimensions: %d x %d x %d\n", h_u->size[0], h_u->size[1], h_u->size[2]);
   ops_diagnostic_output();
 
   // initialize Tridiagonal Library
@@ -203,8 +310,8 @@ int main(int argc, const char **argv) {
 
   ops_timers(&ct0, &et0);
 
-  ops_NaNcheck(h_u);
-  ops_NaNcheck(h_du);
+  ignore_mpi_halo_NaN_check(h_u);
+  ignore_mpi_halo_NaN_check(h_du);
 
   for (int it = 0; it < iter; it++) {  // Start main iteration loop
 
@@ -229,92 +336,39 @@ int main(int argc, const char **argv) {
     ops_timers(&ct3, &et3);
     ops_printf("Elapsed preproc (sec): %lf (s)\n", et3 - et2);
 
-    ops_NaNcheck(h_u);
-    ops_NaNcheck(h_du);
-
     /**---- perform tri-diagonal solves in x-direction--**/
     ops_timers(&ct2, &et2);
     ops_tridMultiDimBatch(3, 0, size, h_ax, h_bx, h_cx, h_du, h_u);
     ops_timers(&ct3, &et3);
     ops_printf("Elapsed trid_x (sec): %lf (s)\n", et3 - et2);
 
-    break;
-
-    ops_NaNcheck(h_u);
-    ops_NaNcheck(h_du);
-
     /**---- perform tri-diagonal solves in y-direction--**/
     ops_timers(&ct2, &et2);
-    //ops_tridMultiDimBatch(3, 1, size, h_ay, h_by, h_cy, h_du, h_u);
+    ops_tridMultiDimBatch(3, 1, size, h_ay, h_by, h_cy, h_du, h_u);
     ops_timers(&ct3, &et3);
     ops_printf("Elapsed trid_y (sec): %lf (s)\n", et3 - et2);
 
-    ops_NaNcheck(h_u);
-    ops_NaNcheck(h_du);
-
     /**---- perform tri-diagonal solves in z-direction--**/
     ops_timers(&ct2, &et2);
-    //ops_tridMultiDimBatch_Inc(3, 2, size, h_az, h_bz, h_cz, h_du, h_u);
+    ops_tridMultiDimBatch_Inc(3, 2, size, h_az, h_bz, h_cz, h_du, h_u);
     //ops_tridMultiDimBatch(3, 2, size, h_az, h_bz, h_cz, h_du, h_u);
     ops_timers(&ct3, &et3);
     ops_printf("Elapsed trid_z (sec): %lf (s)\n", et3 - et2);
-
-    ops_NaNcheck(h_u);
-    ops_NaNcheck(h_du);
-
   }  // End main iteration loop
 
   ops_timers(&ct1, &et1);
-
-  /*int *dat_size = (int *)malloc(3 * sizeof(int));
-  ops_dat_get_raw_metadata(h_u, 0, NULL, dat_size, NULL, NULL, NULL);
-  //Sum the square of values in app.h_u
-  double sum = 0.0;
-  for(int k = 0; k < dat_size[2]; k++) {
-    for(int j = 0; j < dat_size[1]; j++) {
-      for(int i = 0; i < dat_size[0]; i++) {
-        int ind = k * dat_size[0] * dat_size[1] + j * dat_size[0] + i;
-        sum += (double)(h_u->data)[ind];
-      }
-    }
-  }*/
-
-  /*double sum = 0.0;
-
-  for(int k = 0; k < nz; k++) {
-    for(int j = 0; j < ny; j++) {
-      for(int i = 0; i < nx; i++) {
-        int ind = k * nx * ny + j * nx + i;
-        sum += (double)(h_u->data)[ind];
-      }
-    }
-  }
-
-  ops_printf("sum = %.15g\n", sum);*/
-
-  /*double global_sum = 0.0;
-  MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
-
-  ops_printf("sum = %.15g\n", global_sum);*/
-
-  //free(dat_size);
-
-  int *dat_disp = (int *)malloc(3 * sizeof(int));
-  int *dat_sizes = (int *)malloc(3 * sizeof(int));
-  ops_dat_get_extents(h_u, 0, dat_disp, dat_sizes);
-
-  ops_printf("Disp: %d, %d, %d\n", dat_disp[0], dat_disp[1], dat_disp[2]);
-  ops_printf("Sizes: %d, %d, %d\n", dat_sizes[0], dat_sizes[1], dat_sizes[2]);
 
   /**---- dump solution to HDF5 file with OPS-**/
   /*ops_fetch_block_hdf5_file(heat3D, "adi.h5");
   ops_fetch_dat_hdf5_file(h_u, "adi.h5");*/
 
-  ldim = nx; // non padded size along x
-  double *h_to_dump = (double *)malloc(dat_sizes[0] * dat_sizes[1] * dat_sizes[2] * sizeof(double));
-  ops_dat_fetch_data(h_u, 0, (char *)h_to_dump);
+  //ldim = nx; // non padded size along x
+  //double *h_to_dump = (double *)malloc(dat_sizes[0] * dat_sizes[1] * dat_sizes[2] * sizeof(double));
+  //ops_dat_fetch_data(h_u, 0, (char *)h_to_dump);
   // dump the whole raw matrix
-  dump_data(h_to_dump, nx, ny, nz, ldim, argv[0]);
+  //dump_data(h_to_dump, nx, ny, nz, ldim, argv[0]);
+  ignore_mpi_halo_rms(h_u);
+  //ignore_mpi_halo_dump_data(h_u, argv[0]);
 
   ops_printf("\nTotal Wall time %lf\n", et1 - et0);
   ops_exit();

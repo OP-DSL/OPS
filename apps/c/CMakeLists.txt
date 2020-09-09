@@ -109,8 +109,8 @@ macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
 
     set(DO_MPI ${MPI_FOUND})
     #set(DO_MPI NO)
-    set(DO_SEQ YES)
-    #set(DO_SEQ NO)
+    #set(DO_SEQ YES)
+    set(DO_SEQ NO)
     if(${ARGC} GREATER 2)
         set(UseHDF5 ${ARGV2})
         if (UseHDF5)
@@ -165,6 +165,7 @@ macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
 
 
     if (DO_MPI)
+        add_definitions(-DOPS_MPI)
         add_executable(${Name}_mpi
             ${OPS_${Name}_BASEOUTPUT}
             ${OPS_${Name}_MPI_OpenMP_KERNELS}
