@@ -194,7 +194,7 @@ macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
                     ${OPS_C_INCLUDE_DIR}
                     ${LIBTRID_PATH}/include
                     )
-            target_link_libraries(${Name}_cuda_mpi ops_mpi_cuda -L${LIBTRID_PATH}/lib -ltridcuda -ltridcuda_mpi)
+            target_link_libraries(${Name}_cuda_mpi ops_mpi_cuda ops_trid_mpi_cuda -L${LIBTRID_PATH}/lib -ltridcuda_mpi)
             if (UseHDF5)
                 target_link_libraries(${Name}_cuda_mpi ops_hdf5_mpi)
             endif()
