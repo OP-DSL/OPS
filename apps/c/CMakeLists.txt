@@ -313,6 +313,7 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra GenerateTest)
         endif()
     endif()
 
+<<<<<<< HEAD
     if (OPENCL)
         add_executable(${Name}_opencl ${OPS} ${OTHERS} "${TMP_SOURCE_DIR}/OpenCL/${KernerName}_opencl_kernels.cpp")
         target_include_directories(${Name}_opencl PRIVATE ${TMP_SOURCE_DIR})
@@ -327,6 +328,15 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra GenerateTest)
             COMMAND ${CMAKE_COMMAND} -DCMD=$<TARGET_FILE:${Name}_opencl>  -DARG=${args} -DOPS_INSTALL_PATH=${OPS_INSTALL_PATH}
             -P ${OPS_APP_SRC}/runtests.cmake
             WORKING_DIRECTORY "${TMP_SOURCE_DIR}"
+=======
+
+    if (DO_MPI)
+        add_definitions(-DOPS_MPI)
+        add_executable(${Name}_mpi
+            ${OPS_${Name}_BASEOUTPUT}
+            ${OPS_${Name}_MPI_OpenMP_KERNELS}
+            ${${EXTRA_SRC}}
+>>>>>>> Integrated MPI+CPU trid solvers
             )
         endif()
     endif()
