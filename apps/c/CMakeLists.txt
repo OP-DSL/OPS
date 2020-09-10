@@ -5,6 +5,8 @@ include(CheckLanguage)
 check_language(CUDA)
 if(CMAKE_CUDA_COMPILER)
     enable_language(CUDA)
+    set(CMAKE_CUDA_STANDARD 11)
+    find_library(CUDART_LIBRARY cudart)
     set(CUDA_FOUND ON)
 endif()
 
@@ -107,6 +109,8 @@ endmacro()
 macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
     OPS_C_TARGET(${Name} ${InputSource} "${CMAKE_CURRENT_BINARY_DIR}/ops")
 
+    include(FindCUDA)
+
     set(DO_MPI ${MPI_FOUND})
     #set(DO_MPI NO)
     #set(DO_SEQ YES)
@@ -183,21 +187,28 @@ macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
         endif()
 
         if (TARGET ops_mpi_cuda)
-            add_executable(${Name}_cuda_mpi
-                ${OPS_${Name}_BASEOUTPUT}
-                ${OPS_${Name}_CUDA_KERNELS}
-                ${${EXTRA_SRC}}
-                )
-            target_include_directories(${Name}_cuda_mpi
-                PRIVATE
-                    ${CMAKE_CURRENT_SOURCE_DIR}
-                    ${OPS_C_INCLUDE_DIR}
-                    ${LIBTRID_PATH}/include
-                    )
-            target_link_libraries(${Name}_cuda_mpi ops_mpi_cuda ops_trid_mpi_cuda -L${LIBTRID_PATH}/lib -ltridcuda_mpi)
-            if (UseHDF5)
-                target_link_libraries(${Name}_cuda_mpi ops_hdf5_mpi)
-            endif()
+          add_definitions(-DOPS_MPI)
+          find_package(MPI REQUIRED)
+          find_package(OpenMP REQUIRED)
+          cuda_include_directories(SYSTEM ${MPI_INCLUDE_PATH})
+          cuda_add_executable(${Name}_cuda_mpi
+              ${OPS_${Name}_BASEOUTPUT}
+              ${OPS_${Name}_CUDA_KERNELS}
+              ${${EXTRA_SRC}}
+              )
+          target_include_directories(${Name}_cuda_mpi
+              PRIVATE
+                  ${CMAKE_CURRENT_SOURCE_DIR}
+                  ${OPS_C_INCLUDE_DIR}
+                  ${LIBTRID_PATH}/include
+                  ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
+                  )
+
+          target_link_libraries(${Name}_cuda_mpi ops_mpi_cuda ops_trid_mpi_cuda -L${LIBTRID_PATH}/lib -ltridcuda_mpi MPI::MPI_CXX)
+          cuda_add_cublas_to_target(${Name}_cuda_mpi)
+          if (UseHDF5)
+              target_link_libraries(${Name}_cuda_mpi ops_hdf5_mpi)
+          endif()
         endif()
     endif()
 

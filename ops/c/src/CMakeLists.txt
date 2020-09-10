@@ -242,7 +242,7 @@ if(LIBTRID_PATH)
                 tridiag/ops_tridiag_mpi_cuda.cpp)
             set_property(TARGET ops_trid_mpi_cuda PROPERTY POSITION_INDEPENDENT_CODE ON)
             target_include_directories(ops_trid_mpi_cuda PRIVATE ${LIBTRID_PATH}/include ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-            target_link_libraries(ops_trid_mpi_cuda PUBLIC ops_core ops_mpi_cuda -L${LIBTRID_PATH}/lib -ltridcuda_mpi)
+            target_link_libraries(ops_trid_mpi_cuda PUBLIC ops_core ops_mpi_cuda -L${LIBTRID_PATH}/lib -ltridcuda_mpi MPI::MPI_CXX)
 
         	if (OPS_INSTALL_LIBS)
             install(TARGETS ops_trid_mpi_cuda DESTINATION lib)
