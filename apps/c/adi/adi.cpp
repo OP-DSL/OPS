@@ -96,7 +96,7 @@ void dump_and_exit(FP *data, const int nx, const int ny, const int nz,
   if (iteration == max_iteration) exit(0);
 }
 
-void ignore_mpi_halo_dump_data(ops_dat dat, const char *filename) {
+/*void ignore_mpi_halo_dump_data(ops_dat dat, const char *filename) {
   // Set output filname to binary executable.dat
   char out_filename[256];
   strcpy(out_filename, filename);
@@ -163,7 +163,7 @@ void ignore_mpi_halo_NaN_check(ops_dat dat) {
   }
 
   ops_dat_release_raw_data(dat, 0, OPS_READ);
-}
+}*/
 
 void ignore_mpi_halo_rms(ops_dat dat) {
   double sum = 0.0;
@@ -310,8 +310,8 @@ int main(int argc, const char **argv) {
 
   ops_timers(&ct0, &et0);
 
-  ignore_mpi_halo_NaN_check(h_u);
-  ignore_mpi_halo_NaN_check(h_du);
+  //ignore_mpi_halo_NaN_check(h_u);
+  //ignore_mpi_halo_NaN_check(h_du);
 
   for (int it = 0; it < iter; it++) {  // Start main iteration loop
 
