@@ -103,6 +103,10 @@ void ops_tridMultiDimBatch(
     dims_calc[i] = a->size[i] - pads_m[i] - pads_p[i];
   }
 
+  int offset = pads_m[2] * a->size[1] * a->size[0] // z padding
+               + pads_m[1] * a->size[0] // y padding
+               + pads_m[0]; // x padding
+
   // compute tridiagonal system sizes
   ops_block block = a->block;
   sub_block *sb = OPS_sub_block_list[block->index];
@@ -124,7 +128,7 @@ void ops_tridMultiDimBatch(
   double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
   tridDmtsvStridedBatchMPI(*trid_mpi_params, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
-                           ndim, solvedim, dims_calc, a->size);
+                           ndim, solvedim, dims_calc, a->size, offset);
 
   // Release pointer access back to OPS
   ops_dat_release_raw_data(u, 0, OPS_READ);
@@ -194,6 +198,10 @@ void ops_tridMultiDimBatch_Inc(
     dims_calc[i] = a->size[i] - pads_m[i] - pads_p[i];
   }
 
+  int offset = pads_m[2] * a->size[1] * a->size[0] // z padding
+               + pads_m[1] * a->size[0] // y padding
+               + pads_m[0]; // x padding
+
   // compute tridiagonal system sizes
   ops_block block = a->block;
   sub_block *sb = OPS_sub_block_list[block->index];
@@ -214,7 +222,7 @@ void ops_tridMultiDimBatch_Inc(
 
   // For now do not consider adding padding
   tridDmtsvStridedBatchIncMPI(*trid_mpi_params, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
-                              ndim, solvedim, dims_calc, a->size);
+                              ndim, solvedim, dims_calc, a->size, offset);
 
   ops_dat_release_raw_data(u, 0, OPS_RW);
   ops_dat_release_raw_data(d, 0, OPS_READ);
