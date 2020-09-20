@@ -123,7 +123,7 @@ void ops_tridMultiDimBatch(
 
   // Get raw pointer access to data held by OPS
   // Points to element 0, skipping MPI halo
-  ops_put_data(a);
+  /*ops_put_data(a);
   ops_put_data(b);
   ops_put_data(c);
   ops_put_data(d);
@@ -134,8 +134,8 @@ void ops_tridMultiDimBatch(
                            (double*)&d->data_d[offset], (double*)&u->data_d[offset],
                            ndim, solvedim, dims_calc, a->size, offset);
 
-  ops_set_dirtybit_device_dat(d);
-  /*const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &device);
+  ops_set_dirtybit_device_dat(d);*/
+  const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &device);
   const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &device);
   const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &device);
   double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
@@ -149,7 +149,7 @@ void ops_tridMultiDimBatch(
   ops_dat_release_raw_data(d, 0, OPS_RW);
   ops_dat_release_raw_data(c, 0, OPS_READ);
   ops_dat_release_raw_data(b, 0, OPS_READ);
-  ops_dat_release_raw_data(a, 0, OPS_READ);*/
+  ops_dat_release_raw_data(a, 0, OPS_READ);
 
   delete trid_mpi_params;
 
@@ -224,7 +224,7 @@ void ops_tridMultiDimBatch_Inc(
     new MpiSolverParams(sb->comm, sb->ndim, sb->pdims, TRID_MPI_CUDA_BATCH_SIZE,
                         TRID_MPI_CUDA_STRATEGY);
 
-  ops_put_data(a);
+  /*ops_put_data(a);
   ops_put_data(b);
   ops_put_data(c);
   ops_put_data(d);
@@ -235,9 +235,9 @@ void ops_tridMultiDimBatch_Inc(
                               (double*)&d->data_d[offset], (double*)&u->data_d[offset],
                               ndim, solvedim, dims_calc, a->size, offset);
 
-  ops_set_dirtybit_device_dat(u);
+  ops_set_dirtybit_device_dat(u);*/
 
-  /*int device = OPS_DEVICE;
+  int device = OPS_DEVICE;
   int s3D_000[] = {0, 0, 0};
   ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
 
@@ -255,7 +255,7 @@ void ops_tridMultiDimBatch_Inc(
   ops_dat_release_raw_data(d, 0, OPS_READ);
   ops_dat_release_raw_data(c, 0, OPS_READ);
   ops_dat_release_raw_data(b, 0, OPS_READ);
-  ops_dat_release_raw_data(a, 0, OPS_READ);*/
+  ops_dat_release_raw_data(a, 0, OPS_READ);
 
   delete trid_mpi_params;
 }
