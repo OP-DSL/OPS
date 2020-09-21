@@ -48,7 +48,7 @@
 #include <ops_lib_core.h>
 
 #define TRID_MPI_CUDA_BATCH_SIZE 65536
-#define TRID_MPI_CUDA_STRATEGY MpiSolverParams::LATENCY_HIDING_INTERLEAVED
+#define TRID_MPI_CUDA_STRATEGY MpiSolverParams::ALLGATHER
 
 void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
   // dummy routine for non-GPU backends
@@ -142,7 +142,7 @@ void ops_tridMultiDimBatch(
   double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
   tridDmtsvStridedBatchMPI(*trid_mpi_params, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
-                           ndim, solvedim, dims_calc, a->size, offset);
+                           ndim, solvedim, dims_calc, a->size/*, offset*/);
 
   // Release pointer access back to OPS
   ops_dat_release_raw_data(u, 0, OPS_READ);
@@ -249,7 +249,7 @@ void ops_tridMultiDimBatch_Inc(
 
   // For now do not consider adding padding
   tridDmtsvStridedBatchIncMPI(*trid_mpi_params, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
-                              ndim, solvedim, dims_calc, a->size, offset);
+                              ndim, solvedim, dims_calc, a->size/*, offset*/);
 
   ops_dat_release_raw_data(u, 0, OPS_RW);
   ops_dat_release_raw_data(d, 0, OPS_READ);
