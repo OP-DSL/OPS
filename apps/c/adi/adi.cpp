@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 
 // OPS header file
 #define OPS_3D
@@ -54,6 +55,22 @@
 
 #include <mpi.h>
 //#include "print_kernel.h"
+
+extern char *optarg;
+extern int  optind, opterr, optopt;
+static struct option options[] = {
+  {"nx",   required_argument, 0,  0   },
+  {"ny",   required_argument, 0,  0   },
+  {"nz",   required_argument, 0,  0   },
+  {"iter", required_argument, 0,  0   },
+  {"help", no_argument,       0,  'h' },
+  {0,      0,                 0,  0   }
+};
+
+void print_help() {
+  printf("Please specify the ADI configuration, e.g.: \n$ ./adi_* -nx NX -ny NY -nz NZ -iter ITER\n");
+  exit(0);
+}
 
 typedef double FP;
 // writes the whole dataset to a file named as the executable_name.dat
@@ -96,75 +113,6 @@ void dump_and_exit(FP *data, const int nx, const int ny, const int nz,
   if (iteration == max_iteration) exit(0);
 }
 
-/*void ignore_mpi_halo_dump_data(ops_dat dat, const char *filename) {
-  // Set output filname to binary executable.dat
-  char out_filename[256];
-  strcpy(out_filename, filename);
-  strcat(out_filename, ".dat");
-  // print data to file
-  FILE *fout;
-  fout = fopen(out_filename, "w");
-  if (fout == NULL) {
-    printf(
-        "ERROR: File stream could not be opened. Data will not be written to "
-        "file!\n");
-  } else {
-
-    int dims[] = {dat->size[0] - dat->d_p[0] + dat->d_m[0],
-                  dat->size[1] - dat->d_p[1] + dat->d_m[1],
-                  dat->size[2] - dat->d_p[2] + dat->d_m[2]};
-    int numElements = dims[0] * dims[1] * dims[2];
-
-    int host = OPS_HOST;
-    int s3D_000[] = {0, 0, 0};
-    ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
-    const double *ptr = (double *)ops_dat_get_raw_pointer(dat, 0, S3D_000, &host);
-
-    for(int i = 0; i < numElements; i++) {
-      int offset = (i / (dims[0] * dims[1])) * dat->size[1] * dat->size[0];
-      offset += ((i / dims[0]) % dims[1]) * dat->size[0];
-      offset += i % dims[0];
-      fwrite(&ptr[offset], sizeof(double), 1, fout);
-    }
-
-    ops_dat_release_raw_data(dat, 0, OPS_READ);
-
-    fclose(fout);
-  }
-}
-
-void ignore_mpi_halo_NaN_check(ops_dat dat) {
-  sub_dat *sd = OPS_sub_dat_list[dat->index];
-  int pads_m[] = {-1 * (dat->d_m[0] + sd->d_im[0]), -1 * (dat->d_m[1] + sd->d_im[1]), -1 * (dat->d_m[2] + sd->d_im[2])};
-  int pads_p[] = {dat->d_p[0] + sd->d_ip[0], dat->d_p[1] + sd->d_ip[1], dat->d_p[2] + sd->d_ip[2]};
-
-  int dims[] = {dat->size[0] - pads_m[0] - pads_p[0],
-                dat->size[1] - pads_m[1] - pads_p[1],
-                dat->size[2] - pads_m[2] - pads_p[2]};
-  int numElements = dims[0] * dims[1] * dims[2];
-
-  int host = OPS_HOST;
-  int s3D_000[] = {0, 0, 0};
-  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
-  const double *ptr = (double *)ops_dat_get_raw_pointer(dat, 0, S3D_000, &host);
-
-  for(int z = 0; z < dims[2]; z++) {
-    for(int y = 0; y < dims[1]; y++) {
-      for(int x = 0; x < dims[0]; x++) {
-        int offset = z * dat->size[1] * dat->size[0];
-        offset += y * dat->size[0];
-        offset += x;
-        if(std::isnan(ptr[offset])) {
-          printf("Error: NaN detected at element %d\n", offset);
-          exit(2);
-        }
-      }
-    }
-  }
-
-  ops_dat_release_raw_data(dat, 0, OPS_READ);
-}*/
-
 void ignore_mpi_halo_rms(ops_dat dat) {
   double sum = 0.0;
 
@@ -179,7 +127,6 @@ void ignore_mpi_halo_rms(ops_dat dat) {
   int dims[] = {dat->size[0] - pads_m[0] - pads_p[0],
                 dat->size[1] - pads_m[1] - pads_p[1],
                 dat->size[2] - pads_m[2] - pads_p[2]};
-  int numElements = dims[0] * dims[1] * dims[2];
 
   for(int z = 0; z < dims[2]; z++) {
     for(int y = 0; y < dims[1]; y++) {
@@ -211,7 +158,7 @@ int opts[3], pads[3], synch;
 // declare constants
 double lambda;
 
-int main(int argc, const char **argv) {
+int main(int argc, char *argv[]) {
   // Set defaults options
   nx = 256;
   ny = 256;
@@ -224,6 +171,15 @@ int main(int argc, const char **argv) {
 
   // constants
   lambda = 1.0f;
+
+  int opt_index = 0;
+  while( getopt_long_only(argc, argv, "", options, &opt_index) != -1) {
+    if(strcmp((char*)options[opt_index].name,"nx"  ) == 0) nx = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"ny"  ) == 0) ny = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"nz"  ) == 0) nz = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"iter") == 0) iter = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"help") == 0) print_help();
+  }
 
   /**--- Initialisation----**/
 
@@ -245,14 +201,11 @@ int main(int argc, const char **argv) {
                 -1};  // max halo depths for the dat in the negative direction*/
   int size[3] = {nx, ny, nz};  // size of the dat -- should be identical to the
                                // block on which its define on
-  int pads[3] = {nx, ny, nz};
   int base[3] = {0, 0, 0};
   double *temp = NULL;
 
   ops_dat h_u =
       ops_decl_dat(heat3D, 1, size, base, d_m, d_p, temp, "double", "h_u");
-  ops_dat h_temp =
-      ops_decl_dat(heat3D, 1, size, base, d_m, d_p, temp, "double", "h_tmp");
   ops_dat h_du =
       ops_decl_dat(heat3D, 1, size, base, d_m, d_p, temp, "double", "h_du");
   ops_dat h_ax =
@@ -310,9 +263,6 @@ int main(int argc, const char **argv) {
 
   ops_timers(&ct0, &et0);
 
-  //ignore_mpi_halo_NaN_check(h_u);
-  //ignore_mpi_halo_NaN_check(h_du);
-
   for (int it = 0; it < iter; it++) {  // Start main iteration loop
 
     /**-----calculate r.h.s. and set tri-diagonal
@@ -367,6 +317,7 @@ int main(int argc, const char **argv) {
   //ops_dat_fetch_data(h_u, 0, (char *)h_to_dump);
   // dump the whole raw matrix
   //dump_data(h_to_dump, nx, ny, nz, ldim, argv[0]);
+  ignore_mpi_halo_rms(h_du);
   ignore_mpi_halo_rms(h_u);
   //ignore_mpi_halo_dump_data(h_u, argv[0]);
 
