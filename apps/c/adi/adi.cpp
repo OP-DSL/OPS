@@ -246,7 +246,10 @@ int main(int argc, char *argv[]) {
 
   // compute tridiagonal system sizes
   double ct0, ct1, et0, et1, ct2, et2, ct3, et3;
+  double total_preproc, total_x, total_y, total_z;
+  total_preproc = total_x = total_y = total_z = 0.0;
 
+  ops_printf("\nNumber of iterations: %d\n", iter);
   ops_printf("\nGrid dimensions: %d x %d x %d\n", nx, ny, nz);
   printf("\nLocal dimensions: %d x %d x %d\n", h_u->size[0], h_u->size[1], h_u->size[2]);
   ops_diagnostic_output();
@@ -284,26 +287,30 @@ int main(int argc, char *argv[]) {
                  ops_arg_dat(h_cz, 1, S3D_000, "double", OPS_WRITE),
                  ops_arg_idx());
     ops_timers(&ct3, &et3);
-    ops_printf("Elapsed preproc (sec): %lf (s)\n", et3 - et2);
+    total_preproc += et3 - et2;
+    //ops_printf("Elapsed preproc (sec): %lf (s)\n", et3 - et2);
 
     /**---- perform tri-diagonal solves in x-direction--**/
     ops_timers(&ct2, &et2);
     ops_tridMultiDimBatch(3, 0, size, h_ax, h_bx, h_cx, h_du, h_u);
     ops_timers(&ct3, &et3);
-    ops_printf("Elapsed trid_x (sec): %lf (s)\n", et3 - et2);
+    total_x += et3 - et2;
+    //ops_printf("Elapsed trid_x (sec): %lf (s)\n", et3 - et2);
 
     /**---- perform tri-diagonal solves in y-direction--**/
     ops_timers(&ct2, &et2);
     ops_tridMultiDimBatch(3, 1, size, h_ay, h_by, h_cy, h_du, h_u);
     ops_timers(&ct3, &et3);
-    ops_printf("Elapsed trid_y (sec): %lf (s)\n", et3 - et2);
+    total_y += et3 - et2;
+    //ops_printf("Elapsed trid_y (sec): %lf (s)\n", et3 - et2);
 
     /**---- perform tri-diagonal solves in z-direction--**/
     ops_timers(&ct2, &et2);
     ops_tridMultiDimBatch_Inc(3, 2, size, h_az, h_bz, h_cz, h_du, h_u);
     //ops_tridMultiDimBatch(3, 2, size, h_az, h_bz, h_cz, h_du, h_u);
     ops_timers(&ct3, &et3);
-    ops_printf("Elapsed trid_z (sec): %lf (s)\n", et3 - et2);
+    total_z += et3 - et2;
+    //ops_printf("Elapsed trid_z (sec): %lf (s)\n", et3 - et2);
   }  // End main iteration loop
 
   ops_timers(&ct1, &et1);
@@ -321,6 +328,10 @@ int main(int argc, char *argv[]) {
   ignore_mpi_halo_rms(h_u);
   //ignore_mpi_halo_dump_data(h_u, argv[0]);
 
-  ops_printf("\nTotal Wall time %lf\n", et1 - et0);
+  ops_printf("\nTotal Wall time (s): %lf\n", et1 - et0);
+  ops_printf("Preproc total time (s): %lf\n", total_preproc);
+  ops_printf("X Dim total time (s): %lf\n", total_x);
+  ops_printf("Y Dim total time (s): %lf\n", total_y);
+  ops_printf("Z Dim total time (s): %lf\n", total_z);
   ops_exit();
 }
