@@ -203,7 +203,9 @@ macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
                   ${LIBTRID_PATH}/include
                   ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
                   )
-
+          if(OPS_TRID_USE_NCCL)
+              target_include_directories(${Name}_cuda_mpi PRIVATE ${NCCL_INCLUDE_DIR})
+          endif()
           target_link_libraries(${Name}_cuda_mpi ops_mpi_cuda ops_trid_mpi_cuda -L${LIBTRID_PATH}/lib -ltridcuda_mpi MPI::MPI_CXX)
           cuda_add_cublas_to_target(${Name}_cuda_mpi)
           if (UseHDF5)

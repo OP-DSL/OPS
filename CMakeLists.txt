@@ -9,8 +9,11 @@ option(CHECKPOINTING "Enable OPS checkpointing support" OFF)
 option(OPS_INSTALL_TRANSLATOR "Install OPS Source Translator" ON)
 option(OPS_INSTALL_HEADERS "Install OPS Dev Headers" ON)
 option(OPS_INSTALL_LIBS "Install OPS Libraries" ON)
+option(OPS_TRID_USE_NCCL "TDMA library built using NCCL" OFF)
 set(LIBTRID_PATH $ENV{TRIDSOLVER_INSTALL_PATH}
   CACHE STRING "Tridsolver (scalar) installation directory")
+
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 # Enable C++11 standard
 set(CMAKE_CXX_STANDARD 11)
@@ -27,9 +30,9 @@ if(OPS_VERBOSE_WARNINGS)
     endif()
     foreach(flag IN LISTS OPS_WARNINGS)
         # NVCC complicates life a little here
-        # 1) We want to pass our warning flags to the compiler, not NVCC, so 
+        # 1) We want to pass our warning flags to the compiler, not NVCC, so
         #    each need prefaced with -Xcompiler
-        # 2) NVCC generates code which is not pedantically compliant, so need 
+        # 2) NVCC generates code which is not pedantically compliant, so need
         #    to filter the -pedantic from compiling cuda code
         add_compile_options("$<IF:$<COMPILE_LANGUAGE:CUDA>,$<$<NOT:$<STREQUAL:-pedantic,${flag}>>:SHELL:-Xcompiler ${flag}>,${flag}>")
     endforeach()
@@ -43,6 +46,9 @@ if(OPS_ERROR_ON_WARNING)
     add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler >${werrorFlag}")
 endif()
 
+if(OPS_TRID_USE_NCCL)
+    find_package(NCCL)
+endif()
 
 add_subdirectory(ops_translator)
 add_subdirectory(ops/c)
