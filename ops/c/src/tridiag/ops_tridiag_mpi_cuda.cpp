@@ -50,6 +50,41 @@
 #define TRID_MPI_CUDA_BATCH_SIZE 65536
 #define TRID_MPI_CUDA_STRATEGY MpiSolverParams::ALLGATHER
 
+namespace {
+  struct MpiSolverParamsWrapper {
+    MpiSolverParams *trid_mpi_params;
+    sub_block *trid_sb;
+
+    MpiSolverParamsWrapper() {
+      trid_mpi_params = nullptr;
+      trid_sb = nullptr;
+    }
+
+    MpiSolverParams* getMpiSolverParams(sub_block *sb) {
+      if(trid_mpi_params == nullptr) {
+        trid_mpi_params = new MpiSolverParams(sb->comm, sb->ndim, sb->pdims,
+                              TRID_MPI_CUDA_BATCH_SIZE, TRID_MPI_CUDA_STRATEGY);
+        trid_sb = sb;
+      } else {
+        if(sb != trid_sb) {
+          delete trid_mpi_params;
+          trid_mpi_params = new MpiSolverParams(sb->comm, sb->ndim, sb->pdims,
+                              TRID_MPI_CUDA_BATCH_SIZE, TRID_MPI_CUDA_STRATEGY);
+          trid_sb = sb;
+        }
+      }
+      return trid_mpi_params;
+    }
+
+    void free() {
+      delete trid_mpi_params;
+      trid_mpi_params = nullptr;
+    }
+  };
+
+  MpiSolverParamsWrapper mpiParams;
+}
+
 void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
   // dummy routine for non-GPU backends
 }
@@ -113,9 +148,9 @@ void ops_tridMultiDimBatch(
   ops_block block = a->block;
   sub_block *sb = OPS_sub_block_list[block->index];
 
-  MpiSolverParams *trid_mpi_params =
+  /*MpiSolverParams *trid_mpi_params =
     new MpiSolverParams(sb->comm, sb->ndim, sb->pdims, TRID_MPI_CUDA_BATCH_SIZE,
-                        TRID_MPI_CUDA_STRATEGY);
+                        TRID_MPI_CUDA_STRATEGY);*/
 
   int device = OPS_DEVICE;
   int s3D_000[] = {0, 0, 0};
@@ -129,7 +164,7 @@ void ops_tridMultiDimBatch(
   double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
   double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
-  tridDmtsvStridedBatchMPI(*trid_mpi_params, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
+  tridDmtsvStridedBatchMPI(*(mpiParams.getMpiSolverParams(sb)), a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
                            ndim, solvedim, dims_calc, a->size, offset);
 
   // Release pointer access back to OPS
@@ -139,7 +174,7 @@ void ops_tridMultiDimBatch(
   ops_dat_release_raw_data(b, 0, OPS_READ);
   ops_dat_release_raw_data(a, 0, OPS_READ);
 
-  delete trid_mpi_params;
+  //delete trid_mpi_params;
 
   /* Right now, we are simply using the same memory allocated by OPS
   as can be seen by the use of a->data, b->data, c->data etc.
@@ -208,9 +243,9 @@ void ops_tridMultiDimBatch_Inc(
   ops_block block = a->block;
   sub_block *sb = OPS_sub_block_list[block->index];
 
-  MpiSolverParams *trid_mpi_params =
+  /*MpiSolverParams *trid_mpi_params =
     new MpiSolverParams(sb->comm, sb->ndim, sb->pdims, TRID_MPI_CUDA_BATCH_SIZE,
-                        TRID_MPI_CUDA_STRATEGY);
+                        TRID_MPI_CUDA_STRATEGY);*/
 
   int device = OPS_DEVICE;
   int s3D_000[] = {0, 0, 0};
@@ -223,7 +258,7 @@ void ops_tridMultiDimBatch_Inc(
   double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
   // For now do not consider adding padding
-  tridDmtsvStridedBatchIncMPI(*trid_mpi_params, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
+  tridDmtsvStridedBatchIncMPI(*(mpiParams.getMpiSolverParams(sb)), a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
                               ndim, solvedim, dims_calc, a->size, offset);
 
   ops_dat_release_raw_data(u, 0, OPS_RW);
@@ -232,7 +267,7 @@ void ops_tridMultiDimBatch_Inc(
   ops_dat_release_raw_data(b, 0, OPS_READ);
   ops_dat_release_raw_data(a, 0, OPS_READ);
 
-  delete trid_mpi_params;
+  //delete trid_mpi_params;
 }
 
 void ops_exitTridMultiDimBatchSolve() {
