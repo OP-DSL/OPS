@@ -192,6 +192,7 @@ macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
           find_package(OpenMP REQUIRED)
           cuda_include_directories(SYSTEM ${MPI_INCLUDE_PATH})
           if (NCCL_FOUND)
+              add_definitions(-DTRID_NCCL)
               include_directories(SYSTEM ${NCCL_INCLUDE_DIR})
         	endif ()
           cuda_add_executable(${Name}_cuda_mpi
