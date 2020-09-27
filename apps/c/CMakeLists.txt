@@ -191,6 +191,9 @@ macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
           find_package(MPI REQUIRED)
           find_package(OpenMP REQUIRED)
           cuda_include_directories(SYSTEM ${MPI_INCLUDE_PATH})
+          if (NCCL_FOUND)
+              include_directories(SYSTEM ${NCCL_INCLUDE_DIR})
+        	endif ()
           cuda_add_executable(${Name}_cuda_mpi
               ${OPS_${Name}_BASEOUTPUT}
               ${OPS_${Name}_CUDA_KERNELS}
@@ -203,7 +206,13 @@ macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
                   ${LIBTRID_PATH}/include
                   ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
                   )
-          target_link_libraries(${Name}_cuda_mpi ops_mpi_cuda ops_trid_mpi_cuda -L${LIBTRID_PATH}/lib -ltridcuda_mpi MPI::MPI_CXX)
+          target_link_libraries(${Name}_cuda_mpi
+              ops_mpi_cuda
+              ops_trid_mpi_cuda
+              -L${LIBTRID_PATH}/lib
+              -ltridcuda_mpi
+              MPI::MPI_CXX
+              ${NCCL_LIBRARY})
           cuda_add_cublas_to_target(${Name}_cuda_mpi)
           if (UseHDF5)
               target_link_libraries(${Name}_cuda_mpi ops_hdf5_mpi)

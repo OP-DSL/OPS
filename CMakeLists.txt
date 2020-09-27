@@ -9,6 +9,7 @@ option(CHECKPOINTING "Enable OPS checkpointing support" OFF)
 option(OPS_INSTALL_TRANSLATOR "Install OPS Source Translator" ON)
 option(OPS_INSTALL_HEADERS "Install OPS Dev Headers" ON)
 option(OPS_INSTALL_LIBS "Install OPS Libraries" ON)
+option(OPS_TRID_USE_NCCL "TDMA library built using NCCL" OFF)
 set(LIBTRID_PATH $ENV{TRIDSOLVER_INSTALL_PATH}
   CACHE STRING "Tridsolver (scalar) installation directory")
 
@@ -42,6 +43,8 @@ if(OPS_ERROR_ON_WARNING)
     endif()
     add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler >${werrorFlag}")
 endif()
+
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 add_subdirectory(ops_translator)
 add_subdirectory(ops/c)
