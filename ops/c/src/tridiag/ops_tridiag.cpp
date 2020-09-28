@@ -56,7 +56,9 @@ void ops_tridMultiDimBatch(
     ops_dat
         d,  // right hand side coefficients of a multidimensional problem. An
             // array containing d column vectors of individual problems
-    ops_dat u
+    ops_dat u,
+    int solve_method,
+    int batch_size
     ) {
 
   /*if (a->mem != b->mem || b->mem != c->mem || c->mem != d->mem) {
@@ -127,7 +129,9 @@ void ops_tridMultiDimBatch_Inc(
     ops_dat
         d,  // right hand side coefficients of a multidimensional problem. An
             // array containing d column vectors of individual problems
-    ops_dat u
+    ops_dat u,
+    int solve_method,
+    int batch_size
     ) {
 
   /*if (a->mem != b->mem || b->mem != c->mem || c->mem != d->mem || d->mem != u->mem) {
