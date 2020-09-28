@@ -62,6 +62,10 @@ static struct option options[] = {
   {"nx",   required_argument, 0,  0   },
   {"ny",   required_argument, 0,  0   },
   {"nz",   required_argument, 0,  0   },
+  {"bx",   required_argument, 0,  0   },
+  {"by",   required_argument, 0,  0   },
+  {"bz",   required_argument, 0,  0   },
+  {"m", required_argument, 0,  0   },
   {"iter", required_argument, 0,  0   },
   {"help", no_argument,       0,  'h' },
   {0,      0,                 0,  0   }
@@ -154,6 +158,8 @@ int nz;
 int ldim;
 int iter;
 int opts[3], pads[3], synch;
+int bx, by, bz;
+int m;
 
 // declare constants
 double lambda;
@@ -168,6 +174,10 @@ int main(int argc, char *argv[]) {
   opts[2] = 0;
   iter = 10;
   synch = 1;
+  bx = 65536;
+  by = 65536;
+  bx = 65536;
+  m = 0;
 
   // constants
   lambda = 1.0f;
@@ -177,6 +187,10 @@ int main(int argc, char *argv[]) {
     if(strcmp((char*)options[opt_index].name,"nx"  ) == 0) nx = atoi(optarg);
     if(strcmp((char*)options[opt_index].name,"ny"  ) == 0) ny = atoi(optarg);
     if(strcmp((char*)options[opt_index].name,"nz"  ) == 0) nz = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"bx"  ) == 0) bx = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"by"  ) == 0) by = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"bz"  ) == 0) bz = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"m"  ) == 0) m = atoi(optarg);
     if(strcmp((char*)options[opt_index].name,"iter") == 0) iter = atoi(optarg);
     if(strcmp((char*)options[opt_index].name,"help") == 0) print_help();
   }
@@ -292,21 +306,21 @@ int main(int argc, char *argv[]) {
 
     /**---- perform tri-diagonal solves in x-direction--**/
     ops_timers(&ct2, &et2);
-    ops_tridMultiDimBatch(3, 0, size, h_ax, h_bx, h_cx, h_du, h_u);
+    ops_tridMultiDimBatch(3, 0, size, h_ax, h_bx, h_cx, h_du, h_u, m, bx);
     ops_timers(&ct3, &et3);
     total_x += et3 - et2;
     //ops_printf("Elapsed trid_x (sec): %lf (s)\n", et3 - et2);
 
     /**---- perform tri-diagonal solves in y-direction--**/
     ops_timers(&ct2, &et2);
-    ops_tridMultiDimBatch(3, 1, size, h_ay, h_by, h_cy, h_du, h_u);
+    ops_tridMultiDimBatch(3, 1, size, h_ay, h_by, h_cy, h_du, h_u, m, by);
     ops_timers(&ct3, &et3);
     total_y += et3 - et2;
     //ops_printf("Elapsed trid_y (sec): %lf (s)\n", et3 - et2);
 
     /**---- perform tri-diagonal solves in z-direction--**/
     ops_timers(&ct2, &et2);
-    ops_tridMultiDimBatch_Inc(3, 2, size, h_az, h_bz, h_cz, h_du, h_u);
+    ops_tridMultiDimBatch_Inc(3, 2, size, h_az, h_bz, h_cz, h_du, h_u, m, bz);
     //ops_tridMultiDimBatch(3, 2, size, h_az, h_bz, h_cz, h_du, h_u);
     ops_timers(&ct3, &et3);
     total_z += et3 - et2;

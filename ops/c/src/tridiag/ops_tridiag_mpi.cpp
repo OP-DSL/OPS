@@ -32,7 +32,7 @@
 
 /** @file
   * @brief OPS API calls and wrapper routines for Tridiagonal solvers
-  * @author Gihan Mudalige, Istvan Reguly
+  * @author Gihan Mudalige, Istvan Reguly, Toby Flynn
   * @details Implementations of the OPS API calls, wrapper routines and other
   * functions for interfacing with external Tridiagonal libraries
   */
@@ -42,11 +42,64 @@
 #include <ops_exceptions.h>
 #include <ops_tridiag.h>
 
-#define TRID_MPI_CPU_BATCH_SIZE 65536
-#define TRID_MPI_CPU_STRATEGY MpiSolverParams::LATENCY_HIDING_INTERLEAVED
-
 #include <trid_common.h>
 #include <trid_mpi_cpu.h>
+
+namespace {
+  struct MpiSolverParamsWrapper {
+    MpiSolverParams *trid_mpi_params;
+    sub_block *trid_sb;
+
+    MpiSolverParamsWrapper() {
+      trid_mpi_params = nullptr;
+      trid_sb = nullptr;
+    }
+
+    MpiSolverParams* getMpiSolverParams(sub_block *sb, int solve_method,
+                                        int batch_size) {
+      MpiSolverParams::MPICommStrategy strategy;
+      switch(solve_method) {
+        case 0:
+          strategy = MpiSolverParams::GATHER_SCATTER;
+          break;
+        case 1:
+          strategy = MpiSolverParams::ALLGATHER;
+          break;
+        case 2:
+          strategy = MpiSolverParams::LATENCY_HIDING_TWO_STEP;
+          break;
+        case 3:
+          strategy = MpiSolverParams::LATENCY_HIDING_INTERLEAVED;
+          break;
+        default:
+          throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: Unrecognised solving strategy");
+      }
+      if(trid_mpi_params == nullptr) {
+        trid_mpi_params = new MpiSolverParams(sb->comm, sb->ndim, sb->pdims,
+                              batch_size, strategy);
+        trid_sb = sb;
+      } else {
+        if(sb != trid_sb) {
+          delete trid_mpi_params;
+          trid_mpi_params = new MpiSolverParams(sb->comm, sb->ndim, sb->pdims,
+                              batch_size, strategy);
+          trid_sb = sb;
+        } else {
+          trid_mpi_params->strategy = strategy;
+          trid_mpi_params->mpi_batch_size = batch_size;
+        }
+      }
+      return trid_mpi_params;
+    }
+
+    void free() {
+      delete trid_mpi_params;
+      trid_mpi_params = nullptr;
+    }
+  };
+
+  MpiSolverParamsWrapper mpiParams;
+}
 
 void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
   // dummy routine for non-GPU backends
@@ -79,9 +132,9 @@ void ops_tridMultiDimBatch(
     // A matrices of individual problems
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
-    ops_dat u//,
-//    int *opts // indicates different algorithms to use -- not used for CPU
-              // backends
+    ops_dat u,
+    int solve_method,
+    int batch_size
     ) {
 
   // check if sizes match
@@ -106,10 +159,6 @@ void ops_tridMultiDimBatch(
   // compute tridiagonal system sizes
   ops_block block = a->block;
   sub_block *sb = OPS_sub_block_list[block->index];
-
-  MpiSolverParams *trid_mpi_params =
-    new MpiSolverParams(sb->comm, sb->ndim, sb->pdims, TRID_MPI_CPU_BATCH_SIZE,
-                        TRID_MPI_CPU_STRATEGY);
 
   int host = OPS_HOST;
   int s3D_000[] = {0, 0, 0};
@@ -123,8 +172,9 @@ void ops_tridMultiDimBatch(
   double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &host);
   double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
 
-  tridDmtsvStridedBatchMPI(*trid_mpi_params, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
-                           ndim, solvedim, dims_calc, a->size);
+  tridDmtsvStridedBatchMPI(*(mpiParams.getMpiSolverParams(sb, solve_method, batch_size)),
+                           a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
+                           dims_calc, a->size);
 
   // Release pointer access back to OPS
   ops_dat_release_raw_data(u, 0, OPS_READ);
@@ -132,33 +182,6 @@ void ops_tridMultiDimBatch(
   ops_dat_release_raw_data(c, 0, OPS_READ);
   ops_dat_release_raw_data(b, 0, OPS_READ);
   ops_dat_release_raw_data(a, 0, OPS_READ);
-
-  delete trid_mpi_params;
-
-  /* Right now, we are simply using the same memory allocated by OPS
-  as can be seen by the use of a->data, b->data, c->data etc.
-
-  These data is currently not padded to be 32 or 64 bit aligned
-  in the x-lines and so is inefficient.
-
-  In the ADI example currently the mesh size is 256^3 and so we are
-  32/64 bit aligned, thus we do not see any performance deficiencies
-  but other sizes will show this issue
-
-  As such we will need to think on how to pad arrays.
-  The problem is that on apps like Cloverleaf we see poorer performance
-  due to extra x dim padding.
-  */
-
-  /*
-  For MPI padding will be more important as the partition allocated per MPI proc
-  will definitely not be a multiple of 32 or 64 in the x dimension
-
-  Perhaps we make use of a setup phase to add padding to the ops data arrays
-  and then use them in the tridiagonal solvers. But now the problem is
-  that the original OPS lib will not be able to use these padded arrays
-  and produce correct results -- need to think how to solve this
-  */
 }
 
 void ops_tridMultiDimBatch_Inc(
@@ -170,9 +193,9 @@ void ops_tridMultiDimBatch_Inc(
     // A matrices of individual problems
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
-    ops_dat u//,
-//    int *opts // indicates different algorithms to use -- not used for CPU
-//              // backends
+    ops_dat u,
+    int solve_method,
+    int batch_size
     ) {
 
   // check if sizes match
@@ -198,10 +221,6 @@ void ops_tridMultiDimBatch_Inc(
   ops_block block = a->block;
   sub_block *sb = OPS_sub_block_list[block->index];
 
-  MpiSolverParams *trid_mpi_params =
-    new MpiSolverParams(sb->comm, sb->ndim, sb->pdims, TRID_MPI_CPU_BATCH_SIZE,
-                        TRID_MPI_CPU_STRATEGY);
-
   int host = OPS_HOST;
   int s3D_000[] = {0, 0, 0};
   ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
@@ -213,16 +232,15 @@ void ops_tridMultiDimBatch_Inc(
   double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
 
   // For now do not consider adding padding
-  tridDmtsvStridedBatchIncMPI(*trid_mpi_params, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
-                              ndim, solvedim, dims_calc, a->size);
+  tridDmtsvStridedBatchIncMPI(*(mpiParams.getMpiSolverParams(sb, solve_method, batch_size)),
+                              a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
+                              dims_calc, a->size);
 
   ops_dat_release_raw_data(u, 0, OPS_RW);
   ops_dat_release_raw_data(d, 0, OPS_READ);
   ops_dat_release_raw_data(c, 0, OPS_READ);
   ops_dat_release_raw_data(b, 0, OPS_READ);
   ops_dat_release_raw_data(a, 0, OPS_READ);
-
-  delete trid_mpi_params;
 }
 
 void ops_exitTridMultiDimBatchSolve() {

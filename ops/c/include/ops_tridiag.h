@@ -44,11 +44,13 @@
 
 OPS_FTN_INTEROP
 void ops_tridMultiDimBatch(int ndim, int solvedim, int* dims, ops_dat a,
-                           ops_dat b, ops_dat c, ops_dat d, ops_dat u);
+                           ops_dat b, ops_dat c, ops_dat d, ops_dat u,
+                           int solve_method = 3, int batch_size = 65536);
 
 OPS_FTN_INTEROP
 void ops_tridMultiDimBatch_Inc(int ndim, int solvedim, int* dims, ops_dat a,
-                               ops_dat b, ops_dat c, ops_dat d, ops_dat u);
+                               ops_dat b, ops_dat c, ops_dat d, ops_dat u,
+                               int solve_method = 3, int batch_size = 65536);
 
 OPS_FTN_INTEROP
 void ops_initTridMultiDimBatchSolve(int ndim, int* dims);
