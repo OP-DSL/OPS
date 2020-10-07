@@ -7,8 +7,10 @@
 int xdim0_left_bndcon;
 
 //user function
+#pragma acc routine
 inline 
-void left_bndcon(ptr_double A, const int *idx) {
+void left_bndcon(ptr_double A,
+  const int *idx) {
   OPS_ACC(A, 0,0) = sin(pi * (idx[1]+1) / (jmax+1));
 }
 

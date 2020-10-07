@@ -19,8 +19,9 @@ void right_bndcon_c_wrapper(
     for ( int n_x=0; n_x<x_size; n_x++ ){
       int idx[] = {arg_idx0+n_x, arg_idx1+n_y};
       ptr_double A = { A_p + n_x*1 + n_y * xdim0_right_bndcon*1, xdim0_right_bndcon};
+      
+  OPS_ACC(A, 0,0) = sin(pi * (idx[1]+1) / (jmax+1))*exp(-pi);
+
     }
   }
 }
-#undef OPS_ACC0
-

@@ -8,8 +8,11 @@ int xdim0_apply_stencil;
 int xdim1_apply_stencil;
 
 //user function
+#pragma acc routine
 inline 
-void apply_stencil(const ptr_double A, ptr_double Anew, double *error) {
+void apply_stencil(const ptr_double A,
+  ptr_double Anew,
+  double *error) {
   OPS_ACC(Anew, 0,0) = 0.25f * ( OPS_ACC(A, 1,0) + OPS_ACC(A, -1,0)
       + OPS_ACC(A, 0,-1) + OPS_ACC(A, 0,1));
   *error = fmax( *error, fabs(OPS_ACC(Anew, 0,0)-OPS_ACC(A, 0,0)));

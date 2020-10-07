@@ -11,45 +11,46 @@
 
 static bool isbuilt_right_bndcon = false;
 
-void buildOpenCLKernels_right_bndcon(int xdim0) {
+void buildOpenCLKernels_right_bndcon(OPS_instance *instance, int xdim0) {
 
   //int ocl_fma = OCL_FMA;
   if(!isbuilt_right_bndcon) {
-    buildOpenCLKernels();
+    buildOpenCLKernels(instance);
     //clSafeCall( clUnloadCompiler() );
     cl_int ret;
     char* source_filename[1] = {(char*)"./OpenCL/right_bndcon.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
-    char *source_str[1];
+    char *source_str[1] = {NULL};
     size_t source_size[1];
 
     for(int i=0; i<1; i++) {
       fid = fopen(source_filename[i], "r");
       if (!fid) {
-        fprintf(stderr, "Can't open the kernel source file!\n");
-        exit(1);
+        OPSException e(OPS_RUNTIME_ERROR, "Can't open the kernel source file: ");
+        e << source_filename[i] << "\n";
+        throw e;
       }
 
       source_str[i] = (char*)malloc(4*0x1000000);
       source_size[i] = fread(source_str[i], 1, 4*0x1000000, fid);
       if(source_size[i] != 4*0x1000000) {
         if (ferror(fid)) {
-          printf ("Error while reading kernel source file %s\n", source_filename[i]);
-          exit(-1);
+          OPSException e(OPS_RUNTIME_ERROR, "Error while reading kernel source file ");
+          e << source_filename[i] << "\n";
+          throw e;
         }
         if (feof(fid))
-          printf ("Kernel source file %s succesfuly read.\n", source_filename[i]);
-          //printf("%s\n",source_str[i]);
+          instance->ostream() << "Kernel source file "<< source_filename[i] <<" succesfully read.\n";
       }
       fclose(fid);
     }
 
-    printf("Compiling right_bndcon %d source -- start \n",OCL_FMA);
+    instance->ostream() <<"Compiling right_bndcon "<<OCL_FMA<<" source -- start \n";
 
       // Create a program from the source
-      OPS_opencl_core.program = clCreateProgramWithSource(OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
+      instance->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(instance->opencl_instance->OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
       clSafeCall( ret );
 
       // Build the program
@@ -66,27 +67,31 @@ void buildOpenCLKernels_right_bndcon(int xdim0) {
         exit(EXIT_FAILURE);
       }
 
-      ret = clBuildProgram(OPS_opencl_core.program, 1, &OPS_opencl_core.device_id, buildOpts, NULL, NULL);
+      #ifdef OPS_SOA
+      sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
+      #endif
+      ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1, &instance->opencl_instance->OPS_opencl_core.device_id, buildOpts, NULL, NULL);
 
       if(ret != CL_SUCCESS) {
         char* build_log;
         size_t log_size;
-        clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
+        clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
         build_log = (char*) malloc(log_size+1);
-        clSafeCall( clGetProgramBuildInfo(OPS_opencl_core.program, OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
+        clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
         build_log[log_size] = '\0';
-        fprintf(stderr, "=============== OpenCL Program Build Info ================\n\n%s", build_log);
-        fprintf(stderr, "\n========================================================= \n");
+        instance->ostream() << "=============== OpenCL Program Build Info ================\n\n" << build_log;
+        instance->ostream() << "\n========================================================= \n";
         free(build_log);
         exit(EXIT_FAILURE);
       }
-      printf("compiling right_bndcon -- done\n");
+      instance->ostream() << "compiling right_bndcon -- done\n";
 
     // Create the OpenCL kernel
-    OPS_opencl_core.kernel[3] = clCreateKernel(OPS_opencl_core.program, "ops_right_bndcon", &ret);
+    instance->opencl_instance->OPS_opencl_core.kernel[3] = clCreateKernel(instance->opencl_instance->OPS_opencl_core.program, "ops_right_bndcon", &ret);
     clSafeCall( ret );
 
     isbuilt_right_bndcon = true;
+    free(source_str[0]);
   }
 
 }
@@ -106,9 +111,9 @@ void ops_par_loop_right_bndcon(char const *name, ops_block block, int dim, int* 
   if (!ops_checkpointing_before(args,2,range,3)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(3,"right_bndcon");
-    OPS_kernels[3].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,3,"right_bndcon");
+    block->instance->OPS_kernels[3].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -158,12 +163,12 @@ void ops_par_loop_right_bndcon(char const *name, ops_block block, int dim, int* 
 
   //build opencl kernel if not already built
 
-  buildOpenCLKernels_right_bndcon(
+  buildOpenCLKernels_right_bndcon(block->instance,
   xdim0);
 
   //set up OpenCL thread blocks
-  size_t globalWorkSize[3] = {((x_size-1)/OPS_block_size_x+ 1)*OPS_block_size_x, ((y_size-1)/OPS_block_size_y + 1)*OPS_block_size_y, 1};
-  size_t localWorkSize[3] =  {OPS_block_size_x,OPS_block_size_y,OPS_block_size_z};
+  size_t globalWorkSize[3] = {((x_size-1)/block->instance->OPS_block_size_x+ 1)*block->instance->OPS_block_size_x, ((y_size-1)/block->instance->OPS_block_size_y + 1)*block->instance->OPS_block_size_y, 1};
+  size_t localWorkSize[3] =  {block->instance->OPS_block_size_x,block->instance->OPS_block_size_y,block->instance->OPS_block_size_z};
 
 
 
@@ -187,41 +192,41 @@ void ops_par_loop_right_bndcon(char const *name, ops_block block, int dim, int* 
   ops_halo_exchanges(args,2,range);
   ops_H_D_exchanges_device(args, 2);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[3].mpi_time += t2-t1;
+    block->instance->OPS_kernels[3].mpi_time += t2-t1;
   }
 
   if (globalWorkSize[0]>0 && globalWorkSize[1]>0 && globalWorkSize[2]>0) {
 
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[3], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[3], 1, sizeof(cl_int), (void*) &jmax ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[3], 2, sizeof(cl_double), (void*) &pi ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[3], 3, sizeof(cl_int), (void*) &base0 ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[3], 4, sizeof(cl_int), (void*) &arg_idx[0] ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[3], 5, sizeof(cl_int), (void*) &arg_idx[1] ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[3], 6, sizeof(cl_int), (void*) &x_size ));
-    clSafeCall( clSetKernelArg(OPS_opencl_core.kernel[3], 7, sizeof(cl_int), (void*) &y_size ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[3], 0, sizeof(cl_mem), (void*) &arg0.data_d ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[3], 1, sizeof(cl_int), (void*) &jmax ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[3], 2, sizeof(cl_double), (void*) &pi ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[3], 3, sizeof(cl_int), (void*) &base0 ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[3], 4, sizeof(cl_int), (void*) &arg_idx[0] ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[3], 5, sizeof(cl_int), (void*) &arg_idx[1] ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[3], 6, sizeof(cl_int), (void*) &x_size ));
+    clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[3], 7, sizeof(cl_int), (void*) &y_size ));
 
-    //call/enque opencl kernel wrapper function
-    clSafeCall( clEnqueueNDRangeKernel(OPS_opencl_core.command_queue, OPS_opencl_core.kernel[3], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
+    //call/enqueue opencl kernel wrapper function
+    clSafeCall( clEnqueueNDRangeKernel(block->instance->opencl_instance->OPS_opencl_core.command_queue, block->instance->opencl_instance->OPS_opencl_core.kernel[3], 3, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL) );
   }
-  if (OPS_diags>1) {
-    clSafeCall( clFinish(OPS_opencl_core.command_queue) );
+  if (block->instance->OPS_diags>1) {
+    clSafeCall( clFinish(block->instance->opencl_instance->OPS_opencl_core.command_queue) );
   }
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[3].time += t1-t2;
+    block->instance->OPS_kernels[3].time += t1-t2;
   }
 
   ops_set_dirtybit_device(args, 2);
   ops_set_halo_dirtybit3(&args[0],range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[3].mpi_time += t2-t1;
-    OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[3].mpi_time += t2-t1;
+    block->instance->OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

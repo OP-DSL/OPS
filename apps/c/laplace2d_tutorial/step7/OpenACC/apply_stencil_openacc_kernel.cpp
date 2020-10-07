@@ -35,13 +35,13 @@ void ops_par_loop_apply_stencil(char const *name, ops_block block, int dim, int*
   if (!ops_checkpointing_before(args,3,range,4)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(4,"apply_stencil");
-    OPS_kernels[4].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,4,"apply_stencil");
+    block->instance->OPS_kernels[4].count++;
     ops_timers_core(&c1,&t1);
   }
 
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block
 
   int start[2];
   int end[2];
@@ -73,8 +73,8 @@ void ops_par_loop_apply_stencil(char const *name, ops_block block, int dim, int*
   #endif
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
   #ifdef OPS_GPU
@@ -83,8 +83,8 @@ void ops_par_loop_apply_stencil(char const *name, ops_block block, int dim, int*
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  int base1 = args[1].dat->base_offset + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
-  base1 = base1 + (OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
+  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
+  base1 = base1 + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
     args[1].dat->size[0] *
     start[1] * args[1].stencil->stride[1];
   #ifdef OPS_GPU
@@ -99,8 +99,8 @@ void ops_par_loop_apply_stencil(char const *name, ops_block block, int dim, int*
   int y_size = MAX(0,end[1]-start[1]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
-  xdim1 = args[1].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
+  int xdim1 = args[1].dat->size[0];
   if (xdim0 != xdim0_apply_stencil_h || xdim1 != xdim1_apply_stencil_h) {
     xdim0_apply_stencil = xdim0;
     xdim0_apply_stencil_h = xdim0;
@@ -122,9 +122,9 @@ void ops_par_loop_apply_stencil(char const *name, ops_block block, int dim, int*
   #else
   ops_H_D_exchanges_host(args, 3);
   #endif
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[4].mpi_time += t2-t1;
+    block->instance->OPS_kernels[4].mpi_time += t2-t1;
   }
 
   apply_stencil_c_wrapper(
@@ -133,9 +133,9 @@ void ops_par_loop_apply_stencil(char const *name, ops_block block, int dim, int*
     p_a2,
     x_size, y_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[4].time += t1-t2;
+    block->instance->OPS_kernels[4].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 3);
@@ -144,11 +144,11 @@ void ops_par_loop_apply_stencil(char const *name, ops_block block, int dim, int*
   #endif
   ops_set_halo_dirtybit3(&args[1],range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[4].mpi_time += t2-t1;
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[4].mpi_time += t2-t1;
+    block->instance->OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }

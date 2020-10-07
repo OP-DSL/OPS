@@ -8,8 +8,10 @@ int xdim0_copy;
 int xdim1_copy;
 
 //user function
+#pragma acc routine
 inline 
-void copy(ptr_double A, const ptr_double Anew) {
+void copy(ptr_double A,
+  const ptr_double Anew) {
   OPS_ACC(A, 0,0) = OPS_ACC(Anew, 0,0);
 }
 

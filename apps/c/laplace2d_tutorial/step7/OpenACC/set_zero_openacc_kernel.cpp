@@ -31,13 +31,13 @@ void ops_par_loop_set_zero(char const *name, ops_block block, int dim, int* rang
   if (!ops_checkpointing_before(args,1,range,1)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(1,"set_zero");
-    OPS_kernels[1].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,1,"set_zero");
+    block->instance->OPS_kernels[1].count++;
     ops_timers_core(&c1,&t1);
   }
 
-  //compute localy allocated range for the sub-block
+  //compute locally allocated range for the sub-block
 
   int start[2];
   int end[2];
@@ -63,8 +63,8 @@ void ops_par_loop_set_zero(char const *name, ops_block block, int dim, int* rang
 
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0 + (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
+  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
+  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
     args[0].dat->size[0] *
     start[1] * args[0].stencil->stride[1];
   #ifdef OPS_GPU
@@ -78,7 +78,7 @@ void ops_par_loop_set_zero(char const *name, ops_block block, int dim, int* rang
   int y_size = MAX(0,end[1]-start[1]);
 
   //initialize global variable with the dimension of dats
-  xdim0 = args[0].dat->size[0];
+  int xdim0 = args[0].dat->size[0];
   if (xdim0 != xdim0_set_zero_h) {
     xdim0_set_zero = xdim0;
     xdim0_set_zero_h = xdim0;
@@ -98,18 +98,18 @@ void ops_par_loop_set_zero(char const *name, ops_block block, int dim, int* rang
   #else
   ops_H_D_exchanges_host(args, 1);
   #endif
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[1].mpi_time += t2-t1;
+    block->instance->OPS_kernels[1].mpi_time += t2-t1;
   }
 
   set_zero_c_wrapper(
     p_a0,
     x_size, y_size);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c1,&t1);
-    OPS_kernels[1].time += t1-t2;
+    block->instance->OPS_kernels[1].time += t1-t2;
   }
   #ifdef OPS_GPU
   ops_set_dirtybit_device(args, 1);
@@ -118,10 +118,10 @@ void ops_par_loop_set_zero(char const *name, ops_block block, int dim, int* rang
   #endif
   ops_set_halo_dirtybit3(&args[0],range);
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[1].mpi_time += t2-t1;
-    OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[1].mpi_time += t2-t1;
+    block->instance->OPS_kernels[1].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }

@@ -23,11 +23,13 @@ void apply_stencil_c_wrapper(
       error[0] = error_g[0];
       const ptr_double A = { A_p + n_x*1 + n_y * xdim0_apply_stencil*1, xdim0_apply_stencil};
       ptr_double Anew = { Anew_p + n_x*1 + n_y * xdim1_apply_stencil*1, xdim1_apply_stencil};
+      
+  OPS_ACC(Anew, 0,0) = 0.25f * ( OPS_ACC(A, 1,0) + OPS_ACC(A, -1,0)
+      + OPS_ACC(A, 0,-1) + OPS_ACC(A, 0,1));
+  *error = fmax( *error, fabs(OPS_ACC(Anew, 0,0)-OPS_ACC(A, 0,0)));
+
       error_0 = MAX(error_0,error[0]);
     }
   }
   error_g[0] = error_0;
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
-

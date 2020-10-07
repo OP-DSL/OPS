@@ -49,6 +49,7 @@
 class OPS_instance_tiling;
 class OPS_instance_checkpointing;
 class OPS_instance_opencl;
+class OPS_instance_sycl;
 
 /**
  * This class encapsulates "global" scope data required for OPS instances.
@@ -322,6 +323,9 @@ class OPS_instance {
 	int OPS_gbl_changed;
 	char *OPS_gbl_prev;
 	OPS_instance_opencl *opencl_instance;
+
+  // SYCL
+  OPS_instance_sycl *sycl_instance;
 
   int is_initialised;
 

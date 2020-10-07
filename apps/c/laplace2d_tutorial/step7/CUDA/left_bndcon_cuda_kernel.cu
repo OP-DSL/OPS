@@ -7,7 +7,8 @@ static int dims_left_bndcon_h [2][1] = {0};
 //user function
 __device__
 
-void left_bndcon_gpu(ACC<double> &A, const int *idx) {
+void left_bndcon_gpu(ACC<double> &A,
+  const int *idx) {
   A(0,0) = sin(pi * (idx[1]+1) / (jmax+1));
 }
 
@@ -60,9 +61,9 @@ void ops_par_loop_left_bndcon_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,2,range,2)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(2,"left_bndcon");
-    OPS_kernels[2].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,2,"left_bndcon");
+    block->instance->OPS_kernels[2].count++;
     ops_timers_core(&c1,&t1);
   }
 
@@ -74,19 +75,29 @@ void ops_par_loop_left_bndcon_execute(ops_kernel_descriptor *desc) {
   #endif //OPS_MPI
 
   int arg_idx[2];
-  #ifdef OPS_MPI
-  if (compute_ranges(args, 2,block, range, start, end, arg_idx) < 0) return;
-  #else //OPS_MPI
+  #if defined(OPS_LAZY) || !defined(OPS_MPI)
   for ( int n=0; n<2; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
-    arg_idx[n] = start[n];
   }
+  #else
+  if (compute_ranges(args, 2,block, range, start, end, arg_idx) < 0) return;
   #endif
+
+  #if defined(OPS_MPI)
+  #if defined(OPS_LAZY)
+  sub_block_list sb = OPS_sub_block_list[block->index];
+  arg_idx[0] = sb->decomp_disp[0]+start[0];
+  arg_idx[1] = sb->decomp_disp[1]+start[1];
+  #endif
+  #else //OPS_MPI
+  arg_idx[0] = start[0];
+  arg_idx[1] = start[1];
+  #endif //OPS_MPI
   int xdim0 = args[0].dat->size[0];
 
   if (xdim0 != dims_left_bndcon_h[0][0]) {
     dims_left_bndcon_h[0][0] = xdim0;
-    cutilSafeCall(cudaMemcpyToSymbol( dims_left_bndcon, dims_left_bndcon_h, sizeof(dims_left_bndcon)));
+    cutilSafeCall(block->instance->ostream(), cudaMemcpyToSymbol( dims_left_bndcon, dims_left_bndcon_h, sizeof(dims_left_bndcon)));
   }
 
 
@@ -94,12 +105,12 @@ void ops_par_loop_left_bndcon_execute(ops_kernel_descriptor *desc) {
   int x_size = MAX(0,end[0]-start[0]);
   int y_size = MAX(0,end[1]-start[1]);
 
-  dim3 grid( (x_size-1)/OPS_block_size_x+ 1, (y_size-1)/OPS_block_size_y + 1, 1);
-  dim3 tblock(OPS_block_size_x,OPS_block_size_y,OPS_block_size_z);
+  dim3 grid( (x_size-1)/block->instance->OPS_block_size_x+ 1, (y_size-1)/block->instance->OPS_block_size_y + 1, 1);
+  dim3 tblock(block->instance->OPS_block_size_x,block->instance->OPS_block_size_y,block->instance->OPS_block_size_z);
 
 
 
-  int dat0 = (OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   char *p_a[2];
 
@@ -117,9 +128,9 @@ void ops_par_loop_left_bndcon_execute(ops_kernel_descriptor *desc) {
   ops_halo_exchanges(args,2,range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&c2,&t2);
-    OPS_kernels[2].mpi_time += t2-t1;
+    block->instance->OPS_kernels[2].mpi_time += t2-t1;
   }
 
 
@@ -127,12 +138,12 @@ void ops_par_loop_left_bndcon_execute(ops_kernel_descriptor *desc) {
   if (x_size > 0 && y_size > 0)
     ops_left_bndcon<<<grid, tblock >>> (  (double *)p_a[0], arg_idx[0], arg_idx[1],x_size, y_size);
 
-  cutilSafeCall(cudaGetLastError());
+  cutilSafeCall(block->instance->ostream(), cudaGetLastError());
 
-  if (OPS_diags>1) {
-    cutilSafeCall(cudaDeviceSynchronize());
+  if (block->instance->OPS_diags>1) {
+    cutilSafeCall(block->instance->ostream(), cudaDeviceSynchronize());
     ops_timers_core(&c1,&t1);
-    OPS_kernels[2].time += t1-t2;
+    block->instance->OPS_kernels[2].time += t1-t2;
   }
 
   #ifndef OPS_LAZY
@@ -140,18 +151,18 @@ void ops_par_loop_left_bndcon_execute(ops_kernel_descriptor *desc) {
   ops_set_halo_dirtybit3(&args[0],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&c2,&t2);
-    OPS_kernels[2].mpi_time += t2-t1;
-    OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[2].mpi_time += t2-t1;
+    block->instance->OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
 
 #ifdef OPS_LAZY
 void ops_par_loop_left_bndcon(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
@@ -165,13 +176,13 @@ void ops_par_loop_left_bndcon(char const *name, ops_block block, int dim, int* r
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 2;
-  desc->args = (ops_arg*)malloc(2*sizeof(ops_arg));
+  desc->args = (ops_arg*)ops_malloc(2*sizeof(ops_arg));
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
   desc->function = ops_par_loop_left_bndcon_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(2,"left_bndcon");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,2,"left_bndcon");
   }
   ops_enqueue_kernel(desc);
 }

@@ -29,21 +29,21 @@ void ops_par_loop_apply_stencil_execute(ops_kernel_descriptor *desc) {
   if (!ops_checkpointing_before(args,3,range,4)) return;
   #endif
 
-  if (OPS_diags > 1) {
-    ops_timing_realloc(4,"apply_stencil");
-    OPS_kernels[4].count++;
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,4,"apply_stencil");
+    block->instance->OPS_kernels[4].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(args, "apply_stencil");
+  ops_register_args(block->instance, args, "apply_stencil");
   #endif
 
 
   //compute locally allocated range for the sub-block
   int start[2];
   int end[2];
-  #ifdef OPS_MPI
+  #if defined(OPS_MPI) && !defined(OPS_LAZY)
   int arg_idx[2];
   #endif
   #if defined(OPS_LAZY) || !defined(OPS_MPI)
@@ -82,9 +82,9 @@ void ops_par_loop_apply_stencil_execute(ops_kernel_descriptor *desc) {
   ops_H_D_exchanges_host(args, 3);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[4].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[4].mpi_time += __t1-__t2;
   }
 
   double p_a2_0 = p_a2[0];
@@ -92,11 +92,10 @@ void ops_par_loop_apply_stencil_execute(ops_kernel_descriptor *desc) {
   for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
     #ifdef __INTEL_COMPILER
     #pragma loop_count(10000)
-    #pragma omp simd reduction(max:p_a2_0) aligned(A,Anew)
+    #pragma omp simd reduction(max:p_a2_0)
     #elif defined(__clang__)
     #pragma clang loop vectorize(assume_safety)
     #elif defined(__GNUC__)
-    #pragma simd
     #pragma GCC ivdep
     #else
     #pragma simd
@@ -115,35 +114,33 @@ void ops_par_loop_apply_stencil_execute(ops_kernel_descriptor *desc) {
     }
   }
   p_a2[0] = p_a2_0;
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c2,&__t2);
-    OPS_kernels[4].time += __t2-__t1;
+    block->instance->OPS_kernels[4].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_host(args, 3);
   ops_set_halo_dirtybit3(&args[1],range);
   #endif
 
-  if (OPS_diags > 1) {
+  if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    OPS_kernels[4].mpi_time += __t1-__t2;
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg0);
-    OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg1);
+    block->instance->OPS_kernels[4].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[4].transfer += ops_compute_transfer(dim, start, end, &arg1);
   }
 }
-#undef OPS_ACC0
-#undef OPS_ACC1
 
 
 #ifdef OPS_LAZY
 void ops_par_loop_apply_stencil(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1, ops_arg arg2) {
-  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)malloc(sizeof(ops_kernel_descriptor));
+  ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
-  desc->device = 1;
+  desc->device = 0;
   desc->index = 4;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 4;
@@ -153,15 +150,15 @@ void ops_par_loop_apply_stencil(char const *name, ops_block block, int dim, int*
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 3;
-  desc->args = (ops_arg*)malloc(3*sizeof(ops_arg));
+  desc->args = (ops_arg*)ops_malloc(3*sizeof(ops_arg));
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg1.dat->index;
   desc->args[2] = arg2;
   desc->function = ops_par_loop_apply_stencil_execute;
-  if (OPS_diags > 1) {
-    ops_timing_realloc(4,"apply_stencil");
+  if (block->instance->OPS_diags > 1) {
+    ops_timing_realloc(block->instance,4,"apply_stencil");
   }
   ops_enqueue_kernel(desc);
 }

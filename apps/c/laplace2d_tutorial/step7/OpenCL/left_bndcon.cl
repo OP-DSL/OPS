@@ -10,6 +10,7 @@
 #pragma OPENCL EXTENSION cl_khr_fp64:enable
 
 #define OPS_2D
+#define OPS_API 2
 #define OPS_NO_GLOBALS
 #include "ops_macros.h"
 #include "ops_opencl_reduction.h"
@@ -29,23 +30,11 @@
 #define OPS_INC 3
 #define OPS_MIN 4
 #define OPS_MAX 5
-#define ZERO_double 0.0;
-#define INFINITY_double INFINITY;
-#define ZERO_float 0.0f;
-#define INFINITY_float INFINITY;
-#define ZERO_int 0;
-#define INFINITY_int INFINITY;
-#define ZERO_uint 0;
-#define INFINITY_uint INFINITY;
-#define ZERO_ll 0;
-#define INFINITY_ll INFINITY;
-#define ZERO_ull 0;
-#define INFINITY_ull INFINITY;
-#define ZERO_bool 0;
 
 //user function
 
-void left_bndcon(ptr_double A, const int *idx, const int jmax, const double pi)
+void left_bndcon(ptr_double A,
+  const int *idx, const int jmax, const double pi)
 {
   OPS_ACCS(A, 0,0) = sin(pi * (idx[1]+1) / (jmax+1));
 }

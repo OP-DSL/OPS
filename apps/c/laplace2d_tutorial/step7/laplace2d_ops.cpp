@@ -11,7 +11,7 @@ int imax, jmax;
 double pi  = 2.0 * asin(1.0);
 
 #define OPS_2D
-#include  "ops_lib_cpp.h"
+#include  "ops_lib_core.h"
 
 //
 // ops_par_loop declarations

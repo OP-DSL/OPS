@@ -26,6 +26,7 @@ CUDART=-lcudart
 OUT := -o 
 AR := ar -r 
 OPS_LIB_SEQ=-lops_seq
+OPS_LIB_SYCL=-lops_sycl
 OPS_LIB_CUDA=-lops_cuda
 OPS_LIB_HIP=-lops_hip
 OPS_LIB_MPI=-lops_mpi
@@ -63,8 +64,20 @@ else
 ifeq ($(OPS_COMPILER),xlp8)
 	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.xlp8
 else
+ifeq ($(OPS_COMPILER),sycl)
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.sycl
+else
+ifeq ($(OPS_COMPILER),intel-sycl)
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.intel-sycl
+else
+ifeq ($(OPS_COMPILER),hipsycl)
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hipsycl
+else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
+endif
+endif
 endif
 endif
 endif

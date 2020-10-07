@@ -17,6 +17,10 @@ endif
 
 TARGETS = $(APP)_dev_seq $(APP)_dev_mpi $(APP)_mpi $(APP)_mpi_openmp $(APP)_openmp $(APP)_seq $(APP)_mpi_inline $(APP)_tiled $(APP)_mpi_tiled $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled $(APP)_opencl $(APP)_mpi_opencl
 
+ifdef SYCLCXX
+TARGETS += $(APP)_sycl
+endif
+
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += $(APP)_openacc $(APP)_mpi_openacc
 else
@@ -78,7 +82,14 @@ $(APP)_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libo
 $(APP)_mpi_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi.a $(OPS_FILES_GEN) \
                 $(HEADERS)
 		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -DOPS_MPI -D$(OPS_COMPILER) -DOPS_LAZY -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(HDF5_LIB_MPI) $(OPS_LIB_MPI) -o $(APP)_mpi_tiled
- 
+
+
+#
+# SYCL version
+#
+$(APP)_sycl: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_sycl.a $(OPS_FILES_GEN) $(HEADERS)
+	$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./SYCL/$(SEQ_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SYCL) -o $(APP)_sycl
+
 #
 # CUDA version
 #

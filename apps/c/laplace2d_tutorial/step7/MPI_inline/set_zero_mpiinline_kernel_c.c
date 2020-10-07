@@ -16,8 +16,9 @@ void set_zero_c_wrapper(
   for ( int n_y=0; n_y<y_size; n_y++ ){
     for ( int n_x=0; n_x<x_size; n_x++ ){
       ptr_double A = { A_p + n_x*1 + n_y * xdim0_set_zero*1, xdim0_set_zero};
+      
+  OPS_ACC(A, 0,0) = 0.0;
+
     }
   }
 }
-#undef OPS_ACC0
-

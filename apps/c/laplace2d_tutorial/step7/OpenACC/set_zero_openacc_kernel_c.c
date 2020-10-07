@@ -7,6 +7,7 @@
 int xdim0_set_zero;
 
 //user function
+#pragma acc routine
 inline 
 void set_zero(ptr_double A) {
   OPS_ACC(A, 0,0) = 0.0;
