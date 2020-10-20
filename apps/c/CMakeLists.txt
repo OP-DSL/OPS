@@ -112,9 +112,7 @@ macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
     include(FindCUDA)
 
     set(DO_MPI ${MPI_FOUND})
-    #set(DO_MPI NO)
-    #set(DO_SEQ YES)
-    set(DO_SEQ NO)
+    set(DO_SEQ YES)
     if(${ARGC} GREATER 2)
         set(UseHDF5 ${ARGV2})
         if (UseHDF5)
@@ -149,7 +147,7 @@ macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
 
 
         if (TARGET ops_cuda)
-            add_executable(${Name}_cuda
+            cuda_add_executable(${Name}_cuda
                 ${OPS_${Name}_BASEOUTPUT}
                 ${OPS_${Name}_CUDA_KERNELS}
                 ${${EXTRA_SRC}}
@@ -159,8 +157,10 @@ macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
                     ${CMAKE_CURRENT_SOURCE_DIR}
                     ${OPS_C_INCLUDE_DIR}
                     ${LIBTRID_PATH}/include
+                    ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
                     )
-            target_link_libraries(${Name}_cuda ops_cuda -L${LIBTRID_PATH}/lib -ltridcuda)
+            target_link_libraries(${Name}_cuda ops_cuda ops_trid_cuda -L${LIBTRID_PATH}/lib -ltridcuda)
+            cuda_add_cublas_to_target(${Name}_cuda)
             if (UseHDF5)
                 target_link_libraries(${Name}_cuda ops_hdf5_seq)
             endif()
@@ -169,12 +169,12 @@ macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
 
 
     if (DO_MPI)
-        add_definitions(-DOPS_MPI)
         add_executable(${Name}_mpi
             ${OPS_${Name}_BASEOUTPUT}
             ${OPS_${Name}_MPI_OpenMP_KERNELS}
             ${${EXTRA_SRC}}
             )
+        target_compile_definitions(${Name}_mpi PUBLIC -DOPS_MPI)
         target_include_directories(${Name}_mpi
             PRIVATE
                 ${CMAKE_CURRENT_SOURCE_DIR}
@@ -187,7 +187,6 @@ macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
         endif()
 
         if (TARGET ops_mpi_cuda)
-          add_definitions(-DOPS_MPI)
           find_package(MPI REQUIRED)
           find_package(OpenMP REQUIRED)
           cuda_include_directories(SYSTEM ${MPI_INCLUDE_PATH})
@@ -200,6 +199,7 @@ macro(BUILD_OPS_C_TRID_SAMPLE Name InputSource)
               ${OPS_${Name}_CUDA_KERNELS}
               ${${EXTRA_SRC}}
               )
+          target_compile_definitions(${Name}_cuda_mpi PUBLIC -DOPS_MPI)
           target_include_directories(${Name}_cuda_mpi
               PRIVATE
                   ${CMAKE_CURRENT_SOURCE_DIR}
