@@ -46,7 +46,10 @@
 // OPS header file
 #define OPS_3D
 #include "ops_seq.h"
+
+#ifdef OPS_MPI
 #include "ops_mpi_core.h"
+#endif
 
 #include "data.h"
 
@@ -117,6 +120,7 @@ void dump_and_exit(FP *data, const int nx, const int ny, const int nz,
   if (iteration == max_iteration) exit(0);
 }
 
+#ifdef OPS_MPI
 void ignore_mpi_halo_rms(ops_dat dat) {
   double sum = 0.0;
 
@@ -150,6 +154,7 @@ void ignore_mpi_halo_rms(ops_dat dat) {
 
   ops_printf("Sum: %.15g\n", global_sum);
 }
+#endif
 
 // declare defaults options
 int nx;
@@ -206,11 +211,11 @@ int main(int argc, char *argv[]) {
 
   // declare data on blocks
   /*int d_p[3] = {0, 0,
-                0};  // max halo depths for the dat in the possitive direction
+                0};  // max halo depths for the dat in the positive direction
   int d_m[3] = {0, 0,
                 0};  // max halo depths for the dat in the negative direction*/
   int d_p[3] = {1, 1,
-                1};  // max halo depths for the dat in the possitive direction
+                1};  // max halo depths for the dat in the positive direction
   int d_m[3] = {-1, -1,
                 -1};  // max halo depths for the dat in the negative direction*/
   int size[3] = {nx, ny, nz};  // size of the dat -- should be identical to the
@@ -321,7 +326,6 @@ int main(int argc, char *argv[]) {
     /**---- perform tri-diagonal solves in z-direction--**/
     ops_timers(&ct2, &et2);
     ops_tridMultiDimBatch_Inc(3, 2, size, h_az, h_bz, h_cz, h_du, h_u, m, bz);
-    //ops_tridMultiDimBatch(3, 2, size, h_az, h_bz, h_cz, h_du, h_u);
     ops_timers(&ct3, &et3);
     total_z += et3 - et2;
     //ops_printf("Elapsed trid_z (sec): %lf (s)\n", et3 - et2);
@@ -333,14 +337,10 @@ int main(int argc, char *argv[]) {
   /*ops_fetch_block_hdf5_file(heat3D, "adi.h5");
   ops_fetch_dat_hdf5_file(h_u, "adi.h5");*/
 
-  //ldim = nx; // non padded size along x
-  //double *h_to_dump = (double *)malloc(dat_sizes[0] * dat_sizes[1] * dat_sizes[2] * sizeof(double));
-  //ops_dat_fetch_data(h_u, 0, (char *)h_to_dump);
-  // dump the whole raw matrix
-  //dump_data(h_to_dump, nx, ny, nz, ldim, argv[0]);
+#ifdef OPS_MPI
   ignore_mpi_halo_rms(h_du);
   ignore_mpi_halo_rms(h_u);
-  //ignore_mpi_halo_dump_data(h_u, argv[0]);
+#endif
 
   ops_printf("\nTotal Wall time (s): %lf\n", et1 - et0);
   ops_printf("Preproc total time (s): %lf\n", total_preproc);
