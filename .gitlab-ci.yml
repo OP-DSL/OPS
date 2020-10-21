@@ -34,7 +34,6 @@ build:GNU:APP:
     - cd $CI_PROJECT_DIR
     - ls $CI_PROJECT_DIR
     - ls $CI_PROJECT_DIR/opensbli/
-    - ls $CI_PROJECT_DIR/OPS
     - |-
       cd $CI_PROJECT_DIR/opensbli/apps
       echo dir=\$1 > translate.sh
@@ -50,15 +49,15 @@ build:GNU:APP:
       echo "echo \"CreateTempDir()\" >> CMakeLists.txt"  >> translate.sh
       echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
       echo "cd \$CI_PROJECT_DIR/opensbli/apps" >> translate.sh
-      echo "cp \$dir \$CI_PROJECT_DIR/OPS/apps/c -r" >> translate.sh
+      echo "cp \$dir \$CI_PROJECT_DIR/apps/c -r" >> translate.sh
       cat translate.sh
       source translate.sh taylor_green_vortex taylor_green_vortex.py tgv
       echo "add_subdirectory(taylor_green_vortex)" >> $CI_PROJECT_DIR/OPS/apps/c/CMakeLists.txt
       source $CI_PROJECT_DIR/translate.sh channel_flow/laminar_2D laminar_channel.py laminar2d
       echo "add_subdirectory(laminar_2D)" >> $CI_PROJECT_DIR/OPS/apps/c/CMakeLists.txt
-      cd $CI_PROJECT_DIR/OPS
-      ls -l -h $CI_PROJECT_DIR/OPS/apps/c
-      cat $CI_PROJECT_DIR/OPS/apps/c/CMakeLists.txt
+      cd $CI_PROJECT_DIR
+      ls -l -h $CI_PROJECT_DIR/apps/c
+      cat $CI_PROJECT_DIR/apps/c/CMakeLists.txt
     - mkdir appbuild
     - cd appbuild
     - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so
