@@ -31,9 +31,6 @@ build:GNU:APP:
   script:
     - git clone https://github.com/opensbli/opensbli.git
     - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
-    - cd $CI_PROJECT_DIR
-    - ls $CI_PROJECT_DIR
-    - ls $CI_PROJECT_DIR/opensbli/
     - |-
       cd $CI_PROJECT_DIR/opensbli/apps
       echo dir=\$1 > translate.sh
@@ -54,12 +51,10 @@ build:GNU:APP:
       source translate.sh taylor_green_vortex taylor_green_vortex.py tgv
       echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
       echo "add_subdirectory(taylor_green_vortex)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      source translate.sh channel_flow/laminar_2D laminar_channel.py laminar2d
-      echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      echo "add_subdirectory(laminar_2D)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      # source translate.sh channel_flow/laminar_2D laminar_channel.py laminar2d
+      # echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      # echo "add_subdirectory(laminar_2D)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
       cd $CI_PROJECT_DIR
-      ls -l -h $CI_PROJECT_DIR/apps/c
-      cat $CI_PROJECT_DIR/apps/c/CMakeLists.txt
     - mkdir appbuild
     - cd appbuild
     - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so
@@ -78,9 +73,35 @@ test:GNU:
   dependencies:
     - build:GNU:API
   script:
+    - git clone https://github.com/opensbli/opensbli.git
+    - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
+    - |-
+      cd $CI_PROJECT_DIR/opensbli/apps
+      echo dir=\$1 > translate.sh
+      echo pyfile=\$2 >> translate.sh
+      echo "cd \$dir" >> translate.sh
+      echo "python \$pyfile" >> translate.sh
+      echo "head -n-3 opensbli.cpp > tmp.cpp"  >> translate.sh
+      echo "echo \"ops_printf(\\\"PASSED\!\\\\\\\\\\\\n\\\");\" >> tmp.cpp " >> translate.sh
+      echo "tail -n3 opensbli.cpp >> tmp.cpp" >> translate.sh
+      echo "cp tmp.cpp  opensbli.cpp"  >> translate.sh
+      echo "rm tmp.cpp" >> translate.sh
+      echo "echo \"cmake_minimum_required(VERSION 3.17)\" > CMakeLists.txt" >> translate.sh
+      echo "echo \"CreateTempDir()\" >> CMakeLists.txt"  >> translate.sh
+      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
+      echo "cd \$CI_PROJECT_DIR/opensbli/apps" >> translate.sh
+      echo "cp \$dir \$CI_PROJECT_DIR/apps/c -r" >> translate.sh
+      cat translate.sh
+      source translate.sh taylor_green_vortex taylor_green_vortex.py tgv
+      echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      echo "add_subdirectory(taylor_green_vortex)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      # source translate.sh channel_flow/laminar_2D laminar_channel.py laminar2d
+      # echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      # echo "add_subdirectory(laminar_2D)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      cd $CI_PROJECT_DIR
     - mkdir appbuild
     - cd appbuild
-    - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so  -DOPS_APP_TEST=ON  -DGPU_NUMBER=1
+    - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so  -DOPS_APP_TEST=ON  -DGPU_NUMBER=1w
     - make IEEE=1 -j 12
     - make test
   artifacts:
@@ -98,7 +119,7 @@ make-docs:
   script:
     - cd doc && make all clean
   artifacts:
-    expire_in: 2 week
+    expire_in: never
     paths:
       - doc/user.pdf
       - doc/ops/html

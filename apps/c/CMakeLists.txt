@@ -271,15 +271,17 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra GenerateTest)
     target_link_libraries(${Name}_seq ops_seq)
     target_link_libraries(${Name}_seq_dev ops_seq)
     install(TARGETS ${Name}_seq DESTINATION ${APP_INSTALL}/${Name})
-    if ((OPS_APP_TEST) AND (${GenerateTest} STREQUAL "YES"))
-        set(args " ") # here we must have a space to be parsed by the macro
-        set(cmd "$<TARGET_FILE:${Name}_seq>" )
-        add_test(NAME ${Name}_seq
-        COMMAND ${CMAKE_COMMAND} -DCMD=${cmd}  -DARG=${args} -DOPS_INSTALL_PATH=${OPS_INSTALL_PATH}
-        -P ${OPS_APP_SRC}/runtests.cmake
-        WORKING_DIRECTORY "${TMP_SOURCE_DIR}"
-        )
-    endif()
+    # Sequential tests disabled since it is too time consuming for some tests
+    # at this moment
+    # if ((OPS_APP_TEST) AND (${GenerateTest} STREQUAL "YES"))
+    #     set(args " ") # here we must have a space to be parsed by the macro
+    #     set(cmd "$<TARGET_FILE:${Name}_seq>" )
+    #     add_test(NAME ${Name}_seq
+    #     COMMAND ${CMAKE_COMMAND} -DCMD=${cmd}  -DARG=${args} -DOPS_INSTALL_PATH=${OPS_INSTALL_PATH}
+    #     -P ${OPS_APP_SRC}/runtests.cmake
+    #     WORKING_DIRECTORY "${TMP_SOURCE_DIR}"
+    #     )
+    # endif()
     install(TARGETS ${Name}_seq_dev DESTINATION ${APP_INSTALL}/${Name})
 
     if (CUDA)
