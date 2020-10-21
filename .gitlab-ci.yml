@@ -52,9 +52,9 @@ build:GNU:APP:
       echo "cp \$dir \$CI_PROJECT_DIR/apps/c -r" >> translate.sh
       cat translate.sh
       source translate.sh taylor_green_vortex taylor_green_vortex.py tgv
-      echo "add_subdirectory(taylor_green_vortex)" >> $CI_PROJECT_DIR/OPS/apps/c/CMakeLists.txt
+      echo "add_subdirectory(taylor_green_vortex)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
       source $CI_PROJECT_DIR/translate.sh channel_flow/laminar_2D laminar_channel.py laminar2d
-      echo "add_subdirectory(laminar_2D)" >> $CI_PROJECT_DIR/OPS/apps/c/CMakeLists.txt
+      echo "add_subdirectory(laminar_2D)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
       cd $CI_PROJECT_DIR
       ls -l -h $CI_PROJECT_DIR/apps/c
       cat $CI_PROJECT_DIR/apps/c/CMakeLists.txt
