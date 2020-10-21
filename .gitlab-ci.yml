@@ -31,6 +31,8 @@ build:GNU:APP:
   script:
     - git clone https://github.com/opensbli/opensbli.git
     - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
+    - ls $CI_PROJECT_DIR/opensbli/
+    - ls $CI_PROJECT_DIR/opensbli/OPS
     - |-
       cd $CI_PROJECT_DIR/opensbli/apps
       echo dir=\$1 > translate.sh
