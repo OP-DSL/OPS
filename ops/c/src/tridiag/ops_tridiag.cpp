@@ -61,20 +61,12 @@ void ops_tridMultiDimBatch(
     int batch_size
     ) {
 
-  /*if (a->mem != b->mem || b->mem != c->mem || c->mem != d->mem) {
-    throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
-  }*/
-
   for (int i = 0; i < 3; i++) {
     if (a->size[i] != b->size[i] || b->size[i] != c->size[i] ||
         c->size[i] != d->size[i] || d->size[i] != u->size[i]) {
       throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
     }
   }
-
-  int padding[3] = {a->size[0] - a->d_m[0] + a->d_p[0],
-                    a->size[1] - a->d_m[1] + a->d_p[1],
-                    a->size[2] - a->d_m[2] + a->d_p[2]};
 
   int host = OPS_HOST;
   int s3D_000[] = {0, 0, 0};
@@ -85,14 +77,6 @@ void ops_tridMultiDimBatch(
   const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &host);
   double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &host);
   double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
-
-  // Get the starting locations of the pointers (skip the halo padding)
-  // Note d_m are all negative values
-  /*a_ptr = a_ptr - (a->d_m[2] * padding[1] * padding[0]) - (a->d_m[1] * padding[0]) - a->d_m[0];
-  b_ptr = b_ptr - (b->d_m[2] * padding[1] * padding[0]) - (b->d_m[1] * padding[0]) - b->d_m[0];
-  c_ptr = c_ptr - (c->d_m[2] * padding[1] * padding[0]) - (c->d_m[1] * padding[0]) - c->d_m[0];
-  d_ptr = d_ptr - (d->d_m[2] * padding[1] * padding[0]) - (d->d_m[1] * padding[0]) - d->d_m[0];
-  u_ptr = u_ptr - (u->d_m[2] * padding[1] * padding[0]) - (u->d_m[1] * padding[0]) - u->d_m[0];*/
 
   tridDmtsvStridedBatch(a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
                         ndim, solvedim, dims, a->size);
@@ -134,10 +118,6 @@ void ops_tridMultiDimBatch_Inc(
     int batch_size
     ) {
 
-  /*if (a->mem != b->mem || b->mem != c->mem || c->mem != d->mem || d->mem != u->mem) {
-    throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
-  }*/
-
   // check if sizes match
   for (int i = 0; i < 3; i++) {
     if (a->size[i] != b->size[i] || b->size[i] != c->size[i] ||
@@ -145,10 +125,6 @@ void ops_tridMultiDimBatch_Inc(
       throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
     }
   }
-
-  int padding[3] = {a->size[0] - a->d_m[0] + a->d_p[0],
-                    a->size[1] - a->d_m[1] + a->d_p[1],
-                    a->size[2] - a->d_m[2] + a->d_p[2] - 1};
 
   int host = OPS_HOST;
   int s3D_000[] = {0, 0, 0};
@@ -160,16 +136,8 @@ void ops_tridMultiDimBatch_Inc(
   double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &host);
   double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
 
-  // Get the starting locations of the pointers (skip the halo padding)
-  // Note d_m are all negative values
-  /*a_ptr = a_ptr - (a->d_m[2] * padding[1] * padding[0]) - (a->d_m[1] * padding[0]) - a->d_m[0];
-  b_ptr = b_ptr - (b->d_m[2] * padding[1] * padding[0]) - (b->d_m[1] * padding[0]) - b->d_m[0];
-  c_ptr = c_ptr - (c->d_m[2] * padding[1] * padding[0]) - (c->d_m[1] * padding[0]) - c->d_m[0];
-  d_ptr = d_ptr - (d->d_m[2] * padding[1] * padding[0]) - (d->d_m[1] * padding[0]) - d->d_m[0];
-  u_ptr = u_ptr - (u->d_m[2] * padding[1] * padding[0]) - (u->d_m[1] * padding[0]) - u->d_m[0];*/
-
   tridDmtsvStridedBatchInc(a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
-                           ndim, solvedim, dims, padding);
+                           ndim, solvedim, dims, a->size);
 
   ops_dat_release_raw_data(u, 0, OPS_RW);
   ops_dat_release_raw_data(d, 0, OPS_READ);
