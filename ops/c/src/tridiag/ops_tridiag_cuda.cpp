@@ -54,7 +54,9 @@ void ops_tridMultiDimBatch_Inc(
     // A matrices of individual problems
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
-    ops_dat u
+    ops_dat u,
+    int solve_method,
+    int batch_size
     ) {
 
   int opts[3] = {0,0,0}; // indicates different algorithms to use
@@ -79,7 +81,9 @@ void ops_tridMultiDimBatch(
     // A matrices of individual problems
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
-    ops_dat u
+    ops_dat u,
+    int solve_method,
+    int batch_size
     ) {
 
 
@@ -101,4 +105,3 @@ void ops_tridMultiDimBatch(
 void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
   initTridMultiDimBatchSolve(ndim, dims, dims);
 }
-
