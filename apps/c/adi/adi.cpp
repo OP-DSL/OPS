@@ -156,6 +156,61 @@ void ignore_mpi_halo_rms(ops_dat dat) {
 }
 #endif
 
+#ifdef OPS_MPI
+void zero_halo(ops_dat dat) {
+  int host = OPS_HOST;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+  double *ptr = (double *)ops_dat_get_raw_pointer(dat, 0, S3D_000, &host);
+  sub_dat *sd = OPS_sub_dat_list[dat->index];
+  int pads_m[] = {-1 * (dat->d_m[0] + sd->d_im[0]), -1 * (dat->d_m[1] + sd->d_im[1]), -1 * (dat->d_m[2] + sd->d_im[2])};
+  int pads_p[] = {dat->d_p[0] + sd->d_ip[0], dat->d_p[1] + sd->d_ip[1], dat->d_p[2] + sd->d_ip[2]};
+
+  int dims[] = {dat->size[0] - pads_m[0] - pads_p[0],
+                dat->size[1] - pads_m[1] - pads_p[1],
+                dat->size[2] - pads_m[2] - pads_p[2]};
+
+  for(int z = dims[2]; z < dims[2] + pads_p[2]; z++) {
+    for(int y = dims[1]; y < dims[1] + 2*pads_p[1]; y++) {
+      for(int x = dims[0]; x < dims[0] + 2*pads_p[0]; x++) {
+        int offset = z * dat->size[1] * dat->size[0];
+        offset += y * dat->size[0];
+        offset += x;
+        ptr[offset] = 0.0;
+      }
+    }
+  }
+
+  ops_dat_release_raw_data(dat, 0, OPS_WRITE);
+}
+#else
+void zero_halo(ops_dat dat) {
+  int host = OPS_HOST;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+  double *ptr = (double *)ops_dat_get_raw_pointer(dat, 0, S3D_000, &host);
+  int pads_m[] = {-1 * (dat->d_m[0]), -1 * (dat->d_m[1]), -1 * (dat->d_m[2])};
+  int pads_p[] = {dat->d_p[0], dat->d_p[1], dat->d_p[2]};
+
+  int dims[] = {dat->size[0] - pads_m[0] - pads_p[0],
+                dat->size[1] - pads_m[1] - pads_p[1],
+                dat->size[2] - pads_m[2] - pads_p[2]};
+
+  for(int z = dims[2]; z < dims[2] + pads_p[2]; z++) {
+    for(int y = dims[1]; y < dims[1] + pads_p[1]; y++) {
+      for(int x = dims[0]; x < dims[0] + pads_p[0]; x++) {
+        int offset = z * dat->size[1] * dat->size[0];
+        offset += y * dat->size[0];
+        offset += x;
+        ptr[offset] = 0.0;
+      }
+    }
+  }
+
+  ops_dat_release_raw_data(dat, 0, OPS_WRITE);
+}
+#endif
+
 // declare defaults options
 int nx;
 int ny;
@@ -179,9 +234,9 @@ int main(int argc, char *argv[]) {
   opts[2] = 0;
   iter = 10;
   synch = 1;
-  bx = 65536;
-  by = 65536;
-  bx = 65536;
+  bx = 16384;
+  by = 16384;
+  bz = 16384;
   m = 0;
 
   // constants
@@ -210,14 +265,14 @@ int main(int argc, char *argv[]) {
   ops_block heat3D = ops_decl_block(3, "Heat3D");
 
   // declare data on blocks
-  /*int d_p[3] = {0, 0,
-                0};  // max halo depths for the dat in the positive direction
-  int d_m[3] = {0, 0,
-                0};  // max halo depths for the dat in the negative direction*/
   int d_p[3] = {1, 1,
                 1};  // max halo depths for the dat in the positive direction
   int d_m[3] = {-1, -1,
                 -1};  // max halo depths for the dat in the negative direction*/
+  /*int d_p[3] = {4, 4,
+                4};  // max halo depths for the dat in the positive direction
+  int d_m[3] = {-4, -4,
+                -4};  // max halo depths for the dat in the negative direction*/
   int size[3] = {nx, ny, nz};  // size of the dat -- should be identical to the
                                // block on which its define on
   int base[3] = {0, 0, 0};
@@ -334,8 +389,8 @@ int main(int argc, char *argv[]) {
   ops_timers(&ct1, &et1);
 
   /**---- dump solution to HDF5 file with OPS-**/
-  /*ops_fetch_block_hdf5_file(heat3D, "adi.h5");
-  ops_fetch_dat_hdf5_file(h_u, "adi.h5");*/
+  ops_fetch_block_hdf5_file(heat3D, "adi.h5");
+  ops_fetch_dat_hdf5_file(h_u, "adi.h5");
 
 #ifdef OPS_MPI
   ignore_mpi_halo_rms(h_du);
