@@ -395,6 +395,10 @@ int main(int argc, char *argv[]) {
 #ifdef OPS_MPI
   ignore_mpi_halo_rms(h_du);
   ignore_mpi_halo_rms(h_u);
+#else
+  ldim = nx; // non padded size along x
+  // dump the whole raw matrix
+  dump_data((double *)(h_u->data), nx, ny, nz, ldim, argv[0]);
 #endif
 
   ops_printf("\nTotal Wall time (s): %lf\n", et1 - et0);
