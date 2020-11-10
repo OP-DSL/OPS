@@ -87,8 +87,9 @@ $(APP)_mpi_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/
 #
 # SYCL version
 #
+SYCL_KERNELS = $(MAIN_SRC)_sycl_kernels.cpp
 $(APP)_sycl: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_sycl.a $(OPS_FILES_GEN) $(HEADERS)
-	$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./SYCL/$(SEQ_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SYCL) -o $(APP)_sycl
+	$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./SYCL/$(SYCL_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SYCL) -o $(APP)_sycl
 
 #
 # CUDA version

@@ -57,15 +57,18 @@
  * @param temp  Local memory used to store temporary values.
  * @param item_id The corresponding sycl item.
  */
-template <ops_access reduction, class T, class out_acc, class local_acc, class item_type>
-void ops_reduction_sycl(out_acc dat_g, int offset, T dat_l, local_acc temp, item_type &item_id) {
+template <ops_access reduction, class T, class item_type>
+void ops_reduction_sycl(T *dat_g, T dat_l, T* temp, item_type &item_id, int group_size) {
 
   item_id.barrier(cl::sycl::access::fence_space::local_space); /* important to finish all previous activity */
 
   size_t linear_id = item_id.get_local_linear_id();
   temp[linear_id] = dat_l;
+  item_id.barrier(cl::sycl::access::fence_space::local_space); /* important to finish all previous activity */
 
-  for (size_t d = item_id.get_local_range()[0] / 2; d > 0; d >>= 1) {
+  int d0 = 1 << (31 - cl::sycl::clz(((int)(group_size) - 1)));
+
+  for (size_t d = d0; d > 0; d >>= 1) {
     if (linear_id < d) {
       T dat_t = temp[linear_id + d];
 
@@ -90,15 +93,15 @@ void ops_reduction_sycl(out_acc dat_g, int offset, T dat_l, local_acc temp, item
   if (linear_id == 0) {
     switch (reduction) {
       case OPS_INC:
-        dat_g[offset] += dat_l;
+        dat_g[0] += dat_l;
         break;
       case OPS_MIN:
-        if (dat_l < dat_g[offset])
-          dat_g[offset] = dat_l;
+        if (dat_l < dat_g[0])
+          dat_g[0] = dat_l;
         break;
       case OPS_MAX:
-        if (dat_l > dat_g[offset])
-          dat_g[offset] = dat_l;
+        if (dat_l > dat_g[0])
+          dat_g[0] = dat_l;
         break;
     }
   }

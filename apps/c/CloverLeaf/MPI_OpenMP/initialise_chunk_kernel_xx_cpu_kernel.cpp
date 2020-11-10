@@ -51,19 +51,19 @@ void ops_par_loop_initialise_chunk_kernel_xx_execute(ops_kernel_descriptor *desc
   if (compute_ranges(args, 2,block, range, start, end, arg_idx) < 0) return;
   #endif
 
-#if defined(OPS_MPI)
-#if defined(OPS_LAZY)
+  #if defined(OPS_MPI)
+  #if defined(OPS_LAZY)
   sub_block_list sb = OPS_sub_block_list[block->index];
   arg_idx[0] = sb->decomp_disp[0];
   arg_idx[1] = sb->decomp_disp[1];
-#else
+  #else
   arg_idx[0] -= start[0];
   arg_idx[1] -= start[1];
-#endif
-#else  // OPS_MPI
+  #endif
+  #else //OPS_MPI
   arg_idx[0] = 0;
   arg_idx[1] = 0;
-#endif // OPS_MPI
+  #endif //OPS_MPI
 
   //initialize global variable with the dimension of dats
   int xdim0_initialise_chunk_kernel_xx = args[0].dat->size[0];
@@ -142,7 +142,7 @@ void ops_par_loop_initialise_chunk_kernel_xx(char const *name, ops_block block, 
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 2;
-  desc->args = (ops_arg *)ops_malloc(2 * sizeof(ops_arg));
+  desc->args = (ops_arg*)ops_malloc(2*sizeof(ops_arg));
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;

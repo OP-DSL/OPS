@@ -2,10 +2,10 @@ CC    := gcc
 CXX   := g++
 ifdef DEBUG
 	CCFLAGS   := -O0 -std=c99 -g
-	CXXFLAGS   := -O0 -g -std=c++11
+	CXXFLAGS   := -O0 -g -std=c++14
 else
 	CCFLAGS   := -O3 -std=c99 
-	CXXFLAGS  := -O3 -std=c++11
+	CXXFLAGS  := -O3 -std=c++14
 endif
 OMPFLAGS := -fopenmp
 ifdef THREADED

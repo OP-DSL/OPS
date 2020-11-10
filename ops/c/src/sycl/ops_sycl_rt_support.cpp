@@ -54,11 +54,11 @@ void syclDeviceInit(OPS_instance *instance, const int argc,
   int OPS_sycl_device = 3;
   for (int i = 0; i < argc; ++i) {
     if (strncmp(argv[i], "OPS_SYCL_DEVICE=", 16) == 0) {
-      if (strcmp(argv[i] + strlen("SYCL_DEVICE="), "host") == 0)
+      if (strcmp(argv[i] + strlen("OPS_SYCL_DEVICE="), "host") == 0)
         OPS_sycl_device = 0;
-      else if (strcmp(argv[i] + strlen("SYCL_DEVICE="), "cpu") == 0)
+      else if (strcmp(argv[i] + strlen("OPS_SYCL_DEVICE="), "cpu") == 0)
         OPS_sycl_device = 1;
-      else if (strcmp(argv[i] + strlen("SYCL_DEVICE="), "gpu") == 0)
+      else if (strcmp(argv[i] + strlen("OPS_SYCL_DEVICE="), "gpu") == 0)
         OPS_sycl_device = 2;
       break;
     }
@@ -85,6 +85,7 @@ void syclDeviceInit(OPS_instance *instance, const int argc,
   }
 
   instance->OPS_hybrid_gpu = 1;
+  instance->ostream() << "Running on " << instance->sycl_instance->queue->get_device().get_info<cl::sycl::info::device::name>() << "\n";
 }
 
 void *ops_sycl_register_const(void *old_p, void *new_p) {
@@ -148,7 +149,7 @@ void ops_cpHostToDevice(OPS_instance *instance, void **data_d, void **data_h,
 }
 
 void ops_download_dat(ops_dat dat) {
-  ops_sycl_memcpyHostToDevice(
+  ops_sycl_memcpyDeviceToHost(
       dat->block->instance,
       static_cast<cl::sycl::buffer<char, 1> *>((void*)dat->data_d), dat->data,
       dat->mem);

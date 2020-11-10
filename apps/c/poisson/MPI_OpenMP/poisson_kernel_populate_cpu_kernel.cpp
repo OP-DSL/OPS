@@ -174,13 +174,13 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 6;
-  desc->args = (ops_arg *)ops_malloc(6 * sizeof(ops_arg));
+  desc->args = (ops_arg*)ops_malloc(6*sizeof(ops_arg));
   desc->args[0] = arg0;
-  char *tmp = (char *)ops_malloc(1 * sizeof(int));
+  char *tmp = (char*)ops_malloc(1*sizeof(int));
   memcpy(tmp, arg0.data,1*sizeof(int));
   desc->args[0].data = tmp;
   desc->args[1] = arg1;
-  tmp = (char *)ops_malloc(1 * sizeof(int));
+  tmp = (char*)ops_malloc(1*sizeof(int));
   memcpy(tmp, arg1.data,1*sizeof(int));
   desc->args[1].data = tmp;
   desc->args[2] = arg2;

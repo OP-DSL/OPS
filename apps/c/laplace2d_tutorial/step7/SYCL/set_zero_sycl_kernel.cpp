@@ -57,16 +57,15 @@ void ops_par_loop_set_zero_execute(ops_kernel_descriptor *desc) {
   int xdim0_set_zero = args[0].dat->size[0];
 
   //set up initial pointers and exchange halos if necessary
-  int base0 = args[0].dat->base_offset;
-  double * __restrict__ A_p = (double *)(args[0].data + base0);
+  int base0 = args[0].dat->base_offset/sizeof(double);
+  cl::sycl::buffer<double,1> A_p = static_cast<cl::sycl::buffer<char,1> *>((void*)args[0].data_d)->reinterpret<double,1>(cl::sycl::range<1>(args[0].dat->mem/sizeof(double)));
 
 
 
   #ifndef OPS_LAZY
   //Halo Exchanges
-  ops_H_D_exchanges_host(args, 1);
+  ops_H_D_exchanges_device(args, 1);
   ops_halo_exchanges(args,1,range);
-  ops_H_D_exchanges_host(args, 1);
   #endif
 
   if (block->instance->OPS_diags > 1) {
@@ -74,31 +73,39 @@ void ops_par_loop_set_zero_execute(ops_kernel_descriptor *desc) {
     block->instance->OPS_kernels[1].mpi_time += __t1-__t2;
   }
 
-  #pragma omp parallel for
-  for ( int n_y=start[1]; n_y<end[1]; n_y++ ){
-    #ifdef __INTEL_COMPILER
-    #pragma loop_count(10000)
-    #pragma omp simd
-    #elif defined(__clang__)
-    #pragma clang loop vectorize(assume_safety)
-    #elif defined(__GNUC__)
-    #pragma GCC ivdep
-    #else
-    #pragma simd
-    #endif
-    for ( int n_x=start[0]; n_x<end[0]; n_x++ ){
-      ACC<double> A(xdim0_set_zero, A_p + n_x*1 + n_y * xdim0_set_zero*1);
-      
+  int start_0 = start[0];
+  int end_0 = end[0];
+  int start_1 = start[1];
+  int end_1 = end[1];
+  block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {
+    //accessors
+    auto Accessor_A = A_p.get_access<cl::sycl::access::mode::read_write>(cgh);
+
+
+    cgh.parallel_for<class set_zero_kernel>(cl::sycl::nd_range<2>(cl::sycl::range<2>(
+          ((end[0]-start[0]-1)/block->instance->OPS_block_size_x+1)*block->instance->OPS_block_size_x
+         ,((end[1]-start[1]-1)/block->instance->OPS_block_size_y+1)*block->instance->OPS_block_size_y
+           ),cl::sycl::range<2>(block->instance->OPS_block_size_x
+           , block->instance->OPS_block_size_y
+           )), [=](cl::sycl::nd_item<2> item) {
+      cl::sycl::cl_int n_y = item.get_global_id()[1]+start_1;
+      cl::sycl::cl_int n_x = item.get_global_id()[0]+start_0;
+      ACC<double> A(xdim0_set_zero, &Accessor_A[0] + base0 + n_x*1 + n_y * xdim0_set_zero*1);
+      //USER CODE
+      if (n_x < end_0 && n_y < end_1) {
+        
   A(0,0) = 0.0;
 
-    }
-  }
+      }
+    });
+  });
   if (block->instance->OPS_diags > 1) {
+    block->instance->sycl_instance->queue->wait();
     ops_timers_core(&__c2,&__t2);
     block->instance->OPS_kernels[1].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
-  ops_set_dirtybit_host(args, 1);
+  ops_set_dirtybit_device(args, 1);
   ops_set_halo_dirtybit3(&args[0],range);
   #endif
 
@@ -118,7 +125,7 @@ void ops_par_loop_set_zero(char const *name, ops_block block, int dim, int* rang
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
-  desc->device = 0;
+  desc->device = 1;
   desc->index = 1;
   desc->hash = 5381;
   desc->hash = ((desc->hash << 5) + desc->hash) + 1;

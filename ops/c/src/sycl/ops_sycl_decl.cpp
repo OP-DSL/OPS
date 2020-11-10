@@ -106,7 +106,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
       ops_init_zero(dat->data, bytes);
     }
   }
-  ops_cpHostToDevice(block->instance, (void **)&(dat->data_d), (void **)&(data),
+  ops_cpHostToDevice(block->instance, (void **)&(dat->data_d), (void **)&(dat->data),
                      bytes);
 
   // Compute offset in bytes to the base index

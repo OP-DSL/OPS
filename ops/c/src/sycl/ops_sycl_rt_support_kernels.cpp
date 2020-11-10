@@ -186,97 +186,98 @@
 }
 
 void ops_internal_copy_sycl(ops_kernel_descriptor *desc) {
-  int reverse = strcmp(desc->name, "ops_internal_copy_sycl_reverse") == 0;
-  int range[2 * OPS_MAX_DIM] = {0};
-  for (int d = 0; d < desc->dim; d++) {
-    range[2 * d] = desc->range[2 * d];
-    range[2 * d + 1] = desc->range[2 * d + 1];
-  }
-  for (int d = desc->dim; d < OPS_MAX_DIM; d++) {
-    range[2 * d] = 0;
-    range[2 * d + 1] = 1;
-  }
-  ops_dat dat0 = desc->args[0].dat;
-  ops_dat dat1 = desc->args[1].dat;
-  double __t1 = 0.0, __t2 = 0.0, __c1, __c2;
-  if (desc->block->instance->OPS_diags > 1) {
-    desc->block->instance->OPS_kernels[-1].count++;
-    ops_timers_core(&__c1, &__t1);
-  }
-  int s0 = dat0->size[0];
-  int s01 = dat1->size[0];
-#if OPS_MAX_DIM > 1
-  int s1 = dat0->size[1];
-  int s11 = dat1->size[1];
-#if OPS_MAX_DIM > 2
-  int s2 = dat0->size[2];
-  int s21 = dat1->size[2];
-#if OPS_MAX_DIM > 3
-  int s3 = dat0->size[3];
-  int s31 = dat1->size[3];
-#if OPS_MAX_DIM > 4
-  int s4 = dat0->size[4];
-  int s41 = dat1->size[4];
-#endif
-#endif
-#endif
-#endif
-  auto *dat0_buf = static_cast<cl::sycl::buffer<char, 1> *>((void*)dat0->data_d);
-  auto *dat1_buf = static_cast<cl::sycl::buffer<char, 1> *>((void*)dat1->data_d);
-  assert(false && "implement deep copy for not whole copies");
-  if (!reverse) {
-#ifdef SYCL_COPY
-    desc->block->instance->sycl_instance->queue->submit(
-        [&](cl::sycl::handler &cgh) {
-          auto acc0 =
-              (*dat0_buf).template get_access<cl::sycl::access::mode::read>(
-                  cgh);
-          auto acc1 =
-              (*dat1_buf).template get_access<cl::sycl::access::mode::write>(
-                  cgh);
-          cgh.copy(acc0, acc1);
-        });
-    desc->block->instance->sycl_instance->queue->wait();
-#else
-    auto HostAccessor0 = (*dat0_buf).get_access<cl::sycl::access::mode::read>();
-    auto HostAccessor1 =
-        (*dat1_buf).get_access<cl::sycl::access::mode::write>();
-    for (size_t i = 0; i < dat0->mem; i++)
-      HostAccessor1[i] = HostAccessor0[i];
-#endif
-  } else {
-#ifdef SYCL_COPY
-    desc->block->instance->sycl_instance->queue->submit(
-        [&](cl::sycl::handler &cgh) {
-          auto acc0 =
-              (*dat0_buf).template get_access<cl::sycl::access::mode::write>(
-                  cgh);
-          auto acc1 =
-              (*dat1_buf).template get_access<cl::sycl::access::mode::read>(
-                  cgh);
-          cgh.copy(acc1, acc0);
-        });
-    desc->block->instance->sycl_instance->queue->wait();
-#else
-    auto HostAccessor0 =
-        (*dat0_buf).get_access<cl::sycl::access::mode::write>();
-    auto HostAccessor1 = (*dat1_buf).get_access<cl::sycl::access::mode::read>();
-    for (size_t i = 0; i < dat0->mem; i++)
-      HostAccessor0[i] = HostAccessor1[i];
-#endif
-  }
-  if (dat0->block->instance->OPS_diags > 1) {
-    ops_timers_core(&__c2, &__t2);
-    int start[OPS_MAX_DIM];
-    int end[OPS_MAX_DIM];
-    for (int n = 0; n < desc->dim; n++) {
-      start[n] = range[2 * n];
-      end[n] = range[2 * n + 1];
-    }
-    dat0->block->instance->OPS_kernels[-1].time += __t2 - __t1;
-    dat0->block->instance->OPS_kernels[-1].transfer +=
-        ops_compute_transfer(desc->dim, start, end, &desc->args[0]);
-    dat0->block->instance->OPS_kernels[-1].transfer +=
-        ops_compute_transfer(desc->dim, start, end, &desc->args[1]);
-  }
+  throw OPSException(OPS_INTERNAL_ERROR, "Error: internal copy for SYCL unimplemented");
+//   int reverse = strcmp(desc->name, "ops_internal_copy_sycl_reverse") == 0;
+//   int range[2 * OPS_MAX_DIM] = {0};
+//   for (int d = 0; d < desc->dim; d++) {
+//     range[2 * d] = desc->range[2 * d];
+//     range[2 * d + 1] = desc->range[2 * d + 1];
+//   }
+//   for (int d = desc->dim; d < OPS_MAX_DIM; d++) {
+//     range[2 * d] = 0;
+//     range[2 * d + 1] = 1;
+//   }
+//   ops_dat dat0 = desc->args[0].dat;
+//   ops_dat dat1 = desc->args[1].dat;
+//   double __t1 = 0.0, __t2 = 0.0, __c1, __c2;
+//   if (desc->block->instance->OPS_diags > 1) {
+//     desc->block->instance->OPS_kernels[-1].count++;
+//     ops_timers_core(&__c1, &__t1);
+//   }
+//   int s0 = dat0->size[0];
+//   int s01 = dat1->size[0];
+// #if OPS_MAX_DIM > 1
+//   int s1 = dat0->size[1];
+//   int s11 = dat1->size[1];
+// #if OPS_MAX_DIM > 2
+//   int s2 = dat0->size[2];
+//   int s21 = dat1->size[2];
+// #if OPS_MAX_DIM > 3
+//   int s3 = dat0->size[3];
+//   int s31 = dat1->size[3];
+// #if OPS_MAX_DIM > 4
+//   int s4 = dat0->size[4];
+//   int s41 = dat1->size[4];
+// #endif
+// #endif
+// #endif
+// #endif
+//   auto *dat0_buf = static_cast<cl::sycl::buffer<char, 1> *>((void*)dat0->data_d);
+//   auto *dat1_buf = static_cast<cl::sycl::buffer<char, 1> *>((void*)dat1->data_d);
+//   assert(false && "implement deep copy for not whole copies");
+//   if (!reverse) {
+// #ifdef SYCL_COPY
+//     desc->block->instance->sycl_instance->queue->submit(
+//         [&](cl::sycl::handler &cgh) {
+//           auto acc0 =
+//               (*dat0_buf).template get_access<cl::sycl::access::mode::read>(
+//                   cgh);
+//           auto acc1 =
+//               (*dat1_buf).template get_access<cl::sycl::access::mode::write>(
+//                   cgh);
+//           cgh.copy(acc0, acc1);
+//         });
+//     desc->block->instance->sycl_instance->queue->wait();
+// #else
+//     auto HostAccessor0 = (*dat0_buf).get_access<cl::sycl::access::mode::read>();
+//     auto HostAccessor1 =
+//         (*dat1_buf).get_access<cl::sycl::access::mode::write>();
+//     for (size_t i = 0; i < dat0->mem; i++)
+//       HostAccessor1[i] = HostAccessor0[i];
+// #endif
+//   } else {
+// #ifdef SYCL_COPY
+//     desc->block->instance->sycl_instance->queue->submit(
+//         [&](cl::sycl::handler &cgh) {
+//           auto acc0 =
+//               (*dat0_buf).template get_access<cl::sycl::access::mode::write>(
+//                   cgh);
+//           auto acc1 =
+//               (*dat1_buf).template get_access<cl::sycl::access::mode::read>(
+//                   cgh);
+//           cgh.copy(acc1, acc0);
+//         });
+//     desc->block->instance->sycl_instance->queue->wait();
+// #else
+//     auto HostAccessor0 =
+//         (*dat0_buf).get_access<cl::sycl::access::mode::write>();
+//     auto HostAccessor1 = (*dat1_buf).get_access<cl::sycl::access::mode::read>();
+//     for (size_t i = 0; i < dat0->mem; i++)
+//       HostAccessor0[i] = HostAccessor1[i];
+// #endif
+//   }
+//   if (dat0->block->instance->OPS_diags > 1) {
+//     ops_timers_core(&__c2, &__t2);
+//     int start[OPS_MAX_DIM];
+//     int end[OPS_MAX_DIM];
+//     for (int n = 0; n < desc->dim; n++) {
+//       start[n] = range[2 * n];
+//       end[n] = range[2 * n + 1];
+//     }
+//     dat0->block->instance->OPS_kernels[-1].time += __t2 - __t1;
+//     dat0->block->instance->OPS_kernels[-1].transfer +=
+//         ops_compute_transfer(desc->dim, start, end, &desc->args[0]);
+//     dat0->block->instance->OPS_kernels[-1].transfer +=
+//         ops_compute_transfer(desc->dim, start, end, &desc->args[1]);
+//   }
 }
