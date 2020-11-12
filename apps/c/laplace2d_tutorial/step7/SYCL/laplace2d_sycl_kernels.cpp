@@ -23,15 +23,27 @@ void ops_init_backend() {}
 
 void ops_decl_const_char(int dim, char const * type, int size, char * dat, char const * name ) {
   if (!strcmp(name,"imax")) {
-    imax_p = static_cast<cl::sycl::buffer<int,1>*>(ops_sycl_register_const((void*)imax_p, (void*)new cl::sycl::buffer<int,1>((int*)dat,cl::sycl::range<1>(dim))));
+    if (imax_p == nullptr) imax_p = new cl::sycl::buffer<int,1>(cl::sycl::range<1>(dim));
+    auto accessor = (*imax_p).get_access<cl::sycl::access::mode::write>();
+    for ( int d=0; d<dim; d++ ){
+      accessor[d] = ((int*)dat)[d];
+    }
   }
   else
   if (!strcmp(name,"jmax")) {
-    jmax_p = static_cast<cl::sycl::buffer<int,1>*>(ops_sycl_register_const((void*)jmax_p, (void*)new cl::sycl::buffer<int,1>((int*)dat,cl::sycl::range<1>(dim))));
+    if (jmax_p == nullptr) jmax_p = new cl::sycl::buffer<int,1>(cl::sycl::range<1>(dim));
+    auto accessor = (*jmax_p).get_access<cl::sycl::access::mode::write>();
+    for ( int d=0; d<dim; d++ ){
+      accessor[d] = ((int*)dat)[d];
+    }
   }
   else
   if (!strcmp(name,"pi")) {
-    pi_p = static_cast<cl::sycl::buffer<double,1>*>(ops_sycl_register_const((void*)pi_p, (void*)new cl::sycl::buffer<double,1>((double*)dat,cl::sycl::range<1>(dim))));
+    if (pi_p == nullptr) pi_p = new cl::sycl::buffer<double,1>(cl::sycl::range<1>(dim));
+    auto accessor = (*pi_p).get_access<cl::sycl::access::mode::write>();
+    for ( int d=0; d<dim; d++ ){
+      accessor[d] = ((double*)dat)[d];
+    }
   }
   else
   {

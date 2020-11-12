@@ -6,10 +6,10 @@
 
 // host stub function
 #ifndef OPS_LAZY
-void ops_par_loop_right_bndcon(char const *name, ops_block block, int dim, int* range,
+void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
 #else
-void ops_par_loop_right_bndcon_execute(ops_kernel_descriptor *desc) {
+void ops_par_loop_initialise_chunk_kernel_zz_execute(ops_kernel_descriptor *desc) {
   ops_block block = desc->block;
   int dim = desc->dim;
   int *range = desc->range;
@@ -25,26 +25,26 @@ void ops_par_loop_right_bndcon_execute(ops_kernel_descriptor *desc) {
 
 
   #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
-  if (!ops_checkpointing_before(args,2,range,3)) return;
+  if (!ops_checkpointing_before(args,2,range,2)) return;
   #endif
 
   if (block->instance->OPS_diags > 1) {
-    ops_timing_realloc(block->instance,3,"right_bndcon");
-    block->instance->OPS_kernels[3].count++;
+    ops_timing_realloc(block->instance,2,"initialise_chunk_kernel_zz");
+    block->instance->OPS_kernels[2].count++;
     ops_timers_core(&__c2,&__t2);
   }
 
   #ifdef OPS_DEBUG
-  ops_register_args(block->instance, args, "right_bndcon");
+  ops_register_args(block->instance, args, "initialise_chunk_kernel_zz");
   #endif
 
 
   //compute locally allocated range for the sub-block
-  int start[2];
-  int end[2];
-  int arg_idx[2];
+  int start[3];
+  int end[3];
+  int arg_idx[3];
   #if defined(OPS_LAZY) || !defined(OPS_MPI)
-  for ( int n=0; n<2; n++ ){
+  for ( int n=0; n<3; n++ ){
     start[n] = range[2*n];end[n] = range[2*n+1];
   }
   #else
@@ -56,21 +56,25 @@ void ops_par_loop_right_bndcon_execute(ops_kernel_descriptor *desc) {
   sub_block_list sb = OPS_sub_block_list[block->index];
   arg_idx[0] = sb->decomp_disp[0];
   arg_idx[1] = sb->decomp_disp[1];
+  arg_idx[2] = sb->decomp_disp[2];
   #else
   arg_idx[0] -= start[0];
   arg_idx[1] -= start[1];
+  arg_idx[2] -= start[2];
   #endif
   #else //OPS_MPI
   arg_idx[0] = 0;
   arg_idx[1] = 0;
+  arg_idx[2] = 0;
   #endif //OPS_MPI
 
   //initialize global variable with the dimension of dats
-  int xdim0_right_bndcon = args[0].dat->size[0];
+  int xdim0_initialise_chunk_kernel_zz = args[0].dat->size[0];
+  int ydim0_initialise_chunk_kernel_zz = args[0].dat->size[1];
 
   //set up initial pointers and exchange halos if necessary
-  int base0 = args[0].dat->base_offset/sizeof(double);
-  cl::sycl::buffer<double,1> A_p = static_cast<cl::sycl::buffer<char,1> *>((void*)args[0].data_d)->reinterpret<double,1>(cl::sycl::range<1>(args[0].dat->mem/sizeof(double)));
+  int base0 = args[0].dat->base_offset/sizeof(int);
+  cl::sycl::buffer<int,1> zz_p = static_cast<cl::sycl::buffer<char,1> *>((void*)args[0].data_d)->reinterpret<int,1>(cl::sycl::range<1>(args[0].dat->mem/sizeof(int)));
 
 
 
@@ -83,7 +87,7 @@ void ops_par_loop_right_bndcon_execute(ops_kernel_descriptor *desc) {
 
   if (block->instance->OPS_diags > 1) {
     ops_timers_core(&__c1,&__t1);
-    block->instance->OPS_kernels[3].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[2].mpi_time += __t1-__t2;
   }
 
   int start_0 = start[0];
@@ -92,27 +96,31 @@ void ops_par_loop_right_bndcon_execute(ops_kernel_descriptor *desc) {
   int start_1 = start[1];
   int end_1 = end[1];
   int arg_idx_1 = arg_idx[1];
+  int start_2 = start[2];
+  int end_2 = end[2];
+  int arg_idx_2 = arg_idx[2];
   block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {
     //accessors
-    auto Accessor_A = A_p.get_access<cl::sycl::access::mode::read_write>(cgh);
+    auto Accessor_zz = zz_p.get_access<cl::sycl::access::mode::read_write>(cgh);
 
-    auto jmax_sycl = (*jmax_p).template get_access<cl::sycl::access::mode::read>(cgh);
-    auto pi_sycl = (*pi_p).template get_access<cl::sycl::access::mode::read>(cgh);
 
-    cgh.parallel_for<class right_bndcon_kernel>(cl::sycl::nd_range<2>(cl::sycl::range<2>(
+    cgh.parallel_for<class initialise_chunk_kernel_zz_kernel>(cl::sycl::nd_range<3>(cl::sycl::range<3>(
           ((end[0]-start[0]-1)/block->instance->OPS_block_size_x+1)*block->instance->OPS_block_size_x
          ,((end[1]-start[1]-1)/block->instance->OPS_block_size_y+1)*block->instance->OPS_block_size_y
-           ),cl::sycl::range<2>(block->instance->OPS_block_size_x
+         ,((end[2]-start[2]-1)/block->instance->OPS_block_size_z+1)*block->instance->OPS_block_size_z
+           ),cl::sycl::range<3>(block->instance->OPS_block_size_x
            , block->instance->OPS_block_size_y
-           )), [=](cl::sycl::nd_item<2> item) {
+           , block->instance->OPS_block_size_z
+           )), [=](cl::sycl::nd_item<3> item) {
+      cl::sycl::cl_int n_z = item.get_global_id()[2]+start_2;
       cl::sycl::cl_int n_y = item.get_global_id()[1]+start_1;
       cl::sycl::cl_int n_x = item.get_global_id()[0]+start_0;
-      int idx[] = {arg_idx_0+n_x, arg_idx_1+n_y};
-      ACC<double> A(xdim0_right_bndcon, &Accessor_A[0] + base0 + n_x*1 + n_y * xdim0_right_bndcon*1);
+      int idx[] = {arg_idx_0+n_x, arg_idx_1+n_y, arg_idx_2+n_z};
+      ACC<int> zz(xdim0_initialise_chunk_kernel_zz, ydim0_initialise_chunk_kernel_zz, &Accessor_zz[0] + base0 + n_x*0 + n_y * xdim0_initialise_chunk_kernel_zz*0 + n_z * xdim0_initialise_chunk_kernel_zz * ydim0_initialise_chunk_kernel_zz*1);
       //USER CODE
-      if (n_x < end_0 && n_y < end_1) {
+      if (n_x < end_0 && n_y < end_1 && n_z < end_2) {
         
-  A(0,0) = cl::sycl::sin(pi_sycl[0] * (idx[1]+1) / (jmax_sycl[0]+1))*cl::sycl::exp(-pi_sycl[0]);
+  zz(0,0,0) = idx[2]-2;
 
       }
     });
@@ -120,7 +128,7 @@ void ops_par_loop_right_bndcon_execute(ops_kernel_descriptor *desc) {
   if (block->instance->OPS_diags > 1) {
     block->instance->sycl_instance->queue->wait();
     ops_timers_core(&__c2,&__t2);
-    block->instance->OPS_kernels[3].time += __t2-__t1;
+    block->instance->OPS_kernels[2].time += __t2-__t1;
   }
   #ifndef OPS_LAZY
   ops_set_dirtybit_device(args, 2);
@@ -130,24 +138,24 @@ void ops_par_loop_right_bndcon_execute(ops_kernel_descriptor *desc) {
   if (block->instance->OPS_diags > 1) {
     //Update kernel record
     ops_timers_core(&__c1,&__t1);
-    block->instance->OPS_kernels[3].mpi_time += __t1-__t2;
-    block->instance->OPS_kernels[3].transfer += ops_compute_transfer(dim, start, end, &arg0);
+    block->instance->OPS_kernels[2].mpi_time += __t1-__t2;
+    block->instance->OPS_kernels[2].transfer += ops_compute_transfer(dim, start, end, &arg0);
   }
 }
 
 
 #ifdef OPS_LAZY
-void ops_par_loop_right_bndcon(char const *name, ops_block block, int dim, int* range,
+void ops_par_loop_initialise_chunk_kernel_zz(char const *name, ops_block block, int dim, int* range,
  ops_arg arg0, ops_arg arg1) {
   ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
   desc->name = name;
   desc->block = block;
   desc->dim = dim;
   desc->device = 1;
-  desc->index = 3;
+  desc->index = 2;
   desc->hash = 5381;
-  desc->hash = ((desc->hash << 5) + desc->hash) + 3;
-  for ( int i=0; i<4; i++ ){
+  desc->hash = ((desc->hash << 5) + desc->hash) + 2;
+  for ( int i=0; i<6; i++ ){
     desc->range[i] = range[i];
     desc->orig_range[i] = range[i];
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
@@ -157,9 +165,9 @@ void ops_par_loop_right_bndcon(char const *name, ops_block block, int dim, int* 
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
-  desc->function = ops_par_loop_right_bndcon_execute;
+  desc->function = ops_par_loop_initialise_chunk_kernel_zz_execute;
   if (block->instance->OPS_diags > 1) {
-    ops_timing_realloc(block->instance,3,"right_bndcon");
+    ops_timing_realloc(block->instance,2,"initialise_chunk_kernel_zz");
   }
   ops_enqueue_kernel(desc);
 }

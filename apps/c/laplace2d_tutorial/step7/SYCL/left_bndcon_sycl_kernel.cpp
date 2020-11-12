@@ -112,7 +112,7 @@ void ops_par_loop_left_bndcon_execute(ops_kernel_descriptor *desc) {
       //USER CODE
       if (n_x < end_0 && n_y < end_1) {
         
-  A(0,0) = sin(pi_sycl[0] * (idx[1]+1) / (jmax_sycl[0]+1));
+  A(0,0) = cl::sycl::sin(pi_sycl[0] * (idx[1]+1) / (jmax_sycl[0]+1));
 
       }
     });

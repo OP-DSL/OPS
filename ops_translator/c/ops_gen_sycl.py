@@ -241,6 +241,9 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
     kernel_text = re.sub(r'\bfmax\b','cl::sycl::fmax',kernel_text)
     kernel_text = re.sub(r'\bisnan\b','cl::sycl::isnan',kernel_text)
     kernel_text = re.sub(r'\bisinf\b','cl::sycl::isinf',kernel_text)
+    kernel_text = re.sub(r'\bsin\b','cl::sycl::sin',kernel_text)
+    kernel_text = re.sub(r'\bcos\b','cl::sycl::cos',kernel_text)
+    kernel_text = re.sub(r'\bexp\b','cl::sycl::exp',kernel_text)
 
     comm('')
     comm(' host stub function')
@@ -786,7 +789,10 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
   comm(' global constants')
   for nc in range (0,len(consts)):
     code('cl::sycl::buffer<'+consts[nc]['type']+',1> *'+consts[nc]['name'].replace('"','')+'_p=nullptr;')
-    code('extern '+consts[nc]['type']+' '+consts[nc]['name'].replace('"','')+';')
+    if (not consts[nc]['dim'].isdigit()) or int(consts[nc]['dim'])>1:
+      code('extern '+consts[nc]['type']+' *'+consts[nc]['name'].replace('"','')+';')
+    else:
+      code('extern '+consts[nc]['type']+' '+consts[nc]['name'].replace('"','')+';')
   code('')
 
   code('void ops_init_backend() {}')
@@ -796,10 +802,11 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
   config.depth =config.depth + 2
   for nc in range(0,len(consts)):
     IF('!strcmp(name,"'+(consts[nc]['name'].replace('"','')).strip()+'")')
-    code('{0}_p = static_cast<cl::sycl::buffer<{1},1>*>(ops_sycl_register_const('
-        '(void*){0}_p, (void*)new cl::sycl::buffer<{1},1>(({1}*)dat,'
-        'cl::sycl::range<1>(dim))));'.format(consts[nc]['name'].replace('"',''),
-          consts[nc]['type']))
+    code('if ('+consts[nc]['name'].replace('"','')+'_p == nullptr) '+consts[nc]['name'].replace('"','')+'_p = new cl::sycl::buffer<'+consts[nc]['type']+',1>(cl::sycl::range<1>(dim));')
+    code('auto accessor = (*'+consts[nc]['name'].replace('"','')+'_p).get_access<cl::sycl::access::mode::write>();')
+    FOR('d','0','dim')
+    code('accessor[d] = (('+consts[nc]['type']+'*)dat)[d];')
+    ENDFOR()
     ENDIF()
     code('else')
   code('{')
