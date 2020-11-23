@@ -93,7 +93,7 @@ fi
 rm -rf adi_mpi.h5
 
 echo '============> Running MPI - LATENCY HIDING 2 STEP'
-mpirun -n 8 ./adi_mpi -halo 1 -m 2 -bx 65536 -by 65536 -bz 65536 > perf_out
+mpirun -n 8 ./adi_mpi -halo 1 -m 2 -bx 16384 -by 16384 -bz 16384 > perf_out
 mv adi.h5 adi_mpi.h5
 grep "Total Wall time" perf_out
 $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_omp_pad.h5 adi_mpi.h5 > diff_out
@@ -106,7 +106,7 @@ fi
 rm -rf adi_mpi.h5
 
 echo '============> Running MPI - LATENCY HIDING INTERLEAVED'
-mpirun -n 8 ./adi_mpi -halo 1 -m 3 -bx 65536 -by 65536 -bz 65536 > perf_out
+mpirun -n 8 ./adi_mpi -halo 1 -m 3 -bx 16384 -by 16384 -bz 16384 > perf_out
 mv adi.h5 adi_mpi.h5
 grep "Total Wall time" perf_out
 $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_omp_pad.h5 adi_mpi.h5 > diff_out
@@ -132,7 +132,7 @@ fi
 rm -rf adi_cuda_mpi.h5
 
 echo '============> Running MPI+CUDA - LATENCY HIDING 2 STEP'
-mpirun -n 8 ./adi_cuda_mpi -halo 1 -m 2 -bx 65536 -by 65536 -bz 65536 > perf_out
+mpirun -n 8 ./adi_cuda_mpi -halo 1 -m 2 -bx 16384 -by 16384 -bz 16384 > perf_out
 mv adi.h5 adi_cuda_mpi.h5
 grep "Total Wall time" perf_out
 $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_omp_pad.h5 adi_cuda_mpi.h5 > diff_out
@@ -145,7 +145,7 @@ fi
 rm -rf adi_cuda_mpi.h5
 
 echo '============> Running MPI+CUDA - LATENCY HIDING INTERLEAVED'
-mpirun -n 8 ./adi_cuda_mpi -halo 1 -m 3 -bx 65536 -by 65536 -bz 65536 > perf_out
+mpirun -n 8 ./adi_cuda_mpi -halo 1 -m 3 -bx 16384 -by 16384 -bz 16384 > perf_out
 mv adi.h5 adi_cuda_mpi.h5
 grep "Total Wall time" perf_out
 $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_omp_pad.h5 adi_cuda_mpi.h5 > diff_out
@@ -155,4 +155,4 @@ then
 else
     echo "PASSED"
 fi
-rm -rf adi_cuda_mpi.h5
+rm -rf *.h5 *.dat
