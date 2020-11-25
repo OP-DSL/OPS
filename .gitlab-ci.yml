@@ -42,7 +42,7 @@ build:GNU:APP:
       echo "tail -n3 opensbli.cpp >> tmp.cpp" >> translate.sh
       echo "cp tmp.cpp  opensbli.cpp"  >> translate.sh
       echo "rm tmp.cpp" >> translate.sh
-      echo "echo \"cmake_minimum_required(VERSION 3.17)\" > CMakeLists.txt" >> translate.sh
+      echo "echo \"cmake_minimum_required(VERSION 3.18)\" > CMakeLists.txt" >> translate.sh
       echo "echo \"CreateTempDir()\" >> CMakeLists.txt"  >> translate.sh
       echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
       echo "cd \$CI_PROJECT_DIR/opensbli/apps" >> translate.sh
@@ -57,7 +57,7 @@ build:GNU:APP:
       cd $CI_PROJECT_DIR
     - mkdir appbuild
     - cd appbuild
-    - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so
+    - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so
     - make IEEE=1 -j 12
     - make install
   dependencies:
@@ -86,7 +86,7 @@ test:GNU:
       echo "tail -n3 opensbli.cpp >> tmp.cpp" >> translate.sh
       echo "cp tmp.cpp  opensbli.cpp"  >> translate.sh
       echo "rm tmp.cpp" >> translate.sh
-      echo "echo \"cmake_minimum_required(VERSION 3.17)\" > CMakeLists.txt" >> translate.sh
+      echo "echo \"cmake_minimum_required(VERSION 3.18)\" > CMakeLists.txt" >> translate.sh
       echo "echo \"CreateTempDir()\" >> CMakeLists.txt"  >> translate.sh
       echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
       echo "cd \$CI_PROJECT_DIR/opensbli/apps" >> translate.sh
@@ -101,7 +101,7 @@ test:GNU:
       cd $CI_PROJECT_DIR
     - mkdir appbuild
     - cd appbuild
-    - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so  -DOPS_APP_TEST=ON  -DGPU_NUMBER=1w
+    - cmake ../apps/c  -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so  -DOPS_TEST=ON  -DGPU_NUMBER=1
     - make IEEE=1 -j 12
     - make test
   artifacts:
@@ -119,7 +119,7 @@ make-docs:
   script:
     - cd doc && make all clean
   artifacts:
-    expire_in: never
+    expire_in: 4 week
     paths:
       - doc/user.pdf
       - doc/ops/html

@@ -1,22 +1,22 @@
 # To specifiy the cmake version range
-# Currenty work under 3.17.2
-cmake_minimum_required(VERSION 3.17)
+# Currenty work under 3.18
+cmake_minimum_required(VERSION 3.18)
 project(OPS C CXX)
 # if show the compiling process in detail
-option(OPS_VERBOSE_WARNINGS "Turn on verbose warning messages" OFF)
-option(OPS_APP_TEST "Turn on tests for Apps" OFF)
-if (NOT OPS_VERBOSE_WARNINGS)
+option(OPS_VERBOSE_WARNING "Turn on verbose warning messages" OFF)
+option(OPS_TEST "Turn on tests for Apps" OFF)
+if (NOT OPS_VERBOSE_WARNING)
     message("We show concise compiling information by defautl! Use -DOPS_VERBOSE_WARNING=ON to switch on.")
 endif()
-set(CMAKE_VERBOSE_MAKEFILE ${OPS_VERBOSE_WARNINGS})
+set(CMAKE_VERBOSE_MAKEFILE ${OPS_VERBOSE_WARNING})
 # Use the Release mode by default
 if ( NOT CMAKE_BUILD_TYPE )
     message("We choose the Release mode! Please uses -DCMAKE_BUILD_TYPE to change.")
     set(CMAKE_BUILD_TYPE Release)
 endif()
-message("The installation directory is ${CMAKE_INSTALL_PREFIX}! Use -DCMAKE_INSTALL_PREFIX to change")
+message(WARNING "The installation directory is ${CMAKE_INSTALL_PREFIX}! Use -DCMAKE_INSTALL_PREFIX to change")
 
-
+set(HDF5_PREFER_PARALLEL true)
 # Configure Compilers
 # C
 set(CMAKE_C_STANDARD 99)
@@ -63,25 +63,33 @@ find_package(OpenCL QUIET)
 find_package(OpenMP QUIET)
 find_package(Python2 QUIET)
 if (NOT Python2_FOUND)
-  message ("We cannot find Python2 and the Python translator needs Python2!")
+  message (FATAL_ERROR "We cannot find Python2 and the Python translator needs Python2! Please use -DPython2_EXECUTABLE to specify the path.")
 endif ()
 # Configure the "include" dir for compiling
 if (HDF5_FOUND)
     include_directories(${HDF5_INCLUDE_DIRS})
+else()
+    message (WARNING "We cannot find the parallel HDF5 library. The HDF5 IO routines won't work! Please use -DHDF5_ROOT to specify the path!")
 endif ()
 if (MPI_FOUND)
     include_directories(${MPI_C_INCLUDE_DIRS})
     include_directories(${MPI_CXX_INCLUDE_DIRS})
+else()
+    message (WARNING "We cannot find a MPI environment! The MPI codes won't compile!")
 endif ()
 
 if (CUDAToolkit_FOUND)
     include_directories(${CUDAToolkit_INCLUDE_DIRS})
     set(CMAKE_CUDA_COMPILER ${CUDAToolkit_NVCC_EXECUTABLE})
     enable_language(CUDA)
+else()
+    message (WARNING "We cannot find a CUDA kit! The CUDA codes won't compile!")
 endif ()
 
 if (OpenCL_FOUND)
     include_directories(${OpenCL_INCLUDE_DIRS})
+else()
+    message (WARNING "We cannot find a OpenCL kit! The OpenCL codes won't compile!")
 endif ()
 
 
@@ -145,15 +153,8 @@ endif()
 #     add_subdirectory(ops/fortran)
 # endif()
 
-if(BUILD_OPS_APPS)
-    add_subdirectory(apps/c)
-#     if(BUILD_OPS_FORTRAN)
-#         add_subdirectory(apps/fortran)
-#     endif()
-endif()
-
 #prepare ctest
-if (OPS_APP_TEST)
+if (OPS_TEST)
     enable_testing()
     include(ProcessorCount)
     ProcessorCount(CPU_NUMBER)
@@ -161,6 +162,14 @@ if (OPS_APP_TEST)
         set(CPU_NUMBER 12)
     endif()
     if (NOT GPU_NUMBER)
-        message("GPU tests are disabled since the GPU number is not specified!")
+        message(WARNING "GPU tests are disabled! Please use -DGPU_NUMBER to specify!")
     endif()
 endif()
+
+if(BUILD_OPS_APPS)
+    add_subdirectory(apps/c)
+#     if(BUILD_OPS_FORTRAN)
+#         add_subdirectory(apps/fortran)
+#     endif()
+endif()
+

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.18)
 project(OPS_TRANSLATOR)
 #install python translator
 INSTALL(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" DESTINATION bin)
