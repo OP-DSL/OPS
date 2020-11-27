@@ -91,10 +91,14 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
   src_dir = os.path.dirname(master) or '.'
   master_basename = os.path.splitext(os.path.basename(master))
 
-##########################################################################
-#  create new kernel file
-##########################################################################
-
+  ##########################################################################
+  #  create new kernel file
+  ##########################################################################
+  try:
+    os.makedirs('./CUDA')
+  except OSError as e:
+    if e.errno != os.errno.EEXIST:
+      raise
   for nk in range (0,len(kernels)):
     arg_typ  = kernels[nk]['arg_type']
     name  = kernels[nk]['name']
@@ -179,9 +183,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_idx':
         arg_idx = 1
 
-##########################################################################
-#  generate constants and MACROS
-##########################################################################
+    ##########################################################################
+    # generate constants and MACROS
+    ##########################################################################
 
     num_dims = max(1, NDIM -1)
     if NDIM > 1 and soa_set:
@@ -190,9 +194,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code('static int dims_'+name+'_h ['+str(nargs)+']['+str(num_dims)+'] = {0};')
     code('')
 
-##########################################################################
-#  generate header
-##########################################################################
+    ##########################################################################
+    #  generate header
+    ##########################################################################
 
     comm('user function')
 
@@ -243,9 +247,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code('')
 
 
-##########################################################################
-#  generate cuda kernel wrapper function
-##########################################################################
+    ##########################################################################
+    #  generate cuda kernel wrapper function
+    ##########################################################################
 
     code('__global__ void ops_'+name+'(')
     for n in range (0, nargs):
@@ -441,9 +445,9 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code('}')
 
 
-##########################################################################
-#  now host stub
-##########################################################################
+    ##########################################################################
+    #  now host stub
+    ##########################################################################
     code('')
     comm(' host stub function')
     code('#ifndef OPS_LAZY')
@@ -571,16 +575,16 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     condition = condition[:-4]
     IF(condition)
 
-#    for n in range (0, nargs):
-#      if arg_typ[n] == 'ops_arg_dat':
-#        code('cudaMemcpyToSymbol( dims_'+name+'['+str(n)+'][0]'+', &xdim'+str(n)+', sizeof(int) );')
-#        code('dims_'+name+'_h['+str(n)+'][0] = xdim'+str(n)+';')
-#        if NDIM>2 or (NDIM==2 and soa_set):
-#          code('cudaMemcpyToSymbol( dims_'+name+'['+str(n)+'][1]'+', &ydim'+str(n)+', sizeof(int) );')
-#          code('dims_'+name+'_h['+str(n)+'][1] = ydim'+str(n)+';')
-#        if NDIM>3 or (NDIM==3 and soa_set):
-#          code('cudaMemcpyToSymbol( dims_'+name+'['+str(n)+'][2]'+', &zdim'+str(n)+', sizeof(int) );')
-#          code('dims_'+name+'_h['+str(n)+'][2] = zdim'+str(n)+';')
+    #    for n in range (0, nargs):
+    #      if arg_typ[n] == 'ops_arg_dat':
+    #        code('cudaMemcpyToSymbol( dims_'+name+'['+str(n)+'][0]'+', &xdim'+str(n)+', sizeof(int) );')
+    #        code('dims_'+name+'_h['+str(n)+'][0] = xdim'+str(n)+';')
+    #        if NDIM>2 or (NDIM==2 and soa_set):
+    #          code('cudaMemcpyToSymbol( dims_'+name+'['+str(n)+'][1]'+', &ydim'+str(n)+', sizeof(int) );')
+    #          code('dims_'+name+'_h['+str(n)+'][1] = ydim'+str(n)+';')
+    #        if NDIM>3 or (NDIM==3 and soa_set):
+    #          code('cudaMemcpyToSymbol( dims_'+name+'['+str(n)+'][2]'+', &zdim'+str(n)+', sizeof(int) );')
+    #          code('dims_'+name+'_h['+str(n)+'][2] = zdim'+str(n)+';')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('dims_'+name+'_h['+str(n)+'][0] = xdim'+str(n)+';')
@@ -975,25 +979,20 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code('#endif')
 
 
-##########################################################################
-#  output individual kernel file
-##########################################################################
-    try:
-      os.makedirs('./CUDA')
-    except OSError as e:
-      if e.errno != os.errno.EEXIST:
-        raise
+    ##########################################################################
+    #  output individual kernel file
+    ##########################################################################
     fid = open('./CUDA/'+name+'_cuda_kernel.cu','w')
     date = datetime.datetime.now()
     fid.write('//\n// auto-generated by ops.py\n//\n')
     fid.write(config.file_text)
     fid.close()
 
-# end of main kernel call loop
+  # end of main kernel call loop
 
-##########################################################################
-#  output one master kernel file
-##########################################################################
+  ##########################################################################
+  #  output one master kernel file
+  ##########################################################################
 
   config.file_text =''
   config.depth = 0

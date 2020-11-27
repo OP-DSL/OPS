@@ -91,10 +91,15 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
   src_dir = os.path.dirname(master) or '.'
   master_basename = os.path.splitext(os.path.basename(master))
+  try:
+    os.makedirs('./MPI_inline')
+  except OSError as e:
+    if e.errno != os.errno.EEXIST:
+      raise
 
-##########################################################################
-#  create new kernel file
-##########################################################################
+  ##########################################################################
+  #  create new kernel file
+  ##########################################################################
 
   for nk in range (0,len(kernels)):
     arg_typ  = kernels[nk]['arg_type']
@@ -181,9 +186,9 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_idx':
         arg_idx = 1
 
-##########################################################################
-#  generate constants and MACROS
-##########################################################################
+    ##########################################################################
+    #  generate constants and MACROS
+    ##########################################################################
 
     code('')
     for n in range (0, nargs):
@@ -206,7 +211,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
         elif prolong[n] == 1:
           n_x = '(n_x+global_idx[0]%stride_'+str(n)+'[0])/stride_'+str(n)+'[0]'
           n_y = '(n_y+global_idx[1]%stride_'+str(n)+'[1])/stride_'+str(n)+'[1]'
-          n_z = '(n_z+global_idx[2]%stride_'+str(n)+'[2])/stride_'+str(n)+'[2]'            
+          n_z = '(n_z+global_idx[2]%stride_'+str(n)+'[2])/stride_'+str(n)+'[2]'
         else:
           n_x = 'n_x*'+str(stride[NDIM*n])
           n_y = 'n_y*'+str(stride[NDIM*n+1])
@@ -216,9 +221,9 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
         s_u = 'xdim'+str(n)+'_'+name+'*ydim'+str(n)+'_'+name+'*zdim'+str(n)+'_'+name
 
 
-##########################################################################
-#  generate header
-##########################################################################
+    ##########################################################################
+    #  generate header
+    ##########################################################################
 
     comm('user function')
     found = 0
@@ -279,16 +284,16 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     if (NDIM==3):
       itervar = ', const int n_x, const int n_y, const int n_z'
     text = text[0:i]+itervar+text[i:]
-#    code(text)
+    #code(text)
     code('')
 
 
     code('')
     code('')
 
-##########################################################################
-#  generate C wrapper
-##########################################################################
+    ##########################################################################
+    #  generate C wrapper
+    ##########################################################################
     code('void '+name+'_c_wrapper(')
     config.depth = config.depth+2
     for n in range (0, nargs):
@@ -400,7 +405,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
         elif prolong[n] == 1:
           n_x = '(n_x+global_idx[0]%stride_'+str(n)+'[0])/stride_'+str(n)+'[0]'
           n_y = '(n_y+global_idx[1]%stride_'+str(n)+'[1])/stride_'+str(n)+'[1]'
-          n_z = '(n_z+global_idx[2]%stride_'+str(n)+'[2])/stride_'+str(n)+'[2]'            
+          n_z = '(n_z+global_idx[2]%stride_'+str(n)+'[2])/stride_'+str(n)+'[2]'
         else:
           n_x = 'n_x'
           n_y = 'n_y'
@@ -461,9 +466,9 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     config.depth = config.depth-2
     code('}')
 
-##########################################################################
-#  output individual kernel file
-##########################################################################
+    ##########################################################################
+    #  output individual kernel file
+    ##########################################################################
     try:
       os.makedirs('./MPI_inline')
     except OSError as e:
@@ -475,9 +480,9 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     fid.write(config.file_text)
     fid.close()
     config.file_text = ''
-##########################################################################
-#  now host stub
-##########################################################################
+    ##########################################################################
+    #  now host stub
+    ##########################################################################
 
     code('')
     for n in range (0, nargs):
@@ -798,25 +803,20 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     code('}')
 
 
-##########################################################################
-#  output individual kernel file
-##########################################################################
-    try:
-      os.makedirs('./MPI_inline')
-    except OSError as e:
-      if e.errno != os.errno.EEXIST:
-        raise
+    ##########################################################################
+    #  output individual kernel file
+    ##########################################################################
     fid = open('./MPI_inline/'+name+'_mpiinline_kernel.cpp','w')
     date = datetime.datetime.now()
     fid.write('//\n// auto-generated by ops.py\n//\n')
     fid.write(config.file_text)
     fid.close()
 
-# end of main kernel call loop
+  # end of main kernel call loop
 
-##########################################################################
-#  output one master kernel file
-##########################################################################
+  ##########################################################################
+  #  output one master kernel file
+  ##########################################################################
 
   config.file_text =''
   config.depth = 0
@@ -846,15 +846,15 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
   for nc in range (0,len(consts)):
     if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
       code('extern '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
-#      code('#pragma acc declare create('+(str(consts[nc]['name']).replace('"','')).strip()+')')
+      # code('#pragma acc declare create('+(str(consts[nc]['name']).replace('"','')).strip()+')')
     else:
       if consts[nc]['dim'].isdigit() and int(consts[nc]['dim']) > 0:
         num = str(consts[nc]['dim'])
         code('extern '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
-#        code('#pragma acc declare create('+(str(consts[nc]['name']).replace('"','')).strip()+')')
+        # code('#pragma acc declare create('+(str(consts[nc]['name']).replace('"','')).strip()+')')
       else:
         code('extern '+consts[nc]['type']+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
-#        code('#pragma acc declare create('+(str(consts[nc]['name']).replace('"','')).strip()+')')
+        # code('#pragma acc declare create('+(str(consts[nc]['name']).replace('"','')).strip()+')')
 
   fid = open('./MPI_inline/'+master_basename[0]+'_common.h','w')
   fid.write('//\n// auto-generated by ops.py\n//\n')

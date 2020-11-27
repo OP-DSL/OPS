@@ -145,7 +145,7 @@ def self_evaluate_macro_defs(macro_defs):
                 ## This macro definition is numeric
                 continue
 
-            ## If value of key 'k' depends on value of other 
+            ## If value of key 'k' depends on value of other
             ## keys, then substitute in value:
             for k2 in list(macro_defs.keys()):
                 pattern = r'' + '(^|[^a-zA-Z0-9_])' + k2 + '($|[^a-zA-Z0-9_])'
@@ -187,7 +187,7 @@ def evaluate_macro_defs_in_string(macro_defs, string):
             k_pattern = r'' + r'' + '(^|[^a-zA-Z0-9_])' + k + '($|[^a-zA-Z0-9_])'
             m = re.search(k_pattern, resolved_string)
             if m != None:
-                ## "string" contains a reference to macro "k", so substitute 
+                ## "string" contains a reference to macro "k", so substitute
                 ## in its definition:
                 resolved_string_new = re.sub(k_pattern, "\\g<1>"+k_val+"\\g<2>", resolved_string)
                 # print("Performing a substitution of '" + k + "'->'" + k_val + "' into '" + resolved_string + "'' to produce '" + resolved_string_new + "'")
@@ -417,7 +417,7 @@ def main(source_files):
   #
   # loop over all input source files
   #
-  
+
   # Find the macros defined in the source files
   for a in range(0, len(source_files)):
         src_file = str(source_files[a])
@@ -433,7 +433,7 @@ def main(source_files):
                 macro_defs[k] = defs[k]
         defs = {}
   self_evaluate_macro_defs(macro_defs)
-  
+
 
   kernels_in_files = [[] for _ in range(len(source_files))]
   for a in range(0, len(source_files)):
@@ -470,7 +470,7 @@ def main(source_files):
       nexit = nexit + exits
 
       #
-      # check for SoA 
+      # check for SoA
       #
       file_soa = len(re.findall('#define OPS_SOA', text))
       if a > 0 and soa_set == 1 and file_soa == 0:
@@ -481,7 +481,7 @@ def main(source_files):
       if inits > 0 and file_soa and len(re.findall(r'\bOPS_soa\b\s*=\s*1', text))==0:
         print('Error: the source file with ops_init, must include the line OPS_soa = 1 immediately after ops_init')
         sys.exit(1)
-      
+
 
       #
       # parse and process constants

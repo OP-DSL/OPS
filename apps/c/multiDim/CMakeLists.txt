@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.18)
+CreateTempDir()
+if(CPU_NUMBER GREATER 4)
+    set(OringalCPUNum ${CPU_NUMBER})
+    set(CPU_NUMBER 4)
+else()
+    # Note that undefined variables would be `""` thus false
+endif()
+BUILD_OPS_C_SAMPLE(multidim "NONE" "NONE" "NONE" "YES")
+set(CPU_NUMBER ${OringalCPUNum})

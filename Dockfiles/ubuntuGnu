@@ -1,0 +1,13 @@
+# Create the docker image for GNU and Clang
+FROM nvidia/cuda:10.2-devel-ubuntu18.04
+ADD https://github.com/Kitware/CMake/releases/download/v3.19.1/cmake-3.19.1-Linux-x86_64.sh /cmake-3.19.1-Linux-x86_64.sh
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/London
+RUN apt update -y \
+    && apt install gfortran libhdf5-openmpi-dev ssh  python-minimal python-pygments texlive-latex-extra doxygen build-essential git python-sympy python-matplotlib python-scipy python-h5py -y \
+    && apt autoclean \
+    && mkdir /opt/cmake \
+    && sh /cmake-3.19.1-Linux-x86_64.sh --prefix=/opt/cmake --skip-license \
+    && ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake \
+    && cmake --version \
+    && gcc --version \
