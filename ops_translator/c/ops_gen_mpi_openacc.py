@@ -1021,7 +1021,9 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
       code((str(consts[nc]['name']).replace('"','')).strip()+' = *('+consts[nc]['type']+'*)dat;')
     else:
-      code((str(consts[nc]['name']).replace('"','')).strip()+' = ('+consts[nc]['type']+'*)dat;')
+      FOR('d','0',consts[nc]['dim'])
+      code((str(consts[nc]['name']).replace('"','')).strip()+'[d] = (('+consts[nc]['type']+'*)dat)[d];')
+      ENDFOR()
     ENDIF()
     code('else')
 
