@@ -36,7 +36,8 @@ else
 endif
 
 # This refers to the location of the submodule in the "master" pdetk repo
-#TRID_INSTALL_PATH ?= ../../../tridsolver/scalar
+TRID_INSTALL_PATH := $(TDMA_INSTALL_PATH)
+#../../../tridsolver/scalar
 
 TRID_INC := -I$(TRID_INSTALL_PATH)/include
 TRID_LIB := -L$(TRID_INSTALL_PATH)/lib
@@ -106,6 +107,9 @@ $(OBJ)/%_cuda.o : src/cuda/%.cu
 $(OBJ)/%_mpi.o : src/tridiag/%.cpp
 	$(MPICXX) $(CXXFLAGS) -I$(INC) $(TRID_INC) -c $< -o $@
 
+$(OBJ)/%_mpi_cuda.o : src/tridiag/%_mpi_cuda.cpp
+	$(MPICXX) $(CXXFLAGS) -I$(INC) $(TRID_INC) -c $< -o $@
+
 $(OBJ)/%.o : src/tridiag/%.cpp
 	$(CXX) $(CXXFLAGS) -I$(INC) $(TRID_INC) -c $< -o $@
 
@@ -127,6 +131,8 @@ trid_cuda: mklib $(OBJ)/ops_tridiag_cuda.o
 	ar -r $(LIB)/libops_trid_cuda.a $(OBJ)/ops_tridiag_cuda.o
 trid_mpi: mklib $(OBJ)/ops_tridiag_mpi.o
 	ar -r $(LIB)/libops_trid_mpi.a $(OBJ)/ops_tridiag_mpi.o
+trid_mpi_cuda: mklib $(OBJ)/ops_tridiag_mpi_cuda.o
+	ar -r $(LIB)/libops_trid_mpi_cuda.a $(OBJ)/ops_tridiag_mpi_cuda.o
 
 seq: mklib $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
   $(OBJ)/ops_util.o $(OBJ)/ops_seq.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o 

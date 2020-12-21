@@ -136,7 +136,7 @@ endif
 # master to make all versions
 #
 
-TARGETS = adi_dev_seq adi_seq adi_openmp adi_cuda # adi_opencl adi_mpi_openmp adi_dev_mpi adi_mpi adi_mpi_cuda adi_opencl adi_mpi_opencl
+TARGETS = adi_dev_seq adi_seq adi_openmp adi_cuda adi_mpi adi_mpi_cuda # adi_opencl adi_mpi_openmp adi_dev_mpi adi_mpi adi_mpi_cuda adi_opencl adi_mpi_opencl
 
 ifeq ($(OPS_COMPILER),pgi)
 #TARGETS += adi_openacc adi_mpi_openacc
@@ -153,7 +153,7 @@ adi_dev_seq: Makefile .generated adi.cpp preproc_kernel.h init_kernel.h $(OPS_IN
 
 
 adi_dev_mpi: Makefile adi.cpp preproc_kernel.h init_kernel.h $(OPS_INSTALL_PATH)/lib/$(OPS_COMPILER)/libops_mpi.a
-	$(MPICPP) $(CXXFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi.cpp $(TRID_LIB) -ltridcpu -lops_mpi -lops_hdf5_mpi -lops_trid_mpi $(HDF5_LIB) -o adi_dev_mpi
+	$(MPICPP) $(CXXFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi.cpp $(TRID_LIB) -ltridcpu -lops_hdf5_mpi -lops_mpi -lops_trid_mpi $(HDF5_LIB) -o adi_dev_mpi
 
 #
 # mpi version
@@ -162,15 +162,15 @@ adi_dev_mpi: Makefile adi.cpp preproc_kernel.h init_kernel.h $(OPS_INSTALL_PATH)
 SEQ_KERNELS = adi_cpu_kernels.cpp
 
 adi_mpi: Makefile .generated adi_ops.cpp preproc_kernel.h init_kernel.h $(OPS_INSTALL_PATH)/lib/$(OPS_COMPILER)/libops_mpi.a
-	$(MPICPP) $(CXXFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(TRID_LIB) -ltridcpu -lops_mpi -lops_hdf5_mpi -lops_trid_mpi $(HDF5_LIB) -o adi_mpi
+	$(MPICPP) $(CXXFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(TRID_LIB) -ltridcpu -lops_hdf5_mpi -lops_mpi -lops_trid_mpi $(HDF5_LIB) -o adi_mpi
 
 #
 # OpenMP version
 #
 OMP_KERNELS = adi_cpu_kernels.cpp
 
-adi_mpi_openmp: Makefile .generated adi_ops.cpp adi_kernel.h adi_print_kernel.h adi_copy_kernel.h $(OPS_INSTALL_PATH)/lib/$(OPS_COMPILER)/libops_mpi.a
-	$(MPICPP) $(OMPFLAGS) $(CXXFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_mpi -lops_hdf5_mpi -lops_trid_mpi $(HDF5_LIB) -o adi_mpi_openmp
+adi_mpi_openmp: Makefile .generated adi_ops.cpp adi_print_kernel.h adi_copy_kernel.h $(OPS_INSTALL_PATH)/lib/$(OPS_COMPILER)/libops_mpi.a
+	$(MPICPP) $(OMPFLAGS) $(CXXFLAGS) -DOPS_MPI $(OPS_INC) $(HDF5_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_hdf5_mpi -lops_mpi -lops_trid_mpi $(HDF5_LIB) -o adi_mpi_openmp
 
 adi_openmp: Makefile .generated adi_ops.cpp init_kernel.h preproc_kernel.h $(OPS_INSTALL_PATH)/lib/$(OPS_COMPILER)/libops_seq.a
 	$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) $(OPS_INC) $(OPS_LIB) adi_ops.cpp -I. ./MPI_OpenMP/$(OMP_KERNELS) -lops_seq -lops_hdf5_seq -lops_trid_seq $(TRID_LIB) -ltridcpu $(INTEL_LIB) \
@@ -189,8 +189,8 @@ adi_seq: Makefile .generated adi_ops.cpp init_kernel.h preproc_kernel.h $(OPS_IN
 adi_cuda: Makefile .generated ./CUDA/adi_kernels_cu.o adi_ops.cpp preproc_kernel.h init_kernel.h $(OPS_INSTALL_PATH)/lib/$(OPS_COMPILER)/libops_cuda.a
 	$(MPICPP) $(CXXFLAGS) $(CUDA_INC) $(TRID_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_cu.o -lcudart -lcublas -lops_cuda -lops_trid_cuda -lops_hdf5_seq $(TRID_LIB) -ltridcuda $(HDF5_LIB) -o adi_cuda
 
-adi_mpi_cuda: Makefile .generated ./CUDA/adi_kernels_mpi_cu.o adi_ops.cpp adi_kernel.h adi_print_kernel.h adi_copy_kernel.h $(OPS_INSTALL_PATH)/lib/$(OPS_COMPILER)/libops_mpi_cuda.a
-	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_mpi_cu.o -lcudart -lcublas -lops_mpi_cuda -lops_hdf5_mpi $(HDF5_LIB) -o adi_mpi_cuda
+adi_mpi_cuda: Makefile .generated ./CUDA/adi_kernels_mpi_cu.o adi_ops.cpp preproc_kernel.h init_kernel.h $(OPS_INSTALL_PATH)/lib/$(OPS_COMPILER)/libops_mpi_cuda.a
+	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_mpi_cu.o $(TRID_LIB) -ltridcuda_mpi -lops_hdf5_mpi -lops_mpi_cuda -lops_trid_mpi_cuda -lcudart -lcublas $(HDF5_LIB) -o adi_mpi_cuda
 
 ./CUDA/adi_kernels_cu.o: ./CUDA/adi_kernels.cu Makefile
 	nvcc $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) -I. -c -o ./CUDA/adi_kernels_cu.o ./CUDA/adi_kernels.cu
