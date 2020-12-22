@@ -36,7 +36,7 @@ else
 endif
 
 # This refers to the location of the submodule in the "master" pdetk repo
-TRID_INSTALL_PATH := $(TDMA_INSTALL_PATH)
+TRID_INSTALL_PATH = $(TDMA_INSTALL_PATH)
 #../../../tridsolver/scalar
 
 TRID_INC := -I$(TRID_INSTALL_PATH)/include
@@ -66,7 +66,7 @@ endif
 ifdef TRID_INSTALL_PATH
 	TARGETS += trid_seq trid_mpi
 ifdef CUDA_INSTALL_PATH
-	TARGETS += trid_cuda
+	TARGETS += trid_cuda trid_mpi_cuda
 endif
 endif
 
