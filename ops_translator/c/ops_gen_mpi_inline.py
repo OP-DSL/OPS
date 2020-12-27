@@ -61,7 +61,7 @@ para_parse = util.para_parse
 comment_remover = util.comment_remover
 remove_trailing_w_space = util.remove_trailing_w_space
 parse_signature = util.parse_signature
-replace_ACC_kernel_body = util.replace_ACC_kernel_body
+replace_ACC_kernel_body_inline = util.replace_ACC_kernel_body_inline
 check_accs = util.check_accs
 mult = util.mult
 convert_ACC_body = util.convert_ACC_body
@@ -265,7 +265,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     m = text.find(name)
     arg_list = parse_signature(text[i2+len(name):i+j])
 
-    kernel_text = replace_ACC_kernel_body(kernel_text, arg_list, arg_typ, nargs)
+    kernel_text = replace_ACC_kernel_body_inline(kernel_text, arg_list, arg_typ, nargs)
 
     l = text[i:m].find('inline')
     if(l<0):
@@ -385,13 +385,11 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        pre = ''
-        if accs[n] == OPS_READ:
-          pre = 'const '
         offset = ''
         dim = ''
         sizelist = ''
         extradim = 0
+        macroargs = ''
         if dims[n].isdigit() and int(dims[n])>1:
             dim = dims[n]
             extradim = 1
@@ -399,37 +397,40 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
             dim = 'arg'+str(n)+'.dim'
             extradim = 1
         if restrict[n] == 1:
-          n_x = 'n_x*stride_'+str(n)+'[0]'
-          n_y = 'n_y*stride_'+str(n)+'[1]'
-          n_z = 'n_z*stride_'+str(n)+'[2]'
+          n_x = '(n_x*stride_'+str(n)+'[0]+ox)'
+          n_y = '(n_y*stride_'+str(n)+'[1]+oy)'
+          n_z = '(n_z*stride_'+str(n)+'[2]+oz)'
         elif prolong[n] == 1:
-          n_x = '(n_x+global_idx[0]%stride_'+str(n)+'[0])/stride_'+str(n)+'[0]'
-          n_y = '(n_y+global_idx[1]%stride_'+str(n)+'[1])/stride_'+str(n)+'[1]'
-          n_z = '(n_z+global_idx[2]%stride_'+str(n)+'[2])/stride_'+str(n)+'[2]'
+          n_x = '((n_x+global_idx[0]%stride_'+str(n)+'[0])/stride_'+str(n)+'[0]+ox)'
+          n_y = '((n_y+global_idx[1]%stride_'+str(n)+'[1])/stride_'+str(n)+'[1]+oy)'
+          n_z = '((n_z+global_idx[2]%stride_'+str(n)+'[2])/stride_'+str(n)+'[2]+oz)'
         else:
-          n_x = 'n_x'
-          n_y = 'n_y'
-          n_z = 'n_z'
+          n_x = '(n_x + ox)'
+          n_y = '(n_y + oy)'
+          n_z = '(n_z + oz)'
         if NDIM > 0:
           offset = offset + n_x+'*'+str(stride[NDIM*n])
+          macroargs = macroargs + 'ox'
         if NDIM > 1:
           offset = offset + ' + '+n_y+' * xdim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+1])
+          macroargs = macroargs + ', oy'
         if NDIM > 2:
           offset = offset + ' + '+n_z+' * xdim'+str(n)+'_'+name+' * ydim'+str(n)+'_'+name+'*'+str(stride[NDIM*n+2])
+          macroargs = macroargs + ', oz'
         dimlabels = 'xyzuv'
         for i in range(1,NDIM):
-          sizelist = sizelist + dimlabels[i-1]+'dim'+str(n)+'_'+name+', '
+          sizelist = sizelist + dimlabels[i-1]+'dim'+str(n)+'_'+name+' * '
         extradim = dimlabels[NDIM+extradim-2]+'dim'+str(n)+'_'+name
         if dim == '':
           if NDIM==1:
-            code(pre+'ptr_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+'};')
+            code('#define OPS_ACC'+arg_list[n]+'(ptr, '+macroargs+') ptr['+offset+']')
           else:
-            code(pre+'ptr_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+', '+sizelist[:-2]+'};')
+            code('#define OPS_ACC'+arg_list[n]+'(ptr, '+macroargs+') ptr['+offset+']')
         else:
           code('#ifdef OPS_SOA')
-          code(pre+'ptrm_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+', '+sizelist + extradim+'};')
+          code('#define OPS_ACC'+arg_list[n]+'(ptr, m,'+macroargs+') ptr[m * ('+sizelist + extradim+') +'+offset+']')
           code('#else')
-          code(pre+'ptrm_'+typs[n]+' '+arg_list[n]+' = { '+arg_list[n]+'_p + '+offset+', '+sizelist+dim+'};')
+          code('#define OPS_ACC'+arg_list[n]+'(ptr, m,'+macroargs+') ptr[m + '+dim+'*('+offset+')]')
           code('#endif')
 
 
@@ -449,6 +450,8 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
         if accs[n] == OPS_WRITE: #this may not be correct
           for d in range(0,int(dims[n])):
             code(arg_list[n]+'_'+str(d)+' +='+arg_list[n]+'['+str(d)+'];')
+      if arg_typ[n] == 'ops_arg_dat':
+        code('#undef OPS_ACC'+arg_list[n])
 
 
     ENDFOR()

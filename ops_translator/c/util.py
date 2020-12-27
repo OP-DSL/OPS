@@ -461,3 +461,24 @@ def replace_ACC_kernel_body(kernel_text, arg_list, arg_typ, nargs, opencl=0, dim
           kernel_text = kernel_text[0:match.start()] + acc + kernel_text[closeb:]
           match = pattern.search(kernel_text,match.start()+10)
     return kernel_text
+
+def replace_ACC_kernel_body_inline(kernel_text, arg_list, arg_typ, nargs, opencl=0, dims=[]):
+    # replace all data args with macros
+    for n in range(0,nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        pattern = re.compile(r'\b'+arg_list[n]+r'\b')
+        match = pattern.search(kernel_text,0)
+        while match:
+          closeb = para_parse(kernel_text,match.start(),'(',')')+1
+          openb = kernel_text.find('(',match.start())
+          if opencl == 1:
+            if not dims[n].isdigit() or int(dims[n])>1:
+              acc = 'OPS_ACC'+arg_list[n]+'('+arg_list[n]+'_p, '+kernel_text[openb+1:closeb-1]+')'
+            else:
+              acc = 'OPS_ACC'+arg_list[n]+'('+arg_list[n]+'_p, '+kernel_text[openb+1:closeb-1]+')'
+          else:
+            acc = 'OPS_ACC'+arg_list[n]+'('+arg_list[n]+'_p, '+kernel_text[openb+1:closeb-1]+')'
+          kernel_text = kernel_text[0:match.start()] + acc + kernel_text[closeb:]
+          match = pattern.search(kernel_text,match.start()+len(acc))
+    return kernel_text
+
