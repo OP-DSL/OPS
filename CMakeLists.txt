@@ -16,6 +16,12 @@ if ( NOT CMAKE_BUILD_TYPE )
 endif()
 message(WARNING "The installation directory is ${CMAKE_INSTALL_PREFIX}! Use -DCMAKE_INSTALL_PREFIX to change")
 
+# Tridiagonal library
+set(LIBTRID_PATH $ENV{TRIDSOLVER_INSTALL_PATH} CACHE STRING "Tridsolver (scalar) installation directory")
+if (LIBTRID_PATH)
+  message(WARNING "The install path of the scalar tridiagonal solver library is set to: ${LIBTRID_PATH}")
+endif ()
+
 set(HDF5_PREFER_PARALLEL true)
 # Configure Compilers
 # C

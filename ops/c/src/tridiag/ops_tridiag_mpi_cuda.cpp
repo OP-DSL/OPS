@@ -93,11 +93,6 @@ namespace {
       }
       return trid_mpi_params;
     }
-
-    void free() {
-      delete trid_mpi_params;
-      trid_mpi_params = nullptr;
-    }
   };
 
   MpiSolverParamsWrapper mpiParams;
