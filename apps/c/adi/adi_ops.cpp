@@ -148,7 +148,34 @@ void ignore_mpi_halo_rms(ops_dat dat) {
 }
 #endif
 
-#ifndef OPS_MPI
+#ifdef OPS_MPI
+void zero_halo(ops_dat dat) {
+  int host = OPS_HOST;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+  double *ptr = (double *)ops_dat_get_raw_pointer(dat, 0, S3D_000, &host);
+  sub_dat *sd = OPS_sub_dat_list[dat->index];
+  int pads_m[] = {-1 * (dat->d_m[0] + sd->d_im[0]), -1 * (dat->d_m[1] + sd->d_im[1]), -1 * (dat->d_m[2] + sd->d_im[2])};
+  int pads_p[] = {dat->d_p[0] + sd->d_ip[0], dat->d_p[1] + sd->d_ip[1], dat->d_p[2] + sd->d_ip[2]};
+
+  int dims[] = {dat->size[0] - pads_m[0] - pads_p[0],
+                dat->size[1] - pads_m[1] - pads_p[1],
+                dat->size[2] - pads_m[2] - pads_p[2]};
+
+  for(int z = dims[2]; z < dims[2] + pads_p[2]; z++) {
+    for(int y = dims[1]; y < dims[1] + 2*pads_p[1]; y++) {
+      for(int x = dims[0]; x < dims[0] + 2*pads_p[0]; x++) {
+        int offset = z * dat->size[1] * dat->size[0];
+        offset += y * dat->size[0];
+        offset += x;
+        ptr[offset] = 0.0;
+      }
+    }
+  }
+
+  ops_dat_release_raw_data(dat, 0, OPS_WRITE);
+}
+#else
 void zero_halo(ops_dat dat) {
   int host = OPS_HOST;
   int s3D_000[] = {0, 0, 0};
@@ -176,7 +203,38 @@ void zero_halo(ops_dat dat) {
 }
 #endif
 
-#ifndef OPS_MPI
+#ifdef OPS_MPI
+int check_halo_is_zero(ops_dat dat) {
+  int host = OPS_HOST;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+  double *ptr = (double *)ops_dat_get_raw_pointer(dat, 0, S3D_000, &host);
+  sub_dat *sd = OPS_sub_dat_list[dat->index];
+  int pads_m[] = {-1 * (dat->d_m[0] + sd->d_im[0]), -1 * (dat->d_m[1] + sd->d_im[1]), -1 * (dat->d_m[2] + sd->d_im[2])};
+  int pads_p[] = {dat->d_p[0] + sd->d_ip[0], dat->d_p[1] + sd->d_ip[1], dat->d_p[2] + sd->d_ip[2]};
+
+  int dims[] = {dat->size[0] - pads_m[0] - pads_p[0],
+                dat->size[1] - pads_m[1] - pads_p[1],
+                dat->size[2] - pads_m[2] - pads_p[2]};
+
+  for(int z = dims[2]; z < dims[2] + pads_p[2]; z++) {
+    for(int y = dims[1]; y < dims[1] + 2*pads_p[1]; y++) {
+      for(int x = dims[0]; x < dims[0] + 2*pads_p[0]; x++) {
+        int offset = z * dat->size[1] * dat->size[0];
+        offset += y * dat->size[0];
+        offset += x;
+        if(ptr[offset] != 0.0) {
+          ops_dat_release_raw_data(dat, 0, OPS_READ);
+          return false;
+        }
+      }
+    }
+  }
+
+  ops_dat_release_raw_data(dat, 0, OPS_READ);
+  return true;
+}
+#else
 int check_halo_is_zero(ops_dat dat) {
   int host = OPS_HOST;
   int s3D_000[] = {0, 0, 0};
@@ -371,20 +429,17 @@ int main(int argc, char *argv[]) {
 
   ops_timers(&ct1, &et1);
 
-#ifndef OPS_MPI
   if(check_halo_is_zero(h_u)) {
     ops_printf("Halo Test: PASSED\n");
   } else {
     ops_printf("Halo Test: FAILED\n");
   }
-#endif
 
   ops_fetch_block_hdf5_file(heat3D, "adi.h5");
   ops_fetch_dat_hdf5_file(h_u, "adi.h5");
 
 
 
-#ifndef OPS_MPI
   if(t) {
     int dp[3] = {1, 1, 1};
     int dm[3] = {-1, -1, -1};
@@ -420,7 +475,6 @@ int main(int argc, char *argv[]) {
     ops_fetch_block_hdf5_file(heat3D, "adi_pad.h5");
     ops_fetch_dat_hdf5_file(h_u_pad, "adi_pad.h5");
   }
-#endif
 
 #ifdef OPS_MPI
   ignore_mpi_halo_rms(h_du);

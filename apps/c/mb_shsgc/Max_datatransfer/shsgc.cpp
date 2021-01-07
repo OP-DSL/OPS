@@ -499,15 +499,15 @@ int main(int argc, const char **argv) {
   // number of points after shock
   ops_reduction_result(num_pre,&nump);
   err1 = sqrt(err1)/nump;
-  ops_printf("\nErros are:\n");
+  ops_printf("\nErrors are:\n");
   ops_printf("-----------------------------------------\n");
   //ops_printf("Pre shock error is: %g\n",sqrt(err)/(nxp-nump));
   ops_printf("Pre shock error is: %g\n",sqrt(err)/(nxp-nump));
   ops_printf("Post shock error is: %g\n",(err1));
   if(err1 -0.0003206 < 1e-6 && nxp == 200)
-    ops_printf("Error is correct for 200 gridpoitns\n");
+    ops_printf("Error is correct for 200 gridpoints!PASSED!\n");
   else if(err1 < 0.001 && nxp != 200)
-    ops_printf("Post shock Error is acceptable\n");
+    ops_printf("Post shock Error is acceptable!Considered as PASSED!\n");
   else
     ops_printf("Something is wrong\n");
 //   ops_printf("Post shock num is is: %d\n",(err2));
