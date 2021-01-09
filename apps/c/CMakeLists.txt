@@ -423,6 +423,7 @@ endmacro()
 # TODO fetch_data.cpp cannot be found for access
 #add_subdirectory(access)
 add_subdirectory(adi)
+add_subdirectory(adi_burger)
 add_subdirectory(CloverLeaf) # Compile OK
 add_subdirectory(CloverLeaf_3D) # Compile OK
 add_subdirectory(CloverLeaf_3D_HDF5) # Compile OK
