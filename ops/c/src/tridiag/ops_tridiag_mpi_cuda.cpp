@@ -153,9 +153,17 @@ void ops_tridMultiDimBatch(
     dims_calc[i] = a->size[i] - pads_m[i] - pads_p[i];
   }
 
-  int offset = pads_m[2] * a->size[1] * a->size[0] // z padding
-               + pads_m[1] * a->size[0] // y padding
-               + pads_m[0]; // x padding
+  int offset;
+  if(ndim == 1) {
+    offset = pads_m[0]; // x padding
+  } else if (ndim == 2) {
+    offset = pads_m[1] * a->size[0] // y padding
+             + pads_m[0]; // x padding
+  } else {
+    offset = pads_m[2] * a->size[1] * a->size[0] // z padding
+             + pads_m[1] * a->size[0] // y padding
+             + pads_m[0]; // x padding
+  }
 
   // compute tridiagonal system sizes
   ops_block block = a->block;
@@ -218,9 +226,17 @@ void ops_tridMultiDimBatch_Inc(
     dims_calc[i] = a->size[i] - pads_m[i] - pads_p[i];
   }
 
-  int offset = pads_m[2] * a->size[1] * a->size[0] // z padding
-               + pads_m[1] * a->size[0] // y padding
-               + pads_m[0]; // x padding
+  int offset;
+  if(ndim == 1) {
+    offset = pads_m[0]; // x padding
+  } else if (ndim == 2) {
+    offset = pads_m[1] * a->size[0] // y padding
+             + pads_m[0]; // x padding
+  } else {
+    offset = pads_m[2] * a->size[1] * a->size[0] // z padding
+             + pads_m[1] * a->size[0] // y padding
+             + pads_m[0]; // x padding
+  }
 
   // compute tridiagonal system sizes
   ops_block block = a->block;
