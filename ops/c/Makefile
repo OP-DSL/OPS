@@ -104,7 +104,7 @@ $(OBJ)/%_mpi.o : src/mpi/%.cpp
 $(OBJ)/%_cuda.o : src/cuda/%.cu
 	$(NVCC) $(NVCCFLAGS) -I$(INC) -c $< -o $@
 
-$(OBJ)/%_mpi.o : src/tridiag/%.cpp
+$(OBJ)/%_mpi.o : src/tridiag/%_mpi.cpp
 	$(MPICXX) $(CXXFLAGS) -I$(INC) $(TRID_INC) -c $< -o $@
 
 $(OBJ)/%_mpi_cuda.o : src/tridiag/%_mpi_cuda.cpp

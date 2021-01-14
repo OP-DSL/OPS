@@ -92,7 +92,7 @@ if (${CMAKE_PROJECT_NAME} STREQUAL APP)
      # Trying to find the library directory
      set(OPS_LIB ops_cuda  ops_hdf5_seq  ops_mpi_cuda
          ops_opencl ops_hdf5_mpi  ops_mpi  ops_mpi_opencl ops_seq
-         ops_trid ops_trid_cuda ops_trid_mpi ops_trid_mpi_cuda)
+         ops_trid_seq ops_trid_cuda ops_trid_mpi ops_trid_mpi_cuda)
      foreach(library ${OPS_LIB})
          FIND_LIBRARY (${library}_FOUND
          NAMES ${library}
@@ -300,8 +300,8 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra Trid GenerateTest)
       set(TRID No)
     endif ()
     if (TRID)
-        target_link_libraries(${Name}_seq ops_trid -L${LIBTRID_PATH}/lib -ltridcpu)
-        target_link_libraries(${Name}_seq_dev ops_trid -L${LIBTRID_PATH}/lib -ltridcpu)
+        target_link_libraries(${Name}_seq ops_trid_seq -L${LIBTRID_PATH}/lib -ltridcpu)
+        target_link_libraries(${Name}_seq_dev ops_trid_seq -L${LIBTRID_PATH}/lib -ltridcpu)
     endif ()
     target_link_libraries(${Name}_seq ops_seq)
     target_link_libraries(${Name}_seq_dev ops_seq)
@@ -424,6 +424,7 @@ endmacro()
 #add_subdirectory(access)
 add_subdirectory(adi)
 add_subdirectory(adi_burger)
+add_subdirectory(adi_burger_3D)
 add_subdirectory(CloverLeaf) # Compile OK
 add_subdirectory(CloverLeaf_3D) # Compile OK
 add_subdirectory(CloverLeaf_3D_HDF5) # Compile OK

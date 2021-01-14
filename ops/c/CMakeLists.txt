@@ -75,9 +75,9 @@ endif ()
 # Tridiagonal library
 if (LIBTRID_PATH)
     # Sequential Tridiagonal Library
-    add_library(ops_trid ${CMAKE_CURRENT_SOURCE_DIR}/src/tridiag/ops_tridiag.cpp)
-    target_include_directories(ops_trid PRIVATE ${LIBTRID_PATH}/include)
-    install(TARGETS ops_trid DESTINATION lib)
+    add_library(ops_trid_seq ${CMAKE_CURRENT_SOURCE_DIR}/src/tridiag/ops_tridiag.cpp)
+    target_include_directories(ops_trid_seq PRIVATE ${LIBTRID_PATH}/include)
+    install(TARGETS ops_trid_seq DESTINATION lib)
 
     # Sequential CUDA Tridiagonal Library
     if (CUDAToolkit_FOUND)
