@@ -285,10 +285,6 @@ void mvReductArraysToHost(OPS_instance *instance, int reduct_bytes) {
 void ops_hip_exit(OPS_instance *instance) {
   if (!instance->OPS_hybrid_gpu)
     return;
-  ops_dat_entry *item;
-  TAILQ_FOREACH(item, &instance->OPS_dat_list, entries) {
-    hipSafeCall(instance->ostream(), hipFree((item->dat)->data_d));
-  }
   if (instance->OPS_consts_bytes > 0) {
     free(instance->OPS_consts_h);
     hipFreeHost(instance->OPS_gbl_prev);
@@ -298,4 +294,14 @@ void ops_hip_exit(OPS_instance *instance) {
     free(instance->OPS_reduct_h);
     hipSafeCall(instance->ostream(), hipFree(instance->OPS_reduct_d));
   }
+}
+
+void ops_free_dat(ops_dat dat) {
+  delete dat;
+}
+
+// _ops_free_dat is called directly from ~ops_dat_core
+void _ops_free_dat(ops_dat dat) {
+  hipSafeCall(dat->block->instance->ostream(), hipFree(dat->data_d));
+  ops_free_dat_core(dat);
 }

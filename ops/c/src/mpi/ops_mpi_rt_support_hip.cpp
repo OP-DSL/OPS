@@ -189,7 +189,7 @@ void ops_unpack_hip_internal(ops_dat dat, const int dest_offset, const char *__r
   if (OPS_instance::getOPSInstance()->OPS_soa) {
     int num_threads = 128;
     int num_blocks = ((halo_blocklength * halo_count) - 1) / num_threads + 1;
-    hipLaunchKernelGGL(ops_hip_unpacker_1_soa, num_blocks, num_threads, 0, 0,//ops_cuda_unpacker_1_soa<<<num_blocks, num_threads>>>(
+    hipLaunchKernelGGL(ops_hip_unpacker_1_soa, num_blocks, num_threads, 0, 0,//ops_hip_unpacker_1_soa<<<num_blocks, num_threads>>>(
         device_buf, dest, halo_count, halo_blocklength, halo_stride,
         dat->dim, dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size);
     hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipGetLastError());
@@ -409,3 +409,305 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   dest->dirty_hd = 2;
 }
 
+__global__ void ops_internal_copy_hip_kernel(char * dat0_p, char *dat1_p,
+         int s0, int start0, int end0,
+#if OPS_MAX_DIM>1
+        int s1, int start1, int end1,
+#if OPS_MAX_DIM>2
+        int s2, int start2, int end2,
+#if OPS_MAX_DIM>3
+        int s3, int start3, int end3,
+#if OPS_MAX_DIM>4
+        int s4, int start4, int end4,
+#endif
+#endif
+#endif
+#endif
+        int dim, int type_size,
+        int OPS_soa) {
+  int i = start0 + hipThreadIdx_x + hipBlockIdx_x*hipBlockDim_x;
+  int j = start1 + hipThreadIdx_y + hipBlockIdx_y*hipBlockDim_y;
+  int rest = hipThreadIdx_z + hipBlockIdx_z*hipBlockDim_z;
+  int mult = OPS_soa ? type_size : dim*type_size;
+
+    long fullsize = s0;
+    long idx = i*mult;
+#if OPS_MAX_DIM>1
+    fullsize *= s1;
+    idx += j * s0 * mult;
+#endif
+#if OPS_MAX_DIM>2
+    fullsize *= s2;
+    int k = start2+rest%s2;
+    idx += k * s0 * s1 * mult;
+#endif
+#if OPS_MAX_DIM>3
+    fullsize *= s3;
+    int l = start3+rest/s2;
+    idx += l * s0 * s1 * s2 * mult;
+#endif
+#if OPS_MAX_DIM>3
+    fullsize *= s4;
+    int m = start4+rest/(s2*s3);
+    idx += m * s0 * s1 * s2 * s3 * mult;
+#endif
+    if (i<end0
+#if OPS_MAX_DIM>1
+        && j < end1
+#if OPS_MAX_DIM>2
+        && k < end2
+#if OPS_MAX_DIM>3
+        && l < end3
+#if OPS_MAX_DIM>4
+        && m < end4
+#endif
+#endif
+#endif
+#endif
+       )
+
+    if (OPS_soa)
+      for (int d = 0; d < dim; d++)
+        for (int c = 0; c < type_size; c++)
+          dat1_p[idx+d*fullsize*type_size+c] = dat0_p[idx+d*fullsize*type_size+c];
+    else
+      for (int d = 0; d < dim*type_size; d++)
+        dat1_p[idx+d] = dat0_p[idx+d];
+
+}
+
+
+void ops_internal_copy_hip(ops_kernel_descriptor *desc) {
+  int range[2*OPS_MAX_DIM]={0};
+  for (int d = 0; d < desc->dim; d++) {
+    range[2*d] = desc->range[2*d];
+    range[2*d+1] = desc->range[2*d+1];
+  }
+  for (int d = desc->dim; d < OPS_MAX_DIM; d++) {
+    range[2*d] = 0;
+    range[2*d+1] = 1;
+  }
+  ops_dat dat0 = desc->args[0].dat;
+  double __t1 = 0.,__t2 = 0.,__c1 = 0.,__c2 = 0.;
+  if (dat0->block->instance->OPS_diags>1) {
+    dat0->block->instance->OPS_kernels[-1].count++;
+    ops_timers_core(&__c1,&__t1);
+  }
+  char *dat0_p = desc->args[0].data_d + desc->args[0].dat->base_offset;
+  char *dat1_p = desc->args[1].data_d + desc->args[1].dat->base_offset;
+  int s0 = dat0->size[0];
+#if OPS_MAX_DIM>1
+  int s1 = dat0->size[1];
+#if OPS_MAX_DIM>2
+  int s2 = dat0->size[2];
+#if OPS_MAX_DIM>3
+  int s3 = dat0->size[3];
+#if OPS_MAX_DIM>4
+  int s4 = dat0->size[4];
+#endif
+#endif
+#endif
+#endif
+
+  dim3 grid((range[2*0+1]-range[2*0] - 1) / dat0->block->instance->OPS_block_size_x + 1,
+            (range[2*1+1]-range[2*1] - 1) / dat0->block->instance->OPS_block_size_y + 1,
+           ((range[2*2+1]-range[2*2] - 1) / dat0->block->instance->OPS_block_size_z + 1) *
+            (range[2*3+1]-range[2*3]) *
+            (range[2*4+1]-range[2*4]));
+  dim3 tblock(dat0->block->instance->OPS_block_size_x,
+              dat0->block->instance->OPS_block_size_y,
+              dat0->block->instance->OPS_block_size_z);
+
+  if (grid.x>0 && grid.y>0 && grid.z>0) {
+  hipLaunchKernelGGL(ops_internal_copy_hip_kernel,grid, tblock, 0, 0, 
+        dat0_p,
+        dat1_p,
+        s0, range[2*0], range[2*0+1],
+#if OPS_MAX_DIM>1
+        s1, range[2*1], range[2*1+1],
+#if OPS_MAX_DIM>2
+        s2, range[2*2], range[2*2+1],
+#if OPS_MAX_DIM>3
+        s3, range[2*3], range[2*3+1],
+#if OPS_MAX_DIM>4
+        s4, range[2*4], range[2*4+1],
+#endif
+#endif
+#endif
+#endif
+        dat0->dim, dat0->type_size,
+        dat0->block->instance->OPS_soa
+        );
+    hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipGetLastError());
+  }
+  if (dat0->block->instance->OPS_diags>1) {
+    hipSafeCall(dat0->block->instance->ostream(), hipDeviceSynchronize());
+    ops_timers_core(&__c2,&__t2);
+    int start[OPS_MAX_DIM];
+    int end[OPS_MAX_DIM];
+    for ( int n=0; n<desc->dim; n++ ){
+      start[n] = range[2*n];end[n] = range[2*n+1];
+    }
+    dat0->block->instance->OPS_kernels[-1].time += __t2-__t1;
+    dat0->block->instance->OPS_kernels[-1].transfer += ops_compute_transfer(desc->dim, start, end, &desc->args[0]);
+    dat0->block->instance->OPS_kernels[-1].transfer += ops_compute_transfer(desc->dim, start, end, &desc->args[1]);
+  }
+
+}
+
+void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *range, ops_memspace memspace) {
+  throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Not implemented");
+  if (memspace == OPS_HOST) ops_dat_fetch_data_slab_host(dat, part, data, range);
+  else {
+    ops_execute(dat->block->instance);
+    int range2[2*OPS_MAX_DIM];
+    for (int i = 0; i < dat->block->dims; i++) {
+      range2[2*i] = range[2*i];
+      range2[2*i+1] = range[2*i+1];
+    }
+    for (int i = dat->block->dims; i < OPS_MAX_DIM; i++) {
+      range2[2*i] = 0;
+      range2[2*i+1] = 1;
+    }
+    if (dat->dirty_hd == 1) {
+      ops_upload_dat(dat);
+      dat->dirty_hd = 0;
+    }
+    ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
+    target->data_d = data;
+    target->elem_size = dat->elem_size;
+    target->base_offset = 0;
+    size_t prod = 1;
+    for (int d = 0; d < OPS_MAX_DIM; d++) {
+      target->size[d] = range2[2*d+1]-range2[2*d];
+      target->base_offset -= target->elem_size*prod*range2[2*d];
+      prod *= target->size[d];
+    }
+    ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
+    desc->name = "ops_internal_copy_hip";
+    desc->device = 1;
+    desc->function = ops_internal_copy_hip;
+    ops_internal_copy_hip(desc);
+    target->data_d = NULL;
+    ops_free(target);
+    ops_free(desc->args);
+    ops_free(desc);
+  }
+
+}
+
+void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *range, ops_memspace memspace) {
+  throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Not implemented");
+  if (memspace == OPS_HOST) ops_dat_set_data_slab_host(dat, part, data, range);
+  else {
+    ops_execute(dat->block->instance);
+    int range2[2*OPS_MAX_DIM];
+    for (int i = 0; i < dat->block->dims; i++) {
+      range2[2*i] = range[2*i];
+      range2[2*i+1] = range[2*i+1];
+    }
+    for (int i = dat->block->dims; i < OPS_MAX_DIM; i++) {
+      range2[2*i] = 0;
+      range2[2*i+1] = 1;
+    }
+    if (dat->dirty_hd == 1) {
+      ops_upload_dat(dat);
+      dat->dirty_hd = 0;
+    }
+    ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
+    target->data_d = data;
+    target->elem_size = dat->elem_size;
+    target->base_offset = 0;
+    size_t prod = 1;
+    for (int d = 0; d < OPS_MAX_DIM; d++) {
+      target->size[d] = range2[2*d+1]-range2[2*d];
+      target->base_offset -= target->elem_size*prod*range2[2*d];
+      prod *= target->size[d];
+    }
+    ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
+    desc->name = "ops_internal_copy_hip_reverse";
+    desc->device = 1;
+    desc->function = ops_internal_copy_hip;
+    ops_internal_copy_hip(desc);
+    target->data_d = NULL;
+    ops_free(target);
+    ops_free(desc->args);
+    ops_free(desc);
+    dat->dirty_hd = 2;
+  }
+
+}
+
+
+void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace) {
+  throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Not implemented");
+  if (memspace == OPS_HOST) ops_dat_fetch_data_host(dat, part, data);
+  else {
+    ops_execute(dat->block->instance);
+    int disp[OPS_MAX_DIM], size[OPS_MAX_DIM];
+    ops_dat_get_extents(dat, 0, disp, size);
+    int range[2*OPS_MAX_DIM];
+    for (int i = 0; i < dat->block->dims; i++) {
+      range[2*i] = dat->base[i];
+      range[2*i+1] = range[2*i] + size[i];
+    }
+    for (int i = dat->block->dims; i < OPS_MAX_DIM; i++) {
+      range[2*i] = 0;
+      range[2*i+1] = 1;
+    }
+    if (dat->dirty_hd == 1) {
+      ops_upload_dat(dat);
+      dat->dirty_hd = 0;
+    }
+    ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
+    target->data_d = data;
+    target->elem_size = dat->elem_size;
+    target->base_offset = 0;
+    for (int d = 0; d < OPS_MAX_DIM; d++) target->size[d] = size[d];
+    ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
+    desc->name = "ops_internal_copy_hip";
+    desc->device = 1;
+    desc->function = ops_internal_copy_hip;
+    ops_internal_copy_hip(desc);
+    target->data_d = NULL;
+    ops_free(target);
+    ops_free(desc->args);
+    ops_free(desc);
+  }
+}
+
+void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace) {
+  throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Not implemented");
+  if (memspace == OPS_HOST) ops_dat_set_data_host(dat, part, data);
+  else {
+    ops_execute(dat->block->instance);
+    int disp[OPS_MAX_DIM], size[OPS_MAX_DIM];
+    ops_dat_get_extents(dat, 0, disp, size);
+    int range[2*OPS_MAX_DIM];
+    for (int i = 0; i < dat->block->dims; i++) {
+      range[2*i] = dat->base[i];
+      range[2*i+1] = range[2*i] + size[i];
+    }
+    for (int i = dat->block->dims; i < OPS_MAX_DIM; i++) {
+      range[2*i] = 0;
+      range[2*i+1] = 1;
+    }
+    if (dat->dirty_hd == 1)
+      ops_upload_dat(dat);
+    ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
+    target->data_d = data;
+    target->elem_size = dat->elem_size;
+    target->base_offset = 0;
+    for (int d = 0; d < OPS_MAX_DIM; d++) target->size[d] = size[d];
+    ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
+    desc->name = "ops_internal_copy_hip_reverse";
+    desc->device = 1;
+    desc->function = ops_internal_copy_hip;
+    ops_internal_copy_hip(desc);
+    target->data_d = NULL;
+    ops_free(target);
+    ops_free(desc->args);
+    ops_free(desc);
+    dat->dirty_hd = 2;
+  }
+}

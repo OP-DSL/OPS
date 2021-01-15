@@ -25,7 +25,7 @@ if [[ -v HIP_INSTALL_PATH ]]; then
   grep "PASSED" clover.out
   rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
   rm -f clover.out
-  echo “All HIP complied applications PASSED : Moving no to Intel Compiler Tests ”
+  echo "All HIP complied applications PASSED : Moving no to Intel Compiler Tests"
   cd -
 fi
 source ../../scripts/$SOURCE_INTEL

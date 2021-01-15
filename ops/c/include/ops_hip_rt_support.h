@@ -69,6 +69,7 @@ void mvConstArraysToDevice(OPS_instance *instance, int consts_bytes);
 void mvReductArraysToDevice(OPS_instance *instance, int reduct_bytes);
 void mvReductArraysToHost(OPS_instance *instance, int reduct_bytes);
 void ops_hip_exit(OPS_instance *instance);
+void ops_internal_copy_hip(ops_kernel_descriptor *desc);
 void ops_upload_dat(ops_dat dat);
 void ops_download_dat(ops_dat dat);
 

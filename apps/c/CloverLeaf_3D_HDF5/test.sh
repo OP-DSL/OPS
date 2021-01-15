@@ -17,7 +17,7 @@ if [[ -v HIP_INSTALL_PATH ]]; then
   rm -rf *.h5
   ./generate_file
   mv cloverdata.h5 cloverdata_seq.h5
-  $MPI_INSTALL_PATH/bin/mpirun -np 10 ./generate_file_mpi
+  $MPI_INSTALL_PATH/bin/mpirun -np 2 ./generate_file_mpi
   $HDF5_INSTALL_PATH/bin/h5diff cloverdata.h5 cloverdata_seq.h5 > diff_out
   
   if [ -s ./diff_out ]

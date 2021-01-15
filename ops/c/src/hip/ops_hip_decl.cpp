@@ -70,6 +70,161 @@ void ops_exit() {
   _ops_exit(OPS_instance::getOPSInstance());
 }
 
+
+void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *range, ops_memspace memspace) {
+  if (memspace == OPS_HOST) ops_dat_fetch_data_slab_host(dat, part, data, range);
+  else {
+    ops_execute(dat->block->instance);
+    int range2[2*OPS_MAX_DIM];
+    for (int i = 0; i < dat->block->dims; i++) {
+      range2[2*i] = range[2*i];
+      range2[2*i+1] = range[2*i+1];
+    }
+    for (int i = dat->block->dims; i < OPS_MAX_DIM; i++) {
+      range2[2*i] = 0;
+      range2[2*i+1] = 1;
+    }
+    if (dat->dirty_hd == 1) {
+      ops_upload_dat(dat);
+      dat->dirty_hd = 0;
+    }
+    ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
+    target->data_d = data;
+    target->elem_size = dat->elem_size;
+    target->base_offset = 0;
+    size_t prod = 1;
+    for (int d = 0; d < OPS_MAX_DIM; d++) {
+      target->size[d] = range2[2*d+1]-range2[2*d];
+      target->base_offset -= target->elem_size*prod*range2[2*d];
+      prod *= target->size[d];
+    }
+    ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
+    desc->name = "ops_internal_copy_hip";
+    desc->device = 1;
+    desc->function = ops_internal_copy_hip;
+    ops_internal_copy_hip(desc);
+    target->data_d = NULL;
+    ops_free(target);
+    ops_free(desc->args);
+    ops_free(desc);
+  }
+
+}
+
+void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *range, ops_memspace memspace) {
+  if (memspace == OPS_HOST) ops_dat_set_data_slab_host(dat, part, data, range);
+  else {
+    ops_execute(dat->block->instance);
+    int range2[2*OPS_MAX_DIM];
+    for (int i = 0; i < dat->block->dims; i++) {
+      range2[2*i] = range[2*i];
+      range2[2*i+1] = range[2*i+1];
+    }
+    for (int i = dat->block->dims; i < OPS_MAX_DIM; i++) {
+      range2[2*i] = 0;
+      range2[2*i+1] = 1;
+    }
+    if (dat->dirty_hd == 1) {
+      ops_upload_dat(dat);
+      dat->dirty_hd = 0;
+    }
+    ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
+    target->data_d = data;
+    target->elem_size = dat->elem_size;
+    target->base_offset = 0;
+    size_t prod = 1;
+    for (int d = 0; d < OPS_MAX_DIM; d++) {
+      target->size[d] = range2[2*d+1]-range2[2*d];
+      target->base_offset -= target->elem_size*prod*range2[2*d];
+      prod *= target->size[d];
+    }
+    ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
+    desc->name = "ops_internal_copy_hip_reverse";
+    desc->device = 1;
+    desc->function = ops_internal_copy_hip;
+    ops_internal_copy_hip(desc);
+    target->data_d = NULL;
+    ops_free(target);
+    ops_free(desc->args);
+    ops_free(desc);
+    dat->dirty_hd = 2;
+  }
+
+}
+
+
+void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace) {
+  if (memspace == OPS_HOST) ops_dat_fetch_data_host(dat, part, data);
+  else {
+    ops_execute(dat->block->instance);
+    int disp[OPS_MAX_DIM], size[OPS_MAX_DIM];
+    ops_dat_get_extents(dat, 0, disp, size);
+    int range[2*OPS_MAX_DIM];
+    for (int i = 0; i < dat->block->dims; i++) {
+      range[2*i] = dat->base[i];
+      range[2*i+1] = range[2*i] + size[i];
+    }
+    for (int i = dat->block->dims; i < OPS_MAX_DIM; i++) {
+      range[2*i] = 0;
+      range[2*i+1] = 1;
+    }
+    if (dat->dirty_hd == 1) {
+      ops_upload_dat(dat);
+      dat->dirty_hd = 0;
+    }
+    ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
+    target->data_d = data;
+    target->elem_size = dat->elem_size;
+    target->base_offset = 0;
+    for (int d = 0; d < OPS_MAX_DIM; d++) target->size[d] = size[d];
+    ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
+    desc->name = "ops_internal_copy_hip";
+    desc->device = 1;
+    desc->function = ops_internal_copy_hip;
+    ops_internal_copy_hip(desc);
+    target->data_d = NULL;
+    ops_free(target);
+    ops_free(desc->args);
+    ops_free(desc);
+  }
+}
+
+void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace) {
+  if (memspace == OPS_HOST) ops_dat_set_data_host(dat, part, data);
+  else {
+    ops_execute(dat->block->instance);
+    int disp[OPS_MAX_DIM], size[OPS_MAX_DIM];
+    ops_dat_get_extents(dat, 0, disp, size);
+    int range[2*OPS_MAX_DIM];
+    for (int i = 0; i < dat->block->dims; i++) {
+      range[2*i] = dat->base[i];
+      range[2*i+1] = range[2*i] + size[i];
+    }
+    for (int i = dat->block->dims; i < OPS_MAX_DIM; i++) {
+      range[2*i] = 0;
+      range[2*i+1] = 1;
+    }
+    if (dat->dirty_hd == 1)
+      ops_upload_dat(dat);
+    ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
+    target->data_d = data;
+    target->elem_size = dat->elem_size;
+    target->base_offset = 0;
+    for (int d = 0; d < OPS_MAX_DIM; d++) target->size[d] = size[d];
+    ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
+    desc->name = "ops_internal_copy_hip_reverse";
+    desc->device = 1;
+    desc->function = ops_internal_copy_hip;
+    ops_internal_copy_hip(desc);
+    target->data_d = NULL;
+    ops_free(target);
+    ops_free(desc->args);
+    ops_free(desc);
+    dat->dirty_hd = 2;
+  }
+}
+
+
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
                           int *d_m, int *d_p, int *stride, char *data, int type_size,
                           char const *type, char const *name) {
