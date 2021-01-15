@@ -1,6 +1,32 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
+if [[ -v HIP_INSTALL_PATH ]]; then
+  source ../../scripts/$SOURCE_HIP
+  make -j
+  cd -
+  make clean
+  rm -f .generated
+  make tealeaf_hip tealeaf_mpi_hip -j
+   
+  echo '============> Running HIP'
+  ./tealeaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+  grep "Total Wall time" tea.out
+  #grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
+  grep "PASSED" tea.out
+  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+  rm -f tea.out
+  
+  echo '============> Running MPI+HIP'
+  $MPI_INSTALL_PATH/bin/mpirun -np 2 ./tealeaf_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+  grep "Total Wall time" tea.out
+  #grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
+  grep "PASSED" tea.out
+  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+  rm -f tea.out
+  echo “All HIP complied applications PASSED : Moving no to Intel Compiler Tests ”
+  cd -
+fi
 source ../../scripts/$SOURCE_INTEL
 make -j
 cd -

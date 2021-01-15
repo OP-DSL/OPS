@@ -2,6 +2,42 @@
 set -e
 cd ../../../ops/c
 #<<COMMENT
+if [[ -v HIP_INSTALL_PATH ]]; then
+  source ../../scripts/$SOURCE_HIP
+  make -j
+  cd -
+  make clean
+  rm -f .generated
+  make mgrid_seq mgrid_hip mgrid_mpi_hip -j
+
+  echo '============> Running SEQ'
+  ./mgrid_seq > perf_out
+  grep "Total Wall time" perf_out
+  grep "PASSED" perf_out
+  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+  rm perf_out
+  cp data.h5 data_ref.h5
+  
+  echo '============> Running HIP'
+  ./mgrid_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+  grep "Total Wall time" perf_out
+  grep "PASSED" perf_out
+  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+  $HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
+  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
+  rm perf_out
+  
+  echo '============> Running MPI+HIP'
+  $MPI_INSTALL_PATH/bin/mpirun -np 2 ./mgrid_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+  grep "Total Wall time" perf_out
+  grep "PASSED" perf_out
+  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+  $HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
+  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
+  rm perf_out
+  echo “All HIP complied applications PASSED : Moving no to Intel Compiler Tests ”
+  cd -
+fi
 source ../../scripts/$SOURCE_INTEL
 make
 cd -

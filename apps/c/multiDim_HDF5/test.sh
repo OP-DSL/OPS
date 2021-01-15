@@ -1,6 +1,31 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
+if [[ -v HIP_INSTALL_PATH ]]; then
+  source ../../scripts/$SOURCE_HIP
+  make -j
+  cd -
+  
+  echo '============> Running HIP'
+  rm -rf write_data.h5 read_data.h5;
+  ./write_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+  ./read_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+  $HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
+  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
+  
+  
+  echo '============> Running MPI+HIP'
+  rm -rf write_data.h5 read_data.h5;
+  $MPI_INSTALL_PATH/bin/mpirun -np 2 ./write_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+  $MPI_INSTALL_PATH/bin/mpirun -np 2 ./read_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+  $HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
+  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
+
+  echo “All HIP complied applications PASSED : Moving no to Intel Compiler Tests ”
+  cd -
+fi
+
+
 source ../../scripts/$SOURCE_INTEL
 make clean
 make 

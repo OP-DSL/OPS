@@ -2,6 +2,32 @@
 set -e
 cd ../../../ops/c
 #<<COMMENT
+if [[ -v HIP_INSTALL_PATH ]]; then
+  source ../../scripts/$SOURCE_HIP
+  make -j
+  cd -
+  make clean
+  rm -f .generated
+  make cloverleaf_hip cloverleaf_mpi_hip -j
+  
+  echo '============> Running HIP'
+  ./cloverleaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+  grep "Total Wall time" clover.out
+  #grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
+  grep "PASSED" clover.out
+  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+  rm -f clover.out
+  
+  echo '============> Running MPI+HIP'
+  $MPI_INSTALL_PATH/bin/mpirun -np 2 ./cloverleaf_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+  grep "Total Wall time" clover.out
+  #grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
+  grep "PASSED" clover.out
+  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+  rm -f clover.out
+  echo “All HIP complied applications PASSED : Moving no to Intel Compiler Tests ”
+  cd -
+fi
 source ../../scripts/$SOURCE_INTEL
 make clean
 make -j
