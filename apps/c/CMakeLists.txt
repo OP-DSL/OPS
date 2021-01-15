@@ -19,6 +19,10 @@ if (${CMAKE_PROJECT_NAME} STREQUAL APP)
         message("We choose the Release mode! Please uses -DCMAKE_BUILD_TYPE to change.")
         set(CMAKE_BUILD_TYPE Release)
     endif()
+
+    if (NOT LIBTRID_PATH)
+        message(WARNING "The install path of the scalar tridiagonal solver library (LIBTRID_PATH) is not specified and the apps which need it will not compiled!")
+    endif ()
     # Configure Compilers
     # C
     set(CMAKE_C_STANDARD 99)
