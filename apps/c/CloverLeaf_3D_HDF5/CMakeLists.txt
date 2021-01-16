@@ -1,4 +1,11 @@
 cmake_minimum_required(VERSION 3.18)
+set(IEEE "-fp-model strict -fp-model source -prec-div -prec-sqrt")
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
+    SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${IEEE}")
+endif ()
+if (${CMAKE_C_COMPILER_ID} STREQUAL Intel)
+    SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${IEEE}")
+endif ()
 CreateTempDir()
 if (HDF5_SEQ)
     add_executable(generate_file generate_file.cpp build_field_hdf5.cpp read_input.cpp initialise_chunk.cpp
