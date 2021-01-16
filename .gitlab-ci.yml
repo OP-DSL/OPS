@@ -15,7 +15,7 @@ build:GNU:API:
     - mkdir build
     - cd build
     - cmake ../  -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL
-    - make IEEE=1 -j 4
+    - make -j 4
     - make install
   artifacts:
     expire_in: 1 week
@@ -33,7 +33,7 @@ build:Intel:API:
     - mkdir build-intel
     - cd build-intel
     - cmake ../  -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DHDF5_ROOT=/usr/local/hdf5-intel
-    - make IEEE=1 -j 4
+    - make -j 4
     - make install
   artifacts:
     expire_in: 1 week
@@ -74,7 +74,7 @@ build:GNU:APP:
     - mkdir appbuild
     - cd appbuild
     - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP
-    - make IEEE=1 -j 12
+    - make -j 12
     - make install
   dependencies:
     - build:GNU:API
@@ -118,7 +118,7 @@ build:Intel:APP:
     - mkdir appbuild-intel
     - cd appbuild-intel
     - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DHDF5_ROOT=/usr/local/hdf5-intel
-    - make IEEE=1 -j 12
+    - make -j 12
     - make install
   dependencies:
     - build:Intel:API
@@ -162,7 +162,7 @@ test:GNU:
     - mkdir appbuild
     - cd appbuild
     - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON  -DGPU_NUMBER=1
-    - make IEEE=1 -j 12
+    - make -j 12
     - make test
   artifacts:
     expire_in: 1 week
@@ -210,7 +210,7 @@ test:Intel:
     - mkdir appbuild-intel
     - cd appbuild-intel
     - cmake ../apps/c  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DOPS_TEST=ON  -DGPU_NUMBER=1 -DHDF5_ROOT=/usr/local/hdf5-intel
-    - make IEEE=1 -j 12
+    - make -j 12
     - make test
   artifacts:
     expire_in: 1 week
