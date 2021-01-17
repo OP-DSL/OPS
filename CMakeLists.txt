@@ -35,7 +35,7 @@ elseif (${CMAKE_C_COMPILER_ID} STREQUAL MSVC)
     set(CMAKE_C_FLAGS_DEBUG "/Z7 /DEBUG")
 elseif (${CMAKE_C_COMPILER_ID} STREQUAL Intel)
     set(CMAKE_C_FLAGS "-xHost")
-    set(CMAKE_C_FLAGS_RELEASE "-O3 -qopenmp") # -fp-model strict -fp-model source -prec-div -prec-sqrt
+    set(CMAKE_C_FLAGS_RELEASE "-O3 -qopenmp")
     set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
 else ()
     message(FATAL_ERROR "We can't recongnise the C compiler!")
@@ -44,7 +44,7 @@ endif ()
 # C++
 set(CMAKE_CXX_STANDARD 11)
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
-    set(CMAKE_CXX_FLAGS "-fPIC -Wall") #-ffloat-store
+    set(CMAKE_CXX_FLAGS "-fPIC -Wall")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
