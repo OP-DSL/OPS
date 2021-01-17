@@ -1,9 +1,8 @@
 #!/bin/bash
 set -e
+<<COMMENT
 cd ../../../ops/c
 source ../../scripts/$SOURCE_INTEL
-make clean
-make
 
 #==== Build and copy Referance application from the TDMA Library ====
 #build lib first
@@ -12,6 +11,11 @@ rm -rf ./*
 cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_MPI=ON -DLIBTRID_PATH=$TDMA_INSTALL_PATH
 make
 make install
+
+#build OPS
+cd $OPS_INSTALL_PATH/c
+make clean
+make
 
 #now build application
 cd $TDMA_INSTALL_PATH/../../apps/adi/build/
@@ -26,6 +30,7 @@ make clean
 rm -f .generated
 make IEEE=1
 
+COMMENT
 
 rm -rf h_u.dat adi_orig.dat adi_seq.dat adi_dev_seq.dat adi_cuda.dat adi_openmp.dat  *.h5
 
@@ -103,6 +108,32 @@ else
     echo "PASSED"
 fi
 rm -rf perf_out diff_out adi_cuda.h5
+
+echo '============> Running MPI - Gather Scatter'
+$MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi -halo 1 -m 0 > perf_out
+mv adi.h5 adi_mpi.h5
+grep "Total Wall time" perf_out
+$HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_omp_pad.h5 adi_mpi.h5 > diff_out
+if [ -s ./diff_out ]
+then
+    echo "File not empty - Solution Not Valid";exit 1;
+else
+    echo "PASSED"
+fi
+rm -rf perf_out diff_out adi_mpi.h5
+
+echo '============> Running MPI - LATENCY HIDING INTERLEAVED'
+$MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi -halo 1 -m 3 -bx 16384 -by 16384 -bz 16384 > perf_out
+mv adi.h5 adi_mpi.h5
+grep "Total Wall time" perf_out
+$HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_omp_pad.h5 adi_mpi.h5 > diff_out
+if [ -s ./diff_out ]
+then
+    echo "File not empty - Solution Not Valid";exit 1;
+else
+    echo "PASSED"
+fi
+rm -rf adi_mpi.h5 perf_out diff_out
 
 rm -rf *.h5
 echo "All Intel complied applications PASSED : Exiting Test Script"
