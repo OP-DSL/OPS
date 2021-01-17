@@ -71,3 +71,36 @@ if (MPI_FOUND)
         install(TARGETS ops_mpi_opencl DESTINATION lib)
     endif()
 endif ()
+
+# Tridiagonal library
+if (LIBTRID_PATH)
+    # Sequential Tridiagonal Library
+    add_library(ops_trid_seq ${CMAKE_CURRENT_SOURCE_DIR}/src/tridiag/ops_tridiag.cpp)
+    target_include_directories(ops_trid_seq PRIVATE ${LIBTRID_PATH}/include)
+    install(TARGETS ops_trid_seq DESTINATION lib)
+
+    # Sequential CUDA Tridiagonal Library
+    if (CUDAToolkit_FOUND)
+        add_library(ops_trid_cuda ${CMAKE_CURRENT_SOURCE_DIR}/src/tridiag/ops_tridiag_cuda.cpp)
+        target_include_directories(ops_trid_cuda PRIVATE ${LIBTRID_PATH}/include)
+        install(TARGETS ops_trid_cuda DESTINATION lib)
+    endif ()
+
+    if (MPI_FOUND)
+        # MPI Tridiagonal Library
+        add_library(ops_trid_mpi ${CMAKE_CURRENT_SOURCE_DIR}/src/tridiag/ops_tridiag_mpi.cpp)
+        target_include_directories(ops_trid_mpi PRIVATE ${LIBTRID_PATH}/include)
+        install(TARGETS ops_trid_mpi DESTINATION lib)
+
+        if (CUDAToolkit_FOUND)
+            # MPI + CUDA Tridiagonal Library
+            add_library(ops_trid_mpi_cuda ${CMAKE_CURRENT_SOURCE_DIR}/src/tridiag/ops_tridiag_mpi_cuda.cpp)
+            if (NCCL_FOUND)
+                target_compile_definitions(ops_trid_mpi_cuda PRIVATE -DTRID_NCCL)
+                target_include_directories(ops_trid_mpi_cuda PRIVATE ${NCCL_INCLUDE_DIR})
+            endif ()
+            target_include_directories(ops_trid_mpi_cuda PRIVATE ${LIBTRID_PATH}/include)
+            install(TARGETS ops_trid_mpi_cuda DESTINATION lib)
+        endif ()
+    endif ()
+endif ()

@@ -9,6 +9,7 @@ void ops_init_backend();
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 
 #define OPS_3D
 #include  "ops_lib_core.h"
@@ -37,10 +38,38 @@ void ops_par_loop_preproc_kernel(char const *, ops_block, int , int*,
 
 
 
+#ifdef OPS_MPI
+#include "ops_mpi_core.h"
+#endif
+
 #include "data.h"
 
 //#include "init_kernel.h"
 //#include "preproc_kernel.h"
+
+#include <mpi.h>
+
+extern char *optarg;
+extern int  optind, opterr, optopt;
+static struct option options[] = {
+  {"nx",   required_argument, 0,  0   },
+  {"ny",   required_argument, 0,  0   },
+  {"nz",   required_argument, 0,  0   },
+  {"bx",   required_argument, 0,  0   },
+  {"by",   required_argument, 0,  0   },
+  {"bz",   required_argument, 0,  0   },
+  {"m", required_argument, 0,  0   },
+  {"iter", required_argument, 0,  0   },
+  {"halo", required_argument, 0,  0   },
+  {"t", no_argument, 0,  0   },
+  {"help", no_argument,       0,  'h' },
+  {0,      0,                 0,  0   }
+};
+
+void print_help() {
+  printf("Please specify the ADI configuration, e.g.: \n$ ./adi_* -nx NX -ny NY -nz NZ -iter ITER\n");
+  exit(0);
+}
 
 typedef double FP;
 
@@ -83,16 +112,116 @@ void dump_and_exit(FP *data, const int nx, const int ny, const int nz,
   if (iteration == max_iteration) exit(0);
 }
 
+#ifdef OPS_MPI
+void ignore_mpi_halo_rms(ops_dat dat) {
+  double sum = 0.0;
+
+  int host = OPS_HOST;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+  const double *ptr = (double *)ops_dat_get_raw_pointer(dat, 0, S3D_000, &host);
+  sub_dat *sd = OPS_sub_dat_list[dat->index];
+  int pads_m[] = {-1 * (dat->d_m[0] + sd->d_im[0]), -1 * (dat->d_m[1] + sd->d_im[1]), -1 * (dat->d_m[2] + sd->d_im[2])};
+  int pads_p[] = {dat->d_p[0] + sd->d_ip[0], dat->d_p[1] + sd->d_ip[1], dat->d_p[2] + sd->d_ip[2]};
+
+  int dims[] = {dat->size[0] - pads_m[0] - pads_p[0],
+                dat->size[1] - pads_m[1] - pads_p[1],
+                dat->size[2] - pads_m[2] - pads_p[2]};
+
+  for(int z = 0; z < dims[2]; z++) {
+    for(int y = 0; y < dims[1]; y++) {
+      for(int x = 0; x < dims[0]; x++) {
+        int offset = z * dat->size[1] * dat->size[0];
+        offset += y * dat->size[0];
+        offset += x;
+        sum += ptr[offset];
+      }
+    }
+  }
+
+  ops_dat_release_raw_data(dat, 0, OPS_READ);
+
+  double global_sum = 0.0;
+  MPI_Allreduce(&sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+  ops_printf("Sum: %.15g\n", global_sum);
+}
+#endif
+
+#ifndef OPS_MPI
+void zero_halo(ops_dat dat) {
+  int host = OPS_HOST;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+  double *ptr = (double *)ops_dat_get_raw_pointer(dat, 0, S3D_000, &host);
+  int pads_m[] = {-1 * (dat->d_m[0]), -1 * (dat->d_m[1]), -1 * (dat->d_m[2])};
+  int pads_p[] = {dat->d_p[0], dat->d_p[1], dat->d_p[2]};
+
+  int dims[] = {dat->size[0] - pads_m[0] - pads_p[0],
+                dat->size[1] - pads_m[1] - pads_p[1],
+                dat->size[2] - pads_m[2] - pads_p[2]};
+
+  for(int z = dims[2]; z < dims[2] + pads_p[2]; z++) {
+    for(int y = dims[1]; y < dims[1] + pads_p[1]; y++) {
+      for(int x = dims[0]; x < dims[0] + pads_p[0]; x++) {
+        int offset = z * dat->size[1] * dat->size[0];
+        offset += y * dat->size[0];
+        offset += x;
+        ptr[offset] = 0.0;
+      }
+    }
+  }
+
+  ops_dat_release_raw_data(dat, 0, OPS_WRITE);
+}
+#endif
+
+#ifndef OPS_MPI
+int check_halo_is_zero(ops_dat dat) {
+  int host = OPS_HOST;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+  double *ptr = (double *)ops_dat_get_raw_pointer(dat, 0, S3D_000, &host);
+  int pads_m[] = {-1 * (dat->d_m[0]), -1 * (dat->d_m[1]), -1 * (dat->d_m[2])};
+  int pads_p[] = {dat->d_p[0], dat->d_p[1], dat->d_p[2]};
+
+  int dims[] = {dat->size[0] - pads_m[0] - pads_p[0],
+                dat->size[1] - pads_m[1] - pads_p[1],
+                dat->size[2] - pads_m[2] - pads_p[2]};
+
+  for(int z = dims[2]; z < dims[2] + pads_p[2]; z++) {
+    for(int y = dims[1]; y < dims[1] + pads_p[1]; y++) {
+      for(int x = dims[0]; x < dims[0] + pads_p[0]; x++) {
+        int offset = z * dat->size[1] * dat->size[0];
+        offset += y * dat->size[0];
+        offset += x;
+        if(ptr[offset] != 0.0) {
+          ops_dat_release_raw_data(dat, 0, OPS_READ);
+          return false;
+        }
+      }
+    }
+  }
+
+  ops_dat_release_raw_data(dat, 0, OPS_READ);
+  return true;
+}
+#endif
+
 int nx;
 int ny;
 int nz;
 int ldim;
 int iter;
 int opts[3], pads[3], synch;
+int bx, by, bz;
+int m;
+int halo;
+int t;
 
 double lambda;
 
-int main(int argc, const char **argv) {
+int main(int argc, char *argv[]) {
 
   nx = 256;
   ny = 256;
@@ -102,8 +231,29 @@ int main(int argc, const char **argv) {
   opts[2] = 0;
   iter = 10;
   synch = 1;
+  bx = 16384;
+  by = 16384;
+  bz = 16384;
+  m = 0;
+  halo = 1;
+  t = 0;
 
   lambda = 1.0f;
+
+  int opt_index = 0;
+  while( getopt_long_only(argc, argv, "", options, &opt_index) != -1) {
+    if(strcmp((char*)options[opt_index].name,"nx"  ) == 0) nx = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"ny"  ) == 0) ny = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"nz"  ) == 0) nz = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"bx"  ) == 0) bx = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"by"  ) == 0) by = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"bz"  ) == 0) bz = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"m"  ) == 0) m = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"iter") == 0) iter = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"halo") == 0) halo = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"t") == 0) t = 1;
+    if(strcmp((char*)options[opt_index].name,"help") == 0) print_help();
+  }
 
 
   ops_init(argc, argv, 2);
@@ -112,20 +262,18 @@ int main(int argc, const char **argv) {
 
   ops_block heat3D = ops_decl_block(3, "Heat3D");
 
-  int d_p[3] = {0, 0,
-                0};
-  int d_m[3] = {0, 0,
-                0};
+
+  int d_p[3] = {halo, halo, halo};
+
+  int d_m[3] = {-1 * halo, -1 * halo, -1 * halo};
+
   int size[3] = {nx, ny, nz};
 
-  int pads[3] = {nx, ny, nz};
   int base[3] = {0, 0, 0};
   double *temp = NULL;
 
   ops_dat h_u =
       ops_decl_dat(heat3D, 1, size, base, d_m, d_p, temp, "double", "h_u");
-  ops_dat h_temp =
-      ops_decl_dat(heat3D, 1, size, base, d_m, d_p, temp, "double", "h_tmp");
   ops_dat h_du =
       ops_decl_dat(heat3D, 1, size, base, d_m, d_p, temp, "double", "h_du");
   ops_dat h_ax =
@@ -162,8 +310,12 @@ int main(int argc, const char **argv) {
   ops_partition("2D_BLOCK_DECOMPSE");
 
   double ct0, ct1, et0, et1, ct2, et2, ct3, et3;
+  double total_preproc, total_x, total_y, total_z;
+  total_preproc = total_x = total_y = total_z = 0.0;
 
-  printf("\nGrid dimensions: %d x %d x %d\n", nx, ny, nz);
+  ops_printf("\nNumber of iterations: %d\n", iter);
+  ops_printf("\nGrid dimensions: %d x %d x %d\n", nx, ny, nz);
+  printf("\nLocal dimensions: %d x %d x %d\n", h_u->size[0], h_u->size[1], h_u->size[2]);
   ops_diagnostic_output();
 
   ops_initTridMultiDimBatchSolve(3 ,
@@ -195,34 +347,94 @@ int main(int argc, const char **argv) {
                  ops_arg_dat(h_cz, 1, S3D_000, "double", OPS_WRITE),
                  ops_arg_idx());
     ops_timers(&ct3, &et3);
-    ops_printf("Elapsed preproc (sec): %lf (s)\n", et3 - et2);
+    total_preproc += et3 - et2;
+
 
     ops_timers(&ct2, &et2);
-    ops_tridMultiDimBatch(3, 0, size, h_ax, h_bx, h_cx, h_du, h_u);
+    ops_tridMultiDimBatch(3, 0, size, h_ax, h_bx, h_cx, h_du, h_u, m, bx);
     ops_timers(&ct3, &et3);
-    ops_printf("Elapsed trid_x (sec): %lf (s)\n", et3 - et2);
+    total_x += et3 - et2;
+
 
     ops_timers(&ct2, &et2);
-    ops_tridMultiDimBatch(3, 1, size, h_ay, h_by, h_cy, h_du, h_u);
+    ops_tridMultiDimBatch(3, 1, size, h_ay, h_by, h_cy, h_du, h_u, m, by);
     ops_timers(&ct3, &et3);
-    ops_printf("Elapsed trid_y (sec): %lf (s)\n", et3 - et2);
+    total_y += et3 - et2;
+
 
     ops_timers(&ct2, &et2);
-    ops_tridMultiDimBatch_Inc(3, 2, size, h_az, h_bz, h_cz, h_du, h_u);
+    ops_tridMultiDimBatch_Inc(3, 2, size, h_az, h_bz, h_cz, h_du, h_u, m, bz);
     ops_timers(&ct3, &et3);
-    ops_printf("Elapsed trid_z (sec): %lf (s)\n", et3 - et2);
+    total_z += et3 - et2;
 
   }
 
   ops_timers(&ct1, &et1);
 
+#ifndef OPS_MPI
+  if(check_halo_is_zero(h_u)) {
+    ops_printf("Halo Test: PASSED\n");
+  } else {
+    ops_printf("Halo Test: FAILED\n");
+  }
+#endif
+
   ops_fetch_block_hdf5_file(heat3D, "adi.h5");
   ops_fetch_dat_hdf5_file(h_u, "adi.h5");
 
+
+
+#ifndef OPS_MPI
+  if(t) {
+    int dp[3] = {1, 1, 1};
+    int dm[3] = {-1, -1, -1};
+    ops_dat h_u_pad =
+        ops_decl_dat(heat3D, 1, size, base, dm, dp, temp, "double", "h_u");
+    zero_halo(h_u_pad);
+    int host = OPS_HOST;
+    int s3D_000[] = {0, 0, 0};
+    ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+    double *ptr_pad = (double *)ops_dat_get_raw_pointer(h_u_pad, 0, S3D_000, &host);
+    double *ptr = (double *)ops_dat_get_raw_pointer(h_u, 0, S3D_000, &host);
+    int pads_m[] = {-1 * (h_u_pad->d_m[0]), -1 * (h_u_pad->d_m[1]), -1 * (h_u_pad->d_m[2])};
+    int pads_p[] = {h_u_pad->d_p[0], h_u_pad->d_p[1], h_u_pad->d_p[2]};
+
+    int dims[] = {h_u_pad->size[0] - pads_m[0] - pads_p[0],
+                  h_u_pad->size[1] - pads_m[1] - pads_p[1],
+                  h_u_pad->size[2] - pads_m[2] - pads_p[2]};
+
+    for(int z = 0; z < dims[2]; z++) {
+      for(int y = 0; y < dims[1]; y++) {
+        for(int x = 0; x < dims[0]; x++) {
+          int offset_pad = z * h_u_pad->size[1] * h_u_pad->size[0];
+          offset_pad += y * h_u_pad->size[0];
+          offset_pad += x;
+          int offset = z * dims[1] * dims[0] + y * dims[0] + x;
+          ptr_pad[offset_pad] = ptr[offset];
+        }
+      }
+    }
+
+    ops_dat_release_raw_data(h_u, 0, OPS_READ);
+    ops_dat_release_raw_data(h_u_pad, 0, OPS_WRITE);
+    ops_fetch_block_hdf5_file(heat3D, "adi_pad.h5");
+    ops_fetch_dat_hdf5_file(h_u_pad, "adi_pad.h5");
+  }
+#endif
+
+#ifdef OPS_MPI
+  ignore_mpi_halo_rms(h_du);
+  ignore_mpi_halo_rms(h_u);
+#else
   ldim = nx;
 
   dump_data((double *)(h_u->data), nx, ny, nz, ldim, argv[0]);
+#endif
 
-  ops_printf("\nTotal Wall time %lf\n", et1 - et0);
+  ops_printf("\nTotal Wall time (s): %lf\n", et1 - et0);
+  ops_printf("Preproc total time (s): %lf\n", total_preproc);
+  ops_printf("X Dim total time (s): %lf\n", total_x);
+  ops_printf("Y Dim total time (s): %lf\n", total_y);
+  ops_printf("Z Dim total time (s): %lf\n", total_z);
   ops_exit();
 }

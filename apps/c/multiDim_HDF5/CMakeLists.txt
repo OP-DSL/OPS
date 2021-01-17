@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 CreateTempDir()
-BUILD_OPS_C_SAMPLE(write "read" "NONE" "NONE" "NO")
-BUILD_OPS_C_SAMPLE(read "write" "NONE" "NONE" "NO")
+BUILD_OPS_C_SAMPLE(write "read" "NONE" "NONE" "NO" "NO")
+BUILD_OPS_C_SAMPLE(read "write" "NONE" "NONE" "NO" "NO")
 if (OPS_TEST AND  MPI AND HDF5_FOUND)
     enable_testing()
     set(H5D "${HDF5_DIFF_EXECUTABLE}")
@@ -30,4 +30,3 @@ if (OPS_TEST AND  MPI AND HDF5_FOUND)
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/tmp"
         )
 endif()
-

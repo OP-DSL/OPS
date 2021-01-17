@@ -16,6 +16,12 @@ if ( NOT CMAKE_BUILD_TYPE )
 endif()
 message(WARNING "The installation directory is ${CMAKE_INSTALL_PREFIX}! Use -DCMAKE_INSTALL_PREFIX to change")
 
+# Tridiagonal library
+
+if (NOT LIBTRID_PATH)
+  message(WARNING "The install path of the scalar tridiagonal solver library (LIBTRID_PATH) is not specified and it will not compiled!")
+endif ()
+
 set(HDF5_PREFER_PARALLEL true)
 # Configure Compilers
 # C
@@ -33,6 +39,10 @@ elseif (${CMAKE_C_COMPILER_ID} STREQUAL MSVC)
     set(CMAKE_C_FLAGS "-W1")
     set(CMAKE_C_FLAGS_RELEASE "/O2 /Ot ")
     set(CMAKE_C_FLAGS_DEBUG "/Z7 /DEBUG")
+elseif (${CMAKE_C_COMPILER_ID} STREQUAL Intel)
+    set(CMAKE_C_FLAGS "-fPIC -Wall -qopenmp")
+    set(CMAKE_C_FLAGS_RELEASE "-O3")
+    set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
 else ()
     message(FATAL_ERROR "We can't recongnise the C compiler!")
 endif ()
@@ -50,9 +60,16 @@ elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     set(CMAKE_CXX_FLAGS "-W1")
     set(CMAKE_CXX_FLAGS_RELEASE "/O2 /Ot ")
     set(CMAKE_CXX_FLAGS_DEBUG "/Z7 /DEBUG")
+elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
+    set(CMAKE_CXX_FLAGS "-fPIC -Wall -qopenmp")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 else ()
     message(FATAL_ERROR "We can't recongnise the C++ compiler!")
 endif ()
+
+# Add find scripts
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 # Try to find the required dependency
 find_package(MPI QUIET)
@@ -92,6 +109,12 @@ else()
     message (WARNING "We cannot find a OpenCL kit! The OpenCL codes won't compile!")
 endif ()
 
+if (USE_NCCL)
+    find_package(NCCL)
+    if(NOT NCCL_FOUND)
+        message(WARNING "We cannot find NCCL! Tridiagonal library wrapper will be compiled with NCCL")
+    endif()
+endif()
 
 # option(BUILD_OPS_FORTRAN "Build FORTRAN version of OPS" OFF)
 option(BUILD_OPS_APPS "Build Sample OPS applications" OFF)
@@ -172,4 +195,3 @@ if(BUILD_OPS_APPS)
 #         add_subdirectory(apps/fortran)
 #     endif()
 endif()
-

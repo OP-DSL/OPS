@@ -25,5 +25,4 @@ if (OPS_TEST AND  MPI AND HDF5_FOUND)
 endif()
 set(others start.cpp time_step.cpp build_field.cpp read_input.cpp initialise.cpp advection.cpp)
 set(extra generate_file.cpp generate_hdf5.cpp build_field_hdf5.cpp)
-BUILD_OPS_C_SAMPLE(clover_leaf_3D_hdf5 profile "${others}" "${extra}" "YES")
-
+BUILD_OPS_C_SAMPLE(clover_leaf_3D_hdf5 profile "${others}" "${extra}" "NO" "YES")

@@ -6,5 +6,5 @@ if(CPU_NUMBER GREATER 4)
 else()
     # Note that undefined variables would be `""` thus false
 endif()
-BUILD_OPS_C_SAMPLE(multidim "NONE" "NONE" "NONE" "YES")
+BUILD_OPS_C_SAMPLE(multidim "NONE" "NONE" "NONE" "NO" "YES")
 set(CPU_NUMBER ${OringalCPUNum})

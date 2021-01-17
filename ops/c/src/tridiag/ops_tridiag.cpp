@@ -56,14 +56,36 @@ void ops_tridMultiDimBatch(
     ops_dat
         d,  // right hand side coefficients of a multidimensional problem. An
             // array containing d column vectors of individual problems
-    ops_dat u
+    ops_dat u,
+    int solve_method,
+    int batch_size
     ) {
-  if (a->mem != b->mem || b->mem != c->mem || c->mem != d->mem) {
-    throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
+
+  for (int i = 0; i < 3; i++) {
+    if (a->size[i] != b->size[i] || b->size[i] != c->size[i] ||
+        c->size[i] != d->size[i] || d->size[i] != u->size[i]) {
+      throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
+    }
   }
-  tridDmtsvStridedBatch((const double *)a->data, (const double *)b->data,
-                        (const double *)c->data, (double *)d->data,
-                        (double *)u->data, ndim, solvedim, dims, a->size);
+
+  int host = OPS_HOST;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+
+  const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &host);
+  const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &host);
+  const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &host);
+  double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &host);
+  double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
+
+  tridDmtsvStridedBatch(a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
+                        ndim, solvedim, dims, a->size);
+
+  ops_dat_release_raw_data(u, 0, OPS_READ);
+  ops_dat_release_raw_data(d, 0, OPS_RW);
+  ops_dat_release_raw_data(c, 0, OPS_READ);
+  ops_dat_release_raw_data(b, 0, OPS_READ);
+  ops_dat_release_raw_data(a, 0, OPS_READ);
 
   /* Right now, we are simply using the same memory allocated by OPS
   as can be seen by the use of a->data, b->data, c->data etc.
@@ -91,13 +113,36 @@ void ops_tridMultiDimBatch_Inc(
     ops_dat
         d,  // right hand side coefficients of a multidimensional problem. An
             // array containing d column vectors of individual problems
-    ops_dat u
+    ops_dat u,
+    int solve_method,
+    int batch_size
     ) {
-  if (a->mem != b->mem || b->mem != c->mem || c->mem != d->mem || d->mem != u->mem) {
-    throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
+
+  // check if sizes match
+  for (int i = 0; i < 3; i++) {
+    if (a->size[i] != b->size[i] || b->size[i] != c->size[i] ||
+        c->size[i] != d->size[i] || d->size[i] != u->size[i]) {
+      throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
+    }
   }
-  tridDmtsvStridedBatchInc((const double *)a->data, (const double *)b->data,
-                           (const double *)c->data, (double *)d->data,
-                           (double *)u->data, ndim, solvedim, dims, a->size);
+
+  int host = OPS_HOST;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+
+  const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &host);
+  const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &host);
+  const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &host);
+  double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &host);
+  double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
+
+  tridDmtsvStridedBatchInc(a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
+                           ndim, solvedim, dims, a->size);
+
+  ops_dat_release_raw_data(u, 0, OPS_RW);
+  ops_dat_release_raw_data(d, 0, OPS_READ);
+  ops_dat_release_raw_data(c, 0, OPS_READ);
+  ops_dat_release_raw_data(b, 0, OPS_READ);
+  ops_dat_release_raw_data(a, 0, OPS_READ);
 
 }

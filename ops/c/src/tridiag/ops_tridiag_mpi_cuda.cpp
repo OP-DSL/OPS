@@ -37,13 +37,15 @@
   * functions for interfacing with external Tridiagonal libraries
   */
 
-#include <ops_lib_core.h>
+#include <trid_common.h>
+#include <trid_mpi_cuda.hpp>
+#include <cuda.h>
+
+#include <ops_cuda_rt_support.h>
 #include <ops_mpi_core.h>
 #include <ops_exceptions.h>
 #include <ops_tridiag.h>
-
-#include <trid_common.h>
-#include <trid_mpi_cpu.h>
+#include <ops_lib_core.h>
 
 namespace {
   struct MpiSolverParamsWrapper {
@@ -60,7 +62,7 @@ namespace {
       MpiSolverParams::MPICommStrategy strategy;
       switch(solve_method) {
         case 0:
-          strategy = MpiSolverParams::GATHER_SCATTER;
+          throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: Gather Scatter solving strategy is not a valid option for MPI+CUDA");
           break;
         case 1:
           strategy = MpiSolverParams::ALLGATHER;
@@ -151,25 +153,37 @@ void ops_tridMultiDimBatch(
     dims_calc[i] = a->size[i] - pads_m[i] - pads_p[i];
   }
 
+  int offset;
+  if(ndim == 1) {
+    offset = pads_m[0]; // x padding
+  } else if (ndim == 2) {
+    offset = pads_m[1] * a->size[0] // y padding
+             + pads_m[0]; // x padding
+  } else {
+    offset = pads_m[2] * a->size[1] * a->size[0] // z padding
+             + pads_m[1] * a->size[0] // y padding
+             + pads_m[0]; // x padding
+  }
+
   // compute tridiagonal system sizes
   ops_block block = a->block;
   sub_block *sb = OPS_sub_block_list[block->index];
 
-  int host = OPS_HOST;
+  int device = OPS_DEVICE;
   int s3D_000[] = {0, 0, 0};
   ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
 
   // Get raw pointer access to data held by OPS
   // Points to element 0, skipping MPI halo
-  const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &host);
-  const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &host);
-  const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &host);
-  double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &host);
-  double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
+  const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &device);
+  const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &device);
+  const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &device);
+  double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
+  double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
   tridDmtsvStridedBatchMPI(*(mpiParams.getMpiSolverParams(sb, solve_method, batch_size)),
                            a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
-                           dims_calc, a->size);
+                           dims_calc, a->size, offset);
 
   // Release pointer access back to OPS
   ops_dat_release_raw_data(u, 0, OPS_READ);
@@ -212,24 +226,36 @@ void ops_tridMultiDimBatch_Inc(
     dims_calc[i] = a->size[i] - pads_m[i] - pads_p[i];
   }
 
+  int offset;
+  if(ndim == 1) {
+    offset = pads_m[0]; // x padding
+  } else if (ndim == 2) {
+    offset = pads_m[1] * a->size[0] // y padding
+             + pads_m[0]; // x padding
+  } else {
+    offset = pads_m[2] * a->size[1] * a->size[0] // z padding
+             + pads_m[1] * a->size[0] // y padding
+             + pads_m[0]; // x padding
+  }
+
   // compute tridiagonal system sizes
   ops_block block = a->block;
   sub_block *sb = OPS_sub_block_list[block->index];
 
-  int host = OPS_HOST;
+  int device = OPS_DEVICE;
   int s3D_000[] = {0, 0, 0};
   ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
 
-  const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &host);
-  const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &host);
-  const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &host);
-  double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &host);
-  double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
+  const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &device);
+  const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &device);
+  const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &device);
+  double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
+  double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
   // For now do not consider adding padding
   tridDmtsvStridedBatchIncMPI(*(mpiParams.getMpiSolverParams(sb, solve_method, batch_size)),
                               a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
-                              dims_calc, a->size);
+                              dims_calc, a->size, offset);
 
   ops_dat_release_raw_data(u, 0, OPS_RW);
   ops_dat_release_raw_data(d, 0, OPS_READ);
