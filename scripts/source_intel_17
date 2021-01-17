@@ -9,6 +9,7 @@ module purge
 #. /opt/modules/current/Modules/3.2.6/init/bash
 #module load gnu-5.4.0
 export PATH=/rr-home/gihan/numawrap:$PATH
+#module load cmake/3.16.4
 
 #OPS specifics
 export OPS_COMPILER=intel
