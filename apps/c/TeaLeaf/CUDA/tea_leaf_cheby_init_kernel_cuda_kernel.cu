@@ -259,7 +259,7 @@ void ops_par_loop_tea_leaf_cheby_init_kernel(char const *name, ops_block block, 
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 8;
-  desc->args = (ops_arg*)malloc(8*sizeof(ops_arg));
+  desc->args = (ops_arg*)ops_malloc(8*sizeof(ops_arg));
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
@@ -273,11 +273,11 @@ void ops_par_loop_tea_leaf_cheby_init_kernel(char const *name, ops_block block, 
   desc->args[5] = arg5;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg5.dat->index;
   desc->args[6] = arg6;
-  char *tmp = (char*)malloc(1*sizeof(double));
+  char *tmp = (char*)ops_malloc(1*sizeof(double));
   memcpy(tmp, arg6.data,1*sizeof(double));
   desc->args[6].data = tmp;
   desc->args[7] = arg7;
-  tmp = (char*)malloc(1*sizeof(double));
+  tmp = (char*)ops_malloc(1*sizeof(double));
   memcpy(tmp, arg7.data,1*sizeof(double));
   desc->args[7].data = tmp;
   desc->function = ops_par_loop_tea_leaf_cheby_init_kernel_execute;

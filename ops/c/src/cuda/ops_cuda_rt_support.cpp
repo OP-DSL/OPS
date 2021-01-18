@@ -117,7 +117,6 @@ void ops_cpHostToDevice(OPS_instance *instance, void **data_d, void **data_h, si
   }
 
   if (data_h == NULL || *data_h == NULL) {
-    cutilSafeCall(instance->ostream(), cudaMalloc(data_d, size));
     cutilSafeCall(instance->ostream(), cudaMemset(*data_d, 0, size));
     return;
   }

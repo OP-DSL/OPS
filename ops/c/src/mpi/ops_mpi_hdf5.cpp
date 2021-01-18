@@ -270,22 +270,22 @@ void ops_fetch_block_hdf5_file(ops_block block, char const *file_name) {
 
     // create new communicator
     int my_rank, comm_size;
+    MPI_Comm OPS_MPI_HDF5_BLOCK_WORLD;
     // use the communicator for MPI procs holding this block
-    MPI_Comm_dup(sb->comm1, &OPS_MPI_HDF5_WORLD);
-    MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
-    MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
+    MPI_Comm_dup(sb->comm1, &OPS_MPI_HDF5_BLOCK_WORLD);
+    MPI_Comm_rank(OPS_MPI_HDF5_BLOCK_WORLD, &my_rank);
+    MPI_Comm_size(OPS_MPI_HDF5_BLOCK_WORLD, &comm_size);
 
     // MPI variables
     MPI_Info info = MPI_INFO_NULL;
 
     // Set up file access property list with parallel I/O access
     plist_id = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_WORLD, info);
+    H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_BLOCK_WORLD, info);
 
     if (file_exist(file_name) == 0) {
-      MPI_Barrier(MPI_COMM_WORLD);
-      if (OPS_instance::getOPSInstance()->OPS_diags > 2)  ops_printf("File %s does not exist .... creating file\n", file_name);
-      MPI_Barrier(OPS_MPI_HDF5_WORLD);
+      if (OPS_instance::getOPSInstance()->OPS_diags > 2)
+        ops_printf("File %s does not exist .... creating file\n", file_name);
       if (ops_is_root()) {
         FILE *fp;
         fp = fopen(file_name, "w");
@@ -299,9 +299,10 @@ void ops_fetch_block_hdf5_file(ops_block block, char const *file_name) {
     file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
 
     if (H5Lexists(file_id, block->name, H5P_DEFAULT) == 0) {
-      if (OPS_instance::getOPSInstance()->OPS_diags > 2)  ops_printf(
-          "ops_block %s does not exists in file %s ... creating ops_block\n",
-          block->name, file_name);
+      if (OPS_instance::getOPSInstance()->OPS_diags > 2)
+        ops_printf(
+            "ops_block %s does not exists in file %s ... creating ops_block\n",
+            block->name, file_name);
       // create group - ops_block
       group_id = H5Gcreate(file_id, block->name, H5P_DEFAULT, H5P_DEFAULT,
           H5P_DEFAULT);
@@ -322,8 +323,9 @@ void ops_fetch_block_hdf5_file(ops_block block, char const *file_name) {
     H5Gclose(group_id);
     H5Pclose(plist_id);
     H5Fclose(file_id);
-    MPI_Comm_free(&OPS_MPI_HDF5_WORLD);
+    MPI_Comm_free(&OPS_MPI_HDF5_BLOCK_WORLD);
   }
+  MPI_Barrier(MPI_COMM_WORLD); // wait for every rank to finish their I/O
 }
 
 /*******************************************************************************
@@ -351,7 +353,8 @@ void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name) {
 
   if (file_exist(file_name) == 0) {
     MPI_Barrier(MPI_COMM_WORLD);
-    if (OPS_instance::getOPSInstance()->OPS_diags > 2)  ops_printf("File %s does not exist .... creating file\n", file_name);
+    if (OPS_instance::getOPSInstance()->OPS_diags > 2)
+      ops_printf("File %s does not exist .... creating file\n", file_name);
     MPI_Barrier(OPS_MPI_HDF5_WORLD);
     if (ops_is_root()) {
       FILE *fp;
@@ -369,8 +372,10 @@ void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name) {
 
   /* create and write the dataset */
   if (H5Lexists(file_id, stencil->name, H5P_DEFAULT) == 0) {
-    if (OPS_instance::getOPSInstance()->OPS_diags > 2)  ops_printf("ops_stencil %s does not exists in the file ... creating data\n",
-        stencil->name);
+    if (OPS_instance::getOPSInstance()->OPS_diags > 2)
+      ops_printf(
+          "ops_stencil %s does not exists in the file ... creating data\n",
+          stencil->name);
     H5LTmake_dataset(file_id, stencil->name, rank, &elems, H5T_NATIVE_INT,
         stencil->stencil);
   } else {
@@ -422,7 +427,8 @@ void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
 
   if (file_exist(file_name) == 0) {
     MPI_Barrier(MPI_COMM_WORLD);
-    if (OPS_instance::getOPSInstance()->OPS_diags > 2)  ops_printf("File %s does not exist .... creating file\n", file_name);
+    if (OPS_instance::getOPSInstance()->OPS_diags > 2)
+      ops_printf("File %s does not exist .... creating file\n", file_name);
     MPI_Barrier(OPS_MPI_HDF5_WORLD);
     if (ops_is_root()) {
       FILE *fp;
@@ -441,9 +447,11 @@ void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
 
   /* create and write the a group that holds the halo information */
   if (H5Lexists(file_id, halo_name, H5P_DEFAULT) == 0) {
-    if (OPS_instance::getOPSInstance()->OPS_diags > 2)  ops_printf("ops_halo %s does not exists in the file ... creating group to "
-        "hold halo\n",
-        halo_name);
+    if (OPS_instance::getOPSInstance()->OPS_diags > 2)
+      ops_printf(
+          "ops_halo %s does not exists in the file ... creating group to "
+          "hold halo\n",
+          halo_name);
     group_id =
       H5Gcreate(file_id, halo_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     H5Gclose(group_id);
@@ -562,10 +570,11 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
     // create new communicator
     int my_rank, comm_size;
+    MPI_Comm OPS_MPI_HDF5_BLOCK_WORLD;
     // use the communicator for MPI procs holding this block
-    MPI_Comm_dup(sb->comm1, &OPS_MPI_HDF5_WORLD);
-    MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
-    MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
+    MPI_Comm_dup(sb->comm1, &OPS_MPI_HDF5_BLOCK_WORLD);
+    MPI_Comm_rank(OPS_MPI_HDF5_BLOCK_WORLD, &my_rank);
+    MPI_Comm_size(OPS_MPI_HDF5_BLOCK_WORLD, &comm_size);
 
     if (block->dims == 1)
       remove_mpi_halos1D(dat, size, l_disp, data);
@@ -614,13 +623,13 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
     // Set up file access property list with parallel I/O access
     plist_id = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_WORLD, info);
+    H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_BLOCK_WORLD, info);
 
     if (file_exist(file_name) == 0) {
-      MPI_Barrier(MPI_COMM_WORLD);
+      // MPI_Barrier(MPI_COMM_WORLD);
       if (OPS_instance::getOPSInstance()->OPS_diags > 2)
         ops_printf("File %s does not exist .... creating file\n", file_name);
-      MPI_Barrier(OPS_MPI_HDF5_WORLD);
+      // MPI_Barrier(OPS_MPI_HDF5_BLOCK_WORLD);
       if (ops_is_root()) {
         FILE *fp;
         fp = fopen(file_name, "w");
@@ -790,7 +799,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
           OPSException ex(OPS_HDF5_ERROR);
           ex << "Error: ops_decl_block_hdf5: Attribute \"block\" mismatch "
                 "for data set "
-             << dat->name;
+             << dat->name << "block name: " << block->name
+             << " read block name: " << read_block_name;
           throw ex;
         }
       }
@@ -1004,7 +1014,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         throw ex;
       }
 
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(OPS_MPI_HDF5_BLOCK_WORLD);
       free(data);
 
       H5Sclose(filespace);
@@ -1014,9 +1024,10 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       H5Gclose(group_id);
       H5Fclose(file_id);
-      MPI_Comm_free(&OPS_MPI_HDF5_WORLD);
+      MPI_Comm_free(&OPS_MPI_HDF5_BLOCK_WORLD);
     }
   }
+  MPI_Barrier(MPI_COMM_WORLD); // wait for every rank to finish their I/O
   return;
 }
 

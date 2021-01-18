@@ -54,7 +54,9 @@ void ops_tridMultiDimBatch_Inc(
     // A matrices of individual problems
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
-    ops_dat u
+    ops_dat u,
+    int solve_method,
+    int batch_size
     ) {
 
   int opts[3] = {0,0,0}; // indicates different algorithms to use
@@ -62,12 +64,24 @@ void ops_tridMultiDimBatch_Inc(
   if (a->block->instance->OPS_diags > 1)
     sync = 1;
 
-  tridDmtsvStridedBatchInc((const double *)a->data_d, (const double *)b->data_d,
-                           (const double *)c->data_d, (double *)d->data_d,
-                           (double *)u->data_d, ndim, solvedim, dims, a->size,
-                           opts, sync);
-  ops_set_dirtybit_device_dat(u);
+  int device = OPS_DEVICE;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
 
+  const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &device);
+  const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &device);
+  const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &device);
+  double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
+  double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
+
+  tridDmtsvStridedBatchInc(a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
+                           dims, a->size, opts, sync);
+
+  ops_dat_release_raw_data(u, 0, OPS_RW);
+  ops_dat_release_raw_data(d, 0, OPS_READ);
+  ops_dat_release_raw_data(c, 0, OPS_READ);
+  ops_dat_release_raw_data(b, 0, OPS_READ);
+  ops_dat_release_raw_data(a, 0, OPS_READ);
 }
 
 void ops_tridMultiDimBatch(
@@ -79,7 +93,9 @@ void ops_tridMultiDimBatch(
     // A matrices of individual problems
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
-    ops_dat u
+    ops_dat u,
+    int solve_method,
+    int batch_size
     ) {
 
 
@@ -89,16 +105,26 @@ void ops_tridMultiDimBatch(
   if (a->block->instance->OPS_diags > 1)
     sync = 1;
 
-  tridDmtsvStridedBatch((const double *)a->data_d, (const double *)b->data_d,
-                        (const double *)c->data_d, (double *)d->data_d,
-                        (double *)u->data_d, ndim, solvedim, dims, a->size, opts,
-                        sync);
+  int device = OPS_DEVICE;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
 
+  const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &device);
+  const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &device);
+  const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &device);
+  double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
+  double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
+  tridDmtsvStridedBatch(a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim, dims,
+                        a->size, opts, sync);
 
+  ops_dat_release_raw_data(u, 0, OPS_READ);
+  ops_dat_release_raw_data(d, 0, OPS_RW);
+  ops_dat_release_raw_data(c, 0, OPS_READ);
+  ops_dat_release_raw_data(b, 0, OPS_READ);
+  ops_dat_release_raw_data(a, 0, OPS_READ);
 }
 
 void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
   initTridMultiDimBatchSolve(ndim, dims, dims);
 }
-

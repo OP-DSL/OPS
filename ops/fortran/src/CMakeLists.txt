@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 
 
-option(CHECKPOINTING, "Enable Checkpointing support" OFF)
+option(CHECKPOINTING "Enable Checkpointing support" OFF)
 
 enable_language(C CXX Fortran)
 include(CheckLanguage)

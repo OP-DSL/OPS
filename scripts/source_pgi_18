@@ -21,6 +21,7 @@ export OPENCL_INSTALL_PATH=/opt/cuda/9.1.85/toolkit/
 #export OPENCL_INSTALL_PATH=/usr/local/cuda-6.5.14/
 
 #PGI based MPI and Compilers
+module load pgi-18.10/pgi-18.10
 export MPI_INSTALL_PATH=/rr-home/gihan/MPICH-PGI-18/
 #/opt/mpi/openmpi/4.0.0/pgi/18.10/
 export MPICPP=mpic++

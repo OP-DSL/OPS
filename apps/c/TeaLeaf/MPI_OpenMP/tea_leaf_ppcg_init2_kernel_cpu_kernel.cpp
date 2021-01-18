@@ -159,7 +159,7 @@ void ops_par_loop_tea_leaf_ppcg_init2_kernel(char const *name, ops_block block, 
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 5;
-  desc->args = (ops_arg*)malloc(5*sizeof(ops_arg));
+  desc->args = (ops_arg *)ops_malloc(5 * sizeof(ops_arg));
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
@@ -169,7 +169,7 @@ void ops_par_loop_tea_leaf_ppcg_init2_kernel(char const *name, ops_block block, 
   desc->args[3] = arg3;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg3.dat->index;
   desc->args[4] = arg4;
-  char *tmp = (char*)malloc(1*sizeof(double));
+  char *tmp = (char *)ops_malloc(1 * sizeof(double));
   memcpy(tmp, arg4.data,1*sizeof(double));
   desc->args[4].data = tmp;
   desc->function = ops_par_loop_tea_leaf_ppcg_init2_kernel_execute;

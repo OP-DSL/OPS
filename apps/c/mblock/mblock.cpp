@@ -174,6 +174,22 @@ int main(int argc, char **argv)
                ops_arg_dat(data1, 1, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
 
+  // test writing multiple blocks to same file
+  ops_fetch_block_hdf5_file(grid0, "mblocktest.h5");
+  ops_fetch_block_hdf5_file(grid1, "mblocktest.h5");
+
+  // test writing dats on multiple blocks to same file
+  ops_fetch_dat_hdf5_file(data0, "mblocktest.h5");
+  ops_fetch_dat_hdf5_file(data1, "mblocktest.h5");
+
+  // test writing multiple blocks to different files
+  ops_fetch_block_hdf5_file(grid0, "mblocktest0.h5");
+  ops_fetch_block_hdf5_file(grid1, "mblocktest1.h5");
+
+  // test writing dats on multiple blocks to different files
+  ops_fetch_dat_hdf5_file(data0, "mblocktest0.h5");
+  ops_fetch_dat_hdf5_file(data1, "mblocktest1.h5");
+
   ops_halo_transfer(halos0);
   ops_halo_transfer(halos1);
   ops_halo_transfer(halos2);
@@ -181,6 +197,8 @@ int main(int argc, char **argv)
   ops_halo_transfer(halos4);
   ops_print_dat_to_txtfile(data0, "data0.txt");
   ops_print_dat_to_txtfile(data1, "data1.txt");
+
+  ops_printf("This test is considered PASSED\n");
 
   ops_timers(&ct1, &et1);
   ops_timing_output(std::cout);

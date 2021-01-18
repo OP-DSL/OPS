@@ -32,7 +32,7 @@
 
 /** @file
   * @brief OPS API calls and wrapper routines for Tridiagonal solvers
-  * @author Gihan Mudalige, Istvan Reguly
+  * @author Gihan Mudalige, Istvan Reguly, Toby Flynn
   * @details Implementations of the OPS API calls, wrapper routines and other
   * functions for interfacing with external Tridiagonal libraries
   */
@@ -42,9 +42,59 @@
 #include <ops_exceptions.h>
 #include <ops_tridiag.h>
 
-#define FP double // doubles when calling thomas should be FPs
-#define N_MAX 1024
-#include <trid_mpi_cpu.hpp>
+#include <trid_common.h>
+#include <trid_mpi_cpu.h>
+
+namespace {
+  struct MpiSolverParamsWrapper {
+    MpiSolverParams *trid_mpi_params;
+    sub_block *trid_sb;
+
+    MpiSolverParamsWrapper() {
+      trid_mpi_params = nullptr;
+      trid_sb = nullptr;
+    }
+
+    MpiSolverParams* getMpiSolverParams(sub_block *sb, int solve_method,
+                                        int batch_size) {
+      MpiSolverParams::MPICommStrategy strategy;
+      switch(solve_method) {
+        case 0:
+          strategy = MpiSolverParams::GATHER_SCATTER;
+          break;
+        case 1:
+          strategy = MpiSolverParams::ALLGATHER;
+          break;
+        case 2:
+          strategy = MpiSolverParams::LATENCY_HIDING_TWO_STEP;
+          break;
+        case 3:
+          strategy = MpiSolverParams::LATENCY_HIDING_INTERLEAVED;
+          break;
+        default:
+          throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: Unrecognised solving strategy");
+      }
+      if(trid_mpi_params == nullptr) {
+        trid_mpi_params = new MpiSolverParams(sb->comm, sb->ndim, sb->pdims,
+                              batch_size, strategy);
+        trid_sb = sb;
+      } else {
+        if(sb != trid_sb) {
+          delete trid_mpi_params;
+          trid_mpi_params = new MpiSolverParams(sb->comm, sb->ndim, sb->pdims,
+                              batch_size, strategy);
+          trid_sb = sb;
+        } else {
+          trid_mpi_params->strategy = strategy;
+          trid_mpi_params->mpi_batch_size = batch_size;
+        }
+      }
+      return trid_mpi_params;
+    }
+  };
+
+  MpiSolverParamsWrapper mpiParams;
+}
 
 void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
   // dummy routine for non-GPU backends
@@ -77,270 +127,56 @@ void ops_tridMultiDimBatch(
     // A matrices of individual problems
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
-    ops_dat u//,
-//    int *opts // indicates different algorithms to use -- not used for CPU
-              // backends
+    ops_dat u,
+    int solve_method,
+    int batch_size
     ) {
-
-  /*Do only the X dim solver .. later generalize for all three dims*/
-
-  int a_size[3] = {a->size[0] + a->d_m[0] - a->d_p[0],
-                   a->size[1] + a->d_m[1] - a->d_p[1],
-                   a->size[2] + a->d_m[2] - a->d_p[2]};
-  int b_size[3] = {b->size[0] + b->d_m[0] - b->d_p[0],
-                   b->size[1] + b->d_m[1] - b->d_p[1],
-                   b->size[2] + b->d_m[2] - b->d_p[2]};
-  int c_size[3] = {c->size[0] + c->d_m[0] - c->d_p[0],
-                   c->size[1] + c->d_m[1] - c->d_p[1],
-                   c->size[2] + c->d_m[2] - c->d_p[2]};
-  int d_size[3] = {d->size[0] + d->d_m[0] - d->d_p[0],
-                   d->size[1] + d->d_m[1] - d->d_p[1],
-                   d->size[2] + d->d_m[2] - d->d_p[2]};
-  int u_size[3] = {u->size[0] + u->d_m[0] - u->d_p[0],
-                   u->size[1] + u->d_m[1] - u->d_p[1],
-                   u->size[2] + u->d_m[2] - u->d_p[2]};
 
   // check if sizes match
   for (int i = 0; i < 3; i++) {
-    if (a_size[i] != b_size[i] || b_size[i] != c_size[i] ||
-        c_size[i] != d_size[i] || u_size[i] != u_size[i]) {
+    if (a->size[i] != b->size[i] || b->size[i] != c->size[i] ||
+        c->size[i] != d->size[i] || d->size[i] != u->size[i]) {
       throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
     }
+  }
+
+  int dims_calc[OPS_MAX_DIM];
+  int pads_m[OPS_MAX_DIM];
+  int pads_p[OPS_MAX_DIM];
+  sub_dat *sd_a = OPS_sub_dat_list[a->index];
+
+  for(int i = 0; i < ndim; i++) {
+    pads_m[i] = -1 * (a->d_m[i] + sd_a->d_im[i]);
+    pads_p[i] = a->d_p[i] + sd_a->d_ip[i];
+    dims_calc[i] = a->size[i] - pads_m[i] - pads_p[i];
   }
 
   // compute tridiagonal system sizes
   ops_block block = a->block;
   sub_block *sb = OPS_sub_block_list[block->index];
-  int sys_len_l = sb->pdims[0] * 2;         // Reduced system size in x dim
-  int n_sys_g = a_size[1] * a_size[2];      // ny*nz
 
-  // create separate communicator for x dimension communications
-  int free_coords[3];
-  MPI_Comm x_comm;
-  free_coords[0] = 1;
-  free_coords[1] = 0;
-  free_coords[2] = 0;
-  MPI_Cart_sub(sb->comm, free_coords, &x_comm);
+  int host = OPS_HOST;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
 
-  // Containers used to communicate preprocess halo
-  double *halo_sndbuf = (double *)ops_malloc(n_sys_g * sys_len_l * 3 * //n_sys_g * 2 * 3
-                                             sizeof(double)); // Send Buffer
-  double *halo_rcvbuf = (double *)ops_malloc(n_sys_g * sys_len_l * 3 * //n_sys_g * 3* 2* sb->pdims[0]
-                                             sizeof(double)); // Receive Buffer
-  //double *halo_sndbuf2 = (double *)ops_malloc(2 * a_size[1] * a_size[2] *
-    //                                          sizeof(double)); // Send Buffer
-  //double *halo_rcvbuf2 = (double *)ops_malloc(2 * a_size[1] * a_size[2] *
-    //                                          sizeof(double)); // Receive Buffer
+  // Get raw pointer access to data held by OPS
+  // Points to element 0, skipping MPI halo
+  const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &host);
+  const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &host);
+  const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &host);
+  double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &host);
+  double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
 
-  // Containers used to communicate reduced system
-  double *aa_r = (double *)ops_malloc(sizeof(double) * sys_len_l * n_sys_g); //sys_len_l * n_sys_g
-  double *cc_r = (double *)ops_malloc(sizeof(double) * sys_len_l * n_sys_g);
-  double *dd_r = (double *)ops_malloc(sizeof(double) * sys_len_l * n_sys_g);
+  tridDmtsvStridedBatchMPI(*(mpiParams.getMpiSolverParams(sb, solve_method, batch_size)),
+                           a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
+                           dims_calc, a->size);
 
-  // Do modified Thomas
-  double *aa =
-      (double *)ops_malloc(sizeof(double) * a_size[0] * a_size[1] * a_size[2]);
-  double *bb =
-      (double *)ops_malloc(sizeof(double) * b_size[0] * b_size[1] * b_size[2]);
-  double *cc =
-      (double *)ops_malloc(sizeof(double) * c_size[0] * c_size[1] * c_size[2]);
-  double *dd =
-      (double *)ops_malloc(sizeof(double) * d_size[0] * d_size[1] * d_size[2]);
-#pragma omp parallel for
-  for (int id = 0; id < n_sys_g; id++) {
-    int a_base = id * a->size[0] - a->d_m[0];
-    int b_base = id * b->size[0] - b->d_m[0];
-    int c_base = id * c->size[0] - c->d_m[0];
-    int d_base = id * d->size[0] - d->d_m[0];
-    int u_base = id * u->size[0] - u->d_m[0];
-
-    int base = id * a_size[0];
-    thomas_forward((&((const double *)a->data)[a_base]),
-                   (&((const double *)b->data)[b_base]),
-                   (&((const double *)c->data)[c_base]),
-                   (&((const double *)d->data)[d_base]),
-                   (&((const double *)u->data)[u_base]), (double *)(&aa[base]),
-                   (double *)(&cc[base]), (double *)(&dd[base]), a_size[0], 1);
-  }
-
-/*int a_base = 0 * a->size[0] - a->d_m[0];
-int b_base = 0 * b->size[0] - b->d_m[0];
-int c_base = 0 * c->size[0] - c->d_m[0];
-int d_base = 0 * d->size[0] - d->d_m[0];
-int u_base = 0 * u->size[0] - u->d_m[0];
-rms("h_ax", &((double *)a->data)[a_base], a->size[0], a->size[0], a->size[1],
-a->size[2]);
-rms("h_bx", &((double *)b->data)[b_base], b->size[0], b->size[0], b->size[1],
-b->size[2]);
-rms("h_cx", &((double *)c->data)[c_base], c->size[0], c->size[0], c->size[1],
-c->size[2]);
-rms("h_du", &((double *)d->data)[d_base], d->size[0], d->size[0], d->size[1],
-d->size[2]);
-rms("h_u", &((double *)u->data)[u_base], u->size[0], u->size[0], u->size[1],
-u->size[2]);*/
-
-/*rms("aa", &((double *)aa)[0], a_size[0], a_size[0], a_size[1], a_size[2]);
-rms("cc", &((double *)cc)[0], c_size[0], c_size[0], c_size[1], c_size[2]);
-rms("dd", &((double *)dd)[0], d_size[0], d_size[0], d_size[1], d_size[2]);
-exit(-2);*/
-
-// Communicate boundary values
-// Pack boundary to a single data structure
-#pragma omp parallel for
-  for (int id = 0; id < n_sys_g; id++) {
-    // Gather coefficients of a,c,d
-    halo_sndbuf[id * 3 * 2 + 0 * 2] = aa[id * a_size[0]];
-    halo_sndbuf[id * 3 * 2 + 0 * 2 + 1] = aa[id * a_size[0] + a_size[0] - 1];
-    halo_sndbuf[id * 3 * 2 + 1 * 2] = cc[id * a_size[0]];
-    halo_sndbuf[id * 3 * 2 + 1 * 2 + 1] = cc[id * a_size[0] + a_size[0] - 1];
-    halo_sndbuf[id * 3 * 2 + 2 * 2] = dd[id * a_size[0]];
-    halo_sndbuf[id * 3 * 2 + 2 * 2 + 1] = dd[id * a_size[0] + a_size[0] - 1];
-  }
-
-  /*double sum = 0.0;
-  for(int i = 0; i<sys_len_l * n_sys_g * 3; i++)
-    sum += halo_sndbuf[i]*halo_sndbuf[i];
-  double global_sum = 0.0;
-  MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, x_comm);
-  ops_printf("Intermediate halo_sndbuf sum = %lf\n",global_sum);
-  //exit(-2);*/
-
-
-
-  MPI_Alltoall(halo_sndbuf, n_sys_g * 3 * 2, MPI_DOUBLE, halo_rcvbuf, //all gather n_sys_g * 3 * 2
-               n_sys_g * 3 * 2, MPI_DOUBLE, x_comm); //n_sys_g * 3 * 2
-
-  /*sum = 0.0;
-  for(int i = 0; i<sys_len_l * n_sys_g * 3; i++)
-    sum += halo_rcvbuf[i]*halo_rcvbuf[i];
-  global_sum = 0.0;
-  MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, x_comm);
-  ops_printf("Intermediate halo_rcvbuf sum = %lf\n",global_sum);
-  exit(-2);*/
-
-// Unpack boundary data
-#pragma omp parallel for collapse(2)
-  for (int p = 0; p < sb->pdims[0]; p++) {
-    for (int id = 0; id < n_sys_g; id++) {
-      aa_r[id * sys_len_l + p * 2] =
-          halo_rcvbuf[p * n_sys_g * 3 * 2 + id * 3 * 2 + 0 * 2]; //n_sys_g
-      aa_r[id * sys_len_l + p * 2 + 1] =
-          halo_rcvbuf[p * n_sys_g * 3 * 2 + id * 3 * 2 + 0 * 2 + 1];
-      cc_r[id * sys_len_l + p * 2] =
-          halo_rcvbuf[p * n_sys_g * 3 * 2 + id * 3 * 2 + 1 * 2];
-      cc_r[id * sys_len_l + p * 2 + 1] =
-          halo_rcvbuf[p * n_sys_g * 3 * 2 + id * 3 * 2 + 1 * 2 + 1];
-      dd_r[id * sys_len_l + p * 2] =
-          halo_rcvbuf[p * n_sys_g * 3 * 2 + id * 3 * 2 + 2 * 2];
-      dd_r[id * sys_len_l + p * 2 + 1] =
-          halo_rcvbuf[p * n_sys_g * 3 * 2 + id * 3 * 2 + 2 * 2 + 1];
-    }
-  }
-
-
-/*
-double sum = 0.0;
-for(int i = 0; i<sys_len_l * n_sys_g; i++)
-  sum += aa_r[i]*aa_r[i];
-double global_sum = 0.0;
-MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
-printf("Intermediate aa_r sum = %lf\n",global_sum);
-
-sum = 0.0;
-for(int i = 0; i<sys_len_l * n_sys_g; i++)
-  sum += cc_r[i]*cc_r[i];
-global_sum = 0.0;
-MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
-printf("Intermediate cc_r sum = %lf\n",global_sum);
-
-sum = 0.0;
-for(int i = 0; i<sys_len_l * n_sys_g; i++)
-  sum += dd_r[i]*dd_r[i];
-global_sum = 0.0;
-MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
-printf("Intermediate dd_r sum = %lf\n",global_sum);
-exit(-2);*/
-
-// Compute reduced system
-#pragma omp parallel for
-  for (int id = 0; id < n_sys_g; id++) { //n_sys_g
-    int base = id * sys_len_l; //fine
-    thomas_on_reduced(&aa_r[base], &cc_r[base], &dd_r[base], sys_len_l, 1);
-  }
-
-//plug back values to sybsystem
-
-// Pack boundary solution data
-#pragma omp parallel for
-  for (int p = 0; p < sb->pdims[0]; p++) {
-    for (int id = 0; id < n_sys_g; id++) {
-      halo_rcvbuf[p * n_sys_g * 2 + id * 2] = dd_r[id * sys_len_l + p * 2];
-      halo_rcvbuf[p * n_sys_g * 2 + id * 2 + 1] =
-          dd_r[id * sys_len_l + p * 2 + 1];
-    }
-  }
-
-  // Send back new values
-  MPI_Alltoall(halo_rcvbuf, n_sys_g * 2, MPI_DOUBLE, halo_sndbuf, n_sys_g * 2,
-               MPI_DOUBLE, x_comm);
-
-// Unpack boundary solution
-#pragma omp parallel for
-  for (int id = 0; id < n_sys_g; id++) {
-    // Gather coefficients of a,c,d
-    dd[id * a_size[0]] = halo_sndbuf[id * 2];
-    dd[id * a_size[0] + a_size[0] - 1] = halo_sndbuf[id * 2 + 1];
-  }
-
-// Do the backward pass of modified Thomas
-#pragma omp parallel for
-  for (int id = 0; id < n_sys_g; id++) {
-    int u_base = (id - u->d_m[1]) * u->size[0] - u->d_m[0]; //note the u->d_m[0]
-    // to get the base pointer over the block halos
-    // .. need to check this under proper MPI (multiple processors)
-    int base = id * a_size[0];
-    thomas_backward((double *)(&aa[base]), (double *)(&cc[base]),
-                    (double *)(&dd[base]), &((double *)u->data)[u_base],
-                    u_size[0], 1);
-  }
-
-  rms("aa", &((double *)aa)[0], a_size[0], a_size[0], a_size[1], a_size[2]);
-  rms("cc", &((double *)cc)[0], c_size[0], c_size[0], c_size[1], c_size[2]);
-  rms("dd", &((double *)dd)[0], d_size[0], d_size[0], d_size[1], d_size[2]);
-  int u_base = 1 * u->size[0] - u->d_m[0];
-  rms("h_u", &((double *)u->data)[u_base], u->size[0], u_size[0], u_size[1],
-      u_size[2]);
-
-  ops_free(aa);
-  ops_free(bb);
-  ops_free(cc);
-  ops_free(dd);
-
-
-  /* Right now, we are simply using the same memory allocated by OPS
-  as can be seen by the use of a->data, b->data, c->data etc.
-
-  These data is currently not padded to be 32 or 64 bit aligned
-  in the x-lines and so is inefficient.
-
-  In the ADI example currently the mesh size is 256^3 and so we are
-  32/64 bit aligned, thus we do not see any performance deficiencies
-  but other sizes will show this issue
-
-  As such we will need to think on how to pad arrays.
-  The problem is that on apps like Cloverleaf we see poorer performance
-  due to extra x dim padding.
-  */
-
-  /*
-  For MPI padding will be more important as the partition allocated per MPI proc
-  will definitely not be a multiple of 32 or 64 in the x dimension
-
-  Perhaps we make use of a setup phase to add padding to the ops data arrays
-  and then use them in the tridiagonal solvers. But now the problem is
-  that the original OPS lib will not be able to use these padded arrays
-  and produce correct results -- need to think how to solve this
-  */
+  // Release pointer access back to OPS
+  ops_dat_release_raw_data(u, 0, OPS_READ);
+  ops_dat_release_raw_data(d, 0, OPS_RW);
+  ops_dat_release_raw_data(c, 0, OPS_READ);
+  ops_dat_release_raw_data(b, 0, OPS_READ);
+  ops_dat_release_raw_data(a, 0, OPS_READ);
 }
 
 void ops_tridMultiDimBatch_Inc(
@@ -352,18 +188,56 @@ void ops_tridMultiDimBatch_Inc(
     // A matrices of individual problems
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
-    ops_dat u//,
-//    int *opts // indicates different algorithms to use -- not used for CPU
-//              // backends
+    ops_dat u,
+    int solve_method,
+    int batch_size
     ) {
 
-  /*tridDmtsvStridedBatchInc((const double *)a->data,
-    (const double *)b->data,
-    (const double *)c->data,
-    (double *)d->data, (double *)u->data, ndim, solvedim, dims, dims);*/
+  // check if sizes match
+  for (int i = 0; i < 3; i++) {
+    if (a->size[i] != b->size[i] || b->size[i] != c->size[i] ||
+        c->size[i] != d->size[i] || d->size[i] != u->size[i]) {
+      throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
+    }
+  }
+
+  int dims_calc[OPS_MAX_DIM];
+  int pads_m[OPS_MAX_DIM];
+  int pads_p[OPS_MAX_DIM];
+  sub_dat *sd_a = OPS_sub_dat_list[a->index];
+
+  for(int i = 0; i < ndim; i++) {
+    pads_m[i] = -1 * (a->d_m[i] + sd_a->d_im[i]);
+    pads_p[i] = a->d_p[i] + sd_a->d_ip[i];
+    dims_calc[i] = a->size[i] - pads_m[i] - pads_p[i];
+  }
+
+  // compute tridiagonal system sizes
+  ops_block block = a->block;
+  sub_block *sb = OPS_sub_block_list[block->index];
+
+  int host = OPS_HOST;
+  int s3D_000[] = {0, 0, 0};
+  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+
+  const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &host);
+  const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &host);
+  const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &host);
+  double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &host);
+  double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
+
+  // For now do not consider adding padding
+  tridDmtsvStridedBatchIncMPI(*(mpiParams.getMpiSolverParams(sb, solve_method, batch_size)),
+                              a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
+                              dims_calc, a->size);
+
+  ops_dat_release_raw_data(u, 0, OPS_RW);
+  ops_dat_release_raw_data(d, 0, OPS_READ);
+  ops_dat_release_raw_data(c, 0, OPS_READ);
+  ops_dat_release_raw_data(b, 0, OPS_READ);
+  ops_dat_release_raw_data(a, 0, OPS_READ);
 }
 
 void ops_exitTridMultiDimBatchSolve() {
   // free memory allocated during tridiagonal solve e.g. mpi buffers
 }
-

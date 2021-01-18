@@ -242,7 +242,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
       printf("Realloc ops_buffer_recv_1\n");
     ops_buffer_recv_1 = (char *)OPS_realloc_fast(ops_buffer_recv_1, send_recv_offsets[1],
                                         send_recv_offsets[1] + 4 * recv_size);
-    ops_buffer_recv_1_size = send_recv_offsets[0] + 4 * recv_size;
+    ops_buffer_recv_1_size = send_recv_offsets[1] + 4 * recv_size;
  }
 
   // Pack data
@@ -438,7 +438,7 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
       printf("Realloc ops_buffer_recv_1\n");
     ops_buffer_recv_1 = (char *)OPS_realloc_fast(ops_buffer_recv_1, send_recv_offsets[1],
                                         send_recv_offsets[1] + 4 * recv_size);
-    ops_buffer_recv_1_size = send_recv_offsets[0] + 4 * recv_size;
+    ops_buffer_recv_1_size = send_recv_offsets[1] + 4 * recv_size;
   }
 
   // Pack data
@@ -885,6 +885,7 @@ void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
     MPI_Waitall(2, &request[2], &status[2]);
 
     //  ops_timers_core(&c1,&t1);
+    //  printf("1 %g %d\n", t1-t2, send_recv_offsets[0] + send_recv_offsets[2]);
     //  ops_sendrecv_time += t1-t2;
 
     for (int i = 0; i < 4; i++)
@@ -901,6 +902,7 @@ void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
     MPI_Waitall(2, &request[0], &status[0]);
     //  ops_timers_core(&c2,&t2);
     //  ops_scatter_time += t2-t1;
+    //  printf("2 %g %d\n", t2-t1, send_recv_offsets[3] + send_recv_offsets[1]);
   }
 }
 

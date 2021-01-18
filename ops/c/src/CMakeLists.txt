@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 
 
-option(CHECKPOINTING, "Enable Checkpointing support" OFF)
+option(CHECKPOINTING "Enable Checkpointing support" OFF)
 
 enable_language(C CXX)
 include(CheckLanguage)
@@ -53,7 +53,7 @@ endif()
 
 if ( OpenMP_CXX_FOUND )
     set_source_files_properties(
-        sequential/ops_seq.cpp 
+        sequential/ops_seq.cpp
         externlib/ops_util.cpp
         mpi/ops_mpi_rt_support_host.cpp
         PROPERTIES
@@ -216,4 +216,55 @@ if(MPI_CXX_FOUND AND HDF5_FOUND AND HDF5_IS_PARALLEL)
 	if (OPS_INSTALL_LIBS)
     install(TARGETS ops_hdf5_mpi DESTINATION lib)
 	endif()
+endif()
+
+if(LIBTRID_PATH)
+    add_library(ops_trid STATIC
+        tridiag/ops_tridiag.cpp)
+    set_property(TARGET ops_trid PROPERTY POSITION_INDEPENDENT_CODE ON)
+    target_include_directories(ops_trid PRIVATE ${LIBTRID_PATH}/include)
+    target_link_libraries(ops_trid PUBLIC ops_core -L${LIBTRID_PATH}/lib -ltridcpu)
+    if (OPS_INSTALL_LIBS)
+        install(TARGETS ops_trid DESTINATION lib)
+    endif()
+
+    if(CUDA_FOUND)
+        add_library(ops_trid_cuda STATIC
+            tridiag/ops_tridiag_cuda.cpp)
+        set_property(TARGET ops_trid_cuda PROPERTY POSITION_INDEPENDENT_CODE ON)
+        target_include_directories(ops_trid_cuda PRIVATE ${LIBTRID_PATH}/include ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+        target_link_libraries(ops_trid_cuda PUBLIC ops_core ops_cuda -L${LIBTRID_PATH}/lib -ltridcpu)
+        if (OPS_INSTALL_LIBS)
+            install(TARGETS ops_trid_cuda DESTINATION lib)
+        endif()
+    endif()
+
+    if(MPI_CXX_FOUND)
+        add_library(ops_trid_mpi STATIC
+            tridiag/ops_tridiag_mpi)
+        set_property(TARGET ops_trid_mpi PROPERTY POSITION_INDEPENDENT_CODE ON)
+        target_include_directories(ops_trid_mpi PRIVATE ${LIBTRID_PATH}/include)
+        target_link_libraries(ops_trid_mpi PUBLIC ops_core -L${LIBTRID_PATH}/lib -ltridcpu)
+        if (OPS_INSTALL_LIBS)
+            install(TARGETS ops_trid_mpi DESTINATION lib)
+        endif()
+        if(CUDA_FOUND)
+            if (OPS_TRID_USE_NCCL)
+              find_package(NCCL)
+              if (NCCL_FOUND)
+                add_definitions(-DTRID_NCCL)
+                include_directories(SYSTEM ${NCCL_INCLUDE_DIR})
+              endif ()
+            endif ()
+            add_library(ops_trid_mpi_cuda STATIC
+                tridiag/ops_tridiag_mpi_cuda.cpp)
+            set_property(TARGET ops_trid_mpi_cuda PROPERTY POSITION_INDEPENDENT_CODE ON)
+            target_include_directories(ops_trid_mpi_cuda PRIVATE ${LIBTRID_PATH}/include ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+            target_link_libraries(ops_trid_mpi_cuda PUBLIC ops_core ops_mpi_cuda -L${LIBTRID_PATH}/lib -ltridcuda_mpi MPI::MPI_CXX)
+
+        	if (OPS_INSTALL_LIBS)
+            install(TARGETS ops_trid_mpi_cuda DESTINATION lib)
+        	endif()
+        endif()
+    endif()
 endif()

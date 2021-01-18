@@ -180,7 +180,7 @@ void ops_par_loop_update_halo_kernel1_r1(char const *name, ops_block block, int 
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 7;
-  desc->args = (ops_arg*)malloc(7*sizeof(ops_arg));
+  desc->args = (ops_arg *)ops_malloc(7 * sizeof(ops_arg));
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
@@ -194,7 +194,7 @@ void ops_par_loop_update_halo_kernel1_r1(char const *name, ops_block block, int 
   desc->args[5] = arg5;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg5.dat->index;
   desc->args[6] = arg6;
-  char *tmp = (char*)malloc(NUM_FIELDS*sizeof(int));
+  char *tmp = (char *)ops_malloc(NUM_FIELDS * sizeof(int));
   memcpy(tmp, arg6.data,NUM_FIELDS*sizeof(int));
   desc->args[6].data = tmp;
   desc->function = ops_par_loop_update_halo_kernel1_r1_execute;
