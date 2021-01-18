@@ -164,6 +164,10 @@ if (${CMAKE_PROJECT_NAME} STREQUAL APP)
         message (WARNING "We cannot find a MPI environment! The MPI codes won't compile!")
     endif ()
 
+    if (LIBTRID_PATH)
+        include_directories(${LIBTRID_PATH}/include)
+    endif ()
+
     if (CUDAToolkit_FOUND)
         include_directories(${CUDAToolkit_INCLUDE_DIRS})
         set(CMAKE_CUDA_COMPILER ${CUDAToolkit_NVCC_EXECUTABLE})
@@ -440,9 +444,12 @@ endmacro()
 
 # TODO fetch_data.cpp cannot be found for access
 #add_subdirectory(access)
-add_subdirectory(adi)
-add_subdirectory(adi_burger)
-add_subdirectory(adi_burger_3D)
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
+    add_subdirectory(adi)
+    #add_subdirectory(adi_burger)
+    #add_subdirectory(adi_burger_3D)
+endif ()
+
 add_subdirectory(CloverLeaf) # Compile OK
 add_subdirectory(CloverLeaf_3D) # Compile OK
 add_subdirectory(CloverLeaf_3D_HDF5) # Compile OK

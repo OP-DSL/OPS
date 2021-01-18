@@ -132,6 +132,10 @@ if (USE_NCCL)
     endif()
 endif()
 
+if (LIBTRID_PATH)
+    include_directories(${LIBTRID_PATH}/include)
+endif ()
+
 # option(BUILD_OPS_FORTRAN "Build FORTRAN version of OPS" OFF)
 option(BUILD_OPS_APPS "Build Sample OPS applications" OFF)
 
