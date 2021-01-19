@@ -214,12 +214,12 @@ test:Intel:
     - cmake ../apps/c  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DOPS_TEST=ON  -DGPU_NUMBER=1 -DHDF5_ROOT=/usr/local/hdf5-intel -DLIBTRID_PATH=/usr/local/tridsolver
     - make -j 12
     - mpirun --version
-    - cd multiDim/tmp
-    - ls
-    - ls ../
+    #- cd multiDim/tmp
+    #- ls
+    #- ls ../
     #- export OMP_NUM_THREADS=1
-    - mpirun -n 2 ../multidim_mpi
-    - cd ../../
+    #- mpirun -n 2 ../multidim_mpi
+    #- cd ../../
     - make test
   artifacts:
     expire_in: 1 week

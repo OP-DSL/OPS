@@ -445,12 +445,12 @@ endmacro()
 # TODO fetch_data.cpp cannot be found for access
 #add_subdirectory(access)
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
-    add_subdirectory(adi)
+    #add_subdirectory(adi)
     #add_subdirectory(adi_burger)
     #add_subdirectory(adi_burger_3D)
 endif ()
 
-# add_subdirectory(CloverLeaf) # Compile OK
+add_subdirectory(CloverLeaf) # Compile OK
 # add_subdirectory(CloverLeaf_3D) # Compile OK
 # add_subdirectory(CloverLeaf_3D_HDF5) # Compile OK
 #TODO there seem bugs in the codes of complex_numbers
@@ -465,7 +465,7 @@ endif ()
 #TODO needs to replace  acceptable with PASSED for standard test
 # add_subdirectory(mb_shsgc)
 #add_subdirectory(mgrid)  # Compile OK
-add_subdirectory(multiDim)
+#add_subdirectory(multiDim)
 # add_subdirectory(multiDim3D)
 # add_subdirectory(multiDim_HDF5)
 # add_subdirectory(poisson)

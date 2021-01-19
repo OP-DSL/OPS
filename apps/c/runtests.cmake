@@ -1,6 +1,6 @@
 macro(TEST CMD ARG OPS_INSTALL_PATH)
     set(ENV{OPS_INSTALL_PATH} ${OPS_INSTALL_PATH})
-    set(ENV{OMP_NUM_THREADS} 1)
+    #set(ENV{OMP_NUM_THREADS} 1)
     separate_arguments(args NATIVE_COMMAND  ${ARG})
     execute_process(COMMAND ${CMD} ${args} OUTPUT_FILE perf.out)
     execute_process(COMMAND grep "PASSED" perf.out RESULT_VARIABLE RES)
