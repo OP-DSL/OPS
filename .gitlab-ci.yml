@@ -215,7 +215,9 @@ test:Intel:
     - make -j 12
     - mpirun --version
     - cd multiDim/tmp
-    - export OMP_NUM_THREADS=1
+    - ls
+    - ls ../
+    #- export OMP_NUM_THREADS=1
     - mpirun -n 2 ../multidim_mpi
     - cd ../../
     - make test
