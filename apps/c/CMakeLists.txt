@@ -450,24 +450,24 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
     #add_subdirectory(adi_burger_3D)
 endif ()
 
-add_subdirectory(CloverLeaf) # Compile OK
-add_subdirectory(CloverLeaf_3D) # Compile OK
-add_subdirectory(CloverLeaf_3D_HDF5) # Compile OK
+# add_subdirectory(CloverLeaf) # Compile OK
+# add_subdirectory(CloverLeaf_3D) # Compile OK
+# add_subdirectory(CloverLeaf_3D_HDF5) # Compile OK
 #TODO there seem bugs in the codes of complex_numbers
 #add_subdirectory(complex_numbers)
 #TODO Need to figure out the structure
 #add_subdirectory(laplace2d_tutorial)
-add_subdirectory(lowdim_test)
+# add_subdirectory(lowdim_test)
 #TODO no PASSED for testing
-add_subdirectory(mblock)
+# add_subdirectory(mblock)
 #TODO there seems problem for compiling mblock4D
 #add_subdirectory(mblock4D) # ignored at this moment
 #TODO needs to replace  acceptable with PASSED for standard test
-add_subdirectory(mb_shsgc)
+# add_subdirectory(mb_shsgc)
 #add_subdirectory(mgrid)  # Compile OK
 add_subdirectory(multiDim)
-add_subdirectory(multiDim3D)
-add_subdirectory(multiDim_HDF5)
-add_subdirectory(poisson)
-add_subdirectory(shsgc)
-add_subdirectory(TeaLeaf)
+# add_subdirectory(multiDim3D)
+# add_subdirectory(multiDim_HDF5)
+# add_subdirectory(poisson)
+# add_subdirectory(shsgc)
+# add_subdirectory(TeaLeaf)
