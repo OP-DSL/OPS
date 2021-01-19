@@ -215,7 +215,7 @@ test:Intel:
     - make -j 12
     - mpirun --version
     #- cd poisson/tmp
-    - cp ~/OPS/build/apps/c/poisson/poisson_mpi .
+    - cp /home/mhi63623/OPS/build/apps/c/poisson/poisson_mpi .
     - mpirun -n 12 ./poisson_mpi
     #- cd multiDim/tmp
     #- ls
