@@ -214,6 +214,8 @@ test:Intel:
     - cmake ../apps/c  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DOPS_TEST=ON  -DGPU_NUMBER=1 -DHDF5_ROOT=/usr/local/hdf5-intel -DLIBTRID_PATH=/usr/local/tridsolver
     - make -j 12
     - mpirun --version
+    - cd CloverLeaf/tmp
+    - mpirun -n 12 ../clover_leaf_mpi
     #- cd multiDim/tmp
     #- ls
     #- ls ../
