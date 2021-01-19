@@ -217,6 +217,9 @@ test:Intel:
     #- cd poisson/tmp
     - cp /home/mhi63623/OPS/build/apps/c/poisson/poisson_mpi .
     - mpirun -n 12 ./poisson_mpi
+    - mpirun -n 12 poisson/poisson_mpi
+    - cd poisson/tmp
+    - mpirun -n 12 ../poisson_mpi
     #- cd multiDim/tmp
     #- ls
     #- ls ../
