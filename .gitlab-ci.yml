@@ -115,7 +115,6 @@ build:Intel:APP:
     - source /opt/intel/oneapi/setvars.sh
     - export CXX=`which mpiicpc`
     - export CC=`which mpiicc`
-    - export OMP_NUM_THREADS = 1
     - mkdir appbuild-intel
     - cd appbuild-intel
     - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DHDF5_ROOT=/usr/local/hdf5-intel -DLIBTRID_PATH=/usr/local/tridsolver
@@ -216,6 +215,7 @@ test:Intel:
     - make -j 12
     - mpirun --version
     - cd multiDim/tmp
+    - export OMP_NUM_THREADS = 1
     - mpirun -n 2 ../multidim_mpi
     - cd ../../
     - make test
