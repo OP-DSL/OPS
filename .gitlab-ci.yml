@@ -215,8 +215,10 @@ test:Intel:
     - make -j 12
     - mpirun --version
     #- cd poisson/tmp
-    - cp /home/mhi63623/OPS/build/apps/c/poisson/poisson_mpi .
+    - cp /home/mhi63623/OPS/appbuild/poisson/poisson_mpi .
+    - ls -l -h
     - mpirun -n 12 ./poisson_mpi
+    - ls poisson -l -h
     - mpirun -n 12 poisson/poisson_mpi
     - cd poisson/tmp
     - mpirun -n 12 ../poisson_mpi
