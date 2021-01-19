@@ -26,10 +26,10 @@ if (${CMAKE_PROJECT_NAME} STREQUAL APP)
     # Configure Compilers
     # C
     set(CMAKE_C_STANDARD 99)
-    #TODO:Shall we keep the "-g" in the release mode? It increases file size.
+#TODO:Shall we keep the "-g" in the release mode? It increases file size.
     if (${CMAKE_C_COMPILER_ID} STREQUAL GNU)
-        set(CMAKE_C_FLAGS "-fPIC -Wall -ffloat-store")
-        set(CMAKE_C_FLAGS_RELEASE "-O3 -ftree-vectorize")
+        set(CMAKE_C_FLAGS "-fPIC -Wall")
+        set(CMAKE_C_FLAGS_RELEASE "-O3")
         set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
     elseif (${CMAKE_C_COMPILER_ID} STREQUAL Clang)
         set(CMAKE_C_FLAGS "-fPIC -DUNIX -Wall")
@@ -40,18 +40,19 @@ if (${CMAKE_PROJECT_NAME} STREQUAL APP)
         set(CMAKE_C_FLAGS_RELEASE "/O2 /Ot ")
         set(CMAKE_C_FLAGS_DEBUG "/Z7 /DEBUG")
     elseif (${CMAKE_C_COMPILER_ID} STREQUAL Intel)
-        set(CMAKE_C_FLAGS "-fPIC -Wall -qopenmp")
-        set(CMAKE_C_FLAGS_RELEASE "-O3")
+        set(CMAKE_C_FLAGS "-xHost")
+        set(CMAKE_C_FLAGS_RELEASE "-O3 -qopenmp")
         set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
     else ()
         message(FATAL_ERROR "We can't recongnise the C compiler!")
     endif ()
+
     # C++
     set(CMAKE_CXX_STANDARD 11)
     if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
-        set(CMAKE_CXX_FLAGS "-fPIC -Wall -ffloat-store")
+        set(CMAKE_CXX_FLAGS "-fPIC -Wall")
         set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-        set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DUNIX")
+        set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
     elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
         set(CMAKE_CXX_FLAGS "-fPIC -DUNIX -Wall")
         set(CMAKE_CXX_FLAGS_RELEASE "-O3")
@@ -61,12 +62,25 @@ if (${CMAKE_PROJECT_NAME} STREQUAL APP)
         set(CMAKE_CXX_FLAGS_RELEASE "/O2 /Ot ")
         set(CMAKE_CXX_FLAGS_DEBUG "/Z7 /DEBUG")
     elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
-        set(CMAKE_CXX_FLAGS "-fPIC -Wall -qopenmp")
-        set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-        set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+        set(CMAKE_CXX_FLAGS "-xHost")
+        set(CMAKE_CXX_FLAGS_RELEASE "-O3 -qopenmp")
+        set(CMAKE_CXX_FLAGS_DEBUG " -O0 -g -DOPS_DEBUG ")
     else ()
         message(FATAL_ERROR "We can't recongnise the C++ compiler!")
     endif ()
+
+    if (CFLAG)
+        SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${CFLAG}")
+    else ()
+        message("Extra C compiler options by using CFLAG, e.g., -DCFLAG=\"-ffloat-store\" for GNU!")
+    endif ()
+
+    if (CXXFLAG)
+        SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${CXXFLAG}")
+    else ()
+        message("Extra C++ compiler options by using CXXFLAG, e.g., -DCXXFLAG=\"-ffloat-store\" for GNU!")
+    endif ()
+
 
      # Trying to find the OPS library
      # TODO this shall become FindOPS.cmake later
@@ -148,6 +162,10 @@ if (${CMAKE_PROJECT_NAME} STREQUAL APP)
         include_directories(${MPI_CXX_INCLUDE_DIRS})
     else()
         message (WARNING "We cannot find a MPI environment! The MPI codes won't compile!")
+    endif ()
+
+    if (LIBTRID_PATH)
+        include_directories(${LIBTRID_PATH}/include)
     endif ()
 
     if (CUDAToolkit_FOUND)
@@ -426,9 +444,12 @@ endmacro()
 
 # TODO fetch_data.cpp cannot be found for access
 #add_subdirectory(access)
-add_subdirectory(adi)
-add_subdirectory(adi_burger)
-add_subdirectory(adi_burger_3D)
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
+    add_subdirectory(adi)
+    #add_subdirectory(adi_burger)
+    #add_subdirectory(adi_burger_3D)
+endif ()
+
 add_subdirectory(CloverLeaf) # Compile OK
 add_subdirectory(CloverLeaf_3D) # Compile OK
 add_subdirectory(CloverLeaf_3D_HDF5) # Compile OK
