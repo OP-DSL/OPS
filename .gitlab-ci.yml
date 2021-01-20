@@ -32,7 +32,7 @@ build:Intel:API:
     - export CC=`which mpiicc`
     - mkdir build-intel
     - cd build-intel
-    - cmake ../  -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DHDF5_ROOT=/usr/local/hdf5-intel -DLIBTRID_PATH=/usr/local/tridsolver
+    - cmake ../  -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DHDF5_ROOT=/usr/local/hdf5-intel
     - make -j 4
     - make install
   artifacts:
@@ -60,7 +60,7 @@ build:GNU:APP:
       echo "rm tmp.cpp" >> translate.sh
       echo "echo \"cmake_minimum_required(VERSION 3.18)\" > CMakeLists.txt" >> translate.sh
       echo "echo \"CreateTempDir()\" >> CMakeLists.txt"  >> translate.sh
-      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\" \\\"NO\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
+      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
       echo "cd \$CI_PROJECT_DIR/opensbli/apps" >> translate.sh
       echo "cp \$dir \$CI_PROJECT_DIR/apps/c -r" >> translate.sh
       cat translate.sh
@@ -101,7 +101,7 @@ build:Intel:APP:
       echo "rm tmp.cpp" >> translate.sh
       echo "echo \"cmake_minimum_required(VERSION 3.18)\" > CMakeLists.txt" >> translate.sh
       echo "echo \"CreateTempDir()\" >> CMakeLists.txt"  >> translate.sh
-      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\" \\\"NO\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
+      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
       echo "cd \$CI_PROJECT_DIR/opensbli/apps" >> translate.sh
       echo "cp \$dir \$CI_PROJECT_DIR/apps/c -r" >> translate.sh
       cat translate.sh
@@ -117,7 +117,7 @@ build:Intel:APP:
     - export CC=`which mpiicc`
     - mkdir appbuild-intel
     - cd appbuild-intel
-    - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DHDF5_ROOT=/usr/local/hdf5-intel -DLIBTRID_PATH=/usr/local/tridsolver
+    - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DHDF5_ROOT=/usr/local/hdf5-intel
     - make -j 12
     - make install
   dependencies:
@@ -150,7 +150,7 @@ test:GNU:
       echo "rm tmp.cpp" >> translate.sh
       echo "echo \"cmake_minimum_required(VERSION 3.18)\" > CMakeLists.txt" >> translate.sh
       echo "echo \"CreateTempDir()\" >> CMakeLists.txt"  >> translate.sh
-      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\" \\\"NO\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
+      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
       echo "cd \$CI_PROJECT_DIR/opensbli/apps" >> translate.sh
       echo "cp \$dir \$CI_PROJECT_DIR/apps/c -r" >> translate.sh
       cat translate.sh
@@ -195,7 +195,7 @@ test:Intel:
       echo "rm tmp.cpp" >> translate.sh
       echo "echo \"cmake_minimum_required(VERSION 3.18)\" > CMakeLists.txt" >> translate.sh
       echo "echo \"CreateTempDir()\" >> CMakeLists.txt"  >> translate.sh
-      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\" \\\"NO\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
+      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
       echo "cd \$CI_PROJECT_DIR/opensbli/apps" >> translate.sh
       echo "cp \$dir \$CI_PROJECT_DIR/apps/c -r" >> translate.sh
       cat translate.sh
@@ -214,7 +214,7 @@ test:Intel:
     - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/tridsolver/lib:/usr/local/hdf5-intel/lib
     - mkdir appbuild-intel
     - cd appbuild-intel
-    - cmake ../  -DOPS_INATLL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel  -DHDF5_ROOT=/usr/local/hdf5-intel  -DOPS_TEST=ON -DGPU_NUMBER=1 -DLIBTRID_PATH=/usr/local/tridsolver -DBUILD_OPS_APPS=ON
+    - cmake ../apps/c  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DOPS_TEST=ON  -DGPU_NUMBER=1 -DHDF5_ROOT=/usr/local/hdf5-intel
     - make -j 12
     - make test
   artifacts:
