@@ -128,10 +128,8 @@ build:Intel:APP:
     - make install
   dependencies:
     - build:Intel:API
-  only:
+  except:
     - master
-  # except:
-  #   - master
 
 #Stage "test"
 test:GNU:
@@ -228,7 +226,7 @@ test:Intel:
     paths:
     - appbuild-intel/Testing/Temporary
   only:
-    #- master
+    - master
 
 #Stage "docs"
 make-docs:
