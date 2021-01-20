@@ -222,8 +222,8 @@ test:Intel:
     - export I_MPI_THREAD_SPLIT=1
     - export OMP_NUM_THREADS=1
     - export I_MPI_DEBUG=5
-    - mpirun -verbose -print-all-exitcodes  -n 1 ../poisson_mpi
-    - mpirun -verbose -print-all-exitcodes  -n 2 ../poisson_mpi
+    - mpirun.mpich -verbose -print-all-exitcodes  -n 1 ../poisson_mpi
+    - mpirun.hydra -verbose -print-all-exitcodes  -n 1 ../poisson_mpi
     # - cp /home/mhi63623/OPS/appbuild/poisson/poisson_mpi .
     # - ls -l -h
     # - mpirun -n 12 ./poisson_mpi
