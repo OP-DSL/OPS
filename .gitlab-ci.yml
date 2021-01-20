@@ -215,7 +215,11 @@ test:Intel:
     ##- cmake ../apps/c  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/##OPS-APP-Intel -DOPS_TEST=ON  -DGPU_NUMBER=1 -DHDF5_ROOT=/usr/local/hdf5-intel -DLIBTRID_PATH=/usr/local/tridsolver
     - make -j 12
     # - mpirun --version
-    # #- cd poisson/tmp
+    - cd apps/c/poisson/tmp
+    - ../poisson_mpi
+    - mpirun -info
+    - mpirun -verbose -print-all-exitcodes  -n 1 ../poisson_mpi
+    - mpirun -verbose -print-all-exitcodes  -n 2 ../poisson_mpi
     # - cp /home/mhi63623/OPS/appbuild/poisson/poisson_mpi .
     # - ls -l -h
     # - mpirun -n 12 ./poisson_mpi
