@@ -245,6 +245,8 @@ if (${CMAKE_PROJECT_NAME} STREQUAL OPS)
     endif()
 endif()
 
+
+
 # clean the tmp directory for the code generation
 macro(CreateTempDir)
     file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/tmp")
@@ -445,7 +447,7 @@ endmacro()
 # TODO fetch_data.cpp cannot be found for access
 #add_subdirectory(access)
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
-    #add_subdirectory(adi)
+    add_subdirectory(adi)
     #add_subdirectory(adi_burger)
     #add_subdirectory(adi_burger_3D)
 endif ()

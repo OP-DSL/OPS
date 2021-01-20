@@ -207,37 +207,15 @@ test:Intel:
       # echo "add_subdirectory(laminar_2D)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
       cd $CI_PROJECT_DIR
     - source /opt/intel/oneapi/setvars.sh
-    - export CXX=`which mpiicpc`
-    - export CC=`which mpiicc`
+    - export OMPI_MPICC=icc
+    - export OMPI_MPICXX=icpc
+    - export CC=icc
+    - export CXX=icpc
+    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/tridsolver/lib:/usr/local/hdf5-intel/lib
     - mkdir appbuild-intel
     - cd appbuild-intel
     - cmake ../  -DOPS_INATLL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel  -DHDF5_ROOT=/usr/local/hdf5-intel  -DOPS_TEST=ON -DGPU_NUMBER=1 -DLIBTRID_PATH=/usr/local/tridsolver -DBUILD_OPS_APPS=ON
-    ##- cmake ../apps/c  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/##OPS-APP-Intel -DOPS_TEST=ON  -DGPU_NUMBER=1 -DHDF5_ROOT=/usr/local/hdf5-intel -DLIBTRID_PATH=/usr/local/tridsolver
     - make -j 12
-    # - mpirun --version
-    - cd apps/c/poisson/tmp
-    - ../poisson_mpi
-    - alias mpirun=mpiexec.mpich
-    - mpirun -info
-    # - export MPI_BUFFER_SIZE=2000000000
-    # - export I_MPI_THREAD_SPLIT=1
-    # - export OMP_NUM_THREADS=1
-    # - export I_MPI_DEBUG=5
-    - mpiexec.mpich -verbose -print-all-exitcodes  -n 2 ../poisson_mpi
-    - mpirun -verbose -print-all-exitcodes  -n 2 ../poisson_mpi
-    # - cp /home/mhi63623/OPS/appbuild/poisson/poisson_mpi .
-    # - ls -l -h
-    # - mpirun -n 12 ./poisson_mpi
-    # - ls poisson -l -h
-    # - mpirun -n 12 poisson/poisson_mpi
-    # - cd poisson/tmp
-    # - mpirun -n 12 ../poisson_mpi
-    #- cd multiDim/tmp
-    #- ls
-    #- ls ../
-    #- export OMP_NUM_THREADS=1
-    #- mpirun -n 2 ../multidim_mpi
-    #- cd ../../
     - make test
   artifacts:
     expire_in: 1 week
