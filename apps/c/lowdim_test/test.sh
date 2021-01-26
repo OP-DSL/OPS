@@ -2,9 +2,18 @@
 set -e
 cd ../../../ops/c
 #<<COMMENT
+if [ -x "$(command -v enroot)" ]; then
+  cd -
+  enroot start --root --mount $OPS_INSTALL_PATH/../:/tmp/OPS --rw cuda112hip sh -c 'cd /tmp/OPS/apps/c/lowdim_test; ./test.sh'
+  grep "PASSED" perf_out
+  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+  rm perf_out
+  echo "All HIP complied applications PASSED"
+fi
+
 if [[ -v HIP_INSTALL_PATH ]]; then
   source ../../scripts/$SOURCE_HIP
-  make -j
+  make -j -B
   cd -
   make clean
   rm -f .generated
@@ -19,17 +28,17 @@ if [[ -v HIP_INSTALL_PATH ]]; then
   rm -rf perf_out output.h5
   
   echo '============> Running MPI+HIP'
-  $MPI_INSTALL_PATH/bin/mpirun -np 2 ./lowdim_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+  mpirun --allow-run-as-root -np 2 ./lowdim_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
   #$HDF5_INSTALL_PATH/bin/h5diff output.h5 output_seq.h5
   #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi;
   grep "PASSED" perf_out
   rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
   rm -rf perf_out output.h5
-  echo “All HIP complied applications PASSED : Moving no to Intel Compiler Tests ”
-  cd -
+  echo "All HIP complied applications PASSED : Moving no to Intel Compiler Tests " > perf_out
+  exit 0
 fi
 source ../../scripts/$SOURCE_INTEL
-make -j
+make -j -B
 cd -
 make clean
 rm -f .generated

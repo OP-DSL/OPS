@@ -1,9 +1,18 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
+if [ -x "$(command -v enroot)" ]; then
+  cd -
+  enroot start --root --mount $OPS_INSTALL_PATH/../:/tmp/OPS --rw cuda112hip sh -c 'cd /tmp/OPS/apps/c/shsgc; ./test.sh'
+  grep "PASSED" perf_out
+  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+  rm perf_out
+  echo "All HIP complied applications PASSED"
+fi
+
 if [[ -v HIP_INSTALL_PATH ]]; then
   source ../../scripts/$SOURCE_HIP
-  make -j
+  make -j -B
   cd -
   make clean
   rm -f .generated
@@ -18,18 +27,18 @@ if [[ -v HIP_INSTALL_PATH ]]; then
   rm perf_out
   
   echo '============> Running MPI+HIP'
- $MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+  mpirun --allow-run-as-root -np 2 ./shsgc_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
   grep "RMS =" perf_out
   grep "Total Wall time" perf_out
   grep "PASSED" perf_out
   rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
   rm perf_out
-  echo “All HIP complied applications PASSED : Moving no to Intel Compiler Tests ”
-  cd -
+  echo "All HIP complied applications PASSED : Moving no to Intel Compiler Tests" > perf_out
+  exit 0
 fi
 #<<COMMENT
 source ../../scripts/$SOURCE_INTEL
-make -j
+make -j -B
 cd -
 make clean
 rm -f .generated

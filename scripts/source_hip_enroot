@@ -13,3 +13,4 @@ export MPIF90=mpif90
 export MPI_INC=/usr/include/openmpi-x86_64
 export XCOMPILER=-Xcompiler
 export HIP_LINK="-L/usr/local/cuda/lib64 -lcudart"
+export HIPMPICPP=mpicxx
