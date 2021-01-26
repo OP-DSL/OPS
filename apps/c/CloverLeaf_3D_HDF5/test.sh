@@ -40,15 +40,13 @@ if [[ -v HIP_INSTALL_PATH ]]; then
     
   echo '============> Running HIP'
   ./cloverleaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-  grep "Total error:" perf_out
-  grep "Total Wall time" perf_out
-  grep "PASSED" perf_out
+  grep "Total Wall time" clover.out
+  grep "PASSED" clover.out
   rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
   rm perf_out
   
   echo '============> Running MPI+HIP'
   mpirun --allow-run-as-root -np 2 ./cloverleaf_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-  grep "Total error:" perf_out
   grep "Total Wall time" perf_out
   grep "PASSED" perf_out
   rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi

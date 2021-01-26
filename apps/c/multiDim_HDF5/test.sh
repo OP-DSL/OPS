@@ -14,6 +14,8 @@ if [[ -v HIP_INSTALL_PATH ]]; then
   source ../../scripts/$SOURCE_HIP
   make -j -B
   cd -
+  make read_hip read_mpi_hip
+  make -f Makefile.write write_hip write_mpi_hip -B
   
   echo '============> Running HIP'
   rm -rf write_data.h5 read_data.h5;

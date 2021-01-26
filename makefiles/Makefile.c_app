@@ -62,6 +62,10 @@ $(APP)_openmp: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/lib
 $(APP)_seq: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_seq.a $(OPS_FILES_GEN) $(HEADERS) 
 		$(MPICPP) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SEQ) -o $(APP)_seq 
 
+#
+# HIP version
+#
+
 $(APP)_hip: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_hip.a $(OPS_FILES_GEN) $(HEADERS) 
 		$(HIPCC) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./HIP/$(MAIN_SRC)_kernels.cpp $(HDF5_LIB_SEQ) $(OPS_LIB_HIP) -o $(APP)_hip 
 

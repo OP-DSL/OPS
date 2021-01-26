@@ -198,4 +198,5 @@ int main(int argc, const char **argv)
 
   fclose(g_out);
   ops_exit();
+  return 0;
 }
