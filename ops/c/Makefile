@@ -105,7 +105,7 @@ $(OBJ)/%_mpi.o : src/externlib/%.cpp
 	$(MPICXX) $(CXXFLAGS) -I$(INC)  $(HDF5_INC) -c $< -o $@ 
 
 $(OBJ)/%_hip_mpi.o : src/mpi/%_hip.cpp
-	$(HIPCC) $(HIPFLAGS) -I$(INC) -I$(MPI_INSTALL_PATH)/include/mpi -c $< -o $@ 
+	$(HIPCC) $(HIPFLAGS) -I$(INC) $(MPI_INC) -c $< -o $@ 
 
 $(OBJ)/%_mpi.o : src/mpi/%.cpp
 	$(MPICXX) $(CXXFLAGS) -I$(INC)  $(HDF5_INC) -c $< -o $@ 

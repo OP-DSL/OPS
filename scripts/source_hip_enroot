@@ -1,0 +1,15 @@
+export PATH=/usr/lib64/openmpi/bin/:/opt/rocm-4.0.0/bin:$PATH
+export OPS_COMPILER=hip
+export MPI_INSTALL_PATH=/usr
+export HDF5_INSTALL_PATH=/usr
+export HIP_INSTALL_PATH=/opt/rocm-4.0.0/
+export OPS_INSTALL_PATH=/tmp/OPS/ops
+export SOURCE_HIP=source_hip_enroot
+export MPICC=mpicc
+export MPICXX=mpic++
+export MPICPP=mpicxx
+export MPIFC=mpif90
+export MPIF90=mpif90
+export MPI_INC=/usr/include/openmpi-x86_64
+export XCOMPILER=-Xcompiler
+export HIP_LINK="-L/usr/local/cuda/lib64 -lcudart"

@@ -57,11 +57,15 @@ else
 ifeq ($(OPS_COMPILER),xl)
 	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.xl
 else
+ifeq ($(OPS_COMPILER),hip)
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
+else
 ifeq ($(OPS_COMPILER),xlp8)
 	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.xlp8
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 endif
