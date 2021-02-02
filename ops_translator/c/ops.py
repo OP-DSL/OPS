@@ -220,6 +220,14 @@ def ops_decl_const_parse(text, macro_defs):
       return
     args[1] = evaluate_macro_defs_in_string(macro_defs, args[1])
 
+    if args[0].count('"') != 2:
+      print('Error in ops_decl_const : name must be a string literal')
+      return
+
+    if args[2].count('"') != 2:
+      print('Error in ops_decl_const : type must be a string literal')
+      return
+
     consts.append({
           'loc': m.start(),
           'name': args[0].strip(),
