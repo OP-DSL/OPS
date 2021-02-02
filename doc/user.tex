@@ -216,7 +216,8 @@ the negative and positive directions of each dimension). \\\\
 \begin{routine} {void ops\_decl\_const(char const * name, int dim, char const * type, T * data )}
 {This routine defines a global constant: a variable in global scope. Global constants need to be declared upfront
  so that they can be correctly handled for different parallelizations. For e.g CUDA on GPUs. Once defined
- they remain unchanged throughout the program, unless changed by a call to ops\_update\_const(..) }
+ they remain unchanged throughout the program, unless changed by a call to ops\_update\_const(..). The ``name'' and ``type''
+ parameters \emph{must} be string literals since they are used in the code generation step }
 
 \item[name]          a name used to identify the constant
 \item[dim]           dimension of dataset (number of items per element)
