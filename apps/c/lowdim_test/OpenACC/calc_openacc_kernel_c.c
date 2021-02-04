@@ -20,7 +20,6 @@ int xdim6_calc;
 int ydim6_calc;
 
 //user function
-#pragma acc routine
 inline 
 void calc(ptr_double dat3D,
   const ptr_double dat2D_xy,

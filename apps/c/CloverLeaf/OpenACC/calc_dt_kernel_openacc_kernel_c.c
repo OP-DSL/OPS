@@ -17,7 +17,6 @@ int xdim9_calc_dt_kernel;
 int xdim10_calc_dt_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void calc_dt_kernel(const ptr_double celldx,
   const ptr_double celldy,

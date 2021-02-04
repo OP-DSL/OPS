@@ -8,94 +8,125 @@
 #define OCL_FMA 0
 #endif
 
-
 static bool isbuilt_update_halo_kernel2_yvel_plus_2_back = false;
 
-void buildOpenCLKernels_update_halo_kernel2_yvel_plus_2_back(OPS_instance *instance, int xdim0, int ydim0, int xdim1, int ydim1) {
+void buildOpenCLKernels_update_halo_kernel2_yvel_plus_2_back(
+    OPS_instance *instance, int xdim0, int ydim0, int xdim1, int ydim1) {
 
-  //int ocl_fma = OCL_FMA;
-  if(!isbuilt_update_halo_kernel2_yvel_plus_2_back) {
+  // int ocl_fma = OCL_FMA;
+  if (!isbuilt_update_halo_kernel2_yvel_plus_2_back) {
     buildOpenCLKernels(instance);
-    //clSafeCall( clUnloadCompiler() );
+    // clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {(char*)"./OpenCL/update_halo_kernel2_yvel_plus_2_back.cl"};
+    char *source_filename[1] = {
+        (char *)"./OpenCL/update_halo_kernel2_yvel_plus_2_back.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
     char *source_str[1] = {NULL};
     size_t source_size[1];
 
-    for(int i=0; i<1; i++) {
+    for (int i = 0; i < 1; i++) {
       fid = fopen(source_filename[i], "r");
       if (!fid) {
-        OPSException e(OPS_RUNTIME_ERROR, "Can't open the kernel source file: ");
+        OPSException e(OPS_RUNTIME_ERROR,
+                       "Can't open the kernel source file: ");
         e << source_filename[i] << "\n";
         throw e;
       }
 
-      source_str[i] = (char*)malloc(4*0x1000000);
-      source_size[i] = fread(source_str[i], 1, 4*0x1000000, fid);
-      if(source_size[i] != 4*0x1000000) {
+      source_str[i] = (char *)malloc(4 * 0x1000000);
+      source_size[i] = fread(source_str[i], 1, 4 * 0x1000000, fid);
+      if (source_size[i] != 4 * 0x1000000) {
         if (ferror(fid)) {
-          OPSException e(OPS_RUNTIME_ERROR, "Error while reading kernel source file ");
+          OPSException e(OPS_RUNTIME_ERROR,
+                         "Error while reading kernel source file ");
           e << source_filename[i] << "\n";
           throw e;
         }
         if (feof(fid))
-          instance->ostream() << "Kernel source file "<< source_filename[i] <<" succesfully read.\n";
+          instance->ostream() << "Kernel source file " << source_filename[i]
+                              << " succesfully read.\n";
       }
       fclose(fid);
     }
 
-    instance->ostream() <<"Compiling update_halo_kernel2_yvel_plus_2_back "<<OCL_FMA<<" source -- start \n";
+    instance->ostream() << "Compiling update_halo_kernel2_yvel_plus_2_back "
+                        << OCL_FMA << " source -- start \n";
 
-      // Create a program from the source
-      instance->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(instance->opencl_instance->OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
-      clSafeCall( ret );
+    // Create a program from the source
+    instance->opencl_instance->OPS_opencl_core.program =
+        clCreateProgramWithSource(
+            instance->opencl_instance->OPS_opencl_core.context, 1,
+            (const char **)&source_str, (const size_t *)&source_size, &ret);
+    clSafeCall(ret);
 
-      // Build the program
-      char buildOpts[255*3];
-      char* pPath = NULL;
-      pPath = getenv ("OPS_INSTALL_PATH");
-      if (pPath!=NULL)
-        if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel2_yvel_plus_2_back=%d  -Dydim0_update_halo_kernel2_yvel_plus_2_back=%d  -Dxdim1_update_halo_kernel2_yvel_plus_2_back=%d  -Dydim1_update_halo_kernel2_yvel_plus_2_back=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1);
-        else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_update_halo_kernel2_yvel_plus_2_back=%d  -Dydim0_update_halo_kernel2_yvel_plus_2_back=%d  -Dxdim1_update_halo_kernel2_yvel_plus_2_back=%d  -Dydim1_update_halo_kernel2_yvel_plus_2_back=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1);
-      else {
-        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
-        exit(EXIT_FAILURE);
-      }
+    // Build the program
+    char buildOpts[255 * 3];
+    char *pPath = NULL;
+    pPath = getenv("OPS_INSTALL_PATH");
+    if (pPath != NULL)
+      if (OCL_FMA)
+        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/include "
+                           "-DOPS_WARPSIZE=%d  "
+                           "-Dxdim0_update_halo_kernel2_yvel_plus_2_back=%d  "
+                           "-Dydim0_update_halo_kernel2_yvel_plus_2_back=%d  "
+                           "-Dxdim1_update_halo_kernel2_yvel_plus_2_back=%d  "
+                           "-Dydim1_update_halo_kernel2_yvel_plus_2_back=%d ",
+                pPath, 32, xdim0, ydim0, xdim1, ydim1);
+      else
+        sprintf(buildOpts, "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+                           "-Dxdim0_update_halo_kernel2_yvel_plus_2_back=%d  "
+                           "-Dydim0_update_halo_kernel2_yvel_plus_2_back=%d  "
+                           "-Dxdim1_update_halo_kernel2_yvel_plus_2_back=%d  "
+                           "-Dydim1_update_halo_kernel2_yvel_plus_2_back=%d ",
+                pPath, 32, xdim0, ydim0, xdim1, ydim1);
+    else {
+      sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
+      exit(EXIT_FAILURE);
+    }
 
-      #ifdef OPS_SOA
-      sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
-      #endif
-      ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1, &instance->opencl_instance->OPS_opencl_core.device_id, buildOpts, NULL, NULL);
+#ifdef OPS_SOA
+    sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
+#endif
+    ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1,
+                         &instance->opencl_instance->OPS_opencl_core.device_id,
+                         buildOpts, NULL, NULL);
 
-      if(ret != CL_SUCCESS) {
-        char* build_log;
-        size_t log_size;
-        clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
-        build_log = (char*) malloc(log_size+1);
-        clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
-        build_log[log_size] = '\0';
-        instance->ostream() << "=============== OpenCL Program Build Info ================\n\n" << build_log;
-        instance->ostream() << "\n========================================================= \n";
-        free(build_log);
-        exit(EXIT_FAILURE);
-      }
-      instance->ostream() << "compiling update_halo_kernel2_yvel_plus_2_back -- done\n";
+    if (ret != CL_SUCCESS) {
+      char *build_log;
+      size_t log_size;
+      clSafeCall(clGetProgramBuildInfo(
+          instance->opencl_instance->OPS_opencl_core.program,
+          instance->opencl_instance->OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
+      build_log = (char *)malloc(log_size + 1);
+      clSafeCall(clGetProgramBuildInfo(
+          instance->opencl_instance->OPS_opencl_core.program,
+          instance->opencl_instance->OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
+      build_log[log_size] = '\0';
+      instance->ostream()
+          << "=============== OpenCL Program Build Info ================\n\n"
+          << build_log;
+      instance->ostream()
+          << "\n========================================================= \n";
+      free(build_log);
+      exit(EXIT_FAILURE);
+    }
+    instance->ostream()
+        << "compiling update_halo_kernel2_yvel_plus_2_back -- done\n";
 
     // Create the OpenCL kernel
-    instance->opencl_instance->OPS_opencl_core.kernel[45] = clCreateKernel(instance->opencl_instance->OPS_opencl_core.program, "ops_update_halo_kernel2_yvel_plus_2_back", &ret);
-    clSafeCall( ret );
+    instance->opencl_instance->OPS_opencl_core.kernel[45] =
+        clCreateKernel(instance->opencl_instance->OPS_opencl_core.program,
+                       "ops_update_halo_kernel2_yvel_plus_2_back", &ret);
+    clSafeCall(ret);
 
     isbuilt_update_halo_kernel2_yvel_plus_2_back = true;
     free(source_str[0]);
   }
-
 }
-
 
 // host stub function
 void ops_par_loop_update_halo_kernel2_yvel_plus_2_back(char const *name, ops_block block, int dim, int* range,

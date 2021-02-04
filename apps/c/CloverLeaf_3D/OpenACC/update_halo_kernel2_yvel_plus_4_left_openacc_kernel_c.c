@@ -10,7 +10,6 @@ int xdim1_update_halo_kernel2_yvel_plus_4_left;
 int ydim1_update_halo_kernel2_yvel_plus_4_left;
 
 //user function
-#pragma acc routine
 
 inline void update_halo_kernel2_yvel_plus_4_left(ptr_double yvel0,
   ptr_double yvel1,

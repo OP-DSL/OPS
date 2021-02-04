@@ -20,7 +20,6 @@ int xdim12_PdV_kernel_nopredict;
 int xdim13_PdV_kernel_nopredict;
 
 //user function
-#pragma acc routine
 inline 
 void PdV_kernel_nopredict(const ptr_double xarea,
   const ptr_double xvel0,

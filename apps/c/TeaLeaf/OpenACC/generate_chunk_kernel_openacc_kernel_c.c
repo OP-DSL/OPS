@@ -13,7 +13,6 @@ int xdim5_generate_chunk_kernel;
 int xdim6_generate_chunk_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void generate_chunk_kernel(const ptr_double vertexx,
   const ptr_double vertexy,

@@ -7,7 +7,6 @@
 int xdim0_poisson_kernel_initialguess;
 
 //user function
-#pragma acc routine
 inline 
 void poisson_kernel_initialguess(ptr_double u) {
   OPS_ACC(u, 0,0) = 0.0;

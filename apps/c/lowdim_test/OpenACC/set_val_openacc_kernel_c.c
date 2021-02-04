@@ -8,7 +8,6 @@ int xdim0_set_val;
 int ydim0_set_val;
 
 //user function
-#pragma acc routine
 inline 
 void set_val(ptr_double dat,
   const double *val)

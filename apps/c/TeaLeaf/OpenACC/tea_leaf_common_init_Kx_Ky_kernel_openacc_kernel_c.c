@@ -9,7 +9,6 @@ int xdim1_tea_leaf_common_init_Kx_Ky_kernel;
 int xdim2_tea_leaf_common_init_Kx_Ky_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void tea_leaf_common_init_Kx_Ky_kernel(ptr_double Kx,
   ptr_double Ky,

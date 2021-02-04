@@ -10,7 +10,6 @@ int xdim1_update_halo_kernel4_plus_4_front;
 int ydim1_update_halo_kernel4_plus_4_front;
 
 //user function
-#pragma acc routine
 
 inline void update_halo_kernel4_plus_4_front(ptr_double vol_flux_y,
   ptr_double mass_flux_y,

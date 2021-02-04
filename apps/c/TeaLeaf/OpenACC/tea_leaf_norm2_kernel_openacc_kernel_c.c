@@ -7,7 +7,6 @@
 int xdim0_tea_leaf_norm2_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void tea_leaf_norm2_kernel(const ptr_double x,
   double * norm) {

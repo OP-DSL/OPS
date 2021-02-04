@@ -8,94 +8,156 @@
 #define OCL_FMA 0
 #endif
 
-
 static bool isbuilt_PdV_kernel_predict = false;
 
-void buildOpenCLKernels_PdV_kernel_predict(OPS_instance *instance, int xdim0, int ydim0, int xdim1, int ydim1, int xdim2, int ydim2, int xdim3, int ydim3, int xdim4, int ydim4, int xdim5, int ydim5, int xdim6, int ydim6, int xdim7, int ydim7, int xdim8, int ydim8, int xdim9, int ydim9, int xdim10, int ydim10, int xdim11, int ydim11, int xdim12, int ydim12, int xdim13, int ydim13) {
+void buildOpenCLKernels_PdV_kernel_predict(
+    OPS_instance *instance, int xdim0, int ydim0, int xdim1, int ydim1,
+    int xdim2, int ydim2, int xdim3, int ydim3, int xdim4, int ydim4, int xdim5,
+    int ydim5, int xdim6, int ydim6, int xdim7, int ydim7, int xdim8, int ydim8,
+    int xdim9, int ydim9, int xdim10, int ydim10, int xdim11, int ydim11,
+    int xdim12, int ydim12, int xdim13, int ydim13) {
 
-  //int ocl_fma = OCL_FMA;
-  if(!isbuilt_PdV_kernel_predict) {
+  // int ocl_fma = OCL_FMA;
+  if (!isbuilt_PdV_kernel_predict) {
     buildOpenCLKernels(instance);
-    //clSafeCall( clUnloadCompiler() );
+    // clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {(char*)"./OpenCL/PdV_kernel_predict.cl"};
+    char *source_filename[1] = {(char *)"./OpenCL/PdV_kernel_predict.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
     char *source_str[1] = {NULL};
     size_t source_size[1];
 
-    for(int i=0; i<1; i++) {
+    for (int i = 0; i < 1; i++) {
       fid = fopen(source_filename[i], "r");
       if (!fid) {
-        OPSException e(OPS_RUNTIME_ERROR, "Can't open the kernel source file: ");
+        OPSException e(OPS_RUNTIME_ERROR,
+                       "Can't open the kernel source file: ");
         e << source_filename[i] << "\n";
         throw e;
       }
 
-      source_str[i] = (char*)malloc(4*0x1000000);
-      source_size[i] = fread(source_str[i], 1, 4*0x1000000, fid);
-      if(source_size[i] != 4*0x1000000) {
+      source_str[i] = (char *)malloc(4 * 0x1000000);
+      source_size[i] = fread(source_str[i], 1, 4 * 0x1000000, fid);
+      if (source_size[i] != 4 * 0x1000000) {
         if (ferror(fid)) {
-          OPSException e(OPS_RUNTIME_ERROR, "Error while reading kernel source file ");
+          OPSException e(OPS_RUNTIME_ERROR,
+                         "Error while reading kernel source file ");
           e << source_filename[i] << "\n";
           throw e;
         }
         if (feof(fid))
-          instance->ostream() << "Kernel source file "<< source_filename[i] <<" succesfully read.\n";
+          instance->ostream() << "Kernel source file " << source_filename[i]
+                              << " succesfully read.\n";
       }
       fclose(fid);
     }
 
-    instance->ostream() <<"Compiling PdV_kernel_predict "<<OCL_FMA<<" source -- start \n";
+    instance->ostream() << "Compiling PdV_kernel_predict " << OCL_FMA
+                        << " source -- start \n";
 
-      // Create a program from the source
-      instance->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(instance->opencl_instance->OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
-      clSafeCall( ret );
+    // Create a program from the source
+    instance->opencl_instance->OPS_opencl_core.program =
+        clCreateProgramWithSource(
+            instance->opencl_instance->OPS_opencl_core.context, 1,
+            (const char **)&source_str, (const size_t *)&source_size, &ret);
+    clSafeCall(ret);
 
-      // Build the program
-      char buildOpts[255*14];
-      char* pPath = NULL;
-      pPath = getenv ("OPS_INSTALL_PATH");
-      if (pPath!=NULL)
-        if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_PdV_kernel_predict=%d  -Dydim0_PdV_kernel_predict=%d  -Dxdim1_PdV_kernel_predict=%d  -Dydim1_PdV_kernel_predict=%d  -Dxdim2_PdV_kernel_predict=%d  -Dydim2_PdV_kernel_predict=%d  -Dxdim3_PdV_kernel_predict=%d  -Dydim3_PdV_kernel_predict=%d  -Dxdim4_PdV_kernel_predict=%d  -Dydim4_PdV_kernel_predict=%d  -Dxdim5_PdV_kernel_predict=%d  -Dydim5_PdV_kernel_predict=%d  -Dxdim6_PdV_kernel_predict=%d  -Dydim6_PdV_kernel_predict=%d  -Dxdim7_PdV_kernel_predict=%d  -Dydim7_PdV_kernel_predict=%d  -Dxdim8_PdV_kernel_predict=%d  -Dydim8_PdV_kernel_predict=%d  -Dxdim9_PdV_kernel_predict=%d  -Dydim9_PdV_kernel_predict=%d  -Dxdim10_PdV_kernel_predict=%d  -Dydim10_PdV_kernel_predict=%d  -Dxdim11_PdV_kernel_predict=%d  -Dydim11_PdV_kernel_predict=%d  -Dxdim12_PdV_kernel_predict=%d  -Dydim12_PdV_kernel_predict=%d  -Dxdim13_PdV_kernel_predict=%d  -Dydim13_PdV_kernel_predict=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6,xdim7,ydim7,xdim8,ydim8,xdim9,ydim9,xdim10,ydim10,xdim11,ydim11,xdim12,ydim12,xdim13,ydim13);
-        else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_PdV_kernel_predict=%d  -Dydim0_PdV_kernel_predict=%d  -Dxdim1_PdV_kernel_predict=%d  -Dydim1_PdV_kernel_predict=%d  -Dxdim2_PdV_kernel_predict=%d  -Dydim2_PdV_kernel_predict=%d  -Dxdim3_PdV_kernel_predict=%d  -Dydim3_PdV_kernel_predict=%d  -Dxdim4_PdV_kernel_predict=%d  -Dydim4_PdV_kernel_predict=%d  -Dxdim5_PdV_kernel_predict=%d  -Dydim5_PdV_kernel_predict=%d  -Dxdim6_PdV_kernel_predict=%d  -Dydim6_PdV_kernel_predict=%d  -Dxdim7_PdV_kernel_predict=%d  -Dydim7_PdV_kernel_predict=%d  -Dxdim8_PdV_kernel_predict=%d  -Dydim8_PdV_kernel_predict=%d  -Dxdim9_PdV_kernel_predict=%d  -Dydim9_PdV_kernel_predict=%d  -Dxdim10_PdV_kernel_predict=%d  -Dydim10_PdV_kernel_predict=%d  -Dxdim11_PdV_kernel_predict=%d  -Dydim11_PdV_kernel_predict=%d  -Dxdim12_PdV_kernel_predict=%d  -Dydim12_PdV_kernel_predict=%d  -Dxdim13_PdV_kernel_predict=%d  -Dydim13_PdV_kernel_predict=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6,xdim7,ydim7,xdim8,ydim8,xdim9,ydim9,xdim10,ydim10,xdim11,ydim11,xdim12,ydim12,xdim13,ydim13);
-      else {
-        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
-        exit(EXIT_FAILURE);
-      }
+    // Build the program
+    char buildOpts[255 * 14];
+    char *pPath = NULL;
+    pPath = getenv("OPS_INSTALL_PATH");
+    if (pPath != NULL)
+      if (OCL_FMA)
+        sprintf(
+            buildOpts,
+            "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
+            "-Dxdim0_PdV_kernel_predict=%d  -Dydim0_PdV_kernel_predict=%d  "
+            "-Dxdim1_PdV_kernel_predict=%d  -Dydim1_PdV_kernel_predict=%d  "
+            "-Dxdim2_PdV_kernel_predict=%d  -Dydim2_PdV_kernel_predict=%d  "
+            "-Dxdim3_PdV_kernel_predict=%d  -Dydim3_PdV_kernel_predict=%d  "
+            "-Dxdim4_PdV_kernel_predict=%d  -Dydim4_PdV_kernel_predict=%d  "
+            "-Dxdim5_PdV_kernel_predict=%d  -Dydim5_PdV_kernel_predict=%d  "
+            "-Dxdim6_PdV_kernel_predict=%d  -Dydim6_PdV_kernel_predict=%d  "
+            "-Dxdim7_PdV_kernel_predict=%d  -Dydim7_PdV_kernel_predict=%d  "
+            "-Dxdim8_PdV_kernel_predict=%d  -Dydim8_PdV_kernel_predict=%d  "
+            "-Dxdim9_PdV_kernel_predict=%d  -Dydim9_PdV_kernel_predict=%d  "
+            "-Dxdim10_PdV_kernel_predict=%d  -Dydim10_PdV_kernel_predict=%d  "
+            "-Dxdim11_PdV_kernel_predict=%d  -Dydim11_PdV_kernel_predict=%d  "
+            "-Dxdim12_PdV_kernel_predict=%d  -Dydim12_PdV_kernel_predict=%d  "
+            "-Dxdim13_PdV_kernel_predict=%d  -Dydim13_PdV_kernel_predict=%d ",
+            pPath, 32, xdim0, ydim0, xdim1, ydim1, xdim2, ydim2, xdim3, ydim3,
+            xdim4, ydim4, xdim5, ydim5, xdim6, ydim6, xdim7, ydim7, xdim8,
+            ydim8, xdim9, ydim9, xdim10, ydim10, xdim11, ydim11, xdim12, ydim12,
+            xdim13, ydim13);
+      else
+        sprintf(
+            buildOpts,
+            "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+            "-Dxdim0_PdV_kernel_predict=%d  -Dydim0_PdV_kernel_predict=%d  "
+            "-Dxdim1_PdV_kernel_predict=%d  -Dydim1_PdV_kernel_predict=%d  "
+            "-Dxdim2_PdV_kernel_predict=%d  -Dydim2_PdV_kernel_predict=%d  "
+            "-Dxdim3_PdV_kernel_predict=%d  -Dydim3_PdV_kernel_predict=%d  "
+            "-Dxdim4_PdV_kernel_predict=%d  -Dydim4_PdV_kernel_predict=%d  "
+            "-Dxdim5_PdV_kernel_predict=%d  -Dydim5_PdV_kernel_predict=%d  "
+            "-Dxdim6_PdV_kernel_predict=%d  -Dydim6_PdV_kernel_predict=%d  "
+            "-Dxdim7_PdV_kernel_predict=%d  -Dydim7_PdV_kernel_predict=%d  "
+            "-Dxdim8_PdV_kernel_predict=%d  -Dydim8_PdV_kernel_predict=%d  "
+            "-Dxdim9_PdV_kernel_predict=%d  -Dydim9_PdV_kernel_predict=%d  "
+            "-Dxdim10_PdV_kernel_predict=%d  -Dydim10_PdV_kernel_predict=%d  "
+            "-Dxdim11_PdV_kernel_predict=%d  -Dydim11_PdV_kernel_predict=%d  "
+            "-Dxdim12_PdV_kernel_predict=%d  -Dydim12_PdV_kernel_predict=%d  "
+            "-Dxdim13_PdV_kernel_predict=%d  -Dydim13_PdV_kernel_predict=%d ",
+            pPath, 32, xdim0, ydim0, xdim1, ydim1, xdim2, ydim2, xdim3, ydim3,
+            xdim4, ydim4, xdim5, ydim5, xdim6, ydim6, xdim7, ydim7, xdim8,
+            ydim8, xdim9, ydim9, xdim10, ydim10, xdim11, ydim11, xdim12, ydim12,
+            xdim13, ydim13);
+    else {
+      sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
+      exit(EXIT_FAILURE);
+    }
 
-      #ifdef OPS_SOA
-      sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
-      #endif
-      ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1, &instance->opencl_instance->OPS_opencl_core.device_id, buildOpts, NULL, NULL);
+#ifdef OPS_SOA
+    sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
+#endif
+    ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1,
+                         &instance->opencl_instance->OPS_opencl_core.device_id,
+                         buildOpts, NULL, NULL);
 
-      if(ret != CL_SUCCESS) {
-        char* build_log;
-        size_t log_size;
-        clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
-        build_log = (char*) malloc(log_size+1);
-        clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
-        build_log[log_size] = '\0';
-        instance->ostream() << "=============== OpenCL Program Build Info ================\n\n" << build_log;
-        instance->ostream() << "\n========================================================= \n";
-        free(build_log);
-        exit(EXIT_FAILURE);
-      }
-      instance->ostream() << "compiling PdV_kernel_predict -- done\n";
+    if (ret != CL_SUCCESS) {
+      char *build_log;
+      size_t log_size;
+      clSafeCall(clGetProgramBuildInfo(
+          instance->opencl_instance->OPS_opencl_core.program,
+          instance->opencl_instance->OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
+      build_log = (char *)malloc(log_size + 1);
+      clSafeCall(clGetProgramBuildInfo(
+          instance->opencl_instance->OPS_opencl_core.program,
+          instance->opencl_instance->OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
+      build_log[log_size] = '\0';
+      instance->ostream()
+          << "=============== OpenCL Program Build Info ================\n\n"
+          << build_log;
+      instance->ostream()
+          << "\n========================================================= \n";
+      free(build_log);
+      exit(EXIT_FAILURE);
+    }
+    instance->ostream() << "compiling PdV_kernel_predict -- done\n";
 
     // Create the OpenCL kernel
-    instance->opencl_instance->OPS_opencl_core.kernel[101] = clCreateKernel(instance->opencl_instance->OPS_opencl_core.program, "ops_PdV_kernel_predict", &ret);
-    clSafeCall( ret );
+    instance->opencl_instance->OPS_opencl_core.kernel[101] =
+        clCreateKernel(instance->opencl_instance->OPS_opencl_core.program,
+                       "ops_PdV_kernel_predict", &ret);
+    clSafeCall(ret);
 
     isbuilt_PdV_kernel_predict = true;
     free(source_str[0]);
   }
-
 }
-
 
 // host stub function
 void ops_par_loop_PdV_kernel_predict(char const *name, ops_block block, int dim, int* range,

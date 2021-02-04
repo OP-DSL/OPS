@@ -10,7 +10,6 @@ int xdim1_advec_mom_kernel_mass_flux_z;
 int ydim1_advec_mom_kernel_mass_flux_z;
 
 //user function
-#pragma acc routine
 
 inline void advec_mom_kernel_mass_flux_z(ptr_double node_flux,
   const ptr_double mass_flux_z) {

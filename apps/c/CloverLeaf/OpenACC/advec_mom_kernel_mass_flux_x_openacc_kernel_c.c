@@ -8,7 +8,6 @@ int xdim0_advec_mom_kernel_mass_flux_x;
 int xdim1_advec_mom_kernel_mass_flux_x;
 
 //user function
-#pragma acc routine
 
 inline void advec_mom_kernel_mass_flux_x(ptr_double node_flux,
   const ptr_double mass_flux_x) {

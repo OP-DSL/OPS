@@ -13,7 +13,6 @@ int xdim5_update_halo_kernel1_t2;
 int xdim6_update_halo_kernel1_t2;
 
 //user function
-#pragma acc routine
 
 inline void update_halo_kernel1_t2(ptr_double density0,
   ptr_double density1,

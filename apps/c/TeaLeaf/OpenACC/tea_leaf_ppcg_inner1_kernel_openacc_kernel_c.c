@@ -10,7 +10,6 @@ int xdim2_tea_leaf_ppcg_inner1_kernel;
 int xdim3_tea_leaf_ppcg_inner1_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void tea_leaf_ppcg_inner1_kernel(ptr_double rtemp,
   const ptr_double Kx,

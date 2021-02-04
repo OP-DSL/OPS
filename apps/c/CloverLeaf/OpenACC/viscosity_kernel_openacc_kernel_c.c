@@ -13,7 +13,6 @@ int xdim5_viscosity_kernel;
 int xdim6_viscosity_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void viscosity_kernel(const ptr_double xvel0,
   const ptr_double yvel0,

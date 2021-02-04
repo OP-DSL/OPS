@@ -117,54 +117,64 @@ void ops_decl_const_char(int dim, char const * type, int typeSize, char * dat, c
   }
 }
 
-
-
 void buildOpenCLKernels(OPS_instance *instance) {
   static bool isbuilt = false;
 
-  if(!isbuilt) {
-    //clSafeCall( clUnloadCompiler() );
+  if (!isbuilt) {
+    // clSafeCall( clUnloadCompiler() );
 
     instance->opencl_instance->OPS_opencl_core.n_kernels = 57;
-    instance->opencl_instance->OPS_opencl_core.kernel = (cl_kernel*) malloc(57*sizeof(cl_kernel));
+    instance->opencl_instance->OPS_opencl_core.kernel =
+        (cl_kernel *)malloc(57 * sizeof(cl_kernel));
   }
   isbuilt = true;
-}
+  }
 
 //user kernel files
-#include "tea_leaf_init_zero2_kernel_opencl_kernel.cpp"
+#include "../MPI_OpenMP/generate_chunk_kernel_cpu_kernel.cpp"
+#include "../MPI_OpenMP/initialise_chunk_kernel_cellx_cpu_kernel.cpp"
+#include "../MPI_OpenMP/initialise_chunk_kernel_celly_cpu_kernel.cpp"
+#include "../MPI_OpenMP/initialise_chunk_kernel_volume_cpu_kernel.cpp"
+#include "../MPI_OpenMP/initialise_chunk_kernel_x_cpu_kernel.cpp"
+#include "../MPI_OpenMP/initialise_chunk_kernel_xx_cpu_kernel.cpp"
+#include "../MPI_OpenMP/initialise_chunk_kernel_y_cpu_kernel.cpp"
+#include "../MPI_OpenMP/initialise_chunk_kernel_yy_cpu_kernel.cpp"
+#include "../MPI_OpenMP/initialise_chunk_kernel_zero_cpu_kernel.cpp"
+#include "../MPI_OpenMP/initialise_chunk_kernel_zero_x_cpu_kernel.cpp"
+#include "../MPI_OpenMP/initialise_chunk_kernel_zero_y_cpu_kernel.cpp"
+#include "field_summary_kernel_opencl_kernel.cpp"
 #include "set_field_kernel_opencl_kernel.cpp"
-#include "tea_leaf_jacobi_kernel_opencl_kernel.cpp"
-#include "tea_leaf_common_init_kernel_opencl_kernel.cpp"
-#include "tea_leaf_ppcg_reduce_kernel_opencl_kernel.cpp"
-#include "tea_leaf_cg_calc_w_reduce_kernel_opencl_kernel.cpp"
-#include "tea_leaf_yeqx_kernel_opencl_kernel.cpp"
-#include "update_halo_kernel1_r1_opencl_kernel.cpp"
-#include "update_halo_kernel1_r2_opencl_kernel.cpp"
-#include "tea_leaf_recip3_kernel_opencl_kernel.cpp"
-#include "tea_leaf_recip_kernel_opencl_kernel.cpp"
-#include "update_halo_kernel1_l2_opencl_kernel.cpp"
-#include "tea_leaf_common_init_u_u0_kernel_opencl_kernel.cpp"
-#include "tea_leaf_zeqxty_kernel_opencl_kernel.cpp"
+#include "tea_leaf_axpby_kernel_opencl_kernel.cpp"
 #include "tea_leaf_axpy_kernel_opencl_kernel.cpp"
+#include "tea_leaf_cg_calc_ur_r_reduce_kernel_opencl_kernel.cpp"
+#include "tea_leaf_cg_calc_w_reduce_kernel_opencl_kernel.cpp"
+#include "tea_leaf_cheby_init_kernel_opencl_kernel.cpp"
+#include "tea_leaf_common_init_Kx_Ky_kernel_opencl_kernel.cpp"
+#include "tea_leaf_common_init_diag_init_kernel_opencl_kernel.cpp"
+#include "tea_leaf_common_init_kernel_opencl_kernel.cpp"
+#include "tea_leaf_common_init_u_u0_kernel_opencl_kernel.cpp"
+#include "tea_leaf_common_residual_kernel_opencl_kernel.cpp"
+#include "tea_leaf_dot_kernel_opencl_kernel.cpp"
+#include "tea_leaf_init_zero2_kernel_opencl_kernel.cpp"
+#include "tea_leaf_init_zero_kernel_opencl_kernel.cpp"
+#include "tea_leaf_jacobi_kernel_opencl_kernel.cpp"
+#include "tea_leaf_norm2_kernel_opencl_kernel.cpp"
+#include "tea_leaf_ppcg_init1_kernel_opencl_kernel.cpp"
 #include "tea_leaf_ppcg_init2_kernel_opencl_kernel.cpp"
 #include "tea_leaf_ppcg_inner1_kernel_opencl_kernel.cpp"
+#include "tea_leaf_ppcg_inner2_kernel_opencl_kernel.cpp"
+#include "tea_leaf_ppcg_reduce_kernel_opencl_kernel.cpp"
+#include "tea_leaf_recip2_kernel_opencl_kernel.cpp"
+#include "tea_leaf_recip3_kernel_opencl_kernel.cpp"
+#include "tea_leaf_recip_kernel_opencl_kernel.cpp"
+#include "tea_leaf_xpy_kernel_opencl_kernel.cpp"
+#include "tea_leaf_yeqx_kernel_opencl_kernel.cpp"
+#include "tea_leaf_zeqxty_kernel_opencl_kernel.cpp"
 #include "update_halo_kernel1_b1_opencl_kernel.cpp"
 #include "update_halo_kernel1_b2_opencl_kernel.cpp"
-#include "field_summary_kernel_opencl_kernel.cpp"
-#include "tea_leaf_common_residual_kernel_opencl_kernel.cpp"
-#include "tea_leaf_cg_calc_ur_r_reduce_kernel_opencl_kernel.cpp"
-#include "tea_leaf_norm2_kernel_opencl_kernel.cpp"
-#include "tea_leaf_common_init_Kx_Ky_kernel_opencl_kernel.cpp"
-#include "tea_leaf_axpby_kernel_opencl_kernel.cpp"
-#include "tea_leaf_dot_kernel_opencl_kernel.cpp"
-#include "tea_leaf_init_zero_kernel_opencl_kernel.cpp"
-#include "update_halo_kernel1_t2_opencl_kernel.cpp"
-#include "tea_leaf_recip2_kernel_opencl_kernel.cpp"
-#include "tea_leaf_ppcg_inner2_kernel_opencl_kernel.cpp"
-#include "update_halo_kernel1_t1_opencl_kernel.cpp"
-#include "tea_leaf_common_init_diag_init_kernel_opencl_kernel.cpp"
-#include "tea_leaf_ppcg_init1_kernel_opencl_kernel.cpp"
-#include "tea_leaf_xpy_kernel_opencl_kernel.cpp"
 #include "update_halo_kernel1_l1_opencl_kernel.cpp"
-#include "tea_leaf_cheby_init_kernel_opencl_kernel.cpp"
+#include "update_halo_kernel1_l2_opencl_kernel.cpp"
+#include "update_halo_kernel1_r1_opencl_kernel.cpp"
+#include "update_halo_kernel1_r2_opencl_kernel.cpp"
+#include "update_halo_kernel1_t1_opencl_kernel.cpp"
+#include "update_halo_kernel1_t2_opencl_kernel.cpp"

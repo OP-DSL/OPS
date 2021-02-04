@@ -8,7 +8,6 @@ int xdim0_tea_leaf_cg_calc_ur_r_reduce_kernel;
 int xdim1_tea_leaf_cg_calc_ur_r_reduce_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void tea_leaf_cg_calc_ur_r_reduce_kernel(ptr_double  r,
   const ptr_double  w,

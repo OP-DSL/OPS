@@ -56,6 +56,7 @@ if [[ -v HIP_INSTALL_PATH ]]; then
 fi
 
 
+cd ../../../ops/c
 source ../../scripts/$SOURCE_INTEL
 make clean
 make -j -B

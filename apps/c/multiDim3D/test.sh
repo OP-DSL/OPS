@@ -37,6 +37,8 @@ if [[ -v HIP_INSTALL_PATH ]]; then
   echo "All HIP complied applications PASSED : Moving no to Intel Compiler Tests " > perf_out
   exit 0
 fi
+
+cd ../../../ops/c
 source ../../scripts/$SOURCE_INTEL
 make -j -B
 cd -

@@ -11,7 +11,6 @@ int xdim3_tea_leaf_jacobi_kernel;
 int xdim4_tea_leaf_jacobi_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void tea_leaf_jacobi_kernel(ptr_double u1,
   const ptr_double Kx,

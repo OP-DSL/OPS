@@ -10,7 +10,6 @@ int xdim2_ideal_gas_kernel;
 int xdim3_ideal_gas_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void ideal_gas_kernel(const ptr_double density,
   const ptr_double energy,

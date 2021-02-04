@@ -7,7 +7,6 @@
 int xdim0_initialise_chunk_kernel_zero_x;
 
 //user function
-#pragma acc routine
 inline 
 void initialise_chunk_kernel_zero_x(ptr_double var) {
   OPS_ACC(var, 0,0) = 0.0;

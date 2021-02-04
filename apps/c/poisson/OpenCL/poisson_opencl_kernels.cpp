@@ -57,19 +57,18 @@ void ops_decl_const_char(int dim, char const * type, int typeSize, char * dat, c
   }
 }
 
-
-
 void buildOpenCLKernels(OPS_instance *instance) {
   static bool isbuilt = false;
 
-  if(!isbuilt) {
-    //clSafeCall( clUnloadCompiler() );
+  if (!isbuilt) {
+    // clSafeCall( clUnloadCompiler() );
 
     instance->opencl_instance->OPS_opencl_core.n_kernels = 5;
-    instance->opencl_instance->OPS_opencl_core.kernel = (cl_kernel*) malloc(5*sizeof(cl_kernel));
+    instance->opencl_instance->OPS_opencl_core.kernel =
+        (cl_kernel *)malloc(5 * sizeof(cl_kernel));
   }
   isbuilt = true;
-}
+  }
 
 //user kernel files
 #include "poisson_kernel_error_opencl_kernel.cpp"

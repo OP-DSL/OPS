@@ -12,7 +12,6 @@ int xdim4_tea_leaf_cheby_init_kernel;
 int xdim5_tea_leaf_cheby_init_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void tea_leaf_cheby_init_kernel(ptr_double w,
   ptr_double r,

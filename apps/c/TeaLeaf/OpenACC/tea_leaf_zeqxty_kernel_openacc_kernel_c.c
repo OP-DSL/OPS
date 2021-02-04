@@ -9,7 +9,6 @@ int xdim1_tea_leaf_zeqxty_kernel;
 int xdim2_tea_leaf_zeqxty_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void tea_leaf_zeqxty_kernel(ptr_double  z,
   const ptr_double  x,

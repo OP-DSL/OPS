@@ -23,7 +23,9 @@ int size, char *dat, char const *name){
   }
   else
   if (!strcmp(name,"states")) {
-    states = (state_type*)dat;
+    for (int d = 0; d < number_of_states; d++) {
+      states[d] = ((state_type *)dat)[d];
+    }
   }
   else
   if (!strcmp(name,"g_circ")) {

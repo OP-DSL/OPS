@@ -8,7 +8,6 @@ int xdim0_set_field_kernel;
 int xdim1_set_field_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void set_field_kernel(const ptr_double energy0,
   ptr_double energy1) {

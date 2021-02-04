@@ -28,7 +28,6 @@ int xdim10_generate_chunk_kernel;
 int ydim10_generate_chunk_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void generate_chunk_kernel(const ptr_double vertexx,
   const ptr_double vertexy,
