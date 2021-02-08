@@ -8,94 +8,154 @@
 #define OCL_FMA 0
 #endif
 
-
 static bool isbuilt_calc_dt_kernel = false;
 
-void buildOpenCLKernels_calc_dt_kernel(OPS_instance *instance, int xdim0, int ydim0, int xdim1, int ydim1, int xdim2, int ydim2, int xdim3, int ydim3, int xdim4, int ydim4, int xdim5, int ydim5, int xdim6, int ydim6, int xdim7, int ydim7, int xdim8, int ydim8, int xdim9, int ydim9, int xdim10, int ydim10, int xdim11, int ydim11, int xdim12, int ydim12, int xdim13, int ydim13) {
+void buildOpenCLKernels_calc_dt_kernel(
+    OPS_instance *instance, int xdim0, int ydim0, int xdim1, int ydim1,
+    int xdim2, int ydim2, int xdim3, int ydim3, int xdim4, int ydim4, int xdim5,
+    int ydim5, int xdim6, int ydim6, int xdim7, int ydim7, int xdim8, int ydim8,
+    int xdim9, int ydim9, int xdim10, int ydim10, int xdim11, int ydim11,
+    int xdim12, int ydim12, int xdim13, int ydim13) {
 
-  //int ocl_fma = OCL_FMA;
-  if(!isbuilt_calc_dt_kernel) {
+  // int ocl_fma = OCL_FMA;
+  if (!isbuilt_calc_dt_kernel) {
     buildOpenCLKernels(instance);
-    //clSafeCall( clUnloadCompiler() );
+    // clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {(char*)"./OpenCL/calc_dt_kernel.cl"};
+    char *source_filename[1] = {(char *)"./OpenCL/calc_dt_kernel.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
     char *source_str[1] = {NULL};
     size_t source_size[1];
 
-    for(int i=0; i<1; i++) {
+    for (int i = 0; i < 1; i++) {
       fid = fopen(source_filename[i], "r");
       if (!fid) {
-        OPSException e(OPS_RUNTIME_ERROR, "Can't open the kernel source file: ");
+        OPSException e(OPS_RUNTIME_ERROR,
+                       "Can't open the kernel source file: ");
         e << source_filename[i] << "\n";
         throw e;
       }
 
-      source_str[i] = (char*)malloc(4*0x1000000);
-      source_size[i] = fread(source_str[i], 1, 4*0x1000000, fid);
-      if(source_size[i] != 4*0x1000000) {
+      source_str[i] = (char *)malloc(4 * 0x1000000);
+      source_size[i] = fread(source_str[i], 1, 4 * 0x1000000, fid);
+      if (source_size[i] != 4 * 0x1000000) {
         if (ferror(fid)) {
-          OPSException e(OPS_RUNTIME_ERROR, "Error while reading kernel source file ");
+          OPSException e(OPS_RUNTIME_ERROR,
+                         "Error while reading kernel source file ");
           e << source_filename[i] << "\n";
           throw e;
         }
         if (feof(fid))
-          instance->ostream() << "Kernel source file "<< source_filename[i] <<" succesfully read.\n";
+          instance->ostream() << "Kernel source file " << source_filename[i]
+                              << " succesfully read.\n";
       }
       fclose(fid);
     }
 
-    instance->ostream() <<"Compiling calc_dt_kernel "<<OCL_FMA<<" source -- start \n";
+    instance->ostream() << "Compiling calc_dt_kernel " << OCL_FMA
+                        << " source -- start \n";
 
-      // Create a program from the source
-      instance->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(instance->opencl_instance->OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
-      clSafeCall( ret );
+    // Create a program from the source
+    instance->opencl_instance->OPS_opencl_core.program =
+        clCreateProgramWithSource(
+            instance->opencl_instance->OPS_opencl_core.context, 1,
+            (const char **)&source_str, (const size_t *)&source_size, &ret);
+    clSafeCall(ret);
 
-      // Build the program
-      char buildOpts[255*14];
-      char* pPath = NULL;
-      pPath = getenv ("OPS_INSTALL_PATH");
-      if (pPath!=NULL)
-        if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel=%d  -Dydim0_calc_dt_kernel=%d  -Dxdim1_calc_dt_kernel=%d  -Dydim1_calc_dt_kernel=%d  -Dxdim2_calc_dt_kernel=%d  -Dydim2_calc_dt_kernel=%d  -Dxdim3_calc_dt_kernel=%d  -Dydim3_calc_dt_kernel=%d  -Dxdim4_calc_dt_kernel=%d  -Dydim4_calc_dt_kernel=%d  -Dxdim5_calc_dt_kernel=%d  -Dydim5_calc_dt_kernel=%d  -Dxdim6_calc_dt_kernel=%d  -Dydim6_calc_dt_kernel=%d  -Dxdim7_calc_dt_kernel=%d  -Dydim7_calc_dt_kernel=%d  -Dxdim8_calc_dt_kernel=%d  -Dydim8_calc_dt_kernel=%d  -Dxdim9_calc_dt_kernel=%d  -Dydim9_calc_dt_kernel=%d  -Dxdim10_calc_dt_kernel=%d  -Dydim10_calc_dt_kernel=%d  -Dxdim11_calc_dt_kernel=%d  -Dydim11_calc_dt_kernel=%d  -Dxdim12_calc_dt_kernel=%d  -Dydim12_calc_dt_kernel=%d  -Dxdim13_calc_dt_kernel=%d  -Dydim13_calc_dt_kernel=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6,xdim7,ydim7,xdim8,ydim8,xdim9,ydim9,xdim10,ydim10,xdim11,ydim11,xdim12,ydim12,xdim13,ydim13);
-        else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel=%d  -Dydim0_calc_dt_kernel=%d  -Dxdim1_calc_dt_kernel=%d  -Dydim1_calc_dt_kernel=%d  -Dxdim2_calc_dt_kernel=%d  -Dydim2_calc_dt_kernel=%d  -Dxdim3_calc_dt_kernel=%d  -Dydim3_calc_dt_kernel=%d  -Dxdim4_calc_dt_kernel=%d  -Dydim4_calc_dt_kernel=%d  -Dxdim5_calc_dt_kernel=%d  -Dydim5_calc_dt_kernel=%d  -Dxdim6_calc_dt_kernel=%d  -Dydim6_calc_dt_kernel=%d  -Dxdim7_calc_dt_kernel=%d  -Dydim7_calc_dt_kernel=%d  -Dxdim8_calc_dt_kernel=%d  -Dydim8_calc_dt_kernel=%d  -Dxdim9_calc_dt_kernel=%d  -Dydim9_calc_dt_kernel=%d  -Dxdim10_calc_dt_kernel=%d  -Dydim10_calc_dt_kernel=%d  -Dxdim11_calc_dt_kernel=%d  -Dydim11_calc_dt_kernel=%d  -Dxdim12_calc_dt_kernel=%d  -Dydim12_calc_dt_kernel=%d  -Dxdim13_calc_dt_kernel=%d  -Dydim13_calc_dt_kernel=%d ", pPath, 32,xdim0,ydim0,xdim1,ydim1,xdim2,ydim2,xdim3,ydim3,xdim4,ydim4,xdim5,ydim5,xdim6,ydim6,xdim7,ydim7,xdim8,ydim8,xdim9,ydim9,xdim10,ydim10,xdim11,ydim11,xdim12,ydim12,xdim13,ydim13);
-      else {
-        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
-        exit(EXIT_FAILURE);
-      }
+    // Build the program
+    char buildOpts[255 * 14];
+    char *pPath = NULL;
+    pPath = getenv("OPS_INSTALL_PATH");
+    if (pPath != NULL)
+      if (OCL_FMA)
+        sprintf(buildOpts,
+                "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_calc_dt_kernel=%d  -Dydim0_calc_dt_kernel=%d  "
+                "-Dxdim1_calc_dt_kernel=%d  -Dydim1_calc_dt_kernel=%d  "
+                "-Dxdim2_calc_dt_kernel=%d  -Dydim2_calc_dt_kernel=%d  "
+                "-Dxdim3_calc_dt_kernel=%d  -Dydim3_calc_dt_kernel=%d  "
+                "-Dxdim4_calc_dt_kernel=%d  -Dydim4_calc_dt_kernel=%d  "
+                "-Dxdim5_calc_dt_kernel=%d  -Dydim5_calc_dt_kernel=%d  "
+                "-Dxdim6_calc_dt_kernel=%d  -Dydim6_calc_dt_kernel=%d  "
+                "-Dxdim7_calc_dt_kernel=%d  -Dydim7_calc_dt_kernel=%d  "
+                "-Dxdim8_calc_dt_kernel=%d  -Dydim8_calc_dt_kernel=%d  "
+                "-Dxdim9_calc_dt_kernel=%d  -Dydim9_calc_dt_kernel=%d  "
+                "-Dxdim10_calc_dt_kernel=%d  -Dydim10_calc_dt_kernel=%d  "
+                "-Dxdim11_calc_dt_kernel=%d  -Dydim11_calc_dt_kernel=%d  "
+                "-Dxdim12_calc_dt_kernel=%d  -Dydim12_calc_dt_kernel=%d  "
+                "-Dxdim13_calc_dt_kernel=%d  -Dydim13_calc_dt_kernel=%d ",
+                pPath, 32, xdim0, ydim0, xdim1, ydim1, xdim2, ydim2, xdim3,
+                ydim3, xdim4, ydim4, xdim5, ydim5, xdim6, ydim6, xdim7, ydim7,
+                xdim8, ydim8, xdim9, ydim9, xdim10, ydim10, xdim11, ydim11,
+                xdim12, ydim12, xdim13, ydim13);
+      else
+        sprintf(buildOpts,
+                "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_calc_dt_kernel=%d  -Dydim0_calc_dt_kernel=%d  "
+                "-Dxdim1_calc_dt_kernel=%d  -Dydim1_calc_dt_kernel=%d  "
+                "-Dxdim2_calc_dt_kernel=%d  -Dydim2_calc_dt_kernel=%d  "
+                "-Dxdim3_calc_dt_kernel=%d  -Dydim3_calc_dt_kernel=%d  "
+                "-Dxdim4_calc_dt_kernel=%d  -Dydim4_calc_dt_kernel=%d  "
+                "-Dxdim5_calc_dt_kernel=%d  -Dydim5_calc_dt_kernel=%d  "
+                "-Dxdim6_calc_dt_kernel=%d  -Dydim6_calc_dt_kernel=%d  "
+                "-Dxdim7_calc_dt_kernel=%d  -Dydim7_calc_dt_kernel=%d  "
+                "-Dxdim8_calc_dt_kernel=%d  -Dydim8_calc_dt_kernel=%d  "
+                "-Dxdim9_calc_dt_kernel=%d  -Dydim9_calc_dt_kernel=%d  "
+                "-Dxdim10_calc_dt_kernel=%d  -Dydim10_calc_dt_kernel=%d  "
+                "-Dxdim11_calc_dt_kernel=%d  -Dydim11_calc_dt_kernel=%d  "
+                "-Dxdim12_calc_dt_kernel=%d  -Dydim12_calc_dt_kernel=%d  "
+                "-Dxdim13_calc_dt_kernel=%d  -Dydim13_calc_dt_kernel=%d ",
+                pPath, 32, xdim0, ydim0, xdim1, ydim1, xdim2, ydim2, xdim3,
+                ydim3, xdim4, ydim4, xdim5, ydim5, xdim6, ydim6, xdim7, ydim7,
+                xdim8, ydim8, xdim9, ydim9, xdim10, ydim10, xdim11, ydim11,
+                xdim12, ydim12, xdim13, ydim13);
+    else {
+      sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
+      exit(EXIT_FAILURE);
+    }
 
-      #ifdef OPS_SOA
-      sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
-      #endif
-      ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1, &instance->opencl_instance->OPS_opencl_core.device_id, buildOpts, NULL, NULL);
+#ifdef OPS_SOA
+    sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
+#endif
+    ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1,
+                         &instance->opencl_instance->OPS_opencl_core.device_id,
+                         buildOpts, NULL, NULL);
 
-      if(ret != CL_SUCCESS) {
-        char* build_log;
-        size_t log_size;
-        clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
-        build_log = (char*) malloc(log_size+1);
-        clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
-        build_log[log_size] = '\0';
-        instance->ostream() << "=============== OpenCL Program Build Info ================\n\n" << build_log;
-        instance->ostream() << "\n========================================================= \n";
-        free(build_log);
-        exit(EXIT_FAILURE);
-      }
-      instance->ostream() << "compiling calc_dt_kernel -- done\n";
+    if (ret != CL_SUCCESS) {
+      char *build_log;
+      size_t log_size;
+      clSafeCall(clGetProgramBuildInfo(
+          instance->opencl_instance->OPS_opencl_core.program,
+          instance->opencl_instance->OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
+      build_log = (char *)malloc(log_size + 1);
+      clSafeCall(clGetProgramBuildInfo(
+          instance->opencl_instance->OPS_opencl_core.program,
+          instance->opencl_instance->OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
+      build_log[log_size] = '\0';
+      instance->ostream()
+          << "=============== OpenCL Program Build Info ================\n\n"
+          << build_log;
+      instance->ostream()
+          << "\n========================================================= \n";
+      free(build_log);
+      exit(EXIT_FAILURE);
+    }
+    instance->ostream() << "compiling calc_dt_kernel -- done\n";
 
     // Create the OpenCL kernel
-    instance->opencl_instance->OPS_opencl_core.kernel[97] = clCreateKernel(instance->opencl_instance->OPS_opencl_core.program, "ops_calc_dt_kernel", &ret);
-    clSafeCall( ret );
+    instance->opencl_instance->OPS_opencl_core.kernel[97] =
+        clCreateKernel(instance->opencl_instance->OPS_opencl_core.program,
+                       "ops_calc_dt_kernel", &ret);
+    clSafeCall(ret);
 
     isbuilt_calc_dt_kernel = true;
     free(source_str[0]);
   }
-
 }
-
 
 // host stub function
 void ops_par_loop_calc_dt_kernel(char const *name, ops_block block, int dim, int* range,

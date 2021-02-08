@@ -8,7 +8,6 @@ int xdim0_tea_leaf_init_zero2_kernel;
 int xdim1_tea_leaf_init_zero2_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void tea_leaf_init_zero2_kernel (ptr_double  p,
   ptr_double  z) {

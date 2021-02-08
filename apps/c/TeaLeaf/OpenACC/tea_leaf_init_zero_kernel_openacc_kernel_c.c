@@ -7,7 +7,6 @@
 int xdim0_tea_leaf_init_zero_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void tea_leaf_init_zero_kernel (ptr_double  p) {
   OPS_ACC(p, 0,0) = 0.0;

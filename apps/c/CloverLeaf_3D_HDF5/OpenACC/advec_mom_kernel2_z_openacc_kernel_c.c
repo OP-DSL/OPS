@@ -14,7 +14,6 @@ int xdim3_advec_mom_kernel2_z;
 int ydim3_advec_mom_kernel2_z;
 
 //user function
-#pragma acc routine
 
 inline void advec_mom_kernel2_z(ptr_double vel1,
   const ptr_double node_mass_post,

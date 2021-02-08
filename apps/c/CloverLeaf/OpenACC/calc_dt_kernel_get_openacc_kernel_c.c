@@ -8,7 +8,6 @@ int xdim0_calc_dt_kernel_get;
 int xdim1_calc_dt_kernel_get;
 
 //user function
-#pragma acc routine
 inline 
 void calc_dt_kernel_get(const ptr_double cellx,
   const ptr_double celly,

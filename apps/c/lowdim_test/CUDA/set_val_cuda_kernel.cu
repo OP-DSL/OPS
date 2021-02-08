@@ -176,11 +176,11 @@ void ops_par_loop_set_val(char const *name, ops_block block, int dim, int* range
     desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
   }
   desc->nargs = 2;
-  desc->args = (ops_arg*)malloc(2*sizeof(ops_arg));
+  desc->args = (ops_arg*)ops_malloc(2*sizeof(ops_arg));
   desc->args[0] = arg0;
   desc->hash = ((desc->hash << 5) + desc->hash) + arg0.dat->index;
   desc->args[1] = arg1;
-  char *tmp = (char*)malloc(1*sizeof(double));
+  char *tmp = (char*)ops_malloc(1*sizeof(double));
   memcpy(tmp, arg1.data,1*sizeof(double));
   desc->args[1].data = tmp;
   desc->function = ops_par_loop_set_val_execute;

@@ -10,7 +10,6 @@ int xdim2_revert_kernel;
 int xdim3_revert_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void revert_kernel(const ptr_double density0,
   ptr_double density1,

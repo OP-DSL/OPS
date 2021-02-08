@@ -9,7 +9,6 @@ int xdim4_poisson_kernel_populate;
 int xdim5_poisson_kernel_populate;
 
 //user function
-#pragma acc routine
 inline 
 void poisson_kernel_populate(const int *dispx,
   const int *dispy,

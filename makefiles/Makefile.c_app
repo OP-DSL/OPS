@@ -29,7 +29,7 @@ endif
 all: $(TARGETS)
 
 $(APP)_dev_seq: Makefile $(HEADERS) $(OPS_FILES_PLAIN) $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_seq.a
-		$(MPICPP) $(CXXFLAGS) -std=c++11 -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_PLAIN) $(HDF5_LIB_SEQ) $(OPS_LIB_SEQ) -o $(APP)_dev_seq
+		$(CXX) $(CXXFLAGS) -std=c++11 -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_PLAIN) $(HDF5_LIB_SEQ) $(OPS_LIB_SEQ) -o $(APP)_dev_seq
 
 $(APP)_dev_mpi: Makefile $(OPS_FILES_PLAIN) \
                 $(HEADERS) $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi.a
@@ -53,7 +53,7 @@ $(APP)_mpi_openmp: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)
 
 
 $(APP)_openmp: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_seq.a $(OPS_FILES_GEN) $(HEADERS)
-	        $(MPICPP) $(OMPFLAGS) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SEQ) -o $(APP)_openmp
+	        $(CXX) $(OMPFLAGS) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SEQ) -o $(APP)_openmp
 
 
 #
@@ -61,6 +61,13 @@ $(APP)_openmp: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/lib
 #
 $(APP)_seq: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_seq.a $(OPS_FILES_GEN) $(HEADERS) 
 		$(MPICPP) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SEQ) -o $(APP)_seq 
+
+#
+# HIP version
+#
+
+$(APP)_hip: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_hip.a $(OPS_FILES_GEN) $(HEADERS) 
+		$(HIPCC) $(CXXFLAGS) $(HIPFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./HIP/$(MAIN_SRC)_kernels.cpp $(HDF5_LIB_SEQ) $(OPS_LIB_HIP) -o $(APP)_hip 
 
 #
 # Tiled version
@@ -85,6 +92,14 @@ $(APP)_mpi_cuda: ./CUDA/$(APP)_kernels_mpi_cu.o Makefile .generated $(OPS_INSTAL
 $(APP)_mpi_cuda_tiled: ./CUDA/$(APP)_kernels_mpi_tiled_cu.o Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_cuda.a
 		$(MPICPP) $(OMPFLAGS) $(CXXFLAGS) -DOPS_MPI -DOPS_LAZY -I$(CUDA_INC) -I$(C_OPS_INC) -L$(C_OPS_LIB) -L$(CUDA_LIB) $(OPS_FILES_GEN) ./CUDA/$(APP)_kernels_mpi_tiled_cu.o $(CUDART) $(HDF5_LIB_MPI) $(OPS_LIB_MPI_CUDA) -o $(APP)_mpi_cuda_tiled
 
+$(APP)_mpi_hip: Makefile .generated ./HIP/$(APP)_kernels_mpi.o $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_hip.a $(OPS_FILES_GEN) $(HEADERS) 
+		$(HIPMPICPP) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. -DOPS_MPI ./HIP/$(MAIN_SRC)_kernels_mpi.o $(HDF5_LIB_MPI) $(OPS_LIB_MPI_HIP) $(HIP_LINK) -o $(APP)_mpi_hip
+
+$(APP)_mpi_hip_tiled: Makefile .generated ./HIP/$(APP)_kernels_mpi.o $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_hip.a $(OPS_FILES_GEN) $(HEADERS) 
+		$(HIPMPICPP) $(CXXFLAGS) -I$(C_OPS_INC) -DOPS_LAZY -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. -DOPS_MPI ./HIP/$(MAIN_SRC)_kernels_mpi.o $(HDF5_LIB_MPI) $(OPS_LIB_MPI_HIP) $(HIP_LINK) -o $(APP)_mpi_hip_tiled
+
+./HIP/$(APP)_kernels_mpi.o:	.generated Makefile
+		$(HIPCC) $(CXXFLAGS) $(HIPFLAGS) -I$(C_OPS_INC) -I. -DOPS_MPI $(XCOMPILER) "$(shell mpicxx --showme:compile)" ./HIP/$(MAIN_SRC)_kernels.cpp -c -o ./HIP/$(MAIN_SRC)_kernels_mpi.o
 
 ./CUDA/$(APP)_kernels_cu.o:	.generated Makefile
 				$(NVCC) $(VAR) $(INC) $(NVCCFLAGS) $(CODE_GEN_CUDA) -I$(C_OPS_INC) -I. \
@@ -151,4 +166,4 @@ openacc_error:
 #
 
 clean:
-	rm -f $(APP)_dev_seq $(APP)_dev_mpi $(APP)_mpi $(APP)_seq $(APP)_tiled $(APP)_mpi_inline $(APP)_openmp $(APP)_mpi_openmp $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled $(APP)_openacc $(APP)_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o $(APP)_opencl $(APP)_mpi_opencl $(APP)_mpi_tiled $(APP)_mpi_inline ./OpenCL/*.o ./MPI_inline/*.o *.o *.lst
+	rm -f $(APP)_dev_seq $(APP)_dev_mpi $(APP)_mpi $(APP)_seq $(APP)_tiled $(APP)_mpi_inline $(APP)_openmp $(APP)_mpi_openmp $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled $(APP)_openacc $(APP)_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o $(APP)_opencl $(APP)_mpi_opencl $(APP)_mpi_tiled $(APP)_mpi_inline $(APP)_hip $(APP)_mpi_hip ./HIP/*.o ./OpenCL/*.o ./MPI_inline/*.o *.o *.lst

@@ -256,7 +256,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     l = text[0:m].find('inline')
     if(l<0):
       text = 'inline '+text
-    code('#pragma acc routine')
+#    code('#pragma acc routine')
     code(text)
     code('')
 

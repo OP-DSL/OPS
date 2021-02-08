@@ -2,6 +2,12 @@
 set -e
 cd ../../../ops/c
 #<<COMMENT
+if [[ -v HIP_INSTALL_PATH ]]; then
+  
+  echo '============> NO Test for multiDim HIP'
+
+fi
+
 source ../../scripts/$SOURCE_INTEL
 make -j
 cd -

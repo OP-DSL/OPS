@@ -27,8 +27,10 @@ OUT := -o
 AR := ar -r 
 OPS_LIB_SEQ=-lops_seq
 OPS_LIB_CUDA=-lops_cuda
+OPS_LIB_HIP=-lops_hip
 OPS_LIB_MPI=-lops_mpi
 OPS_LIB_MPI_CUDA=-lops_mpi_cuda
+OPS_LIB_MPI_HIP=-lops_mpi_hip
 CUDART=-lcudart
 
 ifeq ($(OPS_COMPILER),clang)
@@ -55,11 +57,15 @@ else
 ifeq ($(OPS_COMPILER),xl)
 	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.xl
 else
+ifeq ($(OPS_COMPILER),hip)
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
+else
 ifeq ($(OPS_COMPILER),xlp8)
 	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.xlp8
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 endif

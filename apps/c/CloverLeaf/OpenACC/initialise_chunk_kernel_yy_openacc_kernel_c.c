@@ -7,7 +7,6 @@
 int xdim0_initialise_chunk_kernel_yy;
 
 //user function
-#pragma acc routine
 inline 
 void initialise_chunk_kernel_yy(ptr_int yy,
   int *idx) {

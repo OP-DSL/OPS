@@ -9,7 +9,6 @@ int xdim1_tea_leaf_ppcg_reduce_kernel;
 int xdim2_tea_leaf_ppcg_reduce_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void tea_leaf_ppcg_reduce_kernel(const ptr_double rstore,
   const ptr_double r,

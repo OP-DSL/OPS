@@ -10,7 +10,6 @@ int xdim2_reset_field_kernel2;
 int xdim3_reset_field_kernel2;
 
 //user function
-#pragma acc routine
 inline 
 void reset_field_kernel2(ptr_double xvel0,
   const ptr_double xvel1,

@@ -11,7 +11,6 @@ int xdim3_tea_leaf_common_residual_kernel;
 int xdim4_tea_leaf_common_residual_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void tea_leaf_common_residual_kernel(ptr_double r,
   const ptr_double Kx,

@@ -18,7 +18,6 @@ int xdim5_advec_mom_kernel_z1;
 int ydim5_advec_mom_kernel_z1;
 
 //user function
-#pragma acc routine
 
 inline void advec_mom_kernel_z1(ptr_double pre_vol,
   ptr_double post_vol,

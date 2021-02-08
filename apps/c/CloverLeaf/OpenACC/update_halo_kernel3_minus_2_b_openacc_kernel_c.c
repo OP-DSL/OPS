@@ -8,7 +8,6 @@ int xdim0_update_halo_kernel3_minus_2_b;
 int xdim1_update_halo_kernel3_minus_2_b;
 
 //user function
-#pragma acc routine
 
 inline void update_halo_kernel3_minus_2_b(ptr_double vol_flux_x,
   ptr_double mass_flux_x,

@@ -8,7 +8,6 @@ int xdim0_update_halo_kernel2_xvel_plus_4_a;
 int xdim1_update_halo_kernel2_xvel_plus_4_a;
 
 //user function
-#pragma acc routine
 
 inline void update_halo_kernel2_xvel_plus_4_a(ptr_double xvel0,
   ptr_double xvel1,

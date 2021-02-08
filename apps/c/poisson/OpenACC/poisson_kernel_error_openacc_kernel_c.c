@@ -8,7 +8,6 @@ int xdim0_poisson_kernel_error;
 int xdim1_poisson_kernel_error;
 
 //user function
-#pragma acc routine
 inline 
 void poisson_kernel_error(const ptr_double u,
   const ptr_double ref,

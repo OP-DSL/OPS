@@ -8,7 +8,6 @@ int xdim0_poisson_kernel_stencil;
 int xdim1_poisson_kernel_stencil;
 
 //user function
-#pragma acc routine
 inline 
 void poisson_kernel_stencil(const ptr_double u,
   ptr_double u2) {

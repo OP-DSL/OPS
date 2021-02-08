@@ -8,7 +8,6 @@ int xdim0_tea_leaf_recip_kernel;
 int xdim1_tea_leaf_recip_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void tea_leaf_recip_kernel(ptr_double  u,
   const ptr_double  p) {

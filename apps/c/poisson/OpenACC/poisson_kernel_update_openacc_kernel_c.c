@@ -8,7 +8,6 @@ int xdim0_poisson_kernel_update;
 int xdim1_poisson_kernel_update;
 
 //user function
-#pragma acc routine
 inline 
 void poisson_kernel_update(const ptr_double u2,
   ptr_double u) {

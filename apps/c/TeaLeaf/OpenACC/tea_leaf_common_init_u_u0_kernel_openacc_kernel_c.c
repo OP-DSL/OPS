@@ -10,7 +10,6 @@ int xdim2_tea_leaf_common_init_u_u0_kernel;
 int xdim3_tea_leaf_common_init_u_u0_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void tea_leaf_common_init_u_u0_kernel(ptr_double u,
   ptr_double u0,

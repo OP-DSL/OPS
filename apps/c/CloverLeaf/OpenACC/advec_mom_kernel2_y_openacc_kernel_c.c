@@ -10,7 +10,6 @@ int xdim2_advec_mom_kernel2_y;
 int xdim3_advec_mom_kernel2_y;
 
 //user function
-#pragma acc routine
 
 inline void advec_mom_kernel2_y(ptr_double vel1,
   const ptr_double node_mass_post,

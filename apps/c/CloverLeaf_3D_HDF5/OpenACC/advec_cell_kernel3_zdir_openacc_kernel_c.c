@@ -22,7 +22,6 @@ int xdim7_advec_cell_kernel3_zdir;
 int ydim7_advec_cell_kernel3_zdir;
 
 //user function
-#pragma acc routine
 
 inline void advec_cell_kernel3_zdir(const ptr_double vol_flux_z,
   const ptr_double pre_vol,

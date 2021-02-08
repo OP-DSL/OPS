@@ -12,7 +12,6 @@ int xdim4_calc_dt_kernel_get;
 int ydim4_calc_dt_kernel_get;
 
 //user function
-#pragma acc routine
 inline 
 void calc_dt_kernel_get(const ptr_double  cellx,
   const ptr_double  celly,

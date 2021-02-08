@@ -2,8 +2,45 @@
 set -e
 cd ../../../ops/c
 #<<COMMENT
+if [ -x "$(command -v enroot)" ]; then
+  cd -
+  enroot start --root --mount $OPS_INSTALL_PATH/../:/tmp/OPS --rw cuda112hip sh -c 'cd /tmp/OPS/apps/c/poisson; ./test.sh'
+  grep "PASSED" perf_out
+  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+  rm perf_out
+  echo "All HIP complied applications PASSED"
+fi
+
+if [[ -v HIP_INSTALL_PATH ]]; then
+  source ../../scripts/$SOURCE_HIP
+  make -j -B
+  cd -
+  make clean
+  rm -f .generated
+  make poisson_hip poisson_mpi_hip -j
+  
+  echo '============> Running HIP'
+  ./poisson_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+  grep "Total error:" perf_out
+  grep "Total Wall time" perf_out
+  grep "PASSED" perf_out
+  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+  rm perf_out
+  
+  echo '============> Running MPI+HIP'
+  mpirun --allow-run-as-root -np 2 ./poisson_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+  grep "Total error:" perf_out
+  grep "Total Wall time" perf_out
+  grep "PASSED" perf_out
+  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+  rm perf_out
+  echo "All HIP complied applications PASSED" > perf_out
+  exit 0
+fi
+
+cd ../../../ops/c
 source ../../scripts/$SOURCE_INTEL
-make -j
+make -j -B
 cd -
 make clean
 rm -f .generated
@@ -75,6 +112,8 @@ grep "Total Wall time" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
+
+
 
 #echo '============> Running MPI+CUDA with GPU-Direct'
 #MV2_USE_CUDA=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_cuda -gpudirect OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out

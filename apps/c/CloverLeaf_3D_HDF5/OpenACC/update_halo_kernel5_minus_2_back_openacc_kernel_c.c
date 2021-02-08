@@ -10,7 +10,6 @@ int xdim1_update_halo_kernel5_minus_2_back;
 int ydim1_update_halo_kernel5_minus_2_back;
 
 //user function
-#pragma acc routine
 
 inline void update_halo_kernel5_minus_2_back(ptr_double vol_flux_z,
   ptr_double mass_flux_z,

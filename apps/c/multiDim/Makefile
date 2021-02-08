@@ -10,6 +10,7 @@ THREADED=1
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.common
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
 
