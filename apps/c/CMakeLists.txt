@@ -449,7 +449,7 @@ endmacro()
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
     add_subdirectory(adi)
     #add_subdirectory(adi_burger)
-    #add_subdirectory(adi_burger_3D)
+    add_subdirectory(adi_burger_3D)
 endif ()
 
 add_subdirectory(CloverLeaf) # Compile OK
