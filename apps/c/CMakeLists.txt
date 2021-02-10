@@ -356,7 +356,7 @@ macro(BUILD_OPS_C_SAMPLE Name Odd Others Extra Trid GenerateTest)
         endif ()
         install(TARGETS ${Name}_cuda DESTINATION ${APP_INSTALL_DIR}/${Name})
         if ((OPS_TEST) AND (GPU_NUMBER GREATER_EQUAL 1) AND  (${GenerateTest} STREQUAL "YES"))
-            set(args "OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1")
+            set(args "OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1")
             set(cmd "$<TARGET_FILE:${Name}_cuda>")
             add_test(NAME ${Name}_cuda
                     COMMAND ${CMAKE_COMMAND} -DCMD=${cmd}  -DARG=${args} -DOPS_INSTALL_PATH=${OPS_INSTALL_PATH}
