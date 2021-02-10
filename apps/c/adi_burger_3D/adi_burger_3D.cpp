@@ -47,6 +47,8 @@
 #include "init_kernel.h"
 // Kernel functions for preparing for a,b,c,d
 #include "preproc_kernel.h"
+// Kernel functions for explicit scheme
+#include "explicit_kernel.h"
 
 double Re{1};
 // Defining the computational problem domain. As a test, we use the
@@ -59,10 +61,12 @@ double dx{(xyzRange[1] - xyzRange[0]) / (nx - 1)};
 double dy{(xyzRange[1] - xyzRange[0]) / (ny - 1)};
 double dz{(xyzRange[1] - xyzRange[0]) / (nz - 1)};
 double h{dx};
-double dt{0.0001};
+double dt{0.00025};//0.00025 for ADI
 double r1{dt / (4 * h)};
 double r2{dt / (2 * Re * h * h)};
-int iter{100};
+int iter{1000};
+const int maxIter{1000000};
+const double convergeCriterion{1e-10};
 // Utility functions mainly debug
 void WriteDataToH5(const std::string &fileName, const ops_block &block,
                    const std::vector<ops_dat> &dataList) {
@@ -139,35 +143,51 @@ int main(int argc, char *argv[]) {
     ops_decl_const("h", 1, "double", &h);
     ops_decl_const("r1", 1, "double", &r1);
     ops_decl_const("r2", 1, "double", &r2);
+    ops_decl_const("dt", 1, "double", &dt);
+    //Prepare reduction handlee
+    double uSqrSum, vSqrSum, wSqrSum, uDiffSqrSum, vDiffSqrSum, wDiffSqrSum;
+    ops_reduction uSqr{ops_decl_reduction_handle(sizeof(double), "double", "uSqr")};
+    ops_reduction vSqr{ops_decl_reduction_handle(sizeof(double), "double", "vSqr")};
+    ops_reduction wSqr{ops_decl_reduction_handle(sizeof(double), "double", "wSqr")};
+    ops_reduction uDiffSqr{ops_decl_reduction_handle(sizeof(double), "double", "uDiffSqr")};
+    ops_reduction vDiffSqr{ops_decl_reduction_handle(sizeof(double), "double", "vDiffSqr")};
+    ops_reduction wDiffSqr{ops_decl_reduction_handle(sizeof(double), "double", "wDiffSqr")};
+
+    double uL2Error{1}, vL2Error{1}, wL2Error{1};
 
     // decompose the block
     ops_partition("BurgersEquation3D");
 
     double ct0, ct1, et0, et1, ct2, et2, ct3, et3;
-    double totalPreprocX{0}, totalPreprocY{0}, totalPreprocZ{0}, totalX{0},
-        totalY{0}, totalZ{0};
-
-    ops_printf("\nNumber of iterations: %d\n", iter);
+    double time{0};
+    //iter = 10000;
     ops_printf("\nGrid dimensions: %d x %d x %d\n", nx, ny, nz);
-    ops_printf("\nh=%f r1=%f r2=%f\n", h, r1, r2);
     printf("\nLocal dimensions at rank %d: %d x %d x %d\n", ops_get_proc(),
            u->size[0], u->size[1], u->size[2]);
     ops_diagnostic_output();
+    //Star ADI scheme
+    double totalPreprocX{0}, totalPreprocY{0}, totalPreprocZ{0}, totalX{0},
+        totalY{0}, totalZ{0};
+    ops_printf("Start the ADI scheme\n!");
+    //ops_printf("Number of iterations for ADI scheme: %d\n", iter);
+    ops_printf("Parameters for ADI scheme h=%f r1=%f r2=%f\n", h, r1, r2);
 
     // initialize Tridiagonal Library
     ops_initTridMultiDimBatchSolve(3, size);
-
-    /**-------- Initialize-------**/
-
+    //-------- Initialize-------
     ops_par_loop(initKernel, "initKernel", burger3D, 3, iterRange,
                  ops_arg_dat(u, 1, S3D_000, "double", OPS_WRITE),
                  ops_arg_dat(v, 1, S3D_000, "double", OPS_WRITE),
                  ops_arg_dat(w, 1, S3D_000, "double", OPS_WRITE),
                  ops_arg_idx());
 
+
     ops_timers(&ct0, &et0);
-    for (int it = 1; it <= iter; it++) {
-        double time{it * dt};
+    int it{1};
+    while ((uL2Error > convergeCriterion || vL2Error > convergeCriterion || wL2Error > convergeCriterion) && (it < maxIter))
+    {
+        // for unsteady problem, useless for unsteady problem
+        time = it * dt;
 
         ops_par_loop(CopyUVW, "CopyUVW", burger3D, 3, iterRange,
                      ops_arg_dat(u, 1, S3D_000, "double", OPS_READ),
@@ -261,45 +281,136 @@ int main(int argc, char *argv[]) {
         ops_tridMultiDimBatch_Inc(3, 2, size, a, b, c, dw, w);
         ops_timers(&ct3, &et3);
         totalZ += et3 - et2;
+        //WriteDataToH5("Burger3DResImplicit.h5", burger3D, resList);
+        if ((it % 100)==0)
+        {
+            //ops_printf("Calculating the residual at iteration %d for ADI scheme!\n", it);
+            ops_par_loop(calculateL2NormError, "calculateL2NormError", burger3D, 3,
+                         iterRange, ops_arg_dat(u, 1, S3D_000, "double", OPS_READ),
+                         ops_arg_dat(v, 1, S3D_000, "double", OPS_READ),
+                         ops_arg_dat(w, 1, S3D_000, "double", OPS_READ),
+                         ops_arg_gbl(&time, 1, "double", OPS_READ),
+                         ops_arg_reduce(uSqr, 1, "double", OPS_INC),
+                         ops_arg_reduce(vSqr, 1, "double", OPS_INC),
+                         ops_arg_reduce(wSqr, 1, "double", OPS_INC),
+                         ops_arg_reduce(uDiffSqr, 1, "double", OPS_INC),
+                         ops_arg_reduce(vDiffSqr, 1, "double", OPS_INC),
+                         ops_arg_reduce(wDiffSqr, 1, "double", OPS_INC),
+                         ops_arg_idx());
+            ops_reduction_result(uSqr, &uSqrSum);
+            ops_reduction_result(vSqr, &vSqrSum);
+            ops_reduction_result(wSqr, &wSqrSum);
+            ops_reduction_result(uDiffSqr, &uDiffSqrSum);
+            ops_reduction_result(vDiffSqr, &vDiffSqrSum);
+            ops_reduction_result(wDiffSqr, &wDiffSqrSum);
+            uL2Error = sqrt(uDiffSqrSum / uSqrSum);
+            vL2Error = sqrt(vDiffSqrSum / vSqrSum);
+            wL2Error = sqrt(wDiffSqrSum / wSqrSum);
+        }
+        it++;
         //WriteDataToH5("Burger3DZ.h5", burger3D, debugList);
-    }  // End main iteration loop
+    } // End main iteration loop
     ops_timers(&ct1, &et1);
+    ops_printf("\n%d iterations are conducted to converge for ADI scheme\n",it-1);
+    ops_printf("\nTotal Wall time (s) of ADI scheme including calculation of L2 norm: %lf\n", et1 - et0);
+    ops_printf("\nPreproc total time at X (s) of ADI scheme: %lf\n", totalPreprocX);
+    ops_printf("\nPreproc total time at Y (s) of ADI scheme: %lf\n", totalPreprocY);
+    ops_printf("\nPreproc total time at Z (s) of ADI scheme: %lf\n", totalPreprocZ);
+    ops_printf("\nX Dim total time (s) of ADI scheme: %lf\n", totalX);
+    ops_printf("\nY Dim total time (s) of ADI scheme: %lf\n", totalY);
+    ops_printf("\nZ Dim total time (s) of ADI scheme: %lf\n", totalZ);
+    ops_printf("\nTotal time spent on ADI scheme: %lf\n", totalPreprocX + totalPreprocY + totalPreprocZ + totalX + totalY + totalZ);
+    ops_printf("Error of ADI scheme at U: %.17g\n", uL2Error);
+    ops_printf("Error of ADI scheme at V: %.17g\n", vL2Error);
+    ops_printf("Error of ADI scheme at w: %.17g\n", wL2Error);
+    bool passed{uL2Error <= convergeCriterion && vL2Error <= convergeCriterion && wL2Error <= convergeCriterion};
+    // Start explicit scheme
+    dt = dt / 10;
+    ops_update_const("dt", 1, "double", &dt);
+    //iter = 100000;
+    ops_printf("Start the explicit scheme!\n");
+    ops_printf("The parameters dt=%f\n", dt);
+    ops_par_loop(initKernel, "initKernel", burger3D, 3, iterRange,
+                 ops_arg_dat(u, 1, S3D_000, "double", OPS_WRITE),
+                 ops_arg_dat(v, 1, S3D_000, "double", OPS_WRITE),
+                 ops_arg_dat(w, 1, S3D_000, "double", OPS_WRITE),
+                 ops_arg_idx());
 
-    const double time{iter * dt};
-    double uSqrSum, vSqrSum, wSqrSum, uDiffSqrSum, vDiffSqrSum, wDiffSqrSum;
-    ops_reduction uSqr;
-    //, vSqr, wSqr, uDiffSqr, vDiffSqr, wDiffSqr;
-    //ops_printf("Calculating the error at time %f!\n", time);
-    // ops_par_loop(calculateL2NormError, "calculateL2NormError", burger3D, 3,
-    //              iterRange, ops_arg_dat(u, 1, S3D_000, "double", OPS_READ),
-    //              ops_arg_dat(v, 1, S3D_000, "double", OPS_READ),
-    //              ops_arg_dat(w, 1, S3D_000, "double", OPS_READ),
-    //              ops_arg_gbl(&time, 1, "double", OPS_READ),
-    //              ops_arg_reduce(uSqr, 1, "double", OPS_INC),
-    //              ops_arg_reduce(vSqr, 1, "double", OPS_INC),
-    //              ops_arg_reduce(wSqr, 1, "double", OPS_INC),
-    //              ops_arg_reduce(uDiffSqr, 1, "double", OPS_INC),
-    //              ops_arg_reduce(vDiffSqr, 1, "double", OPS_INC),
-    //              ops_arg_reduce(wDiffSqr, 1, "double", OPS_INC),
-    //              ops_arg_idx());
+    it = 1;
+    uL2Error = 1;
+    vL2Error = 1;
+    wL2Error = 1;
+    double totalExplicit{0};
+    ops_timers(&ct0, &et0);
 
-    // ops_printf("Reducing...!\n");
-    //ops_reduction_result(uSqr, &uSqrSum);
-    // ops_reduction_result(vSqr, &vSqrSum);
-    // ops_reduction_result(wSqr, &wSqrSum);
-    // ops_reduction_result(uDiffSqr, &uDiffSqrSum);
-    // ops_reduction_result(vDiffSqr, &vDiffSqrSum);
-    // ops_reduction_result(wDiffSqr, &wDiffSqrSum);
-    WriteDataToH5("Burger3DRes.h5", burger3D, resList);
-    ops_printf("\nTotal Wall time (s): %lf\n", et1 - et0);
-    ops_printf("Preproc total time at X (s): %lf\n", totalPreprocX);
-    ops_printf("Preproc total time at Y (s): %lf\n", totalPreprocY);
-    ops_printf("Preproc total time at Z (s): %lf\n", totalPreprocZ);
-    ops_printf("X Dim total time (s): %lf\n", totalX);
-    ops_printf("Y Dim total time (s): %lf\n", totalY);
-    ops_printf("Z Dim total time (s): %lf\n", totalZ);
-    // ops_printf("Error at U: %lf\n", sqrt(uDiffSqrSum / uSqrSum));
-    // ops_printf("Error at V: %lf\n", sqrt(vDiffSqrSum / vSqrSum));
-    // ops_printf("Error at w: %lf\n", sqrt(wDiffSqrSum / wSqrSum));
+    while ((uL2Error > convergeCriterion || vL2Error > convergeCriterion || wL2Error > convergeCriterion) && (it < maxIter))
+    {
+        double time{it * dt};
+
+        ops_par_loop(CopyUVW, "CopyUVW", burger3D, 3, iterRange,
+                     ops_arg_dat(u, 1, S3D_000, "double", OPS_READ),
+                     ops_arg_dat(v, 1, S3D_000, "double", OPS_READ),
+                     ops_arg_dat(w, 1, S3D_000, "double", OPS_READ),
+                     ops_arg_dat(uStar, 1, S3D_000, "double", OPS_WRITE),
+                     ops_arg_dat(vStar, 1, S3D_000, "double", OPS_WRITE),
+                     ops_arg_dat(wStar, 1, S3D_000, "double", OPS_WRITE));
+        ops_timers(&ct2, &et2);
+        ops_par_loop(Euler1STCentralDifference, "Euler1STCentralDifference", burger3D, 3, iterRange,
+                     ops_arg_dat(uStar, 1, S3D_7PT, "double", OPS_READ),
+                     ops_arg_dat(vStar, 1, S3D_7PT, "double", OPS_READ),
+                     ops_arg_dat(wStar, 1, S3D_7PT, "double", OPS_READ),
+                     ops_arg_gbl(&time, 1, "double", OPS_READ),),
+                     ops_arg_dat(u, 1, S3D_000, "double", OPS_WRITE),
+                     ops_arg_dat(v, 1, S3D_000, "double", OPS_WRITE),
+                     ops_arg_dat(w, 1, S3D_000, "double", OPS_WRITE),
+                     ops_arg_idx());
+        ops_timers(&ct3, &et3);
+        totalExplicit += et3 - et2;
+         if ((it % 100)==0)
+        {
+            //ops_printf("Calculating the residual at iteration %d for explicit scheme!\n", it);
+            ops_par_loop(calculateL2NormError, "calculateL2NormError", burger3D, 3,
+                         iterRange, ops_arg_dat(u, 1, S3D_000, "double", OPS_READ),
+                         ops_arg_dat(v, 1, S3D_000, "double", OPS_READ),
+                         ops_arg_dat(w, 1, S3D_000, "double", OPS_READ),
+                         ops_arg_gbl(&time, 1, "double", OPS_READ),
+                         ops_arg_reduce(uSqr, 1, "double", OPS_INC),
+                         ops_arg_reduce(vSqr, 1, "double", OPS_INC),
+                         ops_arg_reduce(wSqr, 1, "double", OPS_INC),
+                         ops_arg_reduce(uDiffSqr, 1, "double", OPS_INC),
+                         ops_arg_reduce(vDiffSqr, 1, "double", OPS_INC),
+                         ops_arg_reduce(wDiffSqr, 1, "double", OPS_INC),
+                         ops_arg_idx());
+            ops_reduction_result(uSqr, &uSqrSum);
+            ops_reduction_result(vSqr, &vSqrSum);
+            ops_reduction_result(wSqr, &wSqrSum);
+            ops_reduction_result(uDiffSqr, &uDiffSqrSum);
+            ops_reduction_result(vDiffSqr, &vDiffSqrSum);
+            ops_reduction_result(wDiffSqr, &wDiffSqrSum);
+            uL2Error = sqrt(uDiffSqrSum / uSqrSum);
+            vL2Error = sqrt(vDiffSqrSum / vSqrSum);
+            wL2Error = sqrt(wDiffSqrSum / wSqrSum);
+        }
+        it++;
+
+    } // End main iteration loop
+    ops_timers(&ct1, &et1);
+    //WriteDataToH5("Burger3DResExplicit.h5", burger3D, resList);
+    ops_printf("\n%d iterations are conducted to converge for explicit scheme\n",it-1);
+    ops_printf("\nTotal Wall time (s) of explicit scheme including calculation of L2 norm: %lf\n", et1 - et0);
+    ops_printf("\nTotal Wall time (s) of implementing explicit scheme: %lf\n", totalExplicit);
+    ops_printf("Error of explicit scheme at U: %.17g\n", uL2Error);
+    ops_printf("Error of explicit scheme at V: %.17g\n", vL2Error);
+    ops_printf("Error of explicit scheme at w: %.17g\n", wL2Error);
+    passed = passed && uL2Error <= convergeCriterion && vL2Error <= convergeCriterion && wL2Error <= convergeCriterion;
+
+    if (passed)
+    {
+        ops_printf("\nThis case is considered PASSED\n");
+    }
+    else
+    {
+        ops_printf("\nThis case is considered FAILED\n");
+    }
     ops_exit();
 }

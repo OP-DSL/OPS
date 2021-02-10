@@ -1,13 +1,6 @@
 #ifndef PREPROC_KERNEL_H
 #define PREPROC_KERNEL_H
 
-void CopyUVW(const ACC<double> &u, const ACC<double> &v, const ACC<double> &w,
-             ACC<double> &uStar, ACC<double> &vStar, ACC<double> &wStar) {
-    uStar(0, 0, 0) = u(0, 0, 0);
-    vStar(0, 0, 0) = v(0, 0, 0);
-    wStar(0, 0, 0) = w(0, 0, 0);
-}
-
 void preprocessX(const ACC<double> &u, const ACC<double> &v,
                  const ACC<double> &w, const double *time, ACC<double> &a,
                  ACC<double> &b, ACC<double> &c, ACC<double> &du,
@@ -21,17 +14,25 @@ void preprocessX(const ACC<double> &u, const ACC<double> &v,
     const double z{h * idx[2]};
     const double t{*time};
     if (idx[0] == 0 || idx[0] == nx - 1 || idx[1] == 0 || idx[1] == ny - 1 ||
-        idx[2] == 0 || idx[2] == nz - 1) {
+        idx[2] == 0 || idx[2] == nz - 1)
+    {
         a(0, 0, 0) = 0;
         b(0, 0, 0) = 1;
         c(0, 0, 0) = 0;
-        du(0, 0, 0) = 2 * exp(-t / Re) * sin(x) * sin(y) * cos(z) /
-                      (Re * (cos(x) * sin(y) * cos(z) + 1));
-        dv(0, 0, 0) = -2 * exp(-t / Re) * cos(x) * cos(y) * cos(z) /
-                      (Re * (cos(x) * sin(y) * cos(z) + 1));
-        dw(0, 0, 0) = 2 * exp(-t / Re) * cos(x) * sin(y) * sin(z) /
-                      (Re * (cos(x) * sin(y) * cos(z) + 1));
-    } else {
+        //Steady problem
+        du(0, 0, 0) = (-2 * (1 + y + z + y * z)) / (Re * (1 + x + y + x * y + z + x * z + y * z + x * y * z));
+        dv(0, 0, 0) = (-2 * (1 + x + z + x * z)) / (Re * (1 + x + y + x * y + z + x * z + y * z + x * y * z));
+        dw(0, 0, 0) = (-2 * (1 + x + y + x * y)) / (Re * (1 + x + y + x * y + z + x * z + y * z + x * y * z));
+        //Unsteady problem
+        // du(0, 0, 0) = 2 * exp(-t / Re) * sin(x) * sin(y) * cos(z) /
+        //               (Re * (cos(x) * sin(y) * cos(z) + 1));
+        // dv(0, 0, 0) = -2 * exp(-t / Re) * cos(x) * cos(y) * cos(z) /
+        //               (Re * (cos(x) * sin(y) * cos(z) + 1));
+        // dw(0, 0, 0) = 2 * exp(-t / Re) * cos(x) * sin(y) * sin(z) /
+        //               (Re * (cos(x) * sin(y) * cos(z) + 1));
+    }
+    else
+    {
         a(0, 0, 0) = -r1 * u(0, 0, 0) - r2;
         b(0, 0, 0) = 1 + 2 * r2;
         c(0, 0, 0) = r1 * u(0, 0, 0) - r2;
@@ -70,12 +71,17 @@ void preprocessY(const ACC<double> &u, const ACC<double> &v,
         a(0, 0, 0) = 0;
         b(0, 0, 0) = 1;
         c(0, 0, 0) = 0;
-        du(0, 0, 0) = 2 * exp(-t / Re) * sin(x) * sin(y) * cos(z) /
-                      (Re * (cos(x) * sin(y) * cos(z) + 1));
-        dv(0, 0, 0) = -2 * exp(-t / Re) * cos(x) * cos(y) * cos(z) /
-                      (Re * (cos(x) * sin(y) * cos(z) + 1));
-        dw(0, 0, 0) = 2 * exp(-t / Re) * cos(x) * sin(y) * sin(z) /
-                      (Re * (cos(x) * sin(y) * cos(z) + 1));
+        //unsteady problem
+        du(0, 0, 0) = (-2 * (1 + y + z + y * z)) / (Re * (1 + x + y + x * y + z + x * z + y * z + x * y * z));
+        dv(0, 0, 0) = (-2 * (1 + x + z + x * z)) / (Re * (1 + x + y + x * y + z + x * z + y * z + x * y * z));
+        dw(0, 0, 0) = (-2 * (1 + x + y + x * y)) / (Re * (1 + x + y + x * y + z + x * z + y * z + x * y * z));
+        // Boundary condition for unsteady  problem
+        // du(0, 0, 0) = 2 * exp(-t / Re) * sin(x) * sin(y) * cos(z) /
+        //               (Re * (cos(x) * sin(y) * cos(z) + 1));
+        // dv(0, 0, 0) = -2 * exp(-t / Re) * cos(x) * cos(y) * cos(z) /
+        //               (Re * (cos(x) * sin(y) * cos(z) + 1));
+        // dw(0, 0, 0) = 2 * exp(-t / Re) * cos(x) * sin(y) * sin(z) /
+        //               (Re * (cos(x) * sin(y) * cos(z) + 1));
     } else {
         a(0, 0, 0) = -r1 * v(0, 0, 0) - r2;
         b(0, 0, 0) = 1 + 2 * r2;
@@ -115,12 +121,17 @@ void preprocessZ(const ACC<double> &u, const ACC<double> &v,
         a(0, 0, 0) = 0;
         b(0, 0, 0) = 1;
         c(0, 0, 0) = 0;
-        du(0, 0, 0) = 2 * exp(-t / Re) * sin(x) * sin(y) * cos(z) /
-                      (Re * (cos(x) * sin(y) * cos(z) + 1));
-        dv(0, 0, 0) = -2 * exp(-t / Re) * cos(x) * cos(y) * cos(z) /
-                      (Re * (cos(x) * sin(y) * cos(z) + 1));
-        dw(0, 0, 0) = 2 * exp(-t / Re) * cos(x) * sin(y) * sin(z) /
-                      (Re * (cos(x) * sin(y) * cos(z) + 1));
+        //unsteady problem
+        // du(0, 0, 0) = 2 * exp(-t / Re) * sin(x) * sin(y) * cos(z) /
+        //               (Re * (cos(x) * sin(y) * cos(z) + 1));
+        // dv(0, 0, 0) = -2 * exp(-t / Re) * cos(x) * cos(y) * cos(z) /
+        //               (Re * (cos(x) * sin(y) * cos(z) + 1));
+        // dw(0, 0, 0) = 2 * exp(-t / Re) * cos(x) * sin(y) * sin(z) /
+        //               (Re * (cos(x) * sin(y) * cos(z) + 1));
+        // Steady problem
+        du(0, 0, 0) = (-2 * (1 + y + z + y * z)) / (Re * (1 + x + y + x * y + z + x * z + y * z + x * y * z));
+        dv(0, 0, 0) = (-2 * (1 + x + z + x * z)) / (Re * (1 + x + y + x * y + z + x * z + y * z + x * y * z));
+        dw(0, 0, 0) = (-2 * (1 + x + y + x * y)) / (Re * (1 + x + y + x * y + z + x * z + y * z + x * y * z));
     } else {
         a(0, 0, 0) = -r1 * w(0, 0, 0) - r2;
         b(0, 0, 0) = 1 + 2 * r2;
