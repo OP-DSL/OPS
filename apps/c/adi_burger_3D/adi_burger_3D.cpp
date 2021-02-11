@@ -49,6 +49,8 @@
 #include "preproc_kernel.h"
 // Kernel functions for explicit scheme
 #include "explicit_kernel.h"
+// Kernel functions for utility routines
+#include "utility_kernel.h"
 
 double Re{1};
 // Defining the computational problem domain. As a test, we use the
@@ -359,7 +361,7 @@ int main(int argc, char *argv[]) {
                      ops_arg_dat(uStar, 1, S3D_7PT, "double", OPS_READ),
                      ops_arg_dat(vStar, 1, S3D_7PT, "double", OPS_READ),
                      ops_arg_dat(wStar, 1, S3D_7PT, "double", OPS_READ),
-                     ops_arg_gbl(&time, 1, "double", OPS_READ),),
+                     ops_arg_gbl(&time, 1, "double", OPS_READ),
                      ops_arg_dat(u, 1, S3D_000, "double", OPS_WRITE),
                      ops_arg_dat(v, 1, S3D_000, "double", OPS_WRITE),
                      ops_arg_dat(w, 1, S3D_000, "double", OPS_WRITE),
