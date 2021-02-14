@@ -325,7 +325,7 @@ void ops_fetch_block_hdf5_file(ops_block block, char const *file_name) {
     H5Fclose(file_id);
     MPI_Comm_free(&OPS_MPI_HDF5_BLOCK_WORLD);
   }
-  MPI_Barrier(MPI_COMM_WORLD); // wait for every rank to finish their I/O
+  MPI_Barrier(OPS_MPI_GLOBAL); // wait for every rank to finish their I/O
 }
 
 /*******************************************************************************
@@ -340,7 +340,7 @@ void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name) {
 
   // create new communicator
   int my_rank, comm_size;
-  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
+  MPI_Comm_dup(OPS_MPI_GLOBAL, &OPS_MPI_HDF5_WORLD);
   MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
   MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
 
@@ -352,7 +352,7 @@ void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name) {
   H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_WORLD, info);
 
   if (file_exist(file_name) == 0) {
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(OPS_MPI_GLOBAL);
     if (OPS_instance::getOPSInstance()->OPS_diags > 2)
       ops_printf("File %s does not exist .... creating file\n", file_name);
     MPI_Barrier(OPS_MPI_HDF5_WORLD);
@@ -414,7 +414,7 @@ void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
 
   // create new communicator
   int my_rank, comm_size;
-  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
+  MPI_Comm_dup(OPS_MPI_GLOBAL, &OPS_MPI_HDF5_WORLD);
   MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
   MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
 
@@ -426,7 +426,7 @@ void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
   H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_WORLD, info);
 
   if (file_exist(file_name) == 0) {
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(OPS_MPI_GLOBAL);
     if (OPS_instance::getOPSInstance()->OPS_diags > 2)
       ops_printf("File %s does not exist .... creating file\n", file_name);
     MPI_Barrier(OPS_MPI_HDF5_WORLD);
@@ -626,7 +626,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     H5Pset_fapl_mpio(plist_id, OPS_MPI_HDF5_BLOCK_WORLD, info);
 
     if (file_exist(file_name) == 0) {
-      // MPI_Barrier(MPI_COMM_WORLD);
+      // MPI_Barrier(OPS_MPI_GLOBAL);
       if (OPS_instance::getOPSInstance()->OPS_diags > 2)
         ops_printf("File %s does not exist .... creating file\n", file_name);
       // MPI_Barrier(OPS_MPI_HDF5_BLOCK_WORLD);
@@ -1027,7 +1027,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       MPI_Comm_free(&OPS_MPI_HDF5_BLOCK_WORLD);
     }
   }
-  MPI_Barrier(MPI_COMM_WORLD); // wait for every rank to finish their I/O
+  MPI_Barrier(OPS_MPI_GLOBAL); // wait for every rank to finish their I/O
   return;
 }
 
@@ -1039,7 +1039,7 @@ ops_block ops_decl_block_hdf5(int dims, const char *block_name,
 
   // create new communicator
   int my_rank, comm_size;
-  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
+  MPI_Comm_dup(OPS_MPI_GLOBAL, &OPS_MPI_HDF5_WORLD);
   MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
   MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
 
@@ -1052,7 +1052,7 @@ ops_block ops_decl_block_hdf5(int dims, const char *block_name,
 
   // open given hdf5 file .. if it exists
   if (file_exist(file_name) == 0) {
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(OPS_MPI_GLOBAL);
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_block_hdf5: file " << file_name << " does not exist";
     throw ex;
@@ -1121,7 +1121,7 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
 
   // create new communicator
   int my_rank, comm_size;
-  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
+  MPI_Comm_dup(OPS_MPI_GLOBAL, &OPS_MPI_HDF5_WORLD);
   MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
   MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
 
@@ -1134,7 +1134,7 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
 
   // open given hdf5 file .. if it exists
   if (file_exist(file_name) == 0) {
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(OPS_MPI_GLOBAL);
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_stencil_hdf5: file " << file_name << " does not exist";
     throw ex;
@@ -1221,7 +1221,7 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
 ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
   // create new communicator
   int my_rank, comm_size;
-  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
+  MPI_Comm_dup(OPS_MPI_GLOBAL, &OPS_MPI_HDF5_WORLD);
   MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
   MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
 
@@ -1234,7 +1234,7 @@ ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
 
   // open given hdf5 file .. if it exists
   if (file_exist(file_name) == 0) {
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(OPS_MPI_GLOBAL);
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_halo_hdf5: file " << file_name << " does not exist";
     throw ex;
@@ -1338,7 +1338,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
 
   // create new communicator
   int my_rank, comm_size;
-  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
+  MPI_Comm_dup(OPS_MPI_GLOBAL, &OPS_MPI_HDF5_WORLD);
   MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
   MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
 
@@ -1352,7 +1352,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
 
   // open given hdf5 file .. if it exists
   if (file_exist(file_name) == 0) {
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(OPS_MPI_GLOBAL);
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_dat_hdf5: file " << file_name << " does not exist";
     throw ex;
@@ -1621,7 +1621,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
 
     // open given hdf5 file .. if it exists
     if (file_exist(dat->hdf5_file) == 0) {
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(OPS_MPI_GLOBAL);
       OPSException ex(OPS_HDF5_ERROR);
       ex << "Error: ops_read_dat_hdf5: file " << dat->hdf5_file << " does not exist";
       throw ex;
@@ -1933,7 +1933,7 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
                        char *const_data, char const *file_name) {
   // create new communicator
   int my_rank, comm_size;
-  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
+  MPI_Comm_dup(OPS_MPI_GLOBAL, &OPS_MPI_HDF5_WORLD);
   MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
   MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
 
@@ -2055,7 +2055,7 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
 
   // create new communicator
   int my_rank, comm_size;
-  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_HDF5_WORLD);
+  MPI_Comm_dup(OPS_MPI_GLOBAL, &OPS_MPI_HDF5_WORLD);
   MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
   MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
 

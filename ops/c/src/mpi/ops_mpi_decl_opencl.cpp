@@ -93,14 +93,28 @@ void _ops_init(OPS_instance *instance, const int argc, const char *const argv[],
   // drill a back door into our own safety system: provided there is only one OPS_instance,
   // we assign that to the global non-thread safe var and carry on.
   global_ops_instance = instance;
-
+  void* v;
   int flag = 0;
   MPI_Initialized(&flag);
   if (!flag) {
     MPI_Init((int *)(&argc), (char ***)&argv);
   }
 
-  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_GLOBAL);
+  //Splitting up the communication world for MPMD apps
+  MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_APPNUM, &v, &flag);
+
+  if (!flag) {
+	  MPI_Comm_dup(MPI_COMM_WORLD, &OPS_MPI_GLOBAL);
+  }
+  else {
+	  int appnum = * (int *) v;
+	  int rank;
+
+	  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	  MPI_Comm_split(MPI_COMM_WORLD,appnum, rank, &OPS_MPI_GLOBAL);
+  }
+
+
   MPI_Comm_rank(OPS_MPI_GLOBAL, &ops_my_global_rank);
   MPI_Comm_size(OPS_MPI_GLOBAL, &ops_comm_global_size);
 
