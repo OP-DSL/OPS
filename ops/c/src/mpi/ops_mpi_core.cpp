@@ -317,12 +317,12 @@ bool ops_checkpointing_filename(const char *file_name, std::string &filename_out
 {
   filename_out = file_name;
   filename_out += ".";
-  filename_out += ops_my_global_rank;
+  filename_out += std::to_string(ops_my_global_rank);
 
   filename_out2 = file_name;
   filename_out2 += ".";
-  filename_out2 += 
-       (ops_my_global_rank + OPS_instance::getOPSInstance()->OPS_ranks_per_node) % ops_comm_global_size;
+  filename_out2 += std::to_string(
+       (ops_my_global_rank + OPS_instance::getOPSInstance()->OPS_ranks_per_node) % ops_comm_global_size);
   filename_out2 += ".dup";
 
   return (OPS_instance::getOPSInstance()->OPS_enable_checkpointing > 1);
