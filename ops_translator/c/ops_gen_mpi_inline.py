@@ -347,7 +347,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
           for d in range(0,int(dims[n])):
             redlist = redlist + ' reduction(max:'+arg_list[n]+'_'+str(d)+')'
 
-    code('#pragma omp parallel for'+redlist)
+    code('#pragma omp parallel for collapse('+str(NDIM-1)+') '+redlist)
     if NDIM==3:
       FOR('n_z','0','z_size')
       FOR('n_y','0','y_size')
@@ -878,7 +878,10 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
       code((str(consts[nc]['name']).replace('"','')).strip()+' = *('+consts[nc]['type']+'*)dat;')
     else:
-      code((str(consts[nc]['name']).replace('"','')).strip()+' = ('+consts[nc]['type']+'*)dat;')
+      if consts[nc]['dim'].isdigit() and int(consts[nc]['dim']) > 0:
+        code('memcpy('+(str(consts[nc]['name']).replace('"','')).strip()+' , ('+consts[nc]['type']+'*)dat,'+consts[nc]['dim']+'*sizeof('+consts[nc]['type']+'));')
+      else:
+        code((str(consts[nc]['name']).replace('"','')).strip()+' = ('+consts[nc]['type']+'*)dat;')
     ENDIF()
     code('else')
 

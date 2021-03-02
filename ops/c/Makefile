@@ -97,6 +97,9 @@ $(OBJ)/%.o : src/opencl/%.cpp
 $(OBJ)/%_mpi.o : src/externlib/%.cpp
 	$(MPICXX) $(CXXFLAGS) -I$(INC)  $(HDF5_INC) -c $< -o $@ 
 
+$(OBJ)/%host_mpi.o : src/mpi/%host.cpp
+	$(MPICXX) $(CXXFLAGS) $(OMPFLAGS) -I$(INC)  $(HDF5_INC) -c $< -o $@ 
+
 $(OBJ)/%_mpi.o : src/mpi/%.cpp
 	$(MPICXX) $(CXXFLAGS) -I$(INC)  $(HDF5_INC) -c $< -o $@ 
 
