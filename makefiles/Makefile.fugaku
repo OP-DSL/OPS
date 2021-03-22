@@ -1,0 +1,22 @@
+CC      := fccpx
+CXX       := FCCpx
+FC := frtpx
+ifdef DEBUG
+	CCFLAGS   := -O0 -std=c99 -fPIC -DUNIX -Wall -ffloat-store -g
+	CXXFLAGS   := -O0 -fPIC -DUNIX -Wall -ffloat-store -g -std=c++11
+else
+#	CCFLAGS   := -Nclang -Ofast #-Kfast -g
+#	CXXFLAGS   := -Nclang -Ofast #-Kfast -g -std=c++11
+	CCFLAGS   := -g -O3 -Kfast,optmsg=2 -KA64FX -KSVE -KARMV8_3_A -Kassume=noshortloop -Kassume=memory_bandwidth -Kassume=notime_saving_compilation
+	CXXFLAGS   := -g -std=c++11 -O3 -Kfast -KA64FX -KSVE -KARMV8_3_A -Kassume=noshortloop -Kassume=memory_bandwidth -Kassume=notime_saving_compilation
+endif
+FFLAGS := $(CFLAGS) -ffree-form -ffree-line-length-none -J$(F_INC_MOD)
+CXXLINK := -lstdc++
+OMPFLAGS := -Kopenmp #-Kopenmp
+#OMPFLAGS := -fopenmp #-Kopenmp
+ifdef THREADED
+	THREADING_FLAGS ?= -Kopenmp
+endif
+MPICPP = mpiFCCpx
+MPICXX = mpiFCCpx
+MPICC = mpifccpx
