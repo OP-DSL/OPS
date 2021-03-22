@@ -106,6 +106,14 @@ $(APP)_mpi_inline: .generated $(OPS_FILES_GEN) $(HEADERS) Makefile $(OPS_INSTALL
 				$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) $(HDF5_INC) -L$(C_OPS_LIB)  -DOPS_MPI \
 					$(OPS_FILES_GEN) -I. MPI_inline/$(MAIN_SRC)_kernels_c.o MPI_inline/$(MAIN_SRC)_kernels.o $(HDF5_LIB_MPI) $(OPS_LIB_MPI) -o $(APP)_mpi_inline
 
+$(APP)_mpi_inline_tiled: .generated $(OPS_FILES_GEN) $(HEADERS) Makefile $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi.a
+				$(MPICC) $(CCFLAGS) $(OMPFLAGS) -DOPS_LAZY -DOPS_MPI  -I$(C_OPS_INC) $(HDF5_INC) \
+			        -I. MPI_inline/$(MAIN_SRC)_kernels_c.c -c -o MPI_inline/$(MAIN_SRC)_kernels_c.o
+				$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -DOPS_LAZY -DOPS_MPI -I$(C_OPS_INC) $(HDF5_INC) \
+				-I. MPI_inline/$(MAIN_SRC)_kernels.cpp -c -o MPI_inline/$(MAIN_SRC)_kernels.o
+				$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) $(HDF5_INC) -L$(C_OPS_LIB) -DOPS_LAZY -DOPS_MPI \
+					$(OPS_FILES_GEN) -I. MPI_inline/$(MAIN_SRC)_kernels_c.o MPI_inline/$(MAIN_SRC)_kernels.o $(HDF5_LIB_MPI) $(OPS_LIB_MPI) -o $(APP)_mpi_inline_tiled
+
 $(APP)_openacc: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_cuda.a
 	$(CC) $(OpenACCFLAGS) $(CCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) $(CUDA_INC) \
 	-I. OpenACC/$(MAIN_SRC)_kernels_c.c -c -o OpenACC/$(MAIN_SRC)_kernels_c.o

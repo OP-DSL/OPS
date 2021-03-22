@@ -533,7 +533,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     code('#endif')
     code('')
     comm(' host stub function')
-
+    code('#ifndef OPS_LAZY')
     code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
     text = ''
     for n in range (0, nargs):
@@ -547,6 +547,18 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
          text = text +'\n'
     code(text);
     config.depth = 2
+    code('#else')
+    code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
+    config.depth = 2
+    #code('char const *name = "'+name+'";')
+    code('ops_block block = desc->block;')
+    code('int dim = desc->dim;')
+    code('int *range = desc->range;')
+
+    for n in range (0, nargs):
+      code('ops_arg arg'+str(n)+' = desc->args['+str(n)+'];')
+
+    code('#endif')
 
     code('');
 
@@ -561,7 +573,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
         text = text +'\n                    '
     code(text);
     code('')
-    code('#ifdef CHECKPOINTING')
+    code('#if defined(CHECKPOINTING) && !defined(OPS_LAZY)')
     code('if (!ops_checkpointing_before(args,'+str(nargs)+',range,'+str(nk)+')) return;')
     code('#endif')
     code('')
@@ -577,14 +589,29 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     code('int arg_idx['+str(NDIM)+'];')
     code('')
 
-    code('#ifdef OPS_MPI')
-    code('if (compute_ranges(args, '+str(nargs)+',block, range, start, end, arg_idx) < 0) return;')
-    code('#else')
+    code('#if defined(OPS_LAZY) || !defined(OPS_MPI)')
     FOR('n','0',str(NDIM))
     code('start[n] = range[2*n];end[n] = range[2*n+1];')
-    code('arg_idx[n] = start[n];')
     ENDFOR()
+    code('#else')
+    code('if (compute_ranges(args, '+str(nargs)+',block, range, start, end, arg_idx) < 0) return;')
     code('#endif')
+
+    code('')
+    if arg_idx!=-1 or MULTI_GRID:
+      code('#if defined(OPS_MPI)')
+      code('#if defined(OPS_LAZY)')
+      code('sub_block_list sb = OPS_sub_block_list[block->index];')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = sb->decomp_disp['+str(n)+'] + start['+str(n)+'];')
+#      code('#else')
+#      for n in range (0,NDIM):
+#        code('arg_idx['+str(n)+'] -= start['+str(n)+'];')
+      code('#endif')
+      code('#else //OPS_MPI')
+      for n in range (0,NDIM):
+        code('arg_idx['+str(n)+'] = start['+str(n)+'];')
+      code('#endif //OPS_MPI')
 
     code('')
     code('int x_size = MAX(0,end[0]-start[0]);')
@@ -732,9 +759,12 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
       code('')
     code('')
 
-    code('')
+    code('#ifndef OPS_LAZY')
+    comm('Halo Exchanges')
     code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
     code('ops_halo_exchanges(args,'+str(nargs)+',range);')
+    code('ops_H_D_exchanges_host(args, '+str(nargs)+');')
+    code('#endif')
     code('')
     IF('block->instance->OPS_diags > 1')
     code('ops_timers_core(&c1,&t1);')
@@ -790,10 +820,12 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     #   code('ops_timers_core(&c1,&t1);')
     #   code('block->instance->OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
 
+    code('#ifndef OPS_LAZY')
     code('ops_set_dirtybit_host(args, '+str(nargs)+');')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
         code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
+    code('#endif')
 
     code('')
     comm('Update kernel record')
@@ -805,6 +837,60 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     config.depth = config.depth - 2
     code('}')
 
+    code('')
+    code('#ifdef OPS_LAZY')
+    code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
+    text = ''
+    for n in range (0, nargs):
+
+      text = text +' ops_arg arg'+str(n)
+      if nargs != 1 and n != nargs-1:
+        text = text +','
+      else:
+        text = text +') {'
+      if n%n_per_line == 3 and n != nargs-1:
+         text = text +'\n'
+    code(text);
+    config.depth = 2
+    code('ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));')
+    #code('desc->name = (char *)malloc(strlen(name)+1);')
+    #code('strcpy(desc->name, name);')
+    code('desc->name = name;')
+    code('desc->block = block;')
+    code('desc->dim = dim;')
+    code('desc->device = 0;')
+    code('desc->index = '+str(nk)+';')
+    code('desc->hash = 5381;')
+    code('desc->hash = ((desc->hash << 5) + desc->hash) + '+str(nk)+';')
+    FOR('i','0',str(2*NDIM))
+    code('desc->range[i] = range[i];')
+    code('desc->orig_range[i] = range[i];')
+    code('desc->hash = ((desc->hash << 5) + desc->hash) + range[i];')
+    ENDFOR()
+
+    code('desc->nargs = '+str(nargs)+';')
+    code('desc->args = (ops_arg*)ops_malloc('+str(nargs)+'*sizeof(ops_arg));')
+    declared = 0
+    for n in range (0, nargs):
+      code('desc->args['+str(n)+'] = arg'+str(n)+';')
+      if arg_typ[n] == 'ops_arg_dat':
+        code('desc->hash = ((desc->hash << 5) + desc->hash) + arg'+str(n)+'.dat->index;')
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
+        if declared == 0:
+          code('char *tmp = (char*)ops_malloc('+dims[n]+'*sizeof('+typs[n]+'));')
+          declared = 1
+        else:
+          code('tmp = (char*)ops_malloc('+dims[n]+'*sizeof('+typs[n]+'));')
+        code('memcpy(tmp, arg'+str(n)+'.data,'+dims[n]+'*sizeof('+typs[n]+'));')
+        code('desc->args['+str(n)+'].data = tmp;')
+    code('desc->function = ops_par_loop_'+name+'_execute;')
+    IF('block->instance->OPS_diags > 1')
+    code('ops_timing_realloc(block->instance,'+str(nk)+',"'+name+'");')
+    ENDIF()
+    code('ops_enqueue_kernel(desc);')
+    config.depth = 0
+    code('}')
+    code('#endif')
 
     ##########################################################################
     #  output individual kernel file
