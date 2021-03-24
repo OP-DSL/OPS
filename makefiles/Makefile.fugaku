@@ -1,5 +1,5 @@
-CC      := fccpx
-CXX       := FCCpx
+CC      := fcc
+CXX       := FCC
 FC := frtpx
 ifdef DEBUG
 	CCFLAGS   := -O0 -std=c99 -fPIC -DUNIX -Wall -ffloat-store -g
@@ -7,8 +7,8 @@ ifdef DEBUG
 else
 #	CCFLAGS   := -Nclang -Ofast #-Kfast -g
 #	CXXFLAGS   := -Nclang -Ofast #-Kfast -g -std=c++11
-	CCFLAGS   := -g -O3 -Kfast,optmsg=2 -KA64FX -KSVE -KARMV8_3_A -Kassume=noshortloop -Kassume=memory_bandwidth -Kassume=notime_saving_compilation
-	CXXFLAGS   := -g -std=c++11 -O3 -Kfast -KA64FX -KSVE -KARMV8_3_A -Kassume=noshortloop -Kassume=memory_bandwidth -Kassume=notime_saving_compilation
+	CCFLAGS   := -g -O3 -Kfast,optmsg=2 -KA64FX -KSVE -KARMV8_3_A -Kassume=noshortloop -Kassume=memory_bandwidth -Kassume=notime_saving_compilation -Kzfill=100 -Kprefetch_sequential=soft -Kprefetch_line=8 -Kprefetch_line_L2=16
+	CXXFLAGS   := -g -std=c++11 -O3 -Kfast -KA64FX -KSVE -KARMV8_3_A -Kassume=noshortloop -Kassume=memory_bandwidth -Kassume=notime_saving_compilation -Kzfill=100 -Kprefetch_sequential=soft -Kprefetch_line=8 -Kprefetch_line_L2=16
 endif
 FFLAGS := $(CFLAGS) -ffree-form -ffree-line-length-none -J$(F_INC_MOD)
 CXXLINK := -lstdc++
@@ -17,6 +17,6 @@ OMPFLAGS := -Kopenmp #-Kopenmp
 ifdef THREADED
 	THREADING_FLAGS ?= -Kopenmp
 endif
-MPICPP = mpiFCCpx
-MPICXX = mpiFCCpx
-MPICC = mpifccpx
+MPICPP = mpiFCC
+MPICXX = mpiFCC
+MPICC = mpifcc

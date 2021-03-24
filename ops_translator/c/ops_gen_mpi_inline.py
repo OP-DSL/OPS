@@ -305,7 +305,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
         code(pre+typs[n]+' * restrict '+arg_list[n]+'_g,')
       else:
         if arg_typ[n] == 'ops_arg_dat':
-          code(typs[n]+' * restrict '+arg_list[n]+'_p,')
+          code(pre + typs[n]+' * restrict '+arg_list[n]+'_p,')
         else:
           code(pre+typs[n]+' * restrict '+arg_list[n]+',')
     if MULTI_GRID:
