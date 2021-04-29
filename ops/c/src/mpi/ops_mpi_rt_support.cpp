@@ -1305,7 +1305,9 @@ void ops_force_halo_exchange(ops_dat dat, ops_stencil stencil) {
 }
 
 int ops_dat_get_local_npartitions(ops_dat dat) {
-  return 1;
+  if (OPS_sub_block_list[dat->block->index]->owned == 1)
+    return 1;
+  else return 0;
 }
 
 void ops_dat_get_raw_metadata(ops_dat dat, int part, int *disp, int *size, int *stride, int *d_m, int *d_p) {
