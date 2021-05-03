@@ -80,7 +80,10 @@ if (CXXFLAG)
 else ()
     message("Extra C++ compiler options by using CXXFLAG, e.g., -DCXXFLAG=\"-ffloat-store\" for GNU!")
 endif ()
-
+#include(GenerateExportHeader)
+include(CMakePackageConfigHelpers)
+set(VERSION latest)
+set(ConfigPackageLocation ${CMAKE_INSTALL_PREFIX}/lib/cmake)
 # if (CFLAG)
 #     add_compile_options(${CFLAG})
 # endif ()
@@ -179,6 +182,7 @@ add_subdirectory(ops_translator)
 add_subdirectory(ops/c)
 # Configure the installation of "include"
 file(GLOB_RECURSE INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/ops/c/include/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/ops/fortran/include/*.inc")
+
 install(FILES ${INCLUDE} DESTINATION include)
 #prepare the script for setting OPS environment variable variables
 if (UNIX)
@@ -208,7 +212,12 @@ if (OPS_TEST)
         message(WARNING "GPU tests are disabled! Please use -DGPU_NUMBER to specify!")
     endif()
 endif()
-
+install(
+  FILES
+  "${CMAKE_BINARY_DIR}/OPSConfig.cmake"
+  DESTINATION
+    ${ConfigPackageLocation}
+)
 if(BUILD_OPS_APPS)
     add_subdirectory(apps/c)
 #     if(BUILD_OPS_FORTRAN)
