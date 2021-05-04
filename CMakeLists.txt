@@ -82,6 +82,7 @@ else ()
 endif ()
 #include(GenerateExportHeader)
 include(CMakePackageConfigHelpers)
+
 set(VERSION latest)
 set(ConfigPackageLocation ${CMAKE_INSTALL_PREFIX}/lib/cmake)
 # if (CFLAG)
@@ -138,7 +139,6 @@ endif()
 if (LIBTRID_PATH)
     include_directories(${LIBTRID_PATH}/include)
 endif ()
-
 # option(BUILD_OPS_FORTRAN "Build FORTRAN version of OPS" OFF)
 option(BUILD_OPS_APPS "Build Sample OPS applications" OFF)
 

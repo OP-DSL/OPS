@@ -132,8 +132,12 @@ if (LIBTRID_PATH)
         endif ()
     endif ()
 endif ()
-
+# if (LIBTRID_PATH)
+#     set(LIBTRID ${LIBTRID_PATH})
+# else()
+#     set(LIBTRID "NONE")
+# endif ()
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
-"${CMAKE_BINARY_DIR}/OPSConfig.cmake"
-  INSTALL_DESTINATION  ${ConfigPackageLocation}
+    "${CMAKE_BINARY_DIR}/OPSConfig.cmake"
+    INSTALL_DESTINATION  ${ConfigPackageLocation}
 )
