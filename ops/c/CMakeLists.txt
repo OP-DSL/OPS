@@ -12,7 +12,7 @@ macro(InstallTarget Name Pos)
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION bin
-    INCLUDES DESTINATION include}
+    INCLUDES DESTINATION include
   )
   install(EXPORT ops_${Name}_targets
     FILE ops_${Name}_targets.cmake
