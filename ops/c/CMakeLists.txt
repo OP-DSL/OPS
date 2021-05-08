@@ -27,19 +27,11 @@ add_library(ops_seq ${CORE} ${EXTERN} ${SEQ} )
 
 target_link_libraries(ops_seq PRIVATE)
 InstallTarget(seq ${ConfigPackageLocation})
-# install(TARGETS ops_seq EXPORT ops_seq_targets DESTINATION lib)
-# install(EXPORT ops_seq_targets
-#   FILE ops_seq_targets.cmake
-#   NAMESPACE
-#     OPS::
-#   DESTINATION ${ConfigPackageLocation}
-# )
-
 
 # hdf5_seq
 if (HDF5_FOUND)
     add_library(ops_hdf5_seq ${CMAKE_CURRENT_SOURCE_DIR}/src/externlib/ops_hdf5.cpp)
-    target_link_libraries(ops_hdf5_seq PRIVATE ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
+    target_link_libraries(ops_hdf5_seq PRIVATE hdf5::hdf5 hdf5::hdf5_hl MPI::MPI_CXX)
     InstallTarget(hdf5_seq ${ConfigPackageLocation})
 endif ()
 # CUDA seq
@@ -54,6 +46,7 @@ if (OpenCL_FOUND)
     file(GLOB_RECURSE OPENCL "${CMAKE_CURRENT_SOURCE_DIR}/src/opencl/*")
     add_library(ops_opencl ${CORE} ${EXTERN} ${OPENCL})
     target_link_libraries(ops_opencl PRIVATE ${OpenCL_LIBRARIES})
+    target_include_directories(ops_opencl PRIVATE ${OpenCL_INCLUDE_DIRS})
     InstallTarget(opencl ${ConfigPackageLocation})
 endif ()
 
@@ -72,7 +65,7 @@ if (MPI_FOUND)
     # HDF5_MPI
     if (HDF5_FOUND)
         add_library(ops_hdf5_mpi ${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/ops_mpi_hdf5.cpp)
-        target_link_libraries(ops_hdf5_mpi PRIVATE MPI::MPI_CXX ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
+        target_link_libraries(ops_hdf5_mpi PRIVATE hdf5::hdf5 hdf5::hdf5_hl MPI::MPI_CXX)
         InstallTarget(hdf5_mpi ${ConfigPackageLocation})
     endif ()
     #MPI_CUDA
@@ -95,7 +88,8 @@ if (MPI_FOUND)
         list(FILTER MPIOPENCL EXCLUDE REGEX "decl.cpp")
         list(FILTER MPIOPENCL EXCLUDE REGEX "hip")
         add_library(ops_mpi_opencl ${MPICORE} ${EXTERN} ${MPIOPENCL} "${CMAKE_CURRENT_SOURCE_DIR}/src/opencl/ops_opencl_rt_support.cpp")
-        target_link_libraries(ops_mpi_opencl PRIVATE ${OpenCL_LIBRARIES})
+        target_include_directories(ops_mpi_opencl PRIVATE ${OpenCL_INCLUDE_DIRS})
+        target_link_libraries(ops_mpi_opencl PRIVATE ${OpenCL_LIBRARIES} MPI::MPI_CXX )
         InstallTarget(mpi_opencl ${ConfigPackageLocation})
     endif()
 endif ()
@@ -111,6 +105,7 @@ if (LIBTRID_PATH)
     if (CUDAToolkit_FOUND)
         add_library(ops_trid_cuda ${CMAKE_CURRENT_SOURCE_DIR}/src/tridiag/ops_tridiag_cuda.cpp)
         target_include_directories(ops_trid_cuda PRIVATE ${LIBTRID_PATH}/include)
+        target_link_libraries(ops_trid_cuda PRIVATE CUDA::cudart_static)
         InstallTarget(trid_cuda ${ConfigPackageLocation})
     endif ()
 
@@ -118,6 +113,7 @@ if (LIBTRID_PATH)
         # MPI Tridiagonal Library
         add_library(ops_trid_mpi ${CMAKE_CURRENT_SOURCE_DIR}/src/tridiag/ops_tridiag_mpi.cpp)
         target_include_directories(ops_trid_mpi PRIVATE ${LIBTRID_PATH}/include)
+        target_link_libraries(ops_trid_mpi PRIVATE MPI::MPI_CXX )
         InstallTarget(trid_mpi ${ConfigPackageLocation})
 
         if (CUDAToolkit_FOUND)
@@ -128,6 +124,7 @@ if (LIBTRID_PATH)
                 target_include_directories(ops_trid_mpi_cuda PRIVATE ${NCCL_INCLUDE_DIR})
             endif ()
             target_include_directories(ops_trid_mpi_cuda PRIVATE ${LIBTRID_PATH}/include)
+            target_link_libraries(ops_trid_mpi_cuda PRIVATE CUDA::cudart_static MPI::MPI_CXX )
             InstallTarget(trid_mpi_cuda ${ConfigPackageLocation})
         endif ()
     endif ()
