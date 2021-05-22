@@ -703,10 +703,10 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
           starttext = 'start_'+str(n)
         else:
           starttext = 'start'
-        code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + (block->instance->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) * '+starttext+'[0] * args['+str(n)+'].stencil->stride[0];')
+        code('long long int base'+str(n)+' = args['+str(n)+'].dat->base_offset + (long long int)(block->instance->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) * '+starttext+'[0] * args['+str(n)+'].stencil->stride[0];')
 
         for d in range (1, NDIM):
-          line = 'base'+str(n)+' = base'+str(n)+'+ (block->instance->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) *\n'
+          line = 'base'+str(n)+' = base'+str(n)+'+ (long long int)(block->instance->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size) *\n'
           for d2 in range (0,d):
             line = line + config.depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
           code(line[:-1])

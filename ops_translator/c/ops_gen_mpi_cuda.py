@@ -725,7 +725,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int dat'+str(n)+' = (block->instance->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size);')
+        code('long long int dat'+str(n)+' = (block->instance->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size);')
 
     code('')
     code('char *p_a['+str(nargs)+'];')
@@ -768,7 +768,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
           starttext = 'start_'+str(n)
         else:
           starttext = 'start'
-        code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset + ')
+        code('long long int base'+str(n)+' = args['+str(n)+'].dat->base_offset + ')
         code('         dat'+str(n)+' * 1 * ('+starttext+'[0] * args['+str(n)+'].stencil->stride[0]);')
         for d in range (1, NDIM):
           line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
