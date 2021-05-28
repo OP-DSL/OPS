@@ -332,7 +332,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
   /* Need to strip out the padding from the x-dimension*/
   g_size[0] = g_size[0] - dat->x_pad;
-  int t_size = 1;
+  hsize_t t_size = 1;
   for (int d = 0; d < block->dims; d++)
     t_size *= g_size[d];
   char *data = (char *)ops_malloc(t_size * dat->elem_size);
@@ -1060,7 +1060,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   }
 
   // read in the actual data
-  int t_size = 1;
+  hsize_t t_size = 1;
   for (int d = 0; d < block->dims; d++)
     t_size *= read_size[d] - read_d_m[d] + read_d_p[d];
   char *data = (char *)ops_malloc(t_size * dat_dim * type_size);
@@ -1162,7 +1162,7 @@ extern "C" char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
 
   // fetch data onto the host ( if needed ) based on the backend
   ops_get_data(dat);
-  int t_size = 1;
+  hsize_t t_size = 1;
   for (int d = 0; d < dat->block->dims; d++)
     t_size *= dat->size[d];
   u_dat = (char *)ops_malloc(t_size * dat->elem_size);

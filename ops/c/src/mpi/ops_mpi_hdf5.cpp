@@ -562,7 +562,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       // printf("dat->d_p[%d] = %d ",d,g_d_p[d]);
     }
 
-    int t_size = 1;
+    hsize_t t_size = 1;
     for (int d = 0; d < dat->block->dims; d++)
       t_size *= size[d];
     // printf("t_size = %d ",t_size);
@@ -1580,7 +1580,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
       // printf("dat->d_p[%d] = %d ",d,g_d_p[d]);
     }
 
-    int t_size = 1;
+    hsize_t t_size = 1;
     for (int d = 0; d < dat->block->dims; d++)
       t_size *= size[d];
     char *data = (char *)ops_malloc(t_size * dat->elem_size);
@@ -1805,7 +1805,7 @@ extern "C" char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
       // dimensions
     }
 
-    int t_size = 1;
+    hsize_t t_size = 1;
     for (int d = 0; d < dat->block->dims; d++)
       t_size *= size[d];
     u_dat = (char *)ops_malloc(t_size * dat->elem_size);
