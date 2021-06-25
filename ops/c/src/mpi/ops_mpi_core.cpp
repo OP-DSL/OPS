@@ -138,7 +138,7 @@ int multi_d0, multi_d1, multi_d2, multi_d3, multi_d4, multi_d5, multi_d6,
 #endif /*__MULTIDIMS__*/
 
 void ops_timers(double *cpu, double *et) {
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(OPS_MPI_GLOBAL);
   ops_timers_core(cpu, et);
 }
 
@@ -212,8 +212,8 @@ void ops_compute_moment(double t, double *first, double *second) {
   int comm_size;
   times[0] = t;
   times[1] = t * t;
-  MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
-  MPI_Reduce(times, times_reduced, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Comm_size(OPS_MPI_GLOBAL, &comm_size);
+  MPI_Reduce(times, times_reduced, 2, MPI_DOUBLE, MPI_SUM, 0, OPS_MPI_GLOBAL);
 
   *first = times_reduced[0] / (double)comm_size;
   *second = times_reduced[1] / (double)comm_size;
@@ -221,7 +221,7 @@ void ops_compute_moment(double t, double *first, double *second) {
 
 int _ops_is_root(OPS_instance *instance) {
   int my_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+  MPI_Comm_rank(OPS_MPI_GLOBAL, &my_rank);
   return (my_rank == MPI_ROOT);
 }
 
@@ -233,13 +233,13 @@ int ops_is_root() {
 
 int ops_get_proc() {
   int my_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+  MPI_Comm_rank(OPS_MPI_GLOBAL, &my_rank);
   return my_rank;
 }
 
 int ops_num_procs() {
   int size;
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  MPI_Comm_size(OPS_MPI_GLOBAL, &size);
   return size;
 }
 

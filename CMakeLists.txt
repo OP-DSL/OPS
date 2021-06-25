@@ -44,7 +44,7 @@ elseif (${CMAKE_C_COMPILER_ID} STREQUAL Intel)
     set(CMAKE_C_FLAGS_RELEASE "-O3")
     set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
 else ()
-    message(FATAL_ERROR "We can't recongnise the C compiler!")
+    message(WARNING "There is no default flag for the chosen C compiler! Please use -DCFLAG=XXX to supply!")
 endif ()
 
 # C++
@@ -66,7 +66,7 @@ elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
     set(CMAKE_CXX_FLAGS_DEBUG " -O0 -g -DOPS_DEBUG ")
 else ()
-    message(FATAL_ERROR "We can't recongnise the C++ compiler!")
+    message(WARNING "There is no default flag for the chosen C++ compiler! Please use -DCXXFLAG=XXX to supply!")
 endif ()
 
 if (CFLAG)
@@ -80,7 +80,11 @@ if (CXXFLAG)
 else ()
     message("Extra C++ compiler options by using CXXFLAG, e.g., -DCXXFLAG=\"-ffloat-store\" for GNU!")
 endif ()
+#include(GenerateExportHeader)
+include(CMakePackageConfigHelpers)
 
+set(VERSION latest)
+set(ConfigPackageLocation ${CMAKE_INSTALL_PREFIX}/lib/cmake)
 # if (CFLAG)
 #     add_compile_options(${CFLAG})
 # endif ()
@@ -99,29 +103,26 @@ if (NOT Python2_FOUND)
   message (FATAL_ERROR "We cannot find Python2 and the Python translator needs Python2! Please use -DPython2_EXECUTABLE to specify the path.")
 endif ()
 # Configure the "include" dir for compiling
-if (HDF5_FOUND)
-    include_directories(${HDF5_INCLUDE_DIRS})
-else()
+if (NOT HDF5_FOUND)
     message (WARNING "We cannot find the parallel HDF5 library. The HDF5 IO routines won't work! Please use -DHDF5_ROOT to specify the path!")
 endif ()
-if (MPI_FOUND)
-    include_directories(${MPI_C_INCLUDE_DIRS})
-    include_directories(${MPI_CXX_INCLUDE_DIRS})
-else()
+if (NOT MPI_FOUND)
     message (WARNING "We cannot find a MPI environment! The MPI codes won't compile!")
 endif ()
 
 if (CUDAToolkit_FOUND)
-    include_directories(${CUDAToolkit_INCLUDE_DIRS})
     set(CMAKE_CUDA_COMPILER ${CUDAToolkit_NVCC_EXECUTABLE})
+    if (GPU_ARCH)
+        set(CMAKE_CUDA_ARCHITECTURES 70  CACHE STRING "CUDA architectures")
+    else()
+        message(WARNING "Please the GPU architecture using -DGPU_ARCH=XXX!")
+    endif()
     enable_language(CUDA)
 else()
     message (WARNING "We cannot find a CUDA kit! The CUDA codes won't compile!")
 endif ()
 
-if (OpenCL_FOUND)
-    include_directories(${OpenCL_INCLUDE_DIRS})
-else()
+if (NOT OpenCL_FOUND)
     message (WARNING "We cannot find a OpenCL kit! The OpenCL codes won't compile!")
 endif ()
 
@@ -135,7 +136,6 @@ endif()
 if (LIBTRID_PATH)
     include_directories(${LIBTRID_PATH}/include)
 endif ()
-
 # option(BUILD_OPS_FORTRAN "Build FORTRAN version of OPS" OFF)
 option(BUILD_OPS_APPS "Build Sample OPS applications" OFF)
 
@@ -179,6 +179,7 @@ add_subdirectory(ops_translator)
 add_subdirectory(ops/c)
 # Configure the installation of "include"
 file(GLOB_RECURSE INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/ops/c/include/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/ops/fortran/include/*.inc")
+
 install(FILES ${INCLUDE} DESTINATION include)
 #prepare the script for setting OPS environment variable variables
 if (UNIX)
@@ -208,7 +209,12 @@ if (OPS_TEST)
         message(WARNING "GPU tests are disabled! Please use -DGPU_NUMBER to specify!")
     endif()
 endif()
-
+install(
+  FILES
+  "${CMAKE_BINARY_DIR}/OPSConfig.cmake"
+  DESTINATION
+    ${ConfigPackageLocation}
+)
 if(BUILD_OPS_APPS)
     add_subdirectory(apps/c)
 #     if(BUILD_OPS_FORTRAN)

@@ -483,7 +483,7 @@ void ops_calc_disp_size_for_dat_and_proc(ops_dat dat, int d, int proc, int *proc
 void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
                          int *proc_sizes, int *proc_dimsplit) {
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(OPS_MPI_GLOBAL, &rank);
   for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_halo_index; i++) {
     ops_halo halo = OPS_instance::getOPSInstance()->OPS_halo_list[i];
     OPS_mpi_halo_list[i].halo = halo;

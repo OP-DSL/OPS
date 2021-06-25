@@ -113,7 +113,7 @@ void rms(char *name, FP *array, int nx_pad, int nx, int ny, int nz) {
     }
   }
   double global_sum = 0.0;
-  MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, OPS_MPI_GLOBAL);
   ops_printf("intermediate %s sum = %lg\n", name, global_sum);
 
 }
