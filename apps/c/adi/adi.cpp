@@ -338,10 +338,6 @@ int main(int argc, char *argv[]) {
   printf("\nLocal dimensions: %d x %d x %d\n", h_u->size[0], h_u->size[1], h_u->size[2]);
   ops_diagnostic_output();
 
-  // initialize Tridiagonal Library
-  ops_initTridMultiDimBatchSolve(3 /*dimension*/,
-                                 size /*size in each dimension*/);
-
   /**-------- Initialize-------**/
   int iter_range[] = {0, nx, 0, ny, 0, nz};
   ops_par_loop(init_kernel, "init_kernel", heat3D, 3, iter_range,

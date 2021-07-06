@@ -154,9 +154,6 @@ int main(int argc, char *argv[]) {
            u->size[0], u->size[1], u->size[2]);
     ops_diagnostic_output();
 
-    // initialize Tridiagonal Library
-    ops_initTridMultiDimBatchSolve(3, size);
-
     /**-------- Initialize-------**/
 
     ops_par_loop(initKernel, "initKernel", burger3D, 3, iterRange,
