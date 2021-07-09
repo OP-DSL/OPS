@@ -41,6 +41,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <iostream>
+#include <cstring>
 
 #define OPS_NOT_IMPLEMENTED 1
 #define OPS_RUNTIME_CONFIGURATION_ERROR 2

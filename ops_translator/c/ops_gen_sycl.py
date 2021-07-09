@@ -347,7 +347,7 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
           code('int base'+str(n)+' = args['+str(n)+'].dat->base_offset/sizeof('+typs[n]+');')
-          code('cl::sycl::buffer<'+typs[n]+',1> '+clean_type(arg_list[n])+'_p = static_cast<cl::sycl::buffer<char,1> *>((void*)args['+str(n)+'].data_d)->reinterpret<'+typs[n]+',1>(cl::sycl::range<1>(args['+str(n)+'].dat->mem/sizeof('+typs[n]+')));')
+          code('cl::sycl::buffer<'+typs[n]+',1> '+clean_type(arg_list[n])+'_p = reinterpret_cast<cl::sycl::buffer<char,1> *>((void*)args['+str(n)+'].data_d)->reinterpret<'+typs[n]+',1>(cl::sycl::range<1>(args['+str(n)+'].dat->mem/sizeof('+typs[n]+')));')
           #code(typs[n]+' * __restrict__ '+clean_type(arg_list[n])+'_p = ('+typs[n]+' *)(args['+str(n)+'].data + base'+str(n)+');')
           if restrict[n] == 1 or prolong[n] == 1:
             code('#ifdef OPS_MPI')
@@ -458,11 +458,11 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
     if GBL_READ == True and GBL_READ_MDIM == True:
       code('mvConstArraysToDevice(block->instance,consts_bytes);')
-      code('cl::sycl::buffer<char,1> *consts = static_cast<cl::sycl::buffer<char,1> *>((void*)block->instance->OPS_consts_d);')
+      code('cl::sycl::buffer<char,1> *consts = reinterpret_cast<cl::sycl::buffer<char,1> *>((void*)block->instance->OPS_consts_d);')
 
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('mvReductArraysToDevice(block->instance,reduct_bytes);')
-      code('cl::sycl::buffer<char,1> *reduct = static_cast<cl::sycl::buffer<char,1> *>((void*)block->instance->OPS_reduct_d);')
+      code('cl::sycl::buffer<char,1> *reduct = reinterpret_cast<cl::sycl::buffer<char,1> *>((void*)block->instance->OPS_reduct_d);')
 
     code('')
 

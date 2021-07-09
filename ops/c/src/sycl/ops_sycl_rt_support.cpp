@@ -93,7 +93,7 @@ void *ops_sycl_register_const(void *old_p, void *new_p) {
   else {
     for (size_t i = 0; i < OPS_instance::getOPSInstance()->sycl_instance->ops_sycl_consts.size(); i++)
       if (OPS_instance::getOPSInstance()->sycl_instance->ops_sycl_consts[i]==old_p) {
-        delete static_cast<cl::sycl::buffer<char,1>*>(OPS_instance::getOPSInstance()->sycl_instance->ops_sycl_consts[i]);
+        delete reinterpret_cast<cl::sycl::buffer<char,1>*>(OPS_instance::getOPSInstance()->sycl_instance->ops_sycl_consts[i]);
         OPS_instance::getOPSInstance()->sycl_instance->ops_sycl_consts[i]=new_p;
       }
   }
@@ -112,7 +112,7 @@ void ops_sycl_memcpyHostToDevice(OPS_instance *instance,
   });
   instance->sycl_instance->queue->wait();
 #else
-  auto HostAccessor = buffer.get_access<cl::sycl::access::mode::write>();
+  auto HostAccessor = buffer.get_host_access(cl::sycl::write_only);
   for (size_t i = 0; i < bytes; i++)
     HostAccessor[i] = data_h[i];
 #endif
@@ -130,7 +130,7 @@ void ops_sycl_memcpyDeviceToHost(OPS_instance *instance,
   });
   instance->sycl_instance->queue->wait();
 #else
-  auto HostAccessor = buffer.get_access<cl::sycl::access::mode::read>();
+  auto HostAccessor = buffer.get_host_access(cl::sycl::read_only);
   for (size_t i = 0; i < bytes; i++)
     data_h[i] = HostAccessor[i];
 #endif
@@ -140,7 +140,7 @@ void ops_cpHostToDevice(OPS_instance *instance, void **data_d, void **data_h,
                         size_t size) {
   if (!instance->OPS_hybrid_gpu) return;
   if (*data_d != nullptr) {
-    delete static_cast<cl::sycl::buffer<char, 1> *>(*data_d);
+    delete reinterpret_cast<cl::sycl::buffer<char, 1> *>(*data_d);
   }
   auto *buffer = new cl::sycl::buffer<char, 1>(cl::sycl::range<1>(size));
   *data_d = (void *)buffer;
@@ -151,14 +151,14 @@ void ops_cpHostToDevice(OPS_instance *instance, void **data_d, void **data_h,
 void ops_download_dat(ops_dat dat) {
   ops_sycl_memcpyDeviceToHost(
       dat->block->instance,
-      static_cast<cl::sycl::buffer<char, 1> *>((void*)dat->data_d), dat->data,
+      reinterpret_cast<cl::sycl::buffer<char, 1> *>((void*)dat->data_d), dat->data,
       dat->mem);
 }
 
 void ops_upload_dat(ops_dat dat) {
   ops_sycl_memcpyHostToDevice(
       dat->block->instance,
-      static_cast<cl::sycl::buffer<char, 1> *>((void*)dat->data_d), dat->data,
+      reinterpret_cast<cl::sycl::buffer<char, 1> *>((void*)dat->data_d), dat->data,
       dat->mem);
 }
 
@@ -244,7 +244,7 @@ void reallocConstArrays(OPS_instance *instance, int consts_bytes) {
     if (instance->OPS_consts_bytes > 0) {
       ops_free(instance->OPS_consts_h);
       ops_free(instance->OPS_gbl_prev);
-      delete static_cast<cl::sycl::buffer<char, 1> *>((void*)instance->OPS_consts_d);
+      delete reinterpret_cast<cl::sycl::buffer<char, 1> *>((void*)instance->OPS_consts_d);
     }
     instance->OPS_consts_bytes =
         4 * consts_bytes; // 4 is arbitrary, more than needed
@@ -259,13 +259,15 @@ void reallocReductArrays(OPS_instance *instance, int reduct_bytes) {
   if (reduct_bytes > instance->OPS_reduct_bytes) {
     if (instance->OPS_reduct_bytes > 0) {
       ops_free(instance->OPS_reduct_h);
-      delete static_cast<cl::sycl::buffer<char, 1> *>((void*)instance->OPS_reduct_d);
+      delete reinterpret_cast<cl::sycl::buffer<char, 1> *>(
+          (void *)instance->OPS_reduct_d);
     }
     instance->OPS_reduct_bytes =
         4 * reduct_bytes; // 4 is arbitrary, more than needed
     instance->OPS_reduct_h = (char *)ops_malloc(instance->OPS_reduct_bytes);
-    instance->OPS_reduct_d = (char *)new cl::sycl::buffer<char, 1>(
-        cl::sycl::range<1>(instance->OPS_reduct_bytes));
+    instance->OPS_reduct_d =
+        reinterpret_cast<char *>(new cl::sycl::buffer<char, 1>(
+            cl::sycl::range<1>(instance->OPS_reduct_bytes)));
   }
 }
 
@@ -282,7 +284,7 @@ void mvConstArraysToDevice(OPS_instance *instance, int consts_bytes) {
   if (instance->OPS_gbl_changed) {
     ops_sycl_memcpyHostToDevice(
         instance,
-        static_cast<cl::sycl::buffer<char, 1> *>((void*)instance->OPS_consts_d),
+        reinterpret_cast<cl::sycl::buffer<char, 1> *>((void*)instance->OPS_consts_d),
         instance->OPS_consts_h, consts_bytes);
     memcpy(instance->OPS_gbl_prev, instance->OPS_consts_h, consts_bytes);
   }
@@ -291,14 +293,14 @@ void mvConstArraysToDevice(OPS_instance *instance, int consts_bytes) {
 void mvReductArraysToDevice(OPS_instance *instance, int reduct_bytes) {
   ops_sycl_memcpyHostToDevice(
       instance,
-      static_cast<cl::sycl::buffer<char, 1> *>((void*)instance->OPS_reduct_d),
+      reinterpret_cast<cl::sycl::buffer<char, 1> *>((void*)instance->OPS_reduct_d),
       instance->OPS_reduct_h, reduct_bytes);
 }
 
 void mvReductArraysToHost(OPS_instance *instance, int reduct_bytes) {
   ops_sycl_memcpyDeviceToHost(
       instance,
-      static_cast<cl::sycl::buffer<char, 1> *>((void*)instance->OPS_reduct_d),
+      reinterpret_cast<cl::sycl::buffer<char, 1> *>((void*)instance->OPS_reduct_d),
       instance->OPS_reduct_h, reduct_bytes);
 }
 
@@ -308,14 +310,14 @@ void ops_sycl_exit(OPS_instance *instance) {
   if (instance->OPS_consts_bytes > 0) {
     ops_free(instance->OPS_consts_h);
     ops_free(instance->OPS_gbl_prev);
-    delete static_cast<cl::sycl::buffer<char, 1> *>((void*)instance->OPS_consts_d);
+    delete reinterpret_cast<cl::sycl::buffer<char, 1> *>((void*)instance->OPS_consts_d);
   }
   if (instance->OPS_reduct_bytes > 0) {
     ops_free(instance->OPS_reduct_h);
-    delete static_cast<cl::sycl::buffer<char, 1> *>((void*)instance->OPS_reduct_d);
+    delete reinterpret_cast<cl::sycl::buffer<char, 1> *>((void*)instance->OPS_reduct_d);
   }
   for (size_t i = 0; i < OPS_instance::getOPSInstance()->sycl_instance->ops_sycl_consts.size(); i++)
-    delete static_cast<cl::sycl::buffer<char,1>*>(OPS_instance::getOPSInstance()->sycl_instance->ops_sycl_consts[i]);
+    delete reinterpret_cast<cl::sycl::buffer<char,1>*>(OPS_instance::getOPSInstance()->sycl_instance->ops_sycl_consts[i]);
 }
 
 void ops_free_dat(ops_dat dat) {
@@ -324,7 +326,7 @@ void ops_free_dat(ops_dat dat) {
 
 // _ops_free_dat is called directly from ~ops_dat_core
 void _ops_free_dat(ops_dat dat) {
-  delete static_cast<cl::sycl::buffer<char, 1> *>((void*)dat->data_d);
+  delete reinterpret_cast<cl::sycl::buffer<char, 1> *>((void*)dat->data_d);
   dat->data_d = nullptr;
   ops_free_dat_core(dat);
 }
