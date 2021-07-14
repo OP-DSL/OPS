@@ -103,16 +103,17 @@ void *ops_sycl_register_const(void *old_p, void *new_p) {
 void ops_sycl_memcpyHostToDevice(OPS_instance *instance,
                                  cl::sycl::buffer<char, 1> *data_d,
                                  char *data_h, size_t bytes) {
+#ifdef SYCL_COPY
   // create sub buffer
   cl::sycl::buffer<char, 1> buffer(*data_d, cl::sycl::id<1>(0), cl::sycl::range<1>(bytes));
-#ifdef SYCL_COPY
   instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {
     auto acc = buffer.template get_access<cl::sycl::access::mode::write>(cgh);
     cgh.copy(data_h, acc);
   });
   instance->sycl_instance->queue->wait();
 #else
-  auto HostAccessor = buffer.get_host_access(cl::sycl::write_only);
+  auto HostAccessor =
+      data_d->get_host_access(cl::sycl::range<1>(bytes), cl::sycl::write_only);
   for (size_t i = 0; i < bytes; i++)
     HostAccessor[i] = data_h[i];
 #endif
@@ -122,15 +123,16 @@ void ops_sycl_memcpyDeviceToHost(OPS_instance *instance,
                                  cl::sycl::buffer<char, 1> *data_d,
                                  char *data_h, size_t bytes) {
   // create sub buffer
-  cl::sycl::buffer<char, 1> buffer(*data_d, cl::sycl::id<1>(0), cl::sycl::range<1>(bytes));
 #ifdef SYCL_COPY
+  cl::sycl::buffer<char, 1> buffer(*data_d, cl::sycl::id<1>(0), cl::sycl::range<1>(bytes));
   instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {
     auto acc = buffer.template get_access<cl::sycl::access::mode::read>(cgh);
     cgh.copy(acc, data_h);
   });
   instance->sycl_instance->queue->wait();
 #else
-  auto HostAccessor = buffer.get_host_access(cl::sycl::read_only);
+  auto HostAccessor =
+      data_d->get_host_access(cl::sycl::range<1>(bytes), cl::sycl::write_only);
   for (size_t i = 0; i < bytes; i++)
     data_h[i] = HostAccessor[i];
 #endif

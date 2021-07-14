@@ -66,9 +66,10 @@ void ops_reduction_sycl(T *dat_g, T dat_l, T* temp, item_type &item_id, int grou
   temp[linear_id] = dat_l;
   item_id.barrier(cl::sycl::access::fence_space::local_space); /* important to finish all previous activity */
 
-  int d0 = 1 << (31 - cl::sycl::clz(((int)(group_size) - 1)));
+  // int d0 = 1 << (31 - cl::sycl::clz(((int)(group_size) - 1)));
 
-  for (size_t d = d0; d > 0; d >>= 1) {
+  for (size_t d = group_size / 2; d > 0; d >>= 1) {
+  // for (size_t d = d0; d > 0; d >>= 1) {
     if (linear_id < d) {
       T dat_t = temp[linear_id + d];
 
