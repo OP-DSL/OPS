@@ -90,7 +90,7 @@ def group_n_per_line(vals, n_per_line=4, sep=','):
 
 
 def ops_gen_sycl(master, date, consts, kernels, soa_set):
-    gen_oneapi = False
+    gen_oneapi = True
     sycl_guarded_namespace = "cl::sycl::"
     if gen_oneapi:
         sycl_guarded_namespace = "cl::sycl::ONEAPI::"
@@ -159,11 +159,17 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                 MULTI_GRID = 1
 
         reduction = False
+        builtin_reduction = True
         red_arg_idxs = []
         for n in range(0, nargs):
             if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
                 reduction = True
                 red_arg_idxs.append(n)
+                if not dims[n].isdigit():
+                    builtin_reduction = False
+        builtin_reduction = builtin_reduction and (
+            not (gen_oneapi and len(red_arg_idxs) > 1))
+        #  builtin_reduction = False
 
         arg_idx = -1
         for n in range(0, nargs):
@@ -457,7 +463,7 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                     if not dims[n].isdigit() or int(dims[n]) > 1:
                         GBL_READ_MDIM = True
 
-        if reduction and gen_oneapi and len(red_arg_idxs) > 1:
+        if reduction and not builtin_reduction:
             code(
                 'int maxblocks = (end[0]-start[0]-1)/block->instance->OPS_block_size_x+1;'
             )
@@ -483,8 +489,7 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                                             or int(dims[n]) > 1):
                     code('consts_bytes += ROUND_UP(' + str(dims[n]) +
                          '*sizeof(' + typs[n] + '));')
-                elif accs[n] != OPS_READ and gen_oneapi and len(
-                        red_arg_idxs) > 1:
+                elif accs[n] != OPS_READ and not builtin_reduction:
                     code('reduct_bytes += ROUND_UP(maxblocks*' + str(dims[n]) +
                          '*sizeof(' + typs[n] + '));')
                     code('reduct_size = MAX(reduct_size,sizeof(' + typs[n] +
@@ -493,11 +498,10 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
 
         if GBL_READ == True and GBL_READ_MDIM == True:
             code('reallocConstArrays(block->instance,consts_bytes);')
-        if reduction and gen_oneapi and len(red_arg_idxs) > 1:
+        if reduction and not builtin_reduction:
             code('reallocReductArrays(block->instance,reduct_bytes);')
             code('reduct_bytes = 0;')
             code('')
-
             for n in red_arg_idxs:
                 code('arg' + str(n) +
                      '.data = block->instance->OPS_reduct_h + reduct_bytes;')
@@ -520,9 +524,16 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                 code('')
         else:
             for n in red_arg_idxs:
-                assert dims[n].isdigit() and int(dims[n]) == 1
-                code('cl::sycl::buffer<' + typs[n] + ',1> reduct_p_a' +
-                     str(n) + '(p_a' + str(n) + ', ' + dims[n] + ');')
+                assert dims[n].isdigit() and "dinamic extent in SYCL"
+                if int(dims[n]) == 1:
+                    code('cl::sycl::buffer<{0}, 1> reduct_p_a{1}(p_a{1}, 1);'.
+                         format(typs[n], n, dims[n]))
+                else:
+                    assert not gen_oneapi
+                    for i in range(int(dims[n])):
+                        code(
+                            'cl::sycl::buffer<{0},1> reduct_p_a{1}_{2}(p_a{1} + {2}, 1);'
+                            .format(typs[n], n, i))
 
         for n in range(0, nargs):
             if arg_typ[n] == 'ops_arg_gbl':
@@ -545,7 +556,7 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                 'cl::sycl::buffer<char,1> *consts = reinterpret_cast<cl::sycl::buffer<char,1> *>((void*)block->instance->OPS_consts_d);'
             )
 
-        if reduction and gen_oneapi and len(red_arg_idxs) > 1:
+        if reduction and not builtin_reduction:
             code('mvReductArraysToDevice(block->instance,reduct_bytes);')
             code(
                 'cl::sycl::buffer<char,1> *reduct = reinterpret_cast<cl::sycl::buffer<char,1> *>((void*)block->instance->OPS_reduct_d);'
@@ -587,7 +598,7 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                 'auto Accessor_consts_char = consts->get_access<cl::sycl::access::mode::read_write>(cgh);'
             )
         if reduction:
-            if gen_oneapi and len(red_arg_idxs) > 1:
+            if not builtin_reduction:
                 code(
                     'auto Accessor_reduct_char = reduct->get_access<cl::sycl::access::mode::read_write>(cgh);'
                 )
@@ -595,15 +606,28 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                     'cl::sycl::accessor<char, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::local> local_mem(reduct_size*cl::sycl::range<1>(block->instance->OPS_block_size_x*block->instance->OPS_block_size_y),cgh);'
                 )
             else:
-                code(
-                    'auto reduction_acc_p_a{0} = reduct_p_a{0}.get_access(cgh);'
-                    .format(n))
-                red_operation = 'plus' if accs[
-                    n] == OPS_INC else 'maximum' if accs[
-                        n] == OPS_MAX else 'minimum'
-                code(
-                    'auto reduction_handler_p_a{0} = {3}reduction(reduction_acc_p_a{0}, {3}{1}<{2}>());'
-                    .format(n, red_operation, typs[n], sycl_guarded_namespace))
+                for n in red_arg_idxs:
+                    assert dims[n].isdigit()
+                    red_operation = 'plus' if accs[
+                        n] == OPS_INC else 'maximum' if accs[
+                            n] == OPS_MAX else 'minimum'
+                    if int(dims[n]) == 1:
+                        code(
+                            'auto reduction_acc_p_a{0} = reduct_p_a{0}.get_access(cgh);'
+                            .format(n))
+                        code(
+                            'auto reduction_handler_p_a{0} = {3}reduction(reduction_acc_p_a{0}, {3}{1}<{2}>());'
+                            .format(n, red_operation, typs[n],
+                                    sycl_guarded_namespace))
+                    else:
+                        for i in range(int(dims[n])):
+                            code(
+                                'auto reduction_acc_p_a{0}_{1} = reduct_p_a{0}_{1}.get_access(cgh);'
+                                .format(n, i))
+                            code(
+                                'auto reduction_handler_p_a{0}_{4} = {3}reduction(reduction_acc_p_a{0}_{4}, {3}{1}<{2}>());'
+                                .format(n, red_operation, typs[n],
+                                        sycl_guarded_namespace, i))
         code('')
         for c in global_consts:
             code(c)
@@ -631,13 +655,25 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
             code('       , block->instance->OPS_block_size_z')
 
         code('       ))')
-        if reduction and not (gen_oneapi and len(red_arg_idxs) > 1):
-            code(',' + ','.join(
-                ['reduction_handler_p_a{0}'.format(n) for n in red_arg_idxs]))
+        if reduction and builtin_reduction:
+            for n in red_arg_idxs:
+                if int(dims[n]) == 1:
+                    code(', reduction_handler_p_a{0}'.format(n))
+                else:
+                    code(',' + ','.join([
+                        'reduction_handler_p_a{0}_{1}'.format(n, i)
+                        for i in range(int(dims[n]))
+                    ]))
         code(', [=](cl::sycl::nd_item<' + str(NDIM) + '> item')
-        if reduction and not (gen_oneapi and len(red_arg_idxs) > 1):
-            code(',' + ','.join(
-                ['auto &reduction_h_p_a{}'.format(n) for n in red_arg_idxs]))
+        if reduction and builtin_reduction:
+            for n in red_arg_idxs:
+                if int(dims[n]) == 1:
+                    code(', auto &reduction_h_p_a{0}'.format(n))
+                else:
+                    code(',' + ','.join([
+                        ' auto &reduction_h_p_a{0}_{1}'.format(n, i)
+                        for i in range(int(dims[n]))
+                    ]))
         code(') {')
         config.depth += 2
         line3 = ''
@@ -769,11 +805,16 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
         ENDIF()
 
         if reduction:
-            if not (gen_oneapi and len(red_arg_idxs) > 1):
+            if builtin_reduction:
                 for n in red_arg_idxs:
-                    assert dims[n].isdigit() and int(dims[n]) == 1
-                    code('reduction_h_p_a{0}.combine({1}[0]);'.format(
-                        n, arg_list[n]))
+                    assert dims[n].isdigit()
+                    if int(dims[n]) == 1:
+                        code('reduction_h_p_a{0}.combine({1}[0]);'.format(
+                            n, arg_list[n]))
+                    else:
+                        for i in range(int(dims[n])):
+                            code('reduction_h_p_a{0}_{2}.combine({1}[{2}]);'.
+                                 format(n, arg_list[n], i))
             else:
                 code('int group_size = item.get_local_range(0);')
                 if NDIM > 1:
@@ -786,31 +827,26 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                         code('ops_reduction_sycl<OPS_MIN>(((' + typs[n] +
                              '*)&Accessor_reduct_char[arg' + str(n) +
                              '_offset]) + d+item.get_group_linear_id()*' +
-                             str(dims[n]) + ', ' + arg_list[n] + '[' + str(d) +
-                             '], (' + typs[n] +
-                             '*)&local_mem[0], )item, group_size);')
+                             str(dims[n]) + ', ' + arg_list[n] + '[d], (' +
+                             typs[n] + '*)&local_mem[0], item, group_size);')
                     if accs[n] == OPS_MAX:
                         code('ops_reduction_sycl<OPS_MAX>(((' + typs[n] +
                              '*)&Accessor_reduct_char[arg' + str(n) +
                              '_offset]) + d+item.get_group_linear_id()*' +
-                             str(dims[n]) + ', ' + arg_list[n] + '[' + str(d) +
-                             '], (' + typs[n] +
-                             '*)&local_mem[0], item, group_size);')
+                             str(dims[n]) + ', ' + arg_list[n] + '[d], (' +
+                             typs[n] + '*)&local_mem[0], item, group_size);')
                     if accs[n] == OPS_INC:
                         code('ops_reduction_sycl<OPS_INC>(((' + typs[n] +
                              '*)&Accessor_reduct_char[arg' + str(n) +
                              '_offset]) + d+item.get_group_linear_id()*' +
-                             str(dims[n]) + ', ' + arg_list[n] + '[' + str(d) +
-                             '], (' + typs[n] +
-                             '*)&local_mem[0], item, group_size);')
+                             str(dims[n]) + ', ' + arg_list[n] + '[d], (' +
+                             typs[n] + '*)&local_mem[0], item, group_size);')
                     if accs[n] == OPS_WRITE:  #this may not be correct
-                        #code('p_a'+str(n)+'_'+str(d)+' +='+arg_list[n]+'['+str(d)+'];')
                         code('ops_reduction_sycl<OPS_MIN>(((' + typs[n] +
                              '*)&Accessor_reduct_char[arg' + str(n) +
                              '_offset]) + d+item.get_group_linear_id()*' +
-                             str(dims[n]) + ', ' + arg_list[n] + '[' + str(d) +
-                             '], (' + typs[n] +
-                             '*)&local_mem[0], item, group_size);')
+                             str(dims[n]) + ', ' + arg_list[n] + '[d], (' +
+                             typs[n] + '*)&local_mem[0], item, group_size);')
                     ENDFOR()
 
         config.depth -= 2
@@ -827,7 +863,7 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
         # Complete Reduction Operation by moving data onto host
         # and reducing over blocks
         #
-        if reduction and gen_oneapi and len(red_arg_idxs) > 1:
+        if reduction and not builtin_reduction:
             code('mvReductArraysToHost(block->instance,reduct_bytes);')
             for n in red_arg_idxs:
                 FOR('b', '0', 'maxblocks')
