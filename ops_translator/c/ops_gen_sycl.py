@@ -165,11 +165,11 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
             if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
                 reduction = True
                 red_arg_idxs.append(n)
-                if not dims[n].isdigit():
+                if not dims[n].isdigit() or (gen_oneapi and int(dims[n]) > 1):
                     builtin_reduction = False
         builtin_reduction = builtin_reduction and (
             not (gen_oneapi and len(red_arg_idxs) > 1))
-        #  builtin_reduction = False
+        builtin_reduction = False
 
         arg_idx = -1
         for n in range(0, nargs):
