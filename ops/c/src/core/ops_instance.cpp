@@ -101,7 +101,7 @@ void OPS_instance::init_globals() {
 	OPS_hybrid_gpu=0; OPS_gpu_direct=0;
 	OPS_block_size_x = 32;
 	OPS_block_size_y = 4;
-	OPS_block_size_z = 1;
+	OPS_block_size_z = 2;
 	OPS_consts_h=NULL; OPS_consts_d=NULL; OPS_reduct_h=NULL; OPS_reduct_d=NULL;
 	OPS_consts_bytes = 0; OPS_reduct_bytes = 0;
 	OPS_cl_device=0;

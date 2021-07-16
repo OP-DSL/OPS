@@ -90,7 +90,7 @@ def group_n_per_line(vals, n_per_line=4, sep=','):
 
 
 def ops_gen_sycl(master, date, consts, kernels, soa_set):
-    gen_oneapi = True
+    gen_oneapi = False
     sycl_guarded_namespace = "cl::sycl::"
     if gen_oneapi:
         sycl_guarded_namespace = "cl::sycl::ONEAPI::"
@@ -169,7 +169,7 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                     builtin_reduction = False
         builtin_reduction = builtin_reduction and (
             not (gen_oneapi and len(red_arg_idxs) > 1))
-        builtin_reduction = False
+        #  builtin_reduction = False
 
         arg_idx = -1
         for n in range(0, nargs):
@@ -284,7 +284,7 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
         code('double __t1,__t2,__c1,__c2;')
         code('')
 
-        #code('ops_printf("In loop \%s\\n","'+name+'");')
+        #  code('ops_printf("In loop \%s\\n","' + name + '");')
 
         code('ops_arg args[' + str(nargs) + '] = {' +
              group_n_per_line([' arg{}'.format(n)
@@ -602,40 +602,50 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                 code(
                     'auto Accessor_reduct_char = reduct->get_access<cl::sycl::access::mode::read_write>(cgh);'
                 )
+                local_mem_size = 'reduct_size * cl::sycl::range<1>(' + '*'.join(
+                    [
+                        'block->instance->OPS_block_size_' + ['x', 'y', 'z'][i]
+                        for i in range(NDIM)
+                    ]) + ')'
                 code(
-                    'cl::sycl::accessor<char, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::local> local_mem(reduct_size*cl::sycl::range<1>(block->instance->OPS_block_size_x*block->instance->OPS_block_size_y),cgh);'
-                )
+                    'cl::sycl::accessor<char, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::local> local_mem('
+                    + local_mem_size + ',cgh);')
             else:
                 for n in red_arg_idxs:
                     assert dims[n].isdigit()
                     red_operation = 'plus' if accs[
                         n] == OPS_INC else 'maximum' if accs[
                             n] == OPS_MAX else 'minimum'
+                    red_identity = (
+                        '0' if accs[n] == OPS_INC else 'std::numeric_limits<' +
+                        typs[n] + '>::min()' if accs[n] == OPS_MAX else
+                        'std::numeric_limits<' + typs[n] + '>::max()')
                     if int(dims[n]) == 1:
                         code(
                             'auto reduction_acc_p_a{0} = reduct_p_a{0}.get_access(cgh);'
                             .format(n))
                         code(
-                            'auto reduction_handler_p_a{0} = {3}reduction(reduction_acc_p_a{0}, {3}{1}<{2}>());'
+                            'auto reduction_handler_p_a{0} = {3}reduction(reduction_acc_p_a{0}, {4}, {3}{1}<{2}>());'
                             .format(n, red_operation, typs[n],
-                                    sycl_guarded_namespace))
+                                    sycl_guarded_namespace, red_identity))
                     else:
                         for i in range(int(dims[n])):
                             code(
                                 'auto reduction_acc_p_a{0}_{1} = reduct_p_a{0}_{1}.get_access(cgh);'
                                 .format(n, i))
                             code(
-                                'auto reduction_handler_p_a{0}_{4} = {3}reduction(reduction_acc_p_a{0}_{4}, {3}{1}<{2}>());'
+                                'auto reduction_handler_p_a{0}_{4} = {3}reduction(reduction_acc_p_a{0}_{4}, {5}, {3}{1}<{2}>());'
                                 .format(n, red_operation, typs[n],
-                                        sycl_guarded_namespace, i))
+                                        sycl_guarded_namespace, i,
+                                        red_identity))
         code('')
         for c in global_consts:
             code(c)
         code('')
 
-        code('cgh.parallel_for<class ' + name +
-             '_kernel>(cl::sycl::nd_range<' + str(NDIM) +
-             '>(cl::sycl::range<' + str(NDIM) + '>(')
+        code(
+            'cgh.parallel_for<class {0}_kernel>(cl::sycl::nd_range<{1}>(cl::sycl::range<{1}>('
+            .format(name, NDIM))
         code(
             '      ((end[0]-start[0]-1)/block->instance->OPS_block_size_x+1)*block->instance->OPS_block_size_x'
         )
@@ -1016,6 +1026,7 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
     code('#include "ops_lib_core.h"')
     code('#ifdef OPS_MPI')
     code('#include "ops_mpi_core.h"')
+    code('#include <limits>')
     code('#endif')
     if os.path.exists(os.path.join(src_dir, 'user_types.h')):
         code('#include "user_types.h"')
