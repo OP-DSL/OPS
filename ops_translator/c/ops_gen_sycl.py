@@ -90,7 +90,7 @@ def group_n_per_line(vals, n_per_line=4, sep=','):
 
 
 def ops_gen_sycl(master, date, consts, kernels, soa_set):
-    gen_oneapi = False
+    gen_oneapi = True
     sycl_guarded_namespace = "cl::sycl::"
     if gen_oneapi:
         sycl_guarded_namespace = "cl::sycl::ONEAPI::"
@@ -646,23 +646,23 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
         code(
             'cgh.parallel_for<class {0}_kernel>(cl::sycl::nd_range<{1}>(cl::sycl::range<{1}>('
             .format(name, NDIM))
+        if NDIM > 2:
+            code(
+                '     ((end[2]-start[2]-1)/block->instance->OPS_block_size_z+1)*block->instance->OPS_block_size_z,'
+            )
+        if NDIM > 1:
+            code(
+                '     ((end[1]-start[1]-1)/block->instance->OPS_block_size_y+1)*block->instance->OPS_block_size_y,'
+            )
         code(
             '      ((end[0]-start[0]-1)/block->instance->OPS_block_size_x+1)*block->instance->OPS_block_size_x'
         )
-        if NDIM > 1:
-            code(
-                '     ,((end[1]-start[1]-1)/block->instance->OPS_block_size_y+1)*block->instance->OPS_block_size_y'
-            )
+        code('       ),cl::sycl::range<' + str(NDIM) + '>(')
         if NDIM > 2:
-            code(
-                '     ,((end[2]-start[2]-1)/block->instance->OPS_block_size_z+1)*block->instance->OPS_block_size_z'
-            )
-        code('       ),cl::sycl::range<' + str(NDIM) +
-             '>(block->instance->OPS_block_size_x')
+            code('       block->instance->OPS_block_size_z,')
         if NDIM > 1:
-            code('       , block->instance->OPS_block_size_y')
-        if NDIM > 2:
-            code('       , block->instance->OPS_block_size_z')
+            code('       block->instance->OPS_block_size_y,')
+        code('block->instance->OPS_block_size_x')
 
         code('       ))')
         if reduction and builtin_reduction:
@@ -692,10 +692,10 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                 line3 = line3 + arg_list[n] + ','
         #FOR('n_x','start[0]','end[0]')
         if NDIM > 2:
-            code('int n_z = item.get_global_id()[2]+start_2;')
+            code('int n_z = item.get_global_id()[0]+start_2;')
         if NDIM > 1:
-            code('int n_y = item.get_global_id()[1]+start_1;')
-        code('int n_x = item.get_global_id()[0]+start_0;')
+            code('int n_y = item.get_global_id()['+str(NDIM-2)+']+start_1;')
+        code('int n_x = item.get_global_id()['+str(NDIM-1)+']+start_0;')
         if arg_idx != -1:
             if NDIM == 1:
                 code('int ' + clean_type(arg_list[arg_idx]) +
