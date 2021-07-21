@@ -854,7 +854,7 @@ def main(source_files):
   ops_gen_mpi_hip(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_openacc(str(source_files[0]), date, consts, kernels, soa_set)
   ops_gen_mpi_opencl(str(source_files[0]), date, consts, kernels, soa_set)
-  ops_gen_sycl(str(source_files[0]), date, consts, kernels, soa_set)
+  ops_gen_sycl(str(source_files[0]), consts, kernels, soa_set)
 
   import subprocess
   retcode = subprocess.call("which clang-format 2> /dev/null", shell=True)

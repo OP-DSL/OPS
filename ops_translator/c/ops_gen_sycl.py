@@ -46,7 +46,6 @@ plus a master kernel file
 """
 
 import re
-import datetime
 import os
 import glob
 
@@ -89,9 +88,8 @@ def group_n_per_line(vals, n_per_line=4, sep=','):
     ])
 
 
-def ops_gen_sycl(master, date, consts, kernels, soa_set):
-    gen_oneapi = False
-    flat_parallel = True
+def ops_gen_sycl(master, consts, kernels, soa_set):
+    gen_oneapi = True
     sycl_guarded_namespace = "cl::sycl::"
     if gen_oneapi:
         sycl_guarded_namespace = "cl::sycl::ONEAPI::"
@@ -112,7 +110,7 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
         dim = kernels[nk]['dim']
         dims = kernels[nk]['dims']
         stens = kernels[nk]['stens']
-        var = kernels[nk]['var']
+        #  var = kernels[nk]['var']
         accs = kernels[nk]['accs']
         typs = kernels[nk]['typs']
         NDIM = int(dim)
@@ -170,9 +168,9 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                     builtin_reduction = False
         builtin_reduction = builtin_reduction and (
             not (gen_oneapi and len(red_arg_idxs) > 1))
-        #  builtin_reduction = False
-        if flat_parallel and not builtin_reduction:
-        #if flat_parallel and reduction: #and not builtin_reduction:
+        flat_parallel = True
+        if not (builtin_reduction or (gen_oneapi and reduction)):
+            #if flat_parallel and reduction: #and not builtin_reduction:
             flat_parallel = False
 
         arg_idx = -1
@@ -185,7 +183,6 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
         n_per_line = 4
 
         i = name.find('kernel')
-        name2 = name[0:i - 1]
 
         ##########################################################################
         #  start with seq kernel function
@@ -196,22 +193,21 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
 
         found = 0
         for files in glob.glob(os.path.join(src_dir, "*.h")):
-            f = open(files, 'r')
-            for line in f:
-                if name in line:
-                    file_name = f.name
-                    found = 1
-                    break
+            with open(files, 'r') as f:
+                for line in f:
+                    if name in line:
+                        file_name = f.name
+                        found = 1
+                        break
             if found == 1:
                 break
 
         if found == 0:
             print(("COUND NOT FIND KERNEL", name))
 
-        fid = open(file_name, 'r')
-        text = fid.read()
+        with open(file_name, 'r') as fid:
+            text = fid.read()
 
-        fid.close()
         text = comment_remover(text)
         text = remove_trailing_w_space(text)
 
@@ -219,7 +215,7 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
 
         i = p.search(text).start()
 
-        if (i < 0):
+        if i < 0:
             print("\n********")
             print(("Error: cannot locate user kernel function: " + name +
                    " - Aborting code generation"))
@@ -231,18 +227,18 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
         k = para_parse(text, i + j, '{', '}')
         kernel_text = text[i + j + 1:k]
         kernel_text = convert_ACC_body(kernel_text)
-        m = text.find(name)
+        #  m = text.find(name)
         arg_list = parse_signature(text[i2 + len(name):i + j])
 
         global_consts = []
-        for nc in range(0, len(consts)):
-            const = consts[nc]['name'].replace('"', '')
+        for c in consts:
+            const = c['name'].replace('"', '')
             if re.search(r'\b' + const + r'\b', kernel_text):
                 global_consts = global_consts + [
                     'auto ' + const + '_sycl = (*' + const +
                     '_p).template get_access<cl::sycl::access::mode::read>(cgh);'
                 ]
-                if consts[nc]['dim'].isdigit() and int(consts[nc]['dim']) == 1:
+                if c['dim'].isdigit() and int(c['dim']) == 1:
                     kernel_text = re.sub(r'\b' + const + r'\b',
                                          const + '_sycl[0]', kernel_text)
                 else:
@@ -320,8 +316,6 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
         code('int end[' + str(NDIM) + '];')
         if not (arg_idx != -1) and not MULTI_GRID:
             code('#if defined(OPS_MPI) && !defined(OPS_LAZY)')
-#    if MULTI_GRID:
-#      code('#ifdef OPS_MPI')
         code('int arg_idx[' + str(NDIM) + '];')
         #    if not (arg_idx!=-1 and not MULTI_GRID):
         if not (arg_idx != -1) and not MULTI_GRID:
@@ -384,7 +378,6 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                     + str(n) + '].data_d)->reinterpret<' + typs[n] +
                     ',1>(cl::sycl::range<1>(args[' + str(n) +
                     '].dat->mem/sizeof(' + typs[n] + ')));')
-                #code(typs[n]+' * __restrict__ '+clean_type(arg_list[n])+'_p = ('+typs[n]+' *)(args['+str(n)+'].data + base'+str(n)+');')
                 if restrict[n] == 1 or prolong[n] == 1:
                     code('#ifdef OPS_MPI')
                     code('sub_dat_list sd' + str(n) +
@@ -483,7 +476,7 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
             code('int reduct_bytes = 0;')
             code('size_t reduct_size = 0;')
             code('')
-        if GBL_READ == True and GBL_READ_MDIM == True:
+        if GBL_READ is True and GBL_READ_MDIM is True:
             code('int consts_bytes = 0;')
             code('')
 
@@ -500,7 +493,7 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                          '));')
         code('')
 
-        if GBL_READ == True and GBL_READ_MDIM == True:
+        if GBL_READ is True and GBL_READ_MDIM is True:
             code('reallocConstArrays(block->instance,consts_bytes);')
         if reduction and not builtin_reduction:
             code('reallocReductArrays(block->instance,reduct_bytes);')
@@ -530,8 +523,9 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
             for n in red_arg_idxs:
                 assert dims[n].isdigit() and "dinamic extent in SYCL"
                 if int(dims[n]) == 1:
-                    code('cl::sycl::buffer<{0}, 1> reduct_p_a{1}(p_a{1}, 1);'.
-                         format(typs[n], n, dims[n]))
+                    code(
+                        'cl::sycl::buffer<{0}, 1> reduct_p_a{1}(p_a{1}, {2});'.
+                        format(typs[n], n, dims[n]))
                 else:
                     assert not gen_oneapi
                     for i in range(int(dims[n])):
@@ -554,17 +548,17 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                          str(n) + 'h[d];')
                     code('consts_bytes += ROUND_UP(' + str(dims[n]) +
                          '*sizeof(int));')
-        if GBL_READ == True and GBL_READ_MDIM == True:
+        if GBL_READ is True and GBL_READ_MDIM is True:
             code('mvConstArraysToDevice(block->instance,consts_bytes);')
-            code(
-                'cl::sycl::buffer<char,1> *consts = reinterpret_cast<cl::sycl::buffer<char,1> *>((void*)block->instance->OPS_consts_d);'
-            )
+            code('cl::sycl::buffer<char,1> *consts = '
+                 'reinterpret_cast<cl::sycl::buffer<char,1> *>('
+                 '(void*)block->instance->OPS_consts_d);')
 
         if reduction and not builtin_reduction:
             code('mvReductArraysToDevice(block->instance,reduct_bytes);')
-            code(
-                'cl::sycl::buffer<char,1> *reduct = reinterpret_cast<cl::sycl::buffer<char,1> *>((void*)block->instance->OPS_reduct_d);'
-            )
+            code('cl::sycl::buffer<char,1> *reduct ='
+                 ' reinterpret_cast<cl::sycl::buffer<char,1> *>('
+                 '(void*)block->instance->OPS_reduct_d);')
 
         code('')
 
@@ -597,14 +591,15 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                 code('auto Accessor_' + clean_type(arg_list[n]) + ' = ' +
                      clean_type(arg_list[n]) +
                      '_p.get_access<cl::sycl::access::mode::read_write>(cgh);')
-        if GBL_READ == True and GBL_READ_MDIM == True:
+        if GBL_READ is True and GBL_READ_MDIM is True:
             code(
-                'auto Accessor_consts_char = consts->get_access<cl::sycl::access::mode::read_write>(cgh);'
-            )
+                'auto Accessor_consts_char = '
+                'consts->get_access<cl::sycl::access::mode::read_write>(cgh);')
         if reduction:
             if not builtin_reduction:
                 code(
-                    'auto Accessor_reduct_char = reduct->get_access<cl::sycl::access::mode::read_write>(cgh);'
+                    'auto Accessor_reduct_char = '
+                    'reduct->get_access<cl::sycl::access::mode::read_write>(cgh);'
                 )
                 local_mem_size = 'reduct_size * cl::sycl::range<1>(' + '*'.join(
                     [
@@ -612,18 +607,20 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                         for i in range(NDIM)
                     ]) + ')'
                 code(
-                    'cl::sycl::accessor<char, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::local> local_mem('
-                    + local_mem_size + ',cgh);')
+                    'cl::sycl::accessor<char, 1, cl::sycl::access::mode::read_write, '
+                    'cl::sycl::access::target::local> local_mem(' +
+                    local_mem_size + ',cgh);')
             else:
                 for n in red_arg_idxs:
                     assert dims[n].isdigit()
                     red_operation = 'plus' if accs[
                         n] == OPS_INC else 'maximum' if accs[
                             n] == OPS_MAX else 'minimum'
-                    red_identity = (
-                        '0' if accs[n] == OPS_INC else 'std::numeric_limits<' +
-                        typs[n] + '>::min()' if accs[n] == OPS_MAX else
-                        'std::numeric_limits<' + typs[n] + '>::max()')
+                    red_identity = ('(' + typs[n] + ')0' if accs[n] == OPS_INC
+                                    else 'std::numeric_limits<' + typs[n] +
+                                    '>::min()' if accs[n] == OPS_MAX else
+                                    'std::numeric_limits<' + typs[n] +
+                                    '>::max()')
                     if int(dims[n]) == 1:
                         code(
                             'auto reduction_acc_p_a{0} = reduct_p_a{0}.get_access(cgh);'
@@ -648,28 +645,36 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
         code('')
 
         if flat_parallel:
-          code('cgh.parallel_for<class {0}_kernel>(cl::sycl::range<{1}>('.format(name,NDIM))
-          if NDIM > 2:
-            code('     end[2]-start[2],')
-          if NDIM > 1:
-            code('     end[1]-start[1],')
-          code('     end[0]-start[0])')
+            code('cgh.parallel_for<class {0}_kernel>(cl::sycl::range<{1}>('.
+                 format(name, NDIM))
+            if NDIM > 2:
+                code('     end[2]-start[2],')
+            if NDIM > 1:
+                code('     end[1]-start[1],')
+            code('     end[0]-start[0])')
         else:
-          code('cgh.parallel_for<class {0}_kernel>(cl::sycl::nd_range<{1}>(cl::sycl::range<{1}>('
-              .format(name, NDIM))
-          if NDIM > 2:
-              code('     ((end[2]-start[2]-1)/block->instance->OPS_block_size_z+1)*block->instance->OPS_block_size_z,')
-          if NDIM > 1:
-              code('     ((end[1]-start[1]-1)/block->instance->OPS_block_size_y+1)*block->instance->OPS_block_size_y,')
-          code('      ((end[0]-start[0]-1)/block->instance->OPS_block_size_x+1)*block->instance->OPS_block_size_x')
-          code('       ),cl::sycl::range<' + str(NDIM) + '>(')
-          if NDIM > 2:
-              code('       block->instance->OPS_block_size_z,')
-          if NDIM > 1:
-              code('       block->instance->OPS_block_size_y,')
-          code('block->instance->OPS_block_size_x')
+            code(
+                'cgh.parallel_for<class {0}_kernel>(cl::sycl::nd_range<{1}>(cl::sycl::range<{1}>('
+                .format(name, NDIM))
+            if NDIM > 2:
+                code(
+                    '     ((end[2]-start[2]-1)/block->instance->OPS_block_size_z+1)*block->instance->OPS_block_size_z,'
+                )
+            if NDIM > 1:
+                code(
+                    '     ((end[1]-start[1]-1)/block->instance->OPS_block_size_y+1)*block->instance->OPS_block_size_y,'
+                )
+            code(
+                '      ((end[0]-start[0]-1)/block->instance->OPS_block_size_x+1)*block->instance->OPS_block_size_x'
+            )
+            code('       ),cl::sycl::range<' + str(NDIM) + '>(')
+            if NDIM > 2:
+                code('       block->instance->OPS_block_size_z,')
+            if NDIM > 1:
+                code('       block->instance->OPS_block_size_y,')
+            code('block->instance->OPS_block_size_x')
 
-          code('       ))')
+            code('       ))')
         if reduction and builtin_reduction:
             for n in red_arg_idxs:
                 if int(dims[n]) == 1:
@@ -680,9 +685,9 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                         for i in range(int(dims[n]))
                     ]))
         if flat_parallel:
-          code(', [=](cl::sycl::item<' + str(NDIM) + '> item')
+            code(', [=](cl::sycl::item<' + str(NDIM) + '> item')
         else:
-          code(', [=](cl::sycl::nd_item<' + str(NDIM) + '> item')
+            code(', [=](cl::sycl::nd_item<' + str(NDIM) + '> item')
         if reduction and builtin_reduction:
             for n in red_arg_idxs:
                 if int(dims[n]) == 1:
@@ -698,7 +703,6 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
         for n in range(0, nargs):
             if arg_typ[n] == 'ops_arg_dat':
                 line3 = line3 + arg_list[n] + ','
-        #FOR('n_x','start[0]','end[0]')
         if NDIM > 2:
             if flat_parallel:
                 code('int n_z = item.get_id(0)+start_2;')
@@ -706,13 +710,15 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
                 code('int n_z = item.get_global_id()[0]+start_2;')
         if NDIM > 1:
             if flat_parallel:
-                code('int n_y = item.get_id('+str(NDIM-2)+')+start_1;')
+                code('int n_y = item.get_id(' + str(NDIM - 2) + ')+start_1;')
             else:
-                code('int n_y = item.get_global_id()['+str(NDIM-2)+']+start_1;')
+                code('int n_y = item.get_global_id()[' + str(NDIM - 2) +
+                     ']+start_1;')
         if flat_parallel:
-            code('int n_x = item.get_id('+str(NDIM-1)+')+start_0;')
+            code('int n_x = item.get_id(' + str(NDIM - 1) + ')+start_0;')
         else:
-            code('int n_x = item.get_global_id()['+str(NDIM-1)+']+start_0;')
+            code('int n_x = item.get_global_id()[' + str(NDIM - 1) +
+                 ']+start_0;')
         if arg_idx != -1:
             if NDIM == 1:
                 code('int ' + clean_type(arg_list[arg_idx]) +
@@ -880,11 +886,6 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
         code('});')
         config.depth -= 2
         code('});')
-        #ENDFOR()
-        #if NDIM>1:
-        #ENDFOR()
-        #if NDIM>2:
-        #ENDFOR()
 
         #
         # Complete Reduction Operation by moving data onto host
@@ -1016,11 +1017,9 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
         except OSError as e:
             if e.errno != os.errno.EEXIST:
                 raise
-        fid = open('./SYCL/' + name + '_sycl_kernel.cpp', 'w')
-        date = datetime.datetime.now()
-        fid.write('//\n// auto-generated by ops.py\n//\n')
-        fid.write(config.file_text)
-        fid.close()
+        with open('./SYCL/' + name + '_sycl_kernel.cpp', 'w') as fid:
+            fid.write('//\n// auto-generated by ops.py\n//\n')
+            fid.write(config.file_text)
 
 
 # end of main kernel call loop
@@ -1096,12 +1095,12 @@ def ops_gen_sycl(master, date, consts, kernels, soa_set):
 
     kernel_name_list = []
 
-    for nk in range(0, len(kernels)):
-        if kernels[nk]['name'] not in kernel_name_list:
-            code('#include "' + kernels[nk]['name'] + '_sycl_kernel.cpp"')
-            kernel_name_list.append(kernels[nk]['name'])
+    for kernel in kernels:
+        if kernel['name'] not in kernel_name_list:
+            code('#include "' + kernel['name'] + '_sycl_kernel.cpp"')
+            kernel_name_list.append(kernel['name'])
 
-    fid = open('./SYCL/' + master_basename[0] + '_sycl_kernels.cpp', 'w')
-    fid.write('//\n// auto-generated by ops.py//\n\n')
-    fid.write(config.file_text)
-    fid.close()
+    with open('./SYCL/' + master_basename[0] + '_sycl_kernels.cpp',
+              'w') as fid:
+        fid.write('//\n// auto-generated by ops.py\n//\n')
+        fid.write(config.file_text)
