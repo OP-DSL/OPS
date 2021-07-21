@@ -164,12 +164,10 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
             if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
                 reduction = True
                 red_arg_idxs.append(n)
-                if not dims[n].isdigit() or (gen_oneapi and int(dims[n]) > 1):
+                if not dims[n].isdigit():
                     builtin_reduction = False
-        builtin_reduction = builtin_reduction and (
-            not (gen_oneapi and len(red_arg_idxs) > 1))
         flat_parallel = True
-        if not (builtin_reduction or (gen_oneapi and reduction)):
+        if (not builtin_reduction) or (gen_oneapi and reduction):
             #if flat_parallel and reduction: #and not builtin_reduction:
             flat_parallel = False
 
@@ -527,7 +525,6 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                         'cl::sycl::buffer<{0}, 1> reduct_p_a{1}(p_a{1}, {2});'.
                         format(typs[n], n, dims[n]))
                 else:
-                    assert not gen_oneapi
                     for i in range(int(dims[n])):
                         code(
                             'cl::sycl::buffer<{0},1> reduct_p_a{1}_{2}(p_a{1} + {2}, 1);'
