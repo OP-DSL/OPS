@@ -31,7 +31,10 @@ Python2 is required by the OPS Python translator. The CMake build system will tr
 The CMake build system will detect the tookit automatically. If the automatic process fails, the build system will compile the library without the CUDA support.  please use -DCUDA_TOOLKIT_ROOT_DIR to manually specify the path.
 
 ## Obtaining OPS
-
+```bash
+git clone https://github.com/gihanmudalige/OPS.git
+```
+    
 ## Build OPS Back-end Libraries and Example Applications
 ### Using cmake
 #### Build the library and example applications together
