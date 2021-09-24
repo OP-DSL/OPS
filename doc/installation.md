@@ -1,4 +1,4 @@
-# Installation
+# Getting Started
 
 **Note: The current CMakefile and relevant instructions are mainly tested on linux-based systems including Windows Subsystem for Linux**
 
@@ -39,7 +39,7 @@
 ## Obtaining OPS
 
 ## Build OPS back-end libraries example applications
-### Using `cmake`
+### Using cmake
 #### Build the library and example applications together
 
   Create a build directory, and run CMake (version 3.18 or newer)
@@ -94,7 +94,7 @@ The current tests are mainly based on the applications.
   <!-- * `-DHDF5_PREFER_PARALLEL=ON` - build using parallel HDF5, rather than serial HDF5 libraries -->
   <!-- * `-DBUILD_OPS_FROTRAN=ON` - enable building OPS Fortran libraries. -->
 
-### Using regular `Makefiles`
+### Using regular Makefiles
 #### Build library
 #### Build application
 #### Makefile options
