@@ -144,5 +144,5 @@ here some needs connected with a 3D application:
 The latest proposal is to handle all of these different requirements
 through stencil definitions.
 
-# OPS API - C++
-# OPS API - Fortran
+# OPS API 
+
