@@ -36,9 +36,11 @@
   * `MPI_HOME` - Installation directory of MPI (to build MPI based distributed memory libs and applications) only needed if MPI not installed in standard locations
   * `HDF5_ROOT` - Installation directory of HDF5 (to support HDF5 based File I/O) if HDF5 not installed in standard location -->
 
+## Obtaining OPS
 
 ## Build OPS back-end libraries example applications
-### Build the library and example applications together
+### Using `cmake`
+#### Build the library and example applications together
 
   Create a build directory, and run CMake (version 3.18 or newer)
   ```bash
@@ -51,7 +53,7 @@
   ```
 After installation, the library and the python translator can be found at the direcory specified by CMAKE_INSTALL_PREFIX, together with the executable files for applications at APP_INSTALL_DIR.
 
-###  Build the library and example applications separately
+####  Build the library and example applications separately
 
 In this mode, the library can be firstly built and installed as
 
@@ -72,14 +74,14 @@ then the application can be built as
   cmake ${PATH_TO_APPS} -DOPS_INSTALL_DIR=$HOME/OPS-INSTALL -DOPS_TEST=ON -DAPP_INSTALL_DIR=$HOME/OPS-APP -DGPU_NUMBER=1
   make # IEEE=1 this option is important for applications to get accurate results
   ```
-### Tests
+#### Tests
 
 A few tasks for testing codes can be run by
 ```bash
   make test
   ```
 The current tests are mainly based on the applications.
-### Options of interest to specify to `cmake` include:
+#### `cmake` options
 
   * `-DCMAKE_BUILD_TYPE=Release` - enable optimizations
   * `-DBUILD_OPS_APPS=ON` - build example applications (Library CMake only)
@@ -92,3 +94,15 @@ The current tests are mainly based on the applications.
   <!-- * `-DHDF5_PREFER_PARALLEL=ON` - build using parallel HDF5, rather than serial HDF5 libraries -->
   <!-- * `-DBUILD_OPS_FROTRAN=ON` - enable building OPS Fortran libraries. -->
 
+### Using regular `Makefiles`
+#### Build library
+#### Build application
+#### Makefile options
+
+## Running example applications
+### CloverLeaf
+### CloverLeaf_3D_HDF5
+### poisson
+### adi
+
+## Runtime flags and options
