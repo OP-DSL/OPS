@@ -38,8 +38,8 @@
 
 ## Obtaining OPS
 
-## Build OPS back-end libraries and example applications
-### Using cmake
+## Build OPS Back-end Libraries and Example Applications
+### Using Cmake
 #### Build the library and example applications together
 
   Create a build directory, and run CMake (version 3.18 or newer)
@@ -94,15 +94,15 @@ The current tests are mainly based on the applications.
   <!-- * `-DHDF5_PREFER_PARALLEL=ON` - build using parallel HDF5, rather than serial HDF5 libraries -->
   <!-- * `-DBUILD_OPS_FROTRAN=ON` - enable building OPS Fortran libraries. -->
 
-### Using regular Makefiles
+### Using Makefiles
 #### Build back-end library
 #### Build an application
 #### Makefile options
 
-## Running example applications
+## Running Example Applications
 ### CloverLeaf
 ### CloverLeaf_3D_HDF5
 ### poisson
 ### adi
 
-## Runtime flags and options
+## Runtime Flags and Options
