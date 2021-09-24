@@ -48,7 +48,7 @@ git clone https://github.com/gihanmudalige/OPS.git
   make # IEEE=1 this option is important for applications to get accurate results
   make install # sudo is needed if a directory like /usr/local/ is chosen.
   ```
-After installation, the library and the python translator can be found at the direcory specified by CMAKE_INSTALL_PREFIX, together with the executable files for applications at APP_INSTALL_DIR.
+After installation, the library and the python translator can be found at the direcory specified by `CMAKE_INSTALL_PREFIX`, together with the executable files for applications at `APP_INSTALL_DIR`.
 
 ####  Build library and example applications separately
 
