@@ -77,9 +77,9 @@ A few tasks for testing codes can be run by
 ```bash
   make test
   ```
+The current tests are mainly based on the applications.
 -->
 
-The current tests are mainly based on the applications.
 #### cmake options
 
   * `-DCMAKE_BUILD_TYPE=Release` - enable optimizations
