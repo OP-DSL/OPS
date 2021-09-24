@@ -13,7 +13,6 @@ Welcome to Test's documentation!
    introduction.md
    installation.md
    devanapp.md
-   keyconcept.md
    opsapi.md
    devdoc.md
    pubs.md
