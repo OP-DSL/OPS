@@ -35,9 +35,9 @@ The CMake build system will detect the tookit automatically. If the automatic pr
 git clone https://github.com/gihanmudalige/OPS.git
 ```
     
-## Build OPS Back-end Libraries and Example Applications
+## Build OPS
 ### Using cmake
-#### Build the library and example applications together
+#### Build library and example applications together
 
   Create a build directory, and run CMake (version 3.18 or newer)
   ```bash
@@ -50,7 +50,7 @@ git clone https://github.com/gihanmudalige/OPS.git
   ```
 After installation, the library and the python translator can be found at the direcory specified by CMAKE_INSTALL_PREFIX, together with the executable files for applications at APP_INSTALL_DIR.
 
-####  Build the library and example applications separately
+####  Build library and example applications separately
 
 In this mode, the library can be firstly built and installed as
 
