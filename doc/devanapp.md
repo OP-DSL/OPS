@@ -1,5 +1,5 @@
 # Developing an OPS Application
 ## Tutorial
-## Supported paralleizations
-## Code-generation flags
+## Supported Paralleizations
+## Code-generation Flags
 ## File I/O
