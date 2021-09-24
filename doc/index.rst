@@ -11,8 +11,12 @@ Welcome to Test's documentation!
    :caption: Contents:
 
    introduction.md
-   keyconcept.md
    installation.md
+   devanapp.md
+   keyconcept.md
+   opsapi.md
+   devdoc.md
+   pubs.md
 
 
 
