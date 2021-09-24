@@ -3,7 +3,7 @@
 ### Frontend API parser
 ### Target Parallel Templates
 ### Elemental Kernel Transformations
-## Back-end library
+## Back-end Library
 ### Sequential and multi-threaded CPU
 ### MPI and Partitioning 
 ### HDF5 
