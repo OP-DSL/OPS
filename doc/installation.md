@@ -38,7 +38,7 @@
 
 ## Obtaining OPS
 
-## Build OPS back-end libraries example applications
+## Build OPS back-end libraries and example applications
 ### Using cmake
 #### Build the library and example applications together
 
@@ -95,8 +95,8 @@ The current tests are mainly based on the applications.
   <!-- * `-DBUILD_OPS_FROTRAN=ON` - enable building OPS Fortran libraries. -->
 
 ### Using regular Makefiles
-#### Build library
-#### Build application
+#### Build back-end library
+#### Build an application
 #### Makefile options
 
 ## Running example applications
