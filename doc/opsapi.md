@@ -1,4 +1,6 @@
-# Key concepts and structure
+# OPS API
+
+## Key concepts and structure
 
 An OPS application can generally be divided into two key parts:
 initialisation and parallel execution. During the initialisation phase,
@@ -144,5 +146,5 @@ here some needs connected with a 3D application:
 The latest proposal is to handle all of these different requirements
 through stencil definitions.
 
-# OPS API 
+## OPS C++ API 
 
