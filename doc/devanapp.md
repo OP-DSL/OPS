@@ -1,4 +1,4 @@
-# Developing and OPS Application
+# Developing an OPS Application
 ## Tutorial
 ## Supported paralleizations
 ## Code-generation flags
