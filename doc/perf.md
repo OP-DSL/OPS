@@ -1,6 +1,6 @@
 # Performance Tuning
 
-## Compiler flags for vectorization
+## Vectorization
 ## Cache-blocking Tiling
 ## OpenMP with MPI
 ## CUDA arguments
