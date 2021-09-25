@@ -55,28 +55,28 @@ After installation, the library and the python translator can be found at the di
 In this mode, the library can be firstly built and installed as
 
 ```bash
-  mkdir build
-  cd build
-  # Please see below for CMake options
-  cmake ${PATH_TO_OPS}   -DCMAKE_INSTALL_PREFIX=$HOME/OPS-INSTALL
-  make # IEEE=1 this option is important for applications to get accurate results
-  make install # sudo is needed if a system direction is chosen,
-  ```
+mkdir build
+cd build
+# Please see below for CMake options
+cmake ${PATH_TO_OPS}   -DCMAKE_INSTALL_PREFIX=$HOME/OPS-INSTALL
+make # IEEE=1 this option is important for applications to get accurate results
+make install # sudo is needed if a system direction is chosen,
+```
 then the application can be built as
 
 ```bash
-  mkdir appbuild
-  cd appbuild
-  # Please see below for CMake options
-  cmake ${PATH_TO_APPS} -DOPS_INSTALL_DIR=$HOME/OPS-INSTALL -DOPS_TEST=ON -DAPP_INSTALL_DIR=$HOME/OPS-APP -DGPU_NUMBER=1
-  make # IEEE=1 this option is important for applications to get accurate results
-  ```
+mkdir appbuild
+cd appbuild
+# Please see below for CMake options
+cmake ${PATH_TO_APPS} -DOPS_INSTALL_DIR=$HOME/OPS-INSTALL -DOPS_TEST=ON -DAPP_INSTALL_DIR=$HOME/OPS-APP -DGPU_NUMBER=1
+make # IEEE=1 this option is important for applications to get accurate results
+```
 <!-- #### Tests
 
 A few tasks for testing codes can be run by
 ```bash
-  make test
-  ```
+make test
+```
 The current tests are mainly based on the applications.
 -->
 
@@ -99,8 +99,34 @@ The current tests are mainly based on the applications.
 * `HDF5_ROOT` - Installation directory of HDF5 (to support HDF5 based File I/O) if HDF5 not installed in standard location -->
 
 ### Using Makefiles
+#### Set up environmental variables:
+
+  * `OPS_COMPILER` - compiler to be used (Currently supports Intel, PGI and Cray compilers, but others can be easily incorporated by extending the Makefiles used in step 2 and 3)
+  * `OPS_INSTALL_PATH` - Installation directory of OPS/ops
+  * `CUDA_INSTALL_PATH - Installation directory of CUDA, usually `/usr/local/cuda` (to build CUDA libs and applications)
+  * `OPENCL_INSTALL_PATH` - Installation directory of OpenCL, usually `/usr/local/cuda` for NVIDIA OpenCL implementation (to build OpenCL libs and applications)
+  * `MPI_INSTALL_PATH` - Installation directory of MPI (to build MPI based distributed memory libs and applications)
+  * `HDF5_INSTALL_PATH` - Installation directory of HDF5 (to support HDF5 based File I/O)
+
+See example scripts (e.g. source_intel, source_pgi_15.10, source_cray) under `OPS/ops/` that sets up the environment for building with various compilers (Intel, PGI, Cray).
+
 #### Build back-end library
-#### Build an application
+For C/C++ back-end use Makefile under `OPS/ops/c` (modify Makefile if required). The libraries will be built in `OPS/ops/c/lib`
+```bash
+cd $OPS_INSTALL_PATH/c
+make
+```
+For Fortran back-end use Makefile under `OPS/ops/fortran` (modify Makefile if required). The libraries will be built in `OPS/ops/fortran/lib`
+```bash
+cd $OPS_INSTALL_PATH/fortran
+make
+```
+#### Build exampe applications
+For example to build CloverLeaf_3D under `OPS/apps/c/CloverLeaf_3D`
+```bash  
+cd ../apps/c/Cloverleaf_3D/
+make
+```  
 #### Makefile options
 
 ## Running Example Applications
