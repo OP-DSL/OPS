@@ -38,6 +38,12 @@ The HIP backend targets AMD GPUs which are supported by the ROCm stack
 
 **Tridiagonal Solver**
 
+To use the tridiagonal solver OPS API in applications and build example applications such as `adi`, `adi_burger` and `adi_burger_3D` the open source tridiagonal solver (scalar) library needs to be cloned and built from the [Tridsolver repository](https://github.com/OP-DSL/tridsolver). 
+```bash
+git clone https://github.com/OP-DSL/tridsolver.git
+```
+Details on building scalar tridiagonal solver library can be found in the [README](https://github.com/OP-DSL/tridsolver/blob/master/scalar/README) file located at the appropriate subdirectory.
+
 ## Obtaining OPS
 The latest OPS source code can be obtained by cloning the [OPS repository](https://github.com/OP-DSL/OPS) using
 ```bash
