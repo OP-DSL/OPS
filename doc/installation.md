@@ -39,8 +39,9 @@ The HIP backend targets AMD GPUs which are supported by the ROCm stack
 **Tridiagonal Solver**
 
 ## Obtaining OPS
+The latest OPS source code can be obtained by cloning the [OPS repository](https://github.com/OP-DSL/OPS) using
 ```bash
-git clone https://github.com/gihanmudalige/OPS.git
+git clone https://github.com/OP-DSL/OPS.git
 ```
     
 ## Build OPS
