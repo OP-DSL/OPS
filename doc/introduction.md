@@ -23,7 +23,7 @@ To cite OPS, please reference the following paper:
   pages={873-886},
   doi={10.1109/TPDS.2017.2778161}}
 ```
-Full list of publications from the OPS project can be found in the [Publications](https://opensbli.readthedocs.io/en/latest/citing.html) section.
+Full list of publications from the OPS project can be found in the [Publications](https://ops-dsl.readthedocs.io/en/markdowndocdev/pubs.html) section.
 
 ## Support
 The preferred method of reporting bugs and issues with OPS is to submit an issue via the repository’s issue tracker. Users can also email the authors directly by  contacting the [OP-DSL team](https://op-dsl.github.io/about.html). 
