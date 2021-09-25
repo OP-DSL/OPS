@@ -40,6 +40,6 @@ To cite OPS, please reference the following paper:
 ## Contact
 If you wish to report a bug with the software, please contact the [OP-DSL team](https://op-dsl.github.io/about.html)
 
-## Licence 
+## License 
 OPS is released as an open-source project under the BSD 3-Clause License. See the file called [LICENSE](https://github.com/OP-DSL/OPS/blob/master/LICENSE) for more information.
 
