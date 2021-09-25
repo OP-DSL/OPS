@@ -5,8 +5,8 @@ from distutils.core import setup
 setup(name='ops',
       version='dev',
       description='OPS is an API with associated libraries and preprocessors to generate parallel executables for applications on mulit-block structured meshes.',
-      author='Mike Giles, Istvan Reguly, Gihan Mudalige, and others',
-      url='http://www.oerc.ox.ac.uk/projects/ops',
+      author='Gihan Mudalige, Istvan Reguly, Mike Giles, and others',
+      url='https://op-dsl.github.io/',
       packages=['ops_translator', 'ops_translator.c', 'ops_translator.fortran'],
       scripts=[],
       classifiers=[
