@@ -60,7 +60,7 @@ git clone https://github.com/OP-DSL/OPS.git
   cd build
   # Please see below for CMake options
   cmake ${PATH_TO_OPS} -DBUILD_OPS_APPS=ON -DOPS_TEST=ON -DAPP_INSTALL_DIR=$HOME/OPS-APP -DCMAKE_INSTALL_PREFIX=$HOME/OPS-INSTALL -DGPU_NUMBER=1
-  make # IEEE=1 this option is important for applications to get accurate results
+  make # IEEE=1 enable IEEE flags in compiler
   make install # sudo is needed if a directory like /usr/local/ is chosen.
   ```
 After installation, the library and the python translator can be found at the direcory specified by `CMAKE_INSTALL_PREFIX`, together with the executable files for applications at `APP_INSTALL_DIR`.
@@ -74,7 +74,7 @@ mkdir build
 cd build
 # Please see below for CMake options
 cmake ${PATH_TO_OPS}   -DCMAKE_INSTALL_PREFIX=$HOME/OPS-INSTALL
-make # IEEE=1 this option is important for applications to get accurate results
+make # IEEE=1 enable IEEE flags in compiler
 make install # sudo is needed if a system direction is chosen,
 ```
 then the application can be built as
