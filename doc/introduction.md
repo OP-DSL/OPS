@@ -2,7 +2,7 @@
 
 ## Overview
 
-[OPS](https://github.com/OP-DSL/OPS)(Oxford Parallel library for Structured mesh solvers) is a high-level embedded domain specific language for writing **multi-block structured mesh** algorithms, and the corresponding software library and code translation tools to enable automatic parallelisation of the high-level code on multi-core and many-core architectures. Multi-block structured grids consists of an unstructured collection of structured meshes/grids. These pages provide detailed documentation on using OPS, including an installation guide, developing and running OPS applications, the OPS API, developer documentation and performance tuning.
+[OPS](https://github.com/OP-DSL/OPS) (Oxford Parallel library for Structured mesh solvers) is a high-level embedded domain specific language for writing **multi-block structured mesh** algorithms, and the corresponding software library and code translation tools to enable automatic parallelisation of the high-level code on multi-core and many-core architectures. Multi-block structured grids consists of an unstructured collection of structured meshes/grids. These pages provide detailed documentation on using OPS, including an installation guide, developing and running OPS applications, the OPS API, developer documentation and performance tuning.
 
 ## Licencing
 OPS is released as an open-source project under the BSD 3-Clause License. See the file called [LICENSE](https://github.com/OP-DSL/OPS/blob/master/LICENSE) for more information.
