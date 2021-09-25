@@ -27,9 +27,16 @@ Python2 is required by the OPS Python translator. The CMake build system will tr
 [HDF5](https://www.hdfgroup.org/solutions/hdf5) is required for parts of IO functionalities. The CMake build system **uses the parallel version by default** even for sequential codes, and automatically identify the library. If the automatic process fails, the path to the parallel HDF5 library can be specified by using `-DHDF5_ROOT`.
 
  **CUDA**
+The CUDA backend targets NVIDIA GPUs with a compute capability of 3.0 or greater.
 
 The CMake build system will detect the tookit automatically. If the automatic process fails, the build system will compile the library without the CUDA support.  Please use `-DCUDA_TOOLKIT_ROOT_DIR` to manually specify the path.
 
+**HIP**
+The HIP backend targets AMD GPUs which are supported by the ROCm stack
+
+**SYCL**
+
+**Tridiagonal Solver**
 
 ## Obtaining OPS
 ```bash
