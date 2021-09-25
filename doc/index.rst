@@ -14,6 +14,7 @@ Welcome to Test's documentation!
    installation.md
    devanapp.md
    opsapi.md
+   apps.md
    devdoc.md
    pubs.md
 
