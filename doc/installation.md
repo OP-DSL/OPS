@@ -130,10 +130,4 @@ make
 ```  
 <!---#### Makefile options -->
 
-## Running Example Applications
-### CloverLeaf
-### CloverLeaf_3D_HDF5
-### poisson
-### adi
-
 ## Runtime Flags and Options
