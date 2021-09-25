@@ -7,7 +7,7 @@
   **CMake**
 
 CMake 3.18 or newer is required for using the CMake building system. If the latest version is not installed/shipped by default, it can be downloaded from https://cmake.org/download/, e.g., using the following script.
-  ```bash
+  ```bash {r}
   version=3.19.0
   wget https://github.com/Kitware/CMake/releases/download/v$version/cmake-$version-Linux-x86_64.sh
   # Assume that CMake is going to be installed at /usr/local/cmake
