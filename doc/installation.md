@@ -86,8 +86,8 @@ The current tests are mainly based on the applications.
   * `-DCMAKE_BUILD_TYPE=Release` - enable optimizations
   * `-DBUILD_OPS_APPS=ON` - build example applications (Library CMake only)
   * `-DOPS_TEST=ON` - enable the tests
-  * `-DCMAKE_INSTALL_PREFIX=` - specify the installation direction for the library (/usr/local by default, Library CMake only)
-  * `-DAPP_INSTALL_DIR=` - specify the installation direction for the applications ($HOME/OPS-APPS by default)
+  * `-DCMAKE_INSTALL_PREFIX=` - specify the installation direction for the library (`/usr/local` by default, Library CMake only)
+  * `-DAPP_INSTALL_DIR=` - specify the installation direction for the applications (`$HOME/OPS-APPS` by default)
   * `-DGPU_NUMBER=` - specify the number of GPUs used in the tests
   * `-DOPS_INSTALL_DIR=` - specify where the OPS library is installed (Application CMake only, see [here](#build-the-library-and-example-applications-separately))
   * `-DOPS_VERBOSE_WARNING=ON` - show verbose output during building process
@@ -104,7 +104,7 @@ The current tests are mainly based on the applications.
 
   * `OPS_COMPILER` - compiler to be used (Currently supports Intel, PGI and Cray compilers, but others can be easily incorporated by extending the Makefiles used in step 2 and 3)
   * `OPS_INSTALL_PATH` - Installation directory of OPS/ops
-  * `CUDA_INSTALL_PATH - Installation directory of CUDA, usually `/usr/local/cuda` (to build CUDA libs and applications)
+  * `CUDA_INSTALL_PATH` - Installation directory of CUDA, usually `/usr/local/cuda` (to build CUDA libs and applications)
   * `OPENCL_INSTALL_PATH` - Installation directory of OpenCL, usually `/usr/local/cuda` for NVIDIA OpenCL implementation (to build OpenCL libs and applications)
   * `MPI_INSTALL_PATH` - Installation directory of MPI (to build MPI based distributed memory libs and applications)
   * `HDF5_INSTALL_PATH` - Installation directory of HDF5 (to support HDF5 based File I/O)
