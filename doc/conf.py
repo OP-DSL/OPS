@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Oxford Parallel library for Structured mesh solvers'
-copyright = '2013, Gihan Mudalige, Istvan Reguly, Mike Giles and [https://github.com/OP-DSL/OPS/blob/master/AUTHORS]'
+copyright = '2013, Gihan Mudalige, Istvan Reguly, Mike Giles and others'
 author = "Mike Giles, Istvan Reguly, Gihan Mudalige"
 
 # The full version, including alpha/beta/rc tags
