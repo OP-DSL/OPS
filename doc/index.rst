@@ -15,6 +15,7 @@ Welcome to OPS documentation!
    devanapp.md
    opsapi.md
    apps.md
+   perf.md
    devdoc.md
    pubs.md
 
