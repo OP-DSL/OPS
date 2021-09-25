@@ -1,4 +1,4 @@
-# Example Applications
+# Examples
 ## CloverLeaf  (2D, 3D and HDF5)
 ## poisson
 ## adi
