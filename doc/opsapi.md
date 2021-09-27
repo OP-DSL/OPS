@@ -2,7 +2,7 @@
 
 ## Overview
 
-The key characteristic of structured mesh applications is the implicit connectivity between neighbouring mesh elements (such as vertices, cells). The main idea is that operations involve looping over a "rectangular" multi-dimensional set of mesh points using one or more "stencils" to access data. In multi-block meshes, we have several structured blocks.  The connectivity between the faces of different blocks can be quite complex, and in particular they may not be oriented in the same way, i.e.~an $i,j$ face of one block may correspond to the $j,k$ face of another block.  This is awkward and hard to handle simply.
+The key characteristic of structured mesh applications is the implicit connectivity between neighboring mesh elements (such as vertices, cells). The main idea is that operations involve looping over a "rectangular" multi-dimensional set of mesh points using one or more "stencils" to access data. In multi-block meshes, we have several structured blocks.  The connectivity between the faces of different blocks can be quite complex, and in particular they may not be oriented in the same way, i.e.~an $i,j$ face of one block may correspond to the $j,k$ face of another block.  This is awkward and hard to handle simply.
 
 ## Key Concepts and Structure
 
