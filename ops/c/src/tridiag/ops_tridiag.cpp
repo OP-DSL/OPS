@@ -42,10 +42,6 @@
 #include "trid_cpu.h"
 #include <ops_exceptions.h>
 
-void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
-  // dummy routine for non-GPU backends
-}
-
 void ops_tridMultiDimBatch(
     int ndim,      // number of dimensions, ndim <= MAXDIM = 8
     int solvedim,  // user chosen dimension to perform solve
@@ -58,7 +54,10 @@ void ops_tridMultiDimBatch(
             // array containing d column vectors of individual problems
     ops_dat u,
     int solve_method,
-    int batch_size
+    int batch_size,
+    double jacobi_rtol, // Used for the JACOBI solving strategy for the MPI solves
+    double jacobi_atol, // Do not need to be set for other solving strategies
+    int jacobi_maxiter // Or for single node solve
     ) {
 
   for (int i = 0; i < 3; i++) {
@@ -115,7 +114,10 @@ void ops_tridMultiDimBatch_Inc(
             // array containing d column vectors of individual problems
     ops_dat u,
     int solve_method,
-    int batch_size
+    int batch_size,
+    double jacobi_rtol, // Used for the JACOBI solving strategy for the MPI solves
+    double jacobi_atol, // Do not need to be set for other solving strategies
+    int jacobi_maxiter // Or for single node solve
     ) {
 
   // check if sizes match
