@@ -4,13 +4,6 @@
 
 The key characteristic of structured mesh applications is the implicit connectivity between neighbouring mesh elements (such as vertices, cells). The key idea is that operations involve looping over a "rectangular" multi-dimensional set of mesh points using one or more "stencils" to access data. In multi-block meshes, we have several structured blocks.  The connectivity between the faces of different blocks can be quite complex, and in particular they may not be oriented in the same way, i.e.~an $i,j$ face of one block may correspond to the $j,k$ face of another block.  This is awkward and hard to handle simply.
 
-To clarify some of the important issues in the API, we note here some needs connected with a 3D application:
-*   When looping over the interior with loop indices $i,j,k$, often there are 1D arrays which are referenced using just one of the indices.
-*   To implement boundary conditions, we often loop over a 2D face, accessing both the 3D dataset and data from a 2D dataset.
-*   To implement periodic boundary conditions using dummy "halo" points, we sometimes have to copy one plane of boundary data to another.  e.g. if the first dimension has size $I$ then we might copy the plane $i=I-2$ to plane $i=0$, and plane $i=1$ to plane $i=I-1$.
-*   In multigrid, we are working with two grids with one having twice as many points as the other in each direction. To handle this we require a stencil with a non-unit stride.
-*   In multi-block grids, we have several structured blocks. The connectivity between the faces of different blocks can be quite complex, and in particular they may not be oriented in the same way, i.e. an $i,j$ face of one block may correspond to the $j,k$ face of another block. 
-
 ## Key concepts and structure
 
 An OPS application can generally be divided into two key parts: (1) initialisation and (2) parallel execution. During the initialisation phase, one or more blocks ( we call these `ops_block`s) are defined: these only have a dimensionality (i.e. 1D, 2D, etc.), and serve to group datasets together. Datasets are defined on a block, and have a specific size (in each dimension of the block), which may be slightly different across different datasets (e.g. staggered grids), in some directions they may be degenerate (a size of 1), or they can represent data associated with different multigrid levels (where their size if a multiple or a fraction of other datasets). Datasets can be declared with empty (NULL) pointers, then OPS will allocate the appropriate amount of memory, may be passed non-NULL pointers (currently only supported in non-MPI environments), in which case OPS will assume the memory is large enough for the data and the block halo, and there are HDF5 dataset declaration routines which allow the distributed reading of datasets from HDF5 files. The concept of blocks is necessary to group datasets together, as in a multi-block problem, in a distributed memory environment, OPS needs to be able to determine how to
@@ -98,34 +91,14 @@ blocks can be quite complex, and in particular they may not be oriented
 in the same way, i.e. an $i,j$ face of one block may correspond to the
 $j,k$ face of another block. This is awkward and hard to handle simply.
 
-To clarify some of the important issues in designing the API, we note
-here some needs connected with a 3D application:
+To clarify some of the important issues in the API, we note here some needs connected with a 3D application:
+*   When looping over the interior with loop indices $i,j,k$, often there are 1D arrays which are referenced using just one of the indices.
+*   To implement boundary conditions, we often loop over a 2D face, accessing both the 3D dataset and data from a 2D dataset.
+*   To implement periodic boundary conditions using dummy "halo" points, we sometimes have to copy one plane of boundary data to another.  e.g. if the first dimension has size $I$ then we might copy the plane $i=I-2$ to plane $i=0$, and plane $i=1$ to plane $i=I-1$.
+*   In multigrid, we are working with two grids with one having twice as many points as the other in each direction. To handle this we require a stencil with a non-unit stride.
+*   In multi-block grids, we have several structured blocks. The connectivity between the faces of different blocks can be quite complex, and in particular they may not be oriented in the same way, i.e. an $i,j$ face of one block may correspond to the $j,k$ face of another block. 
 
--   When looping over the interior with loop indices $i,j,k$, often
-    there are 1D arrays which are referenced using just one of the
-    indices.
-
--   To implement boundary conditions, we often loop over a 2D face,
-    accessing both the 3D dataset and data from a 2D dataset.
-
--   To implement periodic boundary conditions using dummy "halo" points,
-    we sometimes have to copy one plane of boundary data to another.
-    e.g. if the first dimension has size $I$ then we might copy the
-    plane $i=I\!-\!2$ to plane $i=0$, and plane $i=1$ to plane
-    $i=I\!-\!1$.
-
--   In multigrid, we are working with two grids with one having twice as
-    many points as the other in each direction. To handle this we
-    require a stencil with a non-unit stride.
-
--   In multi-block grids, we have several structured blocks. The
-    connectivity between the faces of different blocks can be quite
-    complex, and in particular they may not be oriented in the same way,
-    i.e. an $i,j$ face of one block may correspond to the $j,k$ face of
-    another block. This is awkward and hard to handle simply.
-
-The latest proposal is to handle all of these different requirements
-through stencil definitions.
+OPS handle all of these different requirements through stencil definitions.
 
 ## OPS C++ API 
 
