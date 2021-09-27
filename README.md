@@ -37,8 +37,8 @@ To cite OPS, please reference the following paper:
   doi={10.1109/TPDS.2017.2778161}}
 ```
 
-## Contact
-If you wish to report a bug with the software, please contact the [OP-DSL team](https://op-dsl.github.io/about.html)
+## Support and Contact
+The preferred method of reporting bugs and issues with OPS is to submit an issue via the repository’s issue tracker. Users can also email the authors directly by contacting the the [OP-DSL team](https://op-dsl.github.io/about.html).
 
 ## Contributing
 
