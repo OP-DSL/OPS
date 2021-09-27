@@ -1,6 +1,6 @@
 # OPS
 
-OPS (Oxford Parallel library for Structured mesh solvers) is a high-level embedded domain specific language for writing **multi-block structured mesh** algorithms, and the corresponding software library and code translation tools to enable automatic parallelisation on multi-core and many-core architectures. Multi-block structured meshes consists of an unstructured collection of structured meshes. The OPS API is embedded in C/C++ and Fortran.
+OPS (Oxford Parallel library for Structured mesh solvers) is a high-level embedded domain specific language for writing **multi-block structured mesh** algorithms, and the corresponding software library and code translation tools to enable automatic parallelisation on multi-core and many-core architectures. Multi-block structured meshes. The OPS API is embedded in C/C++ and Fortran.
 
 
 [![Build Status](https://gitlab.com/op-dsl-ci/ops-ci/badges/master/pipeline.svg)](https://gitlab.com/op-dsl-ci/ops-ci) 
