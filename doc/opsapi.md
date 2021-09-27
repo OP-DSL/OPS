@@ -2,9 +2,6 @@
 
 ## Overview
 
-Many of the API and library follows the structure of the OP2 high-level library for unstructured mesh
-applications~\cite{op2}.
-
 The key characteristic of structured mesh applications is the implicit connectivity between neighbouring mesh elements (such as vertices, cells). The key idea is that operations involve looping over a "rectangular" multi-dimensional set of mesh points using one or more "stencils" to access data. In multi-block meshes, we have several structured blocks.  The connectivity between the faces of different blocks can be quite complex, and in particular they may not be oriented in the same way, i.e.~an $i,j$ face of one block may correspond to the $j,k$ face of another block.  This is awkward and hard to handle simply.
 
 To clarify some of the important issues in the API, we note here some needs connected with a 3D application:
