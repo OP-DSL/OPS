@@ -17,81 +17,23 @@ with repeated calls to `ops_decl_const`.
 
 The initialisation phase is terminated by a call to `ops_partition`.
 
-The bulk of the application consists of parallel loops, implemented
-using calls to `ops_par_loop`. These constructs work with datasets,
-passed through the opaque `ops_dat` handles declared during the
-initialisation phase. The iterations of parallel loops are semantically
-independent, and it is the responsibility of the user to enforce this:
-the order in which iterations are executed cannot affect the result
-(within the limits of floating point precision). Parallel loops are
-defined on a block, with a prescribed iteration range that is always
-defined from the perspective of the dataset written/modified (the sizes
-of datasets, particularly in multigrid situations, may be very
-different). Datasets are passed in using `ops_arg_dat`, and during
-execution, values at the current grid point will be passed to the user
-kernel. These values are passed wrapped in a templated `ACC<>` object
-(templated on the type of the data), whose parentheses operator is
-overloaded, which the user must use to specify the relative offset to
-access the grid point's neighbours (which accesses have to match the the
-declared stencil). Datasets written may only be accessed with a
-one-point, zero-offset stencil (otherwise the parallel semantics may be
-violated).
+The bulk of the application consists of parallel loops, implemented using calls to `ops_par_loop`. These constructs work with datasets, passed through the opaque `ops_dat` handles declared during the initialisation phase. The iterations of parallel loops are semantically independent, and it is the responsibility of the user to enforce this:
+the order in which iterations are executed cannot affect the result (within the limits of floating point precision). Parallel loops are defined on a block, with a prescribed iteration range that is always defined from the perspective of the dataset written/modified (the sizes of datasets, particularly in multigrid situations, may be very
+different). Datasets are passed in using `ops_arg_dat`, and during execution, values at the current grid point will be passed to the user kernel. These values are passed wrapped in a templated `ACC<>` object (templated on the type of the data), whose parentheses operator is overloaded, which the user must use to specify the relative offset to
+access the grid point's neighbours (which accesses have to match the the declared stencil). Datasets written may only be accessed with a one-point, zero-offset stencil (otherwise the parallel semantics may be violated).
 
-Other than datasets, one can pass in read-only scalars or small arrays
-that are iteration space invariant with `ops_arg_gbl` (typically
-weights, $\delta t$, etc. which may be different in different loops).
-The current iteration index can also be passed in with `ops_arg_idx`,
-which will pass a globally consistent index to the user kernel (i.e.
+Other than datasets, one can pass in read-only scalars or small arrays that are iteration space invariant with `ops_arg_gbl` (typically weights, $\delta t$, etc. which may be different in different loops). The current iteration index can also be passed in with `ops_arg_idx`, which will pass a globally consistent index to the user kernel (i.e.
 also under MPI).
 
-Reductions in loops are done using the ops_arg_reduce argument, which
-takes a reduction handle as an argument. The result of the reduction can
-then be acquired using a separate call to `ops_reduction_result`. The
-semantics are the following: a reduction handle after it was declared is
-in an "uninitialised" state. The first time it is used as an argument to
-a loop, its type is determined (increment/min/max), and is initialised
-appropriately $(0,\infty,-\infty)$, and subsequent uses of the handle in
-parallel loops are combined together, up until the point, where the
-result is acquired using `ops_reduction_result`, which then sets it back
-to an uninitialised state. This also implies, that different parallel
-loops, which all use the same reduction handle, but are otherwise
-independent, are independent and their partial reduction results can be
-combined together associatively and commutatively.
+Reductions in loops are done using the `ops_arg_reduce` argument, which takes a reduction handle as an argument. The result of the reduction can then be acquired using a separate call to `ops_reduction_result`. The semantics are the following: a reduction handle after it was declared is in an "uninitialised" state. The first time it is used as an argument to a loop, its type is determined (increment/min/max), and is initialised appropriately $(0,\infty,-\infty)$, and subsequent uses of the handle in parallel loops are combined together, up until the point, where the result is acquired using `ops_reduction_result`, which then sets it back to an uninitialised state. This also implies, that different parallel loops, which all use the same reduction handle, but are otherwise independent, are independent and their partial reduction results can be combined together associatively and commutatively.
 
-OPS takes responsibility for all data, its movement and the execution of
-parallel loops. With different execution hardware and optimisations,
-this means OPS will re-organise data as well as execution (potentially
-across different loops), and therefore any data accesses or manipulation
-may only be done through the OPS API.
+OPS takes responsibility for all data, its movement and the execution of parallel loops. With different execution hardware and optimisations, this means OPS will **re-organise** data as well as execution (potentially across different loops), and therefore **any data accesses or manipulation must only be done through the OPS API**. 
 
-This restriction is exploited by a lazy execution mechanism in OPS. The
-idea is that OPS API calls that do not return a result can be not
-executed immediately, rather queued, and once an API call requires
-returning some data, operations in the queue are executed, and the
-result is returned. This allows OPS to analyse and optimise operations
-in the queue together. This mechanism is fully automated by OPS, and is
-used with the various \_tiled executables. For more information on how
-to use this mechanism for improving CPU performance, see Section
-[\[sec:tiling\]](#sec:tiling){reference-type="ref"
-reference="sec:tiling"}. Some API calls triggering the execution of
-queued operations include ops_reduction_result, and the functions in the
+This restriction is exploited by a lazy execution mechanism in OPS. The idea is that OPS API calls that do not return a result need not be executed immediately, rather queued, and once an API call requires returning some data, operations in the queue are executed, and the result is returned. This allows OPS to analyse and optimise operations
+in the queue together. This mechanism is fully automated by OPS, and is used with the various `_tiled` executables. For more information on how to use this mechanism for improving CPU performance, see Section on Tiling. Some API calls triggering the execution of queued operations include `ops_reduction_result`, and the functions in the
 data access API.
 
-
-Many of the API and library follows the structure of the OP2 high-level
-library for unstructured mesh applications [@op2]. However the
-structured mesh domain is distinct from the unstructured mesh
-applications domain due to the implicit connectivity between
-neighbouring mesh elements (such as vertices, cells) in structured
-meshes/grids. The key idea is that operations involve looping over a
-"rectangular" multi-dimensional set of grid points using one or more
-"stencils" to access data. In multi-block grids, we have several
-structured blocks. The connectivity between the faces of different
-blocks can be quite complex, and in particular they may not be oriented
-in the same way, i.e. an $i,j$ face of one block may correspond to the
-$j,k$ face of another block. This is awkward and hard to handle simply.
-
-To clarify some of the important issues in the API, we note here some needs connected with a 3D application:
+To clarify some of the important issues encountered when designing the OPS API, we note here some needs connected with a 3D application:
 *   When looping over the interior with loop indices $i,j,k$, often there are 1D arrays which are referenced using just one of the indices.
 *   To implement boundary conditions, we often loop over a 2D face, accessing both the 3D dataset and data from a 2D dataset.
 *   To implement periodic boundary conditions using dummy "halo" points, we sometimes have to copy one plane of boundary data to another.  e.g. if the first dimension has size $I$ then we might copy the plane $i=I-2$ to plane $i=0$, and plane $i=1$ to plane $i=I-1$.
