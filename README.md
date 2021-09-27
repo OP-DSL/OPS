@@ -40,6 +40,17 @@ To cite OPS, please reference the following paper:
 ## Contact
 If you wish to report a bug with the software, please contact the [OP-DSL team](https://op-dsl.github.io/about.html)
 
+## Contributing
+
+To contribute to OPS please use the following steps :
+
+1. Clone this repository (on your local system)
+2. Create a new branch in your cloned repository
+3. Make changes / contributions in your new branch
+4. Submit your changes by creating a Pull Request to the `develop` branch of the OPS repository
+
+The contributions in the `develop` branch will be merged into the master branch as we create a new release.
+
 ## License 
 OPS is released as an open-source project under the BSD 3-Clause License. See the file called [LICENSE](https://github.com/OP-DSL/OPS/blob/master/LICENSE) for more information.
 
