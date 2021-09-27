@@ -43,4 +43,10 @@ To further clarify some of the important issues encountered when designing the O
 OPS handle all of these different requirements through stencil definitions.
 
 ## OPS C++ API 
-
+### Initialisation declaration and termination routines
+### Diagnostic and output routines
+### Halo exchange
+### Parallel loop syntax
+### Stencils
+### Checkpointing
+### Access to OPS data
