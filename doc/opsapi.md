@@ -27,27 +27,36 @@ also under MPI).
 
 Reductions in loops are done using the `ops_arg_reduce` argument, which takes a reduction handle as an argument. The result of the reduction can then be acquired using a separate call to `ops_reduction_result`. The semantics are the following: a reduction handle after it was declared is in an "uninitialised" state. The first time it is used as an argument to a loop, its type is determined (increment/min/max), and is initialised appropriately $(0,\infty,-\infty)$, and subsequent uses of the handle in parallel loops are combined together, up until the point, where the result is acquired using `ops_reduction_result`, which then sets it back to an uninitialised state. This also implies, that different parallel loops, which all use the same reduction handle, but are otherwise independent, are independent and their partial reduction results can be combined together associatively and commutatively.
 
-OPS takes responsibility for all data, its movement and the execution of parallel loops. With different execution hardware and optimisations, this means OPS will **re-organise** data as well as execution (potentially across different loops), and therefore **any data accesses or manipulation must only be done through the OPS API**. 
+OPS takes responsibility for all data, its movement and the execution of parallel loops. With different execution hardware and optimisations, this means OPS will **re-organise** data as well as execution (potentially across different loops), and therefore **any data accesses or manipulation must only be done through the OPS API**.
 
 This restriction is exploited by a lazy execution mechanism in OPS. The idea is that OPS API calls that do not return a result need not be executed immediately, rather queued, and once an API call requires returning some data, operations in the queue are executed, and the result is returned. This allows OPS to analyse and optimise operations
 in the queue together. This mechanism is fully automated by OPS, and is used with the various `_tiled` executables. For more information on how to use this mechanism for improving CPU performance, see Section on Tiling. Some API calls triggering the execution of queued operations include `ops_reduction_result`, and the functions in the
 data access API.
 
 To further clarify some of the important issues encountered when designing the OPS API, we note here some needs connected with a 3D application:
-*   When looping over the interior with loop indices $i,j,k$, often there are 1D arrays which are referenced using just one of the indices.
-*   To implement boundary conditions, we often loop over a 2D face, accessing both the 3D dataset and data from a 2D dataset.
-*   To implement periodic boundary conditions using dummy "halo" points, we sometimes have to copy one plane of boundary data to another.  e.g. if the first dimension has size $I$ then we might copy the plane $i=I-2$ to plane $i=0$, and plane $i=1$ to plane $i=I-1$.
-*   In multigrid, we are working with two grids with one having twice as many points as the other in each direction. To handle this we require a stencil with a non-unit stride.
-*   In multi-block grids, we have several structured blocks. The connectivity between the faces of different blocks can be quite complex, and in particular they may not be oriented in the same way, i.e. an $i,j$ face of one block may correspond to the $j,k$ face of another block. 
+
+* When looping over the interior with loop indices $i,j,k$, often there are 1D arrays which are referenced using just one of the indices.
+* To implement boundary conditions, we often loop over a 2D face, accessing both the 3D dataset and data from a 2D dataset.
+* To implement periodic boundary conditions using dummy "halo" points, we sometimes have to copy one plane of boundary data to another.  e.g. if the first dimension has size $I$ then we might copy the plane $i=I-2$ to plane $i=0$, and plane $i=1$ to plane $i=I-1$.
+* In multigrid, we are working with two grids with one having twice as many points as the other in each direction. To handle this we require a stencil with a non-unit stride.
+* In multi-block grids, we have several structured blocks. The connectivity between the faces of different blocks can be quite complex, and in particular they may not be oriented in the same way, i.e. an $i,j$ face of one block may correspond to the $j,k$ face of another block.
 
 OPS handle all of these different requirements through stencil definitions.
 
-## OPS C++ API 
+## C/C++ API
+
 ### Initialisation and termination routines
+
 ### Declaration routines
+
 ### Diagnostic and output routines
+
 ### Halo exchange
+
 ### Parallel loop syntax
+
 ### Stencils
+
 ### Checkpointing
+
 ### Access to OPS data
