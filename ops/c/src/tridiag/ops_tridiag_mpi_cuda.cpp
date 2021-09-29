@@ -58,7 +58,8 @@ namespace {
     }
 
     MpiSolverParams* getMpiSolverParams(sub_block *sb, int solve_method,
-                                        int batch_size) {
+                                        int batch_size, double jacobi_rtol,
+                                        double jacobi_atol, int jacobi_maxiter) {
       MpiSolverParams::MPICommStrategy strategy;
       switch(solve_method) {
         case 0:
@@ -73,22 +74,39 @@ namespace {
         case 3:
           strategy = MpiSolverParams::LATENCY_HIDING_INTERLEAVED;
           break;
+        case 4:
+          strategy = MpiSolverParams::JACOBI;
+          break;
+        case 5:
+          strategy = MpiSolverParams::PCR;
+          break;
         default:
           throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: Unrecognised solving strategy");
       }
       if(trid_mpi_params == nullptr) {
         trid_mpi_params = new MpiSolverParams(sb->comm, sb->ndim, sb->pdims,
-                              batch_size, strategy);
+                                              strategy);
         trid_sb = sb;
+        trid_mpi_params->mpi_batch_size = batch_size;
+        trid_mpi_params->jacobi_rtol    = jacobi_rtol;
+        trid_mpi_params->jacobi_atol    = jacobi_atol;
+        trid_mpi_params->jacobi_maxiter = jacobi_maxiter;
       } else {
         if(sb != trid_sb) {
           delete trid_mpi_params;
           trid_mpi_params = new MpiSolverParams(sb->comm, sb->ndim, sb->pdims,
-                              batch_size, strategy);
+                                                strategy);
           trid_sb = sb;
+          trid_mpi_params->mpi_batch_size = batch_size;
+          trid_mpi_params->jacobi_rtol    = jacobi_rtol;
+          trid_mpi_params->jacobi_atol    = jacobi_atol;
+          trid_mpi_params->jacobi_maxiter = jacobi_maxiter;
         } else {
           trid_mpi_params->strategy = strategy;
           trid_mpi_params->mpi_batch_size = batch_size;
+          trid_mpi_params->jacobi_rtol    = jacobi_rtol;
+          trid_mpi_params->jacobi_atol    = jacobi_atol;
+          trid_mpi_params->jacobi_maxiter = jacobi_maxiter;
         }
       }
       return trid_mpi_params;
@@ -96,28 +114,6 @@ namespace {
   };
 
   MpiSolverParamsWrapper mpiParams;
-}
-
-void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
-  // dummy routine for non-GPU backends
-}
-
-void rms(char *name, FP *array, int nx_pad, int nx, int ny, int nz) {
-  // Sum the square of values in app.h_u
-  double sum = 0.0;
-  for (int k = 0; k < nz; k++) {
-    for (int j = 0; j < ny; j++) {
-      for (int i = 0; i < nx; i++) {
-        int ind = k * nx_pad * ny + j * nx_pad + i;
-        // sum += array[ind]*array[ind];
-        sum += array[ind];
-      }
-    }
-  }
-  double global_sum = 0.0;
-  MPI_Allreduce(&sum, &global_sum,1, MPI_DOUBLE,MPI_SUM, OPS_MPI_GLOBAL);
-  ops_printf("intermediate %s sum = %lg\n", name, global_sum);
-
 }
 
 void ops_tridMultiDimBatch(
@@ -131,7 +127,10 @@ void ops_tridMultiDimBatch(
                // array containing d column vectors of individual problems
     ops_dat u,
     int solve_method,
-    int batch_size
+    int batch_size,
+    double jacobi_rtol, // Used for the JACOBI solving strategy for the MPI solves
+    double jacobi_atol, // Do not need to be set for other solving strategies
+    int jacobi_maxiter // Or for single node solve
     ) {
 
   // check if sizes match
@@ -153,18 +152,6 @@ void ops_tridMultiDimBatch(
     dims_calc[i] = a->size[i] - pads_m[i] - pads_p[i];
   }
 
-  int offset;
-  if(ndim == 1) {
-    offset = pads_m[0]; // x padding
-  } else if (ndim == 2) {
-    offset = pads_m[1] * a->size[0] // y padding
-             + pads_m[0]; // x padding
-  } else {
-    offset = pads_m[2] * a->size[1] * a->size[0] // z padding
-             + pads_m[1] * a->size[0] // y padding
-             + pads_m[0]; // x padding
-  }
-
   // compute tridiagonal system sizes
   ops_block block = a->block;
   sub_block *sb = OPS_sub_block_list[block->index];
@@ -181,9 +168,12 @@ void ops_tridMultiDimBatch(
   double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
   double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
-  tridDmtsvStridedBatchMPI(*(mpiParams.getMpiSolverParams(sb, solve_method, batch_size)),
-                           a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
-                           dims_calc, a->size, offset);
+  MpiSolverParams *tridMPIParams = mpiParams.getMpiSolverParams(sb, solve_method,
+                                          batch_size, jacobi_rtol, jacobi_atol,
+                                          jacobi_maxiter);
+
+  tridDmtsvStridedBatchMPI(*tridMPIParams, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
+                           ndim, solvedim, dims_calc, a->size);
 
   // Release pointer access back to OPS
   ops_dat_release_raw_data(u, 0, OPS_READ);
@@ -204,7 +194,10 @@ void ops_tridMultiDimBatch_Inc(
                // array containing d column vectors of individual problems
     ops_dat u,
     int solve_method,
-    int batch_size
+    int batch_size,
+    double jacobi_rtol, // Used for the JACOBI solving strategy for the MPI solves
+    double jacobi_atol, // Do not need to be set for other solving strategies
+    int jacobi_maxiter // Or for single node solve
     ) {
 
   // check if sizes match
@@ -226,18 +219,6 @@ void ops_tridMultiDimBatch_Inc(
     dims_calc[i] = a->size[i] - pads_m[i] - pads_p[i];
   }
 
-  int offset;
-  if(ndim == 1) {
-    offset = pads_m[0]; // x padding
-  } else if (ndim == 2) {
-    offset = pads_m[1] * a->size[0] // y padding
-             + pads_m[0]; // x padding
-  } else {
-    offset = pads_m[2] * a->size[1] * a->size[0] // z padding
-             + pads_m[1] * a->size[0] // y padding
-             + pads_m[0]; // x padding
-  }
-
   // compute tridiagonal system sizes
   ops_block block = a->block;
   sub_block *sb = OPS_sub_block_list[block->index];
@@ -252,18 +233,17 @@ void ops_tridMultiDimBatch_Inc(
   double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
   double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
+  MpiSolverParams *tridMPIParams = mpiParams.getMpiSolverParams(sb, solve_method,
+                                          batch_size, jacobi_rtol, jacobi_atol,
+                                          jacobi_maxiter);
+
   // For now do not consider adding padding
-  tridDmtsvStridedBatchIncMPI(*(mpiParams.getMpiSolverParams(sb, solve_method, batch_size)),
-                              a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
-                              dims_calc, a->size, offset);
+  tridDmtsvStridedBatchIncMPI(*tridMPIParams, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
+                              ndim, solvedim, dims_calc, a->size);
 
   ops_dat_release_raw_data(u, 0, OPS_RW);
   ops_dat_release_raw_data(d, 0, OPS_READ);
   ops_dat_release_raw_data(c, 0, OPS_READ);
   ops_dat_release_raw_data(b, 0, OPS_READ);
   ops_dat_release_raw_data(a, 0, OPS_READ);
-}
-
-void ops_exitTridMultiDimBatchSolve() {
-  // free memory allocated during tridiagonal solve e.g. mpi buffers
 }

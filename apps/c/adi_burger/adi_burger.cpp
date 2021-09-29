@@ -127,10 +127,6 @@ int main(int argc, const char **argv) {
     ops_printf("\nGrid dimensions: %d x %d\n", nx, ny);
     ops_diagnostic_output();
 
-    // initialize Tridiagonal Library
-    ops_initTridMultiDimBatchSolve(2 /*dimension*/,
-                                   size /*size in each dimension*/);
-
     /**-------- Initialize-------**/
     int iterRange[]{0, nx, 0, ny};
     // int iterRangeWithHalo[]{-haloDepth, nx + haloDepth, -haloDepth,

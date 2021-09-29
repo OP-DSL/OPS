@@ -56,7 +56,10 @@ void ops_tridMultiDimBatch_Inc(
                // array containing d column vectors of individual problems
     ops_dat u,
     int solve_method,
-    int batch_size
+    int batch_size,
+    double jacobi_rtol, // Used for the JACOBI solving strategy for the MPI solves
+    double jacobi_atol, // Do not need to be set for other solving strategies
+    int jacobi_maxiter // Or for single node solve
     ) {
 
   int opts[3] = {0,0,0}; // indicates different algorithms to use
@@ -95,7 +98,10 @@ void ops_tridMultiDimBatch(
                // array containing d column vectors of individual problems
     ops_dat u,
     int solve_method,
-    int batch_size
+    int batch_size,
+    double jacobi_rtol, // Used for the JACOBI solving strategy for the MPI solves
+    double jacobi_atol, // Do not need to be set for other solving strategies
+    int jacobi_maxiter // Or for single node solve
     ) {
 
 
@@ -123,8 +129,4 @@ void ops_tridMultiDimBatch(
   ops_dat_release_raw_data(c, 0, OPS_READ);
   ops_dat_release_raw_data(b, 0, OPS_READ);
   ops_dat_release_raw_data(a, 0, OPS_READ);
-}
-
-void ops_initTridMultiDimBatchSolve(int ndim, int *dims) {
-  initTridMultiDimBatchSolve(ndim, dims, dims);
 }
