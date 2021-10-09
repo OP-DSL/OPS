@@ -116,15 +116,15 @@ This routine defines a dataset.
 
 | Arguments      | Description |
 | ----------- | ----------- |
-block   |      structured block |
-dim     |      dimension of dataset (number of items per grid element) |
-size    |  size in each dimension of the block |
-base    |  base indices in each dimension of the block |
-d_m    |  padding from the face in the negative direction for each dimension (used for block halo) |
-d_p    |  padding from the face in the positive direction for each dimension (used for block halo) |
-data    |     input data of type *T* |
-type     |     the name of type used for output diagnostics (e.g. ``double``,``float``)|
-name     |     a name used for output diagnostics|
+|block   |      structured block |
+|dim     |      dimension of dataset (number of items per grid element) |
+|size    |  size in each dimension of the block |
+|base    |  base indices in each dimension of the block |
+|d_m    |  padding from the face in the negative direction for each dimension (used for block halo) |
+|d_p    |  padding from the face in the positive direction for each dimension (used for block halo) |
+|data    |     input data of type *T* |
+|type     |     the name of type used for output diagnostics (e.g. ``double``,``float``)|
+|name     |     a name used for output diagnostics|
 
 The `size` allows to declare different sized data arrays on a given
 `block`. `d_m` and `d_p` are depth of the "block halos" that are used to
@@ -158,7 +158,7 @@ This routine defines a global constant: a variable in global scope. Global const
 | ----------- | ----------- |
 |name |         a name used to identify the constant |
 |dim |           dimension of dataset (number of items per element) |
-|type |          the name of type used for output diagnostics (e.g. ``double'',``float'') |
+|type |          the name of type used for output diagnostics (e.g. ``double``, ``float``) |
 |data |          pointer to input data of type *T* |
 
 #### ops_decl_halo
@@ -205,7 +205,7 @@ This routine defines a collection of halos. Semantically, when an exchange is tr
 |nhalos|         number of halos in *halos* |
 |halos|           array of halos|
 
-#### ops_decl_reduction_handle}
+#### ops_decl_reduction_handle
 
 __ops_reduction ops_decl_reduction_handle(int size, char *type, char *name)__
 This routine defines a reduction handle to be used in a parallel loop
@@ -213,7 +213,7 @@ This routine defines a reduction handle to be used in a parallel loop
 | Arguments      | Description |
 | ----------- | ----------- |
 |size|      size of data in bytes |
-|type|          the name of type used for output diagnostics (e.g. ``double'',``float'') |
+|type|          the name of type used for output diagnostics (e.g. ``double``,``float``) |
 |name|          name of the dat used for output diagnostics|
 
 __{void ops_reduction_result(ops_reduction handle, T *result)
@@ -231,7 +231,7 @@ and ops_halo ops_decl_dat statements have been declared
 
 | Arguments      | Description |
 | ----------- | ----------- |
-|method|        string describing the partitioning method. Currently this string is not used internally, but is simply a place-holder to indicate different partitioning methods in the future. |
+|method| string describing the partitioning method. Currently this string is not used internally, but is simply a place-holder to indicate different partitioning methods in the future. |
 
 ### Diagnostic and output routines
 
@@ -306,7 +306,7 @@ a simple text editor
 |dat|  ops_dat to to be written|
 |file|     text file to write to|
 
-#### ops_timing_output}
+#### ops_timing_output
 
 __void ops_timing_output(FILE *os)__
 
@@ -316,11 +316,11 @@ Print OPS performance performance details to output stream
 | ----------- | ----------- |
 |os|    output stream, use stdout to print to standard out|
 
-#### ops_NaNcheck}
+#### ops_NaNcheck
 
 __void ops_NaNcheck(ops_dat dat)__
 
-Check if any of the values held in the \texttt{dat} is a NaN. If a NaN
+Check if any of the values held in the *dat* is a NaN. If a NaN
 is found, prints an error message and exits.
 
 | Arguments      | Description |
@@ -346,7 +346,7 @@ A parallel loop with N arguments has the following syntax:
 
 #### ops_par_loop
 
-__void ops_par_loop(\ void (*kernel)(...),char *name, ops_block block, int dims, int *range, ops_arg arg1,ops_arg arg2, ..., ops_arg argN )__
+__void ops_par_loop(void (*kernel)(...),char *name, ops_block block, int dims, int *range, ops_arg arg1,ops_arg arg2, ..., ops_arg argN )__
 
 | Arguments      | Description |
 | ----------- | ----------- |
@@ -357,7 +357,7 @@ __void ops_par_loop(\ void (*kernel)(...),char *name, ops_block block, int dims,
 |range|      iteration range array|
 |args|       arguments|
 
-The {\bf ops_arg} arguments in {\bf ops_par_loop} are provided by one of the
+The **ps_arg** arguments in **ops_par_loop** are provided by one of the
 following routines, one for global constants and reductions, and the other
 for OPS datasets.
 
@@ -454,7 +454,7 @@ accessed, for stencil point*p*, in dimension *m* are defined as
  stride[m]*loop_index[m] + stencil[p*dims+m]
 ```
 
- where ``loop_index[m]`` is the iteration index (within the
+where ``loop_index[m]`` is the iteration index (within the
 user-defined iteration space) in the different dimensions.
 
 If, for one or more dimensions, both ``stride[m]`` and
@@ -485,7 +485,7 @@ after a crash, the same number of MPI processes have to be used. To enable check
 
 __bool ops_checkpointing_init(const char *filename, double interval, int options)__
 
-Initialises the checkpointing system, has to be called after {\tt ops_partition}. Returns true if the application launches in restore
+Initialises the checkpointing system, has to be called after *ops_partition*. Returns true if the application launches in restore
 mode, false otherwise.
 
 | Arguments      | Description |
@@ -496,7 +496,7 @@ mode, false otherwise.
 
 * OPS_CHECKPOINT_INITPHASE - indicates that there are a number of parallel loops at the very beginning of the simulations which should be excluded from any checkpoint; mainly because they initialise datasets that do not change during the main body of the execution. During restore mode these loops are executed as usual. An example would be the computation of the mesh geometry, which can be excluded from the checkpoint if it is re-computed when recovering and restoring a checkpoint. The API call *void ops_checkpointing_initphase_done()* indicates the end of this initial phase.
 
-* OPS_CHECKPOINT_MANUAL_DATLIST - Indicates that the user manually controls the location of the checkpoint, and explicitly specifies the list of \texttt{ops_dat}s to be saved.
+* OPS_CHECKPOINT_MANUAL_DATLIST - Indicates that the user manually controls the location of the checkpoint, and explicitly specifies the list of *ops_dat*s to be saved.
 
 * OPS_CHECKPOINT_FASTFW - Indicates that the user manually controls the location of the checkpoint, and it also enables fast-forwarding, by skipping the execution of the
 application (even though none of the parallel loops would actually execute, there may be significant work outside of those) up to the checkpoint
@@ -561,7 +561,7 @@ it combines the manual datlist and fastfw calls, and triggers the creation of a 
 |nbytes| size of the payload in bytes|
 |payload| pointer to memory into which the payload is packed|
 
-\noindent The suggested use of these \textbf{manual} functions is of course when the optimal location for checkpointing
+The suggested use of these **manual** functions is of course when the optimal location for checkpointing
 is known - one of the ways to determine that is to use the built-in algorithm. More details of this will be reported
 in a tech-report on checkpointing, to be published later.
 
@@ -581,8 +581,12 @@ This routine returns the number of chunks of the given dataset held by the curre
 
 #### ops_dat_get_global_npartitions}
 
-__int ops_dat_get_global_npartitions(ops_dat dat)}
-{This routine returns the number of chunks of the given dataset held by all processes.}
+__int ops_dat_get_global_npartitions(ops_dat dat)__
+
+This routine returns the number of chunks of the given dataset held by all processes.
+
+| Arguments      | Description |
+| ----------- | ----------- |
 |dat|         the dataset
 
 #### ops_dat_get_extents
