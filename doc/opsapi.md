@@ -47,16 +47,634 @@ OPS handle all of these different requirements through stencil definitions.
 
 ### Initialisation and termination routines
 
+#### ops_init
+
+__void ops_init(int argc, char** argv, int diags_level)__
+
+This routine must be called before all other OPS routines
+
+| Arguments      | Description |
+| ----------- | ----------- |
+| argc, argv      | the usual command line arguments      |
+| diags_level   |  an integer which defines the level of debugging diagnostics and reporting to be performed |
+
+Currently, higher diags_levels does the following checks
+
+`diags_level` $=$ 1 : no diagnostics, default to achieve best runtime
+performance.
+
+`diags_level` $>$ 1 : print block decomposition and `ops_par_loop`
+timing breakdown.
+
+`diags_level` $>$ 4 : print intra-block halo buffer allocation feedback
+(for OPS internal development only)
+
+`diags_level` $>$ 5 : check if intra-block halo MPI sends depth match
+MPI receives depth (for OPS internal development only)
+
+#### ops_exit
+
+__void ops_exit()__
+
+This routine must be called last to cleanly terminate the OPS computation.
+
 ### Declaration routines
+
+#### ops_decl_block
+
+__ops_block ops_decl_block(int dims, char *name)__
+
+This routine defines a structured grid block.
+| Arguments      | Description |
+| ----------- | ----------- |
+| dims    | dimension of the block    |
+| name  |  a name used for output diagnostics |
+
+#### ops_decl_block_hdf5
+
+__ops_block ops_decl_block_hdf5(int dims, char *name, char *file)__
+
+This routine reads the details of a structured grid block from a named HDF5 file
+
+| Arguments      | Description |
+| ----------- | ----------- |
+| dims    | dimension of the block    |
+| name  |  a name used for output diagnostics |
+| file |hdf5 file to read and obtain the block information from|
+
+Although this routine does not read in any extra information about the
+block from the named HDF5 file than what is already specified in the
+arguments, it is included here for error checking (e.g. check if blocks
+defined in an HDF5 file is matching with the declared arguments in an
+application) and completeness.
+
+#### ops_decl_dat
+
+__ops_dat ops_decl_dat(ops block block, int dim, int *size, int *base, int *dm, int *d p, T *data, char *type, char *name)__
+
+This routine defines a dataset.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+block   |      structured block |
+dim     |      dimension of dataset (number of items per grid element) |
+size    |  size in each dimension of the block |
+base    |  base indices in each dimension of the block |
+d_m    |  padding from the face in the negative direction for each dimension (used for block halo) |
+d_p    |  padding from the face in the positive direction for each dimension (used for block halo) |
+data    |     input data of type *T* |
+type     |     the name of type used for output diagnostics (e.g. ``double``,``float``)|
+name     |     a name used for output diagnostics|
+
+The `size` allows to declare different sized data arrays on a given
+`block`. `d_m` and `d_p` are depth of the "block halos" that are used to
+indicate the offset from the edge of a block (in both the negative and
+positive directions of each dimension).
+
+#### ops_decl_dat_hdf5
+
+__ops_dat ops_decl_dat_hdf5(ops_block block, int dim, char *type, char *name, char *file)__
+
+This routine defines a dataset to be read in from a named hdf5 file
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|block  |   structured block|
+|dim     |  dimension of dataset (number of items per grid element)|
+type    |  the name of type used for output diagnostics (e.g. ``double``,``float``)|
+|name   |   name of the dat used for output diagnostics|
+|file   |   hdf5 file to read and obtain the data from|
+
+#### ops_decl_const
+
+__void ops_decl_const(char const * name, int dim, char const * type, T * data )__
+
+This routine defines a global constant: a variable in global scope. Global constants need to be declared upfront
+ so that they can be correctly handled for different parallelizations. For e.g CUDA on GPUs. Once defined
+ they remain unchanged throughout the program, unless changed by a call to ops_update_const(..). The ``name'' and``type''
+ parameters **must** be string literals since they are used in the code generation step
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|name |         a name used to identify the constant |
+|dim |           dimension of dataset (number of items per element) |
+|type |          the name of type used for output diagnostics (e.g. ``double'',``float'') |
+|data |          pointer to input data of type *T* |
+
+#### ops_decl_halo
+
+__ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir)__
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|from | origin dataset |
+|to|  destination dataset |
+|item_size |  defines an iteration size (number of indices to iterate over in each direction) |
+|from_base |  indices of starting point in \"from\" dataset|
+|to_base | indices of starting point in \"to\" dataset |
+|from_dir | direction of incrementing for \"from\" for each dimension of `iter_size` |
+|to_dir |  direction of incrementing for \"to\" for each dimension of `iter_size`|
+
+A from_dir \[1,2\] and a to_dir \[2,1\] means that x in the first block
+goes to y in the second block, and y in first block goes to x in second
+block. A negative sign indicates that the axis is flipped. (Simple
+example: a transfer from (1:2,0:99,0:99) to (-1:0,0:99,0:99) would use
+iter_size = \[2,100,100\], from_base = \[1,0,0\], to_base = \[-1,0,0\],
+from_dir = \[0,1,2\], to_dir = \[0,1,2\]. In more complex case this
+allows for transfers between blocks with different orientations.)
+
+#### ops_decl_halo_hdf5
+
+__ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char* file)__
+
+This routine reads in a halo relationship between two datasets defined on two different blocks from a named HDF5 file
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|from|      origin dataset|
+|to|        destination dataset|
+|file|      hdf5 file to read and obtain the data from|
+
+#### ops_decl_halo_group
+
+__ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos)__
+
+This routine defines a collection of halos. Semantically, when an exchange is triggered for all halos in a group, there is no order defined in which they are carried out.
+| Arguments      | Description |
+| ----------- | ----------- |
+|nhalos|         number of halos in *halos* |
+|halos|           array of halos|
+
+#### ops_decl_reduction_handle}
+
+__ops_reduction ops_decl_reduction_handle(int size, char *type, char *name)__
+This routine defines a reduction handle to be used in a parallel loop
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|size|      size of data in bytes |
+|type|          the name of type used for output diagnostics (e.g. ``double'',``float'') |
+|name|          name of the dat used for output diagnostics|
+
+__{void ops_reduction_result(ops_reduction handle, T *result)
+{This routine returns the reduced value held by a reduction handle. When OPS uses lazy execution, this will trigger the execution of all previously queued OPS operations.}
+
+|handle|  the *ops_reduction* handle |
+|result|  a pointer to write the results to, memory size has to match the declared |
+
+#### ops_partition
+
+__ops_partition(char *method)__
+
+Triggers a multi-block partitioning across a distributed memory set of processes. (links to a dummy function for single node parallelizations). This routine should only be called after all the ops_halo ops_decl_block
+and ops_halo ops_decl_dat statements have been declared
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|method|        string describing the partitioning method. Currently this string is not used internally, but is simply a place-holder to indicate different partitioning methods in the future. |
 
 ### Diagnostic and output routines
 
+#### ops_diagnostic_output
+
+__void ops_diagnostic_output()__
+
+This routine prints out various useful bits of diagnostic info about sets, mappings and datasets. Usually used right
+after an ops_partition() call to print out the details of the decomposition
+
+#### ops_printf
+
+__void ops_printf(const char * format, ...)__
+
+This routine simply prints a variable number of arguments; it is created is in place of the standard C
+printf function which would print the same on each MPI process
+
+#### ops_timers
+
+__void ops_timers(double *cpu, double *et)__
+ gettimeofday() based timer to start/end timing blocks of code
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|cpu|  variable to hold the CPU time at the time of invocation|
+|et| variable to hold the elapsed time at the time of invocation|
+
+#### ops_fetch_block_hdf5_file
+
+__void ops_fetch_block_hdf5_file(ops_block block, char *file)__
+
+Write the details of an ops_block to a named HDF5 file. Can be used over MPI (puts the data in an ops_dat into an
+HDF5 file using MPI I/O)
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|block|  ops_block to be written|
+|file|     hdf5 file to write to|
+
+#### ops_fetch_stencil_hdf5_file
+
+__void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char *file)__
+
+Write the details of an ops_block to a named HDF5 file. Can be used over MPI (puts the data in an ops_dat into an HDF5 file using MPI I/O)
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|stencil|  ops_stencil to be written
+|file|     hdf5 file to write to
+
+#### ops_fetch_dat_hdf5_file
+
+__void ops_fetch_dat_hdf5_file(ops_dat dat, const char *file)__
+
+Write the details of an ops_block to a named HDF5 file. Can be used over MPI (puts the data in an ops_dat into an
+HDF5 file using MPI I/O)
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dat|  ops_dat to be written|
+|file|     hdf5 file to write to|
+
+#### ops_print_dat_to_txtfile
+
+__void ops_print_dat_to_txtfile(ops_dat dat, chat *file)__
+Write the details of an ops_block to a named text file. When used under an MPI parallelization each MPI process
+will write its own data set separately to the text file. As such it does not use MPI I/O. The data can be viewed using
+a simple text editor
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dat|  ops_dat to to be written|
+|file|     text file to write to|
+
+#### ops_timing_output}
+
+__void ops_timing_output(FILE *os)__
+
+Print OPS performance performance details to output stream
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|os|    output stream, use stdout to print to standard out|
+
+#### ops_NaNcheck}
+
+__void ops_NaNcheck(ops_dat dat)__
+
+Check if any of the values held in the \texttt{dat} is a NaN. If a NaN
+is found, prints an error message and exits.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dat|  ops_dat to to be checked|
+
 ### Halo exchange
+
+#### ops_halo_transfer
+
+__void ops_halo_transfer(ops_halo_group group)__
+
+This routine exchanges all halos in a halo group and will block execution of subsequent computations that depend on
+the exchanged data.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|group|         the halo group|
 
 ### Parallel loop syntax
 
+A parallel loop with N arguments has the following syntax:
+
+#### ops_par_loop
+
+__void ops_par_loop(\ void (*kernel)(...),char *name, ops_block block, int dims, int *range, ops_arg arg1,ops_arg arg2, ..., ops_arg argN )__
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|kernel|     user's kernel function with N arguments|
+|name|       name of kernel function, used for output diagnostics|
+|block|      the ops_block over which this loop executes|
+|dims|       dimension of loop iteration|
+|range|      iteration range array|
+|args|       arguments|
+
+The {\bf ops_arg} arguments in {\bf ops_par_loop} are provided by one of the
+following routines, one for global constants and reductions, and the other
+for OPS datasets.
+
+#### ops_arg_gbl
+
+__ops_arg ops_arg_gbl(T *data, int dim, char *type, ops_access acc)__
+
+Passes a scalar or small array that is invariant of the iteration space (not to be confused with ops_decl_const, which facilitates global scope variables).
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|data|       data array|
+|dim|        array dimension|
+|type|       string representing the type of data held in data|
+|acc|        access type|
+
+#### ops_arg_reduce
+
+__ops_arg ops_arg_reduce(ops_reduction handle, int dim, char *type, ops_access acc)__
+
+Passes a pointer to a variable that needs to be incremented (or swapped for min/max reduction) by the user kernel.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|handle|       an  *ops_reduction* handle|
+|dim|        array dimension (according to *type*)|
+|type|       string representing the type of data held in data|
+|acc|        access type|
+
+#### ops_arg_dat
+
+__ops_arg ops_arg_dat(ops_dat dat, ops_stencil stencil, char *type,ops_access acc)__
+
+Passes a pointer wrapped in ac ACC<> object to the value(s) at the current grid point to the user kernel. The ACC object's parentheses operator has to be used for dereferencing the pointer.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dat|        dataset|
+|stencil|    stencil for accessing data|
+|type|       string representing the type of data held in dataset|
+|acc|        access type|
+
+#### ops_arg_idx
+
+__ops_arg ops_arg_idx()__
+
+Give you an array of integers (in the user kernel) that have the index of
+the current grid point, i.e. idx[0] is the index in x, idx[1] is the index in y, etc. This is a globally consistent
+index, so even if the block is  distributed across different MPI partitions, it gives you the same indexes. Generally
+used to generate initial geometry.
+
 ### Stencils
+
+The final ingredient is the stencil specification, for which we have two versions: simple and strided.
+
+#### ops_decl_stencil
+
+__ops_stencil ops_decl_stencil(int dims,int points, int *stencil, char *name)__
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dims|     dimension of loop iteration|
+|points|   number of points in the stencil|
+|stencil|  stencil for accessing data|
+|name| string representing the name of the stencil|
+
+#### ops_decl_strided_stencil
+
+__ops_stencil ops_decl_strided_stencil(int dims, int points, int *stencil, int *stride, char *name)__
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dims|       dimension of loop iteration|
+|points|     number of points in the stencil|
+|stencil|    stencil for accessing data|
+|stride|     stride for accessing data|
+|name| string representing the name of the stencil|
+
+#### ops_decl_stencil_hdf5
+
+__ops_stencil ops_decl_stencil_hdf5(int dims,int points, char *name, char* file)__
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dims|     dimension of loop iteration|
+|points|   number of points in the stencil|
+|name|     string representing the name of the stencil|
+|file|     hdf5 file to write to|
+
+ In the strided case, the semantics for the index of data to be
+accessed, for stencil point*p*, in dimension *m* are defined as
+
+```c++
+ stride[m]*loop_index[m] + stencil[p*dims+m]
+```
+
+ where ``loop_index[m]`` is the iteration index (within the
+user-defined iteration space) in the different dimensions.
+
+If, for one or more dimensions, both ``stride[m]`` and
+``stencil[p*dims+m]`` are zero, then one of the following must be true;
+
+* the dataset being referenced has size 1 for these dimensions
+
+* these dimensions are to be omitted and so the dataset has
+dimension equal to the number of remaining dimensions.
+
+See *OPS/apps/c/CloverLeaf/build_field.cpp* and *OPS/apps/c/CloverLeaf/generate.cpp* for an example *ops_decl_strided_stencil* declaration and its use in a loop,respectively.
+
+These two stencil definitions probably take care of all of the
+cases in the Introduction except for multiblock applications with interfaces
+with different orientations -- this will need a third, even more general,
+stencil specification. The strided stencil will handle both multigrid
+(with a stride of 2 for example) and the boundary condition and reduced
+dimension applications (with a stride of 0 for the relevant dimensions).
 
 ### Checkpointing
 
+OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the file name for the
+checkpoint and an average time interval between checkpoints, OPS will then automatically save all necessary information
+periodically that is required to fast-forward to the last checkpoint if a crash occurred. Currently, when re-launching
+after a crash, the same number of MPI processes have to be used. To enable checkpointing mode, the *OPS_CHECKPOINT* runtime argument has to be used.
+
+#### ops_checkpointing_init
+
+__bool ops_checkpointing_init(const char *filename, double interval, int options)__
+
+Initialises the checkpointing system, has to be called after {\tt ops_partition}. Returns true if the application launches in restore
+mode, false otherwise.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|filename| name of the file for checkpointing. In MPI, this will automatically be post-fixed with the rank ID.|
+|interval| average time (seconds) between checkpoints|
+|options| a combinations of flags, listed in *ops_checkpointing.h*, also see below|
+
+* OPS_CHECKPOINT_INITPHASE - indicates that there are a number of parallel loops at the very beginning of the simulations which should be excluded from any checkpoint; mainly because they initialise datasets that do not change during the main body of the execution. During restore mode these loops are executed as usual. An example would be the computation of the mesh geometry, which can be excluded from the checkpoint if it is re-computed when recovering and restoring a checkpoint. The API call *void ops_checkpointing_initphase_done()* indicates the end of this initial phase.
+
+* OPS_CHECKPOINT_MANUAL_DATLIST - Indicates that the user manually controls the location of the checkpoint, and explicitly specifies the list of \texttt{ops_dat}s to be saved.
+
+* OPS_CHECKPOINT_FASTFW - Indicates that the user manually controls the location of the checkpoint, and it also enables fast-forwarding, by skipping the execution of the
+application (even though none of the parallel loops would actually execute, there may be significant work outside of those) up to the checkpoint
+
+* OPS_CHECKPOINT_MANUAL - Indicates that when the corresponding API function is called, the checkpoint should be created. Assumes the presence of the above two options as well.
+
+#### ops_checkpointing_manual_datlist
+
+__void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist)__
+
+A user can call this routine at a point in the code to mark the location of a checkpoint.  At this point, the list of datasets specified
+will be saved. The validity of what is saved is not checked by the checkpointing algorithm assuming that the user knows
+what data sets to be saved for full recovery. This routine should be called frequently (compared to check-pointing
+frequency) and it will trigger the creation of the checkpoint the first time it is called after the timeout occurs.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|ndats| number of datasets to be saved|
+|datlist| arrays of *ops_dat* handles to be saved|
+
+#### ops_checkpointing_fastfw
+
+__bool ops_checkpointing_fastfw(int nbytes, char *payload)__
+
+A use can call this routine at a point in the code to mark the location of a checkpoint.  At this point, the
+specified payload (e.g. iteration count, simulation time, etc.) along with the necessary datasets, as determined by the
+checkpointing algorithm will be saved. This routine should be called frequently (compared to checkpointing frequency),
+will trigger the creation of the checkpoint the first time it is called after the timeout occurs. In restore mode,
+will restore all datasets the first time it is called, and returns true indicating that the saved payload is returned
+in payload. Does not save reduction data.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|nbytes| size of the payload in bytes|
+|payload| pointer to memory into which the payload is packed|
+
+#### ops_checkpointing_manual_datlist_fastfw
+
+__bool ops_checkpointing_manual_datlist_fastfw(int ndats, op_dat *datlist, int nbytes, char *payload)__
+
+Combines the manual datlist and fastfw calls.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|ndats| number of datasets to be saved|
+|datlist| arrays of *ops_dat* handles to be saved|
+|nbytes| size of the payload in bytes|
+|payload| pointer to memory into which the payload is packed|
+
+#### ops_checkpointing_manual_datlist_fastfw_trigger
+
+__bool ops_checkpointing_manual_datlist_fastfw_trigger(int ndats, opa_dat *datlist, int
+nbytes, char *payload)__
+
+With this routine it is possible to manually trigger checkpointing, instead of relying on the timeout process. as such
+it combines the manual datlist and fastfw calls, and triggers the creation of a checkpoint when called.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|ndats| number of datasets to be saved|
+|datlist| arrays of *ops_dat* handles to be saved|
+|nbytes| size of the payload in bytes|
+|payload| pointer to memory into which the payload is packed|
+
+\noindent The suggested use of these \textbf{manual} functions is of course when the optimal location for checkpointing
+is known - one of the ways to determine that is to use the built-in algorithm. More details of this will be reported
+in a tech-report on checkpointing, to be published later.
+
 ### Access to OPS data
+
+his section describes APIS that give the user access to internal data structures in OPS and return data to user-space. These should be used cautiously and sparsely, as they can affect performance significantly
+
+#### ops_dat_get_local_npartitions
+
+__int ops_dat_get_local_npartitions(ops_dat dat)__
+
+This routine returns the number of chunks of the given dataset held by the current process.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dat|         the dataset|
+
+#### ops_dat_get_global_npartitions}
+
+__int ops_dat_get_global_npartitions(ops_dat dat)}
+{This routine returns the number of chunks of the given dataset held by all processes.}
+|dat|         the dataset
+
+#### ops_dat_get_extents
+
+__void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *sizes)__
+
+This routine returns the MPI displacement and size of a given chunk of the given dataset on the current process.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dat|         the dataset|
+|part|        the chunk index (has to be 0)|
+|disp|        an array populated with the displacement of the chunk within the ``global'' distributed array|
+|sizes|       an array populated with the spatial extents|
+
+#### ops_dat_get_raw_metadata
+
+__char* ops_dat_get_raw_metadata(ops_dat dat, int part, int *disp, int *size, int *stride, int *d_m, int *d_p)__
+
+This routine returns array shape metadata corresponding to the ops_dat. Any of the arguments that are not of interest, may be NULL.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dat|         the dataset|
+|part|        the chunk index (has to be 0)|
+|disp|        an array populated with the displacement of the chunk within the ``global'' distributed array|
+|size|       an array populated with the spatial extents
+|stride|      an array populated strides in spatial dimensions needed for column-major indexing|
+|d_m|      an array populated with padding on the left in each dimension. Note that these are negative values|
+|d_p|      an array populated with padding on the right in each dimension|
+
+#### ops_dat_get_raw_pointer
+
+__char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_memspace *memspace)__
+
+This routine returns a pointer to the internally stored data, with MPI halo regions automatically updated as required by the supplied stencil. The strides required to index into the dataset are also given.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dat|         the dataset|
+|part|        the chunk index (has to be 0)|
+|stencil|     a stencil used to determine required MPI halo exchange depths|
+|memspace|       when set to OPS_HOST or OPS_DEVICE, returns a pointer to data in that memory space, otherwise must be set to 0, and returns whether data is in the host or on the device|
+
+#### ops_dat_release_raw_data
+
+__void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc)__
+
+Indicates to OPS that a dataset previously accessed with ops_dat_get_raw_pointer is released by the user, and also tells OPS how it was accessed.
+
+A single call to ops_dat_release_raw_data() releases all pointers obtained by previous calls to ops_dat_get_raw_pointer() calls on the same dat and with the same *memspace argument, i.e. calls do not nest.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dat|         the dataset
+|part|        the chunk index (has to be 0)|
+|acc|     the kind of access that was used by the user (OPS_READ if it was read only, OPS_WRITE if it was overwritten, OPS_RW if it was read and written)|
+
+#### ops_dat_release_raw_data
+
+__void ops_dat_release_raw_data_memspace(ops_dat dat, int part, ops_access acc, ops_memspace *memspace)__
+
+Indicates to OPS that a dataset previously accessed with ops_dat_get_raw_pointer is released by the user, and also tells OPS how it was accessed, and which memory space was used.
+
+A single call to ops_dat_release_raw_data() releases all pointers obtained by previous calls to ops_dat_get_raw_pointer() calls on the same dat and with the same *memspace argument, i.e. calls do not nest.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dat|         the dataset|
+|part|        the chunk index (has to be 0)|
+|acc|     the kind of access that was used by the user (OPS_READ if it was read only, OPS_WRITE if it was overwritten, OPS_RW if it was read and written)|
+|memspace|       set to OPS_HOST or OPS_DEVICE |
+
+#### ops_dat_fetch_data
+
+__void ops_dat_fetch_data(ops_dat dat, int part, int *data)__
+This routine copies the data held by OPS to the user-specified memory location, which needs to be at least as large as indicated by the sizes parameter of ops_dat_get_extents.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dat|         the dataset|
+|part|        the chunk index (has to be 0) |
+|data|        pointer to memory which should be filled by OPS|
+
+#### ops_dat_set_data
+
+__void ops_dat_set_data(ops_dat dat, int part, int *data)__
+
+This routine copies the data given  by the user to the internal data structure used by OPS. User data needs to be laid out in column-major order and strided as indicated by the sizes parameter of ops_dat_get_extents.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dat|         the dataset|
+|part|        the chunk index (has to be 0)|
+|data|        pointer to memory which should be copied to OPS |
