@@ -256,5 +256,5 @@ pages:
   - mv ops/html/ public/
   artifacts:
     paths:
-    - public
+    - doc/public
 
