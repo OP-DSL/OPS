@@ -255,19 +255,32 @@ test:Intel:
   only:
     - master
 
-#Stage "docs"
-make-docs:
-  stage: docs
-  when: always
+# #Stage "docs"
+# make-docs:
+#   stage: docs
+#   when: always
+#   tags:
+#     - CCP, test
+#   script:
+#     - cd doc && make all clean
+#   artifacts:
+#     expire_in: 4 week
+#     paths:
+#       - doc/user.pdf
+#       - doc/ops/html
+#       - doc/ops/latex/refman.pdf
+#       - doc/ops_translator/html
+#       - doc/ops_translator/latex/refman.pdf
+
+pages:
   tags:
     - CCP, test
   script:
-    - cd doc && make all clean
+  - cd doc
+  - doxygen ops/Doxyfile
+  - mv ops/html/ public/
   artifacts:
-    expire_in: 4 week
     paths:
-      - doc/user.pdf
-      - doc/ops/html
-      - doc/ops/latex/refman.pdf
-      - doc/ops_translator/html
-      - doc/ops_translator/latex/refman.pdf
+    - public
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
