@@ -246,6 +246,7 @@ test:Intel:
 #       - doc/ops_translator/latex/refman.pdf
 
 pages:
+  stage: docs
   tags:
     - CCP, test
   script:
