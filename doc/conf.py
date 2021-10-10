@@ -14,8 +14,8 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 import subprocess
-subprocess.call('doxygen doc/ops/Doxyfile', shell=True)
-html_extra_path = ['doc/ops/html']
+subprocess.call('doxygen ops/Doxyfile', shell=True)
+html_extra_path = ['ops/html']
 
 # -- Project information -----------------------------------------------------
 
