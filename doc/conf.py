@@ -15,7 +15,7 @@
 # sys.path.insert(0, os.path.abspath('.'))
 import subprocess
 subprocess.call('doxygen ops/Doxyfile', shell=True)
-subprocess.call('cp ops/html/ . -r', shell=True)
+#subprocess.call('cp ops/html/ . -r', shell=True)
 #html_extra_path = ['ops/html']
 
 # -- Project information -----------------------------------------------------
