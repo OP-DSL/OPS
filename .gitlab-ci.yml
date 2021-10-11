@@ -280,8 +280,8 @@ pages:
   script:
   - cd doc
   - doxygen ops/Doxyfile
-  - mv ops/html/ public/
+  - mv ops/html/ $CI_PROJECT_DIR/public/
   artifacts:
     paths:
-    - doc/public
+    - public
 
