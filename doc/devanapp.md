@@ -76,6 +76,7 @@ ops_par_loop(accelerate_kernel, "accelerate_kernel", clover_grid, 2, rangexy_inn
      ops_arg_dat(yarea, 1, S2D_00_M10, "double", OPS_READ),
      ops_arg_dat(viscosity, 1, S2D_00_M10_0M1_M1M1, "double", OPS_READ));
 ```
+## File I/O
 ## Supported Paralleizations
 ## Code-generation Flags
-## File I/O
+## Runtime Flags and Options
