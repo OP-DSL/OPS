@@ -684,4 +684,4 @@ This routine copies the data given  by the user to the internal data structure u
 |data|        pointer to memory which should be copied to OPS |
 
 ### Doxygen comments for APIs
-We also provide Doxygen comments in for using APIs, please view [here](#https://op-dsl-ci.gitlab.io/ops-ci/).
+We also provide Doxygen comments in for using APIs, please view [here](https://op-dsl-ci.gitlab.io/ops-ci/).
