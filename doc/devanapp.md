@@ -1,7 +1,7 @@
 # Developing an OPS Application
 
 ## Tutorial
-##
+
 ## OPS User Kernels
 
 In OPS, the elemental operation carried out per mesh/grid point is
