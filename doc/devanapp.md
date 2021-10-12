@@ -218,7 +218,6 @@ void apply_stencil(const ACC<double> &A, ACC<double> &Anew, double *error) {
 ```
 The loop also has a special argument for the reduction, `ops_arg_reduce`.  As the first argument, it takes a reduction handle, which has to be defined separately:
 ```
-//Reduction handle
 ops_reduction h_err = ops_decl_reduction_handle(sizeof(double), "double", "error");
 ``` 
 Reductions may be increment (`OPS_INC`), min (`OPS_MIN`) or max (`OPS_MAX`). The user kernel will have to perform the reduction operation, reducing the passed in value as well as the computed value.
