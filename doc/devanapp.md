@@ -17,7 +17,30 @@ In this tutorial we will use an example application, a simple 2D iterative Lapla
 * There are a number of loops that set the boundary conditions along the four edges
 * The bulk of the simulation is spent in a whilel oop, repeating a stencil kernel with a maximum reduction, and a copy kernel
 * Compile and run the code !
+
 ## Original - Initialisation
+The original code begins with initializing the data arrays used in the calculation. 
+```
+// Size  along  y
+int jmax = 4094;
+// Size  along  x
+int imax = 4094;
+
+int itermax = 100;
+double pi = 2.0∗asin(1.0);
+const double tol = 1.0e−6;
+double error = 1.0;
+
+double ∗A;
+double ∗Anew;
+double ∗y0;
+
+A    = (double ∗)malloc ((imax+2)∗(jmax+2)∗sizeof(double));
+Anew = (double ∗)malloc ((imax+2)∗(jmax+2)∗sizeof(double));
+y0   = (double ∗)malloc ((imax+2)∗sizeof(double));
+
+memset(A, 0, (imax+2)∗(jmax+2)∗sizeof(double));
+```
 ## Original - Boundary loops
 ## Original - Main iteration
 ## Build OPS
