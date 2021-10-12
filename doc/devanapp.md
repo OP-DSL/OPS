@@ -4,7 +4,7 @@ This page provides a tutorial in the basics of using OPS for multi-block structu
 ## OPS Abstraction
 OPS is a Domain Specific Language embedded in C/C++ and Fortran, targeting the development of multi-block structured mesh computations. The abstraction has two distinct components:  the definition of the mesh, and operations over the mesh.
 * Defining a number of 1-3D blocks, and on them a number of datasets, which have specific extents in the different dimensions.
-* Describing a parallel loop over a given block, with a given iteration range, executing a given "kernel function" at each grid point, and describing what datasets are going to be accessed and how.
+* Describing a parallel loop over a given block, with a given iteration range, executing a given "kernel function" at each mesh point, and describing what datasets are going to be accessed and how.
 * Additionally, one needs to declare stencils (access patterns) that will be used in parallel loops to access datasets, and any global constants (read-only global scope variables)
 
 Data and computations expressed this way can be automatically managed and parallelised by the OPS library. Higher dimensions are supported in the backend, but not currently by the code generators.
@@ -13,7 +13,7 @@ Data and computations expressed this way can be automatically managed and parall
 In this tutorial we will use an example application, a simple 2D iterative Laplace equation solver. 
 * Go to the `OPS/apps/c/laplace2dtutorial/original` directory
 * Open the `laplace2d.cpp` file
-* It uses an $imax$ x $jmax$ grid, with an additional 1 layers of boundary cells on all sides
+* It uses an $imax$ x $jmax$ mesh, with an additional 1 layers of boundary cells on all sides
 * There are a number of loops that set the boundary conditions along the four edges
 * The bulk of the simulation is spent in a whilel oop, repeating a stencil kernel with a maximum reduction, and a copy kernel
 * Compile and run the code !
@@ -158,7 +158,7 @@ The OPS parallel loop can now be written as follows:
 ops_par_loop(set_zero, "set_zero", block, 2, bottom_range,
       ops_arg_dat(d_A, 1, S2D_00, "double", OPS_WRITE));
 ```
-The loop will execute `set_zero` at each mesh point defined in the iteration range, and write the dataset `d_A` with the 1-point stencil. The `ops_par_loop` implies that the order in which grid points will be executed will not affect the end result (within machine precision).
+The loop will execute `set_zero` at each mesh point defined in the iteration range, and write the dataset `d_A` with the 1-point stencil. The `ops_par_loop` implies that the order in which mesh points will be executed will not affect the end result (within machine precision).
 ## Step 4 - Indexes and global constants
 ## Step 5 - Complex stencils and reductions
 ## Step 6 - Handing it all to OPS
