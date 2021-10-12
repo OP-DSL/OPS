@@ -138,6 +138,27 @@ ops_stencil S2D_5pt = ops_decl_stencil(2,5,s2d_5pt,"5pt");
 Different names may be used for stencils in your code, but we suggest using some convention.
 
 ## Step 3 - First parallel loop
+You can now convert the first loop to use OPS:
+```
+for (int i = 0; i < imax+2; i++)
+    A[(0)*(imax+2)+i]   = 0.0;
+```    
+This is a loop on the ottom boundary of the domain, which is at the −1 index for our dataset, therefore our iteration range will be over the entire domain, including halos in the X direction, and the bottom boundary in the Y direction.  The iteration range is given as beginning (inclusive) and end (exclusive) indices in the x, y, etc.  directions.
+```
+int bottom_range[] = {-1, imax+1, -1, 0};
+```
+Next, we need to outline the “elemental” into `laplacekernels.h`, and place the appropriate access objects - `ACC<double> &A`, in the kernel’s formal parameter list, and `(i,j)` are the stencil offsets in the X and Y directions respectively:
+```
+void set_zero(ACC<double> &A) {
+  A(0,0) = 0.0;
+}
+```
+The OPS parallel loop can now be written as follows:
+```
+ops_par_loop(set_zero, "set_zero", block, 2, bottom_range,
+      ops_arg_dat(d_A, 1, S2D_00, "double", OPS_WRITE));
+```
+The loop will execute `set_zero` at each mesh point defined in the iteration range, and write the dataset `d_A` with the 1-point stencil. The `ops_par_loop` implies that the order in which grid points will be executed will not affect the end result (within machine precision).
 ## Step 4 - Indexes and global constants
 ## Step 5 - Complex stencils and reductions
 ## Step 6 - Handing it all to OPS
