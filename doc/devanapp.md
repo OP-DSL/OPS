@@ -174,6 +174,31 @@ void copy(ACC<double> &A, const ACC<double> &Anew) {
 }
 ```
 ## Step 4 - Indexes and global constants
+There are two sets of boundary loops which use the loop variable j - this is a common technique to initialise data, such as coordinates `(x = i∗dx)`. OPS has a special argument `ops_arg_idx` which gives us a globally coherent (including over MPI) iteration index - between the bounds supplied in the iteration range.
+```
+ops_par_loop(left_bndcon, "left_bndcon", block, 2, left_range,
+      ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_WRITE),
+      ops_arg_idx());
+```
+And the corresponding outlined user kernel is as follows.  Observe the `idx` argument and the +1 offset due to the difference in indexing:
+```
+void left_bndcon(ACC<double> &A, const int *idx) {
+  A(0,0) = sin(pi * (idx[1]+1) / (jmax+1));
+}
+```
+This kernel also uses two variables,`jmax` and `pi` that do not depend on the iteration index - they are iteration space invariant.  OPS has two ways of supporting this:
+1. Global scope constants, through `ops_decl_const`, as done in this example: we need to move the declaration of the `imax`,`jmax` and `pi` variables to global scope (outside of main), and call the OPS API:
+```
+//declare and define global constants
+ops_decl_const("imax",1,"int",&imax);
+ops_decl_const("jmax",1,"int",&jmax);
+ops_decl_const("pi",1,"double",&pi);
+```
+These ariables do not need to be passed in to the elemental kernel, they are accessible in all elemental kernels.
+
+2. The other option is to explicitly pass it to the elemental kernel with `ops_arg_gbl`:  this is for scalars and small arrays that should not be in global scope.
+
+
 ## Step 5 - Complex stencils and reductions
 ## Step 6 - Handing it all to OPS
 ## Step 7 - Code generation
