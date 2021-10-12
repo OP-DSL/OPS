@@ -105,6 +105,8 @@ int main(int argc, const char** argv) {
   ops_exit();
 }  
 ```  
+By this point you need OPS set up - take a look at the Makefile in step1, and observ that the include and library paths are added, and we link against `ops_seq`.
+
 ## Step 2 - OPS declarations
 ## Step 3 - First parallel loop
 ## Step 4 - Indexes and global constants
