@@ -159,6 +159,20 @@ ops_par_loop(set_zero, "set_zero", block, 2, bottom_range,
       ops_arg_dat(d_A, 1, S2D_00, "double", OPS_WRITE));
 ```
 The loop will execute `set_zero` at each mesh point defined in the iteration range, and write the dataset `d_A` with the 1-point stencil. The `ops_par_loop` implies that the order in which mesh points will be executed will not affect the end result (within machine precision).
+
+There are three more loops which set values to zero, they can be trivially replaced with the code above, only altering the iteration range. In the main while loop, the second simpler loop simply copies data from one array to another, this time on the interior of the domain:
+```
+int interior_range[] = {0,imax,0,jmax};
+ops_par_loop(copy, "copy", block, 2, interior_range,
+    ops_arg_dat(d_A,    1, S2D_00, "double", OPS_WRITE),
+    ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_READ));
+```
+And the corresponding outlined elemental kernel is as follows:
+```
+void copy(ACC<double> &A, const ACC<double> &Anew) {
+  A(0,0) = Anew(0,0);
+}
+```
 ## Step 4 - Indexes and global constants
 ## Step 5 - Complex stencils and reductions
 ## Step 6 - Handing it all to OPS
