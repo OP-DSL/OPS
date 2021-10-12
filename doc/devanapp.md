@@ -13,13 +13,13 @@ Data and computations expressed this way can be automatically managed and parall
 In this tutorial we will use an example application, a simple 2D iterative Laplace equation solver. 
 * Go to the `OPS/apps/c/laplace2dtutorial/original` directory
 * Open the `laplace2d.cpp` file
-* It uses an $imax x jmax$ grid, with an additional 1 layers of boundary cells on all sides
+* It uses an $imax$x$jmax$ grid, with an additional 1 layers of boundary cells on all sides
 * There are a number of loops that set the boundary conditions along the four edges
 * The bulk of the simulation is spent in a whilel oop, repeating a stencil kernel with a maximum reduction, and a copy kernel
 * Compile and run the code !
 
 ## Original - Initialisation
-The original code begins with initializing the data arrays used in the calculation. 
+The original code begins with initializing the data arrays used in the calculation:
 ```
 // Size  along  y
 int jmax = 4094;
@@ -42,7 +42,46 @@ y0   = (double ∗)malloc ((imax+2)∗sizeof(double));
 memset(A, 0, (imax+2)∗(jmax+2)∗sizeof(double));
 ```
 ## Original - Boundary loops
+The application sen sets boundary conditions:
+```
+for (int i = 0; i < imax+2; i++)
+    A[(0)*(imax+2)+i]   = 0.0;
+
+for (int i = 0; i < imax+2; i++)
+    A[(jmax+1)*(imax+2)+i] = 0.0;
+
+for (int j = 0; j < jmax+2; j++) {
+    A[(j)*(imax+2)+0] = sin(pi * j / (jmax+1));
+}
+
+for (int j = 0; j < imax+2; j++) {
+    A[(j)*(imax+2)+imax+1] = sin(pi * j / (jmax+1))*exp(-pi);
+}
+```  
+Note how in the latter two loops the loop index is used.
+
 ## Original - Main iteration
+The main iterative loop is a while loop iterating until the error tolarance is at a set level and the number of iterations are les than the maximum set. 
+```
+while ( error > tol && iter < iter_max ) {
+  error = 0.0;
+  for( int j = 1; j < jmax+1; j++ ) {
+    for( int i = 1; i < imax+1; i++) {
+      Anew[(j)*(imax+2)+i] = 0.25f * 
+      ( A[(j)*(imax+2)+i+1] + A[(j)*(imax+2)+i-1]
+      + A[(j-1)*(imax+2)+i] + A[(j+1)*(imax+2)+i]);
+      error = fmax( error, fabs(Anew[(j)*(imax+2)+i]-A[(j)*(imax+2)+i]));
+      }
+    }
+    for( int j = 1; j < jmax+1; j++ ) {
+      for( int i = 1; i < imax+1; i++) {
+        A[(j)*(imax+2)+i] = Anew[(j)*(imax+2)+i];    
+      }
+    }
+    if(iter % 10 == 0) printf("%5d, %0.6f\n", iter, error);        
+    iter++;
+  }
+  ```
 ## Build OPS
 ## Step 1 - Preparing to use OPS
 ## Step 2 - OPS declarations
