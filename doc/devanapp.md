@@ -221,7 +221,15 @@ The loop also has a special argument for the reduction, `ops_arg_reduce`.  As th
 //Reduction handle
 ops_reduction h_err = ops_decl_reduction_handle(sizeof(double), "double", "error");
 ``` 
-Reductions may be increment (`OPS_INC`), min (`OPS_MIN`) or max(`OPS_MAX`). The user kernel will have to perform the reduction operation, reducing the passed in value as well as the computed value.
+Reductions may be increment (`OPS_INC`), min (`OPS_MIN`) or max (`OPS_MAX`). The user kernel will have to perform the reduction operation, reducing the passed in value as well as the computed value.
+
+The result of the reduction can be queried from the handle as follows:
+```
+ ops_reduction_result(h_err, &error);
+```
+
+Multiple parallel loops may use the same handle, and their results will be combined, until the result is queried by the user.  Parallel loops that only have the reduction handle in common are semantically independent.
+
 
 ## Step 6 - Handing it all to OPS
 ## Step 7 - Code generation
