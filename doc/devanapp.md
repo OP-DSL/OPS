@@ -13,7 +13,7 @@ Data and computations expressed this way can be automatically managed and parall
 In this tutorial we will use an example application, a simple 2D iterative Laplace equation solver. 
 * Go to the `OPS/apps/c/laplace2dtutorial/original` directory
 * Open the `laplace2d.cpp` file
-* It uses an $imax$x$jmax$ grid, with an additional 1 layers of boundary cells on all sides
+* It uses an $imax$ x $jmax$ grid, with an additional 1 layers of boundary cells on all sides
 * There are a number of loops that set the boundary conditions along the four edges
 * The bulk of the simulation is spent in a whilel oop, repeating a stencil kernel with a maximum reduction, and a copy kernel
 * Compile and run the code !
@@ -87,6 +87,24 @@ while ( error > tol && iter < iter_max ) {
 Build OPS using instructions in the [Getting Started](https://ops-dsl.readthedocs.io/en/markdowndocdev/installation.html#getting-started) page. 
 
 ## Step 1 - Preparing to use OPS
+Firstly, include the appropriate header files, then initialise OPS, and at the end finalise it.
+* Define that this application is 2D, include the OPS header file, and create a header file where the outlined "elemental kernels" will live.
+```
+#define OPS_2D
+#include <ops_seq.h>
+#include "laplace_kernels.h" 
+```
+* Initialise and finalise OPS
+```  
+int main(int argc, const char** argv) {
+  //Initialise the OPS library, passing runtime args, and setting diagnostics level to low (1)
+  ops_init(argc, argv,1);
+  ...
+  ...
+  //Finalising the OPS library
+  ops_exit();
+}  
+```  
 ## Step 2 - OPS declarations
 ## Step 3 - First parallel loop
 ## Step 4 - Indexes and global constants
