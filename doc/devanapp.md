@@ -72,18 +72,20 @@ while ( error > tol && iter < iter_max ) {
       ( A[(j)*(imax+2)+i+1] + A[(j)*(imax+2)+i-1]
       + A[(j-1)*(imax+2)+i] + A[(j+1)*(imax+2)+i]);
       error = fmax( error, fabs(Anew[(j)*(imax+2)+i]-A[(j)*(imax+2)+i]));
-      }
     }
-    for( int j = 1; j < jmax+1; j++ ) {
-      for( int i = 1; i < imax+1; i++) {
-        A[(j)*(imax+2)+i] = Anew[(j)*(imax+2)+i];    
-      }
-    }
-    if(iter % 10 == 0) printf("%5d, %0.6f\n", iter, error);        
-    iter++;
   }
-  ```
+  for( int j = 1; j < jmax+1; j++ ) {
+    for( int i = 1; i < imax+1; i++) {
+      A[(j)*(imax+2)+i] = Anew[(j)*(imax+2)+i];    
+    }
+  }
+  if(iter % 10 == 0) printf("%5d, %0.6f\n", iter, error);        
+  iter++;
+}
+```
 ## Build OPS
+Build OPS using instructions in the [Getting Started](https://ops-dsl.readthedocs.io/en/markdowndocdev/installation.html#getting-started) page. 
+
 ## Step 1 - Preparing to use OPS
 ## Step 2 - OPS declarations
 ## Step 3 - First parallel loop
