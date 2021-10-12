@@ -105,9 +105,38 @@ int main(int argc, const char** argv) {
   ops_exit();
 }  
 ```  
-By this point you need OPS set up - take a look at the Makefile in step1, and observ that the include and library paths are added, and we link against `ops_seq`.
+By this point you need OPS set up - take a look at the Makefile in step1, and observe that the include and library paths are added, and we link against `ops_seq`.
 
 ## Step 2 - OPS declarations
+Now declare a block and data on the block :
+```
+//The 2D block
+ops_block block = ops_decl_block(2, "my_grid");
+
+//The two datasets
+int size[] = {imax, jmax};
+int base[] = {0,0};
+int d_m[] = {-1,-1};
+int d_p[] = {1,1};
+ops_dat d_A    = ops_decl_dat(block, 1, size, base,
+                               d_m, d_p, A,    "double", "A");
+ops_dat d_Anew = ops_decl_dat(block, 1, size, base,
+                               d_m, d_p, Anew, "double", "Anew");
+```
+Data sets have a size (number of mesh points in each dimension). There is passing for halos or boundaries in the positive (`d_p`) and negative directions (`d_m`). Here we use a 1 thick boundary layer. Base index can be defined as it may be different from 0 (e.g. in Fortran). Item these with a 0 base index and a 1 wide halo, these datasets can be indexed from −1 tosize +1.
+
+OPS supports gradual conversion of applications to its API, but in this case the described data sizes will need to match:  the allocated memory and its extents need to be correctly described to OPS. In this example we have two `(imax+ 2) ∗ (jmax+ 2)` size arrays, and the total size in each dimension needs to matchsize `[i] + d_p[i] − d_m[i]`.  This is only supported for the sequential and OpenMP backends. If a `NULL` pointer is passed, OPS will allocate the data internally.
+
+We also need to declare the stencils that will be used - in this example most loops use a simple 1-point stencil, and one uses a 5-point stencil:
+```
+//Two stencils, a 1-point, and a 5-point
+int s2d_00[] = {0,0};
+ops_stencil S2D_00 = ops_decl_stencil(2,1,s2d_00,"0,0");
+int s2d_5pt[] = {0,0, 1,0, -1,0, 0,1, 0,-1};
+ops_stencil S2D_5pt = ops_decl_stencil(2,5,s2d_5pt,"5pt");
+```  
+Different names may be used for stencils in your code, but we suggest using some convention.
+
 ## Step 3 - First parallel loop
 ## Step 4 - Indexes and global constants
 ## Step 5 - Complex stencils and reductions
