@@ -32,9 +32,11 @@ The [CUDA](https://developer.nvidia.com/cuda-downloads) backend targets NVIDIA G
 
 **HIP**
 
-The HIP backend targets AMD GPUs which are supported by the ROCm stack
+The HIP backend targets AMD GPUs and NVIDIA GPUs which are supported by HIP - either through its CUDA support or the ROCm stack (tested with >=3.9). 
 
 **SYCL**
+
+The SYCL backend is currently in development and only working without MPI. It has been tested with Intel OneAPI (>=2021.1), Intel's public LLVM version, and hipSYCL (>=0.9.1), and runs on Intel CPUs and GPUs through Intel's OpenCL and Level Zero, NVIDIA and AMD GPUs both with the LLVM fork as well as hipSYCL. hipSYCL's OpenMP support covers most CPU architectures too.
 
 **Tridiagonal Solver**
 
