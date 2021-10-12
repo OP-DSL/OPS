@@ -187,6 +187,7 @@ void left_bndcon(ACC<double> &A, const int *idx) {
 }
 ```
 This kernel also uses two variables,`jmax` and `pi` that do not depend on the iteration index - they are iteration space invariant.  OPS has two ways of supporting this:
+
 1. Global scope constants, through `ops_decl_const`, as done in this example: we need to move the declaration of the `imax`,`jmax` and `pi` variables to global scope (outside of main), and call the OPS API:
 ```
 //declare and define global constants
@@ -200,6 +201,21 @@ These ariables do not need to be passed in to the elemental kernel, they are acc
 
 
 ## Step 5 - Complex stencils and reductions
+There is only one loop left, which uses a 5 point stencil and a reduction.  It can be outlined as usual, and for the stencil, we will use `S2Dpt5`.
+```
+ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
+        ops_arg_dat(d_A,    1, S2D_5pt, "double", OPS_READ),
+        ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_WRITE),
+        ops_arg_reduce(h_err, 1, "double", OPS_MAX))
+```
+And the corresponding outlined elemental kernel is as follows.  Observe the stencil offsets used to access the adjacent 4 points:
+```
+void apply_stencil(const ACC<double> &A, ACC<double> &Anew, double *error) {
+  Anew(0,0) = 0.25f * ( A(1,0) + A(-1,0)
+      + A(0,-1) + A(0,1));
+  *error = fmax( *error, fabs(Anew(0,0)-A(0,0)));
+}
+```
 ## Step 6 - Handing it all to OPS
 ## Step 7 - Code generation
 ## Code generated versions
