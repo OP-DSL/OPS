@@ -21,25 +21,26 @@ In this tutorial we will use an example application, a simple 2D iterative Lapla
 ## Original - Initialisation
 The original code begins with initializing the data arrays used in the calculation:
 ```
-// Size  along  y
+//Size along y
 int jmax = 4094;
-// Size  along  x
+//Size along x
 int imax = 4094;
+//Size along x
+int iter_max = 100;
 
-int itermax = 100;
-double pi = 2.0∗asin(1.0);
-const double tol = 1.0e−6;
-double error = 1.0;
+double pi  = 2.0 * asin(1.0);
+const double tol = 1.0e-6;
+double error     = 1.0;
 
-double ∗A;
-double ∗Anew;
-double ∗y0;
+double *A;
+double *Anew;
+double *y0;
 
-A    = (double ∗)malloc ((imax+2)∗(jmax+2)∗sizeof(double));
-Anew = (double ∗)malloc ((imax+2)∗(jmax+2)∗sizeof(double));
-y0   = (double ∗)malloc ((imax+2)∗sizeof(double));
+A    = (double *)malloc((imax+2) * (jmax+2) * sizeof(double));
+Anew = (double *)malloc((imax+2) * (jmax+2) * sizeof(double));
+y0   = (double *)malloc((imax+2) * sizeof(double));
 
-memset(A, 0, (imax+2)∗(jmax+2)∗sizeof(double));
+memset(A, 0, (imax+2) * (jmax+2) * sizeof(double));
 ```
 ## Original - Boundary loops
 The application sen sets boundary conditions:
