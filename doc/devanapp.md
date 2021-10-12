@@ -188,7 +188,7 @@ void left_bndcon(ACC<double> &A, const int *idx) {
 ```
 This kernel also uses two variables,`jmax` and `pi` that do not depend on the iteration index - they are iteration space invariant.  OPS has two ways of supporting this:
 
-1. Global scope constants, through `ops_decl_const`, as done in this example: we need to move the declaration of the `imax`,`jmax` and `pi` variables to global scope (outside of main), and call the OPS API:
+1) Global scope constants, through `ops_decl_const`, as done in this example: we need to move the declaration of the `imax`,`jmax` and `pi` variables to global scope (outside of main), and call the OPS API:
 ```
 //declare and define global constants
 ops_decl_const("imax",1,"int",&imax);
@@ -197,7 +197,7 @@ ops_decl_const("pi",1,"double",&pi);
 ```
 These ariables do not need to be passed in to the elemental kernel, they are accessible in all elemental kernels.
 
-2. The other option is to explicitly pass it to the elemental kernel with `ops_arg_gbl`:  this is for scalars and small arrays that should not be in global scope.
+2) The other option is to explicitly pass it to the elemental kernel with `ops_arg_gbl`:  this is for scalars and small arrays that should not be in global scope.
 
 
 ## Step 5 - Complex stencils and reductions
