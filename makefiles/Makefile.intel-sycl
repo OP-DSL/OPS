@@ -11,6 +11,6 @@ OMPFLAGS := -fopenmp
 ifdef THREADED
 	THREADING_FLAGS ?= -fopenmp
 endif
-SYCLCXX = clang++
-SYCL_FLAGS = -fsycl -I$(SYCL_INSTALL_PATH)/include #-fsycl-targets=spir64_x86_64-unknown-unknown-sycldevice #intel sycl 
+SYCLCXX = dpcpp
+SYCL_FLAGS = -fsycl #-I$(SYCL_INSTALL_PATH)/include #-fsycl-targets=spir64_x86_64-unknown-unknown-sycldevice #intel sycl 
 MPICXX=mpicxx
