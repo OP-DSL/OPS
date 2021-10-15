@@ -178,4 +178,4 @@ openacc_error:
 #
 
 clean:
-	rm -f $(APP)_dev_seq $(APP)_dev_mpi $(APP)_mpi $(APP)_seq $(APP)_tiled $(APP)_mpi_inline $(APP)_openmp $(APP)_mpi_openmp $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled $(APP)_openacc $(APP)_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o $(APP)_opencl $(APP)_mpi_opencl $(APP)_mpi_tiled $(APP)_mpi_inline $(APP)_hip $(APP)_mpi_hip ./HIP/*.o ./OpenCL/*.o ./MPI_inline/*.o *.o *.lst
+	rm -f $(APP)_dev_seq $(APP)_dev_mpi $(APP)_mpi $(APP)_seq $(APP)_tiled $(APP)_mpi_inline $(APP)_openmp $(APP)_mpi_openmp $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled $(APP)_openacc $(APP)_mpi_openacc $(APP)_sycl ./CUDA/*.o ./OpenACC/*.o *.o $(APP)_opencl $(APP)_mpi_opencl $(APP)_mpi_tiled $(APP)_mpi_inline $(APP)_hip $(APP)_mpi_hip ./HIP/*.o ./OpenCL/*.o ./MPI_inline/*.o *.o *.lst
