@@ -229,10 +229,34 @@ The result of the reduction can be queried from the handle as follows:
 
 Multiple parallel loops may use the same handle, and their results will be combined, until the result is queried by the user.  Parallel loops that only have the reduction handle in common are semantically independent.
 
-
 ## Step 6 - Handing it all to OPS
+
+We have now successfully converted all computations on the mesh to OPS parallel loops. In order for OPS to manage data and parallelisations better, we should let OPS allocate the datasets - instead of passing in the pointers to memory allocated by us, we just pass in NULL (`A` and `Anew`). Parallel I/O can be done using HDF5 - see the ops_hdf5.h header.
+
+All data and parallelisation is now handed to OPS. We can now also compile the developer MPI version of the code - see the Makefile, and try building `laplace2d_mpi`.
+
 ## Step 7 - Code generation
+
+Now that the developer versions of our code work, it’s time to generate code.  On the console, type: 
+```
+$OPSINSTALLPATH/../ops_translator/c/ops.py laplace2d.cpp
+```
+We have provided a Makefile which can use several different compilers (intel, cray, pgi, clang), we suggest modifying it for your own applications. Try building CUDA, OpenMP, MPI+CUDA, MPI+OpenMP, and other versions of the code. You can take a look at the generated kernels for different parallelisations under the appropriate subfolders. 
+
+If you add the−`OPS_DIAGS=2` runtime flag, at the end of execution, OPS will report timings and achieved bandwidth for each of your kernels. For more options, see the user guide.
+
+
 ## Code generated versions
+OPS will generate and compile a large number of different versions.
+* `laplace2d_dev_seq` and `laplace2d_dev_mpi` :  these do not use code generation, they are intended for development only
+* `laplace2d_seq` and `laplace2d_mpi` : baseline sequential and MPI implementations
+* `laplace2d_openmp` : baseline OpenMP implementation
+* `laplace2d_cuda`, `laplace2d_opencl`, `laplace2d_openacc` : implementations targeting GPUs 
+* `laplace2d_mpiinline` : optimised implementation with MPI+OpenMP
+* `laplace2d_tiled`: optimised implementation with OpenMP that improves spatial and temporal locality
+
+
+
 ## Optimizations - general
 ## Optimizations - tiling
 
