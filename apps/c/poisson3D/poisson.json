@@ -1,0 +1,54 @@
+{
+  "datasets": [
+    {
+      "name": "u",
+      "type": "double",
+      "idx": 0,
+      "begin": [-1,-1,-1],
+      "end": [101,101,101]
+    },
+    {
+      "name": "u2",
+      "type": "double",
+      "idx": 1,
+      "begin": [-1,-1,-1],
+      "end": [101,101,101]
+    }
+  ],
+  "loops": [
+    {
+      "name": "poisson_kernel_stencil",
+      "begin": [0,0,0],
+      "end": [100,100,100],
+      "args": [
+        {
+          "name": "u",
+          "idx": 0,
+          "acc": "OPS_READ"
+        },
+        {
+          "name": "u2",
+          "idx": 1,
+          "acc": "OPS_WRITE"
+        }
+      ]
+    },
+    {
+      "name": "poisson_kernel_update",
+      "begin": [0,0,0],
+      "end": [100,100,100],
+      "args": [
+        {
+          "name": "u2",
+          "idx": 1,
+          "acc": "OPS_READ"
+        },
+        {
+          "name": "u",
+          "idx": 0,
+          "acc": "OPS_WRITE"
+        }
+      ]
+    }
+  ]
+}
