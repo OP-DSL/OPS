@@ -275,6 +275,6 @@ The following versions can be executed with the tiling optimzations.
 
 ## Supported Paralleizations
 
-<!-- ## Code-generation Flags !>
+<!-- ## Code-generation Flags -->
 
 ## Runtime Flags and Options
