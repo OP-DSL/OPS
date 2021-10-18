@@ -9,6 +9,16 @@
 ### HDF5
 ### CUDA
 ### Cache blocking tiling and comm-avoiding optimizations
+
+## To contribute to OPS please use the following steps :
+
+Clone the [OPS](https://github.com/OP-DSL/OPS) repository (on your local system).
+Create a new branch in your cloned repository
+Make changes / contributions in your new branch
+Submit your changes by creating a Pull Request to the `develop` branch of the OPS repository
+The contributions in the `develop` branch will be merged into the `master` branch as we create a new release.
+
+<!--
 ## Git work flow for contribution
 To facilitate the concept of "Version" and "Release", we adopt the [Gitflow Workflow model](#https://nvie.com/posts/a-successful-git-branching-model/).
 ### Overall work flow
@@ -42,3 +52,4 @@ Using the Gitflow model tends to produce a few long-live branches (e.g.,  featur
 ### Gitflow tool
 
 see https://github.com/nvie/gitflow
+-->
