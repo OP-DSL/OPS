@@ -243,7 +243,7 @@ $OPSINSTALLPATH/../ops_translator/c/ops.py laplace2d.cpp
 ```
 We have provided a Makefile which can use several different compilers (intel, cray, pgi, clang), we suggest modifying it for your own applications. Try building CUDA, OpenMP, MPI+CUDA, MPI+OpenMP, and other versions of the code. You can take a look at the generated kernels for different parallelisations under the appropriate subfolders. 
 
-If you add the−`OPS_DIAGS=2` runtime flag, at the end of execution, OPS will report timings and achieved bandwidth for each of your kernels. For more options, see the user guide.
+If you add the−`OPS_DIAGS=2` runtime flag, at the end of execution, OPS will report timings and achieved bandwidth for each of your kernels. For more options, see [Runtime Flags and Options](https://ops-dsl.readthedocs.io/en/markdowndocdev/devanapp.html#runtime-flags-and-options).
 
 
 ## Code generated versions
@@ -255,10 +255,23 @@ OPS will generate and compile a large number of different versions.
 * `laplace2d_mpiinline` : optimised implementation with MPI+OpenMP
 * `laplace2d_tiled`: optimised implementation with OpenMP that improves spatial and temporal locality
 
-
-
 ## Optimizations - general
+Try the following performance tuning options
+* `laplace2d_cuda`, `laplace2d_opencl` : you can set the `OPS_BLOCK_SIZE_X` and `OPS_BLOCK_SIZE_Y` runtime arguments to control thread block or work group sizes 
+* `laplace2d_mpi_cuda`, `laplace2d_mpi_openacc` : add the `-gpudirect` runtime flag to enable GPU Direct communications
+
+
 ## Optimizations - tiling
+
+Tiling uses lazy execution: as parallel loops follow one another, they are not executed, but put in a queue, and only once some data needs to be returned to the user (e.g.  result of a reduction) do these loops have to be executed.
+
+With a chain of loops queued, OPS can analyse them together and come up with a tiled execution schedule.
+
+This works over MPI as well:  OPS extends the halo regions, and does one big halo exchange instead of several smaller ones. In the current `laplace2d` code, every stencil application loop is also doing a reduction, therefore only two loops are queued. Try modifying the code so the reduction only happens every 10 iterations ! On A Xeon E5-2650, one can get a 2.5x speedup.
+
+The following versions can be executed with the tiling optimzations.
+
+* `laplace2d_tiled`, `laplace2d_mpi_tiled` : add the `OPS_TILING` runtime flag, and move `-OPSDIAGS=3` to see the cache blocking tiling at work. For some applications, such as this one, the initial guess gives too large tiles, try setting `OPS_CACHE_SIZE` to a lower value (in MB, for L3 size).  Thread affinity control and using 1 process per socket isstrongly recommended.  E.g. `OMP_NUM_THREADS=20 numactl--cpunodebind=0 ./laplace2dtiled -OPSDIAGS=3 OPS_TILING OPS_CACHE_SIZE=5`. Over MPI, you will have to set `OPS_TILING_MAX_DEPTH` to extend halo regions.
 
 ## Supported Paralleizations
 ## Code-generation Flags
