@@ -273,8 +273,25 @@ The following versions can be executed with the tiling optimzations.
 
 * `laplace2d_tiled`, `laplace2d_mpi_tiled` : add the `OPS_TILING` runtime flag, and move `-OPSDIAGS=3` to see the cache blocking tiling at work. For some applications, such as this one, the initial guess gives too large tiles, try setting `OPS_CACHE_SIZE` to a lower value (in MB, for L3 size).  Thread affinity control and using 1 process per socket isstrongly recommended.  E.g. `OMP_NUM_THREADS=20 numactl--cpunodebind=0 ./laplace2dtiled -OPSDIAGS=3 OPS_TILING OPS_CACHE_SIZE=5`. Over MPI, you will have to set `OPS_TILING_MAX_DEPTH` to extend halo regions.
 
-## Supported Paralleizations
+<!--## Supported Paralleizations-->
 
 <!-- ## Code-generation Flags -->
 
 ## Runtime Flags and Options
+
+### General flags
+* `OPS_DIAGS=`
+* `OPS_BLOCK_SIZE_X=`, `OPS_BLOCK_SIZE_Y=` and `OPS_BLOCK_SIZE_Y=`
+* `-gpudirect`
+* `OPS_CL_DEVICE=`
+* `OPS_TILING`
+* `OPS_TILING_MAXDEPTH=`
+
+### Tridsolver API flags
+* -halo 1 
+* -m
+* `-bx`, `-by` and `-bz`
+
+
+
+
