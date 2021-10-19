@@ -288,8 +288,8 @@ The following versions can be executed with the tiling optimzations.
 * `OPS_TILING_MAXDEPTH=`
 
 ### Tridsolver API flags
-* -halo 1 
-* -m
+* `-halo 1`
+* `-m`
 * `-bx`, `-by` and `-bz`
 
 
