@@ -37,83 +37,85 @@
   * functions for interfacing with external Tridiagonal libraries
   */
 
-#include <trid_common.h>
-#include <trid_mpi_cuda.hpp>
-#include <cuda.h>
-
 #include <ops_cuda_rt_support.h>
 #include <ops_mpi_core.h>
 #include <ops_exceptions.h>
 #include <ops_tridiag.h>
 #include <ops_lib_core.h>
 
-namespace {
-  struct MpiSolverParamsWrapper {
-    MpiSolverParams *trid_mpi_params;
-    sub_block *trid_sb;
+#include <tridsolver.h>
+#include <trid_mpi_solver_params.hpp>
 
-    MpiSolverParamsWrapper() {
-      trid_mpi_params = nullptr;
-      trid_sb = nullptr;
-    }
+ops_tridsolver_params::ops_tridsolver_params(ops_block block) {
+  TridParams *tp = new TridParams();
+  sub_block *sb  = OPS_sub_block_list[block->index];
+  MpiSolverParams::MPICommStrategy strat = MpiSolverParams::PCR;
+  MpiSolverParams *trid_mpi_params = new MpiSolverParams(sb->comm, sb->ndim,
+                                                         sb->pdims, strat);
+  tp->mpi_params    = (void *)trid_mpi_params;
+  tridsolver_params = (void *)tp;
+}
 
-    MpiSolverParams* getMpiSolverParams(sub_block *sb, int solve_method,
-                                        int batch_size, double jacobi_rtol,
-                                        double jacobi_atol, int jacobi_maxiter) {
-      MpiSolverParams::MPICommStrategy strategy;
-      switch(solve_method) {
-        case 0:
-          throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: Gather Scatter solving strategy is not a valid option for MPI+CUDA");
-          break;
-        case 1:
-          strategy = MpiSolverParams::ALLGATHER;
-          break;
-        case 2:
-          strategy = MpiSolverParams::LATENCY_HIDING_TWO_STEP;
-          break;
-        case 3:
-          strategy = MpiSolverParams::LATENCY_HIDING_INTERLEAVED;
-          break;
-        case 4:
-          strategy = MpiSolverParams::JACOBI;
-          break;
-        case 5:
-          strategy = MpiSolverParams::PCR;
-          break;
-        default:
-          throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: Unrecognised solving strategy");
-      }
-      if(trid_mpi_params == nullptr) {
-        trid_mpi_params = new MpiSolverParams(sb->comm, sb->ndim, sb->pdims,
-                                              strategy);
-        trid_sb = sb;
-        trid_mpi_params->mpi_batch_size = batch_size;
-        trid_mpi_params->jacobi_rtol    = jacobi_rtol;
-        trid_mpi_params->jacobi_atol    = jacobi_atol;
-        trid_mpi_params->jacobi_maxiter = jacobi_maxiter;
-      } else {
-        if(sb != trid_sb) {
-          delete trid_mpi_params;
-          trid_mpi_params = new MpiSolverParams(sb->comm, sb->ndim, sb->pdims,
-                                                strategy);
-          trid_sb = sb;
-          trid_mpi_params->mpi_batch_size = batch_size;
-          trid_mpi_params->jacobi_rtol    = jacobi_rtol;
-          trid_mpi_params->jacobi_atol    = jacobi_atol;
-          trid_mpi_params->jacobi_maxiter = jacobi_maxiter;
-        } else {
-          trid_mpi_params->strategy = strategy;
-          trid_mpi_params->mpi_batch_size = batch_size;
-          trid_mpi_params->jacobi_rtol    = jacobi_rtol;
-          trid_mpi_params->jacobi_atol    = jacobi_atol;
-          trid_mpi_params->jacobi_maxiter = jacobi_maxiter;
-        }
-      }
-      return trid_mpi_params;
-    }
-  };
+ops_tridsolver_params::ops_tridsolver_params(ops_block block,
+                                             SolveStrategy strategy) {
+  TridParams *tp = new TridParams();
+  sub_block *sb = OPS_sub_block_list[block->index];
+  MpiSolverParams::MPICommStrategy strat;
+  switch (strategy) {
+    case GATHER_SCATTER:
+      throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: Gather Scatter solving strategy is not a valid option for MPI+CUDA");
+      break;
+    case ALLGATHER:
+      strat = MpiSolverParams::ALLGATHER;
+      break;
+    case LATENCY_HIDING_TWO_STEP:
+      strat = MpiSolverParams::LATENCY_HIDING_TWO_STEP;
+      break;
+    case LATENCY_HIDING_INTERLEAVED:
+      strat = MpiSolverParams::LATENCY_HIDING_INTERLEAVED;
+      break;
+    case JACOBI:
+      strat = MpiSolverParams::JACOBI;
+      break;
+    case PCR:
+      strat = MpiSolverParams::PCR;
+      break;
+    default:
+      throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: Unrecognised solving strategy");
+  }
 
-  MpiSolverParamsWrapper mpiParams;
+  MpiSolverParams *trid_mpi_params = new MpiSolverParams(sb->comm, sb->ndim,
+                                                         sb->pdims, strat);
+  tp->mpi_params    = (void *)trid_mpi_params;
+  tridsolver_params = (void *)tp;
+}
+
+ops_tridsolver_params::~ops_tridsolver_params() {
+  delete (MpiSolverParams *)((TridParams *)tridsolver_params)->mpi_params;
+  delete (TridParams *)tridsolver_params;
+}
+
+void ops_tridsolver_params::set_jacobi_params(double rtol, double atol,
+                                              int maxiter) {
+  TridParams *tp = (TridParams *)tridsolver_params;
+  MpiSolverParams *params = (MpiSolverParams *)tp->mpi_params;
+  params->jacobi_rtol     = rtol;
+  params->jacobi_atol     = atol;
+  params->jacobi_maxiter  = maxiter;
+}
+
+void ops_tridsolver_params::set_batch_size(int batch_size) {
+  TridParams *tp = (TridParams *)tridsolver_params;
+  MpiSolverParams *params = (MpiSolverParams *)tp->mpi_params;
+  params->mpi_batch_size  = batch_size;
+}
+
+void ops_tridsolver_params::set_cuda_opts(int opt_x, int opt_y, int opt_z) {
+  // N/A for everything except single node CUDA
+}
+
+void ops_tridsolver_params::set_cuda_sync(int sync) {
+  // N/A for everything except single node CUDA
 }
 
 void ops_tridMultiDimBatch(
@@ -126,15 +128,11 @@ void ops_tridMultiDimBatch(
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
     ops_dat u,
-    int solve_method,
-    int batch_size,
-    double jacobi_rtol, // Used for the JACOBI solving strategy for the MPI solves
-    double jacobi_atol, // Do not need to be set for other solving strategies
-    int jacobi_maxiter // Or for single node solve
+    ops_tridsolver_params *tridsolver_ctx
     ) {
 
   // check if sizes match
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < ndim; i++) {
     if (a->size[i] != b->size[i] || b->size[i] != c->size[i] ||
         c->size[i] != d->size[i] || d->size[i] != u->size[i]) {
       throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
@@ -152,10 +150,6 @@ void ops_tridMultiDimBatch(
     dims_calc[i] = a->size[i] - pads_m[i] - pads_p[i];
   }
 
-  // compute tridiagonal system sizes
-  ops_block block = a->block;
-  sub_block *sb = OPS_sub_block_list[block->index];
-
   int device = OPS_DEVICE;
   int s3D_000[] = {0, 0, 0};
   ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
@@ -168,12 +162,9 @@ void ops_tridMultiDimBatch(
   double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
   double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
-  MpiSolverParams *tridMPIParams = mpiParams.getMpiSolverParams(sb, solve_method,
-                                          batch_size, jacobi_rtol, jacobi_atol,
-                                          jacobi_maxiter);
-
-  tridDmtsvStridedBatchMPI(*tridMPIParams, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
-                           ndim, solvedim, dims_calc, a->size);
+  tridDmtsvStridedBatch((TridParams *)tridsolver_ctx->tridsolver_params, a_ptr,
+                        b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim, dims_calc,
+                        a->size);
 
   // Release pointer access back to OPS
   ops_dat_release_raw_data(u, 0, OPS_READ);
@@ -193,15 +184,11 @@ void ops_tridMultiDimBatch_Inc(
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
     ops_dat u,
-    int solve_method,
-    int batch_size,
-    double jacobi_rtol, // Used for the JACOBI solving strategy for the MPI solves
-    double jacobi_atol, // Do not need to be set for other solving strategies
-    int jacobi_maxiter // Or for single node solve
+    ops_tridsolver_params *tridsolver_ctx
     ) {
 
   // check if sizes match
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < ndim; i++) {
     if (a->size[i] != b->size[i] || b->size[i] != c->size[i] ||
         c->size[i] != d->size[i] || d->size[i] != u->size[i]) {
       throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
@@ -219,10 +206,6 @@ void ops_tridMultiDimBatch_Inc(
     dims_calc[i] = a->size[i] - pads_m[i] - pads_p[i];
   }
 
-  // compute tridiagonal system sizes
-  ops_block block = a->block;
-  sub_block *sb = OPS_sub_block_list[block->index];
-
   int device = OPS_DEVICE;
   int s3D_000[] = {0, 0, 0};
   ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
@@ -233,13 +216,9 @@ void ops_tridMultiDimBatch_Inc(
   double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
   double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
-  MpiSolverParams *tridMPIParams = mpiParams.getMpiSolverParams(sb, solve_method,
-                                          batch_size, jacobi_rtol, jacobi_atol,
-                                          jacobi_maxiter);
-
-  // For now do not consider adding padding
-  tridDmtsvStridedBatchIncMPI(*tridMPIParams, a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
-                              ndim, solvedim, dims_calc, a->size);
+  tridDmtsvStridedBatchInc((TridParams *)tridsolver_ctx->tridsolver_params,
+                           a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
+                           dims_calc, a->size);
 
   ops_dat_release_raw_data(u, 0, OPS_RW);
   ops_dat_release_raw_data(d, 0, OPS_READ);

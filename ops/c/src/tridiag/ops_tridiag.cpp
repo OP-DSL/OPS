@@ -39,8 +39,39 @@
 
 #include <ops_lib_core.h>
 #include <ops_tridiag.h>
-#include "trid_cpu.h"
 #include <ops_exceptions.h>
+
+#include <tridsolver.h>
+
+ops_tridsolver_params::ops_tridsolver_params(ops_block block) {
+  tridsolver_params = (void *)new TridParams();
+}
+
+ops_tridsolver_params::ops_tridsolver_params(ops_block block,
+                                             SolveStrategy strategy) {
+  tridsolver_params = (void *)new TridParams();
+}
+
+ops_tridsolver_params::~ops_tridsolver_params() {
+  delete (TridParams *)tridsolver_params;
+}
+
+void ops_tridsolver_params::set_jacobi_params(double rtol, double atol,
+                                              int maxiter) {
+  // N/A for non-MPI code
+}
+
+void ops_tridsolver_params::set_batch_size(int batch_size) {
+  // N/A for non-MPI code
+}
+
+void ops_tridsolver_params::set_cuda_opts(int opt_x, int opt_y, int opt_z) {
+  // N/A for everything except single node CUDA
+}
+
+void ops_tridsolver_params::set_cuda_sync(int sync) {
+  // N/A for everything except single node CUDA
+}
 
 void ops_tridMultiDimBatch(
     int ndim,      // number of dimensions, ndim <= MAXDIM = 8
@@ -53,14 +84,10 @@ void ops_tridMultiDimBatch(
         d,  // right hand side coefficients of a multidimensional problem. An
             // array containing d column vectors of individual problems
     ops_dat u,
-    int solve_method,
-    int batch_size,
-    double jacobi_rtol, // Used for the JACOBI solving strategy for the MPI solves
-    double jacobi_atol, // Do not need to be set for other solving strategies
-    int jacobi_maxiter // Or for single node solve
+    ops_tridsolver_params *tridsolver_ctx
     ) {
 
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < ndim; i++) {
     if (a->size[i] != b->size[i] || b->size[i] != c->size[i] ||
         c->size[i] != d->size[i] || d->size[i] != u->size[i]) {
       throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
@@ -77,8 +104,9 @@ void ops_tridMultiDimBatch(
   double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &host);
   double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
 
-  tridDmtsvStridedBatch(a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
-                        ndim, solvedim, dims, a->size);
+  tridDmtsvStridedBatch((TridParams *)tridsolver_ctx->tridsolver_params, a_ptr,
+                        b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim, dims,
+                        a->size);
 
   ops_dat_release_raw_data(u, 0, OPS_READ);
   ops_dat_release_raw_data(d, 0, OPS_RW);
@@ -113,15 +141,11 @@ void ops_tridMultiDimBatch_Inc(
         d,  // right hand side coefficients of a multidimensional problem. An
             // array containing d column vectors of individual problems
     ops_dat u,
-    int solve_method,
-    int batch_size,
-    double jacobi_rtol, // Used for the JACOBI solving strategy for the MPI solves
-    double jacobi_atol, // Do not need to be set for other solving strategies
-    int jacobi_maxiter // Or for single node solve
+    ops_tridsolver_params *tridsolver_ctx
     ) {
 
   // check if sizes match
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < ndim; i++) {
     if (a->size[i] != b->size[i] || b->size[i] != c->size[i] ||
         c->size[i] != d->size[i] || d->size[i] != u->size[i]) {
       throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
@@ -138,8 +162,9 @@ void ops_tridMultiDimBatch_Inc(
   double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &host);
   double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &host);
 
-  tridDmtsvStridedBatchInc(a_ptr, b_ptr, c_ptr, d_ptr, u_ptr,
-                           ndim, solvedim, dims, a->size);
+  tridDmtsvStridedBatchInc((TridParams *)tridsolver_ctx->tridsolver_params,
+                           a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
+                           dims, a->size);
 
   ops_dat_release_raw_data(u, 0, OPS_RW);
   ops_dat_release_raw_data(d, 0, OPS_READ);

@@ -81,9 +81,9 @@ void print_help() {
   exit(0);
 }
 
-typedef double FP;
+typedef double APP_FP;
 // writes the whole dataset to a file named as the executable_name.dat
-void dump_data(FP *data, const int nx, const int ny, const int nz,
+void dump_data(APP_FP *data, const int nx, const int ny, const int nz,
                const int ldim, const char *filename) {
   // Set output filname to binary executable.dat
   char out_filename[256];
@@ -105,7 +105,7 @@ void dump_data(FP *data, const int nx, const int ny, const int nz,
           // data[ind] = i + j*nx + k*nx*ny;
           // fprintf(fout, "%.10f ", data[ind]);
           // printf("%.10f ", data[ind]);
-          fwrite(&data[ind], sizeof(FP), 1, fout); // binary dump
+          fwrite(&data[ind], sizeof(APP_FP), 1, fout); // binary dump
         }
         // fprintf(fout, "\n");
       }
@@ -115,7 +115,7 @@ void dump_data(FP *data, const int nx, const int ny, const int nz,
   }
 }
 
-void dump_and_exit(FP *data, const int nx, const int ny, const int nz,
+void dump_and_exit(APP_FP *data, const int nx, const int ny, const int nz,
                    const int ldim, const char *filename, const int iteration,
                    const int max_iteration) {
   dump_data(data, nx, ny, nz, ldim, filename);
@@ -346,6 +346,35 @@ int main(int argc, char *argv[]) {
 
   ops_timers(&ct0, &et0);
 
+  ops_tridsolver_params::SolveStrategy strat;
+  switch (m) {
+    case 0:
+      strat = ops_tridsolver_params::GATHER_SCATTER;
+      break;
+    case 1:
+      strat = ops_tridsolver_params::ALLGATHER;
+      break;
+    case 2:
+      strat = ops_tridsolver_params::LATENCY_HIDING_TWO_STEP;
+      break;
+    case 3:
+      strat = ops_tridsolver_params::LATENCY_HIDING_INTERLEAVED;
+      break;
+    case 4:
+      strat = ops_tridsolver_params::JACOBI;
+      break;
+    case 5:
+      strat = ops_tridsolver_params::PCR;
+      break;
+  }
+  ops_tridsolver_params *trid_ctx_x = new ops_tridsolver_params(heat3D, strat);
+  ops_tridsolver_params *trid_ctx_y = new ops_tridsolver_params(heat3D, strat);
+  ops_tridsolver_params *trid_ctx_z = new ops_tridsolver_params(heat3D, strat);
+
+  trid_ctx_x->set_batch_size(bx);
+  trid_ctx_x->set_batch_size(by);
+  trid_ctx_x->set_batch_size(bz);
+
   for (int it = 0; it < iter; it++) {  // Start main iteration loop
 
     /**-----calculate r.h.s. and set tri-diagonal
@@ -372,25 +401,29 @@ int main(int argc, char *argv[]) {
 
     /**---- perform tri-diagonal solves in x-direction--**/
     ops_timers(&ct2, &et2);
-    ops_tridMultiDimBatch(3, 0, size, h_ax, h_bx, h_cx, h_du, h_u, m, bx);
+    ops_tridMultiDimBatch(3, 0, size, h_ax, h_bx, h_cx, h_du, h_u, trid_ctx_x);
     ops_timers(&ct3, &et3);
     total_x += et3 - et2;
     //ops_printf("Elapsed trid_x (sec): %lf (s)\n", et3 - et2);
 
     /**---- perform tri-diagonal solves in y-direction--**/
     ops_timers(&ct2, &et2);
-    ops_tridMultiDimBatch(3, 1, size, h_ay, h_by, h_cy, h_du, h_u, m, by);
+    ops_tridMultiDimBatch(3, 1, size, h_ay, h_by, h_cy, h_du, h_u, trid_ctx_y);
     ops_timers(&ct3, &et3);
     total_y += et3 - et2;
     //ops_printf("Elapsed trid_y (sec): %lf (s)\n", et3 - et2);
 
     /**---- perform tri-diagonal solves in z-direction--**/
     ops_timers(&ct2, &et2);
-    ops_tridMultiDimBatch_Inc(3, 2, size, h_az, h_bz, h_cz, h_du, h_u, m, bz);
+    ops_tridMultiDimBatch_Inc(3, 2, size, h_az, h_bz, h_cz, h_du, h_u, trid_ctx_z);
     ops_timers(&ct3, &et3);
     total_z += et3 - et2;
     //ops_printf("Elapsed trid_z (sec): %lf (s)\n", et3 - et2);
   }  // End main iteration loop
+
+  delete trid_ctx_x;
+  delete trid_ctx_y;
+  delete trid_ctx_z;
 
   ops_timers(&ct1, &et1);
 

@@ -42,19 +42,43 @@
 
 #include "ops_lib_core.h"
 
+class ops_tridsolver_params {
+public:
+  enum SolveStrategy {
+    GATHER_SCATTER = 0, // Gather boundaries on first nodes solve reduced system
+                        // and scatter results
+    ALLGATHER,          // Gather boundaries and solve reduced on all nodes
+    JACOBI,             // Use Jacobi iterations to solve the reduced system
+    PCR,                // Use PCR to solve the reduced system
+    LATENCY_HIDING_INTERLEAVED, // Perform solves in mini-batches. Do forward
+                                // run of the current mini-batch start
+                                // communication and finish the previous
+                                // mini-batch
+    LATENCY_HIDING_TWO_STEP     // Perform solves in min-batches. First step:
+                            // forwards and start communication, second step:
+                            // wait for ready requests and finish mini-batches
+  };
+
+  ops_tridsolver_params(ops_block block);
+  ops_tridsolver_params(ops_block block, SolveStrategy strategy);
+  ~ops_tridsolver_params();
+
+  void set_jacobi_params(double rtol, double atol, int maxiter);
+  void set_batch_size(int batch_size);
+  void set_cuda_opts(int opt_x, int opt_y, int opt_z);
+  void set_cuda_sync(int sync);
+
+  void *tridsolver_params;
+};
+
 OPS_FTN_INTEROP
 void ops_tridMultiDimBatch(int ndim, int solvedim, int* dims, ops_dat a,
                            ops_dat b, ops_dat c, ops_dat d, ops_dat u,
-                           int solve_method = 3, int batch_size = 65536,
-                           double jacobi_rtol = 1e-12,
-                           double jacobi_atol = 1e-11, int jacobi_maxiter = -1);
+                           ops_tridsolver_params *tridsolver_ctx);
 
 OPS_FTN_INTEROP
 void ops_tridMultiDimBatch_Inc(int ndim, int solvedim, int* dims, ops_dat a,
                                ops_dat b, ops_dat c, ops_dat d, ops_dat u,
-                               int solve_method = 3, int batch_size = 65536,
-                               double jacobi_rtol = 1e-12,
-                               double jacobi_atol = 1e-11,
-                               int jacobi_maxiter = -1);
+                               ops_tridsolver_params *tridsolver_ctx);
 
 #endif
