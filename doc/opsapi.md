@@ -683,5 +683,22 @@ This routine copies the data given  by the user to the internal data structure u
 |part|        the chunk index (has to be 0)|
 |data|        pointer to memory which should be copied to OPS |
 
+## Runtime Flags and Options
+
+The following is a list of all the runtime flags and options that can be used when executing OPS generated applications. 
+### General flags
+* `OPS_DIAGS=`
+* `OPS_BLOCK_SIZE_X=`, `OPS_BLOCK_SIZE_Y=` and `OPS_BLOCK_SIZE_Y=`
+* `-gpudirect`
+* `OPS_CL_DEVICE=`
+* `OPS_TILING`
+* `OPS_TILING_MAXDEPTH=`
+
+### Tridsolver API flags
+* `-halo 1`
+* `-m`
+* `-bx`, `-by` and `-bz`
+
+
 ## Doxygen
 Doxygen generated from OPS source can be found [here](https://op-dsl-ci.gitlab.io/ops-ci/).
