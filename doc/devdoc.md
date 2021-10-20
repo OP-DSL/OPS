@@ -1,4 +1,6 @@
 # Developer Guide
+Under construction.
+<!-- 
 ## Code-generator
 ### Frontend API parser
 ### Target Parallel Templates
@@ -9,7 +11,7 @@
 ### HDF5
 ### CUDA
 ### Cache blocking tiling and comm-avoiding optimizations
-
+-->
 ## To contribute to OPS please use the following steps :
 
 Clone the [OPS](https://github.com/OP-DSL/OPS) repository (on your local system).
