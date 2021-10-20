@@ -45,7 +45,6 @@ arguments. For example,
 ```bash
 ./cloverleaf_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
 ```
-## CUDA-aware MPI
 ## OpenCL arguments
 
 `OPS_CL_DEVICE=XX` runtime flag sets the OpenCL device to execute the
