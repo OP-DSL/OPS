@@ -21,7 +21,7 @@ in Megabytes. To manually specify the tile sizes, use the
 When MPI is combined with OpenMP tiling can be extended to the MPI
 halos. Set `OPS_TILING_MAXDEPTH` to increase the the halo depths so that
 halos for multiple `ops_par_loops` can be exchanged with a single MPI
-message (see [@TPDS2017] for more details)\
+message (see [TPDS2017](https://ieeexplore.ieee.org/abstract/document/8121995) for more details)\
 To test, compile CloverLeaf under ``OPS/apps/c/CloverLeaf``, modify clover.in
 to use a $6144^2$ mesh, then run as follows:\
 For OpenMP with tiling:
