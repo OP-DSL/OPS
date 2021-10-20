@@ -14,10 +14,11 @@ Under construction.
 -->
 ## To contribute to OPS please use the following steps :
 
-Clone the [OPS](https://github.com/OP-DSL/OPS) repository (on your local system).
-Create a new branch in your cloned repository
-Make changes / contributions in your new branch
-Submit your changes by creating a Pull Request to the `develop` branch of the OPS repository
+1. Clone the [OPS](https://github.com/OP-DSL/OPS) repository (on your local system).
+2. Create a new branch in your cloned repository
+3. Make changes / contributions in your new branch
+4. Submit your changes by creating a Pull Request to the `develop` branch of the OPS repository
+
 The contributions in the `develop` branch will be merged into the `master` branch as we create a new release.
 
 <!--
