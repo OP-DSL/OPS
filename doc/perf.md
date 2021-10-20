@@ -38,7 +38,7 @@ OPS_TILESIZE_X, OPS_TILESIZE_Y, and OPS_TILESIZE_Z runtime arguments:
 export OMP_NUM_THREADS=xx; numactl -physnodebind=0 ./cloverleaf_tiled OPS_TILING OPS_TILESIZE_X=600 OPS_TILESIZE_Y=200
 ```
 ## OpenMP and OpenMP+MPI
-It is recommended that you assign one MPI rank per NUMA region when executing MPI+OpenMP parallel code. Usually for a multi-CPU system a single CPU socket is a single NUMA region. Thus, for a 4 socket system, OPS's MPI+OpenMP code should be executed with 4 MPI processes with each MPI process having multiple OpenMP threads (typically specified by the `OMP_NUM_THREAD`s flag). Additionally on some systems using `numactl` to bind threads to cores could give performance improvements (see `OPS/scripts/numawrap` for an example script that wraps the `numactl` command to be used with common MPI distributions). 
+It is recommended that you assign one MPI rank per NUMA region when executing MPI+OpenMP parallel code. Usually for a multi-CPU system a single CPU socket is a single NUMA region. Thus, for a 4 socket system, OPS's MPI+OpenMP code should be executed with 4 MPI processes with each MPI process having multiple OpenMP threads (typically specified by the `OMP_NUM_THREAD` flag). Additionally on some systems using `numactl` to bind threads to cores could give performance improvements (see `OPS/scripts/numawrap` for an example script that wraps the `numactl` command to be used with common MPI distributions). 
 
 ## CUDA arguments
 The CUDA (and OpenCL) thread block sizes can be controlled by setting
