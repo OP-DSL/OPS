@@ -12,8 +12,9 @@ Under construction.
 ### CUDA
 ### Cache blocking tiling and comm-avoiding optimizations
 -->
-## To contribute to OPS please use the following steps :
+## Contributing
 
+To contribute to OPS please use the following steps :
 1. Clone the [OPS](https://github.com/OP-DSL/OPS) repository (on your local system).
 2. Create a new branch in your cloned repository
 3. Make changes / contributions in your new branch
