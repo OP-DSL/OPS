@@ -37,6 +37,8 @@
   * functions for interfacing with external Tridiagonal libraries
   */
 
+#include <string>
+
 #include <ops_cuda_rt_support.h>
 #include <ops_mpi_core.h>
 #include <ops_exceptions.h>
@@ -139,6 +141,11 @@ void ops_tridMultiDimBatch(
     }
   }
 
+  if(strcmp(a->type, b->type) != 0 || strcmp(b->type, c->type) != 0 ||
+     strcmp(c->type, d->type) != 0 || strcmp(d->type, u->type) != 0 ) {
+    throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets must all be of the same type");
+  }
+
   int dims_calc[OPS_MAX_DIM];
   int pads_m[OPS_MAX_DIM];
   int pads_p[OPS_MAX_DIM];
@@ -154,24 +161,47 @@ void ops_tridMultiDimBatch(
   int s3D_000[] = {0, 0, 0};
   ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
 
-  // Get raw pointer access to data held by OPS
-  // Points to element 0, skipping MPI halo
-  const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &device);
-  const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &device);
-  const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &device);
-  double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
-  double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
+  if(strcmp(a->type, "double") == 0) {
+    // Get raw pointer access to data held by OPS
+    // Points to element 0, skipping MPI halo
+    const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &device);
+    const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &device);
+    const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &device);
+    double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
+    double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
-  tridDmtsvStridedBatch((TridParams *)tridsolver_ctx->tridsolver_params, a_ptr,
-                        b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim, dims_calc,
-                        a->size);
+    tridDmtsvStridedBatch((TridParams *)tridsolver_ctx->tridsolver_params, a_ptr,
+                          b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim, dims_calc,
+                          a->size);
 
-  // Release pointer access back to OPS
-  ops_dat_release_raw_data(u, 0, OPS_READ);
-  ops_dat_release_raw_data(d, 0, OPS_RW);
-  ops_dat_release_raw_data(c, 0, OPS_READ);
-  ops_dat_release_raw_data(b, 0, OPS_READ);
-  ops_dat_release_raw_data(a, 0, OPS_READ);
+    // Release pointer access back to OPS
+    ops_dat_release_raw_data(u, 0, OPS_READ);
+    ops_dat_release_raw_data(d, 0, OPS_RW);
+    ops_dat_release_raw_data(c, 0, OPS_READ);
+    ops_dat_release_raw_data(b, 0, OPS_READ);
+    ops_dat_release_raw_data(a, 0, OPS_READ);
+  } else if(strcmp(a->type, "float") == 0) {
+    // Get raw pointer access to data held by OPS
+    // Points to element 0, skipping MPI halo
+    const float *a_ptr = (float *)ops_dat_get_raw_pointer(a, 0, S3D_000, &device);
+    const float *b_ptr = (float *)ops_dat_get_raw_pointer(b, 0, S3D_000, &device);
+    const float *c_ptr = (float *)ops_dat_get_raw_pointer(c, 0, S3D_000, &device);
+    float *d_ptr = (float *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
+    float *u_ptr = (float *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
+
+    tridSmtsvStridedBatch((TridParams *)tridsolver_ctx->tridsolver_params, a_ptr,
+                          b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim, dims_calc,
+                          a->size);
+
+    // Release pointer access back to OPS
+    ops_dat_release_raw_data(u, 0, OPS_READ);
+    ops_dat_release_raw_data(d, 0, OPS_RW);
+    ops_dat_release_raw_data(c, 0, OPS_READ);
+    ops_dat_release_raw_data(b, 0, OPS_READ);
+    ops_dat_release_raw_data(a, 0, OPS_READ);
+  } else {
+    throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: unsupported type. Dataset type must either be \"double\" or \"float\"");
+  }
 }
 
 void ops_tridMultiDimBatch_Inc(
@@ -195,6 +225,11 @@ void ops_tridMultiDimBatch_Inc(
     }
   }
 
+  if(strcmp(a->type, b->type) != 0 || strcmp(b->type, c->type) != 0 ||
+     strcmp(c->type, d->type) != 0 || strcmp(d->type, u->type) != 0 ) {
+    throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets must all be of the same type");
+  }
+
   int dims_calc[OPS_MAX_DIM];
   int pads_m[OPS_MAX_DIM];
   int pads_p[OPS_MAX_DIM];
@@ -210,19 +245,39 @@ void ops_tridMultiDimBatch_Inc(
   int s3D_000[] = {0, 0, 0};
   ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
 
-  const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &device);
-  const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &device);
-  const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &device);
-  double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
-  double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
+  if(strcmp(a->type, "double") == 0) {
+    const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &device);
+    const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &device);
+    const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &device);
+    double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
+    double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
-  tridDmtsvStridedBatchInc((TridParams *)tridsolver_ctx->tridsolver_params,
-                           a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
-                           dims_calc, a->size);
+    tridDmtsvStridedBatchInc((TridParams *)tridsolver_ctx->tridsolver_params,
+                             a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
+                             dims_calc, a->size);
 
-  ops_dat_release_raw_data(u, 0, OPS_RW);
-  ops_dat_release_raw_data(d, 0, OPS_READ);
-  ops_dat_release_raw_data(c, 0, OPS_READ);
-  ops_dat_release_raw_data(b, 0, OPS_READ);
-  ops_dat_release_raw_data(a, 0, OPS_READ);
+    ops_dat_release_raw_data(u, 0, OPS_RW);
+    ops_dat_release_raw_data(d, 0, OPS_READ);
+    ops_dat_release_raw_data(c, 0, OPS_READ);
+    ops_dat_release_raw_data(b, 0, OPS_READ);
+    ops_dat_release_raw_data(a, 0, OPS_READ);
+  } else if(strcmp(a->type, "float") == 0) {
+    const float *a_ptr = (float *)ops_dat_get_raw_pointer(a, 0, S3D_000, &device);
+    const float *b_ptr = (float *)ops_dat_get_raw_pointer(b, 0, S3D_000, &device);
+    const float *c_ptr = (float *)ops_dat_get_raw_pointer(c, 0, S3D_000, &device);
+    float *d_ptr = (float *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
+    float *u_ptr = (float *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
+
+    tridSmtsvStridedBatchInc((TridParams *)tridsolver_ctx->tridsolver_params,
+                             a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
+                             dims_calc, a->size);
+
+    ops_dat_release_raw_data(u, 0, OPS_RW);
+    ops_dat_release_raw_data(d, 0, OPS_READ);
+    ops_dat_release_raw_data(c, 0, OPS_READ);
+    ops_dat_release_raw_data(b, 0, OPS_READ);
+    ops_dat_release_raw_data(a, 0, OPS_READ);
+  } else {
+    throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: unsupported type. Dataset type must either be \"double\" or \"float\"");
+  }
 }
