@@ -27,7 +27,7 @@ also under MPI).
 
 Reductions in loops are done using the `ops_arg_reduce` argument, which takes a reduction handle as an argument. The result of the reduction can then be acquired using a separate call to `ops_reduction_result`. The semantics are the following: a reduction handle after it was declared is in an "uninitialised" state. The first time it is used as an argument to a loop, its type is determined (increment/min/max), and is initialised appropriately $(0,\infty,-\infty)$, and subsequent uses of the handle in parallel loops are combined together, up until the point, where the result is acquired using `ops_reduction_result`, which then sets it back to an uninitialised state. This also implies, that different parallel loops, which all use the same reduction handle, but are otherwise independent, are independent and their partial reduction results can be combined together associatively and commutatively.
 
-OPS takes responsibility for all data, its movement and the execution of parallel loops. With different execution hardware and optimisations, this means OPS will **re-organise** data as well as execution (potentially across different loops), and therefore **any data accesses or manipulation must only be done through the OPS API**.
+OPS takes responsibility for all data, its movement and the execution of parallel loops. With different execution hardware and optimisations, this means OPS will **re-organise** data as well as execution (potentially across different loops), and therefore **data accesses or manipulation should only be done through the OPS API**. There is an external data access API that allows access to the data stored by OPS which in turn allows interfacing with external libraries.
 
 This restriction is exploited by a lazy execution mechanism in OPS. The idea is that OPS API calls that do not return a result need not be executed immediately, rather queued, and once an API call requires returning some data, operations in the queue are executed, and the result is returned. This allows OPS to analyse and optimise operations
 in the queue together. This mechanism is fully automated by OPS, and is used with the various `_tiled` executables. For more information on how to use this mechanism for improving CPU performance, see Section on Tiling. Some API calls triggering the execution of queued operations include `ops_reduction_result`, and the functions in the
@@ -43,7 +43,7 @@ To further clarify some of the important issues encountered when designing the O
 
 OPS handle all of these different requirements through stencil definitions.
 
-## C/C++ API
+## C API
 
 ### Initialisation and termination routines
 
@@ -567,7 +567,7 @@ in a tech-report on checkpointing, to be published later.
 
 ### Access to OPS data
 
-his section describes APIS that give the user access to internal data structures in OPS and return data to user-space. These should be used cautiously and sparsely, as they can affect performance significantly
+This section describes APIs that give the user access to internal data structures in OPS and return data to user-space. These should be used cautiously and sparsely, as they can affect performance significantly
 
 #### ops_dat_get_local_npartitions
 
