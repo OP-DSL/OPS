@@ -39,6 +39,7 @@
 
 #ifndef __OPS_INTERNAL2
 #define __OPS_INTERNAL2
+#include <vector>
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
@@ -273,6 +274,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 /* lazy execution */
 void ops_enqueue_kernel(ops_kernel_descriptor *desc);
 void ops_execute(OPS_instance *instance);
+void ops_jit_write_json(OPS_instance *instance, const std::vector<ops_kernel_descriptor *>& ops_kernel_list);
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp);
 int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx);
 int ops_get_proc();

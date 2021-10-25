@@ -150,6 +150,7 @@ int main(int argc, char **argv)
   ops_par_loop(poisson_kernel_initialguess, "poisson_kernel_initialguess", block, 3, iter_range,
                ops_arg_dat(u, 1, S3D_000, "double", OPS_WRITE));
 
+	ops_execute(block->instance);
   double it0, it1;
   ops_timers(&ct0, &it0);
 

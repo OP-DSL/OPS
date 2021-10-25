@@ -832,6 +832,8 @@ void ops_execute(OPS_instance *instance) {
   if (ops_kernel_list.size() == 0)
     return;
 
+  
+  if (ops_kernel_list.size() > 1) ops_jit_write_json(instance, ops_kernel_list);
   // Try to find an existing tiling plan for this sequence of loops which is
   // 
   //       instance->tiling_instance->ops_kernel_list
