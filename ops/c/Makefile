@@ -156,30 +156,30 @@ trid_mpi_cuda: mklib $(OBJ)/ops_tridiag_mpi_cuda.o
 
 seq: mklib $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
   $(OBJ)/ops_util.o $(OBJ)/ops_seq.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o \
-	$(OBJ)/ops_json.o
+	$(OBJ)/ops_jit.o
 	ar -r $(LIB)/libops_seq.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
-	$(OBJ)/ops_util.o $(OBJ)/ops_seq.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_json.o
+	$(OBJ)/ops_util.o $(OBJ)/ops_seq.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_jit.o
 
 cuda: mklib $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
   $(OBJ)/ops_util.o $(OBJ)/ops_cuda_rt_support.o $(OBJ)/ops_cuda_rt_support_cuda.o \
-  $(OBJ)/ops_cuda_decl.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_json.o
+  $(OBJ)/ops_cuda_decl.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_jit.o
 	ar -r $(LIB)/libops_cuda.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
 	$(OBJ)/ops_util.o $(OBJ)/ops_cuda_rt_support.o $(OBJ)/ops_cuda_rt_support_cuda.o \
-	$(OBJ)/ops_cuda_decl.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_json.o
+	$(OBJ)/ops_cuda_decl.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_jit.o
 
 hip: mklib $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
   $(OBJ)/ops_util.o $(OBJ)/ops_hip_rt_support.o $(OBJ)/ops_hip_rt_support_kernels.o \
-  $(OBJ)/ops_hip_decl.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_json.o
+  $(OBJ)/ops_hip_decl.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_jit.o
 	ar -r $(LIB)/libops_hip.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
 	$(OBJ)/ops_util.o $(OBJ)/ops_hip_rt_support.o $(OBJ)/ops_hip_rt_support_kernels.o \
-	$(OBJ)/ops_hip_decl.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_json.o
+	$(OBJ)/ops_hip_decl.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_jit.o
 
 mpi: mklib $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
   $(OBJ)/ops_util.o $(OBJ)/ops_mpi_decl_mpi.o $(OBJ)/ops_mpi_rt_support_mpi.o $(OBJ)/ops_checkpointing_strategy_mpi.o \
-  $(OBJ)/ops_mpi_core_mpi.o $(OBJ)/ops_mpi_rt_support_host_mpi.o $(OBJ)/ops_mpi_partition_mpi.o $(OBJ)/ops_json.o
+  $(OBJ)/ops_mpi_core_mpi.o $(OBJ)/ops_mpi_rt_support_host_mpi.o $(OBJ)/ops_mpi_partition_mpi.o $(OBJ)/ops_jit.o
 	ar -r $(LIB)/libops_mpi.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
 	$(OBJ)/ops_util.o $(OBJ)/ops_mpi_decl_mpi.o $(OBJ)/ops_mpi_rt_support_mpi.o $(OBJ)/ops_checkpointing_strategy_mpi.o \
-	$(OBJ)/ops_mpi_core_mpi.o $(OBJ)/ops_mpi_rt_support_host_mpi.o $(OBJ)/ops_mpi_partition_mpi.o $(OBJ)/ops_json.o
+	$(OBJ)/ops_mpi_core_mpi.o $(OBJ)/ops_mpi_rt_support_host_mpi.o $(OBJ)/ops_mpi_partition_mpi.o $(OBJ)/ops_jit.o
 
 hdf5_mpi: mklib $(OBJ)/ops_mpi_hdf5_mpi.o 
 	ar -r $(LIB)/libops_hdf5_mpi.a $(OBJ)/ops_mpi_hdf5_mpi.o
@@ -187,36 +187,36 @@ hdf5_mpi: mklib $(OBJ)/ops_mpi_hdf5_mpi.o
 mpi_cuda: mklib $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_lazy.o \
   $(OBJ)/ops_checkpointing.o $(OBJ)/ops_util.o $(OBJ)/ops_mpi_decl_cuda_mpi.o $(OBJ)/ops_mpi_rt_support_mpi.o \
   $(OBJ)/ops_mpi_core_mpi.o $(OBJ)/ops_mpi_rt_support_cuda.o $(OBJ)/ops_mpi_partition_mpi.o \
-  $(OBJ)/ops_cuda_rt_support.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_json.o
+  $(OBJ)/ops_cuda_rt_support.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_jit.o
 	ar -r $(LIB)/libops_mpi_cuda.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_lazy.o \
 	$(OBJ)/ops_checkpointing.o $(OBJ)/ops_util.o $(OBJ)/ops_mpi_decl_cuda_mpi.o $(OBJ)/ops_mpi_rt_support_mpi.o \
 	$(OBJ)/ops_mpi_core_mpi.o $(OBJ)/ops_mpi_rt_support_cuda.o $(OBJ)/ops_mpi_partition_mpi.o \
-	$(OBJ)/ops_cuda_rt_support.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_json.o
+	$(OBJ)/ops_cuda_rt_support.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_jit.o
 
 mpi_hip: mklib $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_lazy.o \
   $(OBJ)/ops_checkpointing.o $(OBJ)/ops_util.o $(OBJ)/ops_mpi_decl_hip_mpi.o $(OBJ)/ops_mpi_rt_support_mpi.o \
   $(OBJ)/ops_mpi_core_mpi.o $(OBJ)/ops_mpi_rt_support_hip_mpi.o $(OBJ)/ops_mpi_partition_mpi.o \
-  $(OBJ)/ops_hip_rt_support.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_json.o
+  $(OBJ)/ops_hip_rt_support.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_jit.o
 	ar -r $(LIB)/libops_mpi_hip.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_lazy.o \
 	$(OBJ)/ops_checkpointing.o $(OBJ)/ops_util.o $(OBJ)/ops_mpi_decl_hip_mpi.o $(OBJ)/ops_mpi_rt_support_mpi.o \
 	$(OBJ)/ops_mpi_core_mpi.o $(OBJ)/ops_mpi_rt_support_hip_mpi.o $(OBJ)/ops_mpi_partition_mpi.o \
-	$(OBJ)/ops_hip_rt_support.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_json.o
+	$(OBJ)/ops_hip_rt_support.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_jit.o
 
 opencl: mklib $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
   $(OBJ)/ops_util.o $(OBJ)/ops_opencl_rt_support.o $(OBJ)/ops_opencl_rt_support_kernels.o \
-  $(OBJ)/ops_opencl_decl.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_json.o
+  $(OBJ)/ops_opencl_decl.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_jit.o
 	ar -r $(LIB)/libops_opencl.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
 	$(OBJ)/ops_util.o $(OBJ)/ops_opencl_rt_support.o $(OBJ)/ops_opencl_rt_support_kernels.o \
-	$(OBJ)/ops_opencl_decl.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_json.o
+	$(OBJ)/ops_opencl_decl.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_jit.o
 
 mpi_opencl: mklib $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_util.o $(OBJ)/ops_lazy.o \
   $(OBJ)/ops_checkpointing.o $(OBJ)/ops_mpi_decl_opencl_mpi.o $(OBJ)/ops_mpi_rt_support_mpi.o \
         $(OBJ)/ops_mpi_core_mpi.o $(OBJ)/ops_mpi_rt_support_opencl_mpi.o $(OBJ)/ops_mpi_partition_mpi.o \
-  $(OBJ)/ops_opencl_rt_support.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_json.o
+  $(OBJ)/ops_opencl_rt_support.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_jit.o
 	ar -r $(LIB)/libops_mpi_opencl.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_util.o $(OBJ)/ops_lazy.o \
 	$(OBJ)/ops_checkpointing.o $(OBJ)/ops_mpi_decl_opencl_mpi.o $(OBJ)/ops_mpi_rt_support_mpi.o \
         $(OBJ)/ops_mpi_core_mpi.o $(OBJ)/ops_mpi_rt_support_opencl_mpi.o $(OBJ)/ops_mpi_partition_mpi.o \
-	$(OBJ)/ops_opencl_rt_support.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_json.o
+	$(OBJ)/ops_opencl_rt_support.o $(OBJ)/ops_checkpointing_strategy.o $(OBJ)/ops_jit.o
 
 
 clean:

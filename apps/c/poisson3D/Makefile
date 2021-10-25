@@ -27,3 +27,6 @@ APP=poisson
 MAIN_SRC=poisson
 
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app
+
+%.so : %.cpp
+	$(CXX) -fPIC -shared $< -o $@

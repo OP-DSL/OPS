@@ -1,5 +1,7 @@
 #include <ops_lib_core.h>
 #include <vector>
+char *ops_generate_filename(const char *tag);
+#include <dlfcn.h>
 #ifdef OPS_JSON
 #include <string>
 #include <stdio.h>
@@ -147,22 +149,56 @@ class OPSKernelWriter : public JSONWriter {
     }
 };
 
-void ops_jit_write_json(OPS_instance *instance, const std::vector<ops_kernel_descriptor *>& ops_kernel_list) {
+void ops_jit_write_json(OPS_instance *instance, const std::vector<ops_kernel_descriptor *>& ops_kernel_list, const char* tag) {
     OPSKernelWriter writer(instance, ops_kernel_list);
-    const char *tmpdir = getenv("TMPDIR");
-    char *filename = (char*)ops_malloc((tmpdir ? strlen(tmpdir) : 4)+100);
-    memset(filename,0,(tmpdir ? strlen(tmpdir) : 4)+100);
-    if (tmpdir)
-        strcat(filename,tmpdir);
-    else
-        strcat(filename,"/tmp");
-    strcat(filename,"/opsjit.json");
+    char *filename= ops_generate_filename(tag);
+    strcat(filename, "json");
     writer.writeFile(filename);
     ops_free(filename);
 }
 #else
-void ops_jit_write_json(OPS_instance *instance, const std::vector<ops_kernel_descriptor *>& ops_kernel_list) {
+void ops_jit_write_json(OPS_instance *instance, const std::vector<ops_kernel_descriptor *>& ops_kernel_list, const char *tag) {
     (void*)instance;
 }
 #endif
+
+char *ops_generate_filename(const char *tag) {
+  const char *tmpdir = getenv("TMPDIR");
+  char *filename = (char*)ops_malloc((tmpdir ? strlen(tmpdir) : 4)+100+strlen(tag));
+  memset(filename,0,(tmpdir ? strlen(tmpdir) : 4)+100+strlen(tag));
+  if (tmpdir)
+    strcat(filename,tmpdir);
+  else
+    strcat(filename,"/tmp");
+  strcat(filename,"/opsjit_");
+  strcat(filename,tag);
+  strcat(filename,".");
+  return filename;
+}
+
+void ops_jit_compile(const char * tag) {
+  char *filename = ops_generate_filename(tag);
+  strcat(filename, "so");
+  char *command = (char*)ops_malloc(strlen(filename)+100);
+  command[0] = '\0';
+  strcat(command, "make ");
+  strcat(command, filename);
+  ops_printf("Calling %s\n", command);
+  int retval = system(command);
+  if (retval != 0) throw OPSException(OPS_INTERNAL_ERROR,"JIT Command failed");
+}
+
+void ops_jit_run(const char *tag) {
+  char *filename = ops_generate_filename(tag);
+  strcat(filename, "so");
+  ops_printf("Opening %s\n", filename);
+  void *handle = dlopen(filename, RTLD_LAZY);
+  ops_printf("error %s\n", dlerror());
+  if (handle == nullptr) throw OPSException(OPS_INTERNAL_ERROR,dlerror());
+  void (*func_print_name)(const char*);
+  *(void**)(&func_print_name) = dlsym(handle, "print_name");
+  if (func_print_name) {
+    func_print_name("testing");
+  } else throw OPSException(OPS_INTERNAL_ERROR,"JIT function not found in shared object");
+}
 

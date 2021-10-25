@@ -73,7 +73,7 @@ $(APP)_hip: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops
 # Tiled version
 #
 $(APP)_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_seq.a $(OPS_FILES_GEN) $(HEADERS)
-		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -D$(OPS_COMPILER) -DOPS_LAZY -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SEQ) -o $(APP)_tiled
+		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -D$(OPS_COMPILER) -DOPS_LAZY -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SEQ) -o $(APP)_tiled -ldl
 
 $(APP)_mpi_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi.a $(OPS_FILES_GEN) \
                 $(HEADERS)

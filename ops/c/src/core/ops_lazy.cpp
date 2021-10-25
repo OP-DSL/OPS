@@ -69,6 +69,7 @@ struct tiling_plan {
   int nloops;
   std::vector<size_t> loop_sequence;
   int ntiles;
+  size_t hash;
   std::vector<std::vector<int> > tiled_ranges; // ranges for each loop
   std::vector<ops_dat> dats_to_exchange;
   std::vector<int> depths_to_exchange;
@@ -313,7 +314,7 @@ void ops_compute_mpi_dependencies(OPS_instance *instance, int loop, int d, int *
 // Creating a new tiling plan
 /////////////////////////////////////////////////////////////////////////
 
-int ops_construct_tile_plan(OPS_instance *instance) {
+int ops_construct_tile_plan(OPS_instance *instance, size_t hash) {
   // Create new tiling plan
   double t1, t2, c1, c2;
   ops_timers_core(&c1, &t1);
@@ -323,6 +324,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   //
 
   tiling_plans.resize(tiling_plans.size() + 1);
+  tiling_plans[tiling_plans.size() - 1].hash = hash;
   std::vector<std::vector<int> > &tiled_ranges =
       tiling_plans[tiling_plans.size() - 1].tiled_ranges;
   std::vector<ops_dat> &dats_to_exchange = 
@@ -832,33 +834,32 @@ void ops_execute(OPS_instance *instance) {
   if (ops_kernel_list.size() == 0)
     return;
 
-  
-  if (ops_kernel_list.size() > 1) ops_jit_write_json(instance, ops_kernel_list);
   // Try to find an existing tiling plan for this sequence of loops which is
   // 
   //       instance->tiling_instance->ops_kernel_list
   // 
   // which is a vector of ops_kernel_descriptors
+  size_t hash = 5381;
+  for (unsigned int j = 0; j < ops_kernel_list.size(); j++)
+    hash = ((hash << 5) + hash) + ops_kernel_list[j]->hash;
   int match = -1;
   for (unsigned int i = 0; i < tiling_plans.size(); i++) {
-    if (int(ops_kernel_list.size()) == tiling_plans[i].nloops) {
-      int count = 0;
-      for (unsigned int j = 0; j < ops_kernel_list.size(); j++) {
-        if (ops_kernel_list[j]->hash == tiling_plans[i].loop_sequence[j])
-          count++;
-        else
-          break;
-      }
-      if (count == int(ops_kernel_list.size())) {
-        match = i;
-        break;
-      }
+    if (tiling_plans[i].hash == hash) {
+      match = i;
+      break;
     }
+  }
+  
+  if (ops_kernel_list.size() > 1) {
+    
+    ops_jit_write_json(instance, ops_kernel_list, std::to_string(hash).c_str());
+    ops_jit_compile(std::to_string(hash).c_str());
+    ops_jit_run(std::to_string(hash).c_str());
   }
 
   // If not found, construct one
   if (match == -1)
-    match = ops_construct_tile_plan(instance);
+    match = ops_construct_tile_plan(instance, hash);
   std::vector<std::vector<int> > &tiled_ranges =
       tiling_plans[match].tiled_ranges;
   int total_tiles = tiling_plans[match].ntiles;
