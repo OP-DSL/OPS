@@ -127,7 +127,7 @@ The current tests are mainly based on the applications.
   * `MPI_INSTALL_PATH` - Installation directory of MPI (to build MPI based distributed memory libs and applications)
   * `HDF5_INSTALL_PATH` - Installation directory of HDF5 (to support HDF5 based File I/O)
 
-See example scripts (e.g. source_intel, source_pgi_15.10, source_cray) under `OPS/ops/scripts` that sets up the environment for building with various compilers (Intel, PGI, Cray).
+See example scripts (e.g. `source_intel`, `source_pgi_15.10`, `source_cray`) under `OPS/ops/scripts` that sets up the environment for building with various compilers (Intel, PGI, Cray).
 
 #### Build back-end library
 For C/C++ back-end use Makefile under `OPS/ops/c` (modify Makefile if required). The libraries will be built in `OPS/ops/c/lib`
