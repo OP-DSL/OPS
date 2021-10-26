@@ -4,6 +4,8 @@
 
 ## Dependencies
 
+The following prerequisites and dependencies are required for building OPS. Building each of the **backends** are optional and depends on the hardware and/or capabilities you will be targeting. 
+
   **CMake**
 
 CMake 3.18 or newer is required for using the CMake building system. If the latest version is not installed/shipped by default, it can be downloaded from https://cmake.org/download/, e.g., using the following script.
@@ -26,19 +28,19 @@ Python2 is required by the OPS Python translator. The CMake build system will tr
 
 [HDF5](https://www.hdfgroup.org/solutions/hdf5) is required for parts of IO functionalities. The CMake build system **uses the parallel version by default** even for sequential codes, and automatically identify the library. If the automatic process fails, the path to the parallel HDF5 library can be specified by using `-DHDF5_ROOT`.
 
- **CUDA**
+ **CUDA Backend**
  
 The [CUDA](https://developer.nvidia.com/cuda-downloads) backend targets NVIDIA GPUs with a compute capability of 3.0 or greater. The CMake build system will detect the tookit automatically. If the automatic process fails, the build system will compile the library without the CUDA support.  Please use `-DCUDA_TOOLKIT_ROOT_DIR` to manually specify the path.
 
-**HIP**
+**HIP Backend**
 
-The HIP backend targets AMD GPUs and NVIDIA GPUs which are supported by HIP - either through its CUDA support or the ROCm stack (tested with >=3.9). 
+The HIP backend targets AMD GPUs and NVIDIA GPUs which are supported by HIP - either through its CUDA support or the [ROCm](https://rocmdocs.amd.com/en/latest/) stack (tested with >=3.9). 
 
-**SYCL**
+**SYCL Backend**
 
-The SYCL backend is currently in development and only working without MPI. It has been tested with Intel OneAPI (>=2021.1), Intel's public LLVM version, and hipSYCL (>=0.9.1), and runs on Intel CPUs and GPUs through Intel's OpenCL and Level Zero, NVIDIA and AMD GPUs both with the LLVM fork as well as hipSYCL. hipSYCL's OpenMP support covers most CPU architectures too.
+The [SYCL](https://www.khronos.org/sycl/) backend is currently in development and only working without MPI. It has been tested with Intel OneAPI (>=2021.1), Intel's public LLVM version, and hipSYCL (>=0.9.1), and runs on Intel CPUs and GPUs through Intel's OpenCL and Level Zero, NVIDIA and AMD GPUs both with the LLVM fork as well as hipSYCL. hipSYCL's OpenMP support covers most CPU architectures too.
 
-**Tridiagonal Solver**
+**Tridiagonal Solver Backend**
 
 To use the tridiagonal solver OPS API in applications and build example applications such as `adi`, `adi_burger` and `adi_burger_3D` the open source tridiagonal solver (scalar) library needs to be cloned and built from the [Tridsolver repository](https://github.com/OP-DSL/tridsolver). 
 ```bash
