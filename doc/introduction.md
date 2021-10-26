@@ -10,7 +10,7 @@ These pages provide detailed documentation on using OPS, including an installati
 
 
 ## Licencing
-OPS is released as an open-source project under the BSD 3-Clause License. See the file called [LICENSE](https://github.com/OP-DSL/OPS/blob/master/LICENSE) for more information.
+OPS is released as an open-source project under the BSD 3-Clause License. See the [LICENSE](https://github.com/OP-DSL/OPS/blob/master/LICENSE) file for more information.
 
 ## Citing
 To cite OPS, please reference the following paper:
