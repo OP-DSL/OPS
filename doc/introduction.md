@@ -2,9 +2,11 @@
 
 ## Overview
 
-[OPS](https://github.com/OP-DSL/OPS) (Oxford Parallel library for Structured mesh solvers) is a high-level embedded domain specific language (eDSL) for writing **multi-block structured mesh** algorithms, and the corresponding software library and code translation tools to enable automatic parallelisation on multi-core and many-core architectures. Multi-block structured meshes consists of an unstructured collection of structured meshes. The OPS API is embedded in C/C++ and Fortran. These pages provide detailed documentation on using OPS, including an installation guide, developing and running OPS applications, the OPS API, developer documentation and performance tuning.
+[OPS](https://github.com/OP-DSL/OPS) (Oxford Parallel library for Structured mesh solvers) is a high-level embedded domain specific language (eDSL) for writing **multi-block structured mesh** algorithms, and the corresponding software library and code translation tools to enable automatic parallelisation on multi-core and many-core architectures. Multi-block structured meshes consists of an unstructured collection of structured meshes. The OPS API is embedded in C/C++ and Fortran. 
 
-The current OPS eDSL supports generating code targeting multi-core/multi-threaded CPUs, many-core GPUs and clusters of CPUs and GPUs using a range of paralleization models including SIMD vectorization, OpenMP, CUDA, OpenCL, OpenACC and their combinations with MPI. There is also experimental support for paralleizations using SYCL and AMD HIP. Various optimizations for each paralleization can be generated automatically, including cache blocking tiling to improve locality. The OPS API and library can also be used to solve scalar multi-dimensional tridiagonal systems using the [tridsolver](https://github.com/OP-DSL/tridsolver) library.
+The current OPS eDSL supports generating code targeting multi-core/multi-threaded CPUs, many-core GPUs and clusters of CPUs and GPUs using a range of paralleization models including SIMD vectorization, OpenMP, CUDA, OpenCL, OpenACC and their combinations with MPI. There is also experimental support for paralleizations using SYCL and AMD HIP. Various optimizations for each paralleization can be generated automatically, including cache blocking tiling to improve locality. The OPS API and library can also be used to solve multi-dimensional tridiagonal systems using the [tridsolver](https://github.com/OP-DSL/tridsolver) library.
+
+These pages provide detailed documentation on using OPS, including an installation guide, developing and running OPS applications, the OPS API, developer documentation and performance tuning.
 
 
 ## Licencing
