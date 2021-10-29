@@ -15,12 +15,11 @@ export TOL="1.000E-14"
 cd $OPS_APP_INSTALL_PATH/adi
 
 #============== Run refernace solution ========================
-echo '============> Running Referance Solution adi_orig'
+echo "============> Running Referance Solution adi_orig"
 ./adi_orig > perf_out
 rm perf_out
 
-#============================ Test adi with Intel Compilers==========================================================
-echo '============> Running SEQ - No Halo'
+echo "============> Running SEQ - No Halo"
 ./adi_seq -halo 0 -t > perf_out
 mv adi.h5 adi_seq_h0.h5
 mv adi_pad.h5 adi_seq_pad.h5
@@ -29,7 +28,7 @@ grep "Total Wall time" perf_out
 grep exceeded ref_diff || true
 grep SumOfDiff ref_diff
 
-echo '============> Running SEQ - Halo'
+echo "============> Running SEQ - Halo"
 ./adi_seq -halo 1 > perf_out
 mv adi.h5 adi_seq_h1.h5
 grep "Total Wall time" perf_out
@@ -37,125 +36,345 @@ grep "Halo Test" perf_out
 $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_seq_h1.h5 > diff_out
 if [ -s ./diff_out ]
 then
-    echo "File not empty - Solution Not Valid";exit 1;
+  echo "File not empty - Solution Not Valid";exit 1;
 else
-    echo "PASSED"
+  echo "PASSED"
 fi
 rm -rf *.dat adi_seq_h1.h5
 
-echo '============> Running CUDA - No Halo'
+echo "============> Running CUDA - No Halo"
 ./adi_cuda -halo 0 > perf_out
 mv adi.h5 adi_cuda_h0.h5
 grep "Total Wall time" perf_out
 $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_h0.h5 adi_cuda_h0.h5 > diff_out
 if [ -s ./diff_out ]
 then
-    echo "File not empty - Solution Not Valid";exit 1;
+  echo "File not empty - Solution Not Valid";exit 1;
 else
-    echo "PASSED"
+  echo "PASSED"
 fi
 rm -rf adi_seq_h0.h5 adi_cuda_h0.h5
 
-echo '============> Running CUDA - Halo'
+echo "============> Running CUDA - Halo"
 ./adi_cuda -halo 1 > perf_out
 mv adi.h5 adi_cuda_h1.h5
 grep "Total Wall time" perf_out
 $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_cuda_h1.h5 > diff_out
 if [ -s ./diff_out ]
 then
-    echo "File not empty - Solution Not Valid";exit 1;
+  echo "File not empty - Solution Not Valid";exit 1;
 else
-    echo "PASSED"
+  echo "PASSED"
 fi
 rm -rf adi_cuda_h1.h5
 
-echo '============> Running MPI - Gather Scatter'
+echo "============> Running MPI - Gather Scatter"
 $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi -halo 1 -m 0 > perf_out
 mv adi.h5 adi_mpi.h5
 grep "Total Wall time" perf_out
 $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi.h5 > diff_out
 if [ -s ./diff_out ]
 then
-    echo "File not empty - Solution Not Valid";exit 1;
+  echo "File not empty - Solution Not Valid";exit 1;
 else
-    echo "PASSED"
+  echo "PASSED"
 fi
 rm -rf adi_mpi.h5
 
-echo '============> Running MPI - ALLGATHER'
+echo "============> Running MPI - ALLGATHER"
 $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi -halo 1 -m 1 > perf_out
 mv adi.h5 adi_mpi.h5
 grep "Total Wall time" perf_out
 $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi.h5 > diff_out
 if [ -s ./diff_out ]
 then
-    echo "File not empty - Solution Not Valid";exit 1;
+  echo "File not empty - Solution Not Valid";exit 1;
 else
-    echo "PASSED"
+  echo "PASSED"
 fi
 rm -rf adi_mpi.h5
 
-echo '============> Running MPI - LATENCY HIDING 2 STEP'
+echo "============> Running MPI - LATENCY HIDING 2 STEP"
 $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi -halo 1 -m 2 -bx 16384 -by 16384 -bz 16384 > perf_out
 mv adi.h5 adi_mpi.h5
 grep "Total Wall time" perf_out
 $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi.h5 > diff_out
 if [ -s ./diff_out ]
 then
-    echo "File not empty - Solution Not Valid";exit 1;
+  echo "File not empty - Solution Not Valid";exit 1;
 else
-    echo "PASSED"
+  echo "PASSED"
 fi
 rm -rf adi_mpi.h5
 
-echo '============> Running MPI - LATENCY HIDING INTERLEAVED'
+echo "============> Running MPI - LATENCY HIDING INTERLEAVED"
 $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi -halo 1 -m 3 -bx 16384 -by 16384 -bz 16384 > perf_out
 mv adi.h5 adi_mpi.h5
 grep "Total Wall time" perf_out
 $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi.h5 > diff_out
 if [ -s ./diff_out ]
 then
-    echo "File not empty - Solution Not Valid";exit 1;
+  echo "File not empty - Solution Not Valid";exit 1;
 else
-    echo "PASSED"
+  echo "PASSED"
 fi
 rm -rf adi_mpi.h5
 
-echo '============> Running MPI+CUDA - ALLGATHER'
+echo "============> Running MPI - JACOBI"
+$MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi -halo 1 -m 4 > perf_out
+mv adi.h5 adi_mpi.h5
+grep "Total Wall time" perf_out
+$HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi.h5 > diff_out
+if [ -s ./diff_out ]
+then
+  echo "File not empty - Solution Not Valid";exit 1;
+else
+  echo "PASSED"
+fi
+rm -rf adi_mpi.h5
+
+echo "============> Running MPI - PCR"
+$MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi -halo 1 -m 5 > perf_out
+mv adi.h5 adi_mpi.h5
+grep "Total Wall time" perf_out
+$HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi.h5 > diff_out
+if [ -s ./diff_out ]
+then
+  echo "File not empty - Solution Not Valid";exit 1;
+else
+  echo "PASSED"
+fi
+rm -rf adi_mpi.h5
+
+echo "============> Running MPI+CUDA - ALLGATHER"
 $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi_cuda -halo 1 -m 1 > perf_out
 mv adi.h5 adi_mpi_cuda.h5
 grep "Total Wall time" perf_out
 $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi_cuda.h5 > diff_out
 if [ -s ./diff_out ]
 then
-    echo "File not empty - Solution Not Valid";exit 1;
+  echo "File not empty - Solution Not Valid";exit 1;
 else
-    echo "PASSED"
+  echo "PASSED"
 fi
 rm -rf adi_mpi_cuda.h5
 
-echo '============> Running MPI+CUDA - LATENCY HIDING 2 STEP'
+echo "============> Running MPI+CUDA - LATENCY HIDING 2 STEP"
 $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi_cuda -halo 1 -m 2 -bx 16384 -by 16384 -bz 16384 > perf_out
 mv adi.h5 adi_mpi_cuda.h5
 grep "Total Wall time" perf_out
 $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi_cuda.h5 > diff_out
 if [ -s ./diff_out ]
 then
-    echo "File not empty - Solution Not Valid";exit 1;
+  echo "File not empty - Solution Not Valid";exit 1;
 else
-    echo "PASSED"
+  echo "PASSED"
 fi
 rm -rf adi_mpi_cuda.h5
 
-echo '============> Running MPI+CUDA - LATENCY HIDING INTERLEAVED'
+echo "============> Running MPI+CUDA - LATENCY HIDING INTERLEAVED"
 $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi_cuda -halo 1 -m 3 -bx 16384 -by 16384 -bz 16384 > perf_out
 mv adi.h5 adi_mpi_cuda.h5
 grep "Total Wall time" perf_out
 $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi_cuda.h5 > diff_out
 if [ -s ./diff_out ]
 then
-    echo "File not empty - Solution Not Valid";exit 1;
+  echo "File not empty - Solution Not Valid";exit 1;
 else
-    echo "PASSED"
+  echo "PASSED"
+fi
+rm -rf adi_mpi_cuda.h5
+
+echo "============> Running MPI+CUDA - JACOBI"
+$MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi_cuda -halo 1 -m 4 > perf_out
+mv adi.h5 adi_mpi_cuda.h5
+grep "Total Wall time" perf_out
+$HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi_cuda.h5 > diff_out
+if [ -s ./diff_out ]
+then
+  echo "File not empty - Solution Not Valid";exit 1;
+else
+  echo "PASSED"
+fi
+rm -rf adi_mpi_cuda.h5
+
+echo "============> Running MPI+CUDA - PCR"
+$MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi_cuda -halo 1 -m 5 > perf_out
+mv adi.h5 adi_mpi_cuda.h5
+grep "Total Wall time" perf_out
+$HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi_cuda.h5 > diff_out
+if [ -s ./diff_out ]
+then
+  echo "File not empty - Solution Not Valid";exit 1;
+else
+  echo "PASSED"
 fi
 rm -rf *.h5 *.dat
+
+#============== Run For Different Padding ========================
+for HALO in {2..4}
+do
+
+  echo "============> Running SEQ - Halo $HALO (Used as ground truth for halo tests)"
+  ./adi_seq -halo $HALO > perf_out
+  mv adi.h5 adi_seq_pad.h5
+  grep "Total Wall time" perf_out
+  grep "Halo Test" perf_out
+
+  echo "============> Running CUDA - Halo $HALO"
+  ./adi_cuda -halo $HALO > perf_out
+  mv adi.h5 adi_cuda.h5
+  grep "Total Wall time" perf_out
+  $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_cuda.h5 > diff_out
+  if [ -s ./diff_out ]
+  then
+    echo "File not empty - Solution Not Valid";exit 1;
+  else
+    echo "PASSED"
+  fi
+  rm -rf adi_cuda.h5
+
+  echo "============> Running MPI - Gather Scatter Halo $HALO"
+  $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi -halo $HALO -m 0 > perf_out
+  mv adi.h5 adi_mpi.h5
+  grep "Total Wall time" perf_out
+  $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi.h5 > diff_out
+  if [ -s ./diff_out ]
+  then
+    echo "File not empty - Solution Not Valid";exit 1;
+  else
+    echo "PASSED"
+  fi
+  rm -rf adi_mpi.h5
+
+  echo "============> Running MPI - ALLGATHER Halo $HALO"
+  $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi -halo $HALO -m 1 > perf_out
+  mv adi.h5 adi_mpi.h5
+  grep "Total Wall time" perf_out
+  $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi.h5 > diff_out
+  if [ -s ./diff_out ]
+  then
+    echo "File not empty - Solution Not Valid";exit 1;
+  else
+    echo "PASSED"
+  fi
+  rm -rf adi_mpi.h5
+
+  echo "============> Running MPI - LATENCY HIDING 2 STEP Halo $HALO"
+  $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi -halo $HALO -m 2 -bx 16384 -by 16384 -bz 16384 > perf_out
+  mv adi.h5 adi_mpi.h5
+  grep "Total Wall time" perf_out
+  $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi.h5 > diff_out
+  if [ -s ./diff_out ]
+  then
+    echo "File not empty - Solution Not Valid";exit 1;
+  else
+    echo "PASSED"
+  fi
+  rm -rf adi_mpi.h5
+
+  echo "============> Running MPI - LATENCY HIDING INTERLEAVED Halo $HALO"
+  $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi -halo $HALO -m 3 -bx 16384 -by 16384 -bz 16384 > perf_out
+  mv adi.h5 adi_mpi.h5
+  grep "Total Wall time" perf_out
+  $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi.h5 > diff_out
+  if [ -s ./diff_out ]
+  then
+    echo "File not empty - Solution Not Valid";exit 1;
+  else
+    echo "PASSED"
+  fi
+  rm -rf adi_mpi.h5
+
+  echo "============> Running MPI - JACOBI Halo $HALO"
+  $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi -halo $HALO -m 4 > perf_out
+  mv adi.h5 adi_mpi.h5
+  grep "Total Wall time" perf_out
+  $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi.h5 > diff_out
+  if [ -s ./diff_out ]
+  then
+    echo "File not empty - Solution Not Valid";exit 1;
+  else
+    echo "PASSED"
+  fi
+  rm -rf adi_mpi.h5
+
+  echo "============> Running MPI - PCR Halo $HALO"
+  $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi -halo $HALO -m 5 > perf_out
+  mv adi.h5 adi_mpi.h5
+  grep "Total Wall time" perf_out
+  $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi.h5 > diff_out
+  if [ -s ./diff_out ]
+  then
+    echo "File not empty - Solution Not Valid";exit 1;
+  else
+    echo "PASSED"
+  fi
+  rm -rf adi_mpi.h5
+
+  echo "============> Running MPI+CUDA - ALLGATHER Halo $HALO"
+  $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi_cuda -halo $HALO -m 1 > perf_out
+  mv adi.h5 adi_mpi_cuda.h5
+  grep "Total Wall time" perf_out
+  $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi_cuda.h5 > diff_out
+  if [ -s ./diff_out ]
+  then
+    echo "File not empty - Solution Not Valid";exit 1;
+  else
+    echo "PASSED"
+  fi
+  rm -rf adi_mpi_cuda.h5
+
+  echo "============> Running MPI+CUDA - LATENCY HIDING 2 STEP Halo $HALO"
+  $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi_cuda -halo $HALO -m 2 -bx 16384 -by 16384 -bz 16384 > perf_out
+  mv adi.h5 adi_mpi_cuda.h5
+  grep "Total Wall time" perf_out
+  $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi_cuda.h5 > diff_out
+  if [ -s ./diff_out ]
+  then
+    echo "File not empty - Solution Not Valid";exit 1;
+  else
+    echo "PASSED"
+  fi
+  rm -rf adi_mpi_cuda.h5
+
+  echo "============> Running MPI+CUDA - LATENCY HIDING INTERLEAVED Halo $HALO"
+  $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi_cuda -halo $HALO -m 3 -bx 16384 -by 16384 -bz 16384 > perf_out
+  mv adi.h5 adi_mpi_cuda.h5
+  grep "Total Wall time" perf_out
+  $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi_cuda.h5 > diff_out
+  if [ -s ./diff_out ]
+  then
+    echo "File not empty - Solution Not Valid";exit 1;
+  else
+    echo "PASSED"
+  fi
+  rm -rf adi_mpi_cuda.h5
+
+  echo "============> Running MPI+CUDA - JACOBI Halo $HALO"
+  $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi_cuda -halo $HALO -m 4 > perf_out
+  mv adi.h5 adi_mpi_cuda.h5
+  grep "Total Wall time" perf_out
+  $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi_cuda.h5 > diff_out
+  if [ -s ./diff_out ]
+  then
+    echo "File not empty - Solution Not Valid";exit 1;
+  else
+    echo "PASSED"
+  fi
+  rm -rf adi_mpi_cuda.h5
+
+  echo "============> Running MPI+CUDA - PCR Halo $HALO"
+  $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi_cuda -halo $HALO -m 5 > perf_out
+  mv adi.h5 adi_mpi_cuda.h5
+  grep "Total Wall time" perf_out
+  $HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq_pad.h5 adi_mpi_cuda.h5 > diff_out
+  if [ -s ./diff_out ]
+  then
+    echo "File not empty - Solution Not Valid";exit 1;
+  else
+    echo "PASSED"
+  fi
+  rm -rf *.h5 *.dat
+
+done

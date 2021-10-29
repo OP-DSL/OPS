@@ -351,8 +351,8 @@ int main(int argc, char *argv[]) {
   ops_tridsolver_params *trid_ctx_z = new ops_tridsolver_params(heat3D, strat);
 
   trid_ctx_x->set_batch_size(bx);
-  trid_ctx_x->set_batch_size(by);
-  trid_ctx_x->set_batch_size(bz);
+  trid_ctx_y->set_batch_size(by);
+  trid_ctx_z->set_batch_size(bz);
 
   for (int it = 0; it < iter; it++) {
 
