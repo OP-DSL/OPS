@@ -102,20 +102,19 @@ void ops_tridMultiDimBatch(
     // A matrices of individual problems
     ops_dat d, // right hand side coefficients of a multidimensional problem. An
                // array containing d column vectors of individual problems
-    ops_dat u,
     ops_tridsolver_params *tridsolver_ctx
     ) {
 
   // check if sizes match
   for (int i = 0; i < ndim; i++) {
     if (a->size[i] != b->size[i] || b->size[i] != c->size[i] ||
-        c->size[i] != d->size[i] || d->size[i] != u->size[i]) {
+        c->size[i] != d->size[i]) {
       throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets all need to be the same size");
     }
   }
 
   if(strcmp(a->type, b->type) != 0 || strcmp(b->type, c->type) != 0 ||
-     strcmp(c->type, d->type) != 0 || strcmp(d->type, u->type) != 0 ) {
+     strcmp(c->type, d->type) != 0) {
     throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets must all be of the same type");
   }
 
@@ -128,13 +127,11 @@ void ops_tridMultiDimBatch(
     const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &device);
     const double *c_ptr = (double *)ops_dat_get_raw_pointer(c, 0, S3D_000, &device);
     double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
-    double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
-    tridDmtsvStridedBatch((TridParams *)tridsolver_ctx->tridsolver_params, a_ptr,
-                          b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim, dims,
+    tridDmtsvStridedBatch((TridParams *)tridsolver_ctx->tridsolver_params,
+                          a_ptr, b_ptr, c_ptr, d_ptr, ndim, solvedim, dims,
                           a->size);
 
-    ops_dat_release_raw_data(u, 0, OPS_READ);
     ops_dat_release_raw_data(d, 0, OPS_RW);
     ops_dat_release_raw_data(c, 0, OPS_READ);
     ops_dat_release_raw_data(b, 0, OPS_READ);
@@ -144,13 +141,11 @@ void ops_tridMultiDimBatch(
     const float *b_ptr = (float *)ops_dat_get_raw_pointer(b, 0, S3D_000, &device);
     const float *c_ptr = (float *)ops_dat_get_raw_pointer(c, 0, S3D_000, &device);
     float *d_ptr = (float *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
-    float *u_ptr = (float *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
-    tridSmtsvStridedBatch((TridParams *)tridsolver_ctx->tridsolver_params, a_ptr,
-                          b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim, dims,
+    tridSmtsvStridedBatch((TridParams *)tridsolver_ctx->tridsolver_params,
+                          a_ptr, b_ptr, c_ptr, d_ptr, ndim, solvedim, dims,
                           a->size);
 
-    ops_dat_release_raw_data(u, 0, OPS_READ);
     ops_dat_release_raw_data(d, 0, OPS_RW);
     ops_dat_release_raw_data(c, 0, OPS_READ);
     ops_dat_release_raw_data(b, 0, OPS_READ);
