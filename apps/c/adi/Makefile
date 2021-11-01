@@ -15,6 +15,7 @@ OPS_LIB   = -L$(OPS_INSTALL_PATH)/lib/$(OPS_COMPILER)
 CUDA_LIB = -L$(CUDA_INSTALL_PATH)/lib64
 CUDA_INC = -I$(CUDA_INSTALL_PATH)/include
 
+
 # OPENCL_INC = -I$(OPENCL_INSTALL_PATH)/include
 # OPENCL_LIB = -L$(OPENCL_INSTALL_PATH)/lib64 -lOpenCL
 
@@ -27,7 +28,7 @@ endif
 endif
 
 # TRID_INSTALL_PATH=/path/to/tridsolver/scalar/build/libtrid
-TRID_INSTALL_PATH ?= $(TDMA_INSTALL_PATH)/libtrid
+TRID_INSTALL_PATH ?= $(TDMA_INSTALL_PATH)
 TRID_INC := -I$(TRID_INSTALL_PATH)/include
 TRID_LIB := -L$(TRID_INSTALL_PATH)/lib
 
@@ -199,10 +200,10 @@ adi_seq: Makefile .generated adi_ops.cpp init_kernel.h preproc_kernel.h
 #
 
 adi_cuda: Makefile .generated ./CUDA/adi_kernels_cu.o adi_ops.cpp preproc_kernel.h init_kernel.h
-	$(MPICPP) $(CXXFLAGS) $(CUDA_INC) $(TRID_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_cu.o -lcudart -lcublas -lops_cuda -lops_trid_cuda -lops_hdf5_seq $(TRID_LIB) -ltridcuda $(HDF5_LIB) -o adi_cuda
+	$(MPICPP) $(CXXFLAGS) $(CUDA_INC) $(TRID_INC) $(OPS_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_cu.o -lcudart -L$(CUDA_MATH_LIBS) -lcublas -lcublasLt -lops_cuda -lops_trid_cuda -lops_hdf5_seq $(TRID_LIB) -ltridcuda $(HDF5_LIB) -o adi_cuda
 
 adi_mpi_cuda: Makefile .generated ./CUDA/adi_kernels_mpi_cu.o adi_ops.cpp preproc_kernel.h init_kernel.h
-	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_mpi_cu.o -lops_hdf5_mpi -lops_mpi_cuda -lops_trid_mpi_cuda $(TRID_LIB) -ltridcuda_mpi -lcudart -lcublas $(HDF5_LIB) $(NCCL_LIB) -o adi_mpi_cuda
+	$(MPICPP) $(OMPFLAGS) $(CPPFLAGS) -DOPS_MPI $(CUDA_INC) $(OPS_INC) $(HDF5_INC) $(OPS_LIB) $(CUDA_LIB) adi_ops.cpp ./CUDA/adi_kernels_mpi_cu.o -lops_hdf5_mpi -lops_mpi_cuda -lops_trid_mpi_cuda $(TRID_LIB) -ltridcuda_mpi -lcudart -L$(CUDA_MATH_LIBS) -lcublas -lcublasLt $(HDF5_LIB) $(NCCL_LIB) -o adi_mpi_cuda
 
 ./CUDA/adi_kernels_cu.o: ./CUDA/adi_kernels.cu Makefile
 	nvcc $(VAR) $(INC) $(NVCC_FLAGS) $(CODE_GEN_CUDA) $(OPS_INC) -I. -c -o ./CUDA/adi_kernels_cu.o ./CUDA/adi_kernels.cu

@@ -67,21 +67,22 @@ void buildOpenCLKernels_advec_cell_kernel1_xdir(OPS_instance *instance,
     pPath = getenv("OPS_INSTALL_PATH");
     if (pPath != NULL)
       if (OCL_FMA)
-        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/include "
-                           "-DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_advec_cell_kernel1_xdir=%d  "
-                           "-Dxdim1_advec_cell_kernel1_xdir=%d  "
-                           "-Dxdim2_advec_cell_kernel1_xdir=%d  "
-                           "-Dxdim3_advec_cell_kernel1_xdir=%d  "
-                           "-Dxdim4_advec_cell_kernel1_xdir=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_advec_cell_kernel1_xdir=%d  "
+                "-Dxdim1_advec_cell_kernel1_xdir=%d  "
+                "-Dxdim2_advec_cell_kernel1_xdir=%d  "
+                "-Dxdim3_advec_cell_kernel1_xdir=%d  "
+                "-Dxdim4_advec_cell_kernel1_xdir=%d ",
                 pPath, 32, xdim0, xdim1, xdim2, xdim3, xdim4);
       else
-        sprintf(buildOpts, "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_advec_cell_kernel1_xdir=%d  "
-                           "-Dxdim1_advec_cell_kernel1_xdir=%d  "
-                           "-Dxdim2_advec_cell_kernel1_xdir=%d  "
-                           "-Dxdim3_advec_cell_kernel1_xdir=%d  "
-                           "-Dxdim4_advec_cell_kernel1_xdir=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_advec_cell_kernel1_xdir=%d  "
+                "-Dxdim1_advec_cell_kernel1_xdir=%d  "
+                "-Dxdim2_advec_cell_kernel1_xdir=%d  "
+                "-Dxdim3_advec_cell_kernel1_xdir=%d  "
+                "-Dxdim4_advec_cell_kernel1_xdir=%d ",
                 pPath, 32, xdim0, xdim1, xdim2, xdim3, xdim4);
     else {
       sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);

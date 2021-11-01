@@ -67,10 +67,15 @@ void ops_par_loop_initialise_chunk_kernel_yy(char const *name, ops_block block, 
 
 
   //set up initial pointers and exchange halos if necessary
-  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0+ (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
-    args[0].dat->size[0] *
-    start[1] * args[0].stencil->stride[1];
+  long long int base0 =
+      args[0].dat->base_offset + (long long int)(block->instance->OPS_soa
+                                                     ? args[0].dat->type_size
+                                                     : args[0].dat->elem_size) *
+                                     start[0] * args[0].stencil->stride[0];
+  base0 = base0 +
+          (long long int)(block->instance->OPS_soa ? args[0].dat->type_size
+                                                   : args[0].dat->elem_size) *
+              args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
   int *p_a0 = (int *)(args[0].data + base0);
 
   int *p_a1 = NULL;

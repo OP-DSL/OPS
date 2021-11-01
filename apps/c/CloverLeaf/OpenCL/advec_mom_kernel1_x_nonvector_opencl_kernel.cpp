@@ -69,21 +69,22 @@ void buildOpenCLKernels_advec_mom_kernel1_x_nonvector(OPS_instance *instance,
     pPath = getenv("OPS_INSTALL_PATH");
     if (pPath != NULL)
       if (OCL_FMA)
-        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/include "
-                           "-DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_advec_mom_kernel1_x_nonvector=%d  "
-                           "-Dxdim1_advec_mom_kernel1_x_nonvector=%d  "
-                           "-Dxdim2_advec_mom_kernel1_x_nonvector=%d  "
-                           "-Dxdim3_advec_mom_kernel1_x_nonvector=%d  "
-                           "-Dxdim4_advec_mom_kernel1_x_nonvector=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_advec_mom_kernel1_x_nonvector=%d  "
+                "-Dxdim1_advec_mom_kernel1_x_nonvector=%d  "
+                "-Dxdim2_advec_mom_kernel1_x_nonvector=%d  "
+                "-Dxdim3_advec_mom_kernel1_x_nonvector=%d  "
+                "-Dxdim4_advec_mom_kernel1_x_nonvector=%d ",
                 pPath, 32, xdim0, xdim1, xdim2, xdim3, xdim4);
       else
-        sprintf(buildOpts, "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_advec_mom_kernel1_x_nonvector=%d  "
-                           "-Dxdim1_advec_mom_kernel1_x_nonvector=%d  "
-                           "-Dxdim2_advec_mom_kernel1_x_nonvector=%d  "
-                           "-Dxdim3_advec_mom_kernel1_x_nonvector=%d  "
-                           "-Dxdim4_advec_mom_kernel1_x_nonvector=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_advec_mom_kernel1_x_nonvector=%d  "
+                "-Dxdim1_advec_mom_kernel1_x_nonvector=%d  "
+                "-Dxdim2_advec_mom_kernel1_x_nonvector=%d  "
+                "-Dxdim3_advec_mom_kernel1_x_nonvector=%d  "
+                "-Dxdim4_advec_mom_kernel1_x_nonvector=%d ",
                 pPath, 32, xdim0, xdim1, xdim2, xdim3, xdim4);
     else {
       sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);

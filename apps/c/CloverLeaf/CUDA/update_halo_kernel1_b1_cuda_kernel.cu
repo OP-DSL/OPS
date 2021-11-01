@@ -162,61 +162,68 @@ void ops_par_loop_update_halo_kernel1_b1_execute(ops_kernel_descriptor *desc) {
   for (int d=0; d<NUM_FIELDS; d++) ((int *)arg7.data)[d] = arg7h[d];
   consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
   mvConstArraysToDevice(block->instance,consts_bytes);
-  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
-  int dat2 = (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size);
-  int dat3 = (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
-  int dat4 = (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
-  int dat5 = (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
-  int dat6 = (block->instance->OPS_soa ? args[6].dat->type_size : args[6].dat->elem_size);
+  long long int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size
+                                                 : args[0].dat->elem_size);
+  long long int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size
+                                                 : args[1].dat->elem_size);
+  long long int dat2 = (block->instance->OPS_soa ? args[2].dat->type_size
+                                                 : args[2].dat->elem_size);
+  long long int dat3 = (block->instance->OPS_soa ? args[3].dat->type_size
+                                                 : args[3].dat->elem_size);
+  long long int dat4 = (block->instance->OPS_soa ? args[4].dat->type_size
+                                                 : args[4].dat->elem_size);
+  long long int dat5 = (block->instance->OPS_soa ? args[5].dat->type_size
+                                                 : args[5].dat->elem_size);
+  long long int dat6 = (block->instance->OPS_soa ? args[6].dat->type_size
+                                                 : args[6].dat->elem_size);
 
   char *p_a[8];
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + 
-           dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
+  long long int base0 = args[0].dat->base_offset +
+                        dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
     (start[1] * args[0].stencil->stride[1]);
   p_a[0] = (char *)args[0].data_d + base0;
 
-  int base1 = args[1].dat->base_offset + 
-           dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
+  long long int base1 = args[1].dat->base_offset +
+                        dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
   base1 = base1+ dat1 *
     args[1].dat->size[0] *
     (start[1] * args[1].stencil->stride[1]);
   p_a[1] = (char *)args[1].data_d + base1;
 
-  int base2 = args[2].dat->base_offset + 
-           dat2 * 1 * (start[0] * args[2].stencil->stride[0]);
+  long long int base2 = args[2].dat->base_offset +
+                        dat2 * 1 * (start[0] * args[2].stencil->stride[0]);
   base2 = base2+ dat2 *
     args[2].dat->size[0] *
     (start[1] * args[2].stencil->stride[1]);
   p_a[2] = (char *)args[2].data_d + base2;
 
-  int base3 = args[3].dat->base_offset + 
-           dat3 * 1 * (start[0] * args[3].stencil->stride[0]);
+  long long int base3 = args[3].dat->base_offset +
+                        dat3 * 1 * (start[0] * args[3].stencil->stride[0]);
   base3 = base3+ dat3 *
     args[3].dat->size[0] *
     (start[1] * args[3].stencil->stride[1]);
   p_a[3] = (char *)args[3].data_d + base3;
 
-  int base4 = args[4].dat->base_offset + 
-           dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
+  long long int base4 = args[4].dat->base_offset +
+                        dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
   base4 = base4+ dat4 *
     args[4].dat->size[0] *
     (start[1] * args[4].stencil->stride[1]);
   p_a[4] = (char *)args[4].data_d + base4;
 
-  int base5 = args[5].dat->base_offset + 
-           dat5 * 1 * (start[0] * args[5].stencil->stride[0]);
+  long long int base5 = args[5].dat->base_offset +
+                        dat5 * 1 * (start[0] * args[5].stencil->stride[0]);
   base5 = base5+ dat5 *
     args[5].dat->size[0] *
     (start[1] * args[5].stencil->stride[1]);
   p_a[5] = (char *)args[5].data_d + base5;
 
-  int base6 = args[6].dat->base_offset + 
-           dat6 * 1 * (start[0] * args[6].stencil->stride[0]);
+  long long int base6 = args[6].dat->base_offset +
+                        dat6 * 1 * (start[0] * args[6].stencil->stride[0]);
   base6 = base6+ dat6 *
     args[6].dat->size[0] *
     (start[1] * args[6].stencil->stride[1]);

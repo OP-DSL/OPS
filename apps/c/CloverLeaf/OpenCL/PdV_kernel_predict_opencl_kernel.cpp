@@ -69,29 +69,29 @@ void buildOpenCLKernels_PdV_kernel_predict(OPS_instance *instance, int xdim0,
     pPath = getenv("OPS_INSTALL_PATH");
     if (pPath != NULL)
       if (OCL_FMA)
-        sprintf(buildOpts,
-                "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
-                "-Dxdim0_PdV_kernel_predict=%d  -Dxdim1_PdV_kernel_predict=%d  "
-                "-Dxdim2_PdV_kernel_predict=%d  -Dxdim3_PdV_kernel_predict=%d  "
-                "-Dxdim4_PdV_kernel_predict=%d  -Dxdim5_PdV_kernel_predict=%d  "
-                "-Dxdim6_PdV_kernel_predict=%d  -Dxdim7_PdV_kernel_predict=%d  "
-                "-Dxdim8_PdV_kernel_predict=%d  -Dxdim9_PdV_kernel_predict=%d  "
-                "-Dxdim10_PdV_kernel_predict=%d  "
-                "-Dxdim11_PdV_kernel_predict=%d ",
-                pPath, 32, xdim0, xdim1, xdim2, xdim3, xdim4, xdim5, xdim6,
-                xdim7, xdim8, xdim9, xdim10, xdim11);
+        sprintf(
+            buildOpts,
+            "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
+            "-Dxdim0_PdV_kernel_predict=%d  -Dxdim1_PdV_kernel_predict=%d  "
+            "-Dxdim2_PdV_kernel_predict=%d  -Dxdim3_PdV_kernel_predict=%d  "
+            "-Dxdim4_PdV_kernel_predict=%d  -Dxdim5_PdV_kernel_predict=%d  "
+            "-Dxdim6_PdV_kernel_predict=%d  -Dxdim7_PdV_kernel_predict=%d  "
+            "-Dxdim8_PdV_kernel_predict=%d  -Dxdim9_PdV_kernel_predict=%d  "
+            "-Dxdim10_PdV_kernel_predict=%d  -Dxdim11_PdV_kernel_predict=%d ",
+            pPath, 32, xdim0, xdim1, xdim2, xdim3, xdim4, xdim5, xdim6, xdim7,
+            xdim8, xdim9, xdim10, xdim11);
       else
-        sprintf(buildOpts,
-                "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
-                "-Dxdim0_PdV_kernel_predict=%d  -Dxdim1_PdV_kernel_predict=%d  "
-                "-Dxdim2_PdV_kernel_predict=%d  -Dxdim3_PdV_kernel_predict=%d  "
-                "-Dxdim4_PdV_kernel_predict=%d  -Dxdim5_PdV_kernel_predict=%d  "
-                "-Dxdim6_PdV_kernel_predict=%d  -Dxdim7_PdV_kernel_predict=%d  "
-                "-Dxdim8_PdV_kernel_predict=%d  -Dxdim9_PdV_kernel_predict=%d  "
-                "-Dxdim10_PdV_kernel_predict=%d  "
-                "-Dxdim11_PdV_kernel_predict=%d ",
-                pPath, 32, xdim0, xdim1, xdim2, xdim3, xdim4, xdim5, xdim6,
-                xdim7, xdim8, xdim9, xdim10, xdim11);
+        sprintf(
+            buildOpts,
+            "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+            "-Dxdim0_PdV_kernel_predict=%d  -Dxdim1_PdV_kernel_predict=%d  "
+            "-Dxdim2_PdV_kernel_predict=%d  -Dxdim3_PdV_kernel_predict=%d  "
+            "-Dxdim4_PdV_kernel_predict=%d  -Dxdim5_PdV_kernel_predict=%d  "
+            "-Dxdim6_PdV_kernel_predict=%d  -Dxdim7_PdV_kernel_predict=%d  "
+            "-Dxdim8_PdV_kernel_predict=%d  -Dxdim9_PdV_kernel_predict=%d  "
+            "-Dxdim10_PdV_kernel_predict=%d  -Dxdim11_PdV_kernel_predict=%d ",
+            pPath, 32, xdim0, xdim1, xdim2, xdim3, xdim4, xdim5, xdim6, xdim7,
+            xdim8, xdim9, xdim10, xdim11);
     else {
       sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
       exit(EXIT_FAILURE);
