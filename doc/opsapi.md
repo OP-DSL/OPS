@@ -663,6 +663,7 @@ A single call to ops_dat_release_raw_data() releases all pointers obtained by pr
 #### ops_dat_fetch_data
 
 __void ops_dat_fetch_data(ops_dat dat, int part, int *data)__
+
 This routine copies the data held by OPS to the user-specified memory location, which needs to be at least as large as indicated by the sizes parameter of ops_dat_get_extents.
 
 | Arguments      | Description |
@@ -683,9 +684,56 @@ This routine copies the data given  by the user to the internal data structure u
 |part|        the chunk index (has to be 0)|
 |data|        pointer to memory which should be copied to OPS |
 
+### Tridsolver Calls
+This section specifies APIs that allow [Tridsolver](https://github.com/OP-DSL/tridsolver) (a tridiagonal solver library) to be called from OPS. The library can be used to solve a large number of tridiagonal systems of equations stored in multidimensional datasets. Parameters that are passed to Tridsolver from OPS are stored in an `ops_tridsolver_params` object. The constructor for this class takes the `ops_block` that the datasets are defined over as an argument and optionally also a solving strategy to use (only relevant to MPI applications). The following solving strategies are available (see Tridsolver for more details about these):
+
+- GATHER_SCATTER (not available for GPUs)
+- ALLGATHER
+- LATENCY_HIDING_TWO_STEP
+- LATENCY_HIDING_INTERLEAVED
+- JACOBI
+- PCR (default)
+
+Then parameters specific to different solving strategies can be set using setter methods. For applications using MPI, it is beneficial to reuse `ops_tridsolver_params` objects between solves as much as possible due to set up times involved with creating Tridsolver's MPI communicators.
+
+#### ops_tridMultiDimBatch
+
+__void ops_tridMultiDimBatch(int ndim, int solvedim, int* dims, ops_dat a, ops_dat b, ops_dat c, ops_dat d, ops_tridsolver_params *tridsolver_ctx)__
+
+This solves multiple tridiagonal systems of equations in multidimensional datasets along the specified dimension. The matrix is stored in the `a` (bottom diagonal), `b` (central diagonal) and `c` (top diagonal) datasets. The right hand side is stored in the `d` dataset and the result is also written to this dataset.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|ndim| the dimension of the datasets |
+|solvedim| the dimension to solve along |
+|dims| the size of each dimension (excluding any padding) |
+|a| the dataset for the lower diagonal |
+|b| the dataset for the central diagonal |
+|c| the dataset for the upper diagonal |
+|d| the dataset for the right hand side, also where the solution is written to |
+|tridsolver_ctx| an object containing the parameters for the Tridsolver library |
+
+#### ops_tridMultiDimBatch_Inc
+
+__void ops_tridMultiDimBatch(int ndim, int solvedim, int* dims, ops_dat a, ops_dat b, ops_dat c, ops_dat d, ops_dat u, ops_tridsolver_params *tridsolver_ctx)__
+
+This solves multiple tridiagonal systems of equations in multidimensional datasets along the specified dimension. The matrix is stored in the `a` (bottom diagonal), `b` (central diagonal) and `c` (top diagonal) datasets. The right hand side is stored in the `d` dataset and the result is added to the `u` dataset.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|ndim| the dimension of the datasets |
+|solvedim| the dimension to solve along |
+|dims| the size of each dimension (excluding any padding) |
+|a| the dataset for the lower diagonal |
+|b| the dataset for the central diagonal |
+|c| the dataset for the upper diagonal |
+|d| the dataset for the right hand side |
+|u| the dataset that the soluion is added to |
+|tridsolver_ctx| an object containing the parameters for the Tridsolver library |
+
 ## Runtime Flags and Options
 
-The following is a list of all the runtime flags and options that can be used when executing OPS generated applications. 
+The following is a list of all the runtime flags and options that can be used when executing OPS generated applications.
 ### General flags
 * `OPS_DIAGS=`
 * `OPS_BLOCK_SIZE_X=`, `OPS_BLOCK_SIZE_Y=` and `OPS_BLOCK_SIZE_Y=`
@@ -693,12 +741,6 @@ The following is a list of all the runtime flags and options that can be used wh
 * `OPS_CL_DEVICE=`
 * `OPS_TILING`
 * `OPS_TILING_MAXDEPTH=`
-
-### Tridsolver API flags
-* `-halo 1`
-* `-m`
-* `-bx`, `-by` and `-bz`
-
 
 ## Doxygen
 Doxygen generated from OPS source can be found [here](https://op-dsl-ci.gitlab.io/ops-ci/).
