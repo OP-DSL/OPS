@@ -5,13 +5,12 @@ cd ../../../ops/c
 #source ../../scripts/$SOURCE_INTEL
 source  ~/OPS/scripts/source_intel_2021.3
 
-<<COMMENT
+#<<COMMENT
 #==== Build and copy Referance application from the TDMA Library ====
 #build lib first
 # TDMA_INSTALL_PATH=/path/to/tridsolver/scalar/build
 cd $TDMA_INSTALL_PATH/../build
 rm -rf ./*
-#cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_MPI=ON -DBUILD_FOR_SN=ON -DCMAKE_INSTALL_PREFIX=$TDMA_INSTALL_PATH
 cmake .. -DCUDA_cublas_LIBRARY=/opt/cuda/10.2.89/lib64/libcublas.so -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_SN=ON -DBUILD_FOR_MPI=ON -DCMAKE_INSTALL_PREFIX=$TDMA_INSTALL_PATH/../
 
 make
@@ -23,13 +22,11 @@ cd $OPS_INSTALL_PATH/c
 make clean
 make
 
-COMMENT
-#TDMA_INSTALL_PATH=$TDMA_INSTALL_PATH/libtrid
+#COMMENT
 
 #now build application
 cd $TDMA_INSTALL_PATH/../../apps/adi/build/
 rm -rf ./*
-#cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DLIBTRID_PATH=$TDMA_INSTALL_PATH -Dlibtrid_DIR=$TDMA_INSTALL_PATH/lib/cmake
 cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DLIBTRID_PATH=$TDMA_INSTALL_PATH -Dlibtrid_DIR=/rr-home/gihan/tridsolver/scalar/libtrid/lib/cmake/
 make adi_orig compare
 cp compare adi_orig $OPS_INSTALL_PATH/../apps/c/adi
@@ -43,9 +40,6 @@ make IEEE=1
 #COMMENT
 
 rm -rf h_u.dat adi_orig.dat adi_seq.dat adi_dev_seq.dat adi_cuda.dat adi_openmp.dat  *.h5
-
-#export TDMA_INSTALL_PATH=/rr-home/gihan/tridsolver/scalar/
-
 
 # set Relative Tolarance for solution check -- h5diff check only
 export TOL="1.000E-14"
