@@ -43,11 +43,15 @@ To further clarify some of the important issues encountered when designing the O
 
 OPS handle all of these different requirements through stencil definitions.
 
-## C API
+## OPS C and C++ API
+
+Both C and C++ styles API are provided for utilizing the capabilities provided by the OPS library. They are essentially the same although there are minor differences in syntax. The C++ API is mainly designed for data abstraction, which  therefore provides better data encapsulation and the support of multiple instances and threading (OpenMP currently). In the following both C style routines and C++ class and methods will be introduced according their functionality with a notice (C) or (C++). If there is no such notice, the routine will apply to both.
+
+To enable the C++ API, a compiler directive ``OPS_CPP_API`` is required.
 
 ### Initialisation and termination routines
-
-#### ops_init
+#### C Style
+##### ops_init
 
 __void ops_init(int argc, char** argv, int diags_level)__
 
@@ -77,10 +81,26 @@ MPI receives depth (for OPS internal development only)
 __void ops_exit()__
 
 This routine must be called last to cleanly terminate the OPS computation.
+#### C++ style
+
+With the C++ style APIs, all data structures (block, data and stencils etc ) are encapsulated into a class  ``OPS_instance``. Thus, we can allocate multiple instances of ``OPS_instance`` by using the class constructor, for example,
+
+```c++
+// Allocate an instance
+OPS_instance *instance = new OPS_instance(argc,argv,1,ss);
+```
+
+where the meaning of arguments are same to the C API, while the extra argument (i.e., ss) is for accpeting the messages.
+
+An explicit termination is not needed for the C++ API, although we need to "delete" the instance in if it is allocated through pointer, i.e.,
+```C++
+delete instance;
+```
 
 ### Declaration routines
 
-#### ops_decl_block
+#### Block
+##### ops_decl_block (C)
 
 __ops_block ops_decl_block(int dims, char *name)__
 
@@ -90,7 +110,15 @@ This routine defines a structured grid block.
 | dims    | dimension of the block    |
 | name  |  a name used for output diagnostics |
 
-#### ops_decl_block_hdf5
+##### OPS_instance::decl_block (C++)
+
+A method of the OPS_instance class for declaring a block, which accepts same arguments with the C style function. A OPS_instance object should be constructed before this. The method returns a pointer to a ops_block type variable, where ops_block is an alias to a pointer type of ops_block_core. An example is
+
+```C++
+ops_block grid2D = instance->decl_block(2, "grid2D");
+```
+
+##### ops_decl_block_hdf5 (C)
 
 __ops_block ops_decl_block_hdf5(int dims, char *name, char *file)__
 
@@ -108,7 +136,8 @@ arguments, it is included here for error checking (e.g. check if blocks
 defined in an HDF5 file is matching with the declared arguments in an
 application) and completeness.
 
-#### ops_decl_dat
+#### Dat (ops_cat_core)
+##### ops_decl_dat (C)
 
 __ops_dat ops_decl_dat(ops block block, int dim, int *size, int *base, int *dm, int *d p, T *data, char *type, char *name)__
 
@@ -131,7 +160,16 @@ The `size` allows to declare different sized data arrays on a given
 indicate the offset from the edge of a block (in both the negative and
 positive directions of each dimension).
 
-#### ops_decl_dat_hdf5
+##### ops_block_core::decl_dat (C++)
+The method ops_block_core::decl_dat is used to define a ops_dat object, which accepts almost same arguments with the C conterpart where the block argument is not necessary, e.g.,
+```C++
+//declare ops_dat with dim = 2
+ops_dat dat0    = grid2D->decl_dat(2, size, base, d_m, d_p, temp, "double", "dat0");
+ops_dat dat1    = grid2D->decl_dat(2, size, base, d_m, d_p, temp, "double", "dat1");
+```
+where grid2D is a ops_block_core object which shall be defined before this.
+
+##### ops_decl_dat_hdf5 (C)
 
 __ops_dat ops_decl_dat_hdf5(ops_block block, int dim, char *type, char *name, char *file)__
 
@@ -145,12 +183,13 @@ type    |  the name of type used for output diagnostics (e.g. ``double``,``float
 |name   |   name of the dat used for output diagnostics|
 |file   |   hdf5 file to read and obtain the data from|
 
-#### ops_decl_const
+#### Global constant
+##### ops_decl_const (C)
 
 __void ops_decl_const(char const * name, int dim, char const * type, T * data )__
 
 This routine defines a global constant: a variable in global scope. Global constants need to be declared upfront
- so that they can be correctly handled for different parallelizations. For e.g CUDA on GPUs. Once defined
+ so that they can be correctly handled for different parallelization. For e.g CUDA on GPUs. Once defined
  they remain unchanged throughout the program, unless changed by a call to ops_update_const(..). The ``name'' and``type''
  parameters **must** be string literals since they are used in the code generation step
 
@@ -161,7 +200,12 @@ This routine defines a global constant: a variable in global scope. Global const
 |type |          the name of type used for output diagnostics (e.g. ``double``, ``float``) |
 |data |          pointer to input data of type *T* |
 
-#### ops_decl_halo
+##### OPS_instance::decl_const (C++)
+
+The method accepts same arguments with its C counterpart.
+
+#### Halo definition
+##### ops_decl_halo (C)
 
 __ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int* from_base, int *to_base, int *from_dir, int *to_dir)__
 
@@ -183,7 +227,10 @@ iter_size = \[2,100,100\], from_base = \[1,0,0\], to_base = \[-1,0,0\],
 from_dir = \[0,1,2\], to_dir = \[0,1,2\]. In more complex case this
 allows for transfers between blocks with different orientations.)
 
-#### ops_decl_halo_hdf5
+##### OPS_instance::decl_halo (C++)
+The method accepts same arguments with its C counterpart.
+
+##### ops_decl_halo_hdf5 (C)
 
 __ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char* file)__
 
@@ -195,7 +242,7 @@ This routine reads in a halo relationship between two datasets defined on two di
 |to|        destination dataset|
 |file|      hdf5 file to read and obtain the data from|
 
-#### ops_decl_halo_group
+##### ops_decl_halo_group (C)
 
 __ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos)__
 
@@ -205,7 +252,12 @@ This routine defines a collection of halos. Semantically, when an exchange is tr
 |nhalos|         number of halos in *halos* |
 |halos|           array of halos|
 
-#### ops_decl_reduction_handle
+##### OPS_instance::decl_halo_group (C++)
+
+The method accepts same arguments with its C counterpart.
+
+#### Reduction handle
+##### ops_decl_reduction_handle (C)
 
 __ops_reduction ops_decl_reduction_handle(int size, char *type, char *name)__
 This routine defines a reduction handle to be used in a parallel loop
@@ -222,7 +274,10 @@ __{void ops_reduction_result(ops_reduction handle, T *result)
 |handle|  the *ops_reduction* handle |
 |result|  a pointer to write the results to, memory size has to match the declared |
 
-#### ops_partition
+##### OPS_instance::decl_reduction_handle (C++)
+The method accepts same arguments with its C counterpart.
+#### Partition
+##### ops_partition (C)
 
 __ops_partition(char *method)__
 
@@ -233,15 +288,21 @@ and ops_halo ops_decl_dat statements have been declared
 | ----------- | ----------- |
 |method| string describing the partitioning method. Currently this string is not used internally, but is simply a place-holder to indicate different partitioning methods in the future. |
 
+
+##### OPS_instance::partition (C++)
+
+The method accepts same arguments with its C counterpart.
 ### Diagnostic and output routines
 
-#### ops_diagnostic_output
+#### ops_diagnostic_output (C)
 
 __void ops_diagnostic_output()__
 
 This routine prints out various useful bits of diagnostic info about sets, mappings and datasets. Usually used right
 after an ops_partition() call to print out the details of the decomposition
 
+#### OPS_instance::diagnostic_output (C++)
+Same to the C counterpart.
 #### ops_printf
 
 __void ops_printf(const char * format, ...)__
@@ -329,7 +390,7 @@ is found, prints an error message and exits.
 
 ### Halo exchange
 
-#### ops_halo_transfer
+#### ops_halo_transfer (C)
 
 __void ops_halo_transfer(ops_halo_group group)__
 
@@ -685,7 +746,7 @@ This routine copies the data given  by the user to the internal data structure u
 
 ## Runtime Flags and Options
 
-The following is a list of all the runtime flags and options that can be used when executing OPS generated applications. 
+The following is a list of all the runtime flags and options that can be used when executing OPS generated applications.
 ### General flags
 * `OPS_DIAGS=`
 * `OPS_BLOCK_SIZE_X=`, `OPS_BLOCK_SIZE_Y=` and `OPS_BLOCK_SIZE_Y=`
