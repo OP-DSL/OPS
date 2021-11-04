@@ -92,6 +92,7 @@ void buildOpenCLKernels_advec_cell_kernel1_ydir(OPS_instance *instance,
 #ifdef OPS_SOA
     sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
 #endif
+    sprintf(buildOpts, "%s -I%s/c/include", buildOpts, pPath);
     ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1,
                          &instance->opencl_instance->OPS_opencl_core.device_id,
                          buildOpts, NULL, NULL);

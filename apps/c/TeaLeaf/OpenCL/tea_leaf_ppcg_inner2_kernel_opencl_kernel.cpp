@@ -68,17 +68,18 @@ void buildOpenCLKernels_tea_leaf_ppcg_inner2_kernel(OPS_instance *instance,
     pPath = getenv("OPS_INSTALL_PATH");
     if (pPath != NULL)
       if (OCL_FMA)
-        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/include "
-                           "-DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_tea_leaf_ppcg_inner2_kernel=%d  "
-                           "-Dxdim1_tea_leaf_ppcg_inner2_kernel=%d  "
-                           "-Dxdim2_tea_leaf_ppcg_inner2_kernel=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_tea_leaf_ppcg_inner2_kernel=%d  "
+                "-Dxdim1_tea_leaf_ppcg_inner2_kernel=%d  "
+                "-Dxdim2_tea_leaf_ppcg_inner2_kernel=%d ",
                 pPath, 32, xdim0, xdim1, xdim2);
       else
-        sprintf(buildOpts, "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_tea_leaf_ppcg_inner2_kernel=%d  "
-                           "-Dxdim1_tea_leaf_ppcg_inner2_kernel=%d  "
-                           "-Dxdim2_tea_leaf_ppcg_inner2_kernel=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_tea_leaf_ppcg_inner2_kernel=%d  "
+                "-Dxdim1_tea_leaf_ppcg_inner2_kernel=%d  "
+                "-Dxdim2_tea_leaf_ppcg_inner2_kernel=%d ",
                 pPath, 32, xdim0, xdim1, xdim2);
     else {
       sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);

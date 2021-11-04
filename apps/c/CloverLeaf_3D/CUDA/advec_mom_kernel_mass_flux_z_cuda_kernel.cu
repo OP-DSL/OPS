@@ -113,16 +113,16 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z_execute(ops_kernel_descriptor *de
   dim3 grid( (x_size-1)/block->instance->OPS_block_size_x+ 1, (y_size-1)/block->instance->OPS_block_size_y + 1, (z_size-1)/block->instance->OPS_block_size_z +1);
   dim3 tblock(block->instance->OPS_block_size_x,block->instance->OPS_block_size_y,block->instance->OPS_block_size_z);
 
-
-
-  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  long long int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size
+                                                 : args[0].dat->elem_size);
+  long long int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size
+                                                 : args[1].dat->elem_size);
 
   char *p_a[2];
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + 
-           dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
+  long long int base0 = args[0].dat->base_offset +
+                        dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
     (start[1] * args[0].stencil->stride[1]);
@@ -132,8 +132,8 @@ void ops_par_loop_advec_mom_kernel_mass_flux_z_execute(ops_kernel_descriptor *de
     (start[2] * args[0].stencil->stride[2]);
   p_a[0] = (char *)args[0].data_d + base0;
 
-  int base1 = args[1].dat->base_offset + 
-           dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
+  long long int base1 = args[1].dat->base_offset +
+                        dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
   base1 = base1+ dat1 *
     args[1].dat->size[0] *
     (start[1] * args[1].stencil->stride[1]);

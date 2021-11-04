@@ -126,14 +126,16 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_top_execute(ops_kernel_descrip
   for (int d=0; d<NUM_FIELDS; d++) ((int *)arg2.data)[d] = arg2h[d];
   consts_bytes += ROUND_UP(NUM_FIELDS*sizeof(int));
   mvConstArraysToDevice(block->instance,consts_bytes);
-  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
+  long long int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size
+                                                 : args[0].dat->elem_size);
+  long long int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size
+                                                 : args[1].dat->elem_size);
 
   char *p_a[3];
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + 
-           dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
+  long long int base0 = args[0].dat->base_offset +
+                        dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
     (start[1] * args[0].stencil->stride[1]);
@@ -143,8 +145,8 @@ void ops_par_loop_update_halo_kernel2_xvel_plus_2_top_execute(ops_kernel_descrip
     (start[2] * args[0].stencil->stride[2]);
   p_a[0] = (char *)args[0].data_d + base0;
 
-  int base1 = args[1].dat->base_offset + 
-           dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
+  long long int base1 = args[1].dat->base_offset +
+                        dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
   base1 = base1+ dat1 *
     args[1].dat->size[0] *
     (start[1] * args[1].stencil->stride[1]);

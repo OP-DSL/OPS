@@ -67,19 +67,20 @@ void buildOpenCLKernels_update_halo_kernel2_zvel_minus_4_front(
     pPath = getenv("OPS_INSTALL_PATH");
     if (pPath != NULL)
       if (OCL_FMA)
-        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/include "
-                           "-DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_update_halo_kernel2_zvel_minus_4_front=%d  "
-                           "-Dydim0_update_halo_kernel2_zvel_minus_4_front=%d  "
-                           "-Dxdim1_update_halo_kernel2_zvel_minus_4_front=%d  "
-                           "-Dydim1_update_halo_kernel2_zvel_minus_4_front=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_update_halo_kernel2_zvel_minus_4_front=%d  "
+                "-Dydim0_update_halo_kernel2_zvel_minus_4_front=%d  "
+                "-Dxdim1_update_halo_kernel2_zvel_minus_4_front=%d  "
+                "-Dydim1_update_halo_kernel2_zvel_minus_4_front=%d ",
                 pPath, 32, xdim0, ydim0, xdim1, ydim1);
       else
-        sprintf(buildOpts, "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_update_halo_kernel2_zvel_minus_4_front=%d  "
-                           "-Dydim0_update_halo_kernel2_zvel_minus_4_front=%d  "
-                           "-Dxdim1_update_halo_kernel2_zvel_minus_4_front=%d  "
-                           "-Dydim1_update_halo_kernel2_zvel_minus_4_front=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_update_halo_kernel2_zvel_minus_4_front=%d  "
+                "-Dydim0_update_halo_kernel2_zvel_minus_4_front=%d  "
+                "-Dxdim1_update_halo_kernel2_zvel_minus_4_front=%d  "
+                "-Dydim1_update_halo_kernel2_zvel_minus_4_front=%d ",
                 pPath, 32, xdim0, ydim0, xdim1, ydim1);
     else {
       sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);

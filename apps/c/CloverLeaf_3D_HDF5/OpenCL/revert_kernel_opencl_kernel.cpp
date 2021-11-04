@@ -77,13 +77,14 @@ void buildOpenCLKernels_revert_kernel(OPS_instance *instance, int xdim0,
                 pPath, 32, xdim0, ydim0, xdim1, ydim1, xdim2, ydim2, xdim3,
                 ydim3);
       else
-        sprintf(
-            buildOpts, "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
-                       "-Dxdim0_revert_kernel=%d  -Dydim0_revert_kernel=%d  "
-                       "-Dxdim1_revert_kernel=%d  -Dydim1_revert_kernel=%d  "
-                       "-Dxdim2_revert_kernel=%d  -Dydim2_revert_kernel=%d  "
-                       "-Dxdim3_revert_kernel=%d  -Dydim3_revert_kernel=%d ",
-            pPath, 32, xdim0, ydim0, xdim1, ydim1, xdim2, ydim2, xdim3, ydim3);
+        sprintf(buildOpts,
+                "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_revert_kernel=%d  -Dydim0_revert_kernel=%d  "
+                "-Dxdim1_revert_kernel=%d  -Dydim1_revert_kernel=%d  "
+                "-Dxdim2_revert_kernel=%d  -Dydim2_revert_kernel=%d  "
+                "-Dxdim3_revert_kernel=%d  -Dydim3_revert_kernel=%d ",
+                pPath, 32, xdim0, ydim0, xdim1, ydim1, xdim2, ydim2, xdim3,
+                ydim3);
     else {
       sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
       exit(EXIT_FAILURE);

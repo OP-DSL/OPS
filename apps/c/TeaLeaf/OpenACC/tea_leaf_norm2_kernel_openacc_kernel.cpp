@@ -69,11 +69,16 @@ void ops_par_loop_tea_leaf_norm2_kernel(char const *name, ops_block block, int d
   #endif
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
-    args[0].dat->size[0] *
-    start[1] * args[0].stencil->stride[1];
-  #ifdef OPS_GPU
+  long long int base0 =
+      args[0].dat->base_offset + (long long int)(block->instance->OPS_soa
+                                                     ? args[0].dat->type_size
+                                                     : args[0].dat->elem_size) *
+                                     start[0] * args[0].stencil->stride[0];
+  base0 = base0 +
+          (long long int)(block->instance->OPS_soa ? args[0].dat->type_size
+                                                   : args[0].dat->elem_size) *
+              args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
+#ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
   #else
   double *p_a0 = (double *)((char *)args[0].data + base0);

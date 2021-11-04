@@ -224,10 +224,10 @@ void buildOpenCLKernels(OPS_instance *instance) {
         (cl_kernel *)malloc(141 * sizeof(cl_kernel));
   }
   isbuilt = true;
-  }
+}
 
 //user kernel files
-#include "../MPI_OpenMP/generate_chunk_kernel_cpu_kernel.cpp"
+/*#include "../MPI_OpenMP/generate_chunk_kernel_cpu_kernel.cpp"
 #include "../MPI_OpenMP/initialise_chunk_kernel_cellx_cpu_kernel.cpp"
 #include "../MPI_OpenMP/initialise_chunk_kernel_celly_cpu_kernel.cpp"
 #include "../MPI_OpenMP/initialise_chunk_kernel_cellz_cpu_kernel.cpp"
@@ -238,6 +238,7 @@ void buildOpenCLKernels(OPS_instance *instance) {
 #include "../MPI_OpenMP/initialise_chunk_kernel_yy_cpu_kernel.cpp"
 #include "../MPI_OpenMP/initialise_chunk_kernel_z_cpu_kernel.cpp"
 #include "../MPI_OpenMP/initialise_chunk_kernel_zz_cpu_kernel.cpp"
+*/
 #include "PdV_kernel_nopredict_opencl_kernel.cpp"
 #include "PdV_kernel_predict_opencl_kernel.cpp"
 #include "accelerate_kernel_opencl_kernel.cpp"

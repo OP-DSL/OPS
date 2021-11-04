@@ -68,7 +68,7 @@ void buildOpenCLKernels(OPS_instance *instance) {
         (cl_kernel *)malloc(5 * sizeof(cl_kernel));
   }
   isbuilt = true;
-  }
+}
 
 //user kernel files
 #include "poisson_kernel_error_opencl_kernel.cpp"
