@@ -45,7 +45,7 @@ OPS handle all of these different requirements through stencil definitions.
 
 ## OPS C and C++ API
 
-Both C and C++ styles API are provided for utilizing the capabilities provided by the OPS library. They are essentially the same although there are minor differences in syntax. The C++ API is mainly designed for data abstraction, which  therefore provides better data encapsulation and the support of multiple instances and threading (OpenMP currently). In the following both C style routines and C++ class and methods will be introduced according their functionality with a notice (C) or (C++). If there is no such notice, the routine will apply to both.
+Both C and C++ styles API are provided for utilizing the capabilities provided by the OPS library. They are essentially the same although there are minor differences in syntax. The C++ API is mainly designed for data abstraction, which  therefore provides better data encapsulation and the support of multiple instances and threading (OpenMP currently). In the following both C style routines and C++ class and methods will be introduced according to their functionality with a notice (C) or (C++). If there is no such notice, the routine either applies to both or might not provided by the C++ API.
 
 To enable the C++ API, a compiler directive ``OPS_CPP_API`` is required.
 
@@ -474,7 +474,7 @@ used to generate initial geometry.
 
 The final ingredient is the stencil specification, for which we have two versions: simple and strided.
 
-#### ops_decl_stencil
+#### ops_decl_stencil (C)
 
 __ops_stencil ops_decl_stencil(int dims,int points, int *stencil, char *name)__
 
@@ -485,7 +485,10 @@ __ops_stencil ops_decl_stencil(int dims,int points, int *stencil, char *name)__
 |stencil|  stencil for accessing data|
 |name| string representing the name of the stencil|
 
-#### ops_decl_strided_stencil
+#### OPS_instance::decl_stencil (C++)
+
+The method accepts same arguments with its C counterpart.
+#### ops_decl_strided_stencil (C)
 
 __ops_stencil ops_decl_strided_stencil(int dims, int points, int *stencil, int *stride, char *name)__
 
@@ -496,6 +499,10 @@ __ops_stencil ops_decl_strided_stencil(int dims, int points, int *stencil, int *
 |stencil|    stencil for accessing data|
 |stride|     stride for accessing data|
 |name| string representing the name of the stencil|
+
+#### OPS_instance::decl_strided_stencil (C++)
+
+The method accepts same arguments with its C counterpart.
 
 #### ops_decl_stencil_hdf5
 
@@ -537,10 +544,7 @@ dimension applications (with a stride of 0 for the relevant dimensions).
 
 ### Checkpointing
 
-OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the file name for the
-checkpoint and an average time interval between checkpoints, OPS will then automatically save all necessary information
-periodically that is required to fast-forward to the last checkpoint if a crash occurred. Currently, when re-launching
-after a crash, the same number of MPI processes have to be used. To enable checkpointing mode, the *OPS_CHECKPOINT* runtime argument has to be used.
+OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the file name for the checkpoint and an average time interval between checkpoints, OPS will then automatically save all necessary information periodically that is required to fast-forward to the last checkpoint if a crash occurred. Currently, when re-launching after a crash, the same number of MPI processes have to be used. To enable checkpointing mode, the *OPS_CHECKPOINT* runtime argument has to be used. (**Do we also need to define the CHECKPOINTING compiler directive?**)
 
 #### ops_checkpointing_init
 
@@ -559,8 +563,7 @@ mode, false otherwise.
 
 * OPS_CHECKPOINT_MANUAL_DATLIST - Indicates that the user manually controls the location of the checkpoint, and explicitly specifies the list of *ops_dat*s to be saved.
 
-* OPS_CHECKPOINT_FASTFW - Indicates that the user manually controls the location of the checkpoint, and it also enables fast-forwarding, by skipping the execution of the
-application (even though none of the parallel loops would actually execute, there may be significant work outside of those) up to the checkpoint
+* OPS_CHECKPOINT_FASTFW - Indicates that the user manually controls the location of the checkpoint, and it also enables fast-forwarding, by skipping the execution of the application (even though none of the parallel loops would actually execute, there may be significant work outside of those) up to the checkpoint
 
 * OPS_CHECKPOINT_MANUAL - Indicates that when the corresponding API function is called, the checkpoint should be created. Assumes the presence of the above two options as well.
 
@@ -570,8 +573,7 @@ __void ops_checkpointing_manual_datlist(int ndats, ops_dat *datlist)__
 
 A user can call this routine at a point in the code to mark the location of a checkpoint.  At this point, the list of datasets specified
 will be saved. The validity of what is saved is not checked by the checkpointing algorithm assuming that the user knows
-what data sets to be saved for full recovery. This routine should be called frequently (compared to check-pointing
-frequency) and it will trigger the creation of the checkpoint the first time it is called after the timeout occurs.
+what data sets to be saved for full recovery. This routine should be called frequently (compared to check-pointing frequency) and it will trigger the creation of the checkpoint the first time it is called after the timeout occurs.
 
 | Arguments      | Description |
 | ----------- | ----------- |
@@ -630,7 +632,7 @@ in a tech-report on checkpointing, to be published later.
 
 This section describes APIs that give the user access to internal data structures in OPS and return data to user-space. These should be used cautiously and sparsely, as they can affect performance significantly
 
-#### ops_dat_get_local_npartitions
+#### ops_dat_get_local_npartitions (C)
 
 __int ops_dat_get_local_npartitions(ops_dat dat)__
 
@@ -640,7 +642,9 @@ This routine returns the number of chunks of the given dataset held by the curre
 | ----------- | ----------- |
 |dat|         the dataset|
 
-#### ops_dat_get_global_npartitions}
+#### ops_dat_core::get_local_npartitions (C++)
+The C++ version of ``ops_dat_get_local_npartitions``, which does not require input.
+#### ops_dat_get_global_npartitions (C)
 
 __int ops_dat_get_global_npartitions(ops_dat dat)__
 
@@ -650,7 +654,9 @@ This routine returns the number of chunks of the given dataset held by all proce
 | ----------- | ----------- |
 |dat|         the dataset
 
-#### ops_dat_get_extents
+#### ops_dat_core::get_global_npartitions (C++)
+The C++ version of ``ops_dat_get_global_npartitions``, which does not require input.
+#### ops_dat_get_extents (C)
 
 __void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *sizes)__
 
@@ -663,7 +669,10 @@ This routine returns the MPI displacement and size of a given chunk of the given
 |disp|        an array populated with the displacement of the chunk within the ``global'' distributed array|
 |sizes|       an array populated with the spatial extents|
 
-#### ops_dat_get_raw_metadata
+#### ops_dat_core::get_extents (C++)
+The C++ version of ``ops_dat_get_extents`` where the arguments are the same except no need of the ops_dat arguments.
+
+#### ops_dat_get_raw_metadata (C)
 
 __char* ops_dat_get_raw_metadata(ops_dat dat, int part, int *disp, int *size, int *stride, int *d_m, int *d_p)__
 
@@ -679,7 +688,9 @@ This routine returns array shape metadata corresponding to the ops_dat. Any of t
 |d_m|      an array populated with padding on the left in each dimension. Note that these are negative values|
 |d_p|      an array populated with padding on the right in each dimension|
 
-#### ops_dat_get_raw_pointer
+#### ops_dat_core::get_raw_metadata (C++)
+The C++ version of ``ops_dat_get_raw_metadata`` where the arguments are the same except no need of the ops_dat arguments.
+#### ops_dat_get_raw_pointer (C)
 
 __char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_memspace *memspace)__
 
@@ -692,7 +703,9 @@ This routine returns a pointer to the internally stored data, with MPI halo regi
 |stencil|     a stencil used to determine required MPI halo exchange depths|
 |memspace|       when set to OPS_HOST or OPS_DEVICE, returns a pointer to data in that memory space, otherwise must be set to 0, and returns whether data is in the host or on the device|
 
-#### ops_dat_release_raw_data
+#### ops_dat_core::get_raw__pointer (C++)
+The C++ version of ``ops_dat_get_raw_pointer`` where the arguments are the same except no need of the ops_dat arguments.
+#### ops_dat_release_raw_data (C)
 
 __void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc)__
 
@@ -706,22 +719,9 @@ A single call to ops_dat_release_raw_data() releases all pointers obtained by pr
 |part|        the chunk index (has to be 0)|
 |acc|     the kind of access that was used by the user (OPS_READ if it was read only, OPS_WRITE if it was overwritten, OPS_RW if it was read and written)|
 
-#### ops_dat_release_raw_data
-
-__void ops_dat_release_raw_data_memspace(ops_dat dat, int part, ops_access acc, ops_memspace *memspace)__
-
-Indicates to OPS that a dataset previously accessed with ops_dat_get_raw_pointer is released by the user, and also tells OPS how it was accessed, and which memory space was used.
-
-A single call to ops_dat_release_raw_data() releases all pointers obtained by previous calls to ops_dat_get_raw_pointer() calls on the same dat and with the same *memspace argument, i.e. calls do not nest.
-
-| Arguments      | Description |
-| ----------- | ----------- |
-|dat|         the dataset|
-|part|        the chunk index (has to be 0)|
-|acc|     the kind of access that was used by the user (OPS_READ if it was read only, OPS_WRITE if it was overwritten, OPS_RW if it was read and written)|
-|memspace|       set to OPS_HOST or OPS_DEVICE |
-
-#### ops_dat_fetch_data
+#### ops_dat_core::_release_raw_data (C++)
+The C++ version of ``ops_dat_release_raw_data`` where the arguments are the same except no need of the ops_dat arguments.
+#### ops_dat_fetch_data (C)
 
 __void ops_dat_fetch_data(ops_dat dat, int part, int *data)__
 
@@ -733,7 +733,21 @@ This routine copies the data held by OPS to the user-specified memory location, 
 |part|        the chunk index (has to be 0) |
 |data|        pointer to memory which should be filled by OPS|
 
-#### ops_dat_set_data
+#### ops_dat_fetch_data_memspace (C)
+
+__void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace)__
+
+This routine copies the data held by OPS to the user-specified memory location, as which needs to be at least as large as indicated by the sizes parameter of ops_dat_get_extents.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dat|         the dataset|
+|part|        the chunk index (has to be 0) |
+|data|        pointer to memory which should be filled by OPS|
+| memspace |the memory space where the data pointer is|
+#### ops_dat_core::fetch_data (C++)
+The C++ version of ``ops_dat_fetch_data_memspace`` where the arguments the same except no need of the ops_dat arguments.
+#### ops_dat_set_data (C)
 
 __void ops_dat_set_data(ops_dat dat, int part, int *data)__
 
@@ -745,7 +759,25 @@ This routine copies the data given  by the user to the internal data structure u
 |part|        the chunk index (has to be 0)|
 |data|        pointer to memory which should be copied to OPS |
 
-### Tridsolver Calls
+
+#### ops_dat_set_data_memspace (C)
+
+__void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace)__
+
+This routine copies the data given  by the user to the internal data structure used by OPS. User data needs to be laid out in column-major order and strided as indicated by the sizes parameter of ops_dat_get_extents.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dat|         the dataset|
+|part|        the chunk index (has to be 0)|
+|data|        pointer to memory which should be copied to OPS |
+|memspace| the memory space where the data pointer is|
+
+#### ops_dat_core::set_data (C++)
+The C++ version of ``ops_dat_set_data_memspace`` where the arguments the same except no need of the ops_dat arguments.
+### Linear algebra solvers
+
+####  Tridiagonal solver
 This section specifies APIs that allow [Tridsolver](https://github.com/OP-DSL/tridsolver) (a tridiagonal solver library) to be called from OPS. The library can be used to solve a large number of tridiagonal systems of equations stored in multidimensional datasets. Parameters that are passed to Tridsolver from OPS are stored in an `ops_tridsolver_params` object. The constructor for this class takes the `ops_block` that the datasets are defined over as an argument and optionally also a solving strategy to use (only relevant to MPI applications). The following solving strategies are available (see Tridsolver for more details about these):
 
 - GATHER_SCATTER (not available for GPUs)
@@ -757,7 +789,7 @@ This section specifies APIs that allow [Tridsolver](https://github.com/OP-DSL/tr
 
 Then parameters specific to different solving strategies can be set using setter methods. For applications using MPI, it is beneficial to reuse `ops_tridsolver_params` objects between solves as much as possible due to set up times involved with creating Tridsolver's MPI communicators.
 
-#### ops_tridMultiDimBatch
+##### ops_tridMultiDimBatch
 
 __void ops_tridMultiDimBatch(int ndim, int solvedim, int* dims, ops_dat a, ops_dat b, ops_dat c, ops_dat d, ops_tridsolver_params *tridsolver_ctx)__
 
@@ -774,7 +806,7 @@ This solves multiple tridiagonal systems of equations in multidimensional datase
 |d| the dataset for the right hand side, also where the solution is written to |
 |tridsolver_ctx| an object containing the parameters for the Tridsolver library |
 
-#### ops_tridMultiDimBatch_Inc
+##### ops_tridMultiDimBatch_Inc
 
 __void ops_tridMultiDimBatch(int ndim, int solvedim, int* dims, ops_dat a, ops_dat b, ops_dat c, ops_dat d, ops_dat u, ops_tridsolver_params *tridsolver_ctx)__
 
