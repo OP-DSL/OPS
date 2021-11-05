@@ -68,25 +68,26 @@ void buildOpenCLKernels_update_halo_kernel1_b2(OPS_instance *instance,
     pPath = getenv("OPS_INSTALL_PATH");
     if (pPath != NULL)
       if (OCL_FMA)
-        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/include "
-                           "-DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_update_halo_kernel1_b2=%d  "
-                           "-Dxdim1_update_halo_kernel1_b2=%d  "
-                           "-Dxdim2_update_halo_kernel1_b2=%d  "
-                           "-Dxdim3_update_halo_kernel1_b2=%d  "
-                           "-Dxdim4_update_halo_kernel1_b2=%d  "
-                           "-Dxdim5_update_halo_kernel1_b2=%d  "
-                           "-Dxdim6_update_halo_kernel1_b2=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_update_halo_kernel1_b2=%d  "
+                "-Dxdim1_update_halo_kernel1_b2=%d  "
+                "-Dxdim2_update_halo_kernel1_b2=%d  "
+                "-Dxdim3_update_halo_kernel1_b2=%d  "
+                "-Dxdim4_update_halo_kernel1_b2=%d  "
+                "-Dxdim5_update_halo_kernel1_b2=%d  "
+                "-Dxdim6_update_halo_kernel1_b2=%d ",
                 pPath, 32, xdim0, xdim1, xdim2, xdim3, xdim4, xdim5, xdim6);
       else
-        sprintf(buildOpts, "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_update_halo_kernel1_b2=%d  "
-                           "-Dxdim1_update_halo_kernel1_b2=%d  "
-                           "-Dxdim2_update_halo_kernel1_b2=%d  "
-                           "-Dxdim3_update_halo_kernel1_b2=%d  "
-                           "-Dxdim4_update_halo_kernel1_b2=%d  "
-                           "-Dxdim5_update_halo_kernel1_b2=%d  "
-                           "-Dxdim6_update_halo_kernel1_b2=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_update_halo_kernel1_b2=%d  "
+                "-Dxdim1_update_halo_kernel1_b2=%d  "
+                "-Dxdim2_update_halo_kernel1_b2=%d  "
+                "-Dxdim3_update_halo_kernel1_b2=%d  "
+                "-Dxdim4_update_halo_kernel1_b2=%d  "
+                "-Dxdim5_update_halo_kernel1_b2=%d  "
+                "-Dxdim6_update_halo_kernel1_b2=%d ",
                 pPath, 32, xdim0, xdim1, xdim2, xdim3, xdim4, xdim5, xdim6);
     else {
       sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
@@ -96,6 +97,7 @@ void buildOpenCLKernels_update_halo_kernel1_b2(OPS_instance *instance,
 #ifdef OPS_SOA
     sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
 #endif
+    sprintf(buildOpts, "%s -I%s/c/include", buildOpts, pPath);
     ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1,
                          &instance->opencl_instance->OPS_opencl_core.device_id,
                          buildOpts, NULL, NULL);

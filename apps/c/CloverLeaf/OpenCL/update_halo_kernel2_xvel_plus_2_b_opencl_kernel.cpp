@@ -67,15 +67,16 @@ void buildOpenCLKernels_update_halo_kernel2_xvel_plus_2_b(
     pPath = getenv("OPS_INSTALL_PATH");
     if (pPath != NULL)
       if (OCL_FMA)
-        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/include "
-                           "-DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_update_halo_kernel2_xvel_plus_2_b=%d  "
-                           "-Dxdim1_update_halo_kernel2_xvel_plus_2_b=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_update_halo_kernel2_xvel_plus_2_b=%d  "
+                "-Dxdim1_update_halo_kernel2_xvel_plus_2_b=%d ",
                 pPath, 32, xdim0, xdim1);
       else
-        sprintf(buildOpts, "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_update_halo_kernel2_xvel_plus_2_b=%d  "
-                           "-Dxdim1_update_halo_kernel2_xvel_plus_2_b=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_update_halo_kernel2_xvel_plus_2_b=%d  "
+                "-Dxdim1_update_halo_kernel2_xvel_plus_2_b=%d ",
                 pPath, 32, xdim0, xdim1);
     else {
       sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
@@ -85,6 +86,7 @@ void buildOpenCLKernels_update_halo_kernel2_xvel_plus_2_b(
 #ifdef OPS_SOA
     sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
 #endif
+    sprintf(buildOpts, "%s -I%s/c/include", buildOpts, pPath);
     ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1,
                          &instance->opencl_instance->OPS_opencl_core.device_id,
                          buildOpts, NULL, NULL);

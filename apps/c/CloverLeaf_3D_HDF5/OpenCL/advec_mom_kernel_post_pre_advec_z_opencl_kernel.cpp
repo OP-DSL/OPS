@@ -68,32 +68,33 @@ void buildOpenCLKernels_advec_mom_kernel_post_pre_advec_z(
     pPath = getenv("OPS_INSTALL_PATH");
     if (pPath != NULL)
       if (OCL_FMA)
-        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/include "
-                           "-DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dydim0_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dxdim1_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dydim1_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dxdim2_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dydim2_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dxdim3_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dydim3_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dxdim4_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dydim4_advec_mom_kernel_post_pre_advec_z=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dydim0_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dxdim1_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dydim1_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dxdim2_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dydim2_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dxdim3_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dydim3_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dxdim4_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dydim4_advec_mom_kernel_post_pre_advec_z=%d ",
                 pPath, 32, xdim0, ydim0, xdim1, ydim1, xdim2, ydim2, xdim3,
                 ydim3, xdim4, ydim4);
       else
-        sprintf(buildOpts, "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dydim0_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dxdim1_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dydim1_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dxdim2_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dydim2_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dxdim3_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dydim3_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dxdim4_advec_mom_kernel_post_pre_advec_z=%d  "
-                           "-Dydim4_advec_mom_kernel_post_pre_advec_z=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dydim0_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dxdim1_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dydim1_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dxdim2_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dydim2_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dxdim3_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dydim3_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dxdim4_advec_mom_kernel_post_pre_advec_z=%d  "
+                "-Dydim4_advec_mom_kernel_post_pre_advec_z=%d ",
                 pPath, 32, xdim0, ydim0, xdim1, ydim1, xdim2, ydim2, xdim3,
                 ydim3, xdim4, ydim4);
     else {

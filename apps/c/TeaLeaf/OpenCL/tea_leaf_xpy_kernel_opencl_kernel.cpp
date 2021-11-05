@@ -66,15 +66,17 @@ void buildOpenCLKernels_tea_leaf_xpy_kernel(OPS_instance *instance, int xdim0,
     pPath = getenv("OPS_INSTALL_PATH");
     if (pPath != NULL)
       if (OCL_FMA)
-        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/include "
-                           "-DOPS_WARPSIZE=%d  -Dxdim0_tea_leaf_xpy_kernel=%d  "
-                           "-Dxdim1_tea_leaf_xpy_kernel=%d ",
-                pPath, 32, xdim0, xdim1);
+        sprintf(
+            buildOpts,
+            "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
+            "-Dxdim0_tea_leaf_xpy_kernel=%d  -Dxdim1_tea_leaf_xpy_kernel=%d ",
+            pPath, 32, xdim0, xdim1);
       else
-        sprintf(buildOpts, "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_tea_leaf_xpy_kernel=%d  "
-                           "-Dxdim1_tea_leaf_xpy_kernel=%d ",
-                pPath, 32, xdim0, xdim1);
+        sprintf(
+            buildOpts,
+            "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+            "-Dxdim0_tea_leaf_xpy_kernel=%d  -Dxdim1_tea_leaf_xpy_kernel=%d ",
+            pPath, 32, xdim0, xdim1);
     else {
       sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
       exit(EXIT_FAILURE);

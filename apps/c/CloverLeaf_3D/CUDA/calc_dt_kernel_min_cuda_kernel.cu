@@ -134,13 +134,14 @@ void ops_par_loop_calc_dt_kernel_min_execute(ops_kernel_descriptor *desc) {
 
 
   mvReductArraysToDevice(block->instance,reduct_bytes);
-  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  long long int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size
+                                                 : args[0].dat->elem_size);
 
   char *p_a[2];
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + 
-           dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
+  long long int base0 = args[0].dat->base_offset +
+                        dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
     (start[1] * args[0].stencil->stride[1]);

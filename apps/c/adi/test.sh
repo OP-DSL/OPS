@@ -2,25 +2,32 @@
 set -e
 #<<COMMENT
 cd ../../../ops/c
-source ../../scripts/$SOURCE_INTEL
+#source ../../scripts/$SOURCE_INTEL
+source  ~/OPS/scripts/source_intel_2021.3
 
+#<<COMMENT
 #==== Build and copy Referance application from the TDMA Library ====
 #build lib first
-cd $TDMA_INSTALL_PATH/
+# TDMA_INSTALL_PATH=/path/to/tridsolver/scalar/build
+cd $TDMA_INSTALL_PATH/../build
 rm -rf ./*
-cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_MPI=ON -DLIBTRID_PATH=$TDMA_INSTALL_PATH
+cmake .. -DCUDA_cublas_LIBRARY=/opt/cuda/10.2.89/lib64/libcublas.so -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_SN=ON -DBUILD_FOR_MPI=ON -DCMAKE_INSTALL_PREFIX=$TDMA_INSTALL_PATH/../
+
 make
 make install
+
 
 #build OPS
 cd $OPS_INSTALL_PATH/c
 make clean
 make
 
+#COMMENT
+
 #now build application
 cd $TDMA_INSTALL_PATH/../../apps/adi/build/
 rm -rf ./*
-cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DLIBTRID_PATH=$TDMA_INSTALL_PATH
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DLIBTRID_PATH=$TDMA_INSTALL_PATH -Dlibtrid_DIR=/rr-home/gihan/tridsolver/scalar/libtrid/lib/cmake/
 make adi_orig compare
 cp compare adi_orig $OPS_INSTALL_PATH/../apps/c/adi
 cd -
@@ -148,6 +155,32 @@ else
 fi
 rm -rf adi_mpi.h5 perf_out diff_out
 
+echo '============> Running MPI - JACOBI'
+$MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi -halo 1 -m 4 > perf_out
+mv adi.h5 adi_mpi.h5
+grep "Total Wall time" perf_out
+$HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq.h5 adi_mpi.h5 > diff_out
+if [ -s ./diff_out ]
+then
+    echo "File not empty - Solution Not Valid";exit 1;
+else
+    echo "PASSED"
+fi
+rm -rf adi_mpi.h5 perf_out diff_out
+
+echo '============> Running MPI - PCR'
+$MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi -halo 1 -m 5 > perf_out
+mv adi.h5 adi_mpi.h5
+grep "Total Wall time" perf_out
+$HDF5_INSTALL_PATH/bin/h5diff -p $TOL adi_seq.h5 adi_mpi.h5 > diff_out
+if [ -s ./diff_out ]
+then
+    echo "File not empty - Solution Not Valid";exit 1;
+else
+    echo "PASSED"
+fi
+rm -rf adi_mpi.h5 perf_out diff_out
+
 echo '============> Running MPI+CUDA - ALLGATHER'
 $MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi_cuda -halo 1 -m 1 > perf_out
 mv adi.h5 adi_mpi_cuda.h5
@@ -186,7 +219,29 @@ else
     echo "PASSED"
 fi
 
+echo '============> Running MPI+CUDA - JACOBI'
+$MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi_cuda -halo 1 -m 4 > perf_out
+mv adi.h5 adi_mpi_cuda.h5
+grep "Total Wall time" perf_out
+$HDF5_INSTALL_PATH/bin/h5diff -p $TOL ./adi_seq.h5 adi_mpi_cuda.h5 > diff_out
+if [ -s ./diff_out ]
+then
+    echo "File not empty - Solution Not Valid";exit 1;
+else
+    echo "PASSED"
+fi
 
+echo '============> Running MPI+CUDA - PCR'
+$MPI_INSTALL_PATH/bin/mpirun -n 8 ./adi_mpi_cuda -halo 1 -m 5 > perf_out
+mv adi.h5 adi_mpi_cuda.h5
+grep "Total Wall time" perf_out
+$HDF5_INSTALL_PATH/bin/h5diff -p $TOL ./adi_seq.h5 adi_mpi_cuda.h5 > diff_out
+if [ -s ./diff_out ]
+then
+    echo "File not empty - Solution Not Valid";exit 1;
+else
+    echo "PASSED"
+fi
 
 rm -rf *.h5
-echo "All Intel complied applications PASSED : Exiting Test Script"
+echo "All applications PASSED : Exiting Test Script"

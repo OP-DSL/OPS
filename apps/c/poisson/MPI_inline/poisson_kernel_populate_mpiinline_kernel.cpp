@@ -89,22 +89,37 @@ void ops_par_loop_poisson_kernel_populate(char const *name, ops_block block, int
 
   int *p_a2 = NULL;
 
-  int base3 = args[3].dat->base_offset + (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) * start[0] * args[3].stencil->stride[0];
-  base3 = base3+ (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size) *
-    args[3].dat->size[0] *
-    start[1] * args[3].stencil->stride[1];
+  long long int base3 =
+      args[3].dat->base_offset + (long long int)(block->instance->OPS_soa
+                                                     ? args[3].dat->type_size
+                                                     : args[3].dat->elem_size) *
+                                     start[0] * args[3].stencil->stride[0];
+  base3 = base3 +
+          (long long int)(block->instance->OPS_soa ? args[3].dat->type_size
+                                                   : args[3].dat->elem_size) *
+              args[3].dat->size[0] * start[1] * args[3].stencil->stride[1];
   double *p_a3 = (double *)(args[3].data + base3);
 
-  int base4 = args[4].dat->base_offset + (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) * start[0] * args[4].stencil->stride[0];
-  base4 = base4+ (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size) *
-    args[4].dat->size[0] *
-    start[1] * args[4].stencil->stride[1];
+  long long int base4 =
+      args[4].dat->base_offset + (long long int)(block->instance->OPS_soa
+                                                     ? args[4].dat->type_size
+                                                     : args[4].dat->elem_size) *
+                                     start[0] * args[4].stencil->stride[0];
+  base4 = base4 +
+          (long long int)(block->instance->OPS_soa ? args[4].dat->type_size
+                                                   : args[4].dat->elem_size) *
+              args[4].dat->size[0] * start[1] * args[4].stencil->stride[1];
   double *p_a4 = (double *)(args[4].data + base4);
 
-  int base5 = args[5].dat->base_offset + (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) * start[0] * args[5].stencil->stride[0];
-  base5 = base5+ (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size) *
-    args[5].dat->size[0] *
-    start[1] * args[5].stencil->stride[1];
+  long long int base5 =
+      args[5].dat->base_offset + (long long int)(block->instance->OPS_soa
+                                                     ? args[5].dat->type_size
+                                                     : args[5].dat->elem_size) *
+                                     start[0] * args[5].stencil->stride[0];
+  base5 = base5 +
+          (long long int)(block->instance->OPS_soa ? args[5].dat->type_size
+                                                   : args[5].dat->elem_size) *
+              args[5].dat->size[0] * start[1] * args[5].stencil->stride[1];
   double *p_a5 = (double *)(args[5].data + base5);
 
 

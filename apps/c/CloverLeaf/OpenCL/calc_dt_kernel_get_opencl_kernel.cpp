@@ -66,14 +66,14 @@ void buildOpenCLKernels_calc_dt_kernel_get(OPS_instance *instance, int xdim0,
     pPath = getenv("OPS_INSTALL_PATH");
     if (pPath != NULL)
       if (OCL_FMA)
-        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/include "
-                           "-DOPS_WARPSIZE=%d  -Dxdim0_calc_dt_kernel_get=%d  "
-                           "-Dxdim1_calc_dt_kernel_get=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_calc_dt_kernel_get=%d  -Dxdim1_calc_dt_kernel_get=%d ",
                 pPath, 32, xdim0, xdim1);
       else
-        sprintf(buildOpts, "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_calc_dt_kernel_get=%d  "
-                           "-Dxdim1_calc_dt_kernel_get=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_calc_dt_kernel_get=%d  -Dxdim1_calc_dt_kernel_get=%d ",
                 pPath, 32, xdim0, xdim1);
     else {
       sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
@@ -83,6 +83,7 @@ void buildOpenCLKernels_calc_dt_kernel_get(OPS_instance *instance, int xdim0,
 #ifdef OPS_SOA
     sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
 #endif
+    sprintf(buildOpts, "%s -I%s/c/include", buildOpts, pPath);
     ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1,
                          &instance->opencl_instance->OPS_opencl_core.device_id,
                          buildOpts, NULL, NULL);

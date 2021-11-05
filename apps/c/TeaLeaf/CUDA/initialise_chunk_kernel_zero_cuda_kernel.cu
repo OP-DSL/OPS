@@ -94,15 +94,14 @@ void ops_par_loop_initialise_chunk_kernel_zero_execute(ops_kernel_descriptor *de
   dim3 grid( (x_size-1)/block->instance->OPS_block_size_x+ 1, (y_size-1)/block->instance->OPS_block_size_y + 1, 1);
   dim3 tblock(block->instance->OPS_block_size_x,block->instance->OPS_block_size_y,block->instance->OPS_block_size_z);
 
-
-
-  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  long long int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size
+                                                 : args[0].dat->elem_size);
 
   char *p_a[1];
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + 
-           dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
+  long long int base0 = args[0].dat->base_offset +
+                        dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
     (start[1] * args[0].stencil->stride[1]);

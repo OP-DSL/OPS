@@ -195,15 +195,18 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
 
 
   mvReductArraysToDevice(block->instance,reduct_bytes);
-  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
-  int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size);
-  int dat4 = (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
+  long long int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size
+                                                 : args[0].dat->elem_size);
+  long long int dat1 = (block->instance->OPS_soa ? args[1].dat->type_size
+                                                 : args[1].dat->elem_size);
+  long long int dat4 = (block->instance->OPS_soa ? args[4].dat->type_size
+                                                 : args[4].dat->elem_size);
 
   char *p_a[6];
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + 
-           dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
+  long long int base0 = args[0].dat->base_offset +
+                        dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *
     (start[1] * args[0].stencil->stride[1]);
@@ -213,8 +216,8 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
     (start[2] * args[0].stencil->stride[2]);
   p_a[0] = (char *)args[0].data_d + base0;
 
-  int base1 = args[1].dat->base_offset + 
-           dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
+  long long int base1 = args[1].dat->base_offset +
+                        dat1 * 1 * (start[0] * args[1].stencil->stride[0]);
   base1 = base1+ dat1 *
     args[1].dat->size[0] *
     (start[1] * args[1].stencil->stride[1]);
@@ -224,8 +227,8 @@ void ops_par_loop_calc_dt_kernel_get_execute(ops_kernel_descriptor *desc) {
     (start[2] * args[1].stencil->stride[2]);
   p_a[1] = (char *)args[1].data_d + base1;
 
-  int base4 = args[4].dat->base_offset + 
-           dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
+  long long int base4 = args[4].dat->base_offset +
+                        dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
   base4 = base4+ dat4 *
     args[4].dat->size[0] *
     (start[1] * args[4].stencil->stride[1]);

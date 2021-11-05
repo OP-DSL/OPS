@@ -66,15 +66,17 @@ void buildOpenCLKernels_poisson_kernel_error(OPS_instance *instance, int xdim0,
     pPath = getenv("OPS_INSTALL_PATH");
     if (pPath != NULL)
       if (OCL_FMA)
-        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/include "
-                           "-DOPS_WARPSIZE=%d  -Dxdim0_poisson_kernel_error=%d "
-                           " -Dxdim1_poisson_kernel_error=%d ",
-                pPath, 32, xdim0, xdim1);
+        sprintf(
+            buildOpts,
+            "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
+            "-Dxdim0_poisson_kernel_error=%d  -Dxdim1_poisson_kernel_error=%d ",
+            pPath, 32, xdim0, xdim1);
       else
-        sprintf(buildOpts, "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_poisson_kernel_error=%d  "
-                           "-Dxdim1_poisson_kernel_error=%d ",
-                pPath, 32, xdim0, xdim1);
+        sprintf(
+            buildOpts,
+            "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+            "-Dxdim0_poisson_kernel_error=%d  -Dxdim1_poisson_kernel_error=%d ",
+            pPath, 32, xdim0, xdim1);
     else {
       sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
       exit(EXIT_FAILURE);
@@ -83,6 +85,7 @@ void buildOpenCLKernels_poisson_kernel_error(OPS_instance *instance, int xdim0,
 #ifdef OPS_SOA
     sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
 #endif
+    sprintf(buildOpts, "%s -I%s/c/include", buildOpts, pPath);
     ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1,
                          &instance->opencl_instance->OPS_opencl_core.device_id,
                          buildOpts, NULL, NULL);
