@@ -827,7 +827,7 @@ This solves multiple tridiagonal systems of equations in multidimensional datase
 ## Runtime Flags and Options
 
 The following is a list of all the runtime flags and options that can be used when executing OPS generated applications.
-### General flags
+
 * `OPS_DIAGS=` : set OPS diagnostics level at runtime. 
 
   `OPS_DIAGS=1` - no diagnostics, default level to achieve the best runtime performance.
