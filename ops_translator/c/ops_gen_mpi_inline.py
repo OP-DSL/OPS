@@ -51,6 +51,7 @@ plus a master kernel file
 
 import re
 import datetime
+import errno
 import os
 import glob
 
@@ -94,7 +95,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
   try:
     os.makedirs('./MPI_inline')
   except OSError as e:
-    if e.errno != os.errno.EEXIST:
+    if e.errno != errno.EEXIST:
       raise
 
   ##########################################################################
@@ -472,7 +473,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     try:
       os.makedirs('./MPI_inline')
     except OSError as e:
-      if e.errno != os.errno.EEXIST:
+      if e.errno != errno.EEXIST:
         raise
     fid = open('./MPI_inline/'+name+'_mpiinline_kernel_c.c','w')
     date = datetime.datetime.now()

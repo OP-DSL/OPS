@@ -50,6 +50,7 @@ It produces a file xxx_openacc_kernel.F90 for each kernel
 
 import re
 import datetime
+import errno
 import os
 
 import util_fortran
@@ -565,7 +566,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
     try:
       os.makedirs('./MPI_OpenACC')
     except OSError as e:
-      if e.errno != os.errno.EEXIST:
+      if e.errno != errno.EEXIST:
         raise
     fid = open('./MPI_OpenACC/'+name+'_openacc_kernel.F90','w')
     date = datetime.datetime.now()
