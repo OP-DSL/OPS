@@ -162,6 +162,8 @@ int main(int argc, char *argv[]) {
                  ops_arg_dat(w, 1, S3D_000, "double", OPS_WRITE),
                  ops_arg_idx());
 
+    ops_tridsolver_params *trid_ctx = new ops_tridsolver_params(burger3D);
+
     ops_timers(&ct0, &et0);
     for (int it = 1; it <= iter; it++) {
         double time{it * dt};
@@ -196,9 +198,9 @@ int main(int argc, char *argv[]) {
         // ops_printf("Elapsed preproc (sec): %lf (s)\n", et3 - et2);
         // perform tri-diagonal solves in x-direction
         ops_timers(&ct2, &et2);
-        ops_tridMultiDimBatch_Inc(3, 0, size, a, b, c, du, u);
-        ops_tridMultiDimBatch_Inc(3, 0, size, a, b, c, dv, v);
-        ops_tridMultiDimBatch_Inc(3, 0, size, a, b, c, dw, w);
+        ops_tridMultiDimBatch_Inc(3, 0, size, a, b, c, du, u, trid_ctx);
+        ops_tridMultiDimBatch_Inc(3, 0, size, a, b, c, dv, v, trid_ctx);
+        ops_tridMultiDimBatch_Inc(3, 0, size, a, b, c, dw, w, trid_ctx);
         ops_timers(&ct3, &et3);
         totalX += et3 - et2;
         // WriteDataToH5("Burger3DX.h5", burger3D, debugList);
@@ -224,9 +226,9 @@ int main(int argc, char *argv[]) {
         // WriteDataToH5("Burger3DProcY.h5", burger3D, debugList);
         // perform tri-diagonal solves in y-direction
         ops_timers(&ct2, &et2);
-        ops_tridMultiDimBatch_Inc(3, 1, size, a, b, c, du, uStar);
-        ops_tridMultiDimBatch_Inc(3, 1, size, a, b, c, dv, vStar);
-        ops_tridMultiDimBatch_Inc(3, 1, size, a, b, c, dw, wStar);
+        ops_tridMultiDimBatch_Inc(3, 1, size, a, b, c, du, uStar, trid_ctx);
+        ops_tridMultiDimBatch_Inc(3, 1, size, a, b, c, dv, vStar, trid_ctx);
+        ops_tridMultiDimBatch_Inc(3, 1, size, a, b, c, dw, wStar, trid_ctx);
         ops_timers(&ct3, &et3);
         totalY += et3 - et2;
         // WriteDataToH5("Burger3DY.h5", burger3D, debugList);
@@ -253,14 +255,16 @@ int main(int argc, char *argv[]) {
         // ops_printf("Elapsed preproc (sec): %lf (s)\n", et3 - et2);
         // perform tri-diagonal solves in Z-direction
         ops_timers(&ct2, &et2);
-        ops_tridMultiDimBatch_Inc(3, 2, size, a, b, c, du, u);
-        ops_tridMultiDimBatch_Inc(3, 2, size, a, b, c, dv, v);
-        ops_tridMultiDimBatch_Inc(3, 2, size, a, b, c, dw, w);
+        ops_tridMultiDimBatch_Inc(3, 2, size, a, b, c, du, u, trid_ctx);
+        ops_tridMultiDimBatch_Inc(3, 2, size, a, b, c, dv, v, trid_ctx);
+        ops_tridMultiDimBatch_Inc(3, 2, size, a, b, c, dw, w, trid_ctx);
         ops_timers(&ct3, &et3);
         totalZ += et3 - et2;
         //WriteDataToH5("Burger3DZ.h5", burger3D, debugList);
     }  // End main iteration loop
     ops_timers(&ct1, &et1);
+
+    delete trid_ctx;
 
     const double time{iter * dt};
     double uSqrSum, vSqrSum, wSqrSum, uDiffSqrSum, vDiffSqrSum, wDiffSqrSum;

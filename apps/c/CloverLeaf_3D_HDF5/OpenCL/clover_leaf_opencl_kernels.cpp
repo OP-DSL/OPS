@@ -224,7 +224,7 @@ void buildOpenCLKernels(OPS_instance *instance) {
         (cl_kernel *)malloc(140 * sizeof(cl_kernel));
   }
   isbuilt = true;
-  }
+}
 
 //user kernel files
 #include "../MPI_OpenMP/initialise_chunk_kernel_cellx_cpu_kernel.cpp"

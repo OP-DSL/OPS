@@ -67,21 +67,31 @@ void ops_par_loop_set_field_kernel(char const *name, ops_block block, int dim, i
 
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  base0 = base0 + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) *
-    args[0].dat->size[0] *
-    start[1] * args[0].stencil->stride[1];
-  #ifdef OPS_GPU
+  long long int base0 =
+      args[0].dat->base_offset + (long long int)(block->instance->OPS_soa
+                                                     ? args[0].dat->type_size
+                                                     : args[0].dat->elem_size) *
+                                     start[0] * args[0].stencil->stride[0];
+  base0 = base0 +
+          (long long int)(block->instance->OPS_soa ? args[0].dat->type_size
+                                                   : args[0].dat->elem_size) *
+              args[0].dat->size[0] * start[1] * args[0].stencil->stride[1];
+#ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
   #else
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
-  base1 = base1 + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) *
-    args[1].dat->size[0] *
-    start[1] * args[1].stencil->stride[1];
-  #ifdef OPS_GPU
+  long long int base1 =
+      args[1].dat->base_offset + (long long int)(block->instance->OPS_soa
+                                                     ? args[1].dat->type_size
+                                                     : args[1].dat->elem_size) *
+                                     start[0] * args[1].stencil->stride[0];
+  base1 = base1 +
+          (long long int)(block->instance->OPS_soa ? args[1].dat->type_size
+                                                   : args[1].dat->elem_size) *
+              args[1].dat->size[0] * start[1] * args[1].stencil->stride[1];
+#ifdef OPS_GPU
   double *p_a1 = (double *)((char *)args[1].data_d + base1);
   #else
   double *p_a1 = (double *)((char *)args[1].data + base1);

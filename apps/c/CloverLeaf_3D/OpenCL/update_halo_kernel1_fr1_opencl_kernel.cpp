@@ -70,40 +70,41 @@ void buildOpenCLKernels_update_halo_kernel1_fr1(OPS_instance *instance,
     pPath = getenv("OPS_INSTALL_PATH");
     if (pPath != NULL)
       if (OCL_FMA)
-        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/include "
-                           "-DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_update_halo_kernel1_fr1=%d  "
-                           "-Dydim0_update_halo_kernel1_fr1=%d  "
-                           "-Dxdim1_update_halo_kernel1_fr1=%d  "
-                           "-Dydim1_update_halo_kernel1_fr1=%d  "
-                           "-Dxdim2_update_halo_kernel1_fr1=%d  "
-                           "-Dydim2_update_halo_kernel1_fr1=%d  "
-                           "-Dxdim3_update_halo_kernel1_fr1=%d  "
-                           "-Dydim3_update_halo_kernel1_fr1=%d  "
-                           "-Dxdim4_update_halo_kernel1_fr1=%d  "
-                           "-Dydim4_update_halo_kernel1_fr1=%d  "
-                           "-Dxdim5_update_halo_kernel1_fr1=%d  "
-                           "-Dydim5_update_halo_kernel1_fr1=%d  "
-                           "-Dxdim6_update_halo_kernel1_fr1=%d  "
-                           "-Dydim6_update_halo_kernel1_fr1=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_update_halo_kernel1_fr1=%d  "
+                "-Dydim0_update_halo_kernel1_fr1=%d  "
+                "-Dxdim1_update_halo_kernel1_fr1=%d  "
+                "-Dydim1_update_halo_kernel1_fr1=%d  "
+                "-Dxdim2_update_halo_kernel1_fr1=%d  "
+                "-Dydim2_update_halo_kernel1_fr1=%d  "
+                "-Dxdim3_update_halo_kernel1_fr1=%d  "
+                "-Dydim3_update_halo_kernel1_fr1=%d  "
+                "-Dxdim4_update_halo_kernel1_fr1=%d  "
+                "-Dydim4_update_halo_kernel1_fr1=%d  "
+                "-Dxdim5_update_halo_kernel1_fr1=%d  "
+                "-Dydim5_update_halo_kernel1_fr1=%d  "
+                "-Dxdim6_update_halo_kernel1_fr1=%d  "
+                "-Dydim6_update_halo_kernel1_fr1=%d ",
                 pPath, 32, xdim0, ydim0, xdim1, ydim1, xdim2, ydim2, xdim3,
                 ydim3, xdim4, ydim4, xdim5, ydim5, xdim6, ydim6);
       else
-        sprintf(buildOpts, "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_update_halo_kernel1_fr1=%d  "
-                           "-Dydim0_update_halo_kernel1_fr1=%d  "
-                           "-Dxdim1_update_halo_kernel1_fr1=%d  "
-                           "-Dydim1_update_halo_kernel1_fr1=%d  "
-                           "-Dxdim2_update_halo_kernel1_fr1=%d  "
-                           "-Dydim2_update_halo_kernel1_fr1=%d  "
-                           "-Dxdim3_update_halo_kernel1_fr1=%d  "
-                           "-Dydim3_update_halo_kernel1_fr1=%d  "
-                           "-Dxdim4_update_halo_kernel1_fr1=%d  "
-                           "-Dydim4_update_halo_kernel1_fr1=%d  "
-                           "-Dxdim5_update_halo_kernel1_fr1=%d  "
-                           "-Dydim5_update_halo_kernel1_fr1=%d  "
-                           "-Dxdim6_update_halo_kernel1_fr1=%d  "
-                           "-Dydim6_update_halo_kernel1_fr1=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_update_halo_kernel1_fr1=%d  "
+                "-Dydim0_update_halo_kernel1_fr1=%d  "
+                "-Dxdim1_update_halo_kernel1_fr1=%d  "
+                "-Dydim1_update_halo_kernel1_fr1=%d  "
+                "-Dxdim2_update_halo_kernel1_fr1=%d  "
+                "-Dydim2_update_halo_kernel1_fr1=%d  "
+                "-Dxdim3_update_halo_kernel1_fr1=%d  "
+                "-Dydim3_update_halo_kernel1_fr1=%d  "
+                "-Dxdim4_update_halo_kernel1_fr1=%d  "
+                "-Dydim4_update_halo_kernel1_fr1=%d  "
+                "-Dxdim5_update_halo_kernel1_fr1=%d  "
+                "-Dydim5_update_halo_kernel1_fr1=%d  "
+                "-Dxdim6_update_halo_kernel1_fr1=%d  "
+                "-Dydim6_update_halo_kernel1_fr1=%d ",
                 pPath, 32, xdim0, ydim0, xdim1, ydim1, xdim2, ydim2, xdim3,
                 ydim3, xdim4, ydim4, xdim5, ydim5, xdim6, ydim6);
     else {

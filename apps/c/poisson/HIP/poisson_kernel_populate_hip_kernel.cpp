@@ -129,31 +129,32 @@ void ops_par_loop_poisson_kernel_populate_execute(ops_kernel_descriptor *desc) {
   dim3 grid( (x_size-1)/block->instance->OPS_block_size_x+ 1, (y_size-1)/block->instance->OPS_block_size_y + 1, 1);
   dim3 tblock(block->instance->OPS_block_size_x,block->instance->OPS_block_size_y,block->instance->OPS_block_size_z);
 
-
-
-  int dat3 = (block->instance->OPS_soa ? args[3].dat->type_size : args[3].dat->elem_size);
-  int dat4 = (block->instance->OPS_soa ? args[4].dat->type_size : args[4].dat->elem_size);
-  int dat5 = (block->instance->OPS_soa ? args[5].dat->type_size : args[5].dat->elem_size);
+  long long int dat3 = (block->instance->OPS_soa ? args[3].dat->type_size
+                                                 : args[3].dat->elem_size);
+  long long int dat4 = (block->instance->OPS_soa ? args[4].dat->type_size
+                                                 : args[4].dat->elem_size);
+  long long int dat5 = (block->instance->OPS_soa ? args[5].dat->type_size
+                                                 : args[5].dat->elem_size);
 
   char *p_a[6];
 
   //set up initial pointers
-  int base3 = args[3].dat->base_offset + 
-           dat3 * 1 * (start[0] * args[3].stencil->stride[0]);
+  long long int base3 = args[3].dat->base_offset +
+                        dat3 * 1 * (start[0] * args[3].stencil->stride[0]);
   base3 = base3+ dat3 *
     args[3].dat->size[0] *
     (start[1] * args[3].stencil->stride[1]);
   p_a[3] = (char *)args[3].data_d + base3;
 
-  int base4 = args[4].dat->base_offset + 
-           dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
+  long long int base4 = args[4].dat->base_offset +
+                        dat4 * 1 * (start[0] * args[4].stencil->stride[0]);
   base4 = base4+ dat4 *
     args[4].dat->size[0] *
     (start[1] * args[4].stencil->stride[1]);
   p_a[4] = (char *)args[4].data_d + base4;
 
-  int base5 = args[5].dat->base_offset + 
-           dat5 * 1 * (start[0] * args[5].stencil->stride[0]);
+  long long int base5 = args[5].dat->base_offset +
+                        dat5 * 1 * (start[0] * args[5].stencil->stride[0]);
   base5 = base5+ dat5 *
     args[5].dat->size[0] *
     (start[1] * args[5].stencil->stride[1]);

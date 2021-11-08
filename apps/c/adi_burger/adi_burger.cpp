@@ -147,6 +147,8 @@ int main(int argc, const char **argv) {
 
     ops_timers(&ct0, &et0);
 
+    ops_tridsolver_params *trid_ctx = new ops_tridsolver_params(burger2D);
+
     for (int it = 1; it <= iter; it++) {  // Start main iteration loop
         double time{it * dt};
         ops_timers(&ct2, &et2);
@@ -177,8 +179,8 @@ int main(int argc, const char **argv) {
 
         /**---- perform tri-diagonal solves in x-direction--**/
         ops_timers(&ct2, &et2);
-        ops_tridMultiDimBatch_Inc(2, 0, size, a, b, c, du, uStar);
-        ops_tridMultiDimBatch_Inc(2, 0, size, a, b, c, dv, vStar);
+        ops_tridMultiDimBatch_Inc(2, 0, size, a, b, c, du, uStar, trid_ctx);
+        ops_tridMultiDimBatch_Inc(2, 0, size, a, b, c, dv, vStar, trid_ctx);
         ops_fetch_block_hdf5_file(burger2D, "adi_burger2D_X.h5");
         ops_fetch_dat_hdf5_file(u, "adi_burger2D_X.h5");
         ops_fetch_dat_hdf5_file(v, "adi_burger2D_X.h5");
@@ -210,12 +212,14 @@ int main(int argc, const char **argv) {
 
         /**---- perform tri-diagonal solves in y-direction--**/
         ops_timers(&ct2, &et2);
-        ops_tridMultiDimBatch_Inc(2, 1, size, a, b, c, du, u);
-        ops_tridMultiDimBatch_Inc(2, 1, size, a, b, c, dv, v);
+        ops_tridMultiDimBatch_Inc(2, 1, size, a, b, c, du, u, trid_ctx);
+        ops_tridMultiDimBatch_Inc(2, 1, size, a, b, c, dv, v, trid_ctx);
         ops_timers(&ct3, &et3);
         ops_printf("Elapsed trid_y (sec): %lf (s)\n", et3 - et2);
         ops_printf("Finish time=%lf\n", time);
     }  // End main iteration loop
+
+    delete trid_ctx;
 
     ops_timers(&ct1, &et1);
 

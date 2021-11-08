@@ -121,12 +121,12 @@ void ops_par_loop_init_kernel_execute(ops_kernel_descriptor *desc) {
 
 
 
-  int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
+  long long int dat0 = (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size);
 
   char *p_a[2];
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + 
+  long long int base0 = args[0].dat->base_offset + 
            dat0 * 1 * (start[0] * args[0].stencil->stride[0]);
   base0 = base0+ dat0 *
     args[0].dat->size[0] *

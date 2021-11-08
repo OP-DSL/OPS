@@ -128,7 +128,7 @@ void buildOpenCLKernels(OPS_instance *instance) {
         (cl_kernel *)malloc(57 * sizeof(cl_kernel));
   }
   isbuilt = true;
-  }
+}
 
 //user kernel files
 #include "../MPI_OpenMP/generate_chunk_kernel_cpu_kernel.cpp"
