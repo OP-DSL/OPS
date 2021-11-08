@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
 # Open source copyright declaration based on BSD open source template:
 # http://www.opensource.org/licenses/bsd-license.php
@@ -643,7 +643,7 @@ def main(source_files):
               repeat = True
               which_file = nk
             else:
-              print('repeated kernel with incompatible arguments: ERROR' + kernels[nk]['name'])
+              print(('repeated kernel with incompatible arguments: ERROR' + kernels[nk]['name']))
               break
 
 

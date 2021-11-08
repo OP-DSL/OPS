@@ -49,6 +49,7 @@ plus a master kernel file
 
 import re
 import datetime
+import errno
 import os
 import glob
 
@@ -676,7 +677,7 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
       code('')
 
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code('arg'+str(n)+'.data = block->instance->OPS_reduct_h + reduct_bytes;')
         code('arg'+str(n)+'.data_d = block->instance->OPS_reduct_d + reduct_bytes;')
         code('for (int b=0; b<maxblocks; b++)')

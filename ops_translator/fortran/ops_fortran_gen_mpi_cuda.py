@@ -50,6 +50,7 @@ It produces a file xxx_cuda_kernel.CUF for each kernel
 
 import re
 import datetime
+import errno
 import os
 
 import util_fortran
@@ -1099,7 +1100,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     try:
       os.makedirs('./CUDA')
     except OSError as e:
-      if e.errno != os.errno.EEXIST:
+      if e.errno != errno.EEXIST:
         raise
     fid = open('./CUDA/'+name+'_cuda_kernel.CUF','w')
     date = datetime.datetime.now()
