@@ -1,117 +1,57 @@
-## OPS
+# OPS
 
-OPS is an API with associated libraries and pre-processors to generate
-parallel executables for applications on multi-block structured grids.
-
-
-This repository contains the implementation of the run-time library
-and the pre-processor, and is structured as follows:
-
-* ops: Implementation of the user and run-time OPS C/C++ APIs
-
-* apps: Application examples in C.
-  These are examples of user application code and also include
-  the target code an OPS pre-processor should produce to correctly
-  use the OPS run-time library.
-  Currently the main application developed with OPS is a single
-  block structured mesh application - Cloverleaf originally
-  developed at https://github.com/Warwick-PCAV/CloverLeaf
-
-* translator: Python OPS pre-processor for C/C++ API
-
-* doc: Documentation
-
-#### Installation
-
-**Note: The current CMakefile and relevant instructions are mainly tested on linux-based systems including Windows Subsystem for Linux**
-
-##### Dependencies
-
-  * CMake
-
-  CMake 3.18 or newer is required for using the CMake building system. If the latest version is not installed/shipped by default, it can be downloaded from https://cmake.org/download/, e.g., using the following script.
-  ```bash
-  version=3.19.0
-  wget https://github.com/Kitware/CMake/releases/download/v$version/cmake-$version-Linux-x86_64.sh
-  # Assume that CMake is going to be installed at /usr/local/cmake
-  cmake_dir=/usr/local/cmake
-  # sudo is not necessary for directories in user space.
-  sudo mkdir $cmake_dir
-  sudo sh ./cmake-$version-Linux-x86_64.sh --prefix=$cmake_dir  --skip-license
-  sudo ln -s $cmake_dir/bin/cmake /usr/local/bin/cmake
-  ```
-
-  * Python2
-
-  **Python2** is required by the OPS Python translator. The CMake build system will try to identify it automatically. However, the process can fail sometime (e.g., if there are both Python2 and Python3 installed). If this happens, the path to Python2 can be specified manually by using **-DPython2_EXECUTABLE** when invoking CMake
-
-  * HDF5
-
-  [HDF5](https://www.hdfgroup.org/solutions/hdf5) is required for parts of IO functionalities. The CMake build system **uses the parallel version by default** even for sequential codes, and automatically identify the library. If the automatic process fails, the path to the parallel HDF5 library can be specified by using -DHDF5_ROOT.
-
-  * CUDA
-
-  The CMake build system will detect the tookit automatically. If the automatic process fails, the build system will compile the library without the CUDA support.  please use -DCUDA_TOOLKIT_ROOT_DIR to manually specify the path.
-
-<!-- 1. Set up environmental variables:
-
-  * `CUDA_PATH` - Installation directory of CUDA, usually `/usr/local/cuda` (to build CUDA libs and applications, only needed if CUDA cannot be found in standard locations, or to enable OpenCL)
-  * `MPI_HOME` - Installation directory of MPI (to build MPI based distributed memory libs and applications) only needed if MPI not installed in standard locations
-  * `HDF5_ROOT` - Installation directory of HDF5 (to support HDF5 based File I/O) if HDF5 not installed in standard location -->
+OPS (Oxford Parallel library for Structured mesh solvers) is a high-level embedded domain specific language for writing **multi-block structured mesh** algorithms, and the corresponding software library and code translation tools to enable automatic parallelisation on multi-core and many-core architectures. Multi-block structured meshes. The OPS API is embedded in C/C++ and Fortran.
 
 
-##### Build OPS back-end libraries example applications
-###### Build the library and example applications together
+[![Build Status](https://gitlab.com/op-dsl-ci/ops-ci/badges/master/pipeline.svg)](https://gitlab.com/op-dsl-ci/ops-ci) 
+[![Documentation Status](https://readthedocs.org/projects/ops-dsl/badge/?version=latest)](https://ops-dsl.readthedocs.io/en/latest/?badge=latest)
 
-  Create a build directory, and run CMake (version 3.18 or newer)
-  ```bash
-  mkdir build
-  cd build
-  # Please see below for CMake options
-  cmake ${PATH_TO_OPS} -DBUILD_OPS_APPS=ON -DOPS_TEST=ON -DAPP_INSTALL_DIR=$HOME/OPS-APP -DCMAKE_INSTALL_PREFIX=$HOME/OPS-INSTALL -DGPU_NUMBER=1
-  make # IEEE=1 this option is important for applications to get accurate results
-  make install # sudo is needed if a directory like /usr/local/ is chosen.
-  ```
-After installation, the library and the python translator can be found at the direcory specified by CMAKE_INSTALL_PREFIX, together with the executable files for applications at APP_INSTALL_DIR.
+This repository contains the implementation of the back-end library and the code-generator, and is structured as follows:
 
-######  Build the library and example applications separately
+* `ops`: Implementation of the user and run-time OPS C/C++ APIs
+* `apps`: Application examples in C.
+  These are examples of user application code and also include the target parallel code generated by the OPS code generator.
+* `ops_translator`: Python OPS code generator for C/C++ API
+* `scripts` : example scripts for setting environmental variables and testing applications
+* `cmake` : cmake installation files
+* `makefiles` : makefile based installation files
+* `doc`: Documentation
 
-In this mode, the library can be firstly built and installed as
+## Documentation
 
-```bash
-  mkdir build
-  cd build
-  # Please see below for CMake options
-  cmake ${PATH_TO_OPS}   -DCMAKE_INSTALL_PREFIX=$HOME/OPS-INSTALL
-  make # IEEE=1 this option is important for applications to get accurate results
-  make install # sudo is needed if a system direction is chosen,
-  ```
-then the application can be built as
+OPS documentation can be viewed on [Read the Docs](https://ops-dsl.readthedocs.io/).
 
-```bash
-  mkdir appbuild
-  cd appbuild
-  # Please see below for CMake options
-  cmake ${PATH_TO_APPS} -DOPS_INSTALL_DIR=$HOME/OPS-INSTALL -DOPS_TEST=ON -DAPP_INSTALL_DIR=$HOME/OPS-APP -DGPU_NUMBER=1
-  make # IEEE=1 this option is important for applications to get accurate results
-  ```
-###### Tests
+## Citing
+To cite OPS, please reference the following paper:
 
-A few tasks for testing codes can be run by
-```bash
-  make test
-  ```
-The current tests are mainly based on the applications.
-###### Options of interest to specify to `cmake` include:
+[I. Z. Reguly, G. R. Mudalige and M. B. Giles, Loop Tiling in Large-Scale Stencil Codes at Run-Time with OPS, in IEEE Transactions on Parallel and Distributed Systems, vol. 29, no. 4, pp. 873-886, 1 April 2018, doi: 10.1109/TPDS.2017.2778161.](https://ieeexplore.ieee.org/abstract/document/8121995)
 
-  * `-DCMAKE_BUILD_TYPE=Release` - enable optimizations
-  * `-DBUILD_OPS_APPS=ON` - build example applications (Library CMake only)
-  * `-DOPS_TEST=ON` - enable the tests
-  * `-DCMAKE_INSTALL_PREFIX=` - specify the installation direction for the library (/usr/local by default, Library CMake only)
-  * `-DAPP_INSTALL_DIR=` - specify the installation direction for the applications ($HOME/OPS-APPS by default)
-  * `-DGPU_NUMBER=` - specify the number of GPUs used in the tests
-  * `-DOPS_INSTALL_DIR=` - specify where the OPS library is installed (Application CMake only, see [here](#build-the-library-and-example-applications-separately))
-  * `-DOPS_VERBOSE_WARNING=ON` - show verbose output during building process
-  <!-- * `-DHDF5_PREFER_PARALLEL=ON` - build using parallel HDF5, rather than serial HDF5 libraries -->
-  <!-- * `-DBUILD_OPS_FROTRAN=ON` - enable building OPS Fortran libraries. -->
+```
+@ARTICLE{Reguly_et_al_2018,
+  author={Reguly, István Z. and Mudalige, Gihan R. and Giles, Michael B.},
+  journal={IEEE Transactions on Parallel and Distributed Systems}, 
+  title={Loop Tiling in Large-Scale Stencil Codes at Run-Time with OPS}, 
+  year={2018},
+  volume={29},
+  number={4},
+  pages={873-886},
+  doi={10.1109/TPDS.2017.2778161}}
+```
+
+## Support and Contact
+The preferred method of reporting bugs and issues with OPS is to submit an issue via the repository’s issue tracker. Users can also email the authors directly by contacting the the [OP-DSL team](https://op-dsl.github.io/about.html).
+
+## Contributing
+
+To contribute to OPS please use the following steps :
+
+1. Clone this repository (on your local system)
+2. Create a new branch in your cloned repository
+3. Make changes / contributions in your new branch
+4. Submit your changes by creating a Pull Request to the `develop` branch of the OPS repository
+
+The contributions in the `develop` branch will be merged into the master branch as we create a new release.
+
+## License 
+OPS is released as an open-source project under the BSD 3-Clause License. See the file called [LICENSE](https://github.com/OP-DSL/OPS/blob/master/LICENSE) for more information.
 
