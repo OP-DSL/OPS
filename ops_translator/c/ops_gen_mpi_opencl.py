@@ -50,6 +50,7 @@ plus a master kernel file
 
 import re
 import datetime
+import errno
 import os
 import glob
 
@@ -107,7 +108,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
   try:
     os.makedirs('./OpenCL')
   except OSError as e:
-    if e.errno != os.errno.EEXIST:
+    if e.errno != errno.EEXIST:
       raise
   for nk in range (0,len(kernels)):
     arg_typ  = kernels[nk]['arg_type']
@@ -498,7 +499,7 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
     try:
       os.makedirs('./OpenCL')
     except OSError as e:
-      if e.errno != os.errno.EEXIST:
+      if e.errno != errno.EEXIST:
         raise
     fid = open('./OpenCL/'+name+'.cl','w')
     date = datetime.datetime.now()

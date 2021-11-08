@@ -49,6 +49,7 @@ plus a master kernel file
 
 import re
 import datetime
+import errno
 import os
 import glob
 
@@ -97,7 +98,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
   try:
     os.makedirs('./OpenACC')
   except OSError as e:
-    if e.errno != os.errno.EEXIST:
+    if e.errno != errno.EEXIST:
       raise
   for nk in range (0,len(kernels)):
     arg_typ  = kernels[nk]['arg_type']

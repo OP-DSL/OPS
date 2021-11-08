@@ -49,6 +49,7 @@ It produces a file xxx_omp_kernel.F90 for each kernel
 """
 
 import re
+import errno
 import datetime
 import os
 
@@ -515,7 +516,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
     try:
       os.makedirs('./MPI_OpenMP')
     except OSError as e:
-      if e.errno != os.errno.EEXIST:
+      if e.errno != errno.EEXIST:
         raise
     fid = open('./MPI_OpenMP/'+name+'_omp_kernel.F90','w')
     date = datetime.datetime.now()
