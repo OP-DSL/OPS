@@ -22,7 +22,7 @@ import subprocess
 
 project = 'Oxford Parallel library for Structured mesh solvers'
 copyright = '2013, Gihan Mudalige, Istvan Reguly, Mike Giles and others'
-author = "Mike Giles, Istvan Reguly, Gihan Mudalige"
+author = "Gihan Mudalige, Istvan Reguly, Mike Giles and others"
 
 # The full version, including alpha/beta/rc tags
 release = 'latest'
