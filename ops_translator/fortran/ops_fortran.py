@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Open source copyright declaration based on BSD open source template:
 # http://www.opensource.org/licenses/bsd-license.php

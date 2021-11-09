@@ -1,0 +1,2 @@
+ # We set the tools needed by sphinx
+ myst-parser ==  0.15.2

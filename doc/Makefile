@@ -8,28 +8,14 @@
 
 .PHONY : all user doxygen clean distclean
 
-all : user doxygen
-
-user :
-	pdflatex --shell-escape user.tex
-	pdflatex --shell-escape user.tex
-	-bibtex user
-	pdflatex --shell-escape user.tex
-	latex_count=8 ; \
-	while egrep -s 'Rerun (LaTeX|to get cross-references right)' user.log && [ $$latex_count -gt 0 ] ;\
-	    do \
-	      echo "Rerunning latex...." ;\
-	      pdflatex --shell-escape user.tex ;\
-	      latex_count=`expr $$latex_count - 1` ;\
-	    done
-
+all : doxygen
 doxygen :
 	doxygen ops/Doxyfile
 	cd ops/latex; make refman.pdf
 	doxygen ops_translator/Doxyfile
 	cd ops_translator/latex; make refman.pdf
 
-clean : 
+clean :
 	-rm -f *.out *.aux *.blg *.pyg.* *.log *.backup *.toc *~ *.bbl
 	-rm -rf _minted-user
 
