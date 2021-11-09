@@ -544,7 +544,7 @@ dimension applications (with a stride of 0 for the relevant dimensions).
 
 ### Checkpointing
 
-OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the file name for the checkpoint and an average time interval between checkpoints, OPS will then automatically save all necessary information periodically that is required to fast-forward to the last checkpoint if a crash occurred. Currently, when re-launching after a crash, the same number of MPI processes have to be used. To enable checkpointing mode, the *OPS_CHECKPOINT* runtime argument has to be used. (**Do we also need to define the CHECKPOINTING compiler directive?**)
+OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the file name for the checkpoint and an average time interval between checkpoints, OPS will then automatically save all necessary information periodically that is required to fast-forward to the last checkpoint if a crash occurred. Currently, when re-launching after a crash, the same number of MPI processes have to be used. To enable checkpointing mode, the *OPS_CHECKPOINT* runtime argument has to be used.
 
 #### ops_checkpointing_init
 
@@ -828,24 +828,24 @@ This solves multiple tridiagonal systems of equations in multidimensional datase
 
 The following is a list of all the runtime flags and options that can be used when executing OPS generated applications.
 
-* `OPS_DIAGS=` : set OPS diagnostics level at runtime. 
+* `OPS_DIAGS=` : set OPS diagnostics level at runtime.
 
   `OPS_DIAGS=1` - no diagnostics, default level to achieve the best runtime performance.
-   
+
   `OPS_DIAGS>1` - print block decomposition and `ops_par_loop` timing breakdown.
-  
+
   `OPS_DIAGS>4` - print intra-block halo buffer allocation feedback (for OPS internal development only).
-  
-  `OPS_DIAGS>5` - check if intra-block halo MPI sends depth match MPI receives depth (for OPS internal development only).  
-  
+
+  `OPS_DIAGS>5` - check if intra-block halo MPI sends depth match MPI receives depth (for OPS internal development only).
+
 * `OPS_BLOCK_SIZE_X=`, `OPS_BLOCK_SIZE_Y=` and `OPS_BLOCK_SIZE_Y=` : The CUDA (and OpenCL) thread block sizes in X, Y and Z dimensions. The sizes should be an integer between 1 - 1024, and currently they should be selected such that `OPS_BLOCK_SIZE_X`*`OPS_BLOCK_SIZE_Y`*`OPS_BLOCK_SIZE_Z`< 1024
 
-* `-gpudirect` : Enable GPU direct support when executing MPI+CUDA executables. 
+* `-gpudirect` : Enable GPU direct support when executing MPI+CUDA executables.
 
 * `OPS_CL_DEVICE=` : Select the OpenCL device for execution. Usually `OPS_CL_DEVICE=0` selects the CPU and `OPS_CL_DEVICE=1` selects GPUs. The selected device will be reported by OPS during execution.
 
-* `OPS_TILING` : Execute OpenMP code with cache blocking tiling. See the [Performance Tuning](https://github.com/OP-DSL/OPS/blob/MarkdownDocDev/doc/perf.md) section. 
-* `OPS_TILING_MAXDEPTH=` : Execute MPI+OpenMP code with cache blocking tiling and further communication avoidance. See the [Performance Tuning](https://github.com/OP-DSL/OPS/blob/MarkdownDocDev/doc/perf.md) section. 
+* `OPS_TILING` : Execute OpenMP code with cache blocking tiling. See the [Performance Tuning](https://github.com/OP-DSL/OPS/blob/MarkdownDocDev/doc/perf.md) section.
+* `OPS_TILING_MAXDEPTH=` : Execute MPI+OpenMP code with cache blocking tiling and further communication avoidance. See the [Performance Tuning](https://github.com/OP-DSL/OPS/blob/MarkdownDocDev/doc/perf.md) section.
 
 ## Doxygen
 Doxygen generated from OPS source can be found [here](https://op-dsl-ci.gitlab.io/ops-ci/).
