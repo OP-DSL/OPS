@@ -461,3 +461,29 @@ def replace_ACC_kernel_body(kernel_text, arg_list, arg_typ, nargs, opencl=0, dim
           kernel_text = kernel_text[0:match.start()] + acc + kernel_text[closeb:]
           match = pattern.search(kernel_text,match.start()+10)
     return kernel_text
+
+def replace_ACC_mlir_kernel_body(kernel_text, arg_list, arg_typ, nargs, opencl=0, dims=[]):
+    idxs = ['i','j','k','l','m','n']
+    # replace all data args with macros
+    for n in range(0,nargs):
+      if arg_typ[n] == 'ops_arg_dat':
+        pattern = re.compile(r'\b'+arg_list[n]+r'\b')
+        match = pattern.search(kernel_text,0)
+        while match:
+          closeb = para_parse(kernel_text,match.start(),'(',')')+1
+          args = arg_parse_list(kernel_text,match.start())
+          openb = kernel_text.find('(',match.start())
+          if not dims[n].isdigit() or int(dims[n])>1:
+            print('Error, multidim data in [][][] conversion')
+          idx_list = ''
+          for i in range(0,len(args)):
+              if args[i].strip()[0] == '-':
+                idx_list = '['+idxs[len(args)-i-1]+args[i]+']' + idx_list
+              elif args[i].strip() == '0':
+                idx_list = '['+idxs[len(args)-i-1]+']' + idx_list
+              else:
+                idx_list = '['+idxs[len(args)-i-1]+'+'+args[i]+']' + idx_list
+          kernel_text = kernel_text[0:match.start()] + arg_list[n] + idx_list + kernel_text[closeb:]
+
+          match = pattern.search(kernel_text,match.start()+len(arg_list[n]))
+    return kernel_text
