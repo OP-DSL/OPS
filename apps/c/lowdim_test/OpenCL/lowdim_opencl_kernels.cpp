@@ -43,7 +43,7 @@ void buildOpenCLKernels(OPS_instance *instance) {
         (cl_kernel *)malloc(8 * sizeof(cl_kernel));
   }
   isbuilt = true;
-  }
+}
 
 //user kernel files
 #include "calc_opencl_kernel.cpp"

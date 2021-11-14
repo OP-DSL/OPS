@@ -7,7 +7,6 @@
 int xdim0_gridgen_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void gridgen_kernel(ptr_double x,
   const int *id) {

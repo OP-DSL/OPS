@@ -10,7 +10,6 @@ int xdim2_drhouupdx_kernel;
 int xdim3_drhouupdx_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void drhouupdx_kernel(const ptr_double rhou_new,
   const ptr_double rho_new,

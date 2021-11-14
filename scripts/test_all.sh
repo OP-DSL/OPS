@@ -1,6 +1,6 @@
 #!/bin/bash
-export SOURCE_INTEL=source_intel_17
-export SOURCE_PGI=source_pgi_18
+export SOURCE_INTEL=source_intel_2021.3
+export SOURCE_PGI=source_pgi_nvhpc-21
 
 source ./$SOURCE_INTEL #default source to set environment vars
 

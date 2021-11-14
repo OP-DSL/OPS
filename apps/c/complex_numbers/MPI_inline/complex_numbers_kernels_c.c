@@ -4,6 +4,7 @@
 
 #define OPS_1D
 #include "./MPI_inline/complex_numbers_common.h"
+#include <math.h>
 //user kernel files
 #include "complex_numbers_block0_5_kernel_mpiinline_kernel_c.c"
 #include "complex_numbers_block0_4_kernel_mpiinline_kernel_c.c"

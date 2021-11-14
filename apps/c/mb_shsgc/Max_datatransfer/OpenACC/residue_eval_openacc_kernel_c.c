@@ -12,7 +12,6 @@ int xdim4_residue_eval;
 int xdim5_residue_eval;
 
 //user function
-#pragma acc routine
 inline 
 void residue_eval(const ptr_double der1,
   const ptr_double der2,

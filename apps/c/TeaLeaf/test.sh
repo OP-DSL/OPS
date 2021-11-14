@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
-cd ../../../ops/c
+cd $OPS_INSTALL_PATH/c
+<<COMMENT
 if [ -x "$(command -v enroot)" ]; then
   cd -
   enroot start --root --mount $OPS_INSTALL_PATH/../:/tmp/OPS --rw cuda112hip sh -c 'cd /tmp/OPS/apps/c/TeaLeaf; ./test.sh'
@@ -36,11 +37,11 @@ if [[ -v HIP_INSTALL_PATH ]]; then
   echo "All HIP complied applications PASSED : Moving no to Intel Compiler Tests" > perf_out
   exit 0
 fi
-
-cd ../../../ops/c
+COMMENT
+cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_INTEL
 make -j -B
-cd -
+cd $OPS_INSTALL_PATH/../apps/c/TeaLeaf/
 ./generate.sh
 make clean
 make IEEE=1 -j
@@ -64,7 +65,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
 echo '============> Running MPI+OpenMP'
-export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 10 ./tealeaf_mpi_openmp > perf_out
+export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 10 numawrap10 ./tealeaf_mpi_openmp > perf_out
 grep "Total Wall time" tea.out
 #grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
 grep "PASSED" tea.out
@@ -145,7 +146,7 @@ grep "PASSED" tea.out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
-
+<<COMMENT
 echo '============> Running OpenCL on CPU'
 ./tealeaf_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Total Wall time" tea.out
@@ -154,6 +155,7 @@ grep "PASSED" tea.out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 rm perf_out
+COMMENT
 
 
 echo '============> Running OpenCL on GPU'
@@ -166,6 +168,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 rm perf_out
 
+<<COMMENT
 echo '============> Running MPI+OpenCL on CPU'
 $MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_mpi_opencl OPS_CL_DEVICE=0  > perf_out
 $MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_mpi_opencl OPS_CL_DEVICE=0  > perf_out
@@ -175,6 +178,7 @@ grep "PASSED" tea.out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 rm perf_out
+COMMENT
 
 echo '============> Running MPI+OpenCL on GPU'
 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./tealeaf_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
@@ -265,6 +269,7 @@ grep "PASSED" tea.out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
+<<COMMENT
 #echo '============> Running OpenCL on CPU'
 ./tealeaf_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Total Wall time" tea.out
@@ -273,6 +278,7 @@ grep "PASSED" tea.out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 rm perf_out
+COMMENT
 
 echo '============> Running OpenCL on GPU'
 ./tealeaf_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
@@ -284,6 +290,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 rm perf_out
 
+<<COMMENT
 #echo '============> Running MPI+OpenCL on CPU'
 $MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_mpi_opencl OPS_CL_DEVICE=0  > perf_out
 $MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_mpi_opencl OPS_CL_DEVICE=0  > perf_out
@@ -293,6 +300,7 @@ grep "PASSED" tea.out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 rm perf_out
+COMMENT
 
 
 echo '============> Running MPI+OpenCL on GPU'

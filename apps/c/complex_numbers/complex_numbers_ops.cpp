@@ -224,7 +224,7 @@ int main(int argc, char **argv) {
     ops_halo_transfer(halo_exchange0);
 
     ops_halo_transfer(halo_exchange1);
-    }
+  }
 
     int iter_range0[] = {0, nx0};
     ops_par_loop_complex_numbers_block0_cn_kernel(
@@ -232,7 +232,7 @@ int main(int argc, char **argv) {
         ops_arg_dat(phi, 1, stencil0, "double", OPS_READ),
         ops_arg_reduce(real, 1, "double", OPS_INC),
         ops_arg_reduce(imaginary, 1, "double", OPS_INC));
-  }
+}
 
   double cpu_end, elapsed_end;
   ops_timers(&cpu_end, &elapsed_end);

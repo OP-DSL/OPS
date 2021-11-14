@@ -9,7 +9,6 @@ int xdim1_limiter_kernel;
 int xdim2_limiter_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void limiter_kernel(const ptrm_double  al,
   ptrm_double tht,

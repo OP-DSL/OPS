@@ -8,7 +8,6 @@ int xdim0_mgrid_prolong_kernel;
 int xdim1_mgrid_prolong_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void mgrid_prolong_kernel(const ptr_double coarse,
   ptr_double fine,

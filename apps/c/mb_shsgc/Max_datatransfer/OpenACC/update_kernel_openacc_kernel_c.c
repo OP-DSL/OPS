@@ -10,7 +10,6 @@ int xdim2_update_kernel;
 int xdim3_update_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void update_kernel(ptr_double rho_new,
   ptr_double rhou_new,

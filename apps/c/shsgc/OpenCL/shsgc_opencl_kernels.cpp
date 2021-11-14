@@ -332,33 +332,32 @@ void ops_decl_const_char(int dim, char const * type, int typeSize, char * dat, c
   }
 }
 
-
-
 void buildOpenCLKernels(OPS_instance *instance) {
   static bool isbuilt = false;
 
-  if(!isbuilt) {
-    //clSafeCall( clUnloadCompiler() );
+  if (!isbuilt) {
+    // clSafeCall( clUnloadCompiler() );
 
     instance->opencl_instance->OPS_opencl_core.n_kernels = 15;
-    instance->opencl_instance->OPS_opencl_core.kernel = (cl_kernel*) malloc(15*sizeof(cl_kernel));
+    instance->opencl_instance->OPS_opencl_core.kernel =
+        (cl_kernel *)malloc(15 * sizeof(cl_kernel));
   }
   isbuilt = true;
 }
 
 //user kernel files
-#include "zerores_kernel_opencl_kernel.cpp"
-#include "tvd_kernel_opencl_kernel.cpp"
-#include "calupwindeff_kernel_opencl_kernel.cpp"
-#include "initialize_kernel_opencl_kernel.cpp"
-#include "drhoudx_kernel_opencl_kernel.cpp"
-#include "updateRK3_kernel_opencl_kernel.cpp"
-#include "vars_kernel_opencl_kernel.cpp"
-#include "limiter_kernel_opencl_kernel.cpp"
 #include "Riemann_kernel_opencl_kernel.cpp"
-#include "drhouupdx_kernel_opencl_kernel.cpp"
-#include "test_kernel_opencl_kernel.cpp"
-#include "update_kernel_opencl_kernel.cpp"
+#include "calupwindeff_kernel_opencl_kernel.cpp"
 #include "drhoEpudx_kernel_opencl_kernel.cpp"
-#include "save_kernel_opencl_kernel.cpp"
+#include "drhoudx_kernel_opencl_kernel.cpp"
+#include "drhouupdx_kernel_opencl_kernel.cpp"
 #include "fact_kernel_opencl_kernel.cpp"
+#include "initialize_kernel_opencl_kernel.cpp"
+#include "limiter_kernel_opencl_kernel.cpp"
+#include "save_kernel_opencl_kernel.cpp"
+#include "test_kernel_opencl_kernel.cpp"
+#include "tvd_kernel_opencl_kernel.cpp"
+#include "updateRK3_kernel_opencl_kernel.cpp"
+#include "update_kernel_opencl_kernel.cpp"
+#include "vars_kernel_opencl_kernel.cpp"
+#include "zerores_kernel_opencl_kernel.cpp"

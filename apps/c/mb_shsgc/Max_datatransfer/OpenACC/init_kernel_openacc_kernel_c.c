@@ -14,7 +14,6 @@ int xdim6_init_kernel;
 int xdim7_init_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void init_kernel(const ptr_double x,
   ptr_double rho_new,

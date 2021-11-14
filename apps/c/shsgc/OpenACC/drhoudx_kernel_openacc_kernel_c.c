@@ -8,7 +8,6 @@ int xdim0_drhoudx_kernel;
 int xdim1_drhoudx_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void drhoudx_kernel(const ptr_double rhou_new,
   ptr_double rho_res) {

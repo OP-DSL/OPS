@@ -15,7 +15,6 @@ int xdim7_updateRK3_kernel;
 int xdim8_updateRK3_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void updateRK3_kernel(ptr_double rho_new,
   ptr_double  rhou_new,

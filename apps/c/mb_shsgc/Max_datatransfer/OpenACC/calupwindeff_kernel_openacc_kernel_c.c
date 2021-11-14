@@ -13,7 +13,6 @@ int xdim5_calupwindeff_kernel;
 int xdim6_calupwindeff_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void calupwindeff_kernel(const ptrm_double  cmp,
   const ptrm_double gt,

@@ -9,7 +9,6 @@ int xdim1_zerores_kernel;
 int xdim2_zerores_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void zerores_kernel(ptr_double rho_res,
   ptr_double rhou_res,

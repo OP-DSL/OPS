@@ -11,7 +11,6 @@ int xdim3_calvar_kernel;
 int xdim4_calvar_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void calvar_kernel(const ptr_double rho_new,
   const ptr_double rhou_new,

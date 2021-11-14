@@ -20,7 +20,6 @@ int xdim6_write_kernel;
 int ydim6_write_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void write_kernel(ptrm_double mult,
   ptr_double single,

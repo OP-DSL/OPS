@@ -8,94 +8,124 @@
 #define OCL_FMA 0
 #endif
 
-
 static bool isbuilt_residue_eval = false;
 
-void buildOpenCLKernels_residue_eval(OPS_instance *instance, int xdim0, int xdim1, int xdim2, int xdim3, int xdim4, int xdim5) {
+void buildOpenCLKernels_residue_eval(OPS_instance *instance, int xdim0,
+                                     int xdim1, int xdim2, int xdim3, int xdim4,
+                                     int xdim5) {
 
-  //int ocl_fma = OCL_FMA;
-  if(!isbuilt_residue_eval) {
+  // int ocl_fma = OCL_FMA;
+  if (!isbuilt_residue_eval) {
     buildOpenCLKernels(instance);
-    //clSafeCall( clUnloadCompiler() );
+    // clSafeCall( clUnloadCompiler() );
     cl_int ret;
-    char* source_filename[1] = {(char*)"./OpenCL/residue_eval.cl"};
+    char *source_filename[1] = {(char *)"./OpenCL/residue_eval.cl"};
 
     // Load the kernel source code into the array source_str
     FILE *fid;
     char *source_str[1] = {NULL};
     size_t source_size[1];
 
-    for(int i=0; i<1; i++) {
+    for (int i = 0; i < 1; i++) {
       fid = fopen(source_filename[i], "r");
       if (!fid) {
-        OPSException e(OPS_RUNTIME_ERROR, "Can't open the kernel source file: ");
+        OPSException e(OPS_RUNTIME_ERROR,
+                       "Can't open the kernel source file: ");
         e << source_filename[i] << "\n";
         throw e;
       }
 
-      source_str[i] = (char*)malloc(4*0x1000000);
-      source_size[i] = fread(source_str[i], 1, 4*0x1000000, fid);
-      if(source_size[i] != 4*0x1000000) {
+      source_str[i] = (char *)malloc(4 * 0x1000000);
+      source_size[i] = fread(source_str[i], 1, 4 * 0x1000000, fid);
+      if (source_size[i] != 4 * 0x1000000) {
         if (ferror(fid)) {
-          OPSException e(OPS_RUNTIME_ERROR, "Error while reading kernel source file ");
+          OPSException e(OPS_RUNTIME_ERROR,
+                         "Error while reading kernel source file ");
           e << source_filename[i] << "\n";
           throw e;
         }
         if (feof(fid))
-          instance->ostream() << "Kernel source file "<< source_filename[i] <<" succesfully read.\n";
+          instance->ostream() << "Kernel source file " << source_filename[i]
+                              << " succesfully read.\n";
       }
       fclose(fid);
     }
 
-    instance->ostream() <<"Compiling residue_eval "<<OCL_FMA<<" source -- start \n";
+    instance->ostream() << "Compiling residue_eval " << OCL_FMA
+                        << " source -- start \n";
 
-      // Create a program from the source
-      instance->opencl_instance->OPS_opencl_core.program = clCreateProgramWithSource(instance->opencl_instance->OPS_opencl_core.context, 1, (const char **) &source_str, (const size_t *) &source_size, &ret);
-      clSafeCall( ret );
+    // Create a program from the source
+    instance->opencl_instance->OPS_opencl_core.program =
+        clCreateProgramWithSource(
+            instance->opencl_instance->OPS_opencl_core.context, 1,
+            (const char **)&source_str, (const size_t *)&source_size, &ret);
+    clSafeCall(ret);
 
-      // Build the program
-      char buildOpts[255*6];
-      char* pPath = NULL;
-      pPath = getenv ("OPS_INSTALL_PATH");
-      if (pPath!=NULL)
-        if(OCL_FMA)
-          sprintf(buildOpts,"-cl-mad-enable -DOCL_FMA -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_residue_eval=%d  -Dxdim1_residue_eval=%d  -Dxdim2_residue_eval=%d  -Dxdim3_residue_eval=%d  -Dxdim4_residue_eval=%d  -Dxdim5_residue_eval=%d ", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5);
-        else
-          sprintf(buildOpts,"-cl-mad-enable -I%s/c/include -DOPS_WARPSIZE=%d  -Dxdim0_residue_eval=%d  -Dxdim1_residue_eval=%d  -Dxdim2_residue_eval=%d  -Dxdim3_residue_eval=%d  -Dxdim4_residue_eval=%d  -Dxdim5_residue_eval=%d ", pPath, 32,xdim0,xdim1,xdim2,xdim3,xdim4,xdim5);
-      else {
-        sprintf((char*)"Incorrect OPS_INSTALL_PATH %s\n",pPath);
-        exit(EXIT_FAILURE);
-      }
+    // Build the program
+    char buildOpts[255 * 6];
+    char *pPath = NULL;
+    pPath = getenv("OPS_INSTALL_PATH");
+    if (pPath != NULL)
+      if (OCL_FMA)
+        sprintf(buildOpts,
+                "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_residue_eval=%d  -Dxdim1_residue_eval=%d  "
+                "-Dxdim2_residue_eval=%d  -Dxdim3_residue_eval=%d  "
+                "-Dxdim4_residue_eval=%d  -Dxdim5_residue_eval=%d ",
+                pPath, 32, xdim0, xdim1, xdim2, xdim3, xdim4, xdim5);
+      else
+        sprintf(buildOpts,
+                "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_residue_eval=%d  -Dxdim1_residue_eval=%d  "
+                "-Dxdim2_residue_eval=%d  -Dxdim3_residue_eval=%d  "
+                "-Dxdim4_residue_eval=%d  -Dxdim5_residue_eval=%d ",
+                pPath, 32, xdim0, xdim1, xdim2, xdim3, xdim4, xdim5);
+    else {
+      sprintf((char *)"Incorrect OPS_INSTALL_PATH %s\n", pPath);
+      exit(EXIT_FAILURE);
+    }
 
-      #ifdef OPS_SOA
-      sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
-      #endif
-      ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1, &instance->opencl_instance->OPS_opencl_core.device_id, buildOpts, NULL, NULL);
+#ifdef OPS_SOA
+    sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
+#endif
+    sprintf(buildOpts, "%s -I%s/c/include", buildOpts, pPath);
+    ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1,
+                         &instance->opencl_instance->OPS_opencl_core.device_id,
+                         buildOpts, NULL, NULL);
 
-      if(ret != CL_SUCCESS) {
-        char* build_log;
-        size_t log_size;
-        clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size) );
-        build_log = (char*) malloc(log_size+1);
-        clSafeCall( clGetProgramBuildInfo(instance->opencl_instance->OPS_opencl_core.program, instance->opencl_instance->OPS_opencl_core.device_id, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL) );
-        build_log[log_size] = '\0';
-        instance->ostream() << "=============== OpenCL Program Build Info ================\n\n" << build_log;
-        instance->ostream() << "\n========================================================= \n";
-        free(build_log);
-        exit(EXIT_FAILURE);
-      }
-      instance->ostream() << "compiling residue_eval -- done\n";
+    if (ret != CL_SUCCESS) {
+      char *build_log;
+      size_t log_size;
+      clSafeCall(clGetProgramBuildInfo(
+          instance->opencl_instance->OPS_opencl_core.program,
+          instance->opencl_instance->OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
+      build_log = (char *)malloc(log_size + 1);
+      clSafeCall(clGetProgramBuildInfo(
+          instance->opencl_instance->OPS_opencl_core.program,
+          instance->opencl_instance->OPS_opencl_core.device_id,
+          CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL));
+      build_log[log_size] = '\0';
+      instance->ostream()
+          << "=============== OpenCL Program Build Info ================\n\n"
+          << build_log;
+      instance->ostream()
+          << "\n========================================================= \n";
+      free(build_log);
+      exit(EXIT_FAILURE);
+    }
+    instance->ostream() << "compiling residue_eval -- done\n";
 
     // Create the OpenCL kernel
-    instance->opencl_instance->OPS_opencl_core.kernel[5] = clCreateKernel(instance->opencl_instance->OPS_opencl_core.program, "ops_residue_eval", &ret);
-    clSafeCall( ret );
+    instance->opencl_instance->OPS_opencl_core.kernel[5] =
+        clCreateKernel(instance->opencl_instance->OPS_opencl_core.program,
+                       "ops_residue_eval", &ret);
+    clSafeCall(ret);
 
     isbuilt_residue_eval = true;
     free(source_str[0]);
   }
-
 }
-
 
 // host stub function
 void ops_par_loop_residue_eval(char const *name, ops_block block, int dim, int* range,

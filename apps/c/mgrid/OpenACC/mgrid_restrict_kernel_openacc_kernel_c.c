@@ -8,7 +8,6 @@ int xdim0_mgrid_restrict_kernel;
 int xdim1_mgrid_restrict_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void mgrid_restrict_kernel(const ptr_double fine,
   ptr_double coarse,
