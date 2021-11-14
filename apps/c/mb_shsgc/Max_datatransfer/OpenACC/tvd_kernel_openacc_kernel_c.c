@@ -8,7 +8,6 @@ int xdim0_tvd_kernel;
 int xdim1_tvd_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void tvd_kernel(const ptrm_double tht,
   ptrm_double  ep2) {

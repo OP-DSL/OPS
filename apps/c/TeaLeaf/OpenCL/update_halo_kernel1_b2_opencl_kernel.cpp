@@ -95,6 +95,7 @@ void buildOpenCLKernels_update_halo_kernel1_b2(OPS_instance *instance,
 #ifdef OPS_SOA
     sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
 #endif
+    sprintf(buildOpts, "%s -I%s/c/include", buildOpts, pPath);
     ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1,
                          &instance->opencl_instance->OPS_opencl_core.device_id,
                          buildOpts, NULL, NULL);

@@ -7,7 +7,6 @@
 int xdim0_mgrid_populate_kernel_1;
 
 //user function
-#pragma acc routine
 inline 
 void mgrid_populate_kernel_1(ptr_double val,
   int *idx) {

@@ -8,7 +8,6 @@ int xdim0_multidim_reduce_kernel;
 int ydim0_multidim_reduce_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void multidim_reduce_kernel(const ptrm_double val,
   double *redu_dat1) {

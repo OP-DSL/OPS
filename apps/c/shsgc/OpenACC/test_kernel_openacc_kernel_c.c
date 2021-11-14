@@ -7,7 +7,6 @@
 int xdim0_test_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void test_kernel(const ptr_double rho_new,
   double *rms) {

@@ -8,7 +8,6 @@ int xdim0_multidim_kernel;
 int ydim0_multidim_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void multidim_kernel(ptrm_double val,
   int *idx){

@@ -12,7 +12,6 @@ int xdim4_save_kernel;
 int xdim5_save_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void save_kernel(ptr_double rho_old,
   ptr_double rhou_old,

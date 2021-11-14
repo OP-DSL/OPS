@@ -12,7 +12,6 @@ int ydim1_multidim_copy_kernel;
 int zdim1_multidim_copy_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void multidim_copy_kernel(const ptrm_double src,
   ptrm_double dest){

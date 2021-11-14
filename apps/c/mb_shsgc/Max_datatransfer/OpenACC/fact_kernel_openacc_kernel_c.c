@@ -8,7 +8,6 @@ int xdim0_fact_kernel;
 int xdim1_fact_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void fact_kernel(const ptrm_double  eff,
   ptrm_double s) {

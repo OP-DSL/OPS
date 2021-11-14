@@ -9,7 +9,6 @@ int xdim1_checkop_kernel;
 int xdim2_checkop_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void checkop_kernel(const ptr_double rho_new,
   const ptr_double x,

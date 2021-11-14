@@ -7,7 +7,6 @@
 int xdim0_mblock_populate_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void mblock_populate_kernel(ptr_double val,
   int *idx) {

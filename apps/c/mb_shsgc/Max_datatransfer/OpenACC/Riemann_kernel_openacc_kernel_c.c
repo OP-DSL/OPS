@@ -12,7 +12,6 @@ int xdim4_Riemann_kernel;
 int xdim5_Riemann_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void Riemann_kernel(const ptr_double  rho_new,
   const ptr_double rhou_new,

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
-#<<COMMENT
+<<COMMENT
 if [ -x "$(command -v enroot)" ]; then
   cd -
   enroot start --root --mount $OPS_INSTALL_PATH/../:/tmp/OPS --rw cuda112hip sh -c 'cd /tmp/OPS/apps/c/poisson; ./test.sh'
@@ -37,11 +37,13 @@ if [[ -v HIP_INSTALL_PATH ]]; then
   echo "All HIP complied applications PASSED" > perf_out
   exit 0
 fi
+COMMENT
 
-cd ../../../ops/c
+cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_INTEL
 make -j -B
-cd -
+cd $OPS_INSTALL_PATH/../apps/c/poisson
+
 make clean
 rm -f .generated
 make IEEE=1 -j

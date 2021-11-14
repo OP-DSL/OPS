@@ -71,22 +71,34 @@ void ops_par_loop_limiter_kernel(char const *name, ops_block block, int dim, int
 
 
   //set up initial pointers
-  int base0 = args[0].dat->base_offset + (block->instance->OPS_soa ? args[0].dat->type_size : args[0].dat->elem_size) * start[0] * args[0].stencil->stride[0];
-  #ifdef OPS_GPU
+  long long int base0 =
+      args[0].dat->base_offset + (long long int)(block->instance->OPS_soa
+                                                     ? args[0].dat->type_size
+                                                     : args[0].dat->elem_size) *
+                                     start[0] * args[0].stencil->stride[0];
+#ifdef OPS_GPU
   double *p_a0 = (double *)((char *)args[0].data_d + base0);
   #else
   double *p_a0 = (double *)((char *)args[0].data + base0);
   #endif
 
-  int base1 = args[1].dat->base_offset + (block->instance->OPS_soa ? args[1].dat->type_size : args[1].dat->elem_size) * start[0] * args[1].stencil->stride[0];
-  #ifdef OPS_GPU
+  long long int base1 =
+      args[1].dat->base_offset + (long long int)(block->instance->OPS_soa
+                                                     ? args[1].dat->type_size
+                                                     : args[1].dat->elem_size) *
+                                     start[0] * args[1].stencil->stride[0];
+#ifdef OPS_GPU
   double *p_a1 = (double *)((char *)args[1].data_d + base1);
   #else
   double *p_a1 = (double *)((char *)args[1].data + base1);
   #endif
 
-  int base2 = args[2].dat->base_offset + (block->instance->OPS_soa ? args[2].dat->type_size : args[2].dat->elem_size) * start[0] * args[2].stencil->stride[0];
-  #ifdef OPS_GPU
+  long long int base2 =
+      args[2].dat->base_offset + (long long int)(block->instance->OPS_soa
+                                                     ? args[2].dat->type_size
+                                                     : args[2].dat->elem_size) *
+                                     start[0] * args[2].stencil->stride[0];
+#ifdef OPS_GPU
   double *p_a2 = (double *)((char *)args[2].data_d + base2);
   #else
   double *p_a2 = (double *)((char *)args[2].data + base2);

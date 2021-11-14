@@ -8,7 +8,6 @@ int xdim0_xder1_kernel;
 int xdim1_xder1_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void xder1_kernel(const ptr_double inp,
   ptr_double out) {

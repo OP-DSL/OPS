@@ -1,6 +1,6 @@
 #!/bin/bash
-export SOURCE_INTEL=source_intel_17
-export SOURCE_PGI=source_pgi_18
+export SOURCE_INTEL=source_intel_2021.3
+export SOURCE_PGI=source_pgi_nvhpc-21
 
 source ./$SOURCE_INTEL #default source to set environment vars
 
@@ -15,16 +15,16 @@ echo "************Testing C Applications *****************"
 echo "~~~~~~~~~~~~~~~CloverLeaf 2D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../apps/c/CloverLeaf/
 cd ../CloverLeaf/
-./test.sh
+#./test.sh
 echo "~~~~~~~~~~~~~~~CloverLeaf 3D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../CloverLeaf_3D/
-./test.sh
+#./test.sh
 echo "~~~~~~~~~~~~~~~CloverLeaf 3D HDF5~~~~~~~~~~~~~~~~~~~"
 cd ../CloverLeaf_3D_HDF5/
-./test.sh
+#./test.sh
 echo "~~~~~~~~~~~~~~~TeaLeaf 3D ~~~~~~~~~~~~~~~~~~~~~~"
 cd ../TeaLeaf/
-./test.sh
+#./test.sh
 echo "~~~~~~~~~~~~~~~Poisson~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../poisson/
 ./test.sh

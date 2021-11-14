@@ -11,7 +11,6 @@ int xdim3_initialize_kernel;
 int xdim4_initialize_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void initialize_kernel(ptr_double x,
   ptr_double rho_new,

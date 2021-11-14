@@ -68,22 +68,23 @@ void buildOpenCLKernels_calc(OPS_instance *instance, int xdim0, int ydim0,
     pPath = getenv("OPS_INSTALL_PATH");
     if (pPath != NULL)
       if (OCL_FMA)
-        sprintf(buildOpts, "-cl-mad-enable -DOCL_FMA -I%s/include "
-                           "-DOPS_WARPSIZE=%d  -Dxdim0_calc=%d  "
-                           "-Dydim0_calc=%d  -Dxdim1_calc=%d  -Dydim1_calc=%d  "
-                           "-Dxdim2_calc=%d  -Dydim2_calc=%d  -Dxdim3_calc=%d  "
-                           "-Dydim3_calc=%d  -Dxdim4_calc=%d  -Dydim4_calc=%d  "
-                           "-Dxdim5_calc=%d  -Dydim5_calc=%d  -Dxdim6_calc=%d  "
-                           "-Dydim6_calc=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -DOCL_FMA -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_calc=%d  -Dydim0_calc=%d  -Dxdim1_calc=%d  "
+                "-Dydim1_calc=%d  -Dxdim2_calc=%d  -Dydim2_calc=%d  "
+                "-Dxdim3_calc=%d  -Dydim3_calc=%d  -Dxdim4_calc=%d  "
+                "-Dydim4_calc=%d  -Dxdim5_calc=%d  -Dydim5_calc=%d  "
+                "-Dxdim6_calc=%d  -Dydim6_calc=%d ",
                 pPath, 32, xdim0, ydim0, xdim1, ydim1, xdim2, ydim2, xdim3,
                 ydim3, xdim4, ydim4, xdim5, ydim5, xdim6, ydim6);
       else
-        sprintf(buildOpts, "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
-                           "-Dxdim0_calc=%d  -Dydim0_calc=%d  -Dxdim1_calc=%d  "
-                           "-Dydim1_calc=%d  -Dxdim2_calc=%d  -Dydim2_calc=%d  "
-                           "-Dxdim3_calc=%d  -Dydim3_calc=%d  -Dxdim4_calc=%d  "
-                           "-Dydim4_calc=%d  -Dxdim5_calc=%d  -Dydim5_calc=%d  "
-                           "-Dxdim6_calc=%d  -Dydim6_calc=%d ",
+        sprintf(buildOpts,
+                "-cl-mad-enable -I%s/include -DOPS_WARPSIZE=%d  "
+                "-Dxdim0_calc=%d  -Dydim0_calc=%d  -Dxdim1_calc=%d  "
+                "-Dydim1_calc=%d  -Dxdim2_calc=%d  -Dydim2_calc=%d  "
+                "-Dxdim3_calc=%d  -Dydim3_calc=%d  -Dxdim4_calc=%d  "
+                "-Dydim4_calc=%d  -Dxdim5_calc=%d  -Dydim5_calc=%d  "
+                "-Dxdim6_calc=%d  -Dydim6_calc=%d ",
                 pPath, 32, xdim0, ydim0, xdim1, ydim1, xdim2, ydim2, xdim3,
                 ydim3, xdim4, ydim4, xdim5, ydim5, xdim6, ydim6);
     else {
@@ -94,6 +95,7 @@ void buildOpenCLKernels_calc(OPS_instance *instance, int xdim0, int ydim0,
 #ifdef OPS_SOA
     sprintf(buildOpts, "%s -DOPS_SOA", buildOpts);
 #endif
+    sprintf(buildOpts, "%s -I%s/c/include", buildOpts, pPath);
     ret = clBuildProgram(instance->opencl_instance->OPS_opencl_core.program, 1,
                          &instance->opencl_instance->OPS_opencl_core.device_id,
                          buildOpts, NULL, NULL);

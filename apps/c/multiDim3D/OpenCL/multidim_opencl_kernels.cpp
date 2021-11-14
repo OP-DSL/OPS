@@ -33,21 +33,20 @@ void ops_decl_const_char(int dim, char const * type, int typeSize, char * dat, c
   }
 }
 
-
-
 void buildOpenCLKernels(OPS_instance *instance) {
   static bool isbuilt = false;
 
-  if(!isbuilt) {
-    //clSafeCall( clUnloadCompiler() );
+  if (!isbuilt) {
+    // clSafeCall( clUnloadCompiler() );
 
     instance->opencl_instance->OPS_opencl_core.n_kernels = 3;
-    instance->opencl_instance->OPS_opencl_core.kernel = (cl_kernel*) malloc(3*sizeof(cl_kernel));
+    instance->opencl_instance->OPS_opencl_core.kernel =
+        (cl_kernel *)malloc(3 * sizeof(cl_kernel));
   }
   isbuilt = true;
 }
 
 //user kernel files
 #include "multidim_copy_kernel_opencl_kernel.cpp"
-#include "multidim_reduce_kernel_opencl_kernel.cpp"
 #include "multidim_kernel_opencl_kernel.cpp"
+#include "multidim_reduce_kernel_opencl_kernel.cpp"

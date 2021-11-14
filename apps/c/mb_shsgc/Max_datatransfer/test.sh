@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
-cd ../../../../ops/c
-if [ -x "$(command -v enroot)" ]; then
+cd $OPS_INSTALL_PATH/c
+#f [ -x "$(command -v enroot)" ]; then
 # -----
 # Fails to compile with NVCC
 # -----
@@ -11,8 +11,9 @@ if [ -x "$(command -v enroot)" ]; then
 #  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #  rm perf_out
 #  echo "All HIP complied applications PASSED"
-fi
+#i
 
+<<COMMENT
 if [[ -v HIP_INSTALL_PATH ]]; then
   source ../../scripts/$SOURCE_HIP
   make -j -B
@@ -43,11 +44,12 @@ if [[ -v HIP_INSTALL_PATH ]]; then
   echo "All HIP complied applications PASSED : Moving no to Intel Compiler Tests" > perf_out
   exit 0
 fi
+COMMENT
 
-cd ../../../ops/c
+cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_INTEL
 make -j -B
-cd -
+cd $OPS_INSTALL_PATH/../apps/c/mb_shsgc/Max_datatransfer
 make clean
 rm -f .generated
 make IEEE=1 -j
@@ -125,6 +127,7 @@ rm perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
 
+<<COMMENT
 echo '============> Running OpenCL on CPU'
 ./shsgc_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Pre shock error is:" perf_out
@@ -134,6 +137,7 @@ grep "Total Wall time" perf_out
 grep -e "acceptable" -e "correct"  perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
+COMMENT
 
 echo '============> Running OpenCL on GPU'
 ./shsgc_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
@@ -146,6 +150,7 @@ grep -e "acceptable" -e "correct"  perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+<<COMMENT
 echo '============> Running MPI+OpenCL on CPU'
 $MPI_INSTALL_PATH/bin/mpirun -np 20 ./shsgc_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
 $MPI_INSTALL_PATH/bin/mpirun -np 20 ./shsgc_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
@@ -156,6 +161,7 @@ grep "Total Wall time" perf_out
 grep -e "acceptable" -e "correct"  perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
+COMMENT
 
 echo '============> Running MPI+OpenCL on GPU'
 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out

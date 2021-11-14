@@ -11,7 +11,6 @@ int xdim3_vars_kernel;
 int xdim4_vars_kernel;
 
 //user function
-#pragma acc routine
 inline 
 void vars_kernel(const ptrm_double  alam,
   const ptrm_double  al,

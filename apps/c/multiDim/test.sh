@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-cd ../../../ops/c
+cd $OPS_INSTALL_PATH/c
 #<<COMMENT
 if [[ -v HIP_INSTALL_PATH ]]; then
   
@@ -10,7 +10,8 @@ fi
 
 source ../../scripts/$SOURCE_INTEL
 make -j
-cd -
+cd $OPS_INSTALL_PATH/../apps/c/multiDim/
+
 make clean
 rm -f .generated
 make IEEE=1 -j
