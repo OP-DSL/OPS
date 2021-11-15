@@ -1,0 +1,1 @@
+ops.py clover_leaf.cpp initialise_chunk.cpp generate.cpp ideal_gas.cpp update_halo.cpp field_summary.cpp viscosity.cpp  calc_dt.cpp PdV.cpp revert.cpp accelerate.cpp flux_calc.cpp advec_cell.cpp advec_mom.cpp reset_field.cpp
