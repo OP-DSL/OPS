@@ -151,7 +151,7 @@ build:Intel:APP:
 
 
 
-build:Translator:App
+build:Translator:App:
   stage: APP_Build
   tags:
     - CCP, test
