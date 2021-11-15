@@ -159,7 +159,7 @@ build:Translator:App:
     - cat "This is a test" > test.txt
     - git clone git@github.com:OP-DSL/OPS-APPS.git
     - cd OPS-APPS
-    - cat "This is a test" > test.txt
+    - echo "This is a test" > test.txt
     - git commit -a -m "test"
     - git push origin
 
