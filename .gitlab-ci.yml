@@ -158,6 +158,7 @@ build:Translator:App:
     - export PATH=$PATH:$CI_PROJECT_DIR/ops_translator/c
     - git clone git@github.com:OP-DSL/OPS-APPS.git
     - cd OPS-APPS
+    - rm -r -f c
     - cp -r $CI_PROJECT_DIR/apps/c .
     - cd c
     - |-
@@ -171,7 +172,8 @@ build:Translator:App:
         fi
       done
     - cd ../
-    - git commit -a
+    - git add -all
+    - git commit -a -m "$(date)"
     - git push origin
 
 
