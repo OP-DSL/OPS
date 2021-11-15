@@ -156,7 +156,6 @@ build:Translator:App:
   tags:
     - CCP, test
   script:
-    - cat "This is a test" > test.txt
     - git clone git@github.com:OP-DSL/OPS-APPS.git
     - cd OPS-APPS
     - echo "This is a test" > test.txt
