@@ -172,7 +172,7 @@ build:Translator:App:
         fi
       done
     - cd ../
-    - git add -all
+    - git add --all
     - git commit -a -m "$(date)"
     - git push origin
 
