@@ -187,12 +187,12 @@ build:Translator:App:
     - git add --all
     - git commit -a -m "$(date)"
     - git push origin
-  # only:
-  #   refs:
-  #     - merge_requests
-  #   changes:
-  #     - apps
-  #     - ops_translator
+  only:
+    refs:
+      - merge_requests
+    changes:
+      - apps
+      - ops_translator
 
 
 
