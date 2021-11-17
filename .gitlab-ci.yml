@@ -154,7 +154,6 @@ build:Translator:App:
   tags:
     - CCP, test
   script:
-    - ls -l -h -a
     - export PATH=$PATH:$CI_PROJECT_DIR/ops_translator/c
     - git clone git@github.com:OP-DSL/OPS-APPS.git
     - cd OPS-APPS
