@@ -154,12 +154,25 @@ build:Translator:App:
   tags:
     - CCP, test
   script:
-    - export PATH=$PATH:$CI_PROJECT_DIR/ops_translator/c
+    - export PATH=$PATH:$CI_PROJECT_DIR/ops_translator/c:$CI_PROJECT_DIR/ops_translator/fortran
     - git clone git@github.com:OP-DSL/OPS-APPS.git
     - cd OPS-APPS
     - rm -r -f c
     - cp -r $CI_PROJECT_DIR/apps/c .
     - cd c
+    - |-
+      for f in *; do
+        if [ -d "$f" ]; then
+          # $f is a directory
+          echo $f
+          cd $f
+          source source_list
+          cd ../
+        fi
+      done
+    - cd ../
+    - cp -r $CI_PROJECT_DIR/apps/fortran .
+    - cd fortran
     - |-
       for f in *; do
         if [ -d "$f" ]; then
