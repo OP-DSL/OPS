@@ -2,6 +2,7 @@
 stages:
   - API_Build
   - APP_Build
+  - HIP
   - test
   - docs
   - clean
@@ -21,6 +22,116 @@ build:GNU:API:
     expire_in: 1 week
     paths:
     - $CI_PROJECT_DIR/OPS-INSTALL
+
+Test:HIP:
+  stage: HIP
+  tags:
+    - CCP, test
+  script:
+    - |-
+      export PATH=/opt/rocm-4.5.0/bin:$PATH
+      export OPS_COMPILER=hip
+      export MPI_INSTALL_PATH=/usr
+      export HDF5_INSTALL_PATH=/usr/lib/x86_64-linux-gnu/hdf5/openmpi
+      export HIP_INSTALL_PATH=/opt/rocm-4.5.0/
+      export OPS_INSTALL_PATH=$CI_PROJECT_DIR/ops
+      export MPICC=mpicc
+      export MPICXX=mpic++
+      export MPICPP=mpicxx
+      export MPIFC=mpif90
+      export MPIF90=mpif90
+      export MPI_INC=/usr/lib/x86_64-linux-gnu/openmpi/include
+      export XCOMPILER=-Xcompiler
+      export HIP_LINK="-L/usr/local/cuda/lib64 -lcudart"
+      export HIP_HDF5_MPI_LINK="-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi/lib -lmpi_cxx -lmpi"
+      export HIPMPICPP=mpicxx
+      export HIPIEEE="--fmad false"
+    - cd ops/c
+    - make seq IEEE=1
+    - make hip IEEE=1
+    - make hdf5_seq IEEE=1
+    - cd ../../apps/c
+    - cd CloverLeaf
+    - make cloverleaf_hip IEEE=1 -j 4
+    - |-
+      ./cloverleaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      grep "PASSED" clover.out
+      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+    - cd ../CloverLeaf_3D
+    - make cloverleaf_hip IEEE=1 -j 4
+    - |-
+      ./cloverleaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      grep "PASSED" clover.out
+      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+    - cd ../CloverLeaf_3D_HDF5
+    - make cloverleaf_hip IEEE=1
+    - make generate_file IEEE=1 -j 4
+    - |-
+      ./generate_file
+      ./cloverleaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      grep "PASSED" clover.out
+      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+    - cd ../lowdim_test
+    - make lowdim_hip
+    - |-
+      ./lowdim_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      grep "PASSED" perf_out
+      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+    - cd ../mblock
+    - make mblock_hip
+    - |-
+      ./mblock_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > mblock.out
+      grep "PASSED" mblock.out
+      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+    - cd ../mb_shsgc/Max_datatransfer
+    - make shsgc_hip
+    - |-
+      ./shsgc_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      grep "Pre shock error is:" perf_out
+      grep "Post shock error is:" perf_out
+      grep "Post shock Error is" perf_out
+      grep "Total Wall time" perf_out
+      grep -e "acceptable" -e "correct"  perf_out
+      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+    - cd ../../multiDim
+    - make multidim_hip
+    - |-
+      ./multidim_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      grep "PASSED" perf_out
+      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+    - cd ../multiDim3D
+    - make multidim_hip
+    - |-
+      ./multidim_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      grep "PASSED" perf_out
+      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+    - cd ../poisson
+    - make poisson_hip
+    - |-
+      ./poisson_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      grep "PASSED" perf_out
+      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+    - cd ../shsgc
+    - make shsgc_hip
+    - |-
+      ./shsgc_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      grep "PASSED" perf_out
+      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+    - cd ../TeaLeaf
+    - make tealeaf_hip
+    - |-
+      ./tealeaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      grep "PASSED" perf_out
+      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+    - cd ../multiDim_HDF5
+    - make read_hip read_mpi_hip
+    - make -f Makefile.write write_hip write_mpi_hip
+    - |-
+      rm -rf write_data.h5 read_data.h5;
+      ./write_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+      ./read_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+      h5diff write_data.h5 read_data.h5
+      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
 
 build:Intel:API:
   stage: API_Build
