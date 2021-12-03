@@ -46,6 +46,7 @@ Test:HIP:
       export HIP_HDF5_MPI_LINK="-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi/lib -lmpi_cxx -lmpi"
       export HIPMPICPP=mpicxx
       export HIPIEEE="--fmad false"
+      export HIP_PLATFORM=nvidia
     - cd ops/c
     - make seq IEEE=1
     - make hip IEEE=1
