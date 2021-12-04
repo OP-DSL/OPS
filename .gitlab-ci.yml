@@ -85,15 +85,15 @@ Test:HIP:
       grep "PASSED" mblock.out
       rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
     - cd ../mb_shsgc/Max_datatransfer
-    - make shsgc_hip
-    - |-
-      ./shsgc_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-      grep "Pre shock error is:" perf_out
-      grep "Post shock error is:" perf_out
-      grep "Post shock Error is" perf_out
-      grep "Total Wall time" perf_out
-      grep -e "acceptable" -e "correct"  perf_out
-      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+    # - make shsgc_hip
+    # - |-
+    #   ./shsgc_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+    #   grep "Pre shock error is:" perf_out
+    #   grep "Post shock error is:" perf_out
+    #   grep "Post shock Error is" perf_out
+    #   grep "Total Wall time" perf_out
+    #   grep -e "acceptable" -e "correct"  perf_out
+    #   rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
     - cd ../../multiDim
     - make multidim_hip
     - |-
@@ -125,10 +125,11 @@ Test:HIP:
       grep "PASSED" perf_out
       rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
     - cd ../multiDim_HDF5
-    - make read_hip read_mpi_hip
-    - make -f Makefile.write write_hip write_mpi_hip
+    - make -f Makefile.write write_hip
+    - rm .generated
+    - make read_hip
     - |-
-      rm -rf write_data.h5 read_data.h5;
+      rm -rf write_data.h5 read_data.h5
       ./write_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
       ./read_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
       h5diff write_data.h5 read_data.h5
