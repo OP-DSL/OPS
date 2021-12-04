@@ -53,20 +53,20 @@ Test:HIP:
     - make hdf5_seq IEEE=1
     - cd ../../apps/c
     - cd CloverLeaf
-    - make cloverleaf_hip IEEE=1 -j 4
+    - make cloverleaf_hip IEEE=1
     - |-
       ./cloverleaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
       grep "PASSED" clover.out
       rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
     - cd ../CloverLeaf_3D
-    - make cloverleaf_hip IEEE=1 -j 4
+    - make cloverleaf_hip IEEE=1
     - |-
       ./cloverleaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
       grep "PASSED" clover.out
       rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
     - cd ../CloverLeaf_3D_HDF5
     - make cloverleaf_hip IEEE=1
-    - make generate_file IEEE=1 -j 4
+    - make generate_file IEEE=1
     - |-
       ./generate_file
       ./cloverleaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
