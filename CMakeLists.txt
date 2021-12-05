@@ -5,6 +5,7 @@ project(OPS C CXX)
 # if show the compiling process in detail
 option(OPS_VERBOSE_WARNING "Turn on verbose warning messages" OFF)
 option(OPS_TEST "Turn on tests for Apps" OFF)
+option(OPS_HIP "Turn on the HIP backend" OFF)
 if (NOT OPS_VERBOSE_WARNING)
     message("We show concise compiling information by defautl! Use -DOPS_VERBOSE_WARNING=ON to switch on.")
 endif()
@@ -26,7 +27,7 @@ set(HDF5_PREFER_PARALLEL true)
 # Configure Compilers
 # C
 set(CMAKE_C_STANDARD 99)
-#TODO:Shall we keep the "-g" in the release mode? It increases file size.
+
 if (${CMAKE_C_COMPILER_ID} STREQUAL GNU)
     set(CMAKE_C_FLAGS "-fPIC -Wall")
     set(CMAKE_C_FLAGS_RELEASE "-O3")
@@ -91,6 +92,7 @@ set(ConfigPackageLocation ${CMAKE_INSTALL_PREFIX}/lib/cmake)
 # Add find scripts
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
+
 # Try to find the required dependency
 find_package(MPI QUIET)
 find_package(HDF5 QUIET COMPONENTS C HL)
@@ -98,9 +100,27 @@ find_package(CUDAToolkit QUIET)
 find_package(OpenACC QUIET)
 find_package(OpenCL QUIET)
 find_package(OpenMP QUIET)
-find_package(Python2 QUIET)
-if (NOT Python2_FOUND)
-  message (FATAL_ERROR "We cannot find Python2 and the Python translator needs Python2! Please use -DPython2_EXECUTABLE to specify the path.")
+find_package(Python3 QUIET)
+
+if (OPS_HIP)
+    # Search for rocm in common locations
+    list(APPEND CMAKE_PREFIX_PATH /opt/rocm/hip /opt/rocm)
+    # Find hip
+    find_package(hip)
+    #enable_language(HIP)
+    #message($ENV{HIP_PLATFORM})
+    set(ENV{HIP_PLATFORM} "nvidia")
+    #message($ENV{HIP_PLATFORM})
+    set(HIP_FOUND TRUE)
+
+    if({$hip::host} STREQUAL "" OR {$hip::device} STREQUAL "" )
+        message (WARNING "We cannot find the HIP environment. The HIP codes won't work! You might need to use CMAKE_PREFIX_PATH to specify the path for HIP!")
+        set(HIP_FOUND FALSE)
+    endif ()
+endif ()
+
+if (NOT Python3_FOUND)
+  message (FATAL_ERROR "We cannot find Python3 and the Python translator needs Python3! Please use -DPython3_EXECUTABLE to specify the path.")
 endif ()
 # Configure the "include" dir for compiling
 if (NOT HDF5_FOUND)
@@ -113,7 +133,7 @@ endif ()
 if (CUDAToolkit_FOUND)
     set(CMAKE_CUDA_COMPILER ${CUDAToolkit_NVCC_EXECUTABLE})
     if (GPU_ARCH)
-        set(CMAKE_CUDA_ARCHITECTURES 70  CACHE STRING "CUDA architectures")
+        set(CMAKE_CUDA_ARCHITECTURES ${GPU_ARCH}  CACHE STRING "CUDA architectures")
     else()
         message(WARNING "Please the GPU architecture using -DGPU_ARCH=XXX!")
     endif()
