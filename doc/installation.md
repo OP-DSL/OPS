@@ -81,7 +81,7 @@ cmake ${PATH_TO_OPS}   -DCMAKE_INSTALL_PREFIX=$HOME/OPS-INSTALL
 make # IEEE=1 enable IEEE flags in compiler
 make install # sudo is needed if a system direction is chosen,
 ```
-then the application can be built as
+Then the application can be built as:
 
 ```bash
 mkdir appbuild
