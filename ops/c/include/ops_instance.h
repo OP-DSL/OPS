@@ -213,7 +213,7 @@ class OPS_instance {
  */
     template <class T>
     void decl_const(char const *name, int dim, char const *type, T *data) {
-      _ops_decl_const(this, name, dim, type, data);
+      ops_decl_const_char(this, name, dim, type, data);
     }
 
 /**

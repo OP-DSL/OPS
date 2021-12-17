@@ -1031,19 +1031,22 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
     code('((int*)&'+str(consts[nc]['name']).replace('"','')+')[0]=0;')
   code('}')
   code('')
-  code('void ops_decl_const_char(int dim, char const *type,')
+  code('void ops_decl_const_char(OPS_instance *instance, int dim, char const *type,')
   code('int size, char *dat, char const *name){')
   config.depth = config.depth + 2
-  code('ops_execute(OPS_instance::getOPSInstance());')
+  IF('!instance')
+  code('instance = OPS_instance::getOPSInstance();')
+  ENDIF()
+  code('ops_execute(instance);')
 
   for nc in range(0,len(consts)):
     IF('!strcmp(name,"'+(str(consts[nc]['name']).replace('"','')).strip()+'")')
     if consts[nc]['dim'].isdigit():
-      code('hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMemcpyToSymbol(HIP_SYMBOL('+(str(consts[nc]['name']).replace('"','')).strip()+'_OPSCONSTANT), dat, dim*size));')
+      code('hipSafeCall(instance->ostream(),hipMemcpyToSymbol(HIP_SYMBOL('+(str(consts[nc]['name']).replace('"','')).strip()+'_OPSCONSTANT), dat, dim*size));')
     else:
-      code('char *temp; hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMalloc((void**)&temp,dim*size));')
-      code('hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMemcpy(temp,dat,dim*size,hipMemcpyHostToDevice));')
-      code('hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMemcpyToSymbol(HIP_SYMBOL('+(str(consts[nc]['name']).replace('"','')).strip()+'_OPSCONSTANT), &temp, sizeof(char *)));')
+      code('char *temp; hipSafeCall(instance->ostream(),hipMalloc((void**)&temp,dim*size));')
+      code('hipSafeCall(instance->ostream(),hipMemcpy(temp,dat,dim*size,hipMemcpyHostToDevice));')
+      code('hipSafeCall(instance->ostream(),hipMemcpyToSymbol(HIP_SYMBOL('+(str(consts[nc]['name']).replace('"','')).strip()+'_OPSCONSTANT), &temp, sizeof(char *)));')
     ENDIF()
     code('else')
 

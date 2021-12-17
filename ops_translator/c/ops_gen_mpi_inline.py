@@ -867,28 +867,6 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
   code('')
   code('void ops_init_backend() {}')
   code('')
-  code('void ops_decl_const_char2(int dim, char const *type,')
-  code('int size, char *dat, char const *name){')
-  config.depth = config.depth + 2
-
-  for nc in range(0,len(consts)):
-    IF('!strcmp(name,"'+(str(consts[nc]['name']).replace('"','')).strip()+'")')
-    if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
-      code((str(consts[nc]['name']).replace('"','')).strip()+' = *('+consts[nc]['type']+'*)dat;')
-    else:
-      code((str(consts[nc]['name']).replace('"','')).strip()+' = ('+consts[nc]['type']+'*)dat;')
-    ENDIF()
-    code('else')
-
-  code('{')
-  config.depth = config.depth + 2
-  code('throw OPSException(OPS_RUNTIME_ERROR, "error: unknown const name");')
-  ENDIF()
-
-  config.depth = config.depth - 2
-  code('}')
-  code('')
-  #code('')
   comm('user kernel files')
 
   kernel_name_list = []

@@ -570,14 +570,18 @@ void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *rang
   ops_dat_set_data_slab_host(dat, part, data, range);
 }
 
-void ops_decl_const_char(int dim, char const *type, int typeSize, char *data,
-                         char const *name) {
-  (void)dim;
-  (void)type;
-  (void)typeSize;
-  (void)data;
-  (void)name;
-  ops_execute(OPS_instance::getOPSInstance());
+void ops_decl_const_char(OPS_instance *instance, int dim, char const *type,
+                         int typeSize, char *data, char const *name) {
+    (void)dim;
+    (void)type;
+    (void)typeSize;
+    (void)data;
+    (void)name;
+    if (instance) {
+        ops_execute(instance);
+    } else {
+        ops_execute(OPS_instance::getOPSInstance());
+    }
 }
 
 void _ops_partition(OPS_instance *instance, const char *routine) {

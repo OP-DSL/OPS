@@ -95,7 +95,7 @@ ops_arg ops_arg_gbl_char(char *data, int dim, int size, ops_access acc);
 OPS_FTN_INTEROP
 ops_dat_core* ops_decl_dat_char(ops_block_core *, int, int *, int *, int *, int *, int *, char *,
                           int, char const *, char const *);
-void ops_decl_const_char(int, char const *, int, char *, char const *);
+void ops_decl_const_char(OPS_instance *, int, char const *, int, char *, char const *);
 OPS_FTN_INTEROP
 void ops_reduction_result_char(ops_reduction_core *handle, int type_size, char *ptr);
 /*

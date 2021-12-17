@@ -1012,10 +1012,13 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
   code('')
   code('void ops_init_backend() {acc_set_device_num(ops_get_proc()%acc_get_num_devices(acc_device_nvidia),acc_device_nvidia); }')
   code('')
-  code('void ops_decl_const_char(int dim, char const *type,')
+  code('void ops_decl_const_char(OPS_instance *instance, int dim, char const *type,')
   code('int size, char *dat, char const *name){')
   config.depth = config.depth + 2
-  code('ops_execute(OPS_instance::getOPSInstance());')
+  IF('!instance')
+  code('instance = OPS_instance::getOPSInstance();')
+  ENDIF()
+  code('ops_execute(instance);')
 
   for nc in range(0,len(consts)):
     IF('!strcmp(name,"'+(str(consts[nc]['name']).replace('"','')).strip()+'")')

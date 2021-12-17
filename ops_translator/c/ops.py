@@ -500,14 +500,6 @@ def main(source_files):
       if verbose:
         print((str(len(const_args))))
 
-      # cleanup '&' symbols from name and convert dim to integer
-      if const_args:
-        for i in range(0, len(const_args)):
-            #if const_args[i]['name2'][0] == '&':
-            const_args[i]['name2'] = const_args[i]['name2']
-            const_args[i]['dim'] = const_args[i]['dim']
-            const_args[i]['name'] = const_args[i]['name']
-
       # check for repeats
       nconsts = 0
       if const_args:
@@ -706,12 +698,6 @@ def main(source_files):
         header_len = 12
         loc_header = [text.find("ops_seq_v2.h")]
 
-      # get locations of all op_decl_consts
-      n_consts = len(const_args)
-      loc_consts = [0] * n_consts
-      for n in range(0, n_consts):
-          loc_consts[n] = const_args[n]['loc']
-
       # get locations of all ops_par_loops
       n_loops = len(loop_args)
       loc_loops = [0] * n_loops
@@ -729,7 +715,7 @@ def main(source_files):
         #loc_kernel_headers.append(match.end());
 
 
-      locs = sorted(loc_header + loc_consts + loc_loops + loc_kernel_headers)
+      locs = sorted(loc_header + loc_loops + loc_kernel_headers)
 
       # process header and loops
       for loc in range(0, len(locs)):
@@ -806,17 +792,6 @@ def main(source_files):
 
           fid.write(line[0:-len(indent) - 2] + ');')
 
-          loc_old = endofcall + 1
-          continue
-
-        if locs[loc] in loc_consts:
-          curr_const = loc_consts.index(locs[loc])
-          endofcall = text.find(';', locs[loc])
-          name = const_args[curr_const]['name']
-          fid.write(indent[0:-2] + 'ops_decl_const2( '+ name.strip() +
-            ',' + str(const_args[curr_const]['dim']) + ', "' +
-            const_args[curr_const]['type'] + '",' +
-            const_args[curr_const]['name2'].strip() + ');')
           loc_old = endofcall + 1
           continue
 
