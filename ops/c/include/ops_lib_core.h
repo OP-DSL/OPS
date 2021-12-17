@@ -918,7 +918,7 @@ void ops_update_const(char const *name, int dim, char const *type, T *data) {
     ex << "Error: incorrect type specified for constant " << name << " in ops_update_const";
     throw ex;
   }
-  ops_decl_const_char(nullptr, dim, type, sizeof(T), (char *)data, name);
+  ops_decl_const2(name, dim, type, data);
 }
 
 /**
@@ -942,7 +942,7 @@ void ops_decl_const(char const *name, int dim, char const *type, T *data) {
     ex << "Error: incorrect type specified for constant " << name << " in ops_decl_const";
     throw ex;
   }
-  ops_decl_const_char(nullptr, dim, type, sizeof(T), (char*)data, name);
+  ops_decl_const2(name, dim, type, data);
 }
 
 #endif

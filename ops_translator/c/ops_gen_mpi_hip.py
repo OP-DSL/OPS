@@ -1034,9 +1034,6 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
   code('void ops_decl_const_char(OPS_instance *instance, int dim, char const *type,')
   code('int size, char *dat, char const *name){')
   config.depth = config.depth + 2
-  IF('!instance')
-  code('instance = OPS_instance::getOPSInstance();')
-  ENDIF()
   code('ops_execute(instance);')
 
   for nc in range(0,len(consts)):

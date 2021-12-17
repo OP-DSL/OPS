@@ -388,6 +388,13 @@ ops_dat ops_block_core::decl_dat(int data_size, int *block_size, int *base,
       stride, (char *)data, sizeof(T), type, name);
 }
 #endif
+
+template <typename T>
+void ops_decl_const2(char const *name, int dim, char const *type, T *data) {
+  ops_decl_const_char(OPS_instance::getOPSInstance(), dim, type, sizeof(T),
+                      (char *)data, name);
+}
+
 #endif
 
 #endif

@@ -577,11 +577,7 @@ void ops_decl_const_char(OPS_instance *instance, int dim, char const *type,
   (void)typeSize;
   (void)data;
   (void)name;
-  if (instance) {
-    ops_execute(instance);
-  } else {
-    ops_execute(OPS_instance::getOPSInstance());
-  }
+  ops_execute(instance);
 }
 
 void _ops_partition(OPS_instance *instance, const char *routine) {
