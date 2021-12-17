@@ -216,7 +216,7 @@ class OPS_instance {
       if (type_error(data, type)) {
         OPSException ex(OPS_HDF5_ERROR);
         ex << "Error: incorrect type specified for constant " << name
-           << " in ops_decl_const";
+           << " in OPS_instance::decl_const";
         throw ex;
       }
       ops_decl_const_char(this, name, dim, type, data);
