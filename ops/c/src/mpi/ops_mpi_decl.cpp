@@ -194,16 +194,16 @@ void ops_NaNcheck(ops_dat dat) {
 
 void ops_decl_const_char(OPS_instance *instance, int dim, char const *type,
                          int typeSize, char *data, char const *name) {
-    (void)dim;
-    (void)type;
-    (void)typeSize;
-    (void)data;
-    (void)name;
-    if (instance) {
-        ops_execute(instance);
-    } else {
-        ops_execute(OPS_instance::getOPSInstance());
-    }
+  (void)dim;
+  (void)type;
+  (void)typeSize;
+  (void)data;
+  (void)name;
+  if (instance) {
+    ops_execute(instance);
+  } else {
+    ops_execute(OPS_instance::getOPSInstance());
+  }
 }
 
 void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
