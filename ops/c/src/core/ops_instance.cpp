@@ -1,6 +1,6 @@
 #define OPS_CPP_API
 #define OPS_INTERNAL_API
-#include <ops_instance.h>
+#include <ops_lib_core.h>
 
 #include <atomic>
 

@@ -39,9 +39,6 @@
 #ifndef __OPS_INSTANCE_H
 #define __OPS_INSTANCE_H
 
-#include <ops_lib_core.h>
-#include <ops_checkpointing.h>
-
 #if defined(_OPENMP)
   #include <omp.h>
 #endif
