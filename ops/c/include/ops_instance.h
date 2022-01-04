@@ -216,7 +216,7 @@ class OPS_instance {
            << " in OPS_instance::decl_const";
         throw ex;
       }
-      ops_decl_const_char(this, name, dim, type, data);
+      ops_decl_const_char(this, dim, type, sizeof(T), (char *)data, name);
     }
 
 /**

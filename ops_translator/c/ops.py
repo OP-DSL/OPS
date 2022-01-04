@@ -213,7 +213,7 @@ def ops_decl_const_parse(text, macro_defs):
 
   consts = []
   for m in re.finditer('(ops_|\.|->)decl_const\((.*)\)', text):
-    args = m.group(1).split(',')
+    args = m.group(2).split(',')
 
     # check for syntax errors
     if len(args) != 4:
