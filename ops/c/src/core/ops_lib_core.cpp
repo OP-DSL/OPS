@@ -38,7 +38,6 @@
   */
 
 #include <ops_lib_core.h>
-#include <ops_instance.h>
 #include <ops_exceptions.h>
 #include <float.h>
 #include <limits.h>

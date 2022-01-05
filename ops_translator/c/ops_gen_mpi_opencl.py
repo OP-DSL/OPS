@@ -1125,9 +1125,8 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
   code('void ops_init_backend() {}')
   code('')
   comm('this needs to be a platform specific copy symbol to device function')
-  code('void ops_decl_const_char(int dim, char const * type, int typeSize, char * dat, char const * name ) {')
+  code('void ops_decl_const_char(OPS_instance *instance, int dim, char const * type, int typeSize, char * dat, char const * name ) {')
   config.depth =config.depth + 2
-  code('OPS_instance *instance = OPS_instance::getOPSInstance();')
   code('ops_execute(instance);')
   code('cl_int ret = 0;')
   IF('instance->opencl_instance->OPS_opencl_core.constant == NULL')

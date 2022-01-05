@@ -164,7 +164,6 @@ void ops_execute_reduction(ops_reduction handle);
 
 ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
                             ops_access acc);
-void ops_decl_const_char(int, char const *, int, char *, char const *);
 
 void ops_init_core(OPS_instance *instance, const int argc, const char *const argv[], const int diags_level);
 
@@ -390,17 +389,13 @@ ops_dat ops_block_core::decl_dat(int data_size, int *block_size, int *base,
 }
 #endif
 
-template <class T>
+#if !defined(OPS_CPP_API) || defined(OPS_INTERNAL_API)
+template <typename T>
 void ops_decl_const2(char const *name, int dim, char const *type, T *data) {
-  if (type_error(data, type)) {
-    OPSException ex(OPS_HDF5_ERROR);
-    ex << "Error: incorrect type specified for constant " << name;
-    throw ex;
-  }
-
-  ops_decl_const_char(dim, type, sizeof(T), (char *)data, name);
+  ops_decl_const_char(OPS_instance::getOPSInstance(), dim, type, sizeof(T),
+                      (char *)data, name);
 }
 #endif
-
+#endif
 
 #endif

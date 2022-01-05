@@ -1038,19 +1038,19 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
   code('')
   code('void ops_init_backend() {}')
   code('')
-  code('void ops_decl_const_char(int dim, char const *type,')
+  code('void ops_decl_const_char(OPS_instance *instance, int dim, char const *type,')
   code('int size, char *dat, char const *name){')
   config.depth = config.depth + 2
-  code('ops_execute(OPS_instance::getOPSInstance());')
+  code('ops_execute(instance);')
 
   for nc in range(0,len(consts)):
     IF('!strcmp(name,"'+(str(consts[nc]['name']).replace('"','')).strip()+'")')
     if consts[nc]['dim'].isdigit():
-      code('cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMemcpyToSymbol('+(str(consts[nc]['name']).replace('"','')).strip()+', dat, dim*size));')
+      code('cutilSafeCall(instance->ostream(),cudaMemcpyToSymbol('+(str(consts[nc]['name']).replace('"','')).strip()+', dat, dim*size));')
     else:
-      code('char *temp; cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMalloc((void**)&temp,dim*size));')
-      code('cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMemcpy(temp,dat,dim*size,cudaMemcpyHostToDevice));')
-      code('cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMemcpyToSymbol('+(str(consts[nc]['name']).replace('"','')).strip()+', &temp, sizeof(char *)));')
+      code('char *temp; cutilSafeCall(instance->ostream(),cudaMalloc((void**)&temp,dim*size));')
+      code('cutilSafeCall(instance->ostream(),cudaMemcpy(temp,dat,dim*size,cudaMemcpyHostToDevice));')
+      code('cutilSafeCall(instance->ostream(),cudaMemcpyToSymbol('+(str(consts[nc]['name']).replace('"','')).strip()+', &temp, sizeof(char *)));')
     ENDIF()
     code('else')
 

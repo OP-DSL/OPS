@@ -39,9 +39,6 @@
 #ifndef __OPS_INSTANCE_H
 #define __OPS_INSTANCE_H
 
-#include <ops_lib_core.h>
-#include <ops_checkpointing.h>
-
 #if defined(_OPENMP)
   #include <omp.h>
 #endif
@@ -213,7 +210,13 @@ class OPS_instance {
  */
     template <class T>
     void decl_const(char const *name, int dim, char const *type, T *data) {
-      _ops_decl_const(this, name, dim, type, data);
+      if (type_error(data, type)) {
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: incorrect type specified for constant " << name
+           << " in OPS_instance::decl_const";
+        throw ex;
+      }
+      ops_decl_const_char(this, dim, type, sizeof(T), (char *)data, name);
     }
 
 /**

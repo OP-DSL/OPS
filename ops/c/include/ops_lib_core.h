@@ -913,13 +913,12 @@ template <class T> void ops_reduction_result(ops_reduction handle, T *ptr) {
  */
 template <class T>
 void ops_update_const(char const *name, int dim, char const *type, T *data) {
-  (void)dim;
   if (type_error(data, type)) {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: incorrect type specified for constant " << name << " in ops_update_const";
     throw ex;
   }
-  ops_decl_const_char(dim, type, sizeof(T), (char *)data, name);
+  ops_decl_const2(name, dim, type, data);
 }
 
 /**
@@ -938,13 +937,12 @@ void ops_update_const(char const *name, int dim, char const *type, T *data) {
  */
 template <class T>
 void ops_decl_const(char const *name, int dim, char const *type, T *data) {
-  (void)dim;
   if (type_error(data, type)) {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: incorrect type specified for constant " << name << " in ops_decl_const";
     throw ex;
   }
-  ops_decl_const_char(dim, type, sizeof(T), (char*)data, name);
+  ops_decl_const2(name, dim, type, data);
 }
 
 #endif
