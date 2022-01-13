@@ -90,6 +90,23 @@ struct build_indices : public build_indices<N - 1, N - 1, Is...> {};
 template <size_t... Is> struct build_indices<0, Is...> : indices<Is...> {};
 #endif
 
+template <typename... ParamT>
+struct function_param_list_helper {
+  function_param_list_helper() {}
+  template <typename Fptr>
+  function_param_list_helper(Fptr) {}
+};
+
+#if __cplusplus >= 201703L
+// template deduction guides to extract parameter lists
+template <typename C, typename... P>
+function_param_list_helper(void (C::*f)(P...) const)
+    -> function_param_list_helper<P...>;
+template <typename C, typename... P>
+function_param_list_helper(void (C::*f)(P...))
+    -> function_param_list_helper<P...>;
+#endif
+
 // helper struct to get the underlying type of the kernel parameters
 // e.g. const ACC<double> & to ACC<double>
 template <typename T> struct param_remove_cvref {
@@ -156,7 +173,7 @@ static void shift_arg(const ops_arg &arg, char *p, int m, const int* start,
 template <typename T> struct param_handler<ACC<T>> {
   static char *construct(const ops_arg &arg, int dim, int ndim, int start[], ops_block block) { 
     if (arg.argtype == OPS_ARG_DAT) {
-      int d_m[OPS_MAX_DIM];
+      int d_m[OPS_MAX_DIM] = {};
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = arg.dat->d_m[d] + OPS_sub_dat_list[arg.dat->index]->d_im[d];
   #else //OPS_MPI
@@ -175,7 +192,7 @@ template <typename T> struct param_handler<ACC<T>> {
 #endif
       + address(ndim, arg.dat->block->instance->OPS_soa ? arg.dat->type_size : arg.dat->elem_size, &start[0], 
         arg.dat->size, arg.stencil->stride, arg.dat->base,
-        d_m))); //TODO
+        d_m)));
     } 
     //assert(false && "Arg must be OPS_ARG_DAT if accessed by ACC");
     return nullptr;
@@ -209,10 +226,15 @@ static void initoffs(const ops_arg &arg, int *offs, const int &ndim, int *start,
   }
 }
 
-template <typename... ParamType, typename... OPSARG, size_t... J>
-void ops_par_loop_impl(indices<J...>, void (*kernel)(ParamType...),
-                      char const *name, ops_block block, int dim, int *range,
-                      OPSARG... arguments) {
+template <typename Callable, typename... ParamType, typename... OPSARG,
+          size_t... J>
+void ops_par_loop_impl(indices<J...>, function_param_list_helper<ParamType...>,
+                       Callable kernel, char const *name, ops_block block,
+                       int dim, int *range, OPSARG... arguments) {
+  static_assert(
+      sizeof...(ParamType) == sizeof...(OPSARG),
+      "number of parameters of the kernel shoud match the number of ops_arg");
+
   constexpr int N = sizeof...(OPSARG);
 
   int  count[OPS_MAX_DIM] = {0};
@@ -326,14 +348,21 @@ void ops_par_loop_impl(indices<J...>, void (*kernel)(ParamType...),
  */
 template <typename... ParamType, typename... OPSARG>
 void ops_par_loop(void (*kernel)(ParamType...), char const *name,
-                  ops_block block, int dim, int *range,
-                  OPSARG... arguments) {
-  static_assert(sizeof...(ParamType) == sizeof...(OPSARG), 
-      "number of parameters of the kernel shoud match the number of ops_arg");
-  ops_par_loop_impl(build_indices<sizeof...(ParamType)>{}, kernel, name,
+                  ops_block block, int dim, int *range, OPSARG... arguments) {
+  ops_par_loop_impl(build_indices<sizeof...(ParamType)>{},
+                    function_param_list_helper<ParamType...>{}, kernel, name,
                     block, dim, range, arguments...);
 }
 
+#if __cplusplus >= 201703L
+template <typename Callable, typename... OPSARG>
+void ops_par_loop(Callable kernel, char const *name, ops_block block, int dim,
+                  int *range, OPSARG... arguments) {
+  ops_par_loop_impl(build_indices<sizeof...(OPSARG)>{},
+                    function_param_list_helper{&Callable::operator()}, kernel,
+                    name, block, dim, range, arguments...);
+}
+#endif
 
 #endif /* C++11 */
 
