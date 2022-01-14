@@ -91,21 +91,14 @@ template <size_t... Is> struct build_indices<0, Is...> : indices<Is...> {};
 #endif
 
 template <typename... ParamT>
-struct function_param_list_helper {
-  function_param_list_helper() {}
-  template <typename Fptr>
-  function_param_list_helper(Fptr) {}
-};
+struct func_param_list {};
+template <typename C>
+struct build_func_param_list {};
+template <typename C, typename...T>
+struct build_func_param_list<void(C::*)(T...)> : func_param_list<T...> {};
+template <typename C, typename...T>
+struct build_func_param_list<void(C::*)(T...) const> : func_param_list<T...> {};
 
-#if __cplusplus >= 201703L
-// template deduction guides to extract parameter lists
-template <typename C, typename... P>
-function_param_list_helper(void (C::*f)(P...) const)
-    -> function_param_list_helper<P...>;
-template <typename C, typename... P>
-function_param_list_helper(void (C::*f)(P...))
-    -> function_param_list_helper<P...>;
-#endif
 
 // helper struct to get the underlying type of the kernel parameters
 // e.g. const ACC<double> & to ACC<double>
@@ -228,7 +221,7 @@ static void initoffs(const ops_arg &arg, int *offs, const int &ndim, int *start,
 
 template <typename Callable, typename... ParamType, typename... OPSARG,
           size_t... J>
-void ops_par_loop_impl(indices<J...>, function_param_list_helper<ParamType...>,
+void ops_par_loop_impl(indices<J...>, func_param_list<ParamType...>,
                        Callable kernel, char const *name, ops_block block,
                        int dim, int *range, OPSARG... arguments) {
   static_assert(
@@ -350,19 +343,17 @@ template <typename... ParamType, typename... OPSARG>
 void ops_par_loop(void (*kernel)(ParamType...), char const *name,
                   ops_block block, int dim, int *range, OPSARG... arguments) {
   ops_par_loop_impl(build_indices<sizeof...(ParamType)>{},
-                    function_param_list_helper<ParamType...>{}, kernel, name,
-                    block, dim, range, arguments...);
+                    func_param_list<ParamType...>{}, kernel, name, block, dim,
+                    range, arguments...);
 }
 
-#if __cplusplus >= 201703L
 template <typename Callable, typename... OPSARG>
 void ops_par_loop(Callable kernel, char const *name, ops_block block, int dim,
                   int *range, OPSARG... arguments) {
   ops_par_loop_impl(build_indices<sizeof...(OPSARG)>{},
-                    function_param_list_helper{&Callable::operator()}, kernel,
-                    name, block, dim, range, arguments...);
+                    build_func_param_list<decltype(&Callable::operator())>{},
+                    kernel, name, block, dim, range, arguments...);
 }
-#endif
 
 #endif /* C++11 */
 
