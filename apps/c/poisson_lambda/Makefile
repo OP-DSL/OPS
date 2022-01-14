@@ -1,0 +1,29 @@
+#
+# The following environment variables should be predefined:
+#
+# OPS_INSTALL_PATH
+# OPS_COMPILER (gnu,intel,etc)
+#
+LAMBDA_API=1
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.common
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
+
+
+
+
+HEADERS=
+
+OPS_FILES=poisson.cpp
+
+OPS_GENERATED=poisson_ops.cpp
+
+OTHER_FILES=
+
+
+APP=poisson
+MAIN_SRC=poisson
+
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app
