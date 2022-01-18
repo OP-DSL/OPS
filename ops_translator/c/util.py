@@ -41,8 +41,6 @@ utility functions for code generator
 import re
 import config
 
-verbose = False
-
 def comm(line):
   prefix = ' '*config.depth
   if len(line) == 0:

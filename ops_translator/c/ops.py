@@ -98,12 +98,14 @@ from ops_gen_mpi_openacc import ops_gen_mpi_openacc
 from ops_gen_mpi_opencl import ops_gen_mpi_opencl
 
 import util
+import config
+from config import OPS_READ, OPS_WRITE, OPS_RW, OPS_INC, OPS_MAX, OPS_MIN, OPS_accs_labels
 
 arithmetic_regex_pattern = r'^[ \(\)\+\-\*\\\.\%0-9]+$'
 
 comment_remover = util.comment_remover
 remove_trailing_w_space = util.remove_trailing_w_space
-verbose = util.verbose
+verbose = config.verbose
 
 def ops_parse_calls(text):
     """Parsing for ops_init/ops_exit"""
@@ -410,18 +412,6 @@ def main(source_files):
   kernels = []
   kernels_in_files = []
   macro_defs = {}
-
-  OPS_GBL = 2
-
-  OPS_READ = 1
-  OPS_WRITE = 2
-  OPS_RW = 3
-  OPS_INC = 4
-  OPS_MAX = 5
-  OPS_MIN = 6
-
-  OPS_accs_labels = ['OPS_READ', 'OPS_WRITE', 'OPS_RW', 'OPS_INC',
-                    'OPS_MAX', 'OPS_MIN']
 
   #
   # loop over all input source files
