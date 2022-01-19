@@ -55,6 +55,7 @@ import glob
 
 import util
 import config
+from config import OPS_READ, OPS_WRITE, OPS_RW, OPS_INC, OPS_MAX, OPS_MIN, OPS_accs_labels
 
 para_parse = util.para_parse
 comment_remover = util.comment_remover
@@ -79,14 +80,6 @@ ENDIF = util.ENDIF
 
 
 def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
-
-  OPS_ID   = 1;  OPS_GBL   = 2;
-
-  OPS_READ = 1;  OPS_WRITE = 2;  OPS_RW  = 3;
-  OPS_INC  = 4;  OPS_MAX   = 5;  OPS_MIN = 6;
-
-  accsstring = ['OPS_READ','OPS_WRITE','OPS_RW','OPS_INC','OPS_MAX','OPS_MIN' ]
-
   NDIM = 2 #the dimension of the application is hardcoded here .. need to get this dynamically
 
   src_dir = os.path.dirname(master) or '.'
