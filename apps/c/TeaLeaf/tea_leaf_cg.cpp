@@ -200,13 +200,13 @@ void tea_leaf_cg_calc_p(
 
   if (preconditioner_type != TL_PREC_NONE || tl_ppcg_active) {
     ops_par_loop(tea_leaf_axpby_kernel, "tea_leaf_axpby_kernel", tea_grid, 2, rangexy,
-        ops_arg_dat(p, 1, S2D_00, "double", OPS_INC),
+        ops_arg_dat(p, 1, S2D_00, "double", OPS_RW),
         ops_arg_dat(z, 1, S2D_00, "double", OPS_READ),
         ops_arg_gbl(&beta, 1, "double", OPS_READ),
         ops_arg_gbl(&one, 1, "double", OPS_READ));
   } else {
     ops_par_loop(tea_leaf_axpby_kernel, "tea_leaf_axpby_kernel", tea_grid, 2, rangexy,
-        ops_arg_dat(p, 1, S2D_00, "double", OPS_INC),
+        ops_arg_dat(p, 1, S2D_00, "double", OPS_RW),
         ops_arg_dat(r, 1, S2D_00, "double", OPS_READ),
         ops_arg_gbl(&beta, 1, "double", OPS_READ),
         ops_arg_gbl(&one, 1, "double", OPS_READ));
