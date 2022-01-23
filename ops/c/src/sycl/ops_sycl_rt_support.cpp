@@ -150,6 +150,20 @@ void ops_cpHostToDevice(OPS_instance *instance, void **data_d, void **data_h,
   ops_sycl_memcpyHostToDevice(instance, buffer, data, size);
 }
 
+void ops_sycl_memcpyDeviceToDevice(OPS_instance *instance,
+                                 cl::sycl::buffer<char, 1> *data_d_src,
+                                 cl::sycl::buffer<char, 1> *data_d_dest, size_t bytes) {
+  instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {
+    auto src = data_d_src->get_access<cl::sycl::access::mode::read>(cgh);
+	auto dest = data_d_dest->get_access<cl::sycl::access::mode::write>(cgh);
+	cgh.parallel_for<class cpy_dev_to_dev>(cl::sycl::nd_range<1>(cl::sycl::range<1>(((bytes - 1) / 128 + 1) *128), cl::sycl::range<1>(128)), [=](cl::sycl::nd_item<1> item) {
+	  cl::sycl::cl_int global_x_id = item.get_global_id()[0];
+	  dest[global_x_id] = src[global_x_id];
+	});
+  });
+  instance->sycl_instance->queue->wait();
+}
+
 void ops_download_dat(ops_dat dat) {
   ops_sycl_memcpyDeviceToHost(
       dat->block->instance,

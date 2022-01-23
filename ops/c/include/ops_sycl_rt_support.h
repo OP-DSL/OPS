@@ -63,6 +63,10 @@ void ops_upload_dat(ops_dat dat);
 void ops_download_dat(ops_dat dat);
 void ops_internal_copy_sycl(ops_kernel_descriptor *desc);
 void *ops_sycl_register_const(void *old_p, void *new_p);
+void ops_sycl_memcpyHostToDevice(OPS_instance *instance, cl::sycl::buffer<char, 1> *data_d, char *data_h, size_t bytes);
+void ops_sycl_memcpyDeviceToHost(OPS_instance *instance, cl::sycl::buffer<char, 1> *data_d, char *data_h, size_t bytes);
+void ops_sycl_memcpyDeviceToDevice(OPS_instance *instance,
+ cl::sycl::buffer<char, 1> *data_d_src, cl::sycl::buffer<char, 1> *data_d_dest, size_t bytes);
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_SYCL_RT_SUPPORT_H */
