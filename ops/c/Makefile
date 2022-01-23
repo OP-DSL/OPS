@@ -105,6 +105,9 @@ $(OBJ)/%.o : src/cuda/%.cpp
 $(OBJ)/%.o : src/opencl/%.cpp
 	$(CXX) $(CXXFLAGS) -I$(INC) -c $< -o $@
 
+$(OBJ)/%_sycl_mpi.o : src/mpi/%_sycl.cpp
+	$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(INC) -c $< -o $@
+
 $(OBJ)/%_mpi.o : src/externlib/%.cpp
 	$(MPICXX) $(CXXFLAGS) -I$(INC)  $(HDF5_INC) -c $< -o $@ 
 
@@ -218,6 +221,15 @@ mpi_opencl: mklib $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_util.o 
 	$(OBJ)/ops_checkpointing.o $(OBJ)/ops_mpi_decl_opencl_mpi.o $(OBJ)/ops_mpi_rt_support_mpi.o \
         $(OBJ)/ops_mpi_core_mpi.o $(OBJ)/ops_mpi_rt_support_opencl_mpi.o $(OBJ)/ops_mpi_partition_mpi.o \
 	$(OBJ)/ops_opencl_rt_support.o $(OBJ)/ops_checkpointing_strategy.o
+
+mpi_sycl: mklib $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_util.o $(OBJ)/ops_lazy.o \
+  $(OBJ)/ops_checkpointing.o $(OBJ)/ops_mpi_decl_sycl_mpi.o $(OBJ)/ops_mpi_rt_support_mpi.o \
+        $(OBJ)/ops_mpi_core_mpi.o $(OBJ)/ops_mpi_rt_support_sycl_mpi.o $(OBJ)/ops_mpi_partition_mpi.o \
+  $(OBJ)/ops_sycl_rt_support.o $(OBJ)/ops_checkpointing_strategy.o 
+	ar -r $(LIB)/libops_mpi_sycl.a $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_util.o $(OBJ)/ops_lazy.o \
+	$(OBJ)/ops_checkpointing.o $(OBJ)/ops_mpi_decl_sycl_mpi.o $(OBJ)/ops_mpi_rt_support_mpi.o \
+        $(OBJ)/ops_mpi_core_mpi.o $(OBJ)/ops_mpi_rt_support_sycl_mpi.o $(OBJ)/ops_mpi_partition_mpi.o \
+	$(OBJ)/ops_sycl_rt_support.o $(OBJ)/ops_checkpointing_strategy.o
 
 sycl: mklib $(OBJ)/ops_lib_core.o $(OBJ)/ops_instance.o $(OBJ)/ops_lazy.o $(OBJ)/ops_checkpointing.o \
   $(OBJ)/ops_util.o $(OBJ)/ops_dummy_singlenode.o $(OBJ)/ops_checkpointing_strategy.o \

@@ -13,4 +13,6 @@ ifdef THREADED
 endif
 SYCLCXX = dpcpp
 SYCL_FLAGS = -fsycl #-I$(SYCL_INSTALL_PATH)/include #-fsycl-targets=spir64_x86_64-unknown-unknown-sycldevice #intel sycl 
+SYCLMPICXX = dpcpp -I/opt/intel/inteloneapi/mpi/2021.1-beta06/include -L/opt/intel/inteloneapi/mpi/2021.1-beta06/lib/release -L/opt/intel/inteloneapi/mpi/2021.1-beta06/lib -Xlinker --enable-new-dtags -Xlinker -rpath -lmpicxx -lmpifort -lmpi -lrt -lpthread -Wl,-z,now -Wl,-z,relro -Wl,-z,noexecstack -Xlinker --enable-new-dtags -ldl #$(shell mpicxx --showme:compile) $(shell mpicxx --showme:link)
+#SYCL_FLAGS = -fsycl -I$(SYCL_INSTALL_PATH)/include #-fsycl-targets=spir64_x86_64-unknown-unknown-sycldevice #intel sycl 
 MPICXX=mpicxx
