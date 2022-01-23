@@ -266,7 +266,7 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset, const char *__
 		auto src_acc = src_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
 		
 		//parloop
-		cgh.parallel_for<class ops_sycl_packer_1_soa>(cl::sycl::nd_range<1>(cl::sycl::range<1>(num_blocks * num_threads), cl::sycl::range<1>(num_threads)), [=](cl::sycl::nd_item<1> item) {
+		cgh.parallel_for<class ops_sycl_unpacker_1_soa>(cl::sycl::nd_range<1>(cl::sycl::range<1>(num_blocks * num_threads), cl::sycl::range<1>(num_threads)), [=](cl::sycl::nd_item<1> item) {
 			cl::sycl::cl_int global_x_id = item.get_global_id()[0];
 			cl::sycl::cl_int block = global_x_id / halo_blocklength;
 			if(global_x_id < halo_count * halo_blocklength) {
@@ -293,7 +293,7 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset, const char *__
 		auto src_acc = src_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
 		
 		//parloop
-		cgh.parallel_for<class ops_sycl_packer_4>(cl::sycl::nd_range<1>(cl::sycl::range<1>(num_blocks * num_threads), cl::sycl::range<1>(num_threads)), [=](cl::sycl::nd_item<1> item) {
+		cgh.parallel_for<class ops_sycl_unpacker_4>(cl::sycl::nd_range<1>(cl::sycl::range<1>(num_blocks * num_threads), cl::sycl::range<1>(num_threads)), [=](cl::sycl::nd_item<1> item) {
 			cl::sycl::cl_int global_x_id = item.get_global_id()[0];
 			cl::sycl::cl_int block = global_x_id / halo_blocklength*dat->dim / 4;
 			if(global_x_id < halo_count * halo_blocklength*dat->dim / 4) {
@@ -317,7 +317,7 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset, const char *__
 		auto src_acc = src_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
 		
 		//parloop
-		cgh.parallel_for<class ops_sycl_packer_1>(cl::sycl::nd_range<1>(cl::sycl::range<1>(num_blocks * num_threads), cl::sycl::range<1>(num_threads)), [=](cl::sycl::nd_item<1> item) {
+		cgh.parallel_for<class ops_sycl_unpacker_1>(cl::sycl::nd_range<1>(cl::sycl::range<1>(num_blocks * num_threads), cl::sycl::range<1>(num_threads)), [=](cl::sycl::nd_item<1> item) {
 			cl::sycl::cl_int global_x_id = item.get_global_id()[0];
 			cl::sycl::cl_int block = global_x_id / halo_blocklength*dat->dim;
 			if(global_x_id < halo_count * halo_blocklength*dat->dim) {

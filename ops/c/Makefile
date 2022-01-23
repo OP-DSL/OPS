@@ -106,7 +106,7 @@ $(OBJ)/%.o : src/opencl/%.cpp
 	$(CXX) $(CXXFLAGS) -I$(INC) -c $< -o $@
 
 $(OBJ)/%_sycl_mpi.o : src/mpi/%_sycl.cpp
-	$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(INC) -c $< -o $@
+	$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(INC) $(MPI_INC) -c $< -o $@
 
 $(OBJ)/%_mpi.o : src/externlib/%.cpp
 	$(MPICXX) $(CXXFLAGS) -I$(INC)  $(HDF5_INC) -c $< -o $@ 
