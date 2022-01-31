@@ -117,16 +117,16 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset, char *__restrict 
     dat->dirty_hd = 0;
   }
 
-  const char *__restrict src = dat->data_d + src_offset * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
+  const char *__restrict src = dat->data_d;
+  size_t src_offset2 = src_offset * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
+  int datdim = dat->dim;
   if (halo_buffer_size < halo_count * halo_blocklength * dat->dim && !OPS_instance::getOPSInstance()->OPS_gpu_direct) {
     if (halo_buffer_d != NULL){
 	  cl::sycl::buffer<char,1> * halo_buffer_sycl = static_cast<cl::sycl::buffer<char,1> *>((void*)halo_buffer_d);
 	  delete halo_buffer_sycl;
-      //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(halo_buffer_d));
-	}
-	cl::sycl::buffer<char,1> * halo_buffer_sycl = new cl::sycl::buffer<char,1>(cl::sycl::range<1>(halo_count * halo_blocklength * dat->dim * 4));
-	halo_buffer_d = (char*) halo_buffer_sycl;
-    //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMalloc((void **)&halo_buffer_d, halo_count * halo_blocklength * dat->dim * 4));
+    }
+    cl::sycl::buffer<char,1> * halo_buffer_sycl = new cl::sycl::buffer<char,1>(cl::sycl::range<1>(halo_count * halo_blocklength * dat->dim * 4));
+    halo_buffer_d = (char*) halo_buffer_sycl;
     halo_buffer_size = halo_count * halo_blocklength * dat->dim * 4;
   }
   char *device_buf = NULL;
@@ -141,6 +141,7 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset, char *__restrict 
   if (OPS_instance::getOPSInstance()->OPS_soa) {
     int num_threads = 128;
     int num_blocks = ((halo_blocklength * halo_count) - 1) / num_threads + 1;
+		size_t datsize = dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size;
 	
 	//ide kernel kell!! tartalma az ops_cuda_packer_1_soa
 	dat->block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {
@@ -153,18 +154,12 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset, char *__restrict 
 			cl::sycl::cl_int global_x_id = item.get_global_id()[0];
 			cl::sycl::cl_int block = global_x_id / halo_blocklength;
 			if(global_x_id < halo_count * halo_blocklength) {
-				for (int d=0; d<dat->dim; d++) {
-					dest_acc[global_x_id * dat->dim + d] = src_acc[halo_stride * block + global_x_id % halo_blocklength + d * dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size];
+				for (int d=0; d<datdim; d++) {
+					dest_acc[global_x_id * datdim + d] = src_acc[src_offset2 + halo_stride * block + global_x_id % halo_blocklength + d * datsize];
 				}
 			}
 		});
 	});
-    /*
-	ops_cuda_packer_1_soa<<<num_blocks, num_threads>>>(
-        src, device_buf, halo_count, halo_blocklength, halo_stride,
-        dat->dim, dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size);
-	*/
-    //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaGetLastError());
 
   } else if (halo_blocklength % 4 == 0) {
     int num_threads = 128;
@@ -179,48 +174,33 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset, char *__restrict 
 		//parloop
 		cgh.parallel_for<class ops_sycl_packer_4>(cl::sycl::nd_range<1>(cl::sycl::range<1>(num_blocks * num_threads), cl::sycl::range<1>(num_threads)), [=](cl::sycl::nd_item<1> item) {
 			cl::sycl::cl_int global_x_id = item.get_global_id()[0];
-			cl::sycl::cl_int block = global_x_id / halo_blocklength*dat->dim / 4;
-			if(global_x_id < halo_count * halo_blocklength*dat->dim / 4) {
-				dest_acc[global_x_id] = src_acc[halo_stride*dat->dim / 4 * block + global_x_id % halo_blocklength*dat->dim / 4];
+			cl::sycl::cl_int block = global_x_id / halo_blocklength*datdim / 4;
+			if(global_x_id < halo_count * halo_blocklength*datdim / 4) {
+				dest_acc[global_x_id] = src_acc[src_offset2+halo_stride*datdim / 4 * block + global_x_id % halo_blocklength*datdim / 4];
 			}
 		});
 	});
-	/*
-    ops_cuda_packer_4<<<num_blocks, num_threads>>>(
-        (const int *)src, (int *)device_buf, halo_count, halo_blocklength*dat->dim / 4,
-        halo_stride*dat->dim / 4);
-	*/
-    //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaGetLastError());
   } else {
     int num_threads = 128;
     int num_blocks = ((dat->dim * halo_blocklength * halo_count) - 1) / num_threads + 1;
-	//ide kernel kell!! tartalma az ops_cuda_packer_1
 	dat->block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {
-		//Accessors
 		auto dest_acc = dest_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
 		auto src_acc = src_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
 		
 		//parloop
 		cgh.parallel_for<class ops_sycl_packer_1>(cl::sycl::nd_range<1>(cl::sycl::range<1>(num_blocks * num_threads), cl::sycl::range<1>(num_threads)), [=](cl::sycl::nd_item<1> item) {
 			cl::sycl::cl_int global_x_id = item.get_global_id()[0];
-			cl::sycl::cl_int block = global_x_id / halo_blocklength*dat->dim;
-			if(global_x_id < halo_count * halo_blocklength*dat->dim) {
-				dest_acc[global_x_id] = src_acc[halo_stride*dat->dim * block + global_x_id % halo_blocklength*dat->dim];
+			cl::sycl::cl_int block = global_x_id / halo_blocklength*datdim;
+			if(global_x_id < halo_count * halo_blocklength*datdim) {
+				dest_acc[global_x_id] = src_acc[src_offset + halo_stride*datdim * block + global_x_id % halo_blocklength*datdim];
 			}
 		});
 	});
-	/*
-    ops_cuda_packer_1<<<num_blocks, num_threads>>>(
-        src, device_buf, halo_count, halo_blocklength*dat->dim, halo_stride*dat->dim);
-    */
-	//cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaGetLastError());
   }
   if (!OPS_instance::getOPSInstance()->OPS_gpu_direct)
 	ops_sycl_memcpyDeviceToHost(dat->block->instance, dest_buff, dest, halo_blocklength * dat->dim);
-    //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMemcpy(dest, halo_buffer_d, halo_count * halo_blocklength * dat->dim, cudaMemcpyDeviceToHost));
   else
 	dat->block->instance->sycl_instance->queue->wait();
-    //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaDeviceSynchronize());
 }
 
 void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset, const char *__restrict src,
@@ -230,16 +210,16 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset, const char *__
     ops_upload_dat(dat);
     dat->dirty_hd = 0;
   }
-  char *__restrict dest = dat->data_d + dest_offset * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
+  char *__restrict dest = dat->data_d;
+  size_t dest_offset2 = dest_offset * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
+  int datdim = dat->dim;
   if (halo_buffer_size < halo_count * halo_blocklength * dat->dim && !OPS_instance::getOPSInstance()->OPS_gpu_direct) {
     if (halo_buffer_d != NULL){
       cl::sycl::buffer<char,1> * halo_buffer_sycl = static_cast<cl::sycl::buffer<char,1> *>((void*)halo_buffer_d);
 	  delete halo_buffer_sycl;
-	  //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(halo_buffer_d));
 	}
     cl::sycl::buffer<char,1> * halo_buffer_sycl = new cl::sycl::buffer<char,1>(cl::sycl::range<1>(halo_count * halo_blocklength * dat->dim * 4));
 	halo_buffer_d = (char*) halo_buffer_sycl;
-	//cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMalloc((void **)&halo_buffer_d, halo_count * halo_blocklength * dat->dim * 4));
     halo_buffer_size = halo_count * halo_blocklength * dat->dim * 4;
   }
 
@@ -254,11 +234,11 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset, const char *__
   
   if (!OPS_instance::getOPSInstance()->OPS_gpu_direct){
     ops_sycl_memcpyHostToDevice(dat->block->instance, src_buff, halo_buffer_d, halo_count * halo_blocklength * dat->dim);
-	//cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMemcpy(halo_buffer_d, src, halo_count * halo_blocklength * dat->dim, cudaMemcpyHostToDevice));
   }
   if (OPS_instance::getOPSInstance()->OPS_soa) {
     int num_threads = 128;
     int num_blocks = ((halo_blocklength * halo_count) - 1) / num_threads + 1;
+    size_t datsize = dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size;
 	//ide kernel kell!! tartalma az ops_cuda_unpacker_1_soa
     dat->block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {
 		//Accessors
@@ -270,23 +250,16 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset, const char *__
 			cl::sycl::cl_int global_x_id = item.get_global_id()[0];
 			cl::sycl::cl_int block = global_x_id / halo_blocklength;
 			if(global_x_id < halo_count * halo_blocklength) {
-				for (int d=0; d<dat->dim; d++) {
-					dest_acc[halo_stride * block + global_x_id % halo_blocklength + d * dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size] = src_acc[global_x_id * dat->dim + d];
+				for (int d=0; d<datdim; d++) {
+					dest_acc[dest_offset2+halo_stride * block + global_x_id % halo_blocklength + d * datsize] = src_acc[global_x_id * datdim + d];
 				}
 			}
 		});
 	});
-	/*
-	ops_cuda_unpacker_1_soa<<<num_blocks, num_threads>>>(
-        device_buf, dest, halo_count, halo_blocklength, halo_stride,
-        dat->dim, dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size);
-    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaGetLastError());
-	*/
   } else if (halo_blocklength % 4 == 0) {
     int num_threads = 128;
     int num_blocks =
         (((dat->dim * halo_blocklength / 4) * halo_count) - 1) / num_threads + 1;
-	//ide kernel kell!! tartalma az ops_cuda_unpacker_4
     dat->block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {
 		//Accessors
 		auto dest_acc = dest_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
@@ -295,18 +268,12 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset, const char *__
 		//parloop
 		cgh.parallel_for<class ops_sycl_unpacker_4>(cl::sycl::nd_range<1>(cl::sycl::range<1>(num_blocks * num_threads), cl::sycl::range<1>(num_threads)), [=](cl::sycl::nd_item<1> item) {
 			cl::sycl::cl_int global_x_id = item.get_global_id()[0];
-			cl::sycl::cl_int block = global_x_id / halo_blocklength*dat->dim / 4;
+			cl::sycl::cl_int block = global_x_id / halo_blocklength*datdim / 4;
 			if(global_x_id < halo_count * halo_blocklength*dat->dim / 4) {
-				dest_acc[halo_stride*dat->dim / 4 * block + global_x_id % halo_blocklength*dat->dim / 4] = src_acc[global_x_id];
+				dest_acc[dest_offset2+halo_stride*datdim / 4 * block + global_x_id % halo_blocklength*datdim / 4] = src_acc[global_x_id];
 			}
 		});
 	});
-	/*
-	ops_cuda_unpacker_4<<<num_blocks, num_threads>>>(
-        (const int *)device_buf, (int *)dest, halo_count,
-        halo_blocklength*dat->dim / 4, halo_stride*dat->dim / 4);
-    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaGetLastError());
-	*/
   } else {
     int num_threads = 128;
     int num_blocks = ((dat->dim * halo_blocklength * halo_count) - 1) / num_threads + 1;
@@ -319,9 +286,9 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset, const char *__
 		//parloop
 		cgh.parallel_for<class ops_sycl_unpacker_1>(cl::sycl::nd_range<1>(cl::sycl::range<1>(num_blocks * num_threads), cl::sycl::range<1>(num_threads)), [=](cl::sycl::nd_item<1> item) {
 			cl::sycl::cl_int global_x_id = item.get_global_id()[0];
-			cl::sycl::cl_int block = global_x_id / halo_blocklength*dat->dim;
-			if(global_x_id < halo_count * halo_blocklength*dat->dim) {
-				dest_acc[halo_stride*dat->dim * block + global_x_id % halo_blocklength*dat->dim] = src_acc[global_x_id];
+			cl::sycl::cl_int block = global_x_id / halo_blocklength*datdim;
+			if(global_x_id < halo_count * halo_blocklength*datdim) {
+				dest_acc[dest_offset2+halo_stride*dat->dim * block + global_x_id % halo_blocklength*datdim] = src_acc[global_x_id];
 			}
 		});
 	});
