@@ -220,6 +220,21 @@ class OPS_instance {
     }
 
 /**
+ * This routine updates/changes the value of a constant.
+ *
+ * @tparam T
+ * @param name  a name used to identify the constant
+ * @param dim   dimension of dataset (number of items per element)
+ * @param type  the name of type used for output diagnostics
+ *              (e.g. "double", "float")
+ * @param data  pointer to input data of type @p T
+ */
+    template <class T>
+    void update_const(char const *name, int dim, char const *type, T *data) {
+      decl_const(name, dim, type, data);
+    }
+
+/**
  * This routine prints out various useful bits of diagnostic info about sets,
  * mappings and datasets.
  *
