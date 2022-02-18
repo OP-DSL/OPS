@@ -51,16 +51,24 @@
 
 void syclDeviceInit(OPS_instance *instance, const int argc,
                     const char *const argv[]) {
+  char temp[64];
+  const char *pch;
+
   int OPS_sycl_device = 3;
   for (int i = 0; i < argc; ++i) {
-    if (strncmp(argv[i], "OPS_SYCL_DEVICE=", 16) == 0) {
-      if (strcmp(argv[i] + strlen("OPS_SYCL_DEVICE="), "host") == 0)
+    pch = strstr(argv[i], "OPS_SYCL_DEVICE=");
+    if (pch != NULL) {
+      snprintf(temp, 64, "%s", pch);
+      if (strcmp(temp + strlen("OPS_SYCL_DEVICE="), "host") == 0)
         OPS_sycl_device = 0;
-      else if (strcmp(argv[i] + strlen("OPS_SYCL_DEVICE="), "cpu") == 0)
+      else if (strcmp(temp + strlen("OPS_SYCL_DEVICE="), "cpu") == 0)
         OPS_sycl_device = 1;
-      else if (strcmp(argv[i] + strlen("OPS_SYCL_DEVICE="), "gpu") == 0)
+      else if (strcmp(temp + strlen("OPS_SYCL_DEVICE="), "gpu") == 0)
         OPS_sycl_device = 2;
-      break;
+      else {
+        int val = atoi(temp + strlen("OPS_SYCL_DEVICE="));
+        OPS_sycl_device=4+val;
+      }
     }
   }
   instance->sycl_instance = new OPS_instance_sycl();
@@ -81,7 +89,20 @@ void syclDeviceInit(OPS_instance *instance, const int argc,
     instance->sycl_instance->queue =
         new cl::sycl::queue(cl::sycl::default_selector());
     break;
-  default: ops_printf("Error, unrecognised SYCL device selection\n"); exit(-1);
+  default: 
+    std::vector<cl::sycl::device> devices;
+    devices = cl::sycl::device::get_devices();
+    int devid = OPS_sycl_device - 4;
+    if (devid < 0 || devid >= devices.size()) {
+      ops_printf("Error, unrecognised SYCL device selection. Available devices (%d)\n",devices.size());
+      for (int i = 0; i < devices.size(); i++)
+      {
+        ops_printf("%d: %s\n", devid, devices[i].get_info<cl::sycl::info::device::name>().c_str());
+      }
+      exit(-1);
+    }
+    instance->sycl_instance->queue =
+        new cl::sycl::queue(devices[devid]);
   }
 
   instance->OPS_hybrid_gpu = 1;

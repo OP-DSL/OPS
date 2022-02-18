@@ -92,7 +92,7 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
     gen_oneapi = True
     sycl_guarded_namespace = "cl::sycl::"
     if gen_oneapi:
-        sycl_guarded_namespace = "cl::sycl::ONEAPI::"
+        sycl_guarded_namespace = "cl::sycl::"
 
     NDIM = 2  #the dimension of the application is hardcoded here .. need to get this dynamically
 
@@ -158,7 +158,7 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                 MULTI_GRID = 1
 
         reduction = False
-        builtin_reduction = True
+        builtin_reduction = False
         red_arg_idxs = []
         for n in range(0, nargs):
             if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
@@ -166,7 +166,7 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                 red_arg_idxs.append(n)
                 if not dims[n].isdigit():
                     builtin_reduction = False
-        flat_parallel = True
+        flat_parallel = False
         if (not builtin_reduction) or (gen_oneapi and reduction):
             #if flat_parallel and reduction: #and not builtin_reduction:
             flat_parallel = False
@@ -694,7 +694,7 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                         ' auto &reduction_h_p_a{0}_{1}'.format(n, i)
                         for i in range(int(dims[n]))
                     ]))
-        code(') {')
+        code(') [[intel::kernel_args_restrict]] {')
         config.depth += 2
         line3 = ''
         for n in range(0, nargs):
