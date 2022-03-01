@@ -134,7 +134,7 @@ void ops_sycl_memcpyHostToDevice(OPS_instance *instance,
   instance->sycl_instance->queue->wait();
 #else
   auto HostAccessor =
-      data_d->get_host_access(cl::sycl::range<1>(bytes), cl::sycl::write_only);
+      data_d->get_access<cl::sycl::access::mode::write>();
   for (size_t i = 0; i < bytes; i++)
     HostAccessor[i] = data_h[i];
 #endif
@@ -153,7 +153,7 @@ void ops_sycl_memcpyDeviceToHost(OPS_instance *instance,
   instance->sycl_instance->queue->wait();
 #else
   auto HostAccessor =
-      data_d->get_host_access(cl::sycl::range<1>(bytes), cl::sycl::write_only);
+      data_d->get_access<cl::sycl::access::mode::write>();
   for (size_t i = 0; i < bytes; i++)
     data_h[i] = HostAccessor[i];
 #endif

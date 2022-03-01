@@ -311,7 +311,7 @@ char* OPS_realloc_fast(char *ptr, size_t olds, size_t news) {
       //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMalloc((void **)&ptr, news));
       return ptr;
     } else {
-      if (OPS_instance::getOPSInstance()->OPS_diags>3) printf("Warning: cuda cache realloc\n");
+      if (OPS_instance::getOPSInstance()->OPS_diags>3) printf("Warning: SYCL cache realloc\n");
       char *ptr2;
 	  cl::sycl::buffer<char,1> * ptr2_buff = new cl::sycl::buffer<char,1>(cl::sycl::range<1>(news));
 	  ptr2 = (char*) ptr2_buff;
@@ -332,7 +332,7 @@ char* OPS_realloc_fast(char *ptr, size_t olds, size_t news) {
     if (ptr != NULL) cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ptr));
     return ptr2;
 	*/
-	return (char*) ops_realloc((void*) ptr, news);
+    return (char*) ops_realloc((void*) ptr, news);
   }
 }
 /*
@@ -402,121 +402,75 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 
   
   ops_block block = src->block;
-  
-  //dest += dest_offset;
-  int thr_x = abs(rx_s - rx_e);
-  int blk_x = 1;
-  if (abs(rx_s - rx_e) > 8) {
-    blk_x = (thr_x - 1) / 8 + 1;
-    thr_x = 8;
-  }
-  int thr_y = abs(ry_s - ry_e);
-  int blk_y = 1;
-  if (abs(ry_s - ry_e) > 8) {
-    blk_y = (thr_y - 1) / 8 + 1;
-    thr_y = 8;
-  }
-  int thr_z = abs(rz_s - rz_e);
-  int blk_z = 1;
-  if (abs(rz_s - rz_e) > 8) {
-    blk_z = (thr_z - 1) / 8 + 1;
-    thr_z = 8;
-  }
 
   int size =
-      abs(src->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
-  
-  //EZ MI?(A)
+    abs(src->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
+
   char *gpu_ptr;
   if (OPS_instance::getOPSInstance()->OPS_gpu_direct)
     gpu_ptr = dest;
   else {
     if (halo_buffer_size < size) {
       if (halo_buffer_d != NULL){
-		cl::sycl::buffer<char,1> * halo_buffer_sycl = static_cast<cl::sycl::buffer<char,1> *>((void*)halo_buffer_d);
-		delete halo_buffer_sycl;
-		//cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(halo_buffer_d));
-	  }
-	  cl::sycl::buffer<char,1> * halo_buffer_sycl = new cl::sycl::buffer<char,1>(cl::sycl::range<1>(size));
-	  halo_buffer_d = (char*) halo_buffer_sycl;
-      //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMalloc((void **)&halo_buffer_d, size * sizeof(char)));
+        cl::sycl::buffer<char,1> * halo_buffer_sycl = static_cast<cl::sycl::buffer<char,1> *>((void*)halo_buffer_d);
+        delete halo_buffer_sycl;
+      }
+      cl::sycl::buffer<char,1> * halo_buffer_sycl = new cl::sycl::buffer<char,1>(cl::sycl::range<1>(size));
+      halo_buffer_d = (char*) halo_buffer_sycl;
       halo_buffer_size = size;
     }
     gpu_ptr = halo_buffer_d;
   }
-  //EZ(A)
 
   if (src->dirty_hd == 1) {
     ops_upload_dat(src);
     src->dirty_hd = 0;
   }
 
-  //dim3 grid(blk_x, blk_y, blk_z);
-  //dim3 tblock(thr_x, thr_y, thr_z);
-	int size_x = src->size[0];
-	int size_y = src->size[1];
-	int size_z = src->size[2];
-	int type_size = src->type_size;
-	int dim = src->dim;
-	int OPS_soa = block->instance->OPS_soa;
+  int size_x = src->size[0];
+  int size_y = src->size[1];
+  int size_z = src->size[2];
+  int type_size = src->type_size;
+  int dim = src->dim;
+  int OPS_soa = block->instance->OPS_soa;
+  int dest_offset_local = 0;
+  if (OPS_instance::getOPSInstance()->OPS_gpu_direct) dest_offset_local = dest_offset;
 	
 	cl::sycl::buffer<char,1> *dest_buff = static_cast<cl::sycl::buffer<char,1> *>((void*)gpu_ptr);
 	cl::sycl::buffer<char,1> *src_buff = static_cast<cl::sycl::buffer<char,1> *>((void*)src->data_d);
 	
-	
-	block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {		//Queue->Submit
-		//Accessors
+	memset(dest+dest_offset, 0, size);
+	block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {		
 		auto dest_acc = dest_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
 		auto src_acc = src_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
 
-		//nd_range elso argumentume a teljes méret, nem a blokkok száma: https://docs.oneapi.com/versions/latest/dpcpp/iface/nd_range.html
-		cgh.parallel_for<class copy_tobuf>(cl::sycl::nd_range<3>(cl::sycl::range<3>(blk_z*thr_z,blk_y*thr_y,blk_x*thr_x),cl::sycl::range<3>(thr_z,thr_y,thr_x)), [=](cl::sycl::nd_item<3> item) {
-			//get x dimension id
-			cl::sycl::cl_int global_x_id = item.get_global_id()[2];
-			//get y dimension id
-			cl::sycl::cl_int global_y_id = item.get_global_id()[1];
-			//get z dimension id
-			cl::sycl::cl_int global_z_id = item.get_global_id()[0];
+    cgh.parallel_for<class copy_tobuf>(cl::sycl::range<3>(rz_e-rz_s, ry_e-ry_s, rx_e-rx_s), [=](cl::sycl::id<3> item) {
+        cl::sycl::cl_int d_offset = dest_offset_local;
+        cl::sycl::cl_int s_offset = 0;
 
-			cl::sycl::cl_int d_offset = dest_offset;
-			cl::sycl::cl_int s_offset = 0;
+        int idx_z = rz_s + z_step * item.get(0);
+        int idx_y = ry_s + y_step * item.get(1);
+        int idx_x = rx_s + x_step * item.get(2);
+        if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
+            (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
+            (z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
 
-			int idx_z = rz_s + z_step * global_z_id;
-			int idx_y = ry_s + y_step * global_y_id;
-			int idx_x = rx_s + x_step * global_x_id;
-
-			if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
-			   (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
-			   (z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
-
-				if (OPS_soa) s_offset += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size;
-
-				else s_offset += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size * dim;
-				d_offset += ((idx_z - rz_s) * z_step * buf_strides_z +
-							 (idx_y - ry_s) * y_step * buf_strides_y +
-							 (idx_x - rx_s) * x_step * buf_strides_x) *
-							 type_size * dim;
-				for (int d = 0; d < dim; d++) {
-					memcpy(&dest_acc[d_offset + d*type_size],
-						   &src_acc[s_offset],
-						   type_size);
-					if (OPS_soa) s_offset += size_x * size_y * size_z * type_size;
-					else s_offset += type_size;
-				}
-			}
-		});
-	});
-/*  copy_kernel_tobuf<<<grid, tblock>>>(
-      gpu_ptr, src->data_d, rx_s, rx_e, ry_s, ry_e, rz_s, rz_e, x_step, y_step,
-      z_step, src->size[0], src->size[1], src->size[2], buf_strides_x,
-      buf_strides_y, buf_strides_z, src->type_size, src->dim, OPS_instance::getOPSInstance()->OPS_soa);
-*/
-
-  //EZ MI?(B)
+          if (OPS_soa) s_offset += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size;
+          else s_offset += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size * dim;
+          d_offset += ((idx_z - rz_s) * z_step * buf_strides_z +
+                       (idx_y - ry_s) * y_step * buf_strides_y +
+                       (idx_x - rx_s) * x_step * buf_strides_x) *
+          type_size * dim ;
+          for (int d = 0; d < dim; d++) {
+            memcpy(&dest_acc[d_offset+d*type_size], &src_acc[s_offset], type_size);
+            if (OPS_soa) s_offset += size_x * size_y * size_z * type_size;
+            else s_offset += type_size;
+          }
+        }});
+    });
+	src->block->instance->sycl_instance->queue->wait();
   if (!OPS_instance::getOPSInstance()->OPS_gpu_direct)
-	ops_sycl_memcpyDeviceToHost(block->instance, dest_buff, dest, size * sizeof(char));
-    //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMemcpy(dest, halo_buffer_d, size * sizeof(char), cudaMemcpyDeviceToHost));
-  //EZ(B)
+  	ops_sycl_memcpyDeviceToHost(block->instance, dest_buff, dest+dest_offset, size * sizeof(char));
 }
 
 void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
@@ -526,109 +480,78 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                            int buf_strides_z) {
 
   ops_block block = dest->block;
-  
-  //src += src_offset;
-  int thr_x = abs(rx_s - rx_e);
-  int blk_x = 1;
-  if (abs(rx_s - rx_e) > 8) {
-    blk_x = (thr_x - 1) / 8 + 1;
-    thr_x = 8;
-  }
-  int thr_y = abs(ry_s - ry_e);
-  int blk_y = 1;
-  if (abs(ry_s - ry_e) > 8) {
-    blk_y = (thr_y - 1) / 8 + 1;
-    thr_y = 8;
-  }
-  int thr_z = abs(rz_s - rz_e);
-  int blk_z = 1;
-  if (abs(rz_s - rz_e) > 8) {
-    blk_z = (thr_z - 1) / 8 + 1;
-    thr_z = 8;
-  }
 
   int size =
-      abs(dest->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
+    abs(dest->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
   char *gpu_ptr;
   if (OPS_instance::getOPSInstance()->OPS_gpu_direct)
     gpu_ptr = src;
   else {
     if (halo_buffer_size < size) {
       if (halo_buffer_d != NULL){
-		cl::sycl::buffer<char,1> * halo_buffer_sycl = static_cast<cl::sycl::buffer<char,1> *>((void*)halo_buffer_d);
-		delete halo_buffer_sycl;
-		//cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(halo_buffer_d));
-		
-	  }
-	  cl::sycl::buffer<char,1> * halo_buffer_sycl = new cl::sycl::buffer<char,1>(cl::sycl::range<1>(size));
-	  halo_buffer_d = (char*) halo_buffer_sycl;
-      //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMalloc((void **)&halo_buffer_d, size * sizeof(char)));
+        cl::sycl::buffer<char,1> * halo_buffer_sycl = static_cast<cl::sycl::buffer<char,1> *>((void*)halo_buffer_d);
+        delete halo_buffer_sycl;
+      }
+      cl::sycl::buffer<char,1> * halo_buffer_sycl = new cl::sycl::buffer<char,1>(cl::sycl::range<1>(size));
+      halo_buffer_d = (char*) halo_buffer_sycl;
       halo_buffer_size = size;
     }
     gpu_ptr = halo_buffer_d;
-	cl::sycl::buffer<char,1> *src_buff = static_cast<cl::sycl::buffer<char,1> *>((void*)gpu_ptr);
-	ops_sycl_memcpyHostToDevice(block->instance, src_buff, halo_buffer_d, size * sizeof(char));
-    //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMemcpy(halo_buffer_d, src, size * sizeof(char), cudaMemcpyHostToDevice));
+    cl::sycl::buffer<char,1> *src_buff = static_cast<cl::sycl::buffer<char,1> *>((void*)gpu_ptr);
+    ops_sycl_memcpyHostToDevice(block->instance, src_buff, src+src_offset, size * sizeof(char));
   }
 
   if (dest->dirty_hd == 1) {
     ops_upload_dat(dest);
     dest->dirty_hd = 0;
   }
-  
-  int size_x = dest->size[0];
-	int size_y = dest->size[1];
-	int size_z = dest->size[2];
-	int type_size = dest->type_size;
-	int dim = dest->dim;
-	int OPS_soa = block->instance->OPS_soa;
-	
-	cl::sycl::buffer<char,1> *src_buff = static_cast<cl::sycl::buffer<char,1> *>((void*)gpu_ptr);
-	
-	cl::sycl::buffer<char,1> *dest_buff = static_cast<cl::sycl::buffer<char,1> *>((void*)dest->data_d);
 
-  //dim3 grid(blk_x, blk_y, blk_z);
-  //dim3 tblock(thr_x, thr_y, thr_z);
+  int size_x = dest->size[0];
+  int size_y = dest->size[1];
+  int size_z = dest->size[2];
+  int type_size = dest->type_size;
+  int dim = dest->dim;
+  int OPS_soa = block->instance->OPS_soa;
+  int src_offset_local = 0;
+  if (OPS_instance::getOPSInstance()->OPS_gpu_direct) src_offset_local = src_offset;
+
+
+  cl::sycl::buffer<char,1> *src_buff = static_cast<cl::sycl::buffer<char,1> *>((void*)gpu_ptr);
+  cl::sycl::buffer<char,1> *dest_buff = static_cast<cl::sycl::buffer<char,1> *>((void*)dest->data_d);
+
   block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {
-		//Accessors
-		auto dest_acc = dest_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
-		auto src_acc = src_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
-		cgh.parallel_for<class copy_frombuf>(cl::sycl::nd_range<3>(cl::sycl::range<3>(blk_z*thr_z,blk_y*thr_y,blk_x*thr_x),cl::sycl::range<3>(thr_z,thr_y,thr_x)), [=](cl::sycl::nd_item<3> item) {
-			//get x dimension id
-			cl::sycl::cl_int global_x_id = item.get_global_id()[2];
-			//get y dimension id
-			cl::sycl::cl_int global_y_id = item.get_global_id()[1];
-			//get z dimension id
-			cl::sycl::cl_int global_z_id = item.get_global_id()[0];
-			
-			cl::sycl::cl_int d_offset = 0;
-			cl::sycl::cl_int s_offset = src_offset;
-			
-			int idx_z = rz_s + z_step * global_z_id;
-			int idx_y = ry_s + y_step * global_y_id;
-			int idx_x = rx_s + x_step * global_x_id;
-			
-			if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
-			   (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
-			   (z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
-				
-				if (OPS_soa) d_offset += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size;
-				else d_offset += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size * dim;
-				s_offset += ((idx_z - rz_s) * z_step * buf_strides_z + (idx_y - ry_s) * y_step * buf_strides_y + (idx_x - rx_s) * x_step * buf_strides_x) * type_size * dim;
-				for (int d = 0; d < dim; d++) {
-					memcpy(&dest_acc[d_offset], &src_acc[s_offset + d*type_size], type_size);
-					if (OPS_soa) d_offset += size_x * size_y * size_z * type_size;
-					else d_offset += type_size;
-				}
-			}
-		});
-	});
-  /*copy_kernel_frombuf<<<grid, tblock>>>(
-      dest->data_d, gpu_ptr, rx_s, rx_e, ry_s, ry_e, rz_s, rz_e, x_step, y_step,
-      z_step, dest->size[0], dest->size[1], dest->size[2], buf_strides_x,
-      buf_strides_y, buf_strides_z, dest->type_size, dest->dim, OPS_instance::getOPSInstance()->OPS_soa);
-  */
-  //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaGetLastError());
+      //Accessors
+      auto dest_acc = dest_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
+      auto src_acc = src_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
+
+      cgh.parallel_for<class copy_frombuf>(cl::sycl::range<3>(rz_e-rz_s, ry_e-ry_s, rx_e-rx_s), [=](cl::sycl::id<3> item) {
+          cl::sycl::cl_int d_offset = 0;
+          cl::sycl::cl_int s_offset = src_offset_local;
+
+          int idx_z = rz_s + z_step * item.get(0);
+          int idx_y = ry_s + y_step * item.get(1);
+          int idx_x = rx_s + x_step * item.get(2);
+          if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
+              (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
+              (z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
+
+            if (OPS_soa) d_offset += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size;
+            else d_offset += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size * dim;
+            s_offset += ((idx_z - rz_s) * z_step * buf_strides_z +
+                (idx_y - ry_s) * y_step * buf_strides_y +
+                (idx_x - rx_s) * x_step * buf_strides_x) *
+            type_size * dim;
+            for (int d = 0; d < dim; d++) {
+              memcpy(&dest_acc[d_offset], &src_acc[s_offset + d * type_size], type_size);
+              if (OPS_soa) d_offset += size_x * size_y * size_z * type_size;
+              else d_offset += type_size;
+            }
+          }
+        });
+      });
+
+	dest->block->instance->sycl_instance->queue->wait();
+
   dest->dirty_hd = 2;
 }
 

@@ -162,7 +162,7 @@ __global__ void copy_kernel_frombuf(char *dest, char *src, int rx_s, int rx_e,
 		//Accessors
 		auto dest_acc = dest_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
 		auto src_acc = src_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
-		auto out = cl::sycl::stream(1024, 768, cgh);
+		//auto out = cl::sycl::stream(1024, 768, cgh);
 
 		//nd_range elso argumentume a teljes méret, nem a blokkok száma: https://docs.oneapi.com/versions/latest/dpcpp/iface/nd_range.html
 		cgh.parallel_for<class copy_tobuf>(cl::sycl::nd_range<3>(cl::sycl::range<3>(blk_z*thr_z,blk_y*thr_y,blk_x*thr_x),cl::sycl::range<3>(thr_z,thr_y,thr_x)), [=](cl::sycl::nd_item<3> item) {

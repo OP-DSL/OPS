@@ -74,8 +74,7 @@ else
 ifeq ($(OPS_COMPILER),hipsycl)
 	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hipsycl
 else
-print:
-	@echo "unrecognised value for OPS_COMPILER"
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.$(OPS_COMPILER)
 endif
 endif
 endif
