@@ -97,7 +97,8 @@ void syclDeviceInit(OPS_instance *instance, const int argc,
       ops_printf("Error, unrecognised SYCL device selection. Available devices (%d)\n",devices.size());
       for (int i = 0; i < devices.size(); i++)
       {
-        ops_printf("%d: %s\n", devid, devices[i].get_info<cl::sycl::info::device::name>().c_str());
+        auto platform = devices[i].get_platform();
+        ops_printf("%d: [%s] %s\n", i, platform.get_info<cl::sycl::info::platform::name>().c_str(), devices[i].get_info<cl::sycl::info::device::name>().c_str());
       }
       exit(-1);
     }
@@ -106,7 +107,8 @@ void syclDeviceInit(OPS_instance *instance, const int argc,
   }
 
   instance->OPS_hybrid_gpu = 1;
-  instance->ostream() << "Running on " << instance->sycl_instance->queue->get_device().get_info<cl::sycl::info::device::name>() << "\n";
+  auto platform = instance->sycl_instance->queue->get_device().get_platform();
+  instance->ostream() << "Running on " << instance->sycl_instance->queue->get_device().get_info<cl::sycl::info::device::name>() << " platform " << platform.get_info<cl::sycl::info::platform::name>() << "\n";
 }
 
 void *ops_sycl_register_const(void *old_p, void *new_p) {

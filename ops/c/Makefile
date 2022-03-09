@@ -43,7 +43,7 @@ TRID_INSTALL_PATH = $(TDMA_INSTALL_PATH)
 TRID_INC := -I$(TRID_INSTALL_PATH)/include
 TRID_LIB := -L$(TRID_INSTALL_PATH)/lib
 
-MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
+MPI_INC ?= $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
 
 .PHONY: mklib
 
@@ -106,7 +106,7 @@ $(OBJ)/%.o : src/opencl/%.cpp
 	$(CXX) $(CXXFLAGS) -I$(INC) -c $< -o $@
 
 $(OBJ)/%_sycl_mpi.o : src/mpi/%_sycl.cpp
-	$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(INC) $(MPI_INC) -c $< -o $@
+	$(SYCLMPICXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(INC) -c $< -o $@
 
 $(OBJ)/%_mpi.o : src/externlib/%.cpp
 	$(MPICXX) $(CXXFLAGS) -I$(INC)  $(HDF5_INC) -c $< -o $@ 
