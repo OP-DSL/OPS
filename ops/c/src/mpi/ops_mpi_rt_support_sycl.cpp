@@ -42,73 +42,6 @@
 int halo_buffer_size = 0;
 char *halo_buffer_d = NULL;
 
-/*
-__global__ void ops_cuda_packer_1(const char *__restrict src,
-                                  char *__restrict dest, int count, int len,
-                                  int stride) {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  int block = idx / len;
-  if (idx < count * len) {
-    dest[idx] = src[stride * block + idx % len];
-  }
-}
-
-__global__ void ops_cuda_packer_1_soa(const char *__restrict src,
-                                  char *__restrict dest, int count, int len,
-                                  int stride, int dim, int size) {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  int block = idx / len;
-  if (idx < count * len) {
-    for (int d=0; d<dim; d++) {
-      dest[idx*dim+d] = src[stride * block + idx % len + d * size];
-    }
-  }
-}
-
-__global__ void ops_cuda_unpacker_1(const char *__restrict src,
-                                    char *__restrict dest, int count, int len,
-                                    int stride) {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  int block = idx / len;
-  if (idx < count * len) {
-    dest[stride * block + idx % len] = src[idx];
-  }
-}
-
-__global__ void ops_cuda_unpacker_1_soa(const char *__restrict src,
-                                    char *__restrict dest, int count, int len,
-                                    int stride, int dim, int size) {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  int block = idx / len;
-  if (idx < count * len) {
-    for (int d=0; d<dim; d++) {
-      dest[stride * block + idx % len + d * size] = src[idx*dim + d];
-    }
-  }
-}
-
-
-__global__ void ops_cuda_packer_4(const int *__restrict src,
-                                  int *__restrict dest, int count, int len,
-                                  int stride) {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  int block = idx / len;
-  if (idx < count * len) {
-    dest[idx] = src[stride * block + idx % len];
-  }
-}
-
-__global__ void ops_cuda_unpacker_4(const int *__restrict src,
-                                    int *__restrict dest, int count, int len,
-                                    int stride) {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  int block = idx / len;
-  if (idx < count * len) {
-    dest[stride * block + idx % len] = src[idx];
-  }
-}
-*/
-
 void ops_pack_sycl_internal(ops_dat dat, const int src_offset,
                             char *__restrict dest, const int halo_blocklength,
                             const int halo_stride, const int halo_count) {
@@ -126,6 +59,12 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset,
   if (halo_buffer_size < halo_count * halo_blocklength * dat->dim &&
       !OPS_instance::getOPSInstance()->OPS_gpu_direct) {
     if (halo_buffer_d != NULL) {
+    #ifdef SYCL_USM
+      cl::sycl::free((void*)halo_buffer_d, *dat->block->instance->sycl_instance->queue);
+    }
+    halo_buffer_d = (char*)cl::sycl::malloc_device(halo_count * halo_blocklength * dat->dim * 4,
+                            *dat->block->instance->sycl_instance->queue);
+    #else
       cl::sycl::buffer<char, 1> *halo_buffer_sycl =
           static_cast<cl::sycl::buffer<char, 1> *>((void *)halo_buffer_d);
       delete halo_buffer_sycl;
@@ -133,6 +72,7 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset,
     cl::sycl::buffer<char, 1> *halo_buffer_sycl = new cl::sycl::buffer<char, 1>(
         cl::sycl::range<1>(halo_count * halo_blocklength * dat->dim * 4));
     halo_buffer_d = (char *)halo_buffer_sycl;
+    #endif
     halo_buffer_size = halo_count * halo_blocklength * dat->dim * 4;
   }
   char *device_buf = NULL;
@@ -143,8 +83,10 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset,
 
   cl::sycl::buffer<char, 1> *src_buff =
       static_cast<cl::sycl::buffer<char, 1> *>((void *)src);
+  #ifndef SYCL_USM
   cl::sycl::buffer<char, 1> *dest_buff =
       static_cast<cl::sycl::buffer<char, 1> *>((void *)device_buf);
+  #endif
 
   if (OPS_instance::getOPSInstance()->OPS_soa) {
     int num_threads = 128;
@@ -156,8 +98,12 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset,
     dat->block->instance->sycl_instance->queue->submit(
         [&](cl::sycl::handler &cgh) {
           // Accessors
+          #ifdef SYCL_USM
+          char *dest_acc = device_buf;
+          #else
           auto dest_acc =
               dest_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
+          #endif
           auto src_acc =
               src_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
 
@@ -188,8 +134,12 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset,
     dat->block->instance->sycl_instance->queue->submit([&](cl::sycl::handler
                                                                &cgh) {
       // Accessors
+      #ifdef SYCL_USM
+      char *dest_acc = device_buf;
+      #else
       auto dest_acc =
           dest_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
+      #endif
       auto src_acc =
           src_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
 
@@ -217,8 +167,12 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset,
         ((dat->dim * halo_blocklength * halo_count) - 1) / num_threads + 1;
     dat->block->instance->sycl_instance->queue->submit(
         [&](cl::sycl::handler &cgh) {
+          #ifdef SYCL_USM
+          char *dest_acc = device_buf;
+          #else
           auto dest_acc =
               dest_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
+          #endif
           auto src_acc =
               src_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
 
@@ -239,10 +193,15 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset,
               });
         });
   }
-  if (!OPS_instance::getOPSInstance()->OPS_gpu_direct)
+  if (!OPS_instance::getOPSInstance()->OPS_gpu_direct) {
+    #ifdef SYCL_USM
+    dat->block->instance->sycl_instance->queue->memcpy(dest, halo_buffer_d, halo_count * halo_blocklength * dat->dim);
+    dat->block->instance->sycl_instance->queue->wait();
+    #else
     ops_sycl_memcpyDeviceToHost(dat->block->instance, dest_buff, dest,
                                 halo_count * halo_blocklength * dat->dim);
-  else
+    #endif
+  } else
     dat->block->instance->sycl_instance->queue->wait();
 }
 
@@ -263,6 +222,12 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset,
   if (halo_buffer_size < halo_count * halo_blocklength * dat->dim &&
       !OPS_instance::getOPSInstance()->OPS_gpu_direct) {
     if (halo_buffer_d != NULL) {
+    #ifdef SYCL_USM
+      cl::sycl::free((void*)halo_buffer_d, *dat->block->instance->sycl_instance->queue);
+    }
+    halo_buffer_d = (char*)cl::sycl::malloc_device(halo_count * halo_blocklength * dat->dim * 4,
+                            *dat->block->instance->sycl_instance->queue);
+    #else
       cl::sycl::buffer<char, 1> *halo_buffer_sycl =
           static_cast<cl::sycl::buffer<char, 1> *>((void *)halo_buffer_d);
       delete halo_buffer_sycl;
@@ -270,6 +235,7 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset,
     cl::sycl::buffer<char, 1> *halo_buffer_sycl = new cl::sycl::buffer<char, 1>(
         cl::sycl::range<1>(halo_count * halo_blocklength * dat->dim * 4));
     halo_buffer_d = (char *)halo_buffer_sycl;
+    #endif
     halo_buffer_size = halo_count * halo_blocklength * dat->dim * 4;
   }
 
@@ -279,14 +245,21 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset,
   else
     device_buf = halo_buffer_d;
 
+  #ifndef SYCL_USM
   cl::sycl::buffer<char, 1> *src_buff =
       static_cast<cl::sycl::buffer<char, 1> *>((void *)device_buf);
+  #endif
   cl::sycl::buffer<char, 1> *dest_buff =
       static_cast<cl::sycl::buffer<char, 1> *>((void *)dest);
 
   if (!OPS_instance::getOPSInstance()->OPS_gpu_direct) {
+    #ifdef SYCL_USM
+    dat->block->instance->sycl_instance->queue->memcpy(halo_buffer_d, src, halo_count * halo_blocklength * dat->dim);
+    dat->block->instance->sycl_instance->queue->wait();
+    #else
     ops_sycl_memcpyHostToDevice(dat->block->instance, src_buff, src,
                                 halo_count * halo_blocklength * dat->dim);
+    #endif
   }
   if (OPS_instance::getOPSInstance()->OPS_soa) {
     int num_threads = 128;
@@ -298,8 +271,12 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset,
           // Accessors
           auto dest_acc =
               dest_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
+          #ifdef SYCL_USM
+          const char *src_acc = device_buf;
+          #else
           auto src_acc =
               src_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
+          #endif
 
           // parloop
           cgh.parallel_for<class ops_sycl_unpacker_1_soa>(
@@ -328,8 +305,12 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset,
       // Accessors
       auto dest_acc =
           dest_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
+      #ifdef SYCL_USM
+      const char *src_acc = device_buf;
+      #else
       auto src_acc =
           src_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
+      #endif
 
       // parloop
       cgh.parallel_for<class ops_sycl_unpacker_4>(
@@ -357,8 +338,12 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset,
           // Accessors
           auto dest_acc =
               dest_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
+          #ifdef SYCL_USM
+          const char *src_acc = device_buf;
+          #else
           auto src_acc =
               src_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
+          #endif
 
           // parloop
           cgh.parallel_for<class ops_sycl_unpacker_1>(
@@ -384,14 +369,27 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset,
 char *OPS_realloc_fast(char *ptr, size_t olds, size_t news) {
   if (OPS_instance::getOPSInstance()->OPS_gpu_direct) {
     if (ptr == NULL) {
+      #ifdef SYCL_USM
       cl::sycl::buffer<char, 1> *ptr_buff =
           new cl::sycl::buffer<char, 1>(cl::sycl::range<1>(news));
       ptr = (char *)ptr_buff;
+      #else
+      ptr = (char*)cl::sycl::malloc_device(news,
+                            *OPS_instance::getOPSInstance()->sycl_instance->queue);
+
+      OPS_instance::getOPSInstance()->sycl_instance->queue->wait();
+      #endif
       return ptr;
     } else {
       if (OPS_instance::getOPSInstance()->OPS_diags > 3)
         printf("Warning: SYCL cache realloc\n");
       char *ptr2;
+      #ifdef SYCL_USM
+      ptr2 = (char*)cl::sycl::malloc_device(news,
+                            *OPS_instance::getOPSInstance()->sycl_instance->queue);
+      OPS_instance::getOPSInstance()->sycl_instance->queue->memcpy(ptr2, ptr, olds);
+      cl::sycl::free(ptr, *OPS_instance::getOPSInstance()->sycl_instance->queue);
+      #else
       cl::sycl::buffer<char, 1> *ptr2_buff =
           new cl::sycl::buffer<char, 1>(cl::sycl::range<1>(news));
       ptr2 = (char *)ptr2_buff;
@@ -400,6 +398,7 @@ char *OPS_realloc_fast(char *ptr, size_t olds, size_t news) {
       ops_sycl_memcpyDeviceToDevice(OPS_instance::getOPSInstance(), ptr_buff,
                                     ptr2_buff, olds);
       delete ptr_buff;
+      #endif
       return ptr2;
     }
   } else {
@@ -424,6 +423,12 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   else {
     if (halo_buffer_size < size) {
       if (halo_buffer_d != NULL) {
+      #ifdef SYCL_USM
+        cl::sycl::free((void*)halo_buffer_d, *src->block->instance->sycl_instance->queue);
+      }
+      halo_buffer_d = (char*)cl::sycl::malloc_device(size,
+                              *src->block->instance->sycl_instance->queue);
+      #else
         cl::sycl::buffer<char, 1> *halo_buffer_sycl =
             static_cast<cl::sycl::buffer<char, 1> *>((void *)halo_buffer_d);
         delete halo_buffer_sycl;
@@ -431,6 +436,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
       cl::sycl::buffer<char, 1> *halo_buffer_sycl =
           new cl::sycl::buffer<char, 1>(cl::sycl::range<1>(size));
       halo_buffer_d = (char *)halo_buffer_sycl;
+      #endif
       halo_buffer_size = size;
     }
     gpu_ptr = halo_buffer_d;
@@ -451,15 +457,21 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   if (OPS_instance::getOPSInstance()->OPS_gpu_direct)
     dest_offset_local = dest_offset;
 
+  #ifndef SYCL_USM
   cl::sycl::buffer<char, 1> *dest_buff =
       static_cast<cl::sycl::buffer<char, 1> *>((void *)gpu_ptr);
+  #endif
   cl::sycl::buffer<char, 1> *src_buff =
       static_cast<cl::sycl::buffer<char, 1> *>((void *)src->data_d);
 
   memset(dest + dest_offset, 0, size);
   block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {
+    #ifdef SYCL_USM
+    char *dest_acc = gpu_ptr;
+    #else
     auto dest_acc =
         dest_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
+    #endif
     auto src_acc =
         src_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
 
@@ -498,9 +510,15 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
         });
   });
   src->block->instance->sycl_instance->queue->wait();
-  if (!OPS_instance::getOPSInstance()->OPS_gpu_direct)
+  if (!OPS_instance::getOPSInstance()->OPS_gpu_direct) {
+    #ifdef SYCL_USM
+    block->instance->sycl_instance->queue->memcpy(dest + dest_offset, halo_buffer_d, size);
+    block->instance->sycl_instance->queue->wait();
+    #else
     ops_sycl_memcpyDeviceToHost(block->instance, dest_buff, dest + dest_offset,
                                 size * sizeof(char));
+    #endif
+  }
 }
 
 void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
@@ -519,6 +537,12 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   else {
     if (halo_buffer_size < size) {
       if (halo_buffer_d != NULL) {
+      #ifdef SYCL_USM
+        cl::sycl::free((void*)halo_buffer_d, *dest->block->instance->sycl_instance->queue);
+      }
+      halo_buffer_d = (char*)cl::sycl::malloc_device(size,
+                              *dest->block->instance->sycl_instance->queue);
+      #else
         cl::sycl::buffer<char, 1> *halo_buffer_sycl =
             static_cast<cl::sycl::buffer<char, 1> *>((void *)halo_buffer_d);
         delete halo_buffer_sycl;
@@ -526,13 +550,19 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
       cl::sycl::buffer<char, 1> *halo_buffer_sycl =
           new cl::sycl::buffer<char, 1>(cl::sycl::range<1>(size));
       halo_buffer_d = (char *)halo_buffer_sycl;
+      #endif
       halo_buffer_size = size;
     }
     gpu_ptr = halo_buffer_d;
+    #ifdef SYCL_USM
+    dest->block->instance->sycl_instance->queue->memcpy(halo_buffer_d, src + src_offset, size);
+    dest->block->instance->sycl_instance->queue->wait();
+    #else
     cl::sycl::buffer<char, 1> *src_buff =
         static_cast<cl::sycl::buffer<char, 1> *>((void *)gpu_ptr);
     ops_sycl_memcpyHostToDevice(block->instance, src_buff, src + src_offset,
                                 size * sizeof(char));
+    #endif
   }
 
   if (dest->dirty_hd == 1) {
@@ -550,8 +580,10 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   if (OPS_instance::getOPSInstance()->OPS_gpu_direct)
     src_offset_local = src_offset;
 
+  #ifndef SYCL_USM
   cl::sycl::buffer<char, 1> *src_buff =
       static_cast<cl::sycl::buffer<char, 1> *>((void *)gpu_ptr);
+  #endif
   cl::sycl::buffer<char, 1> *dest_buff =
       static_cast<cl::sycl::buffer<char, 1> *>((void *)dest->data_d);
 
@@ -559,8 +591,12 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
     // Accessors
     auto dest_acc =
         dest_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
+    #ifdef SYCL_USM
+    char *src_acc = gpu_ptr;
+    #else
     auto src_acc =
         src_buff->get_access<cl::sycl::access::mode::read_write>(cgh);
+    #endif
 
     cgh.parallel_for<class copy_frombuf>(
         cl::sycl::range<3>(rz_e - rz_s, ry_e - ry_s, rx_e - rx_s),

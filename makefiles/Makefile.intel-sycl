@@ -2,10 +2,10 @@ CC    := dpcpp
 CXX   := dpcpp
 ifdef DEBUG
 	CCFLAGS   := -O0 -std=c99 -fPIC -DUNIX -Wall -g #-ffloat-store
-	CXXFLAGS   := -O0 -fPIC -DUNIX -Wall -g -std=c++17 #-DSYCL_COPY #-ffloat-store
+	CXXFLAGS   := -O0 -fPIC -DUNIX -Wall -g -std=c++17 #-DSYCL_USM #-DSYCL_COPY #-ffloat-store
 else
 	CCFLAGS   := -O3  -std=c99 -fPIC -DUNIX -Wall #-ffloat-store
-	CXXFLAGS  := -O3  -fPIC -DUNIX -Wall -std=c++17 #-DSYCL_COPY
+	CXXFLAGS  := -O3  -fPIC -DUNIX -Wall -std=c++17 #-DSYCL_USM #-DSYCL_COPY
 endif
 OMPFLAGS := -fopenmp
 ifdef THREADED
