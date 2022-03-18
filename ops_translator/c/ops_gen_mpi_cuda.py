@@ -177,6 +177,12 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_idx':
         arg_idx = 1
 
+    needDimList = []
+    for n in range(0,nargs):
+      if arg_typ[n] == 'ops_arg_dat' or (arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ):
+        if not dims[n].isdigit():
+          needDimList = needDimList + [n]
+
     ##########################################################################
     # generate constants and MACROS
     ##########################################################################
@@ -249,12 +255,16 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code(typs[n]+'* __restrict arg'+str(n)+',')
+        if n in needDimList:
+          code('int arg'+str(n)+'dim,')
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
           if dims[n].isdigit() and int(dims[n])==1:
             code('const '+typs[n]+' arg'+str(n)+',')
           else:
             code('const '+typs[n]+'* __restrict arg'+str(n)+',')
+            if n in needDimList:
+              code('int arg'+str(n)+'dim,')
         else:
           code(typs[n]+'* __restrict arg'+str(n)+',')
       if restrict[n] or prolong[n]:
@@ -339,22 +349,25 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
           n_x = 'idx_x'
           n_y = 'idx_y'
           n_z = 'idx_z'
-
+        
+        argdim = str(dims[n])
+        if n in needDimList:
+          argdim = 'arg'+str(n)+'dim'
         if NDIM == 1:
           if soa_set:
             code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+';')
           else:
-            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+str(dims[n])+';')
+            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+argdim+';')
         elif NDIM == 2:
           if soa_set:
             code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+' + '+n_y+' * '+str(stride[NDIM*n+1])+' * dims_'+name+'['+str(n)+'][0]'+';')
           else:
-            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + '+n_y+' * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * dims_'+name+'['+str(n)+'][0]'+';')
+            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+argdim+' + '+n_y+' * '+str(stride[NDIM*n+1])+'*'+argdim+' * dims_'+name+'['+str(n)+'][0]'+';')
         elif NDIM==3:
           if soa_set:
             code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'+ '+n_y+' * '+str(stride[NDIM*n+1])+'* dims_'+name+'['+str(n)+'][0]'+' + '+n_z+' * '+str(stride[NDIM*n+2])+' * dims_'+name+'['+str(n)+'][0]'+' * dims_'+name+'['+str(n)+'][1]'+';')
           else:
-            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + '+n_y+' * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * dims_'+name+'['+str(n)+'][0]'+' + '+n_z+' * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * dims_'+name+'['+str(n)+'][0]'+' * dims_'+name+'['+str(n)+'][1]'+';')
+            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+argdim+' + '+n_y+' * '+str(stride[NDIM*n+1])+'*'+argdim+' * dims_'+name+'['+str(n)+'][0]'+' + '+n_z+' * '+str(stride[NDIM*n+2])+'*'+argdim+' * dims_'+name+'['+str(n)+'][0]'+' * dims_'+name+'['+str(n)+'][1]'+';')
 
     code('')
     n_per_line = 5
@@ -375,7 +388,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
             dim = dims[n]+', '
             extradim = 1
         elif not dims[n].isdigit():
-            dim = 'arg'+str(n)+'.dim, '
+            dim = 'arg'+str(n)+'dim, '
             extradim = 1
         for i in range(1,NDIM):
           sizelist = sizelist + 'dims_'+name+'['+str(n)+']['+str(i-1)+'], '
@@ -819,11 +832,15 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         text = text +' ('+typs[n]+' *)p_a['+str(n)+'],'
+        if n in needDimList:
+          text = text + ' arg'+str(n)+'.dim,'
       elif arg_typ[n] == 'ops_arg_gbl':
         if dims[n].isdigit() and int(dims[n])==1 and accs[n]==OPS_READ:
           text = text +' *('+typs[n]+' *)arg'+str(n)+'.data,'
         else:
           text = text +' ('+typs[n]+' *)arg'+str(n)+'.data_d,'
+          if n in needDimList and accs[n] != OP_READ:
+            text = text + ' arg'+str(n)+'.dim,'
       elif arg_typ[n] == 'ops_arg_idx':
         if NDIM==1:
           text = text + ' arg_idx[0],'
