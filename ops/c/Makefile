@@ -22,6 +22,7 @@ include ../../makefiles/Makefile.common
 include ../../makefiles/Makefile.mpi
 include ../../makefiles/Makefile.cuda
 include ../../makefiles/Makefile.hip
+include ../../makefiles/Makefile.tridsolver
 
 ifdef HDF5_INSTALL_PATH
   HDF5_INC 	  	:= -I$(HDF5_INSTALL_PATH)/include
@@ -35,13 +36,6 @@ else
   CHKCC			:= $(CC)
   CHKCXX			:= $(CXX)
 endif
-
-# This refers to the location of the submodule in the "master" pdetk repo
-TRID_INSTALL_PATH = $(TDMA_INSTALL_PATH)
-#../../../tridsolver/scalar
-
-TRID_INC := -I$(TRID_INSTALL_PATH)/include
-TRID_LIB := -L$(TRID_INSTALL_PATH)/lib
 
 MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
 
