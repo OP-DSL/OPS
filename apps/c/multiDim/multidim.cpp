@@ -121,9 +121,10 @@ int main(int argc, char **argv)
   ops_par_loop(multidim_kernel, "multidim_kernel", grid2D, 2, iter_range,
                ops_arg_dat(dat0, 2, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
+  int two = 2;
   ops_par_loop(multidim_copy_kernel,"multidim_copy_kernel", grid2D, 2, iter_range,
-               ops_arg_dat(dat0, 2, S2D_00_P10_P20_M10_M20, "double", OPS_READ),
-               ops_arg_dat(dat1, 2, S2D_00, "double", OPS_WRITE));
+               ops_arg_dat(dat0, two, S2D_00_P10_P20_M10_M20, "double", OPS_READ),
+               ops_arg_dat(dat1, two, S2D_00, "double", OPS_WRITE));
   halos0->halo_transfer();
 
   //ops_printf("\n\n");
