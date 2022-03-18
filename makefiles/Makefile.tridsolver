@@ -1,0 +1,12 @@
+ifdef TDMA_INSTALL_PATH
+TRID_INSTALL_PATH = $(TDMA_INSTALL_PATH)
+endif
+
+ifdef TRID_INSTALL_PATH
+TRID_INC := -I$(TRID_INSTALL_PATH)/include
+TRID_LIB := -L$(TRID_INSTALL_PATH)/lib
+TRID_SEQ = $(TRID_LIB) -lops_trid_seq -ltridcpu
+TRID_CUDA = $(TRID_LIB) -lops_trid_cuda -ltridcuda
+TRID_MPI = $(TRID_LIB) -lops_trid_mpi -ltridcpu_mpi 
+TRID_MPI_CUDA = $(TRID_LIB) -lops_trid_mpi_cuda  -ltridcuda_mpi
+endif
