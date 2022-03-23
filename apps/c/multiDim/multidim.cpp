@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <vector>
 
 // OPS header file
 #define OPS_2D
@@ -50,6 +51,15 @@
 #include "multidim_print_kernel.h"
 #include "multidim_copy_kernel.h"
 #include "multidim_reduce_kernel.h"
+
+// Utility functions mainly debug
+void WriteDataToH5(const std::string &fileName, const ops_block &block,
+                   const std::vector<ops_dat> &dataList) {
+    ops_fetch_block_hdf5_file(block, fileName.c_str());
+    for (auto data : dataList) {
+        ops_fetch_dat_hdf5_file(data, fileName.c_str());
+    }
+}
 
 int main(int argc, char **argv)
 {
@@ -89,9 +99,22 @@ int main(int argc, char **argv)
   int base[2] = {0,0};
   double* temp = NULL;
 
+
+
   //declare ops_dat with dim = 2
   ops_dat dat0    = grid2D->decl_dat(2, size, base, d_m, d_p, temp, "double", "dat0");
   ops_dat dat1    = grid2D->decl_dat(2, size, base, d_m, d_p, temp, "double", "dat1");
+
+  int nx{5};
+  int ny{3};
+  ops_decl_const("nx", 1, "int", &nx);
+  ops_decl_const("ny", 1, "int", &ny);
+
+  int dp[]{1, 1};
+  int dm[]{-1, -1};
+  int dimension[]{nx, ny};
+  ops_dat coorindate{grid2D->decl_dat(2, dimension, base, dm, dp, temp,
+                                      "double", "coorindate")};
 
   ops_halo_group halos0;
   {
@@ -154,6 +177,29 @@ int main(int argc, char **argv)
   else {
     if (instance->is_root()) instance->ostream() << "This test is considered FAILED" << std::endl;
   }
+  const double X[]{0, 0.25, 0.5, 0.75, 1};
+  const double Y[]{3, 3.5, 4};
+
+  //ops_arg_dat(dat1, 2, S2D_00, "double", OPS_READ),
+  //const std::vector<ops_dat> resList{u, v, w};
+  const std::vector<ops_dat> resList{coorindate};
+
+  int iterRange[] = {0,nx,0,ny};
+
+  ops_par_loop(KerSetCoordinates_test, "KerSetCoordinates_test", grid2D, 2,
+               iterRange,
+               ops_arg_dat(coorindate, two, S2D_00, "double", OPS_WRITE),
+               ops_arg_idx(), ops_arg_gbl(X, nx, "double", OPS_READ),
+               ops_arg_gbl(Y, ny, "double", OPS_READ));
+  WriteDataToH5("without.h5", grid2D, resList);
+  ops_printf("The test without using ops_arg_gbl arguments passed!\n");
+
+  ops_par_loop(KerSetCoordinates, "KerSetCoordinates", grid2D, 2, iterRange,
+               ops_arg_dat(coorindate, two, S2D_00, "double", OPS_WRITE),
+               ops_arg_idx(), ops_arg_gbl(X, nx, "double", OPS_READ),
+               ops_arg_gbl(Y, ny, "double", OPS_READ));
+  WriteDataToH5("with.h5", grid2D, resList);
+  ops_printf("The test using ops_arg_gbl arguments passed!\n");
 
   std::cout << ss.str() << std::endl;
   delete instance;
@@ -164,5 +210,6 @@ int main(int argc, char **argv)
     exit(-1);
   }
 }
+
   exit(0);
 }
