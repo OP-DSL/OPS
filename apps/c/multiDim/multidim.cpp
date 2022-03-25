@@ -47,6 +47,9 @@
 #define OPS_CPP_API
 #include "ops_seq_v2.h"
 
+int nx{5};
+int ny{3};
+
 #include "multidim_kernel.h"
 #include "multidim_print_kernel.h"
 #include "multidim_copy_kernel.h"
@@ -105,10 +108,8 @@ int main(int argc, char **argv)
   ops_dat dat0    = grid2D->decl_dat(2, size, base, d_m, d_p, temp, "double", "dat0");
   ops_dat dat1    = grid2D->decl_dat(2, size, base, d_m, d_p, temp, "double", "dat1");
 
-  int nx{5};
-  int ny{3};
-  ops_decl_const("nx", 1, "int", &nx);
-  ops_decl_const("ny", 1, "int", &ny);
+  instance->decl_const("nx", 1, "int", &nx);
+  instance->decl_const("ny", 1, "int", &ny);
 
   int dp[]{1, 1};
   int dm[]{-1, -1};

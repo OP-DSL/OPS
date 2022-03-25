@@ -687,7 +687,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
-          code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+typs[n]+'));')
+          code('consts_bytes += ROUND_UP(arg'+str(n)+'.dim*sizeof('+typs[n]+'));')
         elif accs[n] != OPS_READ:
           code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
           code('reduct_size = MAX(reduct_size,sizeof('+typs[n]+')*'+str(dims[n])+');')
@@ -722,8 +722,8 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           code('arg'+str(n)+'.data = block->instance->OPS_consts_h + consts_bytes;')
           code('arg'+str(n)+'.data_d = block->instance->OPS_consts_d + consts_bytes;')
-          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d] = arg'+str(n)+'h[d];')
-          code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+typs[n]+'));')
+          code('for (int d=0; d<arg'+str(n)+'.dim; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d] = arg'+str(n)+'h[d];')
+          code('consts_bytes += ROUND_UP(arg'+str(n)+'.dim*sizeof('+typs[n]+'));')
     if GBL_READ == True and GBL_READ_MDIM == True:
       code('mvConstArraysToDevice(block->instance,consts_bytes);')
 
@@ -974,11 +974,11 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         code('desc->hash = ((desc->hash << 5) + desc->hash) + arg'+str(n)+'.dat->index;')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         if declared == 0:
-          code('char *tmp = (char*)ops_malloc('+dims[n]+'*sizeof('+typs[n]+'));')
+          code('char *tmp = (char*)ops_malloc(arg'+str(n)+'.dim*sizeof('+typs[n]+'));')
           declared = 1
         else:
-          code('tmp = (char*)ops_malloc('+dims[n]+'*sizeof('+typs[n]+'));')
-        code('memcpy(tmp, arg'+str(n)+'.data,'+dims[n]+'*sizeof('+typs[n]+'));')
+          code('tmp = (char*)ops_malloc(arg'+str(n)+'.dim*sizeof('+typs[n]+'));')
+        code('memcpy(tmp, arg'+str(n)+'.data,arg'+str(n)+'.dim*sizeof('+typs[n]+'));')
         code('desc->args['+str(n)+'].data = tmp;')
     code('desc->function = ops_par_loop_'+name+'_execute;')
     IF('block->instance->OPS_diags > 1')
