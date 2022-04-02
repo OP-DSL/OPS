@@ -173,6 +173,13 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_idx':
         arg_idx = 1
 
+    needDimList = []
+    for n in range(0,nargs):
+      if arg_typ[n] == 'ops_arg_dat' or (arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ):
+        if not dims[n].isdigit():
+          needDimList = needDimList + [n]
+
+
 ##########################################################################
 #  generate constants and MACROS
 ##########################################################################
@@ -245,6 +252,8 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code(typs[n]+'* __restrict arg'+str(n)+',')
+      if n in needDimList:
+        code('int arg'+str(n)+'dim,')
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
           if dims[n].isdigit() and int(dims[n])==1:
@@ -253,6 +262,8 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
             code('const '+typs[n]+'* __restrict arg'+str(n)+',')
         else:
           code(typs[n]+'* __restrict arg'+str(n)+',')
+        if n in needDimList:
+           code('int arg'+str(n)+'dim,')
       if restrict[n] or prolong[n]:
         if NDIM == 1:
           code('int stride_'+str(n)+'0,')
@@ -339,21 +350,24 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
           n_y = 'idx_y'
           n_z = 'idx_z'
 
+        argdim = str(dims[n])
+        if n in needDimList:
+           argdim = 'arg'+str(n)+'dim'
         if NDIM == 1:
           if soa_set:
             code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+';')
           else:
-            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+str(dims[n])+';')
+            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+argdim+';')
         elif NDIM == 2:
           if soa_set:
             code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+' + '+n_y+' * '+str(stride[NDIM*n+1])+' * dims_'+name+'['+str(n)+'][0]'+';')
           else:
-            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + '+n_y+' * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * dims_'+name+'['+str(n)+'][0]'+';')
+            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+argdim+' + '+n_y+' * '+str(stride[NDIM*n+1])+'*'+argdim+' * dims_'+name+'['+str(n)+'][0]'+';')
         elif NDIM==3:
           if soa_set:
             code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'+ '+n_y+' * '+str(stride[NDIM*n+1])+'* dims_'+name+'['+str(n)+'][0]'+' + '+n_z+' * '+str(stride[NDIM*n+2])+' * dims_'+name+'['+str(n)+'][0]'+' * dims_'+name+'['+str(n)+'][1]'+';')
           else:
-            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + '+n_y+' * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * dims_'+name+'['+str(n)+'][0]'+' + '+n_z+' * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * dims_'+name+'['+str(n)+'][0]'+' * dims_'+name+'['+str(n)+'][1]'+';')
+            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+argdim+' + '+n_y+' * '+str(stride[NDIM*n+1])+'*'+argdim+' * dims_'+name+'['+str(n)+'][0]'+' + '+n_z+' * '+str(stride[NDIM*n+2])+'*'+argdim+' * dims_'+name+'['+str(n)+'][0]'+' * dims_'+name+'['+str(n)+'][1]'+';')
 
     code('')
     n_per_line = 5
@@ -374,7 +388,7 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
             dim = dims[n]+', '
             extradim = 1
         elif not dims[n].isdigit():
-            dim = 'arg'+str(n)+'.dim, '
+            dim = 'arg'+str(n)+'dim, '
             extradim = 1
         for i in range(1,NDIM+extradim):
           sizelist = sizelist + 'dims_'+name+'['+str(n)+']['+str(i-1)+'], '
@@ -656,7 +670,7 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
-          code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+typs[n]+'));')
+          code('consts_bytes += ROUND_UP(arg'+str(n)+'.dim*sizeof('+typs[n]+'));')
         elif accs[n] != OPS_READ:
           code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
           code('reduct_size = MAX(reduct_size,sizeof('+typs[n]+')*'+str(dims[n])+');')
@@ -675,12 +689,12 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
         code('arg'+str(n)+'.data_d = block->instance->OPS_reduct_d + reduct_bytes;')
         code('for (int b=0; b<maxblocks; b++)')
         if accs[n] == OPS_INC:
-          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = ZERO_'+typs[n]+';')
+          code('for (int d=0; d<arg'+str(n)+'.dim; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*arg'+str(n)+'.dim] = ZERO_'+typs[n]+';')
         if accs[n] == OPS_MAX:
-          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = -INFINITY_'+typs[n]+';')
+          code('for (int d=0; d<arg'+str(n)+'.dim; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*arg'+str(n)+'.dim] = -INFINITY_'+typs[n]+';')
         if accs[n] == OPS_MIN:
-          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'] = INFINITY_'+typs[n]+';')
-        code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
+          code('for (int d=0; d<arg'+str(n)+'.dim; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*arg'+str(n)+'.dim] = INFINITY_'+typs[n]+';')
+        code('reduct_bytes += ROUND_UP(maxblocks*arg'+str(n)+'.dim*sizeof('+typs[n]+'));')
         code('')
 
     code('')
@@ -691,8 +705,8 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
           code('consts_bytes = 0;')
           code('arg'+str(n)+'.data = block->instance->OPS_consts_h + consts_bytes;')
           code('arg'+str(n)+'.data_d = block->instance->OPS_consts_d + consts_bytes;')
-          code('for (int d=0; d<'+str(dims[n])+'; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d] = arg'+str(n)+'h[d];')
-          code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof(int));')
+          code('for (int d=0; d<arg'+str(n)+'.dim; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d] = arg'+str(n)+'h[d];')
+          code('consts_bytes += ROUND_UP(arg'+str(n)+'.dim*sizeof(int));')
     if GBL_READ == True and GBL_READ_MDIM == True:
       code('mvConstArraysToDevice(block->instance,consts_bytes);')
 
@@ -803,11 +817,15 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         text = text +' ('+typs[n]+' *)p_a['+str(n)+'],'
+        if n in needDimList:
+           text = text + ' arg'+str(n)+'.dim,'
       elif arg_typ[n] == 'ops_arg_gbl':
         if dims[n].isdigit() and int(dims[n])==1 and accs[n]==OPS_READ:
           text = text +' *('+typs[n]+' *)arg'+str(n)+'.data,'
         else:
           text = text +' ('+typs[n]+' *)arg'+str(n)+'.data_d,'
+          if n in needDimList:
+             text = text + ' arg'+str(n)+'.dim,'
       elif arg_typ[n] == 'ops_arg_idx':
         if NDIM==1:
           text = text + ' arg_idx[0],'
@@ -941,11 +959,11 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
         code('desc->hash = ((desc->hash << 5) + desc->hash) + arg'+str(n)+'.dat->index;')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         if declared == 0:
-          code('char *tmp = (char*)malloc('+dims[n]+'*sizeof('+typs[n]+'));')
+          code('char *tmp = (char*)malloc(arg'+str(n)+'.dim*sizeof('+typs[n]+'));')
           declared = 1
         else:
-          code('tmp = (char*)malloc('+dims[n]+'*sizeof('+typs[n]+'));')
-        code('memcpy(tmp, arg'+str(n)+'.data,'+dims[n]+'*sizeof('+typs[n]+'));')
+          code('tmp = (char*)malloc(arg'+str(n)+'.dim*sizeof('+typs[n]+'));')
+        code('memcpy(tmp, arg'+str(n)+'.data,arg'+str(n)+'.dim*sizeof('+typs[n]+'));')
         code('desc->args['+str(n)+'].data = tmp;')
     code('desc->function = ops_par_loop_'+name+'_execute;')
     IF('block->instance->OPS_diags > 1')
