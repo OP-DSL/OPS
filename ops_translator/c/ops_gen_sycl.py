@@ -167,7 +167,7 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                 if not dims[n].isdigit():
                     builtin_reduction = False
         flat_parallel = False
-        if (not builtin_reduction) or (gen_oneapi and reduction):
+        if (reduction and not builtin_reduction) or (gen_oneapi and reduction):
             #if flat_parallel and reduction: #and not builtin_reduction:
             flat_parallel = False
 
