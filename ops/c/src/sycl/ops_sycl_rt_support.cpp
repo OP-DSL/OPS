@@ -75,19 +75,19 @@ void syclDeviceInit(OPS_instance *instance, const int argc,
   switch (OPS_sycl_device) {
   case 0:
     instance->sycl_instance->queue =
-        new cl::sycl::queue(cl::sycl::host_selector());
+        new cl::sycl::queue(cl::sycl::host_selector(), cl::sycl::property::queue::in_order());
     break;
   case 1:
     instance->sycl_instance->queue =
-        new cl::sycl::queue(cl::sycl::cpu_selector());
+        new cl::sycl::queue(cl::sycl::cpu_selector(), cl::sycl::property::queue::in_order());
     break;
   case 2:
     instance->sycl_instance->queue =
-        new cl::sycl::queue(cl::sycl::gpu_selector());
+        new cl::sycl::queue(cl::sycl::gpu_selector(), cl::sycl::property::queue::in_order());
     break;
   case 3:
     instance->sycl_instance->queue =
-        new cl::sycl::queue(cl::sycl::default_selector());
+        new cl::sycl::queue(cl::sycl::default_selector(), cl::sycl::property::queue::in_order());
     break;
   default: 
     std::vector<cl::sycl::device> devices;
@@ -103,7 +103,7 @@ void syclDeviceInit(OPS_instance *instance, const int argc,
       exit(-1);
     }
     instance->sycl_instance->queue =
-        new cl::sycl::queue(devices[devid]);
+        new cl::sycl::queue(devices[devid], cl::sycl::property::queue::in_order());
   }
 
   instance->OPS_hybrid_gpu = 1;

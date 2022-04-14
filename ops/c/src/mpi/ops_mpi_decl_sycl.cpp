@@ -123,34 +123,34 @@ void _ops_exit(OPS_instance *instance) {
   if (instance->is_initialised == 0) return;
   ops_mpi_exit(instance);
   if (halo_buffer_d != NULL){
+    #ifdef SYCL_USM
+    cl::sycl::free((void*)halo_buffer_d, *instance->sycl_instance->queue);
+    #else
     cl::sycl::buffer<char,1> * halo_buffer_sycl = static_cast<cl::sycl::buffer<char,1> *>((void*)halo_buffer_d);
-	delete halo_buffer_sycl;
-	//cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(halo_buffer_d));
+  	delete halo_buffer_sycl;
+    #endif
   }
   if (OPS_instance::getOPSInstance()->OPS_gpu_direct) {
-	cl::sycl::buffer<char,1> * ops_buffer_send_1_sycl = static_cast<cl::sycl::buffer<char,1> *>((void*)ops_buffer_send_1);
-	cl::sycl::buffer<char,1> * ops_buffer_recv_1_sycl = static_cast<cl::sycl::buffer<char,1> *>((void*)ops_buffer_recv_1);
-	cl::sycl::buffer<char,1> * ops_buffer_send_2_sycl = static_cast<cl::sycl::buffer<char,1> *>((void*)ops_buffer_send_2);
-	cl::sycl::buffer<char,1> * ops_buffer_recv_2_sycl = static_cast<cl::sycl::buffer<char,1> *>((void*)ops_buffer_recv_2);
-	delete ops_buffer_send_1_sycl;
-	delete ops_buffer_recv_1_sycl;
-	delete ops_buffer_send_2_sycl;
-	delete ops_buffer_recv_2_sycl;
-    //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(ops_buffer_send_1));
-    //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(ops_buffer_recv_1));
-    //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(ops_buffer_send_2));
-    //cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(ops_buffer_recv_2));
+    #ifdef SYCL_USM
+    cl::sycl::free((void*)ops_buffer_send_1, *instance->sycl_instance->queue);
+    cl::sycl::free((void*)ops_buffer_recv_1, *instance->sycl_instance->queue);
+    cl::sycl::free((void*)ops_buffer_send_2, *instance->sycl_instance->queue);
+    cl::sycl::free((void*)ops_buffer_recv_2, *instance->sycl_instance->queue);
+    #else
+    cl::sycl::buffer<char,1> * ops_buffer_send_1_sycl = static_cast<cl::sycl::buffer<char,1> *>((void*)ops_buffer_send_1);
+    cl::sycl::buffer<char,1> * ops_buffer_recv_1_sycl = static_cast<cl::sycl::buffer<char,1> *>((void*)ops_buffer_recv_1);
+    cl::sycl::buffer<char,1> * ops_buffer_send_2_sycl = static_cast<cl::sycl::buffer<char,1> *>((void*)ops_buffer_send_2);
+    cl::sycl::buffer<char,1> * ops_buffer_recv_2_sycl = static_cast<cl::sycl::buffer<char,1> *>((void*)ops_buffer_recv_2);
+    delete ops_buffer_send_1_sycl;
+    delete ops_buffer_recv_1_sycl;
+    delete ops_buffer_send_2_sycl;
+    delete ops_buffer_recv_2_sycl;
+    #endif
   } else {
-	ops_free(ops_buffer_send_1);
-	ops_free(ops_buffer_recv_1);
-	ops_free(ops_buffer_send_2);
-	ops_free(ops_buffer_recv_2);
-	/*  
-    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ops_buffer_send_1));
-    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ops_buffer_recv_1));
-    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ops_buffer_send_2));
-    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ops_buffer_recv_2));
-	*/
+    ops_free(ops_buffer_send_1);
+    ops_free(ops_buffer_recv_1);
+    ops_free(ops_buffer_send_2);
+    ops_free(ops_buffer_recv_2);
   }
   int flag = 0;
   MPI_Finalized(&flag);

@@ -94,7 +94,6 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset,
     size_t datsize =
         dat->size[0] * dat->size[1] * dat->size[2] * dat->type_size;
 
-    // ide kernel kell!! tartalma az ops_cuda_packer_1_soa
     dat->block->instance->sycl_instance->queue->submit(
         [&](cl::sycl::handler &cgh) {
           // Accessors
@@ -130,7 +129,6 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset,
     int num_blocks =
         (((dat->dim * halo_blocklength / 4) * halo_count) - 1) / num_threads +
         1;
-    // ide kernel kell!! tartalma az ops_cuda_packer_4
     dat->block->instance->sycl_instance->queue->submit([&](cl::sycl::handler
                                                                &cgh) {
       // Accessors
@@ -195,7 +193,9 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset,
   }
   if (!OPS_instance::getOPSInstance()->OPS_gpu_direct) {
     #ifdef SYCL_USM
-    dat->block->instance->sycl_instance->queue->memcpy(dest, halo_buffer_d, halo_count * halo_blocklength * dat->dim);
+//if the queue is out-of-order, the following wait is needed
+//    dat->block->instance->sycl_instance->queue->wait();
+    dat->block->instance->sycl_instance->queue->copy(halo_buffer_d, dest, halo_count * halo_blocklength * dat->dim);
     dat->block->instance->sycl_instance->queue->wait();
     #else
     ops_sycl_memcpyDeviceToHost(dat->block->instance, dest_buff, dest,
@@ -254,7 +254,7 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset,
 
   if (!OPS_instance::getOPSInstance()->OPS_gpu_direct) {
     #ifdef SYCL_USM
-    dat->block->instance->sycl_instance->queue->memcpy(halo_buffer_d, src, halo_count * halo_blocklength * dat->dim);
+    dat->block->instance->sycl_instance->queue->copy(src, halo_buffer_d, halo_count * halo_blocklength * dat->dim);
     dat->block->instance->sycl_instance->queue->wait();
     #else
     ops_sycl_memcpyHostToDevice(dat->block->instance, src_buff, src,
@@ -370,14 +370,13 @@ char *OPS_realloc_fast(char *ptr, size_t olds, size_t news) {
   if (OPS_instance::getOPSInstance()->OPS_gpu_direct) {
     if (ptr == NULL) {
       #ifdef SYCL_USM
+      ptr = (char*)cl::sycl::malloc_device(news,
+                            *OPS_instance::getOPSInstance()->sycl_instance->queue);
+      OPS_instance::getOPSInstance()->sycl_instance->queue->wait();
+      #else
       cl::sycl::buffer<char, 1> *ptr_buff =
           new cl::sycl::buffer<char, 1>(cl::sycl::range<1>(news));
       ptr = (char *)ptr_buff;
-      #else
-      ptr = (char*)cl::sycl::malloc_device(news,
-                            *OPS_instance::getOPSInstance()->sycl_instance->queue);
-
-      OPS_instance::getOPSInstance()->sycl_instance->queue->wait();
       #endif
       return ptr;
     } else {
@@ -387,7 +386,7 @@ char *OPS_realloc_fast(char *ptr, size_t olds, size_t news) {
       #ifdef SYCL_USM
       ptr2 = (char*)cl::sycl::malloc_device(news,
                             *OPS_instance::getOPSInstance()->sycl_instance->queue);
-      OPS_instance::getOPSInstance()->sycl_instance->queue->memcpy(ptr2, ptr, olds);
+      OPS_instance::getOPSInstance()->sycl_instance->queue->copy(ptr, ptr2, olds);
       cl::sycl::free(ptr, *OPS_instance::getOPSInstance()->sycl_instance->queue);
       #else
       cl::sycl::buffer<char, 1> *ptr2_buff =
@@ -512,7 +511,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   src->block->instance->sycl_instance->queue->wait();
   if (!OPS_instance::getOPSInstance()->OPS_gpu_direct) {
     #ifdef SYCL_USM
-    block->instance->sycl_instance->queue->memcpy(dest + dest_offset, halo_buffer_d, size);
+    block->instance->sycl_instance->queue->copy(halo_buffer_d, dest + dest_offset, size);
     block->instance->sycl_instance->queue->wait();
     #else
     ops_sycl_memcpyDeviceToHost(block->instance, dest_buff, dest + dest_offset,
@@ -555,7 +554,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
     }
     gpu_ptr = halo_buffer_d;
     #ifdef SYCL_USM
-    dest->block->instance->sycl_instance->queue->memcpy(halo_buffer_d, src + src_offset, size);
+    dest->block->instance->sycl_instance->queue->copy(src + src_offset, halo_buffer_d, size);
     dest->block->instance->sycl_instance->queue->wait();
     #else
     cl::sycl::buffer<char, 1> *src_buff =
