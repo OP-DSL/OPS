@@ -47,9 +47,9 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
   #ifdef _OPENMP
   #pragma omp parallel for OMP_COLLAPSE(3) shared(src,dest)
   #endif
-    for (int i = 0; i < halo->count; i++) {
-      for (int d = 0; d < dat->dim; d++)
-        for (int v = 0; v < halo->blocklength/dat->type_size; v++)
+    for (size_t i = 0; i < halo->count; i++) {
+      for (size_t d = 0; d < dat->dim; d++)
+        for (size_t v = 0; v < halo->blocklength/dat->type_size; v++)
           memcpy(dest+i*halo->blocklength*dat->dim+ v*dat->type_size*dat->dim + d*dat->type_size,
                  src+i*halo->stride + v*dat->type_size + d*(dat->size[0]*dat->size[1]*dat->size[2])*dat->type_size, dat->type_size);
     }
@@ -58,7 +58,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
   #ifdef _OPENMP
   #pragma omp parallel for shared(src,dest)
   #endif
-    for (int i = 0; i < halo->count; i++) {
+    for (size_t i = 0; i < halo->count; i++) {
       memcpy(dest+i*halo->blocklength*dat->dim, src+i*halo->stride*dat->dim, halo->blocklength*dat->dim);
       
     }
@@ -72,9 +72,9 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
   #ifdef _OPENMP
   #pragma omp parallel for OMP_COLLAPSE(3) shared(src,dest)
 #endif
-    for (int i = 0; i < halo->count; i++) {
-      for (int d = 0; d < dat->dim; d++)
-        for (int v = 0; v < halo->blocklength/dat->type_size; v++)
+    for (size_t i = 0; i < halo->count; i++) {
+      for (size_t d = 0; d < dat->dim; d++)
+        for (size_t v = 0; v < halo->blocklength/dat->type_size; v++)
           memcpy(dest+i*halo->stride + v*dat->type_size + d*(dat->size[0]*dat->size[1]*dat->size[2])*dat->type_size, 
             src+i*halo->blocklength*dat->dim + v*dat->type_size*dat->dim + d*dat->type_size, dat->type_size);
     }
@@ -83,7 +83,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
   #ifdef _OPENMP
   #pragma omp parallel for shared(src,dest)
   #endif
-    for (int i = 0; i < halo->count; i++) {
+    for (size_t i = 0; i < halo->count; i++) {
       memcpy(dest+i*halo->stride*dat->dim, src+i*halo->blocklength*dat->dim, halo->blocklength*dat->dim);
     }
   }
@@ -130,12 +130,12 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                    ((k - rz_s) * z_step * buf_strides_z +
                     (j - ry_s) * y_step * buf_strides_y +
                     (i - rx_s) * x_step * buf_strides_x) *
-                       src->elem_size + d*src->type_size,
+                       (size_t)src->elem_size + d*src->type_size,
                src->data +
                    (OPS_soa ? ((k * src->size[0] * src->size[1] + j * src->size[0] + i) 
-                            + d * src->size[0] * src->size[1] * src->size[2]) * src->type_size
+                            + d * src->size[0] * src->size[1] * src->size[2]) * (size_t)src->type_size
                           : ((k * src->size[0] * src->size[1] + j * src->size[0] + i) *
-                            src->elem_size + d*src->type_size)),
+                            (size_t)src->elem_size + d*src->type_size)),
                src->type_size);
       }
     }
@@ -157,14 +157,14 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
         for (int d = 0; d < dest->dim; d++) 
         memcpy(dest->data +
                    (OPS_soa ? ((k * dest->size[0] * dest->size[1] + j * dest->size[0] + i)
-                        + d * dest->size[0] * dest->size[1] * dest->size[2]) * dest->type_size
+                        + d * dest->size[0] * dest->size[1] * dest->size[2]) * (size_t)dest->type_size
                        : ((k * dest->size[0] * dest->size[1] + j * dest->size[0] + i) *
-                       dest->elem_size + d*dest->type_size)),
+                       (size_t)dest->elem_size + d*dest->type_size)),
                src + src_offset +
                    ((k - rz_s) * z_step * buf_strides_z +
                     (j - ry_s) * y_step * buf_strides_y +
                     (i - rx_s) * x_step * buf_strides_x) *
-                       dest->elem_size + d*dest->type_size,
+                       (size_t)dest->elem_size + d*dest->type_size,
                dest->type_size);
       }
     }

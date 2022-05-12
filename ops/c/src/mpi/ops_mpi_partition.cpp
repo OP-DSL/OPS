@@ -394,15 +394,15 @@ void ops_decomp_dats(sub_block *sb) {
     // Allocate datasets
     if (dat->data == NULL){
       if (dat->is_hdf5 == 0) {
-        dat->data = (char *)ops_calloc(prod[sb->ndim-1]*dat->elem_size,1);
+        dat->data = (char *)ops_calloc(prod[sb->ndim-1]*(size_t)dat->elem_size,1);
         //dat->data = (char *)ops_malloc(prod[sb->ndim - 1] * dat->elem_size * 1);
         dat->hdf5_file = "none";
         dat->mem =
-            prod[sb->ndim - 1] * dat->elem_size; // this includes the halo sizes
+            (size_t)prod[sb->ndim - 1] * (size_t)dat->elem_size; // this includes the halo sizes
       } else {
         dat->data = (char *)ops_calloc(prod[sb->ndim - 1] * dat->elem_size, 1);
         dat->mem =
-            prod[sb->ndim - 1] * dat->elem_size; // this includes the halo sizes
+            (size_t)prod[sb->ndim - 1] * (size_t)dat->elem_size; // this includes the halo sizes
         if (ops_read_dat_hdf5_dynamic == NULL) {
           OPSException ex(OPS_RUNTIME_ERROR);
           ex << "Error: using ops_decl_dat_hdf5, but lib_ops_hdf5_mpi.so was not linked";
@@ -427,7 +427,7 @@ void ops_decomp_dats(sub_block *sb) {
     }
 
     ops_cpHostToDevice(dat->block->instance, (void **)&(dat->data_d), (void **)&(dat->data),
-                       prod[sb->ndim - 1] * dat->elem_size);
+                       prod[sb->ndim - 1] * (size_t)dat->elem_size);
 
     // TODO: halo exchanges should not include the block halo part for
     // partitions that are on the edge of a block
