@@ -48,18 +48,18 @@ __global__ void ops_cuda_packer_1(const char *__restrict src,
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int block = idx / len;
   if (idx < count * len) {
-    dest[idx] = src[stride * block + idx % len];
+    dest[idx] = src[(size_t)stride * block + idx % len];
   }
 }
 
 __global__ void ops_cuda_packer_1_soa(const char *__restrict src,
                                   char *__restrict dest, int count, int len,
-                                  int stride, int dim, int size) {
+                                  int stride, int dim, size_t size) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int block = idx / len;
   if (idx < count * len) {
     for (int d=0; d<dim; d++) {   
-      dest[idx*dim+d] = src[stride * block + idx % len + d * size];
+      dest[idx*dim+d] = src[(size_t)stride * block + idx % len + d * size];
     }
   }
 }
@@ -70,18 +70,18 @@ __global__ void ops_cuda_unpacker_1(const char *__restrict src,
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int block = idx / len;
   if (idx < count * len) {
-    dest[stride * block + idx % len] = src[idx];
+    dest[(size_t)stride * block + idx % len] = src[idx];
   }
 }
 
 __global__ void ops_cuda_unpacker_1_soa(const char *__restrict src,
                                     char *__restrict dest, int count, int len,
-                                    int stride, int dim, int size) {
+                                    int stride, int dim, size_t size) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int block = idx / len;
   if (idx < count * len) {
     for (int d=0; d<dim; d++) {   
-      dest[stride * block + idx % len + d * size] = src[idx*dim + d];
+      dest[(size_t)stride * block + idx % len + d * size] = src[idx*dim + d];
     }
   }
 }
@@ -93,7 +93,7 @@ __global__ void ops_cuda_packer_4(const int *__restrict src,
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int block = idx / len;
   if (idx < count * len) {
-    dest[idx] = src[stride * block + idx % len];
+    dest[idx] = src[(size_t)stride * block + idx % len];
   }
 }
 
@@ -103,7 +103,7 @@ __global__ void ops_cuda_unpacker_4(const int *__restrict src,
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int block = idx / len;
   if (idx < count * len) {
-    dest[stride * block + idx % len] = src[idx];
+    dest[(size_t)stride * block + idx % len] = src[idx];
   }
 }
 
@@ -134,7 +134,7 @@ void ops_pack_cuda_internal(ops_dat dat, const int src_offset, char *__restrict 
     int num_blocks = ((halo_blocklength * halo_count) - 1) / num_threads + 1;
     ops_cuda_packer_1_soa<<<num_blocks, num_threads>>>(
         src, device_buf, halo_count, halo_blocklength, halo_stride,
-        dat->dim, dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size);
+        dat->dim, (size_t)(dat->size[0]*dat->size[1]*dat->size[2])*dat->type_size);
     cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaGetLastError());
 
   } else if (halo_blocklength % 4 == 0) {
@@ -191,7 +191,7 @@ void ops_unpack_cuda_internal(ops_dat dat, const int dest_offset, const char *__
     int num_blocks = ((halo_blocklength * halo_count) - 1) / num_threads + 1;
     ops_cuda_unpacker_1_soa<<<num_blocks, num_threads>>>(
         device_buf, dest, halo_count, halo_blocklength, halo_stride,
-        dat->dim, dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size);
+        dat->dim, (size_t)(dat->size[0]*dat->size[1]*dat->size[2])*dat->type_size);
     cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaGetLastError());
   } else if (halo_blocklength % 4 == 0) {
     int num_threads = 128;
@@ -240,8 +240,9 @@ __global__ void copy_kernel_tobuf(char *dest, char *src, int rx_s, int rx_e,
                                   int x_step, int y_step, int z_step,
                                   int size_x, int size_y, int size_z,
                                   int buf_strides_x, int buf_strides_y,
-                                  int buf_strides_z, int type_size, int dim, int OPS_soa) {
+                                  int buf_strides_z, int type_sizeg, int dim, int OPS_soa) {
 
+  size_t type_size = type_sizeg;
   int idx_z = rz_s + z_step * (blockDim.z * blockIdx.z + threadIdx.z);
   int idx_y = ry_s + y_step * (blockDim.y * blockIdx.y + threadIdx.y);
   int idx_x = rx_s + x_step * (blockDim.x * blockIdx.x + threadIdx.x);
@@ -269,8 +270,9 @@ __global__ void copy_kernel_frombuf(char *dest, char *src, int rx_s, int rx_e,
                                     int x_step, int y_step, int z_step,
                                     int size_x, int size_y, int size_z,
                                     int buf_strides_x, int buf_strides_y,
-                                    int buf_strides_z, int type_size, int dim, int OPS_soa) {
+                                    int buf_strides_z, int type_sizeg, int dim, int OPS_soa) {
 
+  size_t type_size = type_sizeg;
   int idx_z = rz_s + z_step * (blockDim.z * blockIdx.z + threadIdx.z);
   int idx_y = ry_s + y_step * (blockDim.y * blockIdx.y + threadIdx.y);
   int idx_x = rx_s + x_step * (blockDim.x * blockIdx.x + threadIdx.x);
