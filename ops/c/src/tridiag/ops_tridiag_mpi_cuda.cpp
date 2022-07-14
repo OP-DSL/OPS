@@ -123,7 +123,7 @@ void ops_tridsolver_params::set_cuda_sync(int sync) {
 void ops_tridMultiDimBatch(
     int ndim,     // number of dimensions, ndim <= MAXDIM = 8
     int solvedim, // user chosen dimension to perform solve
-    int *dims,    // array containing the sizes of each ndim dimensions
+    int *range,   // array containing the range over which to solve
     ops_dat a, ops_dat b, ops_dat c, // left hand side coefficients of a
     // multidimensional problem. An array containing
     // A matrices of individual problems
@@ -145,15 +145,37 @@ void ops_tridMultiDimBatch(
     throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets must all be of the same type");
   }
 
-  int dims_calc[OPS_MAX_DIM];
-  int pads_m[OPS_MAX_DIM];
-  int pads_p[OPS_MAX_DIM];
-  sub_dat *sd_a = OPS_sub_dat_list[a->index];
-
+  // Will break if range exlcudes an entire MPI process
+  int offset = 0;
+  int dims_calc[3];
+  sub_dat_list sd = OPS_sub_dat_list[a->index];
   for(int i = 0; i < ndim; i++) {
-    pads_m[i] = -1 * (a->d_m[i] + sd_a->d_im[i]);
-    pads_p[i] = a->d_p[i] + sd_a->d_ip[i];
-    dims_calc[i] = a->size[i] - pads_m[i] - pads_p[i];
+    bool minRangeInSubDat = range[2 * i] >= sd->decomp_disp[i] && range[2 * i] < sd->decomp_disp[i] + sd->decomp_size[i];
+    bool maxRangeinSubDat = range[2 * i + 1] > sd->decomp_disp[i] && range[2 * i + 1] <= sd->decomp_disp[i] + sd->decomp_size[i];
+    // Check that range is within this sub_dat's global elements
+    // (otherwise no offset from sub_dat's origin needed for this dimension)
+    if(minRangeInSubDat) {
+      if(i == 0)
+        offset += range[2 * i];
+      if(i == 1)
+        offset += range[2 * i] * a->size[0];
+      if(i == 2)
+        offset += range[2 * i] * a->size[1] * a->size[0];
+    }
+
+    int pads_m = -1 * (a->d_m[i] + sd->d_im[i]);
+    int pads_p = a->d_p[i] + sd->d_ip[i];
+    dims_calc[i] = a->size[i] - pads_m - pads_p;
+
+    // Edit size of solve to include range information
+    if(minRangeInSubDat && maxRangeinSubDat) {
+      dims_calc[i] = range[2 * i + 1] - range[2 * i];
+    } else if(minRangeInSubDat) {
+      dims_calc[i] -= range[2 * i];
+    } else if(maxRangeinSubDat) {
+      int global_size = sd->gbl_size[i] - sd->gbl_d_p[i] + sd->gbl_d_m[i];
+      dims_calc[i] -= global_size - range[2 * i + 1];
+    }
   }
 
   int device = OPS_DEVICE;
@@ -169,8 +191,8 @@ void ops_tridMultiDimBatch(
     double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
 
     tridDmtsvStridedBatch((TridParams *)tridsolver_ctx->tridsolver_params,
-                          a_ptr, b_ptr, c_ptr, d_ptr, ndim, solvedim, dims_calc,
-                          a->size);
+                          a_ptr + offset, b_ptr + offset, c_ptr + offset,
+                          d_ptr + offset, ndim, solvedim, dims_calc, a->size);
 
     // Release pointer access back to OPS
     ops_dat_release_raw_data(d, 0, OPS_RW);
@@ -186,8 +208,8 @@ void ops_tridMultiDimBatch(
     float *d_ptr = (float *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
 
     tridSmtsvStridedBatch((TridParams *)tridsolver_ctx->tridsolver_params,
-                          a_ptr, b_ptr, c_ptr, d_ptr, ndim, solvedim, dims_calc,
-                          a->size);
+                          a_ptr + offset, b_ptr + offset, c_ptr + offset,
+                          d_ptr + offset, ndim, solvedim, dims_calc, a->size);
 
     // Release pointer access back to OPS
     ops_dat_release_raw_data(d, 0, OPS_RW);
@@ -202,7 +224,7 @@ void ops_tridMultiDimBatch(
 void ops_tridMultiDimBatch_Inc(
     int ndim,     // number of dimensions, ndim <= MAXDIM = 8
     int solvedim, // user chosen dimension to perform solve
-    int *dims,    // array containing the sizes of each ndim dimensions
+    int *range,   // array containing the range over which to solve
     ops_dat a, ops_dat b, ops_dat c, // left hand side coefficients of a
     // multidimensional problem. An array containing
     // A matrices of individual problems
@@ -225,15 +247,37 @@ void ops_tridMultiDimBatch_Inc(
     throw OPSException(OPS_RUNTIME_ERROR, "Tridsolver error: the a,b,c,d datasets must all be of the same type");
   }
 
-  int dims_calc[OPS_MAX_DIM];
-  int pads_m[OPS_MAX_DIM];
-  int pads_p[OPS_MAX_DIM];
-  sub_dat *sd_a = OPS_sub_dat_list[a->index];
-
+  // Will break if range exlcudes an entire MPI process
+  int offset = 0;
+  int dims_calc[3];
+  sub_dat_list sd = OPS_sub_dat_list[a->index];
   for(int i = 0; i < ndim; i++) {
-    pads_m[i] = -1 * (a->d_m[i] + sd_a->d_im[i]);
-    pads_p[i] = a->d_p[i] + sd_a->d_ip[i];
-    dims_calc[i] = a->size[i] - pads_m[i] - pads_p[i];
+    bool minRangeInSubDat = range[2 * i] >= sd->decomp_disp[i] && range[2 * i] < sd->decomp_disp[i] + sd->decomp_size[i];
+    bool maxRangeinSubDat = range[2 * i + 1] > sd->decomp_disp[i] && range[2 * i + 1] <= sd->decomp_disp[i] + sd->decomp_size[i];
+    // Check that range is within this sub_dat's global elements
+    // (otherwise no offset from sub_dat's origin needed for this dimension)
+    if(minRangeInSubDat) {
+      if(i == 0)
+        offset += range[2 * i];
+      if(i == 1)
+        offset += range[2 * i] * a->size[0];
+      if(i == 2)
+        offset += range[2 * i] * a->size[1] * a->size[0];
+    }
+
+    int pads_m = -1 * (a->d_m[i] + sd->d_im[i]);
+    int pads_p = a->d_p[i] + sd->d_ip[i];
+    dims_calc[i] = a->size[i] - pads_m - pads_p;
+
+    // Edit size of solve to include range information
+    if(minRangeInSubDat && maxRangeinSubDat) {
+      dims_calc[i] = range[2 * i + 1] - range[2 * i];
+    } else if(minRangeInSubDat) {
+      dims_calc[i] -= range[2 * i];
+    } else if(maxRangeinSubDat) {
+      int global_size = sd->gbl_size[i] - sd->gbl_d_p[i] + sd->gbl_d_m[i];
+      dims_calc[i] -= global_size - range[2 * i + 1];
+    }
   }
 
   int device = OPS_DEVICE;
@@ -248,7 +292,8 @@ void ops_tridMultiDimBatch_Inc(
     double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
     tridDmtsvStridedBatchInc((TridParams *)tridsolver_ctx->tridsolver_params,
-                             a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
+                             a_ptr + offset, b_ptr + offset, c_ptr + offset,
+                             d_ptr + offset, u_ptr + offset, ndim, solvedim,
                              dims_calc, a->size);
 
     ops_dat_release_raw_data(u, 0, OPS_RW);
@@ -264,7 +309,8 @@ void ops_tridMultiDimBatch_Inc(
     float *u_ptr = (float *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
     tridSmtsvStridedBatchInc((TridParams *)tridsolver_ctx->tridsolver_params,
-                             a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
+                             a_ptr + offset, b_ptr + offset, c_ptr + offset,
+                             d_ptr + offset, u_ptr + offset, ndim, solvedim,
                              dims_calc, a->size);
 
     ops_dat_release_raw_data(u, 0, OPS_RW);
