@@ -198,9 +198,9 @@ int main(int argc, char *argv[]) {
         // ops_printf("Elapsed preproc (sec): %lf (s)\n", et3 - et2);
         // perform tri-diagonal solves in x-direction
         ops_timers(&ct2, &et2);
-        ops_tridMultiDimBatch_Inc(3, 0, size, a, b, c, du, u, trid_ctx);
-        ops_tridMultiDimBatch_Inc(3, 0, size, a, b, c, dv, v, trid_ctx);
-        ops_tridMultiDimBatch_Inc(3, 0, size, a, b, c, dw, w, trid_ctx);
+        ops_tridMultiDimBatch_Inc(3, 0, iterRange, a, b, c, du, u, trid_ctx);
+        ops_tridMultiDimBatch_Inc(3, 0, iterRange, a, b, c, dv, v, trid_ctx);
+        ops_tridMultiDimBatch_Inc(3, 0, iterRange, a, b, c, dw, w, trid_ctx);
         ops_timers(&ct3, &et3);
         totalX += et3 - et2;
         // WriteDataToH5("Burger3DX.h5", burger3D, debugList);
@@ -226,9 +226,9 @@ int main(int argc, char *argv[]) {
         // WriteDataToH5("Burger3DProcY.h5", burger3D, debugList);
         // perform tri-diagonal solves in y-direction
         ops_timers(&ct2, &et2);
-        ops_tridMultiDimBatch_Inc(3, 1, size, a, b, c, du, uStar, trid_ctx);
-        ops_tridMultiDimBatch_Inc(3, 1, size, a, b, c, dv, vStar, trid_ctx);
-        ops_tridMultiDimBatch_Inc(3, 1, size, a, b, c, dw, wStar, trid_ctx);
+        ops_tridMultiDimBatch_Inc(3, 1, iterRange, a, b, c, du, uStar, trid_ctx);
+        ops_tridMultiDimBatch_Inc(3, 1, iterRange, a, b, c, dv, vStar, trid_ctx);
+        ops_tridMultiDimBatch_Inc(3, 1, iterRange, a, b, c, dw, wStar, trid_ctx);
         ops_timers(&ct3, &et3);
         totalY += et3 - et2;
         // WriteDataToH5("Burger3DY.h5", burger3D, debugList);
@@ -255,9 +255,9 @@ int main(int argc, char *argv[]) {
         // ops_printf("Elapsed preproc (sec): %lf (s)\n", et3 - et2);
         // perform tri-diagonal solves in Z-direction
         ops_timers(&ct2, &et2);
-        ops_tridMultiDimBatch_Inc(3, 2, size, a, b, c, du, u, trid_ctx);
-        ops_tridMultiDimBatch_Inc(3, 2, size, a, b, c, dv, v, trid_ctx);
-        ops_tridMultiDimBatch_Inc(3, 2, size, a, b, c, dw, w, trid_ctx);
+        ops_tridMultiDimBatch_Inc(3, 2, iterRange, a, b, c, du, u, trid_ctx);
+        ops_tridMultiDimBatch_Inc(3, 2, iterRange, a, b, c, dv, v, trid_ctx);
+        ops_tridMultiDimBatch_Inc(3, 2, iterRange, a, b, c, dw, w, trid_ctx);
         ops_timers(&ct3, &et3);
         totalZ += et3 - et2;
         //WriteDataToH5("Burger3DZ.h5", burger3D, debugList);
