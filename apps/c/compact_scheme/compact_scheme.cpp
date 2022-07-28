@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
                ops_arg_dat(d, 1, S3D_000, "double", OPS_WRITE), ops_arg_idx());
 
   // Get the u_x, note that the solver will add result to ux so that ux must be // zero before the call
-  ops_tridMultiDimBatch_Inc(3, 0, size, a, b, c, d, ux, trid_ctx);
+  ops_tridMultiDimBatch_Inc(3, 0, iterRange, a, b, c, d, ux, trid_ctx);
 
   ops_par_loop(preprocessY, "preprocessY", compact3d, 3, iterRange,
                ops_arg_dat(u, 1, S3D_7PT, "double", OPS_READ),
@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
 
 
   // Get the u_y, note that the solver will add result to ux so that uy must be // zero before the call
-  ops_tridMultiDimBatch_Inc(3, 1, size, a, b, c, d, uy, trid_ctx);
+  ops_tridMultiDimBatch_Inc(3, 1, iterRange, a, b, c, d, uy, trid_ctx);
 
   ops_par_loop(preprocessZ, "preprocessZ", compact3d, 3, iterRange,
                ops_arg_dat(u, 1, S3D_7PT, "double", OPS_READ),
@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
                ops_arg_dat(d, 1, S3D_000, "double", OPS_WRITE), ops_arg_idx());
 
   // Get the u_z, note that the solver will add result to ux so that ux must be // zero before the call
-  ops_tridMultiDimBatch_Inc(3, 2, size, a, b, c, d, uz, trid_ctx);
+  ops_tridMultiDimBatch_Inc(3, 2, iterRange, a, b, c, d, uz, trid_ctx);
 
   WriteDataToH5("Compact3D.h5", compact3d, resList);
   delete trid_ctx;

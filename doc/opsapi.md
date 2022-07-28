@@ -791,7 +791,7 @@ Then parameters specific to different solving strategies can be set using setter
 
 ##### ops_tridMultiDimBatch
 
-__void ops_tridMultiDimBatch(int ndim, int solvedim, int* dims, ops_dat a, ops_dat b, ops_dat c, ops_dat d, ops_tridsolver_params *tridsolver_ctx)__
+__void ops_tridMultiDimBatch(int ndim, int solvedim, int* range, ops_dat a, ops_dat b, ops_dat c, ops_dat d, ops_tridsolver_params *tridsolver_ctx)__
 
 This solves multiple tridiagonal systems of equations in multidimensional datasets along the specified dimension. The matrix is stored in the `a` (bottom diagonal), `b` (central diagonal) and `c` (top diagonal) datasets. The right hand side is stored in the `d` dataset and the result is also written to this dataset.
 
@@ -799,7 +799,7 @@ This solves multiple tridiagonal systems of equations in multidimensional datase
 | ----------- | ----------- |
 |ndim| the dimension of the datasets |
 |solvedim| the dimension to solve along |
-|dims| the size of each dimension (excluding any padding) |
+|range| the range to solve over, similar to `ops_par_loop`'s range argument, cannot exclude an entire MPI process |
 |a| the dataset for the lower diagonal |
 |b| the dataset for the central diagonal |
 |c| the dataset for the upper diagonal |
@@ -808,7 +808,7 @@ This solves multiple tridiagonal systems of equations in multidimensional datase
 
 ##### ops_tridMultiDimBatch_Inc
 
-__void ops_tridMultiDimBatch(int ndim, int solvedim, int* dims, ops_dat a, ops_dat b, ops_dat c, ops_dat d, ops_dat u, ops_tridsolver_params *tridsolver_ctx)__
+__void ops_tridMultiDimBatch(int ndim, int solvedim, int* range, ops_dat a, ops_dat b, ops_dat c, ops_dat d, ops_dat u, ops_tridsolver_params *tridsolver_ctx)__
 
 This solves multiple tridiagonal systems of equations in multidimensional datasets along the specified dimension. The matrix is stored in the `a` (bottom diagonal), `b` (central diagonal) and `c` (top diagonal) datasets. The right hand side is stored in the `d` dataset and the result is added to the `u` dataset.
 
@@ -816,7 +816,7 @@ This solves multiple tridiagonal systems of equations in multidimensional datase
 | ----------- | ----------- |
 |ndim| the dimension of the datasets |
 |solvedim| the dimension to solve along |
-|dims| the size of each dimension (excluding any padding) |
+|dims| the range to solve over, similar to `ops_par_loop`'s range argument, cannot exclude an entire MPI process |
 |a| the dataset for the lower diagonal |
 |b| the dataset for the central diagonal |
 |c| the dataset for the upper diagonal |
@@ -828,24 +828,24 @@ This solves multiple tridiagonal systems of equations in multidimensional datase
 
 The following is a list of all the runtime flags and options that can be used when executing OPS generated applications.
 
-* `OPS_DIAGS=` : set OPS diagnostics level at runtime. 
+* `OPS_DIAGS=` : set OPS diagnostics level at runtime.
 
   `OPS_DIAGS=1` - no diagnostics, default level to achieve the best runtime performance.
-   
+
   `OPS_DIAGS>1` - print block decomposition and `ops_par_loop` timing breakdown.
-  
+
   `OPS_DIAGS>4` - print intra-block halo buffer allocation feedback (for OPS internal development only).
-  
+
   `OPS_DIAGS>5` - check if intra-block halo MPI sends depth match MPI receives depth (for OPS internal development only).  
-  
+
 * `OPS_BLOCK_SIZE_X=`, `OPS_BLOCK_SIZE_Y=` and `OPS_BLOCK_SIZE_Y=` : The CUDA (and OpenCL) thread block sizes in X, Y and Z dimensions. The sizes should be an integer between 1 - 1024, and currently they should be selected such that `OPS_BLOCK_SIZE_X`*`OPS_BLOCK_SIZE_Y`*`OPS_BLOCK_SIZE_Z`< 1024
 
-* `-gpudirect` : Enable GPU direct support when executing MPI+CUDA executables. 
+* `-gpudirect` : Enable GPU direct support when executing MPI+CUDA executables.
 
 * `OPS_CL_DEVICE=` : Select the OpenCL device for execution. Usually `OPS_CL_DEVICE=0` selects the CPU and `OPS_CL_DEVICE=1` selects GPUs. The selected device will be reported by OPS during execution.
 
-* `OPS_TILING` : Execute OpenMP code with cache blocking tiling. See the [Performance Tuning](https://github.com/OP-DSL/OPS/blob/MarkdownDocDev/doc/perf.md) section. 
-* `OPS_TILING_MAXDEPTH=` : Execute MPI+OpenMP code with cache blocking tiling and further communication avoidance. See the [Performance Tuning](https://github.com/OP-DSL/OPS/blob/MarkdownDocDev/doc/perf.md) section. 
+* `OPS_TILING` : Execute OpenMP code with cache blocking tiling. See the [Performance Tuning](https://github.com/OP-DSL/OPS/blob/MarkdownDocDev/doc/perf.md) section.
+* `OPS_TILING_MAXDEPTH=` : Execute MPI+OpenMP code with cache blocking tiling and further communication avoidance. See the [Performance Tuning](https://github.com/OP-DSL/OPS/blob/MarkdownDocDev/doc/perf.md) section.
 
 ## Doxygen
 Doxygen generated from OPS source can be found [here](https://op-dsl-ci.gitlab.io/ops-ci/).

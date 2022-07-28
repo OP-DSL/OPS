@@ -96,7 +96,7 @@ void ops_tridsolver_params::set_cuda_sync(int sync) {
 void ops_tridMultiDimBatch(
     int ndim,     // number of dimensions, ndim <= MAXDIM = 8
     int solvedim, // user chosen dimension to perform solve
-    int *dims,    // array containing the sizes of each ndim dimensions
+    int *range,   // array containing the range over which to solve
     ops_dat a, ops_dat b, ops_dat c, // left hand side coefficients of a
     // multidimensional problem. An array containing
     // A matrices of individual problems
@@ -122,6 +122,20 @@ void ops_tridMultiDimBatch(
   int s3D_000[] = {0, 0, 0};
   ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
 
+  // Calculate dimension of area being solved and the starting offset from the
+  // origin of the dat
+  int dims[3];
+  int offset = 0;
+  for(int i = 0; i < ndim; i++) {
+    dims[i] = range[2 * i + 1] - range[2 * i];
+    if(i == 0)
+      offset += range[2 * i];
+    if(i == 1)
+      offset += range[2 * i] * a->size[0];
+    if(i == 2)
+      offset += range[2 * i] * a->size[1] * a->size[0];
+  }
+
   if(strcmp(a->type, "double") == 0) {
     const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &device);
     const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &device);
@@ -129,8 +143,8 @@ void ops_tridMultiDimBatch(
     double *d_ptr = (double *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
 
     tridDmtsvStridedBatch((TridParams *)tridsolver_ctx->tridsolver_params,
-                          a_ptr, b_ptr, c_ptr, d_ptr, ndim, solvedim, dims,
-                          a->size);
+                          a_ptr + offset, b_ptr + offset, c_ptr + offset,
+                          d_ptr + offset, ndim, solvedim, dims, a->size);
 
     ops_dat_release_raw_data(d, 0, OPS_RW);
     ops_dat_release_raw_data(c, 0, OPS_READ);
@@ -143,8 +157,8 @@ void ops_tridMultiDimBatch(
     float *d_ptr = (float *)ops_dat_get_raw_pointer(d, 0, S3D_000, &device);
 
     tridSmtsvStridedBatch((TridParams *)tridsolver_ctx->tridsolver_params,
-                          a_ptr, b_ptr, c_ptr, d_ptr, ndim, solvedim, dims,
-                          a->size);
+                          a_ptr + offset, b_ptr + offset, c_ptr + offset,
+                          d_ptr + offset, ndim, solvedim, dims, a->size);
 
     ops_dat_release_raw_data(d, 0, OPS_RW);
     ops_dat_release_raw_data(c, 0, OPS_READ);
@@ -158,7 +172,7 @@ void ops_tridMultiDimBatch(
 void ops_tridMultiDimBatch_Inc(
     int ndim,     // number of dimensions, ndim <= MAXDIM = 8
     int solvedim, // user chosen dimension to perform solve
-    int *dims,    // array containing the sizes of each ndim dimensions
+    int *range,   // array containing the range over which to solve
     ops_dat a, ops_dat b, ops_dat c, // left hand side coefficients of a
     // multidimensional problem. An array containing
     // A matrices of individual problems
@@ -185,6 +199,20 @@ void ops_tridMultiDimBatch_Inc(
   int s3D_000[] = {0, 0, 0};
   ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
 
+  // Calculate dimension of area being solved and the starting offset from the
+  // origin of the dat
+  int dims[3];
+  int offset = 0;
+  for(int i = 0; i < ndim; i++) {
+    dims[i] = range[2 * i + 1] - range[2 * i];
+    if(i == 0)
+      offset += range[2 * i];
+    if(i == 1)
+      offset += range[2 * i] * a->size[0];
+    if(i == 2)
+      offset += range[2 * i] * a->size[1] * a->size[0];
+  }
+
   if(strcmp(a->type, "double") == 0) {
     const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &device);
     const double *b_ptr = (double *)ops_dat_get_raw_pointer(b, 0, S3D_000, &device);
@@ -193,7 +221,8 @@ void ops_tridMultiDimBatch_Inc(
     double *u_ptr = (double *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
     tridDmtsvStridedBatchInc((TridParams *)tridsolver_ctx->tridsolver_params,
-                             a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
+                             a_ptr + offset, b_ptr + offset, c_ptr + offset,
+                             d_ptr + offset, u_ptr + offset, ndim, solvedim,
                              dims, a->size);
 
     ops_dat_release_raw_data(u, 0, OPS_RW);
@@ -209,7 +238,8 @@ void ops_tridMultiDimBatch_Inc(
     float *u_ptr = (float *)ops_dat_get_raw_pointer(u, 0, S3D_000, &device);
 
     tridSmtsvStridedBatchInc((TridParams *)tridsolver_ctx->tridsolver_params,
-                             a_ptr, b_ptr, c_ptr, d_ptr, u_ptr, ndim, solvedim,
+                             a_ptr + offset, b_ptr + offset, c_ptr + offset,
+                             d_ptr + offset, u_ptr + offset, ndim, solvedim,
                              dims, a->size);
 
     ops_dat_release_raw_data(u, 0, OPS_RW);
