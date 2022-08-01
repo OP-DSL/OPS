@@ -109,7 +109,7 @@ program laplace
        
     write(*,'(a,e18.5,a)') 'Total error is within ', err_diff,' % of the expected error'
      
-    if(err_diff .lt. 0.001) then
+    if(err_diff .lt. 0.001_8) then
         write(*,'(a)') 'This run is considered PASSED'
     else
         write(*,'(a)') 'This test is considered FAILED'
@@ -119,4 +119,5 @@ program laplace
     write(*,'(a,f16.7,a)')  ' completed in ', stop_time-start_time, ' seconds'
 
     deallocate (A,Anew)
+
 end program laplace

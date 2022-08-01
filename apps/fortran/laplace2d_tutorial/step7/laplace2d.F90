@@ -11,12 +11,6 @@
 !                      x-direction
 !                       (index-i)
 
-! sizes
-
-!#define imax 4094
-!#define jmax 4094
-!#define pi 2.0_8*asin(1.0_8)
-
 program laplace
     use OPS_Fortran_Reference
     use OPS_FORTRAN_RT_SUPPORT
@@ -38,22 +32,11 @@ program laplace
     
     !ops_dats
     type(ops_dat)     ::    d_A, d_Anew
-
-    !initialize and declare constants
-    imax = 4094
-    jmax = 4094
-    pi = 2.0_8*asin(1.0_8)
-
-#ifdef OPS_WITH_CUDAFOR
-    imax_OPS = imax
-    jmax_OPS = jmax
-    pi_OPS = pi
-#endif
+    
+    !declare OPS constants
     call ops_decl_const("imax", 1, "int", imax)
     call ops_decl_const("jmax", 1, "int", jmax)
     call ops_decl_const("pi", 1, "double", pi)
-
-    !call initialise_constants()
 
     ! vars for stencils
     integer s2D_00(2) /0,0/
@@ -70,7 +53,7 @@ program laplace
     integer d_m(2) /-1,-1/ !max boundary depths for the dat in the negative direction
     
     !size for OPS
-    integer size(2) /jmax,imax/ 
+    integer size(2)
 
     !base
     integer base(2) /1,1/   !this is in fortran indexing - start from 1
@@ -87,6 +70,20 @@ program laplace
     !.. but internally will convert to c index
 
     integer :: bottom_range(4),top_range(4),left_range(4),right_range(4),interior_range(4)
+
+    !initialize and declare constants
+    imax = 4094
+    jmax = 4094
+    pi = 2.0_8*asin(1.0_8)
+
+#ifdef OPS_WITH_CUDAFOR
+    imax_OPS = imax
+    jmax_OPS = jmax
+    pi_OPS = pi
+#endif
+    
+    size(1) = jmax
+    size(2) = imax       
 
     !                         x(min,max)  y(min,max)  
     bottom_range   = [0,imax+1,      0,0]
@@ -179,7 +176,7 @@ program laplace
 
     write(*,'(a,e18.5,a)') 'Total error is within ', err_diff,' % of the expected error'
 
-    if(err_diff .lt. 0.001) then
+    if(err_diff .lt. 0.001_8) then
         write(*,'(a)') 'This run is considered PASSED'
     else
         write(*,'(a)') 'This test is considered FAILED'
@@ -189,4 +186,5 @@ program laplace
     write(*,'(a,f16.7,a)')  ' completed in ', endTime - startTime, ' seconds'
 
     call ops_exit( )
+
 end program laplace
