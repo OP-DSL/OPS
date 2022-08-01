@@ -33,11 +33,6 @@ program laplace
     !ops_dats
     type(ops_dat)     ::    d_A, d_Anew
     
-    !declare OPS constants
-    call ops_decl_const("imax", 1, "int", imax)
-    call ops_decl_const("jmax", 1, "int", jmax)
-    call ops_decl_const("pi", 1, "double", pi)
-
     ! vars for stencils
     integer s2D_00(2) /0,0/
     type(ops_stencil) :: S2D_0pt
@@ -75,6 +70,11 @@ program laplace
     imax = 4094
     jmax = 4094
     pi = 2.0_8*asin(1.0_8)
+
+    !declare OPS constants
+    call ops_decl_const("imax", 1, "int", imax)
+    call ops_decl_const("jmax", 1, "int", jmax)
+    call ops_decl_const("pi", 1, "double", pi)    
 
 #ifdef OPS_WITH_CUDAFOR
     imax_OPS = imax
