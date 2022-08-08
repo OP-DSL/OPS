@@ -105,7 +105,7 @@ program laplace
 
     write(*,'(i5,a,f16.7)') iter, ', ',error
 
-    err_diff = abs((100.0*(error/2.421354960840227e-03))-100.0);
+    err_diff = abs((100.0*(error/2.421354960840227e-03))-100.0)
        
     write(*,'(a,e18.5,a)') 'Total error is within ', err_diff,' % of the expected error'
      

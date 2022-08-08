@@ -2,13 +2,14 @@ OPS = $(OPS_INSTALL_PATH)
 C_OPS = $(OPS)/c
 C_OPS_INC = $(C_OPS)/include
 C_OPS_SRC = $(C_OPS)/src
+C_OPS_OBJ = $(C_OPS)/obj/$(OPS_COMPILER)
 C_OPS_LIB = $(C_OPS)/lib/$(OPS_COMPILER)
 
 F_OPS = $(OPS)/fortran
 F_OPS_INC = $(F_OPS)/include
 F_OPS_SRC = $(F_OPS)/src
-F_OPS_OBJ = $(F_OPS)/obj
-F_OPS_LIB = $(F_OPS)/lib
+F_OPS_OBJ = $(F_OPS)/obj/$(OPS_COMPILER)
+F_OPS_LIB = $(F_OPS)/lib/$(OPS_COMPILER)
 F_OPS_MOD = $(F_OPS)/mod
 F_INC_MOD = $(F_OPS_MOD)/$(OPS_COMPILER)
 

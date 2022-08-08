@@ -2,9 +2,9 @@ MODULE OPS_CONSTANTS
 
 #ifdef OPS_WITH_CUDAFOR
     use cudafor
-    integer, constant :: imax_OPS
-    integer, constant :: jmax_OPS
-    real(8), constant :: pi_OPS
+    integer, constant :: imax_opsconstant
+    integer, constant :: jmax_opsconstant
+    real(8), constant :: pi_opsconstant
     integer :: imax, jmax
     real(8) :: pi
 #else
