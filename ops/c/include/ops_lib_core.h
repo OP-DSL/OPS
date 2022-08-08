@@ -42,6 +42,7 @@
 
 // Needed for size_t
 #include <string>
+#include <map>
 #include <cstring>
 #ifdef __unix__
 #include <string.h>
@@ -1042,6 +1043,7 @@ int ops_is_root();
 OPS_FTN_INTEROP
 void ops_partition(const char *routine);
 
+void ops_partition_opts(const char *routine, std::map<std::string, void*>& opts);
 /*******************************************************************************
 * External access support
 *******************************************************************************/

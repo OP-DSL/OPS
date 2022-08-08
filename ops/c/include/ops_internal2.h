@@ -312,6 +312,7 @@ void _ops_timing_output(OPS_instance *instance,std::ostream &stream);
 void _ops_timing_output_stdout(OPS_instance *instance);
 int _ops_is_root(OPS_instance *instance);
 void _ops_partition(OPS_instance *instance, const char *routine);
+void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::string, void*>& opts);
 void _ops_exit(OPS_instance *instance);
 
 void ops_printf2(OPS_instance *instance, const char *format, ...);

@@ -81,7 +81,7 @@ int intersection(int range1_beg, int range1_end, int range2_beg,
  * This one is just a really primitive initial implementation
  */
 void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
-                          int **proc_sizes, int **proc_dimsplit) {
+                          int **proc_sizes, int **proc_dimsplit, std::map<std::string, void*> &opts) {
   // partitioning strategy 1. many blocks, few MPI processes, no splitting, just
   // spread around
   if (ops_comm_global_size <= OPS_instance::getOPSInstance()->OPS_block_index) {
@@ -118,30 +118,58 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
     (*proc_offsets)[OPS_instance::getOPSInstance()->OPS_block_index] = OPS_instance::getOPSInstance()->OPS_block_index;
   } else { // partitioning strategy 2, few blocks, many MPI processes, split all
            // blocks into same number of pieces
-    int nproc_each_block =
-        ops_comm_global_size / OPS_instance::getOPSInstance()->OPS_block_index; // leftovers will be idle!
+    //see if specified by user
+    int *processes_per_block = NULL;
+    int nproc_total = (ops_comm_global_size / OPS_instance::getOPSInstance()->OPS_block_index) * 
+                        OPS_instance::getOPSInstance()->OPS_block_index; // leftovers will be idle!;
+    if (opts.count("processes_per_block")) {
+      //payload is int* with one value for each block
+      processes_per_block = (int*)opts["processes_per_block"];
+      nproc_total = 0;
+      for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_block_index; i++)
+        nproc_total += processes_per_block[i];
+      if (nproc_total > ops_comm_global_size) {
+        OPSException ex(OPS_RUNTIME_ERROR);
+        ex << "Error: processes_per_block argument to ops_partition: requested " << nproc_total << " but only " << ops_comm_global_size << " available";
+        throw ex;
+      }
+    } else {
+      processes_per_block = (int*)ops_malloc(OPS_instance::getOPSInstance()->OPS_block_index * sizeof(int));
+      for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_block_index; i++)
+        processes_per_block[i] = nproc_total/OPS_instance::getOPSInstance()->OPS_block_index;
+    }
+
     *processes =
-        (int *)ops_malloc(nproc_each_block * OPS_instance::getOPSInstance()->OPS_block_index * sizeof(int));
+        (int *)ops_malloc(nproc_total * sizeof(int));
     *proc_offsets = (int *)ops_malloc((1 + OPS_instance::getOPSInstance()->OPS_block_index) * sizeof(int));
-    *proc_disps = (int *)ops_malloc(OPS_MAX_DIM * nproc_each_block *
-                                    OPS_instance::getOPSInstance()->OPS_block_index * sizeof(int));
-    *proc_sizes = (int *)ops_malloc(OPS_MAX_DIM * nproc_each_block *
-                                    OPS_instance::getOPSInstance()->OPS_block_index * sizeof(int));
+    *proc_disps = (int *)ops_malloc(OPS_MAX_DIM * nproc_total * sizeof(int));
+    *proc_sizes = (int *)ops_malloc(OPS_MAX_DIM * nproc_total * sizeof(int));
     *proc_dimsplit =
         (int *)ops_malloc(OPS_MAX_DIM * OPS_instance::getOPSInstance()->OPS_block_index * sizeof(int));
 
+    int process_count_accumulator = 0;
+    int blockdims = OPS_instance::getOPSInstance()->OPS_block_list[0].block->dims;
     for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_block_index; i++) {
       ops_block block = OPS_instance::getOPSInstance()->OPS_block_list[i].block;
-      (*proc_offsets)[i] = i * nproc_each_block;
-      for (int j = 0; j < nproc_each_block; j++)
-        (*processes)[(*proc_offsets)[i] + j] = i * nproc_each_block + j;
+      (*proc_offsets)[i] = process_count_accumulator;
+      for (int j = 0; j < processes_per_block[i]; j++)
+        (*processes)[(*proc_offsets)[i] + j] = process_count_accumulator + j;
+      process_count_accumulator += processes_per_block[i];
 
       // Use MPI_Dims_create to split the block along different dimensions
       int ndim = block->dims;
       int pdims[OPS_MAX_DIM] = {0};
-      for (int d = 0; d < ndim; d++) {
-        pdims[d] = OPS_instance::getOPSInstance()->ops_force_decomp[d];} //printf("%d %d\n",d,pdims[d]);}
-      MPI_Dims_create(nproc_each_block, ndim, pdims);
+      if (opts.count("force_decomp")) {
+        if (block->dims != blockdims) throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: force_decomp option to ops_partition requires all block to be the same dimension");
+        int *force_decomp = (int*)opts["force_decomp"];
+        for (int d = 0; d < ndim; d++)
+          pdims[d] = force_decomp[i*block->dims+d]; //Assume all the blocks are the same dim
+      } else {
+        for (int d = 0; d < ndim; d++) {
+          pdims[d] = OPS_instance::getOPSInstance()->ops_force_decomp[d];} //printf("%d %d\n",d,pdims[d]);}
+      }
+      //printf("requesting %dx%d for %d processes\n", pdims[0], pdims[1], processes_per_block[i]);
+      MPI_Dims_create(processes_per_block[i], ndim, pdims);
       for (int d = 0; d < ndim; d++)
         (*proc_dimsplit)[i * OPS_MAX_DIM + d] = pdims[d];
 //        (*proc_dimsplit)[i * OPS_MAX_DIM + d] = pdims[ndim-d-1];
@@ -167,7 +195,7 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
       // this information to be held
       // at the end what is in coords[ ] should match  sb->coords in
       // ops_decomp()
-      for (int j = 0; j < nproc_each_block; j++) {
+      for (int j = 0; j < processes_per_block[i]; j++) {
         int coords[OPS_MAX_DIM];
         int *dimsplit = &((*proc_dimsplit)[i * OPS_MAX_DIM]);
         for (int d = 0; d < ndim; d++) {
@@ -187,7 +215,7 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
         }
       }
     }
-    (*proc_offsets)[OPS_instance::getOPSInstance()->OPS_block_index] = nproc_each_block * OPS_instance::getOPSInstance()->OPS_block_index;
+    (*proc_offsets)[OPS_instance::getOPSInstance()->OPS_block_index] = nproc_total;
   }
 }
 
@@ -862,7 +890,7 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
   ops_free(neighbor_array_send);
 }
 
-void _ops_partition(OPS_instance *instance, const char *routine) {
+void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::string, void*>& opts) {
   // create list to hold sub-grid decomposition geometries for each mpi process
   OPS_sub_block_list =
       (sub_block_list *)ops_calloc(OPS_instance::getOPSInstance()->OPS_block_index , sizeof(sub_block_list));
@@ -873,7 +901,7 @@ void _ops_partition(OPS_instance *instance, const char *routine) {
   // Distribute blocks amongst processes
   int *processes, *proc_offsets, *proc_disps, *proc_sizes, *proc_dimsplit;
   ops_partition_blocks(&processes, &proc_offsets, &proc_disps, &proc_sizes,
-                       &proc_dimsplit);
+                       &proc_dimsplit, opts);
 
   for (int b = 0; b < OPS_instance::getOPSInstance()->OPS_block_index; b++) { // for each block
     // decompose this block
@@ -934,6 +962,11 @@ void _ops_partition(OPS_instance *instance, const char *routine) {
   ops_free(proc_disps);
   ops_free(proc_sizes);
   ops_free(proc_dimsplit);
+}
+
+void _ops_partition(OPS_instance *instance, const char *routine) {
+  std::map<std::string, void*> dummy;
+  _ops_partition(instance, routine, dummy);
 }
 
 // special case where iterating in 2D and accessing 1D edge, then all procs will
@@ -1021,6 +1054,10 @@ void ops_mpi_exit(OPS_instance *instance) {
 
 void ops_partition(const char *routine) {
   _ops_partition(OPS_instance::getOPSInstance(), routine);
+}
+
+void ops_partition_opts(const char *routine, std::map<std::string, void*>& opts) {
+  _ops_partition(OPS_instance::getOPSInstance(), routine, opts);
 }
 
 static inline int intersection2(int range1_beg, int range1_end, int range2_beg,

@@ -269,6 +269,7 @@ class OPS_instance {
  *                 in the future.
  */
     void partition(const char *routine);
+	void partition(const char *routine, std::map<std::string, void*>& opts);
 // #endif
 
 	/*******************************************************************************

@@ -157,8 +157,20 @@ int main(int argc, char **argv)
     halos4 = ops_decl_halo_group(2,grp);
   }
 
-  ops_partition("");
-
+  int use_demo = 0;
+  for (int i = 1; i < argc; i++) {
+    if (!strcmp(argv[i], "demo")) use_demo = 1;
+  }
+  if (use_demo) {
+    int procs[] = {4,2};
+    std::map<std::string, void*> opts;
+    opts["processes_per_block"] = (void*)&procs[0];
+    int decomp[] = {4, 0, 0, 0};
+    opts["force_decomp"] = (void*)decomp;
+    ops_partition_opts("", opts);
+  } else
+    ops_partition("");
+  
   /**-------------------------- Computations --------------------------**/
 
 
