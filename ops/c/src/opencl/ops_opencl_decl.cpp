@@ -381,11 +381,23 @@ void ops_get_data(ops_dat dat) { ops_opencl_get_data(dat); }
 void ops_put_data(ops_dat dat) { ops_opencl_put_data(dat); }
 
 void _ops_partition(OPS_instance *instance, const char *routine) {
-    (void)routine;(void)instance;
+  (void)instance;
+  (void)routine;
+}
+
+void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::string, void*>& opts) {
+  (void)instance;
+  (void)routine;
+  (void)opts;
 }
 
 void ops_partition(const char *routine) {
-  _ops_partition(OPS_instance::getOPSInstance(), routine);
+  (void)routine;
+}
+
+void ops_partition_opts(const char *routine, std::map<std::string, void*>& opts) {
+  (void)routine;
+  (void)opts;
 }
 
 void ops_halo_transfer(ops_halo_group group) {

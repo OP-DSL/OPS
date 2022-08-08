@@ -187,6 +187,10 @@ void OPS_instance::partition(const char *routine) {
   _ops_partition(this, routine);
 }
 
+void OPS_instance::partition(const char *routine, std::map<std::string, void*>& opts) {
+  _ops_partition(this, routine, opts);
+}
+
 void OPS_instance::exit() {
   _ops_exit(this);
 }

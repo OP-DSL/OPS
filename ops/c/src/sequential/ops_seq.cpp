@@ -581,12 +581,23 @@ void ops_decl_const_char(OPS_instance *instance, int dim, char const *type,
 }
 
 void _ops_partition(OPS_instance *instance, const char *routine) {
-    (void)instance;
+  (void)instance;
   (void)routine;
+}
+
+void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::string, void*>& opts) {
+  (void)instance;
+  (void)routine;
+  (void)opts;
 }
 
 void ops_partition(const char *routine) {
   (void)routine;
+}
+
+void ops_partition_opts(const char *routine, std::map<std::string, void*>& opts) {
+  (void)routine;
+  (void)opts;
 }
 
 void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
