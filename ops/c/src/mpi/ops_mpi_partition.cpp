@@ -168,6 +168,11 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
         for (int d = 0; d < ndim; d++) {
           pdims[d] = OPS_instance::getOPSInstance()->ops_force_decomp[d];} //printf("%d %d\n",d,pdims[d]);}
       }
+      //Sanity check for force decomp
+      int prod = 1;
+      for (int d = 0; d < ndim; d++) prod *= (pdims[d]==0 ? 1 : prdims[d]);
+      if (prod > processes_per_block[i]) throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: force_decomp requested more processes than available for the block");
+      
       //printf("requesting %dx%d for %d processes\n", pdims[0], pdims[1], processes_per_block[i]);
       MPI_Dims_create(processes_per_block[i], ndim, pdims);
       for (int d = 0; d < ndim; d++)
