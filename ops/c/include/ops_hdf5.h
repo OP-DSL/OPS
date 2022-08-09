@@ -79,7 +79,7 @@ ops_block ops_decl_block_hdf5(int dims, const char *block_name,
  * @param dims          dimension of loop iteration
  * @param points        number of points in the stencil
  * @param stencil_name  string representing the name of the stencil
- * @param file_name     HDF5 file to read from 
+ * @param file_name     HDF5 file to read from
  * @return
  */
 OPS_FTN_INTEROP
@@ -176,6 +176,9 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
                          char *const_data, char const *file_name);
 void ops_get_const_hdf5(char const *name, int dim, char const *type,
                        char *const_data, char const *file_name);
+
+void ops_write_dataslice_h5(char const *file_name, const ops_dat &data,
+                            const int cross_section_dir, const int pos);
 
 #endif
 /* __OPS_HDF5_H */

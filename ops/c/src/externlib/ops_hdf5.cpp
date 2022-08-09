@@ -1506,3 +1506,8 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
 
   H5Fclose(file_id);
 }
+
+void ops_write_dataslice_h5(char const *file_name, const ops_dat &data,
+                            const int cross_section_dir, const int pos){
+
+                            }
