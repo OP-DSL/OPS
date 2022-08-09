@@ -170,7 +170,7 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
       }
       //Sanity check for force decomp
       int prod = 1;
-      for (int d = 0; d < ndim; d++) prod *= (pdims[d]==0 ? 1 : prdims[d]);
+      for (int d = 0; d < ndim; d++) prod *= (pdims[d]==0 ? 1 : pdims[d]);
       if (prod > processes_per_block[i]) throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: force_decomp requested more processes than available for the block");
       
       //printf("requesting %dx%d for %d processes\n", pdims[0], pdims[1], processes_per_block[i]);
