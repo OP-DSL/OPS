@@ -120,7 +120,7 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
            // blocks into same number of pieces
     //see if specified by user
     int *processes_per_block = NULL;
-    int nproc_total = (ops_comm_global_size / OPS_instance::getOPSInstance()->OPS_block_index) *
+    int nproc_total = (ops_comm_global_size / OPS_instance::getOPSInstance()->OPS_block_index) * 
                         OPS_instance::getOPSInstance()->OPS_block_index; // leftovers will be idle!;
     if (opts.count("processes_per_block")) {
       //payload is int* with one value for each block
@@ -171,8 +171,8 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
       //Sanity check for force decomp
       int prod = 1;
       for (int d = 0; d < ndim; d++) prod *= (pdims[d]==0 ? 1 : pdims[d]);
-      if (prod != processes_per_block[i]) throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: force_decomp requested processes inconsistent with one specified for the block");
-
+      if (prod > processes_per_block[i]) throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: force_decomp requested more processes than available for the block");
+      
       //printf("requesting %dx%d for %d processes\n", pdims[0], pdims[1], processes_per_block[i]);
       MPI_Dims_create(processes_per_block[i], ndim, pdims);
       for (int d = 0; d < ndim; d++)
