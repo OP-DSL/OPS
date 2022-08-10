@@ -287,7 +287,7 @@ void ops_fetch_block_hdf5_file(ops_block block, char const *file_name) {
       if (OPS_instance::getOPSInstance()->OPS_diags > 2)
         ops_printf("File %s does not exist .... creating file\n", file_name);
       MPI_Barrier(OPS_MPI_HDF5_BLOCK_WORLD);
-      if (ops_is_root()) {
+      if (my_rank==0) {
         FILE *fp;
         fp = fopen(file_name, "w");
         fclose(fp);
