@@ -50,7 +50,7 @@ core:	mkdir $(C_OPS_INC)/ops_lib_core.h $(C_OPS_SRC)/core/ops_lib_core.cpp $(C_O
 	$(FC) $(FFLAGS) $(FMODS) -c $(F_OPS_SRC)/ops_for_declarations.F90 -o $(F_OPS_OBJ)/ops_for_declarations.o
 
 hdf5:	mkdir core $(F_OPS_OBJ)/ops_lib_core.o
-	$(CHKCC) $(CXXFLAGS) -I$(C_OPS_INC) $(HDF5_INC) -c $(C_OPS_SRC)/externlib/ops_checkpointing.cpp -o $(F_OPS_OBJ)/ops_checkpointing.o
+	$(CXX) $(CXXFLAGS) -I$(C_OPS_INC) $(HDF5_INC) -c $(C_OPS_SRC)/externlib/ops_checkpointing.cpp -o $(F_OPS_OBJ)/ops_checkpointing.o
 	$(CXX) $(CXXFLAGS) $(HDF5_INC) -I$(MPI_INC) -I$(C_OPS_INC) -c $(C_OPS_SRC)/externlib/ops_hdf5.cpp -o $(F_OPS_OBJ)/ops_hdf5.o
 	$(FC) $(FFLAGS) $(FMODS) -c $(F_OPS_SRC)/ops_for_hdf5_declarations.F90 -o $(F_OPS_OBJ)/ops_for_hdf5_declarations.o
 	ar -r $(F_OPS_LIB)/libops_hdf5.a $(F_OPS_OBJ)/ops_hdf5.o $(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_for_hdf5_declarations.o

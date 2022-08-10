@@ -18,6 +18,8 @@ In this tutorial we will use an example application, a simple 2D iterative Lapla
 * The bulk of the simulation is spent in a whilel oop, repeating a stencil kernel with a maximum reduction, and a copy kernel
 * Compile and run the code !
 
+Note: The following tutorial details the step-by-step approach for using OPS for Laplace (C version) application development. Similar step-by-step approach is also followed for the Laplace Fortran version and can be found at `OPS/apps/fortran/laplace2dtutorial`.
+
 ## Original - Initialisation
 The original code begins with initializing the data arrays used in the calculation:
 ```
