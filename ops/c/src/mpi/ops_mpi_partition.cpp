@@ -122,9 +122,11 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
     int *processes_per_block = NULL;
     int nproc_total = (ops_comm_global_size / OPS_instance::getOPSInstance()->OPS_block_index) * 
                         OPS_instance::getOPSInstance()->OPS_block_index; // leftovers will be idle!;
-    if (opts.count("processes_per_block")) {
-      //payload is int* with one value for each block
-      processes_per_block = (int*)opts["processes_per_block"];
+    if (OPS_instance::getOPSInstance()->processes_per_block.size()>0 || opts.count("processes_per_block")) {
+      if (OPS_instance::getOPSInstance()->processes_per_block.size()>0)
+        processes_per_block = (int*)&OPS_instance::getOPSInstance()->processes_per_block[0];
+      else //payload is int* with one value for each block
+        processes_per_block = (int*)opts["processes_per_block"];
       nproc_total = 0;
       for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_block_index; i++)
         nproc_total += processes_per_block[i];
