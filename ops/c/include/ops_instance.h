@@ -39,6 +39,8 @@
 #ifndef __OPS_INSTANCE_H
 #define __OPS_INSTANCE_H
 
+#include <vector>
+
 #if defined(_OPENMP)
   #include <omp.h>
 #endif
@@ -319,10 +321,11 @@ class OPS_instance {
 	double ops_tiled_halo_exchange_time;
 	OPS_instance_tiling *tiling_instance;
 	OPS_instance_checkpointing *checkpointing_instance;
-  int tilesize_x, tilesize_y, tilesize_z;
+  	int tilesize_x, tilesize_y, tilesize_z;
 
 	//Other runtime configuration args
 	int ops_force_decomp[OPS_MAX_DIM];
+	std::vector<int> processes_per_block;
 	int OPS_realloc;
 	int OPS_soa;
 	int OPS_diags;

@@ -43,6 +43,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <cmath>
+#include <vector>
 
 #include <assert.h>
 #include <string>
@@ -72,6 +73,28 @@ static char *copy_str(char const *src) {
   char *dest = (char *)ops_calloc(len, sizeof(char));
   snprintf(dest, len, "%s", src);
   return dest;
+}
+
+std::vector<int> splitStringInt(std::string probsString, char sep) {
+    std::stringstream ss(probsString);
+    std::string arg;
+    std::vector<int> params;
+    for (char i; ss >> i;) {
+        arg.push_back(i);
+        if (ss.peek() == sep || ss.peek() == '\n') {
+            if (arg.length() > 0 && isdigit(arg[0])) {
+                params.push_back(atoi(arg.c_str()));
+                arg.clear();
+            }
+            ss.ignore();
+            if (ss.peek() == '\n') break;
+        }
+    }
+    if (arg.length() > 0 && isdigit(arg[0])) {
+        params.push_back(atoi(arg.c_str()));
+        arg.clear();
+    }
+    return params;
 }
 
 void _ops_set_args(OPS_instance *instance, const char *argv) {
@@ -129,6 +152,13 @@ void _ops_set_args(OPS_instance *instance, const char *argv) {
     snprintf(temp, 64, "%s", pch);
     instance->ops_tiling_mpidepth = atoi(temp + 20);
     if (instance->is_root()) instance->ostream() << "\n Max tiling depth across processes = " << instance->ops_tiling_mpidepth << '\n';
+  }
+  pch = strstr(argv, "OPS_PROCESSES_PER_BLOCK=");
+  if (pch != NULL) {
+    snprintf(temp, 64, "%s", pch);
+    std::string proclist(temp+24);
+    instance->processes_per_block = splitStringInt(proclist, ',');
+    if (instance->is_root()) instance->ostream() << "\n number of processes assigned to blocks = " << proclist << '\n';
   }
 	pch = strstr(argv, "OPS_TILESIZE_X=");
   if (pch != NULL) {
