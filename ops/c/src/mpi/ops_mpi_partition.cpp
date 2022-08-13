@@ -161,15 +161,42 @@ void ops_partition_blocks(int **processes, int **proc_offsets, int **proc_disps,
       // Use MPI_Dims_create to split the block along different dimensions
       int ndim = block->dims;
       int pdims[OPS_MAX_DIM] = {0};
-      if (opts.count("force_decomp")) {
+      if (OPS_instance::getOPSInstance()->ops_force_decomp_x.size()>0 ||
+          OPS_instance::getOPSInstance()->ops_force_decomp_y.size()>0 ||
+          OPS_instance::getOPSInstance()->ops_force_decomp_z.size()>0) {
+          if (OPS_instance::getOPSInstance()->ops_force_decomp_x.size()>1) {
+            if ((int)OPS_instance::getOPSInstance()->ops_force_decomp_x.size() != OPS_instance::getOPSInstance()->OPS_block_index)
+              throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: when using OPS_FORCE_DECOMP, number of arguments has to be 1 or the number of blocks used");
+            pdims[0] = OPS_instance::getOPSInstance()->ops_force_decomp_x[i];
+          } else if (OPS_instance::getOPSInstance()->ops_force_decomp_x.size()==1)
+            pdims[0] = OPS_instance::getOPSInstance()->ops_force_decomp_x[0];
+          else
+            pdims[2] = 0;
+          if (OPS_instance::getOPSInstance()->ops_force_decomp_y.size()>1) {
+            if ((int)OPS_instance::getOPSInstance()->ops_force_decomp_y.size() != OPS_instance::getOPSInstance()->OPS_block_index)
+              throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: when using OPS_FORCE_DECOMP, number of arguments has to be 1 or the number of blocks used");
+            pdims[1] = OPS_instance::getOPSInstance()->ops_force_decomp_y[i];
+          } else if (OPS_instance::getOPSInstance()->ops_force_decomp_y.size()==1)
+            pdims[1] = OPS_instance::getOPSInstance()->ops_force_decomp_y[0];
+          else
+            pdims[1] = 0;
+          if (OPS_instance::getOPSInstance()->ops_force_decomp_z.size()>1) {
+            if ((int)OPS_instance::getOPSInstance()->ops_force_decomp_z.size() != OPS_instance::getOPSInstance()->OPS_block_index)
+              throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: when using OPS_FORCE_DECOMP, number of arguments has to be 1 or the number of blocks used");
+            pdims[2] = OPS_instance::getOPSInstance()->ops_force_decomp_z[i];
+          } else if (OPS_instance::getOPSInstance()->ops_force_decomp_z.size()==1)
+            pdims[2] = OPS_instance::getOPSInstance()->ops_force_decomp_z[0];
+          else
+            pdims[2] = 0;
+          for (int d = 3; d < ndim; d++)
+            pdims[d] = 0;
+      } else if (opts.count("force_decomp")) {
         if (block->dims != blockdims) throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: force_decomp option to ops_partition requires all block to be the same dimension");
         int *force_decomp = (int*)opts["force_decomp"];
         for (int d = 0; d < ndim; d++)
           pdims[d] = force_decomp[i*block->dims+d]; //Assume all the blocks are the same dim
-      } else {
-        for (int d = 0; d < ndim; d++) {
-          pdims[d] = OPS_instance::getOPSInstance()->ops_force_decomp[d];} //printf("%d %d\n",d,pdims[d]);}
       }
+
       //Sanity check for force decomp
       int prod = 1;
       for (int d = 0; d < ndim; d++) prod *= (pdims[d]==0 ? 1 : pdims[d]);

@@ -87,12 +87,11 @@ void OPS_instance::init_globals() {
 	ops_tiled_halo_exchange_time=0.0;
 	tiling_instance=NULL;
 	checkpointing_instance=NULL;
-  tilesize_x=-1;
-  tilesize_y=-1;
-  tilesize_z=-1;
+	tilesize_x=-1;
+	tilesize_y=-1;
+	tilesize_z=-1;
 
 	//Other runtime configuration args
-	for (int i = 0; i < OPS_MAX_DIM; i++) ops_force_decomp[i] = 0;
 	OPS_realloc = 0;
 	OPS_soa=0;
 	OPS_diags=0;
@@ -112,13 +111,13 @@ void OPS_instance::init_globals() {
 	OPS_gbl_prev = NULL;
 	opencl_instance = NULL;
 
-  is_initialised = 1;
-  char buf[20];
-  int points[OPS_MAX_DIM] = {0};
-  for (int i = 0; i < OPS_MAX_DIM; i++) {
-    snprintf(buf, 20, "OPS_internal_0_%d\n", i+1);
-    OPS_internal_0[i] = this->decl_stencil(i+1, 1, points, buf);
-  }
+	is_initialised = 1;
+	char buf[20];
+	int points[OPS_MAX_DIM] = {0};
+	for (int i = 0; i < OPS_MAX_DIM; i++) {
+		snprintf(buf, 20, "OPS_internal_0_%d\n", i+1);
+		OPS_internal_0[i] = this->decl_stencil(i+1, 1, points, buf);
+	}
 }
 
 OPS_instance::OPS_instance(const int argc, const char * const argv[], const int diags_level, std::ostream &s) {
