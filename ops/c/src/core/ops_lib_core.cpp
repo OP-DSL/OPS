@@ -182,20 +182,23 @@ void _ops_set_args(OPS_instance *instance, const char *argv) {
   pch = strstr(argv, "OPS_FORCE_DECOMP_X=");
   if (pch != NULL) {
     snprintf(temp, 64, "%s", pch);
-    instance->ops_force_decomp[0] = atoi(temp + 19);
-    if (instance->is_root()) instance->ostream() << "\n Forced decomposition in x direction = " << instance->ops_force_decomp[0] << '\n';
+    std::string counts(temp+19);
+    instance->ops_force_decomp_x = splitStringInt(counts, ',');
+    if (instance->is_root()) instance->ostream() << "\n Forced decomposition in x direction = " << counts << '\n';
   }
   pch = strstr(argv, "OPS_FORCE_DECOMP_Y=");
   if (pch != NULL) {
     snprintf(temp, 64, "%s", pch);
-    instance->ops_force_decomp[1] = atoi(temp + 19);
-    if (instance->is_root()) instance->ostream() << "\n Forced decomposition in y direction = " << instance->ops_force_decomp[1] << '\n';
+    std::string counts(temp+19);
+    instance->ops_force_decomp_y = splitStringInt(counts, ',');
+    if (instance->is_root()) instance->ostream() << "\n Forced decomposition in y direction = " << counts << '\n';
   }
   pch = strstr(argv, "OPS_FORCE_DECOMP_Z=");
   if (pch != NULL) {
     snprintf(temp, 64, "%s", pch);
-    instance->ops_force_decomp[2] = atoi(temp + 19);
-    if (instance->is_root()) instance->ostream() << "\n Forced decomposition in z direction = " << instance->ops_force_decomp[2] << '\n';
+    std::string counts(temp+19);
+    instance->ops_force_decomp_z = splitStringInt(counts, ',');
+    if (instance->is_root()) instance->ostream() << "\n Forced decomposition in z direction = " << counts << '\n';
   }
 
   if (strstr(argv, "OPS_CHECKPOINT_INMEMORY") != NULL) {
@@ -249,7 +252,6 @@ extern "C" void ops_set_args(const char *argv) {
 */
 void ops_init_core(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
   instance->OPS_diags = diags;
-  for (int d = 0; d < OPS_MAX_DIM; d++) instance->ops_force_decomp[d] = 0;
   for (int n = 1; n < argc; n++) {
     _ops_set_args(instance, argv[n]);
   }

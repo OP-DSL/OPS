@@ -324,7 +324,9 @@ class OPS_instance {
   	int tilesize_x, tilesize_y, tilesize_z;
 
 	//Other runtime configuration args
-	int ops_force_decomp[OPS_MAX_DIM];
+	std::vector<int> ops_force_decomp_x;
+	std::vector<int> ops_force_decomp_y;
+	std::vector<int> ops_force_decomp_z;
 	std::vector<int> processes_per_block;
 	int OPS_realloc;
 	int OPS_soa;
@@ -345,12 +347,12 @@ class OPS_instance {
 	char *OPS_gbl_prev;
 	OPS_instance_opencl *opencl_instance;
 
-  int is_initialised;
+	int is_initialised;
 
-  ops_stencil OPS_internal_0[OPS_MAX_DIM];
+	ops_stencil OPS_internal_0[OPS_MAX_DIM];
 private:
 	void init_globals();
-  std::ostream *_ostream;
+  	std::ostream *_ostream;
 };
 
 #endif //__OPS_INSTANCE_H
