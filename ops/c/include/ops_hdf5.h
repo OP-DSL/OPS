@@ -177,7 +177,7 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
 void ops_get_const_hdf5(char const *name, int dim, char const *type,
                        char *const_data, char const *file_name);
 
-void ops_write_dataslice_h5(char const *file_name, const ops_dat &data,
+void ops_write_dataslice_hdf5(char const *file_name, const ops_dat &data,
                             const int cross_section_dir, const int pos);
 
 #endif
