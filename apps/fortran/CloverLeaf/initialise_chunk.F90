@@ -20,9 +20,9 @@ SUBROUTINE initialise_chunk()
 
     rangex = [x_min-2, x_max+3, 0, 0]
 
-    !call ops_par_loop(initialise_chunk_kernel_xx, "initialise_chunk_kernel_xx", clover_grid, 2, rangex, &
-    !                & ops_arg_dat(xx, 1, S2D_00_STRID2D_X, "integer", OPS_WRITE), &
-    !                & ops_arg_idx())
+    call ops_par_loop(initialise_chunk_kernel_xx, "initialise_chunk_kernel_xx", clover_grid, 2, rangex, &
+                    & ops_arg_dat(xx, 1, S2D_00_STRID2D_X, "integer", OPS_WRITE), &
+                    & ops_arg_idx())
 
     call ops_par_loop(initialise_chunk_kernel_x, "initialise_chunk_kernel_x", clover_grid, 2, rangex, &
                     & ops_arg_dat(vertexx, 1, S2D_00_STRID2D_X, "real(8)", OPS_WRITE), &
