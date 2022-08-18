@@ -357,12 +357,17 @@ def main(source_files):
 
       const_args = ops_decl_const_parse(text)
       print((str(len(const_args))))
- 
-      fp = open('constants_list.txt', 'w')
-      for item in const_args:
-        item_list = list(item.values())
-        fp.write("%s\n" % item_list[-1])
-      fp.close()
+
+      if bool(const_args):
+        if a == 0:
+          fp = open('constants_list.txt', 'w')
+        else:
+          fp = open('constants_list.txt', 'a')
+
+        for item in const_args:
+          item_list = list(item.values())
+          fp.write("%s\n" % item_list[-1])
+        fp.close()
 
       #
       # parse and process ops_par_loop calls

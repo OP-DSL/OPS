@@ -22,7 +22,7 @@ PROGRAM clover_leaf
     CALL initialise( )
 
 #ifdef OPS_WITH_CUDAFOR
-    gridx_min_opsconstant = grid_xmin
+    grid_xmin_opsconstant = grid_xmin
     grid_xmax_opsconstant = grid_xmax
     grid_x_cells_opsconstant = grid_x_cells
     field_left_opsconstant = field_left
