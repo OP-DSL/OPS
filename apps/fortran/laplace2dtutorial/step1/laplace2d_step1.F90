@@ -12,7 +12,8 @@
 !                       (index-i)
 
 program laplace
-    use OPS_Fortran_Reference
+    use OPS_Fortran_Declarations
+    use OPS_Fortran_RT_Support
 
     use, intrinsic :: ISO_C_BINDING
 
@@ -26,7 +27,7 @@ program laplace
     integer, parameter :: iter_max=100
     integer :: i, j, iter
 
-    real(8), dimension (:,:), allocatable :: A, Anew
+    real(8), dimension (:), allocatable :: A, Anew
 
     real(8), parameter :: pi=2.0_8*asin(1.0_8)
     real(8), parameter :: tol=1.0e-6_8
@@ -39,7 +40,7 @@ program laplace
     real(kind=c_double) :: startTime = 0
     real(kind=c_double) :: endTime = 0
 
-    allocate ( A(1:jmax+2,1:imax+2), Anew(1:jmax+2,1:imax+2) )
+    allocate ( A((jmax+2)*(imax+2)), Anew((jmax+2)*(imax+2)) )
     ! Initialize
     A = 0.0_8
 
@@ -50,61 +51,61 @@ program laplace
     
     ! start timer
     call ops_timers ( startTime )
-    
+ 
     ! Bottom
-    do i=1,imax+2
-        A(1,i)   = 0.0_8
+    do i=0,imax+1
+        A((0)*(imax+2)+i)   = 0.0_8
     end do
 
     ! Top
-    do i=1,imax+2
-        A(jmax+2,i) = 0.0_8
+    do i=0,imax+1
+        A((jmax+1)*(imax+2)+i) = 0.0_8
     end do
 
     ! Left
-    do j=1,jmax+2
-        A(j,1)   = sin(pi * j/(jmax+2))
+    do j=0,jmax+1
+        A((j)*(imax+2)+0)   = sin(pi * j/(jmax+1))
     end do
 
     ! Right
-    do j=1,jmax+2
-        A(j,imax+2) = sin(pi * j/(jmax+2)) * exp(-pi)
+    do j=0,jmax+1
+        A((j)*(imax+2)+imax+1) = sin(pi * j/(jmax+1)) * exp(-pi)
     end do
 
     write(*,'(a,i5,a,i5,a)') 'Jacobi relaxation Calculation:', imax+2, ' x', jmax+2, ' mesh'
 
     iter=0
 
-    do i=2,imax+2
-        Anew(1,i)   = 0.0_8
+    do i=1,imax+1
+        Anew((0)*(imax+2)+i)   = 0.0_8
     end do
 
-    do i=2,imax+2
-        Anew(jmax+2,i) = 0.0_8
+    do i=1,imax+1
+        Anew((jmax+1)*(imax+2)+i) = 0.0_8
     end do
 
-    do j=2,jmax+2
-        Anew(j,1)   = sin(pi * j/(jmax+2))
+    do j=1,jmax+1
+        Anew((j)*(imax+2)+0)   = sin(pi * j/(jmax+1))
     end do
 
-    do j=2,jmax+2
-        Anew(j,imax+2) = sin(pi * j/(jmax+2)) * exp(-pi)
+    do j=1,jmax+1
+        Anew((j)*(imax+2)+imax+1) = sin(pi * j/(jmax+1)) * exp(-pi)
     end do
 
     do while ( error .gt. tol .and. iter .lt. iter_max )
         error=0.0_8
 
-        do i=2,imax+1
-            do j=2,jmax+1
-                Anew(j,i) = 0.25_8 * ( A(j+1,i  ) + A(j-1,i  ) + &
-                                             A(j  ,i-1) + A(j  ,i+1) )
-                error = max( error, abs(Anew(j,i)-A(j,i)) )
+        do i=1,imax
+            do j=1,jmax
+                Anew((j)*(imax+2)+i) = 0.25_8 * ( A((j  )*(imax+2)+ i+1) + A((j  )*(imax+2)+ i-1) &
+                                             &  + A((j-1)*(imax+2)+ i  ) + A((j+1)*(imax+2)+ i  ) )
+                error = max( error, abs( Anew((j)*(imax+2)+i)-A((j)*(imax+2)+i) ) )
             end do
         end do
 
-        do i=2,imax+1
-            do j=2,jmax+1
-                A(j,i) = Anew(j,i)
+        do i=1,imax
+            do j=1,jmax
+                A((j)*(imax+2)+i) = Anew((j)*(imax+2)+i)
             end do
         end do
 
