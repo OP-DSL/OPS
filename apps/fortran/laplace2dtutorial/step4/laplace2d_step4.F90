@@ -12,32 +12,35 @@
 !                       (index-i)
 
 program laplace
-    use OPS_Fortran_Reference
+    use OPS_Fortran_Declarations
+    use OPS_Fortran_RT_Support
+    use SET_ZERO_KERNEL_MODULE
+    use LEFT_BNDCON_KERNEL_MODULE
+    use RIGHT_BNDCON_KERNEL_MODULE
+    use COPY_KERNEL_MODULE
     use OPS_CONSTANTS
-
-    use, intrinsic :: ISO_C_BINDING
-
+    
     implicit none
 
     ! max iterations
     integer, parameter :: iter_max=100
     integer :: i, j, iter
 
-    real(8), dimension (:,:), allocatable :: A, Anew
+    real(8), dimension (:), allocatable :: A, Anew
 
     real(8), parameter :: tol=1.0e-6_8
     real(8) :: err_diff
 
     ! integer references (valid inside the OPS library) for ops_block
     type(ops_block)   :: grid2D
-    
-    !ops_dats
-    type(ops_dat)     ::    d_A, d_Anew
+
+    ! ops_dats
+    type(ops_dat)     ::    d_A, d_Anew    
     
     ! vars for stencils
     integer s2D_00(2) /0,0/
     type(ops_stencil) :: S2D_0pt
-    
+
     integer s2D_05(10) /0,0, 1,0, -1,0, 0,1, 0,-1/
     type(ops_stencil) :: S2D_5pt
 
@@ -46,55 +49,38 @@ program laplace
 
     integer d_p(2) /1,1/   !max boundary depths for the dat in the possitive direction
     integer d_m(2) /-1,-1/ !max boundary depths for the dat in the negative direction
-    
-    !size for OPS
+
+    ! size for OPS
     integer size(2)
 
-    !base
-    integer base(2) /1,1/   !this is in fortran indexing - start from 1
+    ! base index
+    integer base(2) /0,0/
 
-    !null array - for declaring ops dat    
-    real(8), dimension(:), allocatable :: temp
+    ! iteration range
+    integer :: bottom_range(4),top_range(4),left_range(4),right_range(4),interior_range(4)
 
     ! profiling
     real(kind=c_double) :: startTime = 0
     real(kind=c_double) :: endTime = 0
 
-    ! iteration range - needs to be fortran indexed here
-    ! inclusive indexing for both min and max points in the range
-    !.. but internally will convert to c index
-
-    integer :: bottom_range(4),top_range(4),left_range(4),right_range(4),interior_range(4)
-
-    !initialize and declare constants
     imax = 4094
     jmax = 4094
     pi = 2.0_8*asin(1.0_8)
 
-    allocate ( A(1:jmax+2,1:imax+2), Anew(1:jmax+2,1:imax+2) )
+    allocate ( A(0:((jmax+2)*(imax+2))-1), Anew(0:((jmax+2)*(imax+2))-1) )
     ! Initialize
     A = 0.0_8
-
-#ifdef OPS_WITH_CUDAFOR
-    imax_opsconstant = imax
-    jmax_opsconstant = jmax
-    pi_opsconstant = pi
-#endif
-
-    !declare OPS constants
-    call ops_decl_const("imax", 1, "int", imax)
-    call ops_decl_const("jmax", 1, "int", jmax)
-    call ops_decl_const("pi", 1, "double", pi)    
     
     size(1) = jmax
-    size(2) = imax       
+    size(2) = imax
 
-    !                         x(min,max)  y(min,max)  
-    bottom_range   = [0,imax+1,      0,0]
-    top_range      = [0,imax+1,      jmax+1,jmax+1]
-    left_range     = [0,0,           0,jmax+1]
-    right_range    = [imax+1,imax+1, 0,jmax+1]
-    interior_range = [1,imax,      1,jmax]     
+    ! inclusive indexing for both min and max points in the range
+    !                x(min,max)     y(min,max)
+    bottom_range   = [-1,imax,      -1,-1]
+    top_range      = [-1,imax,      jmax,jmax]
+    left_range     = [-1,-1,        -1,jmax]
+    right_range    = [imax,imax,    -1,jmax]
+    interior_range = [0,imax-1,     0,jmax-1]
 
     !-----------------------OPS Initialization------------------------
     call ops_init(2)
@@ -109,63 +95,70 @@ program laplace
     call ops_decl_stencil( 2, 5, s2D_05, S2D_5pt, "5pt_stencil")
 
     !declare data on blocks
-    
-    !declare ops_dat
-    call ops_decl_dat(grid2D, 1, size, base, d_m, d_p, temp, d_A, "real(8)", "A")
-    call ops_decl_dat(grid2D, 1, size, base, d_m, d_p, temp, d_Anew, "real(8)", "Anew")
 
-    error=1.0_8 
-    
+    !declare ops_dat
+    call ops_decl_dat(grid2D, 1, size, base, d_m, d_p, A, d_A, "real(8)", "A")
+    call ops_decl_dat(grid2D, 1, size, base, d_m, d_p, Anew, d_Anew, "real(8)", "Anew")
+
+    error=1.0_8
+
+#ifdef OPS_WITH_CUDAFOR
+    imax_opsconstant = imax
+    jmax_opsconstant = jmax
+    pi_opsconstant = pi
+#endif
+
     ! start timer
     call ops_timers ( startTime )
-    
-    call ops_par_loop(set_zero_kernel, "set zero", grid2D, 2, bottom_range, &
-                    & ops_arg_dat(d_A, 1, S2D_0pt, "real(8)", OPS_WRITE))
-    
-    call ops_par_loop(set_zero_kernel, "set zero", grid2D, 2, top_range, &
-                    & ops_arg_dat(d_A, 1, S2D_0pt, "real(8)", OPS_WRITE))
+ 
+    call ops_partition("")
 
-    call ops_par_loop(left_bndcon_kernel, "left_bndcon", grid2D, 2, left_range, &
-                    & ops_arg_dat(d_A, 1, S2D_0pt, "real(8)", OPS_WRITE), &
-                    & ops_arg_idx())
+    call set_zero_kernel_host("set zero", grid2D, 2, bottom_range, &
+                      & ops_arg_dat(d_A, 1, S2D_0pt, "real(8)", OPS_WRITE))
 
-    call ops_par_loop(right_bndcon_kernel, "right_bndcon", grid2D, 2, right_range, &
-               & ops_arg_dat(d_A, 1, S2D_0pt, "real(8)", OPS_WRITE), &
-               & ops_arg_idx())
+    call set_zero_kernel_host("set zero", grid2D, 2, top_range, &
+                      & ops_arg_dat(d_A, 1, S2D_0pt, "real(8)", OPS_WRITE))
+
+    call left_bndcon_kernel_host("left_bndcon", grid2D, 2, left_range, &
+                      & ops_arg_dat(d_A, 1, S2D_0pt, "real(8)", OPS_WRITE), &
+                      & ops_arg_idx())
+
+    call right_bndcon_kernel_host("right_bndcon", grid2D, 2, right_range, &
+                      & ops_arg_dat(d_A, 1, S2D_0pt, "real(8)", OPS_WRITE), &
+                      & ops_arg_idx())
 
     write(*,'(a,i5,a,i5,a)') 'Jacobi relaxation Calculation:', imax+2, ' x', jmax+2, ' mesh'
 
     iter=0
+    
+    call set_zero_kernel_host("set zero", grid2D, 2, bottom_range, &
+                      & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_WRITE))
 
-    call ops_par_loop(set_zero_kernel, "set zero", grid2D, 2, bottom_range, &
-                    & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_WRITE))
+    call set_zero_kernel_host("set zero", grid2D, 2, top_range, &
+                      & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_WRITE))    
 
-    call ops_par_loop(set_zero_kernel, "set zero", grid2D, 2, top_range, &
-                    & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_WRITE))
+    call left_bndcon_kernel_host("left_bndcon", grid2D, 2, left_range, &
+                      & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_WRITE), &
+                      & ops_arg_idx())
 
-    call ops_par_loop(left_bndcon_kernel, "left_bndcon", grid2D, 2, left_range, &
-                    & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_WRITE), &
-                    & ops_arg_idx())
-
-    call ops_par_loop(right_bndcon_kernel, "right_bndcon", grid2D, 2, right_range, &
-               & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_WRITE), &
-               & ops_arg_idx())
-
+    call right_bndcon_kernel_host("right_bndcon", grid2D, 2, right_range, &
+                      & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_WRITE), &
+                      & ops_arg_idx())
 
     do while ( error .gt. tol .and. iter .lt. iter_max )
         error=0.0_8
 
-        do i=2,imax+1
-            do j=2,jmax+1
-                Anew(j,i) = 0.25_8 * ( A(j+1,i  ) + A(j-1,i  ) + &
-                                             A(j  ,i-1) + A(j  ,i+1) )
-                error = max( error, abs(Anew(j,i)-A(j,i)) )
+        do i=1,imax
+            do j=1,jmax
+                Anew((j)*(imax+2)+i) = 0.25_8 * ( A((j  )*(imax+2)+ i+1) + A((j  )*(imax+2)+ i-1) &
+                                             &  + A((j-1)*(imax+2)+ i  ) + A((j+1)*(imax+2)+ i  ) )
+                error = max( error, abs( Anew((j)*(imax+2)+i)-A((j)*(imax+2)+i) ) )
             end do
         end do
-
-        call ops_par_loop(copy_kernel, "copy", grid2D, 2, interior_range, &
-                        & ops_arg_dat(d_A,    1, S2D_0pt, "real(8)", OPS_WRITE), &
-                        & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_READ))
+        
+        call copy_kernel_host("copy", grid2D, 2, interior_range, &
+                          & ops_arg_dat(d_A, 1, S2D_0pt, "real(8)", OPS_WRITE), &
+                          & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_READ))
 
         if(mod(iter,10).eq.0 ) write(*,'(i5,a,f16.7)') iter, ', ',error
             iter = iter +1

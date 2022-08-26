@@ -62,7 +62,7 @@ program laplace
     real(kind=c_double) :: startTime = 0
     real(kind=c_double) :: endTime = 0
 
-    allocate ( A((jmax+2)*(imax+2)), Anew((jmax+2)*(imax+2)) )
+    allocate (A(0:((jmax+2)*(imax+2))-1), Anew(0:((jmax+2)*(imax+2))-1))
     ! Initialize
     A = 0.0_8
 
