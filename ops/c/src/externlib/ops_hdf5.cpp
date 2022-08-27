@@ -1698,6 +1698,7 @@ hid_t h5_type(const char *type) {
   return h5t;
 }
 
+
 void write_buf_hdf5(char const *file_name, const ops_dat &dat, const int dims,
                     const int *size, char *buf) {
   // HDF5 APIs definitions
@@ -1728,7 +1729,7 @@ void write_buf_hdf5(char const *file_name, const ops_dat &dat, const int dims,
 
   file_id = H5Fopen(file_name, H5F_ACC_RDWR, H5P_DEFAULT);
 
-  //TODO: cannot overwrite data to be improved. 
+  //TODO: cannot overwrite data to be improved.
   H5LTmake_dataset(file_id, dat->name, dims, g_size, h5_type(dat->type), buf);
   H5Pclose(plist_id);
   H5Fclose(file_id);

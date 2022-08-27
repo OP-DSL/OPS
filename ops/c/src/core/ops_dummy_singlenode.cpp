@@ -289,7 +289,7 @@ void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems,
   (void)my_range;
   (void)rm_data;
   (void)rm_range;
-  
+
 }
 
 void ops_get_dat_full_range(ops_dat dat, int **full_range) {
@@ -498,7 +498,7 @@ char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_me
         else {
             // Data is dirty on device - nothing to do
         }
-    } 
+    }
     else {
         // User has not specified where they want the pointer
         // We need a default behaviour:
@@ -649,6 +649,7 @@ void ops_dat_fetch_data_slab_host(ops_dat dat, int part, char *data, int *range)
     lsize[d] = range[2*d+1]-range[2*d+0];
     range2[2*d] = range[2*d];
     range2[2*d+1] = range[2*d+1];
+
   }
   for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
     lsize[d] = 1;
