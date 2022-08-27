@@ -2420,8 +2420,9 @@ void determine_local_range(const ops_dat &dat, int *global_range,
 }
 
 template <int dir>
-void copy_loop_slab(char *dest, char *src, int *dest_size, int *src_size,
-                    int *d_m, int elem_size, int *range_max_dim) {
+void copy_loop_slab(char *dest, char *src, const int *dest_size,
+                    const int *src_size, const int *d_m, const int elem_size,
+                    const int *range_max_dim) {
   // TODO: add OpenMP here if needed
 #if OPS_MAX_DIM > 4
   for (int m = 0; m < dest_size[4]; m++) {
@@ -2451,34 +2452,11 @@ void copy_loop_slab(char *dest, char *src, int *dest_size, int *src_size,
                          (range_max_dim[2 * 2] + k - d_m[2]) * src_size[1] *
                              src_size[0] +
                          (range_max_dim[2 * 1] + j - d_m[1]) * src_size[0] +
-                         range_max_dim[2 * 0] - d_m[0]) *
+                         range_max_dim[2 * 0] + 1) *
                         elem_size],
                    dest_size[0]);
-
-            if (ops_my_global_rank == 1) {
-              printf("dest index=%d\n", moff_dest + loff_dest +
-                                            k * dest_size[0] * dest_size[1] +
-                                            j * dest_size[0]);
-              printf("src index=%d\n",
-                     (moff_src + loff_src +
-                      (range_max_dim[2 * 2] + k - d_m[2]) * src_size[1] *
-                          src_size[0] +
-                      (range_max_dim[2 * 1] + j - d_m[1]) * src_size[0] +
-                      range_max_dim[2 * 0] - d_m[0]) *
-                         elem_size);
-              double *num = reinterpret_cast<double *>(
-                  &src[(moff_src + loff_src +
-                        (range_max_dim[2 * 2] + k - d_m[2]) * src_size[1] *
-                            src_size[0] +
-                        (range_max_dim[2 * 1] + j - d_m[1]) * src_size[0] +
-                        range_max_dim[2 * 0] - d_m[0]) *
-                       elem_size]);
-              printf("src num=%f\n", (*num));
-            }
-
           }
-
-          else
+          else {
             memcpy(&src[(moff_src + loff_src +
                          (range_max_dim[2 * 2] + k - d_m[2]) * src_size[1] *
                              src_size[0] +
@@ -2488,6 +2466,7 @@ void copy_loop_slab(char *dest, char *src, int *dest_size, int *src_size,
                    &dest[moff_dest + loff_dest +
                          k * dest_size[0] * dest_size[1] + j * dest_size[0]],
                    dest_size[0]);
+          }
 
 #if OPS_MAX_DIM > 3
     }
@@ -2499,10 +2478,12 @@ void copy_loop_slab(char *dest, char *src, int *dest_size, int *src_size,
 
 void copy_data_buf(const ops_dat &dat, const int *local_range,
                    char *local_buf) {
+  const sub_dat *sd = OPS_sub_dat_list[dat->index];
   ops_execute(dat->block->instance);
   ops_get_data(dat);
   int local_buf_size[OPS_MAX_DIM] = {1};
   int range_max_dim[2 * OPS_MAX_DIM] = {0};
+  int d_m[OPS_MAX_DIM]{0};
   for (int d = 0; d < dat->block->dims; d++) {
     local_buf_size[d] = local_range[2 * d + 1] - local_range[2 * d + 0];
     range_max_dim[2 * d] = local_range[2 * d];
@@ -2513,7 +2494,12 @@ void copy_data_buf(const ops_dat &dat, const int *local_range,
     range_max_dim[2 * d] = 0;
     range_max_dim[2 * d + 1] = 1;
   }
-  local_buf_size[0] *= dat->elem_size;  // now in bytes
+
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    d_m[d] = sd->d_im[d] + dat->d_m[d];
+  }
+  local_buf_size[0] *= dat->elem_size;
+
   if (dat->block->dims > 5)
     throw OPSException(OPS_NOT_IMPLEMENTED,
                        "Error, missing OPS implementation: ops_dat_fetch_data "
@@ -2522,7 +2508,7 @@ void copy_data_buf(const ops_dat &dat, const int *local_range,
     throw OPSException(OPS_NOT_IMPLEMENTED,
                        "Error, missing OPS implementation: ops_dat_fetch_data "
                        "not implemented for SoA");
-  copy_loop_slab<0>(local_buf, dat->data, local_buf_size, dat->size, dat->d_m,
+  copy_loop_slab<0>(local_buf, dat->data, local_buf_size, dat->size, d_m,
                     dat->elem_size, range_max_dim);
   dat->dirty_hd = 1;
 }
@@ -3063,43 +3049,16 @@ void ops_write_dataslice_hdf5(char const *file_name, const ops_dat &dat,
   const int space_dim{dat->block->dims};
   int *global_range{new int(space_dim)};
   determine_global_range(dat, cross_section_dir, pos, global_range);
-  // for (int i = 0; i < 3;i++){
-  //   ops_printf("Range[%d]=%d %d\n",i,global_range[2*i],global_range[2*i+1]);
-
-  // }
   int *local_range{new int(2 * space_dim)};
-
   // TODO if the plane is out of global range, computer range will generate
   // error
   determine_local_range(dat, global_range, local_range);
   size_t local_buf_size{dat->elem_size};
-  printf("local buf size at rank %d = %d\n", ops_my_global_rank,
-         local_buf_size);
   for (int i = 0; i < space_dim; i++) {
     local_buf_size *= (local_range[2 * i + 1] - local_range[2 * i]);
   }
-  printf("local buf size 2 at rank %d = %d\n", ops_my_global_rank,
-         local_buf_size);
   char *local_buf = (char *)ops_malloc(local_buf_size);
   copy_data_buf(dat, local_range, local_buf);
-  if (local_buf_size > 0) {
-    for (int i = 0; i < space_dim; i++) {
-      printf("Rank %d for %d start=%d end=%d\n", ops_my_global_rank, i,
-             local_range[2 * i], local_range[2 * i + 1]);
-    }
-    const double *data = reinterpret_cast<double *>(local_buf);
-    const double *trdata = reinterpret_cast<double *>(dat->data);
-    printf("At rank %d %f %f %f %f\n", ops_my_global_rank, data[0], data[1],
-           data[2], data[3]);
-    printf("At rank %d  true %f %f %f %f \n", ops_my_global_rank, trdata[16],
-           trdata[17], trdata[18], trdata[19]);
-  }
-
-  // for (int i = 0; i < 3;i++){
-  //   printf("At Rank = %d size[%d]=%d d_m[%d]=%d d_p[%d]=%d\n",
-  //          ops_my_global_rank, i, dat->size[i], i, dat->d_m[i], i,
-  //          dat->d_p[i]);
-  // }
 
   delete global_range;
   delete local_range;
