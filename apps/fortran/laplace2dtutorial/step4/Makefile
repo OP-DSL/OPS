@@ -1,15 +1,16 @@
-FC       = ifort
-FFLAGS   = -module $(OPS_INSTALL_PATH)/fortran/mod/$(OPS_COMPILER)
-FMODS    = -I$(OPS_INSTALL_PATH)/fortran/mod/$(OPS_COMPILER)
-FLINK    = -L$(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)
-OMPFLAGS = -lstdc++ -Ofast
 
-BIN =  laplace2d
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.common
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
-all: $(BIN)
+OPS_FILES=laplace2d_step4.F90
 
-laplace2d: laplace2d_step4.F90 Makefile
-	$(FC) $(FFLAGS) $(FMODS) $(FLINK) $(OMPFLAGS) -o $@ constants.F90 *_seq_kernel.F90 laplace2d_step4.F90 -lops_for_seq
+OPS_GENERATED=laplace2d_step4_ops.F90
 
-clean:
-	$(RM) $(BIN)
+OTHER_FILES=constants.F90
+
+APP = laplace
+MAIN_SRC=laplace2d_step4
+
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.f_app 

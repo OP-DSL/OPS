@@ -23,7 +23,7 @@ program laplace
 
     integer :: i, j, iter
 
-    real(8), dimension (:,:), allocatable :: A, Anew
+    real(8), dimension (:), allocatable :: A, Anew
 
     real(8), parameter :: pi=2.0_8*asin(1.0_8)
     real(8), parameter :: tol=1.0e-6_8
@@ -32,69 +32,69 @@ program laplace
 
     real(8) :: start_time, stop_time
 
-    allocate ( A(1:jmax+2,1:imax+2), Anew(1:jmax+2,1:imax+2) )
+    allocate ( A(1:((jmax+2)*(imax+2))), Anew(1:((jmax+2)*(imax+2))) )
 
     ! Initialize
     A = 0.0_8
+
+    call cpu_time(start_time)
 
     ! Set boundary conditions
 
     ! Bottom
     do i=1,imax+2
-        A(1,i)   = 0.0_8
+        A(0*(imax+2) +i)   = 0.0_8
     end do
 
     ! Top
     do i=1,imax+2
-        A(jmax+2,i) = 0.0_8
+        A((jmax+1)*(imax+2) +i) = 0.0_8
     end do
 
     ! Left
-    do j=1,jmax+2
-        A(j,1)   = sin(pi * j/(jmax+2))
+    do j=0,jmax+1
+        A(j*(imax+2) +1)   = sin(pi * j/(jmax+2))
     end do
-    
+
     ! Right
-    do j=1,jmax+2
-        A(j,imax+2) = sin(pi * j/(jmax+2)) * exp(-pi)
+    do j=0,jmax+1
+        A(j*(imax+2) +imax+2) = sin(pi * j/(jmax+2)) * exp(-pi)
     end do
-   
+
     write(*,'(a,i5,a,i5,a)') 'Jacobi relaxation Calculation:', jmax+2, ' x', imax+2, ' mesh'
  
-    call cpu_time(start_time) 
-
     iter=0
 
     do i=2,imax+2
-        Anew(1,i)   = 0.0_8
+        Anew(0*(imax+2) +i)   = 0.0_8
     end do
 
     do i=2,imax+2
-        Anew(jmax+2,i) = 0.0_8
+        Anew((jmax+1)*(imax+2) +i) = 0.0_8
     end do
 
-    do j=2,jmax+2
-        Anew(j,1)   = sin(pi * j/(jmax+2))
+    do j=1,jmax+1
+        Anew(j*(imax+2) +1)   = sin(pi * j/(jmax+2))
     end do
 
-    do j=2,jmax+2
-        Anew(j,imax+2) = sin(pi * j/(jmax+2)) * exp(-pi)
+    do j=1,jmax+1
+        Anew(j*(imax+2) +imax+2) = sin(pi * j/(jmax+2)) * exp(-pi)
     end do
 
     do while ( error .gt. tol .and. iter .lt. iter_max )
         error=0.0_8
 
-        do i=2,imax+1
-            do j=2,jmax+1
-                Anew(j,i) = 0.25_8 * ( A(j+1,i  ) + A(j-1,i  ) + &
-                                             A(j  ,i-1) + A(j  ,i+1) )
-                error = max( error, abs(Anew(j,i)-A(j,i)) )
+        do j=1,jmax
+            do i=2,imax+1
+                Anew(j*(imax+2) +i) = 0.25_8 * ( A((j+1)*(imax+2) +i) + A((j-1)*(imax+2) +i) + &
+                                              &  A(j*(imax+2) +i+1) + A(j*(imax+2) +i-1) )
+                error = max( error, abs(Anew(j*(imax+2) +i)-A(j*(imax+2) +i)) )
             end do
         end do
         
-        do i=2,imax+1
-            do j=2,jmax+1
-                A(j,i) = Anew(j,i)
+        do j=1,imax
+            do i=2,imax+1
+                A(j*(imax+2) +i) = Anew(j*(imax+2) +i)
             end do
         end do
 

@@ -75,11 +75,6 @@ program laplace
     jmax_opsconstant = jmax
     pi_opsconstant = pi
 #endif
-
-    !declare OPS constants
-    call ops_decl_const("imax", 1, "int", imax)
-    call ops_decl_const("jmax", 1, "int", jmax)
-    call ops_decl_const("pi", 1, "double", pi)    
     
     size(1) = jmax
     size(2) = imax       
@@ -108,6 +103,11 @@ program laplace
     !declare ops_dat
     call ops_decl_dat(grid2D, 1, size, base, d_m, d_p, temp, d_A, "real(8)", "A")
     call ops_decl_dat(grid2D, 1, size, base, d_m, d_p, temp, d_Anew, "real(8)", "Anew")
+
+    !declare OPS constants
+    call ops_decl_const("imax", 1, "int", imax)
+    call ops_decl_const("jmax", 1, "int", jmax)
+    call ops_decl_const("pi", 1, "double", pi)
 
     !declare reduction handles
     error=1.0_8 

@@ -1,12 +1,16 @@
-CC       = gfortran
-OMPFLAGS = -Ofast -lm
 
-BIN =  laplace2d
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.common
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
-all: $(BIN)
+OPS_FILES=laplace2d_step6.F90
 
-laplace2d: laplace2d_step6.F90 Makefile
-	$(CC) $(CCFLAGS) $(OMPFLAGS) -o $@ laplace2d_step6.F90
+OPS_GENERATED=laplace2d_step6_ops.F90
 
-clean:
-	$(RM) $(BIN)
+OTHER_FILES=constants.F90
+
+APP = laplace
+MAIN_SRC=laplace2d_step6
+
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.f_app 
