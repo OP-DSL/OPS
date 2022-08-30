@@ -2452,7 +2452,7 @@ void copy_loop_slab(char *dest, char *src, const int *dest_size,
                          (range_max_dim[2 * 2] + k - d_m[2]) * src_size[1] *
                              src_size[0] +
                          (range_max_dim[2 * 1] + j - d_m[1]) * src_size[0] +
-                         range_max_dim[2 * 0] + 1) *
+                         range_max_dim[2 * 0] -d_m[0]) *
                         elem_size],
                    dest_size[0]);
           } else {
@@ -2496,6 +2496,8 @@ void copy_data_buf(const ops_dat &dat, const int *local_range,
 
   for (int d = 0; d < OPS_MAX_DIM; d++) {
     d_m[d] = sd->d_im[d] + dat->d_m[d];
+    // printf("At rank %d d_im[%d]=%d d_m[%d]=%d\n", ops_my_global_rank, d,
+    //        sd->d_im[d], d, dat->d_m[d]);
   }
   local_buf_size[0] *= dat->elem_size;
 
@@ -2650,6 +2652,11 @@ void ops_write_dataslice_hdf5(char const *file_name, const ops_dat &dat,
     // if (local_buf_size > 0) {
     char *local_buf = (char *)ops_malloc(local_buf_size);
     copy_data_buf(dat, local_range, local_buf);
+    // if (local_buf_size>1){
+    //   double *data_p{(double *)local_buf};
+    //   printf("At rank %d data= %f %f %f %f\n", ops_my_global_rank, data_p[0],
+    //          data_p[1], data_p[2], data_p[3]);
+    // }
     write_buf_hdf5(file_name, dat, cross_section_dir, local_range, global_range,
                    local_buf);
     free(local_buf);
