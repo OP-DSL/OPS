@@ -51,9 +51,9 @@
 // Defining the computational problem domain. As a test, we use the
 // simplest grid See the document for the meaning of variables r1 and r2.
 double xyzRange[2]{0, 1};
-int nx{2};
-int ny{nx};
-int nz{nx};
+int nx{32};
+int ny{32};
+int nz{32};
 double h{(xyzRange[1] - xyzRange[0]) / (nx - 1)};
 
 int main(int argc, char *argv[]) {
@@ -107,8 +107,8 @@ int main(int argc, char *argv[]) {
                  ops_arg_dat(u, 1, S3D_000, "double", OPS_WRITE),
                  ops_arg_idx());
 
-    ops_write_dataslice_hdf5("test.h5", u, 0, 1);
-    ops_fetch_block_hdf5_file(slice3D, "fetch.h5");
-    ops_fetch_dat_hdf5_file(u, "fetch.h5");
+    ops_write_dataslice_hdf5("test.h5", u, 1, 16);
+    // ops_fetch_block_hdf5_file(slice3D, "fetch.h5");
+    // ops_fetch_dat_hdf5_file(u, "fetch.h5");
     ops_exit();
 }
