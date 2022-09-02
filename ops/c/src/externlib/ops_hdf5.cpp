@@ -35,8 +35,8 @@
  * @author Gihan Mudalige (started 28-08-2015)
  * @details Implements the OPS API calls for the HDF5 file I/O functionality
  */
-#include <vector>
 #include <math.h>
+#include <vector>
 
 // Use version 2 of H5Dopen H5Acreate and H5Dcreate
 #define H5Dopen_vers 2
@@ -47,9 +47,9 @@
 #include <hdf5.h>
 #include <hdf5_hl.h>
 
+#include <ops_exceptions.h>
 #include <ops_lib_core.h>
 #include <ops_util.h>
-#include <ops_exceptions.h>
 
 /*******************************************************************************
  * Routine to write an ops_block to a named hdf5 file,
@@ -65,9 +65,9 @@ static char *copy_str(char const *src) {
 
 void ops_fetch_block_hdf5_file(ops_block block, char const *file_name) {
   // HDF5 APIs definitions
-  hid_t file_id;   // file identifier
-  hid_t group_id;  // group identifier
-  hid_t plist_id;  // property list identifier
+  hid_t file_id;  // file identifier
+  hid_t group_id; // group identifier
+  hid_t plist_id; // property list identifier
 
   // Set up file access property list for I/O
   plist_id = H5Pcreate(H5P_FILE_ACCESS);
@@ -103,11 +103,11 @@ void ops_fetch_block_hdf5_file(ops_block block, char const *file_name) {
 
   // attach attributes to block
   H5LTset_attribute_string(file_id, block->name, "ops_type",
-                           "ops_block");  // ops type
+                           "ops_block"); // ops type
   H5LTset_attribute_int(file_id, block->name, "dims", &(block->dims),
-                        1);  // dim
+                        1); // dim
   H5LTset_attribute_int(file_id, block->name, "index", &(block->index),
-                        1);  // index
+                        1); // index
 
   H5Gclose(group_id);
   H5Pclose(plist_id);
@@ -121,9 +121,9 @@ void ops_fetch_block_hdf5_file(ops_block block, char const *file_name) {
 
 void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name) {
   // HDF5 APIs definitions
-  hid_t file_id;   // file identifier
-  hid_t dset_id;   // dataset identifier
-  hid_t plist_id;  // property list identifier
+  hid_t file_id;  // file identifier
+  hid_t dset_id;  // dataset identifier
+  hid_t plist_id; // property list identifier
 
   // Set up file access property list with parallel I/O access
   plist_id = H5Pcreate(H5P_FILE_ACCESS);
@@ -160,15 +160,15 @@ void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name) {
 
   // attach attributes to stencil
   H5LTset_attribute_string(file_id, stencil->name, "ops_type",
-                           "ops_stencil");  // ops type
+                           "ops_stencil"); // ops type
   H5LTset_attribute_int(file_id, stencil->name, "dims", &(stencil->dims),
-                        1);  // dim
+                        1); // dim
   H5LTset_attribute_int(file_id, stencil->name, "index", &(stencil->index),
-                        1);  // index
+                        1); // index
   H5LTset_attribute_int(file_id, stencil->name, "points", &(stencil->points),
-                        1);  // number of points
+                        1); // number of points
   H5LTset_attribute_int(file_id, stencil->name, "stride", stencil->stride,
-                        stencil->dims);  // strides
+                        stencil->dims); // strides
 
   H5Pclose(plist_id);
   H5Fclose(file_id);
@@ -180,9 +180,9 @@ void ops_fetch_stencil_hdf5_file(ops_stencil stencil, char const *file_name) {
  *******************************************************************************/
 void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
   // HDF5 APIs definitions
-  hid_t file_id;   // file identifier
-  hid_t group_id;  // group identifier
-  hid_t plist_id;  // property list identifier
+  hid_t file_id;  // file identifier
+  hid_t group_id; // group identifier
+  hid_t plist_id; // property list identifier
 
   // Set up file access property list with parallel I/O access
   plist_id = H5Pcreate(H5P_FILE_ACCESS);
@@ -203,7 +203,7 @@ void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
 
   file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
 
-  char halo_name[100];  // strlen(halo->from->name)+strlen(halo->to->name)];
+  char halo_name[100]; // strlen(halo->from->name)+strlen(halo->to->name)];
   sprintf(halo_name, "from_%s_to_%s", halo->from->name, halo->to->name);
 
   /* create and write the a group that holds the halo information */
@@ -226,28 +226,28 @@ void ops_fetch_halo_hdf5_file(ops_halo halo, char const *file_name) {
   // halo->from->name, halo->to->name);
   // attach attributes to halo
   H5LTset_attribute_string(file_id, halo_name, "ops_type",
-                           "ops_halo");  // ops type
+                           "ops_halo"); // ops type
   H5LTset_attribute_string(file_id, halo_name, "from_dat_name",
-                           halo->from->name);  // from ops_dat (name)
+                           halo->from->name); // from ops_dat (name)
   H5LTset_attribute_string(file_id, halo_name, "to_dat_name",
-                           halo->to->name);  // to ops_dat (name)
+                           halo->to->name); // to ops_dat (name)
   H5LTset_attribute_int(file_id, halo_name, "from_dat_index",
-                        &(halo->from->index), 1);  // from_dat_index
+                        &(halo->from->index), 1); // from_dat_index
   H5LTset_attribute_int(file_id, halo_name, "to_dat_index", &(halo->to->index),
-                        1);  // from_dat_index
+                        1); // from_dat_index
 
   H5LTset_attribute_int(file_id, halo_name, "iter_size", halo->iter_size,
-                        dim);  // iteration size
+                        dim); // iteration size
   H5LTset_attribute_int(file_id, halo_name, "from_base", halo->from_base,
-                        dim);  // base from ops_dat
+                        dim); // base from ops_dat
   H5LTset_attribute_int(file_id, halo_name, "to_base", halo->to_base,
-                        dim);  // base of to ops_dat
+                        dim); // base of to ops_dat
   H5LTset_attribute_int(file_id, halo_name, "from_dir", halo->from_dir,
-                        dim);  // copy from direction
+                        dim); // copy from direction
   H5LTset_attribute_int(file_id, halo_name, "to_dir", halo->to_dir,
-                        dim);  // copy to direction
+                        dim); // copy to direction
   H5LTset_attribute_int(file_id, halo_name, "index", &(halo->index),
-                        1);  // index
+                        1); // index
 
   H5Gclose(group_id);
   H5Pclose(plist_id);
@@ -305,9 +305,9 @@ void remove_padding3D(ops_dat dat, hsize_t *size, char *data) {
   for (hsize_t k = 0; k < size[2]; k++) {
     for (hsize_t j = 0; j < size[1]; j++) {
       for (hsize_t i = 0; i < size[0]; i++) {
-        index = i + j * dat->size[0] +  // need to stride in dat->size as data
-                                        // block includes intra-block halos
-                k * dat->size[0] * dat->size[1];  // +
+        index = i + j * dat->size[0] + // need to stride in dat->size as data
+                                       // block includes intra-block halos
+                k * dat->size[0] * dat->size[1]; // +
 
         memcpy(&data[count * dat->elem_size],
                &dat->data[index * dat->elem_size], dat->elem_size);
@@ -331,9 +331,9 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
   ops_block block = dat->block;
 
   // HDF5 APIs definitions
-  hid_t file_id;   // file identifier
-  hid_t group_id;  // group identifier
-  hid_t plist_id;  // property list identifier
+  hid_t file_id;  // file identifier
+  hid_t group_id; // group identifier
+  hid_t plist_id; // property list identifier
 
   hsize_t g_size[OPS_MAX_DIM] = {0};
   int gbl_size[OPS_MAX_DIM] = {0};
@@ -347,25 +347,29 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
   /* Need to strip out the padding from the x-dimension*/
   g_size[0] = g_size[0] - dat->x_pad;
   hsize_t t_size = 1;
-  for (int d = 0; d < block->dims; d++) t_size *= g_size[d];
+  for (int d = 0; d < block->dims; d++)
+    t_size *= g_size[d];
   char *data = (char *)ops_malloc(t_size * dat->elem_size);
 
-  if (block->dims == 1) remove_padding1D(dat, g_size, data);
-  if (block->dims == 2) remove_padding2D(dat, g_size, data);
-  if (block->dims == 3) remove_padding3D(dat, g_size, data);
+  if (block->dims == 1)
+    remove_padding1D(dat, g_size, data);
+  if (block->dims == 2)
+    remove_padding2D(dat, g_size, data);
+  if (block->dims == 3)
+    remove_padding3D(dat, g_size, data);
 
   // make sure we multiply by the number of data values per element (i.e.
   // dat->dim)
   // g_size[1] = g_size[1]*dat->dim;
   if (block->dims == 1)
-    g_size[0] = g_size[0] * dat->dim;  // -- this needs to be tested for 1D
+    g_size[0] = g_size[0] * dat->dim; // -- this needs to be tested for 1D
   else if (block->dims == 2)
     // Jianping Meng: it looks that growing the zero index is better
     g_size[0] =
-        g_size[0] * dat->dim;  //**note we are using [1] instead of [0] here !!
+        g_size[0] * dat->dim; //**note we are using [1] instead of [0] here !!
   else if (block->dims == 3) {
     g_size[0] =
-        g_size[0] * dat->dim;  //**note that for 3D we are using [0] here !!
+        g_size[0] * dat->dim; //**note that for 3D we are using [0] here !!
   }
 
   hsize_t G_SIZE[OPS_MAX_DIM];
@@ -411,7 +415,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     group_id = H5Gopen2(file_id, block->name, H5P_DEFAULT);
 
     if (H5Lexists(group_id, dat->name, H5P_DEFAULT) ==
-        0) {  // dat does not exisits .. create
+        0) { // dat does not exisits .. create
       if (dat->block->instance->OPS_diags > 2)
         if (dat->block->instance->is_root())
           dat->block->instance->ostream()
@@ -453,28 +457,29 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       // attach attributes to dat
       H5LTset_attribute_string(group_id, dat->name, "ops_type",
-                               "ops_dat");  // ops type
+                               "ops_dat"); // ops type
       H5LTset_attribute_string(group_id, dat->name, "block",
-                               block->name);  // block
+                               block->name); // block
       H5LTset_attribute_int(group_id, dat->name, "block_index", &(block->index),
-                            1);  // block index
-      H5LTset_attribute_int(group_id, dat->name, "dim", &(dat->dim), 1);  // dim
+                            1); // block index
+      H5LTset_attribute_int(group_id, dat->name, "dim", &(dat->dim), 1); // dim
       H5LTset_attribute_int(group_id, dat->name, "size", gbl_size,
-                            block->dims);  // size
+                            block->dims); // size
       H5LTset_attribute_int(group_id, dat->name, "d_m", dat->d_m,
-                            block->dims);  // d_m
+                            block->dims); // d_m
 
       // need to substract x_pad from d_p before writing attribute to file
       int orig_d_p[OPS_MAX_DIM];
-      for (int d = 0; d < block->dims; d++) orig_d_p[d] = dat->d_p[d];
+      for (int d = 0; d < block->dims; d++)
+        orig_d_p[d] = dat->d_p[d];
       orig_d_p[0] = dat->d_p[0] - dat->x_pad;
 
       H5LTset_attribute_int(group_id, dat->name, "d_p", orig_d_p,
-                            block->dims);  // d_p
+                            block->dims); // d_p
       H5LTset_attribute_int(group_id, dat->name, "base", dat->base,
-                            block->dims);                                // base
-      H5LTset_attribute_string(group_id, dat->name, "type", dat->type);  // type
-    } else {  // dat exisits .. check attributes and if matching .. ovewrite
+                            block->dims);                               // base
+      H5LTset_attribute_string(group_id, dat->name, "type", dat->type); // type
+    } else { // dat exisits .. check attributes and if matching .. ovewrite
 
       dat->block->instance->ostream()
           << "Dataset '" << dat->name << "' already found in file " << file_name
@@ -486,7 +491,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
           base[OPS_MAX_DIM];
 
       if (H5LTget_attribute_string(group_id, dat->name, "ops_type", ops_type) <
-          0) {  // ops type
+          0) { // ops type
         OPSException ex(OPS_HDF5_ERROR);
         ex << "Error: Attribute \"ops_type\" not found in dat" << dat->name;
         throw ex;
@@ -499,7 +504,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         }
       }
       if (H5LTget_attribute_string(group_id, dat->name, "block", blk) <
-          0) {  // block
+          0) { // block
         OPSException ex(OPS_HDF5_ERROR);
         ex << "Error: Attribute \"block\" not found in dat" << dat->name;
         throw ex;
@@ -513,7 +518,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         }
       }
       if (H5LTget_attribute_int(group_id, dat->name, "block_index", &bindex) <
-          0) {  // block index
+          0) { // block index
         OPSException ex(OPS_HDF5_ERROR);
         ex << "Error: Attribute \"block_index\" not found in dat" << dat->name;
         throw ex;
@@ -526,7 +531,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
           throw ex;
         }
       }
-      if (H5LTget_attribute_int(group_id, dat->name, "dim", &dim) < 0) {  // dim
+      if (H5LTget_attribute_int(group_id, dat->name, "dim", &dim) < 0) { // dim
         OPSException ex(OPS_HDF5_ERROR);
         ex << "Error: Attribute \"dim\" not found in dat" << dat->name;
         throw ex;
@@ -540,14 +545,14 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       }
 
       if (H5LTget_attribute_int(group_id, dat->name, "size", gsize) <
-          0) {  // size
+          0) { // size
         OPSException ex(OPS_HDF5_ERROR);
         ex << "Error: Attribute \"size\" not found in dat" << dat->name;
         throw ex;
       } else {
         for (int i = 0; i < dat->dim; i++) {
           if (gbl_size[i] !=
-              gsize[i]) {  // remember checking global size as computed above
+              gsize[i]) { // remember checking global size as computed above
             OPSException ex(OPS_HDF5_ERROR);
             ex << "Error: ops_dat size: " << dat->size[i]
                << " of dimension: " << i << " of dat: " << dat->name
@@ -557,7 +562,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         }
       }
 
-      if (H5LTget_attribute_int(group_id, dat->name, "d_m", d_m) < 0) {  // d_m
+      if (H5LTget_attribute_int(group_id, dat->name, "d_m", d_m) < 0) { // d_m
         OPSException ex(OPS_HDF5_ERROR);
         ex << "Error: Attribute \"d_m\" not found in dat" << dat->name;
         throw ex;
@@ -572,14 +577,15 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
           }
         }
       }
-      if (H5LTget_attribute_int(group_id, dat->name, "d_p", d_p) < 0) {  // d_p
+      if (H5LTget_attribute_int(group_id, dat->name, "d_p", d_p) < 0) { // d_p
         OPSException ex(OPS_HDF5_ERROR);
         ex << "Error: Attribute \"d_p\" not found in dat" << dat->name;
         throw ex;
       } else {
         // need to substract x_pad from d_p before checking attribute on file
         int orig_d_p[OPS_MAX_DIM];
-        for (int d = 0; d < block->dims; d++) orig_d_p[d] = dat->d_p[d];
+        for (int d = 0; d < block->dims; d++)
+          orig_d_p[d] = dat->d_p[d];
         orig_d_p[0] = dat->d_p[0] - dat->x_pad;
 
         for (int i = 0; i < dat->dim; i++) {
@@ -593,7 +599,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         }
       }
       if (H5LTget_attribute_int(group_id, dat->name, "base", base) <
-          0) {  // base
+          0) { // base
         OPSException ex(OPS_HDF5_ERROR);
         ex << "Error: Attribute \"base\" not found in dat" << dat->name;
         throw ex;
@@ -609,7 +615,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         }
       }
       if (H5LTget_attribute_string(group_id, dat->name, "type", type) <
-          0) {  // type
+          0) { // type
         OPSException ex(OPS_HDF5_ERROR);
         ex << "Error: Attribute \"type\" not found in dat" << dat->name;
         throw ex;
@@ -673,8 +679,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 ops_block ops_decl_block_hdf5(int dims, const char *block_name,
                               char const *file_name) {
   // HDF5 APIs definitions
-  hid_t file_id;   // file identifier
-  hid_t plist_id;  // property list identifier
+  hid_t file_id;  // file identifier
+  hid_t plist_id; // property list identifier
 
   // open given hdf5 file .. if it exists
   if (file_exist(file_name) == 0) {
@@ -749,8 +755,8 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
                                   const char *stencil_name,
                                   char const *file_name) {
   // HDF5 APIs definitions
-  hid_t file_id;   // file identifier
-  hid_t plist_id;  // property list identifier
+  hid_t file_id;  // file identifier
+  hid_t plist_id; // property list identifier
 
   // open given hdf5 file .. if it exists
   if (file_exist(file_name) == 0) {
@@ -851,8 +857,8 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
  *******************************************************************************/
 ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
   // HDF5 APIs definitions
-  hid_t file_id;   // file identifier
-  hid_t plist_id;  // property list identifier
+  hid_t file_id;  // file identifier
+  hid_t plist_id; // property list identifier
 
   // open given hdf5 file .. if it exists
   if (file_exist(file_name) == 0) {
@@ -866,7 +872,7 @@ ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
   file_id = H5Fopen(file_name, H5F_ACC_RDWR, plist_id);
 
   // check if ops_halo exists
-  char halo_name[100];  // strlen(halo->from->name)+strlen(halo->to->name)];
+  char halo_name[100]; // strlen(halo->from->name)+strlen(halo->to->name)];
   sprintf(halo_name, "from_%s_to_%s", from->name, to->name);
   if (H5Lexists(file_id, halo_name, H5P_DEFAULT) == 0) {
     OPSException ex(OPS_HDF5_ERROR);
@@ -965,9 +971,9 @@ ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
 ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
                           char const *dat_name, char const *file_name) {
   // HDF5 APIs definitions
-  hid_t file_id;   // file identifier
-  hid_t group_id;  // group identifier
-  hid_t plist_id;  // property list identifier
+  hid_t file_id;  // file identifier
+  hid_t group_id; // group identifier
+  hid_t plist_id; // property list identifier
 
   // open given hdf5 file .. if it exists
   if (file_exist(file_name) == 0) {
@@ -1152,7 +1158,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
       block, dat_dim, read_size /*global dat size in each dimension*/,
       read_base, read_d_m, read_d_p, stride, data, type_size /*size of(type)*/,
       type,
-      dat_name);  // TODO: multigrid stride support
+      dat_name); // TODO: multigrid stride support
 
   created_dat->is_hdf5 = 1;
   created_dat->hdf5_file = copy_str(file_name);
@@ -1191,7 +1197,7 @@ void ops_dump_to_hdf5(char const *file_name) {
             << "Dumping dat " << (item->dat)->name << " to HDF5 file "
             << file_name << "\n";
     if (item->dat->e_dat !=
-        1)  // currently cannot write edge dats .. need to fix this
+        1) // currently cannot write edge dats .. need to fix this
       ops_fetch_dat_hdf5_file(item->dat, file_name);
   }
 
@@ -1227,7 +1233,8 @@ extern "C" char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
   // fetch data onto the host ( if needed ) based on the backend
   ops_get_data(dat);
   hsize_t t_size = 1;
-  for (int d = 0; d < dat->block->dims; d++) t_size *= dat->size[d];
+  for (int d = 0; d < dat->block->dims; d++)
+    t_size *= dat->size[d];
   u_dat = (char *)ops_malloc(t_size * dat->elem_size);
   memcpy(u_dat, dat->data, t_size * dat->elem_size);
   return (u_dat);
@@ -1240,10 +1247,10 @@ extern "C" char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
 void ops_get_const_hdf5(char const *name, int dim, char const *type,
                         char *const_data, char const *file_name) {
   // HDF5 APIs definitions
-  hid_t file_id;    // file identifier
-  hid_t dset_id;    // dataset identifier
-  hid_t dataspace;  // data space identifier
-  hid_t attr;       // attribute identifier
+  hid_t file_id;   // file identifier
+  hid_t dset_id;   // dataset identifier
+  hid_t dataspace; // data space identifier
+  hid_t attr;      // attribute identifier
 
   if (file_exist(file_name) == 0) {
     OPSException ex(OPS_HDF5_ERROR);
@@ -1356,11 +1363,11 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
 void ops_write_const_hdf5(char const *name, int dim, char const *type,
                           char *const_data, char const *file_name) {
   // HDF5 APIs definitions
-  hid_t file_id;    // file identifier
-  hid_t dset_id;    // dataset identifier
-  hid_t dataspace;  // data space identifier
-  htri_t status;    // status for checking return values
-  hid_t attr;       // attribute identifier
+  hid_t file_id;   // file identifier
+  hid_t dset_id;   // dataset identifier
+  hid_t dataspace; // data space identifier
+  htri_t status;   // status for checking return values
+  hid_t attr;      // attribute identifier
 
   if (file_exist(file_name) == 0) {
     if (OPS_instance::getOPSInstance()->OPS_diags > 3) {
@@ -1698,46 +1705,89 @@ hid_t h5_type(const char *type) {
   return h5t;
 }
 
+hid_t H5_file_handle(const char *file_name) {
 
-void write_buf_hdf5(char const *file_name, const ops_dat &dat, const int dims,
-                    const int *size, char *buf) {
-  // HDF5 APIs definitions
-  hid_t file_id;   // file identifier
-  hid_t group_id;  // group identifier
-  hid_t plist_id;  // property list identifier
-
-  hsize_t *g_size{new hsize_t(dims)};
-  for (int d = 0; d < dims; d++) {
-    g_size[d] = size[dims - d - 1];
-  }
-  // Set up file access property list with parallel I/O access
-  plist_id = H5Pcreate(H5P_FILE_ACCESS);
+  hid_t file_plist_id{H5Pcreate(H5P_FILE_ACCESS)};
 
   if (file_exist(file_name) == 0) {
-    if (dat->block->instance->OPS_diags > 3)
-      if (dat->block->instance->is_root())
-        dat->block->instance->ostream()
-            << "File " << file_name << "does not exist .... creating file\n";
+    if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+      ops_printf("File %s does not exist .... creating file\n", file_name);
     FILE *fp;
     fp = fopen(file_name, "w");
     fclose(fp);
-
-    // Create a new file
-    file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    // Create a new file collectively and release property list identifier.
+    hid_t file_id{
+        H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, file_plist_id)};
     H5Fclose(file_id);
   }
 
-  file_id = H5Fopen(file_name, H5F_ACC_RDWR, H5P_DEFAULT);
-
-  //TODO: cannot overwrite data to be improved.
-  H5LTmake_dataset(file_id, dat->name, dims, g_size, h5_type(dat->type), buf);
-  H5Pclose(plist_id);
-  H5Fclose(file_id);
-  delete g_size;
+  hid_t file_id{H5Fopen(file_name, H5F_ACC_RDWR, file_plist_id)};
+  H5Pclose(file_plist_id);
+  return file_id;
 }
 
-void ops_write_dataslice_hdf5(char const *file_name, const ops_dat &data,
-                              const int cross_section_dir, const int pos) {
+// create the dataset or open the dataset if existing
+void H5_dataset_space(const hid_t file_id, const int data_dims,
+                      const hsize_t *global_data_size, const char *data_name,
+                      const char *data_type, hid_t &dataset_id,
+                      hid_t &file_space) {
+
+  if (H5Lexists(file_id, data_name, H5P_DEFAULT) == 0) {
+    hid_t data_plist_id{H5Pcreate(H5P_DATASET_CREATE)};
+    file_space = H5Screate_simple(data_dims, global_data_size, NULL);
+    dataset_id = H5Dcreate(file_id, data_name, h5_type(data_type), file_space,
+                           H5P_DEFAULT, data_plist_id, H5P_DEFAULT);
+    H5Pclose(data_plist_id);
+  } else {
+    dataset_id = H5Dopen(file_id, data_name, H5P_DEFAULT);
+    file_space = H5Dget_space(dataset_id);
+    int ndims{H5Sget_simple_extent_ndims(file_space)};
+    bool dims_consistent{ndims == data_dims};
+    bool size_consistent{true};
+    if (dims_consistent) {
+      hsize_t *size{new hsize_t(ndims)};
+      H5Sget_simple_extent_dims(file_space, size, NULL);
+      for (int d = 0; d < ndims; d++) {
+        size_consistent = size_consistent && (size[d] == global_data_size[d]);
+      }
+      delete size;
+    }
+    if ((not dims_consistent) || (not size_consistent)) {
+      H5Sclose(file_space);
+      H5Dclose(dataset_id);
+      OPSException ex(OPS_HDF5_ERROR);
+      ex << "Error: inconstent data size in storage detected for  "
+         << data_name;
+      throw ex;
+    }
+  }
+}
+
+void write_buf_hdf5(char const *file_name, const char *data_name,
+                    const ops_dat &dat, const int dims, const int *size,
+                    char *buf) {
+  // HDF5 APIs definitions
+  hid_t file_id{H5_file_handle(file_name)};
+  hsize_t *size_f{new hsize_t(dims)};
+  for (int d = 0; d < dims; d++) {
+    size_f[d] = size[dims - d - 1];
+  }
+  hid_t file_space;
+  hid_t dataset_id;
+  H5_dataset_space(file_id, dims, size_f, data_name, dat->type, dataset_id,
+                   file_space);
+  H5Dwrite(dataset_id, h5_type(dat->type), H5S_ALL, file_space, H5P_DEFAULT,
+           buf);
+
+  H5Fclose(file_id);
+  H5Sclose(file_space);
+  H5Dclose(dataset_id);
+  delete size_f;
+}
+
+void ops_write_dataslice_hdf5(char const *file_name, const char *data_name,
+                              const ops_dat &data, const int cross_section_dir,
+                              const int pos) {
   char *write_buf =
       (char *)ops_malloc(calc_total_slice_size(data, cross_section_dir));
   int dims{data->block->dims - 1 + ((data->dim > 1) ? 1 : 0)};
@@ -1746,7 +1796,7 @@ void ops_write_dataslice_hdf5(char const *file_name, const ops_dat &data,
   determin_buf_size(data, dims, cross_section_dir, size);
   determine_range(data, cross_section_dir, pos, range);
   ops_dat_fetch_data_slab_host(data, 0, write_buf, range);
-  write_buf_hdf5(file_name, data, dims, size, write_buf);
+  write_buf_hdf5(file_name, data_name, data, dims, size, write_buf);
   delete range;
   free(write_buf);
   delete size;

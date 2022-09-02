@@ -2502,7 +2502,7 @@ hid_t H5_file_handle(const MPI_Comm &mpi_comm, const char *file_name) {
   return file_id;
 }
 
-// create the dataset or open the dataset if exsting
+// create the dataset or open the dataset if existing
 void H5_dataset_space(const hid_t file_id, const int data_dims,
                       const hsize_t *global_data_size, const char *data_name,
                       const char *data_type, hid_t &dataset_id,
@@ -2578,9 +2578,10 @@ void copy_data_buf(const ops_dat &dat, const int *local_range,
   dat->dirty_hd = 1;
 }
 
-void write_buf_hdf5(const char *file_name, const ops_dat &dat,
-                    const int cross_section_dir, const int *local_range,
-                    const int *global_range, const char *buf) {
+void write_buf_hdf5(const char *file_name, const char *data_name,
+                    const ops_dat &dat, const int cross_section_dir,
+                    const int *local_range, const int *global_range,
+                    const char *buf) {
   const sub_block *sb{OPS_sub_block_list[dat->block->index]};
   int my_block_rank;
   MPI_Comm PLANE_WORLD;
@@ -2635,7 +2636,7 @@ void write_buf_hdf5(const char *file_name, const ops_dat &dat,
 
     hid_t dataset_id;
 
-    H5_dataset_space(file_id, data_dims, global_data_size_f, dat->name,
+    H5_dataset_space(file_id, data_dims, global_data_size_f, data_name,
                      dat->type, dataset_id, file_space);
 
     // block of memory to write to file by each proc
@@ -2653,7 +2654,7 @@ void write_buf_hdf5(const char *file_name, const ops_dat &dat,
     H5Pset_dxpl_mpio(xfer_data_plist_id, H5FD_MPIO_COLLECTIVE);
 
     H5Dwrite(dataset_id, h5_type(dat->type), memspace, file_space,
-             xfer_data_plist_id, buf);    
+             xfer_data_plist_id, buf);
     H5Pclose(xfer_data_plist_id);
     H5Sclose(file_space);
     H5Sclose(memspace);
@@ -2674,8 +2675,9 @@ void write_buf_hdf5(const char *file_name, const ops_dat &dat,
   }
 }
 
-void ops_write_dataslice_hdf5(char const *file_name, const ops_dat &dat,
-                              const int cross_section_dir, const int pos) {
+void ops_write_dataslice_hdf5(char const *file_name, const char *data_name,
+                              const ops_dat &dat, const int cross_section_dir,
+                              const int pos) {
   sub_block *sb = OPS_sub_block_list[dat->block->index];
   if (sb->owned == 1) {
     const int space_dim{dat->block->dims};
@@ -2697,12 +2699,11 @@ void ops_write_dataslice_hdf5(char const *file_name, const ops_dat &dat,
     //   printf("At rank %d data= %f %f %f %f\n", ops_my_global_rank, data_p[0],
     //          data_p[1], data_p[2], data_p[3]);
     // }
-    write_buf_hdf5(file_name, dat, cross_section_dir, local_range, global_range,
-                   local_buf);
+    write_buf_hdf5(file_name, data_name, dat, cross_section_dir, local_range,
+                   global_range, local_buf);
     free(local_buf);
     //}
     delete global_range;
     delete local_range;
   }
-  return;
 }
