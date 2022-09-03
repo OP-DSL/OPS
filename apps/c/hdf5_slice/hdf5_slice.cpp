@@ -56,7 +56,7 @@ double h{(xyzRange[1] - xyzRange[0]) / (nx - 1)};
 
 int main(int argc, char *argv[]) {
   // OPS initialisation
-  ops_init(argc, argv, 4);
+  ops_init(argc, argv, 1);
   //--- OPS declarations----
   // declare block
   ops_block slice3Du{ops_decl_block(3, "slice3Du")};
@@ -76,7 +76,10 @@ int main(int argc, char *argv[]) {
 
   ops_dat u{
       ops_decl_dat(slice3Du, 1, size, base, d_m, d_p, temp, "double", "u")};
-  ops_dat v{ops_decl_dat(slice3Dv, 1, size, base, d_m, d_p, int_tmp, "int", "v")};
+  ops_dat velo{
+      ops_decl_dat(slice3Du, 3, size, base, d_m, d_p, temp, "double", "u")};
+  ops_dat v{
+      ops_decl_dat(slice3Dv, 1, size, base, d_m, d_p, int_tmp, "int", "v")};
 
   // declare stencils
   int s3D_000[]{0, 0, 0};
@@ -98,11 +101,14 @@ int main(int argc, char *argv[]) {
 
   ops_par_loop(initKernelU, "initKernelU", slice3Du, 3, iterRange,
                ops_arg_dat(u, 1, S3D_000, "double", OPS_WRITE), ops_arg_idx());
+  ops_par_loop(initKernelvelo, "initKernelvelo", slice3Du, 3, iterRange,
+               ops_arg_dat(velo, 3, S3D_000, "double", OPS_WRITE),
+               ops_arg_idx());
   ops_par_loop(initKernelV, "initKernelV", slice3Dv, 3, iterRange,
                ops_arg_dat(v, 1, S3D_000, "int", OPS_WRITE), ops_arg_idx());
 
   double ct0, ct1, et0, et1;
-  double total1{0}, total2{0};
+  double total1{0}, total2{0}, total3{0};
   ops_timers(&ct0, &et0);
   ops_write_slice_group_hdf5({{1, 16}, {0, 1}, {2, 16}}, "1",
                              {{u, v}, {u, v}, {u, v}});
@@ -113,8 +119,15 @@ int main(int argc, char *argv[]) {
                              {{u, v}, {u, v}, {u, v}});
   ops_timers(&ct1, &et1);
   total2 += et1 - et0;
+
+  ops_timers(&ct0, &et0);
+  ops_write_slice_group_hdf5({{1, 8}, {0, 4}, {2, 15}}, "0",
+                             {{velo}, {velo}, {velo}});
+  ops_timers(&ct1, &et1);
+  total3 += et1 - et0;
   ops_printf("The time write 1 series is %f\n", total1);
   ops_printf("The time write 2 series is %f\n", total2);
+  ops_printf("The time write velo series is %f\n", total3);
   // ops_fetch_block_hdf5_file(slice3Du, "slice3Du.h5");
   // ops_fetch_dat_hdf5_file(u, "slice3Du.h5");
   // ops_fetch_block_hdf5_file(slice3Dv, "slice3Dv.h5");
