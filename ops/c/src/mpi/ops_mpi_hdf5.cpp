@@ -41,6 +41,8 @@
 #include <ops_exceptions.h>
 #include <ops_mpi_core.h>
 #include <ops_util.h>
+#include <vector>
+#include <tuple>
 
 // Use version 2 of H5Dopen H5Acreate and H5Dcreate
 #define H5Dopen_vers 2
@@ -2706,4 +2708,67 @@ void ops_write_dataslice_hdf5(char const *file_name, const char *data_name,
     delete global_range;
     delete local_range;
   }
+}
+
+void ops_write_slice_group_hdf5(
+    const std::vector<std::pair<int, int>> &planes,
+    std::vector<std::string> &plane_names, const std::string &key,
+    const std::vector<std::vector<ops_dat>> &data_list) {
+  const size_t plane_num{planes.size()};
+  std::vector<std::string> plane_name_base{"I", "J", "K"};
+  if (plane_names.size() < plane_num) {
+    size_t current_size(plane_names.size());
+    plane_names.resize(planes.size());
+
+    for (size_t p = current_size; p < planes.size(); p++) {
+      plane_names[p] = plane_name_base[planes[p].first % OPS_MAX_DIM] +
+                       std::to_string(planes[p].second);
+    }
+  }
+
+
+
+  for (size_t p = 0; p < plane_num; p++) {
+    for (const auto &data_plane : data_list) {
+      for (const auto &data : data_plane) {
+        const int cross_section_dir{planes[p].first};
+        const int pos{planes[p].second};
+        if ((cross_section_dir >= 0) &&
+            (cross_section_dir <= data->block->dims)) {
+          const sub_dat *sd{OPS_sub_dat_list[data->index]};
+          if ((pos >= sd->gbl_base[cross_section_dir]) &&
+              (pos <= sd->gbl_size[cross_section_dir])) {
+            std::string block_name{data->block->name};
+            std::string data_name{data->name};
+            std::string file_name{plane_names[p] + ".h5"};
+            std::string dataset_name{block_name + "_" + data_name + "_" + key};
+            ops_write_dataslice_hdf5(file_name.c_str(), dataset_name.c_str(),
+                                     data, cross_section_dir, pos);
+          } else {
+            ops_printf("The dat %s doesn't have the specified plane %s = %d \n",
+                       data->name, plane_name_base[cross_section_dir], pos);
+          }
+        } else {
+          ops_printf(
+              "The block %s doesn't have the specified cross section direction "
+              "%d\n",
+              data->block->name, cross_section_dir);
+        }
+      }
+    }
+  }
+}
+
+void ops_write_slice_group_hdf5(
+    const std::vector<std::pair<int, int>> &planes, const std::string &key,
+    const std::vector<std::vector<ops_dat>> &data_list) {
+  const size_t plane_num{planes.size()};
+  std::vector<std::string> plane_names;
+  plane_names.resize(plane_num);
+  std::vector<std::string> plane_name_base{"I", "J", "K"};
+  for (size_t p = 0; p < plane_num; p++) {
+    plane_names[p] = plane_name_base[planes[p].first % OPS_MAX_DIM] +
+                     std::to_string(planes[p].second);
+  }
+  ops_write_slice_group_hdf5(planes, plane_names, key, data_list);
 }

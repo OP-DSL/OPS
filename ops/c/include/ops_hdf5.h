@@ -38,6 +38,9 @@
 
 #ifndef __OPS_HDF5_H
 #define __OPS_HDF5_H
+#include <string>
+#include <tuple>
+#include <vector>
 
 /**
  * This routine defines a dataset to be read in from a named hdf5 file.
@@ -177,9 +180,18 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
 void ops_get_const_hdf5(char const *name, int dim, char const *type,
                         char *const_data, char const *file_name);
 
+
+
 void ops_write_dataslice_hdf5(char const *file_name, const char *data_name,
                               const ops_dat &data, const int cross_section_dir,
                               const int pos);
 
+void ops_write_slice_group_hdf5(
+    const std::vector<std::pair<int, int>> &planes, const std::string &key,
+    const std::vector<std::vector<ops_dat>> &data_list);
+void ops_write_slice_group_hdf5(
+    const std::vector<std::pair<int, int>> &planes,
+    std::vector<std::string> &plane_names, const std::string &key,
+    const std::vector<std::vector<ops_dat>> &data_list);
 #endif
 /* __OPS_HDF5_H */
