@@ -1630,34 +1630,31 @@ void determin_buf_size(const ops_dat &data, const int buf_dims,
   for (int d = 0; d < space_dim; d++) {
     size[d] = data->size[d] - (data->d_p[d] - data->d_m[d]);
   }
-  const int base{data->dim > 1 ? 1 : 0};
-  if (data->dim > 1) {
-    buf_size[0] = data->dim;
-  }
+
   if (cross_section_dir == 0) {
     if (space_dim == 2) {
-      buf_size[base] = size[1];
+      buf_size[0] = size[1];
     }
 
     if (space_dim == 3) {
-      buf_size[base] = size[1];
-      buf_size[base + 1] = size[2];
+      buf_size[0] = size[1];
+      buf_size[1] = size[2];
     }
   }
 
   if (cross_section_dir == 1) {
     if (space_dim == 2) {
-      buf_size[base] = size[0];
+      buf_size[0] = size[0];
     }
     if (space_dim == 3) {
-      buf_size[base] = size[0];
-      buf_size[base + 1] = size[2];
+      buf_size[0] = size[0];
+      buf_size[1] = size[2];
     }
   }
 
   if (cross_section_dir == 2) {
-    buf_size[base] = size[0];
-    buf_size[base + 1] = size[1];
+    buf_size[0] = size[0];
+    buf_size[1] = size[1];
   }
   delete size;
 }
@@ -1791,12 +1788,13 @@ void ops_write_dataslice_hdf5(char const *file_name, const char *data_name,
                               const int pos) {
   char *write_buf =
       (char *)ops_malloc(calc_total_slice_size(data, cross_section_dir));
-  int dims{data->block->dims - 1 + ((data->dim > 1) ? 1 : 0)};
+  int dims{data->block->dims - 1};
   int *range{new int(2 * data->block->dims)};
   int *size{new int(dims)};
   determin_buf_size(data, dims, cross_section_dir, size);
   determine_range(data, cross_section_dir, pos, range);
   ops_dat_fetch_data_slab_host(data, 0, write_buf, range);
+  size[0] *= (data->dim);
   write_buf_hdf5(file_name, data_name, data, dims, size, write_buf);
   delete range;
   free(write_buf);

@@ -41,8 +41,8 @@
 #include <ops_exceptions.h>
 #include <ops_mpi_core.h>
 #include <ops_util.h>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 // Use version 2 of H5Dopen H5Acreate and H5Dcreate
 #define H5Dopen_vers 2
@@ -2618,6 +2618,9 @@ void write_buf_hdf5(const char *file_name, const char *data_name,
         }
       }
     }
+    local_data_size_c[0] *= (dat->dim);
+    global_data_size_c[0] *= (dat->dim);
+    global_data_disp_c[0] *= (dat->dim);
 
     for (int d = 0; d < data_dims; d++) {
       local_data_size_f[d] = local_data_size_c[data_dims - d - 1];
@@ -2719,8 +2722,6 @@ void ops_write_slice_group_hdf5(
                        std::to_string(planes[p].second);
     }
   }
-
-
 
   for (size_t p = 0; p < plane_num; p++) {
     for (const auto &data_plane : data_list) {
