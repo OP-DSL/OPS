@@ -72,10 +72,11 @@ int main(int argc, char *argv[]) {
   int size[3]{nx, ny, nz};
   int base[3]{0, 0, 0};
   double *temp = NULL;
+  int *int_tmp = NULL;
 
   ops_dat u{
       ops_decl_dat(slice3Du, 1, size, base, d_m, d_p, temp, "double", "u")};
-  ops_dat v{ops_decl_dat(slice3Dv, 1, size, base, d_m, d_p, temp, "int", "v")};
+  ops_dat v{ops_decl_dat(slice3Dv, 1, size, base, d_m, d_p, int_tmp, "int", "v")};
 
   // declare stencils
   int s3D_000[]{0, 0, 0};
@@ -114,5 +115,9 @@ int main(int argc, char *argv[]) {
   total2 += et1 - et0;
   ops_printf("The time write 1 series is %f\n", total1);
   ops_printf("The time write 2 series is %f\n", total2);
+  // ops_fetch_block_hdf5_file(slice3Du, "slice3Du.h5");
+  // ops_fetch_dat_hdf5_file(u, "slice3Du.h5");
+  // ops_fetch_block_hdf5_file(slice3Dv, "slice3Dv.h5");
+  // ops_fetch_dat_hdf5_file(v, "slice3Dv.h5");
   ops_exit();
 }

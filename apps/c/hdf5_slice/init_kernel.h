@@ -8,7 +8,7 @@ void initKernelU(ACC<double> &u, int *idx) {
   u(0, 0, 0) = sin(x) * sin(2 * y) * cos(3 * z);
 }
 
-void initKernelV(ACC<double> &v, int *idx) {
+void initKernelV(ACC<int> &v, int *idx) {
   const double x{h * idx[0]};
   const double y{h * idx[1]};
   const double z{h * idx[2]};
