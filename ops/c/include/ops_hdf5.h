@@ -180,15 +180,44 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
 void ops_get_const_hdf5(char const *name, int dim, char const *type,
                         char *const_data, char const *file_name);
 
-
+/**
+ * Write data on a slice/plane to HDF5 file.
+ *
+ *
+ * @param file_name  HDF5 file name ".h5"
+ * @param data_name  data_name
+ * @param data       the ops_dat to be sliced
+ * @param cross_section_dir the direction for slicing (0:I, 1:J and 2:K)
+ * @param pos the postion of the slice (e.g., 16 for I=16)
+ */
 
 void ops_write_dataslice_hdf5(char const *file_name, const char *data_name,
                               const ops_dat &data, const int cross_section_dir,
                               const int pos);
 
+/**
+ * Write a group of slices/planes of a group of ops_dats into a series of HDF5 files. Each HDF5 will named by I(J,K)Pos.h5, where all ops_dats for this
+ plane will be wrote into this file. The slices will be named as blockname_datname_key
+
+ * @param planes  plane groups specified as {{ cross_section_dir,pos},{...},{...},...}
+ * @param key  a decoration to a dat name for distinguishing, e.g., time steps.
+ * @param data       the ops_dat to be sliced
+ * @param  ops_dats to be written, which specified as {{ops_dats at plane 0},{ops_dats at plane 1}...}
+ */
 void ops_write_slice_group_hdf5(
     const std::vector<std::pair<int, int>> &planes, const std::string &key,
     const std::vector<std::vector<ops_dat>> &data_list);
+
+/**
+ * Write a group of slices/planes of a group of ops_dats into a series of HDF5 files. Each HDF5 will be named as specified, where all ops_dats for this
+ plane will be wrote into this file. The slices will be named as blockname_datname_key
+
+ * @param planes  plane groups specified as {{ cross_section_dir,pos},{...},{...},...}
+ * @param plane_names plane names
+ * @param key  a decoration to a dat name for distinguishing, e.g., time steps.
+ * @param data       the ops_dat to be sliced
+ * @param  ops_dats to be written, which specified as {{ops_dats at plane 0},{ops_dats at plane 1}...}
+ */
 void ops_write_slice_group_hdf5(
     const std::vector<std::pair<int, int>> &planes,
     std::vector<std::string> &plane_names, const std::string &key,
