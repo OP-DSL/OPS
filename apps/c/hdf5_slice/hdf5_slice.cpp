@@ -41,74 +41,78 @@
 #include <string>
 #include <vector>
 #define OPS_3D
-#include "ops_seq_v2.h"
 #include "data.h"
+#include "ops_seq_v2.h"
 // Kernel functions for setting the initial conditions
 #include "init_kernel.h"
-
-
 
 // Defining the computational problem domain. As a test, we use the
 // simplest grid See the document for the meaning of variables r1 and r2.
 double xyzRange[2]{0, 1};
-int nx{32};
-int ny{32};
-int nz{32};
+int nx{64};
+int ny{64};
+int nz{64};
 double h{(xyzRange[1] - xyzRange[0]) / (nx - 1)};
 
 int main(int argc, char *argv[]) {
-    // OPS initialisation
-    ops_init(argc, argv, 4);
-    //--- OPS declarations----
-    // declare block
-    ops_block slice3D = ops_decl_block(3, "slice3D");
-    // declare data on blocks
-    // max haloDepth depths for the dat in the positive direction
-    const int haloDepth{1};
-    int d_p[3]{haloDepth, haloDepth, haloDepth};
-    // max haloDepth depths for the dat in the negative direction*/
-    int d_m[3]{-haloDepth, -haloDepth, -haloDepth};
+  // OPS initialisation
+  ops_init(argc, argv, 4);
+  //--- OPS declarations----
+  // declare block
+  ops_block slice3Du{ops_decl_block(3, "slice3Du")};
+  ops_block slice3Dv{ops_decl_block(3, "slice3Dv")};
+  // declare data on blocks
+  // max haloDepth depths for the dat in the positive direction
+  const int haloDepth{2};
+  int d_p[3]{haloDepth, haloDepth, haloDepth};
+  // max haloDepth depths for the dat in the negative direction*/
+  int d_m[3]{-haloDepth, -haloDepth, -haloDepth};
 
-    // size of the dat
-    int size[3]{nx, ny, nz};
-    int base[3]{0, 0, 0};
-    double *temp = NULL;
+  // size of the dat
+  int size[3]{nx, ny, nz};
+  int base[3]{0, 0, 0};
+  double *temp = NULL;
 
-    ops_dat u{
-        ops_decl_dat(slice3D, 1, size, base, d_m, d_p, temp, "double", "u")};
+  ops_dat u{
+      ops_decl_dat(slice3Du, 1, size, base, d_m, d_p, temp, "double", "u")};
+  ops_dat v{ops_decl_dat(slice3Dv, 1, size, base, d_m, d_p, temp, "int", "v")};
 
-    // declare stencils
-    int s3D_000[]{0, 0, 0};
-    ops_stencil S3D_000{ops_decl_stencil(3, 1, s3D_000, "000")};
+  // declare stencils
+  int s3D_000[]{0, 0, 0};
+  ops_stencil S3D_000{ops_decl_stencil(3, 1, s3D_000, "000")};
 
-    int s3D_7pt[]{0, 0, 0, -1, 0, 0, 1,  0, 0, 0, -1,
-                  0, 0, 1, 0,  0, 0, -1, 0, 0, 1};
-    ops_stencil S3D_7PT{ops_decl_stencil(3, 7, s3D_7pt, "3d7Point")};
-    int iterRange[]{0, nx, 0, ny, 0, nz};
+  int iterRange[]{0, nx, 0, ny, 0, nz};
 
-    // declare constants
-    ops_decl_const("nx", 1, "int", &nx);
-    ops_decl_const("ny", 1, "int", &ny);
-    ops_decl_const("nz", 1, "int", &nz);
-    ops_decl_const("h", 1, "double", &h);
+  // declare constants
+  ops_decl_const("nx", 1, "int", &nx);
+  ops_decl_const("ny", 1, "int", &ny);
+  ops_decl_const("nz", 1, "int", &nz);
+  ops_decl_const("h", 1, "double", &h);
 
+  // decompose the block
+  ops_partition("slice3D");
+  ops_diagnostic_output();
 
-    // decompose the block
-    ops_partition("slice3D");
+  //-------- Initialize-------
 
+  ops_par_loop(initKernelU, "initKernelU", slice3Du, 3, iterRange,
+               ops_arg_dat(u, 1, S3D_000, "double", OPS_WRITE), ops_arg_idx());
+  ops_par_loop(initKernelV, "initKernelV", slice3Dv, 3, iterRange,
+               ops_arg_dat(v, 1, S3D_000, "int", OPS_WRITE), ops_arg_idx());
 
-    printf("\nLocal dimensions at rank %d: %d x %d x %d\n", ops_get_proc(),
-           u->size[0], u->size[1], u->size[2]);
-    ops_diagnostic_output();
-
-    //-------- Initialize-------
-
-    ops_par_loop(initKernel, "initKernel", slice3D, 3, iterRange,
-                 ops_arg_dat(u, 1, S3D_000, "double", OPS_WRITE),
-                 ops_arg_idx());
-
-    ops_write_dataslice_hdf5("test.h5", u, 1, 16);
-    // ops_fetch_block_hdf5_file(slice3D, "fetch.h5");
-    // ops_fetch_dat_hdf5_file(u, "fetch.h5");
-    ops_exit();
+  double ct0, ct1, et0, et1;
+  double total1{0}, total2{0};
+  ops_timers(&ct0, &et0);
+  ops_write_slice_group_hdf5({{1, 16}, {0, 1}, {2, 16}}, "1",
+                             {{u, v}, {u, v}, {u, v}});
+  ops_timers(&ct1, &et1);
+  total1 += et1 - et0;
+  ops_timers(&ct0, &et0);
+  ops_write_slice_group_hdf5({{1, 16}, {0, 1}, {2, 16}}, "2",
+                             {{u, v}, {u, v}, {u, v}});
+  ops_timers(&ct1, &et1);
+  total2 += et1 - et0;
+  ops_printf("The time write 1 series is %f\n", total1);
+  ops_printf("The time write 2 series is %f\n", total2);
+  ops_exit();
 }
