@@ -2485,21 +2485,16 @@ hid_t H5_file_handle(const MPI_Comm &mpi_comm, const char *file_name) {
   MPI_Info info = MPI_INFO_NULL;
   hid_t file_plist_id{H5Pcreate(H5P_FILE_ACCESS)};
   H5Pset_fapl_mpio(file_plist_id, mpi_comm, info);
+  hid_t file_id;
   if (file_exist(file_name) == 0) {
     if (OPS_instance::getOPSInstance()->OPS_diags > 3)
       ops_printf("File %s does not exist .... creating file\n", file_name);
-    if (my_rank == 0) {
-      FILE *fp;
-      fp = fopen(file_name, "w");
-      fclose(fp);
-    }
-    // Create a new file collectively and release property list identifier.
-    hid_t file_id{
-        H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, file_plist_id)};
-    H5Fclose(file_id);
-  }
 
-  hid_t file_id{H5Fopen(file_name, H5F_ACC_RDWR, file_plist_id)};
+    // Create a new file collectively and release property list identifier.
+    file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, file_plist_id);
+  } else {
+    file_id = H5Fopen(file_name, H5F_ACC_RDWR, file_plist_id);
+  };
   H5Pclose(file_plist_id);
   return file_id;
 }
@@ -2665,8 +2660,6 @@ void write_buf_hdf5(const char *file_name, const char *data_name,
 
     delete count;
     delete stride;
-
-    MPI_Barrier(PLANE_WORLD);
     delete local_data_size_c;
     delete local_data_size_f;
     delete global_data_size_c;
@@ -2680,6 +2673,7 @@ void write_buf_hdf5(const char *file_name, const char *data_name,
 void ops_write_dataslice_hdf5(char const *file_name, const char *data_name,
                               const ops_dat &dat, const int cross_section_dir,
                               const int pos) {
+  MPI_Barrier(OPS_MPI_GLOBAL);
   sub_block *sb = OPS_sub_block_list[dat->block->index];
   if (sb->owned == 1) {
     const int space_dim{dat->block->dims};
