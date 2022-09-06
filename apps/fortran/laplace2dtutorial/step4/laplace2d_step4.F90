@@ -24,7 +24,7 @@ program laplace
 
     integer :: i, j, iter
 
-    real(8), dimension (:), allocatable :: A, Anew
+    real(8), dimension (:,:), allocatable :: A, Anew
 
     real(8), parameter :: tol=1.0e-6_8
     real(8) :: error=1.0_8
@@ -83,7 +83,7 @@ program laplace
     right_range    = [imax+1,imax+1, 0,jmax+1]
     interior_range = [1,imax,      1,jmax]
 
-    allocate ( A(1:((jmax+2)*(imax+2))), Anew(1:((jmax+2)*(imax+2))) )
+    allocate ( A(1:jmax+2,1:imax+2), Anew(1:jmax+2,1:imax+2) )
     
     !-----------------------OPS Initialization------------------------
     call ops_init(2)
@@ -151,11 +151,11 @@ program laplace
     do while ( error .gt. tol .and. iter .lt. iter_max )
         error=0.0_8
 
-        do j=1,jmax
-            do i=2,imax+1
-                Anew(j*(imax+2) +i) = 0.25_8 * ( A((j+1)*(imax+2) +i) + A((j-1)*(imax+2) +i) + &
-                                              &  A(j*(imax+2) +i+1) + A(j*(imax+2) +i-1) )
-                error = max( error, abs(Anew(j*(imax+2) +i)-A(j*(imax+2) +i)) )
+        do i=2,imax+1
+            do j=2,jmax+1
+                Anew(j,i) = 0.25_8 * ( A(j+1,i  ) + A(j-1,i  ) + &
+                                             A(j  ,i-1) + A(j  ,i+1) )
+                error = max( error, abs(Anew(j,i)-A(j,i)) )
             end do
         end do
             

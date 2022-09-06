@@ -24,7 +24,7 @@ program laplace
 
     integer :: i, j, iter
 
-    real(8), dimension (:), allocatable :: A, Anew
+    real(8), dimension (:,:), allocatable :: A, Anew
 
     real(8), parameter :: tol=1.0e-6_8
     real(8) :: err_diff
@@ -86,7 +86,7 @@ program laplace
     right_range    = [imax+1,imax+1, 0,jmax+1]
     interior_range = [1,imax,      1,jmax]
 
-    allocate ( A(1:((jmax+2)*(imax+2))), Anew(1:((jmax+2)*(imax+2))) )
+    allocate ( A(1:jmax+2,1:imax+2), Anew(1:jmax+2,1:imax+2) )
     
     !-----------------------OPS Initialization------------------------
     call ops_init(2)
