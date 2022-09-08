@@ -364,10 +364,10 @@ def main(source_files):
         else:
           fp = open('constants_list.txt', 'a')
 
-      for item in const_args:
-        item_list = list(item.values())
-        fp.write("%s\n" % item_list[-1])
-      fp.close()
+        for item in const_args:
+            item_list = list(item.values())
+            fp.write("%s\n" % item_list[-1])
+        fp.close()
 
       #
       # parse and process ops_par_loop calls
