@@ -38,9 +38,9 @@
 
 #include <math.h>
 #include <mpi.h>
-#include <ops_exceptions.h>
 #include <ops_mpi_core.h>
 #include <ops_util.h>
+#include <ops_exceptions.h>
 #include <tuple>
 #include <vector>
 

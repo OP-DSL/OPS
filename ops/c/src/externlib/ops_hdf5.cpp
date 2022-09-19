@@ -47,10 +47,9 @@
 // hdf5 header
 #include <hdf5.h>
 #include <hdf5_hl.h>
-
-#include <ops_exceptions.h>
 #include <ops_lib_core.h>
 #include <ops_util.h>
+#include <ops_exceptions.h>
 
 /*******************************************************************************
  * Routine to write an ops_block to a named hdf5 file,
