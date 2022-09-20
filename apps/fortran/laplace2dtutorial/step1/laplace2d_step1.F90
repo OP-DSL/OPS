@@ -12,6 +12,11 @@
 !                       (index-i)
 
 program laplace
+    use OPS_Fortran_Declarations
+    use OPS_Fortran_RT_Support
+
+    use, intrinsic :: ISO_C_BINDING
+
     implicit none
 
     ! size along x 
@@ -33,11 +38,14 @@ program laplace
     real(8) :: start_time, stop_time
 
     allocate ( A(1:jmax+2,1:imax+2), Anew(1:jmax+2,1:imax+2) )
+    
+    !-----------------------OPS Initialization------------------------
+    call ops_init(2)
 
     ! Initialize
     A = 0.0_8
-
-    call cpu_time(start_time)
+    
+    call cpu_time(start_time) 
 
     ! Set boundary conditions
 
@@ -119,5 +127,7 @@ program laplace
     write(*,'(a,f16.7,a)')  ' completed in ', stop_time-start_time, ' seconds'
 
     deallocate (A,Anew)
+
+    call ops_exit( )
 
 end program laplace

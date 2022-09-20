@@ -440,7 +440,10 @@ void ops_dat_init_metadata_core(
   }
 
   for (int n = 0; n < block->dims; n++)
-    dat->base[n] = base[n];
+    if (dat->size[n] == 1)
+      dat->base[n] = 0;
+    else
+      dat->base[n] = base[n];
 
   for (int n = 0; n < block->dims; n++) {
     if (d_m[n] <= 0)

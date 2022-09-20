@@ -27,8 +27,8 @@ cleanfiles:
 	rm -f *.o *.mod
 
 $(APP)_seq: .generated $(OPS_FILES_GEN) Makefile cleanfiles
-	$(FC) $(FFLAGS) $(FMODS) $(FLINK) $(OTHER_FILES) MPI/*_seq_kernel.F90 $(OPS_GENERATED) \
-	-o $(APP)_seq -lops_for_seq $(F_HDF5_LIB_SEQ)
+	$(MPIF90) $(FFLAGS) $(FMODS) $(FLINK) $(OTHER_FILES) MPI/*_seq_kernel.F90 $(OPS_GENERATED) \
+    -o $(APP)_seq $(APP_LIBS) -lops_for_seq $(F_HDF5_LIB_SEQ)
 
 $(APP)_openmp:  .generated $(OPS_FILES_GEN) Makefile cleanfiles
 	$(FC) $(FFLAGS) $(FMODS) $(FLINK) $(OMPFLAGS) $(OTHER_FILES) MPI_OpenMP/*_omp_kernel.F90  $(OPS_GENERATED) \

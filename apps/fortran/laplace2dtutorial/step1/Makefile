@@ -7,8 +7,8 @@ BIN =  laplace2d
 
 all: $(BIN)
 
-laplace2d: laplace2d_original.F90 Makefile
-	$(FC) $(FFLAGS) -o $@ laplace2d_original.F90 -lm
+laplace2d: laplace2d_step1.F90 Makefile
+	$(FC) $(FFLAGS) $(FMODS) $(FLINK) -o $@ laplace2d_step1.F90 -lops_for_seq
 
 clean:
 	$(RM) $(BIN)

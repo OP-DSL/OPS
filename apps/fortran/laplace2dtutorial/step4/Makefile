@@ -1,14 +1,16 @@
+
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.common
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
-BIN =  laplace2d
+OPS_FILES=laplace2d_step4.F90
 
-all: $(BIN)
+OPS_GENERATED=laplace2d_step4_ops.F90
 
-laplace2d: laplace2d_original.F90 Makefile
-	$(FC) $(FFLAGS) -o $@ laplace2d_original.F90 -lm
+OTHER_FILES=constants.F90
 
-clean:
-	$(RM) $(BIN)
+APP = laplace
+MAIN_SRC=laplace2d_step4
+
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.f_app 

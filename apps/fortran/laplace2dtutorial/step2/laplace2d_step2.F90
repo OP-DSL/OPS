@@ -12,6 +12,11 @@
 !                       (index-i)
 
 program laplace
+    use OPS_Fortran_Declarations
+    use OPS_Fortran_RT_Support
+
+    use, intrinsic :: ISO_C_BINDING
+
     implicit none
 
     ! size along x 
@@ -30,14 +35,57 @@ program laplace
     real(8) :: error=1.0_8
     real(8) :: err_diff
 
+    ! integer references (valid inside the OPS library) for ops_block
+    type(ops_block)   :: grid2D
+
+    !ops_dats
+    type(ops_dat)     ::    d_A, d_Anew
+    
+    ! vars for stencils
+    integer s2D_00(2) /0,0/
+    type(ops_stencil) :: S2D_0pt
+
+    integer s2D_05(10) /0,0, 1,0, -1,0, 0,1, 0,-1/
+    type(ops_stencil) :: S2D_5pt
+
+    integer d_p(2) /1,1/   !max boundary depths for the dat in the possitive direction
+    integer d_m(2) /-1,-1/ !max boundary depths for the dat in the negative direction
+
+    !size for OPS
+    integer size(2)
+
+    !base
+    integer base(2) /1,1/   !this is in fortran indexing - start from 1
+
     real(8) :: start_time, stop_time
+    
+    size(1) = jmax
+    size(2) = imax
 
     allocate ( A(1:jmax+2,1:imax+2), Anew(1:jmax+2,1:imax+2) )
+    
+    !-----------------------OPS Initialization------------------------
+    call ops_init(2)
+
+    !-----------------------OPS Declarations--------------------------
+
+    !declare block
+    call ops_decl_block(2, grid2D, "grid2D")
+
+    !declare stencils
+    call ops_decl_stencil( 2, 1, s2D_00, S2D_0pt, "0pt_stencil")
+    call ops_decl_stencil( 2, 5, s2D_05, S2D_5pt, "5pt_stencil")
+
+    !declare data on blocks
+
+    !declare ops_dat
+    call ops_decl_dat(grid2D, 1, size, base, d_m, d_p, A, d_A, "real(8)", "A")
+    call ops_decl_dat(grid2D, 1, size, base, d_m, d_p, Anew, d_Anew, "real(8)", "Anew")
 
     ! Initialize
     A = 0.0_8
 
-    call cpu_time(start_time)
+    call cpu_time(start_time) 
 
     ! Set boundary conditions
 
@@ -119,5 +167,7 @@ program laplace
     write(*,'(a,f16.7,a)')  ' completed in ', stop_time-start_time, ' seconds'
 
     deallocate (A,Anew)
+
+    call ops_exit( )
 
 end program laplace
