@@ -110,18 +110,18 @@ int main(int argc, char *argv[]) {
   double ct0, ct1, et0, et1;
   double total1{0}, total2{0}, total3{0};
   ops_timers(&ct0, &et0);
-  ops_write_slice_group_hdf5({{1, 16}, {0, 1}, {2, 16}}, "1",
+  ops_write_plane_group_hdf5({{1, 16}, {0, 1}, {2, 16}}, "1",
                              {{u, v}, {u, v}, {u, v}});
   ops_timers(&ct1, &et1);
   total1 += et1 - et0;
   ops_timers(&ct0, &et0);
-  ops_write_slice_group_hdf5({{1, 16}, {0, 1}, {2, 16}}, "2",
+  ops_write_plane_group_hdf5({{1, 16}, {0, 1}, {2, 16}}, "2",
                              {{u, v}, {u, v}, {u, v}});
   ops_timers(&ct1, &et1);
   total2 += et1 - et0;
 
   ops_timers(&ct0, &et0);
-  ops_write_slice_group_hdf5({{1, 8}, {0, 4}, {2, 15}}, "0",
+  ops_write_plane_group_hdf5({{1, 8}, {0, 4}, {2, 15}}, "0",
                              {{velo}, {velo}, {velo}});
   ops_timers(&ct1, &et1);
   total3 += et1 - et0;

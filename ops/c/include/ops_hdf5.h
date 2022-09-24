@@ -191,7 +191,7 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
  * @param pos the postion of the slice (e.g., 16 for I=16)
  */
 
-void ops_write_dataslice_hdf5(char const *file_name, const char *data_name,
+void ops_write_plane_hdf5(char const *file_name, const char *data_name,
                               const ops_dat &data, const int cross_section_dir,
                               const int pos);
 
@@ -204,7 +204,7 @@ void ops_write_dataslice_hdf5(char const *file_name, const char *data_name,
  * @param data       the ops_dat to be sliced
  * @param  ops_dats to be written, which specified as {{ops_dats at plane 0},{ops_dats at plane 1}...}
  */
-void ops_write_slice_group_hdf5(
+void ops_write_plane_group_hdf5(
     const std::vector<std::pair<int, int>> &planes, const std::string &key,
     const std::vector<std::vector<ops_dat>> &data_list);
 
@@ -218,7 +218,7 @@ void ops_write_slice_group_hdf5(
  * @param data       the ops_dat to be sliced
  * @param  ops_dats to be written, which specified as {{ops_dats at plane 0},{ops_dats at plane 1}...}
  */
-void ops_write_slice_group_hdf5(
+void ops_write_plane_group_hdf5(
     const std::vector<std::pair<int, int>> &planes,
     std::vector<std::string> &plane_names, const std::string &key,
     const std::vector<std::vector<ops_dat>> &data_list);

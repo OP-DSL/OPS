@@ -1782,7 +1782,7 @@ void write_buf_hdf5(char const *file_name, const char *data_name,
   delete size_f;
 }
 
-void ops_write_dataslice_hdf5(char const *file_name, const char *data_name,
+void ops_write_plane_hdf5(char const *file_name, const char *data_name,
                               const ops_dat &data, const int cross_section_dir,
                               const int pos) {
   char *write_buf =
@@ -1800,7 +1800,7 @@ void ops_write_dataslice_hdf5(char const *file_name, const char *data_name,
   delete size;
 }
 
-void ops_write_slice_group_hdf5(
+void ops_write_plane_group_hdf5(
     const std::vector<std::pair<int, int>> &planes,
     std::vector<std::string> &plane_names, const std::string &key,
     const std::vector<std::vector<ops_dat>> &data_list) {
@@ -1829,7 +1829,7 @@ void ops_write_slice_group_hdf5(
             std::string data_name{data->name};
             std::string file_name{plane_names[p] + ".h5"};
             std::string dataset_name{block_name + "_" + data_name + "_" + key};
-            ops_write_dataslice_hdf5(file_name.c_str(), dataset_name.c_str(),
+            ops_write_plane_hdf5(file_name.c_str(), dataset_name.c_str(),
                                      data, cross_section_dir, pos);
           } else {
             ops_printf("The dat %s doesn't have the specified plane %s = %d \n",
@@ -1846,7 +1846,7 @@ void ops_write_slice_group_hdf5(
   }
 }
 
-void ops_write_slice_group_hdf5(
+void ops_write_plane_group_hdf5(
     const std::vector<std::pair<int, int>> &planes, const std::string &key,
     const std::vector<std::vector<ops_dat>> &data_list) {
   const size_t plane_num{planes.size()};
@@ -1857,5 +1857,5 @@ void ops_write_slice_group_hdf5(
     plane_names[p] = plane_name_base[planes[p].first % OPS_MAX_DIM] +
                      std::to_string(planes[p].second);
   }
-  ops_write_slice_group_hdf5(planes, plane_names, key, data_list);
+  ops_write_plane_group_hdf5(planes, plane_names, key, data_list);
 }
