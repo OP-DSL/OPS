@@ -1585,7 +1585,7 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   H5Fclose(file_id);
 }
 
-hsize_t calc_total_slice_size(const ops_dat &data,
+hsize_t calc_total_plane_size(const ops_dat &data,
                               const int cross_section_dir) {
   const int space_dim{data->block->dims};
   int *size{new int(space_dim)};
@@ -1622,7 +1622,7 @@ hsize_t calc_total_slice_size(const ops_dat &data,
   return number_element;
 }
 
-void determin_buf_size(const ops_dat &data, const int buf_dims,
+void determin_plane_buf_size(const ops_dat &data, const int buf_dims,
                        const int cross_section_dir, int *buf_size) {
   const int space_dim{data->block->dims};
   int *size{new int(space_dim)};
@@ -1658,7 +1658,7 @@ void determin_buf_size(const ops_dat &data, const int buf_dims,
   delete size;
 }
 
-void determine_range(const ops_dat &data, const int cross_section_dir,
+void determine_plane_range(const ops_dat &data, const int cross_section_dir,
                      const int pos, int *range) {
   const int space_dim{data->block->dims};
   int *size{new int(space_dim)};
@@ -1760,7 +1760,7 @@ void H5_dataset_space(const hid_t file_id, const int data_dims,
   }
 }
 
-void write_buf_hdf5(char const *file_name, const char *data_name,
+void write_plane_buf_hdf5(char const *file_name, const char *data_name,
                     const ops_dat &dat, const int dims, const int *size,
                     char *buf) {
   // HDF5 APIs definitions
@@ -1782,19 +1782,19 @@ void write_buf_hdf5(char const *file_name, const char *data_name,
   delete size_f;
 }
 
-void ops_write_plane_hdf5(char const *file_name, const char *data_name,
-                              const ops_dat &data, const int cross_section_dir,
-                              const int pos) {
+void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
+                          const int pos, char const *file_name,
+                          const char *data_name) {
   char *write_buf =
-      (char *)ops_malloc(calc_total_slice_size(data, cross_section_dir));
-  int dims{data->block->dims - 1};
-  int *range{new int(2 * data->block->dims)};
+      (char *)ops_malloc(calc_total_plane_size(dat, cross_section_dir));
+  int dims{dat->block->dims - 1};
+  int *range{new int(2 * dat->block->dims)};
   int *size{new int(dims)};
-  determin_buf_size(data, dims, cross_section_dir, size);
-  determine_range(data, cross_section_dir, pos, range);
-  ops_dat_fetch_data_slab_host(data, 0, write_buf, range);
-  size[0] *= (data->dim);
-  write_buf_hdf5(file_name, data_name, data, dims, size, write_buf);
+  determin_plane_buf_size(dat, dims, cross_section_dir, size);
+  determine_plane_range(dat, cross_section_dir, pos, range);
+  ops_dat_fetch_data_slab_host(dat, 0, write_buf, range);
+  size[0] *= (dat->dim);
+  write_plane_buf_hdf5(file_name, data_name, dat, dims, size, write_buf);
   delete range;
   free(write_buf);
   delete size;
@@ -1829,8 +1829,8 @@ void ops_write_plane_group_hdf5(
             std::string data_name{data->name};
             std::string file_name{plane_names[p] + ".h5"};
             std::string dataset_name{block_name + "_" + data_name + "_" + key};
-            ops_write_plane_hdf5(file_name.c_str(), dataset_name.c_str(),
-                                     data, cross_section_dir, pos);
+            ops_write_plane_hdf5(data, cross_section_dir, pos,
+                                 file_name.c_str(), dataset_name.c_str());
           } else {
             ops_printf("The dat %s doesn't have the specified plane %s = %d \n",
                        data->name, plane_name_base[cross_section_dir], pos);

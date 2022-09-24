@@ -2368,8 +2368,9 @@ hid_t h5_type(const char *type) {
   return h5t;
 }
 
-void determine_global_range(const ops_dat &dat, const int cross_section_dir,
-                            const int pos, int *range) {
+void determine_plane_global_range(const ops_dat dat,
+                                  const int cross_section_dir, const int pos,
+                                  int *range) {
   const int space_dim{dat->block->dims};
   const sub_dat *sd = OPS_sub_dat_list[dat->index];
   int *size{new int(space_dim)};
@@ -2386,7 +2387,7 @@ void determine_global_range(const ops_dat &dat, const int cross_section_dir,
   delete size;
 }
 
-void determine_local_range(const ops_dat &dat, int *global_range,
+void determine_local_range(const ops_dat dat, int *global_range,
                            int *local_range) {
   ops_arg *dat_arg;
   const int space_dim{dat->block->dims};
@@ -2575,10 +2576,10 @@ void copy_data_buf(const ops_dat &dat, const int *local_range,
   dat->dirty_hd = 1;
 }
 
-void write_buf_hdf5(const char *file_name, const char *data_name,
-                    const ops_dat &dat, const int cross_section_dir,
-                    const int *local_range, const int *global_range,
-                    const char *buf) {
+void write_plane_buf_hdf5(const char *file_name, const char *data_name,
+                          const ops_dat dat, const int cross_section_dir,
+                          const int *local_range, const int *global_range,
+                          const char *buf) {
   const sub_block *sb{OPS_sub_block_list[dat->block->index]};
   int my_block_rank;
   MPI_Comm PLANE_WORLD;
@@ -2673,15 +2674,15 @@ void write_buf_hdf5(const char *file_name, const char *data_name,
   }
 }
 
-void ops_write_plane_hdf5(char const *file_name, const char *data_name,
-                              const ops_dat &dat, const int cross_section_dir,
-                              const int pos) {
+void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
+                          const int pos, char const *file_name,
+                          const char *data_name) {
   MPI_Barrier(OPS_MPI_GLOBAL);
   sub_block *sb = OPS_sub_block_list[dat->block->index];
   if (sb->owned == 1) {
     const int space_dim{dat->block->dims};
     int *global_range{new int(space_dim)};
-    determine_global_range(dat, cross_section_dir, pos, global_range);
+    determine_plane_global_range(dat, cross_section_dir, pos, global_range);
     int *local_range{new int(2 * space_dim)};
     // TODO if the plane is out of global range, computer range will generate
     // error
@@ -2698,8 +2699,8 @@ void ops_write_plane_hdf5(char const *file_name, const char *data_name,
     //   printf("At rank %d data= %f %f %f %f\n", ops_my_global_rank, data_p[0],
     //          data_p[1], data_p[2], data_p[3]);
     // }
-    write_buf_hdf5(file_name, data_name, dat, cross_section_dir, local_range,
-                   global_range, local_buf);
+    write_plane_buf_hdf5(file_name, data_name, dat, cross_section_dir,
+                         local_range, global_range, local_buf);
     free(local_buf);
     //}
     delete global_range;
@@ -2737,8 +2738,9 @@ void ops_write_plane_group_hdf5(
             std::string data_name{data->name};
             std::string file_name{plane_names[p] + ".h5"};
             std::string dataset_name{block_name + "_" + data_name + "_" + key};
-            ops_write_plane_hdf5(file_name.c_str(), dataset_name.c_str(),
-                                     data, cross_section_dir, pos);
+            ops_write_plane_hdf5(data, cross_section_dir, pos,
+                                 file_name.c_str(), dataset_name.c_str());
+
           } else {
             ops_printf("The dat %s doesn't have the specified plane %s = %d \n",
                        data->name, plane_name_base[cross_section_dir], pos);

@@ -181,19 +181,17 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
                         char *const_data, char const *file_name);
 
 /**
- * Write data on a slice/plane to HDF5 file.
- *
- *
+ * Write data on a plane to HDF5 file.
+* @param dat       the ops_dat holds the plane
+ * @param cross_section_dir the plane direction (0:I, 1:J and 2:K)
+ * @param pos the plane postion(e.g., 16 for I=16)
  * @param file_name  HDF5 file name ".h5"
  * @param data_name  data_name
- * @param data       the ops_dat to be sliced
- * @param cross_section_dir the direction for slicing (0:I, 1:J and 2:K)
- * @param pos the postion of the slice (e.g., 16 for I=16)
  */
 
-void ops_write_plane_hdf5(char const *file_name, const char *data_name,
-                              const ops_dat &data, const int cross_section_dir,
-                              const int pos);
+void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
+                          const int pos, char const *file_name,
+                          const char *data_name);
 
 /**
  * Write a group of slices/planes of a group of ops_dats into a series of HDF5 files. Each HDF5 will named by I(J,K)Pos.h5, where all ops_dats for this
