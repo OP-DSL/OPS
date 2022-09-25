@@ -1707,19 +1707,16 @@ hid_t H5_file_handle(const char *file_name) {
 
   hid_t file_plist_id{H5Pcreate(H5P_FILE_ACCESS)};
 
+  hid_t file_id;
   if (file_exist(file_name) == 0) {
     if (OPS_instance::getOPSInstance()->OPS_diags > 3)
       ops_printf("File %s does not exist .... creating file\n", file_name);
-    FILE *fp;
-    fp = fopen(file_name, "w");
-    fclose(fp);
-    // Create a new file collectively and release property list identifier.
-    hid_t file_id{
-        H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, file_plist_id)};
-    H5Fclose(file_id);
-  }
 
-  hid_t file_id{H5Fopen(file_name, H5F_ACC_RDWR, file_plist_id)};
+    // Create a new file collectively and release property list identifier.
+    file_id = H5Fcreate(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, file_plist_id);
+  } else {
+    file_id = H5Fopen(file_name, H5F_ACC_RDWR, file_plist_id);
+  };
   H5Pclose(file_plist_id);
   return file_id;
 }
@@ -1785,7 +1782,7 @@ void H5_dataset_space(const hid_t file_id, const int data_dims,
   }
 }
 
-void write_plane_buf_hdf5(char const *file_name, const char *data_name,
+void write_buf_hdf5(char const *file_name, const char *data_name,
                           const ops_dat &dat, const int dims, const int *size,
                           char *buf) {
   // HDF5 APIs definitions
@@ -1805,10 +1802,12 @@ void write_plane_buf_hdf5(char const *file_name, const char *data_name,
                    dataset_id, file_space);
   H5Dwrite(dataset_id, h5_type(dat->type), H5S_ALL, file_space, H5P_DEFAULT,
            buf);
-
-  H5Fclose(file_id);
   H5Sclose(file_space);
   H5Dclose(dataset_id);
+  for (int grp = groupid_list.size() - 1; grp >= 0; grp--) {
+    H5Gclose(groupid_list[grp]);
+  }
+  H5Fclose(file_id);
   delete size_f;
 }
 
@@ -1824,8 +1823,27 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
   determine_plane_range(dat, cross_section_dir, pos, range);
   ops_dat_fetch_data_slab_host(dat, 0, write_buf, range);
   size[0] *= (dat->dim);
-  write_plane_buf_hdf5(file_name, data_name, dat, dims, size, write_buf);
+  write_buf_hdf5(file_name, data_name, dat, dims, size, write_buf);
   delete range;
+  free(write_buf);
+  delete size;
+}
+
+void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
+                              const char *file_name, const char *data_name) {
+  const int dims{dat->block->dims};
+  int *size{new int(dims)};
+  size_t total_size{1};
+  for (int d = 0; d < dims; d++) {
+    size[d] = range[2 * d + 1] - range[2 * d];
+    total_size *= size[d];
+  }
+  size[0] *= (dat->dim);
+  total_size *= (dat->elem_size);
+
+  char *write_buf = (char *)ops_malloc(total_size);
+  ops_dat_fetch_data_slab_host(dat, 0, write_buf, (int *)range);
+  write_buf_hdf5(file_name, data_name, dat, dims, size, write_buf);
   free(write_buf);
   delete size;
 }

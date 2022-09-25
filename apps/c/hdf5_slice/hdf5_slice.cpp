@@ -108,12 +108,11 @@ int main(int argc, char *argv[]) {
                ops_arg_dat(v, 1, S3D_000, "int", OPS_WRITE), ops_arg_idx());
 
   double ct0, ct1, et0, et1;
-  double total1{0}, total2{0}, total3{0};
+  double total1{0}, total2{0}, total3{0},total4{0};
   ops_timers(&ct0, &et0);
-//   ops_write_plane_hdf5(u, 0, 1, "I1.h5", "block/0/u");
-//   ops_write_plane_hdf5(velo, 0, 1, "I1.h5", "block/0/velo");
-    ops_write_plane_group_hdf5({{1, 16}, {0, 1}, {2, 16}}, "1",
-                               {{u, v}, {u, v}, {u, v}});
+
+  ops_write_plane_group_hdf5({{1, 16}, {0, 1}, {2, 16}}, "1",
+                             {{u, v}, {u, v}, {u, v}});
   ops_timers(&ct1, &et1);
   total1 += et1 - et0;
   ops_timers(&ct0, &et0);
@@ -130,6 +129,13 @@ int main(int argc, char *argv[]) {
   ops_printf("The time write 1 series is %f\n", total1);
   ops_printf("The time write 2 series is %f\n", total2);
   ops_printf("The time write velo series is %f\n", total3);
+  int range[]{0, 16, 0, 32, 32, 64};
+  ops_timers(&ct0, &et0);
+  ops_write_data_slab_hdf5(v, range, "slab.h5", "vslab");
+  ops_timers(&ct1, &et1);
+  total4 += et1 - et0;
+  ops_printf("The time write slab is %f\n", total4);
+
   // ops_fetch_block_hdf5_file(slice3Du, "slice3Du.h5");
   // ops_fetch_dat_hdf5_file(u, "slice3Du.h5");
   // ops_fetch_block_hdf5_file(slice3Dv, "slice3Dv.h5");

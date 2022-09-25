@@ -2389,7 +2389,7 @@ void determine_plane_global_range(const ops_dat dat,
   delete size;
 }
 
-void determine_local_range(const ops_dat dat, int *global_range,
+void determine_local_range(const ops_dat dat, const int *global_range,
                            int *local_range) {
   ops_arg *dat_arg;
   const int space_dim{dat->block->dims};
@@ -2412,7 +2412,7 @@ void determine_local_range(const ops_dat dat, int *global_range,
 
   int *local_start{new int(space_dim)};
   int *local_end{new int(space_dim)};
-  if (compute_ranges(dat_arg, 1, dat->block, global_range, local_start,
+  if (compute_ranges(dat_arg, 1, dat->block, (int *)global_range, local_start,
                      local_end, arg_idx) < 0) {
     return;
   }
@@ -2706,6 +2706,110 @@ void write_plane_buf_hdf5(const char *file_name, const char *data_name,
   }
 }
 
+void write_slab_buf_hdf5(const char *file_name, const char *data_name,
+                         const ops_dat dat, const int *local_range,
+                         const int *global_range, const char *buf) {
+  const sub_block *sb{OPS_sub_block_list[dat->block->index]};
+  const int space_dim{dat->block->dims};
+  int my_block_rank;
+  MPI_Comm SLAB_WORLD;
+  MPI_Comm BLOCK_WORLD{sb->comm1};
+  MPI_Comm_rank(BLOCK_WORLD, &my_block_rank);
+  int color{0};
+  bool no_data{true};
+  for (int d = 0; d < space_dim; d++) {
+    if ((local_range[2 * d + 1] - local_range[2 * d]) != 0) {
+      no_data = false;
+    }
+  }
+  if (no_data){
+    color=MPI_UNDEFINED;
+  }
+
+  MPI_Comm_split(BLOCK_WORLD, color, my_block_rank, &SLAB_WORLD);
+  if (color == 0) {
+    int my_plane_rank;
+    MPI_Comm_rank(SLAB_WORLD, &my_plane_rank);
+    MPI_Barrier(SLAB_WORLD);
+
+
+    const sub_dat *sd = OPS_sub_dat_list[dat->index];
+    hsize_t *local_data_size_c{new hsize_t(space_dim)};
+    hsize_t *local_data_size_f{new hsize_t(space_dim)};
+    hsize_t *global_data_size_c{new hsize_t(space_dim)};
+    hsize_t *global_data_size_f{new hsize_t(space_dim)};
+    hsize_t *global_data_disp_c{new hsize_t(space_dim)};
+    hsize_t *global_data_disp_f{new hsize_t(space_dim)};
+
+    for (int d = 0; d < space_dim; d++) {
+
+      local_data_size_c[d] = local_range[2 * d + 1] - local_range[2 * d];
+      global_data_size_c[d] = global_range[2 * d + 1] - global_range[2 * d];
+      global_data_disp_c[d] = sd->decomp_disp[d] < 0 ? 0 : sd->decomp_disp[d];
+    }
+
+    local_data_size_c[0] *= (dat->dim);
+    global_data_size_c[0] *= (dat->dim);
+    global_data_disp_c[0] *= (dat->dim);
+
+    for (int d = 0; d < space_dim; d++) {
+      local_data_size_f[d] = local_data_size_c[space_dim - d - 1];
+      global_data_size_f[d] = global_data_size_c[space_dim - d - 1];
+      global_data_disp_f[d] = global_data_disp_c[space_dim - d - 1];
+    }
+
+    hid_t file_id{H5_file_handle(SLAB_WORLD, file_name)};
+
+    // space in file
+
+    hid_t file_space;
+
+    hid_t dataset_id;
+    std::vector<std::string> h5_name_list;
+    split_h5_name(data_name, h5_name_list);
+    std::vector<hid_t> groupid_list;
+    groupid_list.resize(h5_name_list.size() - 1);
+
+    H5_dataset_space(file_id, space_dim, global_data_size_f, h5_name_list,
+                     dat->type, groupid_list,dataset_id, file_space);
+
+    // block of memory to write to file by each proc
+    hid_t memspace{H5Screate_simple(space_dim, local_data_size_f, NULL)};
+    hsize_t *stride{new hsize_t(space_dim)};
+    hsize_t *count{new hsize_t(space_dim)};
+    for (int d = 0; d < space_dim; d++) {
+      stride[d] = 1;
+      count[d] = 1;
+    }
+    H5Sselect_hyperslab(file_space, H5S_SELECT_SET, global_data_disp_f, stride,
+                        count, local_data_size_f);
+    // Create property list for collective dataset write.
+    hid_t xfer_data_plist_id = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(xfer_data_plist_id, H5FD_MPIO_COLLECTIVE);
+
+    H5Dwrite(dataset_id, h5_type(dat->type), memspace, file_space,
+             xfer_data_plist_id, buf);
+    H5Pclose(xfer_data_plist_id);
+    H5Sclose(file_space);
+    H5Sclose(memspace);
+    H5Dclose(dataset_id);
+    for (int grp = groupid_list.size() - 1; grp >= 0;grp--){
+      H5Gclose(groupid_list[grp]);
+    }
+    H5Fclose(file_id);
+
+    delete count;
+    delete stride;
+    delete local_data_size_c;
+    delete local_data_size_f;
+    delete global_data_size_c;
+    delete global_data_size_f;
+    delete global_data_disp_c;
+    delete global_data_disp_f;
+    MPI_Comm_free(&SLAB_WORLD);
+  }
+}
+
 void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
                           const int pos, char const *file_name,
                           const char *data_name) {
@@ -2713,7 +2817,7 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
   sub_block *sb = OPS_sub_block_list[dat->block->index];
   if (sb->owned == 1) {
     const int space_dim{dat->block->dims};
-    int *global_range{new int(space_dim)};
+    int *global_range{new int(2 * space_dim)};
     determine_plane_global_range(dat, cross_section_dir, pos, global_range);
     int *local_range{new int(2 * space_dim)};
     // TODO if the plane is out of global range, computer range will generate
@@ -2736,6 +2840,37 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
     free(local_buf);
     //}
     delete global_range;
+    delete local_range;
+  }
+}
+
+void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
+                              const char *file_name, const char *data_name) {
+  MPI_Barrier(OPS_MPI_GLOBAL);
+  sub_block *sb = OPS_sub_block_list[dat->block->index];
+  if (sb->owned == 1) {
+    const int space_dim{dat->block->dims};
+    int *local_range{new int(2 * space_dim)};
+    // TODO if the plane is out of global range, computer range will generate
+    // error
+    determine_local_range(dat, range, local_range);
+    size_t local_buf_size{dat->elem_size};
+    for (int i = 0; i < space_dim; i++) {
+      local_buf_size *= (local_range[2 * i + 1] - local_range[2 * i]);
+    }
+    // if (local_buf_size > 0) {
+    char *local_buf = (char *)ops_malloc(local_buf_size);
+    copy_data_buf(dat, local_range, local_buf);
+    // if (local_buf_size>1){
+    //   double *data_p{(double *)local_buf};
+    //   printf("At rank %d data= %f %f %f %f\n", ops_my_global_rank, data_p[0],
+    //          data_p[1], data_p[2], data_p[3]);
+    // }
+    write_slab_buf_hdf5(file_name, data_name, dat, local_range, range,
+                        local_buf);
+    free(local_buf);
+    //}
+
     delete local_range;
   }
 }
