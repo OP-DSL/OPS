@@ -38,6 +38,7 @@
 #include <math.h>
 #include <string>
 #include <vector>
+#include <sstream>
 
 // Use version 2 of H5Dopen H5Acreate and H5Dcreate
 #define H5Dopen_vers 2
@@ -1723,20 +1724,44 @@ hid_t H5_file_handle(const char *file_name) {
   return file_id;
 }
 
+void split_h5_name(const char *data_name,
+                       std::vector<std::string> &h5_name_list) {
+  std::stringstream name_stream(data_name);
+  std::string segment;
+  while (std::getline(name_stream, segment, '/')) {
+    h5_name_list.push_back(segment);
+  }
+}
+
+
 // create the dataset or open the dataset if existing
 void H5_dataset_space(const hid_t file_id, const int data_dims,
-                      const hsize_t *global_data_size, const char *data_name,
-                      const char *data_type, hid_t &dataset_id,
-                      hid_t &file_space) {
+                      const hsize_t *global_data_size,
+                      const std::vector<std::string> &h5_name_list,
+                      const char *data_type, std::vector<hid_t> &groupid_list,
+                      hid_t &dataset_id, hid_t &file_space) {
 
-  if (H5Lexists(file_id, data_name, H5P_DEFAULT) == 0) {
+  hid_t parent_group{file_id};
+  const char *data_name = h5_name_list.back().c_str();
+  for (int grp = 0; grp < (h5_name_list.size() - 1); grp++) {
+    if (H5Lexists(parent_group, h5_name_list[grp].c_str(), H5P_DEFAULT) == 0) {
+      parent_group = H5Gcreate(parent_group, h5_name_list[grp].c_str(),
+                               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    } else {
+      parent_group =
+          H5Gopen(parent_group, h5_name_list[grp].c_str(), H5P_DEFAULT);
+    }
+    groupid_list[grp] = parent_group;
+  }
+
+  if (H5Lexists(parent_group, data_name, H5P_DEFAULT) == 0) {
     hid_t data_plist_id{H5Pcreate(H5P_DATASET_CREATE)};
     file_space = H5Screate_simple(data_dims, global_data_size, NULL);
-    dataset_id = H5Dcreate(file_id, data_name, h5_type(data_type), file_space,
-                           H5P_DEFAULT, data_plist_id, H5P_DEFAULT);
+    dataset_id = H5Dcreate(parent_group, data_name, h5_type(data_type),
+                           file_space, H5P_DEFAULT, data_plist_id, H5P_DEFAULT);
     H5Pclose(data_plist_id);
   } else {
-    dataset_id = H5Dopen(file_id, data_name, H5P_DEFAULT);
+    dataset_id = H5Dopen(parent_group, data_name, H5P_DEFAULT);
     file_space = H5Dget_space(dataset_id);
     int ndims{H5Sget_simple_extent_ndims(file_space)};
     bool dims_consistent{ndims == data_dims};
@@ -1761,8 +1786,8 @@ void H5_dataset_space(const hid_t file_id, const int data_dims,
 }
 
 void write_plane_buf_hdf5(char const *file_name, const char *data_name,
-                    const ops_dat &dat, const int dims, const int *size,
-                    char *buf) {
+                          const ops_dat &dat, const int dims, const int *size,
+                          char *buf) {
   // HDF5 APIs definitions
   hid_t file_id{H5_file_handle(file_name)};
   hsize_t *size_f{new hsize_t(dims)};
@@ -1771,8 +1796,13 @@ void write_plane_buf_hdf5(char const *file_name, const char *data_name,
   }
   hid_t file_space;
   hid_t dataset_id;
-  H5_dataset_space(file_id, dims, size_f, data_name, dat->type, dataset_id,
-                   file_space);
+  std::vector<std::string> h5_name_list;
+  split_h5_name(data_name, h5_name_list);
+  std::vector<hid_t> groupid_list;
+  groupid_list.resize(h5_name_list.size() - 1);
+
+  H5_dataset_space(file_id, dims, size_f, h5_name_list, dat->type, groupid_list,
+                   dataset_id, file_space);
   H5Dwrite(dataset_id, h5_type(dat->type), H5S_ALL, file_space, H5P_DEFAULT,
            buf);
 
@@ -1828,7 +1858,7 @@ void ops_write_plane_group_hdf5(
             std::string block_name{data->block->name};
             std::string data_name{data->name};
             std::string file_name{plane_names[p] + ".h5"};
-            std::string dataset_name{block_name + "_" + data_name + "_" + key};
+            std::string dataset_name{block_name + "/" + key + "/" + data_name};
             ops_write_plane_hdf5(data, cross_section_dir, pos,
                                  file_name.c_str(), dataset_name.c_str());
           } else {
