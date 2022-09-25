@@ -182,7 +182,7 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
 
 /**
  * Write a hyperslab of ops_dat to HDF5 file. If the data_name follows the HDF5
- * convention (say /block/time/data), data will be created under groups block and time.
+ * convention (say block/time/data), data will be created under groups block and time.
 * @param dat       the ops_dat holds the plane
  * @param range the range of ops_dat to be written
  * @param file_name  HDF5 file name ".h5"
@@ -193,7 +193,7 @@ void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
 
 /**
  * Write data on a plane to HDF5 file. If the data_name follows the HDF5
- * convention (say /block/time/data), data will be created under groups block and time. The array dimension will be reduced by one
+ * convention (say block/time/data), data will be created under groups block and time. The array dimension will be reduced by one
 * @param dat       the ops_dat holds the plane
  * @param cross_section_dir the plane direction (0:I, 1:J and 2:K)
  * @param pos the plane postion(e.g., 16 for I=16)
