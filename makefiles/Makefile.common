@@ -43,6 +43,9 @@ else
 ifeq ($(OPS_COMPILER),intel)
 	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.intel
 else
+ifeq ($(OPS_COMPILER),icx)
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.icx
+else
 ifeq ($(OPS_COMPILER),intel_win)
 	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.intel_win
 else
@@ -66,6 +69,7 @@ ifeq ($(OPS_COMPILER),xlp8)
 else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 endif

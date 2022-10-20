@@ -1,0 +1,17 @@
+CC      := icx
+CXX       := icpx
+FC := ifort
+ifdef DEBUG
+	CCFLAGS   := -O0 -std=c99 -fPIC -DUNIX -Wall -ffloat-store -g
+	CXXFLAGS   := -O0 -fPIC -DUNIX -Wall -ffloat-store -g -std=c++11
+else
+	CCFLAGS   := -Ofast -march=native -std=c99 -fPIC -Wall -g -ftree-vectorize
+	CXXFLAGS   := -Ofast -march=native -fPIC -Wall -g -std=c++11
+endif
+FFLAGS := $(CFLAGS) -ffree-form -ffree-line-length-none -J$(F_INC_MOD)
+CXXLINK := -lstdc++
+OMPFLAGS := -fiopenmp
+CXXFLAGS += $(OMPFLAGS)
+ifdef THREADED
+	THREADING_FLAGS ?= -fopenmp
+endif
