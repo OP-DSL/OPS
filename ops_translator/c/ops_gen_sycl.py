@@ -166,10 +166,20 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                 red_arg_idxs.append(n)
                 if not dims[n].isdigit():
                     builtin_reduction = False
-        flat_parallel = False
+        if os.getenv('OPS_FLAT'):
+            flat_parallel = True
+            ops_cpu = False
+        else:
+            flat_parallel = False
+            ops_cpu = os.getenv('OPS_CPU')
+            if ops_cpu and ops_cpu.isdigit():
+                ops_cpu = int(ops_cpu)
+            elif ops_cpu:
+                ops_cpu = 1
         if (reduction and not builtin_reduction) or (gen_oneapi and reduction):
             #if flat_parallel and reduction: #and not builtin_reduction:
             flat_parallel = False
+            ops_cpu = False
 
         arg_idx = -1
         for n in range(0, nargs):
@@ -459,18 +469,16 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                         GBL_READ_MDIM = True
 
         if reduction and not builtin_reduction:
-            code(
-                'int maxblocks = (end[0]-start[0]-1)/block->instance->OPS_block_size_x+1;'
-            )
+            if ops_cpu and ops_cpu>=1:
+                code('int maxblocks = 1;')
+            else:
+                code('int maxblocks = (end[0]-start[0]-1)/block->instance->OPS_block_size_x+1;')
 
             if NDIM > 1:
-                code(
-                    'maxblocks *= (end[1]-start[1]-1)/block->instance->OPS_block_size_y+1;'
-                )
+                if not ops_cpu or ops_cpu<2:
+                    code('maxblocks *= (end[1]-start[1]-1)/block->instance->OPS_block_size_y+1;')
             if NDIM > 2:
-                code(
-                    'maxblocks *= (end[2]-start[2]-1)/block->instance->OPS_block_size_z+1;'
-                )
+                code('maxblocks *= (end[2]-start[2]-1)/block->instance->OPS_block_size_z+1;')
             code('int reduct_bytes = 0;')
             code('size_t reduct_size = 0;')
             code('')
@@ -578,6 +586,12 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
             if arg_idx != -1:
                 code('int arg_idx_' + str(d) + ' = arg_idx[' + str(d) + '];')
 
+        condition = '(end[0]-start[0])>0'
+        if NDIM > 1:
+            condition = condition + ' && (end[1]-start[1])>0'
+        if NDIM > 2:
+            condition = condition + ' && (end[2]-start[2])>0'
+        IF(condition)
         code(
             'block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {'
         )
@@ -654,22 +668,28 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                 'cgh.parallel_for<class {0}_kernel>(cl::sycl::nd_range<{1}>(cl::sycl::range<{1}>('
                 .format(name, NDIM))
             if NDIM > 2:
-                code(
-                    '     ((end[2]-start[2]-1)/block->instance->OPS_block_size_z+1)*block->instance->OPS_block_size_z,'
-                )
+                code('     ((end[2]-start[2]-1)/block->instance->OPS_block_size_z+1)*block->instance->OPS_block_size_z,')
             if NDIM > 1:
-                code(
-                    '     ((end[1]-start[1]-1)/block->instance->OPS_block_size_y+1)*block->instance->OPS_block_size_y,'
-                )
-            code(
-                '      ((end[0]-start[0]-1)/block->instance->OPS_block_size_x+1)*block->instance->OPS_block_size_x'
-            )
+                if ops_cpu and ops_cpu >= 2:
+                    code('      end[1]-start[1],')
+                else:
+                    code('     ((end[1]-start[1]-1)/block->instance->OPS_block_size_y+1)*block->instance->OPS_block_size_y,')
+            if ops_cpu and ops_cpu >= 1:
+                code('      end[0]-start[0]')
+            else:
+                code('      ((end[0]-start[0]-1)/block->instance->OPS_block_size_x+1)*block->instance->OPS_block_size_x')
             code('       ),cl::sycl::range<' + str(NDIM) + '>(')
             if NDIM > 2:
                 code('       block->instance->OPS_block_size_z,')
             if NDIM > 1:
-                code('       block->instance->OPS_block_size_y,')
-            code('block->instance->OPS_block_size_x')
+                if ops_cpu and ops_cpu >= 2:
+                    code('      end[1]-start[1],')
+                else:
+                    code('       block->instance->OPS_block_size_y,')
+            if ops_cpu and ops_cpu >= 1:
+                code('      end[0]-start[0]')
+            else:
+                code('block->instance->OPS_block_size_x')
 
             code('       ))')
         if reduction and builtin_reduction:
@@ -883,6 +903,7 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
         code('});')
         config.depth -= 2
         code('});')
+        ENDIF()
 
         #
         # Complete Reduction Operation by moving data onto host
