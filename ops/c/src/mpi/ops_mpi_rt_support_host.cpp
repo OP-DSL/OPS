@@ -63,8 +63,6 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
       
     }
   }
-  for (int i = 0; i < halo->count * halo->blocklength * dat->dim / 8; i++) printf("%g ", *((double*)(dest+i*8)));
-  printf("\n");
 }
 
 void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
