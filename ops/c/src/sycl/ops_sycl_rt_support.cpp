@@ -126,6 +126,7 @@ void *ops_sycl_register_const(void *old_p, void *new_p) {
 void ops_sycl_memcpyHostToDevice(OPS_instance *instance,
                                  cl::sycl::buffer<char, 1> *data_d,
                                  const char *data_h, size_t bytes) {
+  if (bytes == 0) return;
 #ifdef SYCL_COPY
   // create sub buffer
   cl::sycl::buffer<char, 1> buffer(*data_d, cl::sycl::id<1>(0), cl::sycl::range<1>(bytes));
@@ -145,6 +146,7 @@ void ops_sycl_memcpyHostToDevice(OPS_instance *instance,
 void ops_sycl_memcpyDeviceToHost(OPS_instance *instance,
                                  cl::sycl::buffer<char, 1> *data_d,
                                  char *data_h, size_t bytes) {
+  if (bytes == 0) return;
   // create sub buffer
 #ifdef SYCL_COPY
   cl::sycl::buffer<char, 1> buffer(*data_d, cl::sycl::id<1>(0), cl::sycl::range<1>(bytes));

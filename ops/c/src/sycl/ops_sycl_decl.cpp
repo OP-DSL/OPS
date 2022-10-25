@@ -44,14 +44,6 @@ void _ops_init(OPS_instance *instance, const int argc, const char *const argv[],
                const int diags) {
   ops_init_core(instance, argc, argv, diags);
 
-  if ((instance->OPS_block_size_x * instance->OPS_block_size_y *
-       instance->OPS_block_size_z) > 1024) {
-    throw OPSException(
-        OPS_RUNTIME_CONFIGURATION_ERROR,
-        "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be "
-        "less than 1024");
-  }
-
   syclDeviceInit(instance, argc, argv);
 }
 

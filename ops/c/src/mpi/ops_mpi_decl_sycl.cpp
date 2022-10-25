@@ -51,10 +51,6 @@ extern char *ops_buffer_recv_2;
 void ops_init_cuda(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
   ops_init_core(instance, argc, argv, diags);
 
-  if ((instance->OPS_block_size_x * instance->OPS_block_size_y * instance->OPS_block_size_z) > 1024) {
-    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
-  }
-
 /*
 #if CUDART_VERSION < 3020
 #error : "must be compiled using CUDA 3.2 or later"
