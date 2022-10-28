@@ -791,4 +791,55 @@ void _ops_exit(OPS_instance *instance) {
   ops_exit_core(instance);
 }
 
+void ops_dat_deep_copy(ops_dat target, ops_dat source) 
+{
+  /* The constraint is that OPS makes it very easy for users to alias ops_dats.  A deep copy
+    * should work even if dats have been aliased.  Suppose a user has written something like
+    *
+    *    ops_dat x = ops_decl_dat( ... );
+    *    ops_dat y = ops_decl_dat( ... );
+    *    ops_dat z = x;
+    *    ops_dat_deep_copy(x, y);
+    *
+    * In this case we cannot call ops_free_dat(x) since that would leave 'z' pointing at invalid memory.
+    * OPS has no knowledge of 'z' - there is no entry in any internal tables corresponding to 'z'.
+    * Hence the only way this function can work is if we leave (*x) intact (i.e the ops_dat_core pointed at
+    * by x) and change the entries inside the ops_dat_core.  Then 'z' will continue to point at valid data.
+    *
+    * If the blocks in source and target are different, then the deep copy could entail MPI re-distribution of 
+    * data. For the moment, perhaps we ignore this ... ?
+    */
+  // Copy the metadata.  This will reallocate target->data if necessary
+  int realloc = ops_dat_copy_metadata_core(target, source);
+  if(realloc && source->block->instance->OPS_hybrid_gpu) {
+    if(target->data_d != nullptr) {
+      ops_device_free(source->block->instance, (void**)&(target->data_d));
+      target->data_d = nullptr;
+    }
+    ops_device_malloc(source->block->instance, (void**)&(target->data_d), target->mem);
+  }
+   // Metadata and buffers are set up
+   // Enqueue a lazy copy of data from source to target
+  int range[2*OPS_MAX_DIM];
+  for (int i = 0; i < source->block->dims; i++) {
+    range[2*i] = source->base[i] + source->d_m[i];
+    range[2*i+1] = range[2*i] + source->size[i];
+  }
+  for (int i = source->block->dims; i < OPS_MAX_DIM; i++) {
+    range[2*i] = 0;
+    range[2*i+1] = 1;
+  }
+  ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, source, range);
+  if (source->block->instance->OPS_hybrid_gpu) {
+    desc->name = "ops_internal_copy_device";
+    desc->device = 1;
+    desc->function = ops_internal_copy_device;
+  } else {
+    desc->name = "ops_internal_copy_seq";
+    desc->device = 0;
+    desc->function = ops_internal_copy_seq;
+  }
+  ops_enqueue_kernel(desc);
+}
+
 void ops_exit() { _ops_exit(OPS_instance::getOPSInstance()); }

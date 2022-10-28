@@ -140,9 +140,9 @@ trid_mpi_cuda: mklib $(C_OPS_OBJ)/ops_tridiag_mpi_cuda.o
 	ar -r $(C_OPS_LIB)/libops_trid_mpi_cuda.a $(C_OPS_OBJ)/ops_tridiag_mpi_cuda.o
 
 seq: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o $(C_OPS_OBJ)/ops_checkpointing.o \
-  $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_seq.o $(C_OPS_OBJ)/ops_dummy_singlenode.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o
+  $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_host_common.o  $(C_OPS_OBJ)/ops_host_singlenode.o $(C_OPS_OBJ)/ops_dummy_singlenode.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o
 	ar -r $(C_OPS_LIB)/libops_seq.a $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o $(C_OPS_OBJ)/ops_checkpointing.o \
-	$(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_seq.o $(C_OPS_OBJ)/ops_dummy_singlenode.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o
+	$(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_host_common.o  $(C_OPS_OBJ)/ops_host_singlenode.o $(C_OPS_OBJ)/ops_dummy_singlenode.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o
 
 cuda: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o $(C_OPS_OBJ)/ops_checkpointing.o \
   $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_cuda_common_cuda.o $(C_OPS_OBJ)/ops_cuda_rt_support_cuda.o \
