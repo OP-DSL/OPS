@@ -38,8 +38,13 @@
   */
 
 #include <ops_mpi_core.h>
-#include <ops_opencl_rt_support.h>
+#include <ops_device_rt_support.h>
 #include <ops_exceptions.h>
+
+
+void ops_exit_device(OPS_instance *instance) {
+    delete instance->opencl_instance;
+}
 
 int halo_buffer_size = 0;
 size_t halo_buffer_size2 = 0;
