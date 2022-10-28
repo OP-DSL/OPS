@@ -39,7 +39,7 @@
 #include <mpi.h>
 #include <hip/hip_runtime.h>
 //#include <hip_runtime_api.h>
-#include <ops_hip_rt_support.h>
+#include <ops_device_rt_support.h>
 #include <ops_mpi_core.h>
 
 //#include <math_constants.h>

@@ -40,6 +40,36 @@
 #include <mpi.h>
 #include <ops_mpi_core.h>
 
+void ops_init_device(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
+  (void*)instance;
+  (void*)argc;
+  (void*)argv;
+  (void*)diags;
+}
+
+void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
+  *ptr = ops_malloc(bytes);
+}
+
+void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
+  *ptr = ops_malloc(bytes);
+}
+
+void ops_device_free(OPS_instance *instance, void** ptr) {
+  ops_free(*ptr)
+  *ptr = nullptr;
+}
+
+void ops_device_freehost(OPS_instance *instance, void** ptr) {
+  ops_free(*ptr)
+  *ptr = nullptr;
+}
+
+void ops_exit_device(OPS_instance *instance) {
+  (void*)instance;
+}
+
+
 void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
               const ops_int_halo *__restrict halo) {
   if (OPS_instance::getOPSInstance()->OPS_soa) {
@@ -174,15 +204,6 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
 void ops_download_dat(ops_dat dat) { (void)dat; }
 
 void ops_upload_dat(ops_dat dat) { (void)dat; }
-
-void ops_free_dat(ops_dat dat) {
-  ops_free_dat_core(dat);
-  ops_free(dat);
-}
-
-void _ops_free_dat(ops_dat dat) {
-  ops_free_dat_core(dat);
-}
 
 void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace) {
   ops_dat_fetch_data_host(dat, part, data);

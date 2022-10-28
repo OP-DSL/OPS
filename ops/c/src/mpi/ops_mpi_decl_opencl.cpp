@@ -40,7 +40,7 @@
 #include <ops_mpi_core.h>
 
 //#include <math_constants.h>
-#include <ops_opencl_rt_support.h>
+#include <ops_device_rt_support.h>
 #include <ops_exceptions.h>
 
 extern char *halo_buffer_d;

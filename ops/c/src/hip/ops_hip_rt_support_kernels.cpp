@@ -47,6 +47,7 @@
 
 #include <hip/hip_runtime.h>
 
+#include <ops_device_rt_support.h>
 #include <ops_hip_rt_support.h>
 #include <ops_lib_core.h>
 

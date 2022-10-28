@@ -288,6 +288,20 @@ void* ops_calloc (size_t num, size_t size);
 void ops_init_zero(char *data, size_t bytes);
 void ops_convert_layout(char *in, char *out, ops_block block, int size, int *dat_size, int *dat_size_orig, int type_size, int hybrid_layout);
 
+//Includes for common device backends
+void ops_init_device(OPS_instance *instance, const int argc, const char *const argv[], const int diags);
+void ops_device_free(OPS_instance *instance, void** ptr);
+void ops_device_freehost(OPS_instance *instance, void** ptr);
+void ops_device_exit(OPS_instance *instance);
+void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes);
+void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes);
+void ops_device_memcpy_h2d(OPS_instance *instance, void** to, void **from, size_t size);
+void ops_device_memcpy_d2h(OPS_instance *instance, void** to, void **from, size_t size);
+void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_t size);
+void ops_device_memset(OPS_instance *instance, void** ptr, int val, size_t size);
+void ops_device_sync(OPS_instance *instance);
+void ops_exit_device(OPS_instance *instance);
+
 
 void _ops_init(OPS_instance *instance, const int argc, const char * const argv[], const int diags_level);
 ops_block _ops_decl_block(OPS_instance *instance, int dims, const char * name);
@@ -325,6 +339,7 @@ ops_dat ops_dat_alloc_core(ops_block block);
 int ops_dat_copy_metadata_core(ops_dat target, ops_dat orig_dat);
 ops_kernel_descriptor * ops_dat_deep_copy_core(ops_dat target, ops_dat orig_dat, int *range);
 void ops_internal_copy_seq(ops_kernel_descriptor *desc);
+void ops_internal_copy_device(ops_kernel_descriptor *desc);
 
 //
 // wrapper functions to handle MPI global reductions

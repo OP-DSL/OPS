@@ -37,7 +37,39 @@
  * backend
   */
 #include <hip/hip_runtime.h>
-#include <ops_hip_rt_support.h>
+#include <ops_device_rt_support.h>
+
+void ops_init_device(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
+  if ((instance->OPS_block_size_x * instance->OPS_block_size_y * instance->OPS_block_size_z) > 1024) {
+    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
+  }
+  cutilDeviceInit(instance, argc, argv);
+  instance->OPS_hybrid_gpu = 1;
+  deviceSafeCall(instance->ostream(),hipDeviceSetCacheConfig(hipFuncCachePreferL1));
+
+}
+
+void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
+  deviceSafeCall(instance->ostream(), hipMalloc(ptr, bytes));
+}
+
+void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
+  deviceSafeCall(instance->ostream(), hipMallocHost(ptr, bytes));
+}
+
+void ops_device_free(OPS_instance *instance, void** ptr) {
+  deviceSafeCall(instance->ostream(),hipFree(*ptr));
+  *ptr = nullptr;
+}
+
+void ops_device_freehost(OPS_instance *instance, void** ptr) {
+  deviceSafeCall(instance->ostream(),hipFreeHost(*ptr));
+  *ptr = nullptr;
+}
+
+void ops_exit_device(OPS_instance *instance) {
+  (void*)instance;
+}
 
 int halo_buffer_size = 0;
 char *halo_buffer_d = NULL;

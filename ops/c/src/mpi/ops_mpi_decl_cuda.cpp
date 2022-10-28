@@ -39,7 +39,7 @@
 #include <mpi.h>
 #include <cuda.h>
 #include <cuda_runtime_api.h>
-#include <ops_cuda_rt_support.h>
+#include <ops_device_rt_support.h>
 #include <ops_mpi_core.h>
 
 #include <math_constants.h>
@@ -73,9 +73,9 @@ void ops_init_cuda(OPS_instance *instance, const int argc, const char *const arg
 //
 
 #ifdef SET_CUDA_CACHE_CONFIG
-  cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaDeviceSetCacheConfig(cudaFuncCachePreferShared));
+  deviceSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaDeviceSetCacheConfig(cudaFuncCachePreferShared));
 #else
-  cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
+  deviceSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 #endif
 
   ops_printf("\n 16/48 L1/shared \n");
@@ -135,17 +135,17 @@ void _ops_exit(OPS_instance *instance) {
   if (instance->is_initialised == 0) return;
   ops_mpi_exit(instance);
   if (halo_buffer_d != NULL)
-    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(halo_buffer_d));
+    deviceSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(halo_buffer_d));
   if (OPS_instance::getOPSInstance()->OPS_gpu_direct) {
-    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(ops_buffer_send_1));
-    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(ops_buffer_recv_1));
-    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(ops_buffer_send_2));
-    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(ops_buffer_recv_2));
+    deviceSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(ops_buffer_send_1));
+    deviceSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(ops_buffer_recv_1));
+    deviceSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(ops_buffer_send_2));
+    deviceSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFree(ops_buffer_recv_2));
   } else {
-    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ops_buffer_send_1));
-    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ops_buffer_recv_1));
-    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ops_buffer_send_2));
-    cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ops_buffer_recv_2));
+    deviceSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ops_buffer_send_1));
+    deviceSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ops_buffer_recv_1));
+    deviceSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ops_buffer_send_2));
+    deviceSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaFreeHost(ops_buffer_recv_2));
   }
   int flag = 0;
   MPI_Finalized(&flag);
@@ -210,6 +210,7 @@ void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
   handle->initialized = 0;
 }
 
+
 // routine to fetch data from device
 void ops_get_data(ops_dat dat) { ops_cuda_get_data(dat); }
 void ops_put_data(ops_dat dat) { ops_cuda_put_data(dat); }
@@ -252,10 +253,10 @@ void ops_dat_deep_copy(ops_dat target, ops_dat source) {
   int realloc = ops_dat_copy_metadata_core(target, source);
   if(realloc) {
     if(target->data_d != nullptr) {
-      cutilSafeCall(source->block->instance->ostream(), cudaFree(target->data_d) );
+      deviceSafeCall(source->block->instance->ostream(), cudaFree(target->data_d) );
       target->data_d = nullptr;
     }
-    cutilSafeCall(target->block->instance->ostream(), cudaMalloc((void**)&(target->data_d), target->mem));
+    deviceSafeCall(target->block->instance->ostream(), cudaMalloc((void**)&(target->data_d), target->mem));
   }
 
   ops_kernel_descriptor *desc = ops_dat_deep_copy_mpi_core(target, source);
@@ -271,18 +272,3 @@ extern "C" int getOPS_block_size_x() { return OPS_instance::getOPSInstance()->OP
 extern "C" int getOPS_block_size_y() { return OPS_instance::getOPSInstance()->OPS_block_size_y; }
 extern "C" int getOPS_block_size_z() { return OPS_instance::getOPSInstance()->OPS_block_size_z; }
 
-void ops_pack_cuda_internal(ops_dat dat, const int src_offset, char *__restrict dest,
-              const int halo_blocklength, const int halo_stride, const int halo_count);
-
-void ops_unpack_cuda_internal(ops_dat dat, const int dest_offset, const char *__restrict src,
-                const int halo_blocklength, const int halo_stride, const int halo_count);
-
-
-void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
-              const ops_int_halo *__restrict halo) {
-  ops_pack_cuda_internal(dat,  src_offset, dest, halo->blocklength, halo->stride, halo->count);
-}
-void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
-                const ops_int_halo *__restrict halo) {
-  ops_unpack_cuda_internal(dat,  dest_offset, src, halo->blocklength, halo->stride, halo->count);
-}
