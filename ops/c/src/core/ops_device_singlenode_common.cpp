@@ -100,41 +100,6 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   return dat;
 }
 
-void ops_dat_deep_copy(ops_dat target, ops_dat source) 
-{
-  // Copy the metadata.  This will reallocate target->data if necessary
-  int realloc = ops_dat_copy_metadata_core(target, source);
-  if(realloc && source->block->instance->OPS_hybrid_gpu) {
-    if(target->data_d != nullptr) {
-      ops_device_free(source->block->instance, (void**)&(target->data_d));
-      target->data_d = nullptr;
-    }
-    ops_device_malloc(source->block->instance, (void**)&(target->data_d), target->mem);
-  }
-   // Metadata and buffers are set up
-   // Enqueue a lazy copy of data from source to target
-  int range[2*OPS_MAX_DIM];
-  for (int i = 0; i < source->block->dims; i++) {
-    range[2*i] = source->base[i] + source->d_m[i];
-    range[2*i+1] = range[2*i] + source->size[i];
-  }
-  for (int i = source->block->dims; i < OPS_MAX_DIM; i++) {
-    range[2*i] = 0;
-    range[2*i+1] = 1;
-  }
-  ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, source, range);
-  if (source->block->instance->OPS_hybrid_gpu) {
-    desc->name = "ops_internal_copy_device";
-    desc->device = 1;
-    desc->function = ops_internal_copy_device;
-  } else {
-    desc->name = "ops_internal_copy_seq";
-    desc->device = 0;
-    desc->function = ops_internal_copy_seq;
-  }
-  ops_enqueue_kernel(desc);
-}
-
 void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *range, ops_memspace memspace) {
   if (memspace == OPS_HOST) ops_dat_fetch_data_slab_host(dat, part, data, range);
   else {
@@ -362,7 +327,6 @@ void ops_halo_transfer(ops_halo_group group) {
                           step[1], step[2], buf_strides[0], buf_strides[1],
                           buf_strides[2]);
 
-    //deviceSafeCall(cudaDeviceSynchronize());
     halo->to->dirty_hd = 2;
   }
 }
