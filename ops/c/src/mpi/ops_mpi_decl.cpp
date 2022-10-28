@@ -111,19 +111,18 @@ void _ops_exit(OPS_instance *instance) {
   
   ops_mpi_exit(instance);
 
-  if (halo_buffer_d != NULL)
-    ops_device_free(instance, (void**)&halo_buffer_d);
-  if (instance->OPS_gpu_direct && ops_buffer_send_1 != NULL) {
-    ops_device_free(instance, (void**)&ops_buffer_send_1);
-    ops_device_free(instance, (void**)&ops_buffer_recv_1);
-    ops_device_free(instance, (void**)&ops_buffer_send_2);
-    ops_device_free(instance, (void**)&ops_buffer_recv_2);
-  } else if (ops_buffer_send_1 != NULL)
-  {
-    ops_device_freehost(instance, (void**)&ops_buffer_send_1);
-    ops_device_freehost(instance, (void**)&ops_buffer_recv_1);
-    ops_device_freehost(instance, (void**)&ops_buffer_send_2);
-    ops_device_freehost(instance, (void**)&ops_buffer_recv_2);
+  if (instance->OPS_hybrid_gpu) {
+    if (instance->OPS_gpu_direct && ops_buffer_send_1 != NULL) {
+      ops_device_free(instance, (void**)&ops_buffer_send_1);
+      ops_device_free(instance, (void**)&ops_buffer_recv_1);
+      ops_device_free(instance, (void**)&ops_buffer_send_2);
+      ops_device_free(instance, (void**)&ops_buffer_recv_2);
+    } else if (ops_buffer_send_1 != NULL) {
+      ops_device_freehost(instance, (void**)&ops_buffer_send_1);
+      ops_device_freehost(instance, (void**)&ops_buffer_recv_1);
+      ops_device_freehost(instance, (void**)&ops_buffer_send_2);
+      ops_device_freehost(instance, (void**)&ops_buffer_recv_2);
+    }
   }
   int flag = 0;
   MPI_Finalized(&flag);
@@ -208,7 +207,7 @@ void ops_dat_deep_copy(ops_dat target, ops_dat source) {
   int realloc = ops_dat_copy_metadata_core(target, source);
   if(realloc && source->block->instance->OPS_hybrid_gpu) {
     if(target->data_d != nullptr) {
-      ops_device_free(source->block->instance, (void**)&(target->data_d);
+      ops_device_free(source->block->instance, (void**)&(target->data_d));
       target->data_d = nullptr;
     }
     ops_device_malloc(source->block->instance, (void**)&(target->data_d), target->mem);
