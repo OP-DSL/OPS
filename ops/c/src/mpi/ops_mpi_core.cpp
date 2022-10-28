@@ -253,25 +253,6 @@ void ops_set_dirtybit_host(ops_arg *args, int nargs) {
   }
 }
 
-ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
-                    ops_access acc) {
-  ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
-  (&temp)->dim = dim;
-  return temp;
-}
-
-ops_arg ops_arg_dat_opt(ops_dat dat, int dim, ops_stencil stencil,
-                        char const *type, ops_access acc, int flag) {
-  ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
-  (&temp)->dim = dim;
-  (&temp)->opt = flag;
-  return temp;
-}
-
-ops_arg ops_arg_gbl_char(char *data, int dim, int size, ops_access acc) {
-  return ops_arg_gbl_core(data, dim, size, acc);
-}
-
 ops_arg ops_arg_reduce(ops_reduction handle, int dim, const char *type,
                        ops_access acc) {
   int was_initialized = handle->initialized;

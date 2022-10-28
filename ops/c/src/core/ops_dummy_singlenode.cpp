@@ -722,3 +722,74 @@ void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size) {
     for (int d = 0; d < dat->block->dims; d++)
       size[d] = dat->size[d] + dat->d_m[d] - dat->d_p[d];
 }
+
+
+
+
+ops_dat ops_dat_copy(ops_dat orig_dat) 
+{
+   // Allocate an empty dat on a block
+   // The block has no internal data buffers
+  ops_dat dat = ops_dat_alloc_core(orig_dat->block);
+  // Do a deep copy from orig_dat into the new dat
+  ops_dat_deep_copy(dat, orig_dat);
+  return dat;
+}
+
+void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
+  // printf("file %s, name %s type = %s\n",file_name, dat->name, dat->type);
+  // need to get data from GPU
+  ops_get_data(dat);
+  ops_print_dat_to_txtfile_core(dat, file_name);
+}
+
+void ops_NaNcheck(ops_dat dat) {
+  char buffer[1]={'\0'};
+  // need to get data from GPU
+  ops_get_data(dat);
+  ops_NaNcheck_core(dat, buffer);
+}
+
+
+void _ops_partition(OPS_instance *instance, const char *routine) {
+  (void)instance;
+  (void)routine;
+}
+
+void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::string, void*>& opts) {
+  (void)instance;
+  (void)routine;
+  (void)opts;
+}
+
+void ops_partition(const char *routine) {
+  (void)routine;
+}
+
+void ops_partition_opts(const char *routine, std::map<std::string, void*>& opts) {
+  (void)routine;
+  (void)opts;
+}
+
+void ops_timers(double *cpu, double *et) {
+  ops_timers_core(cpu, et);
+}
+
+void _ops_exit(OPS_instance *instance) {
+  if (instance->is_initialised == 0) return;
+  if (instance->ops_halo_buffer!=NULL) ops_free(instance->ops_halo_buffer);
+  if (instance->OPS_consts_bytes > 0) {
+    ops_free(instance->OPS_consts_h);
+    if (instance->OPS_gbl_prev!=NULL) ops_device_freehost(instance, (void**)&instance->OPS_gbl_prev);
+    if (instance->OPS_consts_d!=NULL) ops_device_free(instance, (void**)&instance->OPS_consts_d);
+  }
+  if (instance->OPS_reduct_bytes > 0) {
+    ops_free(instance->OPS_reduct_h);
+    if (instance->OPS_reduct_d!=NULL) ops_device_free(instance, (void**)&instance->OPS_reduct_d);
+  }
+
+  ops_exit_device(instance);
+  ops_exit_core(instance);
+}
+
+void ops_exit() { _ops_exit(OPS_instance::getOPSInstance()); }

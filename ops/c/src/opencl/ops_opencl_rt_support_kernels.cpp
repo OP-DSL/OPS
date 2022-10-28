@@ -30,10 +30,10 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief ops opencl specific runtime support functions
+/** @brief ops OpenCL specific runtime support functions
   * @author Gihan Mudalige and Istvan Reguly (adapting OP2 OpenCL backend by
  * Endre Lazslo)
-  * @details Implements opencl backend runtime support functions
+  * @details Implements OpenCL backend runtime support functions
   */
 
 //
@@ -468,8 +468,8 @@ const char copy_opencl_kernel_src[] =
 "\n"
 "}\n";
 
-void ops_internal_copy_opencl(ops_kernel_descriptor *desc) {
-  int reverse = strcmp(desc->name, "ops_internal_copy_opencl_reverse")==0;
+void ops_internal_copy_device(ops_kernel_descriptor *desc) {
+  int reverse = strcmp(desc->name, "ops_internal_copy_device_reverse")==0;
   int range[2*OPS_MAX_DIM]={0};
   for (int d = 0; d < desc->dim; d++) {
     range[2*d] = desc->range[2*d];

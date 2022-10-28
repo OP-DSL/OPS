@@ -46,13 +46,7 @@ void _ops_init(OPS_instance *instance, const int argc, const char *const argv[],
   ops_init_core(instance, argc, argv, diags);
 }
 
-void _ops_exit(OPS_instance *instance) {
-  if (instance->is_initialised == 0) return;
-  if (instance->ops_halo_buffer!=NULL) ops_free(instance->ops_halo_buffer);
-  ops_exit_core(instance);
-}
 
-void ops_exit() { ops_exit_core(OPS_instance::getOPSInstance()); }
 
 
 /**
@@ -165,18 +159,6 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   }
 
   return dat;
-}
-
-ops_halo _ops_decl_halo(OPS_instance *instance, ops_dat from, ops_dat to, int *iter_size, int *from_base,
-                       int *to_base, int *from_dir, int *to_dir) {
-  return ops_decl_halo_core(instance, from, to, iter_size, from_base, to_base, from_dir,
-                            to_dir);
-}
-
-ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int *from_base,
-                       int *to_base, int *from_dir, int *to_dir) {
-  return ops_decl_halo_core(OPS_instance::getOPSInstance(), from, to, iter_size, from_base, to_base, from_dir,
-                            to_dir);
 }
 
 void ops_halo_transfer(ops_halo_group group) {
@@ -522,6 +504,7 @@ void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
   (void)type_size;
   handle->initialized = 0;
 }
+
 
 void ops_free_dat(ops_dat dat) {
    // This just delegates to _ops_free_dat

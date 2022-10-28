@@ -50,12 +50,8 @@
 #include <math_constants.h>
 
 #include <ops_cuda_rt_support.h>
+#include <ops_cuda_rt_support.h>
 #include <ops_lib_core.h>
-
-/*__global__ void copy_kernel(char *dest, char *src, int size ) {
-  int tid = blockIdx.x;
-  memcpy(&dest[tid],&src[tid],size);
-}*/
 
 __global__ void copy_kernel_tobuf(char *dest, char *src, int rx_s, int rx_e,
                                   int ry_s, int ry_e, int rz_s, int rz_e,
@@ -280,8 +276,8 @@ __global__ void ops_internal_copy_cuda_kernel(char * dat0_p, char *dat1_p,
 }
 
 
-void ops_internal_copy_cuda(ops_kernel_descriptor *desc) {
-  int reverse = strcmp(desc->name, "ops_internal_copy_cuda_reverse")==0;
+void ops_internal_copy_device(ops_kernel_descriptor *desc) {
+  int reverse = strcmp(desc->name, "ops_internal_copy_device_reverse")==0;
   int range[2*OPS_MAX_DIM]={0};
   for (int d = 0; d < desc->dim; d++) {
     range[2*d] = desc->range[2*d];
