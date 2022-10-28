@@ -164,31 +164,31 @@ hip: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/
 
 mpi: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o $(C_OPS_OBJ)/ops_checkpointing.o \
   $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_mpi_decl_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o $(C_OPS_OBJ)/ops_checkpointing_strategy_mpi.o \
-  $(C_OPS_OBJ)/ops_mpi_core_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_host_mpi.o $(C_OPS_OBJ)/ops_mpi_partition_mpi.o
+  $(C_OPS_OBJ)/ops_mpi_core_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_host_mpi.o $(C_OPS_OBJ)/ops_mpi_partition_mpi.o $(C_OPS_OBJ)/ops_host_common.o
 	ar -r $(C_OPS_LIB)/libops_mpi.a $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o $(C_OPS_OBJ)/ops_checkpointing.o \
 	$(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_mpi_decl_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o $(C_OPS_OBJ)/ops_checkpointing_strategy_mpi.o \
-	$(C_OPS_OBJ)/ops_mpi_core_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_host_mpi.o $(C_OPS_OBJ)/ops_mpi_partition_mpi.o
+	$(C_OPS_OBJ)/ops_mpi_core_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_host_mpi.o $(C_OPS_OBJ)/ops_mpi_partition_mpi.o $(C_OPS_OBJ)/ops_host_common.o
 
 hdf5_mpi: mklib $(C_OPS_OBJ)/ops_mpi_hdf5_mpi.o
 	ar -r $(C_OPS_LIB)/libops_hdf5_mpi.a $(C_OPS_OBJ)/ops_mpi_hdf5_mpi.o
 
 mpi_cuda: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o \
-  $(C_OPS_OBJ)/ops_checkpointing.o $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_mpi_decl_cuda_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
+  $(C_OPS_OBJ)/ops_checkpointing.o $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_mpi_decl_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
   $(C_OPS_OBJ)/ops_mpi_core_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_cuda.o $(C_OPS_OBJ)/ops_mpi_partition_mpi.o \
-  $(C_OPS_OBJ)/ops_cuda_rt_support.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o
+  $(C_OPS_OBJ)/ops_cuda_rt_support.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o $(C_OPS_OBJ)/ops_cuda_common.o
 	ar -r $(C_OPS_LIB)/libops_mpi_cuda.a $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o \
-	$(C_OPS_OBJ)/ops_checkpointing.o $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_mpi_decl_cuda_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
+	$(C_OPS_OBJ)/ops_checkpointing.o $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_mpi_decl_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
 	$(C_OPS_OBJ)/ops_mpi_core_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_cuda.o $(C_OPS_OBJ)/ops_mpi_partition_mpi.o \
-	$(C_OPS_OBJ)/ops_cuda_rt_support.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o
+	$(C_OPS_OBJ)/ops_cuda_rt_support.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o $(C_OPS_OBJ)/ops_cuda_common.o
 
 mpi_hip: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o \
-  $(C_OPS_OBJ)/ops_checkpointing.o $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_mpi_decl_hip_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
+  $(C_OPS_OBJ)/ops_checkpointing.o $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_mpi_decl_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
   $(C_OPS_OBJ)/ops_mpi_core_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_hip_mpi.o $(C_OPS_OBJ)/ops_mpi_partition_mpi.o \
-  $(C_OPS_OBJ)/ops_hip_rt_support.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o
+  $(C_OPS_OBJ)/ops_checkpointing_strategy.o $(C_OPS_OBJ)/ops_hip_common.o
 	ar -r $(C_OPS_LIB)/libops_mpi_hip.a $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o \
-	$(C_OPS_OBJ)/ops_checkpointing.o $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_mpi_decl_hip_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
+	$(C_OPS_OBJ)/ops_checkpointing.o $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_mpi_decl_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
 	$(C_OPS_OBJ)/ops_mpi_core_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_hip_mpi.o $(C_OPS_OBJ)/ops_mpi_partition_mpi.o \
-	$(C_OPS_OBJ)/ops_hip_rt_support.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o
+	$(C_OPS_OBJ)/ops_checkpointing_strategy.o $(C_OPS_OBJ)/ops_hip_common.o
 
 opencl: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o $(C_OPS_OBJ)/ops_checkpointing.o \
   $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_opencl_common.o $(C_OPS_OBJ)/ops_opencl_rt_support_kernels.o \
@@ -200,13 +200,13 @@ opencl: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OB
 	$(C_OPS_OBJ)/ops_device_singlenode_common.o
 
 mpi_opencl: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_lazy.o \
-  $(C_OPS_OBJ)/ops_checkpointing.o $(C_OPS_OBJ)/ops_mpi_decl_opencl_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
+  $(C_OPS_OBJ)/ops_checkpointing.o $(C_OPS_OBJ)/ops_mpi_decl_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
         $(C_OPS_OBJ)/ops_mpi_core_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_opencl_mpi.o $(C_OPS_OBJ)/ops_mpi_partition_mpi.o \
-  $(C_OPS_OBJ)/ops_opencl_rt_support.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o
+  $(C_OPS_OBJ)/ops_checkpointing_strategy.o $(C_OPS_OBJ)/ops_opencl_common.o
 	ar -r $(C_OPS_LIB)/libops_mpi_opencl.a $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_lazy.o \
-	$(C_OPS_OBJ)/ops_checkpointing.o $(C_OPS_OBJ)/ops_mpi_decl_opencl_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
+	$(C_OPS_OBJ)/ops_checkpointing.o $(C_OPS_OBJ)/ops_mpi_decl_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
         $(C_OPS_OBJ)/ops_mpi_core_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_opencl_mpi.o $(C_OPS_OBJ)/ops_mpi_partition_mpi.o \
-	$(C_OPS_OBJ)/ops_opencl_rt_support.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o
+	$(C_OPS_OBJ)/ops_checkpointing_strategy.o $(C_OPS_OBJ)/ops_opencl_common.o
 
 
 clean:

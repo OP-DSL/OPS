@@ -40,35 +40,6 @@
 #include <mpi.h>
 #include <ops_mpi_core.h>
 
-void ops_init_device(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
-  (void*)instance;
-  (void*)argc;
-  (void*)argv;
-  (void*)diags;
-}
-
-void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
-  *ptr = ops_malloc(bytes);
-}
-
-void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
-  *ptr = ops_malloc(bytes);
-}
-
-void ops_device_free(OPS_instance *instance, void** ptr) {
-  ops_free(*ptr)
-  *ptr = nullptr;
-}
-
-void ops_device_freehost(OPS_instance *instance, void** ptr) {
-  ops_free(*ptr)
-  *ptr = nullptr;
-}
-
-void ops_exit_device(OPS_instance *instance) {
-  (void*)instance;
-}
-
 
 void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
               const ops_int_halo *__restrict halo) {
@@ -121,27 +92,6 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
 
 char *OPS_realloc_fast(char *ptr, size_t olds, size_t news) {
   return (char*)ops_realloc(ptr, news);
-}
-
-void ops_H_D_exchanges_cuda(ops_arg *args, int nargs) {
-  (void)nargs;
-  (void)args;
-}
-
-void ops_set_dirtybit_cuda(ops_arg *args, int nargs) {
-  (void)nargs;
-  (void)args;
-}
-
-void ops_set_dirtybit_opencl(ops_arg *args, int nargs) {
-  (void)nargs;
-  (void)args;
-}
-
-void ops_cpHostToDevice(OPS_instance *instance, void **data_d, void **data_h, size_t size) {
-  (void)data_d;
-  (void)data_h;
-  (void)size;
 }
 
 void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,

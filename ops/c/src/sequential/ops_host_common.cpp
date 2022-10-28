@@ -43,6 +43,10 @@ void ops_init_device(OPS_instance *instance, const int argc, const char *const a
   instance->OPS_hybrid_gpu = 0;
 }
 
+void ops_exit_device(OPS_instance *instance) {
+  (void)instance;
+}
+
 void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
   throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
 }

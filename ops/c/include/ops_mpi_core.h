@@ -78,16 +78,6 @@ typedef struct {
 typedef sub_block *sub_block_list;
 
 ///
-/// Struct duplicating information in MPI_Datatypes for (strided) halo access
-///
-
-typedef struct {
-  int count;       ///< number of blocks
-  int blocklength; ///< size of blocks
-  int stride;      ///< stride between blocks
-} ops_int_halo;
-
-///
 /// Struct for holding the decomposition details of a dat on an MPI process
 ///
 

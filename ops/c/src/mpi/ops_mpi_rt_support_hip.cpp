@@ -36,43 +36,16 @@
   * @details Implements the runtime support routines for the OPS mpi+cuda
  * backend
   */
-#include <hip/hip_runtime.h>
-#include <ops_device_rt_support.h>
-
-void ops_init_device(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
-  if ((instance->OPS_block_size_x * instance->OPS_block_size_y * instance->OPS_block_size_z) > 1024) {
-    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
-  }
-  cutilDeviceInit(instance, argc, argv);
-  instance->OPS_hybrid_gpu = 1;
-  deviceSafeCall(instance->ostream(),hipDeviceSetCacheConfig(hipFuncCachePreferL1));
-
-}
-
-void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
-  deviceSafeCall(instance->ostream(), hipMalloc(ptr, bytes));
-}
-
-void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
-  deviceSafeCall(instance->ostream(), hipMallocHost(ptr, bytes));
-}
-
-void ops_device_free(OPS_instance *instance, void** ptr) {
-  deviceSafeCall(instance->ostream(),hipFree(*ptr));
-  *ptr = nullptr;
-}
-
-void ops_device_freehost(OPS_instance *instance, void** ptr) {
-  deviceSafeCall(instance->ostream(),hipFreeHost(*ptr));
-  *ptr = nullptr;
-}
-
-void ops_exit_device(OPS_instance *instance) {
-  (void*)instance;
-}
+#include <ops_hip_rt_support.h>
 
 int halo_buffer_size = 0;
 char *halo_buffer_d = NULL;
+
+void ops_exit_device(OPS_instance *instance) {
+  if (halo_buffer_d != NULL)
+    ops_device_free(instance, (void**)&halo_buffer_d);
+
+}
 
 __global__ void ops_hip_packer_1(const char *__restrict src,
                                   char *__restrict dest, int count, int len,
@@ -143,7 +116,7 @@ void ops_pack_hip_internal(ops_dat dat, const int src_offset, char *__restrict d
               const int halo_blocklength, const int halo_stride, const int halo_count) {
 
   if (dat->dirty_hd == 1) {
-    ops_upload_dat(dat);
+    ops_put_data(dat);
     dat->dirty_hd = 0;
   }
 
@@ -196,7 +169,7 @@ void ops_unpack_hip_internal(ops_dat dat, const int dest_offset, const char *__r
                 const int halo_blocklength, const int halo_stride, const int halo_count) {
 
   if (dat->dirty_hd == 1) {
-    ops_upload_dat(dat);
+    ops_put_data(dat);
     dat->dirty_hd = 0;
   }
   char *__restrict dest = dat->data_d + dest_offset * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
@@ -366,7 +339,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   }
 
   if (src->dirty_hd == 1) {
-    ops_upload_dat(src);
+    ops_put_data(src);
     src->dirty_hd = 0;
   }
 
@@ -427,7 +400,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   }
 
   if (dest->dirty_hd == 1) {
-    ops_upload_dat(dest);
+    ops_put_data(dest);
     dest->dirty_hd = 0;
   }
 
@@ -602,7 +575,7 @@ void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *ra
       range2[2*i+1] = 1;
     }
     if (dat->dirty_hd == 1) {
-      ops_upload_dat(dat);
+      ops_put_data(dat);
       dat->dirty_hd = 0;
     }
     ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
@@ -643,7 +616,7 @@ void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *rang
       range2[2*i+1] = 1;
     }
     if (dat->dirty_hd == 1) {
-      ops_upload_dat(dat);
+      ops_put_data(dat);
       dat->dirty_hd = 0;
     }
     ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
@@ -688,7 +661,7 @@ void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace
       range[2*i+1] = 1;
     }
     if (dat->dirty_hd == 1) {
-      ops_upload_dat(dat);
+      ops_put_data(dat);
       dat->dirty_hd = 0;
     }
     ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
@@ -725,7 +698,7 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
       range[2*i+1] = 1;
     }
     if (dat->dirty_hd == 1)
-      ops_upload_dat(dat);
+      ops_put_data(dat);
     ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
     target->data_d = data;
     target->elem_size = dat->elem_size;
