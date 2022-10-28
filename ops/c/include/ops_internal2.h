@@ -155,7 +155,15 @@ struct ops_kernel_descriptor {
 
 };
 
+///
+/// Struct duplicating information in MPI_Datatypes for (strided) halo access
+///
 
+typedef struct {
+  int count;       ///< number of blocks
+  int blocklength; ///< size of blocks
+  int stride;      ///< stride between blocks
+} ops_int_halo;
 
 
 ops_reduction ops_decl_reduction_handle_core(OPS_instance *instance, int size, const char *type,

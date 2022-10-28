@@ -38,13 +38,8 @@
   */
 
 #include <ops_mpi_core.h>
-#include <ops_device_rt_support.h>
+#include <ops_opencl_rt_support.h>
 #include <ops_exceptions.h>
-
-
-void ops_exit_device(OPS_instance *instance) {
-    delete instance->opencl_instance;
-}
 
 int halo_buffer_size = 0;
 size_t halo_buffer_size2 = 0;
@@ -57,6 +52,16 @@ cl_kernel *packer4_kernel = NULL;
 cl_kernel *unpacker1_kernel = NULL;
 cl_kernel *unpacker1_soa_kernel = NULL;
 cl_kernel *unpacker4_kernel = NULL;
+
+void ops_exit_device(OPS_instance *instance) {
+  if (halo_buffer_d != NULL)
+    clReleaseMemObject((cl_mem)(halo_buffer_d));
+  clSafeCall(clFinish(instance->opencl_instance->OPS_opencl_core.command_queue));
+  clSafeCall(clReleaseCommandQueue(instance->opencl_instance->OPS_opencl_core.command_queue));
+  clSafeCall(clReleaseContext(instance->opencl_instance->OPS_opencl_core.context));
+  ops_free(instance->opencl_instance->OPS_opencl_core.platform_id);
+  delete instance->opencl_instance;
+}
 
 const char packer1_kernel_src[] =
     "__kernel void ops_opencl_packer1("
@@ -174,7 +179,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
               const ops_int_halo *__restrict halo) {
 
   if (dat->dirty_hd == 1) {
-    ops_upload_dat(dat);
+    ops_put_data(dat);
     dat->dirty_hd = 0;
   }
 
@@ -456,7 +461,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
                 const ops_int_halo *__restrict halo) {
 
   if (dat->dirty_hd == 1) {
-    ops_upload_dat(dat);
+    ops_put_data(dat);
     dat->dirty_hd = 0;
   }
 
@@ -748,7 +753,7 @@ void ops_pack3(ops_dat dat, const int src_offset, char *__restrict dest,
   const char *__restrict src = dat->data + src_offset * dat->elem_size;
 
   if (dat->dirty_hd == 2) {
-    ops_download_dat(dat);
+    ops_get_data(dat);
     dat->dirty_hd = 0;
   }
   for (int i = 0; i < halo->count; i++) {
@@ -763,7 +768,7 @@ void ops_unpack3(ops_dat dat, const int dest_offset, const char *__restrict src,
   char *__restrict dest = dat->data + dest_offset * dat->elem_size;
 
   if (dat->dirty_hd == 2) {
-    ops_download_dat(dat);
+    ops_get_data(dat);
     dat->dirty_hd = 0;
   }
   for (int i = 0; i < halo->count; i++) {
@@ -771,7 +776,7 @@ void ops_unpack3(ops_dat dat, const int dest_offset, const char *__restrict src,
     src += halo->blocklength;
     dest += halo->stride;
   }
-  // ops_upload_dat(dat);
+  // ops_put_data(dat);
   dat->dirty_hd = 1;
 }
 
@@ -938,7 +943,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   cl_mem gpu_ptr = halo_buffer_d2;
 
   if (src->dirty_hd == 1) {
-    ops_upload_dat(src);
+    ops_put_data(src);
     src->dirty_hd = 0;
   }
 
@@ -1091,7 +1096,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   gpu_ptr = halo_buffer_d2;
 
   if (dest->dirty_hd == 1) {
-    ops_upload_dat(dest);
+    ops_put_data(dest);
     dest->dirty_hd = 0;
   }
 
@@ -1382,7 +1387,7 @@ void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *ra
       range2[2*i+1] = 1;
     }
     if (dat->dirty_hd == 1) {
-      ops_upload_dat(dat);
+      ops_put_data(dat);
       dat->dirty_hd = 0;
     }
     ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
@@ -1421,7 +1426,7 @@ void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *rang
       range2[2*i+1] = 1;
     }
     if (dat->dirty_hd == 1) {
-      ops_upload_dat(dat);
+      ops_put_data(dat);
     }
     ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
     target->data_d = data;
@@ -1463,7 +1468,7 @@ void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace
       range[2*i+1] = 1;
     }
     if (dat->dirty_hd == 1) {
-      ops_upload_dat(dat);
+      ops_put_data(dat);
       dat->dirty_hd = 0;
     }
     ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
@@ -1499,7 +1504,7 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
       range[2*i+1] = 1;
     }
     if (dat->dirty_hd == 1) {
-      ops_upload_dat(dat);
+      ops_put_data(dat);
     }
     ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
     target->data_d = data;

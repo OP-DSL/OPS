@@ -431,7 +431,3 @@ void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *rang
     (void)memspace;
   ops_dat_set_data_slab_host(dat, part, data, range);
 }
-
-void ops_exit_device(OPS_instance *instance) {
-  (void*)instance;
-}

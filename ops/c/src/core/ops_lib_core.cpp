@@ -260,15 +260,6 @@ void ops_init_core(OPS_instance *instance, const int argc, const char *const arg
   TAILQ_INIT(&instance->OPS_dat_list);
 }
 
-void _ops_init(OPS_instance *instance, const int argc, const char * const argv[], const int diags) {
-  ops_init_core(instance, argc, argv, diags);
-  ops_init_device(instance, argc, argv, diags);
-}
-
-void ops_init(const int argc, const char *const argv[], const int diags) {
-  _ops_init(OPS_instance::getOPSInstance(), argc, argv, diags);
-}
-
 void ops_exit_core(OPS_instance *instance) {
   ops_checkpointing_exit(instance);
   ops_exit_lazy(instance);
@@ -1999,6 +1990,7 @@ int ops_dat_copy_metadata_core(ops_dat target, ops_dat orig_dat)
 }
 
 void ops_cpHostToDevice(OPS_instance *instance, void **data_d, void **data_h, size_t size) {
+  if (instance->OPS_hybrid_gpu == 0) return;
   if ( *data_d == NULL ) {
     ops_device_malloc(instance, data_d, size);
   }

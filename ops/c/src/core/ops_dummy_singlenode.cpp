@@ -842,4 +842,13 @@ void ops_dat_deep_copy(ops_dat target, ops_dat source)
   ops_enqueue_kernel(desc);
 }
 
+void _ops_init(OPS_instance *instance, const int argc, const char * const argv[], const int diags) {
+  ops_init_core(instance, argc, argv, diags);
+  ops_init_device(instance, argc, argv, diags);
+}
+
+void ops_init(const int argc, const char *const argv[], const int diags) {
+  _ops_init(OPS_instance::getOPSInstance(), argc, argv, diags);
+}
+
 void ops_exit() { _ops_exit(OPS_instance::getOPSInstance()); }

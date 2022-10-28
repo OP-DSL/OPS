@@ -15,7 +15,7 @@ endif
 	touch .generated
 	touch ./OpenCL/$(MAIN_SRC)_seq_kernels.cpp
 
-TARGETS = $(APP)_dev_seq $(APP)_dev_mpi $(APP)_mpi $(APP)_mpi_openmp $(APP)_openmp $(APP)_seq $(APP)_mpi_inline $(APP)_tiled $(APP)_mpi_tiled $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled $(APP)_opencl $(APP)_mpi_opencl
+TARGETS = $(APP)_dev_seq $(APP)_dev_mpi $(APP)_mpi $(APP)_mpi_openmp $(APP)_openmp $(APP)_seq $(APP)_mpi_inline $(APP)_tiled $(APP)_mpi_tiled
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += $(APP)_openacc $(APP)_mpi_openacc
@@ -24,6 +24,12 @@ TARGETS += openacc_error
 endif
 ifdef THREADED
 CXXFLAGS += $(THREADING_FLAGS)
+endif
+ifdef OPENCL_INSTALL_PATH
+	TARGETS += $(APP)_opencl $(APP)_mpi_opencl
+endif
+ifdef CUDA_INSTALL_PATH
+	TARGETS += $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled
 endif
 
 all: $(TARGETS)
