@@ -31,7 +31,7 @@ set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_COMPILE_OPTIONS "${_prop2}")
 endif()
 endif()
 
-find_package(HDF5 COMPONENTS C HL)
+find_package(HDF5)
 if (CHECKPOINTING)
     if(NOT HDF5_FOUND)
         message( FATAL_ERROR "Checkpointing requires HDF5" )
@@ -53,7 +53,7 @@ endif()
 
 if ( OpenMP_CXX_FOUND )
     set_source_files_properties(
-        sequential/ops_seq.cpp
+        sequential/ops_host_singlenode.cpp
         externlib/ops_util.cpp
         mpi/ops_mpi_rt_support_host.cpp
         PROPERTIES
@@ -86,7 +86,8 @@ endif()
 
 
 add_library(ops_seq STATIC
-    sequential/ops_seq.cpp
+    sequential/ops_host_singlenode.cpp
+    sequential/ops_host_common.cpp
     core/ops_dummy_singlenode.cpp)
 set_property(TARGET ops_seq PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(ops_seq PUBLIC ops_core)
@@ -97,7 +98,8 @@ if(MPI_CXX_FOUND)
         mpi/ops_mpi_rt_support.cpp
         mpi/ops_mpi_core.cpp
         mpi/ops_mpi_rt_support_host.cpp
-        mpi/ops_mpi_partition.cpp)
+        mpi/ops_mpi_partition.cpp
+        sequential/ops_host_common.cpp)
     set_property(TARGET ops_mpi PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(ops_mpi
         PUBLIC
@@ -112,9 +114,10 @@ endif()
 if(CUDA_FOUND)
     add_library(ops_cuda STATIC
         cuda/ops_cuda_rt_support.cu
-        cuda/ops_cuda_rt_support.cpp
-        cuda/ops_cuda_decl.cpp
-        core/ops_dummy_singlenode.cpp)
+        cuda/ops_cuda_common.cu
+        cuda/ops_cuda_singlenode.cu
+        core/ops_dummy_singlenode.cpp
+        core/ops_device_singlenode_common.cpp)
     set_property(TARGET ops_cuda PROPERTY POSITION_INDEPENDENT_CODE ON)
     set_source_files_properties(cuda/ops_cuda_decl.cpp PROPERTIES COMPILE_DEFINITIONS SET_CUDA_CACHE_CONFIG)
     set_source_files_properties(cuda/ops_cuda_rt_support.cpp.cpp PROPERTIES COMPILE_DEFINITIONS SET_CUDA_CACHE_CONFIG)
@@ -134,7 +137,7 @@ if(MPI_CXX_FOUND AND CUDA_FOUND)
             mpi/ops_mpi_core.cpp
             mpi/ops_mpi_rt_support_cuda.cu
             mpi/ops_mpi_partition.cpp
-            cuda/ops_cuda_rt_support.cpp
+            cuda/ops_cuda_common.cu
     )
     set_property(TARGET ops_mpi_cuda PROPERTY POSITION_INDEPENDENT_CODE ON)
     set_source_files_properties(mpi/ops_mpi_decl_cuda.cpp PROPERTIES COMPILE_DEFINITIONS SET_CUDA_CACHE_CONFIG)
@@ -151,9 +154,10 @@ endif()
 
 if(OPENCL_FOUND)
     add_library(ops_opencl STATIC
-        opencl/ops_opencl_rt_support.cpp
+        opencl/ops_opencl_common.cpp
         opencl/ops_opencl_rt_support_kernels.cpp
-        opencl/ops_opencl_decl.cpp
+        opencl/ops_opencl_singlenode.cpp
+        core/ops_device_singlenode_common.cpp
         core/ops_dummy_singlenode.cpp)
     set_property(TARGET ops_opencl PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(ops_opencl
@@ -173,7 +177,7 @@ if(MPI_CXX_FOUND AND OPENCL_FOUND)
         mpi/ops_mpi_core.cpp
         mpi/ops_mpi_rt_support_opencl.cpp
         mpi/ops_mpi_partition.cpp
-        opencl/ops_opencl_rt_support.cpp
+        opencl/ops_opencl_common.cpp
     )
     set_property(TARGET ops_mpi_opencl PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(ops_mpi_opencl
