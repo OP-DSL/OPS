@@ -95,6 +95,7 @@ from ops_gen_mpi_cuda import ops_gen_mpi_cuda
 from ops_gen_mpi_hip import ops_gen_mpi_hip
 from ops_gen_mpi_openacc import ops_gen_mpi_openacc
 from ops_gen_mpi_opencl import ops_gen_mpi_opencl
+from ops_gen_sycl import ops_gen_sycl
 
 from util import comment_remover, remove_trailing_w_space
 from config import (
@@ -824,6 +825,7 @@ def generate_kernel_files(app_name, consts, kernels, soa_set):
     ops_gen_mpi_hip(app_name, consts, kernels, soa_set)
     ops_gen_mpi_openacc(app_name, consts, kernels, soa_set)
     ops_gen_mpi_opencl(app_name, consts, kernels, soa_set)
+    ops_gen_sycl(app_name, consts, kernels, soa_set)
 
     import subprocess
 
