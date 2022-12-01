@@ -128,8 +128,8 @@ void _ops_exit(OPS_instance *instance) {
   MPI_Finalized(&flag);
   if (!flag)
     MPI_Finalize();
-  ops_exit_device(instance);
   ops_exit_core(instance);
+  ops_exit_device(instance);
 }
 
 void ops_exit() {

@@ -787,8 +787,8 @@ void _ops_exit(OPS_instance *instance) {
     if (instance->OPS_reduct_d!=NULL) ops_device_free(instance, (void**)&instance->OPS_reduct_d);
   }
 
-  ops_exit_device(instance);
   ops_exit_core(instance);
+  ops_exit_device(instance);
 }
 
 void ops_dat_deep_copy(ops_dat target, ops_dat source) 

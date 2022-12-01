@@ -195,7 +195,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
 
 
 template <int dir>
-__global__ void ops_internal_copy_hip_kernel(char * dat0_p, char *dat1_p,
+__global__ void ops_internal_copy_device_kernel(char * dat0_p, char *dat1_p,
          int s0, int s01, int start0, int end0,
 #if OPS_MAX_DIM>1
         int s1, int s11, int start1, int end1,
@@ -287,8 +287,8 @@ __global__ void ops_internal_copy_hip_kernel(char * dat0_p, char *dat1_p,
 }
 
 
-void ops_internal_copy_hip(ops_kernel_descriptor *desc) {
-  int reverse = strcmp(desc->name, "ops_internal_copy_hip_reverse")==0;
+void ops_internal_copy_device(ops_kernel_descriptor *desc) {
+  int reverse = strcmp(desc->name, "ops_internal_copy_device_reverse")==0;
   int range[2*OPS_MAX_DIM]={0};
   for (int d = 0; d < desc->dim; d++) {
     range[2*d] = desc->range[2*d];

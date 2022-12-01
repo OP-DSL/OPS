@@ -2181,7 +2181,7 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
         file_name);
 
   // Create the dataspace for the dataset.
-  hsize_t dims_of_const = {dim};
+  hsize_t dims_of_const = (hsize_t)dim;
   dataspace = H5Screate_simple(1, &dims_of_const, NULL);
 
   // Create property list for collective dataset write.
