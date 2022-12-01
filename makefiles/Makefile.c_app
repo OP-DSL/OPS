@@ -31,6 +31,9 @@ endif
 ifdef CUDA_INSTALL_PATH
 	TARGETS += $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled
 endif
+ifdef SYCLCXX
+TARGETS += $(APP)_sycl $(APP)_mpi_sycl
+endif
 
 all: $(TARGETS)
 
@@ -160,6 +163,17 @@ $(APP)_mpi_opencl: ./OpenCL/$(MAIN_SRC)_mpi_opencl_kernels.o .generated Makefile
 	        $(MPICPP) $(CXXFLAGS) $(VAR) -I$(OPENCL_INC) $(INC) -I$(C_OPS_INC) -I. -DOPS_MPI \
                 -c -o ./OpenCL/$(MAIN_SRC)_mpi_opencl_kernels.o ./OpenCL/$(MAIN_SRC)_opencl_kernels.cpp
 
+#
+# SYCL version
+#
+SYCL_KERNELS = $(MAIN_SRC)_sycl_kernels.cpp
+$(APP)_sycl: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_sycl.a $(OPS_FILES_GEN) $(HEADERS)
+	$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./SYCL/$(SYCL_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SYCL) -o $(APP)_sycl
+$(APP)_mpi_sycl: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_sycl.a $(OPS_FILES_GEN) $(HEADERS)
+	$(SYCLMPICXX) -DOPS_MPI $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./SYCL/$(SYCL_KERNELS) $(HDF5_LIB_MPI) $(OPS_LIB_MPI_SYCL) -o $(APP)_mpi_sycl
+$(APP)_mpi_sycl_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_sycl.a $(OPS_FILES_GEN) $(HEADERS)
+	$(SYCLMPICXX) -DOPS_MPI -DOPS_LAZY $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./SYCL/$(SYCL_KERNELS) $(HDF5_LIB_MPI) $(OPS_LIB_MPI_SYCL) -o $(APP)_mpi_sycl_tiled
+
 
 #
 #error
@@ -172,4 +186,4 @@ openacc_error:
 #
 
 clean:
-	rm -f $(APP)_dev_seq $(APP)_dev_mpi $(APP)_mpi $(APP)_seq $(APP)_tiled $(APP)_mpi_inline $(APP)_openmp $(APP)_mpi_openmp $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled $(APP)_openacc $(APP)_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o $(APP)_opencl $(APP)_mpi_opencl $(APP)_mpi_tiled $(APP)_mpi_inline $(APP)_hip $(APP)_mpi_hip ./HIP/*.o ./OpenCL/*.o ./MPI_inline/*.o *.o *.lst
+	rm -f $(APP)_dev_seq $(APP)_dev_mpi $(APP)_mpi $(APP)_seq $(APP)_tiled $(APP)_mpi_inline $(APP)_openmp $(APP)_mpi_openmp $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled $(APP)_openacc $(APP)_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o $(APP)_opencl $(APP)_mpi_opencl $(APP)_mpi_tiled $(APP)_mpi_inline $(APP)_hip $(APP)_mpi_hip $(APP)_sycl $(APP)_mpi_sycl ./HIP/*.o ./SYCL/*.o ./OpenCL/*.o ./MPI_inline/*.o *.o *.lst

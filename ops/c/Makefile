@@ -66,6 +66,10 @@ ifdef CUDA_INSTALL_PATH
 endif
 endif
 
+ifdef SYCL_INSTALL_PATH
+	TARGETS += sycl mpi_sycl
+endif
+
 all: $(TARGETS)
 
 mklib:
@@ -90,6 +94,9 @@ $(C_OPS_OBJ)/%.o : src/cuda/%.cpp
 
 $(C_OPS_OBJ)/%.o : src/opencl/%.cpp
 	$(CXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
+
+$(C_OPS_OBJ)/%_sycl_mpi.o : src/mpi/%_sycl.cpp
+	$(SYCLMPICXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -c $< -o $@
 
 $(C_OPS_OBJ)/%_mpi.o : src/externlib/%.cpp
 	$(MPICXX) $(CXXFLAGS) -I$(C_OPS_INC)  $(HDF5_INC) -c $< -o $@
@@ -127,6 +134,9 @@ $(C_OPS_OBJ)/%.o : src/hip/%.cpp
 $(C_OPS_OBJ)/%.o : src/mpi/%.cu
 	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
+$(C_OPS_OBJ)/%.o : src/sycl/%.cpp
+	$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -c $< -o $@
+
 hdf5_seq: mklib $(C_OPS_OBJ)/ops_hdf5.o
 	ar -r $(C_OPS_LIB)/libops_hdf5_seq.a $(C_OPS_OBJ)/ops_hdf5.o
 
@@ -162,6 +172,15 @@ hip: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/
 	$(C_OPS_OBJ)/ops_hip_singlenode.o $(C_OPS_OBJ)/ops_dummy_singlenode.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o \
 	$(C_OPS_OBJ)/ops_device_singlenode_common.o
 
+sycl: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o $(C_OPS_OBJ)/ops_checkpointing.o \
+  $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_sycl_common.o $(C_OPS_OBJ)/ops_sycl_rt_support_kernels.o \
+  $(C_OPS_OBJ)/ops_sycl_singlenode.o $(C_OPS_OBJ)/ops_dummy_singlenode.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o \
+  $(C_OPS_OBJ)/ops_device_singlenode_common.o
+	ar -r $(C_OPS_LIB)/libops_sycl.a $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o $(C_OPS_OBJ)/ops_checkpointing.o \
+  $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_sycl_common.o $(C_OPS_OBJ)/ops_sycl_rt_support_kernels.o \
+  $(C_OPS_OBJ)/ops_sycl_singlenode.o $(C_OPS_OBJ)/ops_dummy_singlenode.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o \
+  $(C_OPS_OBJ)/ops_device_singlenode_common.o
+
 mpi: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o $(C_OPS_OBJ)/ops_checkpointing.o \
   $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_mpi_decl_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o $(C_OPS_OBJ)/ops_checkpointing_strategy_mpi.o \
   $(C_OPS_OBJ)/ops_mpi_core_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_host_mpi.o $(C_OPS_OBJ)/ops_mpi_partition_mpi.o $(C_OPS_OBJ)/ops_host_common.o
@@ -189,6 +208,15 @@ mpi_hip: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_O
 	$(C_OPS_OBJ)/ops_checkpointing.o $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_mpi_decl_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
 	$(C_OPS_OBJ)/ops_mpi_core_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_hip_mpi.o $(C_OPS_OBJ)/ops_mpi_partition_mpi.o \
 	$(C_OPS_OBJ)/ops_checkpointing_strategy.o $(C_OPS_OBJ)/ops_hip_common.o
+
+mpi_sycl: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o \
+  $(C_OPS_OBJ)/ops_checkpointing.o $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_mpi_decl_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
+  $(C_OPS_OBJ)/ops_mpi_core_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_sycl_mpi.o $(C_OPS_OBJ)/ops_mpi_partition_mpi.o \
+  $(C_OPS_OBJ)/ops_checkpointing_strategy.o $(C_OPS_OBJ)/ops_sycl_common.o
+	ar -r $(C_OPS_LIB)/libops_mpi_sycl.a $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o \
+  $(C_OPS_OBJ)/ops_checkpointing.o $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_mpi_decl_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
+  $(C_OPS_OBJ)/ops_mpi_core_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_sycl_mpi.o $(C_OPS_OBJ)/ops_mpi_partition_mpi.o \
+  $(C_OPS_OBJ)/ops_checkpointing_strategy.o $(C_OPS_OBJ)/ops_sycl_common.o
 
 opencl: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o $(C_OPS_OBJ)/ops_checkpointing.o \
   $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_opencl_common.o $(C_OPS_OBJ)/ops_opencl_rt_support_kernels.o \
