@@ -217,6 +217,16 @@ void ops_unpack_hip_internal(ops_dat dat, const int dest_offset, const char *__r
   dat->dirty_hd = 2;
 }
 
+void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
+              const ops_int_halo *__restrict halo) {
+  ops_pack_hip_internal(dat,  src_offset, dest, halo->blocklength, halo->stride, halo->count);
+}
+void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
+                const ops_int_halo *__restrict halo) {
+  ops_unpack_hip_internal(dat,  dest_offset, src, halo->blocklength, halo->stride, halo->count);
+}
+
+
 char* OPS_realloc_fast(char *ptr, size_t olds, size_t news) {
   if (OPS_instance::getOPSInstance()->OPS_gpu_direct) {
     if (ptr == NULL) {
