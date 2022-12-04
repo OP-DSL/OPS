@@ -337,7 +337,7 @@ void ops_internal_copy_device(ops_kernel_descriptor *desc) {
 
   if (grid.x>0 && grid.y>0 && grid.z>0) {
     if (reverse)
-    hipLaunchKernelGGL(ops_internal_copy_hip_kernel<1>,grid,tblock,0,0,
+    hipLaunchKernelGGL(ops_internal_copy_device_kernel<1>,grid,tblock,0,0,
         dat0_p,
         dat1_p,
         s0,s01, range[2*0], range[2*0+1],
@@ -357,7 +357,7 @@ void ops_internal_copy_device(ops_kernel_descriptor *desc) {
         dat0->block->instance->OPS_soa
         );
     else
-  hipLaunchKernelGGL(ops_internal_copy_hip_kernel<0>,grid,tblock,0,0,
+  hipLaunchKernelGGL(ops_internal_copy_device_kernel<0>,grid,tblock,0,0,
         dat0_p,
         dat1_p,
         s0,s01, range[2*0], range[2*0+1],
