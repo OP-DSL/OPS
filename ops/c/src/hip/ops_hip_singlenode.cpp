@@ -36,7 +36,7 @@
   * @details Implements HIP backend runtime support functions applicable to non-MPI backend
   */
 
-#inclide <ops_lib_core.h>
+#include <ops_lib_core.h>
 #include <hip/hip_runtime.h>
 
 void ops_exit_device(OPS_instance *instance) {

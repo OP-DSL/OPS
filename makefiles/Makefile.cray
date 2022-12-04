@@ -1,5 +1,10 @@
 CC        := cc
-CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
-CCFLAGS   := -O3 -hgnu
+#CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
+CCFLAGS   := -Ofast -ffp=3
 CXX       := CC
 CXXFLAGS  := $(CCFLAGS)
+MPICC=cc
+MPICPP=CC
+MPICXX=CC
+HIPCC=CC
+HIPFLAGS=-std=c++11 --rocm-path=${ROCM_PATH} --offload-arch=gfx90a -x hip --rocm-path=${ROCM_PATH} -L${ROCM_PATH}/lib -lamdhip64 -I/opt/rocm/hip/include -D__HIP_PLATFORM_AMD__
