@@ -424,7 +424,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   dest->dirty_hd = 2;
 }
 
-__global__ void ops_internal_copy_hip_kernel(char * dat0_p, char *dat1_p,
+__global__ void ops_internal_copy_device_kernel(char * dat0_p, char *dat1_p,
          int s0, int start0, int end0,
 #if OPS_MAX_DIM>1
         int s1, int start1, int end1,
@@ -492,7 +492,7 @@ __global__ void ops_internal_copy_hip_kernel(char * dat0_p, char *dat1_p,
 }
 
 
-void ops_internal_copy_hip(ops_kernel_descriptor *desc) {
+void ops_internal_copy_device(ops_kernel_descriptor *desc) {
   int range[2*OPS_MAX_DIM]={0};
   for (int d = 0; d < desc->dim; d++) {
     range[2*d] = desc->range[2*d];
@@ -534,7 +534,7 @@ void ops_internal_copy_hip(ops_kernel_descriptor *desc) {
               dat0->block->instance->OPS_block_size_z);
 
   if (grid.x>0 && grid.y>0 && grid.z>0) {
-  hipLaunchKernelGGL(ops_internal_copy_hip_kernel,grid, tblock, 0, 0, 
+  hipLaunchKernelGGL(ops_internal_copy_device_kernel,grid, tblock, 0, 0, 
         dat0_p,
         dat1_p,
         s0, range[2*0], range[2*0+1],
@@ -599,10 +599,10 @@ void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *ra
       prod *= target->size[d];
     }
     ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    desc->name = "ops_internal_copy_hip";
+    desc->name = "ops_internal_copy_device";
     desc->device = 1;
-    desc->function = ops_internal_copy_hip;
-    ops_internal_copy_hip(desc);
+    desc->function = ops_internal_copy_device;
+    ops_internal_copy_device(desc);
     target->data_d = NULL;
     ops_free(target);
     ops_free(desc->args);
@@ -640,10 +640,10 @@ void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *rang
       prod *= target->size[d];
     }
     ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    desc->name = "ops_internal_copy_hip_reverse";
+    desc->name = "ops_internal_copy_device_reverse";
     desc->device = 1;
-    desc->function = ops_internal_copy_hip;
-    ops_internal_copy_hip(desc);
+    desc->function = ops_internal_copy_device;
+    ops_internal_copy_device(desc);
     target->data_d = NULL;
     ops_free(target);
     ops_free(desc->args);
@@ -680,10 +680,10 @@ void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace
     target->base_offset = 0;
     for (int d = 0; d < OPS_MAX_DIM; d++) target->size[d] = size[d];
     ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    desc->name = "ops_internal_copy_hip";
+    desc->name = "ops_internal_copy_device";
     desc->device = 1;
-    desc->function = ops_internal_copy_hip;
-    ops_internal_copy_hip(desc);
+    desc->function = ops_internal_copy_device;
+    ops_internal_copy_device(desc);
     target->data_d = NULL;
     ops_free(target);
     ops_free(desc->args);
@@ -715,10 +715,10 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
     target->base_offset = 0;
     for (int d = 0; d < OPS_MAX_DIM; d++) target->size[d] = size[d];
     ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    desc->name = "ops_internal_copy_hip_reverse";
+    desc->name = "ops_internal_copy_device_reverse";
     desc->device = 1;
-    desc->function = ops_internal_copy_hip;
-    ops_internal_copy_hip(desc);
+    desc->function = ops_internal_copy_device;
+    ops_internal_copy_device(desc);
     target->data_d = NULL;
     ops_free(target);
     ops_free(desc->args);
