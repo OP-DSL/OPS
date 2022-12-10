@@ -359,8 +359,8 @@ void ops_decomp_dats(sub_block *sb) {
     sub_dat *sd = OPS_sub_dat_list[dat->index];
 
     // aggregate size and prod array
-    int *prod_t = (int *)ops_malloc((sb->ndim + 1) * sizeof(int));
-    int *prod = &prod_t[1];
+    size_t *prod_t = (size_t *)ops_malloc((sb->ndim + 1) * sizeof(size_t));
+    size_t *prod = &prod_t[1];
     prod[-1] = 1;
     sd->prod = prod;
     sd->halos = NULL;

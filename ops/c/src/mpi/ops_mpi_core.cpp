@@ -584,8 +584,8 @@ ops_dat ops_dat_copy_mpi_core(ops_dat orig_dat) {
   sd->dat = dat;
   sd->dirty_dir_send = dirt1;
   sd->dirty_dir_recv = dirt2;
-  int *prod_t = (int *)ops_malloc((orig_dat->block->dims + 1) * sizeof(int));
-  memcpy(prod_t, &OPS_sub_dat_list[orig_dat->index]->prod[-1], (orig_dat->block->dims + 1) * sizeof(int));
+  size_t *prod_t = (size_t *)ops_malloc((orig_dat->block->dims + 1) * sizeof(size_t));
+  memcpy(prod_t, &OPS_sub_dat_list[orig_dat->index]->prod[-1], (orig_dat->block->dims + 1) * sizeof(size_t));
   sd->prod = &prod_t[1];
   memcpy(dirt1, OPS_sub_dat_list[orig_dat->index]->dirty_dir_send, sizeof(int) * 2 * dat->block->dims * MAX_DEPTH);
   memcpy(dirt2, OPS_sub_dat_list[orig_dat->index]->dirty_dir_recv, sizeof(int) * 2 * dat->block->dims * MAX_DEPTH);
