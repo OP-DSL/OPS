@@ -18,6 +18,7 @@ OUT := -o
 AR := ar -r 
 OPS_LIB_SEQ=-lops_seq
 OPS_LIB_CUDA=-lops_cuda
+OPS_LIB_SYCL=-lops_sycl
 OPS_LIB_OPENCL=-lops_opencl
 OPS_LIB_HIP=-lops_hip
 OPS_LIB_MPI=-lops_mpi
