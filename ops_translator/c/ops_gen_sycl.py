@@ -1090,7 +1090,10 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
 
     for kernel in kernels:
         if kernel['name'] not in kernel_name_list:
-            code('#include "' + kernel['name'] + '_sycl_kernel.cpp"')
+            if kernel['name'] == 'calc_dt_kernel_print':
+              code('#include "../MPI_OpenMP/' + kernel['name'] + '_cpu_kernel.cpp"')
+            else:
+              code('#include "' + kernel['name'] + '_sycl_kernel.cpp"')
             kernel_name_list.append(kernel['name'])
 
     with open('./SYCL/' + master_basename[0] + '_sycl_kernels.cpp',
