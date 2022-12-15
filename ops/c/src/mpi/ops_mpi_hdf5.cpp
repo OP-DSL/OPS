@@ -2420,6 +2420,10 @@ void determine_local_range(const ops_dat dat, const int *global_range,
     local_range[2 * i] = local_start[i];
     local_range[2 * i + 1] = local_end[i];
   }
+  // printf(
+  //     "At Rank = %d istart=%d iend=%d  jstart=%d jend=%d  kstart=%d kend=%d\n",
+  //     ops_my_global_rank, local_range[0], local_range[1], local_range[2],
+  //     local_range[3], local_range[4], local_range[5]);
   delete arg_idx;
   delete local_start;
   delete local_end;
@@ -2461,6 +2465,16 @@ void copy_loop_slab(char *dest, char *src, const int *dest_size,
                          range_max_dim[2 * 0] - d_m[0]) *
                         elem_size],
                    dest_size[0]);
+            // int i0{(dest[moff_dest + loff_dest +
+            //              k * dest_size[0] * dest_size[1] + j * dest_size[0]};
+            // int i1{dest[moff_dest + loff_dest +
+            //              k * dest_size[0] * dest_size[1] + j * dest_size[0]+elem_size};
+            // int i2{dest[moff_dest + loff_dest +
+            //              k * dest_size[0] * dest_size[1] + j * dest_size[0]+2*elem_size};
+            // printf("At copy rank=%d, size0=%d xs=%d\n", ops_my_global_rank,
+            //        dest_size[0], range_max_dim[2 * 0]);
+            // printf("At copy rank=%d, i0=%d i1=%d i2=%d\n", ops_my_global_rank,
+            //        i0, i1, i2);
           } else {
             memcpy(&src[(moff_src + loff_src +
                          (range_max_dim[2 * 2] + k - d_m[2]) * src_size[1] *
@@ -2596,6 +2610,10 @@ void copy_data_buf(const ops_dat &dat, const int *local_range,
     throw OPSException(OPS_NOT_IMPLEMENTED,
                        "Error, missing OPS implementation: ops_dat_fetch_data "
                        "not implemented for SoA");
+  // printf(
+  //     "At Rank II = %d istart=%d iend=%d  jstart=%d jend=%d  kstart=%d kend=%d\n",
+  //     ops_my_global_rank,range_max_dim[0], range_max_dim[1], range_max_dim[2],
+  //     range_max_dim[3],range_max_dim[4], range_max_dim[5]);
   copy_loop_slab<0>(local_buf, dat->data, local_buf_size, dat->size, d_m,
                     dat->elem_size, range_max_dim);
   dat->dirty_hd = 1;
@@ -2745,7 +2763,13 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
 
       local_data_size_c[d] = local_range[2 * d + 1] - local_range[2 * d];
       global_data_size_c[d] = global_range[2 * d + 1] - global_range[2 * d];
-      global_data_disp_c[d] = sd->decomp_disp[d] < 0 ? 0 : sd->decomp_disp[d];
+      global_data_disp_c[d] = sd->decomp_disp[d] < 0
+                                  ? 0
+                                  : (sd->decomp_disp[d] - global_range[2 * d]);
+      // printf("At slab Rank= %d disp[%d]=%d gb=%d ld=%d ls=%d\n",
+      // ops_my_global_rank,
+      //        d, sd->decomp_disp[d], global_data_disp_c[d],
+      //        local_range[2 * d],local_data_size_c[d]);
     }
 
     local_data_size_c[0] *= (dat->dim);
