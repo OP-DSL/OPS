@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
   int s3D_000[]{0, 0, 0};
   ops_stencil S3D_000{ops_decl_stencil(3, 1, s3D_000, "000")};
 
-  int iterRange[]{0, nx, 0, ny, 0, nz};
+  int iterRange[]{-1, nx+1, -1, ny+1, -0, nz+1};
 
   // declare constants
   ops_decl_const("nx", 1, "int", &nx);
@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
   ops_printf("The time write 1 series is %f\n", total1);
   ops_printf("The time write 2 series is %f\n", total2);
   ops_printf("The time write velo series is %f\n", total3);
-  int range[]{0, 16, 0, 32, 32, 64};
+  int range[]{-1, 16, -1, 32, 32, 64};
   ops_timers(&ct0, &et0);
   ops_write_data_slab_hdf5(v, range, "slab.h5", "vslab");
   ops_timers(&ct1, &et1);
