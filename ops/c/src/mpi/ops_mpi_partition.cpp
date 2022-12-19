@@ -940,6 +940,8 @@ void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::s
                        &proc_dimsplit, opts);
 
   for (int b = 0; b < OPS_instance::getOPSInstance()->OPS_block_index; b++) { // for each block
+    double wall_t1, wall_t2, c;
+    ops_timers(&c, &wall_t1);
     // decompose this block
     int num_proc = proc_offsets[b + 1] - proc_offsets[b];
     ops_block block = OPS_instance::getOPSInstance()->OPS_block_list[b].block;
@@ -952,6 +954,7 @@ void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::s
 
     // decompose dats defined on this block
     ops_decomp_dats(sb);
+    ops_timers(&c, &wall_t2);
     if (sb->owned && OPS_instance::getOPSInstance()->OPS_diags>2) {
       printf(" ================================================================"
              "===========\n");
@@ -965,7 +968,7 @@ void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::s
       for (int n = 0; n < sb->ndim; n++)
         printf(" %5d  :  %9d  :  %9d  :  %5d  :  %5d\n", n, sb->id_m[n],
                sb->id_p[n], sb->decomp_disp[n], sb->decomp_size[n]);
-      printf("\n");
+      printf("Partitioning time: %g seconds\n", wall_t2-wall_t1);
     }
     max_block_dims = MAX(max_block_dims, sb->ndim);
     for (int n = 0; n < sb->ndim; n++)
