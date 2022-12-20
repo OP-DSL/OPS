@@ -57,17 +57,28 @@ from util import complex_numbers_cuda, get_kernel_func_text
 from util import comm, code, FOR, ENDFOR, IF, ENDIF
 
 
-def ops_gen_mpi_cuda(master, consts, kernels, soa_set):
+def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
     NDIM = 2  # the dimension of the application is hardcoded here .. need to get this dynamically
 
     src_dir = os.path.dirname(master) or "."
     master_basename = os.path.splitext(os.path.basename(master))
 
+    if hip == 1:
+      cuda='hip'
+      cutil='hip'
+    else:
+      cuda='cuda'
+      cutil='cutil'
+
     ##########################################################################
     #  create new kernel file
     ##########################################################################
-    if not os.path.exists("./CUDA"):
-        os.makedirs("./CUDA")
+    if hip == 1:
+      if not os.path.exists("./HIP"):
+          os.makedirs("./HIP")
+    else:
+      if not os.path.exists("./CUDA"):
+          os.makedirs("./CUDA")
 
     for nk in range(0, len(kernels)):
         assert config.file_text == "" and config.depth == 0
@@ -314,17 +325,17 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set):
             if arg_typ[n] == "ops_arg_gbl" and accs[n] == OPS_INC:
                 code(f"for (int d=0; d<{dims[n]}; d++)")
                 code(
-                    f"  ops_reduction_cuda<OPS_INC>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
+                    f"  ops_reduction_"+cuda+f"<OPS_INC>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
                 )
             if arg_typ[n] == "ops_arg_gbl" and accs[n] == OPS_MIN:
                 code(f"for (int d=0; d<{dims[n]}; d++)")
                 code(
-                    f"  ops_reduction_cuda<OPS_MIN>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
+                    f"  ops_reduction_"+cuda+f"<OPS_MIN>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
                 )
             if arg_typ[n] == "ops_arg_gbl" and accs[n] == OPS_MAX:
                 code(f"for (int d=0; d<{dims[n]}; d++)")
                 code(
-                    f"  ops_reduction_cuda<OPS_MAX>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
+                    f"  ops_reduction_"+cuda+f"<OPS_MAX>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
                 )
 
         code("")
@@ -451,7 +462,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set):
                 if NDIM > 3 or (NDIM == 3 and soa_set):
                     code(f"dims_{name}_h[{n}][2] = zdim{n};")
         code(
-            f"cutilSafeCall(block->instance->ostream(), cudaMemcpyToSymbol( dims_{name}, dims_{name}_h, sizeof(dims_{name})));"
+            cutil+f"SafeCall(block->instance->ostream(), "+cuda+f"MemcpyToSymbol( dims_{name}, dims_{name}_h, sizeof(dims_{name})));"
         )
         ENDIF()
 
@@ -751,7 +762,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set):
         config.depth = config.depth - 2
 
         code("")
-        code("cutilSafeCall(block->instance->ostream(), cudaGetLastError());")
+        code(cutil+"SafeCall(block->instance->ostream(), "+cuda+"GetLastError());")
         code("")
 
         #
@@ -783,7 +794,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set):
                 code("")
 
         IF("block->instance->OPS_diags>1")
-        code("cutilSafeCall(block->instance->ostream(), cudaDeviceSynchronize());")
+        code(cutil+"SafeCall(block->instance->ostream(), "+cuda+"DeviceSynchronize());")
         code("ops_timers_core(&c1,&t1);")
         code(f"block->instance->OPS_kernels[{nk}].time += t1-t2;")
         ENDIF()
@@ -865,7 +876,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set):
         ##########################################################################
         #  output individual kernel file
         ##########################################################################
-        util.write_text_to_file(f"./CUDA/{name}_cuda_kernel.cu")
+        util.write_text_to_file(f"./CUDA/{name}_"+cuda+f"_kernel.cu")
 
     # end of main kernel call loop
 
@@ -880,8 +891,8 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set):
         code("#define OPS_SOA")
     code('#include "ops_lib_core.h"')
     code("")
-    code('#include "ops_cuda_rt_support.h"')
-    code('#include "ops_cuda_reduction.h"')
+    code('#include "ops_'+cuda+'_rt_support.h"')
+    code('#include "ops_'+cuda+'_reduction.h"')
     code("")
     code(
         "#include <cuComplex.h>"
@@ -908,19 +919,19 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set):
         IF('!strcmp(name,"' + (str(consts[nc]["name"]).replace('"', "")).strip() + '")')
         if consts[nc]["dim"].isdigit():
             code(
-                "cutilSafeCall(instance->ostream(),cudaMemcpyToSymbol("
+                cutil+"SafeCall(instance->ostream(),"+cuda+"MemcpyToSymbol("
                 + (str(consts[nc]["name"]).replace('"', "")).strip()
                 + ", dat, dim*size));"
             )
         else:
             code(
-                "char *temp; cutilSafeCall(instance->ostream(),cudaMalloc((void**)&temp,dim*size));"
+                "char *temp; "+cutil+"SafeCall(instance->ostream(),"+cuda+"Malloc((void**)&temp,dim*size));"
             )
             code(
-                "cutilSafeCall(instance->ostream(),cudaMemcpy(temp,dat,dim*size,cudaMemcpyHostToDevice));"
+                cutil+"SafeCall(instance->ostream(),"+cuda+"Memcpy(temp,dat,dim*size,"+cuda+"MemcpyHostToDevice));"
             )
             code(
-                "cutilSafeCall(instance->ostream(),cudaMemcpyToSymbol("
+                cutil+"SafeCall(instance->ostream(),"+cuda+"MemcpyToSymbol("
                 + (str(consts[nc]["name"]).replace('"', "")).strip()
                 + ", &temp, sizeof(char *)));"
             )
@@ -940,6 +951,9 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set):
     comm("user kernel files")
 
     for kernel_name in map(lambda kernel: kernel["name"], kernels):
-        code(f'#include "{kernel_name}_cuda_kernel.cu"')
+        if hip==1:
+            code(f'#include "{kernel_name}_hip_kernel.cpp"')
+        else:
+            code(f'#include "{kernel_name}_cuda_kernel.cu"')
 
     util.write_text_to_file(f"./CUDA/{master_basename[0]}_kernels.cu")
