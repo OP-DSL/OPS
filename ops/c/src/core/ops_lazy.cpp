@@ -391,23 +391,25 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   if (instance->ops_cache_size == 0)
     instance->ops_cache_size = (int)ops_internal_get_cache_size(instance) / 1000;
   // If tile sizes undefined, make an educated guess
+    // Figure out which datasets are being accessed in these loops
+  std::vector<int> datasets_touched(instance->OPS_dat_index, 0);
+  for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
+    for (int arg = 0; arg < ops_kernel_list[i]->nargs; arg++)
+      if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT)
+        datasets_touched[ops_kernel_list[i]->args[arg].dat->index] = 1;
+  }
+  size_t total_mem = 0;
+  ops_dat_entry *item;
+  TAILQ_FOREACH(item, &instance->OPS_dat_list, entries) {
+    if (datasets_touched[item->dat->index] == 1)
+      total_mem += item->dat->mem;
+  }
+
+  double data_per_point = (double)total_mem / (double)full_owned_size;
+  if (instance->OPS_diags > 3)
+      ops_printf2(instance, "Bytes per gridpoint: %g\n", data_per_point);
   if (tile_sizes[0] == -1 && tile_sizes[1] == -1 && tile_sizes[2] == -1 &&
       instance->ops_cache_size != 0) {
-    // Figure out which datasets are being accessed in these loops
-    std::vector<int> datasets_touched(instance->OPS_dat_index, 0);
-    for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
-      for (int arg = 0; arg < ops_kernel_list[i]->nargs; arg++)
-        if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT)
-          datasets_touched[ops_kernel_list[i]->args[arg].dat->index] = 1;
-    }
-    size_t total_mem = 0;
-    ops_dat_entry *item;
-    TAILQ_FOREACH(item, &instance->OPS_dat_list, entries) {
-      if (datasets_touched[item->dat->index] == 1)
-        total_mem += item->dat->mem;
-    }
-
-    double data_per_point = (double)total_mem / (double)full_owned_size;
     int points_per_tile = int((double)instance->ops_cache_size * 1000000.0 / data_per_point);
     if (dims == 2) {
       // aim for an X size twice as much as the Y size, and the Y size an

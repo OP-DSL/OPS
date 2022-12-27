@@ -6,7 +6,7 @@ ifdef DEBUG
 	CXXFLAGS   := -O0 -g -xHost -DOPS_DEBUG -std=c++11
 else
 	CCFLAGS   := -O3 -g -xHost -std=c99 -qopenmp -qopt-report #enmp #vec-report -xAVX
-	CXXFLAGS   := -O3 -g -xHost -qopenmp -qopt-report -std=c++11 #-qopenmp #vec-report -xAVX
+	CXXFLAGS   := -O3 -g -xHost -qopenmp -qopt-report -std=c++11 -qopt-zmm-usage=high #-qopenmp #vec-report -xAVX
 endif
 ifdef IEEE
 	CCFLAGS += -fp-model strict -fp-model source -prec-div -prec-sqrt
