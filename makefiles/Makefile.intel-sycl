@@ -11,6 +11,10 @@ OMPFLAGS := -fopenmp
 ifdef THREADED
 	THREADING_FLAGS ?= -fopenmp
 endif
+ifdef PROFILE_ITT
+	CXXFLAGS += -DPROFILE_ITT -I$(VTUNE_PROFILER_DIR)/include
+	OPS_LINK += -L$(VTUNE_PROFILER_DIR)/lib64 -littnotify
+endif
 SYCLCXX = dpcpp
 SYCL_FLAGS = -fsycl -fsycl-targets=spir64_x86_64 -Xs "-march=avx512"  #-I$(SYCL_INSTALL_PATH)/include #-fsycl-targets=spir64_x86_64-unknown-unknown-sycldevice #intel sycl 
 SYCLMPICXX = mpicxx

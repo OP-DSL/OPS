@@ -43,6 +43,9 @@
 #include <string.h>
 #include <math.h>
 
+#ifdef PROFILE_ITT
+#include <ittnotify.h>
+#endif
 
 // OPS header file
 #include "ops_seq_v2.h"
@@ -168,6 +171,10 @@ int main(int argc, char **argv)
   **-----------------------------hydro loop---------------------------------**
   ***************************************************************************/
   double ct0, ct1, et0, et1;
+
+#ifdef PROFILE_ITT
+  __itt_resume();
+#endif
   ops_timers(&ct0, &et0);
 
   while(1) {
@@ -224,6 +231,9 @@ int main(int argc, char **argv)
   }
 
   ops_timers(&ct1, &et1);
+#ifdef PROFILE_ITT
+  __itt_pause();
+#endif
 
     ops_timing_output(std::cout); // print output to STDOUT
     //ops_timing_output(g_out);

@@ -53,6 +53,9 @@
 // Cloverleaf definitions
 #include "definitions.h"
 
+#ifdef PROFILE_ITT
+#include <ittnotify.h>
+#endif
 
 // Cloverleaf functions
 void initialise();
@@ -172,6 +175,9 @@ int main(int argc, const char **argv) {
   **-----------------------------hydro loop---------------------------------**
   ***************************************************************************/
   double ct0, ct1, et0, et1;
+#ifdef PROFILE_ITT
+  __itt_resume();
+#endif
   ops_timers(&ct0, &et0);
 
   ops_checkpointing_initphase_done();
@@ -234,6 +240,9 @@ int main(int argc, const char **argv) {
   }
 
   ops_timers(&ct1, &et1);
+#ifdef PROFILE_ITT
+  __itt_pause();
+#endif
   if(profiler_on == 1) {
     ops_timing_output(std::cout); // print output to STDOUT
     //ops_timing_output(g_out);
