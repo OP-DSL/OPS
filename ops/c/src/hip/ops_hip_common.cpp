@@ -31,25 +31,25 @@
 */
 
 /** @file
-  * @brief OPS common HIP-specific functions (non-MPI and MPI)
+  * @brief OPS common cuda-specific functions (non-MPI and MPI)
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the HIP-specific routines shared between single-GPU 
   * and MPI+HIP backends
   */
 
-#include <ops_device_rt_support.h>
 #include <ops_hip_rt_support.h>
-#include <hip/hip_runtime.h>
 
 //
 // HIP utility functions
 //
 
-void __hipSafeCall(std::ostream &stream, hipError_t err, const char *file, const int line) {//??hiperror->megtal�ltam neten
-  if (hipSuccess != err) {//hipsuccess->elvileg megtal�ltam neten
+void __hipSafeCall(std::ostream &stream, hipError_t err, const char *file, const int line) {
+  if (hipSuccess != err) {
     fprintf2(stream, "%s(%i) : hipSafeCall() Runtime API error : %s.\n", file,
             line, hipGetErrorString(err));
-    throw OPSException(OPS_RUNTIME_ERROR, hipGetErrorString(err));
+    if (err == hipErrorNoBinaryForGpu) 
+    throw OPSException(OPS_RUNTIME_ERROR, "Please make sure the OPS HIP/MPI+HIP backends were compiled for your GPU");
+    else throw OPSException(OPS_RUNTIME_ERROR, hipGetErrorString(err));
   }
 }
 
@@ -59,6 +59,8 @@ void ops_init_device(OPS_instance *instance, const int argc, const char *const a
   }
   cutilDeviceInit(instance, argc, argv);
   instance->OPS_hybrid_gpu = 1;
+  hipSafeCall(instance->ostream(),hipDeviceSetCacheConfig(hipFuncCachePreferL1));
+
 }
 
 void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
@@ -75,7 +77,7 @@ void ops_device_free(OPS_instance *instance, void** ptr) {
 }
 
 void ops_device_freehost(OPS_instance *instance, void** ptr) {
-  hipSafeCall(instance->ostream(),hipFreeHost(*ptr));
+  hipSafeCall(instance->ostream(),hipHostFree(*ptr));
   *ptr = nullptr;
 }
 
@@ -99,6 +101,11 @@ void ops_device_sync(OPS_instance *instance) {
   hipSafeCall(instance->ostream(), hipDeviceSynchronize());
 }
 
+// Small re-declaration to avoid using struct in the C version.
+// This is due to the different way in which C and C++ see structs
+
+typedef struct hipDeviceProp_t cudaDeviceProp_t;
+
 void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const argv[]) {
   (void)argc;
   (void)argv;
@@ -110,25 +117,25 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
 
   // Test we have access to a device
 
-  float *test;
+  float *test = 0;
   int my_id = ops_get_proc();
   instance->OPS_hybrid_gpu = 0;
   for (int i = 0; i < deviceCount; i++) {
-    hipError_t err = hipSetDevice((i+my_id)%deviceCount);//hipsetdevice is elvileg van
+    hipError_t err = hipSetDevice((i+my_id)%deviceCount);
     if (err == hipSuccess) {
-      hipError_t err = hipMalloc((void **)&test, sizeof(float));
-      if (err == hipSuccess) {
+      hipError_t err2 = hipMalloc((void **)&test, sizeof(float));
+      if (err2 == hipSuccess) {
         instance->OPS_hybrid_gpu = 1;
         break;
       }
     }
   }
   if (instance->OPS_hybrid_gpu) {
-    hipFree(test);//Ilyen is van 
+    hipFree(test);
 
     int deviceId = -1;
     hipGetDevice(&deviceId);
-    hipDeviceProp_t deviceProp;
+    cudaDeviceProp_t deviceProp;
     hipSafeCall(instance->ostream(), hipGetDeviceProperties(&deviceProp, deviceId));
     if (instance->OPS_diags>2) instance->ostream() << "\n Using HIP device: " <<
       deviceId << " " << deviceProp.name;
