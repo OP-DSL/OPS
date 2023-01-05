@@ -31,12 +31,14 @@
 */
 
 /** @file
-  * @brief OPS mpi+cuda run-time support routines
+  * @brief OPS mpi+hip run-time support routines
   * @author Gihan Mudalige, Istvan Reguly
-  * @details Implements the runtime support routines for the OPS mpi+cuda
+  * @details Implements the runtime support routines for the OPS mpi+hip
  * backend
   */
+
 #include <ops_hip_rt_support.h>
+extern int ops_my_global_rank;
 
 int halo_buffer_size = 0;
 char *halo_buffer_d = NULL;
@@ -50,7 +52,7 @@ void ops_exit_device(OPS_instance *instance) {
 __global__ void ops_hip_packer_1(const char *__restrict src,
                                   char *__restrict dest, int count, int len,
                                   int stride) {
-  int idx =  hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int block = idx / len;
   if (idx < count * len) {
     dest[idx] = src[stride * block + idx % len];
@@ -60,7 +62,7 @@ __global__ void ops_hip_packer_1(const char *__restrict src,
 __global__ void ops_hip_packer_1_soa(const char *__restrict src,
                                   char *__restrict dest, int count, int len,
                                   int stride, int dim, int size) {
-  int idx = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int block = idx / len;
   if (idx < count * len) {
     for (int d=0; d<dim; d++) {   
@@ -72,7 +74,7 @@ __global__ void ops_hip_packer_1_soa(const char *__restrict src,
 __global__ void ops_hip_unpacker_1(const char *__restrict src,
                                     char *__restrict dest, int count, int len,
                                     int stride) {
-  int idx = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int block = idx / len;
   if (idx < count * len) {
     dest[stride * block + idx % len] = src[idx];
@@ -82,7 +84,7 @@ __global__ void ops_hip_unpacker_1(const char *__restrict src,
 __global__ void ops_hip_unpacker_1_soa(const char *__restrict src,
                                     char *__restrict dest, int count, int len,
                                     int stride, int dim, int size) {
-  int idx = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int block = idx / len;
   if (idx < count * len) {
     for (int d=0; d<dim; d++) {   
@@ -95,7 +97,7 @@ __global__ void ops_hip_unpacker_1_soa(const char *__restrict src,
 __global__ void ops_hip_packer_4(const int *__restrict src,
                                   int *__restrict dest, int count, int len,
                                   int stride) {
-  int idx = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int block = idx / len;
   if (idx < count * len) {
     dest[idx] = src[stride * block + idx % len];
@@ -105,7 +107,7 @@ __global__ void ops_hip_packer_4(const int *__restrict src,
 __global__ void ops_hip_unpacker_4(const int *__restrict src,
                                     int *__restrict dest, int count, int len,
                                     int stride) {
-  int idx = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int block = idx / len;
   if (idx < count * len) {
     dest[stride * block + idx % len] = src[idx];
@@ -115,6 +117,7 @@ __global__ void ops_hip_unpacker_4(const int *__restrict src,
 void ops_pack_hip_internal(ops_dat dat, const int src_offset, char *__restrict dest,
               const int halo_blocklength, const int halo_stride, const int halo_count) {
 
+//  printf("%d: Inside pack\n", ops_my_global_rank);
   if (dat->dirty_hd == 1) {
     ops_put_data(dat);
     dat->dirty_hd = 0;
@@ -134,10 +137,12 @@ void ops_pack_hip_internal(ops_dat dat, const int src_offset, char *__restrict d
   else
     device_buf = halo_buffer_d;
 
+//  hipSafeCall(OPS_instance::getOPSInstance()->ostream(), hipDeviceSynchronize());
+//  printf("%d: Inside pack2\n", ops_my_global_rank);
   if (OPS_instance::getOPSInstance()->OPS_soa) {
     int num_threads = 128;
     int num_blocks = ((halo_blocklength * halo_count) - 1) / num_threads + 1;
-    hipLaunchKernelGGL(ops_hip_packer_1_soa, num_blocks, num_threads, 0, 0,
+    hipLaunchKernelGGL(ops_hip_packer_1_soa, num_blocks, num_threads, 0, 0, 
         src, device_buf, halo_count, halo_blocklength, halo_stride,
         dat->dim, dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size);
     hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipGetLastError());
@@ -146,17 +151,19 @@ void ops_pack_hip_internal(ops_dat dat, const int src_offset, char *__restrict d
     int num_threads = 128;
     int num_blocks =
         (((dat->dim * halo_blocklength / 4) * halo_count) - 1) / num_threads + 1;
-    hipLaunchKernelGGL(ops_hip_packer_4, num_blocks, num_threads, 0, 0,
+    hipLaunchKernelGGL(ops_hip_packer_4, num_blocks, num_threads, 0, 0, 
         (const int *)src, (int *)device_buf, halo_count, halo_blocklength*dat->dim / 4,
         halo_stride*dat->dim / 4);
     hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipGetLastError());
   } else {
     int num_threads = 128;
     int num_blocks = ((dat->dim * halo_blocklength * halo_count) - 1) / num_threads + 1;
-    hipLaunchKernelGGL(ops_hip_packer_1, num_blocks, num_threads, 0, 0,//ops_hip_packer_1<<<num_blocks, num_threads>>>(
+    hipLaunchKernelGGL(ops_hip_packer_1, num_blocks, num_threads, 0, 0, 
         src, device_buf, halo_count, halo_blocklength*dat->dim, halo_stride*dat->dim);
     hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipGetLastError());
   }
+//  hipSafeCall(OPS_instance::getOPSInstance()->ostream(), hipDeviceSynchronize());
+//  printf("%d: After pack\n", ops_my_global_rank);
   if (!OPS_instance::getOPSInstance()->OPS_gpu_direct)
     hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMemcpy(dest, halo_buffer_d,
                              halo_count * halo_blocklength * dat->dim,
@@ -172,6 +179,7 @@ void ops_unpack_hip_internal(ops_dat dat, const int dest_offset, const char *__r
     ops_put_data(dat);
     dat->dirty_hd = 0;
   }
+//  printf("%d: Inside unpack\n", ops_my_global_rank);
   char *__restrict dest = dat->data_d + dest_offset * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
   if (halo_buffer_size < halo_count * halo_blocklength * dat->dim && !OPS_instance::getOPSInstance()->OPS_gpu_direct) {
     if (halo_buffer_d != NULL)
@@ -191,10 +199,12 @@ void ops_unpack_hip_internal(ops_dat dat, const int dest_offset, const char *__r
     hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMemcpy(halo_buffer_d, src,
                              halo_count * halo_blocklength * dat->dim,
                              hipMemcpyHostToDevice));
+//  hipSafeCall(OPS_instance::getOPSInstance()->ostream(), hipDeviceSynchronize());
+//  printf("%d: Inside unpack2\n", ops_my_global_rank);
   if (OPS_instance::getOPSInstance()->OPS_soa) {
     int num_threads = 128;
     int num_blocks = ((halo_blocklength * halo_count) - 1) / num_threads + 1;
-    hipLaunchKernelGGL(ops_hip_unpacker_1_soa, num_blocks, num_threads, 0, 0,//ops_hip_unpacker_1_soa<<<num_blocks, num_threads>>>(
+    hipLaunchKernelGGL(ops_hip_unpacker_1_soa, num_blocks, num_threads, 0, 0, 
         device_buf, dest, halo_count, halo_blocklength, halo_stride,
         dat->dim, dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size);
     hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipGetLastError());
@@ -202,20 +212,23 @@ void ops_unpack_hip_internal(ops_dat dat, const int dest_offset, const char *__r
     int num_threads = 128;
     int num_blocks =
         (((dat->dim * halo_blocklength / 4) * halo_count) - 1) / num_threads + 1;
-    hipLaunchKernelGGL(ops_hip_unpacker_4, num_blocks, num_threads, 0, 0,//6<<<num_blocks, num_threads>>>(
+    hipLaunchKernelGGL(ops_hip_unpacker_4, num_blocks, num_threads, 0, 0, 
         (const int *)device_buf, (int *)dest, halo_count,
         halo_blocklength*dat->dim / 4, halo_stride*dat->dim / 4);
     hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipGetLastError());
   } else {
     int num_threads = 128;
     int num_blocks = ((dat->dim * halo_blocklength * halo_count) - 1) / num_threads + 1;
-    hipLaunchKernelGGL(ops_hip_unpacker_1, num_blocks, num_threads, 0, 0,//<<<num_blocks, num_threads>>>(
+    hipLaunchKernelGGL(ops_hip_unpacker_1, num_blocks, num_threads, 0, 0, 
         device_buf, dest, halo_count, halo_blocklength*dat->dim, halo_stride*dat->dim);
     hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipGetLastError());
   }
 
+//  hipSafeCall(OPS_instance::getOPSInstance()->ostream(), hipDeviceSynchronize());
+//  printf("%d: After unpack\n", ops_my_global_rank);
   dat->dirty_hd = 2;
 }
+
 
 void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
               const ops_int_halo *__restrict halo) {
@@ -242,7 +255,7 @@ char* OPS_realloc_fast(char *ptr, size_t olds, size_t news) {
     }
   } else {
     char *ptr2;
-    hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipHostMalloc((void**)&ptr2,news)); //TODO: is this aligned??
+    hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMallocHost((void**)&ptr2,news)); //TODO: is this aligned??
     if (olds > 0)
   	  memcpy(ptr2, ptr, olds);
     if (ptr != NULL) hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipHostFree(ptr));
@@ -257,9 +270,9 @@ __global__ void copy_kernel_tobuf(char *dest, char *src, int rx_s, int rx_e,
                                   int buf_strides_x, int buf_strides_y,
                                   int buf_strides_z, int type_size, int dim, int OPS_soa) {
 
-  int idx_z = rz_s + z_step * (hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z);
-  int idx_y = ry_s + y_step * (hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y);
-  int idx_x = rx_s + x_step * (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x);
+  int idx_z = rz_s + z_step * (blockDim.z * blockIdx.z + threadIdx.z);
+  int idx_y = ry_s + y_step * (blockDim.y * blockIdx.y + threadIdx.y);
+  int idx_x = rx_s + x_step * (blockDim.x * blockIdx.x + threadIdx.x);
 
   if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
       (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
@@ -286,9 +299,9 @@ __global__ void copy_kernel_frombuf(char *dest, char *src, int rx_s, int rx_e,
                                     int buf_strides_x, int buf_strides_y,
                                     int buf_strides_z, int type_size, int dim, int OPS_soa) {
 
-  int idx_z = rz_s + z_step * (hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z);
-  int idx_y = ry_s + y_step * (hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y);
-  int idx_x = rx_s + x_step * (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x);
+  int idx_z = rz_s + z_step * (blockDim.z * blockIdx.z + threadIdx.z);
+  int idx_y = ry_s + y_step * (blockDim.y * blockIdx.y + threadIdx.y);
+  int idx_x = rx_s + x_step * (blockDim.x * blockIdx.x + threadIdx.x);
 
   if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
       (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
@@ -416,7 +429,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
 
   dim3 grid(blk_x, blk_y, blk_z);
   dim3 tblock(thr_x, thr_y, thr_z);
-  hipLaunchKernelGGL(copy_kernel_frombuf,grid, tblock, 0, 0, 
+  hipLaunchKernelGGL(copy_kernel_frombuf, grid, tblock, 0, 0, 
       dest->data_d, gpu_ptr, rx_s, rx_e, ry_s, ry_e, rz_s, rz_e, x_step, y_step,
       z_step, dest->size[0], dest->size[1], dest->size[2], buf_strides_x,
       buf_strides_y, buf_strides_z, dest->type_size, dest->dim, OPS_instance::getOPSInstance()->OPS_soa);
@@ -424,7 +437,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   dest->dirty_hd = 2;
 }
 
-__global__ void ops_internal_copy_device_kernel(char * dat0_p, char *dat1_p,
+__global__ void ops_internal_copy_hip_kernel(char * dat0_p, char *dat1_p,
          int s0, int start0, int end0,
 #if OPS_MAX_DIM>1
         int s1, int start1, int end1,
@@ -440,9 +453,9 @@ __global__ void ops_internal_copy_device_kernel(char * dat0_p, char *dat1_p,
 #endif
         int dim, int type_size,
         int OPS_soa) {
-  int i = start0 + hipThreadIdx_x + hipBlockIdx_x*hipBlockDim_x;
-  int j = start1 + hipThreadIdx_y + hipBlockIdx_y*hipBlockDim_y;
-  int rest = hipThreadIdx_z + hipBlockIdx_z*hipBlockDim_z;
+  int i = start0 + threadIdx.x + blockIdx.x*blockDim.x;
+  int j = start1 + threadIdx.y + blockIdx.y*blockDim.y;
+  int rest = threadIdx.z + blockIdx.z*blockDim.z;
   int mult = OPS_soa ? type_size : dim*type_size;
 
     long fullsize = s0;
@@ -534,7 +547,7 @@ void ops_internal_copy_device(ops_kernel_descriptor *desc) {
               dat0->block->instance->OPS_block_size_z);
 
   if (grid.x>0 && grid.y>0 && grid.z>0) {
-  hipLaunchKernelGGL(ops_internal_copy_device_kernel,grid, tblock, 0, 0, 
+    hipLaunchKernelGGL(ops_internal_copy_hip_kernel, grid, tblock, 0, 0, 
         dat0_p,
         dat1_p,
         s0, range[2*0], range[2*0+1],
@@ -607,7 +620,7 @@ void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *ra
     ops_free(target);
     ops_free(desc->args);
     ops_free(desc);
-  }
+  } 
 
 }
 
@@ -688,7 +701,7 @@ void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace
     ops_free(target);
     ops_free(desc->args);
     ops_free(desc);
-  }
+  } 
 }
 
 void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace) {
@@ -724,5 +737,6 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
     ops_free(desc->args);
     ops_free(desc);
     dat->dirty_hd = 2;
-  }
+  } 
 }
+
