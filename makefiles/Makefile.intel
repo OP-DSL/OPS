@@ -16,6 +16,10 @@ ifdef FAST
 	CCFLAGS += -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2
 	CXXFLAGS += -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2
 endif
+ifdef PROFILE_ITT
+	CXXFLAGS += -DPROFILE_ITT -I$(VTUNE_PROFILER_DIR)/include
+	OPS_LINK += -L$(VTUNE_PROFILER_DIR)/lib64 -littnotify
+endif
 #FFLAGS  = $(CXXFLAGS) -module $(F_INC_MOD)
 FFLAGS  = -module $(F_INC_MOD)
 OMPFLAGS := -qopenmp
