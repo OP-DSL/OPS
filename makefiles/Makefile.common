@@ -22,6 +22,7 @@ OPS_LIB_SYCL=-lops_sycl
 OPS_LIB_OPENCL=-lops_opencl
 OPS_LIB_MPI=-lops_mpi
 OPS_LIB_MPI_CUDA=-lops_mpi_cuda
+OPS_LIB_MPI_HIP=-lops_mpi_hip
 OPS_LIB_MPI_SYCL=-lops_mpi_sycl
 OPS_LINK=
 CUDART=-lcudart

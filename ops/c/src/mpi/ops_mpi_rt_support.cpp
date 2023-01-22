@@ -867,7 +867,18 @@ void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
     if (comm == MPI_COMM_NULL)
       continue;
 
-    MPI_Request request[4];
+    MPI_Request request[4] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL};
+    ops_device_sync(OPS_instance::getOPSInstance());
+    if (send_recv_offsets[0]>0) ops_device_memset(OPS_instance::getOPSInstance(), (void**)&ops_buffer_send_1, 0, send_recv_offsets[0]);
+    ops_device_sync(OPS_instance::getOPSInstance());
+    if (send_recv_offsets[2]>0) ops_device_memset(OPS_instance::getOPSInstance(), (void**)&ops_buffer_send_2, 0, send_recv_offsets[2]);
+    ops_device_sync(OPS_instance::getOPSInstance());
+    if (send_recv_offsets[1]>0) ops_device_memset(OPS_instance::getOPSInstance(), (void**)&ops_buffer_recv_1, 0, send_recv_offsets[1]);
+    ops_device_sync(OPS_instance::getOPSInstance());
+    if (send_recv_offsets[3]>0) ops_device_memset(OPS_instance::getOPSInstance(), (void**)&ops_buffer_recv_2, 0, send_recv_offsets[3]);
+    ops_device_sync(OPS_instance::getOPSInstance());
+    printf("%d pre-send/recv memsets completed OK\n", ops_my_global_rank);
+
     MPI_Isend(ops_buffer_send_1, send_recv_offsets[0], MPI_BYTE,
               send_recv_offsets[0] > 0 ? id_m : MPI_PROC_NULL, dim, comm,
               &request[0]);
@@ -881,8 +892,10 @@ void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
               send_recv_offsets[3] > 0 ? id_m : MPI_PROC_NULL,
               OPS_MAX_DIM + dim, comm, &request[3]);
 
+    printf("%d MPI_Isend/Irecv completed OK\n", ops_my_global_rank);
     MPI_Status status[4];
     MPI_Waitall(2, &request[2], &status[2]);
+    printf("%d MPI_Waitall completed OK\n", ops_my_global_rank);
 
     //  ops_timers_core(&c1,&t1);
     //  printf("1 %g %d\n", t1-t2, send_recv_offsets[0] + send_recv_offsets[2]);
