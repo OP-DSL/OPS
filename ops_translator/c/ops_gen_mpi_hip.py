@@ -202,7 +202,7 @@ def ops_gen_mpi_hip(master, date, consts, kernels, soa_set):
 
     if(i < 0):
       print("\n********")
-      print(("Error: cannot locate user kernel function: "+name+" - Aborting code generation"))
+      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
       exit(2)
 
     i2 = i

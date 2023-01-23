@@ -393,7 +393,7 @@ def check_accs(name, arg_list, arg_typ, text):
               pos2 = text[pos+7:].find('(')
               num = int(text[pos+7:pos+7+pos2])
               if num != n:
-                print(('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)))
+                print('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num))
               pos = pos+7+pos2
             elif match0.start(0) < match1.start(0):
               match = re.search('OPS_ACC_MD\d',text[pos:])
@@ -401,7 +401,7 @@ def check_accs(name, arg_list, arg_typ, text):
               pos2 = text[pos+10:].find('(')
               num = int(text[pos+10:pos+10+pos2])
               if num != n:
-                print(('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)))
+                print('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num))
               pos = pos+10+pos2
           else:
             match = re.search('OPS_ACC_MD\d',text[pos:])
@@ -409,7 +409,7 @@ def check_accs(name, arg_list, arg_typ, text):
             pos2 = text[pos+10:].find('(')
             num = int(text[pos+10:pos+10+pos2])
             if num != n:
-              print(('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)))
+              print('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num))
             pos = pos+10+pos2
         else:
           if match1 != None:
@@ -418,7 +418,7 @@ def check_accs(name, arg_list, arg_typ, text):
             pos2 = text[pos+7:].find('(')
             num = int(text[pos+7:pos+7+pos2])
             if num != n:
-              print(('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)))
+              print('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num))
             pos = pos+7+pos2
           else:
             break
@@ -485,7 +485,7 @@ def get_file_text_for_kernel(kernel_name, src_dir):
                 break
 
     if found == 0:
-        print(("COUND NOT FIND KERNEL", kernel_name))
+        print("COUND NOT FIND KERNEL", kernel_name)
 
     with open(file_name, "r") as fid:
         return remove_trailing_w_space(comment_remover(fid.read()))

@@ -179,7 +179,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     ##########################################################################
 
     code('')
-    if not (('calc_dt_kernel_print' in name)):
+    if not 'calc_dt_kernel_print' in name:
       if not (NDIM==3 and 'field_summary' in name):
         code('#define OPS_GPU')
         code('')
@@ -206,7 +206,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
 
     if(i < 0):
       print("\n********")
-      print(("Error: cannot locate user kernel function: "+name+" - Aborting code generation"))
+      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
       exit(2)
 
     i = max(0,text[0:i].rfind('\n')) #reverse find
@@ -505,7 +505,7 @@ def ops_gen_mpi_openacc(master, date, consts, kernels, soa_set):
     ##########################################################################
 
     code('')
-    if not (('calc_dt_kernel_print' in name)):
+    if not 'calc_dt_kernel_print' in name:
       if not (NDIM==3 and 'field_summary' in name):
         code('#define OPS_GPU')
         code('')
