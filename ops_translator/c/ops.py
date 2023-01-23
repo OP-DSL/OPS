@@ -127,7 +127,7 @@ def ops_parse_macro_defs(text):
         if len(match) < 4:
             continue
         elif len(match) > 4:
-            print(("Unexpected format for macro definition: " + str(match)))
+            print("Unexpected format for macro definition: " + str(match))
             continue
         key = match[2]
         value = match[3]
@@ -270,7 +270,7 @@ def get_arg_dat(arg_string, j, macro_defs):
 
     # check for syntax errors
     if not(len(dat_args_string.split(',')) == 5 or len(dat_args_string.split(',')) == 6 ):
-      print(('Error parsing op_arg_dat(%s): must have five or six arguments' % dat_args_string))
+      print('Error parsing op_arg_dat(%s): must have five or six arguments' % dat_args_string)
       return
 
     if len(dat_args_string.split(',')) == 5:
@@ -305,8 +305,8 @@ def get_arg_gbl(arg_string, k, macro_defs):
 
     # check for syntax errors
     if len(gbl_args_string.split(',')) != 4:
-        print(('Error parsing op_arg_gbl(%s): must have four arguments' \
-              % gbl_args_string))
+        print('Error parsing op_arg_gbl(%s): must have four arguments' \
+              % gbl_args_string)
         return
 
     # split the gbl_args_string into  4 and create a struct with the elements
@@ -484,7 +484,7 @@ def parse_source_files(source_files):
 
         const_args = ops_decl_const_parse(text, macro_defs)
         if verbose:
-            print((str(len(const_args))))
+            print(str(len(const_args)))
 
         # check for repeats
         nconsts = 0
@@ -502,12 +502,12 @@ def parse_source_files(source_files):
 
                 if repeat > 0:
                     if verbose:
-                        print(('repeated global constant ' +
-                               const_args[i]['name']))
+                        print('repeated global constant ' +
+                               const_args[i]['name'])
                 else:
                     if verbose:
-                        print(('\nglobal constant (' + const_args[i]['name'].strip() \
-                              + ') of size ' + str(const_args[i]['dim'])))
+                        print('\nglobal constant (' + const_args[i]['name'].strip() \
+                              + ') of size ' + str(const_args[i]['dim']))
 
                 # store away in master list
                 if repeat == 0:
@@ -534,8 +534,8 @@ def parse_source_files(source_files):
             _range = loop_args[i]['range']
             if verbose:
                 print(f'\nprocessing kernel {name} with {nargs} arguments')
-                print(('dim: ' + dim))
-                print(('range: ' + str(_range)))
+                print('dim: ' + dim)
+                print('range: ' + str(_range))
 
             #
             # process arguments
@@ -564,8 +564,8 @@ def parse_source_files(source_files):
                     except ValueError:
                         print('unknown access type for argument ' + str(m))
                     if verbose:
-                        print((var[m] + ' ' + str(dims[m]) + ' ' +
-                               str(stens[m]) + ' ' + str(accs[m])))
+                        print(var[m] + ' ' + str(dims[m]) + ' ' +
+                              str(stens[m]) + ' ' + str(accs[m]))
 
                 elif arg_type == 'ops_arg_gbl':
                     var[m] = args['data']
@@ -609,14 +609,14 @@ def parse_source_files(source_files):
                         #kernel['var'][arg] == var[arg] and \
                     if rep2:
                         if verbose:
-                            print(('repeated kernel with compatible arguments: ' + \
-                                kernel['name']))
+                            print('repeated kernel with compatible arguments: ' + \
+                                kernel['name'])
                         repeat = True
                         which_file = nk
                     else:
-                        print((
+                        print(
                             'repeated kernel with incompatible arguments: ERROR'
-                            + kernel['name']))
+                            + kernel['name'])
                         break
 
             #
