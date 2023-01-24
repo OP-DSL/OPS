@@ -50,34 +50,18 @@ plus a master kernel file
 """
 
 import re
-import datetime
 import errno
 import os
 
-import util
 import config
-from config import OPS_READ, OPS_WRITE, OPS_RW, OPS_INC, OPS_MAX, OPS_MIN, OPS_accs_labels
+from config import OPS_READ, OPS_WRITE, OPS_RW, OPS_INC, OPS_MAX, OPS_MIN
 
-para_parse = util.para_parse
-parse_signature = util.parse_signature
-replace_ACC_kernel_body = util.replace_ACC_kernel_body
-check_accs = util.check_accs
-mult = util.mult
-convert_ACC_body = util.convert_ACC_body
+import util
+from util import para_parse, parse_signature, replace_ACC_kernel_body, convert_ACC_body
+from util import comm, code, FOR, ENDFOR, IF, ENDIF
 
-comm = util.comm
-code = util.code
-FOR = util.FOR
-FOR2 = util.FOR2
-WHILE = util.WHILE
-ENDWHILE = util.ENDWHILE
-ENDFOR = util.ENDFOR
-IF = util.IF
-ELSEIF = util.ELSEIF
-ELSE = util.ELSE
-ENDIF = util.ENDIF
 
-def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
+def ops_gen_mpi_inline(master, consts, kernels, soa_set):
   NDIM = 2 #the dimension of the application is hardcoded here .. need to get this dynamically
 
   src_dir = os.path.dirname(master) or '.'
@@ -100,7 +84,6 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     dim   = kernels[nk]['dim']
     dims  = kernels[nk]['dims']
     stens = kernels[nk]['stens']
-    var   = kernels[nk]['var']
     accs  = kernels[nk]['accs']
     typs  = kernels[nk]['typs']
     NDIM = int(dim)
@@ -159,7 +142,6 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
       n_per_line = 1
 
     i = name.find('kernel')
-    name2 = name[0:i-1]
 
     reduction = False
     ng_args = 0
