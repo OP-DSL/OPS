@@ -97,15 +97,14 @@ from ops_gen_mpi_hip import ops_gen_mpi_hip
 from ops_gen_mpi_openacc import ops_gen_mpi_openacc
 from ops_gen_mpi_opencl import ops_gen_mpi_opencl
 
-import util
-import config
-from config import OPS_READ, OPS_WRITE, OPS_RW, OPS_INC, OPS_MAX, OPS_MIN, OPS_accs_labels
+from util import comment_remover, remove_trailing_w_space
+from config import (
+    OPS_accs_labels,
+    verbose,
+)
 
 arithmetic_regex_pattern = r'^[ \(\)\+\-\*\\\.\%0-9]+$'
 
-comment_remover = util.comment_remover
-remove_trailing_w_space = util.remove_trailing_w_space
-verbose = config.verbose
 
 def ops_parse_calls(text):
     """Parsing for ops_init/ops_exit"""
@@ -313,8 +312,6 @@ def get_arg_gbl(arg_string, k, macro_defs):
     return temp_gbl
 
 def get_arg_idx(arg_string, l):
-    loc = arg_parse(arg_string, l + 1)
-
     temp_idx = {'type': 'ops_arg_idx'}
 
     return temp_idx
@@ -520,7 +517,6 @@ def parse_source_files(source_files):
             name = loop_args[i]['name1']
             nargs = loop_args[i]['nargs']
             dim = loop_args[i]['dim']
-            block = loop_args[i]['block']
             _range = loop_args[i]['range']
             if verbose:
                 print(f'\nprocessing kernel {name} with {nargs} arguments')
@@ -763,12 +759,12 @@ def generate_ops_files(sources, source_texts, loop_args_in_files,
 
 def generate_kernel_files(app_name, consts, kernels, soa_set):
     date = datetime.datetime.now()
-    ops_gen_mpi_inline(app_name, date, consts, kernels, soa_set)
-    ops_gen_mpi_lazy(app_name, date, consts, kernels, soa_set)
-    ops_gen_mpi_cuda(app_name, date, consts, kernels, soa_set)
-    ops_gen_mpi_hip(app_name, date, consts, kernels, soa_set)
-    ops_gen_mpi_openacc(app_name, date, consts, kernels, soa_set)
-    ops_gen_mpi_opencl(app_name, date, consts, kernels, soa_set)
+    ops_gen_mpi_inline(app_name, consts, kernels, soa_set)
+    ops_gen_mpi_lazy(app_name, consts, kernels, soa_set)
+    ops_gen_mpi_cuda(app_name, consts, kernels, soa_set)
+    ops_gen_mpi_hip(app_name, consts, kernels, soa_set)
+    ops_gen_mpi_openacc(app_name, consts, kernels, soa_set)
+    ops_gen_mpi_opencl(app_name, consts, kernels, soa_set)
 
     import subprocess
     retcode = subprocess.call("which clang-format 1> /dev/null 2>&1",

@@ -138,7 +138,6 @@ def remove_trailing_w_space(text):
   line = ""
   line_end = 0
   striped_test = ''
-  count = 0
   while 1:
     line_end =  text.find("\n",line_start+1)
     line = text[line_start:line_end]
