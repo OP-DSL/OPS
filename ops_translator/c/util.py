@@ -263,25 +263,20 @@ def find_consts(text, consts):
   for cn in range(0,len(consts)):
     pattern = consts[cn]['name'][1:-1]
     if re.search('\\b'+pattern+'\\b', text):
-#      print(("found " + consts[cn]['name'][1:-1]))
       found_consts.append(cn)
 
   return found_consts
 
 
 def parse_signature_opencl(text2):
-
-  #text2 = text2.replace('const','')
   text2 = text2.replace('*','* restrict ')
   text2 = text2.replace('ll','__global long long')
   text2 = text2.replace('long','__global long')
   text2 = text2.replace('short','__global short')
   text2 = text2.replace('char','__global char')
   text2 = text2.replace('int','__global int')
-  #text2 = re.sub('[\s]int','__global int',text2)
   text2 = text2.replace('float','__global float')
   text2 = text2.replace('double','__global double')
-  #text2 = re.sub('double','__global double',text2)
   return text2
 
 def complex_numbers_cuda(text):
@@ -423,24 +418,6 @@ def check_accs(name, arg_list, arg_typ, text):
           else:
             break
 
-
-        #if match0 <> None and match1 <> None:
-        #  if match0.start(0) > match1.start(0):
-        #    match = re.search('OPS_ACC\d',text[pos:])
-        #   pos = pos + match.start(0)
-        #    pos2 = text[pos+7:].find('(')
-        #    num = int(text[pos+7:pos+7+pos2])
-        #    if num <> n:
-        #      print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num)
-        #    pos = pos+7+pos2
-        #  elif match0.start(0) < match1.start(0):
-        #    match = re.search('OPS_ACC_MD\d',text[pos:])
-        #    pos = pos + match.start(0)
-        #    pos2 = text[pos+10:].find('(')
-        #    num = int(text[pos+10:pos+10+pos2])
-        #    if num <> n:
-        #      print 'Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num)
-        #    pos = pos+10+pos2
 
 def replace_ACC_kernel_body(kernel_text, arg_list, arg_typ, nargs, opencl=0, dims=[]):
     # replace all data args with macros

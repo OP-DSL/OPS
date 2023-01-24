@@ -132,7 +132,6 @@ def ops_parse_macro_defs(text):
         key = match[2]
         value = match[3]
         defs[key] = value
-        # print(key + " -> " + value)
     return defs
 
 def self_evaluate_macro_defs(macro_defs):
@@ -158,7 +157,6 @@ def self_evaluate_macro_defs(macro_defs):
                     ## The macro "k" refers to macro "k2"
                     k2_val = macro_defs[k2]
                     macro_defs[k] = re.sub(pattern, "\\g<1>"+k2_val+"\\g<2>", k_val)
-                    # print("Performing a substitution of '" + k2 + "'->'" + k2_val + "' into '" + k_val + "' to produce '" + macro_defs[k] + "'")
                     substitutions_performed = True
 
     ## Evaluate any mathematical expressions:
@@ -173,7 +171,6 @@ def self_evaluate_macro_defs(macro_defs):
                 pass
             if type(res) != type(""):
                 if str(res) != val:
-                    # print("Replacing '" + val + "' with '" + str(res) + "'")
                     macro_defs[k] = str(res)
 
 def evaluate_macro_defs_in_string(macro_defs, string):
@@ -193,7 +190,6 @@ def evaluate_macro_defs_in_string(macro_defs, string):
                 ## "string" contains a reference to macro "k", so substitute
                 ## in its definition:
                 resolved_string_new = re.sub(k_pattern, "\\g<1>"+k_val+"\\g<2>", resolved_string)
-                # print("Performing a substitution of '" + k + "'->'" + k_val + "' into '" + resolved_string + "'' to produce '" + resolved_string_new + "'")
                 resolved_string = resolved_string_new
                 substitutions_performed = True
 
@@ -264,9 +260,6 @@ def get_arg_dat(arg_string, j, macro_defs):
 
     # remove comments
     dat_args_string = comment_remover(dat_args_string)
-    #print dat_args_string
-    #num = len(dat_args_string.split(','))
-    #print num
 
     # check for syntax errors
     if not(len(dat_args_string.split(',')) == 5 or len(dat_args_string.split(',')) == 6 ):
@@ -331,7 +324,6 @@ def ops_par_loop_parse(text, macro_defs):
 
   loop_args = []
 
-  #text = comment_remover(text)
   search = "ops_par_loop"
   i = text.find(search)
   while i > -1:
@@ -388,7 +380,6 @@ def ops_par_loop_parse(text, macro_defs):
             'range': arg_string.split(',')[4].strip(),
             'args': temp_args,
             'nargs': num_args}
-      #print temp
       loop_args.append(temp)
 
       i = text.find(search, i + 15)
@@ -437,7 +428,6 @@ def parse_source_files(source_files):
 
         #get rid of all comments
         text = remove_trailing_w_space(comment_remover(text))
-        #text = comment_remover(text)
 
         text = re.sub('ops_init(.*);', 'ops_init\\1;\n  ops_init_backend();',
                       text)
@@ -751,7 +741,6 @@ def generate_ops_files(sources, source_texts, loop_args_in_files,
                             line += elem['type'] + '(' + elem['dat'] + \
                                 ', ' + elem['dim'] + ', ' + elem['sten'] + ', "' + elem['typ'] + \
                                 '", ' + elem['acc'] + ', ' + elem['opt'] +'),\n' + indent
-                            #elem['type'] = 'ops_arg_dat' # make opt arg a normal arg
                         elif elem['type'] == 'ops_arg_gbl':
                             if elem['acc'] == 'OPS_READ':
                                 line += elem['type'] + '(' + elem['data'] + \

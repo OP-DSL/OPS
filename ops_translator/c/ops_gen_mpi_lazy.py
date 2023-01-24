@@ -212,7 +212,6 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('#else')
     code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
     config.depth = 2
-    #code('char const *name = "'+name+'";')
     code('ops_block block = desc->block;')
     code('int dim = desc->dim;')
     code('int *range = desc->range;')
@@ -226,8 +225,6 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     comm('Timing')
     code('double __t1,__t2,__c1,__c2;')
     code('');
-
-    #code('ops_printf("In loop \%s\\n","'+name+'");')
 
 
     text ='ops_arg args['+str(nargs)+'] = {'
@@ -266,10 +263,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('int end['+str(NDIM)+'];')
     if not (arg_idx!=-1) and not MULTI_GRID:
       code('#if defined(OPS_MPI) && !defined(OPS_LAZY)')
-    #    if MULTI_GRID:
-    #      code('#ifdef OPS_MPI')
     code('int arg_idx['+str(NDIM)+'];')
-    #    if not (arg_idx!=-1 and not MULTI_GRID):
     if not (arg_idx!=-1) and not MULTI_GRID:
       code('#endif')
 
@@ -555,8 +549,6 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code(text);
     config.depth = 2
     code('ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));')
-    #code('desc->name = (char *)malloc(strlen(name)+1);')
-    #code('strcpy(desc->name, name);')
     code('desc->name = name;')
     code('desc->block = block;')
     code('desc->dim = dim;')

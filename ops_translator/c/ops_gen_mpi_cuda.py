@@ -449,7 +449,6 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code('#else')
     code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
     config.depth = 2
-    #code('char const *name = "'+name+'";')
     code('int dim = desc->dim;')
     code('#if OPS_MPI')
     code('ops_block block = desc->block;')
@@ -558,16 +557,6 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     condition = condition[:-4]
     IF(condition)
 
-    #    for n in range (0, nargs):
-    #      if arg_typ[n] == 'ops_arg_dat':
-    #        code('cudaMemcpyToSymbol( dims_'+name+'['+str(n)+'][0]'+', &xdim'+str(n)+', sizeof(int) );')
-    #        code('dims_'+name+'_h['+str(n)+'][0] = xdim'+str(n)+';')
-    #        if NDIM>2 or (NDIM==2 and soa_set):
-    #          code('cudaMemcpyToSymbol( dims_'+name+'['+str(n)+'][1]'+', &ydim'+str(n)+', sizeof(int) );')
-    #          code('dims_'+name+'_h['+str(n)+'][1] = ydim'+str(n)+';')
-    #        if NDIM>3 or (NDIM==3 and soa_set):
-    #          code('cudaMemcpyToSymbol( dims_'+name+'['+str(n)+'][2]'+', &zdim'+str(n)+', sizeof(int) );')
-    #          code('dims_'+name+'_h['+str(n)+'][2] = zdim'+str(n)+';')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('dims_'+name+'_h['+str(n)+'][0] = xdim'+str(n)+';')
@@ -884,13 +873,6 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     ENDIF()
     code('')
 
-    # This is not doen any more due to redution_handles treatement under MPI
-    # if reduction == 1 :
-    #   for n in range (0, nargs):
-    #     if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
-    #       #code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)p_a['+str(n)+']);')
-    #   code('ops_timers_core(&c1,&t1);')
-    #   code('block->instance->OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
 
     code('#ifndef OPS_LAZY')
     code('ops_set_dirtybit_device(args, '+str(nargs)+');')
@@ -926,8 +908,6 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code(text);
     config.depth = 2
     code('ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));')
-    #code('desc->name = (char *)malloc(strlen(name)+1);')
-    #code('strcpy(desc->name, name);')
     code('desc->name = name;')
     code('desc->block = block;')
     code('desc->dim = dim;')
