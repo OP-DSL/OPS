@@ -88,13 +88,6 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
   ##########################################################################
   #  create new kernel files **_kernel.cl
   ##########################################################################
-  #kernel_name_list = []
-  #kernel_list_text = ''
-  #kernel_list__build_text = ''
-  #indent = 10*' '
-  #for nk in range(0,len(kernels)):
-  #  if kernels[nk]['name'] not in kernel_name_list :
-  #    kernel_name_list.append(kernels[nk]['name'])
   try:
     os.makedirs('./OpenCL')
   except OSError as e:
@@ -434,7 +427,6 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
 
 
     for c in range(0, len(found_consts)):
-      #if (consts[found_consts[c]]['dim']).isdigit() and int(consts[found_consts[c]]['dim'])==1:
       if consts[found_consts[c]]['type'] == 'int' or consts[found_consts[c]]['type'] == 'double' or consts[found_consts[c]]['type'] == 'float':
         text = text + consts[found_consts[c]]['name'][1:-1]
       else:
@@ -814,7 +806,6 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
             code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+'));')
         elif accs[n] != OPS_READ:
-          #code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+(str(typs[n]).replace('"','')).strip()+')*64);')
           code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
     code('')
 
@@ -857,12 +848,6 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
       code('mvReductArraysToDevice(block->instance,reduct_bytes);')
 
 
-    #set up initial pointers
-    #for n in range (0, nargs):
-    #  if arg_typ[n] == 'ops_arg_dat':
-    #    code('int dat'+str(n)+' = args['+str(n)+'].dat->elem_size;')
-
-
     comm('')
     comm('set up initial pointers')
     code('int d_m[OPS_MAX_DIM];')
@@ -887,7 +872,6 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
               line = line + ' args['+str(n)+'].dat->size['+str(d2)+'] *'+str(dims[n])+'* '
           code(line[:-1])
           code('(start['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+'] - args['+str(n)+'].dat->base['+str(d)+'] - d_m['+str(d)+']);')
-        #code('printf("base'+str(n)+' = %d, d_m[0] = %d\\n",base'+str(n)+',d_m[0]);')
         code('')
 
 
@@ -913,10 +897,6 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
     for c in range(0, len(found_consts)):
       const_type = consts[found_consts[c]]['type']
       const_dim = consts[found_consts[c]]['dim']
-      #if const_dim.isdigit() and int(const_dim)==1:
-        #code('clSafeCall( clEnqueueWriteBuffer(block->instance->opencl_instance->OPS_opencl_core.command_queue, block->instance->opencl_instance->OPS_opencl_core.constant['+str(found_consts[c])+'], CL_TRUE, 0, sizeof('+const_type+')*'+const_dim+', (void*) &'+consts[found_consts[c]]['name'][1:-1]+', 0, NULL, NULL) );')
-      #  code('')
-      #else:
       if not (consts[found_consts[c]]['type'] == 'int' or consts[found_consts[c]]['type'] == 'double' or consts[found_consts[c]]['type'] == 'float'):
         code('clSafeCall( clEnqueueWriteBuffer(block->instance->opencl_instance->OPS_opencl_core.command_queue, block->instance->opencl_instance->OPS_opencl_core.constant['+str(found_consts[c])+'], CL_TRUE, 0, sizeof('+const_type+')*'+const_dim+', (void*) &'+consts[found_consts[c]]['name'][1:-1]+', 0, NULL, NULL) );')
         code('clSafeCall( clFlush(block->instance->opencl_instance->OPS_opencl_core.command_queue) );')
@@ -949,13 +929,10 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
 
     for c in range(0, len(found_consts)):
       if consts[found_consts[c]]['type'] == 'int' or consts[found_consts[c]]['type'] == 'double' or consts[found_consts[c]]['type'] == 'float':
-        #code('clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem'+\
-        #     consts[found_consts[c]]['type']+'), (void*) &'+consts[found_consts[c]]['name'][1:-1]+' ));')
         code('clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_'+consts[found_consts[c]]['type']+\
              '), (void*) &'+consts[found_consts[c]]['name'][1:-1]+' ));')
       else:
         code('clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &block->instance->opencl_instance->OPS_opencl_core.constant['+str(found_consts[c])+']) );')
-        #code(consts[found_consts[c]]['type']+'clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel['+str(nk)+'], '+str(nkernel_args)+', sizeof(cl_mem), (void*) &'+consts[found_consts[c]]['name'][1:-1]+') );')
 
       nkernel_args = nkernel_args+1
 
@@ -1126,7 +1103,6 @@ def ops_gen_mpi_opencl(master, date, consts, kernels, soa_set):
   kernel_list__build_text = ''
   indent = 10*' '
   for nk in range(0,len(kernels)):
-    #if kernels[nk]['name'] not in kernel_name_list : -- is this necessary ??
     kernel_name_list.append(kernels[nk]['name'])
     if not (('initialise' in kernels[nk]['name']) or ('generate' in kernels[nk]['name'])):
       kernel_list_text = kernel_list_text + '"./OpenCL/'+kernel_name_list[nk]+'.cl"'

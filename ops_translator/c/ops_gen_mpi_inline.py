@@ -191,7 +191,6 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     code('')
     code('')
 
-    #code('#define OPS_ACC_MACROS')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if restrict[n] == 1:
@@ -245,7 +244,6 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
       text = text[i+l:k+2]
 
 
-    #text = text[0:j].replace('*','* restrict ')+text[j:]
     i = text.find('{')
     i = text[0:i].rfind(')')
     if (NDIM==1):
@@ -255,7 +253,6 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     if (NDIM==3):
       itervar = ', const int n_x, const int n_y, const int n_z'
     text = text[0:i]+itervar+text[i:]
-    #code(text)
     code('')
 
 
@@ -560,7 +557,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')#*args['+str(n)+'].dat->dim;')
+        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')
         if NDIM>2 or (NDIM==2 and soa_set):
           code('int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
         if NDIM>3 or (NDIM==3 and soa_set):
@@ -733,25 +730,12 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     config.depth = config.depth-2
 
 
-
-
-
-    # for n in range (0, nargs):
-    #   if arg_typ[n] == 'ops_arg_gbl':
-    #     if accs[n] <> OPS_READ:
-    #       code('*('+typs[n]+' *)args['+str(n)+'].data = *p_a'+str(n)+';')
     code('')
     IF('block->instance->OPS_diags > 1')
     code('ops_timers_core(&c2,&t2);')
     code('block->instance->OPS_kernels['+str(nk)+'].time += t2-t1;')
     ENDIF()
 
-    # if reduction == 1 :
-    #   for n in range (0, nargs):
-    #     if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-    #       #code('ops_mpi_reduce(&arg'+str(n)+',('+typs[n]+' *)args['+str(n)+'].data);')
-    #   code('ops_timers_core(&c1,&t1);')
-    #   code('block->instance->OPS_kernels['+str(nk)+'].mpi_time += t1-t2;')
 
     code('ops_set_dirtybit_host(args, '+str(nargs)+');')
     for n in range (0, nargs):
@@ -806,15 +790,12 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
   for nc in range (0,len(consts)):
     if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
       code('extern '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
-      # code('#pragma acc declare create('+(str(consts[nc]['name']).replace('"','')).strip()+')')
     else:
       if consts[nc]['dim'].isdigit() and int(consts[nc]['dim']) > 0:
         num = str(consts[nc]['dim'])
         code('extern '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
-        # code('#pragma acc declare create('+(str(consts[nc]['name']).replace('"','')).strip()+')')
       else:
         code('extern '+consts[nc]['type']+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
-        # code('#pragma acc declare create('+(str(consts[nc]['name']).replace('"','')).strip()+')')
 
   util.write_text_to_file(f"./MPI_inline/{master_basename[0]}_common.h")
 
