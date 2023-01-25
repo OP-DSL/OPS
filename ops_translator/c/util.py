@@ -48,25 +48,25 @@ def comm(line):
   if len(line) == 0:
     config.file_text +='\n'
   else:
-    config.file_text +=prefix+'//'+line+'\n'
+    config.file_text += f"{prefix}//{line}\n"
 
 def code(text):
   prefix = ''
   if len(text) != 0:
     prefix = ' '*config.depth
 
-  config.file_text += prefix+text+'\n'
+  config.file_text += f"{prefix}{text}\n"
 
 def FOR(i,start,finish):
-  code('for ( int '+i+'='+start+'; '+i+'<'+finish+'; '+i+'++ ){')
+  code(f"for ( int {i}={start}; {i}<{finish}; {i}++ ){{")
   config.depth += 2
 
 def FOR2(i,start,finish,increment):
-  code('for ( int '+i+'='+start+'; '+i+'<'+finish+'; '+i+'+='+increment+' ){')
+  code(f"for ( int {i}={start}; {i}<{finish}; {i}+={increment} ){{")
   config.depth += 2
 
 def WHILE(line):
-  code('while ( '+ line+ ' ){')
+  code(f"while ( {line} ){{")
   config.depth += 2
 
 def ENDWHILE():
@@ -78,11 +78,11 @@ def ENDFOR():
   code('}')
 
 def IF(line):
-  code('if ('+ line + ') {')
+  code(f"if ({line}) {{")
   config.depth += 2
 
 def ELSEIF(line):
-  code('else if ('+ line + ') {')
+  code(f"else if ({line}) {{")
   config.depth += 2
 
 def ELSE():
@@ -97,7 +97,7 @@ def ENDIF():
 def mult(text, i, n):
   text = text + '1'
   for nn in range (0, i):
-    text = text + '* args['+str(n)+'].dat->size['+str(nn)+']'
+    text = f"{text}* args[{n}].dat->size[{nn}]"
 
   return text
 
@@ -225,7 +225,7 @@ def convert_ACC_body(text):
 def convert_ACC(text, arg_typ):
   openb = text.find('(')
   closeb = text[0:text.find('{')].rfind(')')+1
-  text = text[0:openb]+'('+convert_ACC_signature(text[openb:closeb], arg_typ)+')'+text[closeb:]
+  text = text[0:openb]+f"({convert_ACC_signature(text[openb:closeb], arg_typ)})"+text[closeb:]
   body_start = text.find('{')
   text = text[0:body_start]+convert_ACC_body(text[body_start:])
   return text
@@ -292,9 +292,9 @@ def complex_numbers_cuda(text):
         if rhs in complex_variable_names:
             # Assignment of another complex variable already defined.
             if match.group(1) == "double":
-                new_statement = "cuDoubleComplex %s = %s;" % (match.group(3), rhs)
+                new_statement = f"cuDoubleComplex {match.group(3)} = {rhs};"
             elif match.group(1) == "float":
-                new_statement = "cuFloatComplex %s = %s;" % (match.group(3), rhs)
+                new_statement = f"cuFloatComplex {match.group(3)} = {rhs};"
             else:
                 continue
         else:
@@ -320,9 +320,9 @@ def complex_numbers_cuda(text):
                 real = complex_number.group(0)
                 imag = "0.0"
             if match.group(1) == "double":
-                new_statement = "cuDoubleComplex %s = make_cuDoubleComplex(%s, %s);" % (match.group(3), real, imag)
+                new_statement = f"cuDoubleComplex {match.group(3)} = make_cuDoubleComplex({real}, {imag});"
             elif match.group(1) == "float":
-                new_statement = "cuFloatComplex %s = make_cuFloatComplex(%s, %s);" % (match.group(3), real, imag)
+                new_statement = f"cuFloatComplex {match.group(3)} = make_cuFloatComplex({real}, {imag});"
             else:
                 continue
 
@@ -333,18 +333,18 @@ def complex_numbers_cuda(text):
     p = re.compile("(\_\_real\_\_)\s+([a-zA-Z_][a-zA-Z0-9]*)")
     result = p.finditer(new_code)
     for match in result:
-        new_code = new_code.replace(match.group(0), "cuCreal(%s)" % (match.group(2)))
+        new_code = new_code.replace(match.group(0), f"cuCreal({match.group(2)})")
     p = re.compile("(\_\_imag\_\_)\s+([a-zA-Z_][a-zA-Z0-9]*)")
     result = p.finditer(new_code)
     for match in result:
-        new_code = new_code.replace(match.group(0), "cuCimag(%s)" % (match.group(2)))
+        new_code = new_code.replace(match.group(0), f"cuCimag({match.group(2)})")
 
     # Multiplication of two complex numbers
     p = re.compile("([a-zA-Z_][a-zA-Z0-9]*)\s*\*\s*([a-zA-Z_][a-zA-Z0-9]*)")
     result = p.finditer(new_code)
     for match in result:
         if(match.group(1) in complex_variable_names or match.group(2) in complex_variable_names):
-            new_code = new_code.replace(match.group(0), "cuCmul(%s, %s)" % (match.group(1), match.group(2)))
+            new_code = new_code.replace(match.group(0), f"cuCmul({match.group(1)}, {match.group(2)})")
 
     return new_code
 
@@ -368,7 +368,7 @@ def check_accs(name, arg_list, arg_typ, text):
     if arg_typ[n] == 'ops_arg_dat':
       pos = 0
       while 1:
-        match = re.search('\\b'+arg_list[n]+'\\b',text[pos:])
+        match = re.search(f"\\b{arg_list[n]}\\b",text[pos:])
         if match == None:
           break
         pos = pos + match.start(0)
@@ -387,7 +387,7 @@ def check_accs(name, arg_list, arg_typ, text):
               pos2 = text[pos+7:].find('(')
               num = int(text[pos+7:pos+7+pos2])
               if num != n:
-                print('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num))
+                print(f"Access mismatch in {name}, arg {n}({arg_list[n]}) with OPS_ACC{num}")
               pos = pos+7+pos2
             elif match0.start(0) < match1.start(0):
               match = re.search('OPS_ACC_MD\d',text[pos:])
@@ -395,7 +395,7 @@ def check_accs(name, arg_list, arg_typ, text):
               pos2 = text[pos+10:].find('(')
               num = int(text[pos+10:pos+10+pos2])
               if num != n:
-                print('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num))
+                print(f"Access mismatch in {name}, arg {n}({arg_list[n]}) with OPS_ACC_MD{num}")
               pos = pos+10+pos2
           else:
             match = re.search('OPS_ACC_MD\d',text[pos:])
@@ -403,7 +403,7 @@ def check_accs(name, arg_list, arg_typ, text):
             pos2 = text[pos+10:].find('(')
             num = int(text[pos+10:pos+10+pos2])
             if num != n:
-              print('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC_MD'+str(num))
+              print(f"Access mismatch in {name}, arg {n}({arg_list[n]}) with OPS_ACC_MD{num}")
             pos = pos+10+pos2
         else:
           if match1 != None:
@@ -412,7 +412,7 @@ def check_accs(name, arg_list, arg_typ, text):
             pos2 = text[pos+7:].find('(')
             num = int(text[pos+7:pos+7+pos2])
             if num != n:
-              print('Access mismatch in '+name+', arg '+str(n)+'('+arg_list[n]+') with OPS_ACC'+str(num))
+              print(f"Access mismatch in {name}, arg {n}({arg_list[n]}) with OPS_ACC{num}")
             pos = pos+7+pos2
           else:
             break
@@ -429,11 +429,11 @@ def replace_ACC_kernel_body(kernel_text, arg_list, arg_typ, nargs, opencl=0, dim
           openb = kernel_text.find('(',match.start())
           if opencl == 1:
             if not dims[n].isdigit() or int(dims[n])>1:
-              acc = 'OPS_ACCM('+arg_list[n]+', '+kernel_text[openb+1:closeb-1]+')'
+              acc = f"OPS_ACCM({arg_list[n]}, {kernel_text[openb+1:closeb-1]})"
             else:
-              acc = 'OPS_ACCS('+arg_list[n]+', '+kernel_text[openb+1:closeb-1]+')'
+              acc = f"OPS_ACCS({arg_list[n]}, {kernel_text[openb+1:closeb-1]})"
           else:
-            acc = 'OPS_ACC('+arg_list[n]+', '+kernel_text[openb+1:closeb-1]+')'
+            acc = f"OPS_ACC({arg_list[n]}, {kernel_text[openb+1:closeb-1]})"
           kernel_text = kernel_text[0:match.start()] + acc + kernel_text[closeb:]
           match = pattern.search(kernel_text,match.start()+10)
     return kernel_text

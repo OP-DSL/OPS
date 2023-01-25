@@ -163,8 +163,8 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     num_dims = max(1, NDIM -1)
     if NDIM > 1 and soa_set:
         num_dims += 1;
-    code('__constant__ int dims_'+name+' ['+str(nargs)+']['+str(num_dims)+'];')
-    code('static int dims_'+name+'_h ['+str(nargs)+']['+str(num_dims)+'] = {{0}};')
+    code(f'__constant__ int dims_{name} [{nargs}][{num_dims}];')
+    code(f'static int dims_{name}_h [{nargs}][{num_dims}] = {{{{0}}}};')
     code('')
 
 ##########################################################################
@@ -174,15 +174,15 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     comm('user function')
     text = util.get_file_text_for_kernel(name, src_dir)
 
-    text = re.sub('void\\s+\\b'+name+'\\b','void '+name+'_gpu',text)
-    p = re.compile('void\\s+\\b'+name+'_gpu\\b')
+    text = re.sub(f'void\\s+\\b{name}\\b',f'void {name}_gpu',text)
+    p = re.compile(f'void\\s+\\b{name}_gpu\\b')
 
     i = p.search(text).start()
 
 
     if(i < 0):
       print("\n********")
-      print("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
+      print(f"Error: cannot locate user kernel function: {name} - Aborting code generation")
       exit(2)
 
     i2 = i
@@ -204,29 +204,29 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
 #  generate hip kernel wrapper function
 ##########################################################################
 
-    code('__global__ void ops_'+name+'(')
+    code(f'__global__ void ops_{name}(')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code(typs[n]+'* __restrict arg'+str(n)+',')
-      if n in needDimList:
-        code('int arg'+str(n)+'dim,')
+        code(f'{typs[n]}* __restrict arg{n},')
+        if n in needDimList:
+          code(f'int arg{n}dim,')
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
           if dims[n].isdigit() and int(dims[n])==1:
-            code('const '+typs[n]+' arg'+str(n)+',')
+            code(f'const {typs[n]} arg{n},')
           else:
-            code('const '+typs[n]+'* __restrict arg'+str(n)+',')
+            code(f'const {typs[n]}* __restrict arg{n},')
         else:
-          code(typs[n]+'* __restrict arg'+str(n)+',')
+          code(f'{typs[n]}* __restrict arg{n},')
         if n in needDimList:
            code('int arg'+str(n)+'dim,')
       if restrict[n] or prolong[n]:
         if NDIM == 1:
-          code('int stride_'+str(n)+'0,')
+          code(f'int stride_{n}0,')
         if NDIM == 2:
-          code('int stride_'+str(n)+'0, int stride_'+str(n)+'1,')
+          code(f'int stride_{n}0, int stride_{n}1,')
         if NDIM == 3:
-          code('int stride_'+str(n)+'0, int stride_'+str(n)+'1, int stride_'+str(n)+'2,')
+          code(f'int stride_{n}0, int stride_{n}1, int stride_{n}2,')
 
       elif arg_typ[n] == 'ops_arg_idx':
         if NDIM==1:
@@ -262,16 +262,16 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        code(typs[n]+' arg'+str(n)+'_l['+str(dims[n])+'];')
+        code(f'{typs[n]} arg{n}_l[{dims[n]}];')
 
     # set local variables to 0 if OPS_INC, INF if OPS_MIN, -INF
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
-        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = ZERO_'+typs[n]+';')
+        code(f'for (int d=0; d<{dims[n]}; d++) arg{n}_l[d] = ZERO_{typs[n]};')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
-        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = INFINITY_'+typs[n]+';')
+        code(f'for (int d=0; d<{dims[n]}; d++) arg{n}_l[d] = INFINITY_{typs[n]};')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
-        code('for (int d=0; d<'+str(dims[n])+'; d++) arg'+str(n)+'_l[d] = -INFINITY_'+typs[n]+';')
+        code(f'for (int d=0; d<{dims[n]}; d++) arg{n}_l[d] = -INFINITY_{typs[n]};')
 
 
     code('')
@@ -283,7 +283,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     code('int idx_x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;')
     code('')
     if arg_idx:
-      code('int arg_idx['+str(NDIM)+'];')
+      code(f'int arg_idx[{NDIM}];')
       code('arg_idx[0] = arg_idx0+idx_x;')
       if NDIM==2:
         code('arg_idx[1] = arg_idx1+idx_y;')
@@ -294,13 +294,13 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if restrict[n] == 1:
-          n_x = 'idx_x*stride_'+str(n)+'0'
-          n_y = 'idx_y*stride_'+str(n)+'1'
-          n_z = 'idx_z*stride_'+str(n)+'2'
+          n_x = f'idx_x*stride_{n}0'
+          n_y = f'idx_y*stride_{n}1'
+          n_z = f'idx_z*stride_{n}2'
         elif prolong[n] == 1:
-          n_x = '(idx_x+global_idx0%stride_'+str(n)+'0)/stride_'+str(n)+'0'
-          n_y = '(idx_y+global_idx1%stride_'+str(n)+'1)/stride_'+str(n)+'1'
-          n_z = '(idx_z+global_idx2%stride_'+str(n)+'2)/stride_'+str(n)+'2'
+          n_x = f'(idx_x+global_idx0%stride_{n}0)/stride_{n}0'
+          n_y = f'(idx_y+global_idx1%stride_{n}1)/stride_{n}1'
+          n_z = f'(idx_z+global_idx2%stride_{n}2)/stride_{n}2'
         else:
           n_x = 'idx_x'
           n_y = 'idx_y'
@@ -308,22 +308,22 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
 
         argdim = str(dims[n])
         if n in needDimList:
-           argdim = 'arg'+str(n)+'dim'
+          argdim = f'arg{n}dim'
         if NDIM == 1:
           if soa_set:
-            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+';')
+            code(f'arg{n} += {n_x} * {stride[NDIM*n]};')
           else:
-            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+argdim+';')
+            code(f'arg{n} += {n_x} * {stride[NDIM*n]}*{argdim};')
         elif NDIM == 2:
           if soa_set:
-            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+' + '+n_y+' * '+str(stride[NDIM*n+1])+' * dims_'+name+'['+str(n)+'][0]'+';')
+            code(f'arg{n} += {n_x} * {stride[NDIM*n]} + {n_y} * {stride[NDIM*n+1]} * dims_{name}[{n}][0]'+';')
           else:
-            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+argdim+' + '+n_y+' * '+str(stride[NDIM*n+1])+'*'+argdim+' * dims_'+name+'['+str(n)+'][0]'+';')
+            code(f'arg{n} += {n_x} * {stride[NDIM*n]}*{argdim} + {n_y} * {stride[NDIM*n+1]}*{argdim} * dims_{name}[{n}][0]'+';')
         elif NDIM==3:
           if soa_set:
-            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'+ '+n_y+' * '+str(stride[NDIM*n+1])+'* dims_'+name+'['+str(n)+'][0]'+' + '+n_z+' * '+str(stride[NDIM*n+2])+' * dims_'+name+'['+str(n)+'][0]'+' * dims_'+name+'['+str(n)+'][1]'+';')
+            code(f'arg{n} += {n_x} * {stride[NDIM*n]}+ {n_y} * {stride[NDIM*n+1]}* dims_{name}[{n}][0] + {n_z} * {stride[NDIM*n+2]} * dims_{name}[{n}][0] * dims_{name}[{n}][1];')
           else:
-            code('arg'+str(n)+' += '+n_x+' * '+str(stride[NDIM*n])+'*'+argdim+' + '+n_y+' * '+str(stride[NDIM*n+1])+'*'+argdim+' * dims_'+name+'['+str(n)+'][0]'+' + '+n_z+' * '+str(stride[NDIM*n+2])+'*'+argdim+' * dims_'+name+'['+str(n)+'][0]'+' * dims_'+name+'['+str(n)+'][1]'+';')
+            code(f'arg{n} += {n_x} * {stride[NDIM*n]}*{argdim} + {n_y} * {stride[NDIM*n+1]}*{argdim} * dims_{name}[{n}][0] + {n_z} * {stride[NDIM*n+2]}*{argdim} * dims_{name}[{n}][0] * dims_{name}[{n}][1];')
 
     code('')
     n_per_line = 5
@@ -344,37 +344,37 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
             dim = dims[n]+', '
             extradim = 1
         elif not dims[n].isdigit():
-            dim = 'arg'+str(n)+'dim, '
+            dim = f'arg{n}dim, '
             extradim = 1
         for i in range(1,NDIM+extradim):
-          sizelist = sizelist + 'dims_'+name+'['+str(n)+']['+str(i-1)+'], '
+          sizelist += f'dims_{name}[{n}][{i-1}], '
         if accs[n] == OPS_READ:
             pre = 'const '
 
-        code(pre+'ACC<'+typs[n]+'> argp'+str(n)+'('+dim+sizelist+'arg'+str(n)+');')
+        code(f'{pre}ACC<{typs[n]}> argp{n}({dim+sizelist}arg{n});')
     for n in range(0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
-          text = text +'argp'+str(n)
+          text += f'argp{n}'
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         if dims[n].isdigit() and int(dims[n])==1:
-          text = text +'&arg'+str(n)
+          text += f'&arg{n}'
         else:
-          text = text +'arg'+str(n)
+          text += f'arg{n}'
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        text = text +'arg'+str(n)+'_l'
+        text += f'arg{n}_l'
       elif arg_typ[n] == 'ops_arg_idx':
-        text = text +'arg_idx'
+        text += 'arg_idx'
 
 
       if nargs != 1 and n != nargs-1:
         if n%n_per_line != 3:
-          text = text +', '
+          text += ', '
         else:
-          text = text +','
+          text += ','
       else:
-        text = text +');'
+        text += ');'
       if n%n_per_line == 3 and n != nargs-1:
-         text = text +'\n                   '
+         text += '\n                   '
     code(text)
     ENDIF()
 
@@ -387,14 +387,14 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
       cont = '(hipBlockIdx_x + hipBlockIdx_y*hipGridDim_x + hipBlockIdx_z*hipGridDim_x*hipGridDim_y)*'
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
-        code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction_hip<OPS_INC>(&arg'+str(n)+'[d+'+cont+str(dims[n])+'],arg'+str(n)+'_l[d]);')
+        code(f'for (int d=0; d<{dims[n]}; d++)')
+        code(f'  ops_reduction_hip<OPS_INC>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MIN:
-        code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction_hip<OPS_MIN>(&arg'+str(n)+'[d+'+cont+str(dims[n])+'],arg'+str(n)+'_l[d]);')
+        code(f'for (int d=0; d<{dims[n]}; d++)')
+        code(f'  ops_reduction_hip<OPS_MIN>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_MAX:
-        code('for (int d=0; d<'+str(dims[n])+'; d++)')
-        code('  ops_reduction_hip<OPS_MAX>(&arg'+str(n)+'[d+'+cont+str(dims[n])+'],arg'+str(n)+'_l[d]);')
+        code(f'for (int d=0; d<{dims[n]}; d++)')
+        code(f'  ops_reduction_hip<OPS_MAX>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);')
 
 
     code('')
@@ -408,20 +408,20 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     code('')
     comm(' host stub function')
     code('#ifndef OPS_LAZY')
-    code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
+    code(f'void ops_par_loop_{name}(char const *name, ops_block block, int dim, int* range,')
     text = ''
     for n in range (0, nargs):
 
-      text = text +' ops_arg arg'+str(n)
+      text += f' ops_arg arg{n}'
       if nargs != 1 and n != nargs-1:
-        text = text +','
+        text += ','
       else:
-        text = text +') {'
+        text += ') {'
       if n%n_per_line == 3 and n != nargs-1:
-         text = text +'\n'
+         text += '\n'
     code(text);
     code('#else')
-    code('void ops_par_loop_'+name+'_execute(ops_kernel_descriptor *desc) {')
+    code(f'void ops_par_loop_{name}_execute(ops_kernel_descriptor *desc) {{')
     config.depth = 2
     code('int dim = desc->dim;')
     code('#if OPS_MPI')
@@ -430,7 +430,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     code('int *range = desc->range;')
 
     for n in range (0, nargs):
-      code('ops_arg arg'+str(n)+' = desc->args['+str(n)+'];')
+      code(f'ops_arg arg{n} = desc->args[{n}];')
     code('#endif')
 
     code('')
@@ -438,33 +438,33 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     code('double t1,t2,c1,c2;')
     code('');
 
-    text ='ops_arg args['+str(nargs)+'] = {'
+    text =f'ops_arg args[{nargs}] = {{'
     for n in range (0, nargs):
-      text = text +' arg'+str(n)
+      text += f' arg{n}'
       if nargs != 1 and n != nargs-1:
-        text = text +','
+        text += ','
       else:
-        text = text +'};\n'
+        text += '};\n'
       if n%n_per_line == 5 and n != nargs-1:
-        text = text +'\n                    '
+        text += '\n                    '
     code(text);
     code('')
     code('#if CHECKPOINTING && !OPS_LAZY')
-    code('if (!ops_checkpointing_before(args,'+str(nargs)+',range,'+str(nk)+')) return;')
+    code(f'if (!ops_checkpointing_before(args,{nargs},range,{nk})) return;')
     code('#endif')
     code('')
 
     IF('block->instance->OPS_diags > 1')
-    code('ops_timing_realloc(block->instance,'+str(nk)+',"'+name+'");')
-    code('block->instance->OPS_kernels['+str(nk)+'].count++;')
+    code(f'ops_timing_realloc(block->instance,{nk},"{name}");')
+    code(f'block->instance->OPS_kernels[{nk}].count++;')
     code('ops_timers_core(&c1,&t1);')
     ENDIF()
 
     code('')
     comm('compute locally allocated range for the sub-block')
 
-    code('int start['+str(NDIM)+'];')
-    code('int end['+str(NDIM)+'];')
+    code(f'int start[{NDIM}];')
+    code(f'int end[{NDIM}];')
 
     code('#if OPS_MPI && !OPS_LAZY')
     code('sub_block_list sb = OPS_sub_block_list[block->index];')
@@ -473,14 +473,14 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     code('')
     if not arg_idx:
       code('#ifdef OPS_MPI')
-    code('int arg_idx['+str(NDIM)+'];')
+    code(f'int arg_idx[{NDIM}];')
     if not arg_idx:
       code('#endif')
 
 
 
     code('#ifdef OPS_MPI')
-    code('if (compute_ranges(args, '+str(nargs)+',block, range, start, end, arg_idx) < 0) return;')
+    code(f'if (compute_ranges(args, {nargs},block, range, start, end, arg_idx) < 0) return;')
     code('#else //OPS_MPI')
     FOR('n','0',str(NDIM))
     code('start[n] = range[2*n];end[n] = range[2*n+1];')
@@ -490,44 +490,44 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     code('#endif')
 
     if MULTI_GRID:
-      code('int global_idx['+str(NDIM)+'];')
+      code(f'int global_idx[{NDIM}];')
       code('#ifdef OPS_MPI')
       for n in range (0,NDIM):
-        code('global_idx['+str(n)+'] = arg_idx['+str(n)+'];')
+        code(f'global_idx[{n}] = arg_idx[{n}];')
       code('#else')
       for n in range (0,NDIM):
-        code('global_idx['+str(n)+'] = start['+str(n)+'];')
+        code(f'global_idx[{n}] = start[{n}];')
       code('#endif')
       code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('int xdim'+str(n)+' = args['+str(n)+'].dat->size[0];')
+        code(f'int xdim{n} = args[{n}].dat->size[0];')
         if NDIM>2 or (NDIM==2 and soa_set):
-          code('int ydim'+str(n)+' = args['+str(n)+'].dat->size[1];')
+          code(f'int ydim{n} = args[{n}].dat->size[1];')
         if NDIM>3 or (NDIM==3 and soa_set):
-          code('int zdim'+str(n)+' = args['+str(n)+'].dat->size[2];')
+          code(f'int zdim{n} = args[{n}].dat->size[2];')
     code('')
 
     condition = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        condition = condition + 'xdim'+str(n)+' != dims_'+name+'_h['+str(n)+'][0] || '
+        condition += f'xdim{n} != dims_{name}_h[{n}][0] || '
         if NDIM>2 or (NDIM==2 and soa_set):
-          condition = condition + 'ydim'+str(n)+' != dims_'+name+'_h['+str(n)+'][1] || '
+          condition += f'ydim{n} != dims_{name}_h[{n}][1] || '
         if NDIM>3 or (NDIM==3 and soa_set):
-          condition = condition + 'zdim'+str(n)+' != dims_'+name+'_h['+str(n)+'][2] || '
+          condition += f'zdim{n} != dims_{name}_h[{n}][2] || '
     condition = condition[:-4]
     IF(condition)
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('dims_'+name+'_h['+str(n)+'][0] = xdim'+str(n)+';')
+        code(f'dims_{name}_h[{n}][0] = xdim{n};')
         if NDIM>2 or (NDIM==2 and soa_set):
-          code('dims_'+name+'_h['+str(n)+'][1] = ydim'+str(n)+';')
+          code(f'dims_{name}_h[{n}][1] = ydim{n};')
         if NDIM>3 or (NDIM==3 and soa_set):
-          code('dims_'+name+'_h['+str(n)+'][2] = zdim'+str(n)+';')
-    code('hipSafeCall(block->instance->ostream(), hipMemcpyToSymbol(HIP_SYMBOL(dims_'+name+'), dims_'+name+'_h, sizeof(dims_'+name+')));')
+          code(f'dims_{name}_h[{n}][2] = zdim{n};')
+    code(f'hipSafeCall(block->instance->ostream(), hipMemcpyToSymbol(HIP_SYMBOL(dims_{name}), dims_{name}_h, sizeof(dims_{name})));')
     ENDIF()
 
     code('')
@@ -541,12 +541,12 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl' and (accs[n] != OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1))):
           if (accs[n] == OPS_READ):
-            code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
+            code(f'{typs[n]} *arg{n}h = ({typs[n]} *)arg{n}.data;')
           else:
             code('#ifdef OPS_MPI')
-            code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data + ((ops_reduction)args['+str(n)+'].data)->size * block->index);')
+            code(f'{typs[n]} *arg{n}h = ({typs[n]} *)(((ops_reduction)args[{n}].data)->data + ((ops_reduction)args[{n}].data)->size * block->index);')
             code('#else')
-            code(typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)(((ops_reduction)args['+str(n)+'].data)->data);')
+            code(f'{typs[n]} *arg{n}h = ({typs[n]} *)(((ops_reduction)args[{n}].data)->data);')
             code('#endif')
 
     code('')
@@ -615,10 +615,10 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
-          code('consts_bytes += ROUND_UP(arg'+str(n)+'.dim*sizeof('+typs[n]+'));')
+          code(f'consts_bytes += ROUND_UP(arg{n}.dim*sizeof({typs[n]}));')
         elif accs[n] != OPS_READ:
-          code('reduct_bytes += ROUND_UP(maxblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
-          code('reduct_size = MAX(reduct_size,sizeof('+typs[n]+')*'+str(dims[n])+');')
+          code(f'reduct_bytes += ROUND_UP(maxblocks*{dims[n]}*sizeof({typs[n]}));')
+          code(f'reduct_size = MAX(reduct_size,sizeof({typs[n]})*{dims[n]});')
     code('')
 
     if GBL_READ == True and GBL_READ_MDIM == True:
@@ -630,16 +630,16 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        code('arg'+str(n)+'.data = block->instance->OPS_reduct_h + reduct_bytes;')
-        code('arg'+str(n)+'.data_d = block->instance->OPS_reduct_d + reduct_bytes;')
+        code(f'arg{n}.data = block->instance->OPS_reduct_h + reduct_bytes;')
+        code(f'arg{n}.data_d = block->instance->OPS_reduct_d + reduct_bytes;')
         code('for (int b=0; b<maxblocks; b++)')
         if accs[n] == OPS_INC:
-          code('for (int d=0; d<arg'+str(n)+'.dim; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*arg'+str(n)+'.dim] = ZERO_'+typs[n]+';')
-        if accs[n] == OPS_MAX:
-          code('for (int d=0; d<arg'+str(n)+'.dim; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*arg'+str(n)+'.dim] = -INFINITY_'+typs[n]+';')
-        if accs[n] == OPS_MIN:
-          code('for (int d=0; d<arg'+str(n)+'.dim; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*arg'+str(n)+'.dim] = INFINITY_'+typs[n]+';')
-        code('reduct_bytes += ROUND_UP(maxblocks*arg'+str(n)+'.dim*sizeof('+typs[n]+'));')
+          code(f'for (int d=0; d<arg{n}.dim; d++) (({typs[n]} *)arg{n}.data)[d+b*arg{n}.dim] = ZERO_{typs[n]};')
+        if accs[n] == OPS_MAX:                                                             
+          code(f'for (int d=0; d<arg{n}.dim; d++) (({typs[n]} *)arg{n}.data)[d+b*arg{n}.dim] = -INFINITY_{typs[n]};')
+        if accs[n] == OPS_MIN:                                                             
+          code(f'for (int d=0; d<arg{n}.dim; d++) (({typs[n]} *)arg{n}.data)[d+b*arg{n}.dim] = INFINITY_{typs[n]};')
+        code(f'reduct_bytes += ROUND_UP(maxblocks*arg{n}.dim*sizeof({typs[n]}));')
         code('')
 
     code('')
@@ -648,10 +648,10 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           code('consts_bytes = 0;')
-          code('arg'+str(n)+'.data = block->instance->OPS_consts_h + consts_bytes;')
-          code('arg'+str(n)+'.data_d = block->instance->OPS_consts_d + consts_bytes;')
-          code('for (int d=0; d<arg'+str(n)+'.dim; d++) (('+typs[n]+' *)arg'+str(n)+'.data)[d] = arg'+str(n)+'h[d];')
-          code('consts_bytes += ROUND_UP(arg'+str(n)+'.dim*sizeof(int));')
+          code(f'arg{n}.data = block->instance->OPS_consts_h + consts_bytes;')
+          code(f'arg{n}.data_d = block->instance->OPS_consts_d + consts_bytes;')
+          code(f'for (int d=0; d<arg{n}.dim; d++) (({typs[n]} *)arg{n}.data)[d] = arg{n}h[d];')
+          code(f'consts_bytes += ROUND_UP(arg{n}.dim*sizeof(int));')
     if GBL_READ == True and GBL_READ_MDIM == True:
       code('mvConstArraysToDevice(block->instance,consts_bytes);')
 
@@ -660,37 +660,37 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('long long int dat'+str(n)+' = (block->instance->OPS_soa ? args['+str(n)+'].dat->type_size : args['+str(n)+'].dat->elem_size);')
+        code(f'long long int dat{n} = (block->instance->OPS_soa ? args[{n}].dat->type_size : args[{n}].dat->elem_size);')
 
     code('')
-    code('char *p_a['+str(nargs)+'];')
+    code(f'char *p_a[{nargs}];')
 
     #some custom logic for multigrid
     if MULTI_GRID:
       for n in range (0, nargs):
         if prolong[n] == 1 or restrict[n] == 1:
           comm('This arg has a prolong stencil - so create different ranges')
-          code('int start_'+str(n)+'['+str(NDIM)+']; int end_'+str(n)+'['+str(NDIM)+']; int stride_'+str(n)+'['+str(NDIM)+'];int d_size_'+str(n)+'['+str(NDIM)+'];')
+          code(f'int start_{n}[{NDIM}]; int end_{n}[{NDIM}]; int stride_{n}[{NDIM}];int d_size_{n}[{NDIM}];')
           code('#ifdef OPS_MPI')
           FOR('n','0',str(NDIM))
-          code('sub_dat *sd'+str(n)+' = OPS_sub_dat_list[args['+str(n)+'].dat->index];')
-          code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
-          code('d_size_'+str(n)+'[n] = args['+str(n)+'].dat->d_m[n] + sd'+str(n)+'->decomp_size[n] - args['+str(n)+'].dat->d_p[n];')
+          code(f'sub_dat *sd{n} = OPS_sub_dat_list[args[{n}].dat->index];')
+          code(f'stride_{n}[n] = args[{n}].stencil->mgrid_stride[n];')
+          code(f'd_size_{n}[n] = args[{n}].dat->d_m[n] + sd{n}->decomp_size[n] - args[{n}].dat->d_p[n];')
           if restrict[n] == 1:
-            code('start_'+str(n)+'[n] = global_idx[n]*stride_'+str(n)+'[n] - sd'+str(n)+'->decomp_disp[n] + args['+str(n)+'].dat->d_m[n];')
+            code(f'start_{n}[n] = global_idx[n]*stride_{n}[n] - sd{n}->decomp_disp[n] + args[{n}].dat->d_m[n];')
           else:
-            code('start_'+str(n)+'[n] = global_idx[n]/stride_'+str(n)+'[n] - sd'+str(n)+'->decomp_disp[n] + args['+str(n)+'].dat->d_m[n];')
-          code('end_'+str(n)+'[n] = start_'+str(n)+'[n] + d_size_'+str(n)+'[n];')
+            code(f'start_{n}[n] = global_idx[n]/stride_{n}[n] - sd{n}->decomp_disp[n] + args[{n}].dat->d_m[n];')
+          code(f'end_{n}[n] = start_{n}[n] + d_size_{n}[n];')
           ENDFOR()
           code('#else')
           FOR('n','0',str(NDIM))
-          code('stride_'+str(n)+'[n] = args['+str(n)+'].stencil->mgrid_stride[n];')
-          code('d_size_'+str(n)+'[n] = args['+str(n)+'].dat->d_m[n] + args['+str(n)+'].dat->size[n] - args['+str(n)+'].dat->d_p[n];')
+          code(f'stride_{n}[n] = args[{n}].stencil->mgrid_stride[n];')
+          code(f'd_size_{n}[n] = args[{n}].dat->d_m[n] + args[{n}].dat->size[n] - args[{n}].dat->d_p[n];')
           if restrict[n] == 1:
-            code('start_'+str(n)+'[n] = global_idx[n]*stride_'+str(n)+'[n];')
+            code(f'start_{n}[n] = global_idx[n]*stride_{n}[n];')
           else:
-            code('start_'+str(n)+'[n] = global_idx[n]/stride_'+str(n)+'[n];')
-          code('end_'+str(n)+'[n] = start_'+str(n)+'[n] + d_size_'+str(n)+'[n];')
+            code(f'start_{n}[n] = global_idx[n]/stride_{n}[n];')
+          code(f'end_{n}[n] = start_{n}[n] + d_size_{n}[n];')
           ENDFOR()
           code('#endif')
 
@@ -703,28 +703,28 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
           starttext = 'start_'+str(n)
         else:
           starttext = 'start'
-        code('long long int base'+str(n)+' = args['+str(n)+'].dat->base_offset + ')
-        code('         dat'+str(n)+' * 1 * ('+starttext+'[0] * args['+str(n)+'].stencil->stride[0]);')
+        code(f'long long int base{n} = args[{n}].dat->base_offset + ')
+        code(f'         dat{n} * 1 * ({starttext}[0] * args[{n}].stencil->stride[0]);')
         for d in range (1, NDIM):
-          line = 'base'+str(n)+' = base'+str(n)+'+ dat'+str(n)+' *\n'
+          line = f'base{n} = base{n}+ dat{n} *\n'
           for d2 in range (0,d):
-            line = line + config.depth*' '+'  args['+str(n)+'].dat->size['+str(d2)+'] *\n'
+            line += config.depth*' '+f'  args[{n}].dat->size[{d2}] *\n'
           code(line[:-1])
-          code('  ('+starttext+'['+str(d)+'] * args['+str(n)+'].stencil->stride['+str(d)+']);')
+          code(f'  ({starttext}[{d}] * args[{n}].stencil->stride[{d}]);')
 
-        code('p_a['+str(n)+'] = (char *)args['+str(n)+'].data_d + base'+str(n)+';')
+        code(f'p_a[{n}] = (char *)args[{n}].data_d + base{n};')
         code('')
 
     #halo exchange
     code('')
     code('#ifndef OPS_LAZY')
-    code('ops_H_D_exchanges_device(args, '+str(nargs)+');')
-    code('ops_halo_exchanges(args,'+str(nargs)+',range);')
+    code(f'ops_H_D_exchanges_device(args, {nargs});')
+    code(f'ops_halo_exchanges(args,{nargs},range);')
     code('#endif')
     code('')
     IF('block->instance->OPS_diags > 1')
     code('ops_timers_core(&c2,&t2);')
-    code('block->instance->OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
+    code(f'block->instance->OPS_kernels[{nk}].mpi_time += t2-t1;')
     ENDIF()
     code('')
 
@@ -736,7 +736,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
        code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        code('nshared = MAX(nshared,sizeof('+typs[n]+')*'+str(dims[n])+');')
+        code(f'nshared = MAX(nshared,sizeof({typs[n]})*{dims[n]});')
     code('')
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
       code('nshared = MAX(nshared*nthread,reduct_size*nthread);')
@@ -754,35 +754,35 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     config.depth = config.depth + 2
     n_per_line = 2
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
-      text='hipLaunchKernelGGL(ops_'+name+',grid ,tblock ,nshared ,0 ,'
+      text=f'hipLaunchKernelGGL(ops_{name},grid ,tblock ,nshared ,0 ,'
     else:
-      text='hipLaunchKernelGGL(ops_'+name+',grid ,tblock ,0 ,0 ,'
+      text=f'hipLaunchKernelGGL(ops_{name},grid ,tblock ,0 ,0 ,'
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text = text +' ('+typs[n]+' *)p_a['+str(n)+'],'
+        text += f' ({typs[n]} *)p_a[{n}],'
         if n in needDimList:
-           text = text + ' arg'+str(n)+'.dim,'
+          text += f' arg{n}.dim,'
       elif arg_typ[n] == 'ops_arg_gbl':
         if dims[n].isdigit() and int(dims[n])==1 and accs[n]==OPS_READ:
-          text = text +' *('+typs[n]+' *)arg'+str(n)+'.data,'
+          text += f' *({typs[n]} *)arg{n}.data,'
         else:
-          text = text +' ('+typs[n]+' *)arg'+str(n)+'.data_d,'
-          if n in needDimList:
-             text = text + ' arg'+str(n)+'.dim,'
+          text += f' ({typs[n]} *)arg{n}.data_d,'
+          if n in needDimList and accs[n] != OP_READ:
+            text += ' arg{n}.dim,'
       elif arg_typ[n] == 'ops_arg_idx':
         if NDIM==1:
-          text = text + ' arg_idx[0],'
+          text += ' arg_idx[0],'
         if NDIM==2:
-          text = text + ' arg_idx[0], arg_idx[1],'
+          text += ' arg_idx[0], arg_idx[1],'
         elif NDIM==3:
-          text = text + ' arg_idx[0], arg_idx[1], arg_idx[2],'
+          text += ' arg_idx[0], arg_idx[1], arg_idx[2],'
       if restrict[n] or prolong[n]:
         if NDIM==1:
-          text = text + 'stride_'+str(n)+'[0],'
+          text += f'stride_{n}[0],'
         if NDIM==2:
-          text = text + 'stride_'+str(n)+'[0],stride_'+str(n)+'[1],'
+          text += f'stride_{n}[0],stride_{n}[1],'
         if NDIM==3:
-          text = text + 'stride_'+str(n)+'[0],stride_'+str(n)+'[1],stride_'+str(n)+'[2],'
+          text += f'stride_{n}[0],stride_{n}[1],stride_{n}[2],'
 
       if n%n_per_line == 1 and n != nargs-1:
         text = text +'\n        '
@@ -819,44 +819,44 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
         FOR('b','0','maxblocks')
         FOR('d','0',str(dims[n]))
         if accs[n] == OPS_INC:
-          code('arg'+str(n)+'h[d] = arg'+str(n)+'h[d] + (('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+'];')
+          code(f'arg{n}h[d] = arg{n}h[d] + (({typs[n]} *)arg{n}.data)[d+b*{dims[n]}];')
         elif accs[n] == OPS_MAX:
-          code('arg'+str(n)+'h[d] = MAX(arg'+str(n)+'h[d],(('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+']);')
+          code(f'arg{n}h[d] = MAX(arg{n}h[d],(({typs[n]} *)arg{n}.data)[d+b*{dims[n]}]);')
         elif accs[n] == OPS_MIN:
-          code('arg'+str(n)+'h[d] = MIN(arg'+str(n)+'h[d],(('+typs[n]+' *)arg'+str(n)+'.data)[d+b*'+str(dims[n])+']);')
+          code(f'arg{n}h[d] = MIN(arg{n}h[d],(({typs[n]} *)arg{n}.data)[d+b*{dims[n]}]);')
         ENDFOR()
         ENDFOR()
-        code('arg'+str(n)+'.data = (char *)arg'+str(n)+'h;')
+        code(f'arg{n}.data = (char *)arg{n}h;')
         code('')
 
     IF('block->instance->OPS_diags>1')
     code('hipSafeCall(block->instance->ostream(), hipDeviceSynchronize());')
     code('ops_timers_core(&c1,&t1);')
-    code('block->instance->OPS_kernels['+str(nk)+'].time += t1-t2;')
+    code(f'block->instance->OPS_kernels[{nk}].time += t1-t2;')
     ENDIF()
     code('')
 
     code('#ifndef OPS_LAZY')
-    code('ops_set_dirtybit_device(args, '+str(nargs)+');')
+    code(f'ops_set_dirtybit_device(args, {nargs});')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
-        code('ops_set_halo_dirtybit3(&args['+str(n)+'],range);')
+        code(f'ops_set_halo_dirtybit3(&args[{n}],range);')
     code('#endif')
 
     code('')
     IF('block->instance->OPS_diags > 1')
     comm('Update kernel record')
     code('ops_timers_core(&c2,&t2);')
-    code('block->instance->OPS_kernels['+str(nk)+'].mpi_time += t2-t1;')
+    code(f'block->instance->OPS_kernels[{nk}].mpi_time += t2-t1;')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('block->instance->OPS_kernels['+str(nk)+'].transfer += ops_compute_transfer(dim, start, end, &arg'+str(n)+');')
+        code(f'block->instance->OPS_kernels[{nk}].transfer += ops_compute_transfer(dim, start, end, &arg{n});')
     ENDIF()
     config.depth = config.depth - 2
     code('}')
     code('')
     code('#ifdef OPS_LAZY')
-    code('void ops_par_loop_'+name+'(char const *name, ops_block block, int dim, int* range,')
+    code(f'void ops_par_loop_{name}(char const *name, ops_block block, int dim, int* range,')
     text = ''
     for n in range (0, nargs):
 
@@ -874,33 +874,33 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     code('desc->block = block;')
     code('desc->dim = dim;')
     code('desc->device = 1;')
-    code('desc->index = '+str(nk)+';')
+    code(f'desc->index = {nk};')
     code('desc->hash = 5381;')
-    code('desc->hash = ((desc->hash << 5) + desc->hash) + '+str(nk)+';')
+    code(f'desc->hash = ((desc->hash << 5) + desc->hash) + {nk};')
     FOR('i','0',str(2*NDIM))
     code('desc->range[i] = range[i];')
     code('desc->orig_range[i] = range[i];')
     code('desc->hash = ((desc->hash << 5) + desc->hash) + range[i];')
     ENDFOR()
 
-    code('desc->nargs = '+str(nargs)+';')
-    code('desc->args = (ops_arg*)malloc('+str(nargs)+'*sizeof(ops_arg));')
+    code(f'desc->nargs = {nargs};')
+    code(f'desc->args = (ops_arg*)malloc({nargs}*sizeof(ops_arg));')
     declared = 0
     for n in range (0, nargs):
-      code('desc->args['+str(n)+'] = arg'+str(n)+';')
+      code(f'desc->args[{n}] = arg{n};')
       if arg_typ[n] == 'ops_arg_dat':
-        code('desc->hash = ((desc->hash << 5) + desc->hash) + arg'+str(n)+'.dat->index;')
+        code(f'desc->hash = ((desc->hash << 5) + desc->hash) + arg{n}.dat->index;')
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         if declared == 0:
-          code('char *tmp = (char*)malloc(arg'+str(n)+'.dim*sizeof('+typs[n]+'));')
+          code(f'char *tmp = (char*)malloc(arg{n}.dim*sizeof({typs[n]}));')
           declared = 1
         else:
-          code('tmp = (char*)malloc(arg'+str(n)+'.dim*sizeof('+typs[n]+'));')
-        code('memcpy(tmp, arg'+str(n)+'.data,arg'+str(n)+'.dim*sizeof('+typs[n]+'));')
-        code('desc->args['+str(n)+'].data = tmp;')
-    code('desc->function = ops_par_loop_'+name+'_execute;')
+          code(f'tmp = (char*)malloc(arg{n}.dim*sizeof({typs[n]}));')
+        code(f'memcpy(tmp, arg{n}.data,arg{n}.dim*sizeof({typs[n]}));')
+        code(f'desc->args[{n}].data = tmp;')
+    code(f'desc->function = ops_par_loop_{name}_execute;')
     IF('block->instance->OPS_diags > 1')
-    code('ops_timing_realloc(block->instance,'+str(nk)+',"'+name+'");')
+    code(f'ops_timing_realloc(block->instance,{nk},"{name}");')
     ENDIF()
     code('ops_enqueue_kernel(desc);')
     config.depth = 0
@@ -950,13 +950,13 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
   for nc in range (0,len(consts)):
     code('#define '+(str(consts[nc]['name']).replace('"','')).strip()+' '+(str(consts[nc]['name']).replace('"','')).strip()+'_OPSCONSTANT')
     if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
-      code('__constant__ '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+';')
+      code(f"__constant__ {consts[nc]['type']} "+(str(consts[nc]['name']).replace('"','')).strip()+';')
     else:
       if consts[nc]['dim'].isdigit() and int(consts[nc]['dim']) > 0:
         num = str(consts[nc]['dim'])
-        code('__constant__ '+consts[nc]['type']+' '+(str(consts[nc]['name']).replace('"','')).strip()+'['+num+'];')
+        code(f"__constant__ {consts[nc]['type']} "+(str(consts[nc]['name']).replace('"','')).strip()+f'[{num}];')
       else:
-        code('__constant__ '+consts[nc]['type']+' *'+(str(consts[nc]['name']).replace('"','')).strip()+';')
+        code(f"__constant__ {consts[nc]['type']} *"+(str(consts[nc]['name']).replace('"','')).strip()+';')
 
 
 
@@ -1001,7 +1001,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
 
   for nk in range(0,len(kernels)):
     if kernels[nk]['name'] not in kernel_name_list :
-      code('#include "'+kernels[nk]['name']+'_hip_kernel.cpp"')
+      code(f"#include \"{kernels[nk]['name']}_hip_kernel.cpp\"")
       kernel_name_list.append(kernels[nk]['name'])
 
   util.write_text_to_file(
