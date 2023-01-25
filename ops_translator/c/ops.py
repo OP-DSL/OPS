@@ -126,7 +126,7 @@ def ops_parse_macro_defs(text):
         if len(match) < 4:
             continue
         elif len(match) > 4:
-            print("Unexpected format for macro definition: " + str(match))
+            print(f"Unexpected format for macro definition: {match}")
             continue
         key = match[2]
         value = match[3]
@@ -155,7 +155,7 @@ def self_evaluate_macro_defs(macro_defs):
                 if m != None:
                     ## The macro "k" refers to macro "k2"
                     k2_val = macro_defs[k2]
-                    macro_defs[k] = re.sub(pattern, "\\g<1>"+k2_val+"\\g<2>", k_val)
+                    macro_defs[k] = re.sub(pattern, f"\\g<1>{k2_val}\\g<2>", k_val)
                     substitutions_performed = True
 
     ## Evaluate any mathematical expressions:
@@ -183,7 +183,7 @@ def evaluate_macro_defs_in_string(macro_defs, string):
         for k in list(macro_defs.keys()):
             k_val = macro_defs[k]
 
-            k_pattern = r'' + r'' + '(^|[^a-zA-Z0-9_])' + k + '($|[^a-zA-Z0-9_])'
+            k_pattern = r'' + '(^|[^a-zA-Z0-9_])' + k + '($|[^a-zA-Z0-9_])'
             m = re.search(k_pattern, resolved_string)
             if m != None:
                 ## "string" contains a reference to macro "k", so substitute
@@ -262,7 +262,7 @@ def get_arg_dat(arg_string, j, macro_defs):
 
     # check for syntax errors
     if not(len(dat_args_string.split(',')) == 5 or len(dat_args_string.split(',')) == 6 ):
-      print('Error parsing op_arg_dat(%s): must have five or six arguments' % dat_args_string)
+      print(f"Error parsing op_arg_dat({dat_args_string}): must have five or six arguments")
       return
 
     if len(dat_args_string.split(',')) == 5:
@@ -489,12 +489,10 @@ def parse_source_files(source_files):
 
                 if repeat > 0:
                     if verbose:
-                        print('repeated global constant ' +
-                               const_args[i]['name'])
+                        print(f"repeated global constant {const_args[i]['name']}")
                 else:
                     if verbose:
-                        print('\nglobal constant (' + const_args[i]['name'].strip() \
-                              + ') of size ' + str(const_args[i]['dim']))
+                        print(f"\nglobal constant ({const_args[i]['name'].strip()}) of size {const_args[i]['dim']}")
 
                 # store away in master list
                 if repeat == 0:
@@ -520,8 +518,8 @@ def parse_source_files(source_files):
             _range = loop_args[i]['range']
             if verbose:
                 print(f'\nprocessing kernel {name} with {nargs} arguments')
-                print('dim: ' + dim)
-                print('range: ' + str(_range))
+                print(f'dim: {dim}')
+                print(f'range: {_range}')
 
             #
             # process arguments
@@ -548,10 +546,9 @@ def parse_source_files(source_files):
                         accs[m] = OPS_accs_labels.index(
                             args['acc'].strip()) + 1
                     except ValueError:
-                        print('unknown access type for argument ' + str(m))
+                        print(f'unknown access type for argument {m}')
                     if verbose:
-                        print(var[m] + ' ' + str(dims[m]) + ' ' +
-                              str(stens[m]) + ' ' + str(accs[m]))
+                        print(f"{var[m]} {dims[m]} {stens[m]} {accs[m]}")
 
                 elif arg_type == 'ops_arg_gbl':
                     var[m] = args['data']
@@ -563,10 +560,9 @@ def parse_source_files(source_files):
                         accs[m] = OPS_accs_labels.index(
                             args['acc'].strip()) + 1
                     except ValueError:
-                        print('unknown access type for argument ' + str(m))
+                        print(f'unknown access type for argument {m}')
                     if verbose:
-                        print(
-                            (var[m] + ' ' + str(dims[m]) + ' ' + str(accs[m])))
+                        print(f"{var[m]} {dims[m]} {accs[m]}")
 
                 elif arg_type == 'ops_arg_idx':
                     var[m] = ''
@@ -595,14 +591,11 @@ def parse_source_files(source_files):
                         #kernel['var'][arg] == var[arg] and \
                     if rep2:
                         if verbose:
-                            print('repeated kernel with compatible arguments: ' + \
-                                kernel['name'])
+                            print(f"repeated kernel with compatible arguments: {kernel['name']}")
                         repeat = True
                         which_file = nk
                     else:
-                        print(
-                            'repeated kernel with incompatible arguments: ERROR'
-                            + kernel['name'])
+                        print(f"repeated kernel with incompatible arguments: ERROR{kernel['name']}")
                         break
 
             #
@@ -702,8 +695,7 @@ def generate_ops_files(sources, source_texts, loop_args_in_files,
                     if len(kernels_in_file) > 0:
                         fid.write('//\n// ops_par_loop declarations\n//\n')
                     for k in kernels_in_file:
-                        line = '\nvoid ops_par_loop_' + \
-                            kernels[k]['name'] + '(char const *, ops_block, int , int*,\n'
+                        line = f"\nvoid ops_par_loop_{kernels[k]['name']}(char const *, ops_block, int , int*,\n"
                         line += ',\n'.join(['  ops_arg'] * kernels[k]['nargs']) + ' );\n'
                         fid.write(line)
 
@@ -730,24 +722,23 @@ def generate_ops_files(sources, source_texts, loop_args_in_files,
 
                     for elem in loop_args[curr_loop]['args']:
                         if elem['type'] == 'ops_arg_dat':
-                            line += elem['type'] + '(' + elem['dat'] + \
-                                ', ' + elem['dim'] + ', ' + elem['sten'] + ', "' + elem['typ'] + \
-                                '", ' + elem['acc'] + '),\n' + indent
+                            line += f"{elem['type']}({elem['dat']}, {elem['dim']}, {elem['sten']},"
+                            line += f" \"{elem['typ']}\", {elem['acc']}),\n" + indent
                         if elem['type'] == 'ops_arg_dat_opt':
-                            line += elem['type'] + '(' + elem['dat'] + \
-                                ', ' + elem['dim'] + ', ' + elem['sten'] + ', "' + elem['typ'] + \
-                                '", ' + elem['acc'] + ', ' + elem['opt'] +'),\n' + indent
+                            line += f"{elem['type']}({elem['dat']}"
+                            line += f", {elem['dim']}, {elem['sten']}, \"{elem['typ']}\""
+                            line += f", {elem['acc']}, {elem['opt']}),\n" + indent
                         elif elem['type'] == 'ops_arg_gbl':
                             if elem['acc'] == 'OPS_READ':
-                                line += elem['type'] + '(' + elem['data'] + \
-                                    ', ' + elem['dim'] + ', "' +  elem['typ'] + \
-                                    '", ' +  elem['acc'] + '),\n' + indent
+                                line += f"{elem['type']}({elem['data']}"
+                                line += f", {elem['dim']}, \"{elem['typ']}\""
+                                line += f", {elem['acc']}),\n" + indent
                             else:
-                                line += 'ops_arg_reduce(' + elem['data'] + \
-                                      ', ' + elem['dim'] + ', "' +  elem['typ'] + \
-                                      '", ' +  elem['acc'] + '),\n' + indent
+                                line += f"ops_arg_reduce({elem['data']}"
+                                line += f", {elem['dim']}, \"{elem['typ']}\""
+                                line += f", {elem['acc']}),\n" + indent
                         elif elem['type'] == 'ops_arg_idx':
-                            line += elem['type'] + '(),\n' + indent
+                            line += f"{elem['type']}(),\n" + indent
 
                     fid.write(line[0:-len(indent) - 2] + ');')
 
