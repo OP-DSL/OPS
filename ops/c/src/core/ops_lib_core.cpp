@@ -970,7 +970,7 @@ ops_arg ops_arg_gbl_core(char *data, int dim, int size, ops_access acc) {
   arg.dim = dim;
   arg.data = data;
   arg.acc = acc;
-  (void)size;
+  arg.elem_size = size;
   return arg;
 }
 

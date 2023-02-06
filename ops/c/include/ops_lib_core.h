@@ -484,6 +484,7 @@ struct ops_arg {
   ops_dat dat;          /**< dataset */
   ops_stencil stencil;  /**< the stencil */
   int dim;              /**< dimension of data */
+  int elem_size;        /**< #of bytes per primitive element */
   char *data;           /**< data on host */
   char *data_d;         /**< data on device (for CUDA)*/
   ops_access acc;       /**< access type */

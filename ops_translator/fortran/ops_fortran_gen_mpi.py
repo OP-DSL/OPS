@@ -50,6 +50,7 @@ It produces a file xxx_seq_kernel.F90 for each kernel
 
 import re
 import datetime
+import errno
 import os
 
 import util_fortran

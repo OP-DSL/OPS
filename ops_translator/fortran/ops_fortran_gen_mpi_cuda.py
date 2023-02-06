@@ -735,8 +735,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
         elif NDIM==3:
           line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+arg'+str(n+1)+')'
       elif arg_typ[n] == 'ops_arg_gbl':
-#        if (int(dims[n]) == 1 and 'reduction' not in var[n]):
-        if (dims[n] == '1' and 'reduction' not in var[n]):
+        if dims[n] != '1':# and not 'reduction' in var[n]):
           line =line + '& opsGblDat'+str(n+1)+'Device(1)'
         else:
           line =line + '& opsGblDat'+str(n+1)+'Device'
@@ -828,13 +827,10 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_gbl':
         code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
         code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
-#        if accs[n] == OPS_WRITE or int(dims[n]) > 1:
-        if accs[n] == OPS_WRITE or dims[n] != '1':
+        if accs[n] == OPS_READ and dims[n] != '1':
           code(typs[n]+', DIMENSION(:), DEVICE, POINTER :: opsDat'+str(n+1)+'Host')
-          code(typs[n]+', DIMENSION(:), POINTER :: opsDatH'+str(n+1)+'Host')
         else:
-          code(typs[n]+', DIMENSION(:), DEVICE, POINTER :: opsDat'+str(n+1)+'Host')
-          code(typs[n]+', DIMENSION(:), POINTER :: opsDatH'+str(n+1)+'Host')
+          code(typs[n]+', DIMENSION(:), POINTER :: opsDat'+str(n+1)+'Host')
         if (accs[n] == OPS_INC or accs[n] == OPS_MAX or accs[n] == OPS_MIN):
           code(typs[n]+', DIMENSION(:), ALLOCATABLE :: reductionArrayHost'+str(n+1))
           code('INTEGER(kind=4) :: reductionCardinality'+str(n+1))
@@ -918,6 +914,8 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
       code('y_size = MAX(0,end(2)-start(2)+1)')
       code('z_size = MAX(0,end(3)-start(3)+1)')
     code('')
+    if gbls_mdim > 0:
+      code('call ops_upload_gbls(opsArgArray,'+str(nargs)+')')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
@@ -941,15 +939,13 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
           code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,1)')
         code('call c_f_pointer(opsArg'+str(n+1)+'%data_d,opsDat'+str(n+1)+'Local,(/opsDat'+str(n+1)+'Cardinality/))')
 
-      if gbls_mdim > 0:
-        code('call ops_upload_gbls(opsArgArray,'+str(nargs)+')')
       if arg_typ[n] == 'ops_arg_gbl':
         code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim')
         if accs[n] == OPS_INC or accs[n] == OPS_MAX or accs[n] == OPS_MIN:
           code('call c_f_pointer(getReductionPtrFromOpsArg(opsArg'+str(n+1)+',block),opsDat'+str(n+1)+'Host,(/opsDat'+str(n+1)+'Cardinality/))')
         else:
           if dims[n] != '1':
-            code('call c_f_pointer(opsArg'+str(n+1)+'%data_d,opsDat'+str(n+1)+'Host,(/opsDat'+str(n+1)+'Cardinality/))')
+            code('call c_f_pointer(opsArgArray('+str(n+1)+')%data_d,opsDat'+str(n+1)+'Host,(/opsDat'+str(n+1)+'Cardinality/))')
           else:
             code('call c_f_pointer(opsArg'+str(n+1)+'%data,opsDat'+str(n+1)+'Host,(/opsDat'+str(n+1)+'Cardinality/))')
           
@@ -1149,7 +1145,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     try:
       os.makedirs('./CUDA')
     except OSError as e:
-      if e.errno != os.errno.EEXIST:
+      if e.errno != errno.EEXIST:
         raise
     fid = open('./CUDA/'+name+'_cuda_kernel.CUF','w')
     date = datetime.datetime.now()
