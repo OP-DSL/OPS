@@ -331,20 +331,20 @@ extern "C" void ops_upload_gbls(ops_arg* args, int nargs) {
     int consts_bytes = 0;
     ops_block block = NULL;
     for (int n = 0; n < nargs; n++) {
-      if {args[n].argtype == OPS_ARG_GBL && args[n].accs == OPS_READ)
-        consts_bytes += ROUND_UP(args[n].dim * args[n].size)
-      if {args[n].argtype == OPS_ARG_DAT)
+      if (args[n].argtype == OPS_ARG_GBL && args[n].acc == OPS_READ)
+        consts_bytes += ROUND_UP(args[n].dim * args[n].elem_size);
+      if (args[n].argtype == OPS_ARG_DAT)
         block = args[n].dat->block;
     }
     if (consts_bytes) {
       reallocConstArrays(block->instance,consts_bytes);
       consts_bytes = 0;
       for (int n = 0; n < nargs; n++) {
-        if (args[n].argtype == OPS_ARG_GBL && args[n].accs == OPS_READ) {
-          for (int i = 0; i < args[n].dim*args[n].size)
+        if (args[n].argtype == OPS_ARG_GBL && args[n].acc == OPS_READ) {
+          for (int i = 0; i < args[n].dim*args[n].elem_size; i++)
             (block->instance->OPS_consts_h + consts_bytes)[i] = args[n].data[i];
           args[n].data_d = block->instance->OPS_consts_d + consts_bytes;
-          consts_bytes += ROUND_UP(args[n].dim * args[n].size)
+          consts_bytes += ROUND_UP(args[n].dim * args[n].elem_size);
         }
       }
       mvConstArraysToDevice(block->instance,consts_bytes);
