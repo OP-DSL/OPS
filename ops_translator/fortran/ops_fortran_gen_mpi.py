@@ -50,7 +50,6 @@ It produces a file xxx_seq_kernel.F90 for each kernel
 
 import re
 import datetime
-import errno
 import os
 
 import util_fortran
@@ -168,7 +167,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
+        if dims[n] != '1':
           code('INTEGER(KIND=4) multi_d'+str(n+1))
           code('INTEGER(KIND=4) xdim'+str(n+1))
           if NDIM==1:
@@ -214,12 +213,12 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) == 1:
+        if dims[n] == '1':
           code('#undef OPS_ACC'+str(n+1))
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if int(dims[n]) > 1:
+        if dims[n] != '1':
           code('#undef OPS_ACC_MD'+str(n+1))
     code('')
     code('')
@@ -446,7 +445,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
           code('ydim'+str(n+1)+' = dat'+str(n+1)+'_size(2)')
           code('zdim'+str(n+1)+' = dat'+str(n+1)+'_size(3)')
           code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+' * ydim'+str(n+1)+' * zdim'+str(n+1))
-        if int(dims[n]) != 1:
+        if dims[n] != '1':
           code('multi_d'+str(n+1)+' = getDatDimFromOpsArg(opsArg'+str(n+1)+') ! dimension of the dat')
           code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+')')
         else:
