@@ -989,7 +989,7 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: access
 
     ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_gbl_real_1dim = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
+    ops_arg_gbl_real_1dim = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
 
   end function ops_arg_gbl_real_1dim
 
@@ -1002,7 +1002,7 @@ module OPS_Fortran_Declarations
     integer(kind=c_int) :: access
 
     ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_gbl_int_1dim = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
+    ops_arg_gbl_int_1dim = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
 
   end function ops_arg_gbl_int_1dim
 

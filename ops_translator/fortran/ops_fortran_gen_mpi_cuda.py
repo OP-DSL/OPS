@@ -650,7 +650,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
           if dims[n].isdigit() and dims[n] == '1':
             code(typs[n]+' :: opsGblDat'+str(n+1)+'Device')
           else:
-            code(typs[n]+', DIMENSION(0:'+dims[n]+'-1) :: opsGblDat'+str(n+1)+'Device')
+            code(typs[n]+', DIMENSION('+dims[n]+') :: opsGblDat'+str(n+1)+'Device')
 
           code(typs[n]+', DIMENSION(0:*), SHARED :: sharedMem')
         else:
