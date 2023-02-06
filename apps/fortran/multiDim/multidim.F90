@@ -64,7 +64,7 @@ program MULTIDIM
   type(ops_stencil) :: S2D_00
 
   !vars for reduction
-  real(8), dimension(2) :: reduct_result
+  real(8), dimension(2) :: reduct_result, gbl_test
   type(ops_reduction) :: reduct_dat1
 
   ! vars for halo_depths
@@ -120,6 +120,8 @@ program MULTIDIM
   !declare reduction handles
   reduct_result(1) = 0.0_8
   reduct_result(2) = 0.0_8
+  gbl_test(1) = 1.0_8
+  gbl_test(2) = 2.0_8
   call ops_decl_reduction_handle(16, reduct_dat1, "real(8)", "reduct_dat1");
 
   !decompose the block
@@ -141,6 +143,7 @@ program MULTIDIM
 
   call ops_par_loop(multidim_reduce_kernel,"multidim_reduce_kernel", grid2D, 2, iter_range, &
                & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_READ), &
+               & ops_arg_gbl(gbl_test, 2, "real(8)", OPS_READ),     &
                & ops_arg_reduce(reduct_dat1, 2, "real(8)", OPS_INC))
 
   call ops_reduction_result(reduct_dat1, reduct_result)
