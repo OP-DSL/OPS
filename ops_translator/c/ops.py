@@ -574,26 +574,20 @@ def parse_source_files(source_files):
             # check for repeats
             #
             repeat = False
-            which_file = -1
+            rep_kernel_idx = -1
             for nk, kernel in enumerate(kernels):
-                rep1 = kernel['name'] == name and \
-                  kernel['nargs'] == nargs and \
-                  kernel['dim'] == dim and \
-                  kernel['range'] == _range
-                if rep1:
-                    rep2 = True
+                if kernel['name'] == name:
+                    repeat = kernel['nargs'] == nargs and kernel['dim'] == dim
                     for arg in range(0, nargs):
-                        rep2 = rep2 and \
+                        repeat = repeat and \
                             kernel['stens'][arg] == stens[arg] and \
                             kernel['dims'][arg] == dims[arg] and \
                             kernel['typs'][arg] == typs[arg] and \
                             kernel['accs'][arg] == accs[arg]
-                        #kernel['var'][arg] == var[arg] and \
-                    if rep2:
+                    if repeat:
                         if verbose:
                             print(f"repeated kernel with compatible arguments: {kernel['name']}")
-                        repeat = True
-                        which_file = nk
+                        rep_kernel_idx = nk
                     else:
                         print(f"repeated kernel with incompatible arguments: ERROR{kernel['name']}")
                         break
@@ -626,8 +620,8 @@ def parse_source_files(source_files):
                 kernels.append(temp)
                 kernels_in_file.append(len(kernels) - 1)
             else:
-                if which_file not in kernels_in_file:
-                    kernels_in_file.append(which_file)
+                if rep_kernel_idx not in kernels_in_file:
+                    kernels_in_file.append(rep_kernel_idx)
 
     #
     # errors and warnings
