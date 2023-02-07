@@ -614,12 +614,9 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
   code('')
   comm('user kernel files')
 
-  kernel_name_list = []
 
-  for nk in range(0,len(kernels)):
-    if kernels[nk]['name'] not in kernel_name_list :
-      code(f"#include \"{kernels[nk]['name']}_cpu_kernel.cpp\"")
-      kernel_name_list.append(kernels[nk]['name'])
+  for kernel_name in map(lambda kernel: kernel['name'], kernels):
+      code(f"#include \"{kernel_name}_cpu_kernel.cpp\"")
 
   util.write_text_to_file(
       f"./MPI_OpenMP/{master_basename[0]}_cpu_kernels.cpp",

@@ -1067,24 +1067,6 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
   code('}')
 
 
-
-
-
-
-  kernel_name_list = []
-  kernel_list_text = ''
-  kernel_list__build_text = ''
-  indent = 10*' '
-  for nk in range(0,len(kernels)):
-    kernel_name_list.append(kernels[nk]['name'])
-    if not (('initialise' in kernels[nk]['name']) or ('generate' in kernels[nk]['name'])):
-      kernel_list_text += f'"./OpenCL/{kernel_name_list[nk]}.cl"'
-      if nk != len(kernels)-1:
-        kernel_list_text = kernel_list_text+',\n'+indent
-      kernel_list__build_text += f'block->instance->opencl_instance->OPS_opencl_core.kernel[{nk}] = clCreateKernel(block->instance->opencl_instance->OPS_opencl_core.program, "ops_{kernel_name_list[nk]}", &ret);\n      '+\
-      'clSafeCall( ret );\n      '
-
-
   opencl_build = """
 
 
@@ -1106,19 +1088,13 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
   code(opencl_build)
 
 
-
-
   comm('user kernel files')
 
-  #create unique set of kernel names list
-  unique = sorted(list(set(kernel_name_list)))
-
-  for nk in range(0, len(unique)):
-    if not (('initialise' in unique[nk]) or ('generate' in unique[nk])):
-      code(f"#include \"{unique[nk]}_opencl_kernel.cpp\"")
+  for kernel_name in sorted(map(lambda kernel: kernel['name'], kernels)):
+    if not (('initialise' in kernel_name) or ('generate' in kernel_name)):
+      code(f"#include \"{kernel_name}_opencl_kernel.cpp\"")
     else:
-       code(f"#include \"../MPI_OpenMP/{unique[nk]}_cpu_kernel.cpp\"")
-
+       code(f"#include \"../MPI_OpenMP/{kernel_name}_cpu_kernel.cpp\"")
 
 
   util.write_text_to_file(

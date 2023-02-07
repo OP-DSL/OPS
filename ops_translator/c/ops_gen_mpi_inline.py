@@ -788,12 +788,8 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
   code('')
   comm('user kernel files')
 
-  kernel_name_list = []
-
-  for nk in range(0,len(kernels)):
-    if kernels[nk]['name'] not in kernel_name_list :
-      code(f"#include \"{kernels[nk]['name']}_mpiinline_kernel.cpp\"")
-      kernel_name_list.append(kernels[nk]['name'])
+  for kernel_name in map(lambda kernel: kernel['name'], kernels):
+      code(f"#include \"{kernel_name}_mpiinline_kernel.cpp\"")
 
   util.write_text_to_file(
       f"./MPI_inline/{master_basename[0]}_kernels.cpp",
@@ -809,12 +805,8 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
   code(f"#include \"./MPI_inline/{master_basename[0]}_common.h\"")
   comm('user kernel files')
 
-  kernel_name_list = []
-
-  for nk in range(0,len(kernels)):
-    if kernels[nk]['name'] not in kernel_name_list :
-      code(f"#include \"{kernels[nk]['name']}_mpiinline_kernel_c.c\"")
-      kernel_name_list.append(kernels[nk]['name'])
+  for kernel_name in map(lambda kernel: kernel['name'], kernels):
+      code(f"#include \"{kernel_name}_mpiinline_kernel_c.c\"")
 
   util.write_text_to_file(
       f"./MPI_inline/{master_basename[0]}_kernels_c.c",
