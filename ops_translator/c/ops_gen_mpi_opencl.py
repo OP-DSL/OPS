@@ -1090,7 +1090,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
 
   comm('user kernel files')
 
-  for kernel_name in sorted(map(lambda kernel: kernel['name'], kernels)):
+  for kernel_name in map(lambda kernel: kernel['name'], kernels):
     if not (('initialise' in kernel_name) or ('generate' in kernel_name)):
       code(f"#include \"{kernel_name}_opencl_kernel.cpp\"")
     else:
