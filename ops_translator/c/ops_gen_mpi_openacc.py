@@ -945,12 +945,8 @@ def ops_gen_mpi_openacc(master, consts, kernels, soa_set):
   code('')
   comm('user kernel files')
 
-  kernel_name_list = []
-
-  for nk in range(0,len(kernels)):
-    if kernels[nk]['name'] not in kernel_name_list :
-      code(f"#include \"{kernels[nk]['name']}_openacc_kernel.cpp\"")
-      kernel_name_list.append(kernels[nk]['name'])
+  for kernel_name in map(lambda kernel: kernel['name'], kernels):
+      code(f"#include \"{kernel_name}_openacc_kernel.cpp\"")
 
 
   util.write_text_to_file(
@@ -965,12 +961,8 @@ def ops_gen_mpi_openacc(master, consts, kernels, soa_set):
   code('')
   comm('user kernel files')
 
-  kernel_name_list = []
-
-  for nk in range(0,len(kernels)):
-    if kernels[nk]['name'] not in kernel_name_list :
-      code(f"#include \"{kernels[nk]['name']}_openacc_kernel_c.c\"")
-      kernel_name_list.append(kernels[nk]['name'])
+  for kernel_name in map(lambda kernel: kernel['name'], kernels):
+      code(f"#include \"{kernel_name}_openacc_kernel_c.c\"")
 
   config.depth = config.depth - 2
   util.write_text_to_file(
