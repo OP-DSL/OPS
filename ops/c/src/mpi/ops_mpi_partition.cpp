@@ -65,6 +65,7 @@ void (*ops_read_dat_hdf5_dynamic)(ops_dat dat) = NULL;
 
 int ops_comm_global_size;
 int ops_my_global_rank;
+int partitioned = 0;
 
 sub_block_list *OPS_sub_block_list; // pointer to list holding sub-block
                                     // geometries
@@ -925,6 +926,7 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
 }
 
 void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::string, void*>& opts) {
+  if (partitioned) throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: ops_partition called more than once");
   // create list to hold sub-grid decomposition geometries for each mpi process
   OPS_sub_block_list =
       (sub_block_list *)ops_calloc(OPS_instance::getOPSInstance()->OPS_block_index , sizeof(sub_block_list));
@@ -996,6 +998,8 @@ void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::s
   ops_free(proc_disps);
   ops_free(proc_sizes);
   ops_free(proc_dimsplit);
+
+  partitioned = 1;
 }
 
 void _ops_partition(OPS_instance *instance, const char *routine) {

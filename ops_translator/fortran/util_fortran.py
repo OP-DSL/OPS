@@ -117,3 +117,16 @@ def comment_remover(text):
         re.DOTALL | re.MULTILINE
     )
     return re.sub(pattern, replacer, text)
+
+def find_kernel_routine(text, fun_name):
+  beg = re.search(r'\s*\bsubroutine\s*'+fun_name+r'\b\s*\(',text, re.IGNORECASE)
+  if beg == None:
+    print('Could not find user function')
+    exit(1)
+  beg_pos = beg.start()
+  end = re.search(r'\s*end\s*subroutine\b', text[beg_pos:], re.IGNORECASE)
+  if end == None:
+    print('Could not find matching end subroutine for user function')
+    exit(1)
+  req_kernel = text[beg_pos:beg_pos+end.end()]
+  return req_kernel+'\n'
