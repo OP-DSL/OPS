@@ -42,7 +42,7 @@
 // The one and only non-threads safe global OPS_instance
 // Declared in ops_instance.cpp
 extern OPS_instance *global_ops_instance;
-
+extern int partitioned;
 
 void _ops_init(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
   //We do not have thread safety across MPI
@@ -130,6 +130,8 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   /** ---- allocate an empty dat based on the local array sizes computed
            above on each MPI process                                      ----
      **/
+    
+  if (partitioned) throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: ops_decl_dat called after ops_partition");
 
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p,
                                        stride, data, type_size, type, name);

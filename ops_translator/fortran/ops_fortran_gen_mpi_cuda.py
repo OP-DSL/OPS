@@ -83,27 +83,6 @@ def replace_consts(text):
     text = re.sub(fstr,rstr,text)
   return text
 
-def find_kernel_routine(text, fun_name):
-  req_kernel = ''
-  search_str_1 = 'subroutine '+fun_name.lower()+'('
-  search_str_2 = 'end subroutine'
-  start_offset = 0
-  while True:
-    start_offset = text.lower().find(search_str_1, start_offset)
-    if start_offset != 0 and text[start_offset-1] == '!':
-      start_offset = start_offset+1
-      continue
-    if start_offset == -1:
-      break
-
-    end_offset = text.lower().find(search_str_2, start_offset+1)
-    end_offset = end_offset + len(search_str_2)
-
-    if end_offset-start_offset > 1:
-      req_kernel = text[start_offset:end_offset]
-      break
-  return req_kernel+'\n'
-
 funlist = []
 def find_function_calls(text):
   global funlist
@@ -581,7 +560,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
     
     #find subroutine calls
     funlist = [name.lower()]
-    req_kernel = find_kernel_routine(text, name)
+    req_kernel = util_fortran.find_kernel_routine(text, name)
     if len(req_kernel) != 0:
       fun = name.lower()
       regex = re.compile('\\b'+fun+'\\b',re.I)

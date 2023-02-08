@@ -66,27 +66,6 @@ ENDDO = util_fortran.ENDDO
 IF = util_fortran.IF
 ENDIF = util_fortran.ENDIF
 
-def find_kernel_routine(text, fun_name):
-  req_kernel = ''
-  search_str_1 = 'subroutine '+fun_name.lower()+'('
-  search_str_2 = 'end subroutine'
-  start_offset = 0
-  while True:
-    start_offset = text.lower().find(search_str_1, start_offset)
-    if start_offset != 0 and text[start_offset-1] == '!':
-      start_offset = start_offset+1
-      continue
-    if start_offset == -1:
-      break
-
-    end_offset = text.lower().find(search_str_2, start_offset+1)
-    end_offset = end_offset + len(search_str_2)
-
-    if end_offset-start_offset > 1:
-      req_kernel = text[start_offset:end_offset]
-      break
-  return req_kernel+'\n'
-
 def ops_fortran_gen_mpi(master, date, consts, kernels):
 
   OPS_GBL   = 2;
@@ -205,7 +184,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels):
     # need to check accs here - under fortran the
     # parameter vars are declared inside the subroutine
     # for now no check is done
-    req_kernel = find_kernel_routine(text, name)
+    req_kernel = util_fortran.find_kernel_routine(text, name)
     if len(req_kernel) != 0:
       code(req_kernel)
 
