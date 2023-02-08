@@ -20,7 +20,7 @@ ifdef THREADED
 endif
 CUDAFOR	= -DOPS_WITH_CUDAFOR
 OpenACCFLAGS = -acc #-Minline
-CXXLINK := -pgc++libs
+CXXLINK := -pgc++libs -lstdc++
 
 ifdef IEEE
 	CCFLAGS += -Kieee -nofma
