@@ -242,7 +242,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat' and accs[n] == OPS_READ:
         code(typs[n]+', INTENT(IN) :: opsDat'+str(n+1)+'Local(*)')
       elif arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
-        code(typs[n]+'opsDat'+str(n+1)+'Local(*)')
+        code(typs[n]+' opsDat'+str(n+1)+'Local(*)')
       elif arg_typ[n] == 'ops_arg_gbl':
         code(typs[n]+' opsDat'+str(n+1)+'Local('+str(dims[n])+')')
       elif arg_typ[n] == 'ops_arg_idx':
