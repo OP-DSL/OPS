@@ -219,25 +219,7 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
 
     kernel_text = replace_ACC_kernel_body(kernel_text, arg_list, arg_typ, nargs)
 
-    l = text[i:m].find('inline')
-    if(l<0):
-      text = text[i:k+2]
-    else:
-      text = text[i+l:k+2]
-
-
-    i = text.find('{')
-    i = text[0:i].rfind(')')
-    if (NDIM==1):
-      itervar = ', const int n_x'
-    if (NDIM==2):
-      itervar = ', const int n_x, const int n_y'
-    if (NDIM==3):
-      itervar = ', const int n_x, const int n_y, const int n_z'
-    text = text[0:i]+itervar+text[i:]
     code('')
-
-
     code('')
     code('')
 
