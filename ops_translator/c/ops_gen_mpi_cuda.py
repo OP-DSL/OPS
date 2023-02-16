@@ -55,7 +55,7 @@ import config
 from config import OPS_READ, OPS_WRITE, OPS_RW, OPS_INC, OPS_MAX, OPS_MIN
 
 import util
-from util import para_parse, parse_signature, complex_numbers_cuda, convert_ACC
+from util import complex_numbers_cuda, get_kernel_func_text
 from util import comm, code, FOR, ENDFOR, IF, ENDIF
 
 
@@ -175,30 +175,10 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set):
     ##########################################################################
 
     comm('user function')
-    text = util.get_file_text_for_kernel(name, src_dir)
-
-    text = re.sub(f'void\\s+\\b{name}\\b',f'void {name}_gpu',text)
-    p = re.compile(f'void\\s+\\b{name}_gpu\\b')
-
-    i = p.search(text).start()
-
-
-    if(i < 0):
-      print("\n********")
-      print(f"Error: cannot locate user kernel function: {name} - Aborting code generation")
-      exit(2)
-
-    i2 = i
-    i = text[0:i].rfind('\n') #reverse find
-    if i < 0:
-      i = 0
-    j = text[i:].find('{')
-    k = para_parse(text, i+j, '{', '}')
-    arg_list = parse_signature(text[i2+len(name):i+j])
     code('__device__')
-
-    new_code = complex_numbers_cuda(text[i:k+2])  # Handle complex numbers with the cuComplex.h CUDA library.
-    code(convert_ACC(new_code, arg_typ))
+    text = get_kernel_func_text(name, src_dir, arg_typ)
+    text = re.sub(f'void\\s+\\b{name}\\b',f'void {name}_gpu',text)
+    code(complex_numbers_cuda(text))
     code('')
     code('')
 

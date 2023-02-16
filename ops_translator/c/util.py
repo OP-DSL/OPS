@@ -449,19 +449,38 @@ def write_text_to_file(
     config.file_text = ""
 
 def get_file_text_for_kernel(kernel_name, src_dir):
-    found = 0
     for file in glob.glob(os.path.join(src_dir, "*.h")):
-        with open(file, "r") as f:
-            for line in f:
-                if kernel_name in line:
-                    file_name = f.name
-                    found = 1
-                    break
-            if found == 1:
-                break
+        with open(file, "r") as fid:
+            f_content = remove_trailing_w_space(comment_remover(fid.read()))
+            p = re.compile('void\\s+\\b'+kernel_name+'\\b')
+            if p.search(f_content):
+                    return f_content
 
-    if found == 0:
-        print("COULDN'T NOT FIND KERNEL", kernel_name)
+    print("COULDN'T NOT FIND KERNEL", kernel_name)
+    return None
 
-    with open(file_name, "r") as fid:
-        return remove_trailing_w_space(comment_remover(fid.read()))
+
+def get_kernel_func_text(name, src_dir, arg_typ):
+    text = get_file_text_for_kernel(name, src_dir)
+    if text is None:
+        print("\n********")
+        print(
+            f"Error: cannot locate user kernel function: {name} - Aborting code generation"
+        )
+        exit(2)
+
+    p = re.compile(f"void\\s+\\b{name}\\b")
+    match = p.search(text)
+    assert match  # match shouldn't be None unless text was None
+    text = text[max(0, text[: match.start()].rfind("\n")) :]
+    kernel_text = convert_ACC(
+        text[: para_parse(text, text.find("{"), "{", "}") + 2], arg_typ
+    )
+    return kernel_text
+
+def get_kernel_body_and_arg_list(name, src_dir, arg_typ):
+    kernel_text = get_kernel_func_text(name, src_dir, arg_typ)
+    j = kernel_text.find("{")
+    kernel_body = kernel_text[j + 1 : kernel_text.rfind("}")]
+    arg_list = parse_signature(kernel_text[kernel_text.find(name) + len(name) : j])
+    return kernel_body, arg_list
