@@ -47,7 +47,6 @@ plus a master kernel file
 
 """
 
-import re
 import errno
 import os
 
@@ -55,7 +54,6 @@ import config
 from config import OPS_READ, OPS_WRITE, OPS_RW, OPS_INC, OPS_MAX, OPS_MIN
 
 import util
-from util import para_parse, parse_signature, convert_ACC_body
 from util import comm, code, FOR, ENDFOR, IF, ENDIF
 
 
@@ -157,25 +155,7 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
 
     code('')
     comm('user function')
-    text = util.get_file_text_for_kernel(name, src_dir)
-
-    p = re.compile('void\\s+\\b'+name+'\\b')
-
-    i = p.search(text).start()
-
-    if(i < 0):
-      print("\n********")
-      print(f"Error: cannot locate user kernel function: {name} - Aborting code generation")
-      exit(2)
-
-    i2 = text[i:].find(name)
-    i2 = i+i2
-    j = text[i:].find('{')
-    k = para_parse(text, i+j, '{', '}')
-    kernel_text = text[i+j+1:k]
-    kernel_text = convert_ACC_body(kernel_text)
-    m = text.find(name)
-    arg_list = parse_signature(text[i2+len(name):i+j])
+    kernel_text, arg_list = util.get_kernel_body_and_arg_list(name, src_dir, arg_typ)
 
     comm('')
     comm(' host stub function')

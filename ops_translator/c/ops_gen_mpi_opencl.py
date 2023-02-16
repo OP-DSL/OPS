@@ -62,6 +62,7 @@ from util import (
     find_consts,
     replace_ACC_kernel_body,
     parse_replace_ACC_signature,
+    get_kernel_func_text,
 )
 from util import comm, code, FOR, ENDFOR, IF, ELSE, ENDIF
 
@@ -184,27 +185,8 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
 
     code('')
     comm('user function')
-    text = util.get_file_text_for_kernel(name, src_dir)
-
-    p = re.compile(f'void\\s+\\b{name}\\b')
-
-    i = p.search(text).start()
-    if(i < 0):
-      print("\n********")
-      print(f"Error: cannot locate user kernel function: {name} - Aborting code generation")
-      exit(2)
-
-
-    i = text[0:i].rfind('\n') #reverse find
-
-    text = text[i:]
+    text = get_kernel_func_text(name, src_dir, arg_typ).rstrip()
     j = text.find('{')
-    k = para_parse(text, j, '{', '}')
-    text = text[0:k+1]
-    #convert to new API if in old
-    text = util.convert_ACC(text,arg_typ)
-    j = text.find('{')
-    k = para_parse(text, j, '{', '}')
     m = text.find(name)
     arg_list = parse_signature(text[m+len(name):j])
 

@@ -47,7 +47,6 @@ plus a master kernel file
 
 """
 
-import re
 import errno
 import os
 
@@ -55,7 +54,7 @@ import config
 from config import OPS_READ, OPS_WRITE, OPS_RW, OPS_INC, OPS_MAX, OPS_MIN
 
 import util
-from util import para_parse, parse_signature, replace_ACC_kernel_body, parse_replace_ACC_signature
+from util import get_kernel_func_text, parse_signature, replace_ACC_kernel_body, parse_replace_ACC_signature, get_kernel_func_text
 from util import comm, code, FOR, ENDFOR, IF, ENDIF
 
 def ops_gen_mpi_openacc(master, consts, kernels, soa_set):
@@ -178,30 +177,17 @@ def ops_gen_mpi_openacc(master, consts, kernels, soa_set):
     ##########################################################################
 
     comm('user function')
-    text = util.get_file_text_for_kernel(name, src_dir)
-
-    p = re.compile(f'void\\s+\\b{name}\\b')
-    i = p.search(text).start()
-
-    if(i < 0):
-      print("\n********")
-      print(f"Error: cannot locate user kernel function: {name} - Aborting code generation")
-      exit(2)
-
-    i = max(0,text[0:i].rfind('\n')) #reverse find
-    text = text[i:]
+    text = get_kernel_func_text(name, src_dir, arg_typ).rstrip()
     j = text.find('{')
-    k = para_parse(text, j, '{', '}')
-    text = text[0:k+1]
-    #convert to new API if in old
-    text = util.convert_ACC(text,arg_typ)
-    j = text.find('{')
-    k = para_parse(text, j, '{', '}')
 
     m = text.find(name)
     arg_list = parse_signature(text[m+len(name):j])
 
-    text = text[0:m+len(name)] + parse_replace_ACC_signature(text[m+len(name):j], arg_typ, dims) + replace_ACC_kernel_body(text[j:], arg_list, arg_typ, nargs)
+    text = (
+        text[0 : m + len(name)]
+        + parse_replace_ACC_signature(text[m + len(name) : j], arg_typ, dims)
+        + replace_ACC_kernel_body(text[j:], arg_list, arg_typ, nargs)
+    )
 
     l = text[0:m].find('inline')
     if(l<0):
