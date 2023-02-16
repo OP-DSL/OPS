@@ -461,7 +461,7 @@ def get_file_text_for_kernel(kernel_name, src_dir):
                 break
 
     if found == 0:
-        print("COUND NOT FIND KERNEL", kernel_name)
+        print("COULDN'T NOT FIND KERNEL", kernel_name)
 
     with open(file_name, "r") as fid:
         return remove_trailing_w_space(comment_remover(fid.read()))
