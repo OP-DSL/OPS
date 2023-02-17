@@ -982,12 +982,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
   ##########################################################################
   comm('header')
   code('#define OPS_API 2')
-  if NDIM==1:
-    code('#define OPS_1D')
-  if NDIM==2:
-    code('#define OPS_2D')
-  if NDIM==3:
-    code('#define OPS_3D')
+  code(f'#define OPS_{NDIM}D')
   if soa_set:
     code('#define OPS_SOA')
   code('#include "stdlib.h"')
@@ -1000,16 +995,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
   code('#include "ops_mpi_core.h"')
   code('#endif')
 
-  comm('global constants')
-  for nc in range (0,len(consts)):
-    if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
-      code(f"extern {consts[nc]['type']} "+(str(consts[nc]['name']).replace('"','')).strip()+';')
-    else:
-      if consts[nc]['dim'].isdigit() and int(consts[nc]['dim']) > 0:
-        num = consts[nc]['dim']
-        code(f"extern {consts[nc]['type']} "+(str(consts[nc]['name']).replace('"','')).strip()+f'[{num}];')
-      else:
-        code(f"extern {consts[nc]['type']} *"+(str(consts[nc]['name']).replace('"','')).strip()+';')
+  util.generate_extern_global_consts_declarations(consts)
 
   code('')
 

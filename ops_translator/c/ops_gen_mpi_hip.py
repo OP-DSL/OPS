@@ -904,12 +904,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
   comm('header')
   code('#include <hip/hip_runtime.h>')
   code('#define OPS_API 2')
-  if NDIM==1:
-    code('#define OPS_1D')
-  if NDIM==2:
-    code('#define OPS_2D')
-  if NDIM==3:
-    code('#define OPS_3D')
+  code(f'#define OPS_{NDIM}D')
   if soa_set:
     code('#define OPS_SOA')
   code('#include "ops_lib_core.h"')
@@ -926,19 +921,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
   code('#include "ops_mpi_core.h"')
   code('#endif')
 
-  comm(' global constants')
-  for nc in range (0,len(consts)):
-    code('#define '+(str(consts[nc]['name']).replace('"','')).strip()+' '+(str(consts[nc]['name']).replace('"','')).strip()+'_OPSCONSTANT')
-    if consts[nc]['dim'].isdigit() and int(consts[nc]['dim'])==1:
-      code(f"__constant__ {consts[nc]['type']} "+(str(consts[nc]['name']).replace('"','')).strip()+';')
-    else:
-      if consts[nc]['dim'].isdigit() and int(consts[nc]['dim']) > 0:
-        num = str(consts[nc]['dim'])
-        code(f"__constant__ {consts[nc]['type']} "+(str(consts[nc]['name']).replace('"','')).strip()+f'[{num}];')
-      else:
-        code(f"__constant__ {consts[nc]['type']} *"+(str(consts[nc]['name']).replace('"','')).strip()+';')
-
-
+  util.generate_extern_global_consts_declarations(consts, for_hip=True)
 
   code('')
   code('void ops_init_backend() {}')

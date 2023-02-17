@@ -484,3 +484,18 @@ def get_kernel_body_and_arg_list(name, src_dir, arg_typ):
     kernel_body = kernel_text[j + 1 : kernel_text.rfind("}")]
     arg_list = parse_signature(kernel_text[kernel_text.find(name) + len(name) : j])
     return kernel_body, arg_list
+
+def generate_extern_global_consts_declarations(consts, for_cuda=False, for_hip=False):
+    comm(" global constants")
+    prefix = "__constant__" if for_cuda or for_hip else "extern"
+    for const in consts:
+        name = const["name"].replace('"', "").strip()
+        if for_hip:
+            code(f'#define {name} {name}_OPSCONSTANT')
+        if const["dim"].isdigit() and int(const["dim"]) == 1:
+            code(f'{prefix} {const["type"]} {name};')
+        else:
+            if const["dim"].isdigit() and int(const["dim"]) > 1:
+                code(f'{prefix} {const["type"]} {name}[{const["dim"]}];')
+            else:
+                code(f'{prefix} {const["type"]} *{name};')
