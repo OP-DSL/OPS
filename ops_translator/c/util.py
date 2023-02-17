@@ -133,20 +133,7 @@ def comment_remover(text):
     return re.sub(pattern, replacer, text)
 
 def remove_trailing_w_space(text):
-  text = text+' '
-  line_start = 0
-  line = ""
-  line_end = 0
-  striped_test = ''
-  while 1:
-    line_end =  text.find("\n",line_start+1)
-    line = text[line_start:line_end]
-    line = line.rstrip()
-    striped_test = striped_test + line +'\n'
-    line_start = line_end + 1
-    line = ""
-    if line_end < 0:
-      return striped_test[:-1]
+    return "\n".join(map(lambda line: line.rstrip(), text.split("\n")))
 
 def arg_parse_list(text, j):
     """Parsing arguments in function to find the correct closing brace"""
