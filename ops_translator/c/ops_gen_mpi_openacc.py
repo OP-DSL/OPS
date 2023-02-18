@@ -132,11 +132,6 @@ def ops_gen_mpi_openacc(master, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduct = 1
 
-    n_per_line = 2
-
-    if NDIM==3:
-      n_per_line = 1
-
     i = name.find('kernel')
 
     reduction = False
@@ -394,31 +389,28 @@ def ops_gen_mpi_openacc(master, consts, kernels, soa_set):
           code('#endif')
 
 
-    text = name+'( '
-    for n in range (0, nargs):
+    param_strings = []
+    for n in range(nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text += f'ptr{n}'
+        param_strings.append(f' ptr{n}')
       elif arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ:
           if dims[n].isdigit() and int(dims[n])==1:
-            text += f' &p_a{n}'
+            param_strings.append(f' &p_a{n}')
           else:
-            text += f' p_a{n}'
+            param_strings.append(f' p_a{n}')
         else:
           if dims[n].isdigit() and int(dims[n]) == 1:
-            text += f' &p_a{n}_0'
+            param_strings.append(f' &p_a{n}_0')
           else:
-            text += f' p_a{n}_local'
+            param_strings.append(f' p_a{n}_local')
       elif arg_typ[n] == 'ops_arg_idx':
-        text += 'arg_idx'
-
-      if nargs != 1 and n != nargs-1:
-        text += ','
-      else:
-        text += ' );\n'
-      if n%n_per_line == 0 and n != nargs-1:
-        text += '\n          '
-    code(text);
+        param_strings.append('arg_idx')
+    code(
+        f"{name}("
+        + util.group_n_per_line(param_strings, group_sep="\n          ")
+        + ");"
+    )
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
@@ -520,33 +512,19 @@ def ops_gen_mpi_openacc(master, consts, kernels, soa_set):
     comm(' host stub function')
 
     code(f'void ops_par_loop_{name}(char const *name, ops_block block, int dim, int* range,')
-    text = ''
-    for n in range (0, nargs):
-
-      text += f' ops_arg arg{n}'
-      if nargs != 1 and n != nargs-1:
-        text += ','
-      else:
-        text += ') {'
-      if n%n_per_line == 3 and n != nargs-1:
-         text += '\n'
-    code(text);
+    code(util.group_n_per_line([f" ops_arg arg{n}" for n in range(nargs)]) + ") {")
     config.depth = 2
 
     code('');
     comm('Timing')
     code('double t1,t2,c1,c2;')
 
-    text =f'ops_arg args[{nargs}] = {{'
-    for n in range (0, nargs):
-      text += f' arg{n}'
-      if nargs != 1 and n != nargs-1:
-        text += ','
-      else:
-        text += '};\n'
-      if n%n_per_line == 5 and n != nargs-1:
-        text += '\n                    '
-    code(text);
+
+    code(
+        f"ops_arg args[{nargs}] = {{"
+        + ",".join([f" arg{n}" for n in range(nargs)])
+        + "};\n"
+    )
     code('')
     code('#ifdef CHECKPOINTING')
     code(f'if (!ops_checkpointing_before(args,{nargs},range,{nk})) return;')

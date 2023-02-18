@@ -486,3 +486,15 @@ def generate_extern_global_consts_declarations(consts, for_cuda=False, for_hip=F
                 code(f'{prefix} {const["type"]} {name}[{const["dim"]}];')
             else:
                 code(f'{prefix} {const["type"]} *{name};')
+
+def group_n_per_line(vals, n_per_line=4, sep=",", group_sep="\n", spec_group_sep=None):
+    if spec_group_sep:
+        group_sep = spec_group_sep
+    else:
+        group_sep = sep + group_sep
+    return (group_sep).join(
+        [
+            sep.join([vals[i] for i in range(s, min(len(vals), s + n_per_line))])
+            for s in range(0, len(vals), n_per_line)
+        ]
+    )

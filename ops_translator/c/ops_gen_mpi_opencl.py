@@ -143,8 +143,6 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
     #  start with opencl kernel function
     ##########################################################################
 
-    n_per_line = 4
-
     i = name.find('kernel')
     name2 = name[0:i-1]
 
@@ -307,7 +305,6 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
 
 
     indent = (len(name2)+config.depth+8)*' '
-    n_per_line = 5
     if NDIM==1:
       IF('idx_x < size0')
     elif NDIM==2:
@@ -564,17 +561,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
     comm(' host stub function')
 
     code(f'void ops_par_loop_{name}(char const *name, ops_block block, int dim, int* range,')
-    text = ''
-    for n in range (0, nargs):
-
-      text += f' ops_arg arg{n}'
-      if nargs != 1 and n != nargs-1:
-        text += ','
-      else:
-        text += ') {'
-      if n%n_per_line == 3 and n != nargs-1:
-         text += '\n'
-    code(text);
+    code(util.group_n_per_line([f" ops_arg arg{n}" for n in range(nargs)]) + ") {")
     config.depth = 2
 
     #timing structs
@@ -583,16 +570,11 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
     code('double t1,t2,c1,c2;')
     code('')
 
-    text =f'ops_arg args[{nargs}] = {{'
-    for n in range (0, nargs):
-      text += ' arg'+str(n)
-      if nargs != 1 and n != nargs-1:
-        text += ','
-      else:
-        text += '};\n'
-      if n%n_per_line == 5 and n != nargs-1:
-        text += '\n                    '
-    code(text);
+    code(
+        f"ops_arg args[{nargs}] = {{"
+        + ",".join([f" arg{n}" for n in range(nargs)])
+        + "};\n"
+    )
     code('')
     code('#ifdef CHECKPOINTING')
     code(f'if (!ops_checkpointing_before(args,{nargs},range,{nk})) return;')

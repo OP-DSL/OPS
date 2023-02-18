@@ -43,6 +43,8 @@
 #
 maxargs = 100
 
+from util import group_n_per_line
+
 #open/create file
 f = open('./ops_mpi_seq.h','w')
 
@@ -208,60 +210,45 @@ f.write(functions)
 
 for nargs in range (1,maxargs+1):
     f.write('\n\n//\n')
-    f.write('//ops_par_loop routine for '+str(nargs)+' arguments\n')
+    f.write(f'//ops_par_loop routine for {nargs} arguments\n')
     f.write('//\n')
 
-    n_per_line = 4
-
-    f.write('template <')
-    for n in range (0, nargs):
-        f.write('class T'+str(n))
-        if nargs != 1 and n != nargs-1:
-          f.write(',')
-        else:
-          f.write('>\n')
-        if n%n_per_line == 3 and n != nargs-1:
-          f.write('\n')
+    f.write(f"template <{group_n_per_line([f'class T{n}' for n in range(nargs)])}>\n")
 
     f.write('void ops_par_loop(void (*kernel)(')
-    for n in range (0, nargs):
-        f.write('T'+str(n)+'*')
-        if nargs != 1 and n != nargs-1:
-          f.write(',')
-        else:
-          f.write('),\n')
-        if n%n_per_line == 3 and n != nargs-1:
-          f.write('\n                           ')
-        else:
-          f.write(' ')
+    f.write(
+        group_n_per_line(
+            [f" T{n}*" for n in range(nargs)],
+            4,
+            group_sep="\n                          ",
+        ).lstrip()
+        + "),\n"
+    )
 
 
-    f.write('    char const * name, ops_block block, int dim, int *range,\n    ')
-    for n in range (0, nargs):
-        f.write(' ops_arg arg'+str(n))
-        if nargs != 1 and n != nargs-1:
-          f.write(',')
-        else:
-          f.write(') {\n')
-        if n%n_per_line == 3 and n != nargs-1:
-         f.write('\n    ')
+    f.write('     char const * name, ops_block block, int dim, int *range,\n    ')
+    f.write(
+        group_n_per_line(
+            [f" ops_arg arg{n}" for n in range(nargs)],
+            group_sep="\n    ",
+        )
+        + ") {\n"
+    )
 
-    f.write('\n  char *p_a['+str(nargs)+'];')
-    f.write('\n  int  offs['+str(nargs)+'][OPS_MAX_DIM];\n')
+    f.write(f'\n  char *p_a[{nargs}];')
+    f.write(f'\n  int  offs[{nargs}][OPS_MAX_DIM];\n')
     f.write('\n  int  count[dim];\n')
 
-    f.write('  ops_arg args['+str(nargs)+'] = {')
-    for n in range (0, nargs):
-        f.write(' arg'+str(n))
-        if nargs != 1 and n != nargs-1:
-          f.write(',')
-        else:
-          f.write('};\n\n')
-        if n%n_per_line == 3 and n != nargs-1:
-          f.write('\n                    ')
+    f.write(f'  ops_arg args[{nargs}] = {{')
+    f.write(
+        group_n_per_line(
+            [f" arg{n}" for n in range(nargs)], group_sep="\n                    "
+        )
+        + "};\n\n"
+    )
 
     f.write('\n  #ifdef CHECKPOINTING\n')
-    f.write('  if (!ops_checkpointing_name_before(args,'+str(nargs)+',range,name)) return;\n')
+    f.write(f'  if (!ops_checkpointing_name_before(args,{nargs},range,name)) return;\n')
     f.write('  #endif\n\n')
     f.write('  int start[OPS_MAX_DIM];\n');
     f.write('  int end[OPS_MAX_DIM];\n\n')
@@ -296,7 +283,7 @@ for nargs in range (1,maxargs+1):
     f.write('  ops_register_args(args, name);\n');
     f.write('  #endif\n\n')
 
-    f.write('  for (int i = 0; i<'+str(nargs)+';i++) {\n')
+    f.write(f'  for (int i = 0; i<{nargs};i++) {{\n')
     f.write('    if(args[i].stencil!=NULL) {\n')
     f.write('      offs[i][0] = args[i].stencil->stride[0]*1;  //unit step in x dimension\n')
     f.write('      for(int n=1; n<ndim; n++) {\n')
@@ -307,7 +294,7 @@ for nargs in range (1,maxargs+1):
     f.write('  }\n\n')
 
     f.write('  //set up initial pointers\n')
-    f.write('  for (int i = 0; i < '+str(nargs)+'; i++) {\n')
+    f.write(f'  for (int i = 0; i < {nargs}; i++) {{\n')
     f.write('    if (args[i].argtype == OPS_ARG_DAT) {\n')
     f.write('      int d_m[OPS_MAX_DIM];\n')
     f.write('  #ifdef OPS_MPI\n')
@@ -349,22 +336,22 @@ for nargs in range (1,maxargs+1):
 
 
     for n in range (0, nargs):
-      f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT) {\n')
-      f.write('    xdim'+str(n)+' = args['+str(n)+'].dat->size[0];\n') # no need to multiply by dat->dim as macro already does this *args['+str(n)+'].dat->dim;\n')
+      f.write(f'  if (args[{n}].argtype == OPS_ARG_DAT) {{\n')
+      f.write(f'    xdim{n} = args[{n}].dat->size[0];\n') # no need to multiply by dat->dim as macro already does this *args[{n}].dat->dim;\n')
       f.write('    #ifndef OPS_SOA\n')
-      f.write('    multi_d'+str(n)+' = args['+str(n)+'].dat->dim;\n')
+      f.write(f'    multi_d{n} = args[{n}].dat->dim;\n')
       f.write('    #endif\n')
       f.write('    #if defined OPS_3D || defined OPS_4D || defined OPS_5D || defined OPS_SOA\n')
-      f.write('    ydim'+str(n)+' = args['+str(n)+'].dat->size[1];\n')
+      f.write(f'    ydim{n} = args[{n}].dat->size[1];\n')
       f.write('    #endif\n')
       f.write('    #if (defined OPS_3D && defined OPS_SOA) || defined OPS_4D || defined OPS_5D\n')
-      f.write('    zdim'+str(n)+' = args['+str(n)+'].dat->size[2];\n')
+      f.write(f'    zdim{n} = args[{n}].dat->size[2];\n')
       f.write('    #endif\n')
       f.write('    #if (defined OPS_4D && defined OPS_SOA) || defined OPS_5D\n')
-      f.write('    udim'+str(n)+' = args['+str(n)+'].dat->size[3];\n')
+      f.write(f'    udim{n} = args[{n}].dat->size[3];\n')
       f.write('    #endif\n')
       f.write('    #if defined OPS_5D && defined OPS_SOA\n')
-      f.write('    vdim'+str(n)+' = args['+str(n)+'].dat->size[4];\n')
+      f.write(f'    vdim{n} = args[{n}].dat->size[4];\n')
       f.write('    #endif\n')
       f.write('  }\n')
     f.write('\n')
@@ -396,21 +383,19 @@ for nargs in range (1,maxargs+1):
     #f.write('  }\n\n')
 
 
-    f.write('  ops_H_D_exchanges_host(args, '+str(nargs)+');\n')
-    f.write('  ops_halo_exchanges(args,'+str(nargs)+',range);\n')
-    f.write('  ops_H_D_exchanges_host(args, '+str(nargs)+');\n')
+    f.write(f'  ops_H_D_exchanges_host(args, {nargs});\n')
+    f.write(f'  ops_halo_exchanges(args,{nargs},range);\n')
+    f.write(f'  ops_H_D_exchanges_host(args, {nargs});\n')
     f.write('  for (int nt=0; nt<total_range; nt++) {\n')
 
     f.write('    // call kernel function, passing in pointers to data\n')
     f.write('\n    kernel( ')
-    for n in range (0, nargs):
-        f.write(' (T'+str(n)+' *)p_a['+str(n)+']')
-        if nargs != 1 and n != nargs-1:
-          f.write(',')
-        else:
-          f.write(' );\n\n')
-        if n%n_per_line == 3 and n != nargs-1:
-          f.write('\n          ')
+    f.write(
+        group_n_per_line(
+            [f" (T{n} *)p_a[{n}]" for n in range(nargs)], group_sep="\n          "
+        )
+        + " );\n\n"
+    )
 
     f.write('    count[0]--;   // decrement counter\n')
     f.write('    int m = 0;    // max dimension with changed index\n')
@@ -422,7 +407,7 @@ for nargs in range (1,maxargs+1):
     f.write('    }\n\n')
 
     f.write('    // shift pointers to data\n')
-    f.write('    for (int i=0; i<'+str(nargs)+'; i++) {\n')
+    f.write(f'    for (int i=0; i<{nargs}; i++) {{\n')
     f.write('      if (args[i].argtype == OPS_ARG_DAT)\n')
     f.write('        p_a[i] = p_a[i] + ((OPS_soa ? args[i].dat->type_size : args[i].dat->elem_size) * offs[i][m]);\n')
     f.write('      else if (args[i].argtype == OPS_ARG_IDX) {\n')
@@ -443,13 +428,14 @@ for nargs in range (1,maxargs+1):
 
     f.write('  #ifdef OPS_DEBUG_DUMP\n')
     for n in range (0, nargs):
-      f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT && args['+str(n)+'].acc != OPS_READ) ops_dump3(args['+str(n)+'].dat,name);\n')
+      f.write(f'  if (args[{n}].argtype == OPS_ARG_DAT && args[{n}].acc != OPS_READ) ops_dump3(args[{n}].dat,name);\n')
     f.write('  #endif\n')
     for n in range (0, nargs):
-      f.write('  if (args['+str(n)+'].argtype == OPS_ARG_DAT && args['+str(n)+'].acc != OPS_READ)')
-      f.write('  ops_set_halo_dirtybit3(&args['+str(n)+'],range);\n')
-#      f.write('  ops_set_halo_dirtybit(&args['+str(n)+']);\n')
-    f.write('  ops_set_dirtybit_host(args, '+str(nargs)+');\n')
+      f.write(f'  if (args[{n}].argtype == OPS_ARG_DAT && args[{n}].acc != OPS_READ)')
+      f.write(f'  ops_set_halo_dirtybit3(&args[{n}],range);\n')
+#      f.write(f'  ops_set_halo_dirtybit(&args[{n}]);\n')
+    f.write(f'  ops_set_dirtybit_host(args, {nargs});\n')
 
 
     f.write('}\n')
+f.close()

@@ -135,11 +135,6 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduct = 1
 
-    n_per_line = 2
-
-    if NDIM==3:
-      n_per_line = 1
-
     i = name.find('kernel')
 
     reduction = False
@@ -440,31 +435,16 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
     comm(' host stub function')
 
     code(f'void ops_par_loop_{name}(char const *name, ops_block block, int dim, int* range,')
-    text = ''
-    for n in range (0, nargs):
-
-      text = text +' ops_arg arg'+str(n)
-      if nargs != 1 and n != nargs-1:
-        text = text +','
-      else:
-        text = text +') {'
-      if n%n_per_line == 3 and n != nargs-1:
-         text = text +'\n'
-    code(text);
+    code(util.group_n_per_line([f" ops_arg arg{n}" for n in range(nargs)]) + ") {")
     config.depth = 2
 
     code('');
 
-    text = f'ops_arg args[{nargs}] = {{'
-    for n in range (0, nargs):
-      text += f' arg{n}'
-      if nargs != 1 and n != nargs-1:
-        text += ','
-      else:
-        text += '};\n'
-      if n%n_per_line == 5 and n != nargs-1:
-        text += '\n                    '
-    code(text);
+    code(
+        f"ops_arg args[{nargs}] = {{"
+        + ",".join([f" arg{n}" for n in range(nargs)])
+        + "};\n"
+    )
     code('')
     code('#ifdef CHECKPOINTING')
     code(f'if (!ops_checkpointing_before(args,{nargs},range,{nk})) return;')
