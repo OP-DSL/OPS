@@ -1,4 +1,3 @@
-
 # Open source copyright declaration based on BSD open source template:
 # http://www.opensource.org/licenses/bsd-license.php
 #
@@ -58,16 +57,17 @@ from util import get_kernel_func_text
 from util import complex_numbers_cuda as complex_numbers_hip
 from util import comm, code, FOR, ENDFOR, IF, ENDIF
 
-
 def ops_gen_mpi_hip(master, consts, kernels, soa_set):
   NDIM = 2 #the dimension of the application is hardcoded here .. need to get this dynamically
 
   src_dir = os.path.dirname(master) or '.'
   master_basename = os.path.splitext(os.path.basename(master))
 
-##########################################################################
-#  create new kernel file
-##########################################################################
+  ##########################################################################
+  #  create new kernel file
+  ##########################################################################
+  if not os.path.exists('./HIP'):
+    os.makedirs('./HIP')
 
   for nk in range (0,len(kernels)):
     assert config.file_text == '' and config.depth == 0
@@ -84,7 +84,6 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     stride = [1] * nargs * NDIM
     restrict = [1] * nargs
     prolong = [1] * nargs
-
 
     if NDIM == 2:
       for n in range (0, nargs):
@@ -131,17 +130,6 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduct = 1
 
-    i = name.find('kernel')
-
-    reduction = False
-    ng_args = 0
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        reduction = True
-      else:
-        ng_args = ng_args + 1
-
     arg_idx = 0
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
@@ -152,7 +140,6 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_dat' or (arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ):
         if not dims[n].isdigit():
           needDimList = needDimList + [n]
-
 
 ##########################################################################
 #  generate constants and MACROS
@@ -856,8 +843,6 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
 ##########################################################################
 #  output individual kernel file
 ##########################################################################
-    if not os.path.exists('./HIP'):
-      os.makedirs('./HIP')
     util.write_text_to_file(f"./HIP/{name}_hip_kernel.cpp")
 
 # end of main kernel call loop

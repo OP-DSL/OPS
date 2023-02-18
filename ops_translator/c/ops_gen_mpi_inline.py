@@ -1,4 +1,3 @@
-
 # Open source copyright declaration based on BSD open source template:
 # http://www.opensource.org/licenses/bsd-license.php
 #
@@ -31,8 +30,6 @@
 ## @file
 ## @brief OPS OpenMP code generator
 #
-#  OPS OpenMP code generator
-#
 #  This routine is called by ops.py which parses the input files
 #
 #  It produces a file xxx_omp_kernel.cpp for each kernel,
@@ -49,7 +46,6 @@ plus a master kernel file
 
 """
 
-import errno
 import os
 
 import config
@@ -65,15 +61,12 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
 
   src_dir = os.path.dirname(master) or '.'
   master_basename = os.path.splitext(os.path.basename(master))
-  try:
-    os.makedirs('./MPI_inline')
-  except OSError as e:
-    if e.errno != errno.EEXIST:
-      raise
 
   ##########################################################################
   #  create new kernel file
   ##########################################################################
+  if not os.path.exists('./MPI_inline'):
+    os.makedirs('./MPI_inline')
 
   for nk in range (0,len(kernels)):
     assert config.file_text == '' and config.depth == 0
@@ -116,7 +109,6 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
           stride[NDIM*n] = 0
           stride[NDIM*n+1] = 0
 
-
     ### Determine if this is a MULTI_GRID LOOP with
     ### either restrict or prolong
     MULTI_GRID = 0
@@ -134,18 +126,6 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduct = 1
-
-    i = name.find('kernel')
-
-    reduction = False
-    ng_args = 0
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
-        reduction = True
-      else:
-        ng_args = ng_args + 1
-
 
     arg_idx = 0
     for n in range (0, nargs):
@@ -377,11 +357,6 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
     ##########################################################################
     #  output individual kernel file
     ##########################################################################
-    try:
-      os.makedirs('./MPI_inline')
-    except OSError as e:
-      if e.errno != errno.EEXIST:
-        raise
     util.write_text_to_file(f"./MPI_inline/{name}_mpiinline_kernel_c.c")
     ##########################################################################
     #  now host stub

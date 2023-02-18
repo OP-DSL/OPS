@@ -1,4 +1,3 @@
-
 # Open source copyright declaration based on BSD open source template:
 # http://www.opensource.org/licenses/bsd-license.php
 #
@@ -47,7 +46,6 @@ plus a master kernel file
 
 """
 
-import errno
 import os
 
 import config
@@ -66,20 +64,16 @@ def clean_type(arg):
 def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
   NDIM = 2 #the dimension of the application is hardcoded here .. need to get this dynamically
 
-  gen_full_code = 1;
+  gen_full_code = 1
 
   src_dir = os.path.dirname(master) or '.'
   master_basename = os.path.splitext(os.path.basename(master))
 
-
   ##########################################################################
   #  create new kernel file
   ##########################################################################
-  try:
+  if not os.path.exists('./MPI_OpenMP'):
     os.makedirs('./MPI_OpenMP')
-  except OSError as e:
-    if e.errno != errno.EEXIST:
-      raise
 
   for nk in range (0,len(kernels)):
     assert config.file_text == '' and config.depth == 0
@@ -93,34 +87,34 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
     typs  = kernels[nk]['typs']
     NDIM = int(dim)
     #parse stencil to locate strided access
-    stride = ['1'] * (nargs+4) * NDIM
+    stride = [1] * nargs * NDIM
     restrict = [1] * nargs
     prolong = [1] * nargs
 
     if NDIM == 2:
       for n in range (0, nargs):
         if str(stens[n]).find('STRID2D_X') > 0:
-          stride[NDIM*n+1] = '0'
+          stride[NDIM*n+1] = 0
         elif str(stens[n]).find('STRID2D_Y') > 0:
-          stride[NDIM*n] = '0'
+          stride[NDIM*n] = 0
 
     if NDIM == 3:
       for n in range (0, nargs):
         if str(stens[n]).find('STRID3D_XY') > 0:
-          stride[NDIM*n+2] = '0'
+          stride[NDIM*n+2] = 0
         elif str(stens[n]).find('STRID3D_YZ') > 0:
-          stride[NDIM*n] = '0'
+          stride[NDIM*n] = 0
         elif str(stens[n]).find('STRID3D_XZ') > 0:
-          stride[NDIM*n+1] = '0'
+          stride[NDIM*n+1] = 0
         elif str(stens[n]).find('STRID3D_X') > 0:
-          stride[NDIM*n+1] = '0'
-          stride[NDIM*n+2] = '0'
+          stride[NDIM*n+1] = 0
+          stride[NDIM*n+2] = 0
         elif str(stens[n]).find('STRID3D_Y') > 0:
-          stride[NDIM*n] = '0'
-          stride[NDIM*n+2] = '0'
+          stride[NDIM*n] = 0
+          stride[NDIM*n+2] = 0
         elif str(stens[n]).find('STRID3D_Z') > 0:
-          stride[NDIM*n] = '0'
-          stride[NDIM*n+1] = '0'
+          stride[NDIM*n] = 0
+          stride[NDIM*n+1] = 0
 
     ### Determine if this is a MULTI_GRID LOOP with
     ### either restrict or prolong
@@ -135,17 +129,15 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
         prolong[n] = 1
         MULTI_GRID = 1
 
-    reduction = 0
+    reduct = 0
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        reduction = 1
+        reduct = 1
 
     arg_idx = -1
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
         arg_idx = n
-
-    i = name.find('kernel')
 
     ##########################################################################
     #  start with seq kernel function
@@ -324,7 +316,7 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
         if accs[n] == OPS_WRITE: #this may not be correct ..
           for d in range(0,int(dims[n])):
             line += f' reduction(+:p_a{n}_{d})'
-    if NDIM==3 and reduction==0:
+    if NDIM==3 and reduct==0:
       line2 = ' collapse(2)'
     else:
       line2 = line
