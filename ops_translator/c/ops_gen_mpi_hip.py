@@ -131,8 +131,6 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduct = 1
 
-    n_per_line = 4
-
     i = name.find('kernel')
 
     reduction = False
@@ -306,14 +304,12 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
             code(f'arg{n} += {n_x} * {stride[NDIM*n]}*{argdim} + {n_y} * {stride[NDIM*n+1]}*{argdim} * dims_{name}[{n}][0] + {n_z} * {stride[NDIM*n+2]}*{argdim} * dims_{name}[{n}][0] * dims_{name}[{n}][1];')
 
     code('')
-    n_per_line = 5
     if NDIM==1:
       IF('idx_x < size0')
     if NDIM==2:
       IF('idx_x < size0 && idx_y < size1')
     elif NDIM==3:
       IF('idx_x < size0 && idx_y < size1 && idx_z < size2')
-    text = name+'_gpu('
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         dim = ''
@@ -332,30 +328,26 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
             pre = 'const '
 
         code(f'{pre}ACC<{typs[n]}> argp{n}({dim+sizelist}arg{n});')
+    code(f"{name}_gpu(")
+    param_strings = []
     for n in range(0,nargs):
       if arg_typ[n] == 'ops_arg_dat':
-          text += f'argp{n}'
+          param_strings.append(f' argp{n}')
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
         if dims[n].isdigit() and int(dims[n])==1:
-          text += f'&arg{n}'
+          param_strings.append(f' &arg{n}')
         else:
-          text += f'arg{n}'
+          param_strings.append(f' arg{n}')
       elif arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        text += f'arg{n}_l'
+        param_strings.append(f' arg{n}_l')
       elif arg_typ[n] == 'ops_arg_idx':
-        text += 'arg_idx'
-
-
-      if nargs != 1 and n != nargs-1:
-        if n%n_per_line != 3:
-          text += ', '
-        else:
-          text += ','
-      else:
-        text += ');'
-      if n%n_per_line == 3 and n != nargs-1:
-         text += '\n                   '
-    code(text)
+        param_strings.append(' arg_idx')
+    code(
+        util.group_n_per_line(
+            param_strings, n_per_line=5, group_sep="\n" + " " * config.depth
+        )
+        + ");"
+    )
     ENDIF()
 
     #reduction across blocks
@@ -389,17 +381,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     comm(' host stub function')
     code('#ifndef OPS_LAZY')
     code(f'void ops_par_loop_{name}(char const *name, ops_block block, int dim, int* range,')
-    text = ''
-    for n in range (0, nargs):
-
-      text += f' ops_arg arg{n}'
-      if nargs != 1 and n != nargs-1:
-        text += ','
-      else:
-        text += ') {'
-      if n%n_per_line == 3 and n != nargs-1:
-         text += '\n'
-    code(text);
+    code(util.group_n_per_line([f" ops_arg arg{n}" for n in range(nargs)]) + ") {")
     code('#else')
     code(f'void ops_par_loop_{name}_execute(ops_kernel_descriptor *desc) {{')
     config.depth = 2
@@ -418,16 +400,11 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     code('double t1,t2,c1,c2;')
     code('');
 
-    text =f'ops_arg args[{nargs}] = {{'
-    for n in range (0, nargs):
-      text += f' arg{n}'
-      if nargs != 1 and n != nargs-1:
-        text += ','
-      else:
-        text += '};\n'
-      if n%n_per_line == 5 and n != nargs-1:
-        text += '\n                    '
-    code(text);
+    code(
+        f"ops_arg args[{nargs}] = {{"
+        + ",".join([f" arg{n}" for n in range(nargs)])
+        + "};\n"
+    )
     code('')
     code('#if CHECKPOINTING && !OPS_LAZY')
     code(f'if (!ops_checkpointing_before(args,{nargs},range,{nk})) return;')
@@ -732,55 +709,53 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     if NDIM==3:
       code('if (x_size > 0 && y_size > 0 && z_size > 0)')
     config.depth = config.depth + 2
-    n_per_line = 2
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
-      text=f'hipLaunchKernelGGL(ops_{name},grid ,tblock ,nshared ,0 ,'
+      code(f'hipLaunchKernelGGL(ops_{name}, grid, tblock, nshared, 0,')
     else:
-      text=f'hipLaunchKernelGGL(ops_{name},grid ,tblock ,0 ,0 ,'
+      code(f'hipLaunchKernelGGL(ops_{name}, grid, tblock, 0, 0,')
+    param_strings = []
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        text += f' ({typs[n]} *)p_a[{n}],'
+        param_strings.append(f' ({typs[n]} *)p_a[{n}],')
         if n in needDimList:
-          text += f' arg{n}.dim,'
+          param_strings.append(f' arg{n}.dim,')
       elif arg_typ[n] == 'ops_arg_gbl':
         if dims[n].isdigit() and int(dims[n])==1 and accs[n]==OPS_READ:
-          text += f' *({typs[n]} *)arg{n}.data,'
+          param_strings.append(f' *({typs[n]} *)arg{n}.data,')
         else:
-          text += f' ({typs[n]} *)arg{n}.data_d,'
+          param_strings.append(f' ({typs[n]} *)arg{n}.data_d,')
           if n in needDimList and accs[n] != OP_READ:
-            text += ' arg{n}.dim,'
+            param_strings.append(' arg{n}.dim,')
       elif arg_typ[n] == 'ops_arg_idx':
         if NDIM==1:
-          text += ' arg_idx[0],'
+          param_strings.append(' arg_idx[0],')
         if NDIM==2:
-          text += ' arg_idx[0], arg_idx[1],'
+          param_strings.append(' arg_idx[0], arg_idx[1],')
         elif NDIM==3:
-          text += ' arg_idx[0], arg_idx[1], arg_idx[2],'
+          param_strings.append(' arg_idx[0], arg_idx[1], arg_idx[2],')
       if restrict[n] or prolong[n]:
         if NDIM==1:
-          text += f'stride_{n}[0],'
+          param_strings.append(f'stride_{n}[0],')
         if NDIM==2:
-          text += f'stride_{n}[0],stride_{n}[1],'
+          param_strings.append(f'stride_{n}[0],stride_{n}[1],')
         if NDIM==3:
-          text += f'stride_{n}[0],stride_{n}[1],stride_{n}[2],'
+          param_strings.append(f'stride_{n}[0],stride_{n}[1],stride_{n}[2],')
+    code(util.group_n_per_line(param_strings, n_per_line=2, group_sep="\n        "))
 
-      if n%n_per_line == 1 and n != nargs-1:
-        text = text +'\n        '
     if any_prolong:
       if NDIM==1:
-        text = text + 'global_idx[0],'
+        code('global_idx[0],')
       elif NDIM==2:
-        text = text + 'global_idx[0], global_idx[1],'
+        code('global_idx[0], global_idx[1],')
       elif NDIM==3:
-        text = text + 'global_idx[0], global_idx[1], global_idx[2],'
+        code('global_idx[0], global_idx[1], global_idx[2],')
 
     if NDIM==1:
-      text = text +'x_size);'
+      code('x_size);')
     if NDIM==2:
-      text = text +'x_size, y_size);'
+      code('x_size, y_size);')
     elif NDIM==3:
-      text = text +'x_size, y_size, z_size);'
-    code(text);
+      code('x_size, y_size, z_size);')
     config.depth = config.depth - 2
 
     code('')
@@ -837,17 +812,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     code('')
     code('#ifdef OPS_LAZY')
     code(f'void ops_par_loop_{name}(char const *name, ops_block block, int dim, int* range,')
-    text = ''
-    for n in range (0, nargs):
-
-      text = text +' ops_arg arg'+str(n)
-      if nargs != 1 and n != nargs-1:
-        text = text +','
-      else:
-        text = text +') {'
-      if n%n_per_line == 3 and n != nargs-1:
-         text = text +'\n'
-    code(text);
+    code(util.group_n_per_line([f" ops_arg arg{n}" for n in range(nargs)]) + ") {")
     config.depth = 2
     code('ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));')
     code('desc->name = name;')
