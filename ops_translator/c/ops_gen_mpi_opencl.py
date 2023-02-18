@@ -28,9 +28,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ## @file
-## @brief
-#
-#  OPS OpenCL code generator
+## @brief OPS OpenCL code generator
 #
 #  This routine is called by ops.py which parses the input files
 #
@@ -48,8 +46,6 @@ plus a master kernel file
 
 """
 
-import re
-import errno
 import os
 
 import config
@@ -57,7 +53,6 @@ from config import OPS_READ, OPS_WRITE, OPS_RW, OPS_INC, OPS_MAX, OPS_MIN
 
 import util
 from util import (
-    para_parse,
     parse_signature,
     find_consts,
     replace_ACC_kernel_body,
@@ -65,7 +60,6 @@ from util import (
     get_kernel_func_text,
 )
 from util import comm, code, FOR, ENDFOR, IF, ELSE, ENDIF
-
 
 def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
   NDIM = 2 #the dimension of the application, set to 2 by default. Will be updated later from loops
@@ -76,11 +70,9 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
   ##########################################################################
   #  create new kernel files **_kernel.cl
   ##########################################################################
-  try:
+  if not os.path.exists('./OpenCL'):
     os.makedirs('./OpenCL')
-  except OSError as e:
-    if e.errno != errno.EEXIST:
-      raise
+
   for nk in range (0,len(kernels)):
     assert config.file_text == '' and config.depth == 0
     arg_typ  = kernels[nk]['arg_type']
@@ -98,7 +90,6 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
 
     #reset dimension of the application
     NDIM = int(dim)
-
     #parse stencil to locate strided access
     stride = [1] * nargs * NDIM
 
@@ -127,24 +118,21 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
           stride[NDIM*n] = 0
           stride[NDIM*n+1] = 0
 
-    reduction = 0
+    reduct = 0
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        reduction = 1
-
+        reduct = 1
 
     arg_idx = 0
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
         arg_idx = 1
 
-
     ##########################################################################
     #  start with opencl kernel function
     ##########################################################################
 
-    i = name.find('kernel')
-    name2 = name[0:i-1]
+    name2 = name[0:name.find('kernel')-1]
 
     code('')
 
@@ -392,7 +380,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
     ENDIF()
 
     #reduction across blocks
-    if reduction:
+    if reduct:
       code('int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
@@ -410,12 +398,6 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
     config.depth = config.depth - 2
     code('}')
 
-
-    try:
-      os.makedirs('./OpenCL')
-    except OSError as e:
-      if e.errno != errno.EEXIST:
-        raise
     util.write_text_to_file(f"./OpenCL/{name}.cl")
 
     ##########################################################################

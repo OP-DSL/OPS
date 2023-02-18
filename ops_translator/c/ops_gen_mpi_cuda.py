@@ -1,4 +1,3 @@
-
 # Open source copyright declaration based on BSD open source template:
 # http://www.opensource.org/licenses/bsd-license.php
 #
@@ -48,7 +47,6 @@ plus a master kernel file
 """
 
 import re
-import errno
 import os
 
 import config
@@ -57,7 +55,6 @@ from config import OPS_READ, OPS_WRITE, OPS_RW, OPS_INC, OPS_MAX, OPS_MIN
 import util
 from util import complex_numbers_cuda, get_kernel_func_text
 from util import comm, code, FOR, ENDFOR, IF, ENDIF
-
 
 def ops_gen_mpi_cuda(master, consts, kernels, soa_set):
   NDIM = 2 #the dimension of the application is hardcoded here .. need to get this dynamically
@@ -68,11 +65,9 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set):
   ##########################################################################
   #  create new kernel file
   ##########################################################################
-  try:
+  if not os.path.exists('./CUDA'):
     os.makedirs('./CUDA')
-  except OSError as e:
-    if e.errno != errno.EEXIST:
-      raise
+
   for nk in range (0,len(kernels)):
     assert config.file_text == '' and config.depth == 0
     arg_typ  = kernels[nk]['arg_type']
@@ -88,7 +83,6 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set):
     stride = [1] * nargs * NDIM
     restrict = [1] * nargs
     prolong = [1] * nargs
-
 
     if NDIM == 2:
       for n in range (0, nargs):
@@ -134,17 +128,6 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduct = 1
-
-    i = name.find('kernel')
-
-    reduction = False
-    ng_args = 0
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        reduction = True
-      else:
-        ng_args = ng_args + 1
 
     arg_idx = 0
     for n in range (0, nargs):
