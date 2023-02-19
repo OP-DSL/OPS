@@ -24,11 +24,12 @@ def main(argv=None) -> None:
     parser.add_argument("-i", help="Add to include files", type=isFilePath, action="append", nargs=1, default=[])
     parser.add_argument("-D", help="Add to preprocessor defines", action="append", nargs=1, default=[])
 
-    parser.add_argument("--file_paths", help="Input OPS sources", type="isFilePath", nargs="+")
+    parser.add_argument("--file_paths", help="Input OPS sources", type=isFilePath, nargs="+")
 
-    target_names = [taget.name for target in Target.all()] #TODO: implement Target Findable class
+    target_names = [target.name for target in Target.all()] #TODO: implement Target Findable class
     parser.add_argument("-t", "--target", help="Code-gereration target", type=str, action="append", nargs=1, choices=target_names, default=[])
 
+    args = parser.parse_args(argv)
 
 def isDirPath(path):
     if os.path.isdir(path):
