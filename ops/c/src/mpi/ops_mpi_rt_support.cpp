@@ -701,6 +701,11 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
         continue;
       ops_dat dat = args[i].dat;
       int dat_ndim = OPS_sub_block_list[dat->block->index]->ndim;
+      if (args[i].argtype == OPS_ART_DAT &&
+          (args[i].acc == OPS_READ || args[i].acc == OPS_RW) &&
+          args[i].stencil->points == 1 &&
+          args[i].stencil->stencil[dim] == 0)
+        continue;
 
       if (dat_ndim <= dim || dat->size[dim] <= 1)
         continue; // dimension of the sub-block is less than current dim OR has
