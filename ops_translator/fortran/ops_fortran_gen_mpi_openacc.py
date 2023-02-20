@@ -149,10 +149,13 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) == 1:
           code('INTEGER(KIND=4) xdim'+str(n+1))
+          code('!$acc declare create(xdim'+str(n+1)+')')
           if NDIM > 1:
             code('INTEGER(KIND=4) ydim'+str(n+1))
+            code('!$acc declare create(ydim'+str(n+1)+')')
           if NDIM > 2:
             code('INTEGER(KIND=4) zdim'+str(n+1))
+            code('!$acc declare create(zdim'+str(n+1)+')')
           if NDIM==1:
             code('#define OPS_ACC'+str(n+1)+'(x) (x+1)')
           if NDIM==2:
@@ -165,11 +168,15 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
           code('INTEGER(KIND=4) multi_d'+str(n+1))
+          code('!$acc declare create(multi_d'+str(n+1)+')')
           code('INTEGER(KIND=4) xdim'+str(n+1))
+          code('!$acc declare create(xdim'+str(n+1)+')')
           if NDIM > 1:
             code('INTEGER(KIND=4) ydim'+str(n+1))
+            code('!$acc declare create(ydim'+str(n+1)+')')
           if NDIM > 2:
             code('INTEGER(KIND=4) zdim'+str(n+1))
+            code('!$acc declare create(zdim'+str(n+1)+')')
           if NDIM==1:
             code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
           if NDIM==2:
