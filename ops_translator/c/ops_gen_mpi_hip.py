@@ -71,75 +71,25 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
 
   for nk in range (0,len(kernels)):
     assert config.file_text == '' and config.depth == 0
-    arg_typ  = kernels[nk]['arg_type']
-    name  = kernels[nk]['name']
-    nargs = kernels[nk]['nargs']
-    dim   = kernels[nk]['dim']
-    dims  = kernels[nk]['dims']
-    stens = kernels[nk]['stens']
-    accs  = kernels[nk]['accs']
-    typs  = kernels[nk]['typs']
-    NDIM = int(dim)
-    #parse stencil to locate strided access
-    stride = [1] * nargs * NDIM
-    restrict = [1] * nargs
-    prolong = [1] * nargs
-
-    if NDIM == 2:
-      for n in range (0, nargs):
-        if str(stens[n]).find('STRID2D_X') > 0:
-          stride[NDIM*n+1] = 0
-        elif str(stens[n]).find('STRID2D_Y') > 0:
-          stride[NDIM*n] = 0
-
-    if NDIM == 3:
-      for n in range (0, nargs):
-        if str(stens[n]).find('STRID3D_XY') > 0:
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_YZ') > 0:
-          stride[NDIM*n] = 0
-        elif str(stens[n]).find('STRID3D_XZ') > 0:
-          stride[NDIM*n+1] = 0
-        elif str(stens[n]).find('STRID3D_X') > 0:
-          stride[NDIM*n+1] = 0
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_Y') > 0:
-          stride[NDIM*n] = 0
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_Z') > 0:
-          stride[NDIM*n] = 0
-          stride[NDIM*n+1] = 0
-
-    ### Determine if this is a MULTI_GRID LOOP with
-    ### either restrict or prolong
-    MULTI_GRID = 0
-    any_prolong = 0
-    for n in range (0, nargs):
-      restrict[n] = 0
-      prolong[n] = 0
-      if str(stens[n]).find('RESTRICT') > 0:
-        restrict[n] = 1
-        MULTI_GRID = 1
-      if str(stens[n]).find('PROLONG') > 0 :
-        prolong[n] = 1
-        MULTI_GRID = 1
-        any_prolong = 1
-
-    reduct = 0
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        reduct = 1
-
-    arg_idx = 0
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_idx':
-        arg_idx = 1
-
-    needDimList = []
-    for n in range(0,nargs):
-      if arg_typ[n] == 'ops_arg_dat' or (arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ):
-        if not dims[n].isdigit():
-          needDimList = needDimList + [n]
+    (
+        arg_typ,
+        name,
+        nargs,
+        dims,
+        accs,
+        typs,
+        NDIM,
+        stride,
+        restrict,
+        prolong,
+        MULTI_GRID,
+        GBL_READ,
+        GBL_READ_MDIM,
+        has_reduction,
+        arg_idx,
+        needDimList
+    ) = util.create_kernel_info(kernels[nk])
+    any_prolong = any(prolong)
 
 ##########################################################################
 #  generate constants and MACROS
@@ -247,7 +197,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
       code('int idx_y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;')
     code('int idx_x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;')
     code('')
-    if arg_idx:
+    if arg_idx != -1:
       code(f'int arg_idx[{NDIM}];')
       code('arg_idx[0] = arg_idx0+idx_x;')
       if NDIM==2:
@@ -276,19 +226,19 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
           argdim = f'arg{n}dim'
         if NDIM == 1:
           if soa_set:
-            code(f'arg{n} += {n_x} * {stride[NDIM*n]};')
+            code(f'arg{n} += {n_x} * {stride[n][0]};')
           else:
-            code(f'arg{n} += {n_x} * {stride[NDIM*n]}*{argdim};')
+            code(f'arg{n} += {n_x} * {stride[n][0]}*{argdim};')
         elif NDIM == 2:
           if soa_set:
-            code(f'arg{n} += {n_x} * {stride[NDIM*n]} + {n_y} * {stride[NDIM*n+1]} * dims_{name}[{n}][0]'+';')
+            code(f'arg{n} += {n_x} * {stride[n][0]} + {n_y} * {stride[n][1]} * dims_{name}[{n}][0]'+';')
           else:
-            code(f'arg{n} += {n_x} * {stride[NDIM*n]}*{argdim} + {n_y} * {stride[NDIM*n+1]}*{argdim} * dims_{name}[{n}][0]'+';')
+            code(f'arg{n} += {n_x} * {stride[n][0]}*{argdim} + {n_y} * {stride[n][1]}*{argdim} * dims_{name}[{n}][0]'+';')
         elif NDIM==3:
           if soa_set:
-            code(f'arg{n} += {n_x} * {stride[NDIM*n]}+ {n_y} * {stride[NDIM*n+1]}* dims_{name}[{n}][0] + {n_z} * {stride[NDIM*n+2]} * dims_{name}[{n}][0] * dims_{name}[{n}][1];')
+            code(f'arg{n} += {n_x} * {stride[n][0]}+ {n_y} * {stride[n][1]}* dims_{name}[{n}][0] + {n_z} * {stride[n][2]} * dims_{name}[{n}][0] * dims_{name}[{n}][1];')
           else:
-            code(f'arg{n} += {n_x} * {stride[NDIM*n]}*{argdim} + {n_y} * {stride[NDIM*n+1]}*{argdim} * dims_{name}[{n}][0] + {n_z} * {stride[NDIM*n+2]}*{argdim} * dims_{name}[{n}][0] * dims_{name}[{n}][1];')
+            code(f'arg{n} += {n_x} * {stride[n][0]}*{argdim} + {n_y} * {stride[n][1]}*{argdim} * dims_{name}[{n}][0] + {n_z} * {stride[n][2]}*{argdim} * dims_{name}[{n}][0] * dims_{name}[{n}][1];')
 
     code('')
     if NDIM==1:
@@ -415,10 +365,10 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     code('#endif //OPS_MPI')
 
     code('')
-    if not arg_idx:
+    if arg_idx == -1:
       code('#ifdef OPS_MPI')
     code(f'int arg_idx[{NDIM}];')
-    if not arg_idx:
+    if arg_idx == -1:
       code('#endif')
 
 
@@ -428,7 +378,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     code('#else //OPS_MPI')
     FOR('n','0',str(NDIM))
     code('start[n] = range[2*n];end[n] = range[2*n+1];')
-    if arg_idx:
+    if arg_idx != -1:
       code('arg_idx[n] = start[n];')
     ENDFOR()
     code('#endif')
@@ -478,7 +428,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
 
     #setup reduction variables
     code('')
-    if reduct and not arg_idx:
+    if has_reduction and arg_idx == -1:
       code('#if defined(OPS_LAZY) && !defined(OPS_MPI)')
       code('ops_block block = desc->block;')
       code('#endif')
@@ -517,30 +467,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
 
     code('')
 
-    GBL_READ = False
-    GBL_READ_MDIM = False
-    GBL_INC = False
-    GBL_MAX = False
-    GBL_MIN = False
-    GBL_WRITE = False
-
-    #set up reduction variables
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_READ:
-          GBL_READ = True
-          if not dims[n].isdigit() or int(dims[n])>1:
-            GBL_READ_MDIM = True
-        if accs[n] == OPS_INC:
-          GBL_INC = True
-        if accs[n] == OPS_MAX:
-          GBL_MAX = True
-        if accs[n] == OPS_MIN:
-          GBL_MIN = True
-        if accs[n] == OPS_WRITE:
-          GBL_WRITE = True
-
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+    if has_reduction:
       if NDIM==1:
         code('int nblocks = ((x_size-1)/block->instance->OPS_block_size_x+ 1);')
       elif NDIM==2:
@@ -567,7 +494,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
 
     if GBL_READ == True and GBL_READ_MDIM == True:
       code('reallocConstArrays(block->instance,consts_bytes);')
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+    if has_reduction:
       code('reallocReductArrays(block->instance,reduct_bytes);')
       code('reduct_bytes = 0;')
       code('')
@@ -599,7 +526,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     if GBL_READ == True and GBL_READ_MDIM == True:
       code('mvConstArraysToDevice(block->instance,consts_bytes);')
 
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+    if has_reduction:
       code('mvReductArraysToDevice(block->instance,reduct_bytes);')
 
     for n in range (0, nargs):
@@ -674,7 +601,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
 
 
     #set up shared memory for reduction
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+    if has_reduction:
        code('size_t nshared = 0;')
        code('int nthread = block->instance->OPS_block_size_x*block->instance->OPS_block_size_y*block->instance->OPS_block_size_z;')
        code('')
@@ -682,7 +609,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code(f'nshared = MAX(nshared,sizeof({typs[n]})*{dims[n]});')
     code('')
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+    if has_reduction:
       code('nshared = MAX(nshared*nthread,reduct_size*nthread);')
       code('')
 
@@ -696,7 +623,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     if NDIM==3:
       code('if (x_size > 0 && y_size > 0 && z_size > 0)')
     config.depth = config.depth + 2
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+    if has_reduction:
       code(f'hipLaunchKernelGGL(ops_{name}, grid, tblock, nshared, 0,')
     else:
       code(f'hipLaunchKernelGGL(ops_{name}, grid, tblock, 0, 0,')
@@ -727,7 +654,11 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
           param_strings.append(f'stride_{n}[0],stride_{n}[1],')
         if NDIM==3:
           param_strings.append(f'stride_{n}[0],stride_{n}[1],stride_{n}[2],')
-    code(util.group_n_per_line(param_strings, n_per_line=2, group_sep="\n        "))
+    code(
+        util.group_n_per_line(
+            param_strings, n_per_line=2, sep="", group_sep="\n        "
+        )
+    )
 
     if any_prolong:
       if NDIM==1:
@@ -753,7 +684,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     # Complete Reduction Operation by moving data onto host
     # and reducing over blocks
     #
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+    if has_reduction:
       code('mvReductArraysToHost(block->instance,reduct_bytes);')
 
     for n in range (0, nargs):

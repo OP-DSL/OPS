@@ -42,6 +42,7 @@ import re
 import glob
 import os
 import config
+from config import OPS_READ
 
 def comm(line):
   prefix = ' '*config.depth
@@ -497,4 +498,94 @@ def group_n_per_line(vals, n_per_line=4, sep=",", group_sep="\n", spec_group_sep
             sep.join([vals[i] for i in range(s, min(len(vals), s + n_per_line))])
             for s in range(0, len(vals), n_per_line)
         ]
+    )
+
+def create_kernel_info(kernel):
+    arg_typ = kernel["arg_type"]
+    name = kernel["name"]
+    nargs = kernel["nargs"]
+    dim = kernel["dim"]
+    dims = kernel["dims"]
+    stens = kernel["stens"]
+    accs = kernel["accs"]
+    typs = kernel["typs"]
+    NDIM = int(dim)
+    # parse stencil to locate strided access
+    stride = [[1] * NDIM for _ in range(nargs)]
+
+    if NDIM == 2:
+        for n, sten in enumerate(stens):
+            if sten.find("STRID2D_X") > 0:
+                stride[n][1] = 0
+            elif sten.find("STRID2D_Y") > 0:
+                stride[n][0] = 0
+
+    if NDIM == 3:
+        for n, sten in enumerate(stens):
+            if sten.find("STRID3D_XY") > 0:
+                stride[n][2] = 0
+            elif sten.find("STRID3D_YZ") > 0:
+                stride[n][0] = 0
+            elif sten.find("STRID3D_XZ") > 0:
+                stride[n][1] = 0
+            elif sten.find("STRID3D_X") > 0:
+                stride[n][1] = 0
+                stride[n][2] = 0
+            elif sten.find("STRID3D_Y") > 0:
+                stride[n][0] = 0
+                stride[n][2] = 0
+            elif sten.find("STRID3D_Z") > 0:
+                stride[n][0] = 0
+                stride[n][1] = 0
+
+    ### Determine if this is a MULTI_GRID LOOP with
+    ### either restrict or prolong
+    restrict = [str(sten).find("RESTRICT") > 0 for sten in stens]
+    prolong = [str(sten).find("PROLONG") > 0 for sten in stens]
+    MULTI_GRID = any(prolong) or any(restrict)
+
+    has_reduction = any(
+        map(lambda x: x[0] == "ops_arg_gbl" and x[1] != OPS_READ, zip(arg_typ, accs))
+    )
+    GBL_READ = any(
+        map(lambda x: x[0] == "ops_arg_gbl" and x[1] == OPS_READ, zip(arg_typ, accs))
+    )
+    GBL_READ_MDIM = any(
+        map(
+            lambda x: x[0] == "ops_arg_gbl"
+            and x[1] == OPS_READ
+            and (not x[2].isdigit() or int(x[2]) > 1),
+            zip(arg_typ, accs, dims),
+        )
+    )
+
+    arg_idx = -1
+    for n, typ in enumerate(arg_typ):
+        if typ == "ops_arg_idx":
+            arg_idx = n
+
+
+    needDimList = []
+    for n, (typ, acc, dim) in enumerate(zip(arg_typ, accs, dims)):
+      if typ == 'ops_arg_dat' or (typ == 'ops_arg_gbl' and acc != OPS_READ):
+        if not dim.isdigit():
+          needDimList.append(n)
+
+    return (
+        arg_typ,
+        name,
+        nargs,
+        dims,
+        accs,
+        typs,
+        NDIM,
+        stride,
+        restrict,
+        prolong,
+        MULTI_GRID,
+        GBL_READ,
+        GBL_READ_MDIM,
+        has_reduction,
+        arg_idx,
+        needDimList,
     )

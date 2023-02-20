@@ -526,7 +526,7 @@ def parse_source_files(source_files):
             #
             typ = [''] * nargs
             var = [''] * nargs
-            stens = [0] * nargs
+            stens = [''] * nargs
             accs = [0] * nargs
             dims = [''] * nargs  #only for globals
             typs = [''] * nargs

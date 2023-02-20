@@ -74,67 +74,24 @@ def ops_gen_mpi_openacc(master, consts, kernels, soa_set):
 
   for nk in range (0,len(kernels)):
     assert config.file_text == '' and config.depth == 0
-    arg_typ  = kernels[nk]['arg_type']
-    name  = kernels[nk]['name']
-    nargs = kernels[nk]['nargs']
-    dim   = kernels[nk]['dim']
-    dims  = kernels[nk]['dims']
-    stens = kernels[nk]['stens']
-    accs  = kernels[nk]['accs']
-    typs  = kernels[nk]['typs']
-    NDIM = int(dim)
-    #parse stencil to locate strided access
-    stride = [1] * nargs * NDIM
-    restrict = [1] * nargs
-    prolong = [1] * nargs
-
-    if NDIM == 2:
-      for n in range (0, nargs):
-        if str(stens[n]).find('STRID2D_X') > 0:
-          stride[NDIM*n+1] = 0
-        elif str(stens[n]).find('STRID2D_Y') > 0:
-          stride[NDIM*n] = 0
-
-    if NDIM == 3:
-      for n in range (0, nargs):
-        if str(stens[n]).find('STRID3D_XY') > 0:
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_YZ') > 0:
-          stride[NDIM*n] = 0
-        elif str(stens[n]).find('STRID3D_XZ') > 0:
-          stride[NDIM*n+1] = 0
-        elif str(stens[n]).find('STRID3D_X') > 0:
-          stride[NDIM*n+1] = 0
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_Y') > 0:
-          stride[NDIM*n] = 0
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_Z') > 0:
-          stride[NDIM*n] = 0
-          stride[NDIM*n+1] = 0
-
-    ### Determine if this is a MULTI_GRID LOOP with
-    ### either restrict or prolong
-    MULTI_GRID = 0
-    for n in range (0, nargs):
-      restrict[n] = 0
-      prolong[n] = 0
-      if str(stens[n]).find('RESTRICT') > 0:
-        restrict[n] = 1
-        MULTI_GRID = 1
-      if str(stens[n]).find('PROLONG') > 0 :
-        prolong[n] = 1
-        MULTI_GRID = 1
-
-    reduct = 0
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        reduct = 1
-
-    arg_idx = 0
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_idx':
-        arg_idx = 1
+    (
+        arg_typ,
+        name,
+        nargs,
+        dims,
+        accs,
+        typs,
+        NDIM,
+        stride,
+        restrict,
+        prolong,
+        MULTI_GRID,
+        GBL_READ,
+        GBL_READ_MDIM,
+        _,
+        arg_idx,
+        _,
+    ) = util.create_kernel_info(kernels[nk])
 
     ##########################################################################
     #  generate constants and MACROS
@@ -193,7 +150,7 @@ def ops_gen_mpi_openacc(master, consts, kernels, soa_set):
         code(f'{typs[n]} *p_a{n},')
         if restrict[n] or prolong[n]:
           code(f'int *stride_{n},')
-    if arg_idx:
+    if arg_idx != -1:
       if NDIM == 1:
         code('int arg_idx0,')
       elif NDIM == 2:
@@ -286,7 +243,7 @@ def ops_gen_mpi_openacc(master, consts, kernels, soa_set):
       code('#endif')
 
     FOR('n_x','0','x_size')
-    if arg_idx:
+    if arg_idx != -1:
       if NDIM==1:
         code('int arg_idx[] = {arg_idx0+n_x};')
       elif NDIM==2:
@@ -331,21 +288,21 @@ def ops_gen_mpi_openacc(master, consts, kernels, soa_set):
 
         if NDIM == 1:
           if soa_set:
-            text = f' p_a{n} + {n_x}*{stride[NDIM*n]}'
+            text = f' p_a{n} + {n_x}*{stride[n][0]}'
           else:
-            text = f' p_a{n} + {n_x}*{stride[NDIM*n]}*{dims[n]}'
+            text = f' p_a{n} + {n_x}*{stride[n][0]}*{dims[n]}'
         elif NDIM == 2:
           if soa_set:
-            text = f' p_a{n} + {n_x}*{stride[NDIM*n]} + {n_y}*xdim{n}_{name}*{stride[NDIM*n+1]}'
+            text = f' p_a{n} + {n_x}*{stride[n][0]} + {n_y}*xdim{n}_{name}*{stride[n][1]}'
           else:
-            text = f' p_a{n} + {n_x}*{stride[NDIM*n]}*{dims[n]} + {n_y}*xdim{n}_{name}*{stride[NDIM*n+1]}*{dims[n]}'
+            text = f' p_a{n} + {n_x}*{stride[n][0]}*{dims[n]} + {n_y}*xdim{n}_{name}*{stride[n][1]}*{dims[n]}'
         elif NDIM == 3:
           if soa_set:
-            text = f' p_a{n} + {n_x}*{stride[NDIM*n]} + {n_y}*xdim{n}_{name}*{stride[NDIM*n+1]}'
-            text += f' + {n_z}*xdim{n}_{name}*ydim{n}_{name}*{stride[NDIM*n+2]}'
+            text = f' p_a{n} + {n_x}*{stride[n][0]} + {n_y}*xdim{n}_{name}*{stride[n][1]}'
+            text += f' + {n_z}*xdim{n}_{name}*ydim{n}_{name}*{stride[n][2]}'
           else:
-            text = f' p_a{n} + {n_x}*{stride[NDIM*n]}*{dims[n]} + {n_y}*xdim{n}_{name}*{stride[NDIM*n+1]}*{dims[n]}'
-            text += f' + {n_z}*xdim{n}_{name}*ydim{n}_{name}*{stride[NDIM*n+2]}*{dims[n]}'
+            text = f' p_a{n} + {n_x}*{stride[n][0]}*{dims[n]} + {n_y}*xdim{n}_{name}*{stride[n][1]}*{dims[n]}'
+            text += f' + {n_z}*xdim{n}_{name}*ydim{n}_{name}*{stride[n][2]}*{dims[n]}'
 
         pre = ''
         if accs[n] == OPS_READ:
@@ -468,7 +425,7 @@ def ops_gen_mpi_openacc(master, consts, kernels, soa_set):
         code(f'{typs[n]} *p_a{n},')
         if restrict[n] or prolong[n]:
           code(f'int *stride_{n},')
-    if arg_idx:
+    if arg_idx != -1:
       if NDIM == 1:
         code('int arg_idx0,')
       elif NDIM == 2:
@@ -566,29 +523,6 @@ def ops_gen_mpi_openacc(master, consts, kernels, soa_set):
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code(f'int dat{n} = args[{n}].dat->elem_size;')
-
-
-    GBL_READ = False
-    GBL_READ_MDIM = False
-    GBL_INC = False
-    GBL_MAX = False
-    GBL_MIN = False
-    GBL_WRITE = False
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_READ:
-          GBL_READ = True
-          if not dims[n].isdigit() or int(dims[n])>1:
-            GBL_READ_MDIM = True
-        if accs[n] == OPS_INC:
-          GBL_INC = True
-        if accs[n] == OPS_MAX:
-          GBL_MAX = True
-        if accs[n] == OPS_MIN:
-          GBL_MIN = True
-        if accs[n] == OPS_WRITE:
-          GBL_WRITE = True
 
     code('')
     for n in range (0, nargs):
@@ -763,7 +697,7 @@ def ops_gen_mpi_openacc(master, consts, kernels, soa_set):
         if restrict[n] or prolong[n]:
           code(f'stride_{n},')
 
-    if arg_idx:
+    if arg_idx != -1:
       if NDIM==1:
         code('arg_idx[0],')
       elif NDIM==2:
