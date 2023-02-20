@@ -75,64 +75,32 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
 
   for nk in range (0,len(kernels)):
     assert config.file_text == '' and config.depth == 0
-    arg_typ  = kernels[nk]['arg_type']
-    name  = kernels[nk]['name']
-    nargs = kernels[nk]['nargs']
-    dim   = kernels[nk]['dim']
-    dims  = kernels[nk]['dims']
-    stens = kernels[nk]['stens']
-    accs  = kernels[nk]['accs']
-    typs  = kernels[nk]['typs']
+    (
+        arg_typ,
+        name,
+        nargs,
+        dims,
+        accs,
+        typs,
+        NDIM,
+        stride,
+        _,
+        _,
+        _,
+        GBL_READ,
+        GBL_READ_MDIM,
+        has_reduction,
+        arg_idx,
+        _,
+    ) = util.create_kernel_info(kernels[nk])
 
     if ('initialise' in name) or ('generate' in name):
       print(f'WARNING: skipping kernel {name} due to OpenCL compiler bugs: this kernel will run sequentially on the host')
       continue
 
-    #reset dimension of the application
-    NDIM = int(dim)
-    #parse stencil to locate strided access
-    stride = [1] * nargs * NDIM
-
-    if NDIM == 2:
-      for n in range (0, nargs):
-        if str(stens[n]).find('STRID2D_X') > 0:
-          stride[NDIM*n+1] = 0
-        elif str(stens[n]).find('STRID2D_Y') > 0:
-          stride[NDIM*n] = 0
-
-    if NDIM == 3:
-      for n in range (0, nargs):
-        if str(stens[n]).find('STRID3D_XY') > 0:
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_YZ') > 0:
-          stride[NDIM*n] = 0
-        elif str(stens[n]).find('STRID3D_XZ') > 0:
-          stride[NDIM*n+1] = 0
-        elif str(stens[n]).find('STRID3D_X') > 0:
-          stride[NDIM*n+1] = 0
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_Y') > 0:
-          stride[NDIM*n] = 0
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_Z') > 0:
-          stride[NDIM*n] = 0
-          stride[NDIM*n+1] = 0
-
-    reduct = 0
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        reduct = 1
-
-    arg_idx = 0
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_idx':
-        arg_idx = 1
-
     ##########################################################################
     #  start with opencl kernel function
     ##########################################################################
-
-    name2 = name[0:name.find('kernel')-1]
 
     code('')
 
@@ -237,7 +205,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
         code(f'const int base{n},')
 
 
-    if arg_idx:
+    if arg_idx != -1:
       if NDIM==1:
           code('int arg_idx0,')
       elif NDIM==2:
@@ -282,7 +250,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
         code('int idx_y = get_global_id(1);')
     code('int idx_x = get_global_id(0);')
     code('')
-    if arg_idx:
+    if arg_idx != -1:
       code(f'int arg_idx[{NDIM}];')
       code('arg_idx[0] = arg_idx0+idx_x;')
       if NDIM==2:
@@ -292,7 +260,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
         code('arg_idx[2] = arg_idx2+idx_z;')
 
 
-    indent = (len(name2)+config.depth+8)*' '
+    indent = (len(name[0:name.find('kernel')-1])+config.depth+8)*' '
     if NDIM==1:
       IF('idx_x < size0')
     elif NDIM==2:
@@ -304,19 +272,19 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_dat':
         if NDIM==1:
           if soa_set:
-            text += f'&arg{n}[base{n} + idx_x * {stride[NDIM*n]}]'
+            text += f'&arg{n}[base{n} + idx_x * {stride[n][0]}]'
           else:
-            text += f'&arg{n}[base{n} + idx_x * {stride[NDIM*n]}*{dims[n]}]'
+            text += f'&arg{n}[base{n} + idx_x * {stride[n][0]}*{dims[n]}]'
         elif NDIM==2:
           if soa_set:
-            text += f'&arg{n}[base{n} + idx_x * {stride[NDIM*n]} + idx_y * {stride[NDIM*n+1]} * xdim{n}_{name}]'
+            text += f'&arg{n}[base{n} + idx_x * {stride[n][0]} + idx_y * {stride[n][1]} * xdim{n}_{name}]'
           else:
-            text += f'&arg{n}[base{n} + idx_x * {stride[NDIM*n]}*{dims[n]} + idx_y * {stride[NDIM*n+1]}*{dims[n]} * xdim{n}_{name}]'
+            text += f'&arg{n}[base{n} + idx_x * {stride[n][0]}*{dims[n]} + idx_y * {stride[n][1]}*{dims[n]} * xdim{n}_{name}]'
         elif NDIM==3:
           if soa_set:
-            text += f'&arg{n}[base{n} + idx_x * {stride[NDIM*n]} + idx_y * {stride[NDIM*n+1]} * xdim{n}_{name} + idx_z * {stride[NDIM*n+2]} * xdim{n}_{name} * ydim{n}_{name}]'
+            text += f'&arg{n}[base{n} + idx_x * {stride[n][0]} + idx_y * {stride[n][1]} * xdim{n}_{name} + idx_z * {stride[n][2]} * xdim{n}_{name} * ydim{n}_{name}]'
           else:
-            text += f'&arg{n}[base{n} + idx_x * {stride[NDIM*n]}*{dims[n]} + idx_y * {stride[NDIM*n+1]}*{dims[n]} * xdim{n}_{name} + idx_z * {stride[NDIM*n+2]}*{dims[n]} * xdim{n}_{name} * ydim{n}_{name}]'
+            text += f'&arg{n}[base{n} + idx_x * {stride[n][0]}*{dims[n]} + idx_y * {stride[n][1]}*{dims[n]} * xdim{n}_{name} + idx_z * {stride[n][2]}*{dims[n]} * xdim{n}_{name} * ydim{n}_{name}]'
         pre = ''
         if accs[n] == OPS_READ:
           pre = 'const '
@@ -380,7 +348,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
     ENDIF()
 
     #reduction across blocks
-    if reduct:
+    if has_reduction:
       code('int group_index = get_group_id(0) + get_group_id(1)*get_num_groups(0)+ get_group_id(2)*get_num_groups(0)*get_num_groups(1);')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_INC:
@@ -612,7 +580,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
       code('int z_size = MAX(0,end[2]-start[2]);')
     code('')
 
-    if arg_idx:
+    if arg_idx != -1:
       code(f'int arg_idx[{NDIM}];')
       code('#ifdef OPS_MPI')
       for n in range (0,NDIM):
@@ -683,30 +651,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
 
     code('')
 
-
-    GBL_READ = False
-    GBL_READ_MDIM = False
-    GBL_INC = False
-    GBL_MAX = False
-    GBL_MIN = False
-    GBL_WRITE = False
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_READ:
-          GBL_READ = True
-          if not dims[n].isdigit() or int(dims[n])>1:
-            GBL_READ_MDIM = True
-        if accs[n] == OPS_INC:
-          GBL_INC = True
-        if accs[n] == OPS_MAX:
-          GBL_MAX = True
-        if accs[n] == OPS_MIN:
-          GBL_MIN = True
-        if accs[n] == OPS_WRITE:
-          GBL_WRITE = True
-
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+    if has_reduction:
       if NDIM==1:
         code('int nblocks = ((x_size-1)/block->instance->OPS_block_size_x+ 1);')
       elif NDIM==2:
@@ -731,7 +676,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
 
     if GBL_READ == True and GBL_READ_MDIM == True:
       code('reallocConstArrays(block->instance,consts_bytes);')
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+    if has_reduction:
       code('reallocReductArrays(block->instance,reduct_bytes);')
       code('reduct_bytes = 0;')
       code('')
@@ -764,7 +709,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
     if GBL_READ == True and GBL_READ_MDIM == True:
       code('mvConstArraysToDevice(block->instance,consts_bytes);')
 
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+    if has_reduction:
       code('mvReductArraysToDevice(block->instance,reduct_bytes);')
 
 
@@ -808,7 +753,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
 
 
     #set up shared memory for reduction
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+    if has_reduction:
        code('int nthread = block->instance->OPS_block_size_x*block->instance->OPS_block_size_y*block->instance->OPS_block_size_z;')
        code('')
 
@@ -860,7 +805,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
         code(f'clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[{nk}], {nkernel_args}, sizeof(cl_int), (void*) &base{n} ));')
         nkernel_args = nkernel_args+1
 
-    if arg_idx:
+    if arg_idx != -1:
       code(f'clSafeCall( clSetKernelArg(block->instance->opencl_instance->OPS_opencl_core.kernel[{nk}], {nkernel_args}, sizeof(cl_int), (void*) &arg_idx[0] ));')
       nkernel_args = nkernel_args+1
       if NDIM==2:
@@ -899,7 +844,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
     ENDIF()
     code('')
 
-    if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
+    if has_reduction:
       code('mvReductArraysToHost(block->instance,reduct_bytes);')
 
     for n in range (0, nargs):

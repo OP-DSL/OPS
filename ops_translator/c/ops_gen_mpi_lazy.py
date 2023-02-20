@@ -77,67 +77,24 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
 
   for nk in range (0,len(kernels)):
     assert config.file_text == '' and config.depth == 0
-    arg_typ  = kernels[nk]['arg_type']
-    name  = kernels[nk]['name']
-    nargs = kernels[nk]['nargs']
-    dim   = kernels[nk]['dim']
-    dims  = kernels[nk]['dims']
-    stens = kernels[nk]['stens']
-    accs  = kernels[nk]['accs']
-    typs  = kernels[nk]['typs']
-    NDIM = int(dim)
-    #parse stencil to locate strided access
-    stride = [1] * nargs * NDIM
-    restrict = [1] * nargs
-    prolong = [1] * nargs
-
-    if NDIM == 2:
-      for n in range (0, nargs):
-        if str(stens[n]).find('STRID2D_X') > 0:
-          stride[NDIM*n+1] = 0
-        elif str(stens[n]).find('STRID2D_Y') > 0:
-          stride[NDIM*n] = 0
-
-    if NDIM == 3:
-      for n in range (0, nargs):
-        if str(stens[n]).find('STRID3D_XY') > 0:
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_YZ') > 0:
-          stride[NDIM*n] = 0
-        elif str(stens[n]).find('STRID3D_XZ') > 0:
-          stride[NDIM*n+1] = 0
-        elif str(stens[n]).find('STRID3D_X') > 0:
-          stride[NDIM*n+1] = 0
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_Y') > 0:
-          stride[NDIM*n] = 0
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_Z') > 0:
-          stride[NDIM*n] = 0
-          stride[NDIM*n+1] = 0
-
-    ### Determine if this is a MULTI_GRID LOOP with
-    ### either restrict or prolong
-    MULTI_GRID = 0
-    for n in range (0, nargs):
-      restrict[n] = 0
-      prolong[n] = 0
-      if str(stens[n]).find('RESTRICT') > 0:
-        restrict[n] = 1
-        MULTI_GRID = 1
-      if str(stens[n]).find('PROLONG') > 0 :
-        prolong[n] = 1
-        MULTI_GRID = 1
-
-    reduct = 0
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        reduct = 1
-
-    arg_idx = -1
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_idx':
-        arg_idx = n
+    (
+        arg_typ,
+        name,
+        nargs,
+        dims,
+        accs,
+        typs,
+        NDIM,
+        stride,
+        restrict,
+        prolong,
+        MULTI_GRID,
+        _,
+        _,
+        has_reduction,
+        arg_idx,
+        _,
+    ) = util.create_kernel_info(kernels[nk])
 
     ##########################################################################
     #  start with seq kernel function
@@ -316,7 +273,7 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
         if accs[n] == OPS_WRITE: #this may not be correct ..
           for d in range(0,int(dims[n])):
             line += f' reduction(+:p_a{n}_{d})'
-    if NDIM==3 and reduct==0:
+    if NDIM==3 and has_reduction==0:
       line2 = ' collapse(2)'
     else:
       line2 = line
@@ -379,11 +336,11 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
           n_z = 'n_z'
 
         if NDIM > 0:
-          offset += f'{n_x}*{stride[NDIM*n]}'
+          offset += f'{n_x}*{stride[n][0]}'
         if NDIM > 1:
-          offset += f' + {n_y} * xdim{n}_{name}*{stride[NDIM*n+1]}'
+          offset += f' + {n_y} * xdim{n}_{name}*{stride[n][1]}'
         if NDIM > 2:
-          offset += f' + {n_z} * xdim{n}_{name} * ydim{n}_{name}*{stride[NDIM*n+2]}'
+          offset += f' + {n_z} * xdim{n}_{name} * ydim{n}_{name}*{stride[n][2]}'
         dimlabels = 'xyzuv'
         for i in range(1,NDIM+extradim):
           sizelist += f'{dimlabels[i-1]}dim{n}_{name}, '

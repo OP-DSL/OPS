@@ -70,67 +70,24 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
 
   for nk in range (0,len(kernels)):
     assert config.file_text == '' and config.depth == 0
-    arg_typ  = kernels[nk]['arg_type']
-    name  = kernels[nk]['name']
-    nargs = kernels[nk]['nargs']
-    dim   = kernels[nk]['dim']
-    dims  = kernels[nk]['dims']
-    stens = kernels[nk]['stens']
-    accs  = kernels[nk]['accs']
-    typs  = kernels[nk]['typs']
-    NDIM = int(dim)
-    #parse stencil to locate strided access
-    stride = [1] * (nargs+4) * NDIM
-    restrict = [1] * nargs
-    prolong = [1] * nargs
-
-    if NDIM == 2:
-      for n in range (0, nargs):
-        if str(stens[n]).find('STRID2D_X') > 0:
-          stride[NDIM*n+1] = 0
-        elif str(stens[n]).find('STRID2D_Y') > 0:
-          stride[NDIM*n] = 0
-
-    if NDIM == 3:
-      for n in range (0, nargs):
-        if str(stens[n]).find('STRID3D_XY') > 0:
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_YZ') > 0:
-          stride[NDIM*n] = 0
-        elif str(stens[n]).find('STRID3D_XZ') > 0:
-          stride[NDIM*n+1] = 0
-        elif str(stens[n]).find('STRID3D_X') > 0:
-          stride[NDIM*n+1] = 0
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_Y') > 0:
-          stride[NDIM*n] = 0
-          stride[NDIM*n+2] = 0
-        elif str(stens[n]).find('STRID3D_Z') > 0:
-          stride[NDIM*n] = 0
-          stride[NDIM*n+1] = 0
-
-    ### Determine if this is a MULTI_GRID LOOP with
-    ### either restrict or prolong
-    MULTI_GRID = 0
-    for n in range (0, nargs):
-      restrict[n] = 0
-      prolong[n] = 0
-      if str(stens[n]).find('RESTRICT') > 0:
-        restrict[n] = 1
-        MULTI_GRID = 1
-      if str(stens[n]).find('PROLONG') > 0 :
-        prolong[n] = 1
-        MULTI_GRID = 1
-
-    reduct = 0
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
-        reduct = 1
-
-    arg_idx = 0
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_idx':
-        arg_idx = 1
+    (
+        arg_typ,
+        name,
+        nargs,
+        dims,
+        accs,
+        typs,
+        NDIM,
+        stride,
+        restrict,
+        prolong,
+        MULTI_GRID,
+        _,
+        _,
+        _,
+        arg_idx,
+        _,
+    ) = util.create_kernel_info(kernels[nk])
 
     ##########################################################################
     #  generate constants and MACROS
@@ -146,25 +103,6 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
           code(f'int zdim{n}_{name};')
     code('')
     code('')
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_dat':
-        if restrict[n] == 1:
-          n_x = f'n_x*stride_{n}[0]'
-          n_y = f'n_y*stride_{n}[1]'
-          n_z = f'n_z*stride_{n}[2]'
-        elif prolong[n] == 1:
-          n_x = f'(n_x+global_idx[0]%stride_{n}[0])/stride_{n}[0]'
-          n_y = f'(n_y+global_idx[1]%stride_{n}[1])/stride_{n}[1]'
-          n_z = f'(n_z+global_idx[2]%stride_{n}[2])/stride_{n}[2]'
-        else:
-          n_x = f'n_x*{str(stride[NDIM*n])}'
-          n_y = f'n_y*{str(stride[NDIM*n+1])}'
-          n_z = f'n_z*{str(stride[NDIM*n+2])}'
-        s_y = f'xdim{n}_{name}'
-        s_z = f'xdim{n}_{name}*ydim{n}_{name}'
-        s_u = f'xdim{n}_{name}*ydim{n}_{name}*zdim{n}_{name}'
-
 
     ##########################################################################
     #  generate header
@@ -201,7 +139,7 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
     for n in range(0,nargs):
       if restrict[n] == 1 or prolong[n] == 1:
         code(f'const int * restrict stride_{n},')
-    if arg_idx:
+    if arg_idx != -1:
       if NDIM == 1:
         code('int arg_idx0, ')
       elif NDIM == 2:
@@ -299,11 +237,11 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
           n_y = 'n_y'
           n_z = 'n_z'
         if NDIM > 0:
-          offset += f'{n_x}*{stride[NDIM*n]}'
+          offset += f'{n_x}*{stride[n][0]}'
         if NDIM > 1:
-          offset += f' + {n_y} * xdim{n}_{name}*{stride[NDIM*n+1]}'
+          offset += f' + {n_y} * xdim{n}_{name}*{stride[n][1]}'
         if NDIM > 2:
-          offset += f' + {n_z} * xdim{n}_{name} * ydim{n}_{name}*{stride[NDIM*n+2]}'
+          offset += f' + {n_z} * xdim{n}_{name} * ydim{n}_{name}*{stride[n][2]}'
         dimlabels = 'xyzuv'
         for i in range(1,NDIM):
           sizelist += f'{dimlabels[i-1]}dim{n}_{name}, '
@@ -387,7 +325,7 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
     for n in range(0,nargs):
       if restrict[n] == 1 or prolong[n] == 1:
         code(f'int *stride_{n},')
-    if arg_idx:
+    if arg_idx != -1:
       if NDIM == 1:
         code('int arg_idx0,')
       elif NDIM == 2:
@@ -494,29 +432,6 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
     ENDIF()
     code('')
 
-    GBL_READ = False
-    GBL_READ_MDIM = False
-    GBL_INC = False
-    GBL_MAX = False
-    GBL_MIN = False
-    GBL_WRITE = False
-
-    for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] == OPS_READ:
-          GBL_READ = True
-          if not dims[n].isdigit() or int(dims[n])>1:
-            GBL_READ_MDIM = True
-        if accs[n] == OPS_INC:
-          GBL_INC = True
-        if accs[n] == OPS_MAX:
-          GBL_MAX = True
-        if accs[n] == OPS_MIN:
-          GBL_MIN = True
-        if accs[n] == OPS_WRITE:
-          GBL_WRITE = True
-
-
     code('')
 
     if MULTI_GRID:
@@ -612,7 +527,7 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
     for n in range(0,nargs):
       if restrict[n] == 1 or prolong[n] == 1:
         code(f'stride_{n},')
-    if arg_idx:
+    if arg_idx != -1:
       if NDIM==1:
         code('arg_idx[0],')
       elif NDIM==2:
@@ -696,12 +611,7 @@ def ops_gen_mpi_inline(master, consts, kernels, soa_set):
 
   util.write_text_to_file(f"./MPI_inline/{master_basename[0]}_kernels.cpp")
 
-  if NDIM==1:
-    code('#define OPS_1D')
-  if NDIM==2:
-    code('#define OPS_2D')
-  if NDIM==3:
-    code('#define OPS_3D')
+  code(f'#define OPS_{NDIM}D')
   code('#include <math.h>')
   code(f"#include \"./MPI_inline/{master_basename[0]}_common.h\"")
   comm('user kernel files')
