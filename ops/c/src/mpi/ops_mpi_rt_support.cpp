@@ -702,7 +702,7 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
       ops_dat dat = args[i].dat;
       int dat_ndim = OPS_sub_block_list[dat->block->index]->ndim;
       if (args[i].argtype == OPS_ART_DAT &&
-          (args[i].acc == OPS_READ || args[i].acc == OPS_RW) &&
+          (args[i].acc == OPS_READ || args[i].acc == OPS_RW || args[i].acc == OPS_INC) &&
           args[i].stencil->points == 1 &&
           args[i].stencil->stencil[dim] == 0)
         continue;
