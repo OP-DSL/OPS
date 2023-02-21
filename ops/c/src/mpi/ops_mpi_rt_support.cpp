@@ -696,7 +696,7 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
       send_recv_offsets[i] = 0;
     for (int i = 0; i < nargs; i++) {
       if (args[i].argtype != OPS_ARG_DAT ||
-          !(args[i].acc == OPS_READ || args[i].acc == OPS_RW) ||
+          (args[i].acc == OPS_WRITE || args[i].acc == OPS_MAX || args[i].acc == OPS_MIN) ||
           args[i].opt == 0)
         continue;
       ops_dat dat = args[i].dat;
