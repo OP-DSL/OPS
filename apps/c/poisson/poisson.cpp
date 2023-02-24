@@ -123,8 +123,6 @@ int main(int argc, char **argv)
   int base[2] = {0,0};
   int uniform_size[2] = {(logical_size_x-1)/ngrid_x+1,(logical_size_y-1)/ngrid_y+1};
   double* temp = NULL;
-  ops_dat *coordx = (ops_dat *)malloc(ngrid_x*ngrid_y*sizeof(ops_dat*));
-  ops_dat *coordy = (ops_dat *)malloc(ngrid_x*ngrid_y*sizeof(ops_dat*));
   ops_dat *u = (ops_dat *)malloc(ngrid_x*ngrid_y*sizeof(ops_dat*));
   ops_dat *u2 = (ops_dat *)malloc(ngrid_x*ngrid_y*sizeof(ops_dat*));
   ops_dat *f = (ops_dat *)malloc(ngrid_x*ngrid_y*sizeof(ops_dat*));
@@ -140,10 +138,6 @@ int main(int argc, char **argv)
 
       //printf("%d, %d\n", size[0],size[1]);
 
-      sprintf(buf,"coordx %d,%d",i,j);
-      coordx[i+ngrid_x*j] = ops_decl_dat(blocks[i+ngrid_x*j], 1, size, base, d_m, d_p, temp, "double", buf);
-      sprintf(buf,"coordy %d,%d",i,j);
-      coordy[i+ngrid_x*j] = ops_decl_dat(blocks[i+ngrid_x*j], 1, size, base, d_m, d_p, temp, "double", buf);
       sprintf(buf,"u %d,%d",i,j);
       u[i+ngrid_x*j] = ops_decl_dat(blocks[i+ngrid_x*j], 1, size, base, d_m, d_p, temp, "double", buf);
       sprintf(buf,"u2 %d,%d",i,j);
@@ -319,8 +313,6 @@ int main(int argc, char **argv)
   ops_printf("%lf\n",it1-it0);
 
 
-  free(coordx);
-  free(coordy);
   free(u);
   free(u2);
   free(f);
