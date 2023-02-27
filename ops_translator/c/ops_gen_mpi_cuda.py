@@ -290,8 +290,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set):
     ENDIF()
 
     #reduction across blocks
-    if NDIM==1:
-      cont = '(blockIdx.x + blockIdx.y*gridDim.x)*'
+    cont = '(blockIdx.x + blockIdx.y*gridDim.x)*'
     if NDIM==2:
       cont = '(blockIdx.x + blockIdx.y*gridDim.x)*'
     elif NDIM==3:
@@ -651,7 +650,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set):
           param_strings.append(f' *({typs[n]} *)arg{n}.data,')
         else:
           param_strings.append(f' ({typs[n]} *)arg{n}.data_d,')
-          if n in needDimList and accs[n] != OP_READ:
+          if n in needDimList and accs[n] != OPS_READ:
             param_strings.append(' arg{n}.dim,')
       elif arg_typ[n] == 'ops_arg_idx':
         if NDIM==1:

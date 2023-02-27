@@ -288,8 +288,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     ENDIF()
 
     #reduction across blocks
-    if NDIM==1:
-      cont = '(hipBlockIdx_x + hipBlockIdx_y*hipBlockDim_x)*'
+    cont = '(hipBlockIdx_x + hipBlockIdx_y*hipBlockDim_x)*'
     if NDIM==2:
       cont = '(hipBlockIdx_x+ hipBlockIdx_y*hipGridDim_x)*'
     elif NDIM==3:
@@ -638,7 +637,7 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
           param_strings.append(f' *({typs[n]} *)arg{n}.data,')
         else:
           param_strings.append(f' ({typs[n]} *)arg{n}.data_d,')
-          if n in needDimList and accs[n] != OP_READ:
+          if n in needDimList and accs[n] != OPS_READ:
             param_strings.append(' arg{n}.dim,')
       elif arg_typ[n] == 'ops_arg_idx':
         if NDIM==1:

@@ -1,4 +1,3 @@
-
 # Open source copyright declaration based on BSD open source template:
 # http://www.opensource.org/licenses/bsd-license.php
 #
@@ -115,8 +114,9 @@ def para_parse(text, j, op_b, cl_b):
       elif text[loc2] == cl_b:
             depth = depth - 1
             if depth == 0:
-                return loc2
+                break
       loc2 = loc2 + 1
+    return loc2
 
 def comment_remover(text):
     """Remove comments from text"""
@@ -153,7 +153,7 @@ def arg_parse_list(text, j):
             depth = depth - 1
             if depth == 0:
                 arglist.append(text[prev_start:loc2].strip())
-                return arglist
+                break
 
         elif text[loc2] == ',':
             if depth == 1:
@@ -164,6 +164,7 @@ def arg_parse_list(text, j):
         elif text[loc2] == '}':
             depth = depth - 1
         loc2 = loc2 + 1
+    return arglist
 
 def parse_replace_ACC_signature(text, arg_typ, dims, opencl=0, accs=[], typs=[]):
   for i in range(0,len(dims)):
@@ -206,8 +207,8 @@ def convert_ACC_signature(text, arg_typ):
   return signature[:-4]
 
 def convert_ACC_body(text):
-  text = re.sub('\[OPS_ACC_MD[0-9]+(\([ -A-Za-z0-9,+]*\))\]', r'\1', text)
-  text = re.sub('\[OPS_ACC[0-9]+(\([ -A-Za-z0-9,+]*\))\]', r'\1', text)
+  text = re.sub(r'\[OPS_ACC_MD[0-9]+(\([ -A-Za-z0-9,+]*\))\]', r'\1', text)
+  text = re.sub(r'\[OPS_ACC[0-9]+(\([ -A-Za-z0-9,+]*\))\]', r'\1', text)
   return text
 
 def convert_ACC(text, arg_typ):
@@ -237,7 +238,7 @@ def parse_signature(text):
   text2 = text2.replace(')','')
   text2 = text2.replace('(','')
   text2 = text2.replace('\n','')
-  text2 = re.sub('\[[0-9]*\]','',text2)
+  text2 = re.sub(r'\[[0-9]*\]','',text2)
   arg_list = []
   args = text2.split(',')
   for n in range(0,len(args)):
@@ -270,7 +271,7 @@ def complex_numbers_cuda(text):
     """ Handle complex numbers, and translate to the relevant CUDA function in cuComplex.h """
 
     # Complex number assignment
-    p = re.compile("([a-zA-Z_][a-zA-Z0-9]+)(\s+\_\_complex\_\_\s+)([a-zA-Z_][a-zA-Z0-9]*)\s*=\s*(.+)\s*;")
+    p = re.compile(r"([a-zA-Z_][a-zA-Z0-9]+)(\s+\_\_complex\_\_\s+)([a-zA-Z_][a-zA-Z0-9]*)\s*=\s*(.+)\s*;")
     result = p.finditer(text)
     new_code = text
     complex_variable_names = []
@@ -287,8 +288,9 @@ def complex_numbers_cuda(text):
                 continue
         else:
             # Assignment of a complex number in real and imaginary parts.
-            p = re.compile("(\S+I?)\s*([+-]?)\s*(\S*I?)?")
+            p = re.compile(r"(\S+I?)\s*([+-]?)\s*(\S*I?)?")
             complex_number = p.search(rhs)
+            assert complex_number is not None
             if(complex_number.group(1)[-1] == "I"):  # Real after imaginary part
                 imag = complex_number.group(1)[:-1]
                 if(complex_number.group(3)):  # If real part specified
@@ -318,17 +320,17 @@ def complex_numbers_cuda(text):
         new_code = new_code.replace(match.group(0), new_statement)
 
     # Complex number __real__ and __imag__
-    p = re.compile("(\_\_real\_\_)\s+([a-zA-Z_][a-zA-Z0-9]*)")
+    p = re.compile(r"(\_\_real\_\_)\s+([a-zA-Z_][a-zA-Z0-9]*)")
     result = p.finditer(new_code)
     for match in result:
         new_code = new_code.replace(match.group(0), f"cuCreal({match.group(2)})")
-    p = re.compile("(\_\_imag\_\_)\s+([a-zA-Z_][a-zA-Z0-9]*)")
+    p = re.compile(r"(\_\_imag\_\_)\s+([a-zA-Z_][a-zA-Z0-9]*)")
     result = p.finditer(new_code)
     for match in result:
         new_code = new_code.replace(match.group(0), f"cuCimag({match.group(2)})")
 
     # Multiplication of two complex numbers
-    p = re.compile("([a-zA-Z_][a-zA-Z0-9]*)\s*\*\s*([a-zA-Z_][a-zA-Z0-9]*)")
+    p = re.compile(r"([a-zA-Z_][a-zA-Z0-9]*)\s*\*\s*([a-zA-Z_][a-zA-Z0-9]*)")
     result = p.finditer(new_code)
     for match in result:
         if(match.group(1) in complex_variable_names or match.group(2) in complex_variable_names):
@@ -364,13 +366,14 @@ def check_accs(name, arg_list, arg_typ, text):
           break
         pos = pos + len(arg_list[n])
 
-        match0 = re.search('OPS_ACC_MD\d',text[pos:])
-        match1 = re.search('OPS_ACC\d',text[pos:])
+        match0 = re.search(r'OPS_ACC_MD\d',text[pos:])
+        match1 = re.search(r'OPS_ACC\d',text[pos:])
 
         if match0 != None :
           if match1 != None:
             if match0.start(0) > match1.start(0):
-              match = re.search('OPS_ACC\d',text[pos:])
+              match = re.search(r'OPS_ACC\d',text[pos:])
+              assert match is not None
               pos = pos + match.start(0)
               pos2 = text[pos+7:].find('(')
               num = int(text[pos+7:pos+7+pos2])
@@ -378,7 +381,8 @@ def check_accs(name, arg_list, arg_typ, text):
                 print(f"Access mismatch in {name}, arg {n}({arg_list[n]}) with OPS_ACC{num}")
               pos = pos+7+pos2
             elif match0.start(0) < match1.start(0):
-              match = re.search('OPS_ACC_MD\d',text[pos:])
+              match = re.search(r'OPS_ACC_MD\d',text[pos:])
+              assert match is not None
               pos = pos + match.start(0)
               pos2 = text[pos+10:].find('(')
               num = int(text[pos+10:pos+10+pos2])
@@ -386,7 +390,8 @@ def check_accs(name, arg_list, arg_typ, text):
                 print(f"Access mismatch in {name}, arg {n}({arg_list[n]}) with OPS_ACC_MD{num}")
               pos = pos+10+pos2
           else:
-            match = re.search('OPS_ACC_MD\d',text[pos:])
+            match = re.search(r'OPS_ACC_MD\d',text[pos:])
+            assert match is not None
             pos = pos + match.start(0)
             pos2 = text[pos+10:].find('(')
             num = int(text[pos+10:pos+10+pos2])
@@ -395,7 +400,8 @@ def check_accs(name, arg_list, arg_typ, text):
             pos = pos+10+pos2
         else:
           if match1 != None:
-            match = re.search('OPS_ACC\d',text[pos:])
+            match = re.search(r'OPS_ACC\d',text[pos:])
+            assert match is not None
             pos = pos + match.start(0)
             pos2 = text[pos+7:].find('(')
             num = int(text[pos+7:pos+7+pos2])
