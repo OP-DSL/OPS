@@ -19,7 +19,7 @@ void poisson_kernel_stencil(const ACC<double> &u, const ACC<double> &f,
                             ACC<double> &u2) {
   u2(0, 0) = ((u(-1, 0) + u(1, 0)) * dy * dy + (u(0, -1) + u(0, 1)) * dx * dx -
               f(0, 0) * dx * dx * dy * dy) /
-             (-2.0 * (dx * dx + dy * dy));
+             (2.0 * (dx * dx + dy * dy));
 }
 
 void poisson_kernel_update(const ACC<double> &u2, ACC<double> &u) {
