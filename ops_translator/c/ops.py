@@ -87,7 +87,6 @@ xxx_kernel.cu -- for CUDA execution
 import sys
 from os import path
 import re
-import datetime
 
 """import SEQ/MPI, OpenMP, CUDA, OpenACC and OpenCL code generation functions"""
 from ops_gen_mpi_inline import ops_gen_mpi_inline
@@ -209,7 +208,7 @@ def ops_decl_const_parse(text, macro_defs):
   """Parsing for ops_decl_const calls"""
 
   consts = []
-  for m in re.finditer('(ops_|\.|->)decl_const\((.*)\)', text):
+  for m in re.finditer(r'(ops_|\.|->)decl_const\((.*)\)', text):
     args = m.group(2).split(',')
 
     # check for syntax errors
@@ -274,7 +273,8 @@ def get_arg_dat(arg_string, j, macro_defs):
                   'sten': dat_args_string.split(',')[2].strip(),
                   'typ': (dat_args_string.split(',')[3].replace('"','')).strip(),
                   'acc': dat_args_string.split(',')[4].strip()}
-    elif len(dat_args_string.split(',')) == 6:
+    else:
+      assert len(dat_args_string.split(',')) == 6
       # split the dat_args_string into  6 and create a struct with the elements
       # and type as op_arg_dat
       temp_dat = {'type': 'ops_arg_dat_opt',
@@ -311,7 +311,7 @@ def get_arg_gbl(arg_string, k, macro_defs):
 
     return temp_gbl
 
-def get_arg_idx(arg_string, l):
+def get_arg_idx():
     temp_idx = {'type': 'ops_arg_idx'}
 
     return temp_idx
@@ -356,7 +356,7 @@ def ops_par_loop_parse(text, macro_defs):
             k = arg_string.find(search3, k + 12)
 
         elif l>=0 and (l < j or j<=-1) and (l < k or k <=-1) and (l < m or m <=-1):
-            temp_idx = get_arg_idx(arg_string, l)
+            temp_idx = get_arg_idx()
             # append this struct to a temporary list/array
             temp_args.append(temp_idx)
             num_args = num_args + 1
@@ -471,7 +471,7 @@ def parse_source_files(source_files):
 
         const_args = ops_decl_const_parse(text, macro_defs)
         if verbose:
-            print(str(len(const_args)))
+            print(len(const_args))
 
         # check for repeats
         nconsts = 0
@@ -743,7 +743,6 @@ def generate_ops_files(sources, source_texts, loop_args_in_files,
 
 
 def generate_kernel_files(app_name, consts, kernels, soa_set):
-    date = datetime.datetime.now()
     ops_gen_mpi_inline(app_name, consts, kernels, soa_set)
     ops_gen_mpi_lazy(app_name, consts, kernels, soa_set)
     ops_gen_mpi_cuda(app_name, consts, kernels, soa_set)
