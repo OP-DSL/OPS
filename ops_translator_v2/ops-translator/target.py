@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 from typing import Any, Dict
 from util import Findable
 
+#TODO: Add documentaion (numpy style)
 class Target(Findable):
     name: str
     kernel_translation: bool
