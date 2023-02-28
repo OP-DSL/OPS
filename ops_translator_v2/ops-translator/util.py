@@ -1,18 +1,47 @@
+import functools
+import operator
 import subprocess
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar
-
 from pathlib import Path
 
 #Generic type
 T = TypeVar("T")
 
+
 def getRootPath() -> Path:
     return Path(__file__).parent.parent.absolute()
+
 
 def getVersion() -> str:
     args = ["git", "-C", str(getRootPath()), "describe", "--always"]
     return subprocess.check_output(args).strip().decode()
+
+
+def flatten(arr: List[List[T]]) -> List[T]:
+    return functools.reduce(operator.iconcat, arr, [])
+
+
+def findIdx(xs: Iterable[T], p: Callable[[T], bool]) -> List[T]:
+    for idx, x in enumerate(xs):
+        if p(x):
+            return idx
+
+    return None
+
+
+def uniqueBy(xs: Iterable[T], f: Callable[[T], Any]) -> List[T]:
+    s = set()
+    u = list()
+
+    for x in xs:
+        y = f(x)
+        if y not in s:
+            s.add(y)
+            u.append(x)
+
+    return u
 
 
 class Findable(ABC):
@@ -104,3 +133,11 @@ class Findable(ABC):
             False.
         """
         pass
+
+@dataclass(frozen=True)
+class ABDC(ABC):
+    def __new__(cls, *args, **kwargs):
+        if cls == ABDC or cls.__bases__[0] == ABDC:
+            raise TypeError(f"Can' instantiate abstract class {cls.__name__}")
+
+        return super().__new__(cls)
