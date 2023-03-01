@@ -62,9 +62,12 @@ def main(argv=None) -> None:
     elif len(extentions) > 1:
         exit("Varying file extensions, unable to determine target language.")
     else:
-        extention = extentions[0]
-    
+        [extention] = extentions
+
     lang = Lang.find(extention)
+
+    if lang is None:
+        exit(f"Unknown file extention: {extention}")
 
     
 def isDirPath(path):
