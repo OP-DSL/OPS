@@ -19,7 +19,7 @@ class AccessType(Enum):
     MAX = 5
 
     @staticmethod
-    def value() -> List[str]:
+    def values() -> List[str]:
         return [x.value for x in list(AccessType)]
 
 class OpsError(Exception):
@@ -92,9 +92,10 @@ class Const:
     
     dim: int
     typ: Type
+    name: str
 
     def __str__(self) -> str:
-        return f"Const(loc={self.loc}, ptr='{self.ptr}', dim={self.dim}, type={self.typ})"
+        return f"Const(name='{self.name}', loc={self.loc}, ptr='{self.ptr}', dim={self.dim}, type={self.typ})"
 
 @dataclass(frozen=True)
 class Range:
@@ -216,6 +217,13 @@ class Block:
 
         return f"Block(id={self.id}, loc={self.loc}, ptr='{self.ptr}', dim={self.dim}, dats={dat_str})"
 
+    def addDat(self, dat: Dat):
+        dat_id = findIdx(self.dats, lambda d: d.ptr == dat.ptr)
+
+        if dat_id is None:
+            dat_id = len(self.dats)
+            self.dats.append(dat)
+            
 
 class Loop:
     loc: Location
@@ -250,8 +258,7 @@ class Loop:
         dat_typ: Type,
         dat_soa: bool,
         stencil_ptr: str,
-        access_type: AccessType,
-        opt: bool = False
+        access_type: AccessType
     ) -> None: 
 
         arg_id = len(self.args)
@@ -259,10 +266,10 @@ class Loop:
 
         if dat_id is None:
             dat_id = len(self.dats)
-            if findIdx(self.block.dats, lambda d: d.ptr == dat_ptr) is not None:
-                self.dats.append(Dat(dat_id, dat_ptr, dat_dim, dat_typ, dat_soa))
-            else:
-                OpsError(f"Parsing Dat='{dat_ptr}' as argument of loop in {self.loc} which is not belong to block='{self.block.ptr}'", loc)
+            # if findIdx(self.block.dats, lambda d: d.ptr == dat_ptr) is not None:
+            self.dats.append(Dat(dat_id, dat_ptr, dat_dim, dat_typ, dat_soa))
+            # else:
+            #     OpsError(f"Parsing Dat='{dat_ptr}' as argument of loop in {self.loc} which is not belong to block='{self.block.ptr}'", loc)
 
         stencil_id = findIdx(self.stencils, lambda s: s.stencil_ptr == stencil_ptr)
 
