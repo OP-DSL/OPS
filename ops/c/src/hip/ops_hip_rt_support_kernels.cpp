@@ -47,7 +47,6 @@
 
 #include <hip/hip_runtime.h>
 #include <hip/hip_runtime_api.h>
-#include <math_constants.h>
 
 #include <ops_hip_rt_support.h>
 #include <ops_lib_core.h>
