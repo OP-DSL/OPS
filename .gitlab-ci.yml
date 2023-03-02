@@ -29,11 +29,11 @@ Test:HIP:
     - CCP, test
   script:
     - |-
-      export PATH=/opt/rocm-4.5.0/bin:$PATH
+      export PATH=/opt/rocm/bin:$PATH
       export OPS_COMPILER=hip
       export MPI_INSTALL_PATH=/usr
       export HDF5_INSTALL_PATH=/usr/lib/x86_64-linux-gnu/hdf5/openmpi
-      export HIP_INSTALL_PATH=/opt/rocm-4.5.0/
+      export HIP_INSTALL_PATH=/opt/rocm/
       export OPS_INSTALL_PATH=$CI_PROJECT_DIR/ops
       export MPICC=mpicc
       export MPICXX=mpic++
