@@ -884,7 +884,6 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
     #  output one master kernel file
     ##########################################################################
     comm("header")
-    code("#include <cuda.h>")
     code("#define OPS_API 2")
     code(f"#define OPS_{NDIM}D")
     if soa_set:
@@ -956,4 +955,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
         else:
             code(f'#include "{kernel_name}_cuda_kernel.cu"')
 
-    util.write_text_to_file(f"./CUDA/{master_basename[0]}_kernels.cu")
+    if hip==1:
+        util.write_text_to_file(f"./HIP/{master_basename[0]}_kernels.cpp")
+    else:
+        util.write_text_to_file(f"./CUDA/{master_basename[0]}_kernels.cu")
