@@ -104,7 +104,7 @@ class Cpp(Lang):
 
         return program
     
-    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], force_soa: bool) -> str:
+    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], force_soa: bool = False) -> str:
         return cpp.translator.program.translateProgram(program.path.read_text(), program, force_soa)
     
     def formatType(self, typ: ops.Type) -> str:
