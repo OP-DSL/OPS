@@ -46,10 +46,6 @@ class Cpp(Lang):
     com_delim = "//"
     zero_idx = True
 
-    def validate(self, app: Application) -> None:
-        # Application.validate()
-        pass
-
     @lru_cache(maxsize=None)
     def parseFile(
         self, path: Path, include_dirs: FrozenSet[Path], defines: FrozenSet[str], preprocess: bool = False
@@ -95,7 +91,7 @@ class Cpp(Lang):
     
     def parseProgram(self, path: Path, include_dirs: Set[Path], defines: List[str]) -> Program:
         ast, source = self.parseFile(path, frozenset(include_dirs), frozenset(defines))
-        ast_pp, source_pp =  self.parseFile(path, frozenset(include_dirs), frozenset(defines), prprocess=True)
+        ast_pp, source_pp =  self.parseFile(path, frozenset(include_dirs), frozenset(defines), preprocess = True)
 
         program = Program(path, ast_pp, source_pp)
 

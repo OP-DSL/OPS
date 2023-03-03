@@ -32,10 +32,6 @@ class Lang(Findable):
         return key in self.source_exts
 
     @abstractmethod
-    def validate(self, app: Application) -> None:
-        pass
-
-    @abstractmethod
     def parseFile(self, path: Path, include_dirs: FrozenSet[Path], defines: FrozenSet[str]) -> Any:
         pass
 
