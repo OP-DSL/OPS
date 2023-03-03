@@ -21,7 +21,7 @@ class Location:
     column: int
 
     def __str__(self) -> str:
-        return f"{os.path.basename(self.file)}/{self.line}:{self.column}"
+        return f"{os.path.abspath(self.file)}/{self.line}:{self.column}"
 
 
 @dataclass
@@ -89,7 +89,7 @@ class Program:
 
     def findEntities(self, name: str, scope: List[str] = []) -> List[Entity]:
         def in_scope(entity: Entity):
-            return len(entity.scope) <= len(scope) and all(map(lambda s1, s2: s1 == s2, zip(entity.e.scope, scope)))
+            return len(entity.scope) <= len(scope) and all(map(lambda s1, s2: s1 == s2, zip(entity.scope, scope)))
 
         candidates = list(filter(lambda e: e.name == name and in_scope(e), self.entities))
 
@@ -138,14 +138,12 @@ class Application:
         return uniqueBy(consts, lambda c: c.ptr)
 
     def loops(self) -> List[Tuple[ops.Loop, Program]]:
-        return flatten(map(lambda l: (l, p), p.loop) for p in self.programs)
+        return flatten(map(lambda l: (l, p), p.loops) for p in self.programs)
 
     def validate(self, lang: Lang) -> None:
         self.validateConst(lang)
         self.validateLoops(lang)
         
-        # Language specific verification
-        lang.validate(self)
     
     def validateConst(self, lang: Lang) -> None:
         seen_const_ptrs: Set[str] = set()

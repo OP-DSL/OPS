@@ -23,10 +23,10 @@ def translateProgram(source: str, program: Program, force_soa: bool = False) -> 
         buffer.update(loop.loc.line -1, before + f"ops_par_loop_{loop.kernel}" + after)
 
     # 3. Update headers
-    index = buffer.search(r'\s*#include\s+"ops_seq(_v2)?\.h"') + 2
+    index = buffer.search(r'\s*#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)') + 2
 
     buffer.insert(index, '/*\n** ops_par_loop declarations\n*/\n')     
-    buffer.insert(index, '#ifdef OPENACC\n#ifdef __cplusplus\nextern "C" {\n#endif\n#endif\n}')
+    buffer.insert(index, '#ifdef OPENACC\n#ifdef __cplusplus\nextern "C" {\n#endif\n#endif\n')
 
     for loop in program.loops:
         prototype = f'void ops_par_loop_{loop.kernel}(char const *, ops_block, int, int*{", ops_arg" * len(loop.args)});\n'
@@ -37,13 +37,13 @@ def translateProgram(source: str, program: Program, force_soa: bool = False) -> 
     # 4. Update ops_init
     buffer.insert(0, '\nvoid ops_init_backend()\n')
 
-    index = buffer.search(r'\s* ops_init(') + 1
+    index = buffer.search(r'\s* ops_init\(') + 1
     buffer.insert(index, '\tops_init_backend();\n')
 
     # 5. Translation
     new_source = buffer.translate()
 
     # 6. Substitude the ops_seq.h/ops_seq_v2.h with ops_lib_core.h
-    new_source = re.sub(r'\s*#include\s+"ops_seq(_v2)?\.h"', '#include "ops_lib_core.h"', new_source)
+    new_source = re.sub(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)', '#include "ops_lib_core.h"', new_source)
 
-    return source
+    return new_source
