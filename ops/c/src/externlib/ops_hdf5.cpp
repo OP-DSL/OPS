@@ -1587,43 +1587,6 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   H5Fclose(file_id);
 }
 
-hsize_t calc_total_plane_size(const ops_dat &data,
-                              const int cross_section_dir) {
-  const int space_dim{data->block->dims};
-  int *size{new int(space_dim)};
-  for (int d = 0; d < space_dim; d++) {
-    size[d] = data->size[d] - (data->d_p[d] - data->d_m[d]);
-  }
-
-  hsize_t number_element{data->elem_size};
-
-  if (cross_section_dir == 0) {
-    if (space_dim == 2) {
-      number_element *= size[1];
-    }
-
-    if (space_dim == 3) {
-      number_element *= (size[1] * size[2]);
-    }
-  }
-
-  if (cross_section_dir == 1) {
-    if (space_dim == 2) {
-      number_element *= size[0];
-    }
-
-    if (space_dim == 3) {
-      number_element *= (size[0] * size[2]);
-    }
-  }
-
-  if (cross_section_dir == 2) {
-    number_element *= (size[0] * size[1]);
-  }
-  delete size;
-  return number_element;
-}
-
 void determin_plane_buf_size(const ops_dat &data, const int buf_dims,
                        const int cross_section_dir, int *buf_size) {
   const int space_dim{data->block->dims};
@@ -1632,30 +1595,13 @@ void determin_plane_buf_size(const ops_dat &data, const int buf_dims,
     size[d] = data->size[d] - (data->d_p[d] - data->d_m[d]);
   }
 
-  if (cross_section_dir == 0) {
-    if (space_dim == 2) {
-      buf_size[0] = size[1];
-    }
+  int reduced_index{0};
+  for (int d = 0; d < space_dim; d++) {
+    if (d != cross_section_dir) {
+      buf_size[reduced_index] = size[d];
 
-    if (space_dim == 3) {
-      buf_size[0] = size[1];
-      buf_size[1] = size[2];
+      reduced_index++;
     }
-  }
-
-  if (cross_section_dir == 1) {
-    if (space_dim == 2) {
-      buf_size[0] = size[0];
-    }
-    if (space_dim == 3) {
-      buf_size[0] = size[0];
-      buf_size[1] = size[2];
-    }
-  }
-
-  if (cross_section_dir == 2) {
-    buf_size[0] = size[0];
-    buf_size[1] = size[1];
   }
   delete size;
 }
@@ -1778,14 +1724,21 @@ void write_buf_hdf5(char const *file_name, const char *data_name,
 void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
                           const int pos, char const *file_name,
                           const char *data_name) {
-  char *write_buf =
-      (char *)ops_malloc(calc_total_plane_size(dat, cross_section_dir));
+
   int dims{dat->block->dims - 1};
   int *range{new int(2 * dat->block->dims)};
   int *size{new int(dims)};
   determin_plane_buf_size(dat, dims, cross_section_dir, size);
+  hsize_t buf_element_size{1};
+  for (int i = 0; i < dims;i++){
+    buf_element_size *= size[i];
+  }
+  //Consider multi-dim data
+  buf_element_size *= dat->elem_size;
+  char *write_buf = (char *)ops_malloc(buf_element_size);
   determine_plane_range(dat, cross_section_dir, pos, range);
   ops_dat_fetch_data_slab_host(dat, 0, write_buf, range);
+  //Consider the multi-dim data
   size[0] *= (dat->dim);
   write_buf_hdf5(file_name, data_name, dat, dims, size, write_buf);
   delete range;
