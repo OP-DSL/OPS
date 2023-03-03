@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import copy
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 from util import flatten, uniqueBy
 
@@ -76,13 +77,13 @@ class Function(Entity):
             
 @dataclass
 class Program:
-    path: path
+    path: Path
     
     ast: Any
     source: str
     
     consts: List[ops.Const] = field(default_factory=list)
-    loops: List[ops.Loops] = field(default_factory=list)
+    loops: List[ops.Loop] = field(default_factory=list)
 
     entities: List[Entity] = field(default_factory=list)
 
