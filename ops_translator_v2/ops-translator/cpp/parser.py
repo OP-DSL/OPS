@@ -61,7 +61,7 @@ def parseFunction(node: Cursor, program: Program) -> None:
     function = Function(node.spelling, node, program)
 
     for n in node.get_children():
-        if n.kind != CursorKind.PARAM_DECL:
+        if n.kind != CursorKind.PARM_DECL:
             continue
 
         function.parameters.append(n.spelling)

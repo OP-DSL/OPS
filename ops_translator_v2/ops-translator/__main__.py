@@ -139,7 +139,7 @@ def main(argv=None) -> None:
         new_path = Path(args.out, f"{new_file}{args.suffix}{ext}")
 
         with open(new_path, "w") as new_file:
-            new_file.write(f"\n{lang.com_delim} Auto-generated at {datetime.now()} by ops-translator v2")
+            new_file.write(f"\n{lang.com_delim} Auto-generated at {datetime.now()} by ops-translator v2\n")
             new_file.write(source)
 
             if args.verbose:
