@@ -30,7 +30,7 @@ InstallTarget(seq ${ConfigPackageLocation})
 
 # hdf5_seq
 if (HDF5_FOUND)
-    add_library(ops_hdf5_seq ${CMAKE_CURRENT_SOURCE_DIR}/src/externlib/ops_hdf5.cpp)
+    add_library(ops_hdf5_seq ${CMAKE_CURRENT_SOURCE_DIR}/src/externlib/ops_hdf5.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/externlib/ops_hdf5_common.cpp)
     target_link_libraries(ops_hdf5_seq PRIVATE hdf5::hdf5 hdf5::hdf5_hl MPI::MPI_CXX)
     InstallTarget(hdf5_seq ${ConfigPackageLocation})
 endif ()
@@ -77,7 +77,7 @@ if (MPI_FOUND)
     InstallTarget(mpi ${ConfigPackageLocation})
     # HDF5_MPI
     if (HDF5_FOUND)
-        add_library(ops_hdf5_mpi ${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/ops_mpi_hdf5.cpp)
+        add_library(ops_hdf5_mpi ${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/ops_mpi_hdf5.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/externlib/ops_hdf5_common.cpp)
         target_link_libraries(ops_hdf5_mpi PRIVATE hdf5::hdf5 hdf5::hdf5_hl MPI::MPI_CXX)
         InstallTarget(hdf5_mpi ${ConfigPackageLocation})
     endif ()

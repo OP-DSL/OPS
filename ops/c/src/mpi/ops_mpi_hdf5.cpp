@@ -2516,14 +2516,7 @@ hid_t H5_file_handle(const MPI_Comm &mpi_comm, const char *file_name) {
   return file_id;
 }
 
-void split_h5_name(const char *data_name,
-                       std::vector<std::string> &h5_name_list) {
-  std::stringstream name_stream(data_name);
-  std::string segment;
-  while (std::getline(name_stream, segment, '/')) {
-    h5_name_list.push_back(segment);
-  }
-}
+
 
 // create the dataset or open the dataset if existing
 
