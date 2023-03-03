@@ -6,7 +6,7 @@ from clang.cindex import Cursor, CursorKind, TranslationUnit, TypeKind, conf
 
 import ops
 from store import Function, Location, ParseError, Program, Type
-from util import SafeFind #TODO: implement safe find
+from util import safeFind #TODO: implement safe find
 
 def parseMeta(node: Cursor, program: Program) -> None:
     if node.kind == CursorKind.TYPE_REF:

@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Any, FrozenSet, List, Optional, Set
 
 from util import Findable
+from store import Application, Program
+from ops import Type
 
 #TODO: Add documentaion (numpy style)
 class Lang(Findable):
@@ -38,7 +40,7 @@ class Lang(Findable):
         pass
 
     @abstractmethod
-    def parseProgram(self, Path: Path, include_dirs: Set[Path], defines: List[str]) -> Program:
+    def parseProgram(self, path: Path, include_dirs: Set[Path], defines: List[str]) -> Program:
         pass
 
     @abstractmethod
