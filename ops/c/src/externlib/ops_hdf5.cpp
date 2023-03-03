@@ -51,6 +51,7 @@
 #include <ops_lib_core.h>
 #include <ops_util.h>
 #include <ops_exceptions.h>
+#include "ops_hdf5_common.h"
 
 /*******************************************************************************
  * Routine to write an ops_block to a named hdf5 file,
@@ -1676,33 +1677,6 @@ void determine_plane_range(const ops_dat &data, const int cross_section_dir,
   delete size;
 }
 
-hid_t h5_type(const char *type) {
-  hid_t h5t{0};
-  if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0) {
-    h5t = H5T_NATIVE_DOUBLE;
-  } else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0 ||
-             strcmp(type, "real") == 0) {
-    h5t = H5T_NATIVE_FLOAT;
-  } else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 ||
-             strcmp(type, "integer(4)") == 0) {
-    h5t = H5T_NATIVE_INT;
-  } else if (strcmp(type, "long") == 0) {
-    h5t = H5T_NATIVE_LONG;
-  } else if ((strcmp(type, "long long") == 0) || (strcmp(type, "ll") == 0)) {
-    h5t = H5T_NATIVE_LLONG;
-  } else if (strcmp(type, "short") == 0) {
-    h5t = H5T_NATIVE_SHORT;
-  } else if (strcmp(type, "char") == 0) {
-    h5t = H5T_NATIVE_CHAR;
-
-  } else {
-    OPSException ex(OPS_HDF5_ERROR);
-    ex << "Error: Unknown data type for converting to hdf5 recognised types";
-    throw ex;
-  }
-  return h5t;
-}
-
 hid_t H5_file_handle(const char *file_name) {
 
   hid_t file_plist_id{H5Pcreate(H5P_FILE_ACCESS)};
@@ -1720,16 +1694,6 @@ hid_t H5_file_handle(const char *file_name) {
   H5Pclose(file_plist_id);
   return file_id;
 }
-
-void split_h5_name(const char *data_name,
-                       std::vector<std::string> &h5_name_list) {
-  std::stringstream name_stream(data_name);
-  std::string segment;
-  while (std::getline(name_stream, segment, '/')) {
-    h5_name_list.push_back(segment);
-  }
-}
-
 
 // create the dataset or open the dataset if existing
 void H5_dataset_space(const hid_t file_id, const int data_dims,

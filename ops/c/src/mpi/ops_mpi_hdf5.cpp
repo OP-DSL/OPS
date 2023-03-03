@@ -54,6 +54,7 @@
 // hdf5 header
 #include <hdf5.h>
 #include <hdf5_hl.h>
+#include "ops_hdf5_common.h"
 
 static char *copy_str(char const *src) {
   const size_t len = strlen(src) + 1;
@@ -2341,33 +2342,6 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
 
   H5Fclose(file_id);
   MPI_Comm_free(&OPS_MPI_HDF5_WORLD);
-}
-
-hid_t h5_type(const char *type) {
-  hid_t h5t{0};
-  if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0) {
-    h5t = H5T_NATIVE_DOUBLE;
-  } else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0 ||
-             strcmp(type, "real") == 0) {
-    h5t = H5T_NATIVE_FLOAT;
-  } else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 ||
-             strcmp(type, "integer(4)") == 0) {
-    h5t = H5T_NATIVE_INT;
-  } else if (strcmp(type, "long") == 0) {
-    h5t = H5T_NATIVE_LONG;
-  } else if ((strcmp(type, "long long") == 0) || (strcmp(type, "ll") == 0)) {
-    h5t = H5T_NATIVE_LLONG;
-  } else if (strcmp(type, "short") == 0) {
-    h5t = H5T_NATIVE_SHORT;
-  } else if (strcmp(type, "char") == 0) {
-    h5t = H5T_NATIVE_CHAR;
-
-  } else {
-    OPSException ex(OPS_HDF5_ERROR);
-    ex << "Error: Unknown data type for converting to hdf5 recognised types";
-    throw ex;
-  }
-  return h5t;
 }
 
 void determine_plane_global_range(const ops_dat dat,
