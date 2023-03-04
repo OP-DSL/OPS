@@ -41,6 +41,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <iostream>
+#include <cstring>
 
 #define OPS_NOT_IMPLEMENTED 1
 #define OPS_RUNTIME_CONFIGURATION_ERROR 2
@@ -61,12 +62,12 @@ struct OPSException : public std::exception
     int ridx;
     std::stringstream msg;
 
-    /* The copy of the underlying string returned by stringstream::str() is a temporary 
-     * object that will be destructed at the end of the expression, so directly calling 
-     * c_str() on the result of str() (for example in auto *ptr = out.str().c_str();) 
+    /* The copy of the underlying string returned by stringstream::str() is a temporary
+     * object that will be destructed at the end of the expression, so directly calling
+     * c_str() on the result of str() (for example in auto *ptr = out.str().c_str();)
      * results in a dangling pointer.  Hence we need to get the message out of 'msg'
      * and stick it in heap memory somewhere before we return it via what(), otherwise
-     * programs that catch the exception will get a dangling pointer which may or may 
+     * programs that catch the exception will get a dangling pointer which may or may
      * not point at a valid string.  I caught this via gtest, where I got a garbage
      * message.
      */
@@ -84,7 +85,7 @@ struct OPSException : public std::exception
 
     template<class T>
     OPSException& operator<< (const T& val)
-    {  
+    {
        insert(val);
        return *this;
     }
@@ -92,15 +93,15 @@ struct OPSException : public std::exception
     OPSException(int code, const char *val) : code(code), cursize(0), ridx(0) { *this << val; }
 
     void insert(const char *val)
-    {  
+    {
        msg << val;
     }
 
-    template<class T> 
+    template<class T>
     void insert(const T& val)
-    {  
+    {
        if(sizeof(T) + cursize > maxsize )
-       {  
+       {
           std::cerr << "Too many data items!\n";
           abort();
        }

@@ -56,7 +56,7 @@
 #define OPS_ALIGNMENT 64
 #endif
 
-/** Maximum internal halo depth over MPI - 
+/** Maximum internal halo depth over MPI -
  * extend if you get a runtime error about this being too small
  */
 #ifdef MAX_DEPTH
@@ -326,7 +326,7 @@ class ops_dat_core {
  */
   void get_extents(int part, int *disp, int *size);
 /**
- * This routine returns the MPI displacement and size of the intersection of a 
+ * This routine returns the MPI displacement and size of the intersection of a
  * hyper-slab with the given dataset on the current process.
  *
  * @param part  the chunk index (has to be 0)
@@ -334,7 +334,7 @@ class ops_dat_core {
  *              "global" distributed array
  * @param size  an array populated with the spatial extents
  * @param slab  index ranges of the hyperslab. Ordering: {begin_0, end_0, begin_1, end_1,...}
- * @return the size in bytes of the intersection between the dataset and the slab on this process 
+ * @return the size in bytes of the intersection between the dataset and the slab on this process
  */
   size_t get_slab_extents(int part, int *disp, int *size, int *slab);
 /**
@@ -366,17 +366,17 @@ class ops_dat_core {
  *                 whether data is in the host or on the device
  *
  * @return
- */  
+ */
   char* get_raw_pointer(int part, ops_stencil_core *stencil, ops_memspace *memspace);
 /**
  * Indicates to OPS that a dataset previously accessed with
  * get_raw_pointer() is released by the user, and also tells OPS how it
  * was accessed.
  * A single call to release_raw_data() releases all pointers obtained by previous calls to
- * get_raw_pointer() calls on the same dat. Calls to release_raw_data() must be separated by calls to 
+ * get_raw_pointer() calls on the same dat. Calls to release_raw_data() must be separated by calls to
  * get_raw_pointer(), i.e. it is illegal to release raw data access multiple times without first
- * starting raw data access. The data that the user wishes keep is in the memory 
- * space (buffer) indicated by the LAST call to get_raw_pointer().  Data in any other memory spaces 
+ * starting raw data access. The data that the user wishes keep is in the memory
+ * space (buffer) indicated by the LAST call to get_raw_pointer().  Data in any other memory spaces
  * is discarded.
  *
  * @param dat   the dataset
@@ -392,11 +392,11 @@ class ops_dat_core {
  * ops_dat_get_raw_pointer() is released by the user, and also tells OPS how it
  * was accessed, and where it was accessed.
  * A single call to release_raw_data() releases all pointers obtained by previous calls to
- * get_raw_pointer() calls on the same dat. Calls to release_raw_data() must be separated by calls to 
+ * get_raw_pointer() calls on the same dat. Calls to release_raw_data() must be separated by calls to
  * get_raw_pointer(), i.e. it is illegal to release raw data access multiple times without first
  * starting raw data access.
  * The *memspace argument tells OPS in which memory space the data is that the user wants to keep.
- * Data in all other memory spaces will be discarded. 
+ * Data in all other memory spaces will be discarded.
  *
  * @param dat   the dataset
  * @param part  the chunk index (has to be 0
@@ -1073,7 +1073,7 @@ OPS_FTN_INTEROP
 void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size);
 
 /**
- * This routine returns the MPI displacement and size of the intersection of a 
+ * This routine returns the MPI displacement and size of the intersection of a
  * hyper-slab with the given dataset on the current process.
  *
  * @param dat   the dataset
@@ -1082,7 +1082,7 @@ void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size);
  *              "global" distributed array
  * @param size  an array populated with the spatial extents
  * @param slab  index ranges of the hyperslab. Ordering: {begin_0, end_0, begin_1, end_1,...}
- * @return the size in bytes of the intersection between the dataset and the slab on this process 
+ * @return the size in bytes of the intersection between the dataset and the slab on this process
  */
 OPS_FTN_INTEROP
 size_t ops_dat_get_slab_extents(ops_dat dat, int part, int *disp, int *size, int *slab);
@@ -1131,10 +1131,10 @@ char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_me
  * was accessed.
  *
  * A single call to ops_dat_release_raw_data() releases all pointers obtained by previous calls to
- * ops_dat_get_raw_pointer() calls on the same dat. Calls to ops_dat_release_raw_data() must be separated by calls to 
+ * ops_dat_get_raw_pointer() calls on the same dat. Calls to ops_dat_release_raw_data() must be separated by calls to
  * ops_dat_get_raw_pointer(), i.e. it is illegal to release raw data access multiple times without first
- * starting raw data access. The data that the user wishes keep is in the memory 
- * space (buffer) indicated by the LAST call to ops_dat_get_raw_pointer().  Data in any other memory spaces 
+ * starting raw data access. The data that the user wishes keep is in the memory
+ * space (buffer) indicated by the LAST call to ops_dat_get_raw_pointer().  Data in any other memory spaces
  * is discarded.
  *
  * @param dat   the dataset
@@ -1153,11 +1153,11 @@ void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc);
  * was accessed.
  *
  * A single call to ops_dat_release_raw_data_memspace() releases all pointers obtained by previous calls to
- * ops_dat_get_raw_pointer() calls on the same dat. Calls to ops_dat_release_raw_data_memspace() must be separated by calls to 
+ * ops_dat_get_raw_pointer() calls on the same dat. Calls to ops_dat_release_raw_data_memspace() must be separated by calls to
  * ops_dat_get_raw_pointer(), i.e. it is illegal to release raw data access multiple times without first
  * starting raw data access.
  * The *memspace argument tells OPS in which memory space the data is that the user wants to keep.
- * Data in all other memory spaces will be discarded. 
+ * Data in all other memory spaces will be discarded.
  *
  * @param dat   the dataset
  * @param part  the chunk index (has to be 0
@@ -1266,9 +1266,9 @@ int ops_dat_get_global_npartitions(ops_dat dat);
 
 /**
  * This class is an accessor to data stored in ops_dats. It is
- * only to be used in user kernels and functions called from within 
- * user kernels. The user should never explicitly construct such an 
- * object, these are constucted by OPS and passed by reference to 
+ * only to be used in user kernels and functions called from within
+ * user kernels. The user should never explicitly construct such an
+ * object, these are constucted by OPS and passed by reference to
  * the user kernel.
  *
  * Data can be accessed using the overloaded () operator - with as many
@@ -1288,7 +1288,7 @@ public:
   __host__ __device__
   ACC(T *_ptr) : ptr(_ptr) {}
   __host__ __device__
-  ACC(int _mdim, int _sizex, T *_ptr) : 
+  ACC(int _mdim, int _sizex, T *_ptr) :
 #ifdef OPS_SOA
     sizex(_sizex),
 #else
