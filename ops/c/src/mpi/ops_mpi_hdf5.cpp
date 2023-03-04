@@ -2804,34 +2804,51 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
 void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
                           const int pos, char const *file_name,
                           const char *data_name) {
-  MPI_Barrier(OPS_MPI_GLOBAL);
-  sub_block *sb = OPS_sub_block_list[dat->block->index];
-  if (sb->owned == 1) {
-    const int space_dim{dat->block->dims};
-    int *global_range{new int(2 * space_dim)};
-    determine_plane_global_range(dat, cross_section_dir, pos, global_range);
-    int *local_range{new int(2 * space_dim)};
-    // TODO if the plane is out of global range, computer range will generate
-    // error
-    determine_local_range(dat, global_range, local_range);
-    size_t local_buf_size{dat->elem_size};
-    for (int i = 0; i < space_dim; i++) {
-      local_buf_size *= (local_range[2 * i + 1] - local_range[2 * i]);
+  if ((cross_section_dir >= 0) && (cross_section_dir <= dat->block->dims)) {
+    const sub_dat *sd{OPS_sub_dat_list[dat->index]};
+    if ((pos >= sd->gbl_base[cross_section_dir]) &&
+        (pos <= sd->gbl_size[cross_section_dir])) {
+      MPI_Barrier(OPS_MPI_GLOBAL);
+      sub_block *sb = OPS_sub_block_list[dat->block->index];
+      if (sb->owned == 1) {
+        const int space_dim{dat->block->dims};
+        int *global_range{new int(2 * space_dim)};
+        determine_plane_global_range(dat, cross_section_dir, pos, global_range);
+        int *local_range{new int(2 * space_dim)};
+        // TODO if the plane is out of global range, computer range will
+        // generate error
+        determine_local_range(dat, global_range, local_range);
+        size_t local_buf_size{dat->elem_size};
+        for (int i = 0; i < space_dim; i++) {
+          local_buf_size *= (local_range[2 * i + 1] - local_range[2 * i]);
+        }
+        // if (local_buf_size > 0) {
+        char *local_buf = (char *)ops_malloc(local_buf_size);
+        copy_data_buf(dat, local_range, local_buf);
+        // if (local_buf_size>1){
+        //   double *data_p{(double *)local_buf};
+        //   printf("At rank %d data= %f %f %f %f\n", ops_my_global_rank,
+        //   data_p[0],
+        //          data_p[1], data_p[2], data_p[3]);
+        // }
+        write_plane_buf_hdf5(file_name, data_name, dat, cross_section_dir,
+                             local_range, global_range, local_buf);
+        free(local_buf);
+        //}
+        delete global_range;
+        delete local_range;
+      }
+    } else {
+      ops_printf("The dat %s doesn't have the specified plane = %d \n",
+                 dat->name, pos);
+      ops_printf("sd gbl range %d %d pos %d\n", sd->gbl_base[cross_section_dir],
+                 sd->gbl_size[cross_section_dir], pos);
     }
-    // if (local_buf_size > 0) {
-    char *local_buf = (char *)ops_malloc(local_buf_size);
-    copy_data_buf(dat, local_range, local_buf);
-    // if (local_buf_size>1){
-    //   double *data_p{(double *)local_buf};
-    //   printf("At rank %d data= %f %f %f %f\n", ops_my_global_rank, data_p[0],
-    //          data_p[1], data_p[2], data_p[3]);
-    // }
-    write_plane_buf_hdf5(file_name, data_name, dat, cross_section_dir,
-                         local_range, global_range, local_buf);
-    free(local_buf);
-    //}
-    delete global_range;
-    delete local_range;
+  } else {
+    ops_printf(
+        "The block %s doesn't have the specified cross section direction "
+        "%d\n",
+        dat->block->name, cross_section_dir);
   }
 }
 
@@ -2854,7 +2871,8 @@ void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
     copy_data_buf(dat, local_range, local_buf);
     // if (local_buf_size>1){
     //   double *data_p{(double *)local_buf};
-    //   printf("At rank %d data= %f %f %f %f\n", ops_my_global_rank, data_p[0],
+    //   printf("At rank %d data= %f %f %f %f\n", ops_my_global_rank,
+    //   data_p[0],
     //          data_p[1], data_p[2], data_p[3]);
     // }
     write_slab_buf_hdf5(file_name, data_name, dat, local_range, range,
@@ -2887,28 +2905,13 @@ void ops_write_plane_group_hdf5(
       for (const auto &data : data_plane) {
         const int cross_section_dir{planes[p].first};
         const int pos{planes[p].second};
-        if ((cross_section_dir >= 0) &&
-            (cross_section_dir <= data->block->dims)) {
-          const sub_dat *sd{OPS_sub_dat_list[data->index]};
-          if ((pos >= sd->gbl_base[cross_section_dir]) &&
-              (pos <= sd->gbl_size[cross_section_dir])) {
-            std::string block_name{data->block->name};
-            std::string data_name{data->name};
-            std::string file_name{plane_names[p] + ".h5"};
-            std::string dataset_name{block_name + "/" + key + "/" + data_name};
-            ops_write_plane_hdf5(data, cross_section_dir, pos,
-                                 file_name.c_str(), dataset_name.c_str());
 
-          } else {
-            ops_printf("The dat %s doesn't have the specified plane %s = %d \n",
-                       data->name, plane_name_base[cross_section_dir], pos);
-          }
-        } else {
-          ops_printf(
-              "The block %s doesn't have the specified cross section direction "
-              "%d\n",
-              data->block->name, cross_section_dir);
-        }
+        std::string block_name{data->block->name};
+        std::string data_name{data->name};
+        std::string file_name{plane_names[p] + ".h5"};
+        std::string dataset_name{block_name + "/" + key + "/" + data_name};
+        ops_write_plane_hdf5(data, cross_section_dir, pos, file_name.c_str(),
+                             dataset_name.c_str());
       }
     }
   }

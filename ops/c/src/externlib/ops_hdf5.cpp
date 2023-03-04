@@ -1724,26 +1724,39 @@ void write_buf_hdf5(char const *file_name, const char *data_name,
 void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
                           const int pos, char const *file_name,
                           const char *data_name) {
+  if ((cross_section_dir >= 0) && (cross_section_dir <= dat->block->dims)) {
+    if ((pos >= dat->base[cross_section_dir]) &&
+        (pos <= dat->size[cross_section_dir])) {
 
-  int dims{dat->block->dims - 1};
-  int *range{new int(2 * dat->block->dims)};
-  int *size{new int(dims)};
-  determin_plane_buf_size(dat, dims, cross_section_dir, size);
-  hsize_t buf_element_size{1};
-  for (int i = 0; i < dims;i++){
-    buf_element_size *= size[i];
+      int dims{dat->block->dims - 1};
+      int *range{new int(2 * dat->block->dims)};
+      int *size{new int(dims)};
+      determin_plane_buf_size(dat, dims, cross_section_dir, size);
+      hsize_t buf_element_size{1};
+      for (int i = 0; i < dims; i++) {
+        buf_element_size *= size[i];
+      }
+      // Consider multi-dim data
+      buf_element_size *= dat->elem_size;
+      char *write_buf = (char *)ops_malloc(buf_element_size);
+      determine_plane_range(dat, cross_section_dir, pos, range);
+      ops_dat_fetch_data_slab_host(dat, 0, write_buf, range);
+      // Consider the multi-dim data
+      size[0] *= (dat->dim);
+      write_buf_hdf5(file_name, data_name, dat, dims, size, write_buf);
+      delete range;
+      free(write_buf);
+      delete size;
+    } else {
+      ops_printf("The dat %s doesn't have the specified plane = %d \n",
+                 dat->name, pos);
+    }
+  } else {
+    ops_printf(
+        "The block %s doesn't have the specified cross section direction "
+        "%d\n",
+        dat->block->name, cross_section_dir);
   }
-  //Consider multi-dim data
-  buf_element_size *= dat->elem_size;
-  char *write_buf = (char *)ops_malloc(buf_element_size);
-  determine_plane_range(dat, cross_section_dir, pos, range);
-  ops_dat_fetch_data_slab_host(dat, 0, write_buf, range);
-  //Consider the multi-dim data
-  size[0] *= (dat->dim);
-  write_buf_hdf5(file_name, data_name, dat, dims, size, write_buf);
-  delete range;
-  free(write_buf);
-  delete size;
 }
 
 void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
@@ -1786,26 +1799,12 @@ void ops_write_plane_group_hdf5(
       for (const auto &data : data_plane) {
         const int cross_section_dir{planes[p].first};
         const int pos{planes[p].second};
-        if ((cross_section_dir >= 0) &&
-            (cross_section_dir <= data->block->dims)) {
-          if ((pos >= data->base[cross_section_dir]) &&
-              (pos <= data->size[cross_section_dir])) {
-            std::string block_name{data->block->name};
-            std::string data_name{data->name};
-            std::string file_name{plane_names[p] + ".h5"};
-            std::string dataset_name{block_name + "/" + key + "/" + data_name};
-            ops_write_plane_hdf5(data, cross_section_dir, pos,
-                                 file_name.c_str(), dataset_name.c_str());
-          } else {
-            ops_printf("The dat %s doesn't have the specified plane %s = %d \n",
-                       data->name, plane_name_base[cross_section_dir], pos);
-          }
-        } else {
-          ops_printf(
-              "The block %s doesn't have the specified cross section direction "
-              "%d\n",
-              data->block->name, cross_section_dir);
-        }
+        std::string block_name{data->block->name};
+        std::string data_name{data->name};
+        std::string file_name{plane_names[p] + ".h5"};
+        std::string dataset_name{block_name + "/" + key + "/" + data_name};
+        ops_write_plane_hdf5(data, cross_section_dir, pos, file_name.c_str(),
+                             dataset_name.c_str());
       }
     }
   }
