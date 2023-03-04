@@ -2365,28 +2365,25 @@ void determine_plane_global_range(const ops_dat dat,
 
 void determine_local_range(const ops_dat dat, const int *global_range,
                            int *local_range) {
-  ops_arg *dat_arg;
+  ops_arg dat_arg;
   const int space_dim{dat->block->dims};
   if (space_dim == 3) {
     int s3D_000[]{0, 0, 0};
     ops_stencil S3D_000{ops_decl_stencil(3, 1, s3D_000, "000")};
-    ops_arg arg = ops_arg_dat(dat, dat->dim, S3D_000, dat->type, OPS_READ);
-    dat_arg = &arg;
+    dat_arg = ops_arg_dat(dat, dat->dim, S3D_000, dat->type, OPS_READ);
   }
 
   if (space_dim == 2) {
     int s2D_000[]{0, 0, 0};
     ops_stencil S2D_000{ops_decl_stencil(2, 1, s2D_000, "000")};
-
-    ops_arg arg = ops_arg_dat(dat, dat->dim, S2D_000, dat->type, OPS_READ);
-    dat_arg = &arg;
+    dat_arg = ops_arg_dat(dat, dat->dim, S2D_000, dat->type, OPS_READ);
   }
 
   int *arg_idx{new int(space_dim)};
 
   int *local_start{new int(space_dim)};
   int *local_end{new int(space_dim)};
-  if (compute_ranges(dat_arg, 1, dat->block, (int *)global_range, local_start,
+  if (compute_ranges(&dat_arg, 1, dat->block, (int *)global_range, local_start,
                      local_end, arg_idx) < 0) {
     return;
   }
