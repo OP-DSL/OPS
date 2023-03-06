@@ -39,5 +39,5 @@
 #include <ops_lib_core.h>
 
 void ops_exit_device(OPS_instance *instance) {
-  (void*)instance;
+  (void)instance;
 }

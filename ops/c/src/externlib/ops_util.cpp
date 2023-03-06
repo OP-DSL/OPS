@@ -346,4 +346,3 @@ void ops_init_zero(char *data, size_t bytes) {
     data[i] = 0;
   }
 }
-

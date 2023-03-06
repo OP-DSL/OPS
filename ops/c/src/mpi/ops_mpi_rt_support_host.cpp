@@ -169,4 +169,3 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
 void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *range, ops_memspace memspace) {
   ops_dat_set_data_slab_host(dat, part, data, range);
 }
-

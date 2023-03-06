@@ -40,5 +40,5 @@
 #include <hip/hip_runtime.h>
 
 void ops_exit_device(OPS_instance *instance) {
-  (void*)instance;
+  (void)instance;
 }
