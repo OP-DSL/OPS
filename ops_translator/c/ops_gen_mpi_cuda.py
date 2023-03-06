@@ -66,19 +66,19 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
     if hip == 1:
       cuda='hip'
       cutil='hip'
+      dir_name='HIP'
+      file_ext='cpp'
     else:
       cuda='cuda'
       cutil='cutil'
+      dir_name='CUDA'
+      file_ext='cu'
 
     ##########################################################################
     #  create new kernel file
     ##########################################################################
-    if hip == 1:
-      if not os.path.exists("./HIP"):
-          os.makedirs("./HIP")
-    else:
-      if not os.path.exists("./CUDA"):
-          os.makedirs("./CUDA")
+    if not os.path.exists(f"./{dir_name}"):
+        os.makedirs(f"./{dir_name}")
 
     for nk in range(0, len(kernels)):
         assert config.file_text == "" and config.depth == 0
@@ -110,7 +110,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
         if NDIM > 1 and soa_set:
             num_dims += 1
         code(f"__constant__ int dims_{name} [{nargs}][{num_dims}];")
-        code(f"static int dims_{name}_h [{nargs}][{num_dims}] = {{0}};")
+        code(f"static int dims_{name}_h [{nargs}][{num_dims}] = {{{{0}}}};")
         code("")
 
         ##########################################################################
@@ -325,17 +325,17 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
             if arg_typ[n] == "ops_arg_gbl" and accs[n] == OPS_INC:
                 code(f"for (int d=0; d<{dims[n]}; d++)")
                 code(
-                    f"  ops_reduction_"+cuda+f"<OPS_INC>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
+                    f"  ops_reduction_{cuda}<OPS_INC>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
                 )
             if arg_typ[n] == "ops_arg_gbl" and accs[n] == OPS_MIN:
                 code(f"for (int d=0; d<{dims[n]}; d++)")
                 code(
-                    f"  ops_reduction_"+cuda+f"<OPS_MIN>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
+                    f"  ops_reduction_{cuda}<OPS_MIN>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
                 )
             if arg_typ[n] == "ops_arg_gbl" and accs[n] == OPS_MAX:
                 code(f"for (int d=0; d<{dims[n]}; d++)")
                 code(
-                    f"  ops_reduction_"+cuda+f"<OPS_MAX>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
+                    f"  ops_reduction_{cuda}<OPS_MAX>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
                 )
 
         code("")
@@ -462,7 +462,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
                 if NDIM > 3 or (NDIM == 3 and soa_set):
                     code(f"dims_{name}_h[{n}][2] = zdim{n};")
         code(
-            cutil+f"SafeCall(block->instance->ostream(), "+cuda+f"MemcpyToSymbol( dims_{name}, dims_{name}_h, sizeof(dims_{name})));"
+            f"{cutil}SafeCall(block->instance->ostream(), {cuda}MemcpyToSymbol( dims_{name}, dims_{name}_h, sizeof(dims_{name})));"
         )
         ENDIF()
 
@@ -762,7 +762,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
         config.depth = config.depth - 2
 
         code("")
-        code(cutil+"SafeCall(block->instance->ostream(), "+cuda+"GetLastError());")
+        code(f"{cutil}SafeCall(block->instance->ostream(), {cuda}GetLastError());")
         code("")
 
         #
@@ -794,7 +794,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
                 code("")
 
         IF("block->instance->OPS_diags>1")
-        code(cutil+"SafeCall(block->instance->ostream(), "+cuda+"DeviceSynchronize());")
+        code(f"{cutil}SafeCall(block->instance->ostream(), {cuda}DeviceSynchronize());")
         code("ops_timers_core(&c1,&t1);")
         code(f"block->instance->OPS_kernels[{nk}].time += t1-t2;")
         ENDIF()
@@ -876,7 +876,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
         ##########################################################################
         #  output individual kernel file
         ##########################################################################
-        util.write_text_to_file(f"./CUDA/{name}_"+cuda+f"_kernel.cu")
+        util.write_text_to_file(f"./{dir_name}/{name}_{cuda}_kernel.{file_ext}")
 
     # end of main kernel call loop
 
@@ -890,8 +890,8 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
         code("#define OPS_SOA")
     code('#include "ops_lib_core.h"')
     code("")
-    code('#include "ops_'+cuda+'_rt_support.h"')
-    code('#include "ops_'+cuda+'_reduction.h"')
+    code(f'#include "ops_{cuda}_rt_support.h"')
+    code(f'#include "ops_{cuda}_reduction.h"')
     code("")
     code(
         "#include <cuComplex.h>"
@@ -918,19 +918,19 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
         IF('!strcmp(name,"' + (str(consts[nc]["name"]).replace('"', "")).strip() + '")')
         if consts[nc]["dim"].isdigit():
             code(
-                cutil+"SafeCall(instance->ostream(),"+cuda+"MemcpyToSymbol("
+                f"{cutil}SafeCall(instance->ostream(),{cuda}MemcpyToSymbol("
                 + (str(consts[nc]["name"]).replace('"', "")).strip()
                 + ", dat, dim*size));"
             )
         else:
             code(
-                "char *temp; "+cutil+"SafeCall(instance->ostream(),"+cuda+"Malloc((void**)&temp,dim*size));"
+                f"char *temp; {cutil}SafeCall(instance->ostream(),{cuda}Malloc((void**)&temp,dim*size));"
             )
             code(
-                cutil+"SafeCall(instance->ostream(),"+cuda+"Memcpy(temp,dat,dim*size,"+cuda+"MemcpyHostToDevice));"
+                f"{cutil}SafeCall(instance->ostream(),{cuda}Memcpy(temp,dat,dim*size,{cuda}MemcpyHostToDevice));"
             )
             code(
-                cutil+"SafeCall(instance->ostream(),"+cuda+"MemcpyToSymbol("
+                f"{cutil}SafeCall(instance->ostream(),{cuda}MemcpyToSymbol("
                 + (str(consts[nc]["name"]).replace('"', "")).strip()
                 + ", &temp, sizeof(char *)));"
             )
@@ -950,12 +950,6 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
     comm("user kernel files")
 
     for kernel_name in map(lambda kernel: kernel["name"], kernels):
-        if hip==1:
-            code(f'#include "{kernel_name}_hip_kernel.cpp"')
-        else:
-            code(f'#include "{kernel_name}_cuda_kernel.cu"')
+        code(f'#include "{kernel_name}_{cuda}_kernel.{file_ext}"')
 
-    if hip==1:
-        util.write_text_to_file(f"./HIP/{master_basename[0]}_kernels.cpp")
-    else:
-        util.write_text_to_file(f"./CUDA/{master_basename[0]}_kernels.cu")
+    util.write_text_to_file(f"./{dir_name}/{master_basename[0]}_kernels.{file_ext}")
