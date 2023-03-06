@@ -46,14 +46,13 @@ plus a master kernel file
 """
 
 import re
-import datetime
 import errno
 import os
 import glob
 
 import util
 import config
-from config import OPS_READ, OPS_WRITE, OPS_RW, OPS_INC, OPS_MAX, OPS_MIN, OPS_accs_labels
+from config import OPS_READ, OPS_WRITE, OPS_RW, OPS_INC, OPS_MAX, OPS_MIN
 
 para_parse = util.para_parse
 comment_remover = util.comment_remover
