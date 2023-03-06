@@ -64,15 +64,15 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
     master_basename = os.path.splitext(os.path.basename(master))
 
     if hip == 1:
-      cuda='hip'
-      cutil='hip'
-      dir_name='HIP'
-      file_ext='cpp'
+        cuda = "hip"
+        cutil = "hip"
+        dir_name = "HIP"
+        file_ext = "cpp"
     else:
-      cuda='cuda'
-      cutil='cutil'
-      dir_name='CUDA'
-      file_ext='cu'
+        cuda = "cuda"
+        cutil = "cutil"
+        dir_name = "CUDA"
+        file_ext = "cu"
 
     ##########################################################################
     #  create new kernel file
