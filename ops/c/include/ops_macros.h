@@ -2902,4 +2902,3 @@ extern int multi_d0, multi_d1, multi_d2, multi_d3, multi_d4, multi_d5, multi_d6,
 #endif /* OPS_API */
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif // OPS_MACROS_H
-

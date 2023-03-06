@@ -739,4 +739,3 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
     dat->dirty_hd = 2;
   } 
 }
-

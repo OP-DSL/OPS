@@ -1508,4 +1508,3 @@ void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size) {
     for (int d = 0; d < dat->block->dims; d++) 
       size[d] = sd->decomp_size[d] + dat->d_m[d] - dat->d_p[d];
 }
-
