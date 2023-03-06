@@ -66,7 +66,7 @@ ENDDO = util_fortran.ENDDO
 IF = util_fortran.IF
 ENDIF = util_fortran.ENDIF
 
-def ops_fortran_gen_mpi(master, date, consts, kernels):
+def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
 
   OPS_GBL   = 2;
 

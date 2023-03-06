@@ -165,7 +165,7 @@ def find_function_calls(text):
   return my_subs+children_subs
 
 
-def ops_fortran_gen_mpi_cuda(master, date, consts, kernels):
+def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
   global funlist, const_list
   OPS_GBL   = 2;
 
