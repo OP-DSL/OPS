@@ -110,7 +110,6 @@ def ops_parse_calls(text):
 
     inits = len(re.findall('ops_init', text))
     exits = len(re.findall('ops_exit', text))
-
     return (inits, exits)
 
 def ops_decl_const_parse(text):
@@ -298,6 +297,7 @@ def main(source_files):
 
   ninit = 0
   nexit = 0
+  soa_set = 0
   nkernels = 0
   nconsts = 0
   consts = []
@@ -350,7 +350,39 @@ def main(source_files):
       ninit = ninit + inits
       nexit = nexit + exits
 
-
+      #
+      # check for SoA
+      #
+      if inits > 0:
+          soas = len(re.findall('ops_set_soa', text))
+          if soas > 1:
+            print(' ')
+            print('------------------------------------------')
+            print('  ERROR: more than 1 call to ops_set_soa  ')
+            print('------------------------------------------')
+          elif soas == 1:
+           soa_beg = re.search(r'\s*\bops_set_soa\s*'+r'\b\s*\(',text, re.IGNORECASE)
+           beg_pos = soa_beg.end()
+           end = re.search(r'\s*\)', text[beg_pos:], re.IGNORECASE)
+           value_str = text[beg_pos:beg_pos+end.end()-1]
+           soa_set = int(value_str.strip())
+           if soa_set == 0 or soa_set == 1:
+                print('contains ops_set_soa call: soa_set: '+str(soa_set))
+           else:
+                print(' soa_set: '+str(soa_set))
+                print(' ')
+                print('-----------------------------------------------')
+                print('  ERROR: soa_set value should be either 0 or 1 ')
+                print('-----------------------------------------------')
+                sys.exit(1)
+      else:
+        soas = len(re.findall('ops_set_soa', text))
+        if soas > 0:
+            print(' ')
+            print('-------------------------------------------------------------------------------')
+            print('  ERROR: call to ops_set_soa should appear in file containing call to ops_init ')
+            print('-------------------------------------------------------------------------------')
+            sys.exit(1)
       #
       # parse and process constants
       #
@@ -650,10 +682,10 @@ def main(source_files):
   # finally, generate target-specific kernel files
   #
 
-  ops_fortran_gen_mpi(str(source_files[0]), date, consts, kernels)
-  ops_fortran_gen_mpi_openmp(str(source_files[0]), date, consts, kernels)
-  ops_fortran_gen_mpi_cuda(str(source_files[0]), date, consts, kernels)
-  ops_fortran_gen_mpi_openacc(str(source_files[0]), date, consts, kernels)
+  ops_fortran_gen_mpi(str(source_files[0]), date, consts, kernels, soa_set)
+  ops_fortran_gen_mpi_openmp(str(source_files[0]), date, consts, kernels, soa_set)
+  ops_fortran_gen_mpi_cuda(str(source_files[0]), date, consts, kernels, soa_set)
+  ops_fortran_gen_mpi_openacc(str(source_files[0]), date, consts, kernels, soa_set)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

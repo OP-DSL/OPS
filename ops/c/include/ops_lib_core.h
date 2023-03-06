@@ -581,6 +581,9 @@ void ops_init(const int argc, const char *const argv[], const int diags_level);
 OPS_FTN_INTEROP
 void ops_exit();
 
+OPS_FTN_INTEROP
+void ops_set_soa(const int soa_val);
+
 /**
  * This routine defines a structured grid block.
  *
