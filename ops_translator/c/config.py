@@ -34,7 +34,7 @@ global variables for code generator
 
 """
 
-file_text = ''
+file_text = ""
 depth = 0
 
 verbose = False
@@ -46,6 +46,4 @@ OPS_INC = 4
 OPS_MAX = 5
 OPS_MIN = 6
 
-OPS_accs_labels = [
-    'OPS_READ', 'OPS_WRITE', 'OPS_RW', 'OPS_INC', 'OPS_MAX', 'OPS_MIN'
-]
+OPS_accs_labels = ["OPS_READ", "OPS_WRITE", "OPS_RW", "OPS_INC", "OPS_MAX", "OPS_MIN"]

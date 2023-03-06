@@ -123,8 +123,6 @@ int main(int argc, char **argv)
   int base[2] = {0,0};
   int uniform_size[2] = {(logical_size_x-1)/ngrid_x+1,(logical_size_y-1)/ngrid_y+1};
   double* temp = NULL;
-  ops_dat *coordx = (ops_dat *)malloc(ngrid_x*ngrid_y*sizeof(ops_dat*));
-  ops_dat *coordy = (ops_dat *)malloc(ngrid_x*ngrid_y*sizeof(ops_dat*));
   ops_dat *u = (ops_dat *)malloc(ngrid_x*ngrid_y*sizeof(ops_dat*));
   ops_dat *u2 = (ops_dat *)malloc(ngrid_x*ngrid_y*sizeof(ops_dat*));
   ops_dat *f = (ops_dat *)malloc(ngrid_x*ngrid_y*sizeof(ops_dat*));
@@ -140,10 +138,6 @@ int main(int argc, char **argv)
 
       //printf("%d, %d\n", size[0],size[1]);
 
-      sprintf(buf,"coordx %d,%d",i,j);
-      coordx[i+ngrid_x*j] = ops_decl_dat(blocks[i+ngrid_x*j], 1, size, base, d_m, d_p, temp, "double", buf);
-      sprintf(buf,"coordy %d,%d",i,j);
-      coordy[i+ngrid_x*j] = ops_decl_dat(blocks[i+ngrid_x*j], 1, size, base, d_m, d_p, temp, "double", buf);
       sprintf(buf,"u %d,%d",i,j);
       u[i+ngrid_x*j] = ops_decl_dat(blocks[i+ngrid_x*j], 1, size, base, d_m, d_p, temp, "double", buf);
       sprintf(buf,"u2 %d,%d",i,j);
@@ -255,6 +249,7 @@ int main(int argc, char **argv)
         int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
         ops_par_loop(poisson_kernel_stencil, "poisson_kernel_stencil", blocks[i+ngrid_x*j], 2, iter_range,
                  ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00_P10_M10_0P1_0M1, "double", OPS_READ),
+                 ops_arg_dat(f[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
                  ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
       }
     }
@@ -265,6 +260,7 @@ int main(int argc, char **argv)
 					int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
 					ops_par_loop(poisson_kernel_stencil, "poisson_kernel_stencil", blocks[i+ngrid_x*j], 2, iter_range,
 							ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00_P10_M10_0P1_0M1, "double", OPS_READ),
+              ops_arg_dat(f[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
 							ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
 				}
 			}
@@ -303,7 +299,7 @@ int main(int argc, char **argv)
   ops_timers(&ct1, &et1);
   ops_timing_output(std::cout);
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
-  double err_diff=fabs((100.0*(err/20.727007094619303))-100.0);
+  double err_diff=fabs((100.0*(err/16.5173570176708))-100.0);
   ops_printf("Total error: %3.15g\n",err);
   ops_printf("Total error is within %3.15E %% of the expected error\n",err_diff);
 
@@ -317,8 +313,6 @@ int main(int argc, char **argv)
   ops_printf("%lf\n",it1-it0);
 
 
-  free(coordx);
-  free(coordy);
   free(u);
   free(u2);
   free(f);
