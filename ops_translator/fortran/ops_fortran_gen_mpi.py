@@ -150,15 +150,26 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
         if dims[n] != '1':
           code('INTEGER(KIND=4) multi_d'+str(n+1))
           code('INTEGER(KIND=4) xdim'+str(n+1))
-          if NDIM==1:
-            code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
-          if NDIM==2:
-            code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'*(y)*'+str(dims[n])+'))')
-            code('INTEGER(KIND=4) ydim'+str(n+1))
-          if NDIM==3:
-            code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'*(y)*'+str(dims[n])+')+(xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)*'+str(dims[n])+'))')
-            code('INTEGER(KIND=4) ydim'+str(n+1))
-            code('INTEGER(KIND=4) zdim'+str(n+1))
+          if soa_set == 1:
+            if NDIM==1:
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ( (d) + (x*'+str(dims[n])+') )')
+            if NDIM==2:
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ( (d) + (x*'+str(dims[n])+') + (y*xdim'+str(n+1)+'*'+str(dims[n])+') )')
+              code('INTEGER(KIND=4) ydim'+str(n+1))
+            if NDIM==3:
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ( (d) + (x*'+str(dims[n])+') + (y*xdim'+str(n+1)+'*'+str(dims[n])+') + (z*ydim'+str(n+1)+'*xdim'+str(n+1)+'*'+str(dims[n])+') )')
+              code('INTEGER(KIND=4) ydim'+str(n+1))
+              code('INTEGER(KIND=4) zdim'+str(n+1))
+          else:
+            if NDIM==1:
+              code('#define OPS_ACC_MD'+str(n+1)+'(x,d) ( (d*xdim'+str(n+1)+') + (x) )')
+            if NDIM==2:
+              code('#define OPS_ACC_MD'+str(n+1)+'(x,y,d) ( (d*ydim'+str(n+1)+'*xdim'+str(n+1)+') + (y*xdim'+str(n+1)+') + (x) )')
+              code('INTEGER(KIND=4) ydim'+str(n+1))
+            if NDIM==3:
+              code('#define OPS_ACC_MD'+str(n+1)+'(x,y,z,d) ( (d*zdim'+str(n+1)+'*ydim'+str(n+1)+'*xdim'+str(n+1)+') + (z*ydim'+str(n+1)+'*xdim'+str(n+1)+') +(y*xdim'+str(n+1)+') + (x) )')
+              code('INTEGER(KIND=4) ydim'+str(n+1))
+              code('INTEGER(KIND=4) zdim'+str(n+1))
 
     code('')
     code('contains')
@@ -276,15 +287,24 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
     line = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if NDIM==1:
-          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+')'
-        elif NDIM==2:
-          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+\
-             ' + (n_y-1)*xdim'+str(n+1)+'*'+str(dims[n])+')'
-        elif NDIM==3:
-          line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+\
-             ' + (n_y-1)*xdim'+str(n+1)+'*'+str(dims[n])+''+\
-             ' + (n_z-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+'*'+str(dims[n])+')'
+        if soa_set == 1:
+          if NDIM==1:
+            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+')'
+          elif NDIM==2:
+            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+\
+               ' + (n_y-1)*xdim'+str(n+1)+'*'+str(dims[n])+')'
+          elif NDIM==3:
+            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+\
+               ' + (n_y-1)*xdim'+str(n+1)+'*'+str(dims[n])+''+\
+               ' + (n_z-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+'*'+str(dims[n])+')'
+        else:
+          if NDIM==1:
+            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1))'
+          elif NDIM==2:
+            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1) + (n_y-1)*xdim'+str(n+1)+')'
+          elif NDIM==3:
+            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1) + (n_y-1)*xdim'+str(n+1)+' + (n_z-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+')'
+  
       elif arg_typ[n] == 'ops_arg_gbl':
         line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base)'
       elif arg_typ[n] == 'ops_arg_idx':
