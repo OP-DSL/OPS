@@ -152,12 +152,12 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
           code('INTEGER(KIND=4) xdim'+str(n+1))
           if soa_set == 0:
             if NDIM==1:
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x*'+str(dims[n])+') + (d))')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x*multi_d'+str(n+1)+') + (d))')
             if NDIM==2:
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((y*xdim'+str(n+1)+'*'+str(dims[n])+') + (x*'+str(dims[n])+') + (d))')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((y*xdim'+str(n+1)+'*multi_d'+str(n+1)+') + (x*multi_d'+str(n+1)+') + (d))')
               code('INTEGER(KIND=4) ydim'+str(n+1))
             if NDIM==3:
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((z*ydim'+str(n+1)+'*xdim'+str(n+1)+'*'+str(dims[n])+') + (y*xdim'+str(n+1)+'*'+str(dims[n])+') + (x*'+str(dims[n])+') + (d))')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((z*ydim'+str(n+1)+'*xdim'+str(n+1)+'*multi_d'+str(n+1)+') + (y*xdim'+str(n+1)+'*multi_d'+str(n+1)+') + (x*multi_d'+str(n+1)+') + (d))')
               code('INTEGER(KIND=4) ydim'+str(n+1))
               code('INTEGER(KIND=4) zdim'+str(n+1))
           else:
@@ -288,14 +288,14 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_dat':
         if soa_set == 0:
           if NDIM==1:
-            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+')'
+            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*multi_d'+str(n+1)+')'
           elif NDIM==2:
-            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+\
-                ' + (n_y-1)*xdim'+str(n+1)+'*'+str(dims[n])+')'
+            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*multi_d'+str(n+1)+\
+                ' + (n_y-1)*xdim'+str(n+1)+'*multi_d'+str(n+1)+')'
           elif NDIM==3:
-            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+\
-                ' + (n_y-1)*xdim'+str(n+1)+'*'+str(dims[n])+''+\
-                ' + (n_z-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+'*'+str(dims[n])+')'
+            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*multi_d'+str(n+1)+\
+                ' + (n_y-1)*xdim'+str(n+1)+'*multi_d'+str(n+1)+''+\
+                ' + (n_z-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+'*multi_d'+str(n+1)+')'
         else:
           pass
 
