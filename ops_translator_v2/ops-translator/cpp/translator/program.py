@@ -35,7 +35,7 @@ def translateProgram(source: str, program: Program, force_soa: bool = False) -> 
     buffer.insert(index, '#ifdef OPENACC\n#ifdef __cplusplus\n}\n#endif\n#endif\n')
 
     # 4. Update ops_init
-    buffer.insert(0, '\nvoid ops_init_backend()\n')
+    buffer.insert(0, '\nvoid ops_init_backend();\n')
 
     index = buffer.search(r'\s* ops_init\(') + 1
     buffer.insert(index, '\tops_init_backend();\n')

@@ -61,7 +61,7 @@ def main(argv=None) -> None:
 
     args.I = [[str(file_parent)] for file_parent in file_parents] + args.I
 
-    # Collect the set of ile extensions 
+    # Collect the set of file extensions 
     extensions = {str(Path(file_path).suffix)[1:] for file_path in args.file_paths}
 
     if not extensions:
