@@ -893,9 +893,10 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
     code(f'#include "ops_{cuda}_rt_support.h"')
     code(f'#include "ops_{cuda}_reduction.h"')
     code("")
-    code(
-        "#include <cuComplex.h>"
-    )  # Include the CUDA complex numbers library, in case complex numbers are used anywhere.
+    if hip == 0:
+      code(
+          "#include <cuComplex.h>"
+      )  # Include the CUDA complex numbers library, in case complex numbers are used anywhere.
     code("")
     if os.path.exists(os.path.join(src_dir, "user_types.h")):
         code("#define OPS_FUN_PREFIX __device__ __host__")
