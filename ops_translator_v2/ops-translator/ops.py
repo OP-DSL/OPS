@@ -184,10 +184,25 @@ class ArgGbl(Arg):
     
     def __str__(self) -> str:
         return (
-            f"ArgGbl(id={self.id}, loc={self.loc}, access_type={str(self.Access_type) + ',':17}), " ##opt={self.opt}, "
+            f"ArgGbl(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17}), " ##opt={self.opt}, "
             f"ptr={self.ptr}, dim={self.dim}, type={self.typ})"
         )
 
+@dataclass(frozen=True)
+class ArgReduce(Arg):
+    access_type: AccessType
+
+    ptr: str
+
+    dim: int
+    typ: Type
+
+    def __str__(self) -> str:
+        return (
+            f"ArgReduce(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17}), " ##opt={self.opt}, "
+            f"ptr={self.ptr}, dim={self.dim}, type={self.typ})"
+        )
+    
 @dataclass(frozen=True)
 class ArgIdx(Arg):
     pass
@@ -280,6 +295,19 @@ class Loop:
         arg = ArgDat(arg_id, loc, access_type, dat_id, stencil_id)
         self.args.append(arg)
 
+    def addArgReduce(
+        self,
+        loc: Location,
+        reduct_handle: str,
+        dim: int,
+        typ: Type,
+        access_type: AccessType
+    ) -> None: 
+
+        arg_id = len(self.args)
+
+        arg = ArgReduce(arg_id, loc, access_type, reduct_handle, dim, typ)
+        self.args.append(arg)
 
     def addArgGbl(
         self,

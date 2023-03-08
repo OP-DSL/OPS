@@ -52,7 +52,7 @@ class Cpp(Lang):
         ) -> Tuple[clang.cindex.TranslationUnit, str]:
         args = [f"-I{dir}" for dir in include_dirs]
         args = args + [f"-D{define}" for define in defines]
-
+        args = args +['-std=c++11']
         source = path.read_text()
 
         if preprocess:
