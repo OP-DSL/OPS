@@ -704,41 +704,9 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         //  on each proc
 
         // Create the dataset with default properties and close filespace.
-        if (strcmp(dat->type, "double") == 0 ||
-            strcmp(dat->type, "double precision") == 0 ||
-            strcmp(dat->type, "real(8)") == 0)
-          dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_DOUBLE, filespace,
-                              H5P_DEFAULT, plist_id, H5P_DEFAULT);
-        else if (strcmp(dat->type, "float") == 0 ||
-                 strcmp(dat->type, "real(4)") == 0 ||
-                 strcmp(dat->type, "real") == 0)
-          dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_FLOAT, filespace,
-                              H5P_DEFAULT, plist_id, H5P_DEFAULT);
-        else if (strcmp(dat->type, "int") == 0 ||
-                 strcmp(dat->type, "int(4)") == 0 ||
-                 strcmp(dat->type, "integer") == 0 ||
-                 strcmp(dat->type, "integer(4)") == 0) {
-          dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_INT, filespace,
-                              H5P_DEFAULT, plist_id, H5P_DEFAULT);
-        } else if (strcmp(dat->type, "long") == 0)
-          dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_LONG, filespace,
-                              H5P_DEFAULT, plist_id, H5P_DEFAULT);
-        else if ((strcmp(dat->type, "long long") == 0) ||
-                 (strcmp(dat->type, "ll") == 0))
-          dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_LLONG, filespace,
-                              H5P_DEFAULT, plist_id, H5P_DEFAULT);
-        else if (strcmp(dat->type, "short") == 0)
-          dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_SHORT, filespace,
-                              H5P_DEFAULT, plist_id, H5P_DEFAULT);
-        else if (strcmp(dat->type, "char") == 0)
-          dset_id = H5Dcreate(group_id, dat->name, H5T_NATIVE_CHAR, filespace,
-                              H5P_DEFAULT, plist_id, H5P_DEFAULT);
-        else {
-          OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: Unknown type in ops_fetch_dat_hdf5_file(): "
-             << dat->type;
-          throw ex;
-        }
+        dset_id = H5Dcreate(group_id, dat->name, h5_type(dat->type), filespace,
+                            H5P_DEFAULT, plist_id, H5P_DEFAULT);
+
         H5Pclose(plist_id);
         H5Sclose(filespace);
         H5Dclose(dset_id);

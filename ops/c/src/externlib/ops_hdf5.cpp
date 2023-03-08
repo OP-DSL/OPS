@@ -425,37 +425,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
               << " does not exists in the ops_block " << block->name
               << " ... creating ops_dat\n";
 
-      if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0)
-        H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_DOUBLE, data);
-      else if (strcmp(dat->type, "float") == 0 ||
-               strcmp(dat->type, "real(4)") == 0 ||
-               strcmp(dat->type, "real") == 0)
-        H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_FLOAT, data);
-      else if (strcmp(dat->type, "int") == 0 ||
-               strcmp(dat->type, "int(4)") == 0 ||
-               strcmp(dat->type, "integer(4)") == 0)
-        H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_INT, data);
-      else if (strcmp(dat->type, "long") == 0)
-        H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_LONG, data);
-      else if ((strcmp(dat->type, "long long") == 0) ||
-               (strcmp(dat->type, "ll") == 0))
-        H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_LLONG, data);
-      else if (strcmp(dat->type, "short") == 0)
-        H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_SHORT, data);
-      else if (strcmp(dat->type, "char") == 0)
-        H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
-                         H5T_NATIVE_CHAR, data);
-      else {
-        OPSException ex(OPS_HDF5_ERROR);
-        ex << "Error: Unknown type in ops_fetch_dat_hdf5_file(): " << dat->type;
-        throw ex;
-      }
+      H5LTmake_dataset(group_id, dat->name, block->dims, G_SIZE,
+                       h5_type(dat->type), data);
 
       // attach attributes to dat
       H5LTset_attribute_string(group_id, dat->name, "ops_type",
