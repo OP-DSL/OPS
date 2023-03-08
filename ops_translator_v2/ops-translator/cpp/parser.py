@@ -87,6 +87,7 @@ def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
     nodes: List[Cursor] = []
 
     for node in translation_unit.cursor.get_children():
+
         if node.kind == CursorKind.MACRO_DEFINITION:
             continue
 
@@ -102,31 +103,41 @@ def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
 
     for node in nodes:
         for child in node.walk_preorder():
-            if child.kind == CursorKind.CALL_EXPR:
+            if child.kind.is_unexposed():
                 parseCall(child, macros, program)
-
     return program        
 
 def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> None:
-    name = node.spelling
-    args = list(node.get_arguments())
+
+    args = []
+    for child in node.get_children():
+        args.append(child)
+
+    first_child = args.pop(0)
+
+    if first_child.kind == CursorKind.DECL_REF_EXPR:
+        name = list(first_child.get_tokens())[0].spelling
+    else:
+        return
+
     loc = parseLocation(node)
 
     if name == "ops_decl_const":
         program.consts.append(parseConst(args, loc))
 
     elif name == "ops_par_loop":
-        program.loops.append(parseLoops(args, loc, macros))
+        program.loops.append(parseLoop(args, loc, macros))
 
 def decend(node: Cursor) -> Optional[Cursor]:
     return next(node.get_children(), None)
 
 def parseStringLit(node: Cursor) -> str:
-    if node.kind != CursorKind.UNEXPOSED_EXPR:
-        raise ParseError("Expected string literal")
-    
-    node = decend(node)
-    if node.kind != CursorKind.STRING_LITERAL:
+    if node.kind == CursorKind.UNEXPOSED_EXPR:
+        node = decend(node)
+        if node.kind != CursorKind.STRING_LITERAL:
+            raise ParseError("Expected string literal")
+
+    elif node.kind != CursorKind.STRING_LITERAL:
         raise ParseError("Expected string literal")
     
     return node.spelling[1:-1]
@@ -192,7 +203,7 @@ def parseIdentifier(node: Cursor, raw: bool = True) -> str:
 
 def parseConst(args: List[Cursor], loc: Location) -> ops.Const:
     if(len(args) != 4):
-        raise ParseError("Incorrect number of args passed to ops_decl_const", loc)
+        raise ParseError(f"Incorrect number({len(args)}) of args passed to ops_decl_const", loc)
     
     name = parseStringLit(args[0])
     dim = parseIntExpression(args[1])
@@ -215,16 +226,26 @@ def parseAccessType(node: Cursor, loc: Location, macros: Dict[Location, str]) ->
 
 def parseArgDat(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> None:
     if len(args) != 5:
-        raise ParseError("Incorrect number of args passed to ops_arg_dat", loc)
+        raise ParseError(f"Incorrect number({len(args)}) of args passed to ops_arg_dat", loc)
     
     dat_ptr = parseIdentifier(args[0])
     dim = parseIntExpression(args[1])
     stencil_ptr = parseIdentifier(args[2])
     dat_typ, dat_soa = parseType(parseStringLit(args[3]), loc)
-    access_type = parseAccessType(args[4])
+    access_type = parseAccessType(args[4], loc, macros)
 
     loop.addArgDat(loc, dat_ptr, dim, dat_typ, dat_soa, stencil_ptr, access_type)
 
+def parseArgReduce(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> None:
+    if len(args) != 4:
+        raise ParseError(f"Incorrect number of args passed to ops_arg_reduce: {len(args)}", loc)
+    
+    reduct_handle_ptr = parseIdentifier(args[0])
+    dim = parseIntExpression(args[1])
+    typ, soa = parseType(parseStringLit(args[2]), loc)
+    access_type = parseAccessType(args[3], loc, macros)
+
+    loop.addArgReduce(loc, reduct_handle_ptr, dim, typ, access_type)
 
 def parseBlock(node: Cursor, dim: int) -> ops.Block:
     ptr = parseIdentifier(node)
@@ -249,6 +270,11 @@ def parseArgGbl(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[
 
     loop.addArgGbl(loc, ptr, dim, typ, access_type)
 
+def parseArgIdx(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> None:
+    if len(args) !=0:
+        raise ParseError("Incorrect number of args passed to ops_arg_idx", loc)
+    
+    loop.addArgIdx(loc)
 
 def parseLoop(args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> ops.Loop:
     if len(args) < 6:
@@ -256,15 +282,13 @@ def parseLoop(args: List[Cursor], loc: Location, macros: Dict[Location, str]) ->
     
     kernel = parseIdentifier(args[0])
     name = parseStringLit(args[1])
-    block = parseBlock(args[2], dim)
     dim = parseIntExpression(args[3])
+    block = parseBlock(args[2], dim)
     range = parseRange(args[4], dim)
 
     loop = ops.Loop(loc, kernel, block, range, dim)
 
     for node in args[5:]:
-        node = decend(decend(node))
-
         node_name = node.spelling
 
         arg_loc = parseLocation(node)
@@ -276,6 +300,11 @@ def parseLoop(args: List[Cursor], loc: Location, macros: Dict[Location, str]) ->
         elif node_name == "ops_arg_gbl":
             parseArgGbl(loop, arg_args, arg_loc, macros)
         
+        elif node_name == "ops_arg_idx":
+            parseArgIdx(loop, arg_args, arg_loc, macros)
+
+        elif node_name == "ops_arg_reduce":
+            parseArgReduce(loop, arg_args, arg_loc, macros)
         else:
             raise ParseError(f"Invalid loop argument {node_name}", parseLocation(node))
         
