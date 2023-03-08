@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
   ops_dat u{
       ops_decl_dat(slice3Du, 1, size, base, d_m, d_p, temp, "double", "u")};
   ops_dat velo{
-      ops_decl_dat(slice3Du, 3, size, base, d_m, d_p, temp, "double", "u")};
+      ops_decl_dat(slice3Du, 3, size, base, d_m, d_p, temp, "double", "velo")};
   ops_dat v{
       ops_decl_dat(slice3Dv, 1, size, base, d_m, d_p, int_tmp, "int", "v")};
 
@@ -135,10 +135,10 @@ int main(int argc, char *argv[]) {
   ops_timers(&ct1, &et1);
   total4 += et1 - et0;
   ops_printf("The time write slab is %f\n", total4);
-
-  // ops_fetch_block_hdf5_file(slice3Du, "slice3Du.h5");
-  // ops_fetch_dat_hdf5_file(u, "slice3Du.h5");
-  // ops_fetch_block_hdf5_file(slice3Dv, "slice3Dv.h5");
-  // ops_fetch_dat_hdf5_file(v, "slice3Dv.h5");
+  ops_fetch_block_hdf5_file(slice3Du, "slice3Du.h5");
+  ops_fetch_dat_hdf5_file(u, "slice3Du.h5");
+  ops_fetch_dat_hdf5_file(velo, "slice3Du.h5");
+  ops_fetch_block_hdf5_file(slice3Dv, "slice3Dv.h5");
+  ops_fetch_dat_hdf5_file(v, "slice3Dv.h5");
   ops_exit();
 }
