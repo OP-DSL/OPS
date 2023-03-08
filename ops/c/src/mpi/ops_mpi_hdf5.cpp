@@ -258,6 +258,171 @@ void add_mpi_halos3D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
 void add_mpi_halos4D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data){};
 void add_mpi_halos5D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data){};
 
+void determine_plane_global_range(const ops_dat dat,
+                                  const int cross_section_dir, const int pos,
+                                  int *range) {
+  const int space_dim{dat->block->dims};
+  const sub_dat *sd = OPS_sub_dat_list[dat->index];
+  int *size{new int(space_dim)};
+  for (int d = 0; d < space_dim; d++) {
+    size[d] = sd->gbl_size[d] - (sd->gbl_d_p[d] - sd->gbl_d_m[d]);
+  }
+
+  for (int d = 0; d < dat->block->dims; d++) {
+    range[2 * d] = 0;
+    range[2 * d + 1] = size[d];
+  }
+  range[2 * cross_section_dir + 1] = pos + 1;
+  range[2 * cross_section_dir] = pos;
+  delete size;
+}
+
+void determine_local_range(const ops_dat dat, const int *global_range,
+                           int *local_range) {
+  ops_arg dat_arg;
+  const int space_dim{dat->block->dims};
+  if (space_dim == 3) {
+    int s3D_000[]{0, 0, 0};
+    ops_stencil S3D_000{ops_decl_stencil(3, 1, s3D_000, "000")};
+    dat_arg = ops_arg_dat(dat, dat->dim, S3D_000, dat->type, OPS_READ);
+  }
+
+  if (space_dim == 2) {
+    int s2D_000[]{0, 0, 0};
+    ops_stencil S2D_000{ops_decl_stencil(2, 1, s2D_000, "000")};
+    dat_arg = ops_arg_dat(dat, dat->dim, S2D_000, dat->type, OPS_READ);
+  }
+
+  int *arg_idx{new int(space_dim)};
+
+  int *local_start{new int(space_dim)};
+  int *local_end{new int(space_dim)};
+  if (compute_ranges(&dat_arg, 1, dat->block, (int *)global_range, local_start,
+                     local_end, arg_idx) < 0) {
+    return;
+  }
+  for (int i = 0; i < space_dim; i++) {
+    local_range[2 * i] = local_start[i];
+    local_range[2 * i + 1] = local_end[i];
+  }
+  // printf(
+  //     "At Rank = %d istart=%d iend=%d  jstart=%d jend=%d  kstart=%d kend=%d\n",
+  //     ops_my_global_rank, local_range[0], local_range[1], local_range[2],
+  //     local_range[3], local_range[4], local_range[5]);
+  delete arg_idx;
+  delete local_start;
+  delete local_end;
+}
+
+template <int dir>
+void copy_loop_slab(char *dest, char *src, const int *dest_size,
+                    const int *src_size, const int *d_m, const int elem_size,
+                    const int *range_max_dim) {
+  // TODO: add OpenMP here if needed
+#if OPS_MAX_DIM > 4
+  for (int m = 0; m < dest_size[4]; m++) {
+    size_t moff_dest =
+        m * dest_size[0] * dest_size[1] * dest_size[2] * dest_size[3];
+    size_t moff_src = (range_max_dim[2 * 4] + m - d_m[4]) * src_size[3] *
+                      src_size[2] * src_size[1] * src_size[0];
+#else
+  size_t moff_dest = 0;
+  size_t moff_src = 0;
+#endif
+#if OPS_MAX_DIM > 3
+    for (int l = 0; l < dest_size[3]; l++) {
+      size_t loff_dest = l * dest_size[0] * dest_size[1] * dest_size[2];
+      size_t loff_src = (range_max_dim[2 * 3] + l - d_m[3]) * src_size[2] *
+                        src_size[1] * src_size[0];
+#else
+  size_t loff_dest = 0;
+  size_t loff_src = 0;
+#endif
+      for (int k = 0; k < dest_size[2]; k++)
+        for (int j = 0; j < dest_size[1]; j++)
+          if (dir == 0) {
+            memcpy(&dest[moff_dest + loff_dest +
+                         k * dest_size[0] * dest_size[1] + j * dest_size[0]],
+                   &src[(moff_src + loff_src +
+                         (range_max_dim[2 * 2] + k - d_m[2]) * src_size[1] *
+                             src_size[0] +
+                         (range_max_dim[2 * 1] + j - d_m[1]) * src_size[0] +
+                         range_max_dim[2 * 0] - d_m[0]) *
+                        elem_size],
+                   dest_size[0]);
+            // int i0{(dest[moff_dest + loff_dest +
+            //              k * dest_size[0] * dest_size[1] + j * dest_size[0]};
+            // int i1{dest[moff_dest + loff_dest +
+            //              k * dest_size[0] * dest_size[1] + j * dest_size[0]+elem_size};
+            // int i2{dest[moff_dest + loff_dest +
+            //              k * dest_size[0] * dest_size[1] + j * dest_size[0]+2*elem_size};
+            // printf("At copy rank=%d, size0=%d xs=%d\n", ops_my_global_rank,
+            //        dest_size[0], range_max_dim[2 * 0]);
+            // printf("At copy rank=%d, i0=%d i1=%d i2=%d\n", ops_my_global_rank,
+            //        i0, i1, i2);
+          } else {
+            memcpy(&src[(moff_src + loff_src +
+                         (range_max_dim[2 * 2] + k - d_m[2]) * src_size[1] *
+                             src_size[0] +
+                         (range_max_dim[2 * 1] + j - d_m[1]) * src_size[0] +
+                         range_max_dim[2 * 0] - d_m[0]) *
+                        elem_size],
+                   &dest[moff_dest + loff_dest +
+                         k * dest_size[0] * dest_size[1] + j * dest_size[0]],
+                   dest_size[0]);
+          }
+
+#if OPS_MAX_DIM > 3
+    }
+#endif
+#if OPS_MAX_DIM > 4
+  }
+#endif
+}
+
+void copy_data_buf(const ops_dat &dat, const int *local_range,
+                   char *local_buf) {
+  const sub_dat *sd = OPS_sub_dat_list[dat->index];
+  ops_execute(dat->block->instance);
+  ops_get_data(dat);
+  int local_buf_size[OPS_MAX_DIM] = {1};
+  int range_max_dim[2 * OPS_MAX_DIM] = {0};
+  int d_m[OPS_MAX_DIM]{0};
+  for (int d = 0; d < dat->block->dims; d++) {
+    local_buf_size[d] = local_range[2 * d + 1] - local_range[2 * d + 0];
+    range_max_dim[2 * d] = local_range[2 * d];
+    range_max_dim[2 * d + 1] = local_range[2 * d + 1];
+  }
+  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
+    local_buf_size[d] = 1;
+    range_max_dim[2 * d] = 0;
+    range_max_dim[2 * d + 1] = 1;
+  }
+
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    d_m[d] = sd->d_im[d] + dat->d_m[d];
+    // printf("At rank %d d_im[%d]=%d d_m[%d]=%d\n", ops_my_global_rank, d,
+    //        sd->d_im[d], d, dat->d_m[d]);
+  }
+  local_buf_size[0] *= dat->elem_size;
+
+  if (dat->block->dims > 5)
+    throw OPSException(OPS_NOT_IMPLEMENTED,
+                       "Error, missing OPS implementation: ops_dat_fetch_data "
+                       "not implemented for dims>5");
+  if (dat->block->instance->OPS_soa && dat->dim > 1)
+    throw OPSException(OPS_NOT_IMPLEMENTED,
+                       "Error, missing OPS implementation: ops_dat_fetch_data "
+                       "not implemented for SoA");
+  // printf(
+  //     "At Rank II = %d istart=%d iend=%d  jstart=%d jend=%d  kstart=%d kend=%d\n",
+  //     ops_my_global_rank,range_max_dim[0], range_max_dim[1], range_max_dim[2],
+  //     range_max_dim[3],range_max_dim[4], range_max_dim[5]);
+  copy_loop_slab<0>(local_buf, dat->data, local_buf_size, dat->size, d_m,
+                    dat->elem_size, range_max_dim);
+  dat->dirty_hd = 1;
+}
+
 /*******************************************************************************
  * Routine to write an ops_block to a named hdf5 file,
  * if file does not exist, creates it
@@ -582,16 +747,17 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     MPI_Comm_rank(OPS_MPI_HDF5_BLOCK_WORLD, &my_rank);
     MPI_Comm_size(OPS_MPI_HDF5_BLOCK_WORLD, &comm_size);
 
-    if (block->dims == 1)
-      remove_mpi_halos1D(dat, size, l_disp, data);
-    else if (block->dims == 2)
-      remove_mpi_halos2D(dat, size, l_disp, data);
-    else if (block->dims == 3)
-      remove_mpi_halos3D(dat, size, l_disp, data);
-    else if (block->dims == 4)
-      remove_mpi_halos4D(dat, size, l_disp, data);
-    else if (block->dims == 5)
-      remove_mpi_halos5D(dat, size, l_disp, data);
+    const int space_dim{dat->block->dims};
+    int *local_range{new int(2 * space_dim)};
+    int *range{new int(2 * space_dim)};
+    for (int d = 0; d < space_dim; d++) {
+      range[2 * d] = g_d_m[d];
+      range[2 * d + 1] = g_size[d] + g_d_p[d];
+    }
+    determine_local_range(dat, range, local_range);
+    copy_data_buf(dat, local_range, data);
+    delete range;
+    delete local_range;
 
     // make sure we multiply by the number of data values per
     // element (i.e. dat->dim) to get full size of the data
@@ -2313,128 +2479,6 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   MPI_Comm_free(&OPS_MPI_HDF5_WORLD);
 }
 
-void determine_plane_global_range(const ops_dat dat,
-                                  const int cross_section_dir, const int pos,
-                                  int *range) {
-  const int space_dim{dat->block->dims};
-  const sub_dat *sd = OPS_sub_dat_list[dat->index];
-  int *size{new int(space_dim)};
-  for (int d = 0; d < space_dim; d++) {
-    size[d] = sd->gbl_size[d] - (sd->gbl_d_p[d] - sd->gbl_d_m[d]);
-  }
-
-  for (int d = 0; d < dat->block->dims; d++) {
-    range[2 * d] = 0;
-    range[2 * d + 1] = size[d];
-  }
-  range[2 * cross_section_dir + 1] = pos + 1;
-  range[2 * cross_section_dir] = pos;
-  delete size;
-}
-
-void determine_local_range(const ops_dat dat, const int *global_range,
-                           int *local_range) {
-  ops_arg dat_arg;
-  const int space_dim{dat->block->dims};
-  if (space_dim == 3) {
-    int s3D_000[]{0, 0, 0};
-    ops_stencil S3D_000{ops_decl_stencil(3, 1, s3D_000, "000")};
-    dat_arg = ops_arg_dat(dat, dat->dim, S3D_000, dat->type, OPS_READ);
-  }
-
-  if (space_dim == 2) {
-    int s2D_000[]{0, 0, 0};
-    ops_stencil S2D_000{ops_decl_stencil(2, 1, s2D_000, "000")};
-    dat_arg = ops_arg_dat(dat, dat->dim, S2D_000, dat->type, OPS_READ);
-  }
-
-  int *arg_idx{new int(space_dim)};
-
-  int *local_start{new int(space_dim)};
-  int *local_end{new int(space_dim)};
-  if (compute_ranges(&dat_arg, 1, dat->block, (int *)global_range, local_start,
-                     local_end, arg_idx) < 0) {
-    return;
-  }
-  for (int i = 0; i < space_dim; i++) {
-    local_range[2 * i] = local_start[i];
-    local_range[2 * i + 1] = local_end[i];
-  }
-  // printf(
-  //     "At Rank = %d istart=%d iend=%d  jstart=%d jend=%d  kstart=%d kend=%d\n",
-  //     ops_my_global_rank, local_range[0], local_range[1], local_range[2],
-  //     local_range[3], local_range[4], local_range[5]);
-  delete arg_idx;
-  delete local_start;
-  delete local_end;
-}
-
-template <int dir>
-void copy_loop_slab(char *dest, char *src, const int *dest_size,
-                    const int *src_size, const int *d_m, const int elem_size,
-                    const int *range_max_dim) {
-  // TODO: add OpenMP here if needed
-#if OPS_MAX_DIM > 4
-  for (int m = 0; m < dest_size[4]; m++) {
-    size_t moff_dest =
-        m * dest_size[0] * dest_size[1] * dest_size[2] * dest_size[3];
-    size_t moff_src = (range_max_dim[2 * 4] + m - d_m[4]) * src_size[3] *
-                      src_size[2] * src_size[1] * src_size[0];
-#else
-  size_t moff_dest = 0;
-  size_t moff_src = 0;
-#endif
-#if OPS_MAX_DIM > 3
-    for (int l = 0; l < dest_size[3]; l++) {
-      size_t loff_dest = l * dest_size[0] * dest_size[1] * dest_size[2];
-      size_t loff_src = (range_max_dim[2 * 3] + l - d_m[3]) * src_size[2] *
-                        src_size[1] * src_size[0];
-#else
-  size_t loff_dest = 0;
-  size_t loff_src = 0;
-#endif
-      for (int k = 0; k < dest_size[2]; k++)
-        for (int j = 0; j < dest_size[1]; j++)
-          if (dir == 0) {
-            memcpy(&dest[moff_dest + loff_dest +
-                         k * dest_size[0] * dest_size[1] + j * dest_size[0]],
-                   &src[(moff_src + loff_src +
-                         (range_max_dim[2 * 2] + k - d_m[2]) * src_size[1] *
-                             src_size[0] +
-                         (range_max_dim[2 * 1] + j - d_m[1]) * src_size[0] +
-                         range_max_dim[2 * 0] - d_m[0]) *
-                        elem_size],
-                   dest_size[0]);
-            // int i0{(dest[moff_dest + loff_dest +
-            //              k * dest_size[0] * dest_size[1] + j * dest_size[0]};
-            // int i1{dest[moff_dest + loff_dest +
-            //              k * dest_size[0] * dest_size[1] + j * dest_size[0]+elem_size};
-            // int i2{dest[moff_dest + loff_dest +
-            //              k * dest_size[0] * dest_size[1] + j * dest_size[0]+2*elem_size};
-            // printf("At copy rank=%d, size0=%d xs=%d\n", ops_my_global_rank,
-            //        dest_size[0], range_max_dim[2 * 0]);
-            // printf("At copy rank=%d, i0=%d i1=%d i2=%d\n", ops_my_global_rank,
-            //        i0, i1, i2);
-          } else {
-            memcpy(&src[(moff_src + loff_src +
-                         (range_max_dim[2 * 2] + k - d_m[2]) * src_size[1] *
-                             src_size[0] +
-                         (range_max_dim[2 * 1] + j - d_m[1]) * src_size[0] +
-                         range_max_dim[2 * 0] - d_m[0]) *
-                        elem_size],
-                   &dest[moff_dest + loff_dest +
-                         k * dest_size[0] * dest_size[1] + j * dest_size[0]],
-                   dest_size[0]);
-          }
-
-#if OPS_MAX_DIM > 3
-    }
-#endif
-#if OPS_MAX_DIM > 4
-  }
-#endif
-}
-
 // create a h5 file or open a h5 file if existing
 hid_t H5_file_handle(const MPI_Comm &mpi_comm, const char *file_name) {
   int my_rank;
@@ -2507,49 +2551,6 @@ void H5_dataset_space(const hid_t file_id, const int data_dims,
       throw ex;
     }
   }
-}
-
-void copy_data_buf(const ops_dat &dat, const int *local_range,
-                   char *local_buf) {
-  const sub_dat *sd = OPS_sub_dat_list[dat->index];
-  ops_execute(dat->block->instance);
-  ops_get_data(dat);
-  int local_buf_size[OPS_MAX_DIM] = {1};
-  int range_max_dim[2 * OPS_MAX_DIM] = {0};
-  int d_m[OPS_MAX_DIM]{0};
-  for (int d = 0; d < dat->block->dims; d++) {
-    local_buf_size[d] = local_range[2 * d + 1] - local_range[2 * d + 0];
-    range_max_dim[2 * d] = local_range[2 * d];
-    range_max_dim[2 * d + 1] = local_range[2 * d + 1];
-  }
-  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
-    local_buf_size[d] = 1;
-    range_max_dim[2 * d] = 0;
-    range_max_dim[2 * d + 1] = 1;
-  }
-
-  for (int d = 0; d < OPS_MAX_DIM; d++) {
-    d_m[d] = sd->d_im[d] + dat->d_m[d];
-    // printf("At rank %d d_im[%d]=%d d_m[%d]=%d\n", ops_my_global_rank, d,
-    //        sd->d_im[d], d, dat->d_m[d]);
-  }
-  local_buf_size[0] *= dat->elem_size;
-
-  if (dat->block->dims > 5)
-    throw OPSException(OPS_NOT_IMPLEMENTED,
-                       "Error, missing OPS implementation: ops_dat_fetch_data "
-                       "not implemented for dims>5");
-  if (dat->block->instance->OPS_soa && dat->dim > 1)
-    throw OPSException(OPS_NOT_IMPLEMENTED,
-                       "Error, missing OPS implementation: ops_dat_fetch_data "
-                       "not implemented for SoA");
-  // printf(
-  //     "At Rank II = %d istart=%d iend=%d  jstart=%d jend=%d  kstart=%d kend=%d\n",
-  //     ops_my_global_rank,range_max_dim[0], range_max_dim[1], range_max_dim[2],
-  //     range_max_dim[3],range_max_dim[4], range_max_dim[5]);
-  copy_loop_slab<0>(local_buf, dat->data, local_buf_size, dat->size, d_m,
-                    dat->elem_size, range_max_dim);
-  dat->dirty_hd = 1;
 }
 
 void write_plane_buf_hdf5(const char *file_name, const char *data_name,

@@ -327,8 +327,6 @@ void remove_padding3D(ops_dat dat, hsize_t *size, char *data) {
  *******************************************************************************/
 
 void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
-  // fetch data onto the host ( if needed ) based on the backend
-  ops_get_data(dat);
 
   ops_block block = dat->block;
 
@@ -353,13 +351,16 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     t_size *= g_size[d];
   char *data = (char *)ops_malloc(t_size * dat->elem_size);
 
-  if (block->dims == 1)
-    remove_padding1D(dat, g_size, data);
-  if (block->dims == 2)
-    remove_padding2D(dat, g_size, data);
-  if (block->dims == 3)
-    remove_padding3D(dat, g_size, data);
-
+  int *range{new int(2 * block->dims)};
+  for (int d = 0; d < block->dims; d++) {
+    range[2 * d] = dat->d_m[d];
+    range[2 * d + 1] = dat->size[d]-dat->d_p[d];
+    // ops_printf("range[%d]=%d range[%d]=%d size=%d d_p=%d d_m=%d\n", 2 * d,
+    //            range[2 * d], 2 * d + 1, range[2 * d + 1], dat->size[d],
+    //            dat->d_p[d], dat->d_m[d]);
+  }
+  ops_dat_fetch_data_slab_host(dat, 0, data, range);
+  delete range;
   // make sure we multiply by the number of data values per element (i.e.
   // dat->dim)
   // g_size[1] = g_size[1]*dat->dim;
