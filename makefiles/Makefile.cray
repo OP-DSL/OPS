@@ -10,3 +10,4 @@ HIPCC=CC
 HIPMPICPP=CC
 HIPFLAGS=-std=c++11 --rocm-path=${ROCM_PATH} --offload-arch=gfx90a -x hip --rocm-path=${ROCM_PATH} -L${ROCM_PATH}/lib -lamdhip64 -I/opt/rocm/hip/include -D__HIP_PLATFORM_AMD__
 HIPLINK=-std=c++11 --rocm-path=${ROCM_PATH} --offload-arch=gfx90a --rocm-path=${ROCM_PATH} -L${ROCM_PATH}/lib -lamdhip64 -I/opt/rocm/hip/include -D__HIP_PLATFORM_AMD__
+OMPOFFLOADFLAGS=-fopenmp
