@@ -92,6 +92,9 @@ $(C_OPS_OBJ)/%.o : src/externlib/%.cpp
 $(C_OPS_OBJ)/%.o : src/sequential/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
+$(C_OPS_OBJ)/%.o : src/ompoffload/%.cpp
+	$(CXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -I$(C_OPS_INC) -c $< -o $@
+
 $(C_OPS_OBJ)/%.o : src/cuda/%.cpp
 	$(CXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
@@ -165,6 +168,15 @@ cuda: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)
 	$(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_cuda_common_cuda.o $(C_OPS_OBJ)/ops_cuda_rt_support_cuda.o \
 	$(C_OPS_OBJ)/ops_cuda_singlenode_cuda.o $(C_OPS_OBJ)/ops_dummy_singlenode.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o \
 	$(C_OPS_OBJ)/ops_device_singlenode_common.o
+
+ompoffload: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o $(C_OPS_OBJ)/ops_checkpointing.o \
+  $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_ompoffload_common.o $(C_OPS_OBJ)/ops_ompoffload_rt_support_kernels.o \
+  $(C_OPS_OBJ)/ops_ompoffload_singlenode.o $(C_OPS_OBJ)/ops_dummy_singlenode.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o \
+  $(C_OPS_OBJ)/ops_device_singlenode_common.o
+	ar -r $(C_OPS_LIB)/libops_ompoffload.a $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o $(C_OPS_OBJ)/ops_checkpointing.o \
+  $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_ompoffload_common.o $(C_OPS_OBJ)/ops_ompoffload_rt_support_kernels.o \
+  $(C_OPS_OBJ)/ops_ompoffload_singlenode.o $(C_OPS_OBJ)/ops_dummy_singlenode.o $(C_OPS_OBJ)/ops_checkpointing_strategy.o \
+  $(C_OPS_OBJ)/ops_device_singlenode_common.o
 
 hip: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o $(C_OPS_OBJ)/ops_checkpointing.o \
   $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_hip_common.o $(C_OPS_OBJ)/ops_hip_rt_support_kernels.o \

@@ -61,7 +61,7 @@ def clean_type(arg):
     return arg
 
 
-def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
+def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
     NDIM = 2  # the dimension of the application is hardcoded here .. need to get this dynamically
 
     gen_full_code = 1
@@ -72,8 +72,12 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
     ##########################################################################
     #  create new kernel file
     ##########################################################################
-    if not os.path.exists("./MPI_OpenMP"):
-        os.makedirs("./MPI_OpenMP")
+    if offload:
+        if not os.path.exists("./OpenMP_offload"):
+            os.makedirs("./OpenMP_offload")
+    else:
+        if not os.path.exists("./MPI_OpenMP"):
+            os.makedirs("./MPI_OpenMP")
 
     for nk in range(0, len(kernels)):
         assert config.file_text == "" and config.depth == 0
@@ -212,11 +216,14 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
 
         code("")
         comm("set up initial pointers and exchange halos if necessary")
+        ptr_suffix = ""
+        if offload:
+            ptr_suffix = "_d"
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat":
                 code(f"int base{n} = args[{n}].dat->base_offset;")
                 code(
-                    f"{typs[n]} * __restrict__ {clean_type(arg_list[n])}_p = ({typs[n]} *)(args[{n}].data + base{n});"
+                    f"{typs[n]} * __restrict__ {clean_type(arg_list[n])}_p = ({typs[n]} *)(args[{n}].data{ptr_suffix} + base{n});"
                 )
                 if restrict[n] == 1 or prolong[n] == 1:
                     code("#ifdef OPS_MPI")
@@ -250,6 +257,8 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
 
                 if restrict[n] == 1 or prolong[n] == 1:
                     code("#endif")
+                if offload:
+                    code(f"size_t arg{n}_size = (args[{n}].dat->mem - ((char*){clean_type(arg_list[n])}_p-args[{n}].data{ptr_suffix}))/sizeof({typs[n]});")
             elif arg_typ[n] == "ops_arg_gbl":
                 if accs[n] == OPS_READ:
                     code(
@@ -273,9 +282,12 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
 
         code("#ifndef OPS_LAZY")
         comm("Halo Exchanges")
-        code(f"ops_H_D_exchanges_host(args, {nargs});")
+        exec_space = "host"
+        if offload:
+            exec_space = "device"
+        code(f"ops_H_D_exchanges_{exec_space}(args, {nargs});")
         code(f"ops_halo_exchanges(args,{nargs},range);")
-        code(f"ops_H_D_exchanges_host(args, {nargs});")
+        code(f"ops_H_D_exchanges_{exec_space}(args, {nargs});")
         code("#endif")
         code("")
         if gen_full_code == 1:
@@ -306,11 +318,19 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
                 if accs[n] == OPS_WRITE:  # this may not be correct ..
                     for d in range(0, int(dims[n])):
                         line += f" reduction(+:p_a{n}_{d})"
-        if NDIM == 3 and has_reduction == 0:
+        if NDIM == 3 and has_reduction == 0 and offload == 0:
             line2 = " collapse(2)"
         else:
             line2 = line
-        code("#pragma omp parallel for" + line2)
+        if offload == 0:
+            code("#pragma omp parallel for" + line2)
+        else:
+            for g_m in range(0,nargs):
+                if arg_typ[g_m] == "ops_arg_dat":
+                    line2 += f" map({'to' if accs[g_m] == OPS_READ else 'tofrom'}:{arg_list[g_m]}_p[0:arg{g_m}_size])"
+                elif arg_typ[g_m] == "ops_arg_gbl" and accs[g_m] == OPS_READ:
+                    line2 += f" map(to:{clean_type(arg_list[g_m])}[0:{dims[g_m]}])"
+            code(f"#pragma omp target teams distribute parallel for collapse({NDIM})" + line2)
         if NDIM > 2:
             FOR("n_z", "start[2]", "end[2]")
         if NDIM > 1:
@@ -321,16 +341,17 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
             if arg_typ[n] == "ops_arg_dat":
                 line3 += arg_list[n] + ","
         if NDIM > 1:
-            code("#ifdef __INTEL_COMPILER")
-            code("#pragma loop_count(10000)")
-            code("#pragma omp simd" + line)  # +' aligned('+clean_type(line3[:-1])+')')
-            code("#elif defined(__clang__)")
-            code("#pragma clang loop vectorize(assume_safety)")
-            code("#elif defined(__GNUC__)")
-            code("#pragma GCC ivdep")
-            code("#else")
-            code("#pragma simd")
-            code("#endif")
+            if offload == 0:
+                code("#ifdef __INTEL_COMPILER")
+                code("#pragma loop_count(10000)")
+                code("#pragma omp simd" + line)  # +' aligned('+clean_type(line3[:-1])+')')
+                code("#elif defined(__clang__)")
+                code("#pragma clang loop vectorize(assume_safety)")
+                code("#elif defined(__GNUC__)")
+                code("#pragma GCC ivdep")
+                code("#else")
+                code("#pragma simd")
+                code("#endif")
         FOR("n_x", "start[0]", "end[0]")
         if arg_idx != -1:
             if NDIM == 1:
@@ -455,7 +476,7 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
             ENDIF()
 
         code("#ifndef OPS_LAZY")
-        code(f"ops_set_dirtybit_host(args, {nargs});")
+        code(f"ops_set_dirtybit_{exec_space}(args, {nargs});")
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat" and (
                 accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC
@@ -492,7 +513,10 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
         code("desc->name = name;")
         code("desc->block = block;")
         code("desc->dim = dim;")
-        code("desc->device = 0;")
+        if offload:
+            code("desc->device = 1;")
+        else:
+            code("desc->device = 0;")
         code(f"desc->index = {nk};")
         code("desc->hash = 5381;")
         code(f"desc->hash = ((desc->hash << 5) + desc->hash) + {nk};")
@@ -531,7 +555,10 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
         ##########################################################################
         #  output individual kernel file
         ##########################################################################
-        util.write_text_to_file(f"./MPI_OpenMP/{name}_cpu_kernel.cpp")
+        if offload:
+            util.write_text_to_file(f"./OpenMP_offload/{name}_ompoffload_kernel.cpp")
+        else:
+            util.write_text_to_file(f"./MPI_OpenMP/{name}_cpu_kernel.cpp")
 
     # end of main kernel call loop
 
@@ -556,9 +583,32 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
     code("")
     code("void ops_init_backend() {}")
     code("")
+    if offload:
+        code("void ops_decl_const_char(OPS_instance *instance, int dim, char const *type,")
+        code("int size, char *dat, char const *name){")
+        config.depth = config.depth + 2
+        code("ops_execute(instance);")
+
+        for nc in range(0, len(consts)):
+            IF('!strcmp(name,"' + (str(consts[nc]["name"]).replace('"', "")).strip() + '")')
+            if consts[nc]["dim"].isdigit() and int(consts[nc]["dim"]) == 1:
+                code(f"#pragma omp target enter data map(to:{consts[nc]['name'][1:-1]})")
+            else:
+                code(f"#pragma omp target enter data map(to:{consts[nc]['name'][1:-1]}[0:dim])")
+            ENDIF()
+            code("else")
+
+        code("{")
+        config.depth = config.depth + 2
+        code('throw OPSException(OPS_RUNTIME_ERROR, "error: unknown const name");')
+        ENDIF()
+
+        config.depth = config.depth - 2
+        code("}")
+        code("")
     comm("user kernel files")
 
     for kernel_name in map(lambda kernel: kernel["name"], kernels):
-        code(f'#include "{kernel_name}_cpu_kernel.cpp"')
+        code(f'#include "{kernel_name}_{"cpu" if offload==0 else "ompoffload"}_kernel.cpp"')
 
-    util.write_text_to_file(f"./MPI_OpenMP/{master_basename[0]}_cpu_kernels.cpp")
+    util.write_text_to_file(f"./{'MPI_OpenMP' if offload==0 else 'OpenMP_offload'}/{master_basename[0]}_{'cpu' if offload==0 else 'ompoffload'}_kernels.cpp")
