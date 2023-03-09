@@ -83,6 +83,9 @@ $(C_OPS_OBJ)/%.o : src/core/%.cpp
 $(C_OPS_OBJ)/ops_hdf5.o : src/externlib/ops_hdf5.cpp
 	$(CHKCXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
+$(C_OPS_OBJ)/ops_hdf5_common.o : src/externlib/ops_hdf5_common.cpp
+	$(CHKCXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
+
 $(C_OPS_OBJ)/%.o : src/externlib/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
@@ -137,8 +140,8 @@ $(C_OPS_OBJ)/%.o : src/mpi/%.cu
 $(C_OPS_OBJ)/%.o : src/sycl/%.cpp
 	$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-hdf5_seq: mklib $(C_OPS_OBJ)/ops_hdf5.o
-	ar -r $(C_OPS_LIB)/libops_hdf5_seq.a $(C_OPS_OBJ)/ops_hdf5.o
+hdf5_seq: mklib $(C_OPS_OBJ)/ops_hdf5.o $(C_OPS_OBJ)/ops_hdf5_common.o
+	ar -r $(C_OPS_LIB)/libops_hdf5_seq.a $(C_OPS_OBJ)/ops_hdf5.o $(C_OPS_OBJ)/ops_hdf5_common.o
 
 trid_seq: mklib $(C_OPS_OBJ)/ops_tridiag.o
 	ar -r $(C_OPS_LIB)/libops_trid_seq.a $(C_OPS_OBJ)/ops_tridiag.o
@@ -188,8 +191,8 @@ mpi: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/
 	$(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_mpi_decl_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o $(C_OPS_OBJ)/ops_checkpointing_strategy_mpi.o \
 	$(C_OPS_OBJ)/ops_mpi_core_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_host_mpi.o $(C_OPS_OBJ)/ops_mpi_partition_mpi.o $(C_OPS_OBJ)/ops_host_common.o
 
-hdf5_mpi: mklib $(C_OPS_OBJ)/ops_mpi_hdf5_mpi.o
-	ar -r $(C_OPS_LIB)/libops_hdf5_mpi.a $(C_OPS_OBJ)/ops_mpi_hdf5_mpi.o
+hdf5_mpi: mklib $(C_OPS_OBJ)/ops_mpi_hdf5_mpi.o $(C_OPS_OBJ)/ops_hdf5_common.o
+	ar -r $(C_OPS_LIB)/libops_hdf5_mpi.a $(C_OPS_OBJ)/ops_mpi_hdf5_mpi.o $(C_OPS_OBJ)/ops_hdf5_common.o
 
 mpi_cuda: mklib $(C_OPS_OBJ)/ops_lib_core.o $(C_OPS_OBJ)/ops_instance.o $(C_OPS_OBJ)/ops_lazy.o \
   $(C_OPS_OBJ)/ops_checkpointing.o $(C_OPS_OBJ)/ops_util.o $(C_OPS_OBJ)/ops_mpi_decl_mpi.o $(C_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
