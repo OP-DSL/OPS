@@ -724,8 +724,8 @@ def main(source_files):
 
   ops_fortran_gen_mpi(str(source_files[0]), date, consts, kernels, soa_set)
   ops_fortran_gen_mpi_openmp(str(source_files[0]), date, consts, kernels, soa_set)
-  ops_fortran_gen_mpi_cuda(str(source_files[0]), date, consts, kernels, soa_set)
-  ops_fortran_gen_mpi_openacc(str(source_files[0]), date, consts, kernels, soa_set)
+#  ops_fortran_gen_mpi_cuda(str(source_files[0]), date, consts, kernels, soa_set)
+#  ops_fortran_gen_mpi_openacc(str(source_files[0]), date, consts, kernels, soa_set)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

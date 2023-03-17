@@ -79,6 +79,7 @@ void OPS_instance::init_globals() {
 	//Diagnostics
 	OPS_kern_max=0; OPS_kern_curr=0;
 	OPS_kernels=NULL;
+	ops_user_halo_exchanges_time = 0.0;
 	
 	//Tiling
 	ops_enable_tiling = 0;
