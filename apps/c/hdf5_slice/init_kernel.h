@@ -8,6 +8,10 @@ void initKernelU(ACC<double> &u, int *idx) {
   u(0, 0, 0) = sin(x) * sin(2 * y) * cos(3 * z);
 }
 
+void CopyU(const ACC<double> &u, ACC<float> &u_single) {
+  u_single(0, 0, 0) = float(u(0, 0, 0));
+}
+
 void initKernelvelo(ACC<double> &velo, int *idx) {
   const double x{h * idx[0]};
   const double y{h * idx[1]};

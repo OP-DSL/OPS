@@ -72,10 +72,15 @@ int main(int argc, char *argv[]) {
   int size[3]{nx, ny, nz};
   int base[3]{0, 0, 0};
   double *temp = NULL;
+  float *temp_single = NULL;
   int *int_tmp = NULL;
 
   ops_dat u{
       ops_decl_dat(slice3Du, 1, size, base, d_m, d_p, temp, "double", "u")};
+
+  ops_dat u_single{ops_decl_dat(slice3Du, 1, size, base, d_m, d_p, temp_single,
+                                "float", "u_single")};
+
   ops_dat velo{
       ops_decl_dat(slice3Du, 3, size, base, d_m, d_p, temp, "double", "velo")};
   ops_dat v{
@@ -101,18 +106,23 @@ int main(int argc, char *argv[]) {
 
   ops_par_loop(initKernelU, "initKernelU", slice3Du, 3, iterRange,
                ops_arg_dat(u, 1, S3D_000, "double", OPS_WRITE), ops_arg_idx());
+  ops_par_loop(CopyU, "CopyU", slice3Du, 3, iterRange,
+               ops_arg_dat(u, 1, S3D_000, "double", OPS_READ),
+               ops_arg_dat(u_single, 1, S3D_000, "float", OPS_WRITE));
   ops_par_loop(initKernelvelo, "initKernelvelo", slice3Du, 3, iterRange,
                ops_arg_dat(velo, 3, S3D_000, "double", OPS_WRITE),
                ops_arg_idx());
   ops_par_loop(initKernelV, "initKernelV", slice3Dv, 3, iterRange,
                ops_arg_dat(v, 1, S3D_000, "int", OPS_WRITE), ops_arg_idx());
 
+
+
   double ct0, ct1, et0, et1;
   double total1{0}, total2{0}, total3{0},total4{0};
   ops_timers(&ct0, &et0);
 
   ops_write_plane_group_hdf5({{1, 16}, {0, 1}, {2, 16}}, "1",
-                             {{u, v}, {u, v}, {u, v}});
+                             {{u, u_single,v}, {u, v}, {u, v}});
   ops_timers(&ct1, &et1);
   total1 += et1 - et0;
   ops_timers(&ct0, &et0);
@@ -137,6 +147,7 @@ int main(int argc, char *argv[]) {
   ops_printf("The time write slab is %f\n", total4);
   ops_fetch_block_hdf5_file(slice3Du, "slice3Du.h5");
   ops_fetch_dat_hdf5_file(u, "slice3Du.h5");
+  ops_fetch_dat_hdf5_file(u_single, "slice3Du.h5");
   ops_fetch_dat_hdf5_file(velo, "slice3Du.h5");
   ops_fetch_block_hdf5_file(slice3Dv, "slice3Dv.h5");
   ops_fetch_dat_hdf5_file(v, "slice3Dv.h5");
