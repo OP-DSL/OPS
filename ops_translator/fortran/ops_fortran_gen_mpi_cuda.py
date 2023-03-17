@@ -565,7 +565,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       fun = name.lower()
       regex = re.compile('\\b'+fun+'\\b',re.I)
       req_kernel = regex.sub(fun+'_gpu',req_kernel)
-      code('attributes (device) '+req_kernel)
+      code('attributes (device) '+req_kernel.strip())
 
     code('')
 

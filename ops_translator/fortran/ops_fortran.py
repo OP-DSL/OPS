@@ -326,6 +326,9 @@ def main(source_files):
       print(('processing file ' + str(a) + ' of ' + str(len(source_files)) + \
             ' ' + str(source_files[a])))
 
+      # To store kernels in current file - uniq ones
+      kernels_in_cur_file = []
+
       src_file = str(source_files[a])
       f = open(src_file, 'r')
       text = f.read()
@@ -511,6 +514,41 @@ def main(source_files):
         ##todo -- not sure what will be interesting here
         ##
 
+        # store kernel in current file kernel list
+        flag_repeat = False
+        for nk in range(0, len(kernels_in_cur_file)):
+            temp = kernels_in_cur_file[nk]
+
+            check1 = temp['name'] == name and \
+                     temp['nargs'] == nargs and \
+                     temp['dim'] == dim and \
+                     temp['range'] == _range
+            if check1:
+                check2 = True
+                for arg in range(0, nargs):
+                    check2 = check2 and \
+                        temp['stens'][arg] == stens[arg] and \
+                        temp['dims'][arg] == dims[arg] and \
+                        temp['typs'][arg] == typs[arg] and \
+                        temp['accs'][arg] == accs[arg]
+                if check2:
+                    flag_repeat = True
+                    break
+
+        if flag_repeat == False:
+            temp = { 'arg_type':typ,
+                       'name': name,
+                      'nargs': nargs,
+                      'dim': dim,
+                      'dims': dims,
+                      'stens': stens,
+                      'var': var,
+                      'accs': accs,
+                      'typs': typs,
+                      'range': _range
+              }
+            kernels_in_cur_file.append(temp)
+
         #
         # store away in master list
         #
@@ -595,8 +633,10 @@ def main(source_files):
           line = line +'\n'+'  use OPS_Fortran_Declarations'
           line = line +'\n'+'  use OPS_Fortran_RT_Support'+'\n'
 
-          for nk in range (0,len(kernels)):
-            line = line +'  use ' + kernels[nk]['name'].upper()+'_MODULE'+'\n'
+          #for nk in range (0,len(kernels)):
+          #  line = line +'  use ' + kernels[nk]['name'].upper()+'_MODULE'+'\n'
+          for nk in range(0, len(kernels_in_cur_file)):
+            line = line +'  use ' + kernels_in_cur_file[nk]['name'].upper()+'_MODULE'+'\n'
 
           fid.write(line[2:len(line)]);
           loc_old = locs[loc] + header_len + 1
