@@ -313,6 +313,7 @@ class OPS_instance {
 	//Diagnostics
 	int OPS_kern_max, OPS_kern_curr;
 	ops_kernel *OPS_kernels;
+	double ops_user_halo_exchanges_time;
 	
 	//Tiling
 	int ops_enable_tiling;

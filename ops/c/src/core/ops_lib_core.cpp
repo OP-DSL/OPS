@@ -1315,6 +1315,12 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
     } else if (sumtime_mpi > 0) {
       ops_fprintf2(stream, "Total halo exchange time: %g\n", sumtime_mpi);
     }
+
+    if (instance->ops_user_halo_exchanges_time > 0.0) {
+      double moments_time[2] = {0.0};
+      ops_compute_moment(instance->ops_user_halo_exchanges_time, &moments_time[0], &moments_time[1]);
+      ops_fprintf2(stream, "Total user halo exchange time: %g\n", moments_time[0]);
+    }
     // printf("Times: %g %g %g\n",ops_gather_time, ops_sendrecv_time,
     // ops_scatter_time);
     ops_free(buf);
