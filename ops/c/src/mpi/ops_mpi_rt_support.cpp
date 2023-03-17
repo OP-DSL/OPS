@@ -1175,6 +1175,8 @@ void ops_halo_transfer(ops_halo_group group) {
   if (mpi_group->nhalos == 0)
     return;
 
+  double c, t1, t2;
+  ops_timers_core(&c, &t1);
   // Reset offset counters
   mpi_neigh_size[0] = 0;
   for (int i = 1; i < mpi_group->num_neighbors_send; i++)
@@ -1296,6 +1298,9 @@ void ops_halo_transfer(ops_halo_group group) {
   }
   MPI_Waitall(mpi_group->num_neighbors_send, &mpi_group->requests[0],
               &mpi_group->statuses[0]);
+
+  ops_timers_core(&c, &t2);
+  group->instance->ops_user_halo_exchanges_time += t2 - t1;
 }
 
 void ops_force_halo_exchange(ops_dat dat, ops_stencil stencil) {
