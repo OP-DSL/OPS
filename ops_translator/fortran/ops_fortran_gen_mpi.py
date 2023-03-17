@@ -288,16 +288,24 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_dat':
         if soa_set == 0:
           if NDIM==1:
-            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*multi_d'+str(n+1)+')'
+            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+')'
           elif NDIM==2:
-            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*multi_d'+str(n+1)+\
-                ' + (n_y-1)*xdim'+str(n+1)+'*multi_d'+str(n+1)+')'
+            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+\
+               ' + (n_y-1)*xdim'+str(n+1)+'*'+str(dims[n])+')'
           elif NDIM==3:
-            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*multi_d'+str(n+1)+\
-                ' + (n_y-1)*xdim'+str(n+1)+'*multi_d'+str(n+1)+''+\
-                ' + (n_z-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+'*multi_d'+str(n+1)+')'
+            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)*'+str(dims[n])+\
+               ' + (n_y-1)*xdim'+str(n+1)+'*'+str(dims[n])+''+\
+               ' + (n_z-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+'*'+str(dims[n])+')'
         else:
-          pass
+          if NDIM==1:
+            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)'+')'
+          elif NDIM==2:
+            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)'+\
+                ' + (n_y-1)*xdim'+str(n+1)+')'
+          elif NDIM==3:
+            line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base+(n_x-1)'+\
+                ' + (n_y-1)*xdim'+str(n+1)+\
+                ' + (n_z-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+')'
 
       elif arg_typ[n] == 'ops_arg_gbl':
         line = line + '& opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base)'
