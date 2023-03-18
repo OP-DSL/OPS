@@ -152,22 +152,22 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
           code('INTEGER(KIND=4) xdim'+str(n+1))
           if soa_set == 0:
             if NDIM==1:
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x*multi_d'+str(n+1)+') + (d))')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x)*multi_d'+str(n+1)+' + d)')
             if NDIM==2:
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((y*xdim'+str(n+1)+'*multi_d'+str(n+1)+') + (x*multi_d'+str(n+1)+') + (d))')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x)*multi_d'+str(n+1)+' + (d) + (xdim'+str(n+1)+'*(y)*multi_d'+str(n+1)+'))')
               code('INTEGER(KIND=4) ydim'+str(n+1))
             if NDIM==3:
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((z*ydim'+str(n+1)+'*xdim'+str(n+1)+'*multi_d'+str(n+1)+') + (y*xdim'+str(n+1)+'*multi_d'+str(n+1)+') + (x*multi_d'+str(n+1)+') + (d))')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x)*multi_d'+str(n+1)+' + (d) + (xdim'+str(n+1)+'*(y)*multi_d'+str(n+1)+') + (xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)*multi_d'+str(n+1)+'))')
               code('INTEGER(KIND=4) ydim'+str(n+1))
               code('INTEGER(KIND=4) zdim'+str(n+1))
           else:
             if NDIM==1:
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((d*xdim'+str(n+1)+') + (x))')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x) + (xdim'+str(n+1)+'*(d)))')
             if NDIM==2:
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((d*ydim'+str(n+1)+'*xdim'+str(n+1)+') + (y*xdim'+str(n+1)+') + (x))')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x) + (xdim'+str(n+1)+'*(y)) + (d)*xdim'+str(n+1)+'*ydim'+str(n+1)+')')
               code('INTEGER(KIND=4) ydim'+str(n+1))
             if NDIM==3:
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((d*zdim'+str(n+1)+'*ydim'+str(n+1)+'*xdim'+str(n+1)+') + (z*ydim'+str(n+1)+'*xdim'+str(n+1)+') + (y*xdim'+str(n+1)+') + (x))')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x) + (xdim'+str(n+1)+'*(y)) + (xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)) + (d)*xdim'+str(n+1)+'*ydim'+str(n+1)+'*zdim'+str(n+1)+')')
               code('INTEGER(KIND=4) ydim'+str(n+1))
               code('INTEGER(KIND=4) zdim'+str(n+1))
     code('')
