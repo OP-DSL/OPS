@@ -16,8 +16,7 @@ ifdef FAST
 	CCFLAGS += -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2
 	CXXFLAGS += -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2
 endif
-#FFLAGS  = $(CXXFLAGS) -module $(F_INC_MOD)
-FFLAGS  = -module $(F_INC_MOD)
+FFLAGS  = $(CXXFLAGS)
 OMPFLAGS := -qopenmp
 ifdef THREADED
 	THREADING_FLAGS ?= -qopenmp
