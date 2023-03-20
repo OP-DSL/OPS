@@ -67,8 +67,12 @@ else
 ifeq ($(OPS_COMPILER),xlp8)
 	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.xlp8
 else
+ifeq ($(OPS_COMPILER),aocc)
+    include $(OPS_INSTALL_PATH)/../makefiles/Makefile.aocc
+else
 print:
 	@echo "unrecognised value for OPS_COMPILER"
+endif
 endif
 endif
 endif
