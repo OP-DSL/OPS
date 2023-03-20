@@ -18,7 +18,7 @@ HEADERS=laplace_kernels.h
 
 OPS_FILES=laplace2d.cpp
 
-OPS_GENERATED=laplace2d_ops.cpp
+OPS_GENERATED_SUFFIX=_ops
 
 OTHER_FILES=
 
@@ -26,4 +26,7 @@ OTHER_FILES=
 APP=laplace2d
 MAIN_SRC=laplace2d
 
+TARGETS=dev_seq
+
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app
+
