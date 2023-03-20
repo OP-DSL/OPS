@@ -162,12 +162,12 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
               code('INTEGER(KIND=4) zdim'+str(n+1))
           else:
             if NDIM==1:
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x) + (xdim'+str(n+1)+'*(d)))')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x) + (xdim'+str(n+1)+'*(d-1) + 1))')
             if NDIM==2:
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x) + (xdim'+str(n+1)+'*(y)) + (d)*xdim'+str(n+1)+'*ydim'+str(n+1)+')')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x) + (xdim'+str(n+1)+'*(y)) + (d-1)*xdim'+str(n+1)+'*ydim'+str(n+1)+' + 1)')
               code('INTEGER(KIND=4) ydim'+str(n+1))
             if NDIM==3:
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x) + (xdim'+str(n+1)+'*(y)) + (xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)) + (d)*xdim'+str(n+1)+'*ydim'+str(n+1)+'*zdim'+str(n+1)+')')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x) + (xdim'+str(n+1)+'*(y)) + (xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)) + (d-1)*xdim'+str(n+1)+'*ydim'+str(n+1)+'*zdim'+str(n+1)+' + 1)')
               code('INTEGER(KIND=4) ydim'+str(n+1))
               code('INTEGER(KIND=4) zdim'+str(n+1))
     code('')
