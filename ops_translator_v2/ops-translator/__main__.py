@@ -23,7 +23,7 @@ def main(argv=None) -> None:
     #argument declariations
     parser.add_argument("-V", "--version", help="Version", action="version", version=getVersion()) #this needs version tag
     parser.add_argument("-v", "--verbose", help="Verbose", action="store_true")
-    parser.add_argument("-d", "--dump", help="JSON sotre dump", action="store_true")
+    parser.add_argument("-d", "--dump", help="JSON store dump", action="store_true")
     parser.add_argument("-o", "--out", help="Output directory", type=isDirPath)
     parser.add_argument("-c", "--config", help="Target configuration", type=json.loads, default="{}")
     parser.add_argument("-soa", "--force_soa", help="Force structs of arrays", action="store_true")
