@@ -197,6 +197,8 @@ module OPS_Fortran_Declarations
         type(c_ptr)                 :: orig_range       ! original execution range
         type(c_ptr)                 :: block            ! block to execute on
         type(c_funptr)              :: func             ! Function pointer to a wrapper to be called
+        type(c_funptr)              :: startup_function
+        type(c_funptr)              :: cleanup_function
     end type ops_kernel_descriptor_core
 
     type :: ops_kernel_descriptor
