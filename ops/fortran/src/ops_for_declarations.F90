@@ -185,6 +185,25 @@ module OPS_Fortran_Declarations
         type (c_ptr)                 :: halogroupCptr
     end type ops_halo_group
 
+    type, BIND(C) :: ops_kernel_descriptor_core
+        type(c_ptr)                 :: name             ! name of kernel
+        integer(kind=c_long)        :: hash             ! hash of loop
+        type(c_ptr)                 :: args             ! number of arguments
+        integer(kind=c_int)         :: nargs            ! number of arguments
+        integer(kind=c_int)         :: index            ! index of the loop
+        integer(kind=c_int)         :: dim              ! number of dimensions
+        integer(kind=c_int)         :: isdevice         ! flag to indicate if loop runs on device
+        type(c_ptr)                 :: range            ! process local execution range
+        type(c_ptr)                 :: orig_range       ! original execution range
+        type(c_ptr)                 :: block            ! block to execute on
+        type(c_funptr)              :: func             ! Function pointer to a wrapper to be called
+    end type ops_kernel_descriptor_core
+
+    type :: ops_kernel_descriptor
+        type (ops_kernel_descriptor_core), pointer :: kerneldescPtr => null()
+        type (c_ptr)                               :: kerneldescCptr
+    end type ops_kernel_descriptor
+
 
 !#################################################
 ! Fortran interfaces for ops declaration routines
@@ -471,6 +490,24 @@ module OPS_Fortran_Declarations
             integer(kind=c_int), value               :: part
             type(c_ptr), intent(in), value           :: data
         end subroutine ops_dat_set_data_c
+
+        type(c_ptr) function ops_populate_kernel_descriptor_c( name, hash, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='ops_populate_kernel_descriptor')
+            use, intrinsic :: ISO_C_BINDING
+
+            import :: ops_block_core, ops_arg, c_funptr
+
+            character(kind=c_char,len=1), intent(in)    :: name
+            integer(kind=c_long)                        :: hash
+            type(c_ptr), value, intent(in)              :: args
+            integer(kind=c_int), value                  :: nargs
+            integer(kind=c_int), value                  :: index
+            integer(kind=c_int), value                  :: dim
+            integer(kind=c_int), value                  :: isdevice
+            type(c_ptr), intent(in), value              :: range
+            type(c_ptr), value, intent(in)              :: block
+            type(c_funptr), value, intent(in)           :: func
+
+        end function ops_populate_kernel_descriptor_c
 
   end interface
 
@@ -1200,6 +1237,29 @@ module OPS_Fortran_Declarations
 
     call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
   end subroutine ops_reduction_result_real_8
+
+  subroutine ops_populate_kernel_descriptor( name, hash, args, nargs, index, dim, isdevice, range, block, func, desc)
+    use, intrinsic :: ISO_C_BINDING
+
+    character(kind=c_char,len=*)                 :: name             ! name of kernel
+    integer(8), intent(in)                       :: hash             ! hash of loop
+    type(ops_arg), dimension(*), intent(in)      :: args             ! number of arguments
+    integer, intent(in)                          :: nargs            ! number of arguments
+    integer, intent(in)                          :: index            ! index of the loop
+    integer, intent(in)                          :: dim              ! number of dimensions
+    integer, intent(in)                          :: isdevice         ! flag to indicate if loop runs on device
+    integer(4), dimension(*), intent(in), target :: range            ! process local execution range
+    type(ops_block), intent(in)                  :: block            ! block to execute on
+    type(c_funptr), intent(in)                   :: func
+
+    type(ops_kernel_descriptor) :: desc
+
+    desc%kerneldescCptr = ops_populate_kernel_descriptor_c(name//C_NULL_CHAR, hash, c_loc(args), nargs, index, dim, isdevice, c_loc(range), c_loc(block), func)
+
+    ! convert the generated C pointer to Fortran pointer and store it inside the ops_kernel_descriptor variable
+    call c_f_pointer ( desc%kerneldescCptr, desc%kerneldescPtr )
+
+  end subroutine ops_populate_kernel_descriptor
 
 
  !ops_decl_const -- various versions .. no-ops in ref ?

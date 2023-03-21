@@ -277,6 +277,8 @@ int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* s
 int ops_get_proc();
 int ops_num_procs();
 void ops_put_data(ops_dat dat);
+ops_kernel_descriptor* ops_populate_kernel_descriptor(char const *name, size_t hash, ops_arg *args, int nargs, int index, int dim, int device, int *range, ops_block block, void (*function)(struct ops_kernel_descriptor *desc));
+
 
 /*******************************************************************************
 * Memory allocation functions

@@ -937,6 +937,48 @@ void ops_execute(OPS_instance *instance) {
   ops_kernel_list.clear();
 }
 
+ops_kernel_descriptor* ops_populate_kernel_descriptor(char const *name, size_t hash, ops_arg *args, int nargs, int index, int dim, int device, int *range, ops_block block, void (*function)(struct ops_kernel_descriptor *desc))
+{
+    ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
+    desc->name = name;
+    desc->block = block;
+    desc->dim = dim;
+    desc->device = 0;
+    desc->index = index;
+    desc->hash = 5381;
+    desc->hash = ((desc->hash << 5) + desc->hash) + index;
+
+    for ( int i=0; i < 2*block->dims; i++ ) {
+        desc->range[i] = range[i];
+        desc->orig_range[i] = range[i];
+        desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
+    }
+
+    desc->nargs = nargs;
+    desc->args = (ops_arg*)ops_malloc(nargs*sizeof(ops_arg));
+
+    int declared = 0;
+    for ( int n=0; n < nargs; n++) {
+        desc->args[n] = args[n];
+
+        if (args[n].argtype == OPS_ARG_DAT)
+            desc->hash = ((desc->hash << 5) + desc->hash) + args[n].dat->index;
+        if (args[n].argtype == OPS_ARG_GBL && args[n].acc == OPS_READ) {
+            if (declared == 0) {
+                char *tmp = (char*)ops_malloc(args[n].dim*sizeof(args[n].elem_size));
+                declared = 1;
+            }
+            else {
+                char *tmp = (char*)ops_malloc(args[n].dim*sizeof(args[n].elem_size));
+                memcpy(tmp, args[n].data,args[n].dim*sizeof(args[n].elem_size));
+                desc->args[n].data = tmp;
+            }
+        }
+    }
+    desc->function = function;
+    return desc;
+}
+
 
 // This funtion called from OPS_instance destructor
 void ops_exit_lazy(OPS_instance *instance) {
