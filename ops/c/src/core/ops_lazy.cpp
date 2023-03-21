@@ -957,22 +957,15 @@ ops_kernel_descriptor* ops_populate_kernel_descriptor(char const *name, size_t h
     desc->nargs = nargs;
     desc->args = (ops_arg*)ops_malloc(nargs*sizeof(ops_arg));
 
-    int declared = 0;
     for ( int n=0; n < nargs; n++) {
         desc->args[n] = args[n];
 
         if (args[n].argtype == OPS_ARG_DAT)
             desc->hash = ((desc->hash << 5) + desc->hash) + args[n].dat->index;
         if (args[n].argtype == OPS_ARG_GBL && args[n].acc == OPS_READ) {
-            if (declared == 0) {
-                char *tmp = (char*)ops_malloc(args[n].dim*sizeof(args[n].elem_size));
-                declared = 1;
-            }
-            else {
-                char *tmp = (char*)ops_malloc(args[n].dim*sizeof(args[n].elem_size));
-                memcpy(tmp, args[n].data,args[n].dim*sizeof(args[n].elem_size));
-                desc->args[n].data = tmp;
-            }
+            char *tmp = (char*)ops_malloc(args[n].dim*sizeof(args[n].elem_size));
+            memcpy(tmp, args[n].data,args[n].dim*sizeof(args[n].elem_size));
+            desc->args[n].data = tmp;
         }
     }
     desc->function = function;
