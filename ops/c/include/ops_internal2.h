@@ -145,13 +145,13 @@ struct ops_kernel_descriptor {
   int nargs;                  /**< number of arguments */
   int index;                  /**< index of the loop */
   int dim;                    /**< number of dimensions */
-  int device;                 /**< flag to indicate if loop runs on device */
-  int range[2 * OPS_MAX_DIM]; /**< process local execution range */
-  int orig_range[2 * OPS_MAX_DIM]; /**< original execution range */
+  int isdevice;                 /**< flag to indicate if loop runs on device */
+  int *range;                 /**< process local execution range */
+  int *orig_range;            /**< original execution range */
   ops_block block;            /**< block to execute on */
-  void (*function)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
-  void (*startup_function)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
-  void (*cleanup_function)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
+  void (*func)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
+  void (*startup_func)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
+  void (*cleanup_func)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
 
 };
 
@@ -277,8 +277,9 @@ int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* s
 int ops_get_proc();
 int ops_num_procs();
 void ops_put_data(ops_dat dat);
-ops_kernel_descriptor* ops_populate_kernel_descriptor(char const *name, size_t hash, ops_arg *args, int nargs, int index, int dim, int device, int *range, ops_block block, void (*function)(struct ops_kernel_descriptor *desc));
 
+OPS_FTN_INTEROP
+ops_kernel_descriptor* ops_populate_kernel_descriptor(char const *name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc));
 
 /*******************************************************************************
 * Memory allocation functions

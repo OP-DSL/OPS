@@ -197,8 +197,8 @@ module OPS_Fortran_Declarations
         type(c_ptr)                 :: orig_range       ! original execution range
         type(c_ptr)                 :: block            ! block to execute on
         type(c_funptr)              :: func             ! Function pointer to a wrapper to be called
-        type(c_funptr)              :: startup_function
-        type(c_funptr)              :: cleanup_function
+        type(c_funptr)              :: startup_func
+        type(c_funptr)              :: cleanup_func
     end type ops_kernel_descriptor_core
 
     type :: ops_kernel_descriptor
@@ -493,13 +493,12 @@ module OPS_Fortran_Declarations
             type(c_ptr), intent(in), value           :: data
         end subroutine ops_dat_set_data_c
 
-        type(c_ptr) function ops_populate_kernel_descriptor_c( name, hash, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='ops_populate_kernel_descriptor')
+        type(c_ptr) function ops_populate_kernel_descriptor_c( name, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='ops_populate_kernel_descriptor')
             use, intrinsic :: ISO_C_BINDING
 
             import :: ops_block_core, ops_arg, c_funptr
 
             character(kind=c_char,len=1), intent(in)    :: name
-            integer(kind=c_long)                        :: hash
             type(c_ptr), value, intent(in)              :: args
             integer(kind=c_int), value                  :: nargs
             integer(kind=c_int), value                  :: index
@@ -1240,11 +1239,10 @@ module OPS_Fortran_Declarations
     call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
   end subroutine ops_reduction_result_real_8
 
-  subroutine ops_populate_kernel_descriptor( name, hash, args, nargs, index, dim, isdevice, range, block, func, desc)
+  subroutine ops_populate_kernel_descriptor( name, args, nargs, index, dim, isdevice, range, block, func, desc)
     use, intrinsic :: ISO_C_BINDING
 
     character(kind=c_char,len=*)                 :: name             ! name of kernel
-    integer(8), intent(in)                       :: hash             ! hash of loop
     type(ops_arg), dimension(*), intent(in)      :: args             ! number of arguments
     integer, intent(in)                          :: nargs            ! number of arguments
     integer, intent(in)                          :: index            ! index of the loop
@@ -1256,7 +1254,7 @@ module OPS_Fortran_Declarations
 
     type(ops_kernel_descriptor) :: desc
 
-    desc%kerneldescCptr = ops_populate_kernel_descriptor_c(name//C_NULL_CHAR, hash, c_loc(args), nargs, index, dim, isdevice, c_loc(range), c_loc(block), func)
+    desc%kerneldescCptr = ops_populate_kernel_descriptor_c(name//C_NULL_CHAR, c_loc(args), nargs, index, dim, isdevice, c_loc(range), c_loc(block), func)
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_kernel_descriptor variable
     call c_f_pointer ( desc%kerneldescCptr, desc%kerneldescPtr )
