@@ -337,6 +337,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
 
     code('')
     comm('host subroutine')
+    code('#ifndef OPS_LAZY')
     code('subroutine '+name+'_host( userSubroutine, block, dim, range, &')
     for n in range (0, nargs):
       if n == nargs-1:
@@ -344,39 +345,61 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
       else:
         code('& opsArg'+str(n+1)+', &')
 
-
     config.depth = config.depth + 2
     code('IMPLICIT NONE')
     code('character(kind=c_char,len=*), INTENT(IN) :: userSubroutine')
     code('type ( ops_block ), INTENT(IN) :: block')
     code('integer(kind=4), INTENT(IN):: dim')
     code('integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range')
-    code('real(kind=8) t1,t2,t3')
-    code('real(kind=4) transfer_total, transfer')
-    code('')
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
         code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
-        code('')
       if arg_typ[n] == 'ops_arg_dat':
         code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
+      elif arg_typ[n] == 'ops_arg_gbl':
+        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
+    code('')
+    code('type ( ops_arg ) , DIMENSION('+str(nargs)+') :: opsArgArray')
+
+    config.depth = config.depth - 2
+    code('#else')
+    code('subroutine '+name+'_host_execute( desc )')
+    config.depth = config.depth + 2
+    code('IMPLICIT NONE')
+    code('type (ops_kernel_descriptor), INTENT(IN) :: desc')
+    code('type (ops_block) :: block')
+    code('integer(kind=4) :: dim')
+    code('integer(kind=4), DIMENSION(*) :: range')
+    code('character(kind=c_char,len=*) :: userSubroutine')
+
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_idx':
+        code('type ( ops_arg ) :: opsArg'+str(n+1))
+      if arg_typ[n] == 'ops_arg_dat':
+        code('type ( ops_arg ) :: opsArg'+str(n+1))
+      elif arg_typ[n] == 'ops_arg_gbl':
+        code('type ( ops_arg ) :: opsArg'+str(n+1))
+
+    config.depth = config.depth - 2
+    code('#endif')
+
+    code('')
+    config.depth = config.depth + 2
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_dat':
         code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
         code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
         code('integer(kind=4) , POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
         code('integer(kind=4) :: dat'+str(n+1)+'_base')
         code('')
       elif arg_typ[n] == 'ops_arg_gbl':
-        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
         code(typs[n]+', POINTER, DIMENSION(:) :: opsDat'+str(n+1)+'Local')
         code('integer(kind=4) :: dat'+str(n+1)+'_base')
         code('')
 
-    if NDIM==1:
-        code('integer n_x')
-    elif NDIM==2:
-      code('integer n_x, n_y')
-    elif NDIM==2:
-      code('integer n_x, n_y, n_z')
+    code('real(kind=8) t1,t2,t3')
+    code('real(kind=4) transfer_total, transfer')
     code('integer start('+str(NDIM)+')')
     code('integer end('+str(NDIM)+')')
     if arg_idx == 1:
@@ -384,13 +407,27 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
     code('integer(kind=4) :: n')
     code('')
 
-    code('type ( ops_arg ) , DIMENSION('+str(nargs)+') :: opsArgArray')
     code('')
 
+    config.depth = config.depth - 2
+    code('#ifdef OPS_LAZY')
+    config.depth = config.depth + 2
+    code('block = desc%kerneldescPtr%block')
+    code('range = desc%kerneldescPtr%range')
+    code('dim = desc%kerneldescPtr%dim')
+    code('userSubroutine = desc%kerneldescPtr%name')
+    for n in range (0, nargs):
+      code('opsArg'+str(n+1)+' = desc%kerneldescPtr%args('+str(n+1)+')') 
+    config.depth = config.depth - 2
+    code('#else')
+    config.depth = config.depth + 2
     for n in range (0, nargs):
       code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
-    code('')
+    config.depth = config.depth - 2
+    code('#endif')
 
+    code('')
+    config.depth = config.depth + 2
     code('call setKernelTime('+str(nk)+',userSubroutine//char(0),0.0_8,0.0_8,0.0_4,0)')
     code('call ops_timers_core(t1)')
     code('')
@@ -431,7 +468,6 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
     #    code('idx('+str(n+1)+') = start('+str(n+1)+')')
     #  code('')
 
-
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('call c_f_pointer(getDatSizeFromOpsArg(opsArg'+str(n+1)+'),dat'+str(n+1)+'_size,(/dim/))')
@@ -464,9 +500,15 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
           code('dat'+str(n+1)+'_base = 1')
           code('')
 
+    config.depth = config.depth - 2
+    code('#ifndef OPS_LAZY')
+    config.depth = config.depth + 2
     code('call ops_H_D_exchanges_host(opsArgArray,'+str(nargs)+')')
     code('call ops_halo_exchanges(opsArgArray,'+str(nargs)+',range)')
     code('call ops_H_D_exchanges_host(opsArgArray,'+str(nargs)+')')
+    config.depth = config.depth - 2
+    code('#endif')
+    config.depth = config.depth + 2
     code('')
     code('call ops_timers_core(t2)')
     code('')
@@ -487,10 +529,17 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
 
     code('call ops_timers_core(t3)')
 
+    config.depth = config.depth - 2
+    code('#ifndef OPS_LAZY')
+    config.depth = config.depth + 2
     code('call ops_set_dirtybit_host(opsArgArray, '+str(nargs)+')')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
         code('call ops_set_halo_dirtybit3(opsArg'+str(n+1)+',range)')
+    config.depth = config.depth - 2
+    code('#endif')
+    config.depth = config.depth + 2
+
     code('')
     comm('Timing and data movement')
     code('transfer_total = 0.0_4')
@@ -502,6 +551,52 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
 
     config.depth = config.depth - 2
     code('end subroutine')
+
+    code('')
+    code('#ifdef OPS_LAZY')
+    code('subroutine '+name+'_host( userSubroutine, block, dim, range, &')
+    for n in range (0, nargs):
+      if n == nargs-1:
+        code('& opsArg'+str(n+1)+')')
+      else:
+        code('& opsArg'+str(n+1)+', &')
+
+    config.depth = config.depth + 2
+    code('IMPLICIT NONE')
+    code('character(kind=c_char,len=64), INTENT(IN) :: userSubroutine')
+    code('type ( ops_block ), INTENT(IN) :: block')
+    code('integer(kind=4), INTENT(IN):: dim')
+    code('integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range')
+	
+    for n in range (0, nargs):
+      if arg_typ[n] == 'ops_arg_idx':
+        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
+      if arg_typ[n] == 'ops_arg_dat':
+        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
+      elif arg_typ[n] == 'ops_arg_gbl':
+        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
+    code('type ( ops_arg ) , DIMENSION('+str(nargs)+') :: opsArgArray')
+    code('type ( ops_kernel_descriptor ) :: desc')
+
+    code('')
+    for n in range (0, nargs):
+      code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
+
+    code('')
+    text = 'call ops_populate_kernel_descriptor(userSubroutine, opsArgArray, '
+    text = text + f'{nargs}, '
+    text = text + f'{nk}, '
+    text = text + 'dim, 0, range, block, '
+    text = text + f'c_funloc({name}_host_execute), desc )'
+    code(text)
+
+    code('call ops_enqueue_kernel(desc%kerneldescCptr)')
+
+    config.depth = config.depth - 2
+    code('end subroutine')
+    code('#endif')
+
+    code('')
     code('END MODULE')
 
 ##########################################################################

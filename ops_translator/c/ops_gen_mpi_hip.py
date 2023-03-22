@@ -872,14 +872,15 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     code(text);
     config.depth = 2
 
-    text = 'ops_arg args[] = {'
+    text = f'ops_arg args[{nargs}] = {{'
     for n in range (0, nargs):
-        text = text +' arg'+str(n)
-        if nargs != 1 and n != nargs-1:
-            text += ','
-        else:
-            text += ' };'
-
+      text += f' arg{n}'
+      if nargs != 1 and n != nargs-1:
+        text += ','
+      else:
+        text += ' };\n'
+      if n%n_per_line == 5 and n != nargs-1:
+        text +='\n                    '
     code(text)
 
 #    code('ops_kernel_descriptor *desc = ops_populate_kernel_descriptor(name, args, {nargs}, {nk}, dim, 0, range, block, ops_par_loop_{name}_execute);')
