@@ -186,6 +186,7 @@ module OPS_Fortran_Declarations
     end type ops_halo_group
 
     type, BIND(C) :: ops_kernel_descriptor_core
+        
         type(c_ptr)                 :: name             ! name of kernel
         integer(kind=c_long)        :: hash             ! hash of loop
         type(c_ptr)                 :: args             ! number of arguments

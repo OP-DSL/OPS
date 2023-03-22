@@ -82,11 +82,11 @@ $(APP)_mpi_openacc: .generated $(OPS_FILES_GEN) Makefile
 #
 $(APP)_tiled: .generated $(OPS_FILES_GEN) Makefile
 	$(MPIF90) $(FFLAGS) $(FMODS) $(FLINK) -DOPS_LAZY $(OTHER_FILES) MPI/*_seq_kernel.F90 $(OPS_GENERATED) \
-		-o $(APP)_seq $(APP_LIBS) -lops_for_seq $(F_HDF5_LIB_SEQ)
+		-o $(APP)_tiled $(APP_LIBS) -lops_for_seq $(F_HDF5_LIB_SEQ)
 
 $(APP)_mpi_tiled: .generated $(OTHER_FILES:.F90=.o) $(seqkernels_obj) $(OPS_GENERATED:.F90=.o)  Makefile
 	$(MPIF90) $(FFLAGS) $(FMODS) $(FLINK) -DOPS_LAZY -DOPS_MPI $(OTHER_FILES:.F90=.o) $(seqkernels_obj) $(OPS_GENERATED:.F90=.o) \
-		-o $(APP)_mpi -lops_for_mpi $(F_HDF5_LIB_MPI) $(APP_LIBS)
+		-o $(APP)_mpi_tiled -lops_for_mpi $(F_HDF5_LIB_MPI) $(APP_LIBS)
 
 
 clean:

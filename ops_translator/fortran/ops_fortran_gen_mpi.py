@@ -360,7 +360,6 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
       elif arg_typ[n] == 'ops_arg_gbl':
         code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
     code('')
-    code('type ( ops_arg ) , DIMENSION('+str(nargs)+') :: opsArgArray')
 
     config.depth = config.depth - 2
     code('#else')
@@ -370,8 +369,8 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
     code('type (ops_kernel_descriptor), INTENT(IN) :: desc')
     code('type (ops_block) :: block')
     code('integer(kind=4) :: dim')
-    code('integer(kind=4), DIMENSION(*) :: range')
-    code('character(kind=c_char,len=*) :: userSubroutine')
+    code('integer(kind=4), allocatable:: range(:)')
+    code('character(kind=c_char,len=64) :: userSubroutine')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
@@ -406,18 +405,24 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
       code('integer idx('+str(NDIM)+')')
     code('integer(kind=4) :: n')
     code('')
+    code('type ( ops_arg ) , DIMENSION('+str(nargs)+') :: opsArgArray')
 
     code('')
 
     config.depth = config.depth - 2
     code('#ifdef OPS_LAZY')
     config.depth = config.depth + 2
-    code('block = desc%kerneldescPtr%block')
-    code('range = desc%kerneldescPtr%range')
+#    code('block = desc%kerneldescPtr%block')
+    code('call c_f_pointer (desc%kerneldescPtr%block, block)')
+#    code('range = desc%kerneldescPtr%range')
     code('dim = desc%kerneldescPtr%dim')
-    code('userSubroutine = desc%kerneldescPtr%name')
-    for n in range (0, nargs):
-      code('opsArg'+str(n+1)+' = desc%kerneldescPtr%args('+str(n+1)+')') 
+    code('allocate(range(dim))') 
+    code('call c_f_pointer (desc%kerneldescPtr%range, range)')
+#    code('userSubroutine = desc%kerneldescPtr%name')
+    code('call c_f_pointer (desc%kerneldescPtr%name, userSubroutine)')
+    code('call c_f_pointer (desc%kerneldescPtr%args, opsArgArray)')
+#    for n in range (0, nargs):
+#      code('opsArg'+str(n+1)+' = desc%kerneldescPtr%args('+str(n+1)+')') 
     config.depth = config.depth - 2
     code('#else')
     config.depth = config.depth + 2
@@ -563,7 +568,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
 
     config.depth = config.depth + 2
     code('IMPLICIT NONE')
-    code('character(kind=c_char,len=64), INTENT(IN) :: userSubroutine')
+    code('character(kind=c_char,len=*), INTENT(IN) :: userSubroutine')
     code('type ( ops_block ), INTENT(IN) :: block')
     code('integer(kind=4), INTENT(IN):: dim')
     code('integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range')
