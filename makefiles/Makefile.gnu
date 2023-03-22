@@ -1,7 +1,7 @@
 CC      := gcc
 CXX       := g++
 FC := gfortran
-FFLAGS := $(CFLAGS) -ffree-form -ffree-line-length-none -J$(F_INC_MOD) -O0 -g
+FFLAGS := $(CFLAGS) -ffree-form -ffree-line-length-none -J$(F_INC_MOD)
 ifdef DEBUG
 	CCFLAGS   := -O0 -std=c99 -fPIC -DUNIX -Wall -ffloat-store -g
 	CXXFLAGS   := -O0 -fPIC -DUNIX -Wall -ffloat-store -g -std=c++11

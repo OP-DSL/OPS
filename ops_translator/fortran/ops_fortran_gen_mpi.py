@@ -162,12 +162,12 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
               code('INTEGER(KIND=4) zdim'+str(n+1))
           else:
             if NDIM==1:
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x) + (xdim'+str(n+1)+'*(d)))')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x) + (xdim'+str(n+1)+'*(d-1) + 1))')
             if NDIM==2:
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x) + (xdim'+str(n+1)+'*(y)) + (d)*xdim'+str(n+1)+'*ydim'+str(n+1)+')')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x) + (xdim'+str(n+1)+'*(y)) + (d-1)*xdim'+str(n+1)+'*ydim'+str(n+1)+' + 1)')
               code('INTEGER(KIND=4) ydim'+str(n+1))
             if NDIM==3:
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x) + (xdim'+str(n+1)+'*(y)) + (xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)) + (d)*xdim'+str(n+1)+'*ydim'+str(n+1)+'*zdim'+str(n+1)+')')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x) + (xdim'+str(n+1)+'*(y)) + (xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)) + (d-1)*xdim'+str(n+1)+'*ydim'+str(n+1)+'*zdim'+str(n+1)+' + 1)')
               code('INTEGER(KIND=4) ydim'+str(n+1))
               code('INTEGER(KIND=4) zdim'+str(n+1))
     code('')
@@ -255,7 +255,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
 
     if NDIM==1:
       if reduction != 1 and arg_idx != 1:
-        code('!DIR$ SIMD')
+        code('!$OMP SIMD')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
         code('idx_local(1) = idx(1) + n_x - 1')
@@ -264,7 +264,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
       if arg_idx == 1:
         code('idx_local(2) = idx(2) + n_y - 1')
       if reduction != 1:
-        code('!DIR$ SIMD')
+        code('!$OMP SIMD')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
         code('idx_local(1) = idx(1) + n_x - 1')
@@ -276,7 +276,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
       if arg_idx == 1:
         code('idx_local(2) = idx(2) + n_y - 1')
       if reduction != 1:
-        code('!DIR$ SIMD')
+        code('!$OMP SIMD')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
         code('idx_local(1) = idx(1) + n_x - 1')
