@@ -378,10 +378,6 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
         code(f"int start[{NDIM}];")
         code(f"int end[{NDIM}];")
 
-        code("#if OPS_MPI && !OPS_LAZY")
-        code("sub_block_list sb = OPS_sub_block_list[block->index];")
-        code("#endif //OPS_MPI")
-
         code("")
         if arg_idx == -1:
             code("#ifdef OPS_MPI")

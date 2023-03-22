@@ -502,10 +502,6 @@ def ops_gen_mpi_openacc(master, consts, kernels, soa_set):
         code(f"int start[{NDIM}];")
         code(f"int end[{NDIM}];")
 
-        code("#ifdef OPS_MPI")
-        code("sub_block_list sb = OPS_sub_block_list[block->index];")
-        code("#endif //OPS_MPI")
-
         code("")
         code(f"int arg_idx[{NDIM}];")
         code(f"int arg_idx_base[{NDIM}];")

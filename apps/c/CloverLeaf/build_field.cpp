@@ -27,7 +27,7 @@
 
 // OPS header file
 #define OPS_2D
-#include "ops_seq_v2.h"
+#include "ops_lib_core.h"
 
 
 #include "data.h"
