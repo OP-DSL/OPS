@@ -83,7 +83,7 @@ $(C_OPS_OBJ)/%.o : src/externlib/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
 $(C_OPS_OBJ)/%.o : src/sequential/%.cpp
-	$(CXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
 $(C_OPS_OBJ)/%.o : src/cuda/%.cpp
 	$(CXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
@@ -98,7 +98,7 @@ $(C_OPS_OBJ)/%_hip_mpi.o : src/mpi/%_hip.cpp
 	$(HIPCC) $(HIPFLAGS) -I$(C_OPS_INC) $(MPI_INC) -c $< -o $@
 
 $(C_OPS_OBJ)/%_mpi.o : src/mpi/%.cpp
-	$(MPICXX) $(CXXFLAGS) -I$(C_OPS_INC)  $(HDF5_INC) -c $< -o $@
+	$(MPICXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC)  $(HDF5_INC) -c $< -o $@
 
 $(C_OPS_OBJ)/%_cuda.o : src/cuda/%.cu
 	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -c $< -o $@
