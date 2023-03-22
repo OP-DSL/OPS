@@ -74,13 +74,13 @@ mklib:
 .SUFFIXES: .cpp .cu .o
 
 $(C_OPS_OBJ)/%.o : src/core/%.cpp
-	$(CXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
 $(C_OPS_OBJ)/ops_hdf5.o : src/externlib/ops_hdf5.cpp
 	$(CHKCXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
 $(C_OPS_OBJ)/%.o : src/externlib/%.cpp
-	$(CXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
 $(C_OPS_OBJ)/%.o : src/sequential/%.cpp
 	$(CXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
