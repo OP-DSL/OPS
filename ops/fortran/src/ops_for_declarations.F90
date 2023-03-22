@@ -493,6 +493,13 @@ module OPS_Fortran_Declarations
             type(c_ptr), intent(in), value           :: data
         end subroutine ops_dat_set_data_c
 
+        subroutine ops_enqueue_kernel_c ( descCptr ) BIND(C,name='ops_enqueue_kernel')
+            use, intrinsic :: ISO_C_BINDING
+
+            type(c_ptr), value, intent(in) :: descCptr
+
+        end subroutine ops_enqueue_kernel_c
+
         type(c_ptr) function ops_populate_kernel_descriptor_c( name, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='ops_populate_kernel_descriptor')
             use, intrinsic :: ISO_C_BINDING
 
@@ -1238,6 +1245,14 @@ module OPS_Fortran_Declarations
 
     call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
   end subroutine ops_reduction_result_real_8
+
+  subroutine ops_enqueue_kernel ( descCptr )
+    use, intrinsic :: ISO_C_BINDING
+
+    type(c_ptr), intent(in) :: descCptr
+    call ops_enqueue_kernel_c(descCptr)
+
+  end subroutine ops_enqueue_kernel
 
   subroutine ops_populate_kernel_descriptor( name, args, nargs, index, dim, isdevice, range, block, func, desc)
     use, intrinsic :: ISO_C_BINDING

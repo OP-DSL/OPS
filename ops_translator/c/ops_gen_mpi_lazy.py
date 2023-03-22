@@ -227,9 +227,11 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
 
     if gen_full_code:
       IF('block->instance->OPS_diags > 1')
+      code('#ifndef OPS_LAZY')
       code(f'ops_timing_realloc(block->instance,{nk},"{name}");')
       code(f'block->instance->OPS_kernels[{nk}].count++;')
       code('ops_timers_core(&__c2,&__t2);')
+      code('#endif')
       ENDIF()
       code('')
 
@@ -550,9 +552,6 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
     text = text + ');'
     code(text)
 
-    IF('block->instance->OPS_diags > 1')
-    code(f'ops_timing_realloc(block->instance,{nk},"{name}");')
-    ENDIF()
     code('ops_enqueue_kernel(desc);')
     config.depth = 0
     code('}')

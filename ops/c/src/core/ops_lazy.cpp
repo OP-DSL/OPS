@@ -223,6 +223,10 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
       }
     ops_free(desc->args);
     desc->args = nullptr;
+    ops_free(desc->range);
+    desc->range = nullptr;
+    ops_free(desc->orig_range);
+    desc->orig_range = nullptr;
     ops_free(desc);
     desc = nullptr;
   }
@@ -931,6 +935,10 @@ void ops_execute(OPS_instance *instance) {
       }
     ops_free(ops_kernel_list[i]->args);
     ops_kernel_list[i]->args = nullptr;
+    ops_free(ops_kernel_list[i]->range);
+    ops_kernel_list[i]->range = nullptr;
+    ops_free(ops_kernel_list[i]->orig_range);
+    ops_kernel_list[i]->orig_range = nullptr;
     ops_free(ops_kernel_list[i]);
     ops_kernel_list[i] = nullptr;
   }
