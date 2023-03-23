@@ -185,7 +185,7 @@ module OPS_Fortran_Declarations
         type (c_ptr)                 :: halogroupCptr
     end type ops_halo_group
 
-    type, BIND(C) :: ops_kernel_descriptor_core
+    type, BIND(C) :: ops_kernel_descriptor
         
         type(c_ptr)                 :: name             ! name of kernel
         integer(kind=c_long)        :: hash             ! hash of loop
@@ -200,11 +200,6 @@ module OPS_Fortran_Declarations
         type(c_funptr)              :: func             ! Function pointer to a wrapper to be called
         type(c_funptr)              :: startup_func
         type(c_funptr)              :: cleanup_func
-    end type ops_kernel_descriptor_core
-
-    type :: ops_kernel_descriptor
-        type (ops_kernel_descriptor_core), pointer :: kerneldescPtr => null()
-        type (c_ptr)                               :: kerneldescCptr
     end type ops_kernel_descriptor
 
 
@@ -494,18 +489,18 @@ module OPS_Fortran_Declarations
             type(c_ptr), intent(in), value           :: data
         end subroutine ops_dat_set_data_c
 
-        subroutine ops_enqueue_kernel_c ( desc ) BIND(C,name='ops_enqueue_kernel')
+        subroutine ops_enqueue_kernel( descPtr ) BIND(C,name='ops_enqueue_kernel')
             use, intrinsic :: ISO_C_BINDING
-            import ::  ops_kernel_descriptor_core
+            import ::  ops_kernel_descriptor
 
-            type(ops_kernel_descriptor_core) :: desc
+            type(c_ptr), value :: descPtr
 
-        end subroutine ops_enqueue_kernel_c
+        end subroutine ops_enqueue_kernel
 
-        type(c_ptr) function ops_populate_kernel_descriptor_c( name, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='ops_populate_kernel_descriptor')
+        function ops_populate_kernel_descriptor( name, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='ops_populate_kernel_descriptor')
             use, intrinsic :: ISO_C_BINDING
 
-            import :: c_funptr
+            import ::ops_kernel_descriptor,  c_funptr
 
             character(kind=c_char,len=1), intent(in) :: name(*)
             type(c_ptr), value, intent(in)              :: args
@@ -516,21 +511,22 @@ module OPS_Fortran_Declarations
             type(c_ptr), value, intent(in)              :: range
             type(c_ptr), value, intent(in)              :: block
             type(c_funptr), value, intent(in)           :: func
+            type(c_ptr) :: ops_populate_kernel_descriptor
 
-        end function ops_populate_kernel_descriptor_c
+        end function ops_populate_kernel_descriptor
 
-        subroutine setFromKernelDescriptor_c( name, args, dim, range, block, desc) BIND(C,name='setFromKernelDescriptor')
+        subroutine setFromKernelDescriptor( name, args, dim, range, block, descPtr) BIND(C,name='setFromKernelDescriptor')
             use, intrinsic :: ISO_C_BINDING
-            import :: ops_block_core, ops_kernel_descriptor_core            
+            import :: ops_block_core, ops_kernel_descriptor, c_char
 
-            character(kind=c_char,len=1) :: name(*)
+            character(c_char), dimension(*), intent(inout) :: name
             type(c_ptr)                     :: args
             integer(kind=c_int)             :: dim
             type(c_ptr)                     :: range
-            type(ops_block_core)             :: block
-            type(ops_kernel_descriptor_core) :: desc
+            type(c_ptr)                     :: block 
+            type(c_ptr), value :: descPtr
 
-        end subroutine setFromKernelDescriptor_c
+        end subroutine setFromKernelDescriptor
 
   end interface
 
@@ -1260,51 +1256,6 @@ module OPS_Fortran_Declarations
 
     call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
   end subroutine ops_reduction_result_real_8
-
-  subroutine ops_enqueue_kernel ( desc )
-    use, intrinsic :: ISO_C_BINDING
-
-    type(ops_kernel_descriptor) :: desc
-
-    call ops_enqueue_kernel_c(desc%kerneldescPtr)
-
-  end subroutine ops_enqueue_kernel
-
-  subroutine ops_populate_kernel_descriptor( name, args, nargs, index, dim, isdevice, range, block, func, desc)
-    use, intrinsic :: ISO_C_BINDING
-
-    character(kind=c_char,len=*) :: name
-    type(ops_arg), dimension(*), intent(in)      :: args
-    integer, intent(in)                   :: nargs
-    integer, intent(in)                   :: index
-    integer, intent(in)                   :: dim
-    integer, intent(in)                   :: isdevice
-    integer(4), dimension(*), intent(in), target :: range
-    type(ops_block), intent(in)                  :: block
-    type(c_funptr), intent(in)                   :: func
-
-    type(ops_kernel_descriptor) :: desc
-
-    desc%kerneldescCptr = ops_populate_kernel_descriptor_c(name//C_NULL_CHAR, c_loc(args), nargs, index, dim, isdevice, c_loc(range), block%blockCptr, func)
-
-    ! convert the generated C pointer to Fortran pointer and store it inside the ops_kernel_descriptor variable
-    call c_f_pointer ( desc%kerneldescCptr, desc%kerneldescPtr )
-
-  end subroutine ops_populate_kernel_descriptor
-
-  subroutine setFromKernelDescriptor(name, args, dim, range, block, desc)
-    use, intrinsic :: ISO_C_BINDING
-    
-    character(kind=c_char,len=*)    :: name
-    type(ops_arg), dimension(*)     :: args
-    integer                         :: dim
-    integer(4), dimension(*)        :: range
-    type(ops_block)                 :: block
-    type(ops_kernel_descriptor)     :: desc
-
-    call setFromKernelDescriptor_c(%ref(name), c_loc(args), %ref(dim), c_loc(range), block%blockPtr, desc%kerneldescPtr)
-
-  end subroutine setFromKernelDescriptor
 
  !ops_decl_const -- various versions .. no-ops in ref ?
 

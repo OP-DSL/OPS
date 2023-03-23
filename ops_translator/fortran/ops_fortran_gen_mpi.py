@@ -363,15 +363,14 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
 
     config.depth = config.depth - 2
     code('#else')
-    code('subroutine '+name+'_host_execute( desc )')
+    code('subroutine '+name+'_host_execute( descPtr )')
     config.depth = config.depth + 2
     code('IMPLICIT NONE')
-    code('type (ops_kernel_descriptor), INTENT(IN) :: desc')
+    code('type (c_ptr), value:: descPtr')
     code('type (ops_block) :: block')
     code('integer(kind=4) :: dim')
     code('integer(kind=4), allocatable:: range(:)')
-    code('integer(kind=4) :: rangeCardinality')
-    code('character(kind=c_char,len=64) :: userSubroutine')
+    code('character(kind=c_char,len=64) :: userSubroutine = ""')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
@@ -414,9 +413,10 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
     code('#ifdef OPS_LAZY')
     config.depth = config.depth + 2
     comm('Set from kernel descriptor')
-    text = 'call setFromKernelDescriptor(userSubroutine, opsArgArray, '
-    text = text + 'dim, range, block, desc)'
+    text = 'call setFromKernelDescriptor(userSubroutine, c_loc(opsArgArray), '
+    text = text + 'dim, c_loc(range), block%blockCptr, descPtr)'
     code(text)
+    code('call c_f_pointer ( block%blockCptr, block%blockPtr )')
     config.depth = config.depth - 2
     code('#else')
     config.depth = config.depth + 2
@@ -575,21 +575,21 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
       elif arg_typ[n] == 'ops_arg_gbl':
         code('type ( ops_arg ), INTENT(IN) :: opsArg'+str(n+1))
     code('type ( ops_arg ), DIMENSION('+str(nargs)+') :: opsArgArray')
-    code('type ( ops_kernel_descriptor ) :: desc')
+    code('type(c_ptr) :: kernelDescPtr')
 
     code('')
     for n in range (0, nargs):
       code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
 
     code('')
-    text = 'call ops_populate_kernel_descriptor(userSubroutine, opsArgArray, '
+    text = 'kernelDescPtr = ops_populate_kernel_descriptor(userSubroutine, c_loc(opsArgArray), '
     text = text + f'{nargs}, '
     text = text + f'{nk}, '
-    text = text + 'dim, 0, range, block, '
-    text = text + f'c_funloc({name}_host_execute), desc )'
+    text = text + 'dim, 0, c_loc(range), block%blockCptr, '
+    text = text + f'c_funloc({name}_host_execute))'
     code(text)
 
-    code('call ops_enqueue_kernel(desc)')
+    code('call ops_enqueue_kernel(kernelDescPtr)')
 
     config.depth = config.depth - 2
     code('end subroutine')

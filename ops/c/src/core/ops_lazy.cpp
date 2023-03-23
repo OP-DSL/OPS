@@ -949,18 +949,12 @@ void ops_execute(OPS_instance *instance) {
   ops_kernel_list.clear();
 }
 
-static char *copy_str(char const *src) {
-  const size_t len = strlen(src) + 1;
-  char *dest = (char *)ops_calloc(len, sizeof(char));
-  snprintf(dest, len, "%s", src);
-  return dest;
-}
-
 ops_kernel_descriptor* ops_populate_kernel_descriptor(char const *name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc))
 {
     ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
 
-    desc->name = copy_str(name); 
+    desc->name = (char*) calloc(strlen(name)+1, sizeof(char));
+    strcpy(desc->name, name); 
     desc->block = block;
     desc->dim = dim;
     desc->isdevice = isdevice;
@@ -1001,8 +995,10 @@ ops_kernel_descriptor* ops_populate_kernel_descriptor(char const *name, ops_arg 
 
 void setFromKernelDescriptor(char *name, ops_arg *args, int &dim, int *range, ops_block block, ops_kernel_descriptor *desc)
 {
+    if(desc == nullptr)
+        printf("Kernel Descriptor is null\n");
     printf("inside set from kernel desciptor: %s\n", desc->name);
-    name = copy_str(desc->name);
+    strcpy(name, desc->name);
     printf("file: %s, line: %d\n", __FILE__, __LINE__);
     block = desc->block;
     printf("file: %s, line: %d\n", __FILE__, __LINE__);
