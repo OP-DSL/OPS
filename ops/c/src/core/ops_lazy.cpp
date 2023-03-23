@@ -171,7 +171,11 @@ size_t ops_internal_get_cache_size(OPS_instance *instance) {
 /////////////////////////////////////////////////////////////////////////
 
 void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
+
+  printf("Inside enqueue: \n");  
+  printf("name: %s, dim: %d, index: %d, isdevise: %d block_dim: %d\n", desc->name, desc->dim, desc->index, desc->isdevice, desc->block->dims);
   OPS_instance *instance = desc->block->instance;
+
 
   if (instance->ops_enable_tiling && instance->tiling_instance == NULL)
     instance->tiling_instance = new OPS_instance_tiling();
@@ -945,18 +949,27 @@ void ops_execute(OPS_instance *instance) {
   ops_kernel_list.clear();
 }
 
+static char *copy_str(char const *src) {
+  const size_t len = strlen(src) + 1;
+  char *dest = (char *)ops_calloc(len, sizeof(char));
+  snprintf(dest, len, "%s", src);
+  return dest;
+}
+
 ops_kernel_descriptor* ops_populate_kernel_descriptor(char const *name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc))
 {
     ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
-    desc->range = (int*) calloc(2*OPS_MAX_DIM, sizeof(int));
-    desc->orig_range = (int*) calloc(2*OPS_MAX_DIM, sizeof(int));
-    desc->name = name;
+
+    desc->name = copy_str(name); 
     desc->block = block;
     desc->dim = dim;
     desc->isdevice = isdevice;
     desc->index = index;
     desc->hash = 5381;
     desc->hash = ((desc->hash << 5) + desc->hash) + index;
+
+    desc->range = (int*) calloc(2*block->dims, sizeof(int));
+    desc->orig_range = (int*) calloc(2*block->dims, sizeof(int));
 
     for ( int i=0; i < 2*block->dims; i++ ) {
         desc->range[i] = range[i];
@@ -979,9 +992,43 @@ ops_kernel_descriptor* ops_populate_kernel_descriptor(char const *name, ops_arg 
         }
     }
     desc->func = func;
+
+    printf("inside populate\n");
+    printf("name: %s, dim: %d, index: %d, isdevise: %d desc_block_dim: %d block_dim: %d\n", desc->name, desc->dim, desc->index, desc->isdevice, desc->block->dims, block->dims);
+    
     return desc;
 }
 
+void setFromKernelDescriptor(char *name, ops_arg *args, int &dim, int *range, ops_block block, ops_kernel_descriptor *desc)
+{
+    printf("inside set from kernel desciptor: %s\n", desc->name);
+    name = copy_str(desc->name);
+    printf("file: %s, line: %d\n", __FILE__, __LINE__);
+    block = desc->block;
+    printf("file: %s, line: %d\n", __FILE__, __LINE__);
+    dim = desc->dim;
+    printf("file: %s, line: %d\n", __FILE__, __LINE__);
+
+    for ( int i=0; i < 2*block->dims; i++ ) {
+        range[i] = desc->range[i];
+    }
+
+    for ( int n=0; n < desc->nargs; n++) {
+        args[n] = desc->args[n];
+        if (args[n].argtype == OPS_ARG_GBL && args[n].acc == OPS_READ) {
+            char *tmp = (char*)ops_malloc(desc->args[n].dim*sizeof(desc->args[n].elem_size));
+            memcpy(tmp, desc->args[n].data,desc->args[n].dim*sizeof(desc->args[n].elem_size));
+            args[n].data = tmp;
+        }
+    }
+
+    printf("inside setFrom\n");
+    printf("name: %s, dim: %d,  block_dim: %d \n range: ", name, dim, block->dims);
+
+    for ( int i=0; i < 2*block->dims; i++ ) {
+        printf("%d ", range[i]);
+    }
+}
 
 // This funtion called from OPS_instance destructor
 void ops_exit_lazy(OPS_instance *instance) {

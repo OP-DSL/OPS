@@ -494,29 +494,43 @@ module OPS_Fortran_Declarations
             type(c_ptr), intent(in), value           :: data
         end subroutine ops_dat_set_data_c
 
-        subroutine ops_enqueue_kernel_c ( descCptr ) BIND(C,name='ops_enqueue_kernel')
+        subroutine ops_enqueue_kernel_c ( desc ) BIND(C,name='ops_enqueue_kernel')
             use, intrinsic :: ISO_C_BINDING
+            import ::  ops_kernel_descriptor_core
 
-            type(c_ptr), value, intent(in) :: descCptr
+            type(ops_kernel_descriptor_core) :: desc
 
         end subroutine ops_enqueue_kernel_c
 
         type(c_ptr) function ops_populate_kernel_descriptor_c( name, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='ops_populate_kernel_descriptor')
             use, intrinsic :: ISO_C_BINDING
 
-            import :: ops_block_core, ops_arg, c_funptr
+            import :: c_funptr
 
-            character(kind=c_char,len=1), intent(in)    :: name
+            character(kind=c_char,len=1), intent(in) :: name(*)
             type(c_ptr), value, intent(in)              :: args
-            integer(kind=c_int), value                  :: nargs
-            integer(kind=c_int), value                  :: index
-            integer(kind=c_int), value                  :: dim
-            integer(kind=c_int), value                  :: isdevice
-            type(c_ptr), intent(in), value              :: range
+            integer(kind=c_int), value      :: nargs
+            integer(kind=c_int), value      :: index
+            integer(kind=c_int), value      :: dim
+            integer(kind=c_int), value      :: isdevice
+            type(c_ptr), value, intent(in)              :: range
             type(c_ptr), value, intent(in)              :: block
             type(c_funptr), value, intent(in)           :: func
 
         end function ops_populate_kernel_descriptor_c
+
+        subroutine setFromKernelDescriptor_c( name, args, dim, range, block, desc) BIND(C,name='setFromKernelDescriptor')
+            use, intrinsic :: ISO_C_BINDING
+            import :: ops_block_core, ops_kernel_descriptor_core            
+
+            character(kind=c_char,len=1) :: name(*)
+            type(c_ptr)                     :: args
+            integer(kind=c_int)             :: dim
+            type(c_ptr)                     :: range
+            type(ops_block_core)             :: block
+            type(ops_kernel_descriptor_core) :: desc
+
+        end subroutine setFromKernelDescriptor_c
 
   end interface
 
@@ -1247,36 +1261,50 @@ module OPS_Fortran_Declarations
     call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
   end subroutine ops_reduction_result_real_8
 
-  subroutine ops_enqueue_kernel ( descCptr )
+  subroutine ops_enqueue_kernel ( desc )
     use, intrinsic :: ISO_C_BINDING
 
-    type(c_ptr), intent(in) :: descCptr
-    call ops_enqueue_kernel_c(descCptr)
+    type(ops_kernel_descriptor) :: desc
+
+    call ops_enqueue_kernel_c(desc%kerneldescPtr)
 
   end subroutine ops_enqueue_kernel
 
   subroutine ops_populate_kernel_descriptor( name, args, nargs, index, dim, isdevice, range, block, func, desc)
     use, intrinsic :: ISO_C_BINDING
 
-    character(kind=c_char,len=*)                 :: name             ! name of kernel
-    type(ops_arg), dimension(*), intent(in)      :: args             ! number of arguments
-    integer, intent(in)                          :: nargs            ! number of arguments
-    integer, intent(in)                          :: index            ! index of the loop
-    integer, intent(in)                          :: dim              ! number of dimensions
-    integer, intent(in)                          :: isdevice         ! flag to indicate if loop runs on device
-    integer(4), dimension(*), intent(in), target :: range            ! process local execution range
-    type(ops_block), intent(in)                  :: block            ! block to execute on
+    character(kind=c_char,len=*) :: name
+    type(ops_arg), dimension(*), intent(in)      :: args
+    integer, intent(in)                   :: nargs
+    integer, intent(in)                   :: index
+    integer, intent(in)                   :: dim
+    integer, intent(in)                   :: isdevice
+    integer(4), dimension(*), intent(in), target :: range
+    type(ops_block), intent(in)                  :: block
     type(c_funptr), intent(in)                   :: func
 
     type(ops_kernel_descriptor) :: desc
 
-    desc%kerneldescCptr = ops_populate_kernel_descriptor_c(name//C_NULL_CHAR, c_loc(args), nargs, index, dim, isdevice, c_loc(range), c_loc(block), func)
+    desc%kerneldescCptr = ops_populate_kernel_descriptor_c(name//C_NULL_CHAR, c_loc(args), nargs, index, dim, isdevice, c_loc(range), block%blockCptr, func)
 
     ! convert the generated C pointer to Fortran pointer and store it inside the ops_kernel_descriptor variable
     call c_f_pointer ( desc%kerneldescCptr, desc%kerneldescPtr )
 
   end subroutine ops_populate_kernel_descriptor
 
+  subroutine setFromKernelDescriptor(name, args, dim, range, block, desc)
+    use, intrinsic :: ISO_C_BINDING
+    
+    character(kind=c_char,len=*)    :: name
+    type(ops_arg), dimension(*)     :: args
+    integer                         :: dim
+    integer(4), dimension(*)        :: range
+    type(ops_block)                 :: block
+    type(ops_kernel_descriptor)     :: desc
+
+    call setFromKernelDescriptor_c(%ref(name), c_loc(args), %ref(dim), c_loc(range), block%blockPtr, desc%kerneldescPtr)
+
+  end subroutine setFromKernelDescriptor
 
  !ops_decl_const -- various versions .. no-ops in ref ?
 

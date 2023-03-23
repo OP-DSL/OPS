@@ -139,7 +139,7 @@ struct ops_kernel {
 
 /** Storage for OPS parallel handles */
 struct ops_kernel_descriptor {
-  const char *name;           /**< name of kernel */
+  char *name;           /**< name of kernel */
   size_t hash;                /**< hash of loop */
   ops_arg *args;              /**< list of arguments to pass in */
   int nargs;                  /**< number of arguments */
@@ -278,9 +278,10 @@ int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* s
 int ops_get_proc();
 int ops_num_procs();
 void ops_put_data(ops_dat dat);
-
 OPS_FTN_INTEROP
 ops_kernel_descriptor* ops_populate_kernel_descriptor(char const *name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc));
+OPS_FTN_INTEROP
+void setFromKernelDescriptor(char *name, ops_arg *args, int &dim, int *range, ops_block block, ops_kernel_descriptor *desc);
 
 /*******************************************************************************
 * Memory allocation functions
