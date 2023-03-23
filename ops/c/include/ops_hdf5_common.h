@@ -49,7 +49,18 @@ hid_t h5_type(const char *type);
 void split_h5_name(const char *data_name,
                    std::vector<std::string> &h5_name_list);
 
-hid_t create_float16_type();
+void H5_dataset_space(const hid_t file_id, const int data_dims,
+                      const hsize_t *global_data_size,
+                      const std::vector<std::string> &h5_name_list,
+                      const char *data_type, std::vector<hid_t> &groupid_list,
+                      hid_t &dataset_id, hid_t &file_space);
+
+void H5_dataset_space(const hid_t file_id, const int data_dims,
+                      const hsize_t *global_data_size,
+                      const std::vector<std::string> &h5_name_list,
+                      const char *data_type, const int real_precision,
+                      std::vector<hid_t> &groupid_list, hid_t &dataset_id,
+                      hid_t &file_space);
 
 #endif
 /* __OPS_HDF5_COMMON_H */

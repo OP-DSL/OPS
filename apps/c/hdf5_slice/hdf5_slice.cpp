@@ -157,18 +157,17 @@ int main(int argc, char *argv[]) {
   total1 += et1 - et0;
   ops_timers(&ct0, &et0);
   copy_double_single(u, buffer_single);
-  std::string file_name{"d2s.h5"};
+  std::string file_name_single{"single.h5"};
   std::string file_name_double{"double.h5"};
-  std::string dataset_name_u{"slice3Du/0/u_single"};
-  ops_write_plane_hdf5(buffer_single, 1, 16, file_name.c_str(),
-                       dataset_name_u.c_str());
+  std::string file_name_half{"half.h5"};
+  std::string dataset_name_u{"slice3Du/0/u"};
   ops_write_plane_hdf5(u, 1, 16, file_name_double.c_str(),
                        dataset_name_u.c_str());
-  std::string dataset_name_ran{"slice3Du/0/ran_single"};
-  ops_write_plane_hdf5(buffer_single, 1, 16, file_name.c_str(),
-                       dataset_name_ran.c_str());
-  ops_write_plane_hdf5(u, 1, 16, file_name_double.c_str(),
-                       dataset_name_ran.c_str());
+  ops_write_plane_hdf5(u, 1, 16, file_name_single.c_str(),
+                       dataset_name_u.c_str(),8);
+  ops_write_plane_hdf5(u, 1, 16, file_name_half.c_str(),
+                       dataset_name_u.c_str(),4);
+
   ops_write_plane_group_hdf5({{1, 16}, {0, 1}, {2, 16}}, "2",
                              {{u, v}, {u, v}, {u, v}});
   ops_timers(&ct1, &et1);
