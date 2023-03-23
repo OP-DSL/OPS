@@ -49,5 +49,7 @@ hid_t h5_type(const char *type);
 void split_h5_name(const char *data_name,
                    std::vector<std::string> &h5_name_list);
 
+hid_t create_float16_type();
+
 #endif
 /* __OPS_HDF5_COMMON_H */

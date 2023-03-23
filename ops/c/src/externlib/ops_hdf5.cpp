@@ -1636,8 +1636,18 @@ void H5_dataset_space(const hid_t file_id, const int data_dims,
   if (H5Lexists(parent_group, data_name, H5P_DEFAULT) == 0) {
     hid_t data_plist_id{H5Pcreate(H5P_DATASET_CREATE)};
     file_space = H5Screate_simple(data_dims, global_data_size, NULL);
-    dataset_id = H5Dcreate(parent_group, data_name, h5_type(data_type),
-                           file_space, H5P_DEFAULT, data_plist_id, H5P_DEFAULT);
+
+    if (strcmp(data_type, "double") == 0) {
+      hid_t new_type{create_float16_type()};
+
+      dataset_id = H5Dcreate(parent_group, data_name, new_type, file_space,
+                             H5P_DEFAULT, data_plist_id, H5P_DEFAULT);
+      H5Tclose(new_type);
+    } else {
+      dataset_id =
+          H5Dcreate(parent_group, data_name, h5_type(data_type), file_space,
+                    H5P_DEFAULT, data_plist_id, H5P_DEFAULT);
+    }
     H5Pclose(data_plist_id);
   } else {
     dataset_id = H5Dopen(parent_group, data_name, H5P_DEFAULT);

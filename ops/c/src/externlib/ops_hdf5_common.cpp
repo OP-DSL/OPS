@@ -83,3 +83,26 @@ void split_h5_name(const char *data_name,
     h5_name_list.push_back(segment);
   }
 }
+
+hid_t create_float16_type() {
+  hid_t new_type = H5Tcopy(H5T_IEEE_F32BE);
+  size_t spos, epos, esize, mpos, msize;
+  H5Tget_fields(new_type, &spos, &epos, &esize, &mpos, &msize);
+  // for float16
+  mpos = 0;
+  msize = 10;
+  esize = 5;
+  epos = 10;
+  spos = 15;
+  // for single precision
+  //   mpos = 0;
+  // msize = 23;
+  // esize = 8;
+  // epos = 23;
+  // spos = 31;
+  H5Tset_fields(new_type, spos, epos, esize, mpos, msize);
+  H5Tset_precision(new_type, 16);
+  H5Tset_size(new_type, 2);
+  H5Tset_ebias(new_type, 127);
+  return new_type;
+}
