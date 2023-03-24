@@ -949,7 +949,7 @@ void ops_execute(OPS_instance *instance) {
   ops_kernel_list.clear();
 }
 
-ops_kernel_descriptor* ops_populate_kernel_descriptor(char const *name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc))
+void create_kerneldesc_and_enque(char const *name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc))
 {
     ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
 
@@ -962,8 +962,8 @@ ops_kernel_descriptor* ops_populate_kernel_descriptor(char const *name, ops_arg 
     desc->hash = 5381;
     desc->hash = ((desc->hash << 5) + desc->hash) + index;
 
-    desc->range = (int*) calloc(2*block->dims, sizeof(int));
-    desc->orig_range = (int*) calloc(2*block->dims, sizeof(int));
+    desc->range = (int*) calloc(2*OPS_MAX_DIM, sizeof(int));
+    desc->orig_range = (int*) calloc(2*OPS_MAX_DIM, sizeof(int));
 
     for ( int i=0; i < 2*block->dims; i++ ) {
         desc->range[i] = range[i];
@@ -987,43 +987,14 @@ ops_kernel_descriptor* ops_populate_kernel_descriptor(char const *name, ops_arg 
     }
     desc->func = func;
 
-    printf("inside populate\n");
-    printf("name: %s, dim: %d, index: %d, isdevise: %d desc_block_dim: %d block_dim: %d\n", desc->name, desc->dim, desc->index, desc->isdevice, desc->block->dims, block->dims);
-    
-    return desc;
+    ops_enqueue_kernel(desc);  
 }
 
-void setFromKernelDescriptor(char *name, ops_arg *args, int &dim, int *range, ops_block block, ops_kernel_descriptor *desc)
+void extract_kernel_desc(ops_kernel_descriptor *desc, char **name, int *dim, int **range)
 {
-    if(desc == nullptr)
-        printf("Kernel Descriptor is null\n");
-    printf("inside set from kernel desciptor: %s\n", desc->name);
-    strcpy(name, desc->name);
-    printf("file: %s, line: %d\n", __FILE__, __LINE__);
-    block = desc->block;
-    printf("file: %s, line: %d\n", __FILE__, __LINE__);
-    dim = desc->dim;
-    printf("file: %s, line: %d\n", __FILE__, __LINE__);
-
-    for ( int i=0; i < 2*block->dims; i++ ) {
-        range[i] = desc->range[i];
-    }
-
-    for ( int n=0; n < desc->nargs; n++) {
-        args[n] = desc->args[n];
-        if (args[n].argtype == OPS_ARG_GBL && args[n].acc == OPS_READ) {
-            char *tmp = (char*)ops_malloc(desc->args[n].dim*sizeof(desc->args[n].elem_size));
-            memcpy(tmp, desc->args[n].data,desc->args[n].dim*sizeof(desc->args[n].elem_size));
-            args[n].data = tmp;
-        }
-    }
-
-    printf("inside setFrom\n");
-    printf("name: %s, dim: %d,  block_dim: %d \n range: ", name, dim, block->dims);
-
-    for ( int i=0; i < 2*block->dims; i++ ) {
-        printf("%d ", range[i]);
-    }
+    *name = desc->name;
+    *dim = desc->dim;
+    *range = desc->range;
 }
 
 // This funtion called from OPS_instance destructor

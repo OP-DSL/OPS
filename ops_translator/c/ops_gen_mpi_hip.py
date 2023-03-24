@@ -883,8 +883,8 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
         text +='\n                    '
     code(text)
 
-#    code('ops_kernel_descriptor *desc = ops_populate_kernel_descriptor(name, args, {nargs}, {nk}, dim, 0, range, block, ops_par_loop_{name}_execute);')
-    text = 'ops_kernel_descriptor *desc = ops_populate_kernel_descriptor(name, args, '
+    comm('create kernel descriptor and pass it to ops_enqueue_kernel')
+    text = 'create_kerneldesc_and_enque(name, args, '
     text = text + f'{nargs}, '
     text = text + f'{nk}, '
     text = text + 'dim, 1, range, block, '
@@ -892,7 +892,6 @@ def ops_gen_mpi_hip(master, consts, kernels, soa_set):
     text = text + ');'
     code(text)
 
-    code('ops_enqueue_kernel(desc);')
     config.depth = 0
     code('}')
     code('#endif')

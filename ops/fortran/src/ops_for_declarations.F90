@@ -186,20 +186,20 @@ module OPS_Fortran_Declarations
     end type ops_halo_group
 
     type, BIND(C) :: ops_kernel_descriptor
-        
-        type(c_ptr)                 :: name             ! name of kernel
-        integer(kind=c_long)        :: hash             ! hash of loop
-        type(c_ptr)                 :: args             ! number of arguments
-        integer(kind=c_int)         :: nargs            ! number of arguments
-        integer(kind=c_int)         :: index            ! index of the loop
-        integer(kind=c_int)         :: dim              ! number of dimensions
-        integer(kind=c_int)         :: isdevice         ! flag to indicate if loop runs on device
-        type(c_ptr)                 :: range            ! process local execution range
-        type(c_ptr)                 :: orig_range       ! original execution range
-        type(c_ptr)                 :: block            ! block to execute on
-        type(c_funptr)              :: func             ! Function pointer to a wrapper to be called
-        type(c_funptr)              :: startup_func
-        type(c_funptr)              :: cleanup_func
+
+        type(c_ptr) :: name             ! name of kernel
+        integer(c_size_t)      :: hash             ! hash of loop
+        type(c_ptr)         :: args             ! number of arguments
+        integer(c_int)      :: nargs            ! number of arguments
+        integer(c_int)      :: index            ! index of the loop
+        integer(c_int)      :: dim              ! number of dimensions
+        integer(c_int)      :: isdevice         ! flag to indicate if loop runs on device
+        type(c_ptr)    :: range            ! process local execution range
+        type(c_ptr)    :: orig_range       ! original execution range
+        type(c_ptr)         :: block            ! block to execute on
+        type(c_funptr)      :: func             ! Function pointer to a wrapper to be called
+        type(c_funptr)      :: startup_func
+        type(c_funptr)      :: cleanup_func
     end type ops_kernel_descriptor
 
 
@@ -489,44 +489,22 @@ module OPS_Fortran_Declarations
             type(c_ptr), intent(in), value           :: data
         end subroutine ops_dat_set_data_c
 
-        subroutine ops_enqueue_kernel( descPtr ) BIND(C,name='ops_enqueue_kernel')
-            use, intrinsic :: ISO_C_BINDING
-            import ::  ops_kernel_descriptor
-
-            type(c_ptr), value :: descPtr
-
-        end subroutine ops_enqueue_kernel
-
-        function ops_populate_kernel_descriptor( name, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='ops_populate_kernel_descriptor')
+        subroutine create_kerneldesc_and_enque( name, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='create_kerneldesc_and_enque')
             use, intrinsic :: ISO_C_BINDING
 
-            import ::ops_kernel_descriptor,  c_funptr
+            import :: ops_block_core, ops_arg, c_funptr
 
-            character(kind=c_char,len=1), intent(in) :: name(*)
-            type(c_ptr), value, intent(in)              :: args
-            integer(kind=c_int), value      :: nargs
-            integer(kind=c_int), value      :: index
-            integer(kind=c_int), value      :: dim
-            integer(kind=c_int), value      :: isdevice
-            type(c_ptr), value, intent(in)              :: range
-            type(c_ptr), value, intent(in)              :: block
-            type(c_funptr), value, intent(in)           :: func
-            type(c_ptr) :: ops_populate_kernel_descriptor
+            type(c_ptr), value      :: name
+            type(c_ptr), value      :: args
+            integer(c_int), value   :: nargs
+            integer(c_int), value   :: index
+            integer(c_int), value   :: dim
+            integer(c_int), value   :: isdevice
+            type(c_ptr), value      :: range
+            type(c_ptr), value      :: block
+            type(c_funptr), value   :: func
 
-        end function ops_populate_kernel_descriptor
-
-        subroutine setFromKernelDescriptor( name, args, dim, range, block, descPtr) BIND(C,name='setFromKernelDescriptor')
-            use, intrinsic :: ISO_C_BINDING
-            import :: ops_block_core, ops_kernel_descriptor, c_char
-
-            character(c_char), dimension(*), intent(inout) :: name
-            type(c_ptr)                     :: args
-            integer(kind=c_int)             :: dim
-            type(c_ptr)                     :: range
-            type(c_ptr)                     :: block 
-            type(c_ptr), value :: descPtr
-
-        end subroutine setFromKernelDescriptor
+        end subroutine create_kerneldesc_and_enque 
 
   end interface
 

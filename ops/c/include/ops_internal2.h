@@ -270,7 +270,6 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int buf_strides_y, int buf_strides_z);
 
 /* lazy execution */
-OPS_FTN_INTEROP
 void ops_enqueue_kernel(ops_kernel_descriptor *desc);
 void ops_execute(OPS_instance *instance);
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp);
@@ -279,9 +278,9 @@ int ops_get_proc();
 int ops_num_procs();
 void ops_put_data(ops_dat dat);
 OPS_FTN_INTEROP
-ops_kernel_descriptor* ops_populate_kernel_descriptor(char const *name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc));
+void create_kerneldesc_and_enque(char const *name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc));
 OPS_FTN_INTEROP
-void setFromKernelDescriptor(char *name, ops_arg *args, int &dim, int *range, ops_block block, ops_kernel_descriptor *desc);
+void extract_kernel_desc(ops_kernel_descriptor *desc, char **name, int *dim, int **range);
 
 /*******************************************************************************
 * Memory allocation functions
