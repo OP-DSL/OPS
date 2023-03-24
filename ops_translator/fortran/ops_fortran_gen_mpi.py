@@ -422,6 +422,8 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
     code('dim = descFptr%dim')
     code('call c_f_pointer(descFptr%range, range, (/2*dim/))')
     code('call c_f_pointer(descFptr%name, userSubroutine, (/128/))')
+    code('block%blockCptr = descFptr%block')
+    code('call c_f_pointer(descFptr%block, block%blockPtr)')
     for n in range (0, nargs):
       code('opsArg'+str(n+1)+' = opsArgArray('+str(n+1)+')')
     code('')

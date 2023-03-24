@@ -1862,8 +1862,8 @@ ops_kernel_descriptor * ops_dat_deep_copy_core(ops_dat target, ops_dat orig_dat,
 {
     ops_kernel_descriptor *desc =
         (ops_kernel_descriptor *)ops_calloc(1, sizeof(ops_kernel_descriptor));
-    desc->range = (int*) calloc(2*OPS_MAX_DIM, sizeof(int));
-    desc->orig_range = (int*) calloc(2*OPS_MAX_DIM, sizeof(int));
+    desc->range = (int*) calloc(2*desc->dim, sizeof(int));
+    desc->orig_range = (int*) calloc(2*desc->dim, sizeof(int));
 
     //  desc->name = "ops_internal_copy_seq";
     desc->block = orig_dat->block;

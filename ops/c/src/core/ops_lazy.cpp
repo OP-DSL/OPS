@@ -962,8 +962,8 @@ void create_kerneldesc_and_enque(char const *name, ops_arg *args, int nargs, int
     desc->hash = 5381;
     desc->hash = ((desc->hash << 5) + desc->hash) + index;
 
-    desc->range = (int*) calloc(2*OPS_MAX_DIM, sizeof(int));
-    desc->orig_range = (int*) calloc(2*OPS_MAX_DIM, sizeof(int));
+    desc->range = (int*) calloc(2*dim, sizeof(int));
+    desc->orig_range = (int*) calloc(2*dim, sizeof(int));
 
     for ( int i=0; i < 2*block->dims; i++ ) {
         desc->range[i] = range[i];
@@ -988,13 +988,6 @@ void create_kerneldesc_and_enque(char const *name, ops_arg *args, int nargs, int
     desc->func = func;
 
     ops_enqueue_kernel(desc);  
-}
-
-void extract_kernel_desc(ops_kernel_descriptor *desc, char **name, int *dim, int **range)
-{
-    *name = desc->name;
-    *dim = desc->dim;
-    *range = desc->range;
 }
 
 // This funtion called from OPS_instance destructor

@@ -32,7 +32,9 @@ else
   CHKCC			:= $(CC)
 endif
 
+ifeq ($(OPS_COMPILER),intel)
 TARGETS += done
+endif
 
 CXXFLAGS += -DOPS_FTN
 NVCXXFLAGS += -DOPS_FTN
