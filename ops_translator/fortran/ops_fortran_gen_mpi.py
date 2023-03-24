@@ -421,7 +421,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
     code('call c_f_pointer(descFptr%args, opsArgArray, (/descFptr%nargs/))')
     code('dim = descFptr%dim')
     code('call c_f_pointer(descFptr%range, range, (/2*dim/))')
-    code('!call c_f_pointer(descFptr%name, userSubroutine)')
+    code('call c_f_pointer(descFptr%name, userSubroutine, (/128/))')
     for n in range (0, nargs):
       code('opsArg'+str(n+1)+' = opsArgArray('+str(n+1)+')')
     code('')
@@ -436,7 +436,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
 
     code('')
     config.depth = config.depth + 2
-    code('call setKernelTime('+str(nk)+',userSubroutine//char(0),0.0_8,0.0_8,0.0_4,0)')
+    code('call setKernelTime('+str(nk)+',userSubroutine,0.0_8,0.0_8,0.0_4,0)')
     code('call ops_timers_core(t1)')
     code('')
 

@@ -172,8 +172,8 @@ size_t ops_internal_get_cache_size(OPS_instance *instance) {
 
 void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
 
-  printf("Inside enqueue: \n");  
-  printf("name: %s, dim: %d, index: %d, isdevise: %d block_dim: %d\n", desc->name, desc->dim, desc->index, desc->isdevice, desc->block->dims);
+  // printf("Inside enqueue: \n");  
+  // printf("name: %s, dim: %d, index: %d, isdevise: %d block_dim: %d\n", desc->name, desc->dim, desc->index, desc->isdevice, desc->block->dims);
   OPS_instance *instance = desc->block->instance;
 
 
