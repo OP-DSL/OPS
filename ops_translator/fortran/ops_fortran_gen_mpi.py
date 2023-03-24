@@ -360,6 +360,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
       elif arg_typ[n] == 'ops_arg_gbl':
         code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
     code('')
+    code('type ( ops_arg ) , DIMENSION('+str(nargs)+') :: opsArgArray')
 
     config.depth = config.depth - 2
     code('#else')
@@ -371,8 +372,9 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
     code('type (ops_kernel_descriptor), pointer :: descFptr')
     code('type (ops_block) :: block')
     code('integer(kind=c_int) :: dim')
-    code('integer(kind=c_int), pointer :: range')
-    code('character(kind=c_char), pointer :: userSubroutine(:)')
+    code('integer(kind=c_int), pointer, DIMENSION(:) :: range')
+    code('character(kind=c_char), pointer, DIMENSION(:) :: userSubroutine')
+    code('type ( ops_arg ) , pointer, DIMENSION(:) :: opsArgArray')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
@@ -407,7 +409,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
       code('integer idx('+str(NDIM)+')')
     code('integer(kind=4) :: n')
     code('')
-    code('type ( ops_arg ) , DIMENSION('+str(nargs)+') :: opsArgArray')
+  
 
     code('')
 
@@ -415,6 +417,14 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
     code('#ifdef OPS_LAZY')
     config.depth = config.depth + 2
     comm('Set from kernel descriptor')
+    code('call c_f_pointer(descPtr, descFptr)')
+    code('call c_f_pointer(descFptr%args, opsArgArray, (/descFptr%nargs/))')
+    code('dim = descFptr%dim')
+    code('call c_f_pointer(descFptr%range, range, (/2*dim/))')
+    code('!call c_f_pointer(descFptr%name, userSubroutine)')
+    for n in range (0, nargs):
+      code('opsArg'+str(n+1)+' = opsArgArray('+str(n+1)+')')
+    code('')
     
     config.depth = config.depth - 2
     code('#else')
@@ -561,10 +571,10 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
 
     config.depth = config.depth + 2
     code('IMPLICIT NONE')
-    code('character(kind=c_char,len=*), INTENT(IN) :: userSubroutine')
+    code('character(kind=c_char,len=*), INTENT(IN), TARGET :: userSubroutine')
     code('type ( ops_block ), INTENT(IN) :: block')
     code('integer(kind=4), INTENT(IN):: dim')
-    code('integer(kind=4), DIMENSION(2*dim), INTENT(IN) :: range')
+    code('integer(kind=4), DIMENSION(2*dim), INTENT(IN), TARGET :: range')
 	
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
@@ -573,14 +583,14 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
         code('type ( ops_arg ), INTENT(IN) :: opsArg'+str(n+1))
       elif arg_typ[n] == 'ops_arg_gbl':
         code('type ( ops_arg ), INTENT(IN) :: opsArg'+str(n+1))
-    code('type ( ops_arg ), DIMENSION('+str(nargs)+') :: opsArgArray')
+    code('type ( ops_arg ), DIMENSION('+str(nargs)+'), TARGET :: opsArgArray')
     
     code('')
     for n in range (0, nargs):
       code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
 
     code('')
-    text = 'call create_kerneldesc_and_enque(c_loc(userSubroutine), c_loc(opsArgArray), '
+    text = 'call create_kerneldesc_and_enque(userSubroutine//c_null_char, c_loc(opsArgArray), '
     text = text + f'{nargs}, '
     text = text + f'{nk}, '
     text = text + 'dim, 0, c_loc(range), block%blockCptr, '

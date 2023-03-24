@@ -494,7 +494,7 @@ module OPS_Fortran_Declarations
 
             import :: ops_block_core, ops_arg, c_funptr
 
-            type(c_ptr), value      :: name
+            character(kind=c_char,len=1) :: name
             type(c_ptr), value      :: args
             integer(c_int), value   :: nargs
             integer(c_int), value   :: index
