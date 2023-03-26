@@ -460,7 +460,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
     config.depth = config.depth + 2
     DO('n','1',str(NDIM))
     code('start(n) = range(2*n-1) + 1')
-    code('end(n) = range(2*n) + 1')
+    code('end(n) = range(2*n) ')
     ENDDO()
     config.depth = config.depth - 2
     code('#endif')
@@ -604,7 +604,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
     code('')
     DO('n','1',str(NDIM))
     code('range_tmp(2*n-1) = range(2*n-1)-1')
-    code('range_tmp(2*n) = range(2*n)-1')
+    code('range_tmp(2*n) = range(2*n)')
     ENDDO()
 
     code('')
