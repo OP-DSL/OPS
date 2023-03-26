@@ -188,6 +188,7 @@ module OPS_Fortran_Declarations
     type, BIND(C) :: ops_kernel_descriptor
 
         type(c_ptr) :: name             ! name of kernel
+        integer(c_int)      :: name_len ! kernel name length
         integer(c_size_t)      :: hash             ! hash of loop
         type(c_ptr)         :: args             ! number of arguments
         integer(c_int)      :: nargs            ! number of arguments

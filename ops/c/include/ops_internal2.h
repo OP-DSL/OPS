@@ -140,6 +140,7 @@ struct ops_kernel {
 /** Storage for OPS parallel handles */
 struct ops_kernel_descriptor {
   char *name;           /**< name of kernel */
+  int name_len;         /**< kernel name length */
   size_t hash;                /**< hash of loop */
   ops_arg *args;              /**< list of arguments to pass in */
   int nargs;                  /**< number of arguments */

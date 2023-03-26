@@ -954,7 +954,8 @@ void create_kerneldesc_and_enque(char const *name, ops_arg *args, int nargs, int
     ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
 
     desc->name = (char*) calloc(strlen(name)+1, sizeof(char));
-    strcpy(desc->name, name); 
+    strcpy(desc->name, name);       strcat(desc->name,"\0");
+    desc->name_len = strlen(name);
     desc->block = block;
     desc->dim = dim;
     desc->isdevice = isdevice;
