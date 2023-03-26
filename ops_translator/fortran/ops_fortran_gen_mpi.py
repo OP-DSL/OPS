@@ -443,20 +443,28 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
     code('')
 
     config.depth = config.depth - 2
-    code('#ifdef OPS_MPI')
+    code('#if defined(OPS_MPI) && !defined(OPS_LAZY)')
     config.depth = config.depth + 2
     IF('getRange(block, start, end, range) < 0')
     code('return')
     ENDIF()
     config.depth = config.depth - 2
-    code('#else')
+    code('#elif !defined(OPS_MPI)  && !defined(OPS_LAZY)')
     config.depth = config.depth + 2
     DO('n','1',str(NDIM))
     code('start(n) = range(2*n-1)')
-    code('end(n) = range(2*n);')
+    code('end(n) = range(2*n)')
+    ENDDO()
+    config.depth = config.depth - 2
+    code('#else')
+    config.depth = config.depth + 2
+    DO('n','1',str(NDIM))
+    code('start(n) = range(2*n-1) + 1')
+    code('end(n) = range(2*n) + 1')
     ENDDO()
     config.depth = config.depth - 2
     code('#endif')
+    
     config.depth = config.depth + 2
     code('')
     if arg_idx == 1:
@@ -576,7 +584,8 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
     code('character(kind=c_char,len=*), INTENT(IN), TARGET :: userSubroutine')
     code('type ( ops_block ), INTENT(IN) :: block')
     code('integer(kind=4), INTENT(IN):: dim')
-    code('integer(kind=4), DIMENSION(2*dim), INTENT(IN), TARGET :: range')
+    code('integer(kind=4), DIMENSION(2*dim), INTENT(INOUT), TARGET :: range')
+    code('integer(kind=4), DIMENSION(2*dim), TARGET :: range_tmp')
 	
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
@@ -586,16 +595,23 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
       elif arg_typ[n] == 'ops_arg_gbl':
         code('type ( ops_arg ), INTENT(IN) :: opsArg'+str(n+1))
     code('type ( ops_arg ), DIMENSION('+str(nargs)+'), TARGET :: opsArgArray')
+    code('integer(kind=4) :: n')
     
     code('')
     for n in range (0, nargs):
       code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
 
     code('')
+    DO('n','1',str(NDIM))
+    code('range_tmp(2*n-1) = range(2*n-1)-1')
+    code('range_tmp(2*n) = range(2*n)-1')
+    ENDDO()
+
+    code('')
     text = 'call create_kerneldesc_and_enque(userSubroutine//c_null_char, c_loc(opsArgArray), '
     text = text + f'{nargs}, '
     text = text + f'{nk}, '
-    text = text + 'dim, 0, c_loc(range), block%blockCptr, '
+    text = text + 'dim, 0, c_loc(range_tmp), block%blockCptr, '
     text = text + f'c_funloc({name}_host_execute))'
     code(text)
 
