@@ -963,8 +963,8 @@ void create_kerneldesc_and_enque(char const *name, ops_arg *args, int nargs, int
     desc->hash = 5381;
     desc->hash = ((desc->hash << 5) + desc->hash) + index;
 
-    desc->range = (int*) calloc(2*dim, sizeof(int));
-    desc->orig_range = (int*) calloc(2*dim, sizeof(int));
+    desc->range = (int*) calloc(2*OPS_MAX_DIM, sizeof(int));
+    desc->orig_range = (int*) calloc(2*OPS_MAX_DIM, sizeof(int));
 
     for ( int i=0; i < 2*block->dims; i++ ) {
         desc->range[i] = range[i];
