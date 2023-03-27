@@ -81,6 +81,7 @@
 
   ops_stencil S2D_00_P10_0P1_P1P1;
   ops_stencil S2D_00_M10_0M1_M1M1;
+  ops_stencil S2D_00_M10_0M1_M1M1_P1M1_P10;
 
   ops_stencil S2D_00_P10_0M1_P1M1;
   ops_stencil S2D_00_0P1_M10_M1P1;
@@ -103,6 +104,7 @@
 
   ops_stencil S2D_00_P10_P20_M10;
   ops_stencil S2D_00_0P1_0P2_0M1;
+  ops_stencil S2D_00_P20_M1M1;
 
   ops_reduction red_local_dt;
   ops_reduction red_xl_pos;

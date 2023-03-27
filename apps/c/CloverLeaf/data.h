@@ -138,6 +138,7 @@ extern ops_stencil S2D_00_0M4;
 
 extern ops_stencil S2D_00_P10_0P1_P1P1;
 extern ops_stencil S2D_00_M10_0M1_M1M1;
+extern ops_stencil S2D_00_M10_0M1_M1M1_P1M1_P10;
 
 extern ops_stencil S2D_00_P10_0M1_P1M1;
 extern ops_stencil S2D_00_0P1_M10_M1P1;
@@ -160,6 +161,7 @@ extern ops_stencil S2D_00_0P1_0M1_STRID2D_Y;
 
 extern ops_stencil S2D_00_P10_P20_M10;
 extern ops_stencil S2D_00_0P1_0P2_0M1;
+extern ops_stencil S2D_00_P20_M1M1;
 
 extern ops_reduction red_local_dt;
 extern ops_reduction red_xl_pos;
