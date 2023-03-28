@@ -13,6 +13,8 @@ build:GNU:API:
   tags:
     - CCP, test
   script:
+    - module use /opt/nvidia/hpc_sdk/modulefiles
+    - module load nvhpc/22.11
     - mkdir build
     - cd build
     - cmake ../  -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL
@@ -28,6 +30,8 @@ Test:HIP:
   tags:
     - CCP, test
   script:
+    - module use /opt/nvidia/hpc_sdk/modulefiles
+    - module load nvhpc/22.11
     - |-
       export PATH=/opt/rocm/bin:$PATH
       export OPS_COMPILER=hip
@@ -140,6 +144,8 @@ build:Intel:API:
   tags:
     - CCP, test
   script:
+    - module use /opt/nvidia/hpc_sdk/modulefiles
+    - module load nvhpc/22.11
     - source /opt/intel/oneapi/setvars.sh
     - export OMPI_MPICC=icc
     - export OMPI_MPICXX=icpc
@@ -170,6 +176,8 @@ build:GNU:APP:
   tags:
     - CCP, test
   script:
+    - module use /opt/nvidia/hpc_sdk/modulefiles
+    - module load nvhpc/22.11
     - git clone https://github.com/opensbli/opensbli.git
     - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
     - |-
@@ -211,6 +219,8 @@ build:Intel:APP:
   tags:
     - CCP, test
   script:
+    - module use /opt/nvidia/hpc_sdk/modulefiles
+    - module load nvhpc/22.11
     - git clone https://github.com/opensbli/opensbli.git
     - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
     - |-
@@ -267,6 +277,8 @@ build:Translator:App:
   tags:
     - CCP, test
   script:
+    - module use /opt/nvidia/hpc_sdk/modulefiles
+    - module load nvhpc/22.11
     - export PATH=$PATH:$CI_PROJECT_DIR/ops_translator/c:$CI_PROJECT_DIR/ops_translator/fortran
     - git clone git@github.com:OP-DSL/OPS-APPS.git
     - cd OPS-APPS
@@ -317,6 +329,8 @@ test:GNU:
   dependencies:
     - build:GNU:API
   script:
+    - module use /opt/nvidia/hpc_sdk/modulefiles
+    - module load nvhpc/22.11
     - git clone https://github.com/opensbli/opensbli.git
     - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
     - |-
@@ -362,6 +376,8 @@ test:Intel:
   dependencies:
     - build:Intel:API
   script:
+    - module use /opt/nvidia/hpc_sdk/modulefiles
+    - module load nvhpc/22.11
     - git clone https://github.com/opensbli/opensbli.git
     - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
     - |-
