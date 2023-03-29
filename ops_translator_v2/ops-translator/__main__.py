@@ -91,6 +91,7 @@ def main(argv=None) -> None:
     #     for program in app.programs:
     #         for loop in program.loops:
     #             loop.dats = [dataclasses.replace(dat, soa=True) for dat in loop.dats]
+    
     if args.verbose:
         print()
         print(app)
