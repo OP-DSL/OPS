@@ -1,0 +1,30 @@
+
+// headers
+#define OPS_{{ndim}}D
+{% if lh.soa_set %}
+#define OPS_SOA
+{% endif %}
+#define OPS_API 2
+#include "ops_lib_core.h"
+#ifdenf OPS_MPI
+#include "ops_mpi_core.h"
+#endif
+{% if lh.usertype %}
+#include "user_types.h"
+{% endif %}
+
+// global constants
+{% block const_decls %}
+    {% for const in app.consts() %}
+extern {{const.typ}} {{const.ptr}}{% if const.dim > 1 %}[{{const.dim}}]{% endif %};
+    {% endfor %}
+{% endblock %}
+
+{% block initializaion %}
+void ops_init_backend(){}
+{% endblock %}
+
+// user kernel files
+{% for lh in kernels %}
+#include "{{lh.kernel}}_cpu_kernel.cpp"
+{% endfor %}

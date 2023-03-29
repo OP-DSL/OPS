@@ -1,0 +1,190 @@
+{% block prologue %}
+{% endblock %}
+{% block kernel %}
+namespace op2_k{{kernel_idx}}
+{
+{{kernel_func}}
+}
+
+{% endblock%}
+{% block kernel wrapper %}
+{% endblock %}
+{% block host_prologue%}
+// Host stub function
+#ifndef OPS_LAZY
+void ops_par_loop_{{lh.kernel}}(
+    const char * name,
+    ops_block block,
+    int dim,
+    int * range,
+    {% for arg in lh.args %}
+    ops_arg arg{{arg.id}}{{"," if not loop.last}}
+    {% endfor %}
+)
+{ 
+#else
+void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
+{
+    ops_block block = desc->block;
+    int dim = desc->dim;
+    int *range = desc->range;
+    {% for arg in lh.args %}
+    ops_arg arg{{arg.id}} = desc->args[{{arg.id}}];
+    {% endfor %}
+#endif
+
+    //Timers
+    double t1, t2, c1, c2;
+
+    int num_args = {{lh.args|length}};
+    ops_arg args[{{lh.args|length}}];
+
+    {% for arg in lh.args %}
+    args[{{loop.index0}}] = arg{{arg.id}}; 
+    {% endfor %}
+
+#if CHECKPOINTING && !OPS_LAZY
+    if (!ops_checkpointing_before(args, num_args,range, {{kernel_idx}})) return;
+#endif
+
+    if (block->instance->OPS_diags > 1)
+    {
+        ops_timing_realloc(block->instance, {{kernel_idx}}, name);
+        block->instance->OPS_kernels[{{kernel_idx}}].count++;
+        ops_timers_core(&c2, &t2);
+    }
+
+    if (block->instance->OPS_diags > 2)
+        printf("kernel routine: {{lh.kernel}}\n");
+
+#ifdef OPS_DEBUG
+    ops_register_args(block->instance, args, name);
+#endif
+
+    // compute locally allocated range for the sub-block
+    int start[dim];
+    int end[dim];
+
+    {% if not (lh.arg_idx != -1) and not lh.multiGrid %}
+#if OPS_MPI && !OPS_LAZY
+    {% endif %}
+    int arg_idx[dim];
+    {% if not (lh.arg_idx != -1) and not lh.multiGrid %}
+#endif
+    {% endif %}
+
+#if defined(OPS_LAZY) || !defined(OPS_MPI)
+    for ( int n = 0; n < dim; n++)
+    {
+        start[n] = range[2*n];
+        end[n] = range[2*n+1];
+    }
+#else
+    if (compute_ranges(args, num_args, block, range, start, end, arg_idx) < 0) 
+        return;
+#endif
+
+    {% if lh.arg_idx != -1 or lh.multiGrid %}
+#if defined(OPS_MPI)
+#if defined(OPS_LAZY)
+    sub_block_list sb = OPS_sub_block_list[block->index];
+    {% for n in range(0, lh.dim) %}
+    arg_idx[{{n}}] = sb->decomp_disp[{{n}}];
+    {% endfor %}
+#else
+    {% for n in range(0, lh.dim) %}
+    arg_idx[{{n}}] -= start[{{n}}];
+    {% endfor %}
+#endif
+#else //OPS_MPI
+    {% for n in range(0, lh.dim) %}
+    arg_idx[{{n}}] = 0;
+    {% endfor %}
+#endif //OPS_MPI
+{% endblock%}
+
+{% block host_loop required %}
+{% endblock %}
+
+{% block host_epilogue %}
+    # This will be written in respective target template
+    # if (block->instance->OPS_diags > 1)
+    # {
+    #     // ops_timing_realloc(block->instance, {{kernel_idx}}, name);
+    #     // block->instance->OPS_kernels[{{kernel_idx}}].count++''
+    #     // ops_timers_core(&cput_start, &wall_start);
+    # }
+    # ....
+    # ....
+
+    if (block->instance->OPS_diags > 1)
+    {
+        // Update kernel record
+        ops_timers_core(&c2, &t2)
+        block->instance->OPS_kernels[{{lh.kernel_idx}}].mpi_time += t2-t1;
+        {% for arg in lh.args_expanded %}
+            {% if arg.argType == ops.ArgType.ARGDAT %}
+        block->instance->OPS_kernels[{{lh.kernel_idx}}].transfer += ops_compute_transfer(dim, start, end, &arg{{arg.id}});
+            {% endif %}
+        {% endfor %}
+    }
+}
+
+#ifdef OPS_LAZY
+void ops_par_loop_{{lh.kernel}}(
+    const char * name,
+    ops_block block,
+    int dim,
+    int * range,
+    {% for arg in lh.args %}
+    ops_arg arg{{arg.id}}{{"," if not loop.last}}
+    {% endfor %}
+    )
+{
+    ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1, sizeof(ops_kernel_descriptor));
+    desc->name = name;
+    desc->block = block;
+    desc->dim = dim;
+    desc->device = 0;
+    desc->index = {{lh.kernel_idx}};
+    desc->hash = 5381;
+    desc->hash = ((desc->hash << 5) + desc->hash) + {{lh.kernel_idx}};
+
+    for (int i = 0; i < 2 * dim; i++)
+    {
+        desc->range[i] = range[i];
+        desc->orig_range[i] = range[i];
+        desc->hash = ((desc->hash << 5) + desc->hash) + range[i]; 
+    }
+
+    desc->nargs = {{lh.args|length}};
+    desc->args = (ops_arg*) ops_malloc(desc->nargs * sizeof(ops_arg));
+
+    {% set declared = 0 %}{% endset %}
+    {% for arg in lh.args %}
+    desc->args[{{arg.arg_idx}}] = arg{{arg_idx}};
+        {% if arg.argType  == ops.ArgType.ARGDAT %}
+    desc->hash = ((desc->hash << 5) + desc->hash) + arg{{arg.arg_idx}}.dat->index;
+        {% endif %}
+        {% if arg.argType == ops.ArgType>ARGGBL and arg.typ == ops.AccessType.READ %}
+            {% if declared == 0 %}
+    char *tmp = (char*) ops_malloc({{arg.dim}} * sizeof({{arg.typeName}}));
+                {% set declared = 1 %}{% endset %}
+            {% else %}
+    tmp = (char*) ops_malloc({arg.dim} * sizeof({{arg.typeName}}));
+            {% endif %}
+    memcpy(tmp, arg{{arg.arg_idx}}.data, {{arg.dim}} * sizeof({{arg.typeName}}));
+    desc->args[{{arg.arg_idx}}].data = tmp;
+        {% endif %}
+    {% endfor%}
+
+    desc->function = ops_par_loop_{{lh.kernel}}_execute;
+
+    if (block->instance->OPS_diags > 1)
+        ops_timing_realloc(block->instance, {{lh.kernel_idx}}, "{{lh.kernel}}");
+    
+    ops_enqueue_kernel(desc);
+}
+#endif
+{% endblock %}
+

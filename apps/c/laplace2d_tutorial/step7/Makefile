@@ -26,7 +26,7 @@ OTHER_FILES=
 APP=laplace2d
 MAIN_SRC=laplace2d
 
-TARGETS=dev_seq
+TARGETS=seq
 
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app
 
