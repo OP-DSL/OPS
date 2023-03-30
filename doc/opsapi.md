@@ -139,14 +139,14 @@ application) and completeness.
 #### Dat (ops_cat_core)
 ##### ops_decl_dat (C)
 
-__ops_dat ops_decl_dat(ops block block, int dim, int *size, int *base, int *dm, int *d p, T *data, char *type, char *name)__
+__ops_dat ops_decl_dat(ops block block, int elems, int *size, int *base, int *dm, int *d p, T *data, char *type, char *name)__
 
 This routine defines a dataset.
 
 | Arguments      | Description |
 | ----------- | ----------- |
 |block   |      structured block |
-|dim     |      dimension of dataset (number of items per grid element) |
+|elems     |      number of values per grid element |
 |size    |  size in each dimension of the block |
 |base    |  base indices in each dimension of the block |
 |d_m    |  padding from the face in the negative direction for each dimension (used for block halo) |
@@ -163,7 +163,7 @@ positive directions of each dimension).
 ##### ops_block_core::decl_dat (C++)
 The method ops_block_core::decl_dat is used to define a ops_dat object, which accepts almost same arguments with the C conterpart where the block argument is not necessary, e.g.,
 ```C++
-//declare ops_dat with dim = 2
+//declare ops_dat with elems/dim = 2
 ops_dat dat0    = grid2D->decl_dat(2, size, base, d_m, d_p, temp, "double", "dat0");
 ops_dat dat1    = grid2D->decl_dat(2, size, base, d_m, d_p, temp, "double", "dat1");
 ```
@@ -171,14 +171,14 @@ where grid2D is a ops_block_core object which shall be defined before this.
 
 ##### ops_decl_dat_hdf5 (C)
 
-__ops_dat ops_decl_dat_hdf5(ops_block block, int dim, char *type, char *name, char *file)__
+__ops_dat ops_decl_dat_hdf5(ops_block block, int elems, char *type, char *name, char *file)__
 
 This routine defines a dataset to be read in from a named hdf5 file
 
 | Arguments      | Description |
 | ----------- | ----------- |
 |block  |   structured block|
-|dim     |  dimension of dataset (number of items per grid element)|
+|elems     |  number of values per grid element|
 type    |  the name of type used for output diagnostics (e.g. ``double``,``float``)|
 |name   |   name of the dat used for output diagnostics|
 |file   |   hdf5 file to read and obtain the data from|
@@ -186,7 +186,7 @@ type    |  the name of type used for output diagnostics (e.g. ``double``,``float
 #### Global constant
 ##### ops_decl_const (C)
 
-__void ops_decl_const(char const * name, int dim, char const * type, T * data )__
+__void ops_decl_const(char const * name, int elems, char const * type, T * data )__
 
 This routine defines a global constant: a variable in global scope. Global constants need to be declared upfront
  so that they can be correctly handled for different parallelization. For e.g CUDA on GPUs. Once defined
@@ -196,7 +196,7 @@ This routine defines a global constant: a variable in global scope. Global const
 | Arguments      | Description |
 | ----------- | ----------- |
 |name |         a name used to identify the constant |
-|dim |           dimension of dataset (number of items per element) |
+|elems |          number of values in data |
 |type |          the name of type used for output diagnostics (e.g. ``double``, ``float``) |
 |data |          pointer to input data of type *T* |
 
@@ -424,39 +424,40 @@ for OPS datasets.
 
 #### ops_arg_gbl
 
-__ops_arg ops_arg_gbl(T *data, int dim, char *type, ops_access acc)__
+__ops_arg ops_arg_gbl(T *data, int elems, char *type, ops_access acc)__
 
 Passes a scalar or small array that is invariant of the iteration space (not to be confused with ops_decl_const, which facilitates global scope variables).
 
 | Arguments      | Description |
 | ----------- | ----------- |
 |data|       data array|
-|dim|        array dimension|
+|elems|        number of elements in data|
 |type|       string representing the type of data held in data|
 |acc|        access type|
 
 #### ops_arg_reduce
 
-__ops_arg ops_arg_reduce(ops_reduction handle, int dim, char *type, ops_access acc)__
+__ops_arg ops_arg_reduce(ops_reduction handle, int elems, char *type, ops_access acc)__
 
 Passes a pointer to a variable that needs to be incremented (or swapped for min/max reduction) by the user kernel.
 
 | Arguments      | Description |
 | ----------- | ----------- |
 |handle|       an  *ops_reduction* handle|
-|dim|        array dimension (according to *type*)|
+|elems|        array size/number of values (according to *type*)|
 |type|       string representing the type of data held in data|
 |acc|        access type|
 
 #### ops_arg_dat
 
-__ops_arg ops_arg_dat(ops_dat dat, ops_stencil stencil, char *type,ops_access acc)__
+__ops_arg ops_arg_dat(ops_dat dat, int elems, ops_stencil stencil, char *type,ops_access acc)__
 
 Passes a pointer wrapped in ac ACC<> object to the value(s) at the current grid point to the user kernel. The ACC object's parentheses operator has to be used for dereferencing the pointer.
 
 | Arguments      | Description |
 | ----------- | ----------- |
 |dat|        dataset|
+|elems|      number of values (dim) per grid point |
 |stencil|    stencil for accessing data|
 |type|       string representing the type of data held in dataset|
 |acc|        access type|
