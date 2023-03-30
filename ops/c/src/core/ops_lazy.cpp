@@ -981,8 +981,8 @@ void create_kerneldesc_and_enque(char const *name, ops_arg *args, int nargs, int
         if (args[n].argtype == OPS_ARG_DAT)
             desc->hash = ((desc->hash << 5) + desc->hash) + args[n].dat->index;
         if (args[n].argtype == OPS_ARG_GBL && args[n].acc == OPS_READ) {
-            char *tmp = (char*)ops_malloc(args[n].dim*sizeof(args[n].elem_size));
-            memcpy(tmp, args[n].data,args[n].dim*sizeof(args[n].elem_size));
+            char *tmp = (char*)ops_malloc(args[n].dim*args[n].elem_size);
+            memcpy(tmp, args[n].data,args[n].dim*args[n].elem_size);
             desc->args[n].data = tmp;
         }
     }
