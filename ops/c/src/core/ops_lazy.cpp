@@ -172,10 +172,7 @@ size_t ops_internal_get_cache_size(OPS_instance *instance) {
 
 void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
 
-  // printf("Inside enqueue: \n");  
-  // printf("name: %s, dim: %d, index: %d, isdevise: %d block_dim: %d\n", desc->name, desc->dim, desc->index, desc->isdevice, desc->block->dims);
   OPS_instance *instance = desc->block->instance;
-
 
   if (instance->ops_enable_tiling && instance->tiling_instance == NULL)
     instance->tiling_instance = new OPS_instance_tiling();
@@ -227,6 +224,8 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
       }
     ops_free(desc->args);
     desc->args = nullptr;
+    ops_free(desc->name);
+    desc->name = nullptr;
     ops_free(desc->range);
     desc->range = nullptr;
     ops_free(desc->orig_range);
@@ -931,14 +930,17 @@ void ops_execute(OPS_instance *instance) {
 
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
     if (ops_kernel_list[i]->cleanup_func) ops_kernel_list[i]->cleanup_func(ops_kernel_list[i]);
-    for (int j = 0; j < ops_kernel_list[i]->nargs; j++)
+    for (int j = 0; j < ops_kernel_list[i]->nargs; j++) {
       if (ops_kernel_list[i]->args[j].argtype == OPS_ARG_GBL && 
           ops_kernel_list[i]->args[j].acc == OPS_READ) {
         ops_free(ops_kernel_list[i]->args[j].data);
         ops_kernel_list[i]->args[j].data = nullptr;
       }
+    }
     ops_free(ops_kernel_list[i]->args);
     ops_kernel_list[i]->args = nullptr;
+    ops_free(ops_kernel_list[i]->name);
+    ops_kernel_list[i]->name = nullptr;
     ops_free(ops_kernel_list[i]->range);
     ops_kernel_list[i]->range = nullptr;
     ops_free(ops_kernel_list[i]->orig_range);
@@ -996,13 +998,25 @@ void ops_exit_lazy(OPS_instance *instance) {
   if (instance->tiling_instance == NULL) return;
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
     if (ops_kernel_list[i]->cleanup_func) ops_kernel_list[i]->cleanup_func(ops_kernel_list[i]);
-    for (int j = 0; j < ops_kernel_list[i]->nargs; j++)
+    for (int j = 0; j < ops_kernel_list[i]->nargs; j++) {
       if (ops_kernel_list[i]->args[j].argtype == OPS_ARG_GBL && 
-          ops_kernel_list[i]->args[j].acc == OPS_READ)
+          ops_kernel_list[i]->args[j].acc == OPS_READ) {
         ops_free(ops_kernel_list[i]->args[j].data);
+        ops_kernel_list[i]->args[j].data = nullptr;
+      }
+    }
     ops_free(ops_kernel_list[i]->args);
+    ops_kernel_list[i]->args = nullptr;
+    ops_free(ops_kernel_list[i]->name);
+    ops_kernel_list[i]->name = nullptr;
+    ops_free(ops_kernel_list[i]->range);
+    ops_kernel_list[i]->range = nullptr;
+    ops_free(ops_kernel_list[i]->orig_range);
+    ops_kernel_list[i]->orig_range = nullptr;
     ops_free(ops_kernel_list[i]);
+    ops_kernel_list[i] = nullptr;
   }
   ops_kernel_list.clear();
   delete instance->tiling_instance;
+  instance->tiling_instance = nullptr;
 }
