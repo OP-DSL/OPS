@@ -31,7 +31,8 @@ Test:HIP:
     - CCP, test
   script:
     - module use /opt/nvidia/hpc_sdk/modulefiles
-    - module load nvhpc/22.11
+    - module use /home/rfj82982/.local/easybuild//modules/all
+    - module load CUDA/11.6.0
     - |-
       export PATH=/opt/rocm/bin:$PATH
       export OPS_COMPILER=hip
@@ -160,7 +161,7 @@ build:Intel:API:
       cmake --build .
       cmake --install .
       cd $CI_PROJECT_DIR/
-    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/tridlib/libtrid/lib:/usr/local/hdf5-intel/lib
+    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/tridlib/libtrid/lib
     - mkdir build-intel
     - cd build-intel
     - cmake ../  -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DLIBTRID_PATH=$CI_PROJECT_DIR/tridlib/libtrid
@@ -418,10 +419,10 @@ test:Intel:
       cmake --build .
       cmake --install .
       cd $CI_PROJECT_DIR/
-    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/tridlib/libtrid/lib:/usr/local/hdf5-intel/lib
+    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/tridlib/libtrid/lib
     - mkdir appbuild-intel
     - cd appbuild-intel
-    - cmake ../apps/c  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DOPS_TEST=ON  -DGPU_NUMBER=1 -DHDF5_ROOT=/usr/local/hdf5-intel -DLIBTRID_PATH=$CI_PROJECT_DIR/tridlib/libtrid
+    - cmake ../apps/c  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DOPS_TEST=ON  -DGPU_NUMBER=1 -DLIBTRID_PATH=$CI_PROJECT_DIR/tridlib/libtrid
     - cmake --build . -j 12
     - ctest
   artifacts:
