@@ -100,19 +100,28 @@ def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
 
         nodes.append(node)
 
-
     for node in nodes:
+        # print(f"node_kind: {node.kind}, node_loc: {parseLocation(node)}, node_name: {node.spelling}")
         for child in node.walk_preorder():
+            # print(f"    node_kind: {child.kind}, node_loc: {parseLocation(child)}, node_name: {child.spelling}")
             if child.kind.is_unexposed():
                 parseCall(child, macros, program)
+            # elif child.kind == CursorKind.CALL_EXPR:
+            #     parseCall(child, macros, program)
+            # else:
+            #     print("")
     return program        
 
 def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> None:
 
     args = []
+    # child_string=""
     for child in node.get_children():
         args.append(child)
+        # child_string += f"      child_kind: {child.kind}, child_loc: {parseLocation(child)}, child_name: {child.spelling}\n"
 
+    # print(child_string)
+    
     first_child = args.pop(0)
 
     if first_child.kind == CursorKind.DECL_REF_EXPR:
@@ -307,5 +316,6 @@ def parseLoop(args: List[Cursor], loc: Location, macros: Dict[Location, str]) ->
             parseArgReduce(loop, arg_args, arg_loc, macros)
         else:
             raise ParseError(f"Invalid loop argument {node_name}", parseLocation(node))
-        
+    
+    # print("created Loop: ", loop)    
     return loop

@@ -163,7 +163,7 @@ def parse(args: Namespace, lang: Lang) -> Application:
         # Parase the program
         program = lang.parseProgram(Path(raw_path), include_dirs, defines)
         app.programs.append(program)
-        
+     
     return app
 
 def validate(args: Namespace, lang: Lang, app: Application) -> None:

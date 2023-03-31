@@ -168,7 +168,7 @@ class ArgDat(Arg):
     def __str__(self) -> str:
         return (
             f"ArgDat(id={self.id}, loc={self.loc}, \
-                access_type={str(self.Access_type) + ',':17}, " #opt={self.opt}, "
+                access_type={str(self.access_type) + ',':17}, " #opt={self.opt}, "
             f"dat_id={self.dat_id}), stencil_id={self.stencil_id})"
             )
         
@@ -348,7 +348,7 @@ class Loop:
         if len(self.dats) > 0:
             dat_str = f"\n    {dat_str}\n"
 
-        return f"Lopp at {self.loc}:\n    Kernel function: {self.kernel}\n\n    {args_str}\n" + dat_str
+        return f"Loop at {self.loc}:\n    Kernel function: {self.kernel}\n\n    {args_str}\n" + dat_str
         
 
 
