@@ -88,7 +88,7 @@ if (${CMAKE_PROJECT_NAME} STREQUAL APP)
      # Tyring to find the include directory
      set(OPS_HEAD ops_checkpointing.h  ops_hdf5.h  ops_lib_core.h
                    ops_opencl_reduction.h   ops_tridiag.h ops_cuda_reduction.h
-                   ops_instance.h   ops_lib_cpp.h   ops_device_rt_support.h
+                   ops_instance.h   ops_device_rt_support.h
                    ops_util.h ops_device_rt_support.h  ops_internal1.h  ops_macros.h
                    ops_seq.h  queue.h ops_exceptions.h  ops_internal2.h
                    ops_mpi_core.h  ops_seq_v2.h)
