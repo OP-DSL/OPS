@@ -528,7 +528,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
           clSafeCall( ret );
 
           // Build the program
-          char buildOpts[255*"""
+          char buildOpts[512*"""
             + str(nargs)
             + """];
           char* pPath = NULL;
