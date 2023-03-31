@@ -24,7 +24,7 @@ macro(InstallTarget Name Pos)
 endmacro()
 # seq
 add_library(ops_seq ${CORE} ${EXTERN} ${SEQ} )
-#generate_export_header(ops_seq)
+
 
 target_link_libraries(ops_seq PRIVATE OpenMP::OpenMP_CXX)
 InstallTarget(seq ${ConfigPackageLocation})
