@@ -13,6 +13,8 @@ build:GNU:API:
   tags:
     - CCP, test
   script:
+    - module use /opt/nvidia/hpc_sdk/modulefiles
+    - module load nvhpc/22.11
     - mkdir build
     - cd build
     - cmake ../  -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL
@@ -28,12 +30,15 @@ Test:HIP:
   tags:
     - CCP, test
   script:
+    - module use /opt/nvidia/hpc_sdk/modulefiles
+    - module use /home/rfj82982/.local/easybuild//modules/all
+    - module load CUDA/11.6.0
     - |-
-      export PATH=/opt/rocm-4.5.0/bin:$PATH
+      export PATH=/opt/rocm/bin:$PATH
       export OPS_COMPILER=hip
       export MPI_INSTALL_PATH=/usr
       export HDF5_INSTALL_PATH=/usr/lib/x86_64-linux-gnu/hdf5/openmpi
-      export HIP_INSTALL_PATH=/opt/rocm-4.5.0/
+      export HIP_INSTALL_PATH=/opt/rocm/
       export OPS_INSTALL_PATH=$CI_PROJECT_DIR/ops
       export MPICC=mpicc
       export MPICXX=mpic++
@@ -140,6 +145,8 @@ build:Intel:API:
   tags:
     - CCP, test
   script:
+    - module use /opt/nvidia/hpc_sdk/modulefiles
+    - module load nvhpc/22.11
     - source /opt/intel/oneapi/setvars.sh
     - export OMPI_MPICC=icc
     - export OMPI_MPICXX=icpc
@@ -154,10 +161,10 @@ build:Intel:API:
       cmake --build .
       cmake --install .
       cd $CI_PROJECT_DIR/
-    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/tridlib/libtrid/lib:/usr/local/hdf5-intel/lib
+    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/tridlib/libtrid/lib
     - mkdir build-intel
     - cd build-intel
-    - cmake ../  -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DHDF5_ROOT=/usr/local/hdf5-intel -DLIBTRID_PATH=$CI_PROJECT_DIR/tridlib/libtrid
+    - cmake ../  -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DLIBTRID_PATH=$CI_PROJECT_DIR/tridlib/libtrid
     - cmake --build . -j 4
     - cmake --install .
   artifacts:
@@ -170,6 +177,8 @@ build:GNU:APP:
   tags:
     - CCP, test
   script:
+    - module use /opt/nvidia/hpc_sdk/modulefiles
+    - module load nvhpc/22.11
     - git clone https://github.com/opensbli/opensbli.git
     - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
     - |-
@@ -211,6 +220,8 @@ build:Intel:APP:
   tags:
     - CCP, test
   script:
+    - module use /opt/nvidia/hpc_sdk/modulefiles
+    - module load nvhpc/22.11
     - git clone https://github.com/opensbli/opensbli.git
     - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
     - |-
@@ -251,10 +262,10 @@ build:Intel:APP:
       cmake --build .
       cmake --install .
       cd $CI_PROJECT_DIR/
-    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/tridlib/libtrid/lib:/usr/local/hdf5-intel/lib
+    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/tridlib/libtrid/lib
     - mkdir appbuild-intel
     - cd appbuild-intel
-    - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DHDF5_ROOT=/usr/local/hdf5-intel -DLIBTRID_PATH=$CI_PROJECT_DIR/tridlib/libtrid
+    - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DLIBTRID_PATH=$CI_PROJECT_DIR/tridlib/libtrid
     - cmake --build . -j 12
     - cmake --install .
   dependencies:
@@ -267,6 +278,8 @@ build:Translator:App:
   tags:
     - CCP, test
   script:
+    - module use /opt/nvidia/hpc_sdk/modulefiles
+    - module load nvhpc/22.11
     - export PATH=$PATH:$CI_PROJECT_DIR/ops_translator/c:$CI_PROJECT_DIR/ops_translator/fortran
     - git clone git@github.com:OP-DSL/OPS-APPS.git
     - cd OPS-APPS
@@ -317,6 +330,8 @@ test:GNU:
   dependencies:
     - build:GNU:API
   script:
+    - module use /opt/nvidia/hpc_sdk/modulefiles
+    - module load nvhpc/22.11
     - git clone https://github.com/opensbli/opensbli.git
     - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
     - |-
@@ -362,6 +377,8 @@ test:Intel:
   dependencies:
     - build:Intel:API
   script:
+    - module use /opt/nvidia/hpc_sdk/modulefiles
+    - module load nvhpc/22.11
     - git clone https://github.com/opensbli/opensbli.git
     - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
     - |-
@@ -402,10 +419,10 @@ test:Intel:
       cmake --build .
       cmake --install .
       cd $CI_PROJECT_DIR/
-    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/tridlib/libtrid/lib:/usr/local/hdf5-intel/lib
+    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/tridlib/libtrid/lib
     - mkdir appbuild-intel
     - cd appbuild-intel
-    - cmake ../apps/c  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DOPS_TEST=ON  -DGPU_NUMBER=1 -DHDF5_ROOT=/usr/local/hdf5-intel -DLIBTRID_PATH=$CI_PROJECT_DIR/tridlib/libtrid
+    - cmake ../apps/c  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DOPS_TEST=ON  -DGPU_NUMBER=1 -DLIBTRID_PATH=$CI_PROJECT_DIR/tridlib/libtrid
     - cmake --build . -j 12
     - ctest
   artifacts:
