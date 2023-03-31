@@ -100,7 +100,31 @@ class Program:
         min_scope = len(candidates[0].scope)
 
         #returning canditages with min scope    
-        return list(filter(lambda e: len(e.scope) == min_scope, candidates)) 
+        return list(filter(lambda e: len(e.scope) == min_scope, candidates))
+    
+    def __str__(self) -> str:
+        outString = "\nprogram path=" + str(self.path)  + ",\n"
+        outString += "ast=" + str(self.ast) + ",\n"
+        
+        outString += "\n---------------------\n"
+        outString += "       consts        \n"
+        outString += "---------------------\n"
+        for const in self.consts:
+            outString += str(const) + "\n"
+        
+        outString += "\n---------------------\n"    
+        outString += "        loops        \n"
+        outString += "---------------------\n"
+        for loop in self.loops:
+            outString += str(loop) + "\n"
+        
+        outString += "\n---------------------\n"    
+        outString += "       Entities      \n"
+        outString += "---------------------\n"
+        for entity in self.entities:
+            outString += str(entity) + "\n"  
+        return outString
+        
 
 @dataclass
 class Application:

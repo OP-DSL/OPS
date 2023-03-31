@@ -116,7 +116,7 @@ class Cpp(Lang):
         if isinstance(typ, ops.Int):
             return int_types[(typ.signed, typ.size)]
         elif isinstance(typ, ops.Float):
-            return float_type(typ.size)
+            return float_type[typ.size]
         elif isinstance(typ, ops.Bool):
             return "bool"
         elif isinstance(typ, ops.Custom):
