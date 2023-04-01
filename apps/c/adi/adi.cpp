@@ -56,7 +56,9 @@
 #include "init_kernel.h"
 #include "preproc_kernel.h"
 
+#ifdef OPS_MPI
 #include <mpi.h>
+#endif
 //#include "print_kernel.h"
 
 extern char *optarg;
