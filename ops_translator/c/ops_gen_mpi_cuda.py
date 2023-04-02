@@ -918,11 +918,16 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
     for nc in range(0, len(consts)):
         IF('!strcmp(name,"' + (str(consts[nc]["name"]).replace('"', "")).strip() + '")')
         if consts[nc]["dim"].isdigit():
-            code(
-                f"{cutil}SafeCall(instance->ostream(),{cuda}MemcpyToSymbol("
-                + (str(consts[nc]["name"]).replace('"', "")).strip()
-                + ", dat, dim*size));"
-            )
+            if hip == 1:
+              code(
+                  f"{cutil}SafeCall(instance->ostream(),{cuda}MemcpyToSymbol(HIP_SYMBOL("
+                  + (str(consts[nc]["name"]).replace('"', "")).strip()
+                   + "), dat, dim*size));")
+            else:
+              code(
+                  f"{cutil}SafeCall(instance->ostream(),{cuda}MemcpyToSymbol("
+                  + (str(consts[nc]["name"]).replace('"', "")).strip()
+                   + ", dat, dim*size));")
         else:
             code(
                 f"char *temp; {cutil}SafeCall(instance->ostream(),{cuda}Malloc((void**)&temp,dim*size));"
@@ -930,11 +935,18 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
             code(
                 f"{cutil}SafeCall(instance->ostream(),{cuda}Memcpy(temp,dat,dim*size,{cuda}MemcpyHostToDevice));"
             )
-            code(
-                f"{cutil}SafeCall(instance->ostream(),{cuda}MemcpyToSymbol("
-                + (str(consts[nc]["name"]).replace('"', "")).strip()
-                + ", &temp, sizeof(char *)));"
-            )
+            if hip == 1:
+              code(
+                  f"{cutil}SafeCall(instance->ostream(),{cuda}MemcpyToSymbol(HIP_SYMBOL("
+                  + (str(consts[nc]["name"]).replace('"', "")).strip()
+                  + "), &temp, sizeof(char *)));"
+              )
+            else:
+              code(
+                  f"{cutil}SafeCall(instance->ostream(),{cuda}MemcpyToSymbol("
+                  + (str(consts[nc]["name"]).replace('"', "")).strip()
+                  + ", &temp, sizeof(char *)));"
+              )
         ENDIF()
         code("else")
 
