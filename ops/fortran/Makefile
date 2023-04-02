@@ -32,6 +32,10 @@ else
   CHKCC			:= $(CC)
 endif
 
+ifeq ($(OPS_COMPILER),intel)
+TARGETS += done
+endif
+
 CXXFLAGS += -DOPS_FTN
 NVCXXFLAGS += -DOPS_FTN
 
@@ -120,6 +124,9 @@ f_openacc: mkdir core
 	ar -r $(F_OPS_LIB)/libops_for_openacc.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o $(F_OPS_OBJ)/ops_instance.o \
         $(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_cuda_decl.o $(F_OPS_OBJ)/ops_cuda_rt_support.o $(F_OPS_OBJ)/ops_cuda_rt_support_cuda.o \
         $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o
+
+done:
+	mv ops_fortran_declarations.mod ops_fortran_rt_support.mod ops_fortran_hdf5_declarations.mod $(F_INC_MOD)/.
 
 clean:
 	-rm -if $(F_OPS_OBJ)/*.o $(F_OPS_OBJ)/*.optrpt
