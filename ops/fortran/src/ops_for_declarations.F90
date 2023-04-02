@@ -185,6 +185,24 @@ module OPS_Fortran_Declarations
         type (c_ptr)                 :: halogroupCptr
     end type ops_halo_group
 
+    type, BIND(C) :: ops_kernel_descriptor
+
+        type(c_ptr) :: name             ! name of kernel
+        integer(c_int)      :: name_len ! kernel name length
+        integer(c_size_t)      :: hash             ! hash of loop
+        type(c_ptr)         :: args             ! number of arguments
+        integer(c_int)      :: nargs            ! number of arguments
+        integer(c_int)      :: index            ! index of the loop
+        integer(c_int)      :: dim              ! number of dimensions
+        integer(c_int)      :: isdevice         ! flag to indicate if loop runs on device
+        type(c_ptr)    :: range            ! process local execution range
+        type(c_ptr)    :: orig_range       ! original execution range
+        type(c_ptr)         :: block            ! block to execute on
+        type(c_funptr)      :: func             ! Function pointer to a wrapper to be called
+        type(c_funptr)      :: startup_func
+        type(c_funptr)      :: cleanup_func
+    end type ops_kernel_descriptor
+
 
 !#################################################
 ! Fortran interfaces for ops declaration routines
@@ -471,6 +489,23 @@ module OPS_Fortran_Declarations
             integer(kind=c_int), value               :: part
             type(c_ptr), intent(in), value           :: data
         end subroutine ops_dat_set_data_c
+
+        subroutine create_kerneldesc_and_enque( name, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='create_kerneldesc_and_enque')
+            use, intrinsic :: ISO_C_BINDING
+
+            import :: ops_block_core, ops_arg, c_funptr
+
+            character(kind=c_char,len=1) :: name
+            type(c_ptr), value      :: args
+            integer(c_int), value   :: nargs
+            integer(c_int), value   :: index
+            integer(c_int), value   :: dim
+            integer(c_int), value   :: isdevice
+            type(c_ptr), value      :: range
+            type(c_ptr), value      :: block
+            type(c_funptr), value   :: func
+
+        end subroutine create_kerneldesc_and_enque 
 
   end interface
 
@@ -1200,7 +1235,6 @@ module OPS_Fortran_Declarations
 
     call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
   end subroutine ops_reduction_result_real_8
-
 
  !ops_decl_const -- various versions .. no-ops in ref ?
 

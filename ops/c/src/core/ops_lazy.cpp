@@ -171,6 +171,7 @@ size_t ops_internal_get_cache_size(OPS_instance *instance) {
 /////////////////////////////////////////////////////////////////////////
 
 void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
+
   OPS_instance *instance = desc->block->instance;
 
   if (instance->ops_enable_tiling && instance->tiling_instance == NULL)
@@ -192,21 +193,21 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
       ops_timers_core(&c,&t1);
 
     //Halo exchanges
-    if (desc->device) ops_H_D_exchanges_device(desc->args,desc->nargs);
+    if (desc->isdevice) ops_H_D_exchanges_device(desc->args,desc->nargs);
     else ops_H_D_exchanges_host(desc->args,desc->nargs);
     ops_halo_exchanges(desc->args,desc->nargs,desc->orig_range);
-    if (!desc->device) ops_H_D_exchanges_host(desc->args,desc->nargs);
+    if (!desc->isdevice) ops_H_D_exchanges_host(desc->args,desc->nargs);
 
-    if (desc->startup_function) desc->startup_function(desc);
+    if (desc->startup_func) desc->startup_func(desc);
 
     if (instance->OPS_diags > 1)
       ops_timers_core(&c,&t2);
     //Run the kernel
     // This function call could potentially throw
-    desc->function(desc);
+    desc->func(desc);
 
     //Dirtybits
-    if (desc->device) ops_set_dirtybit_device(desc->args,desc->nargs);
+    if (desc->isdevice) ops_set_dirtybit_device(desc->args,desc->nargs);
     else ops_set_dirtybit_host(desc->args,desc->nargs);
     for (int arg = 0; arg < desc->nargs; arg++) {
       if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].acc != OPS_READ)
@@ -215,7 +216,7 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     if (instance->OPS_diags > 1)
       instance->OPS_kernels[desc->index].mpi_time += t2-t1;
 
-    if (desc->cleanup_function) desc->cleanup_function(desc);
+    if (desc->cleanup_func) desc->cleanup_func(desc);
     for (int i = 0; i < desc->nargs; i++)
       if (desc->args[i].argtype == OPS_ARG_GBL && desc->args[i].acc == OPS_READ) {
         ops_free(desc->args[i].data);
@@ -223,6 +224,12 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
       }
     ops_free(desc->args);
     desc->args = nullptr;
+    ops_free(desc->name);
+    desc->name = nullptr;
+    ops_free(desc->range);
+    desc->range = nullptr;
+    ops_free(desc->orig_range);
+    desc->orig_range = nullptr;
     ops_free(desc);
     desc = nullptr;
   }
@@ -881,7 +888,7 @@ void ops_execute(OPS_instance *instance) {
     ops_printf2(instance,"Executing tiling plan for %d loops\n", ops_kernel_list.size());
 
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
-    if (ops_kernel_list[i]->startup_function) ops_kernel_list[i]->startup_function(ops_kernel_list[i]);
+    if (ops_kernel_list[i]->startup_func) ops_kernel_list[i]->startup_func(ops_kernel_list[i]);
   }
   //Execute tiles
   for (int tile = 0; tile < total_tiles; tile++) {
@@ -909,7 +916,7 @@ void ops_execute(OPS_instance *instance) {
                ops_kernel_list[i]->range[2], ops_kernel_list[i]->range[3],
                ops_kernel_list[i]->range[4], ops_kernel_list[i]->range[5]);
       // This function call could potentially throw
-      ops_kernel_list[i]->function(ops_kernel_list[i]);
+      ops_kernel_list[i]->func(ops_kernel_list[i]);
     }
   }
 
@@ -919,39 +926,99 @@ void ops_execute(OPS_instance *instance) {
       if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT && ops_kernel_list[i]->args[arg].acc != OPS_READ)
         ops_set_halo_dirtybit3(&ops_kernel_list[i]->args[arg], ops_kernel_list[i]->orig_range);
     }
-    if (ops_kernel_list[i]->device) ops_set_dirtybit_device(ops_kernel_list[i]->args,ops_kernel_list[i]->nargs);
+    if (ops_kernel_list[i]->isdevice) ops_set_dirtybit_device(ops_kernel_list[i]->args,ops_kernel_list[i]->nargs);
     else ops_set_dirtybit_host(ops_kernel_list[i]->args,ops_kernel_list[i]->nargs);
   }
 
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
-    if (ops_kernel_list[i]->cleanup_function) ops_kernel_list[i]->cleanup_function(ops_kernel_list[i]);
-    for (int j = 0; j < ops_kernel_list[i]->nargs; j++)
+    if (ops_kernel_list[i]->cleanup_func) ops_kernel_list[i]->cleanup_func(ops_kernel_list[i]);
+    for (int j = 0; j < ops_kernel_list[i]->nargs; j++) {
       if (ops_kernel_list[i]->args[j].argtype == OPS_ARG_GBL && 
           ops_kernel_list[i]->args[j].acc == OPS_READ) {
         ops_free(ops_kernel_list[i]->args[j].data);
         ops_kernel_list[i]->args[j].data = nullptr;
       }
+    }
     ops_free(ops_kernel_list[i]->args);
     ops_kernel_list[i]->args = nullptr;
+    ops_free(ops_kernel_list[i]->name);
+    ops_kernel_list[i]->name = nullptr;
+    ops_free(ops_kernel_list[i]->range);
+    ops_kernel_list[i]->range = nullptr;
+    ops_free(ops_kernel_list[i]->orig_range);
+    ops_kernel_list[i]->orig_range = nullptr;
     ops_free(ops_kernel_list[i]);
     ops_kernel_list[i] = nullptr;
   }
   ops_kernel_list.clear();
 }
 
+void create_kerneldesc_and_enque(char const *name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc))
+{
+    ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
+
+    desc->name = (char*) calloc(strlen(name)+1, sizeof(char));
+    strcpy(desc->name, name);       strcat(desc->name,"\0");
+    desc->name_len = strlen(name);
+    desc->block = block;
+    desc->dim = dim;
+    desc->isdevice = isdevice;
+    desc->index = index;
+    desc->hash = 5381;
+    desc->hash = ((desc->hash << 5) + desc->hash) + index;
+
+    desc->range = (int*) calloc(2*OPS_MAX_DIM, sizeof(int));
+    desc->orig_range = (int*) calloc(2*OPS_MAX_DIM, sizeof(int));
+
+    for ( int i=0; i < 2*block->dims; i++ ) {
+        desc->range[i] = range[i];
+        desc->orig_range[i] = range[i];
+        desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
+    }
+
+    desc->nargs = nargs;
+    desc->args = (ops_arg*)ops_malloc(nargs*sizeof(ops_arg));
+
+    for ( int n=0; n < nargs; n++) {
+        desc->args[n] = args[n];
+
+        if (args[n].argtype == OPS_ARG_DAT)
+            desc->hash = ((desc->hash << 5) + desc->hash) + args[n].dat->index;
+        if (args[n].argtype == OPS_ARG_GBL && args[n].acc == OPS_READ) {
+            char *tmp = (char*)ops_malloc(args[n].dim*args[n].elem_size);
+            memcpy(tmp, args[n].data,args[n].dim*args[n].elem_size);
+            desc->args[n].data = tmp;
+        }
+    }
+    desc->func = func;
+
+    ops_enqueue_kernel(desc);  
+}
 
 // This funtion called from OPS_instance destructor
 void ops_exit_lazy(OPS_instance *instance) {
   if (instance->tiling_instance == NULL) return;
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
-    if (ops_kernel_list[i]->cleanup_function) ops_kernel_list[i]->cleanup_function(ops_kernel_list[i]);
-    for (int j = 0; j < ops_kernel_list[i]->nargs; j++)
+    if (ops_kernel_list[i]->cleanup_func) ops_kernel_list[i]->cleanup_func(ops_kernel_list[i]);
+    for (int j = 0; j < ops_kernel_list[i]->nargs; j++) {
       if (ops_kernel_list[i]->args[j].argtype == OPS_ARG_GBL && 
-          ops_kernel_list[i]->args[j].acc == OPS_READ)
+          ops_kernel_list[i]->args[j].acc == OPS_READ) {
         ops_free(ops_kernel_list[i]->args[j].data);
+        ops_kernel_list[i]->args[j].data = nullptr;
+      }
+    }
     ops_free(ops_kernel_list[i]->args);
+    ops_kernel_list[i]->args = nullptr;
+    ops_free(ops_kernel_list[i]->name);
+    ops_kernel_list[i]->name = nullptr;
+    ops_free(ops_kernel_list[i]->range);
+    ops_kernel_list[i]->range = nullptr;
+    ops_free(ops_kernel_list[i]->orig_range);
+    ops_kernel_list[i]->orig_range = nullptr;
     ops_free(ops_kernel_list[i]);
+    ops_kernel_list[i] = nullptr;
   }
   ops_kernel_list.clear();
   delete instance->tiling_instance;
+  instance->tiling_instance = nullptr;
 }
