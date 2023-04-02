@@ -266,7 +266,7 @@ build:Intel:APP:
     - mkdir appbuild-intel
     - cd appbuild-intel
     - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DLIBTRID_PATH=$CI_PROJECT_DIR/tridlib/libtrid
-    - cmake --build . -j 12
+    - cmake --build . -j 12 --verbose
     - cmake --install .
   dependencies:
     - build:Intel:API
