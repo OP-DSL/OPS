@@ -116,8 +116,8 @@ void ops_dat_deep_copy(ops_dat target, ops_dat source) {
 
   ops_kernel_descriptor *desc = ops_dat_deep_copy_mpi_core(target, source);
   desc->name = "ops_internal_copy_seq";
-  desc->device = 0;
-  desc->function = ops_internal_copy_seq;
+  desc->isdevice = 0;
+  desc->func = ops_internal_copy_seq;
   ops_enqueue_kernel(desc);
 }
 

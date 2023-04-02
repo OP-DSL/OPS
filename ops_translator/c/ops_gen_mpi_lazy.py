@@ -227,9 +227,11 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
 
     if gen_full_code:
       IF('block->instance->OPS_diags > 1')
+      code('#ifndef OPS_LAZY')
       code(f'ops_timing_realloc(block->instance,{nk},"{name}");')
       code(f'block->instance->OPS_kernels[{nk}].count++;')
       code('ops_timers_core(&__c2,&__t2);')
+      code('#endif')
       ENDIF()
       code('')
 
@@ -528,42 +530,29 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set):
         text += ') {'
       if n%n_per_line == 3 and n != nargs-1:
          text += '\n'
-    code(text);
+    code(text)
     config.depth = 2
-    code('ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));')
-    code('desc->name = name;')
-    code('desc->block = block;')
-    code('desc->dim = dim;')
-    code('desc->device = 0;')
-    code(f'desc->index = {nk};')
-    code('desc->hash = 5381;')
-    code(f'desc->hash = ((desc->hash << 5) + desc->hash) + {nk};')
-    FOR('i','0',str(2*NDIM))
-    code('desc->range[i] = range[i];')
-    code('desc->orig_range[i] = range[i];')
-    code('desc->hash = ((desc->hash << 5) + desc->hash) + range[i];')
-    ENDFOR()
 
-    code(f'desc->nargs = {nargs};')
-    code(f'desc->args = (ops_arg*)ops_malloc({nargs}*sizeof(ops_arg));')
-    declared = 0
+    text = f'ops_arg args[{nargs}] = {{'
     for n in range (0, nargs):
-      code(f'desc->args[{n}] = arg{n};')
-      if arg_typ[n] == 'ops_arg_dat':
-        code(f'desc->hash = ((desc->hash << 5) + desc->hash) + arg{n}.dat->index;')
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] == OPS_READ:
-        if declared == 0:
-          code(f'char *tmp = (char*)ops_malloc({dims[n]}*sizeof({typs[n]}));')
-          declared = 1
-        else:
-          code(f'tmp = (char*)ops_malloc({dims[n]}*sizeof({typs[n]}));')
-        code(f'memcpy(tmp, arg{n}.data,{dims[n]}*sizeof({typs[n]}));')
-        code(f'desc->args[{n}].data = tmp;')
-    code(f'desc->function = ops_par_loop_{name}_execute;')
-    IF('block->instance->OPS_diags > 1')
-    code(f'ops_timing_realloc(block->instance,{nk},"{name}");')
-    ENDIF()
-    code('ops_enqueue_kernel(desc);')
+      text += f' arg{n}'
+      if nargs != 1 and n != nargs-1:
+        text += ','
+      else:
+        text += ' };\n'
+      if n%n_per_line == 5 and n != nargs-1:
+        text +='\n                    '
+    code(text);
+
+    comm('create kernel descriptor and pass it to ops_enqueue_kernel')
+    text = 'create_kerneldesc_and_enque(name, args, '
+    text = text + f'{nargs}, '
+    text = text + f'{nk}, '
+    text = text + 'dim, 0, range, block, '
+    text = text + f'ops_par_loop_{name}_execute'
+    text = text + ');'
+    code(text)
+
     config.depth = 0
     code('}')
     code('#endif')
