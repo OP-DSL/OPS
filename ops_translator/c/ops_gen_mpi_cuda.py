@@ -829,7 +829,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
         )
         code(util.group_n_per_line([f" ops_arg arg{n}" for n in range(nargs)]) + ") {")
         config.depth = 2
-        
+        n_per_line=5 
         text = f'ops_arg args[{nargs}] = {{'
         for n in range (0, nargs):
           text += f' arg{n}'

@@ -161,18 +161,15 @@ program laplace
                         & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_WRITE), &
                         & ops_arg_reduce(h_err, 1, "real(8)", OPS_MAX))
 
-        !call ops_print_dat_to_txtfile(d_Anew, "data_Anew.txt")
-
-                        
-                        call ops_par_loop(copy_kernel, "copy", grid2D, 2, interior_range, &
+        call ops_par_loop(copy_kernel, "copy", grid2D, 2, interior_range, &
                         & ops_arg_dat(d_A,    1, S2D_0pt, "real(8)", OPS_WRITE), &
                         & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_READ))
                         
-        if(mod(iter,10).eq.0 ) then
+        IF (mod(iter,10).eq.0 ) THEN
             call ops_reduction_result(h_err, error)
             write(*,'(i5,a,f16.7)') iter, ', ',error
-        endif
-            iter = iter +1
+        END IF
+        iter = iter +1
 
     end do  ! End of do while loop
 
