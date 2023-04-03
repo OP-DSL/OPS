@@ -10,7 +10,7 @@ def extentToSpan(extent: SourceRange) -> Span:
     start = Location(extent.start.line, extent.start.column)
     end = Location(extent.end.line, extent.end.column)
 
-    return Span(start. end)
+    return Span(start, end)
 
 
 def extractDependancies(entities: List[Entity], app: Application) -> list[Tuple[Entity, Rewriter]]:

@@ -1,4 +1,4 @@
-{% extends "cpp/loop_host.cpp.j2" %}
+{% extends "cpp/loop_host.cpp.jinja" %}
 
 {% block host_prologue %}
 {{super()}}
@@ -85,69 +85,68 @@
             {% endif %}
         {% endif %}
     {% endfor %}
-    {% set line = "" %}
-    {% endset %}
+    {% set line = [""] %}
     {% for arg in lh.args %}
         {% if arg.argType == ops.ArgType.ARGGBL %}
             {% if arg.accessType != ops.AccessType.MIN %}
                 {% for d in range(arg.dim) %}
-                    {% set line += " reduction(min:p_a" + str(arg.idx) + "_" + str(d) %}{% endset %}
+                    {%if line.append(line.pop() + " reduction(min:p_a" + str(arg.idx) + "_" + str(d)) %}{% endif %}
                 {% endfor %}
             {% endif %}
             {% if arg.accessType != ops.AccessType.MAX %}
                 {% for d in range(arg.dim) %}
-                    {% set line += " reduction(max:p_a" + str(arg.idx) + "_" + str(d) %}{% endset %}
+                    {%if line.append(line.pop() + " reduction(max:p_a" + str(arg.idx) + "_" + str(d)) %}{% endif %}
                 {% endfor %}
             {% endif %}
             {% if arg.accessType != ops.AccessType.INC %}
                 {% for d in range(arg.dim) %}
-                    {% set line += " reduction(+:p_a" + str(arg.idx) + "_" + str(d) %}{% endset %}
+                    {%if line.append(line.pop() + " reduction(+:p_a" + str(arg.idx) + "_" + str(d)) %}{% endif %}
                 {% endfor %}
             {% endif %}
         {% endif %}
     {% endfor %}
     {% if ndim == 3 and (not lh.has_reduction) %}
-        {% set line2 = " collapse(2)"%}{% endset %}
+        {% set line2 = " collapse(2)"%}
     {% else %}
-        {% set line2 = line %}{% endset %}
+        {% set line2 = line[0] %}
     {% endif %}
-    {% set indent = 0 %}{% endset %}
 
+    {% set indent = [0] %}
     #pragma omp parallel for{{line2}}
     {% if ndim > 2 %}
     for (int n_z = start[2]; n_z < end[2]; n_z++)
     {
-        {% set indent += 1 %}{% endset %}
+        {% if indent.append(indent.pop() + 1) %}}{% endif %}
     {% endif %}
     {% if ndim > 1 %}
-        {{indent * "    "}}for (int n_y = start[1]; n_y < end[1]; n_y++)
-        {{indent * "    "}}{
-        {% set indent += 1 %}{% endset %}
+        {{indent[0] * "    "}}for (int n_y = start[1]; n_y < end[1]; n_y++)
+        {{indent[0] * "    "}}{
+        {% if indent.append(indent.pop() + 1) %}{% endif %}
     {% endif %}
     
     {% if ndim > 1%}
 #ifdef __INTEL_COMPILER
-    {{indent * "    "}}#pragma loop_count(10000)
-    {{indent * "    "}}#pragma omp simd{{line}}
+    {{indent[0] * "    "}}#pragma loop_count(10000)
+    {{indent[0] * "    "}}#pragma omp simd{{line}}
 #elif defined(__clang__)
-    {{indent * "    "}}#pragma clang loop vectorize(assume_safety)
+    {{indent[0] * "    "}}#pragma clang loop vectorize(assume_safety)
 #elif defined(__GNUC__)
-    {{indent * "    "}}#pragma GCC ivdep
+    {{indent[0] * "    "}}#pragma GCC ivdep
 #else
-    {{indent * "    "}}#pragma simd
+    {{indent[0] * "    "}}#pragma simd
 #endif
     {% endif %}
 
-    {{indent * "    "}}for(int n_x = start[0]; n_x < end[0]; n_x++)
-    {{indent * "    "}}{
-    {% set indent += 1 %}{% endset %}
+    {{indent[0] * "    "}}for(int n_x = start[0]; n_x < end[0]; n_x++)
+    {{indent[0] * "    "}}{
+    {% if indent.append(indent.pop() + 1) %}{% endif %}
     {% if lh.arg_idx != -1 %}
         {% if ndim == 1 %}
-    {{indent * "    "}}int idx[] = {% raw %}{arg_idx[0] + n_x};{% endraw %}
+    {{indent[0] * "    "}}int idx[] = {% raw %}{arg_idx[0] + n_x};{% endraw %}
         {% elif ndim == 2 %}
-    {{indent * "    "}}int idx[] = {% raw %}{arg_idx[0] + n_x, arg_idx[1] + n_y};{% endraw %}
+    {{indent[0] * "    "}}int idx[] = {% raw %}{arg_idx[0] + n_x, arg_idx[1] + n_y};{% endraw %}
         {% elif ndim == 3 %}
-    {{indent * "    "}}int idx[] = {% raw %}{arg_idx[0] + n_x, arg_idx[1] + n_y, arg_idx[2] + n_z};{% endraw %}
+    {{indent[0] * "    "}}int idx[] = {% raw %}{arg_idx[0] + n_x, arg_idx[1] + n_y, arg_idx[2] + n_z};{% endraw %}
         {% endif %}
     {% endif %}
 
@@ -158,8 +157,8 @@
             {% else %}
                 {% set pre = "" %}
             {% endif %}
-            {% set offset = "" %}
-            {% set sizelist = "" %}
+            {% set offset = [""] %}
+            {% set sizelist = [""] %}
             {% if arg.restrict %}
                 {% set n_x -%}
 n_x * args[arg.idx].stencil->mgrid_stride[0]
@@ -192,33 +191,25 @@ n_z
                 {%- endset %}             
             {% endif %}
             {% if ndim > 0 %}
-                {% set offset += -%}
-{{n_x}} * {{arg.stride[0]}}
-                {%- endset %}
+                {% if offset.append(offset.pop() + str(n_x) + " * " + str(arg.stride[0])) %}{% endif %}
             {% endif %}
             {% if ndim > 1 %}
-                {% set offset += -%}
- + {{n_y}} * x_dim{{arg.idx}}_{{lh.kernel}} * {{arg.stride[1]}}
-                {%- endset %}
+                {% if offset.append(offset.pop() + " " + str(n_y) + " * x_dim" + str(arg.idx) + "_" + str(lh.kernel) + " * " + str(arg.stride[1])) %}{% endif %}
             {% endif %}
             {% if ndim > 2 %}
-                {% set offset += -%}
- + {{n_z}} * x_dim{{arg.idx}}_{{lh.kernel}} * y_dim{{arg.idx}}_{{lh.kernel}} * {{arg.stride[2]}}
-                {%- endset %}
+                {% if offset.append(offset.pop() + " " + str(n_z) + " * x_dim" + str(arg.idx) + "_" + str(lh.kernel) + " * y_dim" + str(arg.idx) + "_" + str(lh.kernel) + " * " + str(arg.stride[2])) %}{% endif %}
             {% endif %}
             {% set dimlabels = "xyzuv" %}
             {% for i in range(0, ndim) %}
-                {% set sizelist += -%}
-{{dimlabels[i]}}dim{{arg.idx}}_{{lh.kernel}}, 
-                {%- endset %}
+                {% if sizelist.append(sizelist.pop() + str(dimlabels[i]) + "dim" + str(arg.idx) + "_" + str(lh.kernel) + ", ") %}{% endif %}
             {% endfor %}
             {% if arg.dim > 1 %}
 #ifdef OPS_SOA
             {% endif %}
-    {{indent * "    "}}{{pre}} ACC<{{arg.typ}}> {{arg.name}}({{arg.dim}},{{sizelist}}{{arg.name}}_p + {{offset}});
+    {{indent[0] * "    "}}{{pre}} ACC<{{arg.typ}}> {{arg.name}}({{arg.dim}},{{sizelist[0]}}{{arg.name}}_p + {{offset[0]}});
             {% if arg.dim > 1 %}
 #else
-    {{indent * "    "}}{{pre}} ACC<{{arg.typ}}> {{arg.name}}({{arg.dim}},{{sizelist}}{{arg.name}}_p + {{arg.dim}} * {{offset}});
+    {{indent[0] * "    "}}{{pre}} ACC<{{arg.typ}}> {{arg.name}}({{arg.dim}},{{sizelist[0]}}{{arg.name}}_p + {{arg.dim}} * {{offset[0]}});
 #endif
             {% endif %}
         {% endif %}
@@ -227,27 +218,27 @@ n_z
     {% for arg in lh.args %}
         {% if arg.argType == ops.ArgType.ARGGBL %}
             {% if arg.accessType == ops.AccessType.MIN %}
-    {{indent * "    "}}{{arg.typ}} {{arg.name}}[{{arg.dim}}];
+    {{indent[0] * "    "}}{{arg.typ}} {{arg.name}}[{{arg.dim}}];
                 {% for d in range(arg.dim) %}
-    {{indent * "    "}}{{arg.name}}[{{d}}] = p_a{{arg.idx}}[{{d}}];
+    {{indent[0] * "    "}}{{arg.name}}[{{d}}] = p_a{{arg.idx}}[{{d}}];
                 {% endfor %} {# need +INFINITY_ change to #}
             {% endif %}
             {% if arg.accessType == ops.AccessType.MAX %}
-    {{indent * "    "}}{{arg.typ}} {{arg.name}}[{{arg.dim}}];
+    {{indent[0] * "    "}}{{arg.typ}} {{arg.name}}[{{arg.dim}}];
                 {% for d in range(arg.dim) %}
-    {{indent * "    "}}{{arg.name}}[{{d}}] = p_a{{arg.idx}}[{{d}}];
+    {{indent[0] * "    "}}{{arg.name}}[{{d}}] = p_a{{arg.idx}}[{{d}}];
                 {% endfor %} {# need -INFINITY_ change to #}
             {% endif %}
             {% if arg.accessType == ops.AccessType.INC %}
-    {{indent * "    "}}{{arg.typ}} {{arg.name}}[{{arg.dim}}];
+    {{indent[0] * "    "}}{{arg.typ}} {{arg.name}}[{{arg.dim}}];
                 {% for d in range(arg.dim) %}
-    {{indent * "    "}}{{arg.name}}[{{d}}] = ZERO_{{arg.typ}};
+    {{indent[0] * "    "}}{{arg.name}}[{{d}}] = ZERO_{{arg.typ}};
                 {% endfor %} 
             {% endif %}
             {% if arg.accessType == ops.AccessType.WRITE %}
-    {{indent * "    "}}{{arg.typ}} {{arg.name}}[{{arg.dim}}];
+    {{indent[0] * "    "}}{{arg.typ}} {{arg.name}}[{{arg.dim}}];
                 {% for d in range(arg.dim) %}
-    {{indent * "    "}}{{arg.name}}[{{d}}] = ZERO_{{arg.typ}};
+    {{indent[0] * "    "}}{{arg.name}}[{{d}}] = ZERO_{{arg.typ}};
                 {% endfor %} 
             {% endif %}
         {% endif %}
@@ -260,37 +251,37 @@ n_z
         {% if arg.argType == ops.ArgType.ARGGBL %}
             {% if arg.accessType == ops.AccessType.MIN %}
                 {% for d in range(arg.dim) %}
-    {{indent * "    "}}p_a{{arg.idx}}_{{d}} = MIN(p_a{{arg.idx}}_{{d}}, {{arg.name}}[{{d}}]);
+    {{indent[0] * "    "}}p_a{{arg.idx}}_{{d}} = MIN(p_a{{arg.idx}}_{{d}}, {{arg.name}}[{{d}}]);
                 {% endfor %}            
             {% endif %}
             {% if arg.accessType == ops.AccessType.MAX %}
                 {% for d in range(arg.dim) %}
-    {{indent * "    "}}p_a{{arg.idx}}_{{d}} = MAX(p_a{{arg.idx}}_{{d}}, {{arg.name}}[{{d}}]);
+    {{indent[0] * "    "}}p_a{{arg.idx}}_{{d}} = MAX(p_a{{arg.idx}}_{{d}}, {{arg.name}}[{{d}}]);
                 {% endfor %}            
             {% endif %}
             {% if arg.accessType == ops.AccessType.MIN %}
                 {% for d in range(arg.dim) %}
-    {{indent * "    "}}p_a{{arg.idx}}_{{d}} += {{arg.name}}[{{d}}];
+    {{indent[0] * "    "}}p_a{{arg.idx}}_{{d}} += {{arg.name}}[{{d}}];
                 {% endfor %}            
             {% endif %}
             {% if arg.accessType == ops.AccessType.MIN %}
                 {% for d in range(arg.dim) %}
-    {{indent * "    "}}p_a{{arg.idx}}_{{d}} += {{arg.name}}[{{d}}];
+    {{indent[0] * "    "}}p_a{{arg.idx}}_{{d}} += {{arg.name}}[{{d}}];
                 {% endfor %}            
             {% endif %}
         {% endif %}
     {% endfor %}
 
-    {% set indent -= 1 %}{% endset %}
-    {{indent * "    "}}}
+    {% if indent.append(indent.pop() - 1) %}{% endif %}
+    {{indent[0] * "    "}}}
     
     {% if ndim > 1 %}
-        {% set indent -= 1 %}{% endset %}
-    {{indent * "    "}}}
+        {% if indent.append(indent.pop() - 1) %}{% endif %}
+    {{indent[0] * "    "}}}
     {% endif %} 
     {% if ndim > 2 %}
-        {% set indent -= 1 %}{% endset %}
-    {{indent * "    "}}}
+        {% if indent.append(indent.pop() - 1) %}{% endif %}
+    {{indent[0] * "    "}}}
     {% endif %}  
 
     {% for arg in lh.args %}
