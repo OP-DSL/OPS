@@ -7,7 +7,7 @@ namespace op2_k{{kernel_idx}}
 }
 
 {% endblock%}
-{% block kernel wrapper %}
+{% block kernel_wrapper %}
 {% endblock %}
 {% block host_prologue%}
 // Host stub function
@@ -88,19 +88,20 @@ void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
 #if defined(OPS_MPI)
 #if defined(OPS_LAZY)
     sub_block_list sb = OPS_sub_block_list[block->index];
-    {% for n in range(0, lh.dim) %}
+        {% for n in range(0, lh.dim) %}
     arg_idx[{{n}}] = sb->decomp_disp[{{n}}];
-    {% endfor %}
+        {% endfor %}
 #else
-    {% for n in range(0, lh.dim) %}
+        {% for n in range(0, lh.dim) %}
     arg_idx[{{n}}] -= start[{{n}}];
-    {% endfor %}
+        {% endfor %}
 #endif
 #else //OPS_MPI
-    {% for n in range(0, lh.dim) %}
+        {% for n in range(0, lh.dim) %}
     arg_idx[{{n}}] = 0;
-    {% endfor %}
+        {% endfor %}
 #endif //OPS_MPI
+    {%endif %}
 {% endblock%}
 
 {% block host_loop required %}
@@ -160,7 +161,7 @@ void ops_par_loop_{{lh.kernel}}(
     desc->nargs = {{lh.args|length}};
     desc->args = (ops_arg*) ops_malloc(desc->nargs * sizeof(ops_arg));
 
-    {% set declared = 0 %}{% endset %}
+    {% set declared = 0 %}
     {% for arg in lh.args %}
     desc->args[{{arg.arg_idx}}] = arg{{arg_idx}};
         {% if arg.argType  == ops.ArgType.ARGDAT %}
@@ -169,7 +170,7 @@ void ops_par_loop_{{lh.kernel}}(
         {% if arg.argType == ops.ArgType>ARGGBL and arg.typ == ops.AccessType.READ %}
             {% if declared == 0 %}
     char *tmp = (char*) ops_malloc({{arg.dim}} * sizeof({{arg.typeName}}));
-                {% set declared = 1 %}{% endset %}
+                {% set declared = 1 %}
             {% else %}
     tmp = (char*) ops_malloc({arg.dim} * sizeof({{arg.typeName}}));
             {% endif %}

@@ -8,12 +8,12 @@ from store import Application, ParseError, Program
 from target import Target
 
 class CppSeq(Scheme):
-    lang = Lang.find("ccp")
+    lang = Lang.find("cpp")
     target = Target.find("seq")
     
     const_template = None
-    loop_hoost_template = Path("cpp/seq/loop_host.cpp.j2")
-    master_kernel_template = Path("cpp/seq/master_kernel.cpp.j2")
+    loop_host_template = Path("cpp/seq/loop_host.cpp.j2")
+    master_kernel_template = Path("cpp/seq/loop_host.cpp.j2")
     
     def translateKernel(
         self, 
