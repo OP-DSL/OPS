@@ -118,7 +118,7 @@ def ops_decl_const_parse(text):
   consts = []
   for m in re.finditer('(.*)call(.+)ops_decl_const(.*)\((.*)\)', text):
     args = m.group(4).split(',')
-    print((m.group(4)))
+    #print((m.group(4)))
     # check for syntax errors
     if len(args) != 4:
       print('Error in ops_decl_const : must have four arguments')
@@ -173,7 +173,7 @@ def get_arg_dat(arg_string, j):
                   'sten': dat_args_string.split(',')[2].strip(),
                   'typ': (dat_args_string.split(',')[3].replace('"','')).strip(),
                   'acc': dat_args_string.split(',')[4].strip()}
-      print(temp_dat)
+      # print(temp_dat)
     elif len(dat_args_string.split(',')) == 6:
       # split the dat_args_string into  6 and create a struct with the elements
       # and type as op_arg_dat
@@ -215,7 +215,7 @@ def get_arg_idx(arg_string, l):
     loc = arg_parse(arg_string, l + 1)
 
     temp_idx = {'type': 'ops_arg_idx'}
-    print(temp_idx)
+    #print(temp_idx)
     return temp_idx
 
 def ops_par_loop_parse(text):
@@ -415,9 +415,9 @@ def main(source_files):
         dim   = loop_args[i]['dim']
         block = loop_args[i]['block']
         _range   = loop_args[i]['range']
-        print(('\nprocessing kernel ' + name + ' with ' + str(nargs) + ' arguments'))
-        print(('dim: '+dim))
-        print(('range: '+str(_range)))
+        #print(('\nprocessing kernel ' + name + ' with ' + str(nargs) + ' arguments'))
+        #print(('dim: '+dim))
+        #print(('range: '+str(_range)))
 
         #
         # process arguments
@@ -450,7 +450,7 @@ def main(source_files):
             else:
                 accs[m] = l + 1
 
-            print((var[m]+' '+str(dims[m]) +' '+str(stens[m])+' '+str(accs[m])))
+            #print((var[m]+' '+str(dims[m]) +' '+str(stens[m])+' '+str(accs[m])))
 
 
           if arg_type.strip() == 'ops_arg_gbl':
@@ -468,14 +468,14 @@ def main(source_files):
             else:
                 accs[m] = l + 1
 
-            print((var[m]+' '+ str(dims[m]) +' '+str(accs[m])))
+            #print((var[m]+' '+ str(dims[m]) +' '+str(accs[m])))
 
           if arg_type.strip() == 'ops_arg_idx':
             var[m] = ''
             dims[m] = 0
             typs[m] = 'int'
             typ[m] = 'ops_arg_idx'
-            print('arg_idx')
+            #print('arg_idx')
 
 
         #
@@ -499,8 +499,7 @@ def main(source_files):
                     kernels[nk]['typs'][arg] == typs[arg] and \
                     kernels[nk]['accs'][arg] == accs[arg]
             if rep2:
-              print(('repeated kernel with compatible arguments: ' + \
-                    kernels[nk]['name']))
+              #print(('repeated kernel with compatible arguments: ' + kernels[nk]['name']))
               repeat = True
               which_file = nk
             else:
