@@ -179,7 +179,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
 ##########################################################################
     comm('user function')
     code('!DEC$ ATTRIBUTES FORCEINLINE :: ' + name )
-    print(name2)
+    #print(name2)
     fid = open(name2+'_kernel.inc', 'r')
     text = fid.read()
     fid.close()

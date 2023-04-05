@@ -503,7 +503,7 @@ def main(source_files):
               repeat = True
               which_file = nk
             else:
-              print('repeated kernel with incompatible arguments: ERROR')
+              print('repeated kernel with incompatible arguments: ERROR  ' + kernels[nk]['name'])
               break
 
         #
@@ -720,8 +720,10 @@ def main(source_files):
   #
   # finally, generate target-specific kernel files
   #
-
+    
+  print('Generating kernels files for target - MPI ........\n')
   ops_fortran_gen_mpi(str(source_files[0]), date, consts, kernels, soa_set)
+  print('Generating kernels files for target - MPI_OpenMP ........\n')  
   ops_fortran_gen_mpi_openmp(str(source_files[0]), date, consts, kernels, soa_set)
 #  ops_fortran_gen_mpi_cuda(str(source_files[0]), date, consts, kernels, soa_set)
 #  ops_fortran_gen_mpi_openacc(str(source_files[0]), date, consts, kernels, soa_set)
