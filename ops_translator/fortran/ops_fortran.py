@@ -723,9 +723,10 @@ def main(source_files):
     
   print('Generating kernels files for target - MPI ........\n')
   ops_fortran_gen_mpi(str(source_files[0]), date, consts, kernels, soa_set)
-  print('Generating kernels files for target - MPI_OpenMP ........\n')  
+  print('Generating kernels files for target - MPI_OpenMP ........\n')
   ops_fortran_gen_mpi_openmp(str(source_files[0]), date, consts, kernels, soa_set)
-#  ops_fortran_gen_mpi_cuda(str(source_files[0]), date, consts, kernels, soa_set)
+  print('Generating kernels files for target - MPI_CUDA ........\n')
+  ops_fortran_gen_mpi_cuda(str(source_files[0]), date, consts, kernels, soa_set)
 #  ops_fortran_gen_mpi_openacc(str(source_files[0]), date, consts, kernels, soa_set)
 
 if __name__ == '__main__':

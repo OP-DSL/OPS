@@ -14,11 +14,16 @@ endif
 	touch .generated
 
 TARGETS	= $(APP)_seq $(APP)_openmp $(APP)_mpi $(APP)_mpi_openmp $(APP)_tiled $(APP)_mpi_tiled
+
+ifdef CUDA_INSTALL_PATH
+	TARGETS 	  += $(APP)_cuda $(APP)_mpi_cuda
+endif
+
 ifeq ($(OPS_COMPILER),pgi)
-	TARGETS       += $(APP)_cuda $(APP)_mpi_cuda $(APP)_openacc $(APP)_mpi_openacc
+	TARGETS       += $(APP)_openacc $(APP)_mpi_openacc
 endif
 ifeq ($(OPS_COMPILER),xlp8)
-	TARGETS       += $(APP)_cuda poisson_mpi_cuda
+	TARGETS       += poisson_mpi_cuda
 endif
 
 all: $(TARGETS)
