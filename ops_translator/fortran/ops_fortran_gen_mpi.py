@@ -436,7 +436,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
 
     code('')
     config.depth = config.depth + 2
-    code('call setKernelTime('+str(nk)+',userSubroutine,0.0_8,0.0_8,0.0_4,0)')
+    code('call setKernelTime('+str(nk)+',userSubroutine,0.0_8,0.0_8,0.0_4,1)')
     code('call ops_timers_core(t1)')
     code('')
 
@@ -563,7 +563,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_dat':
         code('call ops_compute_transfer('+str(NDIM)+', start, end, opsArg'+str(n+1)+',transfer)')
         code('transfer_total = transfer_total + transfer')
-    code('call setKernelTime('+str(nk)+',userSubroutine,t3-t2,t2-t1,transfer_total,1)') 
+    code('call setKernelTime('+str(nk)+',userSubroutine,t3-t2,t2-t1,transfer_total,0)') 
 
     config.depth = config.depth - 2
     code('end subroutine')
