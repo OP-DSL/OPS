@@ -82,7 +82,10 @@ $(F_OPS_OBJ)/%_cuda.o : $(C_OPS_SRC)/cuda/%.cu
 $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/cuda/%.cu
 	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(F_OPS_OBJ)/%.o : $(F_OPS_SRC)/%.F90
+$(F_OPS_OBJ)/ops_for_declarations.o: $(F_OPS_SRC)/ops_for_declarations.F90
+	$(FC) $(FFLAGS) $(FMODS) -c $< -o $@
+
+$(F_OPS_OBJ)/%.o : $(F_OPS_SRC)/%.F90 $(F_OPS_OBJ)/ops_for_declarations.o
 	$(FC) $(FFLAGS) $(FMODS) -c $< -o $@
 
 $(F_OPS_OBJ)/%_cuda.o : $(F_OPS_SRC)/%.F90
