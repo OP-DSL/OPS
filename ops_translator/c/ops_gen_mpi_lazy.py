@@ -422,13 +422,13 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                     code(f"{typs[n]} {arg_list[n]}[{dims[n]}];")
                     for d in range(0, int(dims[n])):
                         code(
-                            f"{arg_list[n]}[{d}] = p_a{n}[{d}];"
+                            f"{arg_list[n]}[{d}] = p_a{n}_{d};"
                         )  # need +INFINITY_ change to
                 if accs[n] == OPS_MAX:
                     code(f"{typs[n]} {arg_list[n]}[{dims[n]}];")
                     for d in range(0, int(dims[n])):
                         code(
-                            f"{arg_list[n]}[{d}] = p_a{n}[{d}];"
+                            f"{arg_list[n]}[{d}] = p_a{n}_{d};"
                         )  # need -INFINITY_ change to
                 if accs[n] == OPS_INC:
                     code(f"{typs[n]} {arg_list[n]}[{dims[n]}];")

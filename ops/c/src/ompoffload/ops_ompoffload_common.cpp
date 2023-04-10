@@ -93,7 +93,7 @@ void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_
   char *ptr = (char *)*to;
   char *ptr2 = (char *)*from;
   #pragma omp target teams distribute parallel for map(to: ptr[:size]) map(from: ptr2[:size])
-  for (int i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++) {
     ptr[i] = ptr2[i];
   }
 }
@@ -101,7 +101,7 @@ void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_
 void ops_device_memset(OPS_instance *instance, void** ptr, int val, size_t size) {
     char *ptr2 = (char *)*ptr;
     #pragma omp target teams distribute parallel for map(to: ptr2[:size])
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
       ptr2[i] = (char)val;
     }
 }

@@ -59,7 +59,7 @@ void ops_init_device(OPS_instance *instance, const int argc, const char *const a
   }
   cutilDeviceInit(instance, argc, argv);
   instance->OPS_hybrid_gpu = 1;
-  hipSafeCall(instance->ostream(),hipDeviceSetCacheConfig(hipFuncCachePreferL1));
+  //hipSafeCall(instance->ostream(),hipDeviceSetCacheConfig(hipFuncCachePreferL1));
 
 }
 
