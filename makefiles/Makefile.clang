@@ -5,7 +5,7 @@ ifdef DEBUG
 	CXXFLAGS   := -O0 -fPIC -DUNIX -Wall -g -std=c++11 #-ffloat-store
 else
 	CCFLAGS   := -O3 -std=c99 -fPIC -DUNIX -Wall -g #-ffloat-store
-	CXXFLAGS  := -O3 -fPIC -DUNIX -Wall -g -std=c++11
+	CXXFLAGS  := -O3 -fPIC -DUNIX -Wall -g -std=c++17
 endif
 OMPFLAGS=-fopenmp
 OMPOFFLOADFLAGS=-fopenmp
@@ -18,31 +18,44 @@ ifdef IEEE
 	CXXFLAGS += -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fno-associative-math
 endif
 
-ifndef NV_ARCH
-print:
-	@echo "select an NVIDA device to compile in CUDA, e.g. make NV_ARCH=Kepler"
-	NV_ARCH=Kepler
-endif
 ifeq ($(NV_ARCH),Fermi)
 	OMPOFFLOADFLAGS+= -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_20 -foffload-lto
+	SYCL_FLAGS=-fsycl-targets=nvptx64-nvidia-cuda-sycldevice -Xsycl-target-backend --cuda-gpu-arch=sm_20
 else
 ifeq ($(NV_ARCH),Kepler)
 	OMPOFFLOADFLAGS+= -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_35 -foffload-lto
+	SYCL_FLAGS=-fsycl-targets=nvptx64-nvidia-cuda-sycldevice -Xsycl-target-backend --cuda-gpu-arch=sm_35
 else
 ifeq ($(NV_ARCH),Pascal)
 	OMPOFFLOADFLAGS+= -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_60 -foffload-lto
+	SYCL_FLAGS=-fsycl-targets=nvptx64-nvidia-cuda-sycldevice -Xsycl-target-backend --cuda-gpu-arch=sm_70
 else
 ifeq ($(NV_ARCH),Volta)
 	OMPOFFLOADFLAGS+= -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_70 -foffload-lto
+	SYCL_FLAGS=-fsycl-targets=nvptx64-nvidia-cuda-sycldevice -Xsycl-target-backend --cuda-gpu-arch=sm_80
 else
 ifeq ($(NV_ARCH),Turing)
 	OMPOFFLOADFLAGS+= -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_75 -foffload-lto
+	SYCL_FLAGS=-fsycl-targets=nvptx64-nvidia-cuda-sycldevice -Xsycl-target-backend --cuda-gpu-arch=sm_75
 else
 ifeq ($(NV_ARCH),Ampere)
 	OMPOFFLOADFLAGS+= -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_80 -foffload-lto
+	SYCL_FLAGS=-fsycl-targets=nvptx64-nvidia-cuda-sycldevice -Xsycl-target-backend --cuda-gpu-arch=sm_80
+else
+ifeq ($(NV_ARCH),Hopper)
+	OMPOFFLOADFLAGS+= -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_90 -foffload-lto
+	SYCL_FLAGS=-fsycl-targets=nvptx64-nvidia-cuda-sycldevice -Xsycl-target-backend --cuda-gpu-arch=sm_90
 endif
 endif
 endif
 endif
 endif
 endif
+endif
+SYCLCXX = clang++
+HIPCC=hipcc
+ifdef HIP_ARCH
+OMPOFFLOADFLAGS=-target x86_64-pc-linux-gnu -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=$(HIP_ARCH)
+SYCL_FLAGS = -fsycl -fsycl-targets=amdgcn-amd-amdhsa -Xsycl-target-backend --offload-arch=$(HIP_ARCH) -munsafe-fp-atomics
+endif
+HIPFLAGS=--offload-arch=$(HIP_ARCH)

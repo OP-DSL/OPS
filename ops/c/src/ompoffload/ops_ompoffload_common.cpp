@@ -122,7 +122,7 @@ void ops_device_memset(OPS_instance *instance, void** ptr, int val, size_t size)
   int device = omp_get_default_device();
 
   char* ptr2 = (char*) *ptr;
-  #pragma omp target teams distribute parallel for
+  #pragma omp target teams distribute parallel for //map(from:ptr2[0:size])
   for (int i = 0; i < size; i++) {
     ptr2[i] = (char)val;
   }
