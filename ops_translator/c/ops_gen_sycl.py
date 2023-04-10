@@ -612,16 +612,16 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
             if flat_parallel:
                 code("int n_z = item.get_id(0)+start_2;")
             else:
-                code("int n_z = item.get_global_id()[0]+start_2;")
+                code("int n_z = item.get_global_id(0)+start_2;")
         if NDIM > 1:
             if flat_parallel:
                 code(f"int n_y = item.get_id({NDIM - 2})+start_1;")
             else:
-                code(f"int n_y = item.get_global_id()[{NDIM - 2}]+start_1;")
+                code(f"int n_y = item.get_global_id({NDIM - 2})+start_1;")
         if flat_parallel:
             code(f"int n_x = item.get_id({NDIM - 1})+start_0;")
         else:
-            code(f"int n_x = item.get_global_id()[{NDIM - 1}]+start_0;")
+            code(f"int n_x = item.get_global_id({NDIM - 1})+start_0;")
         if arg_idx != -1:
             if NDIM == 1:
                 code("int " + clean_type(arg_list[arg_idx]) + "[] = {arg_idx_0+n_x};")
