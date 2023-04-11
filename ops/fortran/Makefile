@@ -34,12 +34,8 @@ ifdef HDF5_INSTALL_PATH
 	C_OPS_INC += $(HDF5_INC)
 endif
 
-ifdef CUDA_INSTALL_PATH
-	TARGETS += f_cuda f_mpi_cuda
-endif
-
 ifeq ($(OPS_COMPILER),pgi)
-	TARGETS += f_openacc
+	TARGETS += f_cuda f_mpi_cuda f_openacc
 endif
 
 all: $(TARGETS)
@@ -89,7 +85,7 @@ $(F_OPS_OBJ)/%.o : $(F_OPS_SRC)/%.F90 $(F_OPS_OBJ)/ops_for_declarations.o
 	$(FC) $(FFLAGS) $(FMODS) -c $< -o $@
 
 $(F_OPS_OBJ)/%_cuda.o : $(F_OPS_SRC)/%.F90
-	$(FC) $(FFLAGS) $(FMODS_CUDA) $(CUDAFOR) -c $< -o $@
+	$(FC) $(FFLAGS) $(FMODS_CUDA) -c $< -o $@
 
 
 hdf5_seq: mkdir $(F_OPS_OBJ)/ops_hdf5.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_hdf5_declarations.o
