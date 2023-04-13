@@ -135,7 +135,14 @@ def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> No
         program.consts.append(parseConst(args, loc))
 
     elif name == "ops_par_loop":
-        program.loops.append(parseLoop(args, loc, macros))
+        loop = parseLoop(args, loc, macros)
+        program.loops.append(loop)
+        
+        if program.ndim == None:
+            program.ndim = loop.ndim
+        elif program.ndim < loop.ndim:
+            program.ndim = loop.ndim
+            
 
 def decend(node: Cursor) -> Optional[Cursor]:
     return next(node.get_children(), None)
@@ -319,3 +326,5 @@ def parseLoop(args: List[Cursor], loc: Location, macros: Dict[Location, str]) ->
     
     # print("created Loop: ", loop)    
     return loop
+
+

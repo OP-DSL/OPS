@@ -93,6 +93,7 @@ class Cpp(Lang):
         ast, source = self.parseFile(path, frozenset(include_dirs), frozenset(defines))
         ast_pp, source_pp =  self.parseFile(path, frozenset(include_dirs), frozenset(defines), preprocess = True)
 
+        # TODO: Find the global ndim programatically
         program = Program(path, ast_pp, source_pp)
 
         cpp.parser.parseLoops(ast, program)

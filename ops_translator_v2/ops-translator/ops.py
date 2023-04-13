@@ -22,6 +22,16 @@ class AccessType(Enum):
     def values() -> List[str]:
         return [x.value for x in list(AccessType)]
 
+# class ArgType(Enum):
+#     ARGDAT = 0
+#     ARGGBL = 1
+    
+#     ARGIDX = 2
+    
+#     @staticmethod
+#     def values() -> List[str]:
+#         return [x.value for x in list(AccessType)]
+
 class OpsError(Exception):
     message: str
     loc: Location
@@ -135,8 +145,7 @@ class Dat:
     #         OpsError(f"dim of d_p={self.d_p} is not same as dat dim={self.dim} of dat='{self.name}'")
             
     def __str__(self) -> str:
-        return f"Dat(block_id={self.block_id}, id={self.id}, ptr='{self.ptr}', \
-            dim={self.dim}, type={self.typ}, soa={self.soa})"
+        return f"Dat(block_id={self.block_id}, id={self.id}, ptr='{self.ptr}', dim={self.dim}, type={self.typ}, soa={self.soa})"
 
 @dataclass(frozen=True)
 class Stencil:
@@ -164,12 +173,16 @@ class ArgDat(Arg):
 
     dat_id: int
     stencil_id: int
-
+    
+    dim: int
+    stride: Optional[List] = None
+    
+    def __post_init__(self):  
+        object.__setattr__(self, 'stride', [1]*3)
+        
     def __str__(self) -> str:
         return (
-            f"ArgDat(id={self.id}, loc={self.loc}, \
-                access_type={str(self.access_type) + ',':17}, " #opt={self.opt}, "
-            f"dat_id={self.dat_id}), stencil_id={self.stencil_id})"
+            f"ArgDat(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17}, dat_id={self.dat_id}, stencil_id={self.stencil_id})"
             )
         
 @dataclass(frozen=True)
@@ -246,20 +259,23 @@ class Loop:
 
     block: Block
     range: Range
-    range_dim: int
+    ndim: int
 
     args: List[Arg]
     args_expanded: List[Arg]
 
     dats: List[Dat]
     stencils: List[Stencil]
+    
+    arg_idx: Optional[int] = -1
+    multiGrid: Optional[bool] = False
 
-    def __init__(self, loc: Location, kernel: str, block: Block, range: Range, range_dim: int) -> None:
+    def __init__(self, loc: Location, kernel: str, block: Block, range: Range, ndim: int) -> None:
         self.loc = loc
         self.kernel = kernel
         self.block = block
         self.range = range
-        self.range_dim = range_dim
+        self.ndim = ndim
 
         self.dats = []
         self.args = []
@@ -292,7 +308,7 @@ class Loop:
             stencil_id = len(self.stencils)
             self.stencils.append(Stencil(stencil_id, dat_dim, stencil_ptr))
 
-        arg = ArgDat(arg_id, loc, access_type, dat_id, stencil_id)
+        arg = ArgDat(arg_id, loc, access_type, dat_id, stencil_id, dat_dim)
         self.args.append(arg)
 
     def addArgReduce(
@@ -329,6 +345,7 @@ class Loop:
     ) -> None:
         arg_id = len(self.args)
         arg = ArgIdx(arg_id, loc)
+        self.arg_idx = arg_id
         self.args.append(arg)
 
     
@@ -342,13 +359,15 @@ class Loop:
         return None
 
     def __str__(self) -> str:
+        kernel_detail_str = f"Loop at {self.loc}:\n Kernel function: {self.kernel}\n \
+            range dim: {self.ndim}, block: {self.block.ptr}, range: {self.range}"
         args_str = "\n    ".join([str(a) for a in self.args])
-        dat_str = "n    ".join([str(d) for d in self.dats])
+        dat_str = "\n    ".join([str(d) for d in self.dats])
 
         if len(self.dats) > 0:
             dat_str = f"\n    {dat_str}\n"
 
-        return f"Loop at {self.loc}:\n    Kernel function: {self.kernel}\n\n    {args_str}\n" + dat_str
+        return f"{kernel_detail_str}\n\n    {args_str}\n {dat_str}\n"
         
 
 
