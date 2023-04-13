@@ -101,7 +101,7 @@ def main(argv=None) -> None:
         validate(args, lang, app)
     except OpsError as e:
         exit(e)
-
+    
     # Generating code for targets
     for [target] in args.target:
         target = Target.find(target)

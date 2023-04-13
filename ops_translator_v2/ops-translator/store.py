@@ -86,6 +86,8 @@ class Program:
     loops: List[ops.Loop] = field(default_factory=list)
 
     entities: List[Entity] = field(default_factory=list)
+    
+    ndim: Optional[int] = None
 
     def findEntities(self, name: str, scope: List[str] = []) -> List[Entity]:
         def in_scope(entity: Entity):
@@ -105,6 +107,7 @@ class Program:
     def __str__(self) -> str:
         outString = "\nprogram path=" + str(self.path)  + ",\n"
         outString += "ast=" + str(self.ast) + ",\n"
+        outString += "ndim=" + str(self.ndim) + ",\n"
         
         outString += "\n---------------------\n"
         outString += "       consts        \n"
@@ -129,7 +132,8 @@ class Program:
 @dataclass
 class Application:
     programs: List[Program] = field(default_factory=list)
-
+    global_dim: Optional[int] = None
+    
     def __str__(self) -> str:
         if len(self.programs) > 0:
             programs_str = "\n".join([str(p) for p in self.programs])
@@ -167,6 +171,14 @@ class Application:
     def validate(self, lang: Lang) -> None:
         self.validateConst(lang)
         self.validateLoops(lang)
+        
+        for program in self.programs:
+            if self.global_dim == None:
+                self.global_dim = program.ndim
+            elif self.global_dim != program.ndim:
+                raise OpsError(f"ndim mismatch with global dim={self.global_dim} and program dim={program.ndim} of program={program.path}")
+        
+        
         
     
     def validateConst(self, lang: Lang) -> None:
