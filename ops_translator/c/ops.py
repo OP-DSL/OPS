@@ -325,7 +325,7 @@ def get_arg_dat(arg_string, j, macro_defs):
             "type": "ops_arg_dat_opt",
             "dat": args_list[0].strip(),
             "dim": evaluate_macro_defs_in_string(
-                macro_defs, [1].strip()
+                macro_defs, args_list[1].strip()
             ),
             "sten": args_list[2].strip(),
             "typ": (args_list[3].replace('"', "")).strip(),
