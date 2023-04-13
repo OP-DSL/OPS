@@ -15,12 +15,8 @@ endif
 
 TARGETS	= $(APP)_seq $(APP)_openmp $(APP)_mpi $(APP)_mpi_openmp $(APP)_tiled $(APP)_mpi_tiled
 
-ifdef CUDA_INSTALL_PATH
-	TARGETS 	  += $(APP)_cuda $(APP)_mpi_cuda
-endif
-
 ifeq ($(OPS_COMPILER),pgi)
-	TARGETS       += $(APP)_openacc $(APP)_mpi_openacc
+	TARGETS       += $(APP)_cuda $(APP)_mpi_cuda $(APP)_openacc $(APP)_mpi_openacc
 endif
 ifeq ($(OPS_COMPILER),xlp8)
 	TARGETS       += poisson_mpi_cuda
@@ -95,7 +91,6 @@ clean:
 	rm -f *.oo
 	rm -f *.optrpt
 	rm -f *.mod
-	rm -f $(EXEC)
 	rm -f *~
 	rm -f $(APP)_seq
 	rm -f $(APP)_openmp
