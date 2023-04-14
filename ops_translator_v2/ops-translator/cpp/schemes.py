@@ -13,7 +13,7 @@ class CppSeq(Scheme):
     
     const_template = None
     loop_host_template = Path("cpp/seq/loop_host.cpp.j2")
-    master_kernel_template = Path("cpp/seq/loop_host.cpp.j2")
+    master_kernel_template = Path("cpp/seq/master_kernel.cpp.j2")
     
     def translateKernel(
         self, 

@@ -167,6 +167,13 @@ class Application:
 
     def loops(self) -> List[Tuple[ops.Loop, Program]]:
         return flatten(map(lambda l: (l, p), p.loops) for p in self.programs)
+    
+    def uniqueLoops(self) -> List[ops.Loop]:
+        return uniqueBy(self.loops(), lambda m: m[0].kernel)
+        
+        for p in self.programs:
+            id = findId
+        
 
     def validate(self, lang: Lang) -> None:
         self.validateConst(lang)
