@@ -112,7 +112,7 @@ void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
     if (block->instance->OPS_diags > 1)
     {
         // Update kernel record
-        ops_timers_core(&c2, &t2)
+        ops_timers_core(&c2, &t2);
         block->instance->OPS_kernels[{{kernel_idx}}].mpi_time += t2-t1;
         {% for arg in lh.args %}
             {% if arg is dat %}

@@ -1,15 +1,15 @@
 
 // headers
-#define OPS_{{ndim}}D
-{% if lh.soa_set %}
+#define OPS_{{app.global_dim}}D
+{% if soa_set %}
 #define OPS_SOA
 {% endif %}
 #define OPS_API 2
 #include "ops_lib_core.h"
-#ifdenf OPS_MPI
+#ifdef OPS_MPI
 #include "ops_mpi_core.h"
 #endif
-{% if lh.usertype %}
+{% if user_types %}
 #include "user_types.h"
 {% endif %}
 
@@ -25,6 +25,6 @@ void ops_init_backend(){}
 {% endblock %}
 
 // user kernel files
-{% for lh in kernels %}
-#include "{{lh.kernel}}_cpu_kernel.cpp"
+{% for lh,p in app.uniqueLoops() %}
+#include "{{lh.kernel}}_kernel.cpp"
 {% endfor %}
