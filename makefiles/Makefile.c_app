@@ -59,7 +59,7 @@ $(APP)_dev_mpi: Makefile $(OPS_FILES_PLAIN) $(HEADERS) $(OPS_INSTALL_PATH)/c/lib
 # mpi version
 #
 
-SEQ_KERNELS = $(MAIN_SRC)_cpu_kernels.cpp
+SEQ_KERNELS = seq_kernels.cpp
 
 $(APP)_mpi: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi.a
 		@echo "Building ${APP}_mpi"

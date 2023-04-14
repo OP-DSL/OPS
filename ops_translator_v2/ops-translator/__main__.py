@@ -188,7 +188,7 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
     defines = [define for [define] in args.D]
 
     # Generate loop hosts
-    for i, (loop, program) in enumerate(app.loops(), 1):
+    for i, (loop, program) in enumerate(app.uniqueLoops(), 1):
         # Generate loop host source
         source, extension = scheme.genLoopHost(include_dirs, defines, env, loop, program, app, i)
 
@@ -196,7 +196,7 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
         path = None
         if scheme.lang.kernel_dir:
             Path(args.out, scheme.target.name).mkdir(parents=True, exist_ok=True)
-            path = Path(args.out, scheme.target.name, f"{i}_{loop.kernel}_kernel.{extension}")
+            path = Path(args.out, scheme.target.name, f"{loop.kernel}_kernel.{extension}")
         else:
             path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.{extension}")
 
@@ -206,7 +206,7 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
             file.write(source)
 
             if args.verbose:
-                print(f"Generated loop host {i} of {len(app.loops())}: {path}")
+                print(f"Generated loop host {i} of {len(app.uniqueLoops())}: {path}")
 
     # Gernerate master kernel file
     if scheme.master_kernel_template is not None:

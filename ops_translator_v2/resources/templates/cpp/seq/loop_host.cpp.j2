@@ -49,8 +49,7 @@
 #endif
             {% endif %}
         {% elif arg is gbl or arg is reduce %}
-        // arg access type {{arg.accessType}}
-            {% if arg.accessType == ops.AccessType.READ %}
+            {% if arg is read %}
     {{arg.typ}} * __restrict__ {{arg.ptr}} = ({{arg.typ}} *)args[{{arg.id}}].data;
             {% else %}
 #ifdef OPS_MPI
@@ -79,7 +78,7 @@
 {% block host_loop %}
     {% for arg in lh.args %}
         {% if arg is gbl or arg is reduce %}
-            {% if arg.accessType != ops.AccessType.READ %}
+            {% if not arg is read %}
                 {% for d in range(arg.dim) %}
     {{arg.typ}} p_a{{arg.id}}_{{d}} = p_a{{arg.id}}[{{d}}];
                 {% endfor %}
@@ -89,19 +88,19 @@
     {% set line = [""] %}
     {% for arg in lh.args %}
         {% if arg is gbl or arg is reduce %}
-            {% if arg.accessType != ops.AccessType.MIN %}
+            {% if arg is min %}
                 {% for d in range(arg.dim) %}
-                    {%if line.append(line.pop() + " reduction(min:p_a" + arg.id|string + "_" + d|string) %}{% endif %}
+                    {%if line.append(line.pop() + " reduction(min:p_a" + arg.id|string + "_" + d|string + ")") %}{% endif %}
                 {% endfor %}
             {% endif %}
-            {% if arg.accessType != ops.AccessType.MAX %}
+            {% if arg is max %}
                 {% for d in range(arg.dim) %}
-                    {%if line.append(line.pop() + " reduction(max:p_a" + arg.id|string + "_" + d|string) %}{% endif %}
+                    {%if line.append(line.pop() + " reduction(max:p_a" + arg.id|string + "_" + d|string + ")") %}{% endif %}
                 {% endfor %}
             {% endif %}
-            {% if arg.accessType != ops.AccessType.INC %}
+            {% if arg is inc %}
                 {% for d in range(arg.dim) %}
-                    {%if line.append(line.pop() + " reduction(+:p_a" + arg.id|string + "_" + d|string) %}{% endif %}
+                    {%if line.append(line.pop() + " reduction(+:p_a" + arg.id|string + "_" + d|string + ")") %}{% endif %}
                 {% endfor %}
             {% endif %}
         {% endif %}
@@ -150,7 +149,7 @@
     {% endif %}
     {% for arg in lh.args %}
         {% if arg is dat %}
-            {% if arg.accessType == ops.AccessType.READ %}
+            {% if arg is read %}
                 {% set pre = "const " %}
             {% else %}
                 {% set pre = "" %}
@@ -203,25 +202,25 @@
 
     {% for arg in lh.args %}
         {% if arg is gbl or arg is reduce %}
-            {% if arg.accessType == ops.AccessType.MIN %}
+            {% if arg is min %}
     {{indent[0] * "    "}}{{arg.typ}} {{arg.ptr}}[{{arg.dim}}];
                 {% for d in range(arg.dim) %}
     {{indent[0] * "    "}}{{arg.ptr}}[{{d}}] = p_a{{arg.id}}[{{d}}];
                 {% endfor %} {# need +INFINITY_ change to #}
             {% endif %}
-            {% if arg.accessType == ops.AccessType.MAX %}
+            {% if arg is max %}
     {{indent[0] * "    "}}{{arg.typ}} {{arg.ptr}}[{{arg.dim}}];
                 {% for d in range(arg.dim) %}
     {{indent[0] * "    "}}{{arg.ptr}}[{{d}}] = p_a{{arg.id}}[{{d}}];
                 {% endfor %} {# need -INFINITY_ change to #}
             {% endif %}
-            {% if arg.accessType == ops.AccessType.INC %}
+            {% if arg in inc %}
     {{indent[0] * "    "}}{{arg.typ}} {{arg.ptr}}[{{arg.dim}}];
                 {% for d in range(arg.dim) %}
     {{indent[0] * "    "}}{{arg.ptr}}[{{d}}] = ZERO_{{arg.typ}};
                 {% endfor %} 
             {% endif %}
-            {% if arg.accessType == ops.AccessType.WRITE %}
+            {% if arg is write %}
     {{indent[0] * "    "}}{{arg.typ}} {{arg.ptr}}[{{arg.dim}}];
                 {% for d in range(arg.dim) %}
     {{indent[0] * "    "}}{{arg.ptr}}[{{d}}] = ZERO_{{arg.typ}};
@@ -266,7 +265,7 @@
     {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} += {{arg.ptr}}[{{d}}];
                 {% endfor %}            
             {% endif %}
-    {#         {% if arg.accessType == ops.AccessType.MIN %}
+    {#         {% if arg is inc %}
                  {% for d in range(arg.dim) %}
      {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} += {{arg.name}}[{{d}}];
                  {% endfor %}            
@@ -288,7 +287,7 @@
 
     {% for arg in lh.args %}
         {% if arg is gbl or arg is reduce %}
-            {% if arg.accessType != ops.AccessType.READ %}
+            {% if not arg is read %}
                 {% for d in range(arg.dim) %}
     p_a{{arg.id}}[{{d}}] = p_a{{arg.id}}_{{d}};    
                 {% endfor %}
@@ -305,9 +304,9 @@
     }
 
 #ifndef OPS_LAZY
-    ops_set_dirtybit(args, {{lh.args|length}});
+    ops_set_dirtybit_host(args, {{lh.args|length}});
     {% for arg in lh.args %}
-        {% if arg is dat and (arg.AccessType == ops.AccessType.WRITE or arg.AccessType == ops.AccessType.RW or arg.AccessType == ops.AccessType.INC) %}
+        {% if arg is dat and (arg is write or arg is read_write or arg is inc) %}
     ops_set_halo_dirtybit3(&args[{{arg.id}}], range);
         {% endif %}
     {% endfor %}
