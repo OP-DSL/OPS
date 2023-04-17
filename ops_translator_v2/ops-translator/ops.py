@@ -166,10 +166,11 @@ class Arg(ABDC):
     id: int
     loc: Location
 
+# TODO: Remove Dat and incorpareate into ArgDat
 @dataclass(frozen=True)
 class ArgDat(Arg):
     access_type: AccessType
-    # opt: bool
+    opt: bool
 
     dat_id: int
     stencil_id: int
@@ -188,16 +189,17 @@ class ArgDat(Arg):
 @dataclass(frozen=True)
 class ArgGbl(Arg):
     access_type: AccessType
-    # opt : bool
 
     ptr: str
 
     dim: int
     typ: Type
     
+    opt : bool
+    
     def __str__(self) -> str:
         return (
-            f"ArgGbl(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17}), " ##opt={self.opt}, "
+            f"ArgGbl(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17}, opt={self.opt}, "
             f"ptr={self.ptr}, dim={self.dim}, type={self.typ})"
         )
 
@@ -262,7 +264,6 @@ class Loop:
     ndim: int
 
     args: List[Arg]
-    args_expanded: List[Arg]
 
     dats: List[Dat]
     stencils: List[Stencil]
@@ -289,7 +290,8 @@ class Loop:
         dat_typ: Type,
         dat_soa: bool,
         stencil_ptr: str,
-        access_type: AccessType
+        access_type: AccessType,
+         opt: bool
     ) -> None: 
 
         arg_id = len(self.args)
@@ -308,7 +310,7 @@ class Loop:
             stencil_id = len(self.stencils)
             self.stencils.append(Stencil(stencil_id, dat_dim, stencil_ptr))
 
-        arg = ArgDat(arg_id, loc, access_type, dat_id, stencil_id, dat_dim)
+        arg = ArgDat(arg_id, loc, access_type, dat_id, stencil_id, dat_dim, opt)
         self.args.append(arg)
 
     def addArgReduce(
