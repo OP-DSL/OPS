@@ -227,7 +227,7 @@ class Application:
             ]
 
         if arg.access_type not in valid_access_types:
-            raise OpsError(f"Invalid access type for dat argument: {arg.access_type}", arg.loc)
+            raise OpsError(f"Invalid access type for dat argument: {arg.access_type}, arg: {arg}", arg.loc)
     
     def validateArgGbl(self, arg: ops.ArgGbl, loop: ops.Loop, lang: Lang) -> None:
         valid_access_types = [
