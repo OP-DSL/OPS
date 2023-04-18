@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 from clang.cindex import Cursor, CursorKind, TranslationUnit, TypeKind, conf
 
@@ -107,8 +107,7 @@ def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
 
     return program        
 
-def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> None:
-
+def parseUnexposedFunction(node: Cursor) -> Union[Tuple[str, List[Cursor]], None]:
     args = []
     # child_string=""
     for child in node.get_children():
@@ -119,7 +118,16 @@ def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> No
     if first_child.kind == CursorKind.DECL_REF_EXPR:
         name = list(first_child.get_tokens())[0].spelling
     else:
+        return None
+    
+    return (name, args)
+        
+def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> None:
+
+    if parseUnexposedFunction(node) == None:
         return
+    else:
+        (name, args) = parseUnexposedFunction(node)
 
     loc = parseLocation(node)
 
@@ -242,7 +250,7 @@ def parseArgDat(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[
     dat_typ, dat_soa = parseType(parseStringLit(args[3]), loc)
     access_type = parseAccessType(args[4], loc, macros)
 
-    loop.addArgDat(loc, dat_ptr, dim, dat_typ, dat_soa, stencil_ptr, access_type, 1)
+    loop.addArgDat(loc, dat_ptr, dim, dat_typ, dat_soa, stencil_ptr, access_type, True)
     
 def parseArgDatOpt(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> None:
     if len(args) != 6:
@@ -321,15 +329,16 @@ def parseLoop(args: List[Cursor], loc: Location, macros: Dict[Location, str]) ->
         elif node_name == "ops_arg_dat_opt":
             parseArgDatOpt(loop, arg_args, arg_loc, macros)
         
-        elif node_name == "ops_arg_gbl":
-            parseArgGbl(loop, arg_args, arg_loc, macros)
-        
         elif node_name == "ops_arg_idx":
             parseArgIdx(loop, arg_args, arg_loc, macros)
 
         elif node_name == "ops_arg_reduce":
             parseArgReduce(loop, arg_args, arg_loc, macros)
-            
+        
+        elif node.kind.is_unexposed() and parseUnexposedFunction(node) != None:
+            (_, arg_args) = parseUnexposedFunction(node)
+            parseArgGbl(loop, arg_args, arg_loc, macros)
+        
         else:
             raise ParseError(f"Invalid loop argument {node_name}", parseLocation(node))
       

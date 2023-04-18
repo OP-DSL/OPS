@@ -183,7 +183,7 @@ class ArgDat(Arg):
         
     def __str__(self) -> str:
         return (
-            f"ArgDat(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17}, dat_id={self.dat_id}, stencil_id={self.stencil_id})"
+            f"ArgDat(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17} opt={self.opt}, dat_id={self.dat_id}, stencil_id={self.stencil_id})"
             )
         
 @dataclass(frozen=True)
@@ -195,11 +195,11 @@ class ArgGbl(Arg):
     dim: int
     typ: Type
     
-    opt : bool
+    #opt : bool
     
     def __str__(self) -> str:
         return (
-            f"ArgGbl(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17}, opt={self.opt}, "
+            f"ArgGbl(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17}" 
             f"ptr={self.ptr}, dim={self.dim}, type={self.typ})"
         )
 
@@ -310,7 +310,7 @@ class Loop:
             stencil_id = len(self.stencils)
             self.stencils.append(Stencil(stencil_id, dat_dim, stencil_ptr))
 
-        arg = ArgDat(arg_id, loc, access_type, dat_id, stencil_id, dat_dim, opt)
+        arg = ArgDat(arg_id, loc, access_type, opt, dat_id, stencil_id, dat_dim)
         self.args.append(arg)
 
     def addArgReduce(

@@ -246,7 +246,7 @@
     {% else %}
         {% if arglist.append(arglist.pop() + " " + lh.args[lh.args|length - 1].ptr)%}{% endif %}
     {% endif %}
-    {{indent[0] * "    "}}op2_k{{kernel_idx}}::{{lh.kernel}}({{arglist[0]}});
+    {{indent[0] * "    "}}ops_k{{kernel_idx}}::{{lh.kernel}}({{arglist[0]}});
 
     {% for arg in lh.args %}
         {% if arg is gbl or arg is reduce %}
