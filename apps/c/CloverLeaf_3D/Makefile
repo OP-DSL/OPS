@@ -35,4 +35,7 @@ OTHER_FILES=start.cpp time_step.cpp build_field.cpp read_input.cpp initialise.cp
 APP=cloverleaf
 MAIN_SRC=clover_leaf
 
+OPS_GENERATOR_VERBOSE=1
+TARGETS=dev_seq seq
+
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app

@@ -197,7 +197,7 @@ class Application:
 
             seen_const_ptrs.add(const.ptr)
 
-            if const.dim < 1:
+            if const.dim < 0:
                 raise OpsError(f"Invalid const dimension: {const.dim} of const: {const.ptr}", const.loc)
 
     def validateLoops(self, lang: Lang) -> None:
