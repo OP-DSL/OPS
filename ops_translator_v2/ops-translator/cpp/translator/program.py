@@ -42,8 +42,9 @@ def translateProgram(source: str, program: Program, force_soa: bool = False) -> 
     # 4. Update ops_init
     buffer.insert(0, '\nvoid ops_init_backend();\n')
 
-    index = buffer.search(r'\s* ops_init\(') + 1
-    buffer.insert(index, '\tops_init_backend();\n')
+    if buffer.search(r'\s* ops_init\('):
+        index = buffer.search(r'\s* ops_init\(') + 1
+        buffer.insert(index, '\tops_init_backend();\n')
 
     # 5. Translation
     new_source = buffer.translate()
