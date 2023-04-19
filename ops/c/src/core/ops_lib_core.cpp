@@ -2170,6 +2170,7 @@ void ops_upload_gbls(ops_arg* args, int nargs) {
 }
 
 void ops_free_dat(ops_dat dat) {
+  ops_execute();
   delete dat;
 }
 
