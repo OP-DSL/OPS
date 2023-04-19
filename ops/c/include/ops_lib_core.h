@@ -673,6 +673,7 @@ ops_dat ops_decl_dat(ops_block block, int data_size, int *block_size, int *base,
  * Deallocates an OPS dataset
  * @param dat     dataset to deallocate
  */
+OPS_FTN_INTEROP
 void ops_free_dat(ops_dat dat);
 
 /**

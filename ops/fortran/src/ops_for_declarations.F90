@@ -241,6 +241,12 @@ module OPS_Fortran_Declarations
             character(kind=c_char,len=1), intent(in)  :: name(*)
         end function ops_decl_block_c
 
+        subroutine ops_free_dat_c( datPtr ) BIND(C,name='ops_free_dat')
+            use, intrinsic :: ISO_C_BINDING
+
+            type(c_ptr), intent(in), value           :: datPtr
+        end subroutine ops_free_dat_c
+
         type(c_ptr) function ops_decl_dat_c ( block, dim, size, base, d_m, d_p, stride, data, type_size, type, name ) BIND(C,name='ops_decl_dat_char')
             use, intrinsic :: ISO_C_BINDING
             import :: ops_block_core, ops_dat_core
@@ -490,6 +496,11 @@ module OPS_Fortran_Declarations
             type(c_ptr), intent(in), value           :: data
         end subroutine ops_dat_set_data_c
 
+        subroutine ops_execute( ) BIND(C,name='ops_execute')
+            use, intrinsic :: ISO_C_BINDING
+
+        end subroutine ops_execute
+
         subroutine create_kerneldesc_and_enque( name, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='create_kerneldesc_and_enque')
             use, intrinsic :: ISO_C_BINDING
 
@@ -612,6 +623,11 @@ module OPS_Fortran_Declarations
     call c_f_pointer (stencil%stencilCptr, stencil%stencilPtr)
 
   end subroutine ops_decl_strided_stencil
+
+  subroutine ops_free_dat( dat )
+    type(ops_dat) :: dat
+    call ops_free_dat_c( dat%dataCPtr )
+  end subroutine ops_free_dat
 
   subroutine ops_decl_dat_real_8 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
 

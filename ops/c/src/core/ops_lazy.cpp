@@ -835,6 +835,10 @@ int ops_construct_tile_plan(OPS_instance *instance) {
 // Execute tiling plan
 ////////////////////////////////////////////////////////////////////
 void ops_execute(OPS_instance *instance) {
+
+  if(instance == NULL)
+    instance = OPS_instance::getOPSInstance();
+
   if (!instance->ops_enable_tiling) return;
   if (instance->tiling_instance == NULL)
     instance->tiling_instance = new OPS_instance_tiling();

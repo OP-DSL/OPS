@@ -698,6 +698,10 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
           (args[i].acc == OPS_WRITE || args[i].acc == OPS_MAX || args[i].acc == OPS_MIN) ||
           args[i].opt == 0)
         continue;
+
+      if(dim >= args[i].stencil->dims)
+        continue;
+
       ops_dat dat = args[i].dat;
       int dat_ndim = OPS_sub_block_list[dat->block->index]->ndim;
       if (args[i].argtype == OPS_ARG_DAT &&
