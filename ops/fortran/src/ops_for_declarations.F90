@@ -496,10 +496,11 @@ module OPS_Fortran_Declarations
             type(c_ptr), intent(in), value           :: data
         end subroutine ops_dat_set_data_c
 
-        subroutine ops_execute( ) BIND(C,name='ops_execute')
+        subroutine ops_execute_c( nullPtr ) BIND(C,name='ops_execute')
             use, intrinsic :: ISO_C_BINDING
 
-        end subroutine ops_execute
+            type(c_ptr), value :: nullPtr
+        end subroutine ops_execute_c
 
         subroutine create_kerneldesc_and_enque( name, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='create_kerneldesc_and_enque')
             use, intrinsic :: ISO_C_BINDING
@@ -1251,6 +1252,12 @@ module OPS_Fortran_Declarations
 
     call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
   end subroutine ops_reduction_result_real_8
+
+  subroutine ops_execute()
+    use, intrinsic :: ISO_C_BINDING
+
+    call ops_execute_c(c_null_ptr)
+  end subroutine ops_execute
 
  !ops_decl_const -- various versions .. no-ops in ref ?
 
