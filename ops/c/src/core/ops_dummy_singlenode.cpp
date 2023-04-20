@@ -41,6 +41,7 @@
 #include <ops_exceptions.h>
 #include <string>
 #include <assert.h>
+#include "ops_util.h"
 
 #ifndef __XDIMS__ // perhaps put this into a separate header file
 #define __XDIMS__
@@ -571,43 +572,6 @@ void copy_loop(char *data, char *ddata, int *lsize, int *dsize, int *d_m, int el
       else
         memcpy(&ddata[(moff2+loff2+(k-d_m[2])*dsize[1]*dsize[0] + (j-d_m[1])*dsize[0] - d_m[0])* elem_size],
              &data[moff + loff + k*lsize[0]*lsize[1]+j*lsize[0]],
-             lsize[0]);
-#if OPS_MAX_DIM>3
-  }
-#endif
-#if OPS_MAX_DIM>4
-  }
-#endif
-}
-
-template <int dir>
-void copy_loop_slab(char *data, char *ddata, int *lsize, int *dsize, int *d_m, int elem_size, int *range2) {
-  //TODO: add OpenMP here if needed
-#if OPS_MAX_DIM>4
-  for (int m = 0; m < lsize[4]; m++) {
-    size_t moff = m * lsize[0] * lsize[1] * lsize[2] * lsize[3];
-    size_t moff2 = (range2[2*4]+m-d_m[4])*dsize[3]*dsize[2]*dsize[1]*dsize[0];
-#else
-  size_t moff = 0;
-  size_t moff2 = 0;
-#endif
-#if OPS_MAX_DIM>3
-  for (int l = 0; l < lsize[3]; l++) {
-    size_t loff = l * lsize[0] * lsize[1] * lsize[2];
-    size_t loff2 = (range2[2*3]+l-d_m[3])*dsize[2]*dsize[1]*dsize[0];
-#else
-  size_t loff = 0;
-  size_t loff2 = 0;
-#endif
-  for (int k = 0; k < lsize[2]; k++)
-    for (int j = 0; j < lsize[1]; j++)
-      if (dir == 0)
-      memcpy(&data[moff + loff + k*lsize[0]*lsize[1]+j*lsize[0]],
-             &ddata[(moff2+loff2+(range2[2*2]+k-d_m[2])*dsize[1]*dsize[0] + (range2[2*1]+j-d_m[1])*dsize[0] + range2[2*0] - d_m[0])* elem_size],
-             lsize[0]);
-      else
-      memcpy(&ddata[(moff2+loff2+(range2[2*2]+k-d_m[2])*dsize[1]*dsize[0] + (range2[2*1]+j-d_m[1])*dsize[0] + range2[2*0] - d_m[0])* elem_size],
-          &data[moff + loff + k*lsize[0]*lsize[1]+j*lsize[0]],
              lsize[0]);
 #if OPS_MAX_DIM>3
   }

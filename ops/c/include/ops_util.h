@@ -133,5 +133,71 @@ inline int off3D(int dim, int *start, int *end, int *size, int *stride) {
   return off;
 }
 
+template <int dir>
+void copy_loop_slab(char *dest, char *src, const int *dest_size,
+                    const int *src_size, const int *d_m, const int elem_size,
+                    const int *range_max_dim) {
+  // TODO: add OpenMP here if needed
+#if OPS_MAX_DIM > 4
+  for (int m = 0; m < dest_size[4]; m++) {
+    size_t moff_dest =
+        m * dest_size[0] * dest_size[1] * dest_size[2] * dest_size[3];
+    size_t moff_src = (range_max_dim[2 * 4] + m - d_m[4]) * src_size[3] *
+                      src_size[2] * src_size[1] * src_size[0];
+#else
+  size_t moff_dest = 0;
+  size_t moff_src = 0;
+#endif
+#if OPS_MAX_DIM > 3
+    for (int l = 0; l < dest_size[3]; l++) {
+      size_t loff_dest = l * dest_size[0] * dest_size[1] * dest_size[2];
+      size_t loff_src = (range_max_dim[2 * 3] + l - d_m[3]) * src_size[2] *
+                        src_size[1] * src_size[0];
+#else
+  size_t loff_dest = 0;
+  size_t loff_src = 0;
+#endif
+      for (int k = 0; k < dest_size[2]; k++)
+        for (int j = 0; j < dest_size[1]; j++)
+          if (dir == 0) {
+            memcpy(&dest[moff_dest + loff_dest +
+                         k * dest_size[0] * dest_size[1] + j * dest_size[0]],
+                   &src[(moff_src + loff_src +
+                         (range_max_dim[2 * 2] + k - d_m[2]) * src_size[1] *
+                             src_size[0] +
+                         (range_max_dim[2 * 1] + j - d_m[1]) * src_size[0] +
+                         range_max_dim[2 * 0] - d_m[0]) *
+                        elem_size],
+                   dest_size[0]);
+            // int i0{(dest[moff_dest + loff_dest +
+            //              k * dest_size[0] * dest_size[1] + j * dest_size[0]};
+            // int i1{dest[moff_dest + loff_dest +
+            //              k * dest_size[0] * dest_size[1] + j * dest_size[0]+elem_size};
+            // int i2{dest[moff_dest + loff_dest +
+            //              k * dest_size[0] * dest_size[1] + j * dest_size[0]+2*elem_size};
+            // printf("At copy rank=%d, size0=%d xs=%d\n", ops_my_global_rank,
+            //        dest_size[0], range_max_dim[2 * 0]);
+            // printf("At copy rank=%d, i0=%d i1=%d i2=%d\n", ops_my_global_rank,
+            //        i0, i1, i2);
+          } else {
+            memcpy(&src[(moff_src + loff_src +
+                         (range_max_dim[2 * 2] + k - d_m[2]) * src_size[1] *
+                             src_size[0] +
+                         (range_max_dim[2 * 1] + j - d_m[1]) * src_size[0] +
+                         range_max_dim[2 * 0] - d_m[0]) *
+                        elem_size],
+                   &dest[moff_dest + loff_dest +
+                         k * dest_size[0] * dest_size[1] + j * dest_size[0]],
+                   dest_size[0]);
+          }
+
+#if OPS_MAX_DIM > 3
+    }
+#endif
+#if OPS_MAX_DIM > 4
+  }
+#endif
+}
+
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OP_UTIL_H */
