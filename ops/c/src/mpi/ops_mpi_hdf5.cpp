@@ -338,22 +338,17 @@ void copy_data_buf(const ops_dat &dat, const int *local_range,
     // printf("At rank %d d_im[%d]=%d d_m[%d]=%d\n", ops_my_global_rank, d,
     //        sd->d_im[d], d, dat->d_m[d]);
   }
-  local_buf_size[0] *= dat->elem_size;
 
   if (dat->block->dims > 5)
     throw OPSException(OPS_NOT_IMPLEMENTED,
                        "Error, missing OPS implementation: ops_dat_fetch_data "
                        "not implemented for dims>5");
-  if (dat->block->instance->OPS_soa && dat->dim > 1)
-    throw OPSException(OPS_NOT_IMPLEMENTED,
-                       "Error, missing OPS implementation: ops_dat_fetch_data "
-                       "not implemented for SoA");
   // printf(
   //     "At Rank II = %d istart=%d iend=%d  jstart=%d jend=%d  kstart=%d kend=%d\n",
   //     ops_my_global_rank,range_max_dim[0], range_max_dim[1], range_max_dim[2],
   //     range_max_dim[3],range_max_dim[4], range_max_dim[5]);
-  copy_loop_slab<0>(local_buf, dat->data, local_buf_size, dat->size, d_m,
-                    dat->elem_size, range_max_dim);
+  fetch_loop_slab(local_buf, dat->data, local_buf_size, dat->size, d_m,
+                    dat->elem_size, dat->dim, range_max_dim);
   dat->dirty_hd = 1;
 }
 

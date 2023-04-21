@@ -39,9 +39,9 @@
 
 #include "ops_lib_core.h"
 #include <ops_exceptions.h>
+#include "ops_util.h"
 #include <string>
 #include <assert.h>
-#include "ops_util.h"
 
 #ifndef __XDIMS__ // perhaps put this into a separate header file
 #define __XDIMS__
@@ -543,45 +543,6 @@ void ops_dat_release_raw_data_memspace(ops_dat dat, int part, ops_access acc, op
     // Unlock the ops_dat
     dat->locked_hd = 0;
 }
-
-template <int dir>
-void copy_loop(char *data, char *ddata, int *lsize, int *dsize, int *d_m, int elem_size) {
-  //TODO: add OpenMP here if needed
-#if OPS_MAX_DIM>4
-  for (int m = 0; m < lsize[4]; m++) {
-    size_t moff = m * lsize[0] * lsize[1] * lsize[2] * lsize[3];
-    size_t moff2 = (m-d_m[4])*dsize[3]*dsize[2]*dsize[1]*dsize[0];
-#else
-  size_t moff = 0;
-  size_t moff2 = 0;
-#endif
-#if OPS_MAX_DIM>3
-  for (int l = 0; l < lsize[3]; l++) {
-    size_t loff = l * lsize[0] * lsize[1] * lsize[2];
-    size_t loff2 = (l-d_m[3])*dsize[2]*dsize[1]*dsize[0];
-#else
-  size_t loff = 0;
-  size_t loff2 = 0;
-#endif
-  for (int k = 0; k < lsize[2]; k++)
-    for (int j = 0; j < lsize[1]; j++)
-      if (dir == 0)
-        memcpy(&data[moff + loff + k*lsize[0]*lsize[1]+j*lsize[0]],
-            &ddata[(moff2+loff2+(k-d_m[2])*dsize[1]*dsize[0] + (j-d_m[1])*dsize[0] - d_m[0])* elem_size],
-             lsize[0]);
-      else
-        memcpy(&ddata[(moff2+loff2+(k-d_m[2])*dsize[1]*dsize[0] + (j-d_m[1])*dsize[0] - d_m[0])* elem_size],
-             &data[moff + loff + k*lsize[0]*lsize[1]+j*lsize[0]],
-             lsize[0]);
-#if OPS_MAX_DIM>3
-  }
-#endif
-#if OPS_MAX_DIM>4
-  }
-#endif
-}
-
-
 void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
   ops_dat_fetch_data_memspace(dat, part, data, OPS_HOST);
 }
@@ -590,87 +551,107 @@ void ops_dat_fetch_data_host(ops_dat dat, int part, char *data) {
   ops_execute(dat->block->instance);
   ops_get_data(dat);
   int lsize[OPS_MAX_DIM] = {1};
+  int range2[2 * OPS_MAX_DIM] = {0};
   int ldisp[OPS_MAX_DIM] = {0};
   ops_dat_get_extents(dat, part, ldisp, lsize);
+  for (int d = 0; d < dat->block->dims; d++) {
+    range2[2 * d] = 0;
+    range2[2 * d + 1] = lsize[d] - 1;
+  }
   for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
     lsize[d] = 1;
     ldisp[d] = 0;
+    range2[2 * d] = 0;
+    range2[2 * d + 1] = 1;
   }
-  lsize[0] *= dat->elem_size; //now in bytes
-  if (dat->block->dims>5) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for dims>5");
-  if (dat->block->instance->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for SoA");
-  copy_loop<0>(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size);
+  if (dat->block->dims > 5)
+    throw OPSException(OPS_NOT_IMPLEMENTED,
+                       "Error, missing OPS implementation: ops_dat_fetch_data "
+                       "not implemented for dims>5");
+  fetch_loop_slab(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size,
+                  dat->dim, range2);
 }
 
-
-void ops_dat_fetch_data_slab_host(ops_dat dat, int part, char *data, int *range) {
-    (void)part;
+void ops_dat_fetch_data_slab_host(ops_dat dat, int part, char *data,
+                                  int *range) {
+  (void)part;
   ops_execute(dat->block->instance);
   ops_get_data(dat);
   int lsize[OPS_MAX_DIM] = {1};
-  int range2[2*OPS_MAX_DIM] = {0};
+  int range2[2 * OPS_MAX_DIM] = {0};
   for (int d = 0; d < dat->block->dims; d++) {
-    lsize[d] = range[2*d+1]-range[2*d+0];
-    range2[2*d] = range[2*d];
-    range2[2*d+1] = range[2*d+1];
-
+    lsize[d] = range[2 * d + 1] - range[2 * d + 0];
+    range2[2 * d] = range[2 * d];
+    range2[2 * d + 1] = range[2 * d + 1];
   }
   for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
     lsize[d] = 1;
-    range2[2*d] = 0;
-    range2[2*d+1] = 1;
+    range2[2 * d] = 0;
+    range2[2 * d + 1] = 1;
   }
-  lsize[0] *= dat->elem_size; //now in bytes
-  if (dat->block->dims>5) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for dims>5");
-  if (dat->block->instance->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for SoA");
-  copy_loop_slab<0>(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size, range2);
+  if (dat->block->dims > 5)
+    throw OPSException(
+        OPS_NOT_IMPLEMENTED,
+        "Error, missing OPS implementation: ops_dat_fetch_data_slab_host "
+        "not implemented for dims>5");
+  fetch_loop_slab(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size,
+                  dat->dim, range2);
 }
-
 
 void ops_dat_set_data(ops_dat dat, int part, char *data) {
   ops_dat_set_data_memspace(dat, part, data, OPS_HOST);
 }
 
-
 void ops_dat_set_data_host(ops_dat dat, int part, char *data) {
   ops_execute(dat->block->instance);
   int lsize[OPS_MAX_DIM] = {1};
+  int range2[2 * OPS_MAX_DIM] = {0};
   int ldisp[OPS_MAX_DIM] = {0};
   ops_dat_get_extents(dat, part, ldisp, lsize);
+  for (int d = 0; d < dat->block->dims; d++) {
+    range2[2 * d] = 0;
+    range2[2 * d + 1] = lsize[d] - 1;
+  }
   for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
     lsize[d] = 1;
     ldisp[d] = 0;
+    range2[2 * d] = 0;
+    range2[2 * d + 1] = 1;
   }
-  lsize[0] *= dat->elem_size; //now in bytes
-  if (dat->block->dims>5) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for dims>5");
-  if (dat->block->instance->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for SoA");
-  copy_loop<1>(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size);
+
+  if (dat->block->dims > 5)
+    throw OPSException(OPS_NOT_IMPLEMENTED,
+                       "Error, missing OPS implementation: "
+                       "ops_dat_set_data_host not implemented for dims>5");
+  set_loop_slab(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size,
+                dat->dim, range2);
   dat->dirty_hd = 1;
 }
 
 void ops_dat_set_data_slab_host(ops_dat dat, int part, char *data, int *range) {
-    (void)part;
+  (void)part;
   ops_execute(dat->block->instance);
   ops_get_data(dat);
   int lsize[OPS_MAX_DIM] = {1};
-  int range2[2*OPS_MAX_DIM] = {0};
+  int range2[2 * OPS_MAX_DIM] = {0};
   for (int d = 0; d < dat->block->dims; d++) {
-    lsize[d] = range[2*d+1]-range[2*d+0];
-    range2[2*d] = range[2*d];
-    range2[2*d+1] = range[2*d+1];
+    lsize[d] = range[2 * d + 1] - range[2 * d + 0];
+    range2[2 * d] = range[2 * d];
+    range2[2 * d + 1] = range[2 * d + 1];
   }
   for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
     lsize[d] = 1;
-    range2[2*d] = 0;
-    range2[2*d+1] = 1;
+    range2[2 * d] = 0;
+    range2[2 * d + 1] = 1;
   }
-  lsize[0] *= dat->elem_size; //now in bytes
-  if (dat->block->dims>5) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for dims>5");
-  if (dat->block->instance->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for SoA");
-  copy_loop_slab<1>(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size, range2);
+  if (dat->block->dims > 5)
+    throw OPSException(OPS_NOT_IMPLEMENTED,
+                       "Error, missing OPS implementation: "
+                       "ops_dat_set_data_slab_host not implemented for dims>5");
+  set_loop_slab(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size,
+                dat->dim, range2);
   dat->dirty_hd = 1;
 }
-
 
 int ops_dat_get_global_npartitions(ops_dat dat) {
     (void)dat;
