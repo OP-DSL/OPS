@@ -41,6 +41,7 @@
 #include <string>
 #include <vector>
 #define OPS_3D
+#define OPS_SOA
 #include "data.h"
 #define OPS_API 2
 #ifdef OPS_MPI
@@ -92,6 +93,9 @@ void copy_double_single(const ops_dat src_double, ops_dat desc_single) {
 int main(int argc, char *argv[]) {
   // OPS initialisation
   ops_init(argc, argv, 1);
+#ifdef OPS_SOA
+    OPS_instance::getOPSInstance()->OPS_soa = 1;
+#endif
   //--- OPS declarations----
   // declare block
   ops_block slice3Du{ops_decl_block(3, "slice3Du")};
