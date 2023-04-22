@@ -17,7 +17,7 @@ if (HDF5_MPI)
     add_executable(generate_file_mpi generate_file.cpp build_field_hdf5.cpp read_input.cpp initialise_chunk.cpp
                     initialise.cpp generate_hdf5.cpp)
     target_include_directories(generate_file_mpi PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/tmp/")
-    target_link_libraries(generate_file_mpi ops_mpi ops_hdf5_mpi ${HDF5_LIBRARIES}  ${HDF5_HL_LIBRARIES} OpenMP::OpenMP_CXX MPI::MPI_CXX)
+    target_link_libraries(generate_file_mpi ops_hdf5_mpi ops_mpi ${HDF5_LIBRARIES}  ${HDF5_HL_LIBRARIES} OpenMP::OpenMP_CXX MPI::MPI_CXX)
 endif()
 if (OPS_TEST AND  MPI AND HDF5_FOUND)
     enable_testing()
