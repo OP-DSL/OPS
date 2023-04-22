@@ -177,7 +177,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     d_p[d] = dat->d_p[d] + sd->d_ip[d];
   }
 
-  int *prod = sd->prod;
+  size_t *prod = sd->prod;
 
   if (!ops_compute_intersections(dat, d_pos,d_neg, iter_range, dim,
           &left_send_depth, &left_recv_depth, &right_send_depth, &right_recv_depth)) return;
@@ -380,7 +380,7 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
     throw ex;
   }
 
-  int *prod = sd->prod;
+  size_t *prod = sd->prod;
 
   //
   // negative direction
@@ -535,7 +535,7 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg,
   int right_recv_depth = 0;
   int left_send_depth = 0;
   int right_send_depth = 0;
-  int *prod = sd->prod;
+  size_t *prod = sd->prod;
 
   int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
   for (int d = 0; d < OPS_MAX_DIM; d++) {
@@ -609,7 +609,7 @@ void ops_exchange_halo_unpacker_given(ops_dat dat, int *depths, int dim,
   int left_recv_depth = depths[1];
   int right_recv_depth = depths[3];
 
-  int *prod = sd->prod;
+  size_t *prod = sd->prod;
 
   int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
   for (int d = 0; d < OPS_MAX_DIM; d++) {
@@ -1508,4 +1508,3 @@ void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size) {
     for (int d = 0; d < dat->block->dims; d++) 
       size[d] = sd->decomp_size[d] + dat->d_m[d] - dat->d_p[d];
 }
-

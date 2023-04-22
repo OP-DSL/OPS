@@ -667,3 +667,134 @@ void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size) {
     for (int d = 0; d < dat->block->dims; d++)
       size[d] = dat->size[d] + dat->d_m[d] - dat->d_p[d];
 }
+
+
+
+
+ops_dat ops_dat_copy(ops_dat orig_dat) 
+{
+   // Allocate an empty dat on a block
+   // The block has no internal data buffers
+  ops_dat dat = ops_dat_alloc_core(orig_dat->block);
+  // Do a deep copy from orig_dat into the new dat
+  ops_dat_deep_copy(dat, orig_dat);
+  return dat;
+}
+
+void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
+  // printf("file %s, name %s type = %s\n",file_name, dat->name, dat->type);
+  // need to get data from GPU
+  ops_get_data(dat);
+  ops_print_dat_to_txtfile_core(dat, file_name);
+}
+
+void ops_NaNcheck(ops_dat dat) {
+  char buffer[1]={'\0'};
+  // need to get data from GPU
+  ops_get_data(dat);
+  ops_NaNcheck_core(dat, buffer);
+}
+
+
+void _ops_partition(OPS_instance *instance, const char *routine) {
+  (void)instance;
+  (void)routine;
+}
+
+void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::string, void*>& opts) {
+  (void)instance;
+  (void)routine;
+  (void)opts;
+}
+
+void ops_partition(const char *routine) {
+  (void)routine;
+}
+
+void ops_partition_opts(const char *routine, std::map<std::string, void*>& opts) {
+  (void)routine;
+  (void)opts;
+}
+
+void ops_timers(double *cpu, double *et) {
+  ops_timers_core(cpu, et);
+}
+
+void _ops_exit(OPS_instance *instance) {
+  if (instance->is_initialised == 0) return;
+  if (instance->ops_halo_buffer!=NULL) ops_free(instance->ops_halo_buffer);
+  if (instance->OPS_consts_bytes > 0) {
+    ops_free(instance->OPS_consts_h);
+    if (instance->OPS_gbl_prev!=NULL) ops_device_freehost(instance, (void**)&instance->OPS_gbl_prev);
+    if (instance->OPS_consts_d!=NULL) ops_device_free(instance, (void**)&instance->OPS_consts_d);
+  }
+  if (instance->OPS_reduct_bytes > 0) {
+    ops_free(instance->OPS_reduct_h);
+    if (instance->OPS_reduct_d!=NULL) ops_device_free(instance, (void**)&instance->OPS_reduct_d);
+  }
+
+  ops_exit_core(instance);
+  ops_exit_device(instance);
+}
+
+void ops_dat_deep_copy(ops_dat target, ops_dat source) 
+{
+  /* The constraint is that OPS makes it very easy for users to alias ops_dats.  A deep copy
+    * should work even if dats have been aliased.  Suppose a user has written something like
+    *
+    *    ops_dat x = ops_decl_dat( ... );
+    *    ops_dat y = ops_decl_dat( ... );
+    *    ops_dat z = x;
+    *    ops_dat_deep_copy(x, y);
+    *
+    * In this case we cannot call ops_free_dat(x) since that would leave 'z' pointing at invalid memory.
+    * OPS has no knowledge of 'z' - there is no entry in any internal tables corresponding to 'z'.
+    * Hence the only way this function can work is if we leave (*x) intact (i.e the ops_dat_core pointed at
+    * by x) and change the entries inside the ops_dat_core.  Then 'z' will continue to point at valid data.
+    *
+    * If the blocks in source and target are different, then the deep copy could entail MPI re-distribution of 
+    * data. For the moment, perhaps we ignore this ... ?
+    */
+  // Copy the metadata.  This will reallocate target->data if necessary
+  int realloc = ops_dat_copy_metadata_core(target, source);
+  if(realloc && source->block->instance->OPS_hybrid_gpu) {
+    if(target->data_d != nullptr) {
+      ops_device_free(source->block->instance, (void**)&(target->data_d));
+      target->data_d = nullptr;
+    }
+    ops_device_malloc(source->block->instance, (void**)&(target->data_d), target->mem);
+  }
+   // Metadata and buffers are set up
+   // Enqueue a lazy copy of data from source to target
+  int range[2*OPS_MAX_DIM];
+  for (int i = 0; i < source->block->dims; i++) {
+    range[2*i] = source->base[i] + source->d_m[i];
+    range[2*i+1] = range[2*i] + source->size[i];
+  }
+  for (int i = source->block->dims; i < OPS_MAX_DIM; i++) {
+    range[2*i] = 0;
+    range[2*i+1] = 1;
+  }
+  ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, source, range);
+  if (source->block->instance->OPS_hybrid_gpu) {
+    desc->name = "ops_internal_copy_device";
+    desc->device = 1;
+    desc->function = ops_internal_copy_device;
+  } else {
+    desc->name = "ops_internal_copy_seq";
+    desc->device = 0;
+    desc->function = ops_internal_copy_seq;
+  }
+  ops_enqueue_kernel(desc);
+}
+
+void _ops_init(OPS_instance *instance, const int argc, const char * const argv[], const int diags) {
+  ops_init_core(instance, argc, argv, diags);
+  ops_init_device(instance, argc, argv, diags);
+}
+
+void ops_init(const int argc, const char *const argv[], const int diags) {
+  _ops_init(OPS_instance::getOPSInstance(), argc, argv, diags);
+}
+
+void ops_exit() { _ops_exit(OPS_instance::getOPSInstance()); }

@@ -155,7 +155,15 @@ struct ops_kernel_descriptor {
 
 };
 
+///
+/// Struct duplicating information in MPI_Datatypes for (strided) halo access
+///
 
+typedef struct {
+  int count;       ///< number of blocks
+  int blocklength; ///< size of blocks
+  int stride;      ///< stride between blocks
+} ops_int_halo;
 
 
 ops_reduction ops_decl_reduction_handle_core(OPS_instance *instance, int size, const char *type,
@@ -198,7 +206,6 @@ ops_halo ops_decl_halo_core(OPS_instance *instance, ops_dat from, ops_dat to, in
 
 ops_arg ops_arg_dat_core(ops_dat dat, ops_stencil stencil, ops_access acc);
 ops_arg ops_arg_gbl_core(char *data, int dim, int size, ops_access acc);
-
 
 OPS_FTN_INTEROP
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name);
@@ -288,6 +295,20 @@ void* ops_calloc (size_t num, size_t size);
 void ops_init_zero(char *data, size_t bytes);
 void ops_convert_layout(char *in, char *out, ops_block block, int size, int *dat_size, int *dat_size_orig, int type_size, int hybrid_layout);
 
+//Includes for common device backends
+void ops_init_device(OPS_instance *instance, const int argc, const char *const argv[], const int diags);
+void ops_device_free(OPS_instance *instance, void** ptr);
+void ops_device_freehost(OPS_instance *instance, void** ptr);
+void ops_device_exit(OPS_instance *instance);
+void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes);
+void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes);
+void ops_device_memcpy_h2d(OPS_instance *instance, void** to, void **from, size_t size);
+void ops_device_memcpy_d2h(OPS_instance *instance, void** to, void **from, size_t size);
+void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_t size);
+void ops_device_memset(OPS_instance *instance, void** ptr, int val, size_t size);
+void ops_device_sync(OPS_instance *instance);
+void ops_exit_device(OPS_instance *instance);
+
 
 void _ops_init(OPS_instance *instance, const int argc, const char * const argv[], const int diags_level);
 ops_block _ops_decl_block(OPS_instance *instance, int dims, const char * name);
@@ -325,6 +346,10 @@ ops_dat ops_dat_alloc_core(ops_block block);
 int ops_dat_copy_metadata_core(ops_dat target, ops_dat orig_dat);
 ops_kernel_descriptor * ops_dat_deep_copy_core(ops_dat target, ops_dat orig_dat, int *range);
 void ops_internal_copy_seq(ops_kernel_descriptor *desc);
+void ops_internal_copy_device(ops_kernel_descriptor *desc);
+
+OPS_FTN_INTEROP
+void ops_upload_gbls(ops_arg* args, int nargs);
 
 //
 // wrapper functions to handle MPI global reductions

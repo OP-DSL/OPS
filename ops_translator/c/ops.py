@@ -92,9 +92,9 @@ import re
 from ops_gen_mpi_inline import ops_gen_mpi_inline
 from ops_gen_mpi_lazy import ops_gen_mpi_lazy
 from ops_gen_mpi_cuda import ops_gen_mpi_cuda
-from ops_gen_mpi_hip import ops_gen_mpi_hip
 from ops_gen_mpi_openacc import ops_gen_mpi_openacc
 from ops_gen_mpi_opencl import ops_gen_mpi_opencl
+from ops_gen_sycl import ops_gen_sycl
 
 from util import comment_remover, remove_trailing_w_space
 from config import (
@@ -820,10 +820,12 @@ def generate_ops_files(
 def generate_kernel_files(app_name, consts, kernels, soa_set):
     ops_gen_mpi_inline(app_name, consts, kernels, soa_set)
     ops_gen_mpi_lazy(app_name, consts, kernels, soa_set)
+    ops_gen_mpi_lazy(app_name, consts, kernels, soa_set, offload=1)
     ops_gen_mpi_cuda(app_name, consts, kernels, soa_set)
-    ops_gen_mpi_hip(app_name, consts, kernels, soa_set)
+    ops_gen_mpi_cuda(app_name, consts, kernels, soa_set, hip=1)
     ops_gen_mpi_openacc(app_name, consts, kernels, soa_set)
     ops_gen_mpi_opencl(app_name, consts, kernels, soa_set)
+    ops_gen_sycl(app_name, consts, kernels, soa_set)
 
     import subprocess
 

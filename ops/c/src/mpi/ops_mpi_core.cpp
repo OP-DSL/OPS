@@ -253,25 +253,6 @@ void ops_set_dirtybit_host(ops_arg *args, int nargs) {
   }
 }
 
-ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
-                    ops_access acc) {
-  ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
-  (&temp)->dim = dim;
-  return temp;
-}
-
-ops_arg ops_arg_dat_opt(ops_dat dat, int dim, ops_stencil stencil,
-                        char const *type, ops_access acc, int flag) {
-  ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
-  (&temp)->dim = dim;
-  (&temp)->opt = flag;
-  return temp;
-}
-
-ops_arg ops_arg_gbl_char(char *data, int dim, int size, ops_access acc) {
-  return ops_arg_gbl_core(data, dim, size, acc);
-}
-
 ops_arg ops_arg_reduce(ops_reduction handle, int dim, const char *type,
                        ops_access acc) {
   int was_initialized = handle->initialized;
@@ -603,8 +584,8 @@ ops_dat ops_dat_copy_mpi_core(ops_dat orig_dat) {
   sd->dat = dat;
   sd->dirty_dir_send = dirt1;
   sd->dirty_dir_recv = dirt2;
-  int *prod_t = (int *)ops_malloc((orig_dat->block->dims + 1) * sizeof(int));
-  memcpy(prod_t, &OPS_sub_dat_list[orig_dat->index]->prod[-1], (orig_dat->block->dims + 1) * sizeof(int));
+  size_t *prod_t = (size_t *)ops_malloc((orig_dat->block->dims + 1) * sizeof(size_t));
+  memcpy(prod_t, &OPS_sub_dat_list[orig_dat->index]->prod[-1], (orig_dat->block->dims + 1) * sizeof(size_t));
   sd->prod = &prod_t[1];
   memcpy(dirt1, OPS_sub_dat_list[orig_dat->index]->dirty_dir_send, sizeof(int) * 2 * dat->block->dims * MAX_DEPTH);
   memcpy(dirt2, OPS_sub_dat_list[orig_dat->index]->dirty_dir_recv, sizeof(int) * 2 * dat->block->dims * MAX_DEPTH);

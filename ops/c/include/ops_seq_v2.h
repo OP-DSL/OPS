@@ -156,7 +156,7 @@ static void shift_arg(const ops_arg &arg, char *p, int m, const int* start,
 template <typename T> struct param_handler<ACC<T>> {
   static char *construct(const ops_arg &arg, int dim, int ndim, int start[], ops_block block) { 
     if (arg.argtype == OPS_ARG_DAT) {
-      int d_m[OPS_MAX_DIM];
+      int d_m[OPS_MAX_DIM] = {};
   #ifdef OPS_MPI
       for (int d = 0; d < dim; d++) d_m[d] = arg.dat->d_m[d] + OPS_sub_dat_list[arg.dat->index]->d_im[d];
   #else //OPS_MPI
@@ -254,7 +254,7 @@ void ops_par_loop_impl(indices<J...>, void (*kernel)(ParamType...),
   char *p_a[N] = 
     {param_handler<param_remove_cvref_t<ParamType>>::construct(arguments, dim, ndim, start, block)...};
   //Offs decl
-  int offs[N][OPS_MAX_DIM];
+  int offs[N][OPS_MAX_DIM] = {};
   (void) std::initializer_list<int>{(initoffs(arguments, offs[J], ndim, start, end), 0)...};
 
   int total_range = 1;
