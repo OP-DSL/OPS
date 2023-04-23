@@ -604,28 +604,17 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
 
 void ops_dat_set_data_host(ops_dat dat, int part, char *data) {
   ops_execute(dat->block->instance);
-  int lsize[OPS_MAX_DIM] = {1};
-  int range2[2 * OPS_MAX_DIM] = {0};
-  int ldisp[OPS_MAX_DIM] = {0};
-  ops_dat_get_extents(dat, part, ldisp, lsize);
-  for (int d = 0; d < dat->block->dims; d++) {
-    range2[2 * d] = 0;
-    range2[2 * d + 1] = lsize[d] - 1;
-  }
-  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
-    lsize[d] = 1;
-    ldisp[d] = 0;
-    range2[2 * d] = 0;
-    range2[2 * d + 1] = 1;
-  }
 
-  if (dat->block->dims > 5)
-    throw OPSException(OPS_NOT_IMPLEMENTED,
-                       "Error, missing OPS implementation: "
-                       "ops_dat_set_data_host not implemented for dims>5");
-  set_loop_slab(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size,
-                dat->dim, range2);
-  dat->dirty_hd = 1;
+  int *range{new int(2 * dat->block->dims)};
+  for (int d = 0; d < dat->block->dims; d++) {
+    range[2 * d] = dat->d_m[d];
+    range[2 * d + 1] = dat->size[d] - dat->d_p[d];
+    // ops_printf("range[%d]=%d range[%d]=%d size=%d d_p=%d d_m=%d\n", 2 * d,
+    //            range[2 * d], 2 * d + 1, range[2 * d + 1], dat->size[d],
+    //            dat->d_p[d], dat->d_m[d]);
+  }
+  ops_dat_set_data_slab_host(dat, 0, data, range);
+  delete range;
 }
 
 void ops_dat_set_data_slab_host(ops_dat dat, int part, char *data, int *range) {
@@ -671,7 +660,7 @@ void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size) {
 
 
 
-ops_dat ops_dat_copy(ops_dat orig_dat) 
+ops_dat ops_dat_copy(ops_dat orig_dat)
 {
    // Allocate an empty dat on a block
    // The block has no internal data buffers
@@ -737,7 +726,7 @@ void _ops_exit(OPS_instance *instance) {
   ops_exit_device(instance);
 }
 
-void ops_dat_deep_copy(ops_dat target, ops_dat source) 
+void ops_dat_deep_copy(ops_dat target, ops_dat source)
 {
   /* The constraint is that OPS makes it very easy for users to alias ops_dats.  A deep copy
     * should work even if dats have been aliased.  Suppose a user has written something like
@@ -752,7 +741,7 @@ void ops_dat_deep_copy(ops_dat target, ops_dat source)
     * Hence the only way this function can work is if we leave (*x) intact (i.e the ops_dat_core pointed at
     * by x) and change the entries inside the ops_dat_core.  Then 'z' will continue to point at valid data.
     *
-    * If the blocks in source and target are different, then the deep copy could entail MPI re-distribution of 
+    * If the blocks in source and target are different, then the deep copy could entail MPI re-distribution of
     * data. For the moment, perhaps we ignore this ... ?
     */
   // Copy the metadata.  This will reallocate target->data if necessary
