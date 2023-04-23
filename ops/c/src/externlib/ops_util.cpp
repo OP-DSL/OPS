@@ -297,7 +297,7 @@ void ops_convert_layout(char *in, char *out, ops_block block, int size, int *dat
       std::vector<int> size_in(num_dims);
       std::vector<int> size_out(num_dims);
       std::vector<int> dim_perm(num_dims);
-      
+
       int s1 = (size>1 && !block->instance->OPS_soa)?1:0;
       int s2 = (size>1)?1:0;
 
@@ -305,7 +305,7 @@ void ops_convert_layout(char *in, char *out, ops_block block, int size, int *dat
         size_in[0] = size;
         int idx_dim = (block->instance->OPS_soa)?
             (/*(block->count>1?1:0)+*/block->dims):0;
-        dim_perm[0] = idx_dim; 
+        dim_perm[0] = idx_dim;
         size_out[idx_dim] = size;
       }
 
@@ -345,4 +345,152 @@ void ops_init_zero(char *data, size_t bytes) {
   for (long long i = 0; i < (long long)bytes; i++) {
     data[i] = 0;
   }
+}
+
+void fetch_loop_slab(char *buf, char *dat, const int *buf_size,
+                     const int *dat_size, const int *d_m, int elem_size,
+                     int dat_dim, const int *range_max_dim) {
+  // TODO: add OpenMP here if needed
+
+#if OPS_MAX_DIM > 4
+  for (int m = 0; m < buf_size[4]; m++) {
+#endif
+#if OPS_MAX_DIM > 3
+    for (int l = 0; l < buf_size[3]; l++) {
+#endif
+      for (int k = 0; k < buf_size[2]; k++) {
+        for (int j = 0; j < buf_size[1]; j++) {
+          size_t buf_index{0}, dat_index{0};
+          size_t moff_buf{0}, moff_dat{0}, loff_buf{0}, loff_dat{0};
+#if OPS_MAX_DIM > 4
+          moff_buf = m * buf_size[0] * buf_size[1] * buf_size[2] * buf_size[3];
+          moff_dat = (range_max_dim[2 * 4] + m - d_m[4]) * dat_size[3] *
+                     dat_size[2] * dat_size[1] * dat_size[0];
+#endif
+#if OPS_MAX_DIM > 3
+          loff_buf = l * buf_size[0] * buf_size[1] * buf_size[2];
+          loff_dat = (range_max_dim[2 * 3] + l - d_m[3]) * dat_size[2] *
+                     dat_size[1] * dat_size[0];
+#endif
+          if (OPS_instance::getOPSInstance()->OPS_soa == 1) {
+            for (int i = 0; i < buf_size[0]; i++) {
+              for (int d = 0; d < dat_dim; d++) {
+                const int type_bits{elem_size / dat_dim};
+                size_t doff_dat{d};
+#if OPS_MAX_DIM > 4
+                doff_dat *= (dat_size[4]);
+#endif
+#if OPS_MAX_DIM > 3
+                doff_dat *= (dat_size[3]);
+#endif
+                doff_dat *= (dat_size[2] * dat_size[1] * dat_size[0]);
+                buf_index =
+                    (moff_buf + loff_buf + k * buf_size[0] * buf_size[1] +
+                     j * buf_size[0] + i) *
+                        elem_size +
+                    d * type_bits;
+                dat_index = (doff_dat + moff_dat + loff_dat +
+                             (range_max_dim[2 * 2] + k - d_m[2]) * dat_size[1] *
+                                 dat_size[0] +
+                             (range_max_dim[2 * 1] + j - d_m[1]) * dat_size[0] +
+                             range_max_dim[2 * 0] + i - d_m[0]) *
+                            type_bits;
+                memcpy(&buf[buf_index], &dat[dat_index], type_bits);
+              } // d
+            }   // i
+          } else {
+            buf_index = (moff_buf + loff_buf + k * buf_size[0] * buf_size[1] +
+                         j * buf_size[0]) *
+                        elem_size;
+            dat_index = (moff_dat + loff_dat +
+                         (range_max_dim[2 * 2] + k - d_m[2]) * dat_size[1] *
+                             dat_size[0] +
+                         (range_max_dim[2 * 1] + j - d_m[1]) * dat_size[0] +
+                         range_max_dim[2 * 0] - d_m[0]) *
+                        elem_size;
+            memcpy(&buf[buf_index], &dat[dat_index], buf_size[0] * elem_size);
+          } // OPS_SOA
+        }   // j
+      }     // k
+
+#if OPS_MAX_DIM > 3
+    } // l
+#endif
+#if OPS_MAX_DIM > 4
+  } // m
+#endif
+}
+
+void set_loop_slab(char *buf, char *dat, const int *buf_size,
+                   const int *dat_size, const int *d_m, int elem_size,
+                   int dat_dim, const int *range_max_dim) {
+  // TODO: add OpenMP here if needed
+
+#if OPS_MAX_DIM > 4
+  for (int m = 0; m < buf_size[4]; m++) {
+#endif
+#if OPS_MAX_DIM > 3
+    for (int l = 0; l < buf_size[3]; l++) {
+#endif
+      for (int k = 0; k < buf_size[2]; k++) {
+        for (int j = 0; j < buf_size[1]; j++) {
+          size_t buf_index{0}, dat_index{0};
+          size_t moff_buf{0}, moff_dat{0}, loff_buf{0}, loff_dat{0};
+#if OPS_MAX_DIM > 4
+          moff_buf = m * buf_size[0] * buf_size[1] * buf_size[2] * buf_size[3];
+          moff_dat = (range_max_dim[2 * 4] + m - d_m[4]) * dat_size[3] *
+                     dat_size[2] * dat_size[1] * dat_size[0];
+#endif
+#if OPS_MAX_DIM > 3
+          loff_buf = l * buf_size[0] * buf_size[1] * buf_size[2];
+          loff_dat = (range_max_dim[2 * 3] + l - d_m[3]) * dat_size[2] *
+                     dat_size[1] * dat_size[0];
+#endif
+          if (OPS_instance::getOPSInstance()->OPS_soa == 1) {
+            for (int i = 0; i < buf_size[0]; i++) {
+              for (int d = 0; d < dat_dim; d++) {
+                const int type_bits{elem_size / dat_dim};
+                size_t doff_dat{d};
+#if OPS_MAX_DIM > 4
+                doff_dat *= (dat_size[4]);
+#endif
+#if OPS_MAX_DIM > 3
+                doff_dat *= (dat_size[3]);
+#endif
+                doff_dat *= (dat_size[2] * dat_size[1] * dat_size[0]);
+                buf_index =
+                    (moff_buf + loff_buf + k * buf_size[0] * buf_size[1] +
+                     j * buf_size[0] + i) *
+                        elem_size +
+                    d * type_bits;
+                dat_index = (doff_dat + moff_dat + loff_dat +
+                             (range_max_dim[2 * 2] + k - d_m[2]) * dat_size[1] *
+                                 dat_size[0] +
+                             (range_max_dim[2 * 1] + j - d_m[1]) * dat_size[0] +
+                             range_max_dim[2 * 0] + i - d_m[0]) *
+                            type_bits;
+                memcpy(&dat[dat_index], &buf[buf_index], type_bits);
+              } // d
+            }   // i
+          } else {
+            buf_index = (moff_buf + loff_buf + k * buf_size[0] * buf_size[1] +
+                         j * buf_size[0]) *
+                        elem_size;
+            dat_index = (moff_dat + loff_dat +
+                         (range_max_dim[2 * 2] + k - d_m[2]) * dat_size[1] *
+                             dat_size[0] +
+                         (range_max_dim[2 * 1] + j - d_m[1]) * dat_size[0] +
+                         range_max_dim[2 * 0] - d_m[0]) *
+                        elem_size;
+            memcpy(&dat[dat_index], &buf[buf_index], buf_size[0] * elem_size);
+          } // OPS_SOA
+        }   // j
+      }     // k
+
+#if OPS_MAX_DIM > 3
+    } // l
+#endif
+#if OPS_MAX_DIM > 4
+  } // m
+#endif
 }
