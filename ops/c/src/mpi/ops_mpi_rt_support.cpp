@@ -37,8 +37,7 @@
   */
 #include <vector>
 #include <ops_lib_core.h>
-
-
+#include "ops_util.h"
 #include <mpi.h>
 #include <ops_mpi_core.h>
 #include <ops_exceptions.h>
@@ -1436,27 +1435,23 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
 }
 
 void ops_dat_set_data_host(ops_dat dat, int part, char *data) {
-throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Not implemented");
+  throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Not implemented");
 }
-void ops_dat_set_data_slab_host(ops_dat dat, int part, char *data, int *range) {
-throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Not implemented");
-}
-void ops_dat_set_data(ops_dat dat, int part, char *data) {
+void ops_dat_set_data_slab_host(ops_dat dat, int part, char *local_buf,
+                                int *local_range) {
+  (void)part;
+  sub_dat *sd = OPS_sub_dat_list[dat->index];
   ops_execute(dat->block->instance);
-  int lsize[OPS_MAX_DIM] = {1};
-  int ldisp[OPS_MAX_DIM] = {1};
+  int local_buf_size[OPS_MAX_DIM] = {1};
   int range_max_dim[2 * OPS_MAX_DIM] = {0};
   int d_m[OPS_MAX_DIM]{0};
-  sub_dat_list sd = OPS_sub_dat_list[dat->index];
-  ops_dat_get_extents(dat, part, ldisp, lsize);
-
   for (int d = 0; d < dat->block->dims; d++) {
-    range_max_dim[2 * d] = 0;
-    range_max_dim[2 * d + 1] = lsize[d] - 1;
+    local_buf_size[d] = local_range[2 * d + 1] - local_range[2 * d + 0];
+    range_max_dim[2 * d] = local_range[2 * d];
+    range_max_dim[2 * d + 1] = local_range[2 * d + 1];
   }
   for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
-    lsize[d] = 1;
-    ldisp[d] = 0;
+    local_buf_size[d] = 1;
     range_max_dim[2 * d] = 0;
     range_max_dim[2 * d + 1] = 1;
   }
@@ -1469,11 +1464,15 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
 
   if (dat->block->dims > 5)
     throw OPSException(OPS_NOT_IMPLEMENTED,
-                       "Error, missing OPS implementation: ops_dat_set_data "
-                       "not implemented for dims>3");
+                       "Error, missing OPS implementation: ops_dat_fetch_data "
+                       "not implemented for dims>5");
+  // printf(
+  //     "At Rank II = %d istart=%d iend=%d  jstart=%d jend=%d  kstart=%d kend=%d\n",
+  //     ops_my_global_rank,range_max_dim[0], range_max_dim[1], range_max_dim[2],
+  //     range_max_dim[3],range_max_dim[4], range_max_dim[5]);
 
-  set_loop_slab(data, dat->data, lsize, dat->size, d_m, dat->elem_size,
-                dat->dim, range_max_dim);
+  set_loop_slab(local_buf, dat->data, local_buf_size, dat->size, d_m,
+                dat->elem_size, dat->dim, range_max_dim);
 
   dat->dirty_hd = 1;
   sd->dirtybit = 1;
@@ -1481,6 +1480,22 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
     sd->dirty_dir_send[i] = 1;
     sd->dirty_dir_recv[i] = 1;
   }
+}
+
+void ops_dat_set_data(ops_dat dat, int part, char *data) {
+  ops_execute(dat->block->instance);
+  const sub_dat *sd = OPS_sub_dat_list[dat->index];
+  const int space_dim{dat->block->dims};
+  int *local_range{new int(2 * space_dim)};
+  int *range{new int(2 * space_dim)};
+  for (int d = 0; d < space_dim; d++) {
+    range[2 * d] = sd->gbl_d_m[d];
+    range[2 * d + 1] = sd->gbl_size[d] + sd->gbl_d_m[d];
+  }
+  determine_local_range(dat, range, local_range);
+  ops_dat_set_data_slab_host(dat, 0, data, local_range);
+  delete range;
+  delete local_range;
 }
 
 size_t ops_dat_get_slab_extents(ops_dat dat, int part, int *disp, int *size, int *slab) {
