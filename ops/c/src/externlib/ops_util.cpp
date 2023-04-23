@@ -45,8 +45,11 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include <ops_util.h>
+#ifdef OPS_MPI
+#include <ops_mpi_core.h>
+#else
 #include <ops_lib_core.h>
+#endif
 
 #include <vector>
 
@@ -494,3 +497,41 @@ void set_loop_slab(char *buf, char *dat, const int *buf_size,
   } // m
 #endif
 }
+
+void determine_local_range(const ops_dat dat, const int *global_range,
+                           int *local_range) {
+  ops_arg dat_arg;
+  const int space_dim{dat->block->dims};
+  if (space_dim == 3) {
+    int s3D_000[]{0, 0, 0};
+    ops_stencil S3D_000{ops_decl_stencil(3, 1, s3D_000, "000")};
+    dat_arg = ops_arg_dat(dat, dat->dim, S3D_000, dat->type, OPS_READ);
+  }
+
+  if (space_dim == 2) {
+    int s2D_000[]{0, 0, 0};
+    ops_stencil S2D_000{ops_decl_stencil(2, 1, s2D_000, "000")};
+    dat_arg = ops_arg_dat(dat, dat->dim, S2D_000, dat->type, OPS_READ);
+  }
+
+  int *arg_idx{new int(space_dim)};
+
+  int *local_start{new int(space_dim)};
+  int *local_end{new int(space_dim)};
+  if (compute_ranges(&dat_arg, 1, dat->block, (int *)global_range, local_start,
+                     local_end, arg_idx) < 0) {
+    return;
+  }
+  for (int i = 0; i < space_dim; i++) {
+    local_range[2 * i] = local_start[i];
+    local_range[2 * i + 1] = local_end[i];
+  }
+  // printf(
+  //     "At Rank = %d istart=%d iend=%d  jstart=%d jend=%d  kstart=%d kend=%d\n",
+  //     ops_my_global_rank, local_range[0], local_range[1], local_range[2],
+  //     local_range[3], local_range[4], local_range[5]);
+  delete arg_idx;
+  delete local_start;
+  delete local_end;
+}
+

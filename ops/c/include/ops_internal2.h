@@ -33,7 +33,7 @@
 /** @file
  * @brief OPS internal types and function declarations
  * @author Istvan Reguly
- * @details this header contains type and function declarations 
+ * @details this header contains type and function declarations
  * not needed by ops_lib_core.h, but needed by backends and generated code
  */
 
@@ -259,8 +259,8 @@ void ops_dat_fetch_data_host(ops_dat dat, int part, char *data);
 void ops_dat_fetch_data_slab_host(ops_dat dat, int part, char *data, int *range);
 
 void ops_dat_set_data_host(ops_dat dat, int part, char *data);
-void ops_dat_set_data_slab_host(ops_dat dat, int part, char *data, int *range);
-
+void ops_dat_set_data_slab_host(ops_dat dat, int part, char *local_buf,
+                                int *local_range);
 
 void ops_compute_moment(double t, double *first, double *second);
 

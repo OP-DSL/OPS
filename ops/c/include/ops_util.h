@@ -161,5 +161,12 @@ void set_loop_slab(char *buf, char *dat, const int *buf_size,
 void fetch_loop_slab(char *buf, char *dat, const int *buf_size,
                      const int *dat_size, const int *d_m, int elem_size,
                      int dat_dim, const int *range_max_dim);
+
+/// @brief determine the range of a ops_dat at a local rank
+/// @param dat a ops_dat
+/// @param global_range
+/// @param local_range
+void determine_local_range(const ops_dat dat, const int *global_range,
+                           int *local_range);
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OP_UTIL_H */

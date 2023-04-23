@@ -617,16 +617,16 @@ void ops_dat_set_data_host(ops_dat dat, int part, char *data) {
   delete range;
 }
 
-void ops_dat_set_data_slab_host(ops_dat dat, int part, char *data, int *range) {
+void ops_dat_set_data_slab_host(ops_dat dat, int part, char *local_buf,
+                                int *local_range) {
   (void)part;
   ops_execute(dat->block->instance);
-  ops_get_data(dat);
   int lsize[OPS_MAX_DIM] = {1};
   int range2[2 * OPS_MAX_DIM] = {0};
   for (int d = 0; d < dat->block->dims; d++) {
-    lsize[d] = range[2 * d + 1] - range[2 * d + 0];
-    range2[2 * d] = range[2 * d];
-    range2[2 * d + 1] = range[2 * d + 1];
+    lsize[d] = local_range[2 * d + 1] - local_range[2 * d + 0];
+    range2[2 * d] = local_range[2 * d];
+    range2[2 * d + 1] = local_range[2 * d + 1];
   }
   for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
     lsize[d] = 1;
@@ -637,8 +637,8 @@ void ops_dat_set_data_slab_host(ops_dat dat, int part, char *data, int *range) {
     throw OPSException(OPS_NOT_IMPLEMENTED,
                        "Error, missing OPS implementation: "
                        "ops_dat_set_data_slab_host not implemented for dims>5");
-  set_loop_slab(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size,
-                dat->dim, range2);
+  set_loop_slab(local_buf, dat->data, lsize, dat->size, dat->d_m,
+                dat->elem_size, dat->dim, range2);
   dat->dirty_hd = 1;
 }
 
