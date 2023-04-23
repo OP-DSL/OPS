@@ -1128,10 +1128,11 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   }
 
   int stride[] = {1, 1, 1, 1, 1};
+  char *data_char = NULL;
   ops_dat created_dat = ops_decl_dat_char(
       block, dat_dim, read_size /*global dat size in each dimension*/,
-      read_base, read_d_m, read_d_p, stride, data, type_size /*size of(type)*/,
-      type,
+      read_base, read_d_m, read_d_p, stride, data_char,
+      type_size /*size of(type)*/, type,
       dat_name); // TODO: multigrid stride support
 
   created_dat->is_hdf5 = 1;
@@ -1142,6 +1143,9 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   H5Pclose(plist_id);
   H5Gclose(group_id);
   H5Fclose(file_id);
+  //Here we assum the data read in are in AoS layout, so we need to transpose
+  ops_dat_set_data_host(created_dat, 0, data);
+  free(data);
 
   return created_dat;
 }

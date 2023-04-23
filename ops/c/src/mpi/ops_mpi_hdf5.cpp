@@ -1824,14 +1824,15 @@ void ops_read_dat_hdf5(ops_dat dat) {
     }
 
     // add MPI halos
-    if (block->dims == 2)
-      add_mpi_halos2D(dat, size2, l_disp, data);
-    else if (block->dims == 3)
-      add_mpi_halos3D(dat, size2, l_disp, data);
-    else if (block->dims == 4)
-      add_mpi_halos4D(dat, size2, l_disp, data);
-    else if (block->dims == 5)
-      add_mpi_halos5D(dat, size2, l_disp, data);
+    // if (block->dims == 2)
+    //   add_mpi_halos2D(dat, size2, l_disp, data);
+    // else if (block->dims == 3)
+    //   add_mpi_halos3D(dat, size2, l_disp, data);
+    // else if (block->dims == 4)
+    //   add_mpi_halos4D(dat, size2, l_disp, data);
+    // else if (block->dims == 5)
+    //   add_mpi_halos5D(dat, size2, l_disp, data);
+    ops_dat_set_data(dat, 0, data);
 
     free(data);
     H5Sclose(filespace);
