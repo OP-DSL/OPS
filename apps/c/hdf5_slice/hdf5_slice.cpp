@@ -92,7 +92,7 @@ void copy_double_single(const ops_dat src_double, ops_dat desc_single) {
 
 int main(int argc, char *argv[]) {
   // OPS initialisation
-  ops_init(argc, argv, 1);
+  ops_init(argc, argv, 5);
 #ifdef OPS_SOA
     OPS_instance::getOPSInstance()->OPS_soa = 1;
 #endif
