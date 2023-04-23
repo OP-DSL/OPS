@@ -35,6 +35,7 @@
   */
 
 #define OPS_3D
+#define OPS_SOA
 #include "ops_seq_v2.h"
 
 #include <math.h>
@@ -49,6 +50,9 @@ int main(int argc, char **argv) {
   // INITIALISE OPS
   //---------------------------------------
   ops_init(argc, argv, 5);
+#ifdef OPS_SOA
+  OPS_instance::getOPSInstance()->OPS_soa = 1;
+#endif
   ops_printf("Hello world from OPS!\n\n");
   //*******************************************************************
 
