@@ -38,11 +38,14 @@
 
 #ifndef __OPS_HDF5_COMMON_H
 #define __OPS_HDF5_COMMON_H
-#include  "hdf5.h"
+#include "hdf5.h"
 #include "hdf5_hl.h"
 #include<string>
 #include<vector>
 #include "ops_exceptions.h"
+#include "ops_hdf5.h"
+
+
 
 hid_t h5_type(const char *type);
 
@@ -58,7 +61,7 @@ void H5_dataset_space(const hid_t file_id, const int data_dims,
 void H5_dataset_space(const hid_t file_id, const int data_dims,
                       const hsize_t *global_data_size,
                       const std::vector<std::string> &h5_name_list,
-                      const char *data_type, const int real_precision,
+                      const char *data_type, REAL_PRECISION real_precision,
                       std::vector<hid_t> &groupid_list, hid_t &dataset_id,
                       hid_t &file_space);
 

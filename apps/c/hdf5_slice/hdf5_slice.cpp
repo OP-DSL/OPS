@@ -168,9 +168,9 @@ int main(int argc, char *argv[]) {
   ops_write_plane_hdf5(u, 1, 16, file_name_double.c_str(),
                        dataset_name_u.c_str());
   ops_write_plane_hdf5(u, 1, 16, file_name_single.c_str(),
-                       dataset_name_u.c_str(),8);
+                       dataset_name_u.c_str(),REAL_PRECISION::Single);
   ops_write_plane_hdf5(u, 1, 16, file_name_half.c_str(),
-                       dataset_name_u.c_str(),4);
+                       dataset_name_u.c_str(),REAL_PRECISION::Half);
 
   ops_write_plane_group_hdf5({{1, 16}, {0, 1}, {2, 16}}, "2",
                              {{u, v}, {u, v}, {u, v}});

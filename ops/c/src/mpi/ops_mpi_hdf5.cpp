@@ -2502,7 +2502,7 @@ void write_plane_buf_hdf5(const char *file_name, const char *data_name,
 
 void write_plane_buf_hdf5(const char *file_name, const char *data_name,
                           const ops_dat dat, const int cross_section_dir,
-                          const int *local_range, const int *global_range,int real_precision,
+                          const int *local_range, const int *global_range,REAL_PRECISION real_precision,
                           const char *buf) {
   const sub_block *sb{OPS_sub_block_list[dat->block->index]};
   int my_block_rank;
@@ -2719,7 +2719,7 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
 
 void write_slab_buf_hdf5(const char *file_name, const char *data_name,
                          const ops_dat dat, const int *local_range,
-                         const int *global_range, int real_precision,const char *buf) {
+                         const int *global_range, REAL_PRECISION real_precision,const char *buf) {
   const sub_block *sb{OPS_sub_block_list[dat->block->index]};
   const int space_dim{dat->block->dims};
   int my_block_rank;
@@ -2960,7 +2960,7 @@ void ops_write_plane_group_hdf5(
 // controlled precision for real numbers
 void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
                           const int pos, char const *file_name,
-                          const char *data_name,int real_precision) {
+                          const char *data_name,REAL_PRECISION real_precision) {
   if ((cross_section_dir >= 0) && (cross_section_dir <= dat->block->dims)) {
     const sub_dat *sd{OPS_sub_dat_list[dat->index]};
     if ((pos >= sd->gbl_base[cross_section_dir]) &&
@@ -2982,12 +2982,6 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
         // if (local_buf_size > 0) {
         char *local_buf = (char *)ops_malloc(local_buf_size);
         copy_data_buf(dat, local_range, local_buf);
-        // if (local_buf_size>1){
-        //   double *data_p{(double *)local_buf};
-        //   printf("At rank %d data= %f %f %f %f\n", ops_my_global_rank,
-        //   data_p[0],
-        //          data_p[1], data_p[2], data_p[3]);
-        // }
         write_plane_buf_hdf5(file_name, data_name, dat, cross_section_dir,
                              local_range, global_range, real_precision, local_buf);
         free(local_buf);
@@ -3010,7 +3004,7 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
 }
 
 void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
-                              const char *file_name, const char *data_name,int real_precision) {
+                              const char *file_name, const char *data_name,REAL_PRECISION real_precision) {
   MPI_Barrier(OPS_MPI_GLOBAL);
   sub_block *sb = OPS_sub_block_list[dat->block->index];
   if (sb->owned == 1) {
@@ -3044,7 +3038,7 @@ void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
 void ops_write_plane_group_hdf5(
     const std::vector<std::pair<int, int>> &planes,
     std::vector<std::string> &plane_names, const std::string &key,
-    const std::vector<std::vector<ops_dat>> &data_list,int real_precision) {
+    const std::vector<std::vector<ops_dat>> &data_list,REAL_PRECISION real_precision) {
   const size_t plane_num{planes.size()};
   std::vector<std::string> plane_name_base{"I", "J", "K"};
   if (plane_names.size() < plane_num) {
@@ -3076,7 +3070,7 @@ void ops_write_plane_group_hdf5(
 
 void ops_write_plane_group_hdf5(
     const std::vector<std::pair<int, int>> &planes, const std::string &key,
-    const std::vector<std::vector<ops_dat>> &data_list,int real_precision) {
+    const std::vector<std::vector<ops_dat>> &data_list,REAL_PRECISION real_precision) {
   const size_t plane_num{planes.size()};
   std::vector<std::string> plane_names;
   plane_names.resize(plane_num);

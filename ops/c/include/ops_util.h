@@ -109,7 +109,6 @@ inline int off2D(int dim, int *start, int *end, int *size, int *stride) {
   return off;
 }
 
-
 inline int off3D(int dim, int *start, int *end, int *size, int *stride) {
   int i = 0;
   int c1[3];

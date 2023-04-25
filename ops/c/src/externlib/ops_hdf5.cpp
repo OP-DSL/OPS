@@ -1649,7 +1649,7 @@ void write_buf_hdf5(char const *file_name, const char *data_name,
 }
 
 void write_buf_hdf5(char const *file_name, const char *data_name,
-                          const ops_dat &dat, const int dims, const int *size,int float_precision,
+                          const ops_dat &dat, const int dims, const int *size,REAL_PRECISION float_precision,
                           char *buf) {
   // HDF5 APIs definitions
   hid_t file_id{H5_file_handle(file_name)};
@@ -1679,7 +1679,7 @@ void write_buf_hdf5(char const *file_name, const char *data_name,
 
 void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
                           const int pos, char const *file_name,
-                          const char *data_name,int real_precision) {
+                          const char *data_name,REAL_PRECISION real_precision) {
   if ((cross_section_dir >= 0) && (cross_section_dir <= dat->block->dims)) {
     if ((pos >= dat->base[cross_section_dir]) &&
         (pos <= dat->size[cross_section_dir])) {
@@ -1776,7 +1776,7 @@ void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
 
 void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
                               const char *file_name, const char *data_name,
-                              int real_precision) {
+                              REAL_PRECISION real_precision) {
   const int dims{dat->block->dims};
   int *size{new int(dims)};
   size_t total_size{1};
@@ -1843,7 +1843,7 @@ void ops_write_plane_group_hdf5(
 void ops_write_plane_group_hdf5(
     const std::vector<std::pair<int, int>> &planes,
     std::vector<std::string> &plane_names, const std::string &key,
-    const std::vector<std::vector<ops_dat>> &data_list, int real_precision) {
+    const std::vector<std::vector<ops_dat>> &data_list, REAL_PRECISION real_precision) {
   const size_t plane_num{planes.size()};
   std::vector<std::string> plane_name_base{"I", "J", "K"};
   if (plane_names.size() < plane_num) {
@@ -1874,7 +1874,7 @@ void ops_write_plane_group_hdf5(
 
 void ops_write_plane_group_hdf5(
     const std::vector<std::pair<int, int>> &planes, const std::string &key,
-    const std::vector<std::vector<ops_dat>> &data_list,int real_precision) {
+    const std::vector<std::vector<ops_dat>> &data_list,REAL_PRECISION real_precision) {
   const size_t plane_num{planes.size()};
   std::vector<std::string> plane_names;
   plane_names.resize(plane_num);

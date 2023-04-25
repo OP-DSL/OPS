@@ -44,9 +44,9 @@
 #define H5Dcreate_vers 2
 
 // hdf5 header
-#include <hdf5.h>
-#include <hdf5_hl.h>
+#include "ops_hdf5_common.h"
 #include <ops_exceptions.h>
+
 
 hid_t h5_type(const char *type) {
   hid_t h5t{0};
@@ -110,7 +110,7 @@ hid_t create_float16_type() {
 void H5_dataset_space(const hid_t file_id, const int data_dims,
                       const hsize_t *global_data_size,
                       const std::vector<std::string> &h5_name_list,
-                      const char *data_type, const int real_precision,
+                      const char *data_type, REAL_PRECISION real_precision,
                       std::vector<hid_t> &groupid_list, hid_t &dataset_id,
                       hid_t &file_space) {
 
@@ -136,23 +136,23 @@ void H5_dataset_space(const hid_t file_id, const int data_dims,
       hid_t real_type;
       bool float16_created{false};
       if (type == H5T_NATIVE_DOUBLE) {
-        if (real_precision == 16) {
+        if (real_precision == REAL_PRECISION::Double) {
           real_type = H5T_NATIVE_DOUBLE;
         }
-        if (real_precision == 8) {
+        if (real_precision == REAL_PRECISION::Single) {
           real_type = H5T_NATIVE_FLOAT;
         }
-        if (real_precision == 4) {
+        if (real_precision == REAL_PRECISION::Half) {
           real_type = create_float16_type();
           float16_created = true;
         }
       }
 
       if (type == H5T_NATIVE_FLOAT) {
-        if (real_precision == 8) {
+        if (real_precision == REAL_PRECISION::Single) {
           real_type = H5T_NATIVE_FLOAT;
         }
-        if (real_precision == 4) {
+        if (real_precision == REAL_PRECISION::Half) {
           real_type = create_float16_type();
           float16_created = true;
         }

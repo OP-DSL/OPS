@@ -1458,18 +1458,12 @@ void ops_dat_set_data_slab_host(ops_dat dat, int part, char *local_buf,
 
   for (int d = 0; d < OPS_MAX_DIM; d++) {
     d_m[d] = sd->d_im[d] + dat->d_m[d];
-    // printf("At rank %d d_im[%d]=%d d_m[%d]=%d\n", ops_my_global_rank, d,
-    //        sd->d_im[d], d, dat->d_m[d]);
   }
 
   if (dat->block->dims > 5)
     throw OPSException(OPS_NOT_IMPLEMENTED,
                        "Error, missing OPS implementation: ops_dat_fetch_data "
                        "not implemented for dims>5");
-  // printf(
-  //     "At Rank II = %d istart=%d iend=%d  jstart=%d jend=%d  kstart=%d kend=%d\n",
-  //     ops_my_global_rank,range_max_dim[0], range_max_dim[1], range_max_dim[2],
-  //     range_max_dim[3],range_max_dim[4], range_max_dim[5]);
 
   set_loop_slab(local_buf, dat->data, local_buf_size, dat->size, d_m,
                 dat->elem_size, dat->dim, range_max_dim);
