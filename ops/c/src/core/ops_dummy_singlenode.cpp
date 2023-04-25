@@ -608,10 +608,7 @@ void ops_dat_set_data_host(ops_dat dat, int part, char *data) {
   int *range{new int(2 * dat->block->dims)};
   for (int d = 0; d < dat->block->dims; d++) {
     range[2 * d] = dat->d_m[d];
-    range[2 * d + 1] = dat->size[d] - dat->d_p[d];
-    // ops_printf("range[%d]=%d range[%d]=%d size=%d d_p=%d d_m=%d\n", 2 * d,
-    //            range[2 * d], 2 * d + 1, range[2 * d + 1], dat->size[d],
-    //            dat->d_p[d], dat->d_m[d]);
+    range[2 * d + 1] = dat->size[d] + dat->d_m[d];
   }
   ops_dat_set_data_slab_host(dat, 0, data, range);
   delete range;
