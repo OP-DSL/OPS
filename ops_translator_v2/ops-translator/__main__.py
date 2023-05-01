@@ -7,6 +7,7 @@ from pathlib import Path
 
 #custom implementation imports
 import cpp
+import fortran
 from jinja_utils import env
 from language import Lang
 from ops import OpsError, Type

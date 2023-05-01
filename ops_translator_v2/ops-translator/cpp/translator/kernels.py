@@ -13,7 +13,7 @@ def extentToSpan(extent: SourceRange) -> Span:
     return Span(start, end)
 
 
-def extractDependancies(entities: List[Entity], app: Application) -> list[Tuple[Entity, Rewriter]]:
+def extractDependancies(entities: List[Entity], app: Application) -> List[Tuple[Entity, Rewriter]]:
     unprocessed_entities = list(entities)
     extracted_entities = []
 
