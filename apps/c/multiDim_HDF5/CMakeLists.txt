@@ -7,10 +7,11 @@ if (OPS_TEST AND  MPI AND HDF5_FOUND)
     set(H5D "${HDF5_DIFF_EXECUTABLE}")
     set(READ "$<TARGET_FILE:read_cuda>")
     set(WRITE "$<TARGET_FILE:write_cuda>")
+    set(WRITE_SEQ "$<TARGET_FILE:write_seq>")
     set(W_ARG " ")
     set(R_ARG " ")
     add_test(NAME multiDim_HDF5_cuda
-        COMMAND ${CMAKE_COMMAND} -DREAD=${READ}  -DWRITE=${WRITE} -DR_ARG=${R_ARG} -DW_ARG=${W_ARG} -DH5D=${H5D} -DOPS_INSTALL_PATH=${OPS_INSTALL_PATH}  -P ${CMAKE_CURRENT_SOURCE_DIR}/runtests.cmake
+        COMMAND ${CMAKE_COMMAND} -DREAD=${READ} -DWRITE_SEQ=${WRITE_SEQ} -DWRITE=${WRITE} -DR_ARG=${R_ARG} -DW_ARG=${W_ARG} -DH5D=${H5D} -DOPS_INSTALL_PATH=${OPS_INSTALL_PATH}  -P ${CMAKE_CURRENT_SOURCE_DIR}/runtests.cmake
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/tmp"
         )
     set(READ "$<TARGET_FILE:read_opencl>")
