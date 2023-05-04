@@ -825,7 +825,7 @@ def ops_gen_mpi_openacc(master, consts, kernels, soa_set):
     if os.path.exists(os.path.join(src_dir, "user_types.h")):
         code('#include "user_types.h"')
 
-    util.generate_extern_global_consts_declarations(consts)
+    util.generate_extern_global_consts_declarations(consts, for_openacc=True)
 
     util.write_text_to_file(f"./OpenACC/{master_basename[0]}_common.h")
 

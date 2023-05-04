@@ -542,7 +542,7 @@ def get_kernel_body_and_arg_list(name, src_dir, arg_typ):
     return kernel_body, arg_list
 
 
-def generate_extern_global_consts_declarations(consts, for_cuda=False, for_hip=False):
+def generate_extern_global_consts_declarations(consts, for_cuda=False, for_hip=False, for_openacc=False):
     comm(" global constants")
     prefix = "__constant__" if for_cuda or for_hip else "extern"
     for const in consts:
@@ -550,7 +550,11 @@ def generate_extern_global_consts_declarations(consts, for_cuda=False, for_hip=F
         if for_hip:
             code(f"#define {name} {name}_OPSCONSTANT")
         if const["dim"].isdigit() and int(const["dim"]) == 1:
-            code(f'{prefix} {const["type"]} {name};')
+            if for_openacc:
+                code(f'{prefix} {const["type"]} {name};')
+                code(f'#pragma acc declare copyin({name})')
+            else:
+                code(f'{prefix} {const["type"]} {name};')
         else:
             if const["dim"].isdigit() and int(const["dim"]) > 1:
                 code(f'{prefix} {const["type"]} {name}[{const["dim"]}];')
