@@ -1,26 +1,33 @@
 CC    := pgcc -c99
 CXX     := pgc++
 FC	:= pgfortran
+
 ifdef DEBUG
 	CCFLAGS   := -O0 -g 
 else
 	CCFLAGS   := -O3 -fast -gopt #-Minline #-Mipa=fast #-Mlist #-mp=nonuma -Kieee
 endif
+
 CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
-CXXFLAGS  := $(CCFLAGS) -std=c++11 
-NVCXXFLAGS  := -O3 -std=c++11 
-OPENACCFLAGS = $(CCFLAGS) -module $(F_INC_MOD)/openacc
-FMODS_OPENACC := -module $(F_INC_MOD)/openacc -Minline
-FMODS := -module $(F_INC_MOD)
-FMODS_CUDA := -module $(F_INC_MOD)/cuda
-FFLAGS = $(CCFLAGS)
+
+CXXFLAGS      := $(CCFLAGS) -std=c++11
+FFLAGS         = $(CCFLAGS)
+NVCXXFLAGS    := -O3 -std=c++11
+OPENACCFLAGS   = $(CCFLAGS) -module $(F_INC_MOD)/openacc
+
+FMODS         := -module $(F_INC_MOD)
+FMODS_CUDA    := -module $(F_INC_MOD)/cuda
+
 OMPFLAGS := -mp
+
 ifdef THREADED
 	THREADING_FLAGS ?= -mp
 endif
+
 CUDAFOR	= -DOPS_WITH_CUDAFOR
-OpenACCFLAGS = -acc #-Minline
+OpenACCFLAGS = -acc -Minline
 CXXLINK := -pgc++libs -lstdc++
+PGIMPILINK := -lmpi_cxx
 
 ifdef IEEE
 	CCFLAGS += -Kieee -nofma

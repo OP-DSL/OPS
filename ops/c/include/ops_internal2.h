@@ -215,8 +215,6 @@ void ops_NaNcheck(ops_dat dat);
 void ops_NaNcheck_core(ops_dat dat, char *buffer);
 
 void ops_timing_realloc(OPS_instance *instance, int, const char *);
-OPS_FTN_INTEROP
-void ops_timers_core(double *cpu, double *et);
 float ops_compute_transfer(int dims, int *start, int *end, ops_arg *arg);
 
 void ops_register_args(OPS_instance *instance, ops_arg *args, const char *name);

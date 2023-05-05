@@ -827,27 +827,26 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
     handle->acc = acc;
     if (acc == OPS_INC)
       memset(handle->data, 0, handle->size);
-    if (strcmp(type, "double") == 0 ||
-        strcmp(type, "real(8)") == 0) { // TODO: handle other types
-      OPS_RED_INIT(double,DBL)
-    } else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0) {
-      OPS_RED_INIT(float,FLT)
-    } else if (strcmp(type, "int") == 0 || strcmp(type, "integer") == 0) {
-      OPS_RED_INIT2(int,INT)
+    if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) { // TODO: handle other types
+        OPS_RED_INIT(double,DBL)
+    } else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 || strcmp(type, "real(kind=4)") == 0) {
+        OPS_RED_INIT(float,FLT)
+    } else if (strcmp(type, "int") == 0 || strcmp(type, "integer") == 0 || strcmp(type, "integer(4)") == 0 || strcmp(type, "integer(kind=4)") == 0) {
+        OPS_RED_INIT2(int,INT)
     } else if (strcmp(type, "long") == 0) {
-      OPS_RED_INIT2(long,LONG)
+        OPS_RED_INIT2(long,LONG)
     } else if (strcmp(type, "char") == 0) {
-      OPS_RED_INIT2(char,CHAR)
+        OPS_RED_INIT2(char,CHAR)
     } else if (strcmp(type, "short") == 0) {
-      OPS_RED_INIT2(short,SHRT)
+        OPS_RED_INIT2(short,SHRT)
     } else if (strcmp(type, "long long") == 0 || strcmp(type, "ll") == 0) {
-      OPS_RED_INIT2(long long,LLONG)
+        OPS_RED_INIT2(long long,LLONG)
     } else if (strcmp(type, "unsigned long long") == 0 || strcmp(type, "ull") == 0) {
-      OPS_RED_INIT2(unsigned long long,ULLONG)
+        OPS_RED_INIT2(unsigned long long,ULLONG)
     } else if (strcmp(type, "unsigned long") == 0 || strcmp(type, "ul") == 0) {
-      OPS_RED_INIT2(unsigned long,ULONG)
+        OPS_RED_INIT2(unsigned long,ULONG)
     } else if (strcmp(type, "unsigned int") == 0 || strcmp(type, "uint") == 0) {
-      OPS_RED_INIT2(unsigned int,UINT)
+        OPS_RED_INIT2(unsigned int,UINT)
     }
     else if (strcmp(type, "complexf") == 0) {
       if (acc == OPS_MIN)
@@ -864,7 +863,7 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
         for (int i = 0; i < 2 * handle->size / 8; i++)
           ((complexd *)handle->data)[i] = complexd(0,0);
     } else {
-      throw OPSException(OPS_NOT_IMPLEMENTED, "Error, reduction type not recognised, please add in ops_lib_core.c");
+      throw OPSException(OPS_NOT_IMPLEMENTED, "Error, reduction type not recognised, please add in ops_lib_core.cpp");
     }
   } else if (handle->acc != acc) {
       OPSException ex(OPS_INVALID_ARGUMENT);

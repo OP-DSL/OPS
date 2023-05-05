@@ -1005,6 +1005,8 @@ void ops_timing_output_stdout();
  * @param et   variable to hold the elapsed time at the time of invocation
  */
 OPS_FTN_INTEROP
+void ops_timers_core(double *cpu, double *et);
+OPS_FTN_INTEROP
 void ops_timers(double *cpu, double *et);
 
 #if !defined(OPS_CPP_API) || defined(OPS_INTERNAL_API)

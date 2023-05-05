@@ -1,3 +1,12 @@
+
+ifndef OPS_GENERATED_SUFFIX
+OPS_GENERATED_SUFFIX=_ops
+endif
+
+ifeq ($(strip $(OPS_GENERATED)),)
+OPS_GENERATED=$(join $(addsuffix $(OPS_GENERATED_SUFFIX), $(basename $(OPS_FILES))), $(suffix $(OPS_FILES)))
+endif
+
 OPS_FILES_GEN=$(OTHER_FILES) $(OPS_GENERATED)
 
 ifndef APP
@@ -32,12 +41,16 @@ $(APP)_seq: .generated $(OPS_FILES_GEN) Makefile
     -o $(APP)_seq $(APP_LIBS) -lops_for_seq $(F_HDF5_LIB_SEQ)
 
 $(APP)_openmp:  .generated $(OPS_FILES_GEN) Makefile
-	$(FC) $(FFLAGS) $(FMODS) $(FLINK) $(OMPFLAGS) $(OTHER_FILES) MPI_OpenMP/*_omp_kernel.F90  $(OPS_GENERATED) \
+	$(MPIF90) $(FFLAGS) $(FMODS) $(FLINK) $(OMPFLAGS) $(OTHER_FILES) MPI_OpenMP/*_omp_kernel.F90  $(OPS_GENERATED) \
         -o $(APP)_openmp $(APP_LIBS) -lops_for_seq $(F_HDF5_LIB_SEQ)
 
 $(APP)_cuda:  .generated $(OPS_FILES_GEN) Makefile
-	$(FC) $(FFLAGS) $(FMODS_CUDA) $(FLINK) $(CUDAFOR) $(OTHER_FILES) CUDA/*_cuda_kernel.CUF $(OPS_GENERATED) \
+	$(MPIF90) $(FFLAGS) $(FMODS_CUDA) $(FLINK) $(CUDAFOR) $(OTHER_FILES) CUDA/*_cuda_kernel.CUF $(OPS_GENERATED) \
         -o $(APP)_cuda $(APP_LIBS) -lops_for_cuda $(F_HDF5_LIB_SEQ)
+
+$(APP)_openacc: .generated $(OPS_FILES_GEN) Makefile
+	$(MPIF90) $(FFLAGS) $(FMODS_CUDA) $(FLINK) $(OpenACCFLAGS) $(OTHER_FILES) MPI_OpenACC/*.F90 $(OPS_GENERATED) \
+		-o $(APP)_openacc $(APP_LIBS) -lops_for_cuda $(F_HDF5_LIB_SEQ)
 
 #F90 files in MPI directory
 seqkernels = $(wildcard MPI/*.F90)
@@ -55,23 +68,19 @@ seqkernels_obj = $(seqkernels:.F90=.o)
 	$(MPIF90) $(FFLAGS) -DOPS_MPI $(FMODS) -c $< -o $@
 
 $(APP)_mpi: .generated $(OTHER_FILES:.F90=.o) $(seqkernels_obj) $(OPS_GENERATED:.F90=.o)  Makefile
-	$(MPIF90) $(FFLAGS) $(FMODS) $(FLINK) -DOPS_MPI $(OTHER_FILES:.F90=.o) $(seqkernels_obj) $(OPS_GENERATED:.F90=.o) \
-        -o $(APP)_mpi $(APP_LIBS) -lops_for_mpi $(F_HDF5_LIB_MPI) $(APP_LIBS)
+	$(MPIF90) $(FFLAGS) $(FMODS) $(FLINK) $(PGIMPILINK) -DOPS_MPI $(OTHER_FILES:.F90=.o) $(seqkernels_obj) $(OPS_GENERATED:.F90=.o) \
+        -o $(APP)_mpi $(APP_LIBS) -lops_for_mpi $(F_HDF5_LIB_MPI)
 
 $(APP)_mpi_openmp: .generated $(OPS_FILES_GEN) Makefile
-	$(MPIF90) $(FFLAGS) $(FMODS) $(FLINK) $(OMPFLAGS) -DOPS_MPI $(OTHER_FILES) MPI_OpenMP/*_omp_kernel.F90 $(OPS_GENERATED) \
+	$(MPIF90) $(FFLAGS) $(FMODS) $(FLINK) $(OMPFLAGS) $(PGIMPILINK) -DOPS_MPI $(OTHER_FILES) MPI_OpenMP/*_omp_kernel.F90 $(OPS_GENERATED) \
         -o $(APP)_mpi_openmp $(APP_LIBS) -lops_for_mpi $(F_HDF5_LIB_MPI)
 
 $(APP)_mpi_cuda: .generated $(OPS_FILES_GEN) Makefile
-	$(MPIF90) $(FFLAGS) $(FMODS_CUDA) $(FLINK) $(CUDAFOR) $(OPS_MPI) $(OTHER_FILES) CUDA/*_cuda_kernel.CUF $(OPS_GENERATED) \
+	$(MPIF90) $(FFLAGS) $(FMODS_CUDA) $(FLINK) $(PGIMPILINK) $(CUDAFOR) $(OPS_MPI) $(OTHER_FILES) CUDA/*_cuda_kernel.CUF $(OPS_GENERATED) \
         -o $(APP)_mpi_cuda $(APP_LIBS) -lops_for_mpi_cuda $(F_HDF5_LIB_MPI)
 
-$(APP)_openacc: .generated $(OPS_FILES_GEN) Makefile
-	$(FC) $(FFLAGS) $(FMODS_OPENACC) $(FLINK) $(OpenACCFLAGS) $(OTHER_FILES) MPI_OpenACC/*.F90 $(OPS_GENERATED) \
-		-o $(APP)_openacc $(APP_LIBS) -lops_for_cuda $(F_HDF5_LIB_SEQ)
-
 $(APP)_mpi_openacc: .generated $(OPS_FILES_GEN) Makefile
-	$(MPIF90) $(FFLAGS) $(FMODS_OPENACC) $(FLINK) $(OpenACCFLAGS) $(OPS_MPI) $(OTHER_FILES) MPI_OpenACC/*.F90 $(OPS_GENERATED) \
+	$(MPIF90) $(FFLAGS) $(FMODS_CUDA) $(FLINK) $(OpenACCFLAGS) $(PGIMPILINK) $(OPS_MPI) $(OTHER_FILES) MPI_OpenACC/*.F90 $(OPS_GENERATED) \
 		-o $(APP)_mpi_openacc $(APP_LIBS) -lops_for_mpi_cuda $(F_HDF5_LIB_MPI)
 
 #
@@ -82,8 +91,8 @@ $(APP)_tiled: .generated $(OPS_FILES_GEN) Makefile
 		-o $(APP)_tiled $(APP_LIBS) -lops_for_seq $(F_HDF5_LIB_SEQ)
 
 $(APP)_mpi_tiled: .generated $(OPS_FILES_GEN) Makefile
-	$(MPIF90) $(FFLAGS) $(FMODS) $(FLINK) -DOPS_LAZY -DOPS_MPI $(OTHER_FILES) MPI/*_seq_kernel.F90 $(OPS_GENERATED) \
-		-o $(APP)_mpi_tiled $(APP_LIBS) -lops_for_mpi $(F_HDF5_LIB_MPI) $(APP_LIBS)
+	$(MPIF90) $(FFLAGS) $(FMODS) $(FLINK) $(PGIMPILINK) -DOPS_LAZY -DOPS_MPI $(OTHER_FILES) MPI/*_seq_kernel.F90 $(OPS_GENERATED) \
+		-o $(APP)_mpi_tiled $(APP_LIBS) -lops_for_mpi $(F_HDF5_LIB_MPI)
 
 
 clean:

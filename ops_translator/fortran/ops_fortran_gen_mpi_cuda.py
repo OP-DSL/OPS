@@ -56,6 +56,8 @@ import os
 import util_fortran
 import config
 
+import threading
+
 comment_remover = util_fortran.comment_remover
 remove_trailing_w_space = util_fortran.remove_trailing_w_space
 comm = util_fortran.comm
@@ -68,132 +70,61 @@ IF = util_fortran.IF
 ENDIF = util_fortran.ENDIF
 
 
-const_list = []
 def replace_consts(text):
-  global const_list
   if not os.path.isfile("constants_list.txt"):
     return text
-  fi2 = open("constants_list.txt","r")
-  for line in fi2:
-    fstr = '\\b'+line[:-1]+'\\b'
-    rstr = line[:-1]+'_OPSCONSTANT'
-    j = re.search(fstr,text)
-    if not (j is None) and not (line[:-1] in const_list):
-      const_list = const_list + [line[:-1]]
-    text = re.sub(fstr,rstr,text)
+
+  with open("constants_list.txt", 'r') as f:
+    words_list = f.read().splitlines()
+
+  regex_pattern = r'\b(' + '|'.join(words_list) + r')\b'
+  replacement_pattern = r'\g<1>_opsconstant'
+  text = re.sub(regex_pattern, replacement_pattern, text)
+
   return text
 
-funlist = []
-def find_function_calls(text):
-  global funlist
-  search_offset = 0
-  res=re.search('\\bcall\\b',text.lower())
-  my_subs = ''
-  children_subs=''
-  while (not (res is None)):
-    i = search_offset + res.start() + 4
-    #find name: whatever is in front of opening bracket
-    openbracket = i+text[i:].find('(')
-    fun_name = text[i:openbracket].strip()
-    print(fun_name)
-    # #if hyd_dump, comment it out
-    # if fun_name == hyd_dump:
-    #   text = text[0:search_offset + res.start()]+'!'+text[search_offset + res.start():]
-    #   search_offset = i
-    #   res=re.search('\\bcall\\b',text[search_offset:])
-    #   continue
-
-    if fun_name.lower() in funlist:
-      search_offset = i
-      res=re.search('\\bcall\\b',text[search_offset:].lower())
-      continue
-
-    funlist = funlist + [fun_name.lower()]
-    #find signature
-    line = text[openbracket:openbracket+text[openbracket:].find('\n')].strip()
-    curr_pos = openbracket+text[openbracket:].find('\n')+1
-    while (line[len(line)-1] == '&'):
-      line = text[curr_pos:curr_pos+text[curr_pos:].find('\n')].strip()
-      curr_pos = curr_pos+text[curr_pos:].find('\n')+1
-    curr_pos = curr_pos-1
-    arglist = text[openbracket:curr_pos]
-    #find the file containing the implementation
-    subr_file =  os.popen('grep -Rilw --include "*.F9*" --exclude "*kernel.*" "subroutine '+fun_name+'" . | head -n1').read().strip()
-    if (len(subr_file) == 0) or (not os.path.exists(subr_file)):
-      print(('Error, subroutine '+fun_name+' implementation not found in files, check parser!'))
-      exit(1)
-    #read the file and find the implementation
-    subr_fileh = open(subr_file,'r')
-    subr_fileh_text = subr_fileh.read()
-    subr_fileh_text = re.sub('\n*!.*\n','\n',subr_fileh_text)
-    subr_fileh_text = re.sub('!.*\n','\n',subr_fileh_text)
-    subr_begin = subr_fileh_text.lower().find('subroutine '+fun_name.lower())
-    #function name as spelled int he file
-    fun_name = subr_fileh_text[subr_begin+11:subr_begin+11+len(fun_name)]
-    subr_end = subr_fileh_text[subr_begin:].lower().find('end subroutine')
-    if subr_end<0:
-      print(('Error, could not find string "end subroutine" for implemenatation of '+fun_name+' in '+subr_file))
-      exit(-1)
-    subr_end= subr_begin+subr_end
-    subr_text =  subr_fileh_text[subr_begin:subr_end+14]
-    if subr_text[10:len(subr_text)-20].lower().find('subroutine')>=0:
-      print(('Error, could not properly parse subroutine, more than one encompassed '+fun_name+' in '+subr_file))
-      #print subr_text
-      exit(-1)
-
-
-    writes = re.search('\\bwrite\\b',subr_text.lower())
-    writes_offset = 0
-    while not (writes is None):
-      writes_offset = writes_offset + writes.start()
-      subr_text = subr_text[0:writes_offset]+'!'+subr_text[writes_offset:]
-      writes_offset = writes_offset + subr_text[writes_offset:].find('\n')+1
-      while (subr_text[writes_offset:].strip()[0] == '&'):
-        subr_text = subr_text[0:writes_offset]+'!'+subr_text[writes_offset:]
-        writes_offset = writes_offset + subr_text[writes_offset:].find('\n')+1
-      writes = re.search('\\bwrite\\b',subr_text[writes_offset:].lower())
-
-#    subr_text = replace_npdes(subr_text)
-    subr_text = replace_consts(subr_text)
-    subr_text = 'attributes(device) ' + subr_text
-    subr_text = subr_text.replace(fun_name, fun_name+'_gpu',1)
-    my_subs = my_subs + '\n' + subr_text
-    subr_text = re.sub('!.*\n','\n',subr_text)
-    children_subs = children_subs + '\n' + find_function_calls(subr_text)
-    search_offset = i
-    res=re.search('\\bcall\\b',text[search_offset:])
-  return my_subs+children_subs
-
-
 def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
-  global funlist, const_list
-  OPS_GBL   = 2;
 
-  OPS_READ = 1;  OPS_WRITE = 2;  OPS_RW  = 3;
-  OPS_INC  = 4;  OPS_MAX   = 5;  OPS_MIN = 6;
+    threads_list = []
 
-  accsstring = ['OPS_READ','OPS_WRITE','OPS_RW','OPS_INC','OPS_MAX','OPS_MIN' ]
+    for nk, cur_kernel in enumerate(kernels):
+        ops_fortran_gen_mpi_cuda_process(date, consts, cur_kernel, soa_set, nk)
+#        thread = threading.Thread(target=ops_fortran_gen_mpi_cuda_process, args=(date, consts, cur_kernel, soa_set, nk))
+#        threads_list.append(thread)
+#        thread.start()
 
-  NDIM = 2 #the dimension of the application is hardcoded here .. need to get this dynamically
+#    for thread in threads_list:
+#        thread.join()
+
+
+def ops_fortran_gen_mpi_cuda_process(date, consts, cur_kernel, soa_set, nk):
+    global funlist
+    OPS_GBL   = 2;
+
+    OPS_READ = 1;  OPS_WRITE = 2;  OPS_RW  = 3;
+    OPS_INC  = 4;  OPS_MAX   = 5;  OPS_MIN = 6;
+
+    accsstring = ['OPS_READ','OPS_WRITE','OPS_RW','OPS_INC','OPS_MAX','OPS_MIN' ]
 
 
 ##########################################################################
 #  create new kernel file
 ##########################################################################
 
-  for nk in range (0,len(kernels)):
-    arg_typ  = kernels[nk]['arg_type']
-    name  = kernels[nk]['name']
-    nargs = kernels[nk]['nargs']
-    dim   = kernels[nk]['dim']
-    dims  = kernels[nk]['dims']
-    stens = kernels[nk]['stens']
-    var   = kernels[nk]['var']
-    accs  = kernels[nk]['accs']
-    typs  = kernels[nk]['typs']
+    arg_typ  = cur_kernel['arg_type']
+    name  = cur_kernel['name']
+    nargs = cur_kernel['nargs']
+    dim   = cur_kernel['dim']
+    dims  = cur_kernel['dims']
+    stens = cur_kernel['stens']
+    var   = cur_kernel['var']
+    accs  = cur_kernel['accs']
+    typs  = cur_kernel['typs']
     NDIM = int(dim)
     #parse stencil to locate strided access
     stride = [1] * nargs * NDIM
+
+#    print("kernel name:"+name)
 
     reduction = 0
     reduction_vars = ''
@@ -223,8 +154,6 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     i = name.find('kernel')
     name2 = name[0:i-1]
 
-    const_list = []
-
 ##########################################################################
 #  generate HEADER
 ##########################################################################
@@ -245,9 +174,9 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl':
         #comm('Vars for reductions')
         if (accs[n]== OPS_INC or accs[n]== OPS_MIN or accs[n]== OPS_MAX):
-          code(typs[n]+', DIMENSION(:), DEVICE, ALLOCATABLE :: reductionArrayDevice'+str(n+1)+'_'+name)
+          code(typs[n]+', dimension(:), device, allocatable :: reductionArrayDevice'+str(n+1)+'_'+name)
         if ((accs[n]==OPS_READ and ((not dims[n].isdigit()) or dims[n] != '1')) or accs[n]==OPS_WRITE):
-          code(typs[n]+', DIMENSION(:), DEVICE, ALLOCATABLE :: opGblDat'+str(n+1)+'Device_'+name)
+          code(typs[n]+', dimension(:), device, allocatable :: opGblDat'+str(n+1)+'Device_'+name)
 
 ##########################################################################
 #  generate MACROS
@@ -256,39 +185,34 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_dat':
         if dims[n] == '1':
           #comm('single-dim macros')
-          code('INTEGER(KIND=4), constant :: xdim'+str(n+1)+'_'+name)
-          code('INTEGER(KIND=4):: xdim'+str(n+1)+'_'+name+'_h  = -1')
+          code('integer(4), constant :: xdim'+str(n+1)+'_'+name)
+          code('integer(4):: xdim'+str(n+1)+'_'+name+'_h  = -1')
           if NDIM==1:
             code('#define OPS_ACC'+str(n+1)+'(x) (x+1)')
           if NDIM==2:
-            code('INTEGER(KIND=4), constant :: ydim'+str(n+1)+'_'+name)
-            code('INTEGER(KIND=4):: ydim'+str(n+1)+'_'+name+'_h  = -1')
             code('#define OPS_ACC'+str(n+1)+'(x,y) (x+xdim'+str(n+1)+'_'+name+'*(y)+1)')
           if NDIM==3:
-            code('INTEGER(KIND=4), constant :: ydim'+str(n+1)+'_'+name)
-            code('INTEGER(KIND=4):: ydim'+str(n+1)+'_'+name+'_h  = -1')
-            code('INTEGER(KIND=4), constant :: zdim'+str(n+1)+'_'+name)
-            code('INTEGER(KIND=4):: zdim'+str(n+1)+'_'+name+'_h  = -1')
-#            code('#define OPS_ACC'+str(n+1)+'(x,y) (x+xdim'+str(n+1)+'_'+name+'*(y)+1)')
+            code('integer(4), constant :: ydim'+str(n+1)+'_'+name)
+            code('integer(4):: ydim'+str(n+1)+'_'+name+'_h  = -1')
             code('#define OPS_ACC'+str(n+1)+'(x,y,z) (x+xdim'+str(n+1)+'_'+name+'*(y)+xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'_'+name+'*(z)+1)')
-    code('')
+        code('')
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if dims[n] != '1':
           #comm('multi-dim macros')
-          code('INTEGER(KIND=4), constant :: xdim'+str(n+1)+'_'+name)
-          code('INTEGER(KIND=4):: xdim'+str(n+1)+'_'+name+'_h  = -1')
+          code('integer(4), constant :: xdim'+str(n+1)+'_'+name)
+          code('integer(4):: xdim'+str(n+1)+'_'+name+'_h  = -1')
           if NDIM==1:
             code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
           if NDIM==2:
             code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'_'+name+'*(y)*'+str(dims[n])+'))')
           if NDIM==3:
-            code('INTEGER(KIND=4), constant :: ydim'+str(n+1)+'_'+name)
-            code('INTEGER(KIND=4):: ydim'+str(n+1)+'_'+name+'_h  = -1')
+            code('integer(KIND=4), constant :: ydim'+str(n+1)+'_'+name)
+            code('integer(KIND=4):: ydim'+str(n+1)+'_'+name+'_h  = -1')
             code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'_'+name+'*(z)*'+str(dims[n])+'))')
+        code('')
 
-    code('')
     code('contains')
     code('')
 
@@ -299,12 +223,12 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       comm('Reduction cuda kernel')
       code('attributes (device) SUBROUTINE ReductionFloat8(sharedDouble8, reductionResult,inputValue,reductionOperation)')
       config.depth = config.depth +2;
-      code('REAL(kind=8), DIMENSION(:), DEVICE :: reductionResult')
-      code('REAL(kind=8) :: inputValue')
-      code('INTEGER(kind=4), VALUE :: reductionOperation')
-      code('REAL(kind=8), DIMENSION(0:*) :: sharedDouble8')
-      code('INTEGER(kind=4) :: i1')
-      code('INTEGER(kind=4) :: threadID')
+      code('REAL(8), dimension(:), DEVICE :: reductionResult')
+      code('REAL(8) :: inputValue')
+      code('integer(4), VALUE :: reductionOperation')
+      code('REAL(8), dimension(0:*) :: sharedDouble8')
+      code('integer(4) :: i1')
+      code('integer(4) :: threadID')
       code('threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)')
       code('i1 = ishft(blockDim%x*blockDim%y,-1)')
       code('CALL syncthreads()')
@@ -351,12 +275,12 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       code('')
 
       code('attributes (device) SUBROUTINE ReductionInt4(sharedInt4, reductionResult,inputValue,reductionOperation)')
-      code('INTEGER(kind=4), DIMENSION(:), DEVICE :: reductionResult')
-      code('INTEGER(kind=4) :: inputValue')
-      code('INTEGER(kind=4), VALUE :: reductionOperation')
-      code('INTEGER(kind=4), DIMENSION(0:*) :: sharedInt4')
-      code('INTEGER(kind=4) :: i1')
-      code('INTEGER(kind=4) :: threadID')
+      code('integer(4), dimension(:), DEVICE :: reductionResult')
+      code('integer(4) :: inputValue')
+      code('integer(4), VALUE :: reductionOperation')
+      code('integer(4), dimension(0:*) :: sharedInt4')
+      code('integer(4) :: i1')
+      code('integer(4) :: threadID')
       code('threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)')
       code('i1 = ishft(blockDim%x*blockDim%y,-1)')
       code('CALL syncthreads()')
@@ -407,14 +331,14 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       comm('Multidimensional reduction cuda kernel')
       code('attributes (device) SUBROUTINE ReductionFloat8Mdim(sharedDouble8, reductionResult,inputValue,reductionOperation,dim)')
       config.depth = config.depth +2;
-      code('REAL(kind=8), DIMENSION(:), DEVICE :: reductionResult')
-      code('REAL(kind=8), DIMENSION(:) :: inputValue')
-      code('INTEGER(kind=4), VALUE :: reductionOperation')
-      code('INTEGER(kind=4), VALUE :: dim')
-      code('REAL(kind=8), DIMENSION(0:*) :: sharedDouble8')
-      code('INTEGER(kind=4) :: i1')
-      code('INTEGER(kind=4) :: d')
-      code('INTEGER(kind=4) :: threadID')
+      code('REAL(8), dimension(:), DEVICE :: reductionResult')
+      code('REAL(8), dimension(:) :: inputValue')
+      code('integer(4), VALUE :: reductionOperation')
+      code('integer(4), VALUE :: dim')
+      code('REAL(8), dimension(0:*) :: sharedDouble8')
+      code('integer(4) :: i1')
+      code('integer(4) :: d')
+      code('integer(4) :: threadID')
       code('threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)')
       code('i1 = ishft(blockDim%x*blockDim%y,-1)')
       code('CALL syncthreads()')
@@ -473,14 +397,14 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       comm('Multidimensional reduction cuda kernel')
       code('attributes (device) SUBROUTINE ReductionInt4Mdim(sharedInt4, reductionResult,inputValue,reductionOperation,dim)')
       config.depth = config.depth +2;
-      code('INTEGER(kind=4), DIMENSION(:), DEVICE :: reductionResult')
-      code('INTEGER(kind=4), DIMENSION(:) :: inputValue')
-      code('INTEGER(kind=4), VALUE :: reductionOperation')
-      code('INTEGER(kind=4), VALUE :: dim')
-      code('INTEGER(kind=4), DIMENSION(0:*) :: sharedInt4')
-      code('INTEGER(kind=4) :: i1')
-      code('INTEGER(kind=4) :: d')
-      code('INTEGER(kind=4) :: threadID')
+      code('integer(4), dimension(:), DEVICE :: reductionResult')
+      code('integer(4), dimension(:) :: inputValue')
+      code('integer(4), VALUE :: reductionOperation')
+      code('integer(4), VALUE :: dim')
+      code('integer(4), dimension(0:*) :: sharedInt4')
+      code('integer(4) :: i1')
+      code('integer(4) :: d')
+      code('integer(4) :: threadID')
       code('threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)')
       code('i1 = ishft(blockDim%x*blockDim%y,-1)')
       code('CALL syncthreads()')
@@ -573,14 +497,13 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_dat':
         if dims[n] == '1':
           code('#undef OPS_ACC'+str(n+1))
-    code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if dims[n] != '1':
           code('#undef OPS_ACC_MD'+str(n+1))
-    code('')
-    code('')
 
+    code('')
+    code('')
 
 ##########################################################################
 #  generate kernel wrapper subroutine
@@ -608,64 +531,68 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       code('& size1, size2, size3 )')
 
     config.depth = config.depth + 2
+    code('')
     code('IMPLICIT NONE')
+    code('')
+
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and accs[n] == OPS_READ:
-        code(typs[n]+', DEVICE, INTENT(IN) :: opsDat'+str(n+1)+'Local(*)')
-        code('integer(4) arg'+str(n+1))
+        code(typs[n]+', device, dimension(*), intent(in)    :: opsDat'+str(n+1)+'Local')
+        code('integer(4) :: arg'+str(n+1))
       elif arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
-        code(typs[n]+', DEVICE :: opsDat'+str(n+1)+'Local(*)')
-        code('integer(4) arg'+str(n+1))
+        code(typs[n]+', device, dimension(*), intent(inout) :: opsDat'+str(n+1)+'Local(*)')
+        code('integer(4) :: arg'+str(n+1))
       elif arg_typ[n] == 'ops_arg_idx':
-        code('integer(4) idx('+str(NDIM)+'),idx_local('+str(NDIM)+')' )
+        code('integer(4), dimension('+str(NDIM)+'), intent(in) :: idx')
+        code('integer(4), dimension('+str(NDIM)+')             :: idx_local')
 
     #vars for reductions
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_INC or accs[n] == OPS_MIN or accs[n] == OPS_MAX:
           #if it's a global reduction, then we pass in a reductionArrayDevice
-          code(typs[n]+', DIMENSION(:), DEVICE :: reductionArrayDevice'+str(n+1))
+          code(typs[n]+', dimension(:), device :: reductionArrayDevice'+str(n+1))
           #and additionally we need registers to store contributions, depending on dim:
           if dims[n].isdigit() and dims[n] == '1':
             code(typs[n]+' :: opsGblDat'+str(n+1)+'Device')
           else:
-            code(typs[n]+', DIMENSION('+dims[n]+') :: opsGblDat'+str(n+1)+'Device')
+            code(typs[n]+', dimension('+dims[n]+') :: opsGblDat'+str(n+1)+'Device')
 
-          code(typs[n]+', DIMENSION(0:*), SHARED :: sharedMem')
+          code(typs[n]+', dimension(0:*), shared :: sharedMem')
         else:
           #if it's not  a global reduction, and multidimensional then we pass in a device array
           if accs[n] == OPS_READ: #if OPS_READ and dim 1, we can pass in by value
             if dims[n] == '1':
-              code(typs[n]+', VALUE :: opsGblDat'+str(n+1)+'Device')
+              code(typs[n]+', value :: opsGblDat'+str(n+1)+'Device')
             else:
-              code(typs[n]+', DEVICE :: opsGblDat'+str(n+1)+'Device(:)')
+              code(typs[n]+', device :: opsGblDat'+str(n+1)+'Device(:)')
 #              code(typs[n]+' :: opsGblDat'+str(n+1)+'Device')
 
     #vars for arg_idx
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         code('integer(4), value :: dat' + str(n+1)+'_base')
-    code('integer(4) start('+str(NDIM)+')')
-    code('integer(4) end('+str(NDIM)+')')
 
     if NDIM==1:
-      code('integer, value :: size1')
-      code('integer n_x')
+      code('integer(4), value :: size1')
+      code('integer(4)        :: n_x')
     elif NDIM==2:
-      code('integer, value :: size1,size2')
-      code('integer n_x, n_y')
+      code('integer(4), value :: size1, size2')
+      code('integer(4)        :: n_x, n_y')
     elif NDIM==3:
-      code('integer, value :: size1,size2,size3')
-      code('integer n_x, n_y, n_z')
+      code('integer(4), value :: size1, size2, size3')
+      code('integer(4)        :: n_x, n_y, n_z')
     code('')
 
 
     code('')
+
     if NDIM==3:
       code('n_z = blockDim%z * (blockIdx%z-1) + threadIdx%z')
       code('n_y = blockDim%y * (blockIdx%y-1) + threadIdx%y')
     if NDIM==2:
       code('n_y = blockDim%y * (blockIdx%y-1) + threadIdx%y')
+
     code('n_x = blockDim%x * (blockIdx%x-1) + threadIdx%x')
     code('')
     if arg_idx:
@@ -702,6 +629,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     elif NDIM==3:
       IF('(n_x-1) < size1 .AND. (n_y-1) < size2 .AND. (n_z-1) < size3')
 
+    code('')
     code('call '+name + '_gpu( &')
     indent = config.depth *' '
     line = ''
@@ -773,75 +701,77 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         code('& opsArg'+str(n+1)+', &')
 
     config.depth = config.depth + 2
-    code('use cudafor')
+    code('')
+    code('USE CUDAFOR')
     code('IMPLICIT NONE')
-    code('character(kind=c_char,len=*), INTENT(IN) :: userSubroutine')
-    code('type ( ops_block ), INTENT(IN) :: block')
-    code('integer(kind=4), INTENT(IN):: dim')
-    code('integer(kind=4)   , DIMENSION(2*dim), INTENT(IN) :: range')
-    code('real(kind=8) t1,t2,t3')
-    code('real(kind=4) transfer_total, transfer')
-    code('integer(kind=4) :: istat')
+    code('')
+    code('character(kind=c_char,len=*), intent(in) :: userSubroutine')
+    code('type(ops_block), intent(in) :: block')
+    code('integer(4), intent(in):: dim')
+    code('integer(4), dimension(2*dim), intent(in) :: range')
+    code('real(8) :: t1,t2,t3')
+    code('real(4) :: transfer_total, transfer')
+    code('integer(4) :: istat')
     code('')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_idx':
-        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
+        code('type(ops_arg), intent(in) :: opsArg'+str(n+1))
         code('')
       if arg_typ[n] == 'ops_arg_dat':
-        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
-        code(typs[n]+', DIMENSION(:), DEVICE, POINTER  :: opsDat'+str(n+1)+'Local')
-        code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
-        code('integer(kind=4), POINTER, DIMENSION(:)  :: dat'+str(n+1)+'_size')
-        code('integer(kind=4) :: dat'+str(n+1)+'_base')
-        code('INTEGER(KIND=4) :: xdim'+str(n+1))
+        code('type(ops_arg), intent(in) :: opsArg'+str(n+1))
+        code(typs[n]+', dimension(:), device, pointer  :: opsDat'+str(n+1)+'Local')
+        code('integer(4) :: opsDat'+str(n+1)+'Cardinality')
+        code('integer(4), pointer, dimension(:) :: dat'+str(n+1)+'_size')
+        code('integer(4) :: dat'+str(n+1)+'_base')
+        code('integer(4) :: xdim'+str(n+1))
         if dims[n] != '1':
-          code('INTEGER(KIND=4) :: multi_d'+str(n+1))
+          code('integer(4) :: multi_d'+str(n+1))
         if NDIM==2:
-          code('INTEGER(KIND=4) :: ydim'+str(n+1))
+          code('integer(4) :: ydim'+str(n+1))
         elif NDIM==3:
-          code('INTEGER(KIND=4) :: ydim'+str(n+1)+', zdim'+str(n+1))
+          code('integer(4) :: ydim'+str(n+1)+', zdim'+str(n+1))
         code('')
 
     for n in range(0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        code('type ( ops_arg )  , INTENT(IN) :: opsArg'+str(n+1))
-        code('integer(kind=4) :: opsDat'+str(n+1)+'Cardinality')
+        code('type(ops_arg), intent(in) :: opsArg'+str(n+1))
+        code('integer(4) :: opsDat'+str(n+1)+'Cardinality')
         if accs[n] == OPS_READ and dims[n] != '1':
-          code(typs[n]+', DIMENSION(:), DEVICE, POINTER :: opsDat'+str(n+1)+'Host')
+          code(typs[n]+', dimension(:), device, pointer :: opsDat'+str(n+1)+'Host')
         else:
-          code(typs[n]+', DIMENSION(:), POINTER :: opsDat'+str(n+1)+'Host')
+          code(typs[n]+', dimension(:), pointer :: opsDat'+str(n+1)+'Host')
         if (accs[n] == OPS_INC or accs[n] == OPS_MAX or accs[n] == OPS_MIN):
-          code(typs[n]+', DIMENSION(:), ALLOCATABLE :: reductionArrayHost'+str(n+1))
-          code('INTEGER(kind=4) :: reductionCardinality'+str(n+1))
+          code(typs[n]+', dimension(:), allocatable :: reductionArrayHost'+str(n+1))
+          code('integer(4) :: reductionCardinality'+str(n+1))
     code('')
 
 
     if NDIM==1:
-      code('integer x_size')
+      code('integer(4) :: x_size')
     elif NDIM==2:
-      code('integer x_size, y_size')
+      code('integer(4) :: x_size, y_size')
     elif NDIM==3:
-      code('integer x_size, y_size, z_size')
-    code('integer start('+str(NDIM)+')')
-    code('integer end('+str(NDIM)+')')
+      code('integer(4) :: x_size, y_size, z_size')
+    code('integer(4), dimension('+str(NDIM)+') :: start_indx, end_indx')
+
     if arg_idx == 1:
-      code('integer, DEVICE :: idx('+str(NDIM)+')')
-      code('integer :: idx_h('+str(NDIM)+')')
+      code('integer(4), dimension('+str(NDIM)+'), device :: idx')
+      code('integer(4), dimension('+str(NDIM)+')         :: idx_h')
 
-    code('integer(kind=4) :: n')
-    code('integer(kind=4) :: i10')
-    code('integer(kind=4) :: i20')
+    code('integer(4) :: n')
+    code('integer(4) :: i10')
+    code('integer(4) :: i20')
 
-    code('integer(kind=4) :: blocksPerGrid')
-    code('integer(kind=4) :: nshared')
-    code('integer(kind=4) :: nthread')
+    code('integer(4) :: blocksPerGrid')
+    code('integer(4) :: nshared')
+    code('integer(4) :: nthread')
 
 
     code('')
     comm('cuda grid and thread block sizes')
     code('type(dim3) :: grid, tblock')
     code('')
-    code('type ( ops_arg ) , DIMENSION('+str(nargs)+') :: opsArgArray')
+    code('type(ops_arg), dimension('+str(nargs)+') :: opsArgArray')
     code('')
 
     for n in range (0, nargs):
@@ -854,15 +784,15 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     config.depth = config.depth - 2
     code('#ifdef OPS_MPI')
     config.depth = config.depth + 2
-    IF('getRange(block, start, end, range) < 0')
+    IF('getRange(block, start_indx, end_indx, range) < 0')
     code('return')
     ENDIF()
     config.depth = config.depth - 2
     code('#else')
     config.depth = config.depth + 2
     DO('n','1',str(NDIM))
-    code('start(n) = range(2*n-1)')
-    code('end(n) = range(2*n)')
+    code('start_indx(n) = range(2*n-1)')
+    code('end_indx(n)   = range(2*n)')
     ENDDO()
     config.depth = config.depth - 2
     code('#endif')
@@ -872,13 +802,13 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       config.depth = config.depth - 2
       code('#ifdef OPS_MPI')
       config.depth = config.depth + 2
-      code('call getIdx(block,start,idx_h)')
+      code('call getIdx(block,start_indx,idx_h)')
       code('idx = idx_h')
       config.depth = config.depth - 2
       code('#else')
       config.depth = config.depth + 2
       for n in range (0, NDIM):
-        code('idx('+str(n+1)+') = start('+str(n+1)+')')
+        code('idx('+str(n+1)+') = start_indx('+str(n+1)+')')
       config.depth = config.depth - 2
       code('#endif')
       config.depth = config.depth + 2
@@ -886,12 +816,12 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
 
     code('')
-    code('x_size = MAX(0,end(1)-start(1)+1)')
+    code('x_size = MAX(0,end_indx(1)-start_indx(1)+1)')
     if NDIM==2:
-      code('y_size = MAX(0,end(2)-start(2)+1)')
+      code('y_size = MAX(0,end_indx(2)-start_indx(2)+1)')
     if NDIM==3:
-      code('y_size = MAX(0,end(2)-start(2)+1)')
-      code('z_size = MAX(0,end(3)-start(3)+1)')
+      code('y_size = MAX(0,end_indx(2)-start_indx(2)+1)')
+      code('z_size = MAX(0,end_indx(3)-start_indx(3)+1)')
     code('')
     if gbls_mdim > 0:
       code('call ops_upload_gbls(opsArgArray,'+str(nargs)+')')
@@ -913,9 +843,9 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
           code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+' * ydim'+str(n+1)+' * zdim'+str(n+1))
         if dims[n] != '1':
           code('multi_d'+str(n+1)+' = getDatDimFromOpsArg(opsArg'+str(n+1)+') ! dimension of the dat')
-          code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,multi_d'+str(n+1)+')')
+          code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start_indx,multi_d'+str(n+1)+')')
         else:
-          code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start,1)')
+          code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+',start_indx,1)')
         code('call c_f_pointer(opsArg'+str(n+1)+'%data_d,opsDat'+str(n+1)+'Local,(/opsDat'+str(n+1)+'Cardinality/))')
 
       if arg_typ[n] == 'ops_arg_gbl':
@@ -1021,6 +951,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code('call ops_H_D_exchanges_device(opsArgArray,'+str(nargs)+')')
     code('')
     code('call ops_timers_core(t2)')
+    code('')
 
     #Call cuda kernel  - i.e. the wrapper calling the user kernel
     if reduction:
@@ -1108,14 +1039,16 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     code('transfer_total = 0.0_4')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('call ops_compute_transfer('+str(NDIM)+', start, end, opsArg'+str(n+1)+',transfer)')
+        code('call ops_compute_transfer('+str(NDIM)+', start_indx, end_indx, opsArg'+str(n+1)+',transfer)')
         code('transfer_total = transfer_total + transfer')
     code('call setKernelTime('+str(nk)+',userSubroutine,t3-t2,t2-t1,transfer_total,0)') 
 
 
 
     config.depth = config.depth - 2
+    code('')
     code('end subroutine')
+    code('')
     code('END MODULE')
 
 ##########################################################################
@@ -1128,7 +1061,7 @@ def ops_fortran_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         raise
     fid = open('./CUDA/'+name+'_cuda_kernel.CUF','w')
     date = datetime.datetime.now()
-    fid.write('!\n! auto-generated by ops_fortran.py\n!\n')
+    fid.write('!\n! auto-generated by ops_fortran.py\n!\n\n')
 
     fid.write(config.file_text)
     fid.close()

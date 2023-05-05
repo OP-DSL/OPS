@@ -49,30 +49,41 @@
 
 
 hid_t h5_type(const char *type) {
-  hid_t h5t{0};
-  if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0) {
-    h5t = H5T_NATIVE_DOUBLE;
-  } else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0 ||
-             strcmp(type, "real") == 0) {
-    h5t = H5T_NATIVE_FLOAT;
-  } else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 ||
-             strcmp(type, "integer(4)") == 0) {
-    h5t = H5T_NATIVE_INT;
-  } else if (strcmp(type, "long") == 0) {
-    h5t = H5T_NATIVE_LONG;
-  } else if ((strcmp(type, "long long") == 0) || (strcmp(type, "ll") == 0)) {
-    h5t = H5T_NATIVE_LLONG;
-  } else if (strcmp(type, "short") == 0) {
-    h5t = H5T_NATIVE_SHORT;
-  } else if (strcmp(type, "char") == 0) {
-    h5t = H5T_NATIVE_CHAR;
-
-  } else {
-    OPSException ex(OPS_HDF5_ERROR);
-    ex << "Error: Unknown data type for converting to hdf5 recognised types";
-    throw ex;
-  }
-  return h5t;
+    hid_t h5t{0};
+    if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(dat->type, "real(kind=8)") == 0)
+    {
+        h5t = H5T_NATIVE_DOUBLE;
+    }
+    else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 ||
+             strcmp(type, "real(kind=4)") == 0)
+    {
+        h5t = H5T_NATIVE_FLOAT;
+    }
+    else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 || strcmp(type, "integer") == 0 ||
+             strcmp(type, "integer(4)") == 0 || strcmp(type, "integer(kind=4)") == 0)
+    {
+        h5t = H5T_NATIVE_INT;
+    } else if (strcmp(type, "long") == 0)
+    {
+        h5t = H5T_NATIVE_LONG;
+    } else if ((strcmp(type, "long long") == 0) || (strcmp(type, "ll") == 0))
+    {
+        h5t = H5T_NATIVE_LLONG;
+    } else if (strcmp(type, "short") == 0)
+    {
+        h5t = H5T_NATIVE_SHORT;
+    }
+    else if (strcmp(type, "char") == 0)
+    {
+        h5t = H5T_NATIVE_CHAR;
+    }
+    else
+    {
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: Unknown data type for converting to hdf5 recognised types";
+        throw ex;
+    }
+    return h5t;
 }
 
 void split_h5_name(const char *data_name,

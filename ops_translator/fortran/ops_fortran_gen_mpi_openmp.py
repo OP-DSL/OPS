@@ -96,7 +96,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels, soa_set):
     #parse stencil to locate strided access
     stride = [1] * nargs * NDIM
 
-
+#    print("OpenMP kernel name: " + name)
 
     reduction = 0
     reduction_vars = ''

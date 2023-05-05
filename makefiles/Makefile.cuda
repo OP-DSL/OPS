@@ -1,7 +1,7 @@
 NVCC  ?= $(CUDA_INSTALL_PATH)/bin/nvcc
 CUDA_INC ?= -I$(CUDA_INSTALL_PATH)/include
 CUDA_LIB ?= $(CUDA_INSTALL_PATH)/lib64
-NVCCFLAGS := -Xcompiler="-std=c99 -fPIC"
+NVCCFLAGS := -Xcompiler="-fPIC"
 ifndef DEBUG
     NVCCFLAGS += -O3 -g -std=c++11
 else

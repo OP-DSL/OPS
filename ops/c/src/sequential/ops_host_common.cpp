@@ -56,13 +56,13 @@ void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
 }
 
 void ops_device_free(OPS_instance *instance, void** ptr) {
-  throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
   *ptr = nullptr;
+  throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
 }
 
 void ops_device_freehost(OPS_instance *instance, void** ptr) {
-  throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
   *ptr = nullptr;
+  throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
 }
 
 void ops_device_memcpy_h2d(OPS_instance *instance, void** to, void **from, size_t size) {

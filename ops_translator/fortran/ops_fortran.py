@@ -116,20 +116,23 @@ def ops_decl_const_parse(text):
   """Parsing for ops_decl_const calls"""
 
   consts = []
-  for m in re.finditer('(.*)call(.+)ops_decl_const(.*)\((.*)\)', text):
-    args = m.group(4).split(',')
-    #print((m.group(4)))
+
+  for m in re.finditer(r'call\s+ops_decl_const\s*\(\s*"([^"]*)"\s*,\s*(\d+)\s*,\s*"([^"]*)"\s*,\s*([^)]*)\s*\)', text, re.IGNORECASE):
+    match_args = str(m.groups())
+    args_list = arg_parse2(match_args, 0)
     # check for syntax errors
-    if len(args) != 4:
+    if len(args_list) != 4:
       print('Error in ops_decl_const : must have four arguments')
       return
-
+    
+    cleaned_list = [item.replace("'", "") for item in args_list]
+ 
     consts.append({
-          'loc': m.start(),
-          'name': args[0].strip(),
-          'dim': args[1].strip(),
-          'type': (args[2].replace('"','')).strip(),
-          'name2': args[3].strip()
+          'loc':  m.start(),
+          'name': cleaned_list[0],
+          'dim':  cleaned_list[1],
+          'type': cleaned_list[2],
+          'name2': cleaned_list[3]
     })
 
   return consts
@@ -330,6 +333,7 @@ def main(source_files):
 
   # declare constants
 
+  const_file_flag = True  
   ninit = 0
   nexit = 0
   soa_set = 0
@@ -429,8 +433,9 @@ def main(source_files):
       print('Total ops const declared in file: '+(str(len(const_args))))
  
       if bool(const_args):
-        if a == 0:
+        if const_file_flag:
           fp = open('constants_list.txt', 'w')
+          const_file_flag = False
         else:
           fp = open('constants_list.txt', 'a')
 
@@ -450,9 +455,9 @@ def main(source_files):
         dim   = loop_args[i]['dim']
         block = loop_args[i]['block']
         _range   = loop_args[i]['range']
-        #print(('\nprocessing kernel ' + name + ' with ' + str(nargs) + ' arguments'))
-        #print(('dim: '+dim))
-        #print(('range: '+str(_range)))
+#        print(('\nprocessing kernel ' + name + ' with ' + str(nargs) + ' arguments'))
+#        print(('dim: '+dim))
+#        print(('range: '+str(_range)))
 
         #
         # process arguments
@@ -517,28 +522,24 @@ def main(source_files):
         # check for repeats
         #
         repeat = False
-        rep1 = False
-        rep2 = False
-        which_file = -1
-        for nk in range(0, nkernels):
-          rep1 = kernels[nk]['name'] == name and \
-            kernels[nk]['nargs'] == nargs and \
-            kernels[nk]['dim'] == dim and \
-            kernels[nk]['range'] == _range
-          if rep1:
-            rep2 = True
+        rep_kernel_idx = -1
+
+        for nk, kernel in enumerate(kernels):
+          if kernel["name"] == name:
+            repeat = kernel["nargs"] == nargs and kernel["dim"] == dim
             for arg in range(0, nargs):
-                rep2 = rep2 and \
-                    kernels[nk]['stens'][arg] == stens[arg] and \
-                    kernels[nk]['dims'][arg] == dims[arg] and \
-                    kernels[nk]['typs'][arg] == typs[arg] and \
-                    kernels[nk]['accs'][arg] == accs[arg]
-            if rep2:
-              #print(('repeated kernel with compatible arguments: ' + kernels[nk]['name']))
-              repeat = True
-              which_file = nk
+              repeat = (
+                repeat
+                and kernel["stens"][arg] == stens[arg]
+                and kernel["dims"][arg] == dims[arg]
+                and kernel["typs"][arg] == typs[arg]
+                and kernel["accs"][arg] == accs[arg]
+              )
+            if repeat:
+#              print(f"repeated kernel with compatible arguments: {kernel['name']}")
+              rep_kernel_idx = nk
             else:
-              print('repeated kernel with incompatible arguments: ERROR  ' + kernels[nk]['name'])
+              print(f"repeated kernel with incompatible arguments: ERROR {kernel['name']}")
               break
 
         #
@@ -550,24 +551,24 @@ def main(source_files):
 
         # store kernel in current file kernel list
         flag_repeat = False
-        for nk in range(0, len(kernels_in_cur_file)):
-            temp = kernels_in_cur_file[nk]
+        for nk, kernel in enumerate(kernels_in_cur_file):
+          if kernel["name"] == name:
+            flag_repeat = kernel["nargs"] == nargs and kernel["dim"] == dim
+            for arg in range(0, nargs):
+              flag_repeat = (
+                flag_repeat
+                and kernel["stens"][arg] == stens[arg]
+                and kernel["dims"][arg] == dims[arg]
+                and kernel["typs"][arg] == typs[arg]
+                and kernel["accs"][arg] == accs[arg]
+              )
+            if flag_repeat:
+#              print(f"repeated kernel with compatible arguments: {kernel['name']}")
+               pass
+            else:
+              print(f"repeated kernel with incompatible arguments: ERROR {kernel['name']}")
+              break
 
-            check1 = temp['name'] == name and \
-                     temp['nargs'] == nargs and \
-                     temp['dim'] == dim and \
-                     temp['range'] == _range
-            if check1:
-                check2 = True
-                for arg in range(0, nargs):
-                    check2 = check2 and \
-                        temp['stens'][arg] == stens[arg] and \
-                        temp['dims'][arg] == dims[arg] and \
-                        temp['typs'][arg] == typs[arg] and \
-                        temp['accs'][arg] == accs[arg]
-                if check2:
-                    flag_repeat = True
-                    break
 
         if flag_repeat == False:
             temp = { 'arg_type':typ,
@@ -586,8 +587,8 @@ def main(source_files):
         #
         # store away in master list
         #
-        if not repeat:
-              nkernels = nkernels + 1
+        if repeat == False:
+              temp = { }
               temp = { 'arg_type':typ,
                        'name': name,
                       'nargs': nargs,
@@ -604,10 +605,10 @@ def main(source_files):
         else:
               append = 1
               for in_file in range(0, len(kernels_in_files[a - 1])):
-                  if kernels_in_files[a - 1][in_file] == which_file:
+                  if kernels_in_files[a - 1][in_file] == rep_kernel_idx:
                       append = 0
               if append == 1:
-                  (kernels_in_files[a - 1]).append(which_file)
+                  (kernels_in_files[a - 1]).append(rep_kernel_idx)
 
 
       #
@@ -735,9 +736,9 @@ def main(source_files):
       fid.close()
       f.close()
 
-  #
-  # errors and warnings
-  #
+#
+# errors and warnings
+#
 
   if ninit == 0:
       print(' ')
@@ -752,17 +753,20 @@ def main(source_files):
       print('-------------------------------')
 
 
-  #
-  # finally, generate target-specific kernel files
-  #
-    
+#
+# finally, generate target-specific kernel files
+#
+
   print('Generating kernels files for target - MPI ........\n')
   ops_fortran_gen_mpi(str(source_files[0]), date, consts, kernels, soa_set)
   print('Generating kernels files for target - MPI_OpenMP ........\n')
   ops_fortran_gen_mpi_openmp(str(source_files[0]), date, consts, kernels, soa_set)
   print('Generating kernels files for target - MPI_CUDA ........\n')
   ops_fortran_gen_mpi_cuda(str(source_files[0]), date, consts, kernels, soa_set)
-#  ops_fortran_gen_mpi_openacc(str(source_files[0]), date, consts, kernels, soa_set)
+  print('Generating kernels files for target - MPI_OpenACC ........\n')
+  ops_fortran_gen_mpi_openacc(str(source_files[0]), date, consts, kernels, soa_set)
+  exit()
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
