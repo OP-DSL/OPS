@@ -213,7 +213,7 @@ build:GNU:APP:
   dependencies:
     - build:GNU:API
   except:
-    - master
+    - develop
 
 build:Intel:APP:
   stage: APP_Build
@@ -271,7 +271,7 @@ build:Intel:APP:
   dependencies:
     - build:Intel:API
   except:
-    - master
+    - develop
 
 build:Translator:App:
   stage: APP_Build
@@ -368,7 +368,7 @@ test:GNU:
     paths:
     - appbuild/Testing/Temporary
   only:
-    - master
+    - develop
 
 test:Intel:
   stage: test
@@ -430,7 +430,7 @@ test:Intel:
     paths:
     - appbuild-intel/Testing/Temporary
   only:
-    - master
+    - develop
 
 # #Stage "docs"
 # make-docs:

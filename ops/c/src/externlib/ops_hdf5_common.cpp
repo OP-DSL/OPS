@@ -44,9 +44,9 @@
 #define H5Dcreate_vers 2
 
 // hdf5 header
-#include <hdf5.h>
-#include <hdf5_hl.h>
+#include "ops_hdf5_common.h"
 #include <ops_exceptions.h>
+
 
 hid_t h5_type(const char *type) {
   hid_t h5t{0};
@@ -81,5 +81,166 @@ void split_h5_name(const char *data_name,
   std::string segment;
   while (std::getline(name_stream, segment, '/')) {
     h5_name_list.push_back(segment);
+  }
+}
+
+hid_t create_float16_type() {
+  hid_t new_type = H5Tcopy(H5T_IEEE_F32LE);
+  size_t spos, epos, esize, mpos, msize;
+  H5Tget_fields(new_type, &spos, &epos, &esize, &mpos, &msize);
+  // for float16
+  mpos = 0;
+  msize = 10;
+  esize = 5;
+  epos = 10;
+  spos = 15;
+  // for single precision
+  //   mpos = 0;
+  // msize = 23;
+  // esize = 8;
+  // epos = 23;
+  // spos = 31;
+  H5Tset_fields(new_type, spos, epos, esize, mpos, msize);
+  H5Tset_precision(new_type, 16);
+  H5Tset_size(new_type, 2);
+  H5Tset_ebias(new_type, 15);
+  return new_type;
+}
+  // create the dataset or open the dataset if existing
+void H5_dataset_space(const hid_t file_id, const int data_dims,
+                      const hsize_t *global_data_size,
+                      const std::vector<std::string> &h5_name_list,
+                      const char *data_type, REAL_PRECISION real_precision,
+                      std::vector<hid_t> &groupid_list, hid_t &dataset_id,
+                      hid_t &file_space) {
+
+  hid_t parent_group{file_id};
+  const char *data_name = h5_name_list.back().c_str();
+  for (int grp = 0; grp < (h5_name_list.size() - 1); grp++) {
+    if (H5Lexists(parent_group, h5_name_list[grp].c_str(), H5P_DEFAULT) == 0) {
+      parent_group = H5Gcreate(parent_group, h5_name_list[grp].c_str(),
+                               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    } else {
+      parent_group =
+          H5Gopen(parent_group, h5_name_list[grp].c_str(), H5P_DEFAULT);
+    }
+    groupid_list[grp] = parent_group;
+  }
+
+  if (H5Lexists(parent_group, data_name, H5P_DEFAULT) == 0) {
+    hid_t data_plist_id{H5Pcreate(H5P_DATASET_CREATE)};
+    file_space = H5Screate_simple(data_dims, global_data_size, NULL);
+
+    hid_t type = h5_type(data_type);
+    if (type == H5T_NATIVE_FLOAT || type == H5T_NATIVE_DOUBLE) {
+      hid_t real_type;
+      bool float16_created{false};
+      if (type == H5T_NATIVE_DOUBLE) {
+        if (real_precision == REAL_PRECISION::Double) {
+          real_type = H5T_NATIVE_DOUBLE;
+        }
+        if (real_precision == REAL_PRECISION::Single) {
+          real_type = H5T_NATIVE_FLOAT;
+        }
+        if (real_precision == REAL_PRECISION::Half) {
+          real_type = create_float16_type();
+          float16_created = true;
+        }
+      }
+
+      if (type == H5T_NATIVE_FLOAT) {
+        if (real_precision == REAL_PRECISION::Single) {
+          real_type = H5T_NATIVE_FLOAT;
+        }
+        if (real_precision == REAL_PRECISION::Half) {
+          real_type = create_float16_type();
+          float16_created = true;
+        }
+      }
+
+      dataset_id = H5Dcreate(parent_group, data_name, real_type, file_space,
+                             H5P_DEFAULT, data_plist_id, H5P_DEFAULT);
+      if (float16_created) {
+        H5Tclose(real_type);
+      }
+    } else {
+      dataset_id =
+          H5Dcreate(parent_group, data_name, h5_type(data_type), file_space,
+                    H5P_DEFAULT, data_plist_id, H5P_DEFAULT);
+    }
+    H5Pclose(data_plist_id);
+  } else {
+    dataset_id = H5Dopen(parent_group, data_name, H5P_DEFAULT);
+    file_space = H5Dget_space(dataset_id);
+    int ndims{H5Sget_simple_extent_ndims(file_space)};
+    bool dims_consistent{ndims == data_dims};
+    bool size_consistent{true};
+    if (dims_consistent) {
+      hsize_t *size{new hsize_t(ndims)};
+      H5Sget_simple_extent_dims(file_space, size, NULL);
+      for (int d = 0; d < ndims; d++) {
+        size_consistent = size_consistent && (size[d] == global_data_size[d]);
+      }
+      delete size;
+    }
+    if ((not dims_consistent) || (not size_consistent)) {
+      H5Sclose(file_space);
+      H5Dclose(dataset_id);
+      OPSException ex(OPS_HDF5_ERROR);
+      ex << "Error: inconstent data size in storage detected for  "
+         << data_name;
+      throw ex;
+    }
+  }
+}
+
+// create the dataset or open the dataset if existing
+void H5_dataset_space(const hid_t file_id, const int data_dims,
+                      const hsize_t *global_data_size,
+                      const std::vector<std::string> &h5_name_list,
+                      const char *data_type, std::vector<hid_t> &groupid_list,
+                      hid_t &dataset_id, hid_t &file_space) {
+
+  hid_t parent_group{file_id};
+  const char *data_name = h5_name_list.back().c_str();
+  for (int grp = 0; grp < (h5_name_list.size() - 1); grp++) {
+    if (H5Lexists(parent_group, h5_name_list[grp].c_str(), H5P_DEFAULT) == 0) {
+      parent_group = H5Gcreate(parent_group, h5_name_list[grp].c_str(),
+                               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    } else {
+      parent_group =
+          H5Gopen(parent_group, h5_name_list[grp].c_str(), H5P_DEFAULT);
+    }
+    groupid_list[grp] = parent_group;
+  }
+
+  if (H5Lexists(parent_group, data_name, H5P_DEFAULT) == 0) {
+    hid_t data_plist_id{H5Pcreate(H5P_DATASET_CREATE)};
+    file_space = H5Screate_simple(data_dims, global_data_size, NULL);
+    dataset_id = H5Dcreate(parent_group, data_name, h5_type(data_type),
+                           file_space, H5P_DEFAULT, data_plist_id, H5P_DEFAULT);
+    H5Pclose(data_plist_id);
+  } else {
+    dataset_id = H5Dopen(parent_group, data_name, H5P_DEFAULT);
+    file_space = H5Dget_space(dataset_id);
+    int ndims{H5Sget_simple_extent_ndims(file_space)};
+    bool dims_consistent{ndims == data_dims};
+    bool size_consistent{true};
+    if (dims_consistent) {
+      hsize_t *size{new hsize_t(ndims)};
+      H5Sget_simple_extent_dims(file_space, size, NULL);
+      for (int d = 0; d < ndims; d++) {
+        size_consistent = size_consistent && (size[d] == global_data_size[d]);
+      }
+      delete size;
+    }
+    if ((not dims_consistent) || (not size_consistent)) {
+      H5Sclose(file_space);
+      H5Dclose(dataset_id);
+      OPSException ex(OPS_HDF5_ERROR);
+      ex << "Error: inconstent data size in storage detected for  "
+         << data_name;
+      throw ex;
+    }
   }
 }

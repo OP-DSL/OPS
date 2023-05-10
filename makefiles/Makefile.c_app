@@ -71,7 +71,7 @@ $(APP)_seq: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops
 #
 
 $(APP)_hip: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_hip.a $(OPS_FILES_GEN) $(HEADERS)
-		$(HIPCC) $(CXXFLAGS) $(HIPFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./HIP/$(MAIN_SRC)_kernels.cpp $(HDF5_LIB_SEQ) $(OPS_LINK) $(OPS_LIB_HIP) -o $(APP)_hip
+		$(HIPCC) $(CXXFLAGS) $(HIPFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./HIP/$(MAIN_SRC)_kernels.cpp $(OPS_LIB_HIP) $(HDF5_LIB_SEQ) $(OPS_LINK)  -o $(APP)_hip
 
 #
 # Tiled version
@@ -97,7 +97,7 @@ $(APP)_mpi_cuda_tiled: ./CUDA/$(APP)_kernels_mpi_tiled_cu.o Makefile .generated 
 		$(MPICPP) $(OMPFLAGS) $(CXXFLAGS) -DOPS_MPI -DOPS_LAZY -I$(CUDA_INC) -I$(C_OPS_INC) -L$(C_OPS_LIB) -L$(CUDA_LIB) $(OPS_FILES_GEN) $(TRID_LIB) ./CUDA/$(APP)_kernels_mpi_tiled_cu.o $(CUDART) $(HDF5_LIB_MPI) $(OPS_LINK) $(OPS_LIB_MPI_CUDA) -o $(APP)_mpi_cuda_tiled
 
 $(APP)_mpi_hip: Makefile .generated ./HIP/$(APP)_kernels_mpi.o $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_hip.a $(OPS_FILES_GEN) $(HEADERS)
-		$(HIPMPICPP) $(CXXFLAGS) $(HIPLINK) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. -DOPS_MPI ./HIP/$(MAIN_SRC)_kernels_mpi.o $(HDF5_LIB_MPI) $(OPS_LINK) $(OPS_LIB_MPI_HIP) $(HIP_LINK) -o $(APP)_mpi_hip
+		$(HIPMPICPP) $(CXXFLAGS) $(HIPLINK) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. -DOPS_MPI ./HIP/$(MAIN_SRC)_kernels_mpi.o  $(OPS_LIB_MPI_HIP) $(HDF5_LIB_MPI) $(OPS_LINK)  $(HIP_LINK) -o $(APP)_mpi_hip
 
 $(APP)_mpi_hip_tiled: Makefile .generated ./HIP/$(APP)_kernels_mpi_tiled.o $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_hip.a $(OPS_FILES_GEN) $(HEADERS)
 		$(HIPMPICPP) $(CXXFLAGS) $(HIPLINK) -I$(C_OPS_INC) -DOPS_LAZY -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. -DOPS_MPI ./HIP/$(MAIN_SRC)_kernels_mpi_tiled.o $(HDF5_LIB_MPI) $(OPS_LINK) $(OPS_LIB_MPI_HIP) $(HIP_LINK) -o $(APP)_mpi_hip_tiled

@@ -41,6 +41,9 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <ops_lib_core.h>
+
+enum class REAL_PRECISION { Half = 16, Single = 32, Double = 64 };
 
 /**
  * This routine defines a dataset to be read in from a named hdf5 file.
@@ -191,6 +194,19 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
 void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
                               const char *file_name, const char *data_name);
 
+                              /**
+ * Write a hyperslab of ops_dat to HDF5 file. If the data_name follows the HDF5
+ * convention (say block/time/data), data will be created under groups block and time.
+* @param dat       the ops_dat holds the plane
+ * @param range the range of ops_dat to be written
+ * @param file_name  HDF5 file name ".h5"
+ * @param data_name  data_name
+ * @param real_precision Half, Single, and Double, see enum class REAL_PRECISION
+ */
+void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
+                              const char *file_name, const char *data_name,
+                              REAL_PRECISION real_precision);
+
 /**
  * Write data on a plane to HDF5 file. If the data_name follows the HDF5
  * convention (say block/time/data), data will be created under groups block and time. The array dimension will be reduced by one
@@ -203,6 +219,20 @@ void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
 void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
                           const int pos, char const *file_name,
                           const char *data_name);
+
+/**
+ * Write data on a plane to HDF5 file. If the data_name follows the HDF5
+ * convention (say block/time/data), data will be created under groups block and time. The array dimension will be reduced by one
+* @param dat       the ops_dat holds the plane
+ * @param cross_section_dir the plane direction (0:I, 1:J and 2:K)
+ * @param pos the plane postion(e.g., 16 for I=16)
+ * @param file_name  HDF5 file name ".h5"
+ * @param data_name  data_name
+ * @param real_precision Half, Single, and Double, see enum class REAL_PRECISION
+ */
+void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
+                          const int pos, char const *file_name,
+                          const char *data_name, REAL_PRECISION real_precision);
 
 /**
  * Write a group of slices/planes of a group of ops_dats into a series of HDF5 files. Each HDF5 will named by I(J,K)Pos.h5, where all ops_dats for this
@@ -231,5 +261,38 @@ void ops_write_plane_group_hdf5(
     const std::vector<std::pair<int, int>> &planes,
     std::vector<std::string> &plane_names, const std::string &key,
     const std::vector<std::vector<ops_dat>> &data_list);
+
+/**
+ * Write a group of slices/planes of a group of ops_dats into a series of HDF5 files. Each HDF5 will named by I(J,K)Pos.h5, where all ops_dats for this
+ plane will be wrote into this file. The slices will be named as blockname_datname_key
+
+ * @param planes  plane groups specified as {{ cross_section_dir,pos},{...},{...},...}
+ * @param key  a decoration to a dat name for distinguishing, e.g., time steps.
+ * @param data       the ops_dat to be sliced
+ * @param  ops_dats to be written, which specified as {{ops_dats at plane 0},{ops_dats at plane 1}...}
+ * @param real_precision Half, Single, and Double, see enum class REAL_PRECISION
+ */
+void ops_write_plane_group_hdf5(
+    const std::vector<std::pair<int, int>> &planes, const std::string &key,
+    const std::vector<std::vector<ops_dat>> &data_list,
+    REAL_PRECISION real_precision);
+
+/**
+ * Write a group of slices/planes of a group of ops_dats into a series of HDF5 files. Each HDF5 will be named as specified, where all ops_dats for this
+ plane will be wrote into this file. The slices will be named as blockname_datname_key
+
+ * @param planes  plane groups specified as {{ cross_section_dir,pos},{...},{...},...}
+ * @param plane_names plane names
+ * @param key  a decoration to a dat name for distinguishing, e.g., time steps.
+ * @param data       the ops_dat to be sliced
+ * @param  ops_dats to be written, which specified as {{ops_dats at plane 0},{ops_dats at plane 1}...}
+ * @param real_precision Half, Single, and Double, see enum class REAL_PRECISION
+ */
+void ops_write_plane_group_hdf5(
+    const std::vector<std::pair<int, int>> &planes,
+    std::vector<std::string> &plane_names, const std::string &key,
+    const std::vector<std::vector<ops_dat>> &data_list,
+    REAL_PRECISION real_precision);
+
 #endif
 /* __OPS_HDF5_H */
