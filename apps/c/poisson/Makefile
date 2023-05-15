@@ -26,4 +26,7 @@ OTHER_FILES=
 APP=poisson
 MAIN_SRC=poisson
 
+OPS_GENERATOR_VERBOSE=1
+TARGETS=dev_seq seq
+
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app
