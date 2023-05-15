@@ -113,6 +113,9 @@ def parseUnexposedFunction(node: Cursor) -> Union[Tuple[str, List[Cursor]], None
     for child in node.get_children():
         args.append(child)
     
+    if len(args) == 0:
+        return None
+    
     first_child = args.pop(0)
 
     if first_child.kind == CursorKind.DECL_REF_EXPR:
