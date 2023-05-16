@@ -1,6 +1,6 @@
 
 ifndef OPS_GENERATED_SUFFIX
-OPS_GENERATED_SUFFIX="_ops"
+OPS_GENERATED_SUFFIX=_ops
 endif
 
 OPS_GENERATED=$(join $(addsuffix $(OPS_GENERATED_SUFFIX), $(basename $(OPS_FILES))), $(suffix $(OPS_FILES)))
@@ -23,7 +23,7 @@ endif
 
 .generated: $(HEADERS) $(OPS_FILES) $(OPS_INSTALL_PATH)/../ops_translator_v2/ops-translator/*.py
 	@echo "generating translations for ${OPS_FILES}"
-	@echo "OPS_EXTENTIONS: ${OPS_EXTENTIONS} OPS_GENERATED: ${OPS_GENERATED}"
+	@echo "OPS_EXTENTIONS: ${OPS_GENERATED_SUFFIX} OPS_GENERATED: ${OPS_GENERATED}"
 	which python3
 	python3 $(OPS_INSTALL_PATH)/../ops_translator_v2/ops-translator $(VERBOSE) -I $(OPS_INSTALL_PATH)/c/include/ --file_paths $(OPS_FILES)
 	rm -f .generated
@@ -31,18 +31,16 @@ endif
 	#touch ./OpenCL/$(MAIN_SRC)_seq_kernels.cpp
 
 ifndef TARGETS
-TARGETS = dev_seq dev_mpi mpi mpi_openmp openmp seq mpi_inline tiled mpi_tiled cuda mpi_cuda mpi_cuda_tiled opencl mpi_opencl
-endif
-
-
-
+    TARGETS = dev_seq dev_mpi seq tiled openmp mpi mpi_openmp mpi_inline mpi_tiled cuda mpi_cuda mpi_cuda_tiled opencl mpi_opencl
 ifeq ($(OPS_COMPILER),pgi)
-TARGETS += openacc mpi_openacc
+    TARGETS += openacc mpi_openacc
 else
-TARGETS += openacc_error
+    TARGETS += openacc_error
 endif
+endif
+
 ifdef THREADED
-CXXFLAGS += $(THREADING_FLAGS)
+    CXXFLAGS += $(THREADING_FLAGS)
 endif
 
 APP_TARGETS = $(addprefix $(APP)_, $(TARGETS))
@@ -62,11 +60,11 @@ $(APP)_dev_mpi: Makefile $(OPS_FILES_PLAIN) \
 # mpi version
 #
 
-SEQ_KERNELS = seq_kernels.cpp
+MPI_OPENMP_KERNELS = mpi_openmp_kernels.cpp
 
 $(APP)_mpi: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi.a
 		@echo "Building ${APP}_mpi"
-		$(MPICPP) $(CXXFLAGS) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(HDF5_LIB_MPI) $(OPS_LIB_MPI) $(TRID_MPI) -fopenmp -o $(APP)_mpi
+		$(MPICPP) $(CXXFLAGS) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./mpi_openmp/$(MPI_OPENMP_KERNELS) $(HDF5_LIB_MPI) $(OPS_LIB_MPI) $(TRID_MPI) -fopenmp -o $(APP)_mpi
 
 #
 # OpenMP version
@@ -74,12 +72,12 @@ $(APP)_mpi: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops
 
 $(APP)_mpi_openmp: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo "Building ${APP}_mpi_openmp"
-		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(HDF5_LIB_MPI) $(OPS_LIB_MPI) $(TRID_LIB) -o $(APP)_mpi_openmp
+		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./mpi_openmp/$(MPI_OPENMP_KERNELS) $(HDF5_LIB_MPI) $(OPS_LIB_MPI) $(TRID_LIB) -o $(APP)_mpi_openmp
 
 
 $(APP)_openmp: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_seq.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo "Building ${APP}_openmp"
-		$(CXX) $(OMPFLAGS) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SEQ) -o $(APP)_openmp
+		$(CXX) $(OMPFLAGS) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./mpi_openmp/$(MPI_OPENMP_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SEQ) -o $(APP)_openmp
 
 
 #
@@ -87,7 +85,7 @@ $(APP)_openmp: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/lib
 #
 $(APP)_seq: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_seq.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo "Building ${APP}_seq"
-		$(MPICPP) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./seq/$(SEQ_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SEQ) $(TRID_SEQ) -fopenmp -o $(APP)_seq
+		$(MPICPP) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./mpi_openmp/$(MPI_OPENMP_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SEQ) $(TRID_SEQ) -fopenmp -o $(APP)_seq
 
 #
 # HIP version
@@ -102,12 +100,12 @@ $(APP)_hip: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops
 #
 $(APP)_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_seq.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo "Building ${APP}_tiled"
-		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -D$(OPS_COMPILER) -DOPS_LAZY -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SEQ) -o $(APP)_tiled
+		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -D$(OPS_COMPILER) -DOPS_LAZY -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./mpi_openmp/$(MPI_OPENMP_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LIB_SEQ) -o $(APP)_tiled
 
 $(APP)_mpi_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi.a $(OPS_FILES_GEN) \
                 $(HEADERS)
 		@echo "Building ${APP}_mpi_tiled"
-		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -DOPS_MPI -D$(OPS_COMPILER) -DOPS_LAZY -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./MPI_OpenMP/$(SEQ_KERNELS) $(HDF5_LIB_MPI) $(OPS_LIB_MPI) -o $(APP)_mpi_tiled
+		$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -DOPS_MPI -D$(OPS_COMPILER) -DOPS_LAZY -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./mpi_openmp/$(MPI_OPENMP_KERNELS) $(HDF5_LIB_MPI) $(OPS_LIB_MPI) -o $(APP)_mpi_tiled
 
 #
 # CUDA version
@@ -201,6 +199,30 @@ openacc_error:
 #
 
 clean:
-	rm -f $(APP)_dev_seq $(APP)_dev_mpi $(APP)_mpi $(APP)_seq $(APP)_tiled $(APP)_mpi_inline $(APP)_openmp $(APP)_mpi_openmp $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled $(APP)_openacc $(APP)_mpi_openacc ./CUDA/*.o ./OpenACC/*.o *.o $(APP)_opencl $(APP)_mpi_opencl $(APP)_mpi_tiled $(APP)_mpi_inline $(APP)_hip $(APP)_mpi_hip ./HIP/*.o ./OpenCL/*.o ./MPI_inline/*.o *.o *.lst
-	rm -f ./*optrpt ./$(OPS_GENERATED) ./.generated
-	rm -rf ./CUDA ./HIP ./MPI_inline ./MPI_OpenMP ./OpenACC ./OpenCL ./seq
+	rm -f *.o
+	rm -f *.oo
+	rm -f *.optrpt
+	rm -f *~
+	rm -f *.lst
+	rm -f constants_list.txt
+	rm -f $(APP)_dev_seq
+	rm -f $(APP)_dev_mpi
+	rm -f $(APP)_seq
+	rm -f $(APP)_tiled
+	rm -f $(APP)_openmp
+	rm -f $(APP)_mpi
+	rm -f $(APP)_mpi_tiled
+	rm -f $(APP)_mpi_inline
+	rm -f $(APP)_mpi_openmp
+	rm -f $(APP)_cuda
+	rm -f $(APP)_mpi_cuda
+	rm -f $(APP)_mpi_cuda_tiled
+	rm -f $(APP)_openacc
+	rm -f $(APP)_mpi_openacc
+	rm -f $(APP)_opencl
+	rm -f $(APP)_mpi_opencl
+	rm -f $(APP)_hip
+	rm -f $(APP)_mpi_hip
+	rm -f $(OPS_GENERATED)
+	rm -f .generated
+	rm -rf ./mpi_openmp

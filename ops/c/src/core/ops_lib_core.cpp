@@ -1855,7 +1855,7 @@ ops_kernel_descriptor * ops_dat_deep_copy_core(ops_dat target, ops_dat orig_dat,
     //  desc->name = "ops_internal_copy_seq";
     desc->block = orig_dat->block;
     desc->dim = orig_dat->block->dims;
-    desc->device = 0;
+    desc->isdevice = 0;
     desc->index = -1;
     ops_timing_realloc(orig_dat->block->instance, -1, "ops_dat_deep_copy");
     desc->hash = 5381;

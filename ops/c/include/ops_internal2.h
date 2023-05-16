@@ -139,19 +139,20 @@ struct ops_kernel {
 
 /** Storage for OPS parallel handles */
 struct ops_kernel_descriptor {
-  const char *name;           /**< name of kernel */
+  char *name;           /**< name of kernel */
+  int name_len;         /**< kernel name length */
   size_t hash;                /**< hash of loop */
   ops_arg *args;              /**< list of arguments to pass in */
   int nargs;                  /**< number of arguments */
   int index;                  /**< index of the loop */
   int dim;                    /**< number of dimensions */
-  int device;                 /**< flag to indicate if loop runs on device */
-  int range[2 * OPS_MAX_DIM]; /**< process local execution range */
-  int orig_range[2 * OPS_MAX_DIM]; /**< original execution range */
+  int isdevice;                 /**< flag to indicate if loop runs on device */
+  int *range; /**< process local execution range */
+  int *orig_range; /**< original execution range */
   ops_block block;            /**< block to execute on */
-  void (*function)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
-  void (*startup_function)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
-  void (*cleanup_function)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
+  void (*func)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
+  void (*startup_func)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
+  void (*cleanup_func)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
 
 };
 
@@ -271,12 +272,15 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 
 /* lazy execution */
 void ops_enqueue_kernel(ops_kernel_descriptor *desc);
-void ops_execute(OPS_instance *instance);
+OPS_FTN_INTEROP
+void ops_execute(OPS_instance *instance=NULL);
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp);
 int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx);
 int ops_get_proc();
 int ops_num_procs();
 void ops_put_data(ops_dat dat);
+OPS_FTN_INTEROP
+void create_kerneldesc_and_enque(char const *name, char const* kernel_name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc));
 
 /*******************************************************************************
 * Memory allocation functions

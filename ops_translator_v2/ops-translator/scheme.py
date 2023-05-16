@@ -20,7 +20,7 @@ class Scheme(Findable):
 
     def __str__(self) -> str:
         return f"{self.lang.name}/{self.target.name}"
-    
+
     def genLoopHost(
         self,
         include_dirs: Set[Path],
@@ -61,7 +61,7 @@ class Scheme(Findable):
 
         # Generate source from the template
         return template.render(ops=ops, app=app, lang=self.lang, target=self.target, user_types=user_types), name      
-    
+
     def translateKernel(
         self,
         loop: ops.Loop,

@@ -57,12 +57,12 @@ def writeSource(entities: List[Tuple[Entity, Rewriter]]) -> str:
         for i in range(len(entities)):
             entity, rewriter = entities[i]
             resolved = True
-            
+
             for dependancy in entity.depends:
                 if safeFind(entities, lambda e: e[0].name == dependancy):
                     resolved = False
                     break
-            
+
             if resolved:
                 entities.pop(i)
                 if source == "":
@@ -74,7 +74,7 @@ def writeSource(entities: List[Tuple[Entity, Rewriter]]) -> str:
                     source = source + ";"
 
                 break
-    
+
     return source
 
 

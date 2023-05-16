@@ -23,7 +23,7 @@ def parseTypeRef(node: Cursor, program: Program) -> None:
 
     if node is None or Path(str(node.location.file)) != program.path:
         return
-    
+
     matching_entities = program.findEntities(node.spelling)
 
     for entity in matching_entities: 
@@ -51,13 +51,13 @@ def parseFunction(node: Cursor, program: Program) -> None:
 
     if node is None or Path(str(node.location.file)) != program.path: 
         return
-    
+
     matching_entities = program.findEntities(node.spelling)
 
     for entity in matching_entities:
         if entity.ast == node: #The entitiy is already exist
             return
-        
+
     function = Function(node.spelling, node, program)
 
     for n in node.get_children():
@@ -112,19 +112,19 @@ def parseUnexposedFunction(node: Cursor) -> Union[Tuple[str, List[Cursor]], None
     # child_string=""
     for child in node.get_children():
         args.append(child)
-    
+
     if len(args) == 0:
         return None
-    
+
     first_child = args.pop(0)
 
     if first_child.kind == CursorKind.DECL_REF_EXPR:
         name = list(first_child.get_tokens())[0].spelling
     else:
         return None
-    
+
     return (name, args)
-        
+
 def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> None:
 
     if parseUnexposedFunction(node) == None:
@@ -140,12 +140,12 @@ def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> No
     elif name == "ops_par_loop":
         loop = parseLoop(args, loc, macros)
         program.loops.append(loop)
-        
+
         if program.ndim == None:
             program.ndim = loop.ndim
         elif program.ndim < loop.ndim:
             program.ndim = loop.ndim
-            
+
 
 def decend(node: Cursor) -> Optional[Cursor]:
     return next(node.get_children(), None)
@@ -158,13 +158,13 @@ def parseStringLit(node: Cursor) -> str:
 
     elif node.kind != CursorKind.STRING_LITERAL:
         raise ParseError("Expected string literal")
-    
+
     return node.spelling[1:-1]
 
 def parseIntExpression(node: Cursor) -> int:
     if node.type.kind != TypeKind.INT:
         raise ParseError("Expected int expression", parseLocation(node))
-    
+
     eval_result = conf.lib.clang_Cursor_Evaluate(node)
     val = conf.lib.clang_EvalResult_getAsInt(eval_result)
     conf.lib.clang_EvalResult_dispose(eval_result)
@@ -217,13 +217,13 @@ def parseIdentifier(node: Cursor, raw: bool = True) -> str:
 
     if node.kind != CursorKind.DECL_REF_EXPR:
         raise ParseError("Expected identifier", parseLocation(node))
-    
+
     return node.spelling
 
 def parseConst(args: List[Cursor], loc: Location) -> ops.Const:
     if(len(args) != 4):
         raise ParseError(f"Incorrect number({len(args)}) of args passed to ops_decl_const", loc)
-    
+
     name = parseStringLit(args[0])
     dim = parseIntExpression(args[1])
     typ, _ = parseType(parseStringLit(args[2]), loc, True)
@@ -239,14 +239,14 @@ def parseAccessType(node: Cursor, loc: Location, macros: Dict[Location, str]) ->
         raise ParseError(
             f"Invalid access type {access_type_raw}, expected one of {', '.join(ops.AccessType.values())}", 
             loc)
-    
+
     return ops.AccessType(access_type_raw)
 
 
 def parseArgDat(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> None:
     if len(args) != 5:
         raise ParseError(f"Incorrect number({len(args)}) of args passed to ops_arg_dat", loc)
-    
+
     dat_ptr = parseIdentifier(args[0])
     dim = parseIntExpression(args[1])
     stencil_ptr = parseIdentifier(args[2])
@@ -254,11 +254,11 @@ def parseArgDat(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[
     access_type = parseAccessType(args[4], loc, macros)
 
     loop.addArgDat(loc, dat_ptr, dim, dat_typ, dat_soa, stencil_ptr, access_type, True)
-    
+
 def parseArgDatOpt(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> None:
     if len(args) != 6:
         raise ParseError(f"Incorrect number({len(args)}) of args passed to ops_arg_dat_opt", loc)
-    
+
     dat_ptr = parseIdentifier(args[0])
     dim = parseIntExpression(args[1])
     stencil_ptr = parseIdentifier(args[2])
@@ -271,7 +271,7 @@ def parseArgDatOpt(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Di
 def parseArgReduce(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> None:
     if len(args) != 4:
         raise ParseError(f"Incorrect number of args passed to ops_arg_reduce: {len(args)}", loc)
-    
+
     reduct_handle_ptr = parseIdentifier(args[0])
     dim = parseIntExpression(args[1])
     typ, soa = parseType(parseStringLit(args[2]), loc)
@@ -294,7 +294,7 @@ def parseRange(node: Cursor, dim: int) -> ops.Range:
 def parseArgGbl(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> None:
     if len(args) !=4:
         raise ParseError("Incorrect number of args passed to ops_arg_gbl", loc)
-    
+
     ptr = parseIdentifier(args[0])
     dim = parseIntExpression(args[1])
     typ, _ = parseType(parseStringLit(args[2]), loc)
@@ -305,13 +305,13 @@ def parseArgGbl(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[
 def parseArgIdx(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> None:
     if len(args) !=0:
         raise ParseError("Incorrect number of args passed to ops_arg_idx", loc)
-    
+
     loop.addArgIdx(loc)
 
 def parseLoop(args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> ops.Loop:
     if len(args) < 6:
-        raise ParseError("Incorrect number of argus passed to ops_par_loop")
-    
+        raise ParseError("Incorrect number of args passed to ops_par_loop")
+
     kernel = parseIdentifier(args[0])
     name = parseStringLit(args[1])
     dim = parseIntExpression(args[3])
@@ -328,23 +328,23 @@ def parseLoop(args: List[Cursor], loc: Location, macros: Dict[Location, str]) ->
 
         if node_name == "ops_arg_dat":
             parseArgDat(loop, arg_args, arg_loc, macros)
-            
+
         elif node_name == "ops_arg_dat_opt":
             parseArgDatOpt(loop, arg_args, arg_loc, macros)
-        
+
         elif node_name == "ops_arg_idx":
             parseArgIdx(loop, arg_args, arg_loc, macros)
 
         elif node_name == "ops_arg_reduce":
             parseArgReduce(loop, arg_args, arg_loc, macros)
-        
+
         elif node.kind.is_unexposed() and parseUnexposedFunction(node) != None:
             (_, arg_args) = parseUnexposedFunction(node)
             parseArgGbl(loop, arg_args, arg_loc, macros)
-        
+
         else:
             raise ParseError(f"Invalid loop argument {node_name}", parseLocation(node))
-      
+
     return loop
 
 

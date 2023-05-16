@@ -22,27 +22,27 @@
     {% for arg in lh.args %}
         {% if arg is dat %}
     int base{{arg.id}} = args[{{arg.id}}].dat->base_offset;
-    {{lh.dats[arg.dat_id].typ}} * __restrict__ {{lh.dats[arg.dat_id].ptr}}_p = ({{lh.dats[arg.dat_id].typ}} *)(args[{{arg.id}}].data + base{{arg.id}});
+    {{lh.dats[arg.dat_id].typ}} * __restrict__ argsDat{{arg.id}}_p = ({{lh.dats[arg.dat_id].typ}} *)(args[{{arg.id}}].data + base{{arg.id}});  
             {% if arg.restrict or arg.prolong %}
 #ifdef OPS_MPI
     sub_dat_list sd{{arg.id}} = OPS_sub_dat_list[args[{{arg_idx}}].dat->index];
             {% endif %}
             {% if arg.restrict %}
-    {{lh.dats[arg.dat_id].ptr}}_p += arg_idx[0] * args[{{arg.id}}].stencil->mgrid_stride[0] - sd{{arg.id}}->decomp_disp[0] + args[{{arg.id}}].dat->d_m[0];
+    argsDat{{arg.id}}_p += arg_idx[0] * args[{{arg.id}}].stencil->mgrid_stride[0] - sd{{arg.id}}->decomp_disp[0] + args[{{arg.id}}].dat->d_m[0];
                 {% if lh.ndim > 1 %}
-    {{lh.dats[arg.dat_id].ptr}}_p += (arg_idx[1]*args[{{arg.id}}].stencil->mgrid_stride[1] - sd{{arg.id}}->decomp_disp[1] + args[{{arg.id}}].dat->d_m[1]) * xdim{{arg.id}}_{{lh.kernel}};    
+    argsDat{{arg.id}}_p += (arg_idx[1]*args[{{arg.id}}].stencil->mgrid_stride[1] - sd{{arg.id}}->decomp_disp[1] + args[{{arg.id}}].dat->d_m[1]) * xdim{{arg.id}}_{{lh.kernel}};    
                 {% endif %}
                 {% if lh.ndim > 2 %}
-    {{lh.dats[arg.dat_id].ptr}}_p += (arg_idx[2]*args[{{arg.id}}].stencil->mgrid_stride[2] - sd{{arg.id}}->decomp_disp[2] + args[{{arg.id}}].dat->d_m[2]) * xdim{{arg.id}}_{{lh.kernel}} * ydim{{arg.id}}_{{lh.kernel}};
+    argsDat{{arg.id}}_p += (arg_idx[2]*args[{{arg.id}}].stencil->mgrid_stride[2] - sd{{arg.id}}->decomp_disp[2] + args[{{arg.id}}].dat->d_m[2]) * xdim{{arg.id}}_{{lh.kernel}} * ydim{{arg.id}}_{{lh.kernel}};
                 {% endif %}
             {% endif %}
             {% if arg.prolong %}
-    {{lh.dats[arg.dat_id].ptr}}_p += arg_idx[0]/args[{{arg.id}}].stencil->mgrid_stride[0] - sd{{arg.id}}->decomp_disp[0] + args[{{arg.id}}].dat->d_m[0];
+    argsDat{{arg.id}}_p += arg_idx[0]/args[{{arg.id}}].stencil->mgrid_stride[0] - sd{{arg.id}}->decomp_disp[0] + args[{{arg.id}}].dat->d_m[0];
                 {% if lh.ndim > 1 %}
-    {{lh.dats[arg.dat_id].ptr}}_p += (arg_idx[1]/args[{{arg.id}}].stencil->mgrid_stride[1] - sd{{arg.id}}->decomp_disp[1] + args[{{arg.id}}].dat->d_m[1]) * xdim{{arg.id}}_{{lh.kernel}};"
+    argsDat{{arg.id}}_p += (arg_idx[1]/args[{{arg.id}}].stencil->mgrid_stride[1] - sd{{arg.id}}->decomp_disp[1] + args[{{arg.id}}].dat->d_m[1]) * xdim{{arg.id}}_{{lh.kernel}};"
                 {% endif %}
                 {% if lh.ndim > 2 %}
-    {{lh.dats[arg.dat_id].ptr}}_p += (arg_idx[2]/args[{{arg.id}}].stencil->mgrid_stride[2] - sd{{arg.id}}->decomp_disp[2] + args[{{arg.id}}].dat->d_m[2]) * xdim{{arg.id}}_{{lh.kernel}} * ydim{{arg.id}}_{{lh.kernel}};"
+    argsDat{{arg.id}}_p += (arg_idx[2]/args[{{arg.id}}].stencil->mgrid_stride[2] - sd{{arg.id}}->decomp_disp[2] + args[{{arg.id}}].dat->d_m[2]) * xdim{{arg.id}}_{{lh.kernel}} * ydim{{arg.id}}_{{lh.kernel}};"
                 {% endif %}                
             {% endif %}
             {% if arg.restrict or arg.prolong %}
@@ -50,7 +50,7 @@
             {% endif %}
         {% elif arg is gbl or arg is reduce %}
             {% if arg is read %}
-    {{arg.typ}} * __restrict__ {{arg.ptr}} = ({{arg.typ}} *)args[{{arg.id}}].data;
+    {{arg.typ}} * __restrict__  argsDat{{arg.id}}= ({{arg.typ}} *)args[{{arg.id}}].data;
             {% else %}
 #ifdef OPS_MPI
     {{arg.typ}} * __restrict__ p_a{{arg.id}} = ({{arg.typ}} *)(((ops_reduction)args[{{arg.id}}].data)->data + ((ops_reduction)args[{{arg.id}}].data)->size * block->index);
@@ -68,10 +68,9 @@
     ops_H_D_exchanges_host(args, {{lh.args|length}});
 #endif //OPS_LAZY
 
-    if (block->instance->OPS_diags > 1)
-    {
-        ops_timers_core(&c2, &t2);
-        block->instance->OPS_kernels[{{kernel_idx}}].mpi_time += t1 - t2;
+    if (block->instance->OPS_diags > 1) {
+        ops_timers_core(&__c1, &__t1);
+        block->instance->OPS_kernels[{{kernel_idx}}].mpi_time += __t1 - __t2;
     }
 {% endblock %}
 
@@ -85,6 +84,7 @@
             {% endif %}
         {% endif %}
     {% endfor %}
+
     {% set line = [""] %}
     {% for arg in lh.args %}
         {% if arg is gbl or arg is reduce %}
@@ -113,13 +113,13 @@
     {% set indent = [0] %}
     #pragma omp parallel for{{line2}}
     {% if lh.ndim > 2 %}
-    for (int n_z = start[2]; n_z < end[2]; n_z++)
+    for (int n_z = start_indx[2]; n_z < end_indx[2]; n_z++)
     {
         {% if indent.append(indent.pop() + 1) %}}{% endif %}
     {% endif %}
     {% if lh.ndim > 1 %}
-        {{indent[0] * "    "}}for (int n_y = start[1]; n_y < end[1]; n_y++)
-        {{indent[0] * "    "}}{
+      {{indent[0] * "  "}}for (int n_y = start_indx[1]; n_y < end_indx[1]; n_y++)
+      {{indent[0] * "  "}}{
         {% if indent.append(indent.pop() + 1) %}{% endif %}
     {% endif %}
 
@@ -135,7 +135,7 @@
     {{indent[0] * "    "}}#pragma simd
 #endif
     {% endif %}
-    {{indent[0] * "    "}}for(int n_x = start[0]; n_x < end[0]; n_x++)
+    {{indent[0] * "    "}}for(int n_x = start_indx[0]; n_x < end_indx[0]; n_x++)
     {{indent[0] * "    "}}{
     {% if indent.append(indent.pop() + 1) %}{% endif %}
     {% if lh.arg_idx != -1 %}
@@ -147,6 +147,8 @@
     {{indent[0] * "    "}}int idx[] = {% raw %}{arg_idx[0] + n_x, arg_idx[1] + n_y, arg_idx[2] + n_z};{% endraw %}
         {% endif %}
     {% endif %}
+
+    {# Insert declarations for OPS_DATS with offset calculation #}
     {% for arg in lh.args %}
         {% if arg is dat %}
             {% if arg is read %}
@@ -191,15 +193,16 @@
             {% if arg.dim > 1 %}
 #ifdef OPS_SOA
             {% endif %}
-    {{indent[0] * "    "}}{{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{lh.dats[arg.dat_id].ptr}}({{dim}}{{sizelist[0]}}{{lh.dats[arg.dat_id].ptr}}_p + {{offset[0]}});
+    {{indent[0] * "    "}}{{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> argsDat{{arg.id}}({{dim}}{{sizelist[0]}}argsDat{{arg.id}}_p + {{offset[0]}});
             {% if arg.dim > 1 %}
 #else
-    {{indent[0] * "    "}}{{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{lh.dats[arg.dat_id].ptr}}({{dim}}{{sizelist[0]}}{{lh.dats[arg.dat_id].ptr}}_p + {{arg.dim}} * {{offset[0]}});
+    {{indent[0] * "    "}}{{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> argsDat{{arg.id}}({{dim}}{{sizelist[0]}}argsDat{{arg.id}}_p + {{arg.dim}} * {{offset[0]}});
 #endif
             {% endif %}
         {% endif %}
     {% endfor %}
 
+    {# Insert declaration for reduction variables #}
     {% for arg in lh.args %}
         {% if arg is gbl or arg is reduce %}
             {% if arg is min %}
@@ -214,7 +217,7 @@
     {{indent[0] * "    "}}{{arg.ptr}}[{{d}}] = p_a{{arg.id}}[{{d}}];
                 {% endfor %} {# need -INFINITY_ change to #}
             {% endif %}
-            {% if arg in inc %}
+            {% if arg is inc %}
     {{indent[0] * "    "}}{{arg.typ}} {{arg.ptr}}[{{arg.dim}}];
                 {% for d in range(arg.dim) %}
     {{indent[0] * "    "}}{{arg.ptr}}[{{d}}] = ZERO_{{arg.typ}};
@@ -228,61 +231,71 @@
             {% endif %}
         {% endif %}
     {% endfor %}
-    {# Instert kernels #}
+
+    {# Insert kernels #}
     {% set arglist = [""]%}
-    {% for i in range(0, lh.args|length - 1) %}
+
+    {# Generate argument list for placing in elemental kernel call #}
+    {% for i in range(0, lh.args|length-1) %}
         {% if lh.args[i] is dat %}
-            {% if arglist.append(arglist.pop() + " " + lh.dats[lh.args[i].dat_id].ptr + ", ")%}{% endif %}
-        {% elif lh.args[i] is idx%}
-            {% if arglist.append(arglist.pop() + " " + "idx, ")%}{% endif %}
-        {% else %}
-            {% if arglist.append(arglist.pop() + " " + lh.args[i].ptr + ", ")%}{% endif %}
+            {% if arglist.append(arglist.pop() + " " + "argsDat"+i|string + ", ") %}{% endif %}
+        {% elif lh.args[i] is idx %}
+            {% if arglist.append(arglist.pop() + " " + "idx, ") %}{% endif %}
+        {% elif lh.args[i] is gbl %}
+            {% if arglist.append(arglist.pop() + " " + "argsDat"+i|string + ", ") %}{% endif %}
+        {% elif lh.args[i] is reduce %} 
+            {% if arglist.append(arglist.pop() + " " + lh.args[i].ptr + ", ") %}{% endif %}
         {% endif %}
     {% endfor %}
+
+    {# Handling last argument separately to avoid placing comma #}
     {% if lh.args[lh.args|length - 1] is dat %}
-        {% if arglist.append(arglist.pop() + " " + lh.dats[lh.args[lh.args|length - 1].dat_id].ptr)%}{% endif %}
+        {% if arglist.append(arglist.pop() + " " + "argsDat"+(lh.args|length - 1)|string) %}{% endif %}
     {% elif lh.args[lh.args|length - 1] is idx%}
-        {% if arglist.append(arglist.pop() + " " + "idx")%}{% endif %}
-    {% else %}
-        {% if arglist.append(arglist.pop() + " " + lh.args[lh.args|length - 1].ptr)%}{% endif %}
+        {% if arglist.append(arglist.pop() + " " + "idx") %}{% endif %}
+    {% elif lh.args[lh.args|length - 1] is gbl %}
+        {% if arglist.append(arglist.pop() + " " + "argsDat"+(lh.args|length - 1)|string) %}{% endif %}
+    {% elif lh.args[lh.args|length - 1] is reduce %}
+        {% if arglist.append(arglist.pop() + " " + lh.args[lh.args|length - 1].ptr) %}{% endif %}
     {% endif %}
+
     {{indent[0] * "    "}}ops_k{{kernel_idx}}::{{lh.kernel}}({{arglist[0]}});
 
     {% for arg in lh.args %}
         {% if arg is gbl or arg is reduce %}
             {% if arg is min %}
                 {% for d in range(arg.dim) %}
-    {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} = MIN(p_a{{arg.id}}_{{d}}, {{arg.ptr}}[{{d}}]);
+                    {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} = MIN(p_a{{arg.id}}_{{d}}, {{arg.ptr}}[{{d}}]);
                 {% endfor %}            
             {% endif %}
             {% if arg is max %}
                 {% for d in range(arg.dim) %}
-    {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} = MAX(p_a{{arg.id}}_{{d}}, {{arg.ptr}}[{{d}}]);
+                    {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} = MAX(p_a{{arg.id}}_{{d}}, {{arg.ptr}}[{{d}}]);
                 {% endfor %}            
             {% endif %}
             {% if arg is inc %}
                 {% for d in range(arg.dim) %}
-    {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} += {{arg.ptr}}[{{d}}];
+                    {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} += {{arg.ptr}}[{{d}}];
                 {% endfor %}            
             {% endif %}
-    {#         {% if arg is inc %}
-                 {% for d in range(arg.dim) %}
-     {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} += {{arg.name}}[{{d}}];
-                 {% endfor %}            
-             {% endif %} #}
+            {#      {% if arg is inc %}
+                    {% for d in range(arg.dim) %}
+                    {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} += {{arg.name}}[{{d}}];
+                    {% endfor %}            
+                    {% endif %} #}
         {% endif %}
     {% endfor %}
 
     {% if indent.append(indent.pop() - 1) %}{% endif %}
     {{indent[0] * "    "}}}
-    
+
     {% if lh.ndim > 1 %}
         {% if indent.append(indent.pop() - 1) %}{% endif %}
-    {{indent[0] * "    "}}}
+    {{indent[0] * "  "}}}
     {% endif %} 
     {% if lh.ndim > 2 %}
         {% if indent.append(indent.pop() - 1) %}{% endif %}
-    {{indent[0] * "    "}}}
+    {{indent[0] * ""}}}
     {% endif %}  
 
     {% for arg in lh.args %}
@@ -299,8 +312,8 @@
 {% block host_epilogue %}
     if (block->instance->OPS_diags > 1)
     {
-        ops_timers_core(&c2, &t2);
-        block->instance->OPS_kernels[{{kernel_idx}}].time += t2 - t1;
+        ops_timers_core(&__c2, &__t2);
+        block->instance->OPS_kernels[{{kernel_idx}}].time += __t2 - __t1;
     }
 
 #ifndef OPS_LAZY

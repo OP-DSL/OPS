@@ -259,9 +259,9 @@ void ops_dat_deep_copy(ops_dat target, ops_dat source) {
   }
 
   ops_kernel_descriptor *desc = ops_dat_deep_copy_mpi_core(target, source);
-  desc->name = "ops_internal_copy_cuda";
-  desc->device = 1;
-  desc->function = ops_internal_copy_cuda;
+  strcpy(desc->name, "ops_internal_copy_cuda\0");
+  desc->isdevice = 1;
+  desc->func = ops_internal_copy_cuda;
   ops_enqueue_kernel(desc);
 }
 

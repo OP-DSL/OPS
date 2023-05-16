@@ -113,9 +113,9 @@ void ops_dat_deep_copy(ops_dat target, ops_dat source)
     range[2*i+1] = 1;
   }
   ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, source, range);
-  desc->name = "ops_internal_copy_cuda";
-  desc->device = 1;
-  desc->function = ops_internal_copy_cuda;
+  strcpy(desc->name, "ops_internal_copy_cuda\0");
+  desc->isdevice = 1;
+  desc->func = ops_internal_copy_cuda;
   ops_enqueue_kernel(desc);
 }
 
@@ -147,9 +147,9 @@ void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *ra
       prod *= target->size[d];
     }
     ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    desc->name = "ops_internal_copy_cuda";
-    desc->device = 1;
-    desc->function = ops_internal_copy_cuda;
+    strcpy(desc->name, "ops_internal_copy_cuda\0");
+    desc->isdevice = 1;
+    desc->func = ops_internal_copy_cuda;
     ops_internal_copy_cuda(desc);
     target->data_d = NULL;
     ops_free(target);
@@ -187,9 +187,9 @@ void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *rang
       prod *= target->size[d];
     }
     ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    desc->name = "ops_internal_copy_cuda_reverse";
-    desc->device = 1;
-    desc->function = ops_internal_copy_cuda;
+    strcpy(desc->name, "ops_internal_copy_cuda_reverse\0");
+    desc->isdevice = 1;
+    desc->func = ops_internal_copy_cuda;
     ops_internal_copy_cuda(desc);
     target->data_d = NULL;
     ops_free(target);
@@ -226,9 +226,9 @@ void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace
     target->base_offset = 0;
     for (int d = 0; d < OPS_MAX_DIM; d++) target->size[d] = size[d];
     ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    desc->name = "ops_internal_copy_cuda";
-    desc->device = 1;
-    desc->function = ops_internal_copy_cuda;
+    strcpy(desc->name, "ops_internal_copy_cuda\0");
+    desc->isdevice = 1;
+    desc->func = ops_internal_copy_cuda;
     ops_internal_copy_cuda(desc);
     target->data_d = NULL;
     ops_free(target);
@@ -260,9 +260,9 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
     target->base_offset = 0;
     for (int d = 0; d < OPS_MAX_DIM; d++) target->size[d] = size[d];
     ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    desc->name = "ops_internal_copy_cuda_reverse";
-    desc->device = 1;
-    desc->function = ops_internal_copy_cuda;
+    strcpy(desc->name, "ops_internal_copy_cuda_reverse\0");
+    desc->isdevice = 1;
+    desc->func = ops_internal_copy_cuda;
     ops_internal_copy_cuda(desc);
     target->data_d = NULL;
     ops_free(target);

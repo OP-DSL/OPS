@@ -171,9 +171,9 @@ void ops_dat_deep_copy(ops_dat target, ops_dat source) {
   }
 
   ops_kernel_descriptor *desc = ops_dat_deep_copy_mpi_core(target, source);
-  desc->name = "ops_internal_copy_opencl";
-  desc->device = 1;
-  desc->function = ops_internal_copy_opencl;
+  strcpy(desc->name, "ops_internal_copy_opencl\0");
+  desc->isdevice = 1;
+  desc->func = ops_internal_copy_opencl;
   ops_enqueue_kernel(desc);
 }
 

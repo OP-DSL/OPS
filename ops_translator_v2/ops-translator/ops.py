@@ -25,9 +25,9 @@ class AccessType(Enum):
 # class ArgType(Enum):
 #     ARGDAT = 0
 #     ARGGBL = 1
-    
+
 #     ARGIDX = 2
-    
+
 #     @staticmethod
 #     def values() -> List[str]:
 #         return [x.value for x in list(AccessType)]
@@ -60,7 +60,7 @@ class Type:
 class Int(Type):
     signed: bool
     size: int
-    
+
     def __repr__(self) -> str:
         if self.signed and self.size == 32:
             return "int"
@@ -99,7 +99,7 @@ class Custom(Type):
 class Const:
     loc: Location
     ptr: str
-    
+
     dim: int
     typ: Type
     name: str
@@ -143,7 +143,7 @@ class Dat:
     #         OpsError(f"dim of d_m={self.d_m} is not same as dat dim={self.dim} of dat='{self.name}'")
     #     elif len(self.d_p) != self.dim:
     #         OpsError(f"dim of d_p={self.d_p} is not same as dat dim={self.dim} of dat='{self.name}'")
-            
+
     def __str__(self) -> str:
         return f"Dat(block_id={self.block_id}, id={self.id}, ptr='{self.ptr}', dim={self.dim}, type={self.typ}, soa={self.soa})"
 
@@ -174,18 +174,18 @@ class ArgDat(Arg):
 
     dat_id: int
     stencil_id: int
-    
+
     dim: int
     stride: Optional[List] = None
-    
+
     def __post_init__(self):  
         object.__setattr__(self, 'stride', [1]*3)
-        
+
     def __str__(self) -> str:
         return (
             f"ArgDat(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17} opt={self.opt}, dat_id={self.dat_id}, stencil_id={self.stencil_id})"
             )
-        
+
 @dataclass(frozen=True)
 class ArgGbl(Arg):
     access_type: AccessType
@@ -194,9 +194,9 @@ class ArgGbl(Arg):
 
     dim: int
     typ: Type
-    
+
     #opt : bool
-    
+
     def __str__(self) -> str:
         return (
             f"ArgGbl(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17}" 
@@ -217,13 +217,15 @@ class ArgReduce(Arg):
             f"ArgReduce(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17}), " ##opt={self.opt}, "
             f"ptr={self.ptr}, dim={self.dim}, type={self.typ})"
         )
-    
+
+
 @dataclass(frozen=True)
 class ArgIdx(Arg):
     pass
 
     def __str__(self) -> str:
         return f"ArgIdx(id={self.id}, loc={self.loc})"    
+
 
 class Block:
     loc: Location
@@ -253,7 +255,7 @@ class Block:
         if dat_id is None:
             dat_id = len(self.dats)
             self.dats.append(dat)
-            
+
 
 class Loop:
     loc: Location
@@ -267,7 +269,7 @@ class Loop:
 
     dats: List[Dat]
     stencils: List[Stencil]
-    
+
     arg_idx: Optional[int] = -1
     multiGrid: Optional[bool] = False
 
@@ -354,7 +356,7 @@ class Loop:
     def get_dat(self, x: Union[ArgDat, int]) -> Optional[Dat]:
         if isinstance(x, ArgDat) and x.dat_id < len(self.dats):
             return self.dats[x.dat_id]
-        
+
         if isinstance(x, int) and x < len(self.dats):
             return self.dats[x]
 

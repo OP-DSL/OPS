@@ -33,7 +33,7 @@ env.tests["read_or_write"] = lambda arg, loop=None: hasattr(arg, "access_type") 
     ops.AccessType.RW
 ]
 
-env.tests["reduciton"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type in [
+env.tests["reduction"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type in [
     ops.AccessType.INC,
     ops.AccessType.MAX,
     ops.AccessType.MIN
@@ -46,7 +46,7 @@ def read_in(dat: ops.Dat, loop: ops.Loop) -> bool:
 
         if arg.dat_id == dat.id and arg.access_type not in [ops.AccessType.READ, ops.AccessType.RW]:
             return False
-    
+
     return True
 
 env.tests["read_in"] = read_in
