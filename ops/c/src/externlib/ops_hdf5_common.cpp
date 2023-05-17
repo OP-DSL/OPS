@@ -50,7 +50,7 @@
 
 hid_t h5_type(const char *type) {
     hid_t h5t{0};
-    if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(dat->type, "real(kind=8)") == 0)
+    if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0)
     {
         h5t = H5T_NATIVE_DOUBLE;
     }
