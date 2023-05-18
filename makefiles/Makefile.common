@@ -32,11 +32,11 @@ CUDART=-lcudart
 
 COMPILER_AVAILABLE := clang gnu intel icx intel_win mic pgi cray xl hip xlp8 aocc
 
-ifeq ($(filter $(OPS_COMPILER),$(COMPILER_AVAILABLE)), $(OPS_COMPILER))
-	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.$(OPS_COMPILER)
-else
+ifeq ($(wildcard $(OPS_INSTALL_PATH)/../makefiles/Makefile.$(OPS_COMPILER)),)
 print:
-	@echo "unrecognised value for OPS_COMPILER"
+	@echo "unrecognised value for OPS_COMPILER: "$(OPS_COMPILER)
+else
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.$(OPS_COMPILER)
 endif
 
 FLINK += -L$(F_OPS_LIB) $(CXXLINK)
