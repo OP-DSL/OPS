@@ -6,7 +6,7 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
 OPS_FILES=laplace2d.F90
 
-OPS_GENERATED=laplace2d_ops.F90
+OPS_GENERATED=
 
 OTHER_FILES=constants.F90
 

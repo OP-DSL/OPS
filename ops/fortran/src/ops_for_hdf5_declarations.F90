@@ -89,14 +89,14 @@ module OPS_Fortran_hdf5_Declarations
   !    character(kind=c_char,len=1), intent(in) :: fileName
   !end function ops_decl_strided_stencil_hdf5_c
 
-	subroutine ops_fetch_dat_hdf5_file_c (dat, fileName) BIND(C,name='ops_fetch_dat_hdf5_file')
+    subroutine ops_fetch_dat_hdf5_file_c (dat, fileName) BIND(C,name='ops_fetch_dat_hdf5_file')
       use, intrinsic :: ISO_C_BINDING
 
       type(c_ptr), value, intent(in)           :: dat
       character(len=1,kind=c_char) :: fileName(*)
     end subroutine ops_fetch_dat_hdf5_file_c
 
-	subroutine ops_fetch_block_hdf5_file_c (block, fileName) BIND(C,name='ops_fetch_block_hdf5_file')
+    subroutine ops_fetch_block_hdf5_file_c (block, fileName) BIND(C,name='ops_fetch_block_hdf5_file')
       use, intrinsic :: ISO_C_BINDING
 
       type(c_ptr), value, intent(in)           :: block

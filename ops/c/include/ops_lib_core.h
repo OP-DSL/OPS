@@ -581,6 +581,9 @@ void ops_init(const int argc, const char *const argv[], const int diags_level);
 OPS_FTN_INTEROP
 void ops_exit();
 
+OPS_FTN_INTEROP
+void ops_set_soa(const int soa_val);
+
 /**
  * This routine defines a structured grid block.
  *
@@ -670,6 +673,7 @@ ops_dat ops_decl_dat(ops_block block, int data_size, int *block_size, int *base,
  * Deallocates an OPS dataset
  * @param dat     dataset to deallocate
  */
+OPS_FTN_INTEROP
 void ops_free_dat(ops_dat dat);
 
 /**
@@ -1000,6 +1004,8 @@ void ops_timing_output_stdout();
  * @param cpu  variable to hold the CPU time at the time of invocation
  * @param et   variable to hold the elapsed time at the time of invocation
  */
+OPS_FTN_INTEROP
+void ops_timers_core(double *cpu, double *et);
 OPS_FTN_INTEROP
 void ops_timers(double *cpu, double *et);
 

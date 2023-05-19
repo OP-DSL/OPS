@@ -39,462 +39,485 @@
 
 module OPS_Fortran_Declarations
 
-  use, intrinsic :: ISO_C_BINDING
+    use, intrinsic :: ISO_C_BINDING
 #ifdef OPS_WITH_CUDAFOR
   use cudafor
 #endif
 
-  ! accessing operation codes
-  integer(c_int) :: OPS_READ = 1
-  integer(c_int) :: OPS_WRITE = 2
-  integer(c_int) :: OPS_RW = 3
-  integer(c_int) :: OPS_INC = 4
-  integer(c_int) :: OPS_MIN = 5
-  integer(c_int) :: OPS_MAX = 6
+!   accessing operation codes
+    integer(c_int) :: OPS_READ = 1
+    integer(c_int) :: OPS_WRITE = 2
+    integer(c_int) :: OPS_RW = 3
+    integer(c_int) :: OPS_INC = 4
+    integer(c_int) :: OPS_MIN = 5
+    integer(c_int) :: OPS_MAX = 6
 
 !################################################
 ! Inteoperable data types for in ops_lib_core.h
 !################################################
 
-  type, BIND(C) :: ops_block_core
-    integer(kind=c_int) :: index        ! index
-    integer(kind=c_int) :: dims         ! dimension of vlock, 2D, 3D .. etc
-    type(c_ptr)         :: name         ! name if the block
-    type(c_ptr)         :: instance     ! pointer to the OPS_instance
-  end type ops_block_core
+    type, BIND(C) :: ops_block_core
+        integer(kind=c_int) :: index        ! index
+        integer(kind=c_int) :: dims         ! dimension of vlock, 2D, 3D .. etc
+        type(c_ptr)         :: name         ! name if the block
+        type(c_ptr)         :: instance     ! pointer to the OPS_instance
+    end type ops_block_core
 
-  type :: ops_block
-    type (ops_block_core), pointer :: blockPtr => null()
-    type (c_ptr)                   :: blockCptr
-  end type ops_block
+    type :: ops_block
+        type (ops_block_core), pointer :: blockPtr => null()
+        type (c_ptr)                   :: blockCptr
+    end type ops_block
 
-  type, BIND(C)         :: ops_dat_core
-    integer(kind=c_int) :: index       ! index
-    type(c_ptr)         :: block       ! block on which data is defined
-    integer(kind=c_int) :: dims        ! number of elements per grid point
-    integer(kind=c_int) :: type_size   ! bytes per primitive = elem_size/dim
-    integer(kind=c_int) :: elem_size   ! number of bytes per grid point
-    type(c_ptr)         :: size        ! size of the array in each block dimension -- including halo
-    type(c_ptr)         :: base        ! base offset to 0,0,... from the start of each dimension
-    type(c_ptr)         :: d_m         ! halo depth in each dimension, negative direction (at 0 end)
-    type(c_ptr)         :: d_p         ! halo depth in each dimension, positive direction (at size end)
-    integer(kind=c_int) :: x_pad       ! padding in x-dimension for allocating aligned memory
-    type(c_ptr)         :: data        ! data on host
+    type, BIND(C)         :: ops_dat_core
+        integer(kind=c_int) :: index       ! index
+        type(c_ptr)         :: block       ! block on which data is defined
+        integer(kind=c_int) :: dims        ! number of elements per grid point
+        integer(kind=c_int) :: type_size   ! bytes per primitive = elem_size/dim
+        integer(kind=c_int) :: elem_size   ! number of bytes per grid point
+        type(c_ptr)         :: size        ! size of the array in each block dimension -- including halo
+        type(c_ptr)         :: base        ! base offset to 0,0,... from the start of each dimension
+        type(c_ptr)         :: d_m         ! halo depth in each dimension, negative direction (at 0 end)
+        type(c_ptr)         :: d_p         ! halo depth in each dimension, positive direction (at size end)
+        integer(kind=c_int) :: x_pad       ! padding in x-dimension for allocating aligned memory
+        type(c_ptr)         :: data        ! data on host
 #ifdef OPS_WITH_CUDAFOR
-    type(c_devptr)      :: data_d      ! data on device
+        type(c_devptr)      :: data_d      ! data on device
 #else
-    type(c_ptr)         :: data_d      ! data on device
+        type(c_ptr)         :: data_d      ! data on device
 #endif
-    type(c_ptr)         :: name        ! name if the dat
-    type(c_ptr)         :: type        ! data type
-    integer(kind=c_int) :: dirty_hd    ! flag to indicate dirty status on host and device
-    integer(kind=c_int) :: locked_hd   ! flag to indicate that the user has obtained a raw data pointer,
+        type(c_ptr)         :: name        ! name if the dat
+        type(c_ptr)         :: type        ! data type
+        integer(kind=c_int) :: dirty_hd    ! flag to indicate dirty status on host and device
+        integer(kind=c_int) :: locked_hd   ! flag to indicate that the user has obtained a raw data pointer,
                                        ! and whether the raw pointer is held on the host or device
-    integer(kind=c_int) :: user_managed! indicates whether the user is managing memory
-    integer(kind=c_int) :: is_hdf5     ! indicates whether the data is to read from an hdf5 file
-    type(c_ptr)         :: hdf5_file   ! name of hdf5 file from which this dataset was read
-    integer(kind=c_int) :: e_dat       ! is this an edge dat?
-    integer(kind=c_long) :: mem        ! memory in bytes allocated to this dat (under MPI, this will be memory held on a single MPI proc)
-    integer(kind=c_long) :: base_offset ! computed quantity, giving offset in bytes to the base index
-    type(c_ptr)         :: stride       ! stride[*] > 1 if this dat is a coarse dat under multi-grid
+        integer(kind=c_int) :: user_managed! indicates whether the user is managing memory
+        integer(kind=c_int) :: is_hdf5     ! indicates whether the data is to read from an hdf5 file
+        type(c_ptr)         :: hdf5_file   ! name of hdf5 file from which this dataset was read
+        integer(kind=c_int) :: e_dat       ! is this an edge dat?
+        integer(kind=c_long) :: mem        ! memory in bytes allocated to this dat (under MPI, this will be memory held on a single MPI proc)
+        integer(kind=c_long) :: base_offset ! computed quantity, giving offset in bytes to the base index
+        type(c_ptr)         :: stride       ! stride[*] > 1 if this dat is a coarse dat under multi-grid
 
-  end type ops_dat_core
+    end type ops_dat_core
 
-  type :: ops_dat
-      type (ops_dat_core), pointer :: dataPtr => null()
-      type (c_ptr)                 :: dataCptr
-      integer (kind=c_int)         :: status = -1
-  end type ops_dat
+    type :: ops_dat
+        type (ops_dat_core), pointer :: dataPtr => null()
+        type (c_ptr)                 :: dataCptr
+        integer (kind=c_int)         :: status = -1
+    end type ops_dat
 
-  type, BIND(C) :: ops_stencil_core
-    integer(kind=c_int) :: index        ! index
-    integer(kind=c_int) :: dims         ! dimensionality of the stencil
-    integer(kind=c_int) :: points       ! number of stencil elements
-    type(c_ptr)         :: name         ! name of stencil
-    type(c_ptr)         :: stencil      ! elements in the stencil
-    type(c_ptr)         :: stride       ! stride of the stencil
-    type(c_ptr)         :: mgrid_stride ! mutlgrid stride
-    integer(kind=c_int) :: type         ! 0 for regular, 1 for prolongate, 2 for restrict 
-  end type ops_stencil_core
+    type, BIND(C) :: ops_stencil_core
+        integer(kind=c_int) :: index        ! index
+        integer(kind=c_int) :: dims         ! dimensionality of the stencil
+        integer(kind=c_int) :: points       ! number of stencil elements
+        type(c_ptr)         :: name         ! name of stencil
+        type(c_ptr)         :: stencil      ! elements in the stencil
+        type(c_ptr)         :: stride       ! stride of the stencil
+        type(c_ptr)         :: mgrid_stride ! mutlgrid stride
+        integer(kind=c_int) :: type         ! 0 for regular, 1 for prolongate, 2 for restrict 
+    end type ops_stencil_core
 
-  type :: ops_stencil
-    type (ops_stencil_core), pointer :: stencilPtr => null()
-    type (c_ptr)                     :: stencilCptr
-  end type ops_stencil
+    type :: ops_stencil
+        type (ops_stencil_core), pointer :: stencilPtr => null()
+        type (c_ptr)                     :: stencilCptr
+    end type ops_stencil
 
-  type, BIND(C) :: ops_arg
-    type(c_ptr)         :: dat          ! dat
-    type(c_ptr)         :: stencil      ! the stencil
-    integer(kind=c_int) :: dim          ! dimension of data
-    integer(kind=c_int) :: elem_size    ! #of bytes per primitive element
-    type(c_ptr)         :: data         ! data on host
+    type, BIND(C) :: ops_arg
+        type(c_ptr)         :: dat          ! dat
+        type(c_ptr)         :: stencil      ! the stencil
+        integer(kind=c_int) :: dim          ! dimension of data
+        integer(kind=c_int) :: elem_size    ! #of bytes per primitive element
+        type(c_ptr)         :: data         ! data on host
 #ifdef OPS_WITH_CUDAFOR
-    type(c_devptr)      :: data_d       ! data on device (for CUDA)
+        type(c_devptr)      :: data_d       ! data on device (for CUDA)
 #else
-    type(c_ptr)         :: data_d
+        type(c_ptr)         :: data_d
 #endif
 
-    integer(kind=c_int) :: acc          ! access type
-    integer(kind=c_int) :: argtype      ! arg type
-    integer(kind=c_int) :: opt          ! falg to indicate whether this is an optional arg, 0 - optional, 1 - not optional
-  end type ops_arg
-
-  type, BIND(C) :: ops_reduction_core
-    type(c_ptr)           :: data       ! The data
-    integer(kind=c_int) :: size         ! size of data in bytes
-    integer(kind=c_int) :: initialized  ! flag indicating whether data has been initialized
-    integer(kind=c_int) :: index        ! unique identifier
-    integer(kind=c_int) :: acc          ! Type of reduction it was used for last time
-    integer(kind=c_int) :: type         ! Type
-    type(c_ptr)         :: name         ! Name
-    type(c_ptr)         :: instance     ! Pointer to the OPS_instance
-  end type ops_reduction_core
-
-  type :: ops_reduction
-    type (ops_reduction_core), pointer :: reductionPtr => null()
-    type (c_ptr)                       :: reductionCptr
-  end type ops_reduction
-
-  type, BIND(C) :: ops_halo_core
-    type(c_ptr)         :: from
-    type(c_ptr)         :: to
-    type(c_ptr)         :: iter_size
-    type(c_ptr)         :: from_base
-    type(c_ptr)         :: to_base
-    type(c_ptr)         :: from_dir
-    type(c_ptr)         :: to_dir
-    integer(kind=c_int) :: index
-  end type ops_halo_core
-
-  type :: ops_halo
-      type (ops_halo_core), pointer :: haloPtr => null()
-      type (c_ptr)                 :: haloCptr
-  end type ops_halo
-
-
-  type, BIND(C) :: ops_halo_group_core
-    integer             :: nhalos
-    type(c_ptr)         :: halos
-    !type (ops_halo), pointer :: halos => null()
-    !type (ops_halo), dimension(*) :: halos
-    integer             :: index
-    type(c_ptr)         :: instance 
-  end type ops_halo_group_core
-
-  type :: ops_halo_group
-      type (ops_halo_group_core), pointer :: halogroupPtr => null()
-      type (c_ptr)                 :: halogroupCptr
-  end type ops_halo_group
-
-
-
-  !#################################################
-  ! Fortran interfaces for ops declaration routines
-  ! - binds *_c routines to ops C backend routines
-  !#################################################
-
-  interface
-
-    subroutine ops_init_c ( argc, argv, diags ) BIND(C,name='ops_init')
-      use, intrinsic :: ISO_C_BINDING
-      integer(kind=c_int), intent(in), value :: argc
-      type(c_ptr), intent(in)                :: argv
-      integer(kind=c_int), intent(in), value :: diags
-    end subroutine ops_init_c
-
-    subroutine ops_set_args_c ( argv, len ) BIND(C,name='ops_set_args_ftn')
-      use, intrinsic :: ISO_C_BINDING
-      integer(kind=c_int), intent(in), value :: len
-      character(len=1, kind=C_CHAR) :: argv
-    end subroutine ops_set_args_c
-
-    subroutine ops_exit_c (  ) BIND(C,name='ops_exit')
-      use, intrinsic :: ISO_C_BINDING
-    end subroutine ops_exit_c
-
-    type(c_ptr) function ops_decl_block_c ( dims, name ) BIND(C,name='ops_decl_block')
-
-      use, intrinsic :: ISO_C_BINDING
-
-      import :: ops_block_core
-
-      integer(kind=c_int), value, intent(in)    :: dims
-      character(kind=c_char,len=1), intent(in)  :: name(*)
-    end function ops_decl_block_c
-
-    type(c_ptr) function ops_decl_dat_c ( block, dim, size, base, d_m, d_p, stride, data, type_size, type, name ) BIND(C,name='ops_decl_dat_char')
-
-      use, intrinsic :: ISO_C_BINDING
-
-      import :: ops_block_core, ops_dat_core
-
-      type(c_ptr), value, intent(in)           :: block
-      integer(kind=c_int), value               :: dim, type_size
-      character(kind=c_char,len=1), intent(in) :: type(*)
-      type(c_ptr), intent(in), value           :: data
-      type(c_ptr), intent(in), value           :: size
-      type(c_ptr), intent(in), value           :: base
-      type(c_ptr), intent(in), value           :: d_m
-      type(c_ptr), intent(in), value           :: d_p
-      type(c_ptr), intent(in), value           :: stride
-      character(kind=c_char,len=1), intent(in) :: name(*)
-
-    end function ops_decl_dat_c
-
-    type(c_ptr) function ops_decl_halo_c ( from, to, iter_size, from_base, to_base, from_dir, to_dir) BIND(C,name='ops_decl_halo_convert')
-
-      use, intrinsic :: ISO_C_BINDING
-
-      import :: ops_block_core, ops_dat_core, ops_halo_core
-
-      type(c_ptr), value, intent(in)           :: from
-      type(c_ptr), value, intent(in)           :: to
-      type(c_ptr), intent(in), value           :: iter_size
-      type(c_ptr), intent(in), value           :: from_base
-      type(c_ptr), intent(in), value           :: to_base
-      type(c_ptr), intent(in), value           :: from_dir
-      type(c_ptr), intent(in), value           :: to_dir
-
-    end function ops_decl_halo_c
-
-    type(c_ptr) function ops_decl_halo_group_c ( nhalos, halos) BIND(C,name='ops_decl_halo_group')
-      use, intrinsic :: ISO_C_BINDING
-      import :: ops_halo
-      integer(kind=c_int), value               :: nhalos
-      type(c_ptr), value, intent(in)           :: halos
-      !type(ops_halo), dimension(nhalos)      :: halos
-    end function ops_decl_halo_group_c
-
-    type(c_ptr) function ops_decl_halo_group_elem_c ( nhalos, halos, group) BIND(C,name='ops_decl_halo_group_elem')
-      use, intrinsic :: ISO_C_BINDING
-      import :: ops_halo
-      integer(kind=c_int), value               :: nhalos
-      type(c_ptr), value, intent(in)           :: halos
-      type(c_ptr), value :: group
-      !type(ops_halo), dimension(nhalos)      :: halos
-    end function ops_decl_halo_group_elem_c
-
-
-    subroutine ops_halo_transfer_c (group) BIND(C,name='ops_halo_transfer')
-      use, intrinsic :: ISO_C_BINDING
-      import :: ops_halo_group_core, ops_halo_core
-      type(c_ptr), value, intent(in)        :: group
-    end subroutine ops_halo_transfer_c
-
-    type(c_ptr) function ops_decl_reduction_handle_c ( size, type, name ) BIND(C,name='ops_decl_reduction_handle')
-
-      use, intrinsic :: ISO_C_BINDING
-
-      import :: ops_reduction_core
-
-      integer(kind=c_int), value               :: size
-      character(kind=c_char,len=1), intent(in) :: type(*)
-      character(kind=c_char,len=1), intent(in) :: name(*)
-
-    end function ops_decl_reduction_handle_c
-
-    type(c_ptr) function ops_decl_stencil_c ( dims, points, sten, name ) BIND(C,name='ops_decl_stencil')
-
-      use, intrinsic :: ISO_C_BINDING
-
-      integer(kind=c_int), value               :: dims, points
-      type(c_ptr), intent(in), value           :: sten
-      character(kind=c_char,len=1), intent(in) :: name(*)
-
-    end function ops_decl_stencil_c
-
-    type(c_ptr) function ops_decl_strided_stencil_c ( dims, points, sten, stride, name ) BIND(C,name='ops_decl_strided_stencil')
-
-      use, intrinsic :: ISO_C_BINDING
-
-      integer(kind=c_int), value               :: dims, points
-      type(c_ptr), intent(in), value           :: sten
-      type(c_ptr), intent(in), value           :: stride
-      character(kind=c_char,len=1), intent(in) :: name(*)
-
-    end function ops_decl_strided_stencil_c
-
-    function ops_arg_dat_c ( dat, dim, sten, type, acc ) BIND(C,name='ops_arg_dat')
-
-      use, intrinsic :: ISO_C_BINDING
-      import :: ops_arg
-
-      type(ops_arg)                  :: ops_arg_dat_c
-      type(c_ptr), value, intent(in) :: dat
-      integer(kind=c_int), value     :: dim
-      type(c_ptr), value, intent(in) :: sten
-      character(kind=c_char,len=1)   :: type(*)
-      integer(kind=c_int), value     :: acc
-
-    end function ops_arg_dat_c
-
-
-    function ops_arg_dat_opt_c ( dat, dim, sten, type, acc, flag ) BIND(C,name='ops_arg_dat_opt')
-
-      use, intrinsic :: ISO_C_BINDING
-      import :: ops_arg
-
-      type(ops_arg)                  :: ops_arg_dat_opt_c
-      type(c_ptr), value, intent(in) :: dat
-      integer(kind=c_int), value     :: dim
-      type(c_ptr), value, intent(in) :: sten
-      character(kind=c_char,len=1)   :: type(*)
-      integer(kind=c_int), value     :: acc
-      integer(kind=c_int), value     :: flag
-    end function ops_arg_dat_opt_c
-
-    function ops_arg_idx_c ( ) BIND(C,name='ops_arg_idx')
-      use, intrinsic :: ISO_C_BINDING
-      import         :: ops_arg
-      type(ops_arg)  :: ops_arg_idx_c
-    end function ops_arg_idx_c
-
-
-    function ops_arg_reduce_c ( handle, dim, type, acc ) BIND(C,name='ops_arg_reduce')
-
-      use, intrinsic :: ISO_C_BINDING
-
-      import :: ops_arg, ops_reduction
-
-      type(ops_arg) :: ops_arg_reduce_c
-
-      type(c_ptr), value, intent(in) :: handle
-      integer(kind=c_int), value   :: dim
-      character(kind=c_char,len=1) :: type(*)
-      integer(kind=c_int), value   :: acc
-
-    end function ops_arg_reduce_c
-
-    function ops_arg_gbl_c ( data, dim, size, acc ) BIND(C,name='ops_arg_gbl_char')
-
-      use, intrinsic :: ISO_C_BINDING
-
-      import :: ops_arg
-
-      type(ops_arg) :: ops_arg_gbl_c
-
-      type(c_ptr), value :: data
-      integer(kind=c_int), value :: dim, size
-      integer(kind=c_int), value :: acc
-
-    end function ops_arg_gbl_c
-
-
-    subroutine ops_reduction_result_c (handle, type_size, var) BIND(C,name='ops_reduction_result_char')
-      use, intrinsic      :: ISO_C_BINDING
-      import :: ops_reduction
-      type(c_ptr), value, intent(in)  :: handle
-      !type(c_ptr), intent(in)  :: handle
-      type(c_ptr) , value       :: var
-      integer(kind=c_int), value, intent(in):: type_size
-    end subroutine ops_reduction_result_c
-
-
-    subroutine ops_timers_core_f ( cpu, et ) BIND(C,name='ops_timers_core')
-      use, intrinsic      :: ISO_C_BINDING
-      real(kind=c_double) :: cpu, et
-    end subroutine ops_timers_core_f
-
-    subroutine ops_timers_f ( cpu, et ) BIND(C,name='ops_timers')
-      use, intrinsic      :: ISO_C_BINDING
-      real(kind=c_double) :: cpu, et
-    end subroutine ops_timers_f
-
-    subroutine ops_timing_output () BIND(C,name='ops_timing_output_stdout')
-      use, intrinsic             :: ISO_C_BINDING
-    end subroutine ops_timing_output
-
-    subroutine ops_diagnostic_output ( ) BIND(C,name='ops_diagnostic_output')
-      use, intrinsic :: ISO_C_BINDING
-    end subroutine ops_diagnostic_output
-
-    subroutine ops_printf_c (line) BIND(C,name='ops_printf')
-      use ISO_C_BINDING
-      character(kind=c_char) :: line(*)
-    end subroutine ops_printf_c
-
-    subroutine ops_fprintf_c (file, line) BIND(C,name='ops_fprintf')
-      use ISO_C_BINDING
-      integer(kind=c_int), value :: file
-      character(kind=c_char)     :: line(*)
-    end subroutine ops_fprintf_c
-
-    subroutine ops_print_dat_to_txtfile_c (dat, file_name) BIND(C,name='ops_print_dat_to_txtfile')
-      use ISO_C_BINDING
-      import :: ops_dat_core
-      type(ops_dat_core) :: dat
-      character(kind=c_char,len=1), intent(in) :: file_name(*)
-    end subroutine ops_print_dat_to_txtfile_c
-
-    subroutine ops_print_dat_to_txtfile_core_c (dat, file_name) BIND(C,name='ops_print_dat_to_txtfile_core')
-      use ISO_C_BINDING
-      import :: ops_dat_core
-      type(ops_dat_core) :: dat
-      character(kind=c_char,len=1), intent(in) :: file_name(*)
-    end subroutine ops_print_dat_to_txtfile_core_c
-
-     integer(kind=c_int) function ops_dat_get_local_npartitions_c( dat ) BIND(C,name='ops_dat_get_local_npartitions')
-      use, intrinsic :: ISO_C_BINDING
-
-      integer(kind=c_int) :: ops_dat_get_local_npartitions
-      type(c_ptr), value, intent(in) :: dat
-
-    end function ops_dat_get_local_npartitions_c
-
-     integer(kind=c_int) function ops_dat_get_global_npartitions_c( dat ) BIND(C,name='ops_dat_get_global_npartitions')
-      use, intrinsic :: ISO_C_BINDING
-
-      integer(kind=c_int) :: ops_dat_get_global_npartitions
-      type(c_ptr), value, intent(in) :: dat
-
-    end function ops_dat_get_global_npartitions_c
-
-    subroutine ops_dat_get_extents_c( dat, part, disp, size ) BIND(C,name='ops_dat_get_extents')
-      use, intrinsic :: ISO_C_BINDING
-
-      type(c_ptr), value, intent(in)           :: dat
-      integer(kind=c_int), value               :: part
-      type(c_ptr), intent(in), value           :: disp, size
-
-    end subroutine ops_dat_get_extents_c
-
-    type(c_ptr) function ops_dat_get_raw_pointer_c( dat, part, stencil, stride ) BIND(C,name='ops_dat_get_raw_pointer')
-      use, intrinsic :: ISO_C_BINDING
-
-      type(c_ptr), value, intent(in)           :: dat
-      integer(kind=c_int), value               :: part
-      type(c_ptr), value, intent(in)           :: stencil
-      type(c_ptr), intent(in), value           :: stride
-
-    end function ops_dat_get_raw_pointer_c
-
-    subroutine ops_dat_release_raw_data_c ( dat, part, acc ) BIND(C,name='ops_dat_release_raw_data')
-      use, intrinsic :: ISO_C_BINDING
-
-      type(c_ptr), value, intent(in)           :: dat
-      integer(kind=c_int), value               :: part
-      integer(kind=c_int), value               :: acc
-
-    end subroutine ops_dat_release_raw_data_c
-
-    subroutine ops_dat_fetch_data_c ( dat, part, data ) BIND(C,name='ops_dat_fetch_data')
-      use, intrinsic :: ISO_C_BINDING
-
-      type(c_ptr), value, intent(in)           :: dat
-      integer(kind=c_int), value               :: part
-      type(c_ptr), intent(in), value           :: data
-
-    end subroutine ops_dat_fetch_data_c
-
-    subroutine ops_dat_set_data_c ( dat, part, data ) BIND(C,name='ops_dat_set_data')
-      use, intrinsic :: ISO_C_BINDING
-
-      type(c_ptr), value, intent(in)           :: dat
-      integer(kind=c_int), value               :: part
-      type(c_ptr), intent(in), value           :: data
-
-    end subroutine ops_dat_set_data_c
-
+        integer(kind=c_int) :: acc          ! access type
+        integer(kind=c_int) :: argtype      ! arg type
+        integer(kind=c_int) :: opt          ! falg to indicate whether this is an optional arg, 0 - optional, 1 - not optional
+    end type ops_arg
+
+    type, BIND(C) :: ops_reduction_core
+        type(c_ptr)           :: data       ! The data
+        integer(kind=c_int) :: size         ! size of data in bytes
+        integer(kind=c_int) :: initialized  ! flag indicating whether data has been initialized
+        integer(kind=c_int) :: index        ! unique identifier
+        integer(kind=c_int) :: acc          ! Type of reduction it was used for last time
+        integer(kind=c_int) :: type         ! Type
+        type(c_ptr)         :: name         ! Name
+        type(c_ptr)         :: instance     ! Pointer to the OPS_instance
+    end type ops_reduction_core
+
+    type :: ops_reduction
+        type (ops_reduction_core), pointer :: reductionPtr => null()
+        type (c_ptr)                       :: reductionCptr
+    end type ops_reduction
+
+    type, BIND(C) :: ops_halo_core
+        type(c_ptr)         :: from
+        type(c_ptr)         :: to
+        type(c_ptr)         :: iter_size
+        type(c_ptr)         :: from_base
+        type(c_ptr)         :: to_base
+        type(c_ptr)         :: from_dir
+        type(c_ptr)         :: to_dir
+        integer(kind=c_int) :: index
+    end type ops_halo_core
+
+    type :: ops_halo
+        type (ops_halo_core), pointer :: haloPtr => null()
+        type (c_ptr)                 :: haloCptr
+    end type ops_halo
+
+    type, BIND(C) :: ops_halo_group_core
+        integer             :: nhalos
+        type(c_ptr)         :: halos
+        !type (ops_halo), pointer :: halos => null()
+        !type (ops_halo), dimension(*) :: halos
+        integer             :: index
+        type(c_ptr)         :: instance
+    end type ops_halo_group_core
+
+    type :: ops_halo_group
+        type (ops_halo_group_core), pointer :: halogroupPtr => null()
+        type (c_ptr)                 :: halogroupCptr
+    end type ops_halo_group
+
+    type, BIND(C) :: ops_kernel_descriptor
+
+        type(c_ptr) :: name             ! name of kernel
+        integer(c_int)      :: name_len ! kernel name length
+        integer(c_size_t)      :: hash             ! hash of loop
+        type(c_ptr)         :: args             ! number of arguments
+        integer(c_int)      :: nargs            ! number of arguments
+        integer(c_int)      :: index            ! index of the loop
+        integer(c_int)      :: dim              ! number of dimensions
+        integer(c_int)      :: isdevice         ! flag to indicate if loop runs on device
+        type(c_ptr)    :: range            ! process local execution range
+        type(c_ptr)    :: orig_range       ! original execution range
+        type(c_ptr)         :: block            ! block to execute on
+        type(c_funptr)      :: func             ! Function pointer to a wrapper to be called
+        type(c_funptr)      :: startup_func
+        type(c_funptr)      :: cleanup_func
+    end type ops_kernel_descriptor
+
+
+!#################################################
+! Fortran interfaces for ops declaration routines
+! - binds *_c routines to ops C backend routines
+!#################################################
+
+    interface
+
+        subroutine ops_init_c ( argc, argv, diags ) BIND(C,name='ops_init')
+            use, intrinsic :: ISO_C_BINDING
+            integer(kind=c_int), intent(in), value :: argc
+            type(c_ptr), intent(in)                :: argv
+            integer(kind=c_int), intent(in), value :: diags
+        end subroutine ops_init_c
+
+        subroutine ops_set_args_c ( argv, len ) BIND(C,name='ops_set_args_ftn')
+            use, intrinsic :: ISO_C_BINDING
+            integer(kind=c_int), intent(in), value :: len
+            character(len=1, kind=C_CHAR) :: argv
+        end subroutine ops_set_args_c
+
+        subroutine ops_exit_c (  ) BIND(C,name='ops_exit')
+            use, intrinsic :: ISO_C_BINDING
+        end subroutine ops_exit_c
+
+        subroutine ops_set_soa_c ( soa_val ) BIND(C,name='ops_set_soa')
+            use, intrinsic :: ISO_C_BINDING
+            integer(kind=c_int), intent(in), value :: soa_val
+        end subroutine ops_set_soa_c
+
+        type(c_ptr) function ops_decl_block_c ( dims, name ) BIND(C,name='ops_decl_block')
+            use, intrinsic :: ISO_C_BINDING
+            import :: ops_block_core
+
+            integer(kind=c_int), value, intent(in)    :: dims
+            character(kind=c_char,len=1), intent(in)  :: name(*)
+        end function ops_decl_block_c
+
+        subroutine ops_free_dat_c( datPtr ) BIND(C,name='ops_free_dat')
+            use, intrinsic :: ISO_C_BINDING
+
+            type(c_ptr), intent(in), value           :: datPtr
+        end subroutine ops_free_dat_c
+
+        type(c_ptr) function ops_decl_dat_c ( block, dim, size, base, d_m, d_p, stride, data, type_size, type, name ) BIND(C,name='ops_decl_dat_char')
+            use, intrinsic :: ISO_C_BINDING
+            import :: ops_block_core, ops_dat_core
+
+            type(c_ptr), value, intent(in)           :: block
+            integer(kind=c_int), value               :: dim, type_size
+            character(kind=c_char,len=1), intent(in) :: type(*)
+            type(c_ptr), intent(in), value           :: data
+            type(c_ptr), intent(in), value           :: size
+            type(c_ptr), intent(in), value           :: base
+            type(c_ptr), intent(in), value           :: d_m
+            type(c_ptr), intent(in), value           :: d_p
+            type(c_ptr), intent(in), value           :: stride
+            character(kind=c_char,len=1), intent(in) :: name(*)
+        end function ops_decl_dat_c
+
+        type(c_ptr) function ops_decl_halo_c ( from, to, iter_size, from_base, to_base, from_dir, to_dir) BIND(C,name='ops_decl_halo_convert')
+            use, intrinsic :: ISO_C_BINDING
+            import :: ops_block_core, ops_dat_core, ops_halo_core
+
+            type(c_ptr), value, intent(in)           :: from
+            type(c_ptr), value, intent(in)           :: to
+            type(c_ptr), intent(in), value           :: iter_size
+            type(c_ptr), intent(in), value           :: from_base
+            type(c_ptr), intent(in), value           :: to_base
+            type(c_ptr), intent(in), value           :: from_dir
+            type(c_ptr), intent(in), value           :: to_dir
+        end function ops_decl_halo_c
+
+        type(c_ptr) function ops_decl_halo_group_c ( nhalos, halos) BIND(C,name='ops_decl_halo_group')
+            use, intrinsic :: ISO_C_BINDING
+            import :: ops_halo
+
+            integer(kind=c_int), value               :: nhalos
+            type(c_ptr), value, intent(in)           :: halos
+            !type(ops_halo), dimension(nhalos)      :: halos
+        end function ops_decl_halo_group_c
+
+        type(c_ptr) function ops_decl_halo_group_elem_c ( nhalos, halos, group) BIND(C,name='ops_decl_halo_group_elem')
+            use, intrinsic :: ISO_C_BINDING
+            import :: ops_halo
+
+            integer(kind=c_int), value               :: nhalos
+            type(c_ptr), value, intent(in)           :: halos
+            type(c_ptr), value :: group
+            !type(ops_halo), dimension(nhalos)      :: halos
+        end function ops_decl_halo_group_elem_c
+
+        subroutine ops_halo_transfer_c (group) BIND(C,name='ops_halo_transfer')
+            use, intrinsic :: ISO_C_BINDING
+            import :: ops_halo_group_core, ops_halo_core
+            type(c_ptr), value, intent(in)        :: group
+        end subroutine ops_halo_transfer_c
+
+        type(c_ptr) function ops_decl_reduction_handle_c ( size, type, name ) BIND(C,name='ops_decl_reduction_handle')
+            use, intrinsic :: ISO_C_BINDING
+            import :: ops_reduction_core
+
+            integer(kind=c_int), value               :: size
+            character(kind=c_char,len=1), intent(in) :: type(*)
+            character(kind=c_char,len=1), intent(in) :: name(*)
+        end function ops_decl_reduction_handle_c
+
+        type(c_ptr) function ops_decl_stencil_c ( dims, points, sten, name ) BIND(C,name='ops_decl_stencil')
+            use, intrinsic :: ISO_C_BINDING
+
+            integer(kind=c_int), value               :: dims, points
+            type(c_ptr), intent(in), value           :: sten
+            character(kind=c_char,len=1), intent(in) :: name(*)
+        end function ops_decl_stencil_c
+
+        type(c_ptr) function ops_decl_strided_stencil_c ( dims, points, sten, stride, name ) BIND(C,name='ops_decl_strided_stencil')
+            use, intrinsic :: ISO_C_BINDING
+
+            integer(kind=c_int), value               :: dims, points
+            type(c_ptr), intent(in), value           :: sten
+            type(c_ptr), intent(in), value           :: stride
+            character(kind=c_char,len=1), intent(in) :: name(*)
+        end function ops_decl_strided_stencil_c
+
+        function ops_arg_dat_c ( dat, dim, sten, type, acc ) BIND(C,name='ops_arg_dat')
+            use, intrinsic :: ISO_C_BINDING
+            import :: ops_arg
+
+            type(ops_arg)                  :: ops_arg_dat_c
+            type(c_ptr), value, intent(in) :: dat
+            integer(kind=c_int), value     :: dim
+            type(c_ptr), value, intent(in) :: sten
+            character(kind=c_char,len=1)   :: type(*)
+            integer(kind=c_int), value     :: acc
+        end function ops_arg_dat_c
+
+        function ops_arg_dat_opt_c ( dat, dim, sten, type, acc, flag ) BIND(C,name='ops_arg_dat_opt')
+            use, intrinsic :: ISO_C_BINDING
+            import :: ops_arg
+
+            type(ops_arg)                  :: ops_arg_dat_opt_c
+            type(c_ptr), value, intent(in) :: dat
+            integer(kind=c_int), value     :: dim
+            type(c_ptr), value, intent(in) :: sten
+            character(kind=c_char,len=1)   :: type(*)
+            integer(kind=c_int), value     :: acc
+            integer(kind=c_int), value     :: flag
+        end function ops_arg_dat_opt_c
+
+        function ops_arg_idx_c ( ) BIND(C,name='ops_arg_idx')
+            use, intrinsic :: ISO_C_BINDING
+            import         :: ops_arg
+
+            type(ops_arg)  :: ops_arg_idx_c
+        end function ops_arg_idx_c
+
+        function ops_arg_reduce_c ( handle, dim, type, acc ) BIND(C,name='ops_arg_reduce')
+            use, intrinsic :: ISO_C_BINDING
+            import :: ops_arg, ops_reduction
+
+            type(ops_arg) :: ops_arg_reduce_c
+
+            type(c_ptr), value, intent(in) :: handle
+            integer(kind=c_int), value   :: dim
+            character(kind=c_char,len=1) :: type(*)
+            integer(kind=c_int), value   :: acc
+        end function ops_arg_reduce_c
+
+        function ops_arg_gbl_c ( data, dim, size, acc ) BIND(C,name='ops_arg_gbl_char')
+            use, intrinsic :: ISO_C_BINDING
+            import :: ops_arg
+
+            type(ops_arg) :: ops_arg_gbl_c
+
+            type(c_ptr), value :: data
+            integer(kind=c_int), value :: dim, size
+            integer(kind=c_int), value :: acc
+        end function ops_arg_gbl_c
+
+        subroutine ops_reduction_result_c (handle, type_size, var) BIND(C,name='ops_reduction_result_char')
+            use, intrinsic      :: ISO_C_BINDING
+            import :: ops_reduction
+
+            type(c_ptr), value, intent(in)  :: handle
+            !type(c_ptr), intent(in)  :: handle
+            type(c_ptr) , value       :: var
+            integer(kind=c_int), value, intent(in):: type_size
+        end subroutine ops_reduction_result_c
+
+        subroutine ops_timers_core_f ( cpu, et ) BIND(C,name='ops_timers_core')
+            use, intrinsic      :: ISO_C_BINDING
+
+            real(kind=c_double) :: cpu, et
+        end subroutine ops_timers_core_f
+
+        subroutine ops_timers_f ( cpu, et ) BIND(C,name='ops_timers')
+            use, intrinsic      :: ISO_C_BINDING
+
+            real(kind=c_double) :: cpu, et
+        end subroutine ops_timers_f
+
+        subroutine ops_timing_output () BIND(C,name='ops_timing_output_stdout')
+            use, intrinsic             :: ISO_C_BINDING
+        end subroutine ops_timing_output
+
+        subroutine ops_diagnostic_output ( ) BIND(C,name='ops_diagnostic_output')
+            use, intrinsic :: ISO_C_BINDING
+        end subroutine ops_diagnostic_output
+
+        subroutine ops_printf_c (line) BIND(C,name='ops_printf')
+            use ISO_C_BINDING
+
+            character(kind=c_char) :: line(*)
+        end subroutine ops_printf_c
+
+        subroutine ops_fprintf_c (file, line) BIND(C,name='ops_fprintf')
+            use ISO_C_BINDING
+
+            integer(kind=c_int), value :: file
+            character(kind=c_char)     :: line(*)
+        end subroutine ops_fprintf_c
+
+        subroutine ops_print_dat_to_txtfile_c (dat, file_name) BIND(C,name='ops_print_dat_to_txtfile')
+            use ISO_C_BINDING
+            import :: ops_dat_core
+
+            type(ops_dat_core) :: dat
+            character(kind=c_char,len=1), intent(in) :: file_name(*)
+        end subroutine ops_print_dat_to_txtfile_c
+
+        subroutine ops_print_dat_to_txtfile_core_c (dat, file_name) BIND(C,name='ops_print_dat_to_txtfile_core')
+            use ISO_C_BINDING
+            import :: ops_dat_core
+
+            type(ops_dat_core) :: dat
+            character(kind=c_char,len=1), intent(in) :: file_name(*)
+        end subroutine ops_print_dat_to_txtfile_core_c
+
+        integer(kind=c_int) function ops_dat_get_local_npartitions_c( dat ) BIND(C,name='ops_dat_get_local_npartitions')
+            use, intrinsic :: ISO_C_BINDING
+
+            integer(kind=c_int) :: ops_dat_get_local_npartitions
+            type(c_ptr), value, intent(in) :: dat
+        end function ops_dat_get_local_npartitions_c
+
+        integer(kind=c_int) function ops_dat_get_global_npartitions_c( dat ) BIND(C,name='ops_dat_get_global_npartitions')
+            use, intrinsic :: ISO_C_BINDING
+
+            integer(kind=c_int) :: ops_dat_get_global_npartitions
+            type(c_ptr), value, intent(in) :: dat
+        end function ops_dat_get_global_npartitions_c
+
+        subroutine ops_dat_get_extents_c( dat, part, disp, size ) BIND(C,name='ops_dat_get_extents')
+            use, intrinsic :: ISO_C_BINDING
+
+            type(c_ptr), value, intent(in)           :: dat
+            integer(kind=c_int), value               :: part
+            type(c_ptr), intent(in), value           :: disp, size
+        end subroutine ops_dat_get_extents_c
+
+        type(c_ptr) function ops_dat_get_raw_pointer_c( dat, part, stencil, stride ) BIND(C,name='ops_dat_get_raw_pointer')
+            use, intrinsic :: ISO_C_BINDING
+
+            type(c_ptr), value, intent(in)           :: dat
+            integer(kind=c_int), value               :: part
+            type(c_ptr), value, intent(in)           :: stencil
+            type(c_ptr), intent(in), value           :: stride
+        end function ops_dat_get_raw_pointer_c
+
+        subroutine ops_dat_release_raw_data_c ( dat, part, acc ) BIND(C,name='ops_dat_release_raw_data')
+            use, intrinsic :: ISO_C_BINDING
+
+            type(c_ptr), value, intent(in)           :: dat
+            integer(kind=c_int), value               :: part
+            integer(kind=c_int), value               :: acc
+        end subroutine ops_dat_release_raw_data_c
+
+        subroutine ops_dat_fetch_data_c ( dat, part, data ) BIND(C,name='ops_dat_fetch_data')
+            use, intrinsic :: ISO_C_BINDING
+
+            type(c_ptr), value, intent(in)           :: dat
+            integer(kind=c_int), value               :: part
+            type(c_ptr), intent(in), value           :: data
+        end subroutine ops_dat_fetch_data_c
+
+        subroutine ops_dat_set_data_c ( dat, part, data ) BIND(C,name='ops_dat_set_data')
+            use, intrinsic :: ISO_C_BINDING
+
+            type(c_ptr), value, intent(in)           :: dat
+            integer(kind=c_int), value               :: part
+            type(c_ptr), intent(in), value           :: data
+        end subroutine ops_dat_set_data_c
+
+        subroutine ops_execute_c( nullPtr ) BIND(C,name='ops_execute')
+            use, intrinsic :: ISO_C_BINDING
+
+            type(c_ptr), value :: nullPtr
+        end subroutine ops_execute_c
+
+        subroutine create_kerneldesc_and_enque( name, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='create_kerneldesc_and_enque')
+            use, intrinsic :: ISO_C_BINDING
+
+            import :: ops_block_core, ops_arg, c_funptr
+
+            character(kind=c_char,len=1) :: name
+            type(c_ptr), value      :: args
+            integer(c_int), value   :: nargs
+            integer(c_int), value   :: index
+            integer(c_int), value   :: dim
+            integer(c_int), value   :: isdevice
+            type(c_ptr), value      :: range
+            type(c_ptr), value      :: block
+            type(c_funptr), value   :: func
+
+        end subroutine create_kerneldesc_and_enque 
 
   end interface
 
@@ -551,11 +574,14 @@ module OPS_Fortran_Declarations
 
     end subroutine ops_init
 
+    subroutine ops_exit ( )
+      call ops_exit_c (  )
+    end subroutine ops_exit
 
-
-  subroutine ops_exit ( )
-    call ops_exit_c (  )
-  end subroutine ops_exit
+    subroutine ops_set_soa ( soa_val )
+        integer(4) :: soa_val
+        call ops_set_soa_c (soa_val)
+    end subroutine ops_set_soa
 
   subroutine ops_decl_block ( dims, block, name )
 
@@ -598,6 +624,11 @@ module OPS_Fortran_Declarations
     call c_f_pointer (stencil%stencilCptr, stencil%stencilPtr)
 
   end subroutine ops_decl_strided_stencil
+
+  subroutine ops_free_dat( dat )
+    type(ops_dat) :: dat
+    call ops_free_dat_c( dat%dataCPtr )
+  end subroutine ops_free_dat
 
   subroutine ops_decl_dat_real_8 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
 
@@ -1222,6 +1253,11 @@ module OPS_Fortran_Declarations
     call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
   end subroutine ops_reduction_result_real_8
 
+  subroutine ops_execute()
+    use, intrinsic :: ISO_C_BINDING
+
+    call ops_execute_c(c_null_ptr)
+  end subroutine ops_execute
 
  !ops_decl_const -- various versions .. no-ops in ref ?
 

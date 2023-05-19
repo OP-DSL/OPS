@@ -153,7 +153,7 @@ program laplace
     !call ops_print_dat_to_txtfile(d_A, "data_A.txt")
     !call ops_print_dat_to_txtfile(d_Anew, "data_Anew.txt")
 
-    do while ( error .gt. tol .and. iter .lt. iter_max )
+    do while ( iter .lt. iter_max ) ! .and. error .gt. tol
         error=0.0_8
 
         call ops_par_loop(apply_stencil_kernel, "apply_stencil", grid2D, 2, interior_range, &
@@ -161,22 +161,22 @@ program laplace
                         & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_WRITE), &
                         & ops_arg_reduce(h_err, 1, "real(8)", OPS_MAX))
 
-        !call ops_print_dat_to_txtfile(d_Anew, "data_Anew.txt")
-
-        call ops_reduction_result(h_err, error)
-
         call ops_par_loop(copy_kernel, "copy", grid2D, 2, interior_range, &
                         & ops_arg_dat(d_A,    1, S2D_0pt, "real(8)", OPS_WRITE), &
                         & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_READ))
-
-        if(mod(iter,10).eq.0 ) write(*,'(i5,a,f16.7)') iter, ', ',error
-            iter = iter +1
+                        
+        IF (mod(iter,10).eq.0 ) THEN
+            call ops_reduction_result(h_err, error)
+            write(*,'(i5,a,f16.7)') iter, ', ',error
+        END IF
+        iter = iter +1
 
     end do  ! End of do while loop
 
+    call ops_reduction_result(h_err, error)
     write(*,'(i5,a,f16.7)') iter, ', ',error
 
-    err_diff = abs((100.0*(error/2.421354960840227e-03))-100.0)
+    err_diff = abs((100.0*(error/0.0026300795485))-100.0)
 
     write(*,'(a,e18.5,a)') 'Total error is within ', err_diff,' % of the expected error'
 

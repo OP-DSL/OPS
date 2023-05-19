@@ -337,6 +337,10 @@ void ops_exit_core(OPS_instance *instance) {
   instance->is_initialised = 0;
 }
 
+void ops_set_soa(const int soa_val) {
+  OPS_instance::getOPSInstance()->OPS_soa = soa_val;
+}
+
 ops_block _ops_decl_block(OPS_instance *instance, int dims, const char *name) {
   if (dims <= 0) {
       OPSException ex(OPS_INVALID_ARGUMENT);
@@ -823,27 +827,26 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
     handle->acc = acc;
     if (acc == OPS_INC)
       memset(handle->data, 0, handle->size);
-    if (strcmp(type, "double") == 0 ||
-        strcmp(type, "real(8)") == 0) { // TODO: handle other types
-      OPS_RED_INIT(double,DBL)
-    } else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0) {
-      OPS_RED_INIT(float,FLT)
-    } else if (strcmp(type, "int") == 0 || strcmp(type, "integer") == 0) {
-      OPS_RED_INIT2(int,INT)
+    if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) { // TODO: handle other types
+        OPS_RED_INIT(double,DBL)
+    } else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 || strcmp(type, "real(kind=4)") == 0) {
+        OPS_RED_INIT(float,FLT)
+    } else if (strcmp(type, "int") == 0 || strcmp(type, "integer") == 0 || strcmp(type, "integer(4)") == 0 || strcmp(type, "integer(kind=4)") == 0) {
+        OPS_RED_INIT2(int,INT)
     } else if (strcmp(type, "long") == 0) {
-      OPS_RED_INIT2(long,LONG)
+        OPS_RED_INIT2(long,LONG)
     } else if (strcmp(type, "char") == 0) {
-      OPS_RED_INIT2(char,CHAR)
+        OPS_RED_INIT2(char,CHAR)
     } else if (strcmp(type, "short") == 0) {
-      OPS_RED_INIT2(short,SHRT)
+        OPS_RED_INIT2(short,SHRT)
     } else if (strcmp(type, "long long") == 0 || strcmp(type, "ll") == 0) {
-      OPS_RED_INIT2(long long,LLONG)
+        OPS_RED_INIT2(long long,LLONG)
     } else if (strcmp(type, "unsigned long long") == 0 || strcmp(type, "ull") == 0) {
-      OPS_RED_INIT2(unsigned long long,ULLONG)
+        OPS_RED_INIT2(unsigned long long,ULLONG)
     } else if (strcmp(type, "unsigned long") == 0 || strcmp(type, "ul") == 0) {
-      OPS_RED_INIT2(unsigned long,ULONG)
+        OPS_RED_INIT2(unsigned long,ULONG)
     } else if (strcmp(type, "unsigned int") == 0 || strcmp(type, "uint") == 0) {
-      OPS_RED_INIT2(unsigned int,UINT)
+        OPS_RED_INIT2(unsigned int,UINT)
     }
     else if (strcmp(type, "complexf") == 0) {
       if (acc == OPS_MIN)
@@ -860,7 +863,7 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
         for (int i = 0; i < 2 * handle->size / 8; i++)
           ((complexd *)handle->data)[i] = complexd(0,0);
     } else {
-      throw OPSException(OPS_NOT_IMPLEMENTED, "Error, reduction type not recognised, please add in ops_lib_core.c");
+      throw OPSException(OPS_NOT_IMPLEMENTED, "Error, reduction type not recognised, please add in ops_lib_core.cpp");
     }
   } else if (handle->acc != acc) {
       OPSException ex(OPS_INVALID_ARGUMENT);
@@ -1347,12 +1350,18 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
       sumtime_mpi += moments_mpi_time[0];
     }
     ops_fprintf2(stream, "Total kernel time: %g\n", sumtime);
-    if (instance->ops_tiled_halo_exchange_time > 0.0) {
-      double moments_time[2] = {0.0};
-      ops_compute_moment(instance->ops_tiled_halo_exchange_time, &moments_time[0], &moments_time[1]);
+    double moments_time[2] = {0.0};
+    ops_compute_moment(instance->ops_tiled_halo_exchange_time, &moments_time[0], &moments_time[1]);
+    if (moments_time[0] > 0.0) {
       ops_fprintf2(stream, "Total tiled halo exchange time: %g\n", moments_time[0]);
     } else if (sumtime_mpi > 0) {
       ops_fprintf2(stream, "Total halo exchange time: %g\n", sumtime_mpi);
+    }
+
+    moments_time[0] = 0.0;
+    ops_compute_moment(instance->ops_user_halo_exchanges_time, &moments_time[0], &moments_time[1]);
+    if (moments_time[0] > 0.0) {
+      ops_fprintf2(stream, "Total user halo exchange time: %g\n", moments_time[0]);
     }
     // printf("Times: %g %g %g\n",ops_gather_time, ops_sendrecv_time,
     // ops_scatter_time);
@@ -1895,15 +1904,18 @@ ops_kernel_descriptor * ops_dat_deep_copy_core(ops_dat target, ops_dat orig_dat,
 {
     ops_kernel_descriptor *desc =
         (ops_kernel_descriptor *)ops_calloc(1, sizeof(ops_kernel_descriptor));
+    desc->range = (int*) calloc(2*OPS_MAX_DIM, sizeof(int));
+    desc->orig_range = (int*) calloc(2*OPS_MAX_DIM, sizeof(int));
+
     //  desc->name = "ops_internal_copy_seq";
     desc->block = orig_dat->block;
     desc->dim = orig_dat->block->dims;
-    desc->device = 0;
+    desc->isdevice = 0;
     desc->index = -1;
     ops_timing_realloc(orig_dat->block->instance, -1, "ops_dat_deep_copy");
     desc->hash = 5381;
     desc->hash = ((desc->hash << 5) + desc->hash) + 1;
-    for (int i = 0; i < 2*OPS_MAX_DIM; i++) {
+    for (int i = 0; i < 2*desc->block->dims; i++) {
         desc->range[i] = range[i];
         desc->orig_range[i] = range[i];
         desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
@@ -2157,6 +2169,7 @@ void ops_upload_gbls(ops_arg* args, int nargs) {
 }
 
 void ops_free_dat(ops_dat dat) {
+  ops_execute();
   delete dat;
 }
 

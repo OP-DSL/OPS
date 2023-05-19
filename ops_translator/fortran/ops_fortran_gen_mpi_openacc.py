@@ -66,7 +66,7 @@ ENDDO = util_fortran.ENDDO
 IF = util_fortran.IF
 ENDIF = util_fortran.ENDIF
 
-def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
+def ops_fortran_gen_mpi_openacc(master, date, consts, kernels, soa_set):
 
   OPS_GBL   = 2;
 
@@ -149,10 +149,13 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) == 1:
           code('INTEGER(KIND=4) xdim'+str(n+1))
+          code('!$acc declare create(xdim'+str(n+1)+')')
           if NDIM > 1:
             code('INTEGER(KIND=4) ydim'+str(n+1))
+            code('!$acc declare create(ydim'+str(n+1)+')')
           if NDIM > 2:
             code('INTEGER(KIND=4) zdim'+str(n+1))
+            code('!$acc declare create(zdim'+str(n+1)+')')
           if NDIM==1:
             code('#define OPS_ACC'+str(n+1)+'(x) (x+1)')
           if NDIM==2:
@@ -165,11 +168,15 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         if int(dims[n]) > 1:
           code('INTEGER(KIND=4) multi_d'+str(n+1))
+          code('!$acc declare create(multi_d'+str(n+1)+')')
           code('INTEGER(KIND=4) xdim'+str(n+1))
+          code('!$acc declare create(xdim'+str(n+1)+')')
           if NDIM > 1:
             code('INTEGER(KIND=4) ydim'+str(n+1))
+            code('!$acc declare create(ydim'+str(n+1)+')')
           if NDIM > 2:
             code('INTEGER(KIND=4) zdim'+str(n+1))
+            code('!$acc declare create(zdim'+str(n+1)+')')
           if NDIM==1:
             code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
           if NDIM==2:
@@ -405,7 +412,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
     code('character(kind=c_char,len=*), INTENT(IN) :: userSubroutine')
     code('type ( ops_block ), INTENT(IN) :: block')
     code('integer(kind=4), INTENT(IN):: dim')
-    code('integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range')
+    code('integer(kind=4)   , DIMENSION(2*dim), INTENT(IN) :: range')
     code('real(kind=8) t1,t2,t3')
     code('real(kind=4) transfer_total, transfer')
     code('')
@@ -449,7 +456,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
     for n in range (0, nargs):
       code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
     code('')
-    code('call setKernelTime('+str(nk)+',userSubroutine//char(0),0.0_8,0.0_8,0.0_4,0)')
+    code('call setKernelTime('+str(nk)+',userSubroutine//char(0),0.0_8,0.0_8,0.0_4,1)')
     code('call ops_timers_core(t1)')
     code('')
 
@@ -557,7 +564,7 @@ def ops_fortran_gen_mpi_openacc(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         code('call ops_compute_transfer('+str(NDIM)+', start, end, opsArg'+str(n+1)+',transfer)')
         code('transfer_total = transfer_total + transfer')
-    code('call setKernelTime('+str(nk)+',userSubroutine,t3-t2,t2-t1,transfer_total,1)') 
+    code('call setKernelTime('+str(nk)+',userSubroutine,t3-t2,t2-t1,transfer_total,0)') 
 
     config.depth = config.depth - 2
     code('end subroutine')
