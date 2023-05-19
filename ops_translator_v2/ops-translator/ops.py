@@ -10,13 +10,13 @@ if TYPE_CHECKING:
     from store import Location
 
 class AccessType(Enum):
-    READ = 0
-    WRITE = 1 
-    RW = 2
+    OPS_READ = 0
+    OPS_WRITE = 1 
+    OPS_RW = 2
 
-    INC = 3
-    MIN = 4
-    MAX = 5
+    OPS_INC = 3
+    OPS_MIN = 4
+    OPS_MAX = 5
 
     @staticmethod
     def values() -> List[str]:
@@ -100,7 +100,7 @@ class Const:
     loc: Location
     ptr: str
 
-    dim: int
+    dim: str
     typ: Type
     name: str
 
@@ -272,6 +272,7 @@ class Loop:
 
     arg_idx: Optional[int] = -1
     multiGrid: Optional[bool] = False
+    has_reduction: Optional[bool] = False
 
     def __init__(self, loc: Location, kernel: str, block: Block, range: Range, ndim: int) -> None:
         self.loc = loc
@@ -325,6 +326,9 @@ class Loop:
     ) -> None: 
 
         arg_id = len(self.args)
+
+        if not self.has_reduction:
+            self.has_reduction = True
 
         arg = ArgReduce(arg_id, loc, access_type, reduct_handle, dim, typ)
         self.args.append(arg)

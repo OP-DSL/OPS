@@ -343,3 +343,46 @@ class Rewriter:
         back = Span(pivot.end, span.end)
 
         return (front, back)
+
+
+class KernelProcess:
+    def get_kernel_body_and_arg_list(self, kernel_func: str) :
+        j = kernel_func.find("{")
+        k = kernel_func.find("(")
+        args_list = self.parse_signature(kernel_func[ k : j])
+
+        # replace OPS_ACC macro in the kernel body
+        kernel_body = self.clean_kernel_body(kernel_func[(j+1) : kernel_func.rfind("}")])
+
+        return kernel_body, args_list
+
+
+    def parse_signature(self,text):
+        new_text = self.comment_remover(text)
+
+        pattern = r"\bll\b|\bconst\b|\bACC<|>|\bint\b|\blong long\b|\blong\b|\bshort\b|\bchar\b|\bfloat\b|\bdouble\b|\bcomplexf\b|\bcomplexd\b|\*|&|\)|\(|\n|\[[0-9]*\]|__restrict__|RESTRICT|__volatile__|\/\/[^\n]*|\/*[^*]*\*\/|\/\*.*?\*\/"
+        text2 = re.sub(pattern, "", new_text)
+
+        args_list = [arg.strip() for arg in text2.split(",")]
+        #print(args_list)
+        return args_list
+
+    def comment_remover(self,text):
+        """Remove comments from text"""
+        def replacer(match):
+            s = match.group(0)
+            if s.startswith("/"):
+                return ""
+            else:
+                return s
+
+        pattern = re.compile(r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
+                             re.DOTALL | re.MULTILINE,
+                            )
+        return re.sub(pattern, replacer, text)
+
+    def clean_kernel_body(self, kernel_text: str) -> str:
+        kernel_text = re.sub(r"\[OPS_ACC_MD[0-9]+(\([ -A-Za-z0-9,+]*\))\]", r"\1", kernel_text)
+        kernel_text= re.sub(r"\[OPS_ACC[0-9]+(\([ -A-Za-z0-9,+]*\))\]", r"\1", kernel_text)
+        return kernel_text
+>>>>>>> fixed bugs for CPP parser, able to generate and run seq,tiled,openmp,mpi,mpi_tiled and mpi_openmp versions

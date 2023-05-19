@@ -161,7 +161,7 @@ def parse(args: Namespace, lang: Lang) -> Application:
         if args.verbose:
             print(f"Parseing file {i} of {len(args.file_paths)}: {raw_path}")
 
-        # Parase the program
+        # Parse the program
         program = lang.parseProgram(Path(raw_path), include_dirs, defines)
         app.programs.append(program)
 

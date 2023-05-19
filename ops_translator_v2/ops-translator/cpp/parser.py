@@ -18,6 +18,7 @@ def parseMeta(node: Cursor, program: Program) -> None:
     for child in node.get_children():
         parseMeta(child, program) 
 
+
 def parseTypeRef(node: Cursor, program: Program) -> None:
     node = node.get_definition()
 
@@ -79,8 +80,10 @@ def parseFunction(node: Cursor, program: Program) -> None:
 
     program.entities.append(function)
 
+
 def parseLocation(node: Cursor) -> Location:
     return Location(node.location.file.name, node.location.line, node.location.column)
+
 
 def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
     macros: Dict[Location, str] = {}
@@ -105,7 +108,8 @@ def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
             if child.kind.is_unexposed():
                 parseCall(child, macros, program)
 
-    return program        
+    return program
+
 
 def parseUnexposedFunction(node: Cursor) -> Union[Tuple[str, List[Cursor]], None]:
     args = []
@@ -124,6 +128,7 @@ def parseUnexposedFunction(node: Cursor) -> Union[Tuple[str, List[Cursor]], None
         return None
 
     return (name, args)
+
 
 def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> None:
 
@@ -150,6 +155,7 @@ def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> No
 def decend(node: Cursor) -> Optional[Cursor]:
     return next(node.get_children(), None)
 
+
 def parseStringLit(node: Cursor) -> str:
     if node.kind == CursorKind.UNEXPOSED_EXPR:
         node = decend(node)
@@ -161,6 +167,7 @@ def parseStringLit(node: Cursor) -> str:
 
     return node.spelling[1:-1]
 
+
 def parseIntExpression(node: Cursor) -> int:
     if node.type.kind != TypeKind.INT:
         raise ParseError("Expected int expression", parseLocation(node))
@@ -170,6 +177,7 @@ def parseIntExpression(node: Cursor) -> int:
     conf.lib.clang_EvalResult_dispose(eval_result)
 
     return val
+
 
 def parseType(typ: str, loc: Location, include_custom=False) -> Tuple[ops.Type, bool]:
     typ_clean = typ.strip()
@@ -199,6 +207,7 @@ def parseType(typ: str, loc: Location, include_custom=False) -> Tuple[ops.Type, 
 
     raise ParseError(f"Unable to parse type: '{typ}'", loc)
 
+
 def parseIdentifier(node: Cursor, raw: bool = True) -> str:
     if raw:
         return "".join([t.spelling for t in node.get_tokens()])
@@ -220,12 +229,13 @@ def parseIdentifier(node: Cursor, raw: bool = True) -> str:
 
     return node.spelling
 
+
 def parseConst(args: List[Cursor], loc: Location) -> ops.Const:
     if(len(args) != 4):
         raise ParseError(f"Incorrect number({len(args)}) of args passed to ops_decl_const", loc)
 
     name = parseStringLit(args[0])
-    dim = parseIntExpression(args[1])
+    dim = parseIdentifier(args[1])
     typ, _ = parseType(parseStringLit(args[2]), loc, True)
     ptr = parseIdentifier(args[3], raw=False)
 
@@ -255,6 +265,7 @@ def parseArgDat(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[
 
     loop.addArgDat(loc, dat_ptr, dim, dat_typ, dat_soa, stencil_ptr, access_type, True)
 
+
 def parseArgDatOpt(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> None:
     if len(args) != 6:
         raise ParseError(f"Incorrect number({len(args)}) of args passed to ops_arg_dat_opt", loc)
@@ -268,6 +279,7 @@ def parseArgDatOpt(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Di
 
     loop.addArgDat(loc, dat_ptr, dim, dat_typ, dat_soa, stencil_ptr, access_type, bool(opt))
 
+
 def parseArgReduce(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> None:
     if len(args) != 4:
         raise ParseError(f"Incorrect number of args passed to ops_arg_reduce: {len(args)}", loc)
@@ -278,6 +290,7 @@ def parseArgReduce(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Di
     access_type = parseAccessType(args[3], loc, macros)
 
     loop.addArgReduce(loc, reduct_handle_ptr, dim, typ, access_type)
+
 
 def parseBlock(node: Cursor, dim: int) -> ops.Block:
     ptr = parseIdentifier(node)
@@ -302,11 +315,13 @@ def parseArgGbl(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[
 
     loop.addArgGbl(loc, ptr, dim, typ, access_type)
 
+
 def parseArgIdx(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> None:
     if len(args) !=0:
         raise ParseError("Incorrect number of args passed to ops_arg_idx", loc)
 
     loop.addArgIdx(loc)
+
 
 def parseLoop(args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> ops.Loop:
     if len(args) < 6:

@@ -24,19 +24,23 @@ def extractDependancies(entities: List[Entity], app: Application) -> List[Tuple[
         if safeFind(extracted_entities, lambda e: e[0] == entity):  
             continue
 
-        for dependancy in entity.depends:
-            dependancy_entities = app.findEntities(dependancy, entity.program)
-            unprocessed_entities.extend(dependancy_entities)
+        # 16 May 2023 - Ashutosh S. Londhe
+        # Dependency not required for template
+        #for dependancy in entity.depends:
+        #    dependancy_entities = app.findEntities(dependancy, entity.program)
+        #    unprocessed_entities.extend(dependancy_entities)
 
         rewriter = Rewriter(entity.program.source, [extentToSpan(entity.ast.extent)])
         extracted_entities.insert(0,(entity, rewriter))
 
     return extracted_entities
 
+
 def updateFunctionTypes(entities: List[Tuple[Entity, Rewriter]], replacement: Callable[[str, Entity], str]) -> None:
     for entity, rewriter in filter(lambda a: isinstance(e[0], function), entities):
         function_type_span = extentToSpan(next(entity.ast.get_token()).extent)
         rewriter.update(function_type_span, lambda s: replacement(s, entity))
+
 
 def renameConst(
         entities: List[Tuple[Entity, Rewriter]], app: Application, replacement: Callable[[str, Entity], str]
@@ -51,8 +55,10 @@ def renameConst(
             if node.spelling in const_ptrs:
                 rewriter.update(extentToSpan(node.extent), lambda s: replacement(s, entity))
 
+
 def writeSource(entities: List[Tuple[Entity, Rewriter]]) -> str:
     source= ""
+
     while len(entities) > 0:
         for i in range(len(entities)):
             entity, rewriter = entities[i]
@@ -76,5 +82,3 @@ def writeSource(entities: List[Tuple[Entity, Rewriter]]) -> str:
                 break
 
     return source
-
-

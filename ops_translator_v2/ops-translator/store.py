@@ -170,10 +170,8 @@ class Application:
 
     def uniqueLoops(self) -> List[ops.Loop]:
         return uniqueBy(self.loops(), lambda m: m[0].kernel)
-
         for p in self.programs:
             id = findId
-
 
     def validate(self, lang: Lang) -> None:
         self.validateConst(lang)
@@ -185,9 +183,6 @@ class Application:
             elif self.global_dim != program.ndim:
                 raise OpsError(f"ndim mismatch with global dim={self.global_dim} and program dim={program.ndim} of program={program.path}")
 
-
-
-
     def validateConst(self, lang: Lang) -> None:
         seen_const_ptrs: Set[str] = set()
 
@@ -197,7 +192,7 @@ class Application:
 
             seen_const_ptrs.add(const.ptr)
 
-            if const.dim < 0:
+            if (const.dim).isdigit() and int(const.dim) < 0:
                 raise OpsError(f"Invalid const dimension: {const.dim} of const: {const.ptr}", const.loc)
 
     def validateLoops(self, lang: Lang) -> None:
@@ -220,10 +215,10 @@ class Application:
 
     def validateArgDat(self, arg: ops.ArgDat, loop: ops.Loop, lang: Lang) -> None:
         valid_access_types = [
-            ops.AccessType.READ, 
-            ops.AccessType.WRITE, 
-            ops.AccessType.RW, 
-            ops.AccessType.INC
+            ops.AccessType.OPS_READ, 
+            ops.AccessType.OPS_WRITE, 
+            ops.AccessType.OPS_RW, 
+            ops.AccessType.OPS_INC
             ]
 
         if arg.access_type not in valid_access_types:
@@ -231,18 +226,18 @@ class Application:
 
     def validateArgGbl(self, arg: ops.ArgGbl, loop: ops.Loop, lang: Lang) -> None:
         valid_access_types = [
-            ops.AccessType.READ, 
-            ops.AccessType.WRITE, 
-            ops.AccessType.RW, 
-            ops.AccessType.INC,
-            ops.AccessType.MAX,
-            ops.AccessType.MIN
+            ops.AccessType.OPS_READ, 
+            ops.AccessType.OPS_WRITE, 
+            ops.AccessType.OPS_RW, 
+            ops.AccessType.OPS_INC,
+            ops.AccessType.OPS_MAX,
+            ops.AccessType.OPS_MIN
             ]
 
         if arg.access_type not in valid_access_types:
             raise OpsError(f"Invalid access type for gbl argumentL {arg.access_type}", arg.loc)
 
-        if arg.access_type != ops.AccessType.READ and arg.typ not in \
+        if arg.access_type != ops.AccessType.OPS_READ and arg.typ not in \
             [ops.Float(64), ops.Float(32), ops.Int(True, 32), ops.Int(False, 32), ops.Bool]:
             raise OpsError(f"Invalid access type for reduced gbl argument: {arg.access_type}", arg.loc)
 

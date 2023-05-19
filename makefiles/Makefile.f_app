@@ -8,8 +8,19 @@ ifndef MAIN_SRC
 $(error MAIN_SRC is not set)
 endif
 
-.generated: $(HEADERS) $(OPS_FILES) $(OPS_INSTALL_PATH)/../ops_translator/fortran/*.py
-	$(OPS_INSTALL_PATH)/../ops_translator/fortran/ops_fortran.py $(OPS_FILES)
+VERBOSE=
+
+ifdef OPS_GENERATOR_VERBOSE
+	VERBOSE=-v
+endif
+
+DEFINES=-DOPS_ACC_IGNORE
+
+generated: $(HEADERS) $(OPS_FILES) $(OPS_INSTALL_PATH)/../ops_translator_v2/ops-translator/*.py
+	@echo "generating translations for ${OPS_FILES}"
+	@echo "OPS_EXTENTIONS: ${OPS_EXTENTIONS} OPS_GENERATED: ${OPS_GENERATED}"
+	which python3
+	python3 $(OPS_INSTALL_PATH)/../ops_translator_v2/ops-translator $(VERBOSE) $(DEFINES) --file_paths $(OPS_FILES)
 	rm -f .generated
 	touch .generated
 
@@ -78,3 +89,7 @@ clean:
 	rm -f $(APP)_mpi_cuda
 	rm -f $(APP)_openacc
 	rm -f $(APP)_mpi_openacc
+	rm -f $(APP)_tiled
+	rm -f $(APP)_mpi_tiled
+	rm -f $(OPS_GENERATED)
+	rm -f .generated constants_list.txt
