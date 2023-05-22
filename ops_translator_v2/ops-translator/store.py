@@ -180,6 +180,8 @@ class Application:
         for program in self.programs:
             if self.global_dim == None:
                 self.global_dim = program.ndim
+            elif program.ndim == None:
+                program.ndim = self.global_dim
             elif self.global_dim != program.ndim:
                 raise OpsError(f"ndim mismatch with global dim={self.global_dim} and program dim={program.ndim} of program={program.path}")
 
