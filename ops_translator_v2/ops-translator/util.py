@@ -24,8 +24,14 @@ def getVersion() -> str:
 def flatten(arr: List[List[T]]) -> List[T]:
     return functools.reduce(operator.iconcat, arr, [])
 
+
+def find(xs: Iterable[T], p: Callable[[T], bool]) -> T:
+    return next(x for x in xs if p(x))
+
+
 def safeFind(xs: Iterable[T], p: Callable[[T], bool]) -> Optional[T]:
     return next((x for x in xs if p(x)), None)
+
 
 def findIdx(xs: Iterable[T], p: Callable[[T], bool]) -> List[T]:
     for idx, x in enumerate(xs):
@@ -385,4 +391,3 @@ class KernelProcess:
         kernel_text = re.sub(r"\[OPS_ACC_MD[0-9]+(\([ -A-Za-z0-9,+]*\))\]", r"\1", kernel_text)
         kernel_text= re.sub(r"\[OPS_ACC[0-9]+(\([ -A-Za-z0-9,+]*\))\]", r"\1", kernel_text)
         return kernel_text
->>>>>>> fixed bugs for CPP parser, able to generate and run seq,tiled,openmp,mpi,mpi_tiled and mpi_openmp versions

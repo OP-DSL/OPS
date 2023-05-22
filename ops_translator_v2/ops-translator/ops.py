@@ -32,6 +32,7 @@ class AccessType(Enum):
 #     def values() -> List[str]:
 #         return [x.value for x in list(AccessType)]
 
+
 class OpsError(Exception):
     message: str
     loc: Location
@@ -46,6 +47,7 @@ class OpsError(Exception):
         else:
             return f"OPS error: {self.message}"
 
+
 class Type:
     formatter: Callable[["Type"], str]
 
@@ -55,6 +57,7 @@ class Type:
 
     def __str__(self) -> str:
         return self.__class__.formatter(self)
+
 
 @dataclass(frozen=True)
 class Int(Type):
@@ -69,6 +72,7 @@ class Int(Type):
         else:
             return f"{'i' if self.signed else 'u'}{self.size}"
 
+
 @dataclass(frozen=True)
 class Float(Type):
     size: int
@@ -81,6 +85,7 @@ class Float(Type):
         else:
             return f"f{self.size}"
 
+
 @dataclass(frozen=bool)
 class Bool(Type):
     pass
@@ -88,12 +93,14 @@ class Bool(Type):
     def __repr__(self) -> str:
         return "bool"
 
+
 @dataclass(frozen=True)
 class Custom(Type):
     name: str
 
     def __repr__(self) -> str:
         return self.name
+
 
 @dataclass(frozen=True)
 class Const:
@@ -107,6 +114,7 @@ class Const:
     def __str__(self) -> str:
         return f"Const(name='{self.name}', loc={self.loc}, ptr='{self.ptr}', dim={self.dim}, type={self.typ})"
 
+
 @dataclass(frozen=True)
 class Range:
     loc: Location
@@ -116,6 +124,7 @@ class Range:
 
     def __str__(self) -> str:
         return f"Range(loc={self.loc}, ptr='{self.ptr}', dim={self.dim})"
+
 
 @dataclass(frozen=True)
 class Dat:
@@ -147,6 +156,7 @@ class Dat:
     def __str__(self) -> str:
         return f"Dat(block_id={self.block_id}, id={self.id}, ptr='{self.ptr}', dim={self.dim}, type={self.typ}, soa={self.soa})"
 
+
 @dataclass(frozen=True)
 class Stencil:
     id: int
@@ -161,10 +171,12 @@ class Stencil:
         return f"Stencil(id={self.id}, dim={self.dim}, stencil_ptr='{self.stencil_ptr}', \
             points={self.points}, stride_ptr='{self.stride_ptr}')"
 
+
 @dataclass(frozen=True)
 class Arg(ABDC):
     id: int
     loc: Location
+
 
 # TODO: Remove Dat and incorpareate into ArgDat
 @dataclass(frozen=True)
@@ -186,6 +198,7 @@ class ArgDat(Arg):
             f"ArgDat(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17} opt={self.opt}, dat_id={self.dat_id}, stencil_id={self.stencil_id})"
             )
 
+
 @dataclass(frozen=True)
 class ArgGbl(Arg):
     access_type: AccessType
@@ -202,6 +215,7 @@ class ArgGbl(Arg):
             f"ArgGbl(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17}" 
             f"ptr={self.ptr}, dim={self.dim}, type={self.typ})"
         )
+
 
 @dataclass(frozen=True)
 class ArgReduce(Arg):
@@ -376,7 +390,3 @@ class Loop:
             dat_str = f"\n    {dat_str}\n"
 
         return f"{kernel_detail_str}\n\n    {args_str}\n {dat_str}\n"
-        
-
-
-    
