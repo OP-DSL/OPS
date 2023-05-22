@@ -10,6 +10,7 @@ from language import Lang
 from store import Application, Program
 from target import Target
 from util import Findable
+from util import KernelProcess
 
 class Scheme(Findable):
     lang: Lang
@@ -20,7 +21,7 @@ class Scheme(Findable):
 
     def __str__(self) -> str:
         return f"{self.lang.name}/{self.target.name}"
-    
+
     def genLoopHost(
         self,
         include_dirs: Set[Path],
@@ -37,10 +38,14 @@ class Scheme(Findable):
 
         kernel_func = self.translateKernel(loop, program, app, kernel_idx)
 
+        kp_obj = KernelProcess()
+
+        kernel_body, args_list = kp_obj.get_kernel_body_and_arg_list(kernel_func)
+
         # Generalte source from the template
         return (
             template.render (
-                ops=ops, lh=loop, kernel_func=kernel_func, kernel_idx=kernel_idx, lang=self.lang, target=self.target
+                ops=ops, lh=loop, kernel_func=kernel_func, kernel_idx=kernel_idx, kernel_body=kernel_body, args_list=args_list, lang=self.lang, target=self.target
             ),
             extention
         )
@@ -61,7 +66,7 @@ class Scheme(Findable):
 
         # Generate source from the template
         return template.render(ops=ops, app=app, lang=self.lang, target=self.target, user_types=user_types), name      
-    
+
     def translateKernel(
         self,
         loop: ops.Loop,

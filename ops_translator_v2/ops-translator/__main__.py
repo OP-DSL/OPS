@@ -7,6 +7,7 @@ from pathlib import Path
 
 #custom implementation imports
 import cpp
+import fortran
 from jinja_utils import env
 from language import Lang
 from ops import OpsError, Type
@@ -91,7 +92,7 @@ def main(argv=None) -> None:
     #     for program in app.programs:
     #         for loop in program.loops:
     #             loop.dats = [dataclasses.replace(dat, soa=True) for dat in loop.dats]
-    
+
     if args.verbose:
         print()
         print(app)
@@ -101,7 +102,7 @@ def main(argv=None) -> None:
         validate(args, lang, app)
     except OpsError as e:
         exit(e)
-    
+
     # Generating code for targets
     for [target] in args.target:
         target = Target.find(target)
@@ -145,7 +146,7 @@ def main(argv=None) -> None:
 
             if args.verbose:
                 print(f"Translated program {i} of {len(args.file_paths)}: {new_path}")
-        
+
 
 
 def parse(args: Namespace, lang: Lang) -> Application:
@@ -160,10 +161,10 @@ def parse(args: Namespace, lang: Lang) -> Application:
         if args.verbose:
             print(f"Parseing file {i} of {len(args.file_paths)}: {raw_path}")
 
-        # Parase the program
+        # Parse the program
         program = lang.parseProgram(Path(raw_path), include_dirs, defines)
         app.programs.append(program)
-     
+
     return app
 
 def validate(args: Namespace, lang: Lang, app: Application) -> None:
@@ -232,7 +233,7 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
             if args.verbose:
                 print(f"Generated master kernel file: {path}")
 
-    
+
 def isDirPath(path):
     if os.path.isdir(path):
         return path

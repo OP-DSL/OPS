@@ -16,7 +16,16 @@
 // global constants
 {% block const_decls %}
     {% for const in app.consts() %}
-extern {{const.typ}} {{const.ptr}}{% if const.dim > 1 %}[{{const.dim}}]{% endif %};
+    {% if const.dim.isdigit() %}
+        {% set NDIM = const.dim|int %}
+            {% if NDIM > 1 %}
+extern {{const.typ}} {{const.ptr}}[{{NDIM}}];
+            {% else %}
+extern {{const.typ}} {{const.ptr}};
+            {% endif %}
+    {% else %}
+extern {{const.typ}} *{{const.ptr}};
+    {% endif %}
     {% endfor %}
 {% endblock %}
 

@@ -24,8 +24,14 @@ def getVersion() -> str:
 def flatten(arr: List[List[T]]) -> List[T]:
     return functools.reduce(operator.iconcat, arr, [])
 
+
+def find(xs: Iterable[T], p: Callable[[T], bool]) -> T:
+    return next(x for x in xs if p(x))
+
+
 def safeFind(xs: Iterable[T], p: Callable[[T], bool]) -> Optional[T]:
     return next((x for x in xs if p(x)), None)
+
 
 def findIdx(xs: Iterable[T], p: Callable[[T], bool]) -> List[T]:
     for idx, x in enumerate(xs):
@@ -96,7 +102,7 @@ class Findable(ABC):
         """
         if not hasattr(cls, "instances"):
             return []
-        
+
         return cls.instances
 
     @classmethod
@@ -108,7 +114,7 @@ class Findable(ABC):
         ----------
         key : T (key types)
             key to search registered instances.
-        
+
         Returns
         -------
         Optional["Findables"]
@@ -117,7 +123,7 @@ class Findable(ABC):
         """
         if not hasattr(cls, "instances"):
             return None
-        
+
         return next((i for i in cls.instances if i.matches(key)), None)
 
     @abstractmethod
@@ -129,7 +135,7 @@ class Findable(ABC):
         ---------
         key : T (key types)
             Key to search registered instances.
-    
+
         Returns
         -------
         status : True or False
@@ -145,7 +151,7 @@ class ABDC(ABC):
             raise TypeError(f"Can' instantiate abstract class {cls.__name__}")
 
         return super().__new__(cls)
-    
+
 class SourceBuffer:
     _source: str
     _insersions: Dict[int, List[str]]
@@ -159,14 +165,14 @@ class SourceBuffer:
     @property
     def rawSource(self) -> str:
         return self._source
-    
+
     @cached_property
     def rawLines(self) -> List[str]:
         return self._source.splitlines()
-    
+
     def get(self, index: int) -> str:
         return self.rawLines[index]
-    
+
     def remove(self, index: int) -> None:
         self._updates[index] = ""
 
@@ -177,7 +183,7 @@ class SourceBuffer:
 
     def update(self, index: int, line: str) -> None:
         self._updates[index] = line
-    
+
     def apply(self, index: int, f: Callable[[str], str]) -> None:
         self.update(index, f(self.get(index)))
 
@@ -191,9 +197,9 @@ class SourceBuffer:
         for i, line in enumerate(self.rawLines):
             if re.match(pattern, line, flags):
                 return i
-            
+
         return None
-    
+
     def translate(self) -> str:
         lines = self.rawLines
 
@@ -231,15 +237,15 @@ class Span:
     def overlaps(self, other: "Span") -> bool:
         if other.start >= self.start:
             return other.start < self.end
-        
+
         if other.start < self.start:
             return other.end > self.start
-        
+
         return False
-    
+
     def encloses(self, other: "Span") -> bool:
         return other.start >= self.start and other.end <= self.end
-    
+
     def merge(self, other: "Span") -> "Span":
         assert self.overlaps(other)
 
@@ -247,7 +253,7 @@ class Span:
         end = max(self.end, other.end)
 
         return Span(start, end)
-    
+
 
 class Rewriter:
     source_lines: List[str]
@@ -264,7 +270,7 @@ class Rewriter:
                 self.extend(span)
         else:
             self.extend(Span(Location(1,1), Location(len(self.source_lines), len(self.source_lines[-1]) + 1)))
-    
+
         self.updates = []
 
     def extend(self, span: Span) -> None:
@@ -289,7 +295,7 @@ class Rewriter:
             if source_span.encloses(span):
                 enclosed = True
                 break
-        
+
         assert enclosed
 
         for update in self.updates:
@@ -300,7 +306,7 @@ class Rewriter:
 
         self.updates.append((span, replacement))
 
-    
+
 
     def rewrite(self) -> str:
         new_source = ""
@@ -317,7 +323,7 @@ class Rewriter:
                 new_source += replcement(self.extract(span))
 
                 remainder = back
-            
+
             new_source += self.extract(remainder)
 
         return new_source
@@ -326,20 +332,62 @@ class Rewriter:
     def extract(self, span: Span) -> str:
         if span.start.line == span.end.line:
             return self.source_lines[span.start.line - 1][span.start.column - 1 : span.end.column - 1]
-        
+
         excerpt = self.source_lines[span.start.line - 1][span.start.column - 1 : ]
 
         for line_idx in range(span.start.line + 1, span.end.line):
             excerpt += self.source_lines[line_idx - 1]
 
         return excerpt + self.source_lines[span.end.line - 1][ : span.end.column - 1]
-    
+
 
     def bisect(self, span: Span, pivot: Span) -> Tuple[Span, Span]:
-        
+
         assert span.encloses(pivot)
 
         front = Span(span.start, pivot.start)
         back = Span(pivot.end, span.end)
 
         return (front, back)
+
+
+class KernelProcess:
+    def get_kernel_body_and_arg_list(self, kernel_func: str) :
+        j = kernel_func.find("{")
+        k = kernel_func.find("(")
+        args_list = self.parse_signature(kernel_func[ k : j])
+
+        # replace OPS_ACC macro in the kernel body
+        kernel_body = self.clean_kernel_body(kernel_func[(j+1) : kernel_func.rfind("}")])
+
+        return kernel_body, args_list
+
+
+    def parse_signature(self,text):
+        new_text = self.comment_remover(text)
+
+        pattern = r"\bll\b|\bconst\b|\bACC<|>|\bint\b|\blong long\b|\blong\b|\bshort\b|\bchar\b|\bfloat\b|\bdouble\b|\bcomplexf\b|\bcomplexd\b|\*|&|\)|\(|\n|\[[0-9]*\]|__restrict__|RESTRICT|__volatile__|\/\/[^\n]*|\/*[^*]*\*\/|\/\*.*?\*\/"
+        text2 = re.sub(pattern, "", new_text)
+
+        args_list = [arg.strip() for arg in text2.split(",")]
+        #print(args_list)
+        return args_list
+
+    def comment_remover(self,text):
+        """Remove comments from text"""
+        def replacer(match):
+            s = match.group(0)
+            if s.startswith("/"):
+                return ""
+            else:
+                return s
+
+        pattern = re.compile(r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
+                             re.DOTALL | re.MULTILINE,
+                            )
+        return re.sub(pattern, replacer, text)
+
+    def clean_kernel_body(self, kernel_text: str) -> str:
+        kernel_text = re.sub(r"\[OPS_ACC_MD[0-9]+(\([ -A-Za-z0-9,+]*\))\]", r"\1", kernel_text)
+        kernel_text= re.sub(r"\[OPS_ACC[0-9]+(\([ -A-Za-z0-9,+]*\))\]", r"\1", kernel_text)
+        return kernel_text

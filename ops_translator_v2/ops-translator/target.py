@@ -11,7 +11,7 @@ class Target(Findable):
 
     def __str__(self) -> str:
         return self.name
-    
+
     def __eq__(self, other) -> bool:
         return self.name == other.name if type(other) is type(self) else False
 
@@ -21,8 +21,8 @@ class Target(Findable):
     def matches(self, key: str) -> bool:
         return self.name == key.lower()
 
-class Seq(Target):
-    name = "seq"
+class MPIOpenMP(Target):
+    name = "mpi_openmp"
     kernel_translation = False
     config = {
         "grouped" : False, 
@@ -38,5 +38,5 @@ class HLS(Target):
         "device" : 3
         }
 
-Target.register(Seq)
+Target.register(MPIOpenMP)
 Target.register(HLS)

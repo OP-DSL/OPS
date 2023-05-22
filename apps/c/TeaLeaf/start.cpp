@@ -29,6 +29,7 @@
 #include <math.h>
 
 // OPS header file
+//#define OPS_2D
 #include <ops_seq.h>
 
 
@@ -59,7 +60,7 @@ void start()
 
   build_field();
 
-   ops_decl_const("field", 1, "field_type", &field );
+  ops_decl_const("field", 1, "field_type", &field );
   ops_decl_const("grid", 1, "grid_type", &grid );
   ops_decl_const("number_of_states",1,"int",&number_of_states);
   ops_decl_const("states",number_of_states, "state_type", states );
