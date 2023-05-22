@@ -51,7 +51,7 @@ APP_TARGETS = $(addprefix $(APP)_, $(TARGETS))
 all: $(APP_TARGETS)
 
 $(APP)_dev_seq: Makefile $(HEADERS) $(OPS_FILES_PLAIN) $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_seq.a
-       	@echo "Building ${APP}_dev_seq" 
+		@echo "Building ${APP}_dev_seq" 
 		$(CXX) $(CXXFLAGS) -std=c++11 -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_PLAIN) $(HDF5_LIB_SEQ) $(OPS_LINK) $(OPS_LIB_SEQ) $(TRID_SEQ) -fopenmp -o $(APP)_dev_seq
 
 $(APP)_dev_mpi: Makefile $(OPS_FILES_PLAIN) $(HEADERS) $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi.a
