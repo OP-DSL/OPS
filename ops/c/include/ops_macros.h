@@ -306,6 +306,7 @@ gen_ptrm(float, float)
 #endif
 
 #else /* OPS_API */
+#ifndef OPS_ACC_IGNORE      /* OPS_ACC_IGNORE */
 
 #if defined OPS_5D
 #ifndef OPS_DEBUG // no debug checks
@@ -2900,5 +2901,6 @@ extern int multi_d0, multi_d1, multi_d2, multi_d3, multi_d4, multi_d5, multi_d6,
 #endif /* OPS_SOA */
 #endif /* OPS_NO_GLOBALS */
 #endif /* OPS_API */
+#endif /* OPS_ACC_IGNORE */
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif // OPS_MACROS_H

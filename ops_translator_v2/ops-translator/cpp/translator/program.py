@@ -29,14 +29,14 @@ def translateProgram(source: str, program: Program, force_soa: bool = False) -> 
     buffer.insert(index, '#ifdef OPENACC\n#ifdef __cplusplus\nextern "C" {\n#endif\n#endif\n')
 
     existingLoopProtypes = []
-    
+
     for loop in program.loops:
         existingIdx = findIdx(existingLoopProtypes, lambda l: l.kernel == loop.kernel and len(l.args) == len(loop.args))
         if existingIdx is None:
             existingLoopProtypes.append(loop)
             prototype = f'void ops_par_loop_{loop.kernel}(char const *, ops_block, int, int*{", ops_arg" * len(loop.args)});\n'
             buffer.insert(index, prototype)
-    
+
     buffer.insert(index, '#ifdef OPENACC\n#ifdef __cplusplus\n}\n#endif\n#endif\n')
 
     # 4. Update ops_init

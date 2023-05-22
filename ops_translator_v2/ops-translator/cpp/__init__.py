@@ -25,15 +25,15 @@ class Preprocessor(pcpp.Preprocessor):
 
     def on_comment(self, tok: str) -> bool:
         return True
-    
+
     def on_error(self, file: str, line: int, msg: str) -> None:
         loc = Location(file, line, 0)
         raise ParseError(msg, loc)
-    
+
     def on_include_not_found(self, is_malformed, is_system_include, curdir, includepath) -> None:
         if is_system_include:
             raise pcpp.OutputDirective(pcpp.Action.IgnoreAndPassThrough)
-        
+
         super().on_include_not_found(is_malformed, is_system_include, curdir, includepath)
 
 class Cpp(Lang):
@@ -86,9 +86,9 @@ class Cpp(Lang):
                 f"Clang parse diagnotic message: severity {diagnostic.severity} at: "
                 f"{cpp.parser.parseLocation(diagnostic)}: {diagnostic.spelling}"
             )
-        
+
         return translation_unit, source
-    
+
     def parseProgram(self, path: Path, include_dirs: Set[Path], defines: List[str]) -> Program:
         ast, source = self.parseFile(path, frozenset(include_dirs), frozenset(defines))
         ast_pp, source_pp =  self.parseFile(path, frozenset(include_dirs), frozenset(defines), preprocess = True)
@@ -100,10 +100,10 @@ class Cpp(Lang):
         cpp.parser.parseMeta(ast_pp.cursor, program)
 
         return program
-    
+
     def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], force_soa: bool = False) -> str:
         return cpp.translator.program.translateProgram(program.path.read_text(), program, force_soa)
-    
+
     def formatType(self, typ: ops.Type) -> str:
         int_types = {
             (True, 32): "int",
