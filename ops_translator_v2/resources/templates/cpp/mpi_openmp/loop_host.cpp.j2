@@ -1,22 +1,61 @@
 {% extends "cpp/loop_host.cpp.j2" %}
 
+{% block host_prologue_sub_1 %}
+    ops_block block = desc->block;
+{% endblock %}
+
+{% block host_prologue_sub_2 %}
+#ifdef OPS_DEBUG
+    ops_register_args(block->instance, args, "{{lh.kernel}}");
+#endif
+{% endblock %}
+
+{% block host_prologue_sub_3 %}
+{% if not (lh.arg_idx != -1) and not lh.multiGrid %}
+#if defined(OPS_MPI) && !defined(OPS_LAZY)
+{% endif %}
+    int arg_idx[{{lh.ndim}}];
+{% if not (lh.arg_idx != -1) and not lh.multiGrid %}
+#endif
+{% endif %}
+{% endblock %}
+
 {% block host_prologue %}
 {{super()}}
 
+{% if lh.arg_idx != -1 or lh.multiGrid %}
+#if defined(OPS_MPI)
+#if defined(OPS_LAZY)
+    sub_block_list sb = OPS_sub_block_list[block->index];
+    {% for n in range(0, lh.ndim) %}
+    arg_idx[{{n}}] = sb->decomp_disp[{{n}}];
+    {% endfor %}
+#else
+    {% for n in range(0, lh.ndim) %}
+    arg_idx[{{n}}] -= start_indx[{{n}}];
+    {% endfor %}
+#endif  //OPS_LAZY
+#else //OPS_MPI
+    {% for n in range(0, lh.ndim) %}
+    arg_idx[{{n}}] = 0;
+    {% endfor %}
+#endif //OPS_MPI
+{%endif %}
+
 //  Initialize global variable with the dimensions of dats
-    {% for arg in lh.args %}
-        {% if arg is ops_dat %}
-            {% if lh.ndim > 1 or (lh.ndim == 1 and (arg.dim) > 1) %}
+{% for arg in lh.args %}
+    {% if arg is ops_dat %}
+        {% if lh.ndim > 1 or (lh.ndim == 1 and (arg.dim) > 1) %}
     int xdim{{arg.id}}_{{lh.kernel}} = args[{{arg.id}}].dat->size[0];
-            {% endif %}
-            {% if lh.ndim > 2 or (lh.ndim == 2 and (arg.dim) > 1) %}
-    int ydim{{arg.id}}_{{lh.kernel}} = args[{{arg.id}}].dat->size[1];
-            {% endif %}
-            {% if lh.ndim > 3 or (lh.ndim == 3 and (arg.dim) > 1) %}
-    int zdim{{arg.id}}_{{lh.kernel}} = args[{{arg.id}}].dat->size[2];
-            {% endif %}
         {% endif %}
-    {% endfor%}
+        {% if lh.ndim > 2 or (lh.ndim == 2 and (arg.dim) > 1) %}
+    int ydim{{arg.id}}_{{lh.kernel}} = args[{{arg.id}}].dat->size[1];
+        {% endif %}
+        {% if lh.ndim > 3 or (lh.ndim == 3 and (arg.dim) > 1) %}
+    int zdim{{arg.id}}_{{lh.kernel}} = args[{{arg.id}}].dat->size[2];
+        {% endif %}
+    {% endif %}
+{% endfor%}
 
 //  Set up initial pointers and exchange halos if necessary
     {% for arg in lh.args %}
@@ -313,10 +352,6 @@
 
 {% endblock %}
 
-{% block kernel_descriptor_lazy %}
-{{super()}}
+{% block kernel_descriptor_lazy_call %}
     create_kerneldesc_and_enque(name, "{{lh.kernel}}", args, {{lh.args|length}}, {{kernel_idx}}, dim, 0, range, block, ops_par_loop_{{lh.kernel}}_execute);
-
-}
-#endif
 {% endblock %}

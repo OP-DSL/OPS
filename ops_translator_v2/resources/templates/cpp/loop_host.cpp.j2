@@ -5,7 +5,7 @@
 {% block kernel_wrapper %}
 {% endblock %}
 
-{% block host_prologue%}
+{% block host_prologue %}
 //  Host stub function
 #ifndef OPS_LAZY
 void ops_par_loop_{{lh.kernel}}(
@@ -21,7 +21,8 @@ void ops_par_loop_{{lh.kernel}}(
 #else
 void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
 {
-    ops_block block = desc->block;
+{% block host_prologue_sub_1 required %}
+{% endblock %}
     int dim = desc->dim;
     int *range = desc->range;
     {% for arg in lh.args %}
@@ -48,20 +49,14 @@ void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
         ops_timers_core(&__c1, &__t1);
     }
 
-#ifdef OPS_DEBUG
-    ops_register_args(block->instance, args, "{{lh.kernel}}");
-#endif
+{% block host_prologue_sub_2 %}
+{% endblock %}
 
 //  compute locally allocated range for the sub-block
     int start_indx[{{lh.ndim}}];
     int end_indx[{{lh.ndim}}];
-    {% if not (lh.arg_idx != -1) and not lh.multiGrid %}
-#if defined(OPS_MPI) && !defined(OPS_LAZY)
-    {% endif %}
-    int arg_idx[{{lh.ndim}}];
-    {% if not (lh.arg_idx != -1) and not lh.multiGrid %}
-#endif
-    {% endif %}
+{% block host_prologue_sub_3 required %}
+{% endblock %}
 
 #if defined(OPS_LAZY) || !defined(OPS_MPI)
     for ( int n = 0; n < {{lh.ndim}}; n++) {
@@ -69,28 +64,9 @@ void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
         end_indx[n]   = range[2*n+1];
     }
 #else
-    if (compute_ranges(args, {{lh.args|length}}, block, range, start_indx, end_indx, arg_idx) < 0)
-        return;
+    if (compute_ranges(args, {{lh.args|length}}, block, range, start_indx, end_indx, arg_idx) < 0) return;
 #endif
 
-    {% if lh.arg_idx != -1 or lh.multiGrid %}
-#if defined(OPS_MPI)
-#if defined(OPS_LAZY)
-    sub_block_list sb = OPS_sub_block_list[block->index];
-        {% for n in range(0, lh.ndim) %}
-    arg_idx[{{n}}] = sb->decomp_disp[{{n}}];
-        {% endfor %}
-#else
-        {% for n in range(0, lh.ndim) %}
-    arg_idx[{{n}}] -= start_indx[{{n}}];
-        {% endfor %}
-#endif
-#else //OPS_MPI
-        {% for n in range(0, lh.ndim) %}
-            arg_idx[{{n}}] = 0;
-        {% endfor %}
-#endif //OPS_MPI
-    {%endif %}
 {% endblock%}
 
 {% block host_loop required %}
@@ -116,4 +92,9 @@ void ops_par_loop_{{lh.kernel}}(
     {% for arg in lh.args %}
     args[{{loop.index0}}] = arg{{arg.id}};
     {% endfor %}
+
+{% block kernel_descriptor_lazy_call required %}
+{% endblock %}
+}
+#endif
 {% endblock %}
