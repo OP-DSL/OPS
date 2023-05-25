@@ -1,0 +1,338 @@
+{% extends "cpp/loop_host.cpp.j2" %}
+
+{% block prologue %}
+{% set num_dims = [1, lh.ndim-1] | max_value %}
+{% if lh.ndim > 1 and soa_set %}
+{% set num_dims = num_dims + 1 %}
+{% endif %}
+__constant__ int dims_{{lh.kernel}}[{{lh.args|length}}][{{num_dims}}];
+static int dims_{{lh.kernel}}_h[{{lh.args|length}}][{{num_dims}}] = {{'{{'|safe}} 0 {{'}}'|safe}};
+{% endblock %}
+
+{% block kernel_wrapper %}
+{% set signature=[""]%}
+{% for arg in lh.args %}
+    {% if arg is ops_read %}
+        {% set pre = "const " %}
+    {% else %}
+        {% set pre = "" %}
+    {% endif %} 
+    {% if arg is ops_dat %}
+        {% set current_arg %}{{pre}}ACC<{{lh.dats[arg.dat_id].typ}}> &{{args_list[arg.id]}}, {% endset %}
+    {% elif arg is ops_idx %}
+        {% set current_arg %}const int *idx, {% endset %}
+    {% else %}
+        {% set current_arg %}{{pre}}{{arg.typ}} *{{args_list[arg.id]}}, {% endset %}
+    {% endif %}
+    {%if signature.append(signature.pop() + current_arg)%} {% endif %}
+{% endfor %}
+
+//  User function
+__device__ void {{lh.kernel}}_gpu({{(signature[0])[:-2]}}) {
+    {# insert kernel body #}
+    {{kernel_body}}
+}
+
+{# Generate cuda kernel wrapper function #}
+{% set signature = [""] %}
+{% set any_prolong = [False] %}
+{% set arg_idx_present = [False] %}
+
+{% for arg in lh.args %}
+    {% if arg is ops_dat %}
+        {% set current_arg %}{{lh.dats[arg.dat_id].typ}}* __restrict arg{{arg.id}}, {% endset %}
+    {% elif arg is ops_gbl or arg is ops_reduce %}
+        {% if arg is ops_read %}
+            {% if arg.dim.isdigit() and arg.dim == 1 %}
+                {% set current_arg %}const {{arg.typ}} arg{{arg.id}}, {% endset %}
+            {% else %}
+                {% set current_arg %}const {{arg.typ}}* __restrict arg{{arg.id}}, {% endset %}
+            {% endif %}
+        {% else %}
+            {% set current_arg %}{{arg.typ}}* __restrict arg{{arg.id}}, {% endset %}
+        {% endif %}
+    {% elif arg is ops_idx %}
+        {% if arg_idx_present.append(True + arg_idx_present.pop()) %} {% endif %}
+        {% if lh.ndim == 1 %}
+            {% set current_arg %}int arg_idx0, {% endset %}
+        {% elif lh.ndim == 2 %}
+            {% set current_arg %}int arg_idx0, int arg_idx1, {% endset %}
+        {% elif lh.ndim == 3 %}
+            {% set current_arg %}int arg_idx0, int arg_idx1, int arg_idx2, {% endset %}
+        {% endif %}
+    {% endif %}
+
+    {% if arg.restrict or arg.prolong %}
+        {% if any_prolong.append(True + any_prolong.pop()) %} {% endif %}
+        {% if lh.ndim == 1 %}
+            {% set current_arg %}{{current_arg}}int stride_{{arg.id}}0, {% endset %} 
+        {% elif lh.ndim == 2 %}
+            {% set current_arg %}{{current_arg}}int stride_{{arg.id}}0, int stride_{{arg.id}}1, {% endset %}
+        {% elif lh.ndim == 3 %}
+            {% set current_arg %}{{current_arg}}int stride_{{arg.id}}0, int stride_{{arg.id}}1, int stride_{{arg.id}}2, {% endset %}
+        {% endif %}
+    {% endif %}
+
+    {%if signature.append(signature.pop() + current_arg)%} {% endif %}
+{% endfor %}
+
+{% if any_prolong[0] %}
+    {% if lh.ndim == 1 %}
+        {% set current_arg %}int global_idx0, {% endset %}
+    {% elif lh.ndim == 2 %}
+        {% set current_arg %}int global_idx0, int global_idx1, {% endset %}
+    {% elif lh.ndim == 3 %}
+        {% set current_arg %}int global_idx0, int global_idx1, int global_idx2, {% endset %}
+    {% endif %}
+{%if signature.append(signature.pop() + current_arg)%} {% endif %}
+{% endif %}
+
+{% if lh.ndim == 1 %}
+    {% set current_arg %}int size0, {% endset %}
+{% elif lh.ndim == 2 %}
+    {% set current_arg %}int size0, int size1, {% endset %}
+{% elif lh.ndim == 3 %}
+    {% set current_arg %}int size0, int size1, int size2, {% endset %}
+{% endif %}
+{%if signature.append(signature.pop() + current_arg)%} {% endif %}
+
+{%if signature.append(signature.pop() + "int **stride")%} {% endif %}
+
+//  Cuda kernel wrapper function
+__global__ void ops_{{lh.kernel}}({{signature[0]}}) {
+{# Local variables to hold reductions on GPU #}
+{% for arg in lh.args %}
+{% if args is ops_gbl or arg is ops_reduce %}
+    {% if arg is not ops_read %}
+    {{arg.typ}} arg{{arg.id}}_l[{{arg.dim}}];
+    {% endif %}
+    {% if arg is ops_inc %}
+    for (int d = 0; d < {{arg.dim}}; d++) arg{{arg.id}}_l[d] = ZERO_{{arg.typ}};
+    {% elif arg is ops_min %}
+    for (int d = 0; d < {{arg.dim}}; d++) arg{{arg.id}}_l[d] = INFINITY_{{arg.typ}};
+    {% elif arg is ops_max %}
+    for (int d = 0; d < {{arg.dim}}; d++) arg{{arg.id}}_l[d] = -INFINITY_{{arg.typ}};
+    {% endif %}
+{% endif %}
+{% endfor %}
+
+{% if lh.ndim == 3 %}
+    int idx_z = blockDim.z * blockIdx.z + threadIdx.z;
+    int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
+{% elif lh.ndim == 2 %}
+    int idx_y = blockDim.y * blockIdx.y + threadIdx.y;
+{% endif %}
+    int idx_x = blockDim.x * blockIdx.x + threadIdx.x;
+
+{% if arg_idx_present[0] %}
+    int arg_idx[{{lh.ndim}}];
+    arg_idx[0] = arg_idx0+idx_x;
+    {% if lh.ndim == 2 %}
+    arg_idx[1] = arg_idx1+idx_y;
+    {% elif lh.ndim == 3 %}
+    arg_idx[1] = arg_idx1+idx_y;
+    arg_idx[2] = arg_idx2+idx_z;
+    {% endif %}
+{% endif %}
+
+{% for arg in lh.args %}
+    {% if arg is ops_dat %}
+    {% if arg.restrict %}
+        {% set n_x -%}idx_x*stride_{{arg.id}}0{%- endset %}
+        {% set n_y -%}idx_y*stride_{{arg.id}}1{%- endset %}
+        {% set n_z -%}idx_z*stride_{{arg.id}}2{%- endset %}
+    {% elif arg.prolong %}
+        {% set n_x -%}(idx_x+global_idx0%stride_{{arg.id}}0)/stride_{{arg.id}}0{%- endset %}
+        {% set n_y -%}(idx_y+global_idx1%stride_{{arg.id}}1)/stride_{{arg.id}}1{%- endset %}
+        {% set n_z -%}(idx_z+global_idx2%stride_{{arg.id}}2)/stride_{{arg.id}}2{%- endset %}
+    {% else %}
+        {% set n_x -%}idx_x{%- endset %}
+        {% set n_y -%}idx_y{%- endset %}
+        {% set n_z -%}idx_z{%- endset %}
+    {% endif %}
+
+    {% if lh.ndim == 1 %}
+    {% if soa_set %}
+    arg{{arg.id}} += {{n_x}} * stride[{{arg.id}}][0];
+    {% else %}
+    arg{{arg.id}} += {{n_x}} * stride[{{arg.id}}][0]*{{arg.dim}};
+    {% endif %}
+    {% elif lh.ndim == 2 %}
+    {% if soa_set %}
+    arg{{arg.id}} += {{n_x}} * stride[{{arg.id}}][0] + {{n_y}} * stride[{{arg.id}}][1] * dims_{{lh.kernel}}[{{arg.id}}][0];
+    {% else %}
+    arg{{arg.id}} += {{n_x}} * stride[{{arg.id}}][0]*{{arg.dim}} + {{n_y}} * stride[{{arg.id}}][1]*{{arg.dim}} * dims_{{lh.kernel}}[{{arg.id}}][0];
+    {% endif %}
+    {% elif lh.ndim == 3 %}
+    {% if soa_set %}
+    arg{{arg.id}} += {{n_x}} * stride[{{arg.id}}][0] + {{n_y}} * stride[{{arg.id}}][1] * dims_{{lh.kernel}}[{{arg.id}}][0] + {{n_z}} * stride[{{arg.id}}][2] * dims_{{lh.kernel}}[{{arg.id}}][0] * dims_{{lh.kernel}}[{{arg.id}}][1];
+    {% else %}
+    arg{{arg.id}} += {{n_x}} * stride[{{arg.id}}][0]*{{arg.dim}} + {{n_y}} * stride[{{arg.id}}][1]*{{arg.dim}} * dims_{{lh.kernel}}[{{arg.id}}][0] + {{n_z}} * stride[{{arg.id}}][2]*{{arg.dim}} * dims_{{lh.kernel}}[{{arg.id}}][0] * dims_{{lh.kernel}}[{{arg.id}}][1];
+    {% endif %}
+    {% endif %}
+    {% endif %}
+{% endfor %}
+
+{% if lh.ndim == 1 %}
+    if(idx_x < size0) {
+{% elif lh.ndim == 2 %}
+    if(idx_x < size0 && idx_y < size1) {
+{% elif lh.ndim == 3 %}
+    if(idx_x < size0 && idx_y < size1 && idx_z < size2) {
+{% endif %}
+
+{% for arg in lh.args %}
+    {% if arg is ops_dat %}
+        {% set signature = [""] %}
+        {% if arg.dim > 1 %}
+            {%set current_val %}{{arg.dim}}, {% endset %}
+            {% if signature.append(signature.pop() + current_val)%} {% endif %}
+        {% endif %}
+        {% for i in range(lh.ndim-1)%}
+            {%set current_val %}dims_{{lh.kernel}}[{{arg.id}}][{{i}}], {% endset %}
+            {% if signature.append(signature.pop() + current_val) %} {% endif %}
+        {% endfor %}
+        {% if arg.dim > 1 %}        
+            {% if soa_set %}
+                {%set current_val %}dims_{{lh.kernel}}[{{arg.id}}][{{lh.ndim-1}}], {% endset %}
+            {% else %}
+                {%set current_val %}0, {% endset %}
+            {% endif %}
+            {% if signature.append(signature.pop() + current_val) %} {% endif %}
+        {% endif %}
+        {% if arg is ops_read %}
+        const ACC<{{lh.dats[arg.dat_id].typ}}> argp{{arg.id}}({{signature[0]}}arg{{arg.id}});
+        {% else %}
+        ACC<{{lh.dats[arg.dat_id].typ}}> argp{{arg.id}}({{signature[0]}}arg{{arg.id}});
+        {% endif %}
+    {% endif %}
+{% endfor %}
+
+{% set signature = [""] %}
+{% for arg in lh.args %}        
+    {% if arg is ops_dat %}
+        {%set current_val %}argp{{arg.id}}, {% endset %}
+    {% elif arg is ops_idx %}
+        {%set current_val %}arg_idx, {% endset %}
+    {% elif arg is ops_gbl or arg is ops_reduce %}
+        {% if arg is ops_read %}
+            {% if arg.dim.isdigit() and arg.dim|int == 1 %}
+                {%set current_val %}&arg{{arg.id}}, {% endset %}
+            {% else %}
+                {%set current_val %}arg{{arg.id}}, {% endset %}
+            {% endif %}
+        {% else%}
+            {%set current_val %}arg{{arg.id}}_l, {% endset %}
+        {% endif %}
+    {% endif %}
+    {% if signature.append(signature.pop() + current_val) %} {% endif %}
+{% endfor %}
+        {{lh.kernel}}_gpu({{(signature[0])[:-2]}});
+
+    }// End of cuda index in_range check
+
+{% if lh.ndim == 1 or lh.ndim == 2 %}
+{% set offset -%}(blockIdx.x + blockIdx.y*gridDim.x)*{%- endset %}
+{% elif lh.ndim == 3 %}
+{% set offset -%}(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*{%- endset %}
+{% endif %}
+
+{% if lh.has_reduction %}
+//  Reduction across thread blocks
+{% endif %}
+{% for arg in lh.args %}
+    {% if arg is ops_gbl or arg is ops_reduce %}
+        {% if arg is ops_inc %}
+    for(int d = 0; d < {{arg.dim|int}} ; d++)
+        {% if target.name=="cuda" %}
+        ops_reduction_cuda<OPS_INC>(&arg{{arg.id}}[d+{{offset}}{{arg.dim|int}}],arg{{arg.id}}_l[d]);
+        {% elif target.name=="hip" %}
+        ops_reduction_hip<OPS_INC>(&arg{{arg.id}}[d+{{offset}}{{arg.dim|int}}],arg{{arg.id}}_l[d]);
+        {% endif %}
+        {% elif arg is ops_min %}
+    for(int d = 0; d < {{arg.dim|int}} ; d++)
+        {% if target.name=="cuda" %}
+        ops_reduction_cuda<OPS_MIN>(&arg{{arg.id}}[d+{{offset}}{{arg.dim|int}}],arg{{arg.id}}_l[d]);
+        {% elif target.name=="hip" %}
+        ops_reduction_hip<OPS_MIN>(&arg{{arg.id}}[d+{{offset}}{{arg.dim|int}}],arg{{arg.id}}_l[d]);
+        {% endif %}
+        {% elif arg is ops_max %}
+    for(int d = 0; d < {{arg.dim|int}} ; d++)
+        {% if target.name=="cuda" %}
+        ops_reduction_cuda<OPS_MAX>(&arg{{arg.id}}[d+{{offset}}{{arg.dim|int}}],arg{{arg.id}}_l[d]);
+        {% elif target.name=="hip" %}
+        ops_reduction_hip<OPS_MAX>(&arg{{arg.id}}[d+{{offset}}{{arg.dim|int}}],arg{{arg.id}}_l[d]);
+        {% endif %}
+        {% endif %}
+    {% endif %}
+{% endfor %}
+
+}// End of cuda kernel wrapper function
+
+
+{% endblock %}
+
+{% block host_prologue %}
+{{super()}}
+
+{# Declare stride variable and copy stencil strides from ops_arg #}
+//  ops_dats strides for offset calculation in wrapper function
+    int stride[{{lh.args|length}}][{{lh.ndim}}];
+{% for arg in lh.args %}
+    {% if arg is ops_dat %}
+    stride[{{arg.id}}][0] = args[{{arg.id}}].stencil->stride[0];
+    {% if lh.ndim > 1 %}
+    stride[{{arg.id}}][1] = args[{{arg.id}}].stencil->stride[1];
+    {% endif %}
+    {% if lh.ndim > 2 %}
+    stride[{{arg.id}}][2] = args[{{arg.id}}].stencil->stride[2];
+    {% endif %}
+    {% endif %}
+{% endfor %}
+
+
+{% endblock %}
+
+{% block host_loop %}
+
+{% endblock %}
+
+{% block host_epilogue %}
+    if (block->instance->OPS_diags > 1)
+    {
+        cutilSafeCall(block->instance->ostream(), cudaDeviceSynchronize());
+        ops_timers_core(&__c1, &__t1);
+        block->instance->OPS_kernels[{{kernel_idx}}].time += __t1 - __t2;
+    }
+
+#ifndef OPS_LAZY
+    ops_set_dirtybit_host(args, {{lh.args|length}});
+    {% for arg in lh.args %}
+        {% if arg is ops_dat and (arg is ops_write or arg is ops_rw or arg is ops_inc) %}
+    ops_set_halo_dirtybit3(&args[{{arg.id}}], range);
+        {% endif %}
+    {% endfor %}
+#endif
+
+    if (block->instance->OPS_diags > 1)
+    {
+//      Update kernel record
+        ops_timers_core(&__c2, &__t2);
+        block->instance->OPS_kernels[{{kernel_idx}}].mpi_time += __t2 -__t1;
+        {% for arg in lh.args %}
+            {% if arg is ops_dat %}
+        block->instance->OPS_kernels[{{kernel_idx}}].transfer += ops_compute_transfer(dim, start_indx, end_indx, &arg{{arg.id}});
+            {% endif %}
+        {% endfor %}
+    }
+}
+
+{% endblock %}
+
+{% block kernel_descriptor_lazy %}
+{{super()}}
+    create_kerneldesc_and_enque(name, "{{lh.kernel}}", args, {{lh.args|length}}, {{kernel_idx}}, dim, 1, range, block, ops_par_loop_{{lh.kernel}}_execute);
+
+}
+#endif
+{% endblock %}

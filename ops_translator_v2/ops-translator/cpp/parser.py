@@ -285,7 +285,7 @@ def parseArgReduce(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Di
         raise ParseError(f"Incorrect number of args passed to ops_arg_reduce: {len(args)}", loc)
 
     reduct_handle_ptr = parseIdentifier(args[0])
-    dim = parseIntExpression(args[1])
+    dim = parseIdentifier(args[1])
     typ, soa = parseType(parseStringLit(args[2]), loc)
     access_type = parseAccessType(args[3], loc, macros)
 
@@ -309,7 +309,7 @@ def parseArgGbl(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[
         raise ParseError("Incorrect number of args passed to ops_arg_gbl", loc)
 
     ptr = parseIdentifier(args[0])
-    dim = parseIntExpression(args[1])
+    dim = parseIdentifier(args[1])
     typ, _ = parseType(parseStringLit(args[2]), loc)
     access_type = parseAccessType(args[3], loc, macros)
 

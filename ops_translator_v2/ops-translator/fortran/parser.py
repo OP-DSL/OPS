@@ -359,7 +359,7 @@ def parseArgGbl(loop: OPS.Loop, args: Optional[f2003.Component_Spec_List], loc: 
     args_list = args.items
 
     ptr = parseIdentifier(args_list[0], loc)
-    dim = parseIntLiteral(args_list[1], loc, True)      #TODO: Might not be an integer literal?
+    dim = parseIdentifier(args_list[1], loc)      #TODO: Might not be an integer literal?
     typ = parseType(parseStringLiteral(args_list[2], loc), loc)[0]
     access_type = parseAccessType(args_list[3], loc)
 
@@ -371,7 +371,7 @@ def parseArgReduce(loop: OPS.Loop, args: Optional[f2003.Component_Spec_List], lo
         raise ParseError("incorrect number of arguments for ops_arg_reduce", loc)
 
     args_list = args.items
-    dim = parseIntLiteral(args_list[1], loc, True)          #TODO: Might not be an integer literal?
+    dim = parseIdentifier(args_list[1], loc)          #TODO: Might not be an integer literal?
     typ = parseType(parseStringLiteral(args_list[2], loc), loc)[0]
     access_type = parseAccessType(args_list[3], loc)
 

@@ -306,8 +306,6 @@ class Rewriter:
 
         self.updates.append((span, replacement))
 
-
-
     def rewrite(self) -> str:
         new_source = ""
         self.updates.sort(key=lambda u: u[0])
@@ -328,7 +326,6 @@ class Rewriter:
 
         return new_source
 
-
     def extract(self, span: Span) -> str:
         if span.start.line == span.end.line:
             return self.source_lines[span.start.line - 1][span.start.column - 1 : span.end.column - 1]
@@ -339,7 +336,6 @@ class Rewriter:
             excerpt += self.source_lines[line_idx - 1]
 
         return excerpt + self.source_lines[span.end.line - 1][ : span.end.column - 1]
-
 
     def bisect(self, span: Span, pivot: Span) -> Tuple[Span, Span]:
 
@@ -352,28 +348,31 @@ class Rewriter:
 
 
 class KernelProcess:
-    def get_kernel_body_and_arg_list(self, kernel_func: str) :
+    def get_kernel_body_and_arg_list(self, kernel_func: str):
         j = kernel_func.find("{")
         k = kernel_func.find("(")
         args_list = self.parse_signature(kernel_func[ k : j])
 
         # replace OPS_ACC macro in the kernel body
-        kernel_body = self.clean_kernel_body(kernel_func[(j+1) : kernel_func.rfind("}")])
+        kernel_body = kernel_func[(j+1) : kernel_func.rfind("}")]
 
         return kernel_body, args_list
 
+    def clean_kernel_func_text(self, kernel_func: str):
+        new_text = self.comment_remover(kernel_func)
+        j = new_text.find("{")
+        kernel_body =  self.clean_kernel_body(new_text[(j+1) : new_text.rfind("}")])
+        return new_text[:j+1]+kernel_body+"}"
 
     def parse_signature(self,text):
-        new_text = self.comment_remover(text)
-
         pattern = r"\bll\b|\bconst\b|\bACC<|>|\bint\b|\blong long\b|\blong\b|\bshort\b|\bchar\b|\bfloat\b|\bdouble\b|\bcomplexf\b|\bcomplexd\b|\*|&|\)|\(|\n|\[[0-9]*\]|__restrict__|RESTRICT|__volatile__|\/\/[^\n]*|\/*[^*]*\*\/|\/\*.*?\*\/"
-        text2 = re.sub(pattern, "", new_text)
+        text2 = re.sub(pattern, "", text)
 
         args_list = [arg.strip() for arg in text2.split(",")]
         #print(args_list)
         return args_list
 
-    def comment_remover(self,text):
+    def comment_remover(self,text: str):
         """Remove comments from text"""
         def replacer(match):
             s = match.group(0)
@@ -391,3 +390,82 @@ class KernelProcess:
         kernel_text = re.sub(r"\[OPS_ACC_MD[0-9]+(\([ -A-Za-z0-9,+]*\))\]", r"\1", kernel_text)
         kernel_text= re.sub(r"\[OPS_ACC[0-9]+(\([ -A-Za-z0-9,+]*\))\]", r"\1", kernel_text)
         return kernel_text
+
+    def cuda_complex_numbers(self, text: str):
+        """Handle complex numbers, and translate to the relevant CUDA function in cuComplex.h"""
+        # Complex number assignment
+        p = re.compile(
+                r"([a-zA-Z_][a-zA-Z0-9]+)(\s+\_\_complex\_\_\s+)([a-zA-Z_][a-zA-Z0-9]*)\s*=\s*(.+)\s*;"
+        )
+        result = p.finditer(text)
+        new_code = text
+        complex_variable_names = []
+        for match in result:
+            complex_variable_names.append(match.group(3))
+            rhs = match.group(4)
+            if rhs in complex_variable_names:
+                # Assignment of another complex variable already defined.
+                if match.group(1) == "double":
+                    new_statement = f"cuDoubleComplex {match.group(3)} = {rhs};"
+                elif match.group(1) == "float":
+                    new_statement = f"cuFloatComplex {match.group(3)} = {rhs};"
+                else:
+                    continue
+            else:
+                # Assignment of a complex number in real and imaginary parts.
+                p = re.compile(r"(\S+I?)\s*([+-]?)\s*(\S*I?)?")
+                complex_number = p.search(rhs)
+                assert complex_number is not None
+                if complex_number.group(1)[-1] == "I":  # Real after imaginary part
+                    imag = complex_number.group(1)[:-1]
+                    if complex_number.group(3):  # If real part specified
+                        real = complex_number.group(3)
+                    else:
+                        real = "0.0"
+                elif complex_number.group(3)[-1] == "I":  # Imaginary after real part
+                    if complex_number.group(2) == "-":
+                        imag = "-" + complex_number.group(3)[:-1]
+                    else:
+                        imag = complex_number.group(3)[:-1]
+                    if complex_number.group(1):  # If real part specified
+                        real = complex_number.group(1)
+                    else:
+                        real = "0.0"
+                else:  # No imaginary part
+                    real = complex_number.group(0)
+                    imag = "0.0"
+                if match.group(1) == "double":
+                    new_statement = f"cuDoubleComplex {match.group(3)} = make_cuDoubleComplex({real}, {imag});"
+                elif match.group(1) == "float":
+                    new_statement = f"cuFloatComplex {match.group(3)} = make_cuFloatComplex({real}, {imag});"
+                else:
+                    continue
+
+            # Perform replacement.
+            new_code = new_code.replace(match.group(0), new_statement)
+
+        # Complex number __real__ and __imag__
+        p = re.compile(r"(\_\_real\_\_)\s+([a-zA-Z_][a-zA-Z0-9]*)")
+        result = p.finditer(new_code)
+        for match in result:
+            new_code = new_code.replace(match.group(0), f"cuCreal({match.group(2)})")
+        p = re.compile(r"(\_\_imag\_\_)\s+([a-zA-Z_][a-zA-Z0-9]*)")
+        result = p.finditer(new_code)
+        for match in result:
+            new_code = new_code.replace(match.group(0), f"cuCimag({match.group(2)})")
+
+        # Multiplication of two complex numbers
+        p = re.compile(r"([a-zA-Z_][a-zA-Z0-9]*)\s*\*\s*([a-zA-Z_][a-zA-Z0-9]*)")
+        result = p.finditer(new_code)
+
+        for match in result:
+            if (
+                match.group(1) in complex_variable_names
+                or match.group(2) in complex_variable_names
+            ):
+                new_code = new_code.replace(
+                    match.group(0), f"cuCmul({match.group(1)}, {match.group(2)})"
+                )
+
+        return new_code
+

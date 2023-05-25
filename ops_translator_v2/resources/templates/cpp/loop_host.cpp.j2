@@ -4,8 +4,9 @@
 
 {% block kernel_wrapper %}
 {% endblock %}
+
 {% block host_prologue%}
-// Host stub function
+//  Host stub function
 #ifndef OPS_LAZY
 void ops_par_loop_{{lh.kernel}}(
     const char * name,
@@ -28,7 +29,7 @@ void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
     {% endfor %}
 #endif
 
-    //Timers
+//  Timing
     double __t1, __t2, __c1, __c2;
 
     ops_arg args[{{lh.args|length}}];
@@ -38,20 +39,20 @@ void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
     {% endfor %}
 
 #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
-    if (!ops_checkpointing_before(args, {{lh.args|length}}, range, "{{kernel_idx}}")) return;
+    if (!ops_checkpointing_before(args, {{lh.args|length}}, range, {{kernel_idx}})) return;
 #endif
 
     if (block->instance->OPS_diags > 1) {
         ops_timing_realloc(block->instance, {{kernel_idx}}, "{{lh.kernel}}");
         block->instance->OPS_kernels[{{kernel_idx}}].count++;
-        ops_timers_core(&__c2, &__t2);
+        ops_timers_core(&__c1, &__t1);
     }
 
 #ifdef OPS_DEBUG
     ops_register_args(block->instance, args, "{{lh.kernel}}");
 #endif
 
-    // compute locally allocated range for the sub-block
+//  compute locally allocated range for the sub-block
     int start_indx[{{lh.ndim}}];
     int end_indx[{{lh.ndim}}];
     {% if not (lh.arg_idx != -1) and not lh.multiGrid %}
@@ -96,19 +97,9 @@ void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
 {% endblock %}
 
 {% block host_epilogue %}
-    if (block->instance->OPS_diags > 1)
-    {
-        // Update kernel record
-        ops_timers_core(&__c1, &__t1);
-        block->instance->OPS_kernels[{{kernel_idx}}].mpi_time += __t1-__t2;
-        {% for arg in lh.args %}
-            {% if arg is ops_dat %}
-        block->instance->OPS_kernels[{{kernel_idx}}].transfer += ops_compute_transfer(dim, start_indx, end_indx, &arg{{arg.id}});
-            {% endif %}
-        {% endfor %}
-    }
-}
+{% endblock %}
 
+{% block kernel_descriptor_lazy %}
 #ifdef OPS_LAZY
 void ops_par_loop_{{lh.kernel}}(
     const char * name,
@@ -125,10 +116,4 @@ void ops_par_loop_{{lh.kernel}}(
     {% for arg in lh.args %}
     args[{{loop.index0}}] = arg{{arg.id}};
     {% endfor %}
-
-    create_kerneldesc_and_enque(name, "{{lh.kernel}}", args, {{lh.args|length}}, {{kernel_idx}}, dim, 0, range, block, ops_par_loop_{{lh.kernel}}_execute);
-
-}
-#endif
 {% endblock %}
-
