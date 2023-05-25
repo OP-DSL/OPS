@@ -29,6 +29,16 @@ class MPIOpenMP(Target):
         "device" : 1
         }
 
+class Cuda(Target):
+    name = "cuda"
+    kernel_translation = True
+    config = {
+        "grouped" : True,
+        "device" : 2,
+        "atomics": True,
+        "color2": False
+        }
+
 class HLS(Target):
     name = "hls"
     kernel_translation = True
@@ -39,4 +49,5 @@ class HLS(Target):
         }
 
 Target.register(MPIOpenMP)
+Target.register(Cuda)
 Target.register(HLS)

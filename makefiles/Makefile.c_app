@@ -279,4 +279,4 @@ clean:
 	rm -f $(APP)_mpi_opencl
 	rm -f $(OPS_GENERATED)
 	rm -f .generated constants_list.txt
-	rm -rf ./mpi_openmp
+	rm -rf ./mpi_openmp ./cuda

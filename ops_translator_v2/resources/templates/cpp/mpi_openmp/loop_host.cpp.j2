@@ -3,7 +3,7 @@
 {% block host_prologue %}
 {{super()}}
 
-// Initialize global variable with the dimensions of dats
+//  Initialize global variable with the dimensions of dats
     {% for arg in lh.args %}
         {% if arg is ops_dat %}
             {% if lh.ndim > 1 or (lh.ndim == 1 and (arg.dim) > 1) %}
@@ -18,7 +18,7 @@
         {% endif %}
     {% endfor%}
 
-// set up initial pointers and exchange halos if necessary
+//  Set up initial pointers and exchange halos if necessary
     {% for arg in lh.args %}
         {% if arg is ops_dat %}
     int base{{arg.id}} = args[{{arg.id}}].dat->base_offset;
@@ -62,23 +62,23 @@
     {% endfor %}
 
 #ifndef OPS_LAZY
-    // Halo exchanges
+//  Halo exchanges
     ops_H_D_exchanges_host(args, {{lh.args|length}});
     ops_halo_exchanges(args, {{lh.args|length}}, range);
     ops_H_D_exchanges_host(args, {{lh.args|length}});
 #endif //OPS_LAZY
 
     if (block->instance->OPS_diags > 1) {
-        ops_timers_core(&__c1, &__t1);
-        block->instance->OPS_kernels[{{kernel_idx}}].mpi_time += __t1 - __t2;
+        ops_timers_core(&__c2, &__t2);
+        block->instance->OPS_kernels[{{kernel_idx}}].mpi_time += __t2 - __t1;
     }
 {% endblock %}
 
 {% block host_loop %}
     {% for arg in lh.args %}
         {% if arg is ops_gbl or arg is ops_reduce %}
-            {% if not arg is ops_read %}
-                {% for d in range(arg.dim) %}
+            {% if arg is not ops_read %}
+                {% for d in range(arg.dim | int) %}
     {{arg.typ}} p_a{{arg.id}}_{{d}} = p_a{{arg.id}}[{{d}}];
                 {% endfor %}
             {% endif %}
@@ -89,17 +89,17 @@
     {% for arg in lh.args %}
         {% if arg is ops_gbl or arg is ops_reduce %}
             {% if arg is ops_min %}
-                {% for d in range(arg.dim) %}
+                {% for d in range(arg.dim|int) %}
                     {%if line.append(line.pop() + " reduction(min:p_a" + arg.id|string + "_" + d|string + ")") %}{% endif %}
                 {% endfor %}
             {% endif %}
             {% if arg is ops_max %}
-                {% for d in range(arg.dim) %}
+                {% for d in range(arg.dim|int) %}
                     {%if line.append(line.pop() + " reduction(max:p_a" + arg.id|string + "_" + d|string + ")") %}{% endif %}
                 {% endfor %}
             {% endif %}
             {% if arg is ops_inc %}
-                {% for d in range(arg.dim) %}
+                {% for d in range(arg.dim|int) %}
                     {%if line.append(line.pop() + " reduction(+:p_a" + arg.id|string + "_" + d|string + ")") %}{% endif %}
                 {% endfor %}
             {% endif %}
@@ -168,7 +168,7 @@
                 {% set n_x -%}n_x * args[{{arg.id}}].stencil->mgrid_stride[0]{%- endset %}
                 {% set n_y -%}n_y * args[{{arg.id}}].stencil->mgrid_stride[1]{%- endset %}
                 {% set n_z -%}n_z * args[{{arg.id}}].stencil->mgrid_stride[2]{%- endset %}
-            {%elif arg.prolong %}
+            {% elif arg.prolong %}
                 {% set n_x -%}(n_x + arg_idx[0] % args[{{arg.id}}].stencil->mgrid_stride[0]) / args[{{arg.id}}].stencil->mgrid_stride[0]{%- endset %}
                 {% set n_y -%}(n_y + arg_idx[1] % args[{{arg.id}}].stencil->mgrid_stride[1]) / args[{{arg.id}}].stencil->mgrid_stride[1]{%- endset %}
                 {% set n_z -%}(n_z + arg_idx[2] % args[{{arg.id}}].stencil->mgrid_stride[2]) / args[{{arg.id}}].stencil->mgrid_stride[2]{%- endset %}
@@ -210,25 +210,25 @@
         {% if arg is ops_gbl or arg is ops_reduce %}
             {% if arg is ops_min %}
     {{indent[0] * "    "}}{{arg.typ}} {{args_list[arg.id]}}[{{arg.dim}}];
-                {% for d in range(arg.dim) %}
+                {% for d in range(arg.dim|int) %}
     {{indent[0] * "    "}}{{args_list[arg.id]}}[{{d}}] = p_a{{arg.id}}[{{d}}];
                 {% endfor %} {# need +INFINITY_ change to #}
             {% endif %}
             {% if arg is ops_max %}
     {{indent[0] * "    "}}{{arg.typ}} {{args_list[arg.id]}}[{{arg.dim}}];
-                {% for d in range(arg.dim) %}
+                {% for d in range(arg.dim|int) %}
     {{indent[0] * "    "}}{{args_list[arg.id]}}[{{d}}] = p_a{{arg.id}}[{{d}}];
                 {% endfor %} {# need -INFINITY_ change to #}
             {% endif %}
             {% if arg is ops_inc %}
     {{indent[0] * "    "}}{{arg.typ}} {{args_list[arg.id]}}[{{arg.dim}}];
-                {% for d in range(arg.dim) %}
+                {% for d in range(arg.dim|int) %}
     {{indent[0] * "    "}}{{args_list[arg.id]}}[{{d}}] = ZERO_{{arg.typ}};
                 {% endfor %} 
             {% endif %}
             {% if arg is ops_write %}
     {{indent[0] * "    "}}{{arg.typ}} {{args_list[arg.id]}}[{{arg.dim}}];
-                {% for d in range(arg.dim) %}
+                {% for d in range(arg.dim|int) %}
     {{indent[0] * "    "}}{{args_list[arg.id]}}[{{d}}] = ZERO_{{arg.typ}};
                 {% endfor %} 
             {% endif %}
@@ -242,17 +242,17 @@
     {% for arg in lh.args %}
         {% if arg is ops_gbl or arg is ops_reduce %}
             {% if arg is ops_min %}
-                {% for d in range(arg.dim) %}
+                {% for d in range(arg.dim|int) %}
                 {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} = MIN(p_a{{arg.id}}_{{d}}, {{args_list[arg.id]}}[{{d}}]);
                 {% endfor %}            
             {% endif %}
             {% if arg is ops_max %}
-                {% for d in range(arg.dim) %}
+                {% for d in range(arg.dim|int) %}
                 {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} = MAX(p_a{{arg.id}}_{{d}}, {{args_list[arg.id]}}[{{d}}]);
                 {% endfor %}            
             {% endif %}
             {% if arg is ops_inc %}
-                {% for d in range(arg.dim) %}
+                {% for d in range(arg.dim|int) %}
                 {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} += {{args_list[arg.id]}}[{{d}}];
                 {% endfor %}            
             {% endif %}
@@ -273,8 +273,8 @@
 
     {% for arg in lh.args %}
         {% if arg is ops_gbl or arg is ops_reduce %}
-            {% if not arg is ops_read %}
-                {% for d in range(arg.dim) %}
+            {% if arg is not ops_read %}
+                {% for d in range(arg.dim|int) %}
     p_a{{arg.id}}[{{d}}] = p_a{{arg.id}}_{{d}};    
                 {% endfor %}
             {% endif %}
@@ -285,8 +285,8 @@
 {% block host_epilogue %}
     if (block->instance->OPS_diags > 1)
     {
-        ops_timers_core(&__c2, &__t2);
-        block->instance->OPS_kernels[{{kernel_idx}}].time += __t2 - __t1;
+        ops_timers_core(&__c1, &__t1);
+        block->instance->OPS_kernels[{{kernel_idx}}].time += __t1 - __t2;
     }
 
 #ifndef OPS_LAZY
@@ -298,6 +298,25 @@
     {% endfor %}
 #endif
 
-{{super()}}
+    if (block->instance->OPS_diags > 1)
+    {
+//      Update kernel record
+        ops_timers_core(&__c2, &__t2);
+        block->instance->OPS_kernels[{{kernel_idx}}].mpi_time += __t2 -__t1;
+        {% for arg in lh.args %}
+            {% if arg is ops_dat %}
+        block->instance->OPS_kernels[{{kernel_idx}}].transfer += ops_compute_transfer(dim, start_indx, end_indx, &arg{{arg.id}});
+            {% endif %}
+        {% endfor %}
+    }
+}
+
 {% endblock %}
 
+{% block kernel_descriptor_lazy %}
+{{super()}}
+    create_kerneldesc_and_enque(name, "{{lh.kernel}}", args, {{lh.args|length}}, {{kernel_idx}}, dim, 0, range, block, ops_par_loop_{{lh.kernel}}_execute);
+
+}
+#endif
+{% endblock %}

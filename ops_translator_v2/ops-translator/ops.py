@@ -205,7 +205,7 @@ class ArgGbl(Arg):
 
     ptr: str
 
-    dim: int
+    dim: str
     typ: Type
 
     #opt : bool
@@ -223,7 +223,7 @@ class ArgReduce(Arg):
 
     ptr: str
 
-    dim: int
+    dim: str
     typ: Type
 
     def __str__(self) -> str:
@@ -334,7 +334,7 @@ class Loop:
         self,
         loc: Location,
         reduct_handle: str,
-        dim: int,
+        dim: str,
         typ: Type,
         access_type: AccessType
     ) -> None: 
@@ -351,7 +351,7 @@ class Loop:
         self,
         loc: Location,
         ptr: str,
-        dim: int,
+        dim: str,
         typ: Type,
         access_type: AccessType
     ) -> None:
