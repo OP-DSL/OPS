@@ -110,27 +110,29 @@ def ops_parse_calls(text):
 
     inits = len(re.findall('ops_init', text))
     exits = len(re.findall('ops_exit', text))
-
     return (inits, exits)
 
 def ops_decl_const_parse(text):
   """Parsing for ops_decl_const calls"""
 
   consts = []
-  for m in re.finditer('(.*)call(.+)ops_decl_const(.*)\((.*)\)', text):
-    args = m.group(4).split(',')
-    print((m.group(4)))
+
+  for m in re.finditer(r'call\s+ops_decl_const\s*\(\s*"([^"]*)"\s*,\s*(\d+)\s*,\s*"([^"]*)"\s*,\s*([^)]*)\s*\)', text, re.IGNORECASE):
+    match_args = str(m.groups())
+    args_list = arg_parse2(match_args, 0)
     # check for syntax errors
-    if len(args) != 4:
+    if len(args_list) != 4:
       print('Error in ops_decl_const : must have four arguments')
       return
-
+    
+    cleaned_list = [item.replace("'", "") for item in args_list]
+ 
     consts.append({
-          'loc': m.start(),
-          'name': args[0].strip(),
-          'dim': args[1].strip(),
-          'type': (args[2].replace('"','')).strip(),
-          'name2': args[3].strip()
+          'loc':  m.start(),
+          'name': cleaned_list[0],
+          'dim':  cleaned_list[1],
+          'type': cleaned_list[2],
+          'name2': cleaned_list[3]
     })
 
   return consts
@@ -150,65 +152,100 @@ def arg_parse(text, j):
                 return loc2
         loc2 = loc2 + 1
 
+def arg_parse2(text, j):
+    """Parsing arguments in op_par_loop to find the correct closing brace"""
+
+    depth = 0
+    loc2 = j
+    arglist = []
+    prev_start = j
+    while 1:
+        if text[loc2] == '(':
+            if depth == 0:
+                prev_start = loc2+1
+            depth = depth + 1
+
+        elif text[loc2] == ')':
+            depth = depth - 1
+            if depth == 0:
+                arglist.append(text[prev_start:loc2].strip())
+                return arglist
+
+        elif text[loc2] == ',':
+            if depth == 1:
+                arglist.append(text[prev_start:loc2].strip())
+                prev_start = loc2+1
+        elif text[loc2] == '{':
+            depth = depth + 1
+        elif text[loc2] == '}':
+            depth = depth - 1
+        loc2 = loc2 + 1
+
 def get_arg_dat(arg_string, j):
-    loc = arg_parse(arg_string, j + 1)
-    dat_args_string = arg_string[arg_string.find('(', j) + 1:loc]
+    loc = arg_parse(arg_string, j+1)
+    dat_args_string = arg_string[arg_string.find("(", j):loc+1]
 
     # remove comments
     dat_args_string = comment_remover(dat_args_string)
-    #print dat_args_string
-    #num = len(dat_args_string.split(','))
-    #print num
+    dat_args_string = dat_args_string.replace('&','')
+
+    args_list = arg_parse2(dat_args_string,0)
 
     # check for syntax errors
-    if not(len(dat_args_string.split(',')) == 5 or len(dat_args_string.split(',')) == 6 ):
-      print(('Error parsing op_arg_dat(%s): must have four or five arguments' % dat_args_string))
-      return
+    if not(len(args_list) == 5 or len(args_list) == 6 ):
+        print('Error parsing op_arg_dat(%s): must have five or six arguments' % str(args_list))
+        return
 
-    if len(dat_args_string.split(',')) == 5:
-      # split the dat_args_string into  5 and create a struct with the elements
-      # and type as op_arg_dat
-      temp_dat = {'type': 'ops_arg_dat',
-                  'dat': dat_args_string.split(',')[0].strip(),
-                  'dim': dat_args_string.split(',')[1].strip(),
-                  'sten': dat_args_string.split(',')[2].strip(),
-                  'typ': (dat_args_string.split(',')[3].replace('"','')).strip(),
-                  'acc': dat_args_string.split(',')[4].strip()}
-      print(temp_dat)
-    elif len(dat_args_string.split(',')) == 6:
-      # split the dat_args_string into  6 and create a struct with the elements
-      # and type as op_arg_dat
-      temp_dat = {'type': 'ops_arg_dat_opt',
-                  'dat': dat_args_string.split(',')[0].strip(),
-                  'dim': dat_args_string.split(',')[1].strip(),
-                  'sten': dat_args_string.split(',')[2].strip(),
-                  'typ': (dat_args_string.split(',')[3].replace('"','')).strip(),
-                  'acc': dat_args_string.split(',')[4].strip(),
-                  'opt': dat_args_string.split(',')[5].strip()}
-
+    if len(args_list) == 5:
+        # split the dat_args_string into  5 and create a struct with the elements
+        # and type as op_arg_dat
+        temp_dat = {
+            'type': 'ops_arg_dat',
+            'dat': args_list[0].strip(),
+            'dim': args_list[1].strip(),
+            'sten': args_list[2].strip(),
+            'typ': (args_list[3].replace('"','')).strip(),
+            'acc': args_list[4].strip()
+        }
+    elif len(args_list) == 6:
+        # split the dat_args_string into  6 and create a struct with the elements
+        # and type as op_arg_dat
+        temp_dat = {
+            'type': 'ops_arg_dat_opt',
+            'dat': args_list[0].strip(),
+            'dim': args_list[1].strip(),
+            'sten': args_list[2].strip(),
+            'typ': (args_list[3].replace('"','')).strip(),
+            'acc': args_list[4].strip(),
+            'opt': args_list[5].strip()
+        }
 
     return temp_dat
 
 def get_arg_gbl(arg_string, k):
-    loc = arg_parse(arg_string, k + 1)
-    gbl_args_string = arg_string[arg_string.find('(', k) + 1:loc]
+    loc = arg_parse(arg_string, k+1)
+    gbl_args_string = arg_string[arg_string.find("(", k):loc+1]
 
     # remove comments
     gbl_args_string = comment_remover(gbl_args_string)
+    gbl_args_string = gbl_args_string.replace('&','')
+
+    args_list = arg_parse2(gbl_args_string,0)
 
     # check for syntax errors
-    if len(gbl_args_string.split(',')) != 4:
-        print(('Error parsing op_arg_gbl(%s): must have four arguments' \
-              % gbl_args_string))
+    if len(args_list) != 4:
+        print('Error parsing op_arg_gbl(%s): must have four arguments' % str(args_list))
         return
 
     # split the gbl_args_string into  4 and create a struct with the elements
     # and type as op_arg_gbl
-    temp_gbl = {'type': 'ops_arg_gbl',
-                'data': gbl_args_string.split(',')[0].strip(),
-                'dim': gbl_args_string.split(',')[1].strip(),
-                'typ': (gbl_args_string.split(',')[2].replace('"','')).strip(),
-                'acc': gbl_args_string.split(',')[3].strip()}
+    temp_gbl = {
+        'type': 'ops_arg_gbl',
+        'data': args_list[0].strip(),
+        'dim': args_list[1].strip(),
+        'typ': (args_list[2].replace('"','')).strip(),
+        'acc': args_list[3].strip()
+    }
 
     return temp_gbl
 
@@ -216,7 +253,7 @@ def get_arg_idx(arg_string, l):
     loc = arg_parse(arg_string, l + 1)
 
     temp_idx = {'type': 'ops_arg_idx'}
-    print(temp_idx)
+    #print(temp_idx)
     return temp_idx
 
 def ops_par_loop_parse(text):
@@ -296,8 +333,10 @@ def main(source_files):
 
   # declare constants
 
+  const_file_flag = True  
   ninit = 0
   nexit = 0
+  soa_set = 0
   nkernels = 0
   nconsts = 0
   consts = []
@@ -326,6 +365,9 @@ def main(source_files):
       print(('processing file ' + str(a) + ' of ' + str(len(source_files)) + \
             ' ' + str(source_files[a])))
 
+      # To store kernels in current file - uniq ones
+      kernels_in_cur_file = []
+
       src_file = str(source_files[a])
       f = open(src_file, 'r')
       text = f.read()
@@ -350,7 +392,39 @@ def main(source_files):
       ninit = ninit + inits
       nexit = nexit + exits
 
-
+      #
+      # check for SoA
+      #
+      if inits > 0:
+          soas = len(re.findall('ops_set_soa', text))
+          if soas > 1:
+            print(' ')
+            print('------------------------------------------')
+            print('  ERROR: more than 1 call to ops_set_soa  ')
+            print('------------------------------------------')
+          elif soas == 1:
+           soa_beg = re.search(r'\s*\bops_set_soa\s*'+r'\b\s*\(',text, re.IGNORECASE)
+           beg_pos = soa_beg.end()
+           end = re.search(r'\s*\)', text[beg_pos:], re.IGNORECASE)
+           value_str = text[beg_pos:beg_pos+end.end()-1]
+           soa_set = int(value_str.strip())
+           if soa_set == 0 or soa_set == 1:
+                print('contains ops_set_soa call: soa_set: '+str(soa_set))
+           else:
+                print(' soa_set: '+str(soa_set))
+                print(' ')
+                print('-----------------------------------------------')
+                print('  ERROR: soa_set value should be either 0 or 1 ')
+                print('-----------------------------------------------')
+                sys.exit(1)
+      else:
+        soas = len(re.findall('ops_set_soa', text))
+        if soas > 0:
+            print(' ')
+            print('-------------------------------------------------------------------------------')
+            print('  ERROR: call to ops_set_soa should appear in file containing call to ops_init ')
+            print('-------------------------------------------------------------------------------')
+            sys.exit(1)
       #
       # parse and process constants
       #
@@ -359,8 +433,9 @@ def main(source_files):
       print('Total ops const declared in file: '+(str(len(const_args))))
  
       if bool(const_args):
-        if a == 0:
+        if const_file_flag:
           fp = open('constants_list.txt', 'w')
+          const_file_flag = False
         else:
           fp = open('constants_list.txt', 'a')
 
@@ -380,9 +455,9 @@ def main(source_files):
         dim   = loop_args[i]['dim']
         block = loop_args[i]['block']
         _range   = loop_args[i]['range']
-        print(('\nprocessing kernel ' + name + ' with ' + str(nargs) + ' arguments'))
-        print(('dim: '+dim))
-        print(('range: '+str(_range)))
+#        print(('\nprocessing kernel ' + name + ' with ' + str(nargs) + ' arguments'))
+#        print(('dim: '+dim))
+#        print(('range: '+str(_range)))
 
         #
         # process arguments
@@ -415,7 +490,7 @@ def main(source_files):
             else:
                 accs[m] = l + 1
 
-            print((var[m]+' '+str(dims[m]) +' '+str(stens[m])+' '+str(accs[m])))
+            #print((var[m]+' '+str(dims[m]) +' '+str(stens[m])+' '+str(accs[m])))
 
 
           if arg_type.strip() == 'ops_arg_gbl':
@@ -433,43 +508,38 @@ def main(source_files):
             else:
                 accs[m] = l + 1
 
-            print((var[m]+' '+ str(dims[m]) +' '+str(accs[m])))
+            #print((var[m]+' '+ str(dims[m]) +' '+str(accs[m])))
 
           if arg_type.strip() == 'ops_arg_idx':
             var[m] = ''
             dims[m] = 0
             typs[m] = 'int'
             typ[m] = 'ops_arg_idx'
-            print('arg_idx')
+            #print('arg_idx')
 
 
         #
         # check for repeats
         #
         repeat = False
-        rep1 = False
-        rep2 = False
-        which_file = -1
-        for nk in range(0, nkernels):
-          rep1 = kernels[nk]['name'] == name and \
-            kernels[nk]['nargs'] == nargs and \
-            kernels[nk]['dim'] == dim and \
-            kernels[nk]['range'] == _range
-          if rep1:
-            rep2 = True
+        rep_kernel_idx = -1
+
+        for nk, kernel in enumerate(kernels):
+          if kernel["name"] == name:
+            repeat = kernel["nargs"] == nargs and kernel["dim"] == dim
             for arg in range(0, nargs):
-                rep2 = rep2 and \
-                    kernels[nk]['stens'][arg] == stens[arg] and \
-                    kernels[nk]['dims'][arg] == dims[arg] and \
-                    kernels[nk]['typs'][arg] == typs[arg] and \
-                    kernels[nk]['accs'][arg] == accs[arg]
-            if rep2:
-              print(('repeated kernel with compatible arguments: ' + \
-                    kernels[nk]['name']))
-              repeat = True
-              which_file = nk
+              repeat = (
+                repeat
+                and kernel["stens"][arg] == stens[arg]
+                and kernel["dims"][arg] == dims[arg]
+                and kernel["typs"][arg] == typs[arg]
+                and kernel["accs"][arg] == accs[arg]
+              )
+            if repeat:
+#              print(f"repeated kernel with compatible arguments: {kernel['name']}")
+              rep_kernel_idx = nk
             else:
-              print('repeated kernel with incompatible arguments: ERROR')
+              print(f"repeated kernel with incompatible arguments: ERROR {kernel['name']}")
               break
 
         #
@@ -479,11 +549,46 @@ def main(source_files):
         ##todo -- not sure what will be interesting here
         ##
 
+        # store kernel in current file kernel list
+        flag_repeat = False
+        for nk, kernel in enumerate(kernels_in_cur_file):
+          if kernel["name"] == name:
+            flag_repeat = kernel["nargs"] == nargs and kernel["dim"] == dim
+            for arg in range(0, nargs):
+              flag_repeat = (
+                flag_repeat
+                and kernel["stens"][arg] == stens[arg]
+                and kernel["dims"][arg] == dims[arg]
+                and kernel["typs"][arg] == typs[arg]
+                and kernel["accs"][arg] == accs[arg]
+              )
+            if flag_repeat:
+#              print(f"repeated kernel with compatible arguments: {kernel['name']}")
+               pass
+            else:
+              print(f"repeated kernel with incompatible arguments: ERROR {kernel['name']}")
+              break
+
+
+        if flag_repeat == False:
+            temp = { 'arg_type':typ,
+                       'name': name,
+                      'nargs': nargs,
+                      'dim': dim,
+                      'dims': dims,
+                      'stens': stens,
+                      'var': var,
+                      'accs': accs,
+                      'typs': typs,
+                      'range': _range
+              }
+            kernels_in_cur_file.append(temp)
+
         #
         # store away in master list
         #
-        if not repeat:
-              nkernels = nkernels + 1
+        if repeat == False:
+              temp = { }
               temp = { 'arg_type':typ,
                        'name': name,
                       'nargs': nargs,
@@ -500,10 +605,10 @@ def main(source_files):
         else:
               append = 1
               for in_file in range(0, len(kernels_in_files[a - 1])):
-                  if kernels_in_files[a - 1][in_file] == which_file:
+                  if kernels_in_files[a - 1][in_file] == rep_kernel_idx:
                       append = 0
               if append == 1:
-                  (kernels_in_files[a - 1]).append(which_file)
+                  (kernels_in_files[a - 1]).append(rep_kernel_idx)
 
 
       #
@@ -563,8 +668,10 @@ def main(source_files):
           line = line +'\n'+'  use OPS_Fortran_Declarations'
           line = line +'\n'+'  use OPS_Fortran_RT_Support'+'\n'
 
-          for nk in range (0,len(kernels)):
-            line = line +'  use ' + kernels[nk]['name'].upper()+'_MODULE'+'\n'
+          #for nk in range (0,len(kernels)):
+          #  line = line +'  use ' + kernels[nk]['name'].upper()+'_MODULE'+'\n'
+          for nk in range(0, len(kernels_in_cur_file)):
+            line = line +'  use ' + kernels_in_cur_file[nk]['name'].upper()+'_MODULE'+'\n'
 
           fid.write(line[2:len(line)]);
           loc_old = locs[loc] + header_len + 1
@@ -629,9 +736,9 @@ def main(source_files):
       fid.close()
       f.close()
 
-  #
-  # errors and warnings
-  #
+#
+# errors and warnings
+#
 
   if ninit == 0:
       print(' ')
@@ -646,14 +753,20 @@ def main(source_files):
       print('-------------------------------')
 
 
-  #
-  # finally, generate target-specific kernel files
-  #
+#
+# finally, generate target-specific kernel files
+#
 
-  ops_fortran_gen_mpi(str(source_files[0]), date, consts, kernels)
-  ops_fortran_gen_mpi_openmp(str(source_files[0]), date, consts, kernels)
-  ops_fortran_gen_mpi_cuda(str(source_files[0]), date, consts, kernels)
-  ops_fortran_gen_mpi_openacc(str(source_files[0]), date, consts, kernels)
+  print('Generating kernels files for target - MPI ........\n')
+  ops_fortran_gen_mpi(str(source_files[0]), date, consts, kernels, soa_set)
+  print('Generating kernels files for target - MPI_OpenMP ........\n')
+  ops_fortran_gen_mpi_openmp(str(source_files[0]), date, consts, kernels, soa_set)
+  print('Generating kernels files for target - MPI_CUDA ........\n')
+  ops_fortran_gen_mpi_cuda(str(source_files[0]), date, consts, kernels, soa_set)
+  print('Generating kernels files for target - MPI_OpenACC ........\n')
+  ops_fortran_gen_mpi_openacc(str(source_files[0]), date, consts, kernels, soa_set)
+  exit()
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

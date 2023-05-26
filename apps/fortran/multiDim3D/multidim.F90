@@ -102,6 +102,7 @@ program MULTIDIM
 
   !OPS initialisation
   call ops_init(2)
+  call ops_set_soa(1)
 
   !----------------------------OPS Declarations------------------------
 

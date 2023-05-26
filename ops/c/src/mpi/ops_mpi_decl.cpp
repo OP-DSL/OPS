@@ -33,11 +33,17 @@
 /** @file
   * @brief OPS mpi declaration
   * @author Gihan Mudalige, Istvan Reguly
-  * @details Implements the OPS API calls for the mpi backend
+  * @details Implements the OPS API calls for the mpi+X backend
   */
 
 #include <mpi.h>
 #include <ops_mpi_core.h>
+
+extern char *halo_buffer_d;
+extern char *ops_buffer_send_1;
+extern char *ops_buffer_recv_1;
+extern char *ops_buffer_send_2;
+extern char *ops_buffer_recv_2;
 
 // The one and only non-threads safe global OPS_instance
 // Declared in ops_instance.cpp
@@ -83,6 +89,7 @@ void _ops_init(OPS_instance *instance, const int argc, const char *const argv[],
   global_ops_instance = instance;
 
   ops_init_core(instance, argc, argv, diags);
+  ops_init_device(instance, argc, argv, diags);
 }
 
 void ops_init(const int argc, const char *const argv[], const int diags) {
@@ -91,37 +98,43 @@ void ops_init(const int argc, const char *const argv[], const int diags) {
 
 void _ops_exit(OPS_instance *instance) {
   if (instance->is_initialised == 0) return;
+  if (instance->ops_halo_buffer!=NULL) ops_free(instance->ops_halo_buffer);
+  if (instance->OPS_consts_bytes > 0) {
+    ops_free(instance->OPS_consts_h);
+    if (instance->OPS_gbl_prev!=NULL) ops_device_freehost(instance, (void**)&instance->OPS_gbl_prev);
+    if (instance->OPS_consts_d!=NULL) ops_device_free(instance, (void**)&instance->OPS_consts_d);
+  }
+  if (instance->OPS_reduct_bytes > 0) {
+    ops_free(instance->OPS_reduct_h);
+    if (instance->OPS_reduct_d!=NULL) ops_device_free(instance, (void**)&instance->OPS_reduct_d);
+  }
+  
   ops_mpi_exit(instance);
-  // ops_rt_exit();
-  ops_exit_core(instance);
 
+  if (instance->OPS_hybrid_gpu) {
+    if (instance->OPS_gpu_direct && ops_buffer_send_1 != NULL) {
+      ops_device_free(instance, (void**)&ops_buffer_send_1);
+      ops_device_free(instance, (void**)&ops_buffer_recv_1);
+      ops_device_free(instance, (void**)&ops_buffer_send_2);
+      ops_device_free(instance, (void**)&ops_buffer_recv_2);
+    } else if (ops_buffer_send_1 != NULL) {
+      ops_device_freehost(instance, (void**)&ops_buffer_send_1);
+      ops_device_freehost(instance, (void**)&ops_buffer_recv_1);
+      ops_device_freehost(instance, (void**)&ops_buffer_send_2);
+      ops_device_freehost(instance, (void**)&ops_buffer_recv_2);
+    }
+  }
   int flag = 0;
   MPI_Finalized(&flag);
   if (!flag)
     MPI_Finalize();
+  ops_exit_core(instance);
+  ops_exit_device(instance);
 }
 
 void ops_exit() {
   _ops_exit(OPS_instance::getOPSInstance());
 }
-
-ops_dat ops_dat_copy(ops_dat orig_dat) {
-  ops_dat dat = ops_dat_copy_mpi_core(orig_dat);
-  ops_dat_deep_copy(dat, orig_dat);
-  return dat;
-}
-
-void ops_dat_deep_copy(ops_dat target, ops_dat source) {
-  ops_dat_copy_metadata_core(target, source);
-
-  ops_kernel_descriptor *desc = ops_dat_deep_copy_mpi_core(target, source);
-  desc->name = "ops_internal_copy_seq";
-  desc->device = 0;
-  desc->function = ops_internal_copy_seq;
-  ops_enqueue_kernel(desc);
-}
-
-
 
 ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
                           int *d_m, int *d_p, int *stride, char *data, int type_size,
@@ -136,7 +149,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   ops_dat dat = ops_decl_dat_temp_core(block, size, dat_size, base, d_m, d_p,
                                        stride, data, type_size, type, name);
 
-  // dat->user_managed = 0;
+  dat->user_managed = 0;
   dat->is_hdf5 = 0;
 
   // note that currently we assume replicated dats are read only or initialized
@@ -168,80 +181,47 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   return dat;
 }
 
-ops_halo _ops_decl_halo(OPS_instance *instance, ops_dat from, ops_dat to, int *iter_size, int *from_base,
-                       int *to_base, int *from_dir, int *to_dir) {
-  return ops_decl_halo_core(instance, from, to, iter_size, from_base, to_base, from_dir,
-                            to_dir);
-}
-
-ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int *from_base,
-                       int *to_base, int *from_dir, int *to_dir) {
-  return ops_decl_halo_core(from->block->instance, from, to, iter_size, from_base, to_base, from_dir,
-                            to_dir);
-}
-
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
   if (OPS_sub_block_list[dat->block->index]->owned == 1) {
+    ops_get_data(dat);
     ops_print_dat_to_txtfile_core(dat, file_name);
   }
 }
 
 void ops_NaNcheck(ops_dat dat) {
   if (OPS_sub_block_list[dat->block->index]->owned == 1) {
+    ops_get_data(dat);
     char buffer[30];
     sprintf(buffer, "On rank %d \t", ops_my_global_rank);
     ops_NaNcheck_core(dat, buffer);
   }
 }
 
-void ops_decl_const_char(OPS_instance *instance, int dim, char const *type,
-                         int typeSize, char *data, char const *name) {
-  (void)dim;
-  (void)type;
-  (void)typeSize;
-  (void)data;
-  (void)name;
-  ops_execute(instance);
+ops_dat ops_dat_copy(ops_dat orig_dat) {
+  ops_dat dat = ops_dat_copy_mpi_core(orig_dat);
+  ops_dat_deep_copy(dat, orig_dat);
+  return dat;
 }
 
-void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
-  for (int i = 0; i < nargs; i++) {
-    if (args[i].argtype == OPS_ARG_DAT &&
-        args[i].dat->locked_hd > 0) {
-      OPSException ex(OPS_RUNTIME_ERROR, "ERROR: ops_par_loops involving datasets for which raw pointers have not been released are not allowed");
-      throw ex;
+void ops_dat_deep_copy(ops_dat target, ops_dat source) {
+  int realloc = ops_dat_copy_metadata_core(target, source);
+  if(realloc && source->block->instance->OPS_hybrid_gpu) {
+    if(target->data_d != nullptr) {
+      ops_device_free(source->block->instance, (void**)&(target->data_d));
+      target->data_d = nullptr;
     }
+    ops_device_malloc(source->block->instance, (void**)&(target->data_d), target->mem);
   }
-}
 
-void ops_H_D_exchanges_device(ops_arg *args, int nargs) {
-  for (int i = 0; i < nargs; i++) {
-    if (args[i].argtype == OPS_ARG_DAT &&
-        args[i].dat->locked_hd > 0) {
-      OPSException ex(OPS_RUNTIME_ERROR, "ERROR: ops_par_loops involving datasets for which raw pointers have not been released are not allowed");
-      throw ex;
-    }
+  ops_kernel_descriptor *desc = ops_dat_deep_copy_mpi_core(target, source);
+  if (source->block->instance->OPS_hybrid_gpu) {
+    strcpy(desc->name, "ops_internal_copy_device\0");
+    desc->isdevice = 1;
+    desc->func = ops_internal_copy_device;
+  } else {
+    strcpy(desc->name, "ops_internal_copy_seq\0");
+    desc->isdevice = 0;
+    desc->func = ops_internal_copy_seq;
   }
-}
-
-void ops_set_dirtybit_device(ops_arg *args, int nargs) {
-  (void)nargs;
-  (void)args;
-}
-
-
-void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
-  ops_execute(handle->instance);
-  ops_checkpointing_reduction(handle);
-  memcpy(ptr, handle->data, handle->size);
-  handle->initialized = 0;
-}
-
-void ops_get_data(ops_dat dat) {
-  // data already on the host .. do nothing
-  (void)dat;
-}
-void ops_put_data(ops_dat dat) {
-  // data already on the host .. do nothing
-  (void)dat;
+  ops_enqueue_kernel(desc);
 }

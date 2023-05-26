@@ -42,6 +42,12 @@
 int halo_buffer_size = 0;
 char *halo_buffer_d = NULL;
 
+void ops_exit_device(OPS_instance *instance) {
+  if (halo_buffer_d != NULL)
+    ops_device_free(instance, (void**)&halo_buffer_d);
+
+}
+
 __global__ void ops_cuda_packer_1(const char *__restrict src,
                                   char *__restrict dest, int count, int len,
                                   int stride) {
@@ -111,7 +117,7 @@ void ops_pack_cuda_internal(ops_dat dat, const int src_offset, char *__restrict 
               const int halo_blocklength, const int halo_stride, const int halo_count) {
 
   if (dat->dirty_hd == 1) {
-    ops_upload_dat(dat);
+    ops_put_data(dat);
     dat->dirty_hd = 0;
   }
 
@@ -164,7 +170,7 @@ void ops_unpack_cuda_internal(ops_dat dat, const int dest_offset, const char *__
                 const int halo_blocklength, const int halo_stride, const int halo_count) {
 
   if (dat->dirty_hd == 1) {
-    ops_upload_dat(dat);
+    ops_put_data(dat);
     dat->dirty_hd = 0;
   }
   char *__restrict dest = dat->data_d + dest_offset * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
@@ -211,6 +217,17 @@ void ops_unpack_cuda_internal(ops_dat dat, const int dest_offset, const char *__
 
   dat->dirty_hd = 2;
 }
+
+
+void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
+              const ops_int_halo *__restrict halo) {
+  ops_pack_cuda_internal(dat,  src_offset, dest, halo->blocklength, halo->stride, halo->count);
+}
+void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
+                const ops_int_halo *__restrict halo) {
+  ops_unpack_cuda_internal(dat,  dest_offset, src, halo->blocklength, halo->stride, halo->count);
+}
+
 
 char* OPS_realloc_fast(char *ptr, size_t olds, size_t news) {
   if (OPS_instance::getOPSInstance()->OPS_gpu_direct) {
@@ -334,7 +351,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   }
 
   if (src->dirty_hd == 1) {
-    ops_upload_dat(src);
+    ops_put_data(src);
     src->dirty_hd = 0;
   }
 
@@ -395,7 +412,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   }
 
   if (dest->dirty_hd == 1) {
-    ops_upload_dat(dest);
+    ops_put_data(dest);
     dest->dirty_hd = 0;
   }
 
@@ -477,7 +494,7 @@ __global__ void ops_internal_copy_cuda_kernel(char * dat0_p, char *dat1_p,
 }
 
 
-void ops_internal_copy_cuda(ops_kernel_descriptor *desc) {
+void ops_internal_copy_device(ops_kernel_descriptor *desc) {
   int range[2*OPS_MAX_DIM]={0};
   for (int d = 0; d < desc->dim; d++) {
     range[2*d] = desc->range[2*d];
@@ -570,7 +587,7 @@ void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *ra
       range2[2*i+1] = 1;
     }
     if (dat->dirty_hd == 1) {
-      ops_upload_dat(dat);
+      ops_put_data(dat);
       dat->dirty_hd = 0;
     }
     ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
@@ -584,10 +601,10 @@ void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *ra
       prod *= target->size[d];
     }
     ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    desc->name = "ops_internal_copy_cuda";
-    desc->device = 1;
-    desc->function = ops_internal_copy_cuda;
-    ops_internal_copy_cuda(desc);
+    strcpy(desc->name, "ops_internal_copy_device\0");
+    desc->isdevice = 1;
+    desc->func = ops_internal_copy_device;
+    ops_internal_copy_device(desc);
     target->data_d = NULL;
     ops_free(target);
     ops_free(desc->args);
@@ -611,7 +628,7 @@ void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *rang
       range2[2*i+1] = 1;
     }
     if (dat->dirty_hd == 1) {
-      ops_upload_dat(dat);
+      ops_put_data(dat);
       dat->dirty_hd = 0;
     }
     ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
@@ -625,10 +642,10 @@ void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *rang
       prod *= target->size[d];
     }
     ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    desc->name = "ops_internal_copy_cuda_reverse";
-    desc->device = 1;
-    desc->function = ops_internal_copy_cuda;
-    ops_internal_copy_cuda(desc);
+    strcpy(desc->name, "ops_internal_copy_device_reverse\0");
+    desc->isdevice = 1;
+    desc->func = ops_internal_copy_device;
+    ops_internal_copy_device(desc);
     target->data_d = NULL;
     ops_free(target);
     ops_free(desc->args);
@@ -656,7 +673,7 @@ void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace
       range[2*i+1] = 1;
     }
     if (dat->dirty_hd == 1) {
-      ops_upload_dat(dat);
+      ops_put_data(dat);
       dat->dirty_hd = 0;
     }
     ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
@@ -665,10 +682,10 @@ void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace
     target->base_offset = 0;
     for (int d = 0; d < OPS_MAX_DIM; d++) target->size[d] = size[d];
     ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    desc->name = "ops_internal_copy_cuda";
-    desc->device = 1;
-    desc->function = ops_internal_copy_cuda;
-    ops_internal_copy_cuda(desc);
+    strcpy(desc->name, "ops_internal_copy_device\0");
+    desc->isdevice = 1;
+    desc->func = ops_internal_copy_device;
+    ops_internal_copy_device(desc);
     target->data_d = NULL;
     ops_free(target);
     ops_free(desc->args);
@@ -693,17 +710,17 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
       range[2*i+1] = 1;
     }
     if (dat->dirty_hd == 1)
-      ops_upload_dat(dat);
+      ops_put_data(dat);
     ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
     target->data_d = data;
     target->elem_size = dat->elem_size;
     target->base_offset = 0;
     for (int d = 0; d < OPS_MAX_DIM; d++) target->size[d] = size[d];
     ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    desc->name = "ops_internal_copy_cuda_reverse";
-    desc->device = 1;
-    desc->function = ops_internal_copy_cuda;
-    ops_internal_copy_cuda(desc);
+    strcpy(desc->name, "ops_internal_copy_device_reverse\0");
+    desc->isdevice = 1;
+    desc->func = ops_internal_copy_device;
+    ops_internal_copy_device(desc);
     target->data_d = NULL;
     ops_free(target);
     ops_free(desc->args);
@@ -711,4 +728,3 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
     dat->dirty_hd = 2;
   } 
 }
-

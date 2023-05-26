@@ -37,8 +37,7 @@
   */
 #include <vector>
 #include <ops_lib_core.h>
-
-
+#include "ops_util.h"
 #include <mpi.h>
 #include <ops_mpi_core.h>
 #include <ops_exceptions.h>
@@ -71,7 +70,7 @@ int contains(int point, int *range) {
   return (point >= range[0] && point < range[1]);
 }
 
-int ops_compute_intersections(ops_dat dat, int d_pos, int d_neg, 
+int ops_compute_intersections(ops_dat dat, int d_pos, int d_neg,
                               int *iter_range, int dim,
                               int *left_send_depth, int *left_recv_depth,
                               int *right_send_depth, int *right_recv_depth) {
@@ -177,7 +176,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     d_p[d] = dat->d_p[d] + sd->d_ip[d];
   }
 
-  int *prod = sd->prod;
+  size_t *prod = sd->prod;
 
   if (!ops_compute_intersections(dat, d_pos,d_neg, iter_range, dim,
           &left_send_depth, &left_recv_depth, &right_send_depth, &right_recv_depth)) return;
@@ -288,7 +287,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     throw ex;
   }
 
-      
+
   // set up initial pointers
   // int i1 = (-d_m[dim] - actual_depth_recv) * prod[dim-1];
   int i3 = (prod[dim] / prod[dim - 1] - (d_p[dim]) - actual_depth_send) *
@@ -380,7 +379,7 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
     throw ex;
   }
 
-  int *prod = sd->prod;
+  size_t *prod = sd->prod;
 
   //
   // negative direction
@@ -535,7 +534,7 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg,
   int right_recv_depth = 0;
   int left_send_depth = 0;
   int right_send_depth = 0;
-  int *prod = sd->prod;
+  size_t *prod = sd->prod;
 
   int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
   for (int d = 0; d < OPS_MAX_DIM; d++) {
@@ -609,7 +608,7 @@ void ops_exchange_halo_unpacker_given(ops_dat dat, int *depths, int dim,
   int left_recv_depth = depths[1];
   int right_recv_depth = depths[3];
 
-  int *prod = sd->prod;
+  size_t *prod = sd->prod;
 
   int d_m[OPS_MAX_DIM], d_p[OPS_MAX_DIM];
   for (int d = 0; d < OPS_MAX_DIM; d++) {
@@ -696,11 +695,20 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
       send_recv_offsets[i] = 0;
     for (int i = 0; i < nargs; i++) {
       if (args[i].argtype != OPS_ARG_DAT ||
-          !(args[i].acc == OPS_READ || args[i].acc == OPS_RW) ||
+          (args[i].acc == OPS_WRITE || args[i].acc == OPS_MAX || args[i].acc == OPS_MIN) ||
           args[i].opt == 0)
         continue;
+
+      if(dim >= args[i].stencil->dims)
+        continue;
+
       ops_dat dat = args[i].dat;
       int dat_ndim = OPS_sub_block_list[dat->block->index]->ndim;
+      if (args[i].argtype == OPS_ARG_DAT &&
+          (args[i].acc == OPS_READ || args[i].acc == OPS_RW || args[i].acc == OPS_INC) &&
+          args[i].stencil->points == 1 &&
+          args[i].stencil->stencil[dim] == 0)
+        continue;
 
       if (dat_ndim <= dim || dat->size[dim] <= 1)
         continue; // dimension of the sub-block is less than current dim OR has
@@ -840,7 +848,7 @@ void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
   for (int dim = 0; dim < OPS_MAX_DIM; dim++) {
     // ops_timers_core(&c1,&t1);
     int id_m = -1, id_p = -1;
-    
+
     for (int i = 0; i < 4; i++)
       send_recv_offsets[i] = 0;
     for (int i = 0; i < ndats; i++) {
@@ -856,7 +864,7 @@ void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
                  ->id_m[dim]; // neighbor in negative direction
       id_p = OPS_sub_block_list[dat->block->index]
                  ->id_p[dim]; // neighbor in positive direction
-      
+
       ops_exchange_halo_packer_given(dat, &depths[OPS_MAX_DIM*4*i + dim*4], dim,
                                  send_recv_offsets);
     }
@@ -1170,6 +1178,8 @@ void ops_halo_transfer(ops_halo_group group) {
   if (mpi_group->nhalos == 0)
     return;
 
+  double c, t1, t2;
+  ops_timers_core(&c, &t1);
   // Reset offset counters
   mpi_neigh_size[0] = 0;
   for (int i = 1; i < mpi_group->num_neighbors_send; i++)
@@ -1291,6 +1301,9 @@ void ops_halo_transfer(ops_halo_group group) {
   }
   MPI_Waitall(mpi_group->num_neighbors_send, &mpi_group->requests[0],
               &mpi_group->statuses[0]);
+
+  ops_timers_core(&c, &t2);
+  group->instance->ops_user_halo_exchanges_time += t2 - t1;
 }
 
 void ops_force_halo_exchange(ops_dat dat, ops_stencil stencil) {
@@ -1436,30 +1449,38 @@ void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
 }
 
 void ops_dat_set_data_host(ops_dat dat, int part, char *data) {
-throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Not implemented");
+  throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Not implemented");
 }
-void ops_dat_set_data_slab_host(ops_dat dat, int part, char *data, int *range) {
-throw OPSException(OPS_NOT_IMPLEMENTED, "Error: Not implemented");
-}
-void ops_dat_set_data(ops_dat dat, int part, char *data) {
+void ops_dat_set_data_slab_host(ops_dat dat, int part, char *local_buf,
+                                int *local_range) {
+  (void)part;
+  sub_dat *sd = OPS_sub_dat_list[dat->index];
   ops_execute(dat->block->instance);
-  int lsize[OPS_MAX_DIM] = {1};
-  int ldisp[OPS_MAX_DIM] = {1};
-  sub_dat_list sd = OPS_sub_dat_list[dat->index];
-  ops_dat_get_extents(dat, part, ldisp, lsize);
-  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
-    lsize[d] = 1;
-    ldisp[d] = 0;
+  int local_buf_size[OPS_MAX_DIM] = {1};
+  int range_max_dim[2 * OPS_MAX_DIM] = {0};
+  int d_m[OPS_MAX_DIM]{0};
+  for (int d = 0; d < dat->block->dims; d++) {
+    local_buf_size[d] = local_range[2 * d + 1] - local_range[2 * d + 0];
+    range_max_dim[2 * d] = local_range[2 * d];
+    range_max_dim[2 * d + 1] = local_range[2 * d + 1];
   }
-  lsize[0] *= dat->elem_size; //now in bytes
-  if (dat->block->dims>3) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for dims>3");
-  if (OPS_instance::getOPSInstance()->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for SoA");
+  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
+    local_buf_size[d] = 1;
+    range_max_dim[2 * d] = 0;
+    range_max_dim[2 * d + 1] = 1;
+  }
 
-  for (int k = 0; k < lsize[2]; k++)
-    for (int j = 0; j < lsize[1]; j++)
-      memcpy(&dat->data[((j-dat->d_m[1]-sd->d_im[1] + (k-dat->d_m[2]-sd->d_im[2])*dat->size[1])*dat->size[0] - dat->d_m[0] - sd->d_im[0])* dat->elem_size],
-             &data[k*lsize[0]*lsize[1]+j*lsize[0]],
-             lsize[0]);
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    d_m[d] = sd->d_im[d] + dat->d_m[d];
+  }
+
+  if (dat->block->dims > 5)
+    throw OPSException(OPS_NOT_IMPLEMENTED,
+                       "Error, missing OPS implementation: ops_dat_fetch_data "
+                       "not implemented for dims>5");
+
+  set_loop_slab(local_buf, dat->data, local_buf_size, dat->size, d_m,
+                dat->elem_size, dat->dim, range_max_dim);
 
   dat->dirty_hd = 1;
   sd->dirtybit = 1;
@@ -1467,6 +1488,22 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
     sd->dirty_dir_send[i] = 1;
     sd->dirty_dir_recv[i] = 1;
   }
+}
+
+void ops_dat_set_data(ops_dat dat, int part, char *data) {
+  ops_execute(dat->block->instance);
+  const sub_dat *sd = OPS_sub_dat_list[dat->index];
+  const int space_dim{dat->block->dims};
+  int *local_range{new int(2 * space_dim)};
+  int *range{new int(2 * space_dim)};
+  for (int d = 0; d < space_dim; d++) {
+    range[2 * d] = sd->gbl_d_m[d];
+    range[2 * d + 1] = sd->gbl_size[d] + sd->gbl_d_m[d];
+  }
+  determine_local_range(dat, range, local_range);
+  ops_dat_set_data_slab_host(dat, 0, data, local_range);
+  delete range;
+  delete local_range;
 }
 
 size_t ops_dat_get_slab_extents(ops_dat dat, int part, int *disp, int *size, int *slab) {
@@ -1502,10 +1539,9 @@ void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size) {
   //TODO: part?? local or global?
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
   if (disp != NULL)
-    for (int d = 0; d < dat->block->dims; d++) 
+    for (int d = 0; d < dat->block->dims; d++)
       disp[d] = sd->decomp_disp[d] - dat->d_m[d];
   if (size != NULL)
-    for (int d = 0; d < dat->block->dims; d++) 
+    for (int d = 0; d < dat->block->dims; d++)
       size[d] = sd->decomp_size[d] + dat->d_m[d] - dat->d_p[d];
 }
-

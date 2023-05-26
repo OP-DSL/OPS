@@ -39,6 +39,7 @@
 
 #include "ops_lib_core.h"
 #include <ops_exceptions.h>
+#include "ops_util.h"
 #include <string>
 #include <assert.h>
 
@@ -542,82 +543,6 @@ void ops_dat_release_raw_data_memspace(ops_dat dat, int part, ops_access acc, op
     // Unlock the ops_dat
     dat->locked_hd = 0;
 }
-
-template <int dir>
-void copy_loop(char *data, char *ddata, int *lsize, int *dsize, int *d_m, int elem_size) {
-  //TODO: add OpenMP here if needed
-#if OPS_MAX_DIM>4
-  for (int m = 0; m < lsize[4]; m++) {
-    size_t moff = m * lsize[0] * lsize[1] * lsize[2] * lsize[3];
-    size_t moff2 = (m-d_m[4])*dsize[3]*dsize[2]*dsize[1]*dsize[0];
-#else
-  size_t moff = 0;
-  size_t moff2 = 0;
-#endif
-#if OPS_MAX_DIM>3
-  for (int l = 0; l < lsize[3]; l++) {
-    size_t loff = l * lsize[0] * lsize[1] * lsize[2];
-    size_t loff2 = (l-d_m[3])*dsize[2]*dsize[1]*dsize[0];
-#else
-  size_t loff = 0;
-  size_t loff2 = 0;
-#endif
-  for (int k = 0; k < lsize[2]; k++)
-    for (int j = 0; j < lsize[1]; j++)
-      if (dir == 0)
-        memcpy(&data[moff + loff + k*lsize[0]*lsize[1]+j*lsize[0]],
-            &ddata[(moff2+loff2+(k-d_m[2])*dsize[1]*dsize[0] + (j-d_m[1])*dsize[0] - d_m[0])* elem_size],
-             lsize[0]);
-      else
-        memcpy(&ddata[(moff2+loff2+(k-d_m[2])*dsize[1]*dsize[0] + (j-d_m[1])*dsize[0] - d_m[0])* elem_size],
-             &data[moff + loff + k*lsize[0]*lsize[1]+j*lsize[0]],
-             lsize[0]);
-#if OPS_MAX_DIM>3
-  }
-#endif
-#if OPS_MAX_DIM>4
-  }
-#endif
-}
-
-template <int dir>
-void copy_loop_slab(char *data, char *ddata, int *lsize, int *dsize, int *d_m, int elem_size, int *range2) {
-  //TODO: add OpenMP here if needed
-#if OPS_MAX_DIM>4
-  for (int m = 0; m < lsize[4]; m++) {
-    size_t moff = m * lsize[0] * lsize[1] * lsize[2] * lsize[3];
-    size_t moff2 = (range2[2*4]+m-d_m[4])*dsize[3]*dsize[2]*dsize[1]*dsize[0];
-#else
-  size_t moff = 0;
-  size_t moff2 = 0;
-#endif
-#if OPS_MAX_DIM>3
-  for (int l = 0; l < lsize[3]; l++) {
-    size_t loff = l * lsize[0] * lsize[1] * lsize[2];
-    size_t loff2 = (range2[2*3]+l-d_m[3])*dsize[2]*dsize[1]*dsize[0];
-#else
-  size_t loff = 0;
-  size_t loff2 = 0;
-#endif
-  for (int k = 0; k < lsize[2]; k++)
-    for (int j = 0; j < lsize[1]; j++)
-      if (dir == 0)
-      memcpy(&data[moff + loff + k*lsize[0]*lsize[1]+j*lsize[0]],
-             &ddata[(moff2+loff2+(range2[2*2]+k-d_m[2])*dsize[1]*dsize[0] + (range2[2*1]+j-d_m[1])*dsize[0] + range2[2*0] - d_m[0])* elem_size],
-             lsize[0]);
-      else
-      memcpy(&ddata[(moff2+loff2+(range2[2*2]+k-d_m[2])*dsize[1]*dsize[0] + (range2[2*1]+j-d_m[1])*dsize[0] + range2[2*0] - d_m[0])* elem_size],
-          &data[moff + loff + k*lsize[0]*lsize[1]+j*lsize[0]],
-             lsize[0]);
-#if OPS_MAX_DIM>3
-  }
-#endif
-#if OPS_MAX_DIM>4
-  }
-#endif
-}
-
-
 void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
   ops_dat_fetch_data_memspace(dat, part, data, OPS_HOST);
 }
@@ -626,87 +551,93 @@ void ops_dat_fetch_data_host(ops_dat dat, int part, char *data) {
   ops_execute(dat->block->instance);
   ops_get_data(dat);
   int lsize[OPS_MAX_DIM] = {1};
+  int range2[2 * OPS_MAX_DIM] = {0};
   int ldisp[OPS_MAX_DIM] = {0};
   ops_dat_get_extents(dat, part, ldisp, lsize);
+  for (int d = 0; d < dat->block->dims; d++) {
+    range2[2 * d] = 0;
+    range2[2 * d + 1] = lsize[d] - 1;
+  }
   for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
     lsize[d] = 1;
     ldisp[d] = 0;
+    range2[2 * d] = 0;
+    range2[2 * d + 1] = 1;
   }
-  lsize[0] *= dat->elem_size; //now in bytes
-  if (dat->block->dims>5) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for dims>5");
-  if (dat->block->instance->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for SoA");
-  copy_loop<0>(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size);
+  if (dat->block->dims > 5)
+    throw OPSException(OPS_NOT_IMPLEMENTED,
+                       "Error, missing OPS implementation: ops_dat_fetch_data "
+                       "not implemented for dims>5");
+  fetch_loop_slab(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size,
+                  dat->dim, range2);
 }
 
-
-void ops_dat_fetch_data_slab_host(ops_dat dat, int part, char *data, int *range) {
-    (void)part;
+void ops_dat_fetch_data_slab_host(ops_dat dat, int part, char *data,
+                                  int *range) {
+  (void)part;
   ops_execute(dat->block->instance);
   ops_get_data(dat);
   int lsize[OPS_MAX_DIM] = {1};
-  int range2[2*OPS_MAX_DIM] = {0};
+  int range2[2 * OPS_MAX_DIM] = {0};
   for (int d = 0; d < dat->block->dims; d++) {
-    lsize[d] = range[2*d+1]-range[2*d+0];
-    range2[2*d] = range[2*d];
-    range2[2*d+1] = range[2*d+1];
-
+    lsize[d] = range[2 * d + 1] - range[2 * d + 0];
+    range2[2 * d] = range[2 * d];
+    range2[2 * d + 1] = range[2 * d + 1];
   }
   for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
     lsize[d] = 1;
-    range2[2*d] = 0;
-    range2[2*d+1] = 1;
+    range2[2 * d] = 0;
+    range2[2 * d + 1] = 1;
   }
-  lsize[0] *= dat->elem_size; //now in bytes
-  if (dat->block->dims>5) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for dims>5");
-  if (dat->block->instance->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for SoA");
-  copy_loop_slab<0>(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size, range2);
+  if (dat->block->dims > 5)
+    throw OPSException(
+        OPS_NOT_IMPLEMENTED,
+        "Error, missing OPS implementation: ops_dat_fetch_data_slab_host "
+        "not implemented for dims>5");
+  fetch_loop_slab(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size,
+                  dat->dim, range2);
 }
-
 
 void ops_dat_set_data(ops_dat dat, int part, char *data) {
   ops_dat_set_data_memspace(dat, part, data, OPS_HOST);
 }
 
-
 void ops_dat_set_data_host(ops_dat dat, int part, char *data) {
   ops_execute(dat->block->instance);
-  int lsize[OPS_MAX_DIM] = {1};
-  int ldisp[OPS_MAX_DIM] = {0};
-  ops_dat_get_extents(dat, part, ldisp, lsize);
-  for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
-    lsize[d] = 1;
-    ldisp[d] = 0;
-  }
-  lsize[0] *= dat->elem_size; //now in bytes
-  if (dat->block->dims>5) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for dims>5");
-  if (dat->block->instance->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_set_data not implemented for SoA");
-  copy_loop<1>(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size);
-  dat->dirty_hd = 1;
-}
 
-void ops_dat_set_data_slab_host(ops_dat dat, int part, char *data, int *range) {
-    (void)part;
-  ops_execute(dat->block->instance);
-  ops_get_data(dat);
-  int lsize[OPS_MAX_DIM] = {1};
-  int range2[2*OPS_MAX_DIM] = {0};
+  int *range{new int(2 * dat->block->dims)};
   for (int d = 0; d < dat->block->dims; d++) {
-    lsize[d] = range[2*d+1]-range[2*d+0];
-    range2[2*d] = range[2*d];
-    range2[2*d+1] = range[2*d+1];
+    range[2 * d] = dat->d_m[d];
+    range[2 * d + 1] = dat->size[d] + dat->d_m[d];
+  }
+  ops_dat_set_data_slab_host(dat, 0, data, range);
+  delete range;
+}
+
+void ops_dat_set_data_slab_host(ops_dat dat, int part, char *local_buf,
+                                int *local_range) {
+  (void)part;
+  ops_execute(dat->block->instance);
+  int lsize[OPS_MAX_DIM] = {1};
+  int range2[2 * OPS_MAX_DIM] = {0};
+  for (int d = 0; d < dat->block->dims; d++) {
+    lsize[d] = local_range[2 * d + 1] - local_range[2 * d + 0];
+    range2[2 * d] = local_range[2 * d];
+    range2[2 * d + 1] = local_range[2 * d + 1];
   }
   for (int d = dat->block->dims; d < OPS_MAX_DIM; d++) {
     lsize[d] = 1;
-    range2[2*d] = 0;
-    range2[2*d+1] = 1;
+    range2[2 * d] = 0;
+    range2[2 * d + 1] = 1;
   }
-  lsize[0] *= dat->elem_size; //now in bytes
-  if (dat->block->dims>5) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for dims>5");
-  if (dat->block->instance->OPS_soa && dat->dim > 1) throw OPSException(OPS_NOT_IMPLEMENTED, "Error, missing OPS implementation: ops_dat_fetch_data not implemented for SoA");
-  copy_loop_slab<1>(data, dat->data, lsize, dat->size, dat->d_m, dat->elem_size, range2);
+  if (dat->block->dims > 5)
+    throw OPSException(OPS_NOT_IMPLEMENTED,
+                       "Error, missing OPS implementation: "
+                       "ops_dat_set_data_slab_host not implemented for dims>5");
+  set_loop_slab(local_buf, dat->data, lsize, dat->size, dat->d_m,
+                dat->elem_size, dat->dim, range2);
   dat->dirty_hd = 1;
 }
-
 
 int ops_dat_get_global_npartitions(ops_dat dat) {
     (void)dat;
@@ -722,3 +653,134 @@ void ops_dat_get_extents(ops_dat dat, int part, int *disp, int *size) {
     for (int d = 0; d < dat->block->dims; d++)
       size[d] = dat->size[d] + dat->d_m[d] - dat->d_p[d];
 }
+
+
+
+
+ops_dat ops_dat_copy(ops_dat orig_dat)
+{
+   // Allocate an empty dat on a block
+   // The block has no internal data buffers
+  ops_dat dat = ops_dat_alloc_core(orig_dat->block);
+  // Do a deep copy from orig_dat into the new dat
+  ops_dat_deep_copy(dat, orig_dat);
+  return dat;
+}
+
+void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
+  // printf("file %s, name %s type = %s\n",file_name, dat->name, dat->type);
+  // need to get data from GPU
+  ops_get_data(dat);
+  ops_print_dat_to_txtfile_core(dat, file_name);
+}
+
+void ops_NaNcheck(ops_dat dat) {
+  char buffer[1]={'\0'};
+  // need to get data from GPU
+  ops_get_data(dat);
+  ops_NaNcheck_core(dat, buffer);
+}
+
+
+void _ops_partition(OPS_instance *instance, const char *routine) {
+  (void)instance;
+  (void)routine;
+}
+
+void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::string, void*>& opts) {
+  (void)instance;
+  (void)routine;
+  (void)opts;
+}
+
+void ops_partition(const char *routine) {
+  (void)routine;
+}
+
+void ops_partition_opts(const char *routine, std::map<std::string, void*>& opts) {
+  (void)routine;
+  (void)opts;
+}
+
+void ops_timers(double *cpu, double *et) {
+  ops_timers_core(cpu, et);
+}
+
+void _ops_exit(OPS_instance *instance) {
+  if (instance->is_initialised == 0) return;
+  if (instance->ops_halo_buffer!=NULL) ops_free(instance->ops_halo_buffer);
+  if (instance->OPS_consts_bytes > 0) {
+    ops_free(instance->OPS_consts_h);
+    if (instance->OPS_gbl_prev!=NULL) ops_device_freehost(instance, (void**)&instance->OPS_gbl_prev);
+    if (instance->OPS_consts_d!=NULL) ops_device_free(instance, (void**)&instance->OPS_consts_d);
+  }
+  if (instance->OPS_reduct_bytes > 0) {
+    ops_free(instance->OPS_reduct_h);
+    if (instance->OPS_reduct_d!=NULL) ops_device_free(instance, (void**)&instance->OPS_reduct_d);
+  }
+
+  ops_exit_core(instance);
+  ops_exit_device(instance);
+}
+
+void ops_dat_deep_copy(ops_dat target, ops_dat source)
+{
+  /* The constraint is that OPS makes it very easy for users to alias ops_dats.  A deep copy
+    * should work even if dats have been aliased.  Suppose a user has written something like
+    *
+    *    ops_dat x = ops_decl_dat( ... );
+    *    ops_dat y = ops_decl_dat( ... );
+    *    ops_dat z = x;
+    *    ops_dat_deep_copy(x, y);
+    *
+    * In this case we cannot call ops_free_dat(x) since that would leave 'z' pointing at invalid memory.
+    * OPS has no knowledge of 'z' - there is no entry in any internal tables corresponding to 'z'.
+    * Hence the only way this function can work is if we leave (*x) intact (i.e the ops_dat_core pointed at
+    * by x) and change the entries inside the ops_dat_core.  Then 'z' will continue to point at valid data.
+    *
+    * If the blocks in source and target are different, then the deep copy could entail MPI re-distribution of
+    * data. For the moment, perhaps we ignore this ... ?
+    */
+  // Copy the metadata.  This will reallocate target->data if necessary
+  int realloc = ops_dat_copy_metadata_core(target, source);
+  if(realloc && source->block->instance->OPS_hybrid_gpu) {
+    if(target->data_d != nullptr) {
+      ops_device_free(source->block->instance, (void**)&(target->data_d));
+      target->data_d = nullptr;
+    }
+    ops_device_malloc(source->block->instance, (void**)&(target->data_d), target->mem);
+  }
+   // Metadata and buffers are set up
+   // Enqueue a lazy copy of data from source to target
+  int range[2*OPS_MAX_DIM];
+  for (int i = 0; i < source->block->dims; i++) {
+    range[2*i] = source->base[i] + source->d_m[i];
+    range[2*i+1] = range[2*i] + source->size[i];
+  }
+  for (int i = source->block->dims; i < OPS_MAX_DIM; i++) {
+    range[2*i] = 0;
+    range[2*i+1] = 1;
+  }
+  ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, source, range);
+  if (source->block->instance->OPS_hybrid_gpu) {
+    strcpy(desc->name, "ops_internal_copy_device\0");
+    desc->isdevice = 1;
+    desc->func = ops_internal_copy_device;
+  } else {
+    strcpy(desc->name, "ops_internal_copy_seq\0");
+    desc->isdevice = 0;
+    desc->func = ops_internal_copy_seq;
+  }
+  ops_enqueue_kernel(desc);
+}
+
+void _ops_init(OPS_instance *instance, const int argc, const char * const argv[], const int diags) {
+  ops_init_core(instance, argc, argv, diags);
+  ops_init_device(instance, argc, argv, diags);
+}
+
+void ops_init(const int argc, const char *const argv[], const int diags) {
+  _ops_init(OPS_instance::getOPSInstance(), argc, argv, diags);
+}
+
+void ops_exit() { _ops_exit(OPS_instance::getOPSInstance()); }

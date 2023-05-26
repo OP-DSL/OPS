@@ -66,7 +66,7 @@ ENDDO = util_fortran.ENDDO
 IF = util_fortran.IF
 ENDIF = util_fortran.ENDIF
 
-def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
+def ops_fortran_gen_mpi_openmp(master, date, consts, kernels, soa_set):
 
   OPS_GBL   = 2;
 
@@ -96,7 +96,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
     #parse stencil to locate strided access
     stride = [1] * nargs * NDIM
 
-
+#    print("OpenMP kernel name: " + name)
 
     reduction = 0
     reduction_vars = ''
@@ -273,29 +273,31 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
 
     elif NDIM==2:
       if reduction != 1 and arg_idx != 1:
-        code('!$OMP PARALLEL DO PRIVATE(n_x)')
+        code('!$OMP PARALLEL DO PRIVATE(n_x,n_y)')
       elif reduction == 1:
-        code('!$OMP PARALLEL DO PRIVATE(n_x) '+reduction_vars)
+        code('!$OMP PARALLEL DO PRIVATE(n_x,n_y) '+reduction_vars)
       DO('n_y','1','end(2)-start(2)+1')
       if arg_idx == 1:
         code('idx_local(2) = idx(2) + n_y - 1')
-      code('!DIR$ IVDEP')
+      if reduction != 1:
+        code('!DIR$ IVDEP')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
         code('idx_local(1) = idx(1) + n_x - 1')
 
     elif NDIM==3:
       if reduction != 1 and arg_idx != 1:
-        code('!$OMP PARALLEL DO PRIVATE(n_x,n_y)')
+        code('!$OMP PARALLEL DO PRIVATE(n_x,n_y,n_z)')
       elif reduction == 1:
-        code('!$OMP PARALLEL DO PRIVATE(n_x,n_y) '+reduction_vars)
+        code('!$OMP PARALLEL DO PRIVATE(n_x,n_y,n_z) '+reduction_vars)
       DO('n_z','1','end(3)-start(3)+1')
       if arg_idx == 1:
         code('idx_local(3) = idx(3) + n_z - 1')
       DO('n_y','1','end(2)-start(2)+1')
       if arg_idx == 1:
         code('idx_local(2) = idx(2) + n_y - 1')
-      code('!DIR$ IVDEP')
+      if reduction != 1:
+        code('!DIR$ IVDEP')
       DO('n_x','1','end(1)-start(1)+1')
       if arg_idx == 1:
         code('idx_local(1) = idx(1) + n_x - 1')
@@ -357,7 +359,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
     code('character(kind=c_char,len=*), INTENT(IN) :: userSubroutine')
     code('type ( ops_block ), INTENT(IN) :: block')
     code('integer(kind=4), INTENT(IN):: dim')
-    code('integer(kind=4)   , DIMENSION(dim), INTENT(IN) :: range')
+    code('integer(kind=4)   , DIMENSION(2*dim), INTENT(IN) :: range')
     code('real(kind=8) t1,t2,t3')
     code('real(kind=4) transfer_total, transfer')
     code('')
@@ -401,7 +403,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
     for n in range (0, nargs):
       code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
     code('')
-    code('call setKernelTime('+str(nk)+',userSubroutine//char(0),0.0_8,0.0_8,0.0_4,0)')
+    code('call setKernelTime('+str(nk)+',userSubroutine//char(0),0.0_8,0.0_8,0.0_4,1)')
     code('call ops_timers_core(t1)')
     code('')
 
@@ -507,7 +509,7 @@ def ops_fortran_gen_mpi_openmp(master, date, consts, kernels):
       if arg_typ[n] == 'ops_arg_dat':
         code('call ops_compute_transfer('+str(NDIM)+', start, end, opsArg'+str(n+1)+',transfer)')
         code('transfer_total = transfer_total + transfer')
-    code('call setKernelTime('+str(nk)+',userSubroutine,t3-t2,t2-t1,transfer_total,1)') 
+    code('call setKernelTime('+str(nk)+',userSubroutine,t3-t2,t2-t1,transfer_total,0)') 
     
     config.depth = config.depth - 2
     code('end subroutine')

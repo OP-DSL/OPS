@@ -337,6 +337,10 @@ void ops_exit_core(OPS_instance *instance) {
   instance->is_initialised = 0;
 }
 
+void ops_set_soa(const int soa_val) {
+  OPS_instance::getOPSInstance()->OPS_soa = soa_val;
+}
+
 ops_block _ops_decl_block(OPS_instance *instance, int dims, const char *name) {
   if (dims <= 0) {
       OPSException ex(OPS_INVALID_ARGUMENT);
@@ -823,27 +827,26 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
     handle->acc = acc;
     if (acc == OPS_INC)
       memset(handle->data, 0, handle->size);
-    if (strcmp(type, "double") == 0 ||
-        strcmp(type, "real(8)") == 0) { // TODO: handle other types
-      OPS_RED_INIT(double,DBL)
-    } else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0) {
-      OPS_RED_INIT(float,FLT)
-    } else if (strcmp(type, "int") == 0 || strcmp(type, "integer") == 0) {
-      OPS_RED_INIT2(int,INT)
+    if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) { // TODO: handle other types
+        OPS_RED_INIT(double,DBL)
+    } else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 || strcmp(type, "real(kind=4)") == 0) {
+        OPS_RED_INIT(float,FLT)
+    } else if (strcmp(type, "int") == 0 || strcmp(type, "integer") == 0 || strcmp(type, "integer(4)") == 0 || strcmp(type, "integer(kind=4)") == 0) {
+        OPS_RED_INIT2(int,INT)
     } else if (strcmp(type, "long") == 0) {
-      OPS_RED_INIT2(long,LONG)
+        OPS_RED_INIT2(long,LONG)
     } else if (strcmp(type, "char") == 0) {
-      OPS_RED_INIT2(char,CHAR)
+        OPS_RED_INIT2(char,CHAR)
     } else if (strcmp(type, "short") == 0) {
-      OPS_RED_INIT2(short,SHRT)
+        OPS_RED_INIT2(short,SHRT)
     } else if (strcmp(type, "long long") == 0 || strcmp(type, "ll") == 0) {
-      OPS_RED_INIT2(long long,LLONG)
+        OPS_RED_INIT2(long long,LLONG)
     } else if (strcmp(type, "unsigned long long") == 0 || strcmp(type, "ull") == 0) {
-      OPS_RED_INIT2(unsigned long long,ULLONG)
+        OPS_RED_INIT2(unsigned long long,ULLONG)
     } else if (strcmp(type, "unsigned long") == 0 || strcmp(type, "ul") == 0) {
-      OPS_RED_INIT2(unsigned long,ULONG)
+        OPS_RED_INIT2(unsigned long,ULONG)
     } else if (strcmp(type, "unsigned int") == 0 || strcmp(type, "uint") == 0) {
-      OPS_RED_INIT2(unsigned int,UINT)
+        OPS_RED_INIT2(unsigned int,UINT)
     }
     else if (strcmp(type, "complexf") == 0) {
       if (acc == OPS_MIN)
@@ -860,7 +863,7 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
         for (int i = 0; i < 2 * handle->size / 8; i++)
           ((complexd *)handle->data)[i] = complexd(0,0);
     } else {
-      throw OPSException(OPS_NOT_IMPLEMENTED, "Error, reduction type not recognised, please add in ops_lib_core.c");
+      throw OPSException(OPS_NOT_IMPLEMENTED, "Error, reduction type not recognised, please add in ops_lib_core.cpp");
     }
   } else if (handle->acc != acc) {
       OPSException ex(OPS_INVALID_ARGUMENT);
@@ -937,6 +940,19 @@ ops_halo ops_decl_halo_core(OPS_instance *instance, ops_dat from, ops_dat to, in
   return halo;
 }
 
+
+ops_halo _ops_decl_halo(OPS_instance *instance, ops_dat from, ops_dat to, int *iter_size, int *from_base,
+                       int *to_base, int *from_dir, int *to_dir) {
+  return ops_decl_halo_core(instance, from, to, iter_size, from_base, to_base, from_dir,
+                            to_dir);
+}
+
+ops_halo ops_decl_halo(ops_dat from, ops_dat to, int *iter_size, int *from_base,
+                       int *to_base, int *from_dir, int *to_dir) {
+  return ops_decl_halo_core(OPS_instance::getOPSInstance(), from, to, iter_size, from_base, to_base, from_dir,
+                            to_dir);
+}
+
 ops_arg ops_arg_dat_core(ops_dat dat, ops_stencil stencil, ops_access acc) {
   ops_arg arg;
   // In the absence of a constructor ...
@@ -988,6 +1004,27 @@ ops_arg ops_arg_idx() {
   return arg;
 }
 
+ops_arg ops_arg_dat(ops_dat dat, int dim, ops_stencil stencil, char const *type,
+                    ops_access acc) {
+    (void)type;
+  // return ops_arg_dat_core( dat, stencil, acc );
+  ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
+  (&temp)->dim = dim;
+  return temp;
+}
+
+ops_arg ops_arg_dat_opt(ops_dat dat, int dim, ops_stencil stencil,
+                        char const *type, ops_access acc, int flag) {
+    (void)type;(void)dim;
+  ops_arg temp = ops_arg_dat_core(dat, stencil, acc);
+  (&temp)->opt = flag;
+  return temp;
+}
+
+ops_arg ops_arg_gbl_char(char *data, int dim, int size, ops_access acc) {
+  return ops_arg_gbl_core(data, dim, size, acc);
+}
+
 ops_reduction ops_decl_reduction_handle_core(OPS_instance *instance, int size, const char *type,
                                              const char *name) {
   if (instance->OPS_reduction_index == instance->OPS_reduction_max) {
@@ -1011,6 +1048,15 @@ ops_reduction ops_decl_reduction_handle_core(OPS_instance *instance, int size, c
   red->index = instance->OPS_reduction_index++;
   return red;
 }
+
+void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
+    (void)type_size;
+  ops_execute(handle->instance);
+  ops_checkpointing_reduction(handle);
+  memcpy(ptr, handle->data, handle->size);
+  handle->initialized = 0;
+}
+
 
 void _ops_diagnostic_output(OPS_instance *instance) {
   if (instance->OPS_diags > 2) {
@@ -1304,12 +1350,18 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
       sumtime_mpi += moments_mpi_time[0];
     }
     ops_fprintf2(stream, "Total kernel time: %g\n", sumtime);
-    if (instance->ops_tiled_halo_exchange_time > 0.0) {
-      double moments_time[2] = {0.0};
-      ops_compute_moment(instance->ops_tiled_halo_exchange_time, &moments_time[0], &moments_time[1]);
+    double moments_time[2] = {0.0};
+    ops_compute_moment(instance->ops_tiled_halo_exchange_time, &moments_time[0], &moments_time[1]);
+    if (moments_time[0] > 0.0) {
       ops_fprintf2(stream, "Total tiled halo exchange time: %g\n", moments_time[0]);
     } else if (sumtime_mpi > 0) {
       ops_fprintf2(stream, "Total halo exchange time: %g\n", sumtime_mpi);
+    }
+
+    moments_time[0] = 0.0;
+    ops_compute_moment(instance->ops_user_halo_exchanges_time, &moments_time[0], &moments_time[1]);
+    if (moments_time[0] > 0.0) {
+      ops_fprintf2(stream, "Total user halo exchange time: %g\n", moments_time[0]);
     }
     // printf("Times: %g %g %g\n",ops_gather_time, ops_sendrecv_time,
     // ops_scatter_time);
@@ -1852,15 +1904,18 @@ ops_kernel_descriptor * ops_dat_deep_copy_core(ops_dat target, ops_dat orig_dat,
 {
     ops_kernel_descriptor *desc =
         (ops_kernel_descriptor *)ops_calloc(1, sizeof(ops_kernel_descriptor));
+    desc->range = (int*) calloc(2*OPS_MAX_DIM, sizeof(int));
+    desc->orig_range = (int*) calloc(2*OPS_MAX_DIM, sizeof(int));
+
     //  desc->name = "ops_internal_copy_seq";
     desc->block = orig_dat->block;
     desc->dim = orig_dat->block->dims;
-    desc->device = 0;
+    desc->isdevice = 0;
     desc->index = -1;
     ops_timing_realloc(orig_dat->block->instance, -1, "ops_dat_deep_copy");
     desc->hash = 5381;
     desc->hash = ((desc->hash << 5) + desc->hash) + 1;
-    for (int i = 0; i < 2*OPS_MAX_DIM; i++) {
+    for (int i = 0; i < 2*desc->block->dims; i++) {
         desc->range[i] = range[i];
         desc->orig_range[i] = range[i];
         desc->hash = ((desc->hash << 5) + desc->hash) + range[i];
@@ -1945,3 +2000,187 @@ int ops_dat_copy_metadata_core(ops_dat target, ops_dat orig_dat)
   target->locked_hd = orig_dat->locked_hd;
   return realloc;
 }
+
+void ops_cpHostToDevice(OPS_instance *instance, void **data_d, void **data_h, size_t size) {
+  if (instance->OPS_hybrid_gpu == 0) return;
+  if ( *data_d == NULL ) {
+    ops_device_malloc(instance, data_d, size);
+  }
+  if (data_h == NULL || *data_h == NULL) {
+    ops_device_memset(instance, data_d, 0, size);
+    return;
+  }
+  ops_device_memcpy_h2d(instance, data_d, data_h, size);
+}
+
+
+void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
+  for (int n = 0; n < nargs; n++) {
+    if (args[n].argtype == OPS_ARG_DAT &&
+        args[n].dat->locked_hd > 0) {
+      OPSException ex(OPS_RUNTIME_ERROR, "ERROR: ops_par_loops involving datasets for which raw pointers have not been released are not allowed");
+      throw ex;
+    }
+    if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
+      ops_get_data(args[n].dat);
+      args[n].dat->dirty_hd = 0;
+    }
+  }
+}
+
+void ops_H_D_exchanges_device(ops_arg *args, int nargs) {
+  for (int n = 0; n < nargs; n++) {
+    if (args[n].argtype == OPS_ARG_DAT &&
+        args[n].dat->locked_hd > 0) {
+      OPSException ex(OPS_RUNTIME_ERROR, "ERROR: ops_par_loops involving datasets for which raw pointers have not been released are not allowed");
+      throw ex;
+    }
+    if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
+      ops_put_data(args[n].dat);
+      args[n].dat->dirty_hd = 0;
+    }
+  }
+}
+
+void ops_set_dirtybit_device(ops_arg *args, int nargs) {
+  for (int n = 0; n < nargs; n++) {
+    if ((args[n].argtype == OPS_ARG_DAT) &&
+        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
+         args[n].acc == OPS_RW)) {
+      args[n].dat->dirty_hd = 2;
+    }
+  }
+}
+
+//set dirty bit for single ops_arg dat
+void ops_set_dirtybit_device_dat(ops_dat dat) {
+  dat->dirty_hd = 2;
+}
+
+//
+// routine to fetch data from GPU to CPU (with transposing SoA to AoS if needed)
+//
+
+void ops_get_data(ops_dat dat) {
+  if (dat->dirty_hd == 2)
+    dat->dirty_hd = 0;
+  else
+    return;
+  size_t bytes = dat->elem_size;
+  for (int i = 0; i < dat->block->dims; i++)
+    bytes = bytes * dat->size[i];
+  ops_device_memcpy_d2h(dat->block->instance, (void**)&dat->data, (void**)&dat->data_d, bytes);
+  ops_device_sync(dat->block->instance);
+}
+
+//
+// routine to upload data from CPU to GPU (with transposing SoA to AoS if needed)
+//
+
+void ops_put_data(ops_dat dat) {
+  if (dat->dirty_hd == 1)
+    dat->dirty_hd = 0;
+  else
+    return;
+  size_t bytes = dat->elem_size;
+  for (int i = 0; i < dat->block->dims; i++)
+    bytes = bytes * dat->size[i];
+  ops_device_memcpy_h2d(dat->block->instance, (void**)&dat->data_d, (void**)&dat->data, bytes);
+  ops_device_sync(dat->block->instance);
+}
+
+
+//
+// routines to resize constant/reduct arrays, if necessary
+//
+
+void reallocConstArrays(OPS_instance *instance, int consts_bytes) {
+  if (consts_bytes > instance->OPS_consts_bytes) {
+    if (instance->OPS_consts_bytes > 0) {
+      ops_free(instance->OPS_consts_h);
+      ops_device_freehost(instance, (void**)&instance->OPS_gbl_prev);
+      ops_device_free(instance, (void**)&instance->OPS_consts_d);
+    }
+    instance->OPS_consts_bytes = 4 * consts_bytes; // 4 is arbitrary, more than needed
+    ops_device_mallochost(instance, (void **)&instance->OPS_gbl_prev, instance->OPS_consts_bytes);
+    instance->OPS_consts_h = (char *)ops_malloc(instance->OPS_consts_bytes);
+    ops_device_malloc(instance, (void **)&instance->OPS_consts_d, instance->OPS_consts_bytes);
+  }
+}
+
+void reallocReductArrays(OPS_instance *instance, int reduct_bytes) {
+  if (reduct_bytes > instance->OPS_reduct_bytes) {
+    if (instance->OPS_reduct_bytes > 0) {
+      ops_free(instance->OPS_reduct_h);
+      ops_device_free(instance, (void**)&instance->OPS_reduct_d);
+    }
+    instance->OPS_reduct_bytes = 4 * reduct_bytes; // 4 is arbitrary, more than needed
+    instance->OPS_reduct_h = (char *)ops_malloc(instance->OPS_reduct_bytes);
+    ops_device_malloc(instance, (void **)&instance->OPS_reduct_d, instance->OPS_reduct_bytes);
+  }
+}
+
+//
+// routines to move constant/reduct arrays
+//
+
+void mvConstArraysToDevice(OPS_instance *instance, int consts_bytes) {
+  instance->OPS_gbl_changed = 0;
+  for (int i = 0; i < consts_bytes; i++) {
+    if (instance->OPS_consts_h[i] != instance->OPS_gbl_prev[i])
+      instance->OPS_gbl_changed = 1;
+  }
+  if (instance->OPS_gbl_changed) {
+    ops_device_memcpy_h2d(instance, (void**)&instance->OPS_consts_d, (void**)&instance->OPS_consts_h, consts_bytes);
+    memcpy(instance->OPS_gbl_prev, instance->OPS_consts_h, consts_bytes);
+  }
+}
+
+void mvReductArraysToDevice(OPS_instance *instance, int reduct_bytes) {
+  ops_device_memcpy_h2d(instance, (void**)&instance->OPS_reduct_d, (void**)&instance->OPS_reduct_h, reduct_bytes);
+}
+
+void mvReductArraysToHost(OPS_instance *instance, int reduct_bytes) {
+  ops_device_memcpy_d2h(instance, (void**)&instance->OPS_reduct_h, (void**)&instance->OPS_reduct_d, reduct_bytes);
+}
+
+void ops_upload_gbls(ops_arg* args, int nargs) {
+    int consts_bytes = 0;
+    ops_block block = NULL;
+    for (int n = 0; n < nargs; n++) {
+      if (args[n].argtype == OPS_ARG_GBL && args[n].acc == OPS_READ)
+        consts_bytes += ROUND_UP(args[n].dim * args[n].elem_size);
+      if (args[n].argtype == OPS_ARG_DAT)
+        block = args[n].dat->block;
+    }
+    if (consts_bytes) {
+      reallocConstArrays(block->instance,consts_bytes);
+      consts_bytes = 0;
+      for (int n = 0; n < nargs; n++) {
+        if (args[n].argtype == OPS_ARG_GBL && args[n].acc == OPS_READ) {
+          for (int i = 0; i < args[n].dim*args[n].elem_size; i++)
+            (block->instance->OPS_consts_h + consts_bytes)[i] = args[n].data[i];
+          args[n].data_d = block->instance->OPS_consts_d + consts_bytes;
+          consts_bytes += ROUND_UP(args[n].dim * args[n].elem_size);
+        }
+      }
+      mvConstArraysToDevice(block->instance,consts_bytes);
+    }
+}
+
+void ops_free_dat(ops_dat dat) {
+  ops_execute();
+  delete dat;
+}
+
+void _ops_free_dat(ops_dat dat) {
+  if (dat->data_d) ops_device_free(dat->block->instance, (void**)&dat->data_d);
+  ops_free_dat_core(dat);
+}
+
+
+/************* Functions only use in the Fortran Backend ************/
+
+extern "C" int getOPS_block_size_x() { return OPS_instance::getOPSInstance()->OPS_block_size_x; }
+extern "C" int getOPS_block_size_y() { return OPS_instance::getOPSInstance()->OPS_block_size_y; }
+extern "C" int getOPS_block_size_z() { return OPS_instance::getOPSInstance()->OPS_block_size_z; }

@@ -92,9 +92,9 @@ import re
 from ops_gen_mpi_inline import ops_gen_mpi_inline
 from ops_gen_mpi_lazy import ops_gen_mpi_lazy
 from ops_gen_mpi_cuda import ops_gen_mpi_cuda
-from ops_gen_mpi_hip import ops_gen_mpi_hip
 from ops_gen_mpi_openacc import ops_gen_mpi_openacc
 from ops_gen_mpi_opencl import ops_gen_mpi_opencl
+from ops_gen_sycl import ops_gen_sycl
 
 from util import comment_remover, remove_trailing_w_space
 from config import (
@@ -260,79 +260,107 @@ def arg_parse(text, j):
                 return loc2
         loc2 = loc2 + 1
 
+def arg_parse2(text, j):
+    """Parsing arguments in op_par_loop to find the correct closing brace"""
+
+    depth = 0
+    loc2 = j
+    arglist = []
+    prev_start = j
+    while 1:
+        if text[loc2] == '(':
+            if depth == 0:
+                prev_start = loc2+1
+            depth = depth + 1
+
+        elif text[loc2] == ')':
+            depth = depth - 1
+            if depth == 0:
+                arglist.append(text[prev_start:loc2].strip())
+                return arglist
+
+        elif text[loc2] == ',':
+            if depth == 1:
+                arglist.append(text[prev_start:loc2].strip())
+                prev_start = loc2+1
+        elif text[loc2] == '{':
+            depth = depth + 1
+        elif text[loc2] == '}':
+            depth = depth - 1
+        loc2 = loc2 + 1
 
 def get_arg_dat(arg_string, j, macro_defs):
-    loc = arg_parse(arg_string, j + 1)
-    dat_args_string = arg_string[arg_string.find("(", j) + 1 : loc]
+    loc = arg_parse(arg_string, j+1)
+    dat_args_string = arg_string[arg_string.find("(", j):loc+1]
 
     # remove comments
     dat_args_string = comment_remover(dat_args_string)
+    dat_args_string = dat_args_string.replace('\\','')       #replace multiline \ character
+
+    args_list = arg_parse2(dat_args_string,0)
 
     # check for syntax errors
-    if not (
-        len(dat_args_string.split(",")) == 5 or len(dat_args_string.split(",")) == 6
-    ):
-        print(
-            f"Error parsing op_arg_dat({dat_args_string}): must have five or six arguments"
-        )
+    if not (len(args_list) == 5 or len(args_list) == 6) :
+        print('Error parsing op_opt_arg_dat(%s): must have five or six arguments' % str(args_list))
         return
 
-    if len(dat_args_string.split(",")) == 5:
+    if len(args_list) == 5:
         # split the dat_args_string into  5 and create a struct with the elements
         # and type as op_arg_dat
         temp_dat = {
             "type": "ops_arg_dat",
-            "dat": dat_args_string.split(",")[0].strip(),
+            "dat": args_list[0].strip(),
             "dim": evaluate_macro_defs_in_string(
-                macro_defs, dat_args_string.split(",")[1].strip()
+                macro_defs, args_list[1].strip()
             ),
-            "sten": dat_args_string.split(",")[2].strip(),
-            "typ": (dat_args_string.split(",")[3].replace('"', "")).strip(),
-            "acc": dat_args_string.split(",")[4].strip(),
+            "sten": args_list[2].strip(),
+            "typ": (args_list[3].replace('"', "")).strip(),
+            "acc": args_list[4].strip(),
         }
     else:
-        assert len(dat_args_string.split(",")) == 6
+        assert len(args_list) == 6
         # split the dat_args_string into  6 and create a struct with the elements
         # and type as op_arg_dat
         temp_dat = {
             "type": "ops_arg_dat_opt",
-            "dat": dat_args_string.split(",")[0].strip(),
+            "dat": args_list[0].strip(),
             "dim": evaluate_macro_defs_in_string(
-                macro_defs, dat_args_string.split(",")[1].strip()
+                macro_defs, args_list[1].strip()
             ),
-            "sten": dat_args_string.split(",")[2].strip(),
-            "typ": (dat_args_string.split(",")[3].replace('"', "")).strip(),
-            "acc": dat_args_string.split(",")[4].strip(),
-            "opt": dat_args_string.split(",")[5].strip(),
+            "sten": args_list[2].strip(),
+            "typ": (args_list[3].replace('"', "")).strip(),
+            "acc": args_list[4].strip(),
+            "opt": args_list[5].strip(),
         }
 
     return temp_dat
 
 
 def get_arg_gbl(arg_string, k, macro_defs):
-    loc = arg_parse(arg_string, k + 1)
-    gbl_args_string = arg_string[arg_string.find("(", k) + 1 : loc]
+    loc = arg_parse(arg_string, k+1)
+    gbl_args_string = arg_string[arg_string.find("(", k):loc+1]
 
     # remove comments
     gbl_args_string = comment_remover(gbl_args_string)
+    gbl_args_string = gbl_args_string.replace('\\','')       #replace multiline \ character
+
+    args_list = arg_parse2(gbl_args_string,0)
 
     # check for syntax errors
-    if len(gbl_args_string.split(",")) != 4:
-        print(
-            "Error parsing op_arg_gbl(%s): must have four arguments" % gbl_args_string
-        )
+    if len(args_list) != 4:
+        print('Error parsing op_arg_gbl(%s): must have four arguments' % str(args_list))
         return
 
     # split the gbl_args_string into  4 and create a struct with the elements
     # and type as op_arg_gbl
     temp_gbl = {
         "type": "ops_arg_gbl",
-        "data": gbl_args_string.split(",")[0].strip(),
+        "data": args_list[0].strip(),
         "dim": evaluate_macro_defs_in_string(
-            macro_defs, gbl_args_string.split(",")[1].strip()
+            macro_defs, args_list[1].strip()
         ),
-        "typ": (gbl_args_string.split(",")[2].replace('"', "")).strip(),
-        "acc": gbl_args_string.split(",")[3].strip(),
+        "typ": (args_list[2].replace('"', "")).strip(),
+        "acc": args_list[3].strip(),
     }
 
     return temp_gbl
@@ -820,10 +848,12 @@ def generate_ops_files(
 def generate_kernel_files(app_name, consts, kernels, soa_set):
     ops_gen_mpi_inline(app_name, consts, kernels, soa_set)
     ops_gen_mpi_lazy(app_name, consts, kernels, soa_set)
+    ops_gen_mpi_lazy(app_name, consts, kernels, soa_set, offload=1)
     ops_gen_mpi_cuda(app_name, consts, kernels, soa_set)
-    ops_gen_mpi_hip(app_name, consts, kernels, soa_set)
+    ops_gen_mpi_cuda(app_name, consts, kernels, soa_set, hip=1)
     ops_gen_mpi_openacc(app_name, consts, kernels, soa_set)
     ops_gen_mpi_opencl(app_name, consts, kernels, soa_set)
+    ops_gen_sycl(app_name, consts, kernels, soa_set)
 
     import subprocess
 

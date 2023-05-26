@@ -1,7 +1,6 @@
 #ifndef __OP_UTIL_H
 #define __OP_UTIL_H
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-
 /*
 * Open source copyright declaration based on BSD open source template:
 * http://www.opensource.org/licenses/bsd-license.php
@@ -133,5 +132,40 @@ inline int off3D(int dim, int *start, int *end, int *size, int *stride) {
   return off;
 }
 
+
+/// @brief set the local memory of a ops_dat from a buf
+/// @param buf pointer to the buf which is always assumed to be in AoS layout
+/// @param dat pointer to the ops_dat data
+/// @param buf_size the size of the buf
+/// @param dat_size
+/// @param d_m
+/// @param elem_size the number of bits per gird point
+/// @param dat_dim the number of elements per grid point
+/// e.g., for a multi_dim (d) int ops_dat elem_size=4*d
+/// @param range_max_dim  the range of slab
+void set_loop_slab(char *buf, char *dat, const int *buf_size,
+                   const int *dat_size, const int *d_m, int elem_size,
+                   int dat_dim, const int *range_max_dim);
+
+/// @brief copy the local data of a ops_dat to a buf
+/// @param buf pointer to the buf which is always assumed to be in AoS layout
+/// @param dat pointer to the ops_dat data
+/// @param buf_size the size of the buf
+/// @param dat_size
+/// @param d_m
+/// @param elem_size the number of bits per gird point
+/// @param dat_dim the number of elements per grid point
+/// e.g., for a multi_dim (d) int ops_dat elem_size=4*d
+/// @param range_max_dim  the range of slab
+void fetch_loop_slab(char *buf, char *dat, const int *buf_size,
+                     const int *dat_size, const int *d_m, int elem_size,
+                     int dat_dim, const int *range_max_dim);
+
+/// @brief determine the range of a ops_dat at a local rank
+/// @param dat a ops_dat
+/// @param global_range
+/// @param local_range
+void determine_local_range(const ops_dat dat, const int *global_range,
+                           int *local_range);
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OP_UTIL_H */

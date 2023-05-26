@@ -18,12 +18,15 @@ HEADERS=poisson_kernel.h
 
 OPS_FILES=poisson.cpp
 
-OPS_GENERATED=poisson_ops.cpp
+OPS_GENERATED_SUFFIX=_ops
 
 OTHER_FILES=
 
 
 APP=poisson
 MAIN_SRC=poisson
+
+#OPS_GENERATOR_VERBOSE=1
+TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp
 
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app

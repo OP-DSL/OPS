@@ -78,16 +78,6 @@ typedef struct {
 typedef sub_block *sub_block_list;
 
 ///
-/// Struct duplicating information in MPI_Datatypes for (strided) halo access
-///
-
-typedef struct {
-  int count;       ///< number of blocks
-  int blocklength; ///< size of blocks
-  int stride;      ///< stride between blocks
-} ops_int_halo;
-
-///
 /// Struct for holding the decomposition details of a dat on an MPI process
 ///
 
@@ -95,7 +85,7 @@ typedef struct {
   /// the decomposition is for this dat
   ops_dat dat;
   /// product array -- used for MPI send/Receives
-  int *prod;
+  size_t *prod;
   /// MPI Types for send/receive -- these should be defined for the dat, not the
   /// block
   MPI_Datatype *mpidat;

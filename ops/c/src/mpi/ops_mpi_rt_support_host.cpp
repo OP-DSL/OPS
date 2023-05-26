@@ -40,6 +40,7 @@
 #include <mpi.h>
 #include <ops_mpi_core.h>
 
+
 void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
               const ops_int_halo *__restrict halo) {
   if (OPS_instance::getOPSInstance()->OPS_soa) {
@@ -91,27 +92,6 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
 
 char *OPS_realloc_fast(char *ptr, size_t olds, size_t news) {
   return (char*)ops_realloc(ptr, news);
-}
-
-void ops_H_D_exchanges_cuda(ops_arg *args, int nargs) {
-  (void)nargs;
-  (void)args;
-}
-
-void ops_set_dirtybit_cuda(ops_arg *args, int nargs) {
-  (void)nargs;
-  (void)args;
-}
-
-void ops_set_dirtybit_opencl(ops_arg *args, int nargs) {
-  (void)nargs;
-  (void)args;
-}
-
-void ops_cpHostToDevice(OPS_instance *instance, void **data_d, void **data_h, size_t size) {
-  (void)data_d;
-  (void)data_h;
-  (void)size;
 }
 
 void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
@@ -175,15 +155,6 @@ void ops_download_dat(ops_dat dat) { (void)dat; }
 
 void ops_upload_dat(ops_dat dat) { (void)dat; }
 
-void ops_free_dat(ops_dat dat) {
-  ops_free_dat_core(dat);
-  ops_free(dat);
-}
-
-void _ops_free_dat(ops_dat dat) {
-  ops_free_dat_core(dat);
-}
-
 void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace memspace) {
   ops_dat_fetch_data_host(dat, part, data);
 }
@@ -198,4 +169,3 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
 void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *range, ops_memspace memspace) {
   ops_dat_set_data_slab_host(dat, part, data, range);
 }
-

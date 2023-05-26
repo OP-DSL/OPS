@@ -1,0 +1,303 @@
+{% extends "cpp/loop_host.cpp.j2" %}
+
+{% block host_prologue %}
+{{super()}}
+
+// Initialize global variable with the dimensions of dats
+    {% for arg in lh.args %}
+        {% if arg is ops_dat %}
+            {% if lh.ndim > 1 or (lh.ndim == 1 and (arg.dim) > 1) %}
+    int xdim{{arg.id}}_{{lh.kernel}} = args[{{arg.id}}].dat->size[0];
+            {% endif %}
+            {% if lh.ndim > 2 or (lh.ndim == 2 and (arg.dim) > 1) %}
+    int ydim{{arg.id}}_{{lh.kernel}} = args[{{arg.id}}].dat->size[1];
+            {% endif %}
+            {% if lh.ndim > 3 or (lh.ndim == 3 and (arg.dim) > 1) %}
+    int zdim{{arg.id}}_{{lh.kernel}} = args[{{arg.id}}].dat->size[2];
+            {% endif %}
+        {% endif %}
+    {% endfor%}
+
+// set up initial pointers and exchange halos if necessary
+    {% for arg in lh.args %}
+        {% if arg is ops_dat %}
+    int base{{arg.id}} = args[{{arg.id}}].dat->base_offset;
+    {{lh.dats[arg.dat_id].typ}} * __restrict__ {{args_list[arg.id]}}_p = ({{lh.dats[arg.dat_id].typ}} *)(args[{{arg.id}}].data + base{{arg.id}});
+            {% if arg.restrict or arg.prolong %}
+#ifdef OPS_MPI
+    sub_dat_list sd{{arg.id}} = OPS_sub_dat_list[args[{{arg_idx}}].dat->index];
+            {% endif %}
+            {% if arg.restrict %}
+    {{args_list[arg.id]}}_p += arg_idx[0] * args[{{arg.id}}].stencil->mgrid_stride[0] - sd{{arg.id}}->decomp_disp[0] + args[{{arg.id}}].dat->d_m[0];
+                {% if lh.ndim > 1 %}
+    {{args_list[arg.id]}}_p += (arg_idx[1]*args[{{arg.id}}].stencil->mgrid_stride[1] - sd{{arg.id}}->decomp_disp[1] + args[{{arg.id}}].dat->d_m[1]) * xdim{{arg.id}}_{{lh.kernel}};
+                {% endif %}
+                {% if lh.ndim > 2 %}
+    {{args_list[arg.id]}}_p += (arg_idx[2]*args[{{arg.id}}].stencil->mgrid_stride[2] - sd{{arg.id}}->decomp_disp[2] + args[{{arg.id}}].dat->d_m[2]) * xdim{{arg.id}}_{{lh.kernel}} * ydim{{arg.id}}_{{lh.kernel}};
+                {% endif %}
+            {% endif %}
+            {% if arg.prolong %}
+    {{args_list[arg.id]}}_p += arg_idx[0]/args[{{arg.id}}].stencil->mgrid_stride[0] - sd{{arg.id}}->decomp_disp[0] + args[{{arg.id}}].dat->d_m[0];
+                {% if lh.ndim > 1 %}
+    {{args_list[arg.id]}}_p += (arg_idx[1]/args[{{arg.id}}].stencil->mgrid_stride[1] - sd{{arg.id}}->decomp_disp[1] + args[{{arg.id}}].dat->d_m[1]) * xdim{{arg.id}}_{{lh.kernel}};"
+                {% endif %}
+                {% if lh.ndim > 2 %}
+    {{args_list[arg.id]}}_p += (arg_idx[2]/args[{{arg.id}}].stencil->mgrid_stride[2] - sd{{arg.id}}->decomp_disp[2] + args[{{arg.id}}].dat->d_m[2]) * xdim{{arg.id}}_{{lh.kernel}} * ydim{{arg.id}}_{{lh.kernel}};"
+                {% endif %}
+            {% endif %}
+            {% if arg.restrict or arg.prolong %}
+#endif
+            {% endif %}
+        {% elif arg is ops_gbl or arg is ops_reduce %}
+            {% if arg is ops_read %}
+    {{arg.typ}} * __restrict__  {{args_list[arg.id]}} = ({{arg.typ}} *)args[{{arg.id}}].data;
+            {% else %}
+#ifdef OPS_MPI
+    {{arg.typ}} * __restrict__ p_a{{arg.id}} = ({{arg.typ}} *)(((ops_reduction)args[{{arg.id}}].data)->data + ((ops_reduction)args[{{arg.id}}].data)->size * block->index);
+#else //OPS_MPI
+    {{arg.typ}} * __restrict__ p_a{{arg.id}} = ({{arg.typ}} *)((ops_reduction)args[{{arg.id}}].data)->data;
+#endif //OPS_MPI
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
+#ifndef OPS_LAZY
+    // Halo exchanges
+    ops_H_D_exchanges_host(args, {{lh.args|length}});
+    ops_halo_exchanges(args, {{lh.args|length}}, range);
+    ops_H_D_exchanges_host(args, {{lh.args|length}});
+#endif //OPS_LAZY
+
+    if (block->instance->OPS_diags > 1) {
+        ops_timers_core(&__c1, &__t1);
+        block->instance->OPS_kernels[{{kernel_idx}}].mpi_time += __t1 - __t2;
+    }
+{% endblock %}
+
+{% block host_loop %}
+    {% for arg in lh.args %}
+        {% if arg is ops_gbl or arg is ops_reduce %}
+            {% if not arg is ops_read %}
+                {% for d in range(arg.dim) %}
+    {{arg.typ}} p_a{{arg.id}}_{{d}} = p_a{{arg.id}}[{{d}}];
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
+    {% set line = [""] %}
+    {% for arg in lh.args %}
+        {% if arg is ops_gbl or arg is ops_reduce %}
+            {% if arg is ops_min %}
+                {% for d in range(arg.dim) %}
+                    {%if line.append(line.pop() + " reduction(min:p_a" + arg.id|string + "_" + d|string + ")") %}{% endif %}
+                {% endfor %}
+            {% endif %}
+            {% if arg is ops_max %}
+                {% for d in range(arg.dim) %}
+                    {%if line.append(line.pop() + " reduction(max:p_a" + arg.id|string + "_" + d|string + ")") %}{% endif %}
+                {% endfor %}
+            {% endif %}
+            {% if arg is ops_inc %}
+                {% for d in range(arg.dim) %}
+                    {%if line.append(line.pop() + " reduction(+:p_a" + arg.id|string + "_" + d|string + ")") %}{% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+    {% if lh.ndim == 3 and (not lh.has_reduction) %}
+        {% set line2 = " collapse(2)"%}
+    {% else %}
+        {% set line2 = line[0] %}
+    {% endif %}
+    {% set indent = [0] %}
+    #pragma omp parallel for{{line2}}
+    {% if lh.ndim > 2 %}
+    for (int n_z = start_indx[2]; n_z < end_indx[2]; n_z++)
+    {
+        {% if indent.append(indent.pop() + 1) %}}{% endif %}
+    {% endif %}
+    {% if lh.ndim > 1 %}
+      {{indent[0] * "  "}}for (int n_y = start_indx[1]; n_y < end_indx[1]; n_y++)
+      {{indent[0] * "  "}}{
+        {% if indent.append(indent.pop() + 1) %}{% endif %}
+    {% endif %}
+
+    {% if lh.ndim > 1%}
+#ifdef __INTEL_COMPILER
+    {{indent[0] * "    "}}#pragma loop_count(10000)
+    {{indent[0] * "    "}}#pragma omp simd{{line[0]}}
+#elif defined(__clang__)
+    {{indent[0] * "    "}}#pragma clang loop vectorize(assume_safety)
+#elif defined(__GNUC__)
+    {{indent[0] * "    "}}#pragma GCC ivdep
+#else
+    {{indent[0] * "    "}}#pragma simd
+#endif
+    {% endif %}
+    {{indent[0] * "    "}}for(int n_x = start_indx[0]; n_x < end_indx[0]; n_x++)
+    {{indent[0] * "    "}}{
+    {% if indent.append(indent.pop() + 1) %}{% endif %}
+    {% if lh.arg_idx != -1 %}
+        {% if lh.ndim == 1 %}
+    {{indent[0] * "    "}}int idx[] = {% raw %}{arg_idx[0] + n_x};{% endraw %}
+        {% elif lh.ndim == 2 %}
+    {{indent[0] * "    "}}int idx[] = {% raw %}{arg_idx[0] + n_x, arg_idx[1] + n_y};{% endraw %}
+        {% elif lh.ndim == 3 %}
+    {{indent[0] * "    "}}int idx[] = {% raw %}{arg_idx[0] + n_x, arg_idx[1] + n_y, arg_idx[2] + n_z};{% endraw %}
+        {% endif %}
+    {% endif %}
+
+    {# Insert declarations for OPS_DATS with offset calculation #}
+    {% for arg in lh.args %}
+        {% if arg is ops_dat %}
+            {% if arg is ops_read %}
+                {% set pre = "const " %}
+            {% else %}
+                {% set pre = "" %}
+            {% endif %}
+            {% set dim = "" %}
+            {% set extradim = 0 %}
+            {% set offset = [""] %}
+            {% set sizelist = [""] %}
+            {% if arg.dim > 1 %}
+                {% set dim -%}{{arg.dim | string}} , {%- endset %}
+                {% set extradim = 1 %}
+            {% endif %}
+            {% if arg.restrict %}
+                {% set n_x -%}n_x * args[{{arg.id}}].stencil->mgrid_stride[0]{%- endset %}
+                {% set n_y -%}n_y * args[{{arg.id}}].stencil->mgrid_stride[1]{%- endset %}
+                {% set n_z -%}n_z * args[{{arg.id}}].stencil->mgrid_stride[2]{%- endset %}
+            {%elif arg.prolong %}
+                {% set n_x -%}(n_x + arg_idx[0] % args[{{arg.id}}].stencil->mgrid_stride[0]) / args[{{arg.id}}].stencil->mgrid_stride[0]{%- endset %}
+                {% set n_y -%}(n_y + arg_idx[1] % args[{{arg.id}}].stencil->mgrid_stride[1]) / args[{{arg.id}}].stencil->mgrid_stride[1]{%- endset %}
+                {% set n_z -%}(n_z + arg_idx[2] % args[{{arg.id}}].stencil->mgrid_stride[2]) / args[{{arg.id}}].stencil->mgrid_stride[2]{%- endset %}
+            {% else %}
+                {% set n_x -%}n_x{%- endset %}
+                {% set n_y -%}n_y{%- endset %} 
+                {% set n_z -%}n_z{%- endset %}             
+            {% endif %}
+            {% if lh.ndim > 0 %}
+                {% set offset_val -%}(n_x * args[{{arg.id}}].stencil->stride[0]){%- endset %}
+                {% if offset.append(offset.pop() + offset_val) %}{% endif %}
+            {% endif %}
+            {% if lh.ndim > 1 %}
+                {% set offset_val -%}(n_y * xdim{{arg.id}}_{{lh.kernel}} * args[{{arg.id}}].stencil->stride[1]){%- endset %}
+                {% if offset.append(offset.pop() + " + " + offset_val) %}{% endif %}
+            {% endif %}
+            {% if lh.ndim > 2 %}
+                {% set offset_val -%}(n_z * xdim{{arg.id}}_{{lh.kernel}} * ydim{{arg.id}}_{{lh.kernel}} * args[{{arg.id}}].stencil->stride[2]){%- endset %}
+                {% if offset.append(offset.pop() + " + " + offset_val) %}{% endif %}
+            {% endif %}
+            {% set dimlabels = "xyzuv" %}
+            {% for i in range(1, lh.ndim + extradim) %}
+                {% if sizelist.append(sizelist.pop() + dimlabels[i-1]|string + "dim" + arg.id|string + "_" + lh.kernel|string + ", ") %}{% endif %}
+            {% endfor %}
+            {% if arg.dim > 1 %}
+#ifdef OPS_SOA
+            {% endif %}
+    {{indent[0] * "    "}}{{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{offset[0]}});
+            {% if arg.dim > 1 %}
+#else
+    {{indent[0] * "    "}}{{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{arg.dim}} * {{offset[0]}});
+#endif
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
+    {# Insert declaration for reduction variables #}
+    {% for arg in lh.args %}
+        {% if arg is ops_gbl or arg is ops_reduce %}
+            {% if arg is ops_min %}
+    {{indent[0] * "    "}}{{arg.typ}} {{args_list[arg.id]}}[{{arg.dim}}];
+                {% for d in range(arg.dim) %}
+    {{indent[0] * "    "}}{{args_list[arg.id]}}[{{d}}] = p_a{{arg.id}}[{{d}}];
+                {% endfor %} {# need +INFINITY_ change to #}
+            {% endif %}
+            {% if arg is ops_max %}
+    {{indent[0] * "    "}}{{arg.typ}} {{args_list[arg.id]}}[{{arg.dim}}];
+                {% for d in range(arg.dim) %}
+    {{indent[0] * "    "}}{{args_list[arg.id]}}[{{d}}] = p_a{{arg.id}}[{{d}}];
+                {% endfor %} {# need -INFINITY_ change to #}
+            {% endif %}
+            {% if arg is ops_inc %}
+    {{indent[0] * "    "}}{{arg.typ}} {{args_list[arg.id]}}[{{arg.dim}}];
+                {% for d in range(arg.dim) %}
+    {{indent[0] * "    "}}{{args_list[arg.id]}}[{{d}}] = ZERO_{{arg.typ}};
+                {% endfor %} 
+            {% endif %}
+            {% if arg is ops_write %}
+    {{indent[0] * "    "}}{{arg.typ}} {{args_list[arg.id]}}[{{arg.dim}}];
+                {% for d in range(arg.dim) %}
+    {{indent[0] * "    "}}{{args_list[arg.id]}}[{{d}}] = ZERO_{{arg.typ}};
+                {% endfor %} 
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
+    {# insert kernel body #}
+    {{indent[0] * "    "}} {{kernel_body}}
+
+    {# Add statements to copy back reduction value calculated in kernel #}
+    {% for arg in lh.args %}
+        {% if arg is ops_gbl or arg is ops_reduce %}
+            {% if arg is ops_min %}
+                {% for d in range(arg.dim) %}
+                {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} = MIN(p_a{{arg.id}}_{{d}}, {{args_list[arg.id]}}[{{d}}]);
+                {% endfor %}            
+            {% endif %}
+            {% if arg is ops_max %}
+                {% for d in range(arg.dim) %}
+                {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} = MAX(p_a{{arg.id}}_{{d}}, {{args_list[arg.id]}}[{{d}}]);
+                {% endfor %}            
+            {% endif %}
+            {% if arg is ops_inc %}
+                {% for d in range(arg.dim) %}
+                {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} += {{args_list[arg.id]}}[{{d}}];
+                {% endfor %}            
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
+    {% if indent.append(indent.pop() - 1) %}{% endif %}
+    {{indent[0] * "    "}}}
+
+    {% if lh.ndim > 1 %}
+        {% if indent.append(indent.pop() - 1) %}{% endif %}
+    {{indent[0] * "  "}}}
+    {% endif %} 
+    {% if lh.ndim > 2 %}
+        {% if indent.append(indent.pop() - 1) %}{% endif %}
+    {{indent[0] * ""}}}
+    {% endif %}  
+
+    {% for arg in lh.args %}
+        {% if arg is ops_gbl or arg is ops_reduce %}
+            {% if not arg is ops_read %}
+                {% for d in range(arg.dim) %}
+    p_a{{arg.id}}[{{d}}] = p_a{{arg.id}}_{{d}};    
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}        
+{% endblock %}
+
+{% block host_epilogue %}
+    if (block->instance->OPS_diags > 1)
+    {
+        ops_timers_core(&__c2, &__t2);
+        block->instance->OPS_kernels[{{kernel_idx}}].time += __t2 - __t1;
+    }
+
+#ifndef OPS_LAZY
+    ops_set_dirtybit_host(args, {{lh.args|length}});
+    {% for arg in lh.args %}
+        {% if arg is ops_dat and (arg is ops_write or arg is ops_rw or arg is ops_inc) %}
+    ops_set_halo_dirtybit3(&args[{{arg.id}}], range);
+        {% endif %}
+    {% endfor %}
+#endif
+
+{{super()}}
+{% endblock %}
+

@@ -10,13 +10,13 @@ if TYPE_CHECKING:
     from store import Location
 
 class AccessType(Enum):
-    READ = 0
-    WRITE = 1 
-    RW = 2
+    OPS_READ = 0
+    OPS_WRITE = 1 
+    OPS_RW = 2
 
-    INC = 3
-    MIN = 4
-    MAX = 5
+    OPS_INC = 3
+    OPS_MIN = 4
+    OPS_MAX = 5
 
     @staticmethod
     def values() -> List[str]:
@@ -25,12 +25,13 @@ class AccessType(Enum):
 # class ArgType(Enum):
 #     ARGDAT = 0
 #     ARGGBL = 1
-    
+
 #     ARGIDX = 2
-    
+
 #     @staticmethod
 #     def values() -> List[str]:
 #         return [x.value for x in list(AccessType)]
+
 
 class OpsError(Exception):
     message: str
@@ -46,6 +47,7 @@ class OpsError(Exception):
         else:
             return f"OPS error: {self.message}"
 
+
 class Type:
     formatter: Callable[["Type"], str]
 
@@ -56,11 +58,12 @@ class Type:
     def __str__(self) -> str:
         return self.__class__.formatter(self)
 
+
 @dataclass(frozen=True)
 class Int(Type):
     signed: bool
     size: int
-    
+
     def __repr__(self) -> str:
         if self.signed and self.size == 32:
             return "int"
@@ -68,6 +71,7 @@ class Int(Type):
             return "unsigned int"
         else:
             return f"{'i' if self.signed else 'u'}{self.size}"
+
 
 @dataclass(frozen=True)
 class Float(Type):
@@ -81,12 +85,14 @@ class Float(Type):
         else:
             return f"f{self.size}"
 
+
 @dataclass(frozen=bool)
 class Bool(Type):
     pass
 
     def __repr__(self) -> str:
         return "bool"
+
 
 @dataclass(frozen=True)
 class Custom(Type):
@@ -95,17 +101,19 @@ class Custom(Type):
     def __repr__(self) -> str:
         return self.name
 
+
 @dataclass(frozen=True)
 class Const:
     loc: Location
     ptr: str
-    
-    dim: int
+
+    dim: str
     typ: Type
     name: str
 
     def __str__(self) -> str:
         return f"Const(name='{self.name}', loc={self.loc}, ptr='{self.ptr}', dim={self.dim}, type={self.typ})"
+
 
 @dataclass(frozen=True)
 class Range:
@@ -116,6 +124,7 @@ class Range:
 
     def __str__(self) -> str:
         return f"Range(loc={self.loc}, ptr='{self.ptr}', dim={self.dim})"
+
 
 @dataclass(frozen=True)
 class Dat:
@@ -143,9 +152,10 @@ class Dat:
     #         OpsError(f"dim of d_m={self.d_m} is not same as dat dim={self.dim} of dat='{self.name}'")
     #     elif len(self.d_p) != self.dim:
     #         OpsError(f"dim of d_p={self.d_p} is not same as dat dim={self.dim} of dat='{self.name}'")
-            
+
     def __str__(self) -> str:
         return f"Dat(block_id={self.block_id}, id={self.id}, ptr='{self.ptr}', dim={self.dim}, type={self.typ}, soa={self.soa})"
+
 
 @dataclass(frozen=True)
 class Stencil:
@@ -174,18 +184,18 @@ class ArgDat(Arg):
 
     dat_id: int
     stencil_id: int
-    
+
     dim: int
     stride: Optional[List] = None
-    
+
     def __post_init__(self):  
         object.__setattr__(self, 'stride', [1]*3)
-        
+
     def __str__(self) -> str:
         return (
             f"ArgDat(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17} opt={self.opt}, dat_id={self.dat_id}, stencil_id={self.stencil_id})"
             )
-        
+
 @dataclass(frozen=True)
 class ArgGbl(Arg):
     access_type: AccessType
@@ -194,9 +204,9 @@ class ArgGbl(Arg):
 
     dim: int
     typ: Type
-    
+
     #opt : bool
-    
+
     def __str__(self) -> str:
         return (
             f"ArgGbl(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17}" 
@@ -217,7 +227,7 @@ class ArgReduce(Arg):
             f"ArgReduce(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17}), " ##opt={self.opt}, "
             f"ptr={self.ptr}, dim={self.dim}, type={self.typ})"
         )
-    
+
 @dataclass(frozen=True)
 class ArgIdx(Arg):
     pass
@@ -253,7 +263,7 @@ class Block:
         if dat_id is None:
             dat_id = len(self.dats)
             self.dats.append(dat)
-            
+
 
 class Loop:
     loc: Location
@@ -267,9 +277,10 @@ class Loop:
 
     dats: List[Dat]
     stencils: List[Stencil]
-    
+
     arg_idx: Optional[int] = -1
     multiGrid: Optional[bool] = False
+    has_reduction: Optional[bool] = False
 
     def __init__(self, loc: Location, kernel: str, block: Block, range: Range, ndim: int) -> None:
         self.loc = loc
@@ -324,6 +335,9 @@ class Loop:
 
         arg_id = len(self.args)
 
+        if not self.has_reduction:
+            self.has_reduction = True
+
         arg = ArgReduce(arg_id, loc, access_type, reduct_handle, dim, typ)
         self.args.append(arg)
 
@@ -354,7 +368,7 @@ class Loop:
     def get_dat(self, x: Union[ArgDat, int]) -> Optional[Dat]:
         if isinstance(x, ArgDat) and x.dat_id < len(self.dats):
             return self.dats[x.dat_id]
-        
+
         if isinstance(x, int) and x < len(self.dats):
             return self.dats[x]
 
@@ -370,7 +384,4 @@ class Loop:
             dat_str = f"\n    {dat_str}\n"
 
         return f"{kernel_detail_str}\n\n    {args_str}\n {dat_str}\n"
-        
 
-
-    

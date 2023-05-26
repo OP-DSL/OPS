@@ -31,20 +31,12 @@
 */
 
 /** @file
-  * @brief OPS opencl specific runtime support functions
-  * @author Gihan Mudalige and Istvan Reguly (adapting OP2 OpenCL backend by
- * Endre Lazslo)
-  * @details Implements opencl backend runtime support functions
+  * @brief OPS common OpenCL-specific functions (non-MPI and MPI)
+  * @author Gihan Mudalige, Istvan Reguly
+  * @details Implements the OpenCL-specific routines shared between single-GPU 
+  * and MPI+OpenCL backends
   */
 
-//
-// header files
-//
-
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 // Turn off warnings about deprecated APIs
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
@@ -184,16 +176,84 @@ void __clSafeCall(cl_int ret, const char *file, const int line) {
   }
 }
 
-void pfn_notify(const char *errinfo, const void *private_info, size_t cb,
-                void *user_data) {
-    (void)user_data;(void)cb;
-  OPSException ex(OPS_OPENCL_ERROR);
-  ex << "OpenCL Error (via pfn_notify) errinfo : " << errinfo << " private info: " << (const char *)private_info;
-  throw ex;
+void ops_init_device(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
+  if ((instance->OPS_block_size_x * instance->OPS_block_size_y * instance->OPS_block_size_z) > 1024) {
+    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
+  }
+  for (int n = 1; n < argc; n++) {
+    if (strncmp(argv[n], "OPS_CL_DEVICE=", 14) == 0) {
+      instance->OPS_cl_device = atoi(argv[n] + 14);
+      instance->ostream() << "\n OPS_cl_device = " << instance->OPS_cl_device << '\n';
+    }
+  }
+
+  instance->opencl_instance = new OPS_instance_opencl();
+  instance->opencl_instance->copy_tobuf_kernel = NULL;
+  instance->opencl_instance->copy_frombuf_kernel = NULL;
+  instance->opencl_instance->copy_opencl_kernel = NULL;
+  instance->opencl_instance->isbuilt_copy_tobuf_kernel = false;
+  instance->opencl_instance->isbuilt_copy_frombuf_kernel = false;
+  instance->opencl_instance->isbuilt_copy_opencl_kernel = false;
+
+  cutilDeviceInit(instance, argc, argv);
+  instance->OPS_hybrid_gpu = 1;
+}
+
+void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
+  cl_int ret = 0;
+  *ptr = (char*)clCreateBuffer(instance->opencl_instance->OPS_opencl_core.context,
+      CL_MEM_READ_WRITE, bytes, NULL, &ret);
+  clSafeCall(ret);
+  clSafeCall(clFinish(instance->opencl_instance->OPS_opencl_core.command_queue));
+}
+
+void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
+  *ptr = ops_malloc(bytes);
+}
+
+void ops_device_free(OPS_instance *instance, void** ptr) {
+  clReleaseMemObject((cl_mem)(*ptr));
+  *ptr = nullptr;
+}
+
+void ops_device_freehost(OPS_instance *instance, void** ptr) {
+  ops_free(*ptr);
+  *ptr = nullptr;
+}
+
+void ops_device_memcpy_h2d(OPS_instance *instance, void** to, void **from, size_t size) {
+  clSafeCall(clEnqueueWriteBuffer(instance->opencl_instance->OPS_opencl_core.command_queue,
+                                  (cl_mem)*to, CL_TRUE, 0, size, *from, 0,
+                                  NULL, NULL));
+  clSafeCall(clFinish(instance->opencl_instance->OPS_opencl_core.command_queue));
+}
+
+void ops_device_memcpy_d2h(OPS_instance *instance, void** to, void **from, size_t size) {
+  clSafeCall(clEnqueueReadBuffer(instance->opencl_instance->OPS_opencl_core.command_queue,
+                                 (cl_mem)*from, CL_TRUE, 0, size,
+                                 *to, 0, NULL, NULL));
+  clSafeCall(clFinish(instance->opencl_instance->OPS_opencl_core.command_queue));
+}
+
+void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_t size) {
+  clSafeCall(clEnqueueCopyBuffer(instance->opencl_instance->OPS_opencl_core.command_queue,
+                                 (cl_mem)*from, (cl_mem)*to, 0, 0, size,
+                                  0, NULL, NULL));
+  clSafeCall(clFinish(instance->opencl_instance->OPS_opencl_core.command_queue));
+}
+
+void ops_device_memset(OPS_instance *instance, void** ptr, int val, size_t size) {
+    cl_int val2 = val;
+    clSafeCall(clEnqueueFillBuffer(instance->opencl_instance->OPS_opencl_core.command_queue,
+                                  (cl_mem)*ptr, (const void*)&val2, sizeof(int), 0, size, 0, NULL, NULL));
+}
+
+void ops_device_sync(OPS_instance *instance) {
+  clSafeCall(clFinish(instance->opencl_instance->OPS_opencl_core.command_queue));
 }
 
 /**adapted from ocl_tools.c by Dan Curran (dancrn.com)*/
-void openclDeviceInit(OPS_instance *instance, const int argc, const char * const argv[]) {
+void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const argv[]) {
   (void)argc;
   (void)argv;
 
@@ -327,206 +387,4 @@ void openclDeviceInit(OPS_instance *instance, const int argc, const char * const
 
   instance->ostream() << "Error: No available devices found.\n";
   return;
-}
-
-void ops_cpHostToDevice(OPS_instance *instance, void **data_d, void **data_h, size_t size) {
-  // printf("Copying data from host to device\n");
-  cl_int ret = 0;
-  *data_d = (cl_mem)clCreateBuffer(instance->opencl_instance->OPS_opencl_core.context, CL_MEM_READ_WRITE,
-                                   size, NULL, &ret);
-  clSafeCall(ret);
-  clSafeCall(clEnqueueWriteBuffer(instance->opencl_instance->OPS_opencl_core.command_queue,
-                                  (cl_mem)*data_d, CL_TRUE, 0, size, *data_h, 0,
-                                  NULL, NULL));
-  clSafeCall(clFinish(instance->opencl_instance->OPS_opencl_core.command_queue));
-}
-
-void ops_download_dat(ops_dat dat) {
-
-  // if (!instance->OPS_hybrid_gpu) return;
-  size_t bytes = dat->elem_size;
-  for (int i = 0; i < dat->block->dims; i++)
-    bytes = bytes * dat->size[i];
-
-  // printf("downloading to host from device %d bytes\n",bytes);
-  clSafeCall(clEnqueueReadBuffer(dat->block->instance->opencl_instance->OPS_opencl_core.command_queue,
-                                 (cl_mem)dat->data_d, CL_TRUE, 0, bytes,
-                                 dat->data, 0, NULL, NULL));
-  // clSafeCall( clFlush(instance->opencl_instance->OPS_opencl_core.command_queue) );
-  clSafeCall(clFinish(dat->block->instance->opencl_instance->OPS_opencl_core.command_queue));
-}
-
-void ops_upload_dat(ops_dat dat) {
-
-  // if (!instance->OPS_hybrid_gpu) return;
-  size_t bytes = dat->elem_size;
-  for (int i = 0; i < dat->block->dims; i++)
-    bytes = bytes * dat->size[i];
-
-  clSafeCall(clEnqueueWriteBuffer(dat->block->instance->opencl_instance->OPS_opencl_core.command_queue,
-                                  (cl_mem)dat->data_d, CL_TRUE, 0, bytes,
-                                  dat->data, 0, NULL, NULL));
-  // clSafeCall( clFlush(instance->opencl_instance->OPS_opencl_core.command_queue) );
-  clSafeCall(clFinish(dat->block->instance->opencl_instance->OPS_opencl_core.command_queue));
-}
-
-void ops_H_D_exchanges_host(ops_arg *args, int nargs) {
-  for (int n = 0; n < nargs; n++) {
-    if (args[n].argtype == OPS_ARG_DAT &&
-        args[n].dat->locked_hd > 0) {
-      OPSException ex(OPS_RUNTIME_ERROR, "ERROR: ops_par_loops involving datasets for which raw pointers have not been released are not allowed");
-      throw ex;
-    }
-    if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 2) {
-      ops_download_dat(args[n].dat);
-      args[n].dat->dirty_hd = 0;
-    }
-  }
-}
-
-void ops_H_D_exchanges_device(ops_arg *args, int nargs) {
-  for (int n = 0; n < nargs; n++) {
-    if (args[n].argtype == OPS_ARG_DAT &&
-        args[n].dat->locked_hd > 0) {
-      OPSException ex(OPS_RUNTIME_ERROR, "ERROR: ops_par_loops involving datasets for which raw pointers have not been released are not allowed");
-      throw ex;
-    }
-    if (args[n].argtype == OPS_ARG_DAT && args[n].dat->dirty_hd == 1) {
-      ops_upload_dat(args[n].dat);
-      args[n].dat->dirty_hd = 0;
-    }
-  }
-}
-
-void ops_set_dirtybit_device(ops_arg *args, int nargs) {
-  for (int n = 0; n < nargs; n++) {
-    if ((args[n].argtype == OPS_ARG_DAT) &&
-        (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
-      args[n].dat->dirty_hd = 2;
-    }
-  }
-}
-
-//
-// routine to fetch data from GPU to CPU (with transposing SoA to AoS if needed)
-//
-
-void ops_opencl_get_data(ops_dat dat) {
-  // if (!instance->OPS_hybrid_gpu) return;
-  if (dat->dirty_hd == 2)
-    dat->dirty_hd = 0;
-  else
-    return;
-  ops_download_dat(dat);
-}
-
-//
-// routine to put data from CPU to GPU (with transposing SoA to AoS if needed)
-//
-
-void ops_opencl_put_data(ops_dat dat) {
-  // if (!OPS_hybrid_gpu) return;
-  if (dat->dirty_hd == 1)
-    dat->dirty_hd = 0;
-  else
-    return;
-  ops_upload_dat(dat);
-}
-//
-// routines to resize constant/reduct arrays, if necessary
-//
-
-void reallocConstArrays(OPS_instance *instance, int consts_bytes) {
-  cl_int ret;
-  if (consts_bytes > instance->OPS_consts_bytes) {
-    if (instance->OPS_consts_bytes > 0) {
-      ops_free(instance->OPS_consts_h);
-      clSafeCall(clReleaseMemObject((cl_mem)instance->OPS_consts_d));
-    }
-    instance->OPS_consts_bytes = 4 * consts_bytes; // 4 is arbitrary, more than needed
-    instance->OPS_consts_h = (char *)ops_malloc(instance->OPS_consts_bytes);
-    instance->OPS_consts_d =
-        (char *)clCreateBuffer(instance->opencl_instance->OPS_opencl_core.context, CL_MEM_READ_WRITE,
-                               instance->OPS_consts_bytes, NULL, &ret);
-    clSafeCall(ret);
-  }
-}
-
-void reallocReductArrays(OPS_instance *instance, int reduct_bytes) {
-  cl_int ret;
-  if (reduct_bytes > instance->OPS_reduct_bytes) {
-    if (instance->OPS_reduct_bytes > 0) {
-      ops_free(instance->OPS_reduct_h);
-      clSafeCall(clReleaseMemObject((cl_mem)instance->OPS_reduct_d));
-    }
-    instance->OPS_reduct_bytes = 4 * reduct_bytes; // 4 is arbitrary, more than needed
-    instance->OPS_reduct_h = (char *)ops_malloc(instance->OPS_reduct_bytes);
-    instance->OPS_reduct_d =
-        (char *)clCreateBuffer(instance->opencl_instance->OPS_opencl_core.context, CL_MEM_READ_WRITE,
-                               instance->OPS_reduct_bytes, NULL, &ret);
-    clSafeCall(ret);
-  }
-}
-
-//
-// routines to move constant/reduct arrays
-//
-
-void mvConstArraysToDevice(OPS_instance *instance, int consts_bytes) {
-  instance->OPS_gbl_changed = 0;
-  if (instance->OPS_gbl_prev != NULL)
-    for (int i = 0; i < consts_bytes; i++) {
-      if (instance->OPS_consts_h[i] != instance->OPS_gbl_prev[i])
-        instance->OPS_gbl_changed = 1;
-    }
-  else {
-    instance->OPS_gbl_changed = 1;
-    instance->OPS_gbl_prev = (char *)ops_malloc(consts_bytes);
-  }
-
-  if (instance->OPS_gbl_changed) {
-    clSafeCall(clEnqueueWriteBuffer(
-        instance->opencl_instance->OPS_opencl_core.command_queue, (cl_mem)instance->OPS_consts_d, CL_TRUE, 0,
-        consts_bytes, (void *)instance->OPS_consts_h, 0, NULL, NULL));
-    // clSafeCall( clFlush(instance->opencl_instance->OPS_opencl_core.command_queue) );
-    // clSafeCall( clFinish(instance->opencl_instance->OPS_opencl_core.command_queue) );
-    memcpy(instance->OPS_gbl_prev, instance->OPS_consts_h, consts_bytes);
-  }
-}
-
-void mvReductArraysToDevice(OPS_instance *instance, int reduct_bytes) {
-  clSafeCall(clEnqueueWriteBuffer(
-      instance->opencl_instance->OPS_opencl_core.command_queue, (cl_mem)instance->OPS_reduct_d, CL_FALSE, 0,
-      reduct_bytes, (void *)instance->OPS_reduct_h, 0, NULL, NULL));
-  // clSafeCall( clFlush(instance->opencl_instance->OPS_opencl_core.command_queue) );
-  // clSafeCall( clFinish(instance->opencl_instance->OPS_opencl_core.command_queue) );
-}
-
-void mvReductArraysToHost(OPS_instance *instance, int reduct_bytes) {
-  clSafeCall(clEnqueueReadBuffer(instance->opencl_instance->OPS_opencl_core.command_queue,
-                                 (cl_mem)instance->OPS_reduct_d, CL_TRUE, 0, reduct_bytes,
-                                 (void *)instance->OPS_reduct_h, 0, NULL, NULL));
-  // clSafeCall( clFlush(instance->opencl_instance->OPS_opencl_core.command_queue) );
-  // clSafeCall( clFinish(instance->opencl_instance->OPS_opencl_core.command_queue) );
-}
-
-void ops_opencl_exit(OPS_instance *instance) {
-  if (!instance->OPS_hybrid_gpu)
-    return;
-  // clSafeCall( clFlush(instance->opencl_instance->OPS_opencl_core.command_queue) );
-  clSafeCall(clFinish(instance->opencl_instance->OPS_opencl_core.command_queue));
-  clSafeCall(clReleaseCommandQueue(instance->opencl_instance->OPS_opencl_core.command_queue));
-  clSafeCall(clReleaseContext(instance->opencl_instance->OPS_opencl_core.context));
-  ops_free(instance->opencl_instance->OPS_opencl_core.platform_id);
-}
-
-void ops_free_dat(ops_dat dat) {
-  delete dat; 
-}
-
-// _ops_free_dat is called directly from ~ops_dat_core
-void _ops_free_dat(ops_dat dat) {
-  clReleaseMemObject((cl_mem)dat->data_d);
-  ops_free_dat_core(dat);
 }

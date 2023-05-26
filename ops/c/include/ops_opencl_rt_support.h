@@ -66,8 +66,7 @@ typedef struct {
 } ops_opencl_core;
 
 #include <ops_lib_core.h>
-
-#define OPS_WARPSIZE 32
+#include <ops_device_rt_support.h>
 
 class OPS_instance_opencl  {
 public:
@@ -83,20 +82,7 @@ public:
 };
 
 #define clSafeCall(ret) __clSafeCall(ret, __FILE__, __LINE__)
-
-void openclDeviceInit(OPS_instance *instance, const int argc, const char * const argv[]);
 void __clSafeCall(cl_int ret, const char *file, const int line);
-void ops_opencl_get_data(ops_dat dat);
-void ops_opencl_put_data(ops_dat dat);
-void reallocConstArrays(OPS_instance *instance,int consts_bytes);
-void reallocReductArrays(OPS_instance *instance,int reduct_bytes);
-void mvConstArraysToDevice(OPS_instance *instance,int consts_bytes);
-void mvReductArraysToDevice(OPS_instance *instance,int reduct_bytes);
-void mvReductArraysToHost(OPS_instance *instance,int reduct_bytes);
-void ops_opencl_exit(OPS_instance *instance);
-void ops_upload_dat(ops_dat dat);
-void ops_download_dat(ops_dat dat);
-void ops_internal_copy_opencl(ops_kernel_descriptor *desc);
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_OPENCL_RT_SUPPORT_H */

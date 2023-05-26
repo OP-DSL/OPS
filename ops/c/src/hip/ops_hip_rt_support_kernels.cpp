@@ -31,9 +31,9 @@
 */
 
 /** @file
-  * @brief OPS cuda specific runtime support functions
+  * @brief OPS hip specific runtime support functions
   * @author Gihan Mudalige
-  * @details Implements cuda backend runtime support functions
+  * @details Implements hip backend runtime support functions
   */
 
 //
@@ -46,14 +46,10 @@
 #include <string.h>
 
 #include <hip/hip_runtime.h>
+#include <hip/hip_runtime_api.h>
 
 #include <ops_hip_rt_support.h>
 #include <ops_lib_core.h>
-
-/*__global__ void copy_kernel(char *dest, char *src, int size ) {
-  int tid = blockIdx.x;
-  memcpy(&dest[tid],&src[tid],size);
-}*/
 
 __global__ void copy_kernel_tobuf(char *dest, char *src, int rx_s, int rx_e,
                                   int ry_s, int ry_e, int rz_s, int rz_e,
@@ -62,9 +58,9 @@ __global__ void copy_kernel_tobuf(char *dest, char *src, int rx_s, int rx_e,
                                   int buf_strides_x, int buf_strides_y,
                                   int buf_strides_z, int type_size, int dim, int OPS_soa) {
 
-  int idx_z = rz_s + z_step * (hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z);
-  int idx_y = ry_s + y_step * (hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y);
-  int idx_x = rx_s + x_step * (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x);
+  int idx_z = rz_s + z_step * (blockDim.z * blockIdx.z + threadIdx.z);
+  int idx_y = ry_s + y_step * (blockDim.y * blockIdx.y + threadIdx.y);
+  int idx_x = rx_s + x_step * (blockDim.x * blockIdx.x + threadIdx.x);
 
   if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
       (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
@@ -77,7 +73,7 @@ __global__ void copy_kernel_tobuf(char *dest, char *src, int rx_s, int rx_e,
              (idx_x - rx_s) * x_step * buf_strides_x) *
             type_size * dim;
     for (int d = 0; d < dim; d++) {
-      memcpy(dest+d*type_size, src, type_size);//??
+      memcpy(dest+d*type_size, src, type_size);
       if (OPS_soa) src += size_x * size_y * size_z * type_size;
       else src += type_size;
     }
@@ -91,9 +87,9 @@ __global__ void copy_kernel_frombuf(char *dest, char *src, int rx_s, int rx_e,
                                     int buf_strides_x, int buf_strides_y,
                                     int buf_strides_z, int type_size, int dim, int OPS_soa) {
 
-  int idx_z = rz_s + z_step * (hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z);
-  int idx_y = ry_s + y_step * (hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y);
-  int idx_x = rx_s + x_step * (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x);
+  int idx_z = rz_s + z_step * (blockDim.z * blockIdx.z + threadIdx.z);
+  int idx_y = ry_s + y_step * (blockDim.y * blockIdx.y + threadIdx.y);
+  int idx_x = rx_s + x_step * (blockDim.x * blockIdx.x + threadIdx.x);
 
   if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
       (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
@@ -106,7 +102,7 @@ __global__ void copy_kernel_frombuf(char *dest, char *src, int rx_s, int rx_e,
             (idx_x - rx_s) * x_step * buf_strides_x) *
            type_size * dim;
     for (int d = 0; d < dim; d++) {
-      memcpy(dest, src + d*type_size, type_size);//??
+      memcpy(dest, src + d*type_size, type_size);
       if (OPS_soa) dest += size_x * size_y * size_z * type_size;
       else dest += type_size;
     }
@@ -140,14 +136,11 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 
   dim3 grid(blk_x, blk_y, blk_z);
   dim3 tblock(thr_x, thr_y, thr_z);
-  /*copy_kernel_tobuf<<<grid, tblock>>>(
+  hipLaunchKernelGGL(copy_kernel_tobuf, grid, tblock, 0, 0, 
       dest, src->data_d, rx_s, rx_e, ry_s, ry_e, rz_s, rz_e, x_step, y_step,
       z_step, src->size[0], src->size[1], src->size[2], buf_strides_x,
-      buf_strides_y, buf_strides_z, src->type_size, src->dim, src->block->instance->OPS_soa);*/
-  hipLaunchKernelGGL(copy_kernel_tobuf,
-      grid, tblock,0,0,dest, src->data_d, rx_s, rx_e, ry_s, ry_e, rz_s, rz_e, x_step, y_step,//??
-      z_step, src->size[0], src->size[1], src->size[2], buf_strides_x,
       buf_strides_y, buf_strides_z, src->type_size, src->dim, src->block->instance->OPS_soa);
+  hipSafeCall(src->block->instance->ostream(),hipGetLastError());
 
   // TODO: MPI buffers and GPUDirect
 }
@@ -180,18 +173,13 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
 
   dim3 grid(blk_x, blk_y, blk_z);
   dim3 tblock(thr_x, thr_y, thr_z);
-  /*copy_kernel_frombuf<<<grid, tblock>>>(
+  hipLaunchKernelGGL(copy_kernel_frombuf, grid, tblock, 0, 0, 
       dest->data_d, src, rx_s, rx_e, ry_s, ry_e, rz_s, rz_e, x_step, y_step,
       z_step, dest->size[0], dest->size[1], dest->size[2], buf_strides_x,
-      buf_strides_y, buf_strides_z, dest->type_size, dest->dim, dest->block->instance->OPS_soa);*/
-  hipLaunchKernelGGL(copy_kernel_frombuf,
-      grid, tblock,0,0,dest->data_d, src, rx_s, rx_e, ry_s, ry_e, rz_s, rz_e, x_step, y_step,
-      z_step, dest->size[0], dest->size[1], dest->size[2], buf_strides_x,
       buf_strides_y, buf_strides_z, dest->type_size, dest->dim, dest->block->instance->OPS_soa);
-      
+  hipSafeCall(dest->block->instance->ostream(),hipGetLastError());
   dest->dirty_hd = 2;
 }
-
 
 template <int dir>
 __global__ void ops_internal_copy_hip_kernel(char * dat0_p, char *dat1_p,
@@ -210,9 +198,9 @@ __global__ void ops_internal_copy_hip_kernel(char * dat0_p, char *dat1_p,
 #endif
         int dim, int type_size,
         int OPS_soa) {
-  int i = start0 + hipThreadIdx_x + hipBlockIdx_x*hipBlockDim_x;
-  int j = start1 + hipThreadIdx_y + hipBlockIdx_y*hipBlockDim_y;
-  int rest = hipThreadIdx_z + hipBlockIdx_z*hipBlockDim_z;
+  int i = start0 + threadIdx.x + blockIdx.x*blockDim.x;
+  int j = start1 + threadIdx.y + blockIdx.y*blockDim.y;
+  int rest = threadIdx.z + blockIdx.z*blockDim.z;
   int mult = OPS_soa ? type_size : dim*type_size;
 
     long fullsize = s0;
@@ -286,8 +274,8 @@ __global__ void ops_internal_copy_hip_kernel(char * dat0_p, char *dat1_p,
 }
 
 
-void ops_internal_copy_hip(ops_kernel_descriptor *desc) {
-  int reverse = strcmp(desc->name, "ops_internal_copy_hip_reverse")==0;
+void ops_internal_copy_device(ops_kernel_descriptor *desc) {
+  int reverse = strcmp(desc->name, "ops_internal_copy_device_reverse")==0;
   int range[2*OPS_MAX_DIM]={0};
   for (int d = 0; d < desc->dim; d++) {
     range[2*d] = desc->range[2*d];
@@ -324,7 +312,7 @@ void ops_internal_copy_hip(ops_kernel_descriptor *desc) {
 #endif
 #endif
 #endif
-
+  
   dim3 grid((range[2*0+1]-range[2*0] - 1) / dat0->block->instance->OPS_block_size_x + 1,
             (range[2*1+1]-range[2*1] - 1) / dat0->block->instance->OPS_block_size_y + 1,
            ((range[2*2+1]-range[2*2] - 1) / dat0->block->instance->OPS_block_size_z + 1) *
@@ -336,7 +324,7 @@ void ops_internal_copy_hip(ops_kernel_descriptor *desc) {
 
   if (grid.x>0 && grid.y>0 && grid.z>0) {
     if (reverse)
-    hipLaunchKernelGGL(ops_internal_copy_hip_kernel<1>,grid,tblock,0,0,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(ops_internal_copy_hip_kernel<1>), grid, tblock, 0, 0, 
         dat0_p,
         dat1_p,
         s0,s01, range[2*0], range[2*0+1],
@@ -356,7 +344,7 @@ void ops_internal_copy_hip(ops_kernel_descriptor *desc) {
         dat0->block->instance->OPS_soa
         );
     else
-  hipLaunchKernelGGL(ops_internal_copy_hip_kernel<0>,grid,tblock,0,0,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(ops_internal_copy_hip_kernel<0>), grid, tblock, 0, 0, 
         dat0_p,
         dat1_p,
         s0,s01, range[2*0], range[2*0+1],

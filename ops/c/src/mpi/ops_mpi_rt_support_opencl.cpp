@@ -53,6 +53,16 @@ cl_kernel *unpacker1_kernel = NULL;
 cl_kernel *unpacker1_soa_kernel = NULL;
 cl_kernel *unpacker4_kernel = NULL;
 
+void ops_exit_device(OPS_instance *instance) {
+  if (halo_buffer_d != NULL)
+    clReleaseMemObject((cl_mem)(halo_buffer_d));
+  clSafeCall(clFinish(instance->opencl_instance->OPS_opencl_core.command_queue));
+  clSafeCall(clReleaseCommandQueue(instance->opencl_instance->OPS_opencl_core.command_queue));
+  clSafeCall(clReleaseContext(instance->opencl_instance->OPS_opencl_core.context));
+  ops_free(instance->opencl_instance->OPS_opencl_core.platform_id);
+  delete instance->opencl_instance;
+}
+
 const char packer1_kernel_src[] =
     "__kernel void ops_opencl_packer1("
     "__global const char* restrict src,  __global char* restrict dest,"
@@ -169,7 +179,7 @@ void ops_pack(ops_dat dat, const int src_offset, char *__restrict dest,
               const ops_int_halo *__restrict halo) {
 
   if (dat->dirty_hd == 1) {
-    ops_upload_dat(dat);
+    ops_put_data(dat);
     dat->dirty_hd = 0;
   }
 
@@ -451,7 +461,7 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
                 const ops_int_halo *__restrict halo) {
 
   if (dat->dirty_hd == 1) {
-    ops_upload_dat(dat);
+    ops_put_data(dat);
     dat->dirty_hd = 0;
   }
 
@@ -743,7 +753,7 @@ void ops_pack3(ops_dat dat, const int src_offset, char *__restrict dest,
   const char *__restrict src = dat->data + src_offset * dat->elem_size;
 
   if (dat->dirty_hd == 2) {
-    ops_download_dat(dat);
+    ops_get_data(dat);
     dat->dirty_hd = 0;
   }
   for (int i = 0; i < halo->count; i++) {
@@ -758,7 +768,7 @@ void ops_unpack3(ops_dat dat, const int dest_offset, const char *__restrict src,
   char *__restrict dest = dat->data + dest_offset * dat->elem_size;
 
   if (dat->dirty_hd == 2) {
-    ops_download_dat(dat);
+    ops_get_data(dat);
     dat->dirty_hd = 0;
   }
   for (int i = 0; i < halo->count; i++) {
@@ -766,7 +776,7 @@ void ops_unpack3(ops_dat dat, const int dest_offset, const char *__restrict src,
     src += halo->blocklength;
     dest += halo->stride;
   }
-  // ops_upload_dat(dat);
+  // ops_put_data(dat);
   dat->dirty_hd = 1;
 }
 
@@ -933,7 +943,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   cl_mem gpu_ptr = halo_buffer_d2;
 
   if (src->dirty_hd == 1) {
-    ops_upload_dat(src);
+    ops_put_data(src);
     src->dirty_hd = 0;
   }
 
@@ -1086,7 +1096,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   gpu_ptr = halo_buffer_d2;
 
   if (dest->dirty_hd == 1) {
-    ops_upload_dat(dest);
+    ops_put_data(dest);
     dest->dirty_hd = 0;
   }
 
@@ -1215,7 +1225,7 @@ const char copy_opencl_kernel_src[] =
 "\n"
 "}\n";
 
-void ops_internal_copy_opencl(ops_kernel_descriptor *desc) {
+void ops_internal_copy_device(ops_kernel_descriptor *desc) {
   int range[2*OPS_MAX_DIM]={0};
   for (int d = 0; d < desc->dim; d++) {
     range[2*d] = desc->range[2*d];
@@ -1289,7 +1299,7 @@ void ops_internal_copy_opencl(ops_kernel_descriptor *desc) {
       block->instance->ostream() <<
               "\n========================================================= \n";
       throw OPSException(OPS_OPENCL_BUILD_ERROR, build_log);
-      ops_free(build_log);
+      //ops_free(build_log);
     }
 
     // Create the OpenCL kernel
@@ -1377,7 +1387,7 @@ void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *ra
       range2[2*i+1] = 1;
     }
     if (dat->dirty_hd == 1) {
-      ops_upload_dat(dat);
+      ops_put_data(dat);
       dat->dirty_hd = 0;
     }
     ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
@@ -1391,10 +1401,10 @@ void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *ra
       prod *= target->size[d];
     }
     ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    desc->name = "ops_internal_copy_opencl";
-    desc->device = 1;
-    desc->function = ops_internal_copy_opencl;
-    ops_internal_copy_opencl(desc);
+    strcpy(desc->name, "ops_internal_copy_device\0");
+    desc->isdevice = 1;
+    desc->func = ops_internal_copy_device;
+    ops_internal_copy_device(desc);
     target->data_d = NULL;
     ops_free(target);
     ops_free(desc->args);
@@ -1416,7 +1426,7 @@ void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *rang
       range2[2*i+1] = 1;
     }
     if (dat->dirty_hd == 1) {
-      ops_upload_dat(dat);
+      ops_put_data(dat);
     }
     ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
     target->data_d = data;
@@ -1429,10 +1439,10 @@ void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *rang
       prod *= target->size[d];
     }
     ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    desc->name = "ops_internal_copy_opencl_reverse";
-    desc->device = 1;
-    desc->function = ops_internal_copy_opencl;
-    ops_internal_copy_opencl(desc);
+    strcpy(desc->name, "ops_internal_copy_device_reverse\0");
+    desc->isdevice = 1;
+    desc->func = ops_internal_copy_device;
+    ops_internal_copy_device(desc);
     target->data_d = NULL;
     ops_free(target);
     ops_free(desc->args);
@@ -1458,7 +1468,7 @@ void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace
       range[2*i+1] = 1;
     }
     if (dat->dirty_hd == 1) {
-      ops_upload_dat(dat);
+      ops_put_data(dat);
       dat->dirty_hd = 0;
     }
     ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
@@ -1467,10 +1477,10 @@ void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace
     target->base_offset = 0;
     for (int d = 0; d < OPS_MAX_DIM; d++) target->size[d] = size[d];
     ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    desc->name = "ops_internal_copy_opencl";
-    desc->device = 1;
-    desc->function = ops_internal_copy_opencl;
-    ops_internal_copy_opencl(desc);
+    strcpy(desc->name, "ops_internal_copy_device\0");
+    desc->isdevice = 1;
+    desc->func = ops_internal_copy_device;
+    ops_internal_copy_device(desc);
     target->data_d = NULL;
     ops_free(target);
     ops_free(desc->args);
@@ -1494,7 +1504,7 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
       range[2*i+1] = 1;
     }
     if (dat->dirty_hd == 1) {
-      ops_upload_dat(dat);
+      ops_put_data(dat);
     }
     ops_dat target = (ops_dat)ops_malloc(sizeof(ops_dat_core));
     target->data_d = data;
@@ -1502,10 +1512,10 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
     target->base_offset = 0;
     for (int d = 0; d < OPS_MAX_DIM; d++) target->size[d] = size[d];
     ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    desc->name = "ops_internal_copy_opencl_reverse";
-    desc->device = 1;
-    desc->function = ops_internal_copy_opencl;
-    ops_internal_copy_opencl(desc);
+    strcpy(desc->name, "ops_internal_copy_device_reverse\0");
+    desc->isdevice = 1;
+    desc->func = ops_internal_copy_device;
+    ops_internal_copy_device(desc);
     target->data_d = NULL;
     ops_free(target);
     ops_free(desc->args);
@@ -1513,4 +1523,3 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
     dat->dirty_hd = 2;
   }
 }
-

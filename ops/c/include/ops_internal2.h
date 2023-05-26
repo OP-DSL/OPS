@@ -33,7 +33,7 @@
 /** @file
  * @brief OPS internal types and function declarations
  * @author Istvan Reguly
- * @details this header contains type and function declarations 
+ * @details this header contains type and function declarations
  * not needed by ops_lib_core.h, but needed by backends and generated code
  */
 
@@ -139,23 +139,32 @@ struct ops_kernel {
 
 /** Storage for OPS parallel handles */
 struct ops_kernel_descriptor {
-  const char *name;           /**< name of kernel */
+  char *name;           /**< name of kernel */
+  int name_len;         /**< kernel name length */
   size_t hash;                /**< hash of loop */
   ops_arg *args;              /**< list of arguments to pass in */
   int nargs;                  /**< number of arguments */
   int index;                  /**< index of the loop */
   int dim;                    /**< number of dimensions */
-  int device;                 /**< flag to indicate if loop runs on device */
-  int range[2 * OPS_MAX_DIM]; /**< process local execution range */
-  int orig_range[2 * OPS_MAX_DIM]; /**< original execution range */
+  int isdevice;                 /**< flag to indicate if loop runs on device */
+  int *range;                 /**< process local execution range */
+  int *orig_range;            /**< original execution range */
   ops_block block;            /**< block to execute on */
-  void (*function)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
-  void (*startup_function)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
-  void (*cleanup_function)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
+  void (*func)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
+  void (*startup_func)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
+  void (*cleanup_func)(struct ops_kernel_descriptor *desc); /**< Function pointer to a wrapper to be called */
 
 };
 
+///
+/// Struct duplicating information in MPI_Datatypes for (strided) halo access
+///
 
+typedef struct {
+  int count;       ///< number of blocks
+  int blocklength; ///< size of blocks
+  int stride;      ///< stride between blocks
+} ops_int_halo;
 
 
 ops_reduction ops_decl_reduction_handle_core(OPS_instance *instance, int size, const char *type,
@@ -199,7 +208,6 @@ ops_halo ops_decl_halo_core(OPS_instance *instance, ops_dat from, ops_dat to, in
 ops_arg ops_arg_dat_core(ops_dat dat, ops_stencil stencil, ops_access acc);
 ops_arg ops_arg_gbl_core(char *data, int dim, int size, ops_access acc);
 
-
 OPS_FTN_INTEROP
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name);
 
@@ -207,8 +215,6 @@ void ops_NaNcheck(ops_dat dat);
 void ops_NaNcheck_core(ops_dat dat, char *buffer);
 
 void ops_timing_realloc(OPS_instance *instance, int, const char *);
-OPS_FTN_INTEROP
-void ops_timers_core(double *cpu, double *et);
 float ops_compute_transfer(int dims, int *start, int *end, ops_arg *arg);
 
 void ops_register_args(OPS_instance *instance, ops_arg *args, const char *name);
@@ -252,8 +258,8 @@ void ops_dat_fetch_data_host(ops_dat dat, int part, char *data);
 void ops_dat_fetch_data_slab_host(ops_dat dat, int part, char *data, int *range);
 
 void ops_dat_set_data_host(ops_dat dat, int part, char *data);
-void ops_dat_set_data_slab_host(ops_dat dat, int part, char *data, int *range);
-
+void ops_dat_set_data_slab_host(ops_dat dat, int part, char *local_buf,
+                                int *local_range);
 
 void ops_compute_moment(double t, double *first, double *second);
 
@@ -271,12 +277,15 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 
 /* lazy execution */
 void ops_enqueue_kernel(ops_kernel_descriptor *desc);
-void ops_execute(OPS_instance *instance);
+OPS_FTN_INTEROP
+void ops_execute(OPS_instance *instance=NULL);
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp);
 int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx);
 int ops_get_proc();
 int ops_num_procs();
 void ops_put_data(ops_dat dat);
+OPS_FTN_INTEROP
+void create_kerneldesc_and_enque(char const *name, char const* kernel_name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc));
 
 /*******************************************************************************
 * Memory allocation functions
@@ -287,6 +296,20 @@ void  ops_free (void *ptr);
 void* ops_calloc (size_t num, size_t size);
 void ops_init_zero(char *data, size_t bytes);
 void ops_convert_layout(char *in, char *out, ops_block block, int size, int *dat_size, int *dat_size_orig, int type_size, int hybrid_layout);
+
+//Includes for common device backends
+void ops_init_device(OPS_instance *instance, const int argc, const char *const argv[], const int diags);
+void ops_device_free(OPS_instance *instance, void** ptr);
+void ops_device_freehost(OPS_instance *instance, void** ptr);
+void ops_device_exit(OPS_instance *instance);
+void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes);
+void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes);
+void ops_device_memcpy_h2d(OPS_instance *instance, void** to, void **from, size_t size);
+void ops_device_memcpy_d2h(OPS_instance *instance, void** to, void **from, size_t size);
+void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_t size);
+void ops_device_memset(OPS_instance *instance, void** ptr, int val, size_t size);
+void ops_device_sync(OPS_instance *instance);
+void ops_exit_device(OPS_instance *instance);
 
 
 void _ops_init(OPS_instance *instance, const int argc, const char * const argv[], const int diags_level);
@@ -325,6 +348,10 @@ ops_dat ops_dat_alloc_core(ops_block block);
 int ops_dat_copy_metadata_core(ops_dat target, ops_dat orig_dat);
 ops_kernel_descriptor * ops_dat_deep_copy_core(ops_dat target, ops_dat orig_dat, int *range);
 void ops_internal_copy_seq(ops_kernel_descriptor *desc);
+void ops_internal_copy_device(ops_kernel_descriptor *desc);
+
+OPS_FTN_INTEROP
+void ops_upload_gbls(ops_arg* args, int nargs);
 
 //
 // wrapper functions to handle MPI global reductions
