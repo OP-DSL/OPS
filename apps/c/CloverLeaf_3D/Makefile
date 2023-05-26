@@ -30,12 +30,7 @@ OTHER_FILES=start.cpp time_step.cpp build_field.cpp read_input.cpp initialise.cp
 APP=cloverleaf
 MAIN_SRC=clover_leaf
 
-<<<<<<< HEAD
-OPS_GENERATOR_VERBOSE=1
-TARGETS=dev_seq seq
-=======
 #OPS_GENERATOR_VERBOSE=1
 TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp
->>>>>>> 62a9e7bfcef6bca03c2ed5178c698c22bb68e1c8
 
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app
