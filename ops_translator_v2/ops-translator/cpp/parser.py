@@ -140,7 +140,7 @@ def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> No
     loc = parseLocation(node)
 
     if name == "ops_decl_const":
-        program.consts.append(parseConst(args, loc))
+        program.consts.append(parseConst(args, loc, macros))
 
     elif name == "ops_par_loop":
         loop = parseLoop(args, loc, macros)
@@ -177,6 +177,19 @@ def parseIntExpression(node: Cursor) -> int:
     conf.lib.clang_EvalResult_dispose(eval_result)
 
     return val
+
+
+def parseIntLiteral(node: Cursor) -> Optional[int]:
+    if node.type.kind != TypeKind.INT:
+        raise ParseError("Expected int expression", parseLocation(node))
+
+    if node.kind == CursorKind.INTEGER_LITERAL:
+        eval_result = conf.lib.clang_Cursor_Evaluate(node)
+        val = conf.lib.clang_EvalResult_getAsInt(eval_result)
+        conf.lib.clang_EvalResult_dispose(eval_result)
+        return val
+    else:
+        raise ParseError("Invalid node type " + str(node.kind), parseLocation(node))
 
 
 def parseType(typ: str, loc: Location, include_custom=False) -> Tuple[ops.Type, bool]:
@@ -230,12 +243,15 @@ def parseIdentifier(node: Cursor, raw: bool = True) -> str:
     return node.spelling
 
 
-def parseConst(args: List[Cursor], loc: Location) -> ops.Const:
+def parseConst(args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> ops.Const:
     if(len(args) != 4):
         raise ParseError(f"Incorrect number({len(args)}) of args passed to ops_decl_const", loc)
 
     name = parseStringLit(args[0])
-    dim = parseIdentifier(args[1])
+    if parseLocation(args[1]) in macros.keys():
+        dim = macros[parseLocation(args[1])]
+    else:
+        dim = parseIdentifier(args[1])
     typ, _ = parseType(parseStringLit(args[2]), loc, True)
     ptr = parseIdentifier(args[3], raw=False)
 
@@ -258,7 +274,7 @@ def parseArgDat(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[
         raise ParseError(f"Incorrect number({len(args)}) of args passed to ops_arg_dat", loc)
 
     dat_ptr = parseIdentifier(args[0])
-    dim = parseIntExpression(args[1])
+    dim = parseIntLiteral(args[1])
     stencil_ptr = parseIdentifier(args[2])
     dat_typ, dat_soa = parseType(parseStringLit(args[3]), loc)
     access_type = parseAccessType(args[4], loc, macros)
@@ -271,7 +287,7 @@ def parseArgDatOpt(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Di
         raise ParseError(f"Incorrect number({len(args)}) of args passed to ops_arg_dat_opt", loc)
 
     dat_ptr = parseIdentifier(args[0])
-    dim = parseIntExpression(args[1])
+    dim = parseIntLiteral(args[1])
     stencil_ptr = parseIdentifier(args[2])
     dat_typ, dat_soa = parseType(parseStringLit(args[3]), loc)
     access_type = parseAccessType(args[4], loc, macros)
@@ -285,7 +301,7 @@ def parseArgReduce(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Di
         raise ParseError(f"Incorrect number of args passed to ops_arg_reduce: {len(args)}", loc)
 
     reduct_handle_ptr = parseIdentifier(args[0])
-    dim = parseIdentifier(args[1])
+    dim = parseIntLiteral(args[1])
     typ, soa = parseType(parseStringLit(args[2]), loc)
     access_type = parseAccessType(args[3], loc, macros)
 
@@ -309,7 +325,10 @@ def parseArgGbl(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[
         raise ParseError("Incorrect number of args passed to ops_arg_gbl", loc)
 
     ptr = parseIdentifier(args[0])
-    dim = parseIdentifier(args[1])
+    if parseLocation(args[1]) in macros.keys():
+        dim = macros[parseLocation(args[1])]
+    else:
+        dim = parseIdentifier(args[1])
     typ, _ = parseType(parseStringLit(args[2]), loc)
     access_type = parseAccessType(args[3], loc, macros)
 
@@ -329,7 +348,7 @@ def parseLoop(args: List[Cursor], loc: Location, macros: Dict[Location, str]) ->
 
     kernel = parseIdentifier(args[0])
     name = parseStringLit(args[1])
-    dim = parseIntExpression(args[3])
+    dim = parseIntLiteral(args[3])
     block = parseBlock(args[2], dim)
     range = parseRange(args[4], dim)
 
