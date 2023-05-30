@@ -104,6 +104,28 @@ def main(argv=None) -> None:
     except OpsError as e:
         exit(e)
 
+    # Generate program translations
+    for i, program in enumerate(app.programs, 1):
+        include_dirs = set([Path(dir) for [dir] in args.I])
+        defines = [define for [define] in args.D]
+
+        source = lang.translateProgram(program, include_dirs, defines, args.force_soa)
+
+        if not args.force_soa and program.soa_val:
+            args.force_soa = program.soa_val
+
+        new_file = os.path.splitext(os.path.basename(program.path))[0]
+        ext = os.path.splitext(os.path.basename(program.path))[1]
+        new_path = Path(args.out, f"{new_file}{args.suffix}{ext}")
+
+        with open(new_path, "w") as new_file:
+            new_file.write(f"\n{lang.com_delim} Auto-generated at {datetime.now()} by ops-translator v2\n")
+            new_file.write(source)
+
+            if args.verbose:
+                print(f"Translated program {i} of {len(args.file_paths)}: {new_path}")
+
+
     # Generating code for targets
     for [target] in args.target:
         target = Target.find(target)
@@ -128,26 +150,6 @@ def main(argv=None) -> None:
 
         if args.verbose:
             print(f"Translation completed: {scheme}")
-
-
-    # Generate program translations
-    for i, program in enumerate(app.programs, 1):
-        include_dirs = set([Path(dir) for [dir] in args.I])
-        defines = [define for [define] in args.D]
-
-        source = lang.translateProgram(program, include_dirs, defines, args.force_soa)
-
-        new_file = os.path.splitext(os.path.basename(program.path))[0]
-        ext = os.path.splitext(os.path.basename(program.path))[1]
-        new_path = Path(args.out, f"{new_file}{args.suffix}{ext}")
-
-        with open(new_path, "w") as new_file:
-            new_file.write(f"\n{lang.com_delim} Auto-generated at {datetime.now()} by ops-translator v2\n")
-            new_file.write(source)
-
-            if args.verbose:
-                print(f"Translated program {i} of {len(args.file_paths)}: {new_path}")
-
 
 
 def parse(args: Namespace, lang: Lang) -> Application:

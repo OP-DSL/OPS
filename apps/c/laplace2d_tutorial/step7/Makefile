@@ -27,7 +27,7 @@ APP=laplace2d
 MAIN_SRC=laplace2d
 
 #OPS_GENERATOR_VERBOSE=1
-TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp
+TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled
 
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app
 

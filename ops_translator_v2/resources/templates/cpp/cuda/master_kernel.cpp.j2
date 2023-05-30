@@ -4,7 +4,7 @@
 {{super()}}
 {% if target.name == "cuda" %}
 #include "ops_cuda_rt_support.h"
-#include "ops_cuda_redcution.h"
+#include "ops_cuda_reduction.h"
 
 #include <cuComplex.h>
 {% elif target.name == "hip" %}
@@ -67,6 +67,7 @@ void ops_decl_const_char(OPS_instance *instance, int dim, char const *type, int 
     {
         throw OPSException(OPS_RUNTIME_ERROR, "error: unknown const name");
     }
+}
 {% endblock %}
 
 {% block header_includes %}

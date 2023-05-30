@@ -6,7 +6,9 @@
 {% endblock %}
 
 {% block host_prologue %}
+//  ==================
 //  Host stub function
+//  ==================
 #ifndef OPS_LAZY
 void ops_par_loop_{{lh.kernel}}(
     const char * name,
@@ -30,7 +32,9 @@ void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
     {% endfor %}
 #endif
 
+//  ======
 //  Timing
+//  ======
     double __t1, __t2, __c1, __c2;
 
     ops_arg args[{{lh.args|length}}];
@@ -52,7 +56,9 @@ void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
 {% block host_prologue_sub_2 %}
 {% endblock %}
 
+//  =================================================
 //  compute locally allocated range for the sub-block
+//  =================================================
     int start_indx[{{lh.ndim}}];
     int end_indx[{{lh.ndim}}];
 {% block host_prologue_sub_3 required %}
