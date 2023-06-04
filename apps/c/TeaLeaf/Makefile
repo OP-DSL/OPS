@@ -25,6 +25,6 @@ OPS_FILES = tea_leaf.cpp field_summary.cpp  generate.cpp initialise_chunk.cpp st
 APP=tealeaf
 MAIN_SRC=tea_leaf
 
-TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled
+TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled hip mpi_hip mpi_hip_tiled
 
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app
