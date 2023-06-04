@@ -45,7 +45,7 @@ class Scheme(Findable):
         if(self.lang.name == "C++" and self.target.name == "cuda"):
             kernel_func = kp_obj.cuda_complex_numbers(kernel_func)
 
-        #TODO : Complex argument in HIP
+        #TODO : Complex arguments in HIP
 
         kernel_body, args_list = kp_obj.get_kernel_body_and_arg_list(kernel_func)
 
