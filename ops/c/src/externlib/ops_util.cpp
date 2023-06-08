@@ -379,7 +379,7 @@ void fetch_loop_slab(char *buf, char *dat, const int *buf_size,
             for (int i = 0; i < buf_size[0]; i++) {
               for (int d = 0; d < dat_dim; d++) {
                 const int type_bits{elem_size / dat_dim};
-                size_t doff_dat{d};
+                size_t doff_dat{(size_t)d};
 #if OPS_MAX_DIM > 4
                 doff_dat *= (dat_size[4]);
 #endif
@@ -453,7 +453,7 @@ void set_loop_slab(char *buf, char *dat, const int *buf_size,
             for (int i = 0; i < buf_size[0]; i++) {
               for (int d = 0; d < dat_dim; d++) {
                 const int type_bits{elem_size / dat_dim};
-                size_t doff_dat{d};
+                size_t doff_dat{(size_t)d};
 #if OPS_MAX_DIM > 4
                 doff_dat *= (dat_size[4]);
 #endif
