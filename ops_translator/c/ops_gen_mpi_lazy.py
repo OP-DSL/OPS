@@ -342,16 +342,16 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                 line3 += arg_list[n] + ","
         if NDIM > 1:
             if offload == 0:
-                code("#ifdef __INTEL_COMPILER")
-                code("#pragma loop_count(10000)")
+                # code("#ifdef __INTEL_COMPILER")
+                # code("#pragma loop_count(10000)")
                 code("#pragma omp simd" + line)  # +' aligned('+clean_type(line3[:-1])+')')
-                code("#elif defined(__clang__)")
-                code("#pragma clang loop vectorize(assume_safety)")
-                code("#elif defined(__GNUC__)")
-                code("#pragma GCC ivdep")
-                code("#else")
-                code("#pragma simd")
-                code("#endif")
+                # code("#elif defined(__clang__)")
+                # code("#pragma clang loop vectorize(assume_safety)")
+                # code("#elif defined(__GNUC__)")
+                # code("#pragma GCC ivdep")
+                # code("#else")
+                # code("#pragma simd")
+                # code("#endif")
         FOR("n_x", "start[0]", "end[0]")
         if arg_idx != -1:
             if NDIM == 1:
