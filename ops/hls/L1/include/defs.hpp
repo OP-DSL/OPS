@@ -22,3 +22,17 @@ constexpr unsigned int min_bytes_per_beat = min_mem_data_width / 8;
 constexpr unsigned int avg_bytes_per_beat = avg_mem_data_width / 8;
 constexpr unsigned int avg_num_of_bursts = (avg_data_size + avg_bytes_per_beat - 1) / avg_bytes_per_beat;
 constexpr unsigned int max_num_of_bursts = (max_data_size + min_bytes_per_beat - 1) / min_bytes_per_beat;
+
+namespace ops {
+namespace hls {
+
+//Float - Int convertor
+typedef union 
+{
+    unsigned int i;
+    float f;
+} DataConv;
+
+}
+}
+
