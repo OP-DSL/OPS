@@ -11,7 +11,7 @@ if {![info exists CLKP]} {
 open_project -reset $DUT_PROJECT
 
 add_files "top.cpp" -cflags "-I${PROJ_ROOT}/L1/include"
-# add_files -tb "top.cpp" -cflags "-I${PROJ_ROOT}/L1/include"
+add_files -tb "main.cpp" -cflags "-I${PROJ_ROOT}/L1/include"
 set_top dut
 
 open_solution -reset $SOLUTION
