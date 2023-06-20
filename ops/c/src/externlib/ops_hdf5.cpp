@@ -632,7 +632,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
           throw ex;
       }
     }
-
+    free(data);
     H5Gclose(group_id);
     H5Fclose(file_id);
   }
