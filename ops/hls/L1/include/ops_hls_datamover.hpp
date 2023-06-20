@@ -4,7 +4,7 @@
 #include <ap_int.h>
 #include <ap_axi_sdata.h>
 #include <hls_stream.h>
-#include "defs.hpp"
+#include "ops_hls_defs.hpp"
 
 namespace ops {
 namespace hls {
@@ -30,17 +30,14 @@ static void convMemBeat2streamPkt(ap_uint<MEM_DATA_WIDTH>* mem_in,
 	{
 	#pragma HLS PIPELINE II=num_strm_pkts_per_beat
 	#pragma HLS LOOP_TRIPCOUNT min=min_strm_pkts_per_beat avg=avg_strm_pkts_per_beat max=max_strm_pkts_per_beat
-		
-		ap_axiu<STREAM_DATA_WIDTH,0,0,0> tmp_pkt;
-		tmp_pkt.data = tmp.range((pkt + 1) * STREAM_DATA_WIDTH - 1, pkt * STREAM_DATA_WIDTH);
+		unsigned int byte_idx = index * bytes_per_beat + pkt * bytes_per_pkt;
 
-		/* TKEEP MACHANISM */
-//		for (unsigned int i = 0; i < bytes_per_pkt; i++)
-//		{
-//		#pragma HLS UNROLL
-//			tmp_pkt.keep.range((i+1), i) = index * bytes_per_beat + pkt * bytes_per_pkt + i < size ? 1 : 0;
-//		}
-		strm_out.write(tmp_pkt);
+		if (byte_idx < size)
+		{
+			ap_axiu<STREAM_DATA_WIDTH,0,0,0> tmp_pkt;
+			tmp_pkt.data = tmp.range((pkt + 1) * STREAM_DATA_WIDTH - 1, pkt * STREAM_DATA_WIDTH);
+			strm_out.write(tmp_pkt);
+		}
 	}
 }
 
@@ -64,18 +61,14 @@ static void convStreamPkt2memBeat(ap_uint<MEM_DATA_WIDTH>* mem_out,
 	{
 	#pragma HLS PIPELINE II=1
 	#pragma HLS LOOP_TRIPCOUNT min=min_strm_pkts_per_beat avg=avg_strm_pkts_per_beat max=max_strm_pkts_per_beat
-		
-		ap_axiu<STREAM_DATA_WIDTH,0,0,0> tmp_pkt;
-		tmp_pkt = strm_in.read();
+		unsigned int byte_idx = index * bytes_per_beat + pkt * bytes_per_pkt;
 
-		/* TKEEP MACHANISM */
-//		for (unsigned int i = 0; i < bytes_per_pkt; i++)
-//		{
-//		#pragma HLS UNROLL
-//			tmp.range(pkt * STREAM_DATA_WIDTH + (i + 1) * 8, pkt * STREAM_DATA_WIDTH + i * 8) 
-//					= tmp_pkt.keep.range((i+1), i) == 1 ? tmp_pkt.data.range((i + 1) * 8, i * 8);
-//		}
-		tmp.range((pkt + 1) * STREAM_DATA_WIDTH - 1, pkt * STREAM_DATA_WIDTH) = tmp_pkt.data;
+		if (byte_idx < size)
+		{
+			ap_axiu<STREAM_DATA_WIDTH,0,0,0> tmp_pkt;
+			tmp_pkt = strm_in.read();
+			tmp.range((pkt + 1) * STREAM_DATA_WIDTH - 1, pkt * STREAM_DATA_WIDTH) = tmp_pkt.data;
+		}
 	}
 	mem_out[index] = tmp;
 }
@@ -292,7 +285,7 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 	for (unsigned int beat = 0; beat < non_bust_beats; beat++)
 	{
 	#pragma HLS PIPELINE II=num_strm_pkts_per_beat
-		convStreamPkt2memBeat<MEM_DATA_WIDTH, STREAM_DATA_WIDTH>(mem_out0, strm_in, size, index);
+		convStreamPkt2memBeat<MEM_DATA_WIDTH, STREAM_DATA_WIDTH>(mem_out, strm_in, size, index);
 		index++;
 	}
 
