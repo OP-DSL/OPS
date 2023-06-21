@@ -30,4 +30,32 @@ class CppMPIOpenMP(Scheme):
         extracted_entities = ctk.extractDependancies(kernel_entities, app)
         return ctk.writeSource(extracted_entities)
 
+class CppHLS(Scheme):
+    lang = Lang.find("cpp")
+    target = Target.find("hls")    
+    loop_host_template = Path("cpp/hls/loop_hls.cpp.j2")
+    master_kernel_template = Path("cpp/hls/master_kernel.cpp.j2")
+    
+    def translateKernel(
+        self, 
+        loop: ops.Loop, 
+        program: Program, 
+        app: Application, 
+        kernel_idx: int
+    ) -> str:
+                
+        print ("Range of loop: ", str(loop.range))
+        
+        kernel_entities = app.findEntities(loop.kernel, program)
+
+        if len(kernel_entities) == 0:
+            raise ParseError(f"Unable to find kernel: {loop.kernel}")
+
+        print ("Found loop entity: ", kernel_entities[0])
+        
+        extracted_entities = ctk.extractDependancies(kernel_entities, app)
+        return ctk.writeSource(extracted_entities)
+        
+        
 Scheme.register(CppMPIOpenMP)
+Scheme.register(CppHLS)
