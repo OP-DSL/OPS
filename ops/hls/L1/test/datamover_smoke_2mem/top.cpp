@@ -9,9 +9,9 @@ void dut(ap_uint<AXI_M_WIDTH>* mem_in0,
 {
 #pragma HLS TOP
 	#pragma HLS INTERFACE mode=m_axi bundle=gmem0 depth=4096 max_read_burst_length=64 max_write_burst_length=64 \
-			num_read_outstanding=4 num_write_outstanding=4 port=mem_in0 offset=slave bundle=gmem0
+			num_read_outstanding=4 num_write_outstanding=4 port=mem_in0 offset=slave
 	#pragma HLS INTERFACE mode=m_axi bundle=gmem0 depth=4096 max_read_burst_length=64 max_write_burst_length=64 \
-			num_read_outstanding=4 num_write_outstanding=4 port=mem_in1 offset=slave bundle=gmem1
+			num_read_outstanding=4 num_write_outstanding=4 port=mem_in1 offset=slave
 	#pragma HLS INTERFACE axis port=strm_loopback register
 
 	ops::hls::mem2stream<AXI_M_WIDTH, AXIS_WIDTH>(mem_in0, mem_in1, strm_loopback, size, 0);
