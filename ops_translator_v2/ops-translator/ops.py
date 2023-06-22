@@ -186,10 +186,13 @@ class ArgDat(Arg):
     stencil_id: int
 
     dim: int
-    stride: Optional[List] = None
+    restrict: Optional[bool] = False
+    prolong: Optional[bool] = False
 
-    def __post_init__(self):  
-        object.__setattr__(self, 'stride', [1]*3)
+#    stride: Optional[List] = None
+
+#    def __post_init__(self):
+#        object.__setattr__(self, 'stride', [1]*3)
 
     def __str__(self) -> str:
         return (
@@ -202,7 +205,7 @@ class ArgGbl(Arg):
 
     ptr: str
 
-    dim: int
+    dim: str
     typ: Type
 
     #opt : bool
@@ -280,6 +283,8 @@ class Loop:
 
     arg_idx: Optional[int] = -1
     multiGrid: Optional[bool] = False
+    isGblRead: Optional[bool] = False
+    isGblReadMDIM: Optional[bool] = False
     has_reduction: Optional[bool] = False
 
     def __init__(self, loc: Location, kernel: str, block: Block, range: Range, ndim: int) -> None:
@@ -321,7 +326,13 @@ class Loop:
             stencil_id = len(self.stencils)
             self.stencils.append(Stencil(stencil_id, dat_dim, stencil_ptr))
 
-        arg = ArgDat(arg_id, loc, access_type, opt, dat_id, stencil_id, dat_dim)
+        restrict = stencil_ptr.find("RESTRICT") > 0
+        prolong = stencil_ptr.find("PROLONG") > 0
+
+        if not self.multiGrid and (restrict or prolong):
+            self.multiGrid = True
+
+        arg = ArgDat(arg_id, loc, access_type, opt, dat_id, stencil_id, dat_dim, restrict, prolong)
         self.args.append(arg)
 
     def addArgReduce(
@@ -345,15 +356,23 @@ class Loop:
         self,
         loc: Location,
         ptr: str,
-        dim: int,
+        dim: str,
         typ: Type,
         access_type: AccessType
     ) -> None:
         arg_id = len(self.args)
         arg = ArgGbl(arg_id, loc, access_type, ptr, dim, typ)
 
-        self.args.append(arg)
+        if not self.isGblRead:
+            if access_type == AccessType.OPS_READ:
+                self.isGblRead = True
 
+        if not self.isGblReadMDIM:
+            if access_type == AccessType.OPS_READ:
+                if not dim.isdigit() or (dim.isdigit() and int(dim) > 1):
+                    self.isGblReadMDIM = True
+
+        self.args.append(arg)
 
     def addArgIdx(
         self,
@@ -364,7 +383,6 @@ class Loop:
         self.arg_idx = arg_id
         self.args.append(arg)
 
-    
     def get_dat(self, x: Union[ArgDat, int]) -> Optional[Dat]:
         if isinstance(x, ArgDat) and x.dat_id < len(self.dats):
             return self.dats[x.dat_id]

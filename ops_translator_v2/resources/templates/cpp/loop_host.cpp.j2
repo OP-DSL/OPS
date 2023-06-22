@@ -4,8 +4,11 @@
 
 {% block kernel_wrapper %}
 {% endblock %}
-{% block host_prologue%}
-// Host stub function
+
+{% block host_prologue %}
+//  ==================
+//  Host stub function
+//  ==================
 #ifndef OPS_LAZY
 void ops_par_loop_{{lh.kernel}}(
     const char * name,
@@ -20,7 +23,8 @@ void ops_par_loop_{{lh.kernel}}(
 #else
 void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
 {
-    ops_block block = desc->block;
+{% block host_prologue_sub_1 required %}
+{% endblock %}
     int dim = desc->dim;
     int *range = desc->range;
     {% for arg in lh.args %}
@@ -28,7 +32,9 @@ void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
     {% endfor %}
 #endif
 
-    //Timers
+//  ======
+//  Timing
+//  ======
     double __t1, __t2, __c1, __c2;
 
     ops_arg args[{{lh.args|length}}];
@@ -38,29 +44,25 @@ void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
     {% endfor %}
 
 #if defined(CHECKPOINTING) && !defined(OPS_LAZY)
-    if (!ops_checkpointing_before(args, {{lh.args|length}}, range, "{{kernel_idx}}")) return;
+    if (!ops_checkpointing_before(args, {{lh.args|length}}, range, {{kernel_idx}})) return;
 #endif
 
     if (block->instance->OPS_diags > 1) {
         ops_timing_realloc(block->instance, {{kernel_idx}}, "{{lh.kernel}}");
         block->instance->OPS_kernels[{{kernel_idx}}].count++;
-        ops_timers_core(&__c2, &__t2);
+        ops_timers_core(&__c1, &__t1);
     }
 
-#ifdef OPS_DEBUG
-    ops_register_args(block->instance, args, "{{lh.kernel}}");
-#endif
+{% block host_prologue_sub_2 %}
+{% endblock %}
 
-    // compute locally allocated range for the sub-block
+//  =================================================
+//  compute locally allocated range for the sub-block
+//  =================================================
     int start_indx[{{lh.ndim}}];
     int end_indx[{{lh.ndim}}];
-    {% if not (lh.arg_idx != -1) and not lh.multiGrid %}
-#if defined(OPS_MPI) && !defined(OPS_LAZY)
-    {% endif %}
-    int arg_idx[{{lh.ndim}}];
-    {% if not (lh.arg_idx != -1) and not lh.multiGrid %}
-#endif
-    {% endif %}
+{% block host_prologue_sub_3 required %}
+{% endblock %}
 
 #if defined(OPS_LAZY) || !defined(OPS_MPI)
     for ( int n = 0; n < {{lh.ndim}}; n++) {
@@ -68,47 +70,18 @@ void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
         end_indx[n]   = range[2*n+1];
     }
 #else
-    if (compute_ranges(args, {{lh.args|length}}, block, range, start_indx, end_indx, arg_idx) < 0)
-        return;
+    if (compute_ranges(args, {{lh.args|length}}, block, range, start_indx, end_indx, arg_idx) < 0) return;
 #endif
 
-    {% if lh.arg_idx != -1 or lh.multiGrid %}
-#if defined(OPS_MPI)
-#if defined(OPS_LAZY)
-    sub_block_list sb = OPS_sub_block_list[block->index];
-        {% for n in range(0, lh.ndim) %}
-    arg_idx[{{n}}] = sb->decomp_disp[{{n}}];
-        {% endfor %}
-#else
-        {% for n in range(0, lh.ndim) %}
-    arg_idx[{{n}}] -= start_indx[{{n}}];
-        {% endfor %}
-#endif
-#else //OPS_MPI
-        {% for n in range(0, lh.ndim) %}
-            arg_idx[{{n}}] = 0;
-        {% endfor %}
-#endif //OPS_MPI
-    {%endif %}
 {% endblock%}
 
 {% block host_loop required %}
 {% endblock %}
 
 {% block host_epilogue %}
-    if (block->instance->OPS_diags > 1)
-    {
-        // Update kernel record
-        ops_timers_core(&__c1, &__t1);
-        block->instance->OPS_kernels[{{kernel_idx}}].mpi_time += __t1-__t2;
-        {% for arg in lh.args %}
-            {% if arg is ops_dat %}
-        block->instance->OPS_kernels[{{kernel_idx}}].transfer += ops_compute_transfer(dim, start_indx, end_indx, &arg{{arg.id}});
-            {% endif %}
-        {% endfor %}
-    }
-}
+{% endblock %}
 
+{% block kernel_descriptor_lazy %}
 #ifdef OPS_LAZY
 void ops_par_loop_{{lh.kernel}}(
     const char * name,
@@ -126,9 +99,8 @@ void ops_par_loop_{{lh.kernel}}(
     args[{{loop.index0}}] = arg{{arg.id}};
     {% endfor %}
 
-    create_kerneldesc_and_enque(name, "{{lh.kernel}}", args, {{lh.args|length}}, {{kernel_idx}}, dim, 0, range, block, ops_par_loop_{{lh.kernel}}_execute);
-
+{% block kernel_descriptor_lazy_call required %}
+{% endblock %}
 }
 #endif
 {% endblock %}
-

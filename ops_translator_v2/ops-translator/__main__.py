@@ -1,6 +1,7 @@
 import dataclasses
 import os
 import json
+import re
 from argparse import ArgumentParser, ArgumentTypeError, Namespace
 from datetime import datetime
 from pathlib import Path
@@ -104,6 +105,28 @@ def main(argv=None) -> None:
     except OpsError as e:
         exit(e)
 
+    # Generate program translations
+    for i, program in enumerate(app.programs, 1):
+        include_dirs = set([Path(dir) for [dir] in args.I])
+        defines = [define for [define] in args.D]
+
+        source = lang.translateProgram(program, include_dirs, defines, args.force_soa)
+
+        if not args.force_soa and program.soa_val:
+            args.force_soa = program.soa_val
+
+        new_file = os.path.splitext(os.path.basename(program.path))[0]
+        ext = os.path.splitext(os.path.basename(program.path))[1]
+        new_path = Path(args.out, f"{new_file}{args.suffix}{ext}")
+
+        with open(new_path, "w") as new_file:
+            new_file.write(f"\n{lang.com_delim} Auto-generated at {datetime.now()} by ops-translator v2\n")
+            new_file.write(source)
+
+            if args.verbose:
+                print(f"Translated program {i} of {len(args.file_paths)}: {new_path}")
+
+
     # Generating code for targets
     for [target] in args.target:
         target = Target.find(target)
@@ -128,26 +151,6 @@ def main(argv=None) -> None:
 
         if args.verbose:
             print(f"Translation completed: {scheme}")
-
-
-    # Generate program translations
-    for i, program in enumerate(app.programs, 1):
-        include_dirs = set([Path(dir) for [dir] in args.I])
-        defines = [define for [define] in args.D]
-
-        source = lang.translateProgram(program, include_dirs, defines, args.force_soa)
-
-        new_file = os.path.splitext(os.path.basename(program.path))[0]
-        ext = os.path.splitext(os.path.basename(program.path))[1]
-        new_path = Path(args.out, f"{new_file}{args.suffix}{ext}")
-
-        with open(new_path, "w") as new_file:
-            new_file.write(f"\n{lang.com_delim} Auto-generated at {datetime.now()} by ops-translator v2\n")
-            new_file.write(source)
-
-            if args.verbose:
-                print(f"Translated program {i} of {len(args.file_paths)}: {new_path}")
-
 
 
 def parse(args: Namespace, lang: Lang) -> Application:
@@ -192,7 +195,9 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
     # Generate loop hosts
     for i, (loop, program) in enumerate(app.uniqueLoops(), 1):
         # Generate loop host source
-        source, extension = scheme.genLoopHost(include_dirs, defines, env, loop, program, app, i)
+        source, extension = scheme.genLoopHost(include_dirs, defines, env, loop, program, app, i, force_soa)
+
+        new_source = re.sub(r'\n\s*\n', '\n\n', source)
 
         # From output files path
         path = None
@@ -204,8 +209,8 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
 
         # Write the gernerated source file
         with open(path, "w") as file:
-            file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator v2")
-            file.write(source)
+            file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator v2\n")
+            file.write(new_source)
 
             if args.verbose:
                 print(f"Generated loop host {i} of {len(app.uniqueLoops())}: {path}")
@@ -216,7 +221,9 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
         user_types_candidates = [Path(dir, user_types_name) for dir in include_dirs]
         user_types_file = safeFind(user_types_candidates, lambda p: p.is_file())
 
-        source, name = scheme.genMasterKernel(env, app, user_types_file)
+        source, name = scheme.genMasterKernel(env, app, user_types_file, force_soa)
+
+        new_source = re.sub(r'\n\s*\n', '\n\n', source)
 
         path = None
 
@@ -228,8 +235,8 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
             path = Path(args.out, name)
 
         with open(path, "w") as file:
-            file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator v2")
-            file.write(source)
+            file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator v2\n")
+            file.write(new_source)
 
             if args.verbose:
                 print(f"Generated master kernel file: {path}")

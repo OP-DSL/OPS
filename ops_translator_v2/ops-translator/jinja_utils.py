@@ -79,3 +79,5 @@ env.filters["reduction"] = test_to_filter("reduction")
 env.filters["index"] = lambda xs, x: xs.index(x)
 
 env.filters["round_up"] = lambda x, b: b * ceil(x / b)
+
+env.filters["max_value"] = lambda values: max(values)

@@ -88,6 +88,7 @@ class Program:
     entities: List[Entity] = field(default_factory=list)
     
     ndim: Optional[int] = None
+    soa_val: Optional[bool] = False
 
     def findEntities(self, name: str, scope: List[str] = []) -> List[Entity]:
         def in_scope(entity: Entity):

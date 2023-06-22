@@ -29,14 +29,36 @@ class MPIOpenMP(Target):
         "device" : 1
         }
 
+class Cuda(Target):
+    name = "cuda"
+    kernel_translation = True
+    config = {
+        "grouped" : True,
+        "device" : 2,
+        "atomics": True,
+        "color2": False
+        }
+
+class Hip(Target):
+    name = "hip"
+    kernel_translation = True
+    config = {
+        "grouped" : True,
+        "device" : 3,
+        "atomics": True,
+        "color2": False
+        }
+
 class HLS(Target):
     name = "hls"
     kernel_translation = True
     config = {
         "grouped" : False,
         "SLR_count" : 1,
-        "device" : 3
+        "device" : 4
         }
 
 Target.register(MPIOpenMP)
+Target.register(Cuda)
+Target.register(Hip)
 Target.register(HLS)

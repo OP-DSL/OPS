@@ -52,4 +52,22 @@ def translateProgram(source: str, program: Program, force_soa: bool = False) -> 
     # 6. Substitude the ops_seq.h/ops_seq_v2.h with ops_lib_core.h
     new_source = re.sub(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)', '#include "ops_lib_core.h"', new_source)
 
+    # 7. check if SOA is set
+    def replacer(match):
+        s = match.group(0)
+        if s.startswith("/"):
+            return ""
+        else:
+            return s
+
+    pattern_comment = re.compile(r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
+                                 re.DOTALL | re.MULTILINE,
+                                )
+
+    pattern = r'(#define\s*OPS_SOA|OPS_soa\s*=\s*1\s*;)'
+    matches = re.findall(pattern, re.sub(pattern_comment, replacer, new_source), re.IGNORECASE)
+
+    if len(matches) == 2 and not program.soa_val:
+        program.soa_val = True
+
     return new_source

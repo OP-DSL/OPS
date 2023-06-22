@@ -2064,7 +2064,7 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
   // open the dataset with default properties
   dset_id = H5Dopen(file_id, name, H5P_DEFAULT);
 
-  char *data;
+  char *data = nullptr;
   // initialize data buffer and read data
   if (strcmp(typ, "int") == 0 || strcmp(typ, "int(4)") == 0 ||
       strcmp(typ, "integer") == 0 || strcmp(typ, "integer(4)") == 0) {
@@ -2966,7 +2966,7 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
         // TODO if the plane is out of global range, computer range will
         // generate error
         determine_local_range(dat, global_range, local_range);
-        size_t local_buf_size{dat->elem_size};
+        size_t local_buf_size{static_cast<size_t>(dat->elem_size)};
         for (int i = 0; i < space_dim; i++) {
           local_buf_size *= (local_range[2 * i + 1] - local_range[2 * i]);
         }
@@ -3004,7 +3004,7 @@ void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
     // TODO if the plane is out of global range, computer range will generate
     // error
     determine_local_range(dat, range, local_range);
-    size_t local_buf_size{dat->elem_size};
+    size_t local_buf_size{static_cast<size_t>(dat->elem_size)};
     for (int i = 0; i < space_dim; i++) {
       local_buf_size *= (local_range[2 * i + 1] - local_range[2 * i]);
     }
