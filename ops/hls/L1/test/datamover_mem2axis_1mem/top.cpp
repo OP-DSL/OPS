@@ -12,5 +12,5 @@ void dut(ap_uint<AXI_M_WIDTH>* mem_in,
 	#pragma HLS INTERFACE axis port=strm_out register
 	#pragma HLS INTERFACE ap_ctrl_chain port=return
 
-	ops::hls::mem2stream<AXI_M_WIDTH, AXIS_WIDTH>(mem_in, strm_out, size);
+	ops::hls::mem2axis<AXI_M_WIDTH, AXIS_WIDTH>(mem_in, strm_out, size);
 }

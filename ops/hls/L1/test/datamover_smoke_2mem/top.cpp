@@ -14,6 +14,6 @@ void dut(ap_uint<AXI_M_WIDTH>* mem_in0,
 			num_read_outstanding=4 num_write_outstanding=4 port=mem_in1 offset=slave
 	#pragma HLS INTERFACE axis port=strm_loopback register
 
-	ops::hls::mem2stream<AXI_M_WIDTH, AXIS_WIDTH>(mem_in0, mem_in1, strm_loopback, size, 0);
-	ops::hls::stream2mem<AXI_M_WIDTH, AXIS_WIDTH>(mem_in0, mem_in1, strm_loopback, size, 1);
+	ops::hls::mem2axis<AXI_M_WIDTH, AXIS_WIDTH>(mem_in0, mem_in1, strm_loopback, size, 0);
+	ops::hls::axis2mem<AXI_M_WIDTH, AXIS_WIDTH>(mem_in0, mem_in1, strm_loopback, size, 1);
 }

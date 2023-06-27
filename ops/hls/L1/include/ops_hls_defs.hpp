@@ -1,4 +1,13 @@
+
 #pragma once
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+/** @file
+  * @brief HLS related definitions.
+  * @author Beniel Thileepan
+  * @details Contains limits and constrains definitions used in L1 components.
+  */
 
 /* data mover limits */
 constexpr unsigned int max_data_size = 4000000000;
@@ -7,14 +16,21 @@ constexpr unsigned int avg_data_size = 4244832; //100 x 100 x 100 grid with (-1,
 constexpr unsigned int min_mem_data_width = 128;
 constexpr unsigned int avg_mem_data_width = 512;
 constexpr unsigned int max_mem_data_width = 1024;
-constexpr unsigned int min_stream_data_width = 64;
-constexpr unsigned int avg_stream_data_width = 256;
-constexpr unsigned int max_stream_data_width = 1024;
+
+constexpr unsigned int min_axis_data_width = 64;
+constexpr unsigned int avg_axis_data_width = 256;
+constexpr unsigned int max_axis_data_width = 1024;
+
+constexpr unsigned int min_hls_stream_data_width = 64;
+constexpr unsigned int avg_hls_stream_data_width = 256;
+constexpr unsigned int max_hls_stream_data_width = 1024;
+
 constexpr unsigned int min_burst_len = 1;
 constexpr unsigned int avg_burst_len = 32;
 constexpr unsigned int max_burst_len = 64;
-constexpr unsigned int max_strm_pkts_per_beat = max_mem_data_width / min_stream_data_width;
-constexpr unsigned int avg_strm_pkts_per_beat = avg_mem_data_width / avg_stream_data_width;
+
+constexpr unsigned int max_strm_pkts_per_beat = max_mem_data_width / min_axis_data_width;
+constexpr unsigned int avg_strm_pkts_per_beat = avg_mem_data_width / avg_axis_data_width;
 constexpr unsigned int min_strm_pkts_per_beat = 1;
 
 constexpr unsigned int min_bytes_per_beat = min_mem_data_width / 8;
@@ -35,3 +51,4 @@ typedef union
 }
 }
 
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */

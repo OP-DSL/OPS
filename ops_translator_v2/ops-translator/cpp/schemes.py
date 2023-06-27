@@ -40,6 +40,9 @@ class CppHLS(Scheme):
     loop_host_template = Path("cpp/hls/loop_hls.cpp.j2")
     master_kernel_template = Path("cpp/hls/master_kernel.cpp.j2")
     
+    loop_kernel_extension = "cpp"
+    master_kernel_extension = "cpp"
+    
     def translateKernel(
         self, 
         loop: ops.Loop, 
