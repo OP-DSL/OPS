@@ -8,6 +8,7 @@ else
 	CXXFLAGS  := -O3 -fPIC -DUNIX -Wall -g -std=c++11
 endif
 OMPFLAGS=-fopenmp
+OMPOFFLOADFLAGS=-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_75
 ifdef THREADED
 	THREADING_FLAGS ?= -fopenmp
 endif
