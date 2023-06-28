@@ -80,6 +80,8 @@ OMPOFFLOAD_KERNELS = $(MAIN_SRC)_ompoffload_kernels.cpp
 $(APP)_ompoffload: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_ompoffload.a $(OPS_FILES_GEN) $(HEADERS)
 	        $(CXX) $(OMPOFFLOADFLAGS) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./OpenMP_offload/$(OMPOFFLOAD_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LINK) $(OPS_LIB_OMPOFFLOAD) -o $(APP)_ompoffload
 
+$(APP)_mpi_ompoffload: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_ompoffload.a $(OPS_FILES_GEN) $(HEADERS)
+	        $(MPICXX) -DOPS_MPI $(OMPOFFLOADFLAGS) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./OpenMP_offload/$(OMPOFFLOAD_KERNELS) $(HDF5_LIB_MPI) $(OPS_LINK) $(OPS_LIB_MPI_OMPOFFLOAD) -o $(APP)_mpi_ompoffload
 
 #
 # Tiled version
