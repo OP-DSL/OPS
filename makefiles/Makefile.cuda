@@ -24,9 +24,14 @@ ifeq ($(NV_ARCH),Volta)
         NVCCFLAGS+=-gencode arch=compute_70,code=sm_70
 				PGI_CUDA_FORT_FLAGS=-Mcuda=cc70
 else
+ifeq ($(NV_ARCH),Turing)
+        NVCCFLAGS+=-gencode arch=compute_75,code=sm_75
+                               PGI_CUDA_FORT_FLAGS=-Mcuda=cc75
+else
 ifeq ($(NV_ARCH),Ampere)
         NVCCFLAGS+=-gencode arch=compute_80,code=sm_80
         PGI_CUDA_FORT_FLAGS=-Mcuda=cc80
+endif
 endif
 endif
 endif
