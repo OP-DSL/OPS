@@ -346,7 +346,10 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                 code("#pragma loop_count(10000)")
                 code("#pragma omp simd" + line)  # +' aligned('+clean_type(line3[:-1])+')')
                 code("#elif defined(__clang__)")
-                code("#pragma clang loop vectorize(assume_safety)")
+                if has_reduction:
+                    code("#pragma clang loop vectorize(disable)")
+                else:
+                    code("#pragma clang loop vectorize(assume_safety)")
                 code("#elif defined(__GNUC__)")
                 code("#pragma GCC ivdep")
                 code("#else")
@@ -422,13 +425,13 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                     code(f"{typs[n]} {arg_list[n]}[{dims[n]}];")
                     for d in range(0, int(dims[n])):
                         code(
-                            f"{arg_list[n]}[{d}] = p_a{n}[{d}];"
+                            f"{arg_list[n]}[{d}] = INFINITY_{typs[n]};"
                         )  # need +INFINITY_ change to
                 if accs[n] == OPS_MAX:
                     code(f"{typs[n]} {arg_list[n]}[{dims[n]}];")
                     for d in range(0, int(dims[n])):
                         code(
-                            f"{arg_list[n]}[{d}] = p_a{n}[{d}];"
+                            f"{arg_list[n]}[{d}] = -INFINITY_{typs[n]};"
                         )  # need -INFINITY_ change to
                 if accs[n] == OPS_INC:
                     code(f"{typs[n]} {arg_list[n]}[{dims[n]}];")

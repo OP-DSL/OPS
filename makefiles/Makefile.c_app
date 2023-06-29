@@ -15,7 +15,7 @@ endif
 	touch .generated
 	touch ./OpenCL/$(MAIN_SRC)_seq_kernels.cpp
 
-TARGETS = $(APP)_dev_seq $(APP)_dev_mpi $(APP)_seq $(APP)_openmp $(APP)_mpi $(APP)_mpi_openmp $(APP)_tiled $(APP)_mpi_tiled $(APP)_mpi_inline
+TARGETS = $(APP)_dev_seq $(APP)_dev_mpi $(APP)_seq $(APP)_openmp $(APP)_mpi $(APP)_mpi_openmp $(APP)_tiled $(APP)_mpi_tiled $(APP)_mpi_inline $(APP)_ompoffload
 
 ifdef CUDA_INSTALL_PATH
 TARGETS += $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled
@@ -224,7 +224,9 @@ clean:
 	rm -f $(APP)_opencl
 	rm -f $(APP)_mpi_opencl
 	rm -f $(APP)_hip
-	rm -f $(APP)_mpi_hip $(APP)_mpi_hip_tiled
+	rm -f $(APP)_mpi_hip
+	rm -f $(APP)_mpi_hip_tiled
+	rm -f $(APP)_ompoffload
 	rm -f ./MPI_OpenMP/*.o
 	rm -f ./MPI_inline/*.o
 	rm -f ./OpenMP_offload/*.o
@@ -233,3 +235,4 @@ clean:
 	rm -f ./OpenCL/*.o
 	rm -f ./SYCL/*.o
 	rm -f ./HIP/*.o
+	rm -f ./OpenMP_offload/*.o

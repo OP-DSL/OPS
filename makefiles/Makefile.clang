@@ -11,3 +11,15 @@ OMPFLAGS=-fopenmp
 ifdef THREADED
 	THREADING_FLAGS ?= -fopenmp
 endif
+
+ifeq ($(NV_ARCH),Kepler)
+	OMPOFFLOADFLAGS=-fopenmp=libomp -fopenmp-targets=nvptx64 -Xopenmp-target -march=sm_35
+else
+ifeq ($(NV_ARCH),Pascal)
+	OMPOFFLOADFLAGS=-fopenmp=libomp -fopenmp-targets=nvptx64 -Xopenmp-target -march=sm_60
+else
+ifeq ($(NV_ARCH),Volta)
+	OMPOFFLOADFLAGS=-fopenmp=libomp -fopenmp-targets=nvptx64 -Xopenmp-target -march=sm_70
+endif
+endif
+endif
