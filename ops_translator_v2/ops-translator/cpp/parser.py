@@ -203,13 +203,24 @@ def parseType(typ: str, loc: Location, include_custom=False) -> Tuple[ops.Type, 
     typ_clean = re.sub(r"\s*:soa\s*", "", typ_clean)
 
     typ_map = {
+        "short": ops.Int(True, 16),
+        "unsigned short": ops.Int(False, 16),
+        "ushort": ops.Int(False, 16),
         "int": ops.Int(True, 32),
+        "long": ops.Int(True, 32),
+        "long int": ops.Int(True, 32),
         "uint": ops.Int(False, 32),
+        "unsigned int": ops.Int(False, 32),
         "ll": ops.Int(True, 64),
+        "long long": ops.Int(True, 64),
         "ull": ops.Int(False, 64),
+        "unsigned long long": ops.Int(False, 64),
         "float": ops.Float(32),
         "double": ops.Float(64),
-        "bool": ops.Bool()
+        "bool": ops.Bool(),
+        "char": ops.Char(),
+        "complexd": ops.ComplexD(),
+        "complexf": ops.ComplexF()
     }
 
     if typ_clean in typ_map:

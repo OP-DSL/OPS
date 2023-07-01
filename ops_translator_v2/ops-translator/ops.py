@@ -65,10 +65,18 @@ class Int(Type):
     size: int
 
     def __repr__(self) -> str:
-        if self.signed and self.size == 32:
+        if self.signed and self.size == 16:
+            return "short"
+        elif not self.signed and self.size == 16:
+            return "unsigned short"
+        elif self.signed and self.size == 32:
             return "int"
-        elif self.size == 32:
+        elif not self.signed and self.size == 32:
             return "unsigned int"
+        elif self.signed and self.size == 64:
+            return "long long"
+        elif not self.signed and self.size == 64:
+            return "unsigned long long"
         else:
             return f"{'i' if self.signed else 'u'}{self.size}"
 
@@ -87,11 +95,34 @@ class Float(Type):
 
 
 @dataclass(frozen=bool)
+class ComplexD(Type):
+    pass
+
+    def __repr__(self) -> str:
+        return "complexd"
+
+
+@dataclass(frozen=bool)
+class ComplexF(Type):
+    pass
+
+    def __repr__(self) -> str:
+        return "complexf"
+
+
+@dataclass(frozen=bool)
 class Bool(Type):
     pass
 
     def __repr__(self) -> str:
         return "bool"
+
+@dataclass(frozen=bool)
+class Char(Type):
+    pass
+
+    def __repr__(self) -> str:
+        return "char"
 
 
 @dataclass(frozen=True)

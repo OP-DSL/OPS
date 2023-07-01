@@ -24,13 +24,14 @@ OPS_FILES=clover_leaf.cpp initialise_chunk.cpp generate.cpp ideal_gas.cpp \
                 calc_dt.cpp PdV.cpp revert.cpp accelerate.cpp flux_calc.cpp \
                 advec_cell.cpp advec_mom.cpp reset_field.cpp
 
-OTHER_FILES=start.cpp time_step.cpp build_field.cpp read_input.cpp initialise.cpp advection.cpp
+OPS_GENERATED_SUFFIX=_ops
 
+OTHER_FILES=start.cpp time_step.cpp build_field.cpp read_input.cpp initialise.cpp advection.cpp
 
 APP=cloverleaf
 MAIN_SRC=clover_leaf
 
 #OPS_GENERATOR_VERBOSE=1
-TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled hip mpi_hip mpi_hip_tiled
+TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled hip mpi_hip mpi_hip_tiled ompoffload
 
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app

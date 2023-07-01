@@ -1,9 +1,9 @@
 #ifndef gridgen_kernel_H
 #define gridgen_kernel_H
 
-void gridgen_kernel(double *x, const int *id) {
+void gridgen_kernel(double *x, const int *idx) {
 
-  x[OPS_ACC0(0)] = xt +  id[0] *dx;
+  x[OPS_ACC0(0)] = xt +  idx[0] *dx;
 /*   if (x[OPS_ACC0(0)] >= -4.0){
      rho_new[OPS_ACC1(0)] = 1.0 + eps * sin(lambda *x[OPS_ACC0(0)]);
      rhou_new[OPS_ACC2(0)] = ur * rho_new[OPS_ACC1(0)];

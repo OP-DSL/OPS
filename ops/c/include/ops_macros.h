@@ -1,6 +1,7 @@
 #ifndef OPS_MACROS_H
 #define OPS_MACROS_H
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef OPS_ACC_IGNORE      /* OPS_ACC_IGNORE - OPS clang parser from code-gen should skip this */
 /*
 * Open source copyright declaration based on BSD open source template:
 * http://www.opensource.org/licenses/bsd-license.php
@@ -306,7 +307,6 @@ gen_ptrm(float, float)
 #endif
 
 #else /* OPS_API */
-#ifndef OPS_ACC_IGNORE      /* OPS_ACC_IGNORE */
 
 #if defined OPS_5D
 #ifndef OPS_DEBUG // no debug checks
