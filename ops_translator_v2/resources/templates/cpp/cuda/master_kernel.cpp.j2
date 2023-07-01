@@ -63,10 +63,12 @@ void ops_decl_const_char(OPS_instance *instance, int dim, char const *type, int 
         {% endif %}
     } 
     else
-    {% endfor %}
+    {% if loop.last %}
     {
         throw OPSException(OPS_RUNTIME_ERROR, "error: unknown const name");
     }
+    {% endif %}
+    {% endfor %}
 }
 {% endblock %}
 

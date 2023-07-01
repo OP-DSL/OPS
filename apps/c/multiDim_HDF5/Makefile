@@ -8,6 +8,7 @@
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.common
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
 USE_HDF5=1
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
@@ -16,12 +17,14 @@ HEADERS=
 
 OPS_FILES=read.cpp
 
-OPS_GENERATED=read_ops.cpp
+OPS_GENERATED_SUFFIX=_ops
 
 OTHER_FILES=
 
 APP=read
 MAIN_SRC=read
+
+TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled hip mpi_hip mpi_hip_tiled ompoffload
 
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app
 

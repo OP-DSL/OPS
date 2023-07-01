@@ -34,8 +34,6 @@ ops_dat rhoin;
 ops_dat r, al, alam, gt, tht, ep2, cmp, cf, eff, s;
 ops_dat readvar;
 
-ops_reduction rms;
-
 //
 //Declare commonly used stencils
 //
@@ -184,7 +182,7 @@ int main(int argc, char **argv) {
 
 
   //reduction handle for rms variable
-  rms = ops_decl_reduction_handle(sizeof(double), "double", "rms");
+  ops_reduction rms = ops_decl_reduction_handle(sizeof(double), "double", "rms");
 
   //
   //Declare commonly used stencils
@@ -398,8 +396,6 @@ int main(int argc, char **argv) {
 
   ops_timers(&ct1, &et1);
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
-
-
 
   //compare solution to referance solution
   double local_rms = 0.0;

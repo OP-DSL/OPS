@@ -144,6 +144,7 @@ class Findable(ABC):
         """
         pass
 
+
 @dataclass(frozen=True)
 class ABDC(ABC):
     def __new__(cls, *args, **kwargs):
@@ -151,6 +152,7 @@ class ABDC(ABC):
             raise TypeError(f"Can' instantiate abstract class {cls.__name__}")
 
         return super().__new__(cls)
+
 
 class SourceBuffer:
     _source: str
@@ -223,11 +225,11 @@ class SourceBuffer:
         return "\n".join(lines)
 
 
-
 @dataclass(frozen=True, order=True)
 class Location:
     line: int
     column: int
+
 
 @dataclass(frozen=True, order=True)
 class Span:

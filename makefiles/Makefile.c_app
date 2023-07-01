@@ -66,7 +66,7 @@ endif
 endif
 
 ifndef TARGETS
-TARGETS = dev_seq dev_mpi seq tiled openmp mpi mpi_openmp mpi_inline mpi_tiled
+TARGETS = dev_seq dev_mpi seq tiled openmp mpi mpi_openmp mpi_tiled ompoffload
 
 ifdef CUDA_INSTALL_PATH
 TARGETS += cuda mpi_cuda mpi_cuda_tiled
@@ -98,11 +98,11 @@ all: $(APP_TARGETS)
 
 $(APP)_dev_seq: Makefile $(HEADERS) $(OPS_FILES_PLAIN) $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_seq.a
 		@echo "Building ${APP}_dev_seq" 
-		$(CXX) $(CXXFLAGS) -std=c++11 -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_PLAIN) $(HDF5_LIB_SEQ) $(OPS_LINK) $(OPS_LIB_SEQ) $(TRID_SEQ) -fopenmp -o $(APP)_dev_seq
+		$(CXX) $(CXXFLAGS) -std=c++11 -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_PLAIN) $(HDF5_LIB_SEQ) $(OPS_LINK) $(OPS_LIB_SEQ) $(TRID_SEQ) -o $(APP)_dev_seq
 
 $(APP)_dev_mpi: Makefile $(OPS_FILES_PLAIN) $(HEADERS) $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi.a
 		@echo "Building ${APP}_dev_mpi"
-	    $(MPICPP) $(CXXFLAGS) -DOPS_MPI -std=c++11 -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_PLAIN) $(HDF5_LIB_MPI) $(OPS_LINK) $(OPS_LIB_MPI) $(TRID_MPI) -fopenmp -o $(APP)_dev_mpi
+	    $(MPICPP) $(CXXFLAGS) -DOPS_MPI -std=c++11 -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_PLAIN) $(HDF5_LIB_MPI) $(OPS_LINK) $(OPS_LIB_MPI) $(TRID_MPI) -o $(APP)_dev_mpi
 
 #
 # Sequential version
@@ -112,7 +112,7 @@ $(APP)_seq: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops
 		@echo ""
 		@echo "Building ${APP}_seq"
 		@echo ""
-		$(MPICPP) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./mpi_openmp/$(MPI_OPENMP_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LINK) $(OPS_LIB_SEQ) $(TRID_SEQ) -fopenmp -o $(APP)_seq
+		$(MPICPP) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./mpi_openmp/$(MPI_OPENMP_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LINK) $(OPS_LIB_SEQ) $(TRID_SEQ) -o $(APP)_seq
 
 #=====================================================================================================================================================================
 #
@@ -125,7 +125,7 @@ $(APP)_mpi: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi"
-	    $(MPICPP) $(CXXFLAGS) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./mpi_openmp/$(MPI_OPENMP_KERNELS) $(HDF5_LIB_MPI) $(OPS_LINK) $(OPS_LIB_MPI) $(TRID_MPI) -fopenmp -o $(APP)_mpi
+	    $(MPICPP) $(CXXFLAGS) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./mpi_openmp/$(MPI_OPENMP_KERNELS) $(HDF5_LIB_MPI) $(OPS_LINK) $(OPS_LIB_MPI) $(TRID_MPI) -o $(APP)_mpi
 
 #=====================================================================================================================================================================
 #
@@ -146,10 +146,18 @@ $(APP)_mpi_openmp: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)
 		@echo ""
 	  	$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./mpi_openmp/$(MPI_OPENMP_KERNELS) $(HDF5_LIB_MPI) $(OPS_LINK) $(OPS_LIB_MPI) $(TRID_LIB) -o $(APP)_mpi_openmp
 
+#=====================================================================================================================================================================
+#
+# OpenMP offload version
+#
 
-OMPOFFLOAD_KERNELS = $(MAIN_SRC)_ompoffload_kernels.cpp
+OMPOFFLOAD_KERNELS = openmp_offload_kernels.cpp
 $(APP)_ompoffload: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_ompoffload.a $(OPS_FILES_GEN) $(HEADERS)
-	        $(CXX) $(OMPOFFLOADFLAGS) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./OpenMP_offload/$(OMPOFFLOAD_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LINK) $(OPS_LIB_OMPOFFLOAD) -o $(APP)_ompoffload
+		@echo ""
+		@echo ""
+		@echo "Building ${APP}_ompoffload"
+		@echo ""
+		$(CXX) $(OMPOFFLOADFLAGS) $(CXXFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./openmp_offload/$(OMPOFFLOAD_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LINK) $(OPS_LIB_OMPOFFLOAD) -o $(APP)_ompoffload
 
 #=====================================================================================================================================================================
 #
@@ -334,6 +342,7 @@ clean:
 	rm -f $(APP)_mpi_openacc
 	rm -f $(APP)_opencl
 	rm -f $(APP)_mpi_opencl
+	rm -f $(APP)_ompoffload
 	rm -f $(OPS_GENERATED)
 	rm -f .generated constants_list.txt
-	rm -rf ./mpi_openmp ./cuda ./hip
+	rm -rf ./mpi_openmp ./cuda ./hip ./openmp_offload

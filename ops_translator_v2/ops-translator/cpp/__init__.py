@@ -106,10 +106,12 @@ class Cpp(Lang):
 
     def formatType(self, typ: ops.Type) -> str:
         int_types = {
+            (True, 16): "short",
             (True, 32): "int",
             (True, 64): "long long",
-            (False, 32): "unsigned",
-            (False, 64): "unsgined long long",
+            (False, 16): "unsigned short",
+            (False, 32): "unsigned int",
+            (False, 64): "unsigned long long",
         }
 
         float_type = {32: "float", 64: "double"}
@@ -120,6 +122,12 @@ class Cpp(Lang):
             return float_type[typ.size]
         elif isinstance(typ, ops.Bool):
             return "bool"
+        elif isinstance(typ, ops.Char):
+            return "char"
+        elif isinstance(typ, ops.ComplexD):
+            return "complexd"
+        elif isinstance(typ, ops.ComplexF):
+            return "complexf"
         elif isinstance(typ, ops.Custom):
             return typ.name
         else:
