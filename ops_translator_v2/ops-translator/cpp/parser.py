@@ -122,7 +122,13 @@ def parseUnexposedFunction(node: Cursor) -> Union[Tuple[str, List[Cursor]], None
 
     first_child = args.pop(0)
 
-    if first_child.kind == CursorKind.DECL_REF_EXPR:
+    if (
+        first_child.kind == CursorKind.MEMBER_REF_EXPR
+        and len(list(first_child.get_children())) >= 2
+    ):
+        name_token = list(first_child.get_children())[1]
+        name = name_token.spelling
+    elif first_child.kind == CursorKind.DECL_REF_EXPR:
         name = list(first_child.get_tokens())[0].spelling
     else:
         return None
@@ -139,7 +145,7 @@ def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> No
 
     loc = parseLocation(node)
 
-    if name == "ops_decl_const":
+    if name == "ops_decl_const" or name == "decl_const":
         program.consts.append(parseConst(args, loc, macros))
 
     elif name == "ops_par_loop":
