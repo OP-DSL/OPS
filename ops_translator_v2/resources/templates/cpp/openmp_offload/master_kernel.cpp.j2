@@ -40,10 +40,12 @@ void ops_decl_const_char(OPS_instance *instance, int dim, char const *type, int 
         #pragma omp target enter data map(to:{{const.ptr}}[0:dim])
     {% endif %}
     } else
-{% endfor %}
+    {% if loop.last %}
     {
         throw OPSException(OPS_RUNTIME_ERROR, "error: unknown const name");
     }
+    {% endif %}
+{% endfor %}
 }
 {% endblock %}
 

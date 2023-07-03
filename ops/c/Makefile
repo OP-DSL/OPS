@@ -50,6 +50,7 @@ ifdef CUDA_INSTALL_PATH
 endif
 
 ifdef HIP_INSTALL_PATH
+	TARGETS:=$(filter-out ompoffload,$(TARGETS))
 	TARGETS += hip mpi_hip
 	C_OPS_INC += $(HIP_INC)
 endif
