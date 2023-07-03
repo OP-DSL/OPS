@@ -208,7 +208,7 @@
             {% set offset = [""] %}
             {% set sizelist = [""] %}
             {% if arg.dim > 1 %}
-                {% set dim -%}{{arg.dim|string}} , {%- endset %}
+                {% set dim -%}{{arg.dim|string}}, {%- endset %}
                 {% set extradim = 1 %}
             {% endif %}
             {% if arg.restrict %}
@@ -246,7 +246,7 @@
     {{indent[0] * "    "}}{{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{offset[0]}});
             {% if arg.dim > 1 %}
 #else
-    {{indent[0] * "    "}}{{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{arg.dim}} * {{offset[0]}});
+    {{indent[0] * "    "}}{{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{arg.dim}} * ({{offset[0]}}));
 #endif
             {% endif %}
         {% endif %}
