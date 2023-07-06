@@ -1,6 +1,4 @@
 
-#pragma once
-
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 /** @file
@@ -8,6 +6,9 @@
   * @author Beniel Thileepan
   * @details Contains limits and constrains definitions used in L1 components.
   */
+
+/* OPS limits */
+constexpr unsigned short ops_max_dim = 3;
 
 /* data mover limits */
 constexpr unsigned int max_data_size = 4000000000;
@@ -47,6 +48,28 @@ typedef union
     unsigned int i;
     float f;
 } DataConv;
+
+
+typedef unsigned short SizeType[ops_max_dim];
+
+
+struct GridPropertyCore
+{
+    SizeType size;
+    SizeType d_p;
+    SizeType d_m;
+    SizeType gridsize;
+    SizeType offset;
+    unsigned short dim;
+    unsigned short xblocks;
+};
+
+enum CoefTypes
+{
+    CONST_COEF=0,
+    DYNAMIC_COEF=1
+};
+
 
 }
 }
