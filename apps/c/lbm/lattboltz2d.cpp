@@ -25,7 +25,7 @@ int main(int argc, char ** argv) {
 
     const int opposite[] = {0,5,6,7,8,1,2,3,4};
     
-    double double energy;
+    double energy;
 
     double ct0,et0,ct1,et1; //timer variables
 
