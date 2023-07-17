@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export OPS_COMPILER=gnu
-export OPS_INSTALL_PATH=/mnt/ceph-training/home/gi386003/OPS/ops
+export OPS_INSTALL_PATH=/mnt/ceph-training/home/as312140/training/OPS/ops
 
 module purge
 
@@ -28,6 +28,6 @@ export NV_ARCH=Volta
 echo "GPU architecture" $NV_ARCH
 
 unset HDF5_INSTALL_PATH
-export HDF5_INSTALL_PATH=/home/gi386003/install/build_hdf5/gnu
-export PATH=$HDF5_INSTALL_PATH/bin:$PATH
-export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
+#export HDF5_INSTALL_PATH=/home/gi386003/install/build_hdf5/gnu
+#export PATH=$HDF5_INSTALL_PATH/bin:$PATH
+#export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
