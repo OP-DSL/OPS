@@ -73,11 +73,11 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
     #  create new kernel file
     ##########################################################################
     if offload:
-        if not os.path.exists("./OpenMP_offload"):
-            os.makedirs("./OpenMP_offload")
+        if not os.path.exists("./openmp_offload"):
+            os.makedirs("./openmp_offload")
     else:
-        if not os.path.exists("./MPI_OpenMP"):
-            os.makedirs("./MPI_OpenMP")
+        if not os.path.exists("./mpi_openmp"):
+            os.makedirs("./mpi_openmp")
 
     for nk in range(0, len(kernels)):
         assert config.file_text == "" and config.depth == 0
@@ -520,7 +520,7 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
         code(text)
 
         comm('create kernel descriptor and pass it to ops_enqueue_kernel')
-        text = 'create_kerneldesc_and_enque(name, args, '
+        text = 'create_kerneldesc_and_enque(name, "{name}", args, '
         text = text + f'{nargs}, '
         text = text + f'{nk}, '
         text = text + 'dim, 0, range, block, '
@@ -536,9 +536,9 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
         #  output individual kernel file
         ##########################################################################
         if offload:
-            util.write_text_to_file(f"./OpenMP_offload/{name}_ompoffload_kernel.cpp")
+            util.write_text_to_file(f"./openmp_offload/{name}_kernel.cpp")
         else:
-            util.write_text_to_file(f"./MPI_OpenMP/{name}_cpu_kernel.cpp")
+            util.write_text_to_file(f"./mpi_openmp/{name}_kernel.cpp")
 
     # end of main kernel call loop
 
@@ -589,6 +589,6 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
     comm("user kernel files")
 
     for kernel_name in map(lambda kernel: kernel["name"], kernels):
-        code(f'#include "{kernel_name}_{"cpu" if offload==0 else "ompoffload"}_kernel.cpp"')
+        code(f'#include "{kernel_name}_kernel.cpp"')
 
-    util.write_text_to_file(f"./{'MPI_OpenMP' if offload==0 else 'OpenMP_offload'}/{master_basename[0]}_{'cpu' if offload==0 else 'ompoffload'}_kernels.cpp")
+    util.write_text_to_file(f"./{'mpi_openmp/mpi_openmp' if offload==0 else 'openmp_offload/openmp_offload'}_kernels.cpp")

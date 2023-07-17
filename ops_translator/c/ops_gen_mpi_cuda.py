@@ -66,12 +66,12 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
     if hip == 1:
         cuda = "hip"
         cutil = "hip"
-        dir_name = "HIP"
+        dir_name = "hip"
         file_ext = "cpp"
     else:
         cuda = "cuda"
         cutil = "cutil"
-        dir_name = "CUDA"
+        dir_name = "cuda"
         file_ext = "cu"
 
     ##########################################################################
@@ -842,7 +842,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
         code(text)
             
         comm('create kernel descriptor and pass it to ops_enqueue_kernel')
-        text = 'create_kerneldesc_and_enque(name, args, '
+        text = 'create_kerneldesc_and_enque(name, "{name}", args, '
         text = text + f'{nargs}, '
         text = text + f'{nk}, '
         text = text + 'dim, 1, range, block, '
@@ -857,7 +857,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
         ##########################################################################
         #  output individual kernel file
         ##########################################################################
-        util.write_text_to_file(f"./{dir_name}/{name}_{cuda}_kernel.{file_ext}")
+        util.write_text_to_file(f"./{dir_name}/{name}_kernel.{file_ext}")
 
     # end of main kernel call loop
 
@@ -944,6 +944,6 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
     comm("user kernel files")
 
     for kernel_name in map(lambda kernel: kernel["name"], kernels):
-        code(f'#include "{kernel_name}_{cuda}_kernel.{file_ext}"')
+        code(f'#include "{kernel_name}_kernel.{file_ext}"')
 
-    util.write_text_to_file(f"./{dir_name}/{master_basename[0]}_kernels.{file_ext}")
+    util.write_text_to_file(f"./{dir_name}/{dir_name}_kernels.{file_ext}")

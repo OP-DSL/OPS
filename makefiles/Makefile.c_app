@@ -23,15 +23,23 @@ endif
 
 DEFINES=-DOPS_ACC_IGNORE
 
-.generated: $(HEADERS) $(OPS_FILES) $(OPS_INSTALL_PATH)/../ops_translator_v2/ops-translator/*.py
+#.generated: $(HEADERS) $(OPS_FILES) $(OPS_INSTALL_PATH)/../ops_translator_v2/ops-translator/*.py
+	#@echo "generating translations for ${OPS_FILES}"
+	#@echo "OPS_EXTENTIONS: ${OPS_GENERATED_SUFFIX}"
+	#@echo "OPS_GENERATED: ${OPS_GENERATED}"
+	#which python3
+	#python3 $(OPS_INSTALL_PATH)/../ops_translator_v2/ops-translator $(VERBOSE) $(DEFINES) -I $(OPS_INSTALL_PATH)/c/include/ --file_paths $(OPS_FILES)
+	#rm -f .generated
+	#touch .generated
+	#touch ./OpenCL/$(MAIN_SRC)_seq_kernels.cpp
+
+.generated: $(HEADERS) $(OPS_FILES) $(OPS_INSTALL_PATH)/../ops_translator/c/*.py
 	@echo "generating translations for ${OPS_FILES}"
 	@echo "OPS_EXTENTIONS: ${OPS_GENERATED_SUFFIX}"
 	@echo "OPS_GENERATED: ${OPS_GENERATED}"
-	which python3
-	python3 $(OPS_INSTALL_PATH)/../ops_translator_v2/ops-translator $(VERBOSE) $(DEFINES) -I $(OPS_INSTALL_PATH)/c/include/ --file_paths $(OPS_FILES)
+	$(OPS_INSTALL_PATH)/../ops_translator/c/ops.py $(OPS_FILES)
 	rm -f .generated
 	touch .generated
-	#touch ./OpenCL/$(MAIN_SRC)_seq_kernels.cpp
 
 # check what targets can not be built with current environment setting and give warnings
 ifneq ($(strip $(TARGETS)),)
@@ -104,6 +112,10 @@ $(APP)_dev_mpi: Makefile $(OPS_FILES_PLAIN) $(HEADERS) $(OPS_INSTALL_PATH)/c/lib
 		@echo "Building ${APP}_dev_mpi"
 	    $(MPICPP) $(CXXFLAGS) -DOPS_MPI -std=c++11 -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_PLAIN) $(HDF5_LIB_MPI) $(OPS_LINK) $(OPS_LIB_MPI) $(TRID_MPI) -o $(APP)_dev_mpi
 
+#=====================================================================================================================================================================
+
+MPI_OPENMP_KERNELS = mpi_openmp_kernels.cpp
+
 #
 # Sequential version
 #
@@ -118,9 +130,6 @@ $(APP)_seq: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops
 #
 # mpi version
 #
-
-MPI_OPENMP_KERNELS = mpi_openmp_kernels.cpp
-
 $(APP)_mpi: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi.a
 		@echo ""
 		@echo ""
@@ -345,4 +354,4 @@ clean:
 	rm -f $(APP)_ompoffload
 	rm -f $(OPS_GENERATED)
 	rm -f .generated constants_list.txt
-	rm -rf ./mpi_openmp ./cuda ./hip ./openmp_offload
+	rm -rf ./mpi_openmp ./cuda ./hip ./openmp_offload ./OpenACC ./OpenCL ./SYCL ./MPI_inline
