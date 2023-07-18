@@ -7,8 +7,35 @@
   * @details Contains limits and constrains definitions used in L1 components.
   */
 
-/* OPS limits */
-constexpr unsigned short ops_max_dim = 3;
+/***** OPS limits *****/
+constexpr unsigned int ops_max_dim = 3;
+
+/* Tiling */
+constexpr unsigned int max_depth_bytes = 8192;
+constexpr unsigned int max_depth_v8 = max_depth_bytes / 8;
+constexpr unsigned int max_depth_v16 = max_depth_bytes / 16;
+constexpr unsigned int max_depth_d32 = max_depth_bytes / 4;
+constexpr unsigned int max_depth_d32_v8 = max_depth_d32 / 8;
+constexpr unsigned int max_depth_d32_v16 = max_depth_d32 / 16;
+
+constexpr unsigned int min_depth_bytes = 32 * 4;
+constexpr unsigned int min_depth_d32 = min_depth_bytes / 4;
+constexpr unsigned int min_depth_d32_v8 = min_depth_d32 / 8;
+constexpr unsigned int min_depth_d32_v16 = min_depth_d32 / 16;
+
+constexpr unsigned int avg_depth_bytes = 1000 * 4;
+constexpr unsigned int avg_depth_d32 = avg_depth_bytes / 4;
+constexpr unsigned int avg_depth_d32_v8 = avg_depth_d32 / 8;
+constexpr unsigned int avg_depth_d32_v16 = avg_depth_d32 / 16;
+
+/* Grid limits */
+constexpr unsigned int max_blocks = max_depth_d32_v8 + 1;
+constexpr unsigned int min_blocks = min_depth_d32_v16 + 1;
+constexpr unsigned int avg_blocks = avg_depth_d32_v8 + 1;
+
+constexpr unsigned int max_grid_size = max_blocks * max_depth_d32 * max_depth_d32;
+constexpr unsigned int min_grid_size = min_blocks * min_depth_d32 * min_depth_d32;
+constexpr unsigned int avg_grid_size = avg_blocks * avg_depth_d32 * avg_depth_d32;
 
 /* data mover limits */
 constexpr unsigned int max_data_size = 4000000000;
@@ -58,10 +85,13 @@ struct GridPropertyCore
     SizeType size;
     SizeType d_p;
     SizeType d_m;
-    SizeType gridsize;
+    SizeType grid_size;
+    SizeType actual_size;
     SizeType offset;
     unsigned short dim;
     unsigned short xblocks;
+    unsigned int total_itr;
+    unsigned outer_loop_limit;
 };
 
 enum CoefTypes
