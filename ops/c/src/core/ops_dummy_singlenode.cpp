@@ -177,6 +177,8 @@ int _ops_is_root(OPS_instance* instance) { (void)instance; return 1; }
 
 int ops_is_root() { return 1; }
 
+int ops_get_proc() { return 0; }
+
 int ops_num_procs() { return 1; }
 
 void ops_set_halo_dirtybit(ops_arg *arg) { (void)arg; }
@@ -323,10 +325,6 @@ bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, 
     disp[n] = 0;
   }
   return true;
-}
-
-int ops_get_proc() {
-  return 0;
 }
 
 /************* Functions only use in the Fortran Backend ************/
