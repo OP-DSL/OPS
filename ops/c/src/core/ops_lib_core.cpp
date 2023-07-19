@@ -645,6 +645,16 @@ ops_stencil ops_decl_stencil(int dims, int points, int *sten,
   return _ops_decl_stencil(OPS_instance::getOPSInstance(), dims, points, sten, name);
 }
 
+ops_stencil ops_dat_create_zeropt_stencil(ops_dat dat) {
+  int block_dim = dat->block->dims;
+  int *sten = new int[block_dim];
+
+  for(int i = 0; i < block_dim; i++)
+    sten[i] = 0;
+
+  return ops_decl_stencil(block_dim, 1, sten, "zero_pt");
+}
+
 ops_stencil _ops_decl_strided_stencil(OPS_instance *instance, int dims, int points, int *sten,
                                      int *stride, char const *name) {
   if (dims <= 0) {

@@ -52,9 +52,11 @@
 */
 
 #define hipSafeCall(stream, err) __hipSafeCall(stream, err, __FILE__, __LINE__)
+#define hiprandSafeCall(stream, err) __hiprandSafeCall(stream, err, __FILE__, __LINE__)
 #define hipCheckMsg(stream, msg) __hipCheckMsg(stream, msg, __FILE__, __LINE__)
 
 void __hipSafeCall(std::ostream &stream, hipError_t err, const char *file, const int line);//?
+void __hiprandSafeCall(std::ostream &stream, hiprandStatus_t err, const char *file, const int line);//?
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_HIP_RT_SUPPORT_H */

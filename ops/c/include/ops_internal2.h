@@ -287,6 +287,15 @@ void ops_put_data(ops_dat dat);
 OPS_FTN_INTEROP
 void create_kerneldesc_and_enque(char const *name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc));
 
+
+/*******************************************************************************
+* Random number generations
+*******************************************************************************/
+void ops_randomgen_init(unsigned int seed, int options);
+void ops_fill_random_uniform(ops_dat dat);
+void ops_fill_random_normal(ops_dat dat);
+void ops_randomgen_exit();
+
 /*******************************************************************************
 * Memory allocation functions
 *******************************************************************************/

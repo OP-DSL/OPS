@@ -810,6 +810,8 @@ OPS_FTN_INTEROP
 ops_stencil ops_decl_stencil(int dims, int points, int *stencil,
                              char const *name);
 
+ops_stencil ops_dat_create_zeropt_stencil(ops_dat dat);
+
 /**
  * This routine defines a strided stencil.
  *
