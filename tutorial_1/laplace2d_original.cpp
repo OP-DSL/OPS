@@ -18,11 +18,9 @@ int main(int argc, const char** argv)
 
   double *A;
   double *Anew;
-  double *y0;
 
   A    = (double *)malloc((imax+2) * (jmax+2) * sizeof(double));
   Anew = (double *)malloc((imax+2) * (jmax+2) * sizeof(double));
-  y0   = (double *)malloc((imax+2) * sizeof(double));
 
   memset(A, 0, (imax+2) * (jmax+2) * sizeof(double));
 
