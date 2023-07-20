@@ -1,0 +1,7 @@
+export OPS_INSTALL_PATH=$HOME/OPS/ops
+export OPS_COMPILER=gnu
+export MPI_INSTALL_PATH=/usr/local
+export CUDA_INSTALL_PATH=/usr/local/cuda
+export PATH=$PATH:$CUDA_INSTALL_PATH/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_INSTALL_PATH/lib
+export NV_ARCH=Volta
