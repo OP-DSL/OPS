@@ -53,7 +53,6 @@ class OPS_instance_sycl  {
 public:
   std::vector<void*> ops_sycl_consts;
   cl::sycl::queue *queue;
-  int sycl_device;
 };
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */

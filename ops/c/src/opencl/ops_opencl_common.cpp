@@ -56,8 +56,8 @@
 #include <ops_exceptions.h>
 
 #include <random>
-std::default_random_engine ops_rand_gen;
-//std::mt19937 ops_rand_gen;
+//std::default_random_engine ops_rand_gen;
+std::mt19937 ops_rand_gen;
 
 //
 // Get return (error) messages from OpenCL run-time

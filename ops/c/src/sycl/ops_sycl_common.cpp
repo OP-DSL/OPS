@@ -41,8 +41,8 @@
 #include <ops_sycl_rt_support.h>
 
 #include <random>
-std::default_random_engine ops_rand_gen;
-//std::mt19937 ops_rand_gen;
+//std::default_random_engine ops_rand_gen;
+std::mt19937 ops_rand_gen;
 
 void ops_init_device(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
   cutilDeviceInit(instance, argc, argv);
@@ -114,7 +114,7 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
     }
   }
   instance->sycl_instance = new OPS_instance_sycl();
-  instance->sycl_instance->sycl_device = OPS_sycl_device;
+
   switch (OPS_sycl_device) {
   case 0:
     instance->sycl_instance->queue =
@@ -174,35 +174,34 @@ void ops_fill_random_uniform(ops_dat dat) {
     cumsize *= dat->size[d];
   }
 
-/*  if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) {
+  if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) {
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    cl::sycl::buffer buf_data((double *)dat->data_d, cl::sycl::range<1>(cumsize));
-    instance->sycl_instance->queue.submit([&](cl::sycl::handler& cgh) {
-      accessor DataArr(buf_data, cgh, write_only);
-      // Specify the device kernel body as lambda function
-      cgh.paralle_for(cl::sycl::range<1>(cumsize), [=](auto i) {
-        DataArr[i] = distribution(ops_rand_gen);
-      });
-    });
+    for (int i =0 ; i < cumsize; i++) {
+      ((double *)dat->data_d)[i] = distribution(ops_rand_gen);
+    }
   }
   else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 ||
              strcmp(type, "real(kind=4)") == 0) {
     std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
+    for (int i =0 ; i < cumsize; i++) {
+      ((float *)dat->data_d)[i] = distribution(ops_rand_gen);
+    }
   }
   else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 || strcmp(type, "integer") == 0 ||
              strcmp(type, "integer(4)") == 0 || strcmp(type, "integer(kind=4)") == 0) {
     std::uniform_int_distribution<int> distribution(0, INT_MAX);
+    for (int i =0 ; i < cumsize; i++) {
+      ((int *)dat->data_d)[i] = distribution(ops_rand_gen);
+    }
   }
-  else*/ {
+  else {
     OPSException ex(OPS_RUNTIME_ERROR);
     ex << "Error: uniform random number generation not implemented for data type: "<<dat->type;
     throw ex;
   }
 
-  if(instance->sycl_instance->sycl_device == 2)
-    dat->dirty_hd = 2;
-  else
-    dat->dirty_hd = 1;
+  dat->dirty_hd = 2;
+
   // set halo
   ops_stencil stencil = ops_dat_create_zeropt_stencil(dat);
   ops_arg arg = ops_arg_dat(dat, dat->dim, stencil, dat->type, OPS_WRITE);
@@ -222,23 +221,27 @@ void ops_fill_random_normal(ops_dat dat) {
     cumsize *= dat->size[d];
   }
 
-  /*if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) {
+  if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) {
     std::normal_distribution<double> distribution(0.0, 1.0);
+    for (int i =0 ; i < cumsize; i++) {
+      ((double *)dat->data_d)[i] = distribution(ops_rand_gen);
+    }
   }
   else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 ||
              strcmp(type, "real(kind=4)") == 0) {
     std::normal_distribution<float> distribution(0.0f, 1.0f);
+    for (int i =0 ; i < cumsize; i++) {
+      ((float *)dat->data_d)[i] = distribution(ops_rand_gen);
+    }
   }
-  else*/ {
+  else {
     OPSException ex(OPS_RUNTIME_ERROR);
     ex << "Error: normal random number generation not implemented for data type: "<<dat->type;
     throw ex;
   }
 
-  if(instance->sycl_instance->sycl_device == 2)
-    dat->dirty_hd = 2;
-  else
-    dat->dirty_hd = 1;
+  dat->dirty_hd = 2;
+
   // set halo
   ops_stencil stencil = ops_dat_create_zeropt_stencil(dat);
   ops_arg arg = ops_arg_dat(dat, dat->dim, stencil, dat->type, OPS_WRITE);
