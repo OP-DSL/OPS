@@ -40,8 +40,8 @@
 #include <ops_device_rt_support.h>
 
 #include <random>
-std::default_random_engine ops_rand_gen;
-//std::mt19937 ops_rand_gen;
+//std::default_random_engine ops_rand_gen;
+std::mt19937 ops_rand_gen;
 
 void ops_init_device(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
   instance->OPS_hybrid_gpu = 0;
