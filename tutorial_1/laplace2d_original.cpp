@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "timer.h"
+
 int main(int argc, const char** argv)
 {
   //Size along y
@@ -19,10 +21,15 @@ int main(int argc, const char** argv)
   double *A;
   double *Anew;
 
+  double ct0,et0,ct1,et1; //timer variables
+
   A    = (double *)malloc((imax+2) * (jmax+2) * sizeof(double));
   Anew = (double *)malloc((imax+2) * (jmax+2) * sizeof(double));
 
   memset(A, 0, (imax+2) * (jmax+2) * sizeof(double));
+
+  //Start timer
+  timer(&ct0, &et0);
 
   // set boundary conditions
   for (int i = 0; i < imax+2; i++)
@@ -84,6 +91,9 @@ int main(int argc, const char** argv)
 
   printf("%5d, %0.6f\n", iter, error);
 
+  //End timer
+  timer(&ct1, &et1);
+
   double err_diff = fabs((100.0*(error/2.421354960840227e-03))-100.0);
   printf("Total error is within %3.15E %% of the expected error\n",err_diff);
   if(err_diff < 0.001)
@@ -91,6 +101,7 @@ int main(int argc, const char** argv)
   else
     printf("This test is considered FAILED\n");
 
+  printf("\nTotal Wall time %lf seconds\n",et1-et0);
 
   free(A);
   free(Anew);
