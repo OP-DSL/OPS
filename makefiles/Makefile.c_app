@@ -74,7 +74,8 @@ endif
 endif
 
 ifndef TARGETS
-TARGETS = dev_seq dev_mpi seq tiled openmp mpi mpi_openmp mpi_tiled ompoffload
+TARGETS = dev_seq dev_mpi seq tiled openmp mpi mpi_openmp mpi_tiled
+#ompoffload
 
 ifdef CUDA_INSTALL_PATH
 TARGETS += cuda mpi_cuda mpi_cuda_tiled
