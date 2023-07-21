@@ -1,5 +1,5 @@
 CC       = g++
-OMPFLAGS = -O0 -lm
+OMPFLAGS = -O3 -lm
 
 BIN =  lattboltz2d
 
