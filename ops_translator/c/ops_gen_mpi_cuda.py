@@ -842,7 +842,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
         code(text)
             
         comm('create kernel descriptor and pass it to ops_enqueue_kernel')
-        text = 'create_kerneldesc_and_enque(name, "{name}", args, '
+        text = f'create_kerneldesc_and_enque(name, "{name}", args, '
         text = text + f'{nargs}, '
         text = text + f'{nk}, '
         text = text + 'dim, 1, range, block, '
