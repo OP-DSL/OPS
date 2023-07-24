@@ -395,8 +395,8 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   //
   // If no tile sizes specified, compute it
   //
-  if (instance->ops_cache_size == 0)
-    instance->ops_cache_size = (int)ops_internal_get_cache_size(instance) / 1000;
+  //if (instance->ops_cache_size == 0)
+  //  instance->ops_cache_size = (int)ops_internal_get_cache_size(instance) / 1000;
   // If tile sizes undefined, make an educated guess
     // Figure out which datasets are being accessed in these loops
   std::vector<int> datasets_touched(instance->OPS_dat_index, 0);
