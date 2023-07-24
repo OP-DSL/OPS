@@ -71,6 +71,10 @@ TARGETS:=$(filter-out opencl mpi_opencl,$(TARGETS))
 endif
 endif
 
+ifneq (,$(filter ompoffload,$(TARGETS)))
+TARGETS:=$(filter-out ompoffload,$(TARGETS))
+endif
+
 endif
 
 ifndef TARGETS
@@ -91,8 +95,8 @@ endif
 
 ifeq ($(OPS_COMPILER),pgi)
     TARGETS += openacc mpi_openacc
-else
-    TARGETS += openacc_error
+#else
+#    TARGETS += openacc_error
 endif
 
 endif
