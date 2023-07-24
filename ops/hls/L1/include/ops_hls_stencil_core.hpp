@@ -5,7 +5,7 @@
 /** @file
   * @brief Vitis HLS specific L1 abstract stencil core class
   * @author Beniel Thileepan
-  * @details Implements of the templatised stencil class.
+  * @details Implements of the template stencil class.
   * 
   */
 
@@ -24,7 +24,7 @@ namespace ops
 namespace hls
 {
 
-template <typename T, unsigned short NUM_POINTS, unsigned short VEC_FACTOR, unsigned short COEF_TYPE, 
+template <typename T, unsigned short NUM_POINTS, unsigned short VEC_FACTOR,
         unsigned int ...SIZES>
 class StencilCore
 {
@@ -39,7 +39,6 @@ class StencilCore
 
         StencilCore()
         {
-        #pragma HLS ARRAY_PARTITION variable = m_coef complete
 		#pragma HLS ARRAY_PARTITION variable = m_sizes complete
 
 #ifndef __SYTHESIS__
@@ -49,16 +48,6 @@ class StencilCore
 #endif        
             __init(s_dim, SIZES...);
         }
-
-    #if COEF_TYPE == 0
-        void setCoef(const T* coef)
-        {
-            for (unsigned int i = 0; i < NUM_POINTS; i++)
-            {
-                m_coef[i] = coef[i];
-            }
-        }
-    #endif
 
         void setGridProp(const GridPropertyCore& gridProp)
         {
@@ -73,21 +62,8 @@ class StencilCore
             }
         }
 
-//        void getMemWr(T& memWrArr)
-//        {
-//            for (unsigned short i = 0; i < VEC_FACTOR; i++)
-//            {
-//                memWrArr[i] = m_memWrArr[i];
-//            }
-//        }
+
 #ifndef __SYTHESIS__
-        void getCoef(T* coef)
-        {
-            for (unsigned int i = 0; i < NUM_POINTS; i++)
-            {
-                coef[i] = m_coef[i];
-            }
-        }
 
         void getPoints(unsigned short* stencilPoints)
         {
@@ -95,6 +71,11 @@ class StencilCore
             {
                 stencilPoints[i] = m_stencilPoints[i];
             }
+        }
+
+        void getGridProp(const GridPropertyCore& gridProp)
+        {
+            gridProp = m_gridProp;
         }
 #endif
 
@@ -116,15 +97,9 @@ class StencilCore
         }
 
     protected:
-        T m_coef[NUM_POINTS];
         GridPropertyCore m_gridProp;
         unsigned short m_stencilPoints[NUM_POINTS * 2];
-
-        widen_dt m_updatedValue; 
-
         unsigned int m_sizes[s_dim];
-
-
 };
 
 

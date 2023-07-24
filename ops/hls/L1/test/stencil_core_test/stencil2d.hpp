@@ -24,15 +24,14 @@ static T register_it(T x){
 class Stencil2D : public ops::hls::StencilCore<stencil_type, num_points, vector_factor, coef_type, stencil_size_p, stencil_size_q>
 {
     public:
-    	using ops::hls::StencilCore<stencil_type, num_points, vector_factor, coef_type, stencil_size_p, stencil_size_q>::m_coef;
 
         Stencil2D()
         {
         #pragma HLS ARRAY_PARTITION variable = m_rowArr_0 dim=1 complete
 		#pragma HLS ARRAY_PARTITION variable = m_rowArr_1 dim=1 complete
 		#pragma HLS ARRAY_PARTITION variable = m_rowArr_2 dim=1 complete
-        #pragma HLS BIND_STORAGE variable = m_buffer_0 type = ram_t2p impl=uram latency=1
-        #pragma HLS BIND_STORAGE variable = m_buffer_1 type = ram_t2p impl=uram latency=1
+        #pragma HLS BIND_STORAGE variable = m_buffer_0 type = ram_t2p impl=uram latency=2
+        #pragma HLS BIND_STORAGE variable = m_buffer_1 type = ram_t2p impl=uram latency=2
 		#pragma HLS ARRAY_PARTITION variable = m_stencilValues complete
 		#pragma HLS ARRAY_PARTITION variable = m_memWrArr complete
         }
@@ -66,18 +65,19 @@ class Stencil2D : public ops::hls::StencilCore<stencil_type, num_points, vector_
                            +-------------------+                          
          */
 
-        void kernel(stream_dt& rd_buffer, stream_dt& wr_buffer)
+        void kernel(stream_dt& rd_buffer, stream_dt& wr_buffer, stencil_type* coef)
         {
             unsigned short i = 0, j = 0;
             unsigned short i_l = 0; // Line buffer index
             unsigned short i_d = 0, j_d = 0;
             unsigned short grid_size_itr = m_gridProp.grid_size[1] * m_gridProp.xblocks;
+            widen_dt read_val = 0;
 //            const unsigned short row_center_indices[] = {0,2,4};
 //			#pragma HLS ARRAY_PARTITION variable=row_center_indices type=complete
 
             for (unsigned short itr = 0; itr < m_gridProp.total_itr; itr++)
             {
-//            #pragma HLS LOOP_TRIPCOUNT min=min_grid_size max=max_grid_size avg=avg_grid_size
+            #pragma HLS LOOP_TRIPCOUNT min=min_grid_size max=avg_grid_size avg=avg_grid_size
             #pragma HLS PIPELINE II=1
 
                 i = i_d;
@@ -106,17 +106,17 @@ class Stencil2D : public ops::hls::StencilCore<stencil_type, num_points, vector_
                     	j_d++;
                     }
                     
+                    bool cond_read = (itr < grid_size_itr);
+                    if (cond_read){
+                    	read_val = rd_buffer.read();
+                    }
+
                     m_stencilValues[0] = m_buffer_0[i_l]; // (i)
                     m_stencilValues[1] = m_stencilValues[2]; // (ii)
                     m_stencilValues[2] = m_stencilValues[3]; // (iii)
                     m_buffer_0[i_l] = m_stencilValues[1]; // (iv)
                     m_stencilValues[3] = m_buffer_1[i_l]; // (v)
-
-                    bool cond_read = (itr < grid_size_itr);
-                    if (cond_read){
-                    	m_stencilValues[4] = rd_buffer.read(); // (vi)
-                    }
-
+                    m_stencilValues[4] = read_val; // (vi)
                     m_buffer_1[i_l] = m_stencilValues[4]; // (vii)
 
                     i_l++;
@@ -164,11 +164,11 @@ class Stencil2D : public ops::hls::StencilCore<stencil_type, num_points, vector_
                 process: for (unsigned short k = 0; k < vector_factor; k++)
                 {
                     unsigned short index = (i << shift_bits) + k;
-                    stencil_type r1 = m_coef[0] * m_rowArr_0[k+1];
-                    stencil_type r2 = m_coef[1] * m_rowArr_1[k];
-                    stencil_type r3 = m_coef[2] * m_rowArr_1[k+1];
-                    stencil_type r4 = m_coef[3] * m_rowArr_1[k+2];
-                    stencil_type r5 = m_coef[4] * m_rowArr_2[k+1];
+                    stencil_type r1 = coef[0] * m_rowArr_0[k+1];
+                    stencil_type r2 = coef[1] * m_rowArr_1[k];
+                    stencil_type r3 = coef[2] * m_rowArr_1[k+1];
+                    stencil_type r4 = coef[3] * m_rowArr_1[k+2];
+                    stencil_type r5 = coef[4] * m_rowArr_2[k+1];
 
                     stencil_type r6 = r1 + r2;
                     stencil_type r7 = r3 + r4;
@@ -211,5 +211,6 @@ class Stencil2D : public ops::hls::StencilCore<stencil_type, num_points, vector_
 
         stencil_type m_memWrArr[vector_factor];
         widen_dt m_stencilValues[num_points];
+        widen_dt m_updatedValue;
 };
 

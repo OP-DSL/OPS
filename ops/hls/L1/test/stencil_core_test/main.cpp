@@ -41,13 +41,12 @@ int main()
     /* Cross Stencil */
     Stencil2D cross_stencil;
 
-    unsigned short points[] = {1,0, 0,1, 1,1, 2,1, 1,2};
+    unsigned short offset[2] = {1,1};
     float coef[] = {0.125 , 0.125 , 0.5, 0.125, 0.125};
-    unsigned short offset[] = {1,1};
+    unsigned short points[10] = {1,0, 0,1, 1,1, 2,1, 1,2};
 
     cross_stencil.setGridProp(gridProp);
     cross_stencil.setPoints(points);
-    cross_stencil.setCoef(coef);
 
     /* Data Generation */
     const int num_tests  = 10;
@@ -80,7 +79,7 @@ int main()
         copyGrid(grid_u1_d, grid_u1_cpu, gridProp);
 
     	cpuGoldenKernel(grid_u1_cpu, grid_u2_cpu, gridProp, coef);
-        dut(gridProp, cross_stencil, grid_u1_d, grid_u2_d);
+        dut(gridProp, cross_stencil, grid_u1_d, grid_u2_d, coef);
         test_summary[test_itr] = verify(grid_u2_cpu, grid_u2_d, gridProp);
 
         if (test_summary[test_itr])

@@ -2,38 +2,28 @@
 #include "top.hpp"
 //#define DEBUG_LOG
 
-void dut(ops::hls::GridPropertyCore& gridProp, Stencil2D & cross_stencil, stencil_type* data_in, stencil_type* data_out)
+void dut(ops::hls::GridPropertyCore& gridProp, Stencil2D& cross_stencil, stencil_type* data_in, stencil_type* data_out)
 {
 
+    stencil_type coef[] = {0.125 , 0.125 , 0.5, 0.125, 0.125};
 
-#ifndef __SYTHESIS__
-    unsigned int stencil_sizes[2];
-    unsigned short read_points[num_points * 2];
-    float read_coef[num_points];
-
-    cross_stencil.getPoints(read_points);
-    cross_stencil.getCoef(read_coef);
-
-    std::cout << "SUCESSFUL INSTANTIATION OF STENCIL CORE" << std::endl;
-
-    std::cout << "POINTS: ";
-
-    for (int i = 0; i < num_points; i++)
-    {
-        std::cout << "(" << read_points[2 * i] << ", " << read_points[2 * i + 1] << ") ";
-    }
-
-    std::cout << std::endl;
-
-    std::cout << "COEF: ";
-
-    for (int i = 0; i < num_points; i++)
-    {
-        std::cout << read_coef[i] << (i == num_points - 1 ? "" :  ", ");
-    }
-
-    std::cout << std::endl << std::endl; 
-#endif  
+//#ifndef __SYTHESIS__
+//    unsigned int stencil_sizes[2];
+//    unsigned short read_points[num_points * 2];
+//
+//    cross_stencil.getPoints(read_points);
+//
+//    std::cout << "SUCESSFUL INSTANTIATION OF STENCIL CORE" << std::endl;
+//
+//    std::cout << "POINTS: ";
+//
+//    for (int i = 0; i < num_points; i++)
+//    {
+//        std::cout << "(" << read_points[2 * i] << ", " << read_points[2 * i + 1] << ") ";
+//    }
+//
+//    std::cout << std::endl << std::endl;
+//#endif
 
     ops::hls::DataConv converterInput;
     typedef ap_uint<vector_factor * sizeof(stencil_type) * 8> widen_dt;
@@ -71,7 +61,7 @@ void dut(ops::hls::GridPropertyCore& gridProp, Stencil2D & cross_stencil, stenci
                 printf("------------------------------\n\n");
 #endif
 
-    cross_stencil.kernel(in_stream, out_stream);
+    cross_stencil.kernel(in_stream, out_stream, coef);
 
 
 #ifdef DEBUG_LOG
