@@ -162,12 +162,23 @@ OPS is a Domain Specific Language embedded in C/C++ and Fortran, targeting multi
 \end{frame}
 
 \begin{frame}
+\frametitle{Setup environment}
+\begin{itemize}
+\item Create your workspace
+\item Open the terminal: Applications/System/Terminal
+\item Clone OPS' training/ops-hackathon2023 branch: \texttt{git clone https://github.com/OP-DSL/OPS.git -b training/ops-hackathon2023}
+\item Go to the \texttt{OPS/tutorial\_1} directory
+\item Do \texttt{source source\_env.sh} - every time you open a new console
+\item Open the \texttt{laplace2d\_original.cpp} file
+\end{itemize}
+\end{frame}
+
+\begin{frame}
 \frametitle{Example application}
 Our example application is a simple 2D iterative Laplace equation solver.
 \begin{itemize}
-\item Go to the \texttt{OPS/apps/c/laplace2d\_tutorial/original} directory
-\item Open the \texttt{laplace2d.cpp} file
-\item It uses an $imax*jmax$ grid, with an additional 1 layers of boundary cells on all sides
+\item Open the \texttt{laplace2d\_original.cpp} file
+\item It uses an $imax*jmax$ grid, with an additional 1 layer of boundary cells (Dirichlet) on all sides
 \item There are a number of loops that set the boundary conditions along the four edges
 \item The bulk of the simulation is spent in a \texttt{while} loop, repeating a stencil kernel with a maximum reduction, and a copy kernel
 \item Compile and run the code!
@@ -257,15 +268,15 @@ while ( error > tol && iter < iter_max ) {
 \fontsize{11}{12}\selectfont
 \begin{itemize}
 \item To build OPS, we need a C/C++ compiler at the minimum, and for advanced parallelisations we will need an MPI compiler, a CUDA compiler, and an OpenCL compiler. To support parallel file I/O we need the parallel HDF5 library as well. We do not require all of the above to build and use OPS (but don't be surprised if some build targets fail).
-\item The OPS Makefiles rely on a set of environment flags to be set appropriately:
+\item The OPS Makefiles rely on a set of environment flags to be set appropriately. Here we have done this with \texttt{source source\_env.sh}
 \begin{lstlisting}[basicstyle=\tiny]
 export OPS_COMPILER=gnu #or intel, cray, pgi, clang
-export OPS_INSTALL_PATH=~/OPS/ops
+export OPS_INSTALL_PATH=$HOME/OPS/ops
 export MPI_INSTALL_PATH=/opt/openmpi #MPI root folder
 export CUDA_INSTALL_PATH=/usr/local/cuda #CUDA root folder
 export OPENCL_INSTALL_PATH=/usr/local/cuda #OpenCL root folder
 export HDF5_INSTALL_PATH=/opt/hdf5 #HDF5 root folder
-export NV_ARCH=Pascal #if you use GPUs, their generation
+export NV_ARCH=Volta #if you use GPUs, their generation
 \end{lstlisting}
 \item Having set these, you can type \texttt{make} in the \texttt{ops/c} subdirectory
 \end{itemize}
@@ -288,7 +299,7 @@ First off, we need to include the appropriate header files, then initialise OPS,
   ...
   ops_exit();
 \end{lstlisting}
-\item By this point you need OPS set up - take a look at the Makefile in step1, and observer that the include and library paths are added, and we link against \texttt{ops\_seq}.
+\item By this point you need OPS set up add these to OMPFLAGS in the \texttt{Makefile}: \texttt{-I\$OPS\_INSTALL\_PATH/c/include -L\$OPS\_INSTALL\_PATH/c/lib -lops\_seq}.
 \end{itemize}
 \end{frame}
 
@@ -310,7 +321,7 @@ First off, we need to include the appropriate header files, then initialise OPS,
                       d_m, d_p, Anew, "double", "Anew");
   \end{lstlisting}
   \item datasets have a size (number of grid points in each dimension). There is padding for halos or boundaries in the positive (\texttt{d\_p}) and negative directions (\texttt{d\_m}); here we use a 1 thick boundary layer. Base index can be defined as it may be different from 0 (e.g. in Fortran). 
-  \item item these with a $0$ base index and a $1$ wide halo, these datasets can be indexed from $-1$ to $size+1$
+  \item we index these with a $0$ base index and a $1$ wide halo, these datasets can be indexed from $-1$ to $size+1$
 \end{itemize}
 \end{frame}
 
@@ -427,6 +438,10 @@ void left_bndcon(ACC<double> &A, const int *idx) {
 \end{lstlisting}  
 These variables do not need to be passed in to the user kernel, they are accessible in all user kernels
 \item The other option is to explicitly pass it to the user kernel with \texttt{ops\_arg\_gbl}: this is for scalars and small arrays that should not be in global scope.
+\begin{lstlisting}
+ops_arg_gbl(&pi, 1, "double", OPS_READ)	
+\end{lstlisting}
+
 \end{itemize}
 \end{itemize}
 \end{frame}
@@ -478,18 +493,17 @@ ops_reduction_result(h_err, &error);
 \begin{itemize}
 \item Parallel I/O can be done using HDF5 - see the \texttt{ops\_hdf5.h} header
 \end{itemize}
-\item All data and parallelisation is now handed to OPS. We can now also compile the developer MPI version of the code - see the Makefile, and try building \texttt{laplace2d\_mpi}
+\item All data and parallelisation is now handed to OPS. We can now also compile the the different versions of the code - copy over a Makefile form \texttt{apps/c/poisson/Makefile} and customize it. Try building \texttt{laplace2d\_dev\_seq} - the "development version"
 \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
 \frametitle{Code generation - step 7}
 \begin{itemize}
-\item Now that the developer versions of our code work, it's time to generate code. On the console, type:
-\begin{lstlisting}[language=bash,basicstyle=\tiny]
-$OPS_INSTALL_PATH/../ops_translator/c/ops.py laplace2d.cpp
+\item Now that the developer versions of our code work, it's time to generate code - done automatically when using the template Makefile
+\item \begin{lstlisting}[language=bash,basicstyle=\tiny]
+make laplace2d_seq
 \end{lstlisting}
-\item We have provided a makefile which can use several different compilers (intel, cray, pgi, clang), we suggest modifying it for your own application
 \item Try building CUDA, OpenMP, MPI+CUDA, MPI+OpenMP, and other versions of the code
 \item You can take a look at the generated kernels for different parallelisations under the appropriate subfolders
 \item If you add the $-OPS\_DIAGS=2$ runtime flag, at the end of execution, OPS will report timings and achieved bandwidth for each of your kernels
@@ -506,7 +520,7 @@ $OPS_INSTALL_PATH/../ops_translator/c/ops.py laplace2d.cpp
   \item \texttt{laplace2d\_seq} and \texttt{laplace2d\_mpi}: baseline sequential and MPI implementations
   \item \texttt{laplace2d\_openmp}: baseline OpenMP implementation
   \item \texttt{laplace2d\_cuda}, \texttt{laplace2d\_opencl}, \texttt{laplace2d\_openacc}: implementations targeting GPUs
-  \item \texttt{laplace2d\_mpi\_inline}: optimised implementation with MPI+OpenMP
+%  \item \texttt{laplace2d\_mpi\_inline}: optimised implementation with MPI+OpenMP
   \item \texttt{laplace2d\_tiled}: optimised implementation with OpenMP that improves spatial and temporal locality
 \end{itemize}
 \end{itemize}
