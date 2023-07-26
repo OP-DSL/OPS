@@ -170,6 +170,7 @@ OPS is a Domain Specific Language embedded in C/C++ and Fortran, targeting multi
 \item Go to the \texttt{OPS/tutorial\_1} directory
 \item Do \texttt{source source\_env.sh} - every time you open a new console
 \item Open the \texttt{laplace2d\_original.cpp} file
+\item \textbf{If you get stuck/fall behind: OPS/apps/c/laplace2d\_tutorial}
 \end{itemize}
 \end{frame}
 
@@ -299,7 +300,8 @@ First off, we need to include the appropriate header files, then initialise OPS,
   ...
   ops_exit();
 \end{lstlisting}
-\item By this point you need OPS set up add these to OMPFLAGS in the \texttt{Makefile}: \texttt{-I\$OPS\_INSTALL\_PATH/c/include -L\$OPS\_INSTALL\_PATH/c/lib -lops\_seq}.
+%\item Compile the OPS backends: type \texttt{make} in \texttt{OPS/ops/c}
+\item By this point you need OPS set up add these to OMPFLAGS in the \texttt{Makefile}: \texttt{-I\$(OPS\_INSTALL\_PATH)/c/include -L\$(OPS\_INSTALL\_PATH)/c/lib -lops\_seq}.
 \end{itemize}
 \end{frame}
 

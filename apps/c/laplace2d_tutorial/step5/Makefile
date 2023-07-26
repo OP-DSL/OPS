@@ -1,5 +1,5 @@
 CC       = g++
-OMPFLAGS = -Ofast -lm -std=c++11
+OMPFLAGS = -Ofast -lm -std=c++11 -fopenmp
 
 BIN =  laplace2d
 
