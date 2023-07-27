@@ -108,6 +108,7 @@ const char *ops_hdf5_type_to_string(hid_t t) {
 
 hid_t h5_type(const char *type) {
     hid_t h5t{0};
+    if (half_type_init == 0) {H5T_IEEE_FP16 = create_float16_type(); half_type_init=1;}
     if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0)
     {
         h5t = H5T_NATIVE_DOUBLE;
@@ -118,7 +119,6 @@ hid_t h5_type(const char *type) {
         h5t = H5T_NATIVE_FLOAT;
     }
     else if (strcmp(type, "half") == 0) {
-        if (half_type_init == 0) {H5T_IEEE_FP16 = create_float16_type(); half_type_init=1;}
         h5t = H5T_IEEE_FP16;
     } else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 || strcmp(type, "integer") == 0 ||
              strcmp(type, "integer(4)") == 0 || strcmp(type, "integer(kind=4)") == 0)
