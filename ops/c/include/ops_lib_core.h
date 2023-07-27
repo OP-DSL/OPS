@@ -49,6 +49,7 @@
 #include "queue.h" //contains double linked list implementation
 #include <strings.h>
 #endif
+#include <stdint.h>
 #include <complex>
 
 /** default byte alignment for allocations made by OPS */
@@ -91,6 +92,14 @@
 
 typedef std::complex<double> complexd;
 typedef std::complex<float> complexf;
+
+#if defined(__CUDA_ARCH__) || defined(__CUDACC__)
+#include <cuda_fp16.h>
+#elif defined(__STDCPP_FLOAT16_T__) || defined(FLT16_MIN)
+typedef _Float16 half;
+#else
+typedef uint16_t half;
+#endif
 
 /*
  * * zero constants
