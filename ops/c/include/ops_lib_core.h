@@ -51,6 +51,7 @@
 #endif
 #include <stdint.h>
 #include <complex>
+#include <random>
 
 /** default byte alignment for allocations made by OPS */
 #ifndef OPS_ALIGNMENT
@@ -809,8 +810,6 @@ ops_reduction ops_decl_reduction_handle(int size, const char *type,
 OPS_FTN_INTEROP
 ops_stencil ops_decl_stencil(int dims, int points, int *stencil,
                              char const *name);
-
-ops_stencil ops_dat_create_zeropt_stencil(ops_dat dat);
 
 /**
  * This routine defines a strided stencil.

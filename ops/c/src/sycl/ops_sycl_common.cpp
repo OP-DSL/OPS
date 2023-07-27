@@ -155,102 +155,15 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
 }
 
 void ops_randomgen_init(unsigned int seed, int options) {
-  /* Set seed */
-  int comm_global_size = ops_num_procs();
-  int my_global_rank = ops_get_proc();
-
-  if(comm_global_size == 0)
-    ops_rand_gen.seed(seed);
-  else
-    ops_rand_gen.seed(seed*my_global_rank+my_global_rank);
+  ops_randomgen_init_host(seed, options, ops_rand_gen);
 }
 
 void ops_fill_random_uniform(ops_dat dat) {
-  OPS_instance *instance = OPS_instance::getOPSInstance();
-  size_t cumsize = dat->dim;
-  const char *type = dat->type;
-
-  for (int d = 0; d < OPS_MAX_DIM; d++) {
-    cumsize *= dat->size[d];
-  }
-
-  if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) {
-    std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    for (int i =0 ; i < cumsize; i++) {
-      ((double *)dat->data_d)[i] = distribution(ops_rand_gen);
-    }
-  }
-  else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 ||
-             strcmp(type, "real(kind=4)") == 0) {
-    std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
-    for (int i =0 ; i < cumsize; i++) {
-      ((float *)dat->data_d)[i] = distribution(ops_rand_gen);
-    }
-  }
-  else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 || strcmp(type, "integer") == 0 ||
-             strcmp(type, "integer(4)") == 0 || strcmp(type, "integer(kind=4)") == 0) {
-    std::uniform_int_distribution<int> distribution(0, INT_MAX);
-    for (int i =0 ; i < cumsize; i++) {
-      ((int *)dat->data_d)[i] = distribution(ops_rand_gen);
-    }
-  }
-  else {
-    OPSException ex(OPS_RUNTIME_ERROR);
-    ex << "Error: uniform random number generation not implemented for data type: "<<dat->type;
-    throw ex;
-  }
-
-  dat->dirty_hd = 2;
-
-  // set halo
-  ops_stencil stencil = ops_dat_create_zeropt_stencil(dat);
-  ops_arg arg = ops_arg_dat(dat, dat->dim, stencil, dat->type, OPS_WRITE);
-  int *iter_range = new int[dat->block->dims*2];
-  for ( int n = 0; n < dat->block->dims; n++) {
-    iter_range[2*n] = 0;
-    iter_range[2*n+1] = dat->size[n];
-  }
-  ops_set_halo_dirtybit3(&arg, iter_range);
+  ops_fill_random_uniform_host(dat, ops_rand_gen);
 }
 
 void ops_fill_random_normal(ops_dat dat) {
-  size_t cumsize = dat->dim;
-  const char *type = dat->type;
-
-  for (int d = 0; d < OPS_MAX_DIM; d++) {
-    cumsize *= dat->size[d];
-  }
-
-  if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) {
-    std::normal_distribution<double> distribution(0.0, 1.0);
-    for (int i =0 ; i < cumsize; i++) {
-      ((double *)dat->data_d)[i] = distribution(ops_rand_gen);
-    }
-  }
-  else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 ||
-             strcmp(type, "real(kind=4)") == 0) {
-    std::normal_distribution<float> distribution(0.0f, 1.0f);
-    for (int i =0 ; i < cumsize; i++) {
-      ((float *)dat->data_d)[i] = distribution(ops_rand_gen);
-    }
-  }
-  else {
-    OPSException ex(OPS_RUNTIME_ERROR);
-    ex << "Error: normal random number generation not implemented for data type: "<<dat->type;
-    throw ex;
-  }
-
-  dat->dirty_hd = 2;
-
-  // set halo
-  ops_stencil stencil = ops_dat_create_zeropt_stencil(dat);
-  ops_arg arg = ops_arg_dat(dat, dat->dim, stencil, dat->type, OPS_WRITE);
-  int *iter_range = new int[dat->block->dims*2];
-  for ( int n = 0; n < dat->block->dims; n++) {
-    iter_range[2*n] = 0;
-    iter_range[2*n+1] = dat->size[n];
-  }
-  ops_set_halo_dirtybit3(&arg, iter_range);
+  ops_fill_random_normal_host(dat, ops_rand_gen);
 }
 
 void ops_randomgen_exit() {
