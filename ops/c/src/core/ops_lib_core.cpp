@@ -645,16 +645,6 @@ ops_stencil ops_decl_stencil(int dims, int points, int *sten,
   return _ops_decl_stencil(OPS_instance::getOPSInstance(), dims, points, sten, name);
 }
 
-ops_stencil ops_dat_create_zeropt_stencil(ops_dat dat) {
-  int block_dim = dat->block->dims;
-  int *sten = new int[block_dim];
-
-  for(int i = 0; i < block_dim; i++)
-    sten[i] = 0;
-
-  return ops_decl_stencil(block_dim, 1, sten, "zero_pt");
-}
-
 ops_stencil _ops_decl_strided_stencil(OPS_instance *instance, int dims, int points, int *sten,
                                      int *stride, char const *name) {
   if (dims <= 0) {
@@ -2105,6 +2095,101 @@ void ops_put_data(ops_dat dat) {
   ops_device_sync(dat->block->instance);
 }
 
+void ops_randomgen_init_host(unsigned int seed, int options, std::mt19937 ops_rand_gen) {
+  /* Set seed */
+  int comm_global_size = ops_num_procs();
+  int my_global_rank = ops_get_proc();
+
+  if(comm_global_size == 0)
+    ops_rand_gen.seed(seed);
+  else
+    ops_rand_gen.seed(seed*my_global_rank+my_global_rank);
+}
+
+void ops_fill_random_uniform_host(ops_dat dat, std::mt19937 ops_rand_gen) {
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+  size_t cumsize = dat->dim;
+  const char *type = dat->type;
+
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    cumsize *= dat->size[d];
+  }
+
+  if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) {
+    std::uniform_real_distribution<double> distribution(0.0, 1.0);
+    for (int i =0 ; i < cumsize; i++) {
+      ((double *)dat->data)[i] = distribution(ops_rand_gen);
+    }
+  }
+  else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 ||
+             strcmp(type, "real(kind=4)") == 0) {
+    std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
+    for (int i =0 ; i < cumsize; i++) {
+      ((float *)dat->data)[i] = distribution(ops_rand_gen);
+    }
+  }
+  else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 || strcmp(type, "integer") == 0 ||
+             strcmp(type, "integer(4)") == 0 || strcmp(type, "integer(kind=4)") == 0) {
+    std::uniform_int_distribution<int> distribution(0, INT_MAX);
+    for (int i =0 ; i < cumsize; i++) {
+      ((int *)dat->data)[i] = distribution(ops_rand_gen);
+    }
+  }
+  else {
+    OPSException ex(OPS_RUNTIME_ERROR);
+    ex << "Error: uniform random number generation not implemented for data type: "<<dat->type;
+    throw ex;
+  }
+
+  dat->dirty_hd = 1;
+  // set halo
+  ops_arg arg = ops_arg_dat(dat, dat->dim, instance->OPS_internal_0[dat->block->dims -1], dat->type, OPS_WRITE);
+  int *iter_range = new int[dat->block->dims*2];
+  for ( int n = 0; n < dat->block->dims; n++) {
+    iter_range[2*n] = 0;
+            iter_range[2*n+1] = dat->size[n];
+  }
+  ops_set_halo_dirtybit3(&arg, iter_range);
+}
+
+void ops_fill_random_normal_host(ops_dat dat, std::mt19937 ops_rand_gen) {
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+  size_t cumsize = dat->dim;
+  const char *type = dat->type;
+
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    cumsize *= dat->size[d];
+  }
+
+  if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) {
+    std::normal_distribution<double> distribution(0.0, 1.0);
+    for (int i =0 ; i < cumsize; i++) {
+      ((double *)dat->data)[i] = distribution(ops_rand_gen);
+    }
+  }
+  else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 ||
+             strcmp(type, "real(kind=4)") == 0) {
+    std::normal_distribution<float> distribution(0.0f, 1.0f);
+    for (int i =0 ; i < cumsize; i++) {
+      ((float *)dat->data)[i] = distribution(ops_rand_gen);
+    }
+  }
+  else {
+    OPSException ex(OPS_RUNTIME_ERROR);
+    ex << "Error: normal random number generation not implemented for data type: "<<dat->type;
+    throw ex;
+  }
+
+  dat->dirty_hd = 1;
+  // set halo
+  ops_arg arg = ops_arg_dat(dat, dat->dim, instance->OPS_internal_0[dat->block->dims -1], dat->type, OPS_WRITE);
+  int *iter_range = new int[dat->block->dims*2];
+  for ( int n = 0; n < dat->block->dims; n++) {
+    iter_range[2*n] = 0;
+    iter_range[2*n+1] = dat->size[n];
+  }
+  ops_set_halo_dirtybit3(&arg, iter_range);
+}
 
 //
 // routines to resize constant/reduct arrays, if necessary
