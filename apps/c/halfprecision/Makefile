@@ -9,6 +9,7 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.common
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
+USE_HDF5=1
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
 
@@ -19,6 +20,7 @@ HEADERS=laplace_kernels.h
 OPS_FILES=laplace2d.cpp
 
 OPS_GENERATED_SUFFIX=_ops
+OPS_GENERATED=laplace2d_ops.cpp
 
 OTHER_FILES=
 

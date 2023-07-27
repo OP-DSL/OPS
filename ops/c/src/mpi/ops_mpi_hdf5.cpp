@@ -1009,28 +1009,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
 
       // write data
-      if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 || strcmp(dat->type, "real(kind=8)") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, plist_id, data);
-      else if (strcmp(dat->type, "float") == 0 || strcmp(dat->type, "real") == 0 || strcmp(dat->type, "real(4)") == 0
-            || strcmp(dat->type, "real(kind=4)") == 0 )
-          H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, data);
-      else if (strcmp(dat->type, "int") == 0 || strcmp(dat->type, "int(4)") == 0 || strcmp(dat->type, "integer") == 0
-             || strcmp(dat->type, "integer(4)") == 0 || strcmp(dat->type, "integer(kind=4)") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id, data);
-      else if (strcmp(dat->type, "long") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_LONG, memspace, filespace, plist_id, data);
-      else if ((strcmp(dat->type, "long long") == 0) || (strcmp(dat->type, "ll") == 0))
-          H5Dwrite(dset_id, H5T_NATIVE_LLONG, memspace, filespace, plist_id, data);
-      else if (strcmp(dat->type, "short") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_SHORT, memspace, filespace, plist_id, data);
-      else if (strcmp(dat->type, "char") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_CHAR, memspace, filespace, plist_id, data);
-      else
-      {
-          OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: Unknown type in ops_fetch_dat_hdf5_file(): " << dat->type;
-          throw ex;
-      }
+      hid_t datatype = h5_type(dat->type);
+      H5Dwrite(dset_id, datatype, memspace, filespace, plist_id, data);
 
       MPI_Barrier(OPS_MPI_HDF5_BLOCK_WORLD);
       free(data);
@@ -1525,27 +1505,8 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   }
 
   // set type size
-  int type_size;
-  if (strcmp(read_type, "double") == 0)
-    type_size = sizeof(double);
-  else if (strcmp(read_type, "float") == 0)
-    type_size = sizeof(float);
-  else if (strcmp(read_type, "int") == 0)
-    type_size = sizeof(int);
-  else if (strcmp(read_type, "long") == 0)
-    type_size = sizeof(long);
-  else if ((strcmp(read_type, "long long") == 0) ||
-           (strcmp(read_type, "ll") == 0))
-    type_size = sizeof(long long);
-  else if (strcmp(read_type, "short") == 0)
-    type_size = sizeof(short);
-  else if (strcmp(read_type, "char") == 0)
-    type_size = sizeof(char);
-  else {
-    OPSException ex(OPS_HDF5_ERROR);
-    ex << "Error: Unknown type in ops_decl_dat_hdf5(): " << read_type;
-    throw ex;
-  }
+  hid_t datatype = h5_type(read_type);
+  size_t type_size = H5Tget_size(datatype);
 
   char *data = NULL;
 
@@ -1755,26 +1716,8 @@ void ops_read_dat_hdf5(ops_dat dat) {
     H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
 
     // read data
-    if (strcmp(dat->type, "double") == 0)
-      H5Dread(dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, plist_id, data);
-    else if (strcmp(dat->type, "float") == 0)
-      H5Dread(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, data);
-    else if (strcmp(dat->type, "int") == 0)
-      H5Dread(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id, data);
-    else if (strcmp(dat->type, "long") == 0)
-      H5Dread(dset_id, H5T_NATIVE_LONG, memspace, filespace, plist_id, data);
-    else if ((strcmp(dat->type, "long long") == 0) ||
-             (strcmp(dat->type, "ll") == 0))
-      H5Dread(dset_id, H5T_NATIVE_LLONG, memspace, filespace, plist_id, data);
-    else if (strcmp(dat->type, "char") == 0)
-      H5Dread(dset_id, H5T_NATIVE_CHAR, memspace, filespace, plist_id, data);
-    else if (strcmp(dat->type, "short") == 0)
-      H5Dread(dset_id, H5T_NATIVE_SHORT, memspace, filespace, plist_id, data);
-    else {
-      OPSException ex(OPS_HDF5_ERROR);
-      ex << "Error: Unknown type in ops_read_dat_hdf5(): " << dat->type;
-      throw ex;
-    }
+    hid_t datatype = h5_type(dat->type);
+    H5Dread(dset_id, datatype, memspace, filespace, plist_id, data);
 
     // add MPI halos
     // if (block->dims == 2)
@@ -1899,33 +1842,7 @@ typedef struct {
   size_t elem_bytes;    // element byte-size
 } ops_hdf5_dataset_properties;
 
-const char *ops_hdf5_type_to_string(hid_t t) {
-  char *text = NULL;
-  if (H5Tequal(t, H5T_NATIVE_INT)) {
-    text = (char *)malloc(4 * sizeof(char));
-    strcpy(text, "int");
-  } else if (H5Tequal(t, H5T_NATIVE_LONG)) {
-    text = (char *)malloc(5 * sizeof(char));
-    strcpy(text, "long");
-  } else if (H5Tequal(t, H5T_NATIVE_LLONG)) {
-    text = (char *)malloc(20 * sizeof(char));
-    strcpy(text, "long long");
-  } else if (H5Tequal(t, H5T_NATIVE_FLOAT)) {
-    text = (char *)malloc(6 * sizeof(char));
-    strcpy(text, "float");
-  } else if (H5Tequal(t, H5T_NATIVE_DOUBLE)) {
-    text = (char *)malloc(7 * sizeof(char));
-    strcpy(text, "double");
-  } else if (H5Tequal(t, H5T_NATIVE_CHAR)) {
-    text = (char *)malloc(5 * sizeof(char));
-    strcpy(text, "char");
-  } else {
-    text = (char *)malloc(13 * sizeof(char));
-    strcpy(text, "UNRECOGNISED");
-  }
-
-  return (const char *)text;
-}
+const char *ops_hdf5_type_to_string(hid_t t);
 
 herr_t get_dataset_properties(hid_t dset_id,
                               ops_hdf5_dataset_properties *dset_props) {
@@ -1963,25 +1880,7 @@ herr_t get_dataset_properties(hid_t dset_id,
     return -1;
   }
   dset_props->type_str = ops_hdf5_type_to_string(t);
-  if (H5Tequal(t, H5T_NATIVE_INT)) {
-    dset_props->elem_bytes = sizeof(int);
-  } else if (H5Tequal(t, H5T_NATIVE_LONG)) {
-    dset_props->elem_bytes = sizeof(long);
-  } else if (H5Tequal(t, H5T_NATIVE_LLONG)) {
-    dset_props->elem_bytes = sizeof(long long);
-  } else if (H5Tequal(t, H5T_NATIVE_FLOAT)) {
-    dset_props->elem_bytes = sizeof(float);
-  } else if (H5Tequal(t, H5T_NATIVE_DOUBLE)) {
-    dset_props->elem_bytes = sizeof(double);
-  } else if (H5Tequal(t, H5T_NATIVE_CHAR)) {
-    dset_props->elem_bytes = sizeof(char);
-  } else {
-    size_t name_len = H5Iget_name(dset_id, NULL, 0);
-    char name[name_len];
-    H5Iget_name(dset_id, name, name_len + 1);
-    ops_printf("Error: Do not recognise type of dataset '%s'\n", name);
-    exit(2);
-  }
+  dset_props->elem_bytes = H5Tget_size(t);
   dset_props->elem_bytes *= dset_props->dim;
 
   return 0;
@@ -2065,39 +1964,11 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
   dset_id = H5Dopen(file_id, name, H5P_DEFAULT);
 
   char *data = nullptr;
-  // initialize data buffer and read data
-  if (strcmp(typ, "int") == 0 || strcmp(typ, "int(4)") == 0 ||
-      strcmp(typ, "integer") == 0 || strcmp(typ, "integer(4)") == 0) {
-    data = (char *)xmalloc(sizeof(int) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, plist_id, data);
-    memcpy((void *)const_data, (void *)data, sizeof(int) * const_dim);
-  } else if (strcmp(typ, "long") == 0) {
-    data = (char *)xmalloc(sizeof(long) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, plist_id, data);
-    memcpy((void *)const_data, (void *)data, sizeof(long) * const_dim);
-  } else if (strcmp(typ, "long long") == 0) {
-    data = (char *)xmalloc(sizeof(long long) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_LLONG, H5S_ALL, H5S_ALL, plist_id, data);
-    memcpy((void *)const_data, (void *)data, sizeof(long long) * const_dim);
-  } else if (strcmp(typ, "float") == 0 || strcmp(typ, "real(4)") == 0 ||
-             strcmp(typ, "real") == 0) {
-    data = (char *)xmalloc(sizeof(float) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, plist_id, data);
-    memcpy((void *)const_data, (void *)data, sizeof(float) * const_dim);
-  } else if (strcmp(typ, "double") == 0 ||
-             strcmp(typ, "double precision") == 0 ||
-             strcmp(typ, "real(8)") == 0) {
-    data = (char *)xmalloc(sizeof(double) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, plist_id, data);
-    memcpy((void *)const_data, (void *)data, sizeof(double) * const_dim);
-  } else if (strcmp(typ, "char") == 0) {
-    data = (char *)xmalloc(sizeof(char) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_CHAR, H5S_ALL, H5S_ALL, plist_id, data);
-    memcpy((void *)const_data, (void *)data, sizeof(char) * const_dim);
-  } else {
-    ops_printf("Unknown type in file %s for constant %s\n", file_name, name);
-    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
-  }
+  hid_t datatype = h5_type(typ);
+  size_t type_size = H5Tget_size(datatype);
+  data = (char *)xmalloc(type_size * const_dim);
+  H5Dread(dset_id, datatype, H5S_ALL, H5S_ALL, plist_id, data);
+  memcpy((void *)const_data, (void *)data, type_size * const_dim);
 
   free(data);
 
@@ -2199,36 +2070,10 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
 
     dataspace = H5Dget_space(dset_id);
 
+    hid_t datatype = h5_type(type);
     // Write to the exisiting dataset with default properties
-    if (strcmp(type, "double") == 0 || strcmp(type, "double precision") == 0 ||
-        strcmp(type, "real(8)") == 0) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, dataspace, plist_id,
+    H5Dwrite(dset_id, datatype, H5S_ALL, dataspace, plist_id,
                const_data);
-    } else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0 ||
-               strcmp(type, "real") == 0) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_FLOAT, H5S_ALL, dataspace, plist_id,
-               const_data);
-    } else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 ||
-               strcmp(type, "integer") == 0 ||
-               strcmp(type, "integer(4)") == 0) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_INT, H5S_ALL, dataspace, plist_id,
-               const_data);
-    } else if ((strcmp(type, "long") == 0)) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_LONG, H5S_ALL, dataspace, plist_id,
-               const_data);
-    } else if ((strcmp(type, "long long") == 0)) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_LLONG, H5S_ALL, dataspace, plist_id,
-               const_data);
-    } else if (strcmp(type, "char") == 0) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_CHAR, H5S_ALL, dataspace, plist_id,
-               const_data);
-    }
 
     H5Pclose(plist_id);
     H5Sclose(dataspace);
@@ -2251,57 +2096,14 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   plist_id = H5Pcreate(H5P_DATASET_XFER);
   H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
 
+  hid_t datatype = h5_type(type);
   // Create the dataset with default properties
-  if (strcmp(type, "double") == 0 || strcmp(type, "double precision") == 0 ||
-      strcmp(type, "real(8)") == 0) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_DOUBLE, dataspace,
-                        H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, dataspace, plist_id,
-             const_data);
-    H5Dclose(dset_id);
-  } else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0 ||
-             strcmp(type, "real") == 0) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_FLOAT, dataspace, H5P_DEFAULT,
-                        H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_FLOAT, H5S_ALL, dataspace, plist_id,
-             const_data);
-    H5Dclose(dset_id);
-  } else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 ||
-             strcmp(type, "integer") == 0 || strcmp(type, "integer(4)") == 0) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_INT, dataspace, H5P_DEFAULT,
-                        H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_INT, H5S_ALL, dataspace, plist_id, const_data);
-    H5Dclose(dset_id);
-  } else if ((strcmp(type, "long") == 0)) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_LONG, dataspace, H5P_DEFAULT,
-                        H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_LONG, H5S_ALL, dataspace, plist_id,
-             const_data);
-    H5Dclose(dset_id);
-  } else if ((strcmp(type, "long long") == 0)) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_LLONG, dataspace, H5P_DEFAULT,
-                        H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_LLONG, H5S_ALL, dataspace, plist_id,
-             const_data);
-    H5Dclose(dset_id);
-  } else if (strcmp(type, "char") == 0) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_CHAR, dataspace, H5P_DEFAULT,
-                        H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_CHAR, H5S_ALL, dataspace, plist_id,
-             const_data);
-    H5Dclose(dset_id);
-  } else {
-    ops_printf(
-        "Unknown type %s for constant %s: cannot write constant to file\n",
-        type, name);
-    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
-  }
+  dset_id = H5Dcreate(file_id, name, datatype, dataspace,
+      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  // write data
+  H5Dwrite(dset_id, datatype, H5S_ALL, dataspace, plist_id,
+      const_data);
+  H5Dclose(dset_id);
 
   H5Pclose(plist_id);
   H5Sclose(dataspace);
@@ -2347,6 +2149,8 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
     H5Awrite(attribute, atype, "float");
   else if (strcmp(type, "char") == 0)
     H5Awrite(attribute, atype, "char");
+  else if (strcmp(type, "half") == 0)
+    H5Awrite(attribute, atype, "half");
   else {
     ops_printf(
         "Unknown type %s for constant %s: cannot write constant to file\n",
