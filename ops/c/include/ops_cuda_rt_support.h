@@ -48,6 +48,7 @@
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 #include <device_launch_parameters.h>
+#include <cuda_fp16.h>
 
 #include <ops_lib_core.h>
 #include <ops_device_rt_support.h>

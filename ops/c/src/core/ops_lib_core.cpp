@@ -831,7 +831,13 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
         OPS_RED_INIT(double,DBL)
     } else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 || strcmp(type, "real(kind=4)") == 0) {
         OPS_RED_INIT(float,FLT)
-    } else if (strcmp(type, "int") == 0 || strcmp(type, "integer") == 0 || strcmp(type, "integer(4)") == 0 || strcmp(type, "integer(kind=4)") == 0) {
+    }
+#ifdef __STDCPP_FLOAT16_T__ 
+    else if (strcmp(type, "half") == 0 || strcmp(type, "_Float16") == 0 || strcmp(type, "real(2)") == 0 || strcmp(type, "real(kind=2)") == 0) {
+        OPS_RED_INIT(half,FLT)
+    }
+#endif
+    else if (strcmp(type, "int") == 0 || strcmp(type, "integer") == 0 || strcmp(type, "integer(4)") == 0 || strcmp(type, "integer(kind=4)") == 0) {
         OPS_RED_INIT2(int,INT)
     } else if (strcmp(type, "long") == 0) {
         OPS_RED_INIT2(long,LONG)
