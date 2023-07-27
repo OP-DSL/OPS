@@ -47,6 +47,64 @@
 #include "ops_hdf5_common.h"
 #include <ops_exceptions.h>
 
+int half_type_init = 0;
+hid_t H5T_IEEE_FP16;
+
+hid_t create_float16_type() {
+  hid_t new_type = H5Tcopy(H5T_IEEE_F32LE);
+  size_t spos, epos, esize, mpos, msize;
+  H5Tget_fields(new_type, &spos, &epos, &esize, &mpos, &msize);
+  // for float16
+  mpos = 0;
+  msize = 10;
+  esize = 5;
+  epos = 10;
+  spos = 15;
+  // for single precision
+  //   mpos = 0;
+  // msize = 23;
+  // esize = 8;
+  // epos = 23;
+  // spos = 31;
+  H5Tset_fields(new_type, spos, epos, esize, mpos, msize);
+  H5Tset_precision(new_type, 16);
+  H5Tset_size(new_type, 2);
+  H5Tset_ebias(new_type, 15);
+  return new_type;
+}
+
+const char *ops_hdf5_type_to_string(hid_t t) {
+  if (half_type_init == 0) {H5T_IEEE_FP16 = create_float16_type(); half_type_init=1;}
+  char *text = NULL;
+  if (H5Tequal(t, H5T_NATIVE_INT)) {
+    text = (char *)malloc(4 * sizeof(char));
+    strcpy(text, "int");
+  } else if (H5Tequal(t, H5T_NATIVE_LONG)) {
+    text = (char *)malloc(5 * sizeof(char));
+    strcpy(text, "long");
+  } else if (H5Tequal(t, H5T_NATIVE_LLONG)) {
+    text = (char *)malloc(20 * sizeof(char));
+    strcpy(text, "long long");
+  } else if (H5Tequal(t, H5T_NATIVE_FLOAT)) {
+    text = (char *)malloc(6 * sizeof(char));
+    strcpy(text, "float");
+  } else if (H5Tequal(t, H5T_NATIVE_DOUBLE)) {
+    text = (char *)malloc(7 * sizeof(char));
+    strcpy(text, "double");
+  } else if (H5Tequal(t, H5T_NATIVE_CHAR)) {
+    text = (char *)malloc(5 * sizeof(char));
+    strcpy(text, "char");
+  } else if (H5Tequal(t, H5T_IEEE_FP16)) {
+    text = (char *)malloc(5 * sizeof(char));
+    strcpy(text, "half");
+  } else {
+    text = (char *)malloc(13 * sizeof(char));
+    strcpy(text, "UNRECOGNISED");
+  }
+
+  return (const char *)text;
+}
+
 
 hid_t h5_type(const char *type) {
     hid_t h5t{0};
@@ -59,7 +117,10 @@ hid_t h5_type(const char *type) {
     {
         h5t = H5T_NATIVE_FLOAT;
     }
-    else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 || strcmp(type, "integer") == 0 ||
+    else if (strcmp(type, "half") == 0) {
+        if (half_type_init == 0) {H5T_IEEE_FP16 = create_float16_type(); half_type_init=1;}
+        h5t = H5T_IEEE_FP16;
+    } else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 || strcmp(type, "integer") == 0 ||
              strcmp(type, "integer(4)") == 0 || strcmp(type, "integer(kind=4)") == 0)
     {
         h5t = H5T_NATIVE_INT;
@@ -95,28 +156,6 @@ void split_h5_name(const char *data_name,
   }
 }
 
-hid_t create_float16_type() {
-  hid_t new_type = H5Tcopy(H5T_IEEE_F32LE);
-  size_t spos, epos, esize, mpos, msize;
-  H5Tget_fields(new_type, &spos, &epos, &esize, &mpos, &msize);
-  // for float16
-  mpos = 0;
-  msize = 10;
-  esize = 5;
-  epos = 10;
-  spos = 15;
-  // for single precision
-  //   mpos = 0;
-  // msize = 23;
-  // esize = 8;
-  // epos = 23;
-  // spos = 31;
-  H5Tset_fields(new_type, spos, epos, esize, mpos, msize);
-  H5Tset_precision(new_type, 16);
-  H5Tset_size(new_type, 2);
-  H5Tset_ebias(new_type, 15);
-  return new_type;
-}
   // create the dataset or open the dataset if existing
 void H5_dataset_space(const hid_t file_id, const int data_dims,
                       const hsize_t *global_data_size,
@@ -143,9 +182,8 @@ void H5_dataset_space(const hid_t file_id, const int data_dims,
     file_space = H5Screate_simple(data_dims, global_data_size, NULL);
 
     hid_t type = h5_type(data_type);
-    if (type == H5T_NATIVE_FLOAT || type == H5T_NATIVE_DOUBLE) {
+    if (type == H5T_NATIVE_FLOAT || type == H5T_NATIVE_DOUBLE || type == H5T_IEEE_FP16) {
       hid_t real_type;
-      bool float16_created{false};
       if (type == H5T_NATIVE_DOUBLE) {
         if (real_precision == REAL_PRECISION::Double) {
           real_type = H5T_NATIVE_DOUBLE;
@@ -154,8 +192,7 @@ void H5_dataset_space(const hid_t file_id, const int data_dims,
           real_type = H5T_NATIVE_FLOAT;
         }
         if (real_precision == REAL_PRECISION::Half) {
-          real_type = create_float16_type();
-          float16_created = true;
+          real_type = H5T_IEEE_FP16;
         }
       }
 
@@ -164,16 +201,16 @@ void H5_dataset_space(const hid_t file_id, const int data_dims,
           real_type = H5T_NATIVE_FLOAT;
         }
         if (real_precision == REAL_PRECISION::Half) {
-          real_type = create_float16_type();
-          float16_created = true;
+          real_type = H5T_IEEE_FP16;
         }
+      }
+
+      if (type == H5T_IEEE_FP16) {
+        real_type = H5T_IEEE_FP16;
       }
 
       dataset_id = H5Dcreate(parent_group, data_name, real_type, file_space,
                              H5P_DEFAULT, data_plist_id, H5P_DEFAULT);
-      if (float16_created) {
-        H5Tclose(real_type);
-      }
     } else {
       dataset_id =
           H5Dcreate(parent_group, data_name, h5_type(data_type), file_space,
