@@ -20,9 +20,10 @@ CMake 3.18 or newer is required for using the CMake building system. If the late
   sudo ln -s $cmake_dir/bin/cmake /usr/local/bin/cmake
   ```
 
- **Python2**
+ **Python**
 
-Python2 is required by the OPS Python translator. The CMake build system will try to identify it automatically. However, the process can fail sometime (e.g., if there are both Python2 and Python3 installed). If this happens, the path to Python2 can be specified manually by using `-DPython2_EXECUTABLE` when invoking CMake
+To set up the Python virtual environment and install the required dependant packages for the code generator, ensure that you have Python3.9 or more recent version with pip installed. Detailed instructions for installing dependendant packages can be found in the `OPS/ops_translator_v2/setup_venv.sh` file.
+After successfully setting up the Python virtual environment and installing the required dependent packages using the instructions mentioned, you will need to activate the virtual environment `source $OPS_INSTALL_PATH/../ops_translator_v2/ops_venv/bin/activate` every time you want to use the code generator. Activating the virtual environment ensures that the code generator and its dependencies are isolated from the system-wide Python installtion, avoiding conflicts and ensuring proper execution.
 
  **HDF5**
 
@@ -32,15 +33,15 @@ Python2 is required by the OPS Python translator. The CMake build system will tr
  
 The [CUDA](https://developer.nvidia.com/cuda-downloads) backend targets NVIDIA GPUs with a compute capability of 3.0 or greater. The CMake build system will detect the tookit automatically. If the automatic process fails, the build system will compile the library without the CUDA support.  Please use `-DCUDA_TOOLKIT_ROOT_DIR` to manually specify the path.
 
-**HIP Backend**
+ **HIP Backend**
 
 The HIP backend targets AMD GPUs and NVIDIA GPUs which are supported by HIP - either through its CUDA support or the [ROCm](https://rocmdocs.amd.com/en/latest/) stack (tested with >=3.9). 
 
-**SYCL Backend**
+ **SYCL Backend**
 
 The [SYCL](https://www.khronos.org/sycl/) backend is currently in development and only working without MPI. It has been tested with Intel OneAPI (>=2021.1), Intel's public LLVM version, and hipSYCL (>=0.9.1), and runs on Intel CPUs and GPUs through Intel's OpenCL and Level Zero, NVIDIA and AMD GPUs both with the LLVM fork as well as hipSYCL. hipSYCL's OpenMP support covers most CPU architectures too.
 
-**Tridiagonal Solver Backend**
+ **Tridiagonal Solver Backend**
 
 To use the tridiagonal solver OPS API in applications and build example applications such as `adi`, `adi_burger` and `adi_burger_3D` the open source tridiagonal solver (scalar) library needs to be cloned and built from the [Tridsolver repository](https://github.com/OP-DSL/tridsolver). 
 ```bash
