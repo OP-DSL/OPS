@@ -34,6 +34,11 @@ TARGETS += $(APP)_openacc $(APP)_mpi_openacc
 else
 TARGETS += openacc_error
 endif
+
+ifdef SYCL_INSTALL_PATH
+TARGETS += $(APP)_sycl $(APP)_mpi_sycl $(APP)_mpi_sycl_tiled
+endif
+
 ifdef THREADED
 CXXFLAGS += $(THREADING_FLAGS)
 endif
@@ -186,8 +191,10 @@ $(APP)_mpi_opencl: ./OpenCL/$(MAIN_SRC)_mpi_opencl_kernels.o .generated Makefile
 SYCL_KERNELS = $(MAIN_SRC)_sycl_kernels.cpp
 $(APP)_sycl: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_sycl.a $(OPS_FILES_GEN) $(HEADERS)
 	$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./SYCL/$(SYCL_KERNELS) $(HDF5_LIB_SEQ) $(OPS_LINK) $(OPS_LIB_SYCL) -o $(APP)_sycl
+
 $(APP)_mpi_sycl: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_sycl.a $(OPS_FILES_GEN) $(HEADERS)
 	$(SYCLMPICXX) -DOPS_MPI $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./SYCL/$(SYCL_KERNELS) $(HDF5_LIB_MPI) $(OPS_LINK) $(OPS_LIB_MPI_SYCL) -o $(APP)_mpi_sycl
+
 $(APP)_mpi_sycl_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_sycl.a $(OPS_FILES_GEN) $(HEADERS)
 	$(SYCLMPICXX) -DOPS_MPI -DOPS_LAZY $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) -I. ./SYCL/$(SYCL_KERNELS) $(HDF5_LIB_MPI) $(OPS_LINK) $(OPS_LIB_MPI_SYCL) -o $(APP)_mpi_sycl_tiled
 
@@ -224,7 +231,12 @@ clean:
 	rm -f $(APP)_opencl
 	rm -f $(APP)_mpi_opencl
 	rm -f $(APP)_hip
-	rm -f $(APP)_mpi_hip $(APP)_mpi_hip_tiled
+	rm -f $(APP)_mpi_hip 
+	rm -f $(APP)_mpi_hip_tiled
+	rm -f $(APP)_ompoffload
+	rm -f $(APP)_sycl
+	rm -f $(APP)_mpi_sycl
+	rm -f $(APP)_mpi_sycl_tiled
 	rm -f ./MPI_OpenMP/*.o
 	rm -f ./MPI_inline/*.o
 	rm -f ./OpenMP_offload/*.o

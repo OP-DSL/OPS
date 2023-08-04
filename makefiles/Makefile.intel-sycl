@@ -4,8 +4,8 @@ ifdef DEBUG
 	CCFLAGS   := -O0 -std=c99 -fPIC -DUNIX -Wall -g #-ffloat-store
 	CXXFLAGS   := -O0 -fPIC -DUNIX -Wall -g -std=c++17 -DSYCL_COPY -DSYCL_USM #-DSYCL_COPY #-ffloat-store
 else
-	CCFLAGS   := -O3  -std=c99 -fPIC -DUNIX -Wall #-ffloat-store
-	CXXFLAGS  := -O3 -g  -fPIC -DUNIX -Wall -std=c++17
+	CCFLAGS   := -O3  -std=c99 -fPIC -DUNIX -Wall -fopenmp #-ffloat-store
+	CXXFLAGS  := -O3 -g  -fPIC -DUNIX -Wall -std=c++17 -fopenmp 
 endif
 OMPFLAGS := -fopenmp
 ifdef THREADED

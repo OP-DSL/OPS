@@ -435,7 +435,7 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                     code(
                         f"for (int d=0; d<{dims[n]}; d++) (({typs[n]} *)arg{n}.data)[d] = arg{n}h[d];"
                     )
-                    code(f"consts_bytes += ROUND_UP({dims[n]}*sizeof(int));")
+                    code(f"consts_bytes += ROUND_UP({dims[n]}*sizeof({typs[n]}));")
         if GBL_READ and GBL_READ_MDIM:
             code("mvConstArraysToDevice(block->instance,consts_bytes);")
 
@@ -835,46 +835,27 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
         )
         code(util.group_n_per_line([f" ops_arg arg{n}" for n in range(nargs)]) + ") {")
         config.depth = 2
-        code(
-            "ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));"
-        )
-        # code('desc->name = (char *)malloc(strlen(name)+1);')
-        # code('strcpy(desc->name, name);')
-        code("desc->name = name;")
-        code("desc->block = block;")
-        code("desc->dim = dim;")
-        code("desc->device = 1;")
-        code(f"desc->index = {nk};")
-        code("desc->hash = 5381;")
-        code(f"desc->hash = ((desc->hash << 5) + desc->hash) + {nk};")
-        FOR("i", "0", str(2 * NDIM))
-        code("desc->range[i] = range[i];")
-        code("desc->orig_range[i] = range[i];")
-        code("desc->hash = ((desc->hash << 5) + desc->hash) + range[i];")
-        ENDFOR()
+        n_per_line=5
+        text = f'ops_arg args[{nargs}] = {{'
+        for n in range (0, nargs):
+          text += f' arg{n}'
+          if nargs != 1 and n != nargs-1:
+            text += ','
+          else:
+            text += ' };\n'
+          if n%n_per_line == 5 and n != nargs-1:
+            text +='\n                    '
+        code(text)
 
-        code(f"desc->nargs = {nargs};")
-        code(f"desc->args = (ops_arg*)ops_malloc({nargs}*sizeof(ops_arg));")
-        declared = 0
-        for n in range(0, nargs):
-            code(f"desc->args[{n}] = arg{n};")
-            if arg_typ[n] == "ops_arg_dat":
-                code(
-                    f"desc->hash = ((desc->hash << 5) + desc->hash) + arg{n}.dat->index;"
-                )
-            if arg_typ[n] == "ops_arg_gbl" and accs[n] == OPS_READ:
-                if declared == 0:
-                    code(f"char *tmp = (char*)ops_malloc({dims[n]}*sizeof({typs[n]}));")
-                    declared = 1
-                else:
-                    code(f"tmp = (char*)ops_malloc({dims[n]}*sizeof({typs[n]}));")
-                code(f"memcpy(tmp, arg{n}.data,{dims[n]}*sizeof({typs[n]}));")
-                code(f"desc->args[{n}].data = tmp;")
-        code(f"desc->function = ops_par_loop_{name}_execute;")
-        IF("block->instance->OPS_diags > 1")
-        code(f'ops_timing_realloc(block->instance,{nk},"{name}");')
-        ENDIF()
-        code("ops_enqueue_kernel(desc);")
+        comm('create kernel descriptor and pass it to ops_enqueue_kernel')
+        text = 'create_kerneldesc_and_enque(name, args, '
+        text = text + f'{nargs}, '
+        text = text + f'{nk}, '
+        text = text + 'dim, 1, range, block, '
+        text = text + f'ops_par_loop_{name}_execute'
+        text = text + ');'
+        code(text)
+
         config.depth = 0
         code("}")
         code("#endif")
