@@ -72,7 +72,7 @@
     sub_dat_list sd{{arg.id}} = OPS_sub_dat_list[args[{{arg.id}}].dat->index];
             {% endif %}
             {% if arg.restrict %}
-    {{args_list[arg.id]}}_p += arg_idx[0] * args[{{arg.id}}].stencil->mgrid_stride[0] - sd{{arg.id}}->decomp_disp[0] + args[{{arg.id}}].dat->d_m[0];
+    {{args_list[arg.id]}}_p += arg_idx[0]*args[{{arg.id}}].stencil->mgrid_stride[0] - sd{{arg.id}}->decomp_disp[0] + args[{{arg.id}}].dat->d_m[0];
                 {% if lh.ndim > 1 %}
     {{args_list[arg.id]}}_p += (arg_idx[1]*args[{{arg.id}}].stencil->mgrid_stride[1] - sd{{arg.id}}->decomp_disp[1] + args[{{arg.id}}].dat->d_m[1]) * xdim{{arg.id}}_{{lh.kernel}};
                 {% endif %}
@@ -325,8 +325,7 @@
 {% endblock %}
 
 {% block host_epilogue %}
-    if (block->instance->OPS_diags > 1)
-    {
+    if (block->instance->OPS_diags > 1) {
         ops_timers_core(&__c1, &__t1);
         block->instance->OPS_kernels[{{kernel_idx}}].time += __t1 - __t2;
     }
@@ -340,8 +339,7 @@
     {% endfor %}
 #endif
 
-    if (block->instance->OPS_diags > 1)
-    {
+    if (block->instance->OPS_diags > 1) {
 //      ====================
 //      Update kernel record
 //      ====================

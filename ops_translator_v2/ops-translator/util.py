@@ -1,6 +1,7 @@
 import functools
 import operator
 import re
+import os
 import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -52,6 +53,24 @@ def uniqueBy(xs: Iterable[T], f: Callable[[T], Any]) -> List[T]:
             u.append(x)
 
     return u
+
+
+def sycl_set_flat_parallel(has_reduction: bool):
+    if os.getenv("OPS_FLAT"):
+            flat_parallel = True
+            ops_cpu = False
+    else:
+        flat_parallel = False
+        ops_cpu = os.getenv("OPS_CPU")
+        if ops_cpu and ops_cpu.isdigit():
+            ops_cpu = int(ops_cpu)
+        elif ops_cpu:
+            ops_cpu = 1
+
+    if has_reduction:
+        flat_parallel = False
+        ops_cpu = False
+    return flat_parallel, ops_cpu
 
 
 class Findable(ABC):
@@ -360,7 +379,7 @@ class KernelProcess:
 
         return kernel_body, args_list
 
-    def clean_kernel_func_text(self, kernel_func: str):
+    def clean_kernel_func_text(self, kernel_func: str) -> str:
         new_text = self.comment_remover(kernel_func)
         j = new_text.find("{")
         kernel_body =  self.clean_kernel_body(new_text[(j+1) : new_text.rfind("}")])
@@ -374,7 +393,7 @@ class KernelProcess:
         #print(args_list)
         return args_list
 
-    def comment_remover(self,text: str):
+    def comment_remover(self,text: str) -> str:
         """Remove comments from text"""
         def replacer(match):
             s = match.group(0)
@@ -471,3 +490,26 @@ class KernelProcess:
 
         return new_code
 
+    def sycl_kernel_func_text(self, kernel_func: str, consts):
+        const_names = []
+        for c in consts:
+            const_name = c.name
+            if re.search(r"\b"+const_name+r"\b",kernel_func):
+                const_names.append(const_name)
+                if c.dim.isdigit() and int(c.dim) == 1:
+                    kernel_func = re.sub(r"\b"+const_name+r"\b", const_name+"_sycl[0]", kernel_func)
+                else:
+                    kernel_func = re.sub(r"\b"+const_name+r"\b", const_name+"_sycl", kernel_func)
+
+        kernel_func = re.sub(r"\bsqrt\b", "cl::sycl::sqrt", kernel_func)
+        kernel_func = re.sub(r"\bcbrt\b", "cl::sycl::cbrt", kernel_func)
+        kernel_func = re.sub(r"\bfabs\b", "cl::sycl::fabs", kernel_func)
+        kernel_func = re.sub(r"\bfmin\b", "cl::sycl::fmin", kernel_func)
+        kernel_func = re.sub(r"\bfmax\b", "cl::sycl::fmax", kernel_func)
+        kernel_func = re.sub(r"\bisnan\b", "cl::sycl::isnan", kernel_func)
+        kernel_func = re.sub(r"\bisinf\b", "cl::sycl::isinf", kernel_func)
+        kernel_func = re.sub(r"\bsin\b", "cl::sycl::sin", kernel_func)
+        kernel_func = re.sub(r"\bcos\b", "cl::sycl::cos", kernel_func)
+        kernel_func = re.sub(r"\bexp\b", "cl::sycl::exp", kernel_func)
+
+        return kernel_func, const_names

@@ -18,10 +18,6 @@
 {% endif %}
 {% endblock %}
 
-{% block initializaion %}
-{{super()}}
-{% endblock %}
-
 {% block const_decls %}
 //  global constants
     {% for const in app.consts() %}

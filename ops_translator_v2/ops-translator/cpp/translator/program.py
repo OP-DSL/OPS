@@ -1,7 +1,7 @@
 import re
 
 from store import Program
-from util import SourceBuffer, findIdx
+from util import SourceBuffer, Rewriter, findIdx
 
 # Augment source program to use generated kernel hosts
 def translateProgram(source: str, program: Program, force_soa: bool = False) -> str:
@@ -19,7 +19,7 @@ def translateProgram(source: str, program: Program, force_soa: bool = False) -> 
         before, after = buffer.get(loop.loc.line - 1).split("ops_par_loop", 1)
         after = re.sub(
             rf"{loop.kernel}\s*,\s*", "", after, count=1
-        ) #TODO: This assumes tat the kernel argument is on the same line as the call
+        ) #TODO: This assumes that the kernel argument is on the same line as the call
         buffer.update(loop.loc.line -1, before + f"ops_par_loop_{loop.kernel}" + after)
 
     # 3. Update headers
@@ -71,3 +71,8 @@ def translateProgram(source: str, program: Program, force_soa: bool = False) -> 
         program.soa_val = True
 
     return new_source
+
+def translateProgram2(source: str, program: Program, force_soa: bool = False) -> str:
+    rewriter = Rewriter(source)
+
+    # 1. Update const calls
