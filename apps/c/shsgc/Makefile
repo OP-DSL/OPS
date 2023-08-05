@@ -12,8 +12,6 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
 
-
-
 HEADERS=calupwindeff_kernel.h drhouupdx_kernel.h limiter_kernel.h test_kernel.h updateRK3_kernel.h zerores_kernel.h drhoEpudx_kernel.h fact_kernel.h Riemann_kernel.h tvd_kernel.h vars.h drhoudx_kernel.h initialize_kernel.h save_kernel.h update_kernel.h vars_kernel.h
 
 OPS_FILES=shsgc.cpp
@@ -26,6 +24,6 @@ OTHER_FILES=
 APP=shsgc
 MAIN_SRC=shsgc
 
-TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled hip mpi_hip mpi_hip_tiled ompoffload
+TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled hip mpi_hip mpi_hip_tiled ompoffload sycl mpi_sycl mpi_sycl_tiled
 
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app

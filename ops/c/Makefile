@@ -30,7 +30,7 @@ ifdef CHECKPOINTING
 endif
 else
   CHKCC			:= $(CC)
-  CHKCXX			:= $(CXX)
+  CHKCXX		:= $(CXX)
 endif
 
 MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))

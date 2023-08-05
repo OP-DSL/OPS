@@ -26,6 +26,6 @@ OTHER_FILES = build_field.cpp diffuse.cpp initialise.cpp read_input.cpp tea_solv
 APP=tealeaf
 MAIN_SRC=tea_leaf
 
-TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled hip mpi_hip mpi_hip_tiled ompoffload
+TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled hip mpi_hip mpi_hip_tiled ompoffload sycl mpi_sycl mpi_sycl_tiled
 
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app

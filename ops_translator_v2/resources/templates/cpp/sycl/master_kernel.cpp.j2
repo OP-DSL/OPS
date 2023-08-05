@@ -1,0 +1,49 @@
+{% extends "cpp/master_kernel.cpp.j2" %}
+
+{% block ops_headers %}
+{{super()}}
+
+{% if user_types %}
+#include "user_types.h"
+{% endif %}
+
+#include "ops_sycl_rt_support.h"
+#include "ops_sycl_reduction.h"
+{% endblock %}
+
+{% block const_decls %}
+// global constants
+    {% for const in app.consts() %}
+cl::sycl::buffer<{{const.typ}},1> *{{const.ptr}}_p = nullptr;
+    {% if not const.dim.isdigit() or (const.dim.isdigit() and const.dim|int > 1) %}
+extern {{const.typ}} *{{const.ptr}};
+    {% else %}
+extern {{const.typ}} {{const.ptr}};
+    {% endif %}
+    {% endfor %}
+
+void ops_init_backend(){}
+
+void ops_decl_const_char(OPS_instance *instance, int dim, char const * type, int size, char * dat, char const * name ) {
+    {% for const in app.consts() %}
+    if(!strcmp(name, "{{const.ptr}}")) {
+        if({{const.ptr}}_p == nullptr) {{const.ptr}}_p = new cl::sycl::buffer<{{const.typ}},1>(cl::sycl::range<1>(dim));
+        auto accessor = (*{{const.ptr}}_p).get_access<cl::sycl::access::mode::write>();
+        for(int d = 0; d < dim; d++) {
+            accessor[d] = (({{const.typ}}*)dat)[d];
+        }
+    }
+    else
+    {% if loop.last %}
+    {
+        throw OPSException(OPS_RUNTIME_ERROR, "error: unknown const name");
+    }
+    {% endif %}
+    {% endfor %}
+}
+{% endblock %}
+
+{% block header_includes %}
+{{super()}}
+{% endblock %}
+

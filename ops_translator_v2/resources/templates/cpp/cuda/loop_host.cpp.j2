@@ -753,8 +753,7 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
 {% endblock %}
 
 {% block host_epilogue %}
-    if(block->instance->OPS_diags > 1)
-    {
+    if(block->instance->OPS_diags > 1) {
     {% if target.name == "cuda" %}
         cutilSafeCall(block->instance->ostream(), cudaDeviceSynchronize());
     {% elif target.name == "hip" %}
@@ -773,8 +772,7 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
     {% endfor %}
 #endif
 
-    if (block->instance->OPS_diags > 1)
-    {
+    if (block->instance->OPS_diags > 1) {
 //      ====================
 //      Update kernel record
 //      ====================

@@ -65,7 +65,7 @@ void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
 {% endblock %}
 
 #if defined(OPS_LAZY) || !defined(OPS_MPI)
-    for ( int n = 0; n < {{lh.ndim}}; n++) {
+    for (int n = 0; n < {{lh.ndim}}; n++) {
         start_indx[n] = range[2*n];
         end_indx[n]   = range[2*n+1];
     }
