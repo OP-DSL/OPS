@@ -13,8 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-#ifndef XF_HPC_FPGA_HPP
-#define XF_HPC_FPGA_HPP
+
+/** @file 
+  * @brief FPGA handler class 
+  * @author Beniel Thileepan (maintainer)
+  * @details This class manage FPGA platform interaction with XOCL API and wrapping related objects.
+  */
+
+# pragma once
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
 #include <iostream>
 #include <vector>
 #include <regex>
@@ -24,10 +32,14 @@
 #include "CL/cl_ext_xilinx.h"
 // This file is required for OpenCL C++ wrapper APIs
 #include "xcl2.hpp"
-using namespace std;
 
 template <typename T>
 using host_buffer_t = std::vector<T, aligned_allocator<T> >;
+
+namespace ops
+{
+namespace hls
+{
 
 class FPGA {
    public:
@@ -148,4 +160,4 @@ class FPGA {
     unordered_map<const void*, cl::Buffer> m_bufferMaps;
 };
 
-#endif
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */

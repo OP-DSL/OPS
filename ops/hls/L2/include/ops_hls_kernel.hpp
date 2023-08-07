@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2019 Xilinx, Inc.
  *
@@ -13,18 +14,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-#ifndef XF_HPC_FPGA_HPP
-#define XF_HPC_FPGA_HPP
+
+/** @file
+  * @brief kernel handle class
+  * @author Beniel Thileepan (maintainer)
+  * @details Abstract class definition to manage kernel with XOCL api as a utility 
+  * to support host side and device side communication.
+  */
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#pragma once
+
 #include <iostream>
 #include <vector>
 #include <regex>
 #include <unordered_map>
-
+#include <ops_hls_fpga.hpp>
 // This extension file is required for stream APIs
 #include "CL/cl_ext_xilinx.h"
 // This file is required for OpenCL C++ wrapper APIs
 #include "xcl2.hpp"
-using namespace std;
+
+namespace ops
+{
+namespace hls
+{
 
 class Kernel {
    public:
@@ -83,4 +98,7 @@ class Kernel {
     cl::Kernel m_kernel;
 };
 
-#endif
+}
+}
+
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
