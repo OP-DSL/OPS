@@ -92,8 +92,8 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset,
                   cl::sycl::range<1>(num_blocks * num_threads),
                   cl::sycl::range<1>(num_threads)),
               [=](cl::sycl::nd_item<1> item) {
-                cl::sycl::cl_int global_x_id = item.get_global_id()[0];
-                cl::sycl::cl_int block = global_x_id / halo_blocklength;
+                int global_x_id = item.get_global_id()[0];
+                int block = global_x_id / halo_blocklength;
                 if (global_x_id < halo_count * halo_blocklength) {
                   for (int d = 0; d < datdim; d++) {
                     dest_buff[global_x_id * datdim + d] =
@@ -117,8 +117,8 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset,
           cl::sycl::nd_range<1>(cl::sycl::range<1>(num_blocks * num_threads),
                                 cl::sycl::range<1>(num_threads)),
           [=](cl::sycl::nd_item<1> item) {
-            cl::sycl::cl_int global_x_id = item.get_global_id()[0];
-            cl::sycl::cl_int block =
+            int global_x_id = item.get_global_id()[0];
+            int block =
                 global_x_id / (halo_blocklength * datdim / 4);
             if (global_x_id < halo_count * (halo_blocklength * datdim / 4)) {
               memcpy(&dest_buff[global_x_id * 4],
@@ -143,8 +143,8 @@ void ops_pack_sycl_internal(ops_dat dat, const int src_offset,
                   cl::sycl::range<1>(num_blocks * num_threads),
                   cl::sycl::range<1>(num_threads)),
               [=](cl::sycl::nd_item<1> item) {
-                cl::sycl::cl_int global_x_id = item.get_global_id()[0];
-                cl::sycl::cl_int block =
+                int global_x_id = item.get_global_id()[0];
+                int block =
                     global_x_id / (halo_blocklength * datdim);
                 if (global_x_id < halo_count * (halo_blocklength * datdim)) {
                   dest_buff[global_x_id] =
@@ -206,8 +206,8 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset,
                   cl::sycl::range<1>(num_blocks * num_threads),
                   cl::sycl::range<1>(num_threads)),
               [=](cl::sycl::nd_item<1> item) {
-                cl::sycl::cl_int global_x_id = item.get_global_id()[0];
-                cl::sycl::cl_int block = global_x_id / halo_blocklength;
+                int global_x_id = item.get_global_id()[0];
+                int block = global_x_id / halo_blocklength;
                 if (global_x_id < halo_count * halo_blocklength) {
                   for (int d = 0; d < datdim; d++) {
                     dest[dest_offset2 + halo_stride * block +
@@ -230,8 +230,8 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset,
           cl::sycl::nd_range<1>(cl::sycl::range<1>(num_blocks * num_threads),
                                 cl::sycl::range<1>(num_threads)),
           [=](cl::sycl::nd_item<1> item) {
-            cl::sycl::cl_int global_x_id = item.get_global_id()[0];
-            cl::sycl::cl_int block =
+            int global_x_id = item.get_global_id()[0];
+            int block =
                 global_x_id / (halo_blocklength * datdim / 4);
             if (global_x_id < halo_count * (halo_blocklength * datdim / 4)) {
               memcpy(&dest[dest_offset2 +
@@ -255,8 +255,8 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset,
                   cl::sycl::range<1>(num_blocks * num_threads),
                   cl::sycl::range<1>(num_threads)),
               [=](cl::sycl::nd_item<1> item) {
-                cl::sycl::cl_int global_x_id = item.get_global_id()[0];
-                cl::sycl::cl_int block =
+                int global_x_id = item.get_global_id()[0];
+                int block =
                     global_x_id / (halo_blocklength * datdim);
                 if (global_x_id < halo_count * (halo_blocklength * datdim)) {
                   dest[dest_offset2 + (halo_stride * dat->dim) * block +
@@ -316,8 +316,8 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
     cgh.parallel_for<class copy_tobuf>(
         cl::sycl::range<3>(rz_e - rz_s, ry_e - ry_s, rx_e - rx_s),
         [=](cl::sycl::id<3> item) {
-          cl::sycl::cl_int d_offset = dest_offset_local;
-          cl::sycl::cl_int s_offset = 0;
+          int d_offset = dest_offset_local;
+          int s_offset = 0;
 
           int idx_z = rz_s + z_step * item.get(0);
           int idx_y = ry_s + y_step * item.get(1);
@@ -402,8 +402,8 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
     cgh.parallel_for<class copy_frombuf>(
         cl::sycl::range<3>(rz_e - rz_s, ry_e - ry_s, rx_e - rx_s),
         [=](cl::sycl::id<3> item) {
-          cl::sycl::cl_int d_offset = 0;
-          cl::sycl::cl_int s_offset = src_offset_local;
+          int d_offset = 0;
+          int s_offset = src_offset_local;
 
           int idx_z = rz_s + z_step * item.get(0);
           int idx_y = ry_s + y_step * item.get(1);

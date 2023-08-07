@@ -80,7 +80,7 @@ def clean_type(arg):
 
 
 def ops_gen_sycl(master, consts, kernels, soa_set):
-    gen_oneapi = True
+    gen_oneapi = False
     sycl_guarded_namespace = "cl::sycl::"
     if gen_oneapi:
         sycl_guarded_namespace = "cl::sycl::"

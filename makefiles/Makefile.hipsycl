@@ -1,11 +1,11 @@
-CC    := dpcpp
-CXX   := dpcpp
+CC    := syclcc
+CXX   := syclcc
 ifdef DEBUG
 	CCFLAGS   := -O0 -std=c99 -fPIC -DUNIX -Wall -g #-ffloat-store
 	CXXFLAGS   := -O0 -fPIC -DUNIX -Wall -g -std=c++17 -DSYCL_COPY -DSYCL_USM #-DSYCL_COPY #-ffloat-store
 else
 	CCFLAGS   := -O3  -std=c99 -fPIC -DUNIX -Wall #-ffloat-store
-	CXXFLAGS  := -O3 -g  -fPIC -DUNIX -Wall -std=c++17
+	CXXFLAGS  := -Ofast -ffast-math -march=native -std=c++17 -fopenmp
 endif
 OMPFLAGS := -fopenmp
 ifdef THREADED
@@ -15,8 +15,8 @@ ifdef PROFILE_ITT
 	CXXFLAGS += -DPROFILE_ITT -I$(VTUNE_PROFILER_DIR)/include
 	OPS_LINK += -L$(VTUNE_PROFILER_DIR)/lib64 -littnotify
 endif
-SYCLCXX = dpcpp
-SYCL_FLAGS = -fsycl #-fsycl-targets=spir64_x86_64 -Xs "-march=avx512"  #-I$(SYCL_INSTALL_PATH)/include #-fsycl-targets=spir64_x86_64-unknown-unknown-sycldevice #intel sycl 
+SYCLCXX = syclcc
+SYCL_FLAGS = $(HIPSYCL_FLAGS) #-fsycl-targets=spir64_x86_64 -Xs "-march=avx512"  #-I$(SYCL_INSTALL_PATH)/include #-fsycl-targets=spir64_x86_64-unknown-unknown-sycldevice #intel sycl 
 SYCLMPICXX = mpicxx
 #dpcpp -I"/nda/development-tools/versions/oneapi/2021.2.nda/inteloneapi/mpi/2021.2.0/include" -L"/nda/development-tools/versions/oneapi/2021.2.nda/inteloneapi/mpi/2021.2.0/lib/release" -L"/nda/development-tools/versions/oneapi/2021.2.nda/inteloneapi/mpi/2021.2.0/lib" -Xlinker --enable-new-dtags -Xlinker -rpath -Xlinker "/nda/development-tools/versions/oneapi/2021.2.nda/inteloneapi/mpi/2021.2.0/lib/release" -Xlinker -rpath -Xlinker "/nda/development-tools/versions/oneapi/2021.2.nda/inteloneapi/mpi/2021.2.0/lib" -lmpicxx -lmpifort -lmpi -lrt -lpthread -Wl,-z,now -Wl,-z,relro -Wl,-z,noexecstack -Xlinker --enable-new-dtags -ldl
 #SYCLMPICXX = dpcpp -I"/nda/development-tools/versions/oneapi/2021.4.nda/inteloneapi/mpi/2021.4.0/include" -L"/nda/development-tools/versions/oneapi/2021.4.nda/inteloneapi/mpi/2021.4.0/lib/release" -L"/nda/development-tools/versions/oneapi/2021.4.nda/inteloneapi/mpi/2021.4.0/lib" -Xlinker --enable-new-dtags -Xlinker -rpath -Xlinker "/nda/development-tools/versions/oneapi/2021.4.nda/inteloneapi/mpi/2021.4.0/lib/release" -Xlinker -rpath -Xlinker "/nda/development-tools/versions/oneapi/2021.4.nda/inteloneapi/mpi/2021.4.0/lib" -lmpicxx -lmpifort -lmpi -ldl -lrt -lpthread
