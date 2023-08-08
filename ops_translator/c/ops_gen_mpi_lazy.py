@@ -330,6 +330,13 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                     line2 += f" map({'to' if accs[g_m] == OPS_READ else 'tofrom'}:{arg_list[g_m]}_p[0:arg{g_m}_size])"
                 elif arg_typ[g_m] == "ops_arg_gbl" and accs[g_m] == OPS_READ:
                     line2 += f" map(to:{clean_type(arg_list[g_m])}[0:{dims[g_m]}])"
+            for n in range(0, nargs):
+                if arg_typ[n] == "ops_arg_gbl":
+                    if accs[n] == OPS_MIN:
+                        line2 += f" map(to:p_a{n}[0:{int(dims[n])}])"
+                    if accs[n] == OPS_MAX:
+                        line2 += f" map(to:p_a{n}[0:{int(dims[n])}])"
+
             code(f"#pragma omp target teams distribute parallel for collapse({NDIM})" + line2)
         if NDIM > 2:
             FOR("n_z", "start[2]", "end[2]")

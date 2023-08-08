@@ -98,6 +98,9 @@ $(C_OPS_OBJ)/%_mpi.o : src/externlib/%.cpp
 $(C_OPS_OBJ)/%.o : src/ompoffload/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
+$(C_OPS_OBJ)/%_ompoffload_mpi.o : src/mpi/%_ompoffload.cpp
+	$(MPICXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -I$(C_OPS_INC) $(MPI_INC) -c $< -o $@
+
 $(C_OPS_OBJ)/%_mpi.o : src/mpi/%.cpp
 	$(MPICXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC)  $(HDF5_INC) -c $< -o $@
 

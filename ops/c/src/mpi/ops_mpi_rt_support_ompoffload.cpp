@@ -56,7 +56,8 @@ void ops_pack_ompoffload_internal(ops_dat dat, const int src_offset,
 		dat->dirty_hd = 0;
 	}
 
-	const char *__restrict src = dat->data_d + src_offset * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
+	size_t src_offset2 = src_offset * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
+	const char *__restrict src = dat->data_d + src_offset2;
 
 	if (halo_buffer_size < halo_count * halo_blocklength * dat->dim && !OPS_instance::getOPSInstance()->OPS_gpu_direct) {
 		if (halo_buffer_d != NULL) {
@@ -74,69 +75,66 @@ void ops_pack_ompoffload_internal(ops_dat dat, const int src_offset,
 
 
 	if (OPS_instance::getOPSInstance()->OPS_soa) {
-		int num_threads = 128;
-		int num_blocks = ((halo_blocklength * halo_count) - 1) / num_threads + 1;
 		size_t dat_size = dat->size[0] * dat->size[1] * dat->size[2] * dat->type_size;
+		size_t datdim = dat->dim;
 		int len = halo_blocklength;
 		int stride = halo_stride;
+		size_t src_size = dat->mem - src_offset2;
+		size_t dest_size = halo_count * len * datdim + datdim;
 
-		#pragma omp target teams distribute parallel for num_teams(num_blocks) thread_limit(num_threads)
-		for (int idx = 0; idx < num_threads * num_blocks; idx++) {
+		#pragma omp target teams distribute parallel for map(to:src[:src_size]) map(tofrom:dest_buff[:dest_size])
+		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
-			if (idx < halo_count * len) {
-				for (int d = 0; d < dat->dim; d++) {
-					dest_buff[idx * dat->dim + d] = src[stride * block + idx % len + d * dat_size];
-				}
+			for (int d = 0; d < datdim; d++) {
+				dest_buff[idx * datdim + d] = src[stride * block + idx % len + d * dat_size];
 			}
 		}
 	} else if (halo_blocklength % 4 == 0) {
-		int num_threads = 128;
-		int num_blocks = (((dat->dim * halo_blocklength / 4) * halo_count) - 1) / num_threads + 1;
 		int len = halo_blocklength * dat->dim / 4;
 		int stride = halo_stride * dat->dim / 4;
+		int* dest_buffer = (int*)dest_buff;
+		const int* src_buffer = (const int*)src;
+		size_t size = (dat->mem - src_offset2) / 4;
 
-		#pragma omp target teams distribute parallel for num_teams(num_blocks) thread_limit(num_threads)
-		for (int idx = 0; idx < num_threads * num_blocks; idx++) {
+		#pragma omp target teams distribute parallel for map(to:src_buffer[:size]) map(tofrom:dest_buffer[:halo_count*len])
+		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
-			if (idx < halo_count * len) {
-				dest_buff[idx] = src[stride * block + idx % len];
-			}
+			dest_buffer[idx] = src_buffer[stride * block + idx % len];
 		}
 	} else {
-		int num_threads = 128;
-		int num_blocks = ((dat->dim * halo_blocklength * halo_count) - 1) / num_threads + 1;
 		int len = halo_blocklength * dat->dim;
 		int stride = halo_stride * dat->dim;
+		size_t size = dat->mem - src_offset2;
 
-		#pragma omp target teams distribute parallel for num_teams(num_blocks) thread_limit(num_threads)
-		for (int idx = 0; idx < num_threads * num_blocks; idx++) {
+		#pragma omp target teams distribute parallel for map(to:src[:size]) map(tofrom:dest_buff[:halo_count*len])
+		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
-			if (idx < halo_count * len) {
-				dest_buff[idx] = src[stride * block + idx % len];
-			}
+			dest_buff[idx] = src[stride * block + idx % len];
 		}
 	}
 	if (!OPS_instance::getOPSInstance()->OPS_gpu_direct) {
 		ops_device_memcpy_d2h(dat->block->instance, (void**)&dest, (void**)&halo_buffer_d, halo_count * halo_blocklength * dat->dim);
-	} else
-		ops_device_sync(dat->block->instance);
+	}
 }
 
 void ops_unpack_ompoffload_internal(ops_dat dat, const int dest_offset, const char *__restrict src,
                 const int halo_blocklength, const int halo_stride, const int halo_count) {
 
-  if (dat->dirty_hd == 1) {
-    ops_put_data(dat);
-    dat->dirty_hd = 0;
-  }
-  char *__restrict dest = dat->data_d + dest_offset * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
-  if (halo_buffer_size < halo_count * halo_blocklength * dat->dim && !OPS_instance::getOPSInstance()->OPS_gpu_direct) {
-		if (halo_buffer_d != NULL) {
-			ops_device_free(dat->block->instance, (void**)&halo_buffer_d);
-		}
-		ops_device_malloc(dat->block->instance, (void**)&halo_buffer_d, halo_count * halo_blocklength * dat->dim * 4);
-    halo_buffer_size = halo_count * halo_blocklength * dat->dim * 4;
-  }
+  	if (dat->dirty_hd == 1) {
+  	  ops_put_data(dat);
+  	  dat->dirty_hd = 0;
+  	}
+
+  	size_t dest_offset2 = dest_offset * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
+  	char *__restrict dest = dat->data_d + dest_offset2;
+
+  	if (halo_buffer_size < halo_count * halo_blocklength * dat->dim && !OPS_instance::getOPSInstance()->OPS_gpu_direct) {
+  	      	if (halo_buffer_d != NULL) {
+  	      		ops_device_free(dat->block->instance, (void**)&halo_buffer_d);
+  	      	}
+  	      	ops_device_malloc(dat->block->instance, (void**)&halo_buffer_d, halo_count * halo_blocklength * dat->dim * 4);
+  	  halo_buffer_size = halo_count * halo_blocklength * dat->dim * 4;
+  	}
 
 	const char *src_buff = NULL;
 	if (OPS_instance::getOPSInstance()->OPS_gpu_direct)
@@ -149,47 +147,41 @@ void ops_unpack_ompoffload_internal(ops_dat dat, const int dest_offset, const ch
 	}
 
   if (OPS_instance::getOPSInstance()->OPS_soa) {
-    int num_threads = 128;
-    int num_blocks = ((halo_blocklength * halo_count) - 1) / num_threads + 1;
 		size_t dat_size = dat->size[0] * dat->size[1] * dat->size[2] * dat->type_size;
+		size_t datdim = dat->dim;
 		int len = halo_blocklength;
 		int stride = halo_stride;
+		size_t dest_size = dat->mem - dest_offset2;
+		size_t src_size = halo_count * len * datdim + datdim;
 
-		#pragma omp target teams distribute parallel for num_teams(num_blocks) thread_limit(num_threads)
-		for (int idx = 0; idx < num_threads * num_blocks; idx++) {
+		#pragma omp target teams distribute parallel for map(to: src_buff[:src_size]) map(tofrom:dest[:dest_size])
+		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
-			if (idx < halo_count * len) {
-				for (int d = 0; d < dat->dim; d++) {
-					dest[stride * block + idx % len + d * dat_size] = src_buff[idx * dat->dim + d];
-				}
+			for (int d = 0; d < datdim; d++) {
+				dest[stride * block + idx % len + d * dat_size] = src_buff[idx * datdim + d];
 			}
 		}
   } else if (halo_blocklength % 4 == 0) {
-    int num_threads = 128;
-    int num_blocks = (((dat->dim * halo_blocklength / 4) * halo_count) - 1) / num_threads + 1;
 		int len = halo_blocklength * dat->dim / 4;
 		int stride = halo_stride * dat->dim / 4;
+		int* dest_buffer = (int*)dest;
+		const int* src_buffer = (const int*)src_buff;
+		size_t size = (dat->mem - dest_offset2) / 4;
 
-		#pragma omp target teams distribute parallel for num_teams(num_blocks) thread_limit(num_threads)
-		for (int idx = 0; idx < num_threads * num_blocks; idx++) {
+		#pragma omp target teams distribute parallel for map(to: src_buffer[halo_count*len]) map(tofrom:dest_buffer[:size])
+		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
-			if (idx < halo_count * len) {
-				dest[stride * block + idx % len] = src_buff[idx];
-			}
+			dest_buffer[stride * block + idx % len] = src_buffer[idx];
 		}
-
   } else {
-    int num_threads = 128;
-    int num_blocks = ((dat->dim * halo_blocklength * halo_count) - 1) / num_threads + 1;
 		int len = halo_blocklength * dat->dim;
 		int stride = halo_stride * dat->dim;
+		size_t size = dat->mem - dest_offset2;
 
-		#pragma omp target teams distribute parallel for num_teams(num_blocks) thread_limit(num_threads)
-		for (int idx = 0; idx < num_threads * num_blocks; idx++) {
+		#pragma omp target teams distribute parallel for map(to: src_buff[halo_count*len]) map(tofrom:dest[:size])
+		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
-			if (idx < halo_count * len) {
-				dest[stride * block + idx % len] = src_buff[idx];
-			}
+			dest[stride * block + idx % len] = src_buff[idx];
 		}
 	}
 
@@ -683,8 +675,7 @@ char* OPS_realloc_fast(char *ptr, size_t olds, size_t news) {
 	} else {
 		char *ptr2;
 		ops_device_mallochost(OPS_instance::getOPSInstance(), (void **)&ptr2, news);
-		if (olds > 0)
-			memcpy(ptr2, ptr, olds);
+		if (olds > 0) memcpy(ptr2, ptr, olds);
 		if (ptr != NULL) ops_device_free(OPS_instance::getOPSInstance(), (void **)&ptr);
 		return ptr2;
 	}
