@@ -57,7 +57,7 @@ void ops_init_device(OPS_instance *instance, const int argc, const char *const a
 void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
   *ptr = ops_malloc(bytes);
   char *ptr2 = (char *)*ptr;
-  #pragma omp target enter data map(to: ptr2[:bytes])
+  #pragma omp target enter data map(alloc: ptr2[:bytes])
   //#pragma omp target update to((*ptr)[:bytes])
 }
 
@@ -67,7 +67,7 @@ void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
 
 void ops_device_free(OPS_instance *instance, void** ptr) {
   char *ptr2 = (char *)*ptr;
-  #pragma omp target exit data map(from: ptr)
+  #pragma omp target exit data map(delete: ptr2)
   ops_free(*ptr);
   *ptr = nullptr;
 }
