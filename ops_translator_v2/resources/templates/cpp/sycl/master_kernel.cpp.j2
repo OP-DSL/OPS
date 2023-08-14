@@ -26,7 +26,7 @@ void ops_init_backend(){}
 
 void ops_decl_const_char(OPS_instance *instance, int dim, char const * type, int size, char * dat, char const * name ) {
     {% for const in app.consts() %}
-    if(!strcmp(name, "{{const.ptr}}")) {
+    if(!strcmp(name, "{{const.name}}")) {
         if({{const.ptr}}_p == nullptr) {{const.ptr}}_p = new cl::sycl::buffer<{{const.typ}},1>(cl::sycl::range<1>(dim));
         auto accessor = (*{{const.ptr}}_p).get_access<cl::sycl::access::mode::write>();
         for(int d = 0; d < dim; d++) {

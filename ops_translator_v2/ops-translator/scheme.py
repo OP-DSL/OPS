@@ -53,8 +53,20 @@ class Scheme(Findable):
 
             #TODO : Complex arguments in HIP
 
+            const_dims = []
+            if(self.target.name == "openacc"):
+                consts_in_kernel, const_dims = kp_obj.openacc_get_const_names_and_dim(kernel_func, app.consts())
+
             kernel_body, args_list = kp_obj.get_kernel_body_and_arg_list(kernel_func)
             flat_parallel, ops_cpu = sycl_set_flat_parallel(loop.has_reduction)
+
+        elif (self.lang.name == "Fortran"):
+            kernel_body = None
+            consts_in_kernel = None
+            const_dims = None
+            args_list = None
+            flat_parallel = None
+            ops_cpu = None
 
         # Generalte source from the template
         return (
@@ -65,6 +77,7 @@ class Scheme(Findable):
                 kernel_idx=kernel_idx,
                 kernel_body=kernel_body,
                 consts_in_kernel=consts_in_kernel,
+                const_dims=const_dims,
                 args_list=args_list,
                 lang=self.lang,
                 target=self.target,

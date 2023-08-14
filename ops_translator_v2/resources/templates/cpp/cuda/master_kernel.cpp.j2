@@ -39,7 +39,7 @@ void ops_decl_const_char(OPS_instance *instance, int dim, char const *type, int 
     ops_execute(instance);
 
     {% for const in app.consts() %}
-    if(!strcmp(name, "{{const.ptr}}")) {
+    if(!strcmp(name, "{{const.name}}")) {
         {% if const.dim.isdigit() %}
             {% if target.name == "cuda" %}
         cutilSafeCall(instance->ostream(), cudaMemcpyToSymbol({{const.ptr}}, dat, dim*size));

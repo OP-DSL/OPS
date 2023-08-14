@@ -114,7 +114,8 @@
     ops_H_D_exchanges_host(args, {{lh.args|length}});
 #endif //OPS_LAZY
 
-    if (block->instance->OPS_diags > 1) {
+    if (block->instance->OPS_diags > 1)
+    {
         ops_timers_core(&__c2, &__t2);
         block->instance->OPS_kernels[{{kernel_idx}}].mpi_time += __t2 - __t1;
     }
@@ -325,7 +326,8 @@
 {% endblock %}
 
 {% block host_epilogue %}
-    if (block->instance->OPS_diags > 1) {
+    if (block->instance->OPS_diags > 1)
+    {
         ops_timers_core(&__c1, &__t1);
         block->instance->OPS_kernels[{{kernel_idx}}].time += __t1 - __t2;
     }
@@ -339,7 +341,8 @@
     {% endfor %}
 #endif
 
-    if (block->instance->OPS_diags > 1) {
+    if (block->instance->OPS_diags > 1)
+    {
 //      ====================
 //      Update kernel record
 //      ====================

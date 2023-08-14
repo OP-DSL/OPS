@@ -47,7 +47,8 @@ void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
     if (!ops_checkpointing_before(args, {{lh.args|length}}, range, {{kernel_idx}})) return;
 #endif
 
-    if (block->instance->OPS_diags > 1) {
+    if (block->instance->OPS_diags > 1)
+    {
         ops_timing_realloc(block->instance, {{kernel_idx}}, "{{lh.kernel}}");
         block->instance->OPS_kernels[{{kernel_idx}}].count++;
         ops_timers_core(&__c1, &__t1);

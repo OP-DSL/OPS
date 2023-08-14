@@ -221,6 +221,28 @@ class SourceBuffer:
 
         return None
 
+    def search2(self, pattern: str, flags: int = 0) -> Optional[int]:
+        line2 = ""
+        for i, line in enumerate(self.rawLines):
+            if ";" not in line and i != len(self.rawLines) - 1:
+                line2 += line + " "
+            else:
+                line2 += line + " "  # Append the current line
+                if re.search(pattern, line2, flags):
+                    return i
+                line2 = ""
+
+        return None
+
+
+    def search_all(self, pattern: str, flags: int = 0):
+        indexes = []
+        for i, line in enumerate(self.rawLines):
+            if re.match(pattern, line.strip(), flags):
+                indexes.append(i)
+
+        return indexes
+
     def translate(self) -> str:
         lines = self.rawLines
 
@@ -513,3 +535,14 @@ class KernelProcess:
         kernel_func = re.sub(r"\bexp\b", "cl::sycl::exp", kernel_func)
 
         return kernel_func, const_names
+
+    def openacc_get_const_names_and_dim(self, kernel_func: str, consts):
+        const_names = []
+        const_dims = []
+        for c in consts:
+            const_name = c.name
+            if re.search(r"\b"+const_name+r"\b",kernel_func):
+                const_names.append(const_name)
+                const_dims.append(c.dim)
+
+        return const_names, const_dims

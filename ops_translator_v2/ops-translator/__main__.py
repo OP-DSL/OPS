@@ -105,11 +105,12 @@ def main(argv=None) -> None:
         exit(e)
 
     # Generate program translations
+    app_consts = app.consts()
     for i, program in enumerate(app.programs, 1):
         include_dirs = set([Path(dir) for [dir] in args.I])
         defines = [define for [define] in args.D]
 
-        source = lang.translateProgram(program, include_dirs, defines, args.force_soa)
+        source = lang.translateProgram(program, include_dirs, defines, app_consts, args.force_soa)
 
         if not args.force_soa and program.soa_val:
             args.force_soa = program.soa_val

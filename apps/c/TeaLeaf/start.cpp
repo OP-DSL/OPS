@@ -37,6 +37,12 @@
 #include "definitions.h"
 
 
+int g_rect, g_circ, g_point;
+int     number_of_states;
+
+state_type * states; //global variable holding state info
+grid_type grid; //global variable holding global grid info
+field_type field; //global variable holding info of fields
 
 void initialise_chunk();
 void generate();

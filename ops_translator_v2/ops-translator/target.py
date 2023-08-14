@@ -59,12 +59,22 @@ class OpenMPOffload(Target):
         "color2": False
         }
 
+class OpenACC(Target):
+    name = "openacc"
+    kernel_translation = True
+    config = {
+        "grouped" : True,
+        "device" : 5,
+        "atomics": True,
+        "color2": False
+        }
+
 class Sycl(Target):
     name = "sycl"
     kernel_translation = True
     config = {
         "grouped" : True,
-        "device" : 5,
+        "device" : 6,
         "atomics": True,
         "color2": False
         }
@@ -75,12 +85,13 @@ class HLS(Target):
     config = {
         "grouped" : False,
         "SLR_count" : 1,
-        "device" : 6
+        "device" : 7
         }
 
 Target.register(MPIOpenMP)
 Target.register(Cuda)
 Target.register(Hip)
 Target.register(OpenMPOffload)
+Target.register(OpenACC)
 Target.register(Sycl)
 Target.register(HLS)
