@@ -126,14 +126,15 @@ class Fortran(Lang):
 
     source_exts = ["F90", "F95"]
     include_ext = "inc"
+    kernel_dir = True
 
     com_delim = "!"
 
 #   fallback_wrapper_template = Path("fortran/fallback_wrapper.F90.jinja")
 
-#    extra_consts_list = None
-#    user_consts_module = True
-#    use_regex_translator = False
+    extra_consts_list = None
+    user_consts_module = None
+    use_regex_translator = False
 
     def __init__(self):
         with open("constants_list.txt", 'w') as file:
@@ -208,7 +209,7 @@ class Fortran(Lang):
         ast, source = self.parseFile(path, frozenset(include_dirs), frozenset(defines))
         return fortran.parser.parseProgram(ast, source, path)
 
-    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], force_soa: bool) -> str:
+    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], app_consts: List[OPS.Const], force_soa: bool) -> str:
         #if self.use_regex_translator:
         #    return fortran.translator.program.translateProgram2(program, force_soa)
 

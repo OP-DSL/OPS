@@ -12,8 +12,6 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
 
 
-
-
 HEADERS=conv_kernel.h tvdx_kernel.h gridgen_kernel.h init_kernel.h
 
 OPS_FILES=shsgc.cpp
@@ -26,6 +24,6 @@ OTHER_FILES=
 APP=shsgc
 MAIN_SRC=shsgc
 
-TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled hip mpi_hip mpi_hip_tiled ompoffload
+TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled hip mpi_hip mpi_hip_tiled ompoffload sycl mpi_sycl mpi_sycl_tiled openacc mpi_openacc mpi_openacc_tiled
 
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app

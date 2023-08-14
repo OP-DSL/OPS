@@ -364,9 +364,9 @@ def parseLoop(args: List[Cursor], loc: Location, macros: Dict[Location, str]) ->
         raise ParseError("Incorrect number of args passed to ops_par_loop")
 
     kernel = parseIdentifier(args[0])
-    name = parseStringLit(args[1])
-    dim = parseIntLiteral(args[3])
-    block = parseBlock(args[2], dim)
+    name   = parseStringLit(args[1])
+    dim    = parseIntLiteral(args[3])
+    block  = parseBlock(args[2], dim)
     range = parseRange(args[4], dim)
 
     loop = ops.Loop(loc, kernel, block, range, dim)

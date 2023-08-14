@@ -6,7 +6,7 @@ from typing import Any, FrozenSet, List, Optional, Set
 
 from util import Findable
 from store import Application, Program
-from ops import Type
+from ops import Type, Const
 
 #TODO: Add documentaion (numpy style)
 class Lang(Findable):
@@ -40,7 +40,7 @@ class Lang(Findable):
         pass
 
     @abstractmethod
-    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], force_soa: bool) -> str:
+    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], app_consts: List[Const], force_soa: bool) -> str:
         pass
 
     @abstractmethod

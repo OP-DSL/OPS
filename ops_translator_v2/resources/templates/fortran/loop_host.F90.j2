@@ -1,0 +1,32 @@
+
+{% block prologue %}
+MODULE {{lh.kernel | upper}}_MODULE
+
+USE OPS_FORTRAN_DECLARATIONS
+USE OPS_FORTRAN_RT_SUPPORT
+
+USE OPS_CONSTANTS
+USE ISO_C_BINDING
+
+{% endblock %}
+
+{% block global_decls required %}
+
+{% endblock %}
+
+{% block kernel_wrapper required %}
+{% endblock %}
+
+{% block kernel_wrap required %}
+{% endblock %}
+
+{% block kernel_host required %}
+{% endblock %}
+
+{% block kernel_descriptor_lazy_call %}
+
+{% endblock %}
+
+{% block epilogue required %}
+
+{% endblock %}

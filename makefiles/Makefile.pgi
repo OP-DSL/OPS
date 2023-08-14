@@ -5,7 +5,8 @@ FC	:= pgfortran
 ifdef DEBUG
 	CCFLAGS   := -O0 -g 
 else
-	CCFLAGS   := -O3 -fast -gopt #-Minline #-Mipa=fast #-Mlist #-mp=nonuma -Kieee
+	CCFLAGS   := -O3 -fast -gopt -Xcudafe "--diag_suppress=unrecognized_gcc_pragma"
+#-Minline #-Mipa=fast #-Mlist #-mp=nonuma -Kieee
 endif
 
 CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
@@ -26,7 +27,7 @@ ifdef THREADED
 endif
 
 CUDAFOR	= -DOPS_WITH_CUDAFOR
-OpenACCFLAGS = -acc -Minline
+OpenACCFLAGS = -acc
 CXXLINK := -pgc++libs -lstdc++
 PGIMPILINK := -lmpi_cxx
 

@@ -37,9 +37,9 @@ int     g_name_len_max,
                g_ydir;
 
 FILE    *g_out, *g_in;  //Files for input and output
-int     g_rect, g_circ, g_point; //geometry of block
+extern int     g_rect, g_circ, g_point; //geometry of block
 
-int     number_of_states;
+extern int     number_of_states;
 int     fields[NUM_FIELDS];
 
 

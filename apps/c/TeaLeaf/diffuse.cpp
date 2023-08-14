@@ -43,11 +43,11 @@ int     CHUNK_LEFT    = 0,
         CHUNK_TOP     = 3,
         EXTERNAL_FACE = -1;
 
-state_type * states; //global variable holding state info
+extern state_type * states; //global variable holding state info
 
-grid_type grid; //global variable holding global grid info
+extern grid_type grid; //global variable holding global grid info
 
-field_type field; //global variable holding info of fields
+extern field_type field; //global variable holding info of fields
 
 int step ;
 int advect_x; //logical

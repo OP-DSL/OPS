@@ -186,26 +186,26 @@ class Application:
             elif self.global_dim != program.ndim:
                 raise OpsError(f"ndim mismatch with global dim={self.global_dim} and program dim={program.ndim} of program={program.path}")
 
+
     def validateConst(self, lang: Lang) -> None:
         seen_const_ptrs: Set[str] = set()
 
-        for const in self.consts():
-            if const.ptr in seen_const_ptrs:
-                raise OpsError(f"Duplicate const declaration: {const.ptr}", const.loc)
+        for program in self.programs:
+            for const in program.consts:
+                if const.ptr in seen_const_ptrs:
+                    raise OpsError(f"Duplicate const declaration: {const.ptr}", const.loc)
 
-            seen_const_ptrs.add(const.ptr)
+                seen_const_ptrs.add(const.ptr)
 
-            if (const.dim).isdigit() and int(const.dim) < 0:
-                raise OpsError(f"Invalid const dimension: {const.dim} of const: {const.ptr}", const.loc)
+                if const.dim.isdigit() and int(const.dim) < 1:
+                    raise OpsError(f"Invalid const dimension: {const.dim} of const: {const.ptr}", const.loc)
+
 
     def validateLoops(self, lang: Lang) -> None:
         for loop, Program in self.loops():
-            # TODO: Make sure this is needed or not. In that case defining optional arguments in ops.py
-
-            # num_opts = len([arg for arg in loop.args if hasattr(arg, "opt") and arg.opt])
-            # if num_opts > 32:
-            #     raise OpsError(f"Number of optional: {num_opts} arguments exceeded 32", loop.loc)
-
+            num_opts = len([arg for arg in loop.args if getattr(arg, "opt", False)])
+            if num_opts > 32:
+                raise OpsError(f"number of optional arguments exceeds 32: {num_opts}", loop.loc)
             for arg in loop.args:
                 if isinstance(arg, ops.ArgDat):
                     self.validateArgDat(arg, loop, lang)
@@ -227,22 +227,26 @@ class Application:
         if arg.access_type not in valid_access_types:
             raise OpsError(f"Invalid access type for dat argument: {arg.access_type}, arg: {arg}", arg.loc)
 
+
     def validateArgGbl(self, arg: ops.ArgGbl, loop: ops.Loop, lang: Lang) -> None:
         valid_access_types = [
             ops.AccessType.OPS_READ, 
             ops.AccessType.OPS_WRITE, 
             ops.AccessType.OPS_RW, 
             ops.AccessType.OPS_INC,
-            ops.AccessType.OPS_MAX,
-            ops.AccessType.OPS_MIN
+            ops.AccessType.OPS_MIN,
+            ops.AccessType.OPS_MAX
             ]
 
         if arg.access_type not in valid_access_types:
-            raise OpsError(f"Invalid access type for gbl argumentL {arg.access_type}", arg.loc)
+            raise OpsError(f"Invalid access type for gbl argument: {arg.access_type}", arg.loc)
 
-        if arg.access_type != ops.AccessType.OPS_READ and arg.typ not in \
+        if arg.access_type in [ops.AccessType.OPS_INC, ops.AccessType.OPS_MIN, ops.AccessType.OPS_MAX] and arg.typ not in \
             [ops.Float(64), ops.Float(32), ops.Int(True, 32), ops.Int(False, 32), ops.Bool]:
             raise OpsError(f"Invalid access type for reduced gbl argument: {arg.access_type}", arg.loc)
+
+        if str(arg.dim).isdigit() and int(str(arg.dim)) < 1:
+            raise OpsError(f"Invalid gbl argument dimension: {arg.dim}", arg.loc)
 
     # TODO: Implement Kernel Validation
 

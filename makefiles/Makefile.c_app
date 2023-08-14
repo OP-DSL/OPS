@@ -69,6 +69,12 @@ TARGETS:=$(filter-out sycl mpi_sycl mpi_sycl_tiled,$(TARGETS))
 endif
 endif
 
+ifneq (,$(filter openacc mpi_openacc mpi_openacc_tiled,$(TARGETS)))
+ifneq ($(OPS_COMPILER),pgi)
+TARGETS:=$(filter-out openacc mpi_openacc mpi_openacc_tiled,$(TARGETS))
+endif
+endif
+
 endif
 
 ifndef TARGETS
@@ -87,13 +93,11 @@ TARGETS += opencl mpi_opencl
 endif
 
 ifeq ($(OPS_COMPILER),pgi)
-    TARGETS += openacc mpi_openacc
-else
-    TARGETS += openacc_error
+TARGETS += openacc mpi_openacc mpi_openacc_tiled
 endif
 
 ifdef SYCL_INSTALL_PATH
-    TARGETS += sycl mpi_sycl mpi_sycl_tiled
+TARGETS += sycl mpi_sycl mpi_sycl_tiled
 endif
 
 endif	#ifndef TARGETS
@@ -270,20 +274,25 @@ $(APP)_mpi_inline: .generated $(OPS_FILES_GEN) $(HEADERS) Makefile $(OPS_INSTALL
 #
 
 $(APP)_openacc: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_cuda.a
-	$(CC) $(OpenACCFLAGS) $(CCFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) $(CUDA_INC) \
-	-I. OpenACC/$(MAIN_SRC)_kernels_c.c -c -o OpenACC/$(MAIN_SRC)_kernels_c.o
-	$(CXX) $(OpenACCFLAGS)  $(CXXFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) $(CUDA_INC) \
-	-I. OpenACC/$(MAIN_SRC)_kernels.cpp -c -o OpenACC/$(MAIN_SRC)_kernels.o
-	$(CXX) $(OpenACCFLAGS) $(CXXFLAGS) $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(CUDA_INC) -L$(CUDA_LIB) \
-		$(OPS_FILES_GEN) -I. OpenACC/$(MAIN_SRC)_kernels_c.o OpenACC/$(MAIN_SRC)_kernels.o -lcudart $(HDF5_LIB_SEQ) -lops_cuda -o $(APP)_openacc
+		@echo ""
+		@echo ""
+		@echo "Building ${APP}_openacc"
+		@echo ""
+		$(MPICPP) $(OpenACCFLAGS) $(CUDA_ALIGNE_FLAG) $(CXXFLAGS) -I$(CUDA_INC) -I$(C_OPS_INC) -L$(C_OPS_LIB) -L$(CUDA_LIB) $(OPS_FILES_GEN) -I. ./openacc/openacc_kernels.cpp -lcudart $(HDF5_LIB_SEQ) -lops_cuda -o $(APP)_openacc
 
 $(APP)_mpi_openacc: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_cuda.a
-	$(MPICC) $(OpenACCFLAGS) -Minline $(CCFLAGS) -DOPS_MPI $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) $(CUDA_INC) \
-	-I. OpenACC/$(MAIN_SRC)_kernels_c.c -c -o OpenACC/$(MAIN_SRC)_kernels_c_mpi.o
-	$(MPICPP) $(OpenACCFLAGS)  $(CXXFLAGS) -DOPS_MPI $(CUDA_ALIGNE_FLAG) -I$(C_OPS_INC) $(CUDA_INC) \
-	-I. OpenACC/$(MAIN_SRC)_kernels.cpp -c -o OpenACC/$(MAIN_SRC)_kernels_mpi.o
-	        $(MPICPP) $(OpenACCFLAGS) $(CUDA_ALIGNE_FLAG) $(CXXFLAGS) -DOPS_MPI -I$(C_OPS_INC) -L$(C_OPS_LIB) $(CUDA_INC) -L$(CUDA_LIB) \
-	        $(OPS_FILES_GEN) -I. OpenACC/$(MAIN_SRC)_kernels_c_mpi.o OpenACC/$(MAIN_SRC)_kernels_mpi.o -lcudart $(HDF5_LIB_MPI) -lops_mpi_cuda -o $(APP)_mpi_openacc
+		@echo ""
+		@echo ""
+		@echo "Building ${APP}_mpi_openacc"
+		@echo ""
+		$(MPICPP) $(OpenACCFLAGS) $(CUDA_ALIGNE_FLAG) $(CXXFLAGS) -DOPS_MPI -I$(CUDA_INC) -I$(C_OPS_INC) -L$(C_OPS_LIB) -L$(CUDA_LIB) $(OPS_FILES_GEN) -I. ./openacc/openacc_kernels.cpp -lcudart $(HDF5_LIB_MPI) -lops_mpi_cuda -o $(APP)_mpi_openacc
+
+$(APP)_mpi_openacc_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_cuda.a
+		@echo ""
+		@echo ""
+		@echo "Building ${APP}_mpi_openacc_tiled"
+		@echo ""
+		$(MPICPP) $(OpenACCFLAGS) $(CUDA_ALIGNE_FLAG) $(CXXFLAGS) -DOPS_MPI -DOPS_LAZY -I$(CUDA_INC) -I$(C_OPS_INC) -L$(C_OPS_LIB) -L$(CUDA_LIB) $(OPS_FILES_GEN) -I. ./openacc/openacc_kernels.cpp -lcudart $(HDF5_LIB_MPI) -lops_mpi_cuda -o $(APP)_mpi_openacc_tiled
 
 #=====================================================================================================================================================================
 #
@@ -336,13 +345,6 @@ $(APP)_mpi_sycl_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPI
 
 #=====================================================================================================================================================================
 #
-#error
-#
-openacc_error:
-	@echo "$(APP)_mpi_openacc cannot be built with $(OPS_COMPILER) compilers .. requires an OpenACC compiler (e.g. pgi)"
-
-#=====================================================================================================================================================================
-#
 # cleanup
 #
 
@@ -375,6 +377,9 @@ clean:
 	rm -f $(APP)_sycl
 	rm -f $(APP)_mpi_sycl
 	rm -f $(APP)_mpi_sycl_tiled
+	rm -f $(APP)_openacc
+	rm -f $(APP)_mpi_openacc
+	rm -f $(APP)_mpi_openacc_tiled
 	rm -f $(OPS_GENERATED)
-	rm -f .generated constants_list.txt
-	rm -rf ./mpi_openmp ./cuda ./hip ./openmp_offload ./sycl
+	rm -f .generated constants_list.txt cudafe
+	rm -rf ./mpi_openmp ./cuda ./hip ./openmp_offload ./sycl ./openacc

@@ -12,8 +12,6 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
 
-
-
 HEADERS=poisson_kernel.h
 
 OPS_FILES=poisson.cpp
@@ -27,6 +25,6 @@ APP=poisson
 MAIN_SRC=poisson
 
 #OPS_GENERATOR_VERBOSE=1
-TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled hip mpi_hip mpi_hip_tiled ompoffload sycl mpi_sycl mpi_sycl_tiled
+TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled hip mpi_hip mpi_hip_tiled ompoffload sycl mpi_sycl mpi_sycl_tiled openacc mpi_openacc mpi_openacc_tiled
 
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app
