@@ -120,11 +120,11 @@ int main(int argc, const char** argv)
   ops_timing_output(std::cout);
 
   double err_diff = fabs((100.0*(error/0.002685546875))-100.0);
-  op_printf("Total error is within %3.15E %% of the expected error\n",err_diff);
+  ops_printf("Total error is within %3.15E %% of the expected error\n",err_diff);
   if(err_diff < 0.001)
-    op_printf("This run is considered PASSED\n");
+    ops_printf("This run is considered PASSED\n");
   else
-    op_printf("This test is considered FAILED\n");
+    ops_printf("This test is considered FAILED\n");
 
   ops_fetch_block_hdf5_file(block, "data.h5");
   ops_fetch_dat_hdf5_file(d_A, "data.h5");
