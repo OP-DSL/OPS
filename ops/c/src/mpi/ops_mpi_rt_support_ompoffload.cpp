@@ -56,8 +56,9 @@ void ops_pack_ompoffload_internal(ops_dat dat, const int src_offset,
 		dat->dirty_hd = 0;
 	}
 
+	int device = omp_get_default_device();
 	size_t src_offset2 = src_offset * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
-	const char *__restrict src = dat->data_d + src_offset2;
+	const char *__restrict src = (char*) omp_get_mapped_ptr(dat->data_d + src_offset2, device);
 
 	if (halo_buffer_size < halo_count * halo_blocklength * dat->dim && !OPS_instance::getOPSInstance()->OPS_gpu_direct) {
 		if (halo_buffer_d != NULL) {
@@ -70,19 +71,18 @@ void ops_pack_ompoffload_internal(ops_dat dat, const int src_offset,
 	char *dest_buff = NULL;
 	if (OPS_instance::getOPSInstance()->OPS_gpu_direct)
 		dest_buff = dest;
-	else
-		dest_buff = halo_buffer_d;
-
+	else {
+		void* device_ptr = omp_get_mapped_ptr(halo_buffer_d, device);
+		dest_buff = (char*) device_ptr;
+	}
 
 	if (OPS_instance::getOPSInstance()->OPS_soa) {
 		size_t dat_size = dat->size[0] * dat->size[1] * dat->size[2] * dat->type_size;
 		size_t datdim = dat->dim;
 		int len = halo_blocklength;
 		int stride = halo_stride;
-		size_t src_size = dat->mem - src_offset2;
-		size_t dest_size = halo_count * len * datdim + datdim;
 
-		#pragma omp target teams distribute parallel for map(to:src[:src_size]) map(tofrom:dest_buff[:dest_size])
+		#pragma omp target teams distribute parallel for is_device_ptr(src, dest_buff)
 		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
 			for (int d = 0; d < datdim; d++) {
@@ -94,9 +94,8 @@ void ops_pack_ompoffload_internal(ops_dat dat, const int src_offset,
 		int stride = halo_stride * dat->dim / 4;
 		int* dest_buffer = (int*)dest_buff;
 		const int* src_buffer = (const int*)src;
-		size_t size = (dat->mem - src_offset2) / 4;
 
-		#pragma omp target teams distribute parallel for map(to:src_buffer[:size]) map(tofrom:dest_buffer[:halo_count*len])
+		#pragma omp target teams distribute parallel for is_device_ptr(src_buffer, dest_buffer)
 		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
 			dest_buffer[idx] = src_buffer[stride * block + idx % len];
@@ -104,9 +103,8 @@ void ops_pack_ompoffload_internal(ops_dat dat, const int src_offset,
 	} else {
 		int len = halo_blocklength * dat->dim;
 		int stride = halo_stride * dat->dim;
-		size_t size = dat->mem - src_offset2;
 
-		#pragma omp target teams distribute parallel for map(to:src[:size]) map(tofrom:dest_buff[:halo_count*len])
+		#pragma omp target teams distribute parallel for is_device_ptr(src, dest_buff)
 		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
 			dest_buff[idx] = src[stride * block + idx % len];
@@ -118,74 +116,73 @@ void ops_pack_ompoffload_internal(ops_dat dat, const int src_offset,
 }
 
 void ops_unpack_ompoffload_internal(ops_dat dat, const int dest_offset, const char *__restrict src,
-                const int halo_blocklength, const int halo_stride, const int halo_count) {
+		const int halo_blocklength, const int halo_stride, const int halo_count) {
 
-  	if (dat->dirty_hd == 1) {
-  	  ops_put_data(dat);
-  	  dat->dirty_hd = 0;
-  	}
+	if (dat->dirty_hd == 1) {
+		ops_put_data(dat);
+		dat->dirty_hd = 0;
+	}
 
-  	size_t dest_offset2 = dest_offset * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
-  	char *__restrict dest = dat->data_d + dest_offset2;
+	int device = omp_get_default_device();
+	size_t dest_offset2 = dest_offset * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
+	char *__restrict dest = (char*) omp_get_mapped_ptr(dat->data_d + dest_offset2, device);
 
-  	if (halo_buffer_size < halo_count * halo_blocklength * dat->dim && !OPS_instance::getOPSInstance()->OPS_gpu_direct) {
-  	      	if (halo_buffer_d != NULL) {
-  	      		ops_device_free(dat->block->instance, (void**)&halo_buffer_d);
-  	      	}
-  	      	ops_device_malloc(dat->block->instance, (void**)&halo_buffer_d, halo_count * halo_blocklength * dat->dim * 4);
-  	  halo_buffer_size = halo_count * halo_blocklength * dat->dim * 4;
-  	}
+	if (halo_buffer_size < halo_count * halo_blocklength * dat->dim && !OPS_instance::getOPSInstance()->OPS_gpu_direct) {
+		if (halo_buffer_d != NULL) {
+			ops_device_free(dat->block->instance, (void**)&halo_buffer_d);
+		}
+		ops_device_malloc(dat->block->instance, (void**)&halo_buffer_d, halo_count * halo_blocklength * dat->dim * 4);
+		halo_buffer_size = halo_count * halo_blocklength * dat->dim * 4;
+	}
 
 	const char *src_buff = NULL;
 	if (OPS_instance::getOPSInstance()->OPS_gpu_direct)
 		src_buff = src;
-	else
-		src_buff = halo_buffer_d;
+	else {
+		void* device_ptr = omp_get_mapped_ptr(halo_buffer_d, device);
+		src_buff = (char*) device_ptr;
+	}
 
-  if (!OPS_instance::getOPSInstance()->OPS_gpu_direct) {
+	if (!OPS_instance::getOPSInstance()->OPS_gpu_direct) {
 		ops_device_memcpy_h2d(dat->block->instance, (void**)&halo_buffer_d, (void**)&src, halo_count * halo_blocklength * dat->dim);
 	}
 
-  if (OPS_instance::getOPSInstance()->OPS_soa) {
+	if (OPS_instance::getOPSInstance()->OPS_soa) {
 		size_t dat_size = dat->size[0] * dat->size[1] * dat->size[2] * dat->type_size;
 		size_t datdim = dat->dim;
 		int len = halo_blocklength;
 		int stride = halo_stride;
-		size_t dest_size = dat->mem - dest_offset2;
-		size_t src_size = halo_count * len * datdim + datdim;
 
-		#pragma omp target teams distribute parallel for map(to: src_buff[:src_size]) map(tofrom:dest[:dest_size])
+		#pragma omp target teams distribute parallel for is_device_ptr(src_buff, dest)
 		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
 			for (int d = 0; d < datdim; d++) {
 				dest[stride * block + idx % len + d * dat_size] = src_buff[idx * datdim + d];
 			}
 		}
-  } else if (halo_blocklength % 4 == 0) {
+	} else if (halo_blocklength % 4 == 0) {
 		int len = halo_blocklength * dat->dim / 4;
 		int stride = halo_stride * dat->dim / 4;
 		int* dest_buffer = (int*)dest;
 		const int* src_buffer = (const int*)src_buff;
-		size_t size = (dat->mem - dest_offset2) / 4;
 
-		#pragma omp target teams distribute parallel for map(to: src_buffer[halo_count*len]) map(tofrom:dest_buffer[:size])
+		#pragma omp target teams distribute parallel for is_device_ptr(src_buffer, dest_buffer)
 		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
 			dest_buffer[stride * block + idx % len] = src_buffer[idx];
 		}
-  } else {
+	} else {
 		int len = halo_blocklength * dat->dim;
 		int stride = halo_stride * dat->dim;
-		size_t size = dat->mem - dest_offset2;
 
-		#pragma omp target teams distribute parallel for map(to: src_buff[halo_count*len]) map(tofrom:dest[:size])
+		#pragma omp target teams distribute parallel for is_device_ptr(src_buff, dest)
 		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
 			dest[stride * block + idx % len] = src_buff[idx];
 		}
 	}
 
-  dat->dirty_hd = 2;
+	dat->dirty_hd = 2;
 }
 
 void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
@@ -193,27 +190,12 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 		int x_step, int y_step, int z_step, int buf_strides_x,
 		int buf_strides_y, int buf_strides_z) {
 
-  dest += dest_offset;
-  int thr_x = abs(rx_s - rx_e);
-  int blk_x = 1;
-  if (abs(rx_s - rx_e) > 8) {
-    blk_x = (thr_x - 1) / 8 + 1;
-    thr_x = 8;
-  }
-  int thr_y = abs(ry_s - ry_e);
-  int blk_y = 1;
-  if (abs(ry_s - ry_e) > 8) {
-    blk_y = (thr_y - 1) / 8 + 1;
-    thr_y = 8;
-  }
-  int thr_z = abs(rz_s - rz_e);
-  int blk_z = 1;
-  if (abs(rz_s - rz_e) > 8) {
-    blk_z = (thr_z - 1) / 8 + 1;
-    thr_z = 8;
-  }
-
-  int size = abs(src->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
+	dest += dest_offset;
+	int thr_x = abs(rx_s - rx_e);
+	int thr_y = abs(ry_s - ry_e);
+	int thr_z = abs(rz_s - rz_e);
+	int size = abs(src->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
+	int device = omp_get_default_device();
 
 	char *gpu_ptr;
 	if (OPS_instance::getOPSInstance()->OPS_gpu_direct)
@@ -226,7 +208,8 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 			ops_device_malloc(src->block->instance, (void**)&halo_buffer_d, size);
 			halo_buffer_size = size;
 		}
-		gpu_ptr = halo_buffer_d;
+		void *device_ptr = omp_get_mapped_ptr(halo_buffer_d, device);
+		gpu_ptr = (char*) device_ptr;
 	}
 
 	if (src->dirty_hd == 1) {
@@ -234,38 +217,44 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 		src->dirty_hd = 0;
 	}
 
-	char *src_buff = src->data_d;
+	char *src_buff = (char*) omp_get_mapped_ptr(src->data_d, device);
 	int size_x = src->size[0];
-  int size_y = src->size[1];
-  int size_z = src->size[2];
-  int type_size = src->type_size;
-  int dim = src->dim;
-  int OPS_soa = src->block->instance->OPS_soa;
+	int size_y = src->size[1];
+	int size_z = src->size[2];
+	int type_size = src->type_size;
+	int dim = src->dim;
+	int OPS_soa = src->block->instance->OPS_soa;
 
-	#pragma omp target teams distribute parallel for num_teams(blk_x * blk_y * blk_z) thread_limit(thr_x * thr_y * thr_z) collapse(3)
-	for (int x = 0; x < blk_x * thr_x; x++) {
-		for (int y = 0; y < blk_y * thr_y; y++) {
-			for (int z = 0; z < blk_z * thr_z; z++) {
-				int idx_z = rz_s + z_step * z;
-  			int idx_y = ry_s + y_step * y;
-  			int idx_x = rx_s + x_step * x;
 
-  			if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
-  			    (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
-  			    (z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
+	#pragma omp target teams distribute parallel for collapse(3) is_device_ptr(gpu_ptr, src_buff)
+	for (int k = 0; k < thr_z; k++) {
+		for (int j = 0; j < thr_y; j++) {
+			for (int i = 0; i < thr_x; i++) {
+				if (i > abs(rx_s - rx_e) || j > abs(ry_s - ry_e) || k > abs(rz_s - rz_e))
+					continue;
+				int idx_z = rz_s + z_step * k;
+				int idx_y = ry_s + y_step * j;
+				int idx_x = rx_s + x_step * i;
 
-  			  if (OPS_soa) src_buff += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size;
-  			  else src_buff += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size * dim;
-  			  gpu_ptr += ((idx_z - rz_s) * z_step * buf_strides_z +
-  			           (idx_y - ry_s) * y_step * buf_strides_y +
-  			           (idx_x - rx_s) * x_step * buf_strides_x) *
-  			          type_size * dim ;
-  			  for (int d = 0; d < dim; d++) {
-  			    memcpy(gpu_ptr+d*type_size, src_buff, type_size);
-  			    if (OPS_soa) src_buff += size_x * size_y * size_z * type_size;
-  			    else src_buff += type_size;
-  			  }
-  			}
+				if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
+						(y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
+						(z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
+
+					if (OPS_soa) {
+						src_buff += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size;
+					} else {
+						src_buff += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size * dim;
+					}
+					gpu_ptr += ((idx_z - rz_s) * z_step * buf_strides_z +
+							(idx_y - ry_s) * y_step * buf_strides_y +
+							(idx_x - rx_s) * x_step * buf_strides_x) *
+						type_size * dim;
+					for (int d = 0; d < dim; d++) {
+						memcpy(gpu_ptr + d * type_size, src_buff, type_size);
+						if (OPS_soa) src_buff += size_x * size_y * size_z * type_size;
+						else src_buff += type_size;
+					}
+				}
 			}
 		}
 	}
@@ -276,33 +265,19 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 }
 
 void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
-                           int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
-                           int x_step, int y_step, int z_step,
-                           int buf_strides_x, int buf_strides_y,
-                           int buf_strides_z) {
+		int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
+		int x_step, int y_step, int z_step,
+		int buf_strides_x, int buf_strides_y,
+		int buf_strides_z) {
 
-  src += src_offset;
-  int thr_x = abs(rx_s - rx_e);
-  int blk_x = 1;
-  if (abs(rx_s - rx_e) > 8) {
-    blk_x = (thr_x - 1) / 8 + 1;
-    thr_x = 8;
-  }
-  int thr_y = abs(ry_s - ry_e);
-  int blk_y = 1;
-  if (abs(ry_s - ry_e) > 8) {
-    blk_y = (thr_y - 1) / 8 + 1;
-    thr_y = 8;
-  }
-  int thr_z = abs(rz_s - rz_e);
-  int blk_z = 1;
-  if (abs(rz_s - rz_e) > 8) {
-    blk_z = (thr_z - 1) / 8 + 1;
-    thr_z = 8;
-  }
+	src += src_offset;
+	int thr_x = abs(rx_s - rx_e);
+	int thr_y = abs(ry_s - ry_e);
+	int thr_z = abs(rz_s - rz_e);
+	int size = abs(dest->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
+	int device = omp_get_default_device();
 
-  int size = abs(dest->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
-  char *gpu_ptr;
+	char *gpu_ptr;
 	if (OPS_instance::getOPSInstance()->OPS_gpu_direct)
 		gpu_ptr = src;
 	else {
@@ -313,47 +288,53 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
 			ops_device_malloc(dest->block->instance, (void**)&halo_buffer_d, size);
 			halo_buffer_size = size;
 		}
-		gpu_ptr = halo_buffer_d;
+		void *device_ptr = omp_get_mapped_ptr(halo_buffer_d, device);
+		gpu_ptr = (char*) device_ptr;
 		ops_device_memcpy_h2d(dest->block->instance, (void**)&halo_buffer_d, (void**)&src, size);
 	}
 
-  if (dest->dirty_hd == 1) {
-    ops_put_data(dest);
-    dest->dirty_hd = 0;
-  }
+	if (dest->dirty_hd == 1) {
+		ops_put_data(dest);
+		dest->dirty_hd = 0;
+	}
 
-	char *dest_buff = dest->data_d;
+	char *dest_buff = (char*) omp_get_mapped_ptr(dest->data_d, device);
 	int size_x = dest->size[0];
-  int size_y = dest->size[1];
-  int size_z = dest->size[2];
-  int type_size = dest->type_size;
-  int dim = dest->dim;
-  int OPS_soa = dest->block->instance->OPS_soa;
+	int size_y = dest->size[1];
+	int size_z = dest->size[2];
+	int type_size = dest->type_size;
+	int dim = dest->dim;
+	int OPS_soa = dest->block->instance->OPS_soa;
 
-	#pragma omp target teams distribute parallel for num_teams(blk_x * blk_y * blk_z) thread_limit(thr_x * thr_y * thr_z) collapse(3)
-	for (int x = 0; x < blk_x * thr_x; x++) {
-		for (int y = 0; y < blk_y * thr_y; y++) {
-			for (int z = 0; z < blk_z * thr_z; z++) {
-				int idx_z = rz_s + z_step * z;
-  			int idx_y = ry_s + y_step * y;
-  			int idx_x = rx_s + x_step * x;
+	#pragma omp target teams distribute parallel for collapse(3) is_device_ptr(gpu_ptr, dest_buff)
+	for (int k = 0; k < thr_z; k++) {
+		for (int j = 0; j < thr_y; j++) {
+			for (int i = 0; i < thr_x; i++) {
+				if (i > abs(rx_s - rx_e) || j > abs(ry_s - ry_e) || k > abs(rz_s - rz_e))
+					continue;
+				int idx_z = rz_s + z_step * k;
+				int idx_y = ry_s + y_step * j;
+				int idx_x = rx_s + x_step * i;
 
-  			if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
-  			    (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
-  			    (z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
+				if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
+						(y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
+						(z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
 
-    			if (OPS_soa) dest_buff += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size;
-    			else dest_buff += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size * dim;
-    			gpu_ptr += ((idx_z - rz_s) * z_step * buf_strides_z +
-    			        (idx_y - ry_s) * y_step * buf_strides_y +
-    			        (idx_x - rx_s) * x_step * buf_strides_x) *
-    			       type_size * dim;
-  			  for (int d = 0; d < dim; d++) {
-      			memcpy(dest_buff, gpu_ptr + d * type_size, type_size);
-      			if (OPS_soa) dest_buff += size_x * size_y * size_z * type_size;
-      			else dest_buff += type_size;
-  			  }
-  			}
+					if (OPS_soa) {
+						dest_buff += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size;
+					} else {
+						dest_buff += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size * dim;
+					}
+					gpu_ptr += ((idx_z - rz_s) * z_step * buf_strides_z +
+							(idx_y - ry_s) * y_step * buf_strides_y +
+							(idx_x - rx_s) * x_step * buf_strides_x) *
+						type_size * dim;
+					for (int d = 0; d < dim; d++) {
+						memcpy(dest_buff, gpu_ptr + d * type_size, type_size);
+						if (OPS_soa) dest_buff += size_x * size_y * size_z * type_size;
+						else dest_buff += type_size;
+					}
+				}
 			}
 		}
 	}
@@ -361,45 +342,43 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
 }
 
 void ops_internal_copy_device(ops_kernel_descriptor *desc) {
-  int range[2*OPS_MAX_DIM]={0};
-  for (int d = 0; d < desc->dim; d++) {
-    range[2*d] = desc->range[2*d];
-    range[2*d+1] = desc->range[2*d+1];
-  }
-  for (int d = desc->dim; d < OPS_MAX_DIM; d++) {
-    range[2*d] = 0;
-    range[2*d+1] = 1;
-  }
-  ops_dat dat0 = desc->args[0].dat;
-  double __t1 = 0.,__t2 = 0.,__c1 = 0.,__c2 = 0.;
-  if (dat0->block->instance->OPS_diags>1) {
-    dat0->block->instance->OPS_kernels[-1].count++;
-    ops_timers_core(&__c1,&__t1);
-  }
-  char *dat0_p = desc->args[0].data_d + desc->args[0].dat->base_offset;
-  char *dat1_p = desc->args[1].data_d + desc->args[1].dat->base_offset;
-  int s0 = dat0->size[0];
+	int range[2*OPS_MAX_DIM]={0};
+	for (int d = 0; d < desc->dim; d++) {
+		range[2*d] = desc->range[2*d];
+		range[2*d+1] = desc->range[2*d+1];
+	}
+	for (int d = desc->dim; d < OPS_MAX_DIM; d++) {
+		range[2*d] = 0;
+		range[2*d+1] = 1;
+	}
+	ops_dat dat0 = desc->args[0].dat;
+	double __t1 = 0.,__t2 = 0.,__c1 = 0.,__c2 = 0.;
+	if (dat0->block->instance->OPS_diags>1) {
+		dat0->block->instance->OPS_kernels[-1].count++;
+		ops_timers_core(&__c1,&__t1);
+	}
+	int device = omp_get_default_device();
+	char *dat0_p = (char*) omp_get_mapped_ptr(desc->args[0].data_d + desc->args[0].dat->base_offset, device);
+	char *dat1_p = (char*) omp_get_mapped_ptr(desc->args[1].data_d + desc->args[1].dat->base_offset, device);
+	int s0 = dat0->size[0];
 #if OPS_MAX_DIM>1
-  int s1 = dat0->size[1];
+	int s1 = dat0->size[1];
 #if OPS_MAX_DIM>2
-  int s2 = dat0->size[2];
+	int s2 = dat0->size[2];
 #if OPS_MAX_DIM>3
-  int s3 = dat0->size[3];
+	int s3 = dat0->size[3];
 #if OPS_MAX_DIM>4
-  int s4 = dat0->size[4];
+	int s4 = dat0->size[4];
 #endif
 #endif
 #endif
 #endif
 
-	int blk_x = (range[2*0+1]-range[2*0] - 1) / dat0->block->instance->OPS_block_size_x + 1;
-	int blk_y =  (range[2*1+1]-range[2*1] - 1) / dat0->block->instance->OPS_block_size_y + 1;
-	int blk_z = ((range[2*2+1]-range[2*2] - 1) / dat0->block->instance->OPS_block_size_z + 1) *
+	int thr_x = dat0->block->instance->OPS_block_size_x * (range[2*0+1]-range[2*0]);
+	int thr_y = dat0->block->instance->OPS_block_size_y * (range[2*1+1]-range[2*1]);
+	int thr_z = dat0->block->instance->OPS_block_size_z * (range[2*2+1]-range[2*2]) *
 		(range[2*3+1]-range[2*3]) *
 		(range[2*4+1]-range[2*4]);
-	int thr_x = dat0->block->instance->OPS_block_size_x;
-	int thr_y = dat0->block->instance->OPS_block_size_y;
-	int thr_z = dat0->block->instance->OPS_block_size_z;
 
 	int dim = dat0->dim;
 	int type_size = dat0->type_size;
@@ -418,51 +397,51 @@ void ops_internal_copy_device(ops_kernel_descriptor *desc) {
 #endif
 #endif
 
-	if (blk_x>0 && blk_y>0 && blk_z>0) {
-		#pragma omp target teams distribute parallel for num_teams(blk_x * blk_y * blk_z) thread_limit(thr_x * thr_y * thr_z) collapse(3)
-		for (int x = 0; x < blk_x * thr_x; x++) {
-			for (int y = 0; y < blk_y * thr_y; y++) {
-				for (int z = 0; z < blk_z * thr_z; z++) {
+	if (thr_x > 0 && thr_y > 0 && thr_z > 0) {
+		#pragma omp target teams distribute parallel for collapse(3) is_device_ptr(dat0_p, dat1_p)
+		for (int z = 0; z < thr_z; z++) {
+			for (int y = 0; y < thr_y; y++) {
+				for (int x = 0; x < thr_x; x++) {
 					int i = start0 + x;
-  				int j = start1 + y;
-  				int rest = z;
-  				int mult = OPS_soa ? type_size : dim*type_size;
+					int j = start1 + y;
+					int rest = z;
+					int mult = OPS_soa ? type_size : dim*type_size;
 
-    			long fullsize = s0;
-    			long idx = i*mult;
+					long fullsize = s0;
+					long idx = i*mult;
 #if OPS_MAX_DIM>1
-    			fullsize *= s1;
-    			idx += j * s0 * mult;
+					fullsize *= s1;
+					idx += j * s0 * mult;
 #endif
 #if OPS_MAX_DIM>2
-    			fullsize *= s2;
-    			int k = start2+rest%s2;
-    			idx += k * s0 * s1 * mult;
+					fullsize *= s2;
+					int k = start2+rest%s2;
+					idx += k * s0 * s1 * mult;
 #endif
 #if OPS_MAX_DIM>3
-    			fullsize *= s3;
-    			int l = start3+rest/s2;
-    			idx += l * s0 * s1 * s2 * mult;
+					fullsize *= s3;
+					int l = start3+rest/s2;
+					idx += l * s0 * s1 * s2 * mult;
 #endif
 #if OPS_MAX_DIM>3
-    			fullsize *= s4;
-    			int m = start4+rest/(s2*s3);
-    			idx += m * s0 * s1 * s2 * s3 * mult;
+					fullsize *= s4;
+					int m = start4+rest/(s2*s3);
+					idx += m * s0 * s1 * s2 * s3 * mult;
 #endif
-    			if (i<end0
+					if (i<end0
 #if OPS_MAX_DIM>1
-        			&& j < end1
+							&& j < end1
 #if OPS_MAX_DIM>2
-        			&& k < end2
+							&& k < end2
 #if OPS_MAX_DIM>3
-        			&& l < end3
+							&& l < end3
 #if OPS_MAX_DIM>4
-        			&& m < end4
+							&& m < end4
 #endif
 #endif
 #endif
 #endif
-       			) {
+					   ) {
 						if (OPS_soa) {
 							for (int d = 0; d < dim; d++)
 								for (int c = 0; c < type_size; c++)
@@ -520,7 +499,7 @@ void ops_dat_fetch_data_slab_memspace(ops_dat dat, int part, char *data, int *ra
 			prod *= target->size[d];
 		}
 		ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    strcpy(desc->name, "ops_internal_copy_device\0");
+		strcpy(desc->name, "ops_internal_copy_device\0");
 		desc->isdevice = 1;
 		desc->func = ops_internal_copy_device;
 		ops_internal_copy_device(desc);
@@ -561,7 +540,7 @@ void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *rang
 			prod *= target->size[d];
 		}
 		ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    strcpy(desc->name, "ops_internal_copy_device_reverse\0");
+		strcpy(desc->name, "ops_internal_copy_device_reverse\0");
 		desc->isdevice = 1;
 		desc->func = ops_internal_copy_device;
 		ops_internal_copy_device(desc);
@@ -601,7 +580,7 @@ void ops_dat_fetch_data_memspace(ops_dat dat, int part, char *data, ops_memspace
 		target->base_offset = 0;
 		for (int d = 0; d < OPS_MAX_DIM; d++) target->size[d] = size[d];
 		ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    strcpy(desc->name, "ops_internal_copy_device\0");
+		strcpy(desc->name, "ops_internal_copy_device\0");
 		desc->isdevice = 1;
 		desc->func = ops_internal_copy_device;
 		ops_internal_copy_device(desc);
@@ -636,7 +615,7 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
 		target->base_offset = 0;
 		for (int d = 0; d < OPS_MAX_DIM; d++) target->size[d] = size[d];
 		ops_kernel_descriptor *desc = ops_dat_deep_copy_core(target, dat, range);
-    strcpy(desc->name, "ops_internal_copy_device_reverse\0");
+		strcpy(desc->name, "ops_internal_copy_device_reverse\0");
 		desc->isdevice = 1;
 		desc->func = ops_internal_copy_device;
 		ops_internal_copy_device(desc);
