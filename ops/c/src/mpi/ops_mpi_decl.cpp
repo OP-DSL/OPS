@@ -215,11 +215,11 @@ void ops_dat_deep_copy(ops_dat target, ops_dat source) {
 
   ops_kernel_descriptor *desc = ops_dat_deep_copy_mpi_core(target, source);
   if (source->block->instance->OPS_hybrid_gpu) {
-    strcpy(desc->name, "ops_internal_copy_device\0");
+    strcpy(desc->name, "ops_internal_copy_device");
     desc->isdevice = 1;
     desc->func = ops_internal_copy_device;
   } else {
-    strcpy(desc->name, "ops_internal_copy_seq\0");
+    strcpy(desc->name, "ops_internal_copy_seq");
     desc->isdevice = 0;
     desc->func = ops_internal_copy_seq;
   }
