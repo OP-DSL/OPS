@@ -291,11 +291,6 @@ void create_kerneldesc_and_enque(char const *name, ops_arg *args, int nargs, int
 /*******************************************************************************
 * Random number generations
 *******************************************************************************/
-void ops_randomgen_init(unsigned int seed, int options);
-void ops_fill_random_uniform(ops_dat dat);
-void ops_fill_random_normal(ops_dat dat);
-void ops_randomgen_exit();
-
 void ops_randomgen_init_host(unsigned int seed, int options, std::mt19937 ops_rand_gen);
 void ops_fill_random_uniform_host(ops_dat dat, std::mt19937 ops_rand_gen);
 void ops_fill_random_normal_host(ops_dat dat, std::mt19937 ops_rand_gen);

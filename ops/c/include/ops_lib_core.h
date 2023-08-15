@@ -1282,6 +1282,15 @@ OPS_FTN_INTEROP
 int ops_dat_get_global_npartitions(ops_dat dat);
 #endif
 
+/*******************************************************************************
+* Random number generations
+*******************************************************************************/
+void ops_randomgen_init(unsigned int seed, int options);
+void ops_fill_random_uniform(ops_dat dat);
+void ops_fill_random_normal(ops_dat dat);
+void ops_randomgen_exit();
+
+
 /**
  * This class is an accessor to data stored in ops_dats. It is
  * only to be used in user kernels and functions called from within
