@@ -327,7 +327,8 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
         else:
             for g_m in range(0,nargs):
                 if arg_typ[g_m] == "ops_arg_dat":
-                    line2 += f" map({'to' if accs[g_m] == OPS_READ else 'tofrom'}:{arg_list[g_m]}_p[0:arg{g_m}_size])"
+                    pass
+                    #line2 += f" map({'to' if accs[g_m] == OPS_READ else 'tofrom'}:{arg_list[g_m]}_p[0:arg{g_m}_size])"
                 elif arg_typ[g_m] == "ops_arg_gbl" and accs[g_m] == OPS_READ:
                     line2 += f" map(to:{clean_type(arg_list[g_m])}[0:{dims[g_m]}])"
             for n in range(0, nargs):

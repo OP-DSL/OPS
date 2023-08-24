@@ -51,6 +51,9 @@ void ops_init_device(OPS_instance *instance, const int argc, const char *const a
     throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
   }
   cutilDeviceInit(instance, argc, argv);
+  int my_id = ops_get_proc();
+  int no_of_devices = omp_get_num_devices();
+  omp_set_default_device(my_id % no_of_devices);
   instance->OPS_hybrid_gpu = 1;
 }
 
@@ -118,8 +121,8 @@ void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_
 void ops_device_memset(OPS_instance *instance, void** ptr, int val, size_t size) {
   int device = omp_get_default_device();
 
-  char* ptr2 = (char*) omp_get_mapped_ptr(*ptr, device);
-  #pragma omp target teams distribute parallel for is_device_ptr(ptr2)
+  char* ptr2 = (char*) *ptr;
+  #pragma omp target teams distribute parallel for
   for (int i = 0; i < size; i++) {
     ptr2[i] = (char)val;
   }
