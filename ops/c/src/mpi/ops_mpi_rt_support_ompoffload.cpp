@@ -56,9 +56,8 @@ void ops_pack_ompoffload_internal(ops_dat dat, const int src_offset,
 		dat->dirty_hd = 0;
 	}
 
-	int device = omp_get_default_device();
 	size_t src_offset2 = src_offset * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
-	const char *__restrict src = (char*) omp_get_mapped_ptr(dat->data_d + src_offset2, device);
+	const char *__restrict src = (char*) (dat->data_d + src_offset2);
 
 	if (halo_buffer_size < halo_count * halo_blocklength * dat->dim && !OPS_instance::getOPSInstance()->OPS_gpu_direct) {
 		if (halo_buffer_d != NULL) {
@@ -72,8 +71,7 @@ void ops_pack_ompoffload_internal(ops_dat dat, const int src_offset,
 	if (OPS_instance::getOPSInstance()->OPS_gpu_direct)
 		dest_buff = dest;
 	else {
-		void* device_ptr = omp_get_mapped_ptr(halo_buffer_d, device);
-		dest_buff = (char*) device_ptr;
+		dest_buff = (char*) halo_buffer_d;
 	}
 
 	if (OPS_instance::getOPSInstance()->OPS_soa) {
@@ -82,7 +80,7 @@ void ops_pack_ompoffload_internal(ops_dat dat, const int src_offset,
 		int len = halo_blocklength;
 		int stride = halo_stride;
 
-		#pragma omp target teams distribute parallel for is_device_ptr(src, dest_buff)
+		#pragma omp target teams distribute parallel for 
 		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
 			for (int d = 0; d < datdim; d++) {
@@ -95,7 +93,7 @@ void ops_pack_ompoffload_internal(ops_dat dat, const int src_offset,
 		int* dest_buffer = (int*)dest_buff;
 		const int* src_buffer = (const int*)src;
 
-		#pragma omp target teams distribute parallel for is_device_ptr(src_buffer, dest_buffer)
+		#pragma omp target teams distribute parallel for
 		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
 			dest_buffer[idx] = src_buffer[stride * block + idx % len];
@@ -104,7 +102,7 @@ void ops_pack_ompoffload_internal(ops_dat dat, const int src_offset,
 		int len = halo_blocklength * dat->dim;
 		int stride = halo_stride * dat->dim;
 
-		#pragma omp target teams distribute parallel for is_device_ptr(src, dest_buff)
+		#pragma omp target teams distribute parallel for
 		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
 			dest_buff[idx] = src[stride * block + idx % len];
@@ -123,9 +121,8 @@ void ops_unpack_ompoffload_internal(ops_dat dat, const int dest_offset, const ch
 		dat->dirty_hd = 0;
 	}
 
-	int device = omp_get_default_device();
 	size_t dest_offset2 = dest_offset * (OPS_instance::getOPSInstance()->OPS_soa ? dat->type_size : dat->elem_size);
-	char *__restrict dest = (char*) omp_get_mapped_ptr(dat->data_d + dest_offset2, device);
+	char *__restrict dest = (char*) (dat->data_d + dest_offset2);
 
 	if (halo_buffer_size < halo_count * halo_blocklength * dat->dim && !OPS_instance::getOPSInstance()->OPS_gpu_direct) {
 		if (halo_buffer_d != NULL) {
@@ -139,8 +136,7 @@ void ops_unpack_ompoffload_internal(ops_dat dat, const int dest_offset, const ch
 	if (OPS_instance::getOPSInstance()->OPS_gpu_direct)
 		src_buff = src;
 	else {
-		void* device_ptr = omp_get_mapped_ptr(halo_buffer_d, device);
-		src_buff = (char*) device_ptr;
+		src_buff = (char*) halo_buffer_d;
 	}
 
 	if (!OPS_instance::getOPSInstance()->OPS_gpu_direct) {
@@ -153,7 +149,7 @@ void ops_unpack_ompoffload_internal(ops_dat dat, const int dest_offset, const ch
 		int len = halo_blocklength;
 		int stride = halo_stride;
 
-		#pragma omp target teams distribute parallel for is_device_ptr(src_buff, dest)
+		#pragma omp target teams distribute parallel for
 		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
 			for (int d = 0; d < datdim; d++) {
@@ -166,7 +162,7 @@ void ops_unpack_ompoffload_internal(ops_dat dat, const int dest_offset, const ch
 		int* dest_buffer = (int*)dest;
 		const int* src_buffer = (const int*)src_buff;
 
-		#pragma omp target teams distribute parallel for is_device_ptr(src_buffer, dest_buffer)
+		#pragma omp target teams distribute parallel for
 		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
 			dest_buffer[stride * block + idx % len] = src_buffer[idx];
@@ -175,7 +171,7 @@ void ops_unpack_ompoffload_internal(ops_dat dat, const int dest_offset, const ch
 		int len = halo_blocklength * dat->dim;
 		int stride = halo_stride * dat->dim;
 
-		#pragma omp target teams distribute parallel for is_device_ptr(src_buff, dest)
+		#pragma omp target teams distribute parallel for
 		for (int idx = 0; idx < halo_count * len; idx++) {
 			int block = idx / len;
 			dest[stride * block + idx % len] = src_buff[idx];
@@ -195,7 +191,6 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 	int thr_y = abs(ry_s - ry_e);
 	int thr_z = abs(rz_s - rz_e);
 	int size = abs(src->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
-	int device = omp_get_default_device();
 
 	char *gpu_ptr;
 	if (OPS_instance::getOPSInstance()->OPS_gpu_direct)
@@ -208,8 +203,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 			ops_device_malloc(src->block->instance, (void**)&halo_buffer_d, size);
 			halo_buffer_size = size;
 		}
-		void *device_ptr = omp_get_mapped_ptr(halo_buffer_d, device);
-		gpu_ptr = (char*) device_ptr;
+		gpu_ptr = (char*) halo_buffer_d;
 	}
 
 	if (src->dirty_hd == 1) {
@@ -217,7 +211,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 		src->dirty_hd = 0;
 	}
 
-	char *src_buff = (char*) omp_get_mapped_ptr(src->data_d, device);
+	char *src_buff = (char*) src->data_d;
 	int size_x = src->size[0];
 	int size_y = src->size[1];
 	int size_z = src->size[2];
@@ -226,7 +220,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 	int OPS_soa = src->block->instance->OPS_soa;
 
 
-	#pragma omp target teams distribute parallel for collapse(3) is_device_ptr(gpu_ptr, src_buff)
+	#pragma omp target teams distribute parallel for collapse(3)
 	for (int k = 0; k < thr_z; k++) {
 		for (int j = 0; j < thr_y; j++) {
 			for (int i = 0; i < thr_x; i++) {
@@ -275,7 +269,6 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
 	int thr_y = abs(ry_s - ry_e);
 	int thr_z = abs(rz_s - rz_e);
 	int size = abs(dest->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
-	int device = omp_get_default_device();
 
 	char *gpu_ptr;
 	if (OPS_instance::getOPSInstance()->OPS_gpu_direct)
@@ -288,8 +281,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
 			ops_device_malloc(dest->block->instance, (void**)&halo_buffer_d, size);
 			halo_buffer_size = size;
 		}
-		void *device_ptr = omp_get_mapped_ptr(halo_buffer_d, device);
-		gpu_ptr = (char*) device_ptr;
+		gpu_ptr = (char*) halo_buffer_d;
 		ops_device_memcpy_h2d(dest->block->instance, (void**)&halo_buffer_d, (void**)&src, size);
 	}
 
@@ -298,7 +290,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
 		dest->dirty_hd = 0;
 	}
 
-	char *dest_buff = (char*) omp_get_mapped_ptr(dest->data_d, device);
+	char *dest_buff = (char*) dest->data_d;
 	int size_x = dest->size[0];
 	int size_y = dest->size[1];
 	int size_z = dest->size[2];
@@ -306,7 +298,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
 	int dim = dest->dim;
 	int OPS_soa = dest->block->instance->OPS_soa;
 
-	#pragma omp target teams distribute parallel for collapse(3) is_device_ptr(gpu_ptr, dest_buff)
+	#pragma omp target teams distribute parallel for collapse(3)
 	for (int k = 0; k < thr_z; k++) {
 		for (int j = 0; j < thr_y; j++) {
 			for (int i = 0; i < thr_x; i++) {
@@ -357,9 +349,8 @@ void ops_internal_copy_device(ops_kernel_descriptor *desc) {
 		dat0->block->instance->OPS_kernels[-1].count++;
 		ops_timers_core(&__c1,&__t1);
 	}
-	int device = omp_get_default_device();
-	char *dat0_p = (char*) omp_get_mapped_ptr(desc->args[0].data_d + desc->args[0].dat->base_offset, device);
-	char *dat1_p = (char*) omp_get_mapped_ptr(desc->args[1].data_d + desc->args[1].dat->base_offset, device);
+	char *dat0_p = (char*) (desc->args[0].data_d + desc->args[0].dat->base_offset);
+	char *dat1_p = (char*) (desc->args[1].data_d + desc->args[1].dat->base_offset);
 	int s0 = dat0->size[0];
 #if OPS_MAX_DIM>1
 	int s1 = dat0->size[1];
@@ -398,7 +389,7 @@ void ops_internal_copy_device(ops_kernel_descriptor *desc) {
 #endif
 
 	if (thr_x > 0 && thr_y > 0 && thr_z > 0) {
-		#pragma omp target teams distribute parallel for collapse(3) is_device_ptr(dat0_p, dat1_p)
+		#pragma omp target teams distribute parallel for collapse(3)
 		for (int z = 0; z < thr_z; z++) {
 			for (int y = 0; y < thr_y; y++) {
 				for (int x = 0; x < thr_x; x++) {

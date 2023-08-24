@@ -19,7 +19,7 @@ FMODS         := -module $(F_INC_MOD)
 FMODS_CUDA    := -module $(F_INC_MOD)/cuda
 
 OMPFLAGS := -mp
-OMPOFFLOADFLAGS= -mp=gpu -Minfo=accel
+OMPOFFLOADFLAGS= -mp=gpu 
 
 ifdef THREADED
 	THREADING_FLAGS ?= -mp

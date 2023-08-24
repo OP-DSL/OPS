@@ -64,7 +64,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   int size_z = src->size[2];
   int dim = src->dim;
   
-#pragma omp target teams distribute parallel for collapse(3) map(to: srcptr[0:src->mem]) map(tofrom: dest[0:bufsize]) private(srcptr,dest)
+#pragma omp target teams distribute parallel for collapse(3)
   for (int k = 0; k < thr_z; k++) {
     for (int j = 0; j < thr_y; j++) {
       for (int i = 0; i < thr_x; i++) {
@@ -113,7 +113,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   int size_z = dest->size[2];
   int dim = dest->dim;
 
-#pragma omp target teams distribute parallel for collapse(3) map(to: src[0:bufsize]) map(tofrom: dest->data_d[0:dest->mem]) private(destptr,src)
+#pragma omp target teams distribute parallel for collapse(3)
   for (int k = 0; k < thr_z; k++) {
     for (int j = 0; j < thr_y; j++) {
       for (int i = 0; i < thr_x; i++) {
