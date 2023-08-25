@@ -9,6 +9,7 @@ else
 endif
 OMPFLAGS=-fopenmp
 OMPOFFLOADFLAGS=-fopenmp
+
 ifdef THREADED
 	THREADING_FLAGS ?= -fopenmp
 endif
