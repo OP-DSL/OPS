@@ -27,6 +27,7 @@ OPS_LIB_MPI_HIP=-lops_mpi_hip
 OPS_LIB_SYCL=$(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_sycl.a
 OPS_LIB_MPI_SYCL=$(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_sycl.a
 OPS_LIB_OMPOFFLOAD=-lops_ompoffload
+OPS_LIB_MPI_OMPOFFLOAD=-lops_mpi_ompoffload
 OPS_LINK=
 CUDART=-lcudart
 

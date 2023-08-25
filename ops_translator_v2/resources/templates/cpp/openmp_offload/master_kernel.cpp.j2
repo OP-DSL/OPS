@@ -8,6 +8,45 @@
 {% endif %}
 {% endblock %}
 
+{% block dim_struct %}
+typedef struct {
+    int size;
+    int *xdim, *ydim, *zdim;
+    int *strideX, *strideY, *strideZ;
+    int *mgridStrideX, *mgridStrideY, *mgridStrideZ;
+} argDims_t;
+
+{#
+#pragma omp declare mapper(mapper_4d_or_3d_mdim: argDims_t A) \
+    map(A.strideX[0:A.size],A.strideY[0:A.size],A.strideZ[0:A.size], \
+        A.xdim[0:A.size],A.ydim[0:A.size],A.zdim[0:A.size])
+
+#pragma omp declare mapper(mapper_3d_or_2d_mdim: argDims_t A) \
+    map(A.strideX[0:A.size],A.strideY[0:A.size],A.strideZ[0:A.size], \
+        A.xdim[0:A.size],A.ydim[0:A.size])
+
+#pragma omp declare mapper(mapper_2d_or_1d_mdim: argDims_t A) \
+    map(A.strideX[0:A.size],A.strideY[0:A.size], \
+        A.xdim[0:A.size])
+
+#pragma omp declare mapper(mapper_1d: argDims_t A) \
+    map(A.strideX[0:A.size])
+
+#pragma omp declare mapper(mapper_3d_or_2d_mdim_prolong: argDims_t A) \
+    map(A.strideX[0:A.size],A.strideY[0:A.size],A.strideZ[0:A.size], \
+        A.mgridStrideX[0:A.size],A.mgridStrideY[0:A.size],A.mgridStrideZ[0:A.size], \
+        A.xdim[0:A.size],A.ydim[0:A.size])
+
+#pragma omp declare mapper(mapper_2d_or_1d_mdim_prolong: argDims_t A) \
+    map(A.strideX[0:A.size],A.strideY[0:A.size], \
+        A.mgridStrideX[0:A.size],A.mgridStrideY[0:A.size], \
+        A.xdim[0:A.size])
+
+#pragma omp declare mapper(mapper_1d_prolong: argDims_t A) \
+    map(A.strideX[0:A.size], A.mgridStrideX[0:A.size])
+#}
+{% endblock %}
+
 {% block const_decls %}
 //  global constants
     {% for const in app.consts() %}

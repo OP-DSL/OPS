@@ -7,19 +7,25 @@ else
 	CCFLAGS   := -O3 -std=c99 -fPIC -DUNIX -Wall -g #-ffloat-store -fopenmp
 	CXXFLAGS  := -O3 -fPIC -DUNIX -Wall -g -std=c++11 -fopenmp
 endif
-OMPFLAGS=-fopenmp
+
+OMPFLAGS := -fopenmp
+
 ifdef THREADED
 	THREADING_FLAGS ?= -fopenmp
 endif
 
 ifeq ($(NV_ARCH),Kepler)
-	OMPOFFLOADFLAGS=-fopenmp=libomp -fopenmp-targets=nvptx64 -Xopenmp-target -march=sm_35
+	OMPOFFLOADFLAGS := -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_35
 else
 ifeq ($(NV_ARCH),Pascal)
-	OMPOFFLOADFLAGS=-fopenmp=libomp -fopenmp-targets=nvptx64 -Xopenmp-target -march=sm_60
+	OMPOFFLOADFLAGS := -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_60
 else
 ifeq ($(NV_ARCH),Volta)
-	OMPOFFLOADFLAGS=-fopenmp=libomp -fopenmp-targets=nvptx64 -Xopenmp-target -march=sm_70
+	OMPOFFLOADFLAGS := -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_70
+else
+ifeq ($(NV_ARCH),Turing)
+	OMPOFFLOADFLAGS := -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_75
+endif
 endif
 endif
 endif
