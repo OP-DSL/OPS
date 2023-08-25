@@ -43,15 +43,15 @@ constexpr unsigned int avg_grid_size = avg_blocks * avg_depth_d32 * avg_depth_d3
 constexpr unsigned int max_data_size = 4000000000;
 constexpr unsigned int avg_data_size = 4244832; //100 x 100 x 100 grid with (-1,+1) halo with 4-byte datatype in bytes
 
-constexpr unsigned int min_mem_data_width = 128;
+constexpr unsigned int min_mem_data_width = 32;
 constexpr unsigned int avg_mem_data_width = 512;
 constexpr unsigned int max_mem_data_width = 1024;
 
-constexpr unsigned int min_axis_data_width = 64;
+constexpr unsigned int min_axis_data_width = 32;
 constexpr unsigned int avg_axis_data_width = 256;
 constexpr unsigned int max_axis_data_width = 1024;
 
-constexpr unsigned int min_hls_stream_data_width = 64;
+constexpr unsigned int min_hls_stream_data_width = 32;
 constexpr unsigned int avg_hls_stream_data_width = 256;
 constexpr unsigned int max_hls_stream_data_width = 1024;
 

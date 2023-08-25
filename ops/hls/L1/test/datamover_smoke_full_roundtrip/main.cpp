@@ -3,6 +3,8 @@
 #include <vector>
 #include "top.hpp"
 
+//#define DEBUG_LOG
+
 int main()
 {
     std::cout << std::endl;
@@ -34,7 +36,7 @@ int main()
         const int num = x_size * x_size * x_size; 
         const int size = num * sizeof(float);
         const int bytes_per_beat = AXI_M_WIDTH / 8;
-        const int data_per_beat = AXI_M_WIDTH / sizeof(float); 
+        const int data_per_beat = bytes_per_beat / sizeof(float);
         const int num_beats = (size + bytes_per_beat - 1) / bytes_per_beat;
 
         std::cout << "x_size: " << x_size << std::endl;
@@ -51,13 +53,17 @@ int main()
         {
             for (int i = 0; i < data_per_beat; i++)
             {
-                converter.f = distFloat(mtRandom);
-                mem0[beat].range((i+1)*sizeof(float) - 1, i * sizeof(float)) = converter.i;
-
-#ifdef DEBUG_LOG
                 unsigned int index = beat * data_per_beat + i;
-                std::cout << "index: " << index << " value: " << converter.f << std::endl; 
+
+                if (index < num)
+                {
+					converter.f = distFloat(mtRandom);
+					mem0[beat].range((i+1)*sizeof(float)*8 - 1, i * sizeof(float)*8) = converter.i;
+#ifdef DEBUG_LOG
+
+					std::cout << "index: " << index << " value: " << converter.f << std::endl;
 #endif
+                }
             }
         }
 
@@ -74,12 +80,20 @@ int main()
 
                 if (index < num)
                 {
-                    if (mem0[beat].range((i+1)*sizeof(float) - 1, i * sizeof(float)) != mem1[beat].range((i+1)*sizeof(float) - 1, i * sizeof(float)))
+                    ops::hls::DataConv tmp1, tmp2;
+
+                    tmp1.i = mem0[beat].range((i+1)*sizeof(float)*8 - 1, i * sizeof(float)*8);
+                    tmp2.i = mem1[beat].range((i+1)*sizeof(float)*8 - 1, i * sizeof(float)*8);
+#ifdef DEBUG_LOG
+                    std::cout << "[INFO] Verification. Index: " << beat * data_per_beat + i
+                    		<< " mem0 val: " << tmp1.f << " mem1 val: " << tmp2.f  << std::endl;
+#endif
+                    if (mem0[beat].range((i+1)*sizeof(float)*8 - 1, i * sizeof(float)*8) != mem1[beat].range((i+1)*sizeof(float)*8 - 1, i * sizeof(float)*8))
                     {
                         no_error = false;
+
                         std::cerr << "[ERROR] Value mismatch. Index: " << beat * data_per_beat + i 
-                        << " mem0 val: " << (float) mem0[beat].range((i+1)*sizeof(float) - 1, i * sizeof(float))
-                        << " mem1 val: " << (float) mem1[beat].range((i+1)*sizeof(float) - 1, i * sizeof(float)) << std::endl;
+                        		<< " mem0 val: " << tmp1.f << " mem1 val: " << tmp2.f  << std::endl;
                     }
                 }
             }

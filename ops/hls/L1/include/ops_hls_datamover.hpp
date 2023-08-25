@@ -14,6 +14,14 @@
 #include <hls_stream.h>
 #include "ops_hls_defs.hpp"
 
+//#define DEBUG_LOG
+
+#ifdef DEBUG_LOG
+	#ifndef DEBUG_LOG_SIZE_OF
+		#define DEBUG_LOG_SIZE_OF 4
+	#endif
+#endif
+
 namespace ops {
 namespace hls {
 
@@ -28,23 +36,45 @@ static void convMemBeat2axisPkt(ap_uint<MEM_DATA_WIDTH>* mem_in,
 					const unsigned int& index)
 {	
 	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
-	constexpr unsigned int bytes_per_pkt = AXIS_DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
 	constexpr unsigned int num_strm_pkts_per_beat = MEM_DATA_WIDTH / AXIS_DATA_WIDTH;
+
+#ifdef DEBUG_LOG
+	printf("\n|HLS DEBUG_LOG| %s | bytes_per_beat: %d, bytes_per_axis_pkt: %d, num_strm_pkts_per_beat: %d\n"
+			, __func__, bytes_per_beat, bytes_per_axis_pkt, num_strm_pkts_per_beat);
+	printf("======================================================================================================\n");
+#endif
 	
 	ap_uint<MEM_DATA_WIDTH> tmp;
 	tmp = mem_in[index];
 	
+#ifdef DEBUG_LOG
+	printf("   |HLS DEBUG_LOG| reading beat index: %d\n", index);
+#endif
+
 	for (unsigned int pkt = 0; pkt < num_strm_pkts_per_beat; pkt++)
 	{
 	#pragma HLS PIPELINE II=num_strm_pkts_per_beat
 	#pragma HLS LOOP_TRIPCOUNT min=min_strm_pkts_per_beat avg=avg_strm_pkts_per_beat max=max_strm_pkts_per_beat
-		unsigned int byte_idx = index * bytes_per_beat + pkt * bytes_per_pkt;
+		unsigned int byte_idx = index * bytes_per_beat + pkt * bytes_per_axis_pkt;
 
 		if (byte_idx < size)
 		{
 			ap_axiu<AXIS_DATA_WIDTH,0,0,0> tmp_pkt;
 			tmp_pkt.data = tmp.range((pkt + 1) * AXIS_DATA_WIDTH - 1, pkt * AXIS_DATA_WIDTH);
 			strm_out.write(tmp_pkt);
+
+#ifdef DEBUG_LOG
+			printf("   |HLS DEBUG_LOG| sending axis pkt: %d, val=(", pkt);
+
+			for (unsigned n = 0; n < bytes_per_axis_pkt/DEBUG_LOG_SIZE_OF; n++)
+			{
+				DataConv tmp;
+				tmp.i = tmp_pkt.data.range((n+1) * DEBUG_LOG_SIZE_OF * 8 - 1, n * DEBUG_LOG_SIZE_OF * 8);
+				printf("%f,", tmp.f);
+			}
+			printf(")\n");
+#endif
 		}
 	}
 }
@@ -60,25 +90,89 @@ static void convAxisPkt2memBeat(ap_uint<MEM_DATA_WIDTH>* mem_out,
 					unsigned int& index)
 {	
 	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
-	constexpr unsigned int bytes_per_pkt = AXIS_DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
 	constexpr unsigned int num_strm_pkts_per_beat = MEM_DATA_WIDTH / AXIS_DATA_WIDTH;
 	
+#ifdef DEBUG_LOG
+	printf("\n|HLS DEBUG_LOG| %s | bytes_per_beat: %d, bytes_per_axis_pkt: %d, num_strm_pkts_per_beat: %d\n"
+			, __func__, bytes_per_beat, bytes_per_axis_pkt, num_strm_pkts_per_beat);
+	printf("======================================================================================================\n");
+	printf("   |HLS DEBUG_LOG| writing beat index: %d\n", index);
+#endif
 	ap_uint<MEM_DATA_WIDTH> tmp;
 	
 	for (unsigned int pkt = 0; pkt < num_strm_pkts_per_beat; pkt++)
 	{
 	#pragma HLS PIPELINE II=1
 	#pragma HLS LOOP_TRIPCOUNT min=min_strm_pkts_per_beat avg=avg_strm_pkts_per_beat max=max_strm_pkts_per_beat
-		unsigned int byte_idx = index * bytes_per_beat + pkt * bytes_per_pkt;
+		unsigned int byte_idx = index * bytes_per_beat + pkt * bytes_per_axis_pkt;
 
 		if (byte_idx < size)
 		{
 			ap_axiu<AXIS_DATA_WIDTH,0,0,0> tmp_pkt;
 			tmp_pkt = strm_in.read();
 			tmp.range((pkt + 1) * AXIS_DATA_WIDTH - 1, pkt * AXIS_DATA_WIDTH) = tmp_pkt.data;
+
+#ifdef DEBUG_LOG
+			printf("   |HLS DEBUG_LOG| receiving axis pkt: %d, val=(", pkt);
+
+			for (unsigned n = 0; n < bytes_per_axis_pkt/DEBUG_LOG_SIZE_OF; n++)
+			{
+				DataConv tmp;
+				tmp.i = tmp_pkt.data.range((n+1) * DEBUG_LOG_SIZE_OF * 8 - 1, n * DEBUG_LOG_SIZE_OF * 8);
+				printf("%f,", tmp.f);
+			}
+			printf(")\n");
+#endif
 		}
 	}
 	mem_out[index] = tmp;
+}
+
+/**
+ * @brief 	convAxisPkt2memBeatMaksed writes a memory location with index and 
+ * from AXI4-stream with strb channels.
+ *  
+ */
+template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
+static void convAxisPkt2memBeatMasked(ap_uint<DATA_WIDTH>* mem_out,
+					::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_in,
+					unsigned int& size,
+					unsigned int& index)
+{	
+	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_data = DATA_WIDTH / 8;
+	constexpr unsigned int num_strm_pkts_per_beat = MEM_DATA_WIDTH / AXIS_DATA_WIDTH;
+	constexpr unsigned int num_data_per_axis_pkt = AXIS_DATA_WIDTH / DATA_WIDTH;
+	constexpr unsigned int num_data_per_beat = MEM_DATA_WIDTH / DATA_WIDTH;
+
+	
+	ap_uint<DATA_WIDTH> tmp;
+
+	for (unsigned int pkt = 0; pkt < num_strm_pkts_per_beat; pkt++)
+	{
+	#pragma HLS PIPELINE II=1
+	#pragma HLS LOOP_TRIPCOUNT min=min_strm_pkts_per_beat avg=avg_strm_pkts_per_beat max=max_strm_pkts_per_beat
+
+		unsigned int base_byte_idx = index * bytes_per_beat + pkt * bytes_per_axis_pkt;
+
+		if (base_byte_idx < size)
+		{
+			ap_axiu<AXIS_DATA_WIDTH,0,0,0> tmp_pkt;
+			tmp_pkt = strm_in.read();
+
+			for (unsigned int data_i = 0; data_i < bytes_per_axis_pkt; data_i++)
+			{
+				unsigned int byte_idx = index * bytes_per_beat + pkt * bytes_per_axis_pkt + data_i * bytes_per_data;
+
+				if (byte_idx < size || tmp_pkt.strb.range((data_i+1) * bytes_per_data - 1, data_i * bytes_per_data))
+				{
+					mem_out[index * num_data_per_beat + pkt * num_data_per_axis_pkt + data_i] = tmp_pkt.data.range((data_i + 1) * DATA_WIDTH - 1, data_i * DATA_WIDTH);
+				}
+			}
+		}
+	}
 }
 
 /**
@@ -111,13 +205,19 @@ void mem2axis(ap_uint<MEM_DATA_WIDTH>* mem_in,
 #endif
 
 	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
-	constexpr unsigned int bytes_per_pkt = AXIS_DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
 	constexpr unsigned int num_strm_pkts_per_beat = MEM_DATA_WIDTH / AXIS_DATA_WIDTH;
 
 	const unsigned int num_beats = (size + bytes_per_beat - 1) / bytes_per_beat;
 	const unsigned int num_bursts = num_beats / BURST_SIZE;
-	const unsigned int non_bust_beats = num_beats % BURST_SIZE;
-	
+	const unsigned int non_burst_beats = num_beats % BURST_SIZE;
+
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG| %s | num_beats: %d, num_burst: %d, non_burst_beats: %d\n"
+			, __func__, num_beats, num_bursts, non_burst_beats);
+	printf("====================================================================================\n");
+#endif
+
 	unsigned int index = 0;
 
 	for (unsigned int brst = 0; brst < num_bursts; brst++)
@@ -134,7 +234,7 @@ void mem2axis(ap_uint<MEM_DATA_WIDTH>* mem_in,
 		}
 	}
 	
-	for (unsigned int beat = 0; beat < non_bust_beats; beat++)
+	for (unsigned int beat = 0; beat < non_burst_beats; beat++)
 	{
 	#pragma HLS PIPELINE II=num_strm_pkts_per_beat
 		convMemBeat2axisPkt<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>(mem_in, strm_out, size, index);
@@ -176,12 +276,12 @@ void mem2axis(ap_uint<MEM_DATA_WIDTH>* mem_in0,
 #endif
 	
 	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
-	constexpr unsigned int bytes_per_pkt = AXIS_DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
 	constexpr unsigned int num_strm_pkts_per_beat = MEM_DATA_WIDTH / AXIS_DATA_WIDTH;
 
 	const unsigned int num_beats = (size + bytes_per_beat - 1) / bytes_per_beat;
 	const unsigned int num_bursts = num_beats / BURST_SIZE;
-	const unsigned int non_bust_beats = num_beats % BURST_SIZE;
+	const unsigned int non_burst_beats = num_beats % BURST_SIZE;
 	
 	unsigned int index = 0;
 	
@@ -203,7 +303,7 @@ void mem2axis(ap_uint<MEM_DATA_WIDTH>* mem_in0,
 				}
 			}
 			
-			for (unsigned int beat = 0; beat < non_bust_beats; beat++)
+			for (unsigned int beat = 0; beat < non_burst_beats; beat++)
 			{
 			#pragma HLS PIPELINE II=num_strm_pkts_per_beat
 				convMemBeat2axisPkt<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>(mem_in0, strm_out, size, index);
@@ -226,7 +326,7 @@ void mem2axis(ap_uint<MEM_DATA_WIDTH>* mem_in0,
 				}
 			}
 			
-			for (unsigned int beat = 0; beat < non_bust_beats; beat++)
+			for (unsigned int beat = 0; beat < non_burst_beats; beat++)
 			{
 			#pragma HLS PIPELINE II=num_strm_pkts_per_beat
 				convMemBeat2axisPkt<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>(mem_in1, strm_out, size, index);
@@ -267,12 +367,12 @@ void axis2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 #endif
 
 	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
-	constexpr unsigned int bytes_per_pkt = AXIS_DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
 	constexpr unsigned int num_strm_pkts_per_beat = MEM_DATA_WIDTH / AXIS_DATA_WIDTH;
 
 	const unsigned int num_beats = (size + bytes_per_beat - 1) / bytes_per_beat;
 	const unsigned int num_bursts = num_beats / BURST_SIZE;
-	const unsigned int non_bust_beats = num_beats % BURST_SIZE;
+	const unsigned int non_burst_beats = num_beats % BURST_SIZE;
 
 	unsigned int index = 0;
 
@@ -290,7 +390,7 @@ void axis2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 		}
 	}
 
-	for (unsigned int beat = 0; beat < non_bust_beats; beat++)
+	for (unsigned int beat = 0; beat < non_burst_beats; beat++)
 	{
 	#pragma HLS PIPELINE II=num_strm_pkts_per_beat
 		convAxisPkt2memBeat<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>(mem_out, strm_in, size, index);
@@ -333,12 +433,12 @@ void axis2mem(ap_uint<MEM_DATA_WIDTH>* mem_out0,
 #endif
 
 	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
-	constexpr unsigned int bytes_per_pkt = AXIS_DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
 	constexpr unsigned int num_strm_pkts_per_beat = MEM_DATA_WIDTH / AXIS_DATA_WIDTH;
 
 	const unsigned int num_beats = (size + bytes_per_beat - 1) / bytes_per_beat;
 	const unsigned int num_bursts = num_beats / BURST_SIZE;
-	const unsigned int non_bust_beats = num_beats % BURST_SIZE;
+	const unsigned int non_burst_beats = num_beats % BURST_SIZE;
 
 	unsigned int index = 0;
 
@@ -359,7 +459,7 @@ void axis2mem(ap_uint<MEM_DATA_WIDTH>* mem_out0,
 				}
 			}
 
-			for (unsigned int beat = 0; beat < non_bust_beats; beat++)
+			for (unsigned int beat = 0; beat < non_burst_beats; beat++)
 			{
 			#pragma HLS PIPELINE II=num_strm_pkts_per_beat
 				convAxisPkt2memBeat<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>(mem_out0, strm_in, size, index);
@@ -382,7 +482,7 @@ void axis2mem(ap_uint<MEM_DATA_WIDTH>* mem_out0,
 				}
 			}
 
-			for (unsigned int beat = 0; beat < non_bust_beats; beat++)
+			for (unsigned int beat = 0; beat < non_burst_beats; beat++)
 			{
 			#pragma HLS PIPELINE II=num_strm_pkts_per_beat
 				convAxisPkt2memBeat<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>(mem_out1, strm_in, size, index);
@@ -418,9 +518,9 @@ void axis2stream(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
 #endif
 
 	constexpr unsigned int num_hls_pkt_per_axis_pkt = AXIS_DATA_WIDTH / STREAM_DATA_WIDTH;
-	constexpr unsigned int bytes_per_pkt = AXIS_DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
 	
-	const unsigned int num_axis_pkts = (size + bytes_per_pkt - 1) / bytes_per_pkt;
+	const unsigned int num_axis_pkts = (size + bytes_per_axis_pkt - 1) / bytes_per_axis_pkt;
 
 	for (unsigned int itr = 0; itr < num_axis_pkts; itr++)
 	{
@@ -460,9 +560,9 @@ void stream2axis(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_out,
 #endif
 
 	constexpr unsigned int num_hls_pkt_per_axis_pkt = AXIS_DATA_WIDTH / STREAM_DATA_WIDTH;
-	constexpr unsigned int bytes_per_pkt = AXIS_DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
 	
-	const unsigned int num_axis_pkts = (size + bytes_per_pkt - 1) / bytes_per_pkt;
+	const unsigned int num_axis_pkts = (size + bytes_per_axis_pkt - 1) / bytes_per_axis_pkt;
 
 	for (unsigned int itr = 0; itr < num_axis_pkts; itr++)
 	{
@@ -472,6 +572,55 @@ void stream2axis(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_out,
 		{
 		#pragma HLS PIPELINE II=1
 			axisPkt.data.range((j+1) * STREAM_DATA_WIDTH - 1, j * STREAM_DATA_WIDTH) = strm_in.read();
+		}
+
+		axis_out.write(axisPkt);
+	}
+}
+
+/**
+ * @brief stream2axisMask converts hls-stream to AXI4-stream with bit-mask for using 
+ * tsrb channel of axi4-stream protocol
+ *
+ * @tparam AXIS_DATA_WIDTH : Data width of the AXI4-stream port
+ * @tparam STREAM_DATA_WIDTH : Data width of the HLS-stream port
+ * 
+ * @param axis_out : AXI4-stream output port
+ * @param strm_in : HLS-stream input port
+ * @param mask_in : mask HLS-stream port for mask bits to be coverted to strb channel
+ * @param size : Number of the bytes of data
+ */
+
+template <unsigned int AXIS_DATA_WIDTH, unsigned int STREAM_DATA_WIDTH>
+void stream2axisMasked(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_out,
+				::hls::stream<ap_uint<STREAM_DATA_WIDTH>>& strm_in,
+				::hls::stream<ap_uint<STREAM_DATA_WIDTH/8>>& mask_in,
+				unsigned int size)
+{
+#ifndef __SYTHESIS__
+	static_assert(AXIS_DATA_WIDTH % STREAM_DATA_WIDTH == 0,
+			"AXIS_DATA_WIDTH has to be fully divided by STREAM_DATA_WIDTH");
+	static_assert(AXIS_DATA_WIDTH >= min_axis_data_width && AXIS_DATA_WIDTH <= max_axis_data_width,
+			"AXIS_DATA_WIDTH failed limit check");
+	static_assert(STREAM_DATA_WIDTH >= min_hls_stream_data_width && AXIS_DATA_WIDTH <= max_hls_stream_data_width,
+			"STREAM_DATA_WIDTH failed limit check");
+#endif
+
+	constexpr unsigned int num_hls_pkt_per_axis_pkt = AXIS_DATA_WIDTH / STREAM_DATA_WIDTH;
+	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_hls_pkt = STREAM_DATA_WIDTH / 8;
+	
+	const unsigned int num_axis_pkts = (size + bytes_per_axis_pkt - 1) / bytes_per_axis_pkt;
+
+	for (unsigned int itr = 0; itr < num_axis_pkts; itr++)
+	{
+		ap_axiu<AXIS_DATA_WIDTH,0,0,0> axisPkt;
+
+		for (unsigned int j = 0; j < num_hls_pkt_per_axis_pkt; j++)
+		{
+		#pragma HLS PIPELINE II=1
+			axisPkt.data.range((j+1) * STREAM_DATA_WIDTH - 1, j * STREAM_DATA_WIDTH) = strm_in.read();
+			axisPkt.strb.range((j+1) * bytes_per_hls_pkt - 1, j * bytes_per_hls_pkt) = mask_in.read();
 		}
 
 		axis_out.write(axisPkt);
