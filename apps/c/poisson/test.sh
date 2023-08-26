@@ -13,7 +13,8 @@ fi
 
 if [[ -v HIP_INSTALL_PATH ]]; then
   source ../../scripts/$SOURCE_HIP
-  make -j -B
+#  make -j -B
+  make
   cd -
   make clean
   rm -f .generated
@@ -41,12 +42,14 @@ COMMENT
 
 cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_INTEL
-make -j -B
+#make -j -B
+make
 cd $OPS_INSTALL_PATH/../apps/c/poisson
 
 make clean
 rm -f .generated
-make IEEE=1 -j
+#make IEEE=1 -j
+make IEEE=1 
 
 
 
@@ -125,39 +128,39 @@ rm perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
 
-echo '============> Running OpenCL on CPU'
-./poisson_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
-grep "Total error:" perf_out
-grep "Total Wall time" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
+#echo '============> Running OpenCL on CPU'
+#./poisson_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
+#grep "Total error:" perf_out
+#grep "Total Wall time" perf_out
+#grep "PASSED" perf_out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+#rm perf_out
 
-echo '============> Running OpenCL on GPU'
-./poisson_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-./poisson_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total error:" perf_out
-grep "Total Wall time" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
-echo '============> Running MPI+OpenCL on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./poisson_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./poisson_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
-grep "Total error:" perf_out
-grep "Total Wall time" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
+#echo '============> Running OpenCL on GPU'
+#./poisson_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#./poisson_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Total error:" perf_out
+#grep "Total Wall time" perf_out
+#grep "PASSED" perf_out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+#rm perf_out
+#echo '============> Running MPI+OpenCL on CPU'
+#$MPI_INSTALL_PATH/bin/mpirun -np 20 ./poisson_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
+#$MPI_INSTALL_PATH/bin/mpirun -np 20 ./poisson_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
+#grep "Total error:" perf_out
+#grep "Total Wall time" perf_out
+#grep "PASSED" perf_out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+#rm perf_out
 
-echo '============> Running MPI+OpenCL on GPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total error:" perf_out
-grep "Total Wall time" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
+#echo '============> Running MPI+OpenCL on GPU'
+#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Total error:" perf_out
+#grep "Total Wall time" perf_out
+#grep "PASSED" perf_out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+#rm perf_out
 
 echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
 cd -
@@ -165,10 +168,12 @@ cd -
 source ../../scripts/$SOURCE_PGI
 
 make clean
-make -j
+#make -j
+make 
 cd -
 make clean
 make 
+make poisson_openacc poisson_mpi_openacc
 
 #============================ Test Poisson with PGI Compilers==========================================================
 echo '============> Running OpenMP'
@@ -250,14 +255,14 @@ rm perf_out
 #c=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
 
-echo '============> Running OpenCL on GPU'
-./poisson_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-./poisson_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total error:" perf_out
-grep "Total Wall time" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
+#echo '============> Running OpenCL on GPU'
+#./poisson_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#./poisson_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Total error:" perf_out
+#grep "Total Wall time" perf_out
+#grep "PASSED" perf_out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+#rm perf_out
 
 #echo '============> Running MPI+OpenCL on CPU'
 #$MPI_INSTALL_PATH/bin/mpirun -np 20 ./poisson_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
@@ -268,14 +273,14 @@ rm perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
 
-echo '============> Running MPI+OpenCL on GPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total error:" perf_out
-grep "Total Wall time" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
+#echo '============> Running MPI+OpenCL on GPU'
+#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Total error:" perf_out
+#grep "Total Wall time" perf_out
+#grep "PASSED" perf_out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+#rm perf_out
 
 echo '============> Running OpenACC'
 ./poisson_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out

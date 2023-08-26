@@ -1,0 +1,48 @@
+#!/bin/bash
+export OPS_COMPILER=pgi
+export OPS_INSTALL_PATH=/rr-home/gihan/OPS/ops
+module purge
+if [ "$HOSTNAME" == "telos" ]
+then
+    #Telos
+    export NV_ARCH=Volta
+elif [ "$HOSTNAME" == "kos" ]
+then
+    # Kos
+    export NV_ARCH=Pascal
+fi
+echo "GPU architecture" $NV_ARCH
+
+#PGI MPI and Compilers
+module load nvhpc/23.1
+
+export CUDA_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/23.1/cuda
+export CUDA_MATH_LIBS=$CUDA_INSTALL_PATH/lib64
+export LD_LIBRARY_PATH=$CUDA_INSTALL_PATH/lib64:$LD_LIBRARY_PATH
+
+export MPI_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/mpi
+export PATH=$MPI_INSTALL_PATH/bin:$PATH
+export LD_LIBRARY_PATH=$MPI_INSTALL_PATH/lib:$LD_LIBRARY_PATH
+
+export OP_AUTO_SOA=1
+
+export MPICPP=mpic++
+export MPICH_CXX=pgc++
+export MPICH_CC=pgcc
+export MPICH_F90=pgfortran
+export MPIF90_F90=pgfortran
+export MPICH_FC=pgfortran
+
+#PGI based HDF5
+unset HDF5_INSTALL_PATH
+export HDF5_INSTALL_PATH=/rr-home/gihan/HDF5-PGI-18
+export LD_LIBRARY_PATH=/rr-home/gihan/HDF5-PGI-18/lib:$LD_LIBRARY_PATH
+#export HDF5_INSTALL_PATH=/ext-home/asl/install/build_hdf5/gnu
+#export PATH=$HDF5_INSTALL_PATH/bin:$PATH
+#export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
+
+module load llvm-14.0.6/llvm-14.0.6
+export LIBCLANG_PATH=/opt/llvm/14.0.6/lib/libclang.so
+
+module load python/3.9.7
+source $OPS_INSTALL_PATH/../ops_translator_v2/ops_venv/bin/activate
