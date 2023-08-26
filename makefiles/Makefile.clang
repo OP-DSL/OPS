@@ -7,8 +7,13 @@ else
 	CCFLAGS   := -O3 -std=c99 -fPIC -DUNIX -Wall -g #-ffloat-store -fopenmp
 	CXXFLAGS  := -O3 -fPIC -DUNIX -Wall -g -std=c++11 -fopenmp
 endif
-OMPFLAGS=-fopenmp
-OMPOFFLOADFLAGS=-fopenmp
+
+ifdef IEEE
+	CCFLAGS += -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fno-associative-math
+	CXXFLAGS += -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fno-associative-math
+endif
+
+OMPFLAGS := -fopenmp
 
 ifdef THREADED
 	THREADING_FLAGS ?= -fopenmp
