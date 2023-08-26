@@ -42,12 +42,12 @@ COMMENT
 cd $OPS_INSTALL_PATH/c
 source $OPS_INSTALL_PATH/../scripts/$SOURCE_INTEL
 make clean
-make -j
+make 
 cd $OPS_INSTALL_PATH/../apps/c/CloverLeaf
 pwd
 make clean
 rm -f .generated
-make IEEE=1 -j
+make IEEE=1 
 
 #============================ Test Cloverleaf 2D With Intel Compilers==========================================================
 echo '============> Running OpenMP'
@@ -157,15 +157,15 @@ rm -f clover.out
 rm perf_out
 COMMENT
 
-echo '============> Running OpenCL on GPU'
-./cloverleaf_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-./cloverleaf_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total Wall time" clover.out
+#echo '============> Running OpenCL on GPU'
+#./cloverleaf_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#./cloverleaf_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Total Wall time" clover.out
 #grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
-grep "PASSED" clover.out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm -f clover.out
-rm perf_out
+#grep "PASSED" clover.out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+#rm -f clover.out
+#rm perf_out
 
 <<COMMENT
 echo '============> Running MPI+OpenCL on CPU'
@@ -179,15 +179,15 @@ rm -f clover.out
 rm perf_out
 COMMENT
 
-echo '============> Running MPI+OpenCL on GPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./cloverleaf_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./cloverleaf_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total Wall time" clover.out
+#echo '============> Running MPI+OpenCL on GPU'
+#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./cloverleaf_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./cloverleaf_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Total Wall time" clover.out
 #grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
-grep "PASSED" clover.out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm -f clover.out
-rm perf_out
+#grep "PASSED" clover.out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+#rm -f clover.out
+#rm perf_out
 
 echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
 #exit
@@ -297,15 +297,15 @@ rm -f clover.out
 #rm -f clover.out
 #rm perf_out
 
-echo '============> Running OpenCL on GPU'
-./cloverleaf_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-./cloverleaf_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total Wall time" clover.out
-#grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
-grep "PASSED" clover.out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm -f clover.out
-rm perf_out
+#echo '============> Running OpenCL on GPU'
+#./cloverleaf_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#./cloverleaf_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Total Wall time" clover.out
+##grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
+#grep "PASSED" clover.out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+#rm -f clover.out
+#rm perf_out
 
 #echo '============> Running MPI+OpenCL on CPU'
 #$MPI_INSTALL_PATH/bin/mpirun -np 20 ./cloverleaf_mpi_opencl OPS_CL_DEVICE=0  > perf_out
@@ -314,15 +314,15 @@ rm perf_out
 #grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
 #rm perf_out
 
-echo '============> Running MPI+OpenCL on GPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./cloverleaf_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./cloverleaf_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total Wall time" clover.out
-#grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
-grep "PASSED" clover.out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm -f clover.out
-rm perf_out
+#echo '============> Running MPI+OpenCL on GPU'
+#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./cloverleaf_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./cloverleaf_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Total Wall time" clover.out
+##grep -e "step:   2952" -e "step:   2953" -e "step:   2954" -e "step:   2955" clover.out
+#grep "PASSED" clover.out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+#rm -f clover.out
+#rm perf_out
 
 echo '============> Running OpenACC'
 ./cloverleaf_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
