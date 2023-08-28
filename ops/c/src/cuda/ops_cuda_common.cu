@@ -33,7 +33,7 @@
 /** @file
   * @brief OPS common cuda-specific functions (non-MPI and MPI)
   * @author Gihan Mudalige, Istvan Reguly
-  * @details Implements the CUDA-specific routines shared between single-GPU 
+  * @details Implements the CUDA-specific routines shared between single-GPU
   * and MPI+CUDA backends
   */
 
@@ -47,7 +47,7 @@ void __cudaSafeCall(std::ostream &stream, cudaError_t err, const char *file, con
   if (cudaSuccess != err) {
     fprintf2(stream, "%s(%i) : cutilSafeCall() Runtime API error : %s.\n", file,
             line, cudaGetErrorString(err));
-    if (err == cudaErrorNoKernelImageForDevice) 
+    if (err == cudaErrorNoKernelImageForDevice)
     throw OPSException(OPS_RUNTIME_ERROR, "Please make sure the OPS CUDA/MPI+CUDA backends were compiled for your GPU");
     else throw OPSException(OPS_RUNTIME_ERROR, cudaGetErrorString(err));
   }
@@ -137,8 +137,8 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
     cudaGetDevice(&deviceId);
     cudaDeviceProp_t deviceProp;
     cutilSafeCall(instance->ostream(), cudaGetDeviceProperties(&deviceProp, deviceId));
-    if (instance->OPS_diags>2) instance->ostream() << "\n Using CUDA device: " <<
-      deviceId << " " << deviceProp.name;
+    if (instance->OPS_diags>=1) instance->ostream() << "\n Using CUDA device: " <<
+      deviceId << " " << deviceProp.name <<"\n";
   } else {
     throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: no available CUDA devices");
   }
