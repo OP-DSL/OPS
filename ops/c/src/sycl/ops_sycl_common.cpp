@@ -33,7 +33,7 @@
 /** @file
   * @brief OPS common HIP-specific functions (non-MPI and MPI)
   * @author Gihan Mudalige, Istvan Reguly
-  * @details Implements the HIP-specific routines shared between single-GPU 
+  * @details Implements the HIP-specific routines shared between single-GPU
   * and MPI+HIP backends
   */
 
@@ -132,7 +132,7 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
     instance->sycl_instance->queue =
         new cl::sycl::queue(cl::sycl::default_selector(), cl::sycl::property::queue::in_order());
     break;
-  default: 
+  default:
     std::vector<cl::sycl::device> devices;
     devices = cl::sycl::device::get_devices();
     int devid = OPS_sycl_device - 4;
@@ -151,7 +151,7 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
 
   instance->OPS_hybrid_gpu = 1;
   auto platform = instance->sycl_instance->queue->get_device().get_platform();
-  instance->ostream() << "Running on " << instance->sycl_instance->queue->get_device().get_info<cl::sycl::info::device::name>() << " platform " << platform.get_info<cl::sycl::info::platform::name>() << "\n";
+  if (instance->OPS_diags>=1) instance->ostream() << "Running on " << instance->sycl_instance->queue->get_device().get_info<cl::sycl::info::device::name>() << " platform " << platform.get_info<cl::sycl::info::platform::name>() << "\n";
 }
 
 void ops_randomgen_init(unsigned int seed, int options) {

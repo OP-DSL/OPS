@@ -1,0 +1,35 @@
+#!/bin/bash
+
+export OPS_COMPILER=gnu
+export OPS_INSTALL_PATH=/rr-home/gihan/OPS/ops
+
+module purge
+
+module load rocmmod5.4.3
+
+module load llvm-14.0.6/llvm-14.0.6
+export LIBCLANG_PATH=/opt/llvm/14.0.6/lib/libclang.so
+module load python/3.9.7
+source $OPS_INSTALL_PATH/../ops_translator_v2/ops_venv/bin/activate
+
+#MPI and Compilers
+module load gnu-9.3.0/openmpi-4.0.4
+export MPI_INSTALL_PATH=/opt/mpi/openmpi/4.0.4/gnu/9.3.0
+export PATH=/opt/mpi/openmpi/4.0.4/gnu/9.3.0/bin:$PATH
+export LD_LIBRARY_PATH=/opt/mpi/openmpi/4.0.4/gnu/9.3.0/lib:$LD_LIBRARY_PATH
+
+export OP_AUTO_SOA=1
+
+export OMPI_CC=hipcc
+export OMPI_CXX=hipcc
+export OMPI_FC=flang
+
+export HIP_INSTALL_PATH=/opt/rocm-5.4.3/hip
+export AOMP=/opt/rocm-5.4.3/llvm/
+
+unset HDF5_INSTALL_PATH
+export HDF5_INSTALL_PATH=/ext-home/asl/install/build_hdf5/gnu_amos
+export PATH=$HDF5_INSTALL_PATH/bin:$PATH
+export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/rr-home/gihan/libffi/

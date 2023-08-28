@@ -33,7 +33,7 @@
 /** @file
   * @brief OPS common cuda-specific functions (non-MPI and MPI)
   * @author Gihan Mudalige, Istvan Reguly
-  * @details Implements the HIP-specific routines shared between single-GPU 
+  * @details Implements the HIP-specific routines shared between single-GPU
   * and MPI+HIP backends
   */
 
@@ -51,7 +51,7 @@ void __hipSafeCall(std::ostream &stream, hipError_t err, const char *file, const
   if (hipSuccess != err) {
     fprintf2(stream, "%s(%i) : hipSafeCall() Runtime API error : %s.\n", file,
             line, hipGetErrorString(err));
-    if (err == hipErrorNoBinaryForGpu) 
+    if (err == hipErrorNoBinaryForGpu)
     throw OPSException(OPS_RUNTIME_ERROR, "Please make sure the OPS HIP/MPI+HIP backends were compiled for your GPU");
     else throw OPSException(OPS_RUNTIME_ERROR, hipGetErrorString(err));
   }
@@ -149,8 +149,8 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
     hipGetDevice(&deviceId);
     cudaDeviceProp_t deviceProp;
     hipSafeCall(instance->ostream(), hipGetDeviceProperties(&deviceProp, deviceId));
-    if (instance->OPS_diags>2) instance->ostream() << "\n Using HIP device: " <<
-      deviceId << " " << deviceProp.name;
+    if (instance->OPS_diags>=1) instance->ostream() << "\n Using HIP device: " <<
+      deviceId << " " << deviceProp.name <<"\n";
   } else {
     throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: no available HIP devices");
   }
