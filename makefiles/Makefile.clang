@@ -8,6 +8,11 @@ else
 	CXXFLAGS  := -O3 -fPIC -DUNIX -Wall -g -std=c++11 -fopenmp
 endif
 
+ifdef IEEE
+	CCFLAGS += -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fno-associative-math
+	CXXFLAGS += -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fno-associative-math
+endif
+
 OMPFLAGS := -fopenmp
 
 ifdef THREADED
