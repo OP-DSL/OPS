@@ -68,6 +68,8 @@ constexpr unsigned int avg_bytes_per_beat = avg_mem_data_width / 8;
 constexpr unsigned int avg_num_of_bursts = (avg_data_size + avg_bytes_per_beat - 1) / avg_bytes_per_beat;
 constexpr unsigned int max_num_of_bursts = (max_data_size + min_bytes_per_beat - 1) / min_bytes_per_beat;
 
+constexpr unsigned int avg_num_data_per_axis_pkt = avg_axis_data_width / 32;
+
 namespace ops {
 namespace hls {
 
@@ -81,7 +83,6 @@ typedef union
 
 typedef unsigned short SizeType[ops_max_dim];
 
-
 struct GridPropertyCore
 {
     SizeType size;
@@ -94,6 +95,13 @@ struct GridPropertyCore
     unsigned short xblocks;
     unsigned int total_itr;
     unsigned outer_loop_limit;
+};
+
+struct AccessRange
+{
+	SizeType start;
+	SizeType end;
+	unsigned short dim;
 };
 
 enum CoefTypes
