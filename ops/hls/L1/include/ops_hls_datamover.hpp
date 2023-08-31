@@ -714,7 +714,7 @@ void stream2axisMasked(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_out,
 }
 
 template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
-void memReadGrid2Axis(ap_uint<DATA_WIDTH>* mem_in,
+void memReadGrid(ap_uint<DATA_WIDTH>* mem_in,
 		::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_out,
 		unsigned int size,
 		SizeType gridSize,
@@ -725,7 +725,7 @@ void memReadGrid2Axis(ap_uint<DATA_WIDTH>* mem_in,
 }
 
 template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
-void memReadGrid2Axis(ap_uint<DATA_WIDTH>* mem_in,
+void memReadGrid(ap_uint<DATA_WIDTH>* mem_in,
 		::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_out,
 		SizeType gridSize,
 		AccessRange& range)
@@ -747,6 +747,24 @@ void memReadGrid2Axis(ap_uint<DATA_WIDTH>* mem_in,
 	}
 }
 
+template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
+void memWriteGrid(ap_uint<DATA_WIDTH>* mem_out,
+		::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_in,
+		unsigned int size,
+		SizeType gridSize,
+		SizeType offset)
+{
+	unsigned int init_offset = offset[0] + offset[1] * gridSize[0] + offset[2] * gridSize[0] * gridSize[1];
+	constexpr unsigned short mem_data_bytes = MEM_DATA_WIDTH / 8;
+	constexpr unsigned short data_bytes = DATA_WIDTH /8;
+	unsigned int num_whole_axi_reads = size / mem_data_bytes;
+	unsigned int whole_axi_size = num_whole_axi_reads * mem_data_bytes;
+	unsigned int partial_offset = whole_axi_size / data_bytes;
+	unsigned int partial_axi_size = size - whole_axi_size;
+
+	axis2mem<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + init_offset), strm_in, whole_axi_size);
+	axis2memMasked<DATA_WIDTH, AXIS_DATA_WIDTH>((mem_out + partial_offset), strm_in, partial_axi_size);
+}
 
 }
 }
