@@ -14,5 +14,5 @@ void dut(ap_uint<DATA_WIDTH>* mem_in,
 //	#pragma HLS INTERFACE axis port=strm_out register
 //	#pragma HLS INTERFACE ap_ctrl_chain port=return
 
-	ops::hls::memReadGrid2Axis<AXI_M_WIDTH, AXIS_WIDTH, DATA_WIDTH>(mem_in, strm_out, size, gridSize, offset);
+	ops::hls::memReadGrid<AXI_M_WIDTH, AXIS_WIDTH, DATA_WIDTH>(mem_in, strm_out, size, gridSize, offset);
 }

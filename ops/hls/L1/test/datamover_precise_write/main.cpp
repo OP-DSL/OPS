@@ -20,7 +20,7 @@ int main()
     std::normal_distribution<float> distFloat(100, 10);
     ops::hls::DataConv converter;
 
-    const int num_tests  = 3;
+    const int num_tests  = 10;
     std::cout << "TOTAL NUMER OF TESTS: " << num_tests << std::endl;
     std::vector<bool> test_summary(10);
 
@@ -46,19 +46,18 @@ int main()
         std::cout << "Size(Bytes): " << size << std::endl;
 //        std::cout << "Number of total beats: " << num_beats << std::endl;
 
-        ap_uint<DATA_WIDTH> mem0[num];
-        ap_uint<DATA_WIDTH> mem1[num];
+        float data[num];
+        ap_uint<DATA_WIDTH> mem[num];
 
 #ifdef DEBUG_LOG
         std::cout << std:: endl << "[DEBUG] **** mem values ****" << std::endl; 
 #endif
         for (int index = 0; index < num; index++)
         {
-			converter.f = distFloat(mtRandom);
-			mem0[index] = converter.i;
+        	data[index] = distFloat(mtRandom);
 #ifdef DEBUG_LOG
 
-			std::cout << "index: " << index << " value: " << converter.f << std::endl;
+			std::cout << "index: " << index << " value: " << data[index] << std::endl;
 #endif
 
         }
@@ -72,10 +71,10 @@ int main()
         	for (int i = 0; i < data_per_axis_pkt; i++)
         	{
         		int index = pkt * data_per_axis_pkt + i;
-
+        		converter.f = data[index];
         		if (index < num)
         		{
-        			tmp.data.range((i+1) * DATA_WIDTH - 1, i * DATA_WIDTH) = mem0[index];
+        			tmp.data.range((i+1) * DATA_WIDTH - 1, i * DATA_WIDTH) = converter.i;
         			tmp.strb.range((i+1) * sizeof(float) - 1, i * sizeof(float)) = -1;
         		}
         		else
@@ -88,26 +87,23 @@ int main()
         }
 
         //calling test dut
-        dut(axis_in, mem1, size);
+        dut(axis_in, mem, size);
 
         bool no_error = true;
 
         for (unsigned int index = 0; index < num; index++)
         {
-			ops::hls::DataConv tmp1, tmp2;
-
-			tmp1.i = mem0[index];
-			tmp2.i = mem1[index];
+			converter.i = mem[index];
 #ifdef DEBUG_LOG
             std::cout << "[INFO] Verification. Index: " << index
-                    << " mem0 val: " << tmp1.f << " mem1 val: " << tmp2.f  << std::endl;
+                    << " mem0 val: " << data[index] << " mem1 val: " << converter.f  << std::endl;
 #endif
-			if (mem0[index] != mem1[index])
+			if (data[index] != converter.f)
 			{
 				no_error = false;
 
 				std::cerr << "[ERROR] Value mismatch. Index: " << index
-						<< " mem0 val: " << tmp1.f << " mem1 val: " << tmp2.f  << std::endl;
+						<< " mem0 val: " << data[index] << " mem1 val: " << converter.f  << std::endl;
 			}
         }
         if (no_error)

@@ -146,7 +146,7 @@ int main()
         const unsigned short data_per_beat = bytes_per_beat / sizeof(float);
         const unsigned short x_beats = (x_size + bytes_per_beat - 1) / bytes_per_beat;
         ops::hls::SizeType grid_size;
-        grid_size[0] = x_beats * bytes_per_beat;
+        grid_size[0] = x_beats * data_per_beat;
         grid_size[1] = x_size;
         grid_size[2] = x_size;
         const int num_elems = grid_size[0] * grid_size[1] * grid_size[2];

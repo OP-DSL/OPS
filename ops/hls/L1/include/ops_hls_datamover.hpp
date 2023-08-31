@@ -763,7 +763,7 @@ void memWriteGrid(ap_uint<DATA_WIDTH>* mem_out,
 	unsigned int partial_axi_size = size - whole_axi_size;
 
 	axis2mem<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + init_offset), strm_in, whole_axi_size);
-	axis2memMasked<DATA_WIDTH, AXIS_DATA_WIDTH>((mem_out + partial_offset), strm_in, partial_axi_size);
+	axis2memMasked<DATA_WIDTH, AXIS_DATA_WIDTH>((mem_out + init_offset + partial_offset), strm_in, partial_axi_size);
 }
 
 }

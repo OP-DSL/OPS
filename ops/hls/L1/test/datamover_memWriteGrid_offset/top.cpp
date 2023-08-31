@@ -2,10 +2,11 @@
 #include "top.hpp"
 
 //template <unsigned int MEM_DATA_WIDTH, unsigned int STREAM_DATA_WIDTH, unsigned int BURST_SIZE>
-void dut(ap_uint<DATA_WIDTH>* mem_in,
-		hls::stream<ap_axiu<AXIS_WIDTH,0,0,0>>& strm_out,
+void dut(ap_uint<DATA_WIDTH>* mem_out,
+		hls::stream<ap_axiu<AXIS_WIDTH,0,0,0>>& strm_in,
+		unsigned int size,
 		ops::hls::SizeType gridSize,
-		ops::hls::AccessRange& range)
+		ops::hls::SizeType offset)
 {
 #pragma HLS TOP
 //	#pragma HLS INTERFACE mode=m_axi bundle=gmem0 depth=4096 max_read_burst_length=64 max_write_burst_length=64 \
@@ -13,5 +14,5 @@ void dut(ap_uint<DATA_WIDTH>* mem_in,
 //	#pragma HLS INTERFACE axis port=strm_out register
 //	#pragma HLS INTERFACE ap_ctrl_chain port=return
 
-	ops::hls::memReadGrid<AXI_M_WIDTH, AXIS_WIDTH, DATA_WIDTH>(mem_in, strm_out, gridSize, range);
+	ops::hls::memWriteGrid<AXI_M_WIDTH, AXIS_WIDTH, DATA_WIDTH>(mem_out, strm_in, size, gridSize, offset);
 }

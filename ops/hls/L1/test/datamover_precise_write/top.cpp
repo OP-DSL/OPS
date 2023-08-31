@@ -20,7 +20,7 @@ void dut(hls::stream<ap_axiu<AXIS_WIDTH,0,0,0>>& axis_in,
 
 	widen_w(axis_in, (ap_uint<AXI_M_WIDTH>*)mem_out, widen_size);
 
-	precise_w(axis_in, (ap_uint<DATA_WIDTH>*)mem_out + precise_offset_index, precise_size);
+	precise_w(axis_in, ((ap_uint<DATA_WIDTH>*)mem_out) + precise_offset_index, precise_size);
 
 }
 
