@@ -180,6 +180,12 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
         code("#endif")
 
         code("")
+        if offload == 1:
+            for dim in range(NDIM):
+                code(f"int start{dim} = start[{dim}];")
+                code(f"int end{dim} = end[{dim}];")
+
+        code("")
         if arg_idx != -1 or MULTI_GRID:
             code("#if defined(OPS_MPI)")
             code("#if defined(OPS_LAZY)")
@@ -261,9 +267,10 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                     code(f"size_t arg{n}_size = (args[{n}].dat->mem - ((char*){clean_type(arg_list[n])}_p-args[{n}].data{ptr_suffix}))/sizeof({typs[n]});")
             elif arg_typ[n] == "ops_arg_gbl":
                 if accs[n] == OPS_READ:
-                    code(
-                        f"{typs[n]} * __restrict__ {clean_type(arg_list[n])} = ({typs[n]} *)args[{n}].data;"
-                    )
+                    if offload == 0:
+                        code(
+                            f"{typs[n]} * __restrict__ {clean_type(arg_list[n])} = ({typs[n]} *)args[{n}].data;"
+                        )
                 else:
                     code("#ifdef OPS_MPI")
                     code(
@@ -277,6 +284,46 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                 code("")
             code("")
         code("")
+
+        if "ops_arg_gbl" in arg_typ and offload == 1:
+            for n in range(0, nargs):
+                if arg_typ[n] == "ops_arg_gbl":
+                    if accs[n] == OPS_READ:
+                        code(f"{typs[n]} *arg{n}h = ({typs[n]} *)args[{n}].data;")
+
+            code("")
+            code(f"int consts_bytes = 0;")
+
+            for n in range(0, nargs):
+                if arg_typ[n] == "ops_arg_gbl":
+                    if accs[n] == OPS_READ:
+                        code(f"consts_bytes += ROUND_UP(args[{n}].dim*sizeof({typs[n]}));")
+
+            code("")
+            code(f"reallocConstArrays(block->instance,consts_bytes);")
+            code(f"consts_bytes = 0;")
+            code("")
+
+            for n in range(0, nargs):
+                if arg_typ[n] == "ops_arg_gbl":
+                    if accs[n] == OPS_READ:
+                        code(f"args[{n}].data = block->instance->OPS_consts_h + consts_bytes;")
+                        code(f"args[{n}].data_d = block->instance->OPS_consts_d + consts_bytes;")
+                        FOR("d", "0", f"args[{n}].dim")
+                        code(f"(({typs[n]} *)args[{n}].data)[d] = arg{n}h[d];")
+                        ENDFOR()
+                        code(f"consts_bytes += ROUND_UP(args[{n}].dim*sizeof({typs[n]}));")
+                        code("")
+
+            code(f"mvConstArraysToDevice(block->instance,consts_bytes);")
+            code("")
+
+            for n in range(0, nargs):
+                if arg_typ[n] == "ops_arg_gbl":
+                    if accs[n] == OPS_READ:
+                        code(
+                            f"{typs[n]} * __restrict__ {clean_type(arg_list[n])} = ({typs[n]} *)args[{n}].data{ptr_suffix};"
+                        )
 
         code("")
 
@@ -330,7 +377,8 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                     pass
                     #line2 += f" map({'to' if accs[g_m] == OPS_READ else 'tofrom'}:{arg_list[g_m]}_p[0:arg{g_m}_size])"
                 elif arg_typ[g_m] == "ops_arg_gbl" and accs[g_m] == OPS_READ:
-                    line2 += f" map(to:{clean_type(arg_list[g_m])}[0:{dims[g_m]}])"
+                    pass
+                    #line2 += f" map(to:{clean_type(arg_list[g_m])}[0:{dims[g_m]}])"
             for n in range(0, nargs):
                 if arg_typ[n] == "ops_arg_gbl":
                     if accs[n] == OPS_MIN:
@@ -340,9 +388,15 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
 
             code(f"#pragma omp target teams distribute parallel for collapse({NDIM})" + line2)
         if NDIM > 2:
-            FOR("n_z", "start[2]", "end[2]")
+            if offload == 1:
+                FOR("n_z", "start2", "end2")
+            else:
+                FOR("n_z", "start[2]", "end[2]")
         if NDIM > 1:
-            FOR("n_y", "start[1]", "end[1]")
+            if offload == 1:
+                FOR("n_y", "start1", "end1")
+            else:
+                FOR("n_y", "start[1]", "end[1]")
 
         line3 = ""
         for n in range(0, nargs):
@@ -360,7 +414,10 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                 code("#else")
                 code("#pragma simd")
                 code("#endif")
-        FOR("n_x", "start[0]", "end[0]")
+        if offload == 1:
+            FOR("n_x", "start0", "end0")
+        else:
+            FOR("n_x", "start[0]", "end[0]")
         if arg_idx != -1:
             if NDIM == 1:
                 code(f"int {clean_type(arg_list[arg_idx])}[] = {{arg_idx[0]+n_x}};")
