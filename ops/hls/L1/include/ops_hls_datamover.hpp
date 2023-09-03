@@ -14,6 +14,7 @@
 #include <hls_stream.h>
 #include "ops_hls_defs.hpp"
 #include "ops_hls_utils.hpp"
+#include <math.h>
 
 //#define DEBUG_LOG
 
@@ -175,6 +176,7 @@ static void convAxisPkt2memBeatMasked(ap_uint<DATA_WIDTH>* mem_out,
 	constexpr unsigned int bytes_per_data = DATA_WIDTH / 8;
 	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
 	constexpr unsigned int num_data_per_axis_pkt = AXIS_DATA_WIDTH / DATA_WIDTH;
+//	constexpr unsigned int shift_val = 1 << bytes_per_data;
 
 #ifndef __SYTHESIS__
 #ifdef DEBUG_LOG
@@ -208,7 +210,8 @@ static void convAxisPkt2memBeatMasked(ap_uint<DATA_WIDTH>* mem_out,
 #pragma HLS PIPELINE  II=1
 #pragma HLS LOOP_TRIPCOUNT avg=avg_num_data_per_axis_pkt
 
-		if (tmp_pkt.strb & strb_pos)
+		bool cond = tmp_pkt.strb & strb_pos;
+		if (cond)
 		{
 			mem_out[index + idx] = tmp_pkt.data.range((idx+1) * DATA_WIDTH - 1, idx * DATA_WIDTH);
 		}
@@ -757,13 +760,47 @@ void memWriteGrid(ap_uint<DATA_WIDTH>* mem_out,
 	unsigned int init_offset = offset[0] + offset[1] * gridSize[0] + offset[2] * gridSize[0] * gridSize[1];
 	constexpr unsigned short mem_data_bytes = MEM_DATA_WIDTH / 8;
 	constexpr unsigned short data_bytes = DATA_WIDTH /8;
-	unsigned int num_whole_axi_reads = size / mem_data_bytes;
-	unsigned int whole_axi_size = num_whole_axi_reads * mem_data_bytes;
+	unsigned int num_whole_axi_blocks = size / mem_data_bytes;
+	unsigned int whole_axi_size = num_whole_axi_blocks * mem_data_bytes;
 	unsigned int partial_offset = whole_axi_size / data_bytes;
 	unsigned int partial_axi_size = size - whole_axi_size;
 
 	axis2mem<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + init_offset), strm_in, whole_axi_size);
 	axis2memMasked<DATA_WIDTH, AXIS_DATA_WIDTH>((mem_out + init_offset + partial_offset), strm_in, partial_axi_size);
+}
+
+template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
+void memWriteGrid(ap_uint<DATA_WIDTH>* mem_out,
+		::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_in,
+		SizeType gridSize,
+		AccessRange& range)
+{
+//	unsigned int init_offset = offset[0] + offset[1] * gridSize[0] + offset[2] * gridSize[0] * gridSize[1];
+//	constexpr unsigned short mem_data_bytes = MEM_DATA_WIDTH / 8;
+//	constexpr unsigned short data_bytes = DATA_WIDTH /8;
+//	unsigned int num_whole_axi_reads = size / mem_data_bytes;
+//	unsigned int whole_axi_size = num_whole_axi_reads * mem_data_bytes;
+//	unsigned int partial_offset = whole_axi_size / data_bytes;
+//	unsigned int partial_axi_size = size - whole_axi_size;
+	constexpr unsigned short vectorFactor = AXIS_DATA_WIDTH / DATA_WIDTH;
+	unsigned short ShiftBits = LOG2(vectorFactor);
+	unsigned short DataShiftBits = LOG2(DATA_WIDTH/8);
+	unsigned short xtile_size = (range.end[0] - range.start[0]);
+	unsigned short num_whole_xblocks = xtile_size >> ShiftBits;
+	unsigned short whole_xtile_size = num_whole_xblocks << ShiftBits;
+	unsigned short whole_xtile_size_bytes = whole_xtile_size << DataShiftBits;
+	unsigned short partial_xtile_size = xtile_size - whole_xtile_size;
+	unsigned short partial_xtile_size_bytes = partial_xtile_size << DataShiftBits;
+
+	for (unsigned short k = range.start[2]; k < range.end[2]; k++)
+	{
+		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
+		{
+			unsigned int offset = range.start[0] + j * gridSize[0] + k * gridSize[1] * gridSize[0];
+			axis2mem<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + offset), strm_in, whole_xtile_size_bytes);
+			axis2memMasked<DATA_WIDTH, AXIS_DATA_WIDTH>(mem_out + offset + whole_xtile_size, strm_in, partial_xtile_size_bytes);
+		}
+	}
 }
 
 }
