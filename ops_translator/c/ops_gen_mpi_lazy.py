@@ -263,8 +263,6 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
 
                 if restrict[n] == 1 or prolong[n] == 1:
                     code("#endif")
-                if offload:
-                    code(f"size_t arg{n}_size = (args[{n}].dat->mem - ((char*){clean_type(arg_list[n])}_p-args[{n}].data{ptr_suffix}))/sizeof({typs[n]});")
             elif arg_typ[n] == "ops_arg_gbl":
                 if accs[n] == OPS_READ:
                     if offload == 0:
@@ -372,20 +370,6 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
         if offload == 0:
             code("#pragma omp parallel for" + line2)
         else:
-            for g_m in range(0,nargs):
-                if arg_typ[g_m] == "ops_arg_dat":
-                    pass
-                    #line2 += f" map({'to' if accs[g_m] == OPS_READ else 'tofrom'}:{arg_list[g_m]}_p[0:arg{g_m}_size])"
-                elif arg_typ[g_m] == "ops_arg_gbl" and accs[g_m] == OPS_READ:
-                    pass
-                    #line2 += f" map(to:{clean_type(arg_list[g_m])}[0:{dims[g_m]}])"
-            for n in range(0, nargs):
-                if arg_typ[n] == "ops_arg_gbl":
-                    if accs[n] == OPS_MIN:
-                        line2 += f" map(to:p_a{n}[0:{int(dims[n])}])"
-                    if accs[n] == OPS_MAX:
-                        line2 += f" map(to:p_a{n}[0:{int(dims[n])}])"
-
             code(f"#pragma omp target teams distribute parallel for collapse({NDIM})" + line2)
         if NDIM > 2:
             if offload == 1:
@@ -487,13 +471,13 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                     code(f"{typs[n]} {arg_list[n]}[{dims[n]}];")
                     for d in range(0, int(dims[n])):
                         code(
-                            f"{arg_list[n]}[{d}] = p_a{n}[{d}];"
+                            f"{arg_list[n]}[{d}] = INFINITY_{typs[n]};"
                         )  # need +INFINITY_ change to
                 if accs[n] == OPS_MAX:
                     code(f"{typs[n]} {arg_list[n]}[{dims[n]}];")
                     for d in range(0, int(dims[n])):
                         code(
-                            f"{arg_list[n]}[{d}] = p_a{n}[{d}];"
+                            f"{arg_list[n]}[{d}] = -INFINITY_{typs[n]};"
                         )  # need -INFINITY_ change to
                 if accs[n] == OPS_INC:
                     code(f"{typs[n]} {arg_list[n]}[{dims[n]}];")
