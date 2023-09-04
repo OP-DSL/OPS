@@ -310,6 +310,9 @@ void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_
 void ops_device_memset(OPS_instance *instance, void** ptr, int val, size_t size);
 void ops_device_sync(OPS_instance *instance);
 void ops_exit_device(OPS_instance *instance);
+//
+void reallocConstArrays(OPS_instance *instance, int consts_bytes);
+void mvConstArraysToDevice(OPS_instance *instance, int consts_bytes);
 
 
 void _ops_init(OPS_instance *instance, const int argc, const char * const argv[], const int diags_level);
