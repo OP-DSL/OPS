@@ -1,7 +1,7 @@
 #!/bin/bash
 #A rough example of environmental variables for compiling with Intel compilers
-#unset and set defaults
 
+#unset and set defaults
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
 unset LD_LIBRARY_PATH
 module purge
@@ -14,34 +14,15 @@ export LIBCLANG_PATH=/opt/llvm/14.0.6/lib/libclang.so
 module load python/3.9.7
 source $OPS_INSTALL_PATH/../ops_translator_v2/ops_venv/bin/activate
 
-#CUDA and NVIDIA OpenCL
-module load cuda/toolkit-10.2.89
-
-if [ "$HOSTNAME" == "telos" ]
-then
-    #Telos
-    export NV_ARCH=Volta
-elif [ "$HOSTNAME" == "kos" ]
-then
-    # Kos
-    export NV_ARCH=Pascal
-fi
-
-echo "GPU architecture" $NV_ARCH
-
 #OPS specifics
 export OPS_COMPILER=intel
 export OPS_INSTALL_PATH=/rr-home/gihan/OPS/ops
-
-export CUDA_INSTALL_PATH=/opt/cuda/10.2.89/toolkit/
-export OPENCL_INSTALL_PATH=/opt/cuda/10.2.89/toolkit/
-export CUDA_MATH_LIBS=/opt/cuda/10.2.89/lib64/
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/cuda/10.2.89/lib64/
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/cuda/10.2.89/toolkit/lib64
+export OP_AUTO_SOA=1
 
 #Intel MPI and Compilers - classic
 module load intel-oneapi-2021.3/intel-classic-2021.3
 module load intel-oneapi-2021.3/impi-classic-2021.3
+unset HIP_INSTALL_PATH
 unset SYCL_INSTALL_PATH
 export MPI_INSTALL_PATH=/opt/intel/oneapi/2021.3/mpi/2021.3.0/
 export MPICPP=$MPI_INSTALL_PATH/bin/mpicxx
@@ -54,7 +35,33 @@ export MPICPP=$MPI_INSTALL_PATH/bin/mpicxx
 #export MPI_INSTALL_PATH=/opt/intel/oneapi/2021.4/mpi/2021.4.0
 #export MPICPP=$MPI_INSTALL_PATH/bin/mpicxx
 
-#HDF5
+#CUDA and NVIDIA OpenCL
+if (lspci | grep -i 'nvidia') then
+
+module load cuda/toolkit-10.2.89
+
+if [ "$HOSTNAME" == "telos" ]
+then
+    #Telos
+    export NV_ARCH=Volta
+elif [ "$HOSTNAME" == "kos" ]
+then
+    # Kos
+    export NV_ARCH=Pascal
+fi
+echo "GPU architecture" $NV_ARCH
+
+export CUDA_INSTALL_PATH=/opt/cuda/10.2.89/toolkit/
+#export OPENCL_INSTALL_PATH=/opt/cuda/10.2.89/toolkit/
+export CUDA_MATH_LIBS=/opt/cuda/10.2.89/lib64/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/cuda/10.2.89/lib64/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/cuda/10.2.89/toolkit/lib64
+else
+unset CUDA_INSTALL_PATH
+fi
+
+
+#Intel based HDF5
 unset HDF5_INSTALL_PATH
 #export HDF5_INSTALL_PATH=/ext-home/asl/install/build_hdf5/intel
 #export LD_LIBRARY_PATH=/ext-home/asl/install/build_hdf5/intel/lib:$LD_LIBRARY_PATH
@@ -67,4 +74,6 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/hdf5/1.8.18/intel/15.0u6/impi/5.0u3
 
 #OpenSBLI -- for testing app TGV only
 #export OPENSBLI_INSTALL_PATH=/rr-home/gihan/OpenSBLI/OpenSBLI_OPS_TESTING/opensbli/
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/rr-home/gihan/libffi/
 
