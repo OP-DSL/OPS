@@ -79,7 +79,7 @@ int main()
         copyGrid(grid_u1_d, grid_u1_cpu, gridProp);
 
     	cpuGoldenKernel(grid_u1_cpu, grid_u2_cpu, gridProp, coef);
-        dut(gridProp, cross_stencil, grid_u1_d, grid_u2_d, coef);
+        dut(gridProp, cross_stencil, grid_u1_d, grid_u2_d);
         test_summary[test_itr] = verify(grid_u2_cpu, grid_u2_d, gridProp);
 
         if (test_summary[test_itr])

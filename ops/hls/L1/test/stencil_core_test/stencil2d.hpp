@@ -1,23 +1,20 @@
 
+#pragma once
+
 #include <stdio.h>
 #include "../../include/ops_hls_stencil_core.hpp"
+#include "../../include/ops_hls_utils.hpp"
 //#define DEBUG_LOG
 
 typedef float stencil_type;
 constexpr unsigned short num_points = 5; //cross_stencil
 constexpr unsigned short vector_factor = 8;
 constexpr unsigned short shift_bits = 3;
-constexpr unsigned short coef_type = ops::hls::CoefTypes::CONST_COEF;
+constexpr ops::hls::CoefTypes coef_type = ops::hls::CoefTypes::CONST_COEF;
 constexpr unsigned short stencil_size_p = 3;
 constexpr unsigned short stencil_size_q = 3;
 
-template <typename T>
-static T register_it(T x){
-	#pragma HLS inline off
-	T tmp = x;
-	return tmp;
-}
-
+ 
 // typedef ap_axiu<vector_factor * sizeof(stencil_type), 0, 0, 0> process_dt;
 // typedef hls::stream<process_dt>  process_stream; 
 
@@ -175,7 +172,10 @@ class Stencil2D : public ops::hls::StencilCore<stencil_type, num_points, vector_
                     stencil_type r8 = r6 + r7;
                     stencil_type r = r5 + r8;
 
-                    bool cond_no_point_update = register_it(index <= 0 || index > m_gridProp.size[0] || (j == 1) || (j == m_gridProp.grid_size[1]));
+                    bool cond_no_point_update = register_it(index < m_lowerLimits[0] || index >= m_upperLimits[0]
+															|| (j < (m_lowerLimits[1] + s_stencil_half_span_x))
+															|| (j >= (m_upperLimits[1] + s_stencil_half_span_x)));
+
                     m_memWrArr[k] = cond_no_point_update ? m_rowArr_1[k+1] : r;
                 }
 

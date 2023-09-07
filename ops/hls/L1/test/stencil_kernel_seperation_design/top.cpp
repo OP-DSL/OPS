@@ -17,7 +17,7 @@ void dut(ops::hls::GridPropertyCore& gridProp, Stencil2D & cross_stencil, stenci
     static ::hls::stream<stencil_type> input_bus_5[vector_factor];
     static ::hls::stream<stencil_type> output_bus[vector_factor];
     static ::hls::stream<stencil_type> alt_bus[vector_factor];
-    const unsigned int kernel_iterations = gridProp.total_itr;
+    const unsigned int kernel_iterations = gridProp.outer_loop_limit * gridProp.xblocks;
     ::ops::hls::GridPropertyCore gridPropCpy = gridProp;
 
 

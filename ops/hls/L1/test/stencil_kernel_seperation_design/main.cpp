@@ -35,7 +35,7 @@ int main()
     gridProp.xblocks = (gridProp.actual_size[0] + vector_factor - 1) >> shift_bits;
     gridProp.grid_size[0] =  gridProp.xblocks << shift_bits;
     gridProp.grid_size[1] = gridProp.actual_size[1];
-    gridProp.total_itr = (gridProp.actual_size[1] + 1) * gridProp.xblocks;  //(gridProp.actual_size[1] + p/2) * xblocks.
+    gridProp.total_itr = gridProp.actual_size[1] * gridProp.xblocks;  //(gridProp.actual_size[1] + p/2) * xblocks.
     gridProp.outer_loop_limit = (gridProp.actual_size[1] + 1);
 
     /* Cross Stencil */

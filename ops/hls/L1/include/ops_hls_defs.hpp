@@ -94,7 +94,7 @@ struct GridPropertyCore
     unsigned short dim;
     unsigned short xblocks;
     unsigned int total_itr;
-    unsigned outer_loop_limit;
+    unsigned int outer_loop_limit;
 };
 
 struct AccessRange

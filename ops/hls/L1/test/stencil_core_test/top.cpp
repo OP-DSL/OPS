@@ -7,23 +7,23 @@ void dut(ops::hls::GridPropertyCore& gridProp, Stencil2D& cross_stencil, stencil
 
     stencil_type coef[] = {0.125 , 0.125 , 0.5, 0.125, 0.125};
 
-//#ifndef __SYTHESIS__
-//    unsigned int stencil_sizes[2];
-//    unsigned short read_points[num_points * 2];
-//
-//    cross_stencil.getPoints(read_points);
-//
-//    std::cout << "SUCESSFUL INSTANTIATION OF STENCIL CORE" << std::endl;
-//
-//    std::cout << "POINTS: ";
-//
-//    for (int i = 0; i < num_points; i++)
-//    {
-//        std::cout << "(" << read_points[2 * i] << ", " << read_points[2 * i + 1] << ") ";
-//    }
-//
-//    std::cout << std::endl << std::endl;
-//#endif
+#ifndef __SYTHESIS__
+    unsigned int stencil_sizes[2];
+    unsigned short read_points[num_points * 2];
+
+    cross_stencil.getPoints(read_points);
+
+    std::cout << "SUCESSFUL INSTANTIATION OF STENCIL CORE" << std::endl;
+
+    std::cout << "POINTS: ";
+
+    for (int i = 0; i < num_points; i++)
+    {
+        std::cout << "(" << read_points[2 * i] << ", " << read_points[2 * i + 1] << ") ";
+    }
+
+    std::cout << std::endl << std::endl;
+#endif
 
     ops::hls::DataConv converterInput;
     typedef ap_uint<vector_factor * sizeof(stencil_type) * 8> widen_dt;
