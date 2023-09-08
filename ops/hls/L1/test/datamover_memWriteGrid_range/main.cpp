@@ -22,7 +22,7 @@ static void printMem(ap_uint<DATA_WIDTH> * mem,
 	ops::hls::SizeType gridSize,
 	std::string printString)
 {
-//#ifdef DEBUG_LOG
+#ifdef DEBUG_LOG
 	unsigned int numElem = gridSize[0] * gridSize[1] * gridSize[2];
 	ops::hls::DataConv converter;
 
@@ -34,7 +34,7 @@ static void printMem(ap_uint<DATA_WIDTH> * mem,
 
 		std::cout << " Index: " << i <<", val: " << converter.f << std::endl;
 	}
-//#endif
+#endif
 }
 
 static bool testDut(float* data,
@@ -54,8 +54,8 @@ static bool testDut(float* data,
     std::uniform_int_distribution<unsigned short> distLow(0, x_size/3);
     std::uniform_int_distribution<unsigned short> distHigh(x_size*2/3, x_size);
 
-	ops::hls::SizeType start = {1,0,0}; //{distLow(mtRandom), distLow(mtRandom), distLow(mtRandom)};
-	ops::hls::SizeType end = {10,10,12}; //{distHigh(mtRandom), distHigh(mtRandom), distHigh(mtRandom)};
+	ops::hls::SizeType start = {5, 1, 5}; //{distLow(mtRandom), distLow(mtRandom), distLow(mtRandom)};
+	ops::hls::SizeType end = {15, 12, 10}; //{distHigh(mtRandom), distHigh(mtRandom), distHigh(mtRandom)};
 
 	ops::hls::SizeType diff;
 	diff[0] = end[0] - start[0];
@@ -226,7 +226,7 @@ int main()
         std::cout << "**********************************" << std::endl;
         std::cout << std::endl;
 
-        const unsigned short x_size = 13; //distInt(mtSeeded);
+        const unsigned short x_size = 16; //distInt(mtSeeded);
         const unsigned short bytes_per_beat = AXI_M_WIDTH / 8;
         const unsigned short data_per_beat = bytes_per_beat / sizeof(float);
         const unsigned short x_beats = (x_size + data_per_beat - 1) / data_per_beat;

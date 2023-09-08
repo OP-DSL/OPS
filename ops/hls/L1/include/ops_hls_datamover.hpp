@@ -15,14 +15,14 @@
 #include "ops_hls_defs.hpp"
 #include "ops_hls_utils.hpp"
 #include <math.h>
-
+#include <stdio.h>
 //#define DEBUG_LOG
 
 #ifndef __SYTHESIS__
 #ifdef DEBUG_LOG
-	#ifndef DEBUG_LOG_SIZE_OF
+//	#ifndef DEBUG_LOG_SIZE_OF
 		#define DEBUG_LOG_SIZE_OF 4
-	#endif
+//	#endif
 #endif
 #endif
 
@@ -176,7 +176,7 @@ static void convAxisPkt2memBeatMasked(ap_uint<DATA_WIDTH>* mem_out,
 	constexpr unsigned int bytes_per_data = DATA_WIDTH / 8;
 	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
 	constexpr unsigned int num_data_per_axis_pkt = AXIS_DATA_WIDTH / DATA_WIDTH;
-//	constexpr unsigned int shift_val = 1 << bytes_per_data;
+	constexpr unsigned int shift_val = 1 << bytes_per_data;
 
 #ifndef __SYTHESIS__
 #ifdef DEBUG_LOG
@@ -210,12 +210,15 @@ static void convAxisPkt2memBeatMasked(ap_uint<DATA_WIDTH>* mem_out,
 #pragma HLS PIPELINE  II=1
 #pragma HLS LOOP_TRIPCOUNT avg=avg_num_data_per_axis_pkt
 
-		bool cond = tmp_pkt.strb & strb_pos;
-		if (cond)
+		ap_uint<bytes_per_axis_pkt> cond_val = tmp_pkt.strb & strb_pos;
+		bool cond = ((tmp_pkt.strb & strb_pos) == 0);
+
+		if (!cond)
 		{
-			mem_out[index + idx] = tmp_pkt.data.range((idx+1) * DATA_WIDTH - 1, idx * DATA_WIDTH);
+			ap_uint<DATA_WIDTH> write_val = tmp_pkt.data.range((idx+1) * DATA_WIDTH - 1, idx * DATA_WIDTH);
+			mem_out[index + idx] = write_val;
 		}
-		strb_pos << bytes_per_data;
+		strb_pos *= shift_val;
 	}
 }
 
@@ -701,19 +704,39 @@ void stream2axisMasked(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_out,
 	
 	const unsigned int num_axis_pkts = (size + bytes_per_axis_pkt - 1) / bytes_per_axis_pkt;
 
+	#ifdef DEBUG_LOG
+		printf("|HLS DEBUG_LOG|%s| stream to axis. size (bytes): %d, num_hls_pkt_per_axis_pkt: %d, bytes_per_axis_pkt: %d, bytes_per_hls_pkt:%d, num_axis_pkts:%d\n"
+				, __func__, size, num_hls_pkt_per_axis_pkt, bytes_per_axis_pkt, bytes_per_hls_pkt, num_axis_pkts);
+		printf("====================================================================================\n");
+	#endif
+
 	for (unsigned int itr = 0; itr < num_axis_pkts; itr++)
 	{
 		ap_axiu<AXIS_DATA_WIDTH,0,0,0> axisPkt;
-
+		printf("|HLS DEBUG_LOG|%s| flag 2. itr:%d\n",
+							__func__, itr);
 		for (unsigned int j = 0; j < num_hls_pkt_per_axis_pkt; j++)
 		{
 		#pragma HLS PIPELINE II=1
+#ifdef DEBUG_LOG
+			unsigned int hls_pkt_index = itr * num_hls_pkt_per_axis_pkt + j;
+			printf("|HLS DEBUG_LOG|%s| reading hls pkt: %d\n",
+					__func__, hls_pkt_index);
+#endif
 			axisPkt.data.range((j+1) * STREAM_DATA_WIDTH - 1, j * STREAM_DATA_WIDTH) = strm_in.read();
 			axisPkt.strb.range((j+1) * bytes_per_hls_pkt - 1, j * bytes_per_hls_pkt) = mask_in.read();
-		}
 
+		}
+#ifdef DEBUG_LOG
+		printf("|HLS DEBUG_LOG|%s| wrting axis pkt: %d\n",
+				__func__, itr);
+#endif
 		axis_out.write(axisPkt);
 	}
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| exiting.\n"
+			, __func__);
+#endif
 }
 
 template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
@@ -792,15 +815,40 @@ void memWriteGrid(ap_uint<DATA_WIDTH>* mem_out,
 	unsigned short partial_xtile_size = xtile_size - whole_xtile_size;
 	unsigned short partial_xtile_size_bytes = partial_xtile_size << DataShiftBits;
 
+	if (range.dim < 3)
+	{
+		range.start[2] = 0;
+		range.end[2] = 1;
+	}
+	else if (range.dim < 2)
+	{
+		range.start[1] = 0;
+		range.end[1] = 1;
+	}
+
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| starting memWriteGrid. grid_size: (%d, %d, %d), range: (%d, %d, %d) --> (%d, %d, %d)\n whole_xtile_size:%d, partial_xtile_size:%d\n"
+			, __func__, gridSize[0], gridSize[1], gridSize[2], range.start[0], range.start[1], range.start[2],
+			range.end[0], range.end[1], range.end[2], whole_xtile_size, partial_xtile_size);
+	printf("====================================================================================\n");
+#endif
 	for (unsigned short k = range.start[2]; k < range.end[2]; k++)
 	{
 		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
 		{
 			unsigned int offset = range.start[0] + j * gridSize[0] + k * gridSize[1] * gridSize[0];
+#ifdef DEBUG_LOG
+			printf("|HLS DEBUG_LOG|%s| writing. offset:%d, j:%d, k:%d\n"
+					, __func__, offset, j, k);
+#endif
 			axis2mem<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + offset), strm_in, whole_xtile_size_bytes);
 			axis2memMasked<DATA_WIDTH, AXIS_DATA_WIDTH>(mem_out + offset + whole_xtile_size, strm_in, partial_xtile_size_bytes);
 		}
 	}
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| exiting.\n"
+			, __func__);
+#endif
 }
 
 }

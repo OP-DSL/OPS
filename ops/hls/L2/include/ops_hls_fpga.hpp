@@ -20,7 +20,7 @@
   * @details This class manage FPGA platform interaction with XOCL API and wrapping related objects.
   */
 
-# pragma once
+#pragma once
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #include <iostream>
@@ -31,7 +31,7 @@
 // This extension file is required for stream APIs
 #include "CL/cl_ext_xilinx.h"
 // This file is required for OpenCL C++ wrapper APIs
-#include "xcl2.hpp"
+#include "../../ext/xcl2/xcl2.hpp"
 
 template <typename T>
 using host_buffer_t = std::vector<T, aligned_allocator<T> >;
@@ -43,12 +43,12 @@ namespace hls
 
 class FPGA {
    public:
-    FPGA(string deviceName) {
+    FPGA(std::string deviceName) {
         getDevices(deviceName);
         m_device = m_Devices[m_id];
         m_id = -1;
     }
-    FPGA(unsigned int p_id = 0, string deviceName = "") {
+    FPGA(unsigned int p_id = 0, std::string deviceName = "") {
         getDevices(deviceName);
         setID(p_id);
     }
@@ -64,13 +64,13 @@ class FPGA {
     void setID(uint32_t id) {
         m_id = id;
         if (m_id >= m_Devices.size()) {
-            cout << "Device specified by id = " << m_id << " is not found." << endl;
+            std::cout << "Device specified by id = " << m_id << " is not found." << std::endl;
             throw;
         }
         m_device = m_Devices[m_id];
     }
 
-    bool xclbin(string binaryFile) {
+    bool xclbin(std::string binaryFile) {
         cl_int err;
         // get_xil_devices() is a utility API which will find the xilinx
         // platforms and will return list of devices connected to Xilinx platform
@@ -99,9 +99,9 @@ class FPGA {
     void finish() const { m_queue.finish(); }
 
     template <typename T>
-    vector<cl::Buffer> createDeviceBuffer(cl_mem_flags p_flags, const vector<host_buffer_t<T> >& p_buffer) {
+    std::vector<cl::Buffer> createDeviceBuffer(cl_mem_flags p_flags, const std::vector<host_buffer_t<T> >& p_buffer) {
         size_t p_hbm_pc = p_buffer.size();
-        vector<cl::Buffer> l_buffer(p_hbm_pc);
+        std::vector<cl::Buffer> l_buffer(p_hbm_pc);
         for (int i = 0; i < p_hbm_pc; i++) {
             l_buffer[i] = createDeviceBuffer(p_flags, p_buffer[i]);
         }
@@ -129,22 +129,22 @@ class FPGA {
         auto it = m_bufferMaps.find(p_ptr);
         return it != m_bufferMaps.end();
     }
-    void getDevices(string deviceName) {
+    void getDevices(std::string deviceName) {
         cl_int err;
         auto devices = xcl::get_xil_devices();
-        auto regexStr = regex(".*" + deviceName + ".*");
+        auto regexStr = std::regex(".*" + deviceName + ".*");
         for (auto device : devices) {
-            string cl_device_name;
+            std::string cl_device_name;
             OCL_CHECK(err, err = device.getInfo(CL_DEVICE_NAME, &cl_device_name));
             if (regex_match(cl_device_name, regexStr)) m_Devices.push_back(device);
         }
         if (0 == m_Devices.size()) {
-            cout << "Device specified by name == " << deviceName << " is not found." << endl;
+            std::cout << "Device specified by name == " << deviceName << " is not found." << std::endl;
             throw;
         }
     }
 
-    FPGA(unsigned int p_id, const vector<cl::Device>& devices) {
+    FPGA(unsigned int p_id, const std::vector<cl::Device>& devices) {
         m_id = p_id;
         m_Devices = devices;
         m_device = m_Devices[m_id];
@@ -153,11 +153,13 @@ class FPGA {
    private:
     unsigned int m_id;
     cl::Device m_device;
-    vector<cl::Device> m_Devices;
+    std::vector<cl::Device> m_Devices;
     cl::Context m_context;
     cl::CommandQueue m_queue;
     cl::Program m_program;
-    unordered_map<const void*, cl::Buffer> m_bufferMaps;
+    std::unordered_map<const void*, cl::Buffer> m_bufferMaps;
 };
 
+}
+}
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
