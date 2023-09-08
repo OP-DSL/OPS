@@ -7,9 +7,12 @@ cd ../../../ops/c
 #export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
 #export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
-export AMOS=TRUE
+#export AMOS=TRUE
 #export DMOS=TRUE
 #export TELOS=TRUE
+export KOS=TRUE
+
+if [[ -v TELOS || -v KOS ]]; then
 
 #============================ Test with Intel Classic Compilers==========================================
 echo "Testing Intel classic complier based applications ---- "
@@ -109,6 +112,7 @@ rm perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
 
+fi
 fi
 
 echo "All Intel classic complier based applications ---- PASSED"
