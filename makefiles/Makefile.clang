@@ -8,7 +8,41 @@ else
 	CXXFLAGS  := -O3 -fPIC -DUNIX -Wall -g -std=c++11
 endif
 OMPFLAGS=-fopenmp
-OMPOFFLOADFLAGS=-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_75
+OMPOFFLOADFLAGS=-fopenmp
 ifdef THREADED
 	THREADING_FLAGS ?= -fopenmp
+endif
+
+ifdef IEEE
+	CCFLAGS += -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fno-associative-math
+	CXXFLAGS += -fno-fast-math -ffp-contract=off -fdenormal-fp-math=ieee -fno-associative-math
+endif
+
+ifndef NV_ARCH
+print:
+	@echo "select an NVIDA device to compile in CUDA, e.g. make NV_ARCH=Kepler"
+	NV_ARCH=Kepler
+endif
+ifeq ($(NV_ARCH),Fermi)
+	OMPOFFLOADFLAGS+= -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_20 -foffload-lto
+else
+ifeq ($(NV_ARCH),Kepler)
+	OMPOFFLOADFLAGS+= -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_35 -foffload-lto
+else
+ifeq ($(NV_ARCH),Pascal)
+	OMPOFFLOADFLAGS+= -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_60 -foffload-lto
+else
+ifeq ($(NV_ARCH),Volta)
+	OMPOFFLOADFLAGS+= -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_70 -foffload-lto
+else
+ifeq ($(NV_ARCH),Turing)
+	OMPOFFLOADFLAGS+= -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_75 -foffload-lto
+else
+ifeq ($(NV_ARCH),Ampere)
+	OMPOFFLOADFLAGS+= -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_80 -foffload-lto
+endif
+endif
+endif
+endif
+endif
 endif
