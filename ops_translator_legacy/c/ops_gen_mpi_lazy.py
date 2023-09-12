@@ -73,11 +73,11 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
     #  create new kernel file
     ##########################################################################
     if offload:
-        if not os.path.exists("./OpenMP_offload"):
-            os.makedirs("./OpenMP_offload")
+        if not os.path.exists("./openmp_offload"):
+            os.makedirs("./openmp_offload")
     else:
-        if not os.path.exists("./MPI_OpenMP"):
-            os.makedirs("./MPI_OpenMP")
+        if not os.path.exists("./mpi_openmp"):
+            os.makedirs("./mpi_openmp")
 
     for nk in range(0, len(kernels)):
         assert config.file_text == "" and config.depth == 0
@@ -105,21 +105,29 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
         ##########################################################################
 
         code("")
-        comm("user function")
         kernel_text, arg_list = util.get_kernel_body_and_arg_list(
             name, src_dir, arg_typ
         )
 
-        comm("")
-        comm(" host stub function")
+        comm("  ==================")
+        comm("  Host stub function")
+        comm("  ==================")
         code("#ifndef OPS_LAZY")
-        code(
-            f"void ops_par_loop_{name}(char const *name, ops_block block, int dim, int* range,"
-        )
-        code(util.group_n_per_line([f" ops_arg arg{n}" for n in range(nargs)]) + ") {")
+        code(f"void ops_par_loop_{name}(")
+        code("    const char *name,")
+        code("    ops_block block,")
+        code("    int dim,")
+        code("    int* range,")
+        for n in range(nargs):
+            if n == nargs-1:
+                code(f"    ops_arg arg{n}")
+            else:
+                code(f"    ops_arg arg{n}, ")
+        code(")\n{")
         code("#else")
-        code(f"void ops_par_loop_{name}_execute(ops_kernel_descriptor *desc) {{")
-        config.depth = 2
+        code(f"void ops_par_loop_{name}_execute(ops_kernel_descriptor *desc)")
+        code("{")
+        config.depth = 4
         code("ops_block block = desc->block;")
         code("int dim = desc->dim;")
         code("int *range = desc->range;")
@@ -127,56 +135,81 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
         for n in range(0, nargs):
             code(f"ops_arg arg{n} = desc->args[{n}];")
 
+        config.depth = 0
         code("#endif")
-
-        code("")
-        comm("Timing")
-        code("double __t1,__t2,__c1,__c2;")
         code("")
 
-        code(
-            f"ops_arg args[{nargs}] = {{"
-            + ",".join([f" arg{n}" for n in range(nargs)])
-            + "};\n\n"
-        )
+        comm("  ======")
+        comm("  Timing")
+        comm("  ======")
+        config.depth = 4
+        code("double __t1, __t2, __c1, __c2;")
         code("")
+
+        code(f"ops_arg args[{nargs}];")
+        code("")
+
+        for n in range(nargs):
+            code(f"args[{n}] = arg{n};")
+
+        code("")
+        config.depth = 0
         code("#if defined(CHECKPOINTING) && !defined(OPS_LAZY)")
-        code(f"if (!ops_checkpointing_before(args,{nargs},range,{nk})) return;")
+        config.depth = 4
+        code(f"if (!ops_checkpointing_before(args, {nargs}, range, {nk})) return;")
+        config.depth = 0
         code("#endif")
         code("")
 
+        config.depth = 4
         if gen_full_code:
             IF("block->instance->OPS_diags > 1")
-            code(f'ops_timing_realloc(block->instance,{nk},"{name}");')
+            code(f'ops_timing_realloc(block->instance, {nk}, "{name}");')
             code(f"block->instance->OPS_kernels[{nk}].count++;")
-            code("ops_timers_core(&__c2,&__t2);")
+            code("ops_timers_core(&__c1, &__t1);")
             ENDIF()
             code("")
 
+        config.depth = 0
         code("#ifdef OPS_DEBUG")
+        config.depth = 4
         code(f'ops_register_args(block->instance, args, "{name}");')
+        config.depth = 0
         code("#endif")
         code("")
 
         code("")
 
-        comm("compute locally allocated range for the sub-block")
+        comm("  =================================================")
+        comm("  compute locally allocated range for the sub-block")
+        comm("  =================================================")
+        config.depth = 4
         code(f"int start[{NDIM}];")
         code(f"int end[{NDIM}];")
         if not (arg_idx != -1) and not MULTI_GRID:
+            config.depth = 0
             code("#if defined(OPS_MPI) && !defined(OPS_LAZY)")
+        config.depth = 4
         code(f"int arg_idx[{NDIM}];")
         if not (arg_idx != -1) and not MULTI_GRID:
+            config.depth = 0
             code("#endif")
 
+        config.depth = 0
+        code("")
         code("#if defined(OPS_LAZY) || !defined(OPS_MPI)")
+        config.depth = 4
         FOR("n", "0", str(NDIM))
-        code("start[n] = range[2*n];end[n] = range[2*n+1];")
+        code("start[n] = range[2*n];")
+        code("end[n]   = range[2*n+1];")
         ENDFOR()
+        config.depth = 0
         code("#else")
+        config.depth = 4
         code(
             f"if (compute_ranges(args, {nargs},block, range, start, end, arg_idx) < 0) return;"
         )
+        config.depth = 0
         code("#endif")
 
         code("")
@@ -185,24 +218,34 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                 code(f"int start{dim} = start[{dim}];")
                 code(f"int end{dim} = end[{dim}];")
 
-        code("")
         if arg_idx != -1 or MULTI_GRID:
+            config.depth = 0
+            code("")
             code("#if defined(OPS_MPI)")
             code("#if defined(OPS_LAZY)")
+            config.depth = 4
             code("sub_block_list sb = OPS_sub_block_list[block->index];")
             for n in range(0, NDIM):
                 code(f"arg_idx[{n}] = sb->decomp_disp[{n}];")
+            config.depth = 0
             code("#else")
+            config.depth = 4
             for n in range(0, NDIM):
                 code(f"arg_idx[{n}] -= start[{n}];")
+            config.depth = 0
             code("#endif")
             code("#else //OPS_MPI")
+            config.depth = 4
             for n in range(0, NDIM):
                 code(f"arg_idx[{n}] = 0;")
+            config.depth = 0
             code("#endif //OPS_MPI")
 
         code("")
-        comm("initialize global variable with the dimension of dats")
+        comm("  =====================================================")
+        comm("  Initialize global variable with the dimension of dats")
+        comm("  =====================================================")
+        config.depth = 4
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat":
                 if NDIM > 1 or (
@@ -221,18 +264,25 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                     code(f"int zdim{n}_{name} = args[{n}].dat->size[2];")
 
         code("")
-        comm("set up initial pointers and exchange halos if necessary")
+        config.depth = 0
+        comm("  =======================================================")
+        comm("  Set up initial pointers and exchange halos if necessary")
+        comm("  =======================================================")
+        config.depth = 4
         ptr_suffix = ""
         if offload:
             ptr_suffix = "_d"
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat":
+                config.depth = 4
                 code(f"int base{n} = args[{n}].dat->base_offset;")
                 code(
                     f"{typs[n]} * __restrict__ {clean_type(arg_list[n])}_p = ({typs[n]} *)(args[{n}].data{ptr_suffix} + base{n});"
                 )
                 if restrict[n] == 1 or prolong[n] == 1:
+                    config.depth = 0
                     code("#ifdef OPS_MPI")
+                    config.depth = 4
                     code(
                         f"sub_dat_list sd{n} = OPS_sub_dat_list[args[{n}].dat->index];"
                     )
@@ -262,83 +312,56 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                         )
 
                 if restrict[n] == 1 or prolong[n] == 1:
+                    config.depth = 0
                     code("#endif")
+                if offload:
+                    config.depth = 4
+                    code(f"size_t arg{n}_size = (args[{n}].dat->mem - ((char*){clean_type(arg_list[n])}_p-args[{n}].data{ptr_suffix}))/sizeof({typs[n]});")
+                code("")
             elif arg_typ[n] == "ops_arg_gbl":
+                config.depth = 4
                 if accs[n] == OPS_READ:
                     if offload == 0:
                         code(
                             f"{typs[n]} * __restrict__ {clean_type(arg_list[n])} = ({typs[n]} *)args[{n}].data;"
                         )
                 else:
+                    config.depth = 0
                     code("#ifdef OPS_MPI")
+                    config.depth = 4
                     code(
                         f"{typs[n]} * __restrict__ p_a{n} = ({typs[n]} *)(((ops_reduction)args[{n}].data)->data + ((ops_reduction)args[{n}].data)->size * block->index);"
                     )
+                    config.depth = 0
                     code("#else //OPS_MPI")
+                    config.depth = 4
                     code(
                         f"{typs[n]} * __restrict__ p_a{n} = ({typs[n]} *)((ops_reduction)args[{n}].data)->data;"
                     )
+                    config.depth = 0
                     code("#endif //OPS_MPI")
                 code("")
-            code("")
-        code("")
 
-        if "ops_arg_gbl" in arg_typ and offload == 1:
-            for n in range(0, nargs):
-                if arg_typ[n] == "ops_arg_gbl":
-                    if accs[n] == OPS_READ:
-                        code(f"{typs[n]} *arg{n}h = ({typs[n]} *)args[{n}].data;")
-
-            code("")
-            code(f"int consts_bytes = 0;")
-
-            for n in range(0, nargs):
-                if arg_typ[n] == "ops_arg_gbl":
-                    if accs[n] == OPS_READ:
-                        code(f"consts_bytes += ROUND_UP(args[{n}].dim*sizeof({typs[n]}));")
-
-            code("")
-            code(f"reallocConstArrays(block->instance,consts_bytes);")
-            code(f"consts_bytes = 0;")
-            code("")
-
-            for n in range(0, nargs):
-                if arg_typ[n] == "ops_arg_gbl":
-                    if accs[n] == OPS_READ:
-                        code(f"args[{n}].data = block->instance->OPS_consts_h + consts_bytes;")
-                        code(f"args[{n}].data_d = block->instance->OPS_consts_d + consts_bytes;")
-                        FOR("d", "0", f"args[{n}].dim")
-                        code(f"(({typs[n]} *)args[{n}].data)[d] = arg{n}h[d];")
-                        ENDFOR()
-                        code(f"consts_bytes += ROUND_UP(args[{n}].dim*sizeof({typs[n]}));")
-                        code("")
-
-            code(f"mvConstArraysToDevice(block->instance,consts_bytes);")
-            code("")
-
-            for n in range(0, nargs):
-                if arg_typ[n] == "ops_arg_gbl":
-                    if accs[n] == OPS_READ:
-                        code(
-                            f"{typs[n]} * __restrict__ {clean_type(arg_list[n])} = ({typs[n]} *)args[{n}].data{ptr_suffix};"
-                        )
-
-        code("")
-
+        config.depth = 0
         code("#ifndef OPS_LAZY")
-        comm("Halo Exchanges")
+        comm("  ==============")
+        comm("  Halo Exchanges")
+        comm("  ==============")
         exec_space = "host"
         if offload:
             exec_space = "device"
+        config.depth = 4
         code(f"ops_H_D_exchanges_{exec_space}(args, {nargs});")
-        code(f"ops_halo_exchanges(args,{nargs},range);")
+        code(f"ops_halo_exchanges(args, {nargs},range);")
         code(f"ops_H_D_exchanges_{exec_space}(args, {nargs});")
-        code("#endif")
+        config.depth = 0
+        code("#endif //OPS_LAZY")
         code("")
+        config.depth = 4
         if gen_full_code == 1:
             IF("block->instance->OPS_diags > 1")
-            code("ops_timers_core(&__c1,&__t1);")
-            code(f"block->instance->OPS_kernels[{nk}].mpi_time += __t1-__t2;")
+            code("ops_timers_core(&__c2, &__t2);")
+            code(f"block->instance->OPS_kernels[{nk}].mpi_time += __t2 - __t1;")
             ENDIF()
             code("")
 
@@ -367,10 +390,13 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
             line2 = " collapse(2)"
         else:
             line2 = line
+
+        config.depth = 4
         if offload == 0:
             code("#pragma omp parallel for" + line2)
         else:
             code(f"#pragma omp target teams distribute parallel for collapse({NDIM})" + line2)
+
         if NDIM > 2:
             if offload == 1:
                 FOR("n_z", "start2", "end2")
@@ -388,20 +414,30 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                 line3 += arg_list[n] + ","
         if NDIM > 1:
             if offload == 0:
+                temp_depth = config.depth
+                config.depth = 0
                 code("#ifdef __INTEL_COMPILER")
+                config.depth = temp_depth
                 code("#pragma loop_count(10000)")
                 code("#pragma omp simd" + line)  # +' aligned('+clean_type(line3[:-1])+')')
+                config.depth = 0
                 code("#elif defined(__clang__)")
-                code("#pragma clang loop vectorize(assume_safety)")
+                config.depth = temp_depth
+                code("#pragma clang loop vectorize(disable)")
+                config.depth = 0
                 code("#elif defined(__GNUC__)")
+                config.depth = temp_depth
                 code("#pragma GCC ivdep")
+                config.depth = 0
                 code("#else")
+                config.depth = temp_depth
                 code("#pragma simd")
+                config.depth = 0
                 code("#endif")
-        if offload == 1:
-            FOR("n_x", "start0", "end0")
-        else:
-            FOR("n_x", "start[0]", "end[0]")
+                config.depth = temp_depth
+        FOR("n_x", "start[0]", "end[0]")
+        code("")
+
         if arg_idx != -1:
             if NDIM == 1:
                 code(f"int {clean_type(arg_list[arg_idx])}[] = {{arg_idx[0]+n_x}};")
@@ -454,39 +490,47 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                 for i in range(1, NDIM + extradim):
                     sizelist += f"{dimlabels[i-1]}dim{n}_{name}, "
 
+                temp_depth = config.depth
                 if not dims[n].isdigit() or int(dims[n]) > 1:
+                    config.depth = 0
                     code("#ifdef OPS_SOA")
+                config.depth = temp_depth
                 code(
                     f"{pre}ACC<{typs[n]}> {arg_list[n]}({dim}{sizelist}{arg_list[n]}_p + {offset});"
                 )
                 if not dims[n].isdigit() or int(dims[n]) > 1:
+                    config.depth = 0
                     code("#else")
+                    config.depth = temp_depth
                     code(
                         f"{pre}ACC<{typs[n]}> {arg_list[n]}({dim}{sizelist}{arg_list[n]}_p + {dim[:-2]}*({offset}));"
                     )
+                    config.depth = 0
                     code("#endif")
+                code("")
+
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_gbl":
                 if accs[n] == OPS_MIN:
                     code(f"{typs[n]} {arg_list[n]}[{dims[n]}];")
                     for d in range(0, int(dims[n])):
-                        code(
-                            f"{arg_list[n]}[{d}] = INFINITY_{typs[n]};"
-                        )  # need +INFINITY_ change to
+                        code(f"{arg_list[n]}[{d}] = INFINITY_{typs[n]};")
+                    code("")
                 if accs[n] == OPS_MAX:
                     code(f"{typs[n]} {arg_list[n]}[{dims[n]}];")
                     for d in range(0, int(dims[n])):
-                        code(
-                            f"{arg_list[n]}[{d}] = -INFINITY_{typs[n]};"
-                        )  # need -INFINITY_ change to
+                        code(f"{arg_list[n]}[{d}] = -INFINITY_{typs[n]};")
+                    code("")
                 if accs[n] == OPS_INC:
                     code(f"{typs[n]} {arg_list[n]}[{dims[n]}];")
                     for d in range(0, int(dims[n])):
                         code(f"{arg_list[n]}[{d}] = ZERO_{typs[n]};")
+                    code("")
                 if accs[n] == OPS_WRITE:  # this may not be correct
                     code(f"{typs[n]} {arg_list[n]}[{dims[n]}];")
                     for d in range(0, int(dims[n])):
                         code(f"{arg_list[n]}[{d}] = ZERO_{typs[n]};")
+                    code("")
 
         # insert user kernel
         code(kernel_text)
@@ -515,64 +559,75 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_gbl":
                 if accs[n] != OPS_READ:
+                    code("")
                     for d in range(0, int(dims[n])):
                         code(f"p_a{n}[{d}] = p_a{n}_{d};")
 
         if gen_full_code == 1:
+            code("")
             IF("block->instance->OPS_diags > 1")
-            code("ops_timers_core(&__c2,&__t2);")
-            code(f"block->instance->OPS_kernels[{nk}].time += __t2-__t1;")
+            code("ops_timers_core(&__c1, &__t1);")
+            code(f"block->instance->OPS_kernels[{nk}].time += __t1 - __t2;")
             ENDIF()
 
+        config.depth = 0
         code("#ifndef OPS_LAZY")
+        config.depth = 4
         code(f"ops_set_dirtybit_{exec_space}(args, {nargs});")
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat" and (
                 accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC
             ):
-                code(f"ops_set_halo_dirtybit3(&args[{n}],range);")
+                code(f"ops_set_halo_dirtybit3(&args[{n}], range);")
+        config.depth = 0
         code("#endif")
 
+        config.depth = 4
         if gen_full_code == 1:
             code("")
             IF("block->instance->OPS_diags > 1")
-            comm("Update kernel record")
-            code("ops_timers_core(&__c1,&__t1);")
-            code(f"block->instance->OPS_kernels[{nk}].mpi_time += __t1-__t2;")
+            comm("  ====================")
+            comm("  Update kernel record")
+            comm("  ====================")
+            code("ops_timers_core(&__c2, &__t2);")
+            code(f"block->instance->OPS_kernels[{nk}].mpi_time += __t2 - __t1;")
             for n in range(0, nargs):
                 if arg_typ[n] == "ops_arg_dat":
                     code(
                         f"block->instance->OPS_kernels[{nk}].transfer += ops_compute_transfer(dim, start, end, &arg{n});"
                     )
             ENDIF()
-        config.depth = config.depth - 2
+        config.depth = 0
         code("}")
         code("")
 
-        code("")
         code("#ifdef OPS_LAZY")
-        code(
-            f"void ops_par_loop_{name}(char const *name, ops_block block, int dim, int* range,"
-        )
-        code(util.group_n_per_line([f" ops_arg arg{n}" for n in range(nargs)]) + ") {")
-        config.depth = 2
-        n_per_line=5
-        text = f'ops_arg args[{nargs}] = {{'
+        code(f"void ops_par_loop_{name}(")
+        code("    const char *name,")
+        code("    ops_block block,")
+        code("    int dim,")
+        code("    int* range,")
+        for n in range(nargs):
+            if n == nargs-1:
+                code(f"    ops_arg arg{n}")
+            else:
+                code(f"    ops_arg arg{n},")
+        code(")\n{")
+        config.depth = 4
+        code(f"ops_arg args[{nargs}];")
+        code("")
         for n in range (0, nargs):
-          text += f' arg{n}'
-          if nargs != 1 and n != nargs-1:
-            text += ','
-          else:
-            text += ' };\n'
-          if n%n_per_line == 5 and n != nargs-1:
-            text +='\n                    '
-        code(text)
+          code(f"args[{n}] = arg{n};")
 
-        comm('create kernel descriptor and pass it to ops_enqueue_kernel')
-        text = 'create_kerneldesc_and_enque(name, args, '
-        text = text + f'{nargs}, '
+        code("")
+        text = 'create_kerneldesc_and_enque(name, '
+        text = text + f'"{name}", '
+        text = text + f'args, {nargs}, '
         text = text + f'{nk}, '
-        text = text + 'dim, 0, range, block, '
+        if offload:
+            text = text + 'dim, 1, range, block, '
+        else:
+            text = text + 'dim, 0, range, block, '
         text = text + f'ops_par_loop_{name}_execute'
         text = text + ');'
         code(text)
@@ -585,9 +640,9 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
         #  output individual kernel file
         ##########################################################################
         if offload:
-            util.write_text_to_file(f"./OpenMP_offload/{name}_ompoffload_kernel.cpp")
+            util.write_text_to_file(f"./openmp_offload/{name}_kernel.cpp")
         else:
-            util.write_text_to_file(f"./MPI_OpenMP/{name}_cpu_kernel.cpp")
+            util.write_text_to_file(f"./mpi_openmp/{name}_kernel.cpp")
 
     # end of main kernel call loop
 
@@ -638,6 +693,9 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
     comm("user kernel files")
 
     for kernel_name in map(lambda kernel: kernel["name"], kernels):
-        code(f'#include "{kernel_name}_{"cpu" if offload==0 else "ompoffload"}_kernel.cpp"')
+        code(f'#include "{kernel_name}_kernel.cpp"')
 
-    util.write_text_to_file(f"./{'MPI_OpenMP' if offload==0 else 'OpenMP_offload'}/{master_basename[0]}_{'cpu' if offload==0 else 'ompoffload'}_kernels.cpp")
+    if offload:
+        util.write_text_to_file(f"./openmp_offload/openmp_offload_kernels.cpp")
+    else:
+        util.write_text_to_file(f"./mpi_openmp/mpi_openmp_kernels.cpp")

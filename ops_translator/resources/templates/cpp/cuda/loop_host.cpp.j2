@@ -283,9 +283,7 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
 {% endblock %}
 
 {% block host_prologue_sub_1 %}
-#ifdef OPS_MPI
     ops_block block = desc->block;
-#endif
 {% endblock %}
 
 {% block host_prologue_sub_3 %}
@@ -378,11 +376,6 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
     }
 
 {# setup reduction variables #}
-{% if lh.has_reduction and lh.arg_idx == -1 %}
-#if defined(OPS_LAZY) && !defined(OPS_MPI)
-    ops_block block = desc->block;
-#endif
-{% endif %}
 {% for arg in lh.args %}
 {% if arg is ops_gbl or arg is ops_reduce %}
 	{% if arg is ops_read %}

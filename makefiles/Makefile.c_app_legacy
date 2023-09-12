@@ -23,12 +23,11 @@ endif
 
 DEFINES=-DOPS_ACC_IGNORE
 
-.generated: $(HEADERS) $(OPS_FILES) $(OPS_INSTALL_PATH)/../ops_translator/ops-translator/*.py
+.generated: $(HEADERS) $(OPS_FILES) $(OPS_INSTALL_PATH)/../ops_translator_legacy/c/*.py
 	@echo "generating translations for ${OPS_FILES}"
 	@echo "OPS_EXTENTIONS: ${OPS_GENERATED_SUFFIX}"
 	@echo "OPS_GENERATED: ${OPS_GENERATED}"
-	which python3
-	python3 $(OPS_INSTALL_PATH)/../ops_translator/ops-translator $(VERBOSE) $(DEFINES) -I $(OPS_INSTALL_PATH)/c/include/ --file_paths $(OPS_FILES)
+	$(OPS_INSTALL_PATH)/../ops_translator_legacy/c/ops.py $(OPS_FILES)
 	rm -f .generated
 	touch .generated
 
@@ -278,6 +277,15 @@ $(APP)_mpi_cuda_tiled: ./cuda/$(APP)_kernels_mpi_tiled_cu.o Makefile .generated 
 
 #=====================================================================================================================================================================
 
+$(APP)_mpi_inline: .generated $(OPS_FILES_GEN) $(HEADERS) Makefile $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi.a
+				$(MPICC) $(CCFLAGS) $(OMPFLAGS) -DOPS_MPI  -I$(C_OPS_INC) $(HDF5_INC) \
+			        -I. MPI_inline/$(MAIN_SRC)_kernels_c.c -c -o MPI_inline/$(MAIN_SRC)_kernels_c.o
+				$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -DOPS_MPI -I$(C_OPS_INC) $(HDF5_INC) \
+				-I. MPI_inline/$(MAIN_SRC)_kernels.cpp -c -o MPI_inline/$(MAIN_SRC)_kernels.o
+				$(MPICPP) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) $(HDF5_INC) -L$(C_OPS_LIB)  -DOPS_MPI \
+					$(OPS_FILES_GEN) -I. MPI_inline/$(MAIN_SRC)_kernels_c.o MPI_inline/$(MAIN_SRC)_kernels.o $(HDF5_LIB_MPI) $(OPS_LINK) $(OPS_LIB_MPI) -o $(APP)_mpi_inline
+
+#=====================================================================================================================================================================
 #
 # OpenACC version
 #
@@ -302,6 +310,28 @@ $(APP)_mpi_openacc_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_CO
 		@echo "Building ${APP}_mpi_openacc_tiled"
 		@echo ""
 		$(MPICPP) $(OpenACCFLAGS) $(CUDA_ALIGNE_FLAG) $(CXXFLAGS) -DOPS_MPI -DOPS_LAZY -I$(CUDA_INC) -I$(C_OPS_INC) -L$(C_OPS_LIB) -L$(CUDA_LIB) $(OPS_FILES_GEN) -I. ./openacc/openacc_kernels.cpp -lcudart $(HDF5_LIB_MPI) -lops_mpi_cuda -o $(APP)_mpi_openacc_tiled
+
+#=====================================================================================================================================================================
+#
+# OpenCL version
+#
+
+CL_SEQ_KERNELS = $(MAIN_SRC)_seq_kernels.cpp
+
+$(APP)_opencl: ./OpenCL/$(MAIN_SRC)_opencl_kernels.o Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_opencl.a
+	        $(MPICPP) $(CXXFLAGS) $(OCL_FLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) -L$(OPENCL_LIB) -lOpenCL $(OPS_FILES_GEN) ./OpenCL/$(MAIN_SRC)_opencl_kernels.o -I. $(HDF5_LIB_SEQ) -lops_opencl -o $(APP)_opencl
+
+./OpenCL/$(MAIN_SRC)_opencl_kernels.o: .generated Makefile
+		$(MPICPP) $(CXXFLAGS) $(OCL_FLAGS) -I$(OPENCL_INC) -I$(C_OPS_INC) -I. \
+                -c -o ./OpenCL/$(MAIN_SRC)_opencl_kernels.o ./OpenCL/$(MAIN_SRC)_opencl_kernels.cpp
+
+
+$(APP)_mpi_opencl: ./OpenCL/$(MAIN_SRC)_mpi_opencl_kernels.o .generated Makefile $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_opencl.a
+		$(MPICPP) $(CXXFLAGS) -DOPS_MPI $(OCL_FLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) -L$(OPENCL_LIB) -lOpenCL $(OPS_FILES_GEN) ./OpenCL/$(MAIN_SRC)_mpi_opencl_kernels.o -I. $(HDF5_LIB_MPI) $(OPS_LINK) $(OPS_LIB_MPI)_opencl -o $(APP)_mpi_opencl
+
+./OpenCL/$(MAIN_SRC)_mpi_opencl_kernels.o: .generated ./OpenCL/$(MAIN_SRC)_opencl_kernels.cpp Makefile
+	        $(MPICPP) $(CXXFLAGS) -I$(OPENCL_INC) -I$(C_OPS_INC) -I. -DOPS_MPI \
+                -c -o ./OpenCL/$(MAIN_SRC)_mpi_opencl_kernels.o ./OpenCL/$(MAIN_SRC)_opencl_kernels.cpp
 
 #=====================================================================================================================================================================
 #
@@ -349,6 +379,7 @@ clean:
 	rm -f $(APP)_mpi
 	rm -f $(APP)_mpi_tiled
 	rm -f $(APP)_mpi_openmp
+	rm -f $(APP)_mpi_inline
 	rm -f $(APP)_cuda
 	rm -f $(APP)_mpi_cuda
 	rm -f $(APP)_mpi_cuda_tiled
@@ -357,6 +388,8 @@ clean:
 	rm -f $(APP)_mpi_hip_tiled
 	rm -f $(APP)_openacc
 	rm -f $(APP)_mpi_openacc
+	rm -f $(APP)_opencl
+	rm -f $(APP)_mpi_opencl
 	rm -f $(APP)_ompoffload
 	rm -f $(APP)_mpi_ompoffload
 	rm -f $(APP)_mpi_ompoffload_tiled
