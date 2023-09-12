@@ -69,8 +69,8 @@ export HDF5_INSTALL_PATH=/opt/hdf5/1.8.18/intel/15.0u6/impi/5.0u3/
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/hdf5/1.8.18/intel/15.0u6/impi/5.0u3/lib/
 
 #Tridiagonal LIB
-#export TDMA_INSTALL_PATH=~/tridsolver/scalar/libtrid
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TDMA_INSTALL_PATH/lib/
+export TDMA_INSTALL_PATH=~/tridsolver/scalar/libtrid
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TDMA_INSTALL_PATH/lib/
 
 #OpenSBLI -- for testing app TGV only
 #export OPENSBLI_INSTALL_PATH=/rr-home/gihan/OpenSBLI/OpenSBLI_OPS_TESTING/opensbli/
