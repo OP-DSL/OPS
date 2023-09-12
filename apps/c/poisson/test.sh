@@ -7,6 +7,13 @@ cd ../../../ops/c
 #export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
 #export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
+#export AMOS=TRUE
+#export DMOS=TRUE
+#export TELOS=TRUE
+export KOS=TRUE
+
+if [[ -v TELOS || -v KOS ]]; then
+
 #============================ Test with Intel Classic Compilers==========================================
 echo "Testing Intel classic complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
@@ -70,7 +77,6 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-
 if [[ -v CUDA_INSTALL_PATH ]]; then
 make IEEE=1 poisson_cuda poisson_mpi_cuda poisson_mpi_cuda_tiled
 
@@ -105,14 +111,14 @@ rm perf_out
 #grep "PASSED" perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
+
+fi
 fi
 
 echo "All Intel classic complier based applications ---- PASSED"
-cd -
 
 
-if [ -z ${SYCL_INSTALL_PATH+x} ];
-then
+if [[ -v TELOS ]]; then
 
 #============================ Test with Intel SYCL Compilers==========================================
 echo "Testing Intel SYCL complier based applications ---- "
@@ -153,8 +159,10 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo "All Intel SYCL complier based applications ---- PASSED"
-cd -
+
 fi
+
+if [[ -v TELOS ]]; then
 
 #============================ Test with PGI Compilers==========================================
 echo "Testing PGI/NVHPC complier based applications ---- "
@@ -163,6 +171,7 @@ source ../../scripts/$SOURCE_PGI
 make clean
 #make -j
 make
+echo "in here "
 cd $OPS_INSTALL_PATH/../apps/c/poisson
 make clean
 make poisson_dev_seq poisson_dev_mpi poisson_seq poisson_tiled poisson_openmp poisson_mpi poisson_mpi_tiled \
@@ -260,6 +269,8 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+fi
+
 echo '============> Running OMPOFFLOAD'
 ./poisson_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total error:" perf_out
@@ -276,12 +287,11 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+echo "All PGI complier based applications ---- PASSED"
+
 fi
 
-echo "All PGI complier based applications ---- PASSED"
-cd -
-
-if [[ -v HIP_INSTALL_PATH ]]; then
+if [[ -v AMOS ]]; then
 
 echo "Testing AMD HIP complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
@@ -294,7 +304,7 @@ cd $OPS_INSTALL_PATH/../apps/c/poisson
 make clean
 rm -f .generated
 #make IEEE=1 -j
-make IEEE=1 poisson_hip poisson_hip_tiled poisson_mpi_hip poisson_mpi_hip_tiled
+make IEEE=1 poisson_hip poisson_mpi_hip #poisson_hip_tiled poisson_mpi_hip_tiled
 
 echo '============> Running HIP'
 ./poisson_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
