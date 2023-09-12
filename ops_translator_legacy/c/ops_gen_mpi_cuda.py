@@ -66,12 +66,12 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
     if hip == 1:
         cuda = "hip"
         cutil = "hip"
-        dir_name = "HIP"
+        dir_name = "hip"
         file_ext = "cpp"
     else:
         cuda = "cuda"
         cutil = "cutil"
-        dir_name = "CUDA"
+        dir_name = "cuda"
         file_ext = "cu"
 
     ##########################################################################
@@ -117,17 +117,21 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
         #  generate header
         ##########################################################################
 
-        comm("user function")
-        code("__device__")
+        comm("  =============")
+        comm("  User function")
+        comm("  =============")
         text = get_kernel_func_text(name, src_dir, arg_typ)
         text = re.sub(f"void\\s+\\b{name}\\b", f"void {name}_gpu", text)
-        code(complex_numbers_cuda(text))
-        code("")
+        code("__device__ "+complex_numbers_cuda(text).lstrip())
         code("")
 
         ##########################################################################
         #  generate cuda kernel wrapper function
         ##########################################################################
+
+        comm("  ============================")
+        comm("  Cuda kernel wrapper function")
+        comm("  ============================")
 
         code(f"__global__ void ops_{name}(")
         for n in range(0, nargs):
@@ -169,37 +173,31 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
             elif NDIM == 3:
                 code("int global_idx0, int global_idx1, int global_idx2,")
         if NDIM == 1:
-            code("int size0 ){")
+            code("int size0) {")
         elif NDIM == 2:
             code("int size0,")
-            code("int size1 ){")
+            code("int size1) {")
         elif NDIM == 3:
             code("int size0,")
             code("int size1,")
-            code("int size2 ){")
+            code("int size2) {")
 
-        config.depth = config.depth + 2
+        config.depth = 4
 
         # local variable to hold reductions on GPU
-        code("")
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_gbl" and accs[n] != OPS_READ:
-                code(f"{typs[n]} arg{n}_l[{dims[n]}];")
+                if accs[n] == OPS_INC:
+                    code(f"{typs[n]} arg{n}_l[{dims[n]}];")
+                    code(f"for (int d = 0; d < {dims[n]}; d++) arg{n}_l[d] = ZERO_{typs[n]};")
+                elif accs[n] == OPS_MIN:
+                    code(f"{typs[n]} arg{n}_l[{dims[n]}];")
+                    code(f"for (int d = 0; d < {dims[n]}; d++) arg{n}_l[d] = INFINITY_{typs[n]};")
+                elif accs[n] == OPS_MAX:
+                    code(f"{typs[n]} arg{n}_l[{dims[n]}];")
+                    code(f"for (int d = 0; d < {dims[n]}; d++) arg{n}_l[d] = -INFINITY_{typs[n]};")
+                code("")
 
-        # set local variables to 0 if OPS_INC, INF if OPS_MIN, -INF
-        for n in range(0, nargs):
-            if arg_typ[n] == "ops_arg_gbl" and accs[n] == OPS_INC:
-                code(f"for (int d=0; d<{dims[n]}; d++) arg{n}_l[d] = ZERO_{typs[n]};")
-            if arg_typ[n] == "ops_arg_gbl" and accs[n] == OPS_MIN:
-                code(
-                    f"for (int d=0; d<{dims[n]}; d++) arg{n}_l[d] = INFINITY_{typs[n]};"
-                )
-            if arg_typ[n] == "ops_arg_gbl" and accs[n] == OPS_MAX:
-                code(
-                    f"for (int d=0; d<{dims[n]}; d++) arg{n}_l[d] = -INFINITY_{typs[n]};"
-                )
-
-        code("")
         if NDIM == 3:
             code("int idx_z = blockDim.z * blockIdx.z + threadIdx.z;")
             code("int idx_y = blockDim.y * blockIdx.y + threadIdx.y;")
@@ -215,6 +213,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
             if NDIM == 3:
                 code("arg_idx[1] = arg_idx1+idx_y;")
                 code("arg_idx[2] = arg_idx2+idx_z;")
+            code("")
 
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat":
@@ -321,32 +320,42 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
             cont = (
                 "(blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y)*"
             )
+        if has_reduction:
+            config.depth = 0
+            code("")
+            comm("  ==============================")
+            comm("  Reduction across thread blocks")
+            comm("  ==============================")
+            config.depth = 4
+
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_gbl" and accs[n] == OPS_INC:
-                code(f"for (int d=0; d<{dims[n]}; d++)")
+                code(f"for(int d = 0; d < {dims[n]}; d++)")
                 code(
-                    f"  ops_reduction_{cuda}<OPS_INC>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
+                    f"    ops_reduction_{cuda}<OPS_INC>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
                 )
             if arg_typ[n] == "ops_arg_gbl" and accs[n] == OPS_MIN:
-                code(f"for (int d=0; d<{dims[n]}; d++)")
+                code(f"for(int d = 0; d < {dims[n]}; d++)")
                 code(
-                    f"  ops_reduction_{cuda}<OPS_MIN>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
+                    f"    ops_reduction_{cuda}<OPS_MIN>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
                 )
             if arg_typ[n] == "ops_arg_gbl" and accs[n] == OPS_MAX:
-                code(f"for (int d=0; d<{dims[n]}; d++)")
+                code(f"for(int d = 0; d < {dims[n]}; d++)")
                 code(
-                    f"  ops_reduction_{cuda}<OPS_MAX>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
+                    f"    ops_reduction_{cuda}<OPS_MAX>(&arg{n}[d+{cont}{dims[n]}],arg{n}_l[d]);"
                 )
 
         code("")
-        config.depth = config.depth - 2
-        code("}")
+        config.depth = 0
+        code("} //End of cuda kernel wrapper function")
 
         ##########################################################################
         #  now host stub
         ##########################################################################
         code("")
-        comm(" host stub function")
+        comm("  ==================")
+        comm("  Host stub function")
+        comm("  ==================")
         code("#ifndef OPS_LAZY")
         code(
             f"void ops_par_loop_{name}(char const *name, ops_block block, int dim, int* range,"
@@ -354,86 +363,119 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
         code(util.group_n_per_line([f" ops_arg arg{n}" for n in range(nargs)]) + ") {")
         code("#else")
         code(f"void ops_par_loop_{name}_execute(ops_kernel_descriptor *desc) {{")
-        config.depth = 2
-        code("int dim = desc->dim;")
-        code("#if OPS_MPI")
+
+        config.depth = 4
         code("ops_block block = desc->block;")
-        code("#endif")
+        code("int dim = desc->dim;")
         code("int *range = desc->range;")
 
         for n in range(0, nargs):
             code(f"ops_arg arg{n} = desc->args[{n}];")
+        config.depth = 0
         code("#endif")
 
         code("")
-        comm("Timing")
-        code("double t1,t2,c1,c2;")
+        comm("  ======")
+        comm("  Timing")
+        comm("  ======")
+        config.depth = 4
+        code("double __t1, __t2, __c1, __c2;")
         code("")
 
-        code(
-            f"ops_arg args[{nargs}] = {{"
-            + ",".join([f" arg{n}" for n in range(nargs)])
-            + "};\n"
-        )
+        code(f"ops_arg args[{nargs}];")
         code("")
+        for n in range(nargs):
+            code(f"args[{n}] = arg{n};")
+
+        code("")
+        config.depth = 0
         code("#if CHECKPOINTING && !OPS_LAZY")
-        code(f"if (!ops_checkpointing_before(args,{nargs},range,{nk})) return;")
+        config.depth = 4
+        code(f"if (!ops_checkpointing_before(args, {nargs}, range, {nk})) return;")
+        config.depth = 0
         code("#endif")
         code("")
 
+        config.depth = 4
         IF("block->instance->OPS_diags > 1")
-        code(f'ops_timing_realloc(block->instance,{nk},"{name}");')
+        code(f'ops_timing_realloc(block->instance, {nk}, "{name}");')
         code(f"block->instance->OPS_kernels[{nk}].count++;")
-        code("ops_timers_core(&c1,&t1);")
+        code("ops_timers_core(&__c1, &__t1);")
         ENDIF()
 
+        config.depth = 0
         code("")
-        comm("compute locally allocated range for the sub-block")
+        comm("  =================================================")
+        comm("  compute locally allocated range for the sub-block")
+        comm("  =================================================")
 
-        code(f"int start[{NDIM}];")
-        code(f"int end[{NDIM}];")
+        config.depth = 4
+        code(f"int start_indx[{NDIM}];")
+        code(f"int end_indx[{NDIM}];")
 
-        code("")
         if arg_idx == -1:
+            config.depth = 0
             code("#ifdef OPS_MPI")
+        config.depth = 4
         code(f"int arg_idx[{NDIM}];")
         if arg_idx == -1:
+            config.depth = 0
             code("#endif")
 
+        config.depth = 0
+        code("")
         code("#if defined(OPS_LAZY) || !defined(OPS_MPI)")
+        config.depth = 4
         FOR("n", "0", str(NDIM))
-        code("start[n] = range[2*n];end[n] = range[2*n+1];")
+        code("start_indx[n] = range[2*n];")
+        code("end_indx[n]   = range[2*n+1];")
         ENDFOR()
+        config.depth = 0
         code("#else")
+        config.depth = 4
         code(
-            f"if (compute_ranges(args, {nargs},block, range, start, end, arg_idx) < 0) return;"
+            f"if (compute_ranges(args, {nargs}, block, range, start_indx, end_indx, arg_idx) < 0) return;"
         )
+        config.depth = 0
         code("#endif")
 
-        code("")
         if arg_idx != -1 or MULTI_GRID:
+            code("")
+            config.depth = 0
             code("#if defined(OPS_MPI)")
             code("#if defined(OPS_LAZY)")
+            config.depth = 4
             code("sub_block_list sb = OPS_sub_block_list[block->index];")
             for n in range(0, NDIM):
-                code(f"arg_idx[{n}] = sb->decomp_disp[{n}]+start[{n}];")
-            code("#endif")
+                code(f"arg_idx[{n}] = sb->decomp_disp[{n}]+start_indx[{n}];")
+            config.depth = 0
+            code("#endif //OPS_LAZY")
             code("#else //OPS_MPI")
+            config.depth = 4
             for n in range(0, NDIM):
-                code(f"arg_idx[{n}] = start[{n}];")
+                code(f"arg_idx[{n}] = start_indx[{n}];")
+            config.depth = 0
             code("#endif //OPS_MPI")
 
         if MULTI_GRID:
+            code("")
+            config.depth = 4
             code(f"int global_idx[{NDIM}];")
+            config.depth = 0
             code("#ifdef OPS_MPI")
+            config.depth = 4
             for n in range(0, NDIM):
                 code(f"global_idx[{n}] = arg_idx[{n}];")
+            config.depth = 0
             code("#else")
+            config.depth = 4
             for n in range(0, NDIM):
-                code(f"global_idx[{n}] = start[{n}];")
+                code(f"global_idx[{n}] = start_indx[{n}];")
+            config.depth = 0
             code("#endif")
-            code("")
 
+        code("")
+        config.depth = 4
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat":
                 code(f"int xdim{n} = args[{n}].dat->size[0];")
@@ -461,19 +503,14 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
                     code(f"dims_{name}_h[{n}][1] = ydim{n};")
                 if NDIM > 3 or (NDIM == 3 and soa_set):
                     code(f"dims_{name}_h[{n}][2] = zdim{n};")
+        code("")
         code(
             f"{cutil}SafeCall(block->instance->ostream(), {cuda}MemcpyToSymbol( dims_{name}, dims_{name}_h, sizeof(dims_{name})));"
         )
         ENDIF()
 
         code("")
-
         # setup reduction variables
-        code("")
-        if has_reduction and arg_idx == -1:
-            code("#if defined(OPS_LAZY) && !defined(OPS_MPI)")
-            code("ops_block block = desc->block;")
-            code("#endif")
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_gbl" and (
                 accs[n] != OPS_READ
@@ -482,23 +519,29 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
                 if accs[n] == OPS_READ:
                     code(f"{typs[n]} *arg{n}h = ({typs[n]} *)arg{n}.data;")
                 else:
+                    config.depth = 0
                     code("#ifdef OPS_MPI")
+                    config.depth = 4
                     code(
                         f"{typs[n]} *arg{n}h = ({typs[n]} *)(((ops_reduction)args[{n}].data)->data + ((ops_reduction)args[{n}].data)->size * block->index);"
                     )
+                    config.depth = 0
                     code("#else")
+                    config.depth = 4
                     code(
                         f"{typs[n]} *arg{n}h = ({typs[n]} *)(((ops_reduction)args[{n}].data)->data);"
                     )
+                    config.depth = 0
                     code("#endif")
 
         code("")
-        code("int x_size = MAX(0,end[0]-start[0]);")
+        config.depth = 4
+        code("int x_size = MAX(0,end_indx[0]-start_indx[0]);")
         if NDIM == 2:
-            code("int y_size = MAX(0,end[1]-start[1]);")
+            code("int y_size = MAX(0,end_indx[1]-start_indx[1]);")
         if NDIM == 3:
-            code("int y_size = MAX(0,end[1]-start[1]);")
-            code("int z_size = MAX(0,end[2]-start[2]);")
+            code("int y_size = MAX(0,end_indx[1]-start_indx[1]);")
+            code("int z_size = MAX(0,end_indx[2]-start_indx[2]);")
         code("")
 
         # set up CUDA grid and thread blocks for kernel call
@@ -533,6 +576,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
                 code(
                     "int nblocks = ((x_size-1)/block->instance->OPS_block_size_x+ 1)*((y_size-1)/block->instance->OPS_block_size_y + 1)*((z_size-1)/block->instance->OPS_block_size_z +1);"
                 )
+            code("")
             code("int maxblocks = nblocks;")
             code("int reduct_bytes = 0;")
             code("size_t reduct_size = 0;")
@@ -550,7 +594,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
                     code(
                         f"reduct_bytes += ROUND_UP(maxblocks*{dims[n]}*sizeof({typs[n]}));"
                     )
-                    code(f"reduct_size = MAX(reduct_size,sizeof({typs[n]})*{dims[n]});")
+                    code(f"reduct_size = MAX(reduct_size,{dims[n]}*sizeof({typs[n]}));")
         code("")
 
         if GBL_READ == True and GBL_READ_MDIM == True:
@@ -565,25 +609,24 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
             if arg_typ[n] == "ops_arg_gbl" and accs[n] != OPS_READ:
                 code(f"arg{n}.data = block->instance->OPS_reduct_h + reduct_bytes;")
                 code(f"arg{n}.data_d = block->instance->OPS_reduct_d + reduct_bytes;")
-                code("for (int b=0; b<maxblocks; b++)")
+                code("for (int b = 0; b < maxblocks; b++) {")
                 if accs[n] == OPS_INC:
                     code(
-                        f"for (int d=0; d<{dims[n]}; d++) (({typs[n]} *)arg{n}.data)[d+b*{dims[n]}] = ZERO_{typs[n]};"
+                        f"  for (int d = 0; d < {dims[n]}; d++)   (({typs[n]} *)arg{n}.data)[d+b*{dims[n]}] = ZERO_{typs[n]};"
                     )
                 if accs[n] == OPS_MAX:
                     code(
-                        f"for (int d=0; d<{dims[n]}; d++) (({typs[n]} *)arg{n}.data)[d+b*{dims[n]}] = -INFINITY_{typs[n]};"
+                        f"  for (int d = 0; d < {dims[n]}; d++)   (({typs[n]} *)arg{n}.data)[d+b*{dims[n]}] = -INFINITY_{typs[n]};"
                     )
                 if accs[n] == OPS_MIN:
                     code(
-                        f"for (int d=0; d<{dims[n]}; d++) (({typs[n]} *)arg{n}.data)[d+b*{dims[n]}] = INFINITY_{typs[n]};"
+                        f"  for (int d = 0; d < {dims[n]}; d++)   (({typs[n]} *)arg{n}.data)[d+b*{dims[n]}] = INFINITY_{typs[n]};"
                     )
+                code("}")
                 code(
                     f"reduct_bytes += ROUND_UP(maxblocks*{dims[n]}*sizeof({typs[n]}));"
                 )
                 code("")
-
-        code("")
 
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_gbl":
@@ -600,8 +643,9 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
             code("mvConstArraysToDevice(block->instance,consts_bytes);")
 
         if has_reduction:
-            code("mvReductArraysToDevice(block->instance,reduct_bytes);")
+            code("mvReductArraysToDevice(block->instance, reduct_bytes);")
 
+        code("")
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat":
                 code(
@@ -610,6 +654,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
 
         code("")
         code(f"char *p_a[{nargs}];")
+        code("")
 
         # some custom logic for multigrid
         if MULTI_GRID:
@@ -619,7 +664,9 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
                     code(
                         f"int start_{n}[{NDIM}]; int end_{n}[{NDIM}]; int stride_{n}[{NDIM}];int d_size_{n}[{NDIM}];"
                     )
+                    config.depth = 0
                     code("#ifdef OPS_MPI")
+                    config.depth = 4
                     FOR("n", "0", str(NDIM))
                     code(f"sub_dat *sd{n} = OPS_sub_dat_list[args[{n}].dat->index];")
                     code(f"stride_{n}[n] = args[{n}].stencil->mgrid_stride[n];")
@@ -636,7 +683,9 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
                         )
                     code(f"end_{n}[n] = start_{n}[n] + d_size_{n}[n];")
                     ENDFOR()
+                    config.depth = 0
                     code("#else")
+                    config.depth = 4
                     FOR("n", "0", str(NDIM))
                     code(f"stride_{n}[n] = args[{n}].stencil->mgrid_stride[n];")
                     code(
@@ -648,40 +697,49 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
                         code(f"start_{n}[n] = global_idx[n]/stride_{n}[n];")
                     code(f"end_{n}[n] = start_{n}[n] + d_size_{n}[n];")
                     ENDFOR()
+                    config.depth = 0
                     code("#endif")
 
-        comm("")
-        comm("set up initial pointers")
+        config.depth = 0
+        comm("  =======================")
+        comm("  set up initial pointers")
+        comm("  =======================")
+        config.depth = 4
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat":
                 if prolong[n] == 1 or restrict[n] == 1:
                     starttext = "start_" + str(n)
                 else:
-                    starttext = "start"
+                    starttext = "start_indx"
                 code(f"long long int base{n} = args[{n}].dat->base_offset + ")
                 code(
                     f"         dat{n} * 1 * ({starttext}[0] * args[{n}].stencil->stride[0]);"
                 )
                 for d in range(1, NDIM):
-                    line = f"base{n} = base{n}+ dat{n} *\n"
+                    line = f"base{n} = base{n} + dat{n} *\n"
                     for d2 in range(0, d):
-                        line += config.depth * " " + f"  args[{n}].dat->size[{d2}] *\n"
+                        line += f"                       args[{n}].dat->size[{d2}] *\n"
                     code(line[:-1])
-                    code(f"  ({starttext}[{d}] * args[{n}].stencil->stride[{d}]);")
+                    code(f"                  ({starttext}[{d}] * args[{n}].stencil->stride[{d}]);")
 
                 code(f"p_a[{n}] = (char *)args[{n}].data_d + base{n};")
                 code("")
 
-        # halo exchange
-        code("")
+        config.depth = 0
+        comm("  =============")
+        comm("  Halo exchange")
+        comm("  =============")
         code("#ifndef OPS_LAZY")
+        config.depth = 4
         code(f"ops_H_D_exchanges_device(args, {nargs});")
-        code(f"ops_halo_exchanges(args,{nargs},range);")
+        code(f"ops_halo_exchanges(args, {nargs}, range);")
+        config.depth = 0
         code("#endif")
         code("")
+        config.depth = 4
         IF("block->instance->OPS_diags > 1")
-        code("ops_timers_core(&c2,&t2);")
-        code(f"block->instance->OPS_kernels[{nk}].mpi_time += t2-t1;")
+        code("ops_timers_core(&__c2, &__t2);")
+        code(f"block->instance->OPS_kernels[{nk}].mpi_time += __t2 - __t1;")
         ENDIF()
         code("")
 
@@ -701,18 +759,23 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
             code("")
 
         # kernel call
+        config.depth = 0
         comm("call kernel wrapper function, passing in pointers to data")
+        config.depth = 4
         if NDIM == 1:
-            code("if (x_size > 0)")
+            code("if (x_size > 0) {")
         if NDIM == 2:
-            code("if (x_size > 0 && y_size > 0)")
+            code("if (x_size > 0 && y_size > 0) {")
         if NDIM == 3:
-            code("if (x_size > 0 && y_size > 0 && z_size > 0)")
-        config.depth = config.depth + 2
+            code("if (x_size > 0 && y_size > 0 && z_size > 0) {")
+
+        code("")
+        config.depth = config.depth + 4
         if has_reduction:
             code(f"ops_" + name + "<<<grid, tblock, nshared >>> ( ")
         else:
             code(f"ops_{name}<<<grid, tblock >>> ( ")
+
         param_strings = []
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat":
@@ -759,7 +822,9 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
             code("x_size, y_size);")
         elif NDIM == 3:
             code("x_size, y_size, z_size);")
-        config.depth = config.depth - 2
+        config.depth = config.depth - 4
+        code("")
+        code("}")
 
         code("")
         code(f"{cutil}SafeCall(block->instance->ostream(), {cuda}GetLastError());")
@@ -795,55 +860,57 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
 
         IF("block->instance->OPS_diags>1")
         code(f"{cutil}SafeCall(block->instance->ostream(), {cuda}DeviceSynchronize());")
-        code("ops_timers_core(&c1,&t1);")
-        code(f"block->instance->OPS_kernels[{nk}].time += t1-t2;")
+        code("ops_timers_core(&__c1, &__t1);")
+        code(f"block->instance->OPS_kernels[{nk}].time += __t1 - __t2;")
         ENDIF()
         code("")
 
+        config.depth = 0
         code("#ifndef OPS_LAZY")
+        config.depth = 4
         code(f"ops_set_dirtybit_device(args, {nargs});")
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat" and (
                 accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC
             ):
-                code(f"ops_set_halo_dirtybit3(&args[{n}],range);")
+                code(f"ops_set_halo_dirtybit3(&args[{n}], range);")
+        config.depth = 0
         code("#endif")
 
+        config.depth = 4
         code("")
         IF("block->instance->OPS_diags > 1")
-        comm("Update kernel record")
-        code("ops_timers_core(&c2,&t2);")
-        code(f"block->instance->OPS_kernels[{nk}].mpi_time += t2-t1;")
+        comm("  ====================")
+        comm("  Update kernel record")
+        comm("  ====================")
+        code("ops_timers_core(&__c2, &__t2);")
+        code(f"block->instance->OPS_kernels[{nk}].mpi_time += __t2 - __t1;")
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat":
                 code(
-                    f"block->instance->OPS_kernels[{nk}].transfer += ops_compute_transfer(dim, start, end, &arg{n});"
+                    f"block->instance->OPS_kernels[{nk}].transfer += ops_compute_transfer(dim, start_indx, end_indx, &arg{n});"
                 )
         ENDIF()
-        config.depth = config.depth - 2
+        config.depth = 0
         code("}")
+
         code("")
         code("#ifdef OPS_LAZY")
         code(
             f"void ops_par_loop_{name}(char const *name, ops_block block, int dim, int* range,"
         )
-        code(util.group_n_per_line([f" ops_arg arg{n}" for n in range(nargs)]) + ") {")
-        config.depth = 2
-        n_per_line=5 
-        text = f'ops_arg args[{nargs}] = {{'
-        for n in range (0, nargs):
-          text += f' arg{n}'
-          if nargs != 1 and n != nargs-1:
-            text += ','
-          else:
-            text += ' };\n'
-          if n%n_per_line == 5 and n != nargs-1:
-            text +='\n                    '
-        code(text)
-            
-        comm('create kernel descriptor and pass it to ops_enqueue_kernel')
-        text = 'create_kerneldesc_and_enque(name, args, '
-        text = text + f'{nargs}, '
+        code(util.group_n_per_line([f" ops_arg arg{n}" for n in range(nargs)]) + ")\n{")
+
+        config.depth = 4
+        code(f"ops_arg args[{nargs}];")
+        code("")
+        for n in range(nargs):
+            code(f"args[{n}] = arg{n};")
+
+        code("")
+        text = 'create_kerneldesc_and_enque(name, '
+        text = text + f'"{name}", '
+        text = text + f'args, {nargs}, '
         text = text + f'{nk}, '
         text = text + 'dim, 1, range, block, '
         text = text + f'ops_par_loop_{name}_execute'
@@ -857,7 +924,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
         ##########################################################################
         #  output individual kernel file
         ##########################################################################
-        util.write_text_to_file(f"./{dir_name}/{name}_{cuda}_kernel.{file_ext}")
+        util.write_text_to_file(f"./{dir_name}/{name}_kernel.{file_ext}")
 
     # end of main kernel call loop
 
@@ -944,6 +1011,6 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
     comm("user kernel files")
 
     for kernel_name in map(lambda kernel: kernel["name"], kernels):
-        code(f'#include "{kernel_name}_{cuda}_kernel.{file_ext}"')
+        code(f'#include "{kernel_name}_kernel.{file_ext}"')
 
-    util.write_text_to_file(f"./{dir_name}/{master_basename[0]}_kernels.{file_ext}")
+    util.write_text_to_file(f"./{dir_name}/{cuda}_kernels.{file_ext}")
