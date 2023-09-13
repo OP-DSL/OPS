@@ -9,8 +9,8 @@ cd ../../../ops/c
 
 #export AMOS=TRUE
 #export DMOS=TRUE
-#export TELOS=TRUE
-export KOS=TRUE
+export TELOS=TRUE
+#export KOS=TRUE
 
 
 if [[ -v TELOS || -v KOS ]]; then
@@ -26,7 +26,7 @@ make clean
 rm -rf generate_file generate_file_mpi
 
 make IEEE=1 cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_seq cloverleaf_tiled cloverleaf_openmp cloverleaf_mpi \
-cloverleaf_mpi_tiled cloverleaf_mpi_openmp cloverleaf_mpi_inline
+cloverleaf_mpi_tiled cloverleaf_mpi_openmp
 make generate_file generate_file_mpi
 
 echo '============> Generate HDF5 file'
