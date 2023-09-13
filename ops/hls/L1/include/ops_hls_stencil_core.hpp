@@ -15,6 +15,7 @@
 #include <cstdarg>
 #include "ops_hls_defs.hpp"
 #include "ops_hls_utils.hpp"
+#include <stdio.h>
 
 /**
  * TODO: This version assume no reduction and arg_dat and arg_const passed 
@@ -25,7 +26,7 @@ namespace hls
 {
 
 template <typename T, unsigned short NUM_POINTS, unsigned short VEC_FACTOR, CoefTypes COEF_TYPE,
-        unsigned short SIZE_X, unsigned short ...SIZES_REST>
+        unsigned short SIZE_X, unsigned short DIM>
 class StencilCore
 {
     public:
@@ -48,7 +49,7 @@ class StencilCore
             static_assert(s_axis_width >= min_axis_data_width && s_axis_width <= max_axis_data_width,
 			        "axis_width failed limit check. VEC_FACTOR and T should be within limits");
 #endif        
-            __init(SIZE_X, s_dim-1, SIZES_REST...);
+            __init();
         }
 
         void setGridProp(const GridPropertyCore& gridProp)
@@ -57,18 +58,14 @@ class StencilCore
 
             for (unsigned short i = 0; i < s_dim; i++)
             {
-//            	if (i == 0)
-//            	{
-//            		m_lowerLimit[i] = s_stencil_half_span_x;
-//            		m_upperLimit[i] = m_gridProp.actual_size[i];
-//            	}
-//            	else
-//            	{
-            		unsigned short half_span = (m_sizes[i] + 1) >> 2;
-            		m_lowerLimits[i] = half_span;
-            		m_upperLimits[i] = m_gridProp.size[i] + half_span;
-//            	}
+				unsigned short half_span = (m_sizes[i] + 1) >> 2;
+				m_lowerLimits[i] = half_span;
+				m_upperLimits[i] = m_gridProp.size[i] + half_span;
             }
+#ifdef DEBUG_LOG
+            printf("[KERNEL_DEBUG]|%s| s_dim: %d, s_size_x: %d, s_stencil_span_x: %d, s_stencil_half_span_x: %d \n"
+            		,__func__, s_dim, s_size_x, s_stencil_span_x, s_stencil_half_span_x);
+#endif
         }
 
         void setPoints(const unsigned short * stencilPoints)
@@ -98,25 +95,16 @@ class StencilCore
 
     private:
 
-        void __init(unsigned short size_x, int N_MIN_1, ...)
+        inline void __init()
         {
-            // m_sizes[0] = size_x;
-
-            std::va_list args;
-            va_start(args, N_MIN_1);
-
-            for (unsigned short i = 0; i < N_MIN_1; i++)
+            for (unsigned short i = 0; i < s_dim; i++)
             {
-                m_sizes[i+1] = (unsigned short)va_arg(args, int);
+                m_sizes[i] = s_size_x;
             }
-
-            va_end(args);
-
-            m_sizes[0] = size_x;
         }
 
     protected:
-        static const unsigned short s_dim = sizeof...(SIZES_REST) + 1;
+        static const unsigned short s_dim = DIM;
         static const unsigned short s_size_x = SIZE_X;
         static const unsigned short s_stencil_span_x = (s_size_x + 1) / 2;
         static const unsigned short s_stencil_half_span_x = s_stencil_span_x / 2;

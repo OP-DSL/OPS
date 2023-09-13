@@ -13,13 +13,19 @@ void kernel_simple_copy_core(const unsigned int num_itr,
 
     for (unsigned int itr = 0; itr < num_itr; itr++)
     {
+#pragma HLS PIPELINE II=1
         for (unsigned int k = 0; k < vector_factor; k++)
         {
 #pragma HLS UNROLL complete
-//        	printf("[KERNEL_DEBUG]|%s| writing to bus: %d, itr: %d\n", __func__, k, itr);
+#ifdef DEBUG_LOG
+        	printf("[KERNEL_DEBUG]|%s| writing to bus: %d, itr: %d, val: %f\n", __func__, k, itr, r);
+#endif
             output_u_bus_0[k].write(r);
         }
     }
+#ifdef DEBUG_LOG
+    printf("[KERNEL_DEBUG]|%s| exiting.", __func__);
+#endif
 }
 
 void kernel_simple_copy_PE(ops::hls::GridPropertyCore& gridProp,
@@ -28,19 +34,28 @@ void kernel_simple_copy_PE(ops::hls::GridPropertyCore& gridProp,
 		s2d_1pt_no_vect::mask_stream_dt& mask_stream_u)
 {
     s2d_1pt_no_vect write_stencil_u;
-
-//    printf("[KERNEL_DEBUG]|%s| setting grid property\n", __func__);
+#ifdef DEBUG_LOG
+    printf("[KERNEL_DEBUG]|%s| setting grid property\n", __func__);
+#endif
     write_stencil_u.setGridProp(gridProp);
 
     static ::hls::stream<stencil_type> output_u_bus_0[vector_factor];
+	#pragma HLS STREAM variable = output_u_bus_0 depth = max_depth_v8
 
     unsigned int kernel_iterations = gridProp.outer_loop_limit * gridProp.xblocks;
     
-//    printf("[KERNEL_DEBUG]|%s| launching kernel_simple_copy_core with iterations: %d\n", __func__, kernel_iterations);
+#ifdef DEBUG_LOG
+    printf("[KERNEL_DEBUG]|%s| launching kernel_simple_copy_core with iterations: %d\n", __func__, kernel_iterations);
+#endif
     kernel_simple_copy_core(kernel_iterations, const_val, output_u_bus_0);
 
-//    printf("[KERNEL_DEBUG]|%s| launching stencil write\n", __func__);
+#ifdef DEBUG_LOG
+    printf("[KERNEL_DEBUG]|%s| launching stencil write\n", __func__);
+#endif
     write_stencil_u.stencilWrite(output_stream_u, mask_stream_u, output_u_bus_0);
+#ifdef DEBUG_LOG
+    printf("[KERNEL_DEBUG]|%s| exiting.", __func__);
+#endif
 }
 
 extern "C" void kernel_simple_copy(

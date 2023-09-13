@@ -55,6 +55,9 @@ extern "C" void kernel_simple_copy(
     static s2d_1pt_no_vect::widen_stream_dt widen_stream;
     static s2d_1pt_no_vect::mask_stream_dt mask_stream;
 
+	#pragma HLS STREAM variable = widen_stream depth = max_depth_v8
+	#pragma HLS STREAM variable = mask_stream depth = max_depth_v8
+
     ops::hls::GridPropertyCore gridProp;
     gridProp.dim = gridProp_dim;
     gridProp.size[0] = gridProp_size_x;
@@ -66,8 +69,9 @@ extern "C" void kernel_simple_copy(
     gridProp.xblocks = gridProp_xblocks;
     gridProp.total_itr = gridProp_total_itr;
     gridProp.outer_loop_limit = gridProp_outer_loop_limit;
-
-//    printf("[KERNEL_DEBUG]|%s| starting kernel_simple_copy_PE\n", __func__);
+#ifdef DEBUG_LOG
+    printf("[KERNEL_DEBUG]|%s| starting kernel_simple_copy_PE\n", __func__);
+#endif
     unsigned int total_bytes = gridProp.grid_size[0] * gridProp.grid_size[1] * sizeof(stencil_type);
     kernel_simple_copy_PE(gridProp, const_val, widen_stream, mask_stream);
 
@@ -76,8 +80,11 @@ extern "C" void kernel_simple_copy(
 //    				::hls::stream<ap_uint<STREAM_DATA_WIDTH>>& strm_in,
 //    				::hls::stream<ap_uint<STREAM_DATA_WIDTH/8>>& mask_in,
 //    				unsigned int size)
-//    printf("[KERNEL_DEBUG]|%s| starting stream2axisMasked\n", __func__);
+#ifdef DEBUG_LOG
+    printf("[KERNEL_DEBUG]|%s| starting stream2axisMasked\n", __func__);
+#endif
     ops::hls::stream2axisMasked<256,256>(axis_out_u, widen_stream, mask_stream, total_bytes);
-
-//    printf("[KERNEL_DEBUG]|%s| exiting.\n", __func__);
+#ifdef DEBUG_LOG
+    printf("[KERNEL_DEBUG]|%s| exiting.\n", __func__);
+#endif
 }

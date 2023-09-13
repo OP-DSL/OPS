@@ -2,12 +2,83 @@
 #include "top.hpp"
 //#define DEBUG_LOG
 
-void dut(ops::hls::GridPropertyCore& gridProp, Stencil2D & cross_stencil, stencil_type* data_in, stencil_type* data_out)
+void dut(const unsigned short gridProp_size_x,
+	    const unsigned short gridProp_size_y,
+	    const unsigned short gridProp_actual_size_x,
+	    const unsigned short gridProp_actual_size_y,
+	    const unsigned short gridProp_grid_size_x,
+	    const unsigned short gridProp_grid_size_y,
+	    const unsigned short gridProp_dim,
+	    const unsigned short gridProp_xblocks,
+	    const unsigned int gridProp_total_itr,
+	    const unsigned int gridProp_outer_loop_limit,
+		stencil_type* data_in,
+		stencil_type* data_out)
 {
+#pragma TOP
+
+#pragma HLS INTERFACE s_axilite port = gridProp_size_x bundle = control
+#pragma HLS INTERFACE s_axilite port = gridProp_size_y bundle = control
+#pragma HLS INTERFACE s_axilite port = gridProp_actual_size_x bundle = control
+#pragma HLS INTERFACE s_axilite port = gridProp_actual_size_y bundle = control
+#pragma HLS INTERFACE s_axilite port = gridProp_grid_size_x bundle = control
+#pragma HLS INTERFACE s_axilite port = gridProp_grid_size_y bundle = control
+#pragma HLS INTERFACE s_axilite port = gridProp_dim bundle = control
+#pragma HLS INTERFACE s_axilite port = gridProp_xblocks bundle = control
+#pragma HLS INTERFACE s_axilite port = gridProp_total_itr bundle = control
+#pragma HLS INTERFACE s_axilite port = gridProp_outer_loop_limit bundle = control
+
+#pragma HLS INTERFACE mode=s_axilite port=return bundle=control
+
+#pragma HLS INTERFACE mode=m_axi depth=max_depth_bytes max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=4 num_write_outstanding=4 port=data_in
+#pragma HLS INTERFACE mode=s_axilite port=data_in bundle=control
+
+#pragma HLS INTERFACE mode=m_axi depth=max_depth_bytes max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=4 num_write_outstanding=4 port=data_out
+#pragma HLS INTERFACE mode=s_axilite port=data_out bundle=control
+	/* Cross Stencil */
+    Stencil2D cross_stencil;
+
+    unsigned short points[] = {1,0, 0,1, 1,1, 2,1, 1,2};
+    float coef[] = {0.125 , 0.125 , 0.5, 0.125, 0.125};
+    unsigned short offset[] = {1,1};
+
+    ops::hls::GridPropertyCore gridProp;
+    gridProp.dim = gridProp_dim;
+    gridProp.size[0] = gridProp_size_x;
+    gridProp.size[1] = gridProp_size_y;
+    gridProp.actual_size[0] = gridProp_actual_size_x;
+    gridProp.actual_size[1] = gridProp_actual_size_y;
+    gridProp.grid_size[0] = gridProp_grid_size_x;
+    gridProp.grid_size[1] = gridProp_grid_size_y;
+    gridProp.xblocks = gridProp_xblocks;
+    gridProp.total_itr = gridProp_total_itr;
+    gridProp.outer_loop_limit = gridProp_outer_loop_limit;
+
+    cross_stencil.setGridProp(gridProp);
+    cross_stencil.setPoints(points);
+
+
+#ifndef __SYTHESIS__
+    unsigned int stencil_sizes[2];
+    unsigned short read_points[num_points * 2];
+
+    cross_stencil.getPoints(read_points);
+
+    std::cout << "SUCESSFUL INSTANTIATION OF STENCIL CORE" << std::endl;
+
+    std::cout << "POINTS: ";
+
+    for (int i = 0; i < num_points; i++)
+    {
+        std::cout << "(" << read_points[2 * i] << ", " << read_points[2 * i + 1] << ") ";
+    }
+
+    std::cout << std::endl << std::endl;
+#endif
+
     ops::hls::DataConv converterInput;
     typedef ap_uint<vector_factor * sizeof(stencil_type) * 8> widen_dt;
     typedef hls::stream<widen_dt> stream_dt;
-    stencil_type coef[] = {0.125 , 0.125 , 0.5, 0.125, 0.125};
 
     static stream_dt in_stream, out_stream;
     static ::hls::stream<stencil_type> input_bus_1[vector_factor];

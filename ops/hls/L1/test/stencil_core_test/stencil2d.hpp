@@ -11,14 +11,14 @@ constexpr unsigned short num_points = 5; //cross_stencil
 constexpr unsigned short vector_factor = 8;
 constexpr unsigned short shift_bits = 3;
 constexpr ops::hls::CoefTypes coef_type = ops::hls::CoefTypes::CONST_COEF;
-constexpr unsigned short stencil_size_p = 3;
-constexpr unsigned short stencil_size_q = 3;
+constexpr unsigned short stencil_size_p = 3; //== stencil_size_q
+constexpr unsigned short dim = 2;
 
  
 // typedef ap_axiu<vector_factor * sizeof(stencil_type), 0, 0, 0> process_dt;
 // typedef hls::stream<process_dt>  process_stream; 
 
-class Stencil2D : public ops::hls::StencilCore<stencil_type, num_points, vector_factor, coef_type, stencil_size_p, stencil_size_q>
+class Stencil2D : public ops::hls::StencilCore<stencil_type, num_points, vector_factor, coef_type, stencil_size_p, 2>
 {
     public:
 
@@ -62,7 +62,7 @@ class Stencil2D : public ops::hls::StencilCore<stencil_type, num_points, vector_
                            +-------------------+                          
          */
 
-        void kernel(stream_dt& rd_buffer, stream_dt& wr_buffer, stencil_type* coef)
+        void kernel(widen_stream_dt& rd_buffer, widen_stream_dt& wr_buffer, stencil_type* coef)
         {
             unsigned short i = 0, j = 0;
             unsigned short i_l = 0; // Line buffer index

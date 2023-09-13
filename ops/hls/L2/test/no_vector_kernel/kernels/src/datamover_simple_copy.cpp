@@ -21,7 +21,7 @@ extern "C" void kernel_datamover_simple_copy(
 	#pragma HLS INTERFACE s_axilite port = gridSize_x bundle = control
 	#pragma HLS INTERFACE s_axilite port = gridSize_y bundle = control
 
-    #pragma HLS INTERFACE mode=ma_axi bundle=gmem0 depth=max_axi_depth maxi_read_burst_length=64 maxi_write_burst_length=64 \
+    #pragma HLS INTERFACE mode=m_axi bundle=gmem0 depth=4096 max_read_burst_length=64 max_write_burst_length=64 \
         num_read_outstanding=4 num_write_outstanding=4 port=arg0_out offset=slave
 	#pragma HLS INTERFACE s_axilite port = arg0_out bundle = control
     #pragma HLS INTERFACE mode=axis port=stream0_in register
@@ -34,9 +34,11 @@ extern "C" void kernel_datamover_simple_copy(
 	range.end[0] = range_end_x;
 	range.end[1] = range_end_y;
 	range.dim = 2;
-//	printf("[KERNEL_DEBUG]|%s| starting.\n", __func__);
-
+#ifdef DEBUG_LOG
+	printf("[KERNEL_DEBUG]|%s| starting.\n", __func__);
+#endif
     ops::hls::memWriteGrid<mem_data_width, axis_data_width, data_width>(arg0_out, stream0_in, gridSize, range);
-
-//    printf("[KERNEL_DEBUG]|%s| exiting.\n", __func__);
+#ifdef DEBUG_LOG
+    printf("[KERNEL_DEBUG]|%s| exiting.\n", __func__);
+#endif
 }

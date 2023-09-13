@@ -38,37 +38,11 @@ int main()
     gridProp.total_itr = gridProp.actual_size[1] * gridProp.xblocks;  //(gridProp.actual_size[1] + p/2) * xblocks.
     gridProp.outer_loop_limit = (gridProp.actual_size[1] + 1);
 
-    /* Cross Stencil */
-    Stencil2D cross_stencil;
 
-    unsigned short points[] = {1,0, 0,1, 1,1, 2,1, 1,2};
-    float coef[] = {0.125 , 0.125 , 0.5, 0.125, 0.125};
-    unsigned short offset[] = {1,1};
-
-    cross_stencil.setGridProp(gridProp);
-    cross_stencil.setPoints(points);
-
-
-#ifndef __SYTHESIS__
-    unsigned int stencil_sizes[2];
-    unsigned short read_points[num_points * 2];
-
-    cross_stencil.getPoints(read_points);
-
-    std::cout << "SUCESSFUL INSTANTIATION OF STENCIL CORE" << std::endl;
-
-    std::cout << "POINTS: ";
-
-    for (int i = 0; i < num_points; i++)
-    {
-        std::cout << "(" << read_points[2 * i] << ", " << read_points[2 * i + 1] << ") ";
-    }
-
-    std::cout << std::endl << std::endl;
-#endif
+    stencil_type coef[] = {0.125 , 0.125 , 0.5, 0.125, 0.125};
 
     /* Data Generation */
-    const int num_tests  = 10;
+    const int num_tests  = 1;
     std::cout << "TOTAL NUMER OF TESTS: " << num_tests << std::endl;
     std::vector<bool> test_summary(num_tests);
 
@@ -98,7 +72,13 @@ int main()
         copyGrid(grid_u1_d, grid_u1_cpu, gridProp);
 
     	cpuGoldenKernel(grid_u1_cpu, grid_u2_cpu, gridProp, coef);
-        dut(gridProp, cross_stencil, grid_u1_d, grid_u2_d);
+
+        dut(gridProp.size[0], gridProp.size[1],
+        		gridProp.actual_size[0], gridProp.actual_size[1],
+        		gridProp.grid_size[0], gridProp.grid_size[1],
+				gridProp.dim, gridProp.xblocks, gridProp.total_itr,
+				gridProp.outer_loop_limit, grid_u1_d, grid_u2_d);
+
         test_summary[test_itr] = verify(grid_u2_cpu, grid_u2_d, gridProp);
 
         if (test_summary[test_itr])

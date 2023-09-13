@@ -7,10 +7,11 @@ void dut(hls::stream<ap_axiu<AXIS_WIDTH,0,0,0>>& axis_in,
 		unsigned int size)
 {
 #pragma HLS TOP
-//	#pragma HLS INTERFACE mode=m_axi bundle=gmem0 depth=4096 max_read_burst_length=64 max_write_burst_length=64 \
-//			num_read_outstanding=4 num_write_outstanding=4 port=mem_in offset=slave
-//	#pragma HLS INTERFACE mode=m_axi bundle=gmem0 depth=4096 max_read_burst_length=64 max_write_burst_length=64 \
-//			num_read_outstanding=4 num_write_outstanding=4 port=mem_out offset=slave
+	#pragma HLS INTERFACE mode=axis register_mode=both port=axis_in register
+	#pragma HLS INTERFACE m_axi bundle=gmem0 depth=max_depth port=mem_out offset=slave
+	#pragma HLS INTERFACE s_axilite port=mem_out bundle=control
+	#pragma HLS INTERFACE s_axilite port=size bundle=control
+	#pragma HLS INTERFACE s_axilite port=return bundle=control
 
 	unsigned int num_of_bytes_in_widen_axi = AXI_M_WIDTH/8;
 	unsigned int widen_size = (size / num_of_bytes_in_widen_axi) * num_of_bytes_in_widen_axi;

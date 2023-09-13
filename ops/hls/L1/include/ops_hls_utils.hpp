@@ -55,7 +55,6 @@ static T register_it(T x){
 	return tmp;
 }
 
-
 #define INT_SUM(...) (add(NUMARGS(int, __VA_ARGS__), __VA_ARGS__))
 #define INT_MUL(...) (multiply(NUMARGS(int, __VA_ARGS__), __VA_ARGS__))
 

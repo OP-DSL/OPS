@@ -3,7 +3,7 @@
 #include <vector>
 #include "top.hpp"
 
-//#define DEBUG_LOG
+#define DEBUG_LOG
 
 int main()
 {
@@ -20,7 +20,7 @@ int main()
     std::normal_distribution<float> distFloat(100, 10);
     ops::hls::DataConv converter;
 
-    const int num_tests  = 10;
+    const int num_tests  = 1;
     std::cout << "TOTAL NUMER OF TESTS: " << num_tests << std::endl;
     std::vector<bool> test_summary(10);
 

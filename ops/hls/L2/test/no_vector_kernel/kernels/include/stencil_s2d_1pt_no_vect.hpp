@@ -5,14 +5,15 @@
 #include <stdio.h>
 
 static constexpr unsigned short num_points = 1;
-static constexpr unsigned short stencil_size[] = {1, 1};
+static constexpr unsigned short stencil_size = 1;
+static constexpr unsigned short stencil_dim = 2;
 
 class s2d_1pt_no_vect : public ops::hls::StencilCore<stencil_type, 1, vector_factor, ops::hls::CoefTypes::CONST_COEF,
-        stencil_size[0], stencil_size[1]>
+        stencil_size, stencil_dim>
 {
     public:
         using ops::hls::StencilCore<stencil_type, 1, vector_factor, ops::hls::CoefTypes::CONST_COEF,
-                stencil_size[0], stencil_size[1]>::m_gridProp;
+                stencil_size, stencil_dim>::m_gridProp;
 
 //        void stencilRead(widen_stream_dt& rd_buffer, ::hls::stream<stencil_type> output_bus[1])
 //        {
@@ -150,44 +151,67 @@ class s2d_1pt_no_vect : public ops::hls::StencilCore<stencil_type, 1, vector_fac
                                 
                 process: for (unsigned short k = 0; k < vector_factor; k++)
                 {  
-                    stencil_type r = input_bus[k].read();
-                    m_memWrArr[k] = r;
-//                    printf("[KERNEL_DEBUG]|%s| reading, (i:%d, j:%d, k:%d), value:%f\n", __func__, i, j, k, r);
-                }
-
-                arr2vec: for (unsigned short k = 0; k < vector_factor; k++)
-                {
+#pragma HLS UNROLL complete
                 	unsigned short index = (i << shift_bits) + k;
                 	bool cond_no_point_update = register_it(index < m_lowerLimits[0]
                 								|| index >= m_upperLimits[0]
                 								|| (j < (m_lowerLimits[1] + s_stencil_half_span_x))
                 								|| (j >= (m_upperLimits[1] + s_stencil_half_span_x)));
                     ops::hls::DataConv tmpConv;
-                    tmpConv.f = m_memWrArr[k];
+                    stencil_type r = input_bus[k].read();
+                   	tmpConv.f = r;
+#ifdef DEBUG_LOG
+                    printf("[KERNEL_DEBUG]|%s| reading, (i:%d, j:%d, k:%d), limits(xl:>= %d, xh:< %d, yl:>= %d, yh:< %d), stencil_half_span: %d, value:%f, condition_update:%d\n",
+                    		__func__, i, j, k, m_lowerLimits[0], m_upperLimits[0], (m_lowerLimits[1] + s_stencil_half_span_x), (m_upperLimits[1] + s_stencil_half_span_x), s_stencil_half_span_x, r, cond_no_point_update);
+#endif
                     if (cond_no_point_update)
                     {
-                    	 maskValue.range((k + 1) * sizeof(stencil_type) - 1, k * sizeof(stencil_size)) = 0;
+                    	 maskValue.range((k + 1) * sizeof(stencil_type) - 1, k * sizeof(stencil_type)) = 0;
                     	 updateValue.range(s_datatype_size * (k + 1) - 1, k * s_datatype_size) = 0.1;
                     }
                     else
                     {
-                    	maskValue.range((k + 1) * sizeof(stencil_type) - 1, k * sizeof(stencil_size)) = -1;
+                    	maskValue.range((k + 1) * sizeof(stencil_type) - 1, k * sizeof(stencil_type)) = -1;
                     	updateValue.range(s_datatype_size * (k + 1) - 1, k * s_datatype_size) = tmpConv.i;
                     }
                 }
 
+//                arr2vec: for (unsigned short k = 0; k < vector_factor; k++)
+//                {
+//#pragma HLS UNROLL complete
+//
+//
+//
+//
+//                    tmpConv.f = m_memWrArr[k];
+//
+//                }
+
                 write:
                 {
-                    bool cond_write = ( j >= 1);
+                    bool cond_write = ( j >= 0);
 
                     if (cond_write)
                     {
-//                    	printf("[KERNEL_DEBUG]|%s| writing to axis. (i:%d, j:%d)\n", __func__, i, j);
+#ifdef DEBUG_LOG
+                    	printf("[KERNEL_DEBUG]|%s| writing to axis. (i:%d, j:%d), val=(", __func__, i, j);
+
+                    	for (unsigned short k = 0; k < vector_factor; k++)
+						{
+                			ops::hls::DataConv tmp;
+                			tmp.i = updateValue.range(s_datatype_size * (k + 1) - 1, k * s_datatype_size);
+                			printf("%f,", tmp.f);
+                		}
+                		printf(")\n");
+#endif
                         wr_buffer << updateValue;
                         strb_buffer << maskValue;
                     }
                 }
             }
+#ifdef DEBUG_LOG
+            printf("[KERNEL_DEBUG]|%s| exiting.", __func__);
+#endif
         }
 
     private:
