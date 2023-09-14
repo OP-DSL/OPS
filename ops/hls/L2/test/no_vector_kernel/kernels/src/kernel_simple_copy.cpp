@@ -50,6 +50,7 @@ extern "C" void kernel_simple_copy(
 //	#pragma HLS INTERFACE s_axilite port = range->dim bundle = control
 
 	#pragma HLS INTERFACE axis port = axis_out_u register
+	#pragma HLS INTERFACE ap_hls_chain port = return bundle = control
 	#pragma HLS INTERFACE s_axilite port = return bundle = control
 
     static s2d_1pt_no_vect::widen_stream_dt widen_stream;

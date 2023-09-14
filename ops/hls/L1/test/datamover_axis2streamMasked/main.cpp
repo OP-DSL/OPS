@@ -3,7 +3,7 @@
 #include <vector>
 #include "top.hpp"
 
-// #define DEBUG_LOG 
+//#define DEBUG_LOG
 static void initMem(ap_uint<DATA_WIDTH> * mem,
 		const float initVal,
 		ops::hls::SizeType gridSize)
@@ -42,20 +42,24 @@ static bool testDut(float* data,
 		unsigned short x_size)
 {
     static hls::stream<ap_axiu<AXIS_WIDTH,0,0,0>> strm_out;
+    static hls::stream<ap_uint<STREAM_WIDTH>> data_in;
+    static hls::stream<ap_uint<STREAM_WIDTH/8>> mask_in;
     ap_uint<DATA_WIDTH> mem[gridSize[0] * gridSize[1] * gridSize[2]];
 
     const float initVal = 2.0;
     initMem(mem, initVal, gridSize);
 
+#ifdef DEBUG_LOG
     printMem(mem, gridSize, "After init");
+#endif
 
 	std::random_device rd;
     std::mt19937 mtRandom(rd());
     std::uniform_int_distribution<unsigned short> distLow(0, x_size/3);
     std::uniform_int_distribution<unsigned short> distHigh(x_size*2/3, x_size);
 
-	ops::hls::SizeType start = {5, 1, 5}; //{distLow(mtRandom), distLow(mtRandom), distLow(mtRandom)};
-	ops::hls::SizeType end = {15, 12, 10}; //{distHigh(mtRandom), distHigh(mtRandom), distHigh(mtRandom)};
+	ops::hls::SizeType start = {distLow(mtRandom), distLow(mtRandom), distLow(mtRandom)}; //{5, 1, 5};
+	ops::hls::SizeType end = {distHigh(mtRandom), distHigh(mtRandom), distHigh(mtRandom)}; //{15, 12, 10};
 
 	ops::hls::SizeType diff;
 	diff[0] = end[0] - start[0];
@@ -68,15 +72,20 @@ static bool testDut(float* data,
 	range.end[0] = end[0]; range.end[1] = end[1]; range.end[2] = end[2];
 
 	constexpr unsigned int num_pkts_per_beat = AXI_M_WIDTH / AXIS_WIDTH;
+	constexpr unsigned int num_stream_pkts_per_beat = AXI_M_WIDTH / STREAM_WIDTH;
 	constexpr unsigned int data_per_pkt = AXIS_WIDTH / DATA_WIDTH;
+	constexpr unsigned int data_per_stram_pkt = STREAM_WIDTH / DATA_WIDTH;
 	constexpr unsigned int data_per_beat = AXI_M_WIDTH / DATA_WIDTH;
     constexpr unsigned int bytes_per_beat = AXI_M_WIDTH / 8;
     constexpr unsigned int data_bytes = DATA_WIDTH / 8;
     unsigned short x_beats = (diff[0] + data_per_beat - 1) / data_per_beat;
     unsigned short x_pkts = (diff[0] + data_per_pkt - 1) / data_per_pkt;
-	const unsigned int num_beats = x_beats * diff[1] * diff[2];
-	unsigned int num = num_beats * data_per_beat;
+    unsigned short x_stream_pkts = (diff[0] + data_per_stram_pkt - 1) / data_per_stram_pkt;
+//	const unsigned int num_beats = x_beats * diff[1] * diff[2];
+	unsigned int num = x_pkts * data_per_pkt * diff[1] * diff[2];
 	unsigned int sizeBytes = num * sizeof(float);
+	ap_uint<data_bytes> zero = 0;
+	ap_uint<data_bytes> one = -1;
 
 	std::cout << "[INFO] " << "write range: ("
 			<< start[0] << ", " << start[1] << ", " << start[2] << ") --> ("
@@ -135,7 +144,7 @@ static bool testDut(float* data,
     	}
     }
 
-    dut(mem, strm_out, gridSize, range);
+    dut(strm_out, data_in, mask_in, sizeBytes);
 
     printMem(mem, gridSize, "After mem write");
 
@@ -149,45 +158,70 @@ static bool testDut(float* data,
     	{
     		for (unsigned short x_beat = 0; x_beat < x_beats; x_beat++)
     		{
-    			for (int pkt = 0; pkt < num_pkts_per_beat; pkt++)
+    			for (int pkt = 0; pkt < num_stream_pkts_per_beat; pkt++)
 				{
-    				int pkt_id = pkt + x_beat * num_pkts_per_beat;
+    				int pkt_id = pkt + x_beat * num_stream_pkts_per_beat;
+    				ap_uint<STREAM_WIDTH> dataPkt;
+    				ap_uint<STREAM_WIDTH/8> maskPkt;
 
     				if (pkt_id < x_pkts)
     				{
-        	            for (int data_i = 0; data_i < data_per_pkt; data_i++)
+    					dataPkt = data_in.read();
+    					maskPkt = mask_in.read();
+
+        	            for (int data_i = 0; data_i < data_per_stram_pkt; data_i++)
         	            {
-        	            	int i = data_i + pkt * data_per_pkt + x_beat * data_per_beat;
+        	            	int i = data_i + pkt * data_per_stram_pkt + x_beat * data_per_beat;
         	                int index = i  + gridSize[0] * j + k * gridSize[0] * gridSize[1];
         	                ops::hls::DataConv converter;
-        	                converter.i = mem_offsetted[index];
 
         	                if (i < diff[0])
         	                {
-                                if (converter.f != data[initial_offset + index])
-                                {
-                                    no_error = false;
-                                    std::cerr << "[ERROR] Value mismatch. Index: " << index
-                                    		<< ", offseted_index: " << index + initial_offset
-                                            << " mem val: " << converter.f
-                                            << " data val: " << data[initial_offset + index] << std::endl;
-                                }
+        	                	converter.i = dataPkt.range((data_i+1) * DATA_WIDTH - 1, data_i * DATA_WIDTH);
+
+        	                	if (converter.f != data[initial_offset + index])
+        	                	{
+        	                		no_error = false;
+									std::cerr << "[ERROR] Value mismatch. Index: " << index
+											<< ", offseted_index: " << index + initial_offset
+											<< ", (i:"<< i << ", j:" << j <<", k:" << k << ")"
+											<< ", stream val: " << converter.f
+											<< ", data val: " << data[initial_offset + index] << std::endl;
+        	                	}
+        	                	if (maskPkt.range((data_i + 1) * data_bytes -1, data_i * data_bytes) != one)
+        	                	{
+        	                		no_error = false;
+									std::cerr << "[ERROR] mask mismatch. it has to be all 1. Index: " << index
+											<< ", offseted_index: " << index + initial_offset
+											<< ", (i:"<< i << ", j:" << j <<", k:" << k << ")"
+											<< ", stream mask: " << maskPkt.range((data_i + 1) * data_bytes -1, data_i * data_bytes)
+											<< ", data val: " << data[initial_offset + index] << std::endl;
+        	                	}
+
         	                }
         	                else
         	                {
-                                if (converter.f != initVal)
-                                {
-                                    no_error = false;
-                                    std::cerr << "[ERROR] Padded values cannot be overwritten. Index: " << index
-                                    		<< ", offseted_index: " << index + initial_offset
-											<< ", init value: " << initVal
-                                            << " mem val: " << converter.f << std::endl;
-                                }
+        	                	if (maskPkt.range((data_i + 1) * data_bytes -1, data_i * data_bytes) != zero)
+        	                	{
+        	                		no_error = false;
+									std::cerr << "[ERROR] mask mismatch. it has to be all 0. Index: " << index
+											<< ", offseted_index: " << index + initial_offset
+											<< ", (i:"<< i << ", j:" << j <<", k:" << k << ")"
+											<< ", stream mask: " << maskPkt.range((data_i + 1) * data_bytes -1, data_i * data_bytes)
+											<< ", data val: " << data[initial_offset + index] << std::endl;
+        	                	}
         	                }
+#ifdef DEBUG_LOG
+							std::cout << "[DEBUG] Index: " << index
+									<< ", offseted_index: " << index + initial_offset
+									<< ", (i:"<< i << ", j:" << j <<", k:" << k << ")"
+									<< ", stream mask: " << maskPkt.range((data_i + 1) * data_bytes -1, data_i * data_bytes)
+									<< ", data val: " << data[initial_offset + index] << std::endl;
+#endif
         	            }
     				}
 				}
-    		}
+			}
     	}
     }
 
@@ -214,7 +248,7 @@ int main()
     std::normal_distribution<float> distFloat(100, 10);
     ops::hls::DataConv converter;
 
-    const int num_tests  = 1;
+    const int num_tests  = 10;
     std::cout << "TOTAL NUMER OF TESTS: " << num_tests << std::endl;
     std::vector<bool> test_summary(10);
 
@@ -226,7 +260,7 @@ int main()
         std::cout << "**********************************" << std::endl;
         std::cout << std::endl;
 
-        const unsigned short x_size = 16; //distInt(mtSeeded);
+        const unsigned short x_size = distInt(mtSeeded); //16;
         const unsigned short bytes_per_beat = AXI_M_WIDTH / 8;
         const unsigned short data_per_beat = bytes_per_beat / sizeof(float);
         const unsigned short x_beats = (x_size + data_per_beat - 1) / data_per_beat;

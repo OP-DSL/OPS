@@ -25,6 +25,7 @@ extern "C" void kernel_datamover_simple_copy(
         num_read_outstanding=4 num_write_outstanding=4 port=arg0_out offset=slave
 	#pragma HLS INTERFACE s_axilite port = arg0_out bundle = control
     #pragma HLS INTERFACE mode=axis port=stream0_in register
+	#pragma HLS INTERFACE ap_hls_chain port = return bundle = control
 	#pragma HLS INTERFACE s_axilite port = return bundle = control
 
 	ops::hls::SizeType gridSize = {gridSize_x, gridSize_y, 1};

@@ -10,7 +10,7 @@
 #include <iomanip>
 #include <random>
 
-#define DEBUG_LOG
+//#define DEBUG_LOG
 
 void getRangeAdjustedGridProp(ops::hls::GridPropertyCore& original, 
 		ops::hls::AccessRange& range, ops::hls::GridPropertyCore& adjusted, const unsigned short vector_factor=8)
@@ -163,7 +163,7 @@ bool verification(TaskDataHolder& task, const float& fill, const float& val)
 				if (task.host_buffer[index] != val)
 				{
 					verified = false;
-					std::cerr << "[ERROR]: val missed at, i:" << i <<", j:" << j <<", with value:" << task.host_buffer[index] <<". expected: " << val << std::endl;
+					std::cout << "[ERROR]: val missed at, i:" << i <<", j:" << j <<", with value:" << task.host_buffer[index] <<". expected: " << val << std::endl;
 				}
 			}
 			else
@@ -171,7 +171,7 @@ bool verification(TaskDataHolder& task, const float& fill, const float& val)
 				if (task.host_buffer[index] != fill)
 				{
 					verified = false;
-					std::cerr << "[ERROR]: fill missed at, i:" << i <<", j:" << j <<", with value:" << task.host_buffer[index] <<". expected: " << fill << std::endl;
+					std::cout << "[ERROR]: fill missed at, i:" << i <<", j:" << j <<", with value:" << task.host_buffer[index] <<". expected: " << fill << std::endl;
 				}
 			}
 		}
@@ -208,7 +208,7 @@ int main(int argc, char **argv)
 
 	unsigned int vector_factor = 8;
 
-	const unsigned int num_tests = 10;
+	const unsigned int num_tests = 1;
 	std::cout << "TOTAL NUMBER OF TESTS: " << num_tests << std::endl;
 
 	//random generators
@@ -216,7 +216,7 @@ int main(int argc, char **argv)
 	unsigned int seed = 7;
 	std::mt19937 mtSeeded(seed);
 	std::mt19937 mtRandom(rd());
-	std::uniform_int_distribution<unsigned short> disInt(5,15);
+	std::uniform_int_distribution<unsigned short> disInt(5,40);
 	std::normal_distribution<float> disFloat(100, 10);
 
 	//summery data holders
@@ -227,7 +227,7 @@ int main(int argc, char **argv)
 	for (unsigned int test_itr = 0; test_itr < num_tests; test_itr++)
 	{
 		TaskDataHolder& taskdata = TaskData[test_itr];
-		unsigned short x_size= disInt(mtSeeded);
+		unsigned short x_size = 35; //disInt(mtSeeded);
 		taskdata.gridProperty = createGridPropery(2, {x_size, x_size,1},
 				{1,1,0},
 				{1,1,0});
@@ -245,13 +245,13 @@ int main(int argc, char **argv)
 
 		ops::hls::AccessRange range;
 		range.dim = 2;
-		range.start[0] = disLow(mtRandom);
-		range.start[1] = disLow(mtRandom);
-		range.end[0] = disHigh(mtRandom);
-		range.end[1] = disHigh(mtRandom);
+		range.start[0] = 15;//disLow(mtRandom);
+		range.start[1] = 16; //disLow(mtRandom);
+		range.end[0] = 32; //disHigh(mtRandom);
+		range.end[1] = 32; //disHigh(mtRandom);
 
 		taskdata.range = range;
-#ifdef DEBUG_LOG
+//#ifdef DEBUG_LOG
         std::cout << std::endl;
         std::cout << "**********************************" << std::endl;
         std::cout << " TEST " << test_itr << std::endl;
@@ -260,7 +260,7 @@ int main(int argc, char **argv)
 
 		printGridProp(taskdata.gridProperty, "original");
 		printAccessRange(range);
-#endif
+//#endif
 	}
 
 
@@ -294,9 +294,11 @@ int main(int argc, char **argv)
 		OCL_CHECK(err, err = krn_datamover.setArg(narg++, taskdata.gridProperty.grid_size[1]));
 		OCL_CHECK(err, err = krn_datamover.setArg(narg++, taskdata.cl_buffer));
 
+		std::cout << "[DEBUG] test: " << test_itr <<", enqueue fill memory movement" << std::endl;
 		OCL_CHECK(err, err = queue.enqueueMigrateMemObjects({taskdata.cl_buffer}, 0, nullptr, &taskdata.fill_event));
 		std::vector<cl::Event> events;
 		events.push_back(taskdata.fill_event);
+		std::cout << "[DEBUG] test: " << test_itr <<", enqueue kernels" << std::endl;
 		OCL_CHECK(err, err = queue.enqueueTask(krn_datamover, &events, &taskdata.data_event));
 		OCL_CHECK(err, err = queue.enqueueTask(krnl_simpleCopy, &events, &taskdata.task_event));
 
@@ -304,7 +306,7 @@ int main(int argc, char **argv)
 		events.push_back(taskdata.data_event);
 		events.push_back(taskdata.task_event);
 		//Receive event
-
+		std::cout << "[DEBUG] test: " << test_itr <<", enqueue memory read" << std::endl;
 		OCL_CHECK(err, err = queue.enqueueMigrateMemObjects({taskdata.cl_buffer}, CL_MIGRATE_MEM_OBJECT_HOST, &events, &taskdata.receive_event));
 	}
 
@@ -320,7 +322,14 @@ int main(int argc, char **argv)
 	}
 #endif
 
-	queue.finish();
+	for (unsigned int test_itr = 0; test_itr < num_tests; test_itr++)
+	{
+		TaskDataHolder& taskdata = TaskData[test_itr];
+		std::cout << "[DEBUG] test: " << test_itr <<", syncing" << std::endl;
+		taskdata.receive_event.wait();
+		std::cout << "[DEBUG] test: " << test_itr <<", syncing completed" << std::endl;
+
+	}
 
     std::cout << std::endl;
     std::cout << "**********************************" << std::endl;

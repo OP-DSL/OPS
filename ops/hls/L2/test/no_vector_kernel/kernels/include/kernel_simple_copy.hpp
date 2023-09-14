@@ -17,8 +17,9 @@ void kernel_simple_copy_core(const unsigned int num_itr,
         for (unsigned int k = 0; k < vector_factor; k++)
         {
 #pragma HLS UNROLL complete
+//        	float val = itr * vector_factor + k;
 #ifdef DEBUG_LOG
-        	printf("[KERNEL_DEBUG]|%s| writing to bus: %d, itr: %d, val: %f\n", __func__, k, itr, r);
+        	printf("[KERNEL_DEBUG]|%s| writing to bus: %d, itr: %d, val: %f\n", __func__, k, itr, val);
 #endif
             output_u_bus_0[k].write(r);
         }
