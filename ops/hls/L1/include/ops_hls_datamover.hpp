@@ -19,11 +19,11 @@
 //#define DEBUG_LOG
 
 #ifndef __SYTHESIS__
-#ifdef DEBUG_LOG
-	#ifndef DEBUG_LOG_SIZE_OF
-		#define DEBUG_LOG_SIZE_OF 4
+	#ifdef DEBUG_LOG
+		#ifndef DEBUG_LOG_SIZE_OF
+			#define DEBUG_LOG_SIZE_OF 4
+		#endif
 	#endif
-#endif
 #endif
 
 namespace ops {
@@ -669,25 +669,65 @@ void axis2streamMasked(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
 
 	ap_axiu<AXIS_DATA_WIDTH,0,0,0> cycleBuf[2];
 	ap_uint<1> cycleBufIndex = 0;
-#pragma HLS ARRAY_PARTITION variable=axisPkt type=complete
+#pragma HLS ARRAY_PARTITION variable=cycleBuf type=complete
 
 
 	//first read
-	if (num_axis_pkts)
+//	if (num_axis_pkts)
+//	{
+	cycleBuf[cycleBufIndex] = axis_in.read();
+
+#ifndef __SYTHESIS__
+	#ifdef DEBUG_LOG
+	printf("   |HLS DEBUG_LOG||%s| Iter 0. Cycle Buff, ", __func__);
+
+	for (unsigned int i = 0; i < 2; i++)
 	{
-		cycleBuf[cycleBufIndex] = axis_in.read();
-		for (unsigned int j = 0; j < num_hls_pkt_per_axis_pkt; j++)
+		printf(" id:%d - val=(",i);
+		for (unsigned int n = 0; n < bytes_per_axis_pkt/DEBUG_LOG_SIZE_OF; n++)
 		{
-		#pragma HLS PIPELINE II=1
-			data_out << cycleBuf[cycleBufIndex].data.range((j+1) * STREAM_DATA_WIDTH - 1, j * STREAM_DATA_WIDTH);
-			mask_out << cycleBuf[cycleBufIndex].strb.range((j+1) * bytes_per_hls_pkt -1, j * bytes_per_hls_pkt);
+			DataConv tmp;
+			tmp.i = cycleBuf[i].data.range((n+1) * DEBUG_LOG_SIZE_OF * 8 - 1, n * DEBUG_LOG_SIZE_OF * 8);
+			printf("%f,", tmp.f);
 		}
-		cycleBufIndex += 1;
+
+		printf(") strb=(%x)", cycleBuf[i].strb);
 	}
+	printf("\n");
+	#endif
+#endif
+
+	for (unsigned int j = 0; j < num_hls_pkt_per_axis_pkt; j++)
+	{
+	#pragma HLS PIPELINE II=1
+		data_out << cycleBuf[cycleBufIndex].data.range((j+1) * STREAM_DATA_WIDTH - 1, j * STREAM_DATA_WIDTH);
+		mask_out << cycleBuf[cycleBufIndex].strb.range((j+1) * bytes_per_hls_pkt -1, j * bytes_per_hls_pkt);
+	}
+	cycleBufIndex += 1;
+//	}
 
 	for (unsigned int itr = 1; itr < num_axis_pkts; itr++)
 	{
 		cycleBuf[cycleBufIndex] = axis_in.read();
+#ifndef __SYTHESIS__
+	#ifdef DEBUG_LOG
+		printf("   |HLS DEBUG_LOG||%s| Iter %d. Cycle Buff, ", __func__, itr);
+
+		for (unsigned int i = 0; i < 2; i++)
+		{
+			printf(" id:%d - val=(",i);
+			for (unsigned int n = 0; n < bytes_per_axis_pkt/DEBUG_LOG_SIZE_OF; n++)
+			{
+				DataConv tmp;
+				tmp.i = cycleBuf[i].data.range((n+1) * DEBUG_LOG_SIZE_OF * 8 - 1, n * DEBUG_LOG_SIZE_OF * 8);
+				printf("%f,", tmp.f);
+			}
+
+			printf(") strb=(%x)", cycleBuf[i].strb);
+		}
+		printf("\n");
+	#endif
+#endif
 		ap_uint<1> cycleBufIndexPlusOne = cycleBufIndex + 1;
 
 		ap_axiu<AXIS_DATA_WIDTH,0,0,0> axisPkt;
@@ -699,11 +739,25 @@ void axis2streamMasked(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
 		if (shift_bits)
 		{
 			axisPkt.data.range(shift_bits - 1, 0)
-					= cycleBuf[cycleBufIndexPlusOne].data.range(AXIS_DATA_WIDTH - 1, shift_bits);
+					= cycleBuf[cycleBufIndexPlusOne].data.range(AXIS_DATA_WIDTH - 1, AXIS_DATA_WIDTH - shift_bits);
 			axisPkt.strb.range(shiftBytes - 1, 0)
-					= cycleBuf[cycleBufIndexPlusOne].data.range(bytes_per_axis_pkt - 1, shiftBytes);
+					= cycleBuf[cycleBufIndexPlusOne].strb.range(bytes_per_axis_pkt - 1, bytes_per_axis_pkt - shiftBytes);
 		}
 
+#ifndef __SYTHESIS__
+	#ifdef DEBUG_LOG
+		printf("   |HLS DEBUG_LOG||%s| shifted axis , val=(", __func__);
+
+		for (unsigned n = 0; n < bytes_per_axis_pkt/DEBUG_LOG_SIZE_OF; n++)
+		{
+			DataConv tmp;
+			tmp.i = axisPkt.data.range((n+1) * DEBUG_LOG_SIZE_OF * 8 - 1, n * DEBUG_LOG_SIZE_OF * 8);
+			printf("%f,", tmp.f);
+		}
+
+		printf(") strb=(%x)\n", axisPkt.strb);
+	#endif
+#endif
 		for (unsigned int j = 0; j < num_hls_pkt_per_axis_pkt; j++)
 		{
 		#pragma HLS PIPELINE II=1

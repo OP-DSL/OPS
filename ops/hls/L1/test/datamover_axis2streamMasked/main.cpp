@@ -57,6 +57,7 @@ static bool testDut(float* data,
     std::mt19937 mtRandom(rd());
     std::uniform_int_distribution<unsigned short> distLow(0, x_size/3);
     std::uniform_int_distribution<unsigned short> distHigh(x_size*2/3, x_size);
+    std::uniform_int_distribution<unsigned short> distShift(0, 7);
 
 	ops::hls::SizeType start = {distLow(mtRandom), distLow(mtRandom), distLow(mtRandom)}; //{5, 1, 5};
 	ops::hls::SizeType end = {distHigh(mtRandom), distHigh(mtRandom), distHigh(mtRandom)}; //{15, 12, 10};
@@ -81,11 +82,14 @@ static bool testDut(float* data,
     unsigned short x_beats = (diff[0] + data_per_beat - 1) / data_per_beat;
     unsigned short x_pkts = (diff[0] + data_per_pkt - 1) / data_per_pkt;
     unsigned short x_stream_pkts = (diff[0] + data_per_stram_pkt - 1) / data_per_stram_pkt;
-//	const unsigned int num_beats = x_beats * diff[1] * diff[2];
-	unsigned int num = x_pkts * data_per_pkt * diff[1] * diff[2];
+	const unsigned int num_beats = x_beats * diff[1] * diff[2];
+	unsigned int num = num_beats * data_per_beat;
 	unsigned int sizeBytes = num * sizeof(float);
+	const unsigned int x_sizeBytes = x_pkts * data_per_pkt * data_bytes;
 	ap_uint<data_bytes> zero = 0;
 	ap_uint<data_bytes> one = -1;
+	unsigned short shiftData = distShift(mtRandom);
+	unsigned short shiftBytes = shiftData * data_bytes;
 
 	std::cout << "[INFO] " << "write range: ("
 			<< start[0] << ", " << start[1] << ", " << start[2] << ") --> ("
@@ -94,13 +98,14 @@ static bool testDut(float* data,
 				<< diff[0] << ", " << diff[1] << ", " << diff[2] << ")" << std::endl;
 	std::cout << "[INFO] x_beats: " << x_beats << std::endl;
 	std::cout << "[INFO] x_pkts: " << x_pkts << std::endl;
+	std::cout << "[INFO] shift: " << shiftData << std::endl;
 	std::cout << "[INFO] Size (Bytes): " << sizeBytes << std::endl;
 
     unsigned int initial_offset = start[0] + start[1] * gridSize[0] + start[2] * gridSize[0] * gridSize[1];
 
-    for (unsigned short k = 0; k < diff[2]; k++)
+    for (unsigned short k = 0; k <= diff[2]; k++)
     {
-    	for (unsigned short j = 0; j < diff[1]; j++)
+    	for (unsigned short j = 0; j <= diff[1]; j++)
     	{
     		for (unsigned short x_beat = 0; x_beat < x_beats; x_beat++)
     		{
@@ -137,6 +142,18 @@ static bool testDut(float* data,
 #endif
         	                }
         	            }
+#ifdef DEBUG_LOG
+						printf("   |HLS DEBUG_LOG||%s| write axis , val=(", __func__);
+
+						for (unsigned n = 0; n < data_per_pkt; n++)
+						{
+							ops::hls::DataConv tmp;
+							tmp.i = outPkt.data.range((n+1) * DATA_WIDTH - 1, n * DATA_WIDTH);
+							printf("%f,", tmp.f);
+						}
+
+						printf(") strb=(%x)\n", outPkt.strb);
+#endif
         	            strm_out.write(outPkt);
     				}
 				}
@@ -144,7 +161,13 @@ static bool testDut(float* data,
     	}
     }
 
-    dut(strm_out, data_in, mask_in, sizeBytes);
+    for (unsigned short k = 0; k <= diff[2]; k++)
+    {
+    	for (unsigned short j = 0; j <= diff[1]; j++)
+    	{
+    		dut(strm_out, data_in, mask_in, x_sizeBytes, shiftBytes);
+    	}
+    }
 
     printMem(mem, gridSize, "After mem write");
 
@@ -152,9 +175,9 @@ static bool testDut(float* data,
 
     bool no_error = true;
 
-    for (unsigned short k = 0; k < diff[2]; k++)
+    for (unsigned short k = 0; k <= diff[2]; k++)
     {
-    	for (unsigned short j = 0; j < diff[1]; j++)
+    	for (unsigned short j = 0; j <= diff[1]; j++)
     	{
     		for (unsigned short x_beat = 0; x_beat < x_beats; x_beat++)
     		{
@@ -164,7 +187,55 @@ static bool testDut(float* data,
     				ap_uint<STREAM_WIDTH> dataPkt;
     				ap_uint<STREAM_WIDTH/8> maskPkt;
 
-    				if (pkt_id < x_pkts)
+    				bool isFirstPkt = (x_beat==0 and pkt == 0);
+
+    				if (isFirstPkt)
+    				{
+    					dataPkt = data_in.read();
+    					maskPkt = mask_in.read();
+
+        	            for (int data_i = 0; data_i < shiftData; data_i++)
+        	            {
+        	            	int i = data_i + pkt * data_per_stram_pkt + x_beat * data_per_beat;
+        	                int index = i  + gridSize[0] * j + k * gridSize[0] * gridSize[1];
+        	                ops::hls::DataConv converter;
+
+							if (i < diff[0])
+							{
+								converter.i = dataPkt.range((data_i+1) * DATA_WIDTH - 1, data_i * DATA_WIDTH);
+
+								if (converter.f != data[initial_offset + index])
+								{
+									no_error = false;
+									std::cerr << "[ERROR]|" << __func__<< "|" << __LINE__ << "| " <<"Value mismatch. Index: " << index
+											<< ", offseted_index: " << index + initial_offset
+											<< ", (i:"<< i << ", j:" << j <<", k:" << k << ")"
+											<< ", stream val: " << converter.f
+											<< ", data val: " << data[initial_offset + index] << std::endl;
+								}
+								if (maskPkt.range((data_i + 1) * data_bytes -1, data_i * data_bytes) != one)
+								{
+									no_error = false;
+									std::cerr << "[ERROR]|" << __func__<< "|" << __LINE__ << "| " << "mask mismatch. it has to be all 1. Index: " << index
+											<< ", offseted_index: " << index + initial_offset
+											<< ", (i:"<< i << ", j:" << j <<", k:" << k << ")"
+											<< ", stream mask: " << maskPkt.range((data_i + 1) * data_bytes -1, data_i * data_bytes)
+											<< ", data val: " << data[initial_offset + index] << std::endl;
+								}
+
+							}
+
+#ifdef DEBUG_LOG
+							std::cout << "[DEBUG] Index: " << index
+									<< ", offseted_index: " << index + initial_offset
+									<< ", (i:"<< i << ", j:" << j <<", k:" << k << ")"
+									<< ", stream mask: " << maskPkt.range((data_i + 1) * data_bytes -1, data_i * data_bytes)
+									<< ", data val: " << data[initial_offset + index] << std::endl;
+    #endif
+        	            }
+    				}
+
+    				else if (pkt_id < x_pkts)
     				{
     					dataPkt = data_in.read();
     					maskPkt = mask_in.read();
@@ -175,27 +246,27 @@ static bool testDut(float* data,
         	                int index = i  + gridSize[0] * j + k * gridSize[0] * gridSize[1];
         	                ops::hls::DataConv converter;
 
-        	                if (i < diff[0])
+        	                if (i < diff[0] + shiftData)
         	                {
         	                	converter.i = dataPkt.range((data_i+1) * DATA_WIDTH - 1, data_i * DATA_WIDTH);
 
-        	                	if (converter.f != data[initial_offset + index])
+        	                	if (converter.f != data[initial_offset + index - shiftData])
         	                	{
         	                		no_error = false;
-									std::cerr << "[ERROR] Value mismatch. Index: " << index
+									std::cerr << "[ERROR]|" << __func__<< "|" << __LINE__ << "| " << " Value mismatch. Index: " << index
 											<< ", offseted_index: " << index + initial_offset
 											<< ", (i:"<< i << ", j:" << j <<", k:" << k << ")"
 											<< ", stream val: " << converter.f
-											<< ", data val: " << data[initial_offset + index] << std::endl;
+											<< ", data val: " << data[initial_offset + index - shiftData] << std::endl;
         	                	}
         	                	if (maskPkt.range((data_i + 1) * data_bytes -1, data_i * data_bytes) != one)
         	                	{
         	                		no_error = false;
-									std::cerr << "[ERROR] mask mismatch. it has to be all 1. Index: " << index
+									std::cerr << "[ERROR]|" << __func__<< "|" << __LINE__ << "| " << " mask mismatch. it has to be all 1. Index: " << index
 											<< ", offseted_index: " << index + initial_offset
 											<< ", (i:"<< i << ", j:" << j <<", k:" << k << ")"
 											<< ", stream mask: " << maskPkt.range((data_i + 1) * data_bytes -1, data_i * data_bytes)
-											<< ", data val: " << data[initial_offset + index] << std::endl;
+											<< ", data val: " << data[initial_offset + index - shiftData] << std::endl;
         	                	}
 
         	                }
@@ -244,7 +315,7 @@ int main()
     unsigned int seed = 7;
     std::mt19937 mtSeeded(seed);
     std::mt19937 mtRandom(rd());
-    std::uniform_int_distribution<unsigned short> distInt(5, 15);
+    std::uniform_int_distribution<unsigned short> distInt(5, 30);
     std::normal_distribution<float> distFloat(100, 10);
     ops::hls::DataConv converter;
 
