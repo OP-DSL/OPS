@@ -206,9 +206,9 @@ int main(int argc, char **argv)
 	OCL_CHECK(err, cl::Kernel krnl_simpleCopy(program, kernelSimpleCopyName.c_str(), &err));
 	OCL_CHECK(err, cl::Kernel krn_datamover(program, kernelDatamoverName.c_str(), &err));
 
-	unsigned int vector_factor = 8;
+	unsigned int vector_factor = 1;
 
-	const unsigned int num_tests = 1;
+	const unsigned int num_tests = 10;
 	std::cout << "TOTAL NUMBER OF TESTS: " << num_tests << std::endl;
 
 	//random generators
@@ -227,7 +227,7 @@ int main(int argc, char **argv)
 	for (unsigned int test_itr = 0; test_itr < num_tests; test_itr++)
 	{
 		TaskDataHolder& taskdata = TaskData[test_itr];
-		unsigned short x_size = 10; //disInt(mtSeeded);
+		unsigned short x_size = disInt(mtSeeded);
 		taskdata.gridProperty = createGridPropery(2, {x_size, x_size,1},
 				{1,1,0},
 				{1,1,0});
@@ -245,10 +245,10 @@ int main(int argc, char **argv)
 
 		ops::hls::AccessRange range;
 		range.dim = 2;
-		range.start[0] = 1;//disLow(mtRandom);
-		range.start[1] = 0; //disLow(mtRandom);
-		range.end[0] = 9; //disHigh(mtRandom);
-		range.end[1] = 9; //disHigh(mtRandom);
+		range.start[0] = disLow(mtRandom);
+		range.start[1] = disLow(mtRandom);
+		range.end[0] = disHigh(mtRandom);
+		range.end[1] = disHigh(mtRandom);
 
 		taskdata.range = range;
 //#ifdef DEBUG_LOG
@@ -347,7 +347,7 @@ int main(int argc, char **argv)
         {
             std::cout << "FAILED";
 
-//            printGrid2D(TaskData[test_itr].host_buffer.data(), TaskData[test_itr].gridProperty, "After sync");
+            printGrid2D(TaskData[test_itr].host_buffer.data(), TaskData[test_itr].gridProperty, "After sync");
         }
 
         std::cout << std::endl;
