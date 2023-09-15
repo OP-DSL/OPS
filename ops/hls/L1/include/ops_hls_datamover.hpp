@@ -156,7 +156,7 @@ static void convAxisPkt2memBeat(ap_uint<MEM_DATA_WIDTH>* mem_out,
  * @brief 	convAxisPkt2memBeatMaksed writes a memory location with index and 
  * from AXI4-stream with strobe channels.
  *
- * @detaisl This works with DATA_WITDH < AXIS_DATA_WIDTH. This will read from
+ * @details This works with DATA_WITDH < AXIS_DATA_WIDTH. This will read from
  * AXI4-stream packet with verifying strobe channel. If the TSTRB of of the first byte of a data
  * point with DATA_WIDH is LOW, it will omit writing it to memory.
  *
@@ -168,15 +168,15 @@ static void convAxisPkt2memBeatMasked(ap_uint<DATA_WIDTH>* mem_out,
 					unsigned int& index)
 {
 #ifndef __SYTHESIS__
-	static_assert(DATA_WIDTH < AXIS_DATA_WIDTH,
-			"MEM_DATA_WIDTH has to be less that AXIS_DATA_WIDTH");
+	static_assert(DATA_WIDTH <= AXIS_DATA_WIDTH,
+			"MEM_DATA_WIDTH has to be less than equal AXIS_DATA_WIDTH");
 #endif
 
 	constexpr unsigned int bytes_per_data = DATA_WIDTH / 8;
 	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
 	constexpr unsigned int num_data_per_axis_pkt = AXIS_DATA_WIDTH / DATA_WIDTH;
-	constexpr unsigned int shift_val = 1 << bytes_per_data;
-	bool cond_write = 0;
+//	constexpr unsigned int shift_val = 1 << bytes_per_data;
+	ap_uint<1> cond_write = 0;
 
 #ifndef __SYTHESIS__
 #ifdef DEBUG_LOG
@@ -204,28 +204,164 @@ static void convAxisPkt2memBeatMasked(ap_uint<DATA_WIDTH>* mem_out,
 
 #endif
 #endif
-	ap_uint<bytes_per_axis_pkt> strb_pos = 1;
+//	ap_uint<bytes_per_axis_pkt> strb_pos = 1;
 
 	for (unsigned int idx = 0; idx < num_data_per_axis_pkt; idx++)
 	{
 #pragma HLS PIPELINE  II=1
 #pragma HLS LOOP_TRIPCOUNT avg=avg_num_data_per_axis_pkt
 
-		ap_uint<bytes_per_axis_pkt> cond_val = tmp_pkt.strb & strb_pos;
-		cond_write = register_it((tmp_pkt.strb & strb_pos) == 0);
+//		ap_uint<bytes_per_axis_pkt> cond_val = tmp_pkt.strb & strb_pos;
+		cond_write = tmp_pkt.strb.range(idx * bytes_per_data + 1, idx * bytes_per_data);
 		ap_uint<DATA_WIDTH> write_val = tmp_pkt.data.range((idx+1) * DATA_WIDTH - 1, idx * DATA_WIDTH);
 
 #ifdef DEBUG_LOG
 		DataConv tmp;
 		tmp.i = write_val;
 		printf("   |HLS DEBUG_LOG||%s| writing to mem index: %d, strb_pos:%d, val: %f, cond: %d\n"
-				, __func__, index+idx, strb_pos, tmp.f, cond_write);
+				, __func__, index+idx, idx * bytes_per_data, tmp.f, cond_write);
 #endif
-		if (!cond_write)
+		if (cond_write)
 		{
 			mem_out[index + idx] = write_val;
 		}
-		strb_pos *= shift_val;
+//		strb_pos *= shift_val;
+	}
+}
+
+/**
+ * @brief 	convAxisPkt2memBeat writes a memory location with index and from AXI4-stream.
+ * This works MEM_DATA_WIDTH >= AXIS_DATA_WIDTH
+ *
+ */
+template <unsigned int MEM_DATA_WIDTH, unsigned int STREAM_DATA_WIDTH>
+static void convStreamPkt2memBeat(ap_uint<MEM_DATA_WIDTH>* mem_out,
+					::hls::stream<ap_uint<STREAM_DATA_WIDTH>>& strm_in,
+					unsigned int& size,
+					unsigned int& index)
+{
+#ifndef __SYTHESIS__
+	static_assert(MEM_DATA_WIDTH >= STREAM_DATA_WIDTH,
+			"MEM_DATA_WIDTH has to be grater that AXIS_DATA_WIDTH");
+#endif
+	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_stream_pkt = STREAM_DATA_WIDTH / 8;
+	constexpr unsigned int num_strm_pkts_per_beat = MEM_DATA_WIDTH / STREAM_DATA_WIDTH;
+
+#ifndef __SYTHESIS__
+#ifdef DEBUG_LOG
+	printf("\n|HLS DEBUG_LOG| %s | bytes_per_beat: %d, bytes_per_stream_pkt: %d, num_strm_pkts_per_beat: %d, beat index: %d\n"
+			, __func__, bytes_per_beat, bytes_per_stream_pkt, num_strm_pkts_per_beat, index);
+	printf("======================================================================================================\n");
+#endif
+#endif
+	ap_uint<MEM_DATA_WIDTH> tmp;
+
+	for (unsigned int pkt = 0; pkt < num_strm_pkts_per_beat; pkt++)
+	{
+	#pragma HLS PIPELINE II=1
+	#pragma HLS LOOP_TRIPCOUNT min=min_strm_pkts_per_beat avg=avg_strm_pkts_per_beat max=max_strm_pkts_per_beat
+		unsigned int byte_idx = index * bytes_per_beat + pkt * bytes_per_stream_pkt;
+
+		if (byte_idx < size)
+		{
+			ap_uint<STREAM_DATA_WIDTH> tmp_pkt;
+			tmp_pkt = strm_in.read();
+			tmp.range((pkt + 1) * STREAM_DATA_WIDTH - 1, pkt * STREAM_DATA_WIDTH) = tmp_pkt;
+
+#ifndef __SYTHESIS__
+#ifdef DEBUG_LOG
+			printf("   |HLS DEBUG_LOG||%s| receiving axis pkt: %d, val=(", __func__, pkt);
+
+			for (unsigned n = 0; n < bytes_per_stream_pkt/DEBUG_LOG_SIZE_OF; n++)
+			{
+				DataConv tmp;
+				tmp.i = tmp_pkt.range((n+1) * DEBUG_LOG_SIZE_OF * 8 - 1, n * DEBUG_LOG_SIZE_OF * 8);
+				printf("%f,", tmp.f);
+			}
+			printf(")\n");
+#endif
+#endif
+		}
+	}
+	mem_out[index] = tmp;
+}
+
+//convStreamPkt2memBeatMasked<DATA_WIDTH,STREAM_DATA_WIDTH>(mem_out, data_in, mask_in, size, index);
+/**
+ * @brief 	convStreamPkt2memBeatMasked writes a memory location with index and
+ * from HLS stream with mask channel.
+ *
+ * @details This works with DATA_WITDH < STREAM_DATA_WIDTH. This will read from
+ * HLS-stream packet with verifying mask channel which is similar to AXIS STRB channel. If the TSTRB
+ * of the first byte of a data point with DATA_WIDH is LOW, it will omit writing it to memory.
+ *
+ */
+template <unsigned int DATA_WIDTH, unsigned int STREAM_DATA_WIDTH>
+static void convStreamPkt2memBeatMasked(ap_uint<DATA_WIDTH>* mem_out,
+					::hls::stream<ap_uint<STREAM_DATA_WIDTH>>& data_in,
+					::hls::stream<ap_uint<STREAM_DATA_WIDTH/8>>& mask_in,
+					unsigned int& size,
+					unsigned int& index)
+{
+#ifndef __SYTHESIS__
+	static_assert(DATA_WIDTH <= STREAM_DATA_WIDTH,
+			"MEM_DATA_WIDTH has to be less that equal AXIS_DATA_WIDTH");
+#endif
+
+	constexpr unsigned int bytes_per_data = DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_strm_pkt = STREAM_DATA_WIDTH / 8;
+	constexpr unsigned int num_data_per_strm_pkt = STREAM_DATA_WIDTH / DATA_WIDTH;
+//	constexpr unsigned int shift_val = 1 << bytes_per_data;
+	ap_uint<1> cond_write = 0;
+
+#ifndef __SYTHESIS__
+#ifdef DEBUG_LOG
+	printf("\n|HLS DEBUG_LOG|%s| bytes_per_strm_pkt: %d, bytes_per_data: %d, num_data_per_strm_pkt: %d, beat index: %d\n"
+			, __func__, bytes_per_strm_pkt, bytes_per_data, num_data_per_strm_pkt, index);
+	printf("======================================================================================================\n");
+#endif
+#endif
+	ap_uint<STREAM_DATA_WIDTH> data_pkt;
+	ap_uint<STREAM_DATA_WIDTH/8> mask_pkt;
+
+	data_pkt = data_in.read();
+	mask_pkt = mask_in.read();
+
+#ifndef __SYTHESIS__
+#ifdef DEBUG_LOG
+		printf("   |HLS DEBUG_LOG||%s| receiving axis , val=(", __func__);
+
+		for (unsigned n = 0; n < bytes_per_strm_pkt/DEBUG_LOG_SIZE_OF; n++)
+		{
+			DataConv tmp;
+			tmp.i = data_in.range((n+1) * DEBUG_LOG_SIZE_OF * 8 - 1, n * DEBUG_LOG_SIZE_OF * 8);
+			printf("%f,", tmp.f);
+		}
+
+		printf(") strb=(%x)\n", mask_pkt);
+
+#endif
+#endif
+
+	for (unsigned int idx = 0; idx < num_data_per_strm_pkt; idx++)
+	{
+#pragma HLS PIPELINE  II=1
+#pragma HLS LOOP_TRIPCOUNT avg=avg_num_data_per_axis_pkt
+
+		cond_write = mask_pkt.range(idx * bytes_per_data + 1, idx * bytes_per_data);
+		ap_uint<DATA_WIDTH> write_val = data_pkt.range((idx+1) * DATA_WIDTH - 1, idx * DATA_WIDTH);
+
+#ifdef DEBUG_LOG
+		DataConv tmp;
+		tmp.i = write_val;
+		printf("   |HLS DEBUG_LOG||%s| writing to mem index: %d, strb_pos:%d, val: %f, cond: %d\n"
+				, __func__, index+idx, idx * bytes_per_data, tmp.f, cond_write);
+#endif
+		if (cond_write)
+		{
+			mem_out[index + idx] = write_val;
+		}
 	}
 }
 
@@ -767,6 +903,7 @@ void axis2streamMasked(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
 		cycleBufIndex += 1;
 	}
 }
+
 /**
  * @brief stream2axis converts hls-stream to AXI4-stream
  *
@@ -881,6 +1018,109 @@ void stream2axisMasked(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_out,
 			, __func__);
 #endif
 }
+
+/**
+ * @brief stream2memMasked converts hls-stream with strb mask to memory
+ *
+ * @tparam MEM_DATA_WIDTH : Data width of the AXI4 port
+ * @tparam STREAM_DATA_WIDTH : Data width of the HLS-stream port
+ * @tparam BURST_SIZE : Burst length of the AXI4 (max beats - 256)
+ *
+ * @param mem_out : AXI4-master memory output port
+ * @param stream_in : HLS-stream input port
+ * @param size : Number of the bytes of data
+ */
+
+template <unsigned int MEM_DATA_WIDTH, unsigned int STREAM_DATA_WIDTH, unsigned int BURST_SIZE=32>
+void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
+		::hls::stream<ap_uint<STREAM_DATA_WIDTH>>& strm_in,
+				unsigned int size)
+{
+#ifndef __SYTHESIS__
+	static_assert(MEM_DATA_WIDTH % STREAM_DATA_WIDTH == 0,
+			"MEM_DATA_WIDTH has to be fully divided by STREAM_DATA_WIDTH");
+	static_assert(MEM_DATA_WIDTH >= min_mem_data_width && MEM_DATA_WIDTH <= max_mem_data_width,
+			"MEM_DATA_WIDTH failed limit check");
+	static_assert(STREAM_DATA_WIDTH >= min_hls_stream_data_width && STREAM_DATA_WIDTH <= max_hls_stream_data_width,
+			"STREAM_DATA_WIDTH failed limit check");
+	static_assert(BURST_SIZE >= min_burst_len && BURST_SIZE <= max_burst_len,
+			" BURST_SIZE has failed limit check");
+#endif
+
+	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_stream_pkt = STREAM_DATA_WIDTH / 8;
+	constexpr unsigned int num_strm_pkts_per_beat = MEM_DATA_WIDTH / STREAM_DATA_WIDTH;
+
+	const unsigned int num_beats = (size + bytes_per_beat - 1) / bytes_per_beat;
+	const unsigned int num_bursts = num_beats / BURST_SIZE;
+	const unsigned int non_burst_beats = num_beats % BURST_SIZE;
+
+	unsigned int index = 0;
+
+	for (unsigned int brst = 0; brst < num_bursts; brst++)
+	{
+	#pragma HLS LOOP_TRIPCOUNT avg=avg_num_of_bursts max=max_num_of_bursts
+
+		for (unsigned int beat = 0; beat < BURST_SIZE; beat++)
+		{
+		#pragma HLS PIPELINE II=num_strm_pkts_per_beat
+		#pragma HLS LOOP_TRIPCOUNT min=min_burst_len avg=avg_burst_len max=max_burst_len
+
+			convStreamPkt2memBeat<MEM_DATA_WIDTH, STREAM_DATA_WIDTH>(mem_out, strm_in, size, index);
+			index++;
+		}
+	}
+
+	for (unsigned int beat = 0; beat < non_burst_beats; beat++)
+	{
+	#pragma HLS PIPELINE II=num_strm_pkts_per_beat
+		convStreamPkt2memBeat<MEM_DATA_WIDTH, STREAM_DATA_WIDTH>(mem_out, strm_in, size, index);
+		index++;
+	}
+
+}
+
+/**
+ * @brief stream2memMasked converts hls-stream with strb mask to memory
+ *
+ * @tparam STREAM_DATA_WIDTH : Data width of the HLS-stream port
+ * @tparam DATA_WIDTH : Data width of the base datatype
+ *
+ * @param mem_out : AXI4-master memory output port
+ * @param data_in : HLS-stream data input port
+ * @param mask_in : HLS-stream mask input port
+ * @param size : Number of the bytes of data
+ */
+
+template <unsigned int STREAM_DATA_WIDTH, unsigned int DATA_WIDTH>
+void stream2memMasked(ap_uint<DATA_WIDTH>* mem_out,
+		::hls::stream<ap_uint<STREAM_DATA_WIDTH>>& data_in,
+		::hls::stream<ap_uint<STREAM_DATA_WIDTH/8>>& mask_in,
+				unsigned int size)
+{
+#ifndef __SYTHESIS__
+	static_assert(STREAM_DATA_WIDTH % DATA_WIDTH == 0,
+			"STREAM_DATA_WIDTH has to be fully divided by DATA_WIDTH");
+	static_assert(STREAM_DATA_WIDTH >= min_hls_stream_data_width && STREAM_DATA_WIDTH <= max_hls_stream_data_width,
+			"STREAM_DATA_WIDTH failed limit check");
+#endif
+
+	constexpr unsigned int bytes_per_strm_pkt = STREAM_DATA_WIDTH / 8;
+	constexpr unsigned int data_per_strm_pkt = STREAM_DATA_WIDTH / DATA_WIDTH;
+	const unsigned int num_of_strm_pkt = (size + bytes_per_strm_pkt - 1) / bytes_per_strm_pkt;
+
+	unsigned int index = 0;
+
+	for (unsigned int brst = 0; brst < num_of_strm_pkt; brst++)
+	{
+	#pragma HLS PIPELINE II=data_per_strm_pkt
+	#pragma HLS LOOP_TRIPCOUNT min=1 avg=8
+
+		convStreamPkt2memBeatMasked<DATA_WIDTH,STREAM_DATA_WIDTH>(mem_out, data_in, mask_in, size, index);
+		index += data_per_strm_pkt;
+	}
+}
+
 
 template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
 void memReadGrid(ap_uint<DATA_WIDTH>* mem_in,
@@ -1018,19 +1258,30 @@ void memWriteGrid(ap_uint<DATA_WIDTH>* mem_out,
 #endif
 }
 
+
+/**
+ * @brief memWriteGridSimple writes to memory with range with MEM_DATA_WIDTH alignment
+ *
+ * @details Writes to a grid with ranges with range.start[0] is aligned with MEM_DATA_WIDTH.
+ * Other components of range will be supported in granual level.
+ *
+ * @tparam MEM_DATA_WIDTH : Data width of the AXI4 port
+ * @tparam AXIS_DATA_WIDTH : Data width of the AXIS-stream port
+ * @tparam DATA_WIDTH : Data width of the base datatype
+ *
+ * @param mem_out : AXI4-master memory output port
+ * @param strm_in : AXIS-stream input port
+ * @param gridSize : gridSize of the original grid
+ * @param range : Access range to be writen data
+ */
+
 template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
-void memWriteGridOrig(ap_uint<DATA_WIDTH>* mem_out,
+void memWriteGridSimple(ap_uint<DATA_WIDTH>* mem_out,
 		::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_in,
 		SizeType gridSize,
 		AccessRange& range)
 {
-//	unsigned int init_offset = offset[0] + offset[1] * gridSize[0] + offset[2] * gridSize[0] * gridSize[1];
-//	constexpr unsigned short mem_data_bytes = MEM_DATA_WIDTH / 8;
-//	constexpr unsigned short data_bytes = DATA_WIDTH /8;
-//	unsigned int num_whole_axi_reads = size / mem_data_bytes;
-//	unsigned int whole_axi_size = num_whole_axi_reads * mem_data_bytes;
-//	unsigned int partial_offset = whole_axi_size / data_bytes;
-//	unsigned int partial_axi_size = size - whole_axi_size;
+
 	constexpr unsigned short vectorFactor = MEM_DATA_WIDTH / DATA_WIDTH;
 	unsigned short ShiftBits = LOG2(vectorFactor);
 	unsigned short DataShiftBits = LOG2(DATA_WIDTH/8);
@@ -1080,6 +1331,135 @@ void memWriteGridOrig(ap_uint<DATA_WIDTH>* mem_out,
 			, __func__);
 #endif
 }
+
+//template <unsigned int MEM_DATA_WIDTH, unsigned int STREAM_DATA_WIDTH, unsigned int DATA_WIDTH=32>
+//void memWriteGridNew(ap_uint<DATA_WIDTH>* mem_out,
+//		::hls::stream<ap_axiu<STREAM_DATA_WIDTH,0,0,0>>& strm_in,
+//		unsigned int sizeBytes,
+//		SizeType gridSize,
+//		SizeType offset)
+//{
+//	constexpr unsigned short maxi_vector_factor = MEM_DATA_WIDTH / DATA_WIDTH;
+//	constexpr unsigned short strm_vector_factor = STREAM_DATA_WIDTH / DATA_WIDTH;
+//	constexpr unsigned short data_bytes = DATA_WIDTH / 8;
+//	constexpr unsigned short maxi_shift_bits = LOG2(maxi_vector_factor);
+//	constexpr unsigned short strm_shift_bits = LOG2(strm_vector_factor);
+//	constexpr unsigned short shift_bits =  LOG2(data_bytes);
+//	unsigned short init_offset = offset[0] + offset[1] * gridSize[0] + offset[2] * gridSize[0] * gridSize[1];
+//	unsigned short maxi_alignment_point = (init_offset >> maxi_shift_bits + 1) << maxi_shift_bits;
+//	unsigned short pre_aligment_size = maxi_alignment_point - init_offset;
+//	unsigned short size_of_elements = sizeBytes >> shift_bits;
+//
+//	bool isSmallSize = false;
+//
+//	if (pre_aligment_size >= size_of_elements)
+//	{
+//		isSmallSize = true;
+//	}
+//
+//	if (isSmallSize)
+//	{
+//		axis2memMasked(mem_out + init_offset, strm_in, sizeBytes);
+//	}
+//	else
+//	{
+//		unsigned short shifted_stream_start_offset = init_offset + ((pre_aligment_size >> strm_shift_bits) << strm_shift_bits);
+//		unsigned short non_shifted_size = init_offset - shifted_stream_start_offset;
+//		unsigned short first_pkt_valid_size = maxi_alignment_point - shifted_stream_start_offset;
+//		unsigned short element_shift_axis_to_stream_conversion = strm_vector_factor - first_pkt_valid_size;
+//
+//		if (non_shifted_size)
+//		{
+//			axis2memMasked(mem_out + init_offset, strm_in, non_shifted_size << shift_bits);
+//		}
+//	}
+////	constexpr unsigned short mem_data_bytes = MEM_DATA_WIDTH / 8;
+////	constexpr unsigned short data_bytes = DATA_WIDTH /8;
+////	unsigned int num_whole_axi_blocks = size / mem_data_bytes;
+////	unsigned int whole_axi_size = num_whole_axi_blocks * mem_data_bytes;
+////	unsigned int partial_offset = whole_axi_size / data_bytes;
+////	unsigned int partial_axi_size = size - whole_axi_size;
+////
+////	axis2mem<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + init_offset), strm_in, whole_axi_size);
+////	axis2memMasked<DATA_WIDTH, AXIS_DATA_WIDTH>((mem_out + init_offset + partial_offset), strm_in, partial_axi_size);
+//}
+//
+//template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
+//void memWriteGridNew(ap_uint<DATA_WIDTH>* mem_out,
+//		::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_in,
+//		SizeType gridSize,
+//		AccessRange& range)
+//{
+//	constexpr unsigned short vectorFactor = MEM_DATA_WIDTH / DATA_WIDTH;
+//	unsigned short ShiftBits = LOG2(vectorFactor);
+//	unsigned short DataShiftBits = LOG2(DATA_WIDTH/8);
+//	unsigned short xtile_size = (range.end[0] - range.start[0]);
+//
+//	unsigned short xtile_alignment_point = ((range.start[0] >> ShiftBits) + 1) * vectorFactor;//This point where alligned widen read start
+//	unsigned short front_part_xtile_size = xtile_alignment_point < range.end[0] ? xtile_alignment_point - range.start[0] : 0;
+//	unsigned short num_whole_xblocks = (xtile_size - front_part_xtile_size)  >> ShiftBits;
+//	unsigned short whole_xtile_size = num_whole_xblocks << ShiftBits;
+//	unsigned short back_part_xtile_size = xtile_size - whole_xtile_size - front_part_xtile_size;
+//
+//	if (whole_xtile_size ==  0)
+//	{
+//		front_part_xtile_size += back_part_xtile_size;
+//		back_part_xtile_size = 0;
+//	}
+//
+////	unsigned short xtile_size_bytes = xtile_size << DataShiftBits;
+//	unsigned short front_part_xtile_bytes = front_part_xtile_size << DataShiftBits;
+//	unsigned short whole_xtile_bytes = whole_xtile_size << DataShiftBits;
+//	unsigned short back_part_xtile_bytes = back_part_xtile_size << DataShiftBits;
+//
+//
+//	if (range.dim < 3)
+//	{
+//		range.start[2] = 0;
+//		range.end[2] = 1;
+//	}
+//	else if (range.dim < 2)
+//	{
+//		range.start[1] = 0;
+//		range.end[1] = 1;
+//	}
+//
+//	unsigned short init_offset = range.start[0];
+//	unsigned short k_coef = gridSize[1] * gridSize[0];
+//	unsigned short j_coef = gridSize[0];
+//#ifdef DEBUG_LOG
+//	printf("|HLS DEBUG_LOG|%s| starting memWriteGrid. grid_size: (%d, %d, %d), range: (%d, %d, %d) --> (%d, %d, %d)\n "
+//			"front partial xtile size:%d, whole xtile size:%d, back partial xtile size:%d, xtile_alignment_point:%d\n"
+//			, __func__, gridSize[0], gridSize[1], gridSize[2], range.start[0], range.start[1], range.start[2],
+//			range.end[0], range.end[1], range.end[2], front_part_xtile_size, whole_xtile_size, back_part_xtile_size, xtile_alignment_point);
+//	printf("===========================================================================================\n");
+//#endif
+//	for (unsigned short k = range.start[2]; k < range.end[2]; k++)
+//	{
+//		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
+//		{
+//			unsigned short offset = init_offset + k * k_coef + j * j_coef;
+//			unsigned short whole_offset = front_part_xtile_size + offset;
+//			unsigned short back_part_offset = whole_offset + whole_xtile_size;
+//#ifdef DEBUG_LOG
+//			printf("|HLS DEBUG_LOG|%s| writing. front_offset:%d, whole_offset:%d, back_part_offset:%d, j:%d, k:%d\n"
+//					, __func__, offset, whole_offset, back_part_offset, j, k);
+//#endif
+////			if (front_part_xtile_size)
+//				axis2memMasked<DATA_WIDTH, AXIS_DATA_WIDTH>(mem_out + offset, strm_in, front_part_xtile_bytes);
+////			if (whole_xtile_size)
+//				axis2mem<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + whole_offset), strm_in, whole_xtile_bytes);
+////			if (back_part_xtile_size)
+//				axis2memMasked<DATA_WIDTH, AXIS_DATA_WIDTH>(mem_out + back_part_offset, strm_in, back_part_xtile_bytes);
+//
+//		}
+//	}
+//#ifdef DEBUG_LOG
+//	printf("|HLS DEBUG_LOG|%s| exiting.\n"
+//			, __func__);
+//#endif
+//}
+
 }
 }
 

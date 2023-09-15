@@ -53,6 +53,7 @@ extern "C" void kernel_simple_copy(
 	#pragma HLS INTERFACE ap_hls_chain port = return bundle = control
 	#pragma HLS INTERFACE s_axilite port = return bundle = control
 
+#pragma HLS DATAFLOW
     static s2d_1pt_no_vect::widen_stream_dt widen_stream;
     static s2d_1pt_no_vect::mask_stream_dt mask_stream;
 
@@ -84,7 +85,7 @@ extern "C" void kernel_simple_copy(
 #ifdef DEBUG_LOG
     printf("[KERNEL_DEBUG]|%s| starting stream2axisMasked\n", __func__);
 #endif
-    ops::hls::stream2axisMasked<256,256>(axis_out_u, widen_stream, mask_stream, total_bytes);
+    ops::hls::stream2axisMasked<axis_data_width, axis_data_width>(axis_out_u, widen_stream, mask_stream, total_bytes);
 #ifdef DEBUG_LOG
     printf("[KERNEL_DEBUG]|%s| exiting.\n", __func__);
 #endif

@@ -38,7 +38,7 @@ extern "C" void kernel_datamover_simple_copy(
 #ifdef DEBUG_LOG
 	printf("[KERNEL_DEBUG]|%s| starting.\n", __func__);
 #endif
-    ops::hls::memWriteGrid<mem_data_width, axis_data_width, data_width>(arg0_out, stream0_in, gridSize, range);
+    ops::hls::memWriteGridSimple<mem_data_width, axis_data_width, data_width>(arg0_out, stream0_in, gridSize, range);
 #ifdef DEBUG_LOG
     printf("[KERNEL_DEBUG]|%s| exiting.\n", __func__);
 #endif

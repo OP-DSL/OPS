@@ -34,6 +34,7 @@ void kernel_simple_copy_PE(ops::hls::GridPropertyCore& gridProp,
         s2d_1pt_no_vect::widen_stream_dt& output_stream_u,
 		s2d_1pt_no_vect::mask_stream_dt& mask_stream_u)
 {
+#pragma HLS DATAFLOW
     s2d_1pt_no_vect write_stencil_u;
 #ifdef DEBUG_LOG
     printf("[KERNEL_DEBUG]|%s| setting grid property\n", __func__);

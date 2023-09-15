@@ -227,7 +227,7 @@ int main(int argc, char **argv)
 	for (unsigned int test_itr = 0; test_itr < num_tests; test_itr++)
 	{
 		TaskDataHolder& taskdata = TaskData[test_itr];
-		unsigned short x_size = 35; //disInt(mtSeeded);
+		unsigned short x_size = 10; //disInt(mtSeeded);
 		taskdata.gridProperty = createGridPropery(2, {x_size, x_size,1},
 				{1,1,0},
 				{1,1,0});
@@ -245,10 +245,10 @@ int main(int argc, char **argv)
 
 		ops::hls::AccessRange range;
 		range.dim = 2;
-		range.start[0] = 15;//disLow(mtRandom);
-		range.start[1] = 16; //disLow(mtRandom);
-		range.end[0] = 32; //disHigh(mtRandom);
-		range.end[1] = 32; //disHigh(mtRandom);
+		range.start[0] = 1;//disLow(mtRandom);
+		range.start[1] = 0; //disLow(mtRandom);
+		range.end[0] = 9; //disHigh(mtRandom);
+		range.end[1] = 9; //disHigh(mtRandom);
 
 		taskdata.range = range;
 //#ifdef DEBUG_LOG
@@ -344,7 +344,11 @@ int main(int argc, char **argv)
         if (verification(TaskData[test_itr], fill, value))
             std::cout << "PASSED";
         else
+        {
             std::cout << "FAILED";
+
+//            printGrid2D(TaskData[test_itr].host_buffer.data(), TaskData[test_itr].gridProperty, "After sync");
+        }
 
         std::cout << std::endl;
 	}
