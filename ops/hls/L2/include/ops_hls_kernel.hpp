@@ -132,7 +132,6 @@ class Kernel
 			addEvent(p_grid, event, __func__);
 			p_grid.activeEvents.resize(0);
 			p_grid.activeEvents.push_back(event);
-			std::cout << "in6" << std::endl;
 		}
 
 		template <typename T>

@@ -194,15 +194,10 @@ int main(int argc, char **argv)
 				printAccessRange(range);
 		#endif
 
-//		std::cout << "flag1 " << std::endl;
 		kernel_simple_copy.createDeviceBuffer(CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, grid);
-//		std::cout << "flag2 " << std::endl;
 		kernel_simple_copy.sendGrid(grid);
-//		std::cout << "flag3 " << std::endl;
 		kernel_simple_copy.run(range, grid, value);
-//		std::cout << "flag4 " << std::endl;
 		kernel_simple_copy.getGrid(grid);
-//		std::cout << "flag5 " << std::endl;
 	}
 
 	fpga.finish();
