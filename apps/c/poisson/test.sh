@@ -1,56 +1,34 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
-<<COMMENT
-if [ -x "$(command -v enroot)" ]; then
-  cd -
-  enroot start --root --mount $OPS_INSTALL_PATH/../:/tmp/OPS --rw cuda112hip sh -c 'cd /tmp/OPS/apps/c/poisson; ./test.sh'
-  grep "PASSED" perf_out
-  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-  rm perf_out
-  echo "All HIP complied applications PASSED"
-fi
 
-if [[ -v HIP_INSTALL_PATH ]]; then
-  source ../../scripts/$SOURCE_HIP
-  make -j -B
-  cd -
-  make clean
-  rm -f .generated
-  make poisson_hip poisson_mpi_hip -j
-  
-  echo '============> Running HIP'
-  ./poisson_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-  grep "Total error:" perf_out
-  grep "Total Wall time" perf_out
-  grep "PASSED" perf_out
-  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-  rm perf_out
-  
-  echo '============> Running MPI+HIP'
-  mpirun --allow-run-as-root -np 2 ./poisson_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-  grep "Total error:" perf_out
-  grep "Total Wall time" perf_out
-  grep "PASSED" perf_out
-  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-  rm perf_out
-  echo "All HIP complied applications PASSED" > perf_out
-  exit 0
-fi
-COMMENT
+#export SOURCE_INTEL=source_intel_2021.3_pythonenv
+#export SOURCE_PGI=source_pgi_nvhpc-23-new
+#export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+#export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
+#export AMOS=TRUE
+#export DMOS=TRUE
+#export TELOS=TRUE
+export KOS=TRUE
+
+if [[ -v TELOS || -v KOS ]]; then
+
+#============================ Test with Intel Classic Compilers==========================================
+echo "Testing Intel classic complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_INTEL
-make -j -B
+#make -j -B
+make clean
+make
 cd $OPS_INSTALL_PATH/../apps/c/poisson
 
 make clean
 rm -f .generated
-make IEEE=1 -j
+#make IEEE=1 -j
+make IEEE=1 poisson_dev_seq poisson_dev_mpi poisson_seq poisson_tiled poisson_openmp poisson_mpi \
+poisson_mpi_tiled poisson_mpi_openmp
 
-
-
-#============================ Test Poisson with Intel Compilers==========================================================
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./poisson_openmp > perf_out
 grep "Total error:" perf_out
@@ -99,6 +77,9 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+if [[ -v CUDA_INSTALL_PATH ]]; then
+make IEEE=1 poisson_cuda poisson_mpi_cuda poisson_mpi_cuda_tiled
+
 echo '============> Running CUDA'
 ./poisson_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total error:" perf_out
@@ -115,7 +96,13 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-
+echo '============> Running MPI+CUDA Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_cuda_tiled OPS_TILING OPS_TILING_MAXDEPTH=10 OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
 
 #echo '============> Running MPI+CUDA with GPU-Direct'
 #MV2_USE_CUDA=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_cuda -gpudirect OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
@@ -125,52 +112,71 @@ rm perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
 
-echo '============> Running OpenCL on CPU'
-./poisson_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
+fi
+fi
+
+echo "All Intel classic complier based applications ---- PASSED"
+
+
+if [[ -v TELOS ]]; then
+
+#============================ Test with Intel SYCL Compilers==========================================
+echo "Testing Intel SYCL complier based applications ---- "
+cd $OPS_INSTALL_PATH/c
+source ../../scripts/$SOURCE_INTEL_SYCL
+#make -j -B
+make clean
+make
+cd $OPS_INSTALL_PATH/../apps/c/poisson
+
+make clean
+rm -f .generated
+#make IEEE=1 -j
+make IEEE=1 poisson_sycl poisson_mpi_sycl poisson_mpi_sycl_tiled
+
+echo '============> Running SYCL on CPU'
+./poisson_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Total error:" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-echo '============> Running OpenCL on GPU'
-./poisson_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-./poisson_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total error:" perf_out
-grep "Total Wall time" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
-echo '============> Running MPI+OpenCL on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./poisson_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./poisson_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
+echo '============> Running MPI+SYCL on CPU'
+$MPI_INSTALL_PATH/bin/mpirun -np 20 ./poisson_mpi_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Total error:" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-echo '============> Running MPI+OpenCL on GPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+echo '============> Running MPI+SYCL Tiled on CPU'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_sycl_tiled OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total error:" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
-cd -
-#COMMENT
+echo "All Intel SYCL complier based applications ---- PASSED"
+
+fi
+
+if [[ -v TELOS ]]; then
+
+#============================ Test with PGI Compilers==========================================
+echo "Testing PGI/NVHPC complier based applications ---- "
+cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_PGI
-
 make clean
-make -j
-cd -
+#make -j
+make
+echo "in here "
+cd $OPS_INSTALL_PATH/../apps/c/poisson
 make clean
-make 
+make poisson_dev_seq poisson_dev_mpi poisson_seq poisson_tiled poisson_openmp poisson_mpi poisson_mpi_tiled \
+poisson_mpi_openmp poisson_ompoffload poisson_mpi_ompoffload poisson_mpi_ompoffload_tiled
 
-#============================ Test Poisson with PGI Compilers==========================================================
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./poisson_openmp > perf_out
 grep "Total error:" perf_out
@@ -219,6 +225,11 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+
+if [[ -v CUDA_INSTALL_PATH ]]; then
+make IEEE=1 poisson_cuda poisson_mpi_cuda poisson_mpi_cuda_tiled poisson_openacc poisson_mpi_openacc \
+poisson_mpi_openacc_tiled
+
 echo '============> Running CUDA'
 ./poisson_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total error:" perf_out
@@ -242,41 +253,6 @@ rm perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
 
-#echo '============> Running OpenCL on CPU'
-#./poisson_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
-#grep "Total error:" perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#c=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#rm perf_out
-
-echo '============> Running OpenCL on GPU'
-./poisson_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-./poisson_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total error:" perf_out
-grep "Total Wall time" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
-
-#echo '============> Running MPI+OpenCL on CPU'
-#$MPI_INSTALL_PATH/bin/mpirun -np 20 ./poisson_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
-#$MPI_INSTALL_PATH/bin/mpirun -np 20 ./poisson_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
-#grep "Total error:" perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#rm perf_out
-
-echo '============> Running MPI+OpenCL on GPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total error:" perf_out
-grep "Total Wall time" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
-
 echo '============> Running OpenACC'
 ./poisson_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total error:" perf_out
@@ -293,5 +269,62 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-echo "All PGI complied applications PASSED : Exiting Test Script "
+fi
 
+echo '============> Running OMPOFFLOAD'
+./poisson_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running MPI+OMPOFFLOAD'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo "All PGI complier based applications ---- PASSED"
+
+fi
+
+if [[ -v AMOS ]]; then
+
+echo "Testing AMD HIP complier based applications ---- "
+cd $OPS_INSTALL_PATH/c
+source ../../scripts/$SOURCE_AMD_HIP
+#make -j -B
+make clean
+make
+cd $OPS_INSTALL_PATH/../apps/c/poisson
+
+make clean
+rm -f .generated
+#make IEEE=1 -j
+make IEEE=1 poisson_hip poisson_mpi_hip #poisson_hip_tiled poisson_mpi_hip_tiled
+
+echo '============> Running HIP'
+./poisson_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running MPI+HIP'
+#mpirun --allow-run-as-root -np 2 ./poisson_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+mpirun -np 2 ./poisson_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo "All AMD HIP complier based applications ---- PASSED"
+
+fi
+
+echo "---------- Exiting Test Script "

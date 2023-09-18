@@ -1,0 +1,28 @@
+
+{% block ops_headers %}
+// headers
+#define OPS_{{app.global_dim}}D
+{% if soa_set %}
+#define OPS_SOA
+{% endif %}
+#define OPS_API 2
+#include "ops_lib_core.h"
+
+#ifdef OPS_MPI
+#include "ops_mpi_core.h"
+#include <limits>
+#endif
+{% endblock %}
+
+{% block dim_struct %}
+{% endblock %}
+
+{% block const_decls required %}
+{% endblock %}
+
+{% block header_includes %}
+// user kernel files
+{% for lh,p in app.uniqueLoops() %}
+#include "{{lh.kernel}}_kernel.{{include_extension}}"
+{% endfor %}
+{% endblock %}
