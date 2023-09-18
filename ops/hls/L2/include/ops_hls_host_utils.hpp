@@ -22,6 +22,9 @@
   * @details This is to manage support functions in the host side.
   */
 
+#include <iomanip>
+#include <iostream>
+
 ops::hls::GridPropertyCore createGridPropery(const unsigned short dim,
 		const ops::hls::SizeType& size,
 		const ops::hls::SizeType& d_m,
@@ -54,4 +57,26 @@ ops::hls::GridPropertyCore createGridPropery(const unsigned short dim,
 	}
 
 	return gridProp;
+}
+
+void printGridProp(ops::hls::GridPropertyCore& gridProp, std::string prompt = "")
+{
+	std::cout << "-------------------------------" << std::endl;
+	std::cout << "  grid properties: " << prompt << std::endl;
+	std::cout << "-------------------------------" << std::endl;
+	std::cout << std::setw(15) << std::right << "dim: "  << gridProp.dim << std::endl;
+	std::cout << std::setw(15) << std::right << "d_m: " << "(" << gridProp.d_m[0]
+				<< ", " << gridProp.d_m[1] << ", " << gridProp.d_m[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "d_p: " << "(" << gridProp.d_p[0]
+				<< ", " << gridProp.d_p[1] << ", " << gridProp.d_p[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "logical size: " << "(" << gridProp.size[0]
+				<< ", " << gridProp.size[1] << ", " << gridProp.size[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "actual size: " << "(" << gridProp.actual_size[0]
+				<< ", " << gridProp.actual_size[1] << ", " << gridProp.actual_size[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "grid size: " << "(" << gridProp.grid_size[0]
+				<< ", " << gridProp.grid_size[1] << ", " << gridProp.grid_size[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "xblocks: " << gridProp.xblocks << std::endl;
+	std::cout << std::setw(15) << std::right << "total iterations: " << gridProp.total_itr << std::endl;
+	std::cout << std::setw(15) << std::right << "outer limit: " << gridProp.outer_loop_limit << std::endl;
+	std::cout << "-------------------------------" << std::endl;
 }

@@ -8,6 +8,8 @@ static constexpr unsigned short num_points = 1;
 static constexpr unsigned short stencil_size = 1;
 static constexpr unsigned short stencil_dim = 2;
 
+//#define DEBUG_LOG
+
 class s2d_1pt_no_vect : public ops::hls::StencilCore<stencil_type, 1, vector_factor, ops::hls::CoefTypes::CONST_COEF,
         stencil_size, stencil_dim>
 {
