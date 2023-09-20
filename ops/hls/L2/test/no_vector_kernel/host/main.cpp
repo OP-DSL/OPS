@@ -109,26 +109,33 @@ bool verification(ops::hls::Grid<float>& grid, const float& fill, const float& v
 	return verified;
 }
 
+void init_backend(int argc, char **argv)
+{
+	std::string xclbinFile = argv[1];
+
+	unsigned int deviceId = 0;
+
+	ops::hls::FPGA::getInstance()->setID(deviceId);
+
+	if(!ops::hls::FPGA::getInstance()->xclbin(xclbinFile))
+	{
+		std::cerr << "[ERROR] Couldn't program fpga. exit" << std::endl;
+		throw;
+	}
+}
+
 int main(int argc, char **argv)
 {
+	init_backend(argc, argv);
+
 	std::cout << std::endl;
 	std::cout << "***************************************************" << std::endl;
 	std::cout << " TEST: simple copy kernel" << std::endl;
 	std::cout << "***************************************************" << std::endl << std::endl;
 
-	std::string xclbinFile = argv[1];
 	cl_int err;
 
-	unsigned int deviceId = 0;
-	ops::hls::FPGA fpga(deviceId);
-
-	if(!fpga.xclbin(xclbinFile))
-	{
-		std::cerr << "[ERROR] Couldn't program fpga. exit" << std::endl;
-		return (-1);
-	}
-
-	SimpleCopyWrapper kernel_simple_copy(&fpga);
+	SimpleCopyWrapper kernel_simple_copy;
 
 	unsigned int vector_factor = 1;
 
@@ -200,7 +207,7 @@ int main(int argc, char **argv)
 		kernel_simple_copy.getGrid(grid);
 	}
 
-	fpga.finish();
+	kernel_simple_copy.finish();
 
     std::cout << std::endl;
     std::cout << "**********************************" << std::endl;

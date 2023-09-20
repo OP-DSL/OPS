@@ -15,7 +15,7 @@
 */
 
 /** @file 
-  * @brief FPGA handler class 
+  * @brief FPGA handler class headerfile
   * @author Beniel Thileepan (maintainer)
   * @details This class manage FPGA platform interaction with XOCL API and wrapping related objects.
   */
@@ -40,26 +40,29 @@ namespace ops
 {
 namespace hls
 {
-
+/**
+ * @brief This is a singleton class indended to use for single FPGA device handlings with 
+ * thread local usage. 
+ * TODO: This can be further extended to support multi FPGAs.
+*/
 class FPGA {
    public:
-    FPGA(std::string deviceName) {
-        getDevices(deviceName);
-        m_device = m_Devices[m_id];
-        m_id = -1;
-    }
-    FPGA(unsigned int p_id = 0, std::string deviceName = "") {
-        getDevices(deviceName);
-        setID(p_id);
-    }
 
-    FPGA* next() const {
-        if (m_id == m_Devices.size() - 1) {
-            return nullptr;
-        }
-        FPGA* ptr = new FPGA(m_id + 1, m_Devices);
-        return ptr;
-    }
+    // Prevent cloning
+    FPGA(FPGA &other) = delete;
+    // Preventing assignment
+    void operator=(const FPGA &) = delete;
+
+    static FPGA* getInstance();
+
+//    const uint32_t next() const {
+//        if (m_id == m_Devices.size() - 1) {
+//            return 0;
+//        }
+//
+//        setID(m_id + 1);
+//        return (m_id + 1);
+//    }
 
     void setID(uint32_t id) {
         m_id = id;
@@ -144,11 +147,23 @@ class FPGA {
         }
     }
 
+    FPGA(std::string deviceName) {
+        getDevices(deviceName);
+        m_device = m_Devices[m_id];
+        m_id = -1;
+    }
+    FPGA(unsigned int p_id = 0, std::string deviceName = "") {
+        getDevices(deviceName);
+        setID(p_id);
+    }
+
     FPGA(unsigned int p_id, const std::vector<cl::Device>& devices) {
         m_id = p_id;
         m_Devices = devices;
         m_device = m_Devices[m_id];
     }
+
+    static FPGA* FPGA_;
 
    private:
     unsigned int m_id;

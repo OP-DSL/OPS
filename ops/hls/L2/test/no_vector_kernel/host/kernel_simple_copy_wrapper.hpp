@@ -7,14 +7,24 @@
 class SimpleCopyWrapper : public ops::hls::Kernel
 {
 public:
-	SimpleCopyWrapper(ops::hls::FPGA* fpga) :
-		Kernel(fpga),
+//	SimpleCopyWrapper(ops::hls::FPGA* fpga) :
+//		Kernel(fpga),
+//		m_kernelName("kernel_simple_copy"),
+//		m_datamoverKernelName("kernel_datamover_simple_copy")
+//	{
+//		cl_int err;
+//		OCL_CHECK(err, m_krnl_simpleCopy = cl::Kernel(fpga->getProgram(), m_kernelName.c_str(), &err));
+//		OCL_CHECK(err, m_krnl_datamover = cl::Kernel(fpga->getProgram(), m_datamoverKernelName.c_str(), &err));
+//	}
+
+	SimpleCopyWrapper() :
+		Kernel(),
 		m_kernelName("kernel_simple_copy"),
 		m_datamoverKernelName("kernel_datamover_simple_copy")
 	{
 		cl_int err;
-		OCL_CHECK(err, m_krnl_simpleCopy = cl::Kernel(fpga->getProgram(), m_kernelName.c_str(), &err));
-		OCL_CHECK(err, m_krnl_datamover = cl::Kernel(fpga->getProgram(), m_datamoverKernelName.c_str(), &err));
+		OCL_CHECK(err, m_krnl_simpleCopy = cl::Kernel(m_fpga->getProgram(), m_kernelName.c_str(), &err));
+		OCL_CHECK(err, m_krnl_datamover = cl::Kernel(m_fpga->getProgram(), m_datamoverKernelName.c_str(), &err));
 	}
 
 	void run(ops::hls::AccessRange& range, ops::hls::Grid<float>& grid, const float fillValue)

@@ -75,7 +75,12 @@ cl::Event& emplaceEvent(Grid<T>& p_grid, std::string prompt="")
 class Kernel
 {
 	public:
-		Kernel(FPGA* p_fpga = nullptr) : m_fpga(p_fpga) {}
+//		Kernel(FPGA* p_fpga = nullptr) : m_fpga(p_fpga) {}
+
+		Kernel()
+		{
+			m_fpga = FPGA::getInstance();
+		}
 
 		void fpga(FPGA* p_fpga) { m_fpga = p_fpga; }
 
