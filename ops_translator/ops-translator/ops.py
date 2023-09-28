@@ -5,6 +5,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
 from util import ABDC, findIdx
+import re
 
 if TYPE_CHECKING:
     from store import Location
@@ -219,6 +220,7 @@ class ArgDat(Arg):
     stencil_id: int
 
     dim: int
+    strides: List[int]
     restrict: Optional[bool] = False
     prolong: Optional[bool] = False
 
@@ -323,6 +325,7 @@ class Loop:
     isGblRead: Optional[bool] = False
     isGblReadMDIM: Optional[bool] = False
     has_reduction: Optional[bool] = False
+    has_argGbl: Optional[bool] = False
 
     def __init__(self, loc: Location, kernel: str, block: Block, range: Range, ndim: int) -> None:
         self.loc = loc
@@ -363,13 +366,37 @@ class Loop:
             stencil_id = len(self.stencils)
             self.stencils.append(Stencil(stencil_id, dat_dim, stencil_ptr))
 
-        restrict = stencil_ptr.find("RESTRICT") > 0
-        prolong = stencil_ptr.find("PROLONG") > 0
+        restrict = bool(re.search(r'restrict', stencil_ptr, re.IGNORECASE))
+        prolong = bool(re.search(r'prolong', stencil_ptr, re.IGNORECASE))
 
         if not self.multiGrid and (restrict or prolong):
             self.multiGrid = True
 
-        arg = ArgDat(arg_id, loc, access_type, opt, dat_id, stencil_id, dat_dim, restrict, prolong)
+        strides = [1] * self.ndim
+        if self.ndim == 2:
+            if "strid2d_x" in stencil_ptr.lower():
+                strides[1] = 0
+            elif "strid2d_y" in stencil_ptr.lower():
+                strides[0] = 0
+
+        elif self.ndim == 3:
+            if "strid3d_xy" in stencil_ptr.lower():
+                strides[2] = 0
+            elif "strid3d_yz" in stencil_ptr.lower():
+                strides[0] = 0
+            elif "strid3d_xz" in stencil_ptr.lower():
+                strides[1] = 0
+            elif "strid3d_x" in stencil_ptr.lower():
+                strides[1] = 0
+                strides[2] = 0
+            elif "strid3d_y" in stencil_ptr.lower():
+                strides[0] = 0
+                strides[2] = 0
+            elif "strid3d_z" in stencil_ptr.lower():
+                strides[0] = 0
+                strides[1] = 0
+
+        arg = ArgDat(arg_id, loc, access_type, opt, dat_id, stencil_id, dat_dim, strides, restrict, prolong)
         self.args.append(arg)
 
     def addArgReduce(
@@ -409,6 +436,9 @@ class Loop:
                 if not dim.isdigit() or (dim.isdigit() and int(dim) > 1):
                     self.isGblReadMDIM = True
 
+        if not self.has_argGbl:
+            self.has_argGbl = True
+
         self.args.append(arg)
 
     def addArgIdx(
@@ -417,7 +447,7 @@ class Loop:
     ) -> None:
         arg_id = len(self.args)
         arg = ArgIdx(arg_id, loc)
-        self.arg_idx = arg_id
+        self.arg_idx = arg_id+1
         self.args.append(arg)
 
     def get_dat(self, x: Union[ArgDat, int]) -> Optional[Dat]:

@@ -132,6 +132,21 @@
         {% endif %}
     {% endfor %}
 
+{# Copy mgrid_strides to local variables if arg.stencil is restrict or prolong #}
+    {% for arg in lh.args %}
+        {% if arg is ops_dat %}
+            {% if arg.restrict or arg.prolong %}
+    int {{args_list[arg.id]}}_mgridstridX = args[{{arg.id}}].stencil->mgrid_stride[0];
+                {% if lh.ndim > 1 %}
+    int {{args_list[arg.id]}}_mgridstridY = args[{{arg.id}}].stencil->mgrid_stride[1];
+                {% endif %}
+                {% if lh.ndim > 2 %}
+    int {{args_list[arg.id]}}_mgridstridZ = args[{{arg.id}}].stencil->mgrid_stride[2];
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
     {% set line = [""] %}
     {% for arg in lh.args %}
         {% if arg is ops_gbl or arg is ops_reduce %}
@@ -213,28 +228,28 @@
                 {% set extradim = 1 %}
             {% endif %}
             {% if arg.restrict %}
-                {% set n_x -%}n_x*args[{{arg.id}}].stencil->mgrid_stride[0]{%- endset %}
-                {% set n_y -%}n_y*args[{{arg.id}}].stencil->mgrid_stride[1]{%- endset %}
-                {% set n_z -%}n_z*args[{{arg.id}}].stencil->mgrid_stride[2]{%- endset %}
+                {% set n_x -%}n_x*{{args_list[arg.id]}}_mgridstridX{%- endset %}
+                {% set n_y -%}n_y*{{args_list[arg.id]}}_mgridstridY{%- endset %}
+                {% set n_z -%}n_z*{{args_list[arg.id]}}_mgridstridZ{%- endset %}
             {% elif arg.prolong %}
-                {% set n_x -%}(n_x+arg_idx[0]%args[{{arg.id}}].stencil->mgrid_stride[0])/args[{{arg.id}}].stencil->mgrid_stride[0]{%- endset %}
-                {% set n_y -%}(n_y+arg_idx[1]%args[{{arg.id}}].stencil->mgrid_stride[1])/args[{{arg.id}}].stencil->mgrid_stride[1]{%- endset %}
-                {% set n_z -%}(n_z+arg_idx[2]%args[{{arg.id}}].stencil->mgrid_stride[2])/args[{{arg.id}}].stencil->mgrid_stride[2]{%- endset %}
+                {% set n_x -%}(n_x+arg_idx[0]%{{args_list[arg.id]}}_mgridstridX)/{{args_list[arg.id]}}_mgridstridX{%- endset %}
+                {% set n_y -%}(n_y+arg_idx[1]%{{args_list[arg.id]}}_mgridstridY)/{{args_list[arg.id]}}_mgridstridY{%- endset %}
+                {% set n_z -%}(n_z+arg_idx[2]%{{args_list[arg.id]}}_mgridstridZ)/{{args_list[arg.id]}}_mgridstridZ{%- endset %}
             {% else %}
                 {% set n_x -%}n_x{%- endset %}
                 {% set n_y -%}n_y{%- endset %} 
                 {% set n_z -%}n_z{%- endset %}             
             {% endif %}
             {% if lh.ndim > 0 %}
-                {% set offset_val -%}({{n_x}} * args[{{arg.id}}].stencil->stride[0]){%- endset %}
+                {% set offset_val -%}({{n_x}} * {{arg.strides[0] | int}}){%- endset %}
                 {% if offset.append(offset.pop() + offset_val) %}{% endif %}
             {% endif %}
             {% if lh.ndim > 1 %}
-                {% set offset_val -%}({{n_y}} * xdim{{arg.id}}_{{lh.kernel}} * args[{{arg.id}}].stencil->stride[1]){%- endset %}
+                {% set offset_val -%}({{n_y}} * xdim{{arg.id}}_{{lh.kernel}} * {{arg.strides[1] | int}}){%- endset %}
                 {% if offset.append(offset.pop() + " + " + offset_val) %}{% endif %}
             {% endif %}
             {% if lh.ndim > 2 %}
-                {% set offset_val -%}({{n_z}} * xdim{{arg.id}}_{{lh.kernel}} * ydim{{arg.id}}_{{lh.kernel}} * args[{{arg.id}}].stencil->stride[2]){%- endset %}
+                {% set offset_val -%}({{n_z}} * xdim{{arg.id}}_{{lh.kernel}} * ydim{{arg.id}}_{{lh.kernel}} * {{arg.strides[2] | int}}){%- endset %}
                 {% if offset.append(offset.pop() + " + " + offset_val) %}{% endif %}
             {% endif %}
             {% set dimlabels = "xyzuv" %}
@@ -250,6 +265,7 @@
     {{indent[0] * "    "}}{{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{arg.dim}} * ({{offset[0]}}));
 #endif
             {% endif %}
+
         {% endif %}
     {% endfor %}
 

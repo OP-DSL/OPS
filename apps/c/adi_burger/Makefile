@@ -16,7 +16,7 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
 HEADERS=
 
-OPS_FILES=adi_burger_3D.cpp
+OPS_FILES=adi_burger.cpp
 
 OPS_GENERATED_SUFFIX=_ops
 
@@ -31,3 +31,4 @@ TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda 
 
 #include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app_legacy
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app
+

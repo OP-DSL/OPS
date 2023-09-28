@@ -6,26 +6,19 @@
 #
 
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.common
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.tridsolver
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
 USE_HDF5=1
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
-# This refers to the location of the submodule in the "master" pdetk repo
-TRID_INSTALL_PATH = $(TDMA_INSTALL_PATH)
-#../../../tridsolver/scalar
-
-TRID_INC := -I$(TRID_INSTALL_PATH)/include
-TRID_LIB := -L$(TRID_INSTALL_PATH)/lib
-
-
 
 HEADERS=data.h preproc_kernel.h init_kernel.h
 
 OPS_FILES=compact_scheme.cpp
 
-OPS_GENERATED=compact_scheme_ops.cpp
+OPS_GENERATED_SUFFIX=_ops
 
 OTHER_FILES=
 
@@ -33,4 +26,7 @@ OTHER_FILES=
 APP=compact3d
 MAIN_SRC=compact_scheme
 
+TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled hip mpi_hip mpi_hip_tiled ompoffload mpi_ompoffload mpi_ompoffload_tiled sycl mpi_sycl mpi_sycl_tiled
+
+#include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app_legacy
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app

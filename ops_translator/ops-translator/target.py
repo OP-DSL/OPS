@@ -59,15 +59,15 @@ class OpenMPOffload(Target):
         "color2": False
         }
 
-class OpenACC(Target):
-    name = "openacc"
-    kernel_translation = True
-    config = {
-        "grouped" : True,
-        "device" : 5,
-        "atomics": True,
-        "color2": False
-        }
+#class OpenACC(Target):
+#    name = "openacc"
+#    kernel_translation = True
+#    config = {
+#        "grouped" : True,
+#        "device" : 5,
+#        "atomics": True,
+#        "color2": False
+#        }
 
 class Sycl(Target):
     name = "sycl"
@@ -92,6 +92,6 @@ Target.register(MPIOpenMP)
 Target.register(Cuda)
 Target.register(Hip)
 Target.register(OpenMPOffload)
-Target.register(OpenACC)
+#Target.register(OpenACC)
 Target.register(Sycl)
 Target.register(HLS)
