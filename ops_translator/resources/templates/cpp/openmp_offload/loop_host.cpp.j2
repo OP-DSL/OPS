@@ -23,6 +23,10 @@
 {% block host_prologue %}
 {{super()}}
 
+{% for n in range(0, lh.ndim) %}
+    int start_indx{{n}} = start_indx[{{n}}], end_indx{{n}} = end_indx[{{n}}];
+{% endfor %}
+
 {% if lh.arg_idx != -1 or lh.multiGrid %}
 #if defined(OPS_MPI)
 #if defined(OPS_LAZY)
@@ -91,13 +95,8 @@
         {% if arg.restrict or arg.prolong %}
 #endif
         {% endif %}
-{#    size_t arg{{arg.id}}_size = (args[{{arg.id}}].dat->mem - ((char*){{args_list[arg.id]}}_p-args[{{arg.id}}].data_d))/sizeof({{lh.dats[arg.dat_id].typ}});           #}
-
     {% elif arg is ops_gbl or arg is ops_reduce %}
-        {% if arg is ops_read %}
-    {{arg.typ}} * __restrict__  {{args_list[arg.id]}} = ({{arg.typ}} *)args[{{arg.id}}].data;
-    int {{args_list[arg.id]}}_dim = args[{{arg.id}}].dim;
-        {% else %}
+        {% if not arg is ops_read %}
 #ifdef OPS_MPI
     {{arg.typ}} * __restrict__ p_a{{arg.id}} = ({{arg.typ}} *)(((ops_reduction)args[{{arg.id}}].data)->data + ((ops_reduction)args[{{arg.id}}].data)->size * block->index);
 #else //OPS_MPI
@@ -106,6 +105,47 @@
         {% endif %}
     {% endif %}
 {% endfor %}
+
+{% if lh.has_argGbl %}
+    int consts_bytes = 0;
+
+    {% for arg in lh.args %}
+        {% if arg is ops_gbl or arg is ops_reduce %}
+            {% if arg is ops_read %}
+    {{arg.typ}} *arg{{arg.id}}h = ({{arg.typ}} *)args[{{arg.id}}].data;
+    int {{args_list[arg.id]}}_dim = args[{{arg.id}}].dim;
+
+    consts_bytes += ROUND_UP({{args_list[arg.id]}}_dim*sizeof({{arg.typ}}));
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
+    reallocConstArrays(block->instance, consts_bytes);
+    consts_bytes = 0;
+
+    {% for arg in lh.args %}
+        {% if arg is ops_gbl or arg is ops_reduce %}
+            {% if arg is ops_read %}
+    args[{{arg.id}}].data = block->instance->OPS_consts_h + consts_bytes;
+    args[{{arg.id}}].data_d = block->instance->OPS_consts_d + consts_bytes;
+    for (int d = 0; d < {{args_list[arg.id]}}_dim; d++)
+        (({{arg.typ}} *)args[{{arg.id}}].data)[d] = arg{{arg.id}}h[d];
+
+    consts_bytes += ROUND_UP({{args_list[arg.id]}}_dim*sizeof({{arg.typ}}));
+
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+    mvConstArraysToDevice(block->instance, consts_bytes);
+
+    {% for arg in lh.args %}
+        {% if arg is ops_gbl or arg is ops_reduce %}
+            {% if arg is ops_read %}
+    {{arg.typ}} * __restrict__ {{args_list[arg.id]}} = ({{arg.typ}} *)args[{{arg.id}}].data_d;
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+{% endif %}
 
 #ifndef OPS_LAZY
 //  ==============
@@ -133,78 +173,20 @@
     {% endif %}
 {% endfor %}
 
-{% set is_any_mdim = [False] %}
-{% for arg in lh.args %}
-    {% if arg is ops_dat %}
-        {% if arg.dim > 1 %}
-            {%if is_any_mdim.append(True + is_any_mdim.pop()) %}{% endif %}
-        {% endif %}
-    {% endif %}
-{% endfor %}
-// Copy all required dim to structure to avoid too many arguments inside offload loop
-    argDims_t argdim;
-
-    argdim.size = {{lh.args|length}};
-    argdim.strideX = (int*) calloc(argdim.size, sizeof(int));
-{% if lh.ndim > 1 or (lh.ndim == 1 and is_any_mdim[0]) %}
-    argdim.strideY = (int*) calloc(argdim.size, sizeof(int));
-    argdim.xdim = (int*) calloc(argdim.size, sizeof(int));
-{% endif %}
-{% if lh.ndim > 2 or (lh.ndim == 2 and is_any_mdim[0]) %}
-    argdim.strideZ = (int*) calloc(argdim.size, sizeof(int));
-    argdim.ydim = (int*) calloc(argdim.size, sizeof(int));
-{% endif %}
-{% if lh.ndim > 3 or (lh.ndim == 3 and is_any_mdim[0]) %}
-    argdim.zdim = (int*) calloc(argdim.size, sizeof(int));
-{% endif %}
-
-{% set is_element = [False] %}
+{# Copy mgrid_strides to local variables if arg.stencil is restrict or prolong #}
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
         {% if arg.restrict or arg.prolong %}
-            {%if is_element.append(True + is_element.pop()) %}{% endif %}
-        {% endif %}
-    {% endif %}
-{% endfor %}
-{% if is_element[0] %}
-    {% if lh.ndim > 0 %}
-    argdim.mgridStrideX = (int*) calloc(argdim.size, sizeof(int));
-    {% endif %}
-    {% if lh.ndim > 1 %}
-    argdim.mgridStrideY = (int*) calloc(argdim.size, sizeof(int));
-    {% endif %}
-    {% if lh.ndim > 2 %}
-    argdim.mgridStrideZ = (int*) calloc(argdim.size, sizeof(int));
-    {% endif %}
-
-{% endif %}
-{% for arg in lh.args %}
-    {% if arg is ops_dat %}
-    argdim.strideX[{{arg.id}}] = args[{{arg.id}}].stencil->stride[0];
-        {% if lh.ndim > 1 or (lh.ndim == 1 and (arg.dim) > 1) %}
-    argdim.strideY[{{arg.id}}] = args[{{arg.id}}].stencil->stride[1];
-    argdim.xdim[{{arg.id}}] = xdim{{arg.id}}_{{lh.kernel}};
-        {% endif %}
-        {% if lh.ndim > 2 or (lh.ndim == 2 and (arg.dim) > 1) %}
-    argdim.strideZ[{{arg.id}}] = args[{{arg.id}}].stencil->stride[2];
-    argdim.ydim[{{arg.id}}] = ydim{{arg.id}}_{{lh.kernel}};
-        {% endif %}
-        {% if lh.ndim > 3 or (lh.ndim == 3 and (arg.dim) > 1) %}
-    argdim.zdim[{{arg.id}}] = zdim{{arg.id}}_{{lh.kernel}};
-        {% endif %}
-        {% if arg.restrict or arg.prolong %}
-            {% if lh.ndim > 0 %}
-    argdim.mgridStrideX[{{arg.id}}] = args[{{arg.id}}].stencil->mgrid_stride[0];
-            {% endif %}
+    int {{args_list[arg.id]}}_mgridstridX = args[{{arg.id}}].stencil->mgrid_stride[0];
             {% if lh.ndim > 1 %}
-    argdim.mgridStrideY[{{arg.id}}] = args[{{arg.id}}].stencil->mgrid_stride[1];
+    int {{args_list[arg.id]}}_mgridstridY = args[{{arg.id}}].stencil->mgrid_stride[1];
             {% endif %}
             {% if lh.ndim > 2 %}
-    argdim.mgridStrideZ[{{arg.id}}] = args[{{arg.id}}].stencil->mgrid_stride[2];
+    int {{args_list[arg.id]}}_mgridstridZ = args[{{arg.id}}].stencil->mgrid_stride[2];
             {% endif %}
         {% endif %}
     {% endif %}
-{% endfor%}
+{% endfor %}
 
 {% set line = [""] %}
 {% for arg in lh.args %}
@@ -224,112 +206,21 @@
         {% endif %}
     {% endif %}
 {% endfor %}
-{% for arg in lh.args %}
-  {% if arg is ops_dat %}
-{#
-        {% if arg is ops_read %}
-            {% set current_line %} map(to:{{args_list[arg.id]}}_p[0:arg{{arg.id}}_size]){% endset %}
-            {% if line.append(line.pop() + current_line) %}{% endif %}
-        {% else %}
-            {% set current_line %} map(tofrom:{{args_list[arg.id]}}_p[0:arg{{arg.id}}_size]){% endset %}
-            {% if line.append(line.pop() + current_line) %}{% endif %}
-        {% endif %}
-#}
-    {% elif arg is ops_gbl or arg is ops_reduce %}
-        {% if arg is ops_read %}
-            {% set current_line %} map(to:{{args_list[arg.id]}}[0:{{args_list[arg.id]}}_dim]){% endset %}
-            {% if line.append(line.pop() + current_line) %}{% endif %}
-        {% endif %}
-    {% endif %}
-{% endfor %}
-{% set line2 = [""] %}
-{#
-{% if is_element[0] %}
-    {% if lh.ndim > 2 %}
-        {% if line2.append(line2.pop() + "map(mapper(mapper_3d_or_2d_mdim_prolong), to: argdim)") %}{% endif %}
-    {% elif lh.ndim > 1 %}
-        {% if line2.append(line2.pop() + "map(mapper(mapper_2d_or_1d_mdim_prolong), to: argdim)") %}{% endif %}
-    {% elif lh.ndim > 0 %}
-        {% if line2.append(line2.pop() + "map(mapper(mapper_1d_prolong), to: argdim)") %}{% endif %}
-    {% endif %}
-{% else %}
-    {% if lh.ndim > 3 or (lh.ndim == 3 and is_any_mdim[0]) %}
-        {% if line2.append(line2.pop() + "map(mapper(mapper_4d_or_3d_mdim), to: argdim)") %}{% endif %}
-    {% elif lh.ndim > 2 or (lh.ndim == 2 and is_any_mdim[0]) %}
-        {% if line2.append(line2.pop() + "map(mapper(mapper_3d_or_2d_mdim), to: argdim)") %}{% endif %}
-    {% elif lh.ndim > 1 or (lh.ndim == 1 and is_any_mdim[0]) %}
-        {% if line2.append(line2.pop() + "map(mapper(mapper_2d_or_1d_mdim), to: argdim)") %}{% endif %}
-    {% else %}
-        {% if line2.append(line2.pop() + "map(mapper(mapper_1d), to: argdim)") %}{% endif %}
-    {% endif %}
-{% endif %}
-#}
-{% set line3 = [""] %}
-{% set line4 = [""] %}
-{% set line5 = [""] %}
-{% if line2.append(line2.pop() + "map(to: argdim)") %}{% endif %}
-{% if is_element[0] %}
-    {% if lh.ndim > 2 %}
-        {% if line3.append(line3.pop() + "map(to: argdim.xdim[0:argdim.size],argdim.ydim[0:argdim.size])") %}{% endif %}
-        {% if line4.append(line4.pop() + "map(to: argdim.strideX[0:argdim.size],argdim.strideY[0:argdim.size],argdim.strideZ[0:argdim.size])") %}{% endif %}
-        {% if line5.append(line5.pop() + "map(to: argdim.mgridStrideX[0:argdim.size],argdim.mgridStrideY[0:argdim.size],argdim.mgridStrideZ[0:argdim.size])") %}{% endif %}
-    {% elif lh.ndim > 1 %}
-        {% if line3.append(line3.pop() + "map(to: argdim.xdim[0:argdim.size])") %}{% endif %}
-        {% if line4.append(line4.pop() + "map(to: argdim.strideX[0:argdim.size],argdim.strideY[0:argdim.size])") %}{% endif %}
-        {% if line5.append(line5.pop() + "map(to: argdim.mgridStrideX[0:argdim.size],argdim.mgridStrideY[0:argdim.size])") %}{% endif %}
-    {% elif lh.ndim > 0 %}
-         {% if line4.append(line4.pop() + "map(to: argdim.strideX[0:argdim.size])") %}{% endif %}
-         {% if line5.append(line5.pop() + "map(to: argdim.mgridStrideX[0:argdim.size])") %}{% endif %}
-    {% endif %}
-{% else %}
-    {% if lh.ndim > 3 or (lh.ndim == 3 and is_any_mdim[0]) %}
-        {% if line3.append(line3.pop() + "map(to: argdim.xdim[0:argdim.size],argdim.ydim[0:argdim.size],argdim.zdim[0:argdim.size])") %}{% endif %}
-        {% if line4.append(line4.pop() + "map(to: argdim.strideX[0:argdim.size],argdim.strideY[0:argdim.size],argdim.strideZ[0:argdim.size])") %}{% endif %}
-    {% elif lh.ndim > 2 or (lh.ndim == 2 and is_any_mdim[0]) %}
-        {% if line3.append(line3.pop() + "map(to: argdim.xdim[0:argdim.size],argdim.ydim[0:argdim.size])") %}{% endif %}
-        {% if line4.append(line4.pop() + "map(to: argdim.strideX[0:argdim.size],argdim.strideY[0:argdim.size],argdim.strideZ[0:argdim.size])") %}{% endif %}
-    {% elif lh.ndim > 1 or (lh.ndim == 1 and is_any_mdim[0]) %}
-        {% if line3.append(line3.pop() + "map(to: argdim.xdim[0:argdim.size])") %}{% endif %}
-        {% if line4.append(line4.pop() + "map(to: argdim.strideX[0:argdim.size],argdim.strideY[0:argdim.size])") %}{% endif %}
-    {% else %}
-        {% if line4.append(line4.pop() + "map(to: argdim.strideX[0:argdim.size])") %}{% endif %}
-    {% endif %}
-{% endif %}
 {% set indent = [0] %}
 {% if lh.has_reduction %}
-    #pragma omp target teams distribute parallel for{{line[0]}} \
+    #pragma omp target teams distribute parallel for{{line[0]}}
 {% else %}
-    #pragma omp target teams distribute parallel for collapse({{lh.ndim}}){{line[0]}} \
-{% endif %}
-        {{line2[0]}} \
-{% if is_element[0] %}
-    {% if lh.ndim > 1 %}
-        {{line3[0]}} \
-        {{line4[0]}} \
-        {{line5[0]}}
-    {% elif lh.ndim > 0 %}
-        {{line4[0]}} \
-        {{line5[0]}}
-    {% endif %}
-{% else %}
-    {% if (lh.ndim > 3 or (lh.ndim == 3 and is_any_mdim[0]))  or
-          (lh.ndim > 2 or (lh.ndim == 2 and is_any_mdim[0]))  or
-          (lh.ndim > 1 or (lh.ndim == 1 and is_any_mdim[0])) %}
-        {{line3[0]}} \
-        {{line4[0]}}
-    {% else %}
-        {{line4[0]}}
-    {% endif %}
+    #pragma omp target teams distribute parallel for collapse({{lh.ndim}}){{line[0]}}
 {% endif %}
 {% if lh.ndim > 2 %}
-    for (int n_z = start_indx[2]; n_z < end_indx[2]; n_z++)
+    for (int n_z = start_indx2; n_z < end_indx2; n_z++)
     {
 {% endif %}
 {% if lh.ndim > 1 %}
-        for (int n_y = start_indx[1]; n_y < end_indx[1]; n_y++)
+        for (int n_y = start_indx1; n_y < end_indx1; n_y++)
         {
 {% endif %}
-            for (int n_x = start_indx[0]; n_x < end_indx[0]; n_x++)
+            for (int n_x = start_indx0; n_x < end_indx0; n_x++)
             {
 {% if lh.arg_idx != -1 %}
     {% if lh.ndim == 1 %}
@@ -358,33 +249,33 @@
             {% set extradim = 1 %}
         {% endif %}
         {% if arg.restrict %}
-            {% set n_x -%}n_x*argdim.mgridStrideX[{{arg.id}}]{%- endset %}
-            {% set n_y -%}n_y*argdim.mgridStrideY[{{arg.id}}]{%- endset %}
-            {% set n_z -%}n_z*argdim.mgridStrideZ[{{arg.id}}]{%- endset %}
+            {% set n_x -%}n_x*{{args_list[arg.id]}}_mgridstridX{%- endset %}
+            {% set n_y -%}n_y*{{args_list[arg.id]}}_mgridstridY{%- endset %}
+            {% set n_z -%}n_z*{{args_list[arg.id]}}_mgridstridZ{%- endset %}
         {% elif arg.prolong %}
-            {% set n_x -%}(n_x+arg_idx[0]%argdim.mgridStrideX[{{arg.id}}])/argdim.mgridStrideX[{{arg.id}}]{%- endset %}
-            {% set n_y -%}(n_y+arg_idx[1]%argdim.mgridStrideY[{{arg.id}}])/argdim.mgridStrideY[{{arg.id}}]{%- endset %}
-            {% set n_z -%}(n_z+arg_idx[2]%argdim.mgridStrideZ[{{arg.id}}])/argdim.mgridStrideZ[{{arg.id}}]{%- endset %}
+            {% set n_x -%}(n_x+arg_idx[0]%{{args_list[arg.id]}}_mgridstridX)/{{args_list[arg.id]}}_mgridstridX{%- endset %}
+            {% set n_y -%}(n_y+arg_idx[1]%{{args_list[arg.id]}}_mgridstridY)/{{args_list[arg.id]}}_mgridstridY{%- endset %}
+            {% set n_z -%}(n_z+arg_idx[2]%{{args_list[arg.id]}}_mgridstridZ)/{{args_list[arg.id]}}_mgridstridZ{%- endset %}
         {% else %}
             {% set n_x -%}n_x{%- endset %}
             {% set n_y -%}n_y{%- endset %}
             {% set n_z -%}n_z{%- endset %}
         {% endif %}
         {% if lh.ndim > 0 %}
-            {% set offset_val -%}({{n_x}} * argdim.strideX[{{arg.id}}]){%- endset %}
+            {% set offset_val -%}({{n_x}} * {{arg.strides[0] | int}}){%- endset %}
             {% if offset.append(offset.pop() + offset_val) %}{% endif %}
         {% endif %}
         {% if lh.ndim > 1 %}
-            {% set offset_val -%}({{n_y}} * argdim.xdim[{{arg.id}}] * argdim.strideY[{{arg.id}}]){%- endset %}
+            {% set offset_val -%}({{n_y}} * xdim{{arg.id}}_{{lh.kernel}} * {{arg.strides[1] | int}}){%- endset %}
             {% if offset.append(offset.pop() + " + " + offset_val) %}{% endif %}
         {% endif %}
         {% if lh.ndim > 2 %}
-            {% set offset_val -%}({{n_z}} * argdim.xdim[{{arg.id}}] * argdim.ydim[{{arg.id}}] * argdim.strideZ[{{arg.id}}]){%- endset %}
+            {% set offset_val -%}({{n_z}} * xdim{{arg.id}}_{{lh.kernel}} * ydim{{arg.id}}_{{lh.kernel}} * {{arg.strides[2] | int}}){%- endset %}
             {% if offset.append(offset.pop() + " + " + offset_val) %}{% endif %}
         {% endif %}
         {% set dimlabels = "xyzuv" %}
         {% for i in range(1, lh.ndim + extradim) %}
-            {% if sizelist.append(sizelist.pop() + "argdim."+dimlabels[i-1]|string + "dim[" + arg.id|string + "], ") %}{% endif %}
+            {% if sizelist.append(sizelist.pop() + dimlabels[i-1]|string + "dim" + arg.id|string + "_" + lh.kernel|string + ", ") %}{% endif %}
         {% endfor %}
         {% if arg.dim > 1 %}
 #ifdef OPS_SOA
@@ -395,6 +286,7 @@
                 {{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{arg.dim}} * ({{offset[0]}}));
 #endif
         {% endif %}
+
     {% endif %}
 {% endfor %}
 
@@ -464,32 +356,6 @@
         {% endif %}
     {% endif %}
 {% endfor %}
-
-//  Free allocated arrays
-    free(argdim.strideX);
-{% if lh.ndim > 1 or (lh.ndim == 1 and is_any_mdim[0]) %}
-    free(argdim.strideY);
-    free(argdim.xdim);
-{% endif %}
-{% if lh.ndim > 2 or (lh.ndim == 2 and is_any_mdim[0]) %}
-    free(argdim.strideZ);
-    free(argdim.ydim);
-{% endif %}
-{% if lh.ndim > 3 or (lh.ndim == 3 and is_any_mdim[0]) %}
-    free(argdim.zdim);
-{% endif %}
-
-{% if is_element[0] %}
-    {% if lh.ndim > 0 %}
-    free(argdim.mgridStrideX);
-    {% endif %}
-    {% if lh.ndim > 1 %}
-    free(argdim.mgridStrideY);
-    {% endif %}
-    {% if lh.ndim > 2 %}
-    free(argdim.mgridStrideZ);
-    {% endif %}
-{% endif %}
 
 {% endblock %}
 

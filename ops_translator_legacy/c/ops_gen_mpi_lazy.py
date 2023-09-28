@@ -214,6 +214,7 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
 
         code("")
         if offload == 1:
+            config.depth = 4
             for dim in range(NDIM):
                 code(f"int start{dim} = start[{dim}];")
                 code(f"int end{dim} = end[{dim}];")
@@ -314,9 +315,6 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                 if restrict[n] == 1 or prolong[n] == 1:
                     config.depth = 0
                     code("#endif")
-                if offload:
-                    config.depth = 4
-                    code(f"size_t arg{n}_size = (args[{n}].dat->mem - ((char*){clean_type(arg_list[n])}_p-args[{n}].data{ptr_suffix}))/sizeof({typs[n]});")
                 code("")
             elif arg_typ[n] == "ops_arg_gbl":
                 config.depth = 4
@@ -341,6 +339,47 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                     config.depth = 0
                     code("#endif //OPS_MPI")
                 code("")
+
+        if "ops_arg_gbl" in arg_typ and offload == 1:
+            config.depth = 4
+            
+            code("")
+            code(f"int consts_bytes = 0;")
+            code("")
+            
+            for n in range(0, nargs):
+                if arg_typ[n] == "ops_arg_gbl":
+                    if accs[n] == OPS_READ:
+                        code(f"{typs[n]} *arg{n}h = ({typs[n]} *)args[{n}].data;")
+                        code(f"consts_bytes += ROUND_UP(args[{n}].dim*sizeof({typs[n]}));")
+
+            code("")
+            code(f"reallocConstArrays(block->instance,consts_bytes);")
+            code(f"consts_bytes = 0;")
+            code("")
+
+            for n in range(0, nargs):
+                if arg_typ[n] == "ops_arg_gbl":
+                    if accs[n] == OPS_READ:
+                        code(f"args[{n}].data = block->instance->OPS_consts_h + consts_bytes;")
+                        code(f"args[{n}].data_d = block->instance->OPS_consts_d + consts_bytes;")
+                        FOR("d", "0", f"args[{n}].dim")
+                        code(f"(({typs[n]} *)args[{n}].data)[d] = arg{n}h[d];")
+                        ENDFOR()
+                        code(f"consts_bytes += ROUND_UP(args[{n}].dim*sizeof({typs[n]}));")
+                        code("")
+
+            code(f"mvConstArraysToDevice(block->instance,consts_bytes);")
+            code("")
+
+            for n in range(0, nargs):
+                if arg_typ[n] == "ops_arg_gbl":
+                    if accs[n] == OPS_READ:
+                        code(
+                            f"{typs[n]} * __restrict__ {clean_type(arg_list[n])} = ({typs[n]} *)args[{n}].data{ptr_suffix};"
+                        )
+
+            code("")
 
         config.depth = 0
         code("#ifndef OPS_LAZY")
@@ -370,6 +409,15 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                 if accs[n] != OPS_READ:
                     for d in range(0, int(dims[n])):
                         code(f"{typs[n]} p_a{n}_{d} = p_a{n}[{d}];")
+
+        for n in range(0, nargs):
+            if arg_typ[n] == "ops_arg_dat":
+                if restrict[n] == 1 or prolong[n] == 1:
+                    code(f"int {clean_type(arg_list[n])}_mgridstridX = args[{n}].stencil->mgrid_stride[0];")
+                    if NDIM > 1:
+                        code(f"int {clean_type(arg_list[n])}_mgridstridY = args[{n}].stencil->mgrid_stride[1];")
+                    if NDIM > 2:
+                        code(f"int {clean_type(arg_list[n])}_mgridstridZ = args[{n}].stencil->mgrid_stride[2];")
 
         line = ""
         for n in range(0, nargs):
@@ -408,10 +456,6 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
             else:
                 FOR("n_y", "start[1]", "end[1]")
 
-        line3 = ""
-        for n in range(0, nargs):
-            if arg_typ[n] == "ops_arg_dat":
-                line3 += arg_list[n] + ","
         if NDIM > 1:
             if offload == 0:
                 temp_depth = config.depth
@@ -435,7 +479,10 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                 config.depth = 0
                 code("#endif")
                 config.depth = temp_depth
-        FOR("n_x", "start[0]", "end[0]")
+        if offload == 1:
+            FOR("n_x", "start0", "end0")
+        else:
+            FOR("n_x", "start[0]", "end[0]")
         code("")
 
         if arg_idx != -1:
@@ -466,13 +513,13 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
                     dim = f"arg{n}.dim, "
                     extradim = 1
                 if restrict[n] == 1:
-                    n_x = f"n_x*args[{n}].stencil->mgrid_stride[0]"
-                    n_y = f"n_y*args[{n}].stencil->mgrid_stride[1]"
-                    n_z = f"n_z*args[{n}].stencil->mgrid_stride[2]"
+                    n_x = f"n_x*{clean_type(arg_list[n])}_mgridstridX"
+                    n_y = f"n_y*{clean_type(arg_list[n])}_mgridstridY"
+                    n_z = f"n_z*{clean_type(arg_list[n])}_mgridstridZ"
                 elif prolong[n] == 1:
-                    n_x = f"(n_x+arg_idx[0]%args[{n}].stencil->mgrid_stride[0])/args[{n}].stencil->mgrid_stride[0]"
-                    n_y = f"(n_y+arg_idx[1]%args[{n}].stencil->mgrid_stride[1])/args[{n}].stencil->mgrid_stride[1]"
-                    n_z = f"(n_z+arg_idx[2]%args[{n}].stencil->mgrid_stride[2])/args[{n}].stencil->mgrid_stride[2]"
+                    n_x = f"(n_x+arg_idx[0]%{clean_type(arg_list[n])}_mgridstridX)/{clean_type(arg_list[n])}_mgridstridX"
+                    n_y = f"(n_y+arg_idx[1]%{clean_type(arg_list[n])}_mgridstridY)/{clean_type(arg_list[n])}_mgridstridY"
+                    n_z = f"(n_z+arg_idx[2]%{clean_type(arg_list[n])}_mgridstridZ)/{clean_type(arg_list[n])}_mgridstridZ"
                 else:
                     n_x = "n_x"
                     n_y = "n_y"

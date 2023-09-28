@@ -323,6 +323,8 @@ void ops_exit_device(OPS_instance *instance);
 void reallocConstArrays(OPS_instance *instance, int consts_bytes);
 void mvConstArraysToDevice(OPS_instance *instance, int consts_bytes);
 
+void reallocConstArrays(OPS_instance *instance, int consts_bytes);
+void mvConstArraysToDevice(OPS_instance *instance, int consts_bytes);
 
 void _ops_init(OPS_instance *instance, const int argc, const char * const argv[], const int diags_level);
 ops_block _ops_decl_block(OPS_instance *instance, int dims, const char * name);
