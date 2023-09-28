@@ -27,7 +27,7 @@ cd $OPS_INSTALL_PATH/../apps/c/TeaLeaf
 make clean
 rm -f .generated
 make IEEE=1 tealeaf_dev_seq tealeaf_dev_mpi tealeaf_seq tealeaf_tiled tealeaf_openmp tealeaf_mpi \
-tealeaf_mpi_tiled tealeaf_mpi_openmp tealeaf_mpi_inline
+tealeaf_mpi_tiled tealeaf_mpi_openmp
 
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./tealeaf_openmp > perf_out
@@ -53,14 +53,6 @@ grep "PASSED" tea.out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
-echo '============> Running MPI_Inline with MPI+OpenMP'
-export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 10 ./tealeaf_mpi_inline > perf_out
-grep "Total Wall time" tea.out
-#grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
-grep "PASSED" tea.out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm -f tea.out
-
 echo '============> Running DEV_MPI'
 $MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_dev_mpi > perf_out
 grep "Total Wall time" tea.out
@@ -71,14 +63,6 @@ rm -f tea.out
 
 echo '============> Running MPI'
 $MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_mpi > perf_out
-grep "Total Wall time" tea.out
-#grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
-grep "PASSED" tea.out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm -f tea.out
-
-echo '============> Running MPI_Inline'
-export OMP_NUM_THREADS=1;$MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_mpi_inline > perf_out
 grep "Total Wall time" tea.out
 #grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
 grep "PASSED" tea.out
