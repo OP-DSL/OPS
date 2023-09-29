@@ -248,7 +248,7 @@ int main(int argc, char *argv[]) {
   bx = 16384;
   by = 16384;
   bz = 16384;
-  m = 0;
+  m = 5;
   halo = 1;
   t = 0;
 
