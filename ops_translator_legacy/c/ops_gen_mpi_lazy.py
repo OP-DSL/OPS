@@ -207,7 +207,7 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
         code("#else")
         config.depth = 4
         code(
-            f"if (compute_ranges(args, {nargs},block, range, start, end, arg_idx) < 0) return;"
+            f"if (compute_ranges(args, {nargs}, block, range, start, end, arg_idx) < 0) return;"
         )
         config.depth = 0
         code("#endif")
