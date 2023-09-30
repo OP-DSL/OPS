@@ -93,8 +93,8 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
     ##########################################################################
     #  create new kernel file
     ##########################################################################
-    if not os.path.exists("./SYCL"):
-        os.makedirs("./SYCL")
+    if not os.path.exists("./sycl"):
+        os.makedirs("./sycl")
 
     for nk in range(0, len(kernels)):
         assert config.file_text == "" and config.depth == 0
@@ -143,8 +143,6 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
         #  start with seq kernel function
         ##########################################################################
 
-        code("")
-        comm("user function")
         kernel_text, arg_list = util.get_kernel_body_and_arg_list(
             name, src_dir, arg_typ
         )
@@ -181,15 +179,25 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
         kernel_text = re.sub(r"\bexp\b", "cl::sycl::exp", kernel_text)
 
         comm("")
-        comm(" host stub function")
+        comm("  ==================")
+        comm("  Host stub function")
+        comm("  ==================")
         code("#ifndef OPS_LAZY")
-        code(
-            f"void ops_par_loop_{name}(char const *name, ops_block block, int dim, int* range,"
-        )
-        code(util.group_n_per_line([f" ops_arg arg{n}" for n in range(nargs)]) + ") {")
+        code(f"void ops_par_loop_{name}(")
+        code("    const char *name,")
+        code("    ops_block block,")
+        code("    int dim,")
+        code("    int* range,")
+        for n in range(nargs):
+            if n == nargs-1:
+                code(f"    ops_arg arg{n}")
+            else:
+                code(f"    ops_arg arg{n}, ")
+        code(")\n{")
         code("#else")
-        code(f"void ops_par_loop_{name}_execute(ops_kernel_descriptor *desc) {{")
-        config.depth = 2
+        code(f"void ops_par_loop_{name}_execute(ops_kernel_descriptor *desc)")
+        code("{")
+        config.depth = 4
         code("ops_block block = desc->block;")
         code("int dim = desc->dim;")
         code("int *range = desc->range;")
@@ -197,76 +205,107 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
         for n in range(0, nargs):
             code(f"ops_arg arg{n} = desc->args[{n}];")
 
+        config.depth = 0
         code("#endif")
-
         code("")
-        comm("Timing")
+        
+        comm("  ======")
+        comm("  Timing")
+        comm("  ======")
+        config.depth = 4
         code("double __t1,__t2,__c1,__c2;")
         code("")
 
-        code(
-            f"ops_arg args[{nargs}] = {{"
-            + util.group_n_per_line([f" arg{n}" for n in range(nargs)], 5)
-            + "};\n\n"
-        )
+        code(f"ops_arg args[{nargs}];")
         code("")
+
+        for n in range(nargs):
+            code(f"args[{n}] = arg{n};")
+
+        code("")
+        config.depth = 0
         code("#if defined(CHECKPOINTING) && !defined(OPS_LAZY)")
-        code(f"if (!ops_checkpointing_before(args,{nargs},range,{nk})) return;")
+        config.depth = 4
+        code(f"if (!ops_checkpointing_before(args,{nargs}, range, {nk})) return;")
+        config.depth = 0
         code("#endif")
         code("")
 
+        config.depth = 4
         IF("block->instance->OPS_diags > 1")
-        code(f'ops_timing_realloc(block->instance,{nk},"{name}");')
+        code(f'ops_timing_realloc(block->instance, {nk}, "{name}");')
         code(f"block->instance->OPS_kernels[{nk}].count++;")
-        code("ops_timers_core(&__c2,&__t2);")
+        code("ops_timers_core(&__c1, &__t1);")
         ENDIF()
         code("")
 
+        config.depth = 0
         code("#ifdef OPS_DEBUG")
+        config.depth = 4
         code(f'ops_register_args(block->instance, args, "{name}");')
+        config.depth = 0
         code("#endif")
-        code("")
 
         code("")
 
-        comm("compute locally allocated range for the sub-block")
+        comm("  =================================================")
+        comm("  compute locally allocated range for the sub-block")
+        comm("  =================================================")
+        config.depth = 4
         code(f"int start[{NDIM}];")
         code(f"int end[{NDIM}];")
         if not (arg_idx != -1) and not MULTI_GRID:
+            config.depth = 0
             code("#if defined(OPS_MPI) && !defined(OPS_LAZY)")
         code(f"int arg_idx[{NDIM}];")
-        #    if not (arg_idx!=-1 and not MULTI_GRID):
         if not (arg_idx != -1) and not MULTI_GRID:
+            config.depth = 0
             code("#endif")
 
+        config.depth = 0
         code("#if defined(OPS_LAZY) || !defined(OPS_MPI)")
+        config.depth = 4
         FOR("n", "0", str(NDIM))
-        code("start[n] = range[2*n];end[n] = range[2*n+1];")
+        code("start[n] = range[2*n];")
+        code("end[n]   = range[2*n+1];")
         ENDFOR()
+        config.depth = 0
         code("#else")
+        config.depth = 4
         code(
-            f"if (compute_ranges(args, {nargs},block, range, start, end, arg_idx) < 0) return;"
+            f"if (compute_ranges(args, {nargs}, block, range, start, end, arg_idx) < 0) return;"
         )
+        config.depth = 0
         code("#endif")
 
         code("")
         if arg_idx != -1 or MULTI_GRID:
+            config.depth = 0
             code("#if defined(OPS_MPI)")
             code("#if defined(OPS_LAZY)")
+            config.depth = 4
             code("sub_block_list sb = OPS_sub_block_list[block->index];")
             for n in range(0, NDIM):
                 code(f"arg_idx[{n}] = sb->decomp_disp[{n}];")
+            config.depth = 0
             code("#else")
+            config.depth = 4
             for n in range(0, NDIM):
                 code(f"arg_idx[{n}] -= start[{n}];")
+            config.depth = 0
             code("#endif")
             code("#else //OPS_MPI")
+            config.depth = 4
             for n in range(0, NDIM):
                 code(f"arg_idx[{n}] = 0;")
+            config.depth = 0
             code("#endif //OPS_MPI")
 
         code("")
-        comm("initialize global variable with the dimension of dats")
+        comm("  =====================================================")
+        comm("  Initialize global variable with the dimension of dats")
+        comm("  =====================================================")
+        config.depth = 4
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat":
                 if NDIM > 1 or (
@@ -285,7 +324,11 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                     code(f"int zdim{n}_{name} = args[{n}].dat->size[2];")
 
         code("")
-        comm("set up initial pointers and exchange halos if necessary")
+        config.depth = 0
+        comm("  =======================================================")
+        comm("  Set up initial pointers and exchange halos if necessary")
+        comm("  =======================================================")
+        config.depth = 4
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat":
                 code(f"int base{n} = args[{n}].dat->base_offset/sizeof({typs[n]});")
@@ -293,7 +336,9 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                     f"{typs[n]}* {clean_type(arg_list[n])}_p = ({typs[n]}*)args[{n}].data_d;"
                 )
                 if restrict[n] == 1 or prolong[n] == 1:
+                    config.depth = 0
                     code("#ifdef OPS_MPI")
+                    config.depth = 4
                     code(
                         f"sub_dat_list sd{n} = OPS_sub_dat_list[args[{n}].dat->index];"
                     )
@@ -323,7 +368,9 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                         )
 
                 if restrict[n] == 1 or prolong[n] == 1:
+                    config.depth = 0
                     code("#endif")
+                    config.depth = 4
             elif arg_typ[n] == "ops_arg_gbl":
                 if accs[n] == OPS_READ:
                     if dims[n].isdigit() and int(dims[n]) == 1:
@@ -333,17 +380,22 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                     else:
                         code(f"{typs[n]} *arg{n}h = ({typs[n]} *)args[{n}].data;")
                 else:
+                    config.depth = 0
                     code("#ifdef OPS_MPI")
+                    config.depth = 4
                     code(
                         f"{typs[n]} * __restrict__ p_a{n} = ({typs[n]} *)(((ops_reduction)args[{n}].data)->data + ((ops_reduction)args[{n}].data)->size * block->index);"
                     )
+                    config.depth = 0
                     code("#else //OPS_MPI")
+                    config.depth = 4
                     code(
                         f"{typs[n]} * __restrict__ p_a{n} = ({typs[n]} *)((ops_reduction)args[{n}].data)->data;"
                     )
+                    config.depth = 0
                     code("#endif //OPS_MPI")
+                    config.depth = 4
                 code("")
-            code("")
 
         if has_reduction and not builtin_reduction:
             if ops_cpu and ops_cpu >= 1:
@@ -378,7 +430,7 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                         f"reduct_bytes += ROUND_UP(maxblocks*{dims[n]}*sizeof({typs[n]}));"
                     )
                     code(f"reduct_size = MAX(reduct_size,sizeof({typs[n]}));")
-        code("")
+                    code("")
 
         if GBL_READ and GBL_READ_MDIM:
             code("reallocConstArrays(block->instance,consts_bytes);")
@@ -435,7 +487,7 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                     code(
                         f"for (int d=0; d<{dims[n]}; d++) (({typs[n]} *)arg{n}.data)[d] = arg{n}h[d];"
                     )
-                    code(f"consts_bytes += ROUND_UP({dims[n]}*sizeof(int));")
+                    code(f"consts_bytes += ROUND_UP({dims[n]}*sizeof({typs[n]}));")
         if GBL_READ and GBL_READ_MDIM:
             code("mvConstArraysToDevice(block->instance,consts_bytes);")
 
@@ -444,15 +496,22 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
 
         code("")
 
+        config.depth = 0
         code("#ifndef OPS_LAZY")
-        comm("Halo Exchanges")
+        comm("  ==============")
+        comm("  Halo Exchanges")
+        comm("  ==============")
+        config.depth = 4
         code(f"ops_H_D_exchanges_device(args, {nargs});")
         code(f"ops_halo_exchanges(args,{nargs},range);")
+        config.depth = 0
         code("#endif")
         code("")
+        
+        config.depth = 4
         IF("block->instance->OPS_diags > 1")
-        code("ops_timers_core(&__c1,&__t1);")
-        code(f"block->instance->OPS_kernels[{nk}].mpi_time += __t1-__t2;")
+        code("ops_timers_core(&__c2, &__t2);")
+        code(f"block->instance->OPS_kernels[{nk}].mpi_time += __t2 - __t1;")
         ENDIF()
         code("")
 
@@ -603,7 +662,8 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                         )
                     )
         code(") [[intel::kernel_args_restrict]] {")
-        config.depth += 2
+        code("")
+        config.depth += 4
         line3 = ""
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat":
@@ -622,6 +682,8 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
             code(f"int n_x = item.get_id({NDIM - 1})+start_0;")
         else:
             code(f"int n_x = item.get_global_id()[{NDIM - 1}]+start_0;")
+
+        code("")
         if arg_idx != -1:
             if NDIM == 1:
                 code("int " + clean_type(arg_list[arg_idx]) + "[] = {arg_idx_0+n_x};")
@@ -637,6 +699,7 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                     + clean_type(arg_list[arg_idx])
                     + "[] = {arg_idx_0+n_x, arg_idx_1+n_y, arg_idx_2+n_z};"
                 )
+            code("")
 
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat":
@@ -722,7 +785,11 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                         )
 
         # insert user kernel
-        comm("USER CODE")
+        config.depth = 0
+        comm("  =========")
+        comm("  User code")
+        comm("  =========")
+        config.depth = 16
         cond = "n_x < end_0"
         if NDIM > 1:
             cond = cond + " && n_y < end_1"
@@ -767,9 +834,9 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                         )
                     ENDFOR()
 
-        config.depth -= 2
+        config.depth -= 4
         code("});")
-        config.depth -= 2
+        config.depth -= 4
         code("});")
         ENDIF()
 
@@ -797,84 +864,74 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                 ENDFOR()
                 ENDFOR()
 
+        code("")
         IF("block->instance->OPS_diags > 1")
         code("block->instance->sycl_instance->queue->wait();")
-        code("ops_timers_core(&__c2,&__t2);")
-        code(f"block->instance->OPS_kernels[{nk}].time += __t2-__t1;")
+        code("ops_timers_core(&__c1, &__t1);")
+        code(f"block->instance->OPS_kernels[{nk}].time += __t1 -__t2;")
         ENDIF()
 
+        code("")
+        config.depth = 0
         code("#ifndef OPS_LAZY")
+        config.depth = 4
         code(f"ops_set_dirtybit_device(args, {nargs});")
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat" and (
                 accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC
             ):
-                code(f"ops_set_halo_dirtybit3(&args[{n}],range);")
+                code(f"ops_set_halo_dirtybit3(&args[{n}], range);")
+        config.depth = 0
         code("#endif")
 
         code("")
+        config.depth = 4
         IF("block->instance->OPS_diags > 1")
-        comm("Update kernel record")
-        code("ops_timers_core(&__c1,&__t1);")
-        code(f"block->instance->OPS_kernels[{nk}].mpi_time += __t1-__t2;")
+        config.depth = 0
+        comm("  ====================")
+        comm("  Update kernel record")
+        comm("  ====================")
+        config.depth = 4
+        code("ops_timers_core(&__c2, &__t2);")
+        code(f"block->instance->OPS_kernels[{nk}].mpi_time += __t2 -__t1;")
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat":
                 code(
                     f"block->instance->OPS_kernels[{nk}].transfer += ops_compute_transfer(dim, start, end, &arg{n});"
                 )
         ENDIF()
-        config.depth = config.depth - 2
+        config.depth = 0
         code("}")
         code("")
 
-        ## TODO should be fine after this point
-        code("")
         code("#ifdef OPS_LAZY")
-        code(
-            f"void ops_par_loop_{name}(char const *name, ops_block block, int dim, int* range,"
-        )
-        code(util.group_n_per_line([f" ops_arg arg{n}" for n in range(nargs)]) + ") {")
-        config.depth = 2
-        code(
-            "ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));"
-        )
-        # code('desc->name = (char *)malloc(strlen(name)+1);')
-        # code('strcpy(desc->name, name);')
-        code("desc->name = name;")
-        code("desc->block = block;")
-        code("desc->dim = dim;")
-        code("desc->device = 1;")
-        code(f"desc->index = {nk};")
-        code("desc->hash = 5381;")
-        code(f"desc->hash = ((desc->hash << 5) + desc->hash) + {nk};")
-        FOR("i", "0", str(2 * NDIM))
-        code("desc->range[i] = range[i];")
-        code("desc->orig_range[i] = range[i];")
-        code("desc->hash = ((desc->hash << 5) + desc->hash) + range[i];")
-        ENDFOR()
+        code(f"void ops_par_loop_{name}(")
+        code("    const char *name,")
+        code("    ops_block block,")
+        code("    int dim,")
+        code("    int* range,")
+        for n in range(nargs):
+            if n == nargs-1:
+                code(f"    ops_arg arg{n}")
+            else:
+                code(f"    ops_arg arg{n},")
+        code("  )\n{")
+        config.depth = 4
+        code(f"ops_arg args[{nargs}];")
+        code("")
+        for n in range (0, nargs):
+          code(f"args[{n}] = arg{n};")
 
-        code(f"desc->nargs = {nargs};")
-        code(f"desc->args = (ops_arg*)ops_malloc({nargs}*sizeof(ops_arg));")
-        declared = 0
-        for n in range(0, nargs):
-            code(f"desc->args[{n}] = arg{n};")
-            if arg_typ[n] == "ops_arg_dat":
-                code(
-                    f"desc->hash = ((desc->hash << 5) + desc->hash) + arg{n}.dat->index;"
-                )
-            if arg_typ[n] == "ops_arg_gbl" and accs[n] == OPS_READ:
-                if declared == 0:
-                    code(f"char *tmp = (char*)ops_malloc({dims[n]}*sizeof({typs[n]}));")
-                    declared = 1
-                else:
-                    code(f"tmp = (char*)ops_malloc({dims[n]}*sizeof({typs[n]}));")
-                code(f"memcpy(tmp, arg{n}.data,{dims[n]}*sizeof({typs[n]}));")
-                code(f"desc->args[{n}].data = tmp;")
-        code(f"desc->function = ops_par_loop_{name}_execute;")
-        IF("block->instance->OPS_diags > 1")
-        code(f'ops_timing_realloc(block->instance,{nk},"{name}");')
-        ENDIF()
-        code("ops_enqueue_kernel(desc);")
+        code("")
+        text = 'create_kerneldesc_and_enque(name, '
+        text = text + f'"{name}", '
+        text = text + f'args, {nargs}, '
+        text = text + f'{nk}, '
+        text = text + 'dim, 1, range, block, '
+        text = text + f'ops_par_loop_{name}_execute'
+        text = text + ');'
+        code(text)
+    
         config.depth = 0
         code("}")
         code("#endif")
@@ -882,7 +939,7 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
         ##########################################################################
         #  output individual kernel file
         ##########################################################################
-        util.write_text_to_file(f"./SYCL/{name}_sycl_kernel.cpp")
+        util.write_text_to_file(f"./sycl/{name}_kernel.cpp")
 
     # end of main kernel call loop
 
@@ -939,7 +996,7 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
     code(
         "void ops_decl_const_char(OPS_instance *instance, int dim, char const * type, int size, char * dat, char const * name ) {"
     )
-    config.depth = config.depth + 2
+    config.depth = config.depth + 4
     for nc in range(0, len(consts)):
         IF('!strcmp(name,"' + (consts[nc]["name"].replace('"', "")).strip() + '")')
         code(
@@ -962,18 +1019,18 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
         ENDIF()
         code("else")
     code("{")
-    config.depth = config.depth + 2
+    config.depth = config.depth + 4
     code('throw OPSException(OPS_RUNTIME_ERROR, "error: unknown const name");')
     ENDIF()
-    config.depth = config.depth - 2
+    config.depth = config.depth - 4
     code("}")
     code("")
     comm("user kernel files")
 
     for kernel_name in map(lambda kernel: kernel["name"], kernels):
         if kernel_name == "calc_dt_kernel_print":
-            code(f'#include "../MPI_OpenMP/{kernel_name}_cpu_kernel.cpp"')
+            code(f'#include "../mpi_openmp/{kernel_name}_kernel.cpp"')
         else:
-            code(f'#include "{kernel_name}_sycl_kernel.cpp"')
+            code(f'#include "{kernel_name}_kernel.cpp"')
 
-    util.write_text_to_file(f"./SYCL/{master_basename[0]}_sycl_kernels.cpp")
+    util.write_text_to_file(f"./sycl/sycl_kernels.cpp")
