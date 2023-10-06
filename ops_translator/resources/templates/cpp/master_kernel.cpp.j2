@@ -23,6 +23,10 @@
 {% block header_includes %}
 // user kernel files
 {% for lh,p in app.uniqueLoops() %}
+{% if lh.kernel == "calc_dt_kernel_print" and target.name == "sycl" %}
+#include "../mpi_openmp/{{lh.kernel}}_kernel.{{include_extension}}"
+{% else %}
 #include "{{lh.kernel}}_kernel.{{include_extension}}"
+{% endif %}
 {% endfor %}
 {% endblock %}
