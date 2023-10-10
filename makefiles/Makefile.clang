@@ -53,6 +53,7 @@ endif
 endif
 endif
 SYCLCXX = clang++
+SYCLMPICXX = mpicxx
 HIPCC=hipcc
 ifdef HIP_ARCH
 OMPOFFLOADFLAGS=-target x86_64-pc-linux-gnu -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=$(HIP_ARCH)
