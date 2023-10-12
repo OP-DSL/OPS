@@ -286,13 +286,13 @@ void ops_compute_mpi_dependencies(OPS_instance *instance, int loop, int d, int *
 
   // Update read dependencies of neighbours
   for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
-          // For any dataset read (i.e. not write-only)
+    // For any dataset read (i.e. not write-only)
     if (LOOPARG.argtype == OPS_ARG_DAT &&
       LOOPARG.opt == 1 &&
       LOOPARG.acc != OPS_WRITE) {
-      int d_m_min = 0; // Find biggest positive/negative direction stencil
+      int d_m_min = INT_MAX; // Find biggest positive/negative direction stencil
                            // point for this dimension
-      int d_p_max = 0;
+      int d_p_max = INT_MIN;
       for (int p = 0; p < LOOPARG.stencil->points; p++) {
           d_m_min = MIN(d_m_min,
             LOOPARG.stencil->stencil[LOOPARG.stencil->dims * p + d]);
@@ -311,8 +311,11 @@ void ops_compute_mpi_dependencies(OPS_instance *instance, int loop, int d, int *
           MIN(data_read_deps_edge[LOOPARG.dat->index][2 * d + 1],
           right_neighbour_start + d_m_min);
       }
+      if (instance->OPS_diags>5) printf2(instance,"Proc %d dim %d name %s read_deps_edge %d-%d\n",ops_get_proc(), d, LOOPARG.dat->name, data_read_deps_edge[LOOPARG.dat->index][2 * d + 0], data_read_deps_edge[LOOPARG.dat->index][2 * d + 1]);
+
     }
   }
+
 }
 
 
@@ -615,9 +618,9 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                   LOOPARG.opt == 1 &&
                   data_write_deps[LOOPARG.dat->index]
                                  [tile * OPS_MAX_DIM * 2 + 2 * d + 1] != INT_MIN ) {
-                int d_m_min = 0;  // Find biggest positive/negative direction
+                int d_m_min = INT_MAX;  // Find biggest positive/negative direction
                                  // stencil point for this dimension
-                int d_p_max = 0;
+                int d_p_max = INT_MIN;
                 for (int p = 0;
                      p < LOOPARG.stencil->points; p++) {
                   d_m_min = MIN(d_m_min,
@@ -698,8 +701,8 @@ int ops_construct_tile_plan(OPS_instance *instance) {
 
             // Find biggest positive/negative direction stencil
             // point for this dimension
-            int d_m_min = 0;                  
-            int d_p_max = 0;
+            int d_m_min = INT_MAX;
+            int d_p_max = INT_MIN;
             for (int p = 0; p < LOOPARG.stencil->points; p++) {
               d_m_min = MIN(d_m_min,
                   LOOPARG.stencil->stencil[LOOPARG.stencil->dims * p + d]);
@@ -733,10 +736,14 @@ int ops_construct_tile_plan(OPS_instance *instance) {
 
         // Update write dependencies based on current iteration range
         for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
-          // For any dataset read (i.e. not write-only)
+          // For any dataset write (i.e. not read-only)
           if (LOOPARG.argtype == OPS_ARG_DAT &&
               LOOPARG.opt == 1 &&
               LOOPARG.acc != OPS_READ) {
+//            // Reset dataset read_deps_edge
+//            data_read_deps_edge[LOOPARG.dat->index][2 * d + 0] = INT_MIN;   // Anything will be more
+//            data_read_deps_edge[LOOPARG.dat->index][2 * d + 1] = INT_MAX;  // Anything will be less
+
             // Extend dependency range with stencil
             data_write_deps[LOOPARG.dat->index]
                 [tile * OPS_MAX_DIM * 2 + 2 * d + 0] = MIN(

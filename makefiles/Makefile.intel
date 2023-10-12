@@ -2,15 +2,15 @@ CC    := icc
 CXX   := icpc
 FC    := ifort
 ifdef DEBUG
-	CCFLAGS   := -O0 -xHost -g -std=c99
-	CXXFLAGS   := -O0 -g -xHost -DOPS_DEBUG -std=c++11
+	CCFLAGS   := -O0 -xHost -g -std=c99 -qopenmp
+	CXXFLAGS   := -O0 -g -xHost -DOPS_DEBUG -std=c++11 -qopenmp
 else
 	CCFLAGS   := -O3 -g -xHost -std=c99 -qopenmp -qopt-report #enmp #vec-report -xAVX
 	CXXFLAGS   := -O3 -g -xHost -qopenmp -qopt-report -std=c++11 -qopt-zmm-usage=high #-qopenmp #vec-report -xAVX
 endif
 ifdef IEEE
-	CCFLAGS += -fp-model strict -fp-model source -prec-div -prec-sqrt
-	CXXFLAGS += -fp-model strict -fp-model source -prec-div -prec-sqrt
+	CCFLAGS += -fp-model precise -fp-model source -fimf-arch-consistency=true -no-fma -fimf-precision=high
+	CXXFLAGS += -fp-model precise -fp-model source -fimf-arch-consistency=true -no-fma -fimf-precision=high
 endif
 ifdef FAST
 	CCFLAGS += -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2
@@ -20,8 +20,8 @@ ifdef PROFILE_ITT
 	CXXFLAGS += -DPROFILE_ITT -I$(VTUNE_PROFILER_DIR)/include
 	OPS_LINK += -L$(VTUNE_PROFILER_DIR)/lib64 -littnotify
 endif
-#FFLAGS  = $(CXXFLAGS) -module $(F_INC_MOD)
-FFLAGS  = -O3 -g -xHost -qopenmp -qopt-report -module $(F_INC_MOD)
+FFLAGS  = $(CXXFLAGS) -module $(F_INC_MOD)
+FFLAGS := $(filter-out -std=c++11,$(FFLAGS))
 OMPFLAGS := -qopenmp
 ifdef THREADED
 	THREADING_FLAGS ?= -qopenmp
