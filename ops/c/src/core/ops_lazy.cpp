@@ -311,7 +311,7 @@ void ops_compute_mpi_dependencies(OPS_instance *instance, int loop, int d, int *
           MIN(data_read_deps_edge[LOOPARG.dat->index][2 * d + 1],
           right_neighbour_start + d_m_min);
       }
-      if (instance->OPS_diags>5) printf2(instance,"Proc %d dim %d name %s read_deps_edge %d-%d\n",ops_get_proc(), d, LOOPARG.dat->name, data_read_deps_edge[LOOPARG.dat->index][2 * d + 0], data_read_deps_edge[LOOPARG.dat->index][2 * d + 1]);
+//      if (instance->OPS_diags>5) printf2(instance,"Proc %d dim %d name %s read_deps_edge %d-%d\n",ops_get_proc(), d, LOOPARG.dat->name, data_read_deps_edge[LOOPARG.dat->index][2 * d + 0], data_read_deps_edge[LOOPARG.dat->index][2 * d + 1]);
 
     }
   }
