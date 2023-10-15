@@ -33,6 +33,7 @@ int main(int argc, const char** argv)
     ops_dat transp = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "transp");
 
     ops_dat drhs = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "drhs");
+    ops_dat erhs = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "erhs");
     ops_dat urhs = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "urhs");
     ops_dat vrhs = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "vrhs");
     ops_dat wrhs = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "wrhs");
@@ -40,6 +41,10 @@ int main(int argc, const char** argv)
     ops_dat yrhs[2];
     yrhs[0] = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "yrhs1");
     yrhs[1] = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "yrhs2");
+
+    ops_dat rrte[2];
+    rrte[0] = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "rrte1");
+    rrte[1] = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "rrte2");
 
     ops_dat rate[2];
     rate[0] = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "rate1");
@@ -51,7 +56,26 @@ int main(int argc, const char** argv)
     ops_dat store2 = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "store2");
     ops_dat store3 = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "store3");
     ops_dat store4 = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "store4");
+    ops_dat store5 = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "store5");
+    ops_dat store6 = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "store6");
+
+    ops_dat ucor = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "ucor");
+    ops_dat vcor = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "vcor");
+    ops_dat wcor = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "wcor");
+
     ops_dat divm = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "divm");
+
+    ops_dat drun = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "drun");
+    ops_dat urun = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "urun");
+    ops_dat vrun = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "vrun");
+    ops_dat wrun = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "wrun");
+    ops_dat erun = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "erun");
+
+    ops_dat derr = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "derr");
+    ops_dat uerr = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "uerr");
+    ops_dat verr = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "verr");
+    ops_dat werr = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "werr");
+    ops_dat eerr = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "eerr");
 
     int s1d_0[] = {0};
     ops_stencil S1D_0 = ops_decl_stencil(1,1,s1d_0,"0");
@@ -66,6 +90,22 @@ int main(int argc, const char** argv)
 
 
 /*  ---------------------------- RHSCAL ---------------------------- */
+
+    iter_range[0] = 0;   iter_range[1] = imax;
+    for(int ispec = 0; ispec < 2; ispec++) {
+        ops_par_loop(eqB1, "eq_B rhscal 625", block, 1, iter_range,
+                ops_arg_dat(rrte[ispec], 1, S1D_0, "double", OPS_WRITE),
+                ops_arg_dat(rate[ispec], 1, S1D_0, "double", OPS_READ));
+    }
+
+    iter_range[0] = 0;   iter_range[1] = imax;
+    ops_par_loop(eqH, "eq_H rhscal 713", block, 1, iter_range,
+            ops_arg_dat(vtmp, 1, S1D_0, "double", OPS_WRITE));
+
+    iter_range[0] = -nhalox;   iter_range[1] = imax+nhalox;
+    ops_par_loop(eqH, "eq_H rhscal 721", block, 1, iter_range,
+            ops_arg_dat(wtmp, 1, S1D_0, "double", OPS_WRITE));
+
     for(int ispec = 0; ispec < 2; ispec++) {
 
         iter_range[0] = -nhalox;   iter_range[1] = imax+nhalox;
@@ -88,7 +128,7 @@ int main(int argc, const char** argv)
         iter_range[0] = 0;   iter_range[1] = imax;
         ops_par_loop(eqD, "eq_D rhscal dfbydx 850", block, 1, iter_range,
                 ops_arg_dat(store7, 1, S1D_11pt, "double", OPS_READ),
-                ops_arg_dat(store4, 1, S1D_0, "double", OPS_WRITE));
+                ops_arg_dat(store1, 1, S1D_0, "double", OPS_WRITE));
 
         iter_range[0] = 0;   iter_range[1] = imax;
         ops_par_loop(eqA, "eq_A rhscal 874", block, 1, iter_range,
@@ -103,16 +143,35 @@ int main(int argc, const char** argv)
                 ops_arg_dat(store1, 1, S1D_0, "double", OPS_WRITE));
 
         iter_range[0] = 0;   iter_range[1] = imax;
-        ops_par_loop(eqA, "eq_A rhscal 983", block, 1, iter_range,
+        ops_par_loop(eqI, "eq_I rhscal 983", block, 1, iter_range,
                 ops_arg_dat(rate[ispec], 1, S1D_0, "double", OPS_INC),
                 ops_arg_dat(store1, 1, S1D_0, "double", OPS_READ),
                 ops_arg_dat(store2, 1, S1D_0, "double", OPS_READ),
-                ops_arg_dat(store3, 1, S1D_0, "double", OPS_READ));
+                ops_arg_dat(store3, 1, S1D_0, "double", OPS_READ),
+                ops_arg_dat(urhs, 1, S1D_0, "double", OPS_READ),
+                ops_arg_dat(vrhs, 1, S1D_0, "double", OPS_READ),
+                ops_arg_dat(wrhs, 1, S1D_0, "double", OPS_READ));
 
         iter_range[0] = -nhalox;   iter_range[1] = imax+nhalox;
         ops_par_loop(eqB1, "eq_B rhscal 1013", block, 1, iter_range,
                 ops_arg_dat(store7, 1, S1D_0, "double", OPS_WRITE),
                 ops_arg_dat(transp, 1, S1D_0, "double", OPS_READ));
+
+        iter_range[0] = 0;   iter_range[1] = imax;
+        ops_par_loop(eqG, "eq_G rhscal 1116", block, 1, iter_range,
+            ops_arg_dat(ucor, 1, S1D_0, "double", OPS_INC),
+            ops_arg_dat(store7, 1, S1D_0, "double", OPS_READ),
+            ops_arg_dat(store1, 1, S1D_0, "double", OPS_READ));
+
+        ops_par_loop(eqG, "eq_G rhscal 1116", block, 1, iter_range,
+            ops_arg_dat(vcor, 1, S1D_0, "double", OPS_INC),
+            ops_arg_dat(store7, 1, S1D_0, "double", OPS_READ),
+            ops_arg_dat(store2, 1, S1D_0, "double", OPS_READ));
+
+        ops_par_loop(eqG, "eq_G rhscal 1116", block, 1, iter_range,
+            ops_arg_dat(wcor, 1, S1D_0, "double", OPS_INC),
+            ops_arg_dat(store7, 1, S1D_0, "double", OPS_READ),
+            ops_arg_dat(store3, 1, S1D_0, "double", OPS_READ));
 
         iter_range[0] = -nhalox;   iter_range[1] = imax+nhalox;
         ops_par_loop(eqC, "eq_C rhscal 1151", block, 1, iter_range,
@@ -135,9 +194,29 @@ int main(int argc, const char** argv)
                 ops_arg_dat(store4, 1, S1D_0, "double", OPS_READ));
 
         iter_range[0] = 0;   iter_range[1] = imax;
+        ops_par_loop(eqI, "eq_I rhscal 1295", block, 1, iter_range,
+                ops_arg_dat(erhs, 1, S1D_0, "double", OPS_INC),
+                ops_arg_dat(utmp, 1, S1D_0, "double", OPS_READ),
+                ops_arg_dat(store1, 1, S1D_0, "double", OPS_READ),
+                ops_arg_dat(store2, 1, S1D_0, "double", OPS_READ),
+                ops_arg_dat(store3, 1, S1D_0, "double", OPS_READ),
+                ops_arg_dat(store4, 1, S1D_0, "double", OPS_READ),
+                ops_arg_dat(store5, 1, S1D_0, "double", OPS_READ));
+
+        iter_range[0] = 0;   iter_range[1] = imax;
         ops_par_loop(eqD, "eq_D rhscal dfbydx 1318", block, 1, iter_range,
                 ops_arg_dat(utmp, 1, S1D_11pt, "double", OPS_READ),
                 ops_arg_dat(store4, 1, S1D_0, "double", OPS_WRITE));
+
+        iter_range[0] = 0;   iter_range[1] = imax;
+        ops_par_loop(eqI, "eq_I rhscal 1349", block, 1, iter_range,
+                ops_arg_dat(erhs, 1, S1D_0, "double", OPS_INC),
+                ops_arg_dat(store7, 1, S1D_0, "double", OPS_READ),
+                ops_arg_dat(store1, 1, S1D_0, "double", OPS_READ),
+                ops_arg_dat(store2, 1, S1D_0, "double", OPS_READ),
+                ops_arg_dat(store3, 1, S1D_0, "double", OPS_READ),
+                ops_arg_dat(store4, 1, S1D_0, "double", OPS_READ),
+                ops_arg_dat(store5, 1, S1D_0, "double", OPS_READ));
 
         iter_range[0] = 0;   iter_range[1] = imax;
         ops_par_loop(eqB1, "eq_B rhscal 1455", block, 1, iter_range,
@@ -153,6 +232,15 @@ int main(int argc, const char** argv)
         ops_par_loop(eqE, "eq_E rhscal 1487", block, 1, iter_range,
                 ops_arg_dat(rate[ispec], 1, S1D_0, "double", OPS_INC),
                 ops_arg_dat(vtmp, 1, S1D_0, "double", OPS_INC),
+                ops_arg_dat(store1, 1, S1D_0, "double", OPS_READ),
+                ops_arg_dat(store2, 1, S1D_0, "double", OPS_READ),
+                ops_arg_dat(store3, 1, S1D_0, "double", OPS_READ),
+                ops_arg_dat(store4, 1, S1D_0, "double", OPS_READ));
+
+        iter_range[0] = 0;   iter_range[1] = imax;
+        ops_par_loop(eqJ, "eq_J rhscal 1510", block, 1, iter_range,
+                ops_arg_dat(erhs, 1, S1D_0, "double", OPS_INC),
+                ops_arg_dat(utmp, 1, S1D_0, "double", OPS_READ),
                 ops_arg_dat(store1, 1, S1D_0, "double", OPS_READ),
                 ops_arg_dat(store2, 1, S1D_0, "double", OPS_READ),
                 ops_arg_dat(store3, 1, S1D_0, "double", OPS_READ),
@@ -189,17 +277,20 @@ int main(int argc, const char** argv)
 
 /*  ----------------- RHSVEL --------------------- */
     iter_range[0] = -nhalox;   iter_range[1] = imax+nhalox;
-    ops_par_loop(eqB1, "eq_B rhsvel 58", block, 1, iter_range,
+    ops_par_loop(eqK, "eq_K rhsvel 58", block, 1, iter_range,
             ops_arg_dat(utmp, 1, S1D_0, "double", OPS_WRITE),
-            ops_arg_dat(urhs, 1, S1D_0, "double", OPS_READ));
+            ops_arg_dat(urhs, 1, S1D_0, "double", OPS_READ),
+            ops_arg_dat(drhs, 1, S1D_0, "double", OPS_READ));
 
-    ops_par_loop(eqB1, "eq_B rhsvel 63", block, 1, iter_range,
+    ops_par_loop(eqK, "eq_K rhsvel 63", block, 1, iter_range,
             ops_arg_dat(vtmp, 1, S1D_0, "double", OPS_WRITE),
-            ops_arg_dat(vrhs, 1, S1D_0, "double", OPS_READ));
+            ops_arg_dat(vrhs, 1, S1D_0, "double", OPS_READ),
+            ops_arg_dat(drhs, 1, S1D_0, "double", OPS_READ));
 
-    ops_par_loop(eqB1, "eq_B rhsvel 68", block, 1, iter_range,
+    ops_par_loop(eqK, "eq_K rhsvel 68", block, 1, iter_range,
             ops_arg_dat(wtmp, 1, S1D_0, "double", OPS_WRITE),
-            ops_arg_dat(wrhs, 1, S1D_0, "double", OPS_READ));
+            ops_arg_dat(wrhs, 1, S1D_0, "double", OPS_READ),
+            ops_arg_dat(drhs, 1, S1D_0, "double", OPS_READ));
 
     ops_par_loop(eqG1, "eq_G rhsvel 159", block, 1, iter_range,
             ops_arg_dat(store7, 1, S1D_0, "double", OPS_WRITE),
@@ -210,6 +301,22 @@ int main(int argc, const char** argv)
     ops_par_loop(eqD, "eq_D rhsvel dfbydx 166", block, 1, iter_range,
             ops_arg_dat(store7, 1, S1D_11pt, "double", OPS_READ),
             ops_arg_dat(store4, 1, S1D_0, "double", OPS_WRITE));
+
+    iter_range[0] = 0;   iter_range[1] = imax;
+    ops_par_loop(eqL, "eq_L rhsvel 196", block, 1, iter_range,
+            ops_arg_dat(store4, 1, S1D_0, "double", OPS_INC),
+            ops_arg_dat(store1, 1, S1D_0, "double", OPS_READ));
+
+    iter_range[0] = -nhalox;   iter_range[1] = imax+nhalox;
+    ops_par_loop(eqG1, "eq_G rhsvel 207", block, 1, iter_range,
+            ops_arg_dat(store7, 1, S1D_0, "double", OPS_WRITE),
+            ops_arg_dat(urhs, 1, S1D_0, "double", OPS_READ),
+            ops_arg_dat(wtmp, 1, S1D_0, "double", OPS_READ));
+
+    iter_range[0] = 0;   iter_range[1] = imax;
+    ops_par_loop(eqD, "eq_D rhsvel dfbydx 215", block, 1, iter_range,
+            ops_arg_dat(store7, 1, S1D_11pt, "double", OPS_READ),
+            ops_arg_dat(store6, 1, S1D_0, "double", OPS_WRITE));
 
 #ifdef OPS_LAZY
     ops_execute();

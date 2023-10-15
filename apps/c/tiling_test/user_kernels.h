@@ -34,6 +34,22 @@ void eqG(ACC<double> &a, const ACC<double> &b, const ACC<double> &c) {
 void eqG1(ACC<double> &a, const ACC<double> &b, const ACC<double> &c) {
 }
 
+//WRITE
+void eqH(ACC<double> &a) {
+}
 
+//INC,READ,READ,READ,READ,READ,READ
+void eqI(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g) {
+}
 
+//INC,READ,READ,READ,READ,READ
+void eqJ(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f) {
+}
 
+//WRITE,READ,READ
+void eqK(ACC<double> &a, const ACC<double> &b, const ACC<double> &c) {
+}
+
+//INC,READ
+void eqL(ACC<double> &a, const ACC<double> &b) {
+}
