@@ -162,7 +162,7 @@ int main(int argc, const char** argv)
         ops_par_loop(eqD, "eq_D rhscal dfbydx 850", block, 1, iter_range,
                 ops_arg_dat(store7, 1, S1D_11pt, "double", OPS_READ),
                 ops_arg_dat(store1, 1, S1D_0, "double", OPS_WRITE));
-
+/*
         iter_range[0] = 0;   iter_range[1] = nxglbl;
         ops_par_loop(eqA, "eq_A rhscal 874", block, 1, iter_range,
                 ops_arg_dat(rate[ispec], 1, S1D_0, "double", OPS_INC),
@@ -267,7 +267,7 @@ int main(int argc, const char** argv)
         ops_par_loop(eqD, "eq_D rhscal d2fdx2 1468", block, 1, iter_range,
                 ops_arg_dat(yrhs[ispec], 1, S1D_11pt, "double", OPS_READ),
                 ops_arg_dat(store1, 1, S1D_0, "double", OPS_WRITE));
-
+*/
         iter_range[0] = 0;   iter_range[1] = nxglbl;
         ops_par_loop(eqE1, "eq_E1 rhscal 1487", block, 1, iter_range,
                 ops_arg_dat(rate[ispec], 1, S1D_0, "double", OPS_INC),
