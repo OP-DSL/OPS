@@ -1,0 +1,102 @@
+mpirun -np 2 ./tilingcheck_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=10 OPS_TILESIZE_X=100
+
+No Force Execute between RHCAL and RHSVEL loops
+
+
+
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+
+ Tiling enabled
+
+ Tiling enabled
+
+ Max tiling depth across processes = 10
+
+ Tile size in X = 100
+block "my_grid" decomposed on to a processor grid of 2  
+ =========================================================================== ===========================================================================
+ rank 1 (1 )
+ ------------------------------
+   dim  :  prev_rank  :  next_rank  :   disp  :   size  :  start  :    end
+     0  :          0  :         -1  :     32  :     32
+Partitioning time: 0.00152493 seconds
+
+ rank 0 (0 )
+ ------------------------------
+   dim  :  prev_rank  :  next_rank  :   disp  :   size  :  start  :    end
+     0  :         -1  :          1  :      0  :     32
+Partitioning time: 0.00152397 seconds
+Finished block decomposition
+Proc 0 dim 0 biggest range -5-32
+Bytes per gridpoint: 114.378
+Proc 0, eq_D rhsvel dfbydx 187 tile 0 dim 0: exec range is: 0-32
+Dataset read store7 dependency dim 0 set to -5 37
+Dataset write store5 dependency dim 0 set to 0 32
+Proc 0, eq_G rhsvel 179 tile 0 dim 0: exec range is: -5-37
+Dataset read urhs dependency dim 0 set to -5 37
+Dataset read vtmp dependency dim 0 set to -5 37
+Dataset write store7 dependency dim 0 set to -5 37
+Proc 0, eq_E1 rhscal 1487 tile 0 dim 0: exec range is: 0-37
+Dataset read rate2 dependency dim 0 set to 0 37
+Dataset read vtmp dependency dim 0 set to -5 37
+Dataset read store1 dependency dim 0 set to 0 37
+Dataset read store2 dependency dim 0 set to 0 37
+Dataset read store3 dependency dim 0 set to 0 37
+Dataset read store4 dependency dim 0 set to 0 37
+Dataset write rate2 dependency dim 0 set to 0 37
+Dataset write vtmp dependency dim 0 set to 0 37
+Proc 0, eq_D rhscal dfbydx 850 tile 0 dim 0: exec range is: 0-37
+Dataset read store7 dependency dim 0 set to -5 42
+Dataset write store1 dependency dim 0 set to 0 37
+Proc 0, eq_G rhscal 845 tile 0 dim 0: exec range is: -5-42
+Dataset read yrhs2 dependency dim 0 set to -5 42
+Dataset read urhs dependency dim 0 set to -5 42
+Dataset write store7 dependency dim 0 set to -5 42
+Proc 0, eq_E1 rhscal 1487 tile 0 dim 0: exec range is: 0-37
+Dataset read rate1 dependency dim 0 set to 0 37
+Dataset read vtmp dependency dim 0 set to -5 37
+Dataset read store1 dependency dim 0 set to 0 37
+Dataset read store2 dependency dim 0 set to 0 37
+Dataset read store3 dependency dim 0 set to 0 37
+Dataset read store4 dependency dim 0 set to 0 37
+Dataset write rate1 dependency dim 0 set to 0 37
+Dataset write vtmp dependency dim 0 set to 0 37
+Proc 0, eq_D rhscal dfbydx 850 tile 0 dim 0: exec range is: 0-37
+Dataset read store7 dependency dim 0 set to -5 42
+Dataset write store1 dependency dim 0 set to 0 37
+Proc 0, eq_G rhscal 845 tile 0 dim 0: exec range is: -5-42
+Dataset read yrhs1 dependency dim 0 set to -5 42
+Dataset read urhs dependency dim 0 set to -5 42
+Dataset write store7 dependency dim 0 set to -5 42
+First access to dataset store7 is 0 (0-write, 1-read)
+First access to dataset yrhs1 is 1 (0-write, 1-read)
+First access to dataset urhs is 1 (0-write, 1-read)
+First access to dataset store1 is 0 (0-write, 1-read)
+First access to dataset rate1 is 1 (0-write, 1-read)
+First access to dataset vtmp is 1 (0-write, 1-read)
+First access to dataset store2 is 1 (0-write, 1-read)
+First access to dataset store3 is 1 (0-write, 1-read)
+First access to dataset store4 is 1 (0-write, 1-read)
+First access to dataset yrhs2 is 1 (0-write, 1-read)
+First access to dataset rate2 is 1 (0-write, 1-read)
+First access to dataset store5 is 0 (0-write, 1-read)
+Proc 0 Dataset yrhs1, dim 0, left send: 0, left recv: 0, right send: 10, right recv: 10
+Proc 0 Dataset urhs, dim 0, left send: 0, left recv: 0, right send: 10, right recv: 10
+Proc 0 Dataset rate1, dim 0, left send: 0, left recv: 0, right send: 5, right recv: 5
+Proc 0 Dataset vtmp, dim 0, left send: 0, left recv: 0, right send: 5, right recv: 5
+Proc 0 Dataset store2, dim 0, left send: 0, left recv: 0, right send: 5, right recv: 5
+Proc 0 Dataset store3, dim 0, left send: 0, left recv: 0, right send: 5, right recv: 5
+Proc 0 Dataset store4, dim 0, left send: 0, left recv: 0, right send: 5, right recv: 5
+Proc 0 Dataset yrhs2, dim 0, left send: 0, left recv: 0, right send: 10, right recv: 10
+Proc 0 Dataset rate2, dim 0, left send: 0, left recv: 0, right send: 5, right recv: 5
+Created tiling plan for 8 loops in 0.00145006 seconds, with tile size: 100x-1x-1
+Executing tiling plan for 8 loops
+Proc 0 Executing eq_G rhscal 845 -5-42 0-0 0-0
+Proc 0 Executing eq_D rhscal dfbydx 850 0-37 0-0 0-0
+Proc 0 Executing eq_E1 rhscal 1487 0-37 0-0 0-0
+Proc 0 Executing eq_G rhscal 845 -5-42 0-0 0-0
+Proc 0 Executing eq_D rhscal dfbydx 850 0-37 0-0 0-0
+Proc 0 Executing eq_E1 rhscal 1487 0-37 0-0 0-0
+Proc 0 Executing eq_G rhsvel 179 -5-37 0-0 0-0
+Proc 0 Executing eq_D rhsvel dfbydx 187 0-32 0-0 0-0
