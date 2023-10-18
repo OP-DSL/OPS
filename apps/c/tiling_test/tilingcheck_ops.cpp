@@ -30,6 +30,11 @@ void ops_par_loop_eqE1(char const *, ops_block, int , int*,
   ops_arg,
   ops_arg );
 
+void ops_par_loop_eqK(char const *, ops_block, int , int*,
+  ops_arg,
+  ops_arg,
+  ops_arg );
+
 
 
 #include "user_kernels.h"
@@ -184,6 +189,12 @@ int main(int argc, const char** argv)
 
 
 
+
+    iter_range[0] = -nhalox;   iter_range[1] = nxglbl+nhalox;
+    ops_par_loop_eqK("eq_K rhsvel 63", block, 1, iter_range,
+                 ops_arg_dat(vtmp, 1, S1D_0, "double", OPS_WRITE),
+                 ops_arg_dat(vrhs, 1, S1D_0, "double", OPS_READ),
+                 ops_arg_dat(drhs, 1, S1D_0, "double", OPS_READ));
 
 
     iter_range[0] = -nhalox;   iter_range[1] = nxglbl+nhalox;

@@ -350,13 +350,13 @@ un-comment till here */
             ops_arg_dat(utmp, 1, S1D_0, "double", OPS_WRITE),
             ops_arg_dat(urhs, 1, S1D_0, "double", OPS_READ),
             ops_arg_dat(drhs, 1, S1D_0, "double", OPS_READ));
-
+*/
     iter_range[0] = -nhalox;   iter_range[1] = nxglbl+nhalox;
     ops_par_loop(eqK, "eq_K rhsvel 63", block, 1, iter_range,
             ops_arg_dat(vtmp, 1, S1D_0, "double", OPS_WRITE),
             ops_arg_dat(vrhs, 1, S1D_0, "double", OPS_READ),
             ops_arg_dat(drhs, 1, S1D_0, "double", OPS_READ));
-
+/*
     iter_range[0] = -nhalox;   iter_range[1] = nxglbl+nhalox;
     ops_par_loop(eqK, "eq_K rhsvel 68", block, 1, iter_range,
             ops_arg_dat(wtmp, 1, S1D_0, "double", OPS_WRITE),
