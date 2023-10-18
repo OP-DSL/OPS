@@ -3,16 +3,16 @@
 #include "common_config.hpp"
 #include <ops_hls_stencil_core.hpp>
 
-static constexpr unsigned short num_points = 1;
-static constexpr unsigned short stencil_size = 1;
-static constexpr unsigned short stencil_dim = 2;
+static constexpr unsigned short s2d_1pt_num_points = 1;
+static constexpr unsigned short s2d_1pt_stencil_size = 1;
+static constexpr unsigned short s2d_1pt_stencil_dim = 2;
 
-class s2d_1pt : public ops::hls::StencilCore<stencil_type, num_points, vector_factor, ops::hls::CoefTypes::CONST_COEF, 
-        stencil_size, stencil_dim>
+class s2d_1pt : public ops::hls::StencilCore<stencil_type, s2d_1pt_num_points, vector_factor, ops::hls::CoefTypes::CONST_COEF, 
+        s2d_1pt_stencil_size, s2d_1pt_stencil_dim>
 {
     public:
-        using ops::hls::StencilCore<stencil_type, num_points, vector_factor, ops::hls::CoefTypes::CONST_COEF, 
-        stencil_size, stencil_dim>::m_gridProp;
+        using ops::hls::StencilCore<stencil_type, s2d_1pt_num_points, vector_factor, ops::hls::CoefTypes::CONST_COEF, 
+        s2d_1pt_stencil_size, s2d_1pt_stencil_dim>::m_gridProp;
 
         void idxRead(index_stream_dt idx_bus[vector_factor])
         {
@@ -25,7 +25,7 @@ class s2d_1pt : public ops::hls::StencilCore<stencil_type, num_points, vector_fa
 
             widen_dt read_val = 0;
 
-            widen_dt stencilValues[num_points];
+            widen_dt stencilValues[s2d_1pt_num_points];
             #pragma HLS ARRAY_PARTITION variable = stencilValues dim=1 complete
 
             //No buffer
@@ -96,7 +96,7 @@ class s2d_1pt : public ops::hls::StencilCore<stencil_type, num_points, vector_fa
 
             widen_dt read_val = 0;
 
-            widen_dt stencilValues[num_points];
+            widen_dt stencilValues[s2d_1pt_num_points];
             #pragma HLS ARRAY_PARTITION variable = stencilValues dim=1 complete
 
             //No buffer
@@ -220,7 +220,7 @@ class s2d_1pt : public ops::hls::StencilCore<stencil_type, num_points, vector_fa
                     }
                 }
                                 
-                process: for (unsigned short k = 0; k < vector_factor; k++)
+                process_read: for (unsigned short k = 0; k < vector_factor; k++)
                 {  
 #pragma HLS UNROLL complete
                 	unsigned short index = (i << shift_bits) + k;

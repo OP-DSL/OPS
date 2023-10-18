@@ -1146,14 +1146,42 @@ void memReadGrid(ap_uint<DATA_WIDTH>* mem_in,
 	unsigned short x_tile_size = num_xblocks << ShiftBits;
 	unsigned int x_tile_size_bytes = x_tile_size << DataShiftBits;
 
+	if (range.dim < 3)
+	{
+		range.start[2] = 0;
+		range.end[2] = 1;
+	}
+	else if (range.dim < 2)
+	{
+		range.start[1] = 0;
+		range.end[1] = 1;
+	}
+
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| starting memReadGrid. grid_size: (%d, %d, %d), range: (%d, %d, %d) --> (%d, %d, %d)\n "
+			"x_tile_size:%d, x_tile_size_bytes:%d, num_xblocks:%d\n"
+			, __func__, gridSize[0], gridSize[1], gridSize[2], range.start[0], range.start[1], range.start[2],
+			range.end[0], range.end[1], range.end[2], x_tile_size, x_tile_size_bytes, num_xblocks);
+	printf("===========================================================================================\n");
+#endif
+
 	for (unsigned short k = range.start[2]; k < range.end[2]; k++)
 	{
 		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
 		{
 			unsigned int offset = range.start[0] + j * gridSize[0] + k * gridSize[1] * gridSize[0];
+
+#ifdef DEBUG_LOG
+			printf("|HLS DEBUG_LOG|%s| reading. offset:%d, j:%d, k:%d\n"
+					, __func__, j, k);
+#endif
 			mem2axis<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_in + offset), strm_out, x_tile_size_bytes);
 		}
 	}
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| exiting.\n"
+			, __func__);
+#endif
 }
 
 template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>

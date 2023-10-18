@@ -1,8 +1,8 @@
 
 #include <ops_hls_datamover.hpp>
-#include "../include/datamover_copy.hpp"
+#include "../include/datamover_apply_stencil.hpp"
 
-extern "C" void datamover_copy(
+extern "C" void datamover_apply_stencil(
     const unsigned short range_start_x,
     const unsigned short range_end_x,
     const unsigned short range_start_y,

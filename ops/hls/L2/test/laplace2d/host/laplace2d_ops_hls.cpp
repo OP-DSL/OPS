@@ -26,7 +26,7 @@ void ops_par_loop_left_bndcon(int, int*, ops::hls::Grid<float>&, const float, co
 
 void ops_par_loop_right_bndcon(int, int*, ops::hls::Grid<float>&, const float, const int);
 
-//void ops_par_loop_apply_stencil(int, int*, ops::hls::Grid<float>&, ops::hls::Grid<float>&);
+void ops_par_loop_apply_stencil(int, int*, ops::hls::Grid<float>&, ops::hls::Grid<float>&);
 
 void ops_par_loop_copy(int, int*, ops::hls::Grid<float>&, ops::hls::Grid<float>&);
 
@@ -101,35 +101,35 @@ int main(int argc, const char** argv)
 
 //  int iter = 0;
 
-//  ops_par_loop_set_zero(2, bottom_range,
-//      d_Anew);
-//
-//  ops_par_loop_set_zero( 2, top_range,
-//      d_Anew);
-//
-//  ops_par_loop_left_bndcon(2, left_range,
-//      d_Anew, pi, jmax);
-//
-//  ops_par_loop_right_bndcon(2, right_range,
-//      d_Anew, pi, jmax);
-//
-//  getGrid(d_A);
-//  getGrid(d_Anew);
+  ops_par_loop_set_zero(2, bottom_range,
+      d_Anew);
 
-//  int num_iter = 100;
-//  for (int iter = 0; iter < num_iter; iter++)
-//  {
-//    int interior_range[] = {0,imax,0,jmax};
-//    ops_par_loop_apply_stencil(2, interior_range,
-//        d_A,
-//        d_Anew);
-//
-//    ops_par_loop_copy(2, interior_range,
-//        d_A,
-//        d_Anew);
-//
-//    if(iter % 10 == 0) printf("%5d\n", iter);
-//  }
+  ops_par_loop_set_zero( 2, top_range,
+      d_Anew);
+
+  ops_par_loop_left_bndcon(2, left_range,
+      d_Anew, pi, jmax);
+
+  ops_par_loop_right_bndcon(2, right_range,
+      d_Anew, pi, jmax);
+
+  getGrid(d_A);
+  getGrid(d_Anew);
+
+  int num_iter = 100;
+  for (int iter = 0; iter < num_iter; iter++)
+  {
+    int interior_range[] = {0,imax,0,jmax};
+    ops_par_loop_apply_stencil(2, interior_range,
+        d_A,
+        d_Anew);
+
+    ops_par_loop_copy(2, interior_range,
+        d_Anew,
+        d_A);
+
+    if(iter % 10 == 0) printf("%5d\n", iter);
+  }
 
   // ops_printf("%5d, %0.6f\n", iter, error);        
 

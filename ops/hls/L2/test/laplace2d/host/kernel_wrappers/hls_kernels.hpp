@@ -34,3 +34,4 @@ void ops_init_backend(int argc, const char** argv)
 #include "kernelwrap_left_bndcon.hpp"
 #include "kernelwrap_right_bndcon.hpp"
 #include "kernelwrap_set_zero.hpp"
+#include "kernelwrap_apply_stencil.hpp"
