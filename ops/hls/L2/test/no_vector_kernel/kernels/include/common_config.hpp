@@ -10,5 +10,3 @@ constexpr unsigned short shift_bits = 0;
 constexpr unsigned int axis_data_width = data_width * vector_factor;
 constexpr unsigned short slr_p_stages = 10;
 
-constexpr unsigned int max_axi_depth = max_grid_size * max_grid_size * max_grid_size;
-

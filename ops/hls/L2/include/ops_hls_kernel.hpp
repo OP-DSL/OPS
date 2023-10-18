@@ -54,6 +54,8 @@ struct Grid
 	cl::Buffer deviceBuffer;
 	std::vector<cl::Event> activeEvents;
 	std::vector<std::pair<cl::Event, std::string>> allEvents;
+	bool isHostBufDirty;
+	bool isDevBufDirty;
 };
 
 template <typename T>
@@ -72,6 +74,39 @@ cl::Event& emplaceEvent(Grid<T>& p_grid, std::string prompt="")
 	return p_grid.allEvents[p_grid.allEvents.size()-1].first;
 }
 
+template <typename T>
+void getGrid(Grid<T>& p_grid)
+{
+	if (p_grid.isDevBufDirty)
+	{
+		cl_int err;
+		cl::Event event;
+		OCL_CHECK(err, err = FPGA::getInstance()->getCommandQueue().enqueueMigrateMemObjects({p_grid.deviceBuffer}, CL_MIGRATE_MEM_OBJECT_HOST, &p_grid.activeEvents, &event));
+		addEvent(p_grid, event, __func__);
+		p_grid.activeEvents.resize(0);
+		p_grid.activeEvents.push_back(event);
+		p_grid.isDevBufDirty = false;
+		p_grid.isHostBufDirty = false;
+	}
+}
+
+template <typename T>
+void sendGrid(Grid<T>& p_grid)
+{
+	if (p_grid.isHostBufDirty)
+	{
+		cl_int err;
+		cl::Event event;
+		OCL_CHECK(err, err = FPGA::getInstance()->getCommandQueue().enqueueMigrateMemObjects({p_grid.deviceBuffer}, 0, &p_grid.activeEvents, &event));
+		addEvent(p_grid, event, __func__);
+		p_grid.activeEvents.resize(0);
+		p_grid.activeEvents.push_back(event);
+		p_grid.isDevBufDirty = false;
+		p_grid.isHostBufDirty = false;
+	}
+}
+
+
 class Kernel
 {
 	public:
@@ -84,14 +119,14 @@ class Kernel
 
 		void fpga(FPGA* p_fpga) { m_fpga = p_fpga; }
 
-		void getCU(const std::string& p_name)
-		{
-			cl_int err;
-			OCL_CHECK(err, m_kernel = cl::Kernel(m_fpga->getProgram(), p_name.c_str(), &err));
-		}
+		// void getCU(const std::string& p_name)
+		// {
+		// 	cl_int err;
+		// 	OCL_CHECK(err, m_kernel = cl::Kernel(m_fpga->getProgram(), p_name.c_str(), &err));
+		// }
 
-		const cl::Kernel& operator()() const { return m_kernel; }
-		cl::Kernel& operator()() { return m_kernel; }
+		// const cl::Kernel& operator()() const { return m_kernel; }
+		// cl::Kernel& operator()() { return m_kernel; }
 
 	//    void enqueueTask() const
 	//    {
@@ -110,16 +145,16 @@ class Kernel
 			finish();
 		}
 
-		template <typename T>
-		void getGrid(Grid<T>& p_grid)
-		{
-			cl_int err;
-			cl::Event event;
-			OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueMigrateMemObjects({p_grid.deviceBuffer}, CL_MIGRATE_MEM_OBJECT_HOST, &p_grid.activeEvents, &event));
-			addEvent(p_grid, event, __func__);
-			p_grid.activeEvents.resize(0);
-			p_grid.activeEvents.push_back(event);
-		}
+//		template <typename T>
+//		void getGrid(Grid<T>& p_grid)
+//		{
+//			cl_int err;
+//			cl::Event event;
+//			OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueMigrateMemObjects({p_grid.deviceBuffer}, CL_MIGRATE_MEM_OBJECT_HOST, &p_grid.activeEvents, &event));
+//			addEvent(p_grid, event, __func__);
+//			p_grid.activeEvents.resize(0);
+//			p_grid.activeEvents.push_back(event);
+//		}
 
 		void sendBuffer(std::vector<cl::Memory>& h_m)
 		{
@@ -128,15 +163,24 @@ class Kernel
 			finish();
 		}
 
+//		template <typename T>
+//		void sendGrid(Grid<T>& p_grid)
+//		{
+//			cl_int err;
+//			cl::Event event;
+//			OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueMigrateMemObjects({p_grid.deviceBuffer}, 0, &p_grid.activeEvents, &event));
+//			addEvent(p_grid, event, __func__);
+//			p_grid.activeEvents.resize(0);
+//			p_grid.activeEvents.push_back(event);
+//		}
+
 		template <typename T>
-		void sendGrid(Grid<T>& p_grid)
+		void sendGrid(std::vector<Grid<T>>& p_grid_vect)
 		{
-			cl_int err;
-			cl::Event event;
-			OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueMigrateMemObjects({p_grid.deviceBuffer}, 0, &p_grid.activeEvents, &event));
-			addEvent(p_grid, event, __func__);
-			p_grid.activeEvents.resize(0);
-			p_grid.activeEvents.push_back(event);
+			for (auto p_grid : p_grid_vect)
+			{
+				sendGrid<T>(*p_grid);
+			}
 		}
 
 		template <typename T>

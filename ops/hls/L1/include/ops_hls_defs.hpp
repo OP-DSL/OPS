@@ -38,6 +38,7 @@ constexpr unsigned int avg_blocks = avg_depth_d32_v8 + 1;
 constexpr unsigned int max_grid_size = max_blocks * max_depth_d32 * max_depth_d32;
 constexpr unsigned int min_grid_size = min_blocks * min_depth_d32 * min_depth_d32;
 constexpr unsigned int avg_grid_size = avg_blocks * avg_depth_d32 * avg_depth_d32;
+constexpr unsigned int max_axi_depth = max_grid_size * max_grid_size * max_grid_size;
 
 /* data mover limits */
 constexpr unsigned int max_data_size = 4000000000;
@@ -82,6 +83,14 @@ typedef union
 
 
 typedef unsigned short SizeType[ops_max_dim];
+
+constexpr unsigned short size_singleIndex = sizeof(unsigned short) * 8;
+constexpr unsigned short size_IndexType = size_singleIndex * ops_max_dim;
+typedef union
+{
+    long flatten;
+    SizeType index;
+} IndexConv;
 
 struct GridPropertyCore
 {

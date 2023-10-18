@@ -202,9 +202,9 @@ int main(int argc, char **argv)
 		#endif
 
 		kernel_simple_copy.createDeviceBuffer(CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, grid);
-		kernel_simple_copy.sendGrid(grid);
+		sendGrid(grid);
 		kernel_simple_copy.run(range, grid, value);
-		kernel_simple_copy.getGrid(grid);
+		getGrid(grid);
 	}
 
 	kernel_simple_copy.finish();

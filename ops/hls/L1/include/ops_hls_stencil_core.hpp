@@ -13,6 +13,7 @@
 #include <ap_axi_sdata.h>
 #include <hls_stream.h>
 #include <cstdarg>
+#include <math.h>
 #include "ops_hls_defs.hpp"
 #include "ops_hls_utils.hpp"
 #include <stdio.h>
@@ -34,10 +35,14 @@ class StencilCore
     	static constexpr unsigned short s_axis_width = VEC_FACTOR * s_datatype_size;
     	static constexpr unsigned short s_datatype_bytes = sizeof(T);
     	static constexpr unsigned short s_mask_width = VEC_FACTOR * s_datatype_bytes;
+        static constexpr unsigned short s_index_size = size_IndexType;
+        static constexpr unsigned short s_singe_index_size = size_singleIndex;
         typedef ap_uint<s_axis_width> widen_dt;
         typedef ap_uint<s_mask_width> mask_dt;
+        typedef ap_uint<s_index_size> index_dt;
         typedef ::hls::stream<widen_dt> widen_stream_dt;
         typedef ::hls::stream<mask_dt> mask_stream_dt;
+        typedef ::hls::stream<index_dt> index_stream_dt;
 
 
         StencilCore()
@@ -106,7 +111,7 @@ class StencilCore
     protected:
         static const unsigned short s_dim = DIM;
         static const unsigned short s_size_x = SIZE_X;
-        static const unsigned short s_stencil_span_x = (s_size_x + 1) / 2;
+        static const unsigned short s_stencil_span_x = s_size_x;
         static const unsigned short s_stencil_half_span_x = s_stencil_span_x / 2;
 
         GridPropertyCore m_gridProp;
