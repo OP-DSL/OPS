@@ -40,6 +40,17 @@ namespace ops
 {
 namespace hls
 {
+
+/**
+ * @brief This is a mock ops_block class to replace
+ */
+class Block
+{
+public:
+	int dims;
+	std::string name;
+};
+
 /**
  * @brief This is a singleton class indended to use for single FPGA device handlings with 
  * thread local usage. 
@@ -52,6 +63,12 @@ class FPGA {
     FPGA(FPGA &other) = delete;
     // Preventing assignment
     void operator=(const FPGA &) = delete;
+
+    ~FPGA()
+    {
+    	m_bufferMaps.clear();
+    	FPGA_ = nullptr;
+    }
 
     static FPGA* getInstance();
 
@@ -177,4 +194,8 @@ class FPGA {
 
 }
 }
+
+void ops_init_backend(int argc, const char** argv);
+void ops_exit_backend();
+
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */

@@ -1,7 +1,7 @@
 
 // Auto-generated at 2023-10-02 14:24:24.741093 by ops-translator
 
-extern void ops_init_backend(int argc, const char** argv);
+//extern void ops_init_backend(int argc, const char** argv);
 
 #include <math.h>
 #include <string.h>
@@ -22,9 +22,9 @@ float pi  = 2.0 * asin(1.0);
 
 void ops_par_loop_set_zero(int, int*, ops::hls::Grid<float>&);
 
-void ops_par_loop_left_bndcon(int, int*, ops::hls::Grid<float>&, const float, const int);
+void ops_par_loop_left_bndcon(int, int*, ops::hls::Grid<float>&);
 
-void ops_par_loop_right_bndcon(int, int*, ops::hls::Grid<float>&, const float, const int);
+void ops_par_loop_right_bndcon(int, int*, ops::hls::Grid<float>&);
 
 void ops_par_loop_apply_stencil(int, int*, ops::hls::Grid<float>&, ops::hls::Grid<float>&);
 
@@ -55,14 +55,14 @@ int main(int argc, const char** argv)
   //
   
   // //The 2D block
-  // ops_block block = ops_decl_block(2, "my_grid");
+  ops::hls::Block block = ops_hls_decl_block(2, "my_grid");
   //The two datasets
   int size[] = {imax, jmax};
   int base[] = {0,0};
   int d_m[] = {-1,-1};
   int d_p[] = {1,1};
-  ops::hls::Grid<float> d_A = createGrid(2, size, base, d_m, d_p, A);
-  ops::hls::Grid<float> d_Anew = createGrid(2, size, base, d_m, d_p, Anew);
+  auto d_A = ops_hls_decl_dat(block, 1, size, base, d_m, d_p, A, "double", "A");
+  auto d_Anew = ops_hls_decl_dat(block, 1, size, base, d_m, d_p, Anew, "double", "Anew");
 
   //Two stencils, a 1-point, and a 5-point
   // int s2d_00[] = {0,0};
@@ -91,11 +91,11 @@ int main(int argc, const char** argv)
 
   int left_range[] = {-1, 0, -1, jmax+1};
   ops_par_loop_left_bndcon(2, left_range,
-      d_A, pi, jmax);
+      d_A);
 
   int right_range[] = {imax-1, imax, -1, jmax+1};
   ops_par_loop_right_bndcon(2, right_range,
-      d_A, pi, jmax);
+      d_A);
 
   printf("Jacobi relaxation Calculation: %d x %d mesh\n", imax+2, jmax+2);
 
@@ -108,10 +108,10 @@ int main(int argc, const char** argv)
       d_Anew);
 
   ops_par_loop_left_bndcon(2, left_range,
-      d_Anew, pi, jmax);
+      d_Anew);
 
   ops_par_loop_right_bndcon(2, right_range,
-      d_Anew, pi, jmax);
+      d_Anew);
 
   getGrid(d_A);
   getGrid(d_Anew);
@@ -147,7 +147,10 @@ int main(int argc, const char** argv)
   // free(A);
   // free(Anew);
   getGrid(d_A);
-  ops::hls::FPGA::getInstance()->finish();
   printGrid2D<float>(d_A, "d_A");
+
+  ops_exit_backend();
+  free(A);
+  free(Anew);
   return 0;
 }

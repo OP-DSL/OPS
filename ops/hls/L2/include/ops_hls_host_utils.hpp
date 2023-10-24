@@ -59,14 +59,28 @@ ops::hls::GridPropertyCore createGridPropery(const unsigned short dim,
 	return gridProp;
 }
 
+ops::hls::Block ops_hls_decl_block(int dims, std::string name)
+{
+	ops::hls::Block block;
+	block.dims = dims;
+	block.name = name;
+
+	return block;
+}
+
+//ops_decl_dat(ops_block block, int data_size, int *block_size, int *base,
+//                     int *d_m, int *d_p, int *stride, T *data, char const *type,
+//                     char const *name)
 template <typename T>
-ops::hls::Grid<T> createGrid(unsigned int dim, int* size, int * base, int* d_m, int* d_p, T* data_ptr=nullptr, unsigned short vector_factor=8)
+ops::hls::Grid<T> ops_hls_decl_dat(ops::hls::Block& block, int elem_size, int* size,
+		int * base, int* d_m, int* d_p, T* data_ptr, std::string type, std::string name,
+		unsigned short vector_factor=8)
 {
 	ops::hls::SizeType size_, d_m_, d_p_;
 
 	for (unsigned int i = 0; i < ops_max_dim; i++)
 	{
-		if (i < dim)
+		if (i < block.dims)
 		{
 			size_[i] = static_cast<unsigned short>(size[i]);
 			d_m_[i] = static_cast<unsigned short>(-d_m[i]);
@@ -81,10 +95,10 @@ ops::hls::Grid<T> createGrid(unsigned int dim, int* size, int * base, int* d_m, 
 	}
 
 	ops::hls::Grid<T> grid;
-	grid.originalProperty = createGridPropery(dim, size_, d_m_, d_p_, vector_factor);
+	grid.originalProperty = createGridPropery(block.dims, size_, d_m_, d_p_, vector_factor);
 
 	unsigned int data_size = 1;
-	for (int i = 0; i < dim; i++)
+	for (int i = 0; i < block.dims; i++)
 		data_size *= grid.originalProperty.grid_size[i];
 	
 	// unsigned int data_size_bytes = data_size * sizeof(T);

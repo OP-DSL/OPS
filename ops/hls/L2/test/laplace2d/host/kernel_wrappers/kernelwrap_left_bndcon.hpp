@@ -75,7 +75,7 @@ private:
 
 
 
-void ops_par_loop_left_bndcon(int dim , int* ops_range, ops::hls::Grid<float>& arg0, const float const0, const int const1)
+void ops_par_loop_left_bndcon(int dim , int* ops_range, ops::hls::Grid<float>& arg0)
 {
 	static kernelwrap_left_bndcon kernelwrap_left_bndconInst;
 
@@ -83,7 +83,7 @@ void ops_par_loop_left_bndcon(int dim , int* ops_range, ops::hls::Grid<float>& a
 	opsRange2hlsRange(dim, ops_range, range, arg0.originalProperty);
 
 	kernelwrap_left_bndconInst.createDeviceBuffer(CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, arg0);
-	kernelwrap_left_bndconInst.run(range, arg0, const0, const1);
+	kernelwrap_left_bndconInst.run(range, arg0, pi, jmax);
 //	kernelwrap_left_bndconInst.getGrid(arg0);
 }
 

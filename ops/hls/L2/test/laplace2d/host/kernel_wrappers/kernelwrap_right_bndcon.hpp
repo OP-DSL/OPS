@@ -73,7 +73,7 @@ private:
     cl::Kernel m_datamover_right_bndcon;
 };
 
-void ops_par_loop_right_bndcon(int dim , int* ops_range, ops::hls::Grid<float>& arg0, const float const0, const int const1)
+void ops_par_loop_right_bndcon(int dim , int* ops_range, ops::hls::Grid<float>& arg0)
 {
 	static kernelwrap_right_bndcon kernelwrap_right_bndconInst;
 
@@ -81,6 +81,6 @@ void ops_par_loop_right_bndcon(int dim , int* ops_range, ops::hls::Grid<float>& 
 	opsRange2hlsRange(dim, ops_range, range, arg0.originalProperty);
 
 	kernelwrap_right_bndconInst.createDeviceBuffer(CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, arg0);
-	kernelwrap_right_bndconInst.run(range, arg0, const0, const1);
+	kernelwrap_right_bndconInst.run(range, arg0, pi, jmax);
 //	kernelwrap_right_bndconInst.getGrid(arg0);
 }
