@@ -303,7 +303,7 @@ class Loop:
     loc: Location
     kernel: str
 
-    block: Block
+    block: str
     range: Range
     ndim: int
 
@@ -318,7 +318,7 @@ class Loop:
     isGblReadMDIM: Optional[bool] = False
     has_reduction: Optional[bool] = False
 
-    def __init__(self, loc: Location, kernel: str, block: Block, range: Range, ndim: int) -> None:
+    def __init__(self, loc: Location, kernel: str, block: str, range: Range, ndim: int) -> None:
         self.loc = loc
         self.kernel = kernel
         self.block = block
@@ -425,7 +425,7 @@ class Loop:
 
     def __str__(self) -> str:
         kernel_detail_str = f"Loop at {self.loc}:\n Kernel function: {self.kernel}\n \
-            range dim: {self.ndim}, block: {self.block.ptr}, range: {self.range}"
+            range dim: {self.ndim}, block: {self.block}, range: {self.range}, arg_idx: {self.arg_idx}"
         args_str = "\n    ".join([str(a) for a in self.args])
         dat_str = "\n    ".join([str(d) for d in self.dats])
 

@@ -10,7 +10,7 @@ class Target(Findable):
     config: Dict[str, Any]
 
     def __str__(self) -> str:
-        return self.name
+        return f"{self.name}: config: {self.config}"
     
     def __eq__(self, other) -> bool:
         return self.name == other.name if type(other) is type(self) else False

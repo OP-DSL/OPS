@@ -122,9 +122,7 @@ class CppHip(Scheme):
 Scheme.register(CppMPIOpenMP)
 Scheme.register(CppCuda)
 Scheme.register(CppHip)
-<<<<<<< HEAD:ops_translator_v2/ops-translator/cpp/schemes.py
 Scheme.register(CppHLS)
-=======
 
 
 class CppOpenMPOffload(Scheme):
@@ -212,4 +210,3 @@ class CppSycl(Scheme):
         return ctk.writeSource(extracted_entities)
 
 Scheme.register(CppSycl)
->>>>>>> 8deae066f33d4c1523d2d0a45abe5ca420aa23b6:ops_translator/ops-translator/cpp/schemes.py

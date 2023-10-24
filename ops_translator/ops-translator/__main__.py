@@ -5,6 +5,7 @@ import re
 from argparse import ArgumentParser, ArgumentTypeError, Namespace
 from datetime import datetime
 from pathlib import Path
+import logging
 
 #custom implementation imports
 import cpp
@@ -26,6 +27,8 @@ def main(argv=None) -> None:
     #argument declariations
     parser.add_argument("-V", "--version", help="Version", action="version", version=getVersion()) #this needs version tag
     parser.add_argument("-v", "--verbose", help="Verbose", action="store_true")
+    parser.add_argument("-g", "--debug", help="Debug", action="store_true")
+    parser.add_argument("-f", "--logfile", help="Logfile Name", default="ops_translator_run.log")
     parser.add_argument("-d", "--dump", help="JSON store dump", action="store_true")
     parser.add_argument("-o", "--out", help="Output directory", type=isDirPath)
     parser.add_argument("-c", "--config", help="Target configuration", type=json.loads, default="{}")
@@ -39,28 +42,45 @@ def main(argv=None) -> None:
 
     parser.add_argument("--file_paths", help="Input OPS sources", type=isFilePath, nargs="+")
 
-    target_names = [target.name for target in Target.all()] #TODO: implement Target Findable class
+    target_names = [target.name for target in Target.all()]
     parser.add_argument("-t", "--target", help="Code-gereration target", type=str, action="append", nargs=1, choices=target_names, default=[])
 
+    parser.add_argument("-fpga", "--fpga", help="Generate program for FPGA vitis HLS", action="store_true")
+    
     #invoking arg parser
     args = parser.parse_args(argv)
 
+    #setting logger
+    if (args.debug):
+        logging.basicConfig(filename=args.logfile, level=logging.DEBUG)
+    elif (args.verbose):
+        logging.basicConfig(filename=args.logfile, level=logging.INFO)
+    else:
+        logging.basicConfig(filename=args.logfile, level=logging.WARNING)
+    
     if os.environ.get("OPS_AUTO_SOA") is not None:
         args.force_soa = True
+        logging.warning("OPS FORCE SOA set")
+    else:
+        logging.warning("OPS FORCE SOA not set")
 
     file_parents = [Path(file_path).parent for file_path in args.file_paths]
 
     if args.out is None:
         args.out = file_parents[0]
+        logging.warning("output location is not set selecting default path: %s", str(args.out.resolve()))
 
     #checking includes of OPS
     if os.environ.get("OPS_INSTALL_PATH") is not None:
         ops_install_path = Path(os.environ.get("OPS_INSTALL_PATH"))
         args.I = [[str(ops_install_path/"include")]] + args.I
+        logging.info("detected OPS_INSTALL_PATH: %s", str(ops_install_path.resolve()))
     else:
         script_parents = list(Path(__file__).resolve().parents)
         if len(script_parents) >= 3 and script_parents[2].stem == "OPS":
-            args.I = [[str(script_parents[2].joinpath("ops/c/include"))]] + args.I
+            ops_install_path = script_parents[2].joinpath("ops/c")
+            logging.info("detected OPS_INSTALL_PATH: %s", str(ops_install_path.resolve()))
+            args.I = [[str(ops_install_path/"include")]] + args.I
 
     args.I = [[str(file_parent)] for file_parent in file_parents] + args.I
 
@@ -68,8 +88,10 @@ def main(argv=None) -> None:
     extensions = {str(Path(file_path).suffix)[1:] for file_path in args.file_paths}
 
     if not extensions:
+        logging.error("Missing file extensions, unable to determine target language.")
         exit("Missing file extensions, unable to determine target language.")
     elif len(extensions) > 1:
+        logging.error("Varying file extensions, unable to determine target language.")
         exit("Varying file extensions, unable to determine target language.")
     else:
         [extension] = extensions
@@ -98,34 +120,47 @@ def main(argv=None) -> None:
     if args.verbose:
         print()
         print(app)
+        logging.debug("App: \n %s", str(app))
 
     # Validation phase
     try: 
         validate(args, lang, app)
     except OpsError as e:
+        logging.error("parsed application validation failed with exception: %e", str(e))
         exit(e)
 
     # Generate program translations
     app_consts = app.consts()
     for i, program in enumerate(app.programs, 1):
+        logging.info("Generating code for program: %s", str(program.path))
         include_dirs = set([Path(dir) for [dir] in args.I])
         defines = [define for [define] in args.D]
 
-        source = lang.translateProgram(program, include_dirs, defines, app_consts, args.force_soa)
+        if (args.fpga):
+            logging.warning("only FPGA vitis HLS mode selected")
+            source = lang.translateProgram(program, include_dirs, defines, app_consts, args.force_soa, True)
+        else:   
+            source = lang.translateProgram(program, include_dirs, defines, app_consts, args.force_soa)
 
         if not args.force_soa and program.soa_val:
             args.force_soa = program.soa_val
 
         new_file = os.path.splitext(os.path.basename(program.path))[0]
         ext = os.path.splitext(os.path.basename(program.path))[1]
-        new_path = Path(args.out, f"{new_file}{args.suffix}{ext}")
-
+        
+        if (args.fpga):
+            new_path = Path(args.out, f"{new_file}{args.suffix}_hls{ext}")
+        else:
+            new_path = Path(args.out, f"{new_file}{args.suffix}{ext}")
+        logging.info("   writing generated code to: %s", str(new_path.resolve()))
+        
         with open(new_path, "w") as new_file:
             new_file.write(f"\n{lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
             new_file.write(source)
 
             if args.verbose:
                 print(f"Translated program {i} of {len(args.file_paths)}: {new_path}")
+                logging.info(f"Translated program {i} of {len(args.file_paths)}: {new_path}")
 
 
     # Generating code for targets
@@ -137,16 +172,20 @@ def main(argv=None) -> None:
             if key in args.config:
                 target.config[key] = args.config[key]
 
+        logging.info("Found target: %s", str(target))
+        
         scheme = Scheme.find((lang, target))
 
         if not scheme:
             if args.verbose:
                 print(f"No scheme register for {lang}/{target}")
-
+                logging.warning(f"No scheme register for {lang}/{target}")
             continue
 
         if args.verbose:
             print(f"Translation scheme: {scheme}")
+            logging.info(f"Translation scheme: {scheme}")
+        
 
         codegen(args, scheme, app, args.force_soa)
 
@@ -170,6 +209,11 @@ def parse(args: Namespace, lang: Lang) -> Application:
         program = lang.parseProgram(Path(raw_path), include_dirs, defines)
         app.programs.append(program)
 
+    # for item in app.loops():
+    #     loop = item[0]
+    #     KernelEntity = app.findEntities(loop.kernel)
+        
+    #     print(f"Found Kernel Entity: {KernelEntity[0]}")
     return app
 
 def validate(args: Namespace, lang: Lang, app: Application) -> None:
@@ -179,7 +223,8 @@ def validate(args: Namespace, lang: Lang, app: Application) -> None:
     if args.dump:
         store_path = Path(args.out, "store.json")
         serializer = lambda o: getattr(o, "__dict__", "unserializable")
-
+        logging.info("Application dump enabled. Dumping file to: %s", store_path.resolve())
+        
         # Write application dump
         with open(store_path, "w") as file:
             file.write(json.dumps(app, default=serializer, indent=4))

@@ -71,10 +71,16 @@ class Type(Entity):
 class Function(Entity):
     parameters: List(str) = field(default_factory=list)
     returns: Optional[ops.Type] = None
+    loc: Location = None
 
     def __str__(self) -> str:
-        return f"Function(name='{self.name}', scope={self.scope}, depends={self.depends})"
+        return f"Function(name='{self.name}', loc={self.loc}, scope={self.scope}, depends={self.depends}, parameters={self.parameters}, ast={self.ast})"
 
+@dataclass 
+class KernelDef(Function):
+    def __str__(self) -> str:
+        return f"Function(name='{self.name}', scope={self.scope}, depends={self.depends}, parameters={self.parameters}, ast={self.ast})"
+        
 @dataclass
 class Program:
     path: Path
@@ -126,6 +132,14 @@ class Program:
         outString += "---------------------\n"
         for entity in self.entities:
             outString += str(entity) + "\n"  
+            
+        # outString += "\n---------------------\n"    
+        # outString += "       Source      \n"
+        # outString += "---------------------\n"
+        # for line in self.scope:
+        #     
+        #outString += self.source + "\n"  
+        
         return outString
 
 @dataclass

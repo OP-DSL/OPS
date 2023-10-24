@@ -77,13 +77,17 @@ def parseFunction(node: Cursor, program: Program) -> None:
             continue
 
         function.depends.add(n.spelling) 
-
+    
+    function.loc = parseLocation(node)
+    
     program.entities.append(function)
 
 
 def parseLocation(node: Cursor) -> Location:
     return Location(node.location.file.name, node.location.line, node.location.column)
 
+# def parseDats(translation_unit: TranslationUnit, program: Program) -> None:
+#     return None
 
 def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
     macros: Dict[Location, str] = {}
@@ -364,7 +368,7 @@ def parseLoop(args: List[Cursor], loc: Location, macros: Dict[Location, str]) ->
     kernel = parseIdentifier(args[0])
     name   = parseStringLit(args[1])
     dim    = parseIntLiteral(args[3])
-    block  = parseBlock(args[2], dim)
+    block  = parseIdentifier(args[2])
     range = parseRange(args[4], dim)
 
     loop = ops.Loop(loc, kernel, block, range, dim)
