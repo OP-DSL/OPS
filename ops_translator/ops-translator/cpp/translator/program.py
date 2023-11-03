@@ -237,6 +237,13 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
         index = buffer.search(r'.*ops_partition.*')
         buffer.remove(index)
     
+    # 9. Add kernel_wrapp_master_kernels include
+    if (buffer.search(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)')):
+        index = buffer.search(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)')
+        buffer.insert(index+1, "#include \"hls_kernels.hpp\"")
+    else:
+        raise OpsError(f"OPS program failed to include core header file, ops_seq.h or ops_seq_V2.h")
+
     new_source = buffer.translate()
     
     # 9. Replace ops_block to ops::hls::Block and replace ops_decl_block to ops_hls_decl_block

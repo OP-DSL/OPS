@@ -195,12 +195,13 @@ class Stencil:
 
     stencil_ptr: str
 
-    points: Optional[int] = field(default_factory=int)
-    stride: Optional[int] = field(default_factory=int)
+    num_points: int
+    points: List
+    stride: Optional[list] = field(default_factory=list)
 
     def __str__(self) -> str:
         return f"Stencil(id={self.id}, dim={self.dim}, stencil_ptr='{self.stencil_ptr}', \
-            points={self.points}, stride_ptr='{self.stride_ptr}')"
+number of points={self.num_points}, points={self.points}, stride_ptr='{self.stride}')"
 
 @dataclass(frozen=True)
 class Arg(ABDC):
@@ -310,7 +311,7 @@ class Loop:
     args: List[Arg]
 
     dats: List[Dat]
-    stencils: List[Stencil]
+    stencils: List[id]
 
     arg_idx: Optional[int] = -1
     multiGrid: Optional[bool] = False
@@ -351,11 +352,12 @@ class Loop:
             # else:
             #     OpsError(f"Parsing Dat='{dat_ptr}' as argument of loop in {self.loc} which is not belong to block='{self.block.ptr}'", loc)
 
-        stencil_id = findIdx(self.stencils, lambda s: s.stencil_ptr == stencil_ptr)
+        stencil_id = 0
+        # stencil_id = findIdx(self.stencils, lambda s: s.stencil_ptr == stencil_ptr)
 
-        if stencil_id is None:
-            stencil_id = len(self.stencils)
-            self.stencils.append(Stencil(stencil_id, dat_dim, stencil_ptr))
+        # if stencil_id is None:
+        #     stencil_id = len(self.stencils)
+        #     self.stencils.append(Stencil(stencil_id, dat_dim, stencil_ptr))
 
         restrict = stencil_ptr.find("RESTRICT") > 0
         prolong = stencil_ptr.find("PROLONG") > 0

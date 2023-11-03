@@ -1,5 +1,5 @@
 import os
-from math import ceil
+from math import ceil, log2
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -51,6 +51,7 @@ def read_in(dat: ops.Dat, loop: ops.Loop) -> bool:
 
 env.tests["read_in"] = read_in
 env.tests["instance"] = lambda x, c: isinstance(x, c)
+env.globals.update(shift_bits = lambda widen, base_size: int(log2(widen+1) - log2(base_size)))
 
 def unpack(tup):
     if not isinstance(tup, tuple):
@@ -81,3 +82,4 @@ env.filters["index"] = lambda xs, x: xs.index(x)
 env.filters["round_up"] = lambda x, b: b * ceil(x / b)
 
 env.filters["max_value"] = lambda values: max(values)
+

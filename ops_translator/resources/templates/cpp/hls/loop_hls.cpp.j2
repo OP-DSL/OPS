@@ -1,0 +1,138 @@
+{% block prologue %}
+#pragma once 
+#include <ops_hls_rt_support.h>
+{% endblock %}
+
+{% block host_kernel_wrapper_class %}
+class KernelWrapper_{{lh.kernel}} : public ops::hls::Kernel
+{
+public:
+    KernelWrapper_{{lh.kernel}}():
+            m_kernelName("kernel_{{lh.kernel}}"),
+            m_datamoverName("datamover_{{lh.kernel}}")
+    {
+        cl_int err;
+        OCL_CHECK(err, m_kernel = cl::Kernel(m_fpga->getProgram(), m_kernelName.c_str(), &err));
+        OCL_CHECK(err, m_datamover = cl::Kernel(m_fpga->getProgram(), m_datamoverName.c_str(), &err));
+    }
+
+    void run(ops::hls::AccessRange& range,
+    {% for arg in lh.args %}
+        {% if arg is ops_dat %}
+            ops::hls::Grid<{{lh.dats[arg.dat_id].typ}}>& arg{{arg.id}}{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+    )
+    {
+        cl_int err;
+        {% for arg in lh.args %}
+            {% if arg is ops_dat %}
+        createDeviceBuffer(CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, arg{{arg.id}});
+        ops::hls::GridPropertyCore arg{{arg.id}}_adjustedGridProp;
+        getRangeAdjustedGridProp(arg{{arg.id}}.originalProperty, range, arg{{arg.id}}_adjustedGridProp, vector_factor);
+#ifdef DEBUG_LOG
+        printGridProp(arg{{arg.id}}.originalProperty, "arg{{arg.id}}_originaGridProp");
+        printGridProp(arg{{arg.id}}_adjustedGridProp, "arg{{arg.id}}_adjustedGridProp");
+#endif
+            {% endif %}
+        {% endfor %}
+
+        int nargs = 0;
+
+        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.size[0]));
+        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.size[1]));
+        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.actual_size[0]));
+        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.actual_size[1]));
+        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.grid_size[0]));
+        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.grid_size[1]));
+        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.dim));
+        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.xblocks));
+        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.total_itr));
+        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.outer_loop_limit));
+
+        narg = 0;
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, range.start[0]));
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, range.end[0]));
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, range.start[1]));
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, range.end[1]));
+        {% for arg in lh.args %}
+            {% if arg is ops_dat %}
+                {% for idx in range(lh.ndim)%}
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, arg{{arg.id}}.originalProperty.grid_size[{{idx}}]));
+                {% endfor %}
+            {% endif %}
+        {% endfor %} 
+        {% for arg in lh.args %}
+            {% if arg is ops_dat %}
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, arg{{arg.id}}.deviceBuffer));
+            {% endif%}
+        {% endfor %}
+
+        cl::Event event_kernel;
+        cl::Event event_datamover;
+
+        std::vector<cl::Event> activeEvents;
+        {% for arg in lh.args %}
+            {% if arg is ops_dat %}
+        activeEvents.insert(activeEvents.end(), arg{{arg.id}}.activeEvents.begin(), arg{{arg.id}}.activeEvents.end());
+            {% endif %}
+        {% endfor %}
+
+        OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueTask(m_datamover, &activeEvents, &event_datamover));
+        OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueTask(m_kernel, &activeEvents, &event_kernel));
+
+#ifdef DEBUG_LOG
+        {% for arg in lh.args %}
+            {% if arg is ops_dat %}
+        ops::hls::addEvent(arg{{arg.id}}, event_kernel, m_kernelName);
+        ops::hls::addEvent(arg{{arg.id}}, event_datamover, m_kernelName);
+            {% endif %}
+        {% endfor %}
+#endif
+        {% for arg in lh.args %}
+            {% if arg is ops_dat %}
+        arg{{arg.id}}.isDevBufDirty = true;
+        arg{{arg.id}}.activeEvents.resize(0);
+        arg{{arg.id}}.activeEvents.push_back(event_datamover);
+        arg{{arg.id}}.activeEvents.push_back(event_kernel);
+            {% endif %}
+        {% endfor %}
+    }
+private:
+    std::string m_kernelName;
+    std::string m_datamoverName;
+    cl::Kernel m_kernel;
+    cl::Kernel m_datamover;
+};
+{% endblock %}
+
+{% block par_loop %}
+void ops_par_loop_{{lh.kernel}}(int dim, int* ops_range,
+    {% for arg in lh.args %}
+        {% if arg is ops_dat %}
+            ops::hls::Grid<{{lh.dats[arg.dat_id].typ}}>& arg{{arg.id}}{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+)
+{
+    static  KernelWrapper_{{lh.kernel}} kernelWrapper_inst;
+    ops::hls::AccessRange range;
+    opsRange2hlsRange(dim, ops_range, range, arg0.originalProperty);
+    {% for arg in lh.args %}
+        {% if arg is ops_dat %}
+    kernelWrapper_inst.createDeviceBuffer(CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, arg{{arg.id}});
+        {% endif %}
+        {% if arg is ops_read %}
+    sendGrid(arg0);
+        {% endif %}
+    {% endfor %}
+    
+    kernelWrapper_inst.run(range,
+    {% for arg in lh.args %}
+        {% if arg is ops_dat %}
+            arg{{arg.id}}{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+    );
+}
+{% endblock %}

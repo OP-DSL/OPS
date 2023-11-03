@@ -1,0 +1,41 @@
+{% macro maxi_name(arg) -%}
+arg{{arg.id}}_{{"in" if arg is ops_read}}{{"out" if arg is ops_write}}{{"inout" if arg is ops_rw}}
+{%- endmacro -%}
+{% macro axis_name(arg) -%}
+    {%- if arg is not ops_rw -%}
+arg{{arg.id}}_stream_{{"out" if (arg is ops_read) else ("in" if (arg is ops_write))}}
+    {%- endif -%}
+{%- endmacro -%}
+{% macro axis_name_t2(arg, suffix) -%}
+arg{{arg.id}}_stream_{{suffix}}
+{%- endmacro -%}
+{% block header_block %}
+
+#pragma once
+#include "common_config.hpp"
+#include <ops_hls_datamover.hpp>
+{% endblock %}
+{% block datamover_prototype %}
+extern "C" void datamover_{{lh.kernel}}(
+    {% for i in range(lh.ndim) %}
+        const unsigned short range_start_{{i}},
+        const unsigned short range_end_{{i}},
+    {% endfor%}
+    {% for arg in lh.args|ops_dat %}
+        {% for i in range(lh.ndim) %}
+        const unsigned short arg{{arg.id}}_gridSize_{{i}},
+        {% endfor %}
+    {% endfor %}
+    {% for arg in lh.args|ops_dat %}
+        ap_uint<data_width>* {{maxi_name(arg)}},
+    {% endfor %}
+    {% for arg in lh.args|ops_dat %}
+    {% if arg is not ops_rw %}
+        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
+    {% else %}
+        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")-}},
+        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "out")-}}{{"," if not loop.last}}
+    {% endif %}
+    {% endfor %}
+);
+{% endblock %}

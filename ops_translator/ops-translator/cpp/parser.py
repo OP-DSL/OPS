@@ -1,12 +1,13 @@
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, Any
 
 from clang.cindex import Cursor, CursorKind, TranslationUnit, TypeKind, conf
 
 import ops
 from store import Function, Location, ParseError, Program, Type
 from util import safeFind #TODO: implement safe find
+import logging
 
 def parseMeta(node: Cursor, program: Program) -> None:
     if node.kind == CursorKind.TYPE_REF:
@@ -92,9 +93,10 @@ def parseLocation(node: Cursor) -> Location:
 def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
     macros: Dict[Location, str] = {}
     nodes: List[Cursor] = []
-
+    # counter = 0
     for node in translation_unit.cursor.get_children():
-
+        # print(f"node {counter}: {node.spelling}")
+        # counter += 1
         if node.kind == CursorKind.MACRO_DEFINITION:
             continue
 
@@ -104,20 +106,139 @@ def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
         if node.kind == CursorKind.MACRO_INSTANTIATION:
             macros[parseLocation(node)] = node.spelling
             continue
-
+        
         nodes.append(node)
 
     for node in nodes:
         for child in node.walk_preorder():
+ 
             if child.kind.is_unexposed():
-                parseCall(child, macros, program)
-
+                parseCallUnexposed(child, macros, program)
+                
+            elif child.kind in [CursorKind.VAR_DECL, CursorKind.BINARY_OPERATOR]:
+                parseVariableDeclaration(child, macros, program)
+                
     return program
 
 
+def parseVariableDeclaration(node: Cursor, macros: Dict[Location, str], program: Program) -> None:
+    children = []
+
+    if (node.kind == CursorKind.VAR_DECL):
+
+        for child in node.get_children():
+            children.append(child)
+           
+        if len(children) < 2:
+            return
+        var_name = node.spelling
+        rval_expr = children[1]
+            
+    elif (node.kind == CursorKind.BINARY_OPERATOR):
+        for child in node.get_children():
+            children.append(child)
+        
+        if len(children) < 2:
+            return
+        
+        var_name = children[0].spelling
+        rval_expr = children[1]
+    
+    logging.debug("Variable detected: %s", var_name)
+    
+    if rval_expr.kind == CursorKind.CALL_EXPR and rval_expr.spelling == "ops_decl_stencil":
+        out = parseFunctionCall(children[1])
+        
+        if not out:
+            return
+        
+        (name, args) = out
+        if name != "ops_decl_stencil":
+            ParseError("Expected ops_decl stencil as RHS expression", parseLocation(node))
+            
+        parseStencil(var_name, args, parseLocation(node), macros, program)
+      
+        
+def parseFunctionCall(node: Cursor) -> Union[Tuple[str, List[Cursor]], None]:
+    args = []
+    if node.kind != CursorKind.CALL_EXPR:
+        return None
+    
+    for arg in node.get_arguments():
+        args.append(arg)
+    
+    name = node.spelling
+
+    logging.debug("Detected function: %s, args: %s", name, args)
+        
+    return (name, args)
+
+
+def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> None:
+    out = parseFunctionCall(node)
+    
+    if out == None:
+        return
+
+    (name, args) = out  
+    loc = parseLocation(node)
+    
+    if name == "ops_decl_stencil":
+        if len(args) != 4:
+            raise ParseError("ops_decl_stencil need 4 arguments", parseLocation(node))
+        
+        print(f"node {node}: {node.spelling}: type: {node.kind}")
+        for arg in args: 
+            if arg.kind == CursorKind.UNEXPOSED_EXPR and arg.get_definition():
+                print(f"|-- argument {arg.spelling}: type: {arg.kind}, definition: {arg.get_definition().kind}, defLoc:{str(parseLocation(arg.get_definition()))}")
+            else:
+                print(f"|-- argument {arg.spelling}: type: {arg.kind}")
+        
+
+def parseStencil(name: str, args: List[Cursor], loc: Location, macros: Dict[Location, str], program: Program) -> Union[ops.Stencil, None]:
+    
+    if len(args) != 4:
+        return None
+    
+    ndim = parseIntLiteral(args[0])
+    npoints = parseIntLiteral(args[1])
+    array = parseArrayIntLit(args[2])
+         
+    logging.info("Stencil found - name:%s ndim: %d, npoints: %d, array: %s", name, ndim, npoints, array)
+    program.stencils.append(ops.Stencil(len(program.stencils), ndim, name, npoints, array))   
+ 
+        
+def parseArrayIntLit(node: Cursor)->List[int]:
+    logging.debug("array: %s, array_decl: %s, type:%s, loc:%s", node, node.get_definition(), 
+            node.get_definition().kind, parseLocation(node.get_definition()))
+     
+    first_child = decend(node.get_definition())
+    
+    outList=[]
+    
+    for child in first_child.get_children():
+        logging.debug("|--- aray elem: %s, kind: %s", child.spelling, child.kind)
+        if child.kind == CursorKind.INTEGER_LITERAL:
+            outList.append(parseIntLiteral(child))
+
+        if child.kind == CursorKind.UNARY_OPERATOR:
+            tokens = [token.spelling for token in child.get_tokens()]
+            logging.debug("  |--- tokens: %s", tokens)
+            
+            if tokens[0] == '-':
+                outList.append(-parseIntLiteral(decend(child)))
+            elif tokens[0] == '+':
+                outList.append(parseIntLiteral(decend(child)))
+            else:
+                raise ParseError(f"Not supported unary operator", parseLocation(node))
+      
+    logging.debug("Array: %s", outList)
+    return outList
+             
+    
 def parseUnexposedFunction(node: Cursor) -> Union[Tuple[str, List[Cursor]], None]:
     args = []
-    # child_string=""
+                    
     for child in node.get_children():
         args.append(child)
 
@@ -125,11 +246,9 @@ def parseUnexposedFunction(node: Cursor) -> Union[Tuple[str, List[Cursor]], None
         return None
 
     first_child = args.pop(0)
-
-    if (
-        first_child.kind == CursorKind.MEMBER_REF_EXPR
-        and len(list(first_child.get_children())) >= 2
-    ):
+    # print(f"   Unexposed Func first child: {first_child.spelling}, kind: {first_child.kind}")
+    if (first_child.kind == CursorKind.MEMBER_REF_EXPR
+        and len(list(first_child.get_children())) >= 2):
         name_token = list(first_child.get_children())[1]
         name = name_token.spelling
     elif first_child.kind == CursorKind.DECL_REF_EXPR:
@@ -139,13 +258,15 @@ def parseUnexposedFunction(node: Cursor) -> Union[Tuple[str, List[Cursor]], None
 
     return (name, args)
 
+    
+def parseCallUnexposed(node: Cursor, macros: Dict[Location, str], program: Program) -> None:
 
-def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> None:
-
-    if parseUnexposedFunction(node) == None:
+    out = parseUnexposedFunction(node)
+    
+    if out == None:
         return
     else:
-        (name, args) = parseUnexposedFunction(node)
+        (name, args) = out
 
     loc = parseLocation(node)
 
@@ -160,7 +281,8 @@ def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> No
             program.ndim = loop.ndim
         elif program.ndim < loop.ndim:
             program.ndim = loop.ndim
-
+    
+        
 def decend(node: Cursor) -> Optional[Cursor]:
     return next(node.get_children(), None)
 
@@ -262,6 +384,20 @@ def parseIdentifier(node: Cursor, raw: bool = True) -> str:
 
     return node.spelling
 
+def getIdentiferDefinition(node: Cursor) -> Optional[Cursor]:
+    if node.kind == CursorKind.UNEXPOSED_EXPR:
+        node = decend(node)
+
+    if node.kind == CursorKind.UNARY_OPERATOR and next(node.get_tokens()).spelling in ("&", "*"):
+        node = decend(node)
+
+    if node.kind == CursorKind.GNU_NULL_EXPR:
+        raise ParseError("Expected identifier, found NULL", parseLocation(node))
+
+    if node.kind != CursorKind.DECL_REF_EXPR:
+        raise ParseError("Expected identifier", parseLocation(node))
+    
+    return node.get_definition()
 
 def parseConst(args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> ops.Const:
     if(len(args) != 4):
@@ -274,7 +410,8 @@ def parseConst(args: List[Cursor], loc: Location, macros: Dict[Location, str]) -
         dim = parseIdentifier(args[1])
     typ, _ = parseType(parseStringLit(args[2]), loc, True)
     ptr = parseIdentifier(args[3], raw=False)
-
+    # ptr_def_node = getIdentiferDefinition(args[3])
+    # print(f"Parse Const: ptr_node: {args[3]}, definition_node:{ptr_def_node.spelling}, is definition extern: {ptr_def_node.extent}")
     return ops.Const(loc, ptr, dim, typ, name)
 
 

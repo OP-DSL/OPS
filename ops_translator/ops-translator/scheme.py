@@ -22,8 +22,33 @@ class Scheme(Findable):
     master_kernel_template: Optional[Path]
 
     def __str__(self) -> str:
-        return f"{self.lang.name}/{self.target.name}"
+        return f"{self.lang.name}/{self.target.name}: \n \
+            lang_details: {self.lang}, target_details: {self.target}"
     
+    def genLoopDevice(
+        self,
+        env: Environment,
+        loop: ops.Loop,
+        program: Program,
+        app: Application,
+        config: dict,
+    ) -> List[Tuple[str, str]]:
+            return None
+    
+    def genConfigHost(
+        self,
+        env: Environment,
+        config: dict,
+    ) -> Tuple[str, str]:
+        return None
+    
+    def genConfigDevice(
+        self,
+        env: Environment,
+        config: dict,
+    ) -> Tuple[str, str]:
+        return None
+           
     def genLoopHost(
         self,
         include_dirs: Set[Path],
@@ -89,7 +114,7 @@ class Scheme(Findable):
             self.loop_kernel_extension
         )
 
-    def genMasterKernel(self, env: Environment, app: Application, user_types_file: Optional[Path], force_soa: bool) -> Tuple[str, str]:
+    def genMasterKernel(self, env: Environment, app: Application, user_types_file: Optional[Path], target_config: dict, force_soa: bool) -> Tuple[str, str]:
         if self.master_kernel_template is None:
             exit(f"No master kernel template registered for {self}")
 
@@ -113,6 +138,7 @@ class Scheme(Findable):
                 target=self.target,
                 user_types=user_types,
                 include_extension=self.master_kernel_extension,
+                target_config=target_config,
                 soa_set=force_soa
             ),
             name

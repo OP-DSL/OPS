@@ -85,7 +85,18 @@ class HLS(Target):
     config = {
         "grouped" : False,
         "SLR_count" : 1,
-        "device" : 7
+        "device" : 7,
+        "vector_factor" : 1,
+        "stencil_type" : "float",
+        "data_width" : 32,
+        "mem_data_width" : 32,
+        "maxi_depth" : 4096,
+        "maxi_read_burst_length" : 64,
+        "maxi_write_burst_length" : 64,
+        "num_read_outstanding" : 4,
+        "num_write_outstanding" : 4,
+        "maxi_offset" : "slave",
+        "ops_max_dim" : 3
         }
 
 Target.register(MPIOpenMP)

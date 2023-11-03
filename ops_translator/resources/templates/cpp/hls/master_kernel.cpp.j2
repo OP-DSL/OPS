@@ -1,0 +1,21 @@
+{% extends "cpp/master_kernel.cpp.j2" %}
+
+{% block ops_headers %}
+#pragma once
+#include <ops_hls_rt_support.h>
+{% endblock %}
+
+{% block const_decls %}
+    {% for const in app.consts() %}
+        {% if not const.dim.isdigit() or (const.dim.isdigit() and const.dim|int > 1) %}
+extern {{const.typ}} *{{const.ptr}};
+        {% else %}
+extern {{const.typ}} {{const.ptr}};
+        {% endif %}
+    {% endfor %}
+{% endblock %}
+
+{% block header_includes %}
+unsigned short vector_factor = {{target_config['vector_factor']}};
+{{super()}}
+{% endblock %}

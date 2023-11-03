@@ -6,6 +6,9 @@ from language import Lang
 from scheme import Scheme
 from store import Application, ParseError, Program
 from target import Target
+from jinja2 import Environment
+from typing import List, Tuple
+from util import KernelProcess
 
 class CppMPIOpenMP(Scheme):
     lang = Lang.find("cpp")
@@ -39,9 +42,19 @@ class CppHLS(Scheme):
     target = Target.find("hls")    
     loop_host_template = Path("cpp/hls/loop_hls.cpp.j2")
     master_kernel_template = Path("cpp/hls/master_kernel.cpp.j2")
+    common_config_template = Path("cpp/hls/common_config_dev_hls.hpp.j2")
+    loop_device_inc_template = Path("cpp/hls/loop_dev_inc_hls.hpp.j2")
+    loop_device_src_template = Path("cpp/hls/loop_dev_src_hls.cpp.j2")
+    loop_datamover_inc_template = Path("cpp/hls/datamover_dev_inc_hls.hpp.j2")
+    loop_datamover_src_template = Path("cpp/hls/datamover_dev_src_hls.cpp.j2")
     
-    loop_kernel_extension = "cpp"
-    master_kernel_extension = "cpp"
+    loop_kernel_extension = "hpp"
+    master_kernel_extension = "hpp"
+    common_config_extension = "hpp"
+    loop_device_inc_extension = "hpp"
+    loop_device_src_extension = "cpp"
+    loop_datamover_inc_extension = "hpp"
+    loop_datamover_src_extension = "cpp"
     
     def translateKernel(
         self, 
@@ -63,6 +76,42 @@ class CppHLS(Scheme):
         extracted_entities = ctk.extractDependancies(kernel_entities, app)
         return ctk.writeSource(extracted_entities)
 
+    def genLoopDevice(
+        self,
+        env: Environment,
+        loop: ops.Loop,
+        program: Program,
+        app: Application,
+        config: dict,
+    ) -> List[Tuple[str, str]]:
+        
+        #load datamover_templates
+        datamover_inc_template = env.get_template(str(self.loop_datamover_inc_template))
+        datamover_src_template = env.get_template(str(self.loop_datamover_src_template))
+        
+        
+        return (
+            [(datamover_inc_template.render(
+                lh=loop
+            ),self.loop_datamover_inc_extension),
+             (datamover_src_template.render(
+                lh=loop,
+                config=config,
+             ), self.loop_datamover_src_extension)]
+        )
+    
+    def genConfigDevice(
+        self,
+        env: Environment,
+        config: dict,
+    ) -> Tuple[str, str]:
+        
+        template = env.get_template(str(self.common_config_template))     
+        return (
+            template.render(
+                config=config
+            ), self.common_config_extension
+        ) 
 
 class CppCuda(Scheme):
     lang = Lang.find("cpp")

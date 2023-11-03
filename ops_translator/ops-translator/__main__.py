@@ -15,6 +15,7 @@ from jinja_utils import env
 from language import Lang
 from ops import OpsError, Type
 from scheme import Scheme
+from cpp.schemes import CppHLS
 from store import Application, ParseError
 from target import Target
 from util import getVersion, safeFind
@@ -169,7 +170,7 @@ def main(argv=None) -> None:
 
         # Applying user defined configs to the target config
         for key in target.config:
-            if key in args.config:
+            if key in args.config and key in target.config:
                 target.config[key] = args.config[key]
 
         logging.info("Found target: %s", str(target))
@@ -187,7 +188,10 @@ def main(argv=None) -> None:
             logging.info(f"Translation scheme: {scheme}")
         
 
-        codegen(args, scheme, app, args.force_soa)
+        codegen(args, scheme, app, target.config, args.force_soa)
+        
+        if target.name == "hls":
+            codegenHLSDevice(args, scheme, app, target.config, args.force_soa)
 
         if args.verbose:
             print(f"Translation completed: {scheme}")
@@ -233,7 +237,7 @@ def validate(args: Namespace, lang: Lang, app: Application) -> None:
             print("Dumped store: ", store_path.resolve(), end="\n\n")
 
 
-def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool = False) -> None:
+def codegen(args: Namespace, scheme: Scheme, app: Application, target_config: dict, force_soa: bool = False) -> None:
     # Collect the paths of the generated files
     include_dirs = set([Path(dir) for [dir] in args.I])
     defines = [define for [define] in args.D]
@@ -248,10 +252,17 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
         # From output files path
         path = None
         if scheme.lang.kernel_dir:
-            Path(args.out, scheme.target.name).mkdir(parents=True, exist_ok=True)
-            path = Path(args.out, scheme.target.name, f"{loop.kernel}_kernel.{extension}")
+            if scheme.target.name == "hls":
+                Path(args.out, scheme.target.name, "host", "kernel_wrappers").mkdir(parents=True, exist_ok=True)
+                path = Path(args.out, scheme.target.name, "host", "kernel_wrappers", f"{loop.kernel}_kernel.{extension}")                
+            else:
+                Path(args.out, scheme.target.name).mkdir(parents=True, exist_ok=True)
+                path = Path(args.out, scheme.target.name, f"{loop.kernel}_kernel.{extension}")
         else:
-            path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.{extension}")
+            if scheme.target.name == "hls":
+                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel_wrapper.{extension}")
+            else:
+                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.{extension}")
 
         # Write the gernerated source file
         with open(path, "w") as file:
@@ -267,15 +278,19 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
         user_types_candidates = [Path(dir, user_types_name) for dir in include_dirs]
         user_types_file = safeFind(user_types_candidates, lambda p: p.is_file())
 
-        source, name = scheme.genMasterKernel(env, app, user_types_file, force_soa)
+        source, name = scheme.genMasterKernel(env, app, user_types_file, target_config, force_soa)
 
         new_source = re.sub(r'\n\s*\n', '\n\n', source)
 
         path = None
 
         if scheme.lang.kernel_dir:
-            Path(args.out, scheme.target.name).mkdir(parents=True, exist_ok=True)
-            path = Path(args.out, scheme.target.name, name)
+            if scheme.target.name == "hls":
+                Path(args.out, scheme.target.name, "host").mkdir(parents=True, exist_ok=True)
+                path = Path(args.out, scheme.target.name, "host", name)
+            else:
+                Path(args.out, scheme.target.name).mkdir(parents=True, exist_ok=True)
+                path = Path(args.out, scheme.target.name, name)
 
         else:
             path = Path(args.out, name)
@@ -286,8 +301,76 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
 
             if args.verbose:
                 print(f"Generated master kernel file: {path}")
+                
 
+#TODO: Add a generic target flag to target class "kernel_device_translation"
+def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_config: dict, force_soa: bool = False) -> None:
+    
+    defines = [define for [define] in args.D]
 
+    #Generate common_config
+    print
+    source, extension = scheme.genConfigDevice(env, target_config)
+    new_source = re.sub(r'\n\s*\n', '\n\n', source)
+    
+    # From output files path
+    path = None
+    if scheme.lang.kernel_dir:
+        Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
+        path = Path(args.out, scheme.target.name, "device", "include", f"common_config.{extension}")                
+    else:
+        path = Path(args.out,f"{scheme.target.name}_common_config.{extension}")
+
+    # Write the gernerated source file
+    with open(path, "w") as file:
+        file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+        file.write(new_source)
+
+        if args.verbose:
+            print(f"Generated Device common_config.hpp")
+
+    #Generate loop device
+    #if scheme.target.name == "hls":
+    for i, (loop, program) in enumerate(app.uniqueLoops(), 1):
+        # Generate loop host source
+        [(datamov_inc_source, datamov_inc_extension),
+         (datamov_src_source, datamov_src_extension)] = scheme.genLoopDevice(env, loop, program, app, target_config)
+
+        datamov_inc_source = re.sub(r'\n\s*\n', '\n\n', datamov_inc_source)
+        datamov_src_source = re.sub(r'\n\s*\n', '\n\n', datamov_src_source)
+        
+        # datamover include
+        path = None
+        if scheme.lang.kernel_dir:
+            Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
+            path = Path(args.out, scheme.target.name, "device", "include", f"datamover_{loop.kernel}.{datamov_inc_extension}")                
+        else:
+            path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_datamover.{datamov_inc_extension}")
+
+        # Write the gernerated datamover include file
+        with open(path, "w") as file:
+            file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+            file.write(datamov_inc_source)
+
+            if args.verbose:
+                print(f"Generated loop device datamover inclue {i} of {len(app.uniqueLoops())}: {path}")
+
+        #datamover src
+        path = None
+        if scheme.lang.kernel_dir:
+            Path(args.out, scheme.target.name, "device", "src").mkdir(parents=True, exist_ok=True)
+            path = Path(args.out, scheme.target.name, "device", "src", f"datamover_{loop.kernel}.{datamov_src_extension}")                
+        else:
+            path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_datamover.{datamov_src_extension}")
+
+        # Write the gernerated source file
+        with open(path, "w") as file:
+            file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+            file.write(datamov_src_source)
+
+            if args.verbose:
+                print(f"Generated loop device datamover src {i} of {len(app.uniqueLoops())}: {path}")
+    
 def isDirPath(path):
     if os.path.isdir(path):
         return path

@@ -89,6 +89,7 @@ class Program:
     source: str
 
     consts: List[ops.Const] = field(default_factory=list)
+    stencils: List[ops.Stencil] = field(default_factory=list)
     loops: List[ops.Loop] = field(default_factory=list)
 
     entities: List[Entity] = field(default_factory=list)
@@ -133,12 +134,11 @@ class Program:
         for entity in self.entities:
             outString += str(entity) + "\n"  
             
-        # outString += "\n---------------------\n"    
-        # outString += "       Source      \n"
-        # outString += "---------------------\n"
-        # for line in self.scope:
-        #     
-        #outString += self.source + "\n"  
+        outString += "\n---------------------\n"    
+        outString += "       Stencils      \n"
+        outString += "---------------------\n"
+        for stencil in self.stencils:
+            outString += str(stencil) + "\n"   
         
         return outString
 
