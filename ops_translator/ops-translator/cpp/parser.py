@@ -8,6 +8,7 @@ import ops
 from store import Function, Location, ParseError, Program, Type
 from util import safeFind #TODO: implement safe find
 import logging
+from functools import cmp_to_key
 
 def parseMeta(node: Cursor, program: Program) -> None:
     if node.kind == CursorKind.TYPE_REF:
@@ -194,6 +195,44 @@ def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> No
             else:
                 print(f"|-- argument {arg.spelling}: type: {arg.kind}")
         
+def pointsToArray(points: List[ops.Point], ndim: int) -> List[int]:
+    array = []
+    for point in points:
+        for i in range(ndim):
+            array.append(point[i])    
+    return array
+
+def pointCompare(point1: ops.Point, point2: ops.Point) -> int:
+    
+    if point1.z != point2.z:
+        return point1.z - point2.z
+    elif point1.y != point2.y:
+        return point1.y - point2.y
+    else:
+        return point1.x - point2.y
+
+def arrayToPoints(npoints: int, ndim: int, array: List[int]) -> List[ops.Point]:
+    
+    points = []
+    if len(array) != npoints * ndim :
+        raise ParseError(f"Missmatch of parsed array with the stencil specification. Array: {array}, npoints: {npoints}, ndim: {ndim}")
+    
+    for i in range(npoints):
+        point = []
+        for j in range(ndim):
+            logging.debug(f"accessing: {array[i*ndim + j]}")
+            point.append(array[i*ndim + j])
+        points.append(ops.Point(point))
+    
+    return points
+
+def stencilPointsSort(npoints: int, ndim: int, array: List[int])-> List[int]: 
+    
+    points = arrayToPoints(npoints, ndim, array)
+    logging.debug(f"Points before sort: {points}")
+    sorted_points = sorted(points, key=cmp_to_key(pointCompare))
+    logging.debug(f"Points after sort: {sorted_points}")
+    return pointsToArray(sorted_points, ndim)
 
 def parseStencil(name: str, args: List[Cursor], loc: Location, macros: Dict[Location, str], program: Program) -> Union[ops.Stencil, None]:
     
@@ -202,12 +241,14 @@ def parseStencil(name: str, args: List[Cursor], loc: Location, macros: Dict[Loca
     
     ndim = parseIntLiteral(args[0])
     npoints = parseIntLiteral(args[1])
-    array = parseArrayIntLit(args[2])
+    array = stencilPointsSort(npoints, ndim, parseArrayIntLit(args[2]))
          
     logging.info("Stencil found - name:%s ndim: %d, npoints: %d, array: %s", name, ndim, npoints, array)
+
     program.stencils.append(ops.Stencil(len(program.stencils), ndim, name, npoints, array))   
  
-        
+
+    
 def parseArrayIntLit(node: Cursor)->List[int]:
     logging.debug("array: %s, array_decl: %s, type:%s, loc:%s", node, node.get_definition(), 
             node.get_definition().kind, parseLocation(node.get_definition()))

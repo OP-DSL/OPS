@@ -188,6 +188,41 @@ class Dat:
         return f"Dat(block_id={self.block_id}, id={self.id}, ptr='{self.ptr}', dim={self.dim}, type={self.typ}, soa={self.soa})"
 
 
+@dataclass(frozen=False)
+class Point:
+    x: int
+    y: int = 0
+    z: int = 0
+    
+    def __str__(self) -> str:
+        return f"({self.x}, {self.y}, {self.z})"
+    
+    def __init__(self, input: List[int]):
+        if (len(input) > 3):
+            raise ValueError("ops.Point cannot be initialized more than 3 dim")
+        
+        for i in range(len(input)):
+            self[i] = input[i]
+        
+    def __getitem__(self, i:int) -> Union[int, None]:
+        if i < 0 or i > 2:
+            return None
+        else:
+            if i == 0:
+                return self.x
+            elif i == 1:
+                return self.y
+            else:
+                return self.z  
+    
+    def __setitem__(self, i:int, newval: int):
+        if i == 0:
+            self.x = newval
+        elif i == 1:
+            self.y = newval
+        else:
+            self.z  = newval
+    
 @dataclass(frozen=True)
 class Stencil:
     id: int
