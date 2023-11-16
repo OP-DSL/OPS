@@ -263,7 +263,7 @@ class ArgDat(Arg):
 
     def __str__(self) -> str:
         return (
-            f"ArgDat(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17} opt={self.opt}, dat_id={self.dat_id}, stencil_id={self.stencil_id})"
+            f"ArgDat(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17} opt={self.opt}, dat_id={self.dat_id}, stencil_id={self.stencil_ptr})"
             )
 
 @dataclass(frozen=True)
