@@ -4,7 +4,7 @@ import os
 import copy
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple, Union
 from util import flatten, uniqueBy
 
 import ops
@@ -111,7 +111,13 @@ class Program:
 
         #returning canditages with min scope    
         return list(filter(lambda e: len(e.scope) == min_scope, candidates))
-
+    
+    def findStencil(self, name_ptr: str)->Union[ops.Stencil, None]:
+        for stencil in self.stencils:
+            if stencil.stencil_ptr == name_ptr:
+                return stencil
+        return None
+    
     def __str__(self) -> str:
         outString = "\nprogram path=" + str(self.path)  + ",\n"
         outString += "ast=" + str(self.ast) + ",\n"

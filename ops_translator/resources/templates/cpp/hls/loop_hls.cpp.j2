@@ -38,13 +38,15 @@ public:
         {% endfor %}
 
         int nargs = 0;
-
-        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.size[0]));
-        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.size[1]));
-        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.actual_size[0]));
-        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.actual_size[1]));
-        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.grid_size[0]));
-        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.grid_size[1]));
+        {% for i in range(lh.ndim)%}
+        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.size[{{i}}]));
+        {% endfor %}
+        {% for i in range(lh.ndim)%}
+        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.actual_size[{{i}}]));
+        {% endfor %}
+        {% for i in range(lh.ndim)%}
+        OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.grid_size[{{i}}]));
+        {% endfor %}
         OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.dim));
         OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.xblocks));
         OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.total_itr));

@@ -195,7 +195,7 @@ class Point:
     z: int = 0
     
     def __str__(self) -> str:
-        return f"({self.x}, {self.y}, {self.z})"
+        return f"({self.x},{self.y},{self.z})"
     
     def __init__(self, input: List[int]):
         if (len(input) > 3):
@@ -231,7 +231,7 @@ class Stencil:
     stencil_ptr: str
 
     num_points: int
-    points: List
+    points: List[Point]
     stride: Optional[list] = field(default_factory=list)
 
     def __str__(self) -> str:
@@ -250,7 +250,7 @@ class ArgDat(Arg):
     opt: bool
 
     dat_id: int
-    stencil_id: int
+    stencil_ptr: str
 
     dim: int
     restrict: Optional[bool] = False
@@ -344,9 +344,7 @@ class Loop:
     ndim: int
 
     args: List[Arg]
-
     dats: List[Dat]
-    stencils: List[id]
 
     arg_idx: Optional[int] = -1
     multiGrid: Optional[bool] = False
@@ -387,7 +385,6 @@ class Loop:
             # else:
             #     OpsError(f"Parsing Dat='{dat_ptr}' as argument of loop in {self.loc} which is not belong to block='{self.block.ptr}'", loc)
 
-        stencil_id = 0
         # stencil_id = findIdx(self.stencils, lambda s: s.stencil_ptr == stencil_ptr)
 
         # if stencil_id is None:
@@ -400,7 +397,7 @@ class Loop:
         if not self.multiGrid and (restrict or prolong):
             self.multiGrid = True
 
-        arg = ArgDat(arg_id, loc, access_type, opt, dat_id, stencil_id, dat_dim, restrict, prolong)
+        arg = ArgDat(arg_id, loc, access_type, opt, dat_id, stencil_ptr, dat_dim, restrict, prolong)
         self.args.append(arg)
 
     def addArgReduce(

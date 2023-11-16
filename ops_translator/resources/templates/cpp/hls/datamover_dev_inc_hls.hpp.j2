@@ -30,12 +30,12 @@ extern "C" void datamover_{{lh.kernel}}(
         ap_uint<data_width>* {{maxi_name(arg)}},
     {% endfor %}
     {% for arg in lh.args|ops_dat %}
-    {% if arg is not ops_rw %}
-        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
-    {% else %}
-        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")-}},
-        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "out")-}}{{"," if not loop.last}}
-    {% endif %}
+        {% if arg is not ops_rw %}
+        hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
+        {% else %}
+        hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name_t2(arg, "in")-}},
+        hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name_t2(arg, "out")-}}{{"," if not loop.last}}
+        {% endif %}
     {% endfor %}
 );
 {% endblock %}

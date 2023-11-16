@@ -226,13 +226,13 @@ def arrayToPoints(npoints: int, ndim: int, array: List[int]) -> List[ops.Point]:
     
     return points
 
-def stencilPointsSort(npoints: int, ndim: int, array: List[int])-> List[int]: 
+def stencilPointsSort(npoints: int, ndim: int, array: List[int])-> List[ops.Point]: 
     
     points = arrayToPoints(npoints, ndim, array)
     logging.debug(f"Points before sort: {points}")
     sorted_points = sorted(points, key=cmp_to_key(pointCompare))
     logging.debug(f"Points after sort: {sorted_points}")
-    return pointsToArray(sorted_points, ndim)
+    return sorted_points
 
 def parseStencil(name: str, args: List[Cursor], loc: Location, macros: Dict[Location, str], program: Program) -> Union[ops.Stencil, None]:
     
