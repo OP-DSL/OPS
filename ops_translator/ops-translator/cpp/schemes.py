@@ -83,21 +83,40 @@ class CppHLS(Scheme):
         program: Program,
         app: Application,
         config: dict,
+        kernel_idx: int
     ) -> List[Tuple[str, str]]:
         
         #load datamover_templates
         datamover_inc_template = env.get_template(str(self.loop_datamover_inc_template))
         datamover_src_template = env.get_template(str(self.loop_datamover_src_template))
+        kernel_inc_template = env.get_template(str(self.loop_device_inc_template))
+        kernel_src_template = env.get_template(str(self.loop_device_src_template))
         
+        kernel_processor = KernelProcess()
+        
+        kernel_func = self.translateKernel(loop, program, app, kernel_idx)
+        kernel_func = kernel_processor.clean_kernel_func_text(kernel_func)
         
         return (
             [(datamover_inc_template.render(
-                lh=loop
-            ),self.loop_datamover_inc_extension),
-             (datamover_src_template.render(
+                lh=loop),
+            self.loop_datamover_inc_extension),
+            (datamover_src_template.render(
                 lh=loop,
-                config=config,
-             ), self.loop_datamover_src_extension)]
+                config=config), 
+            self.loop_datamover_src_extension),
+            (kernel_inc_template.render(
+                 lh=loop,
+                 kernel_func=kernel_func,
+                 prog=program,
+                 config=config
+                 ),self.loop_device_inc_extension),
+            (kernel_src_template.render(
+                lh=loop,
+                kernel_func=kernel_func,
+                prog=program,
+                config=config),
+            self.loop_device_src_extension)]
         )
     
     def genConfigDevice(

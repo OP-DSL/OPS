@@ -1,0 +1,195 @@
+{% macro axis_name(arg) -%}
+    {%- if arg is not ops_rw -%}
+arg{{arg.id}}_stream_{{"in" if (arg is ops_read) else ("out" if (arg is ops_write))}}
+    {%- endif -%}
+{%- endmacro -%}
+{% macro axis_name_t2(arg, suffix) -%}
+arg{{arg.id}}_stream_{{suffix}}
+{%- endmacro -%}
+{% block header_block %}
+
+#pragma once
+#include "common_config.hpp"
+{# TODO: add include for stencil includes #}
+{% endblock %}
+
+{% block kernel_core %}
+void kernel_{{lh.kernel}}_core(const unsigned int num_itr,
+    {% for arg in lh.args|ops_dat %}
+        {% if loop.last %}
+            {% set last_check = True %}
+        {% else %}
+            {% set last_check = False %}
+        {% endif %}
+        {% if arg is ops_read or arg is ops_rw%}
+            {% if prog.findStencil(arg.stencil_ptr) %}
+                {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
+        ::hls::stream<stencil_type> arg{{arg.id}}_input_bus_{{i}}[vector_factor]{{"," if (not loop.last or not last_check)}}
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+        {% if arg is ops_read or ops_rw%}
+            {% if prog.findStencil(arg.stencil_ptr) %}
+                {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
+        ::hls::stream<stencil_type> arg{{arg.id}}_output_bus_{{i}}[vector_factor]{{"," if (not loop.last or not last_check)}}
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+)
+{
+    for (unsigned int itr = 0; itr < num_itr; itr++)
+    {
+#pragma HLS PIPELINE II=1
+        for (unsigned int k = 0; k < vector_factor; k++)
+        {
+#pragma HLS UNROLL complete
+    {% for arg in lh.args|ops_dat %}
+        {% if arg is ops_read or arg is ops_rw%} 
+            reg_{{arg.id}}_{{i}} = arg{{arg.id}}_input_bus_{{i}}[k].read();
+        {% endif %}
+    {% endfor %}
+
+            {{kernel_body}}
+
+    {% for arg in lh.args|ops_dat %}
+        {% if arg is ops_write or arg is ops_rw%} 
+            arg{{arg.id}}_output_bus_{{i}}[k].write(reg_{{arg.id}}_{{i}});
+        {% endif %}
+    {% endfor %}
+        }
+    }
+}
+{% endblock %}
+
+{% block kernel_PE %}
+void kernel_{{lh.kernel}}_PE(ops::hls::GridPropertyCore& gridProp,
+    {% for arg in lh.args %}
+        {% if arg is ops_read %}
+        {{arg.stecil_ptr}}::widen_stream_dt& arg{{arg.id}}_input_stream{{"," if not loop.last}}
+        {% elif arg is ops_write %}
+        {{arg.stecil_ptr}}::widen_stream_dt& arg{{arg.id}}_output_stream,
+        {{arg.stecil_ptr}}::mask_stream_dt& arg{{arg.id}}_outmask_stream,{{"," if not loop.last}}
+        {% else %}
+        {{arg.stecil_ptr}}::widen_stream_dt& arg{{arg.id}}_input_stream,
+        {{arg.stecil_ptr}}::widen_stream_dt& arg{{arg.id}}_output_stream,
+        {{arg.stecil_ptr}}::mask_stream_dt& arg{{arg.id}}_outmask_stream,{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+)
+{
+#pragma DATA_FLOW
+    {% for arg in lh.args %}
+        {% if arg is ops_read %}    
+    {{arg.stecil_ptr}} arg{{arg.id}}_read_stencil;
+        {% elif arg is ops_write %}
+    {{arg.stecil_ptr}} arg{{arg.id}}_write_stencil;
+        {% else %}
+    {{arg.stecil_ptr}} arg{{arg.id}}_read_stencil;
+    {{arg.stecil_ptr}} arg{{arg.id}}_write_stencil;
+        {% endif %}
+    {% endfor %}
+
+    {% for arg in lh.args|ops_dat %}
+        {% if loop.last %}
+            {% set last_check = True %}
+        {% else %}
+            {% set last_check = False %}
+        {% endif %}
+        {% if arg is ops_read or arg is ops_rw%}
+            {% if prog.findStencil(arg.stencil_ptr) %}
+                {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
+    static ::hls::stream<stencil_type> arg{{arg.id}}_input_bus_{{i}}[vector_factor];
+    #pragma HLS STREAM variable = arg{{arg.id}}_input_bus_{{i}} depth = max_depth_v8
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+        {% if arg is ops_read or ops_rw%}
+            {% if prog.findStencil(arg.stencil_ptr) %}
+                {% for i in range(prog.findStencil(arg.stencil_ptr).num_points) %}
+    static ::hls::stream<stencil_type> arg{{arg.id}}_output_bus_{{i}}[vector_factor];
+    #pragma HLS STREAM variable = arg{{arg.id}}_output_bus_{{i}} depth = max_depth_v8
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
+    unsigned int kernel_iterations = gridProp.outer_loop_limit * gridProp.xblocks;
+
+    {% for arg in lh.args %}
+        {% if arg is ops_read or arg is ops_rw %}    
+    arg{{arg.id}}_read_stencil.stencilRead(arg{{arg.id}}_input_stream,
+            {% if prog.findStencil(arg.stencil_ptr) %}
+                {% for i in range(prog.findStencil(arg.stencil_ptr).num_points) %}
+            arg{{arg.id}}_input_bus_{{i}}{{"," if not loop.last}}
+                {% endfor %}
+            {% endif %}
+            );
+        {% endif %}
+    {% endfor %}   
+
+    kernel_{{lh.kernel}}_core(kernel_iterations,
+    {% for arg in lh.args|ops_dat %}
+        {% if loop.last %}
+            {% set last_check = True %}
+        {% else %}
+            {% set last_check = False %}
+        {% endif %}
+        {% if arg is ops_read or arg is ops_rw%}
+            {% if prog.findStencil(arg.stencil_ptr) %}
+                {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
+            arg{{arg.id}}_input_bus_{{i}}{{"," if (not loop.last or not last_check)}}
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+        {% if arg is ops_read or ops_rw%}
+            {% if prog.findStencil(arg.stencil_ptr) %}
+                {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
+            arg{{arg.id}}_output_bus_{{i}}{{"," if (not loop.last or not last_check)}}
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+    );
+
+    {% for arg in lh.args %}
+        {% if arg is ops_write or arg is ops_rw %}    
+    arg{{arg.id}}_write_stencil.stencilWrite(arg{{arg.id}}_output_stream,
+            arg{{arg.id}}_output_stream,
+            {% if prog.findStencil(arg.stencil_ptr) %}
+                {% for i in range(prog.findStencil(arg.stencil_ptr).num_points) %}
+            arg{{arg.id}}_output_bus_{{i}}{{"," if not loop.last}}
+                {% endfor %}
+            {% endif %}
+            );
+        {% endif %}
+    {% endfor %}   
+}
+
+{% endblock %}
+{% block kernel_top_prototype %}
+extern "C" void kernel_{{lh.kernel}}(
+    {% for i in range(lh.ndim)%}
+        const unsigned short gridProp_size_{{i}},
+    {% endfor %}
+    {% for i in range(lh.ndim)%}
+        const unsigned short gridProp_actual_size_{{i}},
+    {% endfor %}
+    {% for i in range(lh.ndim)%}
+        const unsigned short gridProp_grid_size_{{i}},
+    {% endfor %}
+        const unsigned short gridProp_dim,
+        const unsigned short gridProp_xblocks,
+        const unsigned int gridProp_total_itr,
+        const unsigned int gridProp_outer_loop_limit,
+    {% for arg in lh.args|ops_dat %}
+        {% if arg is not ops_rw %}
+        hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
+        {% else %}
+        hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")-}},
+        hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "out")-}}{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+);
+{% endblock %}
+

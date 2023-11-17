@@ -1,0 +1,117 @@
+{% extends "cpp/hls/loop_dev_inc_hls.hpp.j2" %}
+{% block header_block %}
+#include <ops_hls_datamover.hpp>
+#include <kernel_{{lh.kernel}}.hpp>
+{% endblock%}
+{% block kernel_core %}
+{% endblock %}
+{% block kernel_PE %}
+{% endblock %}
+{% block kernel_top_prototype %}
+extern "C" void kernel_{{lh.kernel}}(
+    {% for i in range(lh.ndim)%}
+        const unsigned short gridProp_size_{{i}},
+    {% endfor %}
+    {% for i in range(lh.ndim)%}
+        const unsigned short gridProp_actual_size_{{i}},
+    {% endfor %}
+    {% for i in range(lh.ndim)%}
+        const unsigned short gridProp_grid_size_{{i}},
+    {% endfor %}
+        const unsigned short gridProp_dim,
+        const unsigned short gridProp_xblocks,
+        const unsigned int gridProp_total_itr,
+        const unsigned int gridProp_outer_loop_limit,
+    {% for arg in lh.args|ops_dat %}
+        {% if arg is not ops_rw %}
+        hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
+        {% else %}
+        hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")-}},
+        hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "out")-}}{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+)
+{
+    {% for i in range(lh.ndim)%}
+    #pragma HLS INTERFACE s_axilite port = gridProp_size_{{i}} bundle = control
+    {% endfor %}
+    {% for i in range(lh.ndim)%}
+    #pragma HLS INTERFACE s_axilite port = gridProp_actual_size_{{i}} bundle = control
+    {% endfor %}
+    {% for i in range(lh.ndim)%}
+    #pragma HLS INTERFACE s_axilite port = gridProp_grid_size_{{i}} bundle = control
+    {% endfor %}
+    #pragma HLS INTERFACE s_axilite port = gridProp_dim bundle = control
+    #pragma HLS INTERFACE s_axilite port = gridProp_xblocks bundle = control
+    #pragma HLS INTERFACE s_axilite port = gridProp_total_itr bundle = control
+    #pragma HLS INTERFACE s_axilite port = gridProp_outer_loop_limit = control
+
+    {% for arg in lh.args|ops_dat %}
+        {% if arg is not ops_rw %}
+    #pragma HLS INTERFACE port = {{axis_name(arg)-}} register
+        {% else %}
+    #pragma HLS INTERFACE port = {{axis_name_t2(arg, "in")-}} register
+    #pragma HLS INTERFACE port = {{axis_name_t2(arg, "out")-}} register
+        {% endif %}
+    {% endfor %}
+
+#pragma DATA_FLOW
+
+    {% for arg in lh.args|ops_dat %}
+        {% if arg is ops_read or arg is ops_rw%}
+    static {{arg.stencil_ptr}}::widen_stream_dt arg{{arg.id}}_output_stream;
+    #pragma HLS STREAM variable = arg{{arg.id}}_output_stream depth = max_depth_v8;
+        {% endif %}
+        {% if arg is ops_write or arg is ops_rw %}
+    static {{arg.stencil_ptr}}::widen_stream_dt& arg{{arg.id}}_input_stream;
+    #pragma HLS STREAM variable = arg{{arg.id}}_input_stream depth = max_depth_v8;
+    static {{arg.stencil_ptr}}::mask_stream_dt& arg{{arg.id}}_inmask_stream;
+    #pragma HLS STREAM variable = arg{{arg.id}}_inmask_stream depth = max_depth_v8;
+        {% endif %}
+    {% endfor %}
+
+    ops::hls::GridPropertyCore gridProp;
+    gridProp.dim = gridProp_dim;
+    {% for i in range(lh.ndim)%}
+    gridProp.size[{{i}}] = gridProp_size_{{i}};
+    {% endfor %}
+    {% for i in range(lh.ndim)%}
+    gridProp.actual_size[{{i}}] = gridProp_actual_size_{{i}};
+    {% endfor %}
+    {% for i in range(lh.ndim)%}
+    gridProp.grid_size[{{i}}] = gridProp_grid_size_{{i}};
+    {% endfor %}
+    gridProp.xblocks = gridProp_xblocks;
+    gridProp.total_itr = gridProp_total_itr;
+    gridProp.outer_loop_limit = gridProp_outer_loop_limit;
+
+    unsigned int total_bytes = 
+        {% for i in range(lh.ndim)%}
+            gridProp.grid_size[{{i}}] *
+    {% endfor %}
+            sizeof(stencil_type);
+
+    {% for arg in lh.args|ops_dat %}
+        {% if arg is ops_read or arg is ops_rw%}
+    ops::hls::axis2stream<axis_data_width, axis_data_width>({{axis_name(arg)-}}, arg{{arg.id}}_output_stream, total_bytes);
+        {% endif %}
+    {% endfor %}
+
+    kernel_{{lh.kernel}}_PE(gridProp, 
+    {% for arg in lh.args|ops_dat %}
+        {% if arg is ops_read or arg is ops_rw %}
+            arg{{arg.id}}_output_stream{{"," if not loop.last}}
+        {% elif arg is ops_write or arg in ops_rw %}
+            arg{{arg.id}}_input_stream,
+            arg{{arg.id}}_inmask_stream{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+    );
+
+    {% for arg in lh.args|ops_dat %}
+        {% if arg is ops_write or arg is ops_rw%}
+    ops::hls::stream2axisMasked<axis_data_width, axis_data_width>({{axis_name(arg)-}}, arg{{arg.id}}_input_stream, arg{{arg.id}}_inmask_stream, total_bytes);
+        {% endif %}
+    {% endfor %}
+}
+{% endblock %}

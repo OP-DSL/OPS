@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple, Union
 from util import flatten, uniqueBy
-
+import logging
 import ops
 from ops import OpsError
 
@@ -113,8 +113,10 @@ class Program:
         return list(filter(lambda e: len(e.scope) == min_scope, candidates))
     
     def findStencil(self, name_ptr: str)->Union[ops.Stencil, None]:
+        logging.debug(f"searching stencil: {name_ptr}")
         for stencil in self.stencils:
             if stencil.stencil_ptr == name_ptr:
+                logging.debug(f"found stencil:\n {stencil}")
                 return stencil
         return None
     
