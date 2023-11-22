@@ -42,27 +42,27 @@ print:
 endif
 ifeq ($(NV_ARCH),Fermi)
 	OpenACCFLAGS+= -ta=nvidia,cc20 -Mcuda=cc20
-	CUDAFOR+= -Mcuda=cc20
+	CUDAFOR+= -cuda -gpu=cc20
 	NVCXXFLAGS+= -arch=sm_20
 else
 ifeq ($(NV_ARCH),Kepler)
 	OpenACCFLAGS+= -ta=nvidia,cc35 -Mcuda=cc35
-	CUDAFOR+= -Mcuda=cc35
+	CUDAFOR+= -cuda -gpu=cc35
 	NVCXXFLAGS+= -arch=sm_35
 else
 ifeq ($(NV_ARCH),Pascal)
 	OpenACCFLAGS+= -ta=nvidia,cc60 -Mcuda=cc60
-	CUDAFOR+= -Mcuda=cc60
+	CUDAFOR+= -cuda -gpu=cc60
 	NVCXXFLAGS+= -arch=sm_60
 else
 ifeq ($(NV_ARCH),Volta)
 	OpenACCFLAGS+= -ta=nvidia,cc70 -Mcuda=cc70
-	CUDAFOR+= -Mcuda=cc70
+	CUDAFOR+= -cuda -gpu=cc70
 	NVCXXFLAGS+= -arch=sm_70
 else
 ifeq ($(NV_ARCH),Ampere)
 	OpenACCFLAGS+= -ta=nvidia,cc80 -Mcuda=cc80
-	CUDAFOR+= -Mcuda=cc80
+	CUDAFOR+= -cuda -gpu=cc80
 	NVCXXFLAGS+= -arch=sm_80
 endif
 endif
