@@ -42,6 +42,14 @@ class Scheme(Findable):
     ) -> Tuple[str, str]:
         return None
     
+    def genStencilDecl(
+        self,
+        env: Environment,
+        config: dict,
+        stencil: ops.Stencil
+    ) -> Tuple[str, str]:
+        return None
+    
     def genConfigDevice(
         self,
         env: Environment,

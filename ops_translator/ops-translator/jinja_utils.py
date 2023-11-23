@@ -51,6 +51,8 @@ def read_in(dat: ops.Dat, loop: ops.Loop) -> bool:
 
 env.tests["read_in"] = read_in
 env.tests["instance"] = lambda x, c: isinstance(x, c)
+env.tests["isnumaric"] = lambda arg, loop=None: isinstance(arg, str) and arg.isnumeric()
+
 env.globals.update(shift_bits = lambda widen, base_size: int(log2(widen+1) - log2(base_size)))
 
 def unpack(tup):

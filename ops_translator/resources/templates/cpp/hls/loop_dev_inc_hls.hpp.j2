@@ -9,8 +9,10 @@ arg{{arg.id}}_stream_{{suffix}}
 {% block header_block %}
 
 #pragma once
-#include "common_config.hpp"
-{# TODO: add include for stencil includes #}
+#include <common_config.hpp>
+{% for stencil in lh.stencils %}
+#include <stencil_{{stencil}}.hpp>
+{% endfor %}
 {% endblock %}
 
 {% block kernel_core %}

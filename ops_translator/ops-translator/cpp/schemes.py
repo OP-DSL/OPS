@@ -47,6 +47,7 @@ class CppHLS(Scheme):
     loop_device_src_template = Path("cpp/hls/loop_dev_src_hls.cpp.j2")
     loop_datamover_inc_template = Path("cpp/hls/datamover_dev_inc_hls.hpp.j2")
     loop_datamover_src_template = Path("cpp/hls/datamover_dev_src_hls.cpp.j2")
+    stencil_device_template = Path("cpp/hls/stencil_dev_hls.hpp.j2")
     
     loop_kernel_extension = "hpp"
     master_kernel_extension = "hpp"
@@ -55,6 +56,7 @@ class CppHLS(Scheme):
     loop_device_src_extension = "cpp"
     loop_datamover_inc_extension = "hpp"
     loop_datamover_src_extension = "cpp"
+    stencil_device_extension = "hpp"
     
     def translateKernel(
         self, 
@@ -131,6 +133,20 @@ class CppHLS(Scheme):
                 config=config
             ), self.common_config_extension
         ) 
+    
+    def genStencilDecl(
+        self,
+        env: Environment,
+        config: dict,
+        stencil: ops.Stencil,
+    ) -> Tuple[str, str]:
+        template = env.get_template(str(self.stencil_device_template))
+        return (
+            template.render(
+                config = config,
+                stencil = stencil
+            ), self.stencil_device_extension
+        )
 
 class CppCuda(Scheme):
     lang = Lang.find("cpp")
