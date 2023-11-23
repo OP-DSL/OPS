@@ -9,6 +9,7 @@ from store import Function, Location, ParseError, Program, Type
 from util import safeFind #TODO: implement safe find
 import logging
 from functools import cmp_to_key
+from math import floor
 
 def parseMeta(node: Cursor, program: Program) -> None:
     if node.kind == CursorKind.TYPE_REF:
@@ -234,6 +235,56 @@ def stencilPointsSort(npoints: int, ndim: int, array: List[int])-> List[ops.Poin
     logging.debug(f"Points after sort: {sorted_points}")
     return sorted_points
 
+def getStencilSize(array: List[ops.Point])->int:
+    xes = [point.x for point in array]
+    minX = min(xes)
+    maxX = max(xes)
+    return (maxX - minX)
+
+def isInSameRow(one: ops.Point , two: ops.Point):
+    if one.y == two.y and one.z == two.z:
+        return True
+    return False
+
+def getMinIndices(array: List[ops.Point])->ops.Point:
+    minPoint = ops.Point([100,100,100])
+    for  point in array:
+        minPoint.x = min(minPoint.x, point.x)
+        minPoint.y = min(minPoint.y, point.y)
+        minPoint.z = min(minPoint.z, point.z)
+    
+    return minPoint
+        
+#Window buffer algo uses adjusted index, where base is (x_min, y_min, z_min)
+def windowBuffChainingAlgo(sorted_array: List[ops.Point], ndim: int) -> Tuple[List[str], List[Tuple[str, str]]]:
+    chains = []
+    unique_buffers = []
+    # chains.append(("rd_val", "axis_read"))
+    prev_buff = []
+    feeding_point = []
+    minIndices = getMinIndices(sorted_array)
+    
+    for p_idx in range(len(sorted_array)):
+        if p_idx == len(sorted_array) - 1:
+            chains.append((str(p_idx), "read_val"))
+            if prev_buff:
+                chains.append((prev_buff.pop(), feeding_point.pop()))
+        elif isInSameRow(sorted_array[p_idx], sorted_array[p_idx+1]):
+            chains.append((str(p_idx), str(p_idx+1)))
+        else:
+            if sorted_array[p_idx+1].z == sorted_array[p_idx].z:
+                curr_buff = "buf_r" + str(sorted_array[p_idx].y - minIndices.y) + "_" + str(sorted_array[p_idx+1].y - minIndices.y) + "_p" + str(sorted_array[p_idx].z - minIndices.z)
+            else:
+                curr_buff = "buf_p" + str(sorted_array[p_idx].z - minIndices.z) + "_" + str(sorted_array[p_idx+1].z - minIndices.z)
+            unique_buffers.append(curr_buff)
+            chains.append((str(p_idx), curr_buff))
+            if prev_buff:
+                chains.append((prev_buff.pop(), feeding_point.pop()))
+            print(p_idx)
+            feeding_point.append(str(p_idx+1))
+            prev_buff.append(curr_buff)
+
+    return (unique_buffers, chains)
 def parseStencil(name: str, args: List[Cursor], loc: Location, macros: Dict[Location, str], program: Program) -> Union[ops.Stencil, None]:
     
     if len(args) != 4:
@@ -242,10 +293,12 @@ def parseStencil(name: str, args: List[Cursor], loc: Location, macros: Dict[Loca
     ndim = parseIntLiteral(args[0])
     npoints = parseIntLiteral(args[1])
     array = stencilPointsSort(npoints, ndim, parseArrayIntLit(args[2]))
-         
-    logging.info("Stencil found - name:%s ndim: %d, npoints: %d, array: %s", name, ndim, npoints, array)
-
-    program.stencils.append(ops.Stencil(len(program.stencils), ndim, name, npoints, array))   
+    stencilSize = getStencilSize(array)
+    windowBuffers, chains = windowBuffChainingAlgo(array, ndim)
+        
+    logging.info("Stencil found - name:%s ndim: %d, npoints: %d", name, ndim, npoints, array)
+    logging.debug("Stencil found addition info: windowBuffers: %s, chains: %s", str(windowBuffers), str(chains))
+    program.stencils.append(ops.Stencil(len(program.stencils), ndim, name, npoints, array, stencilSize, windowBuffers, chains))   
  
 
     

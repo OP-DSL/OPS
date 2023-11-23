@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Callable, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Union, Tuple
 
 from util import ABDC, findIdx
 
@@ -232,8 +232,11 @@ class Stencil:
 
     num_points: int
     points: List[Point]
+    stencil_size: int
+    window_buffers : List[str]
+    chains: List[Tuple[str, str]]
     stride: Optional[list] = field(default_factory=list)
-
+    
     def __str__(self) -> str:
         return f"Stencil(id={self.id}, dim={self.dim}, stencil_ptr='{self.stencil_ptr}', \
 number of points={self.num_points}, points={self.points}, stride_ptr='{self.stride}')"
@@ -345,6 +348,7 @@ class Loop:
 
     args: List[Arg]
     dats: List[Dat]
+    stencils: List[str]
 
     arg_idx: Optional[int] = -1
     multiGrid: Optional[bool] = False
@@ -387,9 +391,8 @@ class Loop:
 
         # stencil_id = findIdx(self.stencils, lambda s: s.stencil_ptr == stencil_ptr)
 
-        # if stencil_id is None:
-        #     stencil_id = len(self.stencils)
-        #     self.stencils.append(Stencil(stencil_id, dat_dim, stencil_ptr))
+        if stencil_ptr not in self.stencils:
+            self.stencils.append(stencil_ptr)
 
         restrict = stencil_ptr.find("RESTRICT") > 0
         prolong = stencil_ptr.find("PROLONG") > 0
