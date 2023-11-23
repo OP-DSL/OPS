@@ -9,6 +9,8 @@ stencilValues[{{link}}]
 {{link}}
 {%- endif -%}
 {%- endmacro -%}
+
+{%set half_span_x = (stencil.stencil_size - 1) / 2%}
 {% block header_block %}
 #pragma onece
 
@@ -24,88 +26,177 @@ class {{stencil.stencil_ptr}} : public ops::hls::StencilCore <stencil_type, {{st
         vector_factor, ops::hls::CoefTypes::CONST_COEF, {{stencil.stencil_ptr}}_stencil_size,
         {{stencil.stencil_ptr}}_stencil_dim>
 {
-    public:
-        using ops::hls::StencilCore <stencil_type, {{stencil.stencil_ptr}}_num_points,
-        vector_factor, ops::hls::CoefTypes::CONST_COEF, {{stencil.stencil_ptr}}_stencil_size,
+public:
+    using ops::hls::StencilCore <stencil_type, {{stencil.stencil_ptr}}_num_points,
+    vector_factor, ops::hls::CoefTypes::CONST_COEF, {{stencil.stencil_ptr}}_stencil_size,
         {{stencil.stencil_ptr}}_stencil_dim>::m_gridProp;
 
-        void stencilRead(widen_stream_dt& rd_buffer,
-    {% for i in range(stencil.num_points) %}
-                ::hls::stream<stencil_type> output_bus_{{i}}[vector_factor]{{"," if not loop.last}}
-    {% endfor %}
-                )
-        {
-            unsigned short i = 0; 
-        {% if stencil.dim > 1 %}
-            unsigned i_l = 0; // Line buffer index
-            unsigned short j = 0; 
-        {% endif %}
-        {% if stencil.dim > 2 %}
-            unsigned i_p = 0; // Plane buffer index
-            unsigned short k = 0;
-        {% endif %}
+    void stencilRead(widen_stream_dt& rd_buffer,
+{% for i in range(stencil.num_points) %}
+            ::hls::stream<stencil_type> output_bus_{{i}}[vector_factor]{{"," if not loop.last}}
+{% endfor %}
+            )
+    {
+        unsigned short i = 0; 
+{% if stencil.dim > 1 %}
+        unsigned i_l = 0; // Line buffer index
+        unsigned short j = 0; 
+{% endif %}
+{% if stencil.dim > 2 %}
+        unsigned i_p = 0; // Plane buffer index
+        unsigned short k = 0;
+{% endif %}
 
-            ::ops::hls::GridPropertyCore gridProp = m_gridProp;
-            unsigned short itr_limit = gridProp.itr_limit;
-            unsigned short act_total_itr = gridProp.total_itr;
-            widen_dt read_val = 0;
+        ::ops::hls::GridPropertyCore gridProp = m_gridProp;
+{% if stencil.dim  == 1 %}
+        unsigned short itr_limit = gridProp.total_itr;
+{% elif stencil.dim == 2%}
+        unsigned short itr_limit = gridProp.outer_loop_limit * gridProp.xblocks;
+{% else %}
+        unsigned short itr_limit = gridProp.outer_loop_limit * 
+                gridProp.grid_size[1] * gridProp.xblocks;
+{% endif %}
+        unsigned short act_total_itr = gridProp.total_itr;
+        widen_dt read_val = 0;
             
-            widen_dt stencilValues[{{stencil.stencil_ptr}}_num_points];
-            #pragma HLS ARRAY_PARTITION variable = stencilValues dim = 1 complete
+        widen_dt stencilValues[{{stencil.stencil_ptr}}_num_points];
+        #pragma HLS ARRAY_PARTITION variable = stencilValues dim = 1 complete
 
-        {% for buffer in stencil.window_buffers %}
-            widen_dt {{buffer}}[max_depth_bytes/(sizeof(stencil_type) * vector_factor)];
-            #pragma HLS BIND_STORAGE variable =  {{buffer}} type = ram_t2p impl=uram latency=2
-        {% endfor %}
+{% for buffer in stencil.window_buffers %}
+        widen_dt {{buffer}}[max_depth_bytes/(sizeof(stencil_type) * vector_factor)];
+        #pragma HLS BIND_STORAGE variable =  {{buffer}} type = ram_t2p impl=uram latency=2
+{% endfor %}
 
-        {% for unique_row in stencil.rows %}
-            stencil_type rowArr_{{unique_row[1]}}_{{unique_row[0]}}[vector_factor + s_stencil_span_x];
-            #pragma HLS ARRAY_PARTITION variable = rowArr_{{unique_row[1]}}_{{unique_row[0]}} dim=1 complete
-        {% endfor %}
+{% for row_discriptor in stencil.row_discriptors %}
+        stencil_type rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}}[vector_factor + s_stencil_span_x];
+        #pragma HLS ARRAY_PARTITION variable = rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}} dim=1 complete
+{% endfor %}
 
-            for (unsigned short itr = 0; itr < itr_limit; itr++)
+        for (unsigned short itr = 0; itr < itr_limit; itr++)
+        {
+        #pragma HLS PIPELINE II=1
+
+            spc_temp_blocking_read:
             {
-            #pragma HLS PIPELINE II=1
+                bool cond_x_terminate = (i == gridProp.xblocks - 1); 
+{% if stencil.dim == 2 %}
+                bool cond_y_terminate = (j == gridProp.outer_loop_limit - 1);
+{% elif stenicl.dim == 3 %}
+                bool cond_y_terminate = (j == gridProp.grid_size[1] - 1);
+                bool cond_z_terminate = (k == gridProp.outer_loop_limit - 1);
+{% endif %}
 
-                spc_temp_blocking_read:
+                if (cond_x_terminate)
+                    i = 0;
+                else
+                    i++;
+{% if stencil.dim == 2 %}
+                if (cond_x_terminate && cond_y_terminate)
+                    j = 0;
+                else if (cond_x_terminate)
+                    j++;
+{% elif stenicl.dim == 3 %}
+                if (cond_x_terminate && cond_y_terminate && cond_z_terminate)
+                    k = 0;
+                else if (cond_x_terminate && cond_y_terminate)
+                    k++
+{% endif %}
+
+                bool cond_read = (itr < act_total_itr);
+
+                if (cond_read)
+                    read_val = rd_buffer.read();
+
+{% for chain in stencil.chains %}
+                {{chainLinkTranform(chain[0])}} = {{chainLinkTranform(chain[1])}};
+{% endfor %}
+            
+{# This need to be improved with adding new clear atributes to gridProp #}
+{% if stencil.dim > 1 %}
+                bool cond_end_of_line_buff = (i_l) >= (gridProp.xblocks - 1);
+{% endif %}
+{% if stencil.dim > 2 %}
+                bool cond_end_of_plane_buff = (i_p) >= (gridProp.plane_diff);
+{% endif %}
+
+{% if stencil.dim > 1 %}
+                if (cond_end_of_line_buff)
+                    i_l = 0;
+                else
+                    i_l++;
+{% endif %}
+{% if stencil.dim > 2 %}
+                if (cond_end_of_plane_buff)
+                    i_p = 0;
+                else
+                    i_p++;
+{% endif %}
+
+#ifdef DEBUG_LOG
+                printf("[DEBUG][INTERNAL] loop params i(%d), j(%d),"\
+{% if stencil.dim > 1 %}
+                        "i_l(%d), "\
+{% endif %}
+{% if stencil.dim > 2 %}
+                        "i_p(%d), "\
+{% endif %}
+                        "itr(%d)\n", i, j,
+{% if stencil.dim > 1 %} 
+                        i_l,
+{% endif %}
+{% if stencil.dim > 2 %}
+                        i_p,
+{% endif %}
+                        itr);
+                printf("[DEBUG][INTERNAL] --------------------------------------------------------\n\n");
+
+                printf("[DEBUG][INTERNAL] read values: (");
+                for (int ri = 0; ri < vector_factor; ri++)
                 {
-                    bool cond_x_terminate = (i == gridProp.xblocks - 1); 
-            {% if stencil.dim == 2 %}
-                    bool cond_y_terminate = (j == gridProp.outer_loop_limit - 1);
-            {% elif stenicl.dim == 3 %}
-                    bool cond_y_terminate = (j == gridProp.grid_size[1] - 1);
-                    bool cond_z_terminate = (k == gridProp.outer_loop_limit - 1);
-            {% endif %}
-
-                    if (cond_x_terminate)
-                        i = 0;
-                    else
-                        i++;
-            {% if stencil.dim == 2 %}
-                    if (cond_x_terminate && cond_y_terminate)
-                        j = 0;
-                    else if (cond_x_terminate)
-                        j++;
-            {% elif stenicl.dim == 3 %}
-                    if (cond_x_terminate && cond_y_terminate && cond_z_terminate)
-                        k = 0;
-                    else if (cond_x_terminate && cond_y_terminate)
-                        k++
-            {% endif %}
-
-                    bool cond_read = (itr < act_total_itr);
-
-                    if (cond_read)
-                        read_val = rd_buffer.read();
-
-            {% for chain in stencil.chains %}
-                    {{chainLinkTranform(chain[0])}} = {{chainLinkTranform(chain[1])}};
-            {% endfor %}
-
-            # {% if stencil.dim > 1 %}
-            #         bool cond_end_of_line = 
-            # {% endif %}
+                    ops::hls::DataConv tmpConverter;
+                    tmpConverter.i = read_val.range((ri + 1)*s_datatype_size - 1, ri * s_datatype_size);
+                    printf("%f ", tmpConverter.f);
                 }
+                printf(")\n");
+#endif
+
+            }
+
+            vec2arr: for (unsigned short k = 0; k < vector_factor; k++)
+            {
+{% for row_discriptor in stencil.row_discriptors %}
+    {% for point in row_discriptor.row_points %}
+        {% if point.x == row_discriptor.base_point.x %}
+                ops::hls::DataConv tmpConverter_{{point.y}}_{{point.z}};
+                tmpConverter_{{point.y}}_{{point.z}}.i = stencilValues[{{stencil.points.index(point)}}](s_datatype_size * (k + 1) - 1, k * s_datatype_size);
+                rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}}[k + s_stencil_half_span_x] = tmpConverter_{{point.y}}_{{point.z}}.f; 
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+            }
+
+{% for row_discriptor in stencil.row_discriptors %}
+    {% for point in row_discriptor.row_points %}
+        {% if point.x != row_discriptor.base_point.x %}
+            {% for i in range(config.vector_factor) %}
+                {% set diff = point.x - row_discriptor.base_point.x %}
+                {% set access_idx = diff * config.vector_factor + row_discriptor.base_point.x + i %}
+                {% if (diff < 0 and access_idx >= 0) or (diff > 0 and access_idx <= config.vector_factor + 2 * half_span_x) %}
+            ops::hls::DataConv tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}};
+            tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}}.i = stencilValues[{{stencil.points.index(point)}}].range(s_datatype_size * (i + 1) - 1, s_datatype_size * i);
+            rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}}[{{access_idx}}] = tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}}.f;
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+
+            process: for(unsigned short k = 0; k < vector_factor; k++)
+            {
+{% for i in range(stencil.num_points) %}
+                output_bus_{{i}}[k].write(rowArr_{{stencil.points[i].y}}_{{stencil.points[i].z}}[k + {{stencil.points[i].x}}]);
+{% endfor %}               
             }
         }
-}
+    }
+};

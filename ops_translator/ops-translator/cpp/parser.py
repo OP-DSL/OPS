@@ -254,7 +254,13 @@ def getMinIndices(array: List[ops.Point])->ops.Point:
         minPoint.z = min(minPoint.z, point.z)
     
     return minPoint
-        
+
+def cordinateOriginTranslation(origin: ops.Point, array: List[ops.Point]) -> List[ops.Point]:
+    translated = []
+    for point in array:
+        translated.append(ops.Point([point.x - origin.x, point.y - origin.y, point.z - origin.z]))
+    return translated
+   
 #Window buffer algo uses adjusted index, where base is (x_min, y_min, z_min)
 def windowBuffChainingAlgo(sorted_array: List[ops.Point], ndim: int) -> Tuple[List[str], List[Tuple[str, str]]]:
     chains = []
@@ -262,7 +268,6 @@ def windowBuffChainingAlgo(sorted_array: List[ops.Point], ndim: int) -> Tuple[Li
     # chains.append(("rd_val", "axis_read"))
     prev_buff = []
     feeding_point = []
-    minIndices = getMinIndices(sorted_array)
     
     for p_idx in range(len(sorted_array)):
         if p_idx == len(sorted_array) - 1:
@@ -273,9 +278,9 @@ def windowBuffChainingAlgo(sorted_array: List[ops.Point], ndim: int) -> Tuple[Li
             chains.append((str(p_idx), str(p_idx+1)))
         else:
             if sorted_array[p_idx+1].z == sorted_array[p_idx].z:
-                curr_buff = "buf_r" + str(sorted_array[p_idx].y - minIndices.y) + "_" + str(sorted_array[p_idx+1].y - minIndices.y) + "_p" + str(sorted_array[p_idx].z - minIndices.z)
+                curr_buff = "buf_r" + str(sorted_array[p_idx].y) + "_" + str(sorted_array[p_idx+1].y) + "_p" + str(sorted_array[p_idx].z)
             else:
-                curr_buff = "buf_p" + str(sorted_array[p_idx].z - minIndices.z) + "_" + str(sorted_array[p_idx+1].z - minIndices.z)
+                curr_buff = "buf_p" + str(sorted_array[p_idx].z) + "_" + str(sorted_array[p_idx+1].z)
             unique_buffers.append(curr_buff)
             chains.append((str(p_idx), curr_buff))
             if prev_buff:
@@ -285,6 +290,19 @@ def windowBuffChainingAlgo(sorted_array: List[ops.Point], ndim: int) -> Tuple[Li
             prev_buff.append(curr_buff)
 
     return (unique_buffers, chains)
+
+
+def findUniqueStencilRows(array: List[ops.Point])-> List[Tuple[int,int]]:
+    unique_rows = []
+    
+    for point in array:
+        row = (point.y, point.z)
+        if row not in unique_rows:
+            unique_rows.append(row)
+            
+    return unique_rows
+        
+        
 def parseStencil(name: str, args: List[Cursor], loc: Location, macros: Dict[Location, str], program: Program) -> Union[ops.Stencil, None]:
     
     if len(args) != 4:
@@ -293,13 +311,18 @@ def parseStencil(name: str, args: List[Cursor], loc: Location, macros: Dict[Loca
     ndim = parseIntLiteral(args[0])
     npoints = parseIntLiteral(args[1])
     array = stencilPointsSort(npoints, ndim, parseArrayIntLit(args[2]))
+    minIndices = getMinIndices(array)
+    array = cordinateOriginTranslation(minIndices, array)
     stencilSize = getStencilSize(array)
     windowBuffers, chains = windowBuffChainingAlgo(array, ndim)
-        
-    logging.info("Stencil found - name:%s ndim: %d, npoints: %d", name, ndim, npoints, array)
-    logging.debug("Stencil found addition info: windowBuffers: %s, chains: %s", str(windowBuffers), str(chains))
-    program.stencils.append(ops.Stencil(len(program.stencils), ndim, name, npoints, array, stencilSize, windowBuffers, chains))   
- 
+    unique_rows = findUniqueStencilRows(array)
+    base_offset = -minIndices
+    
+    logging.info("Stencil found name:%s ndim: %d, npoints: %d, array: %s", name, ndim, npoints, str(array))
+    logging.debug("Stencil found addition info: windowBuffers: %s", str(windowBuffers))
+    logging.debug("Stencil found addition info: chains: %s", str(chains), )
+    program.stencils.append(ops.Stencil(len(program.stencils), ndim, name, npoints, array, base_offset, stencilSize, windowBuffers, chains))   
+    logging.debug("Stencil found addition info: unique_rows: %s, row discriptors: %s", str(unique_rows), str(program.stencils[-1].row_discriptors))
 
     
 def parseArrayIntLit(node: Cursor)->List[int]:

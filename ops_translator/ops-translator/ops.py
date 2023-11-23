@@ -222,6 +222,25 @@ class Point:
             self.y = newval
         else:
             self.z  = newval
+            
+    def __add__(self, other: Point)->Point:
+        return Point([self.x + other.x, self.y + other.y, self.z + other.z])
+    
+    def __neg__(self)->Point:
+        return Point([-self.x, -self.y, -self.z])
+
+@dataclass(frozen=False)
+class StencilRowDiscriptor:
+    row_id: Tuple[int, int]
+    base_point: Point = field(default=Point([0,0,0]))
+    row_points: List[Point] = field(default_factory=list, init=False) 
+    
+    def _key(self):
+        return self.row_id
+    def __hash__(self):
+        return hash(self._key())
+    def __eq__(self, other):
+        return self._key() == other._key()
     
 @dataclass(frozen=True)
 class Stencil:
@@ -232,11 +251,21 @@ class Stencil:
 
     num_points: int
     points: List[Point]
+    base_point: Point
     stencil_size: int
     window_buffers : List[str]
     chains: List[Tuple[str, str]]
+    row_discriptors: List[StencilRowDiscriptor] = field(default_factory=list, init=False)
     stride: Optional[list] = field(default_factory=list)
     
+    def __post_init__(self):
+        for point in self.points:
+            if StencilRowDiscriptor((point.y, point.z)) in self.row_discriptors:
+                self.row_discriptors[self.row_discriptors.index(StencilRowDiscriptor((point.y, point.z)))].row_points.append(point)
+            else:
+                self.row_discriptors.append(StencilRowDiscriptor((point.y, point.z), self.base_point))
+                self.row_discriptors[-1].row_points.append(point)
+            
     def __str__(self) -> str:
         return f"Stencil(id={self.id}, dim={self.dim}, stencil_ptr='{self.stencil_ptr}', \
 number of points={self.num_points}, points={self.points}, stride_ptr='{self.stride}')"
