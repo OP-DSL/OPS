@@ -20,8 +20,14 @@ ifdef PROFILE_ITT
 	CXXFLAGS += -DPROFILE_ITT -I$(VTUNE_PROFILER_DIR)/include
 	OPS_LINK += -L$(VTUNE_PROFILER_DIR)/lib64 -littnotify
 endif
+
 #FFLAGS  = $(CXXFLAGS) -module $(F_INC_MOD)
+ifdef DEBUG
+FFLAGS  = -O0 -g -qopenmp -module $(F_INC_MOD)
+else
 FFLAGS  = -O3 -g -xHost -qopenmp -qopt-report -module $(F_INC_MOD)
+endif
+
 OMPFLAGS := -qopenmp
 ifdef THREADED
 	THREADING_FLAGS ?= -qopenmp
