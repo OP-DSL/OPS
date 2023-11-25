@@ -338,9 +338,9 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
             path = None
             if scheme.lang.kernel_dir:
                 Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
-                path = Path(args.out, scheme.target.name, "device", "include", f"{stencil.stencil_ptr}.{extension}")                
+                path = Path(args.out, scheme.target.name, "device", "include", f"stencil_{stencil.stencil_ptr}.{extension}")                
             else:
-                path = Path(args.out,f"{scheme.target.name}_{stencil.stencil_ptr}.{extension}")
+                path = Path(args.out,f"stencil_{scheme.target.name}_{stencil.stencil_ptr}.{extension}")
 
             # Write the gernerated source file
             with open(path, "w") as file:
@@ -348,7 +348,7 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
                 file.write(new_source)
 
                 if args.verbose:
-                    print(f"Generated Device {stencil.stencil_ptr}.hpp")
+                    print(f"Generated Device stencil_{stencil.stencil_ptr}.hpp")
                 
     #Generate loop device
     #if scheme.target.name == "hls":

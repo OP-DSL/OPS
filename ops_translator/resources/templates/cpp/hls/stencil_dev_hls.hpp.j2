@@ -162,14 +162,14 @@ public:
 
             }
 
-            vec2arr: for (unsigned short k = 0; k < vector_factor; k++)
+            vec2arr: for (unsigned short x = 0; x < vector_factor; x++)
             {
 {% for row_discriptor in stencil.row_discriptors %}
     {% for point in row_discriptor.row_points %}
         {% if point.x == row_discriptor.base_point.x %}
                 ops::hls::DataConv tmpConverter_{{point.y}}_{{point.z}};
-                tmpConverter_{{point.y}}_{{point.z}}.i = stencilValues[{{stencil.points.index(point)}}](s_datatype_size * (k + 1) - 1, k * s_datatype_size);
-                rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}}[k + s_stencil_half_span_x] = tmpConverter_{{point.y}}_{{point.z}}.f; 
+                tmpConverter_{{point.y}}_{{point.z}}.i = stencilValues[{{stencil.points.index(point)}}](s_datatype_size * (x + 1) - 1, x * s_datatype_size);
+                rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}}[x + s_stencil_half_span_x] = tmpConverter_{{point.y}}_{{point.z}}.f; 
         {% endif %}
     {% endfor %}
 {% endfor %}
@@ -191,12 +191,168 @@ public:
     {% endfor %}
 {% endfor %}
 
-            process: for(unsigned short k = 0; k < vector_factor; k++)
+            process: for(unsigned short x = 0; x < vector_factor; x++)
             {
 {% for i in range(stencil.num_points) %}
-                output_bus_{{i}}[k].write(rowArr_{{stencil.points[i].y}}_{{stencil.points[i].z}}[k + {{stencil.points[i].x}}]);
+                output_bus_{{i}}[x].write(rowArr_{{stencil.points[i].y}}_{{stencil.points[i].z}}[x + {{stencil.points[i].x}}]);
 {% endfor %}               
             }
         }
     }
+
+{% if stencil.num_points == 1 %}
+    void stencilWrite(widen_stream_dt& wr_buffer,
+            mask_stream_dt& strb_buffer,
+            ::hls::stream<stencil_type> input_bus[vector_factor])
+    {
+        unsigned short i = 0; 
+    {% if stencil.dim > 1 %}
+        unsigned i_l = 0; // Line buffer index
+        unsigned short j = 0; 
+    {% endif %}
+    {% if stencil.dim > 2 %}
+        unsigned i_p = 0; // Plane buffer index
+        unsigned short k = 0;
+    {% endif %}
+
+        ::ops::hls::GridPropertyCore gridProp = m_gridProp;
+    {% if stencil.dim  == 1 %}
+        unsigned short itr_limit = gridProp.total_itr;
+    {% elif stencil.dim == 2%}
+        unsigned short itr_limit = gridProp.outer_loop_limit * gridProp.xblocks;
+    {% else %}
+        unsigned short itr_limit = gridProp.outer_loop_limit * 
+                gridProp.grid_size[1] * gridProp.xblocks;
+    {% endif %}
+        widen_dt updateValue;
+        mask_dt maskValue;
+
+        for (unsigned short itr = 0; itr < itr_limit; itr++)
+        {
+        //#pragma HLS LOOP_TRIPCOUNT min=min_grid_size max=max_grid_size avg=avg_grid_size
+        #pragma HLS PIPELINE II=1
+
+            spc_blocking:
+            {
+                bool cond_x_terminate = (i == gridProp.xblocks - 1); 
+    {% if stencil.dim == 2 %}
+                bool cond_y_terminate = (j == gridProp.outer_loop_limit - 1);
+    {% elif stenicl.dim == 3 %}
+                bool cond_y_terminate = (j == gridProp.grid_size[1] - 1);
+                bool cond_z_terminate = (k == gridProp.outer_loop_limit - 1);
+    {% endif %}
+                if (cond_x_terminate)
+                    i = 0;
+                else
+                    i++;
+
+    {% if stencil.dim == 2 %}
+                if (cond_x_terminate && cond_y_terminate)
+                    j = 0;
+                else if (cond_x_terminate)
+                    j++;
+    {% elif stenicl.dim == 3 %}
+                if (cond_x_terminate && cond_y_terminate && cond_z_terminate)
+                    k = 0;
+                else if (cond_x_terminate && cond_y_terminate)
+                    k++
+    {% endif %}
+
+{# This need to be improved with adding new clear atributes to gridProp #}
+{% if stencil.dim > 1 %}
+                bool cond_end_of_line_buff = (i_l) >= (gridProp.xblocks - 1);
+{% endif %}
+{% if stencil.dim > 2 %}
+                bool cond_end_of_plane_buff = (i_p) >= (gridProp.plane_diff);
+{% endif %}
+
+    {% if stencil.dim > 1 %}
+                if (cond_end_of_line_buff)
+                    i_l = 0;
+                else
+                    i_l++;
+    {% endif %}
+    {% if stencil.dim > 2 %}
+                if (cond_end_of_plane_buff)
+                    i_p = 0;
+                else
+                    i_p++;
+    {% endif %}
+            }
+                            
+            process_read: for (unsigned short x = 0; x < vector_factor; x++)
+            {  
+#pragma HLS UNROLL complete
+                unsigned short index = (i << shift_bits) + x;
+                bool cond_no_point_update = register_it((index < m_lowerLimits[0])
+                        || (index >= m_upperLimits[0])
+    {% if stencil.dim == 2 %}
+                        || (j < (m_lowerLimits[1] + s_stencil_half_span_x))
+                        || (j >= (m_upperLimits[1] + s_stencil_half_span_x)));
+    {% else %}
+                        || (j < m_lowerLimits[1])
+                        || (j >= m_upperLimits[1])
+                        || (k < (m_lowerLimits[2] + s_stencil_half_span_x))
+                        || (k >= (m_upperLimits[2] + s_stencil_half_span_x)));        
+    {% endif %}
+                ops::hls::DataConv tmpConv;
+                stencil_type r = input_bus[x].read();
+                tmpConv.f = r;
+#ifdef DEBUG_LOG
+    {% if stencil.dim == 1 %}
+                printf("[KERNEL_DEBUG]|%s| reading, (i:%d, vec_idx:%d), limits(xl:>= %d, xh:< %d), stencil_half_span: %d, value:%f, condition_update:%d\n",
+                        __func__, i, x, m_lowerLimits[0], m_upperLimits[0], s_stencil_half_span_x, r, cond_no_point_update);
+    {% elif stencil.dim == 2 %}
+                printf("[KERNEL_DEBUG]|%s| reading, (i:%d, j:%d, vec_idx:%d), limits(xl:>= %d, xh:< %d, yl:>= %d, yh:< %d), stencil_half_span: %d, value:%f, condition_update:%d\n",
+                        __func__, i, j, x, m_lowerLimits[0], m_upperLimits[0], (m_lowerLimits[1] + s_stencil_half_span_x), (m_upperLimits[1] + s_stencil_half_span_x), s_stencil_half_span_x, r, cond_no_point_update);
+    {% else %}
+                printf("[KERNEL_DEBUG]|%s| reading, (i:%d, j:%d, k:%d, vec_idx:%d), limits(xl:>= %d, xh:< %d, yl:>= %d, yh:< %d, zl:>= %d, zh:< %d), stencil_half_span: %d, value:%f, condition_update:%d\n",
+                        __func__, i, j, k, x, m_lowerLimits[0], m_upperLimits[0], m_lowerLimits[1], m_upperLimits[1], (m_lowerLimits[2] + s_stencil_half_span_x), (m_upperLimits[2] + s_stencil_half_span_x), s_stencil_half_span_x, r, cond_no_point_update);
+    {% endif %}
+#endif
+                if (cond_no_point_update)
+                {
+                        maskValue.range((x + 1) * sizeof(stencil_type) - 1, x * sizeof(stencil_type)) = 0;
+                        updateValue.range(s_datatype_size * (x + 1) - 1, x * s_datatype_size) = 0.123456789; //To spot errors this value is given
+                }
+                else
+                {
+                    maskValue.range((x + 1) * sizeof(stencil_type) - 1, x * sizeof(stencil_type)) = -1;
+                    updateValue.range(s_datatype_size * (x + 1) - 1, x * s_datatype_size) = tmpConv.i;
+                }
+            }
+
+            write:
+            {
+                //ool cond_write = (j >= 0);
+
+                //if (cond_write)
+                //{
+#ifdef DEBUG_LOG
+    {% if stencil.dim == 1 %}
+                    printf("[KERNEL_DEBUG]|%s| writing to axis. (i:%d), val=(", __func__, i);
+    {% elif stencil.dim == 2 %}
+                    printf("[KERNEL_DEBUG]|%s| writing to axis. (i:%d, j:%d), val=(", __func__, i, j);
+    {% else %}
+                    printf("[KERNEL_DEBUG]|%s| writing to axis. (i:%d, j:%d, k:%d), val=(", __func__, i, j, k);
+
+    {% endif %}
+                    for (unsigned short x = 0; x < vector_factor; x++)
+                    {
+                        ops::hls::DataConv tmp;
+                        tmp.i = updateValue.range(s_datatype_size * (x + 1) - 1, x * s_datatype_size);
+                        printf("%f,", tmp.f);
+                    }
+                    printf(")\n");
+#endif
+                    wr_buffer << updateValue;
+                    strb_buffer << maskValue;
+                //}
+            }
+        }
+#ifdef DEBUG_LOG
+        printf("[KERNEL_DEBUG]|%s| exiting.", __func__);
+#endif        
+    }
+{% endif %}
 };

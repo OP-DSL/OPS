@@ -7,8 +7,10 @@ from scheme import Scheme
 from store import Application, ParseError, Program
 from target import Target
 from jinja2 import Environment
-from typing import List, Tuple
+from typing import List, Tuple, Set
 from util import KernelProcess
+import re
+import logging
 
 class CppMPIOpenMP(Scheme):
     lang = Lang.find("cpp")
@@ -77,7 +79,85 @@ class CppHLS(Scheme):
         
         extracted_entities = ctk.extractDependancies(kernel_entities, app)
         return ctk.writeSource(extracted_entities)
+    
+    # def genLoopHost(
+    #     self,
+    #     include_dirs: Set[Path],
+    #     defines: List[str],
+    #     env: Environment,
+    #     loop: ops.Loop,
+    #     program: Program,
+    #     app: Application,
+    #     kernel_idx: int,
+    #     force_soa: bool
+    # ) -> Tuple[str, str]:
+    #     template = env.get_template(str(self.loop_host_template))
+    #     kernel_func = self.translateKernel(loop, program, app, kernel_idx)
+        
+    #     kp_ = KernelProcess()
+        
+    #     kernel_func = kp_.clean_kernel_func_text(kernel_func)
+    #     kernel_body, args_list = kp_.get_kernel_body_and_arg_list(kernel_func)
+        
+    #     return (
+    #         template.render (
+    #             ops=ops,
+    #             lh=loop,
+    #             kernel_func=kernel_func,
+    #             kernel_idx=kernel_idx,
+    #             kernel_body=kernel_body,
+    #             args_list=args_list,
+    #             lang=self.lang,
+    #             target=self.target,
+    #             soa_set=force_soa
+    #         ),
+    #         self.loop_kernel_extension
+    #     )
+    def hls_replace_accessors_with_registers(self, kernel_body: str, kernel_args: List[str], loop: ops.Loop, prog: Program):
+        logging.getLogger(__name__)
+        assert len(kernel_args) == len(loop.args), f"kernel arguments of kernel {loop.kernel} count mismatch with loop"
+        logging.debug("starting accessor replacer")
+        
+        while(True):
 
+            if loop.ndim == 1:
+                match_string = "[A-Za-z0-9_]+\s*\(\s*-?\s*\d+\s*\)"
+            elif loop.ndim == 2:
+                match_string = "[A-Za-z0-9_]+\s*\(\s*-?\s*\d+\s*,\s*-?\s*\d+\s*\)"
+            else:
+                match_string = "[A-Za-z0-9_]+\s*\(\s*-?\s*\d+\s*,\s*-?\s*\d+\s*,\s*-?\s*\d+\s*\)"
+            logging.debug(f"matching string: {match_string}")
+            match = re.search(match_string, kernel_body)
+            if not match:
+                break
+            
+            name = re.search(r"[A-Za-z0-9_]+", match.group(0))
+            access_raw_indices = re.search(r"\(.*\)",match.group(0))
+            arg_idx = kernel_args.index(name.group(0))
+            logging.debug("match found: %s, name: %s, access_raw_indices: %s", match.group(0), name.group(0), access_raw_indices.group(0))
+
+            if not isinstance(loop.args[arg_idx], ops.ArgDat):
+                logging.error("Transltor failed finding matchin argument for: %s in loop: %s data", match.group(0), loop.kernel)
+                raise ParseError(f"Translator failed finding relevent Dat argument of loop{loop.kernel}")
+                
+            stencil_ptr = loop.args[arg_idx].stencil_ptr
+            stencil = prog.findStencil(stencil_ptr)
+            logging.debug("Matching stencil: %s", str(stencil))
+            
+            if not stencil:
+                raise ParseError(f"Translator failed finding relevent stencil: {stencil_ptr} in program: {str(prog.path)}")
+            try:
+                access_indices = ops.Point(list(eval(access_raw_indices.group(0))))
+                access_indices = access_indices + stencil.base_point
+                logging.debug(f"corrected access indice point: {access_indices}")
+                
+            except Exception as e:
+                raise ParseError(f"Transaltor filed with error: {str(e)}")
+                
+            kernel_body = re.sub(match_string, f"reg_{arg_idx}_{stencil.points.index(access_indices)}", kernel_body, count = 1)
+            
+        return kernel_body
+        
     def genLoopDevice(
         self,
         env: Environment,
@@ -98,7 +178,8 @@ class CppHLS(Scheme):
         
         kernel_func = self.translateKernel(loop, program, app, kernel_idx)
         kernel_func = kernel_processor.clean_kernel_func_text(kernel_func)
-        
+        kernel_body, kernel_args = kernel_processor.get_kernel_body_and_arg_list(kernel_func)
+        kernel_body = self.hls_replace_accessors_with_registers(kernel_body, kernel_args, loop, program)
         return (
             [(datamover_inc_template.render(
                 lh=loop),
@@ -109,13 +190,15 @@ class CppHLS(Scheme):
             self.loop_datamover_src_extension),
             (kernel_inc_template.render(
                  lh=loop,
-                 kernel_func=kernel_func,
+                 kernel_body=kernel_body,
+                 kernel_args=kernel_args,
                  prog=program,
                  config=config
                  ),self.loop_device_inc_extension),
             (kernel_src_template.render(
                 lh=loop,
-                kernel_func=kernel_func,
+                kernel_body=kernel_body,
+                kernel_args=kernel_args,
                 prog=program,
                 config=config),
             self.loop_device_src_extension)]

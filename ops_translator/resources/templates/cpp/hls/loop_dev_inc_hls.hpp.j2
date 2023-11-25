@@ -50,13 +50,19 @@ void kernel_{{lh.kernel}}_core(const unsigned int num_itr,
         {% if arg is ops_read or arg is ops_rw%}
             {% if prog.findStencil(arg.stencil_ptr) %}
                 {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
-            reg_{{arg.id}}_{{i}} = arg{{arg.id}}_input_bus_{{i}}[k].read();
+            stencil_type reg_{{arg.id}}_{{i}} = arg{{arg.id}}_input_bus_{{i}}[k].read();
+                {% endfor %}
+            {% endif %}
+        {% elif arg is ops_write %}
+            {% if prog.findStencil(arg.stencil_ptr) %}
+                {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
+            stencil_type reg_{{arg.id}}_{{i}};
                 {% endfor %}
             {% endif %}
         {% endif %}
     {% endfor %}
 
-            {{kernel_func}}
+                    {{kernel_body}}
 
     {% for arg in lh.args|ops_dat %}
         {% if arg is ops_write or arg is ops_rw%}
