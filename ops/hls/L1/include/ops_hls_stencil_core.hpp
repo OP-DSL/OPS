@@ -42,7 +42,7 @@ class StencilCore
         typedef ap_uint<s_index_size> index_dt;
         typedef ::hls::stream<widen_dt> widen_stream_dt;
         typedef ::hls::stream<mask_dt> mask_stream_dt;
-        typedef ::hls::stream<index_dt> index_stream_dt;
+        typedef ::hls::stream<index_dt> index_stream_dt; //TODO: This need to be removed as this is part of unique INDEX_STENCIL
 
 
         StencilCore()
@@ -121,6 +121,116 @@ class StencilCore
         SizeType m_lowerLimits;
         SizeType m_upperLimits;
 
+};
+
+template <typename T, unsigned short VEC_FACTOR, unsigned short DIM>
+class INDEX_STENCIL : public ops::hls::StencilCore<T, 1, VEC_FACTOR, ops::hls::CoefTypes::CONST_COEF, 
+        0, DIM>
+{
+public:
+    using ops::hls::StencilCore<T, 1, VEC_FACTOR, ops::hls::CoefTypes::CONST_COEF, 
+    0, DIM>::m_gridProp;
+
+    void idxRead(index_stream_dt idx_bus[vector_factor])
+    {
+        unsigned short i = 0;
+#if(DIM > 1)
+        unsigned short j = 0;
+        unsigned short i_l = 0; // Line buffer index
+#endif
+#if(DIM > 2)
+        unsigned short k = 0;
+        unsigned short i_p = 0; // Plane buffer index
+#endif
+        
+        ::ops::hls::GridPropertyCore gridProp = m_gridProp;
+#if(DIM == 1)
+        unsigned short iter_limit = gridProp.total_itr;
+#elif(DIM == 2)      
+        unsigned short iter_limit = gridProp.outer_loop_limit * gridProp.xblocks;
+#else
+        unsigned short itr_limit = gridProp.outer_loop_limit * 
+                gridProp.grid_size[1] * gridProp.xblocks;
+#endif
+        unsigned short total_itr = gridProp.total_itr;
+        widen_dt read_val = 0;
+
+        widen_dt stencilValues[1];
+
+        //No buffer
+        stencil_type rowArr_0[vector_factor];
+        #pragma HLS ARRAY_PARTITION variable = rowArr_0 dim=1 complete
+
+        for (unsigned short itr = 0; itr < iter_limit; itr++)
+        {
+        #pragma HLS LOOP_TRIPCOUNT min=min_grid_size max=max_grid_size avg=avg_grid_size
+        #pragma HLS PIPELINE II=1
+
+            index_gen:
+            {
+                bool cond_x_terminate = (i == gridProp.xblocks - 1); 
+#if(DIM == 2)
+                bool cond_y_terminate = (j == gridProp.outer_loop_limit - 1);
+#elif(DIM == 3)
+                bool cond_y_terminate = (j == gridProp.grid_size[1] - 1);
+                bool cond_z_terminate = (k == gridProp.outer_loop_limit - 1);
+#endif
+
+                if (cond_x_terminate)
+                    i = 0;
+                else
+                    i++;
+#if(DIM == 2)
+                if (cond_x_terminate && cond_y_terminate)
+                    j = 0;
+                else if (cond_x_terminate)
+                    j++;
+#elif(DIM == 3)
+                if (cond_x_terminate && cond_y_terminate && cond_z_terminate)
+                    k = 0;
+                else if (cond_x_terminate && cond_y_terminate)
+                    k++
+#endif
+
+#if(DIM > 1)
+                bool cond_end_of_line_buff = (i_l) >= (gridProp.xblocks - 1);
+#endif
+#if(DIM > 2)
+                bool cond_end_of_plane_buff = (i_p) >= (gridProp.plane_diff);
+#endif
+
+#if(DIM > 1)
+                if (cond_end_of_line_buff)
+                    i_l = 0;
+                else
+                    i_l++;
+#endif
+#if(DIM > 2)
+                if (cond_end_of_plane_buff)
+                    i_p = 0;
+                else
+                    i_p++;
+#endif
+            }
+            
+            process: for (unsigned short x = 0; x < VEC_FACTOR; x++)
+            {
+            #pragma HLS UNROLL complete
+                unsigned short index = (i << LOG2(VEC_FACTOR)) + x;
+                index_dt indexPkt;
+                ops::hls::IndexConv indexConv;
+                indexConv.index[0] = index;
+#if(DIM > 1)
+                indexConv.index[1] = j;
+#endif
+#if(DIM > 2)
+                indexConv.index[2] = k;
+#endif
+                indexPkt = indexConv.flatten;
+                idx_bus[x].write(indexPkt);
+            }
+        }
+    }  
 };
 
 
