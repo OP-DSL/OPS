@@ -328,6 +328,26 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
         if args.verbose:
             print(f"Generated Device common_config.hpp")
 
+    #Generate host linking config cfg file
+    source, extension = scheme.genConfigHost(env, target_config, app)
+    new_source = re.sub(r'\n\s*\n', '\n\n', source)
+    
+    # From output files path
+    path = None
+    if scheme.lang.kernel_dir:
+        Path(args.out, scheme.target.name, "host").mkdir(parents=True, exist_ok=True)
+        path = Path(args.out, scheme.target.name, "host", f"xrt.{extension}")                
+    else:
+        path = Path(args.out,f"{scheme.target.name}_xrt.{extension}")
+
+    # Write the gernerated source file
+    with open(path, "w") as file:
+        file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+        file.write(new_source)
+
+        if args.verbose:
+            print(f"Generated Host xrt.cfg V++ configurations")
+            
     #Generate stencil device definitions
     for program in app.programs:
         for stencil in program.stencils:

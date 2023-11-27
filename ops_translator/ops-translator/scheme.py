@@ -39,6 +39,7 @@ class Scheme(Findable):
         self,
         env: Environment,
         config: dict,
+        app: Application
     ) -> Tuple[str, str]:
         return None
     

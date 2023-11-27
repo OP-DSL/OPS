@@ -8,7 +8,7 @@ constexpr unsigned int data_width = sizeof(stencil_type) * 8;
 constexpr unsigned int vector_factor = {{config["vector_factor"]}};
 constexpr unsigned short mem_data_width = 32;
 constexpr unsigned short axis_data_width = data_width * vector_factor;
-constexpr unsigned short shift_bits = {{shift_bits(config["mem_data_width"] * config["vector_factor"], config["data_width"])}} 
+constexpr unsigned short shift_bits = {{shift_bits(config["mem_data_width"] * config["vector_factor"], config["data_width"])}}; 
 
 #ifdef DBUG_LOG
     #include <stdio.h>
