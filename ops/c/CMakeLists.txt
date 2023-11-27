@@ -77,15 +77,16 @@ endif()
 if(MPI_FOUND)
   file(GLOB_RECURSE MPICORE "${CMAKE_CURRENT_SOURCE_DIR}/src/core/*.cpp")
   list(FILTER MPICORE EXCLUDE REGEX "singlenode")
-  file(GLOB_RECURSE MPI "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/*.cpp"
+  set(CommonFiles
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/ops_mpi_core.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/ops_mpi_decl.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/ops_mpi_partition.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/ops_mpi_rt_support.cpp")
+  # MPI Target
+  file(GLOB_RECURSE MPI
+       "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/ops_mpi_rt_support_host.cpp"
        "${CMAKE_CURRENT_SOURCE_DIR}/src/sequential/ops_host_common.cpp")
-  list(FILTER MPI EXCLUDE REGEX "opencl")
-  list(FILTER MPI EXCLUDE REGEX "sycl")
-  list(FILTER MPI EXCLUDE REGEX "cuda")
-  list(FILTER MPI EXCLUDE REGEX "hdf5")
-  list(FILTER MPI EXCLUDE REGEX "hip")
-  message("The files for MPI are ${MPI}")
-  # MPI
+  list(APPEND MPI ${CommonFiles})
   add_library(ops_mpi ${MPI} ${MPICORE} ${EXTERN})
   target_link_libraries(ops_mpi PRIVATE OpenMP::OpenMP_CXX MPI::MPI_CXX)
   installtarget(mpi ${ConfigPackageLocation})
@@ -100,30 +101,20 @@ if(MPI_FOUND)
   endif()
   # MPI_CUDA
   if(CUDAToolkit_FOUND)
-    file(GLOB_RECURSE MPICUDA "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/*"
+    file(GLOB_RECURSE MPICUDA "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/*cuda*.cu"
          "${CMAKE_CURRENT_SOURCE_DIR}/src/cuda/*")
-    list(FILTER MPICUDA EXCLUDE REGEX "opencl")
     list(FILTER MPICUDA EXCLUDE REGEX "singlenode")
-    list(FILTER MPICUDA EXCLUDE REGEX "sycl")
-    list(FILTER MPICUDA EXCLUDE REGEX "host")
-    list(FILTER MPICUDA EXCLUDE REGEX "hdf5")
-    list(FILTER MPICUDA EXCLUDE REGEX "hip")
-    message("The files for MPICUDA are",${MPICUDA})
+    list(APPEND MPICUDA ${CommonFiles})
     add_library(ops_mpi_cuda ${MPICORE} ${EXTERN} ${MPICUDA})
     target_link_libraries(ops_mpi_cuda PRIVATE OpenMP::OpenMP_CXX
                                                CUDA::cudart_static MPI::MPI_CXX)
     installtarget(mpi_cuda ${ConfigPackageLocation})
   endif()
   if(OpenCL_FOUND)
-    file(GLOB_RECURSE MPIOPENCL "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/*"
+    file(GLOB_RECURSE MPIOPENCL "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/*opencl*"
          "${CMAKE_CURRENT_SOURCE_DIR}/src/opencl/*")
-    list(FILTER MPIOPENCL EXCLUDE REGEX "cuda")
     list(FILTER MPIOPENCL EXCLUDE REGEX "singlenode")
-    list(FILTER MPIOPENCL EXCLUDE REGEX "host")
-    list(FILTER MPIOPENCL EXCLUDE REGEX "sycl")
-    list(FILTER MPIOPENCL EXCLUDE REGEX "hdf5")
-    list(FILTER MPIOPENCL EXCLUDE REGEX "hip")
-    message("The files for MPIOPENCL are ${MPIOPENCL}")
+    list(APPEND MPIOPENCL ${CommonFiles})
     add_library(ops_mpi_opencl ${MPICORE} ${EXTERN} ${MPIOPENCL})
     target_include_directories(ops_mpi_opencl PRIVATE ${OpenCL_INCLUDE_DIRS})
     target_link_libraries(
@@ -133,15 +124,10 @@ if(MPI_FOUND)
   endif()
   if(OPS_HIP)
     if(HIP_FOUND)
-      file(GLOB_RECURSE MPIHIP "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/*"
+      file(GLOB_RECURSE MPIHIP "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/*hip*"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/hip/*")
-      list(FILTER MPIHIP EXCLUDE REGEX "cuda")
       list(FILTER MPIHIP EXCLUDE REGEX "singlenode")
-      list(FILTER MPIHIP EXCLUDE REGEX "opencl")
-      list(FILTER MPIHIP EXCLUDE REGEX "host")
-      list(FILTER MPIHIP EXCLUDE REGEX "hdf5")
-      list(FILTER MPIHIP EXCLUDE REGEX "sycl")
-      message("The files for MPIHIP are ${MPIHIP}")
+      list(APPEND MPIHIP ${CommonFiles})
       add_library(ops_mpi_hip ${MPICORE} ${EXTERN} ${MPIHIP})
       target_include_directories(ops_mpi_hip PRIVATE ${HIP_INCLUDE_DIRS})
       target_link_libraries(ops_mpi_hip PRIVATE OpenMP::OpenMP_CXX
