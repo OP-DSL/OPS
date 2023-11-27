@@ -130,6 +130,13 @@ class INDEX_STENCIL : public ops::hls::StencilCore<T, 1, VEC_FACTOR, ops::hls::C
 public:
     using ops::hls::StencilCore<T, 1, VEC_FACTOR, ops::hls::CoefTypes::CONST_COEF, 
     0, DIM>::m_gridProp;
+    typedef typename ops::hls::StencilCore<T, 1, VEC_FACTOR, ops::hls::CoefTypes::CONST_COEF,
+        0, DIM>::index_stream_dt index_stream_dt;
+    typedef typename ops::hls::StencilCore<T, 1, VEC_FACTOR, ops::hls::CoefTypes::CONST_COEF,
+            0, DIM>::widen_dt widen_dt;
+    typedef typename ops::hls::StencilCore<T, 1, VEC_FACTOR, ops::hls::CoefTypes::CONST_COEF,
+            0, DIM>::index_dt index_dt;
+
 
     void idxRead(index_stream_dt idx_bus[vector_factor])
     {
@@ -149,7 +156,7 @@ public:
 #elif(DIM == 2)      
         unsigned short iter_limit = gridProp.outer_loop_limit * gridProp.xblocks;
 #else
-        unsigned short itr_limit = gridProp.outer_loop_limit * 
+        unsigned short iter_limit = gridProp.outer_loop_limit *
                 gridProp.grid_size[1] * gridProp.xblocks;
 #endif
         unsigned short total_itr = gridProp.total_itr;
@@ -189,7 +196,7 @@ public:
                 if (cond_x_terminate && cond_y_terminate && cond_z_terminate)
                     k = 0;
                 else if (cond_x_terminate && cond_y_terminate)
-                    k++
+                    k++;
 #endif
 
 #if(DIM > 1)

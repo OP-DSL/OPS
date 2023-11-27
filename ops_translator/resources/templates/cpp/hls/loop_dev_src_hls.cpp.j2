@@ -47,7 +47,7 @@ extern "C" void kernel_{{lh.kernel}}(
     #pragma HLS INTERFACE s_axilite port = gridProp_dim bundle = control
     #pragma HLS INTERFACE s_axilite port = gridProp_xblocks bundle = control
     #pragma HLS INTERFACE s_axilite port = gridProp_total_itr bundle = control
-    #pragma HLS INTERFACE s_axilite port = gridProp_outer_loop_limit = control
+    #pragma HLS INTERFACE s_axilite port = gridProp_outer_loop_limit bundle = control
 
     {% for const in consts %}
     #pragma HLS INTERFACE s_axilite port = {{const.ptr}} bundle = control

@@ -5,6 +5,7 @@ from typing import List
 from ops import Const, OpsError, ArgDat, ArgGbl, ArgIdx, ArgReduce
 from store import Program
 from util import SourceBuffer, Rewriter, findIdx
+import logging
 
 # Augment source program to use generated kernel hosts
 def translateProgram(source: str, program: Program, app_consts: List[Const], force_soa: bool = False) -> str:
@@ -221,6 +222,19 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
     # 7. Removing stencil declaration
     if buffer.search(r'\s*ops_stencil.*'):
         line_indices = buffer.search_all(r'\s*ops_stencil.*')
+    
+        # print(f"Found ops_stencils ({len(line_indices)})")  
+        for start_index in line_indices:
+            index = start_index
+            while(True):
+                line = buffer.get(index)
+                buffer.remove(index)
+                if line.find(";") != -1:
+                    break
+                index += 1
+                
+    if buffer.search(r'.*ops_decl_stencil.*'):
+        line_indices = buffer.search_all(r'.*ops_decl_stencil.*')
     
         # print(f"Found ops_stencils ({len(line_indices)})")  
         for start_index in line_indices:

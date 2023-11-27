@@ -45,6 +45,7 @@ class CppHLS(Scheme):
     loop_host_template = Path("cpp/hls/loop_hls.cpp.j2")
     master_kernel_template = Path("cpp/hls/master_kernel.cpp.j2")
     common_config_template = Path("cpp/hls/common_config_dev_hls.hpp.j2")
+    host_config_template = Path("cpp/hls/xrt_config.cfg.j2")
     loop_device_inc_template = Path("cpp/hls/loop_dev_inc_hls.hpp.j2")
     loop_device_src_template = Path("cpp/hls/loop_dev_src_hls.cpp.j2")
     loop_datamover_inc_template = Path("cpp/hls/datamover_dev_inc_hls.hpp.j2")
@@ -54,6 +55,7 @@ class CppHLS(Scheme):
     loop_kernel_extension = "hpp"
     master_kernel_extension = "hpp"
     common_config_extension = "hpp"
+    host_config_extension = "cfg"
     loop_device_inc_extension = "hpp"
     loop_device_src_extension = "cpp"
     loop_datamover_inc_extension = "hpp"
@@ -235,6 +237,20 @@ class CppHLS(Scheme):
             template.render(
                 config=config
             ), self.common_config_extension
+        ) 
+    
+    def genConfigHost(
+        self,
+        env: Environment,
+        config: dict,
+        app: Application
+    ) -> Tuple[str, str]:
+        template = env.get_template(str(self.host_config_template))     
+        return (
+            template.render(
+                config=config,
+                app=app
+            ), self.host_config_extension
         ) 
     
     def genStencilDecl(

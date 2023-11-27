@@ -56,8 +56,8 @@ void kernel_datamover_{{lh.kernel}}(
         {% endif %}
     {% endfor %}
 
-    #pragma HLS INTERFACE mode=s_axilite port=return
-    #pragma HLS INTERFACE mode=ap_ctr_chain port=return
+    #pragma HLS INTERFACE mode=s_axilite port=return bundle = control
+    #pragma HLS INTERFACE mode=ap_ctr_chain port=return bundle = control
 
     #pragma HLS DATAFLOW
 
