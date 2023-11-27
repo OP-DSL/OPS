@@ -17,10 +17,11 @@ public:
     }
 
     void run(ops::hls::AccessRange& range,
-    {% for arg in lh.args %}
-        {% if arg is ops_dat %}
-            ops::hls::Grid<{{lh.dats[arg.dat_id].typ}}>& arg{{arg.id}}{{"," if not loop.last}}
-        {% endif %}
+    {% for arg in lh.args|ops_dat %}
+            ops::hls::Grid<{{lh.dats[arg.dat_id].typ}}>& arg{{arg.id}}{# {{"," if consts}}
+    {% endfor %}
+    {% for const in consts %}#}
+
     {% endfor %}
     )
     {

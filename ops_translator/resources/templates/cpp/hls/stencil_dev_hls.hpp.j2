@@ -81,7 +81,7 @@ public:
                 bool cond_x_terminate = (i == gridProp.xblocks - 1); 
 {% if stencil.dim == 2 %}
                 bool cond_y_terminate = (j == gridProp.outer_loop_limit - 1);
-{% elif stenicl.dim == 3 %}
+{% elif stencil.dim == 3 %}
                 bool cond_y_terminate = (j == gridProp.grid_size[1] - 1);
                 bool cond_z_terminate = (k == gridProp.outer_loop_limit - 1);
 {% endif %}
@@ -95,7 +95,7 @@ public:
                     j = 0;
                 else if (cond_x_terminate)
                     j++;
-{% elif stenicl.dim == 3 %}
+{% elif stencil.dim == 3 %}
                 if (cond_x_terminate && cond_y_terminate && cond_z_terminate)
                     k = 0;
                 else if (cond_x_terminate && cond_y_terminate)
@@ -237,7 +237,7 @@ public:
                 bool cond_x_terminate = (i == gridProp.xblocks - 1); 
     {% if stencil.dim == 2 %}
                 bool cond_y_terminate = (j == gridProp.outer_loop_limit - 1);
-    {% elif stenicl.dim == 3 %}
+    {% elif stencil.dim == 3 %}
                 bool cond_y_terminate = (j == gridProp.grid_size[1] - 1);
                 bool cond_z_terminate = (k == gridProp.outer_loop_limit - 1);
     {% endif %}
@@ -251,7 +251,7 @@ public:
                     j = 0;
                 else if (cond_x_terminate)
                     j++;
-    {% elif stenicl.dim == 3 %}
+    {% elif stencil.dim == 3 %}
                 if (cond_x_terminate && cond_y_terminate && cond_z_terminate)
                     k = 0;
                 else if (cond_x_terminate && cond_y_terminate)
