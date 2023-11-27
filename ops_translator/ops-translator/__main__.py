@@ -286,8 +286,8 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, target_config: di
 
         if scheme.lang.kernel_dir:
             if scheme.target.name == "hls":
-                Path(args.out, scheme.target.name, "host").mkdir(parents=True, exist_ok=True)
-                path = Path(args.out, scheme.target.name, "host", name)
+                Path(args.out, scheme.target.name, "host", "kernel_wrappers").mkdir(parents=True, exist_ok=True)
+                path = Path(args.out, scheme.target.name, "host", "kernel_wrappers", name)
             else:
                 Path(args.out, scheme.target.name).mkdir(parents=True, exist_ok=True)
                 path = Path(args.out, scheme.target.name, name)

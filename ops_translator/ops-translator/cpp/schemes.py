@@ -157,22 +157,15 @@ class CppHLS(Scheme):
             kernel_body = re.sub(match_string, f"reg_{arg_idx}_{stencil.points.index(access_indices)}", kernel_body, count = 1)
             
         return kernel_body
-    
-    def findConstInKernel(self, kernel_body: str, global_consts: List[ops.Const]) -> List[ops.Const]:
-        selected_consts = []
-        for const in global_consts:
-            if const.name in kernel_body:
-                selected_consts.append(const)
-        
-        return selected_consts
+
                 
-    def findKernelArgOfOpsIdx(self, kernel_args: List[str], loopArgs: List[ops.Arg])-> Union[str, None]:
+    def find_kernel_arg_of_ops_idx(self, kernel_args: List[str], loopArgs: List[ops.Arg])-> Union[str, None]:
         for i, arg in enumerate(loopArgs):
             if isinstance(arg, ops.ArgIdx):
                 return kernel_args[i]
         return None
     
-    def replaceIdxAccess(self, kernel_body: str, idx_arg_name: str)->str:
+    def replace_idx_access(self, kernel_body: str, idx_arg_name: str)->str:
         new_kernel_body = re.sub(idx_arg_name, "indexConv.index", kernel_body)
         return new_kernel_body
 
@@ -198,12 +191,12 @@ class CppHLS(Scheme):
         kernel_func = kernel_processor.clean_kernel_func_text(kernel_func)
         kernel_body, kernel_args = kernel_processor.get_kernel_body_and_arg_list(kernel_func)
         kernel_body = self.hls_replace_accessors_with_registers(kernel_body, kernel_args, loop, program)
-        kernel_consts = self.findConstInKernel(kernel_body, program.consts)
-        kernel_idx_arg_name = self.findKernelArgOfOpsIdx(kernel_args, loop.args)
+        kernel_consts = self.find_const_in_kernel(kernel_body, program.consts)
+        kernel_idx_arg_name = self.find_kernel_arg_of_ops_idx(kernel_args, loop.args)
         logging.debug("kernel_idx_arg_name: %s", kernel_idx_arg_name)
         
         if kernel_idx_arg_name:
-            kernel_body = self.replaceIdxAccess(kernel_body, kernel_idx_arg_name)
+            kernel_body = self.replace_idx_access(kernel_body, kernel_idx_arg_name)
         
         return (
             [(datamover_inc_template.render(
@@ -226,6 +219,7 @@ class CppHLS(Scheme):
                 kernel_body=kernel_body,
                 kernel_args=kernel_args,
                 prog=program,
+                consts=kernel_consts,
                 config=config),
             self.loop_device_src_extension)]
         )

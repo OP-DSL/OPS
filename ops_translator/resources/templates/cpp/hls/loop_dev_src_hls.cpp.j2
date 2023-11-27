@@ -22,6 +22,9 @@ extern "C" void kernel_{{lh.kernel}}(
         const unsigned short gridProp_xblocks,
         const unsigned int gridProp_total_itr,
         const unsigned int gridProp_outer_loop_limit,
+    {% for const in consts %}
+        const {{const.typ}} {{const.ptr}},
+    {% endfor %}
     {% for arg in lh.args|ops_dat %}
         {% if arg is not ops_rw %}
         hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
@@ -46,14 +49,21 @@ extern "C" void kernel_{{lh.kernel}}(
     #pragma HLS INTERFACE s_axilite port = gridProp_total_itr bundle = control
     #pragma HLS INTERFACE s_axilite port = gridProp_outer_loop_limit = control
 
+    {% for const in consts %}
+    #pragma HLS INTERFACE s_axilite port = {{const.ptr}} bundle = control
+    {% endfor %}
+
     {% for arg in lh.args|ops_dat %}
         {% if arg is not ops_rw %}
-    #pragma HLS INTERFACE port = {{axis_name(arg)-}} register
+    #pragma HLS INTERFACE port = {{axis_name(arg)}} register
         {% else %}
-    #pragma HLS INTERFACE port = {{axis_name_t2(arg, "in")-}} register
-    #pragma HLS INTERFACE port = {{axis_name_t2(arg, "out")-}} register
+    #pragma HLS INTERFACE port = {{axis_name_t2(arg, "in")}} register
+    #pragma HLS INTERFACE port = {{axis_name_t2(arg, "out")}} register
         {% endif %}
     {% endfor %}
+
+    #pragma HLS INTERFACE ap_hls_chain port = return bundle = control
+    #pragma HLS INTERFACE s_axilite port = return bundle = control
 
 #pragma DATA_FLOW
 
@@ -63,9 +73,9 @@ extern "C" void kernel_{{lh.kernel}}(
     #pragma HLS STREAM variable = arg{{arg.id}}_output_stream depth = max_depth_v8;
         {% endif %}
         {% if arg is ops_write or arg is ops_rw %}
-    static {{arg.stencil_ptr}}::widen_stream_dt& arg{{arg.id}}_input_stream;
+    static {{arg.stencil_ptr}}::widen_stream_dt arg{{arg.id}}_input_stream;
     #pragma HLS STREAM variable = arg{{arg.id}}_input_stream depth = max_depth_v8;
-    static {{arg.stencil_ptr}}::mask_stream_dt& arg{{arg.id}}_inmask_stream;
+    static {{arg.stencil_ptr}}::mask_stream_dt arg{{arg.id}}_inmask_stream;
     #pragma HLS STREAM variable = arg{{arg.id}}_inmask_stream depth = max_depth_v8;
         {% endif %}
     {% endfor %}
@@ -99,12 +109,24 @@ extern "C" void kernel_{{lh.kernel}}(
 
     kernel_{{lh.kernel}}_PE(gridProp, 
     {% for arg in lh.args|ops_dat %}
+        {% if loop.last %}
+            {% if consts %}
+                {% set last_check = False %}
+            {% else %}
+                {% set last_check = True %}
+            {% endif %}
+        {% else %}
+            {% set last_check = False %}
+        {% endif %}
         {% if arg is ops_read or arg is ops_rw %}
-            arg{{arg.id}}_output_stream{{"," if not loop.last}}
+            arg{{arg.id}}_output_stream{{"," if not last_check}}
         {% elif arg is ops_write or arg in ops_rw %}
             arg{{arg.id}}_input_stream,
-            arg{{arg.id}}_inmask_stream{{"," if not loop.last}}
+            arg{{arg.id}}_inmask_stream{{"," if not last_check}}
         {% endif %}
+    {% endfor %}
+    {% for const in consts %}
+            {{const.ptr}}{{"," if not loop.last}}
     {% endfor %}
     );
 

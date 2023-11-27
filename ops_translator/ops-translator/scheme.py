@@ -56,7 +56,17 @@ class Scheme(Findable):
         config: dict,
     ) -> Tuple[str, str]:
         return None
-           
+    
+    
+    def find_const_in_kernel(self, kernel_body: str, global_consts: List[ops.Const]) -> List[ops.Const]:
+        selected_consts = []
+        for const in global_consts:
+            if const.name in kernel_body:
+                selected_consts.append(const)
+        
+        return selected_consts
+    
+     
     def genLoopHost(
         self,
         include_dirs: Set[Path],
@@ -85,8 +95,9 @@ class Scheme(Findable):
             if(self.target.name == "sycl"):
                 kernel_func, consts_in_kernel = kp_obj.sycl_kernel_func_text(kernel_func, app.consts())
 
+            if(self.target.name == "hls"):
+                consts_in_kernel = self.find_const_in_kernel(kernel_func, program.consts)
             #TODO : Complex arguments in HIP
-
             const_dims = []
             if(self.target.name == "openacc"):
                 consts_in_kernel, const_dims = kp_obj.openacc_get_const_names_and_dim(kernel_func, app.consts())

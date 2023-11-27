@@ -2,6 +2,12 @@
 
 {% block ops_headers %}
 #pragma once
+
+#include <math.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
 #include <ops_hls_rt_support.h>
 {% endblock %}
 
@@ -17,5 +23,6 @@ extern {{const.typ}} {{const.ptr}};
 
 {% block header_includes %}
 unsigned short vector_factor = {{target_config['vector_factor']}};
+
 {{super()}}
 {% endblock %}

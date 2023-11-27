@@ -18,17 +18,26 @@ public:
 
     void run(ops::hls::AccessRange& range,
     {% for arg in lh.args|ops_dat %}
-            ops::hls::Grid<{{lh.dats[arg.dat_id].typ}}>& arg{{arg.id}}{# {{"," if consts}}
+        {% if loop.last %}
+            {% if consts_in_kernel %}
+                {% set last_check = False %}
+            {% else %}
+                {% set last_check = True %}
+            {% endif %}
+        {% else %}
+            {% set last_check = False %}
+        {% endif %}
+            ops::hls::Grid<{{lh.dats[arg.dat_id].typ}}>& arg{{arg.id}}{{"," if not last_check}}
     {% endfor %}
-    {% for const in consts %}#}
-
+    {% for const in consts_in_kernel %}
+            const {{const.typ}} {{const.ptr}}{{"," if not loop.last}}
     {% endfor %}
     )
     {
         cl_int err;
         {% for arg in lh.args %}
             {% if arg is ops_dat %}
-        createDeviceBuffer(CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, arg{{arg.id}});
+        createDeviceBuffer(CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, arg{{arg.id}}.hostBuffer);
         ops::hls::GridPropertyCore arg{{arg.id}}_adjustedGridProp;
         getRangeAdjustedGridProp(arg{{arg.id}}.originalProperty, range, arg{{arg.id}}_adjustedGridProp, vector_factor);
 #ifdef DEBUG_LOG
@@ -38,7 +47,7 @@ public:
             {% endif %}
         {% endfor %}
 
-        int nargs = 0;
+        int narg = 0;
         {% for i in range(lh.ndim)%}
         OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.size[{{i}}]));
         {% endfor %}
@@ -52,6 +61,9 @@ public:
         OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.xblocks));
         OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.total_itr));
         OCL_CHECK(err, err = m_kernel.setArg(narg++, arg0_adjustedGridProp.outer_loop_limit));
+        {% for const in consts_in_kernel %}
+        OCL_CHECK(err, err = m_kernel.setArg(narg++, {{const.ptr}}));
+        {% endfor %}
 
         narg = 0;
         OCL_CHECK(err, err = m_datamover.setArg(narg++, range.start[0]));
@@ -111,10 +123,8 @@ private:
 
 {% block par_loop %}
 void ops_par_loop_{{lh.kernel}}(int dim, int* ops_range,
-    {% for arg in lh.args %}
-        {% if arg is ops_dat %}
+    {% for arg in lh.args|ops_dat %}
             ops::hls::Grid<{{lh.dats[arg.dat_id].typ}}>& arg{{arg.id}}{{"," if not loop.last}}
-        {% endif %}
     {% endfor %}
 )
 {
@@ -131,10 +141,20 @@ void ops_par_loop_{{lh.kernel}}(int dim, int* ops_range,
     {% endfor %}
     
     kernelWrapper_inst.run(range,
-    {% for arg in lh.args %}
-        {% if arg is ops_dat %}
-            arg{{arg.id}}{{"," if not loop.last}}
+    {% for arg in lh.args|ops_dat %}
+        {% if loop.last %}
+            {% if consts_in_kernel %}
+                {% set last_check = False %}
+            {% else %}
+                {% set last_check = True %}
+            {% endif %}
+        {% else %}
+            {% set last_check = False %}
         {% endif %}
+            arg{{arg.id}}{{"," if not last_check}}
+    {% endfor %}
+    {% for const in consts_in_kernel %}
+            {{const.ptr}}{{"," if not loop.last}}
     {% endfor %}
     );
 }
