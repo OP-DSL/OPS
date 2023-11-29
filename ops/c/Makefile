@@ -46,7 +46,7 @@ endif
 
 ifdef CUDA_INSTALL_PATH
 	TARGETS += cuda mpi_cuda
-	C_OPS_INC += $(CUDA_INC)
+	C_OPS_INC += -I$(CUDA_INC)
 endif
 
 ifdef HIP_INSTALL_PATH
