@@ -1,0 +1,18 @@
+[connectivity]
+{% for lh, program in app.uniqueLoops() %}
+    {% for arg in lh.args|ops_dat %}
+        {% if arg is ops_read or arg is ops_rw %}
+stream_connect=datamover_{{lh.kernel}}_1.arg{{arg.id}}_stream_out:kernel_{{lh.kernel}}_1.arg{{arg.id}}_stream_in:128
+        {% endif %}
+        {% if arg is ops_write or arg is ops_rw %}
+stream_connect=kernel_{{lh.kernel}}_1.arg{{arg.id}}_stream_out:datamover_{{lh.kernel}}_1.arg{{arg.id}}_stream_in:128
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+
+
+[profile]
+data=all:all:all
+memory=all
+stall=all:all
+exec=all:all
