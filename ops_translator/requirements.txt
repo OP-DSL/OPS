@@ -7,4 +7,5 @@ pylint
 mypy
 pcpp
 sympy
+libclang
 

@@ -9,7 +9,7 @@ class KernelWrapper_{{lh.kernel}} : public ops::hls::Kernel
 public:
     KernelWrapper_{{lh.kernel}}():
             m_kernelName("kernel_{{lh.kernel}}"),
-            m_datamoverName("datamover_{{lh.kernel}}")
+            m_datamoverName("kernel_datamover_{{lh.kernel}}")
     {
         cl_int err;
         OCL_CHECK(err, m_kernel = cl::Kernel(m_fpga->getProgram(), m_kernelName.c_str(), &err));
@@ -122,7 +122,7 @@ private:
 {% endblock %}
 
 {% block par_loop %}
-void ops_par_loop_{{lh.kernel}}(int dim, int* ops_range,
+void ops_par_loop_{{lh.kernel}}(ops::hls::Block dummyBlock, int dim, int* ops_range,
     {% for arg in lh.args|ops_dat %}
             ops::hls::Grid<{{lh.dats[arg.dat_id].typ}}>& arg{{arg.id}}{{"," if not loop.last}}
     {% endfor %}
