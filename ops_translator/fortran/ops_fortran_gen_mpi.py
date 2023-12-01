@@ -595,29 +595,30 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
 
     code('')
     code('type(ops_arg), dimension('+str(nargs)+'), target :: opsArgArray')
-    code('integer(4) :: n')
-    
+    code('integer(4) :: n_indx')
+    code('CHARACTER(len=40) :: namelit')
     code('')
+    
+    code('namelit = "'+name+'"')
+    code('')
+
     for n in range (0, nargs):
       code('opsArgArray('+str(n+1)+') = opsArg'+str(n+1))
-
     code('')
-    DO('n','1',str(NDIM))
-    code('range_tmp(2*n-1) = range(2*n-1)-1')
-    code('range_tmp(2*n) = range(2*n)')
+
+    DO('n_indx','1',str(NDIM))
+    code('range_tmp(2*n_indx-1) = range(2*n_indx-1)-1')
+    code('range_tmp(2*n_indx)   = range(2*n_indx)')
     ENDDO()
-
     code('')
-    text = 'call create_kerneldesc_and_enque(userSubroutine//c_null_char, c_loc(opsArgArray), '
-    text = text + f'{nargs}, '
-    text = text + f'{nk}, '
-    text = text + 'dim, 0, c_loc(range_tmp), block%blockCptr, '
-    text = text + f'c_funloc({name}_host_execute))'
-    code(text)
 
-    config.depth = config.depth - 2
+    code('CALL create_kerneldesc_and_enque(userSubroutine//c_null_char, namelit//c_null_char, c_loc(opsArgArray), &')
+    code(f'             {nargs}, {nk}, dim, 0, c_loc(range_tmp), block%blockCptr, &')
+    code(f'             c_funloc({name}_host_execute))')
+
+    config.depth = 0
     code('')
-    code('end subroutine')
+    code('END SUBROUTINE')
     code('#endif')
 
     code('')

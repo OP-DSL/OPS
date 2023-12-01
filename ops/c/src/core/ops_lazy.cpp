@@ -992,7 +992,7 @@ void ops_execute(OPS_instance *instance) {
   ops_kernel_list.clear();
 }
 
-void create_kerneldesc_and_enque(char const *name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc))
+void create_kerneldesc_and_enque(char const *name, char const* kernel_name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc))
 {
     ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
 
@@ -1031,7 +1031,10 @@ void create_kerneldesc_and_enque(char const *name, ops_arg *args, int nargs, int
     }
     desc->func = func;
 
-    ops_enqueue_kernel(desc);  
+    if (block->instance->OPS_diags > 1)
+       ops_timing_realloc(block->instance, index, kernel_name);
+
+    ops_enqueue_kernel(desc);
 }
 
 // This funtion called from OPS_instance destructor

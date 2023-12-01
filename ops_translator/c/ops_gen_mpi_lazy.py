@@ -520,8 +520,9 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
         code(text)
 
         comm('create kernel descriptor and pass it to ops_enqueue_kernel')
-        text = 'create_kerneldesc_and_enque(name, args, '
-        text = text + f'{nargs}, '
+        text = 'create_kerneldesc_and_enque(name, '
+        text = text + f'"{name}", '
+        text = text + f'args, {nargs}, '
         text = text + f'{nk}, '
         text = text + 'dim, 0, range, block, '
         text = text + f'ops_par_loop_{name}_execute'

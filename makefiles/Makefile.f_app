@@ -25,7 +25,8 @@ endif
 TARGETS	= $(APP)_seq $(APP)_openmp $(APP)_mpi $(APP)_mpi_openmp $(APP)_tiled $(APP)_mpi_tiled
 
 ifeq ($(OPS_COMPILER),pgi)
-	TARGETS       += $(APP)_cuda $(APP)_mpi_cuda $(APP)_openacc $(APP)_mpi_openacc
+	TARGETS       += $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled
+#$(APP)_openacc $(APP)_mpi_openacc
 endif
 ifeq ($(OPS_COMPILER),xlp8)
 	TARGETS       += poisson_mpi_cuda
@@ -88,14 +89,18 @@ $(APP)_mpi_openacc: .generated $(OPS_FILES_GEN) Makefile
 #
 $(APP)_tiled: .generated $(OPS_FILES_GEN) Makefile
 	$(MPIF90) $(FFLAGS) $(FMODS) $(FLINK) -DOPS_LAZY $(OTHER_FILES) MPI/*_seq_kernel.F90 $(OPS_GENERATED) \
-		-o $(APP)_tiled $(APP_LIBS) -lops_for_seq $(F_HDF5_LIB_SEQ)
+		$(APP_LIBS) -lops_for_seq $(F_HDF5_LIB_SEQ) -o $(APP)_tiled
 
 $(APP)_mpi_tiled: .generated $(OPS_FILES_GEN) Makefile
 	$(MPIF90) $(FFLAGS) $(FMODS) $(FLINK) $(PGIMPILINK) -DOPS_LAZY -DOPS_MPI $(OTHER_FILES) MPI/*_seq_kernel.F90 $(OPS_GENERATED) \
 		-o $(APP)_mpi_tiled $(APP_LIBS) -lops_for_mpi $(F_HDF5_LIB_MPI)
 
+$(APP)_mpi_cuda_tiled: .generated $(OPS_FILES_GEN) Makefile
+	$(MPIF90) $(FFLAGS) $(FMODS_CUDA) $(FLINK) $(PGIMPILINK) $(CUDAFOR) -DOPS_MPI -DOPS_LAZY $(OTHER_FILES) CUDA/*_cuda_kernel.CUF $(OPS_GENERATED) \
+		-o $(APP)_mpi_cuda_tiled $(APP_LIBS) -lops_for_mpi_cuda $(F_HDF5_LIB_MPI)
 
 clean:
+	rm -f .generated
 	rm -f *.o
 	rm -f *.oo
 	rm -f *.optrpt
@@ -111,3 +116,4 @@ clean:
 	rm -f $(APP)_mpi_openacc
 	rm -f $(APP)_tiled
 	rm -f $(APP)_mpi_tiled
+	rm -f $(APP)_mpi_cuda_tiled
