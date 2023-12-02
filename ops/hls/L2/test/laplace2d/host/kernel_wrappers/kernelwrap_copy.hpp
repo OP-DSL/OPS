@@ -66,8 +66,8 @@ public:
         std::vector<cl::Event> activeEvents(arg0.activeEvents.begin(), arg0.activeEvents.end());
         activeEvents.insert(activeEvents.end(), arg1.activeEvents.begin(), arg1.activeEvents.end());
 
-        OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueTask(m_datamover_copy, &activeEvents, &event_kernel));
-		OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueTask(m_kernel_copy, &activeEvents, &event_datamover));
+        OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueTask(m_datamover_copy, &activeEvents, &event_datamover));
+		OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueTask(m_kernel_copy, &activeEvents, &event_kernel));
 
 #ifdef DEBUG_LOG
 		ops::hls::addEvent(arg0, event_kernel, m_kernelName);
@@ -76,7 +76,7 @@ public:
 		ops::hls::addEvent(arg1, event_datamover, m_datamoverName);
 #endif
 
-        arg0.isDevBufDirty = true;
+//        arg0.isDevBufDirty = true;
         arg1.isDevBufDirty = true;
 		arg0.activeEvents.resize(0);
 		arg0.activeEvents.push_back(event_datamover);
@@ -84,6 +84,11 @@ public:
         arg1.activeEvents.resize(0);
 		arg1.activeEvents.push_back(event_datamover);
 		arg1.activeEvents.push_back(event_kernel);
+
+//		event_datamover.wait();
+//		std::cout << "copy: datamover wait completed " << std::endl;
+//		event_kernel.wait();
+//		std::cout << "copy: kernel wait completed " << std::endl;
     }
 
 private:
