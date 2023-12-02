@@ -342,7 +342,7 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
 
     # Write the gernerated source file
     with open(path, "w") as file:
-        file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+        # file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
         file.write(new_source)
 
         if args.verbose:
