@@ -67,7 +67,8 @@ class FPGA {
     ~FPGA()
     {
     	m_bufferMaps.clear();
-    	FPGA_ = nullptr;
+    	if (FPGA_)
+    		delete(FPGA_);
     }
 
     static FPGA* getInstance();

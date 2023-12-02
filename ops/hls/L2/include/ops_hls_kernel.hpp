@@ -77,8 +77,8 @@ cl::Event& emplaceEvent(Grid<T>& p_grid, std::string prompt="")
 template <typename T>
 void getGrid(Grid<T>& p_grid)
 {
-//	if (p_grid.isDevBufDirty) TODO: Make only sync if dirty
-//	{
+	if (p_grid.isDevBufDirty)
+	{
 		cl_int err;
 		cl::Event event;
 		OCL_CHECK(err, err = FPGA::getInstance()->getCommandQueue().enqueueMigrateMemObjects({p_grid.deviceBuffer}, CL_MIGRATE_MEM_OBJECT_HOST, &p_grid.activeEvents, &event));
@@ -87,15 +87,15 @@ void getGrid(Grid<T>& p_grid)
 		p_grid.activeEvents.push_back(event);
 		p_grid.isDevBufDirty = false;
 		p_grid.isHostBufDirty = false;
-//	}
-	event.wait();
+		event.wait();
+	}
 }
 
 template <typename T>
 void sendGrid(Grid<T>& p_grid)
 {
-//	if (p_grid.isHostBufDirty) TODO: Make only sync if dirty
-//	{
+	if (p_grid.isHostBufDirty)
+	{
 		cl_int err;
 		cl::Event event;
 		OCL_CHECK(err, err = FPGA::getInstance()->getCommandQueue().enqueueMigrateMemObjects({p_grid.deviceBuffer}, 0, &p_grid.activeEvents, &event));
@@ -104,7 +104,8 @@ void sendGrid(Grid<T>& p_grid)
 		p_grid.activeEvents.push_back(event);
 		p_grid.isDevBufDirty = false;
 		p_grid.isHostBufDirty = false;
-//	}
+		event.wait();
+	}
 }
 
 

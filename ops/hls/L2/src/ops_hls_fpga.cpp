@@ -53,6 +53,4 @@ void ops_exit_backend()
 {
 	  auto fpga_inst = ops::hls::FPGA::getInstance();
 	  fpga_inst->finish();
-
-	  delete(fpga_inst);
 }

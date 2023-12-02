@@ -757,6 +757,10 @@ void axis2stream(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
 	
 	const unsigned int num_axis_pkts = (size + bytes_per_axis_pkt - 1) / bytes_per_axis_pkt;
 
+//#ifdef DEBUG_LOG
+			printf("|HLS DEBUG_LOG|%s| starting. size_bytes: %d, num_axis_pkt: %d, num_hls_pkt_per_axis_pkt: %d\n"
+						, __func__, size, num_axis_pkts, num_hls_pkt_per_axis_pkt);
+//#endif
 	for (unsigned int itr = 0; itr < num_axis_pkts; itr++)
 	{
 		ap_axiu<AXIS_DATA_WIDTH,0,0,0> axisPkt = axis_in.read();
@@ -765,8 +769,16 @@ void axis2stream(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
 		{
 		#pragma HLS PIPELINE II=1
 			strm_out << axisPkt.data.range((j+1) * STREAM_DATA_WIDTH - 1, j * STREAM_DATA_WIDTH);
+#ifdef DEBUG_LOG
+			printf("|HLS DEBUG_LOG|%s| reading axis pkt: %d.\n"
+						, __func__, itr);
+#endif
 		}
 	}
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| exiting.\n"
+			, __func__);
+#endif
 }
 
 /**

@@ -105,7 +105,11 @@ ops::hls::Grid<T> ops_hls_decl_dat(ops::hls::Block& block, int elem_size, int* s
 	grid.hostBuffer.resize(data_size);
 
 	if (data_ptr != nullptr)
-		data_ptr = grid.hostBuffer.data();
+	{
+		memcpy(grid.hostBuffer.data(), data_ptr, data_size);
+	}
+
+	// TODO: Else need to handle user defined hostBuffer
 
 	grid.isHostBufDirty = false;
 	grid.isDevBufDirty = false;
@@ -160,6 +164,24 @@ void printGrid2D(ops::hls::Grid<T> p_grid, std::string prompt="")
 		{
 			int index = i + j * p_grid.originalProperty.grid_size[0];
 			std::cout << std::setw(12) << p_grid.hostBuffer[index];
+		}
+		std::cout << std::endl;
+	}
+}
+
+template<typename T>
+void printGrid2D(T* p_grid, ops::hls::GridPropertyCore& gridProperty, std::string prompt="")
+{
+	std::cout << "----------------------------------------------" << std::endl;
+	std::cout << " [DEBUG] grid values: " << prompt << std::endl;
+	std::cout << "----------------------------------------------" << std::endl;
+
+	for (int j = 0; j < gridProperty.grid_size[1]; j++)
+	{
+		for (int i = 0; i < gridProperty.grid_size[0]; i++)
+		{
+			int index = i + j * gridProperty.grid_size[0];
+			std::cout << std::setw(12) << p_grid[index];
 		}
 		std::cout << std::endl;
 	}
