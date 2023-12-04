@@ -2,6 +2,19 @@
 #include <ops_hls_datamover.hpp>
 #include "../include/datamover_copy.hpp"
 
+static void datamover_copy_dataflow_region(ops::hls::AccessRange& range,
+		ops::hls::SizeType& arg0_gridSize,
+		ops::hls::SizeType& arg1_gridSize,
+	    ap_uint<data_width>* arg0_in,
+	    ap_uint<data_width>* arg1_out,
+	    hls::stream<ap_axiu<axis_data_width,0,0,0>>& arg0_stream_out,
+	    hls::stream<ap_axiu<axis_data_width,0,0,0>>& arg1_stream_in)
+{
+#pragma HLS DATAFLOW
+    ops::hls::memReadGrid<mem_data_width, axis_data_width, data_width>(arg0_in, arg0_stream_out, arg0_gridSize, range);
+    ops::hls::memWriteGridSimple<mem_data_width, axis_data_width, data_width>(arg1_out, arg1_stream_in, arg1_gridSize, range);
+}
+
 extern "C" void datamover_copy(
     const unsigned short range_start_x,
     const unsigned short range_end_x,
@@ -37,10 +50,8 @@ extern "C" void datamover_copy(
     #pragma HLS INTERFACE mode=axis port=arg0_stream_out register
     #pragma HLS INTERFACE mode=axis port=arg1_stream_in register
 
-	#pragma HLS INTERFACE ap_hls_chain port = return bundle = control
+	#pragma HLS INTERFACE ap_ctrl_chain port = return bundle = control
 	#pragma HLS INTERFACE s_axilite port = return bundle = control
-
-#pragma HLS DATAFLOW
 
     ops::hls::AccessRange range;
     range.start[0] = range_start_x;
@@ -52,8 +63,7 @@ extern "C" void datamover_copy(
     ops::hls::SizeType arg0_gridSize = {arg0_gridSize_x, arg0_gridSize_y, 1};
     ops::hls::SizeType arg1_gridSize = {arg1_gridSize_x, arg1_gridSize_y, 1};
 
-    ops::hls::memReadGrid<mem_data_width, axis_data_width, data_width>(arg0_in, arg0_stream_out, arg0_gridSize, range);
-    ops::hls::memWriteGridSimple<mem_data_width, axis_data_width, data_width>(arg1_out, arg1_stream_in, arg1_gridSize, range);
+    datamover_copy_dataflow_region(range, arg0_gridSize, arg1_gridSize, arg0_in, arg1_out, arg0_stream_out, arg1_stream_in);
 }
 
 

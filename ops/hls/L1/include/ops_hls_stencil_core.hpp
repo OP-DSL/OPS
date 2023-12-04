@@ -222,7 +222,8 @@ public:
             
             process: for (unsigned short x = 0; x < VEC_FACTOR; x++)
             {
-            #pragma HLS UNROLL complete
+#pragma HLS UNROLL factor=VEC_FACTOR
+
                 unsigned short index = (i << LOG2(VEC_FACTOR)) + x;
                 index_dt indexPkt;
                 ops::hls::IndexConv indexConv;

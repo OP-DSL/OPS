@@ -46,9 +46,9 @@ int main(int argc, const char** argv)
 
 
   //Size along y
-  jmax = 10;
+  jmax = 80;
   //Size along x
-  imax = 10;
+  imax = 80;
   int iter_max = 100;
 
   const float tol = 1.0e-6;
@@ -209,7 +209,7 @@ int main(int argc, const char** argv)
   // free(A);
   // free(Anew);
   getGrid(d_A);
-  printGrid2D<float>(d_A, "d_A");
+//  printGrid2D<float>(d_A, "d_A");
 
   ops_exit_backend();
 //  free(A);

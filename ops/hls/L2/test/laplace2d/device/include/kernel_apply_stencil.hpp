@@ -91,15 +91,16 @@ void kernel_apply_stencil_PE(ops::hls::GridPropertyCore& gridProp,
 } 
 
 extern "C" void kernel_apply_stencil(
-    const unsigned short gridProp_size_x,
-    const unsigned short gridProp_size_y,
-    const unsigned short gridProp_actual_size_x,
-    const unsigned short gridProp_acutal_size_y,
-    const unsigned short gridProp_grid_size_x,
-    const unsigned short gridProp_grid_size_y,
-    const unsigned short gridProp_dim,
-    const unsigned short gridProp_xblocks,
-    const unsigned int gridProp_total_itr,
-    const unsigned int gridProp_outer_loop_limit,
-    hls::stream <ap_axiu<axis_data_width,0,0,0>>& arg0_axis_in,
-    hls::stream <ap_axiu<axis_data_width,0,0,0>>& arg1_axis_out);
+        const unsigned short gridProp_size_x,
+        const unsigned short gridProp_size_y,
+        const unsigned short gridProp_actual_size_x,
+        const unsigned short gridProp_actual_size_y,
+        const unsigned short gridProp_grid_size_x,
+        const unsigned short gridProp_grid_size_y,
+        const unsigned short gridProp_dim,
+        const unsigned short gridProp_xblocks,
+        const unsigned int gridProp_total_itr,
+        const unsigned int gridProp_outer_loop_limit,
+		const unsigned int total_bytes,
+        hls::stream <ap_axiu<axis_data_width,0,0,0>>& arg0_axis_in,
+        hls::stream <ap_axiu<axis_data_width,0,0,0>>& arg1_axis_out);

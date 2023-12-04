@@ -67,6 +67,7 @@ extern "C" void kernel_right_bndcon(
     const unsigned short gridProp_xblocks,
     const unsigned int gridProp_total_itr,
     const unsigned int gridProp_outer_loop_limit,
+	const unsigned int total_bytes,
     const float const_pi,
     const int const_jmax,
     hls::stream <ap_axiu<axis_data_width,0,0,0>>& arg0_axis_out);

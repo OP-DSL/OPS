@@ -36,6 +36,7 @@ public:
 		OCL_CHECK(err, err = m_kernel_right_bndcon.setArg(narg++, arg0_adjustedGridProp.xblocks));
 		OCL_CHECK(err, err = m_kernel_right_bndcon.setArg(narg++, arg0_adjustedGridProp.total_itr));
 		OCL_CHECK(err, err = m_kernel_right_bndcon.setArg(narg++, arg0_adjustedGridProp.outer_loop_limit));
+        OCL_CHECK(err, err = m_kernel_right_bndcon.setArg(narg++, getTotalBytes<stencil_type>(arg0_adjustedGridProp)));
 		OCL_CHECK(err, err = m_kernel_right_bndcon.setArg(narg++, const0));
         OCL_CHECK(err, err = m_kernel_right_bndcon.setArg(narg++, const1));
         narg = 0;

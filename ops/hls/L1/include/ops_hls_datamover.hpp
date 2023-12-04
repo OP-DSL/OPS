@@ -757,10 +757,10 @@ void axis2stream(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
 	
 	const unsigned int num_axis_pkts = (size + bytes_per_axis_pkt - 1) / bytes_per_axis_pkt;
 
-//#ifdef DEBUG_LOG
+#ifdef DEBUG_LOG
 			printf("|HLS DEBUG_LOG|%s| starting. size_bytes: %d, num_axis_pkt: %d, num_hls_pkt_per_axis_pkt: %d\n"
 						, __func__, size, num_axis_pkts, num_hls_pkt_per_axis_pkt);
-//#endif
+#endif
 	for (unsigned int itr = 0; itr < num_axis_pkts; itr++)
 	{
 		ap_axiu<AXIS_DATA_WIDTH,0,0,0> axisPkt = axis_in.read();
@@ -1354,8 +1354,7 @@ void memWriteGridSimple(ap_uint<DATA_WIDTH>* mem_out,
 	{
 		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
 		{
-			unsigned short offset = k * gridSize[1];
-			offset = j + offset;
+			unsigned short offset = register_it(k * gridSize[1]) + j;
 			offset = offset * gridSize[0];
 			offset = range.start[0] + offset;
 #ifdef DEBUG_LOG

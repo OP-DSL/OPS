@@ -1,6 +1,15 @@
  #include <ops_hls_datamover.hpp>
 #include "../include/datamover_set_zero.hpp"
 
+static void datamover_set_zero_dataflow_region(ops::hls::AccessRange& range,
+		ops::hls::SizeType& gridSize,
+	    ap_uint<data_width>* arg0_out,
+	    hls::stream<ap_axiu<axis_data_width,0,0,0>>& arg0_stream_in)
+{
+#pragma HLS DATAFLOW
+    ops::hls::memWriteGridSimple<mem_data_width, axis_data_width, data_width>(arg0_out, arg0_stream_in, gridSize, range);
+}
+
 extern "C" void datamover_set_zero(
     const unsigned short range_start_x,
     const unsigned short range_end_x,
@@ -26,10 +35,8 @@ extern "C" void datamover_set_zero(
 
     #pragma HLS INTERFACE mode=axis port=arg0_stream_in register
 
-	#pragma HLS INTERFACE ap_hls_chain port = return bundle = control
+	#pragma HLS INTERFACE ap_ctrl_chain port = return bundle = control
 	#pragma HLS INTERFACE s_axilite port = return bundle = control
-
-#pragma HLS DATAFLOW
 
     ops::hls::SizeType gridSize = {gridSize_x, gridSize_y, 1};
     ops::hls::AccessRange range;
@@ -39,6 +46,6 @@ extern "C" void datamover_set_zero(
     range.end[1] = range_end_y;
     range.dim = 2;
 
-    ops::hls::memWriteGridSimple<mem_data_width, axis_data_width, data_width>(arg0_out, arg0_stream_in, gridSize, range);
+    datamover_set_zero_dataflow_region(range, gridSize, arg0_out, arg0_stream_in);
 
 }

@@ -152,6 +152,19 @@ void getRangeAdjustedGridProp(ops::hls::GridPropertyCore& original,
 }
 
 template<typename T>
+unsigned int getTotalBytes(ops::hls::GridPropertyCore& gridProp)
+{
+	unsigned int total_bytes = sizeof(T);
+
+	for (unsigned short i = 0; i < gridProp.dim; i++)
+	{
+		total_bytes *= gridProp.grid_size[i];
+	}
+
+	return total_bytes;
+}
+
+template<typename T>
 void printGrid2D(ops::hls::Grid<T> p_grid, std::string prompt="")
 {
 	std::cout << "----------------------------------------------" << std::endl;
