@@ -24,7 +24,10 @@ void kernel_apply_stencil_core(const unsigned int num_itr,
             stencil_type r3 = arg0_input_bus_3[k].read();
             stencil_type r4 = arg0_input_bus_4[k].read();
 
-            stencil_type r = 0.25f * (r0 + r1 + r3 + r4);
+            stencil_type r5 = r0 + r1;
+            stencil_type r6 = r3 + r4;
+            stencil_type r7 = r5 + r6;
+            stencil_type r = 0.25f * r7;
 
 #ifdef DEBUG_LOG
 			printf("[KERNEL_DEBUG]|%s| bus: %d, itr: %d, read_val: (%f, %f, %f, %f, %f) write_val: (%f)\n",
@@ -35,18 +38,11 @@ void kernel_apply_stencil_core(const unsigned int num_itr,
     }
 }
 
-void kernel_apply_stencil_PE(ops::hls::GridPropertyCore& gridProp,
-        s2d_5pt::widen_stream_dt& arg0_input_stream,
+static void kernel_apply_stencil_PE_dataflow_region(s2d_5pt& arg0_read_stencil, s2d_1pt& arg1_write_stencil, unsigned int& kernel_iterations,         s2d_5pt::widen_stream_dt& arg0_input_stream,
         s2d_1pt::widen_stream_dt& arg1_output_stream,
         s2d_1pt::mask_stream_dt& arg1_outmask_stream)
 {
 #pragma HLS DATAFLOW
-    s2d_5pt arg0_read_stencil;
-    s2d_1pt arg1_write_stencil;
-
-    arg0_read_stencil.setGridProp(gridProp);
-    arg1_write_stencil.setGridProp(gridProp);
-
     static ::hls::stream<stencil_type> arg0_input_bus_0[vector_factor];
     static ::hls::stream<stencil_type> arg0_input_bus_1[vector_factor];
     static ::hls::stream<stencil_type> arg0_input_bus_2[vector_factor];
@@ -63,11 +59,6 @@ void kernel_apply_stencil_PE(ops::hls::GridPropertyCore& gridProp,
 
     #pragma HLS STREAM variable = arg1_output_bus_0 depth = max_depth_v8
 
-    unsigned int kernel_iterations = gridProp.outer_loop_limit * gridProp.xblocks;
-
-#ifdef DEBUG_LOG
-        	printf("[KERNEL_DEBUG]|%s| Ending stencil kernel PE\n", __func__);
-#endif
     arg0_read_stencil.stencilRead(arg0_input_stream, 
             arg0_input_bus_0,
             arg0_input_bus_1,
@@ -84,6 +75,28 @@ void kernel_apply_stencil_PE(ops::hls::GridPropertyCore& gridProp,
     arg1_write_stencil.stencilWrite(arg1_output_stream, 
             arg1_outmask_stream, 
             arg1_output_bus_0);
+}
+
+void kernel_apply_stencil_PE(ops::hls::GridPropertyCore& read_gridProp,
+		ops::hls::GridPropertyCore& write_gridProp,
+        s2d_5pt::widen_stream_dt& arg0_input_stream,
+        s2d_1pt::widen_stream_dt& arg1_output_stream,
+        s2d_1pt::mask_stream_dt& arg1_outmask_stream)
+{
+    s2d_5pt arg0_read_stencil;
+    s2d_1pt arg1_write_stencil;
+
+    arg0_read_stencil.setGridProp(read_gridProp);
+    arg1_write_stencil.setGridProp(write_gridProp);
+
+    unsigned int kernel_iterations = write_gridProp.outer_loop_limit * write_gridProp.xblocks;
+
+    kernel_apply_stencil_PE_dataflow_region(arg0_read_stencil, arg1_write_stencil, kernel_iterations, arg0_input_stream, arg1_output_stream, arg1_outmask_stream);
+
+#ifdef DEBUG_LOG
+        	printf("[KERNEL_DEBUG]|%s| starting stencil kernel PE\n", __func__);
+#endif
+
 
 #ifdef DEBUG_LOG
 			printf("[KERNEL_DEBUG]|%s| Ending stencil kernel PE\n", __func__);
@@ -91,16 +104,25 @@ void kernel_apply_stencil_PE(ops::hls::GridPropertyCore& gridProp,
 } 
 
 extern "C" void kernel_apply_stencil(
-        const unsigned short gridProp_size_x,
-        const unsigned short gridProp_size_y,
-        const unsigned short gridProp_actual_size_x,
-        const unsigned short gridProp_actual_size_y,
-        const unsigned short gridProp_grid_size_x,
-        const unsigned short gridProp_grid_size_y,
-        const unsigned short gridProp_dim,
-        const unsigned short gridProp_xblocks,
-        const unsigned int gridProp_total_itr,
-        const unsigned int gridProp_outer_loop_limit,
-		const unsigned int total_bytes,
+        const unsigned short read_gridProp_size_x,
+        const unsigned short read_gridProp_size_y,
+        const unsigned short read_gridProp_actual_size_x,
+        const unsigned short read_gridProp_actual_size_y,
+        const unsigned short read_gridProp_grid_size_x,
+        const unsigned short read_gridProp_grid_size_y,
+        const unsigned short read_gridProp_dim,
+        const unsigned short read_gridProp_xblocks,
+        const unsigned int read_gridProp_total_itr,
+        const unsigned int read_gridProp_outer_loop_limit,
+        const unsigned short write_gridProp_size_x,
+        const unsigned short write_gridProp_size_y,
+        const unsigned short write_gridProp_actual_size_x,
+        const unsigned short write_gridProp_actual_size_y,
+        const unsigned short write_gridProp_grid_size_x,
+        const unsigned short write_gridProp_grid_size_y,
+        const unsigned short write_gridProp_dim,
+        const unsigned short write_gridProp_xblocks,
+        const unsigned int write_gridProp_total_itr,
+        const unsigned int write_gridProp_outer_loop_limit,
         hls::stream <ap_axiu<axis_data_width,0,0,0>>& arg0_axis_in,
         hls::stream <ap_axiu<axis_data_width,0,0,0>>& arg1_axis_out);

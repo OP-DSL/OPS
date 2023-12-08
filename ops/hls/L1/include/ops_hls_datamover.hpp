@@ -19,11 +19,11 @@
 //#define DEBUG_LOG
 
 #ifndef __SYTHESIS__
-	#ifdef DEBUG_LOG
+#ifdef DEBUG_LOG
 		#ifndef DEBUG_LOG_SIZE_OF
 			#define DEBUG_LOG_SIZE_OF 4
 		#endif
-	#endif
+#endif
 #endif
 
 namespace ops {
@@ -61,7 +61,7 @@ static void convMemBeat2axisPkt(ap_uint<MEM_DATA_WIDTH>* mem_in,
 	
 #ifndef __SYTHESIS__
 #ifdef DEBUG_LOG
-	printf("   |HLS DEBUG_LOG| reading beat index: %d\n", index);
+	printf("   |HLS DEBUG_LOG|%s| reading beat index: %d\n", __func__, index);
 #endif
 #endif
 
@@ -79,7 +79,7 @@ static void convMemBeat2axisPkt(ap_uint<MEM_DATA_WIDTH>* mem_in,
 
 #ifndef __SYTHESIS__
 #ifdef DEBUG_LOG
-			printf("   |HLS DEBUG_LOG| sending axis pkt: %d, val=(", pkt);
+			printf("   |HLS DEBUG_LOG|%s| sending axis pkt: %d, val=(",__func__, pkt);
 
 			for (unsigned n = 0; n < bytes_per_axis_pkt/DEBUG_LOG_SIZE_OF; n++)
 			{
@@ -994,11 +994,11 @@ void stream2axisMasked(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_out,
 	
 	const unsigned int num_axis_pkts = (size + bytes_per_axis_pkt - 1) / bytes_per_axis_pkt;
 
-	#ifdef DEBUG_LOG
+#ifdef DEBUG_LOG
 		printf("|HLS DEBUG_LOG|%s| stream to axis. size (bytes): %d, num_hls_pkt_per_axis_pkt: %d, bytes_per_axis_pkt: %d, bytes_per_hls_pkt:%d, num_axis_pkts:%d\n"
 				, __func__, size, num_hls_pkt_per_axis_pkt, bytes_per_axis_pkt, bytes_per_hls_pkt, num_axis_pkts);
 		printf("====================================================================================\n");
-	#endif
+#endif
 
 	for (unsigned int itr = 0; itr < num_axis_pkts; itr++)
 	{
@@ -1172,7 +1172,7 @@ void memReadGrid(ap_uint<DATA_WIDTH>* mem_in,
 #ifdef DEBUG_LOG
 	printf("|HLS DEBUG_LOG|%s| starting memReadGrid. grid_size: (%d, %d, %d), range: (%d, %d, %d) --> (%d, %d, %d)\n "
 			"x_tile_size:%d, x_tile_size_bytes:%d, num_xblocks:%d\n"
-			, __func__, gridSize[0], gridSize[1], gridSize[2], range.start[0], range.start[1], range.start[2],
+			, __func__, ShiftBits, DataShiftBits, gridSize[0], gridSize[1], gridSize[2], range.start[0], range.start[1], range.start[2],
 			range.end[0], range.end[1], range.end[2], x_tile_size, x_tile_size_bytes, num_xblocks);
 	printf("===========================================================================================\n");
 #endif
@@ -1185,7 +1185,7 @@ void memReadGrid(ap_uint<DATA_WIDTH>* mem_in,
 
 #ifdef DEBUG_LOG
 			printf("|HLS DEBUG_LOG|%s| reading. offset:%d, j:%d, k:%d\n"
-					, __func__, j, k);
+					, __func__,offset, j, k);
 #endif
 			mem2axis<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_in + offset), strm_out, x_tile_size_bytes);
 		}
@@ -1276,6 +1276,7 @@ void memWriteGrid(ap_uint<DATA_WIDTH>* mem_out,
 	{
 		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
 		{
+#pragma HLS PIPELINE II=1
 			unsigned short offset = init_offset + k * k_coef + j * j_coef;
 			unsigned short whole_offset = front_part_xtile_size + offset;
 			unsigned short back_part_offset = whole_offset + whole_xtile_size;
@@ -1354,6 +1355,7 @@ void memWriteGridSimple(ap_uint<DATA_WIDTH>* mem_out,
 	{
 		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
 		{
+#pragma HLS PIPELINE II = 1
 			unsigned short offset = register_it(k * gridSize[1]) + j;
 			offset = offset * gridSize[0];
 			offset = range.start[0] + offset;

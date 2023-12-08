@@ -149,6 +149,19 @@ class s2d_1pt : public ops::hls::StencilCore<stencil_type, s2d_1pt_num_points, v
                     {
                         i_l = 0;
                     }
+#ifdef DEBUG_LOG
+                    printf("[DEBUG][INTERNAL] loop params i(%d), j(%d), i_d(%d), j_d(%d), i_l(%d), itr(%d)\n", i, j, i_d, j_d, i_l, itr);
+                    printf("[DEBUG][INTERNAL] --------------------------------------------------------\n\n");
+
+                    printf("[DEBUG][INTERNAL] read values: (");
+                    for (int ri = 0; ri < vector_factor; ri++)
+                    {
+                    	ops::hls::DataConv tmpConverter;
+                    	tmpConverter.i = read_val.range((ri + 1)*s_datatype_size - 1, ri * s_datatype_size);
+                    	printf("%f ", tmpConverter.f);
+                    }
+                    printf(")\n");
+#endif
                 }
 
                 vec2arr: for (unsigned short k = 0; k < vector_factor; k++)
@@ -167,7 +180,7 @@ class s2d_1pt : public ops::hls::StencilCore<stencil_type, s2d_1pt_num_points, v
             }
         } 
 
-        void stencilWrite(widen_stream_dt& wr_buffer, mask_stream_dt& strb_buffer, ::hls::stream<stencil_type> input_bus[vector_factor])
+        void stencilWrite(widen_stream_dt& wr_buffer, mask_stream_dt& strb_buffer, ::hls::stream<stencil_type> input_bus[vector_factor], unsigned short x_half_span = 0, unsigned short x_full_span = 0)
         {
             unsigned short i = 0, j = 0;
             unsigned short i_l = 0; // Line buffer index
@@ -224,10 +237,10 @@ class s2d_1pt : public ops::hls::StencilCore<stencil_type, s2d_1pt_num_points, v
                 {  
 #pragma HLS UNROLL complete
                 	unsigned short index = (i << shift_bits) + k;
-                	bool cond_no_point_update = register_it(index < m_lowerLimits[0]
-                								|| index >= m_upperLimits[0]
-                								|| (j < (m_lowerLimits[1] + s_stencil_half_span_x))
-                								|| (j >= (m_upperLimits[1] + s_stencil_half_span_x)));
+                	bool cond_no_point_update = register_it((index < m_lowerLimits[0] + x_half_span)
+                								|| (index >= m_upperLimits[0] + x_half_span)
+                								|| (j < m_lowerLimits[1] + x_full_span)
+                								|| (j >= (m_upperLimits[1] + x_full_span)));
                     ops::hls::DataConv tmpConv;
                     stencil_type r = input_bus[k].read();
                    	tmpConv.f = r;
@@ -249,7 +262,7 @@ class s2d_1pt : public ops::hls::StencilCore<stencil_type, s2d_1pt_num_points, v
 
                 write:
                 {
-                    bool cond_write = ( j >= 0);
+                    bool cond_write =  register_it((j >= x_half_span) || (j < m_upperLimits[1] + x_half_span));
 
                     if (cond_write)
                     {

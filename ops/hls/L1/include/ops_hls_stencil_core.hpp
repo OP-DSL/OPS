@@ -111,7 +111,7 @@ class StencilCore
     protected:
         static const unsigned short s_dim = DIM;
         static const unsigned short s_size_x = SIZE_X;
-        static const unsigned short s_stencil_span_x = s_size_x;
+        static const unsigned short s_stencil_span_x = s_size_x - 1;
         static const unsigned short s_stencil_half_span_x = s_stencil_span_x / 2;
 
         GridPropertyCore m_gridProp;

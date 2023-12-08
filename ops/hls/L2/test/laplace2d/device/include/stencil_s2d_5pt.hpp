@@ -24,9 +24,9 @@ class s2d_5pt : public ops::hls::StencilCore<stencil_type, s2d_5pt_num_points, v
             ::hls::stream<stencil_type> output_bus_4[vector_factor])
         {
 //			#pragma HLS DEPENDENCE dependent=false distance=8 type=intra variable=rowArr_0
-            unsigned short i = 0, j = 0;
+            short i = -1, j = -s_stencil_half_span_x;
             unsigned short i_l = 0; // Line buffer index
-            unsigned short i_d = 0, j_d = 0;
+
             ::ops::hls::GridPropertyCore gridProp = m_gridProp;
             unsigned short itr_limit = gridProp.outer_loop_limit * gridProp.xblocks;
             unsigned short total_itr = gridProp.total_itr;
@@ -47,6 +47,10 @@ class s2d_5pt : public ops::hls::StencilCore<stencil_type, s2d_5pt_num_points, v
 			#pragma HLS ARRAY_PARTITION variable = rowArr_1 dim=1 complete
 			#pragma HLS ARRAY_PARTITION variable = rowArr_2 dim=1 complete
 
+#ifdef DEBUG_LOG
+            printf("[DEBUG][INTERNAL] itr_limt: %d, total_actual_itr: %d, grid_prop.xblocks: %d, grid_prop.outer_loop_limit: %d \n",
+            		itr_limit, total_itr, gridProp.xblocks, gridProp.outer_loop_limit);
+#endif
 //            const unsigned short row_center_indices[] = {0,2,4};
 //			#pragma HLS ARRAY_PARTITION variable=row_center_indices type=complete
 
@@ -55,9 +59,6 @@ class s2d_5pt : public ops::hls::StencilCore<stencil_type, s2d_5pt_num_points, v
 //            #pragma HLS LOOP_TRIPCOUNT min=min_grid_size max=max_grid_size avg=avg_grid_size
             #pragma HLS PIPELINE II=1
 
-                i = i_d;
-                j = j_d;
-
                 spc_blocking_read:
                 {
                     bool cond_x_terminate = (i == gridProp.xblocks - 1);
@@ -65,20 +66,20 @@ class s2d_5pt : public ops::hls::StencilCore<stencil_type, s2d_5pt_num_points, v
 
                     if (cond_x_terminate)
                     {
-                    	i_d = 0;
+                    	i = 0;
                     }
                     else
                     {
-                    	i_d++;
+                    	i++;
                     }
 
                     if (cond_x_terminate && cond_y_terminate)
                     {
-                    	j_d = 1;
+                    	j = 0;
                     }
                     else if(cond_x_terminate)
                     {
-                    	j_d++;
+                    	j++;
                     }
                     
                     bool cond_read = (itr < total_itr);
@@ -103,7 +104,7 @@ class s2d_5pt : public ops::hls::StencilCore<stencil_type, s2d_5pt_num_points, v
                     }
 
 #ifdef DEBUG_LOG
-                    printf("[DEBUG][INTERNAL] loop params i(%d), j(%d), i_d(%d), j_d(%d), i_l(%d), itr(%d)\n", i, j, i_d, j_d, i_l, itr);
+                    printf("[DEBUG][INTERNAL] loop params i(%d), j(%d), i_l(%d), itr(%d)\n", i, j, i_l, itr);
                     printf("[DEBUG][INTERNAL] --------------------------------------------------------\n\n");
 
                     printf("[DEBUG][INTERNAL] read values: (");
@@ -119,7 +120,7 @@ class s2d_5pt : public ops::hls::StencilCore<stencil_type, s2d_5pt_num_points, v
 
                 vec2arr: for (unsigned short k = 0; k < vector_factor; k++)
 				{
-
+#pragma HLS UNROLL vector_factor
 					ops::hls::DataConv tmpConverter_0, tmpConverter_1, tmpConverter_2;
 					tmpConverter_0.i = stencilValues[0].range(s_datatype_size * (k + 1) - 1, k * s_datatype_size);
 					tmpConverter_1.i = stencilValues[2].range(s_datatype_size * (k + 1) - 1, k * s_datatype_size);
@@ -138,11 +139,25 @@ class s2d_5pt : public ops::hls::StencilCore<stencil_type, s2d_5pt_num_points, v
 
 				process: for (unsigned short k = 0; k < vector_factor; k++)
 				{
-                    output_bus_0[k].write(rowArr_0[k + s_stencil_half_span_x]);
-                    output_bus_1[k].write(rowArr_1[k]);
-                    output_bus_2[k].write(rowArr_1[k+1]);
-                    output_bus_3[k].write(rowArr_1[k+2]);
-                    output_bus_4[k].write(rowArr_2[k + s_stencil_half_span_x]);
+#pragma HLS UNROLL vector_factor
+					unsigned short index = i * vector_factor + k;
+					bool cond_no_send = register_it((index < m_lowerLimits[0])
+												|| (index >= m_upperLimits[0])
+												|| (j < m_lowerLimits[1])
+												|| (j >= m_upperLimits[1]));
+#ifdef DEBUG_LOG
+					printf("[DEBUG][INTERNAL] index=(%d, %d), lowerbound=(%d, %d), upperboud=(%d, %d), cond_no_send=%d\n", index, j,
+								m_lowerLimits[0], m_lowerLimits[1], m_upperLimits[0], m_upperLimits[1], cond_no_send);
+					printf("[DEBUG][INTERNAL] values = (%f, %f, %f, %f, %f) \n\n", rowArr_0[k + s_stencil_half_span_x], rowArr_1[k], rowArr_1[k+1], rowArr_1[k+2], rowArr_2[k + s_stencil_half_span_x]);
+#endif
+					if (not cond_no_send)
+					{
+						output_bus_0[k].write(rowArr_0[k + s_stencil_half_span_x]);
+						output_bus_1[k].write(rowArr_1[k]);
+						output_bus_2[k].write(rowArr_1[k+1]);
+						output_bus_3[k].write(rowArr_1[k+2]);
+						output_bus_4[k].write(rowArr_2[k + s_stencil_half_span_x]);
+					}
                 }
             }
         }

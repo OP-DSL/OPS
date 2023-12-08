@@ -27,14 +27,26 @@ bool verify(stencil_type * grid_data1, stencil_type *  grid_data2, ops::hls::Gri
 
 void copyGrid(stencil_type * grid_dst, stencil_type * grid_src, ops::hls::GridPropertyCore& gridProp)
 {
-    for (unsigned short j = 0; j < gridProp.grid_size[1]; j++)
+    for (unsigned short j = 0; j < gridProp.actual_size[1]; j++)
     {
-        for (unsigned short i = 0; i < gridProp.grid_size[0]; i++)
+        for (unsigned short i = 0; i < gridProp.actual_size[0]; i++)
         {
             unsigned short index = j * gridProp.grid_size[0] + i;
             grid_dst[index] = grid_src[index];
         }
     }
+}
+
+void testInitGrid(stencil_type* grid_data, ops::hls::GridPropertyCore& gridProp)
+{
+    for (unsigned short j = 0; j < gridProp.grid_size[1]; j++)
+    {
+        for (unsigned short i = 0; i < gridProp.grid_size[0]; i++)
+        {
+        	unsigned short index = j * gridProp.grid_size[0] + i;
+        	grid_data[index] = index;
+        }
+	}
 }
 
 void initilizeGrid(stencil_type * grid_data, ops::hls::GridPropertyCore& gridProp, const float& pi, const int& jmax)

@@ -25,6 +25,9 @@
 #include <iomanip>
 #include <iostream>
 
+static ops::hls::SizeType default_d_p({0,0,0});
+static ops::hls::SizeType default_d_m({0,0,0});
+
 ops::hls::GridPropertyCore createGridPropery(const unsigned short dim,
 		const ops::hls::SizeType& size,
 		const ops::hls::SizeType& d_m,
@@ -115,24 +118,37 @@ ops::hls::Grid<T> ops_hls_decl_dat(ops::hls::Block& block, int elem_size, int* s
 	grid.isDevBufDirty = false;
 	return grid;
 }
+void getAdjustedRange(ops::hls::GridPropertyCore& gridProp, ops::hls::AccessRange& original, ops::hls::AccessRange& adjusted, ops::hls::SizeType d_m=default_d_m, ops::hls::SizeType d_p=default_d_p)
+{
+	adjusted.dim = original.dim;
+
+	for (int i = 0; i < original.dim; i++)
+	{
+		adjusted.end[i] = original.end[i] + d_p[i];
+		adjusted.start[i] = original.start[i] - d_m[i];
+
+		assert((adjusted.end[i]) <= gridProp.actual_size[i]);
+		assert((adjusted.start[i]) >= 0);
+	}
+}
 
 void getRangeAdjustedGridProp(ops::hls::GridPropertyCore& original,
-		ops::hls::AccessRange& range, ops::hls::GridPropertyCore& adjusted, const unsigned short vector_factor=8)
+		ops::hls::AccessRange& range, ops::hls::GridPropertyCore& adjusted, const unsigned short vector_factor=8, ops::hls::SizeType d_m=default_d_m, ops::hls::SizeType d_p=default_d_p)
 {
 	assert(range.dim == original.dim);
 
 	for (int i = 0; i < range.dim; i++)
 	{
-		assert(range.end[i] <= original.actual_size[i]);
-		assert(range.start[i] >= 0);
+		assert((range.end[i] + d_p[i]) <= original.actual_size[i]);
+		assert((range.start[i] - d_m[i]) >= 0);
 	}
 	adjusted.dim = original.dim;
 
 	for (int i = 0; i < range.dim; i++)
 	{
 		adjusted.size[i] = range.end[i] - range.start[i];
-		adjusted.d_m[i] = 0;
-		adjusted.d_p[i] = 0;
+		adjusted.d_m[i] = d_m[i];
+		adjusted.d_p[i] = d_p[i];
 		adjusted.actual_size[i] = adjusted.size[i] + adjusted.d_p[i] + adjusted.d_m[i];
 
 		if (i == 0)
@@ -200,15 +216,16 @@ void printGrid2D(T* p_grid, ops::hls::GridPropertyCore& gridProperty, std::strin
 	}
 }
 
-void opsRange2hlsRange(int dim, int* ops_range, ops::hls::AccessRange& range, ops::hls::GridPropertyCore& p_grid)
+void opsRange2hlsRange(int dim, int* ops_range, ops::hls::AccessRange& range, ops::hls::GridPropertyCore& p_grid,
+				ops::hls::SizeType d_m=default_d_m, ops::hls::SizeType d_p=default_d_p)
 {
 	assert(static_cast<unsigned int>(dim) <= ops_max_dim);
 	range.dim = static_cast<unsigned short>(dim);
 
 	for (int i = 0; i < dim; i++)
 	{
-		range.start[i] = ops_range[i*2] + p_grid.d_m[i];
-		range.end[i] = ops_range[i*2 + 1] + p_grid.d_m[i];
+		range.start[i] = ops_range[i*2] + p_grid.d_m[i] - d_m[i];
+		range.end[i] = ops_range[i*2 + 1] + p_grid.d_m[i] + d_p[i];
 	}
 
 //	std::cout << "[DEBUG]|" <<__func__ <<"| " << "ops_grid: " << ""

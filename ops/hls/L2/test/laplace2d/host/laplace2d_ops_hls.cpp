@@ -20,9 +20,9 @@ float pi  = 2.0 * asin(1.0);
 #define OPS_2D
 #include <ops_hls_rt_support.h>
 
-#ifdef VERIFICATION
+//#ifdef VERIFICATION
   #include <laplace2d_cpu_verification.hpp>
-#endif
+//#endif
 
 //Including applicaiton-specific "user kernels"
 /* ops_par_loop declarations */
@@ -46,9 +46,9 @@ int main(int argc, const char** argv)
 
 
   //Size along y
-  jmax = 80;
+  jmax = 50;
   //Size along x
-  imax = 80;
+  imax = 50;
   int iter_max = 100;
 
   const float tol = 1.0e-6;
@@ -135,29 +135,36 @@ int main(int argc, const char** argv)
   getGrid(d_A);
   getGrid(d_Anew);
 
-  std::cout << "verification of d_A and d_Anew" << std::endl;
+
   if(verify(A, Anew, d_A.originalProperty))
-	  std::cout << "[PASSED]" << std::endl;
+	  std::cout << "verification of d_A and d_Anew" << "[PASSED]" << std::endl;
   else
-	  std::cerr << "[FAILED]" << std::endl;
+	  std::cerr << "verification of d_A and d_Anew" << "[FAILED]" << std::endl;
+
   initilizeGrid(Acpu, d_A.originalProperty, pi, jmax);
   copyGrid(AnewCpu, Acpu, d_A.originalProperty);
-  std::cout << "verification of Acpu and A" << std::endl;
+
   if (verify(Acpu, A, d_A.originalProperty))
-	  std::cout << "[PASSED]" << std::endl;
+	  std::cout << "verification of Acpu and A" << "[PASSED]" << std::endl;
   else
-	  std::cerr << "[FAILED]" << std::endl;
+	  std::cerr << "verification of Acpu and A" << "[FAILED]" << std::endl;
 //  printGrid2D<float>(d_A, "A");
 //  printGrid2D<float>(Acpu, d_A.originalProperty, "Acpu");
-  std::cout << "verification of AnewCpu and Anew" << std::endl;
+
   if (verify(AnewCpu, Anew, d_A.originalProperty))
-	  std::cout << "[PASSED]" << std::endl;
+	  std::cout << "verification of AnewCpu and Anew" << "[PASSED]" << std::endl;
   else
-	  std::cerr << "[FAILED]" << std::endl;
+	  std::cerr << "verification of AnewCpu and Anew" << "[FAILED]" << std::endl;
 
 #endif
 
-  int num_iter = 100;
+//  getGrid(d_A);
+//  testInitGrid(d_A.hostBuffer.data(), d_A.originalProperty);
+//  d_A.isHostBufDirty = true;
+//  sendGrid(d_A);
+//  printGrid2D<float>(d_A, "d_A_test");
+
+  int num_iter = 1;
   for (int iter = 0; iter < num_iter; iter++)
   {
     int interior_range[] = {0,imax,0,jmax};
@@ -176,22 +183,28 @@ int main(int argc, const char** argv)
   for (int iter = 0; iter < num_iter; iter++)
   {
 	  calcGrid(Acpu, AnewCpu, d_A.originalProperty);
-	  copyGrid(AnewCpu, Acpu, d_A.originalProperty);
+	  copyGrid(Acpu, AnewCpu, d_A.originalProperty);
   }
 
   getGrid(d_A);
   getGrid(d_Anew);
 
-  std::cout << "verification of A and Acpu after calc" << std::endl;
   if (verify(A, Acpu, d_A.originalProperty))
-	  std::cout << "[PASSED]" << std::endl;
+	  std::cout << "verification of A and Acpu after calc" << "[PASSED]" << std::endl;
 	else
-	  std::cerr << "[FAILED]" << std::endl;
-  std::cout << "verification of Anew and AnewCpu after calc" << std::endl;
+	  std::cerr << "verification of A and Acpu after calc" << "[FAILED]" << std::endl;
+
   if (verify(Anew, AnewCpu, d_Anew.originalProperty))
-	  std::cout << "[PASSED]" << std::endl;
+	  std::cout << "verification of Anew and AnewCpu after calc" << "[PASSED]" << std::endl;
 	else
-	  std::cerr << "[FAILED]" << std::endl;
+	  std::cerr << "verification of Anew and AnewCpu after calc" << "[FAILED]" << std::endl;
+
+  // printGrid2D<float>(d_A, "d_A");
+  // printGrid2D<float>(Acpu, d_A.originalProperty, "d_Acpu");
+
+  // printGrid2D<float>(d_Anew, "d_Anew");
+  // printGrid2D<float>(AnewCpu, d_Anew.originalProperty, "d_AnewCpu");
+
 #endif
   // ops_printf("%5d, %0.6f\n", iter, error);        
 
@@ -208,8 +221,6 @@ int main(int argc, const char** argv)
   // ops_exit();
   // free(A);
   // free(Anew);
-  getGrid(d_A);
-//  printGrid2D<float>(d_A, "d_A");
 
   ops_exit_backend();
 //  free(A);

@@ -66,8 +66,8 @@ public:
 		arg0.activeEvents.push_back(event_datamover);
 		arg0.activeEvents.push_back(event_kernel);
 
-//		event_datamover.wait();
-//		event_kernel.wait();
+		event_datamover.wait();
+		event_kernel.wait();
     }
 
 private:

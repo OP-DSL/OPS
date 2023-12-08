@@ -86,9 +86,9 @@ public:
 		arg1.activeEvents.push_back(event_datamover);
 		arg1.activeEvents.push_back(event_kernel);
 
-//		event_datamover.wait();
+		event_datamover.wait();
 //		std::cout << "copy: datamover wait completed " << std::endl;
-//		event_kernel.wait();
+		event_kernel.wait();
 //		std::cout << "copy: kernel wait completed " << std::endl;
     }
 
