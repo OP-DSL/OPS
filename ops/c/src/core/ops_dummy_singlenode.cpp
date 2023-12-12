@@ -316,11 +316,12 @@ int compute_ranges(ops_arg *args, int nargs, ops_block block, int *range, int * 
   return true;
 }
 
-bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp) {
+bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp, int *size) {
   for (int n = 0; n < block->dims; n++) {
     start[n] = range[2 * n];
     end[n] = range[2 * n + 1];
     disp[n] = 0;
+    //size[n] = ?
   }
   return true;
 }

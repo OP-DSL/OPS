@@ -524,11 +524,14 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
         text = text + f'"{name}", '
         text = text + f'args, {nargs}, '
         text = text + f'{nk}, '
-        text = text + 'dim, 0, range, block, '
+        if offload:
+            text = text + 'dim, 1, range, block, '
+        else:
+            text = text + 'dim, 0, range, block, '
         text = text + f'ops_par_loop_{name}_execute'
         text = text + ');'
-        code(text)
-    
+        code(text)   
+
         config.depth = 0
         code("}")
         code("#endif")

@@ -299,6 +299,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_p[dim], 666, &they_send,
                  1, MPI_INT, sb->id_m[dim], 666, sb->comm, &status);
     if (sb->id_m[dim] >= 0 && actual_depth_recv != they_send) {
+      printf("Name: %s actual_depth_recv = %d, they_send = %d\n", dat->name, actual_depth_recv, they_send);
       throw OPSException(OPS_INTERNAL_ERROR, "Error: Right recv mismatch");
     }
   }
@@ -415,6 +416,7 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_m[dim], 665, &they_send,
                  1, MPI_INT, sb->id_p[dim], 665, sb->comm, &status);
     if (sb->id_p[dim] >= 0 && actual_depth_recv != they_send) {
+      printf("Name: %s actual_depth_recv = %d, they_send = %d\n", dat->name, actual_depth_recv, they_send);
       throw OPSException(OPS_INTERNAL_ERROR, "Error: Right recv mismatch");
     }
   }
@@ -1093,82 +1095,84 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
   int ndim = sb->ndim;
 
   for (int dim = 0; dim < ndim; dim++) {
-    range_intersect[dim] = intersection(
-        iter_range[2 * dim], iter_range[2 * dim + 1], sd->decomp_disp[dim],
-        (sd->decomp_disp[dim] + sd->decomp_size[dim])); // i.e. the intersection
-                                                        // of the execution
-                                                        // range with my full
-                                                        // range
+    range_intersect[dim] = intersection( iter_range[2 * dim], iter_range[2 * dim + 1],
+                                         sd->decomp_disp[dim], (sd->decomp_disp[dim] + sd->decomp_size[dim]));
+    // i.e. the intersection of the execution range with my full range
 
-    left_boundary_modified[dim] = intersection(
-        iter_range[2 * dim], iter_range[2 * dim + 1], sd->decomp_disp[dim],
-        sd->decomp_disp[dim] + MAX_DEPTH - 1); // i.e. the intersection of the
-                                               // execution range with my left
-                                               // boundary
-    right_halo_modified[dim] =
-        intersection(iter_range[2 * dim], iter_range[2 * dim + 1],
-                     (sd->decomp_disp[dim] + sd->decomp_size[dim]),
-                     (sd->decomp_disp[dim] + sd->decomp_size[dim]) + MAX_DEPTH -
-                         1); // i.e. the intersection of the execution range
-                             // with the my right neighbour's boundary
-    right_boundary_modified[dim] = intersection(
-        iter_range[2 * dim], iter_range[2 * dim + 1],
-        (sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH + 1,
-        (sd->decomp_disp[dim] + sd->decomp_size[dim]));
-    left_halo_modified[dim] = intersection(
-        iter_range[2 * dim], iter_range[2 * dim + 1],
-        sd->decomp_disp[dim] - MAX_DEPTH + 1, sd->decomp_disp[dim]);
+    left_boundary_modified[dim] = intersection( iter_range[2 * dim], iter_range[2 * dim + 1],
+                                               sd->decomp_disp[dim], sd->decomp_disp[dim] + MAX_DEPTH - 1);
+    // i.e. the intersection of the execution range with my left boundary
+
+    right_halo_modified[dim] = intersection(iter_range[2 * dim], iter_range[2 * dim + 1],
+                  (sd->decomp_disp[dim] + sd->decomp_size[dim]), (sd->decomp_disp[dim] + sd->decomp_size[dim]) + MAX_DEPTH - 1);
+    // i.e. the intersection of the execution range with the my right neighbour's boundary
+
+    right_boundary_modified[dim] = intersection( iter_range[2 * dim], iter_range[2 * dim + 1],
+       (sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH + 1, (sd->decomp_disp[dim] + sd->decomp_size[dim]));
+
+    left_halo_modified[dim] = intersection( iter_range[2 * dim], iter_range[2 * dim + 1],
+                           sd->decomp_disp[dim] - MAX_DEPTH + 1, sd->decomp_disp[dim]);
   }
+
+  int left_bnd_beg=0, left_bnd_end=0, left_halo_beg=0, left_halo_end=0;
+  int right_bnd_beg=0, right_bnd_end=0, right_halo_beg=0, right_halo_end=0;
 
   sd->dirtybit = 1;
   for (int dim = 0; dim < ndim; dim++) {
     int other_dims = 1;
     for (int d2 = 0; d2 < ndim; d2++)
       if (d2 != dim)
-        other_dims =
-            other_dims && (range_intersect[d2] > 0 || dat->size[d2] == 1);
+        other_dims = other_dims && (range_intersect[d2] > 0 || dat->size[d2] == 1);
 
     if (left_boundary_modified[dim] > 0 && other_dims) {
       int beg = 1 + (iter_range[2 * dim] >= sd->decomp_disp[dim]
                          ? iter_range[2 * dim] - sd->decomp_disp[dim]
                          : 0);
-      for (int d2 = beg; d2 < beg + left_boundary_modified[dim];
-           d2++) { // we shifted dirtybits, [1] is the first layer not the
-                   // second
+      left_bnd_beg = beg + arg->left_boundary_cleanUpTo[dim];  left_bnd_end = beg + left_boundary_modified[dim];
+      for (int d2 = beg + arg->left_boundary_cleanUpTo[dim]; d2 < beg + left_boundary_modified[dim]; d2++) { 
+        // we shifted dirtybits, [1] is the first layer not the second
         sd->dirty_dir_send[2 * MAX_DEPTH * dim + d2] = 1;
       }
     }
     if (left_halo_modified[dim] > 0 && other_dims) {
-      int beg =
-          iter_range[2 * dim] >= sd->decomp_disp[dim] - MAX_DEPTH + 1
+      int beg = iter_range[2 * dim] >= sd->decomp_disp[dim] - MAX_DEPTH + 1
               ? iter_range[2 * dim] - (sd->decomp_disp[dim] - MAX_DEPTH + 1)
               : 0;
-      for (int d2 = beg; d2 < beg + left_halo_modified[dim]; d2++) {
+      left_halo_beg = beg + arg->left_halo_cleanUpTo[dim]; left_halo_end = beg + left_halo_modified[dim];
+      for (int d2 = beg + arg->left_halo_cleanUpTo[dim]; d2 < beg + left_halo_modified[dim]; d2++) {
         sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH - d2 - 1] = 1;
       }
     }
     if (right_boundary_modified[dim] > 0 && other_dims) {
-      int beg =
-          iter_range[2 * dim] >=
-                  (sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH + 1
-              ? iter_range[2 * dim] -
-                    ((sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH +
-                     1)
+      int beg = iter_range[2 * dim] >= (sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH + 1
+              ? iter_range[2 * dim] - ((sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH + 1)
               : 0;
-      for (int d2 = beg; d2 < beg + right_boundary_modified[dim]; d2++) {
+      right_bnd_beg = beg + arg->right_boundary_cleanUpTo[dim]; right_bnd_end = beg + right_boundary_modified[dim];
+      for (int d2 = beg + arg->right_boundary_cleanUpTo[dim]; d2 < beg + right_boundary_modified[dim]; d2++) {
         sd->dirty_dir_send[2 * MAX_DEPTH * dim + 2 * MAX_DEPTH - d2 - 1] = 1;
       }
     }
     if (right_halo_modified[dim] > 0 && other_dims) {
-      int beg = 1 + (iter_range[2 * dim] >=
-                             (sd->decomp_disp[dim] + sd->decomp_size[dim])
-                         ? iter_range[2 * dim] -
-                               (sd->decomp_disp[dim] + sd->decomp_size[dim])
-                         : 0);
-      for (int d2 = beg; d2 < beg + right_halo_modified[dim]; d2++) {
+      int beg = 1 + (iter_range[2 * dim] >= (sd->decomp_disp[dim] + sd->decomp_size[dim])
+                   ? iter_range[2 * dim] - (sd->decomp_disp[dim] + sd->decomp_size[dim])
+                   : 0);
+      right_halo_beg = beg + arg->right_halo_cleanUpTo[dim]; right_halo_end = beg + right_halo_modified[dim];
+      for (int d2 = beg + arg->right_halo_cleanUpTo[dim]; d2 < beg + right_halo_modified[dim]; d2++) {
         sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH + d2] = 1;
       }
     }
+  }
+
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+  for (int dim = 0; dim < ndim; dim++)
+    if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s dirtybit set left-boundary %d-%d, left-halo %d-%d, right-boundary %d-%d, right-halo %d-%d \n", ops_get_proc(), dim, dat->name, left_bnd_beg, left_bnd_end, left_halo_beg, left_halo_end, right_bnd_beg, right_bnd_end, right_halo_beg, right_halo_end);
+
+  // Reset the dirtybit cleanUpTo arrays
+  for (int dim = 0; dim < ndim; dim++) {
+    arg->left_boundary_cleanUpTo[dim] = 0;
+    arg->left_halo_cleanUpTo[dim] = 0;
+    arg->right_boundary_cleanUpTo[dim] = 0;
+    arg->right_halo_cleanUpTo[dim] = 0;
   }
 }
 
