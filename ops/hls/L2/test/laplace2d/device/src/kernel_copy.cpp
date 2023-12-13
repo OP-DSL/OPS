@@ -10,7 +10,7 @@ static void kernel_copy_dataflow_region(ops::hls::GridPropertyCore& gridProp,
 	    s2d_1pt::mask_stream_dt& arg1_inmask_stream,
 	    s2d_1pt::widen_stream_dt& arg0_output_stream)
 {
-#pragma HLS_DATAFLOW
+#pragma HLS DATAFLOW
     ops::hls::axis2stream<axis_data_width, axis_data_width>(arg0_axis_in, arg0_output_stream, total_bytes);
     kernel_copy_PE(gridProp, arg0_output_stream, arg1_input_stream, arg1_inmask_stream);
     ops::hls::stream2axisMasked<axis_data_width, axis_data_width>(arg1_axis_out, arg1_input_stream, arg1_inmask_stream, total_bytes);

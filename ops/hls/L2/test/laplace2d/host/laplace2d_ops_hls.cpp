@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define VERIFICATION
+//#define VERIFICATION
 
 int imax, jmax;
 //#pragma acc declare create(imax)
@@ -46,9 +46,9 @@ int main(int argc, const char** argv)
 
 
   //Size along y
-  jmax = 50;
+  jmax = 30;
   //Size along x
-  imax = 50;
+  imax = 30;
   int iter_max = 100;
 
   const float tol = 1.0e-6;
@@ -168,9 +168,9 @@ int main(int argc, const char** argv)
   for (int iter = 0; iter < num_iter; iter++)
   {
     int interior_range[] = {0,imax,0,jmax};
-    ops_par_loop_apply_stencil(2, interior_range,
-        d_A,
-        d_Anew);
+//    ops_par_loop_apply_stencil(2, interior_range,
+//        d_A,
+//        d_Anew);
 
     ops_par_loop_copy(2, interior_range,
         d_Anew,

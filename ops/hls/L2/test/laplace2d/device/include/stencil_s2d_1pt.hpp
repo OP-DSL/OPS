@@ -73,7 +73,7 @@ class s2d_1pt : public ops::hls::StencilCore<stencil_type, s2d_1pt_num_points, v
 
                 process: for (unsigned short k = 0; k < vector_factor; k++)
                 {
-                #pragma HLS UNROLL complete
+                #pragma HLS UNROLL factor=vector_factor
                     unsigned short index = (i << shift_bits) + k;
                     index_dt indexPkt;
                     ops::hls::IndexConv indexConv;
@@ -166,7 +166,7 @@ class s2d_1pt : public ops::hls::StencilCore<stencil_type, s2d_1pt_num_points, v
 
                 vec2arr: for (unsigned short k = 0; k < vector_factor; k++)
                 {
-                #pragma HLS UNROLL complete
+                #pragma HLS UNROLL factor=vector_factor
                     ops::hls::DataConv tmpConverter_0;
                     tmpConverter_0.i = stencilValues[0].range(s_datatype_size * (k + 1) - 1, k * s_datatype_size);
                     rowArr_0[k + s_stencil_half_span_x] = tmpConverter_0.f;
@@ -174,7 +174,7 @@ class s2d_1pt : public ops::hls::StencilCore<stencil_type, s2d_1pt_num_points, v
 
                 process: for (unsigned short k = 0; k < vector_factor; k++)
                 {
-                #pragma HLS UNROLL complete
+                #pragma HLS UNROLL factor=vector_factor
                     output_bus[k].write(rowArr_0[k + s_stencil_half_span_x]);
                 }
             }
@@ -235,7 +235,7 @@ class s2d_1pt : public ops::hls::StencilCore<stencil_type, s2d_1pt_num_points, v
                                 
                 process_read: for (unsigned short k = 0; k < vector_factor; k++)
                 {  
-#pragma HLS UNROLL complete
+#pragma HLS UNROLL factor=vector_factor
                 	unsigned short index = (i << shift_bits) + k;
                 	bool cond_no_point_update = register_it((index < m_lowerLimits[0] + x_half_span)
                 								|| (index >= m_upperLimits[0] + x_half_span)
