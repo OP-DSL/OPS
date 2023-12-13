@@ -1477,4 +1477,15 @@ private:
 
 #include <ops_internal2.h>
 
+
+
+
+void increase_precision();
+
+void increase_precision_core();
+
+void increase_dat_precision_core(ops_dat_core* dat);
+
+void increase_precision_float2double(ops_dat_core* dat);
+
 #endif /* __OP_LIB_CORE_H */

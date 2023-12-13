@@ -333,6 +333,7 @@ class OPS_instance {
 	int OPS_realloc;
 	int OPS_soa;
 	int OPS_diags;
+	int OPS_precision;
 
 	// CUDA & OpenCL
 	int OPS_hybrid_gpu, OPS_gpu_direct;
