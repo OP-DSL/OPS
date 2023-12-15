@@ -83,6 +83,7 @@ typedef union
 
 
 typedef unsigned short SizeType[ops_max_dim];
+typedef int IdxType[ops_max_dim];
 
 constexpr unsigned short size_singleIndex = sizeof(unsigned short) * 8;
 constexpr unsigned short size_IndexType = size_singleIndex * ops_max_dim;

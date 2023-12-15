@@ -943,21 +943,43 @@ void stream2axis(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_out,
 
 	constexpr unsigned int num_hls_pkt_per_axis_pkt = AXIS_DATA_WIDTH / STREAM_DATA_WIDTH;
 	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_hls_pkt = STREAM_DATA_WIDTH / 8;
 	
 	const unsigned int num_axis_pkts = (size + bytes_per_axis_pkt - 1) / bytes_per_axis_pkt;
+
+#ifdef DEBUG_LOG
+		printf("|HLS DEBUG_LOG|%s| stream to axis. size (bytes): %d, num_hls_pkt_per_axis_pkt: %d, bytes_per_axis_pkt: %d, bytes_per_hls_pkt:%d, num_axis_pkts:%d\n"
+				, __func__, size, num_hls_pkt_per_axis_pkt, bytes_per_axis_pkt, bytes_per_hls_pkt, num_axis_pkts);
+		printf("====================================================================================\n");
+#endif
 
 	for (unsigned int itr = 0; itr < num_axis_pkts; itr++)
 	{
 		ap_axiu<AXIS_DATA_WIDTH,0,0,0> axisPkt;
-
+#ifdef DEBUG_LOG
+		printf("|HLS DEBUG_LOG|%s| flag 2. itr:%d\n",
+							__func__, itr);
+#endif
 		for (unsigned int j = 0; j < num_hls_pkt_per_axis_pkt; j++)
 		{
 		#pragma HLS PIPELINE II=1
+#ifdef DEBUG_LOG
+			unsigned int hls_pkt_index = itr * num_hls_pkt_per_axis_pkt + j;
+			printf("|HLS DEBUG_LOG|%s| reading hls pkt: %d\n",
+					__func__, hls_pkt_index);
+#endif
 			axisPkt.data.range((j+1) * STREAM_DATA_WIDTH - 1, j * STREAM_DATA_WIDTH) = strm_in.read();
 		}
-
+#ifdef DEBUG_LOG
+		printf("|HLS DEBUG_LOG|%s| wrting axis pkt: %d\n",
+				__func__, itr);
+#endif
 		axis_out.write(axisPkt);
 	}
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| exiting.\n"
+			, __func__);
+#endif
 }
 
 /**
@@ -1373,6 +1395,62 @@ void memWriteGridSimple(ap_uint<DATA_WIDTH>* mem_out,
 #endif
 }
 
+
+template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
+void memWriteGridSimpleV2(ap_uint<DATA_WIDTH>* mem_out,
+		::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_in,
+		SizeType gridSize,
+		AccessRange& range)
+{
+
+	constexpr unsigned short vectorFactor = MEM_DATA_WIDTH / DATA_WIDTH;
+	unsigned short ShiftBits = LOG2(vectorFactor);
+	unsigned short DataShiftBits = LOG2(DATA_WIDTH/8);
+	unsigned short xtile_size = (range.end[0] - range.start[0]);
+	unsigned short num_whole_xblocks = xtile_size >> ShiftBits;
+	unsigned short whole_xtile_size = num_whole_xblocks << ShiftBits;
+	unsigned short whole_xtile_size_bytes = whole_xtile_size << DataShiftBits;
+	unsigned short partial_xtile_size = xtile_size - whole_xtile_size;
+	unsigned short partial_xtile_size_bytes = partial_xtile_size << DataShiftBits;
+	unsigned short xtile_size_bytes = xtile_size << DataShiftBits;
+
+	if (range.dim < 3)
+	{
+		range.start[2] = 0;
+		range.end[2] = 1;
+	}
+	else if (range.dim < 2)
+	{
+		range.start[1] = 0;
+		range.end[1] = 1;
+	}
+
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| starting memWriteGrid. grid_size: (%d, %d, %d), range: (%d, %d, %d) --> (%d, %d, %d)\n whole_xtile_size:%d, partial_xtile_size:%d\n"
+			, __func__, gridSize[0], gridSize[1], gridSize[2], range.start[0], range.start[1], range.start[2],
+			range.end[0], range.end[1], range.end[2], whole_xtile_size, partial_xtile_size);
+	printf("====================================================================================\n");
+#endif
+	for (unsigned short k = range.start[2]; k < range.end[2]; k++)
+	{
+		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
+		{
+#pragma HLS PIPELINE II = 1
+			unsigned short offset = register_it(k * gridSize[1]) + j;
+			offset = offset * gridSize[0];
+			offset = range.start[0] + offset;
+#ifdef DEBUG_LOG
+			printf("|HLS DEBUG_LOG|%s| writing. offset:%d, j:%d, k:%d\n"
+					, __func__, offset, j, k);
+#endif
+			axis2mem<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + offset), strm_in, xtile_size_bytes);
+		}
+	}
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| exiting.\n"
+			, __func__);
+#endif
+}
 //template <unsigned int MEM_DATA_WIDTH, unsigned int STREAM_DATA_WIDTH, unsigned int DATA_WIDTH=32>
 //void memWriteGridNew(ap_uint<DATA_WIDTH>* mem_out,
 //		::hls::stream<ap_axiu<STREAM_DATA_WIDTH,0,0,0>>& strm_in,
