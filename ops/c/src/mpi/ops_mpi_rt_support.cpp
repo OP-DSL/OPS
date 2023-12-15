@@ -165,6 +165,9 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
                               int *send_recv_offsets) {
   sub_block_list sb = OPS_sub_block_list[dat->block->index];
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
+
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+
   int left_send_depth = 0;
   int left_recv_depth = 0;
   int right_send_depth = 0;
@@ -249,8 +252,8 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     ops_pack(dat, i2, ops_buffer_send_1 + send_recv_offsets[0],
              &sd->halos[MAX_DEPTH * dim + actual_depth_send]);
 
-  // if (actual_depth_send>0)
-  //   ops_printf("%s send neg %d\n",dat->name, actual_depth_send);
+  if (actual_depth_send>0)
+    if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s send negative-direction depth: %d\n", ops_get_proc(), dim, dat->name, actual_depth_send);
 
   // increase offset
   send_recv_offsets[0] += send_size;
@@ -330,8 +333,8 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     ops_pack(dat, i3, ops_buffer_send_2 + send_recv_offsets[2],
              &sd->halos[MAX_DEPTH * dim + actual_depth_send]);
 
-  // if (actual_depth_send>0)
-  //   ops_printf("%s send pos %d\n",dat->name, actual_depth_send);
+  if (actual_depth_send>0)
+    if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s send positive-direction depth: %d\n", ops_get_proc(), dim, dat->name, actual_depth_send);
 
   // increase offset
   send_recv_offsets[2] += send_size;
@@ -346,6 +349,9 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
                               int *send_recv_offsets) {
   sub_block_list sb = OPS_sub_block_list[dat->block->index];
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
+
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+
   int left_send_depth = depths[0];
   int left_recv_depth = depths[1];
   int right_send_depth = depths[2];
@@ -447,6 +453,9 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
     ops_pack(dat, i2, ops_buffer_send_1 + send_recv_offsets[0],
              &sd->halos[MAX_DEPTH * dim + actual_depth_send]);
 
+   if (actual_depth_send>0)
+    if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s send negative-direction depth: %d\n", ops_get_proc(), dim, dat->name, actual_depth_send);
+
   // increase offset
   send_recv_offsets[0] += send_size;
   send_recv_offsets[1] += recv_size;
@@ -517,6 +526,9 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   if (actual_depth_send > 0)
     ops_pack(dat, i3, ops_buffer_send_2 + send_recv_offsets[2],
              &sd->halos[MAX_DEPTH * dim + actual_depth_send]);
+
+  if (actual_depth_send>0)
+    if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s send positive-direction depth: %d\n", ops_get_proc(), dim, dat->name, actual_depth_send);
 
   // increase offset
   send_recv_offsets[2] += send_size;
@@ -1114,8 +1126,8 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
                            sd->decomp_disp[dim] - MAX_DEPTH + 1, sd->decomp_disp[dim]);
   }
 
-  int left_bnd_beg=0, left_bnd_end=0, left_halo_beg=0, left_halo_end=0;
-  int right_bnd_beg=0, right_bnd_end=0, right_halo_beg=0, right_halo_end=0;
+  int left_bnd_beg[ndim]={0}, left_bnd_end[ndim]={0}, left_halo_beg[ndim]={0}, left_halo_end[ndim]={0};
+  int right_bnd_beg[ndim]={0}, right_bnd_end[ndim]={0}, right_halo_beg[ndim]={0}, right_halo_end[ndim]={0};
 
   sd->dirtybit = 1;
   for (int dim = 0; dim < ndim; dim++) {
@@ -1128,7 +1140,7 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
       int beg = 1 + (iter_range[2 * dim] >= sd->decomp_disp[dim]
                          ? iter_range[2 * dim] - sd->decomp_disp[dim]
                          : 0);
-      left_bnd_beg = beg + arg->left_boundary_cleanUpTo[dim];  left_bnd_end = beg + left_boundary_modified[dim];
+      left_bnd_beg[dim] = beg + arg->left_boundary_cleanUpTo[dim];  left_bnd_end[dim] = beg + left_boundary_modified[dim];
       for (int d2 = beg + arg->left_boundary_cleanUpTo[dim]; d2 < beg + left_boundary_modified[dim]; d2++) { 
         // we shifted dirtybits, [1] is the first layer not the second
         sd->dirty_dir_send[2 * MAX_DEPTH * dim + d2] = 1;
@@ -1138,7 +1150,7 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
       int beg = iter_range[2 * dim] >= sd->decomp_disp[dim] - MAX_DEPTH + 1
               ? iter_range[2 * dim] - (sd->decomp_disp[dim] - MAX_DEPTH + 1)
               : 0;
-      left_halo_beg = beg + arg->left_halo_cleanUpTo[dim]; left_halo_end = beg + left_halo_modified[dim];
+      left_halo_beg[dim] = beg + arg->left_halo_cleanUpTo[dim]; left_halo_end[dim] = beg + left_halo_modified[dim];
       for (int d2 = beg + arg->left_halo_cleanUpTo[dim]; d2 < beg + left_halo_modified[dim]; d2++) {
         sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH - d2 - 1] = 1;
       }
@@ -1147,7 +1159,7 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
       int beg = iter_range[2 * dim] >= (sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH + 1
               ? iter_range[2 * dim] - ((sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH + 1)
               : 0;
-      right_bnd_beg = beg + arg->right_boundary_cleanUpTo[dim]; right_bnd_end = beg + right_boundary_modified[dim];
+      right_bnd_beg[dim] = beg + arg->right_boundary_cleanUpTo[dim]; right_bnd_end[dim] = beg + right_boundary_modified[dim];
       for (int d2 = beg + arg->right_boundary_cleanUpTo[dim]; d2 < beg + right_boundary_modified[dim]; d2++) {
         sd->dirty_dir_send[2 * MAX_DEPTH * dim + 2 * MAX_DEPTH - d2 - 1] = 1;
       }
@@ -1156,7 +1168,7 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
       int beg = 1 + (iter_range[2 * dim] >= (sd->decomp_disp[dim] + sd->decomp_size[dim])
                    ? iter_range[2 * dim] - (sd->decomp_disp[dim] + sd->decomp_size[dim])
                    : 0);
-      right_halo_beg = beg + arg->right_halo_cleanUpTo[dim]; right_halo_end = beg + right_halo_modified[dim];
+      right_halo_beg[dim] = beg + arg->right_halo_cleanUpTo[dim]; right_halo_end[dim] = beg + right_halo_modified[dim];
       for (int d2 = beg + arg->right_halo_cleanUpTo[dim]; d2 < beg + right_halo_modified[dim]; d2++) {
         sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH + d2] = 1;
       }
@@ -1164,8 +1176,10 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
   }
 
   OPS_instance *instance = OPS_instance::getOPSInstance();
-  for (int dim = 0; dim < ndim; dim++)
-    if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s dirtybit set left-boundary %d-%d, left-halo %d-%d, right-boundary %d-%d, right-halo %d-%d \n", ops_get_proc(), dim, dat->name, left_bnd_beg, left_bnd_end, left_halo_beg, left_halo_end, right_bnd_beg, right_bnd_end, right_halo_beg, right_halo_end);
+  for (int dim = 0; dim < ndim; dim++) {
+    if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s Points to skip left-boundary %d, left-halo %d, right-boundary %d, right-halo %d \n", ops_get_proc(), dim, dat->name, arg->left_boundary_cleanUpTo[dim], arg->left_halo_cleanUpTo[dim], arg->right_boundary_cleanUpTo[dim], arg->right_halo_cleanUpTo[dim]); 
+    if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s dirtybit set left-boundary %d-%d, left-halo %d-%d, right-boundary %d-%d, right-halo %d-%d \n", ops_get_proc(), dim, dat->name, left_bnd_beg[dim], left_bnd_end[dim], left_halo_beg[dim], left_halo_end[dim], right_bnd_beg[dim], right_bnd_end[dim], right_halo_beg[dim], right_halo_end[dim]);
+  }
 
   // Reset the dirtybit cleanUpTo arrays
   for (int dim = 0; dim < ndim; dim++) {

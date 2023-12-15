@@ -851,7 +851,7 @@ range[0]             left_neighbour_end           right_neighbour_start         
                 LOOPARG.right_halo_cleanUpTo[d]     += intersection2(my_tiled_begin, my_tiled_end, beg2, end2);
               }
 
-              if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s tiled_range: %d-%d, left_end: %d, right_start: %d, Points to skip left-boundary %d, left-halo %d, right-boundary %d, right-halo %d \n", ops_get_proc(), d, LOOPARG.dat->name, my_tiled_begin, my_tiled_end, store_left_neighbour_end[loop*OPS_MAX_DIM + d], store_right_neighbour_start[loop*OPS_MAX_DIM + d], LOOPARG.left_boundary_cleanUpTo[d], LOOPARG.left_halo_cleanUpTo[d], LOOPARG.right_boundary_cleanUpTo[d], LOOPARG.right_halo_cleanUpTo[d]);
+              if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d kernel %s, name %s tiled_range: %d-%d, left_end: %d, right_start: %d, Points to skip left-boundary %d, left-halo %d, right-boundary %d, right-halo %d \n", ops_get_proc(), d, ops_kernel_list[loop]->name, LOOPARG.dat->name, my_tiled_begin, my_tiled_end, store_left_neighbour_end[loop*OPS_MAX_DIM + d], store_right_neighbour_start[loop*OPS_MAX_DIM + d], LOOPARG.left_boundary_cleanUpTo[d], LOOPARG.left_halo_cleanUpTo[d], LOOPARG.right_boundary_cleanUpTo[d], LOOPARG.right_halo_cleanUpTo[d]);
           }
         }
       }
