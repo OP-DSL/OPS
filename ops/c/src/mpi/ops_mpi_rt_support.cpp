@@ -1181,13 +1181,6 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
     if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s dirtybit set left-boundary %d-%d, left-halo %d-%d, right-boundary %d-%d, right-halo %d-%d \n", ops_get_proc(), dim, dat->name, left_bnd_beg[dim], left_bnd_end[dim], left_halo_beg[dim], left_halo_end[dim], right_bnd_beg[dim], right_bnd_end[dim], right_halo_beg[dim], right_halo_end[dim]);
   }
 
-  // Reset the dirtybit cleanUpTo arrays
-  for (int dim = 0; dim < ndim; dim++) {
-    arg->left_boundary_cleanUpTo[dim] = 0;
-    arg->left_halo_cleanUpTo[dim] = 0;
-    arg->right_boundary_cleanUpTo[dim] = 0;
-    arg->right_halo_cleanUpTo[dim] = 0;
-  }
 }
 
 void ops_halo_transfer(ops_halo_group group) {

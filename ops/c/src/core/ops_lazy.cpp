@@ -72,6 +72,12 @@ struct tiling_plan {
   std::vector<std::vector<int> > tiled_ranges; // ranges for each loop
   std::vector<ops_dat> dats_to_exchange;
   std::vector<int> depths_to_exchange;
+
+  // Left-neighbour end and Right-neighbour start, required to calculate dirtybit skip/clear information
+  std::vector<std::vector<int> > left_neighbour_end;
+  std::vector<std::vector<int> > right_neighbour_start;
+  std::vector<std::vector<int> > loop_decomp_disp;
+  std::vector<std::vector<int> > loop_decomp_size;
 };
 
 class OPS_instance_tiling {
@@ -363,6 +369,18 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   std::vector<int> &depths_to_exchange = 
       tiling_plans[tiling_plans.size() - 1].depths_to_exchange;
 
+  std::vector<std::vector<int> > &left_neighbour_end =
+      tiling_plans[tiling_plans.size() - 1].left_neighbour_end;
+
+  std::vector<std::vector<int> > &right_neighbour_start =
+      tiling_plans[tiling_plans.size() - 1].right_neighbour_start;
+
+  std::vector<std::vector<int> > &loop_decomp_disp =
+      tiling_plans[tiling_plans.size() - 1].loop_decomp_disp;
+
+  std::vector<std::vector<int> > &loop_decomp_size =
+      tiling_plans[tiling_plans.size() - 1].loop_decomp_size;
+
   tiling_plans[tiling_plans.size() - 1].nloops = (int)ops_kernel_list.size();
   tiling_plans[tiling_plans.size() - 1].loop_sequence.resize(
       ops_kernel_list.size());
@@ -421,6 +439,10 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   int tile_sizes[5] = {TILE1D, TILE2D, TILE3D, TILE4D, TILE5D};
   // Initialise tiling datasets
   tiled_ranges.resize(ops_kernel_list.size());
+  left_neighbour_end.resize(ops_kernel_list.size());
+  right_neighbour_start.resize(ops_kernel_list.size());
+  loop_decomp_disp.resize(ops_kernel_list.size());
+  loop_decomp_size.resize(ops_kernel_list.size());
 
   //
   // If no tile sizes specified, compute it
@@ -515,6 +537,10 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   // Allocate room to store the range of each tile for each loop
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
     tiled_ranges[i].resize(total_tiles * OPS_MAX_DIM * 2);
+    left_neighbour_end[i].resize(OPS_MAX_DIM);
+    right_neighbour_start[i].resize(OPS_MAX_DIM);
+    loop_decomp_disp[i].resize(OPS_MAX_DIM);
+    loop_decomp_size[i].resize(OPS_MAX_DIM);
   }
 
   // Initialise dataset dependencies
@@ -812,49 +838,12 @@ int ops_construct_tile_plan(OPS_instance *instance) {
       }
     }
 
-//  Calculate the offset value indicating how many points to skip when setting the dirty bit
-/*                   decomp_disp                     (decomp_disp+decomp_size)
-                        |data_read_deps[0]     data_read_deps[1]|
-                        |---|                               |---|
-range[0]             left_neighbour_end           right_neighbour_start                 range[1]
-      ----------------------|                               |--------------------------
-                    |------------------------------------------------|
-                                        my_tiled_range
-                    <---|--->                               <---|--->
-            left-halo     left-boundary          right-boundary    right-halo
-*/
-    int my_tiled_begin, my_tiled_end;
-    int beg2, end2;
+    // Store information for left-neighbour end and right-neighbour start to used in execute tiling plan
     for (int d = 0; d < dims; d++) {
-      for (int tile = 0; tile < total_tiles; tile++) {
-        my_tiled_begin = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
-        my_tiled_end = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1];
-
-        for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
-          // For any dataset written (i.e. not read)
-          if (LOOPARG.argtype == OPS_ARG_DAT &&
-            LOOPARG.opt == 1 &&
-            LOOPARG.acc != OPS_READ) {
-              if(store_left_neighbour_end[loop*OPS_MAX_DIM + d] != INT_MIN) {
-                beg2 = decomp_disp[d];               end2 = store_left_neighbour_end[loop*OPS_MAX_DIM + d];
-                LOOPARG.left_boundary_cleanUpTo[d]  += intersection2(my_tiled_begin, my_tiled_end, beg2, end2);
-
-                beg2 = my_tiled_begin;    end2 = decomp_disp[d];
-                LOOPARG.left_halo_cleanUpTo[d]      += intersection2(my_tiled_begin, my_tiled_end, beg2, end2);
-              }
-
-              if(store_right_neighbour_start[loop*OPS_MAX_DIM + d] != INT_MAX) {
-                beg2 = store_right_neighbour_start[loop*OPS_MAX_DIM + d];     end2 = (decomp_disp[d]+decomp_size[d]);
-                LOOPARG.right_boundary_cleanUpTo[d] += intersection2(my_tiled_begin, my_tiled_end, beg2, end2);
-
-                beg2 = (decomp_disp[d]+decomp_size[d]);   end2 = my_tiled_end;
-                LOOPARG.right_halo_cleanUpTo[d]     += intersection2(my_tiled_begin, my_tiled_end, beg2, end2);
-              }
-
-              if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d kernel %s, name %s tiled_range: %d-%d, left_end: %d, right_start: %d, Points to skip left-boundary %d, left-halo %d, right-boundary %d, right-halo %d \n", ops_get_proc(), d, ops_kernel_list[loop]->name, LOOPARG.dat->name, my_tiled_begin, my_tiled_end, store_left_neighbour_end[loop*OPS_MAX_DIM + d], store_right_neighbour_start[loop*OPS_MAX_DIM + d], LOOPARG.left_boundary_cleanUpTo[d], LOOPARG.left_halo_cleanUpTo[d], LOOPARG.right_boundary_cleanUpTo[d], LOOPARG.right_halo_cleanUpTo[d]);
-          }
-        }
-      }
+      left_neighbour_end[loop][d] = store_left_neighbour_end[loop*OPS_MAX_DIM + d];
+      right_neighbour_start[loop][d] = store_right_neighbour_start[loop*OPS_MAX_DIM + d];
+      loop_decomp_disp[loop][d] = decomp_disp[d];
+      loop_decomp_size[loop][d] = decomp_size[d];
     }
 
     // Subtract base index displacements over MPI
@@ -973,6 +962,11 @@ void ops_execute(OPS_instance *instance) {
       tiling_plans[match].tiled_ranges;
   int total_tiles = tiling_plans[match].ntiles;
 
+  std::vector<std::vector<int> > &left_neighbour_end = tiling_plans[match].left_neighbour_end;
+  std::vector<std::vector<int> > &right_neighbour_start = tiling_plans[match].right_neighbour_start;
+  std::vector<std::vector<int> > &decomp_disp = tiling_plans[match].loop_decomp_disp;
+  std::vector<std::vector<int> > &decomp_size = tiling_plans[match].loop_decomp_size;
+
   //Do halo exchanges
   double c,t1=0,t2=0;
   if (instance->OPS_diags>1)
@@ -1022,6 +1016,69 @@ void ops_execute(OPS_instance *instance) {
       ops_kernel_list[i]->func(ops_kernel_list[i]);
     }
   }
+
+//  Calculate the offset value indicating how many points to skip when setting the dirty bit
+/*                   decomp_disp                     (decomp_disp+decomp_size)
+                        |data_read_deps[0]     data_read_deps[1]|
+                        |---|                               |---|
+range[0]             left_neighbour_end           right_neighbour_start                 range[1]
+      ----------------------|                               |--------------------------
+                    |------------------------------------------------|
+                                        my_tiled_range
+                    <---|--->                               <---|--->
+            left-halo     left-boundary          right-boundary    right-halo
+*/
+  // Reset existing information if any
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    for (unsigned int loop = 0; loop < ops_kernel_list.size(); loop++) {
+      for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
+        if (LOOPARG.argtype == OPS_ARG_DAT &&
+            LOOPARG.opt == 1 &&
+            LOOPARG.acc != OPS_READ) {
+              LOOPARG.left_boundary_cleanUpTo[d] = 0;
+              LOOPARG.left_halo_cleanUpTo[d] = 0;
+              LOOPARG.right_boundary_cleanUpTo[d] = 0;
+              LOOPARG.right_halo_cleanUpTo[d] = 0;
+        }
+      }
+    }
+  }
+
+  int my_tiled_begin, my_tiled_end;
+  int beg2, end2;
+  for (int tile = 0; tile < total_tiles; tile++) {
+    for (unsigned int loop = 0; loop < ops_kernel_list.size(); loop++) {
+        for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
+          // For any dataset written (i.e. not read)
+          if (LOOPARG.argtype == OPS_ARG_DAT &&
+              LOOPARG.opt == 1 &&
+              LOOPARG.acc != OPS_READ) {
+                for (int d = 0; d < OPS_MAX_DIM; d++) {
+                  my_tiled_begin = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] + decomp_disp[loop][d];
+                  my_tiled_end = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] + decomp_disp[loop][d];
+
+                  if(left_neighbour_end[loop][d] != INT_MIN) {
+                    beg2 = decomp_disp[loop][d];    end2 = left_neighbour_end[loop][d];
+                    LOOPARG.left_boundary_cleanUpTo[d]  += intersection2(my_tiled_begin, my_tiled_end, beg2, end2);
+
+                    beg2 = my_tiled_begin;    end2 = decomp_disp[loop][d];
+                    LOOPARG.left_halo_cleanUpTo[d]      += intersection2(my_tiled_begin, my_tiled_end, beg2, end2);
+                  }
+                  if(right_neighbour_start[loop][d] != INT_MAX) {
+                    beg2 = right_neighbour_start[loop][d];     end2 = (decomp_disp[loop][d]+decomp_size[loop][d]);
+                    LOOPARG.right_boundary_cleanUpTo[d] += intersection2(my_tiled_begin, my_tiled_end, beg2, end2);
+
+                    beg2 = (decomp_disp[loop][d]+decomp_size[loop][d]);   end2 = my_tiled_end;
+                    LOOPARG.right_halo_cleanUpTo[d]     += intersection2(my_tiled_begin, my_tiled_end, beg2, end2);
+                  }
+
+                  if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d kernel %s, name %s tiled_range: %d-%d, left_end: %d, right_start: %d, Points to skip left-boundary %d, left-halo %d, right-boundary %d, right-halo %d \n", ops_get_proc(), d, ops_kernel_list[loop]->name, LOOPARG.dat->name, my_tiled_begin, my_tiled_end, left_neighbour_end[loop][d], right_neighbour_start[loop][d], LOOPARG.left_boundary_cleanUpTo[d], LOOPARG.left_halo_cleanUpTo[d], LOOPARG.right_boundary_cleanUpTo[d], LOOPARG.right_halo_cleanUpTo[d]);
+
+                }//dim-loop end
+          }//if-condition of dat type check
+      }//arg-loop end
+    }//kernel list loop end
+  }//tile loop end
 
   //Set dirtybits
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
