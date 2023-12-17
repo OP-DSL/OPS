@@ -137,7 +137,7 @@ class FPGA {
         size_t l_bufferSize = sizeof(T) * p_buffer.size();
         cl_int err;
         m_bufferMaps.insert(
-            {l_ptr, cl::Buffer(m_context, p_flags | CL_MEM_USE_HOST_PTR, l_bufferSize, (void*)p_buffer.data(), &err)});
+            {l_ptr, cl::Buffer(m_context, p_flags, l_bufferSize, (void*)p_buffer.data(), &err)});
         if (err != CL_SUCCESS) {
             printf("Failed to allocate device buffer!\n");
             throw std::bad_alloc();

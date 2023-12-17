@@ -110,12 +110,17 @@ ops::hls::Grid<T> ops_hls_decl_dat(ops::hls::Block& block, int elem_size, int* s
 	if (data_ptr != nullptr)
 	{
 		memcpy(grid.hostBuffer.data(), data_ptr, data_size);
+		grid.isHostBufDirty = true;
+		grid.isDevBufDirty = false;
+	}
+	else
+	{
+		grid.isHostBufDirty = false;
+		grid.isDevBufDirty = false;
 	}
 
+	grid.deviceBuffer = ops::hls::FPGA::getInstance()->createDeviceBuffer(CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, grid.hostBuffer);
 	// TODO: Else need to handle user defined hostBuffer
-
-	grid.isHostBufDirty = false;
-	grid.isDevBufDirty = false;
 	return grid;
 }
 void getAdjustedRange(ops::hls::GridPropertyCore& gridProp, ops::hls::AccessRange& original, ops::hls::AccessRange& adjusted, ops::hls::SizeType d_m=default_d_m, ops::hls::SizeType d_p=default_d_p)

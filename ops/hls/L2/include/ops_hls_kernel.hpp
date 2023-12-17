@@ -99,7 +99,7 @@ void sendGrid(Grid<T>& p_grid)
 		cl_int err;
 		cl::Event event;
 		OCL_CHECK(err, err = FPGA::getInstance()->getCommandQueue().enqueueMigrateMemObjects({p_grid.deviceBuffer}, 0, &p_grid.activeEvents, &event));
-		addEvent(p_grid, event, __func__);
+//		addEvent(p_grid, event, __func__);
 		p_grid.activeEvents.resize(0);
 		p_grid.activeEvents.push_back(event);
 		p_grid.isDevBufDirty = false;
