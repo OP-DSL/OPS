@@ -979,13 +979,6 @@ ops_arg ops_arg_dat_core(ops_dat dat, ops_stencil stencil, ops_access acc) {
   arg.acc = acc;
   arg.opt = 1;
 
-  for (int dim = 0; dim < OPS_MAX_DIM; dim++) {
-    arg.left_boundary_cleanUpTo[dim] = 0;
-    arg.left_halo_cleanUpTo[dim] = 0;
-    arg.right_boundary_cleanUpTo[dim] = 0;
-    arg.right_halo_cleanUpTo[dim] = 0;
-  }
-
   return arg;
 }
 

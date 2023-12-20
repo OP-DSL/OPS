@@ -137,10 +137,6 @@ module OPS_Fortran_Declarations
         integer(kind=c_int) :: acc          ! access type
         integer(kind=c_int) :: argtype      ! arg type
         integer(kind=c_int) :: opt          ! flag to indicate whether this is an optional arg, 0 - optional, 1 - not optional
-        integer(kind=c_int), dimension(5) :: left_boundary_cleanUpTo
-        integer(kind=c_int), dimension(5) :: left_halo_cleanUpTo
-        integer(kind=c_int), dimension(5) :: right_boundary_cleanUpTo
-        integer(kind=c_int), dimension(5) :: right_halo_cleanUpTo
     end type ops_arg
 
     type, BIND(C) :: ops_reduction_core

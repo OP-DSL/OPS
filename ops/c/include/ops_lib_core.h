@@ -500,11 +500,6 @@ struct ops_arg {
   ops_arg_type argtype; /**< arg type */
   int opt;              /**< flag to indicate whether this is an optional arg,
                          *   0 - optional, 1 - not optional */
-  int left_boundary_cleanUpTo[OPS_MAX_DIM];     /**< Offset values indicating points to skip
-                                                 *   when setting dirtybit */
-  int left_halo_cleanUpTo[OPS_MAX_DIM];
-  int right_boundary_cleanUpTo[OPS_MAX_DIM];
-  int right_halo_cleanUpTo[OPS_MAX_DIM];
 };
 
 /** Storage for OPS halos */

@@ -253,8 +253,7 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
 // Computing dependencies across MPI
 /////////////////////////////////////////////////////////////////////////
 
-void ops_compute_mpi_dependencies(OPS_instance *instance, int loop, int d, int *start, int *end, int *biggest_range, int *decomp_disp, 
-    int *decomp_size, int *store_left_neighbour_end, int *store_right_neighbour_start) {
+void ops_compute_mpi_dependencies(OPS_instance *instance, int loop, int d, int *start, int *end, int *biggest_range, int *store_left_neighbour_end, int *store_right_neighbour_start) {
   //If loop range starts before my left boundary, my left neighbour's end index
   // is either my start index or the end index of the loop (whichever is smaller)
   int left_neighbour_end = LOOPRANGE[2*d] < biggest_range[2*d] ? 
@@ -572,7 +571,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
 
     for (int d = 0; d < dims; d++) {
 
-      ops_compute_mpi_dependencies(instance, loop, d, start, end, biggest_range, decomp_disp, decomp_size, store_left_neighbour_end, store_right_neighbour_start);
+      ops_compute_mpi_dependencies(instance, loop, d, start, end, biggest_range, store_left_neighbour_end, store_right_neighbour_start);
 
       for (int tile = 0; tile < total_tiles; tile++) {
 
@@ -920,6 +919,45 @@ int ops_construct_tile_plan(OPS_instance *instance) {
 }
 
 ////////////////////////////////////////////////////////////////////
+// Compute dirtybit clear upto information
+void ops_compute_dirtybit_clearupto(int loop_indx, char *name, int match, int *my_tiled_begin, int *my_tiled_end, int *left_boundary_cleanUpTo, int *left_halo_cleanUpTo, int *right_boundary_cleanUpTo, int *right_halo_cleanUpTo) {
+/*                   decomp_disp                     (decomp_disp+decomp_size)
+                        |data_read_deps[0]     data_read_deps[1]|
+                        |---|                               |---|
+range[0]             left_neighbour_end           right_neighbour_start                 range[1]
+      ----------------------|                               |--------------------------
+                    |------------------------------------------------|
+                                        my_tiled_range
+                    <---|--->                               <---|--->
+            left-halo     left-boundary          right-boundary    right-halo
+*/
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+  std::vector<int> left_neighbour_end = tiling_plans[match].left_neighbour_end[loop_indx];
+  std::vector<int> right_neighbour_start = tiling_plans[match].right_neighbour_start[loop_indx];
+  std::vector<int> decomp_disp = tiling_plans[match].loop_decomp_disp[loop_indx];
+  std::vector<int> decomp_size = tiling_plans[match].loop_decomp_size[loop_indx];
+
+  int beg2, end2;
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+
+    if(left_neighbour_end[d] != INT_MIN) {
+      beg2 = decomp_disp[d];    end2 = left_neighbour_end[d];
+      left_boundary_cleanUpTo[d]  = intersection2(my_tiled_begin[d], my_tiled_end[d], beg2, end2);
+
+      beg2 = my_tiled_begin[d];    end2 = decomp_disp[d];
+      left_halo_cleanUpTo[d]      = intersection2(my_tiled_begin[d], my_tiled_end[d], beg2, end2);
+    }
+    if(right_neighbour_start[d] != INT_MAX) {
+      beg2 = right_neighbour_start[d];     end2 = (decomp_disp[d]+decomp_size[d]);
+      right_boundary_cleanUpTo[d] = intersection2(my_tiled_begin[d], my_tiled_end[d], beg2, end2);
+
+      beg2 = (decomp_disp[d]+decomp_size[d]);   end2 = my_tiled_end[d];
+      right_halo_cleanUpTo[d]     = intersection2(my_tiled_begin[d], my_tiled_end[d], beg2, end2);
+    }
+ }//dim-loop end
+}
+
+////////////////////////////////////////////////////////////////////
 // Execute tiling plan
 ////////////////////////////////////////////////////////////////////
 void ops_execute(OPS_instance *instance) {
@@ -962,10 +1000,7 @@ void ops_execute(OPS_instance *instance) {
       tiling_plans[match].tiled_ranges;
   int total_tiles = tiling_plans[match].ntiles;
 
-  std::vector<std::vector<int> > &left_neighbour_end = tiling_plans[match].left_neighbour_end;
-  std::vector<std::vector<int> > &right_neighbour_start = tiling_plans[match].right_neighbour_start;
   std::vector<std::vector<int> > &decomp_disp = tiling_plans[match].loop_decomp_disp;
-  std::vector<std::vector<int> > &decomp_size = tiling_plans[match].loop_decomp_size;
 
   //Do halo exchanges
   double c,t1=0,t2=0;
@@ -1017,74 +1052,31 @@ void ops_execute(OPS_instance *instance) {
     }
   }
 
-//  Calculate the offset value indicating how many points to skip when setting the dirty bit
-/*                   decomp_disp                     (decomp_disp+decomp_size)
-                        |data_read_deps[0]     data_read_deps[1]|
-                        |---|                               |---|
-range[0]             left_neighbour_end           right_neighbour_start                 range[1]
-      ----------------------|                               |--------------------------
-                    |------------------------------------------------|
-                                        my_tiled_range
-                    <---|--->                               <---|--->
-            left-halo     left-boundary          right-boundary    right-halo
-*/
-  // Reset existing information if any
-  for (int d = 0; d < OPS_MAX_DIM; d++) {
-    for (unsigned int loop = 0; loop < ops_kernel_list.size(); loop++) {
-      for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
-        if (LOOPARG.argtype == OPS_ARG_DAT &&
-            LOOPARG.opt == 1 &&
-            LOOPARG.acc != OPS_READ) {
-              LOOPARG.left_boundary_cleanUpTo[d] = 0;
-              LOOPARG.left_halo_cleanUpTo[d] = 0;
-              LOOPARG.right_boundary_cleanUpTo[d] = 0;
-              LOOPARG.right_halo_cleanUpTo[d] = 0;
-        }
-      }
-    }
-  }
-
-  int my_tiled_begin, my_tiled_end;
-  int beg2, end2;
-  for (int tile = 0; tile < total_tiles; tile++) {
-    for (unsigned int loop = 0; loop < ops_kernel_list.size(); loop++) {
-        for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
-          // For any dataset written (i.e. not read)
-          if (LOOPARG.argtype == OPS_ARG_DAT &&
-              LOOPARG.opt == 1 &&
-              LOOPARG.acc != OPS_READ) {
-                for (int d = 0; d < OPS_MAX_DIM; d++) {
-                  my_tiled_begin = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] + decomp_disp[loop][d];
-                  my_tiled_end = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] + decomp_disp[loop][d];
-
-                  if(left_neighbour_end[loop][d] != INT_MIN) {
-                    beg2 = decomp_disp[loop][d];    end2 = left_neighbour_end[loop][d];
-                    LOOPARG.left_boundary_cleanUpTo[d]  += intersection2(my_tiled_begin, my_tiled_end, beg2, end2);
-
-                    beg2 = my_tiled_begin;    end2 = decomp_disp[loop][d];
-                    LOOPARG.left_halo_cleanUpTo[d]      += intersection2(my_tiled_begin, my_tiled_end, beg2, end2);
-                  }
-                  if(right_neighbour_start[loop][d] != INT_MAX) {
-                    beg2 = right_neighbour_start[loop][d];     end2 = (decomp_disp[loop][d]+decomp_size[loop][d]);
-                    LOOPARG.right_boundary_cleanUpTo[d] += intersection2(my_tiled_begin, my_tiled_end, beg2, end2);
-
-                    beg2 = (decomp_disp[loop][d]+decomp_size[loop][d]);   end2 = my_tiled_end;
-                    LOOPARG.right_halo_cleanUpTo[d]     += intersection2(my_tiled_begin, my_tiled_end, beg2, end2);
-                  }
-
-                  if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d kernel %s, name %s tiled_range: %d-%d, left_end: %d, right_start: %d, Points to skip left-boundary %d, left-halo %d, right-boundary %d, right-halo %d \n", ops_get_proc(), d, ops_kernel_list[loop]->name, LOOPARG.dat->name, my_tiled_begin, my_tiled_end, left_neighbour_end[loop][d], right_neighbour_start[loop][d], LOOPARG.left_boundary_cleanUpTo[d], LOOPARG.left_halo_cleanUpTo[d], LOOPARG.right_boundary_cleanUpTo[d], LOOPARG.right_halo_cleanUpTo[d]);
-
-                }//dim-loop end
-          }//if-condition of dat type check
-      }//arg-loop end
-    }//kernel list loop end
-  }//tile loop end
+  int left_boundary_cleanUpTo[OPS_MAX_DIM], left_halo_cleanUpTo[OPS_MAX_DIM];
+  int right_boundary_cleanUpTo[OPS_MAX_DIM], right_halo_cleanUpTo[OPS_MAX_DIM];
 
   //Set dirtybits
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
+
+    // Compute dirtybit clear-upto information
+    int my_tiled_begin[OPS_MAX_DIM], my_tiled_end[OPS_MAX_DIM];
+
+    // find the full tiled_range begin and end for current loop
+    for (int d = 0; d < OPS_MAX_DIM; d++) {
+      left_boundary_cleanUpTo[d] = 0;   left_halo_cleanUpTo[d] = 0;
+      right_boundary_cleanUpTo[d] = 0;  right_halo_cleanUpTo[d] = 0;
+      my_tiled_begin[d] = INT_MAX;      my_tiled_end[d] = INT_MIN;
+      for (int tile = 0; tile < total_tiles; tile++) {
+        my_tiled_begin[d] = MIN(my_tiled_begin[d], tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 2 * d + 0] + decomp_disp[i][d]);
+        my_tiled_end[d]   = MAX(my_tiled_end[d],   tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 2 * d + 1] + decomp_disp[i][d]);
+      }
+    }
+
+    ops_compute_dirtybit_clearupto(i, ops_kernel_list[i]->name, match, my_tiled_begin, my_tiled_end, left_boundary_cleanUpTo, left_halo_cleanUpTo, right_boundary_cleanUpTo, right_halo_cleanUpTo);
+
     for (int arg = 0; arg < ops_kernel_list[i]->nargs; arg++) {
       if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT && ops_kernel_list[i]->args[arg].acc != OPS_READ)
-        ops_set_halo_dirtybit3(&ops_kernel_list[i]->args[arg], ops_kernel_list[i]->orig_range);
+        ops_set_halo_dirtybit3_tiled(&ops_kernel_list[i]->args[arg], ops_kernel_list[i]->orig_range, left_boundary_cleanUpTo, left_halo_cleanUpTo, right_boundary_cleanUpTo, right_halo_cleanUpTo);
     }
     if (ops_kernel_list[i]->isdevice) ops_set_dirtybit_device(ops_kernel_list[i]->args,ops_kernel_list[i]->nargs);
     else ops_set_dirtybit_host(ops_kernel_list[i]->args,ops_kernel_list[i]->nargs);

@@ -236,6 +236,7 @@ void ops_set_dirtybit_host(
 void ops_set_halo_dirtybit(ops_arg *arg);
 OPS_FTN_INTEROP
 void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range);
+void ops_set_halo_dirtybit3_tiled(ops_arg *arg, int *iter_range, int *left_boundary_cleanUpTo, int *left_halo_cleanUpTo, int *right_boundary_cleanUpTo, int *right_halo_cleanUpTo);
 OPS_FTN_INTEROP
 void ops_halo_exchanges(ops_arg *args, int nargs, int *range);
 void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths);

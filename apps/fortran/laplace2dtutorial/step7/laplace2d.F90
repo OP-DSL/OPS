@@ -158,7 +158,7 @@ program laplace
 
         call ops_par_loop(apply_stencil_kernel, "apply_stencil", grid2D, 2, interior_range, &
                         & ops_arg_dat(d_A,    1, S2D_5pt, "real(8)", OPS_READ), &
-                        & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_RW), &
+                        & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_WRITE), &
                         & ops_arg_reduce(h_err, 1, "real(8)", OPS_MAX))
 
         call ops_par_loop(copy_kernel, "copy", grid2D, 2, interior_range, &
