@@ -8,3 +8,4 @@ mypy
 pcpp
 sympy
 libclang
+llvmlite
