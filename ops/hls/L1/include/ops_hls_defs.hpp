@@ -9,6 +9,14 @@
   * @details Contains limits and constrains definitions used in L1 components.
   */
 
+#if defined(__GNUC__) || defined(__clang__)
+    #define DEPRECATED __attribute__((deprecated))
+#elif defined(_MSC_VER)
+    #define DEPRECATED __declspec(deprecated)
+#else
+    #pragma message("WARNING: DEPRECATED for this compiler is not implemented")
+    #define DEPRECATED
+#endif
 /***** OPS limits *****/
 constexpr unsigned int ops_max_dim = 3;
 
@@ -93,7 +101,8 @@ typedef union
     SizeType index;
 } IndexConv;
 
-struct GridPropertyCore
+/** TODO: [[deprecated]] */
+DEPRECATED struct GridPropertyCore
 {
     SizeType size;
     SizeType d_p;
@@ -106,6 +115,32 @@ struct GridPropertyCore
     unsigned int total_itr;
     unsigned int outer_loop_limit;
 };
+
+struct GridPropertyCoreV2
+{
+    SizeType size;
+    SizeType d_p;
+    SizeType d_m;
+    SizeType grid_size;
+    SizeType actual_size;
+    SizeType offset;
+    unsigned short dim;
+};
+
+struct StencilConfigCore
+{
+    SizeType grid_size; //{xblocks, y, z, ...}
+    SizeType lower_limit;
+    SizeType upper_limit;
+    unsigned short dim;
+    unsigned int total_itr;
+};
+
+struct StencilConfigDevice : public StencilConfigCore
+{
+    unsigned int outer_loop_limit;
+};
+
 
 struct AccessRange
 {
