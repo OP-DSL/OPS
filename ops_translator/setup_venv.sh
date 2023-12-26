@@ -11,6 +11,6 @@ source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
 
 python3 -m pip install --upgrade pip
 
-python3 -m pip install -r requirement.txt
+python3 -m pip install -r requirements.txt
 
 pip install --force-reinstall libclang==16.0.6

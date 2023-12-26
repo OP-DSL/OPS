@@ -8,4 +8,3 @@ mypy
 pcpp
 sympy
 libclang==16.0.6
-llvmlite
