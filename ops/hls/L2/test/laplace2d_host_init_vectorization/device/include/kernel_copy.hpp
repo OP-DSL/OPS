@@ -37,7 +37,7 @@ void kernel_copy_PE_datflow_region(s2d_1pt::widen_stream_dt& arg0_input_stream,
     arg1_write_stencil.stencilWrite(arg1_output_stream, arg1_outmask_stream, arg1_output_bus_0);
 }
 
-void kernel_copy_PE(ops::hls::GridPropertyCore& gridProp,
+void kernel_copy_PE(ops::hls::StencilConfigCore& stencilConfig,
         s2d_1pt::widen_stream_dt& arg0_input_stream,
         s2d_1pt::widen_stream_dt& arg1_output_stream,
         s2d_1pt::mask_stream_dt& arg1_outmask_stream)
@@ -45,30 +45,28 @@ void kernel_copy_PE(ops::hls::GridPropertyCore& gridProp,
     s2d_1pt arg0_read_stencil;
     s2d_1pt arg1_write_stencil;
 
-    arg0_read_stencil.setGridProp(gridProp);
-    arg1_write_stencil.setGridProp(gridProp);
+    arg0_read_stencil.setConfig(stencilConfig);
+    arg1_write_stencil.setConfig(stencilConfig);
 
     static ::hls::stream<stencil_type> arg0_input_bus_0[vector_factor];
     static ::hls::stream<stencil_type> arg1_output_bus_0[vector_factor];
     #pragma HLS STREAM variable = arg0_input_bus_0 depth = max_depth_v8
     #pragma HLS STREAM variable = arg1_output_bus_0 depth = max_depth_v8
 
-    unsigned int kernel_iterations = gridProp.outer_loop_limit * gridProp.xblocks;
+    unsigned int kernel_iterations = stencilConfig.total_itr;
 
     kernel_copy_PE_datflow_region(arg0_input_stream, arg1_output_stream, arg1_outmask_stream, arg0_read_stencil, arg1_write_stencil, arg0_input_bus_0, arg1_output_bus_0, kernel_iterations);
 } 
 
 extern "C" void kernel_copy(
-        const unsigned short gridProp_size_x,
-        const unsigned short gridProp_size_y,
-        const unsigned short gridProp_actual_size_x,
-        const unsigned short gridProp_actual_size_y,
-        const unsigned short gridProp_grid_size_x,
-        const unsigned short gridProp_grid_size_y,
-        const unsigned short gridProp_dim,
-        const unsigned short gridProp_xblocks,
-        const unsigned int gridProp_total_itr,
-        const unsigned int gridProp_outer_loop_limit,
-		const unsigned int total_bytes,
+        const unsigned short stencilConfig_grid_size_x,
+        const unsigned short stencilConfig_grid_size_y,
+        const unsigned short stencilConfig_lower_limit_x,
+        const unsigned short stencilConfig_lower_limit_y,
+        const unsigned short stencilConfig_upper_limit_x,
+        const unsigned short stencilConfig_upper_limit_y,
+        const unsigned short stencilConfig_dim,
+        const unsigned short stencilConfig_outer_loop_limit,
+        const unsigned int stencilConfig_total_itr,
         hls::stream <ap_axiu<axis_data_width,0,0,0>>& arg0_axis_in,
         hls::stream <ap_axiu<axis_data_width,0,0,0>>& arg1_axis_out);

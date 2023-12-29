@@ -41,7 +41,7 @@ class StencilCoreV2
         typedef ::hls::stream<widen_dt> widen_stream_dt;
         typedef ::hls::stream<mask_dt> mask_stream_dt;
 
-        StencilCore()
+        StencilCoreV2()
         {
 		#pragma HLS ARRAY_PARTITION variable = m_sizes complete
 
@@ -56,7 +56,6 @@ class StencilCoreV2
         void setConfig(const StencilConfigCore& stencilConfig)
         {
             m_stencilConfig = stencilConfig;
-            m_stencilConfig.outer_loop_limit = stencilConfig.total_itr + s_stencil_half_span_x;
 
 #ifdef DEBUG_LOG
             printf("[KERNEL_DEBUG]|%s| s_dim: %d, s_size_x: %d, s_stencil_span_x: %d, s_stencil_half_span_x: %d \n"
@@ -105,7 +104,7 @@ class StencilCoreV2
         static const unsigned short s_stencil_span_x = s_size_x - 1;
         static const unsigned short s_stencil_half_span_x = s_stencil_span_x / 2;
 
-        StencilConfigDevice m_stencilConfig;
+        StencilConfigCore m_stencilConfig;
         // unsigned short m_stencilPoints[NUM_POINTS * 2];
         unsigned short m_sizes[s_dim];
 
@@ -144,7 +143,7 @@ public:
         unsigned short i_p = 0; // Plane buffer index
 #endif
         
-        ::ops::hls::StencilConfigDevice stencilConfig = m_stencilConfig;
+        ::ops::hls::StencilConfigCore stencilConfig = m_stencilConfig;
         unsigned short iter_limit = stencilConfig.total_itr;
 // #if(STENCIL_DIM == 1)
 //         unsigned short iter_limit = stencilConfig.total_itr;

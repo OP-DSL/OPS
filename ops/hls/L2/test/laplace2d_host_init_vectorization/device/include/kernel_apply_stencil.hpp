@@ -10,7 +10,7 @@ void kernel_apply_stencil_core(const unsigned int num_itr,
         ::hls::stream<stencil_type> arg0_input_bus_2[vector_factor],
         ::hls::stream<stencil_type> arg0_input_bus_3[vector_factor],
         ::hls::stream<stencil_type> arg0_input_bus_4[vector_factor],
-	::hls::stream<bool> neg_cond_bus[vector_factor],
+	    ::hls::stream<bool> neg_cond_bus[vector_factor],
         ::hls::stream<stencil_type> arg1_output_bus_0[vector_factor])
 {
 	#ifdef DEBUG_LOG
@@ -94,8 +94,8 @@ static void kernel_apply_stencil_PE_dataflow_region(s2d_5pt& arg0_read_stencil, 
             arg1_output_bus_0);
 }
 
-void kernel_apply_stencil_PE(ops::hls::GridPropertyCore& read_gridProp,
-		ops::hls::GridPropertyCore& write_gridProp,
+void kernel_apply_stencil_PE(ops::hls::StencilConfigCore& read_stecilConfig,
+		ops::hls::StencilConfigCore& write_stencilConfig,
         s2d_5pt::widen_stream_dt& arg0_input_stream,
         s2d_1pt::widen_stream_dt& arg1_output_stream,
         s2d_1pt::mask_stream_dt& arg1_outmask_stream)
@@ -103,10 +103,10 @@ void kernel_apply_stencil_PE(ops::hls::GridPropertyCore& read_gridProp,
     s2d_5pt arg0_read_stencil;
     s2d_1pt arg1_write_stencil;
 
-    arg0_read_stencil.setGridProp(read_gridProp);
-    arg1_write_stencil.setGridProp(write_gridProp);
+    arg0_read_stencil.setConfig(read_stecilConfig);
+    arg1_write_stencil.setConfig(write_stencilConfig);
 
-    unsigned int kernel_iterations = read_gridProp.total_itr;
+    unsigned int kernel_iterations = read_stecilConfig.total_itr;
 
 #ifdef DEBUG_LOG
     printf("[KERNEL_DEBUG]|%s| starting stencil kernel PE\n", __func__);
@@ -120,25 +120,23 @@ void kernel_apply_stencil_PE(ops::hls::GridPropertyCore& read_gridProp,
 } 
 
 extern "C" void kernel_apply_stencil(
-        const unsigned short read_gridProp_size_x,
-        const unsigned short read_gridProp_size_y,
-        const unsigned short read_gridProp_actual_size_x,
-        const unsigned short read_gridProp_actual_size_y,
-        const unsigned short read_gridProp_grid_size_x,
-        const unsigned short read_gridProp_grid_size_y,
-        const unsigned short read_gridProp_dim,
-        const unsigned short read_gridProp_xblocks,
-        const unsigned int read_gridProp_total_itr,
-        const unsigned int read_gridProp_outer_loop_limit,
-        const unsigned short write_gridProp_size_x,
-        const unsigned short write_gridProp_size_y,
-        const unsigned short write_gridProp_actual_size_x,
-        const unsigned short write_gridProp_actual_size_y,
-        const unsigned short write_gridProp_grid_size_x,
-        const unsigned short write_gridProp_grid_size_y,
-        const unsigned short write_gridProp_dim,
-        const unsigned short write_gridProp_xblocks,
-        const unsigned int write_gridProp_total_itr,
-        const unsigned int write_gridProp_outer_loop_limit,
+        const unsigned short read_stencilConfig_grid_size_x,
+        const unsigned short read_stencilConfig_grid_size_y,
+        const unsigned short read_stencilConfig_lower_limit_x,
+        const unsigned short read_stencilConfig_lower_limit_y,
+        const unsigned short read_stencilConfig_upper_limit_x,
+        const unsigned short read_stencilConfig_upper_limit_y,
+        const unsigned short read_stencilConfig_dim,
+        const unsigned short read_stencilConfig_outer_loop_limit,
+        const unsigned int read_stencilConfig_total_itr,
+        const unsigned short write_stencilConfig_grid_size_x,
+        const unsigned short write_stencilConfig_grid_size_y,
+        const unsigned short write_stencilConfig_lower_limit_x,
+        const unsigned short write_stencilConfig_lower_limit_y,
+        const unsigned short write_stencilConfig_upper_limit_x,
+        const unsigned short write_stencilConfig_upper_limit_y,
+        const unsigned short write_stencilConfig_dim,
+        const unsigned short write_stencilConfig_outer_loop_limit,
+        const unsigned int write_stencilConfig_total_itr,
         hls::stream <ap_axiu<axis_data_width,0,0,0>>& arg0_axis_in,
         hls::stream <ap_axiu<axis_data_width,0,0,0>>& arg1_axis_out);

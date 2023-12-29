@@ -1,7 +1,7 @@
 #pragma once
 
 #include "common_config.hpp"
-#include <ops_hls_stencil_core.hpp>
+#include <ops_hls_stencil_core_v2.hpp>
 
 static constexpr unsigned short s2d_5pt_num_points = 5;
 static constexpr unsigned short s2d_5pt_stencil_size = 3;
@@ -9,12 +9,12 @@ static constexpr unsigned short s2d_5pt_stencil_dim = 2;
 
 // class s2d_5pt : public ops::hls::StencilCore<stencil_type, s2d_5pt_num_points, vector_factor, ops::hls::CoefTypes::CONST_COEF,
 //     s2d_5pt_stencil_size
-class s2d_5pt : public ops::hls::StencilCore<stencil_type, s2d_5pt_num_points, vector_factor, ops::hls::CoefTypes::CONST_COEF, 
+class s2d_5pt : public ops::hls::StencilCoreV2<stencil_type, s2d_5pt_num_points, vector_factor, ops::hls::CoefTypes::CONST_COEF,
         s2d_5pt_stencil_size, s2d_5pt_stencil_dim>
 {
     public:
-        using ops::hls::StencilCore<stencil_type, s2d_5pt_num_points, vector_factor, ops::hls::CoefTypes::CONST_COEF, 
-        s2d_5pt_stencil_size, s2d_5pt_stencil_dim>::m_gridProp;
+        using ops::hls::StencilCoreV2<stencil_type, s2d_5pt_num_points, vector_factor, ops::hls::CoefTypes::CONST_COEF,
+        s2d_5pt_stencil_size, s2d_5pt_stencil_dim>::m_stencilConfig;
 
         void stencilRead(widen_stream_dt& rd_buffer,
             ::hls::stream<stencil_type> output_bus_0[vector_factor],
@@ -28,9 +28,12 @@ class s2d_5pt : public ops::hls::StencilCore<stencil_type, s2d_5pt_num_points, v
             short i = -1, j = -s_stencil_half_span_x;
             unsigned short i_l = 0; // Line buffer index
 
-            ::ops::hls::GridPropertyCore gridProp = m_gridProp;
-            unsigned short itr_limit = gridProp.outer_loop_limit * gridProp.xblocks;
-            unsigned short total_itr = gridProp.total_itr;
+            ::ops::hls::StencilConfigCore stencilConfig = m_stencilConfig;
+			#pragma HLS ARRAY_PARTITION variable = stencilConfig.lower_limit dim = 1 complete
+			#pragma HLS ARRAY_PARTITION variable = stencilConfig.upper_limit dim = 1 complete
+
+            unsigned short itr_limit = stencilConfig.outer_loop_limit * stencilConfig.grid_size[0];
+            unsigned short total_itr = stencilConfig.total_itr;
             widen_dt read_val = 0;
 
             widen_dt stencilValues[s2d_5pt_num_points];
@@ -49,8 +52,8 @@ class s2d_5pt : public ops::hls::StencilCore<stencil_type, s2d_5pt_num_points, v
 			#pragma HLS ARRAY_PARTITION variable = rowArr_2 dim=1 complete
 
 #ifdef DEBUG_LOG
-            printf("[DEBUG][INTERNAL] itr_limt: %d, total_actual_itr: %d, grid_prop.xblocks: %d, grid_prop.outer_loop_limit: %d \n",
-            		itr_limit, total_itr, gridProp.xblocks, gridProp.outer_loop_limit);
+            printf("[DEBUG][INTERNAL] itr_limt: %d, total_actual_itr: %d, grid_prop.xblocks(grid_size[0]): %d, grid_prop.outer_loop_limit: %d \n",
+            		itr_limit, total_itr, stencilConfig.grid_size[0], stencilConfig.outer_loop_limit);
 #endif
 //            const unsigned short row_center_indices[] = {0,2,4};
 //			#pragma HLS ARRAY_PARTITION variable=row_center_indices type=complete
@@ -62,8 +65,8 @@ class s2d_5pt : public ops::hls::StencilCore<stencil_type, s2d_5pt_num_points, v
 
                 spc_blocking_read:
                 {
-                    bool cond_x_terminate = (i == gridProp.xblocks - 1);
-                    bool cond_y_terminate = (j == gridProp.outer_loop_limit - 1);
+                    bool cond_x_terminate = (i == stencilConfig.grid_size[0] - 1);
+                    bool cond_y_terminate = (j == stencilConfig.outer_loop_limit - 1);
 
                     if (cond_x_terminate)
                     {
@@ -99,7 +102,7 @@ class s2d_5pt : public ops::hls::StencilCore<stencil_type, s2d_5pt_num_points, v
 
                     i_l++;
 
-                    if(i_l >= (gridProp.xblocks - 1))
+                    if(i_l >= (stencilConfig.grid_size[0] - 1))
                     {
                     	i_l = 0;
                     }
@@ -142,13 +145,13 @@ class s2d_5pt : public ops::hls::StencilCore<stencil_type, s2d_5pt_num_points, v
 				{
 #pragma HLS UNROLL vector_factor
 					unsigned short index = i * vector_factor + k;
-					bool cond_no_send = register_it((index < m_lowerLimits[0])
-												|| (index >= m_upperLimits[0])
-												|| (j < m_lowerLimits[1])
-												|| (j >= m_upperLimits[1]));
+					bool cond_no_send = register_it((index < stencilConfig.lower_limit[0])
+												|| (index >= stencilConfig.upper_limit[0])
+												|| (j < stencilConfig.lower_limit[1])
+												|| (j >= stencilConfig.upper_limit[1]));
 #ifdef DEBUG_LOG
-					printf("[DEBUG][INTERNAL] index=(%d, %d), lowerbound=(%d, %d), upperboud=(%d, %d), cond_no_send=%d\n", index, j,
-								m_lowerLimits[0], m_lowerLimits[1], m_upperLimits[0], m_upperLimits[1], cond_no_send);
+					printf("[DEBUG][INTERNAL] index=(%d, %d), lowerbound=(%d, %d), upperbound=(%d, %d), cond_no_send=%d\n", index, j,
+								stencilConfig.lower_limit[0], stencilConfig.lower_limit[1], stencilConfig.upper_limit[0], stencilConfig.upper_limit[1], cond_no_send);
 					printf("[DEBUG][INTERNAL] values = (%f, %f, %f, %f, %f) \n\n", rowArr_0[k + s_stencil_half_span_x], rowArr_1[k], rowArr_1[k+1], rowArr_1[k+2], rowArr_2[k + s_stencil_half_span_x]);
 #endif
 					if (j >= 0)
@@ -163,86 +166,4 @@ class s2d_5pt : public ops::hls::StencilCore<stencil_type, s2d_5pt_num_points, v
                 }
             }
         }
-
-        // void stencilWrite(widen_stream_dt& wr_buffer, ::hls::stream<stencil_type> input_bus[vector_factor])
-        // {
-        //     unsigned short i = 0, j = 0;
-        //     unsigned short i_l = 0; // Line buffer index
-        //     unsigned short i_d = 0, j_d = 0;
-        //     ::ops::hls::GridPropertyCore gridProp = m_gridProp;
-        //     unsigned short itr_limit = gridProp.outer_loop_limit * gridProp.xblocks;
-
-        //     widen_dt m_updatedValue;
-
-        //     stencil_type m_memWrArr[vector_factor];
-		// 	#pragma HLS ARRAY_PARTITION variable = m_memWrArr dim=1 complete
-
-        //     for (unsigned short itr = 0; itr < itr_limit; itr++)
-        //     {
-        //     #pragma HLS LOOP_TRIPCOUNT min=min_grid_size max=max_grid_size avg=avg_grid_size
-        //     #pragma HLS PIPELINE II=1
-
-        //         i = i_d;
-        //         j = j_d;
-
-        //         spc_blocking:
-        //         {
-        //             bool cond_x_terminate = (i == gridProp.xblocks - 1);
-        //             bool cond_y_terminate = (j == gridProp.outer_loop_limit - 1);
-
-        //             if (cond_x_terminate)
-        //             {
-        //             	i_d = 0;
-        //             }
-        //             else
-        //             {
-        //             	i_d++;
-        //             }
-
-        //             if (cond_x_terminate && cond_y_terminate)
-        //             {
-        //             	j_d = 1;
-        //             }
-        //             else if(cond_x_terminate)
-        //             {
-        //             	j_d++;
-        //             }
-                    
-        //             i_l++;
-
-        //             if(i_l >= (gridProp.xblocks - 1))
-        //             {
-        //             	i_l = 0;
-        //             }
-        //         }
-                                
-        //         process_read: for (unsigned short k = 0; k < vector_factor; k++)
-        //         {
-        //             unsigned short index = (i << shift_bits) + k;
-
-        //         	bool cond_no_point_update = register_it(index < m_lowerLimits[0]
-        //                     || index >= m_upperLimits[0]
-        //                     || (j < (m_lowerLimits[1] + s_stencil_half_span_x))
-        //                     || (j >= (m_upperLimits[1] + s_stencil_half_span_x)));
-
-        //             ops::hls::DataConv tmpConv;
-
-        //             stencil_type r = input_bus[k].read();
-
-
-        //             tmpConv.f = m_memWrArr[k];
-        //             m_updatedValue.range(s_datatype_size * (k + 1) - 1, k * s_datatype_size) = tmpConv.i;
-        //         }
-
-        //         write:
-        //         {
-        //             bool cond_write = ( j >= 1);
-
-        //             if (cond_write)
-        //             {
-        //                 wr_buffer << m_updatedValue;
-        //             }
-        //         }
-        //     }
-        // }
 };

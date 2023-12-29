@@ -133,14 +133,9 @@ struct StencilConfigCore
     SizeType lower_limit;
     SizeType upper_limit;
     unsigned short dim;
+    unsigned short outer_loop_limit;
     unsigned int total_itr;
 };
-
-struct StencilConfigDevice : public StencilConfigCore
-{
-    unsigned int outer_loop_limit;
-};
-
 
 struct AccessRange
 {

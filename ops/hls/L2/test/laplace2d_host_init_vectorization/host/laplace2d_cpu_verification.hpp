@@ -3,7 +3,7 @@
 #define EPSILON 0.0001
 typedef float stencil_type;
 
-bool verify(stencil_type * grid_data1, stencil_type *  grid_data2, ops::hls::GridPropertyCore & gridProp)
+bool verify(stencil_type * grid_data1, stencil_type *  grid_data2, ops::hls::GridPropertyCoreV2& gridProp)
 {
     bool passed = true;
 
@@ -25,7 +25,7 @@ bool verify(stencil_type * grid_data1, stencil_type *  grid_data2, ops::hls::Gri
     return passed;
 }
 
-void copyGrid(stencil_type * grid_dst, stencil_type * grid_src, ops::hls::GridPropertyCore& gridProp)
+void copyGrid(stencil_type * grid_dst, stencil_type * grid_src, ops::hls::GridPropertyCoreV2& gridProp)
 {
     for (unsigned short j = 0; j < gridProp.grid_size[1]; j++)
     {
@@ -37,7 +37,7 @@ void copyGrid(stencil_type * grid_dst, stencil_type * grid_src, ops::hls::GridPr
     }
 }
 
-void testInitGrid(stencil_type* grid_data, ops::hls::GridPropertyCore& gridProp)
+void testInitGrid(stencil_type* grid_data, ops::hls::GridPropertyCoreV2& gridProp)
 {
     for (unsigned short j = 0; j < gridProp.grid_size[1]; j++)
     {
@@ -49,7 +49,7 @@ void testInitGrid(stencil_type* grid_data, ops::hls::GridPropertyCore& gridProp)
 	}
 }
 
-void initilizeGrid(stencil_type * grid_data, ops::hls::GridPropertyCore& gridProp, const float& pi, const int& jmax)
+void initilizeGrid(stencil_type * grid_data, ops::hls::GridPropertyCoreV2& gridProp, const float& pi, const int& jmax)
 {
     for (unsigned short j = 0; j < gridProp.grid_size[1]; j++)
     {
@@ -77,7 +77,7 @@ void initilizeGrid(stencil_type * grid_data, ops::hls::GridPropertyCore& gridPro
     }
 }
 
-void calcGrid(stencil_type* grid1, stencil_type* grid2, ops::hls::GridPropertyCore& gridProp)
+void calcGrid(stencil_type* grid1, stencil_type* grid2, ops::hls::GridPropertyCoreV2& gridProp)
 {
 	for (unsigned int j = gridProp.d_m[1]; j < (gridProp.d_p[1] + gridProp.size[1]); j++)
 	{

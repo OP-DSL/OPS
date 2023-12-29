@@ -19,35 +19,34 @@ public:
     void run(ops::hls::AccessRange& range, ops::hls::Grid<float>& arg0, ops::hls::Grid<float>& arg1)
     {
         cl_int err;
-        createDeviceBuffer(CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, arg0.hostBuffer);
-        ops::hls::GridPropertyCore arg0_adjustedGridProp;
-        getRangeAdjustedGridProp(arg0.originalProperty, range, arg0_adjustedGridProp, vector_factor);
+//        createDeviceBuffer(CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, arg0.hostBuffer);
+//        ops::hls::GridPropertyCore arg0_adjustedGridProp;
+//        ops::hls::StencilConfigCore getStencilConfig(ops::hls::GridPropertyCoreV2& original, ops::hls::AccessRange& range, const unsigned short stencil_vector_factor=8,
+//                const unsigned short mem_vector_factor=8, ops::hls::SizeType d_m=default_d_m, ops::hls::SizeType d_p=default_d_p)
+        auto arg0_stencilConfig = getStencilConfig(arg0.originalProperty, range, vector_factor);
 #ifdef DEBUG_LOG
         printGridProp(arg0.originalProperty, "arg0_originalGridProp");
-        printGridProp(arg0_adjustedGridProp, "arg0_adjustedGridProp");
+        printStencilConfig(arg0_adjustedGridProp, "arg0_stencilConfig");
 #endif
 
-        createDeviceBuffer(CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, arg1.hostBuffer);
-        ops::hls::GridPropertyCore arg1_adjustedGridProp;
-        getRangeAdjustedGridProp(arg1.originalProperty, range, arg1_adjustedGridProp, vector_factor);
+//        createDeviceBuffer(CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, arg1.hostBuffer);
+//        ops::hls::GridPropertyCore arg1_adjustedGridProp;
+//        getRangeAdjustedGridProp(arg1.originalProperty, range, arg1_adjustedGridProp, vector_factor);
 
 #ifdef DEBUG_LOG
         printGridProp(arg1.originalProperty, "arg1_originalGridProp");
-        printGridProp(arg1_adjustedGridProp, "arg1_adjustedGridProp");
 #endif
         int narg = 0;
       
-        OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_adjustedGridProp.size[0]));
-		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_adjustedGridProp.size[1]));
-		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_adjustedGridProp.actual_size[0]));
-		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_adjustedGridProp.actual_size[1]));
-		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_adjustedGridProp.grid_size[0]));
-		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_adjustedGridProp.grid_size[1]));
-		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_adjustedGridProp.dim));
-		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_adjustedGridProp.xblocks));
-		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_adjustedGridProp.total_itr));
-		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_adjustedGridProp.outer_loop_limit));
-        OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, getTotalBytes<stencil_type>(arg0_adjustedGridProp)));
+		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_stencilConfig.grid_size[0]));
+		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_stencilConfig.grid_size[1]));
+		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_stencilConfig.lower_limit[0]));
+		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_stencilConfig.lower_limit[1]));
+		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_stencilConfig.upper_limit[0]));
+		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_stencilConfig.upper_limit[1]));
+		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_stencilConfig.dim));
+		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_stencilConfig.outer_loop_limit));
+		OCL_CHECK(err, err = m_kernel_copy.setArg(narg++, arg0_stencilConfig.total_itr));
 
         narg = 0;
 		OCL_CHECK(err, err = m_datamover_copy.setArg(narg++, range.start[0]));

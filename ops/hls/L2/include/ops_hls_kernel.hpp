@@ -44,7 +44,7 @@ namespace ops
 {
 namespace hls
 {
-
+#ifndef OPS_HLS_V2
 template <typename T>
 struct Grid
 {
@@ -57,6 +57,20 @@ struct Grid
 	bool isHostBufDirty;
 	bool isDevBufDirty;
 };
+#else
+template <typename T>
+struct Grid
+{
+	GridPropertyCoreV2 originalProperty;
+	unsigned short vector_factor = 8; //grid vector factor considered for adjustements
+	host_buffer_t<T> hostBuffer;
+	cl::Buffer deviceBuffer;
+	std::vector<cl::Event> activeEvents;
+	std::vector<std::pair<cl::Event, std::string>> allEvents;
+	bool isHostBufDirty;
+	bool isDevBufDirty;
+};
+#endif
 
 template <typename T>
 void addEvent(Grid<T>& p_grid, cl::Event& p_event, std::string prompt="")
