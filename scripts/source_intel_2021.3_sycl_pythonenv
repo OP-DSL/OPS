@@ -8,11 +8,11 @@ module purge
 . ~/.bashrc
 export PATH=/rr-home/gihan/numawrap:$PATH
 
-module load llvm-14.0.6/llvm-14.0.6
-export LIBCLANG_PATH=/opt/llvm/14.0.6/lib/libclang.so
+#module load llvm-14.0.6/llvm-14.0.6
+#export LIBCLANG_PATH=/opt/llvm/14.0.6/lib/libclang.so
 
 module load python/3.9.7
-source $OPS_INSTALL_PATH/../ops_translator_v2/ops_venv/bin/activate
+source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
 
 #CUDA and NVIDIA OpenCL
 #module load cuda/toolkit-10.2.89
