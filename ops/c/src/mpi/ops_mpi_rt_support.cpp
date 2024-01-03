@@ -1021,47 +1021,75 @@ ops_reduce_gen(complexf, MPI_C_FLOAT_COMPLEX, complexf(0.0f,0.0f))
     memcpy(handle->data, local.data(), handle->size);
 
 void ops_execute_reduction(ops_reduction handle) {
-  if (strcmp(handle->type, "int") == 0 || strcmp(handle->type, "int(4)") == 0 ||
+
+  if (strcmp(handle->type, "int") == 0 ||
+      strcmp(handle->type, "int(4)") == 0 ||
+      strcmp(handle->type, "integer") == 0 ||
       strcmp(handle->type, "integer(4)") == 0 ||
-      strcmp(handle->type, "integer") == 0) {
+      strcmp(handle->type, "integer(kind=4)") == 0)
+  {
     ops_reduce_exec(int, 0)
   }
-  if (strcmp(handle->type, "float") == 0 || strcmp(handle->type, "real") == 0) {
+  else if (strcmp(handle->type, "float") == 0 ||
+           strcmp(handle->type, "real") == 0 ||
+           strcmp(handle->type, "real(4)") == 0 ||
+           strcmp(handle->type, "real(kind=4)") == 0)
+  {
     ops_reduce_exec(float, 0.0f)
   }
-  if (strcmp(handle->type, "double") == 0 ||
-      strcmp(handle->type, "real(8)") == 0 ||
-      strcmp(handle->type, "double precision") == 0) {
+  else if (strcmp(handle->type, "double") == 0 ||
+           strcmp(handle->type, "real(8)") == 0 ||
+           strcmp(handle->type, "real(kind=8)") == 0 ||
+           strcmp(handle->type, "double precision") == 0)
+  {
     ops_reduce_exec(double, 0.0)
   }
-  if (strcmp(handle->type, "complexd") == 0) {
+  else if (strcmp(handle->type, "complexd") == 0)
+  {
     ops_reduce_exec_complex(complexd, complexd(0.0,0.0))
   }
-  if (strcmp(handle->type, "complexf") == 0) {
+  else if (strcmp(handle->type, "complexf") == 0)
+  {
     ops_reduce_exec_complex(complexf, complexf(0.0f,0.0f))
   }
-  if (strcmp(handle->type, "char") == 0) {
+  else if (strcmp(handle->type, "char") == 0)
+  {
     ops_reduce_exec(char, 0)
   }
-  if (strcmp(handle->type, "short") == 0) {
+  else if (strcmp(handle->type, "short") == 0)
+  {
     ops_reduce_exec(short, 0)
   }
-  if (strcmp(handle->type, "long") == 0) {
+  else if (strcmp(handle->type, "long") == 0)
+  {
     ops_reduce_exec(long, 0)
   }
-  if ((strcmp(handle->type, "long long") == 0) || (strcmp(handle->type, "ll") == 0)) {
+  else if (strcmp(handle->type, "long long") == 0 ||
+           strcmp(handle->type, "ll") == 0)
+  {
     ops_reduce_exec(ll, 0)
   }
-  if ((strcmp(handle->type, "unsigned long long") == 0) || (strcmp(handle->type, "ull") == 0)) {
+  else if (strcmp(handle->type, "unsigned long long") == 0 ||
+           strcmp(handle->type, "ull") == 0)
+  {
     ops_reduce_exec(ull, 0)
   }
-  if ((strcmp(handle->type, "unsigned long") == 0) || (strcmp(handle->type, "ul") == 0)) {
+  else if (strcmp(handle->type, "unsigned long") == 0 ||
+           strcmp(handle->type, "ul") == 0)
+  {
     ops_reduce_exec(ul, 0)
   }
-  if ((strcmp(handle->type, "unsigned int") == 0) || (strcmp(handle->type, "uint") == 0)) {
+  else if (strcmp(handle->type, "unsigned int") == 0 ||
+           strcmp(handle->type, "uint") == 0)
+  {
     ops_reduce_exec(uint, 0)
   }
-
+  else
+  {
+    OPSException ex(OPS_NOT_IMPLEMENTED);
+    ex << "Error: Unknown data type for ops_reduction";
+    throw ex;
+  }
 
 }
 
