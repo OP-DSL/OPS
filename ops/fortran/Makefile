@@ -36,7 +36,7 @@ endif
 
 ifeq ($(OPS_COMPILER),pgi)
 	TARGETS += f_cuda f_mpi_cuda
-	C_OPS_INC += -I$(CUDA_INC)
+	C_OPS_INC += $(CUDA_INC)
 endif
 
 all: $(TARGETS)
