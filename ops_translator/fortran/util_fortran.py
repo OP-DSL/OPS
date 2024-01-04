@@ -129,4 +129,4 @@ def find_kernel_routine(text, fun_name):
     print('Could not find matching end subroutine for user function')
     exit(1)
   req_kernel = text[beg_pos:beg_pos+end.end()]
-  return req_kernel+'\n'
+  return req_kernel.strip()+'\n'

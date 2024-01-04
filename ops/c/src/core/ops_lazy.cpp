@@ -932,10 +932,10 @@ range[0]             left_neighbour_end           right_neighbour_start         
             left-halo     left-boundary          right-boundary    right-halo
 */
   OPS_instance *instance = OPS_instance::getOPSInstance();
-  std::vector<int> left_neighbour_end = tiling_plans[match].left_neighbour_end[loop_indx];
-  std::vector<int> right_neighbour_start = tiling_plans[match].right_neighbour_start[loop_indx];
-  std::vector<int> decomp_disp = tiling_plans[match].loop_decomp_disp[loop_indx];
-  std::vector<int> decomp_size = tiling_plans[match].loop_decomp_size[loop_indx];
+  std::vector<int>& left_neighbour_end = tiling_plans[match].left_neighbour_end[loop_indx];
+  std::vector<int>& right_neighbour_start = tiling_plans[match].right_neighbour_start[loop_indx];
+  std::vector<int>& decomp_disp = tiling_plans[match].loop_decomp_disp[loop_indx];
+  std::vector<int>& decomp_size = tiling_plans[match].loop_decomp_size[loop_indx];
 
   int beg2, end2;
   for (int d = 0; d < OPS_MAX_DIM; d++) {

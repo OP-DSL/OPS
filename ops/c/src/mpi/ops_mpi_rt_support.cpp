@@ -1107,23 +1107,31 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
   int ndim = sb->ndim;
 
   for (int dim = 0; dim < ndim; dim++) {
-    range_intersect[dim] = intersection( iter_range[2 * dim], iter_range[2 * dim + 1],
-                                         sd->decomp_disp[dim], (sd->decomp_disp[dim] + sd->decomp_size[dim]));
-    // i.e. the intersection of the execution range with my full range
+    range_intersect[dim] = intersection(
+        iter_range[2 * dim], iter_range[2 * dim + 1], sd->decomp_disp[dim],
+        (sd->decomp_disp[dim] + sd->decomp_size[dim])); // i.e. the intersection
+                                                        // of the execution
+                                                        // range with my full
+                                                        // range
 
-    left_boundary_modified[dim] = intersection( iter_range[2 * dim], iter_range[2 * dim + 1],
-                                               sd->decomp_disp[dim], sd->decomp_disp[dim] + MAX_DEPTH - 1);
-    // i.e. the intersection of the execution range with my left boundary
-
-    right_halo_modified[dim] = intersection(iter_range[2 * dim], iter_range[2 * dim + 1],
-                  (sd->decomp_disp[dim] + sd->decomp_size[dim]), (sd->decomp_disp[dim] + sd->decomp_size[dim]) + MAX_DEPTH - 1);
-    // i.e. the intersection of the execution range with the my right neighbour's boundary
-
-    right_boundary_modified[dim] = intersection( iter_range[2 * dim], iter_range[2 * dim + 1],
-       (sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH + 1, (sd->decomp_disp[dim] + sd->decomp_size[dim]));
-
-    left_halo_modified[dim] = intersection( iter_range[2 * dim], iter_range[2 * dim + 1],
-                           sd->decomp_disp[dim] - MAX_DEPTH + 1, sd->decomp_disp[dim]);
+    left_boundary_modified[dim] = intersection(
+        iter_range[2 * dim], iter_range[2 * dim + 1], sd->decomp_disp[dim],
+        sd->decomp_disp[dim] + MAX_DEPTH - 1); // i.e. the intersection of the
+                                               // execution range with my left
+                                               // boundary
+    right_halo_modified[dim] =
+        intersection(iter_range[2 * dim], iter_range[2 * dim + 1],
+                     (sd->decomp_disp[dim] + sd->decomp_size[dim]),
+                     (sd->decomp_disp[dim] + sd->decomp_size[dim]) + MAX_DEPTH -
+                         1); // i.e. the intersection of the execution range
+                             // with the my right neighbour's boundary
+    right_boundary_modified[dim] = intersection(
+        iter_range[2 * dim], iter_range[2 * dim + 1],
+        (sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH + 1,
+        (sd->decomp_disp[dim] + sd->decomp_size[dim]));
+    left_halo_modified[dim] = intersection(
+        iter_range[2 * dim], iter_range[2 * dim + 1],
+        sd->decomp_disp[dim] - MAX_DEPTH + 1, sd->decomp_disp[dim]);
   }
 
   sd->dirtybit = 1;
@@ -1131,19 +1139,22 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
     int other_dims = 1;
     for (int d2 = 0; d2 < ndim; d2++)
       if (d2 != dim)
-        other_dims = other_dims && (range_intersect[d2] > 0 || dat->size[d2] == 1);
+        other_dims =
+            other_dims && (range_intersect[d2] > 0 || dat->size[d2] == 1);
 
     if (left_boundary_modified[dim] > 0 && other_dims) {
       int beg = 1 + (iter_range[2 * dim] >= sd->decomp_disp[dim]
                          ? iter_range[2 * dim] - sd->decomp_disp[dim]
                          : 0);
-      for (int d2 = beg; d2 < beg + left_boundary_modified[dim]; d2++) {
-        // we shifted dirtybits, [1] is the first layer not the second
+      for (int d2 = beg; d2 < beg + left_boundary_modified[dim];
+           d2++) { // we shifted dirtybits, [1] is the first layer not the
+                   // second
         sd->dirty_dir_send[2 * MAX_DEPTH * dim + d2] = 1;
       }
     }
     if (left_halo_modified[dim] > 0 && other_dims) {
-      int beg = iter_range[2 * dim] >= sd->decomp_disp[dim] - MAX_DEPTH + 1
+      int beg =
+          iter_range[2 * dim] >= sd->decomp_disp[dim] - MAX_DEPTH + 1
               ? iter_range[2 * dim] - (sd->decomp_disp[dim] - MAX_DEPTH + 1)
               : 0;
       for (int d2 = beg; d2 < beg + left_halo_modified[dim]; d2++) {
@@ -1151,17 +1162,23 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
       }
     }
     if (right_boundary_modified[dim] > 0 && other_dims) {
-      int beg = iter_range[2 * dim] >= (sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH + 1
-              ? iter_range[2 * dim] - ((sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH + 1)
+      int beg =
+          iter_range[2 * dim] >=
+                  (sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH + 1
+              ? iter_range[2 * dim] -
+                    ((sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH +
+                     1)
               : 0;
       for (int d2 = beg; d2 < beg + right_boundary_modified[dim]; d2++) {
         sd->dirty_dir_send[2 * MAX_DEPTH * dim + 2 * MAX_DEPTH - d2 - 1] = 1;
       }
     }
     if (right_halo_modified[dim] > 0 && other_dims) {
-      int beg = 1 + (iter_range[2 * dim] >= (sd->decomp_disp[dim] + sd->decomp_size[dim])
-                   ? iter_range[2 * dim] - (sd->decomp_disp[dim] + sd->decomp_size[dim])
-                   : 0);
+      int beg = 1 + (iter_range[2 * dim] >=
+                             (sd->decomp_disp[dim] + sd->decomp_size[dim])
+                         ? iter_range[2 * dim] -
+                               (sd->decomp_disp[dim] + sd->decomp_size[dim])
+                         : 0);
       for (int d2 = beg; d2 < beg + right_halo_modified[dim]; d2++) {
         sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH + d2] = 1;
       }

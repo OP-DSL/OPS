@@ -205,26 +205,44 @@ def ops_fortran_gen_mpi_cuda_process(date, consts, cur_kernel, soa_set, nk):
             config.depth = 0
             code('#define OPS_ACC'+str(n+1)+'(x,y,z) (x+xdim'+str(n+1)+'_'+name+'*(y)+xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'_'+name+'*(z)+1)')
           code('')
-
+  
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
         if dims[n] != '1':
           #comm('multi-dim macros')
           config.depth = 4
+          code('INTEGER(KIND=4), MANAGED :: multi_d'+str(n+1))
           code('INTEGER(KIND=4), CONSTANT :: xdim'+str(n+1)+'_'+name)
           code('INTEGER(KIND=4):: xdim'+str(n+1)+'_'+name+'_h  = -1')
-          if NDIM==1:
-            config.depth = 0
-            code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x)*'+str(dims[n])+'+(d))')
-          if NDIM==2:
-            config.depth = 0
-            code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'_'+name+'*(y)*'+str(dims[n])+'))')
-          if NDIM==3:
-            config.depth = 4
-            code('INTEGER(KIND=4), CONSTANT :: ydim'+str(n+1)+'_'+name)
-            code('INTEGER(KIND=4):: ydim'+str(n+1)+'_'+name+'_h  = -1')
-            config.depth = 0
-            code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x)*'+str(dims[n])+'+(d)+(xdim'+str(n+1)+'_'+name+'*(y)*'+str(dims[n])+')+(xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'_'+name+'*(z)*'+str(dims[n])+'))')
+          if soa_set == 0:
+            if NDIM==1:
+              config.depth = 0
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x)*multi_d'+str(n+1)+' + (d))')
+            if NDIM==2:
+              config.depth = 0
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x)*multi_d'+str(n+1)+' + (d) + (xdim'+str(n+1)+'_'+name+'*(y)*multi_d'+str(n+1)+'))')
+            if NDIM==3:
+              config.depth = 4
+              code('INTEGER(KIND=4), CONSTANT :: ydim'+str(n+1)+'_'+name)
+              code('INTEGER(KIND=4):: ydim'+str(n+1)+'_'+name+'_h  = -1')
+              config.depth = 0
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x)*multi_d'+str(n+1)+' + (d) + (xdim'+str(n+1)+'_'+name+'*(y)*multi_d'+str(n+1)+') + (xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'_'+name+'*(z)*multi_d'+str(n+1)+'))')
+          else:
+            if NDIM==1:
+              config.depth = 0
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x) + (xdim'+str(n+1)+'_'+name+'*(d-1) + 1))')
+            if NDIM==2:
+              code('INTEGER(KIND=4), CONSTANT :: ydim'+str(n+1)+'_'+name)
+              code('INTEGER(KIND=4):: ydim'+str(n+1)+'_'+name+'_h  = -1')
+              config.depth = 0
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x) + (xdim'+str(n+1)+'_'+name+'*(y)) + (d-1)*xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'_'+name+' + 1)')
+            if NDIM==3:
+              code('INTEGER(KIND=4), CONSTANT :: ydim'+str(n+1)+'_'+name)
+              code('INTEGER(KIND=4):: ydim'+str(n+1)+'_'+name+'_h  = -1')
+              code('INTEGER(KIND=4), CONSTANT :: zdim'+str(n+1)+'_'+name)
+              code('INTEGER(KIND=4):: zdim'+str(n+1)+'_'+name+'_h  = -1')
+              config.depth = 0
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x) + (xdim'+str(n+1)+'_'+name+'*(y)) + (xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'_'+name+'*(z)) + (d-1)*xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'_'+name+'*zdim'+str(n+1)+'_'+name+' + 1)')
           code('')
 
     config.depth = 0
@@ -404,7 +422,7 @@ def ops_fortran_gen_mpi_cuda_process(date, consts, cur_kernel, soa_set, nk):
       code('INTEGER(KIND=4), VALUE :: reductionOperation')
       code('INTEGER(KIND=4), VALUE :: dim')
       code('REAL(KIND=8), DIMENSION(0:*) :: sharedDouble8')
-      code('INTEGER(KIND=4) :: i1')
+      code('INTEGER(KIND=4) :: i1, i2')
       code('INTEGER(KIND=4) :: d')
       code('INTEGER(KIND=4) :: threadID')
         
@@ -496,7 +514,7 @@ def ops_fortran_gen_mpi_cuda_process(date, consts, cur_kernel, soa_set, nk):
       code('INTEGER(KIND=4), VALUE :: reductionOperation')
       code('INTEGER(KIND=4), VALUE :: dim')
       code('INTEGER(KIND=4), DIMENSION(0:*) :: sharedInt4')
-      code('INTEGER(KIND=4) :: i1')
+      code('INTEGER(KIND=4) :: i1, i2')
       code('INTEGER(KIND=4) :: d')
       code('INTEGER(KIND=4) :: threadID')
 
@@ -728,12 +746,20 @@ def ops_fortran_gen_mpi_cuda_process(date, consts, cur_kernel, soa_set, nk):
 
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        if NDIM == 1:
-          code('arg'+str(n+1)+' = (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n]))
-        elif NDIM == 2:
-          code('arg'+str(n+1)+' = (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + (n_y-1) * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name)
-        elif NDIM==3:
-          code('arg'+str(n+1)+' = (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + (n_y-1) * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name+' + (n_z-1) * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name+' * ydim'+str(n+1)+'_'+name)
+        if soa_set == 0:
+          if NDIM == 1:
+            code('arg'+str(n+1)+' = (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n]))
+          elif NDIM == 2:
+            code('arg'+str(n+1)+' = (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + (n_y-1) * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name)
+          elif NDIM==3:
+            code('arg'+str(n+1)+' = (n_x-1) * '+str(stride[NDIM*n])+'*'+str(dims[n])+' + (n_y-1) * '+str(stride[NDIM*n+1])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name+' + (n_z-1) * '+str(stride[NDIM*n+2])+'*'+str(dims[n])+' * xdim'+str(n+1)+'_'+name+' * ydim'+str(n+1)+'_'+name)
+        else:
+          if NDIM == 1:
+            code('arg'+str(n+1)+' = (n_x-1) * '+str(stride[NDIM*n]))
+          elif NDIM == 2:
+            code('arg'+str(n+1)+' = (n_x-1) * '+str(stride[NDIM*n])+' + (n_y-1) * '+str(stride[NDIM*n+1])+' * xdim'+str(n+1)+'_'+name)
+          elif NDIM==3:
+            code('arg'+str(n+1)+' = (n_x-1) * '+str(stride[NDIM*n])+' + (n_y-1) * '+str(stride[NDIM*n+1])+' * xdim'+str(n+1)+'_'+name+' + (n_z-1) * '+str(stride[NDIM*n+2])+' * xdim'+str(n+1)+'_'+name+' * ydim'+str(n+1)+'_'+name)
 
     #initialize local reduction variables depending on the operation
     for n in range (0, nargs):
@@ -868,8 +894,6 @@ def ops_fortran_gen_mpi_cuda_process(date, consts, cur_kernel, soa_set, nk):
         code('INTEGER(KIND=4), POINTER, DIMENSION(:) :: dat'+str(n+1)+'_size')
         code('INTEGER(KIND=4) :: dat'+str(n+1)+'_base')
         code('INTEGER(KIND=4) :: xdim'+str(n+1))
-        if dims[n] != '1':
-          code('INTEGER(KIND=4) :: multi_d'+str(n+1))
         if NDIM==2:
           code('INTEGER(KIND=4) :: ydim'+str(n+1))
         elif NDIM==3:
@@ -1035,21 +1059,50 @@ def ops_fortran_gen_mpi_cuda_process(date, consts, cur_kernel, soa_set, nk):
     condition = ''
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        condition = condition + '(xdim'+str(n+1)+' .NE. xdim'+str(n+1)+'_'+name+'_h) .OR. &\n  '
-        if NDIM==3:
-          condition = condition + '(ydim'+str(n+1)+' .NE. ydim'+str(n+1)+'_'+name+'_h) .OR. &\n  '
+        if dims[n] == '1':
+          condition = condition + '(xdim'+str(n+1)+' .NE. xdim'+str(n+1)+'_'+name+'_h) .OR. &\n  '
+          if NDIM==3:
+            condition = condition + '(ydim'+str(n+1)+' .NE. ydim'+str(n+1)+'_'+name+'_h) .OR. &\n  '
+        if dims[n] != '1':
+          condition = condition + '(xdim'+str(n+1)+' .NE. xdim'+str(n+1)+'_'+name+'_h) .OR. &\n  '
+          if soa_set == 0:
+            if NDIM==3:
+              condition = condition + '(ydim'+str(n+1)+' .NE. ydim'+str(n+1)+'_'+name+'_h) .OR. &\n  '
+          else:
+            if NDIM==2:
+              condition = condition + '(ydim'+str(n+1)+' .NE. ydim'+str(n+1)+'_'+name+'_h) .OR. &\n  '
+            if NDIM==3:
+              condition = condition + '(ydim'+str(n+1)+' .NE. ydim'+str(n+1)+'_'+name+'_h) .OR. &\n  '
+              condition = condition + '(zdim'+str(n+1)+' .NE. zdim'+str(n+1)+'_'+name+'_h) .OR. &\n  '
+
     condition = condition[:-9]
 
     IF(condition)
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat':
-        code('xdim'+str(n+1)+'_'+name+' = xdim'+str(n+1))
-        code('xdim'+str(n+1)+'_'+name+'_h = xdim'+str(n+1))
-        if NDIM==3:
-          code('ydim'+str(n+1)+'_'+name+' = ydim'+str(n+1))
-          code('ydim'+str(n+1)+'_'+name+'_h = ydim'+str(n+1))
+        if dims[n] == '1':
+          code('xdim'+str(n+1)+'_'+name+' = xdim'+str(n+1))
+          code('xdim'+str(n+1)+'_'+name+'_h = xdim'+str(n+1))
+          if NDIM==3:
+            code('ydim'+str(n+1)+'_'+name+' = ydim'+str(n+1))
+            code('ydim'+str(n+1)+'_'+name+'_h = ydim'+str(n+1))
+        if dims[n] != '1':
+          code('xdim'+str(n+1)+'_'+name+' = xdim'+str(n+1))
+          code('xdim'+str(n+1)+'_'+name+'_h = xdim'+str(n+1))
+          if soa_set == 0:
+            if NDIM==3:
+              code('ydim'+str(n+1)+'_'+name+' = ydim'+str(n+1))
+              code('ydim'+str(n+1)+'_'+name+'_h = ydim'+str(n+1))
+          else:
+            if NDIM==2:
+              code('ydim'+str(n+1)+'_'+name+' = ydim'+str(n+1))
+              code('ydim'+str(n+1)+'_'+name+'_h = ydim'+str(n+1))
+            if NDIM==3:
+              code('ydim'+str(n+1)+'_'+name+' = ydim'+str(n+1))
+              code('ydim'+str(n+1)+'_'+name+'_h = ydim'+str(n+1))
+              code('zdim'+str(n+1)+'_'+name+' = zdim'+str(n+1))
+              code('zdim'+str(n+1)+'_'+name+'_h = zdim'+str(n+1))
     ENDIF()
-
 
     # Setup CUDA grid and thread blocks for kernel call
     code('')
