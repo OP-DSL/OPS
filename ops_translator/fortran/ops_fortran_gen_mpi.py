@@ -327,11 +327,17 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
 
     if NDIM==1:
       ENDDO()
+      if reduction != 1 and arg_idx != 1:
+        code('!$OMP END SIMD')
     elif NDIM==2:
       ENDDO()
+      if reduction != 1:
+        code('!$OMP END SIMD')
       ENDDO()
     elif NDIM==3:
       ENDDO()
+      if reduction != 1:
+        code('!$OMP END SIMD')
       ENDDO()
       ENDDO()
     code('')
