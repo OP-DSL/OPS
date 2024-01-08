@@ -28,12 +28,79 @@
 static ops::hls::SizeType default_d_p({0,0,0});
 static ops::hls::SizeType default_d_m({0,0,0});
 
+void printGridProp(ops::hls::GridPropertyCore& gridProp, std::string prompt = "")
+{
+	std::cout << "-------------------------------" << std::endl;
+	std::cout << "  grid properties: " << prompt << std::endl;
+	std::cout << "-------------------------------" << std::endl;
+	std::cout << std::setw(15) << std::right << "dim: "  << gridProp.dim << std::endl;
+	std::cout << std::setw(15) << std::right << "d_m: " << "(" << gridProp.d_m[0]
+				<< ", " << gridProp.d_m[1] << ", " << gridProp.d_m[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "d_p: " << "(" << gridProp.d_p[0]
+				<< ", " << gridProp.d_p[1] << ", " << gridProp.d_p[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "logical size: " << "(" << gridProp.size[0]
+				<< ", " << gridProp.size[1] << ", " << gridProp.size[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "actual size: " << "(" << gridProp.actual_size[0]
+				<< ", " << gridProp.actual_size[1] << ", " << gridProp.actual_size[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "grid size: " << "(" << gridProp.grid_size[0]
+				<< ", " << gridProp.grid_size[1] << ", " << gridProp.grid_size[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "xblocks: " << gridProp.xblocks << std::endl;
+	std::cout << std::setw(15) << std::right << "total iterations: " << gridProp.total_itr << std::endl;
+	std::cout << std::setw(15) << std::right << "outer limit: " << gridProp.outer_loop_limit << std::endl;
+	std::cout << "-------------------------------" << std::endl;
+}
+
+void printGridProp(ops::hls::GridPropertyCoreV2& gridProp, std::string prompt = "")
+{
+	std::cout << "-------------------------------" << std::endl;
+	std::cout << "  grid properties (V2): " << prompt << std::endl;
+	std::cout << "-------------------------------" << std::endl;
+	std::cout << std::setw(15) << std::right << "dim: "  << gridProp.dim << std::endl;
+	std::cout << std::setw(15) << std::right << "d_m: " << "(" << gridProp.d_m[0]
+				<< ", " << gridProp.d_m[1] << ", " << gridProp.d_m[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "d_p: " << "(" << gridProp.d_p[0]
+				<< ", " << gridProp.d_p[1] << ", " << gridProp.d_p[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "logical size: " << "(" << gridProp.size[0]
+				<< ", " << gridProp.size[1] << ", " << gridProp.size[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "actual size: " << "(" << gridProp.actual_size[0]
+				<< ", " << gridProp.actual_size[1] << ", " << gridProp.actual_size[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "grid size: " << "(" << gridProp.grid_size[0]
+				<< ", " << gridProp.grid_size[1] << ", " << gridProp.grid_size[2] <<")"<< std::endl;
+	std::cout << "-------------------------------" << std::endl;
+}
+
+void printStencilConfig(ops::hls::StencilConfigCore& stencilConfig, std::string prompt = "")
+{
+	std::cout << "-------------------------------" << std::endl;
+	std::cout << "  stencil configuration (V2): " << prompt << std::endl;
+	std::cout << "-------------------------------" << std::endl;
+	std::cout << std::setw(15) << std::right << "grid_size (xblocks, y, z): " << "(" << stencilConfig.grid_size[0]
+				<< ", " << stencilConfig.grid_size[1] << ", " << stencilConfig.grid_size[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "lower_limit: " << "(" << stencilConfig.lower_limit[0]
+				<< ", " << stencilConfig.lower_limit[1] << ", " << stencilConfig.lower_limit[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "upper_limit: " << "(" << stencilConfig.upper_limit[0]
+				<< ", " << stencilConfig.upper_limit[1] << ", " << stencilConfig.upper_limit[2] <<")"<< std::endl;
+	std::cout << std::setw(15) << std::right << "dim: " << stencilConfig.dim << std::endl;
+	std::cout << std::setw(15) << std::right << "outer_loop_limit: " << stencilConfig.outer_loop_limit << std::endl;
+	std::cout << std::setw(15) << std::right << "total_itr: " << stencilConfig.total_itr << std::endl;
+	std::cout << "-------------------------------" << std::endl;
+}
+
+void printAccessRange(ops::hls::AccessRange& range, std::string prompt = "")
+{
+	std::cout << "-------------------------------" << std::endl;
+	std::cout << " access range " << prompt << " - dim: " << range.dim << ", range: (" << range.start[0] << ", " << range.start[1] << ", "
+			<< range.start[2] << ") --> (" << range.end[0] << ", " << range.end[0] << ", "<< range.end[2] << ")" << std::endl;
+	std::cout << "-------------------------------" << std::endl;
+
+}
+
 #ifndef OPS_HLS_V2
 ops::hls::GridPropertyCore createGridPropery(const unsigned short dim,
 		const ops::hls::SizeType& size,
 		const ops::hls::SizeType& d_m,
 		const ops::hls::SizeType& d_p,
-		const unsigned short vector_factor=8)
+		const unsigned short vector_factor=16)
 {
 	ops::hls::GridPropertyCore gridProp;
 	gridProp.dim = dim;
@@ -67,7 +134,7 @@ ops::hls::GridPropertyCoreV2 createGridPropery(const unsigned short dim,
 		const ops::hls::SizeType& size,
 		const ops::hls::SizeType& d_m,
 		const ops::hls::SizeType& d_p,
-		const unsigned short vector_factor=8)
+		const unsigned short vector_factor=16)
 {
 	ops::hls::GridPropertyCoreV2 gridProp;
 	gridProp.dim = dim;
@@ -99,7 +166,7 @@ ops::hls::Block ops_hls_decl_block(int dims, std::string name)
 template <typename T>
 ops::hls::Grid<T> ops_hls_decl_dat(ops::hls::Block& block, int elem_size, int* size,
 		int * base, int* d_m, int* d_p, T* data_ptr, std::string type, std::string name,
-		unsigned short vector_factor=8)
+		unsigned short mem_vector_factor=16)
 {
 	ops::hls::SizeType size_, d_m_, d_p_;
 
@@ -120,7 +187,7 @@ ops::hls::Grid<T> ops_hls_decl_dat(ops::hls::Block& block, int elem_size, int* s
 	}
 
 	ops::hls::Grid<T> grid;
-	grid.originalProperty = createGridPropery(block.dims, size_, d_m_, d_p_, vector_factor);
+	grid.originalProperty = createGridPropery(block.dims, size_, d_m_, d_p_, mem_vector_factor);
 
 	unsigned int data_size = 1;
 	for (int i = 0; i < block.dims; i++)
@@ -203,33 +270,65 @@ void getRangeAdjustedGridProp(ops::hls::GridPropertyCore& original,
 	adjusted.outer_loop_limit = adjusted.actual_size[adjusted.dim - 1] + (adjusted.d_m[adjusted.dim-1] + adjusted.d_p[adjusted.dim -1])/2;
 }
 #else
-ops::hls::StencilConfigCore getStencilConfig(ops::hls::GridPropertyCoreV2& original, ops::hls::AccessRange& range, const unsigned short stencil_vector_factor=8, 
-        const unsigned short mem_vector_factor=8, ops::hls::SizeType d_m=default_d_m, ops::hls::SizeType d_p=default_d_p)
+ops::hls::StencilConfigCore getStencilConfig(ops::hls::GridPropertyCoreV2& original, ops::hls::AccessRange& range, const unsigned short stencil_vector_factor=1,
+        const unsigned short mem_vector_factor=1, ops::hls::SizeType d_m=default_d_m, ops::hls::SizeType d_p=default_d_p)
 {
     assert(range.dim == original.dim);
     assert(mem_vector_factor % stencil_vector_factor == 0);
     auto vector_factor_ratio = mem_vector_factor / stencil_vector_factor;
 
     ops::hls::StencilConfigCore stencilConfig;
+    stencilConfig.dim = original.dim;
 
     for (unsigned short i = 0; i < range.dim; i++)
     {
         if (i == 0)
         {
-            unsigned int start_x = range.start[i] - d_m[i];
-            unsigned int end_x = range.end[i] + d_p[i];
-            unsigned int start_xblock = start_x / mem_vector_factor * vector_factor_ratio;
-            unsigned int end_xblock = (end_x + mem_vector_factor - 1) / mem_vector_factor * vector_factor_ratio;            
-            unsigned int start_xblock_aligned = start_xblock * stencil_vector_factor;
-            unsigned int end_xblock_aligned = end_xblock * stencil_vector_factor;
+            unsigned short start_x = range.start[i] - d_m[i];
+            unsigned short end_x = range.end[i] + d_p[i];
+            assert(start_x >= 0);
+            assert(end_x <= original.actual_size[i]);
+            unsigned short start_xblock = start_x / mem_vector_factor * vector_factor_ratio;
+            unsigned short end_xblock = (end_x + mem_vector_factor - 1) / mem_vector_factor * vector_factor_ratio;
+            unsigned short start_xblock_aligned = start_xblock * stencil_vector_factor;
+//            unsigned short end_xblock_aligned = end_xblock * stencil_vector_factor;
             stencilConfig.lower_limit[i] = range.start[i] - start_xblock_aligned;
-            stencilConfig.upper_limit[i] = range.end[i] - start_xblock_aligned;
+            unsigned short size = range.end[i] - range.start[i];
+            stencilConfig.upper_limit[i] = stencilConfig.lower_limit[i] + size;
+            stencilConfig.grid_size[i] = end_xblock - start_xblock; //xblocks
+            stencilConfig.total_itr = stencilConfig.grid_size[i];
         }
         else
         {
+        	unsigned short start = range.start[i] - d_m[i];
+        	unsigned short end = range.end[i] + d_p[i];
+        	stencilConfig.lower_limit[i] = d_m[i];
+        	unsigned short size = range.end[i] - range.start[i];
+        	stencilConfig.upper_limit[i] = stencilConfig.lower_limit[i] + size;
+        	stencilConfig.grid_size[i] = end - start;
 
+        	if (i == range.dim - 1)
+        	{
+        		stencilConfig.outer_loop_limit = stencilConfig.grid_size[i] + d_m[i];
+        		stencilConfig.total_itr *= stencilConfig.grid_size[i];
+        	}
+        	else
+        	{
+        		stencilConfig.total_itr *= stencilConfig.grid_size[i];
+        	}
         }
     }
+
+    return stencilConfig;
+}
+
+ops::hls::StencilConfigCore getStencilConfig(ops::hls::GridPropertyCoreV2& original, ops::hls::AccessRange& range, ops::hls::StencilConfigCore& reference, signed short stencil_vector_factor=1,
+        const unsigned short mem_vector_factor=1, ops::hls::SizeType d_m=default_d_m, ops::hls::SizeType d_p=default_d_p)
+{
+
+    ops::hls::StencilConfigCore stencilConfig = reference;
+    stencilConfig.outer_loop_limit = reference.grid_size[reference.dim - 1] + d_m[reference.dim - 1];
+    return stencilConfig;
 }
 #endif
 
@@ -302,60 +401,4 @@ void opsRange2hlsRange(int dim, int* ops_range, ops::hls::AccessRange& range, op
 //#endif
 }
 
-void printGridProp(ops::hls::GridPropertyCore& gridProp, std::string prompt = "")
-{
-	std::cout << "-------------------------------" << std::endl;
-	std::cout << "  grid properties: " << prompt << std::endl;
-	std::cout << "-------------------------------" << std::endl;
-	std::cout << std::setw(15) << std::right << "dim: "  << gridProp.dim << std::endl;
-	std::cout << std::setw(15) << std::right << "d_m: " << "(" << gridProp.d_m[0]
-				<< ", " << gridProp.d_m[1] << ", " << gridProp.d_m[2] <<")"<< std::endl;
-	std::cout << std::setw(15) << std::right << "d_p: " << "(" << gridProp.d_p[0]
-				<< ", " << gridProp.d_p[1] << ", " << gridProp.d_p[2] <<")"<< std::endl;
-	std::cout << std::setw(15) << std::right << "logical size: " << "(" << gridProp.size[0]
-				<< ", " << gridProp.size[1] << ", " << gridProp.size[2] <<")"<< std::endl;
-	std::cout << std::setw(15) << std::right << "actual size: " << "(" << gridProp.actual_size[0]
-				<< ", " << gridProp.actual_size[1] << ", " << gridProp.actual_size[2] <<")"<< std::endl;
-	std::cout << std::setw(15) << std::right << "grid size: " << "(" << gridProp.grid_size[0]
-				<< ", " << gridProp.grid_size[1] << ", " << gridProp.grid_size[2] <<")"<< std::endl;
-	std::cout << std::setw(15) << std::right << "xblocks: " << gridProp.xblocks << std::endl;
-	std::cout << std::setw(15) << std::right << "total iterations: " << gridProp.total_itr << std::endl;
-	std::cout << std::setw(15) << std::right << "outer limit: " << gridProp.outer_loop_limit << std::endl;
-	std::cout << "-------------------------------" << std::endl;
-}
 
-void printGridProp(ops::hls::GridPropertyCoreV2& gridProp, std::string prompt = "")
-{
-	std::cout << "-------------------------------" << std::endl;
-	std::cout << "  grid properties (V2): " << prompt << std::endl;
-	std::cout << "-------------------------------" << std::endl;
-	std::cout << std::setw(15) << std::right << "dim: "  << gridProp.dim << std::endl;
-	std::cout << std::setw(15) << std::right << "d_m: " << "(" << gridProp.d_m[0]
-				<< ", " << gridProp.d_m[1] << ", " << gridProp.d_m[2] <<")"<< std::endl;
-	std::cout << std::setw(15) << std::right << "d_p: " << "(" << gridProp.d_p[0]
-				<< ", " << gridProp.d_p[1] << ", " << gridProp.d_p[2] <<")"<< std::endl;
-	std::cout << std::setw(15) << std::right << "logical size: " << "(" << gridProp.size[0]
-				<< ", " << gridProp.size[1] << ", " << gridProp.size[2] <<")"<< std::endl;
-	std::cout << std::setw(15) << std::right << "actual size: " << "(" << gridProp.actual_size[0]
-				<< ", " << gridProp.actual_size[1] << ", " << gridProp.actual_size[2] <<")"<< std::endl;
-	std::cout << std::setw(15) << std::right << "grid size: " << "(" << gridProp.grid_size[0]
-				<< ", " << gridProp.grid_size[1] << ", " << gridProp.grid_size[2] <<")"<< std::endl;
-	std::cout << "-------------------------------" << std::endl;
-}
-
-void printStencilConfig(ops::hls::StencilConfigCore& stencilConfig, std::string prompt = "")
-{
-	std::cout << "-------------------------------" << std::endl;
-	std::cout << "  stencil configuration (V2): " << prompt << std::endl;
-	std::cout << "-------------------------------" << std::endl;
-	std::cout << std::setw(15) << std::right << "grid_size (xblocks, y, z): " << "(" << stencilConfig.grid_size[0]
-				<< ", " << stencilConfig.grid_size[1] << ", " << stencilConfig.grid_size[2] <<")"<< std::endl;
-	std::cout << std::setw(15) << std::right << "lower_limit: " << "(" << stencilConfig.lower_limit[0]
-				<< ", " << stencilConfig.lower_limit[1] << ", " << stencilConfig.lower_limit[2] <<")"<< std::endl;
-	std::cout << std::setw(15) << std::right << "upper_limit: " << "(" << stencilConfig.upper_limit[0]
-				<< ", " << stencilConfig.upper_limit[1] << ", " << stencilConfig.upper_limit[2] <<")"<< std::endl;
-	std::cout << std::setw(15) << std::right << "dim: " << stencilConfig.dim << std::endl;
-	std::cout << std::setw(15) << std::right << "outer_loop_limit: " << stencilConfig.outer_loop_limit << std::endl;
-	std::cout << std::setw(15) << std::right << "total_itr: " << stencilConfig.total_itr << std::endl;
-	std::cout << "-------------------------------" << std::endl;
-}

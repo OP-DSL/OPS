@@ -52,8 +52,7 @@ void kernel_apply_stencil_core(const unsigned int num_itr,
 }
 
 static void kernel_apply_stencil_PE_dataflow_region(s2d_5pt& arg0_read_stencil, s2d_1pt& arg1_write_stencil, unsigned int& kernel_iterations,         s2d_5pt::widen_stream_dt& arg0_input_stream,
-        s2d_1pt::widen_stream_dt& arg1_output_stream,
-        s2d_1pt::mask_stream_dt& arg1_outmask_stream)
+        s2d_1pt::widen_stream_dt& arg1_output_stream)
 {
 #pragma HLS DATAFLOW
     static ::hls::stream<stencil_type> arg0_input_bus_0[vector_factor];
@@ -90,15 +89,13 @@ static void kernel_apply_stencil_PE_dataflow_region(s2d_5pt& arg0_read_stencil, 
 			arg0_neg_cond_bus,
             arg1_output_bus_0);
     arg1_write_stencil.stencilWrite(arg1_output_stream, 
-            arg1_outmask_stream, 
             arg1_output_bus_0);
 }
 
 void kernel_apply_stencil_PE(ops::hls::StencilConfigCore& read_stecilConfig,
 		ops::hls::StencilConfigCore& write_stencilConfig,
         s2d_5pt::widen_stream_dt& arg0_input_stream,
-        s2d_1pt::widen_stream_dt& arg1_output_stream,
-        s2d_1pt::mask_stream_dt& arg1_outmask_stream)
+        s2d_1pt::widen_stream_dt& arg1_output_stream)
 {
     s2d_5pt arg0_read_stencil;
     s2d_1pt arg1_write_stencil;
@@ -112,7 +109,7 @@ void kernel_apply_stencil_PE(ops::hls::StencilConfigCore& read_stecilConfig,
     printf("[KERNEL_DEBUG]|%s| starting stencil kernel PE\n", __func__);
 #endif
 
-    kernel_apply_stencil_PE_dataflow_region(arg0_read_stencil, arg1_write_stencil, kernel_iterations, arg0_input_stream, arg1_output_stream, arg1_outmask_stream);
+    kernel_apply_stencil_PE_dataflow_region(arg0_read_stencil, arg1_write_stencil, kernel_iterations, arg0_input_stream, arg1_output_stream);
 
 #ifdef DEBUG_LOG
     printf("[KERNEL_DEBUG]|%s| Ending stencil kernel PE\n", __func__);

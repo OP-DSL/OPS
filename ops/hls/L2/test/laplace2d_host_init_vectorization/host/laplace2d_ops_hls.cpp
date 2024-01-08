@@ -9,11 +9,12 @@
 #include <stdio.h>
 
 #define OPS_HLS_V2
+//#define DEBUG_LOG
 
 #include <ops_hls_rt_support.h>
 
 //#define VERIFICATION
-//#define PROFILE
+#define PROFILE
 
 int imax, jmax;
 //#pragma acc declare create(imax)
@@ -49,7 +50,7 @@ int main(int argc, const char** argv)
 {
 	//Initialise the OPS library, passing runtime args, and setting diagnostics level to low (1)
 	ops_init_backend(argc, argv);
-	unsigned int batches = 5;
+	unsigned int batches = 1;
 
 #ifdef PROFILE
 	double init_runtime[batches];
@@ -59,20 +60,20 @@ int main(int argc, const char** argv)
 	for (unsigned int bat = 0; bat < batches; bat++)
 	{
 		//Size along y
-		jmax = 5;
+		jmax = 30;
 		//Size along x
-		imax = 5;
-		int iter_max = 1;
+		imax = 30;
+		int iter_max = 10;
 
 		const float tol = 1.0e-6;
 		float error     = 1.0;
 
 		float *A=nullptr;
 		float *Anew=nullptr;
-//#ifdef VERIFICATION
+#ifdef VERIFICATION
 		float *Acpu= nullptr;
 		float *AnewCpu = nullptr;
-//#endif
+#endif
 		//
 		//Declare & define key data structures
 		//
@@ -87,13 +88,13 @@ int main(int argc, const char** argv)
 		auto d_A = ops_hls_decl_dat(block, 1, size, base, d_m, d_p, A, "float", "A");
 		auto d_Anew = ops_hls_decl_dat(block, 1, size, base, d_m, d_p, Anew, "float", "Anew");
 
-//#ifdef VERIFICATION
+#ifdef VERIFICATION
 		// Naive CPU grid initialization
 		A = d_A.hostBuffer.data();
 		Anew = d_Anew.hostBuffer.data();
 		Acpu = (float*) malloc(sizeof(float) * d_A.originalProperty.grid_size[0] * d_A.originalProperty.grid_size[1]);
 		AnewCpu = (float*) malloc(sizeof(float) * d_Anew.originalProperty.grid_size[0] * d_Anew.originalProperty.grid_size[1]);
-//#endif
+#endif
 
 		//Two stencils, a 1-point, and a 5-point
 		// int s2d_00[] = {0,0};
@@ -139,23 +140,22 @@ int main(int argc, const char** argv)
 
 		printf("Jacobi relaxation Calculation: %d x %d mesh\n", imax+2, jmax+2);
 
-		//  int iter = 0;
 
 #ifdef PROFILE
 		init_start_clk_point = std::chrono::high_resolution_clock::now();
 #endif
 
-//		ops_par_loop_set_zero(2, bottom_range,
-//				d_Anew);
-//
-//		ops_par_loop_set_zero( 2, top_range,
-//				d_Anew);
-//
-//		ops_par_loop_left_bndcon(2, left_range,
-//				d_Anew);
-//
-//		ops_par_loop_right_bndcon(2, right_range,
-//				d_Anew);
+		ops_par_loop_set_zero(2, bottom_range,
+				d_Anew);
+
+		ops_par_loop_set_zero( 2, top_range,
+				d_Anew);
+
+		ops_par_loop_left_bndcon(2, left_range,
+				d_Anew);
+
+		ops_par_loop_right_bndcon(2, right_range,
+				d_Anew);
 
 #ifdef PROFILE
 		init_end_clk_point = std::chrono::high_resolution_clock::now();
@@ -202,9 +202,9 @@ int main(int argc, const char** argv)
 		for (int iter = 0; iter < iter_max; iter++)
 		{
 			int interior_range[] = {0,imax,0,jmax};
-//			ops_par_loop_apply_stencil(2, interior_range,
-//				d_A,
-//				d_Anew);
+			ops_par_loop_apply_stencil(2, interior_range,
+				d_A,
+				d_Anew);
 
 			ops_par_loop_copy(2, interior_range,
 				d_Anew,
@@ -218,7 +218,7 @@ int main(int argc, const char** argv)
 		main_loop_runtime[bat] = std::chrono::duration<double, std::micro>(main_loop_end_clk_point - main_loop_start_clk_point).count();
 #endif
 
-//#ifdef VERIFICATION
+#ifdef VERIFICATION
 		for (int iter = 0; iter < iter_max; iter++)
 		{
 			calcGrid(Acpu, AnewCpu, d_A.originalProperty);
@@ -228,25 +228,25 @@ int main(int argc, const char** argv)
 		getGrid(d_A);
 		getGrid(d_Anew);
 
-//		if (verify(A, Acpu, d_A.originalProperty))
-//			std::cout << "verification of A and Acpu after calc" << "[PASSED]" << std::endl;
-//		else
-//			std::cerr << "verification of A and Acpu after calc" << "[FAILED]" << std::endl;
-//
-//		if (verify(Anew, AnewCpu, d_Anew.originalProperty))
-//			std::cout << "verification of Anew and AnewCpu after calc" << "[PASSED]" << std::endl;
-//		else
-//			std::cerr << "verification of Anew and AnewCpu after calc" << "[FAILED]" << std::endl;
+		if (verify(A, Acpu, d_A.originalProperty))
+			std::cout << "verification of A and Acpu after calc" << "[PASSED]" << std::endl;
+		else
+			std::cerr << "verification of A and Acpu after calc" << "[FAILED]" << std::endl;
 
-		printGrid2D<float>(d_A, "d_A");
+		if (verify(Anew, AnewCpu, d_Anew.originalProperty))
+			std::cout << "verification of Anew and AnewCpu after calc" << "[PASSED]" << std::endl;
+		else
+			std::cerr << "verification of Anew and AnewCpu after calc" << "[FAILED]" << std::endl;
+
+//		printGrid2D<float>(d_A, "d_A");
 //		printGrid2D<float>(Acpu, d_A.originalProperty, "d_Acpu");
 //
-		printGrid2D<float>(d_Anew, "d_Anew");
+//		printGrid2D<float>(d_Anew, "d_Anew");
 //		printGrid2D<float>(AnewCpu, d_Anew.originalProperty, "d_AnewCpu");
 
 		free(Acpu);
 		free(AnewCpu);
-//#endif
+#endif
 	}
 
 #ifdef PROFILE

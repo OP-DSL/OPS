@@ -1219,6 +1219,60 @@ void memReadGrid(ap_uint<DATA_WIDTH>* mem_in,
 }
 
 template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
+void memReadGridV2(ap_uint<MEM_DATA_WIDTH>* mem_in,
+		::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_out,
+		SizeType gridSize,
+		AccessRange& range)
+{
+	constexpr unsigned short data_vector_factor = MEM_DATA_WIDTH / DATA_WIDTH;
+	unsigned short ShiftBits = (unsigned short)LOG2(data_vector_factor);
+	unsigned short DataShiftBits = (unsigned short)LOG2(DATA_WIDTH/8);
+	unsigned short start_x = range.start[0] >> ShiftBits;
+	unsigned short end_x = (range.end[0] + data_vector_factor - 1) >> ShiftBits;
+	unsigned short grid_xblocks = gridSize[0] >> ShiftBits; //GridSize[0] has to be MEM_DATA_WIDTH aligned
+	unsigned short num_xblocks = end_x - start_x;
+	unsigned short x_tile_size = num_xblocks << ShiftBits;
+	unsigned int x_tile_size_bytes = x_tile_size << DataShiftBits;
+
+	if (range.dim < 3)
+	{
+		range.start[2] = 0;
+		range.end[2] = 1;
+	}
+	else if (range.dim < 2)
+	{
+		range.start[1] = 0;
+		range.end[1] = 1;
+	}
+
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| starting memReadGrid. shiftbits: %d, data shift bits: %d, grid_size: (%d, %d, %d), grid_xblocks: %d, range: (%d, %d, %d) --> (%d, %d, %d)\n "
+			"start_x_block: %d --> end_x_block: %d, x_tile_size:%d, x_tile_size_bytes:%d, num_xblocks:%d\n"
+			, __func__, ShiftBits, DataShiftBits, gridSize[0], gridSize[1], gridSize[2], grid_xblocks, range.start[0], range.start[1], range.start[2],
+			range.end[0], range.end[1], range.end[2], start_x, end_x, x_tile_size, x_tile_size_bytes, num_xblocks);
+	printf("===========================================================================================\n");
+#endif
+
+	for (unsigned short k = range.start[2]; k < range.end[2]; k++)
+	{
+		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
+		{
+			unsigned int offset = start_x + j * grid_xblocks + k * gridSize[1] * grid_xblocks;
+
+#ifdef DEBUG_LOG
+			printf("|HLS DEBUG_LOG|%s| reading. offset:%d, j:%d, k:%d\n"
+					, __func__,offset, j, k);
+#endif
+			mem2axis<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>* )(mem_in + offset), strm_out, x_tile_size_bytes);
+		}
+	}
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| exiting.\n"
+			, __func__);
+#endif
+}
+
+template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
 void memWriteGrid(ap_uint<DATA_WIDTH>* mem_out,
 		::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_in,
 		unsigned int size,
@@ -1397,22 +1451,21 @@ void memWriteGridSimple(ap_uint<DATA_WIDTH>* mem_out,
 
 
 template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
-void memWriteGridSimpleV2(ap_uint<DATA_WIDTH>* mem_out,
+void memWriteGridSimpleV2(ap_uint<MEM_DATA_WIDTH>* mem_out,
 		::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_in,
 		SizeType gridSize,
 		AccessRange& range)
 {
 
-	constexpr unsigned short vectorFactor = MEM_DATA_WIDTH / DATA_WIDTH;
-	unsigned short ShiftBits = LOG2(vectorFactor);
-	unsigned short DataShiftBits = LOG2(DATA_WIDTH/8);
-	unsigned short xtile_size = (range.end[0] - range.start[0]);
-	unsigned short num_whole_xblocks = xtile_size >> ShiftBits;
-	unsigned short whole_xtile_size = num_whole_xblocks << ShiftBits;
-	unsigned short whole_xtile_size_bytes = whole_xtile_size << DataShiftBits;
-	unsigned short partial_xtile_size = xtile_size - whole_xtile_size;
-	unsigned short partial_xtile_size_bytes = partial_xtile_size << DataShiftBits;
-	unsigned short xtile_size_bytes = xtile_size << DataShiftBits;
+	constexpr unsigned short data_vector_factor = MEM_DATA_WIDTH / DATA_WIDTH;
+	unsigned short ShiftBits = (unsigned short)LOG2(data_vector_factor);
+	unsigned short DataShiftBits = (unsigned short)LOG2(DATA_WIDTH/8);
+	unsigned short start_x = range.start[0] >> ShiftBits;
+	unsigned short end_x = (range.end[0] + data_vector_factor - 1) >> ShiftBits;
+	unsigned short grid_xblocks = gridSize[0] >> ShiftBits; //GridSize[0] has to be MEM_DATA_WIDTH aligned
+	unsigned short num_xblocks = end_x - start_x;
+	unsigned short x_tile_size = num_xblocks << ShiftBits;
+	unsigned int x_tile_size_bytes = x_tile_size << DataShiftBits;
 
 	if (range.dim < 3)
 	{
@@ -1426,24 +1479,26 @@ void memWriteGridSimpleV2(ap_uint<DATA_WIDTH>* mem_out,
 	}
 
 #ifdef DEBUG_LOG
-	printf("|HLS DEBUG_LOG|%s| starting memWriteGrid. grid_size: (%d, %d, %d), range: (%d, %d, %d) --> (%d, %d, %d)\n whole_xtile_size:%d, partial_xtile_size:%d\n"
-			, __func__, gridSize[0], gridSize[1], gridSize[2], range.start[0], range.start[1], range.start[2],
-			range.end[0], range.end[1], range.end[2], whole_xtile_size, partial_xtile_size);
+	printf("|HLS DEBUG_LOG|%s| starting memWriteGrid. shiftbits: %d, data shift bits: %d, grid_size: (%d, %d, %d), grid_xblocks: %d, range: (%d, %d, %d) --> (%d, %d, %d)\n "
+			"start_x_block: %d --> end_x_block: %d, x_tile_size:%d, x_tile_size_bytes:%d, num_xblocks:%d\n"
+			, __func__, ShiftBits, DataShiftBits, gridSize[0], gridSize[1], gridSize[2], grid_xblocks, range.start[0], range.start[1], range.start[2],
+			range.end[0], range.end[1], range.end[2], start_x, end_x, x_tile_size, x_tile_size_bytes, num_xblocks);
 	printf("====================================================================================\n");
 #endif
+
 	for (unsigned short k = range.start[2]; k < range.end[2]; k++)
 	{
 		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
 		{
 #pragma HLS PIPELINE II = 1
 			unsigned short offset = register_it(k * gridSize[1]) + j;
-			offset = offset * gridSize[0];
-			offset = range.start[0] + offset;
+			offset = offset * grid_xblocks;
+			offset = start_x + offset;
 #ifdef DEBUG_LOG
 			printf("|HLS DEBUG_LOG|%s| writing. offset:%d, j:%d, k:%d\n"
 					, __func__, offset, j, k);
 #endif
-			axis2mem<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + offset), strm_in, xtile_size_bytes);
+			axis2mem<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + offset), strm_in, x_tile_size_bytes);
 		}
 	}
 #ifdef DEBUG_LOG

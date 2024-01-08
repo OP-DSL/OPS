@@ -22,10 +22,13 @@ class s2d_5pt : public ops::hls::StencilCoreV2<stencil_type, s2d_5pt_num_points,
             ::hls::stream<stencil_type> output_bus_2[vector_factor],
             ::hls::stream<stencil_type> output_bus_3[vector_factor],
             ::hls::stream<stencil_type> output_bus_4[vector_factor],
-			::hls::stream<bool> cond_bus[vector_factor])
+			::hls::stream<bool> neg_cond_bus[vector_factor])
         {
+#ifdef DEBUG_LOG
+            printf("[KERNEL_DEBUG]|%s| starting.", __func__);
+#endif
 //			#pragma HLS DEPENDENCE dependent=false distance=8 type=intra variable=rowArr_0
-            short i = -1, j = -s_stencil_half_span_x;
+            short i = -s_stencil_half_span_x, j = -s_stencil_half_span_x;
             unsigned short i_l = 0; // Line buffer index
 
             ::ops::hls::StencilConfigCore stencilConfig = m_stencilConfig;
@@ -161,9 +164,12 @@ class s2d_5pt : public ops::hls::StencilCoreV2<stencil_type, s2d_5pt_num_points,
 						output_bus_2[k].write(rowArr_1[k+1]);
 						output_bus_3[k].write(rowArr_1[k+2]);
 						output_bus_4[k].write(rowArr_2[k + s_stencil_half_span_x]);
-						cond_bus[k].write(cond_no_send);
+						neg_cond_bus[k].write(cond_no_send);
 					}
                 }
             }
+#ifdef DEBUG_LOG
+            printf("[KERNEL_DEBUG]|%s| exiting.", __func__);
+#endif
         }
 };

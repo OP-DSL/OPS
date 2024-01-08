@@ -12,7 +12,8 @@
 
 extern int imax, jmax;
 extern float pi;
-unsigned short vector_factor = 1;
+unsigned short vector_factor = 16;
+unsigned short mem_vector_factor = 16;
 
 
 

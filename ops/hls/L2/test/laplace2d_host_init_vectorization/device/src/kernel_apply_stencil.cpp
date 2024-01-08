@@ -8,13 +8,12 @@ static void kernel_apply_stencil_dataflow_region(ops::hls::StencilConfigCore& re
 		hls::stream <ap_axiu<axis_data_width,0,0,0>>& arg0_axis_in,
         hls::stream <ap_axiu<axis_data_width,0,0,0>>& arg1_axis_out,
 	    s2d_1pt::widen_stream_dt& arg1_input_stream,
-	    s2d_1pt::mask_stream_dt& arg1_inmask_stream,
 	    s2d_1pt::widen_stream_dt& arg0_output_stream)
 {
 #pragma HLS_DATAFLOW
     ops::hls::axis2stream<axis_data_width, axis_data_width>(arg0_axis_in, arg0_output_stream, total_bytes);
-    kernel_apply_stencil_PE(read_stencilConfig, write_stencilConfig, arg0_output_stream, arg1_input_stream, arg1_inmask_stream);
-    ops::hls::stream2axisMasked<axis_data_width, axis_data_width>(arg1_axis_out, arg1_input_stream, arg1_inmask_stream, total_bytes);
+    kernel_apply_stencil_PE(read_stencilConfig, write_stencilConfig, arg0_output_stream, arg1_input_stream);
+    ops::hls::stream2axis<axis_data_width, axis_data_width>(arg1_axis_out, arg1_input_stream, total_bytes);
 }
 
 extern "C" void kernel_apply_stencil(
@@ -66,16 +65,14 @@ extern "C" void kernel_apply_stencil(
     #pragma HLS INTERFACE s_axilite port = return bundle = control
 
     static s2d_1pt::widen_stream_dt arg1_input_stream;
-    static s2d_1pt::mask_stream_dt arg1_inmask_stream;
     static s2d_5pt::widen_stream_dt arg0_output_stream;
 
     #pragma HLS STREAM variable = arg1_input_stream depth = max_depth_v8
-    #pragma HLS STREAM variable = arg1_inmask_stream depth = max_depth_v8
     #pragma HLS STREAM variable = arg0_output_stream depth = max_depth_v8
 
-#ifdef DEBUG_LOG
+//#ifdef DEBUG_LOG
 			printf("[KERNEL_DEBUG]|%s| Starting stencil kernel TOP \n", __func__);
-#endif
+//#endif
     ops::hls::StencilConfigCore read_stencilConfig, write_stencilConfig;
     read_stencilConfig.dim = read_stencilConfig_dim;
     read_stencilConfig.grid_size[0] = read_stencilConfig_grid_size_x;
@@ -98,9 +95,9 @@ extern "C" void kernel_apply_stencil(
     write_stencilConfig.outer_loop_limit = write_stencilConfig_outer_loop_limit;
 
     unsigned int total_bytes = read_stencilConfig_grid_size_x * vector_factor * read_stencilConfig_grid_size_y * sizeof(float);
-    kernel_apply_stencil_dataflow_region(read_stencilConfig, write_stencilConfig, total_bytes, arg0_axis_in, arg1_axis_out, arg1_input_stream, arg1_inmask_stream, arg0_output_stream);
+    kernel_apply_stencil_dataflow_region(read_stencilConfig, write_stencilConfig, total_bytes, arg0_axis_in, arg1_axis_out, arg1_input_stream, arg0_output_stream);
 
-#ifdef DEBUG_LOG
+//#ifdef DEBUG_LOG
 			printf("[KERNEL_DEBUG]|%s| Ending stencil kernel TOP \n", __func__);
-#endif
+//#endif
 }

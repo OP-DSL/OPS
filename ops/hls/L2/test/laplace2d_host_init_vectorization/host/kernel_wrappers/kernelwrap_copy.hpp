@@ -19,14 +19,17 @@ public:
     void run(ops::hls::AccessRange& range, ops::hls::Grid<float>& arg0, ops::hls::Grid<float>& arg1)
     {
         cl_int err;
+        ops::hls::SizeType s2d_1pt_d_m={0,0,0};
+        ops::hls::SizeType s2d_1pt_d_p={0,0,0};
 //        createDeviceBuffer(CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, arg0.hostBuffer);
 //        ops::hls::GridPropertyCore arg0_adjustedGridProp;
 //        ops::hls::StencilConfigCore getStencilConfig(ops::hls::GridPropertyCoreV2& original, ops::hls::AccessRange& range, const unsigned short stencil_vector_factor=8,
 //                const unsigned short mem_vector_factor=8, ops::hls::SizeType d_m=default_d_m, ops::hls::SizeType d_p=default_d_p)
-        auto arg0_stencilConfig = getStencilConfig(arg0.originalProperty, range, vector_factor);
+        auto arg0_stencilConfig = getStencilConfig(arg0.originalProperty, range, vector_factor, mem_vector_factor, s2d_1pt_d_m, s2d_1pt_d_p);
 #ifdef DEBUG_LOG
+        printAccessRange(range);
         printGridProp(arg0.originalProperty, "arg0_originalGridProp");
-        printStencilConfig(arg0_adjustedGridProp, "arg0_stencilConfig");
+        printStencilConfig(arg0_stencilConfig, "arg0_stencilConfig");
 #endif
 
 //        createDeviceBuffer(CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, arg1.hostBuffer);
