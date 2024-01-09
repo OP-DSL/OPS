@@ -149,23 +149,23 @@ class Fortran(Lang):
             fortran.validator.validateLoop(loop, program, app)
 
     def preprocess(self, path: Path, include_dirs: FrozenSet[Path], defines: FrozenSet[str]) -> str:
-        #TODO fpp = os.getenv("OPS_FPP")
-        #if fpp is not None:
-        #    args = [fpp, "-P", "-free", "-f90"]
+        fpp = os.getenv("OPS_FPP")
+        if fpp is not None:
+            args = [fpp, "-P", "-free", "-f90"]
 
-        #    for dir in include_dirs:
-        #        args.append(f"-I{dir}")
+            for dir in include_dirs:
+                args.append(f"-I{dir}")
 
-        #    for define in defines:
-        #        args.append(f"-D{define}")
+            for define in defines:
+                args.append(f"-D{define}")
 
-        #    args.append(str(path))
+            args.append(str(path))
 
-        #    print(" ".join(args))
-        #    res = subprocess.run(args, capture_output=True, check=True)
-        #    print(res.stderr.decode("utf-8"))
+            print(" ".join(args))
+            res = subprocess.run(args, capture_output=True, check=True)
+            print(res.stderr.decode("utf-8"))
 
-        #    return res.stdout.decode("utf-8")
+            return res.stdout.decode("utf-8")
 
         preprocessor = Preprocessor()
 
@@ -203,6 +203,10 @@ class Fortran(Lang):
         source = path.read_text()
         reader = FortranStringReader(source, include_dirs=list(include_dirs), ignore_comments=False)
         parser = ParserFactory().create(std="f2003")
+#        try:
+#            print(parser(reader))
+#        except Exception as e:
+#            print(f"An error occurred: {e}")
         return parser(reader), source
 
     def parseProgram(self, path: Path, include_dirs: Set[Path], defines: List[str]) -> Program:

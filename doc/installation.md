@@ -29,15 +29,15 @@ Execute following **after cloning the OPS repository (see below)** to install re
 #Install virtual environment using pip (if not installed earlier)
 python3 -m pip install --user virtualenv
 
-mkdir -p $OPS_INSTALL_PATH/../ops_translator_v2/ops_venv
-python3 -m venv $OPS_INSTALL_PATH/../ops_translator_v2/ops_venv
-source $OPS_INSTALL_PATH/../ops_translator_v2/ops_venv/bin/activate
+mkdir -p $OPS_INSTALL_PATH/../ops_translator/ops_venv
+python3 -m venv $OPS_INSTALL_PATH/../ops_translator/ops_venv
+source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
 python3 -m pip install --upgrade pip
-python3 -m pip install fparser cached-property dataclasses jinja2 pylint mypy pcpp sympy
-python3 -m pip install clang==14.0.6 libclang==14.0.6
+python3 -m pip install -r requirements.txt
+python3 -m pip install --force-reinstall libclang==16.0.6
 ```
-These instructions can be executed by running the script `OPS/ops_translator_v2/setup_venv.sh` file. 
-After successfully setting up the Python virtual environment and installing the required dependent packages using the above instructions, you will need to activate the virtual environment by `source $OPS_INSTALL_PATH/../ops_translator_v2/ops_venv/bin/activate` every time you want to use the code generator. Activating the virtual environment ensures that the code generator and its dependencies are isolated from the system-wide Python installtion, avoiding conflicts and ensuring proper execution.
+These instructions can be executed by running the script `OPS/ops_translator/setup_venv.sh` file.
+After successfully setting up the Python virtual environment and installing the required dependent packages using the above instructions, you will need to activate the virtual environment by `source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate` every time you want to use the code generator. Activating the virtual environment ensures that the code generator and its dependencies are isolated from the system-wide Python installation, avoiding conflicts and ensuring proper execution.
 
  **HDF5**
 

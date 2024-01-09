@@ -45,46 +45,45 @@ program MBLOCK
   type(ops_block) :: grid1, grid2
 
   ! vars for stencils
-  integer S2D_00_array(2) /0,0/
+  integer(kind=4) :: S2D_00_array(2) = [0,0]
   type(ops_stencil) :: S2D_00
 
   !ops_dats
   type(ops_dat) :: data1, data2
 
   ! vars for halo_depths
-  integer d_p(2) /2,2/   !max halo depths for the dat in the possitive direction
-  integer d_m(2) /-2,-2/ !max halo depths for the dat in the negative direction
+  integer(kind=4) :: d_p(2) = [2,2]   !max halo depths for the dat in the possitive direction
+  integer(kind=4) :: d_m(2) = [-2,-2] !max halo depths for the dat in the negative direction
 
   !base
-  integer base(2) /1,1/ ! this is in fortran indexing
+  integer(kind=4) :: base(2) = [1,1] ! this is in fortran indexing
 
   !size
-  integer size(2) /20,20/ !size of the dat
+  integer(kind=4) :: size(2) = [20,20] !size of the dat
 
   !null array
-  !real(kind=c_double) temp[allocatable](:)
-  real(8), dimension(:), allocatable :: temp
+  real(kind=8), dimension(:), allocatable :: temp
 
   !block-holos
   type(ops_halo) :: h1, h2
-  type(ops_halo) , DIMENSION(2) :: grp_1, grp_2, grp_3, grp_4, grp_5
+  type(ops_halo), DIMENSION(2) :: grp_1, grp_2, grp_3, grp_4, grp_5
 
   !block-holo groups
   type(ops_halo_group) :: halos1, halos2, halos3, halos4, halos5
 
   !halo vars
-  integer halo_iter(2), base_from(2), base_to(2), dir(2), dir_to(2)
+  integer(kind=4) :: halo_iter(2), base_from(2), base_to(2), dir(2), dir_to(2)
 
   !iteration range
   !iterange needs to be fortran indexed here
   ! inclusive indexing for both min and max points in the range
   !.. but internally will convert to c index
-  integer iter_range(4)
+  integer(kind=4) :: iter_range(4)
 
   !data access API tests
-  integer npartitions_l, npartitions_g
-  integer d_disp(2), d_size(2)
-  real(8), dimension(:,:), allocatable :: temp2
+  integer(kind=4) :: npartitions_l, npartitions_g
+  integer(kind=4) :: d_disp(2), d_size(2)
+  real(kind=8), dimension(:,:), allocatable :: temp2
 
 
   !-------------------------- Initialisation --------------------------
@@ -102,8 +101,8 @@ program MBLOCK
   call ops_decl_stencil( 2, 1, S2D_00_array, S2D_00, "00")
 
   !declare dats
-  call ops_decl_dat(grid1, 1, size, base, d_m, d_p, temp, data1, "real(8)", "data1")
-  call ops_decl_dat(grid2, 1, size, base, d_m, d_p, temp, data2, "real(8)", "data2")
+  call ops_decl_dat(grid1, 1, size, base, d_m, d_p, temp, data1, "real(kind=8)", "data1")
+  call ops_decl_dat(grid2, 1, size, base, d_m, d_p, temp, data2, "real(kind=8)", "data2")
 
   ! straightforward matching orientation halos data1 - data2 in x
   ! last two x lines of data1 and first two of data2
@@ -208,7 +207,6 @@ program MBLOCK
   grp_5(2) = h2
   call ops_decl_halo_group(2,grp_5,halos5)
 
-
   call ops_partition("1D_BLOCK_DECOMPOSE")
 
   !-------------------------- Computations --------------------------
@@ -219,11 +217,11 @@ program MBLOCK
   iter_range(3) =  1
   iter_range(4) =  20
   call ops_par_loop(mblock_populate_kernel, "mblock_populate_kernel", grid1, 2, iter_range, &
-              & ops_arg_dat(data1, 1, S2D_00, "real(8)", OPS_WRITE), &
+              & ops_arg_dat(data1, 1, S2D_00, "real(kind=8)", OPS_WRITE), &
               & ops_arg_idx())
 
   call ops_par_loop(mblock_populate_kernel, "mblock_populate_kernel", grid2, 2, iter_range, &
-              & ops_arg_dat(data2, 1, S2D_00, "real(8)", OPS_WRITE),  &
+              & ops_arg_dat(data2, 1, S2D_00, "real(kind=8)", OPS_WRITE),  &
               & ops_arg_idx())
 
   !call ops_print_dat_to_txtfile(data2, "data2.txt")

@@ -36,8 +36,12 @@ def retrieve_subroutine_by_name(file_path, subroutine_name):
             definition_statement = getChild(child, f2003.Subroutine_Stmt)
             name_node = getChild(definition_statement, f2003.Name)
             name = parseIdentifier(name_node, None)
-            if name == subroutine_name.lower():
-                return str(child)
+            if name.lower() == subroutine_name.lower():
+                req_kernel = str(child)
+                # replacing OPS_ACC and OPS_ACC_MD to uppercase if any lowecase occurence found
+                pattern = re.compile(r'ops_acc(?:|_md)\d+', re.IGNORECASE)
+                new_kernel = pattern.sub(lambda x: x.group(0).upper(), req_kernel)
+                return new_kernel
 
     return None
 #    with open(file_path, 'r') as f:
@@ -84,6 +88,6 @@ class FortranMPIOpenMP(Scheme):
         if kernel_entities is None or (kernel_entities is not None and len(kernel_entities) == 0):
             raise ParseError(f"unable to find kernel function: {loop.kernel}")
 
-        return kernel_entities
+        return kernel_entities.strip()
 
 Scheme.register(FortranMPIOpenMP)
