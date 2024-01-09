@@ -58,31 +58,31 @@ def code(text):
 
 def DO(i,start,finish):
   code('DO '+i+' = '+start+', '+finish)
-  config.depth += 2
+  config.depth += 4
 
 def ENDDO():
-  config.depth -= 2
+  config.depth -= 4
   code('END DO')
 
 def IF(line):
   code('IF ('+ line + ') THEN')
-  config.depth += 2
+  config.depth += 4
 
 def ELSEIF(line):
   code('ELSEIF ('+ line + ') THEN')
-  config.depth += 2
+  config.depth += 4
 
 def ELSE():
   code('ELSE')
-  config.depth += 2
+  config.depth += 4
 
 def ENDIF():
-  config.depth -= 2
+  config.depth -= 4
   code('ENDIF')
 
 def DOWHILE(line):
   code('DO WHILE ('+line+' )')
-  config.depth += 2
+  config.depth += 4
 
 
 def remove_trailing_w_space(text):

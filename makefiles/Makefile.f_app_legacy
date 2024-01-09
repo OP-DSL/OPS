@@ -26,12 +26,11 @@ endif
 
 DEFINES=-DOPS_ACC_IGNORE
 
-.generated: $(OPS_FILES) $(OPS_INSTALL_PATH)/../ops_translator/ops-translator/*.py
+.generated: $(OPS_FILES) $(OPS_INSTALL_PATH)/../ops_translator_legacy/fortran/*.py
 	@echo "generating translations for ${OPS_FILES}"
 	@echo "OPS_EXTENTIONS: ${OPS_GENERATED_SUFFIX}"
 	@echo "OPS_GENERATED: ${OPS_GENERATED}"
-	which python3
-	python3 $(OPS_INSTALL_PATH)/../ops_translator/ops-translator $(VERBOSE) $(DEFINES) -I $(OPS_INSTALL_PATH)/c/include/ --file_paths $(OPS_FILES)
+	$(OPS_INSTALL_PATH)/../ops_translator_legacy/fortran/ops_fortran.py $(OPS_FILES)
 	rm -f .generated
 	touch .generated
 
@@ -69,12 +68,15 @@ APP_TARGETS = $(addprefix $(APP)_, $(TARGETS))
 
 all: $(APP_TARGETS)
 
+cleanfiles:
+	rm -f *.o *.mod
+
 #=====================================================================================================================================================================
 #
 # Sequential version
 #
 
-$(APP)_seq: .generated $(OPS_FILES_GEN) Makefile
+$(APP)_seq: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_seq.a $(OPS_FILES_GEN)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_seq"
@@ -86,7 +88,7 @@ $(APP)_seq: .generated $(OPS_FILES_GEN) Makefile
 # mpi version
 #
 
-$(APP)_mpi: .generated $(OPS_FILES_GEN) Makefile
+$(APP)_mpi: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_mpi.a $(OPS_FILES_GEN)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi"
@@ -108,7 +110,7 @@ $(APP)_openmp: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILE
 $(APP)_mpi_openmp: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_mpi.a $(OPS_FILES_GEN)
 		@echo ""
 		@echo ""
-		@echo "Building ${APP}_mpi_openmp"
+		@echo "Building ${APP}_mpi_openmp"	
 		@echo ""
 		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS) $(FLINK) $(OMPFLAGS) $(PGIMPILINK) -DOPS_MPI $(OTHER_FILES) mpi_openmp/*_seq_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) -lops_for_mpi $(F_HDF5_LIB_MPI) -o $(APP)_mpi_openmp
 

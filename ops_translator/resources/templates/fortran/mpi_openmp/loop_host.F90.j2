@@ -8,41 +8,41 @@
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
         {% if arg.dim == 1 %}
-integer(4) :: xdim{{arg.id+1}}
+    INTEGER(KIND=4) :: xdim{{arg.id+1}}
             {% if lh.ndim == 1 %}
-#define OPS_ACC{{arg.id+1}}(x) (x+1)
+#define OPS_ACC{{arg.id+1}}(x) (x + 1)
             {% elif lh.ndim == 2 %}
-integer(4) :: ydim{{arg.id+1}}
+    INTEGER(KIND=4) :: ydim{{arg.id+1}}
 #define OPS_ACC{{arg.id+1}}(x,y) ((x) + (xdim{{arg.id+1}}*(y)) + 1)
             {% elif lh.ndim == 3 %}
-integer(4) :: ydim{{arg.id+1}}
-integer(4) :: zdim{{arg.id+1}}
+    INTEGER(KIND=4) :: ydim{{arg.id+1}}
+    INTEGER(KIND=4) :: zdim{{arg.id+1}}
 #define OPS_ACC{{arg.id+1}}(x,y,z) ((x) + (xdim{{arg.id+1}}*(y)) + (xdim{{arg.id+1}}*ydim{{arg.id+1}}*(z)) + 1)
             {% endif %}
         {% elif arg.dim > 1 %}
-integer(4) :: multi_d{{arg.id+1}}
-integer(4) :: xdim{{arg.id+1}}
+    INTEGER(KIND=4) :: multi_d{{arg.id+1}}
+    INTEGER(KIND=4) :: xdim{{arg.id+1}}
             {% if soa_set %}
                 {% if lh.ndim == 1 %}
-#define OPS_ACC_MD{{arg.id+1}}(d,x) ((x) + (xdim{{arg.id+1}}*(d-1)) + 1))
+#define OPS_ACC_MD{{arg.id+1}}(d,x) ((x) + (xdim{{arg.id+1}}*(d-1)) + 1)
                 {% elif lh.ndim == 2 %}
-integer(4) :: ydim{{arg.id+1}}
+    INTEGER(KIND=4) :: ydim{{arg.id+1}}
 #define OPS_ACC_MD{{arg.id+1}}(d,x,y) ((x) + (xdim{{arg.id+1}}*(y)) + (xdim{{arg.id+1}}*ydim{{arg.id+1}}*(d-1)) + 1)
                 {% elif lh.ndim == 3 %}
-integer(4) :: ydim{{arg.id+1}}
-integer(4) :: zdim{{arg.id+1}}
+    INTEGER(KIND=4) :: ydim{{arg.id+1}}
+    INTEGER(KIND=4) :: zdim{{arg.id+1}}
 #define OPS_ACC_MD{{arg.id+1}}(d,x,y,z) ((x) + (xdim{{arg.id+1}}*(y)) + (xdim{{arg.id+1}}*ydim{{arg.id+1}}*(z)) + (xdim{{arg.id+1}}*ydim{{arg.id+1}}*zdim{{arg.id+1}}*(d-1)) + 1)
                 {% endif %}
             {% else %}
                 {% if lh.ndim == 1 %}
-#define OPS_ACC_MD{{arg.id+1}}(d,x) (d + (x*multi_d{{arg.id+1}}))
+#define OPS_ACC_MD{{arg.id+1}}(d,x) ((d) + ((x)*multi_d{{arg.id+1}}))
                 {% elif lh.ndim == 2 %}
-integer(4) :: ydim{{arg.id+1}}
-#define OPS_ACC_MD{{arg.id+1}}(d,x,y) (d + (x*multi_d{{arg.id+1}}) + (xdim{{arg.id+1}}*multi_d{{arg.id+1}}*y))
+    INTEGER(KIND=4) :: ydim{{arg.id+1}}
+#define OPS_ACC_MD{{arg.id+1}}(d,x,y) ((d) + ((x)*multi_d{{arg.id+1}}) + (xdim{{arg.id+1}}*(y)*multi_d{{arg.id+1}}))
                 {% elif lh.ndim == 3 %}
-integer(4) :: ydim{{arg.id+1}}
-integer(4) :: zdim{{arg.id+1}}
-#define OPS_ACC_MD{{arg.id+1}}(d,x,y,z) (d + (x*multi_d{{arg.id+1}}) (xdim{{arg.id+1}}*multi_d{{arg.id+1}}*y) + (xdim{{arg.id+1}}*ydim{{arg.id+1}}*multi_d{{arg.id+1}}*z))
+    INTEGER(KIND=4) :: ydim{{arg.id+1}}
+    INTEGER(KIND=4) :: zdim{{arg.id+1}}
+#define OPS_ACC_MD{{arg.id+1}}(d,x,y,z) ((d) + ((x)*multi_d{{arg.id+1}}) + (xdim{{arg.id+1}}*(y)*multi_d{{arg.id+1}}) + (xdim{{arg.id+1}}*ydim{{arg.id+1}}*(z)*multi_d{{arg.id+1}}))
                 {% endif %}
             {% endif %}
         {% endif %}
@@ -52,7 +52,7 @@ integer(4) :: zdim{{arg.id+1}}
 {% endblock %}
 
 {% block kernel_wrapper%}
-contains
+    CONTAINS
 
 !   =============
 !   User function
@@ -90,54 +90,75 @@ SUBROUTINE {{lh.kernel}}_wrap( &
     start_indx, &
     end_indx )
 
-    IMPLICIT NONE
-
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
         {% if arg is ops_read %}
-    {{lh.dats[arg.dat_id].typ}}, dimension(*), intent(in) :: opsDat{{arg.id+1}}Local
+    {{lh.dats[arg.dat_id].typ | upper}}, DIMENSION(*), INTENT(IN) :: opsDat{{arg.id+1}}Local
         {% elif arg is ops_write %}
-    {{lh.dats[arg.dat_id].typ}}, dimension(*), intent(out) :: opsDat{{arg.id+1}}Local
+    {{lh.dats[arg.dat_id].typ | upper}}, DIMENSION(*), INTENT(OUT) :: opsDat{{arg.id+1}}Local
         {% elif arg is ops_rw or arg is ops_inc %}
-    {{lh.dats[arg.dat_id].typ}}, dimension(*), intent(inout) :: opsDat{{arg.id+1}}Local
+    {{lh.dats[arg.dat_id].typ | upper}}, DIMENSION(*), INTENT(INOUT) :: opsDat{{arg.id+1}}Local
         {% endif %}
-    integer(4), intent(in) :: dat{{arg.id+1}}_base
+    INTEGER(KIND=4), INTENT(IN) :: dat{{arg.id+1}}_base
 
     {% elif arg is ops_gbl or arg is ops_reduce %}
         {% if arg is ops_read %}
-    {{arg.typ}}, dimension(*), intent(in) :: opsDat{{arg.id+1}}Local
+    {{arg.typ | upper}}, DIMENSION(*), INTENT(IN) :: opsDat{{arg.id+1}}Local
         {% elif arg is ops_write %}
-    {{arg.typ}}, dimension(*), intent(out) :: opsDat{{arg.id+1}}Local
+    {{arg.typ | upper}}, DIMENSION(*), INTENT(OUT) :: opsDat{{arg.id+1}}Local
         {% elif arg is ops_inc or arg is ops_min or arg is ops_max %}
-    {{arg.typ}}, dimension(*), intent(inout) :: opsDat{{arg.id+1}}Local
+    {{arg.typ | upper}}, DIMENSION({{arg.dim}}), INTENT(INOUT) :: opsDat{{arg.id+1}}Local
         {% endif %}
-    integer(4), intent(in) :: dat{{arg.id+1}}_base
+    INTEGER(KIND=4), INTENT(IN) :: dat{{arg.id+1}}_base
 
     {% elif arg is ops_idx %}
-    integer(4), dimension({{lh.ndim}}), intent(in) :: idx
-    integer(4), dimension({{lh.ndim}})             :: idx_local
+    INTEGER(KIND=4), DIMENSION({{lh.ndim}}), INTENT(IN) :: idx
+    INTEGER(KIND=4), DIMENSION({{lh.ndim}})             :: idx_local
 
     {% endif %}
 {% endfor %}
-    integer(4), dimension({{lh.ndim}}), intent(in) :: start_indx, end_indx
+    INTEGER(KIND=4), DIMENSION({{lh.ndim}}), INTENT(IN) :: start_indx, end_indx
 
 {% if lh.ndim == 1 %}
-    integer(4) :: n_x
+    INTEGER(KIND=4) :: n_x
 {% elif lh.ndim == 2 %}
-    integer(4) :: n_x, n_y
+    INTEGER(KIND=4) :: n_x, n_y
 {% elif lh.ndim == 3 %}
-    integer(4) :: n_x, n_y, n_z
+    INTEGER(KIND=4) :: n_x, n_y, n_z
 {% endif %}
+
+{% set reduct_line = [""] %}
+{% for arg in lh.args %}
+    {% if arg is ops_gbl or arg is ops_reduce %}
+        {% if arg is ops_inc %}
+            {%if reduct_line.append(reduct_line.pop() + " REDUCTION(+:opsDat" + (arg.id+1)|string + "Local) ") %}{% endif %}
+        {% elif arg is ops_min %}
+            {%if reduct_line.append(reduct_line.pop() + " REDUCTION(MIN:opsDat" + (arg.id+1)|string + "Local) ") %}{% endif %}
+        {% elif arg is ops_max %}
+            {%if reduct_line.append(reduct_line.pop() + " REDUCTION(MAX:opsDat" + (arg.id+1)|string + "Local) ") %}{% endif %}
+        {% endif %}
+    {% endif %}
+{% endfor %}
 
 {% if lh.ndim == 1 %}
     {% if not lh.has_reduction and lh.arg_idx == -1 %}
+    !$OMP PARALLEL DO PRIVATE(n_x)
     !$OMP SIMD
+    {% endif %}
+    {% if lh.has_reduction %}
+    !$OMP PARALLEL DO PRIVATE(n_x){{reduct_line[0]}}
     {% endif %}
     DO n_x = 1, end_indx(1)-start_indx(1)+1
     {% if lh.arg_idx != -1 %}
         idx_local(1) = idx(1) + n_x - 1
     {% endif %}
 {% elif lh.ndim == 2 %}
+    {% if not lh.has_reduction and lh.arg_idx == -1 %}
+    !$OMP PARALLEL DO PRIVATE(n_x,n_y)
+    {% endif %}
+    {% if lh.has_reduction %}
+    !$OMP PARALLEL DO PRIVATE(n_x,n_y){{reduct_line[0]}}
+    {% endif %}
     DO n_y = 1, end_indx(2)-start_indx(2)+1
     {% if lh.arg_idx != -1 %}
         idx_local(2) = idx(2) + n_y - 1
@@ -150,6 +171,12 @@ SUBROUTINE {{lh.kernel}}_wrap( &
             idx_local(1) = idx(1) + n_x - 1
         {% endif %}
 {% elif lh.ndim == 3 %}
+    {% if not lh.has_reduction and lh.arg_idx == -1 %}
+    !$OMP PARALLEL DO PRIVATE(n_x,n_y,n_z)
+    {% endif %}
+    {% if lh.has_reduction %}
+    !$OMP PARALLEL DO PRIVATE(n_x,n_y,n_z){{reduct_line[0]}}
+    {% endif %}
     DO n_z = 1, end_indx(3)-start_indx(3)+1
     {% if lh.arg_idx != -1 %}
         idx_local(3) = idx(3) + n_z - 1
@@ -199,11 +226,21 @@ SUBROUTINE {{lh.kernel}}_wrap( &
 
 {% if lh.ndim == 1 %}
     END DO
+    {% if not lh.has_reduction and lh.arg_idx == -1 %}
+    !$OMP END SIMD
+    !$OMP END PARALLEL DO
+    {% endif %}
 {% elif lh.ndim == 2 %}
         END DO
+        {% if not lh.has_reduction %}
+        !$OMP END SIMD
+        {% endif %}
     END DO
 {% elif lh.ndim == 3 %}
             END DO
+            {% if not lh.has_reduction %}
+            !$OMP END SIMD
+            {% endif %}
         END DO
     END DO
 {% endif %}
@@ -225,58 +262,56 @@ SUBROUTINE {{lh.kernel}}_host( userSubroutine, block, dim, range, &
     {% endif %}
 {% endfor %}
 
-    IMPLICIT NONE
-
-    character(kind=c_char,len=*), intent(in) :: userSubroutine
-    type(ops_block), intent(in) :: block
-    integer(4), intent(in) :: dim
-    integer(4), dimension(2*dim), intent(in) :: range
+    CHARACTER(KIND=C_CHAR,LEN=*), INTENT(IN) :: userSubroutine
+    TYPE(ops_block), INTENT(IN) :: block
+    INTEGER(KIND=4), INTENT(IN) :: dim
+    INTEGER(KIND=4), DIMENSION(2*dim), INTENT(IN) :: range
 
 {% for arg in lh.args %}
-    type(ops_arg), intent(in) :: opsArg{{arg.id+1}}
+    TYPE(ops_arg), INTENT(IN) :: opsArg{{arg.id+1}}
 {% endfor %}
 
-    type(ops_arg), dimension({{lh.args|length}}) :: opsArgArray
+    TYPE(ops_arg), DIMENSION({{lh.args|length}}) :: opsArgArray
 
 #else
 SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
 
-    IMPLICIT NONE
-
-    type(ops_kernel_descriptor), intent(in) :: descPtr
-    type(ops_block) :: block
-    integer(kind=c_int) :: dim
-    integer(kind=c_int), pointer, dimension(:) :: range
-    character(kind=c_char), pointer, dimension(:) :: userSubroutine
-    type(ops_arg), pointer, dimension(:) :: opsArgArray
+    TYPE(ops_kernel_descriptor), INTENT(IN) :: descPtr
+    TYPE(ops_block) :: block
+    INTEGER(KIND=C_INT) :: dim
+    INTEGER(KIND=C_INT), POINTER, DIMENSION(:) :: range
+    CHARACTER(KIND=C_CHAR), POINTER, DIMENSION(:) :: userSubroutine
+    TYPE(ops_arg), POINTER, DIMENSION(:) :: opsArgArray
 
 {% for arg in lh.args %}
-    type(ops_arg), intent(in) :: opsArg{{arg.id+1}}
+    TYPE(ops_arg) :: opsArg{{arg.id+1}}
 {% endfor %}
 
 #endif
 
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
-    {{lh.dats[arg.dat_id].typ}}, pointer, dimension(:) :: opsDat{{arg.id+1}}Local
-    integer(4) :: opsDat{{arg.id+1}}Cardinality
-    integer(4), pointer, dimension(:)  :: dat{{arg.id+1}}_size
-    integer(4) :: dat{{arg.id+1}}_base
+    {{lh.dats[arg.dat_id].typ | upper}}, POINTER, DIMENSION(:) :: opsDat{{arg.id+1}}Local
+    INTEGER(KIND=4) :: opsDat{{arg.id+1}}Cardinality
+    INTEGER(KIND=4), POINTER, DIMENSION(:)  :: dat{{arg.id+1}}_size
+    INTEGER(KIND=4) :: dat{{arg.id+1}}_base
+
     {% elif arg is ops_gbl or arg is ops_reduce %}
-    {{arg.typ}}, pointer, dimension(:) :: opsDat{{arg.id+1}}Local
-    integer(4) :: dat{{arg.id+1}}_base
+    {{arg.typ | upper}}, POINTER, DIMENSION(:) :: opsDat{{arg.id+1}}Local
+    INTEGER(KIND=4) :: dat{{arg.id+1}}_base
+
     {% endif %}
 {% endfor %}
 
-    real(8) :: t1__, t2__, t3__
-    real(4) :: transfer_total, transfer
+    REAL(KIND=8) :: t1__, t2__, t3__
+    REAL(KIND=4) :: transfer_total, transfer
 
 {% if lh.arg_idx != -1 %}
-    integer(4), dimension({{lh.ndim}}) :: idx
+    INTEGER(KIND=4), DIMENSION({{lh.ndim}}) :: idx
 {% endif %}
 
-    integer(4), dimension({{lh.ndim}}) :: start_indx, end_indx
-    integer(4) :: n_indx
+    INTEGER(KIND=4), DIMENSION({{lh.ndim}}) :: start_indx, end_indx
+    INTEGER(KIND=4) :: n_indx
 
 #ifdef OPS_LAZY
 !   ==========================
@@ -303,7 +338,7 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
 
 #if defined(OPS_MPI) && !defined(OPS_LAZY)
     IF ( getRange(block, start_indx, end_indx, range) < 0 ) THEN
-        return
+        RETURN
     END IF
 #elif !defined(OPS_MPI)  && !defined(OPS_LAZY)
     DO n_indx = 1, {{lh.ndim}}
@@ -340,7 +375,7 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
         {% elif lh.ndim == 3 %}
     xdim{{arg.id+1}} = dat{{arg.id+1}}_size(1)
     ydim{{arg.id+1}} = dat{{arg.id+1}}_size(2)
-    zdim{{arg.id+1}} = dat{{arg.id+1}}_size(3)'
+    zdim{{arg.id+1}} = dat{{arg.id+1}}_size(3)
     opsDat{{arg.id+1}}Cardinality = opsArg{{arg.id+1}}%dim * xdim{{arg.id+1}} * ydim{{arg.id+1}} * zdim{{arg.id+1}}
         {% endif %}
         {% if arg.dim > 1 %}
@@ -426,20 +461,21 @@ SUBROUTINE {{lh.kernel}}_host( userSubroutine, block, dim, range, &
     {% endif %}
 {% endfor %}
 
-    IMPLICIT NONE
-
-    character(kind=c_char,len=*), intent(in), target :: userSubroutine
-    type(ops_block), intent(in) :: block
-    integer(4), intent(in) :: dim
-    integer(4), dimension(2*dim), intent(inout), target :: range
-    integer(4), dimension(2*dim), target :: range_tmp    
+    CHARACTER(KIND=C_CHAR,LEN=*), INTENT(IN), TARGET :: userSubroutine
+    TYPE(ops_block), INTENT(IN) :: block
+    INTEGER(KIND=4), INTENT(IN) :: dim
+    INTEGER(KIND=4), DIMENSION(2*dim), INTENT(INOUT), TARGET :: range
+    INTEGER(KIND=4), DIMENSION(2*dim), TARGET :: range_tmp
 
 {% for arg in lh.args %}
-    type(ops_arg), intent(in) :: opsArg{{arg.id+1}}
+    TYPE(ops_arg), INTENT(IN) :: opsArg{{arg.id+1}}
 {% endfor %}
 
-    type(ops_arg), dimension({{lh.args|length}}), target :: opsArgArray
-    integer(4) :: n_indx    
+    TYPE(ops_arg), DIMENSION({{lh.args|length}}), TARGET :: opsArgArray
+    INTEGER(KIND=4) :: n_indx
+    CHARACTER(LEN=40) :: namelit
+
+    namelit = "{{lh.kernel}}"
 
 {% for d in range(lh.args|length) %}
     opsArgArray({{d+1}}) = opsArg{{d+1}}
@@ -450,9 +486,9 @@ SUBROUTINE {{lh.kernel}}_host( userSubroutine, block, dim, range, &
         range_tmp(2*n_indx)   = range(2*n_indx)
     END DO
 
-    CALL create_kerneldesc_and_enque(userSubroutine//c_null_char, c_loc(opsArgArray), &
+    CALL create_kerneldesc_and_enque(userSubroutine//c_null_char, namelit//c_null_char, c_loc(opsArgArray), &
                                     {{lh.args|length}}, {{kernel_idx}}, dim, 0, c_loc(range_tmp), &
-                                    block%blockCptr, c_funloc({name}_host_execute))
+                                    block%blockCptr, c_funloc({{lh.kernel}}_host_execute))
 
 END SUBROUTINE
 #endif
@@ -460,5 +496,5 @@ END SUBROUTINE
 {% endblock %}
 
 {% block epilogue %}
-END MODULE
+END MODULE {{lh.kernel | upper}}_MODULE
 {% endblock%}

@@ -77,11 +77,14 @@ def translateProgram(program: Program, force_soa: bool) -> str:
                 sys.exit()
 
         # Update par loop name by adding kernel name to ops_par_loop
-        name.string = f"ops_par_loop_{kernel_name}"
+        name.string = f"{kernel_name}_host"
 
     # 3. Update headers
     #    Add use module statement for ops_par_loops referenced in current file
-    for main_program in fpu.walk(ast, f2003.Main_Program):
+    for main_program in fpu.walk(ast, (f2003.Main_Program,
+                                       f2003.Function_Subprogram,
+                                       f2003.Subroutine_Subprogram,
+                                       f2003.Module)):
         spec = fpu.get_child(main_program, f2003.Specification_Part)
         new_content = []
 
