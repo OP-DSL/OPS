@@ -2,8 +2,8 @@
 set -e
 #<<COMMENT
 cd ../../../ops/c
-#source ../../scripts/$SOURCE_INTEL
-source  ~/OPS/scripts/source_intel_2021.3
+export SOURCE_INTEL=source_intel_2021.3_pythonenv
+source ../../scripts/$SOURCE_INTEL
 
 #<<COMMENT
 #==== Build and copy Referance application from the TDMA Library ====
