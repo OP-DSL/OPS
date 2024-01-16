@@ -667,7 +667,7 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
           code(f"args[{n}] = arg{n};")
 
         code("")
-        text = 'create_kerneldesc_and_enque(name, '
+        text = 'create_kerneldesc_and_enque('
         text = text + f'"{name}", '
         text = text + f'args, {nargs}, '
         text = text + f'{nk}, '
