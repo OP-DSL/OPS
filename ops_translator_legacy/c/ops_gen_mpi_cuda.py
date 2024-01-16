@@ -772,7 +772,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
         code("")
         config.depth = config.depth + 4
         if has_reduction:
-            code(f"ops_" + name + "<<<grid, tblock, nshared >>> ( ")
+            code(f"ops_{name}<<<grid, tblock, nshared >>> ( ")
         else:
             code(f"ops_{name}<<<grid, tblock >>> ( ")
 
@@ -908,7 +908,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
             code(f"args[{n}] = arg{n};")
 
         code("")
-        text = 'create_kerneldesc_and_enque(name, '
+        text = 'create_kerneldesc_and_enque('
         text = text + f'"{name}", '
         text = text + f'args, {nargs}, '
         text = text + f'{nk}, '

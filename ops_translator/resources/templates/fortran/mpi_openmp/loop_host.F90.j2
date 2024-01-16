@@ -333,7 +333,7 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
 {% endfor %}
 #endif
 
-    CALL setKernelTime({{kernel_idx}}, userSubroutine, 0.0_8, 0.0_8, 0.0_4, 1)
+    CALL setKernelTime({{kernel_idx}}, "{{lh.kernel}}", 0.0_8, 0.0_8, 0.0_4, 1)
     CALL ops_timers_core(t1__)
 
 #if defined(OPS_MPI) && !defined(OPS_LAZY)
@@ -445,7 +445,7 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
     {% endif %}
 {% endfor %}
 
-    CALL setKernelTime({{kernel_idx}}, userSubroutine, t3__-t2__, t2__-t1__, transfer_total, 0)
+    CALL setKernelTime({{kernel_idx}}, "{{lh.kernel}}", t3__-t2__, t2__-t1__, transfer_total, 0)
 
 END SUBROUTINE
 
@@ -486,7 +486,7 @@ SUBROUTINE {{lh.kernel}}_host( userSubroutine, block, dim, range, &
         range_tmp(2*n_indx)   = range(2*n_indx)
     END DO
 
-    CALL create_kerneldesc_and_enque(userSubroutine//c_null_char, namelit//c_null_char, c_loc(opsArgArray), &
+    CALL create_kerneldesc_and_enque(namelit//c_null_char, c_loc(opsArgArray), &
                                     {{lh.args|length}}, {{kernel_idx}}, dim, 0, c_loc(range_tmp), &
                                     block%blockCptr, c_funloc({{lh.kernel}}_host_execute))
 

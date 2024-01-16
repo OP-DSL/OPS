@@ -782,5 +782,5 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
 {% endblock %}
 
 {% block kernel_descriptor_lazy_call %}
-    create_kerneldesc_and_enque(name, "{{lh.kernel}}", args, {{lh.args|length}}, {{kernel_idx}}, dim, 1, range, block, ops_par_loop_{{lh.kernel}}_execute);
+    create_kerneldesc_and_enque("{{lh.kernel}}", args, {{lh.args|length}}, {{kernel_idx}}, dim, 1, range, block, ops_par_loop_{{lh.kernel}}_execute);
 {% endblock %}
