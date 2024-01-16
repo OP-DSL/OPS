@@ -502,13 +502,12 @@ module OPS_Fortran_Declarations
             type(c_ptr), value :: nullPtr
         end subroutine ops_execute_c
 
-        subroutine create_kerneldesc_and_enque( name, namelit, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='create_kerneldesc_and_enque')
+        subroutine create_kerneldesc_and_enque( name, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='create_kerneldesc_and_enque')
             use, intrinsic :: ISO_C_BINDING
 
             import :: ops_block_core, ops_arg, c_funptr
 
             character(kind=c_char,len=1) :: name
-            character(kind=c_char,len=1) :: namelit
             type(c_ptr), value      :: args
             integer(c_int), value   :: nargs
             integer(c_int), value   :: index

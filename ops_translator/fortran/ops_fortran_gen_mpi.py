@@ -447,7 +447,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
 
     code('')
     config.depth = config.depth + 2
-    code('call setKernelTime('+str(nk)+',userSubroutine,0.0_8,0.0_8,0.0_4,1)')
+    code('call setKernelTime('+str(nk)+', "'+name+'",0.0_8,0.0_8,0.0_4,1)')
     code('call ops_timers_core(t1)')
     code('')
 
@@ -570,7 +570,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_dat':
         code('call ops_compute_transfer('+str(NDIM)+', start_indx, end_indx, opsArg'+str(n+1)+',transfer)')
         code('transfer_total = transfer_total + transfer')
-    code('call setKernelTime('+str(nk)+',userSubroutine,t3-t2,t2-t1,transfer_total,0)') 
+    code('call setKernelTime('+str(nk)+',"'+name+'",t3-t2,t2-t1,transfer_total,0)')
 
     config.depth = config.depth - 2
     code('')
@@ -618,7 +618,7 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
     ENDDO()
     code('')
 
-    code('CALL create_kerneldesc_and_enque(userSubroutine//c_null_char, namelit//c_null_char, c_loc(opsArgArray), &')
+    code('CALL create_kerneldesc_and_enque(namelit//c_null_char, c_loc(opsArgArray), &')
     code(f'             {nargs}, {nk}, dim, 0, c_loc(range_tmp), block%blockCptr, &')
     code(f'             c_funloc({name}_host_execute))')
 
