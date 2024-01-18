@@ -11,7 +11,7 @@
 //  ==================
 #ifndef OPS_LAZY
 void ops_par_loop_{{lh.kernel}}(
-    const char * name,
+    const char *name,
     ops_block block,
     int dim,
     int *range,
@@ -85,10 +85,10 @@ void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
 {% block kernel_descriptor_lazy %}
 #ifdef OPS_LAZY
 void ops_par_loop_{{lh.kernel}}(
-    const char * name,
+    const char *name,
     ops_block block,
     int dim,
-    int * range,
+    int *range,
     {% for arg in lh.args %}
     ops_arg arg{{arg.id}}{{"," if not loop.last}}
     {% endfor %}

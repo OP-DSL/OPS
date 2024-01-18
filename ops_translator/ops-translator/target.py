@@ -23,6 +23,7 @@ class Target(Findable):
 
 class MPIOpenMP(Target):
     name = "mpi_openmp"
+    suffix = "seq"
     kernel_translation = False
     config = {
         "grouped" : False, 
@@ -31,6 +32,7 @@ class MPIOpenMP(Target):
 
 class Cuda(Target):
     name = "cuda"
+    suffix = "cuda"
     kernel_translation = True
     config = {
         "grouped" : True,

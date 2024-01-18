@@ -3,7 +3,10 @@ ifndef OPS_GENERATED_SUFFIX
 OPS_GENERATED_SUFFIX=_ops
 endif
 
+ifeq ($(strip $(OPS_GENERATED)),)
 OPS_GENERATED=$(join $(addsuffix $(OPS_GENERATED_SUFFIX), $(basename $(OPS_FILES))), $(suffix $(OPS_FILES)))
+endif
+
 OPS_FILES_PLAIN=$(OPS_FILES) $(OTHER_FILES)
 OPS_FILES_GEN=$(OPS_GENERATED) $(OTHER_FILES)
 
@@ -65,7 +68,7 @@ endif
 #endif
 #endif
 
-endif
+endif   #ifneq TARGETS
 
 ifndef TARGETS
 TARGETS = dev_seq dev_mpi seq tiled openmp mpi mpi_openmp mpi_tiled ompoffload mpi_ompoffload mpi_ompoffload_tiled
@@ -113,6 +116,11 @@ endif
 APP_TARGETS = $(addprefix $(APP)_, $(TARGETS))
 
 all: $(APP_TARGETS)
+
+#=====================================================================================================================================================================
+#
+# Dev version
+#
 
 $(APP)_dev_seq: Makefile $(HEADERS) $(OPS_FILES_PLAIN) $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_seq.a
 		@echo "Building ${APP}_dev_seq" 
@@ -173,6 +181,7 @@ $(APP)_mpi_openmp: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)
 #
 
 OMPOFFLOAD_KERNELS = openmp_offload_kernels.cpp
+
 $(APP)_ompoffload: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_ompoffload.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo ""
 		@echo ""
@@ -225,6 +234,7 @@ $(APP)_mpi_hip_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPIL
 #
 # Tiled version
 #
+
 $(APP)_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_seq.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo ""
 		@echo ""
@@ -278,7 +288,6 @@ $(APP)_mpi_cuda_tiled: ./cuda/$(APP)_kernels_mpi_tiled_cu.o Makefile .generated 
 				-c -o ./cuda/$(APP)_kernels_mpi_tiled_cu.o ./cuda/cuda_kernels.cu
 
 #=====================================================================================================================================================================
-
 #
 # OpenACC version
 #
@@ -336,6 +345,9 @@ $(APP)_mpi_sycl_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPI
 # cleanup
 #
 
+cleanall: clean
+	rm -rf ./mpi_openmp ./cuda ./hip ./openmp_offload ./sycl
+	
 clean:
 	rm -f *.o
 	rm -f *.oo
@@ -367,4 +379,3 @@ clean:
 	rm -f $(APP)_mpi_sycl_tiled
 	rm -f $(OPS_GENERATED)
 	rm -f .generated constants_list.txt cudafe
-	rm -rf ./mpi_openmp ./cuda ./hip ./openmp_offload ./sycl

@@ -203,7 +203,10 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
         path = None
         if scheme.lang.kernel_dir:
             Path(args.out, scheme.target.name).mkdir(parents=True, exist_ok=True)
-            path = Path(args.out, scheme.target.name, f"{loop.kernel}_kernel.{extension}")
+            if(scheme.lang.name == "C++"):
+                path = Path(args.out, scheme.target.name, f"{loop.kernel}_kernel.{extension}")
+            else:
+                path = Path(args.out, scheme.target.name, f"{loop.kernel}_{scheme.target.suffix}_kernel.{extension}")
         else:
             path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.{extension}")
 

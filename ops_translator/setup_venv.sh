@@ -13,4 +13,5 @@ python3 -m pip install --upgrade pip
 
 python3 -m pip install -r requirements.txt
 
-pip install --force-reinstall libclang==16.0.6
+python3 -m pip install --force-reinstall libclang==16.0.6
+

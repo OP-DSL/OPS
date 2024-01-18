@@ -814,63 +814,104 @@ ops_stencil ops_decl_prolong_stencil ( int dims, int points, int *sten, int *str
 
 ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
                             ops_access acc) {
-  ops_arg arg;
-  arg.argtype = OPS_ARG_GBL;
-  arg.dat = NULL;
-  arg.data_d = NULL;
-  arg.stencil = NULL;
-  arg.dim = dim;
-  arg.data = (char *)handle;
-  arg.acc = acc;
-  if (handle->initialized == 0) {
-    handle->initialized = 1;
-    handle->acc = acc;
-    if (acc == OPS_INC)
-      memset(handle->data, 0, handle->size);
-    if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) { // TODO: handle other types
-        OPS_RED_INIT(double,DBL)
-    } else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 || strcmp(type, "real(kind=4)") == 0) {
-        OPS_RED_INIT(float,FLT)
-    } else if (strcmp(type, "int") == 0 || strcmp(type, "integer") == 0 || strcmp(type, "integer(4)") == 0 || strcmp(type, "integer(kind=4)") == 0) {
-        OPS_RED_INIT2(int,INT)
-    } else if (strcmp(type, "long") == 0) {
-        OPS_RED_INIT2(long,LONG)
-    } else if (strcmp(type, "char") == 0) {
-        OPS_RED_INIT2(char,CHAR)
-    } else if (strcmp(type, "short") == 0) {
-        OPS_RED_INIT2(short,SHRT)
-    } else if (strcmp(type, "long long") == 0 || strcmp(type, "ll") == 0) {
-        OPS_RED_INIT2(long long,LLONG)
-    } else if (strcmp(type, "unsigned long long") == 0 || strcmp(type, "ull") == 0) {
-        OPS_RED_INIT2(unsigned long long,ULLONG)
-    } else if (strcmp(type, "unsigned long") == 0 || strcmp(type, "ul") == 0) {
-        OPS_RED_INIT2(unsigned long,ULONG)
-    } else if (strcmp(type, "unsigned int") == 0 || strcmp(type, "uint") == 0) {
-        OPS_RED_INIT2(unsigned int,UINT)
+    ops_arg arg;
+    arg.argtype = OPS_ARG_GBL;
+    arg.dat = NULL;
+    arg.data_d = NULL;
+    arg.stencil = NULL;
+    arg.dim = dim;
+    arg.data = (char *)handle;
+    arg.acc = acc;
+    if (handle->initialized == 0)
+    {
+        handle->initialized = 1;
+        handle->acc = acc;
+        if (acc == OPS_INC)
+            memset(handle->data, 0, handle->size);
+        if (strcmp(type, "double") == 0 ||
+            strcmp(type, "real(8)") == 0 ||
+            strcmp(type, "real(kind=8)") == 0 ||
+            strcmp(type, "double precision") == 0)
+        { // TODO: handle other types
+            OPS_RED_INIT(double,DBL)
+        }
+        else if (strcmp(type, "float") == 0 ||
+                 strcmp(type, "real") == 0 ||
+                 strcmp(type, "real(4)") == 0 ||
+                 strcmp(type, "real(kind=4)") == 0)
+        {
+            OPS_RED_INIT(float,FLT)
+        }
+        else if (strcmp(type, "int") == 0 ||
+                 strcmp(type, "int(4)") == 0 ||
+                 strcmp(type, "integer") == 0 ||
+                 strcmp(type, "integer(4)") == 0 ||
+                 strcmp(type, "integer(kind=4)") == 0)
+        {
+            OPS_RED_INIT2(int,INT)
+        }
+        else if (strcmp(type, "long") == 0)
+        {
+            OPS_RED_INIT2(long,LONG)
+        }
+        else if (strcmp(type, "char") == 0)
+        {
+            OPS_RED_INIT2(char,CHAR)
+        }
+        else if (strcmp(type, "short") == 0)
+        {
+            OPS_RED_INIT2(short,SHRT)
+        }
+        else if (strcmp(type, "long long") == 0 ||
+                 strcmp(type, "ll") == 0)
+        {
+            OPS_RED_INIT2(long long,LLONG)
+        }
+        else if (strcmp(type, "unsigned long long") == 0 ||
+                 strcmp(type, "ull") == 0)
+        {
+            OPS_RED_INIT2(unsigned long long,ULLONG)
+        }
+        else if (strcmp(type, "unsigned long") == 0 ||
+                 strcmp(type, "ul") == 0)
+        {
+            OPS_RED_INIT2(unsigned long,ULONG)
+        }
+        else if (strcmp(type, "unsigned int") == 0 ||
+                 strcmp(type, "uint") == 0)
+        {
+            OPS_RED_INIT2(unsigned int,UINT)
+        }
+        else if (strcmp(type, "complexf") == 0)
+        {
+            if (acc == OPS_MIN)
+                for (int i = 0; i < 2 * handle->size / 4; i++)
+                    ((complexf *)handle->data)[i] = complexf(FLT_MAX, FLT_MAX);
+            if (acc == OPS_MAX)
+                for (int i = 0; i < 2 * handle->size / 4; i++)
+                    ((complexf *)handle->data)[i] = complexf(0,0);
+        }
+        else if (strcmp(type, "complexd") == 0)
+        {
+            if (acc == OPS_MIN)
+                for (int i = 0; i < 2 * handle->size / 8; i++)
+                    ((complexd *)handle->data)[i] = complexd(DBL_MAX,DBL_MAX);
+            if (acc == OPS_MAX)
+                for (int i = 0; i < 2 * handle->size / 8; i++)
+                    ((complexd *)handle->data)[i] = complexd(0,0);
+        }
+        else
+        {
+            throw OPSException(OPS_NOT_IMPLEMENTED, "Error, reduction type not recognised, please add in ops_lib_core.cpp");
+        }
     }
-    else if (strcmp(type, "complexf") == 0) {
-      if (acc == OPS_MIN)
-        for (int i = 0; i < 2 * handle->size / 4; i++)
-          ((complexf *)handle->data)[i] = complexf(FLT_MAX, FLT_MAX);
-      if (acc == OPS_MAX)
-        for (int i = 0; i < 2 * handle->size / 4; i++)
-          ((complexf *)handle->data)[i] = complexf(0,0);
-    } else if (strcmp(type, "complexd") == 0) {
-      if (acc == OPS_MIN)
-        for (int i = 0; i < 2 * handle->size / 8; i++)
-          ((complexd *)handle->data)[i] = complexd(DBL_MAX,DBL_MAX);
-      if (acc == OPS_MAX)
-        for (int i = 0; i < 2 * handle->size / 8; i++)
-          ((complexd *)handle->data)[i] = complexd(0,0);
-    } else {
-      throw OPSException(OPS_NOT_IMPLEMENTED, "Error, reduction type not recognised, please add in ops_lib_core.cpp");
+    else if (handle->acc != acc)
+    {
+        OPSException ex(OPS_INVALID_ARGUMENT);
+        ex << "Error: ops_reduction handle " << handle->name << " was already used with a different access type";
+        throw ex;
     }
-  } else if (handle->acc != acc) {
-      OPSException ex(OPS_INVALID_ARGUMENT);
-      ex << "Error: ops_reduction handle " << handle->name << " was already used with a different access type";
-      throw ex;
-  }
-  return arg;
+    return arg;
 }
 
 ops_halo_group _ops_decl_halo_group(OPS_instance *instance, int nhalos, ops_halo halos[]) {
@@ -1215,47 +1256,68 @@ void ops_print_dat_to_txtfile_core(ops_dat dat, const char* file_name_in)
                 size_t offset = dat->block->instance->OPS_soa ?
                         (n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i + d * prod[5])
                       :((n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i)*dat->dim + d);
-                if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
-                    strcmp(dat->type, "double precision") == 0) {
-                  if (fprintf(fp, " %3.10lf", ((double *)dat->data)[offset]) < 0) {
+                if (strcmp(dat->type, "double") == 0 ||
+                    strcmp(dat->type, "real(8)") == 0 ||
+                    strcmp(dat->type, "real(kind=8)") == 0 ||
+                    strcmp(dat->type, "double precision") == 0)
+                {
+                  if (fprintf(fp, " %3.10lf", ((double *)dat->data)[offset]) < 0)
+                  {
                     OPSException ex(OPS_RUNTIME_ERROR);
                     ex << "Error: error writing to file " << file_name;
                     throw ex;
                   }
-                } else if (strcmp(dat->type, "float") == 0 ||
-                           strcmp(dat->type, "real") == 0) {
-                  if (fprintf(fp, "%e ", ((float *)dat->data)[offset]) < 0) {
+                }
+                else if (strcmp(dat->type, "float") == 0 ||
+                         strcmp(dat->type, "real") == 0 ||
+                         strcmp(dat->type, "real(4)") == 0 ||
+                         strcmp(dat->type, "real(kind=4)") == 0)
+                {
+                  if (fprintf(fp, "%e ", ((float *)dat->data)[offset]) < 0)
+                  {
                     OPSException ex(OPS_RUNTIME_ERROR);
                     ex << "Error: error writing to file " << file_name;
                     throw ex;
                   }
-                } else if (strcmp(dat->type, "int") == 0 ||
-                           strcmp(dat->type, "integer") == 0 ||
-                           strcmp(dat->type, "integer(4)") == 0 ||
-                           strcmp(dat->type, "int(4)") == 0 /* ||
-                           strcmp(dat->type, "long") == 0 ||
-                           strcmp(dat->type, "long long") == 0 ||
-                           strcmp(dat->type, "ll") == 0 ||
-                           strcmp(dat->type, "short") == 0 ||
-                           strcmp(dat->type, "char") == 0*/) {
-                  if (fprintf(fp, "%d ", ((int *)dat->data)[offset]) < 0) {
+                }
+                else if (strcmp(dat->type, "int") == 0 ||
+                         strcmp(dat->type, "int(4)") == 0 ||
+                         strcmp(dat->type, "integer") == 0 ||
+                         strcmp(dat->type, "integer(4)") == 0 ||
+                         strcmp(dat->type, "integer(kind=4)") == 0 /* ||
+                         strcmp(dat->type, "long") == 0 ||
+                         strcmp(dat->type, "long long") == 0 ||
+                         strcmp(dat->type, "ll") == 0 ||
+                         strcmp(dat->type, "short") == 0 ||
+                         strcmp(dat->type, "char") == 0*/)
+                {
+                  if (fprintf(fp, "%d ", ((int *)dat->data)[offset]) < 0)
+                  {
                     OPSException ex(OPS_RUNTIME_ERROR);
                     ex << "Error: error writing to file " << file_name;
                     throw ex;
                   }
-                } else if (strcmp(dat->type, "complexf") == 0) {
-                  if (fprintf(fp, "%e+%ei ", ((float *)dat->data)[2*offset],((float *)dat->data)[2*offset+1]) < 0) {
+                }
+                else if (strcmp(dat->type, "complexf") == 0)
+                {
+                  if (fprintf(fp, "%e+%ei ", ((float *)dat->data)[2*offset],((float *)dat->data)[2*offset+1]) < 0)
+                  {
                     OPSException ex(OPS_RUNTIME_ERROR);
                     ex << "Error: error writing to file " << file_name;
                     throw ex;
                   }
-                } else if (strcmp(dat->type, "complexd") == 0) {
-                  if (fprintf(fp, "%3.10lf+%3.10lfi ", ((double *)dat->data)[2*offset],((double *)dat->data)[2*offset+1]) < 0) {
+                }
+                else if (strcmp(dat->type, "complexd") == 0)
+                {
+                  if (fprintf(fp, "%3.10lf+%3.10lfi ", ((double *)dat->data)[2*offset],((double *)dat->data)[2*offset+1]) < 0)
+                  {
                     OPSException ex(OPS_RUNTIME_ERROR);
                     ex << "Error: error writing to file " << file_name;
                     throw ex;
                   }
-                } else {
+                }
+                else
+                {
                     OPSException ex(OPS_NOT_IMPLEMENTED);
                     ex << "Error: Unknown type " << dat->type << " cannot be written to file " << file_name;
                     throw ex;
@@ -1629,24 +1691,38 @@ void ops_NaNcheck_core(ops_dat dat, char *buffer) {
                 size_t offset = dat->block->instance->OPS_soa ?
                         (n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i + d * prod[5])
                       :((n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i)*dat->dim + d);
-                if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 ||
-                    strcmp(dat->type, "double precision") == 0) {
-                  if (  std::isnan(((double *)dat->data)[offset])  ) {
+                if (strcmp(dat->type, "double") == 0 ||
+                    strcmp(dat->type, "real(8)") == 0 ||
+                    strcmp(dat->type, "real(kind=8)") == 0 ||
+                    strcmp(dat->type, "double precision") == 0)
+                {
+                  if (  std::isnan(((double *)dat->data)[offset])  )
+                  {
                     printf("%sError: NaN detected at element %zu\n", buffer, offset);
                     exit(2);
                   }
-                } else if (strcmp(dat->type, "float") == 0 ||
-                           strcmp(dat->type, "real") == 0) {
-                  if (  std::isnan(((float *)dat->data)[offset])  ) {
+                }
+                else if (strcmp(dat->type, "float") == 0 ||
+                         strcmp(dat->type, "real") == 0 ||
+                         strcmp(dat->type, "real(4)") == 0 ||
+                         strcmp(dat->type, "real(kind=4)") == 0)
+                {
+                  if (  std::isnan(((float *)dat->data)[offset])  )
+                  {
                     printf("%sError: NaN detected at element %zu\n", buffer, offset);
                     exit(2);
                   }
-                } else if (strcmp(dat->type, "int") == 0 ||
-                           strcmp(dat->type, "integer") == 0 ||
-                           strcmp(dat->type, "integer(4)") == 0 ||
-                          strcmp(dat->type, "int(4)") == 0) {
+                }
+                else if (strcmp(dat->type, "int") == 0 ||
+                         strcmp(dat->type, "int(4)") == 0 ||
+                         strcmp(dat->type, "integer") == 0 ||
+                         strcmp(dat->type, "integer(4)") == 0 ||
+                         strcmp(dat->type, "integer(kind=4)") == 0)
+                {
                   // do nothing
-                } else {
+                }
+                else
+                {
                   printf("Error: Unknown type %s, cannot check for NaNs\n", dat->type);
                   exit(2);
                 }

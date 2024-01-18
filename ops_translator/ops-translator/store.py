@@ -89,6 +89,7 @@ class Program:
 
     ndim: Optional[int] = None
     soa_val: Optional[bool] = False
+    init_flag: Optional[bool] = False
 
     def findEntities(self, name: str, scope: List[str] = []) -> List[Entity]:
         def in_scope(entity: Entity):
