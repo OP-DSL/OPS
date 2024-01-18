@@ -812,6 +812,20 @@ ops_stencil ops_decl_prolong_stencil ( int dims, int points, int *sten, int *str
         for (unsigned int i = 0; i < handle->size / sizeof(type); i++) \
           ((type *)handle->data)[i] = token##_MIN;
 
+ // Helper function to convert type to a uniform representation
+ std::string uniformType(const char* type) {
+   std::string uniform;
+   if (strcmp(type, "double") == 0 || strcmp(type, "doublestr") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) {
+     uniform = "double";
+   } else if (strcmp(type, "float") == 0 || strcmp(type, "floatstr") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 || strcmp(type, "real(kind=4)") == 0) {
+     uniform = "float";
+   } else {
+     // Add similar conversion logic for other types
+     uniform = type; // Default to original type if no conversion is needed
+   }
+   return uniform;
+ }
+
 ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
                             ops_access acc) {
   ops_arg arg;
@@ -822,6 +836,14 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
   arg.dim = dim;
   arg.data = (char *)handle;
   arg.acc = acc;
+ // Get uniform representations of type and handle->type
+ std::string uniformType1 = uniformType(type);
+ std::string uniformType2 = uniformType(handle->type);
+ 
+ if (uniformType1 != uniformType2) {
+   throw OPSException(OPS_INVALID_ARGUMENT, "Error, type mismatch between handle and argument");
+ }
+
   if (handle->initialized == 0) {
     handle->initialized = 1;
     handle->acc = acc;
@@ -2205,8 +2227,14 @@ void increase_precision_core(){
       //  }
       }
   }
-  
-  
+
+  for (int i = 0; i < instance->OPS_reduction_index; i++) {
+    increase_red_precision_core(instance->OPS_reduction_list[i]);
+    // ops_free(instance->OPS_reduction_list[i]->data);
+    // ops_free(instance->OPS_reduction_list[i]->type);
+    // ops_free(instance->OPS_reduction_list[i]->name);
+    // ops_free(instance->OPS_reduction_list[i]);
+  }  
 }
 
 void increase_dat_precision_core(ops_dat_core* dat){
@@ -2214,107 +2242,52 @@ void increase_dat_precision_core(ops_dat_core* dat){
   increase_precision_float2double(dat);
 }
 
+void increase_red_precision_core(ops_reduction_core* red){
+  ops_printf("Increasing precision of reduction handler %s\n",red->name);
+  increase_red_precision_float2double(red);
+}
+
+void increase_red_precision_float2double(ops_reduction_core* red){
+  if ( strcmp(red->type, "float")==0){
+    ops_printf("Increasing prec of red %s from SP to DP\n",red->name);
+    red->type=copy_str("doublestr");
+    red->size*=2;
+
+    char *new_data = (char *)ops_malloc(red->size);
+    for (int i=0; i<red->size/sizeof(double); i++){
+      ((double*)new_data)[i]=(double)(((float*)red->data)[i]);
+    }
+
+    
+    ops_free(red->data);
+    red->data=new_data;
+
+
+
+  }
+}
+
 void increase_precision_float2double(ops_dat_core* dat){
 
   if ( strcmp(dat->type, "float")==0){
     ops_printf("Increasing prec of dat %s from SP to DP\n",dat->name);
-    dat->type="doublestr";
+    dat->type=copy_str("doublestr");
     dat->type_size*=2;
     dat->elem_size*=2;
     dat->mem*=2;
     dat->base_offset*=2;
 
     char *new_data = (char *)ops_malloc(dat->mem);
-   // for (int i=0; i<dat->size; i++){
-   //   
-   // }
 
-    size_t prod[OPS_MAX_DIM+1];
-  prod[0] = dat->size[0];
-  for (int d = 1; d < OPS_MAX_DIM; d++) {
-    prod[d] = prod[d-1] * dat->size[d];
-  }
-  for (int d = OPS_MAX_DIM; d <= OPS_MAX_DIM; d++)
-    prod[d] = prod[d-1];
-
-  #if OPS_MAX_DIM > 5
-    for (int n = 0; n < dat->size[5]; n++) {
-  #else
-    {
-    int n = 0;
-  #endif
-    #if OPS_MAX_DIM > 4
-      for (int m = 0; m < dat->size[4]; m++) {
-    #else
-      {
-      int m = 0;
-    #endif
-      #if OPS_MAX_DIM > 3
-        for (int l = 0; l < dat->size[3]; l++) {
-      #else
-        {
-        int l = 0;
-      #endif
-        #if OPS_MAX_DIM > 2
-          for (int k = 0; k < dat->size[2]; k++) {
-        #else
-          {
-          int k = 0;
-        #endif
-          #if OPS_MAX_DIM > 1
-            for (int j = 0; j < dat->size[1]; j++) {
-          #else
-            {
-            int j = 0;
-          #endif
-            #if OPS_MAX_DIM > 0
-              for (int i = 0; i < dat->size[0]; i++) {
-            #else
-              {
-              int i = 0;
-            #endif
-                for (int d = 0; d < dat->dim; d++) {
-                  size_t offset = dat->block->instance->OPS_soa ?
-                          (n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i + d * prod[5])
-                        :((n * prod[4] + m * prod[3] + l * prod[2] + k * prod[1] + j * prod[0] + i)*dat->dim + d);
-                  ((double*)new_data)[offset]=(double)(((float *)(dat->data))[offset]);
-                   
-                } //d
-              } //i
-            }//j
-          }//k
-        }//l
-      }//m
-    }//n
+    for (int i=0; i< dat->mem / sizeof(double); i++){
+      ((double*)new_data)[i]=(double)(((float *)(dat->data))[i]);
+    }
 
     ops_free(dat->data);
     dat->data=new_data;
 
-  } //if ( strcmp(dat->type, "float")==0){
+  }
 
-  
-
-  //OP_precision=1;
-  //op_dat_entry *item;
-  //TAILQ_FOREACH(item, &OP_dat_list, entries) {    
-  //  if ( strcmp((item->dat)->type, "float")==0){
-  //    //(item->dat)->type=doublestr;
-  //    (item->dat)->type="f2d";
-  //    //item->dat->mem megmondja, hogy hány báűjt OPSbewn
-  //    //külön datokra
-  //    
-  //    (item->dat)->size=(item->dat)->dim*sizeof(double);
-
-  //    size_t bytes = (size_t)(item->dat)->size * (size_t)
-  //                ((item->dat)->set->size+(item->dat)->set->exec_size+(item->dat)->set->nonexec_size) * sizeof(char);
-  //    char *new_data = (char *)op_malloc(bytes);
-  //    for (int i=0; i<((item->dat)->set->size+(item->dat)->set->exec_size+(item->dat)->set->nonexec_size)*(item->dat->dim);i++){
-  //      ((double*)new_data)[i]=(double)(((float*)((item->dat)->data))[i]);
-  //    }
-  //    op_free((item->dat)->data);
-  //    (item->dat)->data=new_data;
-  //  }
-  //}
 }
 
 /************* Functions only use in the Fortran Backend ************/

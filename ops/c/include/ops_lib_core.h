@@ -895,6 +895,12 @@ ops_halo_group ops_decl_halo_group(int nhalos, ops_halo *halos);
 OPS_FTN_INTEROP
 void ops_halo_transfer(ops_halo_group group);
 
+
+ // Helper function to convert type to a uniform representation
+ std::string uniformType(const char* type);
+
+void ops_free(void *ptr);
+void *ops_malloc(size_t size);
 /**
  * This routine returns the reduced value held by a reduction handle. During lazy execution,
  * this will trigger the execution of all preceding queued operations
@@ -905,17 +911,37 @@ void ops_halo_transfer(ops_halo_group group);
  *                the declared
  */
 template <class T> void ops_reduction_result(ops_reduction handle, T *ptr) {
-  if (type_error(ptr, handle->type)) {
-    OPSException ex(OPS_HDF5_ERROR);
-    ex << "Error: incorrect type specified for constant " << handle->name << " in ops_reduction_result";
-    throw ex;
+  
+    // Determine the target data type based on handle->type for mixed precision
+  if (uniformType(handle->type) == "double" && typeid(T) != typeid(double)) {
+    // Cast to double
+    double* casted_ptr = static_cast<double*>(ops_malloc(sizeof(double)));
+    *casted_ptr = static_cast<double>(*ptr);
+    ops_reduction_result_char(handle, sizeof(double), reinterpret_cast<char*>(casted_ptr));
+    *ptr = static_cast<T>(*casted_ptr);
+    ops_free(static_cast<void*>(casted_ptr));
+  } else if (uniformType(handle->type) == "float" && typeid(T) != typeid(float)) {
+    // Cast to float
+    float* casted_ptr = static_cast<float*>(ops_malloc(sizeof(float)));
+    *casted_ptr = static_cast<float>(*ptr);
+    ops_reduction_result_char(handle, sizeof(float), reinterpret_cast<char*>(casted_ptr));
+    *ptr = static_cast<T>(*casted_ptr);
+    ops_free(static_cast<void*>(casted_ptr));
+  } else {
+    if (type_error(ptr, handle->type)) {
+      OPSException ex(OPS_HDF5_ERROR);
+      ex << "Error: incorrect type specified for constant " << handle->name << " in ops_reduction_result";
+      throw ex;
+    }
+    if (!handle->initialized) {
+      OPSException ex(OPS_INVALID_ARGUMENT);
+      ex << "Error: ops_reduction_result called for " << handle->name << " but the handle was not previously used in a reduction since the last ops_reduction_result call.";
+      throw ex;
+    }
+    ops_reduction_result_char(handle, sizeof(T), (char *)ptr);
+
   }
-  if (!handle->initialized) {
-    OPSException ex(OPS_INVALID_ARGUMENT);
-    ex << "Error: ops_reduction_result called for " << handle->name << " but the handle was not previously used in a reduction since the last ops_reduction_result call.";
-    throw ex;
-  }
-  ops_reduction_result_char(handle, sizeof(T), (char *)ptr);
+
 }
 
 /**
@@ -1487,5 +1513,9 @@ void increase_precision_core();
 void increase_dat_precision_core(ops_dat_core* dat);
 
 void increase_precision_float2double(ops_dat_core* dat);
+
+void increase_red_precision_core(ops_reduction_core* red);
+
+void increase_red_precision_float2double(ops_reduction_core* red);
 
 #endif /* __OP_LIB_CORE_H */
