@@ -1,35 +1,51 @@
 #!/bin/bash
 
-export OPS_COMPILER=gnu
+export OPS_COMPILER=clang
 export OPS_INSTALL_PATH=/rr-home/gihan/OPS/ops
 
 module purge
 
-#module load rocmmod5.4.3
-module load rocm/5.6.0
-
 module load llvm-14.0.6/llvm-14.0.6
 export LIBCLANG_PATH=/opt/llvm/14.0.6/lib/libclang.so
+
+#module load rocmmod5.4.3
+module load rocm/5.6.0
+export LD_LIBRARY_PATH=/opt/rocm-5.6.0/llvm/lib:$LD_LIBRARY_PATH
+unset LIBCLANG_PATH
+
 module load python/3.9.7
-source $OPS_INSTALL_PATH/../ops_translator_v2/ops_venv/bin/activate
+#Uncomment the following to test/reinstall the environment setup for the code-gen
+#cd  $OPS_INSTALL_PATH/../ops_translator/
+#rm -rf ./ops_venv
+#. setup_venv.sh
+#cd -
+source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
 
 #MPI and Compilers
-module load gnu-9.3.0/openmpi-4.0.4
+#module load gnu-9.3.0/openmpi-4.0.4
 export MPI_INSTALL_PATH=/opt/mpi/openmpi/4.0.4/gnu/9.3.0
 export PATH=/opt/mpi/openmpi/4.0.4/gnu/9.3.0/bin:$PATH
 export LD_LIBRARY_PATH=/opt/mpi/openmpi/4.0.4/gnu/9.3.0/lib:$LD_LIBRARY_PATH
 
 export OP_AUTO_SOA=1
 
-export OMPI_CC=hipcc
-export OMPI_CXX=hipcc
-export OMPI_FC=flang
+export CC=/opt/rocm-5.6.0/llvm/bin/clang
+export CXX=/opt/rocm-5.6.0/llvm/bin/clang++
 
-export HIP_INSTALL_PATH=/opt/rocm-5.4.3/hip
-export AOMP=/opt/rocm-5.4.3/llvm/
+export OMPI_CC=/opt/rocm-5.6.0/llvm/bin/clang
+export OMPI_CXX=/opt/rocm-5.6.0/llvm/bin/clang++
+export OMPI_FC=/opt/rocm-5.6.0/llvm/bin/flang
+
+#export HIP_INSTALL_PATH=/opt/rocm-5.4.3/hip
+#export AOMP=/opt/rocm-5.4.3/llvm/
+export HIP_INSTALL_PATH=/opt/rocm-5.6.0/hip
+export AOMP=/opt/rocm-5.6.0/llvm/
+
+export AMD_ARCH=MI100
 
 unset HDF5_INSTALL_PATH
-export HDF5_INSTALL_PATH=/ext-home/asl/install/build_hdf5/gnu_amos
+#export HDF5_INSTALL_PATH=/ext-home/asl/install/build_hdf5/gnu_amos
+export HDF5_INSTALL_PATH=/opt/hdf5/1.8.18/gnu/6.3.0/ompi/1.10.6/
 export PATH=$HDF5_INSTALL_PATH/bin:$PATH
 export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
 

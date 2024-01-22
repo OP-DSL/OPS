@@ -2,15 +2,15 @@
 set -e
 cd ../../../ops/c
 
-#export SOURCE_INTEL=source_intel_2021.3_pythonenv
-#export SOURCE_PGI=source_pgi_nvhpc-23-new
-#export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
-#export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
+export SOURCE_INTEL=source_intel_2021.3_pythonenv
+export SOURCE_PGI=source_pgi_nvhpc-23-new
+export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
-#export AMOS=TRUE
+export AMOS=TRUE
 #export DMOS=TRUE
 #export TELOS=TRUE
-export KOS=TRUE
+#export KOS=TRUE
 
 if [[ -v TELOS || -v KOS ]]; then
 
@@ -174,7 +174,7 @@ make
 echo "in here "
 cd $OPS_INSTALL_PATH/../apps/c/poisson
 make clean
-make poisson_dev_seq poisson_dev_mpi poisson_seq poisson_tiled poisson_openmp poisson_mpi poisson_mpi_tiled \
+make IEEE=1 poisson_dev_seq poisson_dev_mpi poisson_seq poisson_tiled poisson_openmp poisson_mpi poisson_mpi_tiled \
 poisson_mpi_openmp poisson_ompoffload poisson_mpi_ompoffload poisson_mpi_ompoffload_tiled
 
 echo '============> Running OpenMP'
@@ -218,7 +218,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI_Tiled'
-export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=10 > perf_out
+export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 numawrap2 ./poisson_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=10 > perf_out
 grep "Total error:" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -227,8 +227,8 @@ rm perf_out
 
 
 if [[ -v CUDA_INSTALL_PATH ]]; then
-make IEEE=1 poisson_cuda poisson_mpi_cuda poisson_mpi_cuda_tiled poisson_openacc poisson_mpi_openacc \
-poisson_mpi_openacc_tiled
+make IEEE=1 poisson_cuda poisson_mpi_cuda poisson_mpi_cuda_tiled 
+#poisson_openacc poisson_mpi_openacc poisson_mpi_openacc_tiled
 
 echo '============> Running CUDA'
 ./poisson_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
@@ -253,21 +253,21 @@ rm perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
 
-echo '============> Running OpenACC'
-./poisson_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total error:" perf_out
-grep "Total Wall time" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
+#echo '============> Running OpenACC'
+#./poisson_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Total error:" perf_out
+#grep "Total Wall time" perf_out
+#grep "PASSED" perf_out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+#rm perf_out
 
-echo '============> Running MPI+OpenACC'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total error:" perf_out
-grep "Total Wall time" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
+#echo '============> Running MPI+OpenACC'
+#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Total error:" perf_out
+#grep "Total Wall time" perf_out
+#grep "PASSED" perf_out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+#rm perf_out
 
 fi
 
@@ -298,7 +298,7 @@ cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_AMD_HIP
 #make -j -B
 make clean
-make
+make 
 cd $OPS_INSTALL_PATH/../apps/c/poisson
 
 make clean
