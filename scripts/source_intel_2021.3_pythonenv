@@ -7,12 +7,20 @@ unset LD_LIBRARY_PATH
 module purge
 . ~/.bashrc
 export PATH=/rr-home/gihan/numawrap:$PATH
+module load cmake/3.20.1
 
-module load llvm-14.0.6/llvm-14.0.6
-export LIBCLANG_PATH=/opt/llvm/14.0.6/lib/libclang.so
-
+#module load llvm-14.0.6/llvm-14.0.6
+#export LIBCLANG_PATH=/opt/llvm/14.0.6/lib/libclang.so
+unset LIBCLANG_PATH
 module load python/3.9.7
-source $OPS_INSTALL_PATH/../ops_translator_v2/ops_venv/bin/activate
+
+#Uncomment the following to test/reinstall the environment setup for the code-gen
+#cd  $OPS_INSTALL_PATH/../ops_translator/
+#rm -rf ./ops_venv
+#. setup_venv.sh
+#cd -
+source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
+
 
 #OPS specifics
 export OPS_COMPILER=intel
