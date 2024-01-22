@@ -148,7 +148,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $
 rm perf_out
 
 echo '============> Running MPI+SYCL Tiled'
-$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_mpi_sycl_tiled > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_mpi_sycl_tiled OPS_TILING > perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
