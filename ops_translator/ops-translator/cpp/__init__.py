@@ -82,10 +82,11 @@ class Cpp(Lang):
         )
 
         for diagnostic in iter(translation_unit.diagnostics):
-            print(
-                f"Clang parse diagnotic message: severity {diagnostic.severity} at: "
-                f"{cpp.parser.parseLocation(diagnostic)}: {diagnostic.spelling}"
-            )
+            if not "'stddef.h' file not found" in diagnostic.spelling:
+                print(
+                    f"Clang parse diagnotic message: severity {diagnostic.severity} at: "
+                    f"{cpp.parser.parseLocation(diagnostic)}: {diagnostic.spelling}"
+                )
 
         return translation_unit, source
 
