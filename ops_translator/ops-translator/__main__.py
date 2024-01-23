@@ -104,7 +104,10 @@ def main(argv=None) -> None:
     except OpsError as e:
         exit(e)
 
+    print("Code-gen : Parsing done for all files")
+
     # Generate program translations
+    print("Code-gen : Program translation phase started......")
     app_consts = app.consts()
     for i, program in enumerate(app.programs, 1):
         include_dirs = set([Path(dir) for [dir] in args.I])
@@ -125,7 +128,7 @@ def main(argv=None) -> None:
 
             if args.verbose:
                 print(f"Translated program {i} of {len(args.file_paths)}: {new_path}")
-
+    print("Code-gen : Program translation phase finished.........")
 
     # Generating code for targets
     for [target] in args.target:
@@ -147,6 +150,7 @@ def main(argv=None) -> None:
         if args.verbose:
             print(f"Translation scheme: {scheme}")
 
+        print("Code-gen : Generating target specific template, scheme - " + scheme.target.name)
         codegen(args, scheme, app, args.force_soa)
 
         if args.verbose:
@@ -163,7 +167,7 @@ def parse(args: Namespace, lang: Lang) -> Application:
     # Parse the input files
     for i, raw_path in enumerate(args.file_paths, 1):
         if args.verbose:
-            print(f"Parseing file {i} of {len(args.file_paths)}: {raw_path}")
+            print(f"Parsing file {i} of {len(args.file_paths)}: {raw_path}")
 
         # Parse the program
         program = lang.parseProgram(Path(raw_path), include_dirs, defines)
