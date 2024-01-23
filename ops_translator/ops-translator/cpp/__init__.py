@@ -91,6 +91,7 @@ class Cpp(Lang):
         return translation_unit, source
 
     def parseProgram(self, path: Path, include_dirs: Set[Path], defines: List[str]) -> Program:
+        print("Code-gen, parsing file:  " + str(path))
         ast, source = self.parseFile(path, frozenset(include_dirs), frozenset(defines))
         ast_pp, source_pp =  self.parseFile(path, frozenset(include_dirs), frozenset(defines), preprocess = True)
 
