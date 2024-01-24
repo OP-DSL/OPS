@@ -77,5 +77,5 @@ HIPCC=hipcc
 ifdef HIP_ARCH
 OMPOFFLOADFLAGS=-target x86_64-pc-linux-gnu -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=$(HIP_ARCH)
 SYCL_FLAGS = -fsycl -fsycl-targets=amdgcn-amd-amdhsa -Xsycl-target-backend --offload-arch=$(HIP_ARCH) -munsafe-fp-atomics
-endif
 HIPFLAGS=--offload-arch=$(HIP_ARCH)
+endif

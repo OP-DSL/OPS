@@ -2167,9 +2167,13 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   else if (strcmp(type, "char") == 0)
   {
     H5Awrite(attribute, atype, "char");
+  }
   else if (strcmp(type, "half") == 0)
+  {
     H5Awrite(attribute, atype, "half");
-  else {
+  }
+  else
+  {
     ops_printf(
         "Unknown type %s for constant %s: cannot write constant to file\n",
         type, name);

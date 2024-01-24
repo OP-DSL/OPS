@@ -42,7 +42,6 @@ endif
 endif
 endif
 endif
-endif
 
 ifdef IEEE
 	NVCCFLAGS += --fmad false

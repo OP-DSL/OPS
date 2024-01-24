@@ -95,7 +95,7 @@ typedef std::complex<double> complexd;
 typedef std::complex<float> complexf;
 
 #if (defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)) && !(defined(__HIP_PLATFORM_NVCC__) || defined(__HIP_PLATFORM_NVIDIA__))
-#include <hip_fp16.h>
+#include <hip/hip_fp16.h>
 #elif defined(__CUDA_ARCH__) || defined(__CUDACC__)
 #include <cuda_fp16.h>
 typedef __half half;
