@@ -1526,7 +1526,7 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
   int *range{new int(2 * space_dim)};
   for (int d = 0; d < space_dim; d++) {
     range[2 * d] = sd->gbl_d_m[d];
-    range[2 * d + 1] = sd->gbl_size[d] + sd->gbl_d_m[d];
+    range[2 * d + 1] = sd->gbl_size[d] - sd->gbl_d_p[d];
   }
   determine_local_range(dat, range, local_range);
   ops_dat_set_data_slab_host(dat, 0, data, local_range);
