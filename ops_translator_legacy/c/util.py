@@ -222,6 +222,7 @@ def convert_ACC_signature(text, arg_typ):
             arg_list[i] = re.sub(r"\bint\b", "ACC<int>", arg_list[i])
             arg_list[i] = re.sub(r"\bfloat\b", "ACC<float>", arg_list[i])
             arg_list[i] = re.sub(r"\bdouble\b", "ACC<double>", arg_list[i])
+            arg_list[i] = re.sub(r"\bhalf\b", "ACC<half>", arg_list[i])
             arg_list[i] = re.sub(r"\blong long\b", "ACC<long long>", arg_list[i])
             arg_list[i] = re.sub(r"[^<]\blong\b", "ACC<long>", arg_list[i])
             arg_list[i] = re.sub(r"\bll\b", "ACC<ll>", arg_list[i])
@@ -267,6 +268,7 @@ def parse_signature(text):
     text2 = re.sub(r"\bchar\b", "", text2)
     text2 = re.sub(r"\bfloat\b", "", text2)
     text2 = re.sub(r"\bdouble\b", "", text2)
+    text2 = re.sub(r"\bhalf\b", "", text2)
     text2 = re.sub(r"\bcomplexf\b", "", text2)
     text2 = re.sub(r"\bcomplexd\b", "", text2)
     text2 = text2.replace("*", "")
@@ -302,6 +304,7 @@ def parse_signature_opencl(text2):
     text2 = text2.replace("int", "__global int")
     text2 = text2.replace("float", "__global float")
     text2 = text2.replace("double", "__global double")
+    text2 = text2.replace("half", "__global half")
     return text2
 
 

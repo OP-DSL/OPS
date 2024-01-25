@@ -30,6 +30,8 @@ OPS_LIB_OMPOFFLOAD=-lops_ompoffload
 OPS_LIB_MPI_OMPOFFLOAD=-lops_mpi_ompoffload
 OPS_LINK=
 CUDART=-lcudart
+CURAND=-lcurand
+HIPRAND=-lhiprand
 
 ifeq ($(OPS_COMPILER),clang)
 	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.clang

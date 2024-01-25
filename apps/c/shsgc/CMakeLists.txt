@@ -1,3 +1,3 @@
 cmake_minimum_required(VERSION 3.18)
-CreateTempDir()
-BUILD_OPS_C_SAMPLE(shsgc "NONE" "NONE" "NONE" "NO" "YES")
+createtempdir()
+build_ops_c_sample(shsgc "NONE" "NONE" "NONE" "NO" "YES")

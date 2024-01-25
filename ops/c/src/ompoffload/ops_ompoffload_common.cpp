@@ -106,10 +106,10 @@ void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_
 
   for(int i = 0; i < no_devices; i++) {
     if (omp_target_is_present(*from, i)) {
-    device = i;
+	device = i;
     }
     if (omp_target_is_present(*to, i)) {
-    device2 = i;
+	device2 = i;
     }
   }
 
@@ -121,8 +121,8 @@ void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_
 void ops_device_memset(OPS_instance *instance, void** ptr, int val, size_t size) {
   int device = omp_get_default_device();
 
-  char *ptr2 = (char*) *ptr;
-  #pragma omp target teams distribute parallel for
+  char* ptr2 = (char*) *ptr;
+  #pragma omp target teams distribute parallel for //map(from:ptr2[0:size])
   for (int i = 0; i < size; i++) {
     ptr2[i] = (char)val;
   }

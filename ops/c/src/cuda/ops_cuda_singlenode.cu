@@ -36,7 +36,7 @@
   * @details Implements cuda backend runtime support functions applicable to non-MPI backend
   */
 
-#include <ops_lib_core.h>
+#include <ops_cuda_rt_support.h>
 
 void ops_exit_device(OPS_instance *instance) {
   (void)instance;

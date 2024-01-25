@@ -30,8 +30,13 @@ ifeq ($(NV_ARCH),Turing)
 	PGI_CUDA_FORT_FLAGS = -Mcuda=cc75
 else
 ifeq ($(NV_ARCH),Ampere)
-	NVCCFLAGS += -gencode arch=compute_80,code=sm_80
-	PGI_CUDA_FORT_FLAGS = -Mcuda=cc80
+        NVCCFLAGS+=-gencode arch=compute_80,code=sm_80
+        PGI_CUDA_FORT_FLAGS=-Mcuda=cc80
+else
+ifeq ($(NV_ARCH),Hopper)
+        NVCCFLAGS+=-gencode arch=compute_90,code=sm_90
+        PGI_CUDA_FORT_FLAGS=-Mcuda=cc90
+endif
 endif
 endif
 endif

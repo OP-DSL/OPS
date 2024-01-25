@@ -22,21 +22,32 @@ endif
 
 ifeq ($(NV_ARCH),Fermi)
 	OMPOFFLOADFLAGS += -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_20 -foffload-lto
+	SYCL_FLAGS = -fsycl-targets=nvptx64-nvidia-cuda-sycldevice -Xsycl-target-backend --cuda-gpu-arch=sm_20
 else
 ifeq ($(NV_ARCH),Kepler)
 	OMPOFFLOADFLAGS += -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_35 -foffload-lto
+	SYCL_FLAGS = -fsycl-targets=nvptx64-nvidia-cuda-sycldevice -Xsycl-target-backend --cuda-gpu-arch=sm_35
 else
 ifeq ($(NV_ARCH),Pascal)
 	OMPOFFLOADFLAGS += -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_60 -foffload-lto
+	SYCL_FLAGS = -fsycl-targets=nvptx64-nvidia-cuda-sycldevice -Xsycl-target-backend --cuda-gpu-arch=sm_70
 else
 ifeq ($(NV_ARCH),Volta)
 	OMPOFFLOADFLAGS += -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_70 -foffload-lto
+	SYCL_FLAGS = -fsycl-targets=nvptx64-nvidia-cuda-sycldevice -Xsycl-target-backend --cuda-gpu-arch=sm_80
 else
 ifeq ($(NV_ARCH),Turing)
 	OMPOFFLOADFLAGS += -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_75 -foffload-lto
+	SYCL_FLAGS = -fsycl-targets=nvptx64-nvidia-cuda-sycldevice -Xsycl-target-backend --cuda-gpu-arch=sm_75
 else
 ifeq ($(NV_ARCH),Ampere)
 	OMPOFFLOADFLAGS += -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_80 -foffload-lto
+	SYCL_FLAGS = -fsycl-targets=nvptx64-nvidia-cuda-sycldevice -Xsycl-target-backend --cuda-gpu-arch=sm_80
+else
+ifeq ($(NV_ARCH),Hopper)
+	OMPOFFLOADFLAGS += -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_90 -foffload-lto
+	SYCL_FLAGS=-fsycl-targets=nvptx64-nvidia-cuda-sycldevice -Xsycl-target-backend --cuda-gpu-arch=sm_90
+endif
 endif
 endif
 endif
@@ -44,9 +55,6 @@ endif
 endif
 endif
 
-ifeq ($(AMD_ARCH),Vega20)
-	OMPOFFLOADFLAGS += -fopenmp=libomp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx803
-else
 ifeq ($(AMD_ARCH),Vega10)
 	OMPOFFLOADFLAGS += -fopenmp=libomp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx900
 else
@@ -62,4 +70,12 @@ endif
 endif
 endif
 endif
+
+SYCLCXX = clang++
+SYCLMPICXX = mpicxx
+HIPCC=hipcc
+ifdef HIP_ARCH
+OMPOFFLOADFLAGS=-target x86_64-pc-linux-gnu -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=$(HIP_ARCH)
+SYCL_FLAGS = -fsycl -fsycl-targets=amdgcn-amd-amdhsa -Xsycl-target-backend --offload-arch=$(HIP_ARCH) -munsafe-fp-atomics
+HIPFLAGS=--offload-arch=$(HIP_ARCH)
 endif

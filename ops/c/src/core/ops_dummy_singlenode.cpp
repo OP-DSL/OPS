@@ -197,6 +197,8 @@ int _ops_is_root(OPS_instance* instance) { (void)instance; return 1; }
 
 int ops_is_root() { return 1; }
 
+int ops_get_proc() { return 0; }
+
 int ops_num_procs() { return 1; }
 
 void ops_set_halo_dirtybit(ops_arg *arg) { (void)arg; }
@@ -343,10 +345,6 @@ bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, 
     disp[n] = 0;
   }
   return true;
-}
-
-int ops_get_proc() {
-  return 0;
 }
 
 /************* Functions only use in the Fortran Backend ************/
@@ -628,7 +626,7 @@ void ops_dat_set_data_host(ops_dat dat, int part, char *data) {
   int *range{new int(2 * dat->block->dims)};
   for (int d = 0; d < dat->block->dims; d++) {
     range[2 * d] = dat->d_m[d];
-    range[2 * d + 1] = dat->size[d] + dat->d_m[d];
+    range[2 * d + 1] = dat->size[d] - dat->d_p[d];
   }
   ops_dat_set_data_slab_host(dat, 0, data, range);
   delete range;

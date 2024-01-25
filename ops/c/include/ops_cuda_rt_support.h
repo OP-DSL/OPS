@@ -48,18 +48,23 @@
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 #include <device_launch_parameters.h>
+#include <cuda_fp16.h>
 
 #include <ops_lib_core.h>
 #include <ops_device_rt_support.h>
+
+#include<curand.h>
 
 /*
 * personal stripped-down version of cutil_inline.h
 */
 
 #define cutilSafeCall(stream, err) __cudaSafeCall(stream, err, __FILE__, __LINE__)
+#define curandSafeCall(stream, err) __curandSafeCall(stream, err, __FILE__, __LINE__)
 #define cutilCheckMsg(stream, msg) __cutilCheckMsg(stream, msg, __FILE__, __LINE__)
 
 void __cudaSafeCall(std::ostream &stream, cudaError_t err, const char *file, const int line);
+void __curandSafeCall(std::ostream &stream, curandStatus_t err, const char *file, const int line);
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_CUDA_RT_SUPPORT_H */

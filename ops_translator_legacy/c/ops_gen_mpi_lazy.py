@@ -456,11 +456,6 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
             else:
                 FOR("n_y", "start[1]", "end[1]")
 
-        #line3 = ""
-        #for n in range(0, nargs):
-        #    if arg_typ[n] == "ops_arg_dat":
-        #        line3 += arg_list[n] + ","
-
         if NDIM > 1:
             if offload == 0:
                 temp_depth = config.depth

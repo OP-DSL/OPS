@@ -110,6 +110,10 @@ inline int type_error(const float *a, const char *type) {
   (void)a;
   return strcmp(type, "float");
 }
+inline int type_error(const half *a, const char *type) {
+  (void)a;
+  return strcmp(type, "half");
+}
 inline int type_error(const int *a, const char *type) {
   (void)a;
   return strcmp(type, "int");
