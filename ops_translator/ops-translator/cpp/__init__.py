@@ -116,7 +116,7 @@ class Cpp(Lang):
             (False, 64): "unsigned long long",
         }
 
-        float_type = {32: "float", 64: "double"}
+        float_type = {16: "half", 32: "float", 64: "double"}
 
         if isinstance(typ, ops.Int):
             return int_types[(typ.signed, typ.size)]

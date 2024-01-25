@@ -87,7 +87,9 @@ class Float(Type):
     size: int
 
     def __repr__(self) -> str:
-        if self.size == 32:
+        if self.size == 16:
+            return "half"
+        elif self.size == 32:
             return "float"
         elif self.size == 64:
             return "double"
