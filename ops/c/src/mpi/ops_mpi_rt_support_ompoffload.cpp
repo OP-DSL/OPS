@@ -364,7 +364,8 @@ void ops_internal_copy_device(ops_kernel_descriptor *desc) {
 #endif
 #endif
 #endif
-
+        int thr_x = dat0->block->instance->OPS_block_size_x * (range[2*0+1]-range[2*0]);
+	int thr_y = dat0->block->instance->OPS_block_size_y * (range[2*1+1]-range[2*1]);
 	int thr_z = dat0->block->instance->OPS_block_size_z * (range[2*2+1]-range[2*2]) *
 		(range[2*3+1]-range[2*3]) *
 		(range[2*4+1]-range[2*4]);

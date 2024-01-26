@@ -60,7 +60,7 @@ fi
 echo "GPU architecture" $NV_ARCH
 
 export CUDA_INSTALL_PATH=/opt/cuda/10.2.89/toolkit/
-#export OPENCL_INSTALL_PATH=/opt/cuda/10.2.89/toolkit/
+export OPENCL_INSTALL_PATH=/opt/cuda/10.2.89/toolkit/
 export CUDA_MATH_LIBS=/opt/cuda/10.2.89/lib64/
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/cuda/10.2.89/lib64/
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/cuda/10.2.89/toolkit/lib64
@@ -71,14 +71,16 @@ fi
 
 #Intel based HDF5
 unset HDF5_INSTALL_PATH
-#export HDF5_INSTALL_PATH=/ext-home/asl/install/build_hdf5/intel
-#export LD_LIBRARY_PATH=/ext-home/asl/install/build_hdf5/intel/lib:$LD_LIBRARY_PATH
-export HDF5_INSTALL_PATH=/opt/hdf5/1.8.18/intel/15.0u6/impi/5.0u3/
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/hdf5/1.8.18/intel/15.0u6/impi/5.0u3/lib/
+#export HDF5_INSTALL_PATH=/opt/hdf5/1.8.18/intel/15.0u6/impi/5.0u3/
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/hdf5/1.8.18/intel/15.0u6/impi/5.0u3/lib/
+export HDF5_INSTALL_PATH=/rr-home/gihan/HDF5/build_hdf5/intel
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/rr-home/gihan/HDF5/build_hdf5/intel/lib/
 
 #Tridiagonal LIB
 export TDMA_INSTALL_PATH=~/tridsolver/scalar/libtrid
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TDMA_INSTALL_PATH/lib/
+unset TDMA_INSTALL_PATH 
+#unset LD_LIBRARY_PATH
 
 #OpenSBLI -- for testing app TGV only
 #export OPENSBLI_INSTALL_PATH=/rr-home/gihan/OpenSBLI/OpenSBLI_OPS_TESTING/opensbli/
