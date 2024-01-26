@@ -243,7 +243,7 @@ class Application:
             raise OpsError(f"Invalid access type for gbl argument: {arg.access_type}", arg.loc)
 
         if arg.access_type in [ops.AccessType.OPS_INC, ops.AccessType.OPS_MIN, ops.AccessType.OPS_MAX] and arg.typ not in \
-            [ops.Float(64), ops.Float(32), ops.Int(True, 32), ops.Int(False, 32), ops.Bool]:
+            [ops.Float(64), ops.Float(32), ops.Float(16), ops.Int(True, 32), ops.Int(False, 32), ops.Bool]:
             raise OpsError(f"Invalid access type for reduced gbl argument: {arg.access_type}", arg.loc)
 
         if str(arg.dim).isdigit() and int(str(arg.dim)) < 1:
