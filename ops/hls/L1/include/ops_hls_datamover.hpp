@@ -1458,6 +1458,7 @@ void memWriteGridSimpleV2(ap_uint<MEM_DATA_WIDTH>* mem_out,
 {
 
 	constexpr unsigned short data_vector_factor = MEM_DATA_WIDTH / DATA_WIDTH;
+	constexpr int II_factor = MEM_DATA_WIDTH / AXIS_DATA_WIDTH;
 	unsigned short ShiftBits = (unsigned short)LOG2(data_vector_factor);
 	unsigned short DataShiftBits = (unsigned short)LOG2(DATA_WIDTH/8);
 	unsigned short start_x = range.start[0] >> ShiftBits;
@@ -1490,10 +1491,12 @@ void memWriteGridSimpleV2(ap_uint<MEM_DATA_WIDTH>* mem_out,
 	{
 		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
 		{
-#pragma HLS PIPELINE II = 1
-			unsigned short offset = register_it(k * gridSize[1]) + j;
-			offset = offset * grid_xblocks;
-			offset = start_x + offset;
+#pragma HLS PIPELINE II = II_factor
+			unsigned short offset1 = k * gridSize[1];
+			unsigned short offset2 = offset1 + j;
+			unsigned short offset2_2 = offset2;
+			unsigned short offset3 = offset2_2 * grid_xblocks;
+			unsigned short offset = start_x + offset3;
 #ifdef DEBUG_LOG
 			printf("|HLS DEBUG_LOG|%s| writing. offset:%d, j:%d, k:%d\n"
 					, __func__, offset, j, k);

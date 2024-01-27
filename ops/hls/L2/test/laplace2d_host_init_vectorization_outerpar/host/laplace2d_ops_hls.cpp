@@ -43,7 +43,7 @@ void ops_par_loop_right_bndcon(int, int*, ops::hls::Grid<float>&);
 // void ops_par_loop_apply_stencil(int, int*, ops::hls::Grid<float>&, ops::hls::Grid<float>&);
 
 // void ops_par_loop_copy(int, int*, ops::hls::Grid<float>&, ops::hls::Grid<float>&);
-void ops__itr_par_loop_outerloop_1(int, int*, ops::hls::Grid<float>&, ops::hls::Grid<float>&, int, bool = false, int* = nullptr);
+void ops_itr_par_loop_outerloop_1(int, int*, ops::hls::Grid<float>&, ops::hls::Grid<float>&, int, bool = false, int* = nullptr);
 
 
 #include "hls_kernels.hpp"
@@ -202,7 +202,7 @@ int main(int argc, const char** argv)
 
 		int interior_range[] = {0,imax,0,jmax};
 		int swapMap[] = {0, 1};
-		ops__itr_par_loop_outerloop_1(2, interior_range, d_A, d_Anew, iter_max, true, swapMap);
+		ops_itr_par_loop_outerloop_1(2, interior_range, d_A, d_Anew, iter_max, true, swapMap);
 // 		for (int iter = 0; iter < iter_max; iter++)
 // 		{
 // 			int interior_range[] = {0,imax,0,jmax};

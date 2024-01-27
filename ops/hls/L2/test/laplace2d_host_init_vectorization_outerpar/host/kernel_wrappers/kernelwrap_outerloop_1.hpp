@@ -181,7 +181,7 @@ private:
 };
 
 
-void ops__itr_par_loop_outerloop_1(int dim , int* ops_range, ops::hls::Grid<float>& arg0, ops::hls::Grid<float>& arg1, int outer_iter, bool is_copy, int* copy_map)
+void ops_itr_par_loop_outerloop_1(int dim , int* ops_range, ops::hls::Grid<float>& arg0, ops::hls::Grid<float>& arg1, int outer_iter, bool is_copy, int* copy_map)
 {
 	static kernelwrap_outerloop_1 kernelwrap_outerloop_1_inst;
 

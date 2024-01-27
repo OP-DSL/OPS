@@ -59,9 +59,9 @@ extern "C" void kernel_outerloop_1(
     #pragma HLS INTERFACE s_axilite port = return bundle = control
 
 
-//#ifdef DEBUG_LOG
+#ifdef DEBUG_LOG
     printf("[KERNEL_DEBUG]|%s| Starting outerloop_1 kernel TOP \n", __func__);
-//#endif
+#endif
 
     ops::hls::StencilConfigCore stencilConfig;
 
@@ -79,7 +79,7 @@ extern "C" void kernel_outerloop_1(
 
     for (unsigned int i = 0; i < outer_itr; i++)
         kernel_outerloop_1_dataflow_region(stencilConfig, total_bytes, arg0_axis_in, arg1_axis_out);
-//#ifdef DEBUG_LOG
+#ifdef DEBUG_LOG
     printf("[KERNEL_DEBUG]|%s| Ending outerloop_1 kernel TOP \n", __func__);
-//#endif
+#endif
 }
