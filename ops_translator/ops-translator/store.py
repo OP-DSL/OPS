@@ -76,6 +76,16 @@ class Function(Entity):
     def __str__(self) -> str:
         return f"Function(name='{self.name}', loc={self.loc}, scope={self.scope}, depends={self.depends}, parameters={self.parameters}, ast={self.ast})"
 
+@dataclass
+class OuterForLoop(Entity):
+    decls: List(Any) = field(default_factory=list)
+    conditions: List(Any) = field(default_factory=list)
+    iters: List(Any) = field(default_factory=list)
+    loc: Location = None
+    
+    def __str(self) -> str:
+        return f"ForStmt(loc='{self.loc}', decls='{self.decls}', conditions='{self.conditions}', iters='{self.iters}'"
+    
 @dataclass 
 class KernelDef(Function):
     def __str__(self) -> str:
@@ -91,7 +101,7 @@ class Program:
     consts: List[ops.Const] = field(default_factory=list)
     stencils: List[ops.Stencil] = field(default_factory=list)
     loops: List[ops.Loop] = field(default_factory=list)
-
+    outerloops: List[OuterForLoop] = field(default_factory=list)
     entities: List[Entity] = field(default_factory=list)
     
     ndim: Optional[int] = None
@@ -131,9 +141,15 @@ class Program:
             outString += str(const) + "\n"
 
         outString += "\n---------------------\n"    
-        outString += "        loops        \n"
+        outString += "        par loops        \n"
         outString += "---------------------\n"
         for loop in self.loops:
+            outString += str(loop) + "\n"
+            
+        outString += "\n---------------------\n"    
+        outString += "  iterative par loops  \n"
+        outString += "---------------------\n"
+        for loop in self.outerloops:
             outString += str(loop) + "\n"
 
         outString += "\n---------------------\n"    

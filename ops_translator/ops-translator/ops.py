@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Callable, List, Optional, Union, Tuple
+from typing import TYPE_CHECKING, Callable, List, Optional, Union, Tuple, Any
 
 from util import ABDC, findIdx
 
@@ -367,9 +367,32 @@ class Block:
             self.dats.append(dat)
 
 
+class IterLoop:
+    id = int
+    num_iter: Union[int, str]
+    scope: List[Location]
+    loops: List[Loop]
+    
+    def __init__(self, id: int, num_iter: Union[int, str], scope: List[Location], loops: List[Loop] = []) -> None:
+        self.id = id
+        self.num_iter = num_iter
+        self.scope = scope
+        self.loops = loops
+
+    def __str__(self) -> str:
+        outer_loop_str = ""
+        outer_loop_str += f"OPS Iterative Loop at {self.scope[0]}:\n ID: {self.id}, with num of iteration: {self.num_iter}\n \
+            Loops: \n \
+            ------ \n"
+        for loop in self.loops:
+            outer_loop_str += str(loop)
+        
+        return outer_loop_str
+        
 class Loop:
     loc: Location
     kernel: str
+    ast: str
 
     block: str
     range: Range
@@ -384,8 +407,10 @@ class Loop:
     isGblRead: Optional[bool] = False
     isGblReadMDIM: Optional[bool] = False
     has_reduction: Optional[bool] = False
-
-    def __init__(self, loc: Location, kernel: str, block: str, range: Range, ndim: int) -> None:
+    iterativeLoopId: Optional[int] = -1
+    
+    def __init__(self, ast: Any, loc: Location, kernel: str, block: str, range: Range, ndim: int) -> None:
+        self.ast = ast
         self.loc = loc
         self.kernel = kernel
         self.block = block
@@ -396,6 +421,9 @@ class Loop:
         self.args = []
         self.stencils = []
 
+    def __eq__ (self, other: Loop) -> bool:
+        return self.ast == other.ast
+    
     def addArgDat(
         self,
         loc: Location,
@@ -490,7 +518,7 @@ class Loop:
         return None
 
     def __str__(self) -> str:
-        kernel_detail_str = f"Loop at {self.loc}:\n Kernel function: {self.kernel}\n \
+        kernel_detail_str = f"Loop at {self.loc}:\n Kernel function: {self.kernel}, loop ast: {self.ast}, iter_loop_id: {self.iterativeLoopId}\n \
             range dim: {self.ndim}, block: {self.block}, range: {self.range}, arg_idx: {self.arg_idx}"
         args_str = "\n    ".join([str(a) for a in self.args])
         dat_str = "\n    ".join([str(d) for d in self.dats])

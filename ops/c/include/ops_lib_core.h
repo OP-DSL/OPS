@@ -50,6 +50,11 @@
 #include <strings.h>
 #endif
 #include <complex>
+#include <vector>
+#include <list>
+#include <memory>
+#include <utility>
+#include <functional>
 
 /** default byte alignment for allocations made by OPS */
 #ifndef OPS_ALIGNMENT
@@ -493,6 +498,25 @@ struct ops_arg {
                          *   0 - optional, 1 - not optional */
 };
 
+
+/** Storage for OPS parallel loop description **/
+
+class ops_par_loop_core{
+public:
+  std::vector<ops_arg> args;
+  ops_block block;
+  int dim; 
+  std::vector<int> range;
+  std::string name;
+};
+
+
+template<typename... ParamType>
+class ops_par_loop_desc : public ops_par_loop_core{
+public:
+  std::function<void(ParamType...)> kernel_func;
+};
+
 /** Storage for OPS halos */
 struct ops_halo_core {
   ops_dat from;                   /**< dataset from which the halo is read */
@@ -682,6 +706,13 @@ void ops_free_dat(ops_dat dat);
  * @return the copy
  */
 ops_dat ops_dat_copy(ops_dat orig_dat);
+
+/**
+ * Makes a soft copy of a dataset
+ * @param target the target of the copy
+ * @param orig_dat the dataset to be copied
+ */
+void ops_dat_copy(ops_dat target, ops_dat orig_dat);
 
 /**
  * Makes a deep copy of the data held in source

@@ -304,6 +304,127 @@ void ops_par_loop_impl(indices<J...>, void (*kernel)(ParamType...),
     (param_handler<param_remove_cvref_t<ParamType>>::free(p_a[J]),0)...};
 }
 
+
+template <typename... ParamType, typename... OPSARG, size_t... J>
+ops_par_loop_desc<ParamType...> ops_par_loop_impl_V2(indices<J...>, void (*kernel)(ParamType...),
+                      char const *name, ops_block block, int dim, int *range,
+                      OPSARG... arguments) {
+  constexpr int N = sizeof...(OPSARG);
+
+  ops_par_loop_desc<ParamType...> loop_obj;
+  ops_arg args[N] = {arguments...};
+  loop_obj.args.insert(loop_obj.args.end(), args, args + N);
+  loop_obj.block = block;
+  loop_obj.dim = dim;
+//   loop_opj->kernel_func = std::function<void(ParamType...)>(kernel);
+  loop_obj.range.insert(loop_obj.range.end(), range, range + (dim * 2));
+  loop_obj.name = std::string(name);
+  return (loop_obj);
+  }
+
+
+template<typename... PramType>
+void ops_par_loop_sigle_executer(ops_par_loop_desc<PramType...>& desc)
+{
+  std::cout << "desk kernel name: " << desc.name << std::endl;
+  
+//   int N = desc.args.size();
+//   int  count[OPS_MAX_DIM] = {0};
+
+//   #ifdef CHECKPOINTING
+//   if (!ops_checkpointing_name_before(desc.args.data(), N, desc.range.data(), desc.name.c_str())) return;
+//   #endif
+
+//   int start[OPS_MAX_DIM];
+//   int end[OPS_MAX_DIM];
+
+//   #ifdef OPS_MPI
+//   sub_block_list sb = OPS_sub_block_list[desc.block->index];
+//   if (!sb->owned) return;
+//   //compute locally allocated range for the sub-block 
+//   int ndim = sb->ndim;
+//   for (int n=0; n<ndim; n++) {
+//     start[n] = sb->decomp_disp[n];end[n] = sb->decomp_disp[n]+sb->decomp_size[n];
+//     if (start[n] >= desc.range[2*n]) start[n] = 0;
+//     else start[n] = desc.range[2*n] - start[n];
+//     if (sb->id_m[n]==MPI_PROC_NULL && desc.range[2*n] < 0) start[n] = desc.range[2*n];
+//     if (end[n] >= desc.range[2*n+1]) end[n] = desc.range[2*n+1] - sb->decomp_disp[n];
+//     else end[n] = sb->decomp_size[n];
+//     if (sb->id_p[n]==MPI_PROC_NULL && (desc.range[2*n+1] > sb->decomp_disp[n]+sb->decomp_size[n]))
+//       end[n] += (desc.range[2*n+1]-sb->decomp_disp[n]-sb->decomp_size[n]);
+//   }
+//   #else //!OPS_MPI
+//   int ndim = block->dims;
+//   for (int n=0; n<ndim; n++) {
+//     start[n] = desc.range[2*n];end[n] = desc.range[2*n+1];
+//   }
+//   #endif //OPS_MPI
+
+//   #ifdef OPS_DEBUG
+//   ops_register_args(desc.block->instance, desc.args.data(), desc.name.c_str());
+//   #endif
+
+//   char *p_a[N];
+
+//   for (unsigned int i = 0; i < N; i++)
+//     p_a[i] = param_handler<param_remove_cvref_t<ParamType>>::construct(desc.args[i], desc.dim, ndim, start, desc.block);
+//   //Offs decl
+//   int offs[N][OPS_MAX_DIM] = {};
+//   (void) std::initializer_list<int>{(initoffs(desc.args[J], offs[J], ndim, start, end), 0)...};
+
+//   int total_range = 1;
+//   for (int n=0; n<ndim; n++) {
+//     count[n] = end[n]-start[n];  // number in each dimension
+//     total_range *= count[n];
+//     total_range *= (count[n]<0?0:1);
+//   }
+//   count[dim-1]++;     // extra in last to ensure correct termination
+
+//   ops_H_D_exchanges_host(desc.args.data(), N);
+//   ops_halo_exchanges(desc.args.data(),N,desc.range.data());
+//   ops_H_D_exchanges_host(desc.args.data(), N);
+
+//   for (int nt=0; nt<total_range; nt++) {
+//     // call kernel function, passing in pointers to data
+
+//     kernel((param_handler<param_remove_cvref_t<ParamType>>::get(p_a[J]))... );
+
+//     count[0]--;   // decrement counter
+//     int m = 0;    // max dimension with changed index
+//     while (count[m]==0) {
+//       count[m] =  end[m]-start[m];// reset counter
+//       m++;                        // next dimension
+//       count[m]--;                 // decrement counter
+//     }
+
+//     // shift pointers to data
+//   #ifdef OPS_MPI
+//     (void) std::initializer_list<int>{(
+//       param_handler<param_remove_cvref_t<ParamType>>::shift_arg(desc.args[J], p_a[J], m, start, offs[J], sb, desc.block->instance),0)...};
+//   #else //OPS_MPI
+//     (void) std::initializer_list<int>{(
+//       param_handler<param_remove_cvref_t<ParamType>>::shift_arg(desc.args[J], p_a[J], m, start, offs[J], desc.block->instance),0)...};
+//   #endif //OPS_MPI
+//   }
+
+//   #ifdef OPS_DEBUG_DUMP
+//   (void) std::initializer_list<int>{(
+//     desc.args[J].argtype == OPS_ARG_DAT && desc.args[J].acc != OPS_READ? ops_dump3(desc.args[J].dat,desc.name.c_str()),0:0)...};
+//   #endif
+//   (void) std::initializer_list<int>{(
+//   (desc.args[J].argtype == OPS_ARG_DAT && desc.args[J].acc != OPS_READ)?  ops_set_halo_dirtybit3(&desc.args[J],desc.range),0:0)...};
+//   ops_set_dirtybit_host(args, N);
+
+//   (void) std::initializer_list<int>{
+//     (param_handler<param_remove_cvref_t<ParamType>>::free(p_a[J]),0)...};
+}
+
+template <typename... DESC_ARGS>
+void ops_iter_par_loop(unsigned int& iter, DESC_ARGS&&... descs)
+{
+    (ops_par_loop_sigle_executer(descs), ...);
+}
+
 #endif /*DOXYGEN_SHOULD_SKIP_THIS*/
 
 /**
@@ -325,13 +446,18 @@ void ops_par_loop_impl(indices<J...>, void (*kernel)(ParamType...),
  * @param arguments a list of ops_arg arguments
  */
 template <typename... ParamType, typename... OPSARG>
-void ops_par_loop(void (*kernel)(ParamType...), char const *name,
+ops_par_loop_desc<ParamType...> ops_par_loop(void (*kernel)(ParamType...), char const *name,
                   ops_block block, int dim, int *range,
                   OPSARG... arguments) {
   static_assert(sizeof...(ParamType) == sizeof...(OPSARG), 
       "number of parameters of the kernel shoud match the number of ops_arg");
   ops_par_loop_impl(build_indices<sizeof...(ParamType)>{}, kernel, name,
                     block, dim, range, arguments...);
+  ops_par_loop_desc<ParamType...> desc = ops_par_loop_impl_V2(build_indices<sizeof...(ParamType)>{}, kernel, name,
+                    block, dim, range, arguments...);
+//   ops_par_loop_executer(desc);
+//   ops_iter_par_loop(desc);
+  return (desc);
 }
 
 

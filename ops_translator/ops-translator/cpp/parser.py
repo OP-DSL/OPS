@@ -89,6 +89,9 @@ def parseFunction(node: Cursor, program: Program) -> None:
 def parseLocation(node: Cursor) -> Location:
     return Location(node.location.file.name, node.location.line, node.location.column)
 
+def getLocation(location: Cursor.location) -> Location:
+    return Location(location.file.name, location.line, location.column)
+
 # def parseDats(translation_unit: TranslationUnit, program: Program) -> None:
 #     return None
 
@@ -99,9 +102,10 @@ def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
     for node in translation_unit.cursor.get_children():
         # print(f"node {counter}: {node.spelling}")
         # counter += 1
+            
         if node.kind == CursorKind.MACRO_DEFINITION:
             continue
-
+                
         if node.location.file.name != translation_unit.spelling:
             continue
 
@@ -112,8 +116,15 @@ def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
         nodes.append(node)
 
     for node in nodes:
-        for child in node.walk_preorder():
- 
+        for child in node.walk_preorder(): 
+            print(f"node {node.spelling}: child - {child.spelling}/{child.kind}")  
+            if child.kind == CursorKind.FOR_STMT:
+                print(f"For loop found: {parseLocation(node)}")
+                parseForLoop(child)
+                
+            if child.kind == CursorKind.CALL_EXPR:
+                parseCall(child, macros, program)
+                
             if child.kind.is_unexposed():
                 parseCallUnexposed(child, macros, program)
                 
@@ -122,6 +133,30 @@ def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
                 
     return program
 
+def parseForLoop(node: Cursor):
+    for child in node.get_children():
+        if child.kind == CursorKind.DECL_STMT:
+            parseDeclStmt(child)
+        elif child.kind == CursorKind.BINARY_OPERATOR:
+            parseConditions(child)
+        elif child.kind == CursorKind.UNARY_OPERATOR:
+            parseIters(child)    
+        
+def parseDeclStmt(node: Cursor):
+    print (f"found declaration: {parseLocation(node)}")
+    for child in node.get_children():
+        print(f"   child - {child.spelling}/{child.kind}")
+    
+def parseConditions(node: Cursor):
+    print (f"found condition: {parseLocation(node)}")
+    for child in node.get_children():
+        print(f"   child - {child.spelling}/{child.kind}")
+    
+def parseIters(node: Cursor):
+    print (f"found Iteration: {parseLocation(node)}")
+    for child in node.get_children():
+        print(f"   child - {child.spelling}/{child.kind}")    
+          
 
 def parseVariableDeclaration(node: Cursor, macros: Dict[Location, str], program: Program) -> None:
     children = []
@@ -184,7 +219,7 @@ def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> No
 
     (name, args) = out  
     loc = parseLocation(node)
-    
+
     if name == "ops_decl_stencil":
         if len(args) != 4:
             raise ParseError("ops_decl_stencil need 4 arguments", parseLocation(node))
@@ -195,6 +230,15 @@ def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> No
                 print(f"|-- argument {arg.spelling}: type: {arg.kind}, definition: {arg.get_definition().kind}, defLoc:{str(parseLocation(arg.get_definition()))}")
             else:
                 print(f"|-- argument {arg.spelling}: type: {arg.kind}")
+    
+    ov_node = decend(decend(node))   
+    
+    # print (f"node: {name}, ov_node: {ov_node.spelling}, args: {args}") 
+    name = ov_node.spelling        
+    if name == "ops_iter_par_loop":
+        scope = [getLocation(node.extent.start), getLocation(node.extent.end)]
+        outerLoop = parseIterLoop(node, args, scope, macros, program)
+        program.outerloops.append(outerLoop)
         
 def pointsToArray(points: List[ops.Point], ndim: int) -> List[int]:
     array = []
@@ -391,13 +435,15 @@ def parseCallUnexposed(node: Cursor, macros: Dict[Location, str], program: Progr
         program.consts.append(parseConst(args, loc, macros))
 
     elif name == "ops_par_loop":
-        loop = parseLoop(args, loc, macros)
-        program.loops.append(loop)
+        loop = parseLoop(node, args, loc, macros)
+        if loop not in program.loops:
+            program.loops.append(loop)
 
         if program.ndim == None:
             program.ndim = loop.ndim
         elif program.ndim < loop.ndim:
             program.ndim = loop.ndim
+
     
         
 def decend(node: Cursor) -> Optional[Cursor]:
@@ -614,8 +660,44 @@ def parseArgIdx(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[
 
     loop.addArgIdx(loc)
 
+def parseIterLoop(node: Cursor, args: List[Cursor], scope: List[Location], macros: Dict[Location, str], program: Program)-> ops.IterLoop:
+    print(f"Found iterLoop: {node.spelling}, scope: (start - {getLocation(node.extent.start)}, end - {getLocation(node.extent.end)}), args: {print([(arg.spelling, arg.kind) for arg in args])}")
+    is_iter_literal = args[0].kind == CursorKind.INTEGER_LITERAL
+    loops = []
+    if is_iter_literal:
+        iter = parseIntLiteral(args[0])
+    else:
+        iter = args[0].spelling
+    
+    for arg in args[1:]:
+        out = parseUnexposedFunction(arg)
+    
+        if out == None:
+            raise ParseError("Incorrect argument passed to ops_iter_par_loop")
+        else:
+            (name, loop_args) = out
+        
+        if name == "ops_par_loop":
+            loop = parseLoop(arg, loop_args, parseLocation(arg), macros)
+            loop.iterativeLoopId = len(program.outerloops)
+            
+            loops.append(loop)
+            
+            if loop not in program.loops:
+                program.loops.append(loop)
 
-def parseLoop(args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> ops.Loop:
+            if program.ndim == None:
+                program.ndim = loop.ndim
+            elif program.ndim < loop.ndim:
+                program.ndim = loop.ndim
+            
+    return ops.IterLoop(len(program.outerloops), iter, scope, loops)
+            
+        
+        
+        
+    
+def parseLoop(loopNode: Cursor, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> ops.Loop:
     if len(args) < 6:
         raise ParseError("Incorrect number of args passed to ops_par_loop")
 
@@ -625,7 +707,7 @@ def parseLoop(args: List[Cursor], loc: Location, macros: Dict[Location, str]) ->
     block  = parseIdentifier(args[2])
     range = parseRange(args[4], dim)
 
-    loop = ops.Loop(loc, kernel, block, range, dim)
+    loop = ops.Loop(loopNode, loc, kernel, block, range, dim)
 
     for node in args[5:]:
         node_name = node.spelling
