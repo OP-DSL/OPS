@@ -2071,7 +2071,6 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
     dataspace = H5Dget_space(dset_id);
 
     hid_t datatype = h5_type(type);
-    // Write to the exisiting dataset with default properties
     H5Dwrite(dset_id, datatype, H5S_ALL, dataspace, plist_id,
                const_data);
 
@@ -2097,7 +2096,6 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
 
   hid_t datatype = h5_type(type);
-  // Create the dataset with default properties
   dset_id = H5Dcreate(file_id, name, datatype, dataspace,
       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   // write data

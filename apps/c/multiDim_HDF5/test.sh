@@ -7,9 +7,9 @@ export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
 export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
 export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
-export AMOS=TRUE
+#export AMOS=TRUE
 #export DMOS=TRUE
-#export TELOS=TRUE
+export TELOS=TRUE
 #export KOS=TRUE
 
 #<<comment
@@ -132,8 +132,8 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASS
 
 echo '============> Running MPI+SYCL Tiled on CPU'
 rm -rf write_data.h5 read_data.h5;
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./write_mpi_sycl_tiled OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./read_mpi_sycl_tiled OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./write_mpi_sycl_tiled OPS_CL_DEVICE=1 OPS_TILING OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./read_mpi_sycl_tiled OPS_CL_DEVICE=1 OPS_TILING OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
 $HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
 

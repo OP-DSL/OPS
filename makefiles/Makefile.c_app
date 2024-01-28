@@ -114,7 +114,6 @@ ifdef THREADED
 endif
 
 MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
-
 APP_TARGETS = $(addprefix $(APP)_, $(TARGETS))
 
 all: $(APP_TARGETS)

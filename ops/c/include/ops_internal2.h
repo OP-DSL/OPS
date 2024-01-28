@@ -295,7 +295,6 @@ void ops_randomgen_init_host(unsigned int seed, int options, std::mt19937 ops_ra
 void ops_fill_random_uniform_host(ops_dat dat, std::mt19937 ops_rand_gen);
 void ops_fill_random_normal_host(ops_dat dat, std::mt19937 ops_rand_gen);
 
-
 /*******************************************************************************
 * Memory allocation functions
 *******************************************************************************/
