@@ -51,7 +51,7 @@
 
 /******************************************************************************
 * Main program
-/******************************************************************************/
+******************************************************************************/
 int main(int argc, const char **argv)
 {
   /**-------------------------- Initialisation --------------------------**/
@@ -200,14 +200,12 @@ int main(int argc, const char **argv)
   ops_halo_transfer(halos[0]);
   ops_halo_transfer(halos[1]);
 
-  int size4_0 = size4[0];
-  int size4_1 = size4[1];
   ops_par_loop(prolong_check, "prolong_check", grid0, 2, iter_range_large,
                ops_arg_dat(data5, 1, S2D_5pt, "double", OPS_READ),
                ops_arg_idx(),
                ops_arg_reduce(reduct_err, 1, "int", OPS_MAX),
-               ops_arg_gbl(&size4_0, 1, "int", OPS_READ),
-               ops_arg_gbl(&size4_1, 1, "int", OPS_READ));
+               ops_arg_gbl(&size4[0], 1, "int", OPS_READ),
+               ops_arg_gbl(&size4[1], 1, "int", OPS_READ));
 
   int err_prolong = 0;
   ops_reduction_result(reduct_err, &err_prolong);
@@ -245,7 +243,7 @@ int main(int argc, const char **argv)
                ops_arg_dat(data3, 1, S2D_00, "double", OPS_READ),
                ops_arg_idx(),
                ops_arg_reduce(reduct_err, 1, "int", OPS_MAX),
-               ops_arg_gbl(&size4_0, 1, "int", OPS_READ));
+               ops_arg_gbl(&size4[0], 1, "int", OPS_READ));
 
   int err_restrict = 0;
   ops_reduction_result(reduct_err, &err_restrict);

@@ -49,12 +49,6 @@ program POISSON
 
   implicit none
 
-  !integer(kind=4) ::  logical_size_x
-  !integer(kind=4) ::  logical_size_y
-  !integer(kind=4) ::  ngrid_x
-  !integer(kind=4) ::  ngrid_y
-  !integer(kind=4) ::  n_iter
-
   ! vars for halo_depths
   integer(kind=4) ::  d_p(2) = [1,1]   !max halo depths for the dat in the possitive direction
   integer(kind=4) ::  d_m(2) = [-1,-1] !max halo depths for the dat in the negative direction
