@@ -1,63 +1,32 @@
 #!/bin/bash
 set -e
 cd $OPS_INSTALL_PATH/c
-<<COMMENT
-if [ -x "$(command -v enroot)" ]; then
-  cd -
-  enroot start --root --mount $OPS_INSTALL_PATH/../:/tmp/OPS --rw cuda112hip sh -c 'cd /tmp/OPS/apps/c/mgrid; ./test.sh'
-  grep "PASSED" perf_out
-  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-  rm perf_out
-  echo "All HIP complied applications PASSED"
-fi
 
-if [[ -v HIP_INSTALL_PATH ]]; then
-  source ../../scripts/$SOURCE_HIP
-  make -j -B
-  cd -
-  make clean
-  rm -f .generated
-  make mgrid_seq mgrid_hip mgrid_mpi_hip -j
+export SOURCE_INTEL=source_intel_2021.3_pythonenv
+export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
+export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
-  echo '============> Running SEQ'
-  ./mgrid_seq > perf_out
-  grep "Total Wall time" perf_out
-  grep "PASSED" perf_out
-  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-  rm perf_out
-  cp data.h5 data_ref.h5
-  
-  echo '============> Running HIP'
-  ./mgrid_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-  grep "Total Wall time" perf_out
-  grep "PASSED" perf_out
-  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-  h5diff data.h5 data_ref.h5
-  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
-  rm perf_out
-  
-  echo '============> Running MPI+HIP'
-  mpirun --allow-run-as-root -np 2 ./mgrid_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-  grep "Total Wall time" perf_out
-  grep "PASSED" perf_out
-  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-  h5diff data.h5 data_ref.h5
-  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
-  rm perf_out
-  echo "All HIP complied applications PASSED : Moving no to Intel Compiler Tests " > perf_out
-  exit 0
-fi
-COMMENT
+export AMOS=TRUE
+#export DMOS=TRUE
+#export TELOS=TRUE
+#export KOS=TRUE
+
+if [[ -v TELOS || -v KOS ]]; then
+
+#============================ Test with Intel Classic Compilers==========================================
+echo "Testing Intel classic complier based applications ---- "  
 cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_INTEL
-make -j -B
+#make -j -B
+make clean
+make
 cd $OPS_INSTALL_PATH/../apps/c/mgrid/
 make clean
 rm -f .generated
 make IEEE=1
 
 
-#============================ Test mgrid with Intel Compilers ==========================================
 echo '============> Running SEQ'
 ./mgrid_seq > perf_out
 grep "Total Wall time" perf_out
@@ -111,6 +80,8 @@ $HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
 rm perf_out
 
+if [[ -v CUDA_INSTALL_PATH ]]; then
+
 echo '============> Running CUDA'
 ./mgrid_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total Wall time" perf_out
@@ -137,56 +108,69 @@ rm perf_out
 #$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
 #rm perf_out
+fi
 
-#echo '============> Running OpenCL on CPU'
-#./mgrid_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
-#rm perf_out
+rm -f data.h5 
+fi
+echo "All Intel classic complier based applications ---- PASSED"
 
-#echo '============> Running OpenCL on GPU'
-#./mgrid_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-#./mgrid_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
-#rm perf_out
+if [[ -v TELOS ]]; then
 
-#echo '============> Running MPI+OpenCL on CPU'
-#$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
-#$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
-#rm perf_out
+echo "Testing Intel SYCL complier based applications ---- "
+cd $OPS_INSTALL_PATH/c
+source ../../scripts/$SOURCE_INTEL_SYCL
+#make -j -B
+make clean
+make
+cd $OPS_INSTALL_PATH/../apps/c/mgrid/
 
-#echo '============> Running MPI+OpenCL on GPU'
-#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./mgrid_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./mgrid_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
-#rm perf_out
-
-rm -f data.h5 data_ref.h5
-echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
+make clean
+#make IEEE=1 -j
+make IEEE=1 mgrid_sycl mgrid_mpi_sycl mgrid_mpi_sycl_tiled
 
 
-cd -
+echo '============> Running MPI'
+$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_sycl > perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
+rm perf_out
+
+echo '============> Running MPI+SYCL'
+$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_mpi_sycl > perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
+rm perf_out
+
+echo '============> Running MPI+SYCL Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_mpi_sycl_tiled OPS_TILING > perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
+rm perf_out
+
+echo "All Intel SYCL complier based applications ---- PASSED"
+
+fi  
+
+if [[ -v TELOS ]]; then
+
+#============================ Test with PGI Compilers==========================================
+echo "Testing PGI/NVHPC complier based applications ---- "
+
+cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_PGI
 
 make clean
 make
-cd -
+cd $OPS_INSTALL_PATH/../apps/c/mgrid/
 make clean
 make
 
@@ -245,7 +229,7 @@ $HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
 rm perf_out
 
-
+if [[ -v CUDA_INSTALL_PATH ]]; then
 echo '============> Running CUDA'
 ./mgrid_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total Wall time" perf_out
@@ -273,56 +257,82 @@ rm perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
 #rm perf_out
 
-#echo '============> Running OpenCL on CPU'
-#./mgrid_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
+#echo '============> Running OpenACC'
+#./mgrid_openacc OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
 #grep "Total Wall time" perf_out
 #grep "PASSED" perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
 #rm perf_out
-
-#echo '============> Running OpenCL on GPU'
-#./mgrid_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-#./mgrid_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+#COMMENT
+#echo '============> Running MPI+OpenACC'
+#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./mgrid_mpi_openacc OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
 #grep "Total Wall time" perf_out
 #grep "PASSED" perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
 #rm perf_out
+fi
 
-#echo '============> Running MPI+OpenCL on CPU'
-#$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
-#$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
-#rm perf_out
-
-#echo '============> Running MPI+OpenCL on GPU'
-#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./mgrid_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./mgrid_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
-#rm perf_out
-
-echo '============> Running OpenACC'
-./mgrid_openacc OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+echo '============> Running OMPOFFLOAD'
+./mgrid_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 $HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
 rm perf_out
-#COMMENT
-echo '============> Running MPI+OpenACC'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./mgrid_mpi_openacc OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+
+echo '============> Running MPI+OMPOFFLOAD'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./mgrid_mpi_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
+rm perf_out
+
+rm -f data.h5
+echo "All PGI complier based applications ---- PASSED"
+
+fi
+
+if [[ -v AMOS ]]; then
+
+echo "Testing AMD HIP complier based applications ---- "
+cd $OPS_INSTALL_PATH/c
+source ../../scripts/$SOURCE_AMD_HIP
+#make -j -B
+make clean
+make 
+cd $OPS_INSTALL_PATH/../apps/c/mgrid
+
+make clean
+rm -f .generated
+#make IEEE=1 -j
+make IEEE=1 mgrid_seq mgrid_hip mgrid_mpi_hip #mgrid_hip_tiled mgrid_mpi_hip_tiled
+
+echo '============> Running SEQ'
+./mgrid_seq > perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+cp data.h5 data_ref.h5
+
+echo '============> Running HIP'
+./mgrid_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
+rm perf_out
+
+echo '============> Running MPI+HIP'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./mgrid_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
@@ -331,5 +341,10 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $
 rm perf_out
 
 rm -f data.h5 data_ref.h5
-echo "All PGI complied applications PASSED : Exiting Test Script "
+
+echo "All AMD HIP complier based applications ---- PASSED"
+
+fi
+
+echo "---------- Exiting Test Script "
 

@@ -285,7 +285,7 @@ int ops_get_proc();
 int ops_num_procs();
 void ops_put_data(ops_dat dat);
 OPS_FTN_INTEROP
-void create_kerneldesc_and_enque(char const *name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc));
+void create_kerneldesc_and_enque(char const* kernel_name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc));
 
 
 /*******************************************************************************
@@ -294,7 +294,6 @@ void create_kerneldesc_and_enque(char const *name, ops_arg *args, int nargs, int
 void ops_randomgen_init_host(unsigned int seed, int options, std::mt19937 ops_rand_gen);
 void ops_fill_random_uniform_host(ops_dat dat, std::mt19937 ops_rand_gen);
 void ops_fill_random_normal_host(ops_dat dat, std::mt19937 ops_rand_gen);
-
 
 /*******************************************************************************
 * Memory allocation functions
@@ -323,6 +322,8 @@ void ops_exit_device(OPS_instance *instance);
 void reallocConstArrays(OPS_instance *instance, int consts_bytes);
 void mvConstArraysToDevice(OPS_instance *instance, int consts_bytes);
 
+void reallocConstArrays(OPS_instance *instance, int consts_bytes);
+void mvConstArraysToDevice(OPS_instance *instance, int consts_bytes);
 
 void _ops_init(OPS_instance *instance, const int argc, const char * const argv[], const int diags_level);
 ops_block _ops_decl_block(OPS_instance *instance, int dims, const char * name);

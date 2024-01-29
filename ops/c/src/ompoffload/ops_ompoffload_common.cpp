@@ -72,7 +72,7 @@ void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
 void ops_device_free(OPS_instance *instance, void** ptr) {
   int device = omp_get_default_device();
 
-  void* device_ptr = omp_get_mapped_ptr(*ptr, device); 
+  void* device_ptr = omp_get_mapped_ptr(*ptr, device);
   omp_target_disassociate_ptr(*ptr, device);
   omp_target_free(device_ptr, device);
   ops_free(*ptr);

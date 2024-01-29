@@ -7,6 +7,10 @@ else
 	CCFLAGS   := -O3  -std=c99 -fPIC -DUNIX -Wall #-ffloat-store
 	CXXFLAGS  := -O3 -g  -fPIC -DUNIX -Wall -std=c++17 -qopenmp
 endif
+ifdef IEEE
+	CCFLAGS += -fp-model=strict 
+	CXXFLAGS += -fp-model=strict 
+endif
 OMPFLAGS := -fopenmp
 ifdef THREADED
 	THREADING_FLAGS ?= -fopenmp

@@ -17,7 +17,7 @@ program SHSGC
 
   intrinsic :: sqrt, real
 
-  integer niter, iter, nrk
+  integer(kind=4) ::  niter, iter, nrk
   real(8) :: totaltime
   real(8) :: local_rms
 
@@ -38,22 +38,22 @@ program SHSGC
   type(ops_reduction) :: rms
 
   ! vars for stencils
-  integer S1D_0_array(1) /0/
-  integer S1D_01_array(2) /0,1/
-  integer S1D_0M1_array(2) /0,-1/
-  integer S1D_0M1M2P1P2_array(5) /0,-1,-2,1,2/
+  integer(kind=4) ::  S1D_0_array(1) = [0]
+  integer(kind=4) ::  S1D_01_array(2) = [0,1]
+  integer(kind=4) ::  S1D_0M1_array(2) = [0,-1]
+  integer(kind=4) ::  S1D_0M1M2P1P2_array(5) = [0,-1,-2,1,2]
   type(ops_stencil) :: S1D_0, S1D_01, S1D_0M1
   type(ops_stencil) :: S1D_0M1M2P1P2
 
   ! vars for halo_depths
-  integer d_p(1) /2/   !max halo depths for the dat in the possitive direction
-  integer d_m(1) /-2/ !max halo depths for the dat in the negative direction
+  integer(kind=4) ::  d_p(1) = [2]   !max halo depths for the dat in the possitive direction
+  integer(kind=4) ::  d_m(1) = [-2] !max halo depths for the dat in the negative direction
 
   !base
-  integer base(1) /1/ ! this is in fortran indexing
+  integer(kind=4) ::  base(1) = [1] ! this is in fortran indexing
 
   !size
-  integer size(1) /204/ !size of the dat -- should be identical to the block on which its define on
+  integer(kind=4) ::  size(1) = [204] !size of the dat -- should be identical to the block on which its define on
 
   !null array
   real(kind=c_double), dimension(:), allocatable :: temp
@@ -64,7 +64,7 @@ program SHSGC
   !iterange needs to be fortran indexed here
   ! inclusive indexing for both min and max points in the range
   !.. but internally will convert to c index
-  integer nxp_range(2), nxp_range_1(2), nxp_range_2(2), nxp_range_3(2), &
+  integer(kind=4) ::  nxp_range(2), nxp_range_1(2), nxp_range_2(2), nxp_range_3(2), &
   & nxp_range_4(2), nxp_range_5(2)
 
   ! profiling
@@ -76,7 +76,7 @@ program SHSGC
   real(8) :: a2(3)
 
   !status variable to check success of ops_fetch_dat()
-  integer(4) :: status
+  integer(kind=4) :: status
 
   !for validation
   real(8) :: validate_rms, rms_diff
@@ -121,6 +121,7 @@ program SHSGC
 
   ! OPS initialisation
   call ops_init(1)
+  call ops_set_soa(1)
 
   !----------------------------OPS Declarations------------------------
 
@@ -353,8 +354,8 @@ program SHSGC
 
     validate_rms = sqrt(local_rms)/nxp
     rms_diff=ABS((100.0_8*(validate_rms/0.233688543536201_8))-100.0_8)
-    write (*,'(a,f16.7)'), "RMS = " , validate_rms; !Correct RMS = 0.233689
-    write(*,'(a,e16.7,a)') "Total error is within",rms_diff,"% of the expected error"
+    write (*,'(a,f16.7)') "RMS = ", validate_rms !Correct RMS = 0.233689
+    write (*,'(a,e16.7,a)') "Total error is within",rms_diff,"% of the expected error"
 
     IF(rms_diff.LT.0.001) THEN
       write(*,'(a)')"This test is considered PASSED"

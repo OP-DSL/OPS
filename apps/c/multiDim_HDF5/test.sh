@@ -1,61 +1,38 @@
 #!/bin/bash
 set -e
+cd ../../../ops/c
 
-cd $OPS_INSTALL_PATH/c
-<<COMMENT
- "$(command -v enroot)" ]; then
-  cd -
-  enroot start --root --mount $OPS_INSTALL_PATH/../:/tmp/OPS --rw cuda112hip sh -c 'cd /tmp/OPS/apps/c/multiDim_HDF5; ./test.sh'
-  grep "PASSED" perf_out
-  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-  rm perf_out
-  echo "All HIP complied applications PASSED"
-fi
+export SOURCE_INTEL=source_intel_2021.3_pythonenv
+export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
+export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
-if [[ -v HIP_INSTALL_PATH ]]; then
-  source ../../scripts/$SOURCE_HIP
-  make -j -B
-  cd -
-  make read_hip read_mpi_hip
-  make -f Makefile.write write_hip write_mpi_hip -B
-  
-  echo '============> Running HIP'
-  rm -rf write_data.h5 read_data.h5;
-  ./write_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
-  ./read_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
-  h5diff write_data.h5 read_data.h5
-  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
-  
-  
-  echo '============> Running MPI+HIP'
-  rm -rf write_data.h5 read_data.h5;
-  mpirun --allow-run-as-root -np 2 ./write_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
-  mpirun --allow-run-as-root -np 2 ./read_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
-  h5diff write_data.h5 read_data.h5
-  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
+#export AMOS=TRUE
+#export DMOS=TRUE
+export TELOS=TRUE
+#export KOS=TRUE
 
-  echo "All HIP complied applications PASSED : Moving no to Intel Compiler Tests " > perf_out
-  exit 0
-fi
-COMMENT
+#<<comment
 
+if [[ -v TELOS || -v KOS ]]; then
+
+#============================ Test with Intel Classic Compilers==========================================
+echo "Testing Intel classic complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_INTEL
 make clean
-make -j -B
+#make -j -B
+make 
 cd $OPS_INSTALL_PATH/../apps/c/multiDim_HDF5
 #<<COMMENT
 rm -f .generated
-../../../ops_translator/c/ops.py write.cpp
-../../../ops_translator/c/ops.py read.cpp
 make -f Makefile.write clean
-make -f Makefile clean
 make -f Makefile.write IEEE=1
-make -f Makefile IEEE=1
 
+rm -f .generated
+make -f Makefile.read clean
+make -f Makefile.read IEEE=1
 
-
-#============================ Test write with Intel Compilers==========================================================
 echo '============> Running OpenMP'
 rm -rf write_data.h5 read_data.h5;
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./write_openmp 
@@ -85,7 +62,7 @@ $MPI_INSTALL_PATH/bin/mpirun -np 20 ./read_mpi
 $HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
 
-
+if [[ -v CUDA_INSTALL_PATH ]]; then
 echo '============> Running CUDA'
 rm -rf write_data.h5 read_data.h5;
 ./write_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
@@ -112,57 +89,78 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASS
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
 #
 
-## OpenCL CPU test removed due to Intel OpenCL bug for long long types #####
-#echo '============> Running OpenCL on CPU'
-#rm -rf write_data.h5 read_data.h5;
-#./write_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1
-#./read_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1
-#$HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
+fi
+echo "All Intel classic complier based applications ---- PASSED"
+
+fi
+
+#comment
+
+if [[ -v TELOS ]]; then
+#============================ Test with Intel SYCL Compilers==========================================
+echo "Testing Intel SYCL complier based applications ---- "
+cd $OPS_INSTALL_PATH/c
+source ../../scripts/$SOURCE_INTEL_SYCL
+make clean
+#make -j -B
+make 
+cd $OPS_INSTALL_PATH/../apps/c/multiDim_HDF5
+#<<COMMENT
+rm -f .generated
+make -f Makefile.write clean
+make -f Makefile.write IEEE=1
+
+rm -f .generated
+make -f Makefile.read clean
+make -f Makefile.read IEEE=1
 
 
-echo '============> Running OpenCL on GPU'
+echo '============> Running SYCL on CPU'
 rm -rf write_data.h5 read_data.h5;
-./write_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4
-./read_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4
+KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./write_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1
+KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./read_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1
 $HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
 
-## OpenCL CPU test removed due to Intel OpenCL bug for long long types #####
-#echo '============> Running MPI+OpenCL on CPU'
-#rm -rf write_data.h5 read_data.h5;
-#$MPI_INSTALL_PATH/bin/mpirun -np 20 ./write_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1
-#$MPI_INSTALL_PATH/bin/mpirun -np 20 ./read_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1
-#$HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
-
-
-echo '============> Running MPI+OpenCL on GPU'
+echo '============> Running MPI+SYCL on CPU'
 rm -rf write_data.h5 read_data.h5;
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./write_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./read_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4
+export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 10 ./write_mpi_sycl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 10 ./read_mpi_sycl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
 $HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
 
-#COMMENT
 
-echo "All Intel complied applications PASSED"
+echo '============> Running MPI+SYCL Tiled on CPU'
+rm -rf write_data.h5 read_data.h5;
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./write_mpi_sycl_tiled OPS_CL_DEVICE=1 OPS_TILING OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./read_mpi_sycl_tiled OPS_CL_DEVICE=1 OPS_TILING OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+$HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
 
 #cleanup
 rm -rf integers.txt*
+echo "All Intel SYCL complier based applications ---- PASSED"
 
-cd -
+fi
+
+
+if [[ -v TELOS ]]; then
+#============================ Test with PGI Compilers==========================================
+echo "Testing PGI/NVHPC complier based applications ---- "
+cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_PGI
 
 make clean
 make 
-cd -
+cd $OPS_INSTALL_PATH/../apps/c/multiDim_HDF5
+rm -f .generated
 make -f Makefile.write clean
-make -f Makefile clean
 make -f Makefile.write IEEE=1
-make -f Makefile IEEE=1
 
-#============================ Test write with PGI Compilers==========================================================
+rm -f .generated
+make -f Makefile.read clean
+make -f Makefile.read IEEE=1
+
 echo '============> Running OpenMP'
 rm -rf write_data.h5 read_data.h5;
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./write_openmp
@@ -194,7 +192,7 @@ $MPI_INSTALL_PATH/bin/mpirun -np 20 ./read_mpi
 $HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
 
-
+if [[ -v CUDA_INSTALL_PATH ]]; then
 echo '============> Running CUDA'
 rm -rf write_data.h5 read_data.h5;
 ./write_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
@@ -220,42 +218,6 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASS
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
 #
 
-#echo '============> Running OpenCL on CPU'
-#rm write_data.h5 read_data.h5;
-#./write_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1
-#grep "Total error:
-#grep "Total Wall time
-#grep "PASSED
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
-#
-
-echo '============> Running OpenCL on GPU'
-rm -rf write_data.h5 read_data.h5;
-./write_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4
-./read_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4
-$HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
-
-
-#echo '============> Running MPI+OpenCL on CPU'
-#rm write_data.h5 read_data.h5;
-#$MPI_INSTALL_PATH/bin/mpirun -np 20 ./write_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1
-#$MPI_INSTALL_PATH/bin/mpirun -np 20 ./write_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1
-#grep "Total error:
-#grep "Total Wall time
-#grep "PASSED
-#$HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
-#
-
-echo '============> Running MPI+OpenCL on GPU'
-rm -rf write_data.h5 read_data.h5;
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./write_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./read_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4
-$HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
-
-
 #echo '============> Running OpenACC'
 #rm write_data.h5 read_data.h5;
 #./write_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
@@ -270,9 +232,63 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASS
 #$MPI_INSTALL_PATH/bin/mpirun -np 2 ./read_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
 #$HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
+fi
+
+echo '============> Running OMPOFFLOAD'
+rm -rf write_data.h5 read_data.h5;
+./write_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+./read_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+$HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
+
+echo '============> Running MPI+OMPOFFLOAD'
+rm -rf write_data.h5 read_data.h5;
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./write_mpi_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./read_mpi_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+$HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
 
 #cleanup
 rm integers.txt*
 
-echo "All PGI complied applications PASSED "
-echo "All Tests PASSED : Exiting Test Script "
+echo "All PGI complier based applications ---- PASSED"
+
+fi
+
+if [[ -v AMOS ]]; then
+
+echo "Testing AMD HIP complier based applications ---- "
+cd $OPS_INSTALL_PATH/c
+source ../../scripts/$SOURCE_AMD_HIP
+
+
+make clean
+make 
+cd $OPS_INSTALL_PATH/../apps/c/multiDim_HDF5
+rm -f .generated
+make -f Makefile.write clean
+make -f Makefile.write write_hip write_mpi_hip IEEE=1
+
+rm -f .generated
+make -f Makefile.read clean
+make -f Makefile.read read_hip read_mpi_hipIEEE=1
+
+echo '============> Running HIP'
+rm -rf write_data.h5 read_data.h5;
+./write_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+./read_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+$HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
+
+echo '============> Running MPI+HIP'
+rm -rf write_data.h5 read_data.h5;
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./write_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./read_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+$HDF5_INSTALL_PATH/bin/h5diff write_data.h5 read_data.h5
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
+
+echo "All AMD HIP complier based applications ---- PASSED"
+
+fi
+
+echo "---------- Exiting Test Script "

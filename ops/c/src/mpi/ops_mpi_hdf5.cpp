@@ -2071,7 +2071,6 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
     dataspace = H5Dget_space(dset_id);
 
     hid_t datatype = h5_type(type);
-    // Write to the exisiting dataset with default properties
     H5Dwrite(dset_id, datatype, H5S_ALL, dataspace, plist_id,
                const_data);
 
@@ -2097,7 +2096,6 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
 
   hid_t datatype = h5_type(type);
-  // Create the dataset with default properties
   dset_id = H5Dcreate(file_id, name, datatype, dataspace,
       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   // write data
@@ -2134,24 +2132,46 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   attribute =
       H5Acreate(dset_id, "type", atype, dataspace, H5P_DEFAULT, H5P_DEFAULT);
 
-  if (strcmp(type, "double") == 0 || strcmp(type, "double precision") == 0 ||
-      strcmp(type, "real(8)") == 0)
+  if (strcmp(type, "double") == 0 ||
+      strcmp(type, "double precision") == 0 ||
+      strcmp(type, "real(8)") == 0 ||
+      strcmp(type, "real(kind=8)") == 0)
+  {
     H5Awrite(attribute, atype, "double");
-  else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 ||
-           strcmp(type, "integer") == 0 || strcmp(type, "integer(4)") == 0)
-    H5Awrite(attribute, atype, "int");
-  else if (strcmp(type, "long") == 0)
-    H5Awrite(attribute, atype, "long");
-  else if (strcmp(type, "long long") == 0)
-    H5Awrite(attribute, atype, "long long");
-  else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0 ||
-           strcmp(type, "real") == 0)
+  }
+  else if (strcmp(type, "float") == 0 ||
+           strcmp(type, "real") == 0 ||
+           strcmp(type, "real(4)") == 0 ||
+           strcmp(type, "real(kind=4)") == 0)
+  {
     H5Awrite(attribute, atype, "float");
+  }
+  else if (strcmp(type, "int") == 0 ||
+           strcmp(type, "int(4)") == 0 ||
+           strcmp(type, "integer") == 0 ||
+           strcmp(type, "integer(4)") == 0 ||
+           strcmp(type, "integer(kind=4)") == 0)
+  {
+    H5Awrite(attribute, atype, "int");
+  }
+  else if (strcmp(type, "long") == 0)
+  {
+    H5Awrite(attribute, atype, "long");
+  }
+  else if (strcmp(type, "long long") == 0)
+  {
+    H5Awrite(attribute, atype, "long long");
+  }
   else if (strcmp(type, "char") == 0)
+  {
     H5Awrite(attribute, atype, "char");
+  }
   else if (strcmp(type, "half") == 0)
+  {
     H5Awrite(attribute, atype, "half");
-  else {
+  }
+  else
+  {
     ops_printf(
         "Unknown type %s for constant %s: cannot write constant to file\n",
         type, name);

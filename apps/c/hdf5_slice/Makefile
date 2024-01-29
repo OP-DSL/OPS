@@ -9,16 +9,15 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.common
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
+USE_HDF5=1
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
-
-
 
 
 HEADERS=init_kernel.h data.h
 
 OPS_FILES=hdf5_slice.cpp
 
-OPS_GENERATED=hdf5_slice_ops.cpp
+OPS_GENERATED_SUFFIX=_ops
 
 OTHER_FILES=
 
@@ -26,4 +25,7 @@ OTHER_FILES=
 APP=hdf5_slice
 MAIN_SRC=hdf5_slice
 
+TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled hip mpi_hip mpi_hip_tiled ompoffload mpi_ompoffload mpi_ompoffload_tiled sycl mpi_sycl mpi_sycl_tiled
+
+#include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app_legacy
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app

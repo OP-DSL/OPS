@@ -268,14 +268,34 @@ ops_arg ops_arg_reduce(ops_reduction handle, int dim, const char *type,
 ops_reduction _ops_decl_reduction_handle(OPS_instance *instance, int size, const char *type,
                                         const char *name) {
 
-  if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 ||
+  if (strcmp(type, "double") == 0 ||
+      strcmp(type, "real(8)") == 0 ||
+      strcmp(type, "real(kind=8)") == 0 ||
       strcmp(type, "double precision") == 0)
-    type = "double\0";
-  else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0)
+  {
+    type = "double";
+  }
+  else if (strcmp(type, "float") == 0 ||
+           strcmp(type, "real") == 0 ||
+           strcmp(type, "real(4)") == 0 ||
+           strcmp(type, "real(kind=4)") == 0)
+  {
     type = "float";
-  else if (strcmp(type, "int") == 0 || strcmp(type, "integer") == 0 ||
-           strcmp(type, "integer(4)") == 0 || strcmp(type, "int(4)") == 0)
+  }
+  else if (strcmp(type, "int") == 0 ||
+           strcmp(type, "int(4)") == 0 ||
+           strcmp(type, "integer") == 0 ||
+           strcmp(type, "integer(4)") == 0 ||
+           strcmp(type, "integer(kind=4)") == 0)
+  {
     type = "int";
+  }
+  else
+  {
+    OPSException ex(OPS_NOT_IMPLEMENTED);
+    ex << "Error: Unknown data type for ops_decl_reduction_handle";
+    throw ex;
+  }
 
   ops_reduction red = ops_decl_reduction_handle_core(instance, size, type, name);
   if (instance->OPS_block_index < 1)

@@ -13,13 +13,13 @@ wk1(0) = -c0*wk0(0);
 }
 
 
-void complex_numbers_block0_2_kernel(const ACC<double> &phi_old , const ACC<double> &wk1 , ACC<double> &phi , const ACC<double> &rknew)
+void complex_numbers_block0_2_kernel(const ACC<double> &phi_old , const ACC<double> &wk1 , ACC<double> &phi , const double* rknew)
 {
 phi(0) = deltat*rknew[0]*wk1(0) + phi_old(0);
 }
 
 
-void complex_numbers_block0_3_kernel(const ACC<double> &wk1 , ACC<double> &phi_old , const ACC<double> &rkold)
+void complex_numbers_block0_3_kernel(const ACC<double> &wk1 , ACC<double> &phi_old , const double* rkold)
 {
 phi_old(0) = deltat*rkold[0]*wk1(0) + phi_old(0);
 }

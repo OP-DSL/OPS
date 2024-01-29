@@ -11,7 +11,7 @@
 #define FIELD_Z       7
 #define NUM_FIELDS    8
 
-#define fixed 1
+//#define fixed 1
 
 #define CELL_DATA 0
 #define VERTEX_DATA 1
