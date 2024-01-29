@@ -199,19 +199,19 @@ SUBROUTINE {{lh.kernel}}_wrap( &
     {% if arg is ops_dat %}
         {% if soa_set %}
             {% if lh.ndim == 1 %}
-                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base+(n_x-1)){% if not loop.last %},{% endif %}&
+                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}})){% if not loop.last %},{% endif %}&
             {% elif lh.ndim == 2 %}
-                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + (n_x-1) + (n_y-1)*xdim{{arg.id+1}}){% if not loop.last %},{% endif %}&
+                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}) + ((n_y-1)*xdim{{arg.id+1}}*{{arg.strides[1] | int}})){% if not loop.last %},{% endif %}&
             {% elif lh.ndim == 3 %} 
-                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + (n_x-1) + (n_y-1)*xdim{{arg.id+1}} + (n_z-1)*ydim{{arg.id+1}}*xdim{{arg.id+1}}){% if not loop.last %},{% endif %} &
+                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}) + ((n_y-1)*xdim{{arg.id+1}}*{{arg.strides[1] | int}}) + ((n_z-1)*ydim{{arg.id+1}}*xdim{{arg.id+1}}*{{arg.strides[2] | int}})){% if not loop.last %},{% endif %} &
             {% endif %}
         {% else %}
             {% if lh.ndim == 1 %}
-                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + (n_x-1)*{{arg.dim}}){% if not loop.last %},{% endif %} &
+                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}*{{arg.dim}})){% if not loop.last %},{% endif %} &
             {% elif lh.ndim == 2 %}
-                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + (n_x-1)*{{arg.dim}} + (n_y-1)*xdim{{arg.id+1}}*{{arg.dim}}){% if not loop.last %},{% endif %} &
+                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}*{{arg.dim}}) + ((n_y-1)*xdim{{arg.id+1}}*{{arg.strides[1] | int}}*{{arg.dim}})){% if not loop.last %},{% endif %} &
             {% elif lh.ndim == 3 %}
-                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + (n_x-1)*{{arg.dim}} + (n_y-1)*xdim{{arg.id+1}}*{{arg.dim}} + (n_z-1)*ydim{{arg.id+1}}*xdim{{arg.id+1}}*{{arg.dim}}){% if not loop.last %},{% endif %} &
+                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}*{{arg.dim}}) + ((n_y-1)*xdim{{arg.id+1}}*{{arg.strides[1] | int}}*{{arg.dim}}) + ((n_z-1)*ydim{{arg.id+1}}*xdim{{arg.id+1}}*{{arg.strides[2] | int}}*{{arg.dim}})){% if not loop.last %},{% endif %} &
             {% endif %}
         {% endif %}
     {% elif arg is ops_gbl or arg is ops_reduce %}

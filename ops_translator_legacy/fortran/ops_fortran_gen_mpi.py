@@ -60,6 +60,7 @@ comment_remover = util_fortran.comment_remover
 remove_trailing_w_space = util_fortran.remove_trailing_w_space
 comm = util_fortran.comm
 code = util_fortran.code
+populate_stride = util_fortran.populate_stride
 
 DO = util_fortran.DO
 ENDDO = util_fortran.ENDDO
@@ -94,7 +95,7 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
     typs  = kernels[nk]['typs']
     NDIM = int(dim)
     #parse stencil to locate strided access
-    stride = [1] * nargs * NDIM
+    stride = populate_stride(nargs,NDIM,stens)
 
 #    print("MPI kernel name: " + name)
 
@@ -149,6 +150,7 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
           if NDIM==3:
             code('INTEGER(KIND=4) :: ydim'+str(n+1))
             code('INTEGER(KIND=4) :: zdim'+str(n+1))
+            config.depth = 0
             code('#define OPS_ACC'+str(n+1)+'(x,y,z) ((x) + (xdim'+str(n+1)+'*(y)) + (xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)) + 1)')
         code('')
 
@@ -350,24 +352,24 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_dat':
         if soa_set == 0:
           if NDIM==1:
-            line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + (n_x-1)*'+str(dims[n])+')'
+            line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + ((n_x-1)*'+str(stride[n][0])+'*'+str(dims[n])+'))'
           elif NDIM==2:
-            line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + (n_x-1)*'+str(dims[n])+\
-               ' + (n_y-1)*xdim'+str(n+1)+'*'+str(dims[n])+')'
+            line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + ((n_x-1)*'+str(stride[n][0])+'*'+str(dims[n])+')'+\
+               ' + ((n_y-1)*xdim'+str(n+1)+'*'+str(stride[n][1])+'*'+str(dims[n])+'))'
           elif NDIM==3:
-            line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + (n_x-1)*'+str(dims[n])+\
-               ' + (n_y-1)*xdim'+str(n+1)+'*'+str(dims[n])+''+\
-               ' + (n_z-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+'*'+str(dims[n])+')'
+            line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + ((n_x-1)*'+str(stride[n][0])+'*'+str(dims[n])+')'+\
+               ' + ((n_y-1)*xdim'+str(n+1)+'*'+str(stride[n][1])+'*'+str(dims[n])+')'+\
+               ' + ((n_z-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+'*'+str(stride[n][2])+'*'+str(dims[n])+'))'
         else:
           if NDIM==1:
-            line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + (n_x-1)'+')'
+            line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + ((n_x-1)*'+str(stride[n][0])+'))'
           elif NDIM==2:
-            line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + (n_x-1)'+\
-                ' + (n_y-1)*xdim'+str(n+1)+')'
+            line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + ((n_x-1)*'+str(stride[n][0])+')'+\
+                ' + ((n_y-1)*xdim'+str(n+1)+'*'+str(stride[n][1])+'))'
           elif NDIM==3:
-            line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + (n_x-1)'+\
-                ' + (n_y-1)*xdim'+str(n+1)+\
-                ' + (n_z-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+')'
+            line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + ((n_x-1)*'+str(stride[n][0])+')'+\
+                ' + ((n_y-1)*xdim'+str(n+1)+'*'+str(stride[n][1])+')'+\
+                ' + ((n_z-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+'*'+str(stride[n][2])+'))'
 
       elif arg_typ[n] == 'ops_arg_gbl':
         line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base)'
