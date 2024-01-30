@@ -130,3 +130,34 @@ def find_kernel_routine(text, fun_name):
     exit(1)
   req_kernel = text[beg_pos:beg_pos+end.end()]
   return req_kernel+'\n'
+
+def populate_stride(nargs,NDIM,stens):
+    stride = [[1] * NDIM for _ in range(nargs)]
+
+    if NDIM == 2:
+        for n, sten in enumerate(stens):
+            if sten.lower().find("strid2d_x") > 0:
+                stride[n][1] = 0
+            elif sten.lower().find("strid2d_y") > 0:
+                stride[n][0] = 0
+
+    if NDIM == 3:
+        for n, sten in enumerate(stens):
+            if sten.lower().find("strid3d_xy") > 0:
+                stride[n][2] = 0
+            elif sten.lower().find("strid3d_yz") > 0:
+                stride[n][0] = 0
+            elif sten.lower().find("strid3d_xz") > 0:
+                stride[n][1] = 0
+            elif sten.lower().find("strid3d_x") > 0:
+                stride[n][1] = 0
+                stride[n][2] = 0
+            elif sten.lower().find("strid3d_y") > 0:
+                stride[n][0] = 0
+                stride[n][2] = 0
+            elif sten.lower().find("strid3d_z") > 0:
+                stride[n][0] = 0
+                stride[n][1] = 0
+
+    return stride
+
