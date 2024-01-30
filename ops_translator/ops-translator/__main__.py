@@ -245,6 +245,7 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, target_config: di
     # Generate loop hosts
     for i, (loop, program) in enumerate(app.uniqueLoops(), 1):
         # Generate loop host source
+
         source, extension = scheme.genLoopHost(include_dirs, defines, env, loop, program, app, i, force_soa)
 
         new_source = re.sub(r'\n\s*\n', '\n\n', source)
@@ -348,27 +349,27 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
         if args.verbose:
             print(f"Generated Host xrt.cfg V++ configurations")
             
-    #Generate stencil device definitions
-    for program in app.programs:
-        for stencil in program.stencils:
-            source, extension = scheme.genStencilDecl(env, target_config, stencil)
-            new_source = re.sub(r'\n\s*\n', '\n\n', source)
+    # #Generate stencil device definitions
+    # for program in app.programs:
+    #     for stencil in program.stencils:
+    #         source, extension = scheme.genStencilDecl(env, target_config, stencil)
+    #         new_source = re.sub(r'\n\s*\n', '\n\n', source)
             
-            # From output files path
-            path = None
-            if scheme.lang.kernel_dir:
-                Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
-                path = Path(args.out, scheme.target.name, "device", "include", f"stencil_{stencil.stencil_ptr}.{extension}")                
-            else:
-                path = Path(args.out,f"stencil_{scheme.target.name}_{stencil.stencil_ptr}.{extension}")
+    #         # From output files path
+    #         path = None
+    #         if scheme.lang.kernel_dir:
+    #             Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
+    #             path = Path(args.out, scheme.target.name, "device", "include", f"stencil_{stencil.stencil_ptr}.{extension}")                
+    #         else:
+    #             path = Path(args.out,f"stencil_{scheme.target.name}_{stencil.stencil_ptr}.{extension}")
 
-            # Write the gernerated source file
-            with open(path, "w") as file:
-                file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
-                file.write(new_source)
+    #         # Write the gernerated source file
+    #         with open(path, "w") as file:
+    #             file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+    #             file.write(new_source)
 
-                if args.verbose:
-                    print(f"Generated Device stencil_{stencil.stencil_ptr}.hpp")
+    #             if args.verbose:
+    #                 print(f"Generated Device stencil_{stencil.stencil_ptr}.hpp")
                 
     #Generate loop device
     #if scheme.target.name == "hls":

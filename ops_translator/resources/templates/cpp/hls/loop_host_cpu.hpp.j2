@@ -1,0 +1,106 @@
+{% extends "cpp/hls/loop_host.hpp.j2" %}
+
+{% block prologue %}
+{{super()}}
+
+void kernel_{{lh.kernel}}_core(
+    {% for arg in lh.args %}
+        {% if loop.last %}
+            {% if consts %}
+                {% set last_check = False %}
+            {% else %}
+                {% set last_check = True %}
+            {% endif %}
+        {% else %}
+            {% set last_check = False %}
+        {% endif %}
+        {% if arg is ops_read%}
+            {% if prog.findStencil(arg.stencil_ptr) %}
+                {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
+        const {{lh.dats[arg.dat_id].typ}}& arg{{arg.id}}_{{i}}{{"," if (not loop.last or not last_check)}}
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+        {% if arg is ops_write or ops_rw%}
+            {% if prog.findStencil(arg.stencil_ptr) %}
+                {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
+        {{lh.dats[arg.dat_id].typ}}& arg{{arg.id}}_{{i}}{{"," if (not loop.last or not last_check)}}
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+        {% if arg is ops_idx %}
+        const int * idx{{"," if (not loop.last or not last_check)}}
+        {% endif %}
+    {% endfor %}
+    {% for const in consts %}
+        const {{const.typ}} {{const.ptr}}{{"," if not loop.last}}
+    {% endfor %}
+)
+{
+    {{kernel_body}}
+}
+{% endblock %}
+{% block par_loop %}
+{{super()}}
+{
+    ops::hls::AccessRange range;
+    opsRange2hlsRange(ndim, ops_range, range, arg0.originalProperty);
+    {% for arg in lh.args %}
+        {% if prog.findStencil(arg.stencil_ptr) %}
+            {% set stencil = prog.findStencil(arg.stencil_ptr) %}
+            {% for i in range(stencil.num_points)%}
+                {% set point = stencil.points[i] %}
+    constexpr int arg{{arg.id}}_{{i}}_stencil_offset[] = { {{point.x}}, {{point.y}}, {{point.z}} };
+            {% endfor %}
+        {% endif %}
+    {% endfor %}
+
+    {% if lh.ndim > 2 %}
+    for (unsigned short k = 0; k = range.start[2]; k < range.end[2]; k++)
+    {
+    {% endif %}
+    {% if lh.ndim > 1 %}
+        for (unsigned short j = 0; j = range.start[1]; j < range.end[1]; j++)
+        {
+    {% endif %}
+    {% if lh.ndim > 0 %}
+            for (unsigned short i = 0; i = range.start[0]; i < range.end[0]; i++)
+            {
+    {% endif %}
+    {% if lh.arg_idx != -1 %}
+        {% if lh.ndim > 2%}
+                ops::hls::IdxType idx({i - arg0.originalProperty.d_m[0], j - arg0.originalProperty.d_m[1], k - arg0.originalProperty.d_m[2]});
+        {% elif lh.ndim > 1 %}
+                ops::hls::IdxType idx({i - arg0.originalProperty.d_m[0], j - arg0.originalProperty.d_m[1], 0});
+        {% else %}
+                ops::hls::IdxType idx({i - arg0.originalProperty.d_m[0], 0, 0});
+        {% endif %} 
+    {% endif %}
+                kernel_{{lh.kernel}}(
+    {% for arg in lh.args %}
+        {% if loop.last %}
+            {% set last_check = False %}
+        {% endif %}
+        {% if arg is ops_dat %}
+            {% if prog.findStencil(arg.stencil_ptr) %}
+                {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
+                    arg{{arg.id}}.hostBuffer[getOffset(arg{{arg.id}}_{{i}}_stencil_offset, arg{{arg.id}}.originalProperty, i {{", j" if (lh.ndim > 1)}}{{", k" if (lh.ndim > 2)}})]{{"," if not last_check}}
+                {% endfor %}
+            {% endif %}
+        {% elif arg is ops_idx %}
+                    idx{{"," if not last_check}}
+        {% endif %}
+    {% endfor %}
+                );
+    {% if lh.ndim > 0 %}
+            }
+    {% endif %}
+    {% if lh.ndim > 1 %}
+        }
+    {% endif %}
+    {% if lh.ndim > 2 %}
+    }
+    {% endif %}
+
+}
+{% endblock %}

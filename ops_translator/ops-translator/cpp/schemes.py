@@ -42,7 +42,8 @@ class CppMPIOpenMP(Scheme):
 class CppHLS(Scheme):
     lang = Lang.find("cpp")
     target = Target.find("hls")    
-    loop_host_template = Path("cpp/hls/loop_hls.cpp.j2")
+    loop_host_kernelwrap_template = Path("cpp/hls/loop_kernelwrap.hpp.j2")
+    loop_host_cpu_template = Path("cpp/hls/loop_host_cpu.hpp.j2")
     master_kernel_template = Path("cpp/hls/master_kernel.cpp.j2")
     common_config_template = Path("cpp/hls/common_config_dev_hls.hpp.j2")
     host_config_template = Path("cpp/hls/xrt_config.cfg.j2")
@@ -82,40 +83,49 @@ class CppHLS(Scheme):
         extracted_entities = ctk.extractDependancies(kernel_entities, app)
         return ctk.writeSource(extracted_entities)
     
-    # def genLoopHost(
-    #     self,
-    #     include_dirs: Set[Path],
-    #     defines: List[str],
-    #     env: Environment,
-    #     loop: ops.Loop,
-    #     program: Program,
-    #     app: Application,
-    #     kernel_idx: int,
-    #     force_soa: bool
-    # ) -> Tuple[str, str]:
-    #     template = env.get_template(str(self.loop_host_template))
-    #     kernel_func = self.translateKernel(loop, program, app, kernel_idx)
+    def genLoopHost(
+        self,
+        include_dirs: Set[Path],
+        defines: List[str],
+        env: Environment,
+        loop: ops.Loop,
+        program: Program,
+        app: Application,
+        kernel_idx: int,
+        force_soa: bool
+    ) -> Tuple[str, str]:
         
-    #     kp_ = KernelProcess()
+        template = env.get_template(str(self.loop_host_cpu_template))
+        kernel_func = self.translateKernel(loop, program, app, kernel_idx)
         
-    #     kernel_func = kp_.clean_kernel_func_text(kernel_func)
-    #     kernel_body, args_list = kp_.get_kernel_body_and_arg_list(kernel_func)
+        kernel_processor = KernelProcess()
         
-    #     return (
-    #         template.render (
-    #             ops=ops,
-    #             lh=loop,
-    #             kernel_func=kernel_func,
-    #             kernel_idx=kernel_idx,
-    #             kernel_body=kernel_body,
-    #             args_list=args_list,
-    #             lang=self.lang,
-    #             target=self.target,
-    #             soa_set=force_soa
-    #         ),
-    #         self.loop_kernel_extension
-    #     )
-    def hls_replace_accessors_with_registers(self, kernel_body: str, kernel_args: List[str], loop: ops.Loop, prog: Program):
+        kernel_func = self.translateKernel(loop, program, app, kernel_idx)
+        kernel_func = kernel_processor.clean_kernel_func_text(kernel_func)
+        kernel_body, kernel_args = kernel_processor.get_kernel_body_and_arg_list(kernel_func)
+        kernel_body = self.hls_replace_accessors(kernel_body, kernel_args, loop, program, False)
+        kernel_consts = self.find_const_in_kernel(kernel_body, program.consts)
+        kernel_idx_arg_name = self.find_kernel_arg_of_ops_idx(kernel_args, loop.args)
+        logging.debug("kernel_idx_arg_name: %s", kernel_idx_arg_name)
+        
+        if kernel_idx_arg_name:
+            kernel_body = self.replace_idx_access(kernel_body, kernel_idx_arg_name, False)
+        
+        return (
+            template.render (
+                ops=ops,
+                lh=loop,
+                prog=program,
+                kernel_func=kernel_func,
+                kernel_idx=kernel_idx,
+                kernel_body=kernel_body,
+                kernel_args=kernel_args,
+                consts=kernel_consts
+            ),
+            self.loop_kernel_extension
+        )
+    
+    def hls_replace_accessors(self, kernel_body: str, kernel_args: List[str], loop: ops.Loop, prog: Program, isReplaceWithReg = True):
         logging.getLogger(__name__)
         assert len(kernel_args) == len(loop.args), f"kernel arguments of kernel {loop.kernel} count mismatch with loop"
         logging.debug("starting accessor replacer")
@@ -156,8 +166,10 @@ class CppHLS(Scheme):
             except Exception as e:
                 raise ParseError(f"Transaltor filed with error: {str(e)}")
                 
-            kernel_body = re.sub(match_string, f"reg_{arg_idx}_{stencil.points.index(access_indices)}", kernel_body, count = 1)
-            
+            if isReplaceWithReg:
+                kernel_body = re.sub(match_string, f"reg_{arg_idx}_{stencil.points.index(access_indices)}", kernel_body, count = 1)
+            else:
+                kernel_body = re.sub(match_string, f"arg{arg_idx}_{stencil.points.index(access_indices)}", kernel_body, count = 1)
         return kernel_body
 
                 
@@ -167,8 +179,11 @@ class CppHLS(Scheme):
                 return kernel_args[i]
         return None
     
-    def replace_idx_access(self, kernel_body: str, idx_arg_name: str)->str:
-        new_kernel_body = re.sub(idx_arg_name, "indexConv.index", kernel_body)
+    def replace_idx_access(self, kernel_body: str, idx_arg_name: str, isHLS = True)->str:
+        if isHLS:
+            new_kernel_body = re.sub(idx_arg_name, "indexConv.index", kernel_body)
+        else:
+            new_kernel_body = re.sub(idx_arg_name, "idx", kernel_body)
         return new_kernel_body
 
     def genLoopDevice(
@@ -192,7 +207,7 @@ class CppHLS(Scheme):
         kernel_func = self.translateKernel(loop, program, app, kernel_idx)
         kernel_func = kernel_processor.clean_kernel_func_text(kernel_func)
         kernel_body, kernel_args = kernel_processor.get_kernel_body_and_arg_list(kernel_func)
-        kernel_body = self.hls_replace_accessors_with_registers(kernel_body, kernel_args, loop, program)
+        kernel_body = self.hls_replace_accessors(kernel_body, kernel_args, loop, program)
         kernel_consts = self.find_const_in_kernel(kernel_body, program.consts)
         kernel_idx_arg_name = self.find_kernel_arg_of_ops_idx(kernel_args, loop.args)
         logging.debug("kernel_idx_arg_name: %s", kernel_idx_arg_name)

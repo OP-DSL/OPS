@@ -332,6 +332,19 @@ ops::hls::StencilConfigCore getStencilConfig(ops::hls::GridPropertyCoreV2& origi
 }
 #endif
 
+
+#ifndef OPS_HLS_V2
+unsigned short getOffset(const int* stencilOffset, ops::hls::GridPropertyCore& gridProp,const unsigned short i, const unsigned short j = 0, const unsigned short k = 0)
+#else
+unsigned short getOffset(const int* stencilOffset, ops::hls::GridPropertyCoreV2& gridProp, const unsigned short i, const unsigned short j = 0, const unsigned short k = 0)
+#endif
+{
+    return (i + stencilOffset[0]
+            + (j + stencilOffset[1]) * gridProp.grid_size[0]
+            + (k + stencilOffset[2]) * gridProp.grid_size[0] * gridProp.grid_size[1]);
+
+}
+
 template<typename T>
 unsigned int getTotalBytes(ops::hls::GridPropertyCore& gridProp)
 {

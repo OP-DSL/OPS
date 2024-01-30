@@ -34,6 +34,8 @@ float pi  = 2.0 * asin(1.0);
 //Including applicaiton-specific "user kernels"
 /* ops_par_loop declarations */
 
+//#include "laplace_kernels.h"
+
 void ops_par_loop_set_zero(int, int*, ops::hls::Grid<float>&);
 
 void ops_par_loop_left_bndcon(int, int*, ops::hls::Grid<float>&);
@@ -65,7 +67,7 @@ int main(int argc, const char** argv)
 		jmax = 5;
 		//Size along x
 		imax = 5;
-		int iter_max = 60000;
+		int iter_max = 100;
 
 		const float tol = 1.0e-6;
 		float error     = 1.0;

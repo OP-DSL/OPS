@@ -1,0 +1,13 @@
+{% block prologue %}
+#pragma once 
+#include <ops_hls_rt_support.h>
+{% endblock %}
+
+
+{% block par_loop %}
+void ops_par_loop_{{lh.kernel}}(ops::hls::Block dummyBlock, int dim, int* ops_range,
+    {% for arg in lh.args|ops_dat %}
+            ops::hls::Grid<{{lh.dats[arg.dat_id].typ}}>& arg{{arg.id}}{{"," if not loop.last}}
+    {% endfor %}
+)
+{% endblock %}

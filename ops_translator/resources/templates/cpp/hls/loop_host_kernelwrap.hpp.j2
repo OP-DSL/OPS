@@ -1,6 +1,7 @@
+{% extends "cpp/hls/loop_host.hpp.j2" %}
+
 {% block prologue %}
-#pragma once 
-#include <ops_hls_rt_support.h>
+{{super()}}
 {% endblock %}
 
 {% block host_kernel_wrapper_class %}
@@ -122,11 +123,7 @@ private:
 {% endblock %}
 
 {% block par_loop %}
-void ops_par_loop_{{lh.kernel}}(ops::hls::Block dummyBlock, int dim, int* ops_range,
-    {% for arg in lh.args|ops_dat %}
-            ops::hls::Grid<{{lh.dats[arg.dat_id].typ}}>& arg{{arg.id}}{{"," if not loop.last}}
-    {% endfor %}
-)
+{{super()}}
 {
     static  KernelWrapper_{{lh.kernel}} kernelWrapper_inst;
     ops::hls::AccessRange range;
