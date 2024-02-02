@@ -623,7 +623,7 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
 void ops_dat_set_data_host(ops_dat dat, int part, char *data) {
   ops_execute(dat->block->instance);
 
-  int *range{new int(2 * dat->block->dims)};
+  int *range{new int[2 * dat->block->dims]};
   for (int d = 0; d < dat->block->dims; d++) {
     range[2 * d] = dat->d_m[d];
     range[2 * d + 1] = dat->size[d] - dat->d_p[d];
