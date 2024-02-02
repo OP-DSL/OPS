@@ -1,0 +1,51 @@
+#A rough example of environmental variables for compiling with PGI compilers
+#unset and set defaults
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+unset LD_LIBRARY_PATH
+. ~/.bashrc
+export PATH=/rr-home/gihan/numawrap:$PATH
+
+#OPS specifics
+export OPS_COMPILER=pgi
+export OPS_INSTALL_PATH=`git rev-parse --show-toplevel`/ops
+
+#CUDA and NVIDIA OpenCL
+export NV_ARCH=Pascal
+module load cuda/toolkit-9.1.85
+export CUDA_INSTALL_PATH=/opt/cuda/9.1.85/toolkit/
+export OPENCL_INSTALL_PATH=/opt/cuda/9.1.85/toolkit/
+
+#export PATH=/usr/local/cuda-6.5.14/bin:$PATH
+#export LD_LIBRARY_PATH=/usr/local/cuda-6.5.14/lib64:$LD_LIBRARY_PATH
+#export CUDA_INSTALL_PATH=/usr/local/cuda-6.5.14/
+#export OPENCL_INSTALL_PATH=/usr/local/cuda-6.5.14/
+
+#PGI based MPI and Compilers
+export MPI_INSTALL_PATH=/rr-home/gihan/MPICH-PGI-18/
+#/opt/mpi/openmpi/4.0.0/pgi/18.10/
+export MPICPP=mpic++
+export PATH=/opt/pgi/licensed/18.10/linux86-64/2018/bin/:$PATH
+export PATH=/rr-home/gihan/MPICH-PGI-18/bin:$PATH
+#/opt/mpi/openmpi/4.0.0/pgi/18.10/bin/:$PATH
+
+#export LD_LIBRARY_PATH=/opt/pgi/licensed/18.10/linux86-64/2018/lib:/opt/mpi/openmpi/4.0.0/pgi/18.10/lib/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/rr-home/gihan/MPICH-PGI-18/lib:$LD_LIBRARY_PATH
+#/opt/mpi/openmpi/4.0.0/pgi/18.10/lib/:$LD_LIBRARY_PATH
+
+export MPICH_CXX=/opt/pgi/licensed/18.10/linux86-64/2018/bin/pgc++
+export MPICH_CC=/opt/pgi/licensed/18.10/linux86-64/2018/bin/pgcc
+export MPICH_F90=/opt/pgi/licensed/18.10/linux86-64/2018/bin/pgfortran
+export MPIF90_F90=/opt/pgi/licensed/18.10/linux86-64/2018/bin/pgfortran
+export MPICH_FC=/opt/pgi/licensed/18.10/linux86-64/2018/bin/pgfortran
+
+#PGI based HDF5
+unset HDF5_INSTALL_PATH
+export HDF5_INSTALL_PATH=/rr-home/gihan/HDF5-PGI-18
+#/opt/hdf5/1.8.12/pgi/16.10/ompi/1.10.6/
+#/opt/hdf5/1.8.18/pgi/16.10/ompi/1.10.6/
+export LD_LIBRARY_PATH=/rr-home/gihan/HDF5-PGI-18/lib:$LD_LIBRARY_PATH
+#/opt/hdf5/1.8.12/pgi/16.10/ompi/1.10.6/lib:$LD_LIBRARY_PATH
+#/opt/hdf5/1.8.18/pgi/16.10/ompi/1.10.6/lib:$LD_LIBRARY_PATH
+
+#OpenSBLI -- for testing app TGV only
+export OPENSBLI_INSTALL_PATH=/rr-home/gihan/OpenSBLI/OpenSBLI_OPS_TESTING/opensbli/

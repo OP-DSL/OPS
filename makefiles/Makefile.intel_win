@@ -1,0 +1,32 @@
+CC    := icl
+CXX     := icl
+MPICC := mpicc.bat
+MPICPP := mpicxx.bat
+>>>>>>> 001f6ec39... Builds with Intel+bash on windows
+FC		:= ifort
+ifdef DEBUG
+	CCFLAGS   := -O0 -g -std=c99
+	CXXFLAGS   := -O0 -g
+else
+	CCFLAGS   := -O3 -g -xHost -std=c99 #-qopenmp #vec-report -xAVX
+	CXXFLAGS   := -O3 -g -xHost #-qopenmp #vec-report -xAVX
+endif
+ifdef IEEE
+	CCFLAGS += -fp-model strict -fp-model source -prec-div -prec-sqrt
+	CXXFLAGS += -fp-model strict -fp-model source -prec-div -prec-sqrt
+endif
+ifdef FAST
+	CCFLAGS += -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2
+	CXXFLAGS += -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2
+endif
+FFLAGS  = $(CXXFLAGS) -module $(F_INC_MOD)
+OMPFLAGS := -qopenmp
+CXXLINK := -lstdc++
+
+OUT=-Fo
+AR=xilib -out:
+OPS_LIB_SEQ=$(C_OPS_LIB)/libops_seq.a
+OPS_LIB_CUDA=$(C_OPS_LIB)/libops_cuda.a
+OPS_LIB_MPI=$(C_OPS_LIB)/libops_mpi.a
+OPS_LIB_MPI_CUDA=$(C_OPS_LIB)/libops_mpi_cuda.a
+CUDART=$(CUDA_INSTALL_PATH)/lib/x64/cudart.lib

@@ -1,0 +1,9 @@
+CC    := icc -std=c99
+ifdef DEBUG
+	CCFLAGS   := -O0 -g  -mmic
+else
+	CCFLAGS   := -O3 -vec-report -mmic -mcmodel=medium
+endif
+CXX     := icpc
+CXXFLAGS  := $(CCFLAGS)
+THREADING_FLAGS ?= -qopenmp

@@ -1,0 +1,14 @@
+cmake_minimum_required(VERSION 3.8)
+
+list(APPEND CL_OPS_SRC
+                src/clover_leaf.cpp src/initialise_chunk.cpp src/generate.cpp src/ideal_gas.cpp
+                src/update_halo.cpp src/field_summary.cpp src/viscosity.cpp
+                src/calc_dt.cpp src/PdV.cpp src/revert.cpp src/accelerate.cpp src/flux_calc.cpp
+                src/advec_cell.cpp src/advec_mom.cpp src/reset_field.cpp
+    )
+
+list(APPEND CL_OTHER_SRC
+                src/start.cpp src/time_step.cpp src/build_field.cpp src/read_input.cpp src/initialise.cpp src/advection.cpp
+    )
+
+BUILD_OPS_C_SAMPLE(CloverLeaf CL_OPS_SRC NO CL_OTHER_SRC)

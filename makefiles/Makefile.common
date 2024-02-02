@@ -1,0 +1,75 @@
+OPS = $(OPS_INSTALL_PATH)
+C_OPS = $(OPS)/c
+C_OPS_INC = $(C_OPS)/include
+C_OPS_SRC = $(C_OPS)/src
+C_OPS_LIB = $(C_OPS)/lib/$(OPS_COMPILER)
+
+F_OPS = $(OPS)/fortran
+F_OPS_INC = $(F_OPS)/include
+F_OPS_SRC = $(F_OPS)/src
+F_OPS_OBJ = $(F_OPS)/obj
+F_OPS_LIB = $(F_OPS)/lib
+F_OPS_MOD = $(F_OPS)/mod
+F_INC_MOD = $(F_OPS_MOD)/$(OPS_COMPILER)
+
+OPS_MPI	= -DOPS_MPI
+OUT := -o 
+AR := ar -r 
+OPS_LIB_SEQ=-lops_seq
+OPS_LIB_CUDA=-lops_cuda
+OPS_LIB_OPENCL=-lops_opencl
+OPS_LIB_MPI=-lops_mpi
+OPS_LIB_MPI_CUDA=-lops_mpi_cuda
+CUDART=-lcudart
+
+
+OUT := -o 
+AR := ar -r 
+OPS_LIB_SEQ=-lops_seq
+OPS_LIB_CUDA=-lops_cuda
+OPS_LIB_MPI=-lops_mpi
+OPS_LIB_MPI_CUDA=-lops_mpi_cuda
+CUDART=-lcudart
+
+ifeq ($(OPS_COMPILER),clang)
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.clang
+else
+ifeq ($(OPS_COMPILER),gnu)
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.gnu
+else
+ifeq ($(OPS_COMPILER),intel)
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.intel
+else
+ifeq ($(OPS_COMPILER),intel_win)
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.intel_win
+else
+ifeq ($(OPS_COMPILER),mic)
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mic
+else
+ifeq ($(OPS_COMPILER),pgi)
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.pgi
+else
+ifeq ($(OPS_COMPILER),cray)
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cray
+else
+ifeq ($(OPS_COMPILER),xl)
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.xl
+else
+ifeq ($(OPS_COMPILER),xlp8)
+	include $(OPS_INSTALL_PATH)/../makefiles/Makefile.xlp8
+else
+print:
+	@echo "unrecognised value for OPS_COMPILER"
+endif
+endif
+endif
+endif
+endif
+endif
+endif
+endif
+endif
+
+FLINK += -L$(F_OPS_LIB) $(CXXLINK)
+#FLINK += -L$(F_OPS_LIB)
+FMODS += -I$(F_INC_MOD) 

@@ -1,0 +1,541 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Beamer Presentation
+% LaTeX Template
+% Version 1.0 (10/11/12)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND THEMES
+%----------------------------------------------------------------------------------------
+
+\documentclass{beamer}
+
+\mode<presentation> {
+
+% The Beamer class comes with a number of default slide themes
+% which change the colors and layouts of slides. Below this is a list
+% of all the themes, uncomment each in turn to see what they look like.
+
+%\usetheme{default}
+%\usetheme{AnnArbor}
+%\usetheme{Antibes}
+%\usetheme{Bergen}
+%\usetheme{Berkeley}
+%\usetheme{Berlin}
+%\usetheme{Boadilla}
+%\usetheme{CambridgeUS}
+%\usetheme{Copenhagen}
+%\usetheme{Darmstadt}
+%\usetheme{Dresden}
+%\usetheme{Frankfurt}
+%\usetheme{Goettingen}
+%\usetheme{Hannover}
+%\usetheme{Ilmenau}
+%\usetheme{JuanLesPins}
+%\usetheme{Luebeck}
+\usetheme{Madrid}
+%\usetheme{Malmoe}
+%\usetheme{Marburg}
+%\usetheme{Montpellier}
+%\usetheme{PaloAlto}
+%\usetheme{Pittsburgh}
+%\usetheme{Rochester}
+%\usetheme{Singapore}
+%\usetheme{Szeged}
+%\usetheme{Warsaw}
+
+% As well as themes, the Beamer class has a number of color themes
+% for any slide theme. Uncomment each of these in turn to see how it
+% changes the colors of your current slide theme.
+
+%\usecolortheme{albatross}
+%\usecolortheme{beaver}
+%\usecolortheme{beetle}
+%\usecolortheme{crane}
+%\usecolortheme{dolphin}
+%\usecolortheme{dove}
+%\usecolortheme{fly}
+%\usecolortheme{lily}
+%\usecolortheme{orchid}
+%\usecolortheme{rose}
+%\usecolortheme{seagull}
+%\usecolortheme{seahorse}
+%\usecolortheme{whale}
+%\usecolortheme{wolverine}
+
+%\setbeamertemplate{footline} % To remove the footer line in all slides uncomment this line
+%\setbeamertemplate{footline}[page number] % To replace the footer line in all slides with a simple slide count uncomment this line
+
+%\setbeamertemplate{navigation symbols}{} % To remove the navigation symbols from the bottom of all slides uncomment this line
+}
+
+\usepackage{graphicx} % Allows including images
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
+\usepackage{listings}
+
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\title[OPS Tutorial]{Tutorial: Migrating an application to use OPS} % The short title appears at the bottom of every slide, the full title is only on the title page
+
+\author{Istv\'an Reguly} % Your name
+\institute[PPCU ITK] % Your institution as it will appear on the bottom of every slide, may be shorthand to save space
+{
+P\'azm\'any P\'eter Catholic University, Faculty of Information Technology and Bionics \\ % Your institution for the title page
+\medskip
+\textit{reguly.istvan@itk.ppke.hu} % Your email address
+}
+\date{Apr 12, 2018} % Date, can be changed to a custom date
+
+\begin{document}
+
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+\lstset{ 
+backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}; should come as last argument
+  basicstyle=\footnotesize,        % the size of the fonts that are used for the code
+  breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+  breaklines=true,                 % sets automatic line breaking
+  captionpos=b,                    % sets the caption-position to bottom
+  commentstyle=\color{mygreen},    % comment style
+  deletekeywords={...},            % if you want to delete keywords from the given language
+  escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+  extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+  frame=single,	                   % adds a frame around the code
+  keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+  keywordstyle=\color{blue}, 
+	language=C,
+    tabsize=2,
+      showspaces=false,
+  showstringspaces=false,
+  keywordstyle=\color{blue},
+  showtabs=false
+}
+
+
+\begin{frame}
+\titlepage % Print the title page as the first slide
+\end{frame}
+
+\begin{frame}
+\frametitle{Overview} % Table of contents slide, comment this block out to remove it
+\tableofcontents % Throughout your presentation, if you choose to use \section{} and \subsection{} commands, these will automatically be printed on this slide as an overview of your presentation
+\end{frame}
+
+%----------------------------------------------------------------------------------------
+%	PRESENTATION SLIDES
+%----------------------------------------------------------------------------------------
+
+%------------------------------------------------
+\section{Introduction} % Sections can be created in order to organize your presentation into discrete blocks, all sections and subsections are automatically printed in the table of contents as an overview of the talk
+%------------------------------------------------
+
+\subsection{OPS concepts} 
+
+\begin{frame}
+\frametitle{OPS Abstraction}
+\begin{itemize}
+\item
+OPS is a Domain Specific Language embedded in C/C++ and Fortran, targeting multi-block structured mesh computations
+
+\item The abstraction has two distinct components: the definition of the mesh, and operations over the mesh
+\begin{itemize}
+\item Defining a number of 1-3D \footnote{Higher dimensions supported in the backend, but not by the code generators yet} blocks, and on them a number of datasets, which have specific extents in the different dimensions
+\item Describing a parallel loop over a given block, with a given iteration range, executing a given ``kernel function'' at each grid point, and describing what datasets are going to be accessed and how.
+\item Additionally, one needs to declare stencils (access patterns) that will be used in parallel loops to access datasets, and any global constants (read-only global scope variables)
+\end{itemize}
+\item Data and computations expressed this way can be automatically managed and parallelised by the OPS library.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Example application}
+Our example application is a simple 2D iterative Laplace equation solver.
+\begin{itemize}
+\item Go to the \texttt{OPS/apps/c/laplace2d\_tutorial/original} directory
+\item Open the \texttt{laplace2d.cpp} file
+\item It uses an $imax*jmax$ grid, with an additional 1 layers of boundary cells on all sides
+\item There are a number of loops that set the boundary conditions along the four edges
+\item The bulk of the simulation is spent in a \texttt{while} loop, repeating a stencil kernel with a maximum reduction, and a copy kernel
+\item Compile and run the code!
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Original - Initialisation}
+
+\begin{lstlisting}
+  //Size along y
+  int jmax = 4094;
+  //Size along x
+  int imax = 4094;
+  
+  int iter_max = 100;
+  double pi  = 2.0 * asin(1.0);
+  const double tol = 1.0e-6;
+  double error     = 1.0;
+
+  double *A;
+  double *Anew;
+  double *y0;
+
+  A    = (double *)malloc((imax+2)*(jmax+2)*sizeof(double));
+  Anew = (double *)malloc((imax+2)*(jmax+2)*sizeof(double));
+  y0   = (double *)malloc((imax+2)*sizeof(double));
+
+  memset(A, 0, (imax+2)*(jmax+2)*sizeof(double));\end{lstlisting}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Original - Boundary loops}
+
+\begin{lstlisting}
+  // set boundary conditions
+  for (int i = 0; i < imax+2; i++)
+    A[(0)*(imax+2)+i]   = 0.0;
+
+  for (int i = 0; i < imax+2; i++)
+    A[(jmax+1)*(imax+2)+i] = 0.0;
+
+  for (int j = 0; j < jmax+2; j++)
+  {
+    A[(j)*(imax+2)+0] = sin(pi * j / (jmax+1));
+  }
+
+  for (int j = 0; j < imax+2; j++)
+  {
+    A[(j)*(imax+2)+imax+1] = sin(pi * j / (jmax+1))*exp(-pi);
+  }
+  \end{lstlisting}
+\begin{itemize}
+\item Note how in the latter two loops the loop index is used
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Original - Main iteration}
+
+\begin{lstlisting}
+while ( error > tol && iter < iter_max ) {
+    error = 0.0;
+    for( int j = 1; j < jmax+1; j++ ) {
+      for( int i = 1; i < imax+1; i++) {
+        Anew[(j)*(imax+2)+i] = 0.25f * (
+              A[(j)*(imax+2)+i+1] + A[(j)*(imax+2)+i-1]
+            + A[(j-1)*(imax+2)+i] + A[(j+1)*(imax+2)+i]);
+        error = fmax( error, fabs(Anew[(j)*(imax+2)+i]
+                                    -A[(j)*(imax+2)+i]));
+      }
+    }
+    for( int j = 1; j < jmax+1; j++ ) {
+      for( int i = 1; i < imax+1; i++) {
+        A[(j)*(imax+2)+i] = Anew[(j)*(imax+2)+i];
+      }
+    }
+    if(iter % 10 == 0) printf("%5d, %0.6f\n", iter, error);
+    iter++;
+  }
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Building OPS}
+\fontsize{11}{12}\selectfont
+\begin{itemize}
+\item To build OPS, we need a C/C++ compiler at the minimum, and for advanced parallelisations we will need an MPI compiler, a CUDA compiler, and an OpenCL compiler. To support parallel file I/O we need the parallel HDF5 library as well. We do not require all of the above to build and use OPS (but don't be surprised if some build targets fail).
+\item The OPS Makefiles rely on a set of environment flags to be set appropriately:
+\begin{lstlisting}[basicstyle=\tiny]
+export OPS_COMPILER=gnu #or intel, cray, pgi, clang
+export OPS_INSTALL_PATH=~/OPS/ops
+export MPI_INSTALL_PATH=/opt/openmpi #MPI root folder
+export CUDA_INSTALL_PATH=/usr/local/cuda #CUDA root folder
+export OPENCL_INSTALL_PATH=/usr/local/cuda #OpenCL root folder
+export HDF5_INSTALL_PATH=/opt/hdf5 #HDF5 root folder
+export NV_ARCH=Pascal #if you use GPUs, their generation
+\end{lstlisting}
+\item Having set these, you can type \texttt{make} in the \texttt{ops/c} subdirectory
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Preparing to use OPS - step 1}
+First off, we need to include the appropriate header files, then initialise OPS, and at the end finalise it.
+\begin{itemize}
+\item Define that this application is 2D, include the OPS header file, and create a header file where the outlined ``user kernels'' will live
+\begin{lstlisting}
+#define OPS_2D
+#include <ops_seq_v2.h>
+#include "laplace_kernels.h"
+\end{lstlisting}
+\item Initialise and finalise OPS
+\begin{lstlisting}
+  //Initialise the OPS library, passing runtime args, and setting diagnostics level to low (1)
+  ops_init(argc, argv,1);
+  ...
+  ops_exit();
+\end{lstlisting}
+\item By this point you need OPS set up - take a look at the Makefile in step1, and observer that the include and library paths are added, and we link against \texttt{ops\_seq}.
+\end{itemize}
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}[fragile]
+\frametitle{OPS declarations - step 2}
+\begin{itemize}
+\item Now we can declare a block, and the datasets
+\begin{lstlisting}
+  ops_block block = ops_decl_block(2, "my_grid");
+  int size[] = {imax, jmax};
+  int base[] = {0,0};
+  int d_m[] = {-1,-1};
+  int d_p[] = {1,1};
+  ops_dat d_A    = ops_decl_dat(block, 1, size, base,
+                      d_m, d_p, A,    "double", "A");
+  ops_dat d_Anew = ops_decl_dat(block, 1, size, base,
+                      d_m, d_p, Anew, "double", "Anew");
+  \end{lstlisting}
+  \item datasets have a size (number of grid points in each dimension). There is padding for halos or boundaries in the positive (\texttt{d\_p}) and negative directions (\texttt{d\_m}); here we use a 1 thick boundary layer. Base index can be defined as it may be different from 0 (e.g. in Fortran). 
+  \item item these with a $0$ base index and a $1$ wide halo, these datasets can be indexed from $-1$ to $size+1$
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{OPS declarations - step 2}
+\begin{itemize}
+  \item OPS supports gradual conversion of applications to its API, but in this case the described data sizes will need to match: the allocated memory and its extents need to be correctly described to OPS. In this case we have two $(imax+2)*(jmax+2)$ size arrays, and the total size in each dimension needs to match $size[i]+d\_p[i]-d\_m[i]$. This is only supported for the sequential and OpenMP backends
+  \item If a NULL pointer is passed, OPS will allocate the data internally
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{OPS declarations - step 2}
+\begin{itemize}
+\item We also need to declare the stencils that will be used - most loops use a simple 1-point stencil, and one uses a 5-point stencil
+\begin{lstlisting}
+  //Two stencils, a 1-point, and a 5-point
+  int s2d_00[] = {0,0};
+  ops_stencil S2D_00 = 
+      ops_decl_stencil(2,1,s2d_00,"0,0");
+  int s2d_5pt[] = {0,0, 1,0, -1,0, 0,1, 0,-1};
+  ops_stencil S2D_5pt = 
+      ops_decl_stencil(2,5,s2d_5pt,"5pt");
+  \end{lstlisting}
+  \item Different names may be used for stencils in your code, but we suggest using some convention
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{First parallel loop - step 3}
+\begin{itemize}
+\item It's time to convert the first loop to use OPS:
+\begin{lstlisting}
+  for (int i = 0; i < imax+2; i++)
+    A[(0)*(imax+2)+i]   = 0.0;
+\end{lstlisting}
+  \item This is a loop on the bottom boundary of the domain, which is at the $-1$ index for our dataset, therefore our iteration range will be over the entire domain, including halos in the $X$ direction, and the bottom boundary in the $Y$ direction. The iteration range is given as beginning (inclusive) and end (exclusive) indices in the x, y, etc. directions.
+  \begin{lstlisting}
+  int bottom_range[] = {-1, imax+1, -1, 0};
+\end{lstlisting}
+\item Next, we need to outline the ``user kernel'' into \texttt{laplace\_kernels.h}, modifying it so arrays are passed in using the templated ACC<> objects, which overload the () operator - $(i,j)$ are the stencil offsets in the X and Y directions respectively.
+\begin{lstlisting}
+void set_zero(ACC<double> &A) {
+  A(0,0) = 0.0;
+}
+\end{lstlisting}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{First parallel loop - step 3}
+\begin{itemize}
+\item The OPS parallel loop can now be written as follows:
+\begin{lstlisting}
+ops_par_loop(set_zero,"set_zero",block,2,bottom_range,
+   ops_arg_dat(d_A, 1, S2D_00, "double", OPS_WRITE));
+\end{lstlisting}  
+  \item The loop will execute \texttt{set\_zero} at each grid point defined in the iteration range, and write the dataset \texttt{d\_A} with the 1-point stencil
+  \item The \texttt{ops\_par\_loop} implies that the order in which grid points will be executed will not affect the end result (within machine precision)
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{More parallel loops - step 3}
+\begin{itemize}
+\item There are three more loops which set values to zero, they can be trivially replaced with the code above, only altering the iteration range.
+\item In the main \texttt{while} loop, the second simpler loop simply copies data from one array to another, this time on the interior of the domain:
+\begin{lstlisting}
+int interior_range[] = {0,imax,0,jmax};
+ops_par_loop(copy, "copy", block, 2, interior_range,
+   ops_arg_dat(d_A,    1, S2D_00, "double", OPS_WRITE),
+   ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_READ));
+\end{lstlisting}  
+  \item And the corresponding outlined user kernel is as follows. 
+\begin{lstlisting}
+void copy(ACC<double> &A, const ACC<double> Anew) {
+  A(0,0) = Anew(0,0);
+}
+\end{lstlisting}  
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Indexes and global constants - step 4}
+\begin{itemize}
+\item There are two sets of boundary loops which use the loop variable $j$ - this is a common technique to initialise data, such as coordinates ($x=i*dx$).
+\item OPS has a special argument \texttt{ops\_arg\_idx} which gives us a globally coherent (over MPI) iteration index - between the bounds supplied in the iteration range
+\begin{lstlisting}
+int left_range[] = {-1, 0, -1, jmax+1};
+ops_par_loop(left_bndcon, "left_bndcon", block, 2, left_range,
+   ops_arg_dat(d_A, 1, S2D_00, "double", OPS_WRITE),
+   ops_arg_idx());
+\end{lstlisting}  
+  \item And the corresponding outlined user kernel is as follows. Observe the \texttt{idx} argument and the $+1$ offset due to the difference in indexing:
+\begin{lstlisting}
+void left_bndcon(ACC<double> &A, const int *idx) {
+  A(0,0) = sin(pi * (idx[1]+1) / (jmax+1));
+}
+\end{lstlisting}  
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Indexes and global constants - step 4}
+\begin{itemize}
+\item This kernel also uses two variables, \texttt{jmax} and \texttt{pi} that do not depend in the iteration index - they are iteration space invariant. OPS has two ways of supporting this:
+\begin{itemize}
+\item Global scope constants, through \texttt{ops\_decl\_const}, as done in this case: we need to move the declaration of the \texttt{imax}, \texttt{jmax} and \texttt{pi} variables to global scope (outside of main), and call the OPS API:
+\begin{lstlisting}
+ //declare and define global constants
+  ops_decl_const("imax",1,"int",&imax);
+  ops_decl_const("jmax",1,"int",&jmax);
+  ops_decl_const("pi",1,"double",&pi);
+\end{lstlisting}  
+These variables do not need to be passed in to the user kernel, they are accessible in all user kernels
+\item The other option is to explicitly pass it to the user kernel with \texttt{ops\_arg\_gbl}: this is for scalars and small arrays that should not be in global scope.
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Complex stencils and reductions - step 5}
+\begin{itemize}
+\item There is only one loop left, which uses a 5 point stencil and a reduction. It can be outlined as usual, and for the stencil, we will use \texttt{S2D\_pt5}
+\item \begin{lstlisting}
+ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
+   ops_arg_dat(d_A,    1, S2D_5pt, "double", OPS_READ),
+   ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_WRITE),
+   ops_arg_reduce(h_err, 1, "double", OPS_MAX));
+\end{lstlisting}  
+  \item And the corresponding outlined user kernel is as follows. Observe the stencil offsets used to access the adjacent 4 points:
+\begin{lstlisting}
+void apply_stencil(const ACC<double> &A, ACC<double> &Anew, double *error) {
+  Anew(0,0) = 0.25f * ( A(1,0) 
+      + A(-1,0)
+      + A(0,-1) + A(0,1)];
+  *error = fmax( *error, fabs(Anew(0,0)
+                             -A(0,0)));
+}
+\end{lstlisting}  
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Complex stencils and reductions - step 5}
+\begin{itemize}
+\item The loop also has a special argument for the reduction, \texttt{ops\_arg\_reduce}. As the first argument, it takes a reduction handle, which has to be defined separately:
+\item \begin{lstlisting}
+ops_reduction h_err = ops_decl_reduction_handle(
+                  sizeof(double), "double", "error");\end{lstlisting}  
+  \item Reductions may be increment (\texttt{OPS\_INC}), min (\texttt{OPS\_MIN}) or max (\texttt{OPS\_MAX}). The user kernel will have to perform the reduction operation, reducing the passed in value as well as the computed value
+  \item The result of the reduction can be queried from the handle as follows:
+\begin{lstlisting}
+ops_reduction_result(h_err, &error);
+\end{lstlisting}  
+\item Multiple parallel loops may use the same handle, and their results will be combined, until the result is queried by the user. Parallel loops that only have the reduction handle in common are semantically independent
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Handing it all to OPS - step 6}
+\begin{itemize}
+\item We have now successfully converted all computations on the grid to OPS parallel loops
+\item In order for OPS to manage data and parallelisations better, we should let OPS allocate the datasets - instead of passing in the pointers to memory allocated by us, we just pass in NULL (\texttt{A} and \texttt{Anew})
+\begin{itemize}
+\item Parallel I/O can be done using HDF5 - see the \texttt{ops\_hdf5.h} header
+\end{itemize}
+\item All data and parallelisation is now handed to OPS. We can now also compile the developer MPI version of the code - see the Makefile, and try building \texttt{laplace2d\_mpi}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Code generation - step 7}
+\begin{itemize}
+\item Now that the developer versions of our code work, it's time to generate code. On the console, type:
+\begin{lstlisting}[language=bash,basicstyle=\tiny]
+$OPS_INSTALL_PATH/../ops_translator/c/ops.py laplace2d.cpp
+\end{lstlisting}
+\item We have provided a makefile which can use several different compilers (intel, cray, pgi, clang), we suggest modifying it for your own application
+\item Try building CUDA, OpenMP, MPI+CUDA, MPI+OpenMP, and other versions of the code
+\item You can take a look at the generated kernels for different parallelisations under the appropriate subfolders
+\item If you add the $-OPS\_DIAGS=2$ runtime flag, at the end of execution, OPS will report timings and achieved bandwidth for each of your kernels
+\item For more, see the user guide...
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Code generated versions}
+\begin{itemize}
+\item OPS will generate and compile a large number of different versions
+\begin{itemize}
+  \item \texttt{laplace2d\_dev\_seq} and \texttt{laplace2d\_dev\_mpi}: these versions do not use code generation, they are intended for development only
+  \item \texttt{laplace2d\_seq} and \texttt{laplace2d\_mpi}: baseline sequential and MPI implementations
+  \item \texttt{laplace2d\_openmp}: baseline OpenMP implementation
+  \item \texttt{laplace2d\_cuda}, \texttt{laplace2d\_opencl}, \texttt{laplace2d\_openacc}: implementations targeting GPUs
+  \item \texttt{laplace2d\_mpi\_inline}: optimised implementation with MPI+OpenMP
+  \item \texttt{laplace2d\_tiled}: optimised implementation with OpenMP that improves spatial and temporal locality
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Optimisations}
+\begin{itemize}
+\item Try the following performance tuning options
+\begin{itemize}
+  \item \texttt{laplace2d\_cuda}, \texttt{laplace2d\_opencl}: you can set the \texttt{OPS\_BLOCK\_SIZE\_X} and \texttt{OPS\_BLOCK\_SIZE\_Y} runtime arguments to control thread block or work group sizes
+  \item \texttt{laplace2d\_mpi\_cuda}, \texttt{laplace2d\_mpi\_openacc}: add the \texttt{-gpudirect} runtime flag to enable GPU Direct communications
+  \item \texttt{laplace2d\_tiled}, \texttt{laplace2d\_mpi\_tiled}: add the \texttt{OPS\_TILING} runtime flag, and move \texttt{-OPS\_DIAGS=3}: see the cache blocking tiling at work. For some applications, such as this one, the initial guess gives too large tiles, try setting \texttt{OPS\_CACHE\_SIZE} to a lower value (in MB, for L3 size). Thread affinity control and using 1 process per socket is strongly recommended. E.g. \texttt{OMP\_NUM\_THREADS=20 numactl --cpunodebind=0 ./laplace2d\_tiled -OPS\_DIAGS=3 OPS\_TILING OPS\_CACHE\_SIZE=5}. Over MPI, you will have to set \texttt{OPS\_TILING\_MAXDEPTH} to extend halo regions.
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Optimisations - tiling}
+\begin{itemize}
+\item Tiling uses lazy execution: as parallel loops follow one another, they are not executed, but put in a queue, and only once some data needs to be returned to the user (e.g. result of a reduction) do these loops have to be executed
+\item With a chain of loops queued, OPS can analyse them together and come up with a tiled execution schedule
+\item Works over MPI too: OPS extends the halo regions, and does one big halo exchange instead of several smaller ones
+\item In the current laplace2d code, every stencil application loop is also doing a reduction, therefore only two loops are queued. Try modifying the code so the reduction only happens every 10 iterations!
+\begin{itemize}
+\item On A Xeon E5-2650, one can get a 2.5x speedup
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+
+\end{document}

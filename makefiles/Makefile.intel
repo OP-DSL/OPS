@@ -1,0 +1,25 @@
+CC    := icc
+CXX   := icpc
+FC    := ifort
+ifdef DEBUG
+	CCFLAGS   := -O0 -xHost -g -std=c99
+	CXXFLAGS   := -O0 -g -xHost -DOPS_DEBUG -std=c++11
+else
+	CCFLAGS   := -O3 -g -xHost -std=c99 -qopenmp-simd -qopt-report #enmp #vec-report -xAVX
+	CXXFLAGS   := -O3 -g -xHost -qopenmp-simd -qopt-report -std=c++11 #-qopenmp #vec-report -xAVX
+endif
+ifdef IEEE
+	CCFLAGS += -fp-model strict -fp-model source -prec-div -prec-sqrt
+	CXXFLAGS += -fp-model strict -fp-model source -prec-div -prec-sqrt
+endif
+ifdef FAST
+	CCFLAGS += -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2
+	CXXFLAGS += -no-prec-div -restrict -fno-alias -xHost -fma -fp-model fast=2
+endif
+#FFLAGS  = $(CXXFLAGS) -module $(F_INC_MOD)
+FFLAGS  = -module $(F_INC_MOD)
+OMPFLAGS := -qopenmp
+ifdef THREADED
+	THREADING_FLAGS ?= -qopenmp
+endif
+CXXLINK := -lstdc++

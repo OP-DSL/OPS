@@ -1,0 +1,887 @@
+\documentclass[11pt]{article}
+\usepackage[colorlinks,urlcolor=blue,linkcolor=blue,citecolor=blue]{hyperref}
+% \usepackage[footnotesize]{subfigure}
+\usepackage{graphicx}
+\usepackage{verbatim}
+\usepackage{listings}
+% \usepackage{fontspec}
+\usepackage{minted}
+
+\setlength{\oddsidemargin}{-0.01in}
+\setlength{\topmargin}{-0.4in}
+\setlength{\textheight}{9.0in}
+\setlength{\textwidth}{6.5 in}
+
+\date{May 2019}
+
+%  \topmargin 0.in  \headheight 0pt  \headsep 0pt  \raggedbottom
+%  \oddsidemargin 0.1in
+%  \textheight 9.25in  \textwidth 6.00in
+%  \parskip 5pt plus 1pt minus 1pt
+%  \def \baselinestretch {1.25}   % one-and-a-half spaced
+%  \setlength {\unitlength} {0.75in}
+%
+%
+\newenvironment{routine}[2]
+{\vspace{.0in}{\noindent\bf\hspace{-5pt}  #1}{\\ \noindent #2}
+\begin{list}{}{
+\renewcommand{\makelabel}[1]{{\tt  ##1 } \hfil}
+\itemsep 0pt plus 1pt minus 1pt
+\leftmargin  1.5in
+\rightmargin 0.0in
+\labelwidth  1.1in
+\itemindent  0.0in
+\listparindent  0.0in
+\labelsep    0.05in}
+}{\end{list}}
+%
+
+
+\begin{document}
+
+\title{OPS C++ User's Manual}
+\author{Mike Giles, Istvan Reguly, Gihan Mudalige}
+\maketitle
+
+\newpage
+
+
+\tableofcontents
+
+
+
+
+\newpage
+\section{Introduction}
+
+
+OPS is a high-level framework with associated libraries and preprocessors to generate parallel executables for
+applications on \textbf{multi-block structured grids}. Multi-block structured grids consists of an unstructured
+collection of structured meshes/grids. This document describes the OPS C++ API, which supports the development
+of single-block and multi-block structured meshes.
+
+Many of the API and library follows the structure of the OP2 high-level library for unstructured mesh
+applications~\cite{op2}. However the structured mesh domain is distinct from the unstructured mesh applications domain
+due to the implicit connectivity between neighbouring mesh elements (such as vertices, cells) in structured
+meshes/grids. The key idea is that operations involve looping over a ``rectangular'' multi-dimensional set of grid
+points using one or more ``stencils'' to access data. In multi-block grids, we have several structured blocks.  The 
+connectivity between the faces of different blocks can be quite complex, and in particular they may not be oriented in 
+the same way, i.e.~an $i,j$ face of one block may correspond to the $j,k$ face of another block.  This is awkward and 
+hard to handle simply.
+
+\noindent To clarify some of the important issues in designing the API, we note here some needs connected with a 3D
+application:
+\begin{itemize}
+\item
+When looping over the interior with loop indices $i,j,k$, often there are 1D arrays which are referenced using just one 
+of the indices.
+
+\item
+To implement boundary conditions, we often loop over a 2D face, accessing both the 3D dataset and data from a 2D 
+dataset.
+
+\item
+To implement periodic boundary conditions using dummy ``halo'' points, we sometimes have to copy one plane of boundary 
+data to another.  e.g.~if the first dimension has size $I$ then we might copy the plane $i=I\!-\!2$ to plane $i=0$, and 
+plane $i=1$ to plane $i=I\!-\!1$.
+
+\item
+In multigrid, we are working with two grids with one having twice as many points as the other in each direction.  To 
+handle this we require a stencil with a non-unit stride.
+
+\item
+In multi-block grids, we have several structured blocks. The connectivity between the faces of different blocks can 
+be quite complex, and in particular they may not be oriented in the same way, i.e.~an $i,j$ face of one block may 
+correspond to the $j,k$ face of another block.  This is awkward and hard to handle simply.
+\end{itemize}
+
+\noindent The latest proposal is to handle all of these different requirements through stencil definitions.
+
+\section{Key concepts and structure}
+
+An OPS application can generally be divided into two key parts: initialisation and parallel execution. During the
+initialisation phase, one or more blocks ({\texttt ops\_block) are defined: these only have a dimensionality (i.e. 1D, 2D,
+etc.), and serve to group datasets together. Datasets are defined on a block, and have a specific size (in each dimension of the block), which may be
+slightly different across different datasets (e.g. staggered grids), in some directions they may be degenerate (a
+ size of 1), or they can represent data associated with different multigrid levels (where their size if a multiple or
+a fraction of other datasets). Datasets can be declared with empty (NULL) pointers, then OPS will allocate the appropriate
+amount of memory, may be passed non-NULL pointers (currently only supported in non-MPI environments), in which case OPS will
+assume the memory is large enough for the data and the block halo, and there are HDF5 dataset declaration routines which
+allow the distributed reading of datasets from HDF5 files. The concept of blocks is necessary to group datasets together, 
+as in a multi-block problem, in a distributed memory environment, OPS needs to be able to determine how to decompose the problem.
+
+The initialisation phase usually also consists of defining the stencils to be used later on (though they can be defined later as well),
+which describe the data access patterns used in parallel loops. Stencils are always relative to the ``current'' point; e.g. if
+at iteration $(i,j)$, we wish to access $(i{-}1,j)$ and $(i,j)$, then the stencil will have two points: $\{(-1, 0), (0, 0)\}$. To 
+support degenerate datasets (where in one of the dimensions the dataset's size is 1), as well as for multigrid, there are
+special strided, restriction, and prolongation stencils: they differ from normal stencils in that as one steps through a
+grid in a parallel loop, the stepping is done with a non-unit stride for these datasets. For example, in a 2D problem, if
+we have a degenerate dataset called xcoords, size $(N,1)$, then we will need a stencil with stride $(1,0)$ to access it in a
+regular 2D loop.
+
+Finally, the initialisation phase may declare a number of global constants - these are variables in global scope that can 
+be accessed from within user kernels, without having to pass them in explicitly. These may be scalars or small arrays, 
+generally for values that do not change during execution, though they may be updated during execution with repeated calls
+to {\tt ops\_decl\_const}. 
+
+The initialisation phase is terminated by a call to {\tt ops\_partition}.
+
+The bulk of the application consists of parallel loops, implemented using calls to {\tt ops\_par\_loop}. These constructs work with datasets, passed through the opaque {\tt ops\_dat} handles declared during the initialisation phase. The iterations of parallel loops are semantically independent, and it is the responsibility of the user to enforce this: the order in which iterations are executed cannot affect the result (within the limits of floating point precision). Parallel loops are defined on a block, with a prescribed iteration range that is always defined from the perspective of the dataset written/modified (the sizes of datasets, particularly in multigrid situations, may be very different). Datasets are passed in using {\tt ops\_arg\_dat}, and during execution, values at the current grid point will be passed to the user kernel. These values are passed wrapped in a templated {\tt ACC<>} object (templated on the type of the data), whose parentheses operator is overloaded, which the user must use to specify the relative offset to access the grid point's neighbours (which accesses have to match the the declared stencil). Datasets written may only be accessed with a one-point, zero-offset stencil (otherwise the parallel semantics may be violated).
+
+Other than datasets, one can pass in read-only scalars or small arrays that are iteration space invariant with {\tt ops\_arg\_gbl} (typically weights, $\delta t$, etc. which may be different in different loops). The current iteration index can also be passed in with {\tt ops\_arg\_idx}, which will pass a globally consistent index to the user kernel (i.e. also under MPI).
+
+Reductions in loops are done using the ops\_arg\_reduce argument, which takes a reduction handle as an argument. The result of the reduction can then be acquired using a separate call to {\tt ops\_reduction\_result}. The semantics are the following: a reduction handle after it was declared is in an ``uninitialised'' state. The first time it is used as an argument to a loop, its type is determined (increment/min/max), and is initialised appropriately $(0,\infty,-\infty)$, and subsequent uses of the handle in parallel loops are combined together, up until the point, where the result is acquired using {\tt ops\_reduction\_result}, which then sets it back to an uninitialised state. This also implies, that different parallel loops, which all use the same reduction handle, but are otherwise independent, are independent and their partial reduction results can be combined together associatively and commutatively. 
+
+OPS takes responsibility for all data, its movement and the execution of parallel loops. With different execution hardware and optimisations, this means OPS will re-organise data as well as execution (potentially across different loops), and therefore any data accesses or manipulation may only be done through the OPS API.
+
+This restriction is exploited by a lazy execution mechanism in OPS. The idea is that OPS API calls that do not return a result can be not executed immediately, rather queued, and once an API call requires returning some data, operations in the queue are executed, and the result is returned. This allows OPS to analyse and optimise operations in the queue together. This mechanism is fully automated by OPS, and is used with the various \_tiled executables. For more information on how to use this mechanism for improving CPU performance, see Section \ref{sec:tiling}. Some API calls triggering the execution of queued operations include ops\_reduction\_result, and the functions in the data access API.
+
+\clearpage
+
+\newpage
+\section{OPS C++ API}
+
+\subsection{Initialisation declaration and termination routines}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_init}
+\begin{routine} {void ops\_init(int argc, char **argv, int diags\_level)}
+{This routine must be called before all other OPS routines.}
+\item[argc, argv]   the usual command line arguments
+\item[diags\_level] an integer which defines the level of debugging
+                    diagnostics and reporting to be performed
+\end{routine}
+Currently, higher \texttt{diags\_level}s does the following checks\\
+\noindent \texttt{diags\_level} $=$ 1 : no diagnostics, default to achieve best runtime performance.\\
+\noindent \texttt{diags\_level} $>$ 1 : print block decomposition and \texttt{ops\_par\_loop} timing breakdown.\\
+\noindent \texttt{diags\_level} $>$ 4 : print intra-block halo buffer allocation feedback (for OPS internal 
+development only)\\
+\noindent \texttt{diags\_level} $>$ 5 : check if intra-block halo MPI sends depth match MPI receives depth (for OPS 
+internal development only)\\
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_block}
+\begin{routine} {ops\_block ops\_decl\_block(int dims, char *name)} %int *size,
+{This routine defines a structured grid block.}
+
+\item[dims]          dimension of the block
+\item[name]          a name used for output diagnostics
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_block\_hdf5}
+\begin{routine} {ops\_block ops\_decl\_block\_hdf5(int dims, char *name, char *file)} %int *size,
+{This routine reads the details of a structured grid block from a named HDF5 file}
+
+\item[dims]      dimension of the block
+\item[name]      a name used for output diagnostics
+\item[file]      hdf5 file to read and obtain the block information from
+\end{routine}
+
+\noindent Although this routine does not read in any extra information about the block from the named HDF5 file than 
+what is already specified in the arguments, it is included here for error checking (e.g. check if blocks defined in 
+an HDF5 file is matching with the declared arguments in an application) and completeness.\\
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_dat}
+\begin{routine} {ops\_dat ops\_decl\_dat(ops\_block block, int dim, int* size, int *base, \\int *d\_m, int *d\_p, T 
+*data, char
+*type, char *name)}
+{This routine defines a dataset.}
+
+\item[block]         structured block
+\item[dim]           dimension of dataset (number of items per grid element)
+\item[size]      size in each dimension of the block
+\item[base]      base indices in each dimension of the block
+\item[d\_m]      padding from the face in the negative direction for each dimension (used for block halo)
+\item[d\_p]      padding from the face in the positive direction for each dimension (used for block halo)
+\item[data]          input data of type {\tt T}
+\item[type]          the name of type used for output diagnostics (e.g. ``double'', ``float'')
+\item[name]          a name used for output diagnostics
+\end{routine}
+
+\noindent The \texttt{size} allows to declare different sized data arrays on a given \texttt{block}. \texttt{d\_m} and 
+\texttt{d\_p} are depth of the ``block halos'' that are used to indicate the offset from the edge of a block (in both 
+the negative and positive directions of each dimension). \\\\
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_dat\_hdf5}
+\begin{routine} {ops\_dat ops\_decl\_dat\_hdf5(ops\_block block, int dim, char *type, char *name, char *file)}
+{This routine defines a dataset to be read in from a named hdf5 file}
+
+\item[block]     structured block
+\item[dim]       dimension of dataset (number of items per grid element)
+\item[type]      the name of type used for output diagnostics (e.g. ``double'', ``float'')
+\item[name]      name of the dat used for output diagnostics
+\item[file]      hdf5 file to read and obtain the data from
+\end{routine}
+
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_const}
+\begin{routine} {void ops\_decl\_const(char const * name, int dim, char const * type, T * data )}
+{This routine defines a global constant: a variable in global scope. Global constants need to be declared upfront
+ so that they can be correctly handled for different parallelizations. For e.g CUDA on GPUs. Once defined
+ they remain unchanged throughout the program, unless changed by a call to ops\_update\_const(..) }
+
+\item[name]          a name used to identify the constant
+\item[dim]           dimension of dataset (number of items per element)
+\item[type]          the name of type used for output diagnostics (e.g. ``double'', ``float'')
+\item[data]          pointer to input data of type {\tt T}
+
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_update\_const}
+\begin{routine} {void ops\_update\_const(char const * name, int dim, char const * type, T * data)}
+{This routine updates/changes the value of a constant}
+
+\item[name]          a name used to identify the constant
+\item[dim]           dimension of dataset (number of items per element)
+\item[type]          the name of type used for output diagnostics (e.g. ``double'', ``float'')
+\item[data]          pointer to new values for constant of type {\tt T}
+
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_halo}
+\begin{routine} {ops\_halo ops\_decl\_halo(ops\_dat from, ops\_dat to, int *iter\_size, int* from\_base, int *to\_base, 
+int *from\_dir, int *to\_dir)}
+{This routine defines a halo relationship between two datasets defined on two different blocks.}
+
+\item[from]         origin dataset
+\item[to]           destination dataset
+\item[iter\_size]          defines an iteration size (number of indices to iterate over in each direction)
+\item[from\_base]      indices of starting point in "from" dataset
+\item[to\_base]          indices of starting point in "to" dataset
+\item[from\_dir]          direction of incrementing for "from" for each dimension of {\tt iter\_size}
+\item[to\_dir]           direction of incrementing for "to" for each dimension of {\tt iter\_size}
+\end{routine}
+A from\_dir [1,2] and a to\_dir [2,1] means that x in the first block goes to y in the second block, and y in 
+first block goes to x in second block. A negative sign indicates that the axis is flipped. (Simple example: a transfer 
+from (1:2,0:99,0:99) to (-1:0,0:99,0:99) would use iter\_size = [2,100,100], from\_base = [1,0,0], to\_base = [-1,0,0], 
+from\_dir = [0,1,2], to\_dir = [0,1,2]. In more complex case this allows for transfers between blocks with different 
+orientations.)\\
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_halo\_hdf5}
+\begin{routine} {ops\_halo ops\_decl\_halo\_hdf5(ops\_dat from, ops\_dat to, char* file)}
+{This routine reads in a halo relationship between two datasets defined on two different blocks from a named HDF5 file}
+
+\item[from]      origin dataset
+\item[to]        destination dataset
+\item[file]      hdf5 file to read and obtain the data from
+\end{routine}
+
+ 
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_halo\_group}
+\begin{routine} {ops\_halo\_group ops\_decl\_halo\_group(int nhalos, ops\_halo *halos)}
+{This routine defines a collection of halos. Semantically, when an exchange is triggered for all halos in a group, 
+there is no order defined in which they are carried out.}
+
+\item[nhalos]         number of halos in {\tt halos}
+\item[halos]           array of halos
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_reduction\_handle}
+\begin{routine} {ops\_reduction ops\_decl\_reduction\_handle(int size, char *type, char *name)}
+{This routine defines a reduction handle to be used in a parallel loop}
+
+\item[size]      size of data in bytes
+\item[type]          the name of type used for output diagnostics (e.g. ``double'', ``float'')
+\item[name]          name of the dat used for output diagnostics
+\end{routine}
+
+\begin{routine} {void ops\_reduction\_result(ops\_reduction handle, T *result)}
+{This routine returns the reduced value held by a reduction handle. When OPS uses lazy execution, this will trigger the execution of all previously queued OPS operations.}
+
+\item[handle]        the {\tt ops\_reduction} handle
+\item[result]          a pointer to write the results to, memory size has to match the declared
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_partition}
+\begin{routine} {ops\_partition(char *method)}
+{Triggers a multi-block partitioning across a distributed memory set of processes. (links to a dummy 
+function for single node parallelizations). This routine should only be called after all the ops\_halo ops\_decl\_block 
+and ops\_halo ops\_decl\_dat statements have been declared}
+
+\item[method]        string describing the partitioning method. Currently this string is not used internally, but 
+is simply a place-holder to indicate different partitioning methods in the future.
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_exit}
+\begin{routine} {void ops\_exit()}
+{This routine must be called last to cleanly terminate the OPS computation.}
+\item \vspace{-0.3in}
+\end{routine}
+
+\subsection{Diagnostics and output routines}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_diagnostic\_output}
+\begin{routine} {void ops\_diagnostic\_output()}
+{This routine prints out various useful bits of diagnostic info about sets, mappings and datasets. Usually used right 
+after an ops\_partition() call to print out the details of the decomposition}
+\item \vspace{-0.3in}
+\end{routine}
+
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_printf}
+\begin{routine} {void ops\_printf(const char * format, ...)}
+{This routine simply prints a variable number of arguments; it is created is in place of the standard C
+printf function which would print the same on each MPI process}
+\item \vspace{-0.3in}
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_timers}
+\begin{routine} {void ops\_timers(double *cpu, double *et)}
+{gettimeofday() based timer to start/end timing blocks of code }
+\item[cpu] 	variable to hold the CPU time at the time of invocation 
+\item[et]	variable to hold the elapsed time at the time of invocation
+\item \vspace{-0.3in}
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_fetch\_block\_hdf5\_file}
+\begin{routine} {void ops\_fetch\_block\_hdf5\_file(ops\_block block, char *file)}
+{Write the details of an ops\_block to a named HDF5 file. Can be used over MPI (puts the data in an ops\_dat into an
+HDF5 file using MPI I/O)}
+\item[block] 	ops\_block to be written
+\item[file]     hdf5 file to write to
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_fetch\_stencil\_hdf5\_file}
+\begin{routine} {void ops\_fetch\_stencil\_hdf5\_file(ops\_stencil stencil, char *file)}
+{Write the details of an ops\_block to a named HDF5 file. Can be used over MPI (puts the data in an ops\_dat into an
+HDF5 file using MPI I/O)}
+\item[stencil] 	ops\_stencil to be written
+\item[file]     hdf5 file to write to
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_fetch\_dat\_hdf5\_file}
+\begin{routine} {void ops\_fetch\_dat\_hdf5\_file(ops\_dat dat, const char *file)}
+{Write the details of an ops\_block to a named HDF5 file. Can be used over MPI (puts the data in an ops\_dat into an
+HDF5 file using MPI I/O)}
+\item[dat] 	ops\_dat to be written
+\item[file]     hdf5 file to write to
+\end{routine}
+
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_print\_dat\_to\_txtfile}
+\begin{routine} {void ops\_print\_dat\_to\_txtfile(ops\_dat dat, chat *file)}
+{Write the details of an ops\_block to a named text file. When used under an MPI parallelization each MPI process 
+will write its own data set separately to the text file. As such it does not use MPI I/O. The data can be viewed using 
+a simple text editor }
+\item[dat] 	ops\_dat to to be written 
+\item[file]     text file to write to
+\end{routine}
+
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_timing\_output}
+\begin{routine} {void ops\_timing\_output(FILE *os)}
+{Print OPS performance performance details to output stream}
+\item[os]    output stream, use stdout to print to standard out
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_NaNcheck}
+\begin{routine} {void ops\_NaNcheck(ops\_dat dat)}
+{Check if any of the values held in the \texttt{dat} is a NaN. If a NaN 
+is found, prints an error message and exits.}
+\item[dat] 	ops\_dat to to be checked 
+\item \vspace{-0.3in}
+\end{routine}
+
+
+
+
+
+
+% \subsection{Convenience functions}
+
+%Since in many cases blocks and their datasets are perfectly aligned, it is  convenient to define the relationship 
+% between two blocks and get {\tt ops\_halo} objects between datasets defined on these blocks.
+%
+%\begin{routine} {ops\_halo\_group ops\_decl\_halos(ops\_block from, ops\_block to, int *from\_face, int depth)}
+%{This routine defines a connection between two blocks that are oriented the same  way and share a face, and all their 
+% datasets have the same dimensions on that face. It will return an {\tt ops\_halo\_group} with {\tt ops\_halo}s defined 
+% between matching datasets. \textbf{Should this be symmetric?}}
+%
+%\item[from]         origin block
+%\item[to]           target block
+%\item[from\_face]           an array specifying the invariant dimension and a side - it may contain a single non-zero 
+% value, either -1 or +1 (beginning and end of iteration range)
+%\item[depth]         number of halo layers
+%\end{routine}
+%
+%(For example in 2D if (0,0) is the bottom left corner of blocks,  then {\tt from\_face}=[1,0] would define a connection 
+% between the right face of the origin block and the left face of the destination block.)
+
+
+% \addcontentsline{toc}{subsubsection}{ops\_halo\_group\_add}
+% \begin{routine} {void ops\_halo\_group\_add(ops\_halo\_group group, ops\_halo halo)}
+% {Adds an {ops\_halo} to a halo group}
+
+% \item[group]         the halo group to add to
+% \item[halo]          the halo to add
+% \end{routine}
+
+
+\newpage
+\subsection{Halo exchange}
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_halo\_transfer}
+\begin{routine} {void ops\_halo\_transfer(ops\_halo\_group group)}
+{This routine exchanges all halos in a halo group and will block execution of subsequent computations that depend on 
+the exchanged data.}
+
+\item[group]         the halo group
+\end{routine}
+
+
+\newpage
+
+\subsection{Parallel loop syntax}
+
+A parallel loop with N arguments has the following syntax:
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_par\_loop}
+\begin{routine} {void ops\_par\_loop(\ void (*kernel)(...), \\
+                 \hspace*{1.4in} char *name, ops\_blck block, int dims, int *range,\\
+\hspace*{1.4in}  ops\_arg arg1,\ ops\_arg arg2,\ \ldots ,\ ops\_arg argN\ )}{}
+
+\item[kernel]     user's kernel function with N arguments
+\item[name]       name of kernel function, used for output diagnostics
+\item[block]      the ops\_block over which this loop executes
+\item[dims]       dimension of loop iteration
+\item[range]      iteration range array
+\item[args]       arguments
+\end{routine}
+
+\vspace{0.2in}
+\noindent
+The {\bf ops\_arg} arguments in {\bf ops\_par\_loop} are provided by one of the 
+following routines, one for global constants and reductions, and the other 
+for OPS datasets.
+
+\vspace{0.1in}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_arg\_gbl}
+\begin{routine} {ops\_arg ops\_arg\_gbl(T *data, int dim, char *type, ops\_access acc)}{Passes a scalar or small array that is invariant of the iteration space (not to be confused with ops\_decl\_const, which facilitates global scope variables).}
+\item[data]       data array
+\item[dim]        array dimension
+\item[type]       string representing the type of data held in data
+\item[acc]        access type
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_arg\_reduce}
+\begin{routine} {ops\_arg ops\_arg\_reduce(ops\_reduction handle, int dim, char *type, ops\_access acc)}{Passes a pointer to a variable that needs to be incremented (or swapped for min/max reduction) by the user kernel.}
+\item[handle]       an {\tt ops\_reduction} handle
+\item[dim]        array dimension (according to {\tt type})
+\item[type]       string representing the type of data held in data
+\item[acc]        access type
+\end{routine}
+
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_arg\_dat}
+\begin{routine} {ops\_arg ops\_arg\_dat(ops\_dat dat, ops\_stencil stencil, char *type,
+                 ops\_access acc)}{Passes a pointer wrapped in ac ACC<> object to the value(s) at the current grid point to the user kernel. The ACC object's parentheses operator has to be used for dereferencing the pointer.}
+\item[dat]        dataset
+\item[stencil]    stencil for accessing data
+\item[type]       string representing the type of data held in dataset
+\item[acc]        access type
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_arg\_idx}
+\begin{routine} {ops\_arg ops\_arg\_idx()}{Give you an array of integers (in the user kernel) that have the index of 
+the current grid point, i.e. idx[0] is the index in x, idx[1] is the index in y, etc. This is a globally consistent 
+index, so even if the block is  distributed across different MPI partitions, it gives you the same indexes. Generally 
+used to generate initial geometry. }
+\item \vspace{-0.3in}
+\end{routine}
+
+\newpage
+
+\subsection{Stencils}
+
+\noindent The final ingredient is the stencil specification, for which we have two versions: simple and strided.\\
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_stencil}
+\begin{routine} {ops\_stencil ops\_decl\_stencil(int dims,
+                 int points, int *stencil, char *name)}{}
+\item[dims]     dimension of loop iteration
+\item[points]   number of points in the stencil
+\item[stencil]  stencil for accessing data
+\item[name] string representing the name of the stencil
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_strided\_stencil}
+\begin{routine} {ops\_stencil ops\_decl\_strided\_stencil(int dims, int points,\\
+\hspace*{2.65in} int *stencil, int *stride, char *name)}{}
+\item[dims]       dimension of loop iteration
+\item[points]     number of points in the stencil
+\item[stencil]    stencil for accessing data
+\item[stride]     stride for accessing data
+\item[name] string representing the name of the stencil\\
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_decl\_stencil\_hdf5}
+\begin{routine} {ops\_stencil ops\_decl\_stencil\_hdf5(int dims,
+                 int points, char *name, char* file)}{}
+\item[dims]     dimension of loop iteration
+\item[points]   number of points in the stencil
+\item[name]     string representing the name of the stencil
+\item[file]     hdf5 file to write to
+\end{routine}
+
+
+\vspace{0.2in}
+
+\noindent In the strided case, the semantics for the index of data to be 
+accessed, for stencil point {\tt p}, in dimension \texttt{m} are defined as:\\
+
+\noindent {\tt stride[m]*loop\_index[m] + stencil[p*dims+m]},\\
+
+\noindent where \texttt{loop\_index[m]} is the iteration index (within the 
+user-defined iteration space) in the different dimensions.
+
+\noindent If, for one or more dimensions, both {\tt stride[m]} and 
+{\tt stencil[p*dims+m]} are zero, then one of the following must be true;
+\begin{itemize}
+\item
+the dataset being referenced has size 1 for these dimensions
+\item
+these dimensions are to be omitted and so the dataset has 
+dimension equal to the number of remaining dimensions.
+\end{itemize}
+
+\noindent See \texttt{OPS/apps/c/CloverLeaf/build\_field.cpp} and 
+\texttt{OPS/apps/c/CloverLeaf/generate.cpp} for an example 
+\texttt{ops\_decl\_strided\_stencil} declaration and its use in a loop, 
+respectively. \\
+
+\noindent These two stencil definitions probably take care of all of the 
+cases in the Introduction except for multiblock applications with interfaces 
+with different orientations -- this will need a third, even more general, 
+stencil specification. \noindent The strided stencil will handle both multigrid 
+(with a stride of 2 for example) and the boundary condition and reduced 
+dimension applications (with a stride of 0 for the relevant dimensions).
+
+
+\subsection{Checkpointing}
+OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the file name for the 
+checkpoint and an average time interval between checkpoints, OPS will then automatically save all necessary information 
+periodically that is required to fast-forward to the last checkpoint if a crash occurred. Currently, when re-launching 
+after a crash, the same number of MPI processes have to be used. To enable checkpointing mode, the {\tt OPS\_CHECKPOINT} 
+runtime argument has to be used.\\
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_init}
+\begin{routine} {bool ops\_checkpointing\_init(const char *filename, double interval, int options)}{Initialises the 
+checkpointing system, has to be called after {\tt ops\_partition}. Returns true if the application launches in restore 
+mode, false otherwise.} 
+\item[filename] name of the file for checkpointing. In MPI, this will automatically be post-fixed with the rank ID.
+\item[interval] average time (seconds) between checkpoints
+\item[options] a combinations of flags, listed in \texttt{ops\_checkpointing.h}: \\
+OPS\_CHECKPOINT\_INITPHASE - indicates that there are a number of parallel
+loops at the very beginning of the simulations which should be excluded from any checkpoint; mainly because they initialise datasets that do not change during the main body of the
+execution. During restore mode these loops are executed as usual. An example would be the computation of the mesh geometry,
+which can be excluded from the checkpoint if it is re-computed when recovering and restoring
+a checkpoint. The API call void \texttt{ops\_checkpointing\_initphase\_done()} indicates the end of
+this initial phase.
+
+OPS\_CHECKPOINT\_MANUAL\_DATLIST - Indicates that the user manually controls the location of the checkpoint, and explicitly specifies the list of \texttt{ops\_dat}s to be saved.
+
+OPS\_CHECKPOINT\_FASTFW - Indicates that the user manually controls the location of the checkpoint, and it also enables fast-forwarding, by skipping the execution of the 
+application (even though none of the parallel loops would actually execute, there may be significant work outside of those) up to the checkpoint.
+
+OPS\_CHECKPOINT\_MANUAL - Indicates that when the corresponding API function is called, the checkpoint should be created. Assumes the presence of the above two options as well.
+
+\end{routine}
+
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_manual\_datlist}
+\begin{routine} {void ops\_checkpointing\_manual\_datlist(int ndats, ops\_dat *datlist)}{A use can call this 
+routine at a point in the code to mark the location of a checkpoint.  At this point, the list of datasets specified 
+will be saved. The validity of what is saved is not checked by the checkpointing algorithm assuming that the user knows 
+what data sets to be saved for full recovery. This routine should be called frequently (compared to check-pointing 
+frequency) and it will trigger the creation of the checkpoint the first time it is called after the timeout occurs.
+} 
+\item[ndats] number of datasets to be saved
+\item[datlist] arrays of \texttt{ops\_dat} handles to be saved
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_fastfw}
+\begin{routine} {bool ops\_checkpointing\_fastfw(int nbytes, char *payload)}{
+A use can call this routine at a point in the code to mark the location of a checkpoint.  At this point, the 
+specified payload (e.g. iteration count, simulation time, etc.) along with the necessary datasets, as determined by the 
+checkpointing algorithm will be saved. This routine should be called frequently (compared to checkpointing frequency), 
+will trigger the creation of the checkpoint the first time it is called after the timeout occurs. In restore mode,
+will restore all datasets the first time it is called, and returns true indicating that the saved payload is returned 
+in payload. Does not save reduction data.
+} 
+\item[nbytes] size of the payload in bytes
+\item[payload] pointer to memory into which the payload is packed
+\end{routine}
+
+ 
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_manual\_datlist\_fastfw}
+\begin{routine} {bool ops\_checkpointing\_manual\_datlist\_fastfw(int ndats, op\_dat *datlist, int nbytes, char 
+*payload)}{
+Combines the manual datlist and fastfw calls.
+} 
+\item[ndats] number of datasets to be saved
+\item[datlist] arrays of \texttt{ops\_dat} handles to be saved
+\item[nbytes] size of the payload in bytes
+\item[payload] pointer to memory into which the payload is packed
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_checkpointing\_manual\_datlist\_fastfw\_trigger}
+\begin{routine} {bool ops\_checkpointing\_manual\_datlist\_fastfw\_trigger(int ndats, opa\_dat *datlist, int
+nbytes, char *payload)}{
+With this routine it is possible to manually trigger checkpointing, instead of relying on the timeout process. as such 
+it combines the manual datlist and fastfw calls, and triggers the creation of a checkpoint when called.
+} 
+\item[ndats] number of datasets to be saved
+\item[datlist] arrays of \texttt{ops\_dat} handles to be saved
+\item[nbytes] size of the payload in bytes
+\item[payload] pointer to memory into which the payload is packed
+\end{routine}
+
+
+\noindent The suggested use of these \textbf{manual} functions is of course when the optimal location for checkpointing
+is known - one of the ways to determine that is to use the built-in algorithm. More details of this will be reported 
+in a tech-report on checkpointing, to be published later. 
+
+
+
+\newpage
+\subsection{Access to OPS data}
+
+This section describes APIS that give the user access to internal data structures in OPS and return data to user-space. These should be used cautiously and sparsely, as they can affect performance significantly
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_get\_local\_npartitions}
+\begin{routine} {int ops\_dat\_get\_local\_npartitions(ops\_dat dat)}
+{This routine returns the number of chunks of the given dataset held by the current process.}
+\item[dat]         the dataset
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_get\_global\_npartitions}
+\begin{routine} {int ops\_dat\_get\_global\_npartitions(ops\_dat dat)}
+{This routine returns the number of chunks of the given dataset held by all processes.}
+\item[dat]         the dataset
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_get\_extents}
+\begin{routine} {void ops\_dat\_get\_extents(ops\_dat dat, int part, int *disp, int *sizes)}
+{This routine returns the MPI displacement and size of a given chunk of the given dataset on the current process.}
+\item[dat]         the dataset
+\item[part]        the chunk index (has to be 0)
+\item[disp]        an array populated with the displacement of the chunk within the ``global'' distributed array
+\item[sizes]       an array populated with the spatial extents
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_get\_raw\_metadata}
+\begin{routine} {char* ops\_dat\_get\_raw\_metadata(ops\_dat dat, int part, int *disp, int *size, int *stride, int *d\_m, int *d\_p)}
+{This routine returns array shape metadata corresponding to the ops\_dat. Any of the arguments that are not of interest, may be NULL.}
+\item[dat]         the dataset
+\item[part]        the chunk index (has to be 0)
+\item[disp]        an array populated with the displacement of the chunk within the ``global'' distributed array
+\item[size]       an array populated with the spatial extents
+\item[stride]      an array populated strides in spatial dimensions needed for column-major indexing
+\item[d\_m]      an array populated with padding on the left in each dimension. Note that these are negative values
+\item[d\_p]      an array populated with padding on the right in each dimension
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_get\_raw\_pointer}
+\begin{routine} {char* ops\_dat\_get\_raw\_pointer(ops\_dat dat, int part, ops\_stencil stencil, ops\_memspace *memspace)}
+{This routine returns a pointer to the internally stored data, with MPI halo regions automatically updated as required by the supplied stencil. The strides required to index into the dataset are also given.
+
+}
+\item[dat]         the dataset
+\item[part]        the chunk index (has to be 0)
+\item[stencil]     a stencil used to determine required MPI halo exchange depths 
+\item[memspace]       when set to OPS\_HOST or OPS\_DEVICE, returns a pointer to data in that memory space, otherwise must be set to 0, and returns
+ whether data is in the host or on the device\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_release\_raw\_data}
+\begin{routine} {void ops\_dat\_release\_raw\_data(ops\_dat dat, int part, ops\_access acc)}
+{Indicates to OPS that a dataset previously accessed with ops\_dat\_get\_raw\_pointer is released by the user, and also tells OPS how it was accessed.
+
+A single call to ops\_dat\_release\_raw\_data() releases all pointers obtained by previous calls to ops\_dat\_get\_raw\_pointer() calls on the same dat and with the same *memspace argument, i.e. calls do not nest.}
+\item[dat]         the dataset
+\item[part]        the chunk index (has to be 0)
+\item[acc]     the kind of access that was used by the user (OPS\_READ if it was read only, OPS\_WRITE if it was overwritten, OPS\_RW if it was read and written)
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_release\_raw\_data}
+\begin{routine} {void ops\_dat\_release\_raw\_data\_memspace(ops\_dat dat, int part, ops\_access acc, ops\_memspace *memspace)}
+{Indicates to OPS that a dataset previously accessed with ops\_dat\_get\_raw\_pointer is released by the user, and also tells OPS how it was accessed, and which memory space was used.
+
+A single call to ops\_dat\_release\_raw\_data() releases all pointers obtained by previous calls to ops\_dat\_get\_raw\_pointer() calls on the same dat and with the same *memspace argument, i.e. calls do not nest.}
+\item[dat]         the dataset
+\item[part]        the chunk index (has to be 0)
+\item[acc]     the kind of access that was used by the user (OPS\_READ if it was read only, OPS\_WRITE if it was overwritten, OPS\_RW if it was read and written)
+\item[memspace]       set to OPS\_HOST or OPS\_DEVICE
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_fetch\_data}
+\begin{routine} {void ops\_dat\_fetch\_data(ops\_dat dat, int part, int *data)}
+{This routine copies the data held by OPS to the user-specified memory location, which needs to be at least as large as indicated by the sizes parameter of ops\_dat\_get\_extents.}
+\item[dat]         the dataset
+\item[part]        the chunk index (has to be 0)
+\item[data]        pointer to memory which should be filled by OPS
+\end{routine}
+
+\subsubsection*{}\addcontentsline{toc}{subsubsection}{ops\_dat\_set\_data}
+\begin{routine} {void ops\_dat\_set\_data(ops\_dat dat, int part, int *data)}
+{This routine copies the data given  by the user to the internal data structure used by OPS. User data needs to be laid out in column-major order and strided as indicated by the sizes parameter of ops\_dat\_get\_extents.}
+\item[dat]         the dataset
+\item[part]        the chunk index (has to be 0)
+\item[data]        pointer to memory which should be copied to OPS
+\end{routine}
+
+\newpage
+
+\section{Tiling for Cache-blocking}
+OPS has a code generation (ops\_gen\_mpi\_lazy) and build target for tiling.  
+Once compiled, to enable, use the \texttt{OPS\_TILING} runtime parameter - this 
+will look at the L3 cache size of your CPU and guess the correct tile size. If 
+you want to alter the amount of cache to be used for the guess, use the 
+\texttt{OPS\_CACHE\_SIZE=XX} runtime parameter, where the value is in Megabytes. 
+To manually specify the tile sizes, use the 
+OPS\_TILESIZE\_X, OPS\_TILESIZE\_Y, and OPS\_TILESIZE\_Z runtime arguments.
+ 
+When MPI is combined with OpenMP tiling can be extended to the MPI halos. 
+Set \texttt{OPS\_TILING\_MAXDEPTH} to increase the the halo depths so that 
+halos for multiple \texttt{ops\_par\_loops} can be exchanged with a 
+single MPI message (see \cite{TPDS2017} for more details)\\
+
+\noindent To test, compile CloverLeaf under \texttt{apps/c/CloverLeaf}, modify 
+clover.in to use a $6144^2$ mesh, then run as follows: \\
+
+\noindent For OpenMP with tiling:\\
+\texttt{export OMP\_NUM\_THREADS=xx;\\
+numactl -physnodebind=0 ./cloverleaf\_tiled OPS\_TILING}\\
+
+\noindent For MPI+OpenMP with tiling:\\
+\texttt{export OMP\_NUM\_THREADS=xx;\\
+mpirun -np xx ./cloverleaf\_mpi\_tiled OPS\_TILING 
+OPS\_TILING\_MAXDEPTH=6} \\
+
+\noindent To manually specify the tile sizes (in number of grid points), use the 
+OPS\_TILESIZE\_X, OPS\_TILESIZE\_Y, and OPS\_TILESIZE\_Z
+runtime arguments:\\
+\texttt{export OMP\_NUM\_THREADS=xx; \\
+numactl -physnodebind=0 ./cloverleaf\_tiled OPS\_TILING OPS\_TILESIZE\_X=600 OPS\_TILESIZE\_Y=200
+}
+
+\section{CUDA and OpenCL Runtime Arguments}
+\noindent The CUDA (and OpenCL) thread block sizes can be controlled by setting 
+the \texttt{OPS\_BLOCK\_SIZE\_X, OPS\_BLOCK\_SIZE\_Y} and 
+\texttt{OPS\_BLOCK\_SIZE\_Z} runtime arguments. For example :\\
+
+\noindent\texttt{./cloverleaf\_cuda OPS\_BLOCK\_SIZE\_X=64 
+OPS\_BLOCK\_SIZE\_Y=4}\\
+
+\noindent \texttt{OPS\_CL\_DEVICE=XX} runtime flag sets the OpenCL device to 
+execute the code on. \\Usually \texttt{OPS\_CL\_DEVICE=0} selects the CPU and 
+\texttt{OPS\_CL\_DEVICE=1} selects GPUs. 
+
+\section{Executing with GPUDirect}
+
+GPU direct support for MPI+CUDA, to enable (on the OPS side) add 
+\textbf{-gpudirect} when running the executable. You may also have to use 
+certain environmental flags when using different MPI distributions. For an 
+example of the required flags and environmental settings on the Cambridge 
+Wilkes2 GPU cluster
+see: \\
+\url{https://docs.hpc.cam.ac.uk/hpc/user-guide/performance-tips.html}
+
+\newpage
+\section{OPS User Kernels}
+
+\noindent In OPS, the elemental operation carried out per mesh/grid point is specified as an outlined function called
+a \textit{user kernel}. An example taken from the Cloverleaf application is given in \figurename{ \ref{fig:example}}.\\
+\begin{figure}[!h]\small
+\begin{minted}[mathescape, linenos, firstnumber=1,numbersep=0pt, gobble=2, frame=lines, framesep=1mm]{cpp}
+void accelerate_kernel( const ACC<double> &density0, const ACC<double> &volume,
+                ACC<double> &stepbymass, const ACC<double> &xvel0, ACC<double> &xvel1,
+                const ACC<double> &xarea, const ACC<double> &pressure,
+                const ACC<double> &yvel0, ACC<double> &yvel1,
+                const ACC<double> &yarea, const ACC<double> &viscosity) {
+
+  double nodal_mass;
+
+  //{0,0, -1,0, 0,-1, -1,-1};
+  nodal_mass = ( density0(-1,-1) * volume(-1,-1)
+    + density0(0,-1) * volume(0,-1)
+    + density0(0,0) * volume(0,0)
+    + density0(-1,0) * volume(-1,0) ) * 0.25;
+
+  stepbymass(0,0) = 0.5*dt/ nodal_mass;
+
+  //{0,0, -1,0, 0,-1, -1,-1};
+  //{0,0, 0,-1};
+
+  xvel1(0,0) = xvel0(0,0) - stepbymass(0,0) *
+            ( xarea(0,0)  * ( pressure(0,0) - pressure(-1,0) ) +
+              xarea(0,-1) * ( pressure(0,-1) - pressure(-1,-1) ) );
+
+  //{0,0, -1,0, 0,-1, -1,-1};
+  //{0,0, -1,0};
+
+  yvel1(0,0) = yvel0(0,0) - stepbymass(0,0) *
+            ( yarea(0,0)  * ( pressure(0,0) - pressure(0,-1) ) +
+              yarea(-1,0) * ( pressure(-1,0) - pressure(-1,-1) ) );
+
+  //{0,0, -1,0, 0,-1, -1,-1};
+  //{0,0, 0,-1};
+
+  xvel1(0,0) = xvel1(0,0) - stepbymass(0,0) *
+            ( xarea(0,0) * ( viscosity(0,0) - viscosity(-1,0) ) +
+              xarea(0,-1) * ( viscosity(0,-1) - viscosity(-1,-1) ) );
+
+  //{0,0, -1,0, 0,-1, -1,-1};
+  //{0,0, -1,0};
+
+  yvel1(0,0) = yvel1(0,0) - stepbymass(0,0) *
+            ( yarea(0,0) * ( viscosity(0,0) - viscosity(0,-1) ) +
+              yarea(-1,0) * ( viscosity(-1,0) - viscosity(-1,-1) ) );
+
+
+}
+\end{minted}
+\caption{\small example user kernel}
+\normalsize\vspace{-0pt}\label{fig:example}
+\end{figure}\\\\\\\\
+
+
+\noindent This user kernel is then used in an \texttt{ops\_par\_loop} (\figurename{ \ref{fig:parloop}}). The key aspect
+to note in the user kernel in \figurename{ \ref{fig:example}} is the use of the ACC<> objects and their parentheses operator. These specify the stencil in accessing the elements of the respective data arrays. 
+
+\begin{figure}[!h]\small
+\begin{minted}[mathescape, linenos, firstnumber=1,numbersep=0pt, gobble=2, frame=lines, framesep=2mm]{cpp}
+    int rangexy_inner_plus1[] = {x_min,x_max+1,y_min,y_max+1}; 
+
+    ops_par_loop(accelerate_kernel, "accelerate_kernel", clover_grid, 2, rangexy_inner_plus1,
+     ops_arg_dat(density0, 1, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
+     ops_arg_dat(volume, 1, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
+     ops_arg_dat(work_array1, 1, S2D_00, "double", OPS_WRITE),
+     ops_arg_dat(xvel0, 1, S2D_00, "double", OPS_READ),
+     ops_arg_dat(xvel1, 1, S2D_00, "double", OPS_INC),
+     ops_arg_dat(xarea, 1, S2D_00_0M1, "double", OPS_READ),
+     ops_arg_dat(pressure, 1, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
+     ops_arg_dat(yvel0, 1, S2D_00, "double", OPS_READ),
+     ops_arg_dat(yvel1, 1, S2D_00, "double", OPS_INC),
+     ops_arg_dat(yarea, 1, S2D_00_M10, "double", OPS_READ),
+     ops_arg_dat(viscosity, 1, S2D_00_M10_0M1_M1M1, "double", OPS_READ));
+\end{minted}
+\caption{\small example \texttt{ops\_par\_loop}}
+\normalsize\vspace{-0pt}\label{fig:parloop}
+\end{figure}
+
+
+\begin{thebibliography}{1}
+\bibitem{op2} OP2 for Many-Core Platforms, 2013. 
+\url{http://www.oerc.ox.ac.uk/projects/op2}
+
+\bibitem{TPDS2017} Istvan Z. Reguly, G.R. Mudalige, Mike B. Giles. Loop Tiling 
+in Large-Scale Stencil Codes at Run-time with OPS. (2017) IEEE Transactions on 
+Parallel and Distributed Systems. 
+\url{http://dx.doi.org/10.1109/TPDS.2017.2778161}
+
+\end{thebibliography}
+
+\end{document}
+
+
+
+
+

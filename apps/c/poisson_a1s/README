@@ -1,0 +1,19 @@
+Building poisson_a1s
+=======================
+
+```
+mkdir build
+cd build
+cmake -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DCMAKE_BUILD_TYPE=Release ..
+make
+```
+
+Running application:
+====================
+
+```
+cd build
+./src/poisson_a1s_omp  -sizex=4096 -sizey=4096 -iters=100 -OPS_AD=1 -OPS_DIAGS=2 
+./src/poisson_a1s_cuda -sizex=4096 -sizey=4096 -iters=100 -OPS_AD=1 -OPS_DIAGS=2
+```
+
