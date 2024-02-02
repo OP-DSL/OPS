@@ -1522,8 +1522,8 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
   ops_execute(dat->block->instance);
   const sub_dat *sd = OPS_sub_dat_list[dat->index];
   const int space_dim{dat->block->dims};
-  int *local_range{new int(2 * space_dim)};
-  int *range{new int(2 * space_dim)};
+  int *local_range{new int[2 * space_dim]};
+  int *range{new int[2 * space_dim]};
   for (int d = 0; d < space_dim; d++) {
     range[2 * d] = sd->gbl_d_m[d];
     range[2 * d + 1] = sd->gbl_size[d] - sd->gbl_d_p[d];
