@@ -263,7 +263,7 @@ void determine_plane_global_range(const ops_dat dat,
                                   int *range) {
   const int space_dim{dat->block->dims};
   const sub_dat *sd = OPS_sub_dat_list[dat->index];
-  int *size{new int(space_dim)};
+  int *size{new int[space_dim]};
   for (int d = 0; d < space_dim; d++) {
     size[d] = sd->gbl_size[d] - (sd->gbl_d_p[d] - sd->gbl_d_m[d]);
   }
@@ -274,7 +274,7 @@ void determine_plane_global_range(const ops_dat dat,
   }
   range[2 * cross_section_dir + 1] = pos + 1;
   range[2 * cross_section_dir] = pos;
-  delete size;
+  delete[] size;
 }
 void copy_data_buf(const ops_dat &dat, const int *local_range,
                    char *local_buf) {
@@ -639,16 +639,16 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     MPI_Comm_size(OPS_MPI_HDF5_BLOCK_WORLD, &comm_size);
 
     const int space_dim{dat->block->dims};
-    int *local_range{new int(2 * space_dim)};
-    int *range{new int(2 * space_dim)};
+    int *local_range{new int[2 * space_dim]};
+    int *range{new int[2 * space_dim]};
     for (int d = 0; d < space_dim; d++) {
       range[2 * d] = g_d_m[d];
       range[2 * d + 1] = g_size[d] + g_d_p[d];
     }
     determine_local_range(dat, range, local_range);
     copy_data_buf(dat, local_range, data);
-    delete range;
-    delete local_range;
+    delete[] range;
+    delete[] local_range;
 
     // make sure we multiply by the number of data values per
     // element (i.e. dat->dim) to get full size of the data
@@ -2232,12 +2232,12 @@ void write_plane_buf_hdf5(const char *file_name, const char *data_name,
     const int space_dim{dat->block->dims};
     const int data_dims{space_dim - 1};
     const sub_dat *sd = OPS_sub_dat_list[dat->index];
-    hsize_t *local_data_size_c{new hsize_t(data_dims)};
-    hsize_t *local_data_size_f{new hsize_t(data_dims)};
-    hsize_t *global_data_size_c{new hsize_t(data_dims)};
-    hsize_t *global_data_size_f{new hsize_t(data_dims)};
-    hsize_t *global_data_disp_c{new hsize_t(data_dims)};
-    hsize_t *global_data_disp_f{new hsize_t(data_dims)};
+    hsize_t *local_data_size_c{new hsize_t[data_dims]};
+    hsize_t *local_data_size_f{new hsize_t[data_dims]};
+    hsize_t *global_data_size_c{new hsize_t[data_dims]};
+    hsize_t *global_data_size_f{new hsize_t[data_dims]};
+    hsize_t *global_data_disp_c{new hsize_t[data_dims]};
+    hsize_t *global_data_disp_f{new hsize_t[data_dims]};
 
     {
       int reduced_index{0};
@@ -2280,8 +2280,8 @@ void write_plane_buf_hdf5(const char *file_name, const char *data_name,
 
     // block of memory to write to file by each proc
     hid_t memspace{H5Screate_simple(data_dims, local_data_size_f, NULL)};
-    hsize_t *stride{new hsize_t(data_dims)};
-    hsize_t *count{new hsize_t(data_dims)};
+    hsize_t *stride{new hsize_t[data_dims]};
+    hsize_t *count{new hsize_t[data_dims]};
     for (int d = 0; d < data_dims; d++) {
       stride[d] = 1;
       count[d] = 1;
@@ -2303,14 +2303,14 @@ void write_plane_buf_hdf5(const char *file_name, const char *data_name,
     }
     H5Fclose(file_id);
 
-    delete count;
-    delete stride;
-    delete local_data_size_c;
-    delete local_data_size_f;
-    delete global_data_size_c;
-    delete global_data_size_f;
-    delete global_data_disp_c;
-    delete global_data_disp_f;
+    delete[] count;
+    delete[] stride;
+    delete[] local_data_size_c;
+    delete[] local_data_size_f;
+    delete[] global_data_size_c;
+    delete[] global_data_size_f;
+    delete[] global_data_disp_c;
+    delete[] global_data_disp_f;
     MPI_Comm_free(&PLANE_WORLD);
   }
 }
@@ -2337,12 +2337,12 @@ void write_plane_buf_hdf5(const char *file_name, const char *data_name,
     const int space_dim{dat->block->dims};
     const int data_dims{space_dim - 1};
     const sub_dat *sd = OPS_sub_dat_list[dat->index];
-    hsize_t *local_data_size_c{new hsize_t(data_dims)};
-    hsize_t *local_data_size_f{new hsize_t(data_dims)};
-    hsize_t *global_data_size_c{new hsize_t(data_dims)};
-    hsize_t *global_data_size_f{new hsize_t(data_dims)};
-    hsize_t *global_data_disp_c{new hsize_t(data_dims)};
-    hsize_t *global_data_disp_f{new hsize_t(data_dims)};
+    hsize_t *local_data_size_c{new hsize_t[data_dims]};
+    hsize_t *local_data_size_f{new hsize_t[data_dims]};
+    hsize_t *global_data_size_c{new hsize_t[data_dims]};
+    hsize_t *global_data_size_f{new hsize_t[data_dims]};
+    hsize_t *global_data_disp_c{new hsize_t[data_dims]};
+    hsize_t *global_data_disp_f{new hsize_t[data_dims]};
 
     {
       int reduced_index{0};
@@ -2386,8 +2386,8 @@ void write_plane_buf_hdf5(const char *file_name, const char *data_name,
 
     // block of memory to write to file by each proc
     hid_t memspace{H5Screate_simple(data_dims, local_data_size_f, NULL)};
-    hsize_t *stride{new hsize_t(data_dims)};
-    hsize_t *count{new hsize_t(data_dims)};
+    hsize_t *stride{new hsize_t[data_dims]};
+    hsize_t *count{new hsize_t[data_dims]};
     for (int d = 0; d < data_dims; d++) {
       stride[d] = 1;
       count[d] = 1;
@@ -2409,14 +2409,14 @@ void write_plane_buf_hdf5(const char *file_name, const char *data_name,
     }
     H5Fclose(file_id);
 
-    delete count;
-    delete stride;
-    delete local_data_size_c;
-    delete local_data_size_f;
-    delete global_data_size_c;
-    delete global_data_size_f;
-    delete global_data_disp_c;
-    delete global_data_disp_f;
+    delete[] count;
+    delete[] stride;
+    delete[] local_data_size_c;
+    delete[] local_data_size_f;
+    delete[] global_data_size_c;
+    delete[] global_data_size_f;
+    delete[] global_data_disp_c;
+    delete[] global_data_disp_f;
     MPI_Comm_free(&PLANE_WORLD);
   }
 }
@@ -2450,12 +2450,12 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
 
 
     const sub_dat *sd = OPS_sub_dat_list[dat->index];
-    hsize_t *local_data_size_c{new hsize_t(space_dim)};
-    hsize_t *local_data_size_f{new hsize_t(space_dim)};
-    hsize_t *global_data_size_c{new hsize_t(space_dim)};
-    hsize_t *global_data_size_f{new hsize_t(space_dim)};
-    hsize_t *global_data_disp_c{new hsize_t(space_dim)};
-    hsize_t *global_data_disp_f{new hsize_t(space_dim)};
+    hsize_t *local_data_size_c{new hsize_t[space_dim]};
+    hsize_t *local_data_size_f{new hsize_t[space_dim]};
+    hsize_t *global_data_size_c{new hsize_t[space_dim]};
+    hsize_t *global_data_size_f{new hsize_t[space_dim]};
+    hsize_t *global_data_disp_c{new hsize_t[space_dim]};
+    hsize_t *global_data_disp_f{new hsize_t[space_dim]};
 
     for (int d = 0; d < space_dim; d++) {
 
@@ -2497,8 +2497,8 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
 
     // block of memory to write to file by each proc
     hid_t memspace{H5Screate_simple(space_dim, local_data_size_f, NULL)};
-    hsize_t *stride{new hsize_t(space_dim)};
-    hsize_t *count{new hsize_t(space_dim)};
+    hsize_t *stride{new hsize_t[space_dim]};
+    hsize_t *count{new hsize_t[space_dim]};
     for (int d = 0; d < space_dim; d++) {
       stride[d] = 1;
       count[d] = 1;
@@ -2520,14 +2520,14 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
     }
     H5Fclose(file_id);
 
-    delete count;
-    delete stride;
-    delete local_data_size_c;
-    delete local_data_size_f;
-    delete global_data_size_c;
-    delete global_data_size_f;
-    delete global_data_disp_c;
-    delete global_data_disp_f;
+    delete[] count;
+    delete[] stride;
+    delete[] local_data_size_c;
+    delete[] local_data_size_f;
+    delete[] global_data_size_c;
+    delete[] global_data_size_f;
+    delete[] global_data_disp_c;
+    delete[] global_data_disp_f;
     MPI_Comm_free(&SLAB_WORLD);
   }
 }
@@ -2560,12 +2560,12 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
 
 
     const sub_dat *sd = OPS_sub_dat_list[dat->index];
-    hsize_t *local_data_size_c{new hsize_t(space_dim)};
-    hsize_t *local_data_size_f{new hsize_t(space_dim)};
-    hsize_t *global_data_size_c{new hsize_t(space_dim)};
-    hsize_t *global_data_size_f{new hsize_t(space_dim)};
-    hsize_t *global_data_disp_c{new hsize_t(space_dim)};
-    hsize_t *global_data_disp_f{new hsize_t(space_dim)};
+    hsize_t *local_data_size_c{new hsize_t[space_dim]};
+    hsize_t *local_data_size_f{new hsize_t[space_dim]};
+    hsize_t *global_data_size_c{new hsize_t[space_dim]};
+    hsize_t *global_data_size_f{new hsize_t[space_dim]};
+    hsize_t *global_data_disp_c{new hsize_t[space_dim]};
+    hsize_t *global_data_disp_f{new hsize_t[space_dim]};
 
     for (int d = 0; d < space_dim; d++) {
 
@@ -2608,8 +2608,8 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
 
     // block of memory to write to file by each proc
     hid_t memspace{H5Screate_simple(space_dim, local_data_size_f, NULL)};
-    hsize_t *stride{new hsize_t(space_dim)};
-    hsize_t *count{new hsize_t(space_dim)};
+    hsize_t *stride{new hsize_t[space_dim]};
+    hsize_t *count{new hsize_t[space_dim]};
     for (int d = 0; d < space_dim; d++) {
       stride[d] = 1;
       count[d] = 1;
@@ -2631,14 +2631,14 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
     }
     H5Fclose(file_id);
 
-    delete count;
-    delete stride;
-    delete local_data_size_c;
-    delete local_data_size_f;
-    delete global_data_size_c;
-    delete global_data_size_f;
-    delete global_data_disp_c;
-    delete global_data_disp_f;
+    delete[] count;
+    delete[] stride;
+    delete[] local_data_size_c;
+    delete[] local_data_size_f;
+    delete[] global_data_size_c;
+    delete[] global_data_size_f;
+    delete[] global_data_disp_c;
+    delete[] global_data_disp_f;
     MPI_Comm_free(&SLAB_WORLD);
   }
 }
@@ -2654,9 +2654,9 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
       sub_block *sb = OPS_sub_block_list[dat->block->index];
       if (sb->owned == 1) {
         const int space_dim{dat->block->dims};
-        int *global_range{new int(2 * space_dim)};
+        int *global_range{new int[2 * space_dim]};
         determine_plane_global_range(dat, cross_section_dir, pos, global_range);
-        int *local_range{new int(2 * space_dim)};
+        int *local_range{new int[2 * space_dim]};
         // TODO if the plane is out of global range, computer range will
         // generate error
         determine_local_range(dat, global_range, local_range);
@@ -2677,8 +2677,8 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
                              local_range, global_range, local_buf);
         free(local_buf);
         //}
-        delete global_range;
-        delete local_range;
+        delete[] global_range;
+        delete[] local_range;
       }
     } else {
       ops_printf("The dat %s doesn't have the specified plane = %d \n",
@@ -2700,7 +2700,7 @@ void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
   sub_block *sb = OPS_sub_block_list[dat->block->index];
   if (sb->owned == 1) {
     const int space_dim{dat->block->dims};
-    int *local_range{new int(2 * space_dim)};
+    int *local_range{new int[2 * space_dim]};
     // TODO if the plane is out of global range, computer range will generate
     // error
     determine_local_range(dat, range, local_range);
@@ -2722,7 +2722,7 @@ void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
     free(local_buf);
     //}
 
-    delete local_range;
+    delete[] local_range;
   }
 }
 
@@ -2784,9 +2784,9 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
       sub_block *sb = OPS_sub_block_list[dat->block->index];
       if (sb->owned == 1) {
         const int space_dim{dat->block->dims};
-        int *global_range{new int(2 * space_dim)};
+        int *global_range{new int[2 * space_dim]};
         determine_plane_global_range(dat, cross_section_dir, pos, global_range);
-        int *local_range{new int(2 * space_dim)};
+        int *local_range{new int[2 * space_dim]};
         // TODO if the plane is out of global range, computer range will
         // generate error
         determine_local_range(dat, global_range, local_range);
@@ -2801,8 +2801,8 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
                              local_range, global_range, real_precision, local_buf);
         free(local_buf);
         //}
-        delete global_range;
-        delete local_range;
+        delete[] global_range;
+        delete[] local_range;
       }
     } else {
       ops_printf("The dat %s doesn't have the specified plane = %d \n",
@@ -2824,7 +2824,7 @@ void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
   sub_block *sb = OPS_sub_block_list[dat->block->index];
   if (sb->owned == 1) {
     const int space_dim{dat->block->dims};
-    int *local_range{new int(2 * space_dim)};
+    int *local_range{new int[2 * space_dim]};
     // TODO if the plane is out of global range, computer range will generate
     // error
     determine_local_range(dat, range, local_range);
@@ -2846,7 +2846,7 @@ void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
     free(local_buf);
     //}
 
-    delete local_range;
+    delete[] local_range;
   }
 }
 
