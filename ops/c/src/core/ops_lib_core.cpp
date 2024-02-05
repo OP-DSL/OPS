@@ -839,10 +839,17 @@ ops_arg ops_arg_reduce_core(ops_reduction handle, int dim, const char *type,
  // Get uniform representations of type and handle->type
  std::string uniformType1 = uniformType(type);
  std::string uniformType2 = uniformType(handle->type);
- 
- if (uniformType1 != uniformType2) {
-   throw OPSException(OPS_INVALID_ARGUMENT, "Error, type mismatch between handle and argument");
- }
+
+
+  if (uniformType1 != uniformType2 &&
+        !(
+          OPS_instance::getOPSInstance()->OPS_mixed_precision &&
+            ((uniformType1 == "float" || uniformType1 == "double")
+            && (uniformType2 == "float" || uniformType2 == "double"))
+         )
+      ) {
+    throw OPSException(OPS_INVALID_ARGUMENT, "Error, type mismatch between handle and argument");
+  }
 
   if (handle->initialized == 0) {
     handle->initialized = 1;
@@ -2217,6 +2224,7 @@ void increase_precision_core(){
   ops_printf("Increasing precision of all dats.\n");
   OPS_instance* instance = OPS_instance::getOPSInstance() ;
   instance->OPS_precision=1;
+  instance->OPS_mixed_precision=1;
 
   for (int i = 0; i < instance->OPS_block_index; i++) {
     ops_dat_entry *item;

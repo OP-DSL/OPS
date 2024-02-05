@@ -334,6 +334,7 @@ class OPS_instance {
 	int OPS_soa;
 	int OPS_diags;
 	int OPS_precision;
+	int OPS_mixed_precision;
 
 	// CUDA & OpenCL
 	int OPS_hybrid_gpu, OPS_gpu_direct;

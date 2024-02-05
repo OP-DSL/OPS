@@ -113,6 +113,11 @@ int main(int argc, const char** argv)
 
     if(iter % 10 == 0) ops_printf("%5d, %0.10f\n", iter, error);        
     iter++;
+
+    if (iter==30) {
+      ops_printf("Increasing precision at iter %d\n",iter);
+      increase_precision();
+    }
   }
 
   ops_printf("%5d, %0.10f\n", iter, error);        

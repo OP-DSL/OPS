@@ -97,6 +97,7 @@ void OPS_instance::init_globals() {
 	OPS_soa=0;
 	OPS_diags=0;
 	OPS_precision=0;
+	OPS_mixed_precision=0;
 
 	// CUDA & OpenCL
 	OPS_hybrid_gpu=0; OPS_gpu_direct=0;

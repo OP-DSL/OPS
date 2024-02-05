@@ -61,7 +61,7 @@ def clean_type(arg):
     return arg
 
 
-def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
+def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0, suffix='', mixed_kernel_dir=''):
     NDIM = 2  # the dimension of the application is hardcoded here .. need to get this dynamically
 
     gen_full_code = 1
@@ -110,15 +110,21 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
             name, src_dir, arg_typ
         )
 
+        #if there is a suffix (= if its mixed prec), then find the mixed kernel_text
+        if suffix:
+            kernel_text, arg_list = util.get_kernel_body_and_arg_list(
+                '{}{}'.format(name,suffix), mixed_kernel_dir, arg_typ
+            )
+
         comm("")
         comm(" host stub function")
         code("#ifndef OPS_LAZY")
         code(
-            f"void ops_par_loop_{name}(char const *name, ops_block block, int dim, int* range,"
+            f"void ops_par_loop_{name}{suffix}(char const *name, ops_block block, int dim, int* range,"
         )
         code(util.group_n_per_line([f" ops_arg arg{n}" for n in range(nargs)]) + ") {")
         code("#else")
-        code(f"void ops_par_loop_{name}_execute(ops_kernel_descriptor *desc) {{")
+        code(f"void ops_par_loop_{name}{suffix}_execute(ops_kernel_descriptor *desc) {{")
         config.depth = 2
         code("ops_block block = desc->block;")
         code("int dim = desc->dim;")
@@ -154,7 +160,7 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
             code("")
 
         code("#ifdef OPS_DEBUG")
-        code(f'ops_register_args(block->instance, args, "{name}");')
+        code(f'ops_register_args(block->instance, args, "{name}{suffix}");')
         code("#endif")
         code("")
 
@@ -552,7 +558,7 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
         code("")
         code("#ifdef OPS_LAZY")
         code(
-            f"void ops_par_loop_{name}(char const *name, ops_block block, int dim, int* range,"
+            f"void ops_par_loop_{name}{suffix}(char const *name, ops_block block, int dim, int* range,"
         )
         code(util.group_n_per_line([f" ops_arg arg{n}" for n in range(nargs)]) + ") {")
         config.depth = 2
@@ -573,7 +579,7 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
         text = text + f'{nargs}, '
         text = text + f'{nk}, '
         text = text + 'dim, 0, range, block, '
-        text = text + f'ops_par_loop_{name}_execute'
+        text = text + f'ops_par_loop_{name}{suffix}_execute'
         text = text + ');'
         code(text)
     
@@ -585,9 +591,9 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
         #  output individual kernel file
         ##########################################################################
         if offload:
-            util.write_text_to_file(f"./OpenMP_offload/{name}_ompoffload_kernel.cpp")
+            util.write_text_to_file(f"./OpenMP_offload/{name}{suffix}_ompoffload_kernel.cpp")
         else:
-            util.write_text_to_file(f"./MPI_OpenMP/{name}_cpu_kernel.cpp")
+            util.write_text_to_file(f"./MPI_OpenMP/{name}{suffix}_cpu_kernel.cpp")
 
     # end of main kernel call loop
 
