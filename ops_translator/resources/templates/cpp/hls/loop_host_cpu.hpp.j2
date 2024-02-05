@@ -6,11 +6,12 @@
 void kernel_{{lh.kernel}}_core(
     {% for arg in lh.args %}
         {% if loop.last %}
-            {% if consts %}
+            {#{% if consts %}
                 {% set last_check = False %}
             {% else %}
                 {% set last_check = True %}
-            {% endif %}
+            {% endif %}#}
+            {% set last_check = True %}
         {% else %}
             {% set last_check = False %}
         {% endif %}
@@ -32,9 +33,9 @@ void kernel_{{lh.kernel}}_core(
         const int * idx{{"," if (not loop.last or not last_check)}}
         {% endif %}
     {% endfor %}
-    {% for const in consts %}
+    {#{% for const in consts %}
         const {{const.typ}} {{const.ptr}}{{"," if not loop.last}}
-    {% endfor %}
+    {% endfor %}#}
 )
 {
     {{kernel_body}}
@@ -44,7 +45,7 @@ void kernel_{{lh.kernel}}_core(
 {{super()}}
 {
     ops::hls::AccessRange range;
-    opsRange2hlsRange(ndim, ops_range, range, arg0.originalProperty);
+    opsRange2hlsRange(dim, ops_range, range, arg0.originalProperty);
     {% for arg in lh.args %}
         {% if prog.findStencil(arg.stencil_ptr) %}
             {% set stencil = prog.findStencil(arg.stencil_ptr) %}
@@ -56,15 +57,15 @@ void kernel_{{lh.kernel}}_core(
     {% endfor %}
 
     {% if lh.ndim > 2 %}
-    for (unsigned short k = 0; k = range.start[2]; k < range.end[2]; k++)
+    for (unsigned short k = range.start[2]; k < range.end[2]; k++)
     {
     {% endif %}
     {% if lh.ndim > 1 %}
-        for (unsigned short j = 0; j = range.start[1]; j < range.end[1]; j++)
+        for (unsigned short j = range.start[1]; j < range.end[1]; j++)
         {
     {% endif %}
     {% if lh.ndim > 0 %}
-            for (unsigned short i = 0; i = range.start[0]; i < range.end[0]; i++)
+            for (unsigned short i = range.start[0]; i < range.end[0]; i++)
             {
     {% endif %}
     {% if lh.arg_idx != -1 %}
@@ -76,9 +77,11 @@ void kernel_{{lh.kernel}}_core(
                 ops::hls::IdxType idx({i - arg0.originalProperty.d_m[0], 0, 0});
         {% endif %} 
     {% endif %}
-                kernel_{{lh.kernel}}(
+                kernel_{{lh.kernel}}_core(
     {% for arg in lh.args %}
         {% if loop.last %}
+            {% set last_check = True %}
+        {% else %}
             {% set last_check = False %}
         {% endif %}
         {% if arg is ops_dat %}
