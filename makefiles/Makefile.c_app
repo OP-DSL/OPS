@@ -402,4 +402,5 @@ clean:
 	rm -f $(OPS_GENERATED)
 	rm -f .generated constants_list.txt cudafe
 	rm -rf ./mpi_openmp ./cuda ./hip ./openmp_offload ./sycl ./openacc ./hls
+	rm -f $(APP)_ops_hls.cpp
 	rm -f ops_translator_run.log
