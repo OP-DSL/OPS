@@ -8,6 +8,7 @@ double pi  = 2.0 * asin(1.0);
 
 //Including main OPS header file, and setting 2D
 #define OPS_2D
+#define OPS_FPGA
 #include <ops_seq_v2.h>
 //Including applicaiton-specific "user kernels"
 #include "laplace_kernels.h" 
@@ -21,10 +22,10 @@ int main(int argc, const char** argv)
   jmax = 4094;
   //Size along x
   imax = 4094;
-  int iter_max = 100;
+  unsigned int iter_max = 100;
 
-  const double tol = 1.0e-6;
-  double error     = 1.0;
+//   const double tol = 1.0e-6;
+//   double error     = 1.0;
 
   double *A=NULL;
   double *Anew=NULL;
@@ -97,34 +98,43 @@ int main(int argc, const char** argv)
       ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_WRITE),
       ops_arg_idx());
 
-
-  while ( error > tol && iter < iter_max )
+int interior_range[] = {0,imax,0,jmax};
+#ifndef OPS_FPGA
+  for (unsigned int i = 0; i < iter_max; i++)
   {
-    int interior_range[] = {0,imax,0,jmax};
+    
     ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
         ops_arg_dat(d_A,    1, S2D_5pt, "double", OPS_READ),
-        ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_WRITE),
-        ops_arg_reduce(h_err, 1, "double", OPS_MAX));
-    ops_reduction_result(h_err, &error);
+        ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_WRITE));
 
+    // ops_dat_deep_copy(d_A, d_Anew);
     ops_par_loop(copy, "copy", block, 2, interior_range,
         ops_arg_dat(d_A,    1, S2D_00, "double", OPS_WRITE),
         ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_READ));
 
-    if(iter % 10 == 0) ops_printf("%5d, %0.6f\n", iter, error);        
-    iter++;
+    // if(iter % 10 == 0) ops_printf("%5d, %0.6f\n", iter, error);        
+    // iter++;
   }
+#else
+    ops_iter_par_loop(iter_max, 
+        ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
+            ops_arg_dat(d_A,    1, S2D_5pt, "double", OPS_READ),
+            ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_WRITE)),     
+        ops_par_loop(copy, "copy", block, 2, interior_range,
+            ops_arg_dat(d_A,    1, S2D_00, "double", OPS_WRITE),
+            ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_READ)));
+#endif
 
-  ops_printf("%5d, %0.6f\n", iter, error);        
+//   ops_printf("%5d, %0.6f\n", iter, error);        
 
-  ops_timing_output(std::cout);
+//   ops_timing_output(std::cout);
 
-  double err_diff = fabs((100.0*(error/2.421354960840227e-03))-100.0);
-  printf("Total error is within %3.15E %% of the expected error\n",err_diff);
-  if(err_diff < 0.001)
-    printf("This run is considered PASSED\n");
-  else
-    printf("This test is considered FAILED\n");
+//   double err_diff = fabs((100.0*(error/2.421354960840227e-03))-100.0);
+//   printf("Total error is within %3.15E %% of the expected error\n",err_diff);
+//   if(err_diff < 0.001)
+//     printf("This run is considered PASSED\n");
+//   else
+//     printf("This test is considered FAILED\n");
 
   //Finalising the OPS library
   ops_exit();
