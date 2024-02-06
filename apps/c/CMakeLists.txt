@@ -200,12 +200,12 @@ if(${CMAKE_PROJECT_NAME} STREQUAL APP)
       opsc
       NAMES "ops.py"
       PATHS ${SEARCH_PATHS}
-      PATH_SUFFIXES bin/ops_translator/c)
+      PATH_SUFFIXES bin/ops_translator_legacy/c)
     find_path(
       opsfortran
       NAMES "ops_fortran.py"
       PATHS ${SEARCH_PATHS}
-      PATH_SUFFIXES bin/ops_translator/fortran)
+      PATH_SUFFIXES bin/ops_translator_legacy/fortran)
     if(NOT opsc)
       message(FATAL_ERROR "We cannot find the python C/C++ translator!")
     endif()
@@ -311,8 +311,8 @@ if(${CMAKE_PROJECT_NAME} STREQUAL OPS)
       FATAL_ERROR
         "We cannot find Python3 and the Python translator needs Python3!")
   else()
-    set(OPS_C_TRANSLATOR "${CMAKE_SOURCE_DIR}/ops_translator/c/ops.py")
-    set(OPS_F_TRANSLATOR "${opsfortran}/ops_translator/fortran/ops_fortran.py")
+    set(OPS_C_TRANSLATOR "${CMAKE_SOURCE_DIR}/ops_translator_legacy/c/ops.py")
+    set(OPS_F_TRANSLATOR "${opsfortran}/ops_translator_legacy/fortran/ops_fortran.py")
   endif()
   # set the OPS_INSTALL_PATH for testing
   set(OPS_INSTALL_PATH "${CMAKE_SOURCE_DIR}/ops/c")
@@ -394,7 +394,7 @@ macro(
   target_include_directories(${Name}_seq_dev PRIVATE ${TMP_SOURCE_DIR})
   add_executable(
     ${Name}_seq ${OPS} ${OTHERS}
-                "${TMP_SOURCE_DIR}/MPI_OpenMP/${KernerName}_cpu_kernels.cpp")
+                "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
   target_include_directories(${Name}_seq PRIVATE ${TMP_SOURCE_DIR})
   if(HDF5_SEQ)
     target_link_libraries(${Name}_seq ops_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl
@@ -428,9 +428,9 @@ macro(
   if(CUDA)
     add_executable(
       ${Name}_cuda ${OPS} ${OTHERS}
-                   "${TMP_SOURCE_DIR}/CUDA/${KernerName}_kernels.cu")
+                   "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
     target_include_directories(${Name}_cuda PRIVATE ${TMP_SOURCE_DIR})
-    target_link_libraries(${Name}_cuda ops_cuda CUDA::cudart_static
+    target_link_libraries(${Name}_cuda ops_cuda CUDA::cudart_static CUDA::curand
                           OpenMP::OpenMP_CXX)
     target_compile_options(${Name}_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:
                                                 --fmad=false>)
@@ -469,7 +469,7 @@ macro(
     add_executable(
       ${Name}_opencl
       ${OPS} ${OTHERS}
-      "${TMP_SOURCE_DIR}/OpenCL/${KernerName}_opencl_kernels.cpp")
+      "${TMP_SOURCE_DIR}/opencl/opencl_kernels.cpp")
     target_include_directories(${Name}_opencl PRIVATE ${TMP_SOURCE_DIR}
                                                       ${OpenCL_INCLUDE_DIRS})
     target_link_libraries(${Name}_opencl ops_opencl ${OpenCL_LIBRARIES}
@@ -496,8 +496,8 @@ macro(
     if(HIP AND NOT TRID)
       add_executable(
         ${Name}_hip ${OPS} ${OTHERS}
-                    "${TMP_SOURCE_DIR}/HIP/${KernerName}_kernels.cpp")
-      message("${TMP_SOURCE_DIR}/HIP/${KernerName}_hip_kernel.cpp")
+                    "${TMP_SOURCE_DIR}/hip/hip_kernels.cpp")
+      message("${TMP_SOURCE_DIR}/hip/${KernerName}_hip_kernel.cpp")
       target_include_directories(${Name}_hip PRIVATE ${TMP_SOURCE_DIR})
       target_link_libraries(${Name}_hip ops_hip hip::device OpenMP::OpenMP_CXX)
       # if (HDF5_SEQ) target_link_libraries(${Name}_hip ops_hdf5_seq hdf5::hdf5
@@ -524,7 +524,7 @@ macro(
     target_compile_definitions(${Name}_mpi_dev PRIVATE "-DOPS_MPI")
     add_executable(
       ${Name}_mpi ${OPS} ${OTHERS}
-                  "${TMP_SOURCE_DIR}/MPI_OpenMP/${KernerName}_cpu_kernels.cpp")
+                  "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
     target_include_directories(${Name}_mpi PRIVATE ${TMP_SOURCE_DIR})
     target_compile_definitions(${Name}_mpi PRIVATE "-DOPS_MPI")
     if(HDF5_MPI)
@@ -561,7 +561,7 @@ macro(
     if(CUDA_MPI)
       add_executable(
         ${Name}_mpi_cuda ${OPS} ${OTHERS}
-                         "${TMP_SOURCE_DIR}/CUDA/${KernerName}_kernels.cu")
+                         "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
       target_include_directories(${Name}_mpi_cuda PRIVATE ${TMP_SOURCE_DIR})
       target_compile_definitions(${Name}_mpi_cuda PRIVATE "-DOPS_MPI")
       target_compile_options(${Name}_mpi_cuda
@@ -580,7 +580,7 @@ macro(
         endif()
       endif()
       target_link_libraries(
-        ${Name}_mpi_cuda PRIVATE ops_mpi_cuda CUDA::cudart_static MPI::MPI_CXX
+        ${Name}_mpi_cuda PRIVATE ops_mpi_cuda CUDA::cudart_static CUDA::curand MPI::MPI_CXX
                                  OpenMP::OpenMP_CXX)
       install(TARGETS ${Name}_mpi_cuda DESTINATION ${APP_INSTALL_DIR}/${Name})
     endif()
@@ -589,7 +589,7 @@ macro(
       add_executable(
         ${Name}_mpi_opencl
         ${OPS} ${OTHERS}
-        "${TMP_SOURCE_DIR}/OpenCL/${KernerName}_opencl_kernels.cpp")
+        "${TMP_SOURCE_DIR}/opencl/opencl_kernels.cpp")
       target_include_directories(
         ${Name}_mpi_opencl PRIVATE ${TMP_SOURCE_DIR} ${OpenCL_INCLUDE_DIRS})
       target_compile_definitions(${Name}_mpi_opencl PRIVATE "-DOPS_MPI")
