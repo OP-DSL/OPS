@@ -19,10 +19,10 @@ if [[ -v TELOS || -v KOS ]]; then
 echo "Testing Intel classic complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
 source $OPS_INSTALL_PATH/../scripts/$SOURCE_INTEL
-#make clean
+make clean
 make
 cd $OPS_INSTALL_PATH/../apps/c/CloverLeaf_3D_HDF5
-#make clean
+make clean
 rm -rf generate_file generate_file_mpi
 
 make IEEE=1 cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_seq cloverleaf_tiled cloverleaf_openmp cloverleaf_mpi \

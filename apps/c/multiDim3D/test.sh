@@ -7,9 +7,9 @@ export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
 export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
 export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
-export AMOS=TRUE
+#export AMOS=TRUE
 #export DMOS=TRUE
-#export TELOS=TRUE
+export TELOS=TRUE
 #export KOS=TRUE
 
 #<<comment
@@ -185,14 +185,14 @@ rm perf_out
 fi
 
 echo '============> Running OMPOFFLOAD'
-./multiDim3D_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+./multidim_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+OMPOFFLOAD'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multiDim3D_mpi_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi

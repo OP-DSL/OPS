@@ -9,8 +9,8 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
 #export DMOS=TRUE
-export TELOS=TRUE
-#export KOS=TRUE
+#export TELOS=TRUE
+export KOS=TRUE
 
 if [[ -v TELOS || -v KOS ]]; then
 
@@ -46,7 +46,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
 echo '============> Running MPI+OpenMP'
-export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 10 numawrap10 ./tealeaf_mpi_openmp > perf_out
+export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 8 numawrap8 ./tealeaf_mpi_openmp > perf_out
 grep "Total Wall time" tea.out
 #grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
 grep "PASSED" tea.out
@@ -54,7 +54,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
 echo '============> Running DEV_MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_dev_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 8 ./tealeaf_dev_mpi > perf_out
 grep "Total Wall time" tea.out
 #grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
 grep "PASSED" tea.out
@@ -62,7 +62,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
 echo '============> Running MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 8 ./tealeaf_mpi > perf_out
 grep "Total Wall time" tea.out
 #grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
 grep "PASSED" tea.out
@@ -191,7 +191,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
 echo '============> Running DEV_MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_dev_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 8 ./tealeaf_dev_mpi > perf_out
 grep "Total Wall time" tea.out
 #grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
 grep "PASSED" tea.out
@@ -199,7 +199,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
 echo '============> Running MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 8 ./tealeaf_mpi > perf_out
 grep "Total Wall time" tea.out
 #grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
 grep "PASSED" tea.out

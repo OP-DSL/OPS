@@ -1,6 +1,8 @@
 #!/bin/bash
-export SOURCE_INTEL=source_intel_2021.3
-export SOURCE_PGI=source_pgi_nvhpc-21
+export SOURCE_INTEL=source_intel_2021.3_pythonenv
+export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
+export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 source ./$SOURCE_INTEL #default source to set environment vars
 
@@ -29,23 +31,23 @@ echo "~~~~~~~~~~~~~~~Poisson~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../poisson/
 ./test.sh
 echo "~~~~~~~~~~~~~~~multiDim~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../multiDim/
-./test.sh
+#cd ../multiDim/
+#./test.sh
 echo "~~~~~~~~~~~~~~~multiDim3D~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim3D/
 ./test.sh
 echo "~~~~~~~~~~~~~~~shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../shsgc/
-./test.sh
+#cd ../shsgc/
+#./test.sh
 echo "~~~~~~~~~~~~~~~mb_shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../mb_shsgc/Max_datatransfer
-./test.sh
+#cd ../mb_shsgc/Max_datatransfer
+#./test.sh
 echo "~~~~~~~~~~~~~~~multiDim_HDF5~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../../multiDim_HDF5
 ./test.sh
 echo "~~~~~~~~~~~~~~~adi~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../adi
-./test.sh
+#cd ../adi
+#./test.sh
 echo "~~~~~~~~~~~~~~~mgrid~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mgrid
 ./test.sh

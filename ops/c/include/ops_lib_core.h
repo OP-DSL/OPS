@@ -99,7 +99,8 @@ typedef std::complex<float> complexf;
 #elif defined(__CUDA_ARCH__) || defined(__CUDACC__)
 #include <cuda_fp16.h>
 typedef __half half;
-#elif defined(__SYCL_DEVICE_ONLY__)
+//#elif defined(__SYCL_DEVICE_ONLY__)
+#elif defined(INTEL_SYCL)
 #include <CL/sycl.hpp>
 #elif defined(__STDCPP_FLOAT16_T__) || defined(FLT16_MIN)
 typedef _Float16 half;
