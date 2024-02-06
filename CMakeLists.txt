@@ -209,7 +209,7 @@ option(BUILD_OPS_APPS "Build Sample OPS applications" OFF)
 # >${werrorFlag}") endif()
 
 # install python translator
-add_subdirectory(ops_translator)
+add_subdirectory(ops_translator_legacy)
 # Configure the C/C++ library compiling
 add_subdirectory(ops/c)
 # Configure the installation of "include"
