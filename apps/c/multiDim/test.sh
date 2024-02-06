@@ -7,9 +7,9 @@ export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
 export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
 export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
-export AMOS=TRUE
+#export AMOS=TRUE
 #export DMOS=TRUE
-#export TELOS=TRUE
+export TELOS=TRUE
 #export KOS=TRUE
 
 if [[ -v TELOS || -v KOS ]]; then
@@ -25,7 +25,7 @@ cd $OPS_INSTALL_PATH/../apps/c/multiDim/
 
 make clean
 rm -f .generated
-make IEEE=1 -j
+make IEEE=1 
 
 
 echo '============> Running OpenMP'
@@ -111,7 +111,6 @@ make
 cd $OPS_INSTALL_PATH/../apps/c/multiDim/
 
 make clean
-#make IEEE=1 -j
 make IEEE=1 multidim_sycl multidim_mpi_sycl multidim_mpi_sycl_tiled
 
 if [[ -v CUDA_INSTALL_PATH ]]; then

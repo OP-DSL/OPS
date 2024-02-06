@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 #<<COMMENT
-cd ../../../ops/c
+cd $OPS_INSTALL_PATH/c
 export SOURCE_INTEL=source_intel_2021.3_pythonenv
 source ../../scripts/$SOURCE_INTEL
 
@@ -20,7 +20,7 @@ make install
 #build OPS
 cd $OPS_INSTALL_PATH/c
 make clean
-make
+make IEEE=1
 
 #COMMENT
 
@@ -31,7 +31,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DLIBTRID_PATH=$TDMA_INST
 make adi_orig compare
 cp compare adi_orig $OPS_INSTALL_PATH/../apps/c/adi
 cd -
-make
+make IEEE=1
 cd $OPS_INSTALL_PATH/../apps/c/adi
 make clean
 rm -f .generated

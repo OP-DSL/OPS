@@ -7,9 +7,9 @@ export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
 export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
 export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
-export AMOS=TRUE
+#export AMOS=TRUE
 #export DMOS=TRUE
-#export TELOS=TRUE
+export TELOS=TRUE
 #export KOS=TRUE
 
 if [[ -v TELOS || -v KOS ]]; then
@@ -69,7 +69,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f perf_out
 
 echo '============> Running MPI_Tiled'
-export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 numawrap2 ./shsgc_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=6 > perf_out
+export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=6 > perf_out
 grep "RMS" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -214,7 +214,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f perf_out
 
 echo '============> Running MPI_Tiled'
-export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 numawrap2 ./shsgc_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=6 > perf_out
+export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=6 > perf_out
 grep "RMS" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
