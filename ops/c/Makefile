@@ -68,6 +68,18 @@ ifdef SYCL_INSTALL_PATH
 	TARGETS += sycl mpi_sycl
 endif
 
+ifneq (,$(filter ompoffload mpi_ompoffload,$(TARGETS)))
+ifeq ($(OPS_COMPILER),gnu)
+TARGETS:=$(filter-out ompoffload mpi_ompoffload,$(TARGETS))
+endif
+ifeq ($(OPS_COMPILER),intel)
+TARGETS:=$(filter-out ompoffload mpi_ompoffload,$(TARGETS))
+endif
+ifeq ($(OPS_COMPILER),intel-sycl)
+TARGETS:=$(filter-out ompoffload mpi_ompoffload,$(TARGETS))
+endif
+endif
+
 all: $(TARGETS)
 
 mklib:

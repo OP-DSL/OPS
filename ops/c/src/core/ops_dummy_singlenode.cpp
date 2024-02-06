@@ -629,7 +629,7 @@ void ops_dat_set_data_host(ops_dat dat, int part, char *data) {
     range[2 * d + 1] = dat->size[d] - dat->d_p[d];
   }
   ops_dat_set_data_slab_host(dat, 0, data, range);
-  delete range;
+  delete[] range;
 }
 
 void ops_dat_set_data_slab_host(ops_dat dat, int part, char *local_buf,

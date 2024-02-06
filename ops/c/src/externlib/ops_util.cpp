@@ -514,10 +514,10 @@ void determine_local_range(const ops_dat dat, const int *global_range,
     dat_arg = ops_arg_dat(dat, dat->dim, S2D_000, dat->type, OPS_READ);
   }
 
-  int *arg_idx{new int(space_dim)};
+  int *arg_idx{new int[space_dim]};
 
-  int *local_start{new int(space_dim)};
-  int *local_end{new int(space_dim)};
+  int *local_start{new int[space_dim]};
+  int *local_end{new int[space_dim]};
   if (compute_ranges(&dat_arg, 1, dat->block, (int *)global_range, local_start,
                      local_end, arg_idx) < 0) {
     return;
@@ -530,8 +530,8 @@ void determine_local_range(const ops_dat dat, const int *global_range,
   //     "At Rank = %d istart=%d iend=%d  jstart=%d jend=%d  kstart=%d kend=%d\n",
   //     ops_my_global_rank, local_range[0], local_range[1], local_range[2],
   //     local_range[3], local_range[4], local_range[5]);
-  delete arg_idx;
-  delete local_start;
-  delete local_end;
+  delete[] arg_idx;
+  delete[] local_start;
+  delete[] local_end;
 }
 

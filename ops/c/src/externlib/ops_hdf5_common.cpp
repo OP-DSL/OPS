@@ -238,12 +238,12 @@ void H5_dataset_space(const hid_t file_id, const int data_dims,
     bool dims_consistent{ndims == data_dims};
     bool size_consistent{true};
     if (dims_consistent) {
-      hsize_t *size{new hsize_t(ndims)};
+      hsize_t *size{new hsize_t[ndims]};
       H5Sget_simple_extent_dims(file_space, size, NULL);
       for (int d = 0; d < ndims; d++) {
         size_consistent = size_consistent && (size[d] == global_data_size[d]);
       }
-      delete size;
+      delete[] size;
     }
     if ((not dims_consistent) || (not size_consistent)) {
       H5Sclose(file_space);
@@ -289,12 +289,12 @@ void H5_dataset_space(const hid_t file_id, const int data_dims,
     bool dims_consistent{ndims == data_dims};
     bool size_consistent{true};
     if (dims_consistent) {
-      hsize_t *size{new hsize_t(ndims)};
+      hsize_t *size{new hsize_t[ndims]};
       H5Sget_simple_extent_dims(file_space, size, NULL);
       for (int d = 0; d < ndims; d++) {
         size_consistent = size_consistent && (size[d] == global_data_size[d]);
       }
-      delete size;
+      delete[] size;
     }
     if ((not dims_consistent) || (not size_consistent)) {
       H5Sclose(file_space);

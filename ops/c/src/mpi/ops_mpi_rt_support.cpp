@@ -1530,8 +1530,8 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
   }
   determine_local_range(dat, range, local_range);
   ops_dat_set_data_slab_host(dat, 0, data, local_range);
-  delete range;
-  delete local_range;
+  delete[] range;
+  delete[] local_range;
 }
 
 size_t ops_dat_get_slab_extents(ops_dat dat, int part, int *disp, int *size, int *slab) {

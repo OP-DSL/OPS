@@ -204,12 +204,13 @@ void ops_fill_random_uniform(ops_dat dat) {
   dat->dirty_hd = 2;
   // set halo
   ops_arg arg = ops_arg_dat(dat, dat->dim, instance->OPS_internal_0[dat->block->dims -1], dat->type, OPS_WRITE);
-  int *iter_range = new int[dat->block->dims*2];
+  int *iter_range{new int[dat->block->dims*2]};
   for ( int n = 0; n < dat->block->dims; n++) {
     iter_range[2*n] = 0;
     iter_range[2*n+1] = dat->size[n];
   }
   ops_set_halo_dirtybit3(&arg, iter_range);
+  delete[] iter_range;
 }
 
 void ops_fill_random_normal(ops_dat dat) {
@@ -238,12 +239,13 @@ void ops_fill_random_normal(ops_dat dat) {
   dat->dirty_hd = 2;
   // set halo
   ops_arg arg = ops_arg_dat(dat, dat->dim, instance->OPS_internal_0[dat->block->dims -1], dat->type, OPS_WRITE);
-  int *iter_range = new int[dat->block->dims*2];
+  int *iter_range{new int[dat->block->dims*2]};
   for ( int n = 0; n < dat->block->dims; n++) {
     iter_range[2*n] = 0;
     iter_range[2*n+1] = dat->size[n];
   }
   ops_set_halo_dirtybit3(&arg, iter_range);
+  delete[] iter_range;
 }
 
 void ops_randomgen_exit() {

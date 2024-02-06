@@ -2224,12 +2224,13 @@ void ops_fill_random_uniform_host(ops_dat dat, std::mt19937 ops_rand_gen) {
   dat->dirty_hd = 1;
   // set halo
   ops_arg arg = ops_arg_dat(dat, dat->dim, instance->OPS_internal_0[dat->block->dims -1], dat->type, OPS_WRITE);
-  int *iter_range = new int[dat->block->dims*2];
+  int *iter_range{new int[dat->block->dims*2]};
   for ( int n = 0; n < dat->block->dims; n++) {
     iter_range[2*n] = 0;
             iter_range[2*n+1] = dat->size[n];
   }
   ops_set_halo_dirtybit3(&arg, iter_range);
+  delete[] iter_range;
 }
 
 void ops_fill_random_normal_host(ops_dat dat, std::mt19937 ops_rand_gen) {
@@ -2263,12 +2264,13 @@ void ops_fill_random_normal_host(ops_dat dat, std::mt19937 ops_rand_gen) {
   dat->dirty_hd = 1;
   // set halo
   ops_arg arg = ops_arg_dat(dat, dat->dim, instance->OPS_internal_0[dat->block->dims -1], dat->type, OPS_WRITE);
-  int *iter_range = new int[dat->block->dims*2];
+  int *iter_range{new int[dat->block->dims*2]};
   for ( int n = 0; n < dat->block->dims; n++) {
     iter_range[2*n] = 0;
     iter_range[2*n+1] = dat->size[n];
   }
   ops_set_halo_dirtybit3(&arg, iter_range);
+  delete[] iter_range;
 }
 
 //
