@@ -55,6 +55,9 @@ void kernel_{{lh.kernel}}_core(
             {% endfor %}
         {% endif %}
     {% endfor %}
+    {% for arg in lh.args|ops_dat %}
+    getGrid(arg{{arg.id}});
+    {% endfor %}
 
     {% if lh.ndim > 2 %}
     for (unsigned short k = range.start[2]; k < range.end[2]; k++)
@@ -104,6 +107,12 @@ void kernel_{{lh.kernel}}_core(
     {% if lh.ndim > 2 %}
     }
     {% endif %}
+
+    {% for arg in lh.args|ops_dat %}
+        {% if arg is ops_write or arg is ops_rw %}
+    arg{{arg.id}}.isHostBufDirty = true;
+        {% endif %}
+    {% endfor %}
 
 }
 {% endblock %}

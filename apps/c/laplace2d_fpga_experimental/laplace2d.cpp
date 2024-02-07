@@ -52,7 +52,7 @@ int main(int argc, const char** argv)
   ops_stencil S2D_5pt = ops_decl_stencil(2,5,s2d_5pt,"5pt");
 
   //Reduction handle
-  ops_reduction h_err = ops_decl_reduction_handle(sizeof(double), "double", "error");
+//   ops_reduction h_err = ops_decl_reduction_handle(sizeof(double), "double", "error");
 
   //declare and define global constants
   ops_decl_const("imax",1,"int",&imax);
