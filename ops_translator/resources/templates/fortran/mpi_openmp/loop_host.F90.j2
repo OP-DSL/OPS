@@ -51,7 +51,7 @@
 {% endfor %}
 {% endblock %}
 
-{% block kernel_wrapper%}
+{% block user_kernel_function %}
     CONTAINS
 
 !   =============
@@ -73,7 +73,7 @@
 
 {% endblock %}
 
-{% block kernel_wrap %}
+{% block kernel_wrapper_func %}
 SUBROUTINE {{lh.kernel}}_wrap( &
 {% for arg in lh.args %}
     {% if arg is ops_idx %}
@@ -143,7 +143,6 @@ SUBROUTINE {{lh.kernel}}_wrap( &
 {% if lh.ndim == 1 %}
     {% if not lh.has_reduction and lh.arg_idx == -1 %}
     !$OMP PARALLEL DO PRIVATE(n_x)
-    !$OMP SIMD
     {% endif %}
     {% if lh.has_reduction %}
     !$OMP PARALLEL DO PRIVATE(n_x){{reduct_line[0]}}
@@ -199,9 +198,9 @@ SUBROUTINE {{lh.kernel}}_wrap( &
     {% if arg is ops_dat %}
         {% if soa_set %}
             {% if lh.ndim == 1 %}
-                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}})){% if not loop.last %},{% endif %}&
+                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}})){% if not loop.last %},{% endif %} &
             {% elif lh.ndim == 2 %}
-                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}) + ((n_y-1)*xdim{{arg.id+1}}*{{arg.strides[1] | int}})){% if not loop.last %},{% endif %}&
+                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}) + ((n_y-1)*xdim{{arg.id+1}}*{{arg.strides[1] | int}})){% if not loop.last %},{% endif %} &
             {% elif lh.ndim == 3 %} 
                 opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}) + ((n_y-1)*xdim{{arg.id+1}}*{{arg.strides[1] | int}}) + ((n_z-1)*ydim{{arg.id+1}}*xdim{{arg.id+1}}*{{arg.strides[2] | int}})){% if not loop.last %},{% endif %} &
             {% endif %}
@@ -227,7 +226,6 @@ SUBROUTINE {{lh.kernel}}_wrap( &
 {% if lh.ndim == 1 %}
     END DO
     {% if not lh.has_reduction and lh.arg_idx == -1 %}
-    !$OMP END SIMD
     !$OMP END PARALLEL DO
     {% endif %}
 {% elif lh.ndim == 2 %}
@@ -249,7 +247,7 @@ END SUBROUTINE
 
 {% endblock %}
 
-{% block kernel_host %}
+{% block kernel_host_function %}
 !   ===============
 !   Host subroutine
 !   ===============
@@ -389,13 +387,16 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
         {% if arg is ops_read %}
     CALL c_f_pointer(getGblPtrFromOpsArg(opsArg{{arg.id+1}}), opsDat{{arg.id+1}}Local, (/opsArg{{arg.id+1}}%dim/))
     dat{{arg.id+1}}_base = 1
-        {% else%}
+        {% elif arg is ops_inc or arg is ops_min or arg is ops_max %}
     CALL c_f_pointer(getReductionPtrFromOpsArg(opsArg{{arg.id+1}},block), opsDat{{arg.id+1}}Local, (/opsArg{{arg.id+1}}%dim/))
     dat{{arg.id+1}}_base = 1
         {% endif %}
     {% endif %}
 
 {% endfor %}
+!   ==============
+!   Halo exchanges
+!   ==============
 #ifndef OPS_LAZY
     CALL ops_H_D_exchanges_host(opsArgArray, {{lh.args|length}})
     CALL ops_halo_exchanges(opsArgArray, {{lh.args|length}}, range)

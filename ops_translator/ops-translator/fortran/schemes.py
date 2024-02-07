@@ -91,3 +91,57 @@ class FortranMPIOpenMP(Scheme):
         return kernel_entities.strip()
 
 Scheme.register(FortranMPIOpenMP)
+
+class FortranCuda(Scheme):
+    lang = Lang.find("F90")
+    target = Target.find("cuda")
+
+    fallback = None
+
+    consts_template = None
+    loop_host_template = Path("fortran/cuda/loop_host.F90.j2")
+    master_kernel_template = None
+
+    loop_kernel_extension = "CUF"
+
+    def translateKernel(
+        self,
+        loop: OPS.Loop,
+        program: Program,
+        app: Application,
+        kernel_idx: int
+    ) -> str:
+
+        filename = loop.kernel[:loop.kernel.find("kernel")]+"kernel.inc"
+
+        kernel_entities = retrieve_subroutine_by_name(filename, loop.kernel)
+
+        if kernel_entities is None or (kernel_entities is not None and len(kernel_entities) == 0):
+            raise ParseError(f"unable to find kernel function: {loop.kernel}")
+
+        # Replace KernelName with KernelName_gpu
+        replacement_string = loop.kernel+"_gpu"
+        output_string = re.sub(re.escape(loop.kernel), replacement_string, kernel_entities, flags=re.IGNORECASE)
+
+        # Replace all constants:   constname-> constname_opsconstant
+        def replace_consts(text):
+            if not os.path.isfile("constants_list.txt"):
+                return text
+
+            with open("constants_list.txt", 'r') as f:
+                words_list = f.read().splitlines()
+
+            if not words_list:
+                return text
+
+            regex_pattern = r'\b(' + '|'.join(words_list) + r')\b'
+            replacement_pattern = r'\g<1>_opsconstant'
+            text = re.sub(regex_pattern, replacement_pattern, text)
+
+            return text
+
+        output_string = replace_consts(output_string)
+
+        return output_string.strip()
+
+Scheme.register(FortranCuda)

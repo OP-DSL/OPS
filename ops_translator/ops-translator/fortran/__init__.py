@@ -224,9 +224,9 @@ class Fortran(Lang):
             if not typ.signed:
                 raise NotImplementedError("Fortran does not support unsigned integers")
 
-            return f"integer({int(typ.size / 8)})"
+            return f"integer(kind={int(typ.size / 8)})"
         elif isinstance(typ, OPS.Float):
-            return f"real({int(typ.size / 8)})"
+            return f"real(kind={int(typ.size / 8)})"
         elif isinstance(typ, OPS.Bool):
             return "logical"
         elif isinstance(typ, OPS.Custom):

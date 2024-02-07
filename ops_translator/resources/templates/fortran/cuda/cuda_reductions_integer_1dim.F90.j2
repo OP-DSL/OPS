@@ -1,0 +1,67 @@
+{% block reduction_1_dim_integer %}
+!   =======================================
+!   Reduction cuda kernel - INTEGER(KIND=4)
+!   =======================================
+ATTRIBUTES (DEVICE) SUBROUTINE ReductionInt4(sharedInt4, reduction_res, input_value, reduction_op)
+
+!   ====================
+!   Subroutine Arguments
+!   ====================
+    INTEGER(KIND=4), DIMENSION(0:*) :: sharedInt4
+    INTEGER(KIND=4), DIMENSION(:), DEVICE :: reduction_res
+    INTEGER(KIND=4), INTENT(IN) :: input_value
+    INTEGER(KIND=4), VALUE :: reduction_op
+
+!   ==========
+!   Local Data
+!   ==========
+    INTEGER(KIND=4) :: i1
+    INTEGER(KIND=4) :: threadID
+
+    threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)
+    i1 = ishft(blockDim%x*blockDim%y,-1)
+
+    CALL syncthreads()
+
+    sharedInt4(threadID) = input_value
+
+    DO WHILE (i1 > 0 )
+        CALL syncthreads()
+        IF (threadID < i1) THEN
+            SELECT CASE(reduction_op)
+                CASE (0)
+                    sharedInt4(threadID) = sharedInt4(threadID) + sharedInt4(threadID + i1)
+                CASE (1)
+                    IF (sharedInt4(threadID + i1) < sharedInt4(threadID)) THEN
+                        sharedInt4(threadID) = sharedInt4(threadID + i1)
+                    END IF
+                CASE (2)
+                    IF (sharedInt4(threadID + i1) > sharedInt4(threadID)) THEN
+                        sharedInt4(threadID) = sharedInt4(threadID + i1)
+                END IF
+            END SELECT
+        END IF
+        i1 = ishft(i1,-1)
+    END DO
+
+    CALL syncthreads()
+
+    IF (threadID .EQ. 0) THEN
+        SELECT CASE(reduction_op)
+            CASE (0)
+                reduction_res(1) = reduction_res(1) + sharedInt4(0)
+            CASE (1)
+                IF (sharedInt4(0) < reduction_res(1)) THEN
+                    reduction_res(1) = sharedInt4(0)
+                END IF
+            CASE (2)
+                IF (sharedInt4(0) > reduction_res(1)) THEN
+                    reduction_res(1) = sharedInt4(0)
+                END IF
+        END SELECT
+    END IF
+
+  CALL syncthreads()
+
+END SUBROUTINE ReductionInt4
+{% endblock %}

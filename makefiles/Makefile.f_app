@@ -52,7 +52,7 @@ ifndef TARGETS
 TARGETS	= seq tiled openmp mpi mpi_openmp mpi_tiled
 
 ifeq ($(OPS_COMPILER),pgi)
-TARGETS += $(APP)_cuda $(APP)_mpi_cuda $(APP)_openacc $(APP)_mpi_openacc
+TARGETS += $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled
 endif
 
 ifeq ($(OPS_COMPILER),xlp8)
@@ -74,7 +74,7 @@ all: $(APP_TARGETS)
 # Sequential version
 #
 
-$(APP)_seq: .generated $(OPS_FILES_GEN) Makefile
+$(APP)_seq: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_seq.a $(OPS_FILES_GEN)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_seq"
@@ -86,7 +86,7 @@ $(APP)_seq: .generated $(OPS_FILES_GEN) Makefile
 # mpi version
 #
 
-$(APP)_mpi: .generated $(OPS_FILES_GEN) Makefile
+$(APP)_mpi: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_mpi.a $(OPS_FILES_GEN)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi"
@@ -156,13 +156,14 @@ $(APP)_mpi_cuda_tiled: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS
 		@echo "Building ${APP}_mpi_cuda_tiled"
 		@echo ""
 		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(FLINK) $(CUDAFOR) $(PGIMPILINK) -DOPS_LAZY -DOPS_MPI $(OTHER_FILES) cuda/*_cuda_kernel.CUF $(OPS_GENERATED) $(APP_LIBS) -lops_for_mpi_cuda $(F_HDF5_LIB_MPI) -o $(APP)_mpi_cuda_tiled
+
 #=====================================================================================================================================================================
 #
 # cleanup
 #
 
 cleanall: clean
-	rm -rf ./mpi_openmp
+	rm -rf ./mpi_openmp ./cuda
 
 clean:
 	rm -f *.o
@@ -171,14 +172,13 @@ clean:
 	rm -f *.mod
 	rm -f *~
 	rm -f $(APP)_seq
-	rm -f $(APP)_openmp
-	rm -f $(APP)_cuda
-	rm -f $(APP)_mpi
-	rm -f $(APP)_mpi_openmp
-	rm -f $(APP)_mpi_cuda
-	rm -f $(APP)_openacc
-	rm -f $(APP)_mpi_openacc
 	rm -f $(APP)_tiled
+	rm -f $(APP)_openmp
+	rm -f $(APP)_mpi
 	rm -f $(APP)_mpi_tiled
+	rm -f $(APP)_mpi_openmp
+	rm -f $(APP)_cuda
+	rm -f $(APP)_mpi_cuda
+	rm -f $(APP)_mpi_cuda_tiled
 	rm -f $(OPS_GENERATED)
 	rm -f .generated constants_list.txt
