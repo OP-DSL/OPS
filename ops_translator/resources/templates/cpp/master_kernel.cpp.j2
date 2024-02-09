@@ -22,7 +22,9 @@
 
 {% block header_includes %}
 // user kernel files
-{% for lh,p in app.uniqueLoops() %}
+    {% for lh,p in app.uniqueLoops() %}
+        {% if not outerloop_enbl or lh.iterativeLoopId == -1 %}
 #include "{{lh.kernel}}_kernel.{{include_extension}}"
-{% endfor %}
+        {% endif %}
+    {% endfor %}
 {% endblock %}

@@ -134,7 +134,7 @@ class Scheme(Findable):
             self.loop_kernel_extension
         )
 
-    def genMasterKernel(self, env: Environment, app: Application, user_types_file: Optional[Path], target_config: dict, force_soa: bool) -> Tuple[str, str]:
+    def genMasterKernel(self, env: Environment, app: Application, user_types_file: Optional[Path], target_config: dict, force_soa: bool, outerloop_enbl: bool = False) -> Tuple[str, str]:
         if self.master_kernel_template is None:
             exit(f"No master kernel template registered for {self}")
 
@@ -159,7 +159,8 @@ class Scheme(Findable):
                 user_types=user_types,
                 include_extension=self.master_kernel_extension,
                 target_config=target_config,
-                soa_set=force_soa
+                soa_set=force_soa,
+                outerloop_enbl=outerloop_enbl
             ),
             name
         )
