@@ -14,6 +14,7 @@ void ops_par_loop_left_bndcon(int dim , int* ops_range, ops::hls::Grid<float>& a
 	ops::hls::AccessRange range;
 	opsRange2hlsRange(dim, ops_range, range, arg0.originalProperty);
 	constexpr int arg0_0_stencil_offset[] = {0,0,0};
+    getGrid(arg0);
 
 	for (unsigned short j = range.start[1]; j < range.end[1]; j++)
 	{
