@@ -24,9 +24,6 @@ def extractDependencies(
             continue
 
         for dependency in entity.depends:
-            #if dependency in ["hyd_print", "hyd_dump", "hyd_kill", "hyd_error_print", "hyd_error_dump"]:
-            #    continue
-
             dependency_entities = app.findEntities(dependency, entity.program, scope)  # TODO: Loop scope
 
             if len(dependency_entities) == 0:

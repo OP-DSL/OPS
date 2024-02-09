@@ -278,7 +278,7 @@ ATTRIBUTES (GLOBAL) SUBROUTINE {{lh.kernel}}_wrap( &
             {% else %}
                     opsGblDat{{arg.id+1}}Device(1){% if not loop.last %},{% endif %} &
             {% endif %}
-        {% else %}{# ops_inc or ops_min or ops_max #}
+        {% elif arg is ops_inc or arg is ops_min or arg is ops_max %}{# ops_inc or ops_min or ops_max #}
             {% if arg.dim == 1 %}
                     opsGblDat{{arg.id+1}}Device{% if not loop.last %},{% endif %} &
             {% else %}
@@ -620,18 +620,21 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
     {% endif %}
 
     {% for arg in lh.args %}
-        {% if arg is ops_inc or arg is ops_min or arg is ops_max %}
-            {% if arg is fortran_real_type %}
+        {% if arg is ops_gbl or arg is ops_reduce %}
+            {% if arg is ops_inc or arg is ops_min or arg is ops_max %}
+                {% if arg is fortran_real_type %}
     nshared = MAX(nshared, 8*{{arg.dim}}*nthread)
-            {% elif arg is fortran_integer_type %}
+                {% elif arg is fortran_integer_type %}
     nshared = MAX(nshared, 4*{{arg.dim}}*nthread)
+                {% endif %}
             {% endif %}
         {% endif %}
     {% endfor %}
 {% endif %}
 
 {% for arg in lh.args %}
-    {% if arg is ops_inc or arg is ops_min or arg is ops_max %}
+    {% if arg is ops_gbl or arg is ops_reduce %}
+        {% if arg is ops_inc or arg is ops_min or arg is ops_max %}
     reductionCardinality{{arg.id+1}} = blocksPerGrid * 1
     ALLOCATE( reductionArrayHost{{arg.id+1}}(reductionCardinality{{arg.id+1}}*({{arg.dim}})) )
     IF ( .NOT. ALLOCATED(reductionArrayDevice{{arg.id+1}}_{{lh.kernel}}) ) THEN
@@ -639,27 +642,28 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
     END IF
 
     DO i10 = 0, reductionCardinality{{arg.id+1}}-1
-        {% if arg.dim == 1 %}
-            {% if arg is ops_inc %}
+            {% if arg.dim == 1 %}
+                {% if arg is ops_inc %}
         reductionArrayHost{{arg.id+1}}(i10+1) = 0.0
-            {% elif arg is ops_min %}
+                {% elif arg is ops_min %}
         reductionArrayHost{{arg.id+1}}(i10+1) = HUGE(reductionArrayHost{{arg.id+1}}(1))
-            {% elif arg is ops_max %}
+                {% elif arg is ops_max %}
         reductionArrayHost{{arg.id+1}}(i10+1) = -1.0*HUGE(reductionArrayHost{{arg.id+1}}(1))
-            {% endif %}
-        {% else %}
-            {% if arg is ops_inc %}
+                {% endif %}
+            {% else %}
+                {% if arg is ops_inc %}
         reductionArrayHost{{arg.id+1}}(i10*({{arg.dim}})+1 : i10*({{arg.dim}})+({{arg.dim}})) = 0.0
-            {% elif arg is ops_min %}
+                {% elif arg is ops_min %}
         reductionArrayHost{{arg.id+1}}(i10*({{arg.dim}})+1 : i10*({{arg.dim}})+({{arg.dim}})) = HUGE(reductionArrayHost{{arg.id+1}}(1))
-            {% elif arg is ops_max %}
+                {% elif arg is ops_max %}
         reductionArrayHost{{arg.id+1}}(i10*({{arg.dim}})+1 : i10*({{arg.dim}})+({{arg.dim}})) = -1.0*HUGE(reductionArrayHost{{arg.id+1}}(1))
+                {% endif %}
             {% endif %}
-        {% endif %}
     END DO
 
     reductionArrayDevice{{arg.id+1}}_{{lh.kernel}} = reductionArrayHost{{arg.id+1}}
 
+        {% endif %}
     {% endif %}
 {% endfor %}
 !   ==============

@@ -41,8 +41,14 @@ def translateProgram(program: Program, force_soa: bool) -> str:
         arg_list = list(args.items)
 
         kernel_name = arg_list[0].string.lower()
+
         # Update the argument list to point from 1st index onwards emitting 0th index which contain name of par loop
-        args.items = tuple(arg_list[1:])
+        #args.items = tuple(arg_list[1:])
+
+        argument_string = ", ".join(arg.tostr() for arg in arg_list[1:5]) + ", &\n"
+        argument_string += "".join(arg.tostr() + ", &\n" for arg in arg_list[5:])[:-4]
+        new_arg_list = [argument_string]
+        args.items = tuple(new_arg_list)
 
         # if kernel name not in dictionary, add it to dictionary along with arguments
         if kernel_name not in req_module:
@@ -76,7 +82,7 @@ def translateProgram(program: Program, force_soa: bool) -> str:
                 print("Error!!! Repeated kernel with incompatible arguments for kernel: "+kernel_name)
                 sys.exit()
 
-        # Update par loop name by adding kernel name to ops_par_loop
+        # Update subroutine name by replacing ops_par_loop with kernelname_host
         name.string = f"{kernel_name}_host"
 
     # 3. Update headers

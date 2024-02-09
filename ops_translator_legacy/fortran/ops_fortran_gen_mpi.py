@@ -151,8 +151,8 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
     code('')
     code('USE OPS_CONSTANTS')
     code('USE, INTRINSIC :: ISO_C_BINDING')
-    if intrinsic_funcs:
-        code(f'!USE, INTRINSIC :: {intrinsic_funcs}')
+#    if intrinsic_funcs:
+#        code(f'!USE, INTRINSIC :: {intrinsic_funcs}')
     code('')
     code('IMPLICIT NONE')
     code('')

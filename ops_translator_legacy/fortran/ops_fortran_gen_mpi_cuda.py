@@ -191,8 +191,8 @@ def ops_fortran_gen_mpi_cuda_process(consts, cur_kernel, soa_set, nk):
     code('')
     code('USE OPS_CONSTANTS')
     code('USE, INTRINSIC :: ISO_C_BINDING')
-    if intrinsic_funcs:
-        code(f'!USE, INTRINSIC :: {intrinsic_funcs}')
+#    if intrinsic_funcs:
+#        code(f'!USE, INTRINSIC :: {intrinsic_funcs}')
     code('USE CUDAFOR')
     code('')
     code('IMPLICIT NONE')

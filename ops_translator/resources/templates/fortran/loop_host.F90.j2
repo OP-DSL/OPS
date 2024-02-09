@@ -7,7 +7,6 @@ MODULE {{lh.kernel | upper}}_MODULE
 
     USE OPS_CONSTANTS
     USE, INTRINSIC :: ISO_C_BINDING
-!    USE, INTRINSIC :: {{intrinsic_funcs}}
 {% if target.name == "cuda" %}
     USE CUDAFOR
 {% endif %}

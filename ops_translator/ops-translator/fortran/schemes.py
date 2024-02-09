@@ -19,6 +19,9 @@ from fparser.common.readfortran import FortranStringReader
 from fparser.two.parser import ParserFactory
 
 def retrieve_subroutine_by_name(file_path, subroutine_name):
+# TODO : uses fparser to find and read the subroutine from file, but the existing formatting from file is lost.
+# This could results in single statement broken into multiple lines in original file to very long single line statement
+# need to break that again to multi-line statement
     if not os.path.exists(file_path):
         raise ParseError(f"Unable to find file {file_path} for subroutine: {subroutine_name}")
 
@@ -38,28 +41,34 @@ def retrieve_subroutine_by_name(file_path, subroutine_name):
             name = parseIdentifier(name_node, None)
             if name.lower() == subroutine_name.lower():
                 req_kernel = str(child)
+
                 # replacing OPS_ACC and OPS_ACC_MD to uppercase if any lowecase occurence found
                 pattern = re.compile(r'ops_acc(?:|_md)\d+', re.IGNORECASE)
                 new_kernel = pattern.sub(lambda x: x.group(0).upper(), req_kernel)
+
                 return new_kernel
 
     return None
-#    with open(file_path, 'r') as f:
-#        fortran_code = f.read()
 
-#    beg = re.search(r'\s*\bsubroutine\s*'+subroutine_name+r'\b\s*\(', fortran_code, re.IGNORECASE)
-#    if beg == None:
-#        raise ParseError(f"Unable to find subroutine: {subroutine_name}")
-#        exit(1)
-#    beg_pos = beg.start()
-#    end = re.search(r'\s*end\s*subroutine\b', fortran_code[beg_pos:], re.IGNORECASE)
-#    if end == None:
-#        raise ParseError(f"'Could not find matching end subroutine for {subroutine_name}")
-#        exit(1)
-#
-#    req_kernel = fortran_code[beg_pos:beg_pos+end.end()]
-#    return req_kernel+'\n'
+def retrieve_subroutine_by_name_regex(file_path, subroutine_name):
+    if not os.path.exists(file_path):
+        raise ParseError(f"Unable to find file {file_path} for subroutine: {subroutine_name}")
 
+    with open(file_path, 'r') as f:
+        fortran_code = f.read()
+
+    beg = re.search(r'\s*\bsubroutine\s*'+subroutine_name+r'\b\s*\(', fortran_code, re.IGNORECASE)
+    if beg == None:
+        raise ParseError(f"Unable to find subroutine: {subroutine_name}")
+        exit(1)
+    beg_pos = beg.start()
+    end = re.search(r'\s*end\s*subroutine\b', fortran_code[beg_pos:], re.IGNORECASE)
+    if end == None:
+        raise ParseError(f"'Could not find matching end subroutine for {subroutine_name}")
+        exit(1)
+
+    req_kernel = fortran_code[beg_pos:beg_pos+end.end()]
+    return req_kernel+'\n'
 
 class FortranMPIOpenMP(Scheme):
     lang = Lang.find("F90")
@@ -83,7 +92,8 @@ class FortranMPIOpenMP(Scheme):
 
         filename = loop.kernel[:loop.kernel.find("kernel")]+"kernel.inc"
 
-        kernel_entities = retrieve_subroutine_by_name(filename, loop.kernel)
+        #kernel_entities = retrieve_subroutine_by_name(filename, loop.kernel)
+        kernel_entities = retrieve_subroutine_by_name_regex(filename, loop.kernel)
 
         if kernel_entities is None or (kernel_entities is not None and len(kernel_entities) == 0):
             raise ParseError(f"unable to find kernel function: {loop.kernel}")
@@ -91,6 +101,7 @@ class FortranMPIOpenMP(Scheme):
         return kernel_entities.strip()
 
 Scheme.register(FortranMPIOpenMP)
+
 
 class FortranCuda(Scheme):
     lang = Lang.find("F90")
@@ -114,7 +125,8 @@ class FortranCuda(Scheme):
 
         filename = loop.kernel[:loop.kernel.find("kernel")]+"kernel.inc"
 
-        kernel_entities = retrieve_subroutine_by_name(filename, loop.kernel)
+        #kernel_entities = retrieve_subroutine_by_name(filename, loop.kernel)
+        kernel_entities = retrieve_subroutine_by_name_regex(filename, loop.kernel)
 
         if kernel_entities is None or (kernel_entities is not None and len(kernel_entities) == 0):
             raise ParseError(f"unable to find kernel function: {loop.kernel}")
