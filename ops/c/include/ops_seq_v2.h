@@ -306,16 +306,17 @@ void ops_par_loop_impl(indices<J...>, void (*kernel)(ParamType...),
 
 
 template <typename... ParamType, typename... OPSARG, size_t... J>
-ops_par_loop_desc<ParamType...> ops_par_loop_impl_V2(indices<J...>, void (*kernel)(ParamType...),
+ops_iter_par_loop_desc<ParamType...> ops_par_loop_impl_V2(indices<J...>, void (*kernel)(ParamType...),
                       char const *name, ops_block block, int dim, int *range,
                       OPSARG... arguments) {
   constexpr int N = sizeof...(OPSARG);
 
-  ops_par_loop_desc<ParamType...> loop_obj;
+  ops_iter_par_loop_desc<ParamType...> loop_obj;
   ops_arg args[N] = {arguments...};
   loop_obj.args.insert(loop_obj.args.end(), args, args + N);
   loop_obj.block = block;
   loop_obj.dim = dim;
+  loop_obj.argType = OPS_ITER_PAR_ARG_TYPE::OPS_PAR_LOOP;
 //   loop_opj->kernel_func = std::function<void(ParamType...)>(kernel);
   loop_obj.range.insert(loop_obj.range.end(), range, range + (dim * 2));
   loop_obj.name = std::string(name);
@@ -324,7 +325,7 @@ ops_par_loop_desc<ParamType...> ops_par_loop_impl_V2(indices<J...>, void (*kerne
 
 
 template<typename... PramType>
-void ops_par_loop_sigle_executer(ops_par_loop_desc<PramType...>& desc)
+void ops_par_loop_sigle_executer(ops_iter_par_loop_desc<PramType...>& desc)
 {
   std::cout << "desk kernel name: " << desc.name << std::endl;
   
@@ -446,20 +447,28 @@ void ops_iter_par_loop(unsigned int& iter, DESC_ARGS&&... descs)
  * @param arguments a list of ops_arg arguments
  */
 template <typename... ParamType, typename... OPSARG>
-ops_par_loop_desc<ParamType...> ops_par_loop(void (*kernel)(ParamType...), char const *name,
+ops_iter_par_loop_desc<ParamType...> ops_par_loop(void (*kernel)(ParamType...), char const *name,
                   ops_block block, int dim, int *range,
                   OPSARG... arguments) {
   static_assert(sizeof...(ParamType) == sizeof...(OPSARG), 
       "number of parameters of the kernel shoud match the number of ops_arg");
   ops_par_loop_impl(build_indices<sizeof...(ParamType)>{}, kernel, name,
                     block, dim, range, arguments...);
-  ops_par_loop_desc<ParamType...> desc = ops_par_loop_impl_V2(build_indices<sizeof...(ParamType)>{}, kernel, name,
+  ops_iter_par_loop_desc<ParamType...> desc = ops_par_loop_impl_V2(build_indices<sizeof...(ParamType)>{}, kernel, name,
                     block, dim, range, arguments...);
 //   ops_par_loop_executer(desc);
 //   ops_iter_par_loop(desc);
   return (desc);
 }
 
+ //TODO: implementation
+template<typename T> 
+ops_iter_par_loop_desc<ACC<T>, ACC<T>> ops_par_copy(ops_dat arg_target, ops_dat arg_origin)
+{
+    ops_iter_par_loop_desc<ACC<T>, ACC<T>> desc;
+    desc.argType = OPS_ITER_PAR_ARG_TYPE::OPS_DAT_COPY;
+    return (desc);
+}
 
 #endif /* C++11 */
 

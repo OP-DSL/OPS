@@ -499,10 +499,14 @@ struct ops_arg {
 };
 
 
+enum OPS_ITER_PAR_ARG_TYPE{
+  OPS_PAR_LOOP,
+  OPS_DAT_COPY
+};
 /** Storage for OPS parallel loop description **/
-
-class ops_par_loop_core{
+class ops_iter_par_loop_arg_core{
 public:
+  OPS_ITER_PAR_ARG_TYPE argType;
   std::vector<ops_arg> args;
   ops_block block;
   int dim; 
@@ -512,7 +516,7 @@ public:
 
 
 template<typename... ParamType>
-class ops_par_loop_desc : public ops_par_loop_core{
+class ops_iter_par_loop_desc : public ops_iter_par_loop_arg_core{
 public:
   std::function<void(ParamType...)> kernel_func;
 };

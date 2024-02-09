@@ -35,7 +35,7 @@ MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
 
 .PHONY: mklib
 
-TARGETS = seq mpi ompoffload mpi_ompoffload
+TARGETS = seq #mpi mpi_ompoffload ompoffload
 
 ifdef HDF5_INSTALL_PATH
 	TARGETS += hdf5_seq hdf5_mpi
