@@ -122,14 +122,17 @@ def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
                 print(f"For loop found: {parseLocation(node)}")
                 parseForLoop(child)
                 
-            if child.kind == CursorKind.CALL_EXPR:
+            elif child.kind == CursorKind.CALL_EXPR:
                 parseCall(child, macros, program)
                 
-            if child.kind.is_unexposed():
+            elif child.kind.is_unexposed():
                 parseCallUnexposed(child, macros, program)
                 
             elif child.kind in [CursorKind.VAR_DECL, CursorKind.BINARY_OPERATOR]:
                 parseVariableDeclaration(child, macros, program)
+                
+            # elif child.kind == CursorKind.OVERLOADED_DECL_REF:
+            #     parseStencil()
                 
     return program
 
@@ -182,9 +185,12 @@ def parseVariableDeclaration(node: Cursor, macros: Dict[Location, str], program:
         rval_expr = children[1]
     
     logging.debug("Variable detected: %s", var_name)
-    
-    if rval_expr.kind == CursorKind.CALL_EXPR and rval_expr.spelling == "ops_decl_stencil":
-        out = parseFunctionCall(children[1])
+    print(f"rval_expr.spelling: {rval_expr.spelling}, kind: {rval_expr.kind}")
+    if rval_expr.kind == CursorKind.CALL_EXPR or rval_expr.kind.is_unexposed():
+        if rval_expr.kind.is_unexposed():
+            out = parseUnexposedFunction(rval_expr)
+        else:
+            out = parseFunctionCall(rval_expr)
         
         if not out:
             return
@@ -194,7 +200,8 @@ def parseVariableDeclaration(node: Cursor, macros: Dict[Location, str], program:
             ParseError("Expected ops_decl stencil as RHS expression", parseLocation(node))
             
         parseStencil(var_name, args, parseLocation(node), macros, program)
-      
+    
+     
         
 def parseFunctionCall(node: Cursor) -> Union[Tuple[str, List[Cursor]], None]:
     args = []
