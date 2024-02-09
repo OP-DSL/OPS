@@ -86,14 +86,17 @@ int main(int argc, char **argv)
   ops_timers(&ct0, &et0);
 
   ops_randomgen_init(0, 0);
-  ops_fill_random_uniform(dat0);
+
+  for (int i = 0; i < 2; i++) {
+    ops_fill_random_uniform(dat0);
+    ops_print_dat_to_txtfile(dat0, "random.dat");
+  }
 
   int iter_range[] = {0,4,0,4};
   ops_par_loop(random_print_kernel,"random_print_kernel", grid2D, 2, iter_range,
                ops_arg_dat(dat0, 2, S2D_00, "double", OPS_READ));
 
   ops_timers(&ct1, &et1);
-  ops_print_dat_to_txtfile(dat0, "random.dat");
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
   ops_printf("This run is considered PASSED\n");

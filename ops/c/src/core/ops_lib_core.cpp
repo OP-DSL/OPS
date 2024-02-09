@@ -2175,7 +2175,7 @@ void ops_put_data(ops_dat dat) {
   ops_device_sync(dat->block->instance);
 }
 
-void ops_randomgen_init_host(unsigned int seed, int options, std::mt19937 ops_rand_gen) {
+void ops_randomgen_init_host(unsigned int seed, int options, std::mt19937 &ops_rand_gen) {
   /* Set seed */
   int comm_global_size = ops_num_procs();
   int my_global_rank = ops_get_proc();
@@ -2186,7 +2186,7 @@ void ops_randomgen_init_host(unsigned int seed, int options, std::mt19937 ops_ra
     ops_rand_gen.seed(seed*my_global_rank+my_global_rank);
 }
 
-void ops_fill_random_uniform_host(ops_dat dat, std::mt19937 ops_rand_gen) {
+void ops_fill_random_uniform_host(ops_dat dat, std::mt19937 &ops_rand_gen) {
   OPS_instance *instance = OPS_instance::getOPSInstance();
   size_t cumsize = dat->dim;
   const char *type = dat->type;
@@ -2233,7 +2233,7 @@ void ops_fill_random_uniform_host(ops_dat dat, std::mt19937 ops_rand_gen) {
   delete[] iter_range;
 }
 
-void ops_fill_random_normal_host(ops_dat dat, std::mt19937 ops_rand_gen) {
+void ops_fill_random_normal_host(ops_dat dat, std::mt19937 &ops_rand_gen) {
   OPS_instance *instance = OPS_instance::getOPSInstance();
   size_t cumsize = dat->dim;
   const char *type = dat->type;
