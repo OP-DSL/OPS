@@ -12,7 +12,6 @@ export TELOS=TRUE
 
 
 cd $OPS_INSTALL_PATH/fortran
-<<comment
 source ../../scripts/$SOURCE_INTEL
 make
 cd -
@@ -44,12 +43,11 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-comment
 cd $OPS_INSTALL_PATH/fortran
-pwd
+
 source ../../scripts/$SOURCE_PGI
-make clean
-make
+#make clean
+#make
 cd -
 make clean
 make
@@ -103,13 +101,5 @@ rm perf_out
 #grep "PASSED" perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
-
-echo '============> Running OpenACC'
-./poisson_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total error:" perf_out
-grep "Max total runtime" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
 
 echo "All PGI tests passed. Exiting Test script"

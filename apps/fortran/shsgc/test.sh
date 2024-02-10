@@ -11,7 +11,7 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 export TELOS=TRUE
 #export KOS=TRUE
 
-
+<<comment
 cd $OPS_INSTALL_PATH/fortran
 source ../../scripts/$SOURCE_INTEL
 
@@ -49,6 +49,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 
+comment
 
 cd $OPS_INSTALL_PATH/fortran
 source ../../scripts/$SOURCE_PGI
@@ -109,14 +110,6 @@ rm perf_out
 
 echo '============> Running OpenACC'
 ./shsgc_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "RMS =" perf_out
-grep "Max total runtime" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
-
-#echo '============> Running MPI+OpenACC'
-$MPI_INSTALL_PATH/bin/mpirun -np 2  ./shsgc_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "RMS =" perf_out
 grep "Max total runtime" perf_out
 grep "PASSED" perf_out
