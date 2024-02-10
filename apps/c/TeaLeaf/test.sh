@@ -10,7 +10,7 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 #export AMOS=TRUE
 #export DMOS=TRUE
 #export TELOS=TRUE
-export KOS=TRUE
+#export KOS=TRUE
 
 if [[ -v TELOS || -v KOS ]]; then
 
@@ -126,7 +126,7 @@ cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_INTEL_SYCL
 #make -j -B
 make clean
-make
+make IEEE=1
 cd $OPS_INSTALL_PATH/../apps/c/TeaLeaf
 
 make clean
