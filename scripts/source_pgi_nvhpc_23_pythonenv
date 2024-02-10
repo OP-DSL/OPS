@@ -57,8 +57,10 @@ fi
 
 #PGI based HDF5
 unset HDF5_INSTALL_PATH
-export HDF5_INSTALL_PATH=/rr-home/gihan/HDF5-PGI-18
-export LD_LIBRARY_PATH=/rr-home/gihan/HDF5-PGI-18/lib:$LD_LIBRARY_PATH
+#export HDF5_INSTALL_PATH=/rr-home/gihan/HDF5-PGI-18
+#export LD_LIBRARY_PATH=/rr-home/gihan/HDF5-PGI-18/lib:$LD_LIBRARY_PATH
+export HDF5_INSTALL_PATH=/rr-home/gihan//HDF5/build_hdf5/gnu/
+export LD_LIBRARY_PATH=/rr-home/gihan//HDF5/build_hdf5/gnu/lib:$LD_LIBRARY_PATH
 #export HDF5_INSTALL_PATH=/ext-home/asl/install/build_hdf5/gnu
 #export PATH=$HDF5_INSTALL_PATH/bin:$PATH
 #export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
