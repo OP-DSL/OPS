@@ -205,8 +205,8 @@ class Application:
     def validateLoops(self, lang: Lang) -> None:
         for loop, Program in self.loops():
             num_opts = len([arg for arg in loop.args if getattr(arg, "opt", False)])
-            if num_opts > 32:
-                raise OpsError(f"number of optional arguments exceeds 32: {num_opts}", loop.loc)
+            #if num_opts > 128:
+            #    raise OpsError(f"number of optional arguments exceeds 128: {num_opts}", loop.loc)
             for arg in loop.args:
                 if isinstance(arg, ops.ArgDat):
                     self.validateArgDat(arg, loop, lang)

@@ -12,7 +12,7 @@ OPS_GENERATED_SUFFIX=_ops
 APP = multidim
 MAIN_SRC=multidim
 
-TARGETS=seq tiled openmp mpi mpi_tiled mpi_openmp
+TARGETS=seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled
 
 #include $(OPS_INSTALL_PATH)/../makefiles/Makefile.f_app_legacy
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.f_app

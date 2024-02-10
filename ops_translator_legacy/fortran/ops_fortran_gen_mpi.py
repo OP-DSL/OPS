@@ -61,6 +61,7 @@ remove_trailing_w_space = util_fortran.remove_trailing_w_space
 comm = util_fortran.comm
 code = util_fortran.code
 populate_stride = util_fortran.populate_stride
+extract_intrinsic_functions = util_fortran.extract_intrinsic_functions
 
 DO = util_fortran.DO
 ENDDO = util_fortran.ENDDO
@@ -117,6 +118,28 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
     name2 = name[0:i-1]
 
 ##########################################################################
+#   Retrieve Kernel Function from file
+##########################################################################
+
+    fid = open(name2+'_kernel.inc', 'r')
+    text = fid.read()
+    fid.close()
+    text = comment_remover(text)
+    text = remove_trailing_w_space(text)
+    i = text.find(name)
+    if(i < 0):
+      print("\n********")
+      print(("Error: cannot locate user kernel function: "+name+" - Aborting code generation"))
+      exit(2)
+
+    # need to check accs here - under fortran the
+    # parameter vars are declared inside the subroutine
+    # for now no check is done
+    req_kernel = util_fortran.find_kernel_routine(text, name)
+    intrinsic_funcs = extract_intrinsic_functions(req_kernel)
+    
+
+##########################################################################
 #  generate HEADER
 ##########################################################################
 
@@ -127,7 +150,9 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
     code('USE OPS_FORTRAN_RT_SUPPORT')
     code('')
     code('USE OPS_CONSTANTS')
-    code('USE ISO_C_BINDING')
+    code('USE, INTRINSIC :: ISO_C_BINDING')
+#    if intrinsic_funcs:
+#        code(f'!USE, INTRINSIC :: {intrinsic_funcs}')
     code('')
     code('IMPLICIT NONE')
     code('')
@@ -201,26 +226,9 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
     comm('  =============')
     code('')
     code('!DEC$ ATTRIBUTES FORCEINLINE :: ' + name )
-    #print(name2)
-    fid = open(name2+'_kernel.inc', 'r')
-    text = fid.read()
-    fid.close()
-    text = comment_remover(text)
-    text = remove_trailing_w_space(text)
-    i = text.find(name)
-    if(i < 0):
-      print("\n********")
-      print(("Error: cannot locate user kernel function: "+name+" - Aborting code generation"))
-      exit(2)
-
-    # need to check accs here - under fortran the
-    # parameter vars are declared inside the subroutine
-    # for now no check is done
-    req_kernel = util_fortran.find_kernel_routine(text, name)
     if len(req_kernel) != 0:
       code(req_kernel.rstrip())
 
-    #code(text)
     code('')
 
     for n in range (0, nargs):
@@ -306,7 +314,6 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
     if NDIM==1:
       if reduction != 1 and arg_idx != 1:
         code('!$OMP PARALLEL DO')
-        code('!$OMP SIMD')
       elif reduction == 1:
         code('!$OMP PARALLEL DO '+reduction_vars)
       DO('n_x','1','end_indx(1)-start_indx(1)+1')
@@ -387,7 +394,6 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
     if NDIM==1:
       ENDDO()
       if reduction != 1 and arg_idx != 1:
-        code('!$OMP END SIMD')
         code('!$OMP END PARALLEL DO')
     elif NDIM==2:
       ENDDO()
@@ -586,6 +592,9 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
           code('')
 
     config.depth = 0
+    comm('    ==============')
+    comm('    Halo exchanges')
+    comm('    ==============')
     code('#ifndef OPS_LAZY')
     config.depth = 4
     code('CALL ops_H_D_exchanges_host(opsArgArray, '+str(nargs)+')')

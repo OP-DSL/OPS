@@ -36,7 +36,7 @@ endif
 
 ifeq ($(OPS_COMPILER),pgi)
 	TARGETS += f_cuda f_mpi_cuda
-	C_OPS_INC += $(CUDA_INC)
+	C_OPS_INC += -I$(CUDA_INC)
 endif
 
 all: $(TARGETS)
@@ -88,6 +88,9 @@ $(F_OPS_OBJ)/%.o : $(F_OPS_SRC)/%.F90 $(F_OPS_OBJ)/ops_for_declarations.o
 $(F_OPS_OBJ)/%_cuda.o : $(F_OPS_SRC)/%.F90
 	$(FC) $(FFLAGS) $(FMODS_CUDA) -c $< -o $@
 
+$(F_OPS_OBJ)/%_cuda.o : $(F_OPS_SRC)/%.CUF
+	$(FC) $(FFLAGS) $(CUDAFOR) $(FMODS_CUDA) -c $< -o $@
+
 
 hdf5_seq: mkdir $(F_OPS_OBJ)/ops_hdf5.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_hdf5_declarations.o
 	ar -r $(F_OPS_LIB)/libops_hdf5.a $(F_OPS_OBJ)/ops_hdf5.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_hdf5_declarations.o
@@ -136,8 +139,9 @@ f_mpi_cuda: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OP
 clean:
 	-rm -if $(F_OPS_OBJ)/*.o $(F_OPS_OBJ)/*.optrpt
 	-rm -if $(F_OPS_LIB)/*.a
-	-rm -if $(F_OPS_SRC)/*~
+	-rm -if $(C_OPS_SRC)/*~
 	-rm -if $(F_OPS_SRC)/*~
 	-rm -if $(F_OPS_MOD)/*.mod
 	-rm -if $(F_INC_MOD)/*.mod
 	-rm -if $(F_OPS)/*~
+	-rm -if *.lst cudafe

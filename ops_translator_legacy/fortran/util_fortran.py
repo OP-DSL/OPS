@@ -69,7 +69,7 @@ def IF(line):
   config.depth += 4
 
 def ELSEIF(line):
-  code('ELSEIF ('+ line + ') THEN')
+  code('ELSE IF ('+ line + ') THEN')
   config.depth += 4
 
 def ELSE():
@@ -78,7 +78,7 @@ def ELSE():
 
 def ENDIF():
   config.depth -= 4
-  code('ENDIF')
+  code('END IF')
 
 def DOWHILE(line):
   code('DO WHILE ('+line+' )')
@@ -160,4 +160,15 @@ def populate_stride(nargs,NDIM,stens):
                 stride[n][1] = 0
 
     return stride
+
+def extract_intrinsic_functions(kernel_func):
+    pattern = re.compile(r'\b(?:EXP|LOG|LOG10|SQRT|ABS|MOD|SIN|COS|TAN|ASIN|ACOS|ATAN|ATAN2|SINH|COSH|TANH|POW|MAX|MIN|SIGN|CEILING|FLOOR|NINT|INT)\s*\(', re.IGNORECASE)
+
+    matches = pattern.findall(kernel_func)
+
+    function_names = [match.strip().rstrip('(').upper() for match in matches]
+
+    result_string = ', '.join(function_names)
+
+    return result_string
 

@@ -39,6 +39,9 @@ env.tests["reduction"] = lambda arg, loop=None: hasattr(arg, "access_type") and 
     ops.AccessType.OPS_MAX
 ]
 
+env.tests["fortran_real_type"]  = lambda arg, loop=None: hasattr(arg, "typ") and ("real" in str(arg.typ).lower())
+env.tests["fortran_integer_type"]  = lambda arg, loop=None: hasattr(arg, "typ") and ("integer" in str(arg.typ).lower())
+
 def read_in(dat: ops.Dat, loop: ops.Loop) -> bool:
     for arg in loop.args:
         if not isinstance(arg, ops.ArgDat):
@@ -75,6 +78,8 @@ env.filters["ops_max"] = test_to_filter("max")
 
 env.filters["read_or_write"] = test_to_filter("read_or_write")
 env.filters["reduction"] = test_to_filter("reduction")
+env.filters["fortran_real_type"] = test_to_filter("fortran_real_type")
+env.filters["fortran_integer_type"] = test_to_filter("fortran_integer_type")
 
 env.filters["index"] = lambda xs, x: xs.index(x)
 

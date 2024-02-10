@@ -73,6 +73,18 @@ def sycl_set_flat_parallel(has_reduction: bool):
     return flat_parallel, ops_cpu
 
 
+def extract_intrinsic_functions(kernel_func: str):
+    pattern = re.compile(r'\b(?:EXP|LOG|LOG10|SQRT|ABS|MOD|SIN|COS|TAN|ASIN|ACOS|ATAN|ATAN2|SINH|COSH|TANH|POW|MAX|MIN|SIGN|CEILING|FLOOR|NINT|INT)\s*\(', re.IGNORECASE)
+
+    matches = pattern.findall(kernel_func)
+
+    function_names = [match.strip().rstrip('(').upper() for match in matches]
+
+    result_string = ', '.join(function_names)
+
+    return result_string
+
+
 class Findable(ABC):
     """
     A parent abstact class for findable support

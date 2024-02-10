@@ -12,7 +12,7 @@ endif
 CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
 
 CXXFLAGS      := $(CCFLAGS) -std=c++11
-FFLAGS         = $(CCFLAGS)
+FFLAGS         = -O3 -fast -gopt
 NVCXXFLAGS    := -O3 -std=c++11
 OPENACCFLAGS   = $(CCFLAGS) -module $(F_INC_MOD)/openacc
 
@@ -34,6 +34,7 @@ PGIMPILINK := -lmpi_cxx
 ifdef IEEE
 	CCFLAGS += -Kieee -nofma
 	CXXFLAGS += -Kieee -nofma
+    FFLAGS += -Kieee -nofma
 endif
 
 ifndef NV_ARCH
@@ -65,9 +66,15 @@ ifeq ($(NV_ARCH),Ampere)
 	OpenACCFLAGS += -ta=nvidia,cc80 -Mcuda=cc80
 	CUDAFOR      += -Mcuda=cc80
 	NVCXXFLAGS   += -arch=sm_80
+ifeq ($(NV_ARCH),Hopper)
+	OpenACCFLAGS += -ta=nvidia,cc90 -Mcuda=cc90
+	CUDAFOR 	 += -Mcuda=cc90
+	NVCXXFLAGS   += -arch=sm_90
+endif
 endif
 endif
 endif
 endif
 endif
 
+#CUDAFOR = -DOPS_WITH_CUDAFOR -cuda -gpu=rdc

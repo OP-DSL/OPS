@@ -1,0 +1,301 @@
+MODULE OPS_FORTRAN_CUDA_REDUCTIONS
+
+#ifdef OPS_WITH_CUDAFOR
+    USE ISO_C_BINDING
+    USE CUDAFOR
+
+    IMPLICIT NONE
+
+    CONTAINS
+
+!   ====================================
+!   Reduction cuda kernel - REAL(KIND=8)
+!   ====================================
+ATTRIBUTES (DEVICE) SUBROUTINE ReductionReal8(sharedReal8, reduction_res, input_value, reduction_op)
+
+!   ====================
+!   Subroutine Arguments
+!   ====================
+    REAL(KIND=8), DIMENSION(0:*) :: sharedReal8
+    REAL(KIND=8), DIMENSION(:), DEVICE :: reduction_res
+    REAL(KIND=8), INTENT(IN) :: input_value
+    INTEGER(KIND=4), VALUE :: reduction_op
+
+!   ==========
+!   Local Data
+!   ==========
+    INTEGER(KIND=4) :: i1
+    INTEGER(KIND=4) :: threadID
+
+    threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)
+    i1 = ishft(blockDim%x*blockDim%y,-1)
+  
+    CALL syncthreads()
+
+    sharedReal8(threadID) = input_value
+
+    DO WHILE (i1 > 0 )
+        CALL syncthreads()
+        IF (threadID < i1) THEN
+            SELECT CASE( reduction_op )
+                CASE (0)
+                    sharedReal8(threadID) = sharedReal8(threadID) + sharedReal8(threadID + i1)
+                CASE (1)
+                    IF (sharedReal8(threadID + i1) < sharedReal8(threadID)) THEN
+                        sharedReal8(threadID) = sharedReal8(threadID + i1)
+                    ENDIF
+                CASE (2)
+                    IF (sharedReal8(threadID + i1) > sharedReal8(threadID)) THEN
+                        sharedReal8(threadID) = sharedReal8(threadID + i1)
+                    ENDIF
+            END SELECT
+        ENDIF
+        i1 = ishft(i1,-1)
+    END DO
+
+    CALL syncthreads()
+
+    IF (threadID .EQ. 0) THEN
+        SELECT CASE( reduction_op )
+            CASE (0)
+                reduction_res(1) = reduction_res(1) + sharedReal8(0)
+            CASE (1)
+                IF (sharedReal8(0) < reduction_res(1)) THEN
+                    reduction_res(1) = sharedReal8(0)
+                ENDIF
+            CASE (2)
+                IF (sharedReal8(0) > reduction_res(1)) THEN
+                    reduction_res(1) = sharedReal8(0)
+                ENDIF
+        END SELECT
+    ENDIF
+
+    CALL syncthreads()
+
+END SUBROUTINE ReductionReal8
+
+!   =======================================
+!   Reduction cuda kernel - INTEGER(KIND=4)
+!   =======================================
+ATTRIBUTES (DEVICE) SUBROUTINE ReductionInt4(sharedInt4, reduction_res, input_value, reduction_op)
+
+!   ====================
+!   Subroutine Arguments
+!   ====================
+    INTEGER(KIND=4), DIMENSION(0:*) :: sharedInt4
+    INTEGER(KIND=4), DIMENSION(:), DEVICE :: reduction_res
+    INTEGER(KIND=4), INTENT(IN) :: input_value
+    INTEGER(KIND=4), VALUE :: reduction_op
+
+!   ==========
+!   Local Data
+!   ==========
+    INTEGER(KIND=4) :: i1
+    INTEGER(KIND=4) :: threadID
+
+    threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)
+    i1 = ishft(blockDim%x*blockDim%y,-1)
+
+    CALL syncthreads()
+
+    sharedInt4(threadID) = input_value
+
+    DO WHILE (i1 > 0 )
+        CALL syncthreads()
+        IF (threadID < i1) THEN
+            SELECT CASE(reduction_op)
+                CASE (0)
+                    sharedInt4(threadID) = sharedInt4(threadID) + sharedInt4(threadID + i1)
+                CASE (1)
+                    IF (sharedInt4(threadID + i1) < sharedInt4(threadID)) THEN
+                        sharedInt4(threadID) = sharedInt4(threadID + i1)
+                    ENDIF
+                CASE (2)
+                    IF (sharedInt4(threadID + i1) > sharedInt4(threadID)) THEN
+                        sharedInt4(threadID) = sharedInt4(threadID + i1)
+                ENDIF
+            END SELECT
+        ENDIF
+        i1 = ishft(i1,-1)
+    END DO
+
+    CALL syncthreads()
+
+    IF (threadID .EQ. 0) THEN
+        SELECT CASE(reduction_op)
+            CASE (0)
+                reduction_res(1) = reduction_res(1) + sharedInt4(0)
+            CASE (1)
+                IF (sharedInt4(0) < reduction_res(1)) THEN
+                    reduction_res(1) = sharedInt4(0)
+                ENDIF
+            CASE (2)
+                IF (sharedInt4(0) > reduction_res(1)) THEN
+                    reduction_res(1) = sharedInt4(0)
+                ENDIF
+        END SELECT
+    ENDIF
+
+  CALL syncthreads()
+
+END SUBROUTINE ReductionInt4
+
+!   ======================================================
+!   Multi-dimensional reduction cuda kernel - REAL(KIND=8)
+!   ======================================================
+ATTRIBUTES (DEVICE) SUBROUTINE ReductionReal8Mdim(sharedReal8, reduction_res, input_value, reduction_op, dim)
+
+!   ====================
+!   Subroutine Arguments
+!   ====================
+    REAL(KIND=8), DIMENSION(0:*) :: sharedReal8
+    REAL(KIND=8), DIMENSION(:), DEVICE :: reduction_res
+    REAL(KIND=8), DIMENSION(:), INTENT(IN) :: input_value
+    INTEGER(KIND=4), VALUE :: reduction_op
+    INTEGER(KIND=4), VALUE :: dim
+
+!   ==========
+!   Local Data
+!   ==========
+    INTEGER(KIND=4) :: i1, i2
+    INTEGER(KIND=4) :: d
+    INTEGER(KIND=4) :: threadID
+
+    threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)
+    i1 = ishft(blockDim%x*blockDim%y,-1)
+
+    CALL syncthreads()
+
+    sharedReal8(threadID*dim:threadID*dim+dim-1) = input_value(1:dim)
+
+    DO WHILE (i1 > 0 )
+        CALL syncthreads()
+        IF (threadID < i1) THEN
+            SELECT CASE(reduction_op)
+                CASE (0)
+                    DO i2 = 0, dim-1
+                        sharedReal8(threadID*dim + i2) = sharedReal8(threadID*dim + i2) + sharedReal8((threadID + i1)*dim + i2)
+                    END DO
+                CASE (1)
+                    DO i2 = 0, dim-1
+                        IF (sharedReal8((threadID + i1)*dim + i2) < sharedReal8(threadID*dim + i2)) THEN
+                            sharedReal8(threadID*dim + i2) = sharedReal8((threadID + i1)*dim + i2)
+                        ENDIF
+                    END DO
+                CASE (2)
+                    DO i2 = 0, dim-1
+                        IF (sharedReal8((threadID + i1)*dim + i2) > sharedReal8(threadID*dim + i2)) THEN
+                            sharedReal8(threadID*dim + i2) = sharedReal8((threadID + i1)*dim + i2)
+                        ENDIF
+                    END DO
+            END SELECT
+        ENDIF
+        i1 = ishft(i1,-1)
+    END DO
+
+    CALL syncthreads()
+
+    IF (threadID .EQ. 0) THEN
+        SELECT CASE(reduction_op)
+            CASE (0)
+                reduction_res(1:dim) = reduction_res(1:dim) + sharedReal8(0:dim-1)
+            CASE (1)
+                DO i2 = 1, dim
+                    IF (sharedReal8(i2-1) < reduction_res(i2)) THEN
+                        reduction_res(i2) = sharedReal8(i2-1)
+                    ENDIF
+                END DO
+            CASE (2)
+                DO i2 = 1, dim
+                    IF (sharedReal8(i2-1) > reduction_res(i2)) THEN
+                        reduction_res(i2) = sharedReal8(i2-1)
+                    ENDIF
+                END DO
+        END SELECT
+    ENDIF
+
+  CALL syncthreads()
+
+END SUBROUTINE ReductionReal8Mdim
+
+!   =========================================================
+!   Multi-dimensional reduction cuda kernel - INTEGER(KIND=4)
+!   =========================================================
+ATTRIBUTES (DEVICE) SUBROUTINE ReductionInt4Mdim(sharedInt4, reduction_res, input_value, reduction_op, dim)
+
+!   ====================
+!   Subroutine Arguments
+!   ====================
+    INTEGER(KIND=4), DIMENSION(0:*) :: sharedInt4
+    INTEGER(KIND=4), DIMENSION(:), DEVICE :: reduction_res
+    INTEGER(KIND=4), DIMENSION(:), INTENT(IN) :: input_value
+    INTEGER(KIND=4), VALUE :: reduction_op
+    INTEGER(KIND=4), VALUE :: dim
+
+!   ==========
+!   Local Data
+!   ==========
+    INTEGER(KIND=4) :: i1, i2
+    INTEGER(KIND=4) :: d
+    INTEGER(KIND=4) :: threadID
+
+    threadID = (threadIdx%y-1)*blockDim%x + (threadIdx%x - 1)
+    i1 = ishft(blockDim%x*blockDim%y,-1)
+
+    CALL syncthreads()
+
+    sharedInt4(threadID*dim:threadID*dim+dim-1) = input_value(1:dim)
+
+    DO WHILE (i1 > 0 )
+        CALL syncthreads()
+        IF (threadID < i1) THEN
+            SELECT CASE(reduction_op)
+                CASE (0)
+                    DO i2 = 0, dim-1
+                        sharedInt4(threadID*dim + i2) = sharedInt4(threadID*dim + i2) + sharedInt4((threadID + i1)*dim + i2)
+                    END DO
+                CASE (1)
+                    DO i2 = 0, dim-1
+                        IF (sharedInt4((threadID + i1)*dim + i2) < sharedInt4(threadID*dim + i2)) THEN
+                            sharedInt4(threadID*dim + i2) = sharedInt4((threadID + i1)*dim + i2)
+                        ENDIF
+                    END DO
+                CASE (2)
+                    DO i2 = 0, dim-1
+                        IF (sharedInt4((threadID + i1)*dim + i2) > sharedInt4(threadID*dim + i2)) THEN
+                            sharedInt4(threadID*dim + i2) = sharedInt4((threadID + i1)*dim + i2)
+                        ENDIF
+                    END DO
+            END SELECT
+        ENDIF
+        i1 = ishft(i1,-1)
+    END DO
+
+    CALL syncthreads()
+
+    IF (threadID .EQ. 0) THEN
+        SELECT CASE(reduction_op)
+            CASE (0)
+                reduction_res(1:dim) = reduction_res(1:dim) + sharedInt4(0:dim-1)
+            CASE (1)
+                DO i2 = 1, dim
+                    IF (sharedInt4(i2-1) < reduction_res(i2)) THEN
+                        reduction_res(i2) = sharedInt4(i2-1)
+                    ENDIF
+                END DO
+            CASE (2)
+                DO i2 = 1, dim
+                    IF (sharedInt4(i2-1) > reduction_res(i2)) THEN
+                        reduction_res(i2) = sharedInt4(i2-1)
+                    ENDIF
+                END DO
+        END SELECT
+    ENDIF
+
+  CALL syncthreads()
+
+END SUBROUTINE ReductionInt4Mdim
+
+#endif
+
+END MODULE OPS_FORTRAN_CUDA_REDUCTIONS

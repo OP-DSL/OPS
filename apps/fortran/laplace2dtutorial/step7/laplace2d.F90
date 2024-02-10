@@ -13,6 +13,7 @@
 
 program laplace
     use OPS_Fortran_Reference
+    use OPS_Fortran_hdf5_Declarations
     use OPS_CONSTANTS
 
     use, intrinsic :: ISO_C_BINDING
@@ -132,7 +133,9 @@ program laplace
                & ops_arg_dat(d_A, 1, S2D_0pt, "real(kind=8)", OPS_WRITE), &
                & ops_arg_idx())
 
-    write(*,'(a,i5,a,i5,a)') 'Jacobi relaxation Calculation:', imax+2, ' x', jmax+2, ' mesh'
+    if (ops_is_root() == 1) then
+        write(*,'(a,i5,a,i5,a)') 'Jacobi relaxation Calculation:', imax+2, ' x', jmax+2, ' mesh'
+    end if
 
     iter=0
 
@@ -150,6 +153,9 @@ program laplace
                & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(kind=8)", OPS_WRITE), &
                & ops_arg_idx())
 
+!    call ops_fetch_block_hdf5_file(grid2D, "A.h5")
+!    call ops_fetch_dat_hdf5_file(d_A, "A.h5")
+
 !    call ops_print_dat_to_txtfile(d_A, "data_A.txt")
 !    call ops_print_dat_to_txtfile(d_Anew, "data_Anew.txt")
 
@@ -165,7 +171,7 @@ program laplace
                         & ops_arg_dat(d_A,    1, S2D_0pt, "real(kind=8)", OPS_WRITE), &
                         & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(kind=8)", OPS_READ))
                         
-        IF ( mod(iter,10) == 0 .and. ops_is_root() ) THEN
+        IF ( mod(iter,10) == 0 .and. ops_is_root() == 1) THEN
             write(*,'(i5,a,f16.7)') iter, ', ',error
         END IF
 
@@ -173,7 +179,9 @@ program laplace
 
     end do  ! End of do while loop
 
-    write(*,'(i5,a,f16.7)') iter, ', ',error
+    if (ops_is_root() == 1) then
+        write(*,'(i5,a,f16.7)') iter, ', ',error
+    end if
 
     err_diff = abs((100.0*(error/2.421354960840227e-03))-100.0)
 
@@ -186,8 +194,9 @@ program laplace
     end if    
 
     call ops_timers( endTime )
-    write(*,'(a,f16.7,a)')  ' completed in ', endTime - startTime, ' seconds'
-
+    if (ops_is_root() == 1) then
+        write(*,'(a,f16.7,a)')  ' completed in ', endTime - startTime, ' seconds'
+    end if
     call ops_exit( )
 
 end program laplace
