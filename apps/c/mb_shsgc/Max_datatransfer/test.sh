@@ -1,59 +1,29 @@
 #!/bin/bash
 set -e
 cd $OPS_INSTALL_PATH/c
-#f [ -x "$(command -v enroot)" ]; then
-# -----
-# Fails to compile with NVCC
-# -----
-#  cd -
-#  enroot start --root --mount $OPS_INSTALL_PATH/../:/tmp/OPS --rw cuda112hip sh -c 'cd /tmp/OPS/apps/c/mb_shsgc/Max_datatransfer; ./test.sh'
-#  grep "PASSED" perf_out
-#  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#  rm perf_out
-#  echo "All HIP complied applications PASSED"
-#i
 
-<<COMMENT
-if [[ -v HIP_INSTALL_PATH ]]; then
-  source ../../scripts/$SOURCE_HIP
-  make -j -B
-  cd -
-  make clean
-  rm -f .generated
-  make shsgc_hip shsgc_mpi_hip -j
-   
-  echo '============> Running HIP'
-  ./shsgc_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-  grep "Pre shock error is:" perf_out
-  grep "Post shock error is:" perf_out
-  grep "Post shock Error is" perf_out
-  grep "Total Wall time" perf_out
-  grep -e "acceptable" -e "correct"  perf_out
-  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-  rm perf_out
-  
-  echo '============> Running MPI+HIP'
-  mpirun --allow-run-as-root -np 2 ./shsgc_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-  grep "Pre shock error is:" perf_out
-  grep "Post shock error is:" perf_out
-  grep "Post shock Error is" perf_out
-  grep "Total Wall time" perf_out
-  grep -e "acceptable" -e "correct"  perf_out
-  rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-  rm perf_out
-  echo "All HIP complied applications PASSED : Moving no to Intel Compiler Tests" > perf_out
-  exit 0
-fi
-COMMENT
+export SOURCE_INTEL=source_intel_2021.3_pythonenv
+export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
+export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
+#export AMOS=TRUE
+#export DMOS=TRUE
+#export TELOS=TRUE
+#export KOS=TRUE
+
+if [[ -v TELOS || -v KOS ]]; then
+
+#============================ Test with Intel Classic Compilers==========================================
+echo "Testing Intel classic complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_INTEL
-make -j -B
+make clean
+make
+
 cd $OPS_INSTALL_PATH/../apps/c/mb_shsgc/Max_datatransfer
 make clean
-rm -f .generated
-make IEEE=1 -j
-
+make IEEE=1
 
 
 #============================ Test SHSGC with Intel Compilers==========================================================
@@ -97,6 +67,7 @@ grep -e "acceptable" -e "correct"  perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+if [[ -v CUDA_INSTALL_PATH ]]; then
 echo '============> Running CUDA'
 ./shsgc_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Pre shock error is:" perf_out
@@ -126,10 +97,31 @@ rm perf_out
 #grep -e "acceptable" -e "correct"  perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
+fi
 
-<<COMMENT
-echo '============> Running OpenCL on CPU'
-./shsgc_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
+#cleanup
+rm rhoin1.* x1.* rhoout1.*  rhoin1 rhoout1 x1
+
+echo "All Intel classic complier based applications ---- PASSED"
+
+fi
+
+
+if [[ -v TELOS ]]; then
+	#============================ Test with Intel SYCL Compilers==========================================
+echo "Testing Intel SYCL complier based applications ---- "
+cd $OPS_INSTALL_PATH/c
+source ../../scripts/$SOURCE_INTEL_SYCL
+make clean
+make
+cd $OPS_INSTALL_PATH/../apps/c/mb_shsgc/Max_datatransfer
+
+make clean
+#make IEEE=1 -j
+make IEEE=1 shsgc_sycl shsgc_mpi_sycl shsgc_mpi_sycl_tiled
+
+echo '============> Running SYCL on CPU'
+./shsgc_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Pre shock error is:" perf_out
 grep "Post shock error is:" perf_out
 grep "Post shock Error is" perf_out
@@ -137,11 +129,9 @@ grep "Total Wall time" perf_out
 grep -e "acceptable" -e "correct"  perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
-COMMENT
 
-echo '============> Running OpenCL on GPU'
-./shsgc_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-./shsgc_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+echo '============> Running MPI+SYCL on CPU'
+$MPI_INSTALL_PATH/bin/mpirun -np 12 ./shsgc_mpi_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Pre shock error is:" perf_out
 grep "Post shock error is:" perf_out
 grep "Post shock Error is" perf_out
@@ -150,22 +140,8 @@ grep -e "acceptable" -e "correct"  perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-<<COMMENT
-echo '============> Running MPI+OpenCL on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./shsgc_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./shsgc_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
-grep "Pre shock error is:" perf_out
-grep "Post shock error is:" perf_out
-grep "Post shock Error is" perf_out
-grep "Total Wall time" perf_out
-grep -e "acceptable" -e "correct"  perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
-COMMENT
-
-echo '============> Running MPI+OpenCL on GPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+echo '============> Running MPI+SYCL Tiled on CPU'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_sycl_tiled OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Pre shock error is:" perf_out
 grep "Post shock error is:" perf_out
 grep "Post shock Error is" perf_out
@@ -177,16 +153,24 @@ rm perf_out
 #cleanup
 rm rhoin1.* x1.* rhoout1.*  rhoin1 rhoout1 x1
 
-cd -
+echo "All Intel SYCL complier based applications ---- PASSED"
+
+fi
+
+
+if [[ -v TELOS ]]; then
+
+#============================ Test with PGI Compilers==========================================
+echo "Testing PGI/NVHPC complier based applications ---- "
+cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_PGI
-
 make clean
-make 
-cd -
-make clean
+#make -j
 make
+cd $OPS_INSTALL_PATH/../apps/c/mb_shsgc/Max_datatransfer
+make clean
+make IEEE=1
 
-#============================ Test SHSGC with PGI Compilers==========================================================
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=10 ./shsgc_openmp > perf_out
 grep "Pre shock error is:" perf_out
@@ -227,6 +211,7 @@ grep -e "acceptable" -e "correct"  perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+if [[ -v CUDA_INSTALL_PATH ]]; then
 echo '============> Running CUDA'
 ./shsgc_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Pre shock error is:" perf_out
@@ -246,6 +231,17 @@ grep "Total Wall time" perf_out
 grep -e "acceptable" -e "correct"  perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
+
+echo '============> Running MPI+CUDA+Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_cuda_tiled OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Pre shock error is:" perf_out
+grep "Post shock error is:" perf_out
+grep "Post shock Error is" perf_out
+grep "Total Wall time" perf_out
+grep -e "acceptable" -e "correct"  perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
 #echo '============> Running MPI+CUDA with GPU-Direct'
 #MV2_USE_CUDA=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_cuda -gpudirect OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 #grep "Pre shock error is:" perf_out
@@ -256,19 +252,10 @@ rm perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
 
-#echo '============> Running OpenCL on CPU'
-#./shsgc_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
-#grep "Pre shock error is:" perf_out
-#grep "Post shock error is:" perf_out
-#grep "Post shock Error is" perf_out
-#grep "Total Wall time" perf_out
-#grep -e "acceptable" -e "correct"  perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#rm perf_out
+fi
 
-echo '============> Running OpenCL on GPU'
-./shsgc_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-./shsgc_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+echo '============> Running OMPOFFLOAD'
+./shsgc_offload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Pre shock error is:" perf_out
 grep "Post shock error is:" perf_out
 grep "Post shock Error is" perf_out
@@ -277,39 +264,8 @@ grep -e "acceptable" -e "correct"  perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-#echo '============> Running MPI+OpenCL on CPU'
-#$MPI_INSTALL_PATH/bin/mpirun -np 20 ./shsgc_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
-#$MPI_INSTALL_PATH/bin/mpirun -np 20 ./shsgc_mpi_opencl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
-#grep "Pre shock error is:" perf_out
-#grep "Post shock error is:" perf_out
-#grep "Post shock Error is" perf_out
-#grep "Total Wall time" perf_out
-#grep -e "acceptable" -e "correct"  perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#rm perf_out
-
-echo '============> Running MPI+OpenCL on GPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_opencl OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Pre shock error is:" perf_out
-grep "Post shock error is:" perf_out
-grep "Post shock Error is" perf_out
-grep "Total Wall time" perf_out
-grep -e "acceptable" -e "correct"  perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-
-echo '============> Running OpenACC'
-./shsgc_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Pre shock error is:" perf_out
-grep "Post shock error is:" perf_out
-grep "Post shock Error is" perf_out
-grep "Total Wall time" perf_out
-grep -e "acceptable" -e "correct"  perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
-
-echo '============> Running MPI+OpenACC'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+echo '============> Running MPI+OMPOFFLOAD'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_offload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Pre shock error is:" perf_out
 grep "Post shock error is:" perf_out
 grep "Post shock Error is" perf_out
@@ -320,4 +276,48 @@ rm perf_out
 
 #cleanup
 rm rhoin1.* x1.* rhoout1.*  rhoin1 rhoout1 x1
-echo "All PGI Tests Passed. Exiting test script"
+
+echo "All PGI complier based applications ---- PASSED"
+
+fi
+
+if [[ -v AMOS ]]; then
+
+echo "Testing AMD HIP complier based applications ---- "
+cd $OPS_INSTALL_PATH/c
+source ../../scripts/$SOURCE_AMD_HIP
+make clean
+make
+
+cd $OPS_INSTALL_PATH/../apps/c/mb_shsgc/Max_datatransfer
+make clean
+make IEEE=1 shsgc_hip shsgc_mpi_hip
+
+echo '============> Running HIP'
+./shsgc_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Pre shock error is:" perf_out
+grep "Post shock error is:" perf_out
+grep "Post shock Error is" perf_out
+grep "Total Wall time" perf_out
+grep -e "acceptable" -e "correct"  perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running MPI+HIP'
+mpirun --allow-run-as-root -np 2 ./shsgc_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Pre shock error is:" perf_out
+grep "Post shock error is:" perf_out
+grep "Post shock Error is" perf_out
+grep "Total Wall time" perf_out
+grep -e "acceptable" -e "correct"  perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo "All AMD HIP complier based applications ---- PASSED"
+
+#cleanup
+rm rhoin1.* x1.* rhoout1.*  rhoin1 rhoout1 x1
+
+fi
+
+echo "---------- Exiting Test Script "

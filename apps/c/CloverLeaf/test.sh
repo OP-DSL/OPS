@@ -12,8 +12,6 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 #export TELOS=TRUE
 #export KOS=TRUE
 
-#<<comment
-
 if [[ -v TELOS || -v KOS ]]; then
 
 #============================ Test with Intel Classic Compilers==========================================
@@ -23,8 +21,8 @@ source ../../scripts/$SOURCE_INTEL
 #make -j -B
 make clean
 make
-cd $OPS_INSTALL_PATH/../apps/c/CloverLeaf
 
+cd $OPS_INSTALL_PATH/../apps/c/CloverLeaf
 make clean
 rm -f .generated
 make IEEE=1 cloverleaf_dev_seq cloverleaf_dev_mpi cloverleaf_seq cloverleaf_tiled cloverleaf_openmp cloverleaf_mpi \
@@ -117,8 +115,6 @@ fi
 echo "All Intel classic complier based applications ---- PASSED"
 
 fi
-
-#comment
 
 if [[ -v TELOS ]]; then
 
@@ -224,7 +220,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f clover.out
 
 if [[ -v CUDA_INSTALL_PATH ]]; then
-make IEEE=1 cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_mpi_cuda_tiled 
+make IEEE=1 cloverleaf_cuda cloverleaf_mpi_cuda cloverleaf_mpi_cuda_tiled
 #cloverleaf_mpi_openacc_tiled cloverleaf_openacc cloverleaf_mpi_openacc \
 
 echo '============> Running CUDA'
