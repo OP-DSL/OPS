@@ -39,7 +39,7 @@
 
 #include <ops_hip_rt_support.h>
 
-#include <hip/hiprand.h>
+#include <hiprand/hiprand.h>
 hiprandGenerator_t ops_rand_gen;
 int hiprand_initialised = 0;
 

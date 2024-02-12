@@ -2,8 +2,8 @@ CC      := icx
 CXX       := icpx
 FC := ifort
 ifdef DEBUG
-	CCFLAGS   := -O0 -std=c99 -fPIC -DUNIX -Wall -ffloat-store -g
-	CXXFLAGS   := -O0 -fPIC -DUNIX -Wall -ffloat-store -g -std=c++11
+	CCFLAGS   := -O0 -std=c99 -fPIC -Wall -ffloat-store -g
+	CXXFLAGS   := -O0 -fPIC -Wall -ffloat-store -g -std=c++11
 else
 	CCFLAGS   := -Ofast -march=native -std=c99 -fPIC -Wall -g -ftree-vectorize
 	CXXFLAGS   := -Ofast -march=native -fPIC -Wall -g -std=c++11

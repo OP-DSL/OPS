@@ -46,7 +46,7 @@
 
 #include <hip/hip_runtime.h>
 #include <ops_device_rt_support.h>
-#include <hip/hiprand.h>
+#include <hiprand/hiprand.h>
 
 /*
 * personal stripped-down version of cutil_inline.h
