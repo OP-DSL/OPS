@@ -11,9 +11,9 @@ ifdef IEEE
 	CCFLAGS += -fp-model=strict 
 	CXXFLAGS += -fp-model=strict 
 endif
-OMPFLAGS := -fopenmp
+OMPFLAGS := -qopenmp
 ifdef THREADED
-	THREADING_FLAGS ?= -fopenmp
+	THREADING_FLAGS ?= -qopenmp
 endif
 ifdef PROFILE_ITT
 	CXXFLAGS += -DPROFILE_ITT -I$(VTUNE_PROFILER_DIR)/include
@@ -28,4 +28,4 @@ SYCLMPICXX = mpicxx
 #SYCLMPICXX = dpcpp $(shell mpicxx --showme:compile) $(shell mpicxx --showme:link)
 #SYCL_FLAGS = -fsycl -I$(SYCL_INSTALL_PATH)/include #-fsycl-targets=spir64_x86_64-unknown-unknown-sycldevice #intel sycl 
 MPICXX=mpicxx
-CXXFLAGS += -DINTEL_SYCL
+SYCL_FLAGS += -D__INTEL_SYCL__
