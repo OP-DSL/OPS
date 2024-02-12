@@ -8,16 +8,16 @@ module purge
 #. ~/.bashrc
 export PATH=/rr-home/gihan/numawrap:$PATH
 
+#OPS specifics
+export OPS_COMPILER=pgi
+export OPS_INSTALL_PATH=/rr-home/gihan/OPS/ops
+export OP_AUTO_SOA=1
+
 #module load llvm-14.0.6/llvm-14.0.6
 #export LIBCLANG_PATH=/opt/llvm/14.0.6/lib/libclang.so
 
 module load python/3.9.7
 source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
-
-#OPS specifics
-export OPS_COMPILER=pgi
-export OPS_INSTALL_PATH=/rr-home/gihan/OPS/ops
-export OP_AUTO_SOA=1
 
 #PGI/NVIDIA MPI and Compilers
 module load nvhpc/23.1
@@ -59,11 +59,11 @@ fi
 unset HDF5_INSTALL_PATH
 #export HDF5_INSTALL_PATH=/rr-home/gihan/HDF5-PGI-18
 #export LD_LIBRARY_PATH=/rr-home/gihan/HDF5-PGI-18/lib:$LD_LIBRARY_PATH
-export HDF5_INSTALL_PATH=/rr-home/gihan//HDF5/build_hdf5/gnu/
-export LD_LIBRARY_PATH=/rr-home/gihan//HDF5/build_hdf5/gnu/lib:$LD_LIBRARY_PATH
-#export HDF5_INSTALL_PATH=/ext-home/asl/install/build_hdf5/gnu
-#export PATH=$HDF5_INSTALL_PATH/bin:$PATH
-#export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
+#export HDF5_INSTALL_PATH=/rr-home/gihan//HDF5/build_hdf5/gnu/
+#export LD_LIBRARY_PATH=/rr-home/gihan//HDF5/build_hdf5/gnu/lib:$LD_LIBRARY_PATH
+export HDF5_INSTALL_PATH=/ext-home/asl/install/build_hdf5/gnu
+export PATH=$HDF5_INSTALL_PATH/bin:$PATH
+export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
 
 #Tridiagonal LIB
 ##
