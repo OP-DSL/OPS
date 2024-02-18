@@ -29,7 +29,7 @@ endif
 CUDAFOR	= -DOPS_WITH_CUDAFOR
 OpenACCFLAGS = -acc
 CXXLINK := -pgc++libs -lstdc++
-PGIMPILINK := -lmpi_cxx
+MPILINK := -lmpi_cxx
 
 ifdef IEEE
 	CCFLAGS += -Kieee -nofma
