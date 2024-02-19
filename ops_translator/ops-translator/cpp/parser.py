@@ -670,7 +670,7 @@ def parseArgIdx(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[
 def parseIterLoop(node: Cursor, args: List[Cursor], scope: List[Location], macros: Dict[Location, str], program: Program)-> ops.IterLoop:
     print(f"Found iterLoop: {node.spelling}, scope: (start - {getLocation(node.extent.start)}, end - {getLocation(node.extent.end)}), args: {print([(arg.spelling, arg.kind) for arg in args])}")
     is_iter_literal = args[0].kind == CursorKind.INTEGER_LITERAL
-    loops = []
+    iterLoop_args = []
     if is_iter_literal:
         iter = parseIntLiteral(args[0])
     else:
@@ -688,7 +688,7 @@ def parseIterLoop(node: Cursor, args: List[Cursor], scope: List[Location], macro
             loop = parseLoop(arg, loop_args, parseLocation(arg), macros)
             loop.iterativeLoopId = len(program.outerloops)
             
-            loops.append(loop)
+            iterLoop_args.append(loop)
             
             if loop not in program.loops:
                 program.loops.append(loop)
@@ -697,11 +697,23 @@ def parseIterLoop(node: Cursor, args: List[Cursor], scope: List[Location], macro
                 program.ndim = loop.ndim
             elif program.ndim < loop.ndim:
                 program.ndim = loop.ndim
+                
+        elif name == "ops_par_copy":
+            iterLoop_args.append(parse_par_copy(arg, loop_args, parseLocation(arg), macros))
             
-    return ops.IterLoop(len(program.outerloops), iter, scope, loops)
+            
+    return ops.IterLoop(len(program.outerloops), iter, scope, iterLoop_args)
             
         
-        
+def parse_par_copy(loopNode: Cursor, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> ops.parCopy:
+    if len(args) != 2:
+        raise ParseError("Incorrect number of args passed to ops_par_copy")
+    
+    print(args)
+    target = args[0].spelling
+    source = args[1].spelling      
+    
+    return ops.parCopy(target, source)
         
     
 def parseLoop(loopNode: Cursor, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> ops.Loop:

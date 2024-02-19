@@ -76,15 +76,15 @@ class Function(Entity):
     def __str__(self) -> str:
         return f"Function(name='{self.name}', loc={self.loc}, scope={self.scope}, depends={self.depends}, parameters={self.parameters}, ast={self.ast})"
 
-@dataclass
-class OuterForLoop(Entity):
-    decls: List(Any) = field(default_factory=list)
-    conditions: List(Any) = field(default_factory=list)
-    iters: List(Any) = field(default_factory=list)
-    loc: Location = None
+# @dataclass
+# class OuterForLoop(Entity):
+#     decls: List(Any) = field(default_factory=list)
+#     conditions: List(Any) = field(default_factory=list)
+#     iters: List(Any) = field(default_factory=list)
+#     loc: Location = None
     
-    def __str(self) -> str:
-        return f"ForStmt(loc='{self.loc}', decls='{self.decls}', conditions='{self.conditions}', iters='{self.iters}'"
+#     def __str__(self) -> str:
+#         return f"ForStmt(loc='{self.loc}', decls='{self.decls}', conditions='{self.conditions}', iters='{self.iters}'"
     
 @dataclass 
 class KernelDef(Function):
@@ -101,7 +101,7 @@ class Program:
     consts: List[ops.Const] = field(default_factory=list)
     stencils: List[ops.Stencil] = field(default_factory=list)
     loops: List[ops.Loop] = field(default_factory=list)
-    outerloops: List[OuterForLoop] = field(default_factory=list)
+    outerloops: List[ops.IterLoop] = field(default_factory=list)
     entities: List[Entity] = field(default_factory=list)
     
     ndim: Optional[int] = None
@@ -205,11 +205,15 @@ class Application:
     def loops(self) -> List[Tuple[ops.Loop, Program]]:
         return flatten(map(lambda l: (l, p), p.loops) for p in self.programs)
 
-    def uniqueLoops(self) -> List[ops.Loop]:
+    def uniqueLoops(self) -> List[Tuple[ops.Loop, Program]]:
         return uniqueBy(self.loops(), lambda m: m[0].kernel)
-        for p in self.programs:
-            id = findId
 
+    def outerloops(self)->List[Tuple[ops.IterLoop, Program]]:
+        return flatten(map(lambda l: (l,p), p.outerloops) for p in self.programs)
+    
+    def uniqueOuterLoops(self) -> List[Tuple[ops.IterLoop, Program]]:
+        return uniqueBy(self.outerloops(), lambda m: m[0].unique_id)
+    
     def validate(self, lang: Lang) -> None:
         self.validateConst(lang)
         self.validateLoops(lang)

@@ -287,6 +287,8 @@ class ArgDat(Arg):
     dim: int
     restrict: Optional[bool] = False
     prolong: Optional[bool] = False
+    global_dat_id: Optional[int] = -1
+    
 
 #    stride: Optional[List] = None
 
@@ -295,7 +297,7 @@ class ArgDat(Arg):
 
     def __str__(self) -> str:
         return (
-            f"ArgDat(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17} opt={self.opt}, dat_id={self.dat_id}, stencil_id={self.stencil_ptr})"
+            f"ArgDat(id={self.id}, loc={self.loc}, access_type={str(self.access_type) + ',':17} opt={self.opt}, dat_id={self.dat_id}, global_dat_id={self.global_dat_id}, stencil_id={self.stencil_ptr})"
             )
 
 @dataclass(frozen=True)
@@ -371,23 +373,83 @@ class IterLoop:
     id = int
     num_iter: Union[int, str]
     scope: List[Location]
-    loops: List[Loop]
+    itr_args: List[Any]
+    dats: List[List[Dat, AccessType]] = []
+    joint_args: List[Arg] = []
+    unique_id: int
     
-    def __init__(self, id: int, num_iter: Union[int, str], scope: List[Location], loops: List[Loop] = []) -> None:
+    def __init__(self, id: int, num_iter: Union[int, str], scope: List[Location], args: List[Any] = []) -> None:
         self.id = id
         self.num_iter = num_iter
         self.scope = scope
-        self.loops = loops
+        self.itr_args = args
+        
+        key =  ""
+        for arg in args:
+            if isinstance(arg, Loop):
+                key += arg.kernel
+                self.addLoop(arg)
+            elif isinstance(arg, parCopy):
+                self.addParCopy(arg)
+        self.unique_id = hash(key)
 
     def __str__(self) -> str:
         outer_loop_str = ""
-        outer_loop_str += f"OPS Iterative Loop at {self.scope[0]}:\n ID: {self.id}, with num of iteration: {self.num_iter}\n \
-            Loops: \n \
-            ------ \n"
-        for loop in self.loops:
-            outer_loop_str += str(loop)
+        outer_loop_str += f"OPS Iterative Loop at {self.scope[0]}:\n ID: {self.id}, UID: {self.unique_id}, with num of iteration: {self.num_iter}\n\n DATS: \n ------ \n"
+        
+        for i,dat in enumerate(self.dats):
+             outer_loop_str += f"dat{i}: " + str(dat) + "\n"
+        
+        outer_loop_str +="\n ARGS: \n ------ \n"
+        for i,arg in enumerate(self.itr_args):
+            outer_loop_str += f" arg{i}: " + str(arg)
         
         return outer_loop_str
+    
+    def addParCopy(self, parcopy: parCopy) -> None:
+        dat_id = findIdx(self.dats, lambda d: d[0].ptr == parcopy.target)
+        if dat_id is None:
+            OpsError(f"ParCopy missing target dat used in any par-loop {parcopy.target}")
+        if self.dats[dat_id][1] == AccessType.OPS_READ:
+            self.dats[dat_id][1] = AccessType.OPS_RW
+        
+        dat_id = findIdx(self.dats, lambda d: d[0].ptr == parcopy.source)
+        if dat_id is None:
+            OpsError(f"ParCopy missing source dat used in any par-loop {parcopy.source}")
+        if self.dats[dat_id][1] == AccessType.OPS_WRITE:
+            self.dats[dat_id][1] = AccessType.OPS_RW
+        
+    def addLoop(self, loop: Loop) -> None:
+        for arg in loop.args:
+            arg_id = len(self.joint_args)
+            
+            if isinstance(arg, ArgDat):
+                dat_id = findIdx(self.dats, lambda d: d[0].ptr == loop.dats[arg.dat_id].ptr)
+                
+                if dat_id is None:
+                    dat_id = len(self.dats)
+                    self.dats.append([Dat(dat_id, loop.dats[arg.dat_id].ptr,loop.dats[arg.dat_id].dim, loop.dats[arg.dat_id].typ, loop.dats[arg.dat_id].soa), arg.access_type])
+                else:
+                    if (self.dats[dat_id][1] == AccessType.OPS_READ and arg.access_type == AccessType.OPS_WRITE) or \
+                        (self.dats[dat_id][1] == AccessType.OPS_WRITE and arg.access_type == AccessType.OPS_READ):
+                            self.dats[dat_id][1] = AccessType.OPS_RW    
+                        
+                loop.args[arg.id] = ArgDat(arg.dat_id, arg.loc, arg.access_type, arg.opt, arg.dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id)    
+            
+            # elif isinstance(arg, ArgIdx):
+            # elif isinstance(arg, ArgReduce):
+            # elif isinstance(arg, ArgGbl):
+            
+class parCopy:
+    target: str
+    source: str
+    
+    def __init__(self, target: str, source: str) -> None:
+        self.target = target
+        self.source = source
+        
+    def __str__(self) -> str:
+        return f"OPS par copy from {self.source} to {self.target}"
         
 class Loop:
     loc: Location

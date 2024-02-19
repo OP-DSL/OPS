@@ -270,16 +270,22 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, target_config: di
                 path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.{extension}")
 
         # Write the gernerated source file
-        with open(path, "w") as file:
+        if not scheme.target.name == "hls" or loop.iterativeLoopId == -1:
+            with open(path, "w") as file:
 
-            file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
-            file.write(new_source)
+                file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+                file.write(new_source)
 
+                if args.verbose:
+                    print(f"Generated loop host {i} of {len(app.uniqueLoops())}: {path}")
+        else:
             if args.verbose:
-                print(f"Generated loop host {i} of {len(app.uniqueLoops())}: {path}")
+                print(f"Skipping loop host {i} of {len(app.uniqueLoops())}: {path}")
 
-            
-    # Gernerate master kernel file
+    # # Generate iterativeLoop Host
+    # if scheme.target.name == "hls":
+             
+    # Generate master kernel file
     if scheme.master_kernel_template is not None:
         user_types_name = f"user_types.{scheme.lang.include_ext}"
         user_types_candidates = [Path(dir, user_types_name) for dir in include_dirs]
