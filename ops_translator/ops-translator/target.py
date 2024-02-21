@@ -87,6 +87,8 @@ class HLS(Target):
         "SLR_count" : 1,
         "device" : 7,
         "vector_factor" : 1,
+        "mem_vector_factor": 1,
+        "iter_par_factor": 1,
         "stencil_type" : "float",
         "data_width" : 32,
         "mem_data_width" : 32,

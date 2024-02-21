@@ -35,6 +35,16 @@ class Scheme(Findable):
     ) -> List[Tuple[str, str]]:
             return None
     
+    def genIterLoopDevice(
+        self,
+        env: Environment,
+        iterLoop: ops.IterLoop,
+        program: Program,
+        app: Application,
+        config: dict
+    ) -> List[Tuple[str, str]]:
+        return None
+    
     def genConfigHost(
         self,
         env: Environment,
