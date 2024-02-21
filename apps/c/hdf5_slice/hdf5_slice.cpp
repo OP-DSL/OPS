@@ -62,12 +62,12 @@ double h{(xyzRange[1] - xyzRange[0]) / (nx - 1)};
 void copy_double_single(const ops_dat src_double, ops_dat desc_single) {
   ops_block block{src_double->block};
   const int space_dim{block->dims};
-  int* local{new int(space_dim)};
+  int* local{new int[space_dim]};
   for (int d = 0; d < space_dim; d++) {
     local[d] = 0;
   }
   ops_stencil local_stencil{ops_decl_stencil(space_dim, 1, local, "local")};
-  int* iter_range{new int(2 * space_dim)};
+  int* iter_range{new int[2 * space_dim]};
 #ifdef OPS_MPI
   const sub_dat *sd = OPS_sub_dat_list[src_double->index];
   for (int d = 0; d < space_dim; d++) {

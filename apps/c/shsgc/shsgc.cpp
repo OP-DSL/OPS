@@ -389,7 +389,9 @@ int main(int argc, char **argv) {
     //  ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
     //  exit(0);
     //}
-
+#ifdef OPS_LAZY
+    ops_execute();
+#endif
 
   }
 
@@ -421,6 +423,9 @@ int main(int argc, char **argv) {
   //ops_print_dat_to_txtfile(alam, "shsgc.dat");
   //ops_print_dat_to_txtfile(rho_new, "shsgc.dat");
   //ops_print_dat_to_txtfile(al, "shsgc.dat");
+  ops_fetch_block_hdf5_file(shsgc_grid, "shsgc.h5");
+  ops_fetch_dat_hdf5_file(rho_new, "shsgc.h5");
+
   ops_exit();
 
 }
