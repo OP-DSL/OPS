@@ -206,8 +206,34 @@ function build_and_run_cpp_apps ( ) {
         app_dir="${app_dir_list[i]}"
         test_cpp_app "$app_name" "$app_dir" "${target_names[@]}"
     done
+}
+
+function build_and_run_cpp_trid_apps ( ) {
+
+    target_names=("dev_seq" "dev_mpi" "seq" "tiled" "openmp" "mpi" "mpi_tiled" "mpi_openmp")
+    if [ -n "$CUDA_INSTALL_PATH" ]; then
+        target_names+=("cuda" "mpi_cuda" "mpi_cuda_tiled")
+    fi
+    if [ -n "$HIP_INSTALL_PATH" ]; then
+        target_names+=("hip" "mpi_hip" "mpi_hip_tiled")
+    fi
+    if [ -n "$SYCL_INSTALL_PATH" ]; then
+        target_names+=("sycl" "mpi_sycl" "mpi_sycl_tiled")
+    fi
+    if [[ "$OPS_COMPILER" != "intel" ]] && [[ "$OPS_COMPILER" != "gnu" ]] && [[ "$OPS_COMPILER" != "intel-sycl" ]]; then
+        target_names+=("ompoffload" "mpi_ompoffload" "mpi_ompoffload_tiled")
+    fi
 
     trid_app_dir_list=("adi" "adi_burger" "adi_burger_3D" "compact_scheme")
+    trid_app_names_list=("adi" "adi_burger" "adi_burger" "compact3d")
+
+    length=${#trid_app_dir_list[@]}
+
+    for ((i = 0; i < length; i++)); do
+        app_name="${trid_app_names_list[i]}"
+        app_dir="${trid_app_dir_list[i]}"
+        test_cpp_app "$app_name" "$app_dir" "${target_names[@]}"
+    done
 }
 
 function build_and_run_f90_apps ( ) {
@@ -257,7 +283,8 @@ function test_cpp_app ( ) {
     local app_path=$OPS_INSTALL_PATH/../apps/c/$app_dir_name
     is_path_exist "$app_path"
 
-    apps_with_hdf5=("CloverLeaf_3D_HDF5" "lowdim_test" "multiDim" "multiDim_HDF5" "mblock" "mgrid" "hdf5_slice")
+    apps_with_hdf5=("CloverLeaf_3D_HDF5" "lowdim_test" "multiDim" "multiDim_HDF5" "mblock" "mgrid" "hdf5_slice" \
+                    "adi" "adi_burger" "adi_burger_3D" "compact_scheme")
 
     continue_test=true
     if [[ -z "$HDF5_INSTALL_PATH" ]]; then
@@ -384,6 +411,18 @@ $MPI_INSTALL_PATH/bin/mpirun -np 4 ./generate_file_mpi
             if [[ "$app_dir_name" = "hdf5_slice" ]]; then
                 rm double_ref.h5 half_ref.h5 I1_ref.h5 I4_ref.h5 J16_ref.h5 J8_ref.h5 K15_ref.h5 
                 rm K16_ref.h5 single_ref.h5 slab_ref.h5 slice3Du_ref.h5 slice3Dv_ref.h5
+            fi
+            if [[ "$app_dir_name" = "adi" ]]; then
+                rm adi_ref.h5 *.dat
+            fi
+            if [[ "$app_dir_name" = "adi_burger" ]]; then
+                rm adi_burger2D_ref.h5 adi_burger2D_init.h5 adi_burger2D_proc.h5 adi_burger2D_X.h5
+            fi
+            if [[ "$app_dir_name" = "adi_burger_3D" ]]; then
+                rm Burger3DRes_ref.h5
+            fi
+            if [[ "$app_dir_name" = "compact_scheme" ]]; then
+                rm Compact3D_ref.h5
             fi
         fi
     else
@@ -521,7 +560,7 @@ function run_cpp_target ( ) {
         else
             if [[ "$app_dir_name" = "CloverLeaf" ]] || [[ "$app_dir_name" = "CloverLeaf_3D" ]] || [[ "$app_dir_name" = "CloverLeaf_3D_HDF5" ]] || \
             [[ "$app_dir_name" = "mgrid" ]] || [[ "$app_dir_name" = "shsgc" ]] || [[ "$app_dir_name" = "hdf5_slice" ]] || \
-            [[ "$app_dir_name" = "ops-lbm/step5" ]]; then
+            [[ "$app_dir_name" = "ops-lbm/step5" ]] || [[ "$app_dir_name" = "adi_burger_3D" ]]; then
                 NP=2
             else
                 NP=4
@@ -551,7 +590,7 @@ $MPI_INSTALL_PATH/bin/mpirun -np $NP ./$app_target_name OPS_TILING $blocksize 2>
         else
             if [[ "$app_dir_name" = "CloverLeaf" ]] || [[ "$app_dir_name" = "CloverLeaf_3D" ]] || [[ "$app_dir_name" = "CloverLeaf_3D_HDF5" ]] || \
             [[ "$app_dir_name" = "mgrid" ]] || [[ "$app_dir_name" = "shsgc" ]] || [[ "$app_dir_name" = "hdf5_slice" ]] || \
-            [[ "$app_dir_name" = "ops-lbm/step5" ]]; then
+            [[ "$app_dir_name" = "ops-lbm/step5" ]] || [[ "$app_dir_name" = "adi_burger_3D" ]]; then
                 NP=2
             else
                 NP=4
@@ -645,7 +684,7 @@ $MPI_INSTALL_PATH/bin/mpirun -np $NP ./$app_target_name $blocksize 2>&1 | tee lo
     if [[ "$app_dir_name" = "mgrid" ]]; then
         if [[ "$target" = "seq" ]]; then
             mv data.h5 data_ref.h5
-        else
+        elif [[ "$target" != "dev_seq" ]] || [[ "$target" != "dev_mpi" ]]; then
             if [ -e "$app_path/data_ref.h5" ]; then
                 $HDF5_INSTALL_PATH/bin/h5diff --delta=1e-14 data.h5 data_ref.h5 > diff_out.log
                 if [ -s ./diff_out.log ]; then
@@ -689,11 +728,89 @@ $MPI_INSTALL_PATH/bin/mpirun -np $NP ./$app_target_name $blocksize 2>&1 | tee lo
         fi
     fi
 
-#   Check status from log file
-    grep_msg="PASSED"
-    if [[ "$app_dir_name" = "multiDim_HDF5" ]] || [[ "$app_dir_name" = "hdf5_slice" ]]; then
-        grep_msg="Sucessful exit from OPS"
+#   APPLICATION: adi
+    if [[ "$app_dir_name" = "adi" ]]; then
+        if [[ "$target" = "dev_seq" ]]; then
+            mv adi.h5 adi_ref.h5
+        else
+            $HDF5_INSTALL_PATH/bin/h5diff --delta=1e-14 adi.h5 adi_ref.h5 > diff_out.log
+            if [ -s ./diff_out.log ]; then
+                mv adi.h5 adi_${target}_failed.h5
+                echo " FAILURE - HDF5 file not-matched with reference file for target: $target" >> $log_file
+                return 1
+            else
+                rm adi.h5
+                echo " SUCCESS - HDF5 file matched with reference file for target: $target" >> $log_file
+            fi
+            rm diff_out.log
+        fi
     fi
+
+#   APPLICATION: adi_burger
+    if [[ "$app_dir_name" = "adi_burger" ]]; then
+        if [[ "$target" = "dev_seq" ]]; then
+            mv adi_burger2D.h5 adi_burger2D_ref.h5
+        else
+            $HDF5_INSTALL_PATH/bin/h5diff --delta=1e-14 adi_burger2D.h5 adi_burger2D_ref.h5 > diff_out.log
+            if [ -s ./diff_out.log ]; then
+                mv adi_burger2D.h5 adi_burger2D_${target}_failed.h5
+                echo " FAILURE - HDF5 file not-matched with reference file for target: $target" >> $log_file
+                return 1
+            else
+                rm adi_burger2D.h5
+                echo " SUCCESS - HDF5 file matched with reference file for target: $target" >> $log_file
+            fi
+            rm diff_out.log
+        fi
+    fi
+
+#   APPLICATION: adi_burger_3D
+    if [[ "$app_dir_name" = "adi_burger_3D" ]]; then
+        if [[ "$target" = "dev_seq" ]]; then
+            mv Burger3DRes.h5 Burger3DRes_ref.h5
+        else
+            $HDF5_INSTALL_PATH/bin/h5diff --delta=1e-14 Burger3DRes.h5 Burger3DRes_ref.h5 > diff_out.log
+            if [ -s ./diff_out.log ]; then
+                mv Burger3DRes.h5 Burger3DRes_${target}_failed.h5
+                echo " FAILURE - HDF5 file not-matched with reference file for target: $target" >> $log_file
+                return 1
+            else
+                rm Burger3DRes.h5
+                echo " SUCCESS - HDF5 file matched with reference file for target: $target" >> $log_file
+            fi
+            rm diff_out.log
+        fi
+    fi
+
+#   APPLICATION: compact_scheme
+    if [[ "$app_dir_name" = "compact_scheme" ]]; then
+        if [[ "$target" = "dev_seq" ]]; then
+            mv Compact3D.h5 Compact3D_ref.h5
+        else
+            $HDF5_INSTALL_PATH/bin/h5diff --delta=1e-14 Compact3D.h5 Compact3D_ref.h5 > diff_out.log
+            if [ -s ./diff_out.log ]; then
+                mv Compact3D.h5 Compact3D_${target}_failed.h5
+                echo " FAILURE - HDF5 file not-matched with reference file for target: $target" >> $log_file
+                return 1
+            else
+                rm Compact3D.h5
+                echo " SUCCESS - HDF5 file matched with reference file for target: $target" >> $log_file
+            fi
+            rm diff_out.log
+        fi
+    fi
+
+#   Check status from log file
+grep_msg=""
+case "$app_dir_name" in
+    "multiDim_HDF5" | "hdf5_slice" | "adi" | "adi_burger" | "adi_burger_3D" | "compact_scheme")
+        grep_msg="Successful exit from OPS"
+        ;;
+    *)
+        grep_msg="PASSED"
+        ;;
+esac
+#    echo "grep string is : $grep_msg"
     grep "$grep_msg" log_out.txt > /dev/null
     result=$?
     if [[ $result != 0 ]]; then
@@ -706,14 +823,6 @@ $MPI_INSTALL_PATH/bin/mpirun -np $NP ./$app_target_name $blocksize 2>&1 | tee lo
         rm -f log_out.txt
         return 0
     fi
-}
-
-function test_trid_cpp_app ( ) {
-    local app_name="$1"
-    echo "Testing: $app_name"
-
-    local app_path=$OPS_INSTALL_PATH/../apps/c/$app_name
-    is_path_exist "$app_path"
 }
 
 function run_f90_target ( ) {
@@ -911,12 +1020,20 @@ $MPI_INSTALL_PATH/bin/mpirun -np $NP ./$app_target_name $blocksize 2>&1 | tee lo
 # Call the check environment function
 check_env
 
-# Build the CPP OPS library
+# Build the OPS CPP library
 build_cpp_lib
 
+# Build and Test CPP Apps
 build_and_run_cpp_apps
 
+# Build and Test CPP Tridiagonal Solver Apps
+if [ -n "$TRID_INSTALL_PATH" ]; then
+    build_and_run_cpp_trid_apps
+fi
+
+# Build the OPS Fortran library
 build_f90_lib
 
+# Build and Test Fortran Apps
 build_and_run_f90_apps
 

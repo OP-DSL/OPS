@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
   ops_fetch_dat_hdf5_file(velo, "slice3Du.h5");
   ops_fetch_block_hdf5_file(slice3Dv, "slice3Dv.h5");
   ops_fetch_dat_hdf5_file(v, "slice3Dv.h5");
-  ops_printf("\nSucessful exit from OPS!\n");
+  ops_printf("\nSuccessful exit from OPS!\n");
   ops_exit();
   return 0;
 }
