@@ -240,7 +240,7 @@ function build_and_run_f90_apps ( ) {
 
     target_names=("seq" "tiled" "openmp" "mpi" "mpi_tiled" "mpi_openmp")
     if [[ "$OPS_COMPILER" == "pgi" ]]; then
-        target_names=("cuda" "mpi_cuda" "mpi_cuda_tiled")
+        target_names+=("cuda" "mpi_cuda" "mpi_cuda_tiled")
     fi
 
     app_dir_list=("laplace2dtutorial/step7" "poisson" "multiDim" "multiDim3D" "shsgc" "lowdim_test" "mblock")
