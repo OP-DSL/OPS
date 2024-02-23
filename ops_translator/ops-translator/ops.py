@@ -369,6 +369,17 @@ class Block:
             self.dats.append(dat)
 
 
+@dataclass
+class DependancyEdge:
+    source_id: int
+    source_arg_id: int
+    dat_id: int
+    sink_id: int
+    sink_arg_id: int
+    
+    def __str__(self) -> str:
+        return f"source_id: {self.source_id}, source_arg_id: {self.source_arg_id}, dat_id: {self.dat_id}, sink_id:{self.sink_id}, sink_arg_id: {self.sink_arg_id}"
+       
 class IterLoop:
     id = int
     num_iter: Union[int, str]
@@ -377,6 +388,10 @@ class IterLoop:
     dats: List[List[Dat, AccessType]] = []
     joint_args: List[Arg] = []
     unique_id: int
+    source_dats: List[Union[int, ArgDat]]
+    sink_dats: List[Union[int, ArgDat]]
+    edges: List[DependancyEdge]
+    dat_swap_map: List[int]
     
     def __init__(self, id: int, num_iter: Union[int, str], scope: List[Location], args: List[Any] = []) -> None:
         self.id = id
@@ -389,16 +404,78 @@ class IterLoop:
             if isinstance(arg, Loop):
                 key += arg.kernel
                 self.addLoop(arg)
-            elif isinstance(arg, parCopy):
-                self.addParCopy(arg)
+                
         self.unique_id = hash(key)
+        self.gen_graph()
+        
+        self.dat_swap_map = [i for i in range(len(self.dats))]
+        
+        for arg in args:
+            if isinstance(arg, parCopy):
+                self.addParCopy(arg)
+                
 
+    def gen_graph(self) -> None:
+        temp_channels = {}
+        edges = []
+        source_dats = []
+        sink_dats = []
+        for i, v in enumerate(self.itr_args):
+            if isinstance(v, Loop):
+                for arg in filter(lambda x: isinstance(x, ArgDat), v.args):
+                    dat_id = findIdx(self.dats, lambda d: d[0].ptr == v.dats[arg.dat_id].ptr)
+                    if arg.access_type == AccessType.OPS_READ or arg.access_type == AccessType.OPS_RW:
+                        if dat_id in temp_channels.keys():
+                            temp_channel = temp_channels.pop(dat_id)
+                            edges.append(DependancyEdge(temp_channel[0], temp_channel[1].id, dat_id, i, arg.id))
+                        else:
+                            edges.append(DependancyEdge(-1, len(source_dats), dat_id, i, arg.id))
+                            source_dats.append([dat_id, arg])
+                    if arg.access_type == AccessType.OPS_WRITE or arg.access_type == AccessType.OPS_RW:
+                        temp_channels[dat_id] = [i, arg]
+        
+        for key in temp_channels.keys():
+            temp_channel = temp_channels[key]   
+            edges.append(DependancyEdge(temp_channel[0], temp_channel[1].id, key, len(self.dats), len(sink_dats)))
+            sink_dats.append([key, temp_channel[1]])
+        
+        self.source_dats = source_dats
+        self.sink_dats = sink_dats
+        self.edges = edges
+        
+        for dat_id, arg in source_dats:
+            arg_id = len(self.joint_args)
+
+            idx = findIdx(sink_dats, lambda x: x[0] == dat_id)
+            if idx:
+                self.joint_args.append(ArgDat(arg_id, arg.loc, AccessType.OPS_RW, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))
+                sink_dats.remove(dat_id)
+            else:
+                self.joint_args.append(ArgDat(arg_id, arg.loc, AccessType.OPS_READ, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))
+                
+        for dat_id, arg in sink_dats:
+            arg_id = len(self.joint_args)
+            self.joint_args.append(ArgDat(arg_id, arg.loc, AccessType.OPS_WRITE, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))    
+
+  
     def __str__(self) -> str:
         outer_loop_str = ""
         outer_loop_str += f"OPS Iterative Loop at {self.scope[0]}:\n ID: {self.id}, UID: {self.unique_id}, with num of iteration: {self.num_iter}\n\n DATS: \n ------ \n"
         
         for i,dat in enumerate(self.dats):
-             outer_loop_str += f"dat{i}: " + str(dat) + "\n"
+            outer_loop_str += f"dat{i}: " + str(dat) + "\n"
+        
+        outer_loop_str += "SOURCE DATS: " + str(self.source_dats) + "\n"
+        outer_loop_str += "SINK DATS: " + str(self.sink_dats) + "\n"
+        
+        outer_loop_str +="\n JOINT_ARGS: \n ------ \n"
+        for i,arg in enumerate(self.joint_args):
+            outer_loop_str += f"arg{i}: " + str(arg) + "\n"
+            
+        outer_loop_str +="\n EDGES: \n ------ \n"
+
+        for i, edge in enumerate(self.edges):
+            outer_loop_str += f"edges{i}: " + str(edge) + "\n"
         
         outer_loop_str +="\n ARGS: \n ------ \n"
         for i,arg in enumerate(self.itr_args):
@@ -407,22 +484,19 @@ class IterLoop:
         return outer_loop_str
     
     def addParCopy(self, parcopy: parCopy) -> None:
-        dat_id = findIdx(self.dats, lambda d: d[0].ptr == parcopy.target)
-        if dat_id is None:
+        target_dat_id = findIdx(self.dats, lambda d: d[0].ptr == parcopy.target)
+        source_dat_id = findIdx(self.dats, lambda d: d[0].ptr == parcopy.source)
+        if target_dat_id is None:
             OpsError(f"ParCopy missing target dat used in any par-loop {parcopy.target}")
-        if self.dats[dat_id][1] == AccessType.OPS_READ:
-            self.dats[dat_id][1] = AccessType.OPS_RW
-        
-        dat_id = findIdx(self.dats, lambda d: d[0].ptr == parcopy.source)
-        if dat_id is None:
+        elif source_dat_id is None:
             OpsError(f"ParCopy missing source dat used in any par-loop {parcopy.source}")
-        if self.dats[dat_id][1] == AccessType.OPS_WRITE:
-            self.dats[dat_id][1] = AccessType.OPS_RW
+
+        self.dat_swap_map[target_dat_id] = source_dat_id
+        self.dat_swap_map[source_dat_id] = target_dat_id 
+         
         
     def addLoop(self, loop: Loop) -> None:
         for arg in loop.args:
-            arg_id = len(self.joint_args)
-            
             if isinstance(arg, ArgDat):
                 dat_id = findIdx(self.dats, lambda d: d[0].ptr == loop.dats[arg.dat_id].ptr)
                 

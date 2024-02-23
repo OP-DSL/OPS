@@ -51,6 +51,8 @@ class CppHLS(Scheme):
     loop_device_src_template = Path("cpp/hls/loop_dev_src_hls.cpp.j2")
     loop_datamover_inc_template = Path("cpp/hls/datamover_dev_inc_hls.hpp.j2")
     loop_datamover_src_template = Path("cpp/hls/datamover_dev_src_hls.cpp.j2")
+    iterlooop_datamover_inc_template = Path("cpp/hls/iter_loop_datamover_dev_inc_hls.hpp.j2")
+    iterlooop_datamover_src_template = Path("cpp/hls/iter_loop_datamover_dev_src_hls.cpp.j2")
     stencil_device_template = Path("cpp/hls/stencil_dev_hls.hpp.j2")
     
     loop_kernel_extension = "hpp"
@@ -186,6 +188,19 @@ class CppHLS(Scheme):
             new_kernel_body = re.sub(idx_arg_name, "idx", kernel_body)
         return new_kernel_body
 
+    def genIterLoopDevice(
+        self,
+        env: Environment,
+        iterLoop: ops.IterLoop,
+        program: Program,
+        app: Application,
+        config: dict
+    ) -> List[Tuple[str, str]]:
+        iterloop_datamover_inc_template = env.get_template(str(self.iterlooop_datamover_inc_template))
+        iterLoop_datamover_src_template = env.get_template(str(self.iterlooop_datamover_src_template))
+        return [(iterloop_datamover_inc_template.render(ilh=iterLoop, ndim=program.ndim), self.loop_datamover_inc_extension),
+                (iterLoop_datamover_src_template.render(ilh=iterLoop, ndim=program.ndim, config=config), self.loop_datamover_src_extension)]
+    
     def genLoopDevice(
         self,
         env: Environment,

@@ -1,0 +1,169 @@
+{% extends "cpp/hls/iter_loop_datamover_dev_inc_hls.hpp.j2" %}
+
+{% block header_block %}
+#include <ops_hls_datamover.hpp>
+#include <datamover_outerloop_{{ilh.id}}.hpp>
+{% endblock %}
+
+{% block datamover_prototype %}
+static void datamover_outerloop_{{ilh.id}}_dataflow_region(ops::hls::AccessRange& range,
+    {% for arg in ilh.joint_args|ops_dat %}
+    ops::hls::SizeType& arg{{arg.id}}_gridSize,
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat %}
+    ap_uint<mem_data_width>* arg{{arg.id}},
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if arg is not ops_rw %}
+        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)}}{{"," if not loop.last}}
+        {% else %}
+        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")}},
+        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "out")}}{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+        )
+{
+#pragma HLS DATAFLOW
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if arg is not ops_rw %}
+            {% if arg is ops_read%}
+    ops::hls::memReadGridV2<mem_data_width, axis_data_width, data_width>(arg{{arg.id}}, {{axis_name(arg)}}, arg{{arg.id}}_gridSize, range);
+            {% else %}
+    ops::hls::memWriteGridSimpleV2<mem_data_width, axis_data_width, data_width>(arg{{arg.id}}, {{axis_name(arg)}}, arg{{arg.id}}_gridSize, range);
+            {% endif %}
+        {% else %}
+    ops::hls::memReadGridV2<mem_data_width, axis_data_width, data_width>(arg{{arg.id}}, {{axis_name_t2(arg, "out")}}, arg{{arg.id}}_gridSize, range);
+    ops::hls::memWriteGridSimpleV2<mem_data_width, axis_data_width, data_width>(arg{{arg.id}}, {{axis_name_t2(arg, "in")}}, arg{{arg.id}}_gridSize, range);
+        {% endif %}
+    {% endfor %}
+}
+
+extern "C" 
+{
+
+void kernel_datamover_outerloop_{{ilh.id}}(
+    {% for i in range(ndim) %}
+        const unsigned short range_start_{{i}},
+        const unsigned short range_end_{{i}},
+    {% endfor%}
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% for i in range(ndim) %}
+        const unsigned short arg{{arg.id}}_gridSize_{{i}},
+        {% endfor %}
+    {% endfor %}
+        const unsigned itn outer_itr,
+    {% for arg in ilh.joint_args|ops_dat %}
+        ap_uint<data_width>* {{maxi_name(arg)}},
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if arg is not ops_rw %}
+        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)}}{{"," if not loop.last}}
+        {% else %}
+        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")}},
+        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "out")}}{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+)
+{
+    {% for i in range(ndim) %}
+    #pragma HLS INTERFACE s_axilite port = range_start_{{i}} bundle = control
+    #pragma HLS INTERFACE s_axilite port = range_end_{{i}} bundle = control
+    {% endfor%} 
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% for i in range(ndim) %}
+    #pragma HLS INTERFACE s_axilite port = arg{{arg.id}}_gridSize_{{i}} bundle = control
+        {% endfor %}
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat %} 
+    #pragma HLS INTERFACE mode=m_axi bundle=gmem{{arg.id}} depth={{config["maxi_depth"]}} maxi_read_burst_length={{config["maxi_read_burst_length"]}} maxi_write_burst_length={{config["maxi_write_burst_length"]}} \
+            num_read_outstanding={{config["num_read_outstanding"]}} num_write_outstanding={{config["num_write_outstanding"]}} \
+            port={{maxi_name(arg)}} offset={{config["maxi_offset"]}}
+    #pragma HLS INTERFACE s_axilite port = {{maxi_name(arg)}} bundle = control
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if arg is not ops_rw %}
+    #pragma HLS INTERFACE mode=axis port={{axis_name(arg)}} register
+        {% else %}
+    #pragma HLS INTERFACE mode=axis port={{axis_name(arg, "in")}} register
+    #pragma HLS INTERFACE mode=axis port={{axis_name(arg, "out")}} register
+        {% endif %}
+    {% endfor %}
+
+    #pragma HLS INTERFACE mode=s_axilite port=return bundle = control
+    #pragma HLS INTERFACE mode=ap_ctr_chain port=return bundle = control
+
+    #pragma HLS DATAFLOW
+
+    ops::hls::AccessRange range;
+    {% for i in range(ndim) %}
+    range.start[{{i}}] = range_start_{{i}};
+    range.end[{{i}}] = range_end_{{i}};
+    {% endfor%}
+    range.dim = {{ndim}};
+
+    {% for arg in ilh.joint_args|ops_dat %}
+    ops::hls::SizeType arg{{arg.id}}_gridSize = {
+        {% for i in range(config["ops_max_dim"]) %}
+            {% if i < ndim %}
+            arg{{arg.id}}_gridSize_{{i}}{{"," if (not loop.last)}}
+            {% else %}
+            1{{"," if (not loop.last)}}
+            {% endif %}
+        {% endfor %}
+    };
+    {% endfor %}
+
+#ifdef DEBUG_LOG
+    printf("[KERNEL_DEBUG]|%s| starting datamover TOP range:(%d,%d,%d) ---> (%d,%d,%d)\n", __func__,
+            range.start[0], range.start[1], range.start[2], range.end[0], range.end[1], range.end[2]);
+    {% for arg in ilh.joint_args|ops_dat %}
+    printf("[KERNEL_DEBUG]|%s| arg{{arg.id}}_gridSize: (%d, %d, %d), \n", __func__,
+            arg{{arg.id}}_gridSize[0], arg{{arg.id}}_gridSize[1], arg{{arg.id}}_gridSize[2]);
+    {% endfor %}
+#endif 
+
+    for (int i = 0; i < outer_itr; i++)
+    {
+        if (i % 2 == 0)
+        {
+            datamover_outerloop_{{ilh.id}}_dataflow_region(range, 
+    {% for arg in ilh.joint_args|ops_dat %}
+                arg{{arg.id}}_gridSize,
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat %}
+                arg{{arg.id}},
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if arg is not ops_rw %}
+        {{axis_name(arg)}}{{"," if not loop.last}}
+        {% else %}
+        {{axis_name_t2(arg, "in")}},
+        {{axis_name_t2(arg, "out")}}{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+            );
+        }
+        else
+        {
+            datamover_outerloop_{{ilh.id}}_dataflow_region(range, 
+    {% for arg in ilh.joint_args|ops_dat %}
+                arg{{ilh.dat_swap_map[arg.id]}}_gridSize,
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat %}
+                arg{{ilh.dat_swap_map[arg.id]}},
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if arg is not ops_rw %}
+        {{axis_name(arg)}}{{"," if not loop.last}}
+        {% else %}
+        {{axis_name_t2(arg, "in")}},
+        {{axis_name_t2(arg, "out")}}{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+            )
+        }
+    }
+}
+}
+
+{% endblock %}

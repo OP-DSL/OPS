@@ -387,90 +387,134 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
                 
     #Generate loop device
     #if scheme.target.name == "hls":
-    for i, (loop, program) in enumerate(app.uniqueLoops(), 1):
-        if loop.iterativeLoopId != -1:
-        # Generate loop device source
-            [(datamov_inc_source, datamov_inc_extension),
-            (datamov_src_source, datamov_src_extension),
-            (kernel_inc_source, kernel_inc_extension),
-            (kernel_src_source, kernel_src_extension)] = scheme.genLoopDevice(env, loop, program, app, target_config, i)
+    # for i, (loop, program) in enumerate(app.uniqueLoops(), 1):
+    #     if loop.iterativeLoopId != -1:
+    #     # Generate loop device source
+    #         [(datamov_inc_source, datamov_inc_extension),
+    #         (datamov_src_source, datamov_src_extension),
+    #         (kernel_inc_source, kernel_inc_extension),
+    #         (kernel_src_source, kernel_src_extension)] = scheme.genLoopDevice(env, loop, program, app, target_config, i)
 
-            datamov_inc_source = re.sub(r'\n\s*\n', '\n\n', datamov_inc_source)
-            datamov_src_source = re.sub(r'\n\s*\n', '\n\n', datamov_src_source)
-            kernel_inc_source = re.sub(r'\n\s*\n', '\n\n', kernel_inc_source)
-            kernel_src_source = re.sub(r'\n\s*\n', '\n\n', kernel_src_source)
+    #         datamov_inc_source = re.sub(r'\n\s*\n', '\n\n', datamov_inc_source)
+    #         datamov_src_source = re.sub(r'\n\s*\n', '\n\n', datamov_src_source)
+    #         kernel_inc_source = re.sub(r'\n\s*\n', '\n\n', kernel_inc_source)
+    #         kernel_src_source = re.sub(r'\n\s*\n', '\n\n', kernel_src_source)
             
-            # datamover include
-            path = None
-            if scheme.lang.kernel_dir:
-                Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
-                path = Path(args.out, scheme.target.name, "device", "include", f"datamover_{loop.kernel}.{datamov_inc_extension}")                
-            else:
-                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_datamover.{datamov_inc_extension}")
+    #         # datamover include
+    #         path = None
+    #         if scheme.lang.kernel_dir:
+    #             Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
+    #             path = Path(args.out, scheme.target.name, "device", "include", f"datamover_{loop.kernel}.{datamov_inc_extension}")                
+    #         else:
+    #             path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_datamover.{datamov_inc_extension}")
 
-            logging.debug(f"writing datamover include for: {loop.kernel} to {path}")
+    #         logging.debug(f"writing datamover include for: {loop.kernel} to {path}")
             
-            # Write the gernerated datamover include file
-            with open(path, "w") as file:
-                file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
-                file.write(datamov_inc_source)
+    #         # Write the gernerated datamover include file
+    #         with open(path, "w") as file:
+    #             file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+    #             file.write(datamov_inc_source)
 
-                if args.verbose:
-                    print(f"Generated loop device datamover inclue {i} of {len(app.uniqueLoops())}: {path}")
+    #             if args.verbose:
+    #                 print(f"Generated loop device datamover inclue {i} of {len(app.uniqueLoops())}: {path}")
 
-            #datamover src
-            path = None
-            if scheme.lang.kernel_dir:
-                Path(args.out, scheme.target.name, "device", "src").mkdir(parents=True, exist_ok=True)
-                path = Path(args.out, scheme.target.name, "device", "src", f"datamover_{loop.kernel}.{datamov_src_extension}")                
-            else:
-                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_datamover.{datamov_src_extension}")
+    #         #datamover src
+    #         path = None
+    #         if scheme.lang.kernel_dir:
+    #             Path(args.out, scheme.target.name, "device", "src").mkdir(parents=True, exist_ok=True)
+    #             path = Path(args.out, scheme.target.name, "device", "src", f"datamover_{loop.kernel}.{datamov_src_extension}")                
+    #         else:
+    #             path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_datamover.{datamov_src_extension}")
 
-            logging.debug(f"writing datamover src for: {loop.kernel} to {path}")
+    #         logging.debug(f"writing datamover src for: {loop.kernel} to {path}")
             
-            # Write the gernerated source file
-            with open(path, "w") as file:
-                file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
-                file.write(datamov_src_source)
+    #         # Write the gernerated source file
+    #         with open(path, "w") as file:
+    #             file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+    #             file.write(datamov_src_source)
 
-                if args.verbose:
-                    print(f"Generated loop device datamover src {i} of {len(app.uniqueLoops())}: {path}")
+    #             if args.verbose:
+    #                 print(f"Generated loop device datamover src {i} of {len(app.uniqueLoops())}: {path}")
                     
-            #kernel inc
-            path = None
-            if scheme.lang.kernel_dir:
-                Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
-                path = Path(args.out, scheme.target.name, "device", "include", f"kernel_{loop.kernel}.{kernel_inc_extension}")                
-            else:
-                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.{kernel_inc_extension}")
+    #         #kernel inc
+    #         path = None
+    #         if scheme.lang.kernel_dir:
+    #             Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
+    #             path = Path(args.out, scheme.target.name, "device", "include", f"kernel_{loop.kernel}.{kernel_inc_extension}")                
+    #         else:
+    #             path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.{kernel_inc_extension}")
 
-            logging.debug(f"writing kernel: {loop.kernel} include to {path}")
+    #         logging.debug(f"writing kernel: {loop.kernel} include to {path}")
             
-            # Write the gernerated source file
-            with open(path, "w") as file:
-                file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
-                file.write(kernel_inc_source)
+    #         # Write the gernerated source file
+    #         with open(path, "w") as file:
+    #             file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+    #             file.write(kernel_inc_source)
 
-                if args.verbose:
-                    print(f"Generated loop device kernel include {i} of {len(app.uniqueLoops())}: {path}")
+    #             if args.verbose:
+    #                 print(f"Generated loop device kernel include {i} of {len(app.uniqueLoops())}: {path}")
                     
-            #kernel src
-            path = None
-            if scheme.lang.kernel_dir:
-                Path(args.out, scheme.target.name, "device", "src").mkdir(parents=True, exist_ok=True)
-                path = Path(args.out, scheme.target.name, "device", "src", f"kernel_{loop.kernel}.{datamov_src_extension}")                
-            else:
-                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.{datamov_src_extension}")
+    #         #kernel src
+    #         path = None
+    #         if scheme.lang.kernel_dir:
+    #             Path(args.out, scheme.target.name, "device", "src").mkdir(parents=True, exist_ok=True)
+    #             path = Path(args.out, scheme.target.name, "device", "src", f"kernel_{loop.kernel}.{datamov_src_extension}")                
+    #         else:
+    #             path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.{datamov_src_extension}")
 
-            # Write the gernerated source file
-            with open(path, "w") as file:
-                file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
-                file.write(kernel_src_source)
+    #         # Write the gernerated source file
+    #         with open(path, "w") as file:
+    #             file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+    #             file.write(kernel_src_source)
 
-                if args.verbose:
-                    print(f"Generated loop device kernel src {i} of {len(app.uniqueLoops())}: {path}")
-                    
-    
+    #             if args.verbose:
+    #                 print(f"Generated loop device kernel src {i} of {len(app.uniqueLoops())}: {path}")
+    translatedIterUIDs = []
+    for i, (iterloop, program) in enumerate(app.uniqueOuterLoops()):
+        if iterloop.unique_id in translatedIterUIDs:
+            continue
+        
+        translatedIterUIDs.append(iterloop.unique_id)
+        
+        [(datamov_inc_source, datamov_inc_extension),
+         (datamov_src_source, datamov_src_extension)] = scheme.genIterLoopDevice(env, iterloop, program, app, target_config)
+        
+        # datamover include
+        path = None
+        if scheme.lang.kernel_dir:
+            Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
+            path = Path(args.out, scheme.target.name, "device", "include", f"datamover_outerloop_{i}.{datamov_inc_extension}")                
+        else:
+            path = Path(args.out,f"outerloop_{i}_{scheme.target.name}_datamover.{datamov_inc_extension}")
+
+        logging.debug(f"writing datamover include for: outerloop_{i} to {path}")
+        
+        # Write the gernerated datamover include file
+        with open(path, "w") as file:
+            file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+            file.write(datamov_inc_source)
+
+            if args.verbose:
+                print(f"Generated loop device datamover include {i} of {len(app.uniqueOuterLoops())}: {path}")
+ 
+        # datamover src
+        path = None
+        if scheme.lang.kernel_dir:
+            Path(args.out, scheme.target.name, "device", "src").mkdir(parents=True, exist_ok=True)
+            path = Path(args.out, scheme.target.name, "device", "src", f"datamover_outerloop_{i}.{datamov_src_extension}")                
+        else:
+            path = Path(args.out,f"outerloop_{i}_{scheme.target.name}_datamover.{datamov_src_extension}")
+
+        logging.debug(f"writing datamover src for: outerloop_{i} to {path}")
+        
+        # Write the gernerated datamover include file
+        with open(path, "w") as file:
+            file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+            file.write(datamov_src_source)
+
+            if args.verbose:
+                print(f"Generated loop device datamover src {i} of {len(app.uniqueOuterLoops())}: {path}")
+   
 def isDirPath(path):
     if os.path.isdir(path):
         return path

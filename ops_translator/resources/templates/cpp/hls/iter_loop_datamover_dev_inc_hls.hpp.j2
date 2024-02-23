@@ -14,22 +14,24 @@ arg{{arg.id}}_stream_{{suffix}}
 #pragma once
 #include "common_config.hpp"
 #include <ops_hls_datamover.hpp>
+
 {% endblock %}
 {% block datamover_prototype %}
-extern "C" void datamover_{{lh.kernel}}(
-    {% for i in range(lh.ndim) %}
+extern "C" void datamover_outerloop_{{ilh.id}}(
+    {% for i in range(ndim) %}
         const unsigned short range_start_{{i}},
         const unsigned short range_end_{{i}},
     {% endfor%}
-    {% for arg in lh.args|ops_dat %}
-        {% for i in range(lh.ndim) %}
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% for i in range(ndim) %}
         const unsigned short arg{{arg.id}}_gridSize_{{i}},
         {% endfor %}
     {% endfor %}
-    {% for arg in lh.args|ops_dat %}
+        const unsigned itn outer_itr,
+    {% for arg in ilh.joint_args|ops_dat %}
         ap_uint<data_width>* {{maxi_name(arg)}},
     {% endfor %}
-    {% for arg in lh.args|ops_dat %}
+    {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is not ops_rw %}
         hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
         {% else %}
