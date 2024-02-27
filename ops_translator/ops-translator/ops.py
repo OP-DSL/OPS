@@ -513,7 +513,9 @@ class IterLoop:
             # elif isinstance(arg, ArgIdx):
             # elif isinstance(arg, ArgReduce):
             # elif isinstance(arg, ArgGbl):
-            
+    def getLoops(self)-> List[Loop]:
+        return filter(lambda x: isinstance(x, Loop), self.itr_args)
+    
 class parCopy:
     target: str
     source: str
@@ -664,3 +666,15 @@ class Loop:
 
         return f"{kernel_detail_str}\n\n    {args_str}\n {dat_str}\n"
 
+    def get_read_stencil(self) -> str:
+        for arg in filter(lambda x: isinstance(x, ArgDat), self.args):
+            if arg.access_type == AccessType.OPS_READ or arg.access_type == AccessType.OPS_RW:
+                return arg.stencil_ptr    
+        return None
+    
+    def get_write_stencil(self) -> str:
+        for arg in filter(lambda x: isinstance(x, ArgDat), self.args):
+            if arg.access_type == AccessType.OPS_WRITE:
+                return arg.stencil_ptr    
+        return None
+    

@@ -47,22 +47,26 @@ class CppHLS(Scheme):
     master_kernel_template = Path("cpp/hls/master_kernel.cpp.j2")
     common_config_template = Path("cpp/hls/common_config_dev_hls.hpp.j2")
     host_config_template = Path("cpp/hls/xrt_config.cfg.j2")
-    loop_device_inc_template = Path("cpp/hls/loop_dev_inc_hls.hpp.j2")
-    loop_device_src_template = Path("cpp/hls/loop_dev_src_hls.cpp.j2")
-    loop_datamover_inc_template = Path("cpp/hls/datamover_dev_inc_hls.hpp.j2")
-    loop_datamover_src_template = Path("cpp/hls/datamover_dev_src_hls.cpp.j2")
-    iterlooop_datamover_inc_template = Path("cpp/hls/iter_loop_datamover_dev_inc_hls.hpp.j2")
-    iterlooop_datamover_src_template = Path("cpp/hls/iter_loop_datamover_dev_src_hls.cpp.j2")
+    # loop_device_inc_template = Path("cpp/hls/loop_dev_inc_hls.hpp.j2")
+    # loop_device_src_template = Path("cpp/hls/loop_dev_src_hls.cpp.j2")
+    # loop_datamover_inc_template = Path("cpp/hls/datamover_dev_inc_hls.hpp.j2")
+    # loop_datamover_src_template = Path("cpp/hls/datamover_dev_src_hls.cpp.j2")
+    loop_device_PE_template = Path("cpp/hls/loop_dev_PE_hls_V2.hpp.j2")
+    iterloop_datamover_inc_template = Path("cpp/hls/iter_loop_datamover_dev_inc_hls.hpp.j2")
+    iterloop_datamover_src_template = Path("cpp/hls/iter_loop_datamover_dev_src_hls.cpp.j2")
+    iterloop_device_inc_template = Path("cpp/hls/iter_loop_dev_inc_hls.hpp.j2")
+    iterloop_device_src_template = Path("cpp/hls/iter_loop_dev_src_hls.cpp.j2")
     stencil_device_template = Path("cpp/hls/stencil_dev_hls.hpp.j2")
     
     loop_kernel_extension = "hpp"
     master_kernel_extension = "hpp"
     common_config_extension = "hpp"
     host_config_extension = "cfg"
-    loop_device_inc_extension = "hpp"
-    loop_device_src_extension = "cpp"
-    loop_datamover_inc_extension = "hpp"
-    loop_datamover_src_extension = "cpp"
+    iterloop_device_inc_extension = "hpp"
+    iterloop_device_src_extension = "cpp"
+    iterloop_datamover_inc_extension = "hpp"
+    iterloop_datamover_src_extension = "cpp"
+    loop_device_PE_extension = "hpp"
     stencil_device_extension = "hpp"
     
     def translateKernel(
@@ -196,10 +200,25 @@ class CppHLS(Scheme):
         app: Application,
         config: dict
     ) -> List[Tuple[str, str]]:
-        iterloop_datamover_inc_template = env.get_template(str(self.iterlooop_datamover_inc_template))
-        iterLoop_datamover_src_template = env.get_template(str(self.iterlooop_datamover_src_template))
-        return [(iterloop_datamover_inc_template.render(ilh=iterLoop, ndim=program.ndim), self.loop_datamover_inc_extension),
-                (iterLoop_datamover_src_template.render(ilh=iterLoop, ndim=program.ndim, config=config), self.loop_datamover_src_extension)]
+        
+        iterloop_datamover_inc_template = env.get_template(str(self.iterloop_datamover_inc_template))
+        iterLoop_datamover_src_template = env.get_template(str(self.iterloop_datamover_src_template))
+        iterLoop_kernel_inc_template = env.get_template(str(self.iterloop_device_inc_template))
+        iterLoop_kernel_src_template = env.get_template(str(self.iterloop_device_src_template))
+        
+        kernel_processor = KernelProcess()
+        consts = []
+        for kernel_idx, loop in enumerate(iterLoop.getLoops()):
+                kernel_func = self.translateKernel(loop, program, app, kernel_idx)
+                kernel_func = kernel_processor.clean_kernel_func_text(kernel_func)
+                kernel_body, kernel_args = kernel_processor.get_kernel_body_and_arg_list(kernel_func)
+                kernel_body = self.hls_replace_accessors(kernel_body, kernel_args, loop, program)
+                kernel_consts = self.find_const_in_kernel(kernel_body, program.consts)
+                consts.extend(x for x in kernel_consts if x not in consts)
+        
+        return [(iterloop_datamover_inc_template.render(ilh=iterLoop, ndim=program.ndim), self.iterloop_datamover_inc_extension),
+                (iterLoop_datamover_src_template.render(ilh=iterLoop, ndim=program.ndim, config=config), self.iterloop_datamover_src_extension),
+                (iterLoop_kernel_inc_template.render(ilh=iterLoop, ndim=program.ndim, config=config, consts=consts), self.iterloop_device_inc_extension)]
     
     def genLoopDevice(
         self,
@@ -212,11 +231,7 @@ class CppHLS(Scheme):
     ) -> List[Tuple[str, str]]:
         
         #load datamover_templates
-        datamover_inc_template = env.get_template(str(self.loop_datamover_inc_template))
-        datamover_src_template = env.get_template(str(self.loop_datamover_src_template))
-        kernel_inc_template = env.get_template(str(self.loop_device_inc_template))
-        kernel_src_template = env.get_template(str(self.loop_device_src_template))
-        
+        loop_PE_template = env.get_template(str(self.loop_device_PE_template))
         kernel_processor = KernelProcess()
         
         kernel_func = self.translateKernel(loop, program, app, kernel_idx)
@@ -231,29 +246,14 @@ class CppHLS(Scheme):
             kernel_body = self.replace_idx_access(kernel_body, kernel_idx_arg_name)
         
         return (
-            [(datamover_inc_template.render(
-                lh=loop),
-            self.loop_datamover_inc_extension),
-            (datamover_src_template.render(
-                lh=loop,
-                config=config), 
-            self.loop_datamover_src_extension),
-            (kernel_inc_template.render(
+            [(loop_PE_template.render(
                  lh=loop,
                  kernel_body=kernel_body,
                  kernel_args=kernel_args,
                  prog=program,
                  consts=kernel_consts,
                  config=config
-                 ),self.loop_device_inc_extension),
-            (kernel_src_template.render(
-                lh=loop,
-                kernel_body=kernel_body,
-                kernel_args=kernel_args,
-                prog=program,
-                consts=kernel_consts,
-                config=config),
-            self.loop_device_src_extension)]
+                 ),self.loop_device_PE_extension)]
         )
     
     def genConfigDevice(

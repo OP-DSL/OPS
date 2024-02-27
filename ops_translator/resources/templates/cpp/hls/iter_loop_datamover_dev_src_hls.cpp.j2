@@ -102,15 +102,7 @@ void kernel_datamover_outerloop_{{ilh.id}}(
     range.dim = {{ndim}};
 
     {% for arg in ilh.joint_args|ops_dat %}
-    ops::hls::SizeType arg{{arg.id}}_gridSize = {
-        {% for i in range(config["ops_max_dim"]) %}
-            {% if i < ndim %}
-            arg{{arg.id}}_gridSize_{{i}}{{"," if (not loop.last)}}
-            {% else %}
-            1{{"," if (not loop.last)}}
-            {% endif %}
-        {% endfor %}
-    };
+    ops::hls::SizeType arg{{arg.id}}_gridSize = { {% for i in range(config["ops_max_dim"]) -%}{% if i < ndim %}arg{{arg.id}}_gridSize_{{i}}{{", " if (not loop.last)}}{% else %}1{{", " if (not loop.last)}}{% endif %}{% endfor %} };
     {% endfor %}
 
 #ifdef DEBUG_LOG
@@ -126,41 +118,11 @@ void kernel_datamover_outerloop_{{ilh.id}}(
     {
         if (i % 2 == 0)
         {
-            datamover_outerloop_{{ilh.id}}_dataflow_region(range, 
-    {% for arg in ilh.joint_args|ops_dat %}
-                arg{{arg.id}}_gridSize,
-    {% endfor %}
-    {% for arg in ilh.joint_args|ops_dat %}
-                arg{{arg.id}},
-    {% endfor %}
-    {% for arg in ilh.joint_args|ops_dat %}
-        {% if arg is not ops_rw %}
-        {{axis_name(arg)}}{{"," if not loop.last}}
-        {% else %}
-        {{axis_name_t2(arg, "in")}},
-        {{axis_name_t2(arg, "out")}}{{"," if not loop.last}}
-        {% endif %}
-    {% endfor %}
-            );
+            datamover_outerloop_{{ilh.id}}_dataflow_region(range, {% for arg in ilh.joint_args|ops_dat -%}arg{{arg.id}}_gridSize, {% endfor %}{% for arg in ilh.joint_args|ops_dat -%}arg{{arg.id}}, {% endfor %}{% for arg in ilh.joint_args|ops_dat -%}{% if arg is not ops_rw %}{{axis_name(arg)}}{{", " if not loop.last}}{% else %} {{axis_name_t2(arg, "in")}}, {{axis_name_t2(arg, "out")}}{{", " if not loop.last}}{% endif %}{% endfor %});
         }
         else
         {
-            datamover_outerloop_{{ilh.id}}_dataflow_region(range, 
-    {% for arg in ilh.joint_args|ops_dat %}
-                arg{{ilh.dat_swap_map[arg.id]}}_gridSize,
-    {% endfor %}
-    {% for arg in ilh.joint_args|ops_dat %}
-                arg{{ilh.dat_swap_map[arg.id]}},
-    {% endfor %}
-    {% for arg in ilh.joint_args|ops_dat %}
-        {% if arg is not ops_rw %}
-        {{axis_name(arg)}}{{"," if not loop.last}}
-        {% else %}
-        {{axis_name_t2(arg, "in")}},
-        {{axis_name_t2(arg, "out")}}{{"," if not loop.last}}
-        {% endif %}
-    {% endfor %}
-            )
+            datamover_outerloop_{{ilh.id}}_dataflow_region(range, {% for arg in ilh.joint_args|ops_dat -%}arg{{ilh.dat_swap_map[arg.id]}}_gridSize, {% endfor %}{% for arg in ilh.joint_args|ops_dat -%}arg{{ilh.dat_swap_map[arg.id]}}, {% endfor %}{% for arg in ilh.joint_args|ops_dat -%}{% if arg is not ops_rw %}{{axis_name(arg)}}{{", " if not loop.last}}{% else %}{{axis_name_t2(arg, "in")}}, {{axis_name_t2(arg, "out")}}{{", " if not loop.last}}{% endif %}{% endfor %});
         }
     }
 }

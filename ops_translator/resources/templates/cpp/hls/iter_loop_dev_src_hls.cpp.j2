@@ -1,0 +1,61 @@
+{% extends "cpp/hls/iter_loop_dev_inc_hls.hpp.j2" %}
+{% block header_block %}
+#include <ops_hls_datamover.hpp>
+#include <kernel_outerloop_{{ilh.id}}.hpp>
+{% endblock %}
+
+{% block kernel_dataflow_region %}
+static void kernel_outerloop_{{ilh.id}}_dataflow_region(ops::hls::StencilConfigCore& stencilConfig, const unsigned int total_bytes,
+    {% for const in consts %}const {{const.typ}} {{const.ptr}}{{", " if not loop.last }}{% endfor %}
+    {% for arg in ilh.joint_args|ops_dat -%}{% if arg is not ops_rw %}{{axis_name(arg)-}}{{", " if not loop.last}}{% else %}{{axis_name_t2(arg, "in")-}}, {{axis_name_t2(arg, "out")-}}{{", " if not loop.last}}{% endif %}{% endfor %})
+{
+    
+}
+{% endblock %}
+
+{% block kernel_top_prototype %}
+{{super()}}
+{% endblock %}
+{% block kernel_top_body %}
+{
+    {% for i in range(ndim)%}
+    #pragma HLS INTERFACE s_axilite port = stencilConfig_grid_size_{{i}} bundle = control
+    {% endfor %}
+    {#{% for i in range(ndim)%}
+    #pragma HLS INTERFACE s_axilite port = gridProp_actual_size_{{i}} bundle = control
+    {% endfor %}
+    {% for i in range(ndim)%}
+    #pragma HLS INTERFACE s_axilite port = gridProp_grid_size_{{i}} bundle = control
+    {% endfor %}#}
+    #pragma HLS INTERFACE s_axilite port = stencilConfig_dim bundle = control
+    #pragma HLS INTERFACE s_axilite port = stencilConfig_total_itr bundle = control
+    {% for i in range(ndim)%}
+    #pragma HLS INTERFACE s_axilite port = stencilConfig_lower_limit_{{i}} bundle = control
+    {% endfor %}
+    {% for i in range(ndim)%}
+    #pragma HLS INTERFACE s_axilite port = stencilConfig_upper_limit_{{i}} bundle = control
+    {% endfor %}
+    #pragma HLS INTERFACE s_axilite port = gridProp_total_itr bundle = control
+    #pragma HLS INTERFACE s_axilite port = gridProp_outer_loop_limit bundle = control
+
+    {% for const in consts %}
+    #pragma HLS INTERFACE s_axilite port = {{const.ptr}} bundle = control
+    {% endfor %}
+
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if arg is not ops_rw %}
+    #pragma HLS INTERFACE port = {{axis_name(arg)}} register
+        {% else %}
+    #pragma HLS INTERFACE port = {{axis_name_t2(arg, "in")}} register
+    #pragma HLS INTERFACE port = {{axis_name_t2(arg, "out")}} register
+        {% endif %}
+    {% endfor %}
+
+    #pragma HLS INTERFACE ap_hls_chain port = return bundle = control
+    #pragma HLS INTERFACE s_axilite port = return bundle = control   
+
+#ifdef DEBUG_LOG
+    printf("[KERNEL_DEBUG]|%s| Starting outerloop_{{ilh.id}} kernel TOP \n", __func__);
+#endif
+}
+{% endblock %}

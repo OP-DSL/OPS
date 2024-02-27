@@ -1,0 +1,49 @@
+{% macro axis_name(arg) -%}
+    {%- if arg is not ops_rw -%}
+arg{{arg.id}}_stream_{{"in" if (arg is ops_read) else ("out" if (arg is ops_write))}}
+    {%- endif -%}
+{%- endmacro -%}
+{% macro axis_name_t2(arg, suffix) -%}
+arg{{arg.id}}_stream_{{suffix}}
+{%- endmacro -%}
+
+{% block header_block %}
+#pragma once
+    {% for lh in ilh.getLoops() %}
+#include "PE_{{lh.kernel}}.hpp"
+    {% endfor %}
+{% endblock %}
+
+{% block kernel_top_prototype %}
+kernel_outerloop_{{ilh.id}}(
+        const unsigned int outer_itr,
+    {% for i in range(ndim)%}
+        const unsigned short stencilConfig_grid_size_{{i}},
+    {% endfor %}
+    {#{% for i in range(ndim)%}
+        const unsigned short gridProp_actual_size_{{i}},
+    {% endfor %}
+    {% for i in range(ndim)%}
+        const unsigned short gridProp_grid_size_{{i}},
+    {% endfor %}#}
+        const unsigned short stencilConfig_dim,
+        const unsigned short stencilConfig_total_itr,
+    {% for i in range(ndim)%}
+        const unsigned short stencilConfig_lower_limit_{{i}},
+    {% endfor %}
+    {% for i in range(ndim)%}
+        const unsigned short stencilConfig_upper_limit_{{i}},
+    {% endfor %}
+        const unsigned short stencilConfig_outer_loop_limit,
+    {% for const in consts %}
+        const {{const.typ}} {{const.ptr}},
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if arg is not ops_rw %}
+        hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
+        {% else %}
+        hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")-}},
+        hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "out")-}}{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+{% endblock %});

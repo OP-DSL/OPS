@@ -13,7 +13,7 @@ import fortran
 
 from jinja_utils import env
 from language import Lang
-from ops import OpsError, Type
+from ops import OpsError, Type, Loop
 from scheme import Scheme
 from cpp.schemes import CppHLS
 from store import Application, ParseError
@@ -363,27 +363,27 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
         if args.verbose:
             print(f"Generated Host xrt.cfg V++ configurations")
             
-    # #Generate stencil device definitions
-    # for program in app.programs:
-    #     for stencil in program.stencils:
-    #         source, extension = scheme.genStencilDecl(env, target_config, stencil)
-    #         new_source = re.sub(r'\n\s*\n', '\n\n', source)
+    #Generate stencil device definitions
+    for program in app.programs:
+        for stencil in program.stencils:
+            source, extension = scheme.genStencilDecl(env, target_config, stencil)
+            new_source = re.sub(r'\n\s*\n', '\n\n', source)
             
-    #         # From output files path
-    #         path = None
-    #         if scheme.lang.kernel_dir:
-    #             Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
-    #             path = Path(args.out, scheme.target.name, "device", "include", f"stencil_{stencil.stencil_ptr}.{extension}")                
-    #         else:
-    #             path = Path(args.out,f"stencil_{scheme.target.name}_{stencil.stencil_ptr}.{extension}")
+            # From output files path
+            path = None
+            if scheme.lang.kernel_dir:
+                Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
+                path = Path(args.out, scheme.target.name, "device", "include", f"stencil_{stencil.stencil_ptr}.{extension}")                
+            else:
+                path = Path(args.out,f"stencil_{scheme.target.name}_{stencil.stencil_ptr}.{extension}")
 
-    #         # Write the gernerated source file
-    #         with open(path, "w") as file:
-    #             file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
-    #             file.write(new_source)
+            # Write the gernerated source file
+            with open(path, "w") as file:
+                file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+                file.write(new_source)
 
-    #             if args.verbose:
-    #                 print(f"Generated Device stencil_{stencil.stencil_ptr}.hpp")
+                if args.verbose:
+                    print(f"Generated Device stencil_{stencil.stencil_ptr}.hpp")
                 
     #Generate loop device
     #if scheme.target.name == "hls":
@@ -474,47 +474,93 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
         if iterloop.unique_id in translatedIterUIDs:
             continue
         
+        for i, loop in enumerate(filter(lambda x: isinstance(x, Loop), iterloop.itr_args)):
+            # Generate loop device source
+            [(loop_PE_inc_source, loop_PE_inc_extension)] = scheme.genLoopDevice(env, loop, program, app, target_config, i)
+
+            loop_PE_inc_source = re.sub(r'\n\s*\n', '\n\n', loop_PE_inc_source)
+                
+            #kernel inc
+            path = None
+            if scheme.lang.kernel_dir:
+                Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
+                path = Path(args.out, scheme.target.name, "device", "include", f"PE_{loop.kernel}.{loop_PE_inc_extension}")                
+            else:
+                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_PE.{loop_PE_inc_extension}")
+
+            logging.debug(f"writing kernel: {loop.kernel} include to {path}")
+            
+            # Write the gernerated source file
+            with open(path, "w") as file:
+                file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+                file.write(loop_PE_inc_source)
+
+                if args.verbose:
+                    print(f"Generated loop device PE include {i} of {len(app.uniqueLoops())}: {path}")
+                    
         translatedIterUIDs.append(iterloop.unique_id)
         
-        [(datamov_inc_source, datamov_inc_extension),
-         (datamov_src_source, datamov_src_extension)] = scheme.genIterLoopDevice(env, iterloop, program, app, target_config)
+        [(iter_datamov_inc_source, iter_datamov_inc_extension),
+         (iter_datemov_src_source, iter_datamov_src_extension),
+         (iter_kernel_inc_source, iter_kernel_inc_extension)] = scheme.genIterLoopDevice(env, iterloop, program, app, target_config)
         
-        # datamover include
+        ## iterloop datamover include
         path = None
         if scheme.lang.kernel_dir:
             Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
-            path = Path(args.out, scheme.target.name, "device", "include", f"datamover_outerloop_{i}.{datamov_inc_extension}")                
+            path = Path(args.out, scheme.target.name, "device", "include", f"datamover_outerloop_{i}.{iter_datamov_inc_extension}")                
         else:
-            path = Path(args.out,f"outerloop_{i}_{scheme.target.name}_datamover.{datamov_inc_extension}")
+            path = Path(args.out,f"outerloop_{i}_{scheme.target.name}_datamover.{iter_datamov_inc_extension}")
 
         logging.debug(f"writing datamover include for: outerloop_{i} to {path}")
         
         # Write the gernerated datamover include file
         with open(path, "w") as file:
             file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
-            file.write(datamov_inc_source)
+            file.write(iter_datamov_inc_source)
 
             if args.verbose:
                 print(f"Generated loop device datamover include {i} of {len(app.uniqueOuterLoops())}: {path}")
  
-        # datamover src
+        ## iterloop datamover src
         path = None
         if scheme.lang.kernel_dir:
             Path(args.out, scheme.target.name, "device", "src").mkdir(parents=True, exist_ok=True)
-            path = Path(args.out, scheme.target.name, "device", "src", f"datamover_outerloop_{i}.{datamov_src_extension}")                
+            path = Path(args.out, scheme.target.name, "device", "src", f"datamover_outerloop_{i}.{iter_datamov_src_extension}")                
         else:
-            path = Path(args.out,f"outerloop_{i}_{scheme.target.name}_datamover.{datamov_src_extension}")
+            path = Path(args.out,f"outerloop_{i}_{scheme.target.name}_datamover.{iter_datamov_src_extension}")
 
         logging.debug(f"writing datamover src for: outerloop_{i} to {path}")
         
         # Write the gernerated datamover include file
         with open(path, "w") as file:
             file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
-            file.write(datamov_src_source)
+            file.write(iter_datemov_src_source)
 
             if args.verbose:
                 print(f"Generated loop device datamover src {i} of {len(app.uniqueOuterLoops())}: {path}")
-   
+
+        ## iterloop kernel inc
+        path = None
+        if scheme.lang.kernel_dir:
+            Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
+            path = Path(args.out, scheme.target.name, "device", "include", f"kernel_outerloop_{i}.{iter_kernel_inc_extension}")                
+        else:
+            path = Path(args.out,f"outerloop_{i}_{scheme.target.name}_kernel.{iter_kernel_inc_extension}")
+
+        logging.debug(f"writing kernel: outerloop_{i} include to {path}")
+        
+        # Write the gernerated source file
+        with open(path, "w") as file:
+            file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+            file.write(iter_kernel_inc_source)
+
+            if args.verbose:
+                print(f"Generated loop device kernel include {i} of {len(app.uniqueLoops())}: {path}")
+      
+
+
+
 def isDirPath(path):
     if os.path.isdir(path):
         return path

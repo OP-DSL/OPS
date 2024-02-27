@@ -1,0 +1,170 @@
+{% macro hls_stream_name(arg) -%}
+    {%- if arg is not ops_rw -%}
+arg{{arg.id}}_{{"rd" if (arg is ops_read) else ("wr" if (arg is ops_write))}}_buffer
+    {%- endif -%}
+{%- endmacro -%}
+{% macro hls_stream_name_t2(arg, suffix) -%}
+arg{{arg.id}}_{{suffix}}_buffer
+{%- endmacro -%}
+{% block header_block %}
+#pragma once
+#include "common_config.hpp"
+#include <ops_hls_stencil_core_v2.hpp>
+
+ 
+{% set stencil = prog.findStencil(lh.get_read_stencil()) %}
+    {% if stencil is not none %}
+static constexpr unsigned short read_num_points = {{stencil.num_points}};
+static constexpr unsigned short read_stencil_size = {{stencil.stencil_size}};
+static constexpr unsigned short read_stencil_dim = {{stencil.dim}};
+    {% endif %}
+{% set stencil = prog.findStencil(lh.get_write_stencil()) %}
+    {% if stencil is not none %}
+static constexpr unsigned short write_num_points = {{stencil.num_points}};
+static constexpr unsigned short write_stencil_size = {{stencil.stencil_size}};
+static constexpr unsigned short write_stencil_dim = {{stencil.dim}};
+    {% endif %}
+{% endblock %}
+
+{% block kernel_core %}
+inline void kernel_{{lh.kernel}}_core(
+    {% for arg in lh.args %}
+        {% if loop.last %}
+            {% if consts %}
+                {% set last_check = False %}
+            {% else %}
+                {% set last_check = True %}
+            {% endif %}
+        {% else %}
+            {% set last_check = False %}
+        {% endif %}
+        {% if arg is ops_read %}
+            {% if prog.findStencil(arg.stencil_ptr) %}
+                {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
+        const stencil_type& reg_{{arg.id}}_{{i}}{{"," if (not loop.last or not last_check)}}
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+        {% if arg is ops_write or ops_rw%}
+            {% if prog.findStencil(arg.stencil_ptr) %}
+                {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
+        stencil_type& reg_{{arg.id}}_{{i}}{{"," if (not loop.last or not last_check)}}
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+        {% if arg is ops_idx %}
+        const ops::hls::SizeType& idx{{"," if (not loop.last or not last_check)}}
+        {% endif %}
+    {% endfor %}
+    {% for const in consts %}
+        const {{const.typ}} {{const.ptr}}{{"," if not loop.last}}
+    {% endfor %}
+)
+{
+#ifdef DEBUG_LOG
+    printf("[KERNEL_INTERNAL]|%s| starting kernel core: kernel_{{lh.kernel}}_core\n",__func__);
+#endif
+    {{kernel_body}}
+
+#ifdef DEBUG_LOG
+    {% for arg in lh.args %}
+        {% if arg is ops_read %}
+            {% if prog.findStencil(arg.stencil_ptr) %}
+                {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
+    printf("[KERNEL_INTERNAL]|%s| read_val - reg_{{arg.id}}_{{i}}: %f \n", __func__, reg_{{arg.id}}_{{i}});
+                {% endfor %}
+            {% endif %}
+        {% elif arg is ops_write or ops_rw%}
+            {% if prog.findStencil(arg.stencil_ptr) %}
+                {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
+    printf("[KERNEL_INTERNAL]|%s| write_val - reg_{{arg.id}}_{{i}}: %f \n", __func__, reg_{{arg.id}}_{{i}});
+                {% endfor %}
+            {% endif %}
+        {% elif arg is ops_idx %}
+    printf("[KERNEL_INTERNAL]|%s| index_val: (%d, %d, %d) \n", __func__, idx[0], idx[1], idx[2]);
+        {% endif %}
+    {% endfor %}
+#endif
+
+#ifdef DEBUG_LOG
+    printf("[KERNEL_INTERNAL]|%s| exiting: kernel_{{lh.kernel}}_core\n",__func__);
+#endif
+}
+{% endblock %}
+
+{% block stencil_class %}
+class Stencil_{{lh.kernel}} : public ops::hls::StencilCoreV2<stencil_type, read_num_points, vector_factor, ops::hls::CoefTypes::CONST_COEF,
+        read_stencil_size, read_stencil_dim>
+{
+    public:
+        ops::hls::StencilCoreV2<stencil_type, read_num_points, vector_factor, ops::hls::CoefTypes::CONST_COEF,
+        read_stencil_size, read_stencil_dim>::m_stencilConfig;
+
+    void stencilRun(
+    {% for arg in lh.args|ops_dat %}
+        {% if arg is not ops_rw %}
+            widen_stream_dt& {{hls_stream_name(arg)-}}{{"," if not loop.last}}
+        {% else %}
+            widen_stream_dt& {{hls_stream_name_t2(arg, "rd")-}},
+            widen_stream_dt& {{hls_stream_name_t2(arg, "wr")-}}{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+        )
+    {
+        short i = -1;
+    {% if prog.findStencil(lh.get_read_stencil()).dim > 1 %}
+        unsigned i_l = 0; // Line buffer index
+        unsigned short j = -s_stencil_half_span_x; 
+    {% endif %}
+    {% if prog.findStencil(lh.get_read_stencil()).dim > 2 %}
+        unsigned i_p = 0; // Plane buffer index
+        unsigned short k = -s_stencil_half_span_x;
+    {% endif %}
+
+        ::ops::hls::StencilConfigCore stencilConfig = m_stencilConfig;
+        #pragma HLS ARRAY_PARTITION variable = stencilConfig.lower_limit dim = 1 complete
+        #pragma HLS ARRAY_PARTITION variable = stencilConfig.upper_limit dim = 1 complete
+
+        unsigned short itr_limit = stencilConfig.outer_loop_limit * stencilConfig.grid_size[0];
+
+    {% if prog.findStencil(lh.get_read_stencil()).dim  == 1 %}
+        unsigned short itr_limit = stencilConfig.total_itr;
+    {% elif prog.findStencil(lh.get_read_stencil()).dim == 2%}
+        unsigned short itr_limit = stencilConfig.outer_loop_limit * stencilConfig.grid_size[0];
+    {% else %}
+        unsigned short itr_limit = stencilConfig.outer_loop_limit * 
+                stencilConfig.grid_size[1] * stencilConfig.grid_size[0];
+    {% endif %}
+
+        unsigned short total_itr = stencilConfig.total_itr;
+
+    {% for arg in lh.args|ops_dat %}
+        {% if arg is ops_read %}
+        widen_dt arg{{arg.id}}_read_val = 0;
+        {% elif arg is ops_write %}
+        widen_dt arg{{arg.id}}_update_val;
+        {% else %}
+        widen_dt arg{{arg.id}}_read_val = 0;
+        widen_dt arg{{arg.id}}_update_val;
+        {% endif %}
+    {% endfor %}
+
+    {% for arg in lh.args|ops_dat|ops_read %}
+        widen_dt arg{{arg.id}}_stencilValues[read_num_points];
+        #pragma HLS ARRAY_PARTITION variable = arg{{arg.id}}_stencilValues dim = 1 complete
+
+        {% for buffer in prog.findStencil(arg.stencil_ptr).window_buffers %}
+        widen_dt arg{{arg.id}}_{{buffer}}[max_depth_bytes/(sizeof(stencil_type) * vector_factor)];
+        #pragma HLS BIND_STORAGE variable =  arg{{arg.id}}_{{buffer}} type = ram_t2p impl=uram latency=2
+        {% endfor %}
+
+        {% for row_discriptor in prog.findStencil(arg.stencil_ptr).row_discriptors %}
+        stencil_type arg{{arg.id}}_rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}}[vector_factor + s_stencil_span_x];
+        #pragma HLS ARRAY_PARTITION variable = arg{{arg.id}}_rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}} dim=1 complete
+        {% endfor %}
+    {% endfor %}
+
+
+    } 
+}
+{% endblock %}
