@@ -3,9 +3,24 @@
 arg{{arg.id}}_{{"rd" if (arg is ops_read) else ("wr" if (arg is ops_write))}}_buffer
     {%- endif -%}
 {%- endmacro -%}
+
 {% macro hls_stream_name_t2(arg, suffix) -%}
 arg{{arg.id}}_{{suffix}}_buffer
 {%- endmacro -%}
+
+{% macro chainLinkTranform(link, arg_id) -%}
+{%- if link is isnumaric -%}
+arg{{arg_id}}_stencilValues[{{link}}]
+{%- elif "buf_r" in link -%}
+arg{{arg_id}}_{{link}}[i_l]
+{%- elif "buf_p" in link -%}
+arg{{arg_id}}_{{link}}[i_p]
+{%- else -%}
+arg{{arg_id}}_{{link}}
+{%- endif -%}
+{%- endmacro -%}
+
+{%set half_span_x = (prog.findStencil(lh.get_read_stencil()).stencil_size - 1) / 2%}
 {% block header_block %}
 #pragma once
 #include "common_config.hpp"
@@ -119,6 +134,7 @@ class Stencil_{{lh.kernel}} : public ops::hls::StencilCoreV2<stencil_type, read_
     {% if prog.findStencil(lh.get_read_stencil()).dim > 2 %}
         unsigned i_p = 0; // Plane buffer index
         unsigned short k = -s_stencil_half_span_x;
+        plane_diff = stencilConfig.grid_size[0] * stencilConfig.grid_size[1] - 1;
     {% endif %}
 
         ::ops::hls::StencilConfigCore stencilConfig = m_stencilConfig;
@@ -164,7 +180,143 @@ class Stencil_{{lh.kernel}} : public ops::hls::StencilCoreV2<stencil_type, read_
         {% endfor %}
     {% endfor %}
 
+        for (unsigned short itr = 0; itr_limit; itr++)
+        {
+        #pragma HLS PIPELINE II=1
 
+            spc_temp_blocking_read
+            {
+                bool cond_x_terminate = (i == stencilConfig.grid_size[0] - 1); 
+    {% if prog.findStencil(lh.get_read_stencil()).dim == 2 %}
+                bool cond_y_terminate = (j == stencilConfig.outer_loop_limit - 1);
+    {% elif prog.findStencil(lh.get_read_stencil()).dim == 3 %}
+                bool cond_y_terminate = (j == stencilConfig.grid_size[1] - 1);
+                bool cond_z_terminate = (k == stencilConfig.outer_loop_limit - 1);
+    {% endif %}
+
+                if (cond_x_terminate)
+                    i = 0;
+                else
+                    i++;
+    {% if prog.findStencil(lh.get_read_stencil()).dim == 2 %}
+                if (cond_x_terminate && cond_y_terminate)
+                    j = 0;
+                else if  (cond_x_terminate)
+                    j++;
+    {% elif prog.findStencil(lh.get_read_stencil()).dim == 3%}
+                if (cond_x_terminate && cond_y_terminate && cond_z_terminate)
+                    k = 0;
+                else if (cond_x_terminate && cond_y_terminate)
+                    k++;
+    {% endif %}
+
+                bool cond_read = (itr < total_itr);
+
+                if (cond_read){
+                    read_val = rd_buffer.read();
+                }
+    {% for arg in lh.args|ops_dat|ops_read %}
+        {% for chain in prog.findStencil(lh.get_read_stencil()).chains %}
+                {{chainLinkTranform(chain[0], arg.id)}} = {{chainLinkTranform(chain[1], arg.id)}};
+        {% endfor %}
+    {% endfor %}
+
+    {% if prog.findStencil(lh.get_read_stencil()).dim > 1 %}
+                bool cond_end_of_line_buff = (i_l) >= (stencilConfig.grid_size[0] - 1);
+    {% endif %}
+    {% if prog.findStencil(lh.get_read_stencil()).dim > 2 %}
+                bool cond_end_of_plane_buff = (i_p) >= (plane_diff);
+    {% endif %}
+
+    {% if prog.findStencil(lh.get_read_stencil()).dim > 1 %}
+                if (cond_end_of_line_buff)
+                    i_l = 0;
+                else
+                    i_l++;
+    {% endif %}
+    {% if prog.findStencil(lh.get_read_stencil()).dim > 2 %}
+                if (cond_end_of_plane_buff)
+                    i_p = 0;
+                else
+                    i_p++;
+    {% endif %} 
+
+#ifdef DEBUG_LOG
+                printf("[DEBUG][INTERNAL] loop params i(%d), j(%d),"\
+    {% if prog.findStencil(lh.get_read_stencil()).dim > 1 %}
+                        "i_l(%d), "\
+    {% endif %}
+    {% if prog.findStencil(lh.get_read_stencil()).dim > 2 %}
+                        "i_p(%d), "\
+    {% endif %}
+                        "itr(%d)\n", i, j,
+    {% if prog.findStencil(lh.get_read_stencil()).dim > 1 %} 
+                        i_l,
+    {% endif %}
+    {% if prog.findStencil(lh.get_read_stencil()).dim> 2 %}
+                        i_p,
+    {% endif %}
+                        itr);
+            
+                printf("[DEBUG][INTERNAL] --------------------------------------------------------\n\n");
+
+    {% for arg in lh.args|ops_dat|ops_read %}
+                printf("[DEBUG][INTERNAL] read values arg{{arg.id}}: (");
+                for (int ri = 0; ri < vector_factor; ri++)
+                {
+                    ops::hls::DataConv tmpConverter;
+                    tmpConverter.i = arg{{arg.id}}_read_val.range((ri + 1)*s_datatype_size - 1, ri * s_datatype_size);
+                    printf("%f ", tmpConverter.f);
+                }
+                printf(")\n");
+    {% endfor %}
+#endif      
+            }
+
+            vec2arr: for (unsigned short x = 0; x < vector_factor: x++)
+            {
+#pragma HLS UNROLL factor=vector_factor
+{% for arg in lh.args|ops_dat|ops_read %}
+    {% set stencil = prog.findStencil(lh.get_read_stencil()) %}
+    {% for row_discriptor in stencil.row_discriptors %}
+        {% for point in row_discriptor.row_points %}
+            {% if point.x == row_discriptor.base_point.x %}
+                ops::hls::DataConv arg{{arg.id}}_tmpConverter_{{point.y}}_{{point.z}};
+                arg{{arg.id}}_tmpConverter_{{point.y}}_{{point.z}}.i = arg{{arg.id}}_stencilValues[{{stencil.points.index(point)}}](s_datatype_size * (x + 1) - 1, x * s_datatype_size);
+                arg{{arg.id}}_rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}}[x + s_stencil_half_span_x] = arg{{arg.id}}_tmpConverter_{{point.y}}_{{point.z}}.f; 
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+{% endfor %}               
+            }
+            vec2arr_rest:
+            {
+{% for arg in lh.args|ops_dat|ops_read %}
+    {% set stencil = prog.findStencil(lh.get_read_stencil()) %}
+    {% for row_discriptor in stencil.row_discriptors %}
+        {% for point in row_discriptor.row_points %}
+            {% if point.x != row_discriptor.base_point.x %}
+                {% for i in range(config.vector_factor) %}
+                    {% set diff = point.x - row_discriptor.base_point.x %}
+                    {% set access_idx = diff * config.vector_factor + row_discriptor.base_point.x + i %}
+                    {% if (diff < 0 and access_idx >= 0) or (diff > 0 and access_idx <= config.vector_factor + 2 * half_span_x) %}
+                ops::hls::DataConv arg_{{arg.id}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}};
+                arg_{{arg.id}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}}.i = arg_{{arg.id}}_stencilValues[{{stencil.points.index(point)}}].range(s_datatype_size * (i + 1) - 1, s_datatype_size * i);
+                arg_{{arg.id}}_rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}}[{{access_idx}}] = arg_{{arg.id}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}}.f;
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+{% endfor %}
+            }
+
+            process: for (unsigned short k = 0; k < vector_factor; k++)
+            {
+#pragma HLS UNROLL factor=vector_factor
+
+            }
+        }
     } 
 }
 {% endblock %}
