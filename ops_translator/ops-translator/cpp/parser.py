@@ -699,13 +699,14 @@ def parseIterLoop(node: Cursor, args: List[Cursor], scope: List[Location], macro
                 program.ndim = loop.ndim
                 
         elif name == "ops_par_copy":
-            iterLoop_args.append(parse_par_copy(arg, loop_args, parseLocation(arg), macros))
+            parCpyObj = parse_par_copy(arg, loop_args, parseLocation(arg), macros)
+            iterLoop_args.append(parCpyObj)
             
             
     return ops.IterLoop(len(program.outerloops), iter, scope, iterLoop_args)
             
         
-def parse_par_copy(loopNode: Cursor, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> ops.parCopy:
+def parse_par_copy(loopNode: Cursor, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> ops.ParCopy:
     if len(args) != 2:
         raise ParseError("Incorrect number of args passed to ops_par_copy")
     
@@ -713,7 +714,7 @@ def parse_par_copy(loopNode: Cursor, args: List[Cursor], loc: Location, macros: 
     target = args[0].spelling
     source = args[1].spelling      
     
-    return ops.parCopy(target, source)
+    return ops.ParCopy(target, source)
         
     
 def parseLoop(loopNode: Cursor, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> ops.Loop:

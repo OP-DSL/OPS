@@ -39,4 +39,8 @@ extern "C" void datamover_outerloop_{{ilh.id}}(
         hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name_t2(arg, "out")-}}{{"," if not loop.last}}
         {% endif %}
     {% endfor %}
-{% endblock %});
+    )
+{% endblock %}
+{% block  datamover_prototype_end %}
+;
+{% endblock %}

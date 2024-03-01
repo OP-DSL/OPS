@@ -364,26 +364,26 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
             print(f"Generated Host xrt.cfg V++ configurations")
             
     #Generate stencil device definitions
-    for program in app.programs:
-        for stencil in program.stencils:
-            source, extension = scheme.genStencilDecl(env, target_config, stencil)
-            new_source = re.sub(r'\n\s*\n', '\n\n', source)
+    # for program in app.programs:
+    #     for stencil in program.stencils:
+    #         source, extension = scheme.genStencilDecl(env, target_config, stencil)
+    #         new_source = re.sub(r'\n\s*\n', '\n\n', source)
             
-            # From output files path
-            path = None
-            if scheme.lang.kernel_dir:
-                Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
-                path = Path(args.out, scheme.target.name, "device", "include", f"stencil_{stencil.stencil_ptr}.{extension}")                
-            else:
-                path = Path(args.out,f"stencil_{scheme.target.name}_{stencil.stencil_ptr}.{extension}")
+    #         # From output files path
+    #         path = None
+    #         if scheme.lang.kernel_dir:
+    #             Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
+    #             path = Path(args.out, scheme.target.name, "device", "include", f"stencil_{stencil.stencil_ptr}.{extension}")                
+    #         else:
+    #             path = Path(args.out,f"stencil_{scheme.target.name}_{stencil.stencil_ptr}.{extension}")
 
-            # Write the gernerated source file
-            with open(path, "w") as file:
-                file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
-                file.write(new_source)
+    #         # Write the gernerated source file
+    #         with open(path, "w") as file:
+    #             file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+    #             file.write(new_source)
 
-                if args.verbose:
-                    print(f"Generated Device stencil_{stencil.stencil_ptr}.hpp")
+    #             if args.verbose:
+    #                 print(f"Generated Device stencil_{stencil.stencil_ptr}.hpp")
                 
     #Generate loop device
     #if scheme.target.name == "hls":
@@ -476,7 +476,7 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
         
         for i, loop in enumerate(filter(lambda x: isinstance(x, Loop), iterloop.itr_args)):
             # Generate loop device source
-            [(loop_PE_inc_source, loop_PE_inc_extension)] = scheme.genLoopDevice(env, loop, program, app, target_config, i)
+            [(loop_PE_inc_source, loop_PE_inc_extension)] = scheme.genLoopDevice(env, loop, program, app, target_config, i, iterloop)
 
             loop_PE_inc_source = re.sub(r'\n\s*\n', '\n\n', loop_PE_inc_source)
                 
@@ -502,7 +502,8 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
         
         [(iter_datamov_inc_source, iter_datamov_inc_extension),
          (iter_datemov_src_source, iter_datamov_src_extension),
-         (iter_kernel_inc_source, iter_kernel_inc_extension)] = scheme.genIterLoopDevice(env, iterloop, program, app, target_config)
+         (iter_kernel_inc_source, iter_kernel_inc_extension),
+         (iter_kernel_src_source, iter_kernel_src_extension)] = scheme.genIterLoopDevice(env, iterloop, program, app, target_config)
         
         ## iterloop datamover include
         path = None
@@ -557,7 +558,25 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
 
             if args.verbose:
                 print(f"Generated loop device kernel include {i} of {len(app.uniqueLoops())}: {path}")
-      
+
+        ## iterloop kernel src
+        path = None
+        if scheme.lang.kernel_dir:
+            Path(args.out, scheme.target.name, "device", "src").mkdir(parents=True, exist_ok=True)
+            path = Path(args.out, scheme.target.name, "device", "src", f"kernel_outerloop_{i}.{iter_kernel_src_extension}")                
+        else:
+            path = Path(args.out,f"outerloop_{i}_{scheme.target.name}_kernel.{iter_kernel_src_extension}")
+
+        logging.debug(f"writing kernel: outerloop_{i} src to {path}")
+        
+        # Write the gernerated source file
+        with open(path, "w") as file:
+            file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+            file.write(iter_kernel_src_source)
+
+            if args.verbose:
+                print(f"Generated loop device kernel src {i} of {len(app.uniqueLoops())}: {path}")
+    
 
 
 

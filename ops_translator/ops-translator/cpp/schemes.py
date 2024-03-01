@@ -7,7 +7,7 @@ from scheme import Scheme
 from store import Application, ParseError, Program
 from target import Target
 from jinja2 import Environment
-from typing import List, Tuple, Set, Union
+from typing import List, Tuple, Set, Union, Optional
 from util import KernelProcess
 import re
 import logging
@@ -218,7 +218,8 @@ class CppHLS(Scheme):
         
         return [(iterloop_datamover_inc_template.render(ilh=iterLoop, ndim=program.ndim), self.iterloop_datamover_inc_extension),
                 (iterLoop_datamover_src_template.render(ilh=iterLoop, ndim=program.ndim, config=config), self.iterloop_datamover_src_extension),
-                (iterLoop_kernel_inc_template.render(ilh=iterLoop, ndim=program.ndim, config=config, consts=consts), self.iterloop_device_inc_extension)]
+                (iterLoop_kernel_inc_template.render(ilh=iterLoop, ndim=program.ndim, config=config, consts=consts), self.iterloop_device_inc_extension),
+                (iterLoop_kernel_src_template.render(ilh=iterLoop, ndim=program.ndim, config=config, consts=consts), self.iterloop_device_src_extension)]
     
     def genLoopDevice(
         self,
@@ -227,7 +228,8 @@ class CppHLS(Scheme):
         program: Program,
         app: Application,
         config: dict,
-        kernel_idx: int
+        kernel_idx: int,
+        outerLoop: Optional[ops.IterLoop] = None
     ) -> List[Tuple[str, str]]:
         
         #load datamover_templates
@@ -245,6 +247,11 @@ class CppHLS(Scheme):
         if kernel_idx_arg_name:
             kernel_body = self.replace_idx_access(kernel_body, kernel_idx_arg_name)
         
+        if outerLoop:
+            isFullyMapped, datMap = kernel_processor.gen_local_dependancy_map(loop, outerLoop)
+        else:
+            isFullyMapped = False
+            datMap = []
         return (
             [(loop_PE_template.render(
                  lh=loop,
@@ -252,7 +259,9 @@ class CppHLS(Scheme):
                  kernel_args=kernel_args,
                  prog=program,
                  consts=kernel_consts,
-                 config=config
+                 config=config,
+                 isFullyMapped = isFullyMapped,
+                 datMap = datMap
                  ),self.loop_device_PE_extension)]
         )
     

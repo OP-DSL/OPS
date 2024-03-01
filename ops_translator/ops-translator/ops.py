@@ -171,8 +171,8 @@ class Dat:
     typ: Type
     soa: bool
 
-    block_id: Optional(int) = field(default_factory=int)
-    name: Optional(str) = field(default_factory=str)
+    block_id: Optional[int] = field(default_factory=int)
+    name: Optional[str] = field(default_factory=str)
 
     # def __post_init__(self) -> None:
     #     if len(self.size) != self.dim:
@@ -265,10 +265,12 @@ class Stencil:
             else:
                 self.row_discriptors.append(StencilRowDiscriptor((point.y, point.z), self.base_point))
                 self.row_discriptors[-1].row_points.append(point)
+                
+            # base_point = base
             
     def __str__(self) -> str:
         return f"Stencil(id={self.id}, dim={self.dim}, stencil_ptr='{self.stencil_ptr}', \
-number of points={self.num_points}, points={self.points}, stride_ptr='{self.stride}')"
+number of points={self.num_points}, points={self.points}, base_point={self.base_point}, stride_ptr='{self.stride}')"
 
 @dataclass(frozen=True)
 class Arg(ABDC):
@@ -392,12 +394,14 @@ class IterLoop:
     sink_dats: List[Union[int, ArgDat]]
     edges: List[DependancyEdge]
     dat_swap_map: List[int]
+    raw_dat_swap_map: List[ParCopy]
     
     def __init__(self, id: int, num_iter: Union[int, str], scope: List[Location], args: List[Any] = []) -> None:
         self.id = id
         self.num_iter = num_iter
         self.scope = scope
         self.itr_args = args
+        self.raw_dat_swap_map = filter(lambda x: isinstance(x, ParCopy), args)
         
         key =  ""
         for arg in args:
@@ -411,7 +415,7 @@ class IterLoop:
         self.dat_swap_map = [i for i in range(len(self.dats))]
         
         for arg in args:
-            if isinstance(arg, parCopy):
+            if isinstance(arg, ParCopy):
                 self.addParCopy(arg)
                 
 
@@ -483,13 +487,13 @@ class IterLoop:
         
         return outer_loop_str
     
-    def addParCopy(self, parcopy: parCopy) -> None:
-        target_dat_id = findIdx(self.dats, lambda d: d[0].ptr == parcopy.target)
-        source_dat_id = findIdx(self.dats, lambda d: d[0].ptr == parcopy.source)
+    def addParCopy(self, ParCopy: ParCopy) -> None:
+        target_dat_id = findIdx(self.dats, lambda d: d[0].ptr == ParCopy.target)
+        source_dat_id = findIdx(self.dats, lambda d: d[0].ptr == ParCopy.source)
         if target_dat_id is None:
-            OpsError(f"ParCopy missing target dat used in any par-loop {parcopy.target}")
+            OpsError(f"ParCopy missing target dat used in any par-loop {ParCopy.target}")
         elif source_dat_id is None:
-            OpsError(f"ParCopy missing source dat used in any par-loop {parcopy.source}")
+            OpsError(f"ParCopy missing source dat used in any par-loop {ParCopy.source}")
 
         self.dat_swap_map[target_dat_id] = source_dat_id
         self.dat_swap_map[source_dat_id] = target_dat_id 
@@ -516,7 +520,7 @@ class IterLoop:
     def getLoops(self)-> List[Loop]:
         return filter(lambda x: isinstance(x, Loop), self.itr_args)
     
-class parCopy:
+class ParCopy:
     target: str
     source: str
     
@@ -664,7 +668,7 @@ class Loop:
         if len(self.dats) > 0:
             dat_str = f"\n    {dat_str}\n"
 
-        return f"{kernel_detail_str}\n\n    {args_str}\n {dat_str}\n"
+        return f"{kernel_detail_str}\n  ARGS:\n{args_str}\n  DATS:\n{dat_str}\n"
 
     def get_read_stencil(self) -> str:
         for arg in filter(lambda x: isinstance(x, ArgDat), self.args):

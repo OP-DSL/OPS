@@ -5,10 +5,9 @@ import os
 import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
 from pathlib import Path
 from cached_property import cached_property
-
 #Generic type
 T = TypeVar("T")
 
@@ -546,3 +545,37 @@ class KernelProcess:
                 const_dims.append(c.dim)
 
         return const_names, const_dims
+
+    def gen_local_dependancy_map(self, loop, outerloop) -> Union[bool, List[int]]:
+        datMap = [x for x in range(len(loop.dats))]
+        raw_parCpy_objs = outerloop.raw_dat_swap_map
+        fully_mapped = True
+        dat_strings = [dat.ptr for dat in loop.dats]
+        for i in range(len(datMap)):
+            dat_str = loop.dats[i].ptr
+            pair_idx = -1
+            if datMap[i] != i:
+                continue
+            
+            for obj in raw_parCpy_objs:
+                if obj.source == dat_str:
+                    pair_str = obj.target
+                    if pair_str in dat_strings:
+                        pair_idx = findIdx(loop.dats, lambda x: x.ptr == pair_str)
+                        break
+                elif obj.target == dat_str:
+                    pair_str = obj.source
+                    if pair_str in dat_strings:
+                        pair_idx = findIdx(loop.dats, lambda x: x.ptr == pair_str)
+                        break
+            
+            if pair_str == -1:
+                fully_mapped = False
+                
+            else:
+                datMap[i] = pair_idx
+                datMap[pair_idx] = i
+                
+        return (fully_mapped, datMap)
+
+            
