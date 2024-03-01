@@ -23,8 +23,9 @@ CMake 3.18 or newer is required for using the CMake building system. If the late
  **Python**
 
 The Python dependencies (primarily used for the OPS code generator) are best installed by setting up a virtual environment so that required packages can be installed without superuser privileges. To set up the Python virtual environment and install the required dependant packages, ensure that you have Python3.9 or a more recent version with pip installed.
-Detailed instructions for installing virtual environment using pip can be found [here](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/)
-Execute following **after cloning the OPS repository (see below)** to install required packages. Note `OPS_INSTALL_PATH` is the installation directory of OPS/ops:
+Detailed instructions for installing virtual environment using pip can be found [here](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/).<br>
+Execute following **after cloning the OPS repository (see below)** to install required packages.<br>
+Note `OPS_INSTALL_PATH` is the installation directory of OPS/ops:
 ```
 #Install virtual environment using pip (if not installed earlier)
 #Please set the OPS_INSTALL_PATH variable before running following commands
