@@ -27,13 +27,14 @@ Detailed instructions for installing virtual environment using pip can be found 
 Execute following **after cloning the OPS repository (see below)** to install required packages. Note `OPS_INSTALL_PATH` is the installation directory of OPS/ops:
 ```
 #Install virtual environment using pip (if not installed earlier)
+#Please set the OPS_INSTALL_PATH variable before running following commands
 python3 -m pip install --user virtualenv
 
 mkdir -p $OPS_INSTALL_PATH/../ops_translator/ops_venv
 python3 -m venv $OPS_INSTALL_PATH/../ops_translator/ops_venv
 source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
 python3 -m pip install --upgrade pip
-python3 -m pip install -r requirements.txt
+python3 -m pip install -r $OPS_INSTALL_PATH/../ops_translator/requirements.txt
 python3 -m pip install --force-reinstall libclang==16.0.6
 ```
 These instructions can be executed by running the script `OPS/ops_translator/setup_venv.sh` file.
