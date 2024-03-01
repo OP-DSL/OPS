@@ -9,7 +9,7 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
 #export DMOS=TRUE
-export TELOS=TRUE
+#export TELOS=TRUE
 #export KOS=TRUE
 
 if [[ -v TELOS || -v KOS ]]; then

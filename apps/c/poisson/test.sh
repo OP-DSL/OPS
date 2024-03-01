@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-cd ../../../ops/c
+cd $OPS_INSTALL_PATH/c
 
 export SOURCE_INTEL=source_intel_2021.3_pythonenv
 export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
@@ -9,7 +9,7 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
 #export DMOS=TRUE
-export TELOS=TRUE
+#export TELOS=TRUE
 #export KOS=TRUE
 
 if [[ -v TELOS || -v KOS ]]; then
@@ -171,7 +171,7 @@ source ../../scripts/$SOURCE_PGI
 make clean
 #make -j
 make
-echo "in here "
+
 cd $OPS_INSTALL_PATH/../apps/c/poisson
 make clean
 make IEEE=1 poisson_dev_seq poisson_dev_mpi poisson_seq poisson_tiled poisson_openmp poisson_mpi poisson_mpi_tiled \
@@ -227,7 +227,7 @@ rm perf_out
 
 
 if [[ -v CUDA_INSTALL_PATH ]]; then
-make IEEE=1 poisson_cuda poisson_mpi_cuda poisson_mpi_cuda_tiled 
+make IEEE=1 poisson_cuda poisson_mpi_cuda poisson_mpi_cuda_tiled
 #poisson_openacc poisson_mpi_openacc poisson_mpi_openacc_tiled
 
 echo '============> Running CUDA'
@@ -298,7 +298,7 @@ cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_AMD_HIP
 #make -j -B
 make clean
-make 
+make
 cd $OPS_INSTALL_PATH/../apps/c/poisson
 
 make clean
