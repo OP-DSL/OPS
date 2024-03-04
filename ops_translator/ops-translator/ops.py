@@ -395,6 +395,8 @@ class IterLoop:
     edges: List[DependancyEdge]
     dat_swap_map: List[int]
     raw_dat_swap_map: List[ParCopy]
+    PE_args: List[List[str]]
+    interconnector_names: List[str]
     
     def __init__(self, id: int, num_iter: Union[int, str], scope: List[Location], args: List[Any] = []) -> None:
         self.id = id
@@ -411,6 +413,7 @@ class IterLoop:
                 
         self.unique_id = hash(key)
         self.gen_graph()
+        self.gen_PE_args()
         
         self.dat_swap_map = [i for i in range(len(self.dats))]
         
@@ -461,7 +464,44 @@ class IterLoop:
             arg_id = len(self.joint_args)
             self.joint_args.append(ArgDat(arg_id, arg.loc, AccessType.OPS_WRITE, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))    
 
-  
+    def gen_PE_args(self) -> None:
+        PE_args = []
+        for i, v in enumerate(self.itr_args):
+            if isinstance(v, Loop):
+                PE_args.append(self.gen_PE_args_loop(i, v))
+        self.PE_args = PE_args
+        
+    def gen_PE_args_loop(self, i: int,  v: Loop) -> List[str]:
+        arg_map = {}
+        PE_args = []
+        for edge in self.edges:
+            if i == edge.source_id:
+                if edge.sink_id == len(self.dats):
+                    search_list = filter(lambda x: x.access_type == AccessType.OPS_WRITE and x.dat_id == edge.dat_id, self.joint_args)
+                    # print(f"search list: {search_list}")
+                    arg_map[edge.source_arg_id] = f"arg{next(search_list).id}_hls_stream_out"
+                else:
+                    connector_name = f"node{edge.source_id}_{edge.source_arg_id}_to_node{edge.sink_id}_{edge.sink_arg_id}"
+                    if connector_name not in self.interconnector_names:
+                        self.interconnector_names.append(connector_name)
+                    arg_map[edge.source_arg_id] = connector_name
+            elif i == edge.sink_id:
+                if edge.source_id == -1:
+                    search_list = filter(lambda x: x.access_type == AccessType.OPS_READ and x.dat_id == edge.dat_id, self.joint_args)
+                    arg_map[edge.sink_arg_id] = f"arg{next(search_list).id}_hls_stream_in"
+                else:
+                    connector_name = f"node{edge.source_id}_{edge.source_arg_id}_to_node{edge.sink_id}_{edge.sink_arg_id}"
+                    if connector_name not in self.interconnector_names:
+                        self.interconnector_names.append(connector_name)
+                    arg_map[edge.sink_arg_id] = connector_name
+        
+        # print(f"PE_args: {arg_map}")
+        for k in range(len(v.args)):
+            if k in arg_map.keys():
+                PE_args.append(arg_map[k])
+        
+        return PE_args
+    
     def __str__(self) -> str:
         outer_loop_str = ""
         outer_loop_str += f"OPS Iterative Loop at {self.scope[0]}:\n ID: {self.id}, UID: {self.unique_id}, with num of iteration: {self.num_iter}\n\n DATS: \n ------ \n"
@@ -482,9 +522,13 @@ class IterLoop:
             outer_loop_str += f"edges{i}: " + str(edge) + "\n"
         
         outer_loop_str +="\n ARGS: \n ------ \n"
+        
+        dat_arg_i = 0
         for i,arg in enumerate(self.itr_args):
             outer_loop_str += f" arg{i}: " + str(arg)
-        
+            if (isinstance(arg, Loop)):
+                outer_loop_str += f"   PE_args: {self.PE_args[dat_arg_i]} \n\n"
+                dat_arg_i += 1
         return outer_loop_str
     
     def addParCopy(self, ParCopy: ParCopy) -> None:
@@ -519,6 +563,26 @@ class IterLoop:
             # elif isinstance(arg, ArgGbl):
     def getLoops(self)-> List[Loop]:
         return filter(lambda x: isinstance(x, Loop), self.itr_args)
+    
+    def getUniqueDatSwaps(self) -> List[Union[int,int]]:
+        unique_swap_map = []
+        for i in range(len(self.dat_swap_map)):
+            found = False
+            for j in unique_swap_map:
+                if i == j[1]:
+                    found = True
+            if not found:
+                unique_swap_map.append((i, self.dat_swap_map[i]))
+        
+        return unique_swap_map
+    
+    def getOrderedSwapPair(self, dat_id: int) -> Union[int, int]:
+        other_dat = self.dat_swap_map[dat_id]
+        pair = [other_dat, dat_id]
+        pair.sort()
+        return (pair)
+               
+            
     
 class ParCopy:
     target: str

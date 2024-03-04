@@ -249,11 +249,7 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, target_config: di
             source, extension = scheme.genLoopHost(include_dirs, defines, env, loop, program, app, i, force_soa)
 
             new_source = re.sub(r'\n\s*\n', '\n\n', source)
-
-        else:
-            extension = "hpp"
-            new_source = "TODO"
-        
+            
         # From output files path
         path = None
         if scheme.lang.kernel_dir:
@@ -284,6 +280,7 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, target_config: di
 
     # # Generate iterativeLoop Host
     # if scheme.target.name == "hls":
+        
              
     # Generate master kernel file
     if scheme.master_kernel_template is not None:

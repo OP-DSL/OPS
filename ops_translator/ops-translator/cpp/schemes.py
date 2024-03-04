@@ -208,18 +208,20 @@ class CppHLS(Scheme):
         
         kernel_processor = KernelProcess()
         consts = []
+        consts_map = []
         for kernel_idx, loop in enumerate(iterLoop.getLoops()):
                 kernel_func = self.translateKernel(loop, program, app, kernel_idx)
                 kernel_func = kernel_processor.clean_kernel_func_text(kernel_func)
                 kernel_body, kernel_args = kernel_processor.get_kernel_body_and_arg_list(kernel_func)
                 kernel_body = self.hls_replace_accessors(kernel_body, kernel_args, loop, program)
                 kernel_consts = self.find_const_in_kernel(kernel_body, program.consts)
+                consts_map.append(kernel_consts)
                 consts.extend(x for x in kernel_consts if x not in consts)
         
         return [(iterloop_datamover_inc_template.render(ilh=iterLoop, ndim=program.ndim), self.iterloop_datamover_inc_extension),
                 (iterLoop_datamover_src_template.render(ilh=iterLoop, ndim=program.ndim, config=config), self.iterloop_datamover_src_extension),
                 (iterLoop_kernel_inc_template.render(ilh=iterLoop, ndim=program.ndim, config=config, consts=consts), self.iterloop_device_inc_extension),
-                (iterLoop_kernel_src_template.render(ilh=iterLoop, ndim=program.ndim, config=config, consts=consts), self.iterloop_device_src_extension)]
+                (iterLoop_kernel_src_template.render(ilh=iterLoop, ndim=program.ndim, config=config, consts=consts, consts_map = consts_map), self.iterloop_device_src_extension)]
     
     def genLoopDevice(
         self,
