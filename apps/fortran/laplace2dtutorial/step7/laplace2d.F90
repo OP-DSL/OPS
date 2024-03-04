@@ -13,6 +13,7 @@
 
 program laplace
     use OPS_Fortran_Reference
+    use OPS_Fortran_hdf5_Declarations
     use OPS_CONSTANTS
 
     use, intrinsic :: ISO_C_BINDING
@@ -23,8 +24,8 @@ program laplace
     integer, parameter :: iter_max=100
     integer :: i, j, iter
 
-    real(8), parameter :: tol=1.0e-6_8
-    real(8) :: err_diff
+    real(kind=8), parameter :: tol=1.0e-6_8
+    real(kind=8) :: err_diff
 
     ! integer references (valid inside the OPS library) for ops_block
     type(ops_block)   :: grid2D
@@ -33,27 +34,27 @@ program laplace
     type(ops_dat)     ::    d_A, d_Anew
     
     ! vars for stencils
-    integer s2D_00(2) /0,0/
+    integer(kind=4) :: s2D_00(2) = [0,0]
     type(ops_stencil) :: S2D_0pt
     
-    integer s2D_05(10) /0,0, 1,0, -1,0, 0,1, 0,-1/
+    integer(kind=4) :: s2D_05(10) =  [0,0, 1,0, -1,0, 0,1, 0,-1]
     type(ops_stencil) :: S2D_5pt
 
     !vars for reduction
     type(ops_reduction) :: h_err
-    real(8) :: error
+    real(kind=8) :: error
 
-    integer d_p(2) /1,1/   !max boundary depths for the dat in the possitive direction
-    integer d_m(2) /-1,-1/ !max boundary depths for the dat in the negative direction
+    integer(kind=4) :: d_p(2) = [1,1]   !max boundary depths for the dat in the possitive direction
+    integer(kind=4) :: d_m(2) = [-1,-1] !max boundary depths for the dat in the negative direction
     
     !size for OPS
-    integer size(2)
+    integer(kind=4) :: size(2)
 
     !base
-    integer base(2) /1,1/   !this is in fortran indexing - start from 1
+    integer(kind=4) :: base(2) = [1,1]   !this is in fortran indexing - start from 1
 
     !null array - for declaring ops dat    
-    real(8), dimension(:), allocatable :: temp
+    real(kind=8), dimension(:), allocatable :: temp
 
     ! profiling
     real(kind=c_double) :: startTime = 0
@@ -101,17 +102,17 @@ program laplace
     !declare data on blocks
     
     !declare ops_dat
-    call ops_decl_dat(grid2D, 1, size, base, d_m, d_p, temp, d_A, "real(8)", "A")
-    call ops_decl_dat(grid2D, 1, size, base, d_m, d_p, temp, d_Anew, "real(8)", "Anew")
+    call ops_decl_dat(grid2D, 1, size, base, d_m, d_p, temp, d_A, "real(kind=8)", "A")
+    call ops_decl_dat(grid2D, 1, size, base, d_m, d_p, temp, d_Anew, "real(kind=8)", "Anew")
 
     !declare OPS constants
-    call ops_decl_const("imax", 1, "int", imax)
-    call ops_decl_const("jmax", 1, "int", jmax)
-    call ops_decl_const("pi", 1, "double", pi)
+    call ops_decl_const("imax", 1, "integer(kind=4)", imax)
+    call ops_decl_const("jmax", 1, "integer(kind=4)", jmax)
+    call ops_decl_const("pi", 1, "real(kind=8)", pi)
 
     !declare reduction handles
     error=1.0_8 
-    call ops_decl_reduction_handle(8, h_err, "real(8)", "err")
+    call ops_decl_reduction_handle(8, h_err, "real(kind=8)", "err")
     
     ! start timer
     call ops_timers ( startTime )
@@ -119,64 +120,70 @@ program laplace
     call ops_partition("")
 
     call ops_par_loop(set_zero_kernel, "set zero", grid2D, 2, bottom_range, &
-                    & ops_arg_dat(d_A, 1, S2D_0pt, "real(8)", OPS_WRITE))
+                    & ops_arg_dat(d_A, 1, S2D_0pt, "real(kind=8)", OPS_WRITE))
     
     call ops_par_loop(set_zero_kernel, "set zero", grid2D, 2, top_range, &
-                    & ops_arg_dat(d_A, 1, S2D_0pt, "real(8)", OPS_WRITE))
+                    & ops_arg_dat(d_A, 1, S2D_0pt, "real(kind=8)", OPS_WRITE))
 
     call ops_par_loop(left_bndcon_kernel, "left_bndcon", grid2D, 2, left_range, &
-                    & ops_arg_dat(d_A, 1, S2D_0pt, "real(8)", OPS_WRITE), &
+                    & ops_arg_dat(d_A, 1, S2D_0pt, "real(kind=8)", OPS_WRITE), &
                     & ops_arg_idx())
 
     call ops_par_loop(right_bndcon_kernel, "right_bndcon", grid2D, 2, right_range, &
-               & ops_arg_dat(d_A, 1, S2D_0pt, "real(8)", OPS_WRITE), &
+               & ops_arg_dat(d_A, 1, S2D_0pt, "real(kind=8)", OPS_WRITE), &
                & ops_arg_idx())
 
-    write(*,'(a,i5,a,i5,a)') 'Jacobi relaxation Calculation:', imax+2, ' x', jmax+2, ' mesh'
+    if (ops_is_root() == 1) then
+        write(*,'(a,i5,a,i5,a)') 'Jacobi relaxation Calculation:', imax+2, ' x', jmax+2, ' mesh'
+    end if
 
     iter=0
 
     call ops_par_loop(set_zero_kernel, "set zero", grid2D, 2, bottom_range, &
-                    & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_WRITE))
+                    & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(kind=8)", OPS_WRITE))
 
     call ops_par_loop(set_zero_kernel, "set zero", grid2D, 2, top_range, &
-                    & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_WRITE))
+                    & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(kind=8)", OPS_WRITE))
 
     call ops_par_loop(left_bndcon_kernel, "left_bndcon", grid2D, 2, left_range, &
-                    & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_WRITE), &
+                    & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(kind=8)", OPS_WRITE), &
                     & ops_arg_idx())
 
     call ops_par_loop(right_bndcon_kernel, "right_bndcon", grid2D, 2, right_range, &
-               & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_WRITE), &
+               & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(kind=8)", OPS_WRITE), &
                & ops_arg_idx())
 
-    !call ops_print_dat_to_txtfile(d_A, "data_A.txt")
-    !call ops_print_dat_to_txtfile(d_Anew, "data_Anew.txt")
+!    call ops_fetch_block_hdf5_file(grid2D, "A.h5")
+!    call ops_fetch_dat_hdf5_file(d_A, "A.h5")
 
-    do while ( iter .lt. iter_max ) ! .and. error .gt. tol
-        error=0.0_8
+!    call ops_print_dat_to_txtfile(d_A, "data_A.txt")
+!    call ops_print_dat_to_txtfile(d_Anew, "data_Anew.txt")
+
+    do while ( iter < iter_max .and. error > tol )
 
         call ops_par_loop(apply_stencil_kernel, "apply_stencil", grid2D, 2, interior_range, &
-                        & ops_arg_dat(d_A,    1, S2D_5pt, "real(8)", OPS_READ), &
-                        & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_WRITE), &
-                        & ops_arg_reduce(h_err, 1, "real(8)", OPS_MAX))
+                        & ops_arg_dat(d_A,    1, S2D_5pt, "real(kind=8)", OPS_READ), &
+                        & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(kind=8)", OPS_WRITE), &
+                        & ops_arg_reduce(h_err, 1, "real(kind=8)", OPS_MAX))
+        call ops_reduction_result(h_err, error)
 
         call ops_par_loop(copy_kernel, "copy", grid2D, 2, interior_range, &
-                        & ops_arg_dat(d_A,    1, S2D_0pt, "real(8)", OPS_WRITE), &
-                        & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(8)", OPS_READ))
+                        & ops_arg_dat(d_A,    1, S2D_0pt, "real(kind=8)", OPS_WRITE), &
+                        & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(kind=8)", OPS_READ))
                         
-        IF (mod(iter,10).eq.0 ) THEN
-            call ops_reduction_result(h_err, error)
+        IF ( mod(iter,10) == 0 .and. ops_is_root() == 1) THEN
             write(*,'(i5,a,f16.7)') iter, ', ',error
         END IF
+
         iter = iter +1
 
     end do  ! End of do while loop
 
-    call ops_reduction_result(h_err, error)
-    write(*,'(i5,a,f16.7)') iter, ', ',error
+    if (ops_is_root() == 1) then
+        write(*,'(i5,a,f16.7)') iter, ', ',error
+    end if
 
-    err_diff = abs((100.0*(error/0.0026300795485))-100.0)
+    err_diff = abs((100.0*(error/2.421354960840227e-03))-100.0)
 
     write(*,'(a,e18.5,a)') 'Total error is within ', err_diff,' % of the expected error'
 
@@ -187,8 +194,9 @@ program laplace
     end if    
 
     call ops_timers( endTime )
-    write(*,'(a,f16.7,a)')  ' completed in ', endTime - startTime, ' seconds'
-
+    if (ops_is_root() == 1) then
+        write(*,'(a,f16.7,a)')  ' completed in ', endTime - startTime, ' seconds'
+    end if
     call ops_exit( )
 
 end program laplace

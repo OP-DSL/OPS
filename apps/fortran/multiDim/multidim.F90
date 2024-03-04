@@ -37,12 +37,6 @@
 program MULTIDIM
   use OPS_Fortran_Reference
   use OPS_CONSTANTS
-  !use OPS_Fortran_Declarations
-  !use OPS_Fortran_RT_Support
-  !use MULTIDIM_KERNEL_MODULE
-  !use MULTIDIM_PRINT_KERNEL_MODULE
-  !use MULTIDIM_COPY_KERNEL_MODULE
-
 
   use, intrinsic :: ISO_C_BINDING
 
@@ -50,37 +44,36 @@ program MULTIDIM
 
   intrinsic :: sqrt, real
   !initialize sizes using global values
-  integer x_cells /4/
-  integer y_cells /4/
+  integer(kind=4) :: x_cells = 4
+  integer(kind=4) :: y_cells = 4
 
-  ! integer references (valid inside the OPS library) for ops_block
+  ! integer(kind=4) :: references (valid inside the OPS library) for ops_block
   type(ops_block)   :: grid2D
 
   !ops_dats
   type(ops_dat)     :: dat0, dat1
 
   ! vars for stencils
-  integer s2D_00_arry(2) /0,0/
+  integer(kind=4) :: s2D_00_arry(2) = [0,0]
   type(ops_stencil) :: S2D_00
 
   !vars for reduction
-  real(8), dimension(2) :: reduct_result, gbl_test
+  real(kind=8), dimension(2) :: reduct_result, gbl_test
   type(ops_reduction) :: reduct_dat1
 
   ! vars for halo_depths
-  integer d_p(2) /1,1/   !max halo depths for the dat in the possitive direction
-  integer d_m(2) /-1,-1/ !max halo depths for the dat in the negative direction
+  integer(kind=4) :: d_p(2) = [1,1]   !max halo depths for the dat in the possitive direction
+  integer(kind=4) :: d_m(2) = [-1,-1] !max halo depths for the dat in the negative direction
 
   !size
-  integer size(2) /4,4/ !size of the dat -- should be identical to the block on which its define on
+  integer(kind=4) :: size(2) = [4,4] !size of the dat -- should be identical to the block on which its define on
 
   !base
-  integer base1(2) /1,1/ ! this is in fortran indexing
-  integer base2(2) /1,1/ ! this is in fortran indexing
+  integer(kind=4) :: base1(2) = [1,1] ! this is in fortran indexing
+  integer(kind=4) :: base2(2) = [1,1] ! this is in fortran indexing
 
   !null array
-  !real(8) temp[allocatable](:)
-  real(8), dimension(:), allocatable :: temp
+  real(kind=8), dimension(:), allocatable :: temp
 
   ! profiling
   real(kind=c_double) :: startTime = 0
@@ -90,10 +83,10 @@ program MULTIDIM
   !iterange needs to be fortran indexed here
   ! inclusive indexing for both min and max points in the range
   !.. but internally will convert to c index
-  integer iter_range(4) /1,4,1,4/
+  integer(kind=4) :: iter_range(4) = [1,4,1,4]
 
   !for validation
-  REAL(KIND=8) :: qa_diff
+  real(kind=8) :: qa_diff
 
   !-------------------------- Initialisation --------------------------
 
@@ -111,19 +104,19 @@ program MULTIDIM
 
   !declare data on blocks
   !declare ops_dat with dim = 2
-  call ops_decl_dat(grid2D, 2, size, base1, d_m, d_p, temp,  dat0, "real(8)", "dat0")
-  call ops_decl_dat(grid2D, 2, size, base2, d_m, d_p, temp,  dat1, "real(8)", "dat1")
+  call ops_decl_dat(grid2D, 2, size, base1, d_m, d_p, temp,  dat0, "real(kind=8)", "dat0")
+  call ops_decl_dat(grid2D, 2, size, base2, d_m, d_p, temp,  dat1, "real(kind=8)", "dat1")
 
   !initialize and declare constants
   const1 = 5.44_8
-  call ops_decl_const("const1", 1, "double", const1)
+  call ops_decl_const("const1", 1, "real(kind=8)", const1)
 
   !declare reduction handles
   reduct_result(1) = 0.0_8
   reduct_result(2) = 0.0_8
   gbl_test(1) = 1.0_8
   gbl_test(2) = 2.0_8
-  call ops_decl_reduction_handle(16, reduct_dat1, "real(8)", "reduct_dat1");
+  call ops_decl_reduction_handle(16, reduct_dat1, "real(kind=8)", "reduct_dat1");
 
   !decompose the block
   call ops_partition("2D_BLOCK_DECOMPSE")
@@ -132,20 +125,20 @@ program MULTIDIM
   call ops_timers ( startTime )
 
   call ops_par_loop(multidim_kernel, "multidim_kernel", grid2D, 2, iter_range, &
-               & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_WRITE), &
+               & ops_arg_dat(dat0, 2, S2D_00, "real(kind=8)", OPS_WRITE), &
                & ops_arg_idx())
 
   call ops_par_loop(multidim_copy_kernel, "multidim_copy_kernel", grid2D, 2, iter_range, &
-               & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ), &
-               & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_WRITE))
+               & ops_arg_dat(dat0, 2, S2D_00, "real(kind=8)", OPS_READ), &
+               & ops_arg_dat(dat1, 2, S2D_00, "real(kind=8)", OPS_WRITE))
 
   call ops_par_loop(multidim_print_kernel,"multidim_print_kernel", grid2D, 2, iter_range, &
-               & ops_arg_dat(dat0, 2, S2D_00, "real(8)", OPS_READ))
+               & ops_arg_dat(dat0, 2, S2D_00, "real(kind=8)", OPS_READ))
 
   call ops_par_loop(multidim_reduce_kernel,"multidim_reduce_kernel", grid2D, 2, iter_range, &
-               & ops_arg_dat(dat1, 2, S2D_00, "real(8)", OPS_READ), &
-               & ops_arg_gbl(gbl_test, 2, "real(8)", OPS_READ),     &
-               & ops_arg_reduce(reduct_dat1, 2, "real(8)", OPS_INC))
+               & ops_arg_dat(dat1, 2, S2D_00, "real(kind=8)", OPS_READ), &
+               & ops_arg_gbl(gbl_test, 2, "real(kind=8)", OPS_READ),     &
+               & ops_arg_reduce(reduct_dat1, 2, "real(kind=8)", OPS_INC))
 
   call ops_reduction_result(reduct_dat1, reduct_result)
 

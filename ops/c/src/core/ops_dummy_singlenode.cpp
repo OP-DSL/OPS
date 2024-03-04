@@ -154,14 +154,34 @@ ops_arg ops_arg_reduce(ops_reduction handle, int dim, const char *type,
 
 ops_reduction _ops_decl_reduction_handle(OPS_instance *instance, int size, const char *type,
                                         const char *name) {
-  if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 ||
+  if (strcmp(type, "double") == 0 ||
+      strcmp(type, "real(8)") == 0 ||
+      strcmp(type, "real(kind=8)") == 0 ||
       strcmp(type, "double precision") == 0)
+  {
     type = "double";
-  else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0)
+  }
+  else if (strcmp(type, "float") == 0 ||
+           strcmp(type, "real") == 0 ||
+           strcmp(type, "real(4)") == 0 ||
+           strcmp(type, "real(kind=4)") == 0)
+  {
     type = "float";
-  else if (strcmp(type, "int") == 0 || strcmp(type, "integer") == 0 ||
-           strcmp(type, "integer(4)") == 0 || strcmp(type, "int(4)") == 0)
+  }
+  else if (strcmp(type, "int") == 0 ||
+           strcmp(type, "int(4)") == 0 ||
+           strcmp(type, "integer") == 0 ||
+           strcmp(type, "integer(4)") == 0 ||
+           strcmp(type, "integer(kind=4)") == 0)
+  {
     type = "int";
+  }
+  else
+  {
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: Unknown data type for ops_reduction_handle";
+    throw ex;
+  }
 
   return ops_decl_reduction_handle_core(instance, size, type, name);
 }
@@ -176,6 +196,8 @@ void ops_execute_reduction(ops_reduction handle) { (void)handle; }
 int _ops_is_root(OPS_instance* instance) { (void)instance; return 1; }
 
 int ops_is_root() { return 1; }
+
+int ops_get_proc() { return 0; }
 
 int ops_num_procs() { return 1; }
 
@@ -333,10 +355,6 @@ bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, 
     //size[n] = ?
   }
   return true;
-}
-
-int ops_get_proc() {
-  return 0;
 }
 
 /************* Functions only use in the Fortran Backend ************/
@@ -615,13 +633,13 @@ void ops_dat_set_data(ops_dat dat, int part, char *data) {
 void ops_dat_set_data_host(ops_dat dat, int part, char *data) {
   ops_execute(dat->block->instance);
 
-  int *range{new int(2 * dat->block->dims)};
+  int *range{new int[2 * dat->block->dims]};
   for (int d = 0; d < dat->block->dims; d++) {
     range[2 * d] = dat->d_m[d];
-    range[2 * d + 1] = dat->size[d] + dat->d_m[d];
+    range[2 * d + 1] = dat->size[d] - dat->d_p[d];
   }
   ops_dat_set_data_slab_host(dat, 0, data, range);
-  delete range;
+  delete[] range;
 }
 
 void ops_dat_set_data_slab_host(ops_dat dat, int part, char *local_buf,

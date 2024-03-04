@@ -1,0 +1,89 @@
+{% extends "cpp/master_kernel.cpp.j2" %}
+
+{% block ops_headers %}
+{{super()}}
+
+{% if user_types %}
+#include "user_types.h"
+{% endif %}
+{% endblock %}
+
+{% block dim_struct %}
+typedef struct {
+    int size;
+    int *xdim, *ydim, *zdim;
+    int *strideX, *strideY, *strideZ;
+    int *mgridStrideX, *mgridStrideY, *mgridStrideZ;
+} argDims_t;
+
+{#
+#pragma omp declare mapper(mapper_4d_or_3d_mdim: argDims_t A) \
+    map(A.strideX[0:A.size],A.strideY[0:A.size],A.strideZ[0:A.size], \
+        A.xdim[0:A.size],A.ydim[0:A.size],A.zdim[0:A.size])
+
+#pragma omp declare mapper(mapper_3d_or_2d_mdim: argDims_t A) \
+    map(A.strideX[0:A.size],A.strideY[0:A.size],A.strideZ[0:A.size], \
+        A.xdim[0:A.size],A.ydim[0:A.size])
+
+#pragma omp declare mapper(mapper_2d_or_1d_mdim: argDims_t A) \
+    map(A.strideX[0:A.size],A.strideY[0:A.size], \
+        A.xdim[0:A.size])
+
+#pragma omp declare mapper(mapper_1d: argDims_t A) \
+    map(A.strideX[0:A.size])
+
+#pragma omp declare mapper(mapper_3d_or_2d_mdim_prolong: argDims_t A) \
+    map(A.strideX[0:A.size],A.strideY[0:A.size],A.strideZ[0:A.size], \
+        A.mgridStrideX[0:A.size],A.mgridStrideY[0:A.size],A.mgridStrideZ[0:A.size], \
+        A.xdim[0:A.size],A.ydim[0:A.size])
+
+#pragma omp declare mapper(mapper_2d_or_1d_mdim_prolong: argDims_t A) \
+    map(A.strideX[0:A.size],A.strideY[0:A.size], \
+        A.mgridStrideX[0:A.size],A.mgridStrideY[0:A.size], \
+        A.xdim[0:A.size])
+
+#pragma omp declare mapper(mapper_1d_prolong: argDims_t A) \
+    map(A.strideX[0:A.size], A.mgridStrideX[0:A.size])
+#}
+{% endblock %}
+
+{% block const_decls %}
+//  global constants
+    {% for const in app.consts() %}
+    {% if const.dim.isdigit() %}
+        {% set NDIM = const.dim|int %}
+            {% if NDIM > 1 %}
+extern {{const.typ}} {{const.ptr}}[{{NDIM}}];
+            {% else %}
+extern {{const.typ}} {{const.ptr}};
+            {% endif %}
+    {% else %}
+extern {{const.typ}} *{{const.ptr}};
+    {% endif %}
+    {% endfor %}
+
+void ops_init_backend(){}
+
+void ops_decl_const_char(OPS_instance *instance, int dim, char const *type, int size, char *dat, char const *name) {
+    ops_execute(instance);
+
+{% for const in app.consts() %}
+    if(!strcmp(name, "{{const.name}}")) {
+    {% if const.dim.isdigit() and const.dim|int == 1 %}
+        #pragma omp target enter data map(to:{{const.ptr}})
+    {% else %}
+        #pragma omp target enter data map(to:{{const.ptr}}[0:dim])
+    {% endif %}
+    } else
+    {% if loop.last %}
+    {
+        throw OPSException(OPS_RUNTIME_ERROR, "error: unknown const name");
+    }
+    {% endif %}
+{% endfor %}
+}
+{% endblock %}
+
+{% block header_includes %}
+{{super()}}
+{% endblock %}

@@ -51,8 +51,13 @@
 //#include <math_constants.h>
 
 #include <ops_lib_core.h>
+#include <ops_mpi_core.h>
 #include <ops_opencl_rt_support.h>
 #include <ops_exceptions.h>
+
+#include <random>
+//std::default_random_engine ops_rand_gen;
+std::mt19937 ops_rand_gen;
 
 //
 // Get return (error) messages from OpenCL run-time
@@ -387,4 +392,19 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
 
   instance->ostream() << "Error: No available devices found.\n";
   return;
+}
+
+void ops_randomgen_init(unsigned int seed, int options) {
+  ops_randomgen_init_host(seed, options, ops_rand_gen);
+}
+
+void ops_fill_random_uniform(ops_dat dat) {
+  ops_fill_random_uniform_host(dat, ops_rand_gen);
+}
+
+void ops_fill_random_normal(ops_dat dat) {
+  ops_fill_random_normal_host(dat, ops_rand_gen);
+}
+
+void ops_randomgen_exit() {
 }

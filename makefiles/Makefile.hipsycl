@@ -1,0 +1,18 @@
+CC      := clang
+CXX     := clang++-14
+ifdef DEBUG
+	CCFLAGS   := -O0 -std=c99 -fPIC -Wall -g #-ffloat-store
+	CXXFLAGS   := -O0 -fPIC -Wall -g -std=c++11 #-ffloat-store
+else
+	CCFLAGS   := -O3 -std=c99 -fPIC -Wall -g #-ffloat-store
+	CXXFLAGS  := -O3 -fPIC -Wall -g -std=c++17
+endif
+OMPFLAGS=-fopenmp
+ifdef THREADED
+	THREADING_FLAGS ?= -fopenmp
+endif
+OMPOFFLOADFLAGS=-target x86_64-pc-linux-gnu -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx90a
+SYCLCXX = syclcc
+SYCL_FLAGS = --opensycl-targets=hip:gfx90a -Xclang -mlink-bitcode-file -Xclang /opt/rocm-5.4.2/amdgcn/bitcode/oclc_abi_version_400.bc -munsafe-fp-atomics
+OPS_LIB_SYCL=-lops_sycl
+#-fsycl -fsycl-targets=amdgcn-amd-amdhsa -Xsycl-target-backend --offload-arch=gfx90a -munsafe-fp-atomics

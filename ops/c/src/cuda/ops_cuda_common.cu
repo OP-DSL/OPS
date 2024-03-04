@@ -33,11 +33,15 @@
 /** @file
   * @brief OPS common cuda-specific functions (non-MPI and MPI)
   * @author Gihan Mudalige, Istvan Reguly
-  * @details Implements the CUDA-specific routines shared between single-GPU 
+  * @details Implements the CUDA-specific routines shared between single-GPU
   * and MPI+CUDA backends
   */
 
 #include <ops_cuda_rt_support.h>
+
+#include <curand.h>
+curandGenerator_t ops_rand_gen;
+int curand_initialised = 0;
 
 //
 // CUDA utility functions
@@ -47,9 +51,17 @@ void __cudaSafeCall(std::ostream &stream, cudaError_t err, const char *file, con
   if (cudaSuccess != err) {
     fprintf2(stream, "%s(%i) : cutilSafeCall() Runtime API error : %s.\n", file,
             line, cudaGetErrorString(err));
-    if (err == cudaErrorNoKernelImageForDevice) 
+    if (err == cudaErrorNoKernelImageForDevice)
     throw OPSException(OPS_RUNTIME_ERROR, "Please make sure the OPS CUDA/MPI+CUDA backends were compiled for your GPU");
     else throw OPSException(OPS_RUNTIME_ERROR, cudaGetErrorString(err));
+  }
+}
+
+void __curandSafeCall(std::ostream &stream, curandStatus_t err, const char *file, const int line) {
+  if (CURAND_STATUS_SUCCESS != err) {
+    fprintf2(stream, "%s(%i) : curandSafeCall() Runtime API error : %s.\n", file,
+            line, cudaGetErrorString(cudaGetLastError()));
+    throw OPSException(OPS_RUNTIME_ERROR, "Please make sure the OPS CUDA/MPI+CUDA backends were compiled with curand for your GPU");
   }
 }
 
@@ -82,19 +94,19 @@ void ops_device_freehost(OPS_instance *instance, void** ptr) {
 }
 
 void ops_device_memcpy_h2d(OPS_instance *instance, void** to, void **from, size_t size) {
-    cutilSafeCall(instance->ostream(), cudaMemcpy(*to, *from, size, cudaMemcpyHostToDevice));
+  cutilSafeCall(instance->ostream(), cudaMemcpy(*to, *from, size, cudaMemcpyHostToDevice));
 }
 
 void ops_device_memcpy_d2h(OPS_instance *instance, void** to, void **from, size_t size) {
-    cutilSafeCall(instance->ostream(), cudaMemcpy(*to, *from, size, cudaMemcpyDeviceToHost));
+  cutilSafeCall(instance->ostream(), cudaMemcpy(*to, *from, size, cudaMemcpyDeviceToHost));
 }
 
 void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_t size) {
-    cutilSafeCall(instance->ostream(), cudaMemcpy(*to, *from, size, cudaMemcpyDeviceToDevice));
+  cutilSafeCall(instance->ostream(), cudaMemcpy(*to, *from, size, cudaMemcpyDeviceToDevice));
 }
 
 void ops_device_memset(OPS_instance *instance, void** ptr, int val, size_t size) {
-    cutilSafeCall(instance->ostream(), cudaMemset(*ptr, val, size));
+  cutilSafeCall(instance->ostream(), cudaMemset(*ptr, val, size));
 }
 
 void ops_device_sync(OPS_instance *instance) {
@@ -137,9 +149,108 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
     cudaGetDevice(&deviceId);
     cudaDeviceProp_t deviceProp;
     cutilSafeCall(instance->ostream(), cudaGetDeviceProperties(&deviceProp, deviceId));
-    if (instance->OPS_diags>2) instance->ostream() << "\n Using CUDA device: " <<
-      deviceId << " " << deviceProp.name;
+    if (instance->OPS_diags>=1) instance->ostream() << "\n Using CUDA device: " <<
+      deviceId << " " << deviceProp.name <<"\n";
   } else {
     throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: no available CUDA devices");
+  }
+}
+
+void ops_randomgen_init(unsigned int seed, int options) {
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+
+  /* Create pseudo-random number generator */
+  curandSafeCall(instance->ostream(), curandCreateGenerator(&ops_rand_gen, CURAND_RNG_PSEUDO_DEFAULT));
+
+  /* Set seed */
+  int comm_global_size = ops_num_procs();
+  int my_global_rank = ops_get_proc();
+
+  if(comm_global_size == 1)
+    curandSafeCall(instance->ostream(), curandSetPseudoRandomGeneratorSeed(ops_rand_gen, seed));
+  else
+    curandSafeCall(instance->ostream(), curandSetPseudoRandomGeneratorSeed(ops_rand_gen, seed + my_global_rank * 2654435761u));
+
+  curand_initialised = 1;
+}
+
+void ops_fill_random_uniform(ops_dat dat) {
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+
+  size_t cumsize = dat->dim;
+  const char *type = dat->type;
+
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    cumsize *= dat->size[d];
+  }
+
+  if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) {
+    curandSafeCall(instance->ostream(), curandGenerateUniformDouble(ops_rand_gen, (double *)dat->data_d, cumsize));
+  }
+  else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 ||
+             strcmp(type, "real(kind=4)") == 0) {
+    curandSafeCall(instance->ostream(), curandGenerateUniform(ops_rand_gen, (float *)dat->data_d, cumsize));
+  }
+  else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 || strcmp(type, "integer") == 0 ||
+             strcmp(type, "integer(4)") == 0 || strcmp(type, "integer(kind=4)") == 0) {
+    curandSafeCall(instance->ostream(), curandGenerate(ops_rand_gen, (unsigned int *)dat->data_d, cumsize));
+  }
+  else {
+    OPSException ex(OPS_RUNTIME_ERROR);
+    ex << "Error: uniform random number generation not implemented for data type: "<<dat->type;
+    throw ex;
+  }
+
+  dat->dirty_hd = 2;
+  // set halo
+  ops_arg arg = ops_arg_dat(dat, dat->dim, instance->OPS_internal_0[dat->block->dims -1], dat->type, OPS_WRITE);
+  int *iter_range = new int[dat->block->dims*2];
+  for ( int n = 0; n < dat->block->dims; n++) {
+    iter_range[2*n] = 0;
+    iter_range[2*n+1] = dat->size[n];
+  }
+  ops_set_halo_dirtybit3(&arg, iter_range);
+}
+
+void ops_fill_random_normal(ops_dat dat) {
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+
+  size_t cumsize = dat->dim;
+  const char *type = dat->type;
+
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    cumsize *= dat->size[d];
+  }
+
+  if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) {
+    curandSafeCall(instance->ostream(), curandGenerateNormalDouble(ops_rand_gen, (double *)dat->data_d, cumsize, 0.0, 1.0));
+  }
+  else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 ||
+             strcmp(type, "real(kind=4)") == 0) {
+    curandSafeCall(instance->ostream(), curandGenerateNormal(ops_rand_gen, (float *)dat->data_d, cumsize, 0.0f, 1.0f));
+  }
+  else {
+    OPSException ex(OPS_RUNTIME_ERROR);
+    ex << "Error: normal random number generation not implemented for data type: "<<dat->type;
+    throw ex;
+  }
+
+  dat->dirty_hd = 2;
+  // set halo
+  ops_arg arg = ops_arg_dat(dat, dat->dim, instance->OPS_internal_0[dat->block->dims -1], dat->type, OPS_WRITE);
+  int *iter_range = new int[dat->block->dims*2];
+  for ( int n = 0; n < dat->block->dims; n++) {
+    iter_range[2*n] = 0;
+    iter_range[2*n+1] = dat->size[n];
+  }
+  ops_set_halo_dirtybit3(&arg, iter_range);
+}
+
+void ops_randomgen_exit() {
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+
+  if(curand_initialised) {
+    curand_initialised = 0;
+    curandSafeCall(instance->ostream(), curandDestroyGenerator(ops_rand_gen));
   }
 }

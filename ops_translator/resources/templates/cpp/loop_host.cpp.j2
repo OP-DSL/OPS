@@ -1,0 +1,107 @@
+
+{% block prologue %}
+{% endblock %}
+
+{% block kernel_wrapper %}
+{% endblock %}
+
+{% block host_prologue %}
+//  ==================
+//  Host stub function
+//  ==================
+#ifndef OPS_LAZY
+void ops_par_loop_{{lh.kernel}}(
+    const char *name,
+    ops_block block,
+    int dim,
+    int *range,
+    {% for arg in lh.args %}
+    ops_arg arg{{arg.id}}{{"," if not loop.last}}
+    {% endfor %}
+)
+{ 
+#else
+void ops_par_loop_{{lh.kernel}}_execute(ops_kernel_descriptor *desc)
+{
+{% block host_prologue_sub_1 required %}
+{% endblock %}
+    int dim = desc->dim;
+    int *range = desc->range;
+    {% for arg in lh.args %}
+    ops_arg arg{{arg.id}} = desc->args[{{arg.id}}];
+    {% endfor %}
+#endif
+
+//  ======
+//  Timing
+//  ======
+    double __t1, __t2, __c1, __c2;
+
+    ops_arg args[{{lh.args|length}}];
+
+    {% for arg in lh.args %}
+    args[{{loop.index0}}] = arg{{arg.id}};
+    {% endfor %}
+
+#if defined(CHECKPOINTING) && !defined(OPS_LAZY)
+    if (!ops_checkpointing_before(args, {{lh.args|length}}, range, {{kernel_idx}})) return;
+#endif
+
+    if (block->instance->OPS_diags > 1)
+    {
+        ops_timing_realloc(block->instance, {{kernel_idx}}, "{{lh.kernel}}");
+        block->instance->OPS_kernels[{{kernel_idx}}].count++;
+        ops_timers_core(&__c1, &__t1);
+    }
+
+{% block host_prologue_sub_2 %}
+{% endblock %}
+
+//  =================================================
+//  compute locally allocated range for the sub-block
+//  =================================================
+    int start_indx[{{lh.ndim}}];
+    int end_indx[{{lh.ndim}}];
+{% block host_prologue_sub_3 required %}
+{% endblock %}
+
+#if defined(OPS_LAZY) || !defined(OPS_MPI)
+    for (int n = 0; n < {{lh.ndim}}; n++) {
+        start_indx[n] = range[2*n];
+        end_indx[n]   = range[2*n+1];
+    }
+#else
+    if (compute_ranges(args, {{lh.args|length}}, block, range, start_indx, end_indx, arg_idx) < 0) return;
+#endif
+
+{% endblock%}
+
+{% block host_loop required %}
+{% endblock %}
+
+{% block host_epilogue %}
+{% endblock %}
+
+{% block kernel_descriptor_lazy %}
+#ifdef OPS_LAZY
+void ops_par_loop_{{lh.kernel}}(
+    const char *name,
+    ops_block block,
+    int dim,
+    int *range,
+    {% for arg in lh.args %}
+    ops_arg arg{{arg.id}}{{"," if not loop.last}}
+    {% endfor %}
+    )
+{
+    ops_arg args[{{lh.args|length}}];
+
+    {% for arg in lh.args %}
+    args[{{loop.index0}}] = arg{{arg.id}};
+    {% endfor %}
+
+{% block kernel_descriptor_lazy_call required %}
+{% endblock %}
+}
+#endif
+{% endblock %}

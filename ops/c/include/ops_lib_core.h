@@ -51,6 +51,7 @@
 #endif
 #include <stdint.h>
 #include <complex>
+#include <random>
 
 /** default byte alignment for allocations made by OPS */
 #ifndef OPS_ALIGNMENT
@@ -93,8 +94,16 @@
 typedef std::complex<double> complexd;
 typedef std::complex<float> complexf;
 
-#if defined(__CUDA_ARCH__) || defined(__CUDACC__)
+#if (defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)) && !(defined(__HIP_PLATFORM_NVCC__) || defined(__HIP_PLATFORM_NVIDIA__))
+#include <hip/hip_fp16.h>
+#elif !(defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)) && (defined(__HIP_PLATFORM_NVCC__) || defined(__HIP_PLATFORM_NVIDIA__))
 #include <cuda_fp16.h>
+#elif defined(__CUDA_ARCH__) || defined(__CUDACC__)
+#include <cuda_fp16.h>
+typedef __half half;
+//#elif defined(__SYCL_DEVICE_ONLY__)
+#elif defined(__INTEL_SYCL__)
+#include <CL/sycl.hpp>
 #elif defined(__STDCPP_FLOAT16_T__) || defined(FLT16_MIN)
 typedef _Float16 half;
 #else
@@ -1278,6 +1287,15 @@ void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *rang
 OPS_FTN_INTEROP
 int ops_dat_get_global_npartitions(ops_dat dat);
 #endif
+
+/*******************************************************************************
+* Random number generations
+*******************************************************************************/
+void ops_randomgen_init(unsigned int seed, int options);
+void ops_fill_random_uniform(ops_dat dat);
+void ops_fill_random_normal(ops_dat dat);
+void ops_randomgen_exit();
+
 
 /**
  * This class is an accessor to data stored in ops_dats. It is

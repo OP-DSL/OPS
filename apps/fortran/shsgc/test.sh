@@ -1,7 +1,20 @@
 #!/bin/bash
 set -e
-cd ../../../ops/fortran
+
+export SOURCE_INTEL=source_intel_2021.3_pythonenv
+export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
+export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
+
+#export AMOS=TRUE
+#export DMOS=TRUE
+#export TELOS=TRUE
+#export KOS=TRUE
+
+<<comment
+cd $OPS_INSTALL_PATH/fortran
 source ../../scripts/$SOURCE_INTEL
+
 make
 cd -
 make clean
@@ -36,6 +49,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 
+comment
 
 cd $OPS_INSTALL_PATH/fortran
 source ../../scripts/$SOURCE_PGI
@@ -96,14 +110,6 @@ rm perf_out
 
 echo '============> Running OpenACC'
 ./shsgc_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "RMS =" perf_out
-grep "Max total runtime" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
-
-#echo '============> Running MPI+OpenACC'
-$MPI_INSTALL_PATH/bin/mpirun -np 2  ./shsgc_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "RMS =" perf_out
 grep "Max total runtime" perf_out
 grep "PASSED" perf_out

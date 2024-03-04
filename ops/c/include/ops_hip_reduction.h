@@ -48,10 +48,10 @@
 
 template <ops_access reduction, class T>
 __inline__ __device__ void ops_reduction_hip(volatile T *dat_g, T dat_l) {
-  /*extern __shared__ volatile double2 temp2[];
+  extern __shared__ volatile double2 temp2[];
   __shared__ volatile T *temp;
-  temp = (T *)temp2;*/
-  HIP_DYNAMIC_SHARED(T,temp);
+  temp = (T *)temp2;
+  //HIP_DYNAMIC_SHARED(T,temp);
 
   T dat_t;
 

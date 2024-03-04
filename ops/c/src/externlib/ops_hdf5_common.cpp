@@ -108,29 +108,43 @@ const char *ops_hdf5_type_to_string(hid_t t) {
 
 hid_t h5_type(const char *type) {
     hid_t h5t{0};
-    if (half_type_init == 0) {H5T_IEEE_FP16 = create_float16_type(); half_type_init=1;}
-    if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0)
+    if (half_type_init == 0) { H5T_IEEE_FP16 = create_float16_type(); half_type_init=1; }
+
+    if (strcmp(type, "double") == 0 ||
+        strcmp(type, "real(8)") == 0 ||
+        strcmp(type, "real(kind=8)") == 0 ||
+        strcmp(type, "double precision") == 0)
     {
         h5t = H5T_NATIVE_DOUBLE;
     }
-    else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 ||
+    else if (strcmp(type, "float") == 0 ||
+             strcmp(type, "real") == 0 ||
+             strcmp(type, "real(4)") == 0 ||
              strcmp(type, "real(kind=4)") == 0)
     {
         h5t = H5T_NATIVE_FLOAT;
     }
-    else if (strcmp(type, "half") == 0) {
+    else if (strcmp(type, "half") == 0)
+    {
         h5t = H5T_IEEE_FP16;
-    } else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 || strcmp(type, "integer") == 0 ||
-             strcmp(type, "integer(4)") == 0 || strcmp(type, "integer(kind=4)") == 0)
+    }
+    else if (strcmp(type, "int") == 0 ||
+             strcmp(type, "int(4)") == 0 ||
+             strcmp(type, "integer") == 0 ||
+             strcmp(type, "integer(4)") == 0 ||
+             strcmp(type, "integer(kind=4)") == 0)
     {
         h5t = H5T_NATIVE_INT;
-    } else if (strcmp(type, "long") == 0)
+    }
+    else if (strcmp(type, "long") == 0)
     {
         h5t = H5T_NATIVE_LONG;
-    } else if ((strcmp(type, "long long") == 0) || (strcmp(type, "ll") == 0))
+    }
+    else if ((strcmp(type, "long long") == 0) || (strcmp(type, "ll") == 0))
     {
         h5t = H5T_NATIVE_LLONG;
-    } else if (strcmp(type, "short") == 0)
+    }
+    else if (strcmp(type, "short") == 0)
     {
         h5t = H5T_NATIVE_SHORT;
     }
@@ -224,12 +238,12 @@ void H5_dataset_space(const hid_t file_id, const int data_dims,
     bool dims_consistent{ndims == data_dims};
     bool size_consistent{true};
     if (dims_consistent) {
-      hsize_t *size{new hsize_t(ndims)};
+      hsize_t *size{new hsize_t[ndims]};
       H5Sget_simple_extent_dims(file_space, size, NULL);
       for (int d = 0; d < ndims; d++) {
         size_consistent = size_consistent && (size[d] == global_data_size[d]);
       }
-      delete size;
+      delete[] size;
     }
     if ((not dims_consistent) || (not size_consistent)) {
       H5Sclose(file_space);
@@ -275,12 +289,12 @@ void H5_dataset_space(const hid_t file_id, const int data_dims,
     bool dims_consistent{ndims == data_dims};
     bool size_consistent{true};
     if (dims_consistent) {
-      hsize_t *size{new hsize_t(ndims)};
+      hsize_t *size{new hsize_t[ndims]};
       H5Sget_simple_extent_dims(file_space, size, NULL);
       for (int d = 0; d < ndims; d++) {
         size_consistent = size_consistent && (size[d] == global_data_size[d]);
       }
-      delete size;
+      delete[] size;
     }
     if ((not dims_consistent) || (not size_consistent)) {
       H5Sclose(file_space);

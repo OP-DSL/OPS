@@ -1,6 +1,7 @@
 #ifndef OPS_MACROS_H
 #define OPS_MACROS_H
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef OPS_ACC_IGNORE      /* OPS_ACC_IGNORE - OPS clang parser from code-gen should skip this */
 /*
 * Open source copyright declaration based on BSD open source template:
 * http://www.opensource.org/licenses/bsd-license.php
@@ -2900,5 +2901,6 @@ extern int multi_d0, multi_d1, multi_d2, multi_d3, multi_d4, multi_d5, multi_d6,
 #endif /* OPS_SOA */
 #endif /* OPS_NO_GLOBALS */
 #endif /* OPS_API */
+#endif /* OPS_ACC_IGNORE */
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif // OPS_MACROS_H

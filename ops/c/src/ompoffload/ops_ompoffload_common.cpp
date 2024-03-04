@@ -40,6 +40,9 @@
 #include <omp.h>
 #include <ops_lib_core.h>
 
+#include <random>
+std::mt19937 ops_rand_gen;
+
 void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const argv[]) {
   (void)argc;
   (void)argv;
@@ -51,14 +54,18 @@ void ops_init_device(OPS_instance *instance, const int argc, const char *const a
     throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: OPS_block_size_x*OPS_block_size_y*OPS_block_size_z should be less than 1024 -- error OPS_block_size_*");
   }
   cutilDeviceInit(instance, argc, argv);
+  int my_id = ops_get_proc();
+  int no_of_devices = omp_get_num_devices();
+  omp_set_default_device(my_id % no_of_devices);
   instance->OPS_hybrid_gpu = 1;
 }
 
 void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
   *ptr = ops_malloc(bytes);
-  char *ptr2 = (char *)*ptr;
-  #pragma omp target enter data map(to: ptr2[:bytes])
-  //#pragma omp target update to((*ptr)[:bytes])
+  int device = omp_get_default_device();
+
+  void* device_ptr = omp_target_alloc(bytes, device);
+  omp_target_associate_ptr(*ptr, device_ptr, bytes, 0, device);
 }
 
 void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
@@ -66,8 +73,11 @@ void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
 }
 
 void ops_device_free(OPS_instance *instance, void** ptr) {
-  char *ptr2 = (char *)*ptr;
-  #pragma omp target exit data map(from: ptr)
+  int device = omp_get_default_device();
+
+  void* device_ptr = omp_get_mapped_ptr(*ptr, device);
+  omp_target_disassociate_ptr(*ptr, device);
+  omp_target_free(device_ptr, device);
   ops_free(*ptr);
   *ptr = nullptr;
 }
@@ -78,33 +88,63 @@ void ops_device_freehost(OPS_instance *instance, void** ptr) {
 }
 
 void ops_device_memcpy_h2d(OPS_instance *instance, void** to, void **from, size_t size) {
-  memcpy(*to, *from, size);
-  char *ptr2 = (char *)*to;
-  #pragma omp target update to(ptr2[:size])
+  int host = omp_get_initial_device();
+  int device = omp_get_default_device();
+
+  void* device_ptr = omp_get_mapped_ptr(*to, device);
+  omp_target_memcpy(device_ptr, *from, size, 0, 0, device, host);
 }
 
 void ops_device_memcpy_d2h(OPS_instance *instance, void** to, void **from, size_t size) {
-  char *ptr2 = (char *)*from;
-  #pragma omp target update from(ptr2[:size])
-  memcpy(*to, *from, size);
+  int host = omp_get_initial_device();
+  int device = omp_get_default_device();
+
+  void* device_ptr = omp_get_mapped_ptr(*from, device);
+  omp_target_memcpy(*to, device_ptr, size, 0, 0, host, device);
 }
 
 void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_t size) {
-  char *ptr = (char *)*to;
-  char *ptr2 = (char *)*from;
-  #pragma omp target teams distribute parallel for map(to: ptr[:size]) map(from: ptr2[:size])
-  for (int i = 0; i < size; i++) {
-    ptr[i] = ptr2[i];
+  int device, device2;
+  int no_devices = omp_get_num_devices();
+
+  for(int i = 0; i < no_devices; i++) {
+    if (omp_target_is_present(*from, i)) {
+	device = i;
+    }
+    if (omp_target_is_present(*to, i)) {
+	device2 = i;
+    }
   }
+
+  void* device_ptr = omp_get_mapped_ptr(*from, device);
+  void* device_ptr2 = omp_get_mapped_ptr(*to, device);
+  omp_target_memcpy(device_ptr2, device_ptr, size, 0, 0, device2, device);
 }
 
 void ops_device_memset(OPS_instance *instance, void** ptr, int val, size_t size) {
-    char *ptr2 = (char *)*ptr;
-    #pragma omp target teams distribute parallel for map(to: ptr2[:size])
-    for (int i = 0; i < size; i++) {
-      ptr2[i] = (char)val;
-    }
+  int device = omp_get_default_device();
+
+  char* ptr2 = (char*) *ptr;
+  #pragma omp target teams distribute parallel for //map(from:ptr2[0:size])
+  for (int i = 0; i < size; i++) {
+    ptr2[i] = (char)val;
+  }
 }
 
 void ops_device_sync(OPS_instance *instance) {
+}
+
+void ops_randomgen_init(unsigned int seed, int options) {
+  ops_randomgen_init_host(seed, options, ops_rand_gen);
+}
+
+void ops_fill_random_uniform(ops_dat dat) {
+  ops_fill_random_uniform_host(dat, ops_rand_gen);
+}
+
+void ops_fill_random_normal(ops_dat dat) {
+  ops_fill_random_normal_host(dat, ops_rand_gen);
+}
+
+void ops_randomgen_exit() {
 }

@@ -1,0 +1,88 @@
+#!/bin/bash
+#A rough example of environmental variables for compiling with Intel compilers
+
+#unset and set defaults
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+unset LD_LIBRARY_PATH
+module purge
+. ~/.bashrc
+export PATH=/rr-home/gihan/numawrap:$PATH
+module load cmake/3.20.1
+
+#module load llvm-14.0.6/llvm-14.0.6
+#export LIBCLANG_PATH=/opt/llvm/14.0.6/lib/libclang.so
+unset LIBCLANG_PATH
+module load python/3.9.7
+
+#OPS specifics
+export OPS_COMPILER=intel
+export OPS_INSTALL_PATH=/rr-home/gihan/OPS/ops
+export OP_AUTO_SOA=1
+
+#Uncomment the following to test/reinstall the environment setup for the code-gen
+#cd  $OPS_INSTALL_PATH/../ops_translator/
+#rm -rf ./ops_venv
+#. setup_venv.sh
+#cd -
+source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
+
+#Intel MPI and Compilers - classic
+module load intel-oneapi-2021.3/intel-classic-2021.3
+module load intel-oneapi-2021.3/impi-classic-2021.3
+unset HIP_INSTALL_PATH
+unset SYCL_INSTALL_PATH
+export MPI_INSTALL_PATH=/opt/intel/oneapi/2021.3/mpi/2021.3.0/
+export MPICPP=$MPI_INSTALL_PATH/bin/mpicxx
+
+#Intel MPI and Compilers - oneapi
+#module load intel-2021.4/intel-oneapi-2021.4
+#module load intel-2021.4/impi-oneapi-2021.4
+#export SYCL_INSTALL_PATH=/opt/intel/oneapi/2021.4/compiler/2021.4.0/linux
+#unset SYCL_INSTALL_PATH
+#export MPI_INSTALL_PATH=/opt/intel/oneapi/2021.4/mpi/2021.4.0
+#export MPICPP=$MPI_INSTALL_PATH/bin/mpicxx
+
+#CUDA and NVIDIA OpenCL
+if (lspci | grep -i 'nvidia') then
+
+module load cuda/toolkit-10.2.89
+
+if [ "$HOSTNAME" == "telos" ]
+then
+    #Telos
+    export NV_ARCH=Volta
+elif [ "$HOSTNAME" == "kos" ]
+then
+    # Kos
+    export NV_ARCH=Pascal
+fi
+echo "GPU architecture" $NV_ARCH
+
+export CUDA_INSTALL_PATH=/opt/cuda/10.2.89/toolkit/
+export OPENCL_INSTALL_PATH=/opt/cuda/10.2.89/toolkit/
+export CUDA_MATH_LIBS=/opt/cuda/10.2.89/lib64/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/cuda/10.2.89/lib64/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/cuda/10.2.89/toolkit/lib64
+else
+unset CUDA_INSTALL_PATH
+fi
+
+
+#Intel based HDF5
+unset HDF5_INSTALL_PATH
+#export HDF5_INSTALL_PATH=/opt/hdf5/1.8.18/intel/15.0u6/impi/5.0u3/
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/hdf5/1.8.18/intel/15.0u6/impi/5.0u3/lib/
+export HDF5_INSTALL_PATH=/rr-home/gihan/HDF5/build_hdf5/intel
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/rr-home/gihan/HDF5/build_hdf5/intel/lib/
+
+#Tridiagonal LIB
+export TDMA_INSTALL_PATH=~/tridsolver/scalar/libtrid
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TDMA_INSTALL_PATH/lib/
+#unset TDMA_INSTALL_PATH 
+#unset LD_LIBRARY_PATH
+
+#OpenSBLI -- for testing app TGV only
+export OPENSBLI_INSTALL_PATH=/rr-home/gihan/OpenSBLI/OpenSBLI_OPS_TESTING/opensbli
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/rr-home/gihan/libffi/
+

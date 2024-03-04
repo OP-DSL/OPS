@@ -29,6 +29,7 @@
 #include <math.h>
 
 // OPS header file
+//#define OPS_2D
 #include <ops_seq.h>
 
 
@@ -36,6 +37,12 @@
 #include "definitions.h"
 
 
+int g_rect, g_circ, g_point;
+int     number_of_states;
+
+state_type * states; //global variable holding state info
+grid_type grid; //global variable holding global grid info
+field_type field; //global variable holding info of fields
 
 void initialise_chunk();
 void generate();
@@ -59,7 +66,7 @@ void start()
 
   build_field();
 
-   ops_decl_const("field", 1, "field_type", &field );
+  ops_decl_const("field", 1, "field_type", &field );
   ops_decl_const("grid", 1, "grid_type", &grid );
   ops_decl_const("number_of_states",1,"int",&number_of_states);
   ops_decl_const("states",number_of_states, "state_type", states );

@@ -1,14 +1,24 @@
 #!/bin/bash
 set -e
-#<<COMMENT
-cd ../../../ops/c
-#source ../../scripts/$SOURCE_INTEL
-source  ~/OPS/scripts/source_intel_2021.3
+cd $OPS_INSTALL_PATH/c
 
-#<<COMMENT
-#==== Build and copy Referance application from the TDMA Library ====
-#build lib first
-# TDMA_INSTALL_PATH=/path/to/tridsolver/scalar/build
+export SOURCE_INTEL=source_intel_2021.3_pythonenv
+
+#export AMOS=TRUE
+#export DMOS=TRUE
+#export TELOS=TRUE
+#export KOS=TRUE
+
+if [[ -v TELOS || -v KOS ]]; then
+
+#============================ Test with Intel Classic Compilers==========================================
+echo "Testing Intel classic complier based applications ---- "
+
+source ../../scripts/$SOURCE_INTEL
+
+
+# Build and copy Referance application from the TDMA Library
+# build lib first
 cd $TDMA_INSTALL_PATH/../build
 rm -rf ./*
 cmake .. -DCUDA_cublas_LIBRARY=/opt/cuda/10.2.89/lib64/libcublas.so -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_SN=ON -DBUILD_FOR_MPI=ON -DCMAKE_INSTALL_PREFIX=$TDMA_INSTALL_PATH/../
@@ -20,9 +30,8 @@ make install
 #build OPS
 cd $OPS_INSTALL_PATH/c
 make clean
-make
+make IEEE=1
 
-#COMMENT
 
 #now build application
 cd $TDMA_INSTALL_PATH/../../apps/adi/build/
@@ -31,7 +40,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DLIBTRID_PATH=$TDMA_INST
 make adi_orig compare
 cp compare adi_orig $OPS_INSTALL_PATH/../apps/c/adi
 cd -
-make
+make IEEE=1
 cd $OPS_INSTALL_PATH/../apps/c/adi
 make clean
 rm -f .generated
@@ -49,7 +58,7 @@ echo '============> Running Referance Solution adi_orig'
 ./adi_orig > perf_out
 rm perf_out
 
-#============================ Test adi with Intel Compilers==========================================================
+#============== Run ops ADI application ========================
 
 echo '============> Running DEV_SEQ'
 ./adi_dev_seq > perf_out
@@ -244,4 +253,8 @@ else
 fi
 
 rm -rf *.h5
-echo "All applications PASSED : Exiting Test Script"
+echo "All Intel classic complier based applications ---- PASSED"
+
+fi
+
+echo "---------- Exiting Test Script "

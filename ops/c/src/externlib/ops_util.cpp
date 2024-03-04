@@ -379,7 +379,7 @@ void fetch_loop_slab(char *buf, char *dat, const int *buf_size,
             for (int i = 0; i < buf_size[0]; i++) {
               for (int d = 0; d < dat_dim; d++) {
                 const int type_bits{elem_size / dat_dim};
-                size_t doff_dat{(size_t)d};
+                size_t doff_dat{static_cast<size_t>(d)};
 #if OPS_MAX_DIM > 4
                 doff_dat *= (dat_size[4]);
 #endif
@@ -453,7 +453,7 @@ void set_loop_slab(char *buf, char *dat, const int *buf_size,
             for (int i = 0; i < buf_size[0]; i++) {
               for (int d = 0; d < dat_dim; d++) {
                 const int type_bits{elem_size / dat_dim};
-                size_t doff_dat{(size_t)d};
+                size_t doff_dat{static_cast<size_t>(d)};
 #if OPS_MAX_DIM > 4
                 doff_dat *= (dat_size[4]);
 #endif
@@ -507,17 +507,26 @@ void determine_local_range(const ops_dat dat, const int *global_range,
     ops_stencil S3D_000{ops_decl_stencil(3, 1, s3D_000, "000")};
     dat_arg = ops_arg_dat(dat, dat->dim, S3D_000, dat->type, OPS_READ);
   }
-
-  if (space_dim == 2) {
+  else if (space_dim == 2) {
     int s2D_000[]{0, 0, 0};
     ops_stencil S2D_000{ops_decl_stencil(2, 1, s2D_000, "000")};
     dat_arg = ops_arg_dat(dat, dat->dim, S2D_000, dat->type, OPS_READ);
   }
+  else if (space_dim == 1) {
+    int s1D_000[]{0, 0, 0};
+    ops_stencil S1D_000{ops_decl_stencil(1, 1, s1D_000, "000")};
+    dat_arg = ops_arg_dat(dat, dat->dim, S1D_000, dat->type, OPS_READ);
+  }
+  else {
+    OPSException ex(OPS_NOT_IMPLEMENTED);
+    ex << "Error: determine_local_range -- not implemented for dim >3";
+    throw ex;
+  }
 
-  int *arg_idx{new int(space_dim)};
+  int *arg_idx{new int[space_dim]};
 
-  int *local_start{new int(space_dim)};
-  int *local_end{new int(space_dim)};
+  int *local_start{new int[space_dim]};
+  int *local_end{new int[space_dim]};
   if (compute_ranges(&dat_arg, 1, dat->block, (int *)global_range, local_start,
                      local_end, arg_idx) < 0) {
     return;
@@ -530,8 +539,8 @@ void determine_local_range(const ops_dat dat, const int *global_range,
   //     "At Rank = %d istart=%d iend=%d  jstart=%d jend=%d  kstart=%d kend=%d\n",
   //     ops_my_global_rank, local_range[0], local_range[1], local_range[2],
   //     local_range[3], local_range[4], local_range[5]);
-  delete arg_idx;
-  delete local_start;
-  delete local_end;
+  delete[] arg_idx;
+  delete[] local_start;
+  delete[] local_end;
 }
 

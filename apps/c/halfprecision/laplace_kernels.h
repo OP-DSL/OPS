@@ -1,7 +1,7 @@
 //Kernels for Laplace demo app
 //
 void set_zero(ACC<half> &A) {
-  A(0,0) = 0.0;
+  A(0,0) = (half) 0.0f;
 }
 
 void copy(ACC<half> &A, const ACC<half> &Anew) {
@@ -9,11 +9,11 @@ void copy(ACC<half> &A, const ACC<half> &Anew) {
 }
 
 void left_bndcon(ACC<half> &A, const int *idx) {
-  A(0,0) = sin(pi * (idx[1]+1) / (jmax+1));
+  A(0,0) = (half) (sin(pi * (idx[1]+1) / (jmax+1)));
 }
 
 void right_bndcon(ACC<half> &A, const int *idx) {
-  A(0,0) = sin(pi * (idx[1]+1) / (jmax+1))*exp(-pi);
+  A(0,0) = (half) (sin(pi * (idx[1]+1) / (jmax+1))*exp(-pi));
 }
 
 void apply_stencil(const ACC<half> &A, ACC<half> &Anew, float *error) {

@@ -1,0 +1,37 @@
+
+{% block prologue %}
+MODULE {{lh.kernel | upper}}_MODULE
+
+    USE OPS_FORTRAN_DECLARATIONS
+    USE OPS_FORTRAN_RT_SUPPORT
+
+    USE OPS_CONSTANTS
+    USE, INTRINSIC :: ISO_C_BINDING
+{% if target.name == "cuda" %}
+    USE CUDAFOR
+{% endif %}
+
+    IMPLICIT NONE
+
+{% endblock %}
+
+{% block global_decls required %}
+
+{% endblock %}
+
+{% block user_kernel_function required %}
+{% endblock %}
+
+{% block kernel_wrapper_func required %}
+{% endblock %}
+
+{% block kernel_host_function required %}
+{% endblock %}
+
+{% block kernel_descriptor_lazy_call %}
+
+{% endblock %}
+
+{% block epilogue required %}
+
+{% endblock %}

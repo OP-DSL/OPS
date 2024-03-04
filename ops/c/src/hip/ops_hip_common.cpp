@@ -33,11 +33,15 @@
 /** @file
   * @brief OPS common cuda-specific functions (non-MPI and MPI)
   * @author Gihan Mudalige, Istvan Reguly
-  * @details Implements the HIP-specific routines shared between single-GPU 
+  * @details Implements the HIP-specific routines shared between single-GPU
   * and MPI+HIP backends
   */
 
 #include <ops_hip_rt_support.h>
+
+#include <hiprand/hiprand.h>
+hiprandGenerator_t ops_rand_gen;
+int hiprand_initialised = 0;
 
 //
 // HIP utility functions
@@ -47,9 +51,17 @@ void __hipSafeCall(std::ostream &stream, hipError_t err, const char *file, const
   if (hipSuccess != err) {
     fprintf2(stream, "%s(%i) : hipSafeCall() Runtime API error : %s.\n", file,
             line, hipGetErrorString(err));
-    if (err == hipErrorNoBinaryForGpu) 
+    if (err == hipErrorNoBinaryForGpu)
     throw OPSException(OPS_RUNTIME_ERROR, "Please make sure the OPS HIP/MPI+HIP backends were compiled for your GPU");
     else throw OPSException(OPS_RUNTIME_ERROR, hipGetErrorString(err));
+  }
+}
+
+void __hiprandSafeCall(std::ostream &stream, hiprandStatus_t err, const char *file, const int line) {
+  if (HIPRAND_STATUS_SUCCESS != err) {
+    fprintf2(stream, "%s(%i) : hiprandSafeCall() Runtime API error : %s.\n", file,
+            line, hipGetErrorString(hipGetLastError()));
+    throw OPSException(OPS_RUNTIME_ERROR, "Please make sure the OPS HIP/MPI+HIP backends were compiled with hiprand for your GPU");
   }
 }
 
@@ -59,8 +71,8 @@ void ops_init_device(OPS_instance *instance, const int argc, const char *const a
   }
   cutilDeviceInit(instance, argc, argv);
   instance->OPS_hybrid_gpu = 1;
+  //hipSafeCall(instance->ostream(),hipDeviceSetCacheConfig(hipFuncCachePreferL1));
   hipDeviceSetCacheConfig(hipFuncCachePreferL1);
-
 }
 
 void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
@@ -137,9 +149,110 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
     hipGetDevice(&deviceId);
     cudaDeviceProp_t deviceProp;
     hipSafeCall(instance->ostream(), hipGetDeviceProperties(&deviceProp, deviceId));
-    if (instance->OPS_diags>2) instance->ostream() << "\n Using HIP device: " <<
-      deviceId << " " << deviceProp.name;
+    if (instance->OPS_diags>=1) instance->ostream() << "\n Using HIP device: " <<
+      deviceId << " " << deviceProp.name <<"\n";
   } else {
     throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: no available HIP devices");
+  }
+}
+
+void ops_randomgen_init(unsigned int seed, int options) {
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+
+  /* Create pseudo-random number generator */
+  hiprandSafeCall(instance->ostream(), hiprandCreateGenerator(&ops_rand_gen, HIPRAND_RNG_PSEUDO_DEFAULT));
+
+  /* Set seed */
+  int comm_global_size = ops_num_procs();
+  int my_global_rank = ops_get_proc();
+
+  if(comm_global_size == 1)
+    hiprandSafeCall(instance->ostream(), hiprandSetPseudoRandomGeneratorSeed(ops_rand_gen, seed));
+  else
+    hiprandSafeCall(instance->ostream(), hiprandSetPseudoRandomGeneratorSeed(ops_rand_gen, seed + my_global_rank * 2654435761u));
+
+  hiprand_initialised = 1;
+}
+
+void ops_fill_random_uniform(ops_dat dat) {
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+
+  size_t cumsize = dat->dim;
+  const char *type = dat->type;
+
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    cumsize *= dat->size[d];
+  }
+
+  if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) {
+    hiprandSafeCall(instance->ostream(), hiprandGenerateUniformDouble(ops_rand_gen, (double *)dat->data_d, cumsize));
+  }
+  else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 ||
+             strcmp(type, "real(kind=4)") == 0) {
+    hiprandSafeCall(instance->ostream(), hiprandGenerateUniform(ops_rand_gen, (float *)dat->data_d, cumsize));
+  }
+  else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 || strcmp(type, "integer") == 0 ||
+             strcmp(type, "integer(4)") == 0 || strcmp(type, "integer(kind=4)") == 0) {
+    hiprandSafeCall(instance->ostream(), hiprandGenerate(ops_rand_gen, (unsigned int *)dat->data_d, cumsize));
+  }
+  else {
+    OPSException ex(OPS_RUNTIME_ERROR);
+    ex << "Error: uniform random number generation not implemented for data type: "<<dat->type;
+    throw ex;
+  }
+
+  dat->dirty_hd = 2;
+  // set halo
+  ops_arg arg = ops_arg_dat(dat, dat->dim, instance->OPS_internal_0[dat->block->dims -1], dat->type, OPS_WRITE);
+  int *iter_range{new int[dat->block->dims*2]};
+  for ( int n = 0; n < dat->block->dims; n++) {
+    iter_range[2*n] = 0;
+    iter_range[2*n+1] = dat->size[n];
+  }
+  ops_set_halo_dirtybit3(&arg, iter_range);
+  delete[] iter_range;
+}
+
+void ops_fill_random_normal(ops_dat dat) {
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+
+  size_t cumsize = dat->dim;
+  const char *type = dat->type;
+
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+    cumsize *= dat->size[d];
+  }
+
+  if (strcmp(type, "double") == 0 || strcmp(type, "real(8)") == 0 || strcmp(type, "real(kind=8)") == 0) {
+    hiprandSafeCall(instance->ostream(), hiprandGenerateNormalDouble(ops_rand_gen, (double *)dat->data_d, cumsize, 0.0, 1.0));
+  }
+  else if (strcmp(type, "float") == 0 || strcmp(type, "real") == 0 || strcmp(type, "real(4)") == 0 ||
+             strcmp(type, "real(kind=4)") == 0) {
+    hiprandSafeCall(instance->ostream(), hiprandGenerateNormal(ops_rand_gen, (float *)dat->data_d, cumsize, 0.0f, 1.0f));
+  }
+  else {
+    OPSException ex(OPS_RUNTIME_ERROR);
+    ex << "Error: normal random number generation not implemented for data type: "<<dat->type;
+    throw ex;
+  }
+
+  dat->dirty_hd = 2;
+  // set halo
+  ops_arg arg = ops_arg_dat(dat, dat->dim, instance->OPS_internal_0[dat->block->dims -1], dat->type, OPS_WRITE);
+  int *iter_range{new int[dat->block->dims*2]};
+  for ( int n = 0; n < dat->block->dims; n++) {
+    iter_range[2*n] = 0;
+    iter_range[2*n+1] = dat->size[n];
+  }
+  ops_set_halo_dirtybit3(&arg, iter_range);
+  delete[] iter_range;
+}
+
+void ops_randomgen_exit() {
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+
+  if(hiprand_initialised) {
+    hiprand_initialised = 0;
+    hiprandSafeCall(instance->ostream(), hiprandDestroyGenerator(ops_rand_gen));
   }
 }
