@@ -1,15 +1,34 @@
 [connectivity]
-{% for lh, program in app.uniqueLoops() %}
-    {% for arg in lh.args|ops_dat %}
-        {% if arg is ops_read or arg is ops_rw %}
-stream_connect=kernel_datamover_{{lh.kernel}}_1.arg{{arg.id}}_stream_out:kernel_{{lh.kernel}}_1.arg{{arg.id}}_stream_in:128
-        {% endif %}
-        {% if arg is ops_write or arg is ops_rw %}
-stream_connect=kernel_{{lh.kernel}}_1.arg{{arg.id}}_stream_out:kernel_datamover_{{lh.kernel}}_1.arg{{arg.id}}_stream_in:128
+{% for ilh, program in app.uniqueOuterLoops() %}
+    {% for slr_id in range(config["SLR_count"]) %}
+        {% if not loop.first %}
+nk=kernel_outerloop_{{ilh.id}}:1:kernel_outerloop_{{ilh.id}}_{{slr_id+1}}
         {% endif %}
     {% endfor %}
 {% endfor %}
 
+{% for ilh, program in app.uniqueOuterLoops() %}
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if arg is ops_read or arg is ops_rw %}
+stream_connect=datamover_outerloop_{{ilh.id}}_1.arg{{arg.id}}_axis_out:kernel_outerloop_{{ilh.id}}_1.arg{{arg.id}}_axis_in:256
+        {% endif %}
+        {% if arg is ops_write or arg is ops_rw %}
+            {% for slr_id in range(config["SLR_count"]) %}
+                {% if loop.last %}
+stream_connect=kernel_outerloop_{{ilh.id}}_{{slr_id+1}}.arg{{arg.id}}_axis_out:datamover_outerloop_{{ilh.id}}_1.arg{{arg.dat_id}}_axis_in:256
+                {% else %}
+stream_connect=kernel_outerloop_{{ilh.id}}_{{slr_id+1}}.arg{{arg.id}}_axis_out:kernel_outerloop_{{ilh.id}}_{{slr_id+2}}.arg{{ilh.dat_swap_map[arg.dat_id]}}_axis_in:256
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+
+{% for ilh, program in app.uniqueOuterLoops() %}
+    {% for slr_id in range(config["SLR_count"]) %}
+slr=kernel_outerloop_{{ilh.id}}_{{slr_id+1}}:SLR{{slr_id}}
+    {% endfor %}
+{% endfor %}
 
 [profile]
 data=all:all:all

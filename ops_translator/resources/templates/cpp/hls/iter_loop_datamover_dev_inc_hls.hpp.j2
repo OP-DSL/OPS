@@ -3,11 +3,11 @@ arg{{arg.id}}_{{"in" if arg is ops_read}}{{"out" if arg is ops_write}}{{"inout" 
 {%- endmacro -%}
 {% macro axis_name(arg) -%}
     {%- if arg is not ops_rw -%}
-arg{{arg.id}}_stream_{{"out" if (arg is ops_read) else ("in" if (arg is ops_write))}}
+arg{{arg.id}}_axis_{{"out" if (arg is ops_read) else ("in" if (arg is ops_write))}}
     {%- endif -%}
 {%- endmacro -%}
 {% macro axis_name_t2(arg, suffix) -%}
-arg{{arg.id}}_stream_{{suffix}}
+arg{{arg.id}}_axis_{{suffix}}
 {%- endmacro -%}
 {% block header_block %}
 

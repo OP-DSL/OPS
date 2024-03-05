@@ -41,7 +41,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region(ops::hls::AccessRange
 extern "C" 
 {
 
-void kernel_datamover_outerloop_{{ilh.id}}(
+void datamover_outerloop_{{ilh.id}}(
     {% for i in range(ndim) %}
         const unsigned short range_start_{{i}},
         const unsigned short range_end_{{i}},
