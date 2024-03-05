@@ -142,29 +142,29 @@ int main(int argc, const char** argv)
 #endif
 
     int interior_range[] = {0,imax,0,jmax};
-    #ifndef OPS_FPGA
-    for (unsigned int i = 0; i < iter_max; i++)
-    {
+    // #ifndef OPS_FPGA
+    // for (unsigned int i = 0; i < iter_max; i++)
+    // {
         
-        ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
-            ops_arg_dat(d_A,    1, S2D_5pt, "float", OPS_READ),
-            ops_arg_dat(d_Anew, 1, S2D_00, "float", OPS_WRITE));
+    //     ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
+    //         ops_arg_dat(d_A,    1, S2D_5pt, "float", OPS_READ),
+    //         ops_arg_dat(d_Anew, 1, S2D_00, "float", OPS_WRITE));
 
-        // ops_dat_deep_copy(d_A, d_Anew);
-        ops_par_loop(copy, "copy", block, 2, interior_range,
-            ops_arg_dat(d_A,    1, S2D_00, "float", OPS_WRITE),
-            ops_arg_dat(d_Anew, 1, S2D_00, "float", OPS_READ));
+    //     // ops_dat_deep_copy(d_A, d_Anew);
+    //     ops_par_loop(copy, "copy", block, 2, interior_range,
+    //         ops_arg_dat(d_A,    1, S2D_00, "float", OPS_WRITE),
+    //         ops_arg_dat(d_Anew, 1, S2D_00, "float", OPS_READ));
 
-        // if(iter % 10 == 0) ops_printf("%5d, %0.6f\n", iter, error);        
-        // iter++;
-    }
-    #else
+    //     // if(iter % 10 == 0) ops_printf("%5d, %0.6f\n", iter, error);        
+    //     // iter++;
+    // }
+    // #else
         ops_iter_par_loop(iter_max, 
             ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
                 ops_arg_dat(d_A,    1, S2D_5pt, "float", OPS_READ),
                 ops_arg_dat(d_Anew, 1, S2D_00, "float", OPS_WRITE)), 
             ops_par_copy<float>(d_A, d_Anew));
-    #endif
+    // #endif
 
     #ifdef VERIFICATION
         A = (float*)d_A->get_raw_pointer(0, S2D_00, OPS_HOST);

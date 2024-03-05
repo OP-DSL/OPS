@@ -279,8 +279,35 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, target_config: di
                 print(f"Skipping loop host {i} of {len(app.uniqueLoops())}: {path}")
 
     # # Generate iterativeLoop Host
-    # if scheme.target.name == "hls":
+    if scheme.target.name == "hls":
+        translatedIterUIDs = []
+        for i, (iterloop, program) in enumerate(app.uniqueOuterLoops()):
+            if iterloop.unique_id in translatedIterUIDs:
+                continue
+            
+            translatedIterUIDs.append(iterloop.unique_id)
         
+            (iter_host_kernelwrap_inc_source, iter_host_kernelwrap_inc_extension) = scheme.genIterLoopHost(include_dirs, defines, 
+                    env, iterloop, program, app, program.uniqueOuterloopMap[iterloop.unique_id], force_soa, target_config)
+
+            path = None
+            if scheme.lang.kernel_dir:
+                Path(args.out, scheme.target.name, "host", "kernel_wrappers").mkdir(parents=True, exist_ok=True)
+                path = Path(args.out, scheme.target.name, "host", "kernel_wrappers", f"outerloop_{iterloop.id}.{iter_host_kernelwrap_inc_extension}")                
+            else:
+                path = Path(args.out,f"outerloop_{iterloop.id}_{scheme.target.name}.{iter_host_kernelwrap_inc_extension}")
+
+            logging.debug(f"writing kernel: {loop.kernel} include to {path}")
+            
+            print(path)
+            # Write the gernerated source file
+            with open(path, "w") as file:
+                file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+                file.write(iter_host_kernelwrap_inc_source)
+
+                if args.verbose:
+                    print(f"Generated loop host kernelwrap for outerloop{iterloop.id} include {i} of {len(app.uniqueOuterLoops())}: {path}")
+                    
              
     # Generate master kernel file
     if scheme.master_kernel_template is not None:

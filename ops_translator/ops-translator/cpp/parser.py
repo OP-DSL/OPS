@@ -362,17 +362,21 @@ def parseStencil(name: str, args: List[Cursor], loc: Location, macros: Dict[Loca
     ndim = parseIntLiteral(args[0])
     npoints = parseIntLiteral(args[1])
     array = stencilPointsSort(npoints, ndim, parseArrayIntLit(args[2]))
+    d_m = ops.Point([abs(min([point.x for point in array])), abs(min([point.y for point in array])), abs(min([point.z for point in array]))])
+    d_p = ops.Point([abs(max([point.x for point in array])), abs(max([point.y for point in array])), abs(max([point.z for point in array]))])
+
     minIndices = getMinIndices(array)
     array = cordinateOriginTranslation(minIndices, array)
     stencilSize = getStencilSize(array)
     windowBuffers, chains = windowBuffChainingAlgo(array, ndim)
     unique_rows = findUniqueStencilRows(array)
     base_offset = -minIndices
+
     
     logging.info("Stencil found name:%s ndim: %d, npoints: %d, array: %s", name, ndim, npoints, str(array))
     logging.debug("Stencil found addition info: windowBuffers: %s", str(windowBuffers))
     logging.debug("Stencil found addition info: chains: %s", str(chains), )
-    program.stencils.append(ops.Stencil(len(program.stencils), ndim, name, npoints, array, base_offset, stencilSize, windowBuffers, chains))   
+    program.stencils.append(ops.Stencil(len(program.stencils), ndim, name, npoints, array, base_offset, stencilSize, windowBuffers, chains, d_m, d_p))   
     logging.debug("Stencil found addition info: unique_rows: %s, row discriptors: %s", str(unique_rows), str(program.stencils[-1].row_discriptors))
 
     
@@ -703,7 +707,11 @@ def parseIterLoop(node: Cursor, args: List[Cursor], scope: List[Location], macro
             iterLoop_args.append(parCpyObj)
             
             
-    return ops.IterLoop(len(program.outerloops), iter, scope, iterLoop_args)
+    iterLoopObj = ops.IterLoop(len(program.outerloops), iter, scope, iterLoop_args)
+    if iterLoopObj.unique_id not in program.uniqueOuterloopMap.keys():
+        program.uniqueOuterloopMap[iterLoopObj.unique_id] = len(program.uniqueOuterloopMap.keys())
+    
+    return iterLoopObj
             
         
 def parse_par_copy(loopNode: Cursor, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> ops.ParCopy:

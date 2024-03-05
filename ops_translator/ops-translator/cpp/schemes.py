@@ -44,19 +44,22 @@ class CppHLS(Scheme):
     target = Target.find("hls")    
     loop_host_kernelwrap_template = Path("cpp/hls/loop_kernelwrap.hpp.j2")
     loop_host_cpu_template = Path("cpp/hls/loop_host_cpu.hpp.j2")
-    master_kernel_template = Path("cpp/hls/master_kernel.cpp.j2")
-    common_config_template = Path("cpp/hls/common_config_dev_hls.hpp.j2")
-    host_config_template = Path("cpp/hls/xrt_config.cfg.j2")
     # loop_device_inc_template = Path("cpp/hls/loop_dev_inc_hls.hpp.j2")
     # loop_device_src_template = Path("cpp/hls/loop_dev_src_hls.cpp.j2")
     # loop_datamover_inc_template = Path("cpp/hls/datamover_dev_inc_hls.hpp.j2")
     # loop_datamover_src_template = Path("cpp/hls/datamover_dev_src_hls.cpp.j2")
     loop_device_PE_template = Path("cpp/hls/loop_dev_PE_hls_V2.hpp.j2")
+    
     iterloop_datamover_inc_template = Path("cpp/hls/iter_loop_datamover_dev_inc_hls.hpp.j2")
     iterloop_datamover_src_template = Path("cpp/hls/iter_loop_datamover_dev_src_hls.cpp.j2")
     iterloop_device_inc_template = Path("cpp/hls/iter_loop_dev_inc_hls.hpp.j2")
     iterloop_device_src_template = Path("cpp/hls/iter_loop_dev_src_hls.cpp.j2")
+    iterloop_host_kernelwrap_template = Path("cpp/hls/iter_loop_host_kernelwrap.hpp.j2")
+    
     stencil_device_template = Path("cpp/hls/stencil_dev_hls.hpp.j2")
+    master_kernel_template = Path("cpp/hls/master_kernel.cpp.j2")
+    common_config_template = Path("cpp/hls/common_config_dev_hls.hpp.j2")
+    host_config_template = Path("cpp/hls/xrt_config.cfg.j2")
     
     loop_kernel_extension = "hpp"
     master_kernel_extension = "hpp"
@@ -66,6 +69,7 @@ class CppHLS(Scheme):
     iterloop_device_src_extension = "cpp"
     iterloop_datamover_inc_extension = "hpp"
     iterloop_datamover_src_extension = "cpp"
+    iterloop_host_kernelwrap_extension = "hpp"
     loop_device_PE_extension = "hpp"
     stencil_device_extension = "hpp"
     
@@ -131,6 +135,44 @@ class CppHLS(Scheme):
             self.loop_kernel_extension
         )
     
+    def genIterLoopHost(
+            self,
+            include_dirs: Set[Path],
+            defines: List[str],
+            env: Environment,
+            iterloop: ops.IterLoop,
+            program: Program,
+            app: Application,
+            kernel_idx: int,
+            force_soa: bool,
+            config: dict
+    ) -> Tuple[str, str]:
+        
+        template = env.get_template(str(self.iterloop_host_kernelwrap_template))
+        
+        kernel_processor = KernelProcess()
+        consts = []
+        
+        for kernel_idx, loop in enumerate(iterloop.getLoops()):
+                kernel_func = self.translateKernel(loop, program, app, kernel_idx)
+                kernel_func = kernel_processor.clean_kernel_func_text(kernel_func)
+                kernel_body, kernel_args = kernel_processor.get_kernel_body_and_arg_list(kernel_func)
+                kernel_body = self.hls_replace_accessors(kernel_body, kernel_args, loop, program)
+                kernel_consts = self.find_const_in_kernel(kernel_body, program.consts)
+                consts.extend(x for x in kernel_consts if x not in consts)
+
+        return (
+            template.render (
+                ops=ops,
+                ilh=iterloop,
+                prog=program,
+                ndim=program.ndim,
+                consts=consts,
+                config=config
+            ),
+            self.iterloop_host_kernelwrap_extension
+        )
+            
     def hls_replace_accessors(self, kernel_body: str, kernel_args: List[str], loop: ops.Loop, prog: Program, isReplaceWithReg = True):
         logging.getLogger(__name__)
         assert len(kernel_args) == len(loop.args), f"kernel arguments of kernel {loop.kernel} count mismatch with loop"

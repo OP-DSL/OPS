@@ -137,7 +137,43 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
         buffer.remove(const.loc.line -1)
 
     # 2. Update loop calls
+    
+    for iterloop in program.outerloops:
+        startLoc = iterloop.scope[0]
+        
+        before, after = buffer.get(startLoc.line - 1).split("ops_iter_par_loop", 1)
+        loop_indices = [startLoc.line - 1]
+        
+        if (after.find(";") == -1):
+            index = startLoc.line
+            loop_indices.append(index)
+            while(True):
+                line = buffer.get(index)
+                after += line
+                buffer.remove(index)
+                if line.find(";") != -1:
+                    break
+                index += 1
+        [split_after, split_retain] = after.split(";", 1)
+        split_after = split_after.split(",")
+        
+        new_iter_loop_call = f"ops_itr_par_loop_{iterloop.id}{split_after[0]}, {iterloop.ops_range}"
+        
+        for arg in iterloop.joint_args:
+            new_iter_loop_call += f", {iterloop.dats[arg.dat_id][0].ptr}"
+        
+        new_iter_loop_call = before + new_iter_loop_call + ");" + split_retain 
+        
+        for index in loop_indices:
+            buffer.remove(index)
+        
+        buffer.update(index, new_iter_loop_call)
+        
+        
     for loop in program.loops:
+        if loop.iterativeLoopId != -1:
+            continue
+        
         before, after = buffer.get(loop.loc.line - 1).split("ops_par_loop", 1)
         loop_indices = [loop.loc.line - 1]
         
@@ -152,7 +188,7 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
                     break
                 index += 1
                 
-        print ("After: ", after)
+        # print ("After: ", after)
         split_after = after.split(",")
         new_loop_call = before + f"ops_par_loop_{loop.kernel}({split_after[2]}, {split_after[3]} , {split_after[4]}"
         
@@ -177,7 +213,7 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
     for loop in program.loops:
         existingIdx = findIdx(existingLoopProtypes, lambda l: l.kernel == loop.kernel and len(l.args) == len(loop.args))
         
-        if existingIdx is None:
+        if (existingIdx is None) and (loop.iterativeLoopId == -1):
             existingLoopProtypes.append(loop)
             prototype = f'void ops_par_loop_{loop.kernel}(ops::hls::Block, int, int*'
             isArgIdx = loop.arg_idx == 1
