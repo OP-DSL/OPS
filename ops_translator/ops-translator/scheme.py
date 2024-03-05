@@ -174,7 +174,21 @@ class Scheme(Findable):
             ),
             name
         )
-        
+    
+    def genIterLoopHost(
+        self,
+        include_dirs: Set[Path],
+        defines: List[str],
+        env: Environment,
+        iterloop: ops.IterLoop,
+        program: Program,
+        app: Application,
+        kernel_idx: int,
+        force_soa: bool,
+        config: dict
+    ) -> Tuple[str, str]:
+        pass
+            
     def translateKernel(
         self,
         loop: ops.Loop,

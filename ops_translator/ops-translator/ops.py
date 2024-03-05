@@ -246,16 +246,16 @@ class StencilRowDiscriptor:
 class Stencil:
     id: int
     dim: int
-
     stencil_ptr: str
-
     num_points: int
     points: List[Point]
     base_point: Point
     stencil_size: int
     window_buffers : List[str]
     chains: List[Tuple[str, str]]
-    row_discriptors: List[StencilRowDiscriptor] = field(default_factory=list, init=False)
+    d_m: Point
+    d_p: Point
+    row_discriptors: Optional[List[StencilRowDiscriptor]] = field(default_factory=list, init=False)
     stride: Optional[list] = field(default_factory=list)
     
     def __post_init__(self):
@@ -265,9 +265,10 @@ class Stencil:
             else:
                 self.row_discriptors.append(StencilRowDiscriptor((point.y, point.z), self.base_point))
                 self.row_discriptors[-1].row_points.append(point)
-                
-            # base_point = base
-            
+                    
+    def __eq__(self, __value: str) -> bool:
+        return self.stencil_ptr == __value 
+         
     def __str__(self) -> str:
         return f"Stencil(id={self.id}, dim={self.dim}, stencil_ptr='{self.stencil_ptr}', \
 number of points={self.num_points}, points={self.points}, base_point={self.base_point}, stride_ptr='{self.stride}')"
@@ -397,6 +398,7 @@ class IterLoop:
     raw_dat_swap_map: List[ParCopy]
     PE_args: List[List[str]]
     interconnector_names: List[str]
+    ops_range: str = None
     
     def __init__(self, id: int, num_iter: Union[int, str], scope: List[Location], args: List[Any] = []) -> None:
         self.id = id
@@ -557,13 +559,25 @@ class IterLoop:
                             self.dats[dat_id][1] = AccessType.OPS_RW    
                         
                 loop.args[arg.id] = ArgDat(arg.dat_id, arg.loc, arg.access_type, arg.opt, arg.dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id)    
-            
+        
+            if self.ops_range == None:
+                self.ops_range = loop.range.ptr
+            elif self.ops_range != loop.range.ptr:
+                OpsError("Missmatching ranging in par_loops within iter_par_loop scope")
+                
+
             # elif isinstance(arg, ArgIdx):
             # elif isinstance(arg, ArgReduce):
             # elif isinstance(arg, ArgGbl):
     def getLoops(self)-> List[Loop]:
         return filter(lambda x: isinstance(x, Loop), self.itr_args)
     
+    def getReadStencil(self) -> str:
+        for arg in self.joint_args:
+            if arg.access_type == AccessType.OPS_READ:
+                return arg.stencil_ptr
+        return None
+
     def getUniqueDatSwaps(self) -> List[Union[int,int]]:
         unique_swap_map = []
         for i in range(len(self.dat_swap_map)):

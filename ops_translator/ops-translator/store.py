@@ -102,6 +102,7 @@ class Program:
     stencils: List[ops.Stencil] = field(default_factory=list)
     loops: List[ops.Loop] = field(default_factory=list)
     outerloops: List[ops.IterLoop] = field(default_factory=list)
+    uniqueOuterloopMap: Dict[int, int] = field(default_factory=dict)
     entities: List[Entity] = field(default_factory=list)
     
     ndim: Optional[int] = None
