@@ -9,8 +9,9 @@ float pi  = 2.0 * asin(1.0);
 //Including main OPS header file, and setting 2D
 #define OPS_2D
 #define OPS_CPP_API
+#define OPS_HLS_V2
 // #define OPS_FPGA
-#define VERIFICATION
+// #define VERIFICATION
 #include <ops_seq_v2.h>
 //Including applicaiton-specific "user kernels"
 #include "laplace_kernels.h"

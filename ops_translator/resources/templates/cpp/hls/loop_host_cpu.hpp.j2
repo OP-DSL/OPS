@@ -3,7 +3,7 @@
 {% block prologue %}
 {{super()}}
 
-void kernel_{{lh.kernel}}_core(
+void inline kernel_{{lh.kernel}}_core(
     {% for arg in lh.args %}
         {% if loop.last %}
             {#{% if consts %}

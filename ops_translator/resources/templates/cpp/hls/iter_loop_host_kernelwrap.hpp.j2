@@ -39,10 +39,10 @@ public:
     )
     {
         cl_int err;
-    {% set read_stencil = prog.findStencil(ilh.getReadStencil) %}
+    {% set read_stencil = prog.findStencil(ilh.getReadStencil()) %}
     {% if read_stencil %}    
-        ops::hls::SizeType read_stencil_d_m = { {{read_stencil.d_m.x, read_stencil.d_m.y, read_stencil.d_m.z}} };
-        ops::hls::SizeType read_stencil_d_p = { {{read_stencil.d_p.x, read_stencil.d_p.y, read_stencil.d_p.z}} };
+        ops::hls::SizeType read_stencil_d_m = { {{read_stencil.d_m.x}}, {{read_stencil.d_m.y}}, {{read_stencil.d_m.z}} };
+        ops::hls::SizeType read_stencil_d_p = { {{read_stencil.d_p.x}}, {{read_stencil.d_p.y}}, {{read_stencil.d_p.z}} };
         ops::hls::SizeType write_stencil_d_m = {0,0,0};
         ops::hls::SizeType write_stencil_d_p = {0,0,0};
     {% else %}
@@ -76,7 +76,7 @@ public:
         {% for i in range(ndim)%}
         OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, read_stencilConfig.upper_limit[{{i}}]));
         {% endfor %}
-        OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, arg0_adjustedGridProp.outer_loop_limit));
+        OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, read_stencilConfig.outer_loop_limit));
         {% for const in consts %}
         OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, {{const.ptr}}));
         {% endfor %}
@@ -171,7 +171,7 @@ public:
         }
 #ifndef ASYNC_DISPATCH
     {% for swap_pair in ilh.getUniqueDatSwaps() %}
-        cl::Event event_arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_bufCpy.wait();
+        event_arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_bufCpy.wait();
     {% endfor %}
 #endif
     }
@@ -186,7 +186,7 @@ private:
 {% endblock %}
 
 {% block par_loop %}
-void ops_itr_par_loop_{{ilh.id}}(int * ops_range, int outer_iter, 
+void ops_itr_par_loop_{{ilh.id}}(int outer_iter, int* ops_range,
     {% for arg in ilh.joint_args|ops_dat %}
         {% if loop.last %}
             {% if consts %}
