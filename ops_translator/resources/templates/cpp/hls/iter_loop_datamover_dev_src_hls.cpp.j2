@@ -5,7 +5,7 @@
 #include <datamover_outerloop_{{ilh.id}}.hpp>
 {% endblock %}
 
-{% block datamover_prototype %}
+{% block datamover_dataflow_region %}
 static void datamover_outerloop_{{ilh.id}}_dataflow_region(ops::hls::AccessRange& range,
     {% for arg in ilh.joint_args|ops_dat %}
     ops::hls::SizeType& arg{{arg.id}}_gridSize,
@@ -37,33 +37,12 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region(ops::hls::AccessRange
         {% endif %}
     {% endfor %}
 }
+{% endblock %}
 
-extern "C" 
-{
-
-void datamover_outerloop_{{ilh.id}}(
-    {% for i in range(ndim) %}
-        const unsigned short range_start_{{i}},
-        const unsigned short range_end_{{i}},
-    {% endfor%}
-    {% for arg in ilh.joint_args|ops_dat %}
-        {% for i in range(ndim) %}
-        const unsigned short arg{{arg.id}}_gridSize_{{i}},
-        {% endfor %}
-    {% endfor %}
-        const unsigned itn outer_itr,
-    {% for arg in ilh.joint_args|ops_dat %}
-        ap_uint<data_width>* {{maxi_name(arg)}},
-    {% endfor %}
-    {% for arg in ilh.joint_args|ops_dat %}
-        {% if arg is not ops_rw %}
-        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)}}{{"," if not loop.last}}
-        {% else %}
-        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")}},
-        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "out")}}{{"," if not loop.last}}
-        {% endif %}
-    {% endfor %}
-)
+{% block datamover_prototype %}
+{{super()}}
+{% endblock %}
+{% block datamover_body %}
 {
     {% for i in range(ndim) %}
     #pragma HLS INTERFACE s_axilite port = range_start_{{i}} bundle = control
@@ -74,11 +53,12 @@ void datamover_outerloop_{{ilh.id}}(
     #pragma HLS INTERFACE s_axilite port = arg{{arg.id}}_gridSize_{{i}} bundle = control
         {% endfor %}
     {% endfor %}
+    #pragma HLS INTERFACE s_axilite port = outer_itr bundle = control
     {% for arg in ilh.joint_args|ops_dat %} 
     #pragma HLS INTERFACE mode=m_axi bundle=gmem{{arg.id}} depth={{config["maxi_depth"]}} maxi_read_burst_length={{config["maxi_read_burst_length"]}} maxi_write_burst_length={{config["maxi_write_burst_length"]}} \
             num_read_outstanding={{config["num_read_outstanding"]}} num_write_outstanding={{config["num_write_outstanding"]}} \
-            port={{maxi_name(arg)}} offset={{config["maxi_offset"]}}
-    #pragma HLS INTERFACE s_axilite port = {{maxi_name(arg)}} bundle = control
+            port=arg{{arg.id}} offset={{config["maxi_offset"]}}
+    #pragma HLS INTERFACE s_axilite port = arg{{arg.id}} bundle = control
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is not ops_rw %}
@@ -126,8 +106,8 @@ void datamover_outerloop_{{ilh.id}}(
         }
     }
 }
-}
+
 
 {% endblock %}
-{% block  datamover_prototype_end %}
+{% block datamover_prototype_end %}
 {% endblock %}

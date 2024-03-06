@@ -29,7 +29,7 @@ arg{{arg.id}}_hls_stream_{{suffix}}
 {% endblock %}
 
 {% block kernel_top_prototype %}
-kernel_outerloop_{{ilh.id}}(
+extern "C" void kernel_outerloop_{{ilh.id}}(
         const unsigned int outer_itr,
     {% for i in range(ndim)%}
         const unsigned short stencilConfig_grid_size_{{i}},
@@ -60,7 +60,7 @@ kernel_outerloop_{{ilh.id}}(
         hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "out")-}}{{"," if not loop.last}}
         {% endif %}
     {% endfor %}
-    )
+)
 {% endblock %}
 {% block kernel_top_prototype_semicolon %}
 ;

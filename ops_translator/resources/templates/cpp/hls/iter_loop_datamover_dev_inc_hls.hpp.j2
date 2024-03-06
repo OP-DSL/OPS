@@ -16,6 +16,8 @@ arg{{arg.id}}_axis_{{suffix}}
 #include <ops_hls_datamover.hpp>
 
 {% endblock %}
+{% block datamover_dataflow_region %}
+{% endblock %}
 {% block datamover_prototype %}
 extern "C" void datamover_outerloop_{{ilh.id}}(
     {% for i in range(ndim) %}
@@ -29,7 +31,7 @@ extern "C" void datamover_outerloop_{{ilh.id}}(
     {% endfor %}
         const unsigned int outer_itr,
     {% for arg in ilh.joint_args|ops_dat %}
-        ap_uint<data_width>* {{maxi_name(arg)}},
+        ap_uint<data_width>* arg{{(arg.id)}},
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is not ops_rw %}
@@ -40,6 +42,8 @@ extern "C" void datamover_outerloop_{{ilh.id}}(
         {% endif %}
     {% endfor %}
     )
+{% endblock %}
+{% block datamover_body %}
 {% endblock %}
 {% block  datamover_prototype_end %}
 ;

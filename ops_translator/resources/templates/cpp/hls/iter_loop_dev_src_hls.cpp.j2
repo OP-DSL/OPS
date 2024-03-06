@@ -1,7 +1,7 @@
 {% extends "cpp/hls/iter_loop_dev_inc_hls.hpp.j2" %}
 
 {% macro internal_stream_name(arg) -%}
-arg{{ilh.getOrderedSwapPair(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPair(arg.dat_id)[1]}}_stream
+arg{{ilh.getOrderedSwapPair(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPair(arg.dat_id)[1]}}_streams
 {%- endmacro -%}
 
 {% block header_block %}
@@ -11,9 +11,11 @@ arg{{ilh.getOrderedSwapPair(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPair(arg.dat
 
 {% block joint_PE %}
 static void joint_PE_outerloop_{{ilh.id}}(ops::hls::StencilConfigCore& stencilConfig,
-    {% for arg in ilh.joint_args|ops_dat -%}{% if arg is not ops_rw %}{{hls_name(arg)-}}{{", " if not loop.last or consts }}{% else %}{{hls_name_t2(arg, "in")-}}, {{hls_name_t2(arg, "out")-}}{{", " if not loop.last or consts }}{% endif %}{% endfor %}
+    {% for arg in ilh.joint_args|ops_dat -%}{% if arg is not ops_rw %}::hls::stream<ap_uint<axis_data_width>>& {{hls_name(arg)-}}{{", " if not loop.last or consts }}{% else %}::hls::stream<ap_uint<axis_data_width>>& {{hls_name_t2(arg, "in")-}}, ::hls::stream<ap_uint<axis_data_width>>& {{hls_name_t2(arg, "out")-}}{{", " if not loop.last or consts }}{% endif %}{% endfor %}
     {% for const in consts %}const {{const.typ}} {{const.ptr}}{{", " if not loop.last }}{% endfor %})
 {
+
+//TODO: Need to define inter_kernal_stream connections
 #pragma HLS DATAFLOW
     {% for lh in ilh.getLoops() %}
     kernel_{{lh.kernel}}_PE(stencilConfig,
@@ -40,19 +42,20 @@ static void joint_PE_outerloop_{{ilh.id}}(ops::hls::StencilConfigCore& stencilCo
 
 {% block kernel_dataflow_region %}
 static void kernel_outerloop_{{ilh.id}}_dataflow_region(ops::hls::StencilConfigCore& stencilConfig, const unsigned int total_bytes,
-    {% for arg in ilh.joint_args|ops_dat -%}{% if arg is not ops_rw %}{{axis_name(arg)-}}{{", " if not loop.last or consts }}{% else %}{{axis_name_t2(arg, "in")-}}, {{axis_name_t2(arg, "out")-}}{{", " if not loop.last or consts}}{% endif %}{% endfor %}
+    {% for arg in ilh.joint_args|ops_dat -%}{% if arg is not ops_rw %}hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)-}}{{", " if not loop.last or consts }}{% else %} hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")-}}, hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "out")-}}{{", " if not loop.last or consts}}{% endif %}{% endfor %}
     {% for const in consts %}const {{const.typ}} {{const.ptr}}{{", " if not loop.last }}{% endfor %})
 {
 #pragma HLS DATAFLOW
     {% for swap_pair in ilh.getUniqueDatSwaps() -%}
     ::hls::stream<ap_uint<axis_data_width>> arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams[iter_par_factor + 1];
+    #pragma HLS STREAM variable = arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams depth = 10
     {% endfor %}
     
     {% for arg in ilh.joint_args|ops_dat -%}
         {% if arg is ops_read %}
-        ops::hls::axis2stream<axis_data_width, axis_data_width>({{axis_name(arg)-}}, {{internal_stream_name(arg)}}[0]);
+        ops::hls::axis2stream<axis_data_width, axis_data_width>({{axis_name(arg)-}}, {{internal_stream_name(arg)}}[0], total_bytes);
         {% elif arg is ops_rw %}
-        ops::hls::axis2stream<axis_data_width, axis_data_width>({{axis_name_t2(arg, "in")-}}, {{internal_stream_name(arg)}}[0]);
+        ops::hls::axis2stream<axis_data_width, axis_data_width>({{axis_name_t2(arg, "in")-}}, {{internal_stream_name(arg)}}[0], total_bytes);
         {% endif %}
     {% endfor %}
 
@@ -85,10 +88,10 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region(ops::hls::StencilConfigC
         }
 
     {% for arg in ilh.joint_args|ops_dat -%}
-        {% if arg is ops_read %}
-        ops::hls::stream2axis<axis_data_width, axis_data_width>({{axis_name(arg)-}}, {{internal_stream_name(arg)}}[iter_par_factor]);
+        {% if arg is ops_write %}
+        ops::hls::stream2axis<axis_data_width, axis_data_width>({{axis_name(arg)-}}, {{internal_stream_name(arg)}}[iter_par_factor], total_bytes);
         {% elif arg is ops_rw %}
-        ops::hls::stream2axis<axis_data_width, axis_data_width>({{axis_name_t2(arg, "out")-}}, {{internal_stream_name(arg)}}[iter_par_factor]);
+        ops::hls::stream2axis<axis_data_width, axis_data_width>({{axis_name_t2(arg, "out")-}}, {{internal_stream_name(arg)}}[iter_par_factor], total_bytes);
         {% endif %}
     {% endfor %}
 
@@ -98,10 +101,9 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region(ops::hls::StencilConfigC
 {% block kernel_top_prototype %}
 {{super()}}
 {% endblock %}
-{% block kernel_top_prototype_semicolon %}
-{% endblock %}
 {% block kernel_top_body %}
 {
+    #pragma HLS INTERFACE s_axilite port = outer_itr bundle = control
     {% for i in range(ndim)%}
     #pragma HLS INTERFACE s_axilite port = stencilConfig_grid_size_{{i}} bundle = control
     {% endfor %}
@@ -119,8 +121,7 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region(ops::hls::StencilConfigC
     {% for i in range(ndim)%}
     #pragma HLS INTERFACE s_axilite port = stencilConfig_upper_limit_{{i}} bundle = control
     {% endfor %}
-    #pragma HLS INTERFACE s_axilite port = gridProp_total_itr bundle = control
-    #pragma HLS INTERFACE s_axilite port = gridProp_outer_loop_limit bundle = control
+    #pragma HLS INTERFACE s_axilite port = stencilConfig_outer_loop_limit bundle = control
 
     {% for const in consts %}
     #pragma HLS INTERFACE s_axilite port = {{const.ptr}} bundle = control
@@ -128,20 +129,48 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region(ops::hls::StencilConfigC
 
     {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is not ops_rw %}
-    #pragma HLS INTERFACE port = {{axis_name(arg)}} register
+    #pragma HLS INTERFACE axis port = {{axis_name(arg)}} register
         {% else %}
-    #pragma HLS INTERFACE port = {{axis_name_t2(arg, "in")}} register
-    #pragma HLS INTERFACE port = {{axis_name_t2(arg, "out")}} register
+    #pragma HLS INTERFACE axis port = {{axis_name_t2(arg, "in")}} register
+    #pragma HLS INTERFACE axis port = {{axis_name_t2(arg, "out")}} register
         {% endif %}
     {% endfor %}
 
-    #pragma HLS INTERFACE ap_hls_chain port = return bundle = control
+    #pragma HLS INTERFACE ap_ctrl_chain port = return bundle = control
     #pragma HLS INTERFACE s_axilite port = return bundle = control   
+
+
+    ops::hls::StencilConfigCore stencilConfig;
+
+    stencilConfig.dim = stencilConfig_dim;
+    {% for i in range(ndim)%}
+    stencilConfig.grid_size[0] = stencilConfig_grid_size_{{i}};
+    {% endfor %}
+    {% for i in range(ndim)%}
+    stencilConfig.lower_limit[0] = stencilConfig_lower_limit_{{i}};
+    {% endfor %}
+    {% for i in range(ndim)%}
+    stencilConfig.upper_limit[0] = stencilConfig_upper_limit_{{i}};
+    {% endfor %}
+    stencilConfig.total_itr = stencilConfig_total_itr;
+    stencilConfig.outer_loop_limit = stencilConfig_outer_loop_limit;
+
+    unsigned int total_bytes = stencilConfig_total_itr * vector_factor * sizeof(stencil_type);
 
 #ifdef DEBUG_LOG
     printf("[KERNEL_DEBUG]|%s| Starting outerloop_{{ilh.id}} kernel TOP \n", __func__);
 #endif
 
-    
+    for (unsigned int i = 0; i < outer_itr; i++)
+    {
+        kernel_outerloop_{{ilh.id}}_dataflow_region(stencilConfig, total_bytes,{% for arg in ilh.joint_args|ops_dat -%}{% if arg is not ops_rw %}{{axis_name(arg)-}}{{", " if not loop.last or consts }}{% else %}{{axis_name_t2(arg, "in")-}}, {{axis_name_t2(arg, "out")-}}{{", " if not loop.last or consts}}{% endif %}{% endfor %}
+            {% for const in consts %}{{const.ptr}}{{", " if not loop.last }}{% endfor %});
+    }
+
+#ifdef DEBUG_LOG
+    printf("[KERNEL_DEBUG]|%s| Ending outerloop_{{ilh.id}} kernel TOP \n", __func__);
+#endif
 }
+{% endblock %}
+{% block kernel_top_prototype_semicolon %}
 {% endblock %}

@@ -111,9 +111,9 @@ inline void kernel_{{lh.kernel}}_core(
 class Stencil_{{lh.kernel}} : public ops::hls::StencilCoreV2<stencil_type, read_num_points, vector_factor, ops::hls::CoefTypes::CONST_COEF,
         read_stencil_size, read_stencil_dim>
 {
-    public:
-        ops::hls::StencilCoreV2<stencil_type, read_num_points, vector_factor, ops::hls::CoefTypes::CONST_COEF,
-        read_stencil_size, read_stencil_dim>::m_stencilConfig;
+    using ops::hls::StencilCoreV2<stencil_type, read_num_points, vector_factor, ops::hls::CoefTypes::CONST_COEF,
+            read_stencil_size, read_stencil_dim>::m_stencilConfig;
+public:
 
     void stencilRun(
     {% for arg in lh.args|ops_dat %}
@@ -153,14 +153,12 @@ class Stencil_{{lh.kernel}} : public ops::hls::StencilCoreV2<stencil_type, read_
         #pragma HLS ARRAY_PARTITION variable = stencilConfig.lower_limit dim = 1 complete
         #pragma HLS ARRAY_PARTITION variable = stencilConfig.upper_limit dim = 1 complete
 
-        unsigned short itr_limit = stencilConfig.outer_loop_limit * stencilConfig.grid_size[0];
-
     {% if prog.findStencil(lh.get_read_stencil()).dim  == 1 %}
-        unsigned short itr_limit = stencilConfig.total_itr;
+        unsigned short iter_limit = stencilConfig.total_itr;
     {% elif prog.findStencil(lh.get_read_stencil()).dim == 2%}
-        unsigned short itr_limit = stencilConfig.outer_loop_limit * stencilConfig.grid_size[0];
+        unsigned short iter_limit = stencilConfig.outer_loop_limit * stencilConfig.grid_size[0];
     {% else %}
-        unsigned short itr_limit = stencilConfig.outer_loop_limit * 
+        unsigned short iter_limit = stencilConfig.outer_loop_limit * 
                 stencilConfig.grid_size[1] * stencilConfig.grid_size[0];
     {% endif %}
 
@@ -192,11 +190,11 @@ class Stencil_{{lh.kernel}} : public ops::hls::StencilCoreV2<stencil_type, read_
         {% endfor %}
     {% endfor %}
 
-        for (unsigned short itr = 0; itr_limit; itr++)
+        for (unsigned short itr = 0; iter_limit; itr++)
         {
         #pragma HLS PIPELINE II=1
 
-            spc_temp_blocking_read
+            spc_temp_blocking_read:
             {
                 bool cond_x_terminate = (i == stencilConfig.grid_size[0] - 1); 
     {% if prog.findStencil(lh.get_read_stencil()).dim == 2 %}
@@ -225,7 +223,11 @@ class Stencil_{{lh.kernel}} : public ops::hls::StencilCoreV2<stencil_type, read_
                 bool cond_read = (itr < total_itr);
 
                 if (cond_read){
-                    read_val = rd_buffer.read();
+    {% for arg in lh.args|ops_dat %}
+        {% if arg is ops_read or arg is ops_rw %}
+                    arg{{arg.id}}_read_val = arg{{arg.id}}_rd_buffer.read();
+        {% endif %}
+    {% endfor %}
                 }
     {% for arg in lh.args|ops_dat|ops_read %}
         {% for chain in prog.findStencil(lh.get_read_stencil()).chains %}
@@ -285,7 +287,7 @@ class Stencil_{{lh.kernel}} : public ops::hls::StencilCoreV2<stencil_type, read_
 #endif      
             }
 
-            vec2arr: for (unsigned short x = 0; x < vector_factor: x++)
+            vec2arr: for (unsigned short x = 0; x < vector_factor; x++)
             {
 #pragma HLS UNROLL factor=vector_factor
     {% for arg in lh.args|ops_dat|ops_read %}
@@ -312,9 +314,9 @@ class Stencil_{{lh.kernel}} : public ops::hls::StencilCoreV2<stencil_type, read_
                         {% set diff = point.x - row_discriptor.base_point.x %}
                         {% set access_idx = diff * config.vector_factor + row_discriptor.base_point.x + i %}
                         {% if (diff < 0 and access_idx >= 0) or (diff > 0 and access_idx <= config.vector_factor + 2 * half_span_x) %}
-                ops::hls::DataConv arg_{{arg.id}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}};
-                arg_{{arg.id}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}}.i = arg_{{arg.id}}_stencilValues[{{stencil.points.index(point)}}].range(s_datatype_size * (i + 1) - 1, s_datatype_size * i);
-                arg_{{arg.id}}_rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}}[{{access_idx}}] = arg_{{arg.id}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}}.f;
+                ops::hls::DataConv arg{{arg.id}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}};
+                arg{{arg.id}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}}.i = arg{{arg.id}}_stencilValues[{{stencil.points.index(point)}}].range(s_datatype_size * (i + 1) - 1, s_datatype_size * i);
+                arg{{arg.id}}_rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}}[{{access_idx}}] = arg{{arg.id}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}}.f;
                         {% endif %}
                     {% endfor %}
                 {% endif %}
@@ -425,7 +427,7 @@ class Stencil_{{lh.kernel}} : public ops::hls::StencilCoreV2<stencil_type, read_
             {
                 bool cond_write = (j >= 0);
 
-                if cond_write
+                if (cond_write)
                 {
     {% for arg in lh.args|ops_dat|ops_write %}
                     {{hls_stream_name(arg)}} <<  arg{{arg.id}}_update_val;
@@ -434,7 +436,7 @@ class Stencil_{{lh.kernel}} : public ops::hls::StencilCoreV2<stencil_type, read_
             }
         }
     } 
-}
+};
 {% endblock %}
 
 {% block kernel_PE %}
@@ -450,10 +452,10 @@ void kernel_{{lh.kernel}}_PE(ops::hls::StencilConfigCore& stencilConfig,
             {% set last_check = False %}
         {% endif %}
         {% if arg is not ops_rw %}
-            widen_stream_dt& {{hls_stream_name(arg)-}}{{"," if (not loop.last or not last_check)}}
+            Stencil_{{lh.kernel}}::widen_stream_dt& {{hls_stream_name(arg)-}}{{"," if (not loop.last or not last_check)}}
         {% else %}
-            widen_stream_dt& {{hls_stream_name_t2(arg, "rd")-}},
-            widen_stream_dt& {{hls_stream_name_t2(arg, "wr")-}}{{"," if (not loop.last or not last_check)}}
+            Stencil_{{lh.kernel}}::widen_stream_dt& {{hls_stream_name_t2(arg, "rd")-}},
+            Stencil_{{lh.kernel}}::widen_stream_dt& {{hls_stream_name_t2(arg, "wr")-}}{{"," if (not loop.last or not last_check)}}
         {% endif %}
     {% endfor %}
     {% for const in consts %}
