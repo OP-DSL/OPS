@@ -190,7 +190,7 @@ public:
         {% endfor %}
     {% endfor %}
 
-        for (unsigned short itr = 0; iter_limit; itr++)
+        for (unsigned short itr = 0; itr < iter_limit; itr++)
         {
         #pragma HLS PIPELINE II=1
 

@@ -41,7 +41,7 @@ extern "C" void kernel_outerloop_{{ilh.id}}(
         const unsigned short gridProp_grid_size_{{i}},
     {% endfor %}#}
         const unsigned short stencilConfig_dim,
-        const unsigned short stencilConfig_total_itr,
+        const unsigned int stencilConfig_total_itr,
     {% for i in range(ndim)%}
         const unsigned short stencilConfig_lower_limit_{{i}},
     {% endfor %}

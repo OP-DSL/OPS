@@ -144,13 +144,13 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region(ops::hls::StencilConfigC
 
     stencilConfig.dim = stencilConfig_dim;
     {% for i in range(ndim)%}
-    stencilConfig.grid_size[0] = stencilConfig_grid_size_{{i}};
+    stencilConfig.grid_size[{{i}}] = stencilConfig_grid_size_{{i}};
     {% endfor %}
     {% for i in range(ndim)%}
-    stencilConfig.lower_limit[0] = stencilConfig_lower_limit_{{i}};
+    stencilConfig.lower_limit[{{i}}] = stencilConfig_lower_limit_{{i}};
     {% endfor %}
     {% for i in range(ndim)%}
-    stencilConfig.upper_limit[0] = stencilConfig_upper_limit_{{i}};
+    stencilConfig.upper_limit[{{i}}] = stencilConfig_upper_limit_{{i}};
     {% endfor %}
     stencilConfig.total_itr = stencilConfig_total_itr;
     stencilConfig.outer_loop_limit = stencilConfig_outer_loop_limit;
