@@ -15,6 +15,7 @@ def translateProgram(program: Program, force_soa: bool) -> str:
     req_module = {}
     locations = []
     const_list = []
+    const_list_dim = []
 
     # 1. comment const calls
     for call in fpu.walk(ast, f2003.Call_Stmt):
@@ -23,6 +24,7 @@ def translateProgram(program: Program, force_soa: bool) -> str:
             continue
 
         args = fpu.get_child(call, f2003.Actual_Arg_Spec_List)
+        const_list_dim.append(str(list(args.items)[1]))
         const_list.append(str(list(args.items)[3])) 
 
     #print(const_list)
@@ -112,6 +114,31 @@ def translateProgram(program: Program, force_soa: bool) -> str:
     # Comment the call to ops_decl_const, no implementation needed in Fortran
     pattern = r"(?i)(call|CALL)\sops_decl_const\(.*?\)"
     new_source = re.sub(pattern, r"!\g<0>", temp_source)
+
+    # 5. add the omp target directives for constants
+    content_to_append = ""
+    if len(const_list): # Contain call to ops_decl_const
+        content_to_append += "\n#ifdef OPS_WITH_OMPOFFLOADFOR\n"
+        for dim,name in zip(const_list_dim,const_list):
+            if dim.isdigit() and int(dim) == 1:
+                #content_to_append += f"!$OMP TARGET ENTER DATA MAP(TO:{name})\n"
+                content_to_append += f"!$OMP TARGET UPDATE TO({name})\n"
+            else:
+                #content_to_append += f"!$OMP TARGET ENTER DATA MAP(TO:{name}[0:{dim}])\n"
+                content_to_append += f"!$OMP TARGET UPDATE TO({name}[0:{dim}])\n"
+        content_to_append += "#endif\n"
+
+        # Find the last occurance of ops_decl_const in the file and append this contents
+        pattern = re.compile(r'call\s+ops_decl_const\(', re.IGNORECASE)
+        matches = list(pattern.finditer(new_source))
+
+        if matches:
+            last_occurrence = matches[-1]
+            next_line_start = new_source.find('\n', last_occurrence.end())
+            modified_new_source = (
+                new_source[:next_line_start] + content_to_append + new_source[next_line_start:]
+            )
+            return unindent_cpp_directives(modified_new_source)
 
     return unindent_cpp_directives(new_source)
 

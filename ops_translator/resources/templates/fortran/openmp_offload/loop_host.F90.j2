@@ -8,28 +8,37 @@
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
         {% if arg.dim == 1 %}
+!$OMP DECLARE TARGET(xdim{{arg.id+1}}_{{lh.kernel}})
     INTEGER(KIND=4) :: xdim{{arg.id+1}}_{{lh.kernel}}
             {% if lh.ndim == 1 %}
 #define OPS_ACC{{arg.id+1}}(x) (x + 1)
             {% elif lh.ndim == 2 %}
+!$OMP DECLARE TARGET(xdim{{arg.id+1}}_{{lh.kernel}})
     INTEGER(KIND=4) :: ydim{{arg.id+1}}_{{lh.kernel}}
 #define OPS_ACC{{arg.id+1}}(x,y) ((x) + (xdim{{arg.id+1}}_{{lh.kernel}}*(y)) + 1)
             {% elif lh.ndim == 3 %}
+!$OMP DECLARE TARGET(xdim{{arg.id+1}}_{{lh.kernel}})
     INTEGER(KIND=4) :: ydim{{arg.id+1}}_{{lh.kernel}}
+!$OMP DECLARE TARGET(xdim{{arg.id+1}}_{{lh.kernel}})
     INTEGER(KIND=4) :: zdim{{arg.id+1}}_{{lh.kernel}}
 #define OPS_ACC{{arg.id+1}}(x,y,z) ((x) + (xdim{{arg.id+1}}_{{lh.kernel}}*(y)) + (xdim{{arg.id+1}}_{{lh.kernel}}*ydim{{arg.id+1}}_{{lh.kernel}}*(z)) + 1)
             {% endif %}
         {% elif arg.dim > 1 %}
+!$OMP DECLARE TARGET(xdim{{arg.id+1}}_{{lh.kernel}})
     INTEGER(KIND=4) :: multi_d{{arg.id+1}}
+!$OMP DECLARE TARGET(xdim{{arg.id+1}}_{{lh.kernel}})
     INTEGER(KIND=4) :: xdim{{arg.id+1}}_{{lh.kernel}}
             {% if soa_set %}
                 {% if lh.ndim == 1 %}
 #define OPS_ACC_MD{{arg.id+1}}(d,x) ((x) + (xdim{{arg.id+1}}_{{lh.kernel}}*(d-1)) + 1)
                 {% elif lh.ndim == 2 %}
+!$OMP DECLARE TARGET(xdim{{arg.id+1}}_{{lh.kernel}})
     INTEGER(KIND=4) :: ydim{{arg.id+1}}_{{lh.kernel}}
 #define OPS_ACC_MD{{arg.id+1}}(d,x,y) ((x) + (xdim{{arg.id+1}}_{{lh.kernel}}*(y)) + (xdim{{arg.id+1}}_{{lh.kernel}}*ydim{{arg.id+1}}_{{lh.kernel}}*(d-1)) + 1)
                 {% elif lh.ndim == 3 %}
+!$OMP DECLARE TARGET(xdim{{arg.id+1}}_{{lh.kernel}})
     INTEGER(KIND=4) :: ydim{{arg.id+1}}_{{lh.kernel}}
+!$OMP DECLARE TARGET(xdim{{arg.id+1}}_{{lh.kernel}})
     INTEGER(KIND=4) :: zdim{{arg.id+1}}_{{lh.kernel}}
 #define OPS_ACC_MD{{arg.id+1}}(d,x,y,z) ((x) + (xdim{{arg.id+1}}_{{lh.kernel}}*(y)) + (xdim{{arg.id+1}}_{{lh.kernel}}*ydim{{arg.id+1}}_{{lh.kernel}}*(z)) + (xdim{{arg.id+1}}_{{lh.kernel}}*ydim{{arg.id+1}}_{{lh.kernel}}*zdim{{arg.id+1}}_{{lh.kernel}}*(d-1)) + 1)
                 {% endif %}
@@ -37,10 +46,13 @@
                 {% if lh.ndim == 1 %}
 #define OPS_ACC_MD{{arg.id+1}}(d,x) ((d) + ((x)*multi_d{{arg.id+1}}))
                 {% elif lh.ndim == 2 %}
+!$OMP DECLARE TARGET(xdim{{arg.id+1}}_{{lh.kernel}})
     INTEGER(KIND=4) :: ydim{{arg.id+1}}_{{lh.kernel}}
 #define OPS_ACC_MD{{arg.id+1}}(d,x,y) ((d) + ((x)*multi_d{{arg.id+1}}) + (xdim{{arg.id+1}}_{{lh.kernel}}*(y)*multi_d{{arg.id+1}}))
                 {% elif lh.ndim == 3 %}
+!$OMP DECLARE TARGET(xdim{{arg.id+1}}_{{lh.kernel}})
     INTEGER(KIND=4) :: ydim{{arg.id+1}}_{{lh.kernel}}
+!$OMP DECLARE TARGET(xdim{{arg.id+1}}_{{lh.kernel}})
     INTEGER(KIND=4) :: zdim{{arg.id+1}}_{{lh.kernel}}
 #define OPS_ACC_MD{{arg.id+1}}(d,x,y,z) ((d) + ((x)*multi_d{{arg.id+1}}) + (xdim{{arg.id+1}}_{{lh.kernel}}*(y)*multi_d{{arg.id+1}}) + (xdim{{arg.id+1}}_{{lh.kernel}}*ydim{{arg.id+1}}_{{lh.kernel}}*(z)*multi_d{{arg.id+1}}))
                 {% endif %}
@@ -58,6 +70,7 @@
 !   User function
 !   =============
 
+{# !$OMP DECLARE TARGET #}
 !DEC$ ATTRIBUTES FORCEINLINE :: {{lh.kernel}}
 {{kernel_func}}
 
@@ -99,13 +112,15 @@ SUBROUTINE {{lh.kernel}}_wrap( &
         {% elif arg is ops_rw or arg is ops_inc %}
     {{lh.dats[arg.dat_id].typ | upper}}, DIMENSION(*), INTENT(INOUT) :: opsDat{{arg.id+1}}Local
         {% endif %}
-    INTEGER(KIND=4), INTENT(IN) :: dat{{arg.id+1}}_base
+    INTEGER(KIND=4), VALUE :: dat{{arg.id+1}}_base
 
     {% elif arg is ops_gbl or arg is ops_reduce %}
         {% if arg is ops_read %}
-    {{arg.typ | upper}}, DIMENSION(*), INTENT(IN) :: opsDat{{arg.id+1}}Local
-        {% elif arg is ops_write %}
-    {{arg.typ | upper}}, DIMENSION(*), INTENT(OUT) :: opsDat{{arg.id+1}}Local
+            {% if arg.dim.isdigit() and arg.dim|int == 1 %}
+    {{arg.typ | upper}}, VALUE :: opsDat{{arg.id+1}}Local
+            {% else %}
+    {{arg.typ | upper}}  :: opsDat{{arg.id+1}}Local(:)
+            {% endif %}
         {% elif arg is ops_inc or arg is ops_min or arg is ops_max %}
     {{arg.typ | upper}}, DIMENSION({{arg.dim}}), INTENT(INOUT) :: opsDat{{arg.id+1}}Local
         {% endif %}
@@ -144,23 +159,34 @@ SUBROUTINE {{lh.kernel}}_wrap( &
     {%if private_idx.append(private_idx.pop() + ",idx_local") %}{% endif %}
 {% endif %}
 
+{% for arg in lh.args %}
+    {% if arg is ops_dat %}
+        {% if lh.ndim == 2%}
+!$OMP TARGET UPDATE TO(xdim{{arg.id+1}}_{{lh.kernel}})
+        {% elif lh.ndim == 3 %}
+!$OMP TARGET UPDATE TO(xdim{{arg.id+1}}_{{lh.kernel}},ydim{{arg.id+1}}_{{lh.kernel}})
+        {% endif %}
+    {% endif %}
+{% endfor %}
 {% if lh.ndim == 1 %}
-    !$OMP PARALLEL DO PRIVATE(n_x{{private_idx[0]}}){{reduct_line[0]}}
+    !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x{{private_idx[0]}}){{reduct_line[0]}}
     DO n_x = 1, end_indx(1)-start_indx(1)+1
 {% elif lh.ndim == 2 %}
-    !$OMP PARALLEL DO PRIVATE(n_x,n_y{{private_idx[0]}}){{reduct_line[0]}}
+    {% if lh.has_reduction %}
+    !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x,n_y{{private_idx[0]}}){{reduct_line[0]}}
+    {% else %}
+    !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x,n_y{{private_idx[0]}}) COLLAPSE(2)
+    {% endif %}
     DO n_y = 1, end_indx(2)-start_indx(2)+1
-        {% if not lh.has_reduction %}
-        !$OMP SIMD
-        {% endif %}
         DO n_x = 1, end_indx(1)-start_indx(1)+1
 {% elif lh.ndim == 3 %}
-    !$OMP PARALLEL DO PRIVATE(n_x,n_y,n_z{{private_idx[0]}}){{reduct_line[0]}}
+    {% if lh.has_reduction %}
+    !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x,n_y,n_z{{private_idx[0]}}){{reduct_line[0]}}
+    {% else %}
+    !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x,n_y,n_z{{private_idx[0]}}) COLLAPSE(3)
+    {% endif %}
     DO n_z = 1, end_indx(3)-start_indx(3)+1
         DO n_y = 1, end_indx(2)-start_indx(2)+1
-        {% if not lh.has_reduction %}
-            !$OMP SIMD
-        {% endif %}
             DO n_x = 1, end_indx(1)-start_indx(1)+1
 {% endif %}
 
@@ -170,7 +196,7 @@ SUBROUTINE {{lh.kernel}}_wrap( &
     {% elif lh.ndim == 2 %}
         idx_local = [idx(1)+n_x-1,idx(2)+n_y-1]
     {% elif lh.ndim == 3 %}
-        idx_local = [idx(1)+n_x-1,idx(2)+n_y-1,idx(3)+n_z-1]
+        idx_local = [idx(1)+n_x-1,idx(2)+n_y-1,idx(3) + n_z - 1]
     {% endif %}
 {% endif %}
 
@@ -182,7 +208,7 @@ SUBROUTINE {{lh.kernel}}_wrap( &
                 opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}})){% if not loop.last %},{% endif %} &
             {% elif lh.ndim == 2 %}
                 opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}) + ((n_y-1)*xdim{{arg.id+1}}_{{lh.kernel}}*{{arg.strides[1] | int}})){% if not loop.last %},{% endif %} &
-            {% elif lh.ndim == 3 %} 
+            {% elif lh.ndim == 3 %}
                 opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}) + ((n_y-1)*xdim{{arg.id+1}}_{{lh.kernel}}*{{arg.strides[1] | int}}) + ((n_z-1)*ydim{{arg.id+1}}_{{lh.kernel}}*xdim{{arg.id+1}}_{{lh.kernel}}*{{arg.strides[2] | int}})){% if not loop.last %},{% endif %} &
             {% endif %}
         {% else %}
@@ -195,7 +221,15 @@ SUBROUTINE {{lh.kernel}}_wrap( &
             {% endif %}
         {% endif %}
     {% elif arg is ops_gbl or arg is ops_reduce %}
+        {% if arg is ops_read %}
+            {% if arg.dim.isdigit() and arg.dim|int == 1 %}
+                opsDat{{arg.id+1}}Local{% if not loop.last %},{% endif %} &
+            {% else %}
                 opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base){% if not loop.last %},{% endif %} &
+            {% endif %}
+        {% elif arg is ops_inc or arg is ops_min or arg is ops_max %}{# ops_inc or ops_min or ops_max #}
+                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base){% if not loop.last %},{% endif %} &
+        {% endif %}
     {% elif arg is ops_idx %}
                 idx_local{% if not loop.last %},{% endif %} &
     {% endif %}
@@ -206,22 +240,16 @@ SUBROUTINE {{lh.kernel}}_wrap( &
 
 {% if lh.ndim == 1 %}
     END DO
-    !$OMP END PARALLEL DO
+    !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
 {% elif lh.ndim == 2 %}
         END DO
-        {% if not lh.has_reduction %}
-        !$OMP END SIMD
-        {% endif %}
     END DO
-    !$OMP END PARALLEL DO
+    !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
 {% elif lh.ndim == 3 %}
             END DO
-            {% if not lh.has_reduction %}
-            !$OMP END SIMD
-            {% endif %}
         END DO
     END DO
-    !$OMP END PARALLEL DO
+    !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
 {% endif %}
 
 END SUBROUTINE
@@ -270,27 +298,45 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
 
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
-    {{lh.dats[arg.dat_id].typ | upper}}, POINTER, DIMENSION(:) :: opsDat{{arg.id+1}}Local
+    {{lh.dats[arg.dat_id].typ | upper}}, DIMENSION(:), POINTER :: opsDat{{arg.id+1}}Local
     INTEGER(KIND=4) :: opsDat{{arg.id+1}}Cardinality
     INTEGER(KIND=4), POINTER, DIMENSION(:)  :: dat{{arg.id+1}}_size
     INTEGER(KIND=4) :: dat{{arg.id+1}}_base
-
     {% elif arg is ops_gbl or arg is ops_reduce %}
-    {{arg.typ | upper}}, POINTER, DIMENSION(:) :: opsDat{{arg.id+1}}Local
+     INTEGER(KIND=4) :: opsDat{{arg.id+1}}Cardinality
+        {% if arg is ops_read %}
+            {% if arg.dim.isdigit() and arg.dim|int == 1 %}
+    {{arg.typ | upper}}, DIMENSION(:), POINTER :: opsDat{{arg.id+1}}Local
+            {% else %}
+    {{arg.typ | upper}}, DIMENSION(:), POINTER :: opsDat{{arg.id+1}}Local
+            {% endif %}
+        {% elif arg is ops_inc or arg is ops_min or arg is ops_max %}
+    {{arg.typ | upper}},  DIMENSION(:), POINTER :: opsDat{{arg.id+1}}Local
+        {% endif %}
     INTEGER(KIND=4) :: dat{{arg.id+1}}_base
-
     {% endif %}
-{% endfor %}
 
+{% endfor %}
     REAL(KIND=8) :: t1__, t2__, t3__
     REAL(KIND=4) :: transfer_total, transfer
 
-{% if lh.arg_idx != -1 %}
-    INTEGER(KIND=4), DIMENSION({{lh.ndim}}) :: idx
+{% if lh.ndim == 1 %}
+    INTEGER(KIND=4) :: x_size
+{% elif lh.ndim == 2 %}
+    INTEGER(KIND=4) :: x_size, y_size
+{% elif lh.ndim == 3 %}
+    INTEGER(KIND=4) :: x_size, y_size, z_size
 {% endif %}
 
+{% if lh.arg_idx != -1 %}
+    INTEGER(KIND=4), DIMENSION({{lh.ndim}}) :: idx
+
+{% endif %}
     INTEGER(KIND=4), DIMENSION({{lh.ndim}}) :: start_indx, end_indx
     INTEGER(KIND=4) :: n_indx
+    CHARACTER(LEN=40) :: kernelName
+
+    kernelName = "{{lh.kernel}}"
 
 #ifdef OPS_LAZY
 !   ==========================
@@ -312,7 +358,7 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
 {% endfor %}
 #endif
 
-    CALL setKernelTime({{kernel_idx}}, "{{lh.kernel}}", 0.0_8, 0.0_8, 0.0_4, 1)
+    CALL setKernelTime({{kernel_idx}}, kernelName//c_null_char, 0.0_8, 0.0_8, 0.0_4, 1)
     CALL ops_timers_core(t1__)
 
 #if defined(OPS_MPI) && !defined(OPS_LAZY)
@@ -341,6 +387,18 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
 #endif
 {% endif %}
 
+    x_size = MAX(0, end_indx(1)-start_indx(1)+1)
+{% if lh.ndim == 2 %}
+    y_size = MAX(0, end_indx(2)-start_indx(2)+1)
+{% elif lh.ndim == 3 %}
+    y_size = MAX(0, end_indx(2)-start_indx(2)+1)
+    z_size = MAX(0, end_indx(3)-start_indx(3)+1)
+{% endif %}
+
+{% if lh.isGblReadMDIM %}
+    CALL ops_upload_gbls(opsArgArray, {{lh.args|length}})
+{% endif %}
+
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
     CALL c_f_pointer(getDatSizeFromOpsArg(opsArg{{arg.id+1}}), dat{{arg.id+1}}_size, (/dim/))
@@ -358,30 +416,35 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
     opsDat{{arg.id+1}}Cardinality = opsArg{{arg.id+1}}%dim * xdim{{arg.id+1}}_{{lh.kernel}} * ydim{{arg.id+1}}_{{lh.kernel}} * zdim{{arg.id+1}}_{{lh.kernel}}
         {% endif %}
         {% if arg.dim > 1 %}
-    multi_d{{arg.id+1}} = getDatDimFromOpsArg(opsArg{{arg.id+1}}) ! dimension of the multi-dim dat
+    multi_d{{arg.id+1}} = getDatDimFromOpsArg(opsArg{{arg.id+1}}) ! dimension of dat
     dat{{arg.id+1}}_base = getDatBaseFromOpsArg{{lh.ndim}}D(opsArg{{arg.id+1}}, start_indx, multi_d{{arg.id+1}})
         {% else %}
     dat{{arg.id+1}}_base = getDatBaseFromOpsArg{{lh.ndim}}D(opsArg{{arg.id+1}}, start_indx, 1)
         {% endif %}
-    CALL c_f_pointer(opsArg{{arg.id+1}}%data, opsDat{{arg.id+1}}Local, (/opsDat{{arg.id+1}}Cardinality/))
+    CALL c_f_pointer(opsArg{{arg.id+1}}%data_d, opsDat{{arg.id+1}}Local, (/opsDat{{arg.id+1}}Cardinality/))
     {% elif arg is ops_gbl or arg is ops_reduce %}
+    opsDat{{arg.id+1}}Cardinality = opsArg{{arg.id+1}}%dim
         {% if arg is ops_read %}
-    CALL c_f_pointer(getGblPtrFromOpsArg(opsArg{{arg.id+1}}), opsDat{{arg.id+1}}Local, (/opsArg{{arg.id+1}}%dim/))
-    dat{{arg.id+1}}_base = 1
+            {% if arg.dim.isdigit() and arg.dim|int == 1 %}
+    CALL c_f_pointer(opsArg{{arg.id+1}}%data, opsDat{{arg.id+1}}Local, (/opsDat{{arg.id+1}}Cardinality/))
+            {% else %}
+    CALL c_f_pointer(opsArgArray({{arg.id+1}})%data_d, opsDat{{arg.id+1}}Local, (/opsDat{{arg.id+1}}Cardinality/))
+            {% endif %}
         {% elif arg is ops_inc or arg is ops_min or arg is ops_max %}
-    CALL c_f_pointer(getReductionPtrFromOpsArg(opsArg{{arg.id+1}},block), opsDat{{arg.id+1}}Local, (/opsArg{{arg.id+1}}%dim/))
-    dat{{arg.id+1}}_base = 1
+    CALL c_f_pointer(getReductionPtrFromOpsArg(opsArg{{arg.id+1}},block), opsDat{{arg.id+1}}Local, (/opsDat{{arg.id+1}}Cardinality/))
         {% endif %}
+    dat{{arg.id+1}}_base = 1
     {% endif %}
 
 {% endfor %}
+
 !   ==============
 !   Halo exchanges
 !   ==============
 #ifndef OPS_LAZY
-    CALL ops_H_D_exchanges_host(opsArgArray, {{lh.args|length}})
+    CALL ops_H_D_exchanges_device(opsArgArray, {{lh.args|length}})
     CALL ops_halo_exchanges(opsArgArray, {{lh.args|length}}, range)
-    CALL ops_H_D_exchanges_host(opsArgArray, {{lh.args|length}})
+    CALL ops_H_D_exchanges_device(opsArgArray, {{lh.args|length}})
 #endif
 
     CALL ops_timers_core(t2__)
@@ -393,8 +456,18 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
 {% for arg in lh.args %}
     {% if arg is ops_idx %}
                         idx, &
-    {% else %}
+    {% elif arg is ops_dat %}
                         opsDat{{arg.id+1}}Local, &
+    {% elif arg is ops_gbl or arg is ops_reduce %}
+        {% if arg is ops_read %}
+            {% if arg.dim.isdigit() and arg.dim|int == 1 %}
+                        opsDat{{arg.id+1}}Local(1), &
+            {% else %}
+                        opsDat{{arg.id+1}}Local, &
+            {% endif %}
+        {% elif arg is ops_inc or arg is ops_min or arg is ops_max %}
+                        opsDat{{arg.id+1}}Local, &
+        {% endif %}
     {% endif %}
 {% endfor %}
 {% for arg in lh.args %}
@@ -408,7 +481,7 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
     CALL ops_timers_core(t3__)
 
 #ifndef OPS_LAZY
-    CALL ops_set_dirtybit_host(opsArgArray, {{lh.args|length}})
+    CALL ops_set_dirtybit_device(opsArgArray, {{lh.args|length}})
 {% for arg in lh.args %}
     {% if arg is ops_dat and (arg is ops_write or arg is ops_rw or arg is ops_inc) %}
     CALL ops_set_halo_dirtybit3(opsArg{{arg.id+1}}, range)
@@ -427,7 +500,7 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
     {% endif %}
 {% endfor %}
 
-    CALL setKernelTime({{kernel_idx}}, "{{lh.kernel}}", t3__-t2__, t2__-t1__, transfer_total, 0)
+    CALL setKernelTime({{kernel_idx}}, kernelName//c_null_char, t3__-t2__, t2__-t1__, transfer_total, 0)
 
 END SUBROUTINE
 
@@ -469,7 +542,7 @@ SUBROUTINE {{lh.kernel}}_host( userSubroutine, block, dim, range, &
     END DO
 
     CALL create_kerneldesc_and_enque(namelit//c_null_char, c_loc(opsArgArray), &
-                                    {{lh.args|length}}, {{kernel_idx}}, dim, 0, c_loc(range_tmp), &
+                                    {{lh.args|length}}, {{kernel_idx}}, dim, 1, c_loc(range_tmp), &
                                     block%blockCptr, c_funloc({{lh.kernel}}_host_execute))
 
 END SUBROUTINE
@@ -479,4 +552,4 @@ END SUBROUTINE
 
 {% block epilogue %}
 END MODULE {{lh.kernel | upper}}_MODULE
-{% endblock%}
+{% endblock %}

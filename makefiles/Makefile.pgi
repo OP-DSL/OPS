@@ -5,7 +5,7 @@ FC	  := pgfortran
 ifdef DEBUG
 	CCFLAGS   := -O0 -g 
 else
-	CCFLAGS   := -O3 -fast -gopt -Xcudafe "--diag_suppress=unrecognized_gcc_pragma"
+	CCFLAGS   := -O3 -fast -gopt
 #-Minline #-Mipa=fast #-Mlist #-mp=nonuma -Kieee
 endif
 
@@ -18,6 +18,7 @@ OPENACCFLAGS   = $(CCFLAGS) -module $(F_INC_MOD)/openacc
 
 FMODS         := -module $(F_INC_MOD)
 FMODS_CUDA    := -module $(F_INC_MOD)/cuda
+FMODS_OMPOFFLOAD    := -module $(F_INC_MOD)/ompoffload
 
 OMPFLAGS := -mp
 OMPOFFLOADFLAGS = -mp=gpu
@@ -27,6 +28,7 @@ ifdef THREADED
 endif
 
 CUDAFOR	= -DOPS_WITH_CUDAFOR
+OMPOFFLOADFOR = -DOPS_WITH_OMPOFFLOADFOR
 OpenACCFLAGS = -acc
 CXXLINK := -pgc++libs -lstdc++
 PGIMPILINK := -lmpi_cxx

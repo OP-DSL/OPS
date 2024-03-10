@@ -164,19 +164,19 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_dat':
         config.depth = 4
         if int(dims[n]) == 1:
-          code('INTEGER(KIND=4) :: xdim'+str(n+1))
+          code('INTEGER(KIND=4) :: xdim'+str(n+1)+'_'+name)
           if NDIM==1:
             config.depth = 0
             code('#define OPS_ACC'+str(n+1)+'(x) (x + 1)')
           if NDIM==2:
-            code('INTEGER(KIND=4) :: ydim'+str(n+1))
+            code('INTEGER(KIND=4) :: ydim'+str(n+1)+'_'+name)
             config.depth = 0
-            code('#define OPS_ACC'+str(n+1)+'(x,y) ((x) + (xdim'+str(n+1)+'*(y)) + 1)')
+            code('#define OPS_ACC'+str(n+1)+'(x,y) ((x) + (xdim'+str(n+1)+'_'+name+'*(y)) + 1)')
           if NDIM==3:
-            code('INTEGER(KIND=4) :: ydim'+str(n+1))
-            code('INTEGER(KIND=4) :: zdim'+str(n+1))
+            code('INTEGER(KIND=4) :: ydim'+str(n+1)+'_'+name)
+            code('INTEGER(KIND=4) :: zdim'+str(n+1)+'_'+name)
             config.depth = 0
-            code('#define OPS_ACC'+str(n+1)+'(x,y,z) ((x) + (xdim'+str(n+1)+'*(y)) + (xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)) + 1)')
+            code('#define OPS_ACC'+str(n+1)+'(x,y,z) ((x) + (xdim'+str(n+1)+'_'+name+'*(y)) + (xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'_'+name+'*(z)) + 1)')
         code('')
 
     for n in range (0, nargs):
@@ -184,33 +184,33 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
         if dims[n] != '1':
           config.depth = 4
           code('INTEGER(KIND=4) :: multi_d'+str(n+1))
-          code('INTEGER(KIND=4) :: xdim'+str(n+1))
+          code('INTEGER(KIND=4) :: xdim'+str(n+1)+'_'+name)
           if soa_set == 0:
             if NDIM==1:
               config.depth = 0
               code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((d) + ((x)*multi_d'+str(n+1)+'))')
             if NDIM==2:
-              code('INTEGER(KIND=4) :: ydim'+str(n+1))
+              code('INTEGER(KIND=4) :: ydim'+str(n+1)+'_'+name)
               config.depth = 0
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((d) + ((x)*multi_d'+str(n+1)+') + (xdim'+str(n+1)+'*(y)*multi_d'+str(n+1)+'))')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((d) + ((x)*multi_d'+str(n+1)+') + (xdim'+str(n+1)+'_'+name+'*(y)*multi_d'+str(n+1)+'))')
             if NDIM==3:
-              code('INTEGER(KIND=4) :: ydim'+str(n+1))
-              code('INTEGER(KIND=4) :: zdim'+str(n+1))
+              code('INTEGER(KIND=4) :: ydim'+str(n+1)+'_'+name)
+              code('INTEGER(KIND=4) :: zdim'+str(n+1)+'_'+name)
               config.depth = 0
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((d) + ((x)*multi_d'+str(n+1)+') + (xdim'+str(n+1)+'*(y)*multi_d'+str(n+1)+') + (xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)*multi_d'+str(n+1)+'))')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((d) + ((x)*multi_d'+str(n+1)+') + (xdim'+str(n+1)+'_'+name+'*(y)*multi_d'+str(n+1)+') + (xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'_'+name+'*(z)*multi_d'+str(n+1)+'))')
           else:
             if NDIM==1:
               config.depth = 0
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x) + (xdim'+str(n+1)+'*(d-1)) + 1)')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x) ((x) + (xdim'+str(n+1)+'_'+name+'*(d-1)) + 1)')
             if NDIM==2:
-              code('INTEGER(KIND=4) :: ydim'+str(n+1))
+              code('INTEGER(KIND=4) :: ydim'+str(n+1)+'_'+name)
               config.depth = 0
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x) + (xdim'+str(n+1)+'*(y)) + (xdim'+str(n+1)+'*ydim'+str(n+1)+'*(d-1)) + 1)')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y) ((x) + (xdim'+str(n+1)+'_'+name+'*(y)) + (xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'_'+name+'*(d-1)) + 1)')
             if NDIM==3:
-              code('INTEGER(KIND=4) :: ydim'+str(n+1))
-              code('INTEGER(KIND=4) :: zdim'+str(n+1))
+              code('INTEGER(KIND=4) :: ydim'+str(n+1)+'_'+name)
+              code('INTEGER(KIND=4) :: zdim'+str(n+1)+'_'+name)
               config.depth = 0
-              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x) + (xdim'+str(n+1)+'*(y)) + (xdim'+str(n+1)+'*ydim'+str(n+1)+'*(z)) + (xdim'+str(n+1)+'*ydim'+str(n+1)+'*zdim'+str(n+1)+'*(d-1)) + 1)')
+              code('#define OPS_ACC_MD'+str(n+1)+'(d,x,y,z) ((x) + (xdim'+str(n+1)+'_'+name+'*(y)) + (xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'_'+name+'*(z)) + (xdim'+str(n+1)+'_'+name+'*ydim'+str(n+1)+'_'+name+'*zdim'+str(n+1)+'_'+name+'*(d-1)) + 1)')
           code('')
 
     config.depth = 4
@@ -311,45 +311,36 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
       code('INTEGER(KIND=4) :: n_x, n_y, n_z')
     code('')
 
+    private_idx = ''
+    if arg_idx == 1:
+        private_idx = ',idx_local'
+
     if NDIM==1:
-      if reduction != 1 and arg_idx != 1:
-        code('!$OMP PARALLEL DO')
-      elif reduction == 1:
-        code('!$OMP PARALLEL DO '+reduction_vars)
+      code(f'!$OMP PARALLEL DO PRIVATE(n_x{private_idx}) {reduction_vars}')
       DO('n_x','1','end_indx(1)-start_indx(1)+1')
-      if arg_idx == 1:
-        code('idx_local(1) = idx(1) + n_x - 1')
 
     elif NDIM==2:
-      if reduction != 1 and arg_idx != 1:
-        code('!$OMP PARALLEL DO PRIVATE(n_x,n_y)')
-      elif reduction == 1:
-        code('!$OMP PARALLEL DO PRIVATE(n_x,n_y) '+reduction_vars)
+      code(f'!$OMP PARALLEL DO PRIVATE(n_x,n_y{private_idx}) {reduction_vars}')
       DO('n_y','1','end_indx(2)-start_indx(2)+1')
-      if arg_idx == 1:
-        code('idx_local(2) = idx(2) + n_y - 1')
       if reduction != 1:
         code('!$OMP SIMD')
       DO('n_x','1','end_indx(1)-start_indx(1)+1')
-      if arg_idx == 1:
-        code('idx_local(1) = idx(1) + n_x - 1')
 
     elif NDIM==3:
-      if reduction != 1 and arg_idx != 1:
-        code('!$OMP PARALLEL DO PRIVATE(n_x,n_y,n_z)')
-      elif reduction == 1:
-        code('!$OMP PARALLEL DO PRIVATE(n_x,n_y,n_z) '+reduction_vars)
+      code(f'!$OMP PARALLEL DO PRIVATE(n_x,n_y,n_z{private_idx}) {reduction_vars}')
       DO('n_z','1','end_indx(3)-start_indx(3)+1')
-      if arg_idx == 1:
-        code('idx_local(3) = idx(3) + n_z - 1')
       DO('n_y','1','end_indx(2)-start_indx(2)+1')
-      if arg_idx == 1:
-        code('idx_local(2) = idx(2) + n_y - 1')
       if reduction != 1:
         code('!$OMP SIMD')
       DO('n_x','1','end_indx(1)-start_indx(1)+1')
-      if arg_idx == 1:
-        code('idx_local(1) = idx(1) + n_x - 1')
+
+    if arg_idx == 1:
+      if NDIM==1:
+        code('idx_local = [idx(1)+n_x-1]')
+      elif NDIM==2:
+        code('idx_local = [idx(1)+n_x-1,idx(2)+n_y-1]')
+      elif NDIM==3:
+        code('idx_local = [idx(1)+n_x-1,idx(2)+n_y-1,idx(3)+n_z-1]')
 
     code('')
     code('CALL '+name + '( &')
@@ -362,21 +353,21 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
             line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + ((n_x-1)*'+str(stride[n][0])+'*'+str(dims[n])+'))'
           elif NDIM==2:
             line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + ((n_x-1)*'+str(stride[n][0])+'*'+str(dims[n])+')'+\
-               ' + ((n_y-1)*xdim'+str(n+1)+'*'+str(stride[n][1])+'*'+str(dims[n])+'))'
+               ' + ((n_y-1)*xdim'+str(n+1)+'_'+name+'*'+str(stride[n][1])+'*'+str(dims[n])+'))'
           elif NDIM==3:
             line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + ((n_x-1)*'+str(stride[n][0])+'*'+str(dims[n])+')'+\
-               ' + ((n_y-1)*xdim'+str(n+1)+'*'+str(stride[n][1])+'*'+str(dims[n])+')'+\
-               ' + ((n_z-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+'*'+str(stride[n][2])+'*'+str(dims[n])+'))'
+               ' + ((n_y-1)*xdim'+str(n+1)+'_'+name+'*'+str(stride[n][1])+'*'+str(dims[n])+')'+\
+               ' + ((n_z-1)*ydim'+str(n+1)+'_'+name+'*xdim'+str(n+1)+'_'+name+'*'+str(stride[n][2])+'*'+str(dims[n])+'))'
         else:
           if NDIM==1:
             line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + ((n_x-1)*'+str(stride[n][0])+'))'
           elif NDIM==2:
             line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + ((n_x-1)*'+str(stride[n][0])+')'+\
-                ' + ((n_y-1)*xdim'+str(n+1)+'*'+str(stride[n][1])+'))'
+                ' + ((n_y-1)*xdim'+str(n+1)+'_'+name+'*'+str(stride[n][1])+'))'
           elif NDIM==3:
             line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base + ((n_x-1)*'+str(stride[n][0])+')'+\
-                ' + ((n_y-1)*xdim'+str(n+1)+'*'+str(stride[n][1])+')'+\
-                ' + ((n_z-1)*ydim'+str(n+1)+'*xdim'+str(n+1)+'*'+str(stride[n][2])+'))'
+                ' + ((n_y-1)*xdim'+str(n+1)+'_'+name+'*'+str(stride[n][1])+')'+\
+                ' + ((n_z-1)*ydim'+str(n+1)+'_'+name+'*xdim'+str(n+1)+'_'+name+'*'+str(stride[n][2])+'))'
 
       elif arg_typ[n] == 'ops_arg_gbl':
         line = line + 'opsDat'+str(n+1)+'Local(dat'+str(n+1)+'_base)'
@@ -563,17 +554,17 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_dat':
         code('CALL c_f_pointer(getDatSizeFromOpsArg(opsArg'+str(n+1)+'), dat'+str(n+1)+'_size, (/dim/))')
         if NDIM==1:
-          code('xdim'+str(n+1)+' = dat'+str(n+1)+'_size(1)')
-          code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1))
+          code('xdim'+str(n+1)+'_'+name+' = dat'+str(n+1)+'_size(1)')
+          code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+'_'+name)
         elif NDIM==2:
-          code('xdim'+str(n+1)+' = dat'+str(n+1)+'_size(1)')
-          code('ydim'+str(n+1)+' = dat'+str(n+1)+'_size(2)')
-          code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+' * ydim'+str(n+1))
+          code('xdim'+str(n+1)+'_'+name+' = dat'+str(n+1)+'_size(1)')
+          code('ydim'+str(n+1)+'_'+name+' = dat'+str(n+1)+'_size(2)')
+          code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+'_'+name+' * ydim'+str(n+1)+'_'+name)
         elif NDIM==3:
-          code('xdim'+str(n+1)+' = dat'+str(n+1)+'_size(1)')
-          code('ydim'+str(n+1)+' = dat'+str(n+1)+'_size(2)')
-          code('zdim'+str(n+1)+' = dat'+str(n+1)+'_size(3)')
-          code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+' * ydim'+str(n+1)+' * zdim'+str(n+1))
+          code('xdim'+str(n+1)+'_'+name+' = dat'+str(n+1)+'_size(1)')
+          code('ydim'+str(n+1)+'_'+name+' = dat'+str(n+1)+'_size(2)')
+          code('zdim'+str(n+1)+'_'+name+' = dat'+str(n+1)+'_size(3)')
+          code('opsDat'+str(n+1)+'Cardinality = opsArg'+str(n+1)+'%dim * xdim'+str(n+1)+'_'+name+' * ydim'+str(n+1)+'_'+name+' * zdim'+str(n+1)+'_'+name)
         if dims[n] != '1':
           code('multi_d'+str(n+1)+' = getDatDimFromOpsArg(opsArg'+str(n+1)+') ! dimension of the dat')
           code('dat'+str(n+1)+'_base = getDatBaseFromOpsArg'+str(NDIM)+'D(opsArg'+str(n+1)+', start_indx, multi_d'+str(n+1)+')')
