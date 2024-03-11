@@ -55,7 +55,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region(ops::hls::AccessRange
     {% endfor %}
     #pragma HLS INTERFACE s_axilite port = outer_itr bundle = control
     {% for arg in ilh.joint_args|ops_dat %} 
-    #pragma HLS INTERFACE mode=m_axi bundle=gmem{{arg.id}} depth={{config["maxi_depth"]}} maxi_read_burst_length={{config["maxi_read_burst_length"]}} maxi_write_burst_length={{config["maxi_write_burst_length"]}} \
+    #pragma HLS INTERFACE mode=m_axi bundle=gmem{{arg.id}} depth={{config["maxi_depth"]}} max_read_burst_length={{config["maxi_read_burst_length"]}} max_write_burst_length={{config["maxi_write_burst_length"]}} \
             num_read_outstanding={{config["num_read_outstanding"]}} num_write_outstanding={{config["num_write_outstanding"]}} \
             port=arg{{arg.id}} offset={{config["maxi_offset"]}}
     #pragma HLS INTERFACE s_axilite port = arg{{arg.id}} bundle = control
@@ -71,8 +71,6 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region(ops::hls::AccessRange
 
     #pragma HLS INTERFACE mode=s_axilite port=return bundle = control
     #pragma HLS INTERFACE mode=ap_ctr_chain port=return bundle = control
-
-    #pragma HLS DATAFLOW
 
     ops::hls::AccessRange range;
     {% for i in range(ndim) %}
