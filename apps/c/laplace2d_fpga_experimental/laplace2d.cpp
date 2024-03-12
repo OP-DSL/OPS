@@ -23,9 +23,9 @@ int main(int argc, const char** argv)
     ops_init(argc, argv,1);
 
     //Size along y
-    jmax = 4094;
+    jmax = 100;
     //Size along x
-    imax = 4094;
+    imax = 100;
     unsigned int iter_max = 100;
 
 //   const float tol = 1.0e-6;
@@ -143,29 +143,32 @@ int main(int argc, const char** argv)
 #endif
 
     int interior_range[] = {0,imax,0,jmax};
-    // #ifndef OPS_FPGA
-    // for (unsigned int i = 0; i < iter_max; i++)
-    // {
+    // ops_par_loop(test_init, "test_init", block, 2, interior_range, 
+    //     ops_arg_dat(d_A, 2, S2D_00, "float", OPS_WRITE),
+    //     ops_arg_idx());
+#ifndef OPS_FPGA
+    for (unsigned int i = 0; i < iter_max; i++)
+    {
         
-    //     ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
-    //         ops_arg_dat(d_A,    1, S2D_5pt, "float", OPS_READ),
-    //         ops_arg_dat(d_Anew, 1, S2D_00, "float", OPS_WRITE));
+        ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
+            ops_arg_dat(d_A,    1, S2D_5pt, "float", OPS_READ),
+            ops_arg_dat(d_Anew, 1, S2D_00, "float", OPS_WRITE));
 
-    //     // ops_dat_deep_copy(d_A, d_Anew);
-    //     ops_par_loop(copy, "copy", block, 2, interior_range,
-    //         ops_arg_dat(d_A,    1, S2D_00, "float", OPS_WRITE),
-    //         ops_arg_dat(d_Anew, 1, S2D_00, "float", OPS_READ));
+        // ops_dat_deep_copy(d_A, d_Anew);
+        ops_par_loop(copy, "copy", block, 2, interior_range,
+            ops_arg_dat(d_A,    1, S2D_00, "float", OPS_WRITE),
+            ops_arg_dat(d_Anew, 1, S2D_00, "float", OPS_READ));
 
-    //     // if(iter % 10 == 0) ops_printf("%5d, %0.6f\n", iter, error);        
-    //     // iter++;
-    // }
-    // #else
-        ops_iter_par_loop(iter_max, 
-            ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
-                ops_arg_dat(d_A,    1, S2D_5pt, "float", OPS_READ),
-                ops_arg_dat(d_Anew, 1, S2D_00, "float", OPS_WRITE)), 
-            ops_par_copy<float>(d_A, d_Anew));
-    // #endif
+        // if(iter % 10 == 0) ops_printf("%5d, %0.6f\n", iter, error);        
+        // iter++;
+    }
+#else
+    ops_iter_par_loop(iter_max, 
+        ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
+            ops_arg_dat(d_A,    1, S2D_5pt, "float", OPS_READ),
+            ops_arg_dat(d_Anew, 1, S2D_00, "float", OPS_WRITE)), 
+        ops_par_copy<float>(d_A, d_Anew));
+#endif
 
     #ifdef VERIFICATION
         A = (float*)d_A->get_raw_pointer(0, S2D_00, OPS_HOST);
