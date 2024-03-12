@@ -100,7 +100,6 @@ void getGrid(Grid<T>& p_grid)
 		p_grid.activeEvents.resize(0);
 		p_grid.activeEvents.push_back(event);
 		p_grid.isDevBufDirty = false;
-		p_grid.isHostBufDirty = false;
 		event.wait();
 	}
 }
@@ -116,10 +115,9 @@ void sendGrid(Grid<T>& p_grid)
 //		addEvent(p_grid, event, __func__);
 		p_grid.activeEvents.resize(0);
 		p_grid.activeEvents.push_back(event);
-		p_grid.isDevBufDirty = false;
 		p_grid.isHostBufDirty = false;
-		event.wait();
-	}
+				event.wait();
+			}
 }
 
 

@@ -6,8 +6,8 @@ static void datamover_apply_stencil_dataflow_region(ops::hls::AccessRange& read_
         ops::hls::AccessRange& write_range,
 		ops::hls::SizeType& arg0_gridSize,
 		ops::hls::SizeType& arg1_gridSize,
-	    ap_uint<data_width>* arg0_in,
-	    ap_uint<data_width>* arg1_out,
+	    ap_uint<mem_data_width>* arg0_in,
+	    ap_uint<mem_data_width>* arg1_out,
 	    hls::stream<ap_axiu<axis_data_width,0,0,0>>& arg0_stream_out,
 	    hls::stream<ap_axiu<axis_data_width,0,0,0>>& arg1_stream_in)
 {
@@ -30,8 +30,8 @@ extern "C" void datamover_apply_stencil(
     const unsigned short arg0_gridSize_y,
     const unsigned short arg1_gridSize_x,
     const unsigned short arg1_gridSize_y,
-    ap_uint<data_width>* arg0_in,
-    ap_uint<data_width>* arg1_out,
+    ap_uint<mem_data_width>* arg0_in,
+    ap_uint<mem_data_width>* arg1_out,
     hls::stream<ap_axiu<axis_data_width,0,0,0>>& arg0_stream_out,
     hls::stream<ap_axiu<axis_data_width,0,0,0>>& arg1_stream_in
 )
