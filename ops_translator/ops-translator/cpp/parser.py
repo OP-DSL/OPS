@@ -290,7 +290,7 @@ def getStencilSize(array: List[ops.Point])->int:
     xes = [point.x for point in array]
     minX = min(xes)
     maxX = max(xes)
-    return (maxX - minX)
+    return (maxX - minX + 1)
 
 def isInSameRow(one: ops.Point , two: ops.Point):
     if one.y == two.y and one.z == two.z:
@@ -322,22 +322,25 @@ def windowBuffChainingAlgo(sorted_array: List[ops.Point], ndim: int) -> Tuple[Li
     
     for p_idx in range(len(sorted_array)):
         if p_idx == len(sorted_array) - 1:
-            chains.append((str(p_idx), "read_val"))
+            chains.append((p_idx, "read_val"))
             if prev_buff:
                 chains.append((prev_buff.pop(), feeding_point.pop()))
         elif isInSameRow(sorted_array[p_idx], sorted_array[p_idx+1]):
-            chains.append((str(p_idx), str(p_idx+1)))
+            chains.append((p_idx, p_idx+1))
         else:
             if sorted_array[p_idx+1].z == sorted_array[p_idx].z:
-                curr_buff = "buf_r" + str(sorted_array[p_idx].y) + "_" + str(sorted_array[p_idx+1].y) + "_p" + str(sorted_array[p_idx].z)
+                buffer_type = ops.BufferType.LINE_BUFF
+                curr_buff_name = "buf_r" + str(sorted_array[p_idx].y) + "_" + str(sorted_array[p_idx+1].y) + "_p" + str(sorted_array[p_idx].z)
             else:
-                curr_buff = "buf_p" + str(sorted_array[p_idx].z) + "_" + str(sorted_array[p_idx+1].z)
+                buffer_type = ops.BufferType.PLANE_BUFF
+                curr_buff_name = "buf_p" + str(sorted_array[p_idx].z) + "_" + str(sorted_array[p_idx+1].z)
+            curr_buff = ops.WindowBuffer(curr_buff_name, buffer_type, sorted_array[p_idx+1], sorted_array[p_idx])
             unique_buffers.append(curr_buff)
-            chains.append((str(p_idx), curr_buff))
+            chains.append((p_idx, curr_buff))
             if prev_buff:
                 chains.append((prev_buff.pop(), feeding_point.pop()))
-            print(p_idx)
-            feeding_point.append(str(p_idx+1))
+            # print(p_idx)
+            feeding_point.append(p_idx+1)
             prev_buff.append(curr_buff)
 
     return (unique_buffers, chains)

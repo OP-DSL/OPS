@@ -26,6 +26,8 @@ env.tests["ops_rw"]    = lambda arg, loop=None: hasattr(arg, "access_type") and 
 env.tests["ops_inc"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_INC
 env.tests["ops_min"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_MIN
 env.tests["ops_max"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_MAX
+env.tests["point"] = lambda point, loop=None: isinstance(point, ops.Point)
+env.tests["window_buffer"] = lambda buff, loop=None: isinstance(buff, ops.WindowBuffer)
 
 env.tests["read_or_write"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type in [
     ops.AccessType.OPS_READ,

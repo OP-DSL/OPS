@@ -305,7 +305,8 @@ class CppHLS(Scheme):
                  consts=kernel_consts,
                  config=config,
                  isFullyMapped = isFullyMapped,
-                 datMap = datMap
+                 datMap = datMap,
+                 ops=ops
                  ),self.loop_device_PE_extension)]
         )
     

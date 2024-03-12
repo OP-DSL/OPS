@@ -22,6 +22,15 @@ class AccessType(Enum):
     def values() -> List[str]:
         return [x.value for x in list(AccessType)]
 
+
+class BufferType(Enum):
+    LINE_BUFF = 0
+    PLANE_BUFF = 1 
+
+    @staticmethod
+    def values() -> List[str]:
+        return [x.value for x in list(AccessType)]
+    
 # class ArgType(Enum):
 #     ARGDAT = 0
 #     ARGGBL = 1
@@ -241,6 +250,17 @@ class StencilRowDiscriptor:
         return hash(self._key())
     def __eq__(self, other):
         return self._key() == other._key()
+
+
+@dataclass(frozen=False)
+class WindowBuffer:
+    name: str
+    buffer_type: BufferType
+    read_point: Point
+    write_point: Point
+    
+    def __str__(self) -> str:
+        return f"WindowBuffer(name={self.name}, read_point={self.read_point}, write_point={self.write_point})"
     
 @dataclass(frozen=True)
 class Stencil:
@@ -251,8 +271,8 @@ class Stencil:
     points: List[Point]
     base_point: Point
     stencil_size: int
-    window_buffers : List[str]
-    chains: List[Tuple[str, str]]
+    window_buffers : List[WindowBuffer]
+    chains: List[Tuple[Union[int, WindowBuffer], Union[int, WindowBuffer, str]]]
     d_m: Point
     d_p: Point
     row_discriptors: Optional[List[StencilRowDiscriptor]] = field(default_factory=list, init=False)
