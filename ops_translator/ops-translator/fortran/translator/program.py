@@ -1,14 +1,14 @@
+import os
 import re
 import sys
+
+from typing import List
 
 import fparser.two.Fortran2003 as f2003
 import fparser.two.utils as fpu
 
+import ops as OPS
 from store import Program
-
-#use_regex_translator = true
-#def translateProgram2(program: Program, force_soa: bool) -> str:
-#
 
 def translateProgram(program: Program, force_soa: bool) -> str:
     ast = program.ast
@@ -121,11 +121,11 @@ def translateProgram(program: Program, force_soa: bool) -> str:
         content_to_append += "\n#ifdef OPS_WITH_OMPOFFLOADFOR\n"
         for dim,name in zip(const_list_dim,const_list):
             if dim.isdigit() and int(dim) == 1:
-                #content_to_append += f"!$OMP TARGET ENTER DATA MAP(TO:{name})\n"
+                content_to_append += f"!$OMP TARGET ENTER DATA MAP(TO:{name})\n"
                 content_to_append += f"!$OMP TARGET UPDATE TO({name})\n"
             else:
-                #content_to_append += f"!$OMP TARGET ENTER DATA MAP(TO:{name}[0:{dim}])\n"
-                content_to_append += f"!$OMP TARGET UPDATE TO({name}[0:{dim}])\n"
+                content_to_append += f"!$OMP TARGET ENTER DATA MAP(TO:{name}(1:{dim}))\n"
+                content_to_append += f"!$OMP TARGET UPDATE TO({name}(1:{dim}))\n"
         content_to_append += "#endif\n"
 
         # Find the last occurance of ops_decl_const in the file and append this contents
@@ -160,3 +160,35 @@ def unindent_cpp_directives(s: str) -> str:
     ]
 
     return re.sub(rf"^\s*#({'|'.join(directives)})(\s+|\s*$)", r"#\1\2", s, flags=re.MULTILINE)
+
+
+def add_offload_directives(app_consts: List[OPS.Const]):
+    file_path = 'constants.F90'
+    if os.path.exists(file_path):
+        with open('constants.F90', 'r') as file:
+            file_content = file.read()
+
+        contents_to_append = ""
+        contents_to_append += "\n#ifdef OPS_WITH_OMPOFFLOADFOR\n"
+        # For each const variable in app_consts, add the required pragma for ompoffload
+        for const in app_consts:
+            dim = const.dim
+            ptr = const.ptr
+            if dim.isdigit() and int(dim) == 1:
+                contents_to_append += f"!$OMP DECLARE TARGET({ptr})\n"
+            else:
+                contents_to_append += f"!$OMP DECLARE TARGET({ptr}[{dim}])\n"
+        contents_to_append += "#endif\n"
+
+        # Find the last occurrence of #endif in file_content
+        last_endif_index = file_content.rfind("#endif")
+
+        # Insert contents_to_append before the last #endif
+        updated_content = file_content[:last_endif_index] + contents_to_append + file_content[last_endif_index:]
+
+        # Write the updated content to a new file (constants_offload.F90)
+        output_file_path = 'constants_offload.F90'
+        with open(output_file_path, 'w') as output_file:
+            output_file.write(updated_content)
+    else:
+        return

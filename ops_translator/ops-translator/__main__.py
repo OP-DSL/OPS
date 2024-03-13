@@ -9,6 +9,7 @@ from pathlib import Path
 #custom implementation imports
 import cpp
 import fortran
+from fortran.translator.program import add_offload_directives
 from jinja_utils import env
 from language import Lang
 from ops import OpsError, Type
@@ -156,6 +157,9 @@ def main(argv=None) -> None:
         if args.verbose:
             print(f"Translation completed: {scheme}")
 
+    # Create new constants.F90 file with relevant pragms for openmp offload for F90 version
+    if(lang.name == "Fortran"):
+        add_offload_directives(app_consts)
 
 def parse(args: Namespace, lang: Lang) -> Application:
     app = Application()

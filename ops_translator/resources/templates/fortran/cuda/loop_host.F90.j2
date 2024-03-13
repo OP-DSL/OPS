@@ -172,7 +172,7 @@ ATTRIBUTES (GLOBAL) SUBROUTINE {{lh.kernel}}_wrap( &
             {% if arg.dim.isdigit() and arg.dim|int == 1 %}
     {{arg.typ | upper}}, VALUE :: opsGblDat{{arg.id+1}}Device
             {% else %}
-    {{arg.typ | upper}}, DEVICE :: opsGblDat{{arg.id+1}}Device(:)
+    {{arg.typ | upper}}, DEVICE, DIMENSION(:) :: opsGblDat{{arg.id+1}}Device
             {% endif %}
         {% elif arg is ops_inc or arg is ops_min or arg is ops_max %}
     {{arg.typ | upper}}, DIMENSION(:), DEVICE :: reductionArrayDevice{{arg.id+1}}

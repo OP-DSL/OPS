@@ -77,6 +77,11 @@ TARGETS:=$(filter-out ompoffload mpi_ompoffload mpi_ompoffload_tiled,$(TARGETS))
 endif
 endif
 
+ifneq (,$(filter ompoffload mpi_ompoffload mpi_ompoffload_tiled,$(TARGETS)))
+OTHER_FILES_OFFLOAD := $(patsubst %, %_offload, $(filter-out constants.F90, $(OTHER_FILES))) constants_offload.F90
+endif
+
+
 APP_TARGETS = $(addprefix $(APP)_, $(TARGETS))
 
 all: $(APP_TARGETS)
@@ -179,21 +184,21 @@ $(APP)_ompoffload: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COM
 	@echo ""
 	@echo "Building ${APP}_ompoffload"
 	@echo ""
-	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(OMPOFFLOADFLAGS) $(FMODS_OMPOFFLOAD) $(FLINK) $(OMPOFFLOADFOR) $(OTHER_FILES) openmp_offload/*_ompoffload_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) -lops_for_ompoffload $(F_HDF5_LIB_SEQ) -o $(APP)_ompoffload
+	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(OMPOFFLOADFLAGS) $(FMODS_OMPOFFLOAD) $(FLINK) $(OMPOFFLOADFOR) $(OTHER_FILES_OFFLOAD) openmp_offload/*_ompoffload_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) -lops_for_ompoffload $(F_HDF5_LIB_SEQ) -o $(APP)_ompoffload
 
 $(APP)_mpi_ompoffload: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_mpi_ompoffload.a $(OPS_FILES_GEN)
 	@echo ""
 	@echo ""
 	@echo "Building ${APP}_mpi_ompoffload"
 	@echo ""
-	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(OMPOFFLOADFLAGS) $(FMODS_OMPOFFLOAD) $(FLINK) $(OMPOFFLOADFOR) $(PGIMPILINK) -DOPS_MPI $(OTHER_FILES) openmp_offload/*_ompoffload_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) -lops_for_mpi_ompoffload $(F_HDF5_LIB_MPI) -o $(APP)_mpi_ompoffload
+	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(OMPOFFLOADFLAGS) $(FMODS_OMPOFFLOAD) $(FLINK) $(OMPOFFLOADFOR) $(PGIMPILINK) -DOPS_MPI $(OTHER_FILES_OFFLOAD) openmp_offload/*_ompoffload_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) -lops_for_mpi_ompoffload $(F_HDF5_LIB_MPI) -o $(APP)_mpi_ompoffload
 
 $(APP)_mpi_ompoffload_tiled: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_mpi_ompoffload.a $(OPS_FILES_GEN)
 	@echo ""
 	@echo ""
 	@echo "Building ${APP}_mpi_ompoffload_tiled"
 	@echo ""
-	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(OMPOFFLOADFLAGS) $(FMODS_OMPOFFLOAD) $(FLINK) $(OMPOFFLOADFOR) $(PGIMPILINK) -DOPS_LAZY -DOPS_MPI $(OTHER_FILES) openmp_offload/*_ompoffload_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) -lops_for_mpi_ompoffload $(F_HDF5_LIB_MPI) -o $(APP)_mpi_ompoffload_tiled
+	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(OMPOFFLOADFLAGS) $(FMODS_OMPOFFLOAD) $(FLINK) $(OMPOFFLOADFOR) $(PGIMPILINK) -DOPS_LAZY -DOPS_MPI $(OTHER_FILES_OFFLOAD) openmp_offload/*_ompoffload_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) -lops_for_mpi_ompoffload $(F_HDF5_LIB_MPI) -o $(APP)_mpi_ompoffload_tiled
 
 #=====================================================================================================================================================================
 #
@@ -222,4 +227,4 @@ clean:
 	rm -f $(APP)_mpi_ompoffload
 	rm -f $(APP)_mpi_ompoffload_tiled
 	rm -f $(OPS_GENERATED)
-	rm -f .generated constants_list.txt
+	rm -f .generated constants_list.txt constants_offload.F90

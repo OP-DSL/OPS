@@ -229,7 +229,8 @@ program POISSON
   end if
   call ops_decl_halo_group((off-1),halos, u_halos)
 
-
+  call ops_decl_const("dx", 1, "real(8)", dx)
+  call ops_decl_const("dy", 1, "real(8)", dy)
 
   call ops_partition("")
 
