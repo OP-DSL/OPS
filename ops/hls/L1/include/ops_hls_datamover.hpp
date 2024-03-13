@@ -1491,12 +1491,8 @@ void memWriteGridSimpleV2(ap_uint<MEM_DATA_WIDTH>* mem_out,
 	{
 		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
 		{
-#pragma HLS PIPELINE II = II_factor
-			unsigned short offset1 = k * gridSize[1];
-			unsigned short offset2 = offset1 + j;
-			unsigned short offset2_2 = offset2;
-			unsigned short offset3 = offset2_2 * grid_xblocks;
-			unsigned short offset = start_x + offset3;
+// #pragma HLS PIPELINE II = II_factor
+			unsigned int offset = start_x + j * grid_xblocks + k * gridSize[1] * grid_xblocks;	
 #ifdef DEBUG_LOG
 			printf("|HLS DEBUG_LOG|%s| writing. offset:%d, j:%d, k:%d\n"
 					, __func__, offset, j, k);
