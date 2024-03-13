@@ -346,7 +346,7 @@ public:
                     {% for i in range(config.vector_factor) %}
                         {% set diff = point.x - row_discriptor.base_point.x %}
                         {% set access_idx = diff * config.vector_factor + row_discriptor.base_point.x + i %}
-                        {% if (diff < 0 and access_idx >= 0) or (diff > 0 and access_idx <= config.vector_factor + 2 * half_span_x) %}
+                        {% if (diff < 0 and access_idx >= 0) or (diff > 0 and access_idx < config.vector_factor + 2 * half_span_x) %}
                 ops::hls::DataConv arg{{arg.id}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}};
                 arg{{arg.id}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}}.i = arg{{arg.id}}_stencilValues[{{stencil.points.index(point)}}].range(s_datatype_size * ({{i}} + 1) - 1, s_datatype_size * {{i}});
                 arg{{arg.id}}_rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}}[{{access_idx}}] = arg{{arg.id}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}}.f;
@@ -473,7 +473,7 @@ public:
 {% endblock %}
 
 {% block kernel_PE %}
-void kernel_{{lh.kernel}}_PE(ops::hls::StencilConfigCore& stencilConfig,
+void kernel_{{lh.kernel}}_PE(const ops::hls::StencilConfigCore& stencilConfig,
     {% for arg in lh.args|ops_dat %}
         {% if loop.last %}
             {% if consts %}

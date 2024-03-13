@@ -70,7 +70,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region(ops::hls::AccessRange
     {% endfor %}
 
     #pragma HLS INTERFACE mode=s_axilite port=return bundle = control
-    #pragma HLS INTERFACE mode=ap_ctr_chain port=return bundle = control
+    #pragma HLS INTERFACE mode=ap_ctrl_chain port=return
 
     ops::hls::AccessRange range;
     {% for i in range(ndim) %}

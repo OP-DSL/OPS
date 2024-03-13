@@ -88,7 +88,7 @@ class HLS(Target):
         "device" : 7,
         "vector_factor" : 8,
         "mem_vector_factor": 16,
-        "iter_par_factor": 1,
+        "iter_par_factor": 20,
         "stencil_type" : "float",
         "data_width" : 32,
         "mem_data_width" : 32,
