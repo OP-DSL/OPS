@@ -18,7 +18,7 @@ from scheme import Scheme
 from cpp.schemes import CppHLS
 from store import Application, ParseError
 from target import Target
-from util import getVersion, safeFind
+from util import getVersion, safeFind, isFilePath, isDirPath, jsonReadFile
 
 def main(argv=None) -> None:
 
@@ -32,7 +32,7 @@ def main(argv=None) -> None:
     parser.add_argument("-f", "--logfile", help="Logfile Name", default="ops_translator_run.log")
     parser.add_argument("-d", "--dump", help="JSON store dump", action="store_true")
     parser.add_argument("-o", "--out", help="Output directory", type=isDirPath)
-    parser.add_argument("-c", "--config", help="Target configuration", type=json.loads, default="{}")
+    parser.add_argument("-c", "--config", help="Target configuration", type=jsonReadFile, default="{}")
     parser.add_argument("-soa", "--force_soa", help="Force structs of arrays", action="store_true")
 
     parser.add_argument("--suffix", help="Add a suffix to genreated program translations", default="_ops")
@@ -165,6 +165,8 @@ def main(argv=None) -> None:
 
 
     # Generating code for targets
+    logging.info("Found config overides: %s", str(args.config))
+     
     for [target] in args.target:
         target = Target.find(target)
 
@@ -602,21 +604,6 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
                 print(f"Generated loop device kernel src {i} of {len(app.uniqueLoops())}: {path}")
     
 
-
-
-def isDirPath(path):
-    if os.path.isdir(path):
-        return path
-    else:
-        raise ArgumentTypeError("Invalid directory path: {path}")
-
-def isFilePath(path):
-    if os.path.isfile(path):
-        return path
-    else:
-        raise ArgumentTypeError("Invalid file: {path}")
-
-    
 
 if __name__ == "__main__":
     main()

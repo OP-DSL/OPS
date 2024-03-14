@@ -8,9 +8,32 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
 from pathlib import Path
 from cached_property import cached_property
+from argparse import ArgumentTypeError
+import json
+import logging
+
 #Generic type
 T = TypeVar("T")
 
+def isDirPath(path):
+    if os.path.isdir(path):
+        return path
+    else:
+        raise ArgumentTypeError("Invalid directory path: {path}")
+
+def isFilePath(path):
+    if os.path.isfile(path):
+        return path
+    else:
+        raise ArgumentTypeError("Invalid file: {path}")
+
+def jsonReadFile(filename: str):
+    if os.path.isfile(filename):
+        with open(filename) as fp:
+            print(f"Found config overide file: {filename}")
+            return json.load(fp)
+    print(f"couldn't find config file: {filename}")
+    return json.loads("{}")  
 
 def getRootPath() -> Path:
     return Path(__file__).parent.parent.absolute()
