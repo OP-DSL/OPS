@@ -106,6 +106,11 @@ program POISSON
   dx = 0.01_8
   dy = 0.01_8
 
+#ifdef OPS_WITH_CUDAFOR
+  dx_opsconstant = dx
+  dy_opsconstant = dy
+#endif
+
   !ALLOCATE(blocks(ngrid_x*ngrid_y))
 
   !-------------------------- Initialisation --------------------------
