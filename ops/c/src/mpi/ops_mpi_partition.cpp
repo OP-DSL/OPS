@@ -454,11 +454,20 @@ void ops_decomp_dats(sub_block *sb) {
       continue;
     }
 
+    int init_deviceptr = 1;
     // Allocate datasets
     if (dat->data == NULL){
       if (dat->is_hdf5 == 0) {
-        //dat->data = (char *)ops_calloc(prod[sb->ndim-1]*dat->elem_size,1);
-        dat->data = (char *)ops_malloc(prod[sb->ndim - 1] * dat->elem_size * 1);
+//      dat->data = (char *)ops_calloc(prod[sb->ndim-1]*dat->elem_size, 1);
+        dat->data = (char *)ops_malloc(prod[sb->ndim-1]*dat->elem_size*1);
+        if (dat->block->instance->OPS_hybrid_gpu == 0) // CPU-only target
+            ops_init_zero(dat->data, prod[sb->ndim-1]*dat->elem_size*1);
+        else {
+            ops_device_malloc(dat->block->instance, (void **)&(dat->data_d), prod[sb->ndim-1]*dat->elem_size*1);
+            ops_device_memset(dat->block->instance, (void **)&(dat->data_d), 0, prod[sb->ndim-1]*dat->elem_size*1);
+            init_deviceptr = 0; // When device ptr initialized to zero, no need to call HostToDevice copy
+            dat->dirty_hd = 2;  // device dirty bit set to true to trigger DeviceToHost copy
+        }
         dat->hdf5_file = "none";
         dat->mem =
             prod[sb->ndim - 1] * dat->elem_size; // this includes the halo sizes
@@ -489,8 +498,9 @@ void ops_decomp_dats(sub_block *sb) {
       cumsize *= dat->size[i];
     }
 
-    ops_cpHostToDevice(dat->block->instance, (void **)&(dat->data_d), (void **)&(dat->data),
-                       prod[sb->ndim - 1] * dat->elem_size);
+    if(init_deviceptr)
+      ops_cpHostToDevice(dat->block->instance, (void **)&(dat->data_d), (void **)&(dat->data),
+                         prod[sb->ndim-1]*dat->elem_size);
 
     // TODO: halo exchanges should not include the block halo part for
     // partitions that are on the edge of a block

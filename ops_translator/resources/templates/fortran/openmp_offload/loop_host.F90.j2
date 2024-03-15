@@ -189,21 +189,26 @@ SUBROUTINE {{lh.kernel}}_wrap( &
 {% endfor %}
 {% if lh.ndim == 1 %}
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x{{private_idx[0]}}){{reduct_line[0]}}
+{# !$OMP TARGET TEAMS LOOP PRIVATE(n_x{{private_idx[0]}}){{reduct_line[0]}} #}
     DO n_x = 1, end_indx(1)-start_indx(1)+1
 {% elif lh.ndim == 2 %}
-    {% if lh.has_reduction %}
+{% if lh.has_reduction %}
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x,n_y{{private_idx[0]}}){{reduct_line[0]}}
-    {% else %}
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x,n_y{{private_idx[0]}}) COLLAPSE(2)
-    {% endif %}
+{# !$OMP TARGET TEAMS LOOP PRIVATE(n_x,n_y{{private_idx[0]}}){{reduct_line[0]}} #}
+{% else %}
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2) PRIVATE(n_x,n_y{{private_idx[0]}}){{reduct_line[0]}}
+{# !$OMP TARGET TEAMS LOOP COLLAPSE(2) PRIVATE(n_x,n_y{{private_idx[0]}}){{reduct_line[0]}} #}
+{% endif %}
     DO n_y = 1, end_indx(2)-start_indx(2)+1
         DO n_x = 1, end_indx(1)-start_indx(1)+1
 {% elif lh.ndim == 3 %}
-    {% if lh.has_reduction %}
+{% if lh.has_reduction %}
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x,n_y,n_z{{private_idx[0]}}){{reduct_line[0]}}
-    {% else %}
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x,n_y,n_z{{private_idx[0]}}) COLLAPSE(3)
-    {% endif %}
+{# !$OMP TARGET TEAMS LOOP PRIVATE(n_x,n_y,n_z{{private_idx[0]}}){{reduct_line[0]}} #}
+{% else %}
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(3) PRIVATE(n_x,n_y,n_z{{private_idx[0]}}){{reduct_line[0]}}
+{# !$OMP TARGET TEAMS LOOP COLLAPSE(3) PRIVATE(n_x,n_y,n_z{{private_idx[0]}}){{reduct_line[0]}} #}
+{% endif %}
     DO n_z = 1, end_indx(3)-start_indx(3)+1
         DO n_y = 1, end_indx(2)-start_indx(2)+1
             DO n_x = 1, end_indx(1)-start_indx(1)+1
@@ -252,15 +257,18 @@ SUBROUTINE {{lh.kernel}}_wrap( &
 {% if lh.ndim == 1 %}
     END DO
 !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+{# !$OMP END TARGET TEAMS LOOP #}
 {% elif lh.ndim == 2 %}
         END DO
     END DO
 !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+{# !$OMP END TARGET TEAMS LOOP #}
 {% elif lh.ndim == 3 %}
             END DO
         END DO
     END DO
 !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+{# !$OMP END TARGET TEAMS LOOP #}
 {% endif %}
 {% for arg in lh.args %}
     {% if arg is ops_gbl or arg is ops_reduce %}
@@ -437,6 +445,7 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
         {% endif %}
         {% if arg.dim > 1 %}
     multi_d{{arg.id+1}} = getDatDimFromOpsArg(opsArg{{arg.id+1}}) ! dimension of dat
+{# !$OMP TARGET ENTER DATA MAP(TO:multi_d{{arg.id+1}}) #}
 !$OMP TARGET UPDATE TO(multi_d{{arg.id+1}})
     dat{{arg.id+1}}_base = getDatBaseFromOpsArg{{lh.ndim}}D(opsArg{{arg.id+1}}, start_indx, multi_d{{arg.id+1}})
         {% else %}
@@ -488,32 +497,38 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
         {% if arg.dim == 1 %}
             xdim{{arg.id+1}}_{{lh.kernel}} = xdim{{arg.id+1}}
             xdim{{arg.id+1}}_{{lh.kernel}}_h = xdim{{arg.id+1}}
+{# !$OMP TARGET ENTER DATA MAP(TO:xdim{{arg.id+1}}_{{lh.kernel}}) #}
 !$OMP TARGET UPDATE TO(xdim{{arg.id+1}}_{{lh.kernel}})
             {% if lh.ndim == 3 %}
             ydim{{arg.id+1}}_{{lh.kernel}} = ydim{{arg.id+1}}
             ydim{{arg.id+1}}_{{lh.kernel}}_h = ydim{{arg.id+1}}
+{# !$OMP TARGET ENTER DATA MAP(TO:ydim{{arg.id+1}}_{{lh.kernel}}) #}
 !$OMP TARGET UPDATE TO(ydim{{arg.id+1}}_{{lh.kernel}})
             {% endif %}
         {% else %}
             xdim{{arg.id+1}}_{{lh.kernel}} = xdim{{arg.id+1}}
             xdim{{arg.id+1}}_{{lh.kernel}}_h = xdim{{arg.id+1}}
+{# !$OMP TARGET ENTER DATA MAP(TO:xdim{{arg.id+1}}_{{lh.kernel}}) #}
 !$OMP TARGET UPDATE TO(xdim{{arg.id+1}}_{{lh.kernel}})
             {% if soa_set %}
                 {% if lh.ndim == 2 %}
             ydim{{arg.id+1}}_{{lh.kernel}} = ydim{{arg.id+1}}
             ydim{{arg.id+1}}_{{lh.kernel}}_h = ydim{{arg.id+1}}
+{# !$OMP TARGET ENTER DATA MAP(TO:ydim{{arg.id+1}}_{{lh.kernel}}) #}
 !$OMP TARGET UPDATE TO(ydim{{arg.id+1}}_{{lh.kernel}})
                 {% elif lh.ndim == 3 %}
             ydim{{arg.id+1}}_{{lh.kernel}} = ydim{{arg.id+1}}
             ydim{{arg.id+1}}_{{lh.kernel}}_h = ydim{{arg.id+1}}
             zdim{{arg.id+1}}_{{lh.kernel}} = zdim{{arg.id+1}}
             zdim{{arg.id+1}}_{{lh.kernel}}_h = zdim{{arg.id+1}}
+{# !$OMP TARGET ENTER DATA MAP(TO:ydim{{arg.id+1}}_{{lh.kernel}},zdim{{arg.id+1}}_{{lh.kernel}}_h) #}
 !$OMP TARGET UPDATE TO(ydim{{arg.id+1}}_{{lh.kernel}},zdim{{arg.id+1}}_{{lh.kernel}}_h)
                 {% endif %}
             {% else %}
                 {% if lh.ndim == 3 %}
             ydim{{arg.id+1}}_{{lh.kernel}} = ydim{{arg.id+1}}
             ydim{{arg.id+1}}_{{lh.kernel}}_h = ydim{{arg.id+1}}
+{# !$OMP TARGET ENTER DATA MAP(TO:ydim{{arg.id+1}}_{{lh.kernel}}) #}
 !$OMP TARGET UPDATE TO(ydim{{arg.id+1}}_{{lh.kernel}})
                 {% endif %}
             {% endif %}

@@ -121,10 +121,10 @@ def translateProgram(program: Program, force_soa: bool) -> str:
         content_to_append += "\n#ifdef OPS_WITH_OMPOFFLOADFOR\n"
         for dim,name in zip(const_list_dim,const_list):
             if dim.isdigit() and int(dim) == 1:
-                content_to_append += f"!$OMP TARGET ENTER DATA MAP(TO:{name})\n"
+#                content_to_append += f"!$OMP TARGET ENTER DATA MAP(TO:{name})\n"
                 content_to_append += f"!$OMP TARGET UPDATE TO({name})\n"
             else:
-                content_to_append += f"!$OMP TARGET ENTER DATA MAP(TO:{name}(1:{dim}))\n"
+#                content_to_append += f"!$OMP TARGET ENTER DATA MAP(TO:{name}(1:{dim}))\n"
                 content_to_append += f"!$OMP TARGET UPDATE TO({name}(1:{dim}))\n"
         content_to_append += "#endif\n"
 
@@ -177,7 +177,7 @@ def add_offload_directives(app_consts: List[OPS.Const]):
             if dim.isdigit() and int(dim) == 1:
                 contents_to_append += f"!$OMP DECLARE TARGET({ptr})\n"
             else:
-                contents_to_append += f"!$OMP DECLARE TARGET({ptr}[{dim}])\n"
+                contents_to_append += f"!$OMP DECLARE TARGET({ptr}(1:{dim}))\n"
         contents_to_append += "#endif\n"
 
         # Find the last occurrence of #endif in file_content
