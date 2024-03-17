@@ -390,6 +390,10 @@ program SHSGC
       write (*,*) iter, totaltime
     endif
 
+#ifdef OPS_LAZY
+    call ops_execute()
+#endif
+
   ENDDO
 
   call ops_timers(endTime)
@@ -419,7 +423,7 @@ program SHSGC
 
   end if
 
-  call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
+!  call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
   call ops_fetch_block_hdf5_file(shsgc_grid, "shsgc.h5")
   call ops_fetch_dat_hdf5_file(rho_new, "shsgc.h5")
 
