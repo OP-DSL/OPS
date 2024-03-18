@@ -10,7 +10,7 @@ import fparser.two.utils as fpu
 import ops as OPS
 from store import Program
 
-def translateProgram(program: Program, force_soa: bool) -> str:
+def translateProgram(program: Program, force_soa: bool, offload_pragma_flag_dict: dict) -> str:
     ast = program.ast
     req_module = {}
     locations = []
@@ -120,12 +120,13 @@ def translateProgram(program: Program, force_soa: bool) -> str:
     if len(const_list): # Contain call to ops_decl_const
         content_to_append += "\n#ifdef OPS_WITH_OMPOFFLOADFOR\n"
         for dim,name in zip(const_list_dim,const_list):
-            if dim.isdigit() and int(dim) == 1:
-#                content_to_append += f"!$OMP TARGET ENTER DATA MAP(TO:{name})\n"
-                content_to_append += f"!$OMP TARGET UPDATE TO({name})\n"
-            else:
-#                content_to_append += f"!$OMP TARGET ENTER DATA MAP(TO:{name}(1:{dim}))\n"
-                content_to_append += f"!$OMP TARGET UPDATE TO({name}(1:{dim}))\n"
+            if len(offload_pragma_flag_dict) and offload_pragma_flag_dict.get(name):
+                if dim.isdigit() and int(dim) == 1:
+#                   content_to_append += f"!$OMP TARGET ENTER DATA MAP(TO:{name})\n"
+                    content_to_append += f"!$OMP TARGET UPDATE TO({name})\n"
+                else:
+#                    content_to_append += f"!$OMP TARGET ENTER DATA MAP(TO:{name}(1:{dim}))\n"
+                    content_to_append += f"!$OMP TARGET UPDATE TO({name}(1:{dim}))\n"
         content_to_append += "#endif\n"
 
         # Find the last occurance of ops_decl_const in the file and append this contents
@@ -192,3 +193,24 @@ def add_offload_directives(app_consts: List[OPS.Const]):
             output_file.write(updated_content)
     else:
         return
+
+
+def check_offload_pragma_required(app_consts: List[OPS.Const]):
+    file_path = 'constants.F90'
+    if os.path.exists(file_path):
+        with open('constants.F90', 'r') as file:
+            file_content = file.read()
+
+    offload_pragma_flag = {}
+
+    for const in app_consts:
+        ptr = const.ptr
+        pattern = r'\b{}\s*=\s*[^,\n]*'.format(re.escape(ptr))
+
+        matches = re.findall(pattern, file_content, flags=re.IGNORECASE)
+
+        if len(matches) > 0:
+            offload_pragma_flag[ptr] = False
+        else:
+            offload_pragma_flag[ptr] = True
+    return offload_pragma_flag

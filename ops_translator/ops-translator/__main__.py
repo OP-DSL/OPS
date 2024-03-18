@@ -9,7 +9,7 @@ from pathlib import Path
 #custom implementation imports
 import cpp
 import fortran
-from fortran.translator.program import add_offload_directives
+from fortran.translator.program import add_offload_directives, check_offload_pragma_required
 from jinja_utils import env
 from language import Lang
 from ops import OpsError, Type
@@ -107,14 +107,19 @@ def main(argv=None) -> None:
 
     print("Code-gen : Parsing done for all files")
 
+    # Find out if declare pragma in case of openmp offload is required for constants or not
+    app_consts = app.consts()
+    offload_pragma_flag_dict = {}
+    if(lang.name == "Fortran"):
+        offload_pragma_flag_dict = check_offload_pragma_required(app_consts)
+
     # Generate program translations
     print("Code-gen : Program translation phase started......")
-    app_consts = app.consts()
     for i, program in enumerate(app.programs, 1):
         include_dirs = set([Path(dir) for [dir] in args.I])
         defines = [define for [define] in args.D]
 
-        source = lang.translateProgram(program, include_dirs, defines, app_consts, args.force_soa)
+        source = lang.translateProgram(program, include_dirs, defines, app_consts, args.force_soa, offload_pragma_flag_dict)
 
         if not args.force_soa and program.soa_val:
             args.force_soa = program.soa_val

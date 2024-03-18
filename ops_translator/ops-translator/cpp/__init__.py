@@ -103,7 +103,7 @@ class Cpp(Lang):
 
         return program
 
-    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], app_consts: List[ops.Const], force_soa: bool = False) -> str:
+    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], app_consts: List[ops.Const], force_soa: bool = False, offload_pragma_flag_dict = {}) -> str:
         return cpp.translator.program.translateProgram(program.path.read_text(), program, app_consts, force_soa)
 
     def formatType(self, typ: ops.Type) -> str:

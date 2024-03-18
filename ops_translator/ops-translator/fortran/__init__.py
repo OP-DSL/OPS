@@ -213,11 +213,11 @@ class Fortran(Lang):
         ast, source = self.parseFile(path, frozenset(include_dirs), frozenset(defines))
         return fortran.parser.parseProgram(ast, source, path)
 
-    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], app_consts: List[OPS.Const], force_soa: bool) -> str:
+    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], app_consts: List[OPS.Const], force_soa: bool, offload_pragma_flag_dict) -> str:
         #if self.use_regex_translator:
         #    return fortran.translator.program.translateProgram2(program, force_soa)
 
-        return fortran.translator.program.translateProgram(program, force_soa)
+        return fortran.translator.program.translateProgram(program, force_soa, offload_pragma_flag_dict)
 
     def formatType(self, typ: OPS.Type) -> str:
         if isinstance(typ, OPS.Int):

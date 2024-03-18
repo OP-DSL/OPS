@@ -104,7 +104,7 @@ program POISSON
 
   ! constants
   dx = 0.01_8
-  dy = 0.01_8
+!  dy = 0.01_8
 
 #ifdef OPS_WITH_CUDAFOR
   dx_opsconstant = dx
