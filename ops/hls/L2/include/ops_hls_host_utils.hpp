@@ -377,7 +377,11 @@ void printGrid2D(ops::hls::Grid<T> p_grid, std::string prompt="")
 }
 
 template<typename T>
+#ifndef OPS_HLS_V2
 void printGrid2D(T* p_grid, ops::hls::GridPropertyCore& gridProperty, std::string prompt="")
+#else
+void printGrid2D(T* p_grid, ops::hls::GridPropertyCoreV2& gridProperty, std::string prompt="")
+#endif
 {
 	std::cout << "----------------------------------------------" << std::endl;
 	std::cout << " [DEBUG] grid values: " << prompt << std::endl;
@@ -393,6 +397,7 @@ void printGrid2D(T* p_grid, ops::hls::GridPropertyCore& gridProperty, std::strin
 		std::cout << std::endl;
 	}
 }
+
 
 #ifndef OPS_HLS_V2
 void opsRange2hlsRange(int dim, int* ops_range, ops::hls::AccessRange& range, ops::hls::GridPropertyCore& p_grid)

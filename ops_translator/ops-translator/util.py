@@ -258,12 +258,12 @@ class SourceBuffer:
 
 
     def search_all(self, pattern: str, flags: int = 0):
-        indexes = []
+        indices = []
         for i, line in enumerate(self.rawLines):
             if re.match(pattern, line.strip(), flags):
-                indexes.append(i)
+                indices.append(i)
 
-        return indexes
+        return indices
 
     def translate(self) -> str:
         lines = self.rawLines

@@ -164,8 +164,8 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
         
         new_iter_loop_call = before + new_iter_loop_call + ");" + split_retain 
         
-        for index in loop_indices:
-            buffer.remove(index)
+
+        buffer.remove(startLoc.line - 1)
         
         buffer.update(index, new_iter_loop_call)
         
@@ -294,21 +294,69 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
     else:
         raise OpsError(f"OPS program failed to include core header file, ops_seq.h or ops_seq_V2.h")
 
+    # 10. get_raw_pointer update
+    found_indices = buffer.search_all(r'.*ops_dat_get_raw_pointer.*')
+    print (f"found_indices: {found_indices}")
+    
+    for index in found_indices:
+        before, after = buffer.get(index).split("ops_dat_get_raw_pointer", 1)
+        print (f"before: {before}, after: {after}")
+        loop_indices = [index]
+        
+        if (after.find(";") == -1):
+            index = startLoc.line
+            loop_indices.append(index)
+            while(True):
+                line = buffer.get(index)
+                after += line
+                buffer.remove(index)
+                if line.find(";") != -1:
+                    break
+                index += 1
+        [split_after, split_retain] = after.split(";", 1)
+        
+        dat_name = split_after.split(",", 1)[0].replace('(', '')
+        
+        new_call_line = before + f"{dat_name}.get_raw_pointer()" + ";" + split_retain 
+        buffer.update(index, new_call_line)
+    
+    found_indices = buffer.search_all(r'.*->.*get_raw_pointer.*')
+    print (f"found_indices: {found_indices}")
+    
+    for index in found_indices:
+        before, after = buffer.get(index).split("get_raw_pointer", 1)
+        print (f"before: {before}, after: {after}")
+        loop_indices = [index]
+        
+        if (after.find(";") == -1):
+            index = startLoc.line
+            loop_indices.append(index)
+            while(True):
+                line = buffer.get(index)
+                after += line
+                buffer.remove(index)
+                if line.find(";") != -1:
+                    break
+                index += 1
+        [split_after, split_retain] = after.split(";", 1)
+        
+        new_call_line = before.replace("->", ".") + f"get_raw_pointer()" + ";" + split_retain 
+        buffer.update(index, new_call_line)
     new_source = buffer.translate()
     
-    # 9. Replace ops_block to ops::hls::Block and replace ops_decl_block to ops_hls_decl_block
+    # 11. Replace ops_block to ops::hls::Block and replace ops_decl_block to ops_hls_decl_block
     new_source = new_source.replace("ops_block", "ops::hls::Block").replace("ops_decl_block", "ops_hls_decl_block")
     
-    # 10. Replace ops_dat to auto and ops_decl_dat to ops_hls_decl_dat
+    # 12. Replace ops_dat to auto and ops_decl_dat to ops_hls_decl_dat
     new_source = new_source.replace("ops_dat", "auto").replace("ops_decl_dat", "ops_hls_decl_dat")
     
-    # 11. Replace ops_printf
+    # 13. Replace ops_printf
     new_source = new_source.replace("ops_printf", "printf")
     
-    # 11. Substitude the ops_seq.h/ops_seq_v2.h with ops_lib_core.h
+    # 14. Substitude the ops_seq.h/ops_seq_v2.h with ops_lib_core.h
     new_source = re.sub(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)', '#include <ops_hls_rt_support.h>', new_source)
 
-    # 12. check if SOA is set
+    # 15. check if SOA is set
     def replacer(match):
         s = match.group(0)
         if s.startswith("/"):

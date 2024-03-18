@@ -46,8 +46,9 @@ namespace hls
 {
 #ifndef OPS_HLS_V2
 template <typename T>
-struct Grid
+class Grid
 {
+public:
 	GridPropertyCore originalProperty;
 	unsigned short vector_factor = 8; //grid vector factor considered for adjustements
 	host_buffer_t<T> hostBuffer;
@@ -56,11 +57,18 @@ struct Grid
 	std::vector<std::pair<cl::Event, std::string>> allEvents;
 	bool isHostBufDirty;
 	bool isDevBufDirty;
+
+	void* get_raw_pointer()
+	{
+		getGrid(*this);
+		return (void*)hostBuffer.data();
+	}
 };
 #else
 template <typename T>
-struct Grid
+class Grid
 {
+public:
 	GridPropertyCoreV2 originalProperty;
 	unsigned short vector_factor = 8; //grid vector factor considered for adjustements
 	host_buffer_t<T> hostBuffer;
@@ -69,6 +77,12 @@ struct Grid
 	std::vector<std::pair<cl::Event, std::string>> allEvents;
 	bool isHostBufDirty;
 	bool isDevBufDirty;
+
+	void* get_raw_pointer()
+	{
+		getGrid(*this);
+		return (void*)hostBuffer.data();
+	}
 };
 #endif
 
@@ -116,8 +130,8 @@ void sendGrid(Grid<T>& p_grid)
 		p_grid.activeEvents.resize(0);
 		p_grid.activeEvents.push_back(event);
 		p_grid.isHostBufDirty = false;
-				event.wait();
-			}
+		event.wait();
+	}
 }
 
 
