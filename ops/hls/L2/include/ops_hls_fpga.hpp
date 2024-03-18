@@ -196,7 +196,7 @@ class FPGA {
 }
 }
 
-void ops_init_backend(int argc, const char** argv);
+void ops_init_backend(int argc, const char** argv, unsigned int devId = 0);
 void ops_exit_backend();
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */

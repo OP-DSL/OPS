@@ -33,11 +33,11 @@ ops::hls::FPGA* ops::hls::FPGA::getInstance()
     return FPGA_;
 }
 
-void ops_init_backend(int argc, const char** argv)
+void ops_init_backend(int argc, const char** argv, unsigned int devId)
 {
     std::string xclbinFile = argv[1];
 
-    unsigned int deviceId = 0;
+    unsigned int deviceId = devId;
 
     ops::hls::FPGA * fpga = ops::hls::FPGA::getInstance();
     fpga->setID(deviceId);
