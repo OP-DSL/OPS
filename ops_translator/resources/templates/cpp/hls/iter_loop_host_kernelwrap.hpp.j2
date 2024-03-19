@@ -100,6 +100,12 @@ public:
         OCL_CHECK(err, err = m_datamover.setArg(narg++, arg{{arg.id}}.deviceBuffer));
         {% endif%}
     {% endfor %}
+    
+    {% for arg in ilh.joint_args %}
+        {% if arg is ops_dat %}
+        arg{{arg.id}}.set_as_arg();
+        {% endif %}
+    {% endfor %} 
 
     {% for slr_id in range(config["SLR_count"]) %}
         cl::Event event_kernel_{{slr_id}};
