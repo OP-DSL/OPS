@@ -8,6 +8,7 @@ job_build:
     - CCP, test
   script:
     - echo "Building the project"
+    - source ~/.bash_aliases
     - module avail 
 
 job_test:
