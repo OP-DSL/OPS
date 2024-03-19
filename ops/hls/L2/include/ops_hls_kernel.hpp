@@ -57,11 +57,19 @@ public:
 	std::vector<std::pair<cl::Event, std::string>> allEvents;
 	bool isHostBufDirty;
 	bool isDevBufDirty;
+	bool isSetAsArg;
 
 	void* get_raw_pointer()
 	{
 		getGrid(*this);
 		return (void*)hostBuffer.data();
+	}
+
+	void set_as_arg()
+	{
+		isSetAsArg = true;
+		sendGrid(*this);
+		isSetAsArg = false;
 	}
 };
 #else
@@ -77,11 +85,19 @@ public:
 	std::vector<std::pair<cl::Event, std::string>> allEvents;
 	bool isHostBufDirty;
 	bool isDevBufDirty;
+	bool isSetAsArg;
 
 	void* get_raw_pointer()
 	{
 		getGrid(*this);
 		return (void*)hostBuffer.data();
+	}
+
+	void set_as_arg()
+	{
+		isSetAsArg = true;
+		sendGrid(*this);
+		isSetAsArg = false;
 	}
 };
 #endif
@@ -114,14 +130,16 @@ void getGrid(Grid<T>& p_grid)
 		p_grid.activeEvents.resize(0);
 		p_grid.activeEvents.push_back(event);
 		p_grid.isDevBufDirty = false;
+#ifndef ASYNC_DISPATCH
 		event.wait();
+#endif
 	}
 }
 
 template <typename T>
 void sendGrid(Grid<T>& p_grid)
 {
-	if (p_grid.isHostBufDirty)
+	if (p_grid.isHostBufDirty and p_grid.isSetAsArg)
 	{
 		cl_int err;
 		cl::Event event;
@@ -130,7 +148,10 @@ void sendGrid(Grid<T>& p_grid)
 		p_grid.activeEvents.resize(0);
 		p_grid.activeEvents.push_back(event);
 		p_grid.isHostBufDirty = false;
+		p_grid.isSetAsArg = false;
+#ifndef ASYNC_DISPATCH
 		event.wait();
+#endif
 	}
 }
 
