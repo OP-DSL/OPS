@@ -8,6 +8,7 @@ job_build:
     - CCP, test
   script:
     - echo "Building the project"
+    - module avail 
 
 job_test:
   stage: test
