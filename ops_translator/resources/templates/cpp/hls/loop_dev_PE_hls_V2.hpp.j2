@@ -202,7 +202,7 @@ public:
         #pragma HLS ARRAY_PARTITION variable = arg{{arg.id}}_stencilValues dim = 1 complete
 
         {% for buffer in prog.findStencil(arg.stencil_ptr).window_buffers %}
-        widen_dt arg{{arg.id}}_{{buffer.name}}[max_depth_bytes/(sizeof(stencil_type) * vector_factor)];
+        widen_dt arg{{arg.id}}_{{buffer.name}}[max_depth];
         #pragma HLS BIND_STORAGE variable = arg{{arg.id}}_{{buffer.name}} type = ram_t2p impl=uram latency=2
         {% endfor %}
 

@@ -5,6 +5,7 @@
 {% block config_body %}
 typedef {{config["stencil_type"]}} stencil_type;
 constexpr unsigned int data_width = sizeof(stencil_type) * 8;
+constexpr unsigned int max_depth = max_depth_bytes / data_width;
 constexpr unsigned int vector_factor = {{config["vector_factor"]}};
 constexpr unsigned int mem_vector_factor = {{config["mem_vector_factor"]}};
 constexpr unsigned int iter_par_factor = {{config["iter_par_factor"]}};

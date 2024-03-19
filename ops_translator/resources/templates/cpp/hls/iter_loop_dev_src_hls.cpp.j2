@@ -94,7 +94,7 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region(const ops::hls::StencilC
 #pragma HLS DATAFLOW
     {% for swap_pair in ilh.getUniqueDatSwaps() -%}
     ::hls::stream<ap_uint<axis_data_width>> arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams[iter_par_factor + 1];
-    #pragma HLS STREAM variable = arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams depth = 100
+    #pragma HLS STREAM variable = arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams depth = max_depth
     {% endfor %}
     
     {% for arg in ilh.joint_args|ops_dat -%}
