@@ -195,6 +195,7 @@ ops::hls::Grid<T> ops_hls_decl_dat(ops::hls::Block& block, int elem_size, int* s
 	
 	// unsigned int data_size_bytes = data_size * sizeof(T);
 	grid.hostBuffer.resize(data_size);
+	grid.isSetAsArg = false;
 
 	if (data_ptr != nullptr)
 	{

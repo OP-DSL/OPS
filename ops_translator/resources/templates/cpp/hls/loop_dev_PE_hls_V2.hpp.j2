@@ -265,8 +265,7 @@ public:
     {% endfor %}
                 }
     {% for arg in lh.args|ops_dat|ops_read %}
-        {% for chain in prog.findStencil(lh.get_read_stencil()).chains %}
-                {{chainLinkTranform(chain[0], arg.id, 0)}} = {{chainLinkTranform(chain[1], arg.id, 1)}};
+        {% for chain in prog.findStencil(lh.get_read_stencil()).chains %}                {{chainLinkTranform(chain[0], arg.id, 1)}} = {{chainLinkTranform(chain[1], arg.id, 0)}};
         {% endfor %}
     {% endfor %}
 
