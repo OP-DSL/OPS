@@ -32,7 +32,7 @@ slr=kernel_outerloop_{{ilh.id}}_{{slr_id+1}}:SLR{{slr_id}}
 
 {% for ilh, program in app.uniqueOuterLoops() %}
     {% for arg in ilh.joint_args|ops_dat %}
-sp=kernel_outerloop_{{ilh.id}}_{{slr_id+1}}.arg{{arg.id}}:HBM[{{arg.id}}]
+sp=datamover_outerloop_{{ilh.id}}_1.arg{{arg.id}}:HBM[{{arg.id}}]
     {% endfor %}
 {% endfor %}
 [profile]
