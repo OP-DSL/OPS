@@ -164,7 +164,7 @@ def main(argv=None) -> None:
 
     # Create new constants.F90 file with relevant pragms for openmp offload for F90 version
     if(lang.name == "Fortran"):
-        add_offload_directives(app_consts)
+        add_offload_directives(app_consts,offload_pragma_flag_dict)
 
 def parse(args: Namespace, lang: Lang) -> Application:
     app = Application()

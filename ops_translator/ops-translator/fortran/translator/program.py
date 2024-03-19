@@ -163,7 +163,7 @@ def unindent_cpp_directives(s: str) -> str:
     return re.sub(rf"^\s*#({'|'.join(directives)})(\s+|\s*$)", r"#\1\2", s, flags=re.MULTILINE)
 
 
-def add_offload_directives(app_consts: List[OPS.Const]):
+def add_offload_directives(app_consts: List[OPS.Const], offload_pragma_flag_dict: dict):
     file_path = 'constants.F90'
     if os.path.exists(file_path):
         with open('constants.F90', 'r') as file:
@@ -175,10 +175,11 @@ def add_offload_directives(app_consts: List[OPS.Const]):
         for const in app_consts:
             dim = const.dim
             ptr = const.ptr
-            if dim.isdigit() and int(dim) == 1:
-                contents_to_append += f"!$OMP DECLARE TARGET({ptr})\n"
-            else:
-                contents_to_append += f"!$OMP DECLARE TARGET({ptr}(1:{dim}))\n"
+            if len(offload_pragma_flag_dict) and offload_pragma_flag_dict.get(ptr):
+                if dim.isdigit() and int(dim) == 1:
+                    contents_to_append += f"!$OMP DECLARE TARGET({ptr})\n"
+                else:
+                    contents_to_append += f"!$OMP DECLARE TARGET({ptr}(1:{dim}))\n"
         contents_to_append += "#endif\n"
 
         # Find the last occurrence of #endif in file_content
@@ -205,7 +206,8 @@ def check_offload_pragma_required(app_consts: List[OPS.Const]):
 
     for const in app_consts:
         ptr = const.ptr
-        pattern = r'\b{}\s*=\s*[^,\n]*'.format(re.escape(ptr))
+#       pattern = r'\b{}\s*=\s*[^,\n]*'.format(re.escape(ptr))
+        pattern = r'parameter.*\b{}\s*=\s*[^,\n]*'.format(re.escape(ptr))
 
         matches = re.findall(pattern, file_content, flags=re.IGNORECASE)
 

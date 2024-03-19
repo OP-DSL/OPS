@@ -546,8 +546,8 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
             ydim{{arg.id+1}}_{{lh.kernel}}_h = ydim{{arg.id+1}}
             zdim{{arg.id+1}}_{{lh.kernel}} = zdim{{arg.id+1}}
             zdim{{arg.id+1}}_{{lh.kernel}}_h = zdim{{arg.id+1}}
-{# !$OMP TARGET ENTER DATA MAP(TO:ydim{{arg.id+1}}_{{lh.kernel}},zdim{{arg.id+1}}_{{lh.kernel}}_h) #}
-!$OMP TARGET UPDATE TO(ydim{{arg.id+1}}_{{lh.kernel}},zdim{{arg.id+1}}_{{lh.kernel}}_h)
+{# !$OMP TARGET ENTER DATA MAP(TO:ydim{{arg.id+1}}_{{lh.kernel}},zdim{{arg.id+1}}_{{lh.kernel}}) #}
+!$OMP TARGET UPDATE TO(ydim{{arg.id+1}}_{{lh.kernel}},zdim{{arg.id+1}}_{{lh.kernel}})
                 {% endif %}
             {% else %}
                 {% if lh.ndim == 3 %}
