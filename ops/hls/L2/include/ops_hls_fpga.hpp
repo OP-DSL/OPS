@@ -51,6 +51,36 @@ public:
 	std::string name;
 };
 
+typedef std::chrono::system_clock::time_point time_point;
+typedef std::chrono::duration<double, std::nano> duration;
+
+class RuntimeRecords
+{
+public:
+	RuntimeRecords() = default;
+
+	duration kernel_runtime;
+	duration data_HtD_runtime;
+};
+
+//class bad_runtime_record : public std::exception
+//{
+//public:
+//	bad_runtime_record() throw() { }
+//
+//#if __cplusplus >= 201103L
+//  bad_runtime_record(const bad_runtime_record&) = default;
+//  bad_runtime_record& operator=(const bad_runtime_record&) = default;
+//#endif
+//
+//  // This declaration is not useless:
+//  // http://gcc.gnu.org/onlinedocs/gcc-3.0.2/gcc_6.html#SEC118
+//  virtual ~bad_runtime_record() throw();
+//
+//  // See comment in eh_exception.cc.
+//  virtual const char* what() const throw();
+//};
+
 /**
  * @brief This is a singleton class indended to use for single FPGA device handlings with 
  * thread local usage. 
@@ -132,7 +162,7 @@ class FPGA {
     template <typename T>
     cl::Buffer createDeviceBuffer(cl_mem_flags p_flags, const host_buffer_t<T>& p_buffer) {
         const void* l_ptr = (const void*)p_buffer.data();
-        if (exists(l_ptr)) return m_bufferMaps[l_ptr];
+        if (bufferExists(l_ptr)) return m_bufferMaps[l_ptr];
 
         size_t l_bufferSize = sizeof(T) * p_buffer.size();
         cl_int err;
@@ -145,8 +175,67 @@ class FPGA {
         return m_bufferMaps[l_ptr];
     }
 
+    void registerRuntime(const std::string& kernel_name, const duration exec_time,
+    		const duration HtoD_time)
+    {
+#ifdef DEBUG_LOG
+    	printf("reginstering runtime for %s\n", kernel_name.c_str());
+#endif
+    	if (not runtimeRecExists(kernel_name))
+    	{
+    		RuntimeRecords newrecord;
+    		m_runtimes[kernel_name] = newrecord;
+    	}
+
+    	m_runtimes[kernel_name].kernel_runtime = exec_time;
+    	m_runtimes[kernel_name].data_HtD_runtime = HtoD_time;
+    }
+
+    void registerExecutionRuntime(const std::string& kernel_name, const duration& exec_time)
+    {
+#ifdef DEBUG_LOG
+    	printf("reginstering exec runtime for %s\n", kernel_name.c_str());
+#endif
+    	if (not runtimeRecExists(kernel_name))
+    		m_runtimes[kernel_name] = RuntimeRecords();
+
+    	m_runtimes[kernel_name].kernel_runtime = exec_time;
+    }
+
+    void registerHtoDRuntime(const std::string& kernel_name, const duration& HtoD_time)
+    {
+    	if (not runtimeRecExists(kernel_name))
+    		m_runtimes[kernel_name] = RuntimeRecords();
+
+    	m_runtimes[kernel_name].data_HtD_runtime = HtoD_time;
+    }
+
+    bool runtimeRecExists(const std::string& kernel_name) const
+    {
+        auto it = m_runtimes.find(kernel_name);
+        return it != m_runtimes.end();
+    }
+
+    template<typename _Period>
+    double getExecutionRuntime(const std::string& kernel_name)
+    {
+    	if (not runtimeRecExists(kernel_name))
+			throw std::runtime_error((std::string("bad_runtime_record. Record do not exists for ") + kernel_name).c_str());
+
+    	return std::chrono::duration_cast<_Period>(m_runtimes[kernel_name].kernel_runtime).count();
+    }
+
+    template<typename _Period>
+    double getHtoDRuntime(const std::string& kernel_name)
+    {
+    	if (not runtimeRecExists(kernel_name))
+    		throw std::runtime_error((std::string("bad_runtime_record. Record do not exists for ") + kernel_name).c_str());
+
+    	return std::chrono::duration_cast<_Period>(m_runtimes[kernel_name].data_HtD_runtime).count();
+    }
+
    protected:
-    bool exists(const void* p_ptr) const {
+    bool bufferExists(const void* p_ptr) const {
         auto it = m_bufferMaps.find(p_ptr);
         return it != m_bufferMaps.end();
     }
@@ -181,9 +270,9 @@ class FPGA {
         m_device = m_Devices[m_id];
     }
 
+
     static FPGA* FPGA_;
 
-   private:
     unsigned int m_id;
     cl::Device m_device;
     std::vector<cl::Device> m_Devices;
@@ -191,12 +280,20 @@ class FPGA {
     cl::CommandQueue m_queue;
     cl::Program m_program;
     std::unordered_map<const void*, cl::Buffer> m_bufferMaps;
+    std::unordered_map<std::string, RuntimeRecords> m_runtimes;
 };
 
 }
 }
 
 void ops_init_backend(int argc, const char** argv, unsigned int devId = 0);
+
+template<typename _Period>
+double ops_hls_get_execution_runtime(const std::string&);
+
+template<typename _Period>
+double ops_hls_get_execution_runtime(const char*);
+
 void ops_exit_backend();
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */

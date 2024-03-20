@@ -44,6 +44,26 @@ namespace ops
 {
 namespace hls
 {
+
+//class bad_kernel_name : public std::exception
+//{
+//public:
+//	bad_kernel_name() throw() { }
+//
+//#if __cplusplus >= 201103L
+//	bad_kernel_name(const bad_kernel_name&) = default;
+//	bad_kernel_name& operator=(const bad_kernel_name&) = default;
+//#endif
+//
+//  // This declaration is not useless:
+//  // http://gcc.gnu.org/onlinedocs/gcc-3.0.2/gcc_6.html#SEC118
+//  virtual ~bad_kernel_name() throw();
+//
+//  // See comment in eh_exception.cc.
+//  virtual const char* what() const throw();
+//};
+
+
 #ifndef OPS_HLS_V2
 template <typename T>
 class Grid
@@ -161,9 +181,18 @@ class Kernel
 	public:
 //		Kernel(FPGA* p_fpga = nullptr) : m_fpga(p_fpga) {}
 
-		Kernel()
+		Kernel(std::string name = ""): m_kernel_name(name)
 		{
 			m_fpga = FPGA::getInstance();
+			if (m_fpga->runtimeRecExists(name))
+				throw std::runtime_error("bad_kernel_name");
+#ifdef DEBUG_LOG
+			printf("initiating: %s \n", m_kernel_name.c_str());
+#endif
+			m_isExecStart = false;
+			m_isExecEnd = false;
+			m_isHtoDStart = false;
+			m_isHtoDEnd = false;
 		}
 
 		void fpga(FPGA* p_fpga) { m_fpga = p_fpga; }
@@ -259,8 +288,53 @@ class Kernel
 			}
 		}
 
+		void startHtoDTimer()
+		{
+			m_HtoD_start_time_point = std::chrono::high_resolution_clock::now();
+			m_isHtoDStart = true;
+		}
+
+		void endHtoDTimer()
+		{
+			m_HtoD_end_time_point = std::chrono::high_resolution_clock::now();
+			m_isHtoDEnd = true;
+		}
+
+		void startExecTimer()
+		{
+			m_exc_start_time_point = std::chrono::high_resolution_clock::now();
+			m_isExecStart = true;
+		}
+
+		void endExecTimer()
+		{
+			m_exc_end_time_point = std::chrono::high_resolution_clock::now();
+			m_isExecEnd = true;
+		}
+
+		void registerProfileTime()
+		{
+			if (m_isExecStart and m_isExecEnd and m_isExecStart and m_isHtoDEnd)
+			{
+				m_fpga->registerRuntime(m_kernel_name, duration(m_exc_end_time_point - m_exc_start_time_point),
+						duration(m_HtoD_end_time_point - m_HtoD_start_time_point));
+			}
+		}
+
+	protected:
 		FPGA* m_fpga;
-		cl::Kernel m_kernel;
+		std::string m_kernel_name;
+	private:
+
+
+		bool m_isExecStart;
+		bool m_isExecEnd;
+		bool m_isHtoDStart;
+		bool m_isHtoDEnd;
+		time_point m_exc_start_time_point;
+		time_point m_exc_end_time_point;
+		time_point m_HtoD_start_time_point;
+		time_point m_HtoD_end_time_point;
 };
 
 }
