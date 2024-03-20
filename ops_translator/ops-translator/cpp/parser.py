@@ -241,6 +241,9 @@ def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> No
     ov_node = decend(decend(node))   
     
     # print (f"node: {name}, ov_node: {ov_node.spelling}, args: {args}") 
+    if not ov_node:
+        return
+    
     name = ov_node.spelling        
     if name == "ops_iter_par_loop":
         scope = [getLocation(node.extent.start), getLocation(node.extent.end)]
@@ -676,14 +679,16 @@ def parseArgIdx(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[
 
 def parseIterLoop(node: Cursor, args: List[Cursor], scope: List[Location], macros: Dict[Location, str], program: Program)-> ops.IterLoop:
     print(f"Found iterLoop: {node.spelling}, scope: (start - {getLocation(node.extent.start)}, end - {getLocation(node.extent.end)}), args: {print([(arg.spelling, arg.kind) for arg in args])}")
-    is_iter_literal = args[0].kind == CursorKind.INTEGER_LITERAL
+    is_iter_literal = args[1].kind == CursorKind.INTEGER_LITERAL
     iterLoop_args = []
+    unique_name = parseStringLit(args[0])
+
     if is_iter_literal:
-        iter = parseIntLiteral(args[0])
+        iter = parseIntLiteral(args[1])
     else:
-        iter = args[0].spelling
+        iter = args[1].spelling
     
-    for arg in args[1:]:
+    for arg in args[2:]:
         out = parseUnexposedFunction(arg)
     
         if out == None:
@@ -710,7 +715,7 @@ def parseIterLoop(node: Cursor, args: List[Cursor], scope: List[Location], macro
             iterLoop_args.append(parCpyObj)
             
             
-    iterLoopObj = ops.IterLoop(len(program.outerloops), iter, scope, iterLoop_args)
+    iterLoopObj = ops.IterLoop(unique_name, len(program.outerloops), iter, scope, iterLoop_args)
     if iterLoopObj.unique_id not in program.uniqueOuterloopMap.keys():
         program.uniqueOuterloopMap[iterLoopObj.unique_id] = len(program.uniqueOuterloopMap.keys())
     

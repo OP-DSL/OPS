@@ -421,7 +421,7 @@ void ops_par_loop_sigle_executer(ops_iter_par_loop_desc<PramType...>& desc)
 }
 
 template <typename... DESC_ARGS>
-void ops_iter_par_loop(unsigned int& iter, DESC_ARGS&&... descs)
+void ops_iter_par_loop(const std::string unique_name, unsigned int& iter, DESC_ARGS&&... descs)
 {
     (ops_par_loop_sigle_executer(descs), ...);
 }

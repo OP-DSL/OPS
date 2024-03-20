@@ -404,7 +404,8 @@ class DependancyEdge:
         return f"source_id: {self.source_id}, source_arg_id: {self.source_arg_id}, dat_id: {self.dat_id}, sink_id:{self.sink_id}, sink_arg_id: {self.sink_arg_id}"
        
 class IterLoop:
-    id = int
+    unique_name: str
+    id: int
     num_iter: Union[int, str]
     scope: List[Location]
     itr_args: List[Any]
@@ -420,7 +421,8 @@ class IterLoop:
     interconnector_names: List[str]
     ops_range: str = None
     
-    def __init__(self, id: int, num_iter: Union[int, str], scope: List[Location], args: List[Any] = []) -> None:
+    def __init__(self, unique_name: str, id: int, num_iter: Union[int, str], scope: List[Location], args: List[Any] = []) -> None:
+        self.unique_name = unique_name
         self.id = id
         self.num_iter = num_iter
         self.scope = scope

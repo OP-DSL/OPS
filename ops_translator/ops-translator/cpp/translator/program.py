@@ -157,7 +157,7 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
         [split_after, split_retain] = after.split(";", 1)
         split_after = split_after.split(",")
         
-        new_iter_loop_call = f"ops_itr_par_loop_{iterloop.id}{split_after[0]}, {iterloop.ops_range}"
+        new_iter_loop_call = f"{iterloop.unique_name}({split_after[1]}, {iterloop.ops_range}"
         
         for arg in iterloop.joint_args:
             new_iter_loop_call += f", {iterloop.dats[arg.dat_id][0].ptr}"

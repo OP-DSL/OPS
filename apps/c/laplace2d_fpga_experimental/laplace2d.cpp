@@ -11,6 +11,7 @@ float pi  = 2.0 * asin(1.0);
 #define OPS_CPP_API
 #define OPS_HLS_V2
 // #define OPS_FPGA
+#define PROFILE
 #define VERIFICATION
 #include <ops_seq_v2.h>
 //Including applicaiton-specific "user kernels"
@@ -198,7 +199,7 @@ int main(int argc, const char** argv)
             // iter++;
         }
 #else
-        ops_iter_par_loop(iter_max, 
+        ops_iter_par_loop("ops_iter_par_loop_0", iter_max, 
             ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
                 ops_arg_dat(d_A,    1, S2D_5pt, "float", OPS_READ),
                 ops_arg_dat(d_Anew, 1, S2D_00, "float", OPS_WRITE)), 
@@ -207,7 +208,11 @@ int main(int argc, const char** argv)
 
 #ifdef PROFILE
 		auto main_loop_end_clk_point = std::chrono::high_resolution_clock::now();
+    #ifndef OPS_FPGA
 		main_loop_runtime[bat] = std::chrono::duration<double, std::micro>(main_loop_end_clk_point - main_loop_start_clk_point).count();
+    #else
+        main_loop_runtime[bat] = ops_hls_get_execution_runtime<std::chrono::microseconds>(std::string("ops_iter_par_loop_0"));
+    #endif
 #endif
 
 #ifdef VERIFICATION

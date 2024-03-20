@@ -9,7 +9,7 @@ class KernelWrapper_outerloop_{{ilh.id}} : public ops::hls::Kernel
 {
 public:
     KernelWrapper_outerloop_{{ilh.id}}():
-            Kernel(),
+            Kernel("{{ilh.unique_name}}"),
             m_kernelName("kernel_outerloop_{{ilh.id}}"),
             m_datamoverName("datamover_outerloop_{{ilh.id}}")
     {
@@ -100,12 +100,18 @@ public:
         OCL_CHECK(err, err = m_datamover.setArg(narg++, arg{{arg.id}}.deviceBuffer));
         {% endif%}
     {% endfor %}
-    
+
+#ifdef PROFILE
+    startHtoDTimer();
+#endif
     {% for arg in ilh.joint_args %}
         {% if arg is ops_dat %}
         arg{{arg.id}}.set_as_arg();
         {% endif %}
-    {% endfor %} 
+    {% endfor %}
+#ifdef PROFILE
+    endHtoDTimer();
+#endif
 
     {% for slr_id in range(config["SLR_count"]) %}
         cl::Event event_kernel_{{slr_id}};
@@ -119,6 +125,9 @@ public:
         {% endif %}
     {% endfor %}
 
+#ifdef PROFILE
+    startExecTimer();
+#endif
         OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueTask(m_datamover, &activeEvents, &event_datamover));
     {% for slr_id in range(config["SLR_count"]) %}
         OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueTask(m_kernel_{{slr_id}}, &activeEvents, &event_kernel_{{slr_id}}));
@@ -149,7 +158,10 @@ public:
         event_kernel_{{slr_id}}.wait();
     {% endfor %}
 #endif
-
+#ifdef PROFILE
+    endExecTimer();
+    registerProfileTime();
+#endif
         //Sync maped dats
         activeEvents.resize(0);
     {% for arg in ilh.joint_args %}
@@ -192,7 +204,7 @@ private:
 {% endblock %}
 
 {% block par_loop %}
-void ops_itr_par_loop_{{ilh.id}}(int outer_iter, int* ops_range,
+void {{ilh.unique_name}}(int outer_iter, int* ops_range,
     {% for arg in ilh.joint_args|ops_dat %}
         {% if loop.last %}
             {% if consts %}
