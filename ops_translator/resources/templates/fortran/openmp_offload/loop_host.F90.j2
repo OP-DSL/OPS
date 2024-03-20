@@ -89,8 +89,14 @@ SUBROUTINE {{lh.kernel}}_wrap( &
 {% for arg in lh.args %}
     {% if arg is ops_idx %}
     idx, &
-    {% else %}
+    {% elif arg is ops_dat %}
     opsDat{{arg.id+1}}Local, &
+    {% elif arg is ops_gbl or arg is ops_reduce %}
+        {% if arg is ops_read %}
+    opsGblDat{{arg.id+1}}Device, &
+        {% else %}
+    opsDat{{arg.id+1}}Local, &
+        {% endif %}
     {% endif %}
 {% endfor %}
 {% for arg in lh.args %}
@@ -120,7 +126,11 @@ SUBROUTINE {{lh.kernel}}_wrap( &
     {% elif arg is ops_gbl or arg is ops_reduce %}
         {% if arg is ops_read %}
     INTEGER(KIND=4), INTENT(IN) :: dat{{arg.id+1}}_dim
-    {{arg.typ | upper}}, DIMENSION(dat{{arg.id+1}}_dim), INTENT(IN) :: opsDat{{arg.id+1}}Local
+            {% if arg.dim.isdigit() and arg.dim|int == 1 %}
+    {{arg.typ | upper}}, VALUE ::  opsGblDat{{arg.id+1}}Device
+            {% else %}
+    {{arg.typ | upper}}, DIMENSION(dat{{arg.id+1}}_dim), INTENT(IN) :: opsGblDat{{arg.id+1}}Device
+            {% endif %}
         {% elif arg is ops_write %}
     {{arg.typ | upper}}, DIMENSION(*), INTENT(OUT) :: opsDat{{arg.id+1}}Local
         {% elif arg is ops_inc or arg is ops_min or arg is ops_max %}
@@ -175,25 +185,10 @@ SUBROUTINE {{lh.kernel}}_wrap( &
 {% if lh.arg_idx != -1 %}
     {%if private_idx.append(private_idx.pop() + ",idx_local") %}{% endif %}
 {% endif %}
-{% set map_line = [""] %}
-{% for arg in lh.args %}
-    {% if arg is ops_gbl or arg is ops_reduce %}
-        {% if arg is ops_read %}
-            {%if map_line.append(map_line.pop() + " MAP(TO:opsDat" + (arg.id+1)|string + "Local(1:dat" + (arg.id+1)|string + "_dim)) ") %}{% endif %}
-        {% endif %}
-    {% endif %}
-{% endfor %}
 
 {% if lh.arg_idx != -1 %}
 !$OMP TARGET DATA MAP(TO:idx_local(1:{{lh.ndim}}))
 {% endif %}
-{% for arg in lh.args %}
-    {% if arg is ops_gbl or arg is ops_reduce %}
-        {% if arg is ops_read %}
-!$OMP TARGET DATA MAP(TO:opsDat{{arg.id+1}}Local(1:dat{{arg.id+1}}_dim))
-        {% endif %}
-    {% endif %}
-{% endfor %}
 {% if lh.ndim == 1 %}
 {# !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x{{private_idx[0]}}){{reduct_line[0]}} #}
 !$OMP TARGET TEAMS LOOP PRIVATE(n_x{{private_idx[0]}}){{reduct_line[0]}}
@@ -252,14 +247,18 @@ SUBROUTINE {{lh.kernel}}_wrap( &
             {% endif %}
         {% endif %}
     {% elif arg is ops_gbl or arg is ops_reduce %}
-        {% if arg is ops_inc or arg is ops_min or arg is ops_max %}
+        {% if arg is ops_read %}
+            {% if arg.dim.isdigit() and arg.dim|int == 1 %}
+                opsGblDat{{arg.id+1}}Device{% if not loop.last %},{% endif %} &
+            {% else %}
+                opsGblDat{{arg.id+1}}Device(1){% if not loop.last %},{% endif %} &
+            {% endif %}
+        {% elif arg is ops_inc or arg is ops_min or arg is ops_max %}
             {% if arg.dim == 1 %}
                 {{args_list[arg.id]}}{% if not loop.last %},{% endif %} &
             {% else %}
                 opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base){% if not loop.last %},{% endif %} &
             {% endif %}
-        {% else %}
-                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base){% if not loop.last %},{% endif %} &
         {% endif %}
     {% elif arg is ops_idx %}
                 idx_local{% if not loop.last %},{% endif %} &
@@ -285,13 +284,6 @@ SUBROUTINE {{lh.kernel}}_wrap( &
 {# !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO #}
 !$OMP END TARGET TEAMS LOOP
 {% endif %}
-{% for arg in lh.args %}
-    {% if arg is ops_gbl or arg is ops_reduce %}
-        {% if arg is ops_read %}
-!$OMP END TARGET DATA
-        {% endif %}
-    {% endif %}
-{% endfor %}
 {% if lh.arg_idx != -1 %}
 !$OMP END TARGET DATA
 {% endif %}
@@ -448,7 +440,7 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
     z_size = MAX(0, end_indx(3)-start_indx(3)+1)
 {% endif %}
 
-{% if lh.isGblRead %}
+{% if lh.isGblReadMDIM %}
     CALL ops_upload_gbls(opsArgArray, {{lh.args|length}})
 {% endif %}
 
@@ -480,7 +472,11 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
     {% elif arg is ops_gbl or arg is ops_reduce %}
     opsDat{{arg.id+1}}Cardinality = opsArg{{arg.id+1}}%dim
         {% if arg is ops_read %}
+            {% if arg.dim.isdigit() and arg.dim|int == 1 %}
     CALL c_f_pointer(opsArg{{arg.id+1}}%data, opsDat{{arg.id+1}}Local, (/opsDat{{arg.id+1}}Cardinality/))
+            {% else %}
+    CALL c_f_pointer(opsArgArray({{arg.id+1}})%data_d, opsDat{{arg.id+1}}Local, (/opsDat{{arg.id+1}}Cardinality/))
+            {% endif %}
         {% elif arg is ops_inc or arg is ops_min or arg is ops_max %}
     CALL c_f_pointer(getReductionPtrFromOpsArg(opsArg{{arg.id+1}},block), opsDat{{arg.id+1}}Local, (/opsDat{{arg.id+1}}Cardinality/))
         {% endif %}
@@ -580,8 +576,18 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
 {% for arg in lh.args %}
     {% if arg is ops_idx %}
                         idx, &
-    {% else %}
+    {% elif arg is ops_dat %}
                         opsDat{{arg.id+1}}Local, &
+    {% elif arg is ops_gbl or arg is ops_reduce %}
+        {% if arg is ops_read %}
+            {% if arg.dim.isdigit() and arg.dim|int == 1 %}
+                        opsDat{{arg.id+1}}Local(1), &
+            {% else %}
+                        opsDat{{arg.id+1}}Local, &
+            {% endif %}
+        {% elif arg is ops_inc or arg is ops_min or arg is ops_max %}
+                        opsDat{{arg.id+1}}Local, &
+        {% endif %}
     {% endif %}
 {% endfor %}
 {% for arg in lh.args %}

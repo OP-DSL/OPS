@@ -12,7 +12,7 @@ endif
 CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
 
 CXXFLAGS      := $(CCFLAGS) -std=c++11
-FFLAGS         = -O3 -fast -gopt -Minline
+FFLAGS         = -O3 -fast -gopt
 NVCXXFLAGS    := -O3 -std=c++11
 OPENACCFLAGS   = $(CCFLAGS) -module $(F_INC_MOD)/openacc
 
@@ -21,7 +21,7 @@ FMODS_CUDA    := -module $(F_INC_MOD)/cuda
 FMODS_OMPOFFLOAD    := -module $(F_INC_MOD)/ompoffload
 
 OMPFLAGS := -mp
-OMPOFFLOADFLAGS = -mp=gpu
+OMPOFFLOADFLAGS = -Minline -mp=gpu
 
 ifdef THREADED
 	THREADING_FLAGS ?= -mp

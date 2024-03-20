@@ -425,6 +425,10 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
 !   ================================
     TYPE(dim3) :: grid, tblock
 
+    CHARACTER(LEN=40) :: kernelName
+
+    kernelName = "{{lh.kernel}}"
+
 #ifdef OPS_LAZY
 !   ==========================
 !   Set from kernel descriptor
@@ -445,7 +449,7 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
 {% endfor %}
 #endif
 
-    CALL setKernelTime({{kernel_idx}}, "{{lh.kernel}}", 0.0_8, 0.0_8, 0.0_4, 1)
+    CALL setKernelTime({{kernel_idx}}, kernelName//c_null_char, 0.0_8, 0.0_8, 0.0_4, 1)
     CALL ops_timers_core(t1__)
 
 #if defined(OPS_MPI) && !defined(OPS_LAZY)
@@ -767,7 +771,7 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
     {% endif %}
 {% endfor %}
 
-    CALL setKernelTime({{kernel_idx}}, "{{lh.kernel}}", t3__-t2__, t2__-t1__, transfer_total, 0)
+    CALL setKernelTime({{kernel_idx}}, kernelName//c_null_char, t3__-t2__, t2__-t1__, transfer_total, 0)
 
 END SUBROUTINE
 
