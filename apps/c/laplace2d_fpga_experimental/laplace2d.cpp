@@ -256,6 +256,8 @@ int main(int argc, const char** argv)
         //     printf("This test is considered FAILED\n");
 
         //Finalising the OPS library
+		ops_free_dat(d_A);
+		ops_free_dat(d_Anew);
     }
 
 #ifdef PROFILE

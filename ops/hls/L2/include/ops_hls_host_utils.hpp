@@ -214,6 +214,17 @@ ops::hls::Grid<T> ops_hls_decl_dat(ops::hls::Block& block, int elem_size, int* s
 	return grid;
 }
 
+template <typename T>
+void ops_free_dat(ops::hls::Grid<T>& grid)
+{
+	for (auto event : grid.activeEvents)
+	{
+		event.wait();
+	}
+	grid.activeEvents.clear();
+	grid.allEvents.clear();
+	ops::hls::FPGA::getInstance()->deleteDeviceBuffer(grid.hostBuffer);
+}
 
 void getAdjustedRange(
 #ifndef OPS_HLS_V2

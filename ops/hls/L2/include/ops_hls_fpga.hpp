@@ -175,6 +175,16 @@ class FPGA {
         return m_bufferMaps[l_ptr];
     }
 
+    template <typename T>
+    void deleteDeviceBuffer(const host_buffer_t<T>& p_buffer)
+    {
+    	const void* l_ptr = (const void*)p_buffer.data();
+		if (bufferExists(l_ptr))
+		{
+			m_bufferMaps.erase(l_ptr);
+		}
+    }
+
     void registerRuntime(const std::string& kernel_name, const duration exec_time,
     		const duration HtoD_time)
     {
