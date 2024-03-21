@@ -130,10 +130,10 @@ int main(int argc, char **argv)
   ops_reduction_result(reduct_dat1, reduct_result);
 
   ops_timers(&ct1, &et1);
-  ops_print_dat_to_txtfile(dat0, "multidim.dat");
+//  ops_print_dat_to_txtfile(dat0, "multidim.dat");
 
-  //ops_fetch_block_hdf5_file(grid3D, "multidim.h5");
-//  ops_fetch_dat_hdf5_file(dat0, "multidim.h5");
+  ops_fetch_block_hdf5_file(grid3D, "multidim.h5");
+  ops_fetch_dat_hdf5_file(dat0, "multidim.h5");
 
   ops_printf("\nTotal Wall time %lf\n",et1-et0);
   double result_diff=fabs((100.0*((reduct_result[0]+reduct_result[1]+reduct_result[2])/(3*96.000000)))-100.0);

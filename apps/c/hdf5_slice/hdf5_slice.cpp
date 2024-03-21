@@ -86,8 +86,8 @@ void copy_double_single(const ops_dat src_double, ops_dat desc_single) {
                ops_arg_dat(desc_single, 1, local_stencil, "float", OPS_WRITE));
 #endif
 
-  delete local;
-  delete iter_range;
+  delete[] local;
+  delete[] iter_range;
 }
 
 int main(int argc, char *argv[]) {

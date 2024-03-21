@@ -1,11 +1,17 @@
 NVCC  ?= $(CUDA_INSTALL_PATH)/bin/nvcc
 CUDA_INC ?= $(CUDA_INSTALL_PATH)/include
 CUDA_LIB ?= $(CUDA_INSTALL_PATH)/lib64
+
+ifneq ($(CUDA_MATH_LIBS),)
+	CUDA_LIB += -L$(CUDA_MATH_LIBS)
+endif
+
 NVCCFLAGS := -Xcompiler="-fPIC"
+
 ifndef DEBUG
-    NVCCFLAGS += -O3 -g -std=c++11
+	NVCCFLAGS += -O3 -g -std=c++11
 else
-    NVCCFLAGS += -O0 -g -G -std=c++11
+	NVCCFLAGS += -O0 -g -G -std=c++11
 endif
 
 ifndef NV_ARCH

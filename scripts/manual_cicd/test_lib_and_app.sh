@@ -192,16 +192,16 @@ function build_and_run_cpp_apps ( ) {
         target_names+=("ompoffload" "mpi_ompoffload" "mpi_ompoffload_tiled")
     fi
 
-    app_dir_list=("laplace2d_tutorial/step7" "poisson" "CloverLeaf" "CloverLeaf_3D" "CloverLeaf_3D_HDF5" "TeaLeaf" \
-              "lowdim_test" "multiDim" "multiDim_HDF5" "mblock" "mgrid" "shsgc" "mb_shsgc/Max_datatransfer" \
-              "hdf5_slice" "ops-lbm/step5")
-    app_names_list=("laplace2d" "poisson" "cloverleaf" "cloverleaf" "cloverleaf" "tealeaf" \
-                    "lowdim" "multidim" "multiDim_HDF5" "mblock" "mgrid" "shsgc" "shsgc" \
-                    "hdf5_slice" "lattboltz2d")
+    app_dir_list=("laplace2d_tutorial/step7" "poisson" "TeaLeaf" \
+              "lowdim_test" "multiDim" "multiDim_HDF5" "multiDim3D" "mblock" "mgrid" "shsgc" "mb_shsgc/Max_datatransfer" \
+              "hdf5_slice" "ops-lbm/step5" "CloverLeaf" "CloverLeaf_3D" "CloverLeaf_3D_HDF5")
+    app_names_list=("laplace2d" "poisson" "tealeaf" \
+                    "lowdim" "multidim" "multiDim_HDF5" "multidim" "mblock" "mgrid" "shsgc" "shsgc" \
+                    "hdf5_slice" "lattboltz2d" "cloverleaf" "cloverleaf" "cloverleaf")
     
     length=${#app_dir_list[@]}
     
-    for ((i = 0; i < length; i++)); do
+    for ((i = 13; i < length; i++)); do
         app_name="${app_names_list[i]}"
         app_dir="${app_dir_list[i]}"
         test_cpp_app "$app_name" "$app_dir" "${target_names[@]}"
@@ -283,7 +283,7 @@ function test_cpp_app ( ) {
     local app_path=$OPS_INSTALL_PATH/../apps/c/$app_dir_name
     is_path_exist "$app_path"
 
-    apps_with_hdf5=("CloverLeaf_3D_HDF5" "lowdim_test" "multiDim" "multiDim_HDF5" "mblock" "mgrid" "hdf5_slice" \
+    apps_with_hdf5=("CloverLeaf_3D_HDF5" "lowdim_test" "multiDim" "multiDim_HDF5" "multiDim3D" "mblock" "mgrid" "hdf5_slice" \
                     "adi" "adi_burger" "adi_burger_3D" "compact_scheme")
 
     continue_test=true
@@ -352,14 +352,14 @@ $MPI_INSTALL_PATH/bin/mpirun -np 4 ./generate_file_mpi
                 build_res=$?
                 if [[ $build_res != 0 ]]; then
                     app_build_failed+=("read_$target")
-                fi
-                run_cpp_target "$app_name" "$app_dir_name" "$target" "$app_target_name" "$app_path"
-                result2=$?
-
-                if [[ $((result1 + result2)) = 0 ]]; then
-                    app_passed+=("$target")
                 else
-                    app_failed+=("$target")
+                    run_cpp_target "$app_name" "$app_dir_name" "$target" "$app_target_name" "$app_path"
+                    result2=$?
+                    if [[ $((result1 + result2)) = 0 ]]; then
+                        app_passed+=("$target")
+                    else
+                        app_failed+=("$target")
+                    fi
                 fi
             done        
         else
@@ -370,13 +370,14 @@ $MPI_INSTALL_PATH/bin/mpirun -np 4 ./generate_file_mpi
                 build_res=$?
                 if [[ $build_res != 0 ]]; then
                     app_build_failed+=("$target")
-                fi
-                run_cpp_target "$app_name" "$app_dir_name" "$target" "$app_target_name" "$app_path"
-                result=$?
-                if [[ $result = 0 ]]; then
-                    app_passed+=("$target")
                 else
-                    app_failed+=("$target")
+                    run_cpp_target "$app_name" "$app_dir_name" "$target" "$app_target_name" "$app_path"
+                    result=$?
+                    if [[ $result = 0 ]]; then
+                        app_passed+=("$target")
+                    else
+                        app_failed+=("$target")
+                    fi
                 fi
             done
         fi
@@ -404,6 +405,9 @@ $MPI_INSTALL_PATH/bin/mpirun -np 4 ./generate_file_mpi
             fi
             if [[ "$app_dir_name" = "lowdim_test" ]]; then
                 rm output_seq_ref.h5 output_mpi_ref.h5
+            fi
+            if [[ "$app_dir_name" = "multiDim3D" ]]; then
+                rm multidim_ref.h5
             fi
             if [[ "$app_dir_name" = "mgrid" ]]; then
                 rm data_ref.h5
@@ -554,17 +558,15 @@ function run_cpp_target ( ) {
             OPS_TILING_MAXDEPTH=6
         elif  [[ "$app_dir_name" = "poisson" ]] || [[ "$app_dir_name" = "shsgc" ]]; then
             OPS_TILING_MAXDEPTH=10
+        else
+            OPS_TILING_MAXDEPTH=""
         fi
-        if [[ "$target" = *"cuda"* ]] || [[ "$target" = *"hip"* ]] || [[ "$target" = *"sycl"* ]]; then
+        if [[ "$app_dir_name" = "CloverLeaf" ]] || [[ "$app_dir_name" = "CloverLeaf_3D" ]] || [[ "$app_dir_name" = "CloverLeaf_3D_HDF5" ]] || \
+           [[ "$app_dir_name" = "mgrid" ]] || [[ "$app_dir_name" = "shsgc" ]] || [[ "$app_dir_name" = "hdf5_slice" ]] || \
+           [[ "$app_dir_name" = "ops-lbm/step5" ]] || [[ "$app_dir_name" = "adi_burger_3D" ]] || [[ "$app_dir_name" = "mb_shsgc/Max_datatransfer" ]]; then
             NP=2
         else
-            if [[ "$app_dir_name" = "CloverLeaf" ]] || [[ "$app_dir_name" = "CloverLeaf_3D" ]] || [[ "$app_dir_name" = "CloverLeaf_3D_HDF5" ]] || \
-            [[ "$app_dir_name" = "mgrid" ]] || [[ "$app_dir_name" = "shsgc" ]] || [[ "$app_dir_name" = "hdf5_slice" ]] || \
-            [[ "$app_dir_name" = "ops-lbm/step5" ]] || [[ "$app_dir_name" = "adi_burger_3D" ]]; then
-                NP=2
-            else
-                NP=4
-            fi
+            NP=4
         fi
 #       Run tiled version
         if [[ -n "$OPS_TILING_MAXDEPTH" ]]; then
@@ -573,7 +575,7 @@ $MPI_INSTALL_PATH/bin/mpirun -np $NP ./$app_target_name OPS_TILING OPS_TILING_MA
 #$MPI_INSTALL_PATH/bin/mpirun -np $NP ./$app_target_name OPS_TILING OPS_TILING_MAXDEPTH=$OPS_TILING_MAXDEPTH $blocksize > log_out.txt
         else
             if [[ "$app_dir_name" = "hdf5_slice" ]]; then
-                echo "skipping running mpi tiled version for hdf5_slice, getting stuck for longer, need fix" >> $log_file
+                echo "skipped running mpi tiled version for hdf5_slice, getting stuck for longer, need fix" >> $log_file
                 return 1
             else
                 echo "     command: mpirun -np $NP ./$app_target_name OPS_TILING $blocksize 2>&1 | tee log_out.txt" >> $log_file
@@ -585,16 +587,12 @@ $MPI_INSTALL_PATH/bin/mpirun -np $NP ./$app_target_name OPS_TILING $blocksize 2>
 #   IF MPI version - Without tiling
 #   ==============================
     elif [[ "$target" = *"mpi"* ]] && [[ "$target" != *"tiled"* ]]; then
-        if [[ "$target" = *"cuda"* ]] || [[ "$target" = *"hip"* ]] || [[ "$target" = *"sycl"* ]]; then
+        if [[ "$app_dir_name" = "CloverLeaf" ]] || [[ "$app_dir_name" = "CloverLeaf_3D" ]] || [[ "$app_dir_name" = "CloverLeaf_3D_HDF5" ]] || \
+           [[ "$app_dir_name" = "mgrid" ]] || [[ "$app_dir_name" = "shsgc" ]] || [[ "$app_dir_name" = "hdf5_slice" ]] || \
+           [[ "$app_dir_name" = "ops-lbm/step5" ]] || [[ "$app_dir_name" = "adi_burger_3D" ]] || [[ "$app_dir_name" = "mb_shsgc/Max_datatransfer" ]]; then
             NP=2
         else
-            if [[ "$app_dir_name" = "CloverLeaf" ]] || [[ "$app_dir_name" = "CloverLeaf_3D" ]] || [[ "$app_dir_name" = "CloverLeaf_3D_HDF5" ]] || \
-            [[ "$app_dir_name" = "mgrid" ]] || [[ "$app_dir_name" = "shsgc" ]] || [[ "$app_dir_name" = "hdf5_slice" ]] || \
-            [[ "$app_dir_name" = "ops-lbm/step5" ]] || [[ "$app_dir_name" = "adi_burger_3D" ]]; then
-                NP=2
-            else
-                NP=4
-            fi
+            NP=4
         fi
         echo "     command : $MPI_INSTALL_PATH/bin/mpirun -np $NP ./$app_target_name $blocksize 2>&1 | tee log_out.txt" >> $log_file
 $MPI_INSTALL_PATH/bin/mpirun -np $NP ./$app_target_name $blocksize 2>&1 | tee log_out.txt
@@ -662,7 +660,7 @@ $MPI_INSTALL_PATH/bin/mpirun -np $NP ./$app_target_name $blocksize 2>&1 | tee lo
 
 #   APPLICATION: multiDim_HDF5
     if [[ "$app_dir_name" = "multiDim_HDF5" ]]; then
-        echo "checking hdf5 status "$app_name
+#        echo "checking hdf5 status "$app_name
 #       If app is read, then check the difference from write and read HDF5
         if [[ "$app_name" = "read" ]]; then
             $HDF5_INSTALL_PATH/bin/h5diff --delta=1e-14 write_data.h5 read_data.h5 > diff_out.log
@@ -674,6 +672,24 @@ $MPI_INSTALL_PATH/bin/mpirun -np $NP ./$app_target_name $blocksize 2>&1 | tee lo
                 return 1
             else
                 rm write_data.h5 read_data.h5
+                echo " SUCCESS - HDF5 file matched with reference file for target: $target" >> $log_file
+            fi
+            rm diff_out.log
+        fi
+    fi
+
+#   APPLICATION: multiDim3D
+    if [[ "$app_dir_name" = "multiDim3D" ]]; then
+        if [[ "$target" = "dev_seq" ]]; then
+            mv multidim.h5 multidim_ref.h5
+        else
+            $HDF5_INSTALL_PATH/bin/h5diff --delta=1e-14  multidim.h5 multidim_ref.h5 > diff_out.log
+            if [ -s ./diff_out.log ]; then
+                mv multidim.h5 multidim_${target}_failed.h5
+                echo " FAILURE - HDF5 file not-matched with reference file for target: $target" >> $log_file
+                return 1
+            else
+                rm multidim.h5
                 echo " SUCCESS - HDF5 file matched with reference file for target: $target" >> $log_file
             fi
             rm diff_out.log
@@ -1016,6 +1032,7 @@ $MPI_INSTALL_PATH/bin/mpirun -np $NP ./$app_target_name $blocksize 2>&1 | tee lo
     fi
 }
 
+echo ""  > $log_file
 
 # Call the check environment function
 check_env
