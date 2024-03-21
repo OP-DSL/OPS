@@ -10,7 +10,7 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 #export AMOS=TRUE
 #export DMOS=TRUE
 #export TELOS=TRUE
-export KOS=TRUE
+#export KOS=TRUE
 
 if [[ -v TELOS || -v KOS ]]; then
 
@@ -118,6 +118,7 @@ fi
 echo "All Intel classic complier based applications ---- PASSED"
 
 
+
 if [[ -v TELOS ]]; then
 
 #============================ Test with Intel SYCL Compilers==========================================
@@ -126,7 +127,7 @@ cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_INTEL_SYCL
 #make -j -B
 make clean
-make
+make IEEE=1
 cd $OPS_INSTALL_PATH/../apps/c/TeaLeaf
 
 make clean
@@ -141,7 +142,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+SYCL on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_mpi_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 8 ./tealeaf_mpi_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
@@ -207,7 +208,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
 if [[ -v CUDA_INSTALL_PATH ]]; then
-make IEEE=1 tealeaf_cuda tealeaf_mpi_cuda tealeaf_mpi_cuda_tiled 
+make IEEE=1 tealeaf_cuda tealeaf_mpi_cuda tealeaf_mpi_cuda_tiled
 #tealeaf_openacc tealeaf_mpi_openacc tealeaf_mpi_openacc_tiled
 
 echo '============> Running CUDA'

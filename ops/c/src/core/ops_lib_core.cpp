@@ -2180,10 +2180,10 @@ void ops_randomgen_init_host(unsigned int seed, int options, std::mt19937 &ops_r
   int comm_global_size = ops_num_procs();
   int my_global_rank = ops_get_proc();
 
-  if(comm_global_size == 0)
+  if(comm_global_size == 1)
     ops_rand_gen.seed(seed);
   else
-    ops_rand_gen.seed(seed*my_global_rank+my_global_rank);
+    ops_rand_gen.seed(seed + my_global_rank * 2654435761u); //arbitrary multiplier to avoid same seed between processes
 }
 
 void ops_fill_random_uniform_host(ops_dat dat, std::mt19937 &ops_rand_gen) {

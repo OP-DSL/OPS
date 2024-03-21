@@ -14,18 +14,17 @@ module load cmake/3.20.1
 unset LIBCLANG_PATH
 module load python/3.9.7
 
+#OPS specifics
+export OPS_COMPILER=intel
+export OPS_INSTALL_PATH=/rr-home/gihan/OPS/ops
+export OP_AUTO_SOA=1
+
 #Uncomment the following to test/reinstall the environment setup for the code-gen
 #cd  $OPS_INSTALL_PATH/../ops_translator/
 #rm -rf ./ops_venv
 #. setup_venv.sh
 #cd -
 source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
-
-
-#OPS specifics
-export OPS_COMPILER=intel
-export OPS_INSTALL_PATH=/rr-home/gihan/OPS/ops
-export OP_AUTO_SOA=1
 
 #Intel MPI and Compilers - classic
 module load intel-oneapi-2021.3/intel-classic-2021.3
@@ -83,7 +82,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TDMA_INSTALL_PATH/lib/
 #unset LD_LIBRARY_PATH
 
 #OpenSBLI -- for testing app TGV only
-#export OPENSBLI_INSTALL_PATH=/rr-home/gihan/OpenSBLI/OpenSBLI_OPS_TESTING/opensbli/
+export OPENSBLI_INSTALL_PATH=/rr-home/gihan/OpenSBLI/OpenSBLI_OPS_TESTING/opensbli
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/rr-home/gihan/libffi/
 

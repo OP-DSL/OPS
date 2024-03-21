@@ -9,7 +9,7 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
 #export DMOS=TRUE
-export TELOS=TRUE
+#export TELOS=TRUE
 #export KOS=TRUE
 
 if [[ -v TELOS || -v KOS ]]; then
@@ -35,23 +35,23 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 cp data.h5 data_ref.h5
 
-#echo '============> Running OpenMP'
-#KMP_AFFINITY=compact OMP_NUM_THREADS=12 ./mgrid_openmp > perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
-#rm perf_out
+echo '============> Running OpenMP'
+KMP_AFFINITY=compact OMP_NUM_THREADS=12 ./mgrid_openmp > perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
+rm perf_out
 
-#echo '============> Running MPI+OpenMP'
-#export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_mpi_openmp > perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
-#rm perf_out
+echo '============> Running MPI+OpenMP'
+export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_mpi_openmp > perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
+rm perf_out
 
 #echo '============> Running DEV_MPI'
 #$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_dev_mpi > perf_out
@@ -71,14 +71,6 @@ $HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
 rm perf_out
 
-echo '============> Running MPI_inline'
-$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_mpi_inline > perf_out
-grep "Total Wall time" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
-rm perf_out
 
 if [[ -v CUDA_INSTALL_PATH ]]; then
 
@@ -129,8 +121,8 @@ make clean
 make IEEE=1 mgrid_sycl mgrid_mpi_sycl mgrid_mpi_sycl_tiled
 
 
-echo '============> Running MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_sycl > perf_out
+echo '============> Running SYCL'
+./mgrid_sycl > perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
@@ -184,32 +176,32 @@ rm perf_out
 cp data.h5 data_ref.h5
 
 
-#echo '============> Running OpenMP'
-#KMP_AFFINITY=compact OMP_NUM_THREADS=12 ./mgrid_openmp > perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
-#rm perf_out
+echo '============> Running OpenMP'
+KMP_AFFINITY=compact OMP_NUM_THREADS=12 ./mgrid_openmp > perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
+rm perf_out
 
-#echo '============> Running MPI+OpenMP'
-#export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_mpi_openmp > perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
-#rm perf_out
+echo '============> Running MPI+OpenMP'
+export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_mpi_openmp > perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
+rm perf_out
 
-#echo '============> Running DEV_MPI'
-#$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_dev_mpi > perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
-#rm perf_out
+echo '============> Running DEV_MPI'
+$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_dev_mpi > perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
+rm perf_out
 
 echo '============> Running MPI'
 $MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_mpi > perf_out
@@ -220,14 +212,6 @@ $HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
 rm perf_out
 
-echo '============> Running MPI_inline'
-$MPI_INSTALL_PATH/bin/mpirun -np 6 ./mgrid_mpi_inline > perf_out
-grep "Total Wall time" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-$HDF5_INSTALL_PATH/bin/h5diff data.h5 data_ref.h5
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED - HDF5 files comparison";exit $rc; fi;
-rm perf_out
 
 if [[ -v CUDA_INSTALL_PATH ]]; then
 echo '============> Running CUDA'

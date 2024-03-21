@@ -166,10 +166,10 @@ void ops_randomgen_init(unsigned int seed, int options) {
   int comm_global_size = ops_num_procs();
   int my_global_rank = ops_get_proc();
 
-  if(comm_global_size == 0)
+  if(comm_global_size == 1)
     curandSafeCall(instance->ostream(), curandSetPseudoRandomGeneratorSeed(ops_rand_gen, seed));
   else
-    curandSafeCall(instance->ostream(), curandSetPseudoRandomGeneratorSeed(ops_rand_gen, seed*my_global_rank+my_global_rank));
+    curandSafeCall(instance->ostream(), curandSetPseudoRandomGeneratorSeed(ops_rand_gen, seed + my_global_rank * 2654435761u));
 
   curand_initialised = 1;
 }
