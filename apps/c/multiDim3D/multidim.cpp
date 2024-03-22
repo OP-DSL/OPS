@@ -147,6 +147,6 @@ int main(int argc, char **argv)
     ops_printf("This test is considered FAILED\n");
   }
 
-
   ops_exit();
+  return 0;
 }

@@ -427,5 +427,5 @@ int main(int argc, char **argv) {
   ops_fetch_dat_hdf5_file(rho_new, "shsgc.h5");
 
   ops_exit();
-
+  return 0;
 }

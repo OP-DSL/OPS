@@ -498,4 +498,5 @@ int main(int argc, char *argv[]) {
   ops_printf("Z Dim total time (s): %lf\n", total_z);
   ops_printf("\nSuccessful exit from OPS!\n");
   ops_exit();
+  return 0;
 }

@@ -220,4 +220,5 @@ int main(int argc, char **argv)
   ops_printf("\nThe test is considered as PASSED!");
 
   ops_exit();
+  return 0;
 }

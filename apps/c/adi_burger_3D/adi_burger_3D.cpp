@@ -304,4 +304,5 @@ int main(int argc, char *argv[]) {
     // ops_printf("Error at w: %lf\n", sqrt(wDiffSqrSum / wSqrSum));
     ops_printf("\nSuccessful exit from OPS!\n");
     ops_exit();
+    return 0;
 }
