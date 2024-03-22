@@ -232,24 +232,16 @@ program MBLOCK
   call ops_halo_transfer(halos4)
   call ops_halo_transfer(halos5)
 
-! test writing multiple blocks to same file
-  call ops_fetch_block_hdf5_file(grid1, "mblocktest.h5")
-  call ops_fetch_block_hdf5_file(grid2, "mblocktest.h5")
-
-! test writing dats on multiple blocks to same file
-  call ops_fetch_dat_hdf5_file(data1, "mblocktest.h5")
-  call ops_fetch_dat_hdf5_file(data2, "mblocktest.h5")
-
-! test writing multiple blocks to different files
-  call ops_fetch_block_hdf5_file(grid1, "mblocktest1.h5")
-  call ops_fetch_block_hdf5_file(grid2, "mblocktest2.h5")
-
-! test writing dats on multiple blocks to different files
-  call ops_fetch_dat_hdf5_file(data1, "mblocktest1.h5")
-  call ops_fetch_dat_hdf5_file(data2, "mblocktest2.h5")
 
 !  call ops_print_dat_to_txtfile(data1, "data0.txt")
 !  call ops_print_dat_to_txtfile(data2, "data1.txt")
+
+  call ops_fetch_block_hdf5_file(grid1, "data0.h5")
+  call ops_fetch_dat_hdf5_file(data1, "data0.h5")
+
+  call ops_fetch_block_hdf5_file(grid2, "data1.h5")
+  call ops_fetch_dat_hdf5_file(data2, "data1.h5")
+
 
   !test data access API
   npartitions_l = ops_dat_get_local_npartitions( data1 )
@@ -259,12 +251,16 @@ program MBLOCK
   print *,"extents: ", d_disp, d_size
   allocate(temp2(d_size(1), d_size(2)))
   call ops_dat_fetch_data( data1, 1, temp2 )
-!  print *,temp2
+
+! print *,temp2
   temp2(5,5) = -100
   call ops_dat_set_data( data1, 1, temp2 )
-! call ops_print_dat_to_txtfile(data1, "data0_modified.txt")
-  call ops_fetch_block_hdf5_file(grid1, "data1_modified.h5")
-  call ops_fetch_dat_hdf5_file(data1, "data1_modified.h5") 
+!  call ops_print_dat_to_txtfile(data1, "data0_modified.txt")
+
+  call ops_fetch_block_hdf5_file(grid1, "data0_modified.h5")
+  call ops_fetch_dat_hdf5_file(data1, "data0_modified.h5")
+
+  write(*,'(a)')"Sucessful exit from OPS"
 
   call ops_exit( )
 

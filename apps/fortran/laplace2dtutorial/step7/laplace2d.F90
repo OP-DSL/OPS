@@ -194,6 +194,7 @@ program laplace
     end if    
 
     call ops_timers( endTime )
+    call ops_timing_output()
     if (ops_is_root() == 1) then
         write(*,'(a,f16.7,a)')  ' completed in ', endTime - startTime, ' seconds'
     end if

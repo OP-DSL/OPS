@@ -152,6 +152,7 @@ program MULTIDIM
   call ops_fetch_dat_hdf5_file(dat0, "multidim.h5")
   call ops_fetch_dat_hdf5_file(dat1, "multidim.h5")
 
+
   !call ops_timing_output (6) ! where is this printing to ? .. problem in what stdout is in fortran
   if (ops_is_root() .eq. 1) then
     write (*,'(a,f16.7,a)') 'Max total runtime =', endTime - startTime,' seconds'

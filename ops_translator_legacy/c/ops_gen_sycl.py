@@ -331,10 +331,8 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
         config.depth = 4
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat":
-                code(f"int base{n} = args[{n}].dat->base_offset/sizeof({typs[n]});")
-                code(
-                    f"{typs[n]}* {clean_type(arg_list[n])}_p = ({typs[n]}*)args[{n}].data_d;"
-                )
+                code(f"int base{n} = args[{n}].dat->base_offset;")
+                code(f"{typs[n]} * __restrict__ {clean_type(arg_list[n])}_p = ({typs[n]} *)(args[{n}].data_d + base{n});")
                 if restrict[n] == 1 or prolong[n] == 1:
                     config.depth = 0
                     code("#ifdef OPS_MPI")
@@ -429,7 +427,7 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                     code(
                         f"reduct_bytes += ROUND_UP(maxblocks*{dims[n]}*sizeof({typs[n]}));"
                     )
-                    code(f"reduct_size = MAX(reduct_size,sizeof({typs[n]}));")
+                    code(f"reduct_size = MAX(reduct_size,{dims[n]}*sizeof({typs[n]}));")
                     code("")
 
         if GBL_READ and GBL_READ_MDIM:
@@ -744,12 +742,12 @@ def ops_gen_sycl(master, consts, kernels, soa_set):
                 if not dims[n].isdigit() or int(dims[n]) > 1:
                     code("#ifdef OPS_SOA")
                 code(
-                    f"{pre}ACC<{typs[n]}> {arg_list[n]}({dim}{sizelist}&{arg_list[n]}_p[0] + base{n} + {offset});"
+                    f"{pre}ACC<{typs[n]}> {arg_list[n]}({dim}{sizelist}{arg_list[n]}_p + {offset});"
                 )
                 if not dims[n].isdigit() or int(dims[n]) > 1:
                     code("#else")
                     code(
-                        f"{pre}ACC<{typs[n]}> {arg_list[n]}({dim}{sizelist}&{arg_list[n]}_p[0] + {dim[:-2]}*({offset}));"
+                        f"{pre}ACC<{typs[n]}> {arg_list[n]}({dim}{sizelist}{arg_list[n]}_p + {dim[:-2]}*({offset}));"
                     )
                     code("#endif")
         for n in range(0, nargs):

@@ -242,6 +242,7 @@ int main(int argc, char ** argv) {
 
     // Finalising the OPS library
     ops_exit();
+    return 0;
     
 }// End of main function
 
