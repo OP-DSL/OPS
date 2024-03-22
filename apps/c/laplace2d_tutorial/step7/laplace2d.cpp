@@ -127,9 +127,9 @@ int main(int argc, const char** argv)
     printf("This test is considered FAILED\n");
 
   //Finalising the OPS library
-  ops_exit();
   free(A);
   free(Anew);
+  ops_exit();
   return 0;
 }
 

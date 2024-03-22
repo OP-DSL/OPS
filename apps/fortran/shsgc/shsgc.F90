@@ -81,6 +81,10 @@ program SHSGC
   !for validation
   real(8) :: validate_rms, rms_diff
 
+  character(len=60) :: fname
+  character(len=3) :: pnxhdf
+  parameter(pnxhdf = '.h5')
+
   !-------------------------- Initialis constants--------------------------
   nxp = 204
   nyp = 5
@@ -336,6 +340,10 @@ program SHSGC
       write (*,*) iter, totaltime
     endif
 
+#ifdef OPS_LAZY
+    call ops_execute()
+#endif
+
   ENDDO
 
   call ops_timers(endTime)
@@ -365,9 +373,11 @@ program SHSGC
 
   end if
 
-  call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
-  call ops_fetch_block_hdf5_file(shsgc_grid, "shsgc.h5")
-  call ops_fetch_dat_hdf5_file(rho_new, "shsgc.h5")
+!  call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
+
+  fname = 'shsgc'//pnxhdf
+  call ops_fetch_block_hdf5_file(shsgc_grid, trim(fname))
+  call ops_fetch_dat_hdf5_file(rho_new, trim(fname))
 
   call ops_fetch_dat(rho_new, u_rho_new, status);
   if (status .lt. 0)then

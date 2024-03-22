@@ -852,7 +852,7 @@ def generate_kernel_files(app_name, consts, kernels, soa_set):
     ops_gen_mpi_cuda(app_name, consts, kernels, soa_set)
     ops_gen_mpi_cuda(app_name, consts, kernels, soa_set, hip=1)
 #    ops_gen_mpi_openacc(app_name, consts, kernels, soa_set)
-    ops_gen_mpi_opencl(app_name, consts, kernels, soa_set)
+#    ops_gen_mpi_opencl(app_name, consts, kernels, soa_set)
     ops_gen_sycl(app_name, consts, kernels, soa_set)
 
     import subprocess

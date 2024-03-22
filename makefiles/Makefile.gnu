@@ -16,3 +16,4 @@ OMPFLAGS := -fopenmp
 ifdef THREADED
 	THREADING_FLAGS ?= -fopenmp
 endif
+MPILINK := -lmpi_cxx

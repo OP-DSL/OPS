@@ -28,4 +28,3 @@ TARGETS=dev_seq dev_mpi seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda 
 
 #include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app_legacy
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app
-
