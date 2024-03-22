@@ -231,4 +231,5 @@ int main(int argc, const char **argv) {
     ops_printf("\nTotal Wall time %lf\n", et1 - et0);
     ops_printf("\nSuccessful exit from OPS!\n");
     ops_exit();
+    return 0;
 }
