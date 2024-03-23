@@ -88,23 +88,39 @@ void ops_device_freehost(OPS_instance *instance, void** ptr) {
 }
 
 void ops_device_memcpy_h2d(OPS_instance *instance, void** to, void **from, size_t size) {
-  int host = omp_get_initial_device();
+  /* int host = omp_get_initial_device();
   int device = omp_get_default_device();
 
   void* device_ptr = omp_get_mapped_ptr(*to, device);
-  omp_target_memcpy(device_ptr, *from, size, 0, 0, device, host);
+  omp_target_memcpy(device_ptr, *from, size, 0, 0, device, host); */
+
+  char *data_d = (char *)*to;
+  char *data_h = (char *)*from;
+
+  #pragma omp target teams distribute parallel for map(to: data_h[:size])
+  for (size_t i_size = 0; i_size < size; i_size++) {
+    data_d[i_size] = data_h[i_size];
+  }
 }
 
 void ops_device_memcpy_d2h(OPS_instance *instance, void** to, void **from, size_t size) {
-  int host = omp_get_initial_device();
+  /* int host = omp_get_initial_device();
   int device = omp_get_default_device();
 
   void* device_ptr = omp_get_mapped_ptr(*from, device);
-  omp_target_memcpy(*to, device_ptr, size, 0, 0, host, device);
+  omp_target_memcpy(*to, device_ptr, size, 0, 0, host, device); */
+
+  char *data_d = (char *)*from;
+  char *data_h = (char *)*to;
+
+  #pragma omp target teams distribute parallel for map(from: data_h[:size])
+  for (size_t i_size = 0; i_size < size; i_size++) {
+    data_h[i_size] = data_d[i_size];
+  }
 }
 
 void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_t size) {
-  int device, device2;
+  /* int device, device2;
   int no_devices = omp_get_num_devices();
 
   for(int i = 0; i < no_devices; i++) {
@@ -118,7 +134,15 @@ void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_
 
   void* device_ptr = omp_get_mapped_ptr(*from, device);
   void* device_ptr2 = omp_get_mapped_ptr(*to, device);
-  omp_target_memcpy(device_ptr2, device_ptr, size, 0, 0, device2, device);
+  omp_target_memcpy(device_ptr2, device_ptr, size, 0, 0, device2, device); */
+
+  char *data_d_dest = (char *)*to;
+  char *data_d_src  = (char *)*from;
+
+  #pragma omp target teams distribute parallel for
+  for (size_t i_size = 0; i_size < size; i_size++) {
+    data_d_dest[i_size] = data_d_src[i_size];
+  }
 }
 
 void ops_device_memset(OPS_instance *instance, void** ptr, int val, size_t size) {
