@@ -61,11 +61,15 @@ void ops_init_device(OPS_instance *instance, const int argc, const char *const a
 }
 
 void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
-  *ptr = ops_malloc(bytes);
+  /* *ptr = ops_malloc(bytes);
   int device = omp_get_default_device();
 
   void* device_ptr = omp_target_alloc(bytes, device);
-  omp_target_associate_ptr(*ptr, device_ptr, bytes, 0, device);
+  omp_target_associate_ptr(*ptr, device_ptr, bytes, 0, device); */
+
+  *ptr = ops_malloc(bytes);
+  char *data_d = (char *)*ptr;
+  #pragma omp target enter data map(to: data_d[0:bytes])
 }
 
 void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
@@ -75,11 +79,16 @@ void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
 void ops_device_free(OPS_instance *instance, void** ptr) {
   int device = omp_get_default_device();
 
-  void* device_ptr = omp_get_mapped_ptr(*ptr, device);
+  /* void* device_ptr = omp_get_mapped_ptr(*ptr, device);
   omp_target_disassociate_ptr(*ptr, device);
   omp_target_free(device_ptr, device);
   ops_free(*ptr);
-  *ptr = nullptr;
+  *ptr = nullptr; */
+
+  char *data_d = (char *)*ptr;
+  #pragma omp target exit data map(delete: data_d)
+  ops_free(data_d);
+  data_d = nullptr;
 }
 
 void ops_device_freehost(OPS_instance *instance, void** ptr) {
