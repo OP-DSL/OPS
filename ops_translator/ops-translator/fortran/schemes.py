@@ -157,3 +157,36 @@ class FortranCuda(Scheme):
         return output_string.strip()
 
 Scheme.register(FortranCuda)
+
+
+class FortranOpenMPOffload(Scheme):
+    lang = Lang.find("F90")
+    target = Target.find("openmp_offload")
+
+    fallback = None
+
+    consts_template = None
+    loop_host_template = Path("fortran/openmp_offload/loop_host.F90.j2")
+    master_kernel_template = None
+
+    loop_kernel_extension = "F90"
+
+    def translateKernel(
+        self,
+        loop: OPS.Loop,
+        program: Program,
+        app: Application,
+        kernel_idx: int
+    ) -> str:
+
+        filename = loop.kernel[:loop.kernel.find("kernel")]+"kernel.inc"
+
+        #kernel_entities = retrieve_subroutine_by_name(filename, loop.kernel)
+        kernel_entities = retrieve_subroutine_by_name_regex(filename, loop.kernel)
+
+        if kernel_entities is None or (kernel_entities is not None and len(kernel_entities) == 0):
+            raise ParseError(f"unable to find kernel function: {loop.kernel}")
+
+        return kernel_entities.strip()
+
+Scheme.register(FortranOpenMPOffload)

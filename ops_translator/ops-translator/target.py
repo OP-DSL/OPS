@@ -54,6 +54,7 @@ class Hip(Target):
 class OpenMPOffload(Target):
     name = "openmp_offload"
     kernel_translation = True
+    suffix = "ompoffload"
     config = {
         "grouped" : True,
         "device" : 4,

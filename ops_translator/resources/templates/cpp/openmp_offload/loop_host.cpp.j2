@@ -209,8 +209,10 @@
 {% set indent = [0] %}
 {% if lh.has_reduction %}
     #pragma omp target teams distribute parallel for{{line[0]}}
+{#    #pragma omp target teams loop{{line[0]}} #}
 {% else %}
     #pragma omp target teams distribute parallel for collapse({{lh.ndim}}){{line[0]}}
+{#    #pragma omp target teams loop collapse({{lh.ndim}}){{line[0]}} #}
 {% endif %}
 {% if lh.ndim > 2 %}
     for (int n_z = start_indx2; n_z < end_indx2; n_z++)

@@ -87,73 +87,73 @@ mklib:
 
 .SUFFIXES: .cpp .cu .o
 
-$(C_OPS_OBJ)/%.o : src/core/%.cpp
+$(C_OPS_OBJ)/%.o : $(C_OPS_SRC)/core/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%.o : src/sequential/%.cpp
+$(C_OPS_OBJ)/%.o : $(C_OPS_SRC)/sequential/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/ops_hdf5.o : src/externlib/ops_hdf5.cpp
+$(C_OPS_OBJ)/ops_hdf5.o : $(C_OPS_SRC)/externlib/ops_hdf5.cpp
 	$(CHKCXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/ops_hdf5_common.o : src/externlib/ops_hdf5_common.cpp
+$(C_OPS_OBJ)/ops_hdf5_common.o : $(C_OPS_SRC)/externlib/ops_hdf5_common.cpp
 	$(CHKCXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%.o : src/externlib/%.cpp
+$(C_OPS_OBJ)/%.o : $(C_OPS_SRC)/externlib/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%_mpi.o : src/externlib/%.cpp
+$(C_OPS_OBJ)/%_mpi.o : $(C_OPS_SRC)/externlib/%.cpp
 	$(MPICXX) $(CXXFLAGS) -I$(C_OPS_INC)  $(HDF5_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%.o : src/ompoffload/%.cpp
+$(C_OPS_OBJ)/%.o : $(C_OPS_SRC)/ompoffload/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%_ompoffload_mpi.o : src/mpi/%_ompoffload.cpp
+$(C_OPS_OBJ)/%_ompoffload_mpi.o : $(C_OPS_SRC)/mpi/%_ompoffload.cpp
 	$(MPICXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -I$(C_OPS_INC) $(MPI_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%_mpi.o : src/mpi/%.cpp
+$(C_OPS_OBJ)/%_mpi.o : $(C_OPS_SRC)/mpi/%.cpp
 	$(MPICXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC)  $(HDF5_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%.o : src/mpi/%.cu
+$(C_OPS_OBJ)/%.o : $(C_OPS_SRC)/mpi/%.cu
 	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%_sycl_mpi.o : src/mpi/%_sycl.cpp
+$(C_OPS_OBJ)/%_sycl_mpi.o : $(C_OPS_SRC)/mpi/%_sycl.cpp
 	$(SYCLMPICXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%_hip_mpi.o : src/mpi/%_hip.cpp
+$(C_OPS_OBJ)/%_hip_mpi.o : $(C_OPS_SRC)/mpi/%_hip.cpp
 	$(HIPCC) $(CXXFLAGS) $(HIPFLAGS) -I$(C_OPS_INC) $(MPI_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%.o : src/cuda/%.cpp
+$(C_OPS_OBJ)/%.o : $(C_OPS_SRC)/cuda/%.cpp
 	$(CXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%_cuda.o : src/cuda/%.cu
+$(C_OPS_OBJ)/%_cuda.o : $(C_OPS_SRC)/cuda/%.cu
 	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%.o : src/cuda/%.cu
+$(C_OPS_OBJ)/%.o : $(C_OPS_SRC)/cuda/%.cu
 	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%.o : src/opencl/%.cpp
+$(C_OPS_OBJ)/%.o : $(C_OPS_SRC)/opencl/%.cpp
 	$(CXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%_hip.o : src/hip/%.cpp
+$(C_OPS_OBJ)/%_hip.o : $(C_OPS_SRC)/hip/%.cpp
 	$(HIPCC) $(CXXFLAGS) $(HIPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%.o : src/hip/%.cpp
+$(C_OPS_OBJ)/%.o : $(C_OPS_SRC)/hip/%.cpp
 	$(HIPCC) $(CXXFLAGS) $(HIPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%.o : src/sycl/%.cpp
+$(C_OPS_OBJ)/%.o : $(C_OPS_SRC)/sycl/%.cpp
 	$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%_mpi.o : src/tridiag/%_mpi.cpp
+$(C_OPS_OBJ)/%_mpi.o : $(C_OPS_SRC)/tridiag/%_mpi.cpp
 	$(MPICXX) $(CXXFLAGS) -I$(C_OPS_INC) $(TRID_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%_mpi_cuda.o : src/tridiag/%_mpi_cuda.cpp
+$(C_OPS_OBJ)/%_mpi_cuda.o : $(C_OPS_SRC)/tridiag/%_mpi_cuda.cpp
 	$(MPICXX) $(CXXFLAGS) -I$(C_OPS_INC) $(TRID_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%.o : src/tridiag/%.cpp
+$(C_OPS_OBJ)/%.o : $(C_OPS_SRC)/tridiag/%.cpp
 	$(CXX) $(CXXFLAGS) -I$(C_OPS_INC) $(TRID_INC) -c $< -o $@
 
-$(C_OPS_OBJ)/%_cuda.o : src/tridiag/%.cu
+$(C_OPS_OBJ)/%_cuda.o : $(C_OPS_SRC)/tridiag/%.cu
 	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) $(TRID_INC) -c $< -o $@
 
 hdf5_seq: mklib $(C_OPS_OBJ)/ops_hdf5.o $(C_OPS_OBJ)/ops_hdf5_common.o

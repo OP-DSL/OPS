@@ -69,7 +69,7 @@ program laplace
     !initialize and declare constants
     imax = 4094
     jmax = 4094
-    pi = 2.0_8*asin(1.0_8)
+!    pi = 2.0_8*asin(1.0_8)
 
 #ifdef OPS_WITH_CUDAFOR
     imax_opsconstant = imax

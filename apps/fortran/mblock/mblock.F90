@@ -232,6 +232,7 @@ program MBLOCK
   call ops_halo_transfer(halos4)
   call ops_halo_transfer(halos5)
 
+
 !  call ops_print_dat_to_txtfile(data1, "data0.txt")
 !  call ops_print_dat_to_txtfile(data2, "data1.txt")
 
@@ -241,6 +242,7 @@ program MBLOCK
   call ops_fetch_block_hdf5_file(grid2, "data1.h5")
   call ops_fetch_dat_hdf5_file(data2, "data1.h5")
 
+
   !test data access API
   npartitions_l = ops_dat_get_local_npartitions( data1 )
   npartitions_g = ops_dat_get_global_npartitions( data1 )
@@ -249,6 +251,7 @@ program MBLOCK
   print *,"extents: ", d_disp, d_size
   allocate(temp2(d_size(1), d_size(2)))
   call ops_dat_fetch_data( data1, 1, temp2 )
+
 ! print *,temp2
   temp2(5,5) = -100
   call ops_dat_set_data( data1, 1, temp2 )
@@ -260,4 +263,5 @@ program MBLOCK
   write(*,'(a)')"Sucessful exit from OPS"
 
   call ops_exit( )
+
 end program MBLOCK
