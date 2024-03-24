@@ -1252,18 +1252,38 @@ void memReadGridV2(ap_uint<MEM_DATA_WIDTH>* mem_in,
 			range.end[0], range.end[1], range.end[2], start_x, end_x, x_tile_size, x_tile_size_bytes, num_xblocks);
 	printf("===========================================================================================\n");
 #endif
+	unsigned short diff_y = range.end[1] - range.start[1];
+	bool isContinous = (grid_xblocks == num_xblocks and (diff_y == gridSize[1] or not range.dim == 3));
 
-	for (unsigned short k = range.start[2]; k < range.end[2]; k++)
+	if (isContinous)
 	{
-		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
-		{
-			unsigned int offset = start_x + j * grid_xblocks + k * gridSize[1] * grid_xblocks;
+#ifdef DEBUG_LOG
+		printf("|HLS DEBUG_LOG|%s| continuous read\n", __func__);
+#endif
+		unsigned int offset = start_x + range.start[1] * grid_xblocks + range.start[2] * gridSize[1] * grid_xblocks;
+		unsigned int size_y = range.end[1] - range.start[1];
+		unsigned int size_z = range.end[2] - range.start[2];
+		unsigned int  size_bytes = x_tile_size_bytes * size_y * size_z;
 
 #ifdef DEBUG_LOG
-			printf("|HLS DEBUG_LOG|%s| reading. offset:%d, j:%d, k:%d\n"
-					, __func__,offset, j, k);
+		printf("|HLS DEBUG_LOG|%s| init offset:%d, size_y:%d, size_z:%d\, size_bytes:%d\n", __func__, offset, size_y, size_z, size_bytes);
 #endif
-			mem2axis<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>* )(mem_in + offset), strm_out, x_tile_size_bytes);
+		mem2axis<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>* )(mem_in + offset), strm_out, size_bytes);
+	}
+	else
+	{
+		for (unsigned short k = range.start[2]; k < range.end[2]; k++)
+		{
+			for (unsigned short j = range.start[1]; j < range.end[1]; j++)
+			{
+				unsigned int offset = start_x + j * grid_xblocks + k * gridSize[1] * grid_xblocks;
+
+		#ifdef DEBUG_LOG
+				printf("|HLS DEBUG_LOG|%s| reading. offset:%d, j:%d, k:%d\n"
+						, __func__,offset, j, k);
+		#endif
+				mem2axis<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>* )(mem_in + offset), strm_out, x_tile_size_bytes);
+			}
 		}
 	}
 #ifdef DEBUG_LOG
@@ -1487,17 +1507,38 @@ void memWriteGridSimpleV2(ap_uint<MEM_DATA_WIDTH>* mem_out,
 	printf("====================================================================================\n");
 #endif
 
-	for (unsigned short k = range.start[2]; k < range.end[2]; k++)
+	unsigned short diff_y = range.end[1] - range.start[1];
+	bool isContinous = (grid_xblocks == num_xblocks and (diff_y == gridSize[1] or not range.dim == 3));
+
+	if (isContinous)
 	{
-		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
-		{
-// #pragma HLS PIPELINE II = II_factor
-			unsigned int offset = start_x + j * grid_xblocks + k * gridSize[1] * grid_xblocks;	
 #ifdef DEBUG_LOG
-			printf("|HLS DEBUG_LOG|%s| writing. offset:%d, j:%d, k:%d\n"
-					, __func__, offset, j, k);
+		printf("|HLS DEBUG_LOG|%s| continuous read\n", __func__);
 #endif
-			axis2mem<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + offset), strm_in, x_tile_size_bytes);
+		unsigned int offset = start_x + range.start[1] * grid_xblocks + range.start[2] * gridSize[1] * grid_xblocks;
+		unsigned int size_y = range.end[1] - range.start[1];
+		unsigned int size_z = range.end[2] - range.start[2];
+		unsigned int  size_bytes = x_tile_size_bytes * size_y * size_z;
+
+#ifdef DEBUG_LOG
+		printf("|HLS DEBUG_LOG|%s| init offset:%d, size_y:%d, size_z:%d\, size_bytes:%d\n", __func__, offset, size_y, size_z, size_bytes);
+#endif
+		axis2mem<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + offset), strm_in, size_bytes);
+	}
+	else
+	{
+		for (unsigned short k = range.start[2]; k < range.end[2]; k++)
+		{
+			for (unsigned short j = range.start[1]; j < range.end[1]; j++)
+			{
+	// #pragma HLS PIPELINE II = II_factor
+				unsigned int offset = start_x + j * grid_xblocks + k * gridSize[1] * grid_xblocks;
+	#ifdef DEBUG_LOG
+				printf("|HLS DEBUG_LOG|%s| writing. offset:%d, j:%d, k:%d\n"
+						, __func__, offset, j, k);
+	#endif
+				axis2mem<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + offset), strm_in, x_tile_size_bytes);
+			}
 		}
 	}
 #ifdef DEBUG_LOG
