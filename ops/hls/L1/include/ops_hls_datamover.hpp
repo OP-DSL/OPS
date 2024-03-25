@@ -1546,6 +1546,54 @@ void memWriteGridSimpleV2(ap_uint<MEM_DATA_WIDTH>* mem_out,
 			, __func__);
 #endif
 }
+
+template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
+void axisLoopback(
+		::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_in,
+		 ::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_out,
+		SizeType& gridSize,
+		AccessRange& range)
+{
+	constexpr unsigned short data_vector_factor = MEM_DATA_WIDTH / DATA_WIDTH;
+	constexpr unsigned short pkts_per_beat = MEM_DATA_WIDTH / AXIS_DATA_WIDTH;
+	const unsigned short ShiftBits = (unsigned short)LOG2(data_vector_factor);
+	const unsigned short PktsShiftBits = (unsigned short)LOG2(pkts_per_beat);
+	unsigned short start_x = range.start[0] >> ShiftBits;
+	start_x = start_x << PktsShiftBits;
+	unsigned short end_x = (range.end[0] + data_vector_factor - 1) >> ShiftBits;
+	end_x = end_x << PktsShiftBits;
+	unsigned short grid_xblocks = gridSize[0] >> ShiftBits; //GridSize[0] has to be MEM_DATA_WIDTH aligned
+	unsigned short num_xpkts = end_x - start_x;
+
+	if (range.dim < 3)
+	{
+		range.start[2] = 0;
+		range.end[2] = 1;
+	}
+	else if (range.dim < 2)
+	{
+		range.start[1] = 0;
+		range.end[1] = 1;
+	}
+
+	for (unsigned short k = range.start[2]; k < range.end[2]; k++)
+	{
+		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
+		{
+			for (unsigned short x_pkt = start_x; x_pkt < end_x; x_pkt++)
+			{
+ #pragma HLS PIPELINE II = 1
+
+#ifdef DEBUG_LOG
+			printf("|HLS DEBUG_LOG|%s| writing. offset:%d, j:%d, k:%d\n"
+					, __func__, x_pkt, j, k);
+#endif
+				ap_axiu<AXIS_DATA_WIDTH,0,0,0> pkt = strm_in.read();
+				strm_out.write(pkt);
+			}
+		}
+	}
+}
 //template <unsigned int MEM_DATA_WIDTH, unsigned int STREAM_DATA_WIDTH, unsigned int DATA_WIDTH=32>
 //void memWriteGridNew(ap_uint<DATA_WIDTH>* mem_out,
 //		::hls::stream<ap_axiu<STREAM_DATA_WIDTH,0,0,0>>& strm_in,
