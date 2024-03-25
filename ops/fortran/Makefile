@@ -25,6 +25,12 @@ endif
 CXXFLAGS += -DOPS_FTN
 NVCCFLAGS += -DOPS_FTN
 
+ifneq ($(strip $(MPI_INSTALL_PATH)),)
+    I_MPI_INC = -I$(MPI_INC)
+else
+    I_MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
+endif
+
 .PHONY: mkdir
 
 TARGETS	= f_seq f_mpi f_ompoffload f_mpi_ompoffload
@@ -74,16 +80,16 @@ $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/externlib/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
 $(F_OPS_OBJ)/%_mpi.o : $(C_OPS_SRC)/externlib/%.cpp
-	$(MPICXX) $(CXXFLAGS) -I$(C_OPS_INC)  $(HDF5_INC) -c $< -o $@
+	$(MPICXX) $(CXXFLAGS) -I$(C_OPS_INC) $(I_MPI_INC) $(HDF5_INC) -c $< -o $@
 
 $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/ompoffload/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
 $(F_OPS_OBJ)/%_ompoffload_mpi.o : $(C_OPS_SRC)/mpi/%_ompoffload.cpp
-	$(MPICXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -I$(C_OPS_INC) $(MPI_INC) -c $< -o $@
+	$(MPICXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -I$(C_OPS_INC) $(I_MPI_INC) -c $< -o $@
 
 $(F_OPS_OBJ)/%_mpi.o : $(C_OPS_SRC)/mpi/%.cpp
-	$(MPICXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC)  $(HDF5_INC) -c $< -o $@
+	$(MPICXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) $(I_MPI_INC) $(HDF5_INC) -c $< -o $@
 
 $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/mpi/%.cu
 	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -c $< -o $@

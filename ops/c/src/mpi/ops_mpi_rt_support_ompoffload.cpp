@@ -37,6 +37,7 @@
  * backend
  */
 #include <ops_lib_core.h>
+#include <string>
 #include <ops_device_rt_support.h>
 
 int halo_buffer_size = 0;
