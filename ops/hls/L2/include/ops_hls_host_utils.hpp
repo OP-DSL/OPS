@@ -346,9 +346,9 @@ ops::hls::StencilConfigCore getStencilConfig(ops::hls::GridPropertyCoreV2& origi
 
 
 #ifndef OPS_HLS_V2
-unsigned short getOffset(const int* stencilOffset, ops::hls::GridPropertyCore& gridProp,const unsigned short i, const unsigned short j = 0, const unsigned short k = 0)
+unsigned int getOffset(const int* stencilOffset, ops::hls::GridPropertyCore& gridProp,const unsigned short i, const unsigned short j = 0, const unsigned short k = 0)
 #else
-unsigned short getOffset(const int* stencilOffset, ops::hls::GridPropertyCoreV2& gridProp, const unsigned short i, const unsigned short j = 0, const unsigned short k = 0)
+unsigned int getOffset(const int* stencilOffset, ops::hls::GridPropertyCoreV2& gridProp, const unsigned short i, const unsigned short j = 0, const unsigned short k = 0)
 #endif
 {
     return (i + stencilOffset[0]
