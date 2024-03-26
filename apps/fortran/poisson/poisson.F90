@@ -65,6 +65,7 @@ program POISSON
 
   !halo vars
   integer(kind=4) ::  sizes(2*ngrid_x*ngrid_y), disps(2*ngrid_x*ngrid_y)
+  integer(kind=4) ::  dispx, dispy
 
   integer(kind=4) ::  halo_iter(2), base_from(2), base_to(2), dir(2), dir_to(2)
 
@@ -252,9 +253,11 @@ program POISSON
       iter_range(3) = 0
       iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2) +1
       !write(*,*) iter_range
+      dispx = disps(2*((i-1)+ngrid_x*(j-1))+1)
+      dispy = disps(2*((i-1)+ngrid_x*(j-1))+2)
       call ops_par_loop(poisson_populate_kernel, "poisson_populate_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
-            &  ops_arg_gbl(disps(2*((i-1)+ngrid_x*(j-1))+1), 1, "integer(kind=4)", OPS_READ), &
-            &  ops_arg_gbl(disps(2*((i-1)+ngrid_x*(j-1))+2), 1, "integer(kind=4)", OPS_READ), &
+            &  ops_arg_gbl(dispx, 1, "integer(kind=4)", OPS_READ), &
+            &  ops_arg_gbl(dispy, 1, "integer(kind=4)", OPS_READ), &
             &  ops_arg_idx(), &
             &  ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE), &
             &  ops_arg_dat(f((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE), &

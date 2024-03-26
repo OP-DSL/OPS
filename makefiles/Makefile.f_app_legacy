@@ -85,7 +85,7 @@ $(APP)_seq: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/
 		@echo ""
 		@echo "Building ${APP}_seq"
 		@echo ""
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS) $(FLINK) $(OTHER_FILES) mpi_openmp/*_seq_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) -lops_for_seq $(F_HDF5_LIB_SEQ) -o $(APP)_seq
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS) $(OTHER_FILES) mpi_openmp/*_seq_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_seq $(F_HDF5_LIB_SEQ) -o $(APP)_seq
 
 #=====================================================================================================================================================================
 #
@@ -97,7 +97,7 @@ $(APP)_mpi: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/
 		@echo ""
 		@echo "Building ${APP}_mpi"
 		@echo ""
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS) $(FLINK) $(MPI_LINK) -DOPS_MPI $(OTHER_FILES) mpi_openmp/*_seq_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) -lops_for_mpi $(F_HDF5_LIB_MPI) -o $(APP)_mpi
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS) -DOPS_MPI $(I_MPI_INC) $(OTHER_FILES) mpi_openmp/*_seq_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_mpi $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi
 
 #=====================================================================================================================================================================
 #
@@ -109,14 +109,14 @@ $(APP)_openmp: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILE
 		@echo ""
 		@echo "Building ${APP}_openmp"
 		@echo ""
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS) $(FLINK) $(OMPFLAGS) $(OTHER_FILES) mpi_openmp/*_seq_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) -lops_for_seq $(F_HDF5_LIB_SEQ) -o $(APP)_openmp
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS) $(OMPFLAGS) $(OTHER_FILES) mpi_openmp/*_seq_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_seq $(F_HDF5_LIB_SEQ) -o $(APP)_openmp
 
 $(APP)_mpi_openmp: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_mpi.a $(OPS_FILES_GEN)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_openmp"
 		@echo ""
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS) $(FLINK) $(OMPFLAGS) $(MPI_LINK) -DOPS_MPI $(OTHER_FILES) mpi_openmp/*_seq_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) -lops_for_mpi $(F_HDF5_LIB_MPI) -o $(APP)_mpi_openmp
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS) $(OMPFLAGS) -DOPS_MPI $(I_MPI_INC) $(OTHER_FILES) mpi_openmp/*_seq_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_mpi $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_openmp
 
 #=====================================================================================================================================================================
 #
@@ -128,14 +128,14 @@ $(APP)_tiled: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER
 		@echo ""
 		@echo "Building ${APP}_tiled"
 		@echo ""
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS) $(FLINK) -DOPS_LAZY $(OTHER_FILES) mpi_openmp/*_seq_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) -lops_for_seq $(F_HDF5_LIB_SEQ) -o $(APP)_tiled
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS) -DOPS_LAZY $(OTHER_FILES) mpi_openmp/*_seq_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_seq $(F_HDF5_LIB_SEQ) -o $(APP)_tiled
 
 $(APP)_mpi_tiled: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_mpi.a $(OPS_FILES_GEN)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_tiled"
 		@echo ""
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS) $(FLINK) $(MPI_LINK) -DOPS_LAZY -DOPS_MPI $(OTHER_FILES) mpi_openmp/*_seq_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) -lops_for_mpi $(F_HDF5_LIB_MPI) -o $(APP)_mpi_tiled
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS) -DOPS_MPI -DOPS_LAZY $(I_MPI_INC) $(OTHER_FILES) mpi_openmp/*_seq_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_mpi $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_tiled
 
 #=====================================================================================================================================================================
 #
@@ -147,21 +147,21 @@ $(APP)_cuda: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)
 		@echo ""
 		@echo "Building ${APP}_cuda"
 		@echo ""
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(FLINK) $(CUDAFOR) $(OTHER_FILES) cuda/*_cuda_kernel.CUF $(OPS_GENERATED) $(APP_LIBS) -lops_for_cuda $(F_HDF5_LIB_SEQ) -o $(APP)_cuda
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) $(OTHER_FILES) cuda/*_cuda_kernel.CUF $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_cuda $(F_HDF5_LIB_SEQ) -o $(APP)_cuda
 
 $(APP)_mpi_cuda: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_mpi_cuda.a $(OPS_FILES_GEN)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_cuda"
 		@echo ""
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(FLINK) $(CUDAFOR) $(MPI_LINK) -DOPS_MPI $(OTHER_FILES) cuda/*_cuda_kernel.CUF $(OPS_GENERATED) $(APP_LIBS) -lops_for_mpi_cuda $(F_HDF5_LIB_MPI) -o $(APP)_mpi_cuda
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) -DOPS_MPI $(I_MPI_INC) $(OTHER_FILES) cuda/*_cuda_kernel.CUF $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_mpi_cuda $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_cuda
 
 $(APP)_mpi_cuda_tiled: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_mpi_cuda.a $(OPS_FILES_GEN)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_cuda_tiled"
 		@echo ""
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(FLINK) $(CUDAFOR) $(MPI_LINK) -DOPS_LAZY -DOPS_MPI $(OTHER_FILES) cuda/*_cuda_kernel.CUF $(OPS_GENERATED) $(APP_LIBS) -lops_for_mpi_cuda $(F_HDF5_LIB_MPI) -o $(APP)_mpi_cuda_tiled
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) -DOPS_MPI -DOPS_LAZY $(I_MPI_INC) $(OTHER_FILES) cuda/*_cuda_kernel.CUF $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_mpi_cuda $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_cuda_tiled
 
 #=====================================================================================================================================================================
 #
