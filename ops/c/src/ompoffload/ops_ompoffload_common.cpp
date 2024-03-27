@@ -109,16 +109,9 @@ void ops_device_memcpy_h2d(OPS_instance *instance, void** to, void **from, size_
   char *data_d = (char *)*to;
   char *data_h = (char *)*from;
 
-  // allocates and moves data_h to device
-  #pragma omp target teams loop map(to: data_h[:size])
-  for (int i = 0; i < size; i++) {
-    data_d[i] = data_h[i];      // updates device copy of data_d
-  }
-  #pragma omp target update from(data_d)    // updates host copy associated with device pointer
-
-/*  memcpy(*to, *from, size);
+  memcpy(*to, *from, size);
   char *ptr2 = (char *)*to;
-  #pragma omp target update to(ptr2[:size]) */
+  #pragma omp target update to(ptr2[:size]) 
 }
 
 void ops_device_memcpy_d2h(OPS_instance *instance, void** to, void **from, size_t size) {
@@ -128,18 +121,9 @@ void ops_device_memcpy_d2h(OPS_instance *instance, void** to, void **from, size_
   void* device_ptr = omp_get_mapped_ptr(*from, device);
   omp_target_memcpy(*to, device_ptr, size, 0, 0, host, device); */
 
-  char *data_d = (char *)*from;
-  char *data_h = (char *)*to;
-
-  #pragma omp target update to(data_d)
-  // allocates and moves data_h from device
-  #pragma omp target teams loop map(from: data_h[:size])
-  for (int i = 0; i < size; i++) {
-    data_h[i] = data_d[i];
-  }
-  /* char *ptr2 = (char *)*from;
+  char *ptr2 = (char *)*from;
   #pragma omp target update from(ptr2[:size])
-  memcpy(*to, *from, size); */
+  memcpy(*to, *from, size);
 }
 
 void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_t size) {
@@ -159,32 +143,20 @@ void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_
   void* device_ptr2 = omp_get_mapped_ptr(*to, device);
   omp_target_memcpy(device_ptr2, device_ptr, size, 0, 0, device2, device); */
 
-  char *dest = (char *)*to;
-  char *src  = (char *)*from;
-
-  // as both to and from pointers are mapped to device with enter data no need of map clause here
-  #pragma omp target teams loop
-  for (int i = 0; i < size; i++) {
-    dest[i] = src[i];
-  }
-  #pragma omp target update from(dest)    // updates host copy associated with dest device pointer
-
-  /* char *ptr = (char *)*to;
+  char *ptr = (char *)*to;
   char *ptr2 = (char *)*from;
   #pragma omp target teams distribute parallel for map(to: ptr[:size]) map(from: ptr2[:size])
   for (int i = 0; i < size; i++) {
     ptr[i] = ptr2[i];
-  } */
+  }
 }
 
 void ops_device_memset(OPS_instance *instance, void** ptr, int val, size_t size) {
-
-  char* data_d = (char*) *ptr;
-  #pragma omp target teams loop map(to: data_d[:size])
+  char *ptr2 = (char *)*ptr;
+  #pragma omp target teams distribute parallel for map(to: ptr2[:size])
   for (int i = 0; i < size; i++) {
-    data_d[i] = (char)val;
+    ptr2[i] = (char)val;
   }
-  #pragma omp target update from(data_d)    // updates host copy associated with device pointer
 }
 
 void ops_device_sync(OPS_instance *instance) {

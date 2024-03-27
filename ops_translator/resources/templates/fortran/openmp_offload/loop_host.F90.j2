@@ -115,11 +115,11 @@ SUBROUTINE {{lh.kernel}}_wrap( &
     {% if arg is ops_dat %}
     INTEGER(KIND=4), INTENT(IN) :: dat{{arg.id+1}}_dim
         {% if arg is ops_read %}
-    {{lh.dats[arg.dat_id].typ | upper}}, INTENT(IN) :: opsDat{{arg.id+1}}Local(:)
+    {{lh.dats[arg.dat_id].typ | upper}}, DIMENSION(*), INTENT(IN) :: opsDat{{arg.id+1}}Local
         {% elif arg is ops_write %}
-    {{lh.dats[arg.dat_id].typ | upper}}, INTENT(OUT) :: opsDat{{arg.id+1}}Local(:)
+    {{lh.dats[arg.dat_id].typ | upper}}, DIMENSION(*), INTENT(OUT) :: opsDat{{arg.id+1}}Local
         {% elif arg is ops_rw or arg is ops_inc %}
-    {{lh.dats[arg.dat_id].typ | upper}}, INTENT(INOUT) :: opsDat{{arg.id+1}}Local(:)
+    {{lh.dats[arg.dat_id].typ | upper}}, DIMENSION(*), INTENT(INOUT) :: opsDat{{arg.id+1}}Local
         {% endif %}
     INTEGER(KIND=4), VALUE :: dat{{arg.id+1}}_base
 
@@ -129,7 +129,7 @@ SUBROUTINE {{lh.kernel}}_wrap( &
             {% if arg.dim.isdigit() and arg.dim|int == 1 %}
     {{arg.typ | upper}}, VALUE ::  opsGblDat{{arg.id+1}}Device
             {% else %}
-    {{arg.typ | upper}}, INTENT(IN) :: opsGblDat{{arg.id+1}}Device(:)
+    {{arg.typ | upper}}, DIMENSION(dat{{arg.id+1}}_dim), INTENT(IN) :: opsGblDat{{arg.id+1}}Device
             {% endif %}
         {% elif arg is ops_write %}
     {{arg.typ | upper}}, DIMENSION(dat{{arg.id+1}}_dim), INTENT(OUT) :: opsDat{{arg.id+1}}Local
