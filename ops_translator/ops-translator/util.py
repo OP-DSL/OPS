@@ -85,6 +85,20 @@ def extract_intrinsic_functions(kernel_func: str):
     return result_string
 
 
+def extract_arglist_fortran(kernel_func: str):
+    start_index = kernel_func.find('(')
+    end_index   = kernel_func.find(')', start_index)
+
+    arguments_str = kernel_func[start_index + 1:end_index]
+
+    arguments_str = arguments_str.replace('&', '')
+
+    # Split the string by ',' to get individual arguments
+    arguments_list = [arg.strip() for arg in arguments_str.split(',')]
+
+    return arguments_list
+
+
 class Findable(ABC):
     """
     A parent abstact class for findable support

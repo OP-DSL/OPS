@@ -121,6 +121,34 @@ program SHSGC
   a2(2) = 3.0_8/20.0_8
   a2(3) = 3.0_8/5.0_8
 
+#ifdef OPS_WITH_CUDAFOR
+  nxp_opsconstant = nxp
+  nyp_opsconstant = nyp
+  xhalo_opsconstant = xhalo
+  yhalo_opsconstant = yhalo
+  xmin_opsconstant = xmin
+  ymin_opsconstant = ymin
+  xmax_opsconstant = xmax
+  ymax_opsconstant = ymax
+  dx_opsconstant = dx
+  dy_opsconstant = dy
+  pl_opsconstant = pl
+  pr_opsconstant = pr
+  rhol_opsconstant = rhol
+  rhor_opsconstant = rhor
+  ul_opsconstant = ul
+  ur_opsconstant = ur
+  gam_opsconstant = gam
+  gam1_opsconstant = gam1
+  eps_opsconstant = eps
+  lambda_opsconstant = lambda
+  dt_opsconstant = dt
+  del2_opsconstant = del2
+  akap2_opsconstant = akap2
+  tvdsmu_opsconstant = tvdsmu
+  con_opsconstant = con
+#endif
+
   !-------------------------- Initialisation --------------------------
 
   ! OPS initialisation
@@ -174,7 +202,33 @@ program SHSGC
   ! reduction handle for rms variable
   call ops_decl_reduction_handle(8, rms, "real(8)", "rms")
 
-  call ops_partition("1D_BLOCK_DECOMPOSE")
+  call ops_decl_const("nxp", 1, "integer(4)", nxp)
+  call ops_decl_const("nyp", 1, "integer(4)", nyp)
+  call ops_decl_const("xhalo", 1, "integer(4)", xhalo)
+  call ops_decl_const("yhalo", 1, "integer(4)", yhalo)
+  call ops_decl_const("xmin", 1, "real(8)", xmin)
+  call ops_decl_const("ymin", 1, "real(8)", ymin)
+  call ops_decl_const("xmax", 1, "real(8)", xmax)
+  call ops_decl_const("ymax", 1, "real(8)", ymax)
+  call ops_decl_const("dx", 1, "real(8)", dx)
+  call ops_decl_const("dy", 1, "real(8)", dy)
+  call ops_decl_const("pl", 1, "real(8)", pl)
+  call ops_decl_const("pr", 1, "real(8)", pr)
+  call ops_decl_const("rhol", 1, "real(8)", rhol)
+  call ops_decl_const("rhor", 1, "real(8)", rhor)
+  call ops_decl_const("ul", 1, "real(8)", ul)
+  call ops_decl_const("ur", 1, "real(8)", ur)
+  call ops_decl_const("gam", 1, "real(8)", gam)
+  call ops_decl_const("gam1", 1, "real(8)", gam1)
+  call ops_decl_const("eps", 1, "real(8)", eps)
+  call ops_decl_const("lambda", 1, "real(8)", lambda)
+  call ops_decl_const("dt", 1, "real(8)", dt)
+  call ops_decl_const("del2", 1, "real(8)", del2)
+  call ops_decl_const("akap2", 1, "real(8)", akap2)
+  call ops_decl_const("tvdsmu", 1, "real(8)", tvdsmu)
+  call ops_decl_const("con", 1, "real(8)", con)
+
+  call ops_partition("1D_BLOCK_DECOMPOSE"  )
 
   !
   ! Initialize with the test case

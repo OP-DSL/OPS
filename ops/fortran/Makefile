@@ -25,9 +25,15 @@ endif
 CXXFLAGS += -DOPS_FTN
 NVCCFLAGS += -DOPS_FTN
 
+ifneq ($(strip $(MPI_INSTALL_PATH)),)
+    I_MPI_INC = -I$(MPI_INC)
+else
+    I_MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
+endif
+
 .PHONY: mkdir
 
-TARGETS	= f_seq f_mpi
+TARGETS	= f_seq f_mpi f_ompoffload f_mpi_ompoffload
 
 ifdef HDF5_INSTALL_PATH
 	TARGETS += hdf5_seq
@@ -39,10 +45,29 @@ ifeq ($(OPS_COMPILER),pgi)
 	C_OPS_INC += -I$(CUDA_INC)
 endif
 
+ifneq (,$(filter f_ompoffload f_mpi_ompoffload,$(TARGETS)))
+ifeq ($(OPS_COMPILER),gnu)
+TARGETS:=$(filter-out f_ompoffload f_mpi_ompoffload,$(TARGETS))
+endif
+ifeq ($(OPS_COMPILER),intel)
+TARGETS:=$(filter-out f_ompoffload f_mpi_ompoffload,$(TARGETS))
+endif
+ifeq ($(OPS_COMPILER),intel-sycl)
+TARGETS:=$(filter-out f_ompoffload f_mpi_ompoffload,$(TARGETS))
+endif
+endif
+
+ifdef USE_OPENMP4
+    OMP_OFFLOAD_COMMON=ops_ompoffload_common_omp4.o
+else
+    OMP_OFFLOAD_COMMON=ops_ompoffload_common_omp5.o
+endif
+
+
 all: $(TARGETS)
 
 mkdir:
-	@mkdir -p $(F_OPS_LIB) $(F_OPS_OBJ) $(F_OPS_MOD) $(F_INC_MOD) $(F_INC_MOD)/openacc $(F_INC_MOD)/cuda
+	@mkdir -p $(F_OPS_LIB) $(F_OPS_OBJ) $(F_OPS_MOD) $(F_INC_MOD) $(F_INC_MOD)/cuda $(F_INC_MOD)/ompoffload
 
 .SUFFIXES: .cpp .cu .F90 .o
 
@@ -62,10 +87,16 @@ $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/externlib/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
 $(F_OPS_OBJ)/%_mpi.o : $(C_OPS_SRC)/externlib/%.cpp
-	$(MPICXX) $(CXXFLAGS) -I$(C_OPS_INC)  $(HDF5_INC) -c $< -o $@
+	$(MPICXX) $(CXXFLAGS) -I$(C_OPS_INC) $(I_MPI_INC) $(HDF5_INC) -c $< -o $@
+
+$(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/ompoffload/%.cpp
+	$(CXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -I$(C_OPS_INC) -c $< -o $@
+
+$(F_OPS_OBJ)/%_ompoffload_mpi.o : $(C_OPS_SRC)/mpi/%_ompoffload.cpp
+	$(MPICXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -I$(C_OPS_INC) $(I_MPI_INC) -c $< -o $@
 
 $(F_OPS_OBJ)/%_mpi.o : $(C_OPS_SRC)/mpi/%.cpp
-	$(MPICXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC)  $(HDF5_INC) -c $< -o $@
+	$(MPICXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) $(I_MPI_INC) $(HDF5_INC) -c $< -o $@
 
 $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/mpi/%.cu
 	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -c $< -o $@
@@ -91,6 +122,9 @@ $(F_OPS_OBJ)/%_cuda.o : $(F_OPS_SRC)/%.F90
 $(F_OPS_OBJ)/%_cuda.o : $(F_OPS_SRC)/%.CUF
 	$(FC) $(FFLAGS) $(CUDAFOR) $(FMODS_CUDA) -c $< -o $@
 
+$(F_OPS_OBJ)/%_ompoffload.o : $(F_OPS_SRC)/%.F90
+	$(FC) $(FFLAGS) $(FMODS_OMPOFFLOAD) -c $< -o $@
+
 
 hdf5_seq: mkdir $(F_OPS_OBJ)/ops_hdf5.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_hdf5_declarations.o
 	ar -r $(F_OPS_LIB)/libops_hdf5.a $(F_OPS_OBJ)/ops_hdf5.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_hdf5_declarations.o
@@ -111,6 +145,15 @@ f_cuda: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OB
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_cuda_common_cuda.o $(F_OPS_OBJ)/ops_cuda_rt_support_cuda.o $(F_OPS_OBJ)/ops_cuda_singlenode_cuda.o \
 	$(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_checkpointing_strategy.o $(F_OPS_OBJ)/ops_device_singlenode_common.o \
 	$(F_OPS_OBJ)/ops_for_declarations_cuda.o $(F_OPS_OBJ)/ops_for_rt_support_cuda.o
+
+f_ompoffload: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
+	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/$(OMP_OFFLOAD_COMMON) $(F_OPS_OBJ)/ops_ompoffload_rt_support_kernels.o \
+	$(F_OPS_OBJ)/ops_ompoffload_singlenode.o $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_checkpointing_strategy.o \
+	$(F_OPS_OBJ)/ops_device_singlenode_common.o $(F_OPS_OBJ)/ops_for_declarations_ompoffload.o $(F_OPS_OBJ)/ops_for_rt_support_ompoffload.o
+	ar -r $(F_OPS_LIB)/libops_for_ompoffload.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
+	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/$(OMP_OFFLOAD_COMMON) $(F_OPS_OBJ)/ops_ompoffload_rt_support_kernels.o \
+	$(F_OPS_OBJ)/ops_ompoffload_singlenode.o $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_checkpointing_strategy.o \
+	$(F_OPS_OBJ)/ops_device_singlenode_common.o $(F_OPS_OBJ)/ops_for_declarations_ompoffload.o $(F_OPS_OBJ)/ops_for_rt_support_ompoffload.o
 
 f_mpi: 	mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_mpi.o $(F_OPS_OBJ)/ops_checkpointing_strategy_mpi.o \
@@ -136,6 +179,20 @@ f_mpi_cuda: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OP
 	$(F_OPS_OBJ)/ops_mpi_hdf5_mpi.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_declarations_cuda.o $(F_OPS_OBJ)/ops_for_rt_support_cuda.o \
 	$(F_OPS_OBJ)/ops_for_hdf5_declarations_cuda.o
 
+f_mpi_ompoffload: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o \
+	$(F_OPS_OBJ)/ops_checkpointing.o $(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
+	$(F_OPS_OBJ)/ops_mpi_core_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_ompoffload_mpi.o $(F_OPS_OBJ)/ops_mpi_partition_mpi.o \
+	$(F_OPS_OBJ)/ops_checkpointing_strategy.o $(F_OPS_OBJ)/$(OMP_OFFLOAD_COMMON) \
+	$(F_OPS_OBJ)/ops_mpi_hdf5_mpi.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_declarations_ompoffload.o \
+	$(F_OPS_OBJ)/ops_for_rt_support_ompoffload.o $(F_OPS_OBJ)/ops_for_hdf5_declarations_ompoffload.o
+	ar -r $(F_OPS_LIB)/libops_for_mpi_ompoffload.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o \
+	$(F_OPS_OBJ)/ops_checkpointing.o $(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
+	$(F_OPS_OBJ)/ops_mpi_core_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_ompoffload_mpi.o $(F_OPS_OBJ)/ops_mpi_partition_mpi.o \
+	$(F_OPS_OBJ)/ops_checkpointing_strategy.o $(F_OPS_OBJ)/$(OMP_OFFLOAD_COMMON) \
+	$(F_OPS_OBJ)/ops_mpi_hdf5_mpi.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_declarations_ompoffload.o \
+	$(F_OPS_OBJ)/ops_for_rt_support_ompoffload.o $(F_OPS_OBJ)/ops_for_hdf5_declarations_ompoffload.o
+
+
 clean:
 	-rm -if $(F_OPS_OBJ)/*.o $(F_OPS_OBJ)/*.optrpt
 	-rm -if $(F_OPS_LIB)/*.a
@@ -143,5 +200,7 @@ clean:
 	-rm -if $(F_OPS_SRC)/*~
 	-rm -if $(F_OPS_MOD)/*.mod
 	-rm -if $(F_INC_MOD)/*.mod
+	-rm -if $(F_INC_MOD)/cuda/*.mod
+	-rm -if $(F_INC_MOD)/ompoffload/*.mod
 	-rm -if $(F_OPS)/*~
 	-rm -if *.lst cudafe

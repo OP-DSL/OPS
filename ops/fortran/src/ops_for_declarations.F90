@@ -505,7 +505,7 @@ module OPS_Fortran_Declarations
         subroutine create_kerneldesc_and_enque( name, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='create_kerneldesc_and_enque')
             use, intrinsic :: ISO_C_BINDING
 
-            import :: ops_block_core, ops_arg, c_funptr
+            import :: ops_block_core, ops_arg
 
             character(kind=c_char,len=1) :: name
             type(c_ptr), value      :: args

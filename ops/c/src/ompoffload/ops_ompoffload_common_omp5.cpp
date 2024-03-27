@@ -58,6 +58,9 @@ void ops_init_device(OPS_instance *instance, const int argc, const char *const a
   int no_of_devices = omp_get_num_devices();
   omp_set_default_device(my_id % no_of_devices);
   instance->OPS_hybrid_gpu = 1;
+
+  int device = omp_get_default_device();
+  if (instance->OPS_diags>=1) instance->ostream() << "\n Based on OpenMP5 standard, Using GPU device: " << device <<"\n";
 }
 
 void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
@@ -117,7 +120,7 @@ void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_
   }
 
   void* device_ptr = omp_get_mapped_ptr(*from, device);
-  void* device_ptr2 = omp_get_mapped_ptr(*to, device);
+  void* device_ptr2 = omp_get_mapped_ptr(*to, device2);
   omp_target_memcpy(device_ptr2, device_ptr, size, 0, 0, device2, device);
 }
 

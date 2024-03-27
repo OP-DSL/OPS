@@ -43,6 +43,7 @@
 
 program POISSON
   use OPS_Fortran_Reference
+  use OPS_Fortran_hdf5_Declarations
   use OPS_CONSTANTS
 
   use, intrinsic :: ISO_C_BINDING
@@ -65,6 +66,7 @@ program POISSON
 
   !halo vars
   integer(kind=4) ::  sizes(2*ngrid_x*ngrid_y), disps(2*ngrid_x*ngrid_y)
+  integer(kind=4) ::  dispx, dispy
 
   integer(kind=4) ::  halo_iter(2), base_from(2), base_to(2), dir(2), dir_to(2)
 
@@ -104,7 +106,12 @@ program POISSON
 
   ! constants
   dx = 0.01_8
-  dy = 0.01_8
+!  dy = 0.01_8
+
+#ifdef OPS_WITH_CUDAFOR
+  dx_opsconstant = dx
+  dy_opsconstant = dy
+#endif
 
   !ALLOCATE(blocks(ngrid_x*ngrid_y))
 
@@ -229,7 +236,8 @@ program POISSON
   end if
   call ops_decl_halo_group((off-1),halos, u_halos)
 
-
+  call ops_decl_const("dx", 1, "real(8)", dx)
+  call ops_decl_const("dy", 1, "real(8)", dy)
 
   call ops_partition("")
 
@@ -246,9 +254,11 @@ program POISSON
       iter_range(3) = 0
       iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2) +1
       !write(*,*) iter_range
+      dispx = disps(2*((i-1)+ngrid_x*(j-1))+1)
+      dispy = disps(2*((i-1)+ngrid_x*(j-1))+2)
       call ops_par_loop(poisson_populate_kernel, "poisson_populate_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
-            &  ops_arg_gbl(disps(2*((i-1)+ngrid_x*(j-1))+1), 1, "integer(kind=4)", OPS_READ), &
-            &  ops_arg_gbl(disps(2*((i-1)+ngrid_x*(j-1))+2), 1, "integer(kind=4)", OPS_READ), &
+            &  ops_arg_gbl(dispx, 1, "integer(kind=4)", OPS_READ), &
+            &  ops_arg_gbl(dispy, 1, "integer(kind=4)", OPS_READ), &
             &  ops_arg_idx(), &
             &  ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE), &
             &  ops_arg_dat(f((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE), &
@@ -305,6 +315,7 @@ program POISSON
 
   END DO
 
+  !call ops_dump_to_hdf5("output.h5")
   !call ops_print_dat_to_txtfile(u(1), "poisson.dat")
   !call ops_print_dat_to_txtfile(ref(1), "poisson.dat")
   !call exit()

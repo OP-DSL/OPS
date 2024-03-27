@@ -1,5 +1,7 @@
 CC      := clang
 CXX     := clang++
+FC		:= flang
+
 ifdef DEBUG
 	CCFLAGS   := -O0 -std=c99 -fPIC -Wall -g #-ffloat-store
 	CXXFLAGS   := -O0 -fPIC -Wall -g -std=c++11 #-ffloat-store

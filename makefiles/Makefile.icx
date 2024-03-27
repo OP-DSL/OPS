@@ -8,8 +8,10 @@ else
 	CCFLAGS   := -Ofast -march=native -std=c99 -fPIC -Wall -g -ftree-vectorize
 	CXXFLAGS   := -Ofast -march=native -fPIC -Wall -g -std=c++11
 endif
-FFLAGS := $(CFLAGS) -ffree-form -ffree-line-length-none -J$(F_INC_MOD)
 CXXLINK := -lstdc++
+FFLAGS  := $(CFLAGS) -ffree-form -ffree-line-length-none
+FMODS   := -J$(F_INC_MOD)
+
 OMPFLAGS := -fiopenmp
 CXXFLAGS += $(OMPFLAGS)
 ifdef THREADED

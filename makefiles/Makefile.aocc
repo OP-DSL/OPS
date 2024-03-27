@@ -9,8 +9,10 @@ else
 	CCFLAGS   := -Ofast -march=native -flto -g -Wall -fPIC -fopenmp
 	CXXFLAGS  := -Ofast -march=native -flto -g -Wall -fPIC -fopenmp
 endif
-FFLAGS := -Ofast -march=native -flto -g -Wall -ffree-form -ffree-line-length-none -fopenmp -J$(F_INC_MOD)
 CXXLINK := -lstdc++
+FFLAGS := -Ofast -march=native -flto -g -Wall -ffree-form -ffree-line-length-none -fopenmp
+FMODS  := -J$(F_INC_MOD)
+
 OMPFLAGS=-fopenmp
 ifdef THREADED
 	THREADING_FLAGS ?= -fopenmp
