@@ -43,6 +43,7 @@
 
 program POISSON
   use OPS_Fortran_Reference
+  use OPS_Fortran_hdf5_Declarations
   use OPS_CONSTANTS
 
   use, intrinsic :: ISO_C_BINDING
@@ -278,6 +279,8 @@ program POISSON
 
     END DO
   END DO
+
+!  call ops_dump_to_hdf5("output.h5")
 
   !
   ! Main iterative loop
