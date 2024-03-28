@@ -21,7 +21,7 @@ MPIF90=ftn
 
 MPI_INC = $(CRAY_MPICH_DIR)/include
 MPI_LIB = $(CRAY_MPICH_DIR)/lib $(PE_MPICH_GTL_DIR_amd_gfx90a)
-MPI_LINK = -lmpi $(PE_MPICH_GTL_LIBS_amd_gfx90a)
+MPI_LINK = -lmpi -lmpi_gtl_hsa # $(PE_MPICH_GTL_LIBS_amd_gfx90a)
 
 HIPCC=CC
 HIPMPICPP=CC
