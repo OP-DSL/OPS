@@ -6,12 +6,63 @@
 {% endblock %}
 
 {% block datamover_dataflow_region %}
-static void datamover_outerloop_{{ilh.id}}_dataflow_region(ops::hls::AccessRange& range,
-    {% for arg in ilh.joint_args|ops_dat %}
-    ops::hls::SizeType& arg{{arg.id}}_gridSize,
+static void datamover_outerloop_{{ilh.id}}_dataflow_region_read(ops::hls::AccessRange& range,
+    {% for arg in ilh.joint_args|ops_dat|ops_read %}
+        ops::hls::SizeType& arg{{arg.id}}_gridSize,
     {% endfor %}
-    {% for arg in ilh.joint_args|ops_dat %}
-    ap_uint<mem_data_width>* arg{{arg.id}},
+    {% for arg in ilh.joint_args|ops_dat|ops_read %}
+        ap_uint<mem_data_width>* arg{{arg.id}},
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat|ops_read %}
+        {% if arg is not ops_rw %}
+        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)}}{{"," if not loop.last}}
+        {% else %}
+        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "out")}}{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+        )
+{
+#pragma HLS DATAFLOW
+    {% for arg in ilh.joint_args|ops_dat|ops_read %}
+        {% if arg is not ops_rw %}
+    ops::hls::memReadGridV2<mem_data_width, axis_data_width, data_width>(arg{{arg.id}}, {{axis_name(arg)}}, arg{{arg.id}}_gridSize, range);
+        {% else %}
+    ops::hls::memReadGridV2<mem_data_width, axis_data_width, data_width>(arg{{arg.id}}, {{axis_name_t2(arg, "out")}}, arg{{arg.id}}_gridSize, range);
+        {% endif %}
+    {% endfor %}
+}
+
+static void datamover_outerloop_{{ilh.id}}_dataflow_region_write(ops::hls::AccessRange& range,
+    {% for arg in ilh.joint_args|ops_dat|ops_write %}
+        ops::hls::SizeType& arg{{arg.id}}_gridSize,
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat|ops_write %}
+        ap_uint<mem_data_width>* arg{{arg.id}},
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat|ops_write %}
+        {% if arg is not ops_rw %}
+        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)}}{{"," if not loop.last}}
+        {% else %}
+        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")}}{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+        )
+{
+#pragma HLS DATAFLOW
+    {% for arg in ilh.joint_args|ops_dat|ops_write %}
+        {% if arg is not ops_rw %}
+    ops::hls::memWriteGridSimpleV2<mem_data_width, axis_data_width, data_width>(arg{{arg.id}}, {{axis_name(arg)}}, arg{{arg.id}}_gridSize, range);
+        {% else %}
+    ops::hls::memWriteGridSimpleV2<mem_data_width, axis_data_width, data_width>(arg{{arg.id}}, {{axis_name_t2(arg, "in")}}, arg{{arg.id}}_gridSize, range);
+        {% endif %}
+    {% endfor %}
+}
+
+static void datamover_outerloop_{{ilh.id}}_dataflow_region_loopback(
+        const unsigned int iter,
+        ops::hls::AccessRange& range,
+    {% for arg in ilh.joint_args|ops_dat|ops_read %}
+        ops::hls::SizeType& arg{{arg.id}}_gridSize,
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is not ops_rw %}
@@ -23,19 +74,16 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region(ops::hls::AccessRange
     {% endfor %}
         )
 {
-#pragma HLS DATAFLOW
-    {% for arg in ilh.joint_args|ops_dat %}
-        {% if arg is not ops_rw %}
-            {% if arg is ops_read%}
-    ops::hls::memReadGridV2<mem_data_width, axis_data_width, data_width>(arg{{arg.id}}, {{axis_name(arg)}}, arg{{arg.id}}_gridSize, range);
-            {% else %}
-    ops::hls::memWriteGridSimpleV2<mem_data_width, axis_data_width, data_width>(arg{{arg.id}}, {{axis_name(arg)}}, arg{{arg.id}}_gridSize, range);
-            {% endif %}
-        {% else %}
-    ops::hls::memReadGridV2<mem_data_width, axis_data_width, data_width>(arg{{arg.id}}, {{axis_name_t2(arg, "out")}}, arg{{arg.id}}_gridSize, range);
-    ops::hls::memWriteGridSimpleV2<mem_data_width, axis_data_width, data_width>(arg{{arg.id}}, {{axis_name_t2(arg, "in")}}, arg{{arg.id}}_gridSize, range);
-        {% endif %}
+    for (unsigned int i = 0; i < iter; i++)
+    {
+#ifdef DEBUG_LOG
+        printf("[KERNEL_DEBUG]|%s| Calling loopback: %d \n", __func__, i);
+#endif
+#pragma HLS PIPELINE II=1
+    {% for arg in ilh.joint_args|ops_dat|ops_read %}
+        ops::hls::axisLoopback<mem_data_width, axis_data_width, data_width>( arg{{ilh.dat_swap_map[arg.id]}}_axis_in, {{axis_name(arg)}}, arg{{arg.id}}_gridSize, range);
     {% endfor %}
+    }
 }
 {% endblock %}
 
@@ -83,6 +131,8 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region(ops::hls::AccessRange
     ops::hls::SizeType arg{{arg.id}}_gridSize = { {% for i in range(config["ops_max_dim"]) -%}{% if i < ndim %}arg{{arg.id}}_gridSize_{{i}}{{", " if (not loop.last)}}{% else %}1{{", " if (not loop.last)}}{% endif %}{% endfor %} };
     {% endfor %}
 
+    unsigned loopback_itr = outer_itr - 1 >= 0 ? outer_itr - 1 : 0;
+
 #ifdef DEBUG_LOG
     printf("[KERNEL_DEBUG]|%s| starting datamover TOP range:(%d,%d,%d) ---> (%d,%d,%d)\n", __func__,
             range.start[0], range.start[1], range.start[2], range.end[0], range.end[1], range.end[2]);
@@ -92,16 +142,16 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region(ops::hls::AccessRange
     {% endfor %}
 #endif 
 
-    for (int i = 0; i < outer_itr; i++)
+    datamover_outerloop_{{ilh.id}}_dataflow_region_read(range, {% for arg in ilh.joint_args|ops_dat|ops_read -%}arg{{arg.id}}_gridSize, {% endfor %}{% for arg in ilh.joint_args|ops_dat|ops_read -%}arg{{arg.id}}, {% endfor %}{% for arg in ilh.joint_args|ops_dat|ops_read -%}{% if arg is not ops_rw -%}{{axis_name(arg)}}{{", " if not loop.last}}{% else -%}{{axis_name_t2(arg, "out")}}{{", " if not loop.last}}{% endif %}{% endfor %});
+    datamover_outerloop_{{ilh.id}}_dataflow_region_loopback(loopback_itr, range, {% for arg in ilh.joint_args|ops_dat|ops_read -%}arg{{arg.id}}_gridSize, {% endfor %}{% for arg in ilh.joint_args|ops_dat -%}{% if arg is not ops_rw -%}{{axis_name(arg)}}{{", " if not loop.last}}{% else -%}{{axis_name_t2(arg, "in")}}, {{axis_name_t2(arg, "out")}}{{", " if not loop.last}}{% endif %}{% endfor %});
+
+    if ((outer_itr - 1) % 2 == 0)
     {
-        if (i % 2 == 0)
-        {
-            datamover_outerloop_{{ilh.id}}_dataflow_region(range, {% for arg in ilh.joint_args|ops_dat -%}arg{{arg.id}}_gridSize, {% endfor %}{% for arg in ilh.joint_args|ops_dat -%}arg{{arg.id}}, {% endfor %}{% for arg in ilh.joint_args|ops_dat -%}{% if arg is not ops_rw %}{{axis_name(arg)}}{{", " if not loop.last}}{% else %} {{axis_name_t2(arg, "in")}}, {{axis_name_t2(arg, "out")}}{{", " if not loop.last}}{% endif %}{% endfor %});
-        }
-        else
-        {
-            datamover_outerloop_{{ilh.id}}_dataflow_region(range, {% for arg in ilh.joint_args|ops_dat -%}arg{{ilh.dat_swap_map[arg.id]}}_gridSize, {% endfor %}{% for arg in ilh.joint_args|ops_dat -%}arg{{ilh.dat_swap_map[arg.id]}}, {% endfor %}{% for arg in ilh.joint_args|ops_dat -%}{% if arg is not ops_rw %}{{axis_name(arg)}}{{", " if not loop.last}}{% else %}{{axis_name_t2(arg, "in")}}, {{axis_name_t2(arg, "out")}}{{", " if not loop.last}}{% endif %}{% endfor %});
-        }
+        datamover_outerloop_{{ilh.id}}_dataflow_region_write(range, {% for arg in ilh.joint_args|ops_dat|ops_write -%}arg{{arg.id}}_gridSize, {% endfor %}{% for arg in ilh.joint_args|ops_dat|ops_write -%}arg{{arg.id}}, {% endfor %}{% for arg in ilh.joint_args|ops_dat|ops_write -%}{% if arg is not ops_rw %}{{axis_name(arg)}}{{", " if not loop.last}}{% else %}{{axis_name_t2(arg, "in")}}{{", " if not loop.last}}{% endif %}{% endfor %});
+    }
+    else
+    {
+        datamover_outerloop_{{ilh.id}}_dataflow_region_write(range, {% for arg in ilh.joint_args|ops_dat|ops_write -%}arg{{ilh.dat_swap_map[arg.id]}}_gridSize, {% endfor %}{% for arg in ilh.joint_args|ops_dat|ops_write -%}arg{{ilh.dat_swap_map[arg.id]}}, {% endfor %}{% for arg in ilh.joint_args|ops_dat|ops_write -%}{% if arg is not ops_rw %}{{axis_name(arg)}}{{", " if not loop.last}}{% else %}{{axis_name_t2(arg, "in")}}{{", " if not loop.last}}{% endif %}{% endfor %});    
     }
 }
 
