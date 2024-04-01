@@ -2287,7 +2287,8 @@ void reallocConstArrays(OPS_instance *instance, int consts_bytes) {
     instance->OPS_consts_bytes = 4 * consts_bytes; // 4 is arbitrary, more than needed
     ops_device_mallochost(instance, (void **)&instance->OPS_gbl_prev, instance->OPS_consts_bytes);
     instance->OPS_consts_h = (char *)ops_malloc(instance->OPS_consts_bytes);
-    ops_device_malloc(instance, (void **)&instance->OPS_consts_d, instance->OPS_consts_bytes);
+    ops_device_malloc(instance, (void **)&(instance->OPS_consts_d), instance->OPS_consts_bytes);
+    ops_device_memset(instance, (void **)&(instance->OPS_consts_d), 0, instance->OPS_consts_bytes);
   }
 }
 
@@ -2299,7 +2300,8 @@ void reallocReductArrays(OPS_instance *instance, int reduct_bytes) {
     }
     instance->OPS_reduct_bytes = 4 * reduct_bytes; // 4 is arbitrary, more than needed
     instance->OPS_reduct_h = (char *)ops_malloc(instance->OPS_reduct_bytes);
-    ops_device_malloc(instance, (void **)&instance->OPS_reduct_d, instance->OPS_reduct_bytes);
+    ops_device_malloc(instance, (void **)&(instance->OPS_reduct_d), instance->OPS_reduct_bytes);
+    ops_device_memset(instance, (void **)&(instance->OPS_reduct_d), 0, instance->OPS_reduct_bytes);
   }
 }
 

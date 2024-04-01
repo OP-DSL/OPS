@@ -766,7 +766,8 @@ void ops_dat_deep_copy(ops_dat target, ops_dat source)
       ops_device_free(source->block->instance, (void**)&(target->data_d));
       target->data_d = nullptr;
     }
-    ops_device_malloc(source->block->instance, (void**)&(target->data_d), target->mem);
+    ops_device_malloc(source->block->instance, (void **)&(target->data_d), target->mem);
+    ops_device_memset(source->block->instance, (void **)&(target->data_d), 0, target->mem);
   }
    // Metadata and buffers are set up
    // Enqueue a lazy copy of data from source to target

@@ -66,7 +66,7 @@ void ops_init_device(OPS_instance *instance, const int argc, const char *const a
 void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
   *ptr = ops_malloc(bytes);
   char *data_d = (char *)*ptr;
-  #pragma omp target enter data map(to: data_d[:bytes])
+  #pragma omp target enter data map(alloc: data_d[0:bytes])
 }
 
 void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
@@ -88,19 +88,19 @@ void ops_device_freehost(OPS_instance *instance, void** ptr) {
 void ops_device_memcpy_h2d(OPS_instance *instance, void** to, void **from, size_t size) {
   memcpy(*to, *from, size);
   char *ptr2 = (char *)*to;
-  #pragma omp target update to(ptr2[:size]) 
+  #pragma omp target update to(ptr2[0:size])
 }
 
 void ops_device_memcpy_d2h(OPS_instance *instance, void** to, void **from, size_t size) {
   char *ptr2 = (char *)*from;
-  #pragma omp target update from(ptr2[:size])
+  #pragma omp target update from(ptr2[0:size])
   memcpy(*to, *from, size);
 }
 
 void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_t size) {
   char *ptr = (char *)*to;
   char *ptr2 = (char *)*from;
-  #pragma omp target teams distribute parallel for map(to: ptr[:size]) map(from: ptr2[:size])
+  #pragma omp target teams distribute parallel for map(tofrom: ptr[0:size]) map(to: ptr2[0:size])
   for (int i = 0; i < size; i++) {
     ptr[i] = ptr2[i];
   }
@@ -108,7 +108,7 @@ void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_
 
 void ops_device_memset(OPS_instance *instance, void** ptr, int val, size_t size) {
   char *ptr2 = (char *)*ptr;
-  #pragma omp target teams distribute parallel for map(to: ptr2[:size])
+  #pragma omp target teams distribute parallel for map(tofrom: ptr2[0:size])
   for (int i = 0; i < size; i++) {
     ptr2[i] = (char)val;
   }
