@@ -559,9 +559,9 @@ class IterLoop:
         target_dat_id = findIdx(self.dats, lambda d: d[0].ptr == ParCopy.target)
         source_dat_id = findIdx(self.dats, lambda d: d[0].ptr == ParCopy.source)
         if target_dat_id is None:
-            OpsError(f"ParCopy missing target dat used in any par-loop {ParCopy.target}")
+            raise OpsError(f"ParCopy missing target dat used in any par-loop '{ParCopy.target}'")
         elif source_dat_id is None:
-            OpsError(f"ParCopy missing source dat used in any par-loop {ParCopy.source}")
+            raise OpsError(f"ParCopy missing source dat used in any par-loop '{ParCopy.source}'")
 
         self.dat_swap_map[target_dat_id] = source_dat_id
         self.dat_swap_map[source_dat_id] = target_dat_id 

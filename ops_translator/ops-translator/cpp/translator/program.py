@@ -194,7 +194,7 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
         
         for arg in loop.args:
             if isinstance(arg, ArgDat):
-                dat = loop.dats[arg.id]
+                dat = loop.dats[arg.dat_id]
                 new_loop_call = f"{new_loop_call}, {dat.ptr}"
         new_loop_call = f'{new_loop_call});' 
         
@@ -300,7 +300,7 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
     
     for index in found_indices:
         before, after = buffer.get(index).split("ops_dat_get_raw_pointer", 1)
-        print (f"before: {before}, after: {after}")
+        # print (f"before: {before}, after: {after}")
         loop_indices = [index]
         
         if (after.find(";") == -1):

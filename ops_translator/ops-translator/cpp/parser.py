@@ -550,6 +550,9 @@ def parseIdentifier(node: Cursor, raw: bool = True) -> str:
     while node.kind == CursorKind.CSTYLE_CAST_EXPR:
         node = list(node.get_children())[1]
 
+    if node.kind == CursorKind.ARRAY_SUBSCRIPT_EXPR:
+        node = decend(node)
+        
     if node.kind == CursorKind.UNEXPOSED_EXPR:
         node = decend(node)
 
@@ -726,9 +729,8 @@ def parse_par_copy(loopNode: Cursor, args: List[Cursor], loc: Location, macros: 
     if len(args) != 2:
         raise ParseError("Incorrect number of args passed to ops_par_copy")
     
-    print(args)
-    target = args[0].spelling
-    source = args[1].spelling      
+    target = parseIdentifier(args[0])
+    source = parseIdentifier(args[1])
     
     return ops.ParCopy(target, source)
         
