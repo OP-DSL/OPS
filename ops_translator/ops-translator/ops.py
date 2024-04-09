@@ -5,6 +5,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Callable, List, Optional, Union, Tuple, Any
 
 from util import ABDC, findIdx
+from functools import cmp_to_key
 
 if TYPE_CHECKING:
     from store import Location
@@ -235,8 +236,76 @@ class Point:
     def __add__(self, other: Point)->Point:
         return Point([self.x + other.x, self.y + other.y, self.z + other.z])
     
+    def __sub__(self, other: Point)->Point:
+        return Point([self.x - other.x, self.y - other.y, self.z - other.z])
+    
     def __neg__(self)->Point:
         return Point([-self.x, -self.y, -self.z])
+
+def pointsToArray(points: List[Point], ndim: int) -> List[int]:
+    array = []
+    for point in points:
+        for i in range(ndim):
+            array.append(point[i])    
+    return array
+
+def pointCompare(point1: Point, point2: Point) -> int:
+    
+    if point1.z != point2.z:
+        return point1.z - point2.z
+    elif point1.y != point2.y:
+        return point1.y - point2.y
+    else:
+        return point1.x - point2.y
+
+def arrayToPoints(npoints: int, ndim: int, array: List[int]) -> List[Point]:
+    
+    points = []
+    if len(array) != npoints * ndim :
+        raise OpsError(f"Missmatch of parsed array with the stencil specification. Array: {array}, npoints: {npoints}, ndim: {ndim}")
+    
+    for i in range(npoints):
+        point = []
+        for j in range(ndim):
+            # logging.debug(f"accessing: {array[i*ndim + j]}")
+            point.append(array[i*ndim + j])
+        points.append(Point(point))
+    
+    return points
+
+def stencilPointsSort(npoints: int, ndim: int, array: List[int])-> List[Point]: 
+    
+    points = arrayToPoints(npoints, ndim, array)
+    # logging.debug(f"Points before sort: {points}")
+    sorted_points = sorted(points, key=cmp_to_key(pointCompare))
+    # logging.debug(f"Points after sort: {sorted_points}")
+    return sorted_points
+
+def getStencilSize(array: List[Point])->int:
+    xes = [point.x for point in array]
+    minX = min(xes)
+    maxX = max(xes)
+    return (maxX - minX + 1)
+
+def isInSameRow(one: Point , two: Point):
+    if one.y == two.y and one.z == two.z:
+        return True
+    return False
+
+def getMinPoint(array: List[Point]) -> Point:
+    minPoint = Point([100,100,100])
+    for  point in array:
+        minPoint.x = min(minPoint.x, point.x)
+        minPoint.y = min(minPoint.y, point.y)
+        minPoint.z = min(minPoint.z, point.z)
+    
+    return minPoint
+
+def cordinateOriginTranslation(origin: Point, array: List[Point]) -> List[Point]:
+    translated = []
+    for point in array:
+        translated.append(Point([point.x + origin.x, point.y + origin.y, point.z + origin.z]))
+    return translated
 
 @dataclass(frozen=False)
 class StencilRowDiscriptor:
@@ -643,6 +712,8 @@ class Loop:
     args: List[Arg]
     dats: List[Dat]
     stencils: List[str]
+    read_stencil: Stencil = None
+    write_stencil: Stencil = None
 
     arg_idx: Optional[int] = -1
     multiGrid: Optional[bool] = False
@@ -770,15 +841,77 @@ class Loop:
 
         return f"{kernel_detail_str}\n  ARGS:\n{args_str}\n  DATS:\n{dat_str}\n"
 
-    def get_read_stencil(self) -> str:
-        for arg in filter(lambda x: isinstance(x, ArgDat), self.args):
-            if arg.access_type == AccessType.OPS_READ or arg.access_type == AccessType.OPS_RW:
-                return arg.stencil_ptr    
-        return None
-    
+    def get_read_stencil(self, prog) -> str:
+        """! return the union of all read stenils
+
+        Returns:
+            str: _description_
+        """
+        
+        if self.read_stencil:
+            return self.read_stencil
+        
+        unique_stencil_names = self.get_unique_read_stencil_names()
+        unique_stencils = []
+        
+        for stencil_name in unique_stencil_names:
+            unique_stencils.append(prog.findStencil(stencil_name))
+        
+        id = -1
+        dim = 0
+        stencil_ptr = "read_stencil"
+        num_points = 0
+        base_afine_points = []
+        base_point = Point([0,0,0])
+        window_buffers = []
+        chains = []
+        d_m = [0,0,0]
+        d_p = [0,0,0]
+          
+        for i, stencil in enumerate(unique_stencils):
+            print(f"Unique stencil {i} - {stencil}")
+            
+            dim = max(dim, stencil.dim)
+            local_base_afine_points = [(p - stencil.base_point) for p in stencil.points]
+            base_afine_points.extend([p for p in local_base_afine_points if p not in base_afine_points])
+            
+            print (f"stencil_dim: {stencil.dim}")
+            for i in range(stencil.dim):
+                d_m[i] = max(d_m[i], stencil.d_m[i])
+                d_p[i] = max(d_p[i], stencil.d_p[i])
+        
+        minPoint = getMinPoint(base_afine_points)
+        base_point = -minPoint
+        points = cordinateOriginTranslation(base_point, base_afine_points)
+                
+        num_points = len(points)
+        xes = [point.x for point in points]
+        minX = min(xes)
+        maxX = max(xes)
+        stencil_size = (maxX - minX + 1)
+        
+        self.read_stencil = Stencil(id, dim, stencil_ptr, num_points, points, base_point, stencil_size, window_buffers, chains, d_m, d_p)
+        
+        print(f"read stencil: {self.read_stencil}")
+        
+        return self.read_stencil
+        
+        
     def get_write_stencil(self) -> str:
-        for arg in filter(lambda x: isinstance(x, ArgDat), self.args):
-            if arg.access_type == AccessType.OPS_WRITE:
-                return arg.stencil_ptr    
-        return None
+        """ Write Stencil is always 
+
+        Returns:
+            str: _description_
+        """
+        if self.write_stencil:
+            return self.write_stencil
+        
+        self.write_stencil = Stencil(-1, self.ndim, "default_write_stencil", 1, [Point([0,0,0])], Point([0,0,0,]), 1, [], [], Point([0,0,0]), Point([0,0,0]))
+        return self.write_stencil
     
+    def get_unique_read_stencil_names(self) -> List[str]:
+        unique_stencil_names = []
+        for arg in filter(lambda x: isinstance(x, ArgDat), self.args):
+            if arg.access_type in [AccessType.OPS_READ, AccessType.OPS_RW] and arg.stencil_ptr not in unique_stencil_names:
+                unique_stencil_names.append(arg.stencil_ptr)
+        return unique_stencil_names

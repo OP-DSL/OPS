@@ -8,7 +8,6 @@ import ops
 from store import Function, Location, ParseError, Program, Type
 from util import safeFind #TODO: implement safe find
 import logging
-from functools import cmp_to_key
 from math import floor
 
 def parseMeta(node: Cursor, program: Program) -> None:
@@ -250,70 +249,6 @@ def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> No
         outerLoop = parseIterLoop(node, args, scope, macros, program)
         program.outerloops.append(outerLoop)
         
-def pointsToArray(points: List[ops.Point], ndim: int) -> List[int]:
-    array = []
-    for point in points:
-        for i in range(ndim):
-            array.append(point[i])    
-    return array
-
-def pointCompare(point1: ops.Point, point2: ops.Point) -> int:
-    
-    if point1.z != point2.z:
-        return point1.z - point2.z
-    elif point1.y != point2.y:
-        return point1.y - point2.y
-    else:
-        return point1.x - point2.y
-
-def arrayToPoints(npoints: int, ndim: int, array: List[int]) -> List[ops.Point]:
-    
-    points = []
-    if len(array) != npoints * ndim :
-        raise ParseError(f"Missmatch of parsed array with the stencil specification. Array: {array}, npoints: {npoints}, ndim: {ndim}")
-    
-    for i in range(npoints):
-        point = []
-        for j in range(ndim):
-            logging.debug(f"accessing: {array[i*ndim + j]}")
-            point.append(array[i*ndim + j])
-        points.append(ops.Point(point))
-    
-    return points
-
-def stencilPointsSort(npoints: int, ndim: int, array: List[int])-> List[ops.Point]: 
-    
-    points = arrayToPoints(npoints, ndim, array)
-    logging.debug(f"Points before sort: {points}")
-    sorted_points = sorted(points, key=cmp_to_key(pointCompare))
-    logging.debug(f"Points after sort: {sorted_points}")
-    return sorted_points
-
-def getStencilSize(array: List[ops.Point])->int:
-    xes = [point.x for point in array]
-    minX = min(xes)
-    maxX = max(xes)
-    return (maxX - minX + 1)
-
-def isInSameRow(one: ops.Point , two: ops.Point):
-    if one.y == two.y and one.z == two.z:
-        return True
-    return False
-
-def getMinIndices(array: List[ops.Point])->ops.Point:
-    minPoint = ops.Point([100,100,100])
-    for  point in array:
-        minPoint.x = min(minPoint.x, point.x)
-        minPoint.y = min(minPoint.y, point.y)
-        minPoint.z = min(minPoint.z, point.z)
-    
-    return minPoint
-
-def cordinateOriginTranslation(origin: ops.Point, array: List[ops.Point]) -> List[ops.Point]:
-    translated = []
-    for point in array:
-        translated.append(ops.Point([point.x - origin.x, point.y - origin.y, point.z - origin.z]))
-    return translated
    
 #Window buffer algo uses adjusted index, where base is (x_min, y_min, z_min)
 def windowBuffChainingAlgo(sorted_array: List[ops.Point], ndim: int) -> Tuple[List[str], List[Tuple[str, str]]]:
@@ -328,7 +263,7 @@ def windowBuffChainingAlgo(sorted_array: List[ops.Point], ndim: int) -> Tuple[Li
             chains.append((p_idx, "read_val"))
             if prev_buff:
                 chains.append((prev_buff.pop(), feeding_point.pop()))
-        elif isInSameRow(sorted_array[p_idx], sorted_array[p_idx+1]):
+        elif ops.isInSameRow(sorted_array[p_idx], sorted_array[p_idx+1]):
             chains.append((p_idx, p_idx+1))
         else:
             if sorted_array[p_idx+1].z == sorted_array[p_idx].z:
@@ -367,17 +302,16 @@ def parseStencil(name: str, args: List[Cursor], loc: Location, macros: Dict[Loca
     
     ndim = parseIntLiteral(args[0])
     npoints = parseIntLiteral(args[1])
-    array = stencilPointsSort(npoints, ndim, parseArrayIntLit(args[2]))
+    array = ops.stencilPointsSort(npoints, ndim, parseArrayIntLit(args[2]))
     d_m = ops.Point([abs(min([point.x for point in array])), abs(min([point.y for point in array])), abs(min([point.z for point in array]))])
     d_p = ops.Point([abs(max([point.x for point in array])), abs(max([point.y for point in array])), abs(max([point.z for point in array]))])
 
-    minIndices = getMinIndices(array)
-    array = cordinateOriginTranslation(minIndices, array)
-    stencilSize = getStencilSize(array)
+    minPoint = ops.getMinPoint(array)
+    base_offset = -minPoint
+    array = ops.cordinateOriginTranslation(base_offset, array)
+    stencilSize = ops.getStencilSize(array)
     windowBuffers, chains = windowBuffChainingAlgo(array, ndim)
     unique_rows = findUniqueStencilRows(array)
-    base_offset = -minIndices
-
     
     logging.info("Stencil found name:%s ndim: %d, npoints: %d, array: %s", name, ndim, npoints, str(array))
     logging.debug("Stencil found addition info: windowBuffers: %s", str(windowBuffers))

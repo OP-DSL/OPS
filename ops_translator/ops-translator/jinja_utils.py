@@ -42,20 +42,53 @@ env.tests["reduction"] = lambda arg, loop=None: hasattr(arg, "access_type") and 
 ]
 
 def read_in(dat: ops.Dat, loop: ops.Loop) -> bool:
+    isReadin = False
+    
     for arg in loop.args:
         if not isinstance(arg, ops.ArgDat):
             continue
 
-        if arg.dat_id == dat.id and arg.access_type not in [ops.AccessType.OPS_READ, ops.AccessType.OPS_RW]:
-            return False
+        if arg.dat_id == dat.id and arg.access_type in [ops.AccessType.OPS_READ, ops.AccessType.OPS_RW]:
+            isReadin = True
+    
+    if isReadin:
+        return True
 
-    return True
+    return False
 
 env.tests["read_in"] = read_in
 env.tests["instance"] = lambda x, c: isinstance(x, c)
 env.tests["isnumaric"] = lambda arg, loop=None: isinstance(arg, str) and arg.isnumeric()
 
+def isArgSwap(arg: ops.ArgDat, iterloop: ops.IterLoop) -> bool:
+    pair = iterloop.getOrderedSwapPair(arg.dat_id)
+    if pair[0] != pair[1]:
+        return True
+    else:
+        return False
+    
+env.tests["is_arg_swap"] = isArgSwap
+
 env.globals.update(shift_bits = lambda widen, base_size: int(log2(widen+1) - log2(base_size)))
+
+def getReadArgFromDat(dat: ops.Dat, loop: ops.Loop) -> ops.ArgDat:
+    for arg in loop.args:
+        if not isinstance(arg, ops.ArgDat):
+            continue
+        if arg.dat_id  == dat.id and arg.access_type in [ops.AccessType.OPS_READ, ops.AccessType.OPS_RW]:
+            return arg
+    return None
+
+def getWriteArgFromDat(dat: ops.Dat, loop: ops.Loop) -> ops.ArgDat:
+    for arg in loop.args:
+        if not isinstance(arg, ops.ArgDat):
+            continue
+        if arg.dat_id  == dat.id and arg.access_type in [ops.AccessType.OPS_WRITE, ops.AccessType.OPS_RW]:
+            return arg
+    return None
+
+env.globals.update(get_read_arg_from_dat = lambda dat, loop: getReadArgFromDat(dat, loop))
+env.globals.update(get_write_arg_from_dat = lambda dat, loop: getWriteArgFromDat(dat, loop))
 
 def unpack(tup):
     if not isinstance(tup, tuple):
@@ -64,7 +97,7 @@ def unpack(tup):
 
 def test_to_filter(filter_, key=unpack):
     return lambda xs, loop=None: list(filter(lambda x: env.tests[filter_](key(x), loop), xs))
-
+    
 env.filters["ops_dat"] = test_to_filter("ops_dat")
 env.filters["ops_gbl"] = test_to_filter("ops_gbl")
 env.filters["ops_reduce"] = test_to_filter("ops_reduce")

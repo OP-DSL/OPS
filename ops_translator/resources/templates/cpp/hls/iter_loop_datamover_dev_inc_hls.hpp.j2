@@ -34,7 +34,7 @@ extern "C" void datamover_outerloop_{{ilh.id}}(
         ap_uint<mem_data_width>* arg{{(arg.id)}},
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat %}
-        {% if arg is not ops_rw %}
+        {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
         hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
         {% else %}
         hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name_t2(arg, "in")-}},

@@ -574,6 +574,7 @@ class KernelProcess:
         raw_parCpy_objs = outerloop.raw_dat_swap_map
         fully_mapped = True
         dat_strings = [dat.ptr for dat in loop.dats]
+        
         for i in range(len(datMap)):
             dat_str = loop.dats[i].ptr
             pair_idx = -1
@@ -592,7 +593,7 @@ class KernelProcess:
                         pair_idx = findIdx(loop.dats, lambda x: x.ptr == pair_str)
                         break
             
-            if pair_str == -1:
+            if pair_idx == -1:
                 fully_mapped = False
                 
             else:

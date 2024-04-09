@@ -65,7 +65,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_loopback(
         ops::hls::SizeType& arg{{arg.id}}_gridSize,
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat %}
-        {% if arg is not ops_rw %}
+    {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
         hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)}}{{"," if not loop.last}}
         {% else %}
         hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")}},
@@ -109,11 +109,11 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_loopback(
     #pragma HLS INTERFACE s_axilite port = arg{{arg.id}} bundle = control
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat %}
-        {% if arg is not ops_rw %}
+        {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
     #pragma HLS INTERFACE mode=axis port={{axis_name(arg)}} register
         {% else %}
-    #pragma HLS INTERFACE mode=axis port={{axis_name(arg, "in")}} register
-    #pragma HLS INTERFACE mode=axis port={{axis_name(arg, "out")}} register
+    #pragma HLS INTERFACE mode=axis port={{axis_name_t2(arg, "in")}} register
+    #pragma HLS INTERFACE mode=axis port={{axis_name_t2(arg, "out")}} register
         {% endif %}
     {% endfor %}
 
@@ -143,7 +143,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_loopback(
 #endif 
 
     datamover_outerloop_{{ilh.id}}_dataflow_region_read(range, {% for arg in ilh.joint_args|ops_dat|ops_read -%}arg{{arg.id}}_gridSize, {% endfor %}{% for arg in ilh.joint_args|ops_dat|ops_read -%}arg{{arg.id}}, {% endfor %}{% for arg in ilh.joint_args|ops_dat|ops_read -%}{% if arg is not ops_rw -%}{{axis_name(arg)}}{{", " if not loop.last}}{% else -%}{{axis_name_t2(arg, "out")}}{{", " if not loop.last}}{% endif %}{% endfor %});
-    datamover_outerloop_{{ilh.id}}_dataflow_region_loopback(loopback_itr, range, {% for arg in ilh.joint_args|ops_dat|ops_read -%}arg{{arg.id}}_gridSize, {% endfor %}{% for arg in ilh.joint_args|ops_dat -%}{% if arg is not ops_rw -%}{{axis_name(arg)}}{{", " if not loop.last}}{% else -%}{{axis_name_t2(arg, "in")}}, {{axis_name_t2(arg, "out")}}{{", " if not loop.last}}{% endif %}{% endfor %});
+    datamover_outerloop_{{ilh.id}}_dataflow_region_loopback(loopback_itr, range, {% for arg in ilh.joint_args|ops_dat|ops_read -%}arg{{arg.id}}_gridSize, {% endfor %}{% for arg in ilh.joint_args|ops_dat -%}{% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}{{axis_name(arg)}}{{", " if not loop.last}}{% else -%}{{axis_name_t2(arg, "in")}}, {{axis_name_t2(arg, "out")}}{{", " if not loop.last}}{% endif %}{% endfor %});
 
     if ((outer_itr - 1) % 2 == 0)
     {
