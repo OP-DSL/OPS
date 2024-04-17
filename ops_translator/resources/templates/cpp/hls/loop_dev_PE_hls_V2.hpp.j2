@@ -189,7 +189,7 @@ public:
         unsigned short total_itr = stencilConfig.total_itr;
 
     {% for arg in lh.args|ops_dat %}
-        {% if arg is ops_read and arg.dat_id != datMap[arg.data] %}
+        {% if arg is ops_read and arg.dat_id != datMap[arg.dat_id] %}
         widen_dt arg{{arg.id}}_read_val = 0;
         {% elif arg is ops_write %}
         widen_dt arg{{arg.id}}_update_val;

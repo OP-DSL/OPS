@@ -18,10 +18,11 @@ static void joint_PE_outerloop_{{ilh.id}}(const ops::hls::StencilConfigCore& ste
 //TODO: Need to define inter_kernal_stream connections
 //#pragma HLS DATAFLOW
     {% for lh in ilh.getLoops() %}
+        {% set loop_idx = loop.index0 %}
     kernel_{{lh.kernel}}_PE(stencilConfig,
-        {% for arg_str in ilh.PE_args[loop.index0]%}
+        {% for arg_str in ilh.PE_args[loop_idx]%}
             {% if loop.last %}
-                {% if consts_map[loop.index0] %}
+                {% if consts_map[loop_idx] %}
                     {% set last_check = False %}
                 {% else %}
                     {% set last_check = True %}
@@ -29,9 +30,9 @@ static void joint_PE_outerloop_{{ilh.id}}(const ops::hls::StencilConfigCore& ste
             {% else %}
                 {% set last_check = False %}
             {% endif %}
-            {{arg_str}}{{"," if (not loop.last or not last_check)}}
+            {{arg_str}}{{"," if not last_check}}
         {% endfor %}
-        {% for const in consts_map[loop.index0] %}
+        {% for const in consts_map[loop_idx] %}
             {{const.ptr}}{{"," if not loop.last}}
         {% endfor %}
     );

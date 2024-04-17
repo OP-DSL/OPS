@@ -530,6 +530,17 @@ void mem2axis(ap_uint<MEM_DATA_WIDTH>* mem_in0,
 }
 
 /**
+ * @brief 	streamSpliter is a component reads one hlsStream and split to ndim split
+ *
+ * @tparam STREAM_DATA_WIDTH : Data width of the hls-stream port
+ * @tparam ...T : variadic parameter read channel types
+ *
+ * @param stream_in : input hls-stream
+ * @param ...steam_out : variadic stream out
+ */
+//TODO: inmplement to split hls channels in daflow split
+
+/**
  * @brief 	axis2mem reads from an AXI4 stream into a memory location.
  *  		This is optimized to write to AXI4 with burst and to utilize width conversion in-between
  *  		AXI4 to AXI4-stream

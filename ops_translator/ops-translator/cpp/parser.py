@@ -116,12 +116,12 @@ def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
 
     for node in nodes:
         for child in node.walk_preorder(): 
-            print(f"node {node.spelling}: child - {child.spelling}/{child.kind}")  
-            if child.kind == CursorKind.FOR_STMT:
-                print(f"For loop found: {parseLocation(node)}")
-                parseForLoop(child)
+            # print(f"node {node.spelling}: child - {child.spelling}/{child.kind}")  
+            # if child.kind == CursorKind.FOR_STMT:
+            #     print(f"For loop found: {parseLocation(node)}")
+            #     parseForLoop(child)
                 
-            elif child.kind == CursorKind.CALL_EXPR:
+            if child.kind == CursorKind.CALL_EXPR:
                 parseCall(child, macros, program)
                 
             elif child.kind.is_unexposed():
@@ -135,29 +135,29 @@ def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
                 
     return program
 
-def parseForLoop(node: Cursor):
-    for child in node.get_children():
-        if child.kind == CursorKind.DECL_STMT:
-            parseDeclStmt(child)
-        elif child.kind == CursorKind.BINARY_OPERATOR:
-            parseConditions(child)
-        elif child.kind == CursorKind.UNARY_OPERATOR:
-            parseIters(child)    
+# def parseForLoop(node: Cursor):
+#     for child in node.get_children():
+#         if child.kind == CursorKind.DECL_STMT:
+#             parseDeclStmt(child)
+#         elif child.kind == CursorKind.BINARY_OPERATOR:
+#             parseConditions(child)
+#         elif child.kind == CursorKind.UNARY_OPERATOR:
+#             parseIters(child)    
         
-def parseDeclStmt(node: Cursor):
-    print (f"found declaration: {parseLocation(node)}")
-    for child in node.get_children():
-        print(f"   child - {child.spelling}/{child.kind}")
+# def parseDeclStmt(node: Cursor):
+#     print (f"found declaration: {parseLocation(node)}")
+#     for child in node.get_children():
+#         print(f"   child - {child.spelling}/{child.kind}")
     
-def parseConditions(node: Cursor):
-    print (f"found condition: {parseLocation(node)}")
-    for child in node.get_children():
-        print(f"   child - {child.spelling}/{child.kind}")
+# def parseConditions(node: Cursor):
+#     print (f"found condition: {parseLocation(node)}")
+#     for child in node.get_children():
+#         print(f"   child - {child.spelling}/{child.kind}")
     
-def parseIters(node: Cursor):
-    print (f"found Iteration: {parseLocation(node)}")
-    for child in node.get_children():
-        print(f"   child - {child.spelling}/{child.kind}")    
+# def parseIters(node: Cursor):
+#     print (f"found Iteration: {parseLocation(node)}")
+#     for child in node.get_children():
+#         print(f"   child - {child.spelling}/{child.kind}")    
           
 
 def parseVariableDeclaration(node: Cursor, macros: Dict[Location, str], program: Program) -> None:
