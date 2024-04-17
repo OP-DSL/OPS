@@ -53,7 +53,6 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int buf_strides_y, int buf_strides_z) {
 
   char *srcptr = src->data_d;
-  size_t bufsize = src->block->instance->ops_halo_buffer_size;
   int thr_x = abs(rx_s - rx_e);
   int thr_y = abs(ry_s - ry_e);
   int thr_z = abs(rz_s - rz_e);
@@ -102,7 +101,6 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                            int buf_strides_z) {
 
   char *destptr = dest->data_d;
-  size_t bufsize = dest->block->instance->ops_halo_buffer_size;
   int thr_x = abs(rx_s - rx_e);
   int thr_y = abs(ry_s - ry_e);
   int thr_z = abs(rz_s - rz_e);

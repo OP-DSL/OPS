@@ -523,7 +523,7 @@ ops_dat ops_dat_alloc_core(ops_block block)
   }
 
   // This will memset(0) the entire ops_dat_core
-  ops_dat dat = new ops_dat_core;
+  ops_dat dat = new ops_dat_core();
   dat->index = block->instance->OPS_dat_index++;
   dat->block = block;
 

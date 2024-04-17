@@ -526,7 +526,7 @@ struct ops_halo_core {
 typedef ops_halo_core *ops_halo;
 
 /** Storage for OPS halo groups */
-typedef struct {
+typedef struct ops_halo_group_core {
   int nhalos;                     /**< number of halos */
   ops_halo *halos;                /**< list of halos */
   int index;                      /**< index of halo group */
