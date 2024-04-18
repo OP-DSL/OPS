@@ -11,8 +11,17 @@ arg{{ilh.getOrderedSwapPair(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPair(arg.dat
 
 {% block joint_PE %}
 static void joint_PE_outerloop_{{ilh.id}}(const ops::hls::StencilConfigCore& stencilConfig, 
-    {% for arg in ilh.joint_args|ops_dat %}{% if arg is not ops_rw %}::hls::stream<ap_uint<axis_data_width>>& {{hls_name(arg)-}}{{", " if not loop.last or consts }}{% else %}::hls::stream<ap_uint<axis_data_width>>& {{hls_name_t2(arg, "in")-}}, ::hls::stream<ap_uint<axis_data_width>>& {{hls_name_t2(arg, "out")-}}{{", " if not loop.last or consts }}{% endif %}{% endfor %}
-    {% for const in consts %}const {{const.typ}} {{const.ptr}}{{", " if not loop.last }}{% endfor %})
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if arg is not ops_rw %}
+        ::hls::stream<ap_uint<axis_data_width>>& {{hls_name(arg)-}}{{", " if not loop.last or consts }}
+        {% else %}
+        ::hls::stream<ap_uint<axis_data_width>>& {{hls_name_t2(arg, "in")-}}, 
+        ::hls::stream<ap_uint<axis_data_width>>& {{hls_name_t2(arg, "out")-}}{{", " if not loop.last or consts }}
+        {% endif %}
+    {% endfor %}
+    {% for const in consts %}
+        const {{const.typ}} {{const.ptr}}{{", " if not loop.last }}
+    {% endfor %})
 {
 
 //TODO: Need to define inter_kernal_stream connections
@@ -44,7 +53,7 @@ static void joint_PE_outerloop_{{ilh.id}}(const ops::hls::StencilConfigCore& ste
 {% block kernel_dataflow_region %}
 
 static void kernel_outerloop_{{ilh.id}}_dataflow_region_cascaded(const ops::hls::StencilConfigCore& stencilConfig, const unsigned int total_bytes,
-    {%- for swap_pair in ilh.getUniqueDatSwaps() -%}
+    {% for swap_pair in ilh.getUniqueDatSwaps() %}
         {% if loop.last %}
             {% if consts %}
                 {% set last_check = False %}
@@ -55,8 +64,10 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region_cascaded(const ops::hls:
             {% set last_check = False %}
         {% endif %}
     ::hls::stream<ap_uint<axis_data_width>> arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams[iter_par_factor + 1]{{", " if not last_check}}
-    {%- endfor -%}
-    {%- for const in consts -%}const {{const.typ}} {{const.ptr}}{{", " if not loop.last }}{%- endfor -%})
+    {% endfor %}
+    {% for const in consts %}
+    const {{const.typ}} {{const.ptr}}{{", " if not loop.last }}
+    {% endfor %})
 {
 #pragma HLS INLINE 
 

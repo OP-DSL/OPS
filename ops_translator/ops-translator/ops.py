@@ -526,9 +526,13 @@ class IterLoop:
         source_dats = []
         sink_dats = []
         
+        # for aditional write channels
+        loop_read_arg_sinks = {}
+        
         # First Iteration initial edge generatitons inbetween loops
         for v_id,v in enumerate(self.itr_args):
             
+            loop_read_arg_sinks[v_id] = []
             if not isinstance(v, Loop):
                 continue
             
@@ -545,11 +549,19 @@ class IterLoop:
                         source_dats.append([global_dat_id, arg])
                         print (f"global id: {global_dat_id}")
                         read_map_of_maps[global_dat_id] = {-1:[(v_id, arg.id)]}
+                        
                         # By assuming one read and one right in each channels. There can be multiple reads from a source, where need to 
                         # implement how to add a streamSpliter.
                         
                         # here if a read from source dat without a swap map, the vertex loop need a output channel to be able to chain without
                         # reading from the memory. 
+                        if self.dat_swap_map[global_dat_id] == global_dat_id:
+                            dat_current_update_map[global_dat_id] = (v_id, arg.id)
+                            if global_dat_id in read_map_of_maps.keys():
+                                read_map_of_maps[global_dat_id][v_id] = []
+                            else:
+                                read_map_of_maps[global_dat_id]= {v_id: []}
+                            
                         
                 if arg.access_type == AccessType.OPS_WRITE or arg.access_type == AccessType.OPS_RW:
                     # checking previous update properly mapped
@@ -580,11 +592,13 @@ class IterLoop:
         
         for dat_id, arg in source_dats:
             arg_id = len(self.joint_args)
-
+            print(f"Check dat id: {dat_id}")
             idx = findIdx(sink_dats, lambda x: x[0] == dat_id)
-            if idx:
+            print(f"found idx: {idx}")
+            
+            if idx != None:
                 self.joint_args.append(ArgDat(arg_id, arg.loc, AccessType.OPS_RW, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))
-                sink_dats.remove(dat_id)
+                del sink_dats[idx]
             else:
                 self.joint_args.append(ArgDat(arg_id, arg.loc, AccessType.OPS_READ, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))
                 
@@ -593,7 +607,8 @@ class IterLoop:
             self.joint_args.append(ArgDat(arg_id, arg.loc, AccessType.OPS_WRITE, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))    
 
         print (f'read_map_of_maps: {read_map_of_maps}') 
-        print (f"edges: {edges}")
+        for edge in edges:
+            print (f"edge: {edge}")
         
         
     # def gen_graph(self) -> None:
@@ -638,24 +653,6 @@ class IterLoop:
     #         arg_id = len(self.joint_args)
     #         self.joint_args.append(ArgDat(arg_id, arg.loc, AccessType.OPS_WRITE, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))    
 
-    # def gen_PE_args(self) -> None:
-    #     PE_args = []
-    #     current_consumer = [(-1 for i in range(self.dats))]
-        
-    #     for i, v in enumerate(self.itr_args):
-    #         if isinstance(v, Loop):
-    #             related_edges = []
-                
-    #             for edge in self.edges:
-    #                 if i == edge.source_id or i == edge.sink_id:
-    #                     related_edges.append(edge)
-            
-    #         for arg in filter(lambda a: isinstance(a, ArgDat), v.args):    
-                
-    #     self.PE_args = PE_args
-           
-    # def gen_PE_args_v2(self) -> None:
-    #     PE_args = [["" for j in range(i.args)] for i in filter(lambda x: isinstance(x, Loop), self.itr_args)]
         
     def gen_PE_args(self) -> None:
         PE_args = []
@@ -670,9 +667,12 @@ class IterLoop:
         for edge in self.edges:
             if i == edge.source_id:
                 if edge.sink_id == -2:
-                    search_list = filter(lambda x: x.access_type == AccessType.OPS_WRITE and x.dat_id == edge.dat_id, self.joint_args)
-                    # print(f"search list: {search_list}")
-                    arg_map[edge.source_arg_id] = f"arg{next(search_list).id}_hls_stream_out"
+                    search_list = filter(lambda x: (x.access_type == AccessType.OPS_WRITE or x.access_type == AccessType.OPS_RW) and x.dat_id == edge.dat_id, self.joint_args)
+                    # print(f"search list: {[i for i in search_list]}")
+                    if edge.source_arg_id in arg_map.keys():
+                        arg_map[edge.source_arg_id].append(f"arg{next(search_list).id}_hls_stream_out")
+                    else:
+                        arg_map[edge.source_arg_id] = [f"arg{next(search_list).id}_hls_stream_out"]
                 else:
                     connector_name = f"node{edge.source_id}_{edge.source_arg_id}_to_node{edge.sink_id}_{edge.sink_arg_id}"
                     if connector_name not in self.interconnector_names:
@@ -680,18 +680,18 @@ class IterLoop:
                     arg_map[edge.source_arg_id] = connector_name
             elif i == edge.sink_id:
                 if edge.source_id == -1:
-                    search_list = filter(lambda x: x.access_type == AccessType.OPS_READ and x.dat_id == edge.dat_id, self.joint_args)
+                    search_list = filter(lambda x: x.access_type in [AccessType.OPS_READ, AccessType.OPS_RW] and x.dat_id == edge.dat_id, self.joint_args)
                     arg_id = next(search_list).id
-                    if self.dat_swap_map[edge.dat_id] == edge.dat_id:
-                        arg_map[edge.sink_arg_id] = [f"arg{arg_id}_hls_stream_in", f"arg{arg_id}_hls_stream_out"]
+                    if edge.sink_arg_id in arg_map.keys():
+                        arg_map[edge.sink_arg_id].append(f"arg{arg_id}_hls_stream_in")
                     else:
-                        arg_map[edge.sink_arg_id] = f"arg{arg_id}_hls_stream_in"
+                        arg_map[edge.sink_arg_id] = [f"arg{arg_id}_hls_stream_in"]
                         
                 else:
                     connector_name = f"node{edge.source_id}_{edge.source_arg_id}_to_node{edge.sink_id}_{edge.sink_arg_id}"
                     if connector_name not in self.interconnector_names:
                         self.interconnector_names.append(connector_name)
-                    arg_map[edge.sink_arg_id] = connector_name
+                    arg_map[edge.sink_arg_id] = [connector_name]
         
         # print(f"PE_args: {arg_map}")
         for k in range(len(v.args)):
