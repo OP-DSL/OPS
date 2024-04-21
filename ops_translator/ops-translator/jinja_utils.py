@@ -22,7 +22,8 @@ env.tests["ops_idx"]    = lambda arg, loop=None: isinstance(arg, ops.ArgIdx)
 env.tests["ops_read"]  = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_READ
 env.tests["ops_write"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_WRITE
 env.tests["ops_rw"]    = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_RW
-
+env.tests["read_only_rw"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_RW \
+    and hasattr(arg, "is_read_only") and arg.is_read_only
 env.tests["ops_inc"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_INC
 env.tests["ops_min"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_MIN
 env.tests["ops_max"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_MAX

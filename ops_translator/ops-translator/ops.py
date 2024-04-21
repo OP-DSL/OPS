@@ -380,6 +380,7 @@ class ArgDat(Arg):
     restrict: Optional[bool] = False
     prolong: Optional[bool] = False
     global_dat_id: Optional[int] = -1
+    is_read_only: Optional[bool] = False # if OPS_RW this is to disinguise in FPGA implementation wether via stream or RW stream.
     
 
 #    stride: Optional[List] = None
@@ -597,7 +598,11 @@ class IterLoop:
             print(f"found idx: {idx}")
             
             if idx != None:
-                self.joint_args.append(ArgDat(arg_id, arg.loc, AccessType.OPS_RW, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))
+                if self.dat_swap_map[dat_id] == dat_id:
+                    # This means this is a via stream for chaining not to be store back to memory.
+                    self.joint_args.append(ArgDat(arg_id, arg.loc, AccessType.OPS_RW, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id, True))
+                else:
+                    self.joint_args.append(ArgDat(arg_id, arg.loc, AccessType.OPS_RW, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))
                 del sink_dats[idx]
             else:
                 self.joint_args.append(ArgDat(arg_id, arg.loc, AccessType.OPS_READ, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))

@@ -45,7 +45,11 @@ void inline kernel_{{lh.kernel}}_core(
 {{super()}}
 {
     ops::hls::AccessRange range;
-    opsRange2hlsRange(dim, ops_range, range, arg0.originalProperty);
+    {% for arg in lh.args|ops_dat %}
+        {% if loop.first %}
+    opsRange2hlsRange(dim, ops_range, range, arg{{arg.id}}.originalProperty);
+        {% endif %}
+    {% endfor %}
     {% for arg in lh.args %}
         {% if prog.findStencil(arg.stencil_ptr) %}
             {% set stencil = prog.findStencil(arg.stencil_ptr) %}
@@ -71,15 +75,15 @@ void inline kernel_{{lh.kernel}}_core(
             for (unsigned short i = range.start[0]; i < range.end[0]; i++)
             {
     {% endif %}
-    {% if lh.arg_idx != -1 %}
+    {% if lh.arg_idx != -1 %}{% for arg in lh.args|ops_dat %}{% if loop.first %}
         {% if lh.ndim > 2%}
-                ops::hls::IdxType idx({i - arg0.originalProperty.d_m[0], j - arg0.originalProperty.d_m[1], k - arg0.originalProperty.d_m[2]});
+                ops::hls::IdxType idx({i - arg{{arg.id}}.originalProperty.d_m[0], j - arg{{arg.id}}.originalProperty.d_m[1], k - arg{{arg.id}}.originalProperty.d_m[2]});
         {% elif lh.ndim > 1 %}
-                ops::hls::IdxType idx({i - arg0.originalProperty.d_m[0], j - arg0.originalProperty.d_m[1], 0});
+                ops::hls::IdxType idx({i - arg{{arg.id}}.originalProperty.d_m[0], j - arg{{arg.id}}.originalProperty.d_m[1], 0});
         {% else %}
-                ops::hls::IdxType idx({i - arg0.originalProperty.d_m[0], 0, 0});
-        {% endif %} 
-    {% endif %}
+                ops::hls::IdxType idx({i - arg{{arg.id}}.originalProperty.d_m[0], 0, 0});
+        {% endif %}
+    {% endif %}{% endfor %}{% endif %}
                 kernel_{{lh.kernel}}_core(
     {% for arg in lh.args %}
         {% if loop.last %}

@@ -207,19 +207,20 @@ private:
 void {{ilh.unique_name}}(int outer_iter, int* ops_range,
     {% for arg in ilh.joint_args|ops_dat %}
         {% if loop.last %}
-            {% if consts %}
+            {#{% if consts %}
                 {% set last_check = False %}
             {% else %}
                 {% set last_check = True %}
-            {% endif %}
+            {% endif %}#}
+            {% set last_check = True %}
         {% else %}
             {% set last_check = False %}
         {% endif %}
             ops::hls::Grid<{{ilh.dats[arg.dat_id][0].typ}}>& arg{{arg.id}}{{"," if not last_check}}
     {% endfor %}
-    {% for const in consts %}
+    {# {% for const in consts %}
             const {{const.typ}} {{const.ptr}}{{"," if not loop.last}}
-    {% endfor %}
+    {% endfor %} #}
 )
 {
     static  KernelWrapper_outerloop_{{ilh.id}} kernelWrapper_inst;

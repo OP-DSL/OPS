@@ -37,8 +37,8 @@ extern "C" void datamover_outerloop_{{ilh.id}}(
         {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
         hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
         {% else %}
-        hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name_t2(arg, "in")-}},
-        hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name_t2(arg, "out")-}}{{"," if not loop.last}}
+        hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name_t2(arg, "out")-}},
+        hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name_t2(arg, "in")-}}{{"," if not loop.last}}
         {% endif %}
     {% endfor %}
     )
