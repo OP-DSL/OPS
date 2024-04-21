@@ -928,6 +928,88 @@ void axis2streamMasked(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
 }
 
 /**
+ * @brief axisLoopback reads from one grid data axis-stream to another grid data axis stream
+ *
+ * @details This component is to support memory looback from the output of PE to the input in next iteration
+ * without copying back to memory.
+ *
+ * @tparam MEM_DATA_WIDTH : Data width of the AXI4 port
+ * @tparam AXIS_DATA_WIDTH : Data width of the AXIS-stream port
+ * @tparam DATA_WIDTH : Data width of the base datatype
+ *
+ * @param strm_in : AXIS-stream input port
+ * @param strm_out : AXIS-stream output port
+ * @param gridSize : gridSize of the original grid
+ * @param range : Access range to be writen data
+ */
+template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
+void axisLoopback(
+		::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_in,
+		 ::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_out,
+		SizeType& gridSize,
+		AccessRange& range)
+{
+	constexpr unsigned short data_vector_factor = MEM_DATA_WIDTH / DATA_WIDTH;
+	constexpr unsigned short pkts_per_beat = MEM_DATA_WIDTH / AXIS_DATA_WIDTH;
+	const unsigned short ShiftBits = (unsigned short)LOG2(data_vector_factor);
+	const unsigned short PktsShiftBits = (unsigned short)LOG2(pkts_per_beat);
+	unsigned short start_x = range.start[0] >> ShiftBits;
+	start_x = start_x << PktsShiftBits;
+	unsigned short end_x = (range.end[0] + data_vector_factor - 1) >> ShiftBits;
+	end_x = end_x << PktsShiftBits;
+	unsigned short grid_xblocks = gridSize[0] >> ShiftBits; //GridSize[0] has to be MEM_DATA_WIDTH aligned
+	unsigned short num_xpkts = end_x - start_x;
+
+	if (range.dim < 3)
+	{
+		range.start[2] = 0;
+		range.end[2] = 1;
+	}
+	else if (range.dim < 2)
+	{
+		range.start[1] = 0;
+		range.end[1] = 1;
+	}
+
+	for (unsigned short k = range.start[2]; k < range.end[2]; k++)
+	{
+		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
+		{
+			for (unsigned short x_pkt = start_x; x_pkt < end_x; x_pkt++)
+			{
+ #pragma HLS PIPELINE II = 1
+
+#ifdef DEBUG_LOG
+			printf("|HLS DEBUG_LOG|%s| writing. offset:%d, j:%d, k:%d\n"
+					, __func__, x_pkt, j, k);
+#endif
+				ap_axiu<AXIS_DATA_WIDTH,0,0,0> pkt = strm_in.read();
+				strm_out.write(pkt);
+			}
+		}
+	}
+}
+
+/**
+ * @brief axisTerminate read from axis stream and discard the packets
+ *
+ * @tparam AXIS_DATA_WIDTH : Data width of the AXI4-stream port
+ *
+ * @param axis_in : AXI4-stream input
+ * @param num_pkts: number of axis pkts
+ */
+template <unsigned int AXIS_DATA_WIDTH>
+void axisTerminate(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
+		unsigned int num_pkts)
+{
+	for (unsigned int i = 0; i < num_pkts; i++)
+	{
+#pragma HLS pipline II=1
+		auto pkt = axis_in.read();
+	}
+}
+
+/**
  * @brief stream2axis converts hls-stream to AXI4-stream
  *
  * @tparam AXIS_DATA_WIDTH : Data width of the AXI4-stream port
@@ -1480,6 +1562,22 @@ void memWriteGridSimple(ap_uint<DATA_WIDTH>* mem_out,
 #endif
 }
 
+/**
+ * @brief memWriteGridSimpleV2 writes to memory with range with MEM_DATA_WIDTH alignment with detecting continous range for
+ * optimized burst write to memory
+ *
+ * @details Writes to a grid with ranges with range.start[0] is aligned with MEM_DATA_WIDTH.
+ * Other components of range will be supported in granual level.
+ *
+ * @tparam MEM_DATA_WIDTH : Data width of the AXI4 port
+ * @tparam AXIS_DATA_WIDTH : Data width of the AXIS-stream port
+ * @tparam DATA_WIDTH : Data width of the base datatype
+ *
+ * @param mem_out : AXI4-master memory output port
+ * @param strm_in : AXIS-stream input port
+ * @param gridSize : gridSize of the original grid
+ * @param range : Access range to be writen data
+ */
 
 template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
 void memWriteGridSimpleV2(ap_uint<MEM_DATA_WIDTH>* mem_out,
@@ -1558,23 +1656,36 @@ void memWriteGridSimpleV2(ap_uint<MEM_DATA_WIDTH>* mem_out,
 #endif
 }
 
+/**
+ * @brief memWriteGridTerminate writes to memory with range to terminate read only output stream
+ *
+ * @details terminate output axis stream which do not need to be written to a memory.
+ *
+ * @tparam MEM_DATA_WIDTH : Data width of the AXI4 port
+ * @tparam AXIS_DATA_WIDTH : Data width of the AXIS-stream port
+ * @tparam DATA_WIDTH : Data width of the base datatype
+ *
+ * @param strm_in : AXIS-stream input port
+ * @param gridSize : gridSize of the original grid
+ * @param range : Access range to be writen data
+ */
 template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
-void axisLoopback(
-		::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_in,
-		 ::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_out,
-		SizeType& gridSize,
+void memWriteGridTerminate(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_in,
+		SizeType gridSize,
 		AccessRange& range)
 {
 	constexpr unsigned short data_vector_factor = MEM_DATA_WIDTH / DATA_WIDTH;
-	constexpr unsigned short pkts_per_beat = MEM_DATA_WIDTH / AXIS_DATA_WIDTH;
-	const unsigned short ShiftBits = (unsigned short)LOG2(data_vector_factor);
-	const unsigned short PktsShiftBits = (unsigned short)LOG2(pkts_per_beat);
+	constexpr unsigned int num_strm_pkts_per_beat = MEM_DATA_WIDTH / AXIS_DATA_WIDTH;
+//	constexpr int II_factor = MEM_DATA_WIDTH / AXIS_DATA_WIDTH;
+	unsigned short ShiftBits = (unsigned short)LOG2(data_vector_factor);
+//	unsigned short DataShiftBits = (unsigned short)LOG2(DATA_WIDTH/8);
 	unsigned short start_x = range.start[0] >> ShiftBits;
-	start_x = start_x << PktsShiftBits;
 	unsigned short end_x = (range.end[0] + data_vector_factor - 1) >> ShiftBits;
-	end_x = end_x << PktsShiftBits;
 	unsigned short grid_xblocks = gridSize[0] >> ShiftBits; //GridSize[0] has to be MEM_DATA_WIDTH aligned
-	unsigned short num_xpkts = end_x - start_x;
+	unsigned short num_xblocks = end_x - start_x;
+	unsigned short num_xpkts = num_xblocks * num_strm_pkts_per_beat;
+//	unsigned short x_tile_size = num_xblocks << ShiftBits;
+//	unsigned int x_tile_size_bytes = x_tile_size << DataShiftBits;
 
 	if (range.dim < 3)
 	{
@@ -1587,24 +1698,11 @@ void axisLoopback(
 		range.end[1] = 1;
 	}
 
-	for (unsigned short k = range.start[2]; k < range.end[2]; k++)
-	{
-		for (unsigned short j = range.start[1]; j < range.end[1]; j++)
-		{
-			for (unsigned short x_pkt = start_x; x_pkt < end_x; x_pkt++)
-			{
- #pragma HLS PIPELINE II = 1
+	unsigned int num_pkts = num_xpkts * (range.end[1] - range.start[1]) * (range.end[2] - range.start[2]);
 
-#ifdef DEBUG_LOG
-			printf("|HLS DEBUG_LOG|%s| writing. offset:%d, j:%d, k:%d\n"
-					, __func__, x_pkt, j, k);
-#endif
-				ap_axiu<AXIS_DATA_WIDTH,0,0,0> pkt = strm_in.read();
-				strm_out.write(pkt);
-			}
-		}
-	}
+	axisTerminate<AXIS_DATA_WIDTH>(strm_in, num_pkts);
 }
+
 //template <unsigned int MEM_DATA_WIDTH, unsigned int STREAM_DATA_WIDTH, unsigned int DATA_WIDTH=32>
 //void memWriteGridNew(ap_uint<DATA_WIDTH>* mem_out,
 //		::hls::stream<ap_axiu<STREAM_DATA_WIDTH,0,0,0>>& strm_in,
