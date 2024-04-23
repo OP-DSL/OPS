@@ -1002,11 +1002,19 @@ template <unsigned int AXIS_DATA_WIDTH>
 void axisTerminate(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
 		unsigned int num_pkts)
 {
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| starting.\n"
+			, __func__);
+#endif
 	for (unsigned int i = 0; i < num_pkts; i++)
 	{
 #pragma HLS pipline II=1
 		auto pkt = axis_in.read();
 	}
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| exiting.\n"
+			, __func__);
+#endif
 }
 
 /**
@@ -1700,7 +1708,17 @@ void memWriteGridTerminate(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_i
 
 	unsigned int num_pkts = num_xpkts * (range.end[1] - range.start[1]) * (range.end[2] - range.start[2]);
 
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| Terminate memGridWrite with total pkts %d.\n"
+			, __func__, num_pkts);
+#endif
+
 	axisTerminate<AXIS_DATA_WIDTH>(strm_in, num_pkts);
+
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| exiting.\n"
+			, __func__);
+#endif
 }
 
 //template <unsigned int MEM_DATA_WIDTH, unsigned int STREAM_DATA_WIDTH, unsigned int DATA_WIDTH=32>

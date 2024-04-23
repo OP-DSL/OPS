@@ -41,7 +41,7 @@
 #include <math.h>
 
 float dx,dy;
-extern unsigned short mem_vector_factor;
+extern const unsigned short mem_vector_factor;
 
 // OPS header file
 #define OPS_2D
@@ -50,8 +50,8 @@ extern unsigned short mem_vector_factor;
 #define OPS_HLS_V2
 // #define OPS_FPGA
 #define PROFILE
-#include <ops_seq_v2.h>
 #include "user_types.h"
+#include <ops_seq_v2.h>
 #include "poisson_kernel.h"
 #include "poisson_cpu_verification.hpp"
 
@@ -62,7 +62,7 @@ extern unsigned short mem_vector_factor;
 /******************************************************************************
 * Main program
 *******************************************************************************/
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
   /**-------------------------- Initialisation --------------------------**/
 
@@ -73,7 +73,7 @@ int main(int argc, char **argv)
     //Mesh
     int imax = 20;
     int jmax = 20;
-    unsigned int iter_max = 10;
+    unsigned int iter_max = 120;
     unsigned int batches = 1;
 
     const char* pch;
@@ -175,7 +175,7 @@ int main(int argc, char **argv)
     ops_partition("");
 
     int full_range[] = {d_m[0], size[0] + d_p[0], d_m[1], size[1] + d_p[1]};
-    int internal_range[] = {d_m[0], size[0] + d_p[0], d_m[1], size[1] + d_p[1]};
+    int internal_range[] = {0, size[0], 0, size[1]};
     //Producer
     for (unsigned int bat = 0; bat < batches; bat++)
     {
@@ -205,25 +205,27 @@ int main(int argc, char **argv)
         auto f_raw = (float*)ops_dat_get_raw_pointer(f[bat], 0, S2D_00, OPS_HOST);
         auto ref_raw = (float*)ops_dat_get_raw_pointer(ref[bat], 0, S2D_00, OPS_HOST);
 
-        poisson_kernel_populate_cpu(u_cpu[bat], f_cpu[bat], ref_cpu[bat], size, d_m, d_p);
-        poisson_kernel_update_cpu(u2_cpu[bat], u_cpu[bat], size, d_m, d_p);
+        poisson_kernel_populate_cpu(u_cpu[bat], f_cpu[bat], ref_cpu[bat], size, d_m, d_p, full_range);
+        poisson_kernel_update_cpu(u2_cpu[bat], u_cpu[bat], size, d_m, d_p, full_range);
 
-        if(verify(u_raw, u_cpu[bat], size, d_m, d_p))
+        poisson_kernel_initialguess_cpu(u_cpu[bat], size, d_m, d_p, internal_range);
+
+        if(verify(u_raw, u_cpu[bat], size, d_m, d_p, full_range))
             std::cout << "[BATCH - " << bat << "] verification of u after initiation" << "[PASSED]" << std::endl;
         else
             std::cout << "[BATCH - " << bat << "] verification of u after initiation" << "[FAILED]" << std::endl;
 
-        if(verify(u2_raw, u2_cpu[bat], size, d_m, d_p))
+        if(verify(u2_raw, u2_cpu[bat], size, d_m, d_p, full_range))
             std::cout << "[BATCH - " << bat << "] verification of u2 after initiation" << "[PASSED]" << std::endl;
         else
             std::cout << "[BATCH - " << bat << "] verification of u2 after initiation" << "[FAILED]" << std::endl;
 
-        if(verify(f_raw, f_cpu[bat], size, d_m, d_p))
+        if(verify(f_raw, f_cpu[bat], size, d_m, d_p, full_range))
             std::cout << "[BATCH - " << bat << "] verification of f after initiation" << "[PASSED]" << std::endl;
         else
             std::cout << "[BATCH - " << bat << "] verification of f after initiation" << "[FAILED]" << std::endl;
         
-        if(verify(ref_raw, ref_cpu[bat], size, d_m, d_p))
+        if(verify(ref_raw, ref_cpu[bat], size, d_m, d_p, full_range))
             std::cout << "[BATCH - " << bat << "] verification of ref after initiation" << "[PASSED]" << std::endl;
         else
             std::cout << "[BATCH - " << bat << "] verification of ref after initiation" << "[FAILED]" << std::endl;
@@ -277,16 +279,19 @@ int main(int argc, char **argv)
 
         for (int iter = 0; iter < iter_max; iter++)
         {
-            poisson_kernel_stencil_cpu(u_cpu[bat], f_cpu[bat], u2_cpu[bat], size, d_m, d_p);
-            poisson_kernel_update_cpu(u2_cpu[bat], u_cpu[bat], size, d_m, d_p);
+            poisson_kernel_stencil_cpu(u_cpu[bat], f_cpu[bat], u2_cpu[bat], size, d_m, d_p, internal_range);
+            poisson_kernel_update_cpu(u_cpu[bat], u2_cpu[bat], size, d_m, d_p, internal_range);
         }
 
-        if(verify(u_raw, u_cpu[bat], size, d_m, d_p))
+		// printGrid2D<float>(u_raw, u[bat].originalProperty, "u after computation");
+		// printGrid2D<float>(u_cpu[bat], u[bat].originalProperty, "u_Acpu after computation");
+
+        if(verify(u_raw, u_cpu[bat], size, d_m, d_p, full_range))
             std::cout << "[BATCH - " << bat << "] verification of u after calculation" << "[PASSED]" << std::endl;
         else
             std::cout << "[BATCH - " << bat << "] verification of u after calculation" << "[FAILED]" << std::endl;
 
-        if(verify(u2_raw, u2_cpu[bat], size, d_m, d_p))
+        if(verify(u2_raw, u2_cpu[bat], size, d_m, d_p, full_range))
             std::cout << "[BATCH - " << bat << "] verification of u2 after calculation" << "[PASSED]" << std::endl;
         else
             std::cout << "[BATCH - " << bat << "] verification of u2 after calculation" << "[FAILED]" << std::endl;

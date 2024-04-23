@@ -24,6 +24,10 @@ env.tests["ops_write"] = lambda arg, loop=None: hasattr(arg, "access_type") and 
 env.tests["ops_rw"]    = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_RW
 env.tests["read_only_rw"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_RW \
     and hasattr(arg, "is_read_only") and arg.is_read_only
+env.tests["ops_read_or_rw"]  = lambda arg, loop=None: hasattr(arg, "access_type") and \
+    (arg.access_type == ops.AccessType.OPS_READ or arg.access_type == ops.AccessType.OPS_RW)
+env.tests["ops_write_or_rw"]  = lambda arg, loop=None: hasattr(arg, "access_type") and \
+    (arg.access_type == ops.AccessType.OPS_WRITE or arg.access_type == ops.AccessType.OPS_RW)
 env.tests["ops_inc"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_INC
 env.tests["ops_min"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_MIN
 env.tests["ops_max"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_MAX
@@ -107,6 +111,9 @@ env.filters["ops_idx"] = test_to_filter("ops_idx")
 env.filters["ops_read"]  = test_to_filter("ops_read")
 env.filters["ops_write"] = test_to_filter("ops_write")
 env.filters["ops_rw"]    = test_to_filter("ops_rw")
+env.filters["read_only_rw"] = test_to_filter("read_only_rw")
+env.filters["ops_read_or_rw"] = test_to_filter("ops_read_or_rw")
+env.filters["ops_write_or_rw"] = test_to_filter("ops_write_or_rw")
 
 env.filters["ops_inc"] = test_to_filter("inc")
 env.filters["ops_min"] = test_to_filter("min")

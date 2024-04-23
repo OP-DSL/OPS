@@ -72,15 +72,17 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_write(ops::hls::Acces
 static void datamover_outerloop_{{ilh.id}}_dataflow_region_loopback(
         const unsigned int iter,
         ops::hls::AccessRange& range
-    {%- for arg in ilh.joint_args|ops_dat|ops_read -%}
+    {%- for arg in ilh.joint_args|ops_dat -%}
+        {%- if arg is ops_read or arg is ops_rw -%}
         ,{{"\n"}}        ops::hls::SizeType& arg{{arg.id}}_gridSize
+        {%- endif -%}
     {%- endfor -%}
     {%- for arg in ilh.joint_args|ops_dat -%}
     {%- if (arg is not ops_rw) and arg is is_arg_swap(ilh) -%}
         ,{{"\n"}}        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)}}
         {%- else -%}
         ,{{"\n"}}        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "out")}},
-        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")}}
+           hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")}}
         {%- endif -%}
     {%- endfor -%}
         )
@@ -91,8 +93,10 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_loopback(
         printf("[KERNEL_DEBUG]|%s| Calling loopback: %d \n", __func__, i);
 #endif
 #pragma HLS PIPELINE II=1
-    {% for arg in ilh.joint_args|ops_dat|ops_read %}
-        ops::hls::axisLoopback<mem_data_width, axis_data_width, data_width>( arg{{ilh.dat_swap_map[arg.id]}}_axis_in, {{axis_name(arg)}}, arg{{arg.id}}_gridSize, range);
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if arg is ops_read or arg is ops_rw %}
+        ops::hls::axisLoopback<mem_data_width, axis_data_width, data_width>( arg{{ilh.dat_swap_map[arg.id]}}_axis_in, arg{{arg.id}}_axis_out, arg{{arg.id}}_gridSize, range);
+        {% endif %}
     {% endfor %}
     }
 }
@@ -173,14 +177,16 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_loopback(
     {%- endfor -%}
     );
     datamover_outerloop_{{ilh.id}}_dataflow_region_loopback(loopback_itr, range 
-    {%- for arg in ilh.joint_args|ops_dat|ops_read -%}
+    {%- for arg in ilh.joint_args|ops_dat -%}
+        {%- if arg is ops_read or arg is ops_rw -%}
             ,{{"\n"}}        arg{{arg.id}}_gridSize
+        {%- endif -%}
     {%- endfor -%}
     {%- for arg in ilh.joint_args|ops_dat -%}
         {%- if (arg is not ops_rw) and arg is is_arg_swap(ilh) -%}
             ,{{"\n"}}        {{axis_name(arg)}}
         {%- else -%}
-            ,{{"\n"}}        {{axis_name_t2(arg, "in")}}, {{axis_name_t2(arg, "out")}}
+            ,{{"\n"}}        {{axis_name_t2(arg, "out")}}, {{axis_name_t2(arg, "in")}}
         {%- endif -%}
     {%- endfor -%}
     );

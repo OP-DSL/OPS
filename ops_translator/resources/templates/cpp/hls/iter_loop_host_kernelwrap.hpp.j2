@@ -133,14 +133,14 @@ public:
         OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueTask(m_kernel_{{slr_id}}, &activeEvents, &event_kernel_{{slr_id}}));
     {% endfor %}
 
-#ifdef DEBUG_LOG
+{##ifdef DEBUG_LOG
     {% for arg in ilh.joint_args %}
         {% if arg is ops_dat %}
         ops::hls::addEvent(arg{{arg.id}}, event_kernel, m_kernelName);
         ops::hls::addEvent(arg{{arg.id}}, event_datamover, m_kernelName);
         {% endif %}
     {% endfor %}
-#endif
+#endif#}
     {% for arg in ilh.joint_args %}
         {% if arg is ops_dat %}
         arg{{arg.id}}.isDevBufDirty = true;
@@ -171,25 +171,33 @@ public:
     {% endfor %}
 
     {% for swap_pair in ilh.getUniqueDatSwaps() %}
+        {% if swap_pair[0] != swap_pair[1] %}
         cl::Event event_arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_bufCpy;
         size_t arg{{swap_pair[0]}}_total_bytes = arg{{swap_pair[0]}}.originalProperty.grid_size[0] * arg{{swap_pair[0]}}.originalProperty.grid_size[1] * arg{{swap_pair[0]}}.originalProperty.grid_size[2] * sizeof(stencil_type);
+        {% endif %}
     {% endfor %}
 
         if (adjusted_outer_iter %2 == 0)
         {
     {% for swap_pair in ilh.getUniqueDatSwaps() %}
+        {% if swap_pair[0] != swap_pair[1] %}
             OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueCopyBuffer(arg{{swap_pair[0]}}.deviceBuffer, arg{{swap_pair[1]}}.deviceBuffer, 0, 0, arg{{swap_pair[0]}}_total_bytes, &activeEvents, &event_arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_bufCpy));
+        {% endif %}
     {% endfor %}
         }
         else
         {
     {% for swap_pair in ilh.getUniqueDatSwaps() %}
+        {% if swap_pair[0] != swap_pair[1] %}
             OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueCopyBuffer(arg{{swap_pair[1]}}.deviceBuffer, arg{{swap_pair[0]}}.deviceBuffer, 0, 0, arg{{swap_pair[0]}}_total_bytes, &activeEvents, &event_arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_bufCpy));
+        {% endif %}
     {% endfor %}
         }
 #ifndef ASYNC_DISPATCH
     {% for swap_pair in ilh.getUniqueDatSwaps() %}
+        {% if swap_pair[0] != swap_pair[1] %}
         event_arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_bufCpy.wait();
+        {% endif %}
     {% endfor %}
 #endif
     }

@@ -186,7 +186,21 @@ public:
                 stencilConfig.grid_size[1] * stencilConfig.grid_size[0];
     {% endif %}
 
-        unsigned short total_itr = stencilConfig.total_itr;
+    {% for arg in lh.args|ops_dat|ops_read_or_rw %}
+        {% if lh.get_read_stencil(prog).dim == 1 %}
+            {% set base_offset = lh.get_read_stencil(prog).base_point.x - prog.findStencil(arg.stencil_ptr).base_point.x %}
+            unsigned short arg{{arg.id}}_read_lb_itr = {{base_offset}};
+            unsigned short arg{{arg.id}}_read_ub_itr = {{base_offset}} + stencilConfig.grid_size[0];
+        {% elif lh.get_read_stencil(prog).dim == 2 %}
+            {% set base_offset = lh.get_read_stencil(prog).base_point.y - prog.findStencil(arg.stencil_ptr).base_point.y %}
+            unsigned short arg{{arg.id}}_read_lb_itr = {{base_offset}} * stencilConfig.grid_size[0];
+            unsigned short arg{{arg.id}}_read_ub_itr = ({{base_offset}} + stencilConfig.grid_size[1]) * stencilConfig.grid_size[0];
+        {% else %}
+            {% set base_offset = lh.get_read_stencil(prog).base_point.z - prog.findStencil(arg.stencil_ptr).base_point.z %}
+            unsigned short arg{{arg.id}}_read_lb_itr = {{base_offset}} * stencilConfig.grid_size[0] * stencilConfig.grid_size[1];
+            unsigned short arg{{arg.id}}_read_ub_itr = ({{base_offset}} + stencilConfig.grid_size[2]) stencilConfig.grid_size[1] * stencilConfig.grid_size[0];
+        {% endif %}
+    {% endfor %}
 
     {% for arg in lh.args|ops_dat %}
         {% if arg is ops_read and arg.dat_id != datMap[arg.dat_id] %}
@@ -199,7 +213,7 @@ public:
         {% endif %}
     {% endfor %}
 
-    {% for arg in lh.args|ops_dat|ops_read %}
+    {% for arg in lh.args|ops_dat|ops_read_or_rw %}
         widen_dt arg{{arg.id}}_stencilValues[read_num_points];
         #pragma HLS ARRAY_PARTITION variable = arg{{arg.id}}_stencilValues dim = 1 complete
 
@@ -261,15 +275,15 @@ public:
                     k++;
     {% endif %}
 
-                bool cond_read = (itr < total_itr);
-
-                if (cond_read){
-    {% for arg in lh.args|ops_dat %}
-        {% if arg is ops_read or arg is ops_rw %}
-                    arg{{arg.id}}_read_val = arg{{arg.id}}_rd_buffer.read();
-        {% endif %}
+    {% for arg in lh.args|ops_dat|ops_read %}
+                bool arg{{arg.id}}_read_cond = (itr < arg{{arg.id}}_read_ub_itr) and (itr >= arg{{arg.id}}_read_lb_itr);
     {% endfor %}
-                }
+
+    {% for arg in lh.args|ops_dat|ops_read_or_rw %}
+                if (arg{{arg.id}}_read_cond)
+                    arg{{arg.id}}_read_val = arg{{arg.id}}_rd_buffer.read();
+    {% endfor %}
+                
     {% for arg in lh.args|ops_dat|ops_read %}
         {% for chain in prog.findStencil(arg.stencil_ptr).chains %}                
                 {{chainLinkTranform(chain[0], arg, 1)}} = {{chainLinkTranform(chain[1], arg, 0)}};{% endfor %}
@@ -423,8 +437,9 @@ public:
         {% endif %}
         {% if arg is ops_read %}
             {% if prog.findStencil(arg.stencil_ptr) %}
+            {% set base_offset = lh.get_read_stencil(prog).base_point.x - prog.findStencil(arg.stencil_ptr).base_point.x %}
                 {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
-                        arg{{arg.id}}_rowArr_{{prog.findStencil(arg.stencil_ptr).points[i].y}}_{{prog.findStencil(arg.stencil_ptr).points[i].z}}[x + {{prog.findStencil(arg.stencil_ptr).points[i].x}}]{{"," if (not loop.last or not last_check)}}
+                        arg{{arg.id}}_rowArr_{{prog.findStencil(arg.stencil_ptr).points[i].y}}_{{prog.findStencil(arg.stencil_ptr).points[i].z}}[x + {{prog.findStencil(arg.stencil_ptr).points[i].x + base_offset}}]{{"," if (not loop.last or not last_check)}}
                 {% endfor %}
             {% endif %}
         {% endif %}
@@ -460,13 +475,15 @@ public:
                 {
 
     {% for arg in lh.args|ops_dat|ops_write %}
-                    arg{{arg.id}}_tmpConvWrite.f = arg{{get_read_arg_from_dat(lh.dats[datMap[arg.dat_id]], lh).id}}_rowArr_{{prog.findStencil(get_read_arg_from_dat(lh.dats[datMap[arg.dat_id]], lh).stencil_ptr).base_point.y}}_{{prog.findStencil(get_read_arg_from_dat(lh.dats[datMap[arg.dat_id]], lh).stencil_ptr).base_point.z}}[x + {{prog.findStencil(get_read_arg_from_dat(lh.dats[datMap[arg.dat_id]], lh).stencil_ptr).base_point.x}}];
+    {% set base_offset = lh.get_read_stencil(prog).base_point.x - prog.findStencil(arg.stencil_ptr).base_point.x %}
+                    arg{{arg.id}}_tmpConvWrite.f = arg{{get_read_arg_from_dat(lh.dats[datMap[arg.dat_id]], lh).id}}_rowArr_{{prog.findStencil(get_read_arg_from_dat(lh.dats[datMap[arg.dat_id]], lh).stencil_ptr).base_point.y}}_{{prog.findStencil(get_read_arg_from_dat(lh.dats[datMap[arg.dat_id]], lh).stencil_ptr).base_point.z}}[x + {{base_offset}}];
     {% endfor %}
                 }
     {% if not isFullyMapped %}
         {% for arg in lh.args|ops_dat|ops_read %}
+        {% set base_offset = lh.get_read_stencil(prog).base_point.x - prog.findStencil(arg.stencil_ptr).base_point.x %}
             {% if arg.dat_id == datMap[arg.dat_id] %}
-                    arg{{arg.id}}_tmpConvWrite.f = arg{{arg.id}}_rowArr_{{prog.findStencil(arg.stencil_ptr).base_point.y}}_{{prog.findStencil(arg.stencil_ptr).base_point.z}}[x + {{prog.findStencil(arg.stencil_ptr).base_point.x}}];
+                    arg{{arg.id}}_tmpConvWrite.f = arg{{arg.id}}_rowArr_{{prog.findStencil(arg.stencil_ptr).base_point.y}}_{{prog.findStencil(arg.stencil_ptr).base_point.z}}[x + {{prog.findStencil(arg.stencil_ptr).base_point.x + base_offset}}];
             {% endif %}
         {% endfor %}
     {% endif %}
