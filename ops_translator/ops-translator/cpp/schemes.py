@@ -215,9 +215,9 @@ class CppHLS(Scheme):
                 raise ParseError(f"Transaltor filed with error: {str(e)}")
                 
             if isReplaceWithReg:
-                kernel_body = re.sub(match_string, f"reg_{arg_idx}_{stencil.points.index(access_indices)}", kernel_body, count = 1)
+                kernel_body = re.sub(match_string, f"reg_{loop.args[arg_idx].dat_id}_{stencil.points.index(access_indices)}", kernel_body, count = 1)
             else:
-                kernel_body = re.sub(match_string, f"arg{arg_idx}_{stencil.points.index(access_indices)}", kernel_body, count = 1)
+                kernel_body = re.sub(match_string, f"arg{loop.args[arg_idx].dat_id}_{stencil.points.index(access_indices)}", kernel_body, count = 1)
         return kernel_body
 
                 
@@ -228,10 +228,7 @@ class CppHLS(Scheme):
         return None
     
     def replace_idx_access(self, kernel_body: str, idx_arg_name: str, isHLS = True)->str:
-        if isHLS:
-            new_kernel_body = re.sub(idx_arg_name, "indexConv.index", kernel_body)
-        else:
-            new_kernel_body = re.sub(idx_arg_name, "idx", kernel_body)
+        new_kernel_body = re.sub(idx_arg_name, "idx", kernel_body)
         return new_kernel_body
 
     def genIterLoopDevice(
@@ -306,6 +303,7 @@ class CppHLS(Scheme):
                  config=config,
                  isFullyMapped = isFullyMapped,
                  datMap = datMap,
+                 is_arg_idx = (kernel_idx_arg_name != None),
                  ops=ops
                  ),self.loop_device_PE_extension)]
         )

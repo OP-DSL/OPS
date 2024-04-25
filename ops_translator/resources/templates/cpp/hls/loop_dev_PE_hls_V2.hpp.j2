@@ -82,7 +82,7 @@ inline void kernel_{{lh.kernel}}_core(
             {% endif %}
         {% endif %}
         {% if arg is ops_idx %}
-        const ops::hls::SizeType& idx{{"," if (not loop.last or not last_check)}}
+        const short idx[3]{{"," if (not loop.last or not last_check)}}
         {% endif %}
     {% endfor %}
     {% for const in consts %}
@@ -385,7 +385,7 @@ public:
             process: for (unsigned short x = 0; x < vector_factor; x++)
             {
 #pragma HLS UNROLL factor=vector_factor
-                unsigned short index = (i << shift_bits) + x;
+                short index = (i << shift_bits) + x;
                 bool neg_cond = register_it(             
                         (index < stencilConfig.lower_limit[0]) 
                         || (index >= stencilConfig.upper_limit[0])
@@ -421,7 +421,7 @@ public:
     {% endfor %}
 
     {% if lh.arg_idx != -1 %}
-                ops::hls::SizeType idx = {index, {% if lh.get_read_stencil(prog).dim > 1 %}y,{% else %}1,{% endif %} {% if lh.get_read_stencil(prog).dim > 2 %}z,{% else %}1,{% endif %}};
+                short idx[] = {index, {% if lh.get_read_stencil(prog).dim > 1 %}j,{% else %}1,{% endif %} {% if lh.get_read_stencil(prog).dim > 2 %}k,{% else %}1{% endif %}};
     {% endif %}
 
                 kernel_{{lh.kernel}}_core(
