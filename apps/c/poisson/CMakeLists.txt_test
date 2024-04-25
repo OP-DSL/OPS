@@ -569,7 +569,6 @@
             add_executable(${Name}_mpi ${OPS} ${OTHERS}
                             "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
             target_include_directories(${Name}_mpi PRIVATE ${TMP_SOURCE_DIR})
-            target_include_directories(${Name}_mpi_cuda PRIVATE ${MPI_CXX_INCLUDE_PATH})
             target_compile_definitions(${Name}_mpi PRIVATE "-DOPS_MPI")
 
             if(HDF5_MPI)
@@ -633,32 +632,4 @@
 
     endmacro()
 
-#   TODO fetch_data.cpp cannot be found for access add_subdirectory(access)
-    if(LIBTRID_PATH)
-        add_subdirectory(adi)
-        add_subdirectory(adi_burger)
-        add_subdirectory(adi_burger_3D)
-    endif()
-
-    add_subdirectory(CloverLeaf) # Compile OK
-    add_subdirectory(CloverLeaf_3D) # Compile OK
-    add_subdirectory(CloverLeaf_3D_HDF5) # Compile OK
-#   TODO there seem bugs in the codes of complex_numbers
-#   add_subdirectory(complex_numbers) TODO Need to figure out the structure
-#   add_subdirectory(laplace2d_tutorial)
-    add_subdirectory(lowdim_test)
-#   TODO no PASSED for testing
-    add_subdirectory(mblock)
-#   TODO there seems problem for compiling mblock4D add_subdirectory(mblock4D) #
-#   ignored at this moment TODO needs to replace  acceptable with PASSED for
-#   standard test
-    add_subdirectory(mb_shsgc)
-#   add_subdirectory(mgrid)  # Compile OK
-    add_subdirectory(multiDim)
-    add_subdirectory(multiDim3D)
-    add_subdirectory(multiDim_HDF5)
-    add_subdirectory(poisson)
-    add_subdirectory(shsgc)
-    add_subdirectory(TeaLeaf)
-    add_subdirectory(compact_scheme)
-    add_subdirectory(hdf5_slice)
+build_ops_c_sample(poisson "NONE" "NONE" "NONE" "NO" "YES")
