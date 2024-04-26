@@ -17,6 +17,7 @@
         option(OPS_VERBOSE_WARNING "Turn on verbose warning messages" OFF)
         option(OPS_TEST "Turn on tests for Apps" OFF)
         option(ENABLE_IEEE "Enable IEEE flags" OFF)
+        option(LEGACY_CODEGEN "Build apps with Legacy code-gen" OFF)
 
         if(NOT OPS_VERBOSE_WARNING)
             message(
@@ -234,23 +235,34 @@
         find_package(CUDAToolkit QUIET)
         find_package(OpenMP QUIET)
 
-        find_package(Python3 REQUIRED)
-#       find_package(Python3 3.8 REQUIRED)
+        find_package(Python3 3.8 REQUIRED)
         if(NOT Python3_FOUND)
             message(
                 WARNING
                     "We cannot find Python3 and the OPS code-generator needs Python3! Please use -DPython3_EXECUTABLE to specify the path."
             )  
         else()
-            find_path(opsc
-                    NAMES "ops.py"
-                    PATHS ${SEARCH_PATHS}
-                    PATH_SUFFIXES bin/ops_translator_legacy/c)
+            if(LEGACY_CODEGEN)
+                find_path(opsc
+                        NAMES "ops.py"
+                        PATHS ${SEARCH_PATHS}
+                        PATH_SUFFIXES bin/ops_translator_legacy/c)
 
-            find_path(opsfortran
-                    NAMES "ops_fortran.py"
-                    PATHS ${SEARCH_PATHS}
-                    PATH_SUFFIXES bin/ops_translator_legacy/fortran)
+                find_path(opsfortran
+                        NAMES "ops_fortran.py"
+                        PATHS ${SEARCH_PATHS}
+                        PATH_SUFFIXES bin/ops_translator_legacy/fortran)
+            else()
+                find_path(opsc
+                        NAMES "__main__.py"
+                        PATHS ${SEARCH_PATHS}
+                        PATH_SUFFIXES bin/ops_translator/ops-translator)
+
+                find_path(opsfortran
+                        NAMES "__main__.py"
+                        PATHS ${SEARCH_PATHS}
+                        PATH_SUFFIXES bin/ops_translator/ops-translator)
+            endif()
     
             if(NOT opsc)
                 message(FATAL_ERROR "We cannot find the python C/C++ translator!")
@@ -261,8 +273,13 @@
             endif()
         endif()
 
-        set(OPS_C_TRANSLATOR "${opsc}/ops.py")
-        set(OPS_F_TRANSLATOR "${opsfortran}/ops_fortran.py")
+        if(LEGACY_CODEGEN)
+            set(OPS_C_TRANSLATOR "${opsc}/ops.py")
+            set(OPS_F_TRANSLATOR "${opsfortran}/ops_fortran.py")
+        else()
+            set(OPS_C_TRANSLATOR "python3 ${opsc}/__main__.py -DOPS_ACC_IGNORE -I ${OPS_INCLUDE_DIR} --file_paths")
+            set(OPS_F_TRANSLATOR "python3 ${opsfortran}/__main__.py -DOPS_ACC_IGNORE -I ${OPS_INCLUDE_DIR} --file_paths")
+        endif()
 
 #       Configure the "include" dir for compiling
         if(NOT HDF5_FOUND)
@@ -363,8 +380,13 @@
                     "We cannot find Python3 and the OPS code-generator needs Python3! Please use -DPython3_EXECUTABLE to specify the path."
             )
         else()
-            set(OPS_C_TRANSLATOR "${CMAKE_SOURCE_DIR}/ops_translator_legacy/c/ops.py")
-            set(OPS_F_TRANSLATOR "${opsfortran}/ops_translator_legacy/fortran/ops_fortran.py")
+            if(LEGACY_CODEGEN)
+                set(OPS_C_TRANSLATOR "${CMAKE_SOURCE_DIR}/ops_translator_legacy/c/ops.py")
+                set(OPS_F_TRANSLATOR "${CMAKE_SOURCE_DIR}/ops_translator_legacy/fortran/ops_fortran.py")
+            else()
+                set(OPS_C_TRANSLATOR "python3 ${CMAKE_SOURCE_DIR}/ops_translator/ops-translator/__main__.py -DOPS_ACC_IGNORE -I ${CMAKE_SOURCE_DIR}/ops/c/include --file_paths")
+                set(OPS_F_TRANSLATOR "python3 ${CMAKE_SOURCE_DIR}/ops_translator/ops-translator/__main__.py -DOPS_ACC_IGNORE -I ${CMAKE_SOURCE_DIR}/ops/c/include --file_paths")
+            endif()
         endif()
 
 #       Set the OPS_INSTALL_PATH for testing
@@ -424,8 +446,24 @@
         list(GET DEV 0 Kernel)
 
         get_filename_component(KernelName ${Kernel} NAME_WE)
+
+#       If not LEGACY_CODEGEN then activate the Installed Python Virtual Environment
+        if(${CMAKE_PROJECT_NAME} STREQUAL APP)
+            if(NOT LEGACY_CODEGEN)
+                message("Activating Python Virtual Environment for Code-Generation")
+                execute_process(
+                    COMMAND ${CMAKE_COMMAND} /bin/bash -c "deactivate"
+                )
+                execute_process(
+                    COMMAND ${CMAKE_COMMAND} /bin/bash -c "source ${OPS_INSTALL_PATH}/bin/ops_translator/ops_venv/bin/activate"
+                )
+            endif()
+        endif()
+
         execute_process(COMMAND ${OPS_C_TRANSLATOR} ${DEV}
                         WORKING_DIRECTORY ${TMP_SOURCE_DIR})
+
+
         file(GLOB OPS "${TMP_SOURCE_DIR}/*ops*.cpp")
 #       message(${OPS})
 
@@ -569,7 +607,6 @@
             add_executable(${Name}_mpi ${OPS} ${OTHERS}
                             "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
             target_include_directories(${Name}_mpi PRIVATE ${TMP_SOURCE_DIR})
-            target_include_directories(${Name}_mpi_cuda PRIVATE ${MPI_CXX_INCLUDE_PATH})
             target_compile_definitions(${Name}_mpi PRIVATE "-DOPS_MPI")
 
             if(HDF5_MPI)
@@ -608,6 +645,7 @@
                 add_executable(${Name}_mpi_cuda ${OPS} ${OTHERS}
                                 "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
                 target_include_directories(${Name}_mpi_cuda PRIVATE ${TMP_SOURCE_DIR})
+                target_include_directories(${Name}_mpi_cuda PRIVATE ${MPI_CXX_INCLUDE_PATH})
                 target_compile_definitions(${Name}_mpi_cuda PRIVATE "-DOPS_MPI")
                 target_compile_options(${Name}_mpi_cuda
                              PRIVATE $<$<COMPILE_LANGUAGE:CUDA>: --fmad=false >)

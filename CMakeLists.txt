@@ -8,7 +8,7 @@
     option(OPS_TEST "Turn on tests for Apps" OFF)
     option(OPS_HIP "Turn on the HIP backend" OFF)
     option(ENABLE_IEEE "Enable IEEE flags" OFF)
-
+    option(LEGACY_CODEGEN "Build apps with Legacy code-gen" OFF)
 
     if(NOT OPS_VERBOSE_WARNING)
         message(
@@ -154,8 +154,7 @@
     find_package(CUDAToolkit QUIET)
     find_package(OpenMP REQUIRED)
 
-    find_package(Python3 QUIET)
-#   find_package(Python3 3.8 REQUIRED)
+    find_package(Python3 3.8 REQUIRED)
     if(NOT Python3_FOUND)
         message(
             WARNING
@@ -258,7 +257,11 @@
 #   >${werrorFlag}") endif()
 
 #   install python translator
-    add_subdirectory(ops_translator_legacy)
+    if(LEGACY_CODEGEN)
+        add_subdirectory(ops_translator_legacy)
+    else()
+        add_subdirectory(ops_translator)
+    endif()
 
 #   Configure the C/C++ library compiling
     add_subdirectory(ops/c)
