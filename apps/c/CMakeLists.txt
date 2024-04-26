@@ -277,8 +277,8 @@
             set(OPS_C_TRANSLATOR "${opsc}/ops.py")
             set(OPS_F_TRANSLATOR "${opsfortran}/ops_fortran.py")
         else()
-            set(OPS_C_TRANSLATOR "python3 ${opsc}/__main__.py -DOPS_ACC_IGNORE -I ${OPS_INCLUDE_DIR} --file_paths")
-            set(OPS_F_TRANSLATOR "python3 ${opsfortran}/__main__.py -DOPS_ACC_IGNORE -I ${OPS_INCLUDE_DIR} --file_paths")
+            set(OPS_C_TRANSLATOR "${opsc}")
+            set(OPS_F_TRANSLATOR "${opsfortran}")
         endif()
 
 #       Configure the "include" dir for compiling
@@ -359,7 +359,9 @@
 
 #   If APPs are compiled together with the OPS API
     if(${CMAKE_PROJECT_NAME} STREQUAL OPS)
+
         include_directories("${CMAKE_SOURCE_DIR}/ops/c/include")
+        set(OPS_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/ops/c/include")
 
         set(HDF5_SEQ ${HDF5_FOUND})
         set(CUDA ${CUDAToolkit_FOUND})
@@ -381,11 +383,11 @@
             )
         else()
             if(LEGACY_CODEGEN)
-                set(OPS_C_TRANSLATOR "${CMAKE_SOURCE_DIR}/ops_translator_legacy/c/ops.py")
-                set(OPS_F_TRANSLATOR "${CMAKE_SOURCE_DIR}/ops_translator_legacy/fortran/ops_fortran.py")
+                set(OPS_C_TRANSLATOR "${CMAKE_INSTALL_PREFIX}/bin/ops_translator_legacy/c/ops.py")
+                set(OPS_F_TRANSLATOR "${CMAKE_INSTALL_PREFIX}/bin/ops_translator_legacy/fortran/ops_fortran.py")
             else()
-                set(OPS_C_TRANSLATOR "python3 ${CMAKE_SOURCE_DIR}/ops_translator/ops-translator/__main__.py -DOPS_ACC_IGNORE -I ${CMAKE_SOURCE_DIR}/ops/c/include --file_paths")
-                set(OPS_F_TRANSLATOR "python3 ${CMAKE_SOURCE_DIR}/ops_translator/ops-translator/__main__.py -DOPS_ACC_IGNORE -I ${CMAKE_SOURCE_DIR}/ops/c/include --file_paths")
+                set(OPS_C_TRANSLATOR "${CMAKE_INSTALL_PREFIX}/bin/ops_translator/ops-translator")
+                set(OPS_F_TRANSLATOR "${CMAKE_INSTALL_PREFIX}/bin/ops_translator/ops-translator")
             endif()
         endif()
 
@@ -451,17 +453,56 @@
         if(${CMAKE_PROJECT_NAME} STREQUAL APP)
             if(NOT LEGACY_CODEGEN)
                 message("Activating Python Virtual Environment for Code-Generation")
-                execute_process(
-                    COMMAND ${CMAKE_COMMAND} /bin/bash -c "deactivate"
-                )
-                execute_process(
-                    COMMAND ${CMAKE_COMMAND} /bin/bash -c "source ${OPS_INSTALL_PATH}/bin/ops_translator/ops_venv/bin/activate"
-                )
+                set(VENV_DEACTIVATE "deactivate")
+                set(VENV_ACTIVATE "source ${OPS_INSTALL_PATH}/bin/ops_translator/ops_venv/bin/activate")
+                execute_process(COMMAND /bin/bash -c ${VENV_DEACTIVATE}
+                                WORKING_DIRECTORY ${TMP_SOURCE_DIR})
+
+                execute_process(COMMAND /bin/bash -c ${VENV_ACTIVATE}
+                                WORKING_DIRECTORY ${TMP_SOURCE_DIR}
+                                RESULT_VARIABLE result
+                                OUTPUT_VARIABLE output)
+
+                if(result EQUAL 0)
+                    set(PYTHON_EXECUTABLE "${OPS_INSTALL_PATH}/bin/ops_translator/ops_venv/bin/python3")
+                    message(STATUS "Python Virtual Enviroment activated successfully")
+                else()
+                    message("command: ${VENV_ACTIVATE}")
+                    message(FATAL_ERROR "Activate Python Virtual Environment command failed with error code ${result}: ${output}")
+                endif()
             endif()
         endif()
 
-        execute_process(COMMAND ${OPS_C_TRANSLATOR} ${DEV}
-                        WORKING_DIRECTORY ${TMP_SOURCE_DIR})
+#       Run OPS code-generation
+        if(LEGACY_CODEGEN)
+            message(STATUS "Code-gen command: ${OPS_C_TRANSLATOR} ${DEV}")
+            execute_process(COMMAND ${OPS_C_TRANSLATOR} ${DEV}
+                            WORKING_DIRECTORY ${TMP_SOURCE_DIR}
+                            RESULT_VARIABLE result
+                            OUTPUT_VARIABLE output)
+        else()
+            set(PYTHON_FILE_ARGS "-DOPS_ACC_IGNORE -I ${OPS_INSTALL_PATH}/include --file_paths")
+
+            foreach(filepath ${DEV})
+                get_filename_component(filename ${filepath} NAME)
+                list(APPEND FILENAMES ${filename})
+            endforeach()
+
+            message(STATUS "Code-gen command: ${PYTHON_EXECUTABLE} ${OPS_C_TRANSLATOR} ${PYTHON_FILE_ARGS} ${FILENAMES}")
+            execute_process(COMMAND ${PYTHON_EXECUTABLE} ${OPS_C_TRANSLATOR}
+                            -DOPS_ACC_IGNORE
+                            -I ${OPS_INSTALL_PATH}/include
+                            --file_paths ${FILENAMES}
+                            WORKING_DIRECTORY ${TMP_SOURCE_DIR}
+                            RESULT_VARIABLE result
+                            OUTPUT_VARIABLE output)
+        endif()
+
+        if(result EQUAL 0)
+            message(STATUS "OPS Python code generation runs successfully")
+        else()
+            message(FATAL_ERROR "OPS Python code generation command failed with error code ${result}: ${output}")
+        endif()
 
 
         file(GLOB OPS "${TMP_SOURCE_DIR}/*ops*.cpp")
