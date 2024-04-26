@@ -558,6 +558,8 @@
 
         install(FILES ${INPUT} DESTINATION ${APP_INSTALL_DIR}/${Name})
 
+
+#       TARGET: DEV_SEQ, SEQ, OPENMP, TILED
         add_executable(${Name}_dev_seq ${DEV} ${OTHERS})
         target_include_directories(${Name}_dev_seq PRIVATE ${TMP_SOURCE_DIR})
 
@@ -565,12 +567,24 @@
                        "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
         target_include_directories(${Name}_seq PRIVATE ${TMP_SOURCE_DIR})
 
+        add_executable(${Name}_openmp ${OPS} ${OTHERS}
+                       "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
+        target_include_directories(${Name}_openmp PRIVATE ${TMP_SOURCE_DIR})
+
+        add_executable(${Name}_tiled ${OPS} ${OTHERS}
+                       "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
+        target_include_directories(${Name}_tiled PRIVATE ${TMP_SOURCE_DIR})
+        target_compile_definitions(${Name}_tiled PRIVATE "-DOPS_LAZY")
+
         if(HDF5_SEQ)
             target_link_libraries(${Name}_dev_seq ops_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl
                                     MPI::MPI_CXX)
             target_link_libraries(${Name}_seq ops_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl
                                     MPI::MPI_CXX)
-
+            target_link_libraries(${Name}_openmp ops_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl
+                                    MPI::MPI_CXX)
+            target_link_libraries(${Name}_tiled ops_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl
+                                    MPI::MPI_CXX)
         endif()
 
         if(${Trid} STREQUAL "YES")
@@ -581,14 +595,20 @@
 
         if(TRID)
             target_link_libraries(${Name}_dev_seq ops_trid_seq -L${LIBTRID_PATH}/lib -ltridcpu)
-            target_link_libraries(${Name}_seq ops_trid_seq -L${LIBTRID_PATH}/lib -ltridcpu)
+            target_link_libraries(${Name}_seq     ops_trid_seq -L${LIBTRID_PATH}/lib -ltridcpu)
+            target_link_libraries(${Name}_openmp  ops_trid_seq -L${LIBTRID_PATH}/lib -ltridcpu)
+            target_link_libraries(${Name}_tiled   ops_trid_seq -L${LIBTRID_PATH}/lib -ltridcpu)
         endif()
 
-        target_link_libraries(${Name}_seq ops_seq OpenMP::OpenMP_CXX)
         target_link_libraries(${Name}_dev_seq ops_seq OpenMP::OpenMP_CXX)
+        target_link_libraries(${Name}_seq     ops_seq OpenMP::OpenMP_CXX)
+        target_link_libraries(${Name}_openmp  ops_seq OpenMP::OpenMP_CXX)
+        target_link_libraries(${Name}_tiled   ops_seq OpenMP::OpenMP_CXX)
 
         install(TARGETS ${Name}_dev_seq DESTINATION ${APP_INSTALL_DIR}/${Name})
-        install(TARGETS ${Name}_seq DESTINATION ${APP_INSTALL_DIR}/${Name})
+        install(TARGETS ${Name}_seq     DESTINATION ${APP_INSTALL_DIR}/${Name})
+        install(TARGETS ${Name}_openmp  DESTINATION ${APP_INSTALL_DIR}/${Name})
+        install(TARGETS ${Name}_tiled   DESTINATION ${APP_INSTALL_DIR}/${Name})
 
 #       Sequential tests disabled since it is too time consuming for some tests at this moment 
 #       if ((OPS_TEST) AND (${GenerateTest} STREQUAL "YES")) 
@@ -674,24 +694,47 @@
             target_include_directories(${Name}_mpi PRIVATE ${TMP_SOURCE_DIR})
             target_compile_definitions(${Name}_mpi PRIVATE "-DOPS_MPI")
 
+            add_executable(${Name}_mpi_openmp ${OPS} ${OTHERS}
+                            "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
+            target_include_directories(${Name}_mpi_openmp PRIVATE ${TMP_SOURCE_DIR})
+            target_compile_definitions(${Name}_mpi_openmp PRIVATE "-DOPS_MPI")
+
+            add_executable(${Name}_mpi_tiled ${OPS} ${OTHERS}
+                            "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
+            target_include_directories(${Name}_mpi_tiled PRIVATE ${TMP_SOURCE_DIR})
+            target_compile_definitions(${Name}_mpi_tiled PRIVATE "-DOPS_MPI -DOPS_LAZY")
+
             if(HDF5_MPI)
-                target_link_libraries(${Name}_mpi PRIVATE ops_hdf5_mpi hdf5::hdf5
-                                                hdf5::hdf5_hl MPI::MPI_CXX)
                 target_link_libraries(${Name}_dev_mpi PRIVATE ops_hdf5_mpi hdf5::hdf5
                                                     hdf5::hdf5_hl MPI::MPI_CXX)
+                target_link_libraries(${Name}_mpi PRIVATE ops_hdf5_mpi hdf5::hdf5
+                                                hdf5::hdf5_hl MPI::MPI_CXX)
+                target_link_libraries(${Name}_mpi_openmp PRIVATE ops_hdf5_mpi hdf5::hdf5
+                                                hdf5::hdf5_hl MPI::MPI_CXX)
+                target_link_libraries(${Name}_mpi_tiled PRIVATE ops_hdf5_mpi hdf5::hdf5
+                                                hdf5::hdf5_hl MPI::MPI_CXX)
             endif()
 
             if(TRID)
+                target_link_libraries(${Name}_dev_mpi PRIVATE ops_trid_mpi -L${LIBTRID_PATH}/lib -ltridcpu_mpi 
+                                        MPI::MPI_CXX)
                 target_link_libraries(${Name}_mpi PRIVATE ops_trid_mpi -L${LIBTRID_PATH}/lib -ltridcpu_mpi
                                         MPI::MPI_CXX)
-                target_link_libraries(${Name}_dev_mpi PRIVATE ops_trid_mpi -L${LIBTRID_PATH}/lib -ltridcpu_mpi 
+                target_link_libraries(${Name}_mpi_openmp PRIVATE ops_trid_mpi -L${LIBTRID_PATH}/lib -ltridcpu_mpi
+                                        MPI::MPI_CXX)
+                target_link_libraries(${Name}_mpi_tiled PRIVATE ops_trid_mpi -L${LIBTRID_PATH}/lib -ltridcpu_mpi
                                         MPI::MPI_CXX)
             endif()
 
+            target_link_libraries(${Name}_dev_mpi PRIVATE ops_mpi MPI::MPI_CXX
+                                              OpenMP::OpenMP_CXX)
             target_link_libraries(${Name}_mpi PRIVATE ops_mpi MPI::MPI_CXX
                                               OpenMP::OpenMP_CXX)
-            target_link_libraries(${Name}_dev_mpi PRIVATE ops_mpi MPI::MPI_CXX
-                                                  OpenMP::OpenMP_CXX)
+            target_link_libraries(${Name}_mpi_openmp PRIVATE ops_mpi MPI::MPI_CXX
+                                              OpenMP::OpenMP_CXX)
+            target_link_libraries(${Name}_mpi_tiled PRIVATE ops_mpi MPI::MPI_CXX
+                                              OpenMP::OpenMP_CXX)
+
             if((OPS_TEST) AND (${GenerateTest} STREQUAL "YES"))
                 set(args "-n ${CPU_NUMBER} $<TARGET_FILE:${Name}_mpi>")
                 set(cmd "mpirun")
@@ -705,6 +748,8 @@
 
             install(TARGETS ${Name}_dev_mpi DESTINATION ${APP_INSTALL_DIR}/${Name})
             install(TARGETS ${Name}_mpi DESTINATION ${APP_INSTALL_DIR}/${Name})
+            install(TARGETS ${Name}_mpi_openmp DESTINATION ${APP_INSTALL_DIR}/${Name})
+            install(TARGETS ${Name}_mpi_tiled DESTINATION ${APP_INSTALL_DIR}/${Name})
 
             if(CUDA_MPI)
                 add_executable(${Name}_mpi_cuda ${OPS} ${OTHERS}
@@ -713,23 +758,39 @@
                 target_compile_definitions(${Name}_mpi_cuda PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK")
                 target_compile_options(${Name}_mpi_cuda
                              PRIVATE $<$<COMPILE_LANGUAGE:CUDA>: --fmad=false >)
+
+                add_executable(${Name}_mpi_cuda_tiled ${OPS} ${OTHERS}
+                                "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
+                target_include_directories(${Name}_mpi_cuda_tiled PRIVATE ${TMP_SOURCE_DIR} ${MPI_INCLUDE_DIRS})
+                target_compile_definitions(${Name}_mpi_cuda_tiled PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK -DOPS_LAZY")
+                target_compile_options(${Name}_mpi_cuda_tiled
+                             PRIVATE $<$<COMPILE_LANGUAGE:CUDA>: --fmad=false >)
+
                 if(HDF5_MPI)
                     target_link_libraries(${Name}_mpi_cuda PRIVATE ops_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
+                                            MPI::MPI_CXX)
+                    target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
                                             MPI::MPI_CXX)
                 endif()
 
                 if(TRID)
-                    target_link_libraries(${Name}_mpi_cuda PRIVATE ops_trid_mpi_cuda -L${LIBTRID_PATH}/lib -ltridcuda_mpi 
+                    target_link_libraries(${Name}_mpi_cuda PRIVATE ops_trid_mpi_cuda -L${LIBTRID_PATH}/lib -ltridcuda_mpi
+                                            MPI::MPI_CXX)
+                    target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_trid_mpi_cuda -L${LIBTRID_PATH}/lib -ltridcuda_mpi
                                             MPI::MPI_CXX)
                     if(NCCL_FOUND)
                         target_link_libraries(${Name}_mpi_cuda PRIVATE ${NCCL_LIBRARY})
+                        target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ${NCCL_LIBRARY})
                     endif()
                 endif()
 
                 target_link_libraries(${Name}_mpi_cuda PRIVATE ops_mpi_cuda CUDA::cudart_static CUDA::curand MPI::MPI_CXX
                                         OpenMP::OpenMP_CXX)
+                target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_mpi_cuda CUDA::cudart_static CUDA::curand MPI::MPI_CXX
+                                        OpenMP::OpenMP_CXX)
 
                 install(TARGETS ${Name}_mpi_cuda DESTINATION ${APP_INSTALL_DIR}/${Name})
+                install(TARGETS ${Name}_mpi_cuda_tiled DESTINATION ${APP_INSTALL_DIR}/${Name})
             endif()
 
         endif()
