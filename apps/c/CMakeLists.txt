@@ -340,6 +340,30 @@
             if(ops_cuda_FOUND)
                 set(CUDA_MPI ${CUDAToolkit_FOUND})
             endif()
+
+#           Find the MPI INCLUDE directory, required to resolve mpi.h not found error for some targets
+            if(DEFINED ENV{I_MPI_ROOT})     #Intel MPI
+                set(MPI_INCLUDE_DIRS $ENV{I_MPI_ROOT}/include)
+            elseif(DEFINED ENV{MPI_ROOT})       # HPE MPT
+                set(MPI_INCLUDE_DIRS $ENV{MPI_ROOT}/include)
+            elseif(DEFINED ENV{MPICH_DIR})      # Cray
+                set(MPI_INCLUDE_DIRS $ENV{MPICH_DIR}/include)
+            else()                          # OpenMPI
+                execute_process(COMMAND mpicc --showme:incdirs
+                                OUTPUT_VARIABLE MPI_INCLUDE_DIRS
+                                OUTPUT_STRIP_TRAILING_WHITESPACE
+                                ERROR_VARIABLE MPI_INCLUDE_DIRS_ERROR)
+                if(MPI_INCLUDE_DIRS_ERROR)
+                    message(FATAL_ERROR "Failed to determine MPI include directories: ${MPI_INCLUDE_DIRS_ERROR}")
+                endif()
+            endif()
+
+            if(NOT EXISTS ${MPI_INCLUDE_DIRS})
+                message(FATAL_ERROR "MPI include directory ${MPI_INCLUDE_DIRS} does not exist.")
+            else()
+                message(STATUS "MPI include directories: ${MPI_INCLUDE_DIRS}")
+            endif()
+
         endif()
 
 #       Prepare ctest
@@ -455,8 +479,8 @@
                 message("Activating Python Virtual Environment for Code-Generation")
                 set(VENV_DEACTIVATE "deactivate")
                 set(VENV_ACTIVATE "source ${OPS_INSTALL_PATH}/bin/ops_translator/ops_venv/bin/activate")
-                execute_process(COMMAND /bin/bash -c ${VENV_DEACTIVATE}
-                                WORKING_DIRECTORY ${TMP_SOURCE_DIR})
+                #execute_process(COMMAND /bin/bash -c ${VENV_DEACTIVATE}
+                #                WORKING_DIRECTORY ${TMP_SOURCE_DIR})
 
                 execute_process(COMMAND /bin/bash -c ${VENV_ACTIVATE}
                                 WORKING_DIRECTORY ${TMP_SOURCE_DIR}
@@ -685,9 +709,8 @@
             if(CUDA_MPI)
                 add_executable(${Name}_mpi_cuda ${OPS} ${OTHERS}
                                 "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
-                target_include_directories(${Name}_mpi_cuda PRIVATE ${TMP_SOURCE_DIR})
-                target_include_directories(${Name}_mpi_cuda PRIVATE ${MPI_CXX_INCLUDE_PATH})
-                target_compile_definitions(${Name}_mpi_cuda PRIVATE "-DOPS_MPI")
+                target_include_directories(${Name}_mpi_cuda PRIVATE ${TMP_SOURCE_DIR} ${MPI_INCLUDE_DIRS})
+                target_compile_definitions(${Name}_mpi_cuda PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK")
                 target_compile_options(${Name}_mpi_cuda
                              PRIVATE $<$<COMPILE_LANGUAGE:CUDA>: --fmad=false >)
                 if(HDF5_MPI)
@@ -705,6 +728,7 @@
 
                 target_link_libraries(${Name}_mpi_cuda PRIVATE ops_mpi_cuda CUDA::cudart_static CUDA::curand MPI::MPI_CXX
                                         OpenMP::OpenMP_CXX)
+
                 install(TARGETS ${Name}_mpi_cuda DESTINATION ${APP_INSTALL_DIR}/${Name})
             endif()
 
