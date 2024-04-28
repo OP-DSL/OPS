@@ -43,8 +43,8 @@
 
     if(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -std=c99 -fPIC -Wall -ffloat-store -g -ftree-vectorize -fopenmp")
-        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -O3 -std=c99 -fPIC -Wall -ffloat-store -g -ftree-vectorize -fopenmp")
-        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -O0 -std=c99 -fPIC -Wall -ffloat-store -g -fopenmp")
+        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -std=c99 -fPIC -Wall -ffloat-store -g -ftree-vectorize -fopenmp")
+        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -std=c99 -fPIC -Wall -ffloat-store -g -fopenmp")
     elseif(${CMAKE_C_COMPILER_ID} STREQUAL Clang)
         set(CMAKE_C_FLAGS "-fPIC -DUNIX -Wall")
         set(CMAKE_C_FLAGS_RELEASE "-O3")
@@ -53,10 +53,14 @@
         set(CMAKE_C_FLAGS "-W1")
         set(CMAKE_C_FLAGS_RELEASE "/O2 /Ot ")
         set(CMAKE_C_FLAGS_DEBUG "/Z7 /DEBUG")
+    elseif(${CMAKE_C_COMPILER_ID} STREQUAL NVHPC)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -fast -gopt")
+        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -fast -gopt")
+        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g")
     elseif(${CMAKE_C_COMPILER_ID} STREQUAL Intel)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -xHost -std=c99 -qopenmp -qopt-report")
-        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -O3 -g -xHost -std=c99 -qopenmp -qopt-report")
-        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -O0 -xHost -g -std=c99")
+        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -g -xHost -std=c99 -qopenmp -qopt-report")
+        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -xHost -g -std=c99")
     else()
         message(
             WARNING
@@ -69,8 +73,8 @@
 
     if(${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fPIC -Wall -ffloat-store -g -std=c++11 -fopenmp")
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -fPIC -Wall -ffloat-store -g -std=c++11 -fopenmp")
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -fPIC -Wall -ffloat-store -g -std=c++11")
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -fPIC -Wall -ffloat-store -g -std=c++11 -fopenmp")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -fPIC -Wall -ffloat-store -g -std=c++11")
     elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
         set(CMAKE_CXX_FLAGS "-fPIC -DUNIX -Wall")
         set(CMAKE_CXX_FLAGS_RELEASE "-O3")
@@ -79,10 +83,14 @@
         set(CMAKE_CXX_FLAGS "-W1")
         set(CMAKE_CXX_FLAGS_RELEASE "/O2 /Ot ")
         set(CMAKE_CXX_FLAGS_DEBUG "/Z7 /DEBUG")
+    elseif(${CMAKE_C_COMPILER_ID} STREQUAL NVHPC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fast -gopt -std=c++11 -mp")
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -fast -gopt -std=c++11 -mp")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g -std=c++11 -mp")
     elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -xHost -qopenmp -qopt-report -std=c++11 -qopt-zmm-usage=high")
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -g -xHost -qopenmp -qopt-report -std=c++11 -qopt-zmm-usage=high")
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -g -xHost -DOPS_DEBUG -std=c++11 -DOPS_DEBUG")
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -g -xHost -qopenmp -qopt-report -std=c++11 -qopt-zmm-usage=high")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g -xHost -DOPS_DEBUG -std=c++11 -DOPS_DEBUG")
     else()
         message(
             WARNING
@@ -115,6 +123,9 @@
         if(${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fp-model strict -fp-model source -prec-div -prec-sqrt")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fp-model strict -fp-model source -prec-div -prec-sqrt")
+        elseif(${CMAKE_C_COMPILER_ID} STREQUAL NVHPC)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Kieee -nofma")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Kieee -nofma")
         else()
             message(
                 WARNING
@@ -212,8 +223,7 @@
             set(CMAKE_CUDA_ARCHITECTURES
                 70
                 CACHE STRING "CUDA architectures")
-                message(WARNING "Using Volta architecure for compiling CUDA.")
-                message(WARNING "If different please provide correct GPU architecture using -DGPU_ARCH=XXX  where XXX is compute capability of an architecture!")
+                message(WARNING "Using Volta architecure for compiling CUDA. \nIf different please provide correct GPU architecture using -DGPU_ARCH=XXX  where XXX is compute capability of an architecture!")
         endif()
 
         enable_language(CUDA)
