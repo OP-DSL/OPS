@@ -239,6 +239,7 @@
 
 #       Set the OPS_INSTALL_PATH for testing
         set(OPS_INSTALL_PATH "${OPS_INSTALL_DIR}")
+        set(OPS_CMAKE_INSTALL_PATH "${OPS_INSTALL_DIR}")
 
 #       Try to find the required dependency
         find_package(MPI QUIET)
@@ -426,6 +427,7 @@
         endif()
 
 #       Set the OPS_INSTALL_PATH for testing
+        set(OPS_CMAKE_INSTALL_PATH "${CMAKE_INSTALL_PREFIX}")
         set(OPS_INSTALL_PATH "${CMAKE_SOURCE_DIR}/ops/c")
         set(OPS_APP_SRC "${CMAKE_SOURCE_DIR}/apps/c")
 
@@ -488,7 +490,7 @@
             if(NOT LEGACY_CODEGEN)
                 message("Activating Python Virtual Environment for Code-Generation")
                 set(VENV_DEACTIVATE "deactivate")
-                set(VENV_ACTIVATE "source ${OPS_INSTALL_PATH}/bin/ops_translator/ops_venv/bin/activate")
+                set(VENV_ACTIVATE "source ${OPS_CMAKE_INSTALL_PATH}/bin/ops_translator/ops_venv/bin/activate")
                 #execute_process(COMMAND /bin/bash -c ${VENV_DEACTIVATE}
                 #                WORKING_DIRECTORY ${TMP_SOURCE_DIR})
 
@@ -498,7 +500,7 @@
                                 OUTPUT_VARIABLE output)
 
                 if(result EQUAL 0)
-                    set(PYTHON_EXECUTABLE "${OPS_INSTALL_PATH}/bin/ops_translator/ops_venv/bin/python3")
+                    set(PYTHON_EXECUTABLE "${OPS_CMAKE_INSTALL_PATH}/bin/ops_translator/ops_venv/bin/python3")
                     message(STATUS "Python Virtual Enviroment activated successfully")
                 else()
                     message("command: ${VENV_ACTIVATE}")
@@ -515,7 +517,7 @@
                             RESULT_VARIABLE result
                             OUTPUT_VARIABLE output)
         else()
-            set(PYTHON_FILE_ARGS "-DOPS_ACC_IGNORE -I ${OPS_INSTALL_PATH}/include --file_paths")
+            set(PYTHON_FILE_ARGS "-DOPS_ACC_IGNORE -I ${OPS_CMAKE_INSTALL_PATH}/include --file_paths")
 
             foreach(filepath ${DEV})
                 get_filename_component(filename ${filepath} NAME)
@@ -525,7 +527,7 @@
             message(STATUS "Code-gen command: ${PYTHON_EXECUTABLE} ${OPS_C_TRANSLATOR} ${PYTHON_FILE_ARGS} ${FILENAMES}")
             execute_process(COMMAND ${PYTHON_EXECUTABLE} ${OPS_C_TRANSLATOR}
                             -DOPS_ACC_IGNORE
-                            -I ${OPS_INSTALL_PATH}/include
+                            -I ${OPS_CMAKE_INSTALL_PATH}/include
                             --file_paths ${FILENAMES}
                             WORKING_DIRECTORY ${TMP_SOURCE_DIR}
                             RESULT_VARIABLE result
@@ -628,7 +630,7 @@
 #           add_test(NAME ${Name}_seq 
 #                    COMMAND ${CMAKE_COMMAND} 
 #                    -DCMD=${cmd}  -DARG=${args}
-#                    -DOPS_INSTALL_PATH=${OPS_INSTALL_PATH} -P ${OPS_APP_SRC}/runtests.cmake
+#                    -DOPS_INSTALL_PATH=${OPS_CMAKE_INSTALL_PATH} -P ${OPS_APP_SRC}/runtests.cmake
 #                    WORKING_DIRECTORY "${TMP_SOURCE_DIR}" ) 
 #          endif()
 
@@ -661,7 +663,7 @@
                 add_test(NAME ${Name}_cuda
                         COMMAND
                         ${CMAKE_COMMAND} -DCMD=${cmd} -DARG=${args}
-                        -DOPS_INSTALL_PATH=${OPS_INSTALL_PATH} -P
+                        -DOPS_INSTALL_PATH=${OPS_CMAKE_INSTALL_PATH} -P
                         ${OPS_APP_SRC}/runtests.cmake
                         WORKING_DIRECTORY "${TMP_SOURCE_DIR}")
             endif()
@@ -687,7 +689,7 @@
                 add_test(NAME ${Name}_hip
                         COMMAND
                         ${CMAKE_COMMAND} -DCMD=$<TARGET_FILE:${Name}_opencl> -DARG=${args}
-                        -DOPS_INSTALL_PATH=${OPS_INSTALL_PATH} -P
+                        -DOPS_INSTALL_PATH=${OPS_CMAKE_INSTALL_PATH} -P
                         ${OPS_APP_SRC}/runtests.cmake
                         WORKING_DIRECTORY "${TMP_SOURCE_DIR}")
                 endif()
@@ -751,7 +753,7 @@
                 add_test(NAME ${Name}_mpi
                         COMMAND
                         ${CMAKE_COMMAND} -DCMD=${cmd} -DARG=${args}
-                        -DOPS_INSTALL_PATH=${OPS_INSTALL_PATH} -P
+                        -DOPS_INSTALL_PATH=${OPS_CMAKE_INSTALL_PATH} -P
                         ${OPS_APP_SRC}/runtests.cmake
                         WORKING_DIRECTORY "${TMP_SOURCE_DIR}")
             endif()
