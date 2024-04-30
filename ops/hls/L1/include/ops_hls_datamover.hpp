@@ -1008,7 +1008,7 @@ void axisTerminate(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
 #endif
 	for (unsigned int i = 0; i < num_pkts; i++)
 	{
-#pragma HLS pipline II=1
+#pragma HLS PIPELINE II=1
 		auto pkt = axis_in.read();
 	}
 #ifdef DEBUG_LOG
