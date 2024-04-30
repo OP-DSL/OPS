@@ -40,7 +40,7 @@
 #include <string.h>
 #include <math.h>
 
-float dx,dy;
+float dx,dy,dx_2,dy_2,dx_2_dy_2,dx_2_plus_dy_2_mult_2;
 extern const unsigned short mem_vector_factor;
 
 // OPS header file
@@ -73,7 +73,7 @@ int main(int argc, const char **argv)
     //Mesh
     int imax = 20;
     int jmax = 20;
-    unsigned int iter_max = 120;
+    unsigned int iter_max = 135;
     unsigned int batches = 1;
 
     const char* pch;
@@ -109,8 +109,18 @@ int main(int argc, const char **argv)
     //declare consts
     dx = 0.01;
     dy = 0.01;
+    dy_2 = dy*dy;
+    dx_2 = dx*dx;
+    dx_2_plus_dy_2_mult_2 = (dy_2 + dx_2) * 2.0;
+    dx_2_dy_2 = dy_2 * dx_2;
+
     ops_decl_const("dx", 1, "float", &dx);
     ops_decl_const("dy", 1, "float", &dy);
+    ops_decl_const("dy_2", 1, "float", &dy_2);
+    ops_decl_const("dx_2", 1, "float", &dx_2);
+    ops_decl_const("dx_2_plus_dy_2_mult_2",1, "float", &dx_2_plus_dy_2_mult_2);
+    ops_decl_const("dx_2_dy_2",1, "float", &dx_2_dy_2);
+
 
     //The 2D block
     ops_block blocks[batches];
@@ -245,7 +255,6 @@ int main(int argc, const char **argv)
         {
             ops_par_loop(poisson_kernel_stencil, "poisson_kernel_stencil", blocks[bat], 2, internal_range,
                     ops_arg_dat(u[bat], 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-                    ops_arg_dat(f[bat], 1, S2D_00, "float", OPS_READ),
                     ops_arg_dat(u2[bat], 1, S2D_00, "float", OPS_WRITE));
             
             ops_par_loop(poisson_kernel_update, "poisson_kernel_update", blocks[bat], 2, internal_range,
@@ -256,7 +265,6 @@ int main(int argc, const char **argv)
         ops_iter_par_loop("ops_iter_par_loop_0", iter_max,
             ops_par_loop(poisson_kernel_stencil, "poisson_kernel_stencil", blocks[bat], 2, internal_range,
                     ops_arg_dat(u[bat], 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-                    ops_arg_dat(f[bat], 1, S2D_00, "float", OPS_READ),
                     ops_arg_dat(u2[bat], 1, S2D_00, "float", OPS_WRITE)),
             ops_par_copy<float>(u[bat], u2[bat]));
 #endif

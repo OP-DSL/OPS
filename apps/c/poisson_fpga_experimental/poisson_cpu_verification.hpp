@@ -2,7 +2,7 @@
 
 #define EPSILON 0.0001
 typedef float stencil_type;
-extern float dx, dy;
+extern float dx,dy,dx_2,dy_2,dx_2_dy_2,dx_2_plus_dy_2_mult_2;
 extern const unsigned short mem_vector_factor;
 
 void poisson_kernel_populate_cpu(stencil_type* u, stencil_type* f, stencil_type* ref, int size[2], int d_m[2], int d_p[2], int range[4])
@@ -24,7 +24,7 @@ void poisson_kernel_populate_cpu(stencil_type* u, stencil_type* f, stencil_type*
             stencil_type y = dy * (stencil_type)(j + d_m[1]);
 
             u[index] = myfun(sin(M_PI * x), cos(2.0 * M_PI * y))-1.0;
-            f[index] = -5.0*M_PI*M_PI*sin(M_PI*x)*cos(2.0*M_PI*y);
+            f[index] = (-5.0*M_PI*M_PI*sin(M_PI*x)*cos(2.0*M_PI*y)); // * dx_2_dy_2;
             ref[index] = sin(M_PI*x)*cos(2.0*M_PI*y);
         }
     }
@@ -66,12 +66,13 @@ void poisson_kernel_stencil_cpu(stencil_type* u, stencil_type* f, stencil_type* 
         {
             int index = j * grid_size_x + i;
 
-            u2[index] = ((u[index - 1] + u[index + 1]) * dy * dy 
-                    + (u[index - grid_size_x] + u[index + grid_size_x]) * dx * dx 
-                    - f[index] * dx * dx * dy * dy) / (2.0 * (dx * dx + dy * dy));
+//            u2[index] = ((u[index - 1] + u[index + 1]) * dy * dy
+//                    + (u[index - grid_size_x] + u[index + grid_size_x]) * dx * dx
+//                    - f[index]) / dx_2_plus_dy_2_mult_2;
+            u2[index] = ((u[index - 1] + u[index + 1] + u[index + grid_size_x] + u[index - grid_size_x]) * 0.125  + (0.5 * u[index]));
 
-            // printf("Verification:- i: %d, j: %d, index: %d, dx: %f, dy: %f, u2(0,0): %f, f: %f, u1(-1, -1): %f, u(-1,0): %f, u(0,0): %f, u(0,1): %f, u(1,1): %f\n",
-                // i, j, index, dx, dy, u2[index], f[index], u[index - grid_size_x], u[index - 1], u[index], u[index + 1], u[index + grid_size_x]);
+//             printf("Verification:- i: %d, j: %d, index: %d, dx: %f, dy: %f, u2(0,0): %f, f: %f, u1(-1, -1): %f, u(-1,0): %f, u(0,0): %f, u(0,1): %f, u(1,1): %f\n",
+//                 i, j, index, dx, dy, u2[index], f[index], u[index - grid_size_x], u[index - 1], u[index], u[index + 1], u[index + grid_size_x]);
         }
     }
 }

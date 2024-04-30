@@ -15,11 +15,26 @@ void poisson_kernel_initialguess(ACC<float> &u) {
   u(0,0) = 0.0;
 }
 
-void poisson_kernel_stencil(const ACC<float> &u, const ACC<float> &f,
+void poisson_kernel_stencil(const ACC<float> &u,
                             ACC<float> &u2) {
-  u2(0, 0) = ((u(-1, 0) + u(1, 0)) * dy * dy + (u(0, -1) + u(0, 1)) * dx * dx -
-              f(0, 0) * dx * dx * dy * dy) /
-             (2.0 * (dx * dx + dy * dy));
+//  u2(0, 0) = ((u(-1, 0) + u(1, 0)) * dy_2 + (u(0, -1) + u(0, 1)) * dx_2 -
+//              f(0, 0) * dx_2_dy_2) /
+//             (2.0 * (dx_2_plus_dy_2));
+
+//    float tmp1_t = (u(-1, 0) + u(1, 0));
+//    float tmp1 = tmp1_t * dy_2;
+//    float tmp2_t = (u(0, -1) + u(0, 1));
+//    float tmp2 = tmp2_t * dx_2;
+//    float tmp3 = f(0, 0);
+//    float tmp4_t = tmp1 + tmp2;
+//    float tmp4 = tmp4_t - tmp3;
+//    float tmp5 = (2.0 * (dx_2_plus_dy_2));
+//    u2(0,0) = tmp4 / tmp5;
+
+	  float tmp1 = u(-1,0)+ u(1,0) + u(0,1) + u(0,-1);
+	  float tmp2 = 0.5f * u(0,0);
+	  float tmp3 = tmp1 * 0.125f;
+	  u2(0,0) = tmp2 + tmp3;
 }
 
 void poisson_kernel_update(const ACC<float> &u2, ACC<float> &u) {
