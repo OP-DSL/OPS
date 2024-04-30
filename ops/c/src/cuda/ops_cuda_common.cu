@@ -73,6 +73,8 @@ void ops_init_device(OPS_instance *instance, const int argc, const char *const a
   instance->OPS_hybrid_gpu = 1;
   cutilSafeCall(instance->ostream(),cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 
+  int heapsize = 16*1024*1024;
+  cutilSafeCall(instance->ostream(),cudaDeviceSetLimit(cudaLimitMallocHeapSize,heapsize));
 }
 
 void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
