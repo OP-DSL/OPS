@@ -18,14 +18,14 @@ void inline kernel_{{lh.kernel}}_core(
         {% if arg is ops_read%}
             {% if prog.findStencil(arg.stencil_ptr) %}
                 {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
-        const {{lh.dats[arg.dat_id].typ}}& arg{{arg.id}}_{{i}}{{"," if (not loop.last or not last_check)}}
+        const {{lh.dats[arg.dat_id].typ}}& arg{{arg.dat_id}}_{{i}}{{"," if (not loop.last or not last_check)}}
                 {% endfor %}
             {% endif %}
         {% endif %}
         {% if arg is ops_write or ops_rw%}
             {% if prog.findStencil(arg.stencil_ptr) %}
                 {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
-        {{lh.dats[arg.dat_id].typ}}& arg{{arg.id}}_{{i}}{{"," if (not loop.last or not last_check)}}
+        {{lh.dats[arg.dat_id].typ}}& arg{{arg.dat_id}}_{{i}}{{"," if (not loop.last or not last_check)}}
                 {% endfor %}
             {% endif %}
         {% endif %}
