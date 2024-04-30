@@ -55,34 +55,6 @@ def translateProgram(program: Program, force_soa: bool, offload_pragma_flag_dict
         # if kernel name not in dictionary, add it to dictionary along with arguments
         if kernel_name not in req_module:
             req_module[kernel_name] =  arg_list[3:]
-        else:
-            # if kernel name in dictionary, check if args matching for dim, stencil, type and access
-            repeat = True
-            cur_arg_list = arg_list[3:]
-            from_dict = req_module[kernel_name]
-            if len(from_dict) != len(cur_arg_list):
-                repeat = False
-            else:
-                # ops_par_loop dims parameter mismatch
-                if cur_arg_list[0] != from_dict[0]:
-                    repeat = False
-                    break
-                for indx in range(2,len(cur_arg_list)):
-                    arg_name1 = list(cur_arg_list[indx].items)[0]
-                    arg_name2 = list(from_dict[indx].items)[0]    
-
-                    # if argument is ops_arg_dat, ops_arg_dat_opt, ops_arg_gbl or ops_arg_reduce
-                    # check if values match for n-species, stencil, type and access
-                    if ( arg_name1.string.lower() == arg_name2.string.lower() 
-                        and arg_name1.string.lower() != "ops_arg_idx" ) :
-                        args1 = (list(cur_arg_list[indx].items)[1]).items[1:]
-                        args2 = (list(from_dict[indx].items)[1]).items[1:]
-                        if args1 != args2:
-                            repeat = False
-
-            if not repeat:
-                print("Error!!! Repeated kernel with incompatible arguments for kernel: "+kernel_name)
-                sys.exit()
 
         # Update subroutine name by replacing ops_par_loop with kernelname_host
         name.string = f"{kernel_name}_host"
@@ -214,3 +186,51 @@ def check_offload_pragma_required(app_consts: List[OPS.Const]):
         else:
             offload_pragma_flag[ptr] = True
     return offload_pragma_flag
+
+def check_repeated_kernels_fortran(program: Program, all_par_loops: dict):
+    ast = program.ast
+
+    for call in fpu.walk(ast, f2003.Call_Stmt):
+        name = fpu.get_child(call, f2003.Name)
+
+        if name is None or name.string.lower() != "ops_par_loop":
+            continue
+
+        args = fpu.get_child(call, f2003.Actual_Arg_Spec_List)
+        arg_list = list(args.items)
+
+        kernel_name = arg_list[0].string.lower()
+
+        if kernel_name not in all_par_loops:
+            all_par_loops[kernel_name] =  arg_list[3:]
+        else:
+            # if kernel name in dictionary, check if args matching for dim, stencil, type and access
+            repeat = True
+            cur_arg_list = arg_list[3:]
+            from_dict = all_par_loops[kernel_name]
+
+            if len(from_dict) != len(cur_arg_list):
+                repeat = False
+            else:
+                # ops_par_loop dims parameter mismatch
+                if cur_arg_list[0] != from_dict[0]:
+                    repeat = False
+                    break
+                # Skip the range and check for other parameter
+                for indx in range(2,len(cur_arg_list)):
+                    arg_name1 = list(cur_arg_list[indx].items)[0]
+                    arg_name2 = list(from_dict[indx].items)[0]
+
+                    # if argument is ops_arg_dat, ops_arg_dat_opt, ops_arg_gbl or ops_arg_reduce
+                    # check if values match for n-species, stencil, type and access
+                    if ( arg_name1.string.lower() == arg_name2.string.lower()
+                        and arg_name1.string.lower() != "ops_arg_idx" ) :
+                        args1 = (list(cur_arg_list[indx].items)[1]).items[1:]
+                        args2 = (list(from_dict[indx].items)[1]).items[1:]
+                        if args1 != args2:
+                            repeat = False
+
+            if not repeat:
+                print("Error!!! Repeated kernel with incompatible arguments for kernel: "+kernel_name)
+                sys.exit()
+

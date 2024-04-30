@@ -9,7 +9,7 @@ from pathlib import Path
 #custom implementation imports
 import cpp
 import fortran
-from fortran.translator.program import add_offload_directives, check_offload_pragma_required
+from fortran.translator.program import add_offload_directives, check_offload_pragma_required, check_repeated_kernels_fortran
 from jinja_utils import env
 from language import Lang
 from ops import OpsError, Type
@@ -112,6 +112,13 @@ def main(argv=None) -> None:
     offload_pragma_flag_dict = {}
     if(lang.name == "Fortran"):
         offload_pragma_flag_dict = check_offload_pragma_required(app_consts)
+
+
+    all_par_loops = {}
+    # Check if repeated kernels are there with argument mismatch
+    if(lang.name == "Fortran"):
+        for program in app.programs:
+            check_repeated_kernels_fortran(program, all_par_loops)
 
     # Generate program translations
     print("Code-gen : Program translation phase started......")
