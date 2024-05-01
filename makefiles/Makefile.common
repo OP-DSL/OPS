@@ -31,6 +31,7 @@ OPS_LIB_MPI_OMPOFFLOAD=-lops_mpi_ompoffload
 OPS_LINK=
 CUDART=-lcudart
 CURAND=-lcurand
+FCURAND=-cudalib=curand
 HIPRAND=-lhiprand
 
 COMPILER_AVAILABLE := clang gnu intel icx intel_win intel-sycl mic pgi cray xl hip xlp8 aocc
