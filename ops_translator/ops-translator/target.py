@@ -98,7 +98,8 @@ class HLS(Target):
         "num_read_outstanding" : 4,
         "num_write_outstanding" : 4,
         "maxi_offset" : "slave",
-        "ops_max_dim" : 3
+        "ops_max_dim" : 3,
+        "axis_interconnect_buff_size" : 2048
         }
 
 Target.register(MPIOpenMP)

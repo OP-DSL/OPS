@@ -10,14 +10,14 @@ nk=kernel_outerloop_{{ilh.id}}:1:kernel_outerloop_{{ilh.id}}_{{slr_id+1}}
 {% for ilh, program in app.uniqueOuterLoops() %}
     {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is ops_read or arg is ops_rw %}
-stream_connect=datamover_outerloop_{{ilh.id}}_1.arg{{arg.id}}_axis_out:kernel_outerloop_{{ilh.id}}_1.arg{{arg.id}}_axis_in:1024
+stream_connect=datamover_outerloop_{{ilh.id}}_1.arg{{arg.id}}_axis_out:kernel_outerloop_{{ilh.id}}_1.arg{{arg.id}}_axis_in:{{config["axis_interconnect_buff_size"]}}
         {% endif %}
         {% if arg is ops_write or arg is ops_rw %}
             {% for slr_id in range(config["SLR_count"]) %}
                 {% if loop.last %}
-stream_connect=kernel_outerloop_{{ilh.id}}_{{slr_id+1}}.arg{{arg.id}}_axis_out:datamover_outerloop_{{ilh.id}}_1.arg{{arg.dat_id}}_axis_in:1024
+stream_connect=kernel_outerloop_{{ilh.id}}_{{slr_id+1}}.arg{{arg.id}}_axis_out:datamover_outerloop_{{ilh.id}}_1.arg{{arg.dat_id}}_axis_in:{{config["axis_interconnect_buff_size"]}}
                 {% else %}
-stream_connect=kernel_outerloop_{{ilh.id}}_{{slr_id+1}}.arg{{arg.id}}_axis_out:kernel_outerloop_{{ilh.id}}_{{slr_id+2}}.arg{{ilh.dat_swap_map[arg.dat_id]}}_axis_in:1024
+stream_connect=kernel_outerloop_{{ilh.id}}_{{slr_id+1}}.arg{{arg.id}}_axis_out:kernel_outerloop_{{ilh.id}}_{{slr_id+2}}.arg{{ilh.dat_swap_map[arg.dat_id]}}_axis_in:{{config["axis_interconnect_buff_size"]}}
                 {% endif %}
             {% endfor %}
         {% endif %}
