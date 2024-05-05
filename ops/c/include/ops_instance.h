@@ -237,6 +237,13 @@ class OPS_instance {
       decl_const(name, dim, type, data);
     }
 
+
+/**
+ * This routine resets OPS's internal power counters.
+ * This is useful for measuring the power consumption of a specific section of
+ * code, usually after partitioning.
+ */
+	void reset_power_counters();
 /**
  * This routine prints out various useful bits of diagnostic info about sets,
  * mappings and datasets.
@@ -315,6 +322,9 @@ class OPS_instance {
 	int OPS_kern_max, OPS_kern_curr;
 	ops_kernel *OPS_kernels;
 	double ops_user_halo_exchanges_time;
+	long long *ops_energy_counters;
+	char **ops_energy_paths;
+	int ops_energy_paths_count;
 	
 	//Tiling
 	int ops_enable_tiling;
