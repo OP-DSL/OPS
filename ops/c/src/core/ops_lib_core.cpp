@@ -1107,6 +1107,21 @@ void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
   handle->initialized = 0;
 }
 
+void _ops_reset_power_counters(OPS_instance *instance) {
+  for (int i = 0; i < instance->ops_energy_paths_count; i++) {
+    if (instance->ops_energy_paths[i] != NULL) {
+        FILE* file = fopen(instance->ops_energy_paths[i], "r");
+				if (file == NULL) {
+          if (instance->OPS_diags > 3)
+					  ops_printf("Error: Could not open RAPL path %s. Skipping.\n", instance->ops_energy_paths[i]);
+				} else {
+					fscanf(file, "%lld", &(instance->ops_energy_counters[i]));
+					fclose(file);
+				}
+    }
+  }
+}
+
 
 void _ops_diagnostic_output(OPS_instance *instance) {
   if (instance->OPS_diags > 2) {
@@ -1434,6 +1449,29 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
     if (moments_time[0] > 0.0) {
       ops_fprintf2(stream, "Total user halo exchange time: %g\n", moments_time[0]);
     }
+
+    long long aggregate_energy = 0;
+    for (int i = 0; i < instance->ops_energy_paths_count; i++) {
+      if (instance->ops_energy_paths[i] != NULL) {
+          FILE* file = fopen(instance->ops_energy_paths[i], "r");
+          if (file == NULL) {
+            if (instance->OPS_diags > 3)
+              ops_printf("Error: Could not open RAPL path %s. Skipping.\n", instance->ops_energy_paths[i]);
+          } else {
+            long long energy;
+            fscanf(file, "%lld", &energy);
+            aggregate_energy += (MAX(energy, instance->ops_energy_counters[i]) - MIN(energy, instance->ops_energy_counters[i]));
+            fclose(file);
+          }
+      }
+    }
+    if (aggregate_energy > 0) {
+      moments_time[0] = 0.0;
+      double aggregate_energy_d = (double)aggregate_energy/1000000.0;
+      ops_compute_moment(aggregate_energy_d, &moments_time[0], &moments_time[1]);
+      ops_fprintf2(stream, "Total CPU energy consumed (REPL): %g J\n", moments_time[0]);
+    }
+
     // printf("Times: %g %g %g\n",ops_gather_time, ops_sendrecv_time,
     // ops_scatter_time);
     ops_free(buf);
