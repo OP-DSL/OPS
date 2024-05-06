@@ -222,7 +222,9 @@ class Application:
             ops.AccessType.OPS_READ, 
             ops.AccessType.OPS_WRITE, 
             ops.AccessType.OPS_RW, 
-            ops.AccessType.OPS_INC
+            ops.AccessType.OPS_INC,
+            ops.AccessType.OPS_MAX,
+            ops.AccessType.OPS_MIN
             ]
 
         if arg.access_type not in valid_access_types:
