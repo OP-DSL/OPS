@@ -223,7 +223,7 @@
             set(CMAKE_CUDA_ARCHITECTURES
                 70
                 CACHE STRING "CUDA architectures")
-                message(WARNING "Using Volta architecure for compiling CUDA. \nIf different please provide correct GPU architecture using -DGPU_ARCH=XXX  where XXX is compute capability of an architecture!")
+                message(WARNING "Using Volta architecure for compiling CUDA. \n If different please provide correct GPU architecture using -DGPU_ARCH=XXX  where XXX is compute capability of an architecture \n For ex. -DGPU_ARCH=70 if you want to target sm_70")
         endif()
 
         enable_language(CUDA)

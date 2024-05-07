@@ -1,11 +1,4 @@
 cmake_minimum_required(VERSION 3.18)
-set(IEEE "-fp-model strict -fp-model source -prec-div -prec-sqrt")
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${IEEE}")
-endif()
-if(${CMAKE_C_COMPILER_ID} STREQUAL Intel)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${IEEE}")
-endif()
 createtempdir()
 if(HDF5_SEQ)
   add_executable(
