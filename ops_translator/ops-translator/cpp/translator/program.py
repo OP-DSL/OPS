@@ -196,6 +196,9 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
             if isinstance(arg, ArgDat):
                 dat = loop.dats[arg.dat_id]
                 new_loop_call = f"{new_loop_call}, {dat.ptr}"
+            elif isinstance(arg, ArgGbl):
+                new_loop_call = f"{new_loop_call}, {arg.ptr}"
+                
         new_loop_call = f'{new_loop_call});' 
         
         for index in loop_indices:

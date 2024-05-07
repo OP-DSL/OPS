@@ -2,7 +2,7 @@ import os
 from math import ceil, log2
 
 from jinja2 import Environment, FileSystemLoader
-
+import re
 import ops
 
 env = Environment(
@@ -28,6 +28,7 @@ env.tests["ops_read_or_rw"]  = lambda arg, loop=None: hasattr(arg, "access_type"
     (arg.access_type == ops.AccessType.OPS_READ or arg.access_type == ops.AccessType.OPS_RW)
 env.tests["ops_write_or_rw"]  = lambda arg, loop=None: hasattr(arg, "access_type") and \
     (arg.access_type == ops.AccessType.OPS_WRITE or arg.access_type == ops.AccessType.OPS_RW)
+env.tests["ops_not_idx"] = lambda arg, loop=None: not isinstance(arg, ops.ArgIdx)
 env.tests["ops_inc"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_INC
 env.tests["ops_min"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_MIN
 env.tests["ops_max"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_MAX
@@ -92,8 +93,12 @@ def getWriteArgFromDat(dat: ops.Dat, loop: ops.Loop) -> ops.ArgDat:
             return arg
     return None
 
+def getArgGblName(arg: ops.ArgGbl):
+    return re.sub(r'\W+', '', arg.ptr)
+
 env.globals.update(get_read_arg_from_dat = lambda dat, loop: getReadArgFromDat(dat, loop))
 env.globals.update(get_write_arg_from_dat = lambda dat, loop: getWriteArgFromDat(dat, loop))
+env.globals.update(get_arg_gbl_name = lambda gbl: getArgGblName(gbl))
 
 def unpack(tup):
     if not isinstance(tup, tuple):
@@ -107,6 +112,7 @@ env.filters["ops_dat"] = test_to_filter("ops_dat")
 env.filters["ops_gbl"] = test_to_filter("ops_gbl")
 env.filters["ops_reduce"] = test_to_filter("ops_reduce")
 env.filters["ops_idx"] = test_to_filter("ops_idx")
+env.filters["ops_not_idx"] = test_to_filter("ops_not_idx")
 
 env.filters["ops_read"]  = test_to_filter("ops_read")
 env.filters["ops_write"] = test_to_filter("ops_write")

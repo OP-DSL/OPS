@@ -21,7 +21,7 @@ public:
     }
 
     void run(ops::hls::AccessRange& range, unsigned int outer_iter,
-    {% for arg in ilh.joint_args|ops_dat %}
+    {% for arg in ilh.joint_args %}
         {% if loop.last %}
             {% if consts %}
                 {% set last_check = False %}
@@ -31,7 +31,11 @@ public:
         {% else %}
             {% set last_check = False %}
         {% endif %}
+        {% if arg is ops_dat %}
             ops::hls::Grid<{{ilh.dats[arg.dat_id][0].typ}}>& arg{{arg.id}}{{"," if not last_check}}
+        {% elif arg is ops_gbl %}
+            const {{arg.typ}}* {{get_arg_gbl_name(arg)}}{{"," if not last_check}}
+        {% endif %}
     {% endfor %}
     {% for const in consts %}
             const {{const.typ}} {{const.ptr}}{{"," if not loop.last}}
@@ -77,6 +81,9 @@ public:
         OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, read_stencilConfig.upper_limit[{{i}}]));
         {% endfor %}
         OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, read_stencilConfig.outer_loop_limit));
+        {% for arg in ilh.joint_args|ops_gbl%}
+        OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, *{{get_arg_gbl_name(arg)}}));
+        {% endfor %}
         {% for const in consts %}
         OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, {{const.ptr}}));
         {% endfor %}
@@ -213,7 +220,7 @@ private:
 
 {% block par_loop %}
 void {{ilh.unique_name}}(int outer_iter, int* ops_range,
-    {% for arg in ilh.joint_args|ops_dat %}
+    {% for arg in ilh.joint_args %}
         {% if loop.last %}
             {#{% if consts %}
                 {% set last_check = False %}
@@ -224,7 +231,11 @@ void {{ilh.unique_name}}(int outer_iter, int* ops_range,
         {% else %}
             {% set last_check = False %}
         {% endif %}
+        {% if arg is ops_dat %}
             ops::hls::Grid<{{ilh.dats[arg.dat_id][0].typ}}>& arg{{arg.id}}{{"," if not last_check}}
+        {% elif arg is ops_gbl %}
+            const {{arg.typ}}* {{get_arg_gbl_name(arg)}}{{"," if not last_check}}
+        {% endif %}
     {% endfor %}
     {# {% for const in consts %}
             const {{const.typ}} {{const.ptr}}{{"," if not loop.last}}
@@ -241,7 +252,7 @@ void {{ilh.unique_name}}(int outer_iter, int* ops_range,
     {% endfor %}
     
     kernelWrapper_inst.run(range, outer_iter,
-    {% for arg in ilh.joint_args|ops_dat %}
+    {% for arg in ilh.joint_args %}
         {% if loop.last %}
             {% if consts %}
                 {% set last_check = False %}
@@ -251,7 +262,11 @@ void {{ilh.unique_name}}(int outer_iter, int* ops_range,
         {% else %}
             {% set last_check = False %}
         {% endif %}
+        {% if arg is ops_dat %}
             arg{{arg.id}}{{"," if not last_check}}
+        {% elif arg is ops_gbl %}
+            {{get_arg_gbl_name(arg)}}{{"," if not last_check}}
+        {% endif %}
     {% endfor %}
     {% for const in consts %}
             {{const.ptr}}{{"," if not loop.last}}

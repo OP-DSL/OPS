@@ -207,7 +207,11 @@ class CppHLS(Scheme):
             if not stencil:
                 raise ParseError(f"Translator failed finding relevent stencil: {stencil_ptr} in program: {str(prog.path)}")
             try:
-                access_indices = ops.Point(list(eval(access_raw_indices.group(0))))
+                print(f"re search: {access_raw_indices.group(0)}, eval: {eval(access_raw_indices.group(0))}")
+                if loop.ndim == 1:
+                    access_indices = ops.Point(list([eval(access_raw_indices.group(0))]))
+                else:
+                    access_indices = ops.Point(list(eval(access_raw_indices.group(0))))
                 access_indices = access_indices + stencil.base_point
                 logging.debug(f"corrected access indice point: {access_indices}")
                 

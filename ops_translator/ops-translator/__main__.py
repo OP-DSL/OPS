@@ -500,7 +500,7 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
         if iterloop.unique_id in translatedIterUIDs:
             continue
         
-        for i, loop in enumerate(filter(lambda x: isinstance(x, Loop), iterloop.itr_args)):
+        for i, loop in enumerate(filter(lambda x: isinstance(x, Loop), iterloop.itrloop_args)):
             # Generate loop device source
             [(loop_PE_inc_source, loop_PE_inc_extension)] = scheme.genLoopDevice(env, loop, program, app, target_config, i, iterloop)
 

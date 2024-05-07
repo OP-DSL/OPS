@@ -6,8 +6,12 @@
 
 {% block par_loop %}
 void ops_par_loop_{{lh.kernel}}(ops::hls::Block dummyBlock, int dim, int* ops_range,
-    {% for arg in lh.args|ops_dat %}
+    {% for arg in lh.args|ops_not_idx %}
+        {% if arg is ops_dat %}
             ops::hls::Grid<{{lh.dats[arg.dat_id].typ}}>& arg{{arg.id}}{{"," if not loop.last}}
+        {% elif arg is ops_gbl %}
+            const {{arg.typ}}* {{get_arg_gbl_name(arg)}}{{"," if not loop.last}}
+        {% endif %}
     {% endfor %}
 )
 {% endblock %}

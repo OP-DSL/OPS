@@ -49,6 +49,9 @@ extern "C" void kernel_outerloop_{{ilh.id}}(
         const unsigned short stencilConfig_upper_limit_{{i}},
     {% endfor %}
         const unsigned short stencilConfig_outer_loop_limit,
+    {% for const_arg in ilh.joint_args|ops_gbl%}
+        const {{const_arg.typ}} {{get_arg_gbl_name(const_arg)}},
+    {% endfor %}
     {% for const in consts %}
         const {{const.typ}} {{const.ptr}},
     {% endfor %}

@@ -237,6 +237,7 @@ def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> No
             else:
                 print(f"|-- argument {arg.spelling}: type: {arg.kind}")
     
+    print(f"node:{node.spelling}, type: {node.type}")
     ov_node = decend(decend(node))   
     
     # print (f"node: {name}, ov_node: {ov_node.spelling}, args: {args}") 
@@ -398,6 +399,8 @@ def parseCallUnexposed(node: Cursor, macros: Dict[Location, str], program: Progr
     
         
 def decend(node: Cursor) -> Optional[Cursor]:
+    if not node:
+        return None
     return next(node.get_children(), None)
 
 
@@ -679,6 +682,8 @@ def parseLoop(loopNode: Cursor, args: List[Cursor], loc: Location, macros: Dict[
     block  = parseIdentifier(args[2])
     range = parseRange(args[4], dim)
 
+    print(f"[DEBUG] kernel={kernel}, name={name}, dim={dim}, block={block}, range={range}\n")
+    
     loop = ops.Loop(loopNode, loc, kernel, block, range, dim)
 
     for node in args[5:]:

@@ -95,7 +95,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_loopback(
 #pragma HLS PIPELINE II=1
     {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is ops_read or arg is ops_rw %}
-        ops::hls::axisLoopback<mem_data_width, axis_data_width, data_width>( arg{{ilh.dat_swap_map[arg.id]}}_axis_in, arg{{arg.id}}_axis_out, arg{{arg.id}}_gridSize, range);
+        ops::hls::axisLoopback<mem_data_width, axis_data_width, data_width>( arg{{ilh.getArg(ilh.dat_swap_map[arg.dat_id]).id}}_axis_in, arg{{arg.id}}_axis_out, arg{{arg.id}}_gridSize, range);
         {% endif %}
     {% endfor %}
     }
@@ -218,12 +218,12 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_loopback(
         datamover_outerloop_{{ilh.id}}_dataflow_region_write(range 
         {%- for arg in ilh.joint_args|ops_dat -%}
             {%- if arg is ops_write or arg is ops_rw -%}
-                ,{{"\n"}}        arg{{ilh.dat_swap_map[arg.dat_id]}}_gridSize 
+                ,{{"\n"}}        arg{{ilh.getArg(ilh.dat_swap_map[arg.dat_id]).id}}_gridSize 
             {%- endif -%}
         {%- endfor -%}
         {%- for arg in ilh.joint_args|ops_dat -%}
             {%- if arg is ops_write or arg is ops_rw %}
-                ,{{"\n"}}        arg{{ilh.dat_swap_map[arg.dat_id]}} 
+                ,{{"\n"}}        arg{{ilh.getArg(ilh.dat_swap_map[arg.dat_id]).id}} 
             {%- endif -%}
         {%- endfor -%}
         {%- for arg in ilh.joint_args|ops_dat -%}

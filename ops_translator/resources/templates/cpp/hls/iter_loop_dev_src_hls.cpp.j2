@@ -19,8 +19,11 @@ static void joint_PE_outerloop_{{ilh.id}}(const ops::hls::StencilConfigCore& ste
         ::hls::stream<ap_uint<axis_data_width>>& {{hls_name_t2(arg, "out")-}}{{", " if not loop.last or consts }}
         {% endif %}
     {% endfor %}
+    {% for const_arg in ilh.joint_args|ops_gbl%}
+        const {{const_arg.typ}}& {{get_arg_gbl_name(const_arg)}}{{", " if not loop.last }}
+    {% endfor %}
     {% for const in consts %}
-        const {{const.typ}} {{const.ptr}}{{", " if not loop.last }}
+        const {{const.typ}}& {{const.ptr}}{{", " if not loop.last }}
     {% endfor %})
 {
 
@@ -40,6 +43,9 @@ static void joint_PE_outerloop_{{ilh.id}}(const ops::hls::StencilConfigCore& ste
                 {% set last_check = False %}
             {% endif %}
             {{arg_str}}{{"," if not last_check}}
+        {% endfor %}
+        {% for const_arg in lh.args|ops_gbl %}
+            {{get_arg_gbl_name(const_arg)}}{{"," if not loop.last}}
         {% endfor %}
         {% for const in consts_map[loop_idx] %}
             {{const.ptr}}{{"," if not loop.last}}
@@ -65,8 +71,11 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region_cascaded(const ops::hls:
         {% endif %}
     ::hls::stream<ap_uint<axis_data_width>> arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams[iter_par_factor + 1]{{", " if not last_check}}
     {% endfor %}
+    {% for const_arg in ilh.joint_args|ops_gbl%}
+    const {{const_arg.typ}}& {{get_arg_gbl_name(const_arg)}}{{", " if not loop.last }}
+    {% endfor %}
     {% for const in consts %}
-    const {{const.typ}} {{const.ptr}}{{", " if not loop.last }}
+    const {{const.typ}}& {{const.ptr}}{{", " if not loop.last }}
     {% endfor %})
 {
 #pragma HLS INLINE 
@@ -93,6 +102,9 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region_cascaded(const ops::hls:
                 {{internal_stream_name(arg)}}[i], {{internal_stream_name(arg)}}[i+1]{{"," if (not loop.last or not last_check)}}
         {% endif %}
     {% endfor %}
+    {% for const_arg in ilh.joint_args|ops_gbl %}
+                {{get_arg_gbl_name(const_arg)}}{{", " if not loop.last }}
+    {% endfor %}
     {% for const in consts %}
                 {{const.ptr}}{{"," if not loop.last}}
     {% endfor %}
@@ -101,7 +113,8 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region_cascaded(const ops::hls:
 }
 static void kernel_outerloop_{{ilh.id}}_dataflow_region(const ops::hls::StencilConfigCore& stencilConfig, const unsigned int total_bytes,
     {% for arg in ilh.joint_args|ops_dat -%}{% if arg is not ops_rw %}hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)-}}{{", " if not loop.last or consts }}{% else %} hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")-}}, hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "out")-}}{{", " if not loop.last or consts}}{% endif %}{% endfor %}
-    {% for const in consts %}const {{const.typ}} {{const.ptr}}{{", " if not loop.last }}{% endfor %})
+    {% for const_arg in ilh.joint_args|ops_gbl%}const {{const_arg.typ}}& {{get_arg_gbl_name(const_arg)}}{{", " if not loop.last }}{% endfor %}
+    {% for const in consts %}const {{const.typ}}& {{const.ptr}}{{", " if not loop.last }}{% endfor %})
 {
 #pragma HLS DATAFLOW
     {% for swap_pair in ilh.getUniqueDatSwaps() -%}
@@ -129,6 +142,9 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region(const ops::hls::StencilC
             {% set last_check = False %}
         {% endif %}
  arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams{{"," if not last_check}}
+    {%- endfor -%}
+    {%- for const_arg in ilh.joint_args|ops_gbl -%}
+{{get_arg_gbl_name(const_arg)}}{{", " if not loop.last }}
     {%- endfor -%}
     {% for const in consts -%}
  {{const.ptr}}{{", " if not loop.last }}
@@ -170,6 +186,9 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region(const ops::hls::StencilC
     {% endfor %}
     #pragma HLS INTERFACE s_axilite port = stencilConfig_outer_loop_limit bundle = control
 
+    {% for const_arg in ilh.joint_args|ops_gbl%}
+    #pragma HLS INTERFACE s_axilite port = {{get_arg_gbl_name(const_arg)}} bundle = control
+    {% endfor %}    
     {% for const in consts %}
     #pragma HLS INTERFACE s_axilite port = {{const.ptr}} bundle = control
     {% endfor %}
@@ -211,6 +230,7 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region(const ops::hls::StencilC
     for (unsigned int i = 0; i < outer_itr; i++)
     {
         kernel_outerloop_{{ilh.id}}_dataflow_region(stencilConfig, total_bytes,{% for arg in ilh.joint_args|ops_dat -%}{% if arg is not ops_rw %}{{axis_name(arg)-}}{{", " if not loop.last or consts }}{% else %}{{axis_name_t2(arg, "in")-}}, {{axis_name_t2(arg, "out")-}}{{", " if not loop.last or consts}}{% endif %}{% endfor %}
+            {% for const_arg in ilh.joint_args|ops_gbl %}{{get_arg_gbl_name(const_arg)}}{{", " if not loop.last }}{% endfor %}
             {% for const in consts %}{{const.ptr}}{{", " if not loop.last }}{% endfor %});
     }
 

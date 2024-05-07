@@ -478,7 +478,7 @@ class IterLoop:
     id: int
     num_iter: Union[int, str]
     scope: List[Location]
-    itr_args: List[Any]
+    itrloop_args: List[Any]
     dats: List[List[Dat, AccessType]] = []
     joint_args: List[Arg] = []
     unique_id: int
@@ -496,7 +496,7 @@ class IterLoop:
         self.id = id
         self.num_iter = num_iter
         self.scope = scope
-        self.itr_args = args
+        self.itrloop_args = args
         self.raw_dat_swap_map = filter(lambda x: isinstance(x, ParCopy), args)
         self.interconnector_names = []
 
@@ -515,7 +515,8 @@ class IterLoop:
                 self.addParCopy(arg)
         
         self.gen_graph_v2()
-        self.gen_PE_args()   
+        self.gen_PE_args()
+        self.gen_arg_globals()
 
     def gen_graph_v2(self) -> None:
         # temporary_map_of_maps to store consumers from the node-produced-dat
@@ -531,7 +532,7 @@ class IterLoop:
         loop_read_arg_sinks = {}
         
         # First Iteration initial edge generatitons inbetween loops
-        for v_id,v in enumerate(self.itr_args):
+        for v_id,v in enumerate(self.itrloop_args):
             
             loop_read_arg_sinks[v_id] = []
             if not isinstance(v, Loop):
@@ -570,7 +571,7 @@ class IterLoop:
                         if global_dat_id not in read_map_of_maps.keys() \
                             or not(read_map_of_maps[global_dat_id][dat_current_update_map[global_dat_id][0]]):
                             OpsError(f"Dataflow analysis failed: arg {dat_current_update_map[global_dat_id][1]} \
-                                of par_loop {self.itr_args[dat_current_update_map[global_dat_id][0]].kernel} overide before read")
+                                of par_loop {self.itrloop_args[dat_current_update_map[global_dat_id][0]].kernel} overide before read")
                             
                     dat_current_update_map[global_dat_id] = (v_id, arg.id)
                     if global_dat_id in read_map_of_maps.keys():
@@ -584,7 +585,7 @@ class IterLoop:
             for src_v_id in read_map_of_maps[key]:
                 if not read_map_of_maps[key][src_v_id]:
                     edges.append(DependancyEdge(dat_current_update_map[key][0], dat_current_update_map[key][1], key, -2, len(sink_dats)))
-                    sink_dats.append([key, self.itr_args[dat_current_update_map[global_dat_id][0]].args[dat_current_update_map[global_dat_id][1]]])
+                    sink_dats.append([key, self.itrloop_args[dat_current_update_map[global_dat_id][0]].args[dat_current_update_map[global_dat_id][1]]])
                 
         self.source_dats = source_dats
         self.sink_dats = sink_dats
@@ -615,13 +616,27 @@ class IterLoop:
         for edge in edges:
             print (f"edge: {edge}")
         
+    def gen_arg_globals(self) -> None:
+        global_args_ptrs = []
+        global_args = []
+        for v_id,v in enumerate(self.itrloop_args):
+            if isinstance(v, Loop):
+                print(f"args: {v.args}")
+                for arg in filter(lambda x: isinstance(x, ArgGbl), v.args):
+                    if arg.ptr not in global_args_ptrs:
+                        global_args_ptrs.append(arg.ptr)
+                        global_args.append(arg)
         
+        for arg in global_args:
+            self.joint_args.append(arg)
+            
+                    
     # def gen_graph(self) -> None:
     #     temp_channels = {}
     #     edges = []
     #     source_dats = []
     #     sink_dats = []
-    #     for i, v in enumerate(self.itr_args):
+    #     for i, v in enumerate(self.itrloop_args):
     #         if isinstance(v, Loop):
     #             for arg in filter(lambda x: isinstance(x, ArgDat), v.args):
     #                 dat_id = findIdx(self.dats, lambda d: d[0].ptr == v.dats[arg.dat_id].ptr)
@@ -661,7 +676,7 @@ class IterLoop:
         
     def gen_PE_args(self) -> None:
         PE_args = []
-        for i, v in enumerate(self.itr_args):
+        for i, v in enumerate(self.itrloop_args):
             if isinstance(v, Loop):
                 PE_args.append(self.gen_PE_args_loop(i, v))
         self.PE_args = PE_args
@@ -727,10 +742,15 @@ class IterLoop:
         for i, edge in enumerate(self.edges):
             outer_loop_str += f"edges{i}: " + str(edge) + "\n"
         
+        outer_loop_str +="\n SWAP MAP: \n ------ \n"
+            
+        for i,j in enumerate(self.dat_swap_map):
+            outer_loop_str += f"dat{i} - dat{j}\n"
+        
         outer_loop_str +="\n ARGS: \n ------ \n"
         
         dat_arg_i = 0
-        for i,arg in enumerate(self.itr_args):
+        for i,arg in enumerate(self.itrloop_args):
             outer_loop_str += f" arg{i}: " + str(arg)
             if (isinstance(arg, Loop)):
                 outer_loop_str += f"   PE_args: {self.PE_args[dat_arg_i]} \n\n"
@@ -774,7 +794,7 @@ class IterLoop:
             # elif isinstance(arg, ArgReduce):
             # elif isinstance(arg, ArgGbl):
     def getLoops(self)-> List[Loop]:
-        return filter(lambda x: isinstance(x, Loop), self.itr_args)
+        return filter(lambda x: isinstance(x, Loop), self.itrloop_args)
     
     def getReadStencil(self) -> str:
         for arg in self.joint_args:
@@ -799,7 +819,12 @@ class IterLoop:
         pair = [other_dat, dat_id]
         pair.sort()
         return (pair)
-               
+         
+    def getArg(self, dat_id: int) -> Union[ArgDat, None]:
+        for arg in self.joint_args:
+            if arg.dat_id == dat_id:
+                return arg
+        return None      
             
     
 class ParCopy:
