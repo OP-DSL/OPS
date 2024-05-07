@@ -7,7 +7,7 @@
         set(APP_INSTALL_DIR "$ENV{HOME}/OPS-APPS")
         message(
             WARNING
-                "We will install the applications to ${APP_INSTALL_DIR}! Please use -DAPP_INSTALL_DIR to specify!"
+                "We will install the applications to ${APP_INSTALL_DIR} \n! Please use -DAPP_INSTALL_DIR to specify!"
         )
     endif()
 
@@ -21,7 +21,7 @@
 
         if(NOT OPS_VERBOSE_WARNING)
             message(
-                "We show concise compiling information by defautl! Use -DOPS_VERBOSE_WARNING=ON to switch on."
+                "We show concise compiling information by defautl \n! Use -DOPS_VERBOSE_WARNING=ON to switch on."
             )
         endif()
 
@@ -211,6 +211,8 @@
                 ops_trid_mpi_cuda)
         else()
             set(OPS_LIB
+                ops_ompoffload
+                ops_mpi_ompoffload
                 ops_cuda
                 ops_mpi_cuda
                 ops_hdf5_seq
@@ -343,6 +345,10 @@
 
         if(ops_cuda_FOUND)
             set(CUDA ${CUDAToolkit_FOUND})
+            if(${CMAKE_C_COMPILER_ID} STREQUAL NVHPC)
+                set(OMPOFFLOAD TRUE)
+                set(OMPOFFLOAD_FLAGS -Minline=reshape -Mvect=levels:5 -mp=gpu -gpu=cc${CMAKE_CUDA_ARCHITECTURES})
+            endif()
         endif()
 
         if(${MPI_FOUND})
@@ -350,6 +356,9 @@
             set(HDF5_MPI ${HDF5_FOUND})
             if(ops_cuda_FOUND)
                 set(CUDA_MPI ${CUDAToolkit_FOUND})
+                if(${CMAKE_C_COMPILER_ID} STREQUAL NVHPC)
+                    set(OMPOFFLOAD_MPI TRUE)
+                endif()
             endif()
 
 #           Find the MPI INCLUDE directory, required to resolve mpi.h not found error for some targets
@@ -400,6 +409,12 @@
 
         set(HDF5_SEQ ${HDF5_FOUND})
         set(CUDA ${CUDAToolkit_FOUND})
+        if(CUDA)
+            if(${CMAKE_C_COMPILER_ID} STREQUAL NVHPC)
+                set(OMPOFFLOAD TRUE)
+                set(OMPOFFLOAD_FLAGS -Minline=reshape -Mvect=levels:5 -mp=gpu -gpu=cc${CMAKE_CUDA_ARCHITECTURES})
+            endif()
+        endif()
 
         if(OPS_HIP)
             set(HIP ${HIP_FOUND})
@@ -409,6 +424,11 @@
             set(MPI TRUE)
             set(HDF5_MPI ${HDF5_FOUND})
             set(CUDA_MPI ${CUDAToolkit_FOUND})
+            if(CUDA_MPI)
+                if(${CMAKE_C_COMPILER_ID} STREQUAL NVHPC)
+                    set(OMPOFFLOAD_MPI TRUE)
+                endif()
+            endif()
         endif()
 
         if(NOT Python3_FOUND)
@@ -669,6 +689,20 @@
             endif()
         endif()
 
+        if(OMPOFFLOAD)
+            add_executable(${Name}_ompoffload ${OPS} ${OTHERS}
+                            "${TMP_SOURCE_DIR}/openmp_offload/openmp_offload_kernels.cpp")
+            target_include_directories(${Name}_ompoffload PRIVATE ${TMP_SOURCE_DIR})
+            target_link_libraries(${Name}_ompoffload ops_ompoffload OpenMP::OpenMP_CXX)
+            target_compile_options(${Name}_ompoffload PRIVATE ${OMPOFFLOAD_FLAGS})
+            if(HDF5_SEQ)
+                target_link_libraries(${Name}_ompoffload ops_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl
+                                        MPI::MPI_CXX)
+            endif()
+            target_link_options(${Name}_ompoffload PRIVATE ${OMPOFFLOAD_FLAGS})
+            install(TARGETS ${Name}_ompoffload DESTINATION ${APP_INSTALL_DIR}/${Name})
+        endif()
+
         if(OPS_HIP)
             if(HIP AND NOT TRID)
                 add_executable(${Name}_hip ${OPS} ${OTHERS}
@@ -803,6 +837,39 @@
 
                 install(TARGETS ${Name}_mpi_cuda DESTINATION ${APP_INSTALL_DIR}/${Name})
                 install(TARGETS ${Name}_mpi_cuda_tiled DESTINATION ${APP_INSTALL_DIR}/${Name})
+            endif()
+
+            if(OMPOFFLOAD_MPI)
+                add_executable(${Name}_mpi_ompoffload ${OPS} ${OTHERS}
+                                "${TMP_SOURCE_DIR}/openmp_offload/openmp_offload_kernels.cpp")
+                target_include_directories(${Name}_mpi_ompoffload PRIVATE ${TMP_SOURCE_DIR} ${MPI_INCLUDE_DIRS})
+                target_compile_definitions(${Name}_mpi_ompoffload PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK")
+                target_compile_options(${Name}_mpi_ompoffload PRIVATE ${OMPOFFLOAD_FLAGS})
+
+                add_executable(${Name}_mpi_ompoffload_tiled ${OPS} ${OTHERS}
+                                "${TMP_SOURCE_DIR}/openmp_offload/openmp_offload_kernels.cpp")
+                target_include_directories(${Name}_mpi_ompoffload_tiled PRIVATE ${TMP_SOURCE_DIR} ${MPI_INCLUDE_DIRS})
+                target_compile_definitions(${Name}_mpi_ompoffload_tiled PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK -DOPS_LAZY")
+                target_compile_options(${Name}_mpi_ompoffload_tiled PRIVATE ${OMPOFFLOAD_FLAGS})
+
+                if(HDF5_MPI)
+                    target_link_libraries(${Name}_mpi_ompoffload PRIVATE ops_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
+                                            MPI::MPI_CXX)
+                    target_link_libraries(${Name}_mpi_ompoffload_tiled PRIVATE ops_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
+                                            MPI::MPI_CXX)
+                endif()
+
+                target_link_libraries(${Name}_mpi_ompoffload PRIVATE ops_mpi_ompoffload MPI::MPI_CXX
+                                        OpenMP::OpenMP_CXX)
+                target_link_libraries(${Name}_mpi_ompoffload_tiled PRIVATE ops_mpi_ompoffload MPI::MPI_CXX
+                                        OpenMP::OpenMP_CXX)
+
+                target_link_options(${Name}_mpi_ompoffload PRIVATE ${OMPOFFLOAD_FLAGS})
+                target_link_options(${Name}_mpi_ompoffload_tiled PRIVATE ${OMPOFFLOAD_FLAGS})
+
+                install(TARGETS ${Name}_mpi_ompoffload DESTINATION ${APP_INSTALL_DIR}/${Name})
+                install(TARGETS ${Name}_mpi_ompoffload_tiled DESTINATION ${APP_INSTALL_DIR}/${Name})
+
             endif()
 
         endif()

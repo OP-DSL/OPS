@@ -12,7 +12,7 @@
 
     if(NOT OPS_VERBOSE_WARNING)
         message(
-            "We show concise compiling information by defautl! Use -DOPS_VERBOSE_WARNING=ON to switch on."
+            "We show concise compiling information by defautl \n! Use -DOPS_VERBOSE_WARNING=ON to switch on."
         )
     endif()
 
@@ -26,7 +26,7 @@
 
     message(
         WARNING
-            "The installation directory is ${CMAKE_INSTALL_PREFIX}! Use -DCMAKE_INSTALL_PREFIX to change"
+            "The installation directory is ${CMAKE_INSTALL_PREFIX} \n! Use -DCMAKE_INSTALL_PREFIX to change"
     )
 
 #   Tridiagonal library

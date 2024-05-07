@@ -52,6 +52,22 @@
         add_library(ops_cuda ${CORE} ${EXTERN} ${CUDA})
         target_link_libraries(ops_cuda PRIVATE OpenMP::OpenMP_CXX CUDA::cudart_static)
         installtarget(cuda ${ConfigPackageLocation})
+
+        if(${CMAKE_C_COMPILER_ID} STREQUAL NVHPC)
+            set(BUILD_OMPOFFLOAD TRUE)
+            set(OMPOFFLOAD_FLAGS -Minline=reshape -Mvect=levels:5 -mp=gpu -gpu=cc${CMAKE_CUDA_ARCHITECTURES})
+        endif()
+
+    endif()
+
+#   TARGET: OMPOFFLOAD
+    if(BUILD_OMPOFFLOAD)
+        file(GLOB_RECURSE OMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/*"
+                "${CMAKE_CURRENT_SOURCE_DIR}/src/core/ops_device_singlenode_common.cpp")
+        add_library(ops_ompoffload ${CORE} ${EXTERN} ${OMPOFFLOAD})
+        target_link_libraries(ops_ompoffload PRIVATE OpenMP::OpenMP_CXX)
+        target_compile_options(ops_ompoffload PRIVATE ${OMPOFFLOAD_FLAGS})
+        installtarget(ompoffload ${ConfigPackageLocation})
     endif()
 
 #   TARGET: HIP
@@ -109,6 +125,23 @@
             target_link_libraries(ops_mpi_cuda PRIVATE OpenMP::OpenMP_CXX
                                                CUDA::cudart_static MPI::MPI_CXX)
             installtarget(mpi_cuda ${ConfigPackageLocation})
+
+            if(${CMAKE_C_COMPILER_ID} STREQUAL NVHPC)
+                set(BUILD_MPIOMPOFFLOAD TRUE)
+            endif()
+        endif()
+
+#       TARGET: MPI_OMPOFFLOAD
+        if(BUILD_MPIOMPOFFLOAD)
+            file(GLOB_RECURSE MPIOMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/*ompoffload*.cpp"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/*")
+                list(FILTER MPIOMPOFFLOAD EXCLUDE REGEX "singlenode")
+                list(APPEND MPIOMPOFFLOAD ${CommonFiles})
+                add_library(ops_mpi_ompoffload ${MPICORE} ${EXTERN} ${MPIOMPOFFLOAD})
+                target_link_libraries(ops_mpi_ompoffload PRIVATE OpenMP::OpenMP_CXX
+                                                            MPI::MPI_CXX)
+                target_compile_options(ops_mpi_ompoffload PRIVATE ${OMPOFFLOAD_FLAGS})
+                installtarget(mpi_ompoffload ${ConfigPackageLocation})
         endif()
 
 #       TARGET: MPI_HIP
@@ -127,6 +160,7 @@
         endif()
 
     endif()
+
 
 #   Tridiagonal library
     if(LIBTRID_PATH)
