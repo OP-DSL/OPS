@@ -1018,8 +1018,10 @@ void axisTerminate(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
 	for (unsigned int i = 0; i < num_pkts; i++)
 	{
 #pragma HLS PIPELINE II=1
-		printf("|HLS DEBUG_LOG|%s| terminaking pkt:%d.\n"
+#ifdef DEBUG_LOG
+		printf("|HLS DEBUG_LOG|%s| terminating pkt:%d.\n"
 				, __func__, i);
+#endif
 		auto pkt = axis_in.read();
 	}
 #ifdef DEBUG_LOG
