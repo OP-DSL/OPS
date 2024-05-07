@@ -960,6 +960,11 @@ void axisLoopback(
 	unsigned short grid_xblocks = gridSize[0] >> ShiftBits; //GridSize[0] has to be MEM_DATA_WIDTH aligned
 	unsigned short num_xpkts = end_x - start_x;
 
+#ifdef DEBUG_LOG
+			printf("|HLS DEBUG_LOG|%s| starting range: (%d,%d,%d) -> (%d,%d,%d), start_x: %d, end_x:%d, num xpkts: %d\n"
+					, __func__, range.start[0], range.start[1], range.start[2], range.end[0], range.end[1], range.end[2],
+					start_x, end_x, num_xpkts);
+#endif
 	if (range.dim < 3)
 	{
 		range.start[2] = 0;
@@ -988,6 +993,10 @@ void axisLoopback(
 			}
 		}
 	}
+#ifdef DEBUG_LOG
+			printf("|HLS DEBUG_LOG|%s| exiting. \n"
+					, __func__);
+#endif
 }
 
 /**
@@ -1009,6 +1018,8 @@ void axisTerminate(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
 	for (unsigned int i = 0; i < num_pkts; i++)
 	{
 #pragma HLS PIPELINE II=1
+		printf("|HLS DEBUG_LOG|%s| terminaking pkt:%d.\n"
+				, __func__, i);
 		auto pkt = axis_in.read();
 	}
 #ifdef DEBUG_LOG
@@ -1340,7 +1351,7 @@ void memReadGridV2(ap_uint<MEM_DATA_WIDTH>* mem_in,
 		range.start[2] = 0;
 		range.end[2] = 1;
 	}
-	else if (range.dim < 2)
+	if (range.dim < 2)
 	{
 		range.start[1] = 0;
 		range.end[1] = 1;
@@ -1700,7 +1711,7 @@ void memWriteGridTerminate(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_i
 		range.start[2] = 0;
 		range.end[2] = 1;
 	}
-	else if (range.dim < 2)
+	if (range.dim < 2)
 	{
 		range.start[1] = 0;
 		range.end[1] = 1;
@@ -1709,8 +1720,8 @@ void memWriteGridTerminate(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_i
 	unsigned int num_pkts = num_xpkts * (range.end[1] - range.start[1]) * (range.end[2] - range.start[2]);
 
 #ifdef DEBUG_LOG
-	printf("|HLS DEBUG_LOG|%s| Terminate memGridWrite with total pkts %d.\n"
-			, __func__, num_pkts);
+	printf("|HLS DEBUG_LOG|%s| Terminate memGridWrite with total pkts %d. num of x_pkts:%d, range dim: %d, range:(%d,%d,%d) -> (%d,%d,%d) \n"
+			, __func__, num_pkts, num_xpkts, range.dim, range.start[0], range.start[1], range.start[2], range.end[0], range.end[1], range.end[2]);
 #endif
 
 	axisTerminate<AXIS_DATA_WIDTH>(strm_in, num_pkts);
