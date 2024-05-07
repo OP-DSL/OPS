@@ -318,7 +318,7 @@ int main(int argc, const char **argv)
 	for (unsigned int bat = 0; bat < gridProp.batch; bat++)
 	{
 		//explicit blacksholes test
-    	float direct_calc_value = test_blacksholes_call_option(calcParam[0]);
+    	float direct_calc_value = test_blacksholes_call_option(calcParam[bat]]);
 
 		float* current_raw = (float*)ops_dat_get_raw_pointer(dat_current[bat], 0, S1D_1pt, OPS_HOST);
 		float* next_raw = (float*)ops_dat_get_raw_pointer(dat_next[bat], 0, S1D_1pt, OPS_HOST);
@@ -333,8 +333,8 @@ int main(int argc, const char **argv)
         else
             std::cout << "[BATCH - " << bat << "] verification of current after calculation" << "[FAILED]" << std::endl;
 		std::cout << "[BATCH - " << bat << "] call option price from cpu direct calc method: " << direct_calc_value << std::endl;	
-		std::cout << "[BATCH - " << bat << "] call option price from cpu explicit iter method: " << get_call_option(grid_u2_cpu[bat], calcParam[0]) << std::endl;
-		std::cout << "[BATCH - " << bat << "] call option price from ops explicit method: " << get_call_option(next_raw, calcParam[0]) << std::endl;
+		std::cout << "[BATCH - " << bat << "] call option price from cpu explicit iter method: " << get_call_option(grid_u2_cpu[bat], calcParam[bat]) << std::endl;
+		std::cout << "[BATCH - " << bat << "] call option price from ops explicit method: " << get_call_option(next_raw, calcParam[bat]) << std::endl;
 	}
 	std::cout << "============================================="  << std::endl << std::endl;
 #endif
