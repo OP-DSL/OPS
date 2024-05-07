@@ -318,7 +318,7 @@ int main(int argc, const char **argv)
 	for (unsigned int bat = 0; bat < gridProp.batch; bat++)
 	{
 		//explicit blacksholes test
-    	float direct_calc_value = test_blacksholes_call_option(calcParam[bat]]);
+    	float direct_calc_value = test_blacksholes_call_option(calcParam[bat]);
 
 		float* current_raw = (float*)ops_dat_get_raw_pointer(dat_current[bat], 0, S1D_1pt, OPS_HOST);
 		float* next_raw = (float*)ops_dat_get_raw_pointer(dat_next[bat], 0, S1D_1pt, OPS_HOST);
