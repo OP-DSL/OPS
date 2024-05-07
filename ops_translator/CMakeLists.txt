@@ -26,19 +26,19 @@
             )"
         )
 
-    endif()
+#       Install the required Python dependencies at CMAKE_INSTALL_PREFIX/bin/ops_translator/ops_venv
+        file(GLOB OPS_VENV ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/ops_venv)
+        if(NOT OPS_VENV)
+            message(STATUS "Python Virtual Environment not found in OPS_TRANSLATOR, proceeding with installation")
 
-#   Install the required Python dependencies at CMAKE_INSTALL_PREFIX/bin/ops_translator/ops_venv
-    file(GLOB OPS_VENV ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/ops_venv)
-    if(NOT OPS_VENV)
-        message(STATUS "Python Virtual Environment not found in OPS_TRANSLATOR, proceeding with installation")
+            install(CODE 
+                "execute_process(
+                COMMAND /bin/bash ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/setup_venv_cmake.sh ${CMAKE_INSTALL_PREFIX}/bin/ops_translator
+                )"
+            )
 
-        install(CODE 
-            "execute_process(
-            COMMAND /bin/bash ${CMAKE_INSTALL_PREFIX}/bin/ops_translator/setup_venv_cmake.sh ${CMAKE_INSTALL_PREFIX}/bin/ops_translator
-              )"
-        )
+        else()
+            message(STATUS "Python Virtual Environment found, skipping installation")
+        endif()
 
-    else()
-        message(STATUS "Python Virtual Environment found, skipping installation")
-    endif()
+    endif() # UNIX if end
