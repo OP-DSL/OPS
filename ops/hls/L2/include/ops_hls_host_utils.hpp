@@ -309,6 +309,11 @@ ops::hls::StencilConfigCore getStencilConfig(ops::hls::GridPropertyCoreV2& origi
             stencilConfig.upper_limit[i] = stencilConfig.lower_limit[i] + size;
             stencilConfig.grid_size[i] = end_xblock - start_xblock; //xblocks
             stencilConfig.total_itr = stencilConfig.grid_size[i];
+
+        	if (i == range.dim - 1)
+        	{
+        		stencilConfig.outer_loop_limit = stencilConfig.grid_size[i] + d_m[i];
+        	}
         }
         else
         {
