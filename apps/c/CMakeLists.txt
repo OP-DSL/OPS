@@ -876,32 +876,70 @@
 
     endmacro()
 
+
+#   Build all listed apps
+
+#   Current Targets: dev_seq, dev_mpi, seq, openmp, tiled, mpi, mpi_openmp, mpi_tiled
+#                    cuda, mpi_cuda, mpi_cuda_tiled
+#                    ompoffload, mpi_ompoffload, mpi_ompoffload_tiled (curently built only with NVHPC compilers)
+
+#   App: Poisson # Compiles OK
+    add_subdirectory(poisson)
+
+#   App: Laplace2d  # Compiles OK
+    add_subdirectory(laplace2d_tutorial/step7)
+
+#   App: Cloverleaf #
+    add_subdirectory(CloverLeaf)    # Compiles OK
+
+#   App: Cloverleaf_3D  # Compiles OK, Runtime Floating point exception
+    add_subdirectory(CloverLeaf_3D)
+
+#   App: Cloverleaf_3D_HDF5 # Compiles OK, Runtime Floating point exception
+    add_subdirectory(CloverLeaf_3D_HDF5)
+
+#   App: Tealeaf    # Compiles OK
+    add_subdirectory(TeaLeaf)
+
+#   App: lowdim # Compiles OK
+    add_subdirectory(lowdim_test)
+
+#   App: multiDim   # Compiles OK
+    add_subdirectory(multiDim)
+
+#   App: multiDim3D # Compiles OK
+    add_subdirectory(multiDim3D)
+
+#   App: mblock # Compiles OK
+    add_subdirectory(mblock)
+
+#   App: mgrid  # Compiles OK
+    add_subdirectory(mgrid)
+
+#   App: shsgc  # Compiles OK
+    add_subdirectory(shsgc)
+
+#   App: mb_shsgc   # Compiles OK
+    add_subdirectory(mb_shsgc)
+
+#   App: hdf5_slice # Compiles OK
+    add_subdirectory(hdf5_slice)
+
+#   App: ops-lbm    # Compiles OK
+    add_subdirectory(ops-lbm/step5)
+
+#   TODO there seem bugs in the codes of complex_numbers
+#   add_subdirectory(complex_numbers) TODO Need to figure out the structure
+#   TODO there seems problem for compiling mblock4D add_subdirectory(mblock4D) #
+#   ignored at this moment TODO needs to replace  acceptable with PASSED for
+#   standard test
+#    add_subdirectory(multiDim_HDF5)
+#    add_subdirectory(compact_scheme)
+#    add_subdirectory(hdf5_slice)
+
 #   TODO fetch_data.cpp cannot be found for access add_subdirectory(access)
     if(LIBTRID_PATH)
         add_subdirectory(adi)
         add_subdirectory(adi_burger)
         add_subdirectory(adi_burger_3D)
     endif()
-
-    add_subdirectory(CloverLeaf) # Compile OK
-    add_subdirectory(CloverLeaf_3D) # Compile OK
-    add_subdirectory(CloverLeaf_3D_HDF5) # Compile OK
-#   TODO there seem bugs in the codes of complex_numbers
-#   add_subdirectory(complex_numbers) TODO Need to figure out the structure
-#   add_subdirectory(laplace2d_tutorial)
-    add_subdirectory(lowdim_test)
-#   TODO no PASSED for testing
-    add_subdirectory(mblock)
-#   TODO there seems problem for compiling mblock4D add_subdirectory(mblock4D) #
-#   ignored at this moment TODO needs to replace  acceptable with PASSED for
-#   standard test
-    add_subdirectory(mb_shsgc)
-#   add_subdirectory(mgrid)  # Compile OK
-    add_subdirectory(multiDim)
-    add_subdirectory(multiDim3D)
-    add_subdirectory(multiDim_HDF5)
-    add_subdirectory(poisson)
-    add_subdirectory(shsgc)
-    add_subdirectory(TeaLeaf)
-    add_subdirectory(compact_scheme)
-    add_subdirectory(hdf5_slice)
