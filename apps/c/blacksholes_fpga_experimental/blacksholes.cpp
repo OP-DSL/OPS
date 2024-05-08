@@ -34,7 +34,7 @@ int main(int argc, const char **argv)
     ops_init(argc,argv,1);
 
 	GridParameter gridProp;
-	gridProp.logical_size_x = 200;
+	gridProp.logical_size_x = 180;
 	gridProp.logical_size_y = 1;
 	gridProp.batch = 1;
 	gridProp.num_iter = 6000;
@@ -303,6 +303,8 @@ int main(int argc, const char **argv)
 	#endif
 		//golden computation
 		bs_explicit1(grid_u1_cpu[bat], grid_u2_cpu[bat], gridProp, calcParam[bat]);
+		copy_grid(grid_u1_cpu[bat], grid_u2_cpu[bat], gridProp);
+
 	
 	#ifdef PROFILE
 		auto naive_stop_clk_point = std::chrono::high_resolution_clock::now();
