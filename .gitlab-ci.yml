@@ -8,16 +8,18 @@ stages:
   - clean
 
 # Stage "build"
-build:GNU:API:
+build:GNU11:API:
   stage: API_Build
   tags:
     - CCP, test
   script:
-    - module use /opt/nvidia/hpc_sdk/modulefiles
-    - module load nvhpc/22.11
+    - source ~/.bash_aliases
+    - module avail 
+    - module load CUDA
+    - export CXX=mpicxx
     - mkdir build
     - cd build
-    - cmake ../  -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DGPU_ARCH=75 
     - cmake --build . -j 4
     - cmake --install .
   artifacts:
@@ -25,440 +27,483 @@ build:GNU:API:
     paths:
     - $CI_PROJECT_DIR/OPS-INSTALL
 
-Test:HIP:
-  stage: HIP
-  tags:
-    - CCP, test
-  script:
-    - module use /opt/nvidia/hpc_sdk/modulefiles
-    - module use /home/rfj82982/.local/easybuild//modules/all
-    - module load CUDA/11.6.0
-    - |-
-      export PATH=/opt/rocm/bin:$PATH
-      export OPS_COMPILER=hip
-      export MPI_INSTALL_PATH=/usr
-      export HDF5_INSTALL_PATH=/usr/lib/x86_64-linux-gnu/hdf5/openmpi
-      export HIP_INSTALL_PATH=/opt/rocm/
-      export OPS_INSTALL_PATH=$CI_PROJECT_DIR/ops
-      export MPICC=mpicc
-      export MPICXX=mpic++
-      export MPICPP=mpicxx
-      export MPIFC=mpif90
-      export MPIF90=mpif90
-      export MPI_INC=/usr/lib/x86_64-linux-gnu/openmpi/include
-      export XCOMPILER=-Xcompiler
-      export HIP_LINK="-L/usr/local/cuda/lib64 -lcudart"
-      export HIP_HDF5_MPI_LINK="-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi/lib -lmpi_cxx -lmpi"
-      export HIPMPICPP=mpicxx
-      export HIPIEEE="--fmad false"
-      export HIP_PLATFORM=nvidia
-    - cd ops/c
-    - make seq IEEE=1
-    - make hip IEEE=1
-    - make hdf5_seq IEEE=1
-    - cd ../../apps/c
-    - cd CloverLeaf
-    - make cloverleaf_hip IEEE=1
-    - |-
-      ./cloverleaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-      grep "PASSED" clover.out
-      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-    - cd ../CloverLeaf_3D
-    - make cloverleaf_hip IEEE=1
-    - |-
-      ./cloverleaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-      grep "PASSED" clover.out
-      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-    - cd ../CloverLeaf_3D_HDF5
-    - make cloverleaf_hip IEEE=1
-    - make generate_file IEEE=1
-    - |-
-      ./generate_file
-      ./cloverleaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-      grep "PASSED" clover.out
-      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-    - cd ../lowdim_test
-    - make lowdim_hip
-    - |-
-      ./lowdim_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-      grep "PASSED" perf_out
-      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-    - cd ../mblock
-    - make mblock_hip
-    - |-
-      ./mblock_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > mblock.out
-      grep "PASSED" mblock.out
-      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-    - cd ../mb_shsgc/Max_datatransfer
-    # - make shsgc_hip
-    # - |-
-    #   ./shsgc_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-    #   grep "Pre shock error is:" perf_out
-    #   grep "Post shock error is:" perf_out
-    #   grep "Post shock Error is" perf_out
-    #   grep "Total Wall time" perf_out
-    #   grep -e "acceptable" -e "correct"  perf_out
-    #   rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-    - cd ../../multiDim
-    - make multidim_hip
-    - |-
-      ./multidim_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-      grep "PASSED" perf_out
-      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-    - cd ../multiDim3D
-    - make multidim_hip
-    - |-
-      ./multidim_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-      grep "PASSED" perf_out
-      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-    - cd ../poisson
-    - make poisson_hip
-    - |-
-      ./poisson_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-      grep "PASSED" perf_out
-      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-    - cd ../shsgc
-    - make shsgc_hip
-    - |-
-      ./shsgc_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-      grep "PASSED" perf_out
-      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-    - cd ../TeaLeaf
-    - make tealeaf_hip
-    - |-
-      ./tealeaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-      grep "PASSED" perf_out
-      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-    - cd ../multiDim_HDF5
-    - make -f Makefile.write write_hip
-    - rm .generated
-    - make read_hip
-    - |-
-      rm -rf write_data.h5 read_data.h5
-      ./write_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
-      ./read_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
-      h5diff write_data.h5 read_data.h5
-      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
-
-build:Intel:API:
+# This is the latest easybuild based on GNU
+build:foss:API:
   stage: API_Build
   tags:
     - CCP, test
   script:
-    - module use /opt/nvidia/hpc_sdk/modulefiles
-    - module load nvhpc/22.11
-    - source /opt/intel/oneapi/setvars.sh
-    - export OMPI_MPICC=icc
-    - export OMPI_MPICXX=icpc
-    - export CC=icc
-    - export CXX=icpc
-    - |-
-      git clone https://github.com/OP-DSL/tridsolver.git
-      cd $CI_PROJECT_DIR/tridsolver
-      mkdir build
-      cd build
-      cmake ../scalar  -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_MPI=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DBUILD_FOR_SN=ON -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/tridlib
-      cmake --build .
-      cmake --install .
-      cd $CI_PROJECT_DIR/
-    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/tridlib/libtrid/lib
-    - mkdir build-intel
-    - cd build-intel
-    - cmake ../  -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DLIBTRID_PATH=$CI_PROJECT_DIR/tridlib/libtrid
+    - source ~/.bash_aliases
+    - module avail 
+    - module load foss CUDA
+    - export CXX=mpicxx
+    - mkdir build
+    - cd build
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DGPU_ARCH=75 -DCMAKE_CUDA_HOST_COMPILER=gcc-11
     - cmake --build . -j 4
     - cmake --install .
   artifacts:
     expire_in: 1 week
     paths:
-    - $CI_PROJECT_DIR/OPS-INSTALL-Intel
+    - $CI_PROJECT_DIR/OPS-INSTALL
 
-build:GNU:APP:
-  stage: APP_Build
+      
+# This is the latest easybuild based on GNU
+build:NVHCP23:API:
+  stage: API_Build
   tags:
     - CCP, test
   script:
-    - module use /opt/nvidia/hpc_sdk/modulefiles
-    - module load nvhpc/22.11
-    - git clone https://github.com/opensbli/opensbli.git
-    - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
-    - |-
-      cd $CI_PROJECT_DIR/opensbli/apps
-      echo dir=\$1 > translate.sh
-      echo pyfile=\$2 >> translate.sh
-      echo "cd \$dir" >> translate.sh
-      echo "python \$pyfile" >> translate.sh
-      echo "head -n-3 opensbli.cpp > tmp.cpp"  >> translate.sh
-      echo "echo \"ops_printf(\\\"PASSED\!\\\\\\\\\\\\n\\\");\" >> tmp.cpp " >> translate.sh
-      echo "tail -n3 opensbli.cpp >> tmp.cpp" >> translate.sh
-      echo "cp tmp.cpp  opensbli.cpp"  >> translate.sh
-      echo "rm tmp.cpp" >> translate.sh
-      echo "echo \"cmake_minimum_required(VERSION 3.18)\" > CMakeLists.txt" >> translate.sh
-      echo "echo \"CreateTempDir()\" >> CMakeLists.txt"  >> translate.sh
-      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\"  \\\"NO\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
-      echo "cd \$CI_PROJECT_DIR/opensbli/apps" >> translate.sh
-      echo "cp \$dir \$CI_PROJECT_DIR/apps/c -r" >> translate.sh
-      cat translate.sh
-      source translate.sh taylor_green_vortex taylor_green_vortex.py tgv
-      echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      echo "add_subdirectory(taylor_green_vortex)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      # source translate.sh channel_flow/laminar_2D laminar_channel.py laminar2d
-      # echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      # echo "add_subdirectory(laminar_2D)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      cd $CI_PROJECT_DIR
-    - mkdir appbuild
-    - cd appbuild
-    - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP
-    - cmake --build . -j 12
-    - cmake --install .
-  dependencies:
-    - build:GNU:API
-  except:
-    - develop
-
-build:Intel:APP:
-  stage: APP_Build
-  tags:
-    - CCP, test
-  script:
-    - module use /opt/nvidia/hpc_sdk/modulefiles
-    - module load nvhpc/22.11
-    - git clone https://github.com/opensbli/opensbli.git
-    - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
-    - |-
-      cd $CI_PROJECT_DIR/opensbli/apps
-      echo dir=\$1 > translate.sh
-      echo pyfile=\$2 >> translate.sh
-      echo "cd \$dir" >> translate.sh
-      echo "python \$pyfile" >> translate.sh
-      echo "head -n-3 opensbli.cpp > tmp.cpp"  >> translate.sh
-      echo "echo \"ops_printf(\\\"PASSED\!\\\\\\\\\\\\n\\\");\" >> tmp.cpp " >> translate.sh
-      echo "tail -n3 opensbli.cpp >> tmp.cpp" >> translate.sh
-      echo "cp tmp.cpp  opensbli.cpp"  >> translate.sh
-      echo "rm tmp.cpp" >> translate.sh
-      echo "echo \"cmake_minimum_required(VERSION 3.18)\" > CMakeLists.txt" >> translate.sh
-      echo "echo \"CreateTempDir()\" >> CMakeLists.txt"  >> translate.sh
-      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\" \\\"NO\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
-      echo "cd \$CI_PROJECT_DIR/opensbli/apps" >> translate.sh
-      echo "cp \$dir \$CI_PROJECT_DIR/apps/c -r" >> translate.sh
-      cat translate.sh
-      source translate.sh taylor_green_vortex taylor_green_vortex.py tgv
-      echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      echo "add_subdirectory(taylor_green_vortex)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      # source translate.sh channel_flow/laminar_2D laminar_channel.py laminar2d
-      # echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      # echo "add_subdirectory(laminar_2D)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      cd $CI_PROJECT_DIR
-    - source /opt/intel/oneapi/setvars.sh
-    - export OMPI_MPICC=icc
-    - export OMPI_MPICXX=icpc
-    - export CC=icc
-    - export CXX=icpc
-    - |-
-      git clone https://github.com/OP-DSL/tridsolver.git
-      cd $CI_PROJECT_DIR/tridsolver
-      mkdir build
-      cd build
-      cmake ../scalar  -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_MPI=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DBUILD_FOR_SN=ON -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/tridlib
-      cmake --build .
-      cmake --install .
-      cd $CI_PROJECT_DIR/
-    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/tridlib/libtrid/lib
-    - mkdir appbuild-intel
-    - cd appbuild-intel
-    - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DLIBTRID_PATH=$CI_PROJECT_DIR/tridlib/libtrid
-    - cmake --build . -j 12 --verbose
-    - cmake --install .
-  dependencies:
-    - build:Intel:API
-  except:
-    - develop
-
-build:Translator:App:
-  stage: APP_Build
-  tags:
-    - CCP, test
-  script:
-    - module use /opt/nvidia/hpc_sdk/modulefiles
-    - module load nvhpc/22.11
-    - export PATH=$PATH:$CI_PROJECT_DIR/ops_translator/c:$CI_PROJECT_DIR/ops_translator/fortran
-    - git clone git@github.com:OP-DSL/OPS-APPS.git
-    - cd OPS-APPS
-    - rm -r -f c
-    - cp -r $CI_PROJECT_DIR/apps/c .
-    - cd c
-    - |-
-      for f in *; do
-        if [ -d "$f" ]; then
-          # $f is a directory
-          echo $f
-          cd $f
-          source source_list
-          cd ../
-        fi
-      done
-    - cd ../
-    - cp -r $CI_PROJECT_DIR/apps/fortran .
-    - cd fortran
-    - |-
-      for f in *; do
-        if [ -d "$f" ]; then
-          # $f is a directory
-          echo $f
-          cd $f
-          source source_list
-          cd ../
-        fi
-      done
-    - cd ../
-    - git add --all
-    - git commit -a -m "$(date)"
-    - git push origin
-  only:
-    refs:
-      - merge_requests
-    changes:
-      - apps
-      - ops_translator
-
-
-
-#Stage "test"
-test:GNU:
-  stage: test
-  tags:
-    - CCP,test
-  dependencies:
-    - build:GNU:API
-  script:
-    - module use /opt/nvidia/hpc_sdk/modulefiles
-    - module load nvhpc/22.11
-    - git clone https://github.com/opensbli/opensbli.git
-    - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
-    - |-
-      cd $CI_PROJECT_DIR/opensbli/apps
-      echo dir=\$1 > translate.sh
-      echo pyfile=\$2 >> translate.sh
-      echo "cd \$dir" >> translate.sh
-      echo "python \$pyfile" >> translate.sh
-      echo "head -n-3 opensbli.cpp > tmp.cpp"  >> translate.sh
-      echo "echo \"ops_printf(\\\"PASSED\!\\\\\\\\\\\\n\\\");\" >> tmp.cpp " >> translate.sh
-      echo "tail -n3 opensbli.cpp >> tmp.cpp" >> translate.sh
-      echo "cp tmp.cpp  opensbli.cpp"  >> translate.sh
-      echo "rm tmp.cpp" >> translate.sh
-      echo "echo \"cmake_minimum_required(VERSION 3.18)\" > CMakeLists.txt" >> translate.sh
-      echo "echo \"CreateTempDir()\" >> CMakeLists.txt"  >> translate.sh
-      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\"  \\\"NO\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
-      echo "cd \$CI_PROJECT_DIR/opensbli/apps" >> translate.sh
-      echo "cp \$dir \$CI_PROJECT_DIR/apps/c -r" >> translate.sh
-      cat translate.sh
-      source translate.sh taylor_green_vortex taylor_green_vortex.py tgv
-      echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      echo "add_subdirectory(taylor_green_vortex)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      # source translate.sh channel_flow/laminar_2D laminar_channel.py laminar2d
-      # echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      # echo "add_subdirectory(laminar_2D)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      cd $CI_PROJECT_DIR
-    - mkdir appbuild
-    - cd appbuild
-    - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON  -DGPU_NUMBER=1
-    - cmake --build . -j 12
-    - ctest
-  artifacts:
+    - source ~/.bash_aliases
+    - module avail 
+    - module load nvhpc/23.11
+    - export CXX=mpicxx
+    - mkdir build
+    - cd build
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DGPU_ARCH=75
+    - cmake --build . -j 4
+    - cmake --install . 
+ artifacts:
     expire_in: 1 week
     paths:
-    - appbuild/Testing/Temporary
-  only:
-    - develop
-
-test:Intel:
-  stage: test
-  tags:
-    - CCP,test
-  dependencies:
-    - build:Intel:API
-  script:
-    - module use /opt/nvidia/hpc_sdk/modulefiles
-    - module load nvhpc/22.11
-    - git clone https://github.com/opensbli/opensbli.git
-    - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
-    - |-
-      cd $CI_PROJECT_DIR/opensbli/apps
-      echo dir=\$1 > translate.sh
-      echo pyfile=\$2 >> translate.sh
-      echo "cd \$dir" >> translate.sh
-      echo "python \$pyfile" >> translate.sh
-      echo "head -n-3 opensbli.cpp > tmp.cpp"  >> translate.sh
-      echo "echo \"ops_printf(\\\"PASSED\!\\\\\\\\\\\\n\\\");\" >> tmp.cpp " >> translate.sh
-      echo "tail -n3 opensbli.cpp >> tmp.cpp" >> translate.sh
-      echo "cp tmp.cpp  opensbli.cpp"  >> translate.sh
-      echo "rm tmp.cpp" >> translate.sh
-      echo "echo \"cmake_minimum_required(VERSION 3.18)\" > CMakeLists.txt" >> translate.sh
-      echo "echo \"CreateTempDir()\" >> CMakeLists.txt"  >> translate.sh
-      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\"  \\\"NO\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
-      echo "cd \$CI_PROJECT_DIR/opensbli/apps" >> translate.sh
-      echo "cp \$dir \$CI_PROJECT_DIR/apps/c -r" >> translate.sh
-      cat translate.sh
-      source translate.sh taylor_green_vortex taylor_green_vortex.py tgv
-      echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      echo "add_subdirectory(taylor_green_vortex)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      # source translate.sh channel_flow/laminar_2D laminar_channel.py laminar2d
-      # echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      # echo "add_subdirectory(laminar_2D)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
-      cd $CI_PROJECT_DIR
-    - source /opt/intel/oneapi/setvars.sh
-    - export OMPI_MPICC=icc
-    - export OMPI_MPICXX=icpc
-    - export CC=icc
-    - export CXX=icpc
-    - |-
-      git clone https://github.com/OP-DSL/tridsolver.git
-      cd $CI_PROJECT_DIR/tridsolver
-      mkdir build
-      cd build
-      cmake ../scalar  -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_MPI=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DBUILD_FOR_SN=ON -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/tridlib
-      cmake --build .
-      cmake --install .
-      cd $CI_PROJECT_DIR/
-    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/tridlib/libtrid/lib
-    - mkdir appbuild-intel
-    - cd appbuild-intel
-    - cmake ../apps/c  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DOPS_TEST=ON  -DGPU_NUMBER=1 -DLIBTRID_PATH=$CI_PROJECT_DIR/tridlib/libtrid
-    - cmake --build . -j 12
-    - ctest
-  artifacts:
-    expire_in: 1 week
-    paths:
-    - appbuild-intel/Testing/Temporary
-  only:
-    - develop
-
-# #Stage "docs"
-# make-docs:
-#   stage: docs
-#   when: always
-#   tags:
-#     - CCP, test
-#   script:
-#     - cd doc && make all clean
-#   artifacts:
-#     expire_in: 4 week
-#     paths:
-#       - doc/user.pdf
-#       - doc/ops/html
-#       - doc/ops/latex/refman.pdf
-#       - doc/ops_translator/html
-#       - doc/ops_translator/latex/refman.pdf
-
-pages:
-  stage: docs
-  when: always
-  tags:
-    - CCP, test
-  script:
-  - cd doc
-  - doxygen ops/Doxyfile
-  - mv ops/html/ $CI_PROJECT_DIR/public/
-  artifacts:
-    paths:
-    - public
-
+    - $CI_PROJECT_DIR/OPS-INSTALL
+      
+      
+      
+      #Test:HIP:
+      #  stage: HIP
+      #  tags:
+      #    - CCP, test
+      #  script:
+      #    - module use /opt/nvidia/hpc_sdk/modulefiles
+      #    - module use /home/rfj82982/.local/easybuild//modules/all
+      #    - module load CUDA/11.6.0
+      #    - |-
+      #      export PATH=/opt/rocm/bin:$PATH
+      #      export OPS_COMPILER=hip
+      #      export MPI_INSTALL_PATH=/usr
+      #      export HDF5_INSTALL_PATH=/usr/lib/x86_64-linux-gnu/hdf5/openmpi
+      #      export HIP_INSTALL_PATH=/opt/rocm/
+      #      export OPS_INSTALL_PATH=$CI_PROJECT_DIR/ops
+      #      export MPICC=mpicc
+      #      export MPICXX=mpic++
+      #      export MPICPP=mpicxx
+      #      export MPIFC=mpif90
+      #      export MPIF90=mpif90
+      #      export MPI_INC=/usr/lib/x86_64-linux-gnu/openmpi/include
+      #      export XCOMPILER=-Xcompiler
+      #      export HIP_LINK="-L/usr/local/cuda/lib64 -lcudart"
+      #      export HIP_HDF5_MPI_LINK="-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi/lib -lmpi_cxx -lmpi"
+      #      export HIPMPICPP=mpicxx
+      #      export HIPIEEE="--fmad false"
+      #      export HIP_PLATFORM=nvidia
+      #    - cd ops/c
+      #    - make seq IEEE=1
+      #    - make hip IEEE=1
+      #    - make hdf5_seq IEEE=1
+      #    - cd ../../apps/c
+      #    - cd CloverLeaf
+      #    - make cloverleaf_hip IEEE=1
+      #    - |-
+      #      ./cloverleaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      #      grep "PASSED" clover.out
+      #      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+      #    - cd ../CloverLeaf_3D
+      #    - make cloverleaf_hip IEEE=1
+      #    - |-
+      #      ./cloverleaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      #      grep "PASSED" clover.out
+      #      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+      #    - cd ../CloverLeaf_3D_HDF5
+      #    - make cloverleaf_hip IEEE=1
+      #    - make generate_file IEEE=1
+      #    - |-
+      #      ./generate_file
+      #      ./cloverleaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      #      grep "PASSED" clover.out
+      #      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+      #    - cd ../lowdim_test
+      #    - make lowdim_hip
+      #    - |-
+      #      ./lowdim_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      #      grep "PASSED" perf_out
+      #      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+      #    - cd ../mblock
+      #    - make mblock_hip
+      #    - |-
+      #      ./mblock_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > mblock.out
+      #      grep "PASSED" mblock.out
+      #      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+      #    - cd ../mb_shsgc/Max_datatransfer
+      #    # - make shsgc_hip
+      #    # - |-
+      #    #   ./shsgc_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      #    #   grep "Pre shock error is:" perf_out
+      #    #   grep "Post shock error is:" perf_out
+      #    #   grep "Post shock Error is" perf_out
+      #    #   grep "Total Wall time" perf_out
+      #    #   grep -e "acceptable" -e "correct"  perf_out
+      #    #   rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+      #    - cd ../../multiDim
+      #    - make multidim_hip
+      #    - |-
+      #      ./multidim_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      #      grep "PASSED" perf_out
+      #      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+      #    - cd ../multiDim3D
+      #    - make multidim_hip
+      #    - |-
+      #      ./multidim_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      #      grep "PASSED" perf_out
+      #      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+      #    - cd ../poisson
+      #    - make poisson_hip
+      #    - |-
+      #      ./poisson_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      #      grep "PASSED" perf_out
+      #      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+      #    - cd ../shsgc
+      #    - make shsgc_hip
+      #    - |-
+      #      ./shsgc_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      #      grep "PASSED" perf_out
+      #      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+      #    - cd ../TeaLeaf
+      #    - make tealeaf_hip
+      #    - |-
+      #      ./tealeaf_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+      #      grep "PASSED" perf_out
+      #      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+      #    - cd ../multiDim_HDF5
+      #    - make -f Makefile.write write_hip
+      #    - rm .generated
+      #    - make read_hip
+      #    - |-
+      #      rm -rf write_data.h5 read_data.h5
+      #      ./write_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+      #      ./read_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
+      #      h5diff write_data.h5 read_data.h5
+      #      rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; else echo "TEST PASSED"; fi
+      #
+      #build:Intel:API:
+      #  stage: API_Build
+      #  tags:
+      #    - CCP, test
+      #  script:
+      #    - module use /opt/nvidia/hpc_sdk/modulefiles
+      #    - module load nvhpc/22.11
+      #    - source /opt/intel/oneapi/setvars.sh
+      #    - export OMPI_MPICC=icc
+      #    - export OMPI_MPICXX=icpc
+      #    - export CC=icc
+      #    - export CXX=icpc
+      #    - |-
+      #      git clone https://github.com/OP-DSL/tridsolver.git
+      #      cd $CI_PROJECT_DIR/tridsolver
+      #      mkdir build
+      #      cd build
+      #      cmake ../scalar  -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_MPI=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DBUILD_FOR_SN=ON -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/tridlib
+      #      cmake --build .
+      #      cmake --install .
+      #      cd $CI_PROJECT_DIR/
+      #    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/tridlib/libtrid/lib
+      #    - mkdir build-intel
+      #    - cd build-intel
+      #    - cmake ../  -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DLIBTRID_PATH=$CI_PROJECT_DIR/tridlib/libtrid
+      #    - cmake --build . -j 4
+      #    - cmake --install .
+      #  artifacts:
+      #    expire_in: 1 week
+      #    paths:
+      #    - $CI_PROJECT_DIR/OPS-INSTALL-Intel
+      #
+      #build:GNU:APP:
+      #  stage: APP_Build
+      #  tags:
+      #    - CCP, test
+      #  script:
+      #    - module use /opt/nvidia/hpc_sdk/modulefiles
+      #    - module load nvhpc/22.11
+      #    - git clone https://github.com/opensbli/opensbli.git
+      #    - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
+      #    - |-
+      #      cd $CI_PROJECT_DIR/opensbli/apps
+      #      echo dir=\$1 > translate.sh
+      #      echo pyfile=\$2 >> translate.sh
+      #      echo "cd \$dir" >> translate.sh
+      #      echo "python \$pyfile" >> translate.sh
+      #      echo "head -n-3 opensbli.cpp > tmp.cpp"  >> translate.sh
+      #      echo "echo \"ops_printf(\\\"PASSED\!\\\\\\\\\\\\n\\\");\" >> tmp.cpp " >> translate.sh
+      #      echo "tail -n3 opensbli.cpp >> tmp.cpp" >> translate.sh
+      #      echo "cp tmp.cpp  opensbli.cpp"  >> translate.sh
+      #      echo "rm tmp.cpp" >> translate.sh
+      #      echo "echo \"cmake_minimum_required(VERSION 3.18)\" > CMakeLists.txt" >> translate.sh
+      #      echo "echo \"CreateTempDir()\" >> CMakeLists.txt"  >> translate.sh
+      #      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\"  \\\"NO\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
+      #      echo "cd \$CI_PROJECT_DIR/opensbli/apps" >> translate.sh
+      #      echo "cp \$dir \$CI_PROJECT_DIR/apps/c -r" >> translate.sh
+      #      cat translate.sh
+      #      source translate.sh taylor_green_vortex taylor_green_vortex.py tgv
+      #      echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      #      echo "add_subdirectory(taylor_green_vortex)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      #      # source translate.sh channel_flow/laminar_2D laminar_channel.py laminar2d
+      #      # echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      #      # echo "add_subdirectory(laminar_2D)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      #      cd $CI_PROJECT_DIR
+      #    - mkdir appbuild
+      #    - cd appbuild
+      #    - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP
+      #    - cmake --build . -j 12
+      #    - cmake --install .
+      #  dependencies:
+      #    - build:GNU:API
+      #  except:
+      #    - develop
+      #
+      #build:Intel:APP:
+      #  stage: APP_Build
+      #  tags:
+      #    - CCP, test
+      #  script:
+      #    - module use /opt/nvidia/hpc_sdk/modulefiles
+      #    - module load nvhpc/22.11
+      #    - git clone https://github.com/opensbli/opensbli.git
+      #    - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
+      #    - |-
+      #      cd $CI_PROJECT_DIR/opensbli/apps
+      #      echo dir=\$1 > translate.sh
+      #      echo pyfile=\$2 >> translate.sh
+      #      echo "cd \$dir" >> translate.sh
+      #      echo "python \$pyfile" >> translate.sh
+      #      echo "head -n-3 opensbli.cpp > tmp.cpp"  >> translate.sh
+      #      echo "echo \"ops_printf(\\\"PASSED\!\\\\\\\\\\\\n\\\");\" >> tmp.cpp " >> translate.sh
+      #      echo "tail -n3 opensbli.cpp >> tmp.cpp" >> translate.sh
+      #      echo "cp tmp.cpp  opensbli.cpp"  >> translate.sh
+      #      echo "rm tmp.cpp" >> translate.sh
+      #      echo "echo \"cmake_minimum_required(VERSION 3.18)\" > CMakeLists.txt" >> translate.sh
+      #      echo "echo \"CreateTempDir()\" >> CMakeLists.txt"  >> translate.sh
+      #      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\" \\\"NO\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
+      #      echo "cd \$CI_PROJECT_DIR/opensbli/apps" >> translate.sh
+      #      echo "cp \$dir \$CI_PROJECT_DIR/apps/c -r" >> translate.sh
+      #      cat translate.sh
+      #      source translate.sh taylor_green_vortex taylor_green_vortex.py tgv
+      #      echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      #      echo "add_subdirectory(taylor_green_vortex)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      #      # source translate.sh channel_flow/laminar_2D laminar_channel.py laminar2d
+      #      # echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      #      # echo "add_subdirectory(laminar_2D)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      #      cd $CI_PROJECT_DIR
+      #    - source /opt/intel/oneapi/setvars.sh
+      #    - export OMPI_MPICC=icc
+      #    - export OMPI_MPICXX=icpc
+      #    - export CC=icc
+      #    - export CXX=icpc
+      #    - |-
+      #      git clone https://github.com/OP-DSL/tridsolver.git
+      #      cd $CI_PROJECT_DIR/tridsolver
+      #      mkdir build
+      #      cd build
+      #      cmake ../scalar  -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_MPI=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DBUILD_FOR_SN=ON -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/tridlib
+      #      cmake --build .
+      #      cmake --install .
+      #      cd $CI_PROJECT_DIR/
+      #    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/tridlib/libtrid/lib
+      #    - mkdir appbuild-intel
+      #    - cd appbuild-intel
+      #    - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DLIBTRID_PATH=$CI_PROJECT_DIR/tridlib/libtrid
+      #    - cmake --build . -j 12 --verbose
+      #    - cmake --install .
+      #  dependencies:
+      #    - build:Intel:API
+      #  except:
+      #    - develop
+      #
+      #build:Translator:App:
+      #  stage: APP_Build
+      #  tags:
+      #    - CCP, test
+      #  script:
+      #    - module use /opt/nvidia/hpc_sdk/modulefiles
+      #    - module load nvhpc/22.11
+      #    - export PATH=$PATH:$CI_PROJECT_DIR/ops_translator/c:$CI_PROJECT_DIR/ops_translator/fortran
+      #    - git clone git@github.com:OP-DSL/OPS-APPS.git
+      #    - cd OPS-APPS
+      #    - rm -r -f c
+      #    - cp -r $CI_PROJECT_DIR/apps/c .
+      #    - cd c
+      #    - |-
+      #      for f in *; do
+      #        if [ -d "$f" ]; then
+      #          # $f is a directory
+      #          echo $f
+      #          cd $f
+      #          source source_list
+      #          cd ../
+      #        fi
+      #      done
+      #    - cd ../
+      #    - cp -r $CI_PROJECT_DIR/apps/fortran .
+      #    - cd fortran
+      #    - |-
+      #      for f in *; do
+      #        if [ -d "$f" ]; then
+      #          # $f is a directory
+      #          echo $f
+      #          cd $f
+      #          source source_list
+      #          cd ../
+      #        fi
+      #      done
+      #    - cd ../
+      #    - git add --all
+      #    - git commit -a -m "$(date)"
+      #    - git push origin
+      #  only:
+      #    refs:
+      #      - merge_requests
+      #    changes:
+      #      - apps
+      #      - ops_translator
+      #
+      #
+      #
+      ##Stage "test"
+      #test:GNU:
+      #  stage: test
+      #  tags:
+      #    - CCP,test
+      #  dependencies:
+      #    - build:GNU:API
+      #  script:
+      #    - module use /opt/nvidia/hpc_sdk/modulefiles
+      #    - module load nvhpc/22.11
+      #    - git clone https://github.com/opensbli/opensbli.git
+      #    - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
+      #    - |-
+      #      cd $CI_PROJECT_DIR/opensbli/apps
+      #      echo dir=\$1 > translate.sh
+      #      echo pyfile=\$2 >> translate.sh
+      #      echo "cd \$dir" >> translate.sh
+      #      echo "python \$pyfile" >> translate.sh
+      #      echo "head -n-3 opensbli.cpp > tmp.cpp"  >> translate.sh
+      #      echo "echo \"ops_printf(\\\"PASSED\!\\\\\\\\\\\\n\\\");\" >> tmp.cpp " >> translate.sh
+      #      echo "tail -n3 opensbli.cpp >> tmp.cpp" >> translate.sh
+      #      echo "cp tmp.cpp  opensbli.cpp"  >> translate.sh
+      #      echo "rm tmp.cpp" >> translate.sh
+      #      echo "echo \"cmake_minimum_required(VERSION 3.18)\" > CMakeLists.txt" >> translate.sh
+      #      echo "echo \"CreateTempDir()\" >> CMakeLists.txt"  >> translate.sh
+      #      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\"  \\\"NO\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
+      #      echo "cd \$CI_PROJECT_DIR/opensbli/apps" >> translate.sh
+      #      echo "cp \$dir \$CI_PROJECT_DIR/apps/c -r" >> translate.sh
+      #      cat translate.sh
+      #      source translate.sh taylor_green_vortex taylor_green_vortex.py tgv
+      #      echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      #      echo "add_subdirectory(taylor_green_vortex)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      #      # source translate.sh channel_flow/laminar_2D laminar_channel.py laminar2d
+      #      # echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      #      # echo "add_subdirectory(laminar_2D)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      #      cd $CI_PROJECT_DIR
+      #    - mkdir appbuild
+      #    - cd appbuild
+      #    - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON  -DGPU_NUMBER=1
+      #    - cmake --build . -j 12
+      #    - ctest
+      #  artifacts:
+      #    expire_in: 1 week
+      #    paths:
+      #    - appbuild/Testing/Temporary
+      #  only:
+      #    - develop
+      #
+      #test:Intel:
+      #  stage: test
+      #  tags:
+      #    - CCP,test
+      #  dependencies:
+      #    - build:Intel:API
+      #  script:
+      #    - module use /opt/nvidia/hpc_sdk/modulefiles
+      #    - module load nvhpc/22.11
+      #    - git clone https://github.com/opensbli/opensbli.git
+      #    - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR/opensbli/
+      #    - |-
+      #      cd $CI_PROJECT_DIR/opensbli/apps
+      #      echo dir=\$1 > translate.sh
+      #      echo pyfile=\$2 >> translate.sh
+      #      echo "cd \$dir" >> translate.sh
+      #      echo "python \$pyfile" >> translate.sh
+      #      echo "head -n-3 opensbli.cpp > tmp.cpp"  >> translate.sh
+      #      echo "echo \"ops_printf(\\\"PASSED\!\\\\\\\\\\\\n\\\");\" >> tmp.cpp " >> translate.sh
+      #      echo "tail -n3 opensbli.cpp >> tmp.cpp" >> translate.sh
+      #      echo "cp tmp.cpp  opensbli.cpp"  >> translate.sh
+      #      echo "rm tmp.cpp" >> translate.sh
+      #      echo "echo \"cmake_minimum_required(VERSION 3.18)\" > CMakeLists.txt" >> translate.sh
+      #      echo "echo \"CreateTempDir()\" >> CMakeLists.txt"  >> translate.sh
+      #      echo "echo \"BUILD_OPS_C_SAMPLE(\$3 \\\"NONE\\\" \\\"NONE\\\" \\\"NONE\\\"  \\\"NO\\\" \\\"YES\\\")\" >> CMakeLists.txt"  >> translate.sh
+      #      echo "cd \$CI_PROJECT_DIR/opensbli/apps" >> translate.sh
+      #      echo "cp \$dir \$CI_PROJECT_DIR/apps/c -r" >> translate.sh
+      #      cat translate.sh
+      #      source translate.sh taylor_green_vortex taylor_green_vortex.py tgv
+      #      echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      #      echo "add_subdirectory(taylor_green_vortex)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      #      # source translate.sh channel_flow/laminar_2D laminar_channel.py laminar2d
+      #      # echo " " >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      #      # echo "add_subdirectory(laminar_2D)" >> $CI_PROJECT_DIR/apps/c/CMakeLists.txt
+      #      cd $CI_PROJECT_DIR
+      #    - source /opt/intel/oneapi/setvars.sh
+      #    - export OMPI_MPICC=icc
+      #    - export OMPI_MPICXX=icpc
+      #    - export CC=icc
+      #    - export CXX=icpc
+      #    - |-
+      #      git clone https://github.com/OP-DSL/tridsolver.git
+      #      cd $CI_PROJECT_DIR/tridsolver
+      #      mkdir build
+      #      cd build
+      #      cmake ../scalar  -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_MPI=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DBUILD_FOR_SN=ON -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/tridlib
+      #      cmake --build .
+      #      cmake --install .
+      #      cd $CI_PROJECT_DIR/
+      #    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CI_PROJECT_DIR/tridlib/libtrid/lib
+      #    - mkdir appbuild-intel
+      #    - cd appbuild-intel
+      #    - cmake ../apps/c  -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL-Intel -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP-Intel -DOPS_TEST=ON  -DGPU_NUMBER=1 -DLIBTRID_PATH=$CI_PROJECT_DIR/tridlib/libtrid
+      #    - cmake --build . -j 12
+      #    - ctest
+      #  artifacts:
+      #    expire_in: 1 week
+      #    paths:
+      #    - appbuild-intel/Testing/Temporary
+      #  only:
+      #    - develop
+      #
+      ## #Stage "docs"
+      ## make-docs:
+      ##   stage: docs
+      ##   when: always
+      ##   tags:
+      ##     - CCP, test
+      ##   script:
+      ##     - cd doc && make all clean
+      ##   artifacts:
+      ##     expire_in: 4 week
+      ##     paths:
+      ##       - doc/user.pdf
+      ##       - doc/ops/html
+      ##       - doc/ops/latex/refman.pdf
+      ##       - doc/ops_translator/html
+      ##       - doc/ops_translator/latex/refman.pdf
+      #
+      #pages:
+      #  stage: docs
+      #  when: always
+      #  tags:
+      #    - CCP, test
+      #  script:
+      #  - cd doc
+      #  - doxygen ops/Doxyfile
+      #  - mv ops/html/ $CI_PROJECT_DIR/public/
+      #  artifacts:
+      #    paths:
+      #    - public
+      #
