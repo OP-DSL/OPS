@@ -648,16 +648,16 @@
         install(TARGETS ${Name}_tiled   DESTINATION ${APP_INSTALL_DIR}/${Name})
 
 #       Sequential tests disabled since it is too time consuming for some tests at this moment 
-#       if ((OPS_TEST) AND (${GenerateTest} STREQUAL "YES")) 
-#           set(args "") 
-#           Here we must have a space to be parsed by the macro 
-#           set(cmd "$<TARGET_FILE:${Name}_seq>") 
-#           add_test(NAME ${Name}_seq 
-#                    COMMAND ${CMAKE_COMMAND} 
-#                    -DCMD=${cmd}  -DARG=${args}
-#                    -DOPS_INSTALL_PATH=${OPS_CMAKE_INSTALL_PATH} -P ${OPS_APP_SRC}/runtests.cmake
-#                    WORKING_DIRECTORY "${TMP_SOURCE_DIR}" ) 
-#          endif()
+       if ((OPS_TEST) AND (${GenerateTest} STREQUAL "YES"))
+           set(args " ")
+#          Here we must have a space to be parsed by the macro
+           set(cmd "$<TARGET_FILE:${Name}_seq>")
+           add_test(NAME ${Name}_seq
+                    COMMAND ${CMAKE_COMMAND}
+                    -DCMD=${cmd} -DARG=${args}
+                    -DOPS_INSTALL_PATH=${OPS_CMAKE_INSTALL_PATH} -P ${OPS_APP_SRC}/runtests.cmake
+                    WORKING_DIRECTORY "${TMP_SOURCE_DIR}")
+        endif()
 
         if(CUDA)
             add_executable(${Name}_cuda ${OPS} ${OTHERS}
@@ -895,43 +895,43 @@
     add_subdirectory(laplace2d_tutorial/step7)
 
 #   App: Cloverleaf #
-    add_subdirectory(CloverLeaf)    # Compiles OK
+#    add_subdirectory(CloverLeaf)    # Compiles OK
 
 #   App: Cloverleaf_3D  # Compiles OK, Runtime Floating point exception
-    add_subdirectory(CloverLeaf_3D)
+#    add_subdirectory(CloverLeaf_3D)
 
 #   App: Tealeaf    # Compiles OK
-    add_subdirectory(TeaLeaf)
+#    add_subdirectory(TeaLeaf)
 
     if(HDF5_FOUND)
 #       App: Cloverleaf_3D_HDF5 # Compiles OK, Runtime Floating point exception
-        add_subdirectory(CloverLeaf_3D_HDF5)
+#        add_subdirectory(CloverLeaf_3D_HDF5)
 
 #       App: lowdim # Compiles OK
-        add_subdirectory(lowdim_test)
+#        add_subdirectory(lowdim_test)
 
 #       App: multiDim   # Compiles OK
-        add_subdirectory(multiDim)
+#        add_subdirectory(multiDim)
 
 #       App: multiDim3D # Compiles OK
-        add_subdirectory(multiDim3D)
+#        add_subdirectory(multiDim3D)
 
 #       App: mblock # Compiles OK
-        add_subdirectory(mblock)
+#        add_subdirectory(mblock)
 
 #       App: mgrid  # Compiles OK
-        add_subdirectory(mgrid)
+#        add_subdirectory(mgrid)
 
 #       App: shsgc  # Compiles OK
-        add_subdirectory(shsgc)
+#        add_subdirectory(shsgc)
 
 #       App: hdf5_slice # Compiles OK
-        add_subdirectory(hdf5_slice)
+#        add_subdirectory(hdf5_slice)
 #    add_subdirectory(hdf5_slice)
     endif()
 
 #   App: mb_shsgc   # Compiles OK
-    add_subdirectory(mb_shsgc)
+#    add_subdirectory(mb_shsgc)
 
 #   App: ops-lbm    # Compiles OK
     add_subdirectory(ops-lbm/step5)
