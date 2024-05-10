@@ -900,35 +900,38 @@
 #   App: Cloverleaf_3D  # Compiles OK, Runtime Floating point exception
     add_subdirectory(CloverLeaf_3D)
 
-#   App: Cloverleaf_3D_HDF5 # Compiles OK, Runtime Floating point exception
-    add_subdirectory(CloverLeaf_3D_HDF5)
-
 #   App: Tealeaf    # Compiles OK
     add_subdirectory(TeaLeaf)
 
-#   App: lowdim # Compiles OK
-    add_subdirectory(lowdim_test)
+    if(HDF5_FOUND)
+#       App: Cloverleaf_3D_HDF5 # Compiles OK, Runtime Floating point exception
+        add_subdirectory(CloverLeaf_3D_HDF5)
 
-#   App: multiDim   # Compiles OK
-    add_subdirectory(multiDim)
+#       App: lowdim # Compiles OK
+        add_subdirectory(lowdim_test)
 
-#   App: multiDim3D # Compiles OK
-    add_subdirectory(multiDim3D)
+#       App: multiDim   # Compiles OK
+        add_subdirectory(multiDim)
 
-#   App: mblock # Compiles OK
-    add_subdirectory(mblock)
+#       App: multiDim3D # Compiles OK
+        add_subdirectory(multiDim3D)
 
-#   App: mgrid  # Compiles OK
-    add_subdirectory(mgrid)
+#       App: mblock # Compiles OK
+        add_subdirectory(mblock)
 
-#   App: shsgc  # Compiles OK
-    add_subdirectory(shsgc)
+#       App: mgrid  # Compiles OK
+        add_subdirectory(mgrid)
+
+#       App: shsgc  # Compiles OK
+        add_subdirectory(shsgc)
+
+#       App: hdf5_slice # Compiles OK
+        add_subdirectory(hdf5_slice)
+#    add_subdirectory(hdf5_slice)
+    endif()
 
 #   App: mb_shsgc   # Compiles OK
     add_subdirectory(mb_shsgc)
-
-#   App: hdf5_slice # Compiles OK
-    add_subdirectory(hdf5_slice)
 
 #   App: ops-lbm    # Compiles OK
     add_subdirectory(ops-lbm/step5)
@@ -940,11 +943,12 @@
 #   standard test
 #    add_subdirectory(multiDim_HDF5)
 #    add_subdirectory(compact_scheme)
-#    add_subdirectory(hdf5_slice)
 
 #   TODO fetch_data.cpp cannot be found for access add_subdirectory(access)
     if(LIBTRID_PATH)
-        add_subdirectory(adi)
-        add_subdirectory(adi_burger)
-        add_subdirectory(adi_burger_3D)
+        if(HDF5_FOUND) 
+            add_subdirectory(adi)
+            add_subdirectory(adi_burger)
+            add_subdirectory(adi_burger_3D)
+        endif()
     endif()
