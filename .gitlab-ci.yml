@@ -46,27 +46,26 @@ build:foss:API:
     expire_in: 1 week
     paths:
     - $CI_PROJECT_DIR/OPS-INSTALL
-#
-#      
-## This is the latest easybuild based on GNU
-#build:NVHCP23:API:
-#  stage: API_Build
-#  tags:
-#    - CCP, test
-#  script:
-#    - source ~/.bash_aliases
-#    - module avail 
-#    - module load nvhpc/23.11
-#    - export CXX=mpicxx
-#    - mkdir build
-#    - cd build
-#    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DGPU_ARCH=75
-#    - cmake --build . -j 4
-#    - cmake --install . 
-# artifacts:
-#    expire_in: 1 week
-#    paths:
-#    - $CI_PROJECT_DIR/OPS-INSTALL
+      
+# This is the latest easybuild based on GNU
+build:NVHCP23:API:
+  stage: API_Build
+  tags:
+    - CCP, test
+  script:
+    - source ~/.bash_aliases
+    - module avail 
+    - module load nvhpc/23.11
+    - export CXX=mpicxx
+    - mkdir build
+    - cd build
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DGPU_ARCH=75
+    - cmake --build . -j 4
+    - cmake --install . 
+ artifacts:
+    expire_in: 1 week
+    paths:
+    - $CI_PROJECT_DIR/OPS-INSTALL
       
       
       
