@@ -369,7 +369,7 @@
             elseif(DEFINED ENV{MPICH_DIR})      # Cray
                 set(MPI_INCLUDE_DIRS $ENV{MPICH_DIR}/include)
             else()                          # OpenMPI
-                execute_process(COMMAND mpicc --showme:incdirs
+                execute_process(COMMAND mpicc --showme:incdirs | awk '{print $1}'
                                 OUTPUT_VARIABLE MPI_INCLUDE_DIRS
                                 OUTPUT_STRIP_TRAILING_WHITESPACE
                                 ERROR_VARIABLE MPI_INCLUDE_DIRS_ERROR)
@@ -379,7 +379,7 @@
             endif()
 
             if(NOT EXISTS ${MPI_INCLUDE_DIRS})
-                message(FATAL_ERROR "MPI include directory ${MPI_INCLUDE_DIRS} does not exist.")
+                message(FATAL_ERROR "Error!!! MPI include directory ${MPI_INCLUDE_DIRS} does not exist.")
             else()
                 message(STATUS "MPI include directories: ${MPI_INCLUDE_DIRS}")
             endif()
