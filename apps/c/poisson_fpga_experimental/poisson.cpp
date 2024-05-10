@@ -30,8 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @Test application for fpga batched temporal blocked poisson
-  * @author Beniel Thileepan, Gihan Mudalige, Istvan Reguly
+/** @Test application for fpga batched temporal blocked poisson 2D
+  * @author Gihan Mudalige, Istvan Reguly, Beniel Thileepan
   */
 
 // standard headers
