@@ -30,4 +30,7 @@ ops/fortran/mod
 *.lst
 tea*.in
 .clang-format
+build*
+Build*
+BUILD*
 
