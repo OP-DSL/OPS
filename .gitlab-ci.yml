@@ -55,7 +55,7 @@ build:NVHCP23:API:
   script:
     - source ~/.bash_aliases
     - module avail 
-    - module load nvhpc/23.11
+    - module load nvhpc/23.9
     - export CXX=mpicxx
     - mkdir build
     - cd build
