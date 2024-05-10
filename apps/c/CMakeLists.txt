@@ -260,22 +260,22 @@
                 find_path(opsc
                         NAMES "ops.py"
                         PATHS ${SEARCH_PATHS}
-                        PATH_SUFFIXES bin/ops_translator_legacy/c)
+                        PATH_SUFFIXES translator/ops_translator_legacy/c)
 
                 find_path(opsfortran
                         NAMES "ops_fortran.py"
                         PATHS ${SEARCH_PATHS}
-                        PATH_SUFFIXES bin/ops_translator_legacy/fortran)
+                        PATH_SUFFIXES translator/ops_translator_legacy/fortran)
             else()
                 find_path(opsc
                         NAMES "__main__.py"
                         PATHS ${SEARCH_PATHS}
-                        PATH_SUFFIXES bin/ops_translator/ops-translator)
+                        PATH_SUFFIXES translator/ops_translator/ops-translator)
 
                 find_path(opsfortran
                         NAMES "__main__.py"
                         PATHS ${SEARCH_PATHS}
-                        PATH_SUFFIXES bin/ops_translator/ops-translator)
+                        PATH_SUFFIXES translator/ops_translator/ops-translator)
             endif()
     
             if(NOT opsc)
@@ -438,11 +438,11 @@
             )
         else()
             if(LEGACY_CODEGEN)
-                set(OPS_C_TRANSLATOR "${CMAKE_INSTALL_PREFIX}/bin/ops_translator_legacy/c/ops.py")
-                set(OPS_F_TRANSLATOR "${CMAKE_INSTALL_PREFIX}/bin/ops_translator_legacy/fortran/ops_fortran.py")
+                set(OPS_C_TRANSLATOR "${CMAKE_INSTALL_PREFIX}/translator/ops_translator_legacy/c/ops.py")
+                set(OPS_F_TRANSLATOR "${CMAKE_INSTALL_PREFIX}/translator/ops_translator_legacy/fortran/ops_fortran.py")
             else()
-                set(OPS_C_TRANSLATOR "${CMAKE_INSTALL_PREFIX}/bin/ops_translator/ops-translator")
-                set(OPS_F_TRANSLATOR "${CMAKE_INSTALL_PREFIX}/bin/ops_translator/ops-translator")
+                set(OPS_C_TRANSLATOR "${CMAKE_INSTALL_PREFIX}/translator/ops_translator/ops-translator")
+                set(OPS_F_TRANSLATOR "${CMAKE_INSTALL_PREFIX}/translator/ops_translator/ops-translator")
             endif()
         endif()
 
@@ -506,25 +506,24 @@
         get_filename_component(KernelName ${Kernel} NAME_WE)
 
 #       If not LEGACY_CODEGEN then activate the Installed Python Virtual Environment
-        if(${CMAKE_PROJECT_NAME} STREQUAL APP)
-            if(NOT LEGACY_CODEGEN)
-                message("Activating Python Virtual Environment for Code-Generation")
-                set(VENV_DEACTIVATE "deactivate")
-                set(VENV_ACTIVATE "source ${OPS_CMAKE_INSTALL_PATH}/bin/ops_translator/ops_venv/bin/activate")
-                #execute_process(COMMAND /bin/bash -c ${VENV_DEACTIVATE}
-                #                WORKING_DIRECTORY ${TMP_SOURCE_DIR})
+        if(NOT LEGACY_CODEGEN)
+            message("Activating Python Virtual Environment for Code-Generation")
+            set(VENV_ACTIVATE "source ${OPS_CMAKE_INSTALL_PATH}/translator/ops_translator/ops_venv/bin/activate")
 
-                execute_process(COMMAND /bin/bash -c ${VENV_ACTIVATE}
-                                WORKING_DIRECTORY ${TMP_SOURCE_DIR}
-                                RESULT_VARIABLE result
-                                OUTPUT_VARIABLE output)
+            execute_process(COMMAND /bin/bash -c ${VENV_ACTIVATE}
+                            WORKING_DIRECTORY ${TMP_SOURCE_DIR}
+                            RESULT_VARIABLE result
+                            OUTPUT_VARIABLE output)
 
-                if(result EQUAL 0)
-                    set(PYTHON_EXECUTABLE "${OPS_CMAKE_INSTALL_PATH}/bin/ops_translator/ops_venv/bin/python3")
-                    message(STATUS "Python Virtual Enviroment activated successfully")
-                else()
-                    message("command: ${VENV_ACTIVATE}")
+            if(result EQUAL 0)
+                set(PYTHON_EXECUTABLE "${OPS_CMAKE_INSTALL_PATH}/translator/ops_translator/ops_venv/bin/python3")
+                message(STATUS "Python Virtual Enviroment activated successfully")
+            else()
+                message("command: ${VENV_ACTIVATE}")
+                if(NOT "${output}" STREQUAL "")
                     message(FATAL_ERROR "Activate Python Virtual Environment command failed with error code ${result}: ${output}")
+                else()
+                    message(FATAL_ERROR "Activate Python Virtual Environment command failed with error code ${result}")
                 endif()
             endif()
         endif()
@@ -537,8 +536,14 @@
                             RESULT_VARIABLE result
                             OUTPUT_VARIABLE output)
         else()
-            set(PYTHON_FILE_ARGS "-DOPS_ACC_IGNORE -I ${OPS_CMAKE_INSTALL_PATH}/include --file_paths")
-
+            if(${CMAKE_PROJECT_NAME} STREQUAL OPS)
+                set(PYTHON_FILE_ARGS "-DOPS_ACC_IGNORE -I ${CMAKE_SOURCE_DIR}/ops/c/include --file_paths")
+                set(PYTHON_OPS_INCLUDE ${CMAKE_SOURCE_DIR}/ops/c/include)
+            endif()
+            if(${CMAKE_PROJECT_NAME} STREQUAL APP)
+                set(PYTHON_FILE_ARGS "-DOPS_ACC_IGNORE -I ${OPS_CMAKE_INSTALL_PATH}/include --file_paths")
+                set(PYTHON_OPS_INCLUDE ${OPS_CMAKE_INSTALL_PATH}/include)
+            endif()
             foreach(filepath ${DEV})
                 get_filename_component(filename ${filepath} NAME)
                 list(APPEND FILENAMES ${filename})
@@ -547,7 +552,7 @@
             message(STATUS "Code-gen command: ${PYTHON_EXECUTABLE} ${OPS_C_TRANSLATOR} ${PYTHON_FILE_ARGS} ${FILENAMES}")
             execute_process(COMMAND ${PYTHON_EXECUTABLE} ${OPS_C_TRANSLATOR}
                             -DOPS_ACC_IGNORE
-                            -I ${OPS_CMAKE_INSTALL_PATH}/include
+                            -I ${PYTHON_OPS_INCLUDE}
                             --file_paths ${FILENAMES}
                             WORKING_DIRECTORY ${TMP_SOURCE_DIR}
                             RESULT_VARIABLE result
