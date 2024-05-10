@@ -54,15 +54,15 @@ build:NVHCP23:API:
     - CCP, test
   script:
     - source ~/.bash_aliases
-    #- module avail 
-    #- module load nvhpc/23.11
-    #- export CXX=mpicxx
-    #- mkdir build
-    #- cd build
-    #- cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DGPU_ARCH=75
-    #- cmake --build . -j 4
-    #- cmake --install . 
- artifacts:
+    - module avail 
+    - module load nvhpc/23.11
+    - export CXX=mpicxx
+    - mkdir build
+    - cd build
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DGPU_ARCH=75
+    - cmake --build . -j 4
+    - cmake --install . 
+  artifacts:
     expire_in: 1 week
     paths:
     - $CI_PROJECT_DIR/OPS-INSTALL
