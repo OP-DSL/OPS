@@ -12,7 +12,7 @@
 
     if(NOT OPS_VERBOSE_WARNING)
         message(
-            "We show concise compiling information by defautl \n! Use -DOPS_VERBOSE_WARNING=ON to switch on."
+            "We show concise compiling information by default \n! Use -DOPS_VERBOSE_WARNING=ON to switch on."
         )
     endif()
 
