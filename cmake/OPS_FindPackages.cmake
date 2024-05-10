@@ -19,7 +19,7 @@ else()
 endif()
 # Python 
 find_package(Python3 REQUIRED)
-if(NOT OpenMP_FOUND)
+if(NOT Python3_FOUND)
   message(FATAL_ERROR "Python3 support NOT FOUND! The Python translator needs Python3! Please use -DPython3_EXECUTABLE to specify the path.")
 endif()
 # CUDA Support

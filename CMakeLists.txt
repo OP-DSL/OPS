@@ -1,11 +1,12 @@
 # To specifiy the cmake version range Currenty work under 3.18
 cmake_minimum_required(VERSION 3.18)
-project(OPS C CXX)
+project(OPS CXX)
 
 # if show the compiling process in detail
 option(OPS_TEST "Turn on tests for Apps" OFF)
 option(OPS_HIP "Turn on the HIP backend" OFF)
 option(OPS_CUDA "Turn on the CUDA backend" ON)
+option(IEEE "Use IEEE flags" ON)
 
 # Output of the installation directory
 include(GNUInstallDirs)
@@ -60,4 +61,5 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_
 include(OPS_FindPackages)
 include(OPS_Compilers)
 # install python translator
-add_subdirectory(ops_translator_legacy)
+add_subdirectory(ops)
+#add_subdirectory(ops_translator)

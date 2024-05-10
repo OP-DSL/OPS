@@ -10,6 +10,9 @@ job_build:
     - echo "Building the project"
     - source ~/.bash_aliases
     - module avail 
+    - module load CUDA
+    - cmake -S . -B build 
+    - cmake --build build 
 
 job_test:
   stage: test

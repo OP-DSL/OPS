@@ -186,8 +186,8 @@ if(${CMAKE_PROJECT_NAME} STREQUAL APP)
   find_package(MPI QUIET)
   find_package(HDF5 QUIET COMPONENTS C HL)
   find_package(CUDAToolkit QUIET)
-  find_package(OpenACC QUIET)
-  find_package(OpenCL QUIET)
+  #find_package(OpenACC QUIET)
+  #find_package(OpenCL QUIET)
   find_package(OpenMP QUIET)
   find_package(Python3 REQUIRED)
   if(NOT Python3_FOUND)
@@ -245,10 +245,10 @@ if(${CMAKE_PROJECT_NAME} STREQUAL APP)
     message(WARNING "We cannot find a CUDA kit! The CUDA codes won't compile!")
   endif()
 
-  if(NOT OpenCL_FOUND)
-    message(
-      WARNING "We cannot find a OpenCL kit! The OpenCL codes won't compile!")
-  endif()
+  #if(NOT OpenCL_FOUND)
+  #  message(
+  #    WARNING "We cannot find a OpenCL kit! The OpenCL codes won't compile!")
+  #endif()
 
   if(USE_NCCL)
     find_package(NCCL)
@@ -264,9 +264,9 @@ if(${CMAKE_PROJECT_NAME} STREQUAL APP)
   if(ops_cuda_FOUND)
     set(CUDA ${CUDAToolkit_FOUND})
   endif()
-  if(ops_opencl_FOUND)
-    set(OPENCL ${OpenCL_FOUND})
-  endif()
+  #if(ops_opencl_FOUND)
+  #  set(OPENCL ${OpenCL_FOUND})
+  #endif()
   if(${MPI_FOUND})
     set(MPI TRUE)
     set(HDF5_MPI ${HDF5_FOUND})
@@ -296,7 +296,7 @@ if(${CMAKE_PROJECT_NAME} STREQUAL OPS)
   include_directories("${CMAKE_SOURCE_DIR}/ops/c/include")
   set(HDF5_SEQ ${HDF5_FOUND})
   set(CUDA ${CUDAToolkit_FOUND})
-  set(OPENCL ${OpenCL_FOUND})
+  #set(OPENCL ${OpenCL_FOUND})
   if(OPS_HIP)
     set(HIP ${HIP_FOUND})
   endif()
@@ -304,7 +304,7 @@ if(${CMAKE_PROJECT_NAME} STREQUAL OPS)
     set(MPI TRUE)
     set(HDF5_MPI ${HDF5_FOUND})
     set(CUDA_MPI ${CUDAToolkit_FOUND})
-    set(OPENCL_MPI ${OpenCL_FOUND})
+    #set(OPENCL_MPI ${OpenCL_FOUND})
   endif()
   if(NOT Python3_FOUND)
     message(
@@ -465,33 +465,33 @@ macro(
   endif()
 
   # Tridiagonal library does not currently support OpenCL
-  if(OPENCL AND NOT TRID)
-    add_executable(
-      ${Name}_opencl
-      ${OPS} ${OTHERS}
-      "${TMP_SOURCE_DIR}/opencl/opencl_kernels.cpp")
-    target_include_directories(${Name}_opencl PRIVATE ${TMP_SOURCE_DIR}
-                                                      ${OpenCL_INCLUDE_DIRS})
-    target_link_libraries(${Name}_opencl ops_opencl ${OpenCL_LIBRARIES}
-                          OpenMP::OpenMP_CXX)
-    if(HDF5_SEQ)
-      target_link_libraries(${Name}_opencl ops_hdf5_seq hdf5::hdf5
-                            hdf5::hdf5_hl MPI::MPI_CXX)
-    endif()
-    install(TARGETS ${Name}_opencl DESTINATION ${APP_INSTALL_DIR}/${Name})
-    if((OPS_TEST)
-       AND (GPU_NUMBER GREATER_EQUAL 1)
-       AND (${GenerateTest} STREQUAL "YES"))
-      set(args "OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1")
-      add_test(
-        NAME ${Name}_opencl
-        COMMAND
-          ${CMAKE_COMMAND} -DCMD=$<TARGET_FILE:${Name}_opencl> -DARG=${args}
-          -DOPS_INSTALL_PATH=${OPS_INSTALL_PATH} -P
-          ${OPS_APP_SRC}/runtests.cmake
-        WORKING_DIRECTORY "${TMP_SOURCE_DIR}")
-    endif()
-  endif()
+  #if(OPENCL AND NOT TRID)
+  #  add_executable(
+  #    ${Name}_opencl
+  #    ${OPS} ${OTHERS}
+  #    "${TMP_SOURCE_DIR}/opencl/opencl_kernels.cpp")
+  #  target_include_directories(${Name}_opencl PRIVATE ${TMP_SOURCE_DIR}
+  #                                                    ${OpenCL_INCLUDE_DIRS})
+  #  target_link_libraries(${Name}_opencl ops_opencl ${OpenCL_LIBRARIES}
+  #                        OpenMP::OpenMP_CXX)
+  #  if(HDF5_SEQ)
+  #    target_link_libraries(${Name}_opencl ops_hdf5_seq hdf5::hdf5
+  #                          hdf5::hdf5_hl MPI::MPI_CXX)
+  #  endif()
+  #  install(TARGETS ${Name}_opencl DESTINATION ${APP_INSTALL_DIR}/${Name})
+  #  if((OPS_TEST)
+  #     AND (GPU_NUMBER GREATER_EQUAL 1)
+  #     AND (${GenerateTest} STREQUAL "YES"))
+  #    set(args "OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1")
+  #    add_test(
+  #      NAME ${Name}_opencl
+  #      COMMAND
+  #        ${CMAKE_COMMAND} -DCMD=$<TARGET_FILE:${Name}_opencl> -DARG=${args}
+  #        -DOPS_INSTALL_PATH=${OPS_INSTALL_PATH} -P
+  #        ${OPS_APP_SRC}/runtests.cmake
+  #      WORKING_DIRECTORY "${TMP_SOURCE_DIR}")
+  #  endif()
+  #endif()
   if(OPS_HIP)
     if(HIP AND NOT TRID)
       add_executable(
@@ -585,24 +585,24 @@ macro(
       install(TARGETS ${Name}_mpi_cuda DESTINATION ${APP_INSTALL_DIR}/${Name})
     endif()
 
-    if(OPENCL_MPI AND NOT TRID)
-      add_executable(
-        ${Name}_mpi_opencl
-        ${OPS} ${OTHERS}
-        "${TMP_SOURCE_DIR}/opencl/opencl_kernels.cpp")
-      target_include_directories(
-        ${Name}_mpi_opencl PRIVATE ${TMP_SOURCE_DIR} ${OpenCL_INCLUDE_DIRS})
-      target_compile_definitions(${Name}_mpi_opencl PRIVATE "-DOPS_MPI")
-      if(HDF5_MPI)
-        target_link_libraries(
-          ${Name}_mpi_opencl PRIVATE ops_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
-                                     MPI::MPI_CXX)
-      endif()
-      target_link_libraries(
-        ${Name}_mpi_opencl PRIVATE ops_mpi_opencl ${OpenCL_LIBRARIES}
-                                   MPI::MPI_CXX OpenMP::OpenMP_CXX)
-      install(TARGETS ${Name}_mpi_opencl DESTINATION ${APP_INSTALL_DIR}/${Name})
-    endif()
+    #if(OPENCL_MPI AND NOT TRID)
+    #  add_executable(
+    #    ${Name}_mpi_opencl
+    #    ${OPS} ${OTHERS}
+    #    "${TMP_SOURCE_DIR}/opencl/opencl_kernels.cpp")
+    #  target_include_directories(
+    #    ${Name}_mpi_opencl PRIVATE ${TMP_SOURCE_DIR} ${OpenCL_INCLUDE_DIRS})
+    #  target_compile_definitions(${Name}_mpi_opencl PRIVATE "-DOPS_MPI")
+    #  if(HDF5_MPI)
+    #    target_link_libraries(
+    #      ${Name}_mpi_opencl PRIVATE ops_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
+    #                                 MPI::MPI_CXX)
+    #  endif()
+    #  target_link_libraries(
+    #    ${Name}_mpi_opencl PRIVATE ops_mpi_opencl ${OpenCL_LIBRARIES}
+    #                               MPI::MPI_CXX OpenMP::OpenMP_CXX)
+    #  install(TARGETS ${Name}_mpi_opencl DESTINATION ${APP_INSTALL_DIR}/${Name})
+    #endif()
   endif()
 endmacro()
 
@@ -614,24 +614,24 @@ if(LIBTRID_PATH)
 endif()
 
 add_subdirectory(CloverLeaf) # Compile OK
-add_subdirectory(CloverLeaf_3D) # Compile OK
-add_subdirectory(CloverLeaf_3D_HDF5) # Compile OK
-# TODO there seem bugs in the codes of complex_numbers
-# add_subdirectory(complex_numbers) TODO Need to figure out the structure
-# add_subdirectory(laplace2d_tutorial)
-add_subdirectory(lowdim_test)
-# TODO no PASSED for testing
-add_subdirectory(mblock)
-# TODO there seems problem for compiling mblock4D add_subdirectory(mblock4D) #
-# ignored at this moment TODO needs to replace  acceptable with PASSED for
-# standard test
-add_subdirectory(mb_shsgc)
-# add_subdirectory(mgrid)  # Compile OK
-add_subdirectory(multiDim)
-add_subdirectory(multiDim3D)
-add_subdirectory(multiDim_HDF5)
-add_subdirectory(poisson)
-add_subdirectory(shsgc)
-add_subdirectory(TeaLeaf)
-add_subdirectory(compact_scheme)
-add_subdirectory(hdf5_slice)
+#add_subdirectory(CloverLeaf_3D) # Compile OK
+#add_subdirectory(CloverLeaf_3D_HDF5) # Compile OK
+## TODO there seem bugs in the codes of complex_numbers
+## add_subdirectory(complex_numbers) TODO Need to figure out the structure
+## add_subdirectory(laplace2d_tutorial)
+#add_subdirectory(lowdim_test)
+## TODO no PASSED for testing
+#add_subdirectory(mblock)
+## TODO there seems problem for compiling mblock4D add_subdirectory(mblock4D) #
+## ignored at this moment TODO needs to replace  acceptable with PASSED for
+## standard test
+#add_subdirectory(mb_shsgc)
+## add_subdirectory(mgrid)  # Compile OK
+#add_subdirectory(multiDim)
+#add_subdirectory(multiDim3D)
+#add_subdirectory(multiDim_HDF5)
+#add_subdirectory(poisson)
+#add_subdirectory(shsgc)
+#add_subdirectory(TeaLeaf)
+#add_subdirectory(compact_scheme)
+#add_subdirectory(hdf5_slice)

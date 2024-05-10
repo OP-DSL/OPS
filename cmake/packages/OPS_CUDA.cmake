@@ -2,7 +2,7 @@ find_package(CUDAToolkit QUIET)
 
 if(CUDAToolkit_FOUND)                                                              
   set(CMAKE_CUDA_COMPILER ${CUDAToolkit_NVCC_EXECUTABLE}) 
-   enable_language(CUDA)
+  enable_language(CUDA)
   if(NOT SET_GPU_ARCH)  
     include(FindCUDA/select_compute_arch)
     CUDA_DETECT_INSTALLED_GPUS(INSTALLED_GPU_CCS_1)
@@ -17,7 +17,13 @@ if(CUDAToolkit_FOUND)
   endif()                                                                         
   set(CMAKE_CUDA_ARCHITECTURES ${SET_GPU_ARCH}                                                                
       CACHE STRING "CUDA architectures")   
-  
+  # Set the CUDA Flags compilers
+  set(OPS_CUDAFLAGS "-Xcompiler=\"-fPIC\" -g -std=c++11 -gencode arch=compute_${SET_CUDA_ARCH},code=sm_${SET_CUDA_ARCH}") 
+  set(OPS_CUDAFLAGS_RELEASE "-O3 --use_fast_math") 
+  set(OPS_CUDAFLAGS_DEBUG "-O0") 
+  if(IEEE)
+    set(OPS_CUDAFLAGS "${OPS_CUDAFLAGS} --fmad false")
+  endif(IEEE)
 else()                                                                             
   message(WARNING "CUDA toolkit not found! The CUDA codes won't compile!")      
 endif()
