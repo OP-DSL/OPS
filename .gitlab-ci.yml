@@ -1,11 +1,11 @@
 # Defines stages which are to be executed
 stages:
   - API_Build
-  - APP_Build
-  - HIP
-  - test
-  - docs
-  - clean
+    #  - APP_Build
+    #  - HIP
+    #  - test
+    #  - docs
+    #  - clean
 
 # Stage "build"
 build:GNU11:API:
