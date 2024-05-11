@@ -436,28 +436,24 @@
 #   Find the MPI INCLUDE directory, required to resolve mpi.h not found error for some targets
     if(${MPI_FOUND})
         if(DEFINED ENV{I_MPI_ROOT})     #Intel MPI
-            set(MPI_INCLUDE_DIRS $ENV{I_MPI_ROOT}/include)
+            set(MPI_INCLUDE_DIRS -I$ENV{I_MPI_ROOT}/include)
         elseif(DEFINED ENV{MPI_ROOT})       # HPE MPT
-            set(MPI_INCLUDE_DIRS $ENV{MPI_ROOT}/include)
+            set(MPI_INCLUDE_DIRS -I$ENV{MPI_ROOT}/include)
         elseif(DEFINED ENV{MPICH_DIR})      # Cray
-            set(MPI_INCLUDE_DIRS $ENV{MPICH_DIR}/include)
+            set(MPI_INCLUDE_DIRS -I$ENV{MPICH_DIR}/include)
         else()                          # OpenMPI
             execute_process(COMMAND mpicc --showme:incdirs
-                            OUTPUT_VARIABLE MPI_INCLUDE_DIRS_RAW
+                            OUTPUT_VARIABLE MPI_INCLUDE_DIRS
                             OUTPUT_STRIP_TRAILING_WHITESPACE
                             ERROR_VARIABLE MPI_INCLUDE_DIRS_ERROR)
             if(MPI_INCLUDE_DIRS_ERROR)
                 message(FATAL_ERROR "Failed to determine MPI include directories: ${MPI_INCLUDE_DIRS_ERROR}")
             endif()
 
-            string(REPLACE "\n" ";" MPI_INCLUDE_DIRS_LIST "${MPI_INCLUDE_DIRS_RAW}")
-            list(GET MPI_INCLUDE_DIRS_LIST 0 MPI_INCLUDE_DIRS)
-        endif()
-
-        if(NOT EXISTS ${MPI_INCLUDE_DIRS})
-            message(FATAL_ERROR "MPI include directory ${MPI_INCLUDE_DIRS} does not exist.")
-        else()
-            message(STATUS "MPI include directories: ${MPI_INCLUDE_DIRS}")
+#           Split into list if multiple paths are there
+            string(REPLACE "\n" ";" MPI_INCLUDE_DIRS ${MPI_INCLUDE_DIRS})
+#           Remove empty string
+            list(FILTER MPI_INCLUDE_DIRS  EXCLUDE REGEX "^$")
         endif()
     endif()
 
@@ -811,14 +807,20 @@
             if(CUDA_MPI)
                 add_executable(${Name}_mpi_cuda ${OPS} ${OTHERS}
                                 "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
-                target_include_directories(${Name}_mpi_cuda PRIVATE ${TMP_SOURCE_DIR} ${MPI_INCLUDE_DIRS})
+                target_include_directories(${Name}_mpi_cuda PRIVATE ${TMP_SOURCE_DIR})
+                foreach(dir ${MPI_INCLUDE_DIRS})
+                    target_include_directories(${Name}_mpi_cuda PRIVATE ${dir})
+                endforeach()
                 target_compile_definitions(${Name}_mpi_cuda PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK")
                 target_compile_options(${Name}_mpi_cuda
                              PRIVATE $<$<COMPILE_LANGUAGE:CUDA>: --fmad=false >)
 
                 add_executable(${Name}_mpi_cuda_tiled ${OPS} ${OTHERS}
                                 "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
-                target_include_directories(${Name}_mpi_cuda_tiled PRIVATE ${TMP_SOURCE_DIR} ${MPI_INCLUDE_DIRS})
+                target_include_directories(${Name}_mpi_cuda_tiled PRIVATE ${TMP_SOURCE_DIR})
+                foreach(dir ${MPI_INCLUDE_DIRS})
+                    target_include_directories(${Name}_mpi_cuda_tiled PRIVATE ${dir})
+                endforeach()
                 target_compile_definitions(${Name}_mpi_cuda_tiled PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK -DOPS_LAZY")
                 target_compile_options(${Name}_mpi_cuda_tiled
                              PRIVATE $<$<COMPILE_LANGUAGE:CUDA>: --fmad=false >)
@@ -853,13 +855,19 @@
             if(OMPOFFLOAD_MPI)
                 add_executable(${Name}_mpi_ompoffload ${OPS} ${OTHERS}
                                 "${TMP_SOURCE_DIR}/openmp_offload/openmp_offload_kernels.cpp")
-                target_include_directories(${Name}_mpi_ompoffload PRIVATE ${TMP_SOURCE_DIR} ${MPI_INCLUDE_DIRS})
+                target_include_directories(${Name}_mpi_ompoffload PRIVATE ${TMP_SOURCE_DIR})
+                foreach(dir ${MPI_INCLUDE_DIRS})
+                    target_include_directories(${Name}_mpi_ompoffload PRIVATE ${dir})
+                endforeach()
                 target_compile_definitions(${Name}_mpi_ompoffload PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK")
                 target_compile_options(${Name}_mpi_ompoffload PRIVATE ${OMPOFFLOAD_FLAGS})
 
                 add_executable(${Name}_mpi_ompoffload_tiled ${OPS} ${OTHERS}
                                 "${TMP_SOURCE_DIR}/openmp_offload/openmp_offload_kernels.cpp")
-                target_include_directories(${Name}_mpi_ompoffload_tiled PRIVATE ${TMP_SOURCE_DIR} ${MPI_INCLUDE_DIRS})
+                target_include_directories(${Name}_mpi_ompoffload_tiled PRIVATE ${TMP_SOURCE_DIR})
+                foreach(dir ${MPI_INCLUDE_DIRS})
+                    target_include_directories(${Name}_mpi_ompoffload_tiled PRIVATE ${dir})
+                endforeach()
                 target_compile_definitions(${Name}_mpi_ompoffload_tiled PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK -DOPS_LAZY")
                 target_compile_options(${Name}_mpi_ompoffload_tiled PRIVATE ${OMPOFFLOAD_FLAGS})
 

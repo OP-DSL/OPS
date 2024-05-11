@@ -80,10 +80,10 @@ build_and_test:GNU11:APP:
     - export CXX=mpicxx
     - mkdir build
     - cd build
-    - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON  -DGPU_ARCH=75 -DGPU_NUMBER=1
+    - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON  -DGPU_ARCH=75 -DGPU_NUMBER=1 -DLEGACY_CODEGEN=ON
     - cmake --build . -j 4
     - cmake --install .
-    - ctest
+    - ctest -V
   artifacts:
     expire_in: 1 week
     paths:
