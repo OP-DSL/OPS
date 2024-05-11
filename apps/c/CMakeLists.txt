@@ -786,7 +786,7 @@
                                               OpenMP::OpenMP_CXX)
 
             if((OPS_TEST) AND (${GenerateTest} STREQUAL "YES"))
-                set(args "-n ${CPU_NUMBER} $<TARGET_FILE:${Name}_mpi>")
+                set(args "-np 2 --oversubscribe $<TARGET_FILE:${Name}_mpi>")
                 set(cmd "mpirun")
                 add_test(NAME ${Name}_mpi
                         COMMAND
