@@ -436,11 +436,11 @@
 #   Find the MPI INCLUDE directory, required to resolve mpi.h not found error for some targets
     if(${MPI_FOUND})
         if(DEFINED ENV{I_MPI_ROOT})     #Intel MPI
-            set(MPI_INCLUDE_DIRS -I$ENV{I_MPI_ROOT}/include)
+            set(MPI_INCLUDE_DIRS $ENV{I_MPI_ROOT}/include)
         elseif(DEFINED ENV{MPI_ROOT})       # HPE MPT
-            set(MPI_INCLUDE_DIRS -I$ENV{MPI_ROOT}/include)
+            set(MPI_INCLUDE_DIRS $ENV{MPI_ROOT}/include)
         elseif(DEFINED ENV{MPICH_DIR})      # Cray
-            set(MPI_INCLUDE_DIRS -I$ENV{MPICH_DIR}/include)
+            set(MPI_INCLUDE_DIRS $ENV{MPICH_DIR}/include)
         else()                          # OpenMPI
             execute_process(COMMAND mpicc --showme:incdirs
                             OUTPUT_VARIABLE MPI_INCLUDE_DIRS
