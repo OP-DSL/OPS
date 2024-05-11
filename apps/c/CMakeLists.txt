@@ -361,29 +361,6 @@
                 endif()
             endif()
 
-#           Find the MPI INCLUDE directory, required to resolve mpi.h not found error for some targets
-            if(DEFINED ENV{I_MPI_ROOT})     #Intel MPI
-                set(MPI_INCLUDE_DIRS $ENV{I_MPI_ROOT}/include)
-            elseif(DEFINED ENV{MPI_ROOT})       # HPE MPT
-                set(MPI_INCLUDE_DIRS $ENV{MPI_ROOT}/include)
-            elseif(DEFINED ENV{MPICH_DIR})      # Cray
-                set(MPI_INCLUDE_DIRS $ENV{MPICH_DIR}/include)
-            else()                          # OpenMPI
-                execute_process(COMMAND mpicc --showme:incdirs | awk '{print $1}'
-                                OUTPUT_VARIABLE MPI_INCLUDE_DIRS
-                                OUTPUT_STRIP_TRAILING_WHITESPACE
-                                ERROR_VARIABLE MPI_INCLUDE_DIRS_ERROR)
-                if(MPI_INCLUDE_DIRS_ERROR)
-                    message(FATAL_ERROR "Failed to determine MPI include directories: ${MPI_INCLUDE_DIRS_ERROR}")
-                endif()
-            endif()
-
-            if(NOT EXISTS ${MPI_INCLUDE_DIRS})
-                message(FATAL_ERROR "Error!!! MPI include directory ${MPI_INCLUDE_DIRS} does not exist.")
-            else()
-                message(STATUS "MPI include directories: ${MPI_INCLUDE_DIRS}")
-            endif()
-
         endif()
 
 #       Prepare ctest
@@ -455,6 +432,35 @@
             enable_testing()
         endif()
     endif()
+
+#   Find the MPI INCLUDE directory, required to resolve mpi.h not found error for some targets
+    if(${MPI_FOUND})
+        if(DEFINED ENV{I_MPI_ROOT})     #Intel MPI
+            set(MPI_INCLUDE_DIRS $ENV{I_MPI_ROOT}/include)
+        elseif(DEFINED ENV{MPI_ROOT})       # HPE MPT
+            set(MPI_INCLUDE_DIRS $ENV{MPI_ROOT}/include)
+        elseif(DEFINED ENV{MPICH_DIR})      # Cray
+            set(MPI_INCLUDE_DIRS $ENV{MPICH_DIR}/include)
+        else()                          # OpenMPI
+            execute_process(COMMAND mpicc --showme:incdirs
+                            OUTPUT_VARIABLE MPI_INCLUDE_DIRS_RAW
+                            OUTPUT_STRIP_TRAILING_WHITESPACE
+                            ERROR_VARIABLE MPI_INCLUDE_DIRS_ERROR)
+            if(MPI_INCLUDE_DIRS_ERROR)
+                message(FATAL_ERROR "Failed to determine MPI include directories: ${MPI_INCLUDE_DIRS_ERROR}")
+            endif()
+
+            string(REPLACE "\n" ";" MPI_INCLUDE_DIRS_LIST "${MPI_INCLUDE_DIRS_RAW}")
+            list(GET MPI_INCLUDE_DIRS_LIST 0 MPI_INCLUDE_DIRS)
+        endif()
+
+        if(NOT EXISTS ${MPI_INCLUDE_DIRS})
+            message(FATAL_ERROR "MPI include directory ${MPI_INCLUDE_DIRS} does not exist.")
+        else()
+            message(STATUS "MPI include directories: ${MPI_INCLUDE_DIRS}")
+        endif()
+    endif()
+
 
 #   Clean the tmp directory for the code generation
     macro(CreateTempDir)
