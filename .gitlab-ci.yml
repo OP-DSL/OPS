@@ -1,7 +1,7 @@
 # Defines stages which are to be executed
 stages:
   - API_Build
-  - APP_Build_Test
+  - APPS_Build_and_Test
     #  - HIP
     #  - test
     #  - docs
@@ -69,8 +69,8 @@ build:NVHCP23:API:
 
 
 # Stage "Test"
-build_and_test:GNU11:APP:
-  stage: APP_Build_Test
+build_and_test:GNU11:APPS:
+  stage: APPS_Build_and_Test
   tags:
     - CCP, test
   script:
@@ -80,7 +80,7 @@ build_and_test:GNU11:APP:
     - export CXX=mpicxx
     - mkdir build
     - cd build
-    - cmake ../apps/c -DOPS_INSTALL_DIR=$CI_PROJECT_DIR/OPS-INSTALL -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON  -DGPU_ARCH=75 -DGPU_NUMBER=1 -DLEGACY_CODEGEN=ON
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON  -DGPU_ARCH=75 -DGPU_NUMBER=1 -DLEGACY_CODEGEN=ON
     - cmake --build . -j 4
     - cmake --install .
     - ctest -V

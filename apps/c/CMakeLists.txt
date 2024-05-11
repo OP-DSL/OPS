@@ -436,24 +436,21 @@
 #   Find the MPI INCLUDE directory, required to resolve mpi.h not found error for some targets
     if(${MPI_FOUND})
         if(DEFINED ENV{I_MPI_ROOT})     #Intel MPI
-            set(MPI_INCLUDE_DIRS $ENV{I_MPI_ROOT}/include)
+            set(MPI_INC_LIST -I$ENV{I_MPI_ROOT}/include)
         elseif(DEFINED ENV{MPI_ROOT})       # HPE MPT
-            set(MPI_INCLUDE_DIRS $ENV{MPI_ROOT}/include)
+            set(MPI_INC_LIST -I$ENV{MPI_ROOT}/include)
         elseif(DEFINED ENV{MPICH_DIR})      # Cray
-            set(MPI_INCLUDE_DIRS $ENV{MPICH_DIR}/include)
+            set(MPI_INC_LIST -I$ENV{MPICH_DIR}/include)
         else()                          # OpenMPI
-            execute_process(COMMAND mpicc --showme:incdirs
-                            OUTPUT_VARIABLE MPI_INCLUDE_DIRS
+            execute_process(COMMAND mpicc --showme:compile
+                            OUTPUT_VARIABLE MPI_INC_STRING
                             OUTPUT_STRIP_TRAILING_WHITESPACE
-                            ERROR_VARIABLE MPI_INCLUDE_DIRS_ERROR)
-            if(MPI_INCLUDE_DIRS_ERROR)
-                message(FATAL_ERROR "Failed to determine MPI include directories: ${MPI_INCLUDE_DIRS_ERROR}")
+                            ERROR_VARIABLE MPI_INC_FIND)
+            if(MPI_INC_FIND)
+                message(FATAL_ERROR "Failed to determine MPI include directories: ${MPI_INC_FIND}")
             endif()
+            string(REPLACE " " ";" MPI_INC_LIST ${MPI_INC_STRING})
 
-#           Split into list if multiple paths are there
-            string(REPLACE "\n" ";" MPI_INCLUDE_DIRS ${MPI_INCLUDE_DIRS})
-#           Remove empty string
-            list(FILTER MPI_INCLUDE_DIRS  EXCLUDE REGEX "^$")
         endif()
     endif()
 
@@ -808,22 +805,28 @@
                 add_executable(${Name}_mpi_cuda ${OPS} ${OTHERS}
                                 "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
                 target_include_directories(${Name}_mpi_cuda PRIVATE ${TMP_SOURCE_DIR})
-                foreach(dir ${MPI_INCLUDE_DIRS})
-                    target_include_directories(${Name}_mpi_cuda PRIVATE ${dir})
-                endforeach()
                 target_compile_definitions(${Name}_mpi_cuda PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK")
                 target_compile_options(${Name}_mpi_cuda
                              PRIVATE $<$<COMPILE_LANGUAGE:CUDA>: --fmad=false >)
+                foreach(include_dir IN LISTS MPI_INC_LIST)
+                    string(FIND ${include_dir} "include" include_index)
+                    if(NOT include_index EQUAL -1)
+                        target_compile_options(${Name}_mpi_cuda PRIVATE ${include_dir})
+                    endif()
+                endforeach()
 
                 add_executable(${Name}_mpi_cuda_tiled ${OPS} ${OTHERS}
                                 "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
                 target_include_directories(${Name}_mpi_cuda_tiled PRIVATE ${TMP_SOURCE_DIR})
-                foreach(dir ${MPI_INCLUDE_DIRS})
-                    target_include_directories(${Name}_mpi_cuda_tiled PRIVATE ${dir})
-                endforeach()
                 target_compile_definitions(${Name}_mpi_cuda_tiled PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK -DOPS_LAZY")
                 target_compile_options(${Name}_mpi_cuda_tiled
                              PRIVATE $<$<COMPILE_LANGUAGE:CUDA>: --fmad=false >)
+                foreach(include_dir IN LISTS MPI_INC_LIST)
+                    string(FIND ${include_dir} "include" include_index)
+                    if(NOT include_index EQUAL -1)
+                        target_compile_options(${Name}_mpi_cuda_tiled PRIVATE ${include_dir})
+                    endif()
+                endforeach()
 
                 if(HDF5_MPI)
                     target_link_libraries(${Name}_mpi_cuda PRIVATE ops_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
@@ -856,20 +859,26 @@
                 add_executable(${Name}_mpi_ompoffload ${OPS} ${OTHERS}
                                 "${TMP_SOURCE_DIR}/openmp_offload/openmp_offload_kernels.cpp")
                 target_include_directories(${Name}_mpi_ompoffload PRIVATE ${TMP_SOURCE_DIR})
-                foreach(dir ${MPI_INCLUDE_DIRS})
-                    target_include_directories(${Name}_mpi_ompoffload PRIVATE ${dir})
-                endforeach()
                 target_compile_definitions(${Name}_mpi_ompoffload PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK")
                 target_compile_options(${Name}_mpi_ompoffload PRIVATE ${OMPOFFLOAD_FLAGS})
+                foreach(include_dir IN LISTS MPI_INC_LIST)
+                    string(FIND ${include_dir} "include" include_index)
+                    if(NOT include_index EQUAL -1)
+                        target_compile_options(${Name}_mpi_ompoffload PRIVATE ${include_dir})
+                    endif()
+                endforeach()
 
                 add_executable(${Name}_mpi_ompoffload_tiled ${OPS} ${OTHERS}
                                 "${TMP_SOURCE_DIR}/openmp_offload/openmp_offload_kernels.cpp")
                 target_include_directories(${Name}_mpi_ompoffload_tiled PRIVATE ${TMP_SOURCE_DIR})
-                foreach(dir ${MPI_INCLUDE_DIRS})
-                    target_include_directories(${Name}_mpi_ompoffload_tiled PRIVATE ${dir})
-                endforeach()
                 target_compile_definitions(${Name}_mpi_ompoffload_tiled PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK -DOPS_LAZY")
                 target_compile_options(${Name}_mpi_ompoffload_tiled PRIVATE ${OMPOFFLOAD_FLAGS})
+                foreach(include_dir IN LISTS MPI_INC_LIST)
+                    string(FIND ${include_dir} "include" include_index)
+                    if(NOT include_index EQUAL -1)
+                        target_compile_options(${Name}_mpi_ompoffload_tiled PRIVATE ${include_dir})
+                    endif()
+                endforeach()
 
                 if(HDF5_MPI)
                     target_link_libraries(${Name}_mpi_ompoffload PRIVATE ops_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
