@@ -133,7 +133,7 @@ class Stencil_{{lh.kernel}} : public ops::hls::StencilCoreV2<stencil_type, read_
 public:
 
     void stencilRun(
-    {% for arg in lh.args|ops_dat %}
+    {% for arg in lh.args|ops_not_idx %}
         {% if loop.last %}
             {% if consts %}
                 {% set last_check = False %}
@@ -143,18 +143,19 @@ public:
         {% else %}
             {% set last_check = False %}
         {% endif %}
-        {% if (arg is not ops_rw) and (arg.dat_id != datMap[arg.dat_id]) %}
+        {% if arg is ops_dat %}
+            {% if (arg is not ops_rw) and (arg.dat_id != datMap[arg.dat_id]) %}
             widen_stream_dt& {{hls_stream_name(arg)-}}{{"," if (not loop.last or not last_check)}}
-        {% else %}
+            {% else %}
             widen_stream_dt& {{hls_stream_name_t2(arg, "rd")-}},
             widen_stream_dt& {{hls_stream_name_t2(arg, "wr")-}}{{"," if (not loop.last or not last_check)}}
+            {% endif %}
+        {% elif arg is ops_gbl %}
+            const {{arg.typ}}& {{get_arg_gbl_name(arg)}}{{"," if (not loop.last or not last_check)}}
         {% endif %}
     {% endfor %}
-    {% for arg in lh.args|ops_gbl %}
-        const {{arg.typ}}& {{lh.get_arg_gbl_name(arg.ptr)}}{{"," if not loop.last}}
-    {% endfor %}
     {% for const in consts %}
-        const {{const.typ}}& {{const.ptr}}{{"," if not loop.last}}
+            const {{const.typ}}& {{const.ptr}}{{"," if not loop.last}}
     {% endfor %}
         )
     {
@@ -176,8 +177,8 @@ public:
         unsigned short {{stencil_name}}_{{buffer_read_idx(buffer)}} = {{(buffer.read_point.x - buffer.write_point.x, 0)|max}};
         unsigned short {{stencil_name}}_{{buffer_write_idx(buffer)}} = {{(buffer.write_point.x - buffer.read_point.x, 0)|max}};
             {% else %}
-        unsigned short {{stencil_name}}_{{buffer_read_idx(buffer)}} = max({{(buffer.read_point - buffer.write_point).y}} * stencilConfig.grid_size[0] + {{(buffer.read_point - buff.write_point).x}},0);
-        unsigned short {{stencil_name}}_{{buffer_write_idx(buffer)}} = max({{(buffer.write_point - buffer.read_point).y}} * stencilConfig.grid_size[0] + {{(buffer.write_point - buff.read_point).x}},0);
+        unsigned short {{stencil_name}}_{{buffer_read_idx(buffer)}} = max({{(buffer.read_point - buffer.write_point).y}} * stencilConfig.grid_size[0] + {{(buffer.read_point - buffer.write_point).x}},0);
+        unsigned short {{stencil_name}}_{{buffer_write_idx(buffer)}} = max({{(buffer.write_point - buffer.read_point).y}} * stencilConfig.grid_size[0] + {{(buffer.write_point - buffer.read_point).x}},0);
             {% endif %}
         {% endfor %}
     {% endfor %}
@@ -557,7 +558,7 @@ public:
 
 {% block kernel_PE %}
 void kernel_{{lh.kernel}}_PE(const ops::hls::StencilConfigCore& stencilConfig,
-    {% for arg in lh.args|ops_dat %}
+    {% for arg in lh.args|ops_not_idx %}
         {% if loop.last %}
             {% if consts %}
                 {% set last_check = False %}
@@ -567,15 +568,16 @@ void kernel_{{lh.kernel}}_PE(const ops::hls::StencilConfigCore& stencilConfig,
         {% else %}
             {% set last_check = False %}
         {% endif %}
-        {% if ((arg is not ops_rw) and (arg.dat_id != datMap[arg.dat_id])) %}
+        {% if arg is ops_dat %}
+            {% if ((arg is not ops_rw) and (arg.dat_id != datMap[arg.dat_id])) %}
             Stencil_{{lh.kernel}}::widen_stream_dt& {{hls_stream_name(arg)-}}{{"," if (not loop.last or not last_check)}}
-        {% else %}
+            {% else %}
             Stencil_{{lh.kernel}}::widen_stream_dt& {{hls_stream_name_t2(arg, "rd")-}},
             Stencil_{{lh.kernel}}::widen_stream_dt& {{hls_stream_name_t2(arg, "wr")-}}{{"," if (not loop.last or not last_check)}}
+            {% endif %}
+        {% elif arg is ops_gbl %}
+            const {{arg.typ}}& {{get_arg_gbl_name(arg)}}{{"," if (not loop.last or not last_check)}}
         {% endif %}
-    {% endfor %}
-    {% for arg in lh.args|ops_gbl %}
-        const {{arg.typ}}& {{lh.get_arg_gbl_name(arg.ptr)}}{{"," if not loop.last}}
     {% endfor %}
     {% for const in consts %}
         const {{const.typ}}& {{const.ptr}}{{"," if not loop.last}}
@@ -594,7 +596,7 @@ void kernel_{{lh.kernel}}_PE(const ops::hls::StencilConfigCore& stencilConfig,
 #endif
 
     stencil.stencilRun(
-        {% for arg in lh.args|ops_dat %}
+        {% for arg in lh.args|ops_not_idx %}
         {% if loop.last %}
             {% if consts %}
                 {% set last_check = False %}
@@ -604,16 +606,17 @@ void kernel_{{lh.kernel}}_PE(const ops::hls::StencilConfigCore& stencilConfig,
         {% else %}
             {% set last_check = False %}
         {% endif %}
-        {% if (arg is not ops_rw) and (arg.dat_id != datMap[arg.dat_id]) %}
+        {% if arg is ops_dat %}
+            {% if (arg is not ops_rw) and (arg.dat_id != datMap[arg.dat_id]) %}
             {{hls_stream_name(arg)-}}{{"," if (not loop.last or not last_check)}}
-        {% else %}
+            {% else %}
             {{hls_stream_name_t2(arg, "rd")-}},
             {{hls_stream_name_t2(arg, "wr")-}}{{"," if (not loop.last or not last_check)}}
+            {% endif %}
+        {% elif ops is ops_gbl %}
+            {{get_arg_gbl_name(arg)}}{{"," if not loop.last}}
         {% endif %}
-    {% endfor %}
-    {% for arg in lh.args|ops_gbl %}
-            {{lh.get_arg_gbl_name(arg.ptr)}}{{"," if not loop.last}}
-    {% endfor %}
+    {% endfor %}    
     {% for const in consts %}
             {{const.ptr}}{{"," if not loop.last}}
     {% endfor %});

@@ -578,14 +578,14 @@ class IterLoop:
                         read_map_of_maps[global_dat_id][v_id] = []
                     else:
                         read_map_of_maps[global_dat_id]= {v_id: []}
-                                
+                                              
         # Second iteration       
         for key in dat_current_update_map.keys():
             # check every update is properly mapped oterwise map to sink
             for src_v_id in read_map_of_maps[key]:
                 if not read_map_of_maps[key][src_v_id]:
                     edges.append(DependancyEdge(dat_current_update_map[key][0], dat_current_update_map[key][1], key, -2, len(sink_dats)))
-                    sink_dats.append([key, self.itrloop_args[dat_current_update_map[global_dat_id][0]].args[dat_current_update_map[global_dat_id][1]]])
+                    sink_dats.append([key, self.itrloop_args[dat_current_update_map[key][0]].args[dat_current_update_map[key][1]]])
                 
         self.source_dats = source_dats
         self.sink_dats = sink_dats
