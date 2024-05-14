@@ -1093,6 +1093,41 @@ void ops_execute_reduction(ops_reduction handle) {
 
 }
 
+void ops_lowdim_reduction(ops_dat dat, ops_access acc){
+
+  int ndim=dat->block->dims;
+  sub_block* sb = OPS_sub_block_list[dat->block->index];
+
+  int myrank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+  if (sb->owned){
+    for (int i = 0; i < ndim; i++){
+      if (dat->size[i] ==1){
+       // printf("at rank %d, datname %s, lowdim %d/%d\n",myrank,dat->name,i,ndim);
+        MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(double), MPI_DOUBLE, MPI_MAX, sb->pencils[i]);
+      } 
+    }
+  }
+
+  return;
+}
+
+void ops_update_pencil(ops_dat dat){
+  int ndim=dat->block->dims;
+  sub_block* sb = OPS_sub_block_list[dat->block->index];
+
+  if (sb->owned){
+    for (int i = 0; i < ndim; i++){
+      if (dat->size[i] ==1){
+        int rank;
+        MPI_Comm_rank(sb->pencils[i], &rank);
+        MPI_Bcast(dat->data, dat->mem/sizeof(double), MPI_DOUBLE, 0, sb->pencils[i]);
+      } 
+    }
+  }
+}
+
 void ops_set_halo_dirtybit(ops_arg *arg) {
   if (arg->opt == 0)
     return;

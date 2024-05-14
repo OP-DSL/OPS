@@ -73,6 +73,8 @@ typedef struct {
   /// Group communicator for intra-block
   MPI_Group grp;
   int owned;
+  /// MPI Communicators for low dimension reduction
+  MPI_Comm pencils[OPS_MAX_DIM];
 } sub_block;
 
 typedef sub_block *sub_block_list;
@@ -155,6 +157,9 @@ void ops_unpack(ops_dat dat, const int dest_offset, const char *__restrict src,
 char* OPS_realloc_fast(char *ptr, size_t old_size, size_t new_size);
 ops_dat ops_dat_copy_mpi_core(ops_dat orig_dat);
 ops_kernel_descriptor * ops_dat_deep_copy_mpi_core(ops_dat target, ops_dat orig_dat);
+
+void ops_lowdim_reduction(ops_dat dat, ops_access acc);
+void ops_update_pencil(ops_dat dat);
 
 /*******************************************************************************
 * Other External functions
