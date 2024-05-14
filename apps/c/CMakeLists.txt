@@ -965,7 +965,7 @@
 
     if(HDF5_FOUND)
 #       App: Cloverleaf_3D_HDF5 # Compiles OK, Runtime Floating point exception
-#        add_subdirectory(CloverLeaf_3D_HDF5)
+        add_subdirectory(CloverLeaf_3D_HDF5)
 
 #       App: lowdim # Compiles OK
 #        add_subdirectory(lowdim_test)
@@ -983,7 +983,7 @@
 #        add_subdirectory(mgrid)
 
 #       App: shsgc  # Compiles OK
-#        add_subdirectory(shsgc)
+        add_subdirectory(shsgc)
 
 #       App: hdf5_slice # Compiles OK
 #        add_subdirectory(hdf5_slice)
