@@ -159,7 +159,7 @@ ops_dat ops_dat_copy_mpi_core(ops_dat orig_dat);
 ops_kernel_descriptor * ops_dat_deep_copy_mpi_core(ops_dat target, ops_dat orig_dat);
 
 void ops_lowdim_reduction(ops_dat dat, ops_access acc);
-void ops_update_pencil(ops_dat dat);
+void ops_update_pencil(ops_dat dat, int *range);
 
 /*******************************************************************************
 * Other External functions
