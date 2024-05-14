@@ -1113,16 +1113,41 @@ void ops_lowdim_reduction(ops_dat dat, ops_access acc){
   return;
 }
 
-void ops_update_pencil(ops_dat dat){
+void ops_update_pencil(ops_dat dat, int *range){
   int ndim=dat->block->dims;
   sub_block* sb = OPS_sub_block_list[dat->block->index];
 
+
   if (sb->owned){
+    int local_range[2*OPS_MAX_DIM];
+    determine_local_range(dat, range, local_range);
     for (int i = 0; i < ndim; i++){
-      if (dat->size[i] ==1){
+      if (dat->e_dat && dat->size[i] == 1) {
+        //if I am the only rank in the pencil, I can skip the communication
+        int comm_size;
+        MPI_Comm_size(sb->pencils[i], &comm_size);
+        if (comm_size == 1) {
+          continue;
+        }
+
+        //Check if I executed this particular computation
+        int executed_locally = local_range[2*i+1] > local_range[2*i];
         int rank;
-        MPI_Comm_rank(sb->pencils[i], &rank);
-        MPI_Bcast(dat->data, dat->mem/sizeof(double), MPI_DOUBLE, 0, sb->pencils[i]);
+        if (executed_locally)
+          MPI_Comm_rank(sb->pencils[i], &rank);
+        else
+          rank = -1;
+
+        //Figure out which rank executed the computation, and agree on where to broadcast from
+        int source_rank = -1;
+        MPI_Allreduce(&rank, &source_rank, 1, MPI_INT, MPI_MAX, sb->pencils[i]);
+        if (source_rank == -1) {
+          OPSException ex(OPS_RUNTIME_ERROR);
+          ex << "Error: write to low dimensional dataset could not be broadcast. ops_dat name: " << dat->name;
+          throw ex;
+        }
+        //Broadcast data
+        MPI_Bcast(dat->data, dat->mem/sizeof(double), MPI_DOUBLE, source_rank, sb->pencils[i]);
       } 
     }
   }
@@ -1156,6 +1181,13 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
   int ndim = sb->ndim;
 
   for (int dim = 0; dim < ndim; dim++) {
+    if (dat->e_dat && dat->size[dim] == 1) {
+      if (arg->acc == OPS_WRITE) 
+        ops_update_pencil(dat, iter_range);
+      else if (arg->acc != OPS_INC)
+        ops_lowdim_reduction(dat, arg->acc);
+    }
+
     range_intersect[dim] = intersection(
         iter_range[2 * dim], iter_range[2 * dim + 1], sd->decomp_disp[dim],
         (sd->decomp_disp[dim] + sd->decomp_size[dim])); // i.e. the intersection
