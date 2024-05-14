@@ -516,7 +516,8 @@
 
 #       Skipping sequential run tests for Cloverleaf applications
         string(FIND ${Name} "clover_leaf" clover_flag)
-        if(clover_flag EQUAL -1)
+        string(FIND ${Name} "mb_shsgc" mb_shsgc_flag)
+        if((clover_flag EQUAL -1) AND (mb_shsgc_flag EQUAL -1))
             set(SKIP_SEQ_TESTING FALSE)
         else()
             set(SKIP_SEQ_TESTING TRUE)
@@ -957,10 +958,10 @@
     add_subdirectory(CloverLeaf)    # Compiles OK
 
 #   App: Cloverleaf_3D  # Compiles OK, Runtime Floating point exception
-#    add_subdirectory(CloverLeaf_3D)
+    add_subdirectory(CloverLeaf_3D)
 
 #   App: Tealeaf    # Compiles OK
-#    add_subdirectory(TeaLeaf)
+    add_subdirectory(TeaLeaf)
 
     if(HDF5_FOUND)
 #       App: Cloverleaf_3D_HDF5 # Compiles OK, Runtime Floating point exception
@@ -990,7 +991,7 @@
     endif()
 
 #   App: mb_shsgc   # Compiles OK
-#    add_subdirectory(mb_shsgc)
+    add_subdirectory(mb_shsgc)
 
 #   App: ops-lbm    # Compiles OK
     add_subdirectory(ops-lbm/step5)
