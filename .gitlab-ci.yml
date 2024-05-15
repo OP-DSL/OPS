@@ -89,19 +89,18 @@ build_and_test:GNU11:APPS:
     paths:
     - $CI_PROJECT_DIR/OPS-APP
 
-# Build and Test with NVHPC compiler
-build_and_test:NVHCP23:APPS:
+build_and_test:foss:APPS:
   stage: APPS_Build_and_Test
   tags:
     - CCP, test
   script:
     - source ~/.bash_aliases
     - module avail
-    - module load nvhpc/23.9
+    - module load foss CUDA
     - export CXX=mpicxx
     - mkdir build
     - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DENABLE_IEEE=ON -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON  -DGPU_ARCH=75 -DGPU_NUMBER=1 -DLEGACY_CODEGEN=ON
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON  -DGPU_ARCH=75 -DCMAKE_CUDA_HOST_COMPILER=gcc-11 -DGPU_NUMBER=1 -DLEGACY_CODEGEN=ON
     - cmake --build . -j 4
     - cmake --install .
     - ctest -V
@@ -109,6 +108,27 @@ build_and_test:NVHCP23:APPS:
     expire_in: 1 week
     paths:
     - $CI_PROJECT_DIR/OPS-APP
+
+# Build and Test with NVHPC compiler
+#build_and_test:NVHCP23:APPS:
+#  stage: APPS_Build_and_Test
+#  tags:
+#    - CCP, test
+#  script:
+#    - source ~/.bash_aliases
+#    - module avail
+#    - module load nvhpc/23.9
+#    - export CXX=mpicxx
+#    - mkdir build
+#    - cd build
+#    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DENABLE_IEEE=ON -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON  -DGPU_ARCH=75 -DGPU_NUMBER=1 -DLEGACY_CODEGEN=ON
+#    - cmake --build . -j 4
+#    - cmake --install .
+#    - ctest -V
+#  artifacts:
+#    expire_in: 1 week
+#    paths:
+#    - $CI_PROJECT_DIR/OPS-APP
 
       #Test:HIP:
       #  stage: HIP
