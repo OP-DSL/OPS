@@ -1165,14 +1165,16 @@ int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* s
   if (!sb->owned) return -1;
 
   for ( int n=0; n < block->dims; n++ ){
-    int starti = sd->decomp_disp[n];
+    int starti;
     int length = intersection2(range[2*n], range[2*n+1], sd->decomp_disp[n], sd->decomp_disp[n]+sd->decomp_size[n], &starti);
     arg_idx[n] = starti;
     if (sb->id_m[n]!=MPI_PROC_NULL)
       starti -= sd->decomp_disp[n];
     if (sd->gbl_size[n] == 1) {
-      starti = sb->decomp_disp[n];
       length = intersection2(range[2*n], range[2*n+1], sb->decomp_disp[n], sb->decomp_disp[n]+sb->decomp_size[n], &starti);
+      arg_idx[n] = starti;
+      if (sb->id_m[n]!=MPI_PROC_NULL)
+            starti -= sb->decomp_disp[n];
     }
     start[n] = starti;
     end[n] = starti + length;
