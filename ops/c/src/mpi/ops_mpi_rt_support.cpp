@@ -1104,8 +1104,13 @@ void ops_lowdim_reduction(ops_dat dat, ops_access acc){
   if (sb->owned){
     for (int i = 0; i < ndim; i++){
       if (dat->size[i] ==1){
-       // printf("at rank %d, datname %s, lowdim %d/%d\n",myrank,dat->name,i,ndim);
-        MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(double), MPI_DOUBLE, MPI_MAX, sb->pencils[i]);
+        if (acc == OPS_INC){
+          MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(double), MPI_DOUBLE, MPI_SUM, sb->pencils[i]);
+        } else if (acc == OPS_MAX){
+          MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(double), MPI_DOUBLE, MPI_MAX, sb->pencils[i]);
+        } else if (acc == OPS_MIN){
+          MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(double), MPI_DOUBLE, MPI_MIN, sb->pencils[i]);
+        } 
       } 
     }
   }
@@ -1181,12 +1186,23 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
   int ndim = sb->ndim;
 
   for (int dim = 0; dim < ndim; dim++) {
-    if (dat->e_dat && dat->size[dim] == 1) {
+    if (dat->e_dat && dat->size[dim] == 1){
+      printf("Calling pencil ops for dat %s\n", dat->name);
       if (arg->acc == OPS_WRITE) 
         ops_update_pencil(dat, iter_range);
-      else if (arg->acc != OPS_INC)
+      else if (arg->acc != OPS_READ )
         ops_lowdim_reduction(dat, arg->acc);
-    }
+      break;
+    } 
+  }
+
+  for (int dim = 0; dim < ndim; dim++) {
+  //  if (dat->e_dat && dat->size[dim] == 1) {
+  //    if (arg->acc == OPS_WRITE) 
+  //      ops_update_pencil(dat, iter_range);
+  //  //  else //if (arg->acc != OPS_INC )
+  //   //   ops_lowdim_reduction(dat, arg->acc);
+  //  }
 
     range_intersect[dim] = intersection(
         iter_range[2 * dim], iter_range[2 * dim + 1], sd->decomp_disp[dim],

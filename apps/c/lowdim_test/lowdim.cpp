@@ -96,7 +96,7 @@ int main(int argc, char **argv)
       ops_arg_dat(dat2D_XY, 1, S3D_000_STRID3D_XY, "double", OPS_WRITE),
       ops_arg_gbl(&val, 1, "double", OPS_READ));
 
-  val = 2.0;
+  val = 42.0;
   int range_2D_YZ[] = {9, 10, 0, 10, 0, 10};
   //int range_2D_YZ[] = {0, 1, -1, 4, -1, 4};
   ops_par_loop(set_valYZ, "set_valYZ", block, 3, range_2D_YZ,
@@ -147,21 +147,32 @@ int main(int argc, char **argv)
 
 //  ops_dump_to_hdf5("output_pre.h5");
 
+//  ops_par_loop(set_valXZ2, "set_valXZ2", block, 3, range_2D_XZ,
+//      ops_arg_dat(dat2D_XZ, 1, S3D_000_STRID3D_XZ, "double", OPS_WRITE),
+//      ops_arg_dat(dat2D_YZ, 1, S3D_000_STRID3D_YZ, "double", OPS_READ));
+
+
   // Reduction to lower dimension
   ops_par_loop(reduct22D, "reduct22D", block, 3, range_3D,
       ops_arg_dat(dat3D, 1, S3D_000, "double", OPS_READ),
-      ops_arg_dat(dat2D_XZ, 1, S3D_000_STRID3D_XZ, "double", OPS_MAX),
-      ops_arg_dat(dat2D_XY, 1, S3D_000_STRID3D_XY, "double", OPS_MAX),
-      ops_arg_dat(dat2D_YZ, 1, S3D_000_STRID3D_YZ, "double", OPS_MAX));
+      ops_arg_dat(dat2D_XZ, 1, S3D_000_STRID3D_XZ, "double", OPS_INC),
+      ops_arg_dat(dat2D_XY, 1, S3D_000_STRID3D_XY, "double", OPS_INC),
+      ops_arg_dat(dat2D_YZ, 1, S3D_000_STRID3D_YZ, "double", OPS_INC));
+//printf("adat2D_YZ->data\n");
+//  for (int i = 0; i < dat2D_YZ->mem/sizeof(double); i++) {
+//          printf("%d ", (int)(((double*)(dat2D_YZ->data))[i]));
+//  }
+//          printf("\n");
 
-  ops_par_loop(reduct21D, "reduct21D", block, 3, range_3D,
-      ops_arg_dat(dat3D, 1, S3D_000, "double", OPS_READ),
-      ops_arg_dat(dat1D_X, 1, S3D_000_STRID3D_X, "double", OPS_MAX),
-      ops_arg_dat(dat1D_Y, 1, S3D_000_STRID3D_Y, "double", OPS_MAX),
-      ops_arg_dat(dat1D_Z, 1, S3D_000_STRID3D_Z, "double", OPS_MAX));
+//  ops_par_loop(reduct21D, "reduct21D", block, 3, range_3D,
+//      ops_arg_dat(dat3D, 1, S3D_000, "double", OPS_READ),
+//      ops_arg_dat(dat1D_X, 1, S3D_000_STRID3D_X, "double", OPS_INC),
+//      ops_arg_dat(dat1D_Y, 1, S3D_000_STRID3D_Y, "double", OPS_INC),
+//      ops_arg_dat(dat1D_Z, 1, S3D_000_STRID3D_Z, "double", OPS_INC));
 
+ops_printf("Calc done\n");
 char name0[80];
-sprintf(name0, "ops_max_output.h5");
+sprintf(name0, "OPS_INC_output.h5");
 ops_fetch_block_hdf5_file(block, name0);
 ops_fetch_dat_hdf5_file(dat2D_XZ, name0);
 ops_fetch_dat_hdf5_file(dat2D_XY, name0);
