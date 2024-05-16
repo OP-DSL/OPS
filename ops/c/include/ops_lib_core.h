@@ -1378,7 +1378,7 @@ public:
   }
 
   __host__ __device__
-  void combine_sum(int xoff,const T val){
+  void combine_inc(int xoff,const T val){
     
     #ifdef __CUDA_ARCH__
     atomicAdd(&operator()(xoff), val);
@@ -1453,7 +1453,7 @@ public:
   }
 
   __host__ __device__
-  void combine_sum(int xoff, int yoff,const T val){
+  void combine_inc(int xoff, int yoff,const T val){
     
     #ifdef __CUDA_ARCH__
     atomicAdd(&operator()(xoff, yoff), val);
@@ -1529,7 +1529,7 @@ public:
   }
 
   __host__ __device__
-  void combine_sum(int xoff, int yoff, int zoff,const T val){
+  void combine_inc(int xoff, int yoff, int zoff,const T val){
     
     #ifdef __CUDA_ARCH__
     atomicAdd(&operator()(xoff, yoff, zoff), val);
@@ -1605,7 +1605,7 @@ public:
   }
 
   __host__ __device__
-  void combine_sum(int xoff, int yoff, int zoff, int uoff,const T val){
+  void combine_inc(int xoff, int yoff, int zoff, int uoff,const T val){
     
     #ifdef __CUDA_ARCH__
     atomicAdd(&operator()(xoff, yoff, zoff, uoff), val);
