@@ -24,7 +24,6 @@ int main(int argc, char **argv)
   int halo_p[] = {1, 1, 1};
   int halo_m[] = {-1, -1, -1};
   int size[] = {10,10,10};
-  //int size[] = {3,3,3};
   int base[] = {0, 0, 0};
   double* value = NULL;
   ops_dat dat3D = ops_decl_dat(block, 1, size, base, halo_m, halo_p, value, "double", "dat3D");
@@ -32,33 +31,27 @@ int main(int argc, char **argv)
   halo_p[0] = 1; halo_p[1] = 1; halo_p[2] = 0;
   halo_m[0] = -1; halo_m[1] = -1; halo_m[2] = 0;
   size[0] = 10; size[1] = 10; size[2] = 1;
-  //size[0] = 3; size[1] = 3; size[2] = 1;
   ops_dat dat2D_XY = ops_decl_dat(block, 1, size, base, halo_m, halo_p, value, "double", "dat2D_XY");
   halo_p[0] = 0; halo_p[1] = 1; halo_p[2] = 1;
   halo_m[0] = 0; halo_m[1] = -1; halo_m[2] = -1;
   size[0] = 1; size[1] = 10; size[2] = 10;
-  //size[0] = 1; size[1] = 3; size[2] = 3;
   ops_dat dat2D_YZ = ops_decl_dat(block, 1, size, base, halo_m, halo_p, value, "double", "dat2D_YZ");
   halo_p[0] = 1; halo_p[1] = 0; halo_p[2] = 1;
   halo_m[0] = -1; halo_m[1] = 0; halo_m[2] = -1;
   size[0] = 10; size[1] = 1; size[2] = 10;
-  //size[0] = 3; size[1] = 1; size[2] = 3;
   ops_dat dat2D_XZ = ops_decl_dat(block, 1, size, base, halo_m, halo_p, value, "double", "dat2D_XZ");
 
   halo_p[0] = 1; halo_p[1] = 0; halo_p[2] = 0;
   halo_m[0] = -1; halo_m[1] = 0; halo_m[2] = 0;
   size[0] = 10; size[1] = 1; size[2] = 1;
-  //size[0] = 3; size[1] = 1; size[2] = 1;
   ops_dat dat1D_X = ops_decl_dat(block, 1, size, base, halo_m, halo_p, value, "double", "dat1D_X");
   halo_p[0] = 0; halo_p[1] = 1; halo_p[2] = 0;
   halo_m[0] = 0; halo_m[1] = -1; halo_m[2] = 0;
   size[0] = 1; size[1] = 10; size[2] = 1;
-  //size[0] = 1; size[1] = 3; size[2] = 1;
   ops_dat dat1D_Y = ops_decl_dat(block, 1, size, base, halo_m, halo_p, value, "double", "dat1D_Y");
   halo_p[0] = 0; halo_p[1] = 0; halo_p[2] = 1;
   halo_m[0] = 0; halo_m[1] = 0; halo_m[2] = -1;
   size[0] = 1; size[1] = 1; size[2] = 10;
-  //size[0] = 1; size[1] = 1; size[2] = 3;
   ops_dat dat1D_Z = ops_decl_dat(block, 1, size, base, halo_m, halo_p, value, "double", "dat1D_Z");
 
   // Define and declare stencils
@@ -84,49 +77,42 @@ int main(int argc, char **argv)
 
   double val = 0.0;
   int range_3D[] = {0, 10, 0, 10, 0, 10};
-  //int range_3D[] = {0, 3, 0, 3, 0, 3};
   ops_par_loop(set_val, "set_val", block, 3, range_3D,
       ops_arg_dat(dat3D, 1, S3D_000, "double", OPS_WRITE),
       ops_arg_gbl(&val, 1, "double", OPS_READ));
 
-  val = 1.0;
+  val = 0.0;
   int range_2D_XY[] = {0, 10, 0, 10, 0, 1};
-  //int range_2D_XY[] = {0, 3, 0, 3, 0, 1};
   ops_par_loop(set_valXY, "set_valXY", block, 3, range_2D_XY,
       ops_arg_dat(dat2D_XY, 1, S3D_000_STRID3D_XY, "double", OPS_WRITE),
       ops_arg_gbl(&val, 1, "double", OPS_READ));
 
-  val = 42.0;
+  val = 0.0;
   int range_2D_YZ[] = {9, 10, 0, 10, 0, 10};
-  //int range_2D_YZ[] = {0, 1, -1, 4, -1, 4};
   ops_par_loop(set_valYZ, "set_valYZ", block, 3, range_2D_YZ,
       ops_arg_dat(dat2D_YZ, 1, S3D_000_STRID3D_YZ, "double", OPS_WRITE),
       ops_arg_gbl(&val, 1, "double", OPS_READ));
 
-  val = 3.0;
+  val = 0.0;
   int range_2D_XZ[] = {0, 10, 5, 6, 0, 10};
-  //int range_2D_XZ[] = {0, 3, 0, 1, 0, 3};
   ops_par_loop(set_valXZ, "set_valXZ", block, 3, range_2D_XZ,
       ops_arg_dat(dat2D_XZ, 1, S3D_000_STRID3D_XZ, "double", OPS_WRITE),
       ops_arg_gbl(&val, 1, "double", OPS_READ));
 
-  val = 4.0;
+  val = 0.0;
   int range_1D_X[] = {0, 10, 0, 1, 5, 6};
-  //int range_1D_X[] = {0, 3, 0, 1, 0, 1};
   ops_par_loop(set_valX, "set_valX", block, 3, range_1D_X,
       ops_arg_dat(dat1D_X, 1, S3D_000_STRID3D_X, "double", OPS_WRITE),
       ops_arg_gbl(&val, 1, "double", OPS_READ));
 
-  val = 5.0;
+  val = 0.0;
   int range_1D_Y[] = {2, 3, 0, 10, 9, 10};
-  //int range_1D_Y[] = {0, 1, 0, 3, 0, 1};
   ops_par_loop(set_valY, "set_valY", block, 3, range_1D_Y,
       ops_arg_dat(dat1D_Y, 1, S3D_000_STRID3D_Y, "double", OPS_WRITE),
       ops_arg_gbl(&val, 1, "double", OPS_READ));
 
-  val = 6.0;
+  val = 0.0;
   int range_1D_Z[] = {0, 1, 9, 10, 0, 10};
-  //int range_1D_Z[] = {0, 1, 0, 1, 0, 3};
   ops_par_loop(set_valZ, "set_valZ", block, 3, range_1D_Z,
       ops_arg_dat(dat1D_Z, 1, S3D_000_STRID3D_Z, "double", OPS_WRITE),
       ops_arg_gbl(&val, 1, "double", OPS_READ));
@@ -145,30 +131,18 @@ int main(int argc, char **argv)
       ops_arg_dat(dat3D, 1, S3D_000, "double", OPS_WRITE),
       ops_arg_idx());
 
-//  ops_dump_to_hdf5("output_pre.h5");
-
-//  ops_par_loop(set_valXZ2, "set_valXZ2", block, 3, range_2D_XZ,
-//      ops_arg_dat(dat2D_XZ, 1, S3D_000_STRID3D_XZ, "double", OPS_WRITE),
-//      ops_arg_dat(dat2D_YZ, 1, S3D_000_STRID3D_YZ, "double", OPS_READ));
-
-
   // Reduction to lower dimension
   ops_par_loop(reduct22D, "reduct22D", block, 3, range_3D,
       ops_arg_dat(dat3D, 1, S3D_000, "double", OPS_READ),
       ops_arg_dat(dat2D_XZ, 1, S3D_000_STRID3D_XZ, "double", OPS_INC),
       ops_arg_dat(dat2D_XY, 1, S3D_000_STRID3D_XY, "double", OPS_INC),
       ops_arg_dat(dat2D_YZ, 1, S3D_000_STRID3D_YZ, "double", OPS_INC));
-//printf("adat2D_YZ->data\n");
-//  for (int i = 0; i < dat2D_YZ->mem/sizeof(double); i++) {
-//          printf("%d ", (int)(((double*)(dat2D_YZ->data))[i]));
-//  }
-//          printf("\n");
 
-//  ops_par_loop(reduct21D, "reduct21D", block, 3, range_3D,
-//      ops_arg_dat(dat3D, 1, S3D_000, "double", OPS_READ),
-//      ops_arg_dat(dat1D_X, 1, S3D_000_STRID3D_X, "double", OPS_INC),
-//      ops_arg_dat(dat1D_Y, 1, S3D_000_STRID3D_Y, "double", OPS_INC),
-//      ops_arg_dat(dat1D_Z, 1, S3D_000_STRID3D_Z, "double", OPS_INC));
+  ops_par_loop(reduct21D, "reduct21D", block, 3, range_3D,
+      ops_arg_dat(dat3D, 1, S3D_000, "double", OPS_READ),
+      ops_arg_dat(dat1D_X, 1, S3D_000_STRID3D_X, "double", OPS_INC),
+      ops_arg_dat(dat1D_Y, 1, S3D_000_STRID3D_Y, "double", OPS_INC),
+      ops_arg_dat(dat1D_Z, 1, S3D_000_STRID3D_Z, "double", OPS_INC));
 
 ops_printf("Calc done\n");
 char name0[80];
@@ -183,7 +157,6 @@ ops_fetch_dat_hdf5_file(dat1D_Z, name0);
 ops_fetch_dat_hdf5_file(dat3D, name0);
 
 
-//  ops_dump_to_hdf5("output.h5");
   ops_printf("PASSED\n");
 
   ops_exit();
