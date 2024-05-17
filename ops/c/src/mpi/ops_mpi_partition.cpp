@@ -294,7 +294,6 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps,
   if (sb->owned) {
     MPI_Cart_create(sb->comm1, ndim, pdims, periodic, 0, &(sb->comm));
     
-    //sb->pencils = (MPI_Comm*) ops_malloc(ndim * sizeof(MPI_Comm));
     int remain_dims[ndim];
     for (int i = 0; i < ndim; i++) {      
         for (int j = 0; j < ndim; j++) {
@@ -304,27 +303,6 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps,
         // Create the pencil communicator
         MPI_Cart_sub(sb->comm, remain_dims, &sb->pencils[i]);
     }
-
-//  int size, my_rank;
-//  MPI_Comm_rank(sb->comm, &my_rank);
-//  for (int i = 0; i < ndim; i++) {
-//      MPI_Comm_size(sb->pencils[i], &size);
-//      int *ranks = (int *)malloc(size * sizeof(int));
-//      MPI_Allgather(&my_rank, 1, MPI_INT, ranks, 1, MPI_INT, sb->pencils[i]);
-//
-//      //if (my_rank == 0) {
-//          printf("Ranks in pencil communicator from rank %d: %d ", my_rank,i);
-//          for (int j = 0; j < size; j++) {
-//              printf("%d ", ranks[j]);
-//          }
-//          printf("\n");
-//      //}
-//
-//      free(ranks);
-//  }
-//  printf("\n");
-
-
   }
 
   // Store number of procs in each dimension for latter use
@@ -1117,11 +1095,6 @@ void ops_mpi_exit(OPS_instance *instance) {
     if (sb->owned) {
       MPI_Comm_free(&(sb->comm));
       MPI_Comm_free(&(sb->comm1));
-
-    //  for (int n = 0; n < sb->ndim; n++) {
-    //    MPI_Comm_free(&(sb->pencils[n]));
-    //  }
-    //  ops_free(sb->pencils);
     }
 
     MPI_Group_free(&(sb->grp));

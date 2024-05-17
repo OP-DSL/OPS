@@ -25,21 +25,6 @@ void set_valXZ(ACC<double> &dat, const double *val)
     dat(0,0,0) = *val;
 }
 
-void set_valXZ2(ACC<double> &datXZ, const ACC<double> &dat2D)
-{
-    datXZ(0,0,0) = dat2D(0,0,0);
-}
-
-void set_valXY2(ACC<double> &datXY, const ACC<double> &dat2D)
-{
-    datXY(0,0,0) = dat2D(0,0,0);
-}
-
-void set_valYZ2(ACC<double> &datYZ, const ACC<double> &dat2D)
-{
-    datYZ(0,0,0) = dat2D(0,0,0);
-}
-
 void set_valX(ACC<double> &dat, const double *val)
 {
     // make up some values
@@ -70,9 +55,9 @@ void calc(ACC<double> &dat3D, const ACC<double> &dat2D_xy,  const ACC<double> &d
                            dat1D_x(0,0,0) +
                            dat1D_y(0,0,0) +
                            dat1D_z(0,0,0);
-  if (dat3D(0,0,0) != 21) {
-    printf("Error: dat3D(0,0,0) = %f\n", dat3D(0,0,0));
-  }
+ // if (dat3D(0,0,0) != 21) {
+ //   printf("Error: dat3D(0,0,0) = %f\n", dat3D(0,0,0));
+ // }
 }
 
 void reduct22D(const ACC<double> &dat3D, ACC<double> &dat2D_xz, ACC<double> &dat2D_xy, ACC<double> &dat2D_yz)
@@ -82,7 +67,7 @@ void reduct22D(const ACC<double> &dat3D, ACC<double> &dat2D_xz, ACC<double> &dat
     dat2D_yz.combine_inc(0,0,0,dat3D(0,0,0));
 }
 
-void reduct21D(ACC<double> &dat3D, ACC<double> &dat1D_x, ACC<double> &dat1D_y, ACC<double> &dat1D_z)
+void reduct21D(const ACC<double> &dat3D, ACC<double> &dat1D_x, ACC<double> &dat1D_y, ACC<double> &dat1D_z)
 {
     dat1D_x.combine_inc(0,0,0,dat3D(0,0,0));
     dat1D_y.combine_inc(0,0,0,dat3D(0,0,0));
