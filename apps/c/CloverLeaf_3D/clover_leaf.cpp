@@ -175,6 +175,7 @@ int main(int argc, const char **argv) {
   **-----------------------------hydro loop---------------------------------**
   ***************************************************************************/
   double ct0, ct1, et0, et1;
+  clover_grid->instance->reset_power_counters();
 #ifdef PROFILE_ITT
   __itt_resume();
 #endif

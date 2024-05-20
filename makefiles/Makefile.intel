@@ -1,5 +1,5 @@
-CC    := icc
-CXX   := icpc
+CC    := icx
+CXX   := icpx
 FC    := ifort
 ifdef DEBUG
 	CCFLAGS   := -O0 -xHost -g -std=c99
