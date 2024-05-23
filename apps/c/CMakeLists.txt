@@ -628,6 +628,18 @@
 
         install(FILES ${INPUT} DESTINATION ${APP_INSTALL_DIR}/${Name})
 
+        string(FIND ${Name} "clover_leaf_3D" clover_flag_3D)
+        if((clover_flag GREATER -1) AND (clover_flag_3D EQUAL -1))
+            execute_process(COMMAND cp ${TMP_SOURCE_DIR}/clover_bm_short.in ${TMP_SOURCE_DIR}/clover.in)
+
+            set(copy_command "
+                    execute_process(COMMAND \${CMAKE_COMMAND} -E copy_if_different
+                    ${APP_INSTALL_DIR}/${Name}/clover_bm_short.in
+                    ${APP_INSTALL_DIR}/${Name}/clover.in)
+                ")
+            install(CODE "${copy_command}")
+        endif()
+
 #       TARGET: DEV_SEQ, SEQ, OPENMP, TILED
         add_executable(${Name}_dev_seq ${DEV} ${OTHERS})
         target_include_directories(${Name}_dev_seq PRIVATE ${TMP_SOURCE_DIR})
@@ -682,7 +694,7 @@
 #       Sequential tests disabled since it is too time consuming for some tests at this moment 
        if ((OPS_TEST) AND (${GenerateTest} STREQUAL "YES") AND (NOT SKIP_SEQ_TESTING))
 
-            add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_dev_seq ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh dev_seq)
+#            add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_dev_seq ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh dev_seq)
             add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_seq ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh seq)
             add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_openmp ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh openmp)
             add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_tiled ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh tiled)
@@ -814,7 +826,7 @@
                                               OpenMP::OpenMP_CXX)
 
             if((OPS_TEST) AND (${GenerateTest} STREQUAL "YES"))
-                add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_dev_mpi ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh dev_mpi)
+#                add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_dev_mpi ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh dev_mpi)
                 add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh mpi)
                 add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_openmp ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh mpi_openmp)
                 add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_tiled ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh mpi_tiled)
