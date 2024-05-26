@@ -628,6 +628,18 @@
 
         install(FILES ${INPUT} DESTINATION ${APP_INSTALL_DIR}/${Name})
 
+        string(FIND ${Name} "clover_leaf_3D" clover_flag_3D)
+        if((clover_flag GREATER -1) AND (clover_flag_3D EQUAL -1))
+            execute_process(COMMAND cp ${TMP_SOURCE_DIR}/clover_bm_short.in ${TMP_SOURCE_DIR}/clover.in)
+
+            set(copy_command "
+                    execute_process(COMMAND \${CMAKE_COMMAND} -E copy_if_different
+                    ${APP_INSTALL_DIR}/${Name}/clover_bm_short.in
+                    ${APP_INSTALL_DIR}/${Name}/clover.in)
+                ")
+            install(CODE "${copy_command}")
+        endif()
+
 #       TARGET: DEV_SEQ, SEQ, OPENMP, TILED
         add_executable(${Name}_dev_seq ${DEV} ${OTHERS})
         target_include_directories(${Name}_dev_seq PRIVATE ${TMP_SOURCE_DIR})
