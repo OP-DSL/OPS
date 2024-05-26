@@ -50,6 +50,9 @@ float test_blacksholes_call_option(BlacksholesParameter calcParam, double * time
 void bs_explicit1(float* current, float *next, GridParameter& gridData, BlacksholesParameter& computeParam);
 
 float get_call_option(float* data, BlacksholesParameter& computeParam);
+
+float get_call_option_cubic(float* data, BlacksholesParameter& computeParam);
+
 // copy of instvan's implementation explicit1 in BS_1D_CPU
 int bs_explicit2(float* current, float *next, GridParameter gridData, std::vector<BlacksholesParameter> & computeParam);
 

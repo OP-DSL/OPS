@@ -98,6 +98,10 @@ void bs_explicit1(float* current, float *next, GridParameter& gridData, Blacksho
 	}
 }
 
+float cubicInterpolate(float p0, float p1, float p2, float p3, float x)
+{
+	return (p1 + 0.5 * x*(p2 - p0 + x*(2.0*p0 - 5.0*p1 + 4.0*p2 - p3 + x*(3.0*(p1 - p2) + p3 - p0))));
+}
 //get the exact call option pricing for given spot price and strike price
 float get_call_option(float* data, BlacksholesParameter& computeParam)
 {
@@ -109,6 +113,30 @@ float get_call_option(float* data, BlacksholesParameter& computeParam)
 
 	if (indexUpper < computeParam.K)
 		option_price = (data[indexLower] * (indexUpper - index) + data[indexUpper] * (index - indexLower));
+	else
+		option_price = data[computeParam.K];
+
+	return option_price;
+}
+
+float get_call_option_cubic(float* data, BlacksholesParameter& computeParam)
+{
+	float index 	= (float)computeParam.spot_price / ((float) computeParam.strike_price * computeParam.SMaxFactor) * computeParam.K;
+	unsigned int indexLower 	= (int)std::floor(index);
+	unsigned int indexUpper 	= indexLower + 1;
+
+	float option_price = 0.0;
+
+	if (indexUpper < computeParam.K)
+	{
+		float p0 = indexLower > 0? data[indexLower-1]: data[0];
+		float p1 = indexLower > 0? data[indexLower]: data[0];
+		float p2 = indexUpper < computeParam.K? data[indexUpper]: data[computeParam.K];
+		float p3 = indexLower < computeParam.K? data[indexUpper + 1]: data[computeParam.K];
+
+		printf("p0: %f, p1: %f, p2: %f, p3: %f, x:%f indexLower:%d, indexUpper:%d \n", p0,p1,p2,p3,index,indexLower, indexUpper);
+		option_price = data[computeParam.K] = cubicInterpolate(p0, p1, p2, p3, index - indexLower);
+	}
 	else
 		option_price = data[computeParam.K];
 
