@@ -366,6 +366,270 @@ static void convStreamPkt2memBeatMasked(ap_uint<DATA_WIDTH>* mem_out,
 }
 
 /**
+ * @brief 	mem2stream reads from a memory location with to an hls stream.
+ *  		This is optimized to read from AXI4 with burst and to utilize width maximum througput
+ *
+ * @tparam MEM_DATA_WIDTH : Data width of the AXI4 port and the hls stream port
+ * @tparam BURST_SIZE : Burst length of the AXI4 (max beats < 256)
+ *
+ * @param mem_in : input memory port
+ * @param stream_out : output hls-stream
+ * @param size : Number of bytes of the data
+ */
+template <unsigned int MEM_DATA_WIDTH, unsigned int BURST_SIZE=32>
+void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
+				::hls::stream<ap_uint<MEM_DATA_WIDTH>>& strm_out,
+				const unsigned int num_beats)
+{
+#ifndef __SYTHESIS__
+	static_assert(MEM_DATA_WIDTH >= min_mem_data_width && MEM_DATA_WIDTH <= max_mem_data_width,
+			"MEM_DATA_WIDTH failed limit check");
+	static_assert(BURST_SIZE >= min_burst_len && BURST_SIZE <= max_burst_len,
+			" BURST_SIZE has failed limit check");
+#endif
+
+	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
+
+	const unsigned int num_bursts = num_beats / BURST_SIZE;
+	const unsigned int non_burst_beats = num_beats % BURST_SIZE;
+
+#ifndef __SYTHESIS__
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG| %s | num_beats: %d, num_burst: %d, non_burst_beats: %d\n"
+			, __func__, num_beats, num_bursts, non_burst_beats);
+	printf("====================================================================================\n");
+#endif
+#endif
+
+	unsigned int index = 0;
+
+	for (unsigned int brst = 0; brst < num_bursts; brst++)
+	{
+	#pragma HLS LOOP_TRIPCOUNT avg=avg_num_of_bursts max=max_num_of_bursts
+
+		for (unsigned int beat = 0; beat < BURST_SIZE; beat++)
+		{
+		#pragma HLS PIPELINE II=1
+		#pragma HLS LOOP_TRIPCOUNT min=min_burst_len avg=avg_burst_len max=max_burst_len
+
+			ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
+			strm_out << tmp;
+			index++;
+		}
+	}
+
+	for (unsigned int beat = 0; beat < non_burst_beats; beat++)
+	{
+	#pragma HLS PIPELINE II=1
+		ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
+		strm_out << tmp;
+		index++;
+	}
+}
+
+/**
+ * @brief 	stream2mem reads from a memory from hls stram and write to memory
+ *  		This is optimized to write to AXI4 with burst and to utilize maximum throughput.
+ *
+ * @tparam MEM_DATA_WIDTH : Data width of the AXI4 port the hls stream port
+ * @tparam BURST_SIZE : Burst length of the AXI4 (max beats < 256)
+ *
+ * @param mem_out : out memory port
+ * @param stream_in : input hls-stream
+ * @param size : Number of bytes of the data
+ */
+template <unsigned int MEM_DATA_WIDTH, unsigned int BURST_SIZE=32>
+void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
+				::hls::stream<ap_uint<MEM_DATA_WIDTH>>& strm_in,
+				const unsigned int num_beats)
+{
+#ifndef __SYTHESIS__
+	static_assert(MEM_DATA_WIDTH >= min_mem_data_width && MEM_DATA_WIDTH <= max_mem_data_width,
+			"MEM_DATA_WIDTH failed limit check");
+	static_assert(BURST_SIZE >= min_burst_len && BURST_SIZE <= max_burst_len,
+			" BURST_SIZE has failed limit check");
+#endif
+
+	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
+
+	const unsigned int num_bursts = num_beats / BURST_SIZE;
+	const unsigned int non_burst_beats = num_beats % BURST_SIZE;
+
+#ifndef __SYTHESIS__
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG| %s | num_beats: %d, num_burst: %d, non_burst_beats: %d\n"
+			, __func__, num_beats, num_bursts, non_burst_beats);
+	printf("====================================================================================\n");
+#endif
+#endif
+
+	unsigned int index = 0;
+
+	for (unsigned int brst = 0; brst < num_bursts; brst++)
+	{
+	#pragma HLS LOOP_TRIPCOUNT avg=avg_num_of_bursts max=max_num_of_bursts
+
+		for (unsigned int beat = 0; beat < BURST_SIZE; beat++)
+		{
+		#pragma HLS PIPELINE II=1
+		#pragma HLS LOOP_TRIPCOUNT min=min_burst_len avg=avg_burst_len max=max_burst_len
+
+			ap_uint<MEM_DATA_WIDTH> tmp = strm_in.read();
+			mem_out[index] = tmp;
+			index++;
+		}
+	}
+
+	for (unsigned int beat = 0; beat < non_burst_beats; beat++)
+	{
+	#pragma HLS PIPELINE II=1
+		ap_uint<MEM_DATA_WIDTH> tmp = strm_in.read();
+		mem_out[index] = tmp;
+		index++;
+	}
+}
+
+/**
+ * @brief stream2stream Converts from one hls-stream to another with different size.
+ *
+ * @tparam STREAM1_DATA_WIDTH : Data width of the hls port1
+ * @tparam STREAM1_DATA_WIDTH : Data width of the hls port1
+ *
+ * @param num_big_pkts : Number of pkts of the wider stream
+ */
+template <unsigned int STREAM1_DATA_WIDTH, unsigned int STREAM2_DATA_WIDTH>
+void stream2stream(::hls::stream<ap_uint<STREAM1_DATA_WIDTH>>& strm_in,
+				::hls::stream<ap_uint<STREAM2_DATA_WIDTH>>& strm_out,
+				const unsigned int num_big_pkts)
+{
+#ifndef __SYTHESIS__
+	static_assert(STREAM1_DATA_WIDTH > STREAM2_DATA_WIDTH ? STREAM1_DATA_WIDTH % STREAM2_DATA_WIDTH == 0 : STREAM2_DATA_WIDTH % STREAM1_DATA_WIDTH == 0,
+			"Bigger stream has to be fully divisible by smaller stream");
+#endif
+	constexpr unsigned short BIG_STREAM_DATA_WIDTH = STREAM1_DATA_WIDTH > STREAM2_DATA_WIDTH ? STREAM1_DATA_WIDTH : STREAM2_DATA_WIDTH;
+	constexpr unsigned short SMALL_STREAM_DATA_WIDTH = STREAM1_DATA_WIDTH > STREAM2_DATA_WIDTH ? STREAM2_DATA_WIDTH : STREAM1_DATA_WIDTH;
+	constexpr unsigned short FACTOR = BIG_STREAM_DATA_WIDTH / SMALL_STREAM_DATA_WIDTH;
+	constexpr unsigned short BIG_STREAM_DATA_WIDTH_BYTES = BIG_STREAM_DATA_WIDTH / 8;
+	constexpr unsigned short TYPE = STREAM1_DATA_WIDTH > STREAM2_DATA_WIDTH ? 1 : 0;
+
+#ifndef __SYTHESIS__
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG| %s | type: %d, num_big_pkts: %d\n"
+			, __func__,TYPE, num_big_pkts);
+	printf("====================================================================================\n");
+#endif
+#endif
+	if (TYPE)
+	{
+		for (int pkt = 0; pkt < num_big_pkts; pkt++)
+		{
+			ap_uint<STREAM1_DATA_WIDTH> tmp1 = strm_in.read();
+#ifndef __SYTHESIS__
+	#ifdef DEBUG_LOG
+				printf("   |HLS DEBUG_LOG||%s| receiving pkt: %d, val=(", __func__, pkt);
+
+				for (unsigned n = 0; n < STREAM1_DATA_WIDTH/(DEBUG_LOG_SIZE_OF * 8); n++)
+				{
+					DataConv conv;
+					conv.i = tmp1.range((n+1) * DEBUG_LOG_SIZE_OF * 8 - 1, n * DEBUG_LOG_SIZE_OF * 8);
+					printf("%f,", conv.f);
+				}
+				printf(")\n");
+	#endif
+#endif
+			for (unsigned n = 0; n < FACTOR; n++)
+			{
+			#pragma HLS PIPELINE II=1
+				ap_uint<STREAM2_DATA_WIDTH> tmp2 = tmp1.range((n+1)* STREAM2_DATA_WIDTH -1, n * STREAM2_DATA_WIDTH);
+				strm_out.write(tmp2);
+#ifndef __SYTHESIS__
+	#ifdef DEBUG_LOG
+				printf("   |HLS DEBUG_LOG||%s| writing pkt: %d, val=(", __func__, pkt*FACTOR + n);
+
+				for (unsigned k = 0; k < STREAM2_DATA_WIDTH/(DEBUG_LOG_SIZE_OF * 8); k++)
+				{
+					DataConv conv;
+					conv.i = tmp2.range((k+1) * DEBUG_LOG_SIZE_OF * 8 - 1, k * DEBUG_LOG_SIZE_OF * 8);
+					printf("%f,", conv.f);
+				}
+				printf(")\n");
+	#endif
+#endif
+			}
+		}
+	}
+	else
+	{
+		for (int pkt = 0; pkt < num_big_pkts; pkt++)
+		{
+			ap_uint<STREAM2_DATA_WIDTH> tmp2;
+			for (unsigned n = 0; n < FACTOR; n++)
+			{
+			#pragma HLS PIPELINE II=1
+
+				ap_uint<STREAM1_DATA_WIDTH> tmp1 = strm_in.read();
+				tmp2.range((n+1)* STREAM1_DATA_WIDTH -1, n * STREAM1_DATA_WIDTH) = tmp1;
+			}
+			strm_out.write(tmp2);
+		}
+	}
+}
+
+/**
+ * @brief stream2axis Converts from one hls-stream to axis4-stream with same_size
+ *
+ * @tparam STREAM_DATA_WIDTH : Data width of the streams
+ *
+ * @param pkts : Number of pkts
+ */
+template <unsigned int STREAM_DATA_WIDTH>
+void stream2axis(::hls::stream<ap_uint<STREAM_DATA_WIDTH>>& strm_in,
+				::hls::stream<ap_axiu<STREAM_DATA_WIDTH,0,0,0>>& strm_out,
+				const unsigned int pkts)
+{
+	for (int itr = 0; itr < pkts; itr++){
+		#pragma HLS PIPELINE II=1
+
+		ap_axiu<STREAM_DATA_WIDTH,0,0,0> tmp;
+		tmp.data = strm_in.read();
+#ifndef __SYTHESIS__
+#ifdef DEBUG_LOG
+			printf("   |HLS DEBUG_LOG|%s| sending axis pkt: %d, val=(",__func__, itr);
+
+			for (unsigned n = 0; n < STREAM_DATA_WIDTH/(DEBUG_LOG_SIZE_OF * 8); n++)
+			{
+				DataConv conv;
+				conv.i = tmp.data.range((n+1) * DEBUG_LOG_SIZE_OF * 8 - 1, n * DEBUG_LOG_SIZE_OF * 8);
+				printf("%f,", conv.f);
+			}
+			printf(")\n");
+#endif
+#endif
+		strm_out << tmp;
+	}
+}
+
+/**
+ * @brief axis2stream Converts from one axis4-stream to hls-stream with same_size
+ *
+ * @tparam STREAM_DATA_WIDTH : Data width of the streams
+ *
+ * @param pkts : Number of pkts
+ */
+template <unsigned int STREAM_DATA_WIDTH>
+void axis2stream(::hls::stream<ap_axiu<STREAM_DATA_WIDTH,0,0,0>>& strm_in,
+		::hls::stream<ap_uint<STREAM_DATA_WIDTH>>& strm_out,
+		unsigned int pkts)
+{
+	for (int itr = 0; itr < pkts; itr++){
+		#pragma HLS PIPELINE II=1
+
+		ap_axiu<STREAM_DATA_WIDTH,0,0,0> tmp = strm_in.read();
+		strm_out << tmp.data;
+	}
+}
+
+/**
  * @brief 	mem2axis reads from a memory location with to an AXI4 stream.
  *  		This is optimized to read from AXI4 with burst and to utilize width conversion in-between
  *  		AXI4 to AXI4-stream.
@@ -434,6 +698,59 @@ void mem2axis(ap_uint<MEM_DATA_WIDTH>* mem_in,
 	}
 }
 
+
+/**
+ * @brief 	mem2axisV2 reads from a memory location with to an AXI4 stream.
+ *  		This is optimized to read from AXI4 with burst and to utilize width conversion in-between
+ *  		AXI4 to AXI4-stream.
+ *
+ * @tparam MEM_DATA_WIDTH : Data width of the AXI4 port
+ * @tparam AXIS_DATA_WIDTH : Data width of the AXI4-stream port
+ * @tparam BURST_SIZE : Burst length of the AXI4 (max beats - 256)
+ *
+ * @param mem_in : input memory port
+ * @param stream_out : output AXI4-stream
+ * @param size : Number of bytes of the data
+ */
+template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int BURST_SIZE=32>
+void mem2axisV2(ap_uint<MEM_DATA_WIDTH>* mem_in,
+				::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_out,
+				unsigned int size)
+{
+#ifndef __SYTHESIS__
+	static_assert(MEM_DATA_WIDTH % AXIS_DATA_WIDTH == 0,
+			"MEM_DATA_WIDTH has to be fully divided by AXIS_DATA_WIDTH");
+	static_assert(MEM_DATA_WIDTH >= min_mem_data_width && MEM_DATA_WIDTH <= max_mem_data_width,
+			"MEM_DATA_WIDTH failed limit check");
+	static_assert(AXIS_DATA_WIDTH >= min_axis_data_width && AXIS_DATA_WIDTH <= max_axis_data_width,
+			"AXIS_DATA_WIDTH failed limit check");
+	static_assert(BURST_SIZE >= min_burst_len && BURST_SIZE <= max_burst_len,
+			" BURST_SIZE has failed limit check");
+#endif
+
+	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
+	constexpr unsigned int num_strm_pkts_per_beat = MEM_DATA_WIDTH / AXIS_DATA_WIDTH;
+
+	const unsigned int num_beats = (size + bytes_per_beat - 1) / bytes_per_beat;
+
+#ifndef __SYTHESIS__
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG| %s | size: %d, num_beats: %d, num_burst: %d, non_burst_beats: %d\n"
+			, __func__, size, num_beats, num_bursts, non_burst_beats);
+	printf("====================================================================================\n");
+#endif
+#endif
+	::hls::stream<ap_uint<MEM_DATA_WIDTH>> mem_strm;
+	::hls::stream<ap_uint<AXIS_DATA_WIDTH>> red_mem_strm;
+#pragma HLS STREAM variable = mem_strm depth = max_depth_v16
+#pragma HLS STREAM variable = red_mem_strm depth = max_depth_v8
+
+#pragma HLS DATAFLOW
+	mem2stream<MEM_DATA_WIDTH>(mem_in, mem_strm, num_beats);
+	stream2stream<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>(mem_strm, red_mem_strm, num_beats);
+	stream2axis<AXIS_DATA_WIDTH>(red_mem_strm, strm_out, num_beats*num_strm_pkts_per_beat);
+}
 /**
  * @brief 	mem2axis reads from two memory location with a selector mux to an AXI4 stream.
  *  		This is optimized to read from AXI4 with burst and to utilize width conversion in-between
@@ -601,6 +918,60 @@ void axis2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 	}
 
 }
+
+/**
+ * @brief 	axis2memV2 reads from an AXI4 stream into a memory location.
+ *  		This is optimized to write to AXI4 with burst and to utilize width conversion in-between
+ *  		AXI4 to AXI4-stream
+ *
+ * @tparam MEM_DATA_WIDTH : Data width of the AXI4 port
+ * @tparam AXIS_DATA_WIDTH : Data width of the AXI4-stream port
+ * @tparam BURST_SIZE : Burst length of the AXI4 (max beats - 256)
+ *
+ * @param mem_out : output memory port
+ * @param stream_in : input AXI4-stream
+ * @param size : Number of bytes of the data
+ */
+template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int BURST_SIZE=32>
+void axis2memV2(ap_uint<MEM_DATA_WIDTH>* mem_out,
+				::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_in,
+				unsigned int size)
+{
+#ifndef __SYTHESIS__
+	static_assert(MEM_DATA_WIDTH % AXIS_DATA_WIDTH == 0,
+			"MEM_DATA_WIDTH has to be fully divided by AXIS_DATA_WIDTH");
+	static_assert(MEM_DATA_WIDTH >= min_mem_data_width && MEM_DATA_WIDTH <= max_mem_data_width,
+			"MEM_DATA_WIDTH failed limit check");
+	static_assert(AXIS_DATA_WIDTH >= min_axis_data_width && AXIS_DATA_WIDTH <= max_axis_data_width,
+			"AXIS_DATA_WIDTH failed limit check");
+	static_assert(BURST_SIZE >= min_burst_len && BURST_SIZE <= max_burst_len,
+			" BURST_SIZE has failed limit check");
+#endif
+
+	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
+	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
+	constexpr unsigned int num_strm_pkts_per_beat = MEM_DATA_WIDTH / AXIS_DATA_WIDTH;
+
+	const unsigned int num_beats = (size + bytes_per_beat - 1) / bytes_per_beat;
+
+#ifndef __SYTHESIS__
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG| %s | size: %d, num_beats: %d, num_burst: %d, non_burst_beats: %d\n"
+			, __func__, size, num_beats, num_bursts, non_burst_beats);
+	printf("====================================================================================\n");
+#endif
+#endif
+	::hls::stream<ap_uint<MEM_DATA_WIDTH>> mem_strm;
+	::hls::stream<ap_uint<AXIS_DATA_WIDTH>> red_mem_strm;
+#pragma HLS STREAM variable = mem_strm depth = max_depth_v16
+#pragma HLS STREAM variable = red_mem_strm depth = max_depth_v8
+
+#pragma HLS DATAFLOW
+	axis2stream<AXIS_DATA_WIDTH>(strm_in, red_mem_strm, num_beats*num_strm_pkts_per_beat);
+	stream2stream<AXIS_DATA_WIDTH,MEM_DATA_WIDTH>(red_mem_strm, mem_strm, num_beats);
+	stream2mem<MEM_DATA_WIDTH>(mem_out, mem_strm, num_beats);
+}
+
 
 /**
  * @brief 	axis2mem reads from an AXI4 stream into a memory location with a selector mux to select out of two.
@@ -925,6 +1296,73 @@ void axis2streamMasked(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
 		}
 		cycleBufIndex += 1;
 	}
+}
+
+/**
+ * @brief getNumStreamPkts produced number of stream pkts need for read grid with given range
+ *
+ * @details
+ *
+ * @tparam MEM_DATA_WIDTH : Data width of the AXI4 port
+ * @tparam AXIS_DATA_WIDTH : Data width of the AXIS-stream port
+ * @tparam DATA_WIDTH : Data width of the base datatype
+ *
+ * @param range : read range
+ * @param n_pkts : number_of axis pkts need
+ */
+template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
+void getNumStreamPkts(const AccessRange& range, unsigned int n_pkts)
+{
+	constexpr unsigned short data_vector_factor = MEM_DATA_WIDTH / DATA_WIDTH;
+	constexpr unsigned short num_pkts_per_mem_beat = MEM_DATA_WIDTH/AXIS_DATA_WIDTH;
+	unsigned short ShiftBits = (unsigned short)LOG2(data_vector_factor);
+	unsigned short DataShiftBits = (unsigned short)LOG2(DATA_WIDTH/8);
+	unsigned short start_x = range.start[0] >> ShiftBits;
+	unsigned short end_x = (range.end[0] + data_vector_factor - 1) >> ShiftBits;
+	unsigned short num_xblocks = end_x - start_x;
+	unsigned short num_xpkts = num_xblocks * num_pkts_per_mem_beat;
+	unsigned short diff_y = range.end[1] - range.start[1];
+	unsigned short diff_z = range.end[2] - range.start[2];
+
+	n_pkts = num_xpkts * diff_y * diff_z;
+}
+/**
+ * @brief axisLoopback reads from one grid data axis-stream to another grid data axis stream
+ *
+ * @details This component is to support memory looback from the output of PE to the input in next iteration
+ * without copying back to memory.
+ *
+ * @tparam MEM_DATA_WIDTH : Data width of the AXI4 port
+ * @tparam AXIS_DATA_WIDTH : Data width of the AXIS-stream port
+ * @tparam DATA_WIDTH : Data width of the base datatype
+ *
+ * @param strm_in : AXIS-stream input port
+ * @param strm_out : AXIS-stream output port
+ * @param n_pkts : number_of axis pkts need to be loopback
+ */
+template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
+void axisLoopbackV2(
+		::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_in,
+		 ::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_out,
+		 const unsigned int n_pkts)
+{
+
+	for (unsigned short pkt = 0; pkt < n_pkts; pkt++)
+	{
+#pragma HLS PIPELINE II = 1
+
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| writing. pkt:%d\n"
+			, __func__, pkt);
+#endif
+		ap_axiu<AXIS_DATA_WIDTH,0,0,0> tmp = strm_in.read();
+		strm_out.write(tmp);
+	}
+
+#ifdef DEBUG_LOG
+			printf("|HLS DEBUG_LOG|%s| exiting. \n"
+					, __func__);
+#endif
 }
 
 /**
@@ -1367,7 +1805,7 @@ void memReadGridV2(ap_uint<MEM_DATA_WIDTH>* mem_in,
 	printf("===========================================================================================\n");
 #endif
 	unsigned short diff_y = range.end[1] - range.start[1];
-	bool isContinous = (grid_xblocks == num_xblocks and (diff_y == gridSize[1] or not range.dim == 3));
+	bool isContinous = (grid_xblocks == num_xblocks and (diff_y == gridSize[1] or not range.dim == 3)) or range.dim == 1;
 
 	if (isContinous)
 	{
@@ -1382,7 +1820,7 @@ void memReadGridV2(ap_uint<MEM_DATA_WIDTH>* mem_in,
 #ifdef DEBUG_LOG
 		printf("|HLS DEBUG_LOG|%s| init offset:%d, size_y:%d, size_z:%d\, size_bytes:%d\n", __func__, offset, size_y, size_z, size_bytes);
 #endif
-		mem2axis<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>* )(mem_in + offset), strm_out, size_bytes);
+		mem2axisV2<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>* )(mem_in + offset), strm_out, size_bytes);
 	}
 	else
 	{
@@ -1396,7 +1834,7 @@ void memReadGridV2(ap_uint<MEM_DATA_WIDTH>* mem_in,
 				printf("|HLS DEBUG_LOG|%s| reading. offset:%d, j:%d, k:%d\n"
 						, __func__,offset, j, k);
 		#endif
-				mem2axis<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>* )(mem_in + offset), strm_out, x_tile_size_bytes);
+				mem2axisV2<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>* )(mem_in + offset), strm_out, x_tile_size_bytes);
 			}
 		}
 	}
@@ -1638,7 +2076,7 @@ void memWriteGridSimpleV2(ap_uint<MEM_DATA_WIDTH>* mem_out,
 #endif
 
 	unsigned short diff_y = range.end[1] - range.start[1];
-	bool isContinous = (grid_xblocks == num_xblocks and (diff_y == gridSize[1] or not range.dim == 3));
+	bool isContinous = (grid_xblocks == num_xblocks and (diff_y == gridSize[1] or not range.dim == 3)) or range.dim==1;
 
 	if (isContinous)
 	{
@@ -1653,7 +2091,7 @@ void memWriteGridSimpleV2(ap_uint<MEM_DATA_WIDTH>* mem_out,
 #ifdef DEBUG_LOG
 		printf("|HLS DEBUG_LOG|%s| init offset:%d, size_y:%d, size_z:%d\, size_bytes:%d\n", __func__, offset, size_y, size_z, size_bytes);
 #endif
-		axis2mem<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + offset), strm_in, size_bytes);
+		axis2memV2<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + offset), strm_in, size_bytes);
 	}
 	else
 	{
@@ -1667,7 +2105,7 @@ void memWriteGridSimpleV2(ap_uint<MEM_DATA_WIDTH>* mem_out,
 				printf("|HLS DEBUG_LOG|%s| writing. offset:%d, j:%d, k:%d\n"
 						, __func__, offset, j, k);
 	#endif
-				axis2mem<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + offset), strm_in, x_tile_size_bytes);
+				axis2memV2<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>*)(mem_out + offset), strm_in, x_tile_size_bytes);
 			}
 		}
 	}
@@ -1734,6 +2172,159 @@ void memWriteGridTerminate(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_i
 #endif
 }
 
+//constexpr unsigned short log2(constexpr unsigned short n)
+//{
+//  return ( (n<2) ? 1 : 1+log2(n/2));
+//}
+
+struct MemConfig
+{
+	unsigned short start_x;
+	unsigned short end_x;
+	unsigned short start_y;
+	unsigned short end_y;
+	unsigned short start_z;
+	unsigned short end_z;
+	unsigned short grid_xblocks;
+	unsigned short grid_size_y;
+	unsigned short grid_size_z;
+	unsigned short num_xblocks;
+	unsigned int x_tile_size;
+	unsigned int x_tile_bytes;
+	bool isContinous;
+	unsigned int start_offset;
+	unsigned int total_size_bytes;
+};
+
+template <unsigned short MEM_DATA_WIDTH, unsigned short AXIS_DATA_WIDTH, unsigned short DATA_WIDTH=32>
+void genMemConfig(SizeType& gridSize, AccessRange& range, MemConfig& config)
+{
+	constexpr unsigned short data_vector_factor = MEM_DATA_WIDTH / DATA_WIDTH;
+	unsigned short ShiftBits = (unsigned short)LOG2(data_vector_factor);
+	unsigned short DataShiftBits = (unsigned short)LOG2(DATA_WIDTH/8);
+	unsigned short start_x = range.start[0] >> ShiftBits;
+	unsigned short end_x = (range.end[0] + data_vector_factor - 1) >> ShiftBits;
+	unsigned short grid_xblocks = gridSize[0] >> ShiftBits; //GridSize[0] has to be MEM_DATA_WIDTH aligned
+	unsigned short num_xblocks = end_x - start_x;
+	unsigned short x_tile_size = num_xblocks << ShiftBits;
+	unsigned int x_tile_size_bytes = x_tile_size << DataShiftBits;
+
+    config.start_x = start_x;
+    config.end_x = end_x;
+    config.grid_xblocks = grid_xblocks;
+    config.num_xblocks = num_xblocks;
+    config.x_tile_size = x_tile_size;
+    config.x_tile_bytes = x_tile_size_bytes;
+    unsigned short diff_y = 1;
+    unsigned short diff_z = 1;
+
+    if (range.dim > 1)
+    {
+		config.start_y = range.start[1];
+		config.end_y = range.end[1];
+		unsigned short diff_y = range.end[1] - range.start[1];
+		config.grid_size_y = gridSize[1];
+    }
+    else
+    {
+		config.start_y = 0;
+		config.end_y = 1;
+		config.grid_size_y=1;
+    }
+    if (range.dim > 2)
+    {
+		config.start_z = range.start[2];
+		config.end_z = range.end[2];
+		unsigned short diff_z = range.end[2] - range.start[2];
+		config.grid_size_z = gridSize[2];
+    }
+    {
+		config.start_z = 0;
+		config.end_z = 1;
+		config.grid_size_z = 1;
+    }
+
+    config.isContinous = (grid_xblocks == num_xblocks or range.dim == 1) and (diff_y == gridSize[1] or range.dim != 3);
+    config.start_offset = start_x + config.start_y * grid_xblocks + config.start_z * gridSize[1] * grid_xblocks;
+    config.total_size_bytes = x_tile_size_bytes * diff_y * diff_z;
+
+ #ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| memconfig generated -> range: (%d(xblocks), %d, %d) --> (%d(xblocks), %d, %d), grid_size: (%d(xblocks), %d, %d)\
+            num_xblocks: %d, x_tile_size: %d, x_tile_bytes: %d, isContinous: %d, start_offset: %d(xblocks), total_size_bytes: %d\n", __func__, config.start_x, config.start_y, config.start_z,
+            config.end_x, config.end_y, config.end_z, config.grid_xblocks, config.grid_size_y, config.grid_size_z, config.num_xblocks, config.x_tile_size, config.x_tile_bytes, config.isContinous, config.start_offset, config.total_size_bytes);
+ #endif
+}
+
+template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
+void memReadGrid_test(ap_uint<MEM_DATA_WIDTH>* mem_in,
+		::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_out, MemConfig& config)
+{
+// 	constexpr unsigned short data_vector_factor = MEM_DATA_WIDTH / DATA_WIDTH;
+// 	constexpr unsigned short ShiftBits = log2(data_vector_factor);
+// 	unsigned short DataShiftBits = (unsigned short)LOG2(DATA_WIDTH/8);
+// 	unsigned short start_x = range.start[0] >> ShiftBits;
+// 	unsigned short end_x = (range.end[0] + data_vector_factor - 1) >> ShiftBits;
+// 	unsigned short grid_xblocks = gridSize[0] >> ShiftBits; //GridSize[0] has to be MEM_DATA_WIDTH aligned
+// 	unsigned short num_xblocks = end_x - start_x;
+// 	unsigned short x_tile_size = num_xblocks << ShiftBits;
+// 	unsigned int x_tile_size_bytes = x_tile_size << DataShiftBits;
+
+// 	if (range.dim < 3)
+// 	{
+// 		range.start[2] = 0;
+// 		range.end[2] = 1;
+// 	}
+// 	if (range.dim < 2)
+// 	{
+// 		range.start[1] = 0;
+// 		range.end[1] = 1;
+// 	}
+
+// #ifdef DEBUG_LOG
+// 	printf("|HLS DEBUG_LOG|%s| starting memReadGrid. shiftbits: %d, data shift bits: %d, grid_size: (%d, %d, %d), grid_xblocks: %d, range: (%d, %d, %d) --> (%d, %d, %d)\n "
+// 			"start_x_block: %d --> end_x_block: %d, x_tile_size:%d, x_tile_size_bytes:%d, num_xblocks:%d\n"
+// 			, __func__, ShiftBits, DataShiftBits, gridSize[0], gridSize[1], gridSize[2], grid_xblocks, range.start[0], range.start[1], range.start[2],
+// 			range.end[0], range.end[1], range.end[2], start_x, end_x, x_tile_size, x_tile_size_bytes, num_xblocks);
+// 	printf("===========================================================================================\n");
+// #endif
+// 	unsigned short diff_y = range.end[1] - range.start[1];
+// 	bool isContinous = (grid_xblocks == num_xblocks and (diff_y == gridSize[1] or not range.dim == 3));
+
+	if (config.isContinous)
+	{
+//#ifdef DEBUG_LOG
+		printf("|HLS DEBUG_LOG|%s| continuous read\n", __func__);
+//#endif
+// 		unsigned int offset = start_x + range.start[1] * grid_xblocks + range.start[2] * gridSize[1] * grid_xblocks;
+// 		unsigned int size_y = range.end[1] - range.start[1];
+// 		unsigned int size_z = range.end[2] - range.start[2];
+// 		unsigned int  size_bytes = x_tile_size_bytes * size_y * size_z;
+
+#ifdef DEBUG_LOG
+		printf("|HLS DEBUG_LOG|%s| init offset:%d, size_bytes:%d\n", __func__, config.start_offset, size_bytes);
+#endif
+		mem2axis<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>* )(mem_in + config.start_offset), strm_out, config.total_size_bytes);
+	}
+	else
+	{
+		for (unsigned short k = config.start_z; k < config.end_z; k++)
+		{
+			for (unsigned short j = config.start_y; j < config.end_y; j++)
+			{
+				unsigned int offset = config.start_x + j * config.grid_xblocks + k * config.grid_size_y * config.grid_xblocks;
+    #ifdef DEBUG_LOG
+				printf("|HLS DEBUG_LOG|%s| reading. offset:%d, j:%d, k:%d\n"
+						, __func__,offset, j, k);
+    #endif
+				mem2axis<MEM_DATA_WIDTH, AXIS_DATA_WIDTH>((ap_uint<MEM_DATA_WIDTH>* )(mem_in + offset), strm_out, config.x_tile_bytes);
+			}
+		}
+	}
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| exiting.\n"
+			, __func__);
+#endif
+}
 //template <unsigned int MEM_DATA_WIDTH, unsigned int STREAM_DATA_WIDTH, unsigned int DATA_WIDTH=32>
 //void memWriteGridNew(ap_uint<DATA_WIDTH>* mem_out,
 //		::hls::stream<ap_axiu<STREAM_DATA_WIDTH,0,0,0>>& strm_in,
