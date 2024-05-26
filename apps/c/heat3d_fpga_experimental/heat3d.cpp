@@ -30,50 +30,47 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @Test application for fpga batched temporal blocked poisson 2D
-  * @author Gihan Mudalige, Istvan Reguly, Beniel Thileepan
+/** @Test application for fpga batched temporal blocked heat3d
+  * @author Beniel Thileepan
   */
 
-// standard headers
+
+#include <math.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-#include <math.h>
 
-float dx,dy,dx_2,dy_2,dx_2_dy_2,dx_2_plus_dy_2_mult_2;
-extern const unsigned short mem_vector_factor;
+int imax, jmax, kmax;
+extern unsigned short mem_vector_factor;
+// float pi  = 2.0 * asin(1.0);
 
-// OPS header file
-#define OPS_2D
-#define VERIFICATION
+//Including main OPS header file, and setting 3D
+#define OPS_3D
 // #define OPS_CPP_API
 #define OPS_HLS_V2
 // #define OPS_FPGA
 #define PROFILE
-#include "user_types.h"
+#define VERIFICATION
 #include <ops_seq_v2.h>
-#include "poisson_kernel.h"
-#include "poisson_cpu_verification.hpp"
+//Including applicaiton-specific "user kernels"
+#include "heat3d.hpp"
+#include "heat3d_kernels.h"
+#include "heat3d_cpu_verification.hpp"
 
 #ifdef PROFILE
     #include <chrono>
 #endif
 
-/******************************************************************************
-* Main program
-*******************************************************************************/
-int main(int argc, const char **argv)
+int main(int argc, const char** argv)
 {
-  /**-------------------------- Initialisation --------------------------**/
+    //Initialise the OPS library, passing runtime args, and setting diagnostics level to low (1)
+    ops_init(argc, argv,1);
 
-    // OPS initialisation
-    ops_init(argc,argv,1);
+    imax = 20;
+    jmax = 20;
+    kmax = 20;
 
-
-    //Mesh
-    int imax = 20;
-    int jmax = 20;
-    unsigned int iter_max = 135;
+    unsigned int iter_max = 100;
     unsigned int batches = 1;
 
     const char* pch;
@@ -89,16 +86,52 @@ int main(int argc, const char **argv)
         if(pch != NULL) {
             jmax = atoi ( argv[n] + 7 ); continue;
         }
-        pch = strstr(argv[n], "-iter=");
+        pch = strstr(argv[n], "-sizez=");
+
+        if(pch != NULL) {
+            kmax = atoi ( argv[n] + 7 ); continue;
+        }
+        pch = strstr(argv[n], "-iters=");
 
         if(pch != NULL) {
             iter_max = atoi ( argv[n] + 7 ); continue;
         }
-        pch = strstr(argv[n], "-batches=");
+        pch = strstr(argv[n], "-batch=");
 
         if(pch != NULL) {
             batches = atoi ( argv[n] + 7 ); continue;
         }
+    }
+
+    GridParameter gridData;
+    gridData.logical_size_x = imax;
+    gridData.logical_size_y = jmax;
+    gridData.logical_size_z = kmax;
+    gridData.batch = batches;
+    gridData.num_iter = iter_max;
+
+    //adding halo
+    gridData.act_size_x = gridData.logical_size_x + 2;
+    gridData.act_size_y = gridData.logical_size_y + 2;
+    gridData.act_size_z = gridData.logical_size_z + 2;
+
+    //padding each row as multiples of vectorization factor
+    gridData.grid_size_x = (gridData.act_size_x % mem_vector_factor) != 0 ?
+			      (gridData.act_size_x/mem_vector_factor + 1) * mem_vector_factor:
+			      gridData.act_size_x;
+	  gridData.grid_size_y = gridData.act_size_y;
+    gridData.grid_size_z = gridData.act_size_z;
+
+    unsigned int data_size_bytes = sizeof(float) * gridData.grid_size_x 
+            * gridData.grid_size_y * gridData.grid_size_z;
+
+    float angle_res_x = 2 * M_PI / gridData.logical_size_x;
+    float angle_res_y = 2 * M_PI / gridData.logical_size_y;
+    float angle_res_z = 2 * M_PI / gridData.logical_size_z;
+
+    if (data_size_bytes >= 4000000000)
+    {
+        std::cerr << "Maximum buffer size is exceeded!" << std::endl;
     }
 
 #ifdef PROFILE
@@ -106,23 +139,7 @@ int main(int argc, const char **argv)
 	double main_loop_runtime[batches];
 #endif
 
-    //declare consts
-    dx = 0.01;
-    dy = 0.01;
-    dy_2 = dy*dy;
-    dx_2 = dx*dx;
-    dx_2_plus_dy_2_mult_2 = (dy_2 + dx_2) * 2.0;
-    dx_2_dy_2 = dy_2 * dx_2;
-
-    ops_decl_const("dx", 1, "float", &dx);
-    ops_decl_const("dy", 1, "float", &dy);
-    ops_decl_const("dy_2", 1, "float", &dy_2);
-    ops_decl_const("dx_2", 1, "float", &dx_2);
-    ops_decl_const("dx_2_plus_dy_2_mult_2",1, "float", &dx_2_plus_dy_2_mult_2);
-    ops_decl_const("dx_2_dy_2",1, "float", &dx_2_dy_2);
-
-
-    //The 2D block
+    //The 3D block
     ops_block blocks[batches];
 
     for (unsigned int bat = 0; bat < batches; bat++)
@@ -131,36 +148,27 @@ int main(int argc, const char **argv)
         blocks[bat] = ops_decl_block(2, name.c_str());
     }
 
+    //defining stencils
+    int s3d_1pt[] = {0,0,0};
+    ops_stencil stencil3D_1pt = ops_decl_stencil(3, 1, s3d_1pt, "1pt stencil");
 
-    //declare stencils
-    int s2D_00[] = {0,0};
-    ops_stencil S2D_00 = ops_decl_stencil(2, 1, s2D_00, "00");
-    int s2D_00_P10_M10_0P1_0M1[] = {0,0, 1,0, -1,0, 0,1, 0,-1};
-    ops_stencil S2D_00_P10_M10_0P1_0M1 = ops_decl_stencil(2, 5, s2D_00_P10_M10_0P1_0M1, "00:10:-10:01:0-1");
+    int s3d_7pt[] = {0,0,0, 1,0,0, -1,0,0, 0,1,0, 0,-1,0, 0,0,1, 0,0,-1};
+    ops_stencil stencil3D_7pt = ops_decl_stencil(3, 7, s3d_7pt, "7pt stencil");
 
-    //declare datasets
-    int size[] = {imax, jmax};
-    int base[] = {0,0};
-    int d_m[] = {-1,-1};
-    int d_p[] = {1,1};
+    //The two datasets
+    int size[] = {imax, jmax, kmax};
+    int base[] = {0,0,0};
+    int d_m[] = {-1,-1,-1};
+    int d_p[] = {1,1,1};
     float* temp = NULL;
 
     ops_dat u[batches];
     ops_dat u2[batches];
-    ops_dat f[batches];
-    ops_dat ref[batches];
+    std::vector<heat3DParameter> calcParam(gridData.batch);
+
 #ifdef VERIFICATION
     float* u_cpu[batches];
     float* u2_cpu[batches];
-    float* f_cpu[batches];
-    float* ref_cpu[batches];
-
-    int grid_size_y = size[1] - d_m[1] + d_p[1];
-    #ifdef OPS_FPGA
-    int grid_size_x = ((size[0] - d_m[0] + d_p[0] + mem_vector_factor - 1) / mem_vector_factor) * mem_vector_factor;
-    #else
-    int grid_size_x = size[0] - d_m[0] + d_p[0];
-    #endif
 #endif
 
     // Allocation
@@ -170,56 +178,75 @@ int main(int argc, const char **argv)
         u[bat] = ops_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
         name = std::string("u2_") + std::to_string(bat);
         u2[bat] = ops_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("f_") + std::to_string(bat);
-        f[bat] = ops_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("ref_") + std::to_string(bat);
-        ref[bat] = ops_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
+
 #ifdef VERIFICATION
-        u_cpu[bat] = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y);
-        u2_cpu[bat] = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y);
-        f_cpu[bat] = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y);
-        ref_cpu[bat] = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y);
+        u_cpu[bat] = (float*)malloc(data_size_bytes);
+        u2_cpu[bat] = (float*)malloc(data_size_bytes);
 #endif
+        //Generating calc parameters
+        calcParam[bat].alpha = 1.5/1000; //diffusivity 
+        calcParam[bat].h = 1/gridData.act_size_x; 
+        calcParam[bat].delta_t = 0.5; //0.5s
+        calcParam[bat].K = calcParam[bat].alpha * calcParam[bat].delta_t / (calcParam[bat].h * calcParam[bat].h);
     }
 
+    //defining the access ranges
+    int bottom_plane_range[] = {-1,gridData.logical_size_x+1, -1,gridData.logical_size_y+1, -1,0};
+    int top_plane_range[] = {-1,gridData.logical_size_x+1, -1,gridData.logical_size_y+1, gridData.logical_size_z,gridData.logical_size_z+1};
+    int front_plane_range[] = {-1,gridData.logical_size_x+1,-1,0,-1,gridData.logical_size_z+1};
+    int back_plane_range[] = {-1,gridData.logical_size_x+1, gridData.logical_size_y,gridData.logical_size_y+1, -1,gridData.logical_size_z+1};
+    int left_plane_range[] = {-1,0, -1,gridData.logical_size_y+1, -1,gridData.logical_size_z+1};
+    int right_plane_range[] = {gridData.logical_size_x,gridData.logical_size_x+1, -1,gridData.logical_size_y+1, -1,gridData.logical_size_z+1};
+    int full_range[] = {-1,gridData.logical_size_x+1, -1,gridData.logical_size_y+1, -1,gridData.logical_size_z+1};
+    int interior_range[] =  {0,gridData.logical_size_x+1, 0,gridData.logical_size_y+1, 0,gridData.logical_size_z};
     ops_partition("");
 
-    int full_range[] = {d_m[0], size[0] + d_p[0], d_m[1], size[1] + d_p[1]};
-    int internal_range[] = {0, size[0], 0, size[1]};
-    //Producer
     for (unsigned int bat = 0; bat < batches; bat++)
     {
 #ifdef PROFILE
         auto init_start_clk_point =  std::chrono::high_resolution_clock::now();
 #endif
-        ops_par_loop(poisson_kernel_populate, "poisson_kernel_populate", blocks[bat], 2, full_range, ops_arg_idx(),
-                ops_arg_dat(u[bat], 1, S2D_00, "float", OPS_WRITE),
-                ops_arg_dat(f[bat], 1, S2D_00, "float", OPS_WRITE),
-                ops_arg_dat(ref[bat], 1, S2D_00, "float", OPS_WRITE));
+        //Initializing data
+        ops_par_loop(ops_krnl_zero_init, "ops_top_plane_init", blocks[bat], 3, top_plane_range,
+                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE));
 
-        ops_par_loop(poisson_kernel_update, "poisson_kernel_update", blocks[bat], 2, full_range, 
-                ops_arg_dat(u[bat], 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(u2[bat], 1, S2D_00, "float", OPS_WRITE));
+        ops_par_loop(ops_krnl_zero_init, "ops_bottom_plane_init", blocks[bat], 3, bottom_plane_range,
+                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE));
 
-    //initial guess 0
-        ops_par_loop(poisson_kernel_initialguess, "poisson_kernel_initialguess", blocks[bat], 2, internal_range,
-                ops_arg_dat(u[bat], 1, S2D_00, "float", OPS_WRITE));
+        ops_par_loop(ops_krnl_zero_init, "ops_front_plane_init", blocks[bat], 3, front_plane_range,
+                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE));
+        
+        ops_par_loop(ops_krnl_zero_init, "ops_back_plane_init", blocks[bat], 3, back_plane_range,
+                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE));
+
+        ops_par_loop(ops_krnl_zero_init, "ops_left_plane_init", blocks[bat], 3, left_plane_range,
+                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE));
+
+        ops_par_loop(ops_krnl_zero_init, "ops_right_plane_init", blocks[bat], 3, right_plane_range,
+                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE));
+
+        ops_par_loop(ops_krnl_interior_init, "ops_interior_init", blocks[bat], 3, interior_range,
+                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE),
+                ops_arg_idx(),
+                ops_arg_gbl(&angle_res_x, 1, "float", OPS_READ),
+                ops_arg_gbl(&angle_res_y, 1, "float", OPS_READ),
+                ops_arg_gbl(&angle_res_z, 1, "float", OPS_READ));
+
+        ops_par_loop(ops_krnl_copy, "ops_copy_init", blocks[bat], 3, full_range,
+                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE),
+                ops_arg_dat(u2[bat], 3, stencil3D_1pt, "float", OPS_READ));
+
 #ifdef PROFILE
         auto init_end_clk_point = std::chrono::high_resolution_clock::now();
         init_runtime[bat] = std::chrono::duration<double, std::micro> (init_end_clk_point - init_start_clk_point).count();
 #endif
 
 #ifdef VERIFICATION
-        auto u_raw = (float*)ops_dat_get_raw_pointer(u[bat], 0, S2D_00, OPS_HOST);
-        auto u2_raw = (float*)ops_dat_get_raw_pointer(u2[bat], 0, S2D_00, OPS_HOST);
-        auto f_raw = (float*)ops_dat_get_raw_pointer(f[bat], 0, S2D_00, OPS_HOST);
-        auto ref_raw = (float*)ops_dat_get_raw_pointer(ref[bat], 0, S2D_00, OPS_HOST);
+        auto u_raw = (float*)ops_dat_get_raw_pointer(u[bat], 0, stencil3D_1pt, OPS_HOST);
+        auto u2_raw = (float*)ops_dat_get_raw_pointer(u2[bat], 0, stencil3D_1pt, OPS_HOST);
 
-        poisson_kernel_populate_cpu(u_cpu[bat], f_cpu[bat], ref_cpu[bat], size, d_m, d_p, full_range);
-        poisson_kernel_update_cpu(u2_cpu[bat], u_cpu[bat], size, d_m, d_p, full_range);
-
-        poisson_kernel_initialguess_cpu(u_cpu[bat], size, d_m, d_p, internal_range);
-
+        initialize_grid(u_cpu[bat], gridData);
+        copy_grid(u_cpu[bat], u2_cpu[bat], gridData);
         if(verify(u_raw, u_cpu[bat], size, d_m, d_p, full_range))
             std::cout << "[BATCH - " << bat << "] verification of u after initiation" << "[PASSED]" << std::endl;
         else
@@ -229,43 +256,37 @@ int main(int argc, const char **argv)
             std::cout << "[BATCH - " << bat << "] verification of u2 after initiation" << "[PASSED]" << std::endl;
         else
             std::cout << "[BATCH - " << bat << "] verification of u2 after initiation" << "[FAILED]" << std::endl;
-
-        if(verify(f_raw, f_cpu[bat], size, d_m, d_p, full_range))
-            std::cout << "[BATCH - " << bat << "] verification of f after initiation" << "[PASSED]" << std::endl;
-        else
-            std::cout << "[BATCH - " << bat << "] verification of f after initiation" << "[FAILED]" << std::endl;
-        
-        if(verify(ref_raw, ref_cpu[bat], size, d_m, d_p, full_range))
-            std::cout << "[BATCH - " << bat << "] verification of ref after initiation" << "[PASSED]" << std::endl;
-        else
-            std::cout << "[BATCH - " << bat << "] verification of ref after initiation" << "[FAILED]" << std::endl;
 #endif
-    }
 
+        ops_printf("Launching poisson calculation: %d x %d x %d mesh\n", size[0], size[1], size[2]);
 
-    //iterative stencil loop
-    for (unsigned int bat = 0; bat < batches; bat++)
-    {
-        ops_printf("Launching poisson calculation: %d x %d mesh\n", size[0], size[1]);
+        //iterative stencil loop
 #ifdef PROFILE
         auto main_loop_start_clk_point = std::chrono::high_resolution_clock::now();
 #endif
+
+        float param_k = calcParam[bat].K;
+
 #ifndef OPS_FPGA
         for (int iter = 0; iter < iter_max; iter++)
         {
-            ops_par_loop(poisson_kernel_stencil, "poisson_kernel_stencil", blocks[bat], 2, internal_range,
-                    ops_arg_dat(u[bat], 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-                    ops_arg_dat(u2[bat], 1, S2D_00, "float", OPS_WRITE));
-            
-            ops_par_loop(poisson_kernel_update, "poisson_kernel_update", blocks[bat], 2, internal_range,
-                    ops_arg_dat(u2[bat], 1, S2D_00, "float", OPS_READ),
-                    ops_arg_dat(u[bat], 1, S2D_00, "float", OPS_WRITE));
+            ops_par_loop(ops_krnl_heat3D, "ops_krnl_heat3D", blocks[bat], 3, interior_range,
+                    ops_arg_dat(u2[bat], 3, stencil3D_1pt, "float", OPS_WRITE),
+                    ops_arg_dat(u[bat], 3, stencil3D_7pt, "float", OPS_READ),
+                    ops_arg_gbl(&param_k, 1, "float", OPS_READ),
+                    ops_arg_idx());
+
+            ops_par_loop(ops_krnl_copy, "ops_krnl_copy after_calc", blocks[bat], 3, interior_range,
+                    ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE),
+                    ops_arg_dat(u2[bat], 3, stencil3D_1pt, "float", OPS_READ));
         }
 #else
         ops_iter_par_loop("ops_iter_par_loop_0", iter_max,
-            ops_par_loop(poisson_kernel_stencil, "poisson_kernel_stencil", blocks[bat], 2, internal_range,
-                    ops_arg_dat(u[bat], 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-                    ops_arg_dat(u2[bat], 1, S2D_00, "float", OPS_WRITE)),
+            ops_par_loop(ops_krnl_heat3D, "ops_krnl_heat3D", blocks[bat], 3, interior_range,
+                    ops_arg_dat(u2[bat], 3, stencil3D_1pt, "float", OPS_WRITE),
+                    ops_arg_dat(u[bat], 3, stencil3D_7pt, "float", OPS_READ),
+                    ops_arg_gbl(&param_k, 1, "float", OPS_READ),
+                    ops_arg_idx()),
             ops_par_copy<float>(u[bat], u2[bat]));
 #endif
 #ifdef PROFILE
@@ -275,25 +296,18 @@ int main(int argc, const char **argv)
     #else
         main_loop_runtime[bat] = ops_hls_get_execution_runtime<std::chrono::microseconds>(std::string("ops_iter_par_loop_0"));
     #endif
-#endif
+#endif        
     }
 
     //Final Verification after calc
 #ifdef VERIFICATION
     for (unsigned int bat = 0; bat < batches; bat++)
     {
-        auto u_raw = (float*)ops_dat_get_raw_pointer(u[bat], 0, S2D_00, OPS_HOST);
-        auto u2_raw = (float*)ops_dat_get_raw_pointer(u2[bat], 0, S2D_00, OPS_HOST);
+        auto u_raw = (float*)ops_dat_get_raw_pointer(u[bat], 0, stencil3D_1pt, OPS_HOST);
+        auto u2_raw = (float*)ops_dat_get_raw_pointer(u2[bat], 0, stencil3D_1pt, OPS_HOST);
 
-        for (int iter = 0; iter < iter_max; iter++)
-        {
-            poisson_kernel_stencil_cpu(u_cpu[bat], f_cpu[bat], u2_cpu[bat], size, d_m, d_p, internal_range);
-            poisson_kernel_update_cpu(u_cpu[bat], u2_cpu[bat], size, d_m, d_p, internal_range);
-        }
-
-		// printGrid2D<float>(u_raw, u[bat].originalProperty, "u after computation");
-		// printGrid2D<float>(u_cpu[bat], u[bat].originalProperty, "u_Acpu after computation");
-
+        heat3D_explicit(u_cpu[bat], u2_cpu[bat], gridData, calcParam);
+        
         if(verify(u_raw, u_cpu[bat], size, d_m, d_p, full_range))
             std::cout << "[BATCH - " << bat << "] verification of u after calculation" << "[PASSED]" << std::endl;
         else
@@ -303,7 +317,6 @@ int main(int argc, const char **argv)
             std::cout << "[BATCH - " << bat << "] verification of u2 after calculation" << "[PASSED]" << std::endl;
         else
             std::cout << "[BATCH - " << bat << "] verification of u2 after calculation" << "[FAILED]" << std::endl;
-
     }
 #endif
 
@@ -312,13 +325,11 @@ int main(int argc, const char **argv)
     {
         ops_free_dat(u[bat]);
         ops_free_dat(u2[bat]);
-        ops_free_dat(f[bat]);
-        ops_free_dat(ref[bat]);
+
 #ifdef VERIFICATION
         free(u_cpu[bat]);
         free(u2_cpu[bat]);
-        free(f_cpu[bat]);
-        free(ref_cpu[bat]);
+
 #endif
     }
 
@@ -396,3 +407,4 @@ int main(int argc, const char **argv)
     std::cout << "Exit properly" << std::endl;
     return 0;
 }
+

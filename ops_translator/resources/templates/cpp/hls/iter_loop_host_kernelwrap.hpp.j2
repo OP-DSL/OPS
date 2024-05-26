@@ -245,9 +245,9 @@ void {{ilh.unique_name}}(int outer_iter, int* ops_range,
     static  KernelWrapper_outerloop_{{ilh.id}} kernelWrapper_inst;
     ops::hls::AccessRange range;
     opsRange2hlsRange({{ndim}}, ops_range, range, arg{{ilh.joint_args[0].id}}.originalProperty);
-    {% for arg in ilh.joint_args %}
+    {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is ops_read %}
-    sendGrid(arg{{arg.id}});
+    sendGrid(arg{{ilh.getArg(arg.dat_id).id}});
         {% endif %}
     {% endfor %}
     

@@ -160,7 +160,10 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
         new_iter_loop_call = f"{iterloop.unique_name}({split_after[1]}, {iterloop.ops_range}"
         
         for arg in iterloop.joint_args:
-            new_iter_loop_call += f", {iterloop.dats[arg.dat_id][0].ptr}"
+            if isinstance(arg, ArgDat):
+                new_iter_loop_call += f", {iterloop.dats[arg.dat_id][0].ptr}"
+            elif isinstance(arg, ArgGbl):
+                new_iter_loop_call += f", {arg.ptr}"
         
         new_iter_loop_call = before + new_iter_loop_call + ");" + split_retain 
         
