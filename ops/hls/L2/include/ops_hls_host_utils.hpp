@@ -90,7 +90,7 @@ void printAccessRange(ops::hls::AccessRange& range, std::string prompt = "")
 {
 	std::cout << "-------------------------------" << std::endl;
 	std::cout << " access range " << prompt << " - dim: " << range.dim << ", range: (" << range.start[0] << ", " << range.start[1] << ", "
-			<< range.start[2] << ") --> (" << range.end[0] << ", " << range.end[0] << ", "<< range.end[2] << ")" << std::endl;
+			<< range.start[2] << ") --> (" << range.end[0] << ", " << range.end[1] << ", "<< range.end[2] << ")" << std::endl;
 	std::cout << "-------------------------------" << std::endl;
 
 }
@@ -236,13 +236,21 @@ void getAdjustedRange(
 {
 	adjusted.dim = original.dim;
 
-	for (int i = 0; i < original.dim; i++)
+	for (int i = 0; i < 3; i++)
 	{
-		adjusted.end[i] = original.end[i] + d_p[i];
-		adjusted.start[i] = original.start[i] - d_m[i];
+		if (i < original.dim)
+		{
+			adjusted.end[i] = original.end[i] + d_p[i];
+			adjusted.start[i] = original.start[i] - d_m[i];
 
-		assert((adjusted.end[i]) <= gridProp.actual_size[i]);
-		assert((adjusted.start[i]) >= 0);
+			assert((adjusted.end[i]) <= gridProp.actual_size[i]);
+			assert((adjusted.start[i]) >= 0);
+		}
+		else
+		{
+			adjusted.end[i] = 1;
+			adjusted.start[i] = 0;
+		}
 	}
 }
 

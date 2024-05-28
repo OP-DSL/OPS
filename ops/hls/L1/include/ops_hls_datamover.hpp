@@ -1311,7 +1311,7 @@ void axis2streamMasked(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
  * @param n_pkts : number_of axis pkts need
  */
 template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>
-void getNumStreamPkts(const AccessRange& range, unsigned int n_pkts)
+void getNumStreamPkts(const AccessRange& range, unsigned int& n_pkts)
 {
 	constexpr unsigned short data_vector_factor = MEM_DATA_WIDTH / DATA_WIDTH;
 	constexpr unsigned short num_pkts_per_mem_beat = MEM_DATA_WIDTH/AXIS_DATA_WIDTH;
@@ -1321,8 +1321,16 @@ void getNumStreamPkts(const AccessRange& range, unsigned int n_pkts)
 	unsigned short end_x = (range.end[0] + data_vector_factor - 1) >> ShiftBits;
 	unsigned short num_xblocks = end_x - start_x;
 	unsigned short num_xpkts = num_xblocks * num_pkts_per_mem_beat;
+
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| range: (%d, %d, %d) -> (%d, %d, %d)\n"
+			, __func__, range.start[0], range.start[1], range.start[2], range.end[0], range.end[1], range.end[2]);
+#endif
 	unsigned short diff_y = range.end[1] - range.start[1];
 	unsigned short diff_z = range.end[2] - range.start[2];
+
+//	printf("|HLS DEBUG_LOG|%s| num_xpkts: %d, diff_y: %d, diff_z: %d \n"
+//			, __func__, num_xpkts, diff_y, diff_z);
 
 	n_pkts = num_xpkts * diff_y * diff_z;
 }
