@@ -1212,46 +1212,46 @@ void ops_update_pencil(ops_dat dat, int *range){
                 strcmp(dat->type, "real(4)") == 0 ||
                 strcmp(dat->type, "real(kind=4)") == 0)
         {
-          ops_broadcast_pencil_float(dat, arg->acc);
+          ops_broadcast_pencil_float(dat, source_rank, i);
         }
         else if (strcmp(dat->type, "double") == 0 ||
                 strcmp(dat->type, "real(8)") == 0 ||
                 strcmp(dat->type, "real(kind=8)") == 0 ||
                 strcmp(dat->type, "double precision") == 0)
         {
-          ops_broadcast_pencil_double(dat, arg->acc);
+          ops_broadcast_pencil_double(dat, source_rank, i);
         }
         else if (strcmp(dat->type, "char") == 0)
         {
-          ops_broadcast_pencil_char(dat, arg->acc);
+          ops_broadcast_pencil_char(dat, source_rank, i);
         }
         else if (strcmp(dat->type, "short") == 0)
         {
-          ops_broadcast_pencil_short(dat, arg->acc);
+          ops_broadcast_pencil_short(dat, source_rank, i);
         }
         else if (strcmp(dat->type, "long") == 0)
         {
-          ops_broadcast_pencil_long(dat, arg->acc);
+          ops_broadcast_pencil_long(dat, source_rank, i);
         }
         else if (strcmp(dat->type, "long long") == 0 ||
                 strcmp(dat->type, "ll") == 0)
         {
-          ops_broadcast_pencil_ll(dat, arg->acc);
+          ops_broadcast_pencil_ll(dat, source_rank, i);
         }
         else if (strcmp(dat->type, "unsigned long long") == 0 ||
                 strcmp(dat->type, "ull") == 0)
         {
-          ops_broadcast_pencil_ull(dat, arg->acc);
+          ops_broadcast_pencil_ull(dat, source_rank, i);
         }
         else if (strcmp(dat->type, "unsigned long") == 0 ||
                 strcmp(dat->type, "ul") == 0)
         {
-          ops_broadcast_pencil_ul(dat, arg->acc);
+          ops_broadcast_pencil_ul(dat, source_rank, i);
         }
         else if (strcmp(dat->type, "unsigned int") == 0 ||
                 strcmp(dat->type, "uint") == 0)
         {
-          ops_broadcast_pencil_uint(dat, arg->acc);
+          ops_broadcast_pencil_uint(dat, source_rank, i);
         }
         else
         {
