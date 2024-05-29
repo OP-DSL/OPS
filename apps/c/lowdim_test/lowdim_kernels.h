@@ -53,7 +53,7 @@ void set3D(ACC<double> &dat,  const int* sizes, const int *idx)
     dat(0,0,0) = shifted_idx[0] + shifted_idx[1]*sizes[0] + shifted_idx[2]*sizes[0]*sizes[1];
 }
 
-void check2D_XY_max(ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
+void check2D_XY_max(const ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[2]= {idx[0] + sizes[0]/3, idx[1] + sizes[1]/3};
@@ -66,7 +66,7 @@ void check2D_XY_max(ACC<double> &dat2D, const int* sizes, const int *idx, int *e
     }
 }
 
-void check2D_XZ_max(ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
+void check2D_XZ_max(const ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[3] = {idx[0] + sizes[0]/3, idx[1] + sizes[1]/3, idx[2] + sizes[2]/3};
@@ -81,7 +81,7 @@ void check2D_XZ_max(ACC<double> &dat2D, const int* sizes, const int *idx, int *e
     }
 }
 
-void check2D_YZ_max(ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
+void check2D_YZ_max(const ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[3] = {idx[0] + sizes[0]/3, idx[1] + sizes[1]/3, idx[2] + sizes[2]/3};
@@ -98,7 +98,7 @@ void check2D_YZ_max(ACC<double> &dat2D, const int* sizes, const int *idx, int *e
 
 
 
-void check2D_XY_min(ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
+void check2D_XY_min(const ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[3] = {idx[0] + sizes[0]/3, idx[1] + sizes[1]/3, idx[2] + sizes[2]/3};
@@ -112,7 +112,7 @@ void check2D_XY_min(ACC<double> &dat2D, const int* sizes, const int *idx, int *e
     }
 }
 
-void check2D_XZ_min(ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
+void check2D_XZ_min(const ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[3] = {idx[0] + sizes[0]/3, idx[1] + sizes[1]/3, idx[2] + sizes[2]/3};
@@ -127,7 +127,7 @@ void check2D_XZ_min(ACC<double> &dat2D, const int* sizes, const int *idx, int *e
     }
 }
 
-void check2D_YZ_min(ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
+void check2D_YZ_min(const ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[3] = {idx[0] + sizes[0]/3, idx[1] + sizes[1]/3, idx[2] + sizes[2]/3};
@@ -144,7 +144,7 @@ void check2D_YZ_min(ACC<double> &dat2D, const int* sizes, const int *idx, int *e
 
 
 
-void check2D_XY_inc(ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
+void check2D_XY_inc(const ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[2]= {idx[0] + sizes[0]/3, idx[1] + sizes[1]/3};
@@ -159,7 +159,7 @@ void check2D_XY_inc(ACC<double> &dat2D, const int* sizes, const int *idx, int *e
     }
 }
 
-void check2D_XZ_inc(ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
+void check2D_XZ_inc(const ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[2]= {idx[0] + sizes[0]/3, idx[2] + sizes[2]/3};
@@ -174,7 +174,7 @@ void check2D_XZ_inc(ACC<double> &dat2D, const int* sizes, const int *idx, int *e
     }
 }
 
-void check2D_YZ_inc(ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
+void check2D_YZ_inc(const ACC<double> &dat2D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[2]= {idx[1] + sizes[1]/3, idx[2] + sizes[2]/3};
@@ -190,7 +190,7 @@ void check2D_YZ_inc(ACC<double> &dat2D, const int* sizes, const int *idx, int *e
 }
 
 
-void check1D_X_max(ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
+void check1D_X_max(const ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[3] = {idx[0] + sizes[0]/3, idx[1] + sizes[1]/3, idx[2] + sizes[2]/3};
@@ -205,7 +205,7 @@ void check1D_X_max(ACC<double> &dat1D, const int* sizes, const int *idx, int *er
     }
 }
 
-void check1D_Y_max(ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
+void check1D_Y_max(const ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[3] = {idx[0] + sizes[0]/3, idx[1] + sizes[1]/3, idx[2] + sizes[2]/3};
@@ -220,7 +220,7 @@ void check1D_Y_max(ACC<double> &dat1D, const int* sizes, const int *idx, int *er
 }
 
 
-void check1D_Z_max(ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
+void check1D_Z_max(const ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[3] = {idx[0] + sizes[0]/3, idx[1] + sizes[1]/3, idx[2] + sizes[2]/3};
@@ -236,7 +236,7 @@ void check1D_Z_max(ACC<double> &dat1D, const int* sizes, const int *idx, int *er
 
 
 
-void check1D_X_min(ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
+void check1D_X_min(const ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[3] = {idx[0] + sizes[0]/3, idx[1] + sizes[1]/3, idx[2] + sizes[2]/3};
@@ -250,7 +250,7 @@ void check1D_X_min(ACC<double> &dat1D, const int* sizes, const int *idx, int *er
     }
 }
 
-void check1D_Y_min(ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
+void check1D_Y_min(const ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[3] = {idx[0] + sizes[0]/3, idx[1] + sizes[1]/3, idx[2] + sizes[2]/3};
@@ -265,7 +265,7 @@ void check1D_Y_min(ACC<double> &dat1D, const int* sizes, const int *idx, int *er
 }
 
 
-void check1D_Z_min(ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
+void check1D_Z_min(const ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[3] = {idx[0] + sizes[0]/3, idx[1] + sizes[1]/3, idx[2] + sizes[2]/3};
@@ -281,7 +281,7 @@ void check1D_Z_min(ACC<double> &dat1D, const int* sizes, const int *idx, int *er
 
 
 
-void check1D_X_inc(ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
+void check1D_X_inc(const ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[3] = {idx[0] + sizes[0]/3, idx[1] + sizes[1]/3, idx[2] + sizes[2]/3};
@@ -298,7 +298,7 @@ void check1D_X_inc(ACC<double> &dat1D, const int* sizes, const int *idx, int *er
     }
 }
 
-void check1D_Y_inc(ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
+void check1D_Y_inc(const ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[3] = {idx[0] + sizes[0]/3, idx[1] + sizes[1]/3, idx[2] + sizes[2]/3};
@@ -317,7 +317,7 @@ void check1D_Y_inc(ACC<double> &dat1D, const int* sizes, const int *idx, int *er
 }
 
 
-void check1D_Z_inc(ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
+void check1D_Z_inc(const ACC<double> &dat1D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 0;
     int shifted_idx[3] = {idx[0] + sizes[0]/3, idx[1] + sizes[1]/3, idx[2] + sizes[2]/3};
@@ -378,7 +378,7 @@ void calc(ACC<double> &dat3D, const ACC<double> &dat2D_xy,  const ACC<double> &d
 }
 
 
-void check_3D(ACC<double> &dat3D, const int* sizes, const int *idx, int *error_count)
+void check_3D(const ACC<double> &dat3D, const int* sizes, const int *idx, int *error_count)
 {
     double expectedValue = 1.0*(idx[0]*sizes[1]+idx[1]) +
                            100.0*(idx[1]*sizes[2]+idx[2]) +
