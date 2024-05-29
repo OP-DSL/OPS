@@ -90,8 +90,6 @@ void check2D_YZ_max(ACC<double> &dat2D, const int* sizes, const int *idx, int *e
     shifted_idx[2] %= sizes[2];
     expectedValue = shifted_idx[2]*sizes[0]*sizes[1] + shifted_idx[1]*sizes[0] + (sizes[0]-1);
 
-//    printf("idx: %d %d %d, shifted_idx: %d %d %d, expectedValue: %f, dat2D(0,0,0): %f\n", idx[0], idx[1], idx[2], shifted_idx[0], shifted_idx[1], shifted_idx[2], expectedValue, dat2D(0,0,0));
-
     if (dat2D(0,0,0) != expectedValue) {
         *error_count += 1;
     }
@@ -137,8 +135,6 @@ void check2D_YZ_min(ACC<double> &dat2D, const int* sizes, const int *idx, int *e
     shifted_idx[1] %= sizes[1];
     shifted_idx[2] %= sizes[2];
     expectedValue = shifted_idx[2]*sizes[0]*sizes[1] + shifted_idx[1]*sizes[0] + (0);
-
-//    printf("idx: %d %d %d, shifted_idx: %d %d %d, expectedValue: %f, dat2D(0,0,0): %f\n", idx[0], idx[1], idx[2], shifted_idx[0], shifted_idx[1], shifted_idx[2], expectedValue, dat2D(0,0,0));
 
     if (dat2D(0,0,0) != expectedValue) {
         *error_count += 1;
@@ -188,7 +184,6 @@ void check2D_YZ_inc(ACC<double> &dat2D, const int* sizes, const int *idx, int *e
     int end_value= start_value+(sizes[2]-1);
     expectedValue = (sizes[0]/2)*(start_value+end_value);
 
-    //printf("expectedValue: %f, dat2D(0,0,0): %f\n", expectedValue, dat2D(0,0,0));
     if (dat2D(0,0,0) != expectedValue) {
         *error_count += 1;
     }
@@ -219,8 +214,6 @@ void check1D_Y_max(ACC<double> &dat1D, const int* sizes, const int *idx, int *er
     shifted_idx[2] %= sizes[2];
     expectedValue = sizes[1]*sizes[2]*(sizes[0]-1) + sizes[1]*(shifted_idx[1]) + sizes[2]-1;
 
-    //printf("idx: %d %d %d, shifted_idx: %d %d %d, expectedValue: %f, dat1D(0,0,0): %f\n", idx[0], idx[1], idx[2], shifted_idx[0], shifted_idx[1], shifted_idx[2], expectedValue, dat1D(0,0,0));
-
     if (dat1D(0,0,0) != expectedValue) {
         *error_count += 1;
     }
@@ -235,8 +228,6 @@ void check1D_Z_max(ACC<double> &dat1D, const int* sizes, const int *idx, int *er
     shifted_idx[1] %= sizes[1];
     shifted_idx[2] %= sizes[2];
     expectedValue = sizes[0]*sizes[1]*(shifted_idx[2]+1)-1;
-
-    //printf("idx: %d %d %d, shifted_idx: %d %d %d, expectedValue: %f, dat1D(0,0,0): %f\n", idx[0], idx[1], idx[2], shifted_idx[0], shifted_idx[1], shifted_idx[2], expectedValue, dat1D(0,0,0));
 
     if (dat1D(0,0,0) != expectedValue) {
         *error_count += 1;
@@ -268,8 +259,6 @@ void check1D_Y_min(ACC<double> &dat1D, const int* sizes, const int *idx, int *er
     shifted_idx[2] %= sizes[2];
     expectedValue = sizes[1]*shifted_idx[1];
 
-    //printf("idx: %d %d %d, shifted_idx: %d %d %d, expectedValue: %f, dat1D(0,0,0): %f\n", idx[0], idx[1], idx[2], shifted_idx[0], shifted_idx[1], shifted_idx[2], expectedValue, dat1D(0,0,0));
-
     if (dat1D(0,0,0) != expectedValue) {
         *error_count += 1;
     }
@@ -284,8 +273,6 @@ void check1D_Z_min(ACC<double> &dat1D, const int* sizes, const int *idx, int *er
     shifted_idx[1] %= sizes[1];
     shifted_idx[2] %= sizes[2];
     expectedValue = sizes[0]*sizes[1]*shifted_idx[2];
-
-//    printf("idx: %d %d %d, shifted_idx: %d %d %d, expectedValue: %f, dat1D(0,0,0): %f\n", idx[0], idx[1], idx[2], shifted_idx[0], shifted_idx[1], shifted_idx[2], expectedValue, dat1D(0,0,0));
 
     if (dat1D(0,0,0) != expectedValue) {
         *error_count += 1;
@@ -324,8 +311,6 @@ void check1D_Y_inc(ACC<double> &dat1D, const int* sizes, const int *idx, int *er
     double hundreds_sum=(0+(sizes[1]-1))*sizes[1]/2*sizes[0]*sizes[1]*sizes[2];
     expectedValue = within_sum*sizes[2]+hundreds_sum;
     
-    //printf("idx: %d %d %d, shifted_idx: %d %d %d, expectedValue: %f, dat1D(0,0,0): %f\n", idx[0], idx[1], idx[2], shifted_idx[0], shifted_idx[1], shifted_idx[2], expectedValue, dat1D(0,0,0));
-
     if (dat1D(0,0,0) != expectedValue) {
         *error_count += 1;
     }
@@ -343,8 +328,6 @@ void check1D_Z_inc(ACC<double> &dat1D, const int* sizes, const int *idx, int *er
     double first = sizes[1]*sizes[2]*shifted_idx[2];
     double last = first+sizes[0]*sizes[1]-1;
     expectedValue = (first+last)*sizes[0]*sizes[1]/2;
-
-    //printf("idx: %d %d %d, shifted_idx: %d %d %d, expectedValue: %f, dat1D(0,0,0): %f\n", idx[0], idx[1], idx[2], shifted_idx[0], shifted_idx[1], shifted_idx[2], expectedValue, dat1D(0,0,0));
     
     if (dat1D(0,0,0) != expectedValue) {
         *error_count += 1;
@@ -406,7 +389,6 @@ void check_3D(ACC<double> &dat3D, const int* sizes, const int *idx, int *error_c
     
     if (dat3D(0,0,0) != expectedValue) {
         *error_count += 1;
-        //printf("expectedValue: %f, dat3D(0,0,0): %f\n", expectedValue, dat3D(0,0,0));
     }
 }
 
