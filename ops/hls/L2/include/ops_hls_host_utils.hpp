@@ -423,6 +423,33 @@ void printGrid2D(T* p_grid, ops::hls::GridPropertyCoreV2& gridProperty, std::str
 	}
 }
 
+template<typename T>
+#ifndef OPS_HLS_V2
+void printGrid3D(T* p_grid, ops::hls::GridPropertyCore& gridProperty, std::string prompt="")
+#else
+void printGrid3D(T* p_grid, ops::hls::GridPropertyCoreV2& gridProperty, std::string prompt="")
+#endif
+{
+	std::cout << "----------------------------------------------" << std::endl;
+	std::cout << " [DEBUG] grid values: " << prompt << std::endl;
+	std::cout << "----------------------------------------------" << std::endl;
+
+	for (int k = 0; k < gridProperty.grid_size[2]; k++)
+	{
+		std::cout << "----------- plane: " << k <<"----------" << std::endl;
+
+		for (int j = 0; j < gridProperty.grid_size[1]; j++)
+		{
+			for (int i = 0; i < gridProperty.grid_size[0]; i++)
+			{
+				int index = i + j * gridProperty.grid_size[0] + k * gridProperty.grid_size[0] * gridProperty.grid_size[1];
+				std::cout << std::setw(12) << p_grid[index];
+			}
+			std::cout << std::endl;
+		}
+	}
+}
+
 
 #ifndef OPS_HLS_V2
 void opsRange2hlsRange(int dim, int* ops_range, ops::hls::AccessRange& range, ops::hls::GridPropertyCore& p_grid)
