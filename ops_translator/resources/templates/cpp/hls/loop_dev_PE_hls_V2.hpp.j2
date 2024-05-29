@@ -10,12 +10,12 @@ arg{{arg.id}}_{{suffix}}_buffer
 
 {%- macro buffer_read_idx(buffer) -%}
     {%- if buffer.buffer_type == ops.BufferType.LINE_BUFF -%}
-{{buffer.name}}_i_l_rd {%- else -%}{{buffer.name}}_i_p_rd {%- endif -%}
+{{buffer.name}}_rd {%- else -%}{{buffer.name}}_rd {%- endif -%}
 {%- endmacro -%}
 
 {%- macro buffer_write_idx(buffer) -%}
     {%- if buffer.buffer_type == ops.BufferType.LINE_BUFF -%}
-{{buffer.name}}_i_l_wr {%- else -%}{{buffer.name}}_i_p_wr {%- endif -%}
+{{buffer.name}}_wr {%- else -%}{{buffer.name}}_wr {%- endif -%}
 {%- endmacro -%}
 
 {%- macro chainLinkTranform(link, arg, isread) -%}
@@ -179,10 +179,20 @@ public:
         unsigned short {{stencil_name}}_{{buffer_read_idx(buffer)}} = {{(buffer.read_point.x - buffer.write_point.x, 0)|max}};
         unsigned short {{stencil_name}}_{{buffer_write_idx(buffer)}} = {{(buffer.write_point.x - buffer.read_point.x, 0)|max}};
             {% else %}
-        unsigned short {{stencil_name}}_{{buffer_read_idx(buffer)}} = {{(buffer.read_point - buffer.write_point).y}} * stencilConfig.grid_size[0] + {{(buffer.read_point - buffer.write_point).x}} > 0? 
-                {{(buffer.read_point - buffer.write_point).y}} * stencilConfig.grid_size[0] + {{(buffer.read_point - buffer.write_point).x}} : 0;
-        unsigned short {{stencil_name}}_{{buffer_write_idx(buffer)}} = {{(buffer.write_point - buffer.read_point).y}} * stencilConfig.grid_size[0] + {{(buffer.write_point - buffer.read_point).x}} > 0?
-                {{(buffer.write_point - buffer.read_point).y}} * stencilConfig.grid_size[0] + {{(buffer.write_point - buffer.read_point).x}} : 0;
+
+        unsigned short {{stencil_name}}_{{buffer_read_idx(buffer)}};
+        
+        if ({{(buffer.read_point - buffer.write_point).y}} * stencilConfig.grid_size[0] + {{(buffer.read_point - buffer.write_point).x}} > 0)
+            {{stencil_name}}_{{buffer_read_idx(buffer)}} = {{(buffer.read_point - buffer.write_point).y}} * stencilConfig.grid_size[0] + {{(buffer.read_point - buffer.write_point).x}};
+        else
+            {{stencil_name}}_{{buffer_read_idx(buffer)}} = 0;
+
+        unsigned short {{stencil_name}}_{{buffer_write_idx(buffer)}};
+        
+        if ({{(buffer.write_point - buffer.read_point).y}} * stencilConfig.grid_size[0] + {{(buffer.write_point - buffer.read_point).x}} > 0)
+            {{stencil_name}}_{{buffer_write_idx(buffer)}} = {{(buffer.write_point - buffer.read_point).y}} * stencilConfig.grid_size[0] + {{(buffer.write_point - buffer.read_point).x}};
+        else
+            {{stencil_name}}_{{buffer_write_idx(buffer)}} = 0;
             {% endif %}
         {% endfor %}
     {% endfor %}
@@ -265,8 +275,8 @@ public:
     {% endif %}
     {% for stencil_name in lh.get_unique_read_stencil_names() %}
         {% for buffer in prog.findStencil(stencil_name).window_buffers %}
-                    "{{stencil_name}}_{{buffer_read_idx(buffer)}}(%d), "\
-                    "{{stencil_name}}_{{buffer_write_idx(buffer)}}(%d), "\
+                    "{{stencil_name}}_{{buffer_read_idx(buffer)}}: %d, "\
+                    "{{stencil_name}}_{{buffer_write_idx(buffer)}}: %d, "\
         {% endfor %}
     {% endfor %}
                     "itr(%d)\n", i, 
@@ -277,9 +287,9 @@ public:
                     k,
     {% endif %}
     {% for stencil_name in lh.get_unique_read_stencil_names() %}
-        {% for buffer in lh.get_read_stencil(prog).window_buffers %}
-                    {{stencil_name}}_{{buffer_read_idx(buffer)}},
-                    {{stencil_name}}_{{buffer_write_idx(buffer)}},
+        {% for buffer in prog.findStencil(stencil_name).window_buffers %}
+                    {{stencil_name}}_{{buffer_read_idx(buffer)}}, 
+                    {{stencil_name}}_{{buffer_write_idx(buffer)}}, 
         {% endfor %}
     {% endfor %}
                     itr);
@@ -360,9 +370,9 @@ public:
                                 k,
                 {% endif %}
                 {% for stencil_name in lh.get_unique_read_stencil_names() %}
-                    {% for buffer in lh.get_read_stencil(prog).window_buffers %}
-                                {{stencil_name}}_{{buffer_read_idx(buffer)}},
-                                {{stencil_name}}_{{buffer_write_idx(buffer)}},
+                    {% for buffer in prog.findStencil(stencil_name).window_buffers %}
+                                {{stencil_name}}_{{buffer_read_idx(buffer)}}, 
+                                {{stencil_name}}_{{buffer_write_idx(buffer)}}, 
                     {% endfor %}
                 {% endfor %}
                                 itr);
