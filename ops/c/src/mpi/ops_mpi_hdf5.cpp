@@ -313,28 +313,10 @@ void copy_data_buf(const ops_dat &dat, const int *local_range,
   int myrank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-//  if (ndim == 3){
-//    printf("eeeee ");
-//    for (int i = 0; i < dat->mem/sizeof(double); i++){
-//      if (myrank==0) printf("n%f ",((double*)(dat->data))[i]);
-//      if (myrank==1) printf("e%f ",((double*)(dat->data))[i]);
-//    }
-//    printf("\n");
-  //}
-
-
   fetch_loop_slab(local_buf, dat->data, local_buf_size, dat->size, d_m,
                     dat->elem_size, dat->dim, range_max_dim);
   dat->dirty_hd = 1;
 
-  //  if (ndim == 3){
-//    printf("eeuuu ");
-//    for (int i = 0; i < dat->mem/sizeof(double); i++){
-//      if (myrank==0) printf("n%f ",((double*)(local_buf))[i]);
-//      if (myrank==1) printf("e%f ",((double*)(local_buf))[i]);
-//    }
-//    printf("\n");
-  //}
 }
 
 /*******************************************************************************
@@ -669,15 +651,14 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       range[2 * d + 1] = g_size[d] + g_d_p[d];
     }
     determine_local_range(dat, range, local_range);
-    //if dim = erre gyenge, akkor local range=0,1
+
     for (int d = 0; d < block->dims; d++) {
       if (dat->size[d] == 1) {
         local_range[2 * d] = 0;
         local_range[2 * d + 1] = 1;
       }
     }
-    //printf("my_rank %d, local_range = %d %d %d %d %d %d\n", my_rank, local_range[0], local_range[1],
-    //       local_range[2], local_range[3], local_range[4], local_range[5]);
+
     copy_data_buf(dat, local_range, data);
     delete[] range;
     delete[] local_range;
