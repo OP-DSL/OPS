@@ -5,6 +5,7 @@
 void ops_krnl_interior_init(ACC<float>& data, const int * idx, const float * angle_res_x, const float * angle_res_y, const float * angle_res_z)
 {
 	data(0,0,0) = sin((*angle_res_x) * idx[0]) * sin((*angle_res_y) * idx[1]) * sin((*angle_res_z) * idx[2]);
+//   data(0,0,0) = idx[0] + 5 * idx[1] + 5 * 5 * idx[2];
 }
 
 void ops_krnl_zero_init(ACC<float>& data)

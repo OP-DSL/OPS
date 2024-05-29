@@ -105,10 +105,8 @@ int heat3D_explicit(float * current, float *next, GridParameter gridData, std::v
         float coeff[] = {1 - 6 * calcParam[bat].K, calcParam[bat].K, calcParam[bat].K, 
                 calcParam[bat].K, calcParam[bat].K, calcParam[bat].K, calcParam[bat].K};
         int offset = bat * gridData.grid_size_x * gridData.grid_size_y * gridData.grid_size_z; 
-        float error = EPSILON + 1; //intially setting the error greater than the tolarance
-        unsigned int iter = 0;
 
-        while (iter < gridData.num_iter)
+        for (unsigned int iter = 0; iter < gridData.num_iter; iter=+2)
         {
             for (unsigned int k = 1; k < gridData.act_size_z - 1; k++)
             {
@@ -129,8 +127,17 @@ int heat3D_explicit(float * current, float *next, GridParameter gridData, std::v
                                 + coeff[1] * current[index_i_min_1] + coeff[2] * current[index_i_pls_1]
                                 + coeff[1] * current[index_j_min_1] + coeff[2] * current[index_j_pls_1]
                                 + coeff[1] * current[index_k_min_1] + coeff[2] * current[index_k_pls_1];
-
-                        error = fmax(error, fabs(next[index] - current[index]));
+#ifdef DEBUG_LOG
+                        printf("[VERIFICATION_INTERNAL]|%s| write_val - reg_0_0: %f \n", __func__, next[index]);
+                        printf("[VERIFICATION_INTERNAL]|%s| read_val - reg_1_0: %f \n", __func__, current[index_k_min_1]);
+                        printf("[VERIFICATION_INTERNAL]|%s| read_val - reg_1_1: %f \n", __func__, current[index_j_min_1]);
+                        printf("[VERIFICATION_INTERNAL]|%s| read_val - reg_1_2: %f \n", __func__, current[index_i_min_1]);
+                        printf("[VERIFICATION_INTERNAL]|%s| read_val - reg_1_3: %f \n", __func__, current[index]);
+                        printf("[VERIFICATION_INTERNAL]|%s| read_val - reg_1_4: %f \n", __func__, current[index_i_pls_1]);
+                        printf("[VERIFICATION_INTERNAL]|%s| read_val - reg_1_5: %f \n", __func__, current[index_j_pls_1]);
+                        printf("[VERIFICATION_INTERNAL]|%s| read_val - reg_1_6: %f \n", __func__, current[index_k_pls_1]);
+                        printf("[VERIFICATION_INTERNAL]|%s| index_val: (%d, %d, %d) \n", __func__, i, j, k);
+#endif
                     }
 
                     for (unsigned int i = 1; i < gridData.act_size_x - 1; i++)
@@ -149,81 +156,69 @@ int heat3D_explicit(float * current, float *next, GridParameter gridData, std::v
                                 + coeff[1] * next[index_j_min_1] + coeff[2] * next[index_j_pls_1]
                                 + coeff[1] * next[index_k_min_1] + coeff[2] * next[index_k_pls_1];
                         
-                        error = fmax(error, fabs(next[index] - current[index]));
                     }
                 }
             }
-            iter += 2;
-        }
-
-        if (iter < gridData.num_iter)
-        {
-            std::cout << "Exiting iteration: " << iter << " with max error in iteration: " 
-                    << error << " is less than tolarance: " << EPSILON << std::endl; 
-        }
-        else
-        {
-            std::cout << "Exiting iteration: " << iter << " with max error in iteration: " 
-                    << error << std::endl; 
         }
     }
 
     return 0;
 }
 
-void initialize_grid(float* grid, GridParameter gridData)
+void initialize_grid(float* grid, int size[2], int d_m[3], int d_p[3], int range[6], float& angle_res_x, float angle_res_y, float angle_res_z)
 {
-    float angle_res_x = 2 * M_PI / gridData.logical_size_x;
-    float angle_res_y = 2 * M_PI / gridData.logical_size_y;
-    float angle_res_z = 2 * M_PI / gridData.logical_size_z;
+    int grid_size_z = size[2] - d_m[2] + d_p[1];
+    int grid_size_y = size[1] - d_m[1] + d_p[1];
+#ifdef OPS_FPGA
+    int grid_size_x = ((size[0] - d_m[0] + d_p[0] + mem_vector_factor - 1) / mem_vector_factor) * mem_vector_factor;
+#else
+    int grid_size_x = size[0] - d_m[0] + d_p[0];
+#endif
+    int actual_size_x = size[0] - d_m[0] + d_p[0];
 
-    for (unsigned int bat = 0; bat < gridData.batch; bat++)
+    for (int k = range[4] - d_m[2]; k < range[5] - d_m[2]; k++)
     {
-        int offset = bat * gridData.grid_size_x * gridData.grid_size_y * gridData.grid_size_z;
+		for (int j = range[2] - d_m[1]; j < range[3] -d_m[1]; j++)
+		{
+			for (int i = range[0] - d_m[0]; i < range[1] - d_m[0]; i++)
+			{
+				int index = k * grid_size_x * grid_size_y
+						+ j * grid_size_x + i;
+				int idx[] = {i + d_m[0], j + d_m[1], k + d_m[2]};
 
-        for (unsigned int k = 0; k < gridData.act_size_z; k++)
-        {
-            for (unsigned int j = 0; j < gridData.act_size_y; j++)
-            {
-                for (unsigned int i = 0; i < gridData.act_size_x; i++)
+                if (i == 0 or j == 0 or k == 0 or i == actual_size_x - 1
+                        or j == grid_size_y - 1 or k == grid_size_z - 1)
                 {
-                    int index = offset + k * gridData.grid_size_x * gridData.grid_size_y 
-                            + j * gridData.grid_size_x + i;
-
-                    if (i == 0 or j == 0 or k == 0 or i == gridData.act_size_x - 1 
-                            or j == gridData.act_size_y - 1 or k == gridData.act_size_z - 1)
-                            {
-                                grid[index] = 0;
-                            }
-                    else
-                    {
-                        grid[index] = sin(angle_res_x * (i-1)) 
-                                * sin(angle_res_y * (j-1)) * sin(angle_res_z * (k-1));
-                    }
+                    grid[index] = 0;
                 }
-            }
-        }
-    }
+                else
+                {
+					grid[index] = sin(angle_res_x * (i-1))
+							* sin(angle_res_y * (j-1)) * sin(angle_res_z * (k-1));
+                    // grid[index] = idx[2] * size[0] * size[1]
+                    //         + idx[1] * size[0] + idx[0];
+                }
+
+			}
+		}
+	}
+
 }
 
 void copy_grid(float* grid_s, float* grid_d, GridParameter gridData)
 {
-    for (unsigned int bat = 0; bat < gridData.batch; bat++)
-    {
-        int offset = bat * gridData.grid_size_x * gridData.grid_size_y * gridData.grid_size_z;
+	for (unsigned int k = 0; k < gridData.act_size_z; k++)
+	{
+		for (unsigned int j = 0; j < gridData.act_size_y; j++)
+		{
+			 for (unsigned int  i = 0; i < gridData.act_size_x; i++)
+			 {
+				int index = k * gridData.grid_size_x * gridData.grid_size_y
+						+ j * gridData.grid_size_x + i;
 
-        for (unsigned int k = 0; k < gridData.act_size_z; k++)
-        {
-            for (unsigned int j = 0; j < gridData.act_size_y; j++)
-            {
-                 for (unsigned int  i = 0; i < gridData.act_size_x; i++)
-                 {
-                    int index = offset + k * gridData.grid_size_x * gridData.grid_size_y 
-                            + j * gridData.grid_size_x + i;
+				grid_d[index] = grid_s[index];
+			 }
+		}
+	}
 
-                    grid_d[index] = grid_s[index];
-                 }
-            }
-        }
-    }
 }

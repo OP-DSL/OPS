@@ -41,7 +41,7 @@
 #include <stdio.h>
 
 int imax, jmax, kmax;
-extern unsigned short mem_vector_factor;
+extern const unsigned short mem_vector_factor;
 // float pi  = 2.0 * asin(1.0);
 
 //Including main OPS header file, and setting 3D
@@ -66,11 +66,11 @@ int main(int argc, const char** argv)
     //Initialise the OPS library, passing runtime args, and setting diagnostics level to low (1)
     ops_init(argc, argv,1);
 
-    imax = 20;
-    jmax = 20;
-    kmax = 20;
+    imax = 5;
+    jmax = 5;
+    kmax = 5;
 
-    unsigned int iter_max = 100;
+    unsigned int iter_max = 2;
     unsigned int batches = 1;
 
     const char* pch;
@@ -145,7 +145,7 @@ int main(int argc, const char** argv)
     for (unsigned int bat = 0; bat < batches; bat++)
     {
         std::string name = std::string("batch_") + std::to_string(bat);
-        blocks[bat] = ops_decl_block(2, name.c_str());
+        blocks[bat] = ops_decl_block(3, name.c_str());
     }
 
     //defining stencils
@@ -198,7 +198,7 @@ int main(int argc, const char** argv)
     int left_plane_range[] = {-1,0, -1,gridData.logical_size_y+1, -1,gridData.logical_size_z+1};
     int right_plane_range[] = {gridData.logical_size_x,gridData.logical_size_x+1, -1,gridData.logical_size_y+1, -1,gridData.logical_size_z+1};
     int full_range[] = {-1,gridData.logical_size_x+1, -1,gridData.logical_size_y+1, -1,gridData.logical_size_z+1};
-    int interior_range[] =  {0,gridData.logical_size_x+1, 0,gridData.logical_size_y+1, 0,gridData.logical_size_z};
+    int interior_range[] =  {0,gridData.logical_size_x, 0,gridData.logical_size_y, 0,gridData.logical_size_z};
     ops_partition("");
 
     for (unsigned int bat = 0; bat < batches; bat++)
@@ -233,8 +233,8 @@ int main(int argc, const char** argv)
                 ops_arg_gbl(&angle_res_z, 1, "float", OPS_READ));
 
         ops_par_loop(ops_krnl_copy, "ops_copy_init", blocks[bat], 3, full_range,
-                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE),
-                ops_arg_dat(u2[bat], 3, stencil3D_1pt, "float", OPS_READ));
+                ops_arg_dat(u2[bat], 3, stencil3D_1pt, "float", OPS_WRITE),
+                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_READ));
 
 #ifdef PROFILE
         auto init_end_clk_point = std::chrono::high_resolution_clock::now();
@@ -245,7 +245,7 @@ int main(int argc, const char** argv)
         auto u_raw = (float*)ops_dat_get_raw_pointer(u[bat], 0, stencil3D_1pt, OPS_HOST);
         auto u2_raw = (float*)ops_dat_get_raw_pointer(u2[bat], 0, stencil3D_1pt, OPS_HOST);
 
-        initialize_grid(u_cpu[bat], gridData);
+        initialize_grid(u_cpu[bat], size, d_m, d_p, full_range, angle_res_x, angle_res_y, angle_res_z);
         copy_grid(u_cpu[bat], u2_cpu[bat], gridData);
         if(verify(u_raw, u_cpu[bat], size, d_m, d_p, full_range))
             std::cout << "[BATCH - " << bat << "] verification of u after initiation" << "[PASSED]" << std::endl;
