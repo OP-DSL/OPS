@@ -190,7 +190,6 @@ def parseIntLiteral(node: Cursor) -> Optional[int]:
         tokens = list(node.get_tokens())
         if len(tokens) == 1:
             value_str = tokens[0].spelling
-            print(value_str)
             return int(value_str)
     elif node.kind == CursorKind.UNARY_OPERATOR:
         operator = None
