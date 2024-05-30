@@ -79,7 +79,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_loopback(unsigned int
     {%- endfor -%}
 )
 {
-#pragma HLS DATAFLOW
+//#pragma HLS DATAFLOW
     {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is ops_read or arg is ops_rw %}
         ops::hls::axisLoopbackV2<mem_data_width, axis_data_width, data_width>( arg{{ilh.getArg(ilh.dat_swap_map[arg.dat_id]).id}}_axis_in, arg{{arg.id}}_axis_out, num_pkts);
