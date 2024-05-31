@@ -105,7 +105,10 @@ def main(argv=None) -> None:
     Type.set_formatter(lang.formatType)
 
     if len(args.target) == 0:
-        args.target = [[target_name] for target_name in target_names]
+        if not args.fpga:
+            args.target = [[target_name] for target_name in target_names]
+        else:
+            args.target = [["hls"]]
 
     try:
         app = parse(args, lang)
