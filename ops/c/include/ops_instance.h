@@ -328,7 +328,7 @@ class OPS_instance {
 	
 	//Tiling
 	int ops_enable_tiling;
-	int ops_cache_size;
+	double ops_cache_size;
 	int ops_tiling_mpidepth;
 	double ops_tiled_halo_exchange_time;
 	OPS_instance_tiling *tiling_instance;
