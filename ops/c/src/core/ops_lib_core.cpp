@@ -132,7 +132,7 @@ void _ops_set_args(OPS_instance *instance, const char *argv) {
   pch = strstr(argv, "OPS_CACHE_SIZE=");
   if (pch != NULL) {
     snprintf(temp, 64, "%s", pch);
-    instance->ops_cache_size = atoi(temp + 15);
+    instance->ops_cache_size = atof(temp + 15);
     if (instance->is_root()) instance->ostream() << "\n Cache size per process = " << instance->ops_cache_size << '\n';
   }
   pch = strstr(argv, "OPS_REALLOC=");
