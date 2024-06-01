@@ -110,6 +110,9 @@ typedef _Float16 half;
 typedef uint16_t half;
 #endif
 
+
+#include "ops_cuda_atomic.h"
+
 /*
  * * zero constants
  * */

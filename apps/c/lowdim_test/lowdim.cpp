@@ -161,7 +161,7 @@ int main(int argc, char **argv)
 
   checkError(error_count, "check2D_YZ_max");
 
-  ops_printf("OPS_MAX on 2D directions PASSED\n");
+  ops_printf("OPS_MAX on 2D directions OK\n");
 
   
   ops_printf("Check OPS_MIN on 2D directions...\n");
@@ -222,7 +222,7 @@ int main(int argc, char **argv)
 
   checkError(error_count, "check2D_YZ_min");
 
-  ops_printf("OPS_MIN on 2D directions PASSED\n");
+  ops_printf("OPS_MIN on 2D directions OK\n");
 
 
   
@@ -284,7 +284,7 @@ int main(int argc, char **argv)
 
   checkError(error_count, "check2D_YZ_inc");
 
-  ops_printf("OPS_INC on 2D directions PASSED\n");
+  ops_printf("OPS_INC on 2D directions OK\n");
 
 
 
@@ -349,7 +349,7 @@ int main(int argc, char **argv)
 
   checkError(error_count, "check1D_Z_max");
 
-  ops_printf("OPS_MAX on 1D directions PASSED\n");
+  ops_printf("OPS_MAX on 1D directions OK\n");
 
 
   ops_printf("Check OPS_MIN on 1D directions...\n");
@@ -411,7 +411,7 @@ int main(int argc, char **argv)
 
   checkError(error_count, "check1D_Z_min");
 
-  ops_printf("OPS_MIN on 1D directions PASSED\n");
+  ops_printf("OPS_MIN on 1D directions OK\n");
 
 
   ops_printf("Check OPS_INC on 1D directions...\n");
@@ -470,7 +470,7 @@ int main(int argc, char **argv)
 
   checkError(error_count, "check1D_Z_inc");
 
-  ops_printf("OPS_INC on 1D directions PASSED\n");
+  ops_printf("OPS_INC on 1D directions OK\n");
 
 
   ops_printf("Check reading from strided dats...\n");
@@ -554,7 +554,7 @@ ops_fetch_dat_hdf5_file(dat1D_Z, name0);
 ops_fetch_dat_hdf5_file(dat3D, name0);
 
 
-  ops_printf("PASSED\n");
+  ops_printf("All checks PASSED\n");
 
   ops_exit();
   return 0;
