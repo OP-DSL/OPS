@@ -1,8 +1,8 @@
 // ops_cuda_atomic.h
 #ifndef OPS_CUDA_ATOMIC_H
 #define OPS_CUDA_ATOMIC_H
-#ifdef __CUDA_ARCH__
 
+#if defined(__CUDA_ARCH__) && defined(__CUDACC__)
 __device__ half atomicMax(half* address, const half val)
 {
     unsigned short* address_as_us = (unsigned short*)address;
