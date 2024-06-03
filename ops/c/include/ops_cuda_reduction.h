@@ -254,10 +254,5 @@ __inline__ __device__ void ops_reduction_alt(volatile T *dat_g, T dat_l) {
     }
   }
 }
-
-
-
-
-
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_CUDA_REDUCTION_H */

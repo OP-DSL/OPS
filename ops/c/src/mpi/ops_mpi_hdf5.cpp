@@ -310,13 +310,9 @@ void copy_data_buf(const ops_dat &dat, const int *local_range,
   //     ops_my_global_rank,range_max_dim[0], range_max_dim[1], range_max_dim[2],
   //     range_max_dim[3],range_max_dim[4], range_max_dim[5]);
   
-  int myrank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
   fetch_loop_slab(local_buf, dat->data, local_buf_size, dat->size, d_m,
                     dat->elem_size, dat->dim, range_max_dim);
   dat->dirty_hd = 1;
-
 }
 
 /*******************************************************************************
