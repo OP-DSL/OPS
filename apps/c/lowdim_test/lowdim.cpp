@@ -475,11 +475,6 @@ int main(int argc, char **argv)
 
   ops_printf("Check reading from strided dats...\n");
 
-  //val= 0.0;
-  //ops_par_loop(set_val, "set_val", block, 3, range_3D,
-  //    ops_arg_dat(dat3D, 1, S3D_000, "double", OPS_WRITE),
-  //    ops_arg_gbl(&val, 1, "double", OPS_READ));
-
   val=1.0;
   ops_par_loop(set_valXY_idx, "set_valXY_idx", block, 3, range_2D_XY,
       ops_arg_dat(dat2D_XY, 1, S3D_000_STRID3D_XY, "double", OPS_WRITE),
@@ -519,8 +514,7 @@ int main(int argc, char **argv)
       ops_arg_gbl(&val, 1, "double", OPS_READ),
       ops_arg_idx());
 
-
-// Now access them with strided stencils
+  // Now access them with strided stencils
   ops_par_loop(calc, "calc", block, 3, range_3D,
       ops_arg_dat(dat3D, 1, S3D_000, "double", OPS_WRITE),
       ops_arg_dat(dat2D_XY, 1, S3D_000_STRID3D_XY, "double", OPS_READ),
@@ -541,17 +535,17 @@ int main(int argc, char **argv)
   checkError(error_count, "check_3D");
       
 
-ops_printf("Calc done\n");
-char name0[80];
-sprintf(name0, "OPS_INC_output.h5");
-ops_fetch_block_hdf5_file(block, name0);
-ops_fetch_dat_hdf5_file(dat2D_XZ, name0);
-ops_fetch_dat_hdf5_file(dat2D_XY, name0);
-ops_fetch_dat_hdf5_file(dat2D_YZ, name0);
-ops_fetch_dat_hdf5_file(dat1D_X, name0);
-ops_fetch_dat_hdf5_file(dat1D_Y, name0);
-ops_fetch_dat_hdf5_file(dat1D_Z, name0);
-ops_fetch_dat_hdf5_file(dat3D, name0);
+  ops_printf("Calc done\n");
+  char name0[80];
+  sprintf(name0, "output.h5");
+  ops_fetch_block_hdf5_file(block, name0);
+  ops_fetch_dat_hdf5_file(dat2D_XZ, name0);
+  ops_fetch_dat_hdf5_file(dat2D_XY, name0);
+  ops_fetch_dat_hdf5_file(dat2D_YZ, name0);
+  ops_fetch_dat_hdf5_file(dat1D_X, name0);
+  ops_fetch_dat_hdf5_file(dat1D_Y, name0);
+  ops_fetch_dat_hdf5_file(dat1D_Z, name0);
+  ops_fetch_dat_hdf5_file(dat3D, name0);
 
 
   ops_printf("All checks PASSED\n");
