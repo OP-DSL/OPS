@@ -471,4 +471,35 @@ void opsRange2hlsRange(int dim, int* ops_range, ops::hls::AccessRange& range, op
 //#endif
 }
 
+template<typename T>
+void ops_dat_fetch_data(ops::hls::Grid<T>& p_grid, int part, char* data)
+{
+	auto gridsize = p_grid.originalProperty.grid_size;
+	assert(data != nullptr);
+
+	for (unsigned short d = p_grid.originalProperty.dim; d < ops_max_dim; d++)
+	{
+		gridsize[d] = 1;
+	}
+
+	T* cast_data = (T*)data;
+	T* grid_host_data = (T*)p_grid.get_raw_pointer();
+
+	for (unsigned int k = 0; k < gridsize[2]; k++)
+	{
+		for (unsigned int j = 0; j < gridsize[1]; j++)
+		{
+			for (unsigned int i = 0; i < gridsize[0]; i++)
+			{
+				unsigned int index = i + j *gridsize[0]
+						+ k * gridsize[0] * gridsize[1];
+
+				grid_host_data[index] = cast_data[index];
+			}
+		}
+	}
+
+	p_grid.isHostBufDirty = true;
+	p_grid.isDevBufDirty = false;
+}
 
