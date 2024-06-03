@@ -205,29 +205,27 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
     {%- endfor -%}
     );
 
-    if ((outer_itr - 1) % 2 == 0)
-    {
-        datamover_outerloop_{{ilh.id}}_dataflow_region_write(range 
-        {%- for arg in ilh.joint_args|ops_dat -%}
-            {%- if arg is ops_write or arg is ops_rw -%}
-                ,{{"\n"}}        arg{{arg.id}}_gridSize 
-            {%- endif -%}
-        {%- endfor -%}
-        {%- for arg in ilh.joint_args|ops_dat -%}
-            {%- if arg is ops_write or arg is ops_rw -%}
-                ,{{"\n"}}        arg{{arg.id}} 
-            {%- endif -%}
-        {%- endfor -%}
-        {%- for arg in ilh.joint_args|ops_dat -%}
-            {%- if arg is ops_write -%}
-                ,{{"\n"}}        {{axis_name(arg)}}
-            {%- elif arg is  ops_rw -%}
-                ,{{"\n"}}        {{axis_name_t2(arg, "in")}}
-            {%- endif -%}
-        {%- endfor -%}
-        );
-    }
-    else
+    datamover_outerloop_{{ilh.id}}_dataflow_region_write(range 
+    {%- for arg in ilh.joint_args|ops_dat -%}
+        {%- if arg is ops_write or arg is ops_rw -%}
+            ,{{"\n"}}        arg{{arg.id}}_gridSize 
+        {%- endif -%}
+    {%- endfor -%}
+    {%- for arg in ilh.joint_args|ops_dat -%}
+        {%- if arg is ops_write or arg is ops_rw -%}
+            ,{{"\n"}}        arg{{arg.id}} 
+        {%- endif -%}
+    {%- endfor -%}
+    {%- for arg in ilh.joint_args|ops_dat -%}
+        {%- if arg is ops_write -%}
+            ,{{"\n"}}        {{axis_name(arg)}}
+        {%- elif arg is  ops_rw -%}
+            ,{{"\n"}}        {{axis_name_t2(arg, "in")}}
+        {%- endif -%}
+    {%- endfor -%}
+    );
+    
+    {#else
     {
         datamover_outerloop_{{ilh.id}}_dataflow_region_write(range 
         {%- for arg in ilh.joint_args|ops_dat -%}
@@ -248,7 +246,7 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
             {%- endif -%}
         {%- endfor -%}
         );    
-    }
+    }#}
 }
 
 
