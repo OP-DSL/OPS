@@ -304,8 +304,8 @@ int main(int argc, const char **argv)
 		for (int iter = 0 ; iter < calcParam[bat].N; iter++)
 		{
 			ops_par_loop(ops_krnl_blacksholes, "blacksholes_1", grid1D, 1, interior_range,
-					ops_arg_dat(dat_current[bat], 1, S1D_1pt, "float", OPS_WRITE),
-					ops_arg_dat(dat_next[bat], 1, S1D_3pt, "float", OPS_READ),
+					ops_arg_dat(dat_next[bat], 1, S1D_1pt, "float", OPS_WRITE),
+					ops_arg_dat(dat_current[bat], 1, S1D_3pt, "float", OPS_READ),
 					ops_arg_dat(dat_a[bat], 1, S1D_1pt, "float", OPS_READ),
 					ops_arg_dat(dat_b[bat], 1, S1D_1pt, "float", OPS_READ),
 					ops_arg_dat(dat_c[bat], 1, S1D_1pt, "float", OPS_READ));
@@ -313,8 +313,8 @@ int main(int argc, const char **argv)
 #else
         ops_iter_par_loop("ops_iter_par_loop_0", calcParam[bat].N,
 			ops_par_loop(ops_krnl_blacksholes, "blacksholes_1", grid1D, 1, interior_range,
-					ops_arg_dat(dat_current[bat], 1, S1D_1pt, "float", OPS_WRITE),
-					ops_arg_dat(dat_next[bat], 1, S1D_3pt, "float", OPS_READ),
+					ops_arg_dat(dat_next[bat], 1, S1D_1pt, "float", OPS_WRITE),
+					ops_arg_dat(dat_current[bat], 1, S1D_3pt, "float", OPS_READ),
 					ops_arg_dat(dat_a[bat], 1, S1D_1pt, "float", OPS_READ),
 					ops_arg_dat(dat_b[bat], 1, S1D_1pt, "float", OPS_READ),
 					ops_arg_dat(dat_c[bat], 1, S1D_1pt, "float", OPS_READ)),
