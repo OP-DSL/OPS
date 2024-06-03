@@ -1650,6 +1650,8 @@ int ops_stencil_check_5d(int arg_idx, int idx0, int idx1, int idx2, int idx3, in
 
 void ops_NaNcheck_core(ops_dat dat, char *buffer) {
 
+  ops_printf("ops_NaNcheck_core called for %s \n", dat->name);
+
   size_t prod[OPS_MAX_DIM+1];
   prod[0] = dat->size[0];
   for (int d = 1; d < OPS_MAX_DIM; d++) {
@@ -1707,7 +1709,7 @@ void ops_NaNcheck_core(ops_dat dat, char *buffer) {
                 {
                   if (  std::isnan(((double *)dat->data)[offset])  )
                   {
-                    printf("%sError: NaN detected at element %zu\n", buffer, offset);
+                    printf("%sError: NaN detected at element %zu, in dat %s\n", buffer, offset, dat->name);
                     exit(2);
                   }
                 }
@@ -1718,7 +1720,24 @@ void ops_NaNcheck_core(ops_dat dat, char *buffer) {
                 {
                   if (  std::isnan(((float *)dat->data)[offset])  )
                   {
-                    printf("%sError: NaN detected at element %zu\n", buffer, offset);
+                    printf("%sError: NaN detected at element %zu, in dat %s\n", buffer, offset, dat->name);
+                    exit(2);
+                  }
+                }
+                else if (strcmp(dat->type, "half") == 0 ||
+                        strcmp(dat->type, "_Float16") == 0 ||
+                        strcmp(dat->type, "real(2)") == 0 ||
+                        strcmp(dat->type, "real(kind=2)") == 0)
+                {
+                  uint16_t half_bits = ((uint16_t *)dat->data)[offset];
+                  if ( ((half_bits & 0x7C00) == 0x7C00) && ((half_bits & 0x03FF) != 0))
+                  {
+                    printf("%sError: NaN detected at element %zu, in dat %s\n", buffer, offset, dat->name);
+                    exit(2);
+                  }
+                  //if ((half_bits & 0x7C00) == 0x7C00 && (half_bits & 0x03FF) == 0){
+                  if ((half_bits & 0x7FFF) == 0x7C00){
+                    printf("%sError: Inf detected at element %zu, in dat %s\n", buffer, offset, dat->name);
                     exit(2);
                   }
                 }

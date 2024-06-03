@@ -97,9 +97,13 @@ typedef std::complex<float> complexf;
 #if (defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)) && !(defined(__HIP_PLATFORM_NVCC__) || defined(__HIP_PLATFORM_NVIDIA__))
 #include <hip/hip_fp16.h>
 #elif !(defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)) && (defined(__HIP_PLATFORM_NVCC__) || defined(__HIP_PLATFORM_NVIDIA__))
+#ifndef __HALF_DEFINED__
 #include <cuda_fp16.h>
+#endif
 #elif defined(__CUDA_ARCH__) || defined(__CUDACC__)
+#ifndef __HALF_DEFINED__
 #include <cuda_fp16.h>
+#endif
 typedef __half half;
 //#elif defined(__SYCL_DEVICE_ONLY__)
 #elif defined(__INTEL_SYCL__)

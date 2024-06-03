@@ -398,6 +398,7 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
 
         config.depth = 4
         IF("block->instance->OPS_diags > 1")
+        #code(f'ops_printf("kernel {name}\\n");')
         code(f'ops_timing_realloc(block->instance, {nk}, "{name}");')
         code(f"block->instance->OPS_kernels[{nk}].count++;")
         code("ops_timers_core(&__c1, &__t1);")
