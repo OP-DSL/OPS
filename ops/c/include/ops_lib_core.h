@@ -111,9 +111,6 @@ typedef _Float16 half;
 typedef uint16_t half;
 #endif
 
-
-#include "ops_cuda_atomic.h"
-
 /*
  * * zero constants
  * */
@@ -1357,7 +1354,7 @@ public:
   __host__ __device__
   void combine_max(int xoff,const T val){
     
-    #ifdef __CUDA_ARCH__
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMax(&operator()(xoff), val);
     #else
     #pragma omp critical
@@ -1370,7 +1367,7 @@ public:
   __host__ __device__
   void combine_min(int xoff,const T val){
     
-    #ifdef __CUDA_ARCH__
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMin(&operator()(xoff), val);
     #else
     #pragma omp critical
@@ -1383,7 +1380,7 @@ public:
   __host__ __device__
   void combine_inc(int xoff,const T val){
     
-    #ifdef __CUDA_ARCH__
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicAdd(&operator()(xoff), val);
     #else
     #pragma omp critical
@@ -1432,7 +1429,7 @@ public:
   __host__ __device__
   void combine_max(int xoff, int yoff,const T val){
 
-    #ifdef __CUDA_ARCH__
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMax(&operator()(xoff, yoff), val);
     #else
     #pragma omp critical
@@ -1445,7 +1442,7 @@ public:
   __host__ __device__
   void combine_min(int xoff, int yoff,const T val){
     
-    #ifdef __CUDA_ARCH__
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMin(&operator()(xoff, yoff), val);
     #else
     #pragma omp critical
@@ -1458,7 +1455,7 @@ public:
   __host__ __device__
   void combine_inc(int xoff, int yoff,const T val){
     
-    #ifdef __CUDA_ARCH__
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicAdd(&operator()(xoff, yoff), val);
     #else
     #pragma omp critical
@@ -1508,7 +1505,7 @@ public:
   __host__ __device__
   void combine_max(int xoff, int yoff, int zoff,const T val){
     
-    #ifdef __CUDA_ARCH__
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMax(&operator()(xoff, yoff, zoff), val);
     #else
     #pragma omp critical
@@ -1521,7 +1518,7 @@ public:
   __host__ __device__
   void combine_min(int xoff, int yoff, int zoff,const T val){
     
-    #ifdef __CUDA_ARCH__
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMin(&operator()(xoff, yoff, zoff), val);
     #else
     #pragma omp critical
@@ -1534,7 +1531,7 @@ public:
   __host__ __device__
   void combine_inc(int xoff, int yoff, int zoff,const T val){
     
-    #ifdef __CUDA_ARCH__
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicAdd(&operator()(xoff, yoff, zoff), val);
     #else
     #pragma omp critical
@@ -1584,7 +1581,7 @@ public:
   __host__ __device__
   void combine_max(int xoff, int yoff, int zoff, int uoff,const T val){
     
-    #ifdef __CUDA_ARCH__
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMax(&operator()(xoff, yoff, zoff, uoff), val);
     #else
     #pragma omp critical
@@ -1597,7 +1594,7 @@ public:
   __host__ __device__
   void combine_min(int xoff, int yoff, int zoff, int uoff,const T val){
     
-    #ifdef __CUDA_ARCH__
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMin(&operator()(xoff, yoff, zoff, uoff), val);
     #else
     #pragma omp critical
@@ -1610,7 +1607,7 @@ public:
   __host__ __device__
   void combine_inc(int xoff, int yoff, int zoff, int uoff,const T val){
     
-    #ifdef __CUDA_ARCH__
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicAdd(&operator()(xoff, yoff, zoff, uoff), val);
     #else
     #pragma omp critical
