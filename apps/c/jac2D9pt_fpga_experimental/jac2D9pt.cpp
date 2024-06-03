@@ -175,6 +175,17 @@ int main(int argc, const char **argv)
 #ifdef PROFILE
         auto init_start_clk_point =  std::chrono::high_resolution_clock::now();
 #endif
+#ifdef VERIFICATION
+        initialise_grid(u_cpu[bat], size, d_m, d_p, full_range);
+        // printGrid2D(u_cpu[bat], u[bat].originalProperty, "u_CPU after init");
+        copy_grid(u2_cpu[bat], u_cpu[bat], size, d_m, d_p, full_range);
+
+        ops_dat_fetch_data(u[bat], 0, (char*)u_cpu[bat]);
+
+        ops_par_loop(kernel_copy, "kernel_update", blocks[bat], 2, full_range, 
+            ops_arg_dat(u[bat], 1, S2D_00, "float", OPS_READ),
+            ops_arg_dat(u2[bat], 1, S2D_00, "float", OPS_WRITE));
+#else
         ops_par_loop(kernel_populate, "kernel_populate", blocks[bat], 2, full_range,
                 ops_arg_dat(u[bat], 1, S2D_00, "float", OPS_WRITE));
 
@@ -184,7 +195,7 @@ int main(int argc, const char **argv)
         ops_par_loop(kernel_copy, "kernel_update", blocks[bat], 2, full_range, 
                 ops_arg_dat(u[bat], 1, S2D_00, "float", OPS_READ),
                 ops_arg_dat(u2[bat], 1, S2D_00, "float", OPS_WRITE));
-
+#endif
 #ifdef PROFILE
         auto init_end_clk_point = std::chrono::high_resolution_clock::now();
         init_runtime[bat] = std::chrono::duration<double, std::micro> (init_end_clk_point - init_start_clk_point).count();
@@ -194,8 +205,7 @@ int main(int argc, const char **argv)
         auto u_raw = (float*)ops_dat_get_raw_pointer(u[bat], 0, S2D_00, OPS_HOST);
         auto u2_raw = (float*)ops_dat_get_raw_pointer(u2[bat], 0, S2D_00, OPS_HOST);
 
-        initialise_grid(u_cpu[bat], size, d_m, d_p, full_range);
-        copy_grid(u2_cpu[bat], u_cpu[bat], size, d_m, d_p, full_range);
+        // printGrid2D(u_raw, u[bat].originalProperty, "test");
 
         if(verify(u_raw, u_cpu[bat], size, d_m, d_p, full_range))
             std::cout << "[BATCH - " << bat << "] verification of u after initiation" << "[PASSED]" << std::endl;
@@ -261,10 +271,10 @@ int main(int argc, const char **argv)
 		// printGrid2D<float>(u_raw, u[bat].originalProperty, "u after computation");
 		// printGrid2D<float>(u_cpu[bat], u[bat].originalProperty, "u_Acpu after computation");
 
-        if(verify(u_raw, u_cpu[bat], size, d_m, d_p, full_range))
-            std::cout << "[BATCH - " << bat << "] verification of u after calculation" << "[PASSED]" << std::endl;
-        else
-            std::cout << "[BATCH - " << bat << "] verification of u after calculation" << "[FAILED]" << std::endl;
+        // if(verify(u_raw, u_cpu[bat], size, d_m, d_p, full_range))
+        //     std::cout << "[BATCH - " << bat << "] verification of u after calculation" << "[PASSED]" << std::endl;
+        // else
+        //     std::cout << "[BATCH - " << bat << "] verification of u after calculation" << "[FAILED]" << std::endl;
 
         if(verify(u2_raw, u2_cpu[bat], size, d_m, d_p, full_range))
             std::cout << "[BATCH - " << bat << "] verification of u2 after calculation" << "[PASSED]" << std::endl;

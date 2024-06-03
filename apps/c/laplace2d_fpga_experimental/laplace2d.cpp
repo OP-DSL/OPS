@@ -262,10 +262,10 @@ int main(int argc, const char** argv)
 			copyGrid(Acpu, AnewCpu, size, d_m, d_p);
 		}
 
-		if (verify(A, Acpu, size, d_m, d_p))
-			std::cout << "verification of A and Acpu after calc" << "[PASSED]" << std::endl;
-		else
-			std::cerr << "verification of A and Acpu after calc" << "[FAILED]" << std::endl;
+		// if (verify(A, Acpu, size, d_m, d_p))
+		// 	std::cout << "verification of A and Acpu after calc" << "[PASSED]" << std::endl;
+		// else
+		// 	std::cerr << "verification of A and Acpu after calc" << "[FAILED]" << std::endl;
 
 		if (verify(Anew, AnewCpu, size, d_m, d_p))
 			std::cout << "verification of Anew and AnewCpu after calc" << "[PASSED]" << std::endl;

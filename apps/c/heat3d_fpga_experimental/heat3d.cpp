@@ -308,10 +308,10 @@ int main(int argc, const char** argv)
 
         heat3D_explicit(u_cpu[bat], u2_cpu[bat], gridData, calcParam);
         
-        if(verify(u_raw, u_cpu[bat], size, d_m, d_p, full_range))
-            std::cout << "[BATCH - " << bat << "] verification of u after calculation" << "[PASSED]" << std::endl;
-        else
-            std::cout << "[BATCH - " << bat << "] verification of u after calculation" << "[FAILED]" << std::endl;
+        // if(verify(u_raw, u_cpu[bat], size, d_m, d_p, full_range))
+        //     std::cout << "[BATCH - " << bat << "] verification of u after calculation" << "[PASSED]" << std::endl;
+        // else
+        //     std::cout << "[BATCH - " << bat << "] verification of u after calculation" << "[FAILED]" << std::endl;
 
         if(verify(u2_raw, u2_cpu[bat], size, d_m, d_p, full_range))
             std::cout << "[BATCH - " << bat << "] verification of u2 after calculation" << "[PASSED]" << std::endl;

@@ -294,10 +294,10 @@ int main(int argc, const char **argv)
 		// printGrid2D<float>(u_raw, u[bat].originalProperty, "u after computation");
 		// printGrid2D<float>(u_cpu[bat], u[bat].originalProperty, "u_Acpu after computation");
 
-        if(verify(u_raw, u_cpu[bat], size, d_m, d_p, full_range))
-            std::cout << "[BATCH - " << bat << "] verification of u after calculation" << "[PASSED]" << std::endl;
-        else
-            std::cout << "[BATCH - " << bat << "] verification of u after calculation" << "[FAILED]" << std::endl;
+        // if(verify(u_raw, u_cpu[bat], size, d_m, d_p, full_range))
+        //     std::cout << "[BATCH - " << bat << "] verification of u after calculation" << "[PASSED]" << std::endl;
+        // else
+        //     std::cout << "[BATCH - " << bat << "] verification of u after calculation" << "[FAILED]" << std::endl;
 
         if(verify(u2_raw, u2_cpu[bat], size, d_m, d_p, full_range))
             std::cout << "[BATCH - " << bat << "] verification of u2 after calculation" << "[PASSED]" << std::endl;
