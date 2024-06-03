@@ -1110,7 +1110,9 @@ void ops_lowdim_reduction_##type (ops_dat dat, ops_access acc){ \
             } else if (acc == OPS_MIN){\
               MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_MIN, sb->pencils[i]);\
             } \
+            dat->dirty_hd = OPS_DEVICE;\
           } else {\
+            ops_get_data(dat);\
             if (acc == OPS_INC){\
               MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_SUM, sb->pencils[i]);\
             } else if (acc == OPS_MAX){\
@@ -1118,6 +1120,7 @@ void ops_lowdim_reduction_##type (ops_dat dat, ops_access acc){ \
             } else if (acc == OPS_MIN){\
               MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_MIN, sb->pencils[i]);\
             } \
+            dat->dirty_hd = OPS_HOST;\
           }\
       } \
     }\
