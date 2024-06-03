@@ -250,53 +250,8 @@ def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> No
         outerLoop = parseIterLoop(node, args, scope, macros, program)
         program.outerloops.append(outerLoop)
         
-   
-#Window buffer algo uses adjusted index, where base is (x_min, y_min, z_min)
-def windowBuffChainingAlgo(sorted_array: List[ops.Point], ndim: int) -> Tuple[List[str], List[Tuple[str, str]]]:
-    chains = []
-    unique_buffers = []
-    # chains.append(("rd_val", "axis_read"))
-    prev_buff = []
-    feeding_point = []
-    
-    for p_idx in range(len(sorted_array)):
-        if p_idx == len(sorted_array) - 1:
-            chains.append((p_idx, "read_val"))
-            if prev_buff:
-                chains.append((prev_buff.pop(), feeding_point.pop()))
-        elif ops.isInSameRow(sorted_array[p_idx], sorted_array[p_idx+1]):
-            chains.append((p_idx, p_idx+1))
-        else:
-            if sorted_array[p_idx+1].z == sorted_array[p_idx].z:
-                buffer_type = ops.BufferType.LINE_BUFF
-                curr_buff_name = "buf_r" + str(sorted_array[p_idx].y) + "_" + str(sorted_array[p_idx+1].y) + "_p" + str(sorted_array[p_idx].z)
-            else:
-                buffer_type = ops.BufferType.PLANE_BUFF
-                curr_buff_name = "buf_p" + str(sorted_array[p_idx].z) + "_" + str(sorted_array[p_idx+1].z)
-            curr_buff = ops.WindowBuffer(curr_buff_name, buffer_type, sorted_array[p_idx+1], sorted_array[p_idx])
-            unique_buffers.append(curr_buff)
-            chains.append((p_idx, curr_buff))
-            if prev_buff:
-                chains.append((prev_buff.pop(), feeding_point.pop()))
-            # print(p_idx)
-            feeding_point.append(p_idx+1)
-            prev_buff.append(curr_buff)
-
-    return (unique_buffers, chains)
-
-
-def findUniqueStencilRows(array: List[ops.Point])-> List[Tuple[int,int]]:
-    unique_rows = []
-    
-    for point in array:
-        row = (point.y, point.z)
-        if row not in unique_rows:
-            unique_rows.append(row)
-            
-    return unique_rows
         
-        
-def parseStencil(name: str, args: List[Cursor], loc: Location, macros: Dict[Location, str], program: Program) -> Union[ops.Stencil, None]:
+def parseStencil(name: str, args: List[Cursor], loc: Location, macros: Dict[Location, str], program: Program, vector_factor: int = 1) -> Union[ops.Stencil, None]:
     
     if len(args) != 4:
         return None
@@ -311,14 +266,19 @@ def parseStencil(name: str, args: List[Cursor], loc: Location, macros: Dict[Loca
     base_offset = -minPoint
     array = ops.cordinateOriginTranslation(base_offset, array)
     stencilSize = ops.getStencilSize(array)
-    windowBuffers, chains = windowBuffChainingAlgo(array, ndim)
-    unique_rows = findUniqueStencilRows(array)
+    row_discriptors = ops.genRowDiscriptors(array, base_offset)
+    # widen_array, point_to_widen_map = ops.computeWidenPoints(row_discriptors, vector_factor)
+    # widen_npoints = len(widen_array)
+    # windowBuffers, chains = ops.windowBuffChainingAlgo(widen_array, ndim)
+    
     
     logging.info("Stencil found name:%s ndim: %d, npoints: %d, array: %s", name, ndim, npoints, str(array))
-    logging.debug("Stencil found addition info: windowBuffers: %s", str(windowBuffers))
-    logging.debug("Stencil found addition info: chains: %s", str(chains), )
-    program.stencils.append(ops.Stencil(len(program.stencils), ndim, name, npoints, array, base_offset, stencilSize, windowBuffers, chains, d_m, d_p))   
-    logging.debug("Stencil found addition info: unique_rows: %s, row discriptors: %s", str(unique_rows), str(program.stencils[-1].row_discriptors))
+    # logging.debug("Stencil found addition info: windowBuffers: %s", str(windowBuffers))
+    # logging.debug("Stencil found addition info: chains: %s", str(chains) )
+    logging.debug("Stencil found addition info: row discriptors: %s", str(row_discriptors))
+    # logging.debug("Stencil found addition info: point to widen point map: %s", str(point_to_widen_map))
+    program.stencils.append(ops.Stencil(len(program.stencils), ndim, name, npoints, array, base_offset, stencilSize, d_m, d_p, row_discriptors))   
+
 
     
 def parseArrayIntLit(node: Cursor)->List[int]:

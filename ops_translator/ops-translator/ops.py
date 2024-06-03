@@ -209,7 +209,7 @@ class Point:
     
     def __init__(self, input: List[int]):
         if (len(input) > 3):
-            raise ValueError("ops.Point cannot be initialized more than 3 dim")
+            raise ValueError("Point cannot be initialized more than 3 dim")
         
         for i in range(len(input)):
             self[i] = input[i]
@@ -241,6 +241,9 @@ class Point:
     
     def __neg__(self)->Point:
         return Point([-self.x, -self.y, -self.z])
+    
+    def __hash__(self) -> int:
+        return hash(str(self.x) + "_" + str(self.y) + "_" + str(self.z))
 
 def pointsToArray(points: List[Point], ndim: int) -> List[int]:
     array = []
@@ -307,6 +310,85 @@ def cordinateOriginTranslation(origin: Point, array: List[Point]) -> List[Point]
         translated.append(Point([point.x + origin.x, point.y + origin.y, point.z + origin.z]))
     return translated
 
+#Window buffer algo uses adjusted index, where base is (x_min, y_min, z_min)
+def windowBuffChainingAlgo(sorted_array: List[Point], ndim: int) -> Tuple[List[str], List[Tuple[str, str]]]:
+    chains = []
+    unique_buffers = []
+    # chains.append(("rd_val", "axis_read"))
+    prev_buff = []
+    feeding_point = []
+    
+    for p_idx in range(len(sorted_array)):
+        if p_idx == len(sorted_array) - 1:
+            chains.append((p_idx, "read_val"))
+            if prev_buff:
+                chains.append((prev_buff.pop(), feeding_point.pop()))
+        elif isInSameRow(sorted_array[p_idx], sorted_array[p_idx+1]):
+            chains.append((p_idx, p_idx+1))
+        else:
+            if sorted_array[p_idx+1].z == sorted_array[p_idx].z:
+                buffer_type = BufferType.LINE_BUFF
+                curr_buff_name = "buf_r" + str(sorted_array[p_idx].y) + "_" + str(sorted_array[p_idx+1].y) + "_p" + str(sorted_array[p_idx].z)
+            else:
+                buffer_type = BufferType.PLANE_BUFF
+                curr_buff_name = "buf_p" + str(sorted_array[p_idx].z) + "_" + str(sorted_array[p_idx+1].z)
+            curr_buff = WindowBuffer(curr_buff_name, buffer_type, sorted_array[p_idx+1], sorted_array[p_idx])
+            unique_buffers.append(curr_buff)
+            chains.append((p_idx, curr_buff))
+            if prev_buff:
+                chains.append((prev_buff.pop(), feeding_point.pop()))
+            # print(p_idx)
+            feeding_point.append(p_idx+1)
+            prev_buff.append(curr_buff)
+
+    return (unique_buffers, chains)  
+
+def genRowDiscriptors(array: List[Point], base_point: Point = Point([0,0,0]))-> List[StencilRowDiscriptor]:
+    
+    row_discriptors = []
+    
+    for point in array:
+        if StencilRowDiscriptor((point.y, point.z)) in row_discriptors:
+            row_discriptors[row_discriptors.index(StencilRowDiscriptor((point.y, point.z)))].row_points.append(point)
+        else:
+            row_discriptors.append(StencilRowDiscriptor((point.y, point.z), base_point))
+            row_discriptors[-1].row_points.append(point)
+    
+    return row_discriptors
+     
+def  computeWidenPoints(row_discriptors: List[StencilRowDiscriptor], vector_factor: int):
+    widen_points = []
+    init_point_to_widen_point_map = {}
+    point_to_widen_point_map = {}
+    
+    for row in row_discriptors:
+        base_point = row.base_point
+        
+        for point in row.row_points:
+            
+            if point.x - base_point.x < 0:
+                widen_x = int((point.x - base_point.x - vector_factor + 1) / vector_factor)
+            else: 
+                widen_x = int((point.x - base_point.x + vector_factor - 1) / vector_factor)
+                
+            widen_point = Point([widen_x, row.row_id[0], row.row_id[1]])
+            
+            if widen_point not in widen_points:
+                index = len(widen_points)
+                widen_points.append(widen_point)
+            else:
+                index = widen_points.index(widen_point)
+            init_point_to_widen_point_map[point] = index
+            
+    minWidenPoint = getMinPoint(widen_points)
+    print("minwiden point: %d", minWidenPoint)
+    widen_points = cordinateOriginTranslation(-minWidenPoint, widen_points)
+    
+    for key in init_point_to_widen_point_map.keys():
+        point_to_widen_point_map[key] = widen_points[init_point_to_widen_point_map[key]]
+    
+    return widen_points, point_to_widen_point_map
+
 @dataclass(frozen=False)
 class StencilRowDiscriptor:
     row_id: Tuple[int, int]
@@ -320,6 +402,12 @@ class StencilRowDiscriptor:
     def __eq__(self, other):
         return self._key() == other._key()
 
+@dataclass(frozen=False)
+class WindowBufferDiscriptor:
+    widen_stencil: Stencil
+    window_buffers: List[WindowBuffer]
+    chains: List[Tuple[str, str]]
+    point_to_widen_map: Optional[dict[Point, Point]]
 
 @dataclass(frozen=False)
 class WindowBuffer:
@@ -340,20 +428,20 @@ class Stencil:
     points: List[Point]
     base_point: Point
     stencil_size: int
-    window_buffers : List[WindowBuffer]
-    chains: List[Tuple[Union[int, WindowBuffer], Union[int, WindowBuffer, str]]]
+    # window_buffers : List[WindowBuffer]
+    # chains: List[Tuple[Union[int, WindowBuffer], Union[int, WindowBuffer, str]]]
     d_m: Point
     d_p: Point
-    row_discriptors: Optional[List[StencilRowDiscriptor]] = field(default_factory=list, init=False)
+    row_discriptors: Optional[List[StencilRowDiscriptor]] = field(default_factory=list)
     stride: Optional[list] = field(default_factory=list)
     
-    def __post_init__(self):
-        for point in self.points:
-            if StencilRowDiscriptor((point.y, point.z)) in self.row_discriptors:
-                self.row_discriptors[self.row_discriptors.index(StencilRowDiscriptor((point.y, point.z)))].row_points.append(point)
-            else:
-                self.row_discriptors.append(StencilRowDiscriptor((point.y, point.z), self.base_point))
-                self.row_discriptors[-1].row_points.append(point)
+    # def __post_init__(self):
+    #     for point in self.points:
+    #         if StencilRowDiscriptor((point.y, point.z)) in self.row_discriptors:
+    #             self.row_discriptors[self.row_discriptors.index(StencilRowDiscriptor((point.y, point.z)))].row_points.append(point)
+    #         else:
+    #             self.row_discriptors.append(StencilRowDiscriptor((point.y, point.z), self.base_point))
+    #             self.row_discriptors[-1].row_points.append(point)
                     
     def __eq__(self, __value: str) -> bool:
         return self.stencil_ptr == __value 
@@ -1001,8 +1089,6 @@ class Loop:
         num_points = 0
         base_afine_points = []
         base_point = Point([0,0,0])
-        window_buffers = []
-        chains = []
         d_m = [0,0,0]
         d_p = [0,0,0]
           
@@ -1028,7 +1114,9 @@ class Loop:
         maxX = max(xes)
         stencil_size = (maxX - minX + 1)
         
-        self.read_stencil = Stencil(id, dim, stencil_ptr, num_points, points, base_point, stencil_size, window_buffers, chains, d_m, d_p)
+        row_discriptors = genRowDiscriptors(points, base_point)
+        
+        self.read_stencil = Stencil(id, dim, stencil_ptr, num_points, points, base_point, stencil_size, d_m, d_p, row_discriptors)
         
         print(f"read stencil: {self.read_stencil}")
         

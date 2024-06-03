@@ -356,7 +356,9 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
     # 12. Replace ops_dat to auto and ops_decl_dat to ops_hls_decl_dat
     # TODO: Make the ops_dat to ops::hls::Grid without type defined. to support predefined ops_dat without declaration. 
     #       right now simply translating ops_dat to ops::hls::Grid<stencil_type>
-    new_source = new_source.replace("ops_dat", "ops::hls::Grid<stencil_type>").replace("ops_decl_dat", "ops_hls_decl_dat")
+    # found_indices = buffer.search_all(r'.*ops_decl_dat.*')
+    # print (f"found_indices ops_hls_decl_dat: {found_indices}")
+    new_source = new_source.replace("ops_dat ", "ops::hls::Grid<stencil_type> ").replace("ops_decl_dat", "ops_hls_decl_dat")
     
     # 13. Replace ops_printf
     new_source = new_source.replace("ops_printf", "printf")

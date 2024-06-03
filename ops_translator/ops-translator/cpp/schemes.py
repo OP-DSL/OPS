@@ -224,7 +224,17 @@ class CppHLS(Scheme):
                 kernel_body = re.sub(match_string, f"arg{loop.args[arg_idx].dat_id}_{stencil.points.index(access_indices)}", kernel_body, count = 1)
         return kernel_body
 
-                
+    def generateWidenStencilandBufferDiscriptor(self, stencil: ops.Stencil, vector_factor: int) -> tuple[ops.Stencil, ops.WindowBufferDiscriptor]:
+        widen_points, point_to_widen_map = ops.computeWidenPoints(stencil.row_discriptors, vector_factor)
+        
+        print(f"widen points: {widen_points}, stencil: {stencil}")
+        windows_buffers, chains = ops.windowBuffChainingAlgo(widen_points, stencil.dim)
+        stencilSize = ops.getStencilSize(widen_points)
+        row_discriptors = ops.genRowDiscriptors(widen_points, stencil.base_point)
+        widen_stencil = ops.Stencil(stencil.id, stencil.dim, stencil.stencil_ptr, len(widen_points), widen_points, stencil.base_point, stencilSize, stencil.d_m, stencil.d_p, row_discriptors)
+        
+        return (ops.WindowBufferDiscriptor(widen_stencil, windows_buffers, chains, point_to_widen_map))
+      
     def find_kernel_arg_of_ops_idx(self, kernel_args: List[str], loopArgs: List[ops.Arg])-> Union[str, None]:
         for i, arg in enumerate(loopArgs):
             if isinstance(arg, ops.ArgIdx):
@@ -289,6 +299,20 @@ class CppHLS(Scheme):
         kernel_idx_arg_name = self.find_kernel_arg_of_ops_idx(kernel_args, loop.args)
         logging.debug("kernel_idx_arg_name: %s", kernel_idx_arg_name)
         
+        widen_stencil_desc = {}
+        
+        for stencil_ptr in loop.stencils:
+            stencil = program.findStencil(stencil_ptr)
+            
+            if not stencil:
+                raise ParseError("Failed to find stencil of a loop in the program")
+            
+            window_stencil_buff = self.generateWidenStencilandBufferDiscriptor(stencil, config["vector_factor"])
+            widen_stencil_desc[stencil.stencil_ptr] = window_stencil_buff
+            
+        widen_read_stencil_desc = self.generateWidenStencilandBufferDiscriptor(loop.get_read_stencil(program), config["vector_factor"])
+        
+        
         if kernel_idx_arg_name:
             kernel_body = self.replace_idx_access(kernel_body, kernel_idx_arg_name)
         
@@ -308,7 +332,9 @@ class CppHLS(Scheme):
                  isFullyMapped = isFullyMapped,
                  datMap = datMap,
                  is_arg_idx = (kernel_idx_arg_name != None),
-                 ops=ops
+                 ops=ops,
+                 widen_stencil_disc=widen_stencil_desc,
+                 widen_read_stencil_desc = widen_read_stencil_desc
                  ),self.loop_device_PE_extension)]
         )
     
