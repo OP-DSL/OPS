@@ -1451,6 +1451,7 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
     }
 
     long long aggregate_energy = 0;
+    long long max_energy = 262143328850LL;
     for (int i = 0; i < instance->ops_energy_paths_count; i++) {
       if (instance->ops_energy_paths[i] != NULL) {
           FILE* file = fopen(instance->ops_energy_paths[i], "r");
@@ -1460,8 +1461,24 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
           } else {
             long long energy;
             fscanf(file, "%lld", &energy);
-            aggregate_energy += (MAX(energy, instance->ops_energy_counters[i]) - MIN(energy, instance->ops_energy_counters[i]));
-            fclose(file);
+            if (energy < instance->ops_energy_counters[i]) {
+              // Energy counter has wrapped around.
+              char max_energy_filename[128];
+              strcpy(max_energy_filename, instance->ops_energy_paths[i]);
+              char* substring = strstr(max_energy_filename, "energy_uj");
+              if (substring != NULL) {
+                strncpy(substring, "max_energy_range_uj", strlen("max_energy_range_uj"));
+              }
+              FILE *max_energy_file = fopen(max_energy_filename, "r");
+              if (max_energy_file != NULL) {
+                fscanf(max_energy_file, "%lld", &max_energy);
+                fclose(max_energy_file);
+              }
+              aggregate_energy += (max_energy - instance->ops_energy_counters[i] + energy);
+            } else
+                  aggregate_energy += (energy - instance->ops_energy_counters[i]);
+                fclose(file);
+                
           }
       }
     }
