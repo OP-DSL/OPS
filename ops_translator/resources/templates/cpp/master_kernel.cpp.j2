@@ -6,13 +6,14 @@
 #define OPS_SOA
 {% endif %}
 #define OPS_API 2
+{% endblock %}
 #include "ops_lib_core.h"
 
 #ifdef OPS_MPI
 #include "ops_mpi_core.h"
 #include <limits>
 #endif
-{% endblock %}
+
 
 {% block dim_struct %}
 {% endblock %}

@@ -104,7 +104,7 @@ int main(int argc, char **argv)
  
   ops_printf("Check OPS_MAX on 2D directions...\n");
   
-  double val= -INFINITY;
+  double val= -INFINITY_double;
   
   ops_par_loop(set_valXY, "set_valXY", block, 3, range_2D_XY,
       ops_arg_dat(dat2D_XY, 1, S3D_000_STRID3D_XY, "double", OPS_WRITE),
@@ -166,7 +166,7 @@ int main(int argc, char **argv)
   
   ops_printf("Check OPS_MIN on 2D directions...\n");
   
-  val= INFINITY;
+  val= INFINITY_double;
   ops_par_loop(set_valXY, "set_valXY", block, 3, range_2D_XY,
       ops_arg_dat(dat2D_XY, 1, S3D_000_STRID3D_XY, "double", OPS_WRITE),
       ops_arg_gbl(&val, 1, "double", OPS_READ));
@@ -295,7 +295,7 @@ int main(int argc, char **argv)
  
   ops_printf("Check OPS_MAX on 1D directions...\n");
   
-  val= -INFINITY;
+  val= -INFINITY_double;
 
   ops_par_loop(set_valX, "set_valX", block, 3, range_1D_X,
       ops_arg_dat(dat1D_X, 1, S3D_000_STRID3D_X, "double", OPS_WRITE),
@@ -354,7 +354,7 @@ int main(int argc, char **argv)
 
   ops_printf("Check OPS_MIN on 1D directions...\n");
 
-  val= INFINITY;
+  val= INFINITY_double;
 
   ops_par_loop(set_valX, "set_valX", block, 3, range_1D_X,
       ops_arg_dat(dat1D_X, 1, S3D_000_STRID3D_X, "double", OPS_WRITE),
