@@ -203,17 +203,27 @@ int main(int argc, const char** argv)
         else
             std::cerr << "verification of AnewCpu and Anew" << "[FAILED]" << std::endl;
 
-        // printGrid2D<float>(A, d_A.originalProperty, "d_A after computation");
-        // printGrid2D<float>(Acpu, d_A.originalProperty, "d_Acpu after computation");
-
-        // printGrid2D<float>(Anew, d_Anew.originalProperty, "d_Anew after computation");
-        // printGrid2D<float>(AnewCpu, d_Anew.originalProperty, "d_AnewCpu after computation");
 #endif
 
         int interior_range[] = {0,imax,0,jmax};
         // ops_par_loop(test_init, "test_init", block, 2, interior_range, 
         //     ops_arg_dat(d_A, 2, S2D_00, "float", OPS_WRITE),
         //     ops_arg_idx());
+
+        // ops_par_loop(test_init, "test_init", block, 2, interior_range, 
+        //     ops_arg_dat(d_Anew, 2, S2D_00, "float", OPS_WRITE),
+        //     ops_arg_idx());
+
+        // testInitGrid(Acpu, size, d_m, d_p);
+        // testInitGrid(AnewCpu, size, d_m, d_p);
+
+#ifdef VERIFICATION
+        // printGrid2D<float>(A, d_A.originalProperty, "d_A after computation");
+        // printGrid2D<float>(Acpu, d_A.originalProperty, "d_Acpu after computation");
+
+        // printGrid2D<float>(Anew, d_Anew.originalProperty, "d_Anew after computation");
+        // printGrid2D<float>(AnewCpu, d_Anew.originalProperty, "d_AnewCpu after computation");
+#endif
 
 #ifdef PROFILE
 		auto main_loop_start_clk_point = std::chrono::high_resolution_clock::now();

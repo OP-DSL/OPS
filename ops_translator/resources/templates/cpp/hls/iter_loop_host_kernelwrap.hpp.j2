@@ -4,6 +4,8 @@
 #include <ops_hls_rt_support.h>
 {% endblock %}
 
+{% block loopback_checker %}
+{% endblock %}
 {% block host_kernel_wrapper_class %}
 class KernelWrapper_outerloop_{{ilh.id}} : public ops::hls::Kernel
 {
@@ -89,7 +91,13 @@ public:
         {% endfor %}
     {% endfor %}
 
+#ifndef OPS_HLS_NO_LOOPBACK
+        bool loopback_enbl = true;
+#else
+        bool loopback_enbl = false;
+#endif 
         narg = 0;
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, loopback_enbl));
     {% for i in range(ndim)%}
         OCL_CHECK(err, err = m_datamover.setArg(narg++, read_range.start[{{i}}]));
         OCL_CHECK(err, err = m_datamover.setArg(narg++, read_range.end[{{i}}]));

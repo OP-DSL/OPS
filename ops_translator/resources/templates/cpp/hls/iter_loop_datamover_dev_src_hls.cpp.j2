@@ -68,26 +68,80 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_write(ops::hls::Acces
         {% endif %}
     {% endfor %}
 }
-static void datamover_outerloop_{{ilh.id}}_dataflow_region_loopback(unsigned int num_pkts
-    {%- for arg in ilh.joint_args|ops_dat -%}
-    {%- if (arg is not ops_rw) and arg is is_arg_swap(ilh) -%}
-        ,{{"\n"}}        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)}}
-        {%- else -%}
-        ,{{"\n"}}        hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "out")}},
-           hls::stream<ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")}}
-        {%- endif -%}
-    {%- endfor -%}
-)
-{
-//#pragma HLS DATAFLOW
+
+static void datamover_outerloop_{{ilh.id}}_dataflow_read_write(
+        const unsigned int num_beats,
+        const unsigned int num_pkts,
+        const ops::hls::MemConfig& memconfig,
     {% for arg in ilh.joint_args|ops_dat %}
-        {% if arg is ops_read or arg is ops_rw %}
-        ops::hls::axisLoopbackV2<mem_data_width, axis_data_width, data_width>( arg{{ilh.getArg(ilh.dat_swap_map[arg.dat_id]).id}}_axis_in, arg{{arg.id}}_axis_out, num_pkts);
+        ap_uint<mem_data_width>* arg{{(arg.id)}},
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
+        hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
+        {% else %}
+        hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name_t2(arg, "out")-}},
+        hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name_t2(arg, "in")-}}{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %})    
+{
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if arg is ops_read_or_rw%}
+    static ::hls::stream<ap_uint<mem_data_width>> arg{{arg.id}}_read_mem_strm;
+    static ::hls::stream<ap_uint<axis_data_width>> arg{{arg.id}}_read_reduced_mem_strm;
+    #pragma HLS STREAM variable = arg{{arg.id}}_read_mem_strm depth = max_depth_v16
+    #pragma HLS STREAM variable = arg{{arg.id}}_read_reduced_mem_strm depth = max_depth_v8
+        {% endif %}
+        {% if arg is ops_write_or_rw and arg is not read_only_rw %}
+    static ::hls::stream<ap_uint<mem_data_width>> arg{{arg.id}}_write_mem_strm;
+    static ::hls::stream<ap_uint<axis_data_width>> arg{{arg.id}}_write_reduced_mem_strm;
+    #pragma HLS STREAM variable = arg{{arg.id}}_write_mem_strm depth = max_depth_v16
+    #pragma HLS STREAM variable = arg{{arg.id}}_write_reduced_mem_strm depth = max_depth_v8
         {% endif %}
     {% endfor %}
+
+#pragma HLS DATAFLOW
+    {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
+        ops::hls::mem2stream<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_read_mem_strm, memconfig);
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
+        ops::hls::stream2stream<mem_data_width, axis_data_width>(arg{{arg.id}}_read_mem_strm, arg{{arg.id}}_read_reduced_mem_strm, num_beats);
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
+        {% if arg is ops_read %}
+        ops::hls::stream2axis<axis_data_width>(arg{{arg.id}}_read_reduced_mem_strm, {{axis_name(arg)}}, num_pkts);
+        {% elif arg is ops_rw %}
+        ops::hls::stream2axis<axis_data_width>(arg{{arg.id}}_read_reduced_mem_strm, {{axis_name_t2(arg, "out")}}, num_pkts);
+        {% endif %}
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
+        {% if arg is ops_write_or_rw %}
+            {% if arg is read_only_rw %}
+        ops::hls::axisTerminate<axis_data_width>({{axis_name_t2(arg, "in")}}, num_pkts);
+            {% else %}
+                {% if arg is ops_write %}
+        ops::hls::axis2stream<axis_data_width>({{axis_name(arg)}}, arg{{arg.id}}_write_reduced_mem_strm, num_pkts);
+                {% else %}
+        ops::hls::axis2stream<axis_data_width>({{axis_name_t2(arg, "in")}}, arg{{arg.id}}_write_reduced_mem_strm, num_pkts);
+                {% endif %}
+            {% endif %}
+        {% endif %}    
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
+        {% if arg is not read_only_rw %}
+        ops::hls::stream2stream<axis_data_width, mem_data_width>(arg{{arg.id}}_write_reduced_mem_strm, arg{{arg.id}}_write_mem_strm, num_beats);
+        {% endif %}
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
+        {% if arg is not read_only_rw %}
+        ops::hls::stream2mem<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_write_mem_strm, num_beats);
+        {% endif %}
+    {% endfor %}
+    
 }
+
 static void datamover_outerloop_{{ilh.id}}_loopback(
-        const unsigned int iter,
+        const unsigned num_pkts,
         ops::hls::AccessRange& range
     {%- for arg in ilh.joint_args|ops_dat -%}
     {%- if (arg is not ops_rw) and arg is is_arg_swap(ilh) -%}
@@ -99,25 +153,12 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
     {%- endfor -%}
         )
 {
-    unsigned int num_pkts;
-	ops::hls::getNumStreamPkts<mem_data_width, axis_data_width, data_width>(range, num_pkts);
-
-    for (unsigned int i = 0; i < iter; i++)
-    {
-#ifdef DEBUG_LOG
-        printf("[KERNEL_DEBUG]|%s| Calling loopback: %d \n", __func__, i);
-#endif
-        datamover_outerloop_{{ilh.id}}_dataflow_region_loopback(num_pkts 
-    {%- for arg in ilh.joint_args|ops_dat -%}
-        {%- if (arg is not ops_rw) and arg is is_arg_swap(ilh) -%}
-            ,{{"\n"}}        {{axis_name(arg)}}
-        {%- else -%}
-            ,{{"\n"}}        {{axis_name_t2(arg, "out")}},
-            {{axis_name_t2(arg, "in")}}
-        {%- endif -%}
-    {%- endfor -%}
-        );
-    }
+#pragma HLS DATAFLOW
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if arg is ops_read or arg is ops_rw %}
+        ops::hls::axisLoopbackV2<mem_data_width, axis_data_width, data_width>(arg{{ilh.getArg(ilh.dat_swap_map[arg.dat_id]).id}}_axis_in, arg{{arg.id}}_axis_out, num_pkts);
+        {% endif %}
+    {% endfor %}
 }
 {% endblock %}
 
@@ -126,6 +167,7 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
 {% endblock %}
 {% block datamover_body %}
 {
+    #pragma HLS INTERFACE s_axilite port = is_loopback bundle = control
     {% for i in range(ndim) %}
     #pragma HLS INTERFACE s_axilite port = range_start_{{i}} bundle = control
     #pragma HLS INTERFACE s_axilite port = range_end_{{i}} bundle = control
@@ -163,6 +205,9 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
 
     {% for arg in ilh.joint_args|ops_dat %}
     ops::hls::SizeType arg{{arg.id}}_gridSize = { {% for i in range(config["ops_max_dim"]) -%}{% if i < ndim %}arg{{arg.id}}_gridSize_{{i}}{{", " if (not loop.last)}}{% else %}1{{", " if (not loop.last)}}{% endif %}{% endfor %} };
+    {% if loop.first %}
+    ops::hls::SizeType read_gridSize = { {% for i in range(config["ops_max_dim"]) -%}{% if i < ndim %}arg{{arg.id}}_gridSize_{{i}}{{", " if (not loop.last)}}{% else %}1{{", " if (not loop.last)}}{% endif %}{% endfor %} };
+    {% endif %}
     {% endfor %}
 
     unsigned loopback_itr = outer_itr - 1 >= 0 ? outer_itr - 1 : 0;
@@ -175,56 +220,119 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
             arg{{arg.id}}_gridSize[0], arg{{arg.id}}_gridSize[1], arg{{arg.id}}_gridSize[2]);
     {% endfor %}
 #endif 
+    constexpr unsigned int num_of_pkts_per_bytes = mem_data_width / axis_data_width;
+    ops::hls::MemConfig config;
+    ops::hls::genMemConfig<mem_data_width, axis_data_width, data_width>(read_gridSize, range, config);
+    const unsigned int num_beats = config.total_xblocks;
+    const unsigned int num_pkts = num_of_pkts_per_bytes * config.total_xblocks;
 
-    datamover_outerloop_{{ilh.id}}_dataflow_region_read(range 
-    {%- for arg in ilh.joint_args|ops_dat -%}
-        {%- if arg is ops_read or arg is ops_rw -%}
-            ,{{"\n"}}       arg{{arg.id}}_gridSize 
-        {%- endif -%}
-    {%- endfor -%}
-    {%- for arg in ilh.joint_args|ops_dat -%}
-        {%- if arg is ops_read or arg is ops_rw -%}
-            ,{{"\n"}}        arg{{arg.id}} 
-        {%- endif -%}
-    {%- endfor -%}
-    {%- for arg in ilh.joint_args|ops_dat -%}
-        {%- if arg is ops_read -%}
-            ,{{"\n"}}        {{axis_name(arg)}}
-        {%- elif arg is ops_rw -%}
-            ,{{"\n"}}        {{axis_name_t2(arg, "out")}}
-        {%- endif -%}
-    {%- endfor -%}
-    );
-    datamover_outerloop_{{ilh.id}}_loopback(loopback_itr, range 
-    {%- for arg in ilh.joint_args|ops_dat -%}
-        {%- if (arg is not ops_rw) and arg is is_arg_swap(ilh) -%}
-            ,{{"\n"}}        {{axis_name(arg)}}
-        {%- else -%}
-            ,{{"\n"}}        {{axis_name_t2(arg, "out")}}, {{axis_name_t2(arg, "in")}}
-        {%- endif -%}
-    {%- endfor -%}
-    );
+    if (is_loopback)
+    {
+        datamover_outerloop_{{ilh.id}}_dataflow_region_read(range 
+        {%- for arg in ilh.joint_args|ops_dat -%}
+            {%- if arg is ops_read or arg is ops_rw -%}
+                ,{{"\n"}}       arg{{arg.id}}_gridSize 
+            {%- endif -%}
+        {%- endfor -%}
+        {%- for arg in ilh.joint_args|ops_dat -%}
+            {%- if arg is ops_read or arg is ops_rw -%}
+                ,{{"\n"}}        arg{{arg.id}} 
+            {%- endif -%}
+        {%- endfor -%}
+        {%- for arg in ilh.joint_args|ops_dat -%}
+            {%- if arg is ops_read -%}
+                ,{{"\n"}}        {{axis_name(arg)}}
+            {%- elif arg is ops_rw -%}
+                ,{{"\n"}}        {{axis_name_t2(arg, "out")}}
+            {%- endif -%}
+        {%- endfor -%}
+        );
 
-    datamover_outerloop_{{ilh.id}}_dataflow_region_write(range 
-    {%- for arg in ilh.joint_args|ops_dat -%}
-        {%- if arg is ops_write or arg is ops_rw -%}
-            ,{{"\n"}}        arg{{arg.id}}_gridSize 
-        {%- endif -%}
-    {%- endfor -%}
-    {%- for arg in ilh.joint_args|ops_dat -%}
-        {%- if arg is ops_write or arg is ops_rw -%}
-            ,{{"\n"}}        arg{{arg.id}} 
-        {%- endif -%}
-    {%- endfor -%}
-    {%- for arg in ilh.joint_args|ops_dat -%}
-        {%- if arg is ops_write -%}
-            ,{{"\n"}}        {{axis_name(arg)}}
-        {%- elif arg is  ops_rw -%}
-            ,{{"\n"}}        {{axis_name_t2(arg, "in")}}
-        {%- endif -%}
-    {%- endfor -%}
-    );
-    
+        for (unsigned int i = 0; i < loopback_itr; i++)
+        {
+        #ifdef DEBUG_LOG
+            printf("[KERNEL_DEBUG]|%s| Calling loopback. i:%d\n", __func__, i);
+        #endif
+            datamover_outerloop_{{ilh.id}}_loopback(num_pkts, range 
+            {%- for arg in ilh.joint_args|ops_dat -%}
+                {%- if (arg is not ops_rw) and arg is is_arg_swap(ilh) -%}
+                    ,{{"\n"}}        {{axis_name(arg)}}
+                {%- else -%}
+                    ,{{"\n"}}        {{axis_name_t2(arg, "out")}}, {{axis_name_t2(arg, "in")}}
+                {%- endif -%}
+            {%- endfor -%}
+            );
+        }
+
+        datamover_outerloop_{{ilh.id}}_dataflow_region_write(range 
+        {%- for arg in ilh.joint_args|ops_dat -%}
+            {%- if arg is ops_write or arg is ops_rw -%}
+                ,{{"\n"}}        arg{{arg.id}}_gridSize 
+            {%- endif -%}
+        {%- endfor -%}
+        {%- for arg in ilh.joint_args|ops_dat -%}
+            {%- if arg is ops_write or arg is ops_rw -%}
+                ,{{"\n"}}        arg{{arg.id}} 
+            {%- endif -%}
+        {%- endfor -%}
+        {%- for arg in ilh.joint_args|ops_dat -%}
+            {%- if arg is ops_write -%}
+                ,{{"\n"}}        {{axis_name(arg)}}
+            {%- elif arg is  ops_rw -%}
+                ,{{"\n"}}        {{axis_name_t2(arg, "in")}}
+            {%- endif -%}
+        {%- endfor -%}
+        );
+    }
+    else
+    {
+        for (unsigned int i = 0; i < outer_itr; i++)
+        {
+
+        #ifdef DEBUG_LOG
+            printf("[KERNEL_DEBUG]|%s| Calling datamover. i:%d\n", __func__, i);
+        #endif
+            if (i % 2 == 0)
+            {
+                datamover_outerloop_{{ilh.id}}_dataflow_read_write(
+                        num_beats,
+                        num_pkts,
+                        config,
+                    {% for arg in ilh.joint_args|ops_dat %}
+                        arg{{(arg.id)}},
+                    {% endfor %}
+                    {% for arg in ilh.joint_args|ops_dat %}
+                        {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
+                        {{axis_name(arg)-}}{{"," if not loop.last}}
+                        {% else %}
+                        {{axis_name_t2(arg, "out")-}},
+                        {{axis_name_t2(arg, "in")-}}{{"," if not loop.last}}
+                        {% endif %}
+                    {% endfor %}
+                    );
+            }
+            else
+            {
+                datamover_outerloop_{{ilh.id}}_dataflow_read_write(
+                        num_beats,
+                        num_pkts,
+                        config,
+                    {% for arg in ilh.joint_args|ops_dat %}
+                        arg{{ilh.getArg(ilh.dat_swap_map[arg.dat_id]).id}},
+                    {% endfor %}
+                    {% for arg in ilh.joint_args|ops_dat %}
+                        {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
+                        {{axis_name(arg)-}}{{"," if not loop.last}}
+                        {% else %}
+                        {{axis_name_t2(arg, "out")-}},
+                        {{axis_name_t2(arg, "in")-}}{{"," if not loop.last}}
+                        {% endif %}
+                    {% endfor %}
+                    );
+            }
+        }
+    }
+
     {#else
     {
         datamover_outerloop_{{ilh.id}}_dataflow_region_write(range 

@@ -20,6 +20,7 @@ arg{{arg.id}}_axis_{{suffix}}
 {% endblock %}
 {% block datamover_prototype %}
 extern "C" void datamover_outerloop_{{ilh.id}}(
+        const bool is_loopback,
     {% for i in range(ndim) %}
         const unsigned short range_start_{{i}},
         const unsigned short range_end_{{i}},
