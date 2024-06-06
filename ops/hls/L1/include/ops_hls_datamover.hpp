@@ -1550,7 +1550,7 @@ void axisLoopbackV2(
 		 ::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& strm_out,
 		 const unsigned int n_pkts)
 {
-
+	ap_axiu<AXIS_DATA_WIDTH,0,0,0> tmp;
 	for (unsigned short pkt = 0; pkt < n_pkts; pkt++)
 	{
 #pragma HLS PIPELINE II=1
@@ -1559,7 +1559,7 @@ void axisLoopbackV2(
 	printf("|HLS DEBUG_LOG|%s| writing. pkt:%d\n"
 			, __func__, pkt);
 #endif
-		ap_axiu<AXIS_DATA_WIDTH,0,0,0> tmp = strm_in.read();
+		tmp = strm_in.read();
 		strm_out.write(tmp);
 	}
 
