@@ -1145,8 +1145,11 @@ void ops_broadcast_pencil_##type(ops_dat dat, int source_rank, int dim){\
 \
   if (OPS_instance::getOPSInstance()->OPS_gpu_direct){\
     MPI_Bcast(dat->data_d, dat->mem/sizeof(type), mpi_type, source_rank, sb->pencils[dim]);\
+    dat->dirty_hd = OPS_DEVICE;\
   } else {\
+    ops_get_data(dat);\
     MPI_Bcast(dat->data, dat->mem/sizeof(type), mpi_type, source_rank, sb->pencils[dim]);\
+    dat->dirty_hd = OPS_HOST;\
   }\
 }
 
