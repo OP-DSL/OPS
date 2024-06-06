@@ -224,7 +224,7 @@ class CppHLS(Scheme):
                 kernel_body = re.sub(match_string, f"arg{loop.args[arg_idx].dat_id}_{stencil.points.index(access_indices)}", kernel_body, count = 1)
         return kernel_body
 
-    def generateWidenStencilandBufferDiscriptor(self, stencil: ops.Stencil, vector_factor: int) -> tuple[ops.Stencil, ops.WindowBufferDiscriptor]:
+    def generateWidenStencilandBufferDiscriptor(self, stencil: ops.Stencil, vector_factor: int) -> Tuple[ops.Stencil, ops.WindowBufferDiscriptor]:
         widen_points, point_to_widen_map = ops.computeWidenPoints(stencil.row_discriptors, vector_factor)
         
         print(f"widen points: {widen_points}, stencil: {stencil}")

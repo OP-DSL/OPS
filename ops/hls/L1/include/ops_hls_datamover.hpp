@@ -928,8 +928,8 @@ void mem2axisV2(ap_uint<MEM_DATA_WIDTH>* mem_in,
 	printf("====================================================================================\n");
 #endif
 #endif
-	static ::hls::stream<ap_uint<MEM_DATA_WIDTH>> mem_strm;
-	static ::hls::stream<ap_uint<AXIS_DATA_WIDTH>> red_mem_strm;
+	::hls::stream<ap_uint<MEM_DATA_WIDTH>> mem_strm;
+	::hls::stream<ap_uint<AXIS_DATA_WIDTH>> red_mem_strm;
 #pragma HLS STREAM variable = mem_strm depth = max_depth_v16
 #pragma HLS STREAM variable = red_mem_strm depth = max_depth_v8
 
@@ -1148,8 +1148,8 @@ void axis2memV2(ap_uint<MEM_DATA_WIDTH>* mem_out,
 	printf("====================================================================================\n");
 #endif
 #endif
-	static ::hls::stream<ap_uint<MEM_DATA_WIDTH>> mem_strm;
-	static ::hls::stream<ap_uint<AXIS_DATA_WIDTH>> red_mem_strm;
+	::hls::stream<ap_uint<MEM_DATA_WIDTH>> mem_strm;
+	::hls::stream<ap_uint<AXIS_DATA_WIDTH>> red_mem_strm;
 #pragma HLS STREAM variable = mem_strm depth = max_depth_v16
 #pragma HLS STREAM variable = red_mem_strm depth = max_depth_v8
 
