@@ -2132,7 +2132,7 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs) {
   for (int n = 0; n < nargs; n++) {
     if ((args[n].argtype == OPS_ARG_DAT) &&
         (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
+         args[n].acc == OPS_RW || args[n].acc == OPS_MAX || args[n].acc == OPS_MIN)) {
       args[n].dat->dirty_hd = 2;
     }
   }
