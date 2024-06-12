@@ -19,7 +19,7 @@ build:GNU11:API:
     - export CXX=mpicxx
     - mkdir build
     - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DGPU_ARCH=75 
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_FORTRAN=ON -DGPU_ARCH=75
     - cmake --build . -j 4
     - cmake --install .
   artifacts:
@@ -39,7 +39,7 @@ build:foss:API:
     - export CXX=mpicxx
     - mkdir build
     - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DGPU_ARCH=75 -DCMAKE_CUDA_HOST_COMPILER=gcc-11
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_FORTRAN=ON -DGPU_ARCH=75 -DCMAKE_CUDA_HOST_COMPILER=gcc-11
     - cmake --build . -j 4
     - cmake --install .
   artifacts:
@@ -59,7 +59,7 @@ build:NVHCP23:API:
     - export CXX=mpicxx
     - mkdir build
     - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DGPU_ARCH=75
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_FORTRAN=ON -DGPU_ARCH=75
     - cmake --build . -j 4
     - cmake --install . 
   artifacts:
@@ -80,7 +80,7 @@ build_and_test:GNU11:APPS:
     - export CXX=mpicxx
     - mkdir build
     - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON -DGPU_ARCH=75 -DGPU_NUMBER=1
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_FORTRAN=ON -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON -DGPU_ARCH=75 -DGPU_NUMBER=1
     - cmake --build . -j 4
     - cmake --install .
     - ctest -V
@@ -100,7 +100,7 @@ build_and_test:foss:APPS:
     - export CXX=mpicxx
     - mkdir build
     - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON -DGPU_ARCH=75 -DCMAKE_CUDA_HOST_COMPILER=gcc-11 -DGPU_NUMBER=1
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_FORTRAN=ON -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON -DGPU_ARCH=75 -DCMAKE_CUDA_HOST_COMPILER=gcc-11 -DGPU_NUMBER=1
     - cmake --build . -j 4
     - cmake --install .
     - ctest -V

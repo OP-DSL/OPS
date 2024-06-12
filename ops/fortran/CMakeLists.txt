@@ -1,0 +1,95 @@
+
+    cmake_minimum_required(VERSION 3.18)
+
+    project(API Fortran CXX)
+
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../c/include)
+
+    include(CheckLanguage)
+    check_language(Fortran)
+
+    if(CMAKE_Fortran_COMPILER)
+        message(STATUS "Fortran compiler: ${CMAKE_Fortran_COMPILER}")
+
+        set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/mod)
+
+        if(${CMAKE_Fortran_COMPILER_ID} STREQUAL Intel)
+            set(CMAKE_Fortran_FLAGS         "${CMAKE_Fortran_FLAGS} -Wall -O3 -g -xHost -qopenmp")
+            set(CMAKE_Fortran_FLAGS_DEBUG   "-g -traceback -qopenmp")
+            set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -ip -xHOST -qopenmp")
+        elseif(${CMAKE_Fortran_COMPILER_ID} STREQUAL GNU)
+            set(CMAKE_Fortran_FLAGS         "${CMAKE_Fortran_FLAGS} -Wall -O3 -g -ffree-form -ffree-line-length-none -fopenmp")
+            set(CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g3 -ffree-form -ffree-line-length-none -fopenmp")
+            set(CMAKE_Fortran_FLAGS_RELEASE "-Ofast -march=native -ffree-form -ffree-line-length-none -fopenmp")
+        elseif(${CMAKE_Fortran_COMPILER_ID} STREQUAL NVHPC)
+            set(CMAKE_Fortran_FLAGS         "${CMAKE_Fortran_FLAGS} -Wall O3 -fast -gopt")
+        else()
+            message(
+                WARNING
+                    "There is no default flag for the chosen Fortran compiler!"
+            )
+        endif()
+
+        if(CMAKE_BUILD_TYPE STREQUAL "Release")
+            message(STATUS "CMAKE_Fortran_FLAGS_RELEASE: ${CMAKE_Fortran_FLAGS_RELEASE}")
+        elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+            message(STATUS "CMAKE_Fortran_FLAGS_DEBUG: ${CMAKE_Fortran_FLAGS_DEBUG}")
+        elseif(CMAKE_BUILD_TYPE STREQUAL "")
+            message(STATUS "CMAKE_Fortran_FLAGS: ${CMAKE_Fortran_FLAGS}")
+        else()
+            message(STATUS "Unknown build type: ${CMAKE_BUILD_TYPE}")
+        endif()
+
+#       Prepare for files to compile the SEQ targets
+        list(APPEND F_HDF5
+                    "${CMAKE_CURRENT_SOURCE_DIR}/src/ops_for_hdf5_declarations.F90")
+
+        list(APPEND F_SEQ
+                    "${CMAKE_CURRENT_SOURCE_DIR}/src/ops_for_declarations.F90"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/src/ops_for_rt_support.F90")
+
+        list(APPEND F_MPI
+                    "${CMAKE_CURRENT_SOURCE_DIR}/src/ops_for_declarations.F90"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/src/ops_for_rt_support.F90"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/src/ops_for_hdf5_declarations.F90")
+
+        file(GLOB_RECURSE CORE "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/core/*.cpp")
+        file(GLOB_RECURSE SEQ "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/sequential/*.cpp")
+        file(GLOB_RECURSE EXTERN "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/externlib/*.cpp")
+
+        list(FILTER EXTERN EXCLUDE REGEX "hdf5")
+        list(FILTER CORE EXCLUDE REGEX "device")
+
+        macro(InstallTarget Name Pos)
+        install(
+                TARGETS ops_${Name}
+                EXPORT ops_${Name}_targets
+                LIBRARY DESTINATION lib
+                ARCHIVE DESTINATION lib
+                RUNTIME DESTINATION bin
+                INCLUDES
+                DESTINATION include)
+        install(
+                EXPORT ops_${Name}_targets
+                FILE ops_${Name}_targets.cmake
+                NAMESPACE OPS::
+                DESTINATION ${Pos})
+    endmacro()
+
+
+#       TARGET: SEQ
+        add_library(ops_for_seq ${CORE} ${SEQ} ${EXTERN} ${F_SEQ})
+        target_compile_definitions(ops_for_seq PRIVATE OPS_FTN)
+        installtarget(for_seq ${ConfigPackageLocation})
+
+#       TARGET: HDF5_SEQ
+        if(HDF5_FOUND)
+            add_library(ops_for_hdf5_seq ${CMAKE_CURRENT_SOURCE_DIR}/../c/src/externlib/ops_hdf5_common.cpp
+                        ${CMAKE_CURRENT_SOURCE_DIR}/../c/src/externlib/ops_hdf5.cpp ${F_HDF5})
+            target_link_libraries(ops_for_hdf5_seq PRIVATE hdf5::hdf5 hdf5::hdf5_hl)
+            target_compile_definitions(ops_for_hdf5_seq PRIVATE OPS_FTN)
+            installtarget(for_hdf5_seq ${ConfigPackageLocation})
+        endif()
+
+    endif(CMAKE_Fortran_COMPILER)

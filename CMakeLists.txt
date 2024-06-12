@@ -9,6 +9,8 @@
     option(OPS_HIP "Turn on the HIP backend" OFF)
     option(ENABLE_IEEE "Enable IEEE flags" OFF)
     option(LEGACY_CODEGEN "Build apps with Legacy code-gen" OFF)
+    option(BUILD_OPS_FORTRAN "Build FORTRAN version of OPS" OFF)
+    option(BUILD_OPS_APPS "Build Sample OPS applications" OFF)
 
     if(NOT OPS_VERBOSE_WARNING)
         message(
@@ -242,8 +244,6 @@
         endif()
     endif()
 
-#   option(BUILD_OPS_FORTRAN "Build FORTRAN version of OPS" OFF)
-    option(BUILD_OPS_APPS "Build Sample OPS applications" OFF)
 
 #   option(OPS_ERROR_ON_WARNING "Error upon encountering a warning" ON)
 #   option(CHECKPOINTING "Enable OPS checkpointing support" OFF)
@@ -282,7 +282,7 @@
 
     install(FILES ${INCLUDE} DESTINATION include)
 
-#   prepare the script for setting OPS environment variable variables
+#   prepare the script for setting OPS environment variable
     if(UNIX)
         install(
             CODE "file(WRITE \"${CMAKE_INSTALL_PREFIX}/bin/ops_env\" \"export OPS_INSTALL_PATH=${CMAKE_INSTALL_PREFIX}\n\")"
@@ -296,7 +296,9 @@
         endif()
     endif()
 
-#   if(BUILD_OPS_FORTRAN) add_subdirectory(ops/fortran) endif()
+    if(BUILD_OPS_FORTRAN)
+        add_subdirectory(ops/fortran)
+    endif()
 
 #   prepare ctest
     if(OPS_TEST)
@@ -317,6 +319,8 @@
 
     if(BUILD_OPS_APPS)
         add_subdirectory(apps/c)
-#       if(BUILD_OPS_FORTRAN) add_subdirectory(apps/fortran) endif()
+        if(BUILD_OPS_FORTRAN)
+            add_subdirectory(apps/fortran)
+        endif()
     endif()
 
