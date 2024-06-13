@@ -45,14 +45,9 @@
         list(APPEND F_HDF5
                     "${CMAKE_CURRENT_SOURCE_DIR}/src/ops_for_hdf5_declarations.F90")
 
-        list(APPEND F_SEQ
+        list(APPEND F_COMMON
                     "${CMAKE_CURRENT_SOURCE_DIR}/src/ops_for_declarations.F90"
                     "${CMAKE_CURRENT_SOURCE_DIR}/src/ops_for_rt_support.F90")
-
-        list(APPEND F_MPI
-                    "${CMAKE_CURRENT_SOURCE_DIR}/src/ops_for_declarations.F90"
-                    "${CMAKE_CURRENT_SOURCE_DIR}/src/ops_for_rt_support.F90"
-                    "${CMAKE_CURRENT_SOURCE_DIR}/src/ops_for_hdf5_declarations.F90")
 
         file(GLOB_RECURSE CORE "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/core/*.cpp")
         file(GLOB_RECURSE SEQ "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/sequential/*.cpp")
@@ -79,17 +74,54 @@
 
 
 #       TARGET: SEQ
-        add_library(ops_for_seq ${CORE} ${SEQ} ${EXTERN} ${F_SEQ})
+        add_library(ops_for_seq ${CORE} ${SEQ} ${EXTERN} ${F_COMMON})
         target_compile_definitions(ops_for_seq PRIVATE OPS_FTN)
         installtarget(for_seq ${ConfigPackageLocation})
 
 #       TARGET: HDF5_SEQ
         if(HDF5_FOUND)
-            add_library(ops_for_hdf5_seq ${CMAKE_CURRENT_SOURCE_DIR}/../c/src/externlib/ops_hdf5_common.cpp
-                        ${CMAKE_CURRENT_SOURCE_DIR}/../c/src/externlib/ops_hdf5.cpp ${F_HDF5})
+            file(GLOB_RECURSE HDF5_SEQ
+                "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/externlib/ops_hdf5_common.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/externlib/ops_hdf5.cpp")
+            add_library(ops_for_hdf5_seq ${HDF5_SEQ} ${F_HDF5})
             target_link_libraries(ops_for_hdf5_seq PRIVATE hdf5::hdf5 hdf5::hdf5_hl)
             target_compile_definitions(ops_for_hdf5_seq PRIVATE OPS_FTN)
             installtarget(for_hdf5_seq ${ConfigPackageLocation})
+        endif()
+
+        if(MPI_FOUND)
+            file(GLOB_RECURSE MPICORE "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/core/*.cpp")
+            list(FILTER MPICORE EXCLUDE REGEX "singlenode")
+            set(CommonFiles
+                "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/mpi/ops_mpi_core.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/mpi/ops_mpi_decl.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/mpi/ops_mpi_partition.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/mpi/ops_mpi_rt_support.cpp")
+
+#           TARGET: MPI
+            file(GLOB_RECURSE MPI_HOST
+                "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/mpi/ops_mpi_rt_support_host.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/sequential/ops_host_common.cpp")
+
+
+            list(APPEND MPI_HOST ${CommonFiles})
+            add_library(ops_for_mpi ${MPI_HOST} ${MPICORE} ${EXTERN} ${F_COMMON})
+            target_compile_definitions(ops_for_mpi PRIVATE OPS_FTN)
+            target_link_libraries(ops_for_mpi PRIVATE MPI::MPI_Fortran)
+            installtarget(for_mpi ${ConfigPackageLocation})
+
+#           TARGET: HDF5_MPI
+            if(HDF5_FOUND)
+                file(GLOB_RECURSE HDF5_MPI
+                    "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/mpi/ops_mpi_hdf5.cpp"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/externlib/ops_hdf5_common.cpp")
+
+                add_library(ops_for_hdf5_mpi ${HDF5_MPI} ${F_HDF5})
+                target_compile_definitions(ops_for_hdf5_mpi PRIVATE OPS_FTN)
+                target_link_libraries(ops_for_hdf5_mpi PRIVATE hdf5::hdf5 hdf5::hdf5_hl
+                                                    MPI::MPI_Fortran)
+                installtarget(for_hdf5_mpi ${ConfigPackageLocation})
+            endif()
         endif()
 
     endif(CMAKE_Fortran_COMPILER)

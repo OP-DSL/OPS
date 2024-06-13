@@ -10,4 +10,10 @@ elif [[ "$target" == "openmp" ]]; then
     echo "$exe"
 elif [[ "$target" == "tiled" ]]; then
     echo "$exe OPS_TILING"
+elif [[ "$target" == "mpi" ]]; then
+    echo "mpirun -np 4 --oversubscribe $exe"
+elif [[ "$target" == "mpi_openmp" ]]; then
+    echo "mpirun -np 4 --oversubscribe $exe"
+elif [[ "$target" == "mpi_tiled" ]]; then
+    echo "mpirun -np 1 --oversubscribe $exe OPS_TILING"
 fi

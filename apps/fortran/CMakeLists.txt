@@ -32,6 +32,12 @@
         if(${CMAKE_PROJECT_NAME} STREQUAL OPS)
 
             set(HDF5_SEQ ${HDF5_FOUND})
+            if(${MPI_FOUND})
+                set(MPI TRUE)
+                set(HDF5_MPI ${HDF5_FOUND})
+                set(CUDA_MPI ${CUDAToolkit_FOUND})
+            endif()
+
             if(NOT Python3_FOUND)
                 message(
                     WARNING
@@ -57,6 +63,28 @@
             endif()
 
         endif()
+
+#       Find the MPI INCLUDE directory, required to resolve mpi.h not found error for some targets
+        if(${MPI_FOUND})
+            if(DEFINED ENV{I_MPI_ROOT})     #Intel MPI
+                set(MPI_INC_LIST -I$ENV{I_MPI_ROOT}/include)
+            elseif(DEFINED ENV{MPI_ROOT})       # HPE MPT
+                set(MPI_INC_LIST -I$ENV{MPI_ROOT}/include)
+            elseif(DEFINED ENV{MPICH_DIR})      # Cray
+                set(MPI_INC_LIST -I$ENV{MPICH_DIR}/include)
+            else()                          # OpenMPI
+                execute_process(COMMAND mpicc --showme:compile
+                                OUTPUT_VARIABLE MPI_INC_STRING
+                                OUTPUT_STRIP_TRAILING_WHITESPACE
+                                ERROR_VARIABLE MPI_INC_FIND)
+                if(MPI_INC_FIND)
+                    message(FATAL_ERROR "Failed to determine MPI include directories: ${MPI_INC_FIND}")
+                endif()
+                string(REPLACE " " ";" MPI_INC_LIST ${MPI_INC_STRING})
+
+            endif()
+        endif()
+
 
 #       Clean the tmp directory for the code generation
         macro(CreateTempDir)
@@ -156,6 +184,7 @@
                 endif()
             endif()
 
+
 #           Run OPS code-generation
             if(LEGACY_CODEGEN)
                 message(STATUS "Code-gen command: ${OPS_F_TRANSLATOR} ${DEV}")
@@ -187,13 +216,16 @@
                                 OUTPUT_VARIABLE output)
             endif()
 
+            file(GLOB CONSTANTS_MODULE "${TMP_SOURCE_DIR}/constants.F90")
             if(result EQUAL 0)
                 message(STATUS "OPS Python code generation runs successfully")
+                add_library(${Name}_constants OBJECT ${CONSTANTS_MODULE})
             else()
                 message(FATAL_ERROR "OPS Python code generation command failed with error code ${result}: ${output}")
             endif()
 
             file(GLOB OPS "${TMP_SOURCE_DIR}/*ops*.F90")
+
 
             file(GLOB OTHERS "${TMP_SOURCE_DIR}/*.F90")
             foreach(OpsFile ${OPS})
@@ -208,33 +240,45 @@
                 list(FILTER OTHERS EXCLUDE REGEX ${ext})
             endforeach()
 
+            list(FILTER OTHERS EXCLUDE REGEX ${CONSTANTS_MODULE})
+
             file(GLOB_RECURSE SEQ_TEMPLATES "${TMP_SOURCE_DIR}/mpi_openmp/*_seq_kernel.F90")
 
 #            message(STATUS "OPS: ${OPS}")
 #            message(STATUS "OTHERS: ${OTHERS}")
 #            message(STATUS "SEQ_TEMPLATES: ${SEQ_TEMPLATES}")
-            add_executable(${Name}_seq ${OPS} ${OTHERS} ${SEQ_TEMPLATES})
+
+#           TARGET: SEQ
+            add_executable(${Name}_seq ${OPS} $<TARGET_OBJECTS:${Name}_constants> ${SEQ_TEMPLATES} ${OTHERS})
+
             target_include_directories(${Name}_seq PRIVATE ${TMP_SOURCE_DIR})
+            if(HDF5_SEQ)
+                target_link_libraries(${Name}_seq PRIVATE ops_for_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl)
+            endif()
+            target_link_libraries(${Name}_seq PRIVATE ops_for_seq)
+            install(TARGETS ${Name}_seq     DESTINATION ${APP_INSTALL_DIR}/${Name})
 
-            add_executable(${Name}_openmp ${OPS} ${OTHERS} ${SEQ_TEMPLATES})
+
+#           TARGET: OpenMP
+            add_executable(${Name}_openmp ${OPS} $<TARGET_OBJECTS:${Name}_constants> ${SEQ_TEMPLATES} ${OTHERS})
+
             target_include_directories(${Name}_openmp PRIVATE ${TMP_SOURCE_DIR})
+            if(HDF5_SEQ)
+                target_link_libraries(${Name}_openmp PRIVATE ops_for_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl)
+            endif()
+            target_link_libraries(${Name}_openmp PRIVATE ops_for_seq)
+            install(TARGETS ${Name}_openmp     DESTINATION ${APP_INSTALL_DIR}/${Name})
 
-            add_executable(${Name}_tiled ${OPS} ${OTHERS} ${SEQ_TEMPLATES})           
+
+#           TARGET: tiled
+            add_executable(${Name}_tiled ${OPS} $<TARGET_OBJECTS:${Name}_constants> ${SEQ_TEMPLATES} ${OTHERS})
+
             target_include_directories(${Name}_tiled PRIVATE ${TMP_SOURCE_DIR})
             target_compile_definitions(${Name}_tiled PRIVATE "-DOPS_LAZY")
-
-            target_link_libraries(${Name}_seq     ops_for_seq)
-            target_link_libraries(${Name}_openmp     ops_for_seq)
-            target_link_libraries(${Name}_tiled     ops_for_seq)
-
             if(HDF5_SEQ)
-                target_link_libraries(${Name}_seq ops_for_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl)
-                target_link_libraries(${Name}_openmp ops_for_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl)
-                target_link_libraries(${Name}_tiled ops_for_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl)
+                target_link_libraries(${Name}_tiled PRIVATE ops_for_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl)
             endif()
-
-            install(TARGETS ${Name}_seq     DESTINATION ${APP_INSTALL_DIR}/${Name})
-            install(TARGETS ${Name}_openmp     DESTINATION ${APP_INSTALL_DIR}/${Name})
+            target_link_libraries(${Name}_tiled PRIVATE ops_for_seq)
             install(TARGETS ${Name}_tiled     DESTINATION ${APP_INSTALL_DIR}/${Name})
 
             if((OPS_TEST) AND (${GenerateTest} STREQUAL "YES"))
@@ -243,11 +287,60 @@
                 add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_tiled ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh tiled)
             endif()
 
+
+            if(MPI)
+#               TARGET: MPI
+                add_executable(${Name}_mpi ${OPS} $<TARGET_OBJECTS:${Name}_constants> ${SEQ_TEMPLATES} ${OTHERS})
+
+                target_include_directories(${Name}_mpi PRIVATE ${TMP_SOURCE_DIR})
+                target_compile_definitions(${Name}_mpi PRIVATE "-DOPS_MPI")
+                if(HDF5_MPI)
+                    target_link_libraries(${Name}_mpi PRIVATE ops_for_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
+                                                    MPI::MPI_Fortran)
+                endif()
+                target_link_libraries(${Name}_mpi PRIVATE ops_for_mpi MPI::MPI_Fortran)
+                install(TARGETS ${Name}_mpi     DESTINATION ${APP_INSTALL_DIR}/${Name})
+
+
+#               TARGET: MPI_OpenMP
+                add_executable(${Name}_mpi_openmp ${OPS} $<TARGET_OBJECTS:${Name}_constants> ${SEQ_TEMPLATES} ${OTHERS})
+
+                target_include_directories(${Name}_mpi_openmp PRIVATE ${TMP_SOURCE_DIR})
+                target_compile_definitions(${Name}_mpi_openmp PRIVATE "-DOPS_MPI")
+                if(HDF5_MPI)
+                    target_link_libraries(${Name}_mpi_openmp PRIVATE ops_for_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
+                                                    MPI::MPI_Fortran)
+                endif()
+                target_link_libraries(${Name}_mpi_openmp PRIVATE ops_for_mpi MPI::MPI_Fortran)
+                install(TARGETS ${Name}_mpi_openmp     DESTINATION ${APP_INSTALL_DIR}/${Name})
+
+
+#               TARGET: MPI_tiled
+                add_executable(${Name}_mpi_tiled ${OPS} $<TARGET_OBJECTS:${Name}_constants> ${SEQ_TEMPLATES} ${OTHERS})
+
+                target_include_directories(${Name}_mpi_tiled PRIVATE ${TMP_SOURCE_DIR})
+                target_compile_definitions(${Name}_mpi_tiled PRIVATE "-DOPS_MPI -DOPS_LAZY")
+                if(HDF5_MPI)
+                    target_link_libraries(${Name}_mpi_tiled PRIVATE ops_for_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
+                                                    MPI::MPI_Fortran)
+                endif()
+                target_link_libraries(${Name}_mpi_tiled PRIVATE ops_for_mpi MPI::MPI_Fortran)
+                install(TARGETS ${Name}_mpi_tiled     DESTINATION ${APP_INSTALL_DIR}/${Name})
+
+
+                if((OPS_TEST) AND (${GenerateTest} STREQUAL "YES"))
+                    add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh mpi)
+                    add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_openmp ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh mpi_openmp)
+                    add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_tiled ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh mpi_tiled)
+                endif()
+
+            endif()
+
         endmacro()
 
 #       Build all listed apps
 
-#       Current Targets: seq
+#       Current Targets: seq, openmp, tiled, mpi, mpi_openmp, mpi_tiled
 
 #       App: Poisson
         add_subdirectory(poisson)

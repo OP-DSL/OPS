@@ -1,7 +1,7 @@
 #   Specifiy the cmake version range, currenty work under 3.18
     cmake_minimum_required(VERSION 3.18)
 
-    project(OPS C CXX)
+    project(OPS C CXX Fortran)
 
 #   if show the compiling process in detail
     option(OPS_VERBOSE_WARNING "Turn on verbose warning messages" OFF)
