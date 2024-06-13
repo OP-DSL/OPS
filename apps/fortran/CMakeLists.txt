@@ -9,7 +9,6 @@
 
     if(CMAKE_Fortran_COMPILER)
         message(STATUS "Fortran compiler: ${CMAKE_Fortran_COMPILER}")
-        set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/mod)
 
         if(${CMAKE_Fortran_COMPILER_ID} STREQUAL Intel)
             set(CMAKE_Fortran_FLAGS         "${CMAKE_Fortran_FLAGS} -Wall -O3 -g -xHost -qopenmp")
@@ -216,10 +215,8 @@
                                 OUTPUT_VARIABLE output)
             endif()
 
-            file(GLOB CONSTANTS_MODULE "${TMP_SOURCE_DIR}/constants.F90")
             if(result EQUAL 0)
                 message(STATUS "OPS Python code generation runs successfully")
-                add_library(${Name}_constants OBJECT ${CONSTANTS_MODULE})
             else()
                 message(FATAL_ERROR "OPS Python code generation command failed with error code ${result}: ${output}")
             endif()
@@ -240,16 +237,70 @@
                 list(FILTER OTHERS EXCLUDE REGEX ${ext})
             endforeach()
 
+            file(GLOB CONSTANTS_MODULE "${TMP_SOURCE_DIR}/constants.F90")
             list(FILTER OTHERS EXCLUDE REGEX ${CONSTANTS_MODULE})
 
             file(GLOB_RECURSE SEQ_TEMPLATES "${TMP_SOURCE_DIR}/mpi_openmp/*_seq_kernel.F90")
+            foreach(source_file ${SEQ_TEMPLATES})
+                set_source_files_properties(${source_file} PROPERTIES GENERATED TRUE)
+            endforeach()
 
 #            message(STATUS "OPS: ${OPS}")
 #            message(STATUS "OTHERS: ${OTHERS}")
 #            message(STATUS "SEQ_TEMPLATES: ${SEQ_TEMPLATES}")
 
+#           Copying the required mod files
+            set(SOURCE_DIR "${OPS_CMAKE_INSTALL_PATH}/mod")
+            set(DESTINATION_DIR "${OPS_CMAKE_INSTALL_PATH}/mod/${Name}")
+
+            set(SOURCE_MOD_FILES
+                "ops_fortran_declarations.mod"
+                "ops_fortran_hdf5_declarations.mod"
+                "ops_fortran_rt_support.mod"
+            )
+
+            foreach(SOURCE_MOD_FILE ${SOURCE_MOD_FILES})
+                set(SOURCE_FILE "${SOURCE_DIR}/${SOURCE_MOD_FILE}")
+                set(DEST_FILE "${DESTINATION_DIR}/${SOURCE_MOD_FILE}")
+
+                add_custom_command(
+                    OUTPUT ${DEST_FILE}
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SOURCE_FILE} ${DEST_FILE}
+                    DEPENDS ${SOURCE_FILE}
+                    COMMENT "Copying ${SOURCE_FILE} to ${DEST_FILE}"
+                    VERBATIM
+                )
+
+                list(APPEND COPY_OUTPUTS ${DEST_FILE})
+            endforeach()
+
+            add_custom_target(${Name}_copy_files
+                DEPENDS ${COPY_OUTPUTS}
+                COMMENT "Ensuring ${DESTINATION_DIR} is up-to-date"
+            )
+
+            set(CMAKE_Fortran_MODULE_DIRECTORY ${OPS_CMAKE_INSTALL_PATH}/mod/${Name})
+            add_library(${Name}_constants OBJECT ${CONSTANTS_MODULE})
+            add_dependencies(${Name}_constants ${Name}_copy_files)
+
 #           TARGET: SEQ
-            add_executable(${Name}_seq ${OPS} $<TARGET_OBJECTS:${Name}_constants> ${SEQ_TEMPLATES} ${OTHERS})
+            if(OTHERS)
+                add_library(${Name}_others OBJECT ${OTHERS})
+                add_dependencies(${Name}_others ${Name}_constants)
+            endif()
+
+            add_library(${Name}_seqtemplates OBJECT ${SEQ_TEMPLATES})
+            add_dependencies(${Name}_seqtemplates ${Name}_constants)
+
+            add_library(${Name}_seqopsgen OBJECT ${OPS})
+            add_dependencies(${Name}_seqopsgen ${Name}_constants)
+            add_dependencies(${Name}_seqopsgen ${Name}_seqtemplates)
+
+            if(OTHERS)
+                add_executable(${Name}_seq $<TARGET_OBJECTS:${Name}_others> $<TARGET_OBJECTS:${Name}_seqopsgen> $<TARGET_OBJECTS:${Name}_seqtemplates> $<TARGET_OBJECTS:${Name}_constants>)
+            else()
+                add_executable(${Name}_seq $<TARGET_OBJECTS:${Name}_seqopsgen> $<TARGET_OBJECTS:${Name}_seqtemplates> $<TARGET_OBJECTS:${Name}_constants>)
+            endif()
 
             target_include_directories(${Name}_seq PRIVATE ${TMP_SOURCE_DIR})
             if(HDF5_SEQ)
@@ -260,7 +311,11 @@
 
 
 #           TARGET: OpenMP
-            add_executable(${Name}_openmp ${OPS} $<TARGET_OBJECTS:${Name}_constants> ${SEQ_TEMPLATES} ${OTHERS})
+            if(OTHERS)
+                add_executable(${Name}_openmp $<TARGET_OBJECTS:${Name}_others> $<TARGET_OBJECTS:${Name}_seqopsgen> $<TARGET_OBJECTS:${Name}_seqtemplates> $<TARGET_OBJECTS:${Name}_constants>)
+            else()
+                add_executable(${Name}_openmp $<TARGET_OBJECTS:${Name}_seqopsgen> $<TARGET_OBJECTS:${Name}_seqtemplates> $<TARGET_OBJECTS:${Name}_constants>)
+            endif()
 
             target_include_directories(${Name}_openmp PRIVATE ${TMP_SOURCE_DIR})
             if(HDF5_SEQ)
@@ -271,7 +326,20 @@
 
 
 #           TARGET: tiled
-            add_executable(${Name}_tiled ${OPS} $<TARGET_OBJECTS:${Name}_constants> ${SEQ_TEMPLATES} ${OTHERS})
+            add_library(${Name}_tiledtemplates OBJECT ${SEQ_TEMPLATES})
+            add_dependencies(${Name}_tiledtemplates ${Name}_constants)
+            target_compile_definitions(${Name}_tiledtemplates PRIVATE "-DOPS_LAZY")
+
+            add_library(${Name}_tiledopsgen OBJECT ${OPS})
+            add_dependencies(${Name}_tiledopsgen ${Name}_constants)
+            add_dependencies(${Name}_tiledopsgen ${Name}_tiledtemplates)
+            target_compile_definitions(${Name}_tiledopsgen PRIVATE "-DOPS_LAZY")
+
+            if(OTHERS)
+                add_executable(${Name}_tiled $<TARGET_OBJECTS:${Name}_others> $<TARGET_OBJECTS:${Name}_tiledopsgen> $<TARGET_OBJECTS:${Name}_tiledtemplates> $<TARGET_OBJECTS:${Name}_constants>)
+            else()
+                add_executable(${Name}_tiled $<TARGET_OBJECTS:${Name}_tiledopsgen> $<TARGET_OBJECTS:${Name}_tiledtemplates> $<TARGET_OBJECTS:${Name}_constants>)
+            endif()
 
             target_include_directories(${Name}_tiled PRIVATE ${TMP_SOURCE_DIR})
             target_compile_definitions(${Name}_tiled PRIVATE "-DOPS_LAZY")
@@ -290,7 +358,20 @@
 
             if(MPI)
 #               TARGET: MPI
-                add_executable(${Name}_mpi ${OPS} $<TARGET_OBJECTS:${Name}_constants> ${SEQ_TEMPLATES} ${OTHERS})
+                add_library(${Name}_mpitemplates OBJECT ${SEQ_TEMPLATES})
+                add_dependencies(${Name}_mpitemplates ${Name}_constants)
+                target_compile_definitions(${Name}_mpitemplates PRIVATE "-DOPS_MPI")
+
+                add_library(${Name}_mpiopsgen OBJECT ${OPS})
+                add_dependencies(${Name}_mpiopsgen ${Name}_constants)
+                add_dependencies(${Name}_mpiopsgen ${Name}_mpitemplates)
+                target_compile_definitions(${Name}_mpiopsgen PRIVATE "-DOPS_MPI")
+
+                if(OTHERS)
+                    add_executable(${Name}_mpi $<TARGET_OBJECTS:${Name}_others> $<TARGET_OBJECTS:${Name}_mpiopsgen> $<TARGET_OBJECTS:${Name}_mpitemplates> $<TARGET_OBJECTS:${Name}_constants>)
+                else()
+                    add_executable(${Name}_mpi $<TARGET_OBJECTS:${Name}_mpiopsgen> $<TARGET_OBJECTS:${Name}_mpitemplates> $<TARGET_OBJECTS:${Name}_constants>)
+                endif()
 
                 target_include_directories(${Name}_mpi PRIVATE ${TMP_SOURCE_DIR})
                 target_compile_definitions(${Name}_mpi PRIVATE "-DOPS_MPI")
@@ -303,7 +384,11 @@
 
 
 #               TARGET: MPI_OpenMP
-                add_executable(${Name}_mpi_openmp ${OPS} $<TARGET_OBJECTS:${Name}_constants> ${SEQ_TEMPLATES} ${OTHERS})
+                if(OTHERS)
+                    add_executable(${Name}_mpi_openmp $<TARGET_OBJECTS:${Name}_others> $<TARGET_OBJECTS:${Name}_mpiopsgen> $<TARGET_OBJECTS:${Name}_mpitemplates> $<TARGET_OBJECTS:${Name}_constants>)
+                else()
+                    add_executable(${Name}_mpi_openmp $<TARGET_OBJECTS:${Name}_mpiopsgen> $<TARGET_OBJECTS:${Name}_mpitemplates> $<TARGET_OBJECTS:${Name}_constants>)
+                endif()
 
                 target_include_directories(${Name}_mpi_openmp PRIVATE ${TMP_SOURCE_DIR})
                 target_compile_definitions(${Name}_mpi_openmp PRIVATE "-DOPS_MPI")
@@ -316,7 +401,20 @@
 
 
 #               TARGET: MPI_tiled
-                add_executable(${Name}_mpi_tiled ${OPS} $<TARGET_OBJECTS:${Name}_constants> ${SEQ_TEMPLATES} ${OTHERS})
+                add_library(${Name}_mpitiledtemplates OBJECT ${SEQ_TEMPLATES})
+                add_dependencies(${Name}_mpitiledtemplates ${Name}_constants)
+                target_compile_definitions(${Name}_mpitiledtemplates PRIVATE "-DOPS_MPI -DOPS_LAZY")
+
+                add_library(${Name}_mpitiledopsgen OBJECT ${OPS})
+                add_dependencies(${Name}_mpitiledopsgen ${Name}_constants)
+                add_dependencies(${Name}_mpitiledopsgen ${Name}_mpitiledtemplates)
+                target_compile_definitions(${Name}_mpitiledopsgen PRIVATE "-DOPS_MPI -DOPS_LAZY")
+
+                if(OTHERS)
+                    add_executable(${Name}_mpi_tiled $<TARGET_OBJECTS:${Name}_others> $<TARGET_OBJECTS:${Name}_mpitiledopsgen> $<TARGET_OBJECTS:${Name}_mpitiledtemplates> $<TARGET_OBJECTS:${Name}_constants>)
+                else()
+                    add_executable(${Name}_mpi_tiled $<TARGET_OBJECTS:${Name}_mpitiledopsgen> $<TARGET_OBJECTS:${Name}_mpitiledtemplates> $<TARGET_OBJECTS:${Name}_constants>)
+                endif()
 
                 target_include_directories(${Name}_mpi_tiled PRIVATE ${TMP_SOURCE_DIR})
                 target_compile_definitions(${Name}_mpi_tiled PRIVATE "-DOPS_MPI -DOPS_LAZY")
