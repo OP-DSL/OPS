@@ -61,5 +61,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_
 include(OPS_FindPackages)
 include(OPS_Compilers)
 # install python translator
+if(Python3_FOUND)
+  add_subdirectory(ops_translator)
+endif()
 add_subdirectory(ops)
-#add_subdirectory(ops_translator)
