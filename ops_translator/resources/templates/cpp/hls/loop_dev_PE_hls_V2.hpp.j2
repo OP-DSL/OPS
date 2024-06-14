@@ -44,7 +44,6 @@ arg{{arg.id}}_{{link}}
 {% set stencil = widen_read_stencil_desc.widen_stencil %}
     {% if stencil is not none %}
 static constexpr unsigned short read_num_points = {{stencil.num_points}};
-//static constexpr unsigned short read_widen_num_points
 static constexpr unsigned short read_stencil_size = {{stencil.stencil_size}};
 static constexpr unsigned short read_stencil_dim = {{stencil.dim}};
     {% endif %}
@@ -160,22 +159,30 @@ public:
         )
     {
         ::ops::hls::StencilConfigCore stencilConfig = m_stencilConfig;
-
+    {% set read_origin_wide_diff = lh.get_read_stencil(prog).read_origin_diff %}
+    {% set read_origin_wide_diff_x = read_origin_wide_diff.x %}
+    {% set read_origin_wide_diff_x  = ((read_origin_wide_diff_x + config["vector_factor"] - 1) / config["vector_factor"])|round(0,"floor")|int %}
+    //read_origin_wide_diff_x: {{read_origin_wide_diff_x}}, read_origin_wide_diff: {{read_origin_wide_diff}}
+    
     {% if lh.ndim == 1 %}
         short i = -1 -s_stencil_half_span_x;
     {% elif lh.ndim == 2 %}
-        short i = -1;
+        short i = {{ (-read_origin_wide_diff_x) - 1}};
         short j = -s_stencil_half_span_x; 
     {% elif lh.ndim == 3 %}
-        short i = -1;
-        short j = 0; 
+        short i = {{ (-read_origin_wide_diff_x) - 1}};
+        short j = {{(-read_origin_wide_diff[1]) }}; 
         short k = -s_stencil_half_span_x;
         unsigned short plane_diff = stencilConfig.grid_size[0] * stencilConfig.grid_size[1] - 1;
     {% endif %}
 
     {% for stencil_name in lh.get_unique_read_stencil_names() %}
+        {% for point  in prog.findStencil(stencil_name).points %}
+        // point: {{point}}
+        {% endfor %}
         {% for buffer in widen_stencil_disc[stencil_name].window_buffers %}
             {% if buffer.buffer_type == ops.BufferType.LINE_BUFF %}
+        // read point: {{buffer.read_point}}, write point: {{buffer.write_point}}
         unsigned short {{stencil_name}}_{{buffer_read_idx(buffer)}} = {{(buffer.read_point.x - buffer.write_point.x, 0)|max}};
         unsigned short {{stencil_name}}_{{buffer_write_idx(buffer)}} = {{(buffer.write_point.x - buffer.read_point.x, 0)|max}};
             {% else %}
@@ -203,10 +210,10 @@ public:
     {% if lh.ndim  == 1 %}
         unsigned short iter_limit = stencilConfig.outer_loop_limit;
     {% elif lh.ndim == 2%}
-        unsigned short iter_limit = stencilConfig.outer_loop_limit * stencilConfig.grid_size[0];
+        unsigned short iter_limit = stencilConfig.outer_loop_limit * stencilConfig.grid_size[0]{%- if read_origin_wide_diff_x != 0 %} + {{read_origin_wide_diff_x}}{%- endif %};
     {% else %}
         unsigned short iter_limit = stencilConfig.outer_loop_limit * 
-                stencilConfig.grid_size[1] * stencilConfig.grid_size[0];
+                stencilConfig.grid_size[1] * stencilConfig.grid_size[0] {% if read_origin_wide_diff[1] !=0 -%} + {{read_origin_wide_diff[1]}} * stencilConfig.grid_size[0] {%- endif %} {%- if read_origin_wide_diff_x != 0 %} + {{read_origin_wide_diff_x}}{%- endif %};
     {% endif %}
 
     {% for arg in lh.args|ops_dat|ops_read_or_rw %}
