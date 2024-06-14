@@ -259,7 +259,7 @@ def pointCompare(point1: Point, point2: Point) -> int:
     elif point1.y != point2.y:
         return point1.y - point2.y
     else:
-        return point1.x - point2.y
+        return point1.x - point2.x
 
 def arrayToPoints(npoints: int, ndim: int, array: List[int]) -> List[Point]:
     
@@ -434,7 +434,11 @@ class Stencil:
     d_p: Point
     row_discriptors: Optional[List[StencilRowDiscriptor]] = field(default_factory=list)
     stride: Optional[list] = field(default_factory=list)
+    read_origin_diff: Optional[List[Point]] = field(default_factory=list)
     
+    def __post_init__(self):
+        super().__setattr__('read_origin_diff', self.points[-1] - self.base_point)
+        
     # def __post_init__(self):
     #     for point in self.points:
     #         if StencilRowDiscriptor((point.y, point.z)) in self.row_discriptors:
