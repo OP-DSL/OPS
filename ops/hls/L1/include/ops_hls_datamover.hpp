@@ -621,11 +621,32 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 			, __func__);
 #endif
 }
+
+/**
+ * @brief streamRedirect Converts from one hls-stream to another with same size.
+ *
+ * @tparam STREAM_DATA_WIDTH : Data width of the hls ports
+ *
+ * @param num_pkts : Number of pkts
+ */
+template <unsigned int STREAM_DATA_WIDTH>
+void streamRedirect(::hls::stream<ap_uint<STREAM_DATA_WIDTH>>& strm_in,
+				::hls::stream<ap_uint<STREAM_DATA_WIDTH>>& strm_out,
+				const unsigned int num_pkts)
+{
+	for (int pkt = 0; pkt < num_pkts; pkt++)
+	{
+#pragma HLS PIPELINE II=1
+		ap_uint<STREAM_DATA_WIDTH> tmp = strm_in.read();
+		strm_out.write(tmp);
+	}
+}
+
 /**
  * @brief stream2stream Converts from one hls-stream to another with different size.
  *
  * @tparam STREAM1_DATA_WIDTH : Data width of the hls port1
- * @tparam STREAM1_DATA_WIDTH : Data width of the hls port1
+ * @tparam STREAM2_DATA_WIDTH : Data width of the hls port2
  *
  * @param num_big_pkts : Number of pkts of the wider stream
  */
