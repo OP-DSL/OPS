@@ -37,7 +37,7 @@ build:GNU11:API_FORTRAN:
     - mkdir build
     - cd build
     - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_CXX=OFF -DBUILD_OPS_FORTRAN=ON -DGPU_ARCH=75
-    - cmake --build . -j 4
+    - cmake --build .
     - cmake --install .
   artifacts:
     expire_in: 1 week
@@ -97,7 +97,7 @@ build:NVHCP23:API_FORTRAN:
     - mkdir build
     - cd build
     - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_CXX=OFF -DBUILD_OPS_FORTRAN=ON -DGPU_ARCH=75
-    - cmake --build . -j 4
+    - cmake --build .
     - cmake --install .
   artifacts:
     expire_in: 1 week
