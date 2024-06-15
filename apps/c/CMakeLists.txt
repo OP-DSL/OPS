@@ -707,13 +707,10 @@
             add_executable(${Name}_cuda ${OPS} ${OTHERS}
                             "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
             target_include_directories(${Name}_cuda PRIVATE ${TMP_SOURCE_DIR})
-            target_link_libraries(${Name}_cuda PRIVATE ops_cuda CUDA::cudart_static -lcurand
-                                  OpenMP::OpenMP_CXX)
-            target_compile_options(${Name}_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:
-                                                --fmad=false>)
+            target_compile_options(${Name}_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--fmad=false>)
+            target_link_libraries(${Name}_cuda ops_cuda CUDA::cudart_static -lcurand OpenMP::OpenMP_CXX)
             if(HDF5_SEQ)
-                target_link_libraries(${Name}_cuda ops_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl
-                                        MPI::MPI_CXX)
+                target_link_libraries(${Name}_cuda ops_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl)
             endif()
 
             if(TRID)
