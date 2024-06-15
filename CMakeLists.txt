@@ -9,6 +9,7 @@
     option(OPS_HIP "Turn on the HIP backend" OFF)
     option(ENABLE_IEEE "Enable IEEE flags" OFF)
     option(LEGACY_CODEGEN "Build apps with Legacy code-gen" OFF)
+    option(BUILD_OPS_CXX "Build CXX version of OPS" ON)
     option(BUILD_OPS_FORTRAN "Build FORTRAN version of OPS" OFF)
     option(BUILD_OPS_APPS "Build Sample OPS applications" OFF)
 
@@ -274,7 +275,9 @@
     endif()
 
 #   Configure the C/C++ library compiling
-    add_subdirectory(ops/c)
+    if(BUILD_OPS_CXX)
+        add_subdirectory(ops/c)
+    endif()
 
 #   Configure the installation of "include"
     file(GLOB_RECURSE INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/ops/c/include/*.h"
@@ -314,11 +317,15 @@
         endif()
     endif()
 
-    install(FILES "${CMAKE_BINARY_DIR}/OPSConfig.cmake"
-            DESTINATION ${ConfigPackageLocation})
+    if(BUILD_OPS_CXX)
+        install(FILES "${CMAKE_BINARY_DIR}/OPSConfig.cmake"
+                DESTINATION ${ConfigPackageLocation})
+    endif()
 
     if(BUILD_OPS_APPS)
-        add_subdirectory(apps/c)
+        if(BUILD_OPS_CXX)
+            add_subdirectory(apps/c)
+        endif()
         if(BUILD_OPS_FORTRAN)
             add_subdirectory(apps/fortran)
         endif()

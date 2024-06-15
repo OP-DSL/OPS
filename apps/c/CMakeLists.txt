@@ -221,6 +221,7 @@
                 ops_mpi)
         endif()
 
+        set(OPS_LIBRARY_DIR "")
         foreach(library ${OPS_LIB})
             find_library(
                     ${library}_FOUND
@@ -253,7 +254,7 @@
         if(NOT Python3_FOUND)
             message(
                 WARNING
-                    "We cannot find Python3 and the OPS code-generator needs Python3! Please use -DPython3_EXECUTABLE to specify the path."
+                    "We cannot find Python3.8 or higher  and the OPS code-generator needs Python3! Please use -DPython3_EXECUTABLE to specify the path."
             )  
         else()
             if(LEGACY_CODEGEN)
@@ -706,7 +707,7 @@
             add_executable(${Name}_cuda ${OPS} ${OTHERS}
                             "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
             target_include_directories(${Name}_cuda PRIVATE ${TMP_SOURCE_DIR})
-            target_link_libraries(${Name}_cuda ops_cuda CUDA::cudart_static -lcurand
+            target_link_libraries(${Name}_cuda PRIVATE ops_cuda CUDA::cudart_static -lcurand
                                   OpenMP::OpenMP_CXX)
             target_compile_options(${Name}_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:
                                                 --fmad=false>)
