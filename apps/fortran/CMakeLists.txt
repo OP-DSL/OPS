@@ -712,6 +712,7 @@
 
             endif()
 
+
 #           TARGET: CUDA
             if(CUDAToolkit_FOUND)
                 if(${CMAKE_Fortran_COMPILER_ID} STREQUAL NVHPC)
@@ -797,6 +798,94 @@
                         AND (GPU_NUMBER GREATER_EQUAL 1)
                         AND (${GenerateTest} STREQUAL "YES"))
                         add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_cuda ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh cuda)
+                    endif()
+
+                    if(MPI)
+#                       TARGET: MPI_CUDA
+                        add_library(${Name}_cudampitemplates OBJECT ${CUDA_TEMPLATES})
+                        add_dependencies(${Name}_cudampitemplates ${Name}_constants_cuda)
+                        target_compile_definitions(${Name}_cudampitemplates PRIVATE
+                            $<$<COMPILE_LANGUAGE:Fortran>:OPS_WITH_CUDAFOR>
+                            $<$<COMPILE_LANGUAGE:Fortran>:OPS_MPI>
+                        )
+                        target_compile_options(${Name}_cudampitemplates PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-cuda -gpu=cc${CMAKE_CUDA_ARCHITECTURES}>)
+
+                        add_library(${Name}_cudampiopsgen OBJECT ${OPS})
+                        add_dependencies(${Name}_cudampiopsgen ${Name}_constants_cuda)
+                        add_dependencies(${Name}_cudampiopsgen ${Name}_cudampitemplates)
+                        target_compile_definitions(${Name}_cudampiopsgen PRIVATE
+                            $<$<COMPILE_LANGUAGE:Fortran>:OPS_WITH_CUDAFOR>
+                            $<$<COMPILE_LANGUAGE:Fortran>:OPS_MPI>
+                        )
+                        target_compile_options(${Name}_cudampiopsgen PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-cuda -gpu=cc${CMAKE_CUDA_ARCHITECTURES}>)
+
+                        if(OTHERS)
+                            add_executable(${Name}_mpi_cuda $<TARGET_OBJECTS:${Name}_others> $<TARGET_OBJECTS:${Name}_cudampiopsgen> $<TARGET_OBJECTS:${Name}_cudampitemplates> $<TARGET_OBJECTS:${Name}_constants_cuda>)
+                        else()
+                            add_executable(${Name}_mpi_cuda $<TARGET_OBJECTS:${Name}_cudampiopsgen> $<TARGET_OBJECTS:${Name}_cudampitemplates> $<TARGET_OBJECTS:${Name}_constants_cuda>)
+                        endif()
+
+                        set_target_properties(${Name}_mpi_cuda PROPERTIES LINKER_LANGUAGE Fortran)
+
+                        target_link_options(${Name}_mpi_cuda PRIVATE "-DOPS_WITH_CUDAFOR" "-DOPS_MPI" "-cuda" "-gpu=cc${CMAKE_CUDA_ARCHITECTURES}")
+
+                        if(HDF5_MPI)
+                             target_link_libraries(${Name}_mpi_cuda PRIVATE ops_for_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
+                                                                MPI::MPI_Fortran)
+                        endif()
+                        target_link_libraries(${Name}_mpi_cuda PRIVATE ops_for_mpi_cuda MPI::MPI_Fortran "${MPI_LINK}" "-cudalib=curand -c++libs -lstdc++ -lcudart")
+                        install(TARGETS ${Name}_mpi_cuda     DESTINATION ${APP_INSTALL_DIR}/${Name})
+
+                        if((OPS_TEST)
+                            AND (GPU_NUMBER GREATER_EQUAL 1)
+                            AND (${GenerateTest} STREQUAL "YES"))
+                            add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_cuda ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh "mpi_cuda ${GPU_NUMBER}")
+                        endif()
+
+
+#                       TARGET: MPI_CUDA_TILED
+                        add_library(${Name}_cudampitiledtemplates OBJECT ${CUDA_TEMPLATES})
+                        add_dependencies(${Name}_cudampitiledtemplates ${Name}_constants_cuda)
+                        target_compile_definitions(${Name}_cudampitiledtemplates PRIVATE
+                            $<$<COMPILE_LANGUAGE:Fortran>:OPS_WITH_CUDAFOR>
+                            $<$<COMPILE_LANGUAGE:Fortran>:OPS_MPI>
+                            $<$<COMPILE_LANGUAGE:Fortran>:OPS_LAZY>
+                        )
+                        target_compile_options(${Name}_cudampitiledtemplates PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-cuda -gpu=cc${CMAKE_CUDA_ARCHITECTURES}>)
+
+                        add_library(${Name}_cudampitiledopsgen OBJECT ${OPS})
+                        add_dependencies(${Name}_cudampitiledopsgen ${Name}_constants_cuda)
+                        add_dependencies(${Name}_cudampitiledopsgen ${Name}_cudampitiledtemplates)
+                        target_compile_definitions(${Name}_cudampitiledopsgen PRIVATE
+                            $<$<COMPILE_LANGUAGE:Fortran>:OPS_WITH_CUDAFOR>
+                            $<$<COMPILE_LANGUAGE:Fortran>:OPS_MPI>
+                            $<$<COMPILE_LANGUAGE:Fortran>:OPS_LAZY>
+                        )
+                        target_compile_options(${Name}_cudampitiledopsgen PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-cuda -gpu=cc${CMAKE_CUDA_ARCHITECTURES}>)
+
+                        if(OTHERS)
+                            add_executable(${Name}_mpi_cuda_tiled $<TARGET_OBJECTS:${Name}_others> $<TARGET_OBJECTS:${Name}_cudampitiledopsgen> $<TARGET_OBJECTS:${Name}_cudampitiledtemplates> $<TARGET_OBJECTS:${Name}_constants_cuda>)
+                        else()
+                            add_executable(${Name}_mpi_cuda_tiled $<TARGET_OBJECTS:${Name}_cudampitiledopsgen> $<TARGET_OBJECTS:${Name}_cudampitiledtemplates> $<TARGET_OBJECTS:${Name}_constants_cuda>)
+                        endif()
+
+                        set_target_properties(${Name}_mpi_cuda_tiled PROPERTIES LINKER_LANGUAGE Fortran)
+
+                        target_link_options(${Name}_mpi_cuda_tiled PRIVATE "-DOPS_WITH_CUDAFOR" "-DOPS_MPI" "-DOPS_LAZY" "-cuda" "-gpu=cc${CMAKE_CUDA_ARCHITECTURES}")
+
+                        if(HDF5_MPI)
+                             target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_for_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
+                                                                MPI::MPI_Fortran)
+                        endif()
+                        target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_for_mpi_cuda MPI::MPI_Fortran "${MPI_LINK}" "-cudalib=curand -c++libs -lstdc++ -lcudart")
+                        install(TARGETS ${Name}_mpi_cuda_tiled     DESTINATION ${APP_INSTALL_DIR}/${Name})
+
+                        if((OPS_TEST)
+                            AND (GPU_NUMBER GREATER_EQUAL 1)
+                            AND (${GenerateTest} STREQUAL "YES"))
+                            add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_cuda_tiled ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh "mpi_cuda_tiled ${GPU_NUMBER}")
+                        endif()
+
                     endif()
 
                 endif()
