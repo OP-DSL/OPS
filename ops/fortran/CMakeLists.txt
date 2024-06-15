@@ -95,8 +95,6 @@
         if(CUDAToolkit_FOUND)
             if(${CMAKE_Fortran_COMPILER_ID} STREQUAL NVHPC)
 
-#                set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} "
-
                 list(APPEND CUDA
                     "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/cuda/ops_cuda_common.cu"
                     "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/cuda/ops_cuda_rt_support.cu"
@@ -145,21 +143,20 @@
             endif()
 
 #           TARGET: MPI_CUDA
-#            if(CUDAToolkit_FOUND)
-#                if(${CMAKE_Fortran_COMPILER_ID} STREQUAL NVHPC)
-#                    list(APPEND MPI_DEVICE
-#                        "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/cuda/ops_cuda_common.cu"
-#                        "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/cuda/ops_cuda_rt_support.cu"
-#                        "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/mpi/ops_mpi_rt_support_cuda.cu")
-#                    list(APPEND MPI_DEVICE ${CommonFiles})
-#
-#                    add_library(ops_for_mpi_cuda ${MPI_DEVICE} ${MPICORE} ${EXTERN} ${F_COMMON})
-#                    target_compile_definitions(ops_for_mpi_cuda PRIVATE OPS_FTN)
-#                    target_compile_options(ops_for_mpi_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-fPIC>)
-#                    target_link_libraries(ops_for_mpi_cuda PRIVATE OpenMP::OpenMP_CXX MPI::MPI_CXX MPI::MPI_Fortran)
-#                    installtarget(for_mpi_cuda ${ConfigPackageLocation})
-#                endif()
-#            endif()
+            if(CUDAToolkit_FOUND)
+                if(${CMAKE_Fortran_COMPILER_ID} STREQUAL NVHPC)
+
+                    list(APPEND MPI_DEVICE
+                        "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/cuda/ops_cuda_common.cu"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/../c/src/mpi/ops_mpi_rt_support_cuda.cu")
+                    list(APPEND MPI_DEVICE ${CommonFiles})
+
+                    add_library(ops_for_mpi_cuda ${MPI_DEVICE} ${MPICORE} ${EXTERN} ${F_COMMON})
+                    target_compile_definitions(ops_for_mpi_cuda PRIVATE OPS_FTN)
+                    target_link_libraries(ops_for_mpi_cuda PRIVATE OpenMP::OpenMP_CXX MPI::MPI_CXX MPI::MPI_Fortran)
+                    installtarget(for_mpi_cuda ${ConfigPackageLocation})
+                endif()
+            endif()
 
         endif()
 

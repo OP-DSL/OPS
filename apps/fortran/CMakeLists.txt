@@ -254,6 +254,26 @@
             include_directories("${CMAKE_SOURCE_DIR}/ops/c/include")
             set(OPS_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/ops/c/include")
 
+            message(STATUS "Fortran compiler: ${CMAKE_Fortran_COMPILER}")
+
+            if(${CMAKE_Fortran_COMPILER_ID} STREQUAL Intel)
+                set(CMAKE_Fortran_FLAGS         "${CMAKE_Fortran_FLAGS} -O3 -g -xHost -qopenmp")
+                set(CMAKE_Fortran_FLAGS_DEBUG   "-g -traceback -qopenmp")
+                set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -ip -xHOST -qopenmp")
+            elseif(${CMAKE_Fortran_COMPILER_ID} STREQUAL GNU)
+                set(CMAKE_Fortran_FLAGS         "${CMAKE_Fortran_FLAGS} -O3 -g -ffree-form -ffree-line-length-none -fopenmp")
+                set(CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g3 -ffree-form -ffree-line-length-none -fopenmp")
+                set(CMAKE_Fortran_FLAGS_RELEASE "-Ofast -march=native -ffree-form -ffree-line-length-none -fopenmp")
+            elseif(${CMAKE_Fortran_COMPILER_ID} STREQUAL NVHPC)
+                set(CMAKE_Fortran_FLAGS         "${CMAKE_Fortran_FLAGS} -O3 -fast -gopt -mp")
+                set(MPI_LINK "-lmpi_cxx")
+            else()
+                message(
+                    WARNING
+                        "There is no default flag for the chosen Fortran compiler!"
+                )
+            endif()
+
             set(HDF5_SEQ ${HDF5_FOUND})
             if(${MPI_FOUND})
                 set(CMAKE_Fortran_COMPILER ${MPI_Fortran_COMPILER})
@@ -480,9 +500,13 @@
 
             set(SOURCE_MOD_FILES
                 "ops_fortran_declarations.mod"
-                "ops_fortran_hdf5_declarations.mod"
                 "ops_fortran_rt_support.mod"
             )
+
+            if(HDF5_SEQ)
+                list(APPEND SOURCE_MOD_FILES
+                    "ops_fortran_hdf5_declarations.mod")
+            endif()
 
             foreach(SOURCE_MOD_FILE ${SOURCE_MOD_FILES})
                 set(SOURCE_FILE "${SOURCE_DIR}/${SOURCE_MOD_FILE}")
@@ -697,9 +721,13 @@
 
                     set(SOURCE_MOD_FILES
                         "ops_fortran_declarations.mod"
-                        "ops_fortran_hdf5_declarations.mod"
                         "ops_fortran_rt_support.mod"
                     )
+
+                    if(HDF5_SEQ)
+                        list(APPEND SOURCE_MOD_FILES
+                            "ops_fortran_hdf5_declarations.mod")
+                    endif()
 
                     foreach(SOURCE_MOD_FILE ${SOURCE_MOD_FILES})
                         set(SOURCE_FILE "${SOURCE_DIR}/${SOURCE_MOD_FILE}")
