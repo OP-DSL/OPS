@@ -169,7 +169,7 @@ program lowdim
 
     call ops_timers( endTime )
 
-    IF (ops_is_root()) THEN
+    IF (ops_is_root() == 1) THEN
         write(*,'(a)') 'This run is considered PASSED'
         write(*,'(a,f16.7,a)')  ' completed in ', endTime - startTime, ' seconds'
     END IF

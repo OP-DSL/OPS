@@ -15,3 +15,12 @@ if(CUDAToolkit_FOUND)
   include(OPS_BUILD_CUDA)
 endif()
 
+
+#   Configure the installation of "include"
+file(GLOB_RECURSE INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
+install(FILES ${INCLUDE} DESTINATION include)
+# Add the configure file
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in
+                              "${CMAKE_BINARY_DIR}/OPSConfig.cmake"
+                              INSTALL_DESTINATION ${ConfigPackageLocation})
+

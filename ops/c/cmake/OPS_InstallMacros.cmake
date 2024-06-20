@@ -15,7 +15,7 @@ macro(InstallTarget Name Pos)
 endmacro()
 
 macro(SetLib LibName SRC Links)
-  message(STATUS "LibName ${LibName}")
+  #message(STATUS "LibName ${LibName}")
   add_library(${LibName} ${SRC})
   foreach(Link IN LISTS Links)
     target_link_libraries(${LibName} PRIVATE ${Link})

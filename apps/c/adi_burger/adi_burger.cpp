@@ -229,5 +229,7 @@ int main(int argc, const char **argv) {
     ops_fetch_dat_hdf5_file(v, "adi_burger2D.h5");
 
     ops_printf("\nTotal Wall time %lf\n", et1 - et0);
+    ops_printf("\nSuccessful exit from OPS!\n");
     ops_exit();
+    return 0;
 }

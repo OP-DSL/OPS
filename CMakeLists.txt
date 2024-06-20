@@ -1,9 +1,10 @@
 # To specifiy the cmake version range Currenty work under 3.18
 cmake_minimum_required(VERSION 3.18)
 project(OPS CXX)
+enable_testing()
 
 # if show the compiling process in detail
-option(OPS_TEST "Turn on tests for Apps" OFF)
+option(OPS_TEST "Turn on tests for Apps" ON)
 option(OPS_HIP "Turn on the HIP backend" OFF)
 option(OPS_CUDA "Turn on the CUDA backend" ON)
 option(IEEE "Use IEEE flags" ON)
@@ -65,3 +66,7 @@ if(Python3_FOUND)
   add_subdirectory(ops_translator)
 endif()
 add_subdirectory(ops)
+# Build the APPS and TEST
+if(OPS_TEST)
+  add_subdirectory(apps)
+endif()

@@ -62,12 +62,12 @@ double h{(xyzRange[1] - xyzRange[0]) / (nx - 1)};
 void copy_double_single(const ops_dat src_double, ops_dat desc_single) {
   ops_block block{src_double->block};
   const int space_dim{block->dims};
-  int* local{new int(space_dim)};
+  int* local{new int[space_dim]};
   for (int d = 0; d < space_dim; d++) {
     local[d] = 0;
   }
   ops_stencil local_stencil{ops_decl_stencil(space_dim, 1, local, "local")};
-  int* iter_range{new int(2 * space_dim)};
+  int* iter_range{new int[2 * space_dim]};
 #ifdef OPS_MPI
   const sub_dat *sd = OPS_sub_dat_list[src_double->index];
   for (int d = 0; d < space_dim; d++) {
@@ -86,8 +86,8 @@ void copy_double_single(const ops_dat src_double, ops_dat desc_single) {
                ops_arg_dat(desc_single, 1, local_stencil, "float", OPS_WRITE));
 #endif
 
-  delete local;
-  delete iter_range;
+  delete[] local;
+  delete[] iter_range;
 }
 
 int main(int argc, char *argv[]) {
@@ -197,5 +197,7 @@ int main(int argc, char *argv[]) {
   ops_fetch_dat_hdf5_file(velo, "slice3Du.h5");
   ops_fetch_block_hdf5_file(slice3Dv, "slice3Dv.h5");
   ops_fetch_dat_hdf5_file(v, "slice3Dv.h5");
+  ops_printf("\nSuccessful exit from OPS!\n");
   ops_exit();
+  return 0;
 }

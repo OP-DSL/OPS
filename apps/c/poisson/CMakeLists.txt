@@ -1,3 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+set(case "poisson")
+set(CASE_DIR "${app_dir_c}/${case}")
 createtempdir()
-build_ops_c_sample(poisson "NONE" "NONE" "NONE" "NO" "YES")
+build_ops_c_sample(${case} "NONE" "NONE" "NONE" "NO" "YES")
