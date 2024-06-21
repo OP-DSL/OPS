@@ -607,16 +607,17 @@
 
         list(FILTER OPS EXCLUDE REGEX ${Odd})
 #       message(${OPS})
-  
+
         file(GLOB OTHERS "${TMP_SOURCE_DIR}/*.cpp")
         foreach(OpsFile ${OPS})
             list(REMOVE_ITEM OTHERS ${OpsFile})
-            string(REPLACE "_ops" "" NoOPS ${OpsFile})
-            list(REMOVE_ITEM OTHERS ${NoOPS})
+        endforeach()
+
+        foreach(NotReqFile ${DEV})
+            list(REMOVE_ITEM OTHERS ${NotReqFile})
         endforeach()
 
         list(FILTER OTHERS EXCLUDE REGEX ${Odd})
-        list(FILTER OTHERS EXCLUDE REGEX ${DEV})
 
         foreach(ext ${Extra})
             list(FILTER OTHERS EXCLUDE REGEX ${ext})
