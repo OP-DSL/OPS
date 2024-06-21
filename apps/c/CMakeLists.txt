@@ -616,6 +616,7 @@
         endforeach()
 
         list(FILTER OTHERS EXCLUDE REGEX ${Odd})
+        list(FILTER OTHERS EXCLUDE REGEX ${DEV})
 
         foreach(ext ${Extra})
             list(FILTER OTHERS EXCLUDE REGEX ${ext})
