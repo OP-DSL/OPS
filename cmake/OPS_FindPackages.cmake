@@ -27,6 +27,6 @@ if(OPS_CUDA)
   include(OPS_CUDA)
 endif()
 # HIP Support
-if(OPS_CUDA)
+if(OPS_HIP)
   include(OPS_HIP)
 endif()
