@@ -2461,13 +2461,13 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
 
       local_data_size_c[d] = local_range[2 * d + 1] - local_range[2 * d];
       global_data_size_c[d] = global_range[2 * d + 1] - global_range[2 * d];
-      global_data_disp_c[d] = sd->decomp_disp[d] < 0
+      global_data_disp_c[d] = sd->decomp_disp[d] < 0 || (global_range[2 * d] > sd->decomp_disp[d])
                                   ? 0
                                   : (sd->decomp_disp[d] - global_range[2 * d]);
-      // printf("At slab Rank= %d disp[%d]=%d gb=%d ld=%d ls=%d\n",
-      // ops_my_global_rank,
-      //        d, sd->decomp_disp[d], global_data_disp_c[d],
-      //        local_range[2 * d],local_data_size_c[d]);
+      //printf("At slab Rank= %d disp[%d]=%d global_data_disp_c=%d local_range=%d-%d local_data_size=%d\n",
+      //ops_my_global_rank,
+      //       d, sd->decomp_disp[d], global_data_disp_c[d],
+      ..       local_range[2 * d],local_range[2 * d+1],local_data_size_c[d]);
     }
 
     local_data_size_c[0] *= (dat->dim);
@@ -2571,7 +2571,7 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
 
       local_data_size_c[d] = local_range[2 * d + 1] - local_range[2 * d];
       global_data_size_c[d] = global_range[2 * d + 1] - global_range[2 * d];
-      global_data_disp_c[d] = sd->decomp_disp[d] < 0
+      global_data_disp_c[d] = sd->decomp_disp[d] < 0 || (global_range[2 * d] > sd->decomp_disp[d])
                                   ? 0
                                   : (sd->decomp_disp[d] - global_range[2 * d]);
       // printf("At slab Rank= %d disp[%d]=%d gb=%d ld=%d ls=%d\n",
