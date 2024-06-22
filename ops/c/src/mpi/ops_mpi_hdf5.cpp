@@ -2467,7 +2467,7 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
       //printf("At slab Rank= %d disp[%d]=%d global_data_disp_c=%d local_range=%d-%d local_data_size=%d\n",
       //ops_my_global_rank,
       //       d, sd->decomp_disp[d], global_data_disp_c[d],
-      ..       local_range[2 * d],local_range[2 * d+1],local_data_size_c[d]);
+      //       local_range[2 * d],local_range[2 * d+1],local_data_size_c[d]);
     }
 
     local_data_size_c[0] *= (dat->dim);
