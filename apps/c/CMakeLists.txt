@@ -440,6 +440,8 @@
             set(MPI_INC_LIST -I$ENV{I_MPI_ROOT}/include)
         elseif(DEFINED ENV{MPI_ROOT})       # HPE MPT
             set(MPI_INC_LIST -I$ENV{MPI_ROOT}/include)
+        elseif(DEFINED ENV{MPIROOT})       # SOME GNU SYSTEMS
+            set(MPI_INC_LIST -I$ENV{MPIROOT}/include)
         elseif(DEFINED ENV{MPICH_DIR})      # Cray
             set(MPI_INC_LIST -I$ENV{MPICH_DIR}/include)
         else()                          # OpenMPI
