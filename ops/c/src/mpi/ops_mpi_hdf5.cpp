@@ -2216,9 +2216,13 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
     std::vector<hid_t> groupid_list;
     groupid_list.resize(h5_name_list.size() - 1);
 
-    H5_dataset_space(file_id, space_dim, global_data_size_f, h5_name_list,
+    if (real_precision != REAL_PRECISION::Undefined)
+      H5_dataset_space(file_id, space_dim, global_data_size_f, h5_name_list,
                      dat->type, real_precision, groupid_list, dataset_id,
                      file_space);
+    else
+      H5_dataset_space(file_id, space_dim, global_data_size_f, h5_name_list,
+                     dat->type, groupid_list, dataset_id, file_space);
 
     // block of memory to write to file by each proc
     hid_t memspace{H5Screate_simple(space_dim, local_data_size_f, NULL)};
