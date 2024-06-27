@@ -52,6 +52,7 @@
 #define OPS_1D
 #define OPS_HLS_V2
 // #define OPS_FPGA
+// #define OPS_HLS_NO_LOOPBACK
 #define VERIFICATION
 #define DEBUG_VERBOSE
 #define PROFILE
