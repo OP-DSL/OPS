@@ -16,7 +16,7 @@
 #include "ops_hls_utils.hpp"
 #include <math.h>
 #include <stdio.h>
-// #define DEBUG_LOG
+//  #define DEBUG_LOG
 
 #ifndef __SYTHESIS__
 #ifdef DEBUG_LOG
@@ -627,6 +627,8 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
  *
  * @tparam STREAM_DATA_WIDTH : Data width of the hls ports
  *
+ * @param stream_in : input hls-stream
+ * @param stream_out : output hls-stream
  * @param num_pkts : Number of pkts
  */
 template <unsigned int STREAM_DATA_WIDTH>
@@ -638,7 +640,53 @@ void streamRedirect(::hls::stream<ap_uint<STREAM_DATA_WIDTH>>& strm_in,
 	{
 #pragma HLS PIPELINE II=1
 		ap_uint<STREAM_DATA_WIDTH> tmp = strm_in.read();
+#ifndef __SYTHESIS__
+	#ifdef DEBUG_LOG
+		printf("   |HLS DEBUG_LOG||%s| forwarding pkt: %d, val=(", __func__, pkt);
+
+		for (unsigned n = 0; n < STREAM_DATA_WIDTH/(DEBUG_LOG_SIZE_OF * 8); n++)
+		{
+			DataConv conv;
+			conv.i = tmp.range((n+1) * DEBUG_LOG_SIZE_OF * 8 - 1, n * DEBUG_LOG_SIZE_OF * 8);
+			printf("%f,", conv.f);
+		}
+		printf(")\n");
+	#endif
+#endif
 		strm_out.write(tmp);
+	}
+}
+
+
+/**
+ * @brief streamTerminate terminate hls stream
+ *
+ * @tparam STREAM_DATA_WIDTH : Data width of the hls ports
+ * 
+ * @param stream_in : input hls-stream
+ * @param num_pkts : Number of pkts
+ */
+template <unsigned int STREAM_DATA_WIDTH>
+void streamTerminate(::hls::stream<ap_uint<STREAM_DATA_WIDTH>>& strm_in,
+				const unsigned int num_pkts)
+{
+	for (int pkt = 0; pkt < num_pkts; pkt++)
+	{
+#pragma HLS PIPELINE II=1
+		ap_uint<STREAM_DATA_WIDTH> tmp = strm_in.read();
+#ifndef __SYTHESIS__
+	#ifdef DEBUG_LOG
+		printf("   |HLS DEBUG_LOG||%s| terminating pkt: %d, val=(", __func__, pkt);
+
+		for (unsigned n = 0; n < STREAM_DATA_WIDTH/(DEBUG_LOG_SIZE_OF * 8); n++)
+		{
+			DataConv conv;
+			conv.i = tmp.range((n+1) * DEBUG_LOG_SIZE_OF * 8 - 1, n * DEBUG_LOG_SIZE_OF * 8);
+			printf("%f,", conv.f);
+		}
+		printf(")\n");
+	#endif
+#endif
 	}
 }
 
@@ -1344,7 +1392,7 @@ void axis2stream(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
 
 	constexpr unsigned int num_hls_pkt_per_axis_pkt = AXIS_DATA_WIDTH / STREAM_DATA_WIDTH;
 	constexpr unsigned int bytes_per_axis_pkt = AXIS_DATA_WIDTH / 8;
-	
+
 	const unsigned int num_axis_pkts = (size + bytes_per_axis_pkt - 1) / bytes_per_axis_pkt;
 
 #ifdef DEBUG_LOG
