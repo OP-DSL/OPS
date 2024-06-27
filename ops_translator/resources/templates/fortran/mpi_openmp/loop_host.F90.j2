@@ -54,25 +54,6 @@
 {% block user_kernel_function %}
     CONTAINS
 
-!   =============
-!   User function
-!   =============
-
-#ifdef __INTEL_COMPILER
-!DEC$ ATTRIBUTES FORCEINLINE :: {{lh.kernel}}
-#endif
-{{kernel_func}}
-
-{% for arg in lh.args %}
-    {% if arg is ops_dat %}
-        {% if arg.dim == 1 %}
-#undef OPS_ACC{{arg.id+1}}
-        {% elif arg.dim > 1 %}
-#undef OPS_ACC_MD{{arg.id+1}}
-        {% endif %}
-    {% endif %}
-{% endfor %}
-
 {% endblock %}
 
 {% block kernel_wrapper_func %}
@@ -248,7 +229,28 @@ SUBROUTINE {{lh.kernel}}_wrap( &
     END DO
 {% endif %}
 
-END SUBROUTINE
+CONTAINS
+
+!   =============
+!   User function
+!   =============
+
+#ifdef __INTEL_COMPILER
+!DEC$ ATTRIBUTES FORCEINLINE :: {{lh.kernel}}
+#endif
+{{kernel_func}}
+
+{% for arg in lh.args %}
+    {% if arg is ops_dat %}
+        {% if arg.dim == 1 %}
+#undef OPS_ACC{{arg.id+1}}
+        {% elif arg.dim > 1 %}
+#undef OPS_ACC_MD{{arg.id+1}}
+        {% endif %}
+    {% endif %}
+{% endfor %}
+
+END SUBROUTINE {{lh.kernel}}_wrap
 
 {% endblock %}
 
