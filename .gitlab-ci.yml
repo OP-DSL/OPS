@@ -11,8 +11,10 @@ job_build:
     - source ~/.bash_aliases
     - module avail 
     - module load CUDA
-    - cmake -S . -B build 
-    - cmake --build build 
+    - cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt 
+    - cmake --build build -j 4
+    - cmake --install build 
+    - ctest --test-dir build --output-on-failure 
 
 job_test:
   stage: test
