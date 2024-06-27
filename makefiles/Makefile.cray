@@ -2,7 +2,7 @@ CC        := cc
 CXX       := CC
 FC        := ftn
 
-CCFLAGS   := -O3 -std=c++11 -g -fPIC#-ffp=3 -fsanitize=undefined
+CCFLAGS   := -O3 -std=c++11 -g -fPIC #-ffp=3 -fsanitize=undefined
 CXXFLAGS  := $(CCFLAGS) -fopenmp
 FFLAGS    := -O3 -g -fopenmp -fPIC -M 878 -f free
 #-M 878 will disable ftn-878 warning message - module named <name> has already been directly or indirectly use 
@@ -21,7 +21,10 @@ MPIF90=ftn
 
 MPI_INC = $(CRAY_MPICH_DIR)/include
 MPI_LIB = $(CRAY_MPICH_DIR)/lib $(PE_MPICH_GTL_DIR_amd_gfx90a)
-MPI_LINK = -lmpi -lmpi_gtl_hsa # $(PE_MPICH_GTL_LIBS_amd_gfx90a)
+MPI_LINK = -lmpi
+
+#$PE_MPICH_GTL_LIBS_amd_gfx90a = -lmpi_gtl_hsa
+OPS_LIB_MPI_OMPOFFLOAD += -lmpi_gtl_hsa
 
 HIPCC=CC
 HIPMPICPP=CC

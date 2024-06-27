@@ -82,10 +82,10 @@ OTHER_FILES_OFFLOAD := $(patsubst %, %_offload, $(filter-out constants.F90, $(OT
 endif
 
 ifneq ($(strip $(MPI_INSTALL_PATH)),)
-	I_MPI_INC = -I$(MPI_INC)
-	L_MPI_LIB = -L$(MPI_LIB)
+I_MPI_INC = -I$(MPI_INC)
+L_MPI_LIB = -L$(MPI_LIB)
 else
-	I_MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
+I_MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
 endif
 
 APP_TARGETS = $(addprefix $(APP)_, $(TARGETS))
@@ -164,21 +164,21 @@ $(APP)_cuda: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)
 		@echo ""
 		@echo "Building ${APP}_cuda"
 		@echo ""
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) $(OTHER_FILES) cuda/*_cuda_kernel.CUF $(OPS_GENERATED) $(APP_LIBS) $(FLINK) $(FCURAND) -lops_for_cuda $(F_HDF5_LIB_SEQ) -o $(APP)_cuda
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) $(OTHER_FILES) cuda/*_cuda_kernel.CUF $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_cuda $(F_HDF5_LIB_SEQ) $(FCURAND) -o $(APP)_cuda
 
 $(APP)_mpi_cuda: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_mpi_cuda.a $(OPS_FILES_GEN)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_cuda"
 		@echo ""
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) -DOPS_MPI $(I_MPI_INC) $(OTHER_FILES) cuda/*_cuda_kernel.CUF $(OPS_GENERATED) $(APP_LIBS) $(FLINK) $(FCURAND) -lops_for_mpi_cuda $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_cuda
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) -DOPS_MPI $(I_MPI_INC) $(OTHER_FILES) cuda/*_cuda_kernel.CUF $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_mpi_cuda $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(FCURAND) -o $(APP)_mpi_cuda
 
 $(APP)_mpi_cuda_tiled: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_mpi_cuda.a $(OPS_FILES_GEN)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_cuda_tiled"
 		@echo ""
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) -DOPS_MPI -DOPS_LAZY $(I_MPI_INC) $(OTHER_FILES) cuda/*_cuda_kernel.CUF $(OPS_GENERATED) $(APP_LIBS) $(FLINK) $(FCURAND) -lops_for_mpi_cuda $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_cuda_tiled
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) -DOPS_MPI -DOPS_LAZY $(I_MPI_INC) $(OTHER_FILES) cuda/*_cuda_kernel.CUF $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_mpi_cuda $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(FCURAND) -o $(APP)_mpi_cuda_tiled
 
 #=====================================================================================================================================================================
 #

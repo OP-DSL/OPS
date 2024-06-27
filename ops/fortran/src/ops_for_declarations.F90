@@ -45,12 +45,14 @@ module OPS_Fortran_Declarations
 #endif
 
 !   accessing operation codes
-    integer(c_int) :: OPS_READ = 1
-    integer(c_int) :: OPS_WRITE = 2
-    integer(c_int) :: OPS_RW = 3
-    integer(c_int) :: OPS_INC = 4
-    integer(c_int) :: OPS_MIN = 5
-    integer(c_int) :: OPS_MAX = 6
+    integer(kind=c_int), parameter :: OPS_READ = 1
+    integer(kind=c_int), parameter :: OPS_WRITE = 2
+    integer(kind=c_int), parameter :: OPS_RW = 3
+    integer(kind=c_int), parameter :: OPS_INC = 4
+    integer(kind=c_int), parameter :: OPS_MIN = 5
+    integer(kind=c_int), parameter :: OPS_MAX = 6
+
+    integer(kind=c_int), parameter :: OPS_MAX_DIM = 5
 
 !################################################
 ! Inteoperable data types for in ops_lib_core.h
@@ -64,8 +66,8 @@ module OPS_Fortran_Declarations
     end type ops_block_core
 
     type :: ops_block
-        type (ops_block_core), pointer :: blockPtr => null()
-        type (c_ptr)                   :: blockCptr
+        type(ops_block_core), pointer :: blockPtr => null()
+        type(c_ptr)                   :: blockCptr
     end type ops_block
 
     type, BIND(C)         :: ops_dat_core
@@ -74,10 +76,10 @@ module OPS_Fortran_Declarations
         integer(kind=c_int) :: dims        ! number of elements per grid point
         integer(kind=c_int) :: type_size   ! bytes per primitive = elem_size/dim
         integer(kind=c_int) :: elem_size   ! number of bytes per grid point
-        type(c_ptr)         :: size        ! size of the array in each block dimension -- including halo
-        type(c_ptr)         :: base        ! base offset to 0,0,... from the start of each dimension
-        type(c_ptr)         :: d_m         ! halo depth in each dimension, negative direction (at 0 end)
-        type(c_ptr)         :: d_p         ! halo depth in each dimension, positive direction (at size end)
+        integer(kind=c_int), dimension(OPS_MAX_DIM) :: size        ! size of the array in each block dimension -- including halo
+        integer(kind=c_int), dimension(OPS_MAX_DIM) :: base        ! base offset to 0,0,... from the start of each dimension
+        integer(kind=c_int), dimension(OPS_MAX_DIM) :: d_m         ! halo depth in each dimension, negative direction (at 0 end)
+        integer(kind=c_int), dimension(OPS_MAX_DIM) :: d_p         ! halo depth in each dimension, positive direction (at size end)
         integer(kind=c_int) :: x_pad       ! padding in x-dimension for allocating aligned memory
         type(c_ptr)         :: data        ! data on host
 #ifdef OPS_WITH_CUDAFOR
@@ -94,16 +96,16 @@ module OPS_Fortran_Declarations
         integer(kind=c_int) :: is_hdf5     ! indicates whether the data is to read from an hdf5 file
         type(c_ptr)         :: hdf5_file   ! name of hdf5 file from which this dataset was read
         integer(kind=c_int) :: e_dat       ! is this an edge dat?
-        integer(kind=c_long) :: mem        ! memory in bytes allocated to this dat (under MPI, this will be memory held on a single MPI proc)
-        integer(kind=c_long) :: base_offset ! computed quantity, giving offset in bytes to the base index
-        type(c_ptr)         :: stride       ! stride[*] > 1 if this dat is a coarse dat under multi-grid
+        integer(kind=c_size_t) :: mem        ! memory in bytes allocated to this dat (under MPI, this will be memory held on a single MPI proc)
+        integer(kind=c_size_t) :: base_offset ! computed quantity, giving offset in bytes to the base index
+        integer(kind=c_int), dimension(OPS_MAX_DIM) :: stride       ! stride[*] > 1 if this dat is a coarse dat under multi-grid
 
     end type ops_dat_core
 
     type :: ops_dat
-        type (ops_dat_core), pointer :: dataPtr => null()
-        type (c_ptr)                 :: dataCptr
-        integer (kind=c_int)         :: status = -1
+        type(ops_dat_core), pointer :: dataPtr => null()
+        type(c_ptr)                 :: dataCptr
+        integer(kind=c_int)         :: status = -1
     end type ops_dat
 
     type, BIND(C) :: ops_stencil_core
@@ -140,12 +142,12 @@ module OPS_Fortran_Declarations
     end type ops_arg
 
     type, BIND(C) :: ops_reduction_core
-        type(c_ptr)           :: data       ! The data
+        type(c_ptr)         :: data       ! The data
         integer(kind=c_int) :: size         ! size of data in bytes
         integer(kind=c_int) :: initialized  ! flag indicating whether data has been initialized
         integer(kind=c_int) :: index        ! unique identifier
         integer(kind=c_int) :: acc          ! Type of reduction it was used for last time
-        integer(kind=c_int) :: type         ! Type
+        type(c_ptr)         :: type         ! Type
         type(c_ptr)         :: name         ! Name
         type(c_ptr)         :: instance     ! Pointer to the OPS_instance
     end type ops_reduction_core
@@ -158,11 +160,11 @@ module OPS_Fortran_Declarations
     type, BIND(C) :: ops_halo_core
         type(c_ptr)         :: from
         type(c_ptr)         :: to
-        type(c_ptr)         :: iter_size
-        type(c_ptr)         :: from_base
-        type(c_ptr)         :: to_base
-        type(c_ptr)         :: from_dir
-        type(c_ptr)         :: to_dir
+        integer(kind=c_int), dimension(OPS_MAX_DIM) :: iter_size
+        integer(kind=c_int), dimension(OPS_MAX_DIM) :: from_base
+        integer(kind=c_int), dimension(OPS_MAX_DIM) :: to_base
+        integer(kind=c_int), dimension(OPS_MAX_DIM) :: from_dir
+        integer(kind=c_int), dimension(OPS_MAX_DIM) :: to_dir
         integer(kind=c_int) :: index
     end type ops_halo_core
 
@@ -188,13 +190,13 @@ module OPS_Fortran_Declarations
     type, BIND(C) :: ops_kernel_descriptor
 
         type(c_ptr) :: name             ! name of kernel
-        integer(c_int)      :: name_len ! kernel name length
-        integer(c_size_t)      :: hash             ! hash of loop
+        integer(kind=c_int)      :: name_len ! kernel name length
+        integer(kind=c_size_t)      :: hash             ! hash of loop
         type(c_ptr)         :: args             ! number of arguments
-        integer(c_int)      :: nargs            ! number of arguments
-        integer(c_int)      :: index            ! index of the loop
-        integer(c_int)      :: dim              ! number of dimensions
-        integer(c_int)      :: isdevice         ! flag to indicate if loop runs on device
+        integer(kind=c_int)      :: nargs            ! number of arguments
+        integer(kind=c_int)      :: index            ! index of the loop
+        integer(kind=c_int)      :: dim              ! number of dimensions
+        integer(kind=c_int)      :: isdevice         ! flag to indicate if loop runs on device
         type(c_ptr)    :: range            ! process local execution range
         type(c_ptr)    :: orig_range       ! original execution range
         type(c_ptr)         :: block            ! block to execute on
@@ -298,6 +300,7 @@ module OPS_Fortran_Declarations
         subroutine ops_halo_transfer_c (group) BIND(C,name='ops_halo_transfer')
             use, intrinsic :: ISO_C_BINDING
             import :: ops_halo_group_core, ops_halo_core
+
             type(c_ptr), value, intent(in)        :: group
         end subroutine ops_halo_transfer_c
 
@@ -364,7 +367,6 @@ module OPS_Fortran_Declarations
             import :: ops_arg, ops_reduction
 
             type(ops_arg) :: ops_arg_reduce_c
-
             type(c_ptr), value, intent(in) :: handle
             integer(kind=c_int), value   :: dim
             character(kind=c_char,len=1) :: type(*)
@@ -376,7 +378,6 @@ module OPS_Fortran_Declarations
             import :: ops_arg
 
             type(ops_arg) :: ops_arg_gbl_c
-
             type(c_ptr), value :: data
             integer(kind=c_int), value :: dim, size
             integer(kind=c_int), value :: acc
@@ -504,15 +505,14 @@ module OPS_Fortran_Declarations
 
         subroutine create_kerneldesc_and_enque( name, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='create_kerneldesc_and_enque')
             use, intrinsic :: ISO_C_BINDING
-
             import :: ops_block_core, ops_arg
 
-            character(kind=c_char,len=1) :: name
-            type(c_ptr), value      :: args
-            integer(c_int), value   :: nargs
-            integer(c_int), value   :: index
-            integer(c_int), value   :: dim
-            integer(c_int), value   :: isdevice
+            character(kind=c_char,len=1) :: name(*)
+            type(c_ptr), value           :: args
+            integer(kind=c_int), value   :: nargs
+            integer(kind=c_int), value   :: index
+            integer(kind=c_int), value   :: dim
+            integer(kind=c_int), value   :: isdevice
             type(c_ptr), value      :: range
             type(c_ptr), value      :: block
             type(c_funptr), value   :: func
@@ -542,7 +542,7 @@ module OPS_Fortran_Declarations
     module procedure ops_dat_fetch_data_real_8, ops_dat_fetch_data_integer_4, ops_dat_fetch_data_real_8_2d, &
     & ops_dat_fetch_data_integer_4_2d
   end interface ops_dat_fetch_data
-  
+
   interface ops_dat_set_data
     module procedure ops_dat_set_data_real_8, ops_dat_set_data_integer_4, ops_dat_set_data_real_8_2d, &
     & ops_dat_set_data_integer_4_2d
@@ -557,707 +557,723 @@ module OPS_Fortran_Declarations
   contains
 
     subroutine ops_init ( diags )
-      integer(4) :: diags
-      integer(kind=c_int) :: argc
-      integer :: i,len
-      character(kind=c_char,len=64)           :: temp
+        integer(kind=c_int) :: diags
+        integer(kind=c_int) :: argc
+        integer :: i,len
+        character(kind=c_char,len=64)           :: temp
 
-      !Get the command line arguments - needs to be handled using Fortrn
-      argc = command_argument_count()
+!       Get the command line arguments - needs to be handled using Fortrn
+        argc = command_argument_count()
 
-      call ops_init_c (0, C_NULL_PTR, diags)
-      do i = 1, argc
-        call get_command_argument(i, temp, len)
-        call ops_set_args_c (temp, len) !special function to set args
-      end do
-
-
+        call ops_init_c (0, C_NULL_PTR, diags)
+        do i = 1, argc
+            call get_command_argument(i, temp, len)
+            call ops_set_args_c (temp, len) !special function to set args
+        end do
     end subroutine ops_init
 
     subroutine ops_exit ( )
-      call ops_exit_c (  )
+        call ops_exit_c (  )
     end subroutine ops_exit
 
     subroutine ops_set_soa ( soa_val )
-        integer(4) :: soa_val
+        integer(kind=c_int) :: soa_val
         call ops_set_soa_c (soa_val)
     end subroutine ops_set_soa
 
-  subroutine ops_decl_block ( dims, block, name )
-
-    integer(kind=c_int), value, intent(in) :: dims
-    type(ops_block)                        :: block
-    character(kind=c_char,len=*)           :: name
-
-    block%blockCPtr = ops_decl_block_c ( dims, name//char(0) )
-
-    ! convert the generated C pointer to Fortran pointer and store it inside the op_block variable
-    call c_f_pointer ( block%blockCptr, block%blockPtr )
-
-  end subroutine ops_decl_block
-
-  subroutine ops_decl_stencil ( dims, points, stencil_data, stencil, name )
-
-    integer, intent(in) :: dims, points
-    integer(4), dimension(*), intent(in), target :: stencil_data
-    type(ops_stencil) :: stencil
-    character(kind=c_char,len=*):: name
-
-    stencil%stencilCPtr = ops_decl_stencil_c ( dims, points, c_loc ( stencil_data ), name//C_NULL_CHAR )
-
-    ! convert the generated C pointer to Fortran pointer and store it inside the ops_stencil variable
-    call c_f_pointer (stencil%stencilCptr, stencil%stencilPtr)
-
-  end subroutine ops_decl_stencil
-
-  subroutine ops_decl_strided_stencil ( dims, points, stencil_data, stride_data, stencil, name )
-
-    integer, intent(in) :: dims, points
-    integer(4), dimension(*), intent(in), target :: stencil_data
-    integer(4), dimension(*), intent(in), target :: stride_data
-    type(ops_stencil) :: stencil
-    character(kind=c_char,len=*):: name
-
-    stencil%stencilCPtr = ops_decl_strided_stencil_c ( dims, points, c_loc ( stencil_data ), c_loc ( stride_data ), name//C_NULL_CHAR )
-
-    ! convert the generated C pointer to Fortran pointer and store it inside the ops_stencil variable
-    call c_f_pointer (stencil%stencilCptr, stencil%stencilPtr)
-
-  end subroutine ops_decl_strided_stencil
-
-  subroutine ops_free_dat( dat )
-    type(ops_dat) :: dat
-    call ops_free_dat_c( dat%dataCPtr )
-  end subroutine ops_free_dat
-
-  subroutine ops_decl_dat_real_8 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
-
-    type(ops_block), intent(in)                  :: block
-    integer, intent(in)                          :: dim
-    integer(4), dimension(*), intent(in), target :: size
-    integer(4), dimension(*),             target :: base
-    integer(4), dimension(*), intent(in), target :: d_m
-    integer(4), dimension(*), intent(in), target :: d_p
-    real(8), dimension(*), intent(in), target    :: data
-    type(ops_dat)                                :: dat
-    character(kind=c_char,len=*)                 :: name
-    character(kind=c_char,len=*)                 :: typ
-    integer(4), dimension(5), target :: stride
-
-    integer d;
-    DO d = 1, block%blockPtr%dims
-      base(d) = base(d)-1
-      stride(d) = 1
-    end DO
-
-    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc(stride), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
-
-    DO d = 1, block%blockPtr%dims
-      base(d) = base(d)+1
-    end DO
-
-    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
-    call c_f_pointer ( dat%dataCptr, dat%dataPtr )
-
-  end subroutine ops_decl_dat_real_8
-
-  subroutine ops_decl_dat_real_8_2 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
-
-    type(ops_block), intent(in)                  :: block
-    integer, intent(in)                          :: dim
-    integer(4), dimension(*), intent(in), target :: size
-    integer(4), dimension(*),             target :: base
-    integer(4), dimension(*), intent(in), target :: d_m
-    integer(4), dimension(*), intent(in), target :: d_p
-    real(8), dimension(:,:), intent(in), target  :: data
-    type(ops_dat)                                :: dat
-    character(kind=c_char,len=*)                 :: name
-    character(kind=c_char,len=*)                 :: typ
-    integer(4), dimension(5), target :: stride
-
-    integer d;
-    DO d = 1, block%blockPtr%dims
-      base(d) = base(d)-1
-      stride(d) = 1
-    end DO
-
-    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc(stride), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
-
-    DO d = 1, block%blockPtr%dims
-      base(d) = base(d)+1
-    end DO
-
-    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
-    call c_f_pointer ( dat%dataCptr, dat%dataPtr )
-
-  end subroutine ops_decl_dat_real_8_2
-
-  subroutine ops_decl_dat_real_8_3 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
-
-    type(ops_block), intent(in)                  :: block
-    integer, intent(in)                          :: dim
-    integer(4), dimension(*), intent(in), target :: size
-    integer(4), dimension(*),             target :: base
-    integer(4), dimension(*), intent(in), target :: d_m
-    integer(4), dimension(*), intent(in), target :: d_p
-    real(8), dimension(:,:,:), intent(in), target  :: data
-    type(ops_dat)                                :: dat
-    character(kind=c_char,len=*)                 :: name
-    character(kind=c_char,len=*)                 :: typ
-    integer(4), dimension(5), target :: stride
-
-    integer d;
-    DO d = 1, block%blockPtr%dims
-      base(d) = base(d)-1
-      stride(d) = 1
-    end DO
-
-    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc(stride), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
-
-    DO d = 1, block%blockPtr%dims
-      base(d) = base(d)+1
-    end DO
-
-    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
-    call c_f_pointer ( dat%dataCptr, dat%dataPtr )
-
-  end subroutine ops_decl_dat_real_8_3
-
-  subroutine ops_decl_dat_real_8_4 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
-
-    type(ops_block), intent(in)                  :: block
-    integer, intent(in)                          :: dim
-    integer(4), dimension(*), intent(in), target :: size
-    integer(4), dimension(*),             target :: base
-    integer(4), dimension(*), intent(in), target :: d_m
-    integer(4), dimension(*), intent(in), target :: d_p
-    real(8), dimension(:,:,:,:), intent(in), target  :: data
-    type(ops_dat)                                :: dat
-    character(kind=c_char,len=*)                 :: name
-    character(kind=c_char,len=*)                 :: typ
-    integer(4), dimension(5), target :: stride
-
-    integer d;
-    DO d = 1, block%blockPtr%dims
-      base(d) = base(d)-1
-      stride(d) = 1
-    end DO
-
-    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc(stride), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
-
-    DO d = 1, block%blockPtr%dims
-      base(d) = base(d)+1
-    end DO
-
-    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
-    call c_f_pointer ( dat%dataCptr, dat%dataPtr )
-
-  end subroutine ops_decl_dat_real_8_4
-
-  subroutine ops_decl_dat_integer_4 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
-
-    type(ops_block), intent(in)                  :: block
-    integer, intent(in)                          :: dim
-    integer(4), dimension(*), intent(in), target :: size
-    integer(4), dimension(*),             target :: base
-    integer(4), dimension(*), intent(in), target :: d_m
-    integer(4), dimension(*), intent(in), target :: d_p
-    integer(4), dimension(*), intent(in), target :: data
-    type(ops_dat)                                :: dat
-    character(kind=c_char,len=*)                 :: name
-    character(kind=c_char,len=*)                 :: typ
-    integer(4), dimension(5), target :: stride
-
-    integer d;
-    DO d = 1, block%blockPtr%dims
-      base(d) = base(d)-1
-      stride(d) = 1
-    end DO
-
-    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc(stride), c_loc ( data ), 4, typ//C_NULL_CHAR, name//C_NULL_CHAR )
-
-    DO d = 1, block%blockPtr%dims
-      base(d) = base(d)+1
-    end DO
-
-    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
-    call c_f_pointer ( dat%dataCptr, dat%dataPtr )
-
-  end subroutine ops_decl_dat_integer_4
-
-  subroutine ops_decl_dat_integer_4_4 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
-
-    type(ops_block), intent(in)                  :: block
-    integer, intent(in)                          :: dim
-    integer(4), dimension(*), intent(in), target :: size
-    integer(4), dimension(*),             target :: base
-    integer(4), dimension(*), intent(in), target :: d_m
-    integer(4), dimension(*), intent(in), target :: d_p
-    integer(4), dimension(:,:,:,:), intent(in), target :: data
-    type(ops_dat)                                :: dat
-    character(kind=c_char,len=*)                 :: name
-    character(kind=c_char,len=*)                 :: typ
-    integer(4), dimension(5), target :: stride
-
-    integer d;
-    DO d = 1, block%blockPtr%dims
-      base(d) = base(d)-1
-      stride(d) = 1
-    end DO
-
-    dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc(stride), c_loc ( data ), 4, typ//C_NULL_CHAR, name//C_NULL_CHAR )
-
-    DO d = 1, block%blockPtr%dims
-      base(d) = base(d)+1
-    end DO
-
-    ! convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
-    call c_f_pointer ( dat%dataCptr, dat%dataPtr )
-
-  end subroutine ops_decl_dat_integer_4_4
-
-  subroutine ops_decl_reduction_handle ( size, handle, typ, name )
-
-    integer, intent(in)                          :: size
-    type(ops_reduction)                          :: handle
-    character(kind=c_char,len=*)                 :: name
-    character(kind=c_char,len=*)                 :: typ
-
-    handle%reductionCPtr = ops_decl_reduction_handle_c (size, typ//C_NULL_CHAR, name//C_NULL_CHAR )
-
-    ! convert the generated C pointer to Fortran pointer and store it inside the ops_reduction variable
-    call c_f_pointer ( handle%reductionCptr, handle%reductionPtr )
-
-  end subroutine ops_decl_reduction_handle
-
-  integer(kind=c_int) function ops_dat_get_local_npartitions(dat) 
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-
-    ops_dat_get_local_npartitions = ops_dat_get_local_npartitions_c(dat%dataCptr)
-  end function ops_dat_get_local_npartitions
-
-  integer(kind=c_int) function ops_dat_get_global_npartitions(dat) 
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-
-    ops_dat_get_global_npartitions = ops_dat_get_global_npartitions_c(dat%dataCptr)
-  end function ops_dat_get_global_npartitions
-
-  subroutine ops_dat_get_extents( dat, part, disp, size )
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-    integer(kind = c_int) :: part
-    integer(4), dimension(*), intent(in), target :: disp, size
-    integer d;
-
-    call ops_dat_get_extents_c( dat%dataCptr, part-1, c_loc(disp), c_loc(size))
-  end subroutine ops_dat_get_extents
-
-  type(c_ptr) function ops_dat_get_raw_pointer( dat, part, sten, stride )
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-    integer(kind = c_int) :: part
-    type(ops_stencil) :: sten
-    integer(4), dimension(*), intent(in), target :: stride
-
-    ops_dat_get_raw_pointer = ops_dat_get_raw_pointer_c(dat%dataCptr, part-1, sten%stencilCptr, c_loc(stride))
-  end function ops_dat_get_raw_pointer
-
-  subroutine ops_dat_release_raw_data( dat, part, acc )
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-    integer(kind = c_int) :: part
-    integer(kind=c_int) :: acc
-
-    call ops_dat_release_raw_data_c( dat%dataCptr, part-1, acc )
-  end subroutine ops_dat_release_raw_data
-
-  subroutine ops_dat_fetch_data_real_8( dat, part, data )
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-    integer(kind = c_int) :: part
-    real(8), dimension(*), target :: data
-    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
-  end subroutine ops_dat_fetch_data_real_8
-    
-  subroutine ops_dat_fetch_data_integer_4( dat, part, data )
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-    integer(kind = c_int) :: part
-    integer(4), dimension(*), target :: data
-    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
-  end subroutine ops_dat_fetch_data_integer_4
-
-  subroutine ops_dat_fetch_data_real_8_2d( dat, part, data )
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-    integer(kind = c_int) :: part
-    real(8), dimension(:,:), target :: data
-    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
-  end subroutine ops_dat_fetch_data_real_8_2d
-    
-  subroutine ops_dat_fetch_data_integer_4_2d( dat, part, data )
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-    integer(kind = c_int) :: part
-    integer(4), dimension(:,:), target :: data
-    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
-  end subroutine ops_dat_fetch_data_integer_4_2d
-
-  subroutine ops_dat_fetch_data_real_8_3d( dat, part, data )
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-    integer(kind = c_int) :: part
-    real(8), dimension(:,:,:), target :: data
-    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
-  end subroutine ops_dat_fetch_data_real_8_3d
-    
-  subroutine ops_dat_fetch_data_integer_4_3d( dat, part, data )
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-    integer(kind = c_int) :: part
-    integer(4), dimension(:,:,:), target :: data
-    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
-  end subroutine ops_dat_fetch_data_integer_4_3d
-
-  subroutine ops_dat_set_data_real_8( dat, part, data )
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-    integer(kind = c_int) :: part
-    real(8), dimension(*), target :: data
-    call ops_dat_set_data_c( dat%dataCptr, part-1, c_loc(data) )
-  end subroutine ops_dat_set_data_real_8
-    
-  subroutine ops_dat_set_data_integer_4( dat, part, data )
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-    integer(kind = c_int) :: part
-    integer(4), dimension(*), target :: data
-    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
-  end subroutine ops_dat_set_data_integer_4
-
-  subroutine ops_dat_set_data_real_8_2d( dat, part, data )
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-    integer(kind = c_int) :: part
-    real(8), dimension(:,:), target :: data
-    call ops_dat_set_data_c( dat%dataCptr, part-1, c_loc(data) )
-  end subroutine ops_dat_set_data_real_8_2d
-    
-  subroutine ops_dat_set_data_integer_4_2d( dat, part, data )
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-    integer(kind = c_int) :: part
-    integer(4), dimension(:,:), target :: data
-    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
-  end subroutine ops_dat_set_data_integer_4_2d
-
-  subroutine ops_dat_set_data_real_8_3d( dat, part, data )
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-    integer(kind = c_int) :: part
-    real(8), dimension(:,:,:), target :: data
-    call ops_dat_set_data_c( dat%dataCptr, part-1, c_loc(data) )
-  end subroutine ops_dat_set_data_real_8_3d
-    
-  subroutine ops_dat_set_data_integer_4_3d( dat, part, data )
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_dat) :: dat
-    integer(kind = c_int) :: part
-    integer(4), dimension(:,:,:), target :: data
-    call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
-  end subroutine ops_dat_set_data_integer_4_3d
-
-
-  type(ops_arg) function ops_arg_dat(dat, dim, sten, type, access)
-
-    use, intrinsic :: ISO_C_BINDING
-
-    implicit none
-
-    type(ops_dat) :: dat
-    integer(kind=c_int) :: dim
-    type(ops_stencil) :: sten
-    character(kind=c_char,len=*) :: type
-    integer(kind=c_int) :: access
-
-    if (dat%dataPtr%dims .ne. dim) then
-      print *, "Wrong dim",dim,dat%dataPtr%dims
-    endif
-    ! warning: access and idx are in FORTRAN style, while the C style is required here
-    ops_arg_dat = ops_arg_dat_c ( dat%dataCptr, dim, sten%stencilCptr, type, access-1 )
-
-  end function ops_arg_dat
-
-  type(ops_arg) function ops_arg_dat_opt(dat, dim, sten, type, access, flag)
-
-    use, intrinsic :: ISO_C_BINDING
-
-    implicit none
-
-    type(ops_dat) :: dat
-    integer(kind=c_int) :: dim, flag
-    type(ops_stencil) :: sten
-    character(kind=c_char,len=*) :: type
-    integer(kind=c_int) :: access
-
-    if (dat%dataPtr%dims .ne. dim) then
-      print *, "Wrong dim",dim,dat%dataPtr%dims
-    endif
-    ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_dat_opt = ops_arg_dat_opt_c ( dat%dataCptr, dim, sten%stencilCptr, type, access-1, flag )
-
-  end function ops_arg_dat_opt
-
-  type(ops_arg) function ops_arg_idx()
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    ops_arg_idx = ops_arg_idx_c ()
-  end function ops_arg_idx
-
-
-  type(ops_arg) function ops_arg_reduce(handle, dim, typ, access)
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    type(ops_reduction) :: handle
-    integer(kind=c_int) :: dim
-    character(kind=c_char,len=*) :: typ
-    integer(kind=c_int) :: access
-
-    ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_reduce= ops_arg_reduce_c( handle%reductionCptr , dim, typ//C_NULL_CHAR, access-1 )
-
-  end function ops_arg_reduce
-
-  type(ops_arg) function ops_arg_gbl_real_scalar(data, dim, typ, access)
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    real(8), target :: data
-    integer(kind=c_int) :: dim
-    character(kind=c_char,len=*) :: typ
-    integer(kind=c_int) :: access
-
-    ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_gbl_real_scalar = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
-
-  end function ops_arg_gbl_real_scalar
-
-  type(ops_arg) function ops_arg_gbl_int_scalar(data, dim, typ, access)
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    integer(4), target :: data
-    integer(kind=c_int) :: dim
-    character(kind=c_char,len=*) :: typ
-    integer(kind=c_int) :: access
-
-    ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_gbl_int_scalar = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
-
-  end function ops_arg_gbl_int_scalar
-
-  type(ops_arg) function ops_arg_gbl_real_1dim(data, dim, typ, access)
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    real(8), dimension(*), target :: data
-    integer(kind=c_int) :: dim
-    character(kind=c_char,len=*) :: typ
-    integer(kind=c_int) :: access
-
-    ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_gbl_real_1dim = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
-
-  end function ops_arg_gbl_real_1dim
-
-  type(ops_arg) function ops_arg_gbl_real_2dim(data, dim, typ, access)
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    real(8), dimension(:,:), target :: data
-    integer(kind=c_int) :: dim
-    character(kind=c_char,len=*) :: typ
-    integer(kind=c_int) :: access
-
-    ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_gbl_real_2dim = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
-
-  end function ops_arg_gbl_real_2dim
-
-  type(ops_arg) function ops_arg_gbl_real_3dim(data, dim, typ, access)
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    real(8), dimension(:,:,:), target :: data
-    integer(kind=c_int) :: dim
-    character(kind=c_char,len=*) :: typ
-    integer(kind=c_int) :: access
-
-    ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_gbl_real_3dim = ops_arg_gbl_c( c_loc(data) , dim, 8, access-1 )
-
-  end function ops_arg_gbl_real_3dim
-
-  type(ops_arg) function ops_arg_gbl_int_1dim(data, dim, typ, access)
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    integer(4), dimension(*), target :: data
-    integer(kind=c_int) :: dim
-    character(kind=c_char,len=*) :: typ
-    integer(kind=c_int) :: access
-
-    ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_gbl_int_1dim = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
-
-  end function ops_arg_gbl_int_1dim
-
-  type(ops_arg) function ops_arg_gbl_int_2dim(data, dim, typ, access)
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    integer(4), dimension(:,:), target :: data
-    integer(kind=c_int) :: dim
-    character(kind=c_char,len=*) :: typ
-    integer(kind=c_int) :: access
-
-    ! warning: access is in FORTRAN style, while the C style is required here
-    ops_arg_gbl_int_2dim = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
-
-  end function ops_arg_gbl_int_2dim
-
-  subroutine ops_decl_halo (from, to, iter_size, from_base, to_base, from_dir, to_dir, halo)
-
-    type(ops_dat)                                :: from
-    type(ops_dat)                                :: to
-    integer(4), dimension(*), intent(in), target :: iter_size
-    integer(4), dimension(*), intent(in), target :: from_base
-    integer(4), dimension(*), intent(in), target :: to_base
-    integer(4), dimension(*), intent(in), target :: from_dir
-    integer(4), dimension(*), intent(in), target :: to_dir
-    type(ops_halo)                               :: halo
-
-    halo%haloCptr = ops_decl_halo_c (from%dataCptr, to%dataCptr, c_loc(iter_size), c_loc(from_base), c_loc(to_base), c_loc(from_dir), c_loc(to_dir))
-
-    ! convert the generated C pointer to Fortran pointer and store it inside the ops_decl_halo variable
-    call c_f_pointer ( halo%haloCptr, halo%haloPtr )
-
-  end subroutine ops_decl_halo
-
-  subroutine ops_decl_halo_group (nhalos, halos, group)
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    integer(kind=c_int), value                        :: nhalos
-    type(ops_halo), dimension(nhalos), target         :: halos
-    type(ops_halo_group)                              :: group
-    integer i
-    type(c_ptr) :: temp = c_null_ptr
-    type(c_ptr) :: dummy = c_null_ptr
-
-    !need to call special routine for each halo in the hlos array
-    !-- due to issues in passing an array for types in fortran
-    DO i = 1, nhalos
-      temp = ops_decl_halo_group_elem_c ( nhalos, c_loc(halos(i)), temp)
-    END DO
-
-    !special case if nhalos == 0
-    if (nhalos .EQ. 0) then
-      temp = ops_decl_halo_group_elem_c ( nhalos, dummy, temp)
-    end if
-
-    !group%halogroupCptr = ops_decl_halo_group_c ( nhalos, c_loc(halos))
-    !group%halogroupCptr = ops_decl_halo_group_c (nhalos, halos)
-    group%halogroupCptr = temp
-    temp = c_null_ptr
-    ! convert the generated C pointer to Fortran pointer and store it inside the ops_halo_group variable
-    call c_f_pointer ( group%halogroupCptr, group%halogroupPtr )
-  end subroutine ops_decl_halo_group
-
-  subroutine ops_halo_transfer (group)
-      type(ops_halo_group)                :: group
-      call ops_halo_transfer_c(group%halogroupCptr)
-  end subroutine ops_halo_transfer
-
-  subroutine ops_timers ( et )
-    real(kind=c_double) :: et
-    real(kind=c_double) :: cpu = 0
-    call ops_timers_f (cpu, et)
-  end subroutine ops_timers
-
-  subroutine ops_timers_core ( et )
-    real(kind=c_double) :: et
-    real(kind=c_double) :: cpu = 0
-    call ops_timers_core_f (cpu, et)
-  end subroutine ops_timers_core
-
-  subroutine ops_printf (line)
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    character(kind=c_char,len=*) :: line
-    call ops_printf_c (line//C_NULL_CHAR)
-  end subroutine
-
-  subroutine ops_fprintf (file, line)
-    use, intrinsic :: ISO_C_BINDING
-    implicit none
-    character(kind=c_char,len=*) :: line
-    integer(kind=c_int) :: file
-    call ops_fprintf_c (file, line//C_NULL_CHAR)
-  end subroutine
-
-  subroutine ops_print_dat_to_txtfile (dat, fileName)
-    type(ops_dat) :: dat
-    character(kind=c_char,len=*) :: fileName
-    call ops_print_dat_to_txtfile_c (dat%dataPtr, fileName//C_NULL_CHAR)
-  end subroutine ops_print_dat_to_txtfile
-
-  subroutine ops_print_dat_to_txtfile_core (dat, fileName)
-    type(ops_dat) :: dat
-    character(kind=c_char,len=*) :: fileName
-    call ops_print_dat_to_txtfile_core_c (dat%dataPtr, fileName//C_NULL_CHAR)
-  end subroutine ops_print_dat_to_txtfile_core
-
- subroutine ops_reduction_result_scalar_real_8 (reduction_handle, var)
-    use, intrinsic :: ISO_C_BINDING
-    type(ops_reduction) :: reduction_handle
-    real(8), target    :: var
-
-    call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
-
-  end subroutine ops_reduction_result_scalar_real_8
-
- subroutine ops_reduction_result_scalar_int_4 (reduction_handle, var)
-    use, intrinsic :: ISO_C_BINDING
-    type(ops_reduction) :: reduction_handle
-    integer(4), target  :: var
-    call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
-  end subroutine ops_reduction_result_scalar_int_4
-
- subroutine ops_reduction_result_real_8 (reduction_handle, var)
-    use, intrinsic :: ISO_C_BINDING
-    type(ops_reduction) :: reduction_handle
-    real(8), dimension(:), target :: var
-
-    call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
-  end subroutine ops_reduction_result_real_8
-
-  subroutine ops_execute()
-    use, intrinsic :: ISO_C_BINDING
-
-    call ops_execute_c(c_null_ptr)
-  end subroutine ops_execute
+    subroutine ops_decl_block ( dims, block, name )
+        integer(kind=c_int), value, intent(in) :: dims
+        type(ops_block)                        :: block
+        character(kind=c_char,len=*)           :: name
+
+        block%blockCPtr = ops_decl_block_c ( dims, name//char(0) )
+
+!       Convert the generated C pointer to Fortran pointer and store it inside the op_block variable
+        call c_f_pointer ( block%blockCptr, block%blockPtr )
+    end subroutine ops_decl_block
+
+    subroutine ops_decl_stencil ( dims, points, stencil_data, stencil, name )
+        integer(kind=c_int), intent(in) :: dims, points
+        integer(kind=c_int), dimension(*), intent(in), target :: stencil_data
+        type(ops_stencil) :: stencil
+        character(kind=c_char,len=*):: name
+
+        stencil%stencilCPtr = ops_decl_stencil_c ( dims, points, c_loc ( stencil_data ), name//C_NULL_CHAR )
+
+!       Convert the generated C pointer to Fortran pointer and store it inside the ops_stencil variable
+        call c_f_pointer (stencil%stencilCptr, stencil%stencilPtr)
+    end subroutine ops_decl_stencil
+
+    subroutine ops_decl_strided_stencil ( dims, points, stencil_data, stride_data, stencil, name )
+        integer(kind=c_int), intent(in) :: dims, points
+        integer(kind=c_int), dimension(*), intent(in), target :: stencil_data
+        integer(kind=c_int), dimension(*), intent(in), target :: stride_data
+        type(ops_stencil) :: stencil
+        character(kind=c_char,len=*):: name
+
+        stencil%stencilCPtr = ops_decl_strided_stencil_c ( dims, points, c_loc ( stencil_data ), c_loc ( stride_data ), name//C_NULL_CHAR )
+
+!       Convert the generated C pointer to Fortran pointer and store it inside the ops_stencil variable
+        call c_f_pointer (stencil%stencilCptr, stencil%stencilPtr)
+    end subroutine ops_decl_strided_stencil
+
+    subroutine ops_free_dat( dat )
+        type(ops_dat) :: dat
+        call ops_free_dat_c( dat%dataCPtr )
+    end subroutine ops_free_dat
+
+    subroutine ops_decl_dat_real_8 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
+        type(ops_block), intent(in)                  :: block
+        integer(kind=c_int), intent(in)                          :: dim
+        integer(kind=c_int), dimension(*), intent(in), target :: size
+        integer(kind=c_int), dimension(*),             target :: base
+        integer(kind=c_int), dimension(*), intent(in), target :: d_m
+        integer(kind=c_int), dimension(*), intent(in), target :: d_p
+        real(kind=c_double), dimension(*), intent(in), target    :: data
+        type(ops_dat)                                :: dat
+        character(kind=c_char,len=*)                 :: name
+        character(kind=c_char,len=*)                 :: typ
+        integer(kind=c_int), dimension(OPS_MAX_DIM), target :: stride
+
+        integer(kind=c_int) :: d
+
+        DO d = 1, block%blockPtr%dims
+            base(d) = base(d)-1
+            stride(d) = 1
+        END DO
+
+        dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc(stride), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+
+        DO d = 1, block%blockPtr%dims
+            base(d) = base(d)+1
+        END DO
+
+!       Convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
+        call c_f_pointer ( dat%dataCptr, dat%dataPtr )
+    end subroutine ops_decl_dat_real_8
+
+    subroutine ops_decl_dat_real_8_2 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
+        type(ops_block), intent(in)                  :: block
+        integer(kind=c_int), intent(in)                          :: dim
+        integer(kind=c_int), dimension(*), intent(in), target :: size
+        integer(kind=c_int), dimension(*),             target :: base
+        integer(kind=c_int), dimension(*), intent(in), target :: d_m
+        integer(kind=c_int), dimension(*), intent(in), target :: d_p
+        real(kind=c_double), dimension(:,:), intent(in), target  :: data
+        type(ops_dat)                                :: dat
+        character(kind=c_char,len=*)                 :: name
+        character(kind=c_char,len=*)                 :: typ
+        integer(kind=c_int), dimension(OPS_MAX_DIM), target :: stride
+
+        integer(kind=c_int) :: d
+        DO d = 1, block%blockPtr%dims
+            base(d) = base(d)-1
+            stride(d) = 1
+        END DO
+
+        dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc(stride), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+
+        DO d = 1, block%blockPtr%dims
+            base(d) = base(d)+1
+        END DO
+
+!       Convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
+        call c_f_pointer ( dat%dataCptr, dat%dataPtr )
+    end subroutine ops_decl_dat_real_8_2
+
+    subroutine ops_decl_dat_real_8_3 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
+        type(ops_block), intent(in)                  :: block
+        integer(kind=c_int), intent(in)                          :: dim
+        integer(kind=c_int), dimension(*), intent(in), target :: size
+        integer(kind=c_int), dimension(*),             target :: base
+        integer(kind=c_int), dimension(*), intent(in), target :: d_m
+        integer(kind=c_int), dimension(*), intent(in), target :: d_p
+        real(kind=c_double), dimension(:,:,:), intent(in), target  :: data
+        type(ops_dat)                                :: dat
+        character(kind=c_char,len=*)                 :: name
+        character(kind=c_char,len=*)                 :: typ
+        integer(kind=c_int), dimension(OPS_MAX_DIM), target :: stride
+
+        integer(kind=c_int) :: d
+
+        DO d = 1, block%blockPtr%dims
+            base(d) = base(d)-1
+            stride(d) = 1
+        END DO
+
+        dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc(stride), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+
+        DO d = 1, block%blockPtr%dims
+            base(d) = base(d)+1
+        END DO
+
+!       Convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
+        call c_f_pointer ( dat%dataCptr, dat%dataPtr )
+    end subroutine ops_decl_dat_real_8_3
+
+    subroutine ops_decl_dat_real_8_4 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
+        type(ops_block), intent(in)                  :: block
+        integer(kind=c_int), intent(in)                          :: dim
+        integer(kind=c_int), dimension(*), intent(in), target :: size
+        integer(kind=c_int), dimension(*),             target :: base
+        integer(kind=c_int), dimension(*), intent(in), target :: d_m
+        integer(kind=c_int), dimension(*), intent(in), target :: d_p
+        real(kind=c_double), dimension(:,:,:,:), intent(in), target  :: data
+        type(ops_dat)                                :: dat
+        character(kind=c_char,len=*)                 :: name
+        character(kind=c_char,len=*)                 :: typ
+        integer(kind=c_int), dimension(OPS_MAX_DIM), target :: stride
+
+        integer(kind=c_int) :: d
+
+        DO d = 1, block%blockPtr%dims
+            base(d) = base(d)-1
+            stride(d) = 1
+        END DO
+
+        dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc(stride), c_loc ( data ), 8, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+
+        DO d = 1, block%blockPtr%dims
+            base(d) = base(d)+1
+        END DO
+
+!       Convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
+        call c_f_pointer ( dat%dataCptr, dat%dataPtr )
+    end subroutine ops_decl_dat_real_8_4
+
+    subroutine ops_decl_dat_integer_4 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
+        type(ops_block), intent(in)                  :: block
+        integer(kind=c_int), intent(in)                          :: dim
+        integer(kind=c_int), dimension(*), intent(in), target :: size
+        integer(kind=c_int), dimension(*),             target :: base
+        integer(kind=c_int), dimension(*), intent(in), target :: d_m
+        integer(kind=c_int), dimension(*), intent(in), target :: d_p
+        integer(kind=c_int), dimension(*), intent(in), target :: data
+        type(ops_dat)                                :: dat
+        character(kind=c_char,len=*)                 :: name
+        character(kind=c_char,len=*)                 :: typ
+        integer(kind=c_int), dimension(OPS_MAX_DIM), target :: stride
+
+        integer(kind=c_int) :: d
+
+        DO d = 1, block%blockPtr%dims
+            base(d) = base(d)-1
+            stride(d) = 1
+        END DO
+
+        dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc(stride), c_loc ( data ), 4, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+
+        DO d = 1, block%blockPtr%dims
+            base(d) = base(d)+1
+        END DO
+
+!       Convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
+        call c_f_pointer ( dat%dataCptr, dat%dataPtr )
+    end subroutine ops_decl_dat_integer_4
+
+    subroutine ops_decl_dat_integer_4_4 ( block, dim, size, base, d_m, d_p, data, dat, typ, name )
+        type(ops_block), intent(in)                  :: block
+        integer(kind=c_int), intent(in)                          :: dim
+        integer(kind=c_int), dimension(*), intent(in), target :: size
+        integer(kind=c_int), dimension(*),             target :: base
+        integer(kind=c_int), dimension(*), intent(in), target :: d_m
+        integer(kind=c_int), dimension(*), intent(in), target :: d_p
+        integer(kind=c_int), dimension(:,:,:,:), intent(in), target :: data
+        type(ops_dat)                                :: dat
+        character(kind=c_char,len=*)                 :: name
+        character(kind=c_char,len=*)                 :: typ
+        integer(kind=c_int), dimension(OPS_MAX_DIM), target :: stride
+
+        integer(kind=c_int) :: d
+
+        DO d = 1, block%blockPtr%dims
+            base(d) = base(d)-1
+            stride(d) = 1
+        END DO
+
+        dat%dataCPtr = ops_decl_dat_c ( block%blockCptr, dim, c_loc(size), c_loc(base), c_loc(d_m), c_loc(d_p), c_loc(stride), c_loc ( data ), 4, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+
+        DO d = 1, block%blockPtr%dims
+            base(d) = base(d)+1
+        END DO
+
+!       Convert the generated C pointer to Fortran pointer and store it inside the ops_dat variable
+        call c_f_pointer ( dat%dataCptr, dat%dataPtr )
+    end subroutine ops_decl_dat_integer_4_4
+
+    subroutine ops_decl_reduction_handle ( size, handle, typ, name )
+        integer(kind=c_int), intent(in)              :: size
+        type(ops_reduction)                          :: handle
+        character(kind=c_char,len=*)                 :: name
+        character(kind=c_char,len=*)                 :: typ
+
+        handle%reductionCPtr = ops_decl_reduction_handle_c (size, typ//C_NULL_CHAR, name//C_NULL_CHAR )
+
+!       Convert the generated C pointer to Fortran pointer and store it inside the ops_reduction variable
+        call c_f_pointer ( handle%reductionCptr, handle%reductionPtr )
+    end subroutine ops_decl_reduction_handle
+
+    integer(kind=c_int) function ops_dat_get_local_npartitions(dat)
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+
+        ops_dat_get_local_npartitions = ops_dat_get_local_npartitions_c(dat%dataCptr)
+    end function ops_dat_get_local_npartitions
+
+    integer(kind=c_int) function ops_dat_get_global_npartitions(dat)
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+
+        ops_dat_get_global_npartitions = ops_dat_get_global_npartitions_c(dat%dataCptr)
+    end function ops_dat_get_global_npartitions
+
+    subroutine ops_dat_get_extents( dat, part, disp, size )
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+
+        integer(kind=c_int) :: part
+        integer(kind=c_int), dimension(*), intent(in), target :: disp, size
+        integer(kind=c_int) :: d
+
+        call ops_dat_get_extents_c( dat%dataCptr, part-1, c_loc(disp), c_loc(size))
+    end subroutine ops_dat_get_extents
+
+    type(c_ptr) function ops_dat_get_raw_pointer( dat, part, sten, stride )
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+        integer(kind = c_int) :: part
+        type(ops_stencil) :: sten
+        integer(kind=c_int), dimension(*), intent(in), target :: stride
+
+        ops_dat_get_raw_pointer = ops_dat_get_raw_pointer_c(dat%dataCptr, part-1, sten%stencilCptr, c_loc(stride))
+    end function ops_dat_get_raw_pointer
+
+    subroutine ops_dat_release_raw_data( dat, part, acc )
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+        integer(kind=c_int) :: part
+        integer(kind=c_int) :: acc
+
+        call ops_dat_release_raw_data_c( dat%dataCptr, part-1, acc )
+    end subroutine ops_dat_release_raw_data
+
+    subroutine ops_dat_fetch_data_real_8( dat, part, data )
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+        integer(kind=c_int) :: part
+        real(kind=c_double), dimension(*), target :: data
+
+        call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+    end subroutine ops_dat_fetch_data_real_8
+
+    subroutine ops_dat_fetch_data_integer_4( dat, part, data )
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+        integer(kind=c_int) :: part
+        integer(kind=c_int), dimension(*), target :: data
+
+        call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+    end subroutine ops_dat_fetch_data_integer_4
+
+    subroutine ops_dat_fetch_data_real_8_2d( dat, part, data )
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+        integer(kind=c_int) :: part
+        real(kind=c_double), dimension(:,:), target :: data
+
+        call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+    end subroutine ops_dat_fetch_data_real_8_2d
+
+    subroutine ops_dat_fetch_data_integer_4_2d( dat, part, data )
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+        integer(kind=c_int) :: part
+        integer(kind=c_int), dimension(:,:), target :: data
+
+        call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+    end subroutine ops_dat_fetch_data_integer_4_2d
+
+    subroutine ops_dat_fetch_data_real_8_3d( dat, part, data )
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+        integer(kind=c_int) :: part
+        real(kind=c_double), dimension(:,:,:), target :: data
+
+        call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+    end subroutine ops_dat_fetch_data_real_8_3d
+
+    subroutine ops_dat_fetch_data_integer_4_3d( dat, part, data )
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+        integer(kind=c_int) :: part
+        integer(kind=c_int), dimension(:,:,:), target :: data
+
+        call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+    end subroutine ops_dat_fetch_data_integer_4_3d
+
+    subroutine ops_dat_set_data_real_8( dat, part, data )
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+        integer(kind=c_int) :: part
+        real(kind=c_double), dimension(*), target :: data
+
+        call ops_dat_set_data_c( dat%dataCptr, part-1, c_loc(data) )
+    end subroutine ops_dat_set_data_real_8
+
+    subroutine ops_dat_set_data_integer_4( dat, part, data )
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+        integer(kind=c_int) :: part
+        integer(kind=c_int), dimension(*), target :: data
+
+        call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+    end subroutine ops_dat_set_data_integer_4
+
+    subroutine ops_dat_set_data_real_8_2d( dat, part, data )
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+        integer(kind=c_int) :: part
+        real(kind=c_double), dimension(:,:), target :: data
+
+        call ops_dat_set_data_c( dat%dataCptr, part-1, c_loc(data) )
+    end subroutine ops_dat_set_data_real_8_2d
+
+    subroutine ops_dat_set_data_integer_4_2d( dat, part, data )
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+        integer(kind=c_int) :: part
+        integer(kind=c_int), dimension(:,:), target :: data
+
+        call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+    end subroutine ops_dat_set_data_integer_4_2d
+
+    subroutine ops_dat_set_data_real_8_3d( dat, part, data )
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+        integer(kind=c_int) :: part
+        real(kind=c_double), dimension(:,:,:), target :: data
+
+        call ops_dat_set_data_c( dat%dataCptr, part-1, c_loc(data) )
+    end subroutine ops_dat_set_data_real_8_3d
+
+    subroutine ops_dat_set_data_integer_4_3d( dat, part, data )
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+        integer(kind=c_int) :: part
+        integer(kind=c_int), dimension(:,:,:), target :: data
+
+        call ops_dat_fetch_data_c( dat%dataCptr, part-1, c_loc(data) )
+    end subroutine ops_dat_set_data_integer_4_3d
+
+    type(ops_arg) function ops_arg_dat(dat, dim, sten, type, access)
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+        integer(kind=c_int) :: dim
+        type(ops_stencil) :: sten
+        character(kind=c_char,len=*) :: type
+        integer(kind=c_int) :: access
+
+        if (dat%dataPtr%dims .ne. dim) then
+            print *, "Wrong dim",dim,dat%dataPtr%dims
+        endif
+
+!       Warning: access and idx are in FORTRAN style, while the C style is required here
+        ops_arg_dat = ops_arg_dat_c ( dat%dataCptr, dim, sten%stencilCptr, type, access-1 )
+    end function ops_arg_dat
+
+    type(ops_arg) function ops_arg_dat_opt(dat, dim, sten, type, access, flag)
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_dat) :: dat
+        integer(kind=c_int) :: dim, flag
+        type(ops_stencil) :: sten
+        character(kind=c_char,len=*) :: type
+        integer(kind=c_int) :: access
+
+        if (dat%dataPtr%dims .ne. dim) then
+            print *, "Wrong dim",dim,dat%dataPtr%dims
+        endif
+!       Warning: access is in FORTRAN style, while the C style is required here
+        ops_arg_dat_opt = ops_arg_dat_opt_c ( dat%dataCptr, dim, sten%stencilCptr, type, access-1, flag )
+    end function ops_arg_dat_opt
+
+    type(ops_arg) function ops_arg_idx()
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        ops_arg_idx = ops_arg_idx_c ()
+    end function ops_arg_idx
+
+    type(ops_arg) function ops_arg_reduce(handle, dim, typ, access)
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        type(ops_reduction) :: handle
+        integer(kind=c_int) :: dim
+        character(kind=c_char,len=*) :: typ
+        integer(kind=c_int) :: access
+
+!       Warning: access is in FORTRAN style, while the C style is required here
+        ops_arg_reduce= ops_arg_reduce_c( handle%reductionCptr, dim, typ//C_NULL_CHAR, access-1 )
+    end function ops_arg_reduce
+
+    type(ops_arg) function ops_arg_gbl_real_scalar(data, dim, typ, access)
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        real(kind=c_double), target :: data
+        integer(kind=c_int) :: dim
+        character(kind=c_char,len=*) :: typ
+        integer(kind=c_int) :: access
+
+!       Warning: access is in FORTRAN style, while the C style is required here
+        ops_arg_gbl_real_scalar = ops_arg_gbl_c( c_loc(data), dim, 8, access-1 )
+    end function ops_arg_gbl_real_scalar
+
+    type(ops_arg) function ops_arg_gbl_int_scalar(data, dim, typ, access)
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        integer(kind=c_int), intent(in), target :: data
+        integer(kind=c_int) :: dim
+        character(kind=c_char,len=*) :: typ
+        integer(kind=c_int) :: access
+
+!       Warning: access is in FORTRAN style, while the C style is required here
+        ops_arg_gbl_int_scalar = ops_arg_gbl_c( c_loc(data), dim, 4, access-1 )
+    end function ops_arg_gbl_int_scalar
+
+    type(ops_arg) function ops_arg_gbl_real_1dim(data, dim, typ, access)
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        real(kind=c_double), dimension(*), target :: data
+        integer(kind=c_int) :: dim
+        character(kind=c_char,len=*) :: typ
+        integer(kind=c_int) :: access
+
+!       Warning: access is in FORTRAN style, while the C style is required here
+        ops_arg_gbl_real_1dim = ops_arg_gbl_c( c_loc(data), dim, 8, access-1 )
+    end function ops_arg_gbl_real_1dim
+
+    type(ops_arg) function ops_arg_gbl_real_2dim(data, dim, typ, access)
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        real(kind=c_double), dimension(:,:), target :: data
+        integer(kind=c_int) :: dim
+        character(kind=c_char,len=*) :: typ
+        integer(kind=c_int) :: access
+
+!       Warning: access is in FORTRAN style, while the C style is required here
+        ops_arg_gbl_real_2dim = ops_arg_gbl_c( c_loc(data), dim, 8, access-1 )
+    end function ops_arg_gbl_real_2dim
+
+    type(ops_arg) function ops_arg_gbl_real_3dim(data, dim, typ, access)
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        real(kind=c_double), dimension(:,:,:), target :: data
+        integer(kind=c_int) :: dim
+        character(kind=c_char,len=*) :: typ
+        integer(kind=c_int) :: access
+
+!       Warning: access is in FORTRAN style, while the C style is required here
+        ops_arg_gbl_real_3dim = ops_arg_gbl_c( c_loc(data), dim, 8, access-1 )
+    end function ops_arg_gbl_real_3dim
+
+    type(ops_arg) function ops_arg_gbl_int_1dim(data, dim, typ, access)
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        integer(kind=c_int), dimension(*), target :: data
+        integer(kind=c_int) :: dim
+        character(kind=c_char,len=*) :: typ
+        integer(kind=c_int) :: access
+
+!       Warning: access is in FORTRAN style, while the C style is required here
+        ops_arg_gbl_int_1dim = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
+    end function ops_arg_gbl_int_1dim
+
+    type(ops_arg) function ops_arg_gbl_int_2dim(data, dim, typ, access)
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        integer(kind=c_int), dimension(:,:), target :: data
+        integer(kind=c_int) :: dim
+        character(kind=c_char,len=*) :: typ
+        integer(kind=c_int) :: access
+
+!       Warning: access is in FORTRAN style, while the C style is required here
+        ops_arg_gbl_int_2dim = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
+    end function ops_arg_gbl_int_2dim
+
+    subroutine ops_decl_halo (from, to, iter_size, from_base, to_base, from_dir, to_dir, halo)
+        type(ops_dat)                                :: from
+        type(ops_dat)                                :: to
+        integer(kind=c_int), dimension(*), intent(in), target :: iter_size
+        integer(kind=c_int), dimension(*), intent(in), target :: from_base
+        integer(kind=c_int), dimension(*), intent(in), target :: to_base
+        integer(kind=c_int), dimension(*), intent(in), target :: from_dir
+        integer(kind=c_int), dimension(*), intent(in), target :: to_dir
+        type(ops_halo)                               :: halo
+
+        halo%haloCptr = ops_decl_halo_c (from%dataCptr, to%dataCptr, c_loc(iter_size), c_loc(from_base), c_loc(to_base), c_loc(from_dir), c_loc(to_dir))
+
+!       Convert the generated C pointer to Fortran pointer and store it inside the ops_decl_halo variable
+        call c_f_pointer ( halo%haloCptr, halo%haloPtr )
+    end subroutine ops_decl_halo
+
+    subroutine ops_decl_halo_group (nhalos, halos, group)
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        integer(kind=c_int), value                        :: nhalos
+        type(ops_halo), dimension(nhalos), target         :: halos
+        type(ops_halo_group)                              :: group
+        integer(kind=c_int) :: i
+        type(c_ptr) :: temp = c_null_ptr
+        type(c_ptr) :: dummy = c_null_ptr
+
+!       Need to call special routine for each halo in the hlos array
+!       -- due to issues in passing an array for types in fortran
+        DO i = 1, nhalos
+            temp = ops_decl_halo_group_elem_c ( nhalos, c_loc(halos(i)), temp)
+        END DO
+
+!       Special case if nhalos == 0
+        if (nhalos .EQ. 0) then
+            temp = ops_decl_halo_group_elem_c ( nhalos, dummy, temp)
+        end if
+
+        !group%halogroupCptr = ops_decl_halo_group_c ( nhalos, c_loc(halos))
+        !group%halogroupCptr = ops_decl_halo_group_c (nhalos, halos)
+        group%halogroupCptr = temp
+        temp = c_null_ptr
+
+!       Convert the generated C pointer to Fortran pointer and store it inside the ops_halo_group variable
+        call c_f_pointer ( group%halogroupCptr, group%halogroupPtr )
+    end subroutine ops_decl_halo_group
+
+    subroutine ops_halo_transfer (group)
+        type(ops_halo_group)                :: group
+        call ops_halo_transfer_c(group%halogroupCptr)
+    end subroutine ops_halo_transfer
+
+    subroutine ops_timers ( et )
+        real(kind=c_double) :: et
+        real(kind=c_double) :: cpu = 0
+        call ops_timers_f (cpu, et)
+    end subroutine ops_timers
+
+    subroutine ops_timers_core ( et )
+        real(kind=c_double) :: et
+        real(kind=c_double) :: cpu = 0
+        call ops_timers_core_f (cpu, et)
+    end subroutine ops_timers_core
+
+    subroutine ops_printf (line)
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        character(kind=c_char,len=*) :: line
+
+        call ops_printf_c (line//C_NULL_CHAR)
+    end subroutine
+
+    subroutine ops_fprintf (file, line)
+        use, intrinsic :: ISO_C_BINDING
+        implicit none
+
+        character(kind=c_char,len=*) :: line
+        integer(kind=c_int) :: file
+
+        call ops_fprintf_c (file, line//C_NULL_CHAR)
+    end subroutine
+
+    subroutine ops_print_dat_to_txtfile (dat, fileName)
+        type(ops_dat) :: dat
+        character(kind=c_char,len=*) :: fileName
+
+        call ops_print_dat_to_txtfile_c (dat%dataPtr, fileName//C_NULL_CHAR)
+    end subroutine ops_print_dat_to_txtfile
+
+    subroutine ops_print_dat_to_txtfile_core (dat, fileName)
+        type(ops_dat) :: dat
+        character(kind=c_char,len=*) :: fileName
+
+        call ops_print_dat_to_txtfile_core_c (dat%dataPtr, fileName//C_NULL_CHAR)
+    end subroutine ops_print_dat_to_txtfile_core
+
+    subroutine ops_reduction_result_scalar_real_8 (reduction_handle, var)
+        use, intrinsic :: ISO_C_BINDING
+
+        type(ops_reduction) :: reduction_handle
+        real(kind=c_double), target    :: var
+
+        call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
+    end subroutine ops_reduction_result_scalar_real_8
+
+    subroutine ops_reduction_result_scalar_int_4 (reduction_handle, var)
+        use, intrinsic :: ISO_C_BINDING
+
+        type(ops_reduction) :: reduction_handle
+        integer(kind=c_int), target  :: var
+
+        call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
+    end subroutine ops_reduction_result_scalar_int_4
+
+    subroutine ops_reduction_result_real_8 (reduction_handle, var)
+        use, intrinsic :: ISO_C_BINDING
+
+        type(ops_reduction) :: reduction_handle
+        real(kind=c_double), dimension(:), target :: var
+
+        call ops_reduction_result_c (reduction_handle%reductionCptr, reduction_handle%reductionPtr%size, c_loc(var))
+    end subroutine ops_reduction_result_real_8
+
+    subroutine ops_execute()
+        use, intrinsic :: ISO_C_BINDING
+
+        call ops_execute_c(c_null_ptr)
+    end subroutine ops_execute
 
  !ops_decl_const -- various versions .. no-ops in ref ?
 

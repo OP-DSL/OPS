@@ -69,6 +69,7 @@
 /**
  * maximum number of spatial dimensions supported.
  * Can reduce to save on size of metadata
+ * Declared in Fortran side as well, correct the number there if changed from 5
  */
 #define OPS_MAX_DIM 5
 
