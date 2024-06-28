@@ -43,7 +43,7 @@
 #include <vector>
 #include <ops_lib_core.h>
 
-enum class REAL_PRECISION { Half = 16, Single = 32, Double = 64 };
+enum class REAL_PRECISION { Half = 16, Single = 32, Double = 64, Undefined = 0 };
 
 /**
  * This routine defines a dataset to be read in from a named hdf5 file.

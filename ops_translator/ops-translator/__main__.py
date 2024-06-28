@@ -23,7 +23,7 @@ def main(argv=None) -> None:
     parser = ArgumentParser(prog="ops-translator")
 
     #argument declariations
-    parser.add_argument("-V", "--version", help="Version", action="version", version=getVersion()) #this needs version tag
+#    parser.add_argument("-V", "--version", help="Version", action="version", version=getVersion()) #this needs version tag
     parser.add_argument("-v", "--verbose", help="Verbose", action="store_true")
     parser.add_argument("-d", "--dump", help="JSON store dump", action="store_true")
     parser.add_argument("-o", "--out", help="Output directory", type=isDirPath)

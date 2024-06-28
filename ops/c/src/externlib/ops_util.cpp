@@ -508,14 +508,14 @@ void determine_local_range(const ops_dat dat, const int *global_range,
     dat_arg = ops_arg_dat(dat, dat->dim, S3D_000, dat->type, OPS_READ);
   }
   else if (space_dim == 2) {
-    int s2D_000[]{0, 0, 0};
-    ops_stencil S2D_000{ops_decl_stencil(2, 1, s2D_000, "000")};
-    dat_arg = ops_arg_dat(dat, dat->dim, S2D_000, dat->type, OPS_READ);
+    int s2D_00[]{0, 0};
+    ops_stencil S2D_00{ops_decl_stencil(2, 1, s2D_00, "00")};
+    dat_arg = ops_arg_dat(dat, dat->dim, S2D_00, dat->type, OPS_READ);
   }
   else if (space_dim == 1) {
-    int s1D_000[]{0, 0, 0};
-    ops_stencil S1D_000{ops_decl_stencil(1, 1, s1D_000, "000")};
-    dat_arg = ops_arg_dat(dat, dat->dim, S1D_000, dat->type, OPS_READ);
+    int s1D_0[]{0};
+    ops_stencil S1D_0{ops_decl_stencil(1, 1, s1D_0, "0")};
+    dat_arg = ops_arg_dat(dat, dat->dim, S1D_0, dat->type, OPS_READ);
   }
   else {
     OPSException ex(OPS_NOT_IMPLEMENTED);

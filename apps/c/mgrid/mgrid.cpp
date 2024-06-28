@@ -261,4 +261,5 @@ int main(int argc, const char **argv)
   else ops_printf("\nFAILED\n");
 
   ops_exit();
+  return 0;
 }

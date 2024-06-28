@@ -64,8 +64,8 @@
 //  =======================================================
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
-    int base{{arg.id}} = args[{{arg.id}}].dat->base_offset/sizeof({{lh.dats[arg.dat_id].typ}});
-    {{lh.dats[arg.dat_id].typ}}* {{args_list[arg.id]}}_p = ({{lh.dats[arg.dat_id].typ}}*)args[{{arg.id}}].data_d;
+    int base{{arg.id}} = args[{{arg.id}}].dat->base_offset;
+    {{lh.dats[arg.dat_id].typ}} * __restrict__ {{args_list[arg.id]}}_p = ({{lh.dats[arg.dat_id].typ}} *)(args[{{arg.id}}].data_d + base{{arg.id}});
 
         {% if arg.restrict or arg.prolong %}
 #ifdef OPS_MPI
@@ -142,7 +142,7 @@
         {% endif %}
     {% else %}
     reduct_bytes += ROUND_UP(maxblocks*{{arg.dim}}*sizeof({{arg.typ}}));
-    reduct_size = MAX(reduct_size, sizeof({{arg.typ}}));
+    reduct_size = MAX(reduct_size,{{arg.dim}}*sizeof({{arg.typ}}));
     {% endif %}
 {% endif %}    
 {% endfor %}
@@ -202,10 +202,10 @@
     mvReductArraysToDevice(block->instance, reduct_bytes);
 {% endif %}
 
+#ifndef OPS_LAZY
 //  =============
 //  Halo exchange
 //  =============
-#ifndef OPS_LAZY
     ops_H_D_exchanges_device(args, {{lh.args|length}});
     ops_halo_exchanges(args, {{lh.args|length}}, range);
 #endif
@@ -420,10 +420,10 @@
         {% if arg.dim > 1 %}
 #ifdef OPS_SOA
         {% endif %}
-                {{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}&{{args_list[arg.id]}}_p[0] + base{{arg.id}} + {{offset[0]}});
+                {{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{offset[0]}});
         {% if arg.dim > 1 %}
 #else
-                {{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}&{{args_list[arg.id]}}_p[0] + {{arg.dim}} * ({{offset[0]}}));
+                {{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{arg.dim}} * ({{offset[0]}}));
 #endif
         {% endif %}
     {% endif %}

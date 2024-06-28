@@ -5,7 +5,7 @@ FC	  := pgfortran
 ifdef DEBUG
 	CCFLAGS   := -O0 -g 
 else
-	CCFLAGS   := -O3 -fast -gopt -Xcudafe "--diag_suppress=unrecognized_gcc_pragma"
+	CCFLAGS   := -O3 -fast -gopt
 #-Minline #-Mipa=fast #-Mlist #-mp=nonuma -Kieee
 endif
 
