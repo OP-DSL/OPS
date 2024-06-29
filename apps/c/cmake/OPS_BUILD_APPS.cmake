@@ -46,11 +46,10 @@ macro(SetAppExe
     foreach(Def IN LISTS Defs)
       target_compile_definitions(${APP_exe} PRIVATE ${Def})
     endforeach()
-    foreach(Opt IN LISTS Optionss)
-      target_compile_options(${APP_exe} PRIVATE ${Def})
+    foreach(Opt IN LISTS Options)
+      message(STATUS "AppExe Opt ${Opt}")
+      target_compile_options(${APP_exe} PRIVATE ${Opt})
     endforeach()
-    message(STATUS "INP ${INP}")
-    message(STATUS "DESTINATION ${APP_DIR_DST}")
     install(FILES ${INP} DESTINATION ${APP_DIR_DST})
     foreach(Link IN LISTS Links)
       target_link_libraries(${APP_exe} PRIVATE ${Link})
@@ -279,34 +278,44 @@ macro(
         list(APPEND Links "hdf5::hdf5_hl")
         list(APPEND Links "MPI::MPI_CXX")
       endif()
-      set(Defs "-DOPS_LAZY")
+      set(Defs "")
       # Not sure this should be here: why not on the general nvcc flags? 
-      set(Opts "$<$<COMPILE_LANGUAGE:CUDA>:--fmad=false>")
+      set(Opts "")
       # Make sure to use "" for potentially empty inputs
       setappexe("${Name_exe}" "${APP_SRC}" "${APP_TYPE}" 
                 "${APP_INSTALL_DIR}" "${TMP_SOURCE_DIR}" 
                 "${CMAKE_CURRENT_SOURCE_DIR}" "${INPUT}" 
                 "${Links}" "${Defs}" "${Opts}")  
     endif()     
-    #if(OMPOFFLOAD)
-    #    add_executable(${Name}_ompoffload ${OPS} ${OTHERS}
-    #                    "${TMP_SOURCE_DIR}/openmp_offload/openmp_offload_kernels.cpp")
-    #    target_include_directories(${Name}_ompoffload PRIVATE ${TMP_SOURCE_DIR})
-    #    target_link_libraries(${Name}_ompoffload ops_ompoffload OpenMP::OpenMP_CXX)
-    #    target_compile_options(${Name}_ompoffload PRIVATE ${OMPOFFLOAD_FLAGS})
-    #    if(HDF5_SEQ)
-    #        target_link_libraries(${Name}_ompoffload ops_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl
-    #                                MPI::MPI_CXX)
-    #    endif()
-    #    target_link_options(${Name}_ompoffload PRIVATE ${OMPOFFLOAD_FLAGS})
-    #    install(TARGETS ${Name}_ompoffload DESTINATION ${APP_INSTALL_DIR}/${Name})
+    # OMPOFFLOAD
+    if(OPS_CXXFLAGS_OMPOFFLOAD)
+      set(APP_TYPE "ompoffload")
+      set(Name_exe ${Name}_${APP_TYPE})
+      set(APP_INSTALL_DIR ${app_dir_c}/${Name_exe})
+      set(APP_SRC ${OPS} ${OTHERS} 
+                  "${TMP_SOURCE_DIR}/openmp_offload/openmp_offload_kernels.cpp")
+      set(Links "ops_ompoffload"
+                "OpenMP::OpenMP_CXX")
+      if (HDF5_FOUND)
+        list(APPEND Links "ops_hdf5_seq")
+        list(APPEND Links "hdf5::hdf5")
+        list(APPEND Links "hdf5::hdf5_hl")
+        list(APPEND Links "MPI::MPI_CXX")
+      endif()
+      set(Defs "")
+      set(Opts "")
+      foreach(Flag IN LISTS OPS_CXXFLAGS_OMPOFFLOAD)
+        set(Opt "$<$<COMPILE_LANGUAGE:CXX>:${Flag}>")
+        list(APPEND Opts "${Opt}")
+      endforeach()
+      message(STATUS "Additional Flags for OMPOFF ${Opts}")
+      # Make sure to use "" for potentially empty inputs
+      setappexe("${Name_exe}" "${APP_SRC}" "${APP_TYPE}" 
+                "${APP_INSTALL_DIR}" "${TMP_SOURCE_DIR}" 
+                "${CMAKE_CURRENT_SOURCE_DIR}" "${INPUT}" 
+                "${Links}" "${Defs}" "${Opts}")  
 
-    #    if((OPS_TEST)
-    #        AND (GPU_NUMBER GREATER_EQUAL 1)
-    #        AND (${GenerateTest} STREQUAL "YES"))
-    #        add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_ompoffload ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh ompoffload)
-    #    endif()
-    #endif()
+    endif()
 
     #if(OPS_HIP)
     #    if(HIP AND NOT TRID)

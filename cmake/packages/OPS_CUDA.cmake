@@ -14,15 +14,18 @@ if(CUDAToolkit_FOUND)
     list(GET CUDA_ARCH_LIST 0 SET_CUDA_ARCH)
     message(STATUS "CUDA Architecture from autodetect ${SET_CUDA_ARCH}")	  
     message(STATUS "If different architecture has to be used set -DSET_GPU_ARCH=XXX!")           
-  endif()                                                                         
-  set(CMAKE_CUDA_ARCHITECTURES ${SET_GPU_ARCH}                                                                
-      CACHE STRING "CUDA architectures")   
+  endif()
+  set(CMAKE_CUDA_ARCHITECTURES "${SET_CUDA_ARCH}")  
+  #set(CMAKE_CUDA_ARCHITECTURES "${SET_GPU_ARCH}"                                                               
+  #    CACHE STRING "CUDA architectures")  
   # Set the CUDA Flags compilers
   set(OPS_CUDAFLAGS "-Xcompiler=\"-fPIC\" -g -std=c++11 -gencode arch=compute_${SET_CUDA_ARCH},code=sm_${SET_CUDA_ARCH}") 
+  # If CMAKE_CUDA_ARCHITECTURES is correct there is no need to add the flags for the architectures, CMake does it
+  #set(OPS_CUDAFLAGS "-Xcompiler=\"-fPIC\" -g -std=c++11") 
   set(OPS_CUDAFLAGS_RELEASE "-O3 --use_fast_math") 
   set(OPS_CUDAFLAGS_DEBUG "-O0") 
   if(IEEE)
-    set(OPS_CUDAFLAGS "${OPS_CUDAFLAGS} --fmad false")
+    set(OPS_CUDAFLAGS "${OPS_CUDAFLAGS} --fmad=false")
   endif(IEEE)
 else()                                                                             
   message(WARNING "CUDA toolkit not found! The CUDA codes won't compile!")      

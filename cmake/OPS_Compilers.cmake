@@ -5,8 +5,6 @@ set(CXX_COMPILER_NAME ${CMAKE_CXX_COMPILER_ID} )
 message(STATUS "COMP ID CXX ${CXX_COMPILER_NAME}")
 message(STATUS "CXX compiler version ${CMAKE_CXX_COMPILER_VERSION}")
 
-include(FindOpenMP)
-
 if (CXX_COMPILER_NAME MATCHES "GNU")
   message(STATUS "Setting GNU flags")
   include(OPS_flags_gnu)
@@ -49,4 +47,3 @@ if (NOT FLAGS_SET)
 	"Additional CUDAFLAGS for Debug build" FORCE)
   endif(CUDAToolkit_FOUND)                                                              
 endif()
-

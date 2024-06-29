@@ -8,7 +8,7 @@ endif()
 # OpenMP
 find_package(OpenMP QUIET)
 if(NOT OpenMP_FOUND)
-  message(WARNING "OpenMP support NOT FOUND!")
+  message(FATAL_ERROR "OpenMP support NOT FOUND!")
 endif()
 # HDF5
 find_package(HDF5 QUIET COMPONENTS C HL)

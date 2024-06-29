@@ -14,6 +14,10 @@ endif()
 if(CUDAToolkit_FOUND)
   include(OPS_BUILD_CUDA)
 endif()
+# OMPOFFLOAD
+if (OpenMP_CXX_VERSION GREATER_EQUAL 4.5)
+  include(OPS_BUILD_OMPOFFLOAD)
+endif()
 
 
 #   Configure the installation of "include"

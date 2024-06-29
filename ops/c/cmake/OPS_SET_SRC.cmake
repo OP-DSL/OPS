@@ -7,7 +7,9 @@ list(FILTER EXTERN EXCLUDE REGEX "hdf5")
 list(FILTER CORE EXCLUDE REGEX "device")
 # Set the source for HDF5
 file(GLOB_RECURSE HDF "${CMAKE_CURRENT_SOURCE_DIR}/src/externlib/*hdf5*.cpp")
-message(STATUS "HDF5 List ${HDF}")
 # Set the sources for CUDA
 file(GLOB_RECURSE CUDA "${CMAKE_CURRENT_SOURCE_DIR}/src/cuda/*"
                        "${CMAKE_CURRENT_SOURCE_DIR}/src/core/ops_device_singlenode_common.cpp")
+# Set sources for OMPOFFLOAD
+file(GLOB_RECURSE OMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/*"
+                             "${CMAKE_CURRENT_SOURCE_DIR}/src/core/ops_device_singlenode_common.cpp")

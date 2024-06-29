@@ -40,12 +40,12 @@ if(NOT OPS_VERBOSE_WARNING)
 endif()
 set(CMAKE_VERBOSE_MAKEFILE ${OPS_VERBOSE_WARNING})
 
-# Tridiagonal library
-if(NOT LIBTRID_PATH)
-  message(WARNING
-      "The install path of the scalar tridiagonal solver library (LIBTRID_PATH) is not specified and it will not be compiled!"
-  )
-endif()
+## Tridiagonal library
+#if(NOT LIBTRID_PATH)
+#  message(WARNING
+#      "The install path of the scalar tridiagonal solver library (LIBTRID_PATH) is not specified and it will not be compiled!"
+#  )
+#endif()
 
 
 # Try to find the required dependency
