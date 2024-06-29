@@ -291,8 +291,19 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps,
   MPI_Comm_group(OPS_MPI_GLOBAL, &global);
   MPI_Group_incl(global, num_proc, processes, &(sb->grp));
   MPI_Comm_create(OPS_MPI_GLOBAL, sb->grp, &(sb->comm1));
-  if (sb->owned)
+  if (sb->owned) {
     MPI_Cart_create(sb->comm1, ndim, pdims, periodic, 0, &(sb->comm));
+    
+    int remain_dims[ndim];
+    for (int i = 0; i < ndim; i++) {      
+        for (int j = 0; j < ndim; j++) {
+            remain_dims[j] = 0;
+        }
+        remain_dims[i] = 1;
+        // Create the pencil communicator
+        MPI_Cart_sub(sb->comm, remain_dims, &sb->pencils[i]);
+    }
+  }
 
   // Store number of procs in each dimension for latter use
   sb->pdims = (int *)ops_malloc(ndim * sizeof(int));
@@ -1127,14 +1138,16 @@ int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* s
   if (!sb->owned) return -1;
 
   for ( int n=0; n < block->dims; n++ ){
-    int starti = sd->decomp_disp[n];
+    int starti;
     int length = intersection2(range[2*n], range[2*n+1], sd->decomp_disp[n], sd->decomp_disp[n]+sd->decomp_size[n], &starti);
     arg_idx[n] = starti;
     if (sb->id_m[n]!=MPI_PROC_NULL)
       starti -= sd->decomp_disp[n];
     if (sd->gbl_size[n] == 1) {
-      starti = sb->decomp_disp[n];
       length = intersection2(range[2*n], range[2*n+1], sb->decomp_disp[n], sb->decomp_disp[n]+sb->decomp_size[n], &starti);
+      arg_idx[n] = starti;
+      if (sb->id_m[n]!=MPI_PROC_NULL)
+            starti -= sb->decomp_disp[n];
     }
     start[n] = starti;
     end[n] = starti + length;

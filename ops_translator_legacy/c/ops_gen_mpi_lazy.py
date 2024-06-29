@@ -623,7 +623,8 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
         code(f"ops_set_dirtybit_{exec_space}(args, {nargs});")
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat" and (
-                accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC
+                accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC or
+                accs[n] == OPS_MIN or accs[n] == OPS_MAX
             ):
                 code(f"ops_set_halo_dirtybit3(&args[{n}], range);")
         config.depth = 0

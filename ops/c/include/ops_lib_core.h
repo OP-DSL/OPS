@@ -1349,6 +1349,45 @@ public:
     return *(ptr + d + xoff*mdim );
 #endif
   }
+
+  __host__ __device__
+  void combine_max(int xoff,const T val){
+    
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
+    atomicMax(&operator()(xoff), val);
+    #else
+    #pragma omp critical
+    operator()(xoff) = std::max(operator()(xoff), val);
+    #endif
+
+    return ;
+  }
+
+  __host__ __device__
+  void combine_min(int xoff,const T val){
+    
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
+    atomicMin(&operator()(xoff), val);
+    #else
+    #pragma omp critical
+    operator()(xoff) = std::min(operator()(xoff), val);
+    #endif
+
+    return ;
+  }
+
+  __host__ __device__
+  void combine_inc(int xoff,const T val){
+    
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
+    atomicAdd(&operator()(xoff), val);
+    #else
+    #pragma omp critical
+    operator()(xoff) += val;
+    #endif
+
+    return ;
+  }
 #endif
 
   //////////////////////////////////////////////////
@@ -1386,6 +1425,45 @@ public:
     return *(ptr + d + xoff*mdim + yoff*sizex*mdim );
 #endif
   }
+  __host__ __device__
+  void combine_max(int xoff, int yoff,const T val){
+
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
+    atomicMax(&operator()(xoff, yoff), val);
+    #else
+    #pragma omp critical
+    operator()(xoff, yoff) = std::max(operator()(xoff, yoff), val);
+    #endif
+
+    return ;
+  }
+
+  __host__ __device__
+  void combine_min(int xoff, int yoff,const T val){
+    
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
+    atomicMin(&operator()(xoff, yoff), val);
+    #else
+    #pragma omp critical
+    operator()(xoff, yoff) = std::min(operator()(xoff, yoff), val);
+    #endif
+
+    return ;
+  }
+
+  __host__ __device__
+  void combine_inc(int xoff, int yoff,const T val){
+    
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
+    atomicAdd(&operator()(xoff, yoff), val);
+    #else
+    #pragma omp critical
+    operator()(xoff, yoff) += val;
+    #endif
+
+    return ;
+  }
+
 #endif
   //////////////////////////////////////////////////
   // 3D
@@ -1421,6 +1499,45 @@ public:
 #else
     return *(ptr + d + xoff*mdim + yoff*sizex*mdim + zoff*sizex*sizey*mdim);
 #endif
+  }
+
+  __host__ __device__
+  void combine_max(int xoff, int yoff, int zoff,const T val){
+    
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
+    atomicMax(&operator()(xoff, yoff, zoff), val);
+    #else
+    #pragma omp critical
+    operator()(xoff, yoff, zoff) = std::max(operator()(xoff, yoff, zoff), val);
+    #endif
+
+    return ;
+  }
+
+  __host__ __device__
+  void combine_min(int xoff, int yoff, int zoff,const T val){
+    
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
+    atomicMin(&operator()(xoff, yoff, zoff), val);
+    #else
+    #pragma omp critical
+    operator()(xoff, yoff, zoff) = std::min(operator()(xoff, yoff, zoff), val);
+    #endif
+
+    return ;
+  }
+
+  __host__ __device__
+  void combine_inc(int xoff, int yoff, int zoff,const T val){
+    
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
+    atomicAdd(&operator()(xoff, yoff, zoff), val);
+    #else
+    #pragma omp critical
+    operator()(xoff, yoff, zoff) += val;
+    #endif
+
+    return ;
   }
 #endif
 
@@ -1458,6 +1575,45 @@ public:
 #else
     return *(ptr + d + xoff*mdim + yoff*sizex*mdim + zoff*sizex*sizey*mdim + uoff*sizex*sizey*sizez*mdim);
 #endif
+  }
+
+  __host__ __device__
+  void combine_max(int xoff, int yoff, int zoff, int uoff,const T val){
+    
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
+    atomicMax(&operator()(xoff, yoff, zoff, uoff), val);
+    #else
+    #pragma omp critical
+    operator()(xoff, yoff, zoff, uoff) = std::max(operator()(xoff, yoff, zoff, uoff), val);
+    #endif
+
+    return ;
+  }
+
+  __host__ __device__
+  void combine_min(int xoff, int yoff, int zoff, int uoff,const T val){
+    
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
+    atomicMin(&operator()(xoff, yoff, zoff, uoff), val);
+    #else
+    #pragma omp critical
+    operator()(xoff, yoff, zoff, uoff) = std::min(operator()(xoff, yoff, zoff, uoff), val);
+    #endif
+
+    return ;
+  }
+
+  __host__ __device__
+  void combine_inc(int xoff, int yoff, int zoff, int uoff,const T val){
+    
+    #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
+    atomicAdd(&operator()(xoff, yoff, zoff, uoff), val);
+    #else
+    #pragma omp critical
+    operator()(xoff, yoff, zoff, uoff) += val;
+    #endif
+
+    return ;
   }
 #endif
 

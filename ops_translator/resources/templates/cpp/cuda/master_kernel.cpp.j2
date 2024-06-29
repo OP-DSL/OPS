@@ -11,7 +11,9 @@
 #include "ops_hip_rt_support.h"
 #include "ops_hip_reduction.h"
 {% endif %}
+{% endblock %}
 
+{% block ops_user_types %}
 {% if user_types %}
 #define OPS_FUN_PREFIX __device__ __host__
 #include "user_types.h"

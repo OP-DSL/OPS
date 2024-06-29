@@ -485,6 +485,36 @@
         endif()
     endfunction()
 
+    function(add_cmake_h5diff_test EXE_NAME SCRIPT_PATH H5DIFF_TEST ARGUMENTS)
+        if(H5DIFF_TEST)
+            if(EXISTS ${SCRIPT_PATH})
+                separate_arguments(args NATIVE_COMMAND ${ARGUMENTS})
+                execute_process(COMMAND /bin/bash ${SCRIPT_PATH} ${CMAKE_CURRENT_BINARY_DIR} ${args}
+                                RESULT_VARIABLE test_result
+                                OUTPUT_VARIABLE test_output)
+
+                if(test_result EQUAL 0)
+                    string(REGEX REPLACE "\n" "" test_output "${test_output}")
+
+#                    message(STATUS "h5diff command: ${test_output}")
+                    set(args " ")
+
+                    set(output_file "${EXE_NAME}_h5diff.sh")
+#                   Write the content of test_output to the file
+                    file(WRITE ${output_file} "${test_output}")
+
+                    set(cmd "/bin/bash ${output_file}")
+                    add_test(NAME ${EXE_NAME}_h5diff
+                            COMMAND ${CMAKE_COMMAND}
+                            -DCMD=${cmd} -DARG=${args}
+                            -DOPS_INSTALL_PATH=${OPS_CMAKE_INSTALL_PATH} -P ${OPS_APP_SRC}/runtests.cmake
+                            WORKING_DIRECTORY "${TMP_SOURCE_DIR}")
+                else()
+                    message(FATAL_ERROR "Error in executing script to get runtime command string ${test_result}: ${test_output}")
+                endif()
+            endif()
+        endif()
+    endfunction()
 
 
 #   Prepare the macro for compiling apps Name: App name Odd: Key words for source
@@ -521,6 +551,12 @@
             set(SKIP_SEQ_TESTING FALSE)
         else()
             set(SKIP_SEQ_TESTING TRUE)
+        endif()
+
+        if("${Name}" STREQUAL "lowdim" ) #OR "${Name}" STREQUAL "multidim")
+            set(H5DIFF_TEST TRUE)
+        else()
+            set(H5DIFF_TEST FALSE)
         endif()
 
 #       Get the file to be compiled, DEV: non-optimised codes (full directory and filename) 
@@ -695,9 +731,16 @@
        if ((OPS_TEST) AND (${GenerateTest} STREQUAL "YES") AND (NOT SKIP_SEQ_TESTING))
 
             add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_dev_seq ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh dev_seq)
+            add_cmake_h5diff_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_dev_seq ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh ${H5DIFF_TEST} h5_dev_seq)
+
             add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_seq ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh seq)
+            add_cmake_h5diff_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_seq ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh ${H5DIFF_TEST} h5_seq)
+
             add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_openmp ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh openmp)
+            add_cmake_h5diff_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_openmp ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh ${H5DIFF_TEST} h5_openmp)
+
             add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_tiled ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh tiled)
+            add_cmake_h5diff_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_tiled ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh ${H5DIFF_TEST} h5_tiled)
         endif()
 
         if(CUDA)
@@ -724,6 +767,7 @@
                 AND (GPU_NUMBER GREATER_EQUAL 1)
                 AND (${GenerateTest} STREQUAL "YES"))
                 add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_cuda ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh cuda)
+                add_cmake_h5diff_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_cuda ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh ${H5DIFF_TEST} h5_cuda)
             endif()
         endif()
 
@@ -827,9 +871,16 @@
 
             if((OPS_TEST) AND (${GenerateTest} STREQUAL "YES"))
                 add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_dev_mpi ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh dev_mpi)
+                add_cmake_h5diff_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_dev_mpi ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh ${H5DIFF_TEST} h5_dev_mpi)
+
                 add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh mpi)
+                add_cmake_h5diff_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh ${H5DIFF_TEST} h5_mpi)
+
                 add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_openmp ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh mpi_openmp)
+                add_cmake_h5diff_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_openmp ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh ${H5DIFF_TEST} h5_mpi_openmp)
+
                 add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_tiled ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh mpi_tiled)
+                add_cmake_h5diff_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_tiled ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh ${H5DIFF_TEST} h5_mpi_tiled)
             endif()
 
             install(TARGETS ${Name}_dev_mpi DESTINATION ${APP_INSTALL_DIR}/${Name})
@@ -980,7 +1031,7 @@
         add_subdirectory(CloverLeaf_3D_HDF5)
 
 #       App: lowdim # Compiles OK
-#        add_subdirectory(lowdim_test)
+        add_subdirectory(lowdim_test)
 
 #       App: multiDim   # Compiles OK
 #        add_subdirectory(multiDim)

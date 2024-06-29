@@ -148,6 +148,7 @@ void copy_data_buf(const ops_dat &dat, const int *local_range,
   //     "At Rank II = %d istart=%d iend=%d  jstart=%d jend=%d  kstart=%d kend=%d\n",
   //     ops_my_global_rank,range_max_dim[0], range_max_dim[1], range_max_dim[2],
   //     range_max_dim[3],range_max_dim[4], range_max_dim[5]);
+  
   fetch_loop_slab(local_buf, dat->data, local_buf_size, dat->size, d_m,
                     dat->elem_size, dat->dim, range_max_dim);
   dat->dirty_hd = 1;
@@ -485,6 +486,14 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       range[2 * d + 1] = g_size[d] + g_d_p[d];
     }
     determine_local_range(dat, range, local_range);
+
+    for (int d = 0; d < block->dims; d++) {
+      if (dat->size[d] == 1) {
+        local_range[2 * d] = 0;
+        local_range[2 * d + 1] = 1;
+      }
+    }
+
     copy_data_buf(dat, local_range, data);
     delete[] range;
     delete[] local_range;

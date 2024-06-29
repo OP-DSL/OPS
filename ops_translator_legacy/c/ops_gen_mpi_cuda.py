@@ -871,7 +871,8 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
         code(f"ops_set_dirtybit_device(args, {nargs});")
         for n in range(0, nargs):
             if arg_typ[n] == "ops_arg_dat" and (
-                accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC
+                accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC or
+                accs[n] == OPS_MIN or accs[n] == OPS_MAX
             ):
                 code(f"ops_set_halo_dirtybit3(&args[{n}], range);")
         config.depth = 0
@@ -936,9 +937,10 @@ def ops_gen_mpi_cuda(master, consts, kernels, soa_set, hip=0):
     code(f"#define OPS_{NDIM}D")
     if soa_set:
         code("#define OPS_SOA")
+    code(f'#include "ops_{cuda}_rt_support.h"')
+    code("")
     code('#include "ops_lib_core.h"')
     code("")
-    code(f'#include "ops_{cuda}_rt_support.h"')
     code(f'#include "ops_{cuda}_reduction.h"')
     code("")
     if hip == 0:
