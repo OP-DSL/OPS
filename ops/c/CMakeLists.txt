@@ -118,7 +118,7 @@
 #       TARGET: MPI_CUDA
         if(CUDAToolkit_FOUND)
             file(GLOB_RECURSE MPICUDA "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/*cuda*.cu"
-                "${CMAKE_CURRENT_SOURCE_DIR}/src/cuda/*")
+                "${CMAKE_CURRENT_SOURCE_DIR}/src/cuda/ops_cuda_common.cu")
             list(FILTER MPICUDA EXCLUDE REGEX "singlenode")
             list(APPEND MPICUDA ${CommonFiles})
             add_library(ops_mpi_cuda ${MPICORE} ${EXTERN} ${MPICUDA})

@@ -1,15 +1,13 @@
 # Defines stages which are to be executed
 stages:
-  - API_Build
-  - APPS_Build_and_Test
-    #  - HIP
-    #  - test
-    #  - docs
-    #  - clean
+  - API_CXX_Build
+  - API_FORTRAN_Build
+  - APPS_CXX_Build_and_Test
+  - APPS_FORTRAN_Build_and_Test
 
 # Stage "API_Build"
-build:GNU11:API:
-  stage: API_Build
+build:GNU11:API_CXX:
+  stage: API_CXX_Build
   tags:
     - CCP, test
   script:
@@ -19,7 +17,7 @@ build:GNU11:API:
     - export CXX=mpicxx
     - mkdir build
     - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DGPU_ARCH=75 
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DGPU_ARCH=75
     - cmake --build . -j 4
     - cmake --install .
   artifacts:
@@ -27,9 +25,28 @@ build:GNU11:API:
     paths:
     - $CI_PROJECT_DIR/OPS-INSTALL
 
+build:GNU11:API_FORTRAN:
+  stage: API_FORTRAN_Build
+  tags:
+    - CCP, test
+  script:
+    - source ~/.bash_aliases
+    - module avail
+    - module load CUDA
+    - export CXX=mpicxx
+    - mkdir build
+    - cd build
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_CXX=OFF -DBUILD_OPS_FORTRAN=ON -DGPU_ARCH=75
+    - cmake --build .
+    - cmake --install .
+  artifacts:
+    expire_in: 1 week
+    paths:
+    - $CI_PROJECT_DIR/OPS-INSTALL
+
 # This is the latest easybuild based on GNU
-build:foss:API:
-  stage: API_Build
+build:foss:API_CXX:
+  stage: API_CXX_Build
   tags:
     - CCP, test
   script:
@@ -48,8 +65,8 @@ build:foss:API:
     - $CI_PROJECT_DIR/OPS-INSTALL
 
 # Build with NVHPC compiler
-build:NVHCP23:API:
-  stage: API_Build
+build:NVHCP23:API_CXX:
+  stage: API_CXX_Build
   tags:
     - CCP, test
   script:
@@ -67,10 +84,29 @@ build:NVHCP23:API:
     paths:
     - $CI_PROJECT_DIR/OPS-INSTALL
 
+# Build with NVHPC compiler
+build:NVHCP23:API_FORTRAN:
+  stage: API_FORTRAN_Build
+  tags:
+    - CCP, test
+  script:
+    - source ~/.bash_aliases
+    - module avail
+    - module load nvhpc/23.9
+    - export CXX=mpicxx
+    - mkdir build
+    - cd build
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_CXX=OFF -DBUILD_OPS_FORTRAN=ON -DGPU_ARCH=75
+    - cmake --build .
+    - cmake --install .
+  artifacts:
+    expire_in: 1 week
+    paths:
+    - $CI_PROJECT_DIR/OPS-INSTALL
 
 # Stage "Test"
-build_and_test:GNU11:APPS:
-  stage: APPS_Build_and_Test
+build_and_test:GNU11:APPS_CXX:
+  stage: APPS_CXX_Build_and_Test
   tags:
     - CCP, test
   script:
@@ -89,8 +125,48 @@ build_and_test:GNU11:APPS:
     paths:
     - $CI_PROJECT_DIR/OPS-APP
 
-build_and_test:foss:APPS:
-  stage: APPS_Build_and_Test
+build_and_test:GNU11:APPS_FORTRAN:
+  stage: APPS_FORTRAN_Build_and_Test
+  tags:
+    - CCP, test
+  script:
+    - source ~/.bash_aliases
+    - module avail
+    - module load CUDA
+    - export CXX=mpicxx
+    - mkdir build
+    - cd build
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_CXX=OFF -DBUILD_OPS_FORTRAN=ON -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON -DGPU_ARCH=75 -DGPU_NUMBER=1
+    - cmake --build .
+    - cmake --install .
+    - ctest -V
+  artifacts:
+    expire_in: 1 week
+    paths:
+    - $CI_PROJECT_DIR/OPS-APP
+
+build_and_test:NVHCP23:APPS_FORTRAN:
+  stage: APPS_FORTRAN_Build_and_Test
+  tags:
+    - CCP, test
+  script:
+    - source ~/.bash_aliases
+    - module avail
+    - module load nvhpc/23.9
+    - export CXX=mpicxx
+    - mkdir build
+    - cd build
+    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_CXX=OFF -DBUILD_OPS_FORTRAN=ON -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON -DGPU_ARCH=75 -DGPU_NUMBER=1
+    - cmake --build . --verbose
+    - cmake --install .
+    - ctest -V
+  artifacts:
+    expire_in: 1 week
+    paths:
+    - $CI_PROJECT_DIR/OPS-INSTALL
+
+build_and_test:foss:APPS_CXX:
+  stage: APPS_CXX_Build_and_Test
   tags:
     - CCP, test
   script:

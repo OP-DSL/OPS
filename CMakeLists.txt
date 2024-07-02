@@ -1,7 +1,7 @@
 #   Specifiy the cmake version range, currenty work under 3.18
     cmake_minimum_required(VERSION 3.18)
 
-    project(OPS C CXX)
+    project(OPS C CXX Fortran)
 
 #   if show the compiling process in detail
     option(OPS_VERBOSE_WARNING "Turn on verbose warning messages" OFF)
@@ -9,6 +9,9 @@
     option(OPS_HIP "Turn on the HIP backend" OFF)
     option(ENABLE_IEEE "Enable IEEE flags" OFF)
     option(LEGACY_CODEGEN "Build apps with Legacy code-gen" OFF)
+    option(BUILD_OPS_CXX "Build CXX version of OPS" ON)
+    option(BUILD_OPS_FORTRAN "Build FORTRAN version of OPS" OFF)
+    option(BUILD_OPS_APPS "Build Sample OPS applications" OFF)
 
     if(NOT OPS_VERBOSE_WARNING)
         message(
@@ -242,8 +245,6 @@
         endif()
     endif()
 
-#   option(BUILD_OPS_FORTRAN "Build FORTRAN version of OPS" OFF)
-    option(BUILD_OPS_APPS "Build Sample OPS applications" OFF)
 
 #   option(OPS_ERROR_ON_WARNING "Error upon encountering a warning" ON)
 #   option(CHECKPOINTING "Enable OPS checkpointing support" OFF)
@@ -274,7 +275,9 @@
     endif()
 
 #   Configure the C/C++ library compiling
-    add_subdirectory(ops/c)
+    if(BUILD_OPS_CXX)
+        add_subdirectory(ops/c)
+    endif()
 
 #   Configure the installation of "include"
     file(GLOB_RECURSE INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/ops/c/include/*.h"
@@ -282,7 +285,7 @@
 
     install(FILES ${INCLUDE} DESTINATION include)
 
-#   prepare the script for setting OPS environment variable variables
+#   prepare the script for setting OPS environment variable
     if(UNIX)
         install(
             CODE "file(WRITE \"${CMAKE_INSTALL_PREFIX}/bin/ops_env\" \"export OPS_INSTALL_PATH=${CMAKE_INSTALL_PREFIX}\n\")"
@@ -296,7 +299,9 @@
         endif()
     endif()
 
-#   if(BUILD_OPS_FORTRAN) add_subdirectory(ops/fortran) endif()
+    if(BUILD_OPS_FORTRAN)
+        add_subdirectory(ops/fortran)
+    endif()
 
 #   prepare ctest
     if(OPS_TEST)
@@ -312,11 +317,17 @@
         endif()
     endif()
 
-    install(FILES "${CMAKE_BINARY_DIR}/OPSConfig.cmake"
-            DESTINATION ${ConfigPackageLocation})
+    if(BUILD_OPS_CXX)
+        install(FILES "${CMAKE_BINARY_DIR}/OPSConfig.cmake"
+                DESTINATION ${ConfigPackageLocation})
+    endif()
 
     if(BUILD_OPS_APPS)
-        add_subdirectory(apps/c)
-#       if(BUILD_OPS_FORTRAN) add_subdirectory(apps/fortran) endif()
+        if(BUILD_OPS_CXX)
+            add_subdirectory(apps/c)
+        endif()
+        if(BUILD_OPS_FORTRAN)
+            add_subdirectory(apps/fortran)
+        endif()
     endif()
 

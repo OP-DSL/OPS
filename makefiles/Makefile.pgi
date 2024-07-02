@@ -13,7 +13,8 @@ CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\
 
 CXXFLAGS      := $(CCFLAGS) -std=c++11
 FFLAGS         = -O3 -fast -gopt
-NVCXXFLAGS    := -O3 -std=c++11
+NVCCFLAGS      = -O3 -std=c++11
+NVCC_FLAG_SET := 1
 OPENACCFLAGS   = $(CCFLAGS) -module $(F_INC_MOD)/openacc
 
 FMODS         := -module $(F_INC_MOD)
@@ -28,13 +29,13 @@ endif
 
 CUDAFOR	= -DOPS_WITH_CUDAFOR
 OpenACCFLAGS = -acc
-CXXLINK := -pgc++libs -lstdc++
+CXXLINK := -c++libs -lstdc++
 MPILINK := -lmpi_cxx
 
 ifdef IEEE
-	CCFLAGS += -Kieee -nofma
-	CXXFLAGS += -Kieee -nofma
-    FFLAGS += -Kieee -nofma
+CCFLAGS += -Kieee -nofma
+CXXFLAGS += -Kieee -nofma
+FFLAGS += -Kieee -nofma
 endif
 
 ifndef NV_ARCH
@@ -43,33 +44,34 @@ print:
 	NV_ARCH=Kepler
 endif
 ifeq ($(NV_ARCH),Fermi)
-	OpenACCFLAGS += -ta=nvidia,cc20 -Mcuda=cc20
-	CUDAFOR      += -Mcuda=cc20
-	NVCXXFLAGS   += -arch=sm_20
+OpenACCFLAGS += -ta=nvidia,cc20 -Mcuda=cc20
+CUDAFOR      += -cuda -gpu=cc20
+NVCCFLAGS    += -arch=sm_20
 else
 ifeq ($(NV_ARCH),Kepler)
-	OpenACCFLAGS += -ta=nvidia,cc35 -Mcuda=cc35
-	CUDAFOR      += -Mcuda=cc35
-	NVCXXFLAGS   += -arch=sm_35
+OpenACCFLAGS += -ta=nvidia,cc35 -Mcuda=cc35
+CUDAFOR      += -cuda -gpu=cc35
+NVCCFLAGS    += -arch=sm_35
 else
 ifeq ($(NV_ARCH),Pascal)
-	OpenACCFLAGS += -ta=nvidia,cc60 -Mcuda=cc60
-	CUDAFOR      += -Mcuda=cc60
-	NVCXXFLAGS   += -arch=sm_60
+OpenACCFLAGS += -ta=nvidia,cc60 -Mcuda=cc60
+CUDAFOR      += -cuda -gpu=cc60
+NVCCFLAGS    += -arch=sm_60
 else
 ifeq ($(NV_ARCH),Volta)
-	OpenACCFLAGS += -ta=nvidia,cc70 -Mcuda=cc70
-	CUDAFOR      += -Mcuda=cc70
-	NVCXXFLAGS   += -arch=sm_70
+OpenACCFLAGS += -ta=nvidia,cc70 -Mcuda=cc70
+CUDAFOR      += -cuda -gpu=cc70
+NVCCFLAGS    += -arch=sm_70
 else
 ifeq ($(NV_ARCH),Ampere)
-	OpenACCFLAGS += -ta=nvidia,cc80 -Mcuda=cc80
-	CUDAFOR      += -Mcuda=cc80
-	NVCXXFLAGS   += -arch=sm_80
+OpenACCFLAGS += -ta=nvidia,cc80 -Mcuda=cc80
+CUDAFOR      += -cuda -gpu=cc80
+NVCCFLAGS    += -arch=sm_80
+else
 ifeq ($(NV_ARCH),Hopper)
-	OpenACCFLAGS += -ta=nvidia,cc90 -Mcuda=cc90
-	CUDAFOR 	 += -Mcuda=cc90
-	NVCXXFLAGS   += -arch=sm_90
+OpenACCFLAGS += -ta=nvidia,cc90 -Mcuda=cc90
+CUDAFOR 	 += -cuda -gpu=cc90
+NVCCFLAGS    += -arch=sm_90
 endif
 endif
 endif
