@@ -143,7 +143,7 @@ void ops_pack_cuda_internal(ops_dat dat, const int src_offset, char *__restrict 
         dat->dim, dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size);
     cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaGetLastError());
 
-  } else if (halo_blocklength % 4 == 0) {
+  } else if (halo_blocklength % 4 == 0 && dat->type_size>=4) {
     int num_threads = 128;
     int num_blocks =
         (((dat->dim * halo_blocklength / 4) * halo_count) - 1) / num_threads + 1;
@@ -199,7 +199,7 @@ void ops_unpack_cuda_internal(ops_dat dat, const int dest_offset, const char *__
         device_buf, dest, halo_count, halo_blocklength, halo_stride,
         dat->dim, dat->size[0]*dat->size[1]*dat->size[2]*dat->type_size);
     cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaGetLastError());
-  } else if (halo_blocklength % 4 == 0) {
+  } else if (halo_blocklength % 4 == 0 && dat->type_size>=4) {
     int num_threads = 128;
     int num_blocks =
         (((dat->dim * halo_blocklength / 4) * halo_count) - 1) / num_threads + 1;
