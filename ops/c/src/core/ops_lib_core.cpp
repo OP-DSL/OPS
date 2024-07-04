@@ -354,6 +354,18 @@ void ops_exit_core(OPS_instance *instance) {
      instance->OPS_kern_max=0;
   }
 
+  // Free lowdim edge dataset treatment
+  edge_dirtybit.clear();
+  std::vector<int>().swap(edge_dirtybit);
+  for (auto& vec : edat_prev_range) {
+    vec.clear();
+    std::vector<int>().swap(vec);  // Force release of capacity
+  }
+  edat_prev_range.clear();
+  std::vector<std::vector<int>>().swap(edat_prev_range);  // Free outer vector
+  edat_prev_acc.clear();
+  std::vector<ops_access>().swap(edat_prev_acc);  // Free ops_access vector
+
   instance->is_initialised = 0;
 }
 
@@ -569,6 +581,12 @@ ops_dat ops_dat_alloc_core(ops_block block)
   TAILQ_INSERT_TAIL(&block->instance->OPS_block_list[block->index].datasets, item, entries);
   block->instance->OPS_block_list[block->index].num_datasets++;
 
+  // Initialize lowdim edge dataset treatment
+  edge_dirtybit.push_back(0);
+  edat_prev_range.push_back(std::vector<int>());
+  edat_prev_range[dat->index].resize(2*OPS_MAX_DIM, 0);
+  edat_prev_acc.push_back(OPS_READ);
+
   return dat;
 }
 
@@ -591,6 +609,9 @@ ops_dat ops_decl_dat_temp_core(ops_block block, int dim, int *dataset_size,
 }
 
 void ops_free_dat_core(ops_dat dat) {
+  // Free lowdim edge dataset treatment
+  edat_prev_range[dat->index].clear();
+
   ops_dat_entry *item;
   TAILQ_FOREACH(item, &dat->block->instance->OPS_dat_list, entries) {
     if (item->dat->index == dat->index) {
@@ -2327,7 +2348,7 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs) {
   for (int n = 0; n < nargs; n++) {
     if ((args[n].argtype == OPS_ARG_DAT) &&
         (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
+         args[n].acc == OPS_RW || args[n].acc == OPS_MAX || args[n].acc == OPS_MIN)) {
       args[n].dat->dirty_hd = 2;
     }
   }
@@ -2558,6 +2579,10 @@ void _ops_free_dat(ops_dat dat) {
   ops_free_dat_core(dat);
 }
 
+/* Edge dataset treatment*/
+std::vector<std::vector<int> > edat_prev_range;
+std::vector<ops_access >       edat_prev_acc;
+std::vector<int> edge_dirtybit;
 
 /************* Functions only use in the Fortran Backend ************/
 

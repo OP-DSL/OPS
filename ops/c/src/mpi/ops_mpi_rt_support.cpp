@@ -42,6 +42,8 @@
 #include <ops_mpi_core.h>
 #include <ops_exceptions.h>
 #include <cassert>
+#include <limits>
+#include <algorithm>
 
 #define AGGREGATE
 int ops_buffer_size = 0;
@@ -165,6 +167,9 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
                               int *send_recv_offsets) {
   sub_block_list sb = OPS_sub_block_list[dat->block->index];
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
+
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+
   int left_send_depth = 0;
   int left_recv_depth = 0;
   int right_send_depth = 0;
@@ -230,15 +235,15 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
                   sd->halos[MAX_DEPTH * dim + actual_depth_recv].count * dat->dim;
 
   if (send_recv_offsets[0] + send_size > ops_buffer_send_1_size) {
-    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
-      printf("Realloc ops_buffer_send_1\n");
+//    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
+//      printf("Realloc ops_buffer_send_1\n");
     ops_buffer_send_1 = (char *)OPS_realloc_fast(ops_buffer_send_1, send_recv_offsets[0],
                                         send_recv_offsets[0] + 4 * send_size);
     ops_buffer_send_1_size = send_recv_offsets[0] + 4 * send_size;
   }
   if (send_recv_offsets[1] + recv_size > ops_buffer_recv_1_size) {
-    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
-      printf("Realloc ops_buffer_recv_1\n");
+//    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
+//      printf("Realloc ops_buffer_recv_1\n");
     ops_buffer_recv_1 = (char *)OPS_realloc_fast(ops_buffer_recv_1, send_recv_offsets[1],
                                         send_recv_offsets[1] + 4 * recv_size);
     ops_buffer_recv_1_size = send_recv_offsets[1] + 4 * recv_size;
@@ -249,8 +254,8 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     ops_pack(dat, i2, ops_buffer_send_1 + send_recv_offsets[0],
              &sd->halos[MAX_DEPTH * dim + actual_depth_send]);
 
-  // if (actual_depth_send>0)
-  //   ops_printf("%s send neg %d\n",dat->name, actual_depth_send);
+  if (actual_depth_send>0)
+    if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s send negative-direction depth: %d\n", ops_get_proc(), dim, dat->name, actual_depth_send);
 
   // increase offset
   send_recv_offsets[0] += send_size;
@@ -299,6 +304,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_p[dim], 666, &they_send,
                  1, MPI_INT, sb->id_m[dim], 666, sb->comm, &status);
     if (sb->id_m[dim] >= 0 && actual_depth_recv != they_send) {
+      printf("Name: %s actual_depth_recv = %d, they_send = %d\n", dat->name, actual_depth_recv, they_send);
       throw OPSException(OPS_INTERNAL_ERROR, "Error: Right recv mismatch");
     }
   }
@@ -310,15 +316,15 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
               sd->halos[MAX_DEPTH * dim + actual_depth_recv].count * dat->dim;
 
   if (send_recv_offsets[2] + send_size > ops_buffer_send_2_size) {
-    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
-      printf("Realloc ops_buffer_send_2\n");
+//    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
+//      printf("Realloc ops_buffer_send_2\n");
     ops_buffer_send_2 = (char *)OPS_realloc_fast(ops_buffer_send_2,  send_recv_offsets[2],
                                         send_recv_offsets[2] + 4 * send_size);
     ops_buffer_send_2_size = send_recv_offsets[2] + 4 * send_size;
   }
   if (send_recv_offsets[3] + recv_size > ops_buffer_recv_2_size) {
-    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
-      printf("Realloc ops_buffer_recv_2\n");
+//    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
+//      printf("Realloc ops_buffer_recv_2\n");
     ops_buffer_recv_2 = (char *)OPS_realloc_fast(ops_buffer_recv_2,  send_recv_offsets[3],
                                         send_recv_offsets[3] + 4 * recv_size);
     ops_buffer_recv_2_size = send_recv_offsets[3] + 4 * recv_size;
@@ -329,8 +335,8 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     ops_pack(dat, i3, ops_buffer_send_2 + send_recv_offsets[2],
              &sd->halos[MAX_DEPTH * dim + actual_depth_send]);
 
-  // if (actual_depth_send>0)
-  //   ops_printf("%s send pos %d\n",dat->name, actual_depth_send);
+  if (actual_depth_send>0)
+    if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s send positive-direction depth: %d\n", ops_get_proc(), dim, dat->name, actual_depth_send);
 
   // increase offset
   send_recv_offsets[2] += send_size;
@@ -345,6 +351,9 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
                               int *send_recv_offsets) {
   sub_block_list sb = OPS_sub_block_list[dat->block->index];
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
+
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+
   int left_send_depth = depths[0];
   int left_recv_depth = depths[1];
   int right_send_depth = depths[2];
@@ -358,13 +367,13 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
 
   if (sb->id_m[dim] != MPI_PROC_NULL && sd->d_im[dim] > -left_recv_depth) {
     OPSException ex(OPS_RUNTIME_CONFIGURATION_ERROR);
-    ex << "Error: trying to exchange a " << left_recv_depth << "-deep halo for " << dat->name << ", but halo is only " << -sd->d_im[dim] << " deep. Please set OPS_TILING_MAXDEPTH accordingly";
+    ex << "Error: Proc " << ops_get_proc() << " trying to exchange a " << left_recv_depth << "-deep halo for " << dat->name << ", but halo is only " << -sd->d_im[dim] << " deep. Please set OPS_TILING_MAXDEPTH accordingly";
     throw ex;
   }
 
   if (sb->id_p[dim] != MPI_PROC_NULL && sd->d_ip[dim] < right_recv_depth) {
     OPSException ex(OPS_RUNTIME_CONFIGURATION_ERROR);
-    ex << "Error: trying to exchange a " << right_recv_depth << "-deep halo for " << dat->name << ", but halo is only " << sd->d_ip[dim] << " deep. Please set OPS_TILING_MAXDEPTH accordingly";
+    ex << "Error: Proc " << ops_get_proc() << " trying to exchange a " << right_recv_depth << "-deep halo for " << dat->name << ", but halo is only " << sd->d_ip[dim] << " deep. Please set OPS_TILING_MAXDEPTH accordingly";
     throw ex;
   }
 
@@ -412,9 +421,10 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   if (OPS_instance::getOPSInstance()->OPS_diags > 5) { // Consistency checking
     int they_send;
     MPI_Status status;
-    MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_m[dim], 665, &they_send,
-                 1, MPI_INT, sb->id_p[dim], 665, sb->comm, &status);
+    MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_m[dim], 665+dat->index, &they_send,
+                 1, MPI_INT, sb->id_p[dim], 665+dat->index, sb->comm, &status);
     if (sb->id_p[dim] >= 0 && actual_depth_recv != they_send) {
+      printf("Name: %s actual_depth_recv = %d, they_send = %d\n", dat->name, actual_depth_recv, they_send);
       throw OPSException(OPS_INTERNAL_ERROR, "Error: Right recv mismatch");
     }
   }
@@ -426,15 +436,15 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
                   sd->halos[MAX_DEPTH * dim + actual_depth_recv].count * dat->dim;
 
   if (send_recv_offsets[0] + send_size > ops_buffer_send_1_size) {
-    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
-      printf("Realloc ops_buffer_send_1\n");
+//    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
+//      printf("Realloc ops_buffer_send_1\n");
     ops_buffer_send_1 = (char *)OPS_realloc_fast(ops_buffer_send_1,  send_recv_offsets[0],
                                         send_recv_offsets[0] + 4 * send_size);
     ops_buffer_send_1_size = send_recv_offsets[0] + 4 * send_size;
   }
   if (send_recv_offsets[1] + recv_size > ops_buffer_recv_1_size) {
-    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
-      printf("Realloc ops_buffer_recv_1\n");
+//    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
+//      printf("Realloc ops_buffer_recv_1\n");
     ops_buffer_recv_1 = (char *)OPS_realloc_fast(ops_buffer_recv_1, send_recv_offsets[1],
                                         send_recv_offsets[1] + 4 * recv_size);
     ops_buffer_recv_1_size = send_recv_offsets[1] + 4 * recv_size;
@@ -444,6 +454,9 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   if (actual_depth_send > 0)
     ops_pack(dat, i2, ops_buffer_send_1 + send_recv_offsets[0],
              &sd->halos[MAX_DEPTH * dim + actual_depth_send]);
+
+  if (actual_depth_send>0)
+    if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s send negative-direction depth: %d\n", ops_get_proc(), dim, dat->name, actual_depth_send);
 
   // increase offset
   send_recv_offsets[0] += send_size;
@@ -483,9 +496,10 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   if (OPS_instance::getOPSInstance()->OPS_diags > 5) { // Consistency checking
     int they_send;
     MPI_Status status;
-    MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_p[dim], 666, &they_send,
-                 1, MPI_INT, sb->id_m[dim], 666, sb->comm, &status);
+    MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_p[dim], 766+dat->index, &they_send,
+                 1, MPI_INT, sb->id_m[dim], 766+dat->index, sb->comm, &status);
     if (sb->id_m[dim] != MPI_PROC_NULL && actual_depth_recv != they_send) {
+      printf("left recv mismatch for dat %s\n", dat->name);
       throw OPSException(OPS_INTERNAL_ERROR, "Error: Left recv mismatch");
     }
   }
@@ -497,15 +511,15 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
               sd->halos[MAX_DEPTH * dim + actual_depth_recv].count * dat->dim;
 
   if (send_recv_offsets[2] + send_size > ops_buffer_send_2_size) {
-    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
-      printf("Realloc ops_buffer_send_2\n");
+//    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
+//      printf("Realloc ops_buffer_send_2\n");
     ops_buffer_send_2 = (char *)OPS_realloc_fast(ops_buffer_send_2,  send_recv_offsets[2],
                                         send_recv_offsets[2] + 4 * send_size);
     ops_buffer_send_2_size = send_recv_offsets[2] + 4 * send_size;
   }
   if (send_recv_offsets[3] + recv_size > ops_buffer_recv_2_size) {
-    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
-      printf("Realloc ops_buffer_recv_2\n");
+//    if (OPS_instance::getOPSInstance()->OPS_diags > 4)
+//      printf("Realloc ops_buffer_recv_2\n");
     ops_buffer_recv_2 = (char *)OPS_realloc_fast(ops_buffer_recv_2, send_recv_offsets[3],
                                         send_recv_offsets[3] + 4 * recv_size);
     ops_buffer_recv_2_size = send_recv_offsets[3] + 4 * recv_size;
@@ -515,6 +529,9 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   if (actual_depth_send > 0)
     ops_pack(dat, i3, ops_buffer_send_2 + send_recv_offsets[2],
              &sd->halos[MAX_DEPTH * dim + actual_depth_send]);
+
+  if (actual_depth_send>0)
+    if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s send positive-direction depth: %d\n", ops_get_proc(), dim, dat->name, actual_depth_send);
 
   // increase offset
   send_recv_offsets[2] += send_size;
@@ -679,6 +696,142 @@ void ops_exchange_halo_unpacker_given(ops_dat dat, int *depths, int dim,
 
 }
 
+#define ops_lowdim_reduction_gen(type, mpi_type) \
+void ops_lowdim_reduction_##type (ops_dat dat, ops_access acc){ \
+\
+  int ndim=dat->block->dims;\
+  sub_block* sb = OPS_sub_block_list[dat->block->index];\
+  if (OPS_instance::getOPSInstance()->OPS_diags > 3) \
+    printf("Process %d: doing reduction on %s, acc = %d, size[2] = %d\n", ops_my_global_rank, dat->name, acc, dat->size[2]);\
+\
+  if (sb->owned){\
+    for (int i = 0; i < ndim; i++){\
+      if (dat->size[i] ==1){\
+         if (OPS_instance::getOPSInstance()->OPS_gpu_direct){\
+          ops_put_data(dat);\
+          if (acc == OPS_INC){\
+            MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_SUM, sb->pencils[i]);\
+          } else if (acc == OPS_MAX){\
+            MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_MAX, sb->pencils[i]);\
+          } else if (acc == OPS_MIN){\
+            MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_MIN, sb->pencils[i]);\
+          } \
+          dat->dirty_hd = OPS_DEVICE;\
+          ops_get_data(dat);\
+        } else {\
+          ops_get_data(dat);\
+          if (acc == OPS_INC){\
+            MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_SUM, sb->pencils[i]);\
+          } else if (acc == OPS_MAX){\
+            MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_MAX, sb->pencils[i]);\
+          } else if (acc == OPS_MIN){\
+            MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_MIN, sb->pencils[i]);\
+          } \
+          dat->dirty_hd = OPS_HOST;\
+          ops_put_data(dat);\
+        }\
+      } \
+    }\
+  }\
+  return;\
+}
+
+ops_lowdim_reduction_gen(double, MPI_DOUBLE)
+ops_lowdim_reduction_gen(float, MPI_FLOAT)
+ops_lowdim_reduction_gen(int, MPI_INT)
+ops_lowdim_reduction_gen(char, MPI_CHAR)
+ops_lowdim_reduction_gen(short, MPI_SHORT)
+ops_lowdim_reduction_gen(long, MPI_LONG)
+ops_lowdim_reduction_gen(ll, MPI_LONG_LONG)
+ops_lowdim_reduction_gen(ull, MPI_UNSIGNED_LONG_LONG)
+ops_lowdim_reduction_gen(ul, MPI_UNSIGNED_LONG)
+ops_lowdim_reduction_gen(uint, MPI_UNSIGNED)
+
+void ops_lowdim_reduction(ops_dat dat, ops_access acc) {
+  if (strcmp(dat->type, "int") == 0 ||
+        strcmp(dat->type, "int(4)") == 0 ||
+        strcmp(dat->type, "integer") == 0 ||
+        strcmp(dat->type, "integer(4)") == 0 ||
+        strcmp(dat->type, "integer(kind=4)") == 0) {
+    ops_lowdim_reduction_int(dat, acc);
+  }
+  else if (strcmp(dat->type, "float") == 0 ||
+            strcmp(dat->type, "real") == 0 ||
+            strcmp(dat->type, "real(4)") == 0 ||
+            strcmp(dat->type, "real(kind=4)") == 0)
+  {
+    ops_lowdim_reduction_float(dat, acc);
+  }
+  else if (strcmp(dat->type, "double") == 0 ||
+          strcmp(dat->type, "real(8)") == 0 ||
+          strcmp(dat->type, "real(kind=8)") == 0 ||
+          strcmp(dat->type, "double precision") == 0)
+  {
+    ops_lowdim_reduction_double(dat, acc);
+  }
+  else if (strcmp(dat->type, "char") == 0)
+  {
+    ops_lowdim_reduction_char(dat, acc);
+  }
+  else if (strcmp(dat->type, "short") == 0)
+  {
+    ops_lowdim_reduction_short(dat, acc);
+  }
+  else if (strcmp(dat->type, "long") == 0)
+  {
+    ops_lowdim_reduction_long(dat, acc);
+  }
+  else if (strcmp(dat->type, "long long") == 0 ||
+          strcmp(dat->type, "ll") == 0)
+  {
+    ops_lowdim_reduction_ll(dat, acc);
+  }
+  else if (strcmp(dat->type, "unsigned long long") == 0 ||
+          strcmp(dat->type, "ull") == 0)
+  {
+    ops_lowdim_reduction_ull(dat, acc);
+  }
+  else if (strcmp(dat->type, "unsigned long") == 0 ||
+          strcmp(dat->type, "ul") == 0)
+  {
+    ops_lowdim_reduction_ul(dat, acc);
+  }
+  else if (strcmp(dat->type, "unsigned int") == 0 ||
+          strcmp(dat->type, "uint") == 0)
+  {
+    ops_lowdim_reduction_uint(dat, acc);
+  }
+  else
+  {
+    OPSException ex(OPS_NOT_IMPLEMENTED);
+    ex << "Error: Unknown data type for ops_lowdim_reduction";
+    throw ex;
+  }
+}
+
+void ops_check_lowdim_update(ops_dat dat) {
+  if (!dat->e_dat) return;
+  if (edge_dirtybit[dat->index] == 0) return;
+  for (int i = 0; i < dat->block->dims; i++) {
+    if (dat->size[i] == 1) {
+      if (edat_prev_acc[dat->index] == OPS_WRITE) {
+          ops_broadcast_pencil(dat, edat_prev_range[dat->index].data());
+          edge_dirtybit[dat->index] = 0;    // not dirty anymore
+          edat_prev_acc[dat->index] = OPS_READ;
+          break;
+      }
+      else if (edat_prev_acc[dat->index] == OPS_INC ||
+               edat_prev_acc[dat->index] == OPS_MAX ||
+               edat_prev_acc[dat->index] == OPS_MIN) {
+        ops_lowdim_reduction(dat, edat_prev_acc[dat->index]);
+        edge_dirtybit[dat->index] = 0;    // not dirty anymore
+        edat_prev_acc[dat->index] = OPS_READ;
+        break;
+      }
+    }
+  }
+}
+
 void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
   double c,t1,t2;
   // printf("*************** range[i] %d %d %d %d\n",range[0],range[1],range[2],
@@ -695,7 +848,6 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
       send_recv_offsets[i] = 0;
     for (int i = 0; i < nargs; i++) {
       if (args[i].argtype != OPS_ARG_DAT ||
-          (args[i].acc == OPS_WRITE || args[i].acc == OPS_MAX || args[i].acc == OPS_MIN) ||
           args[i].opt == 0)
         continue;
 
@@ -704,6 +856,194 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
 
       ops_dat dat = args[i].dat;
       int dat_ndim = OPS_sub_block_list[dat->block->index]->ndim;
+
+      // lowdim data treatment
+      if (args[i].dat->e_dat && args[i].dat->size[dim] == 1) {
+        // if the data is read and the previous access was write, and it wasn't broadcast, then broadcast it if needed
+        if(args[i].acc == OPS_READ &&
+           edat_prev_acc[args[i].dat->index] == OPS_WRITE &&
+           edge_dirtybit[args[i].dat->index] == 1) {
+          if(edat_prev_range[args[i].dat->index][2 * dim + 0] != range_in[2 * dim + 0] ||
+             edat_prev_range[args[i].dat->index][2 * dim + 1] != range_in[2 * dim + 1]) {
+            int range_prev[2*OPS_MAX_DIM];
+            for(int dim_prev = 0; dim_prev < OPS_MAX_DIM; dim_prev++) {
+              range_prev[2*dim_prev + 0] = edat_prev_range[args[i].dat->index][2 * dim_prev + 0];
+              range_prev[2*dim_prev + 1] = edat_prev_range[args[i].dat->index][2 * dim_prev + 1];   
+            }
+            if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+              printf("Process %d: READ after write, on different range, on %s, broadcasting\n", ops_my_global_rank, args[i].dat->name);
+            ops_broadcast_pencil(args[i].dat, range_prev);
+            edge_dirtybit[args[i].dat->index] = 0;    // not dirty anymore
+            edat_prev_acc[args[i].dat->index] = OPS_READ;
+          } else {
+            if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+              printf("Process %d: READ after write, on same range, on %s\n", ops_my_global_rank, args[i].dat->name);
+          }
+        }
+        // if the data is read and the previous access was a reduction, then do the reduction
+        else if (args[i].acc == OPS_READ &&
+                   edat_prev_acc[args[i].dat->index] != OPS_READ &&
+                   edge_dirtybit[args[i].dat->index] == 1) {
+          // Sanity check - we can only do reductions on lowdim data if the previous access was inc, max, or min
+          if (!(edat_prev_acc[args[i].dat->index] == OPS_INC ||
+                edat_prev_acc[args[i].dat->index] == OPS_MAX ||
+                edat_prev_acc[args[i].dat->index] == OPS_MIN)) {
+            throw OPSException(OPS_RUNTIME_ERROR, "Error: lowdim data is read and the previous access was not read, inc, max, or min");
+          }
+          if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+          printf("Process %d: READ after reduction, on %s, doing reduction\n", ops_my_global_rank, args[i].dat->name);
+          ops_lowdim_reduction(args[i].dat, edat_prev_acc[args[i].dat->index]);
+          edat_prev_acc[args[i].dat->index] = OPS_READ;
+          edge_dirtybit[args[i].dat->index] = 0;    // not dirty anymore
+
+        }
+        //if the data is being accumulated into, for the first time since the last read/broadcast or other reduction, we need to initialize it
+        else if( (args[i].acc == OPS_INC || args[i].acc == OPS_MAX || args[i].acc == OPS_MIN) &&
+                edat_prev_acc[args[i].dat->index] != args[i].acc) {
+
+          edat_prev_acc[args[i].dat->index] = args[i].acc;
+
+          if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+          printf("Process %d: first reduction, initializing %s data\n", ops_my_global_rank, args[i].dat->name);
+          if (strcmp(dat->type, "int") == 0 ||
+              strcmp(dat->type, "int(4)") == 0 ||
+              strcmp(dat->type, "integer") == 0 ||
+              strcmp(dat->type, "integer(4)") == 0 ||
+              strcmp(dat->type, "integer(kind=4)") == 0) {
+              int val = 0;
+              if (args[i].acc == OPS_INC){
+                val = (int)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<int>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<int>::max();
+              }
+              std::fill((int*)args[i].dat->data, (int*)args[i].dat->data + args[i].dat->mem/sizeof(int), val);
+          }
+          else if (strcmp(dat->type, "float") == 0 ||
+                    strcmp(dat->type, "real") == 0 ||
+                    strcmp(dat->type, "real(4)") == 0 ||
+                    strcmp(dat->type, "real(kind=4)") == 0) {
+            float val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (float)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<float>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<float>::max();
+              }
+            std::fill((float*)args[i].dat->data, (float*)args[i].dat->data + args[i].dat->mem/sizeof(float), val);
+          }
+          else if (strcmp(dat->type, "double") == 0 ||
+                    strcmp(dat->type, "real(8)") == 0 ||
+                    strcmp(dat->type, "real(kind=8)") == 0 ||
+                    strcmp(dat->type, "double precision") == 0) {
+            double val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (double)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<double>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<double>::max();
+              }
+            std::fill((double*)args[i].dat->data, (double*)args[i].dat->data + args[i].dat->mem/sizeof(double), val);
+          }
+          else if (strcmp(dat->type, "char") == 0) {
+            char val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (char)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<char>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<char>::max();
+              }
+            std::fill((char*)args[i].dat->data, (char*)args[i].dat->data + args[i].dat->mem/sizeof(char), val);
+          }
+          else if (strcmp(dat->type, "short") == 0) {
+            short val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (short)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<short>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<short>::max();
+              }
+            std::fill((short*)args[i].dat->data, (short*)args[i].dat->data + args[i].dat->mem/sizeof(short), val);
+          }
+          else if (strcmp(dat->type, "long") == 0) {
+            long val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (long)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<long>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<long>::max();
+              }
+            std::fill((long*)args[i].dat->data, (long*)args[i].dat->data + args[i].dat->mem/sizeof(long), val);
+          }
+          else if (strcmp(dat->type, "long long") == 0 ||
+                    strcmp(dat->type, "ll") == 0) {
+            long long val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (long long)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<long long>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<long long>::max();
+              }
+            std::fill((long long*)args[i].dat->data, (long long*)args[i].dat->data + args[i].dat->mem/sizeof(long long), val);
+          }
+          else if (strcmp(dat->type, "unsigned long long") == 0 ||
+                    strcmp(dat->type, "ull") == 0) {
+            unsigned long long val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (unsigned long long)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<unsigned long long>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<unsigned long long>::max();
+              }
+            std::fill((unsigned long long*)args[i].dat->data, (unsigned long long*)args[i].dat->data + args[i].dat->mem/sizeof(unsigned long long), val);
+          }
+          else if (strcmp(dat->type, "unsigned long") == 0 ||
+                    strcmp(dat->type, "ul") == 0) {
+            unsigned long val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (unsigned long)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<unsigned long>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<unsigned long>::max();
+              }
+            std::fill((unsigned long*)args[i].dat->data, (unsigned long*)args[i].dat->data + args[i].dat->mem/sizeof(unsigned long), val);
+          }
+          else if (strcmp(dat->type, "unsigned int") == 0 ||
+                    strcmp(dat->type, "uint") == 0) {
+            unsigned int val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (unsigned int)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<unsigned int>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<unsigned int>::max();
+              }
+            std::fill((unsigned int*)args[i].dat->data, (unsigned int*)args[i].dat->data + args[i].dat->mem/sizeof(unsigned int), val);
+          }
+          else {
+            OPSException ex(OPS_NOT_IMPLEMENTED);
+            ex << "Error: Unknown data type for ops_lowdim_reduction";
+            throw ex;
+          }
+          edge_dirtybit[args[i].dat->index] = 1;
+          args[i].dat->dirty_hd = OPS_HOST;
+          ops_put_data(args[i].dat);
+        }
+      }
+
+      if (args[i].argtype == OPS_ARG_DAT &&
+        (args[i].acc == OPS_WRITE || args[i].acc == OPS_MAX || args[i].acc == OPS_MIN))
+        continue;
+
       if (args[i].argtype == OPS_ARG_DAT &&
           (args[i].acc == OPS_READ || args[i].acc == OPS_RW || args[i].acc == OPS_INC) &&
           args[i].stencil->points == 1 &&
@@ -1110,15 +1450,138 @@ void ops_execute_reduction(ops_reduction handle) {
   }
 }
 
-void ops_set_halo_dirtybit(ops_arg *arg) {
-  if (arg->opt == 0)
-    return;
-  sub_dat_list sd = OPS_sub_dat_list[arg->dat->index];
-  sd->dirtybit = 1;
-  for (int i = 0; i < 2 * arg->dat->block->dims * MAX_DEPTH; i++)
-    sd->dirty_dir_send[i] = 1;
-  for (int i = 0; i < 2 * arg->dat->block->dims * MAX_DEPTH; i++)
-    sd->dirty_dir_recv[i] = 1;
+
+#define ops_broadcast_pencil_gen(type, mpi_type) \
+void ops_broadcast_pencil_##type(ops_dat dat, int source_rank, int dim){\
+  sub_block* sb = OPS_sub_block_list[dat->block->index];\
+\
+  if (OPS_instance::getOPSInstance()->OPS_gpu_direct){\
+    ops_put_data(dat);\
+    MPI_Bcast(dat->data_d, dat->mem/sizeof(type), mpi_type, source_rank, sb->pencils[dim]);\
+    dat->dirty_hd = OPS_DEVICE;\
+    ops_get_data(dat);\
+  } else {\
+    ops_get_data(dat);\
+    MPI_Bcast(dat->data, dat->mem/sizeof(type), mpi_type, source_rank, sb->pencils[dim]);\
+    dat->dirty_hd = OPS_HOST;\
+    ops_put_data(dat);\
+  }\
+}
+
+ops_broadcast_pencil_gen(double, MPI_DOUBLE)
+ops_broadcast_pencil_gen(float, MPI_FLOAT)
+ops_broadcast_pencil_gen(int, MPI_INT)
+ops_broadcast_pencil_gen(char, MPI_CHAR)
+ops_broadcast_pencil_gen(short, MPI_SHORT)
+ops_broadcast_pencil_gen(long, MPI_LONG)
+ops_broadcast_pencil_gen(ll, MPI_LONG_LONG)
+ops_broadcast_pencil_gen(ull, MPI_UNSIGNED_LONG_LONG)
+ops_broadcast_pencil_gen(ul, MPI_UNSIGNED_LONG)
+ops_broadcast_pencil_gen(uint, MPI_UNSIGNED)
+
+
+void ops_broadcast_pencil(ops_dat dat, int *range){
+  int ndim=dat->block->dims;
+  sub_block* sb = OPS_sub_block_list[dat->block->index];
+
+
+  if (sb->owned){
+    int local_range[2*OPS_MAX_DIM];
+    determine_local_range(dat, range, local_range);
+    for (int i = 0; i < ndim; i++){
+      if (dat->e_dat && dat->size[i] == 1) {
+        //if I am the only rank in the pencil, I can skip the communication
+        int comm_size;
+        MPI_Comm_size(sb->pencils[i], &comm_size);
+        if (comm_size == 1) {
+          continue;
+        }
+
+        //Check if I executed this particular computation
+        int executed_locally = local_range[2*i+1] > local_range[2*i];
+        if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+        printf("Process %d, dim %d: ops_broadcast_pencil: executed_locally %d, range: %d %d\n", ops_my_global_rank, i, executed_locally, local_range[2*i], local_range[2*i+1]);
+        int rank;
+        if (executed_locally)
+          MPI_Comm_rank(sb->pencils[i], &rank);
+        else
+          rank = -1;
+
+        //Figure out which rank executed the computation, and agree on where to broadcast from
+        int source_rank = -1;
+        MPI_Allreduce(&rank, &source_rank, 1, MPI_INT, MPI_MAX, sb->pencils[i]);
+        if (source_rank == -1) {
+          OPSException ex(OPS_RUNTIME_ERROR);
+          ex << "Error: write to low dimensional dataset could not be broadcast. ops_dat name: " << dat->name;
+          throw ex;
+        }
+        if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+        printf("Process %d: ops_broadcast_pencil: Broadcasting from rank %d\n", ops_my_global_rank, source_rank);
+
+        //Broadcast data
+        if (strcmp(dat->type, "int") == 0 ||
+            strcmp(dat->type, "int(4)") == 0 ||
+            strcmp(dat->type, "integer") == 0 ||
+            strcmp(dat->type, "integer(4)") == 0 ||
+            strcmp(dat->type, "integer(kind=4)") == 0)
+        {
+          ops_broadcast_pencil_int(dat, source_rank, i);
+        }
+        else if (strcmp(dat->type, "float") == 0 ||
+                strcmp(dat->type, "real") == 0 ||
+                strcmp(dat->type, "real(4)") == 0 ||
+                strcmp(dat->type, "real(kind=4)") == 0)
+        {
+          ops_broadcast_pencil_float(dat, source_rank, i);
+        }
+        else if (strcmp(dat->type, "double") == 0 ||
+                strcmp(dat->type, "real(8)") == 0 ||
+                strcmp(dat->type, "real(kind=8)") == 0 ||
+                strcmp(dat->type, "double precision") == 0)
+        {
+          ops_broadcast_pencil_double(dat, source_rank, i);
+        }
+        else if (strcmp(dat->type, "char") == 0)
+        {
+          ops_broadcast_pencil_char(dat, source_rank, i);
+        }
+        else if (strcmp(dat->type, "short") == 0)
+        {
+          ops_broadcast_pencil_short(dat, source_rank, i);
+        }
+        else if (strcmp(dat->type, "long") == 0)
+        {
+          ops_broadcast_pencil_long(dat, source_rank, i);
+        }
+        else if (strcmp(dat->type, "long long") == 0 ||
+                strcmp(dat->type, "ll") == 0)
+        {
+          ops_broadcast_pencil_ll(dat, source_rank, i);
+        }
+        else if (strcmp(dat->type, "unsigned long long") == 0 ||
+                strcmp(dat->type, "ull") == 0)
+        {
+          ops_broadcast_pencil_ull(dat, source_rank, i);
+        }
+        else if (strcmp(dat->type, "unsigned long") == 0 ||
+                strcmp(dat->type, "ul") == 0)
+        {
+          ops_broadcast_pencil_ul(dat, source_rank, i);
+        }
+        else if (strcmp(dat->type, "unsigned int") == 0 ||
+                strcmp(dat->type, "uint") == 0)
+        {
+          ops_broadcast_pencil_uint(dat, source_rank, i);
+        }
+        else
+        {
+          OPSException ex(OPS_NOT_IMPLEMENTED);
+          ex << "Error: Unknown data type for ops_broadcast_pencil";
+          throw ex;
+        }
+      } 
+    }
+  }
 }
 
 void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
@@ -1138,6 +1601,23 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
   int ndim = sb->ndim;
 
   for (int dim = 0; dim < ndim; dim++) {
+    if (dat->e_dat && dat->size[dim] == 1){
+      if (arg->acc != OPS_READ) {
+        for (int dim2 = 0; dim2 < ndim; dim2++) {
+          edat_prev_range[dat->index][2 * dim2 + 0] = iter_range[2 * dim2 + 0];
+          edat_prev_range[dat->index][2 * dim2 + 1] = iter_range[2 * dim2 + 1];
+        }
+        edat_prev_acc[dat->index] = arg->acc;
+        edge_dirtybit[dat->index] = 1;
+        if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+          printf("Process %d: ops_set_halo_dirtybit3: %s: dirtybit set to 1, range: %d %d, %d %d, %d %d\n", ops_my_global_rank, dat->name, iter_range[0], iter_range[1], iter_range[2], iter_range[3], iter_range[4], iter_range[5]);
+        break;
+      }
+    } 
+  }
+
+  for (int dim = 0; dim < ndim; dim++) {
+
     range_intersect[dim] = intersection(
         iter_range[2 * dim], iter_range[2 * dim + 1], sd->decomp_disp[dim],
         (sd->decomp_disp[dim] + sd->decomp_size[dim])); // i.e. the intersection
@@ -1165,7 +1645,7 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
         sd->decomp_disp[dim] - MAX_DEPTH + 1, sd->decomp_disp[dim]);
   }
 
-  sd->dirtybit = 1;
+  edge_dirtybit[dat->index] = 1;
   for (int dim = 0; dim < ndim; dim++) {
     int other_dims = 1;
     for (int d2 = 0; d2 < ndim; d2++)
@@ -1215,6 +1695,130 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
       }
     }
   }
+}
+
+void ops_set_halo_dirtybit3_tiled(ops_arg *arg, int *iter_range, int *left_boundary_cleanUpTo, int *left_halo_cleanUpTo,
+       int *right_boundary_cleanUpTo, int *right_halo_cleanUpTo) {
+  // TODO: account for base
+  if (arg->opt == 0)
+    return;
+  ops_dat dat = arg->dat;
+  sub_block_list sb = OPS_sub_block_list[dat->block->index];
+  sub_dat_list sd = OPS_sub_dat_list[dat->index];
+  int left_boundary_modified[OPS_MAX_DIM] = {0};
+  int left_halo_modified[OPS_MAX_DIM] = {0};
+  int right_boundary_modified[OPS_MAX_DIM] = {0};
+  int right_halo_modified[OPS_MAX_DIM] = {0};
+
+  int range_intersect[OPS_MAX_DIM] = {0};
+
+  int ndim = sb->ndim;
+
+  for (int dim = 0; dim < ndim; dim++) {
+    if (dat->e_dat && dat->size[dim] == 1){
+      if (arg->acc != OPS_READ) {
+        for (int dim2 = 0; dim2 < ndim; dim2++) {
+          edat_prev_range[dat->index][2 * dim2 + 0] = iter_range[2 * dim2 + 0];
+          edat_prev_range[dat->index][2 * dim2 + 1] = iter_range[2 * dim2 + 1];
+        }
+        edat_prev_acc[dat->index] = arg->acc;
+        edge_dirtybit[dat->index] = 1;
+        if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+          printf("Process %d: ops_set_halo_dirtybit3: %s: dirtybit set to 1, range: %d %d, %d %d, %d %d\n", ops_my_global_rank, dat->name, iter_range[0], iter_range[1], iter_range[2], iter_range[3], iter_range[4], iter_range[5]);
+        break;
+      }
+    } 
+  }
+
+  for (int dim = 0; dim < ndim; dim++) {
+    // the intersection of the execution range with my full range
+    range_intersect[dim] = intersection( iter_range[2 * dim], iter_range[2 * dim + 1],
+                                         sd->decomp_disp[dim], (sd->decomp_disp[dim] + sd->decomp_size[dim]));
+
+    // the intersection of the execution range with my left boundary
+    left_boundary_modified[dim] = intersection( iter_range[2 * dim], iter_range[2 * dim + 1],
+                                               sd->decomp_disp[dim], sd->decomp_disp[dim] + MAX_DEPTH - 1);
+
+    // the intersection of the execution range with the my right neighbour's boundary
+    right_halo_modified[dim] = intersection(iter_range[2 * dim], iter_range[2 * dim + 1],
+                  (sd->decomp_disp[dim] + sd->decomp_size[dim]), (sd->decomp_disp[dim] + sd->decomp_size[dim]) + MAX_DEPTH - 1);
+
+    right_boundary_modified[dim] = intersection( iter_range[2 * dim], iter_range[2 * dim + 1],
+       (sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH + 1, (sd->decomp_disp[dim] + sd->decomp_size[dim]));
+
+    left_halo_modified[dim] = intersection( iter_range[2 * dim], iter_range[2 * dim + 1],
+                           sd->decomp_disp[dim] - MAX_DEPTH + 1, sd->decomp_disp[dim]);
+  }
+
+  int left_bnd_beg[ndim]={0}, left_bnd_end[ndim]={0}, left_halo_beg[ndim]={0}, left_halo_end[ndim]={0};
+  int right_bnd_beg[ndim]={0}, right_bnd_end[ndim]={0}, right_halo_beg[ndim]={0}, right_halo_end[ndim]={0};
+
+  for (int dim = 0; dim < ndim; dim++) {
+    int other_dims = 1;
+    for (int d2 = 0; d2 < ndim; d2++)
+      if (d2 != dim)
+        other_dims = other_dims && (range_intersect[d2] > 0 || dat->size[d2] == 1);
+
+    if (left_boundary_modified[dim] > 0 && other_dims) {
+      int beg = 1 + (iter_range[2 * dim] >= sd->decomp_disp[dim]
+                         ? iter_range[2 * dim] - sd->decomp_disp[dim]
+                         : 0);
+      left_bnd_beg[dim] = beg - 1 + left_boundary_cleanUpTo[2*dim+0];  left_bnd_end[dim] = beg + left_boundary_modified[dim];
+      for (int d2 = beg; d2 < beg + left_boundary_cleanUpTo[2*dim+0]; d2++) {
+        // we shifted dirtybits, [1] is the first layer not the second
+        sd->dirty_dir_send[2 * MAX_DEPTH * dim + d2] = 0;
+      }
+      for (int d2 = beg + left_boundary_cleanUpTo[2*dim+0]; d2 < beg + left_boundary_modified[dim]; d2++) {
+        // we shifted dirtybits, [1] is the first layer not the second
+        sd->dirty_dir_send[2 * MAX_DEPTH * dim + d2] = 1;
+      }
+    }
+    if (left_halo_modified[dim] > 0 && other_dims) {
+      int beg = iter_range[2 * dim] >= sd->decomp_disp[dim] - MAX_DEPTH + 1
+              ? iter_range[2 * dim] - (sd->decomp_disp[dim] - MAX_DEPTH + 1)
+              : 0;
+      left_halo_beg[dim] = beg + left_halo_cleanUpTo[2*dim+0]; left_halo_end[dim] = beg + left_halo_modified[dim];
+      for (int d2 = beg; d2 < beg + left_halo_cleanUpTo[2*dim+0]; d2++) {
+        sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH - d2 - 1] = 0;
+      }
+      for (int d2 = beg + left_halo_cleanUpTo[2*dim+0]; d2 < beg + left_halo_modified[dim]; d2++) {
+        sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH - d2 - 1] = 1;
+      }
+    }
+    if (right_boundary_modified[dim] > 0 && other_dims) {
+      int beg = iter_range[2 * dim] >= (sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH + 1
+              ? iter_range[2 * dim] - ((sd->decomp_disp[dim] + sd->decomp_size[dim]) - MAX_DEPTH + 1)
+              : 0;
+      right_bnd_beg[dim] = beg + right_boundary_cleanUpTo[2*dim+0]; right_bnd_end[dim] = beg + right_boundary_modified[dim];
+      for (int d2 = beg; d2 < beg + right_boundary_cleanUpTo[2*dim+0]; d2++) {
+        sd->dirty_dir_send[2 * MAX_DEPTH * dim + 2 * MAX_DEPTH - d2 - 1] = 0;
+      }
+      for (int d2 = beg + right_boundary_cleanUpTo[2*dim+0]; d2 < beg + right_boundary_modified[dim]; d2++) {
+        sd->dirty_dir_send[2 * MAX_DEPTH * dim + 2 * MAX_DEPTH - d2 - 1] = 1;
+      }
+    }
+    if (right_halo_modified[dim] > 0 && other_dims) {
+      int beg = 1 + (iter_range[2 * dim] >= (sd->decomp_disp[dim] + sd->decomp_size[dim])
+                   ? iter_range[2 * dim] - (sd->decomp_disp[dim] + sd->decomp_size[dim])
+                   : 0);
+      right_halo_beg[dim] = beg - 1 + right_halo_cleanUpTo[2*dim+0]; right_halo_end[dim] = beg + right_halo_modified[dim];
+      for (int d2 = beg; d2 < beg + right_halo_cleanUpTo[2*dim+0]; d2++) {
+        // we shifted dirtybits, [1] is the first layer not the second
+        sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH + d2] = 0;
+      }
+      for (int d2 = beg + right_halo_cleanUpTo[2*dim+0]; d2 < beg + right_halo_modified[dim]; d2++) {
+        // we shifted dirtybits, [1] is the first layer not the second
+        sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH + d2] = 1;
+      }
+    }
+  }
+
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+  for (int dim = 0; dim < ndim; dim++) {
+    if (instance->OPS_diags>5) printf2(instance,"Proc %d dim %d name %s Points to skip left-boundary %d, left-halo %d, right-boundary %d, right-halo %d \n", ops_get_proc(), dim, dat->name, left_boundary_cleanUpTo[dim], left_halo_cleanUpTo[dim], right_boundary_cleanUpTo[dim], right_halo_cleanUpTo[dim]);
+    if (instance->OPS_diags>5) printf2(instance,"Proc %d dim %d name %s dirtybit set left-boundary %d-%d, left-halo %d-%d, right-boundary %d-%d, right-halo %d-%d \n", ops_get_proc(), dim, dat->name, left_bnd_beg[dim], left_bnd_end[dim], left_halo_beg[dim], left_halo_end[dim], right_bnd_beg[dim], right_bnd_end[dim], right_halo_beg[dim], right_halo_end[dim]);
+  }
+
 }
 
 void ops_halo_transfer(ops_halo_group group) {
@@ -1454,7 +2058,7 @@ void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc) {
   if (acc != OPS_READ) {
     dat->dirty_hd = dat->locked_hd; // dirty on host or device depending on where the pointer was obtained
     sub_dat_list sd = OPS_sub_dat_list[dat->index];
-    sd->dirtybit = 1;
+    edge_dirtybit[dat->index] = 1;
     for (int i = 0; i < 2 * dat->block->dims * MAX_DEPTH; i++) {
       sd->dirty_dir_send[i] = 1;
       sd->dirty_dir_recv[i] = 1;
@@ -1472,7 +2076,7 @@ void ops_dat_release_raw_data_memspace(ops_dat dat, int part, ops_access acc, op
   if (acc != OPS_READ) {
     dat->dirty_hd = *memspace; // dirty on host or device depending on argument
     sub_dat_list sd = OPS_sub_dat_list[dat->index];
-    sd->dirtybit = 1;
+    edge_dirtybit[dat->index] = 1;
     for (int i = 0; i < 2 * dat->block->dims * MAX_DEPTH; i++) {
       sd->dirty_dir_send[i] = 1;
       sd->dirty_dir_recv[i] = 1;
@@ -1490,6 +2094,7 @@ void ops_dat_fetch_data_slab_host(ops_dat dat, int part, char *data, int *range)
 
 void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
   ops_execute(dat->block->instance);
+  ops_check_lowdim_update(dat);
   ops_get_data(dat);
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
   int lsize[OPS_MAX_DIM] = {1};
@@ -1545,7 +2150,7 @@ void ops_dat_set_data_slab_host(ops_dat dat, int part, char *local_buf,
                 dat->elem_size, dat->dim, range_max_dim);
 
   dat->dirty_hd = 1;
-  sd->dirtybit = 1;
+  edge_dirtybit[dat->index] = 1;
   for (int i = 0; i < 2 * dat->block->dims * MAX_DEPTH; i++) {
     sd->dirty_dir_send[i] = 1;
     sd->dirty_dir_recv[i] = 1;
