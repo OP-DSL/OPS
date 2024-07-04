@@ -165,6 +165,9 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
                               int *send_recv_offsets) {
   sub_block_list sb = OPS_sub_block_list[dat->block->index];
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
+
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+
   int left_send_depth = 0;
   int left_recv_depth = 0;
   int right_send_depth = 0;
@@ -249,8 +252,8 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     ops_pack(dat, i2, ops_buffer_send_1 + send_recv_offsets[0],
              &sd->halos[MAX_DEPTH * dim + actual_depth_send]);
 
-  // if (actual_depth_send>0)
-  //   ops_printf("%s send neg %d\n",dat->name, actual_depth_send);
+  if (actual_depth_send>0)
+    if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s send negative-direction depth: %d\n", ops_get_proc(), dim, dat->name, actual_depth_send);
 
   // increase offset
   send_recv_offsets[0] += send_size;
@@ -299,6 +302,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_p[dim], 666, &they_send,
                  1, MPI_INT, sb->id_m[dim], 666, sb->comm, &status);
     if (sb->id_m[dim] >= 0 && actual_depth_recv != they_send) {
+      printf("Name: %s actual_depth_recv = %d, they_send = %d\n", dat->name, actual_depth_recv, they_send);
       throw OPSException(OPS_INTERNAL_ERROR, "Error: Right recv mismatch");
     }
   }
@@ -329,8 +333,8 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
     ops_pack(dat, i3, ops_buffer_send_2 + send_recv_offsets[2],
              &sd->halos[MAX_DEPTH * dim + actual_depth_send]);
 
-  // if (actual_depth_send>0)
-  //   ops_printf("%s send pos %d\n",dat->name, actual_depth_send);
+  if (actual_depth_send>0)
+    if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s send positive-direction depth: %d\n", ops_get_proc(), dim, dat->name, actual_depth_send);
 
   // increase offset
   send_recv_offsets[2] += send_size;
@@ -345,6 +349,9 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
                               int *send_recv_offsets) {
   sub_block_list sb = OPS_sub_block_list[dat->block->index];
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
+
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+
   int left_send_depth = depths[0];
   int left_recv_depth = depths[1];
   int right_send_depth = depths[2];
@@ -415,6 +422,7 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_m[dim], 665, &they_send,
                  1, MPI_INT, sb->id_p[dim], 665, sb->comm, &status);
     if (sb->id_p[dim] >= 0 && actual_depth_recv != they_send) {
+      printf("Name: %s actual_depth_recv = %d, they_send = %d\n", dat->name, actual_depth_recv, they_send);
       throw OPSException(OPS_INTERNAL_ERROR, "Error: Right recv mismatch");
     }
   }
@@ -444,6 +452,9 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   if (actual_depth_send > 0)
     ops_pack(dat, i2, ops_buffer_send_1 + send_recv_offsets[0],
              &sd->halos[MAX_DEPTH * dim + actual_depth_send]);
+
+  if (actual_depth_send>0)
+    if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s send negative-direction depth: %d\n", ops_get_proc(), dim, dat->name, actual_depth_send);
 
   // increase offset
   send_recv_offsets[0] += send_size;
@@ -515,6 +526,9 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   if (actual_depth_send > 0)
     ops_pack(dat, i3, ops_buffer_send_2 + send_recv_offsets[2],
              &sd->halos[MAX_DEPTH * dim + actual_depth_send]);
+
+  if (actual_depth_send>0)
+    if (instance->OPS_diags>5) printf2(instance, "Proc %d dim %d name %s send positive-direction depth: %d\n", ops_get_proc(), dim, dat->name, actual_depth_send);
 
   // increase offset
   send_recv_offsets[2] += send_size;
