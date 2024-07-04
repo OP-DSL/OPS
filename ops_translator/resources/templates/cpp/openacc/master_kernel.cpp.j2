@@ -7,10 +7,12 @@
 #include <math.h>
 #include "ops_cuda_rt_support.h"
 
+{% endblock %}
+
+{% block ops_user_types %}
 {% if user_types %}
 #include "user_types.h"
 {% endif %}
-
 {% endblock %}
 
 {% block const_decls %}

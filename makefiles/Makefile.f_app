@@ -59,6 +59,11 @@ TARGETS:=$(filter-out f2c_hip f2c_mpi_hip f2c_mpi_hip_tiled,$(TARGETS))
 #$(info Please set the HIP_INSTALL_PATH and relevant environment variables (e.g., PATH, LD_LIBRARY_PATH).)
 #$(info Build continues without HIP targets.....)
 endif
+
+ifneq (,$(filter f2c_cuda f2c_mpi_cuda f2c_mpi_cuda_tiled,$(TARGETS)))
+ifndef CUDA_INSTALL_PATH
+TARGETS:=$(filter-out f2c_cuda f2c_mpi_cuda f2c_mpi_cuda_tiled,$(TARGETS))
+endif	#ifndef CUDA_INSTALL_PATH
 endif
 
 endif	#ifneq TARGETS
@@ -684,6 +689,69 @@ else
 		$(SYCLMPICXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c main.cpp -o main.o
 		$(SYCLMPICXX) $(CXXFLAGS) $(SYCL_FLAGS) -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) $(I_MPI_INC) -I$(F_INC_MOD)/f2c_sycl main.o $(F2C_MPI_SYCL_TILED_CXX_OBJS) $(F2C_MPI_SYCL_TILED_OTHER_OBJS) $(F2C_MPI_SYCL_TILED_FTN_OBJS) $(F2C_MPI_SYCL_TILED_OPS_GEN_OBJS) $(APP_LIBS) $(FLINK) -lops_f2c_mpi_sycl -fortlib $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_SYCL_LINK) -o $(APP)_f2c_mpi_sycl_tiled
 endif
+
+#=====================================================================================================================================================================
+#
+# F2C CUDA version
+#
+F2C_HIP_FTN_KERNELS = $(wildcard f2c_hip/*.F90)
+F2C_HIP_FTN_OBJS = $(F2C_HIP_FTN_KERNELS:.F90=_f2c_hip.o)
+
+F2C_HIP_CXX_MASTER_KERNELS = f2c_hip/f2c_hip_kernels.cpp
+F2C_HIP_CXX_OBJS = $(F2C_HIP_CXX_MASTER_KERNELS:.cpp=_f2c_hip.o)
+
+F2C_HIP_OTHER_OBJS = $(OTHER_FILES:.F90=_f2c_hip.o)
+F2C_HIP_OPS_GEN_OBJS = $(OPS_GENERATED:.F90=_f2c_hip.o)
+
+$(F2C_HIP_CXX_OBJS) : $(F2C_HIP_CXX_MASTER_KERNELS)
+	$(HIPCC) $(CXXFLAGS_NOOMP) $(F2C_HIPFLAGS) -DOPS_FTN -I$(C_OPS_INC) -I. -c $< -o $@
+
+$(APP)_f2c_hip: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_f2c_hip.a $(OPS_FILES_GEN) $(F2C_HIP_CXX_OBJS)
+		@echo ""
+		@echo ""
+		@echo "Building ${APP}_f2c_hip"
+		@echo ""
+		$(foreach src, $(OTHER_FILES), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_HIP) -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_hip.o);)
+		$(foreach src, $(F2C_HIP_FTN_KERNELS), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_HIP) -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_hip.o);)
+		$(foreach src, $(OPS_GENERATED), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_HIP) -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_hip.o);)
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) -I$(C_OPS_INC) $(FMODS_F2C_HIP) $(F2C_HIP_CXX_OBJS) $(F2C_HIP_OTHER_OBJS) $(F2C_HIP_FTN_OBJS) $(F2C_HIP_OPS_GEN_OBJS) $(APP_LIBS) $(FLINK) -lops_f2c_hip $(F_HDF5_LIB_SEQ) $(HIP_LINK) $(HIPRAND) -o $(APP)_f2c_hip
+
+
+F2C_MPI_HIP_FTN_OBJS = $(F2C_HIP_FTN_KERNELS:.F90=_f2c_mpi_hip.o)
+F2C_MPI_HIP_CXX_OBJS = $(F2C_HIP_CXX_MASTER_KERNELS:.cpp=_f2c_mpi_hip.o)
+F2C_MPI_HIP_OTHER_OBJS = $(OTHER_FILES:.F90=_f2c_mpi_hip.o)
+F2C_MPI_HIP_OPS_GEN_OBJS = $(OPS_GENERATED:.F90=_f2c_mpi_hip.o)
+
+$(F2C_MPI_HIP_CXX_OBJS) : $(F2C_HIP_CXX_MASTER_KERNELS)
+	$(HIPMPICPP) $(CXXFLAGS_NOOMP) $(F2C_HIPFLAGS) -DOPS_FTN -DOPS_MPI  -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c $< -o $@
+
+$(APP)_f2c_mpi_hip: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_f2c_mpi_hip.a $(OPS_FILES_GEN) $(F2C_MPI_HIP_CXX_OBJS)
+		@echo ""
+		@echo ""
+		@echo "Building ${APP}_f2c_mpi_hip"
+		@echo ""
+		$(foreach src, $(OTHER_FILES), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_HIP) -DOPS_MPI -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_hip.o);)
+		$(foreach src, $(F2C_HIP_FTN_KERNELS), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_HIP) -DOPS_MPI -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_hip.o);)
+		$(foreach src, $(OPS_GENERATED), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_HIP) -DOPS_MPI -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_hip.o);)
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) -DOPS_MPI -I$(C_OPS_INC) $(FMODS_F2C_HIP) $(I_MPI_INC) $(F2C_MPI_HIP_CXX_OBJS) $(F2C_MPI_HIP_OTHER_OBJS) $(F2C_MPI_HIP_FTN_OBJS) $(F2C_MPI_HIP_OPS_GEN_OBJS) $(APP_LIBS) $(FLINK) -lops_f2c_mpi_hip $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_HIP_LINK) $(HIP_LINK) $(HIPRAND) -o $(APP)_f2c_mpi_hip
+
+F2C_MPI_HIP_TILED_FTN_OBJS = $(F2C_HIP_FTN_KERNELS:.F90=_f2c_mpi_hip_tiled.o)
+F2C_MPI_HIP_TILED_CXX_OBJS = $(F2C_HIP_CXX_MASTER_KERNELS:.cpp=_f2c_mpi_hip_tiled.o)
+F2C_MPI_HIP_TILED_OTHER_OBJS = $(OTHER_FILES:.F90=_f2c_mpi_hip_tiled.o)
+F2C_MPI_HIP_TILED_OPS_GEN_OBJS = $(OPS_GENERATED:.F90=_f2c_mpi_hip_tiled.o)
+
+$(F2C_MPI_HIP_TILED_CXX_OBJS) : $(F2C_HIP_CXX_MASTER_KERNELS)
+	$(HIPMPICPP) $(CXXFLAGS_NOOMP) $(F2C_HIPFLAGS) -DOPS_FTN -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c $< -o $@
+
+$(APP)_f2c_mpi_hip_tiled: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_f2c_mpi_hip.a $(OPS_FILES_GEN) $(F2C_MPI_HIP_TILED_CXX_OBJS)
+		@echo ""
+		@echo ""
+		@echo "Building ${APP}_f2c_mpi_hip_tiled"
+		@echo ""
+		$(foreach src, $(OTHER_FILES), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_HIP) -DOPS_MPI -DOPS_LAZY -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_hip_tiled.o);)
+		$(foreach src, $(F2C_HIP_FTN_KERNELS), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_HIP) -DOPS_MPI -DOPS_LAZY -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_hip_tiled.o);)
+		$(foreach src, $(OPS_GENERATED), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_HIP) -DOPS_MPI -DOPS_LAZY -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_hip_tiled.o);)
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) $(FMODS_F2C_HIP) $(I_MPI_INC) $(F2C_MPI_HIP_TILED_CXX_OBJS) $(F2C_MPI_HIP_TILED_OTHER_OBJS) $(F2C_MPI_HIP_TILED_FTN_OBJS) $(F2C_MPI_HIP_TILED_OPS_GEN_OBJS) $(APP_LIBS) $(FLINK) -lops_f2c_mpi_hip $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_HIP_LINK) $(HIP_LINK) $(HIPRAND) -o $(APP)_f2c_mpi_hip_tiled
 
 #=====================================================================================================================================================================
 #

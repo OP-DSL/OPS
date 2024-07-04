@@ -54,14 +54,14 @@ void accelerate()
     ops_arg_dat(volume, 1, S3D_000_fM1M1M1, "double", OPS_READ),
     ops_arg_dat(work_array1, 1, S3D_000, "double", OPS_WRITE),
     ops_arg_dat(xvel0, 1, S3D_000, "double", OPS_READ),
-    ops_arg_dat(xvel1, 1, S3D_000, "double", OPS_INC),
+    ops_arg_dat(xvel1, 1, S3D_000, "double", OPS_WRITE),
     ops_arg_dat(xarea, 1, S3D_000_f0M1M1, "double", OPS_READ),
     ops_arg_dat(pressure, 1, S3D_000_fM1M1M1, "double", OPS_READ),
     ops_arg_dat(yvel0, 1, S3D_000, "double", OPS_READ),
-    ops_arg_dat(yvel1, 1, S3D_000, "double", OPS_INC),
+    ops_arg_dat(yvel1, 1, S3D_000, "double", OPS_WRITE),
     ops_arg_dat(yarea, 1, S3D_000_fM10M1, "double", OPS_READ),
     ops_arg_dat(viscosity, 1, S3D_000_fM1M1M1, "double", OPS_READ),
     ops_arg_dat(zvel0, 1, S3D_000, "double", OPS_READ),
-    ops_arg_dat(zvel1, 1, S3D_000, "double", OPS_INC),
+    ops_arg_dat(zvel1, 1, S3D_000, "double", OPS_WRITE),
     ops_arg_dat(zarea, 1, S3D_000_fM1M10, "double", OPS_READ));
 }
