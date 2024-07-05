@@ -2,7 +2,7 @@
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.common
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
-USE_HDF5=1
+#USE_HDF5=1
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
 OTHER_FILES=constants.F90
@@ -16,5 +16,5 @@ MAIN_SRC=laplace2d
 
 TARGETS=seq tiled openmp mpi mpi_tiled mpi_openmp cuda mpi_cuda mpi_cuda_tiled ompoffload mpi_ompoffload mpi_ompoffload_tiled
 
-#include $(OPS_INSTALL_PATH)/../makefiles/Makefile.f_app_legacy
-include $(OPS_INSTALL_PATH)/../makefiles/Makefile.f_app
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.f_app_legacy
+#include $(OPS_INSTALL_PATH)/../makefiles/Makefile.f_app
