@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 from util import Findable
+from enum import Enum
 
 #TODO: Add documentaion (numpy style)
 class Target(Findable):
@@ -79,6 +80,11 @@ class Sycl(Target):
         "color2": False
         }
 
+class FpgaDatamoverMode(Enum):
+    DATAMOVER_LOOPBACK = 1
+    DATAMOVER_DATACOPY = 2
+    DATAMOVER_HYBRID = 3
+
 class HLS(Target):
     name = "hls"
     kernel_translation = True
@@ -99,7 +105,8 @@ class HLS(Target):
         "num_write_outstanding" : 4,
         "maxi_offset" : "slave",
         "ops_max_dim" : 3,
-        "axis_interconnect_buff_size" : 2048
+        "axis_interconnect_buff_size" : 2048,
+        "datamover_mode" : 1
         }
 
 Target.register(MPIOpenMP)
