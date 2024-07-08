@@ -196,14 +196,14 @@ $(APP)_mpi_ompoffload: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPI
 		@echo ""
 		@echo "Building ${APP}_mpi_ompoffload"
 		@echo ""
-		$(MPICXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./openmp_offload/$(OMPOFFLOAD_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_OMPOFFLOAD) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_ompoffload
+		$(MPICXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./openmp_offload/$(OMPOFFLOAD_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_OMPOFFLOAD) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_OMPOFFLOAD_LINK) -o $(APP)_mpi_ompoffload
 
 $(APP)_mpi_ompoffload_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_ompoffload.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_ompoffload_tiled"
 		@echo ""
-		$(MPICXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./openmp_offload/$(OMPOFFLOAD_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_OMPOFFLOAD) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_ompoffload_tiled
+		$(MPICXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./openmp_offload/$(OMPOFFLOAD_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_OMPOFFLOAD) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_OMPOFFLOAD_LINK) -o $(APP)_mpi_ompoffload_tiled
 
 #=====================================================================================================================================================================
 #

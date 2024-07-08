@@ -197,14 +197,14 @@ $(APP)_mpi_ompoffload: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS
 	@echo ""
 	@echo "Building ${APP}_mpi_ompoffload"
 	@echo ""
-	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(OMPOFFLOADFLAGS) $(FMODS_OMPOFFLOAD) $(OMPOFFLOADFOR) -DOPS_MPI $(I_MPI_INC) $(OTHER_FILES_OFFLOAD) openmp_offload/*_ompoffload_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_mpi_ompoffload $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_ompoffload
+	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(OMPOFFLOADFLAGS) $(FMODS_OMPOFFLOAD) $(OMPOFFLOADFOR) -DOPS_MPI $(I_MPI_INC) $(OTHER_FILES_OFFLOAD) openmp_offload/*_ompoffload_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_mpi_ompoffload $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_OMPOFFLOAD_LINK) -o $(APP)_mpi_ompoffload
 
 $(APP)_mpi_ompoffload_tiled: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_mpi_ompoffload.a $(OPS_FILES_GEN)
 	@echo ""
 	@echo ""
 	@echo "Building ${APP}_mpi_ompoffload_tiled"
 	@echo ""
-	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(OMPOFFLOADFLAGS) $(FMODS_OMPOFFLOAD) $(OMPOFFLOADFOR) -DOPS_MPI -DOPS_LAZY $(I_MPI_INC) $(OTHER_FILES_OFFLOAD) openmp_offload/*_ompoffload_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_mpi_ompoffload $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_ompoffload_tiled
+	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(OMPOFFLOADFLAGS) $(FMODS_OMPOFFLOAD) $(OMPOFFLOADFOR) -DOPS_MPI -DOPS_LAZY $(I_MPI_INC) $(OTHER_FILES_OFFLOAD) openmp_offload/*_ompoffload_kernel.F90 $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_mpi_ompoffload $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_OMPOFFLOAD_LINK) -o $(APP)_mpi_ompoffload_tiled
 
 #=====================================================================================================================================================================
 #
