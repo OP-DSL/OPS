@@ -390,18 +390,15 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
     const unsigned int num_beats = config.total_xblocks;
     const unsigned int num_pkts = num_of_pkts_per_bytes * config.total_xblocks;
 
+    {% if config["datamover_mode"] == 3 %}
     if (is_loopback)
     {
+    {% endif %}
+    {% if config["datamover_mode"] == 3 or config["datamover_mode"] == 1 %}
         datamover_outerloop_{{ilh.id}}_dataflow_region_read(
             num_beats,
             num_pkts,
             config
-            {#range 
-        {%- for arg in ilh.joint_args|ops_dat -%}
-            {%- if arg is ops_read or arg is ops_rw -%}
-                ,{{"\n"}}       arg{{arg.id}}_gridSize 
-            {%- endif -%}
-        {%- endfor -%}#}
         {%- for arg in ilh.joint_args|ops_dat -%}
             {%- if arg is ops_read or arg is ops_rw -%}
                 ,{{"\n"}}        arg{{arg.id}} 
@@ -430,12 +427,6 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
             num_beats,
             num_pkts,
             config
-        {#range 
-        {%- for arg in ilh.joint_args|ops_dat -%}
-            {%- if arg is ops_write or arg is ops_rw -%}
-                ,{{"\n"}}        arg{{arg.id}}_gridSize 
-            {%- endif -%}
-        {%- endfor -%}#}
         {%- for arg in ilh.joint_args|ops_dat -%}
             {%- if arg is ops_write or arg is ops_rw -%}
                 ,{{"\n"}}        arg{{arg.id}} 
@@ -449,9 +440,13 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
             {%- endif -%}
         {%- endfor -%}
         );
+    {% endif %}
+    {% if config["datamover_mode"] == 3 %}
     }
     else
     {
+    {% endif %}
+    {% if config["datamover_mode"] == 3 or config["datamover_mode"] == 2 %}
         datamover_outerloop_{{ilh.id}}_dataflow_read_write(
                 outer_itr,
                 num_beats,
@@ -469,32 +464,10 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
                 {% endif %}
             {% endfor %}
             );
-
-
+    {% endif %}
+    {% if config["datamover_mode"] == 3 %}
     }
-
-    {#else
-    {
-        datamover_outerloop_{{ilh.id}}_dataflow_region_write(range 
-        {%- for arg in ilh.joint_args|ops_dat -%}
-            {%- if arg is ops_write or arg is ops_rw -%}
-                ,{{"\n"}}        arg{{ilh.getArg(ilh.dat_swap_map[arg.dat_id]).id}}_gridSize 
-            {%- endif -%}
-        {%- endfor -%}
-        {%- for arg in ilh.joint_args|ops_dat -%}
-            {%- if arg is ops_write or arg is ops_rw %}
-                ,{{"\n"}}        arg{{ilh.getArg(ilh.dat_swap_map[arg.dat_id]).id}} 
-            {%- endif -%}
-        {%- endfor -%}
-        {%- for arg in ilh.joint_args|ops_dat -%}
-            {%- if arg is ops_write -%}
-                ,{{"\n"}}        {{axis_name(arg)}}
-            {%- elif arg is ops_rw -%}
-                ,{{"\n"}}        {{axis_name_t2(arg, "in")}}
-            {%- endif -%}
-        {%- endfor -%}
-        );    
-    }#}
+    {% endif %}
 }
 
 
