@@ -14,6 +14,28 @@ if(LEGACY_CODEGEN)
 else()
   set(OPS_C_TRANSLATOR "${opsc}")
 endif()
+
+
+if(${MPI_FOUND})
+  if(DEFINED ENV{I_MPI_ROOT})     #Intel MPI
+    set(MPI_INC_LIST -I$ENV{I_MPI_ROOT}/include)
+  elseif(DEFINED ENV{MPI_ROOT})       # HPE MPT
+    set(MPI_INC_LIST -I$ENV{MPI_ROOT}/include)
+  elseif(DEFINED ENV{MPICH_DIR})      # Cray
+    set(MPI_INC_LIST -I$ENV{MPICH_DIR}/include)
+  else()                          # OpenMPI
+    execute_process(COMMAND mpicc --showme:compile
+                    OUTPUT_VARIABLE MPI_INC_STRING
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+                    ERROR_VARIABLE MPI_INC_FIND)
+    if(MPI_INC_FIND)
+        message(FATAL_ERROR "Failed to determine MPI include directories: ${MPI_INC_FIND}")
+    endif()
+    string(REPLACE " " ";" MPI_INC_LIST ${MPI_INC_STRING})
+  endif()
+endif()
+message(STATUS "MPI_INC_LIST ${MPI_INC_LIST}")
+
 add_subdirectory(poisson)
 
 

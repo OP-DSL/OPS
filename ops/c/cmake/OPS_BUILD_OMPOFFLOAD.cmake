@@ -13,3 +13,12 @@ foreach(Flag IN LISTS OPS_CXXFLAGS_OMPOFFLOAD)
   list(APPEND Opts "${Opt}")
 endforeach()
 setlib(${LibName} "${SRC}" "${Links}" "${Opts}")
+if(MPI_FOUND)
+  set(TargetName "mpi_ompoffload")
+  set(SRC ${MPICORE} ${MPICommonFiles} ${MPIOMPOFFLOAD} ${EXTERN})
+  #
+  set(LibName "${lib_prefix}${TargetName}")
+  list(APPEND "MPI::MPI_CXX")
+  setlib(${LibName} "${SRC}" "${Links}" "${Opts}")
+endif()
+

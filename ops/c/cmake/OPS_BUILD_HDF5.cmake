@@ -10,3 +10,11 @@ set(Links "hdf5::hdf5"
           "MPI::MPI_CXX")
 set(Opts "")
 setlib(${LibName} "${SRC}" "${Links}" "${Opts}")
+if(MPI_FOUND)
+  set(TargetName "hdf5_mpi")
+  set(SRC ${HDF_MPI})
+  #
+  set(LibName "${lib_prefix}${TargetName}")
+  setlib(${LibName} "${SRC}" "${Links}" "${Opts}")
+endif()
+

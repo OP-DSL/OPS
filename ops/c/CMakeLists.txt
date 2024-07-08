@@ -4,18 +4,19 @@ include(OPS_InstallMacros)
 # Here we set all the lists for building the different targets
 include(OPS_SET_SRC)
 set(lib_prefix "ops_")
-# seq
-include(OPS_BUILD_SEQ)
+# Base build with sequenatial and MPI
+include(OPS_BUILD_BASE)
 # seq with HDF5
 if(HDF5_FOUND)
-  include(OPS_BUILD_HDF5_SEQ)
+  include(OPS_BUILD_HDF5)
 endif()
 # seq with CUDA
 if(CUDAToolkit_FOUND)
   include(OPS_BUILD_CUDA)
 endif()
 # OMPOFFLOAD
-if (OpenMP_CXX_VERSION GREATER_EQUAL 4.5)
+# If the FLAFS are set for the OMPOFFLOAD than we build
+if (OPS_CXXFLAGS_OMPOFFLOAD)
   include(OPS_BUILD_OMPOFFLOAD)
 endif()
 

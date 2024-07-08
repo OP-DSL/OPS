@@ -1,6 +1,8 @@
 # Create a folder directory for testing
 set(app_dir "${PROJECT_BINARY_DIR}/APPS_BUILD")
 file(MAKE_DIRECTORY ${app_dir})
+# Activate the full list of tests
+option(OPS_TEST_FULL "Turn on tests for all Apps" ON)
 
 # Find the OPS Translator
 if(LEGACY_CODEGEN)

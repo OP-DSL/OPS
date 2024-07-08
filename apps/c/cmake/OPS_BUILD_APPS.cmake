@@ -5,57 +5,98 @@ macro(CreateTempDir)
 endmacro()
 
 function(add_cmake_test EXE_NAME SCRIPT_PATH ARGUMENTS)
-    if(EXISTS ${SCRIPT_PATH})
-        separate_arguments(args NATIVE_COMMAND ${ARGUMENTS})
-        execute_process(COMMAND /bin/bash ${SCRIPT_PATH} ${EXE_NAME} ${args}
-                        RESULT_VARIABLE test_result
-                        OUTPUT_VARIABLE test_output)
-
-        if(test_result EQUAL 0)
-            string(REGEX REPLACE "\n" "" test_output "${test_output}")
-
-            # message(STATUS "run command: ${test_output}")
-            set(args " ")
-            set(cmd "${test_output}")
-
-            add_test(NAME ${EXE_NAME}
-                    COMMAND ${CMAKE_COMMAND}
-                    -DCMD=${cmd} -DARG=${args}
-		    -DOPS_INSTALL_PATH=${CMAKE_INSTALL_PATH} -P ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/OPS_runtests.cmake
-                    WORKING_DIRECTORY "${TMP_SOURCE_DIR}")
-        else()
-            message(FATAL_ERROR "Error in executing script to get runtime command string ${test_result}: ${test_output}")
-        endif()
+  if(EXISTS ${SCRIPT_PATH})
+    list(LENGTH ARGUMENTS NL)
+    if(NL LESS 2)
+      separate_arguments(args NATIVE_COMMAND ${ARGUMENTS})
+    else()
+      message(WARNING "ARGUMENTS to indentify execute command is a list and not a string: this might not work")
     endif()
+    execute_process(COMMAND /bin/bash ${SCRIPT_PATH} ${EXE_NAME} ${args}
+                    RESULT_VARIABLE test_result
+                    OUTPUT_VARIABLE test_output)
+    if(test_result EQUAL 0)
+      string(REGEX REPLACE "\n" "" test_output "${test_output}")
+      #message(STATUS "run command: ${test_output}")
+      set(args " ")
+      set(cmd "${test_output}")
+      add_test(NAME ${EXE_NAME}
+              COMMAND ${CMAKE_COMMAND}
+              -DCMD=${cmd} -DARG=${args}
+              -DOPS_INSTALL_PATH=${CMAKE_INSTALL_PATH} -P ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/OPS_runtests.cmake
+              WORKING_DIRECTORY "${TMP_SOURCE_DIR}")
+    else()
+      message(FATAL_ERROR "Error in executing script to get runtime command string ${test_result}: ${test_output}")
+    endif()
+  endif()
 endfunction()
 
 
 macro(SetAppExe
-    APP_exe 
     APP_SRC 
+    Root_Name
     APP_type
-    APP_DIR_DST
+    APP_DIR_ROOT
     APP_DIR_SRC
     CWD 
     INP
     Links 
     Defs
     Options)
+    # Init the lists for FLAGS and LINKS
+    set(Defs_Loc "")
+    set(Links_Loc "")
+    set(Opts_Loc "")
+    list(APPEND Defs_Loc ${Defs})
+    list(APPEND Links_Loc ${Links})
+    list(APPEND Opts_Loc ${Options})
+    # Set APP names and paths
+    set(APP_exe ${Root_Name}_${APP_TYPE})
+    set(APP_DIR_DST ${APP_DIR_ROOT}/${APP_exe})
+    string(FIND ${APP_type} "mpi" FLAG_FOUND)
+    if(FLAG_FOUND GREATER -1)
+      list(APPEND Defs_Loc "-DOPS_MPI")
+    endif()
+    #
+    if (HDF5_FOUND)
+      if(FLAG_FOUND GREATER -1)
+	list(APPEND Links_Loc "ops_hdf5_mpi")
+      else()
+	list(APPEND Links_Loc "ops_hdf5_seq")
+      endif()
+      list(APPEND Links_Loc "hdf5::hdf5")
+      list(APPEND Links_Loc "hdf5::hdf5_hl")
+      list(APPEND Links_Loc "MPI::MPI_CXX")
+    endif()
+    #
+    string(FIND ${APP_type} "tiled" FLAG_FOUND)
+    if(FLAG_FOUND GREATER -1)
+      list(APPEND Defs_Loc "-DOPS_LAZY")
+    endif()
+    #message(STATUS "Defs for ${APP_exe} ${Defs_Loc}")
+    #message(STATUS "Links for ${APP_exe} ${Links_Loc}")
+    #message(" ")
     add_executable(${APP_exe} ${APP_SRC})
     target_include_directories(${APP_exe} PRIVATE ${APP_DIR_SRC})
-    foreach(Def IN LISTS Defs)
+    foreach(Def IN LISTS Defs_Loc)
       target_compile_definitions(${APP_exe} PRIVATE ${Def})
     endforeach()
-    foreach(Opt IN LISTS Options)
-      message(STATUS "AppExe Opt ${Opt}")
+    foreach(Opt IN LISTS Opts_Loc)
       target_compile_options(${APP_exe} PRIVATE ${Opt})
     endforeach()
     install(FILES ${INP} DESTINATION ${APP_DIR_DST})
-    foreach(Link IN LISTS Links)
+    foreach(Link IN LISTS Links_Loc)
       target_link_libraries(${APP_exe} PRIVATE ${Link})
     endforeach()
     install(TARGETS ${APP_exe} DESTINATION ${APP_DIR_DST})
-    add_cmake_test(${APP_DIR_DST}/${APP_exe} ${CWD}/cmake_test.sh ${APP_type})
+    # Append the number of GPUs
+    string(FIND ${APP_type} "mpi_cuda" FLAG_FOUND)
+    if(FLAG_FOUND GREATER -1)
+      set(ARGUMENTS "${APP_type} ${GPU_NUMBER}")
+    else()
+      set(ARGUMENTS "${APP_type}" )
+    endif()
+    add_cmake_test(${APP_DIR_DST}/${APP_exe} ${CWD}/cmake_test.sh ${ARGUMENTS})
 endmacro()
 
 #   Prepare the macro for compiling apps Name: App name Odd: Key words for source
@@ -124,6 +165,7 @@ macro(
     endif()
 
     #       Run OPS code-generation
+    message(STATUS "Start Code Generation")
     if(LEGACY_CODEGEN)
         message(STATUS "Code-gen command legacy: ${OPS_C_TRANSLATOR} ${DEV}")
         execute_process(COMMAND ${OPS_C_TRANSLATOR} ${DEV}
@@ -144,6 +186,7 @@ macro(
             list(APPEND FILENAMES ${filename})
         endforeach()
 
+        message(STATUS "Code-gen command: ${PYTHON_EXECUTABLE} ${OPS_C_TRANSLATOR} ${PYTHON_FILE_ARGS} ${FILENAMES}")
         execute_process(COMMAND ${PYTHON_EXECUTABLE} ${OPS_C_TRANSLATOR}
                         -DOPS_ACC_IGNORE
                         -I ${PYTHON_OPS_INCLUDE}
@@ -165,15 +208,15 @@ macro(
 
     file(GLOB OTHERS "${TMP_SOURCE_DIR}/*.cpp")
     foreach(OpsFile ${OPS})
-            list(REMOVE_ITEM OTHERS ${OpsFile})
-        string(REPLACE "_ops" "" NoOPS ${OpsFile})
-        list(REMOVE_ITEM OTHERS ${NoOPS})
+      list(REMOVE_ITEM OTHERS ${OpsFile})
+      string(REPLACE "_ops" "" NoOPS ${OpsFile})
+      list(REMOVE_ITEM OTHERS ${NoOPS})
     endforeach()
 
     list(FILTER OTHERS EXCLUDE REGEX ${Odd})
 
     foreach(ext ${Extra})
-        list(FILTER OTHERS EXCLUDE REGEX ${ext})
+      list(FILTER OTHERS EXCLUDE REGEX ${ext})
     endforeach()
 
     # Copy input parameters
@@ -181,127 +224,134 @@ macro(
 
     # TARGET: DEV_SEQ, SEQ, OPENMP, TILED
     set(APP_TYPE "dev_seq")
-    set(Name_exe ${Name}_${APP_TYPE})
-    set(APP_INSTALL_DIR ${app_dir_c}/${Name_exe})
     set(APP_SRC ${DEV} ${OTHERS})
     set(Links "ops_seq" 
 	      "OpenMP::OpenMP_CXX")
-    if (HDF5_FOUND)
-      list(APPEND Links "ops_hdf5_seq")
-      list(APPEND Links "hdf5::hdf5")
-      list(APPEND Links "hdf5::hdf5_hl")
-      list(APPEND Links "MPI::MPI_CXX")
-    endif()
     set(Defs "")
     set(Opts "")
     # Make sure to use "" for potentially empty inputs
-    setappexe("${Name_exe}" "${APP_SRC}" "${APP_TYPE}" 
-	      "${APP_INSTALL_DIR}" "${TMP_SOURCE_DIR}" 
+    setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+	      "${app_dir_c}" "${TMP_SOURCE_DIR}" 
 	      "${CMAKE_CURRENT_SOURCE_DIR}" "${INPUT}" 
 	      "${Links}" "${Defs}" "${Opts}")  
+    if(MPI_FOUND)
+      set(APP_TYPE "dev_mpi")
+      set(Links "ops_mpi" 
+	        "OpenMP::OpenMP_CXX")
+      setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+        	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
+  	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INPUT}" 
+  	        "${Links}" "${Defs}" "${Opts}")  
+    endif()
    
     set(APP_TYPE "seq")
-    set(Name_exe ${Name}_${APP_TYPE})
-    set(APP_INSTALL_DIR ${app_dir_c}/${Name_exe})
     set(APP_SRC ${OPS} ${OTHERS} "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
     set(Links "ops_seq" 
 	      "OpenMP::OpenMP_CXX")
-    if (HDF5_FOUND)
-      list(APPEND Links "ops_hdf5_seq")
-      list(APPEND Links "hdf5::hdf5")
-      list(APPEND Links "hdf5::hdf5_hl")
-      list(APPEND Links "MPI::MPI_CXX")
-    endif()
     set(Defs "")
     set(Opts "")
     # Make sure to use "" for potentially empty inputs
-    setappexe("${Name_exe}" "${APP_SRC}" "${APP_TYPE}" 
-	      "${APP_INSTALL_DIR}" "${TMP_SOURCE_DIR}" 
+    setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+	      "${app_dir_c}" "${TMP_SOURCE_DIR}" 
 	      "${CMAKE_CURRENT_SOURCE_DIR}" "${INPUT}" 
 	      "${Links}" "${Defs}" "${Opts}")  
-    
+    if(MPI_FOUND)
+      set(APP_TYPE "mpi")
+      set(Links "ops_mpi" 
+	        "OpenMP::OpenMP_CXX")
+      setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+        	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
+  	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INPUT}" 
+  	        "${Links}" "${Defs}" "${Opts}")  
+    endif()
+
     set(APP_TYPE "openmp")
-    set(Name_exe ${Name}_${APP_TYPE})
-    set(APP_INSTALL_DIR ${app_dir_c}/${Name_exe})
     set(APP_SRC ${OPS} ${OTHERS} 
 	        "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
     set(Links "ops_seq" 
 	      "OpenMP::OpenMP_CXX")
-    if (HDF5_FOUND)
-      list(APPEND Links "ops_hdf5_seq")
-      list(APPEND Links "hdf5::hdf5")
-      list(APPEND Links "hdf5::hdf5_hl")
-      list(APPEND Links "MPI::MPI_CXX")
-    endif()
     set(Defs "")
     set(Opts "")
     # Make sure to use "" for potentially empty inputs
-    setappexe("${Name_exe}" "${APP_SRC}" "${APP_TYPE}" 
-	      "${APP_INSTALL_DIR}" "${TMP_SOURCE_DIR}" 
+    setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+	      "${app_dir_c}" "${TMP_SOURCE_DIR}" 
 	      "${CMAKE_CURRENT_SOURCE_DIR}" "${INPUT}" 
 	      "${Links}" "${Defs}" "${Opts}")  
+    if(MPI_FOUND)
+      set(APP_TYPE "mpi_openmp")
+      set(Links "ops_mpi" 
+	        "OpenMP::OpenMP_CXX")
+      setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+        	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
+  	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INPUT}" 
+  	        "${Links}" "${Defs}" "${Opts}")  
+    endif()
     
     set(APP_TYPE "tiled")
-    set(Name_exe ${Name}_${APP_TYPE})
-    set(APP_INSTALL_DIR ${app_dir_c}/${Name_exe})
     set(APP_SRC ${OPS} ${OTHERS} 
 	        "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
     set(Links "ops_seq" 
 	      "OpenMP::OpenMP_CXX")
-    if (HDF5_FOUND)
-      list(APPEND Links "ops_hdf5_seq")
-      list(APPEND Links "hdf5::hdf5")
-      list(APPEND Links "hdf5::hdf5_hl")
-      list(APPEND Links "MPI::MPI_CXX")
-    endif()
-    set(Defs "-DOPS_LAZY")
+    set(Defs "")
     set(Opts "")
     # Make sure to use "" for potentially empty inputs
-    setappexe("${Name_exe}" "${APP_SRC}" "${APP_TYPE}" 
-	      "${APP_INSTALL_DIR}" "${TMP_SOURCE_DIR}" 
+    setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+	      "${app_dir_c}" "${TMP_SOURCE_DIR}" 
 	      "${CMAKE_CURRENT_SOURCE_DIR}" "${INPUT}" 
 	      "${Links}" "${Defs}" "${Opts}")  
+    if(MPI_FOUND)
+      set(APP_TYPE "mpi_tiled")
+      set(Links "ops_mpi" 
+	        "OpenMP::OpenMP_CXX")
+      setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+        	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
+  	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INPUT}" 
+  	        "${Links}" "${Defs}" "${Opts}")  
+    endif()
    
     if(CUDAToolkit_FOUND) 
       set(APP_TYPE "cuda")
-      set(Name_exe ${Name}_${APP_TYPE})
-      set(APP_INSTALL_DIR ${app_dir_c}/${Name_exe})
       set(APP_SRC ${OPS} ${OTHERS} 
                   "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
       set(Links "ops_cuda"
 	        "CUDA::cudart_static"
 	        "-lcurand"	
                 "OpenMP::OpenMP_CXX")
-      if (HDF5_FOUND)
-        list(APPEND Links "ops_hdf5_seq")
-        list(APPEND Links "hdf5::hdf5")
-        list(APPEND Links "hdf5::hdf5_hl")
-        list(APPEND Links "MPI::MPI_CXX")
-      endif()
       set(Defs "")
       # Not sure this should be here: why not on the general nvcc flags? 
       set(Opts "")
       # Make sure to use "" for potentially empty inputs
-      setappexe("${Name_exe}" "${APP_SRC}" "${APP_TYPE}" 
-                "${APP_INSTALL_DIR}" "${TMP_SOURCE_DIR}" 
-                "${CMAKE_CURRENT_SOURCE_DIR}" "${INPUT}" 
-                "${Links}" "${Defs}" "${Opts}")  
+      setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+             	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
+	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INPUT}" 
+	        "${Links}" "${Defs}" "${Opts}")  
+      if(MPI_FOUND)
+        set(APP_TYPE "mpi_cuda")
+        set(Defs "-DMPICH_IGNORE_CXX_SEEK")
+        set(Links "ops_mpi_cuda" 
+	          "CUDA::cudart_static"
+	          "-lcurand"	
+                  "OpenMP::OpenMP_CXX")
+	list(APPEND Opts ${MPI_INC_LIST})
+        setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+                  "${app_dir_c}" "${TMP_SOURCE_DIR}" 
+                  "${CMAKE_CURRENT_SOURCE_DIR}" "${INPUT}" 
+                  "${Links}" "${Defs}" "${Opts}")  
+	#
+	set(APP_TYPE "mpi_cuda_tiled")
+        setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+                  "${app_dir_c}" "${TMP_SOURCE_DIR}" 
+                  "${CMAKE_CURRENT_SOURCE_DIR}" "${INPUT}" 
+                  "${Links}" "${Defs}" "${Opts}")  
+      endif()
     endif()     
     # OMPOFFLOAD
     if(OPS_CXXFLAGS_OMPOFFLOAD)
       set(APP_TYPE "ompoffload")
-      set(Name_exe ${Name}_${APP_TYPE})
-      set(APP_INSTALL_DIR ${app_dir_c}/${Name_exe})
       set(APP_SRC ${OPS} ${OTHERS} 
                   "${TMP_SOURCE_DIR}/openmp_offload/openmp_offload_kernels.cpp")
       set(Links "ops_ompoffload"
                 "OpenMP::OpenMP_CXX")
-      if (HDF5_FOUND)
-        list(APPEND Links "ops_hdf5_seq")
-        list(APPEND Links "hdf5::hdf5")
-        list(APPEND Links "hdf5::hdf5_hl")
-        list(APPEND Links "MPI::MPI_CXX")
-      endif()
       set(Defs "")
       set(Opts "")
       foreach(Flag IN LISTS OPS_CXXFLAGS_OMPOFFLOAD)
@@ -310,215 +360,11 @@ macro(
       endforeach()
       message(STATUS "Additional Flags for OMPOFF ${Opts}")
       # Make sure to use "" for potentially empty inputs
-      setappexe("${Name_exe}" "${APP_SRC}" "${APP_TYPE}" 
-                "${APP_INSTALL_DIR}" "${TMP_SOURCE_DIR}" 
-                "${CMAKE_CURRENT_SOURCE_DIR}" "${INPUT}" 
-                "${Links}" "${Defs}" "${Opts}")  
+      setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+  	        "${app_dir_c}" "${TMP_SOURCE_DIR}" 
+  	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INPUT}" 
+  	        "${Links}" "${Defs}" "${Opts}")  
 
     endif()
-
-    #if(OPS_HIP)
-    #    if(HIP AND NOT TRID)
-    #        add_executable(${Name}_hip ${OPS} ${OTHERS}
-    #                        "${TMP_SOURCE_DIR}/hip/hip_kernels.cpp")
-    #        message("${TMP_SOURCE_DIR}/hip/${KernelName}_hip_kernel.cpp")
-
-    #    target_include_directories(${Name}_hip PRIVATE ${TMP_SOURCE_DIR})
-    #    target_link_libraries(${Name}_hip ops_hip hip::device OpenMP::OpenMP_CXX)
-
-    #    # if (HDF5_SEQ) target_link_libraries(${Name}_hip ops_hdf5_seq hdf5::hdf5
-    #    #                                     hdf5::hdf5_hl  MPI::MPI_CXX) endif()
-    #    install(TARGETS ${Name}_hip DESTINATION ${APP_INSTALL_DIR}/${Name})
-    #    if((OPS_TEST)
-    #        AND (GPU_NUMBER GREATER_EQUAL 1)
-    #        AND (${GenerateTest} STREQUAL "YES"))
-
-    #        set(args "OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1")
-    #        add_test(NAME ${Name}_hip
-    #                COMMAND
-    #                ${CMAKE_COMMAND} -DCMD=$<TARGET_FILE:${Name}_opencl> -DARG=${args}
-    #                -DOPS_INSTALL_PATH=${OPS_CMAKE_INSTALL_PATH} -P
-    #                ${OPS_APP_SRC}/runtests.cmake
-    #                WORKING_DIRECTORY "${TMP_SOURCE_DIR}")
-    #        endif()
-    #    endif()
-    #endif()
-
-    #if(MPI)
-    #    add_executable(${Name}_dev_mpi ${DEV} ${OTHERS})
-    #    target_include_directories(${Name}_dev_mpi PRIVATE ${TMP_SOURCE_DIR})
-    #    target_compile_definitions(${Name}_dev_mpi PRIVATE "-DOPS_MPI")
-
-    #    add_executable(${Name}_mpi ${OPS} ${OTHERS}
-    #                    "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
-    #    target_include_directories(${Name}_mpi PRIVATE ${TMP_SOURCE_DIR})
-    #    target_compile_definitions(${Name}_mpi PRIVATE "-DOPS_MPI")
-
-    #    add_executable(${Name}_mpi_openmp ${OPS} ${OTHERS}
-    #                    "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
-    #    target_include_directories(${Name}_mpi_openmp PRIVATE ${TMP_SOURCE_DIR})
-    #    target_compile_definitions(${Name}_mpi_openmp PRIVATE "-DOPS_MPI")
-
-    #    add_executable(${Name}_mpi_tiled ${OPS} ${OTHERS}
-    #                    "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
-    #    target_include_directories(${Name}_mpi_tiled PRIVATE ${TMP_SOURCE_DIR})
-    #    target_compile_definitions(${Name}_mpi_tiled PRIVATE "-DOPS_MPI -DOPS_LAZY")
-
-    #    if(HDF5_MPI)
-    #        target_link_libraries(${Name}_dev_mpi PRIVATE ops_hdf5_mpi hdf5::hdf5
-    #                                            hdf5::hdf5_hl MPI::MPI_CXX)
-    #        target_link_libraries(${Name}_mpi PRIVATE ops_hdf5_mpi hdf5::hdf5
-    #                                        hdf5::hdf5_hl MPI::MPI_CXX)
-    #        target_link_libraries(${Name}_mpi_openmp PRIVATE ops_hdf5_mpi hdf5::hdf5
-    #                                        hdf5::hdf5_hl MPI::MPI_CXX)
-    #        target_link_libraries(${Name}_mpi_tiled PRIVATE ops_hdf5_mpi hdf5::hdf5
-    #                                        hdf5::hdf5_hl MPI::MPI_CXX)
-    #    endif()
-
-    #    if(TRID)
-    #        target_link_libraries(${Name}_dev_mpi PRIVATE ops_trid_mpi -L${LIBTRID_PATH}/lib -ltridcpu_mpi
-    #                                MPI::MPI_CXX)
-    #        target_link_libraries(${Name}_mpi PRIVATE ops_trid_mpi -L${LIBTRID_PATH}/lib -ltridcpu_mpi
-    #                                MPI::MPI_CXX)
-    #        target_link_libraries(${Name}_mpi_openmp PRIVATE ops_trid_mpi -L${LIBTRID_PATH}/lib -ltridcpu_mpi
-    #                                MPI::MPI_CXX)
-    #        target_link_libraries(${Name}_mpi_tiled PRIVATE ops_trid_mpi -L${LIBTRID_PATH}/lib -ltridcpu_mpi
-    #                                MPI::MPI_CXX)
-    #    endif()
-
-    #    target_link_libraries(${Name}_dev_mpi PRIVATE ops_mpi MPI::MPI_CXX
-    #                                      OpenMP::OpenMP_CXX)
-    #    target_link_libraries(${Name}_mpi PRIVATE ops_mpi MPI::MPI_CXX
-    #                                      OpenMP::OpenMP_CXX)
-    #    target_link_libraries(${Name}_mpi_openmp PRIVATE ops_mpi MPI::MPI_CXX
-    #                                      OpenMP::OpenMP_CXX)
-    #    target_link_libraries(${Name}_mpi_tiled PRIVATE ops_mpi MPI::MPI_CXX
-    #                                      OpenMP::OpenMP_CXX)
-
-    #    if((OPS_TEST) AND (${GenerateTest} STREQUAL "YES"))
-    #        add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_dev_mpi ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh dev_mpi)
-    #        add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh mpi)
-    #        add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_openmp ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh mpi_openmp)
-    #        add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_tiled ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh mpi_tiled)
-    #    endif()
-
-    #    install(TARGETS ${Name}_dev_mpi DESTINATION ${APP_INSTALL_DIR}/${Name})
-    #    install(TARGETS ${Name}_mpi DESTINATION ${APP_INSTALL_DIR}/${Name})
-    #    install(TARGETS ${Name}_mpi_openmp DESTINATION ${APP_INSTALL_DIR}/${Name})
-    #    install(TARGETS ${Name}_mpi_tiled DESTINATION ${APP_INSTALL_DIR}/${Name})
-
-    #    if(CUDA_MPI)
-    #        add_executable(${Name}_mpi_cuda ${OPS} ${OTHERS}
-    #                        "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
-    #        target_include_directories(${Name}_mpi_cuda PRIVATE ${TMP_SOURCE_DIR})
-    #        target_compile_definitions(${Name}_mpi_cuda PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK")
-    #        target_compile_options(${Name}_mpi_cuda
-    #                     PRIVATE $<$<COMPILE_LANGUAGE:CUDA>: --fmad=false >)
-    #        foreach(include_dir IN LISTS MPI_INC_LIST)
-    #            string(FIND ${include_dir} "include" include_index)
-    #            if(NOT include_index EQUAL -1)
-    #                target_compile_options(${Name}_mpi_cuda PRIVATE ${include_dir})
-    #            endif()
-    #        endforeach()
-
-    #        add_executable(${Name}_mpi_cuda_tiled ${OPS} ${OTHERS}
-    #                        "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
-    #        target_include_directories(${Name}_mpi_cuda_tiled PRIVATE ${TMP_SOURCE_DIR})
-    #        target_compile_definitions(${Name}_mpi_cuda_tiled PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK -DOPS_LAZY")
-    #        target_compile_options(${Name}_mpi_cuda_tiled
-    #                     PRIVATE $<$<COMPILE_LANGUAGE:CUDA>: --fmad=false >)
-    #        foreach(include_dir IN LISTS MPI_INC_LIST)
-    #            string(FIND ${include_dir} "include" include_index)
-    #            if(NOT include_index EQUAL -1)
-    #                target_compile_options(${Name}_mpi_cuda_tiled PRIVATE ${include_dir})
-    #            endif()
-    #        endforeach()
-
-    #        if(HDF5_MPI)
-    #            target_link_libraries(${Name}_mpi_cuda PRIVATE ops_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
-    #                                    MPI::MPI_CXX)
-    #            target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
-    #                                    MPI::MPI_CXX)
-    #        endif()
-
-    #        if(TRID)
-    #            target_link_libraries(${Name}_mpi_cuda PRIVATE ops_trid_mpi_cuda -L${LIBTRID_PATH}/lib -ltridcuda_mpi
-    #                                    MPI::MPI_CXX)
-    #            target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_trid_mpi_cuda -L${LIBTRID_PATH}/lib -ltridcuda_mpi
-    #                                    MPI::MPI_CXX)
-    #            if(NCCL_FOUND)
-    #                target_link_libraries(${Name}_mpi_cuda PRIVATE ${NCCL_LIBRARY})
-    #                target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ${NCCL_LIBRARY})
-    #            endif()
-    #        endif()
-
-    #        target_link_libraries(${Name}_mpi_cuda PRIVATE ops_mpi_cuda CUDA::cudart_static -lcurand MPI::MPI_CXX
-    #                                OpenMP::OpenMP_CXX)
-    #        target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_mpi_cuda CUDA::cudart_static -lcurand MPI::MPI_CXX
-    #                                OpenMP::OpenMP_CXX)
-
-    #        install(TARGETS ${Name}_mpi_cuda DESTINATION ${APP_INSTALL_DIR}/${Name})
-    #        install(TARGETS ${Name}_mpi_cuda_tiled DESTINATION ${APP_INSTALL_DIR}/${Name})
-
-    #        if((OPS_TEST)
-    #            AND (GPU_NUMBER GREATER_EQUAL 1)
-    #            AND (${GenerateTest} STREQUAL "YES"))
-    #            add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_cuda ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh "mpi_cuda ${GPU_NUMBER}")
-    #            add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_cuda_tiled ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh "mpi_cuda_tiled ${GPU_NUMBER}")
-    #        endif()
-    #    endif()
-
-    #    if(OMPOFFLOAD_MPI)
-    #        add_executable(${Name}_mpi_ompoffload ${OPS} ${OTHERS}
-    #                        "${TMP_SOURCE_DIR}/openmp_offload/openmp_offload_kernels.cpp")
-    #        target_include_directories(${Name}_mpi_ompoffload PRIVATE ${TMP_SOURCE_DIR})
-    #        target_compile_definitions(${Name}_mpi_ompoffload PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK")
-    #        target_compile_options(${Name}_mpi_ompoffload PRIVATE ${OMPOFFLOAD_FLAGS})
-    #        foreach(include_dir IN LISTS MPI_INC_LIST)
-    #            string(FIND ${include_dir} "include" include_index)
-    #            if(NOT include_index EQUAL -1)
-    #                target_compile_options(${Name}_mpi_ompoffload PRIVATE ${include_dir})
-    #            endif()
-    #        endforeach()
-
-    #        add_executable(${Name}_mpi_ompoffload_tiled ${OPS} ${OTHERS}
-    #                        "${TMP_SOURCE_DIR}/openmp_offload/openmp_offload_kernels.cpp")
-    #        target_include_directories(${Name}_mpi_ompoffload_tiled PRIVATE ${TMP_SOURCE_DIR})
-    #        target_compile_definitions(${Name}_mpi_ompoffload_tiled PRIVATE "-DOPS_MPI -DMPICH_IGNORE_CXX_SEEK -DOPS_LAZY")
-    #        target_compile_options(${Name}_mpi_ompoffload_tiled PRIVATE ${OMPOFFLOAD_FLAGS})
-    #        foreach(include_dir IN LISTS MPI_INC_LIST)
-    #            string(FIND ${include_dir} "include" include_index)
-    #            if(NOT include_index EQUAL -1)
-    #                target_compile_options(${Name}_mpi_ompoffload_tiled PRIVATE ${include_dir})
-    #            endif()
-    #        endforeach()
-
-    #        if(HDF5_MPI)
-    #            target_link_libraries(${Name}_mpi_ompoffload PRIVATE ops_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
-    #                                    MPI::MPI_CXX)
-    #            target_link_libraries(${Name}_mpi_ompoffload_tiled PRIVATE ops_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
-    #                                    MPI::MPI_CXX)
-    #        endif()
-
-    #        target_link_libraries(${Name}_mpi_ompoffload PRIVATE ops_mpi_ompoffload MPI::MPI_CXX
-    #                                OpenMP::OpenMP_CXX)
-    #        target_link_libraries(${Name}_mpi_ompoffload_tiled PRIVATE ops_mpi_ompoffload MPI::MPI_CXX
-    #                                OpenMP::OpenMP_CXX)
-
-    #        target_link_options(${Name}_mpi_ompoffload PRIVATE ${OMPOFFLOAD_FLAGS})
-    #        target_link_options(${Name}_mpi_ompoffload_tiled PRIVATE ${OMPOFFLOAD_FLAGS})
-
-    #        install(TARGETS ${Name}_mpi_ompoffload DESTINATION ${APP_INSTALL_DIR}/${Name})
-    #        install(TARGETS ${Name}_mpi_ompoffload_tiled DESTINATION ${APP_INSTALL_DIR}/${Name})
-
-    #        if((OPS_TEST)
-    #            AND (GPU_NUMBER GREATER_EQUAL 1)
-    #            AND (${GenerateTest} STREQUAL "YES"))
-    #            add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_ompoffload ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh "mpi_ompoffload ${GPU_NUMBER}")
-    #            add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_ompoffload_tiled ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh "mpi_ompoffload_tiled ${GPU_NUMBER}")
-    #        endif()
-    #    endif()
-
-    #endif()
 
 endmacro()

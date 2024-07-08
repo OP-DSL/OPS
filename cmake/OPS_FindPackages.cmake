@@ -1,10 +1,5 @@
 # Look for dependancies 
 
-# MPI
-find_package(MPI QUIET)
-if(NOT MPI_FOUND)
-  message(WARNING "MPI environment NOT FOUND! Only sequential code will be compiled!")
-endif()
 # OpenMP
 find_package(OpenMP QUIET)
 if(NOT OpenMP_FOUND)
@@ -23,6 +18,9 @@ if(NOT Python3_FOUND)
   message(FATAL_ERROR "Python3 support NOT FOUND! The Python translator needs Python3! Please use -DPython3_EXECUTABLE to specify the path.")
 endif()
 # CUDA Support
+# Set the NUMBER of GPU to 1 in any case
+# CUDA and HIP will look if more are available
+set(GPU_NUMBER 1)
 if(OPS_CUDA)
   include(OPS_CUDA)
 endif()
@@ -30,3 +28,10 @@ endif()
 if(OPS_HIP)
   include(OPS_HIP)
 endif()
+# MPI
+find_package(MPI QUIET)
+if(NOT MPI_FOUND)
+  message(WARNING "MPI environment NOT FOUND! Only sequential code will be compiled!")
+endif()
+message(STATUS "MPICXX FOUND ${MPI_CXX_FOUND}")
+message(STATUS "MPICC FOUND ${MPI_C_FOUND}")
