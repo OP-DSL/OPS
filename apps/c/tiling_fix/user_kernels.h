@@ -1,102 +1,116 @@
 
 //WRITE
-void eqH(ACC<double> &a) {
+void equationA(ACC<double> &a) {
 }
 
 //WRITE-MD6
-void eqR(ACC<double> &a) {
+void equationB(ACC<double> &a) {
 }
 
 //WRITE-MD5
-void eqS(ACC<double> &a) {
+void equationC(ACC<double> &a) {
 }
 
 //READ,WRITE DFBYDX
-void eqD(const ACC<double> &a, ACC<double> &b) {
+void equationD(const ACC<double> &a, ACC<double> &b) {
 }
 
 //WRITE,READ
-void eqB1(ACC<double> &a, const ACC<double> &b) {
+void equationE(ACC<double> &a, const ACC<double> &b) {
 }
 
 //RW,READ
-void eqB(ACC<double> &a, const ACC<double> &b) {
+void equationF(ACC<double> &a, const ACC<double> &b) {
 }
 
 //INC,READ
-void eqL(ACC<double> &a, const ACC<double> &b) {
+void equationG(ACC<double> &a, const ACC<double> &b) {
 }
 
 //WRITE,READ,READ
-void eqK(ACC<double> &a, const ACC<double> &b, const ACC<double> &c) {
+void equationH(ACC<double> &a, const ACC<double> &b, const ACC<double> &c) {
+}
+
+//WRITE,WRITE,WRITE,READ,READ,READ,READ
+void equationH_fused(ACC<double> &a, ACC<double> &b, ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g) {
 }
 
 //WRITE,RW,READ
-void eqP(ACC<double> &a, ACC<double> &b, const ACC<double> &c) {
+void equationI(ACC<double> &a, ACC<double> &b, const ACC<double> &c) {
 }
 
 //INC,READ,READ
-void eqG(ACC<double> &a, const ACC<double> &b, const ACC<double> &c) {
+void equationJ(ACC<double> &a, const ACC<double> &b, const ACC<double> &c) {
+}
+
+//INC,READ,READ
+void equationJ_fused(ACC<double> &a, ACC<double> &b, ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g) {
 }
 
 //WRITE,READ,READ,READ
-void eqU(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d) {
+void equationK(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d) {
 }
 
-//RW,RW,READ,READ
-void eqN(ACC<double> &a, ACC<double> &b, const ACC<double> &c, const ACC<double> &d) {
+//INC,INC,READ,READ
+void equationL(ACC<double> &a, ACC<double> &b, const ACC<double> &c, const ACC<double> &d) {
 }
 
-//RW-MD6,RW-MD5,WRITE,READ
-void eqT(ACC<double> &a, ACC<double> &b, ACC<double> &c, const ACC<double> &d) {
+//INC-MD6,RW-MD5,READ,READ
+void equationM(ACC<double> &a, ACC<double> &b, const ACC<double> &c, const ACC<double> &d) {
 }
 
 //INC,READ,READ,READ
-void eqA(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d) {
+void equationN(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d) {
 }
 
 //RW,WRITE,READ,READ,READ
-void eqO(ACC<double> &a, ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e) {
+void equationO(ACC<double> &a, ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e) {
 }
 
-//RW,INC,READ,READ,READ
-void eqC(ACC<double> &a, ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<int> &e) {
+//WRITE,INC,READ,READ,READ
+void equationP(ACC<double> &a, ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<int> &e) {
 }
 
 //WRITE-MD6,READ,READ,READ,READ,READ
-void eqQ(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f) {
+void equationQ(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f) {
 }
 
 //RW,READ,READ,READ,READ,READ
-void eqM(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f) {
+void equationR(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f) {
 }
 
 //INC,READ,READ,READ,READ,READ
-void eqJ(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f) {
+void equationS(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f) {
 }
 
 //INC,INC,READ,READ,READ,READ
-void eqE1(ACC<double> &a, ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f) {
+void equationT(ACC<double> &a, ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f) {
 }
 
 //INC,READ,READ,READ,READ,READ,READ
-void eqI(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g) {
+void equationU(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g) {
 }
 
 //INC,READ,READ,READ,READ,READ,READ,READ
-void eqI1(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g, const ACC<double> &h) {
+void equationV(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g, const ACC<double> &h) {
 }
 
 //INC,INC,READ,READ,READ,READ,READ,READ
-void eqE(ACC<double> &a, ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g, const ACC<double> &h) {
+void equationW(ACC<double> &a, ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g, const ACC<double> &h) {
 }
 
 //RW,READ,READ,READ,READ,READ,READ,READ,READ
-void eqF(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g, const ACC<double> &h, const ACC<double> &i) {
+void equationX(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g, const ACC<double> &h, const ACC<double> &i) {
 }
 
 //INC,READ,READ,READ,READ,READ,READ,READ,READ
-void eqI2(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g, const ACC<double> &h, const ACC<double> &I) {
+void equationY(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g, const ACC<double> &h, const ACC<double> &I) {
 }
 
+//RW,READ-MD6,READ-MD5,READ,READ,READ,READ,READ
+void equationZ(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g, const ACC<double> &h) {
+}
 
+//WRITE,READ,READ,READ,READ,READ,READ,READ
+void equationAA(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g, const ACC<double> &h) {
+}

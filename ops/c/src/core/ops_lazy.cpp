@@ -263,6 +263,12 @@ void ops_compute_mpi_dependencies(OPS_instance *instance, int loop, int d, int *
                                          LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
         if (intersect_len > 0)
           left_neighbour_end = MAX(left_neighbour_end,intersect_begin + intersect_len);
+
+        //if overwritten to full extent (range end >= my left boundary), clear read dependency
+        if (LOOPARG.acc == OPS_WRITE && LOOPRANGE[2*d+1]>=start[d]) {
+          if (instance->OPS_diags>5) printf2(instance,"Proc %d dim %d name %s read_deps_edge cleared\n",ops_get_proc(), d, LOOPARG.dat->name);
+          data_read_deps_edge[LOOPARG.dat->index][2 * d] = INT_MIN;
+        }
       }
     }
   }
@@ -280,19 +286,25 @@ void ops_compute_mpi_dependencies(OPS_instance *instance, int loop, int d, int *
           LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
         if (intersect_len > 0)
           right_neighbour_start = MIN(right_neighbour_start,intersect_begin);
+
+        //if overwritten to full extent (range start <= my right boundary), clear read dependency
+        if (LOOPARG.acc == OPS_WRITE && LOOPRANGE[2*d]<=end[d]) {
+          if (instance->OPS_diags>5) printf2(instance,"Proc %d dim %d name %s read_deps_edge cleared\n",ops_get_proc(), d, LOOPARG.dat->name);
+          data_read_deps_edge[LOOPARG.dat->index][2 * d + 1] = INT_MAX;
+        }
       }
     }
   }
 
   // Update read dependencies of neighbours
   for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
-          // For any dataset read (i.e. not write-only)
+    // For any dataset read (i.e. not write-only)
     if (LOOPARG.argtype == OPS_ARG_DAT &&
       LOOPARG.opt == 1 &&
       LOOPARG.acc != OPS_WRITE) {
-      int d_m_min = 0; // Find biggest positive/negative direction stencil
+      int d_m_min = INT_MAX; // Find biggest positive/negative direction stencil
                            // point for this dimension
-      int d_p_max = 0;
+      int d_p_max = INT_MIN;
       for (int p = 0; p < LOOPARG.stencil->points; p++) {
           d_m_min = MIN(d_m_min,
             LOOPARG.stencil->stencil[LOOPARG.stencil->dims * p + d]);
@@ -615,9 +627,9 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                   LOOPARG.opt == 1 &&
                   data_write_deps[LOOPARG.dat->index]
                                  [tile * OPS_MAX_DIM * 2 + 2 * d + 1] != INT_MIN ) {
-                int d_m_min = 0;  // Find biggest positive/negative direction
+                int d_m_min = INT_MIN;  // Find biggest positive/negative direction
                                  // stencil point for this dimension
-                int d_p_max = 0;
+                int d_p_max = INT_MAX;
                 for (int p = 0;
                      p < LOOPARG.stencil->points; p++) {
                   d_m_min = MIN(d_m_min,
@@ -698,8 +710,8 @@ int ops_construct_tile_plan(OPS_instance *instance) {
 
             // Find biggest positive/negative direction stencil
             // point for this dimension
-            int d_m_min = 0;                  
-            int d_p_max = 0;
+            int d_m_min = INT_MAX;
+            int d_p_max = INT_MIN;
             for (int p = 0; p < LOOPARG.stencil->points; p++) {
               d_m_min = MIN(d_m_min,
                   LOOPARG.stencil->stencil[LOOPARG.stencil->dims * p + d]);
@@ -733,10 +745,28 @@ int ops_construct_tile_plan(OPS_instance *instance) {
 
         // Update write dependencies based on current iteration range
         for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
-          // For any dataset read (i.e. not write-only)
+          // For any dataset write (i.e. not read-only)
           if (LOOPARG.argtype == OPS_ARG_DAT &&
               LOOPARG.opt == 1 &&
               LOOPARG.acc != OPS_READ) {
+
+             //if this is the first/last tile and OPS_WRITE, clear read dependency
+            if (LOOPARG.acc == OPS_WRITE) {
+              //If this is the first tile, we need to clear read dependency
+              if ((tile / tiles_prod[d]) % ntiles[d] == 0)
+                data_read_deps[LOOPARG.dat->index]
+                                   [tile * OPS_MAX_DIM * 2 + 2 * d + 0] = INT_MAX;
+              //If this is the last tile, we need to clear read dependency
+              if ((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 ||
+                //or if the next tile shrunk to 0, in which case this is the last tile
+                  (tile + tiles_prod[d] < total_tiles &&
+                  tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 1] -
+                  tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 0] > 0))
+                data_read_deps[LOOPARG.dat->index]
+                                   [tile * OPS_MAX_DIM * 2 + 2 * d + 1] = INT_MIN;
+
+            }
+
             // Extend dependency range with stencil
             data_write_deps[LOOPARG.dat->index]
                 [tile * OPS_MAX_DIM * 2 + 2 * d + 0] = MIN(

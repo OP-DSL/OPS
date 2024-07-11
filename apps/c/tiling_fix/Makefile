@@ -14,15 +14,15 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
 HEADERS=user_kernels.h
 
-OPS_FILES=senga_mini.cpp
+OPS_FILES=minisenga.cpp
 
 OPS_GENERATED_SUFFIX=_ops
 
 OTHER_FILES=
 
 
-APP=senga_mini
-MAIN_SRC=senga_mini
+APP=minisenga
+MAIN_SRC=minisenga
 
 TARGETS=mpi mpi_tiled
 
