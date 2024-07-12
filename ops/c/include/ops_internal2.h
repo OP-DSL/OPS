@@ -236,6 +236,7 @@ void ops_set_dirtybit_host(
 void ops_set_halo_dirtybit(ops_arg *arg);
 OPS_FTN_INTEROP
 void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range);
+void ops_set_halo_dirtybit3_tiled(ops_arg *arg, int *iter_range, int *left_boundary_cleanUpTo, int *left_halo_cleanUpTo, int *right_boundary_cleanUpTo, int *right_halo_cleanUpTo);
 OPS_FTN_INTEROP
 void ops_halo_exchanges(ops_arg *args, int nargs, int *range);
 void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths);
@@ -279,7 +280,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 void ops_enqueue_kernel(ops_kernel_descriptor *desc);
 OPS_FTN_INTEROP
 void ops_execute(OPS_instance *instance=NULL);
-bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp);
+bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp, int *size);
 int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx);
 int ops_get_proc();
 int ops_num_procs();

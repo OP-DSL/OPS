@@ -72,6 +72,12 @@ struct tiling_plan {
   std::vector<std::vector<int> > tiled_ranges; // ranges for each loop
   std::vector<ops_dat> dats_to_exchange;
   std::vector<int> depths_to_exchange;
+
+  // Left-neighbour end and Right-neighbour start, required to calculate dirtybit skip/clear information
+  std::vector<std::vector<int> > left_neighbour_end;
+  std::vector<std::vector<int> > right_neighbour_start;
+  std::vector<std::vector<int> > loop_decomp_disp;
+  std::vector<std::vector<int> > loop_decomp_size;
 };
 
 class OPS_instance_tiling {
@@ -125,6 +131,14 @@ inline int intersection(int range1_beg, int range1_end, int range2_beg,
   int i_min = MAX(range1_beg, range2_beg);
   int i_max = MIN(range1_end, range2_end);
   *intersect_begin = i_min;
+  return i_max > i_min ? i_max - i_min : 0;
+}
+
+inline int intersection2(int range1_beg, int range1_end, int range2_beg,
+                 int range2_end) {
+  if (range1_beg >= range1_end || range2_beg >= range2_end) return 0;
+  int i_min = MAX(range1_beg, range2_beg);
+  int i_max = MIN(range1_end, range2_end);
   return i_max > i_min ? i_max - i_min : 0;
 }
 
@@ -239,7 +253,7 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
 // Computing dependencies across MPI
 /////////////////////////////////////////////////////////////////////////
 
-void ops_compute_mpi_dependencies(OPS_instance *instance, int loop, int d, int *start, int *end, int *biggest_range) {
+void ops_compute_mpi_dependencies(OPS_instance *instance, int loop, int d, int *start, int *end, int *biggest_range, int *store_left_neighbour_end, int *store_right_neighbour_start) {
   //If loop range starts before my left boundary, my left neighbour's end index
   // is either my start index or the end index of the loop (whichever is smaller)
   int left_neighbour_end = LOOPRANGE[2*d] < biggest_range[2*d] ? 
@@ -323,8 +337,13 @@ void ops_compute_mpi_dependencies(OPS_instance *instance, int loop, int d, int *
           MIN(data_read_deps_edge[LOOPARG.dat->index][2 * d + 1],
           right_neighbour_start + d_m_min);
       }
+//      if (instance->OPS_diags>5) printf2(instance,"Proc %d dim %d name %s read_deps_edge %d-%d\n",ops_get_proc(), d, LOOPARG.dat->name, data_read_deps_edge[LOOPARG.dat->index][2 * d + 0], data_read_deps_edge[LOOPARG.dat->index][2 * d + 1]);
+
     }
   }
+
+  store_left_neighbour_end[loop*OPS_MAX_DIM + d] = left_neighbour_end;
+  store_right_neighbour_start[loop*OPS_MAX_DIM + d] = right_neighbour_start;
 }
 
 
@@ -349,12 +368,28 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   std::vector<int> &depths_to_exchange = 
       tiling_plans[tiling_plans.size() - 1].depths_to_exchange;
 
+  std::vector<std::vector<int> > &left_neighbour_end =
+      tiling_plans[tiling_plans.size() - 1].left_neighbour_end;
+
+  std::vector<std::vector<int> > &right_neighbour_start =
+      tiling_plans[tiling_plans.size() - 1].right_neighbour_start;
+
+  std::vector<std::vector<int> > &loop_decomp_disp =
+      tiling_plans[tiling_plans.size() - 1].loop_decomp_disp;
+
+  std::vector<std::vector<int> > &loop_decomp_size =
+      tiling_plans[tiling_plans.size() - 1].loop_decomp_size;
+
   tiling_plans[tiling_plans.size() - 1].nloops = (int)ops_kernel_list.size();
   tiling_plans[tiling_plans.size() - 1].loop_sequence.resize(
       ops_kernel_list.size());
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++)
     tiling_plans[tiling_plans.size() - 1].loop_sequence[i] =
         ops_kernel_list[i]->hash;
+
+  int *store_left_neighbour_end, *store_right_neighbour_start;
+  store_left_neighbour_end = (int*) calloc(ops_kernel_list.size()*OPS_MAX_DIM, sizeof(int));
+  store_right_neighbour_start = (int*) calloc(ops_kernel_list.size()*OPS_MAX_DIM, sizeof(int));
 
   //
   // Compute biggest range
@@ -368,8 +403,8 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   // TODO: mixed dim blocks, currently it's just the last loop's block
   ops_dims_tiling_internal = dims;
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
-    int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM];
-    ops_get_abs_owned_range(ops_kernel_list[i]->block, ops_kernel_list[i]->range, start, end, disp);
+    int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM], decomp_size[OPS_MAX_DIM];
+    ops_get_abs_owned_range(ops_kernel_list[i]->block, ops_kernel_list[i]->range, start, end, disp, decomp_size);
     // TODO: handling non-owned blocks
     for (int d = 0; d < dims; d++) {
       biggest_range[2 * d] =
@@ -381,7 +416,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
       biggest_range[2 * d] = 1;
       biggest_range[2 * d + 1] = 1;
     }
-  }
+  } // Last loop block for end
   
   for (int d = 0; d < dims; d++) {
     if (biggest_range[2*d] > biggest_range[2*d+1])
@@ -403,6 +438,10 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   int tile_sizes[5] = {TILE1D, TILE2D, TILE3D, TILE4D, TILE5D};
   // Initialise tiling datasets
   tiled_ranges.resize(ops_kernel_list.size());
+  left_neighbour_end.resize(ops_kernel_list.size());
+  right_neighbour_start.resize(ops_kernel_list.size());
+  loop_decomp_disp.resize(ops_kernel_list.size());
+  loop_decomp_size.resize(ops_kernel_list.size());
 
   //
   // If no tile sizes specified, compute it
@@ -497,6 +536,10 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   // Allocate room to store the range of each tile for each loop
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
     tiled_ranges[i].resize(total_tiles * OPS_MAX_DIM * 2);
+    left_neighbour_end[i].resize(OPS_MAX_DIM);
+    right_neighbour_start[i].resize(OPS_MAX_DIM);
+    loop_decomp_disp[i].resize(OPS_MAX_DIM);
+    loop_decomp_size[i].resize(OPS_MAX_DIM);
   }
 
   // Initialise dataset dependencies
@@ -523,12 +566,12 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   // Main tiling dependency analysis loop
   //
   for (int loop = (int)ops_kernel_list.size() - 1; loop >= 0; loop--) {
-    int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM];
-    ops_get_abs_owned_range(ops_kernel_list[loop]->block, LOOPRANGE, start, end, disp);
+    int start[OPS_MAX_DIM], end[OPS_MAX_DIM], decomp_disp[OPS_MAX_DIM], decomp_size[OPS_MAX_DIM];
+    ops_get_abs_owned_range(ops_kernel_list[loop]->block, LOOPRANGE, start, end, decomp_disp, decomp_size);
 
     for (int d = 0; d < dims; d++) {
 
-      ops_compute_mpi_dependencies(instance, loop, d, start, end, biggest_range);
+      ops_compute_mpi_dependencies(instance, loop, d, start, end, biggest_range, store_left_neighbour_end, store_right_neighbour_start);
 
       for (int tile = 0; tile < total_tiles; tile++) {
 
@@ -610,13 +653,15 @@ int ops_construct_tile_plan(OPS_instance *instance) {
         for (int tile = 0; tile < total_tiles; tile++) {
 
           //Keep tile begin indices consistent
-          if ((tile / tiles_prod[d]) % ntiles[d] != 0) 
+          if ((tile / tiles_prod[d]) % ntiles[d] != 0) //If not first tile, begin should be end of previous tile's end
             tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] =
               tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile - tiles_prod[d]) + 2 * d + 1];
+          //But if we overshoot, just make begin=end
           if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] > tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1])
             tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
 
-          //If this is not the last tile, we need to check write dependencies too
+          //TODO: how about first tile?
+          //If this is not the last tile, we need to check write-after-write dependencies too
           if ((tile / tiles_prod[d]) % ntiles[d] != ntiles[d] - 1 &&
             //unless the next tile shrunk to 0, in which case this is the last tile
               tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 1] -
@@ -627,9 +672,9 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                   LOOPARG.opt == 1 &&
                   data_write_deps[LOOPARG.dat->index]
                                  [tile * OPS_MAX_DIM * 2 + 2 * d + 1] != INT_MIN ) {
-                int d_m_min = INT_MIN;  // Find biggest positive/negative direction
+                int d_m_min = INT_MAX;  // Find biggest positive/negative direction
                                  // stencil point for this dimension
-                int d_p_max = INT_MAX;
+                int d_p_max = INT_MIN;
                 for (int p = 0;
                      p < LOOPARG.stencil->points; p++) {
                   d_m_min = MIN(d_m_min,
@@ -750,7 +795,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
               LOOPARG.opt == 1 &&
               LOOPARG.acc != OPS_READ) {
 
-             //if this is the first/last tile and OPS_WRITE, clear read dependency
+            //if this is the first/last tile and OPS_WRITE, clear read dependency
             if (LOOPARG.acc == OPS_WRITE) {
               //If this is the first tile, we need to clear read dependency
               if ((tile / tiles_prod[d]) % ntiles[d] == 0)
@@ -792,11 +837,19 @@ int ops_construct_tile_plan(OPS_instance *instance) {
       }
     }
 
+    // Store information for left-neighbour end and right-neighbour start to used in execute tiling plan
+    for (int d = 0; d < dims; d++) {
+      left_neighbour_end[loop][d] = store_left_neighbour_end[loop*OPS_MAX_DIM + d];
+      right_neighbour_start[loop][d] = store_right_neighbour_start[loop*OPS_MAX_DIM + d];
+      loop_decomp_disp[loop][d] = decomp_disp[d];
+      loop_decomp_size[loop][d] = decomp_size[d];
+    }
+
     //Subtract base index displacements over MPI
     for (int d = 0; d < dims; d++) {
       for (int tile = 0; tile < total_tiles; tile++) {
-        tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] -= disp[d];
-        tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] -= disp[d];
+        tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] -= decomp_disp[d];
+        tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] -= decomp_disp[d];
       }
     }
   }
@@ -857,8 +910,51 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   if (instance->OPS_diags > 2)
     printf2(instance,"Created tiling plan for %d loops in %g seconds, with tile size: %dx%dx%d\n", int(ops_kernel_list.size()), t2 - t1, tile_sizes[0], tile_sizes[1], tile_sizes[2]);
 
+  // free local storage
+  free(store_left_neighbour_end);   store_left_neighbour_end = nullptr;
+  free(store_right_neighbour_start);   store_right_neighbour_start = nullptr;
+
   // return index to newly created tiling plan
   return (int)tiling_plans.size() - 1;
+}
+
+////////////////////////////////////////////////////////////////////
+// Compute dirtybit clear upto information
+void ops_compute_dirtybit_clearupto(int loop_indx, char *name, int match, int *my_tiled_begin, int *my_tiled_end, int *left_boundary_cleanUpTo, int *left_halo_cleanUpTo, int *right_boundary_cleanUpTo, int *right_halo_cleanUpTo) {
+/*                   decomp_disp                     (decomp_disp+decomp_size)
+                        |data_read_deps[0]     data_read_deps[1]|
+                        |---|                               |---|
+range[0]             left_neighbour_end           right_neighbour_start                 range[1]
+      ----------------------|                               |--------------------------
+                    |------------------------------------------------|
+                                        my_tiled_range
+                    <---|--->                               <---|--->
+            left-halo     left-boundary          right-boundary    right-halo
+*/
+  OPS_instance *instance = OPS_instance::getOPSInstance();
+  std::vector<int>& left_neighbour_end = tiling_plans[match].left_neighbour_end[loop_indx];
+  std::vector<int>& right_neighbour_start = tiling_plans[match].right_neighbour_start[loop_indx];
+  std::vector<int>& decomp_disp = tiling_plans[match].loop_decomp_disp[loop_indx];
+  std::vector<int>& decomp_size = tiling_plans[match].loop_decomp_size[loop_indx];
+
+  int beg2, end2;
+  for (int d = 0; d < OPS_MAX_DIM; d++) {
+
+    if(left_neighbour_end[d] != INT_MIN) {
+      beg2 = decomp_disp[d];    end2 = left_neighbour_end[d];
+      left_boundary_cleanUpTo[d]  = intersection2(my_tiled_begin[d], my_tiled_end[d], beg2, end2);
+
+      beg2 = my_tiled_begin[d];    end2 = decomp_disp[d];
+      left_halo_cleanUpTo[d]      = intersection2(my_tiled_begin[d], my_tiled_end[d], beg2, end2);
+    }
+    if(right_neighbour_start[d] != INT_MAX) {
+      beg2 = right_neighbour_start[d];     end2 = (decomp_disp[d]+decomp_size[d]);
+      right_boundary_cleanUpTo[d] = intersection2(my_tiled_begin[d], my_tiled_end[d], beg2, end2);
+
+      beg2 = (decomp_disp[d]+decomp_size[d]);   end2 = my_tiled_end[d];
+      right_halo_cleanUpTo[d]     = intersection2(my_tiled_begin[d], my_tiled_end[d], beg2, end2);
+    }
+ }//dim-loop end
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -903,6 +999,8 @@ void ops_execute(OPS_instance *instance) {
   std::vector<std::vector<int> > &tiled_ranges =
       tiling_plans[match].tiled_ranges;
   int total_tiles = tiling_plans[match].ntiles;
+
+  std::vector<std::vector<int> > &decomp_disp = tiling_plans[match].loop_decomp_disp;
 
   //Do halo exchanges
   double c,t1=0,t2=0;
@@ -954,11 +1052,31 @@ void ops_execute(OPS_instance *instance) {
     }
   }
 
+  int left_boundary_cleanUpTo[OPS_MAX_DIM], left_halo_cleanUpTo[OPS_MAX_DIM];
+  int right_boundary_cleanUpTo[OPS_MAX_DIM], right_halo_cleanUpTo[OPS_MAX_DIM];
+
   //Set dirtybits
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
+
+    // Compute dirtybit clear-upto information
+    int my_tiled_begin[OPS_MAX_DIM], my_tiled_end[OPS_MAX_DIM];
+
+    // find the full tiled_range begin and end for current loop
+    for (int d = 0; d < OPS_MAX_DIM; d++) {
+      left_boundary_cleanUpTo[d] = 0;   left_halo_cleanUpTo[d] = 0;
+      right_boundary_cleanUpTo[d] = 0;  right_halo_cleanUpTo[d] = 0;
+      my_tiled_begin[d] = INT_MAX;      my_tiled_end[d] = INT_MIN;
+      for (int tile = 0; tile < total_tiles; tile++) {
+        my_tiled_begin[d] = MIN(my_tiled_begin[d], tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 2 * d + 0] + decomp_disp[i][d]);
+        my_tiled_end[d]   = MAX(my_tiled_end[d],   tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 2 * d + 1] + decomp_disp[i][d]);
+      }
+    }
+
+    ops_compute_dirtybit_clearupto(i, ops_kernel_list[i]->name, match, my_tiled_begin, my_tiled_end, left_boundary_cleanUpTo, left_halo_cleanUpTo, right_boundary_cleanUpTo, right_halo_cleanUpTo);
+
     for (int arg = 0; arg < ops_kernel_list[i]->nargs; arg++) {
       if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT && ops_kernel_list[i]->args[arg].acc != OPS_READ)
-        ops_set_halo_dirtybit3(&ops_kernel_list[i]->args[arg], ops_kernel_list[i]->orig_range);
+        ops_set_halo_dirtybit3_tiled(&ops_kernel_list[i]->args[arg], ops_kernel_list[i]->orig_range, left_boundary_cleanUpTo, left_halo_cleanUpTo, right_boundary_cleanUpTo, right_halo_cleanUpTo);
     }
     if (ops_kernel_list[i]->isdevice) ops_set_dirtybit_device(ops_kernel_list[i]->args,ops_kernel_list[i]->nargs);
     else ops_set_dirtybit_host(ops_kernel_list[i]->args,ops_kernel_list[i]->nargs);
@@ -967,7 +1085,7 @@ void ops_execute(OPS_instance *instance) {
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
     if (ops_kernel_list[i]->cleanup_func) ops_kernel_list[i]->cleanup_func(ops_kernel_list[i]);
     for (int j = 0; j < ops_kernel_list[i]->nargs; j++) {
-      if (ops_kernel_list[i]->args[j].argtype == OPS_ARG_GBL && 
+      if (ops_kernel_list[i]->args[j].argtype == OPS_ARG_GBL &&
           ops_kernel_list[i]->args[j].acc == OPS_READ) {
         ops_free(ops_kernel_list[i]->args[j].data);
         ops_kernel_list[i]->args[j].data = nullptr;
@@ -1027,7 +1145,7 @@ void create_kerneldesc_and_enque(char const* kernel_name, ops_arg *args, int nar
     desc->func = func;
 
     if (block->instance->OPS_diags > 1)
-       ops_timing_realloc(block->instance, index, kernel_name); 
+       ops_timing_realloc(block->instance, index, kernel_name);
 
     ops_enqueue_kernel(desc);
 }

@@ -208,6 +208,15 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
   (void)iter_range;
 }
 
+void ops_set_halo_dirtybit3_tiled(ops_arg *arg, int *iter_range, int *left_bnd, int *left_halo, int *right_bnd, int *right_halo) {
+  (void)arg;
+  (void)iter_range;
+  (void)left_bnd;
+  (void)left_halo;
+  (void)right_bnd;
+  (void)right_halo;
+}
+
 void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
   (void)dats;
   (void)depths;
@@ -338,11 +347,12 @@ int compute_ranges(ops_arg *args, int nargs, ops_block block, int *range, int * 
   return true;
 }
 
-bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp) {
+bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp, int *size) {
   for (int n = 0; n < block->dims; n++) {
     start[n] = range[2 * n];
     end[n] = range[2 * n + 1];
     disp[n] = 0;
+    //size[n] = ?
   }
   return true;
 }

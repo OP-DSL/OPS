@@ -408,13 +408,14 @@ void ops_get_dat_full_range(ops_dat dat, int **full_range) {
   *full_range = OPS_sub_dat_list[dat->index]->gbl_size;
 }
 
-bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp) {
+bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp, int *size) {
   sub_block_list sb = OPS_sub_block_list[block->index];
   if (!sb->owned) {
     for (int n = 0; n < block->dims; n++) {
       start[n] = 0;
       end[n] = 0;
       disp[n] = 0;
+      size[n] = 0;
     }
     return false;
   }
@@ -431,6 +432,7 @@ bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, 
       end[n] = range[2 * n + 1];
 
     disp[n] = sb->decomp_disp[n];
+    size[n] = sb->decomp_size[n];
   }
   return true;
 }
