@@ -263,9 +263,6 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
   for (int d = 0; d <= actual_depth_send; d++)
     sd->dirty_dir_send[2 * MAX_DEPTH * dim + d] = 0;
 
-  for (int d = 0; d <= actual_depth_recv; d++)
-    sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH + d] = 0;
-
   //
   // similarly for positive direction
   //
@@ -273,12 +270,12 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
   // decide actual depth based on dirtybits
   actual_depth_send = 0;
   for (int d = 0; d <= right_send_depth; d++)
-    if (sd->dirty_dir_send[2 * MAX_DEPTH * dim + 2 * MAX_DEPTH - d - 1] == 1)
+    if (sd->dirty_dir_send[2 * MAX_DEPTH * dim + MAX_DEPTH + d] == 1)
       actual_depth_send = d;
 
   actual_depth_recv = 0;
   for (int d = 0; d <= left_recv_depth; d++)
-    if (sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH - d - 1] == 1)
+    if (sd->dirty_dir_recv[2 * MAX_DEPTH * dim + d] == 1)
       actual_depth_recv = d;
 
 
@@ -345,11 +342,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
 
   // clear dirtybits
   for (int d = 0; d <= actual_depth_send; d++)
-    sd->dirty_dir_send[2 * MAX_DEPTH * dim + 2 * MAX_DEPTH - d - 1] = 0;
-
-  for (int d = 0; d <= actual_depth_recv; d++)
-    sd->dirty_dir_recv[2 * MAX_DEPTH * dim + MAX_DEPTH - d - 1] = 0;
-
+    sd->dirty_dir_send[2 * MAX_DEPTH * dim + MAX_DEPTH + d] = 0;
 }
 
 void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
