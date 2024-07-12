@@ -795,7 +795,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
               LOOPARG.opt == 1 &&
               LOOPARG.acc != OPS_READ) {
 
-            //if this is the first/last tile and OPS_WRITE, clear read dependency
+            /*//if this is the first/last tile and OPS_WRITE, clear read dependency
             if (LOOPARG.acc == OPS_WRITE) {
               //If this is the first tile, we need to clear read dependency
               if ((tile / tiles_prod[d]) % ntiles[d] == 0)
@@ -810,7 +810,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                 data_read_deps[LOOPARG.dat->index]
                                    [tile * OPS_MAX_DIM * 2 + 2 * d + 1] = INT_MIN;
             
-            }
+            }*/
 
             // Extend dependency range with stencil
             data_write_deps[LOOPARG.dat->index]
