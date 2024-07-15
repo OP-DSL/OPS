@@ -89,12 +89,12 @@ int main(int argc, const char **argv)
         if(pch != NULL) {
             jmax = atoi ( argv[n] + 7 ); continue;
         }
-        pch = strstr(argv[n], "-iter=");
+        pch = strstr(argv[n], "-iters=");
 
         if(pch != NULL) {
             iter_max = atoi ( argv[n] + 7 ); continue;
         }
-        pch = strstr(argv[n], "-batches=");
+        pch = strstr(argv[n], "-batch=");
 
         if(pch != NULL) {
             batches = atoi ( argv[n] + 7 ); continue;
