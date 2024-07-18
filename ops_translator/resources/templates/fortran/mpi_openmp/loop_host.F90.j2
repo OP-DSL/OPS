@@ -54,6 +54,25 @@
 {% block user_kernel_function %}
     CONTAINS
 
+!   =============
+!   User function
+!   =============
+
+#ifdef __INTEL_COMPILER
+!DEC$ ATTRIBUTES FORCEINLINE :: {{lh.kernel}}
+#endif
+{{kernel_func}}
+
+{% for arg in lh.args %}
+    {% if arg is ops_dat %}
+        {% if arg.dim == 1 %}
+#undef OPS_ACC{{arg.id+1}}
+        {% elif arg.dim > 1 %}
+#undef OPS_ACC_MD{{arg.id+1}}
+        {% endif %}
+    {% endif %}
+{% endfor %}
+
 {% endblock %}
 
 {% block kernel_wrapper_func %}
@@ -146,11 +165,7 @@ SUBROUTINE {{lh.kernel}}_wrap( &
         idx_local(2) = idx(2) + n_y - 1
     {% endif %}
         {% if not lh.has_reduction %}
-#ifdef __GFORTRAN__
-        !GCC$ VECTOR
-#else
         !$OMP SIMD
-#endif
         {% endif %}
         DO n_x = 1, end_indx(1)-start_indx(1)+1
         {% if lh.arg_idx != -1 %}
@@ -172,11 +187,7 @@ SUBROUTINE {{lh.kernel}}_wrap( &
             idx_local(2) = idx(2) + n_y - 1
         {% endif %}
         {% if not lh.has_reduction %}
-#ifdef __GFORTRAN__
-            !GCC$ VECTOR
-#else
             !$OMP SIMD
-#endif
         {% endif %}
             DO n_x = 1, end_indx(1)-start_indx(1)+1
             {% if lh.arg_idx != -1 %}
@@ -225,42 +236,17 @@ SUBROUTINE {{lh.kernel}}_wrap( &
 {% elif lh.ndim == 2 %}
         END DO
         {% if not lh.has_reduction %}
-#ifndef __GFORTRAN__
         !$OMP END SIMD
-#endif
         {% endif %}
     END DO
 {% elif lh.ndim == 3 %}
             END DO
             {% if not lh.has_reduction %}
-#ifndef __GFORTRAN__
             !$OMP END SIMD
-#endif
             {% endif %}
         END DO
     END DO
 {% endif %}
-
-CONTAINS
-
-!   =============
-!   User function
-!   =============
-
-#ifdef __INTEL_COMPILER
-!DEC$ ATTRIBUTES FORCEINLINE :: {{lh.kernel}}
-#endif
-{{kernel_func}}
-
-{% for arg in lh.args %}
-    {% if arg is ops_dat %}
-        {% if arg.dim == 1 %}
-#undef OPS_ACC{{arg.id+1}}
-        {% elif arg.dim > 1 %}
-#undef OPS_ACC_MD{{arg.id+1}}
-        {% endif %}
-    {% endif %}
-{% endfor %}
 
 END SUBROUTINE {{lh.kernel}}_wrap
 
