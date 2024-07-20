@@ -1,12 +1,15 @@
-CC    := icc
-CXX   := icpc
+CC    := icx
+CXX   := icpx
 FC    := ifort
 ifdef DEBUG
 	CCFLAGS   := -O0 -xHost -g -std=c99
-	CXXFLAGS   := -O0 -g -xHost -DOPS_DEBUG -std=c++11
+	CXXFLAGS   := -O0 -g -xHost -DOPS_DEBUG -std=c++17
 else
 	CCFLAGS   := -O3 -g -xHost -std=c99 -qopenmp -qopt-report #enmp #vec-report -xAVX
-	CXXFLAGS   := -O3 -g -xHost -qopenmp -qopt-report -std=c++11 -qopt-zmm-usage=high #-qopenmp #vec-report -xAVX
+	CXXFLAGS   := -O3 -g -xHost -qopenmp -qopt-report -std=c++17 #-qopt-zmm-usage=high #-qopenmp #vec-report -xAVX
+	ifdef TEST_ZMM
+		CXXFLAGS += -qopt-zmm-usage=high
+	endif
 endif
 ifdef IEEE
 	CCFLAGS += -fp-model strict -fp-model source -prec-div -prec-sqrt
@@ -27,3 +30,7 @@ ifdef THREADED
 	THREADING_FLAGS ?= -qopenmp
 endif
 CXXLINK := -lstdc++
+
+SYCLCXX=icpx
+SYCLMPICXX=mpicxx
+SYCL_FLAGS=-fsycl -fsycl-targets=spir64_x86_64 -Xs "-march=avx512" -D__INTEL_SYCL__

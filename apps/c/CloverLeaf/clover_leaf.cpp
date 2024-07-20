@@ -172,6 +172,7 @@ int main(int argc, char **argv)
   ***************************************************************************/
   double ct0, ct1, et0, et1;
 
+  clover_grid->instance->reset_power_counters();
 #ifdef PROFILE_ITT
   __itt_resume();
 #endif

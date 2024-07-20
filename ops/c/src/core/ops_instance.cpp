@@ -1,6 +1,7 @@
 #define OPS_CPP_API
 #define OPS_INTERNAL_API
 #include <ops_lib_core.h>
+#include <unistd.h>
 
 #include <atomic>
 
@@ -80,6 +81,68 @@ void OPS_instance::init_globals() {
 	OPS_kern_max=0; OPS_kern_curr=0;
 	OPS_kernels=NULL;
 	ops_user_halo_exchanges_time = 0.0;
+
+	char default_paths[1024];
+	strcpy(&default_paths[0],"/sys/devices/virtual/powercap/intel-rapl/intel-rapl:0/energy_uj;/sys/devices/virtual/powercap/intel-rapl/intel-rapl:1/energy_uj");
+	char default_dram_paths[1024];
+	strcpy(&default_dram_paths[0],"/sys/devices/virtual/powercap/intel-rapl/intel-rapl:0/intel-rapl:0:0/energy_uj;/sys/devices/virtual/powercap/intel-rapl/intel-rapl:1/intel-rapl:1:0/energy_uj");
+	char* env_paths = getenv("RAPL_PATH");
+	if (!env_paths) {
+		env_paths = default_paths;
+	}
+	char* env_dram_paths = getenv("RAPL_DRAM_PATH");
+	if (!env_dram_paths) {
+		env_dram_paths = default_dram_paths;
+	}
+
+	//concatenate the paths
+	char* paths = (char*)ops_malloc(sizeof(char)*(strlen(env_paths)+strlen(env_dram_paths)+2));
+	char* paths2 = (char*)ops_malloc(sizeof(char)*(strlen(env_paths)+strlen(env_dram_paths)+2));
+	strcpy(paths, env_paths);
+	strcat(paths, ";");
+	strcat(paths, env_dram_paths);
+	strcpy(paths2, paths);
+
+	ops_energy_paths_count = 0;
+    if (paths) {
+		// Count the number of paths
+		int num_paths = 0;
+		char* path = strtok(paths, ";");
+		while (path != NULL) {
+			num_paths++;
+			path = strtok(NULL, ";");
+		}
+
+		// Read the paths and initial energies
+		ops_energy_paths_count = num_paths;
+		ops_energy_paths = (char**)ops_malloc(sizeof(char*)*num_paths);
+		ops_energy_counters = (long long*)ops_malloc(sizeof(long long)*num_paths);
+
+		num_paths = 0;
+		path = strtok(paths2, ";");
+		while (path != NULL) {
+			ops_energy_paths[num_paths] = strdup(path); // Duplicate the string for safekeeping
+			//check if path exists
+			if (access(path, R_OK) == -1) {
+				if (env_paths != default_paths)
+					ops_printf("Error: RAPL path %s does not exist or does not have the right permissions. Skipping.\n", path);
+				ops_energy_paths[num_paths] = NULL;
+			} else {
+				// Read initial energy
+				FILE* file = fopen(path, "r");
+				if (file == NULL) {
+					if (env_paths != default_paths)
+						ops_printf("Error: Could not open RAPL path %s. Skipping.\n", path);
+				} else {
+					fscanf(file, "%lld", &ops_energy_counters[num_paths]);
+					fclose(file);
+				}
+			}
+			num_paths++;
+			path = strtok(NULL, ";");
+		}
+    }
+
 	
 	//Tiling
 	ops_enable_tiling = 0;
@@ -167,6 +230,10 @@ ops_halo OPS_instance::decl_halo(ops_dat from, ops_dat to, int *iter_size, int *
 }
 ops_halo_group OPS_instance::decl_halo_group(int nhalos, ops_halo *halos) {
   return _ops_decl_halo_group(this, nhalos, halos);
+}
+
+void OPS_instance::reset_power_counters() {
+  _ops_reset_power_counters(this);
 }
 
 void OPS_instance::diagnostic_output() {

@@ -458,27 +458,31 @@ def ops_gen_mpi_lazy(master, consts, kernels, soa_set, offload=0):
 
         if NDIM > 1:
             if offload == 0:
-                temp_depth = config.depth
-                config.depth = 0
-                code("#ifdef __INTEL_COMPILER")
-                config.depth = temp_depth
-                code("#pragma loop_count(10000)")
-                code("#pragma omp simd" + line)  # +' aligned('+clean_type(line3[:-1])+')')
-                config.depth = 0
-                code("#elif defined(__clang__)")
-                config.depth = temp_depth
-                code("#pragma clang loop vectorize(disable)")
-                config.depth = 0
-                code("#elif defined(__GNUC__)")
-                config.depth = temp_depth
-                code("#pragma GCC ivdep")
-                config.depth = 0
-                code("#else")
-                config.depth = temp_depth
-                code("#pragma simd")
-                config.depth = 0
-                code("#endif")
-                config.depth = temp_depth
+#                temp_depth = config.depth
+#                config.depth = 0
+#                code("#ifdef __INTEL_COMPILER")
+#                config.depth = temp_depth
+#                code("#pragma loop_count(10000)")
+                simdlen = ''
+                for arg in range(0, nargs):
+                    if typs[arg] == "half":
+                        simdlen = ' simdlen(32)'
+                code("#pragma omp simd" +simdlen + line)  # +' aligned('+clean_type(line3[:-1])+')')
+#                config.depth = 0
+#                code("#elif defined(__clang__)")
+#                config.depth = temp_depth
+#                code("#pragma clang loop vectorize(assume_safety)")
+#                config.depth = 0
+#                code("#elif defined(__GNUC__)")
+#                config.depth = temp_depth
+#                code("#pragma GCC ivdep")
+#                config.depth = 0
+#                code("#else")
+#                config.depth = temp_depth
+#                code("#pragma simd")
+#                config.depth = 0
+#                code("#endif")
+#                config.depth = temp_depth
         if offload == 1:
             FOR("n_x", "start0", "end0")
         else:
