@@ -108,7 +108,8 @@ typedef sycl::half half;
 #elif defined(__STDCPP_FLOAT16_T__) || defined(FLT16_MIN)
 typedef _Float16 half;
 #else
-typedef uint16_t half;
+//typedef uint16_t half;
+typedef _Float16 half;
 #endif
 
 /*

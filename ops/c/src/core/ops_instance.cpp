@@ -82,17 +82,32 @@ void OPS_instance::init_globals() {
 	OPS_kernels=NULL;
 	ops_user_halo_exchanges_time = 0.0;
 
-	char default_paths[128];
+	char default_paths[1024];
 	strcpy(&default_paths[0],"/sys/devices/virtual/powercap/intel-rapl/intel-rapl:0/energy_uj;/sys/devices/virtual/powercap/intel-rapl/intel-rapl:1/energy_uj");
+	char default_dram_paths[1024];
+	strcpy(&default_dram_paths[0],"/sys/devices/virtual/powercap/intel-rapl/intel-rapl:0/intel-rapl:0:0/energy_uj;/sys/devices/virtual/powercap/intel-rapl/intel-rapl:1/intel-rapl:1:0/energy_uj");
 	char* env_paths = getenv("RAPL_PATH");
 	if (!env_paths) {
 		env_paths = default_paths;
 	}
+	char* env_dram_paths = getenv("RAPL_DRAM_PATH");
+	if (!env_dram_paths) {
+		env_dram_paths = default_dram_paths;
+	}
+
+	//concatenate the paths
+	char* paths = (char*)ops_malloc(sizeof(char)*(strlen(env_paths)+strlen(env_dram_paths)+2));
+	char* paths2 = (char*)ops_malloc(sizeof(char)*(strlen(env_paths)+strlen(env_dram_paths)+2));
+	strcpy(paths, env_paths);
+	strcat(paths, ";");
+	strcat(paths, env_dram_paths);
+	strcpy(paths2, paths);
+
 	ops_energy_paths_count = 0;
-    if (env_paths) {
+    if (paths) {
 		// Count the number of paths
 		int num_paths = 0;
-		char* path = strtok(env_paths, ";");
+		char* path = strtok(paths, ";");
 		while (path != NULL) {
 			num_paths++;
 			path = strtok(NULL, ";");
@@ -104,7 +119,7 @@ void OPS_instance::init_globals() {
 		ops_energy_counters = (long long*)ops_malloc(sizeof(long long)*num_paths);
 
 		num_paths = 0;
-		path = strtok(env_paths, ";");
+		path = strtok(paths2, ";");
 		while (path != NULL) {
 			ops_energy_paths[num_paths] = strdup(path); // Duplicate the string for safekeeping
 			//check if path exists

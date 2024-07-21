@@ -1451,6 +1451,7 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
     }
 
     long long aggregate_energy = 0;
+    long long aggregate_energy_dram = 0;
     long long max_energy = 262143328850LL;
     for (int i = 0; i < instance->ops_energy_paths_count; i++) {
       if (instance->ops_energy_paths[i] != NULL) {
@@ -1474,10 +1475,18 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
                 fscanf(max_energy_file, "%lld", &max_energy);
                 fclose(max_energy_file);
               }
-              aggregate_energy += (max_energy - instance->ops_energy_counters[i] + energy);
-            } else
-                  aggregate_energy += (energy - instance->ops_energy_counters[i]);
-                fclose(file);
+              if (i < instance->ops_energy_paths_count/2)
+                aggregate_energy += (max_energy - instance->ops_energy_counters[i] + energy);
+              else 
+                aggregate_energy_dram += (max_energy - instance->ops_energy_counters[i] + energy);
+            } else {
+              if (i < instance->ops_energy_paths_count/2)
+                aggregate_energy += (energy - instance->ops_energy_counters[i]);
+              else
+                aggregate_energy_dram += (energy - instance->ops_energy_counters[i]);
+            }
+            //ops_printf("starting value %lld, ending value %lld for %s\n", instance->ops_energy_counters[i], energy, instance->ops_energy_paths[i]);
+            fclose(file);
                 
           }
       }
@@ -1486,7 +1495,11 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
       moments_time[0] = 0.0;
       double aggregate_energy_d = (double)aggregate_energy/1000000.0;
       ops_compute_moment(aggregate_energy_d, &moments_time[0], &moments_time[1]);
-      ops_fprintf2(stream, "Total CPU energy consumed (REPL): %g J\n", moments_time[0]);
+      double avg_energy = moments_time[0];
+      moments_time[0] = 0.0;
+      double aggregate_energy_dram_d = (double)aggregate_energy_dram/1000000.0;
+      ops_compute_moment(aggregate_energy_dram_d, &moments_time[0], &moments_time[1]);
+      ops_fprintf2(stream, "Total CPU energy consumed (RAPL): %g J, of which DRAM energy: %g\n", avg_energy, moments_time[0]);
     }
 
     // printf("Times: %g %g %g\n",ops_gather_time, ops_sendrecv_time,
@@ -1882,24 +1895,24 @@ extern "C" ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
 
 
 void *ops_malloc(size_t size) {
-  void *ptr = NULL;
-  if( posix_memalign((void**)&(ptr), OPS_ALIGNMENT, size) ) {
-      OPSException ex(OPS_INTERNAL_ERROR);
-      ex << "Error, posix_memalign() returned an error.";
-      throw ex;
-  }
+  void *ptr = _mm_malloc(size, OPS_ALIGNMENT);
+  // if( posix_memalign((void**)&(ptr), OPS_ALIGNMENT, size) ) {
+  //     OPSException ex(OPS_INTERNAL_ERROR);
+  //     ex << "Error, posix_memalign() returned an error.";
+  //     throw ex;
+  // }
   return ptr;
 }
 
 void *ops_calloc(size_t num, size_t size) {
 //#ifdef __INTEL_COMPILER
-  // void * ptr = _mm_malloc(num*size, OPS_ALIGNMENT);
-  void *ptr=NULL;
-  if( posix_memalign((void**)&(ptr), OPS_ALIGNMENT, num*size) ) {
-      OPSException ex(OPS_INTERNAL_ERROR);
-      ex << "Error, posix_memalign() returned an error.";
-      throw ex;
-  }
+  void * ptr = _mm_malloc(num*size, OPS_ALIGNMENT);
+  // void *ptr=NULL;
+  // if( posix_memalign((void**)&(ptr), OPS_ALIGNMENT, num*size) ) {
+  //     OPSException ex(OPS_INTERNAL_ERROR);
+  //     ex << "Error, posix_memalign() returned an error.";
+  //     throw ex;
+  // }
   memset(ptr, 0, num * size);
   return ptr;
 //#else
@@ -1916,13 +1929,13 @@ void *ops_realloc(void *ptr, size_t size) {
 #endif
   static_assert(sizeof(size_t) == sizeof(void*), "size_t is not big enough to hold pointer address");
   if (((size_t)newptr & (OPS_ALIGNMENT - 1)) != 0) {
-    void *newptr2=NULL;
-    if( posix_memalign((void**)&(newptr2), OPS_ALIGNMENT, size) ) {
-        OPSException ex(OPS_INTERNAL_ERROR);
-        ex << "Error, posix_memalign() returned an error.";
-        throw ex;
-    }
-    // void *newptr2 = _mm_malloc(size, OPS_ALIGNMENT);
+    // void *newptr2=NULL;
+    // if( posix_memalign((void**)&(newptr2), OPS_ALIGNMENT, size) ) {
+    //     OPSException ex(OPS_INTERNAL_ERROR);
+    //     ex << "Error, posix_memalign() returned an error.";
+    //     throw ex;
+    // }
+    void *newptr2 = _mm_malloc(size, OPS_ALIGNMENT);
     memcpy(newptr2, newptr, size);
     ops_free(newptr);
     return newptr2;
@@ -1938,7 +1951,7 @@ void ops_free(void *ptr) {
 #if defined (_WIN32) || defined(WIN32)
   _aligned_free(ptr);
 #else
-  free(ptr);
+  _mm_free(ptr);
 #endif
 }
 
