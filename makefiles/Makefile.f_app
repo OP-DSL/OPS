@@ -294,7 +294,7 @@ clean:
 	rm -f *.oo
 	rm -f *.optrpt
 	rm -f *.mod
-	rm -f *~
+	rm -f *~ *.acc.s
 	rm -f $(APP)_seq
 	rm -f $(APP)_tiled
 	rm -f $(APP)_openmp

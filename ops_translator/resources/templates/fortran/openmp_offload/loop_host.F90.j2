@@ -211,7 +211,7 @@ SUBROUTINE {{lh.kernel}}_wrap( &
 !$OMP TARGET TEAMS LOOP PRIVATE(n_x{{private_idx[0]}}){{reduct_line[0]}}
     DO n_x = 1, end_indx(1)-start_indx(1)+1
 {% elif lh.ndim == 2 %}
-{% if lh.has_reductionMDIM %}
+{% if lh.has_reduction or lh.has_reductionMDIM %}
 {# !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x,n_y{{private_idx[0]}}){{reduct_line[0]}} #}
 !$OMP TARGET TEAMS LOOP PRIVATE(n_x,n_y{{private_idx[0]}}){{reduct_line[0]}}
 {% else %}
@@ -221,7 +221,7 @@ SUBROUTINE {{lh.kernel}}_wrap( &
     DO n_y = 1, end_indx(2)-start_indx(2)+1
         DO n_x = 1, end_indx(1)-start_indx(1)+1
 {% elif lh.ndim == 3 %}
-{% if lh.has_reductionMDIM %}
+{% if lh.has_reduction or lh.has_reductionMDIM %}
 {# !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x,n_y,n_z{{private_idx[0]}}){{reduct_line[0]}} #}
 !$OMP TARGET TEAMS LOOP PRIVATE(n_x,n_y,n_z{{private_idx[0]}}){{reduct_line[0]}}
 {% else %}

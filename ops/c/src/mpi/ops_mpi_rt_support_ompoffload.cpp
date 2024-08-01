@@ -248,8 +248,8 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                         memcpy(gpu_ptr + d * type_size, src_buff, type_size);
 #else
                         char *dest_buff = gpu_ptr + d * type_size;
-                        for (int it = 0; it < type_size; it++)
-                            dest_buff[it] = src_buff[it];
+                        for (size_t i_size = 0; i_size < type_size; i_size++)
+                            dest_buff[i_size] = src_buff[i_size];
 #endif
 						if (OPS_soa) src_buff += size_x * size_y * size_z * type_size;
 						else src_buff += type_size;
@@ -332,8 +332,8 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                         memcpy(dest_buff, gpu_ptr + d * type_size, type_size);
 #else
                         char *src_buff = gpu_ptr + d * type_size;
-                        for (int it = 0; it < type_size; it++)
-                            dest_buff[it] = src_buff[it];
+                        for (size_t i_size = 0; i_size < type_size; i_size++)
+                            dest_buff[i_size] = src_buff[i_size];
 #endif
 						if (OPS_soa) dest_buff += size_x * size_y * size_z * type_size;
 						else dest_buff += type_size;

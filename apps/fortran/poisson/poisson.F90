@@ -291,8 +291,8 @@ program POISSON
       DO i = 1, ngrid_x
       iter_range(1) = 1
       iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
-      iter_range(1) = 1
-      iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
+      iter_range(3) = 1
+      iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
         call ops_par_loop(poisson_stencil_kernel, "poisson_stencil_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
                 & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00_P10_M10_0P1_0M1, "real(kind=8)", OPS_READ), &
                 & ops_arg_dat(f((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_READ), &
@@ -305,8 +305,8 @@ program POISSON
       DO i = 1, ngrid_x
         iter_range(1) = 1
         iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
-        iter_range(1) = 1
-        iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
+        iter_range(3) = 1
+        iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
         call ops_par_loop(poisson_update_kernel, "poisson_update_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
                 & ops_arg_dat(u2((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_READ), &
                 & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1) , 1, S2D_00, "real(kind=8)", OPS_WRITE))
@@ -325,8 +325,8 @@ program POISSON
     DO i = 1, ngrid_x
       iter_range(1) = 1
       iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
-      iter_range(1) = 1
-      iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
+      iter_range(3) = 1
+      iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
       call ops_par_loop(poisson_error_kernel, "poisson_error_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
               & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_READ), &
               & ops_arg_dat(ref((i-1)+ngrid_x*(j-1)+1) , 1, S2D_00, "real(kind=8)", OPS_READ), &
