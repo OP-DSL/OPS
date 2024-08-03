@@ -12,7 +12,15 @@ void equationC(ACC<double> &a) {
 }
 
 //READ,WRITE DFBYDX
-void equationD(const ACC<double> &a, ACC<double> &b) {
+void equationDX(const ACC<double> &a, ACC<double> &b) {
+}
+
+//READ,WRITE DFBYDY
+void equationDY(const ACC<double> &a, ACC<double> &b) {
+}
+
+//READ,WRITE DFBYDZ
+void equationDZ(const ACC<double> &a, ACC<double> &b) {
 }
 
 //WRITE,READ
@@ -43,7 +51,7 @@ void equationI(ACC<double> &a, ACC<double> &b, const ACC<double> &c) {
 void equationJ(ACC<double> &a, const ACC<double> &b, const ACC<double> &c) {
 }
 
-//INC,READ,READ
+//INC,INC,INC,READ,READ,READ,READ
 void equationJ_fused(ACC<double> &a, ACC<double> &b, ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g) {
 }
 
@@ -114,3 +122,24 @@ void equationZ(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const
 //WRITE,READ,READ,READ,READ,READ,READ,READ
 void equationAA(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g, const ACC<double> &h) {
 }
+
+//RW,RW,RW,READ,READ
+void equationAB(ACC<double> &a, ACC<double> &b, ACC<double> &c, const ACC<double> &d, const ACC<double> &e) {
+}
+
+//RW,RW,RW,WRITE,WRITE,READ
+void equationAC(ACC<double> &a, ACC<double> &b, ACC<double> &c, ACC<double> &d, ACC<double> &e, const ACC<double> &f) {
+}
+
+//INC,READ,READ,READ,READ,READ,READ
+void equationAD(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d, const ACC<double> &e, const ACC<double> &f, const ACC<double> &g) {
+}
+
+//RW,READ,READ,READ
+void equationAE(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d) {
+}
+
+//WRITE,WRITE,READ,READ
+void equationAF(ACC<double> &a, ACC<double> &b, const ACC<double> &c, const ACC<double> &d) {
+}
+

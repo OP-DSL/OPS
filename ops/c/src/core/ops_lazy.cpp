@@ -216,6 +216,13 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
 
     if (instance->OPS_diags > 1)
       ops_timers_core(&c,&t2);
+
+    if (instance->OPS_diags > 4)
+        printf2(instance,"Proc %d Executing %s %d-%d %d-%d %d-%d\n", ops_get_proc(), desc->name,
+               desc->range[0], desc->range[1],
+               desc->range[2], desc->range[3],
+               desc->range[4], desc->range[5]);
+
     //Run the kernel
     // This function call could potentially throw
     desc->func(desc);
@@ -482,11 +489,14 @@ int ops_construct_tile_plan(OPS_instance *instance) {
     } else if (dims == 3) {
       // determine X size so at least 10*#of max threads is left for Y*Z
       tile_sizes[0] = biggest_range[1] - biggest_range[0];
+
       while ((double)points_per_tile / (double)tile_sizes[0] <
              10.0 * omp_get_max_threads())
         tile_sizes[0] = tile_sizes[0] / 2;
+
       tile_sizes[2] = (int)sqrt((double)points_per_tile / (double)tile_sizes[0]);
       tile_sizes[1] = points_per_tile / (tile_sizes[0] * tile_sizes[2]);
+
       // Sanity check
       if (tile_sizes[0] <= 0 || tile_sizes[1] <= 0 || tile_sizes[2] <= 0)
         tile_sizes[0] = tile_sizes[1] = tile_sizes[2] = -1;
