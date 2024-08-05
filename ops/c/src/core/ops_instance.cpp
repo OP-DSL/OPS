@@ -143,6 +143,11 @@ void OPS_instance::init_globals() {
 		}
     }
 
+
+
+  ops_message_count = 0;
+  ops_message_size = 0;
+  ops_reduction_time = 0.0;
 	
 	//Tiling
 	ops_enable_tiling = 0;

@@ -1450,6 +1450,26 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
       ops_fprintf2(stream, "Total user halo exchange time: %g\n", moments_time[0]);
     }
 
+    moments_time[0] = 0.0;
+    ops_compute_moment(instance->ops_reduction_time, &moments_time[0], &moments_time[1]);
+    if (moments_time[0] > 0.0) {
+      ops_fprintf2(stream, "Total reduction time: %g\n", moments_time[0]);
+    }
+
+    moments_time[0] = 0.0;
+    double msg_count = instance->ops_message_count;
+    ops_compute_moment(msg_count, &moments_time[0], &moments_time[1]);
+    if (moments_time[0] > 0.0) {
+      ops_fprintf2(stream, "Average number of MPI messages per process: %g\n", moments_time[0]);
+    }
+
+    moments_time[0] = 0.0;
+    double msg_size = instance->ops_message_size;
+    ops_compute_moment(msg_size, &moments_time[0], &moments_time[1]);
+    if (moments_time[0] > 0.0) {
+      ops_fprintf2(stream, "Average volume of MPI communications per process: %g MB\n", moments_time[0]/1e6);
+    }
+
     long long aggregate_energy = 0;
     long long aggregate_energy_dram = 0;
     long long max_energy = 262143328850LL;

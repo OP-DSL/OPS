@@ -694,7 +694,7 @@ void ops_exchange_halo_unpacker_given(ops_dat dat, int *depths, int dim,
 }
 
 void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
-  // double c1,c2,t1,t2;
+  double c,t1,t2;
   // printf("*************** range[i] %d %d %d %d\n",range[0],range[1],range[2],
   // range[3]);
   int send_recv_offsets[4]; //{send_1, recv_1, send_2, recv_2}, for the two
@@ -807,6 +807,12 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
     MPI_Status status[4];
     MPI_Waitall(2, &request[2], &status[2]);
 
+    OPS_instance::getOPSInstance()->ops_message_count +=
+      (send_recv_offsets[0] > 0) + (send_recv_offsets[2] > 0);
+    OPS_instance::getOPSInstance()->ops_message_size +=
+      send_recv_offsets[0] + send_recv_offsets[2];
+    
+
     //  ops_timers_core(&c1,&t1);
     //  ops_sendrecv_time += t1-t2;
 
@@ -905,6 +911,11 @@ void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
 
     MPI_Status status[4];
     MPI_Waitall(2, &request[2], &status[2]);
+
+    OPS_instance::getOPSInstance()->ops_message_count +=
+      (send_recv_offsets[0] > 0) + (send_recv_offsets[2] > 0);
+    OPS_instance::getOPSInstance()->ops_message_size +=
+      send_recv_offsets[0] + send_recv_offsets[2];
 
     //  ops_timers_core(&c1,&t1);
     //  printf("1 %g %d\n", t1-t2, send_recv_offsets[0] + send_recv_offsets[2]);
@@ -1036,6 +1047,9 @@ ops_reduce_gen(complexf, MPI_C_FLOAT_COMPLEX, complexf(0.0f,0.0f))
 
 void ops_execute_reduction(ops_reduction handle) {
 
+  double c, t1, t2;
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1)
+    ops_timers_core(&c, &t1);
   if (strcmp(handle->type, "int") == 0 ||
       strcmp(handle->type, "int(4)") == 0 ||
       strcmp(handle->type, "integer") == 0 ||
@@ -1104,7 +1118,10 @@ void ops_execute_reduction(ops_reduction handle) {
     ex << "Error: Unknown data type for ops_reduction";
     throw ex;
   }
-
+  if (OPS_instance::getOPSInstance()->OPS_diags > 1) {
+    ops_timers_core(&c, &t2);
+    OPS_instance::getOPSInstance()->ops_reduction_time += (t2-t1);
+  }
 }
 
 void ops_set_halo_dirtybit(ops_arg *arg) {
