@@ -325,6 +325,9 @@ class OPS_instance {
 	long long *ops_energy_counters;
 	char **ops_energy_paths;
 	int ops_energy_paths_count;
+  long long ops_message_count;
+  long long ops_message_size;
+  double ops_reduction_time;
 	
 	//Tiling
 	int ops_enable_tiling;
