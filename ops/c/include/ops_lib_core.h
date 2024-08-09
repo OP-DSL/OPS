@@ -114,6 +114,78 @@ typedef _Float16 half;
 typedef uint16_t half;
 #endif
 
+/*#ifdef __CUDACC__
+__device__ inline half operator*(int lhs, const half& rhs) {
+    half lhs_half = __float2half(static_cast<float>(lhs));
+    return __hmul(lhs_half, rhs);
+}
+
+__device__ inline half operator*(const half& lhs, int rhs) {
+    half rhs_half = __float2half(static_cast<float>(rhs));
+    return __hmul(lhs, rhs_half);
+}
+
+__device__ inline half operator+(int lhs, const half& rhs) {
+    half lhs_half = __float2half(static_cast<float>(lhs));
+    return __hadd(lhs_half, rhs);
+}
+
+__device__ inline half operator+(const half& lhs, int rhs) {
+    half rhs_half = __float2half(static_cast<float>(rhs));
+    return __hadd(lhs, rhs_half);
+}
+
+__device__ inline half operator-(int lhs, const half& rhs) {
+    half lhs_half = __float2half(static_cast<float>(lhs));
+    return __hsub(lhs_half, rhs);
+}
+
+__device__ inline half operator-(const half& lhs, int rhs) {
+    half rhs_half = __float2half(static_cast<float>(rhs));
+    return __hsub(lhs, rhs_half);
+}
+
+__device__ inline half operator/(int lhs, const half& rhs) {
+    half lhs_half = __float2half(static_cast<float>(lhs));
+    return __hdiv(lhs_half, rhs);
+}
+
+__device__ inline half operator/(const half& lhs, int rhs) {
+    half rhs_half = __float2half(static_cast<float>(rhs));
+    return __hdiv(lhs, rhs_half);
+}
+
+__device__ inline half cos(const half& lhs) {
+    return (half)cos((float)lhs);
+}
+
+__device__ inline half sin(const half& lhs) {
+    return (half)sin((float)lhs);
+}
+
+
+__device__ inline half operator*(double lhs, const half& rhs) {
+    half lhs_half = __float2half(lhs);
+    return __hmul(lhs_half, rhs);
+}
+
+__device__ inline half operator*(const half& lhs, float rhs) {
+    half rhs_half = __float2half(rhs);
+    return __hmul(lhs, rhs_half);
+}
+
+__device__ inline half operator+(float lhs, const half& rhs) {
+    half lhs_half = __float2half(lhs);
+    return __hadd(lhs_half, rhs);
+}
+
+__device__ inline half operator+(const half& lhs, float rhs) {
+    half rhs_half = __float2half(rhs);
+    return __hadd(lhs, rhs_half);
+}
+
+#endif 
+*/
 /*
  * * zero constants
  * */

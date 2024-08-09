@@ -97,6 +97,73 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   return dat;
 }
 
+char *get_buffer_ptr(char *ops_halo_buffer, int i, int j, int k, int l, int m, int d, int elem_size, int *ranges, int *step, int *buf_strides, int buf_type_size) {
+  return ops_halo_buffer +
+          (
+        #if OPS_MAX_DIM > 4
+          (m - ranges[8]) * step[4] * buf_strides[4] +
+        #endif
+        #if OPS_MAX_DIM > 3
+          (l - ranges[6]) * step[3] * buf_strides[3] +
+        #endif
+        #if OPS_MAX_DIM > 2
+          (k - ranges[4]) * step[2] * buf_strides[2] +
+        #endif
+        #if OPS_MAX_DIM > 1
+          (j - ranges[2]) * step[1] * buf_strides[1] +
+        #endif
+          (i - ranges[0]) * step[0] * buf_strides[0]) *
+              elem_size + d * buf_type_size;
+}
+
+char *get_data_ptr(ops_dat dat, int i, int j, int k, int l, int m, int d, int OPS_soa) {
+  return dat->data +
+      (OPS_soa ?
+        (
+          #if OPS_MAX_DIM > 4
+          m * dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3] +
+          #endif
+          #if OPS_MAX_DIM > 3
+          l * dat->size[0] * dat->size[1] * dat->size[2] +
+          #endif
+          #if OPS_MAX_DIM > 2
+          k * dat->size[0] * dat->size[1] +
+          #endif
+          #if OPS_MAX_DIM > 1
+          j * dat->size[0] +
+          #endif
+          i +
+          d * dat->size[0]
+            #if OPS_MAX_DIM > 4
+            * dat->size[4]
+            #endif
+            #if OPS_MAX_DIM > 3
+            * dat->size[3]
+            #endif
+            #if OPS_MAX_DIM > 2
+            * dat->size[2]
+            #endif
+            #if OPS_MAX_DIM > 1
+            * dat->size[1]
+            #endif
+        ) * dat->type_size
+      :(
+        #if OPS_MAX_DIM > 4
+        m * dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3] +
+        #endif
+        #if OPS_MAX_DIM > 3
+        l * dat->size[0] * dat->size[1] * dat->size[2] +
+        #endif
+        #if OPS_MAX_DIM > 2
+        k * dat->size[0] * dat->size[1] +
+        #endif
+        #if OPS_MAX_DIM > 1
+        j * dat->size[0] +
+        #endif
+        i) *
+            dat->elem_size + d * dat->type_size);
+}
+
 void ops_halo_transfer(ops_halo_group group) {
   ops_execute(group->instance);
   // Test contents of halo group
@@ -149,6 +216,10 @@ void ops_halo_transfer(ops_halo_group group) {
     }
     int OPS_soa = group->instance->OPS_soa;
     char *ops_halo_buffer =  group->instance->ops_halo_buffer;
+    int storage_type_size = halo->from->type_size < halo->to->type_size ? halo->from->type_size : halo->to->type_size;
+    bool mixed_exchange = halo->from->type_size!=halo->to->type_size &&
+                    (strcmp(halo->from->type, "float") == 0 || strcmp(halo->from->type, "double") == 0 || strcmp(halo->from->type, "half") == 0) &&
+                    (strcmp(halo->to->type, "float") == 0 || strcmp(halo->to->type, "double") == 0 || strcmp(halo->to->type, "half") == 0);
   #if OPS_MAX_DIM>4
     #if OPS_MAX_DIM == 5
     #ifdef _OPENMP
@@ -200,69 +271,47 @@ void ops_halo_transfer(ops_halo_group group) {
             for (int i = MIN(ranges[0], ranges[1] + 1);
                  i < MAX(ranges[0] + 1, ranges[1]); i++) {
               for (int d = 0; d < halo->from->dim; d++) {
-                memcpy(ops_halo_buffer +
-                         (
-                        #if OPS_MAX_DIM > 4
-                          (m - ranges[8]) * step[4] * buf_strides[4] +
-                        #endif
-                        #if OPS_MAX_DIM > 3
-                          (l - ranges[6]) * step[3] * buf_strides[3] +
-                        #endif
-                        #if OPS_MAX_DIM > 2
-                          (k - ranges[4]) * step[2] * buf_strides[2] +
-                        #endif
-                        #if OPS_MAX_DIM > 1
-                          (j - ranges[2]) * step[1] * buf_strides[1] +
-                        #endif
-                          (i - ranges[0]) * step[0] * buf_strides[0]) *
-                             halo->from->elem_size + d * halo->from->type_size,
-                     halo->from->data +
-                         (OPS_soa ?
-                           ((
-                            #if OPS_MAX_DIM > 4
-                            m * halo->from->size[0] * halo->from->size[1] * halo->from->size[2] * halo->from->size[3] +
-                            #endif
-                            #if OPS_MAX_DIM > 3
-                            l * halo->from->size[0] * halo->from->size[1] * halo->from->size[2] +
-                            #endif
-                            #if OPS_MAX_DIM > 2
-                            k * halo->from->size[0] * halo->from->size[1] +
-                            #endif
-                            #if OPS_MAX_DIM > 1
-                            j * halo->from->size[0] +
-                            #endif
-                            i) +
-                             d * halo->from->size[0]
-                              #if OPS_MAX_DIM > 4
-                              * halo->from->size[4]
-                              #endif
-                              #if OPS_MAX_DIM > 3
-                              * halo->from->size[3]
-                              #endif
-                              #if OPS_MAX_DIM > 2
-                              * halo->from->size[2]
-                              #endif
-                              #if OPS_MAX_DIM > 1
-                              * halo->from->size[1]
-                              #endif
-                            ) * halo->from->type_size
-
-                         : (
-                            #if OPS_MAX_DIM > 4
-                            m * halo->from->size[0] * halo->from->size[1] * halo->from->size[2] * halo->from->size[3] +
-                            #endif
-                            #if OPS_MAX_DIM > 3
-                            l * halo->from->size[0] * halo->from->size[1] * halo->from->size[2] +
-                            #endif
-                            #if OPS_MAX_DIM > 2
-                            k * halo->from->size[0] * halo->from->size[1] +
-                            #endif
-                            #if OPS_MAX_DIM > 1
-                            j * halo->from->size[0] +
-                            #endif
-                            i) *
-                            halo->from->elem_size + d * halo->from->type_size),
-                     halo->from->type_size);
+                if (mixed_exchange) {
+                  if (storage_type_size == 4) {
+                    float value = 0;
+                    if (halo->from->type_size == 4) {
+                      value = *((float *)get_data_ptr(halo->from, i, j, k, l, m, d, OPS_soa));
+                    } else if (halo->from->type_size == 8) {
+                      value = *((double *)get_data_ptr(halo->from, i, j, k, l, m, d, OPS_soa));
+                    } 
+                    else if (halo->from->type_size == 2) {
+                      value = *((half *)get_data_ptr(halo->from, i, j, k, l, m, d, OPS_soa));
+                    }
+                    memcpy(get_buffer_ptr(ops_halo_buffer, i, j, k, l, m, d, 4, ranges, step, buf_strides, 4), &value, 4);
+                  } else if (storage_type_size == 8) {
+                    double value = 0;
+                    if (halo->from->type_size == 4) {
+                      value = *((float *)get_data_ptr(halo->from, i, j, k, l, m, d, OPS_soa));
+                    } else if (halo->from->type_size == 8) {
+                      value = *((double *)get_data_ptr(halo->from, i, j, k, l, m, d, OPS_soa));
+                    } 
+                    else if (halo->from->type_size == 2) {
+                      value = *((half *)get_data_ptr(halo->from, i, j, k, l, m, d, OPS_soa));
+                    }
+                    memcpy(get_buffer_ptr(ops_halo_buffer, i, j, k, l, m, d, 8, ranges, step, buf_strides, 8), &value, 8);
+                  } 
+                  else if (storage_type_size == 2) {
+                    half value = 0;
+                    if (halo->from->type_size == 4) {
+                      value = *((float *)get_data_ptr(halo->from, i, j, k, l, m, d, OPS_soa));
+                    } else if (halo->from->type_size == 8) {
+                      value = *((double *)get_data_ptr(halo->from, i, j, k, l, m, d, OPS_soa));
+                    } else if (halo->from->type_size == 2) {
+                      value = *((half *)get_data_ptr(halo->from, i, j, k, l, m, d, OPS_soa));
+                    }
+                    memcpy(get_buffer_ptr(ops_halo_buffer, i, j, k, l, m, d, 2, ranges, step, buf_strides, 2), &value, 2);
+                  }
+                } else {
+                  char *from = get_data_ptr(halo->from, i, j, k, l, m, d, OPS_soa);
+                  char *to = get_buffer_ptr(ops_halo_buffer, i, j, k, l, m, d, halo->from->elem_size, ranges, step, buf_strides, halo->from->type_size);
+                  memcpy(to, from, halo->from->type_size);
+                  
+                }
               }
             }
           }
@@ -341,68 +390,47 @@ void ops_halo_transfer(ops_halo_group group) {
             for (int i = MIN(ranges[0], ranges[1] + 1);
                  i < MAX(ranges[0] + 1, ranges[1]); i++) {
               for (int d = 0; d < halo->to->dim; d++) {
-                memcpy(halo->to->data +
-                       (OPS_soa ?
-                         (
-                          #if OPS_MAX_DIM > 4
-                          m * halo->to->size[0] * halo->to->size[1] * halo->to->size[2] * halo->to->size[3] +
-                          #endif
-                          #if OPS_MAX_DIM > 3
-                          l * halo->to->size[0] * halo->to->size[1] * halo->to->size[2] +
-                          #endif
-                          #if OPS_MAX_DIM > 2
-                          k * halo->to->size[0] * halo->to->size[1] +
-                          #endif
-                          #if OPS_MAX_DIM > 1
-                          j * halo->to->size[0] +
-                          #endif
-                          i +
-                          d * halo->to->size[0]
-                            #if OPS_MAX_DIM > 4
-                            * halo->to->size[4]
-                            #endif
-                            #if OPS_MAX_DIM > 3
-                            * halo->to->size[3]
-                            #endif
-                            #if OPS_MAX_DIM > 2
-                            * halo->to->size[2]
-                            #endif
-                            #if OPS_MAX_DIM > 1
-                            * halo->to->size[1]
-                            #endif
-                          ) * halo->to->type_size
-                        :(
-                          #if OPS_MAX_DIM > 4
-                          m * halo->to->size[0] * halo->to->size[1] * halo->to->size[2] * halo->to->size[3] +
-                          #endif
-                          #if OPS_MAX_DIM > 3
-                          l * halo->to->size[0] * halo->to->size[1] * halo->to->size[2] +
-                          #endif
-                          #if OPS_MAX_DIM > 2
-                          k * halo->to->size[0] * halo->to->size[1] +
-                          #endif
-                          #if OPS_MAX_DIM > 1
-                          j * halo->to->size[0] +
-                          #endif
-                          i) *
-                             halo->to->elem_size + d * halo->to->type_size),
-                     ops_halo_buffer +
-                         (
-                        #if OPS_MAX_DIM > 4
-                          (m - ranges[8]) * step[4] * buf_strides[4] +
-                        #endif
-                        #if OPS_MAX_DIM > 3
-                          (l - ranges[6]) * step[3] * buf_strides[3] +
-                        #endif
-                        #if OPS_MAX_DIM > 2
-                          (k - ranges[4]) * step[2] * buf_strides[2] +
-                        #endif
-                        #if OPS_MAX_DIM > 1
-                          (j - ranges[2]) * step[1] * buf_strides[1] +
-                        #endif
-                          (i - ranges[0]) * step[0] * buf_strides[0]) *
-                             halo->to->elem_size + d * halo->to->type_size,
-                     halo->to->type_size);
+                if (mixed_exchange) {
+                  if (storage_type_size == 4) {
+                    float value = 0;
+                    memcpy(&value, get_buffer_ptr(ops_halo_buffer, i, j, k, l, m, d, 4, ranges, step, buf_strides, 4), 4);
+                    if (halo->to->type_size == 4) {
+                      *((float *)get_data_ptr(halo->to, i, j, k, l, m, d, OPS_soa)) = value;
+                    } else if (halo->to->type_size == 8) {
+                      *((double *)get_data_ptr(halo->to, i, j, k, l, m, d, OPS_soa)) = value;
+                    } 
+                    else if (halo->to->type_size == 2) {
+                      *((half *)get_data_ptr(halo->to, i, j, k, l, m, d, OPS_soa)) = value;
+                    }
+                  } else if (storage_type_size == 8) {
+                    double value = 0;
+                    memcpy(&value, get_buffer_ptr(ops_halo_buffer, i, j, k, l, m, d, 8, ranges, step, buf_strides, 8), 8);
+                    if (halo->to->type_size == 4) {
+                      *((float *)get_data_ptr(halo->to, i, j, k, l, m, d, OPS_soa)) = value;
+                    } else if (halo->to->type_size == 8) {
+                      *((double *)get_data_ptr(halo->to, i, j, k, l, m, d, OPS_soa)) = value;
+                    } 
+                    else if (halo->to->type_size == 2) {
+                      *((half *)get_data_ptr(halo->to, i, j, k, l, m, d, OPS_soa)) = value;
+                    }
+                  } 
+                  else if (storage_type_size == 2) {
+                    half value = 0;
+                    memcpy(&value, get_buffer_ptr(ops_halo_buffer, i, j, k, l, m, d, 2, ranges, step, buf_strides, 2), 2);
+                    if (halo->to->type_size == 4) {
+                      *((float *)get_data_ptr(halo->to, i, j, k, l, m, d, OPS_soa)) = value;
+                    } else if (halo->to->type_size == 8) {
+                      *((double *)get_data_ptr(halo->to, i, j, k, l, m, d, OPS_soa)) = value;
+                    } else if (halo->to->type_size == 2) {
+                      *((half *)get_data_ptr(halo->to, i, j, k, l, m, d, OPS_soa)) = value;
+                    }
+                  }
+                } else {
+                  char *from = get_buffer_ptr(ops_halo_buffer, i, j, k, l, m, d, halo->to->elem_size, ranges, step, buf_strides, halo->to->type_size);
+                  char *to = get_data_ptr(halo->to, i, j, k, l, m, d, OPS_soa);
+                  memcpy(to, from, halo->to->type_size);
+                }
+
               }
             }
           }
