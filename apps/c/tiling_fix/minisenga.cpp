@@ -166,7 +166,7 @@ int main(int argc, const char** argv)
 
 //----------------------------------------------------------------------------------------------
     int s3d_000[] = {0,0,0};
-    ops_stencil S3D_000 = ops_decl_stencil(1,1,s3d_000,"0");
+    ops_stencil S3D_000 = ops_decl_stencil(3,1,s3d_000,"0");
 
     int s3d_p500_to_m500_x[] = {5,0,0, 4,0,0, 3,0,0, 2,0,0, 1,0,0, 0,0,0, -1,0,0, -2,0,0, -3,0,0, -4,0,0, -5,0,0};
     ops_stencil S3D_p500_to_m500_x = ops_decl_stencil(3,11,s3d_p500_to_m500_x,"5,0,0 to -5,0,0");
