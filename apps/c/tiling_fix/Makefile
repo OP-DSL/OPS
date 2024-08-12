@@ -26,5 +26,6 @@ MAIN_SRC=minisenga
 
 TARGETS=mpi mpi_tiled
 
+
 #include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app_legacy
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app

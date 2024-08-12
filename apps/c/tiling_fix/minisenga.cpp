@@ -762,7 +762,7 @@ int main(int argc, const char** argv)
 
 
 /*  ----------------- RHSVEL --------------------- */
-/*
+
     ops_par_loop(equationH_fused, "equationH_fused rhsvel 72", block, 1, extended_iter_range,
             ops_arg_dat(utmp, 1, S3D_000, "double", OPS_WRITE),
             ops_arg_dat(vtmp, 1, S3D_000, "double", OPS_WRITE),
@@ -771,7 +771,7 @@ int main(int argc, const char** argv)
             ops_arg_dat(vrhs, 1, S3D_000, "double", OPS_READ),
             ops_arg_dat(wrhs, 1, S3D_000, "double", OPS_READ),
             ops_arg_dat(drhs, 1, S3D_000, "double", OPS_READ));
-
+/*
     ops_par_loop(equationDY, "equationDY rhsvel dfbydy 87", block, 1, internal_iter_range,
             ops_arg_dat(utmp, 1, S3D_p050_to_m050_y, "double", OPS_READ),
             ops_arg_dat(store1, 1, S3D_000, "double", OPS_WRITE));

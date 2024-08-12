@@ -374,5 +374,5 @@
 {% endblock %}
 
 {% block kernel_descriptor_lazy_call %}
-    create_kerneldesc_and_enque("{{lh.kernel}}", args, {{lh.args|length}}, {{kernel_idx}}, dim, 0, range, block, ops_par_loop_{{lh.kernel}}_execute);
+    create_kerneldesc_and_enque(name, args, {{lh.args|length}}, {{kernel_idx}}, dim, 0, range, block, ops_par_loop_{{lh.kernel}}_execute);
 {% endblock %}
