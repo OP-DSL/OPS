@@ -848,7 +848,7 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
     // receive each
     for (int j = 0; j < mpi_group->nhalos; j++) {
       for (int k = 0; k < mpi_group->mpi_halos[j]->nproc_from; k++) {
-        int halo_size = mpi_group->mpi_halos[j]->halo->from->elem_size;
+        int halo_size = std::min(mpi_group->mpi_halos[j]->halo->to->elem_size, mpi_group->mpi_halos[j]->halo->from->elem_size);
         for (int d = 0; d < OPS_MAX_DIM; d++)
           halo_size *=
               mpi_group->mpi_halos[j]->local_iter_size[k * OPS_MAX_DIM + d];
@@ -858,7 +858,7 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
            k < mpi_group->mpi_halos[j]->nproc_from +
                    mpi_group->mpi_halos[j]->nproc_to;
            k++) {
-        int halo_size = mpi_group->mpi_halos[j]->halo->to->elem_size;
+        int halo_size = std::min(mpi_group->mpi_halos[j]->halo->to->elem_size,mpi_group->mpi_halos[j]->halo->from->elem_size);
         for (int d = 0; d < OPS_MAX_DIM; d++)
           halo_size *=
               mpi_group->mpi_halos[j]->local_iter_size[k * OPS_MAX_DIM + d];

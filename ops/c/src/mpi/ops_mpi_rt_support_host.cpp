@@ -94,10 +94,20 @@ char *OPS_realloc_fast(char *ptr, size_t olds, size_t news) {
   return (char*)ops_realloc(ptr, news);
 }
 
+
+char* get_data_ptr(ops_dat dat, int i, int j, int k, int d) {
+  int OPS_soa = OPS_instance::getOPSInstance()->OPS_soa;
+  return dat->data +
+                   (OPS_soa ? ((k * dat->size[0] * dat->size[1] + j * dat->size[0] + i) 
+                            + d * dat->size[0] * dat->size[1] * dat->size[2]) * dat->type_size
+                          : ((k * dat->size[0] * dat->size[1] + j * dat->size[0] + i) *
+                            dat->elem_size + d*dat->type_size));
+}
+
 void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
                          int x_step, int y_step, int z_step, int buf_strides_x,
-                         int buf_strides_y, int buf_strides_z) {
+                         int buf_strides_y, int buf_strides_z, bool mixed_exchange, int storage_type_size) {
   int OPS_soa = OPS_instance::getOPSInstance()->OPS_soa;
 #ifdef _OPENMP
 #pragma omp parallel for OMP_COLLAPSE(3)
@@ -105,18 +115,67 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   for (int k = MIN(rz_s,rz_e+1); k < MAX(rz_s+1,rz_e); k ++) {
     for (int j = MIN(ry_s,ry_e+1); j < MAX(ry_s+1,ry_e); j ++) {
       for (int i = MIN(rx_s,rx_e+1); i < MAX(rx_s+1,rx_e); i ++) {
-        for (int d = 0; d < src->dim; d++) 
-        memcpy(dest + dest_offset +
-                   ((k - rz_s) * z_step * buf_strides_z +
+        for (int d = 0; d < src->dim; d++){
+          if (mixed_exchange) {
+            if (storage_type_size == 4) {
+              float value=0.0f;
+              if (src->type_size == 4) {
+                value = *((float*)get_data_ptr(src, i, j, k, d));
+              } else if (src->type_size == 8) {
+                value = (float)(*((double*)get_data_ptr(src, i, j, k, d)));
+              } else if (src->type_size == 2) {
+                value = (float)(*((half*)get_data_ptr(src, i, j, k, d)));
+              }
+              memcpy(dest + dest_offset +
+                ((k - rz_s) * z_step * buf_strides_z +
+                  (j - ry_s) * y_step * buf_strides_y +
+                  (i - rx_s) * x_step * buf_strides_x) *
+                    src->elem_size + d*storage_type_size,
+                  &value,
+                  storage_type_size);
+            } else if (storage_type_size == 8) {
+              double value=0.0;
+              if (src->type_size == 4) {
+                value = (double)(*((float*)get_data_ptr(src, i, j, k, d)));
+              } else if (src->type_size == 8) {
+                value = *((double*)get_data_ptr(src, i, j, k, d));
+              } else if (src->type_size == 2) {
+                value = (double)(*((half*)get_data_ptr(src, i, j, k, d)));
+              }
+              memcpy(dest + dest_offset +
+                ((k - rz_s) * z_step * buf_strides_z +
+                  (j - ry_s) * y_step * buf_strides_y +
+                  (i - rx_s) * x_step * buf_strides_x) *
+                    src->elem_size + d*storage_type_size,
+                  &value,
+                  storage_type_size);
+            } else if (storage_type_size == 2) {
+              half value=0.0;
+              if (src->type_size == 4) {
+                value = (half)(*((float*)get_data_ptr(src, i, j, k, d)));
+              } else if (src->type_size == 8) {
+                value = (half)(*((double*)get_data_ptr(src, i, j, k, d)));
+              } else if (src->type_size == 2) {
+                value = *((half*)get_data_ptr(src, i, j, k, d));
+              }
+              memcpy(dest + dest_offset +
+                ((k - rz_s) * z_step * buf_strides_z +
+                  (j - ry_s) * y_step * buf_strides_y +
+                  (i - rx_s) * x_step * buf_strides_x) *
+                    src->elem_size + d*storage_type_size,
+                  &value,
+                  storage_type_size);
+            }
+          } else {
+              memcpy(dest + dest_offset +
+                  ((k - rz_s) * z_step * buf_strides_z +
                     (j - ry_s) * y_step * buf_strides_y +
                     (i - rx_s) * x_step * buf_strides_x) *
-                       src->elem_size + d*src->type_size,
-               src->data +
-                   (OPS_soa ? ((k * src->size[0] * src->size[1] + j * src->size[0] + i) 
-                            + d * src->size[0] * src->size[1] * src->size[2]) * src->type_size
-                          : ((k * src->size[0] * src->size[1] + j * src->size[0] + i) *
-                            src->elem_size + d*src->type_size)),
-               src->type_size);
+                      src->elem_size + d*storage_type_size,
+                    get_data_ptr(src, i, j, k, d),
+                  storage_type_size);
+          }
+        } 
       }
     }
   }
@@ -126,7 +185,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                            int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
                            int x_step, int y_step, int z_step,
                            int buf_strides_x, int buf_strides_y,
-                           int buf_strides_z) {
+                           int buf_strides_z, bool mixed_exchange, int storage_type_size) {
   int OPS_soa = OPS_instance::getOPSInstance()->OPS_soa;
 #ifdef _OPENMP
 #pragma omp parallel for OMP_COLLAPSE(3)
@@ -135,17 +194,66 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
     for (int j = MIN(ry_s,ry_e+1); j < MAX(ry_s+1,ry_e); j ++) {
       for (int i = MIN(rx_s,rx_e+1); i < MAX(rx_s+1,rx_e); i ++) {
         for (int d = 0; d < dest->dim; d++) 
-        memcpy(dest->data +
-                   (OPS_soa ? ((k * dest->size[0] * dest->size[1] + j * dest->size[0] + i)
-                        + d * dest->size[0] * dest->size[1] * dest->size[2]) * dest->type_size
-                       : ((k * dest->size[0] * dest->size[1] + j * dest->size[0] + i) *
-                       dest->elem_size + d*dest->type_size)),
-               src + src_offset +
-                   ((k - rz_s) * z_step * buf_strides_z +
-                    (j - ry_s) * y_step * buf_strides_y +
-                    (i - rx_s) * x_step * buf_strides_x) *
-                       dest->elem_size + d*dest->type_size,
-               dest->type_size);
+        if (mixed_exchange){
+          if (storage_type_size == 4) {
+            float value=0.0f;
+            memcpy(&value, src + src_offset +
+                ((k - rz_s) * z_step * buf_strides_z +
+                  (j - ry_s) * y_step * buf_strides_y +
+                  (i - rx_s) * x_step * buf_strides_x) *
+                    dest->elem_size + d*storage_type_size,
+                storage_type_size);
+            if (dest->type_size == 4) {
+              *((float*)get_data_ptr(dest, i, j, k, d)) = value;
+            } else if (dest->type_size == 8) {
+              *((double*)get_data_ptr(dest, i, j, k, d)) = (double)value;
+            } else if (dest->type_size == 2) {
+              *((half*)get_data_ptr(dest, i, j, k, d)) = (half)value;
+            }
+          }  else if (storage_type_size == 8) {
+            double value=0.0;
+            memcpy(&value, src + src_offset +
+                ((k - rz_s) * z_step * buf_strides_z +
+                  (j - ry_s) * y_step * buf_strides_y +
+                  (i - rx_s) * x_step * buf_strides_x) *
+                    dest->elem_size + d*storage_type_size,
+                storage_type_size);
+            if (dest->type_size == 4) {
+              *((float*)get_data_ptr(dest, i, j, k, d)) = (float)value;
+            } else if (dest->type_size == 8) {
+              *((double*)get_data_ptr(dest, i, j, k, d)) = value;
+            } else if (dest->type_size == 2) {
+              *((half*)get_data_ptr(dest, i, j, k, d)) = (half)value;
+            }
+          } else if (storage_type_size == 2) {
+            half value=0.0;
+            memcpy(&value, src + src_offset +
+                ((k - rz_s) * z_step * buf_strides_z +
+                  (j - ry_s) * y_step * buf_strides_y +
+                  (i - rx_s) * x_step * buf_strides_x) *
+                    dest->elem_size + d*storage_type_size,
+                storage_type_size);
+            if (dest->type_size == 4) {
+              *((float*)get_data_ptr(dest, i, j, k, d)) = (float)value;
+            } else if (dest->type_size == 8) {
+              *((double*)get_data_ptr(dest, i, j, k, d)) = (double)value;
+            } else if (dest->type_size == 2) {
+              *((half*)get_data_ptr(dest, i, j, k, d)) = value;
+            }
+          }
+        } else {
+          memcpy(dest->data +
+                    (OPS_soa ? ((k * dest->size[0] * dest->size[1] + j * dest->size[0] + i)
+                          + d * dest->size[0] * dest->size[1] * dest->size[2]) * dest->type_size
+                        : ((k * dest->size[0] * dest->size[1] + j * dest->size[0] + i) *
+                        dest->elem_size + d*dest->type_size)),
+                src + src_offset +
+                    ((k - rz_s) * z_step * buf_strides_z +
+                      (j - ry_s) * y_step * buf_strides_y +
+                      (i - rx_s) * x_step * buf_strides_x) *
+                        dest->elem_size + d*dest->type_size,
+                dest->type_size);
+        }
       }
     }
   }

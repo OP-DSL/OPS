@@ -255,9 +255,16 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
 
 void ops_halo_transfer(ops_halo_group group) {
 
+
+  int storage_type_size = group->halos[0]->from->type_size < group->halos[0]->to->type_size ? group->halos[0]->from->type_size : group->halos[0]->to->type_size;
+  bool mixed_exchange = group->halos[0]->from->type_size!=group->halos[0]->to->type_size &&
+                  (strcmp(group->halos[0]->from->type, "float") == 0 || strcmp(group->halos[0]->from->type, "double") == 0 || strcmp(group->halos[0]->from->type, "half") == 0) &&
+                  (strcmp(group->halos[0]->to->type, "float") == 0 || strcmp(group->halos[0]->to->type, "double") == 0 || strcmp(group->halos[0]->to->type, "half") == 0);
+
+
   for (int h = 0; h < group->nhalos; h++) {
     ops_halo halo = group->halos[h];
-    int size = halo->from->elem_size * halo->iter_size[0];
+    int size = std::min(halo->from->elem_size,halo->to->elem_size) * halo->iter_size[0];
     for (int i = 1; i < halo->from->block->dims; i++)
       size *= halo->iter_size[i];
     if (size > group->instance->ops_halo_buffer_size) {
@@ -297,7 +304,7 @@ void ops_halo_transfer(ops_halo_group group) {
     ops_halo_copy_tobuf(group->instance->ops_halo_buffer_d, 0, halo->from, ranges[0], ranges[1],
                         ranges[2], ranges[3], ranges[4], ranges[5], step[0],
                         step[1], step[2], buf_strides[0], buf_strides[1],
-                        buf_strides[2]);
+                        buf_strides[2],mixed_exchange, storage_type_size);
 
     // copy from linear buffer to target
     for (int i = 0; i < OPS_MAX_DIM; i++) {
@@ -325,7 +332,7 @@ void ops_halo_transfer(ops_halo_group group) {
     ops_halo_copy_frombuf(halo->to, group->instance->ops_halo_buffer_d, 0, ranges[0], ranges[1],
                           ranges[2], ranges[3], ranges[4], ranges[5], step[0],
                           step[1], step[2], buf_strides[0], buf_strides[1],
-                          buf_strides[2]);
+                          buf_strides[2],mixed_exchange, storage_type_size);
 
     halo->to->dirty_hd = 2;
   }
