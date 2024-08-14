@@ -816,9 +816,18 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                 //or if the next tile shrunk to 0, in which case this is the last tile
                   (tile + tiles_prod[d] < total_tiles &&
                   tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 1] -
-                  tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 0] > 0))
+                  tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 0] == 0))
                 data_read_deps[LOOPARG.dat->index]
                                    [tile * OPS_MAX_DIM * 2 + 2 * d + 1] = INT_MIN;
+              if (instance->OPS_diags > 5 && tile_sizes[d] != -1) {
+                printf2(instance,
+                    "Dataset overwrite %s read dependency update dim %d tile %d set to %d %d\n",
+                    LOOPARG.dat->name, d, tile,
+                    data_read_deps[LOOPARG.dat->index]
+                                  [tile * OPS_MAX_DIM * 2 + 2 * d + 0],
+                    data_read_deps[LOOPARG.dat->index]
+                                  [tile * OPS_MAX_DIM * 2 + 2 * d + 1]);
+              }
 
             }
 
