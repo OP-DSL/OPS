@@ -119,7 +119,8 @@ build_and_test:GNU11:APPS_CXX:
     - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON -DGPU_ARCH=75 -DGPU_NUMBER=1
     - cmake --build . -j 4
     - cmake --install .
-    - ctest -V
+#    - ctest -V
+    - ctest
   artifacts:
     expire_in: 1 week
     paths:
@@ -139,7 +140,8 @@ build_and_test:GNU11:APPS_FORTRAN:
     - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_CXX=OFF -DBUILD_OPS_FORTRAN=ON -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON -DGPU_ARCH=75 -DGPU_NUMBER=1
     - cmake --build .
     - cmake --install .
-    - ctest -V
+#    - ctest -V
+    - ctest
   artifacts:
     expire_in: 1 week
     paths:
@@ -159,7 +161,8 @@ build_and_test:NVHCP23:APPS_FORTRAN:
     - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_CXX=OFF -DBUILD_OPS_FORTRAN=ON -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON -DGPU_ARCH=75 -DGPU_NUMBER=1
     - cmake --build . --verbose
     - cmake --install .
-    - ctest -V
+#    - ctest -V
+    - ctest
   artifacts:
     expire_in: 1 week
     paths:
@@ -179,7 +182,8 @@ build_and_test:foss:APPS_CXX:
     - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON -DGPU_ARCH=75 -DCMAKE_CUDA_HOST_COMPILER=gcc-11 -DGPU_NUMBER=1
     - cmake --build . -j 4
     - cmake --install .
-    - ctest -V
+#    - ctest -V
+    - ctest
   artifacts:
     expire_in: 1 week
     paths:
