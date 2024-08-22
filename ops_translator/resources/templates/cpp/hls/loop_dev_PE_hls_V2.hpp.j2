@@ -258,18 +258,26 @@ public:
         {% endfor %}
     {% endfor %}
 
+        const short cond_x_val = stencilConfig.grid_size[0] - 1; 
+    {% if lh.ndim == 2 %}
+        const short cond_y_val = stencilConfig.outer_loop_limit - 1;
+    {% elif lh.ndim == 3 %}
+        const short cond_y_val = stencilConfig.grid_size[1] - 1;
+        const short cond_z_val = stencilConfig.outer_loop_limit - 1;
+    {% endif %}
+
         for (unsigned short itr = 0; itr < iter_limit; itr++)
         {
         #pragma HLS PIPELINE II=1
 
             spc_temp_blocking_read:
             {
-                bool cond_x_terminate = (i == stencilConfig.grid_size[0] - 1); 
+                bool cond_x_terminate = (i == cond_x_val ? true : false); 
     {% if lh.ndim == 2 %}
-                bool cond_y_terminate = (j == stencilConfig.outer_loop_limit - 1);
+                bool cond_y_terminate = (j == cond_y_val ? true : false);
     {% elif lh.ndim == 3 %}
-                bool cond_y_terminate = (j == stencilConfig.grid_size[1] - 1);
-                bool cond_z_terminate = (k == stencilConfig.outer_loop_limit - 1);
+                bool cond_y_terminate = (j == cond_y_val ? true : false);
+                bool cond_z_terminate = (k == cond_z_val ? true : false);
     {% endif %}
 
 #ifdef DEBUG_LOG
