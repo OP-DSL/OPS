@@ -207,26 +207,41 @@ SUBROUTINE {{lh.kernel}}_wrap( &
 !$OMP TARGET DATA MAP(TO:idx_local(1:{{lh.ndim}}))
 {% endif %}
 {% if lh.ndim == 1 %}
-{# !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x{{private_idx[0]}}){{reduct_line[0]}} #}
+#ifdef _CRAYFTN
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x{{private_idx[0]}}){{reduct_line[0]}}
+#else
 !$OMP TARGET TEAMS LOOP PRIVATE(n_x{{private_idx[0]}}){{reduct_line[0]}}
+#endif
     DO n_x = 1, end_indx(1)-start_indx(1)+1
 {% elif lh.ndim == 2 %}
 {% if lh.has_reduction or lh.has_reductionMDIM %}
-{# !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x,n_y{{private_idx[0]}}){{reduct_line[0]}} #}
+#ifdef _CRAYFTN
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x,n_y{{private_idx[0]}}){{reduct_line[0]}}
+#else
 !$OMP TARGET TEAMS LOOP PRIVATE(n_x,n_y{{private_idx[0]}}){{reduct_line[0]}}
+#endif
 {% else %}
-{# !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2) PRIVATE(n_x,n_y{{private_idx[0]}}){{reduct_line[0]}} #}
+#ifdef _CRAYFTN
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2) PRIVATE(n_x,n_y{{private_idx[0]}}){{reduct_line[0]}}
+#else
 !$OMP TARGET TEAMS LOOP COLLAPSE(2) PRIVATE(n_x,n_y{{private_idx[0]}}){{reduct_line[0]}}
+#endif
 {% endif %}
     DO n_y = 1, end_indx(2)-start_indx(2)+1
         DO n_x = 1, end_indx(1)-start_indx(1)+1
 {% elif lh.ndim == 3 %}
 {% if lh.has_reduction or lh.has_reductionMDIM %}
-{# !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x,n_y,n_z{{private_idx[0]}}){{reduct_line[0]}} #}
+#ifdef _CRAYFTN
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO PRIVATE(n_x,n_y,n_z{{private_idx[0]}}){{reduct_line[0]}}
+#else
 !$OMP TARGET TEAMS LOOP PRIVATE(n_x,n_y,n_z{{private_idx[0]}}){{reduct_line[0]}}
+#endif
 {% else %}
-{# !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(3) PRIVATE(n_x,n_y,n_z{{private_idx[0]}}){{reduct_line[0]}} #}
+#ifdef _CRAYFTN
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(3) PRIVATE(n_x,n_y,n_z{{private_idx[0]}}){{reduct_line[0]}}
+#else
 !$OMP TARGET TEAMS LOOP COLLAPSE(3) PRIVATE(n_x,n_y,n_z{{private_idx[0]}}){{reduct_line[0]}}
+#endif
 {% endif %}
     DO n_z = 1, end_indx(3)-start_indx(3)+1
         DO n_y = 1, end_indx(2)-start_indx(2)+1
@@ -287,19 +302,28 @@ SUBROUTINE {{lh.kernel}}_wrap( &
 
 {% if lh.ndim == 1 %}
     END DO
-{# !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO #}
+#ifdef _CRAYFTN
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+#else
 !$OMP END TARGET TEAMS LOOP
+#endif
 {% elif lh.ndim == 2 %}
         END DO
     END DO
-{# !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO #}
+#ifdef _CRAYFTN
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+#else
 !$OMP END TARGET TEAMS LOOP
+#endif
 {% elif lh.ndim == 3 %}
             END DO
         END DO
     END DO
-{# !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO #}
+#ifdef _CRAYFTN
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+#else
 !$OMP END TARGET TEAMS LOOP
+#endif
 {% endif %}
 {% if lh.arg_idx != -1 %}
 !$OMP END TARGET DATA
