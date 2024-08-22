@@ -437,6 +437,9 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 
 			ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
 			strm_out << tmp;
+#ifdef DEBUG_LOG
+			printf("|HLS DEBUG_LOG| %s | reading index: %d\n", __func__, index);
+#endif
 			index++;
 		}
 	}
@@ -446,6 +449,9 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 	#pragma HLS PIPELINE II=1
 		ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
 		strm_out << tmp;
+#ifdef DEBUG_LOG
+		printf("|HLS DEBUG_LOG| %s | reading index: %d\n", __func__, index);
+#endif
 		index++;
 	}
 }
@@ -553,7 +559,10 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 
 			ap_uint<MEM_DATA_WIDTH> tmp = strm_in.read();
 			mem_out[index] = tmp;
-			index++;
+#ifdef DEBUG_LOG
+			printf("|HLS DEBUG_LOG| %s | writing index: %d\n", __func__, index);
+#endif			
+            index++;
 		}
 	}
 
@@ -562,7 +571,10 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 	#pragma HLS PIPELINE II=1
 		ap_uint<MEM_DATA_WIDTH> tmp = strm_in.read();
 		mem_out[index] = tmp;
-		index++;
+#ifdef DEBUG_LOG
+		printf("|HLS DEBUG_LOG| %s | reading index: %d\n", __func__, index);
+#endif
+        index++;
 	}
 #ifdef DEBUG_LOG
 	printf("|HLS DEBUG_LOG|%s| exiting.\n"

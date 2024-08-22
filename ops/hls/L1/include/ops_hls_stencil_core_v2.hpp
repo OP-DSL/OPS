@@ -53,8 +53,9 @@ class StencilCoreV2
             __init();
         }
 
-        void setConfig(const StencilConfigCore& stencilConfig)
+        void setConfig(const short& PEId, const StencilConfigCore& stencilConfig)
         {
+        	m_PEId = PEId;
             m_stencilConfig = stencilConfig;
 
 #ifdef DEBUG_LOG
@@ -107,7 +108,7 @@ class StencilCoreV2
         StencilConfigCore m_stencilConfig;
         // unsigned short m_stencilPoints[NUM_POINTS * 2];
         unsigned short m_sizes[s_dim];
-
+        short m_PEId;
         // SizeType m_lowerLimits;
         // SizeType m_upperLimits;
 

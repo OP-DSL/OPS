@@ -30,6 +30,7 @@ arg{{arg.id}}_hls_stream_{{suffix}}
 
 {% block kernel_top_prototype %}
 extern "C" void kernel_outerloop_{{ilh.id}}(
+        const unsigned short slr_region,
         const unsigned int outer_itr,
     {% for i in range(ndim)%}
         const unsigned short stencilConfig_grid_size_{{i}},
