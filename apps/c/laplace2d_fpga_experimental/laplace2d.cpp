@@ -65,6 +65,36 @@ int main(int argc, const char** argv)
     ops_init(argc, argv,1);
 
     unsigned int batches = 1;
+    //Size along y
+    jmax = 100;
+    //Size along x
+    imax = 100;
+    unsigned int iter_max = 100;
+
+    const char* pch;
+    for ( int n = 1; n < argc; n++ )
+    {
+        pch = strstr(argv[n], "-sizex=");
+
+        if(pch != NULL) {
+            imax = atoi ( argv[n] + 7 ); continue;
+        }
+        pch = strstr(argv[n], "-sizey=");
+
+        if(pch != NULL) {
+            jmax = atoi ( argv[n] + 7 ); continue;
+        }
+        pch = strstr(argv[n], "-iters=");
+
+        if(pch != NULL) {
+            iter_max = atoi ( argv[n] + 7 ); continue;
+        }
+        pch = strstr(argv[n], "-batch=");
+
+        if(pch != NULL) {
+            batches = atoi ( argv[n] + 7 ); continue;
+        }
+    }
 
 #ifdef PROFILE
 	double init_runtime[batches];
@@ -73,12 +103,6 @@ int main(int argc, const char** argv)
 
     for (unsigned int bat = 0; bat < batches; bat++)
     {
-        //Size along y
-        jmax = 100;
-        //Size along x
-        imax = 100;
-        unsigned int iter_max = 100;
-
         float *A=NULL;
         float *Anew=NULL;
 #ifdef VERIFICATION
@@ -156,7 +180,7 @@ int main(int argc, const char** argv)
 		init_runtime[bat] = std::chrono::duration<double, std::micro> (init_end_clk_point - init_start_clk_point).count();
 #endif
 
-        ops_printf("Jacobi relaxation Calculation: %d x %d mesh\n", imax+2, jmax+2);
+        ops_printf("Laplace 2D Calculation: %d x %d mesh\n", imax+2, jmax+2);
 
 #ifdef PROFILE
 		init_start_clk_point = std::chrono::high_resolution_clock::now();
