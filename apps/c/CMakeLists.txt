@@ -832,7 +832,9 @@
             if((OPS_TEST) AND (${GenerateTest} STREQUAL "YES"))
                 add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_dev_mpi ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh dev_mpi)
                 add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh mpi)
-                add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_openmp ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh mpi_openmp)
+                if (NOT SKIP_SEQ_TESTING)
+                    add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_openmp ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh mpi_openmp)
+                endif()
                 add_cmake_test(${CMAKE_CURRENT_BINARY_DIR}/${Name}_mpi_tiled ${CMAKE_CURRENT_SOURCE_DIR}/cmake_test.sh mpi_tiled)
             endif()
 
