@@ -1,19 +1,18 @@
 stages:
-  - build
+  - test_gnu11
   - test
 
 job_build:
-  stage: build
+  stage: test_gnu11
   tags:
     - CCP, test
   script:
-    - echo "Building the project"
     - source ~/.bash_aliases
     - module avail 
     - module load CUDA
     - export CXX=mpicxx
     - cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt 
-    - cmake --build build -j 4
+    - cmake --build build -j 6
     - cmake --install build 
     - ctest --test-dir build --output-on-failure 
 

@@ -34,8 +34,9 @@ if(${MPI_FOUND})
     string(REPLACE " " ";" MPI_INC_LIST ${MPI_INC_STRING})
   endif()
 endif()
-message(STATUS "MPI_INC_LIST ${MPI_INC_LIST}")
 
 add_subdirectory(poisson)
+add_subdirectory(CloverLeaf)
+add_subdirectory(CloverLeaf_3D)
 
 
