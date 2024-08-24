@@ -4,7 +4,7 @@ macro(CreateTempDir)
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/tmp")
 endmacro()
 
-function(add_cmake_test WORK_DIR EXE_NAME SCRIPT_PATH ARGUMENTS)
+function(add_cmake_test WORK_DIR EXE_NAME SCRIPT_PATH ARGUMENTS OMPNT)
   if(EXISTS ${SCRIPT_PATH})
     set(exe_file "${WORK_DIR}/${EXE_NAME}")
     list(LENGTH ARGUMENTS NL)
@@ -23,8 +23,8 @@ function(add_cmake_test WORK_DIR EXE_NAME SCRIPT_PATH ARGUMENTS)
       set(cmd "${test_output}")
       add_test(NAME ${EXE_NAME}
               COMMAND ${CMAKE_COMMAND}
-              -DCMD=${cmd} -DARG=${args}
-              -DOPS_INSTALL_PATH=${CMAKE_INSTALL_PATH} -P ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/OPS_runtests.cmake
+	      -DCMD=${cmd} -DARG=${args} -DOMPNT=${OMPNT}
+              -DOPS_INSTALL_PATH=${CMAKE_INSTALL_PATH} -P ${CMAKE_SOURCE_DIR}/apps/c/cmake/OPS_runtests.cmake
 	      WORKING_DIRECTORY "${WORK_DIR}")
     else()
       message(FATAL_ERROR "Error in executing script to get runtime command string ${test_result}: ${test_output}")
@@ -43,7 +43,8 @@ macro(SetAppExe
     INP
     Links 
     Defs
-    Options)
+    Options
+    OMPNT)
     # Init the lists for FLAGS and LINKS
     set(Defs_Loc "")
     set(Links_Loc "")
@@ -103,7 +104,7 @@ macro(SetAppExe
     else()
       set(ARGUMENTS "${APP_type}" )
     endif()
-    add_cmake_test(${APP_DIR_DST} ${APP_exe} ${CWD}/cmake_test.sh ${ARGUMENTS})
+    add_cmake_test(${APP_DIR_DST} ${APP_exe} ${CWD}/cmake_test.sh ${ARGUMENTS} ${OMPNT})
 endmacro()
 
 #   Prepare the macro for compiling apps Name: App name Odd: Key words for source
@@ -120,7 +121,11 @@ macro(
     Others
     Extra
     Trid
-    GenerateTest)
+    TestDev
+    OMPNT)
+
+    message(STATUS "TEST DEV ${TestDev}")
+    message(STATUS "OPS_TEST_DEV ${OPS_TEST_DEV}")
 
     # Copy all source and head files into tmp
     file(GLOB CPP "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
@@ -230,25 +235,28 @@ macro(
     file(GLOB_RECURSE INP "${CMAKE_CURRENT_SOURCE_DIR}/*bm_short.in")
 
     # TARGET: DEV_SEQ, SEQ, OPENMP, TILED
-    set(APP_TYPE "dev_seq")
-    set(APP_SRC ${DEV} ${OTHERS})
-    set(Links "ops_seq" 
-	      "OpenMP::OpenMP_CXX")
     set(Defs "")
     set(Opts "")
-    # Make sure to use "" for potentially empty inputs
-    setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
-	      "${app_dir_c}" "${TMP_SOURCE_DIR}" 
-	      "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-	      "${Links}" "${Defs}" "${Opts}")  
-    if(MPI_FOUND)
-      set(APP_TYPE "dev_mpi")
-      set(Links "ops_mpi" 
-	        "OpenMP::OpenMP_CXX")
+    set(APP_SRC ${DEV} ${OTHERS})
+    if(${TestDev})
+      message(STATUS "Set UP also DEV")
+      set(APP_TYPE "dev_seq")
+      set(Links "ops_seq" 
+                "OpenMP::OpenMP_CXX")
+      # Make sure to use "" for potentially empty inputs
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
-        	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
-  	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-  	        "${Links}" "${Defs}" "${Opts}")  
+         	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
+	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+		"${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+      if(MPI_FOUND)
+        set(APP_TYPE "dev_mpi")
+        set(Links "ops_mpi" 
+                  "OpenMP::OpenMP_CXX")
+        setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+          	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
+                  "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+                  "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+      endif()
     endif()
    
     set(APP_TYPE "seq")
@@ -261,7 +269,7 @@ macro(
     setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
 	      "${app_dir_c}" "${TMP_SOURCE_DIR}" 
 	      "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-	      "${Links}" "${Defs}" "${Opts}")  
+	      "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
     if(MPI_FOUND)
       set(APP_TYPE "mpi")
       set(Links "ops_mpi" 
@@ -269,7 +277,7 @@ macro(
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
         	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
   	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-  	        "${Links}" "${Defs}" "${Opts}")  
+  	        "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
     endif()
 
     set(APP_TYPE "openmp")
@@ -283,7 +291,7 @@ macro(
     setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
 	      "${app_dir_c}" "${TMP_SOURCE_DIR}" 
 	      "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-	      "${Links}" "${Defs}" "${Opts}")  
+	      "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
     if(MPI_FOUND)
       set(APP_TYPE "mpi_openmp")
       set(Links "ops_mpi" 
@@ -291,7 +299,7 @@ macro(
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
         	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
   	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-  	        "${Links}" "${Defs}" "${Opts}")  
+  	        "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
     endif()
     
     set(APP_TYPE "tiled")
@@ -305,7 +313,7 @@ macro(
     setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
 	      "${app_dir_c}" "${TMP_SOURCE_DIR}" 
 	      "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-	      "${Links}" "${Defs}" "${Opts}")  
+	      "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
     if(MPI_FOUND)
       set(APP_TYPE "mpi_tiled")
       set(Links "ops_mpi" 
@@ -313,7 +321,7 @@ macro(
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
         	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
   	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-  	        "${Links}" "${Defs}" "${Opts}")  
+  	        "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
     endif()
    
     if(CUDAToolkit_FOUND) 
@@ -331,7 +339,7 @@ macro(
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
              	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
 	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-	        "${Links}" "${Defs}" "${Opts}")  
+	        "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
       if(MPI_FOUND)
         set(APP_TYPE "mpi_cuda")
         set(Defs "-DMPICH_IGNORE_CXX_SEEK")
@@ -343,13 +351,13 @@ macro(
         setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
                   "${app_dir_c}" "${TMP_SOURCE_DIR}" 
                   "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-                  "${Links}" "${Defs}" "${Opts}")  
+                  "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
 	#
 	set(APP_TYPE "mpi_cuda_tiled")
         setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
                   "${app_dir_c}" "${TMP_SOURCE_DIR}" 
                   "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-                  "${Links}" "${Defs}" "${Opts}")  
+                  "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
       endif()
     endif()     
     # OMPOFFLOAD
@@ -370,7 +378,7 @@ macro(
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
   	        "${app_dir_c}" "${TMP_SOURCE_DIR}" 
   	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-  	        "${Links}" "${Defs}" "${Opts}")  
+  	        "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
 
     endif()
 

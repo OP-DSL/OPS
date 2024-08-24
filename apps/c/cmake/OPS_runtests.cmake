@@ -1,14 +1,15 @@
-macro(TEST CMD ARG)
+macro(TEST CMD ARG OMPNT)
     string(FIND ${CMD} "_openmp" openmp_index)
     if(openmp_index EQUAL -1)
         set(ENV{OMP_NUM_THREADS} 1)
     else()
-        set(ENV{OMP_NUM_THREADS} 2)
+        set(ENV{OMP_NUM_THREADS} ${OMPNT})
     endif()
 
     separate_arguments(args NATIVE_COMMAND ${ARG})
     separate_arguments(cmds NATIVE_COMMAND ${CMD})
 
+    execute_process(COMMAND echo $OMP_NUM_THREADS)
     execute_process(COMMAND ${cmds} ${args} OUTPUT_FILE perf.out)
     execute_process(COMMAND tail -n 10 perf.out)
     execute_process(COMMAND grep "PASSED" perf.out RESULT_VARIABLE RES)
@@ -17,4 +18,4 @@ macro(TEST CMD ARG)
     endif()
 endmacro()
 
-TEST(${CMD} ${ARG})
+TEST(${CMD} ${ARG} ${OMPNT})

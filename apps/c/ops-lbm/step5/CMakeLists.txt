@@ -1,3 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+set(case "lattboltz2d")
+set(CASE_DIR "${app_dir_c}/${case}")
 createtempdir()
-build_ops_c_sample(lattboltz2d "NONE" "NONE" "NONE" "NO" "YES")
+build_ops_c_sample(${case} "NONE" "NONE" "NONE" "NO" "${OPS_TEST_DEV}" "2")

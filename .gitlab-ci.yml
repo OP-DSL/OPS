@@ -2,7 +2,7 @@ stages:
   - test_gnu11
   - test
 
-job_build:
+build_test_gnu11:
   stage: test_gnu11
   tags:
     - CCP, test
@@ -11,7 +11,7 @@ job_build:
     - module avail 
     - module load CUDA
     - export CXX=mpicxx
-    - cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt 
+    - cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt -DOPS_TEST_FULL=ON 
     - cmake --build build -j 6
     - cmake --install build 
     - ctest --test-dir build --output-on-failure 

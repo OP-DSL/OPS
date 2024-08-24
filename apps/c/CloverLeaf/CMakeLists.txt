@@ -10,4 +10,4 @@ set(others start.cpp
 	   advection.cpp)
 # Off files to avoid: generally they are idetified with a small string
 set(odd "profile")
-build_ops_c_sample(${case} ${odd} "${others}" "NONE" "NO" "YES")
+build_ops_c_sample(${case} ${odd} "${others}" "NONE" "NO" "${OPS_TEST_DEV}" "2")

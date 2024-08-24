@@ -2,7 +2,8 @@
 set(app_dir "${PROJECT_BINARY_DIR}/APPS_BUILD")
 file(MAKE_DIRECTORY ${app_dir})
 # Activate the full list of tests
-option(OPS_TEST_FULL "Turn on tests for all Apps" ON)
+option(OPS_TEST_FULL "Turn on tests for all Apps" OFF)
+option(OPS_TEST_DEV "Turn on tests for dev backends" OFF)
 
 # Find the OPS Translator
 if(LEGACY_CODEGEN)

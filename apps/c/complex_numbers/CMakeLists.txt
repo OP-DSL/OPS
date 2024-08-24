@@ -1,3 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
-
-build_ops_c_sample(complex_numbers "NONE" "NONE" "NO" "NONE")
+set(case "complex_numbers")
+set(CASE_DIR "${app_dir_c}/${case}")
+createtempdir()
+build_ops_c_sample(${case} "NONE" "NONE" "NONE" "NO" "${OPS_TEST_DEV}" "2")
