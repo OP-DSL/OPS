@@ -260,7 +260,7 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
 // Computing dependencies across MPI
 /////////////////////////////////////////////////////////////////////////
 
-void ops_compute_mpi_dependencies(OPS_instance *instance, int loop, int d, int *start, int *end, int *biggest_range, int *store_left_neighbour_end, int *store_right_neighbour_start) {
+void ops_compute_mpi_dependencies(OPS_instance *instance, int loop, int d, int *start, int *end, int *biggest_range, int *store_left_neighbour_end, int *store_right_neighbour_start, int other_dims) {
   //If loop range starts before my left boundary, my left neighbour's end index
   // is either my start index or the end index of the loop (whichever is smaller)
   int left_neighbour_end = LOOPRANGE[2*d] < biggest_range[2*d] ? 
@@ -285,8 +285,8 @@ void ops_compute_mpi_dependencies(OPS_instance *instance, int loop, int d, int *
         if (intersect_len > 0)
           left_neighbour_end = MAX(left_neighbour_end,intersect_begin + intersect_len);
 
-        //if overwritten to full extent (range end >= my left boundary), clear read dependency
-        if (LOOPARG.acc == OPS_WRITE && LOOPRANGE[2*d+1]>=start[d]) {
+        //if overwritten to full extent (range end >= my left boundary) in all dimensions, clear read dependency
+        if (LOOPARG.acc == OPS_WRITE && LOOPRANGE[2*d+1]>=start[d] && other_dims) {
           if (instance->OPS_diags>5) printf2(instance,"Proc %d dim %d name %s read_deps_edge cleared\n",ops_get_proc(), d, LOOPARG.dat->name);
           data_read_deps_edge[LOOPARG.dat->index][2 * d] = INT_MIN;
         }
@@ -308,8 +308,8 @@ void ops_compute_mpi_dependencies(OPS_instance *instance, int loop, int d, int *
         if (intersect_len > 0)
           right_neighbour_start = MIN(right_neighbour_start,intersect_begin);
 
-        //if overwritten to full extent (range start <= my right boundary), clear read dependency
-        if (LOOPARG.acc == OPS_WRITE && LOOPRANGE[2*d]<=end[d]) {
+        //if overwritten to full extent (range start <= my right boundary) in all dimensions, clear read dependency
+        if (LOOPARG.acc == OPS_WRITE && LOOPRANGE[2*d]<=end[d] && other_dims) {
           if (instance->OPS_diags>5) printf2(instance,"Proc %d dim %d name %s read_deps_edge cleared\n",ops_get_proc(), d, LOOPARG.dat->name);
           data_read_deps_edge[LOOPARG.dat->index][2 * d + 1] = INT_MAX;
         }
@@ -581,7 +581,15 @@ int ops_construct_tile_plan(OPS_instance *instance) {
 
     for (int d = 0; d < dims; d++) {
 
-      ops_compute_mpi_dependencies(instance, loop, d, start, end, biggest_range, store_left_neighbour_end, store_right_neighbour_start);
+      //need to check full intersection in other dimensions
+      int other_dims = 1;
+      for (int d2 = 0; d2 < OPS_MAX_DIM; d2++) {
+        if (d2 == d) continue;
+        int full_intersection = intersection2(start[d2], end[d2], decomp_disp[d2], decomp_disp[d2] + decomp_size[d2]);
+        other_dims = other_dims && (full_intersection>=decomp_size[d2]);
+      }
+
+      ops_compute_mpi_dependencies(instance, loop, d, start, end, biggest_range, store_left_neighbour_end, store_right_neighbour_start, other_dims);
 
       for (int tile = 0; tile < total_tiles; tile++) {
 
@@ -747,11 +755,6 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                                          tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1],
                                          LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
 
-//TODO: check if I intersect in other dimensions as well - but this may cause issues over MPI boundaries?
-// also, this might ake adjacent tiles have slightly different skewing - again a problem over MPI?
-//currently not an issue due to edge loops only having stencils in the direction where they are edges
-
-
 				//If invalid/no range, skip updating dependencies
         if (intersect_len <= 0)
           continue;
@@ -807,16 +810,16 @@ int ops_construct_tile_plan(OPS_instance *instance) {
 
             //if this is the first/last tile and OPS_WRITE, clear read dependency
             if (LOOPARG.acc == OPS_WRITE) {
-              //If this is the first tile, we need to clear read dependency
-              if ((tile / tiles_prod[d]) % ntiles[d] == 0)
+              //If this is the first tile, and we cover full range in other dims, we need to clear read dependency
+              if ((tile / tiles_prod[d]) % ntiles[d] == 0 && other_dims)
                 data_read_deps[LOOPARG.dat->index]
                                    [tile * OPS_MAX_DIM * 2 + 2 * d + 0] = INT_MAX;
-              //If this is the last tile, we need to clear read dependency
-              if ((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 ||
+              //If this is the last tile, and we cover full range in other dims, we need to clear read dependency
+              if (((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 ||
                 //or if the next tile shrunk to 0, in which case this is the last tile
                   (tile + tiles_prod[d] < total_tiles &&
                   tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 1] -
-                  tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 0] == 0))
+                  tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 0] == 0)) && other_dims)
                 data_read_deps[LOOPARG.dat->index]
                                    [tile * OPS_MAX_DIM * 2 + 2 * d + 1] = INT_MIN;
               if (instance->OPS_diags > 5 && tile_sizes[d] != -1) {
@@ -958,20 +961,35 @@ range[0]             left_neighbour_end           right_neighbour_start         
 
   int beg2, end2;
   for (int d = 0; d < OPS_MAX_DIM; d++) {
-
-    if(left_neighbour_end[d] != INT_MIN) {
-      beg2 = decomp_disp[d];    end2 = left_neighbour_end[d];
-      left_boundary_cleanUpTo[d]  = intersection2(my_tiled_begin[d], my_tiled_end[d], beg2, end2);
-
-      beg2 = my_tiled_begin[d];    end2 = decomp_disp[d];
-      left_halo_cleanUpTo[d]      = intersection2(my_tiled_begin[d], my_tiled_end[d], beg2, end2);
+    //need to check full intersection in other dimensions
+    int other_dims = 1;
+    for (int d2 = 0; d2 < OPS_MAX_DIM; d2++) {
+      if (d2 == d) continue;
+      int full_intersection = intersection2(my_tiled_begin[d2], my_tiled_end[d2], decomp_disp[d2], decomp_disp[d2] + decomp_size[d2]);
+      other_dims = other_dims && (full_intersection>=decomp_size[d2]);
     }
+    if (!other_dims) continue;
+
+    //TODO: do my neighbours do the same thing?
+    
+    //if there is a left neighbour and they are executing someting
+    if(left_neighbour_end[d] != INT_MIN) {
+      //my left neighbour is redundantly executing some of my owned range, therefore those dirty bits can be cleared
+      beg2 = decomp_disp[d];    end2 = left_neighbour_end[d];
+      left_boundary_cleanUpTo[2*d+0]  = intersection(my_tiled_begin[d], my_tiled_end[d], beg2, end2, &left_boundary_cleanUpTo[2*d+1]);
+
+      //I am redundantly executing some of my left neighbour's owned range, therefore those dirty bits can be cleared
+      beg2 = my_tiled_begin[d];    end2 = decomp_disp[d];
+      left_halo_cleanUpTo[2*d+0]      = intersection(my_tiled_begin[d], my_tiled_end[d], beg2, end2, &left_halo_cleanUpTo[2*d+1]);
+    }
+
+    //Same on right side
     if(right_neighbour_start[d] != INT_MAX) {
       beg2 = right_neighbour_start[d];     end2 = (decomp_disp[d]+decomp_size[d]);
-      right_boundary_cleanUpTo[d] = intersection2(my_tiled_begin[d], my_tiled_end[d], beg2, end2);
+      right_boundary_cleanUpTo[2*d+0] = intersection(my_tiled_begin[d], my_tiled_end[d], beg2, end2, &right_boundary_cleanUpTo[2*d+1]);
 
       beg2 = (decomp_disp[d]+decomp_size[d]);   end2 = my_tiled_end[d];
-      right_halo_cleanUpTo[d]     = intersection2(my_tiled_begin[d], my_tiled_end[d], beg2, end2);
+      right_halo_cleanUpTo[2*d+0]     = intersection(my_tiled_begin[d], my_tiled_end[d], beg2, end2, &right_halo_cleanUpTo[2*d+1]);
     }
  }//dim-loop end
 }
@@ -1020,6 +1038,10 @@ void ops_execute(OPS_instance *instance) {
   int total_tiles = tiling_plans[match].ntiles;
 
   std::vector<std::vector<int> > &decomp_disp = tiling_plans[match].loop_decomp_disp;
+  std::vector<std::vector<int> > &decomp_size = tiling_plans[match].loop_decomp_size;
+
+  if (instance->OPS_diags>3)
+    ops_printf2(instance,"Executing tiling plan for %d loops\n", ops_kernel_list.size());
 
   //Do halo exchanges
   double c,t1=0,t2=0;
@@ -1034,9 +1056,6 @@ void ops_execute(OPS_instance *instance) {
     ops_timers_core(&c,&t2);
     instance->ops_tiled_halo_exchange_time += t2-t1;
   }
-
-  if (instance->OPS_diags>3)
-    ops_printf2(instance,"Executing tiling plan for %d loops\n", ops_kernel_list.size());
 
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
     if (ops_kernel_list[i]->startup_func) ops_kernel_list[i]->startup_func(ops_kernel_list[i]);
@@ -1071,8 +1090,8 @@ void ops_execute(OPS_instance *instance) {
     }
   }
 
-  int left_boundary_cleanUpTo[OPS_MAX_DIM], left_halo_cleanUpTo[OPS_MAX_DIM];
-  int right_boundary_cleanUpTo[OPS_MAX_DIM], right_halo_cleanUpTo[OPS_MAX_DIM];
+  int left_boundary_cleanUpTo[2*OPS_MAX_DIM], left_halo_cleanUpTo[2*OPS_MAX_DIM];
+  int right_boundary_cleanUpTo[2*OPS_MAX_DIM], right_halo_cleanUpTo[2*OPS_MAX_DIM];
 
   //Set dirtybits
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
@@ -1082,8 +1101,14 @@ void ops_execute(OPS_instance *instance) {
 
     // find the full tiled_range begin and end for current loop
     for (int d = 0; d < OPS_MAX_DIM; d++) {
-      left_boundary_cleanUpTo[d] = 0;   left_halo_cleanUpTo[d] = 0;
-      right_boundary_cleanUpTo[d] = 0;  right_halo_cleanUpTo[d] = 0;
+      left_boundary_cleanUpTo[2*d+0] = 0;
+      left_boundary_cleanUpTo[2*d+1] = 0;
+      left_halo_cleanUpTo[2*d+0] = 0;
+      left_halo_cleanUpTo[2*d+1] = 0;
+      right_boundary_cleanUpTo[2*d+0] = 0;
+      right_boundary_cleanUpTo[2*d+1] = 0;
+      right_halo_cleanUpTo[2*d+0] = 0;
+      right_halo_cleanUpTo[2*d+1] = 0;
       my_tiled_begin[d] = INT_MAX;      my_tiled_end[d] = INT_MIN;
       for (int tile = 0; tile < total_tiles; tile++) {
         my_tiled_begin[d] = MIN(my_tiled_begin[d], tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 2 * d + 0] + decomp_disp[i][d]);
@@ -1092,6 +1117,8 @@ void ops_execute(OPS_instance *instance) {
     }
 
     ops_compute_dirtybit_clearupto(i, ops_kernel_list[i]->name, match, my_tiled_begin, my_tiled_end, left_boundary_cleanUpTo, left_halo_cleanUpTo, right_boundary_cleanUpTo, right_halo_cleanUpTo);
+    if (instance->OPS_diags > 5)
+      ops_printf("kernel %s left_halo_cleanUpTo %d left_boundary_cleanUpTo %d right_boundary_cleanUpTo %d right_halo_cleanUpTo %d, owned range: %d-%d tiled range: %d-%d, left neighbour end: %d\n", ops_kernel_list[i]->name, left_halo_cleanUpTo[0], left_boundary_cleanUpTo[0], right_boundary_cleanUpTo[0], right_halo_cleanUpTo[0], decomp_disp[i][0], decomp_disp[i][0]+decomp_size[i][0], my_tiled_begin[0], my_tiled_end[0], tiling_plans[match].left_neighbour_end[i][0]);
 
     for (int arg = 0; arg < ops_kernel_list[i]->nargs; arg++) {
       if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT && ops_kernel_list[i]->args[arg].acc != OPS_READ)
