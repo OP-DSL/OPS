@@ -130,7 +130,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                 ((k - rz_s) * z_step * buf_strides_z +
                   (j - ry_s) * y_step * buf_strides_y +
                   (i - rx_s) * x_step * buf_strides_x) *
-                    src->elem_size + d*storage_type_size,
+                    src->dim*storage_type_size + d*storage_type_size,
                   &value,
                   storage_type_size);
             } else if (storage_type_size == 8) {
@@ -146,7 +146,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                 ((k - rz_s) * z_step * buf_strides_z +
                   (j - ry_s) * y_step * buf_strides_y +
                   (i - rx_s) * x_step * buf_strides_x) *
-                    src->elem_size + d*storage_type_size,
+                    src->dim*storage_type_size + d*storage_type_size,
                   &value,
                   storage_type_size);
             } else if (storage_type_size == 2) {
@@ -162,7 +162,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                 ((k - rz_s) * z_step * buf_strides_z +
                   (j - ry_s) * y_step * buf_strides_y +
                   (i - rx_s) * x_step * buf_strides_x) *
-                    src->elem_size + d*storage_type_size,
+                    src->dim*storage_type_size + d*storage_type_size,
                   &value,
                   storage_type_size);
             }
@@ -171,7 +171,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                   ((k - rz_s) * z_step * buf_strides_z +
                     (j - ry_s) * y_step * buf_strides_y +
                     (i - rx_s) * x_step * buf_strides_x) *
-                      src->elem_size + d*storage_type_size,
+                      src->dim*storage_type_size + d*storage_type_size,
                     get_data_ptr(src, i, j, k, d),
                   storage_type_size);
           }
@@ -201,7 +201,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                 ((k - rz_s) * z_step * buf_strides_z +
                   (j - ry_s) * y_step * buf_strides_y +
                   (i - rx_s) * x_step * buf_strides_x) *
-                    dest->elem_size + d*storage_type_size,
+                    dest->dim*storage_type_size + d*storage_type_size,
                 storage_type_size);
             if (dest->type_size == 4) {
               *((float*)get_data_ptr(dest, i, j, k, d)) = value;
@@ -216,7 +216,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                 ((k - rz_s) * z_step * buf_strides_z +
                   (j - ry_s) * y_step * buf_strides_y +
                   (i - rx_s) * x_step * buf_strides_x) *
-                    dest->elem_size + d*storage_type_size,
+                    dest->dim*storage_type_size + d*storage_type_size,
                 storage_type_size);
             if (dest->type_size == 4) {
               *((float*)get_data_ptr(dest, i, j, k, d)) = (float)value;
@@ -231,7 +231,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                 ((k - rz_s) * z_step * buf_strides_z +
                   (j - ry_s) * y_step * buf_strides_y +
                   (i - rx_s) * x_step * buf_strides_x) *
-                    dest->elem_size + d*storage_type_size,
+                    dest->dim*storage_type_size + d*storage_type_size,
                 storage_type_size);
             if (dest->type_size == 4) {
               *((float*)get_data_ptr(dest, i, j, k, d)) = (float)value;
@@ -246,12 +246,12 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                     (OPS_soa ? ((k * dest->size[0] * dest->size[1] + j * dest->size[0] + i)
                           + d * dest->size[0] * dest->size[1] * dest->size[2]) * dest->type_size
                         : ((k * dest->size[0] * dest->size[1] + j * dest->size[0] + i) *
-                        dest->elem_size + d*dest->type_size)),
+                        dest->dim*storage_type_size + d*dest->type_size)),
                 src + src_offset +
                     ((k - rz_s) * z_step * buf_strides_z +
                       (j - ry_s) * y_step * buf_strides_y +
                       (i - rx_s) * x_step * buf_strides_x) *
-                        dest->elem_size + d*dest->type_size,
+                        dest->dim*storage_type_size + d*dest->type_size,
                 dest->type_size);
         }
       }
