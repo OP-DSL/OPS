@@ -219,7 +219,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write(
 {
     for (unsigned int i = 0; i < iter/2; i++)
     {
-    #pragma HLS PIPELINE REWIND
+    //#pragma HLS PIPELINE REWIND
     #ifdef DEBUG_LOG
         printf("[KERNEL_DEBUG]|%s| Calling datamover. i:%d\n", __func__, i);
     #endif
