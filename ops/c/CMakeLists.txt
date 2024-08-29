@@ -28,4 +28,3 @@ install(FILES ${INCLUDE} DESTINATION include)
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in
                               "${CMAKE_BINARY_DIR}/OPSConfig.cmake"
                               INSTALL_DESTINATION ${ConfigPackageLocation})
-

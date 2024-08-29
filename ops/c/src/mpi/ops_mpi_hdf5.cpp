@@ -75,188 +75,27 @@ extern sub_dat_list *OPS_sub_dat_list; // pointer to list holding sub-dat
 // details
 
 extern void (*ops_read_dat_hdf5_dynamic)(ops_dat dat);
-/*******************************************************************************
- * Routine to remove the intra-block (i.e. MPI) halos from the flattened 1D dat
- * before writing to HDF5 files - Maximum dimension of block is 1
- *******************************************************************************/
-void remove_mpi_halos1D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
+
+
+void remove_mpi_halos(ops_dat dat, hsize_t *size, hsize_t *disp, char *data, int dimensions) {
   int index = 0;
   int count = 0;
-  // for(int m = disp[4]; m < size[4]; m++) {
-  //  for(int l = disp[3]; l < size[3]; l++) {
-  //  for(int k = disp[2]; k < disp[2]+size[2]; k++) {
-  // for(int j = disp[1]; j < disp[1]+size[1]; j++) {
-  for (int i = disp[0]; i < disp[0] + size[0]; i++) {
-    index = i; //+
-    // j * dat->size[0]; //+ // need to stride in dat->size as data block
-    // includes intra-block halos
-    // k * dat->size[0] * dat->size[1];// +
-    // l * dat->size[0] * dat->size[1] * dat->size[2] +
-    // m * dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3];
-    memcpy(&data[count * dat->elem_size], &dat->data[index * dat->elem_size],
-           dat->elem_size);
-    count++;
-  }
-  // }
-  //}
-  //}
-  //}
-  return;
-  /*
-     x = disp[0] to size[0]
-     y = disp[1] to size[1]
-     z = disp[2] to size[2]
-     t = disp[3] to size[4]
-     u = disp[4] to size[4]
-     index = x + y * D1 + z * D1 * D2 + t * D1 * D2 * D3 + u * D1 * D2 * D3 *
-     D4;
-
-
-     D1 - dat->size[0]
-     D2 - dat->size[1]
-     D3 - dat->size[2]
-     D4 - dat->size[3]
-   */
-}
-
-/*******************************************************************************
- * Routine to remove the intra-block (i.e. MPI) halos from the flattened 1D dat
- * before writing to HDF5 files - Maximum dimension of block is 2
- *******************************************************************************/
-void remove_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
-  int index = 0;
-  int count = 0;
-  // for(int m = disp[4]; m < size[4]; m++) {
-  //  for(int l = disp[3]; l < size[3]; l++) {
-  //  for(int k = disp[2]; k < disp[2]+size[2]; k++) {
-  for (int j = disp[1]; j < disp[1] + size[1]; j++) {
-    for (int i = disp[0]; i < disp[0] + size[0]; i++) {
-      index = i + j * dat->size[0]; //+ // need to stride in dat->size as data
-      // block includes intra-block halos
-      // k * dat->size[0] * dat->size[1];// +
-      // l * dat->size[0] * dat->size[1] * dat->size[2] +
-      // m * dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3];
-      memcpy(&data[count * dat->elem_size], &dat->data[index * dat->elem_size],
-             dat->elem_size);
-      count++;
-    }
-  }
-  //}
-  //}
-  //}
-  return;
-  /*
-     x = disp[0] to size[0]
-     y = disp[1] to size[1]
-     z = disp[2] to size[2]
-     t = disp[3] to size[4]
-     u = disp[4] to size[4]
-     index = x + y * D1 + z * D1 * D2 + t * D1 * D2 * D3 + u * D1 * D2 * D3 *
-     D4;
-
-
-     D1 - dat->size[0]
-     D2 - dat->size[1]
-     D3 - dat->size[2]
-     D4 - dat->size[3]
-   */
-}
-
-/*******************************************************************************
- * Routine to remove the intra-block (i.e. MPI) halos from the flattened 1D dat
- * before writing to HDF5 files - Maximum dimension of block is 3
- *******************************************************************************/
-void remove_mpi_halos3D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
-  int index = 0;
-  int count = 0;
-  // for(int m = disp[4]; m < size[4]; m++) {
-  //  for(int l = disp[3]; l < size[3]; l++) {
-  for (int k = disp[2]; k < disp[2] + size[2]; k++) {
-    for (int j = disp[1]; j < disp[1] + size[1]; j++) {
-      for (int i = disp[0]; i < disp[0] + size[0]; i++) {
-        index = i + j * dat->size[0] + // need to stride in dat->size as data
-                                       // block includes intra-block halos
-                k * dat->size[0] * dat->size[1]; // +
-        // l * dat->size[0] * dat->size[1] * dat->size[2] +
-        // m * dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3];
-        memcpy(&data[count * dat->elem_size],
-               &dat->data[index * dat->elem_size], dat->elem_size);
-        count++;
+  for (int m = (dimensions > 4 ? disp[4] : 0); m < (dimensions > 4 ? disp[4] + size[4] : 1); m++) {
+    for (int l = (dimensions > 3 ? disp[3] : 0); l < (dimensions > 3 ? disp[3] + size[3] : 1); l++) {
+      for (int k = (dimensions > 2 ? disp[2] : 0); k < (dimensions > 2 ? disp[2] + size[2] : 1); k++) {
+        for (int j = (dimensions > 1 ? disp[1] : 0); j < (dimensions > 1 ? disp[1] + size[1] : 1); j++) {
+          for (int i = disp[0]; i < disp[0] + size[0]; i++) {
+            index = i + (j * (dimensions > 1 ? dat->size[0] : 0)) + (k * (dimensions > 2 ? dat->size[0] * dat->size[1] : 0))
+                    + (l * (dimensions > 3 ? dat->size[0] * dat->size[1] * dat->size[2] : 0))
+                    + (m * (dimensions > 4 ? dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3] : 0));
+            memcpy(&data[count * dat->elem_size], &dat->data[index * dat->elem_size], dat->elem_size);
+            count++;
+          }
+        }
       }
     }
   }
-  //}
-  //}
-  return;
 }
-
-/*******************************************************************************
- * Routine to remove the intra-block (i.e. MPI) halos from the flattened 1D dat
- * before writing to HDF5 files - Maximum dimension of block is 4
- *******************************************************************************/
-void remove_mpi_halos4D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
-}
-
-/*******************************************************************************
- * Routine to remove the intra-block (i.e. MPI) halos from the flattened 1D dat
- * before writing to HDF5 files - Maximum dimension of block is 5
- *******************************************************************************/
-void remove_mpi_halos5D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
-}
-
-/*******************************************************************************
- * Routine to add the intra-block halos (i.e. MPI) from the flattened 1D data
- * after reading from an HDF5 file - Maximum dimension of block is 2
- *******************************************************************************/
-void add_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
-  int index = 0;
-  int count = 0;
-  // for(int m = disp[4]; m < size[4]; m++) {
-  //  for(int l = disp[3]; l < size[3]; l++) {
-  //  for(int k = disp[2]; k < disp[2]+size[2]; k++) {
-  for (int j = disp[1]; j < disp[1] + size[1]; j++) {
-    for (int i = disp[0]; i < disp[0] + size[0]; i++) {
-      index = i + j * dat->size[0]; //+ // need to stride in dat->size as data
-      // block includes intra-block halos
-      // k * dat->size[0] * dat->size[1];// +
-      // l * dat->size[0] * dat->size[1] * dat->size[2] +
-      // m * dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3];
-      memcpy(&dat->data[index * dat->elem_size], &data[count * dat->elem_size],
-             dat->elem_size);
-      count++;
-    }
-  }
-  //}
-  //}
-  //}
-  return;
-}
-
-void add_mpi_halos3D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
-  int index = 0;
-  int count = 0;
-  // for(int m = disp[4]; m < size[4]; m++) {
-  //  for(int l = disp[3]; l < size[3]; l++) {
-  for (int k = disp[2]; k < disp[2] + size[2]; k++) {
-    for (int j = disp[1]; j < disp[1] + size[1]; j++) {
-      for (int i = disp[0]; i < disp[0] + size[0]; i++) {
-        index = i + j * dat->size[0] + // need to stride in dat->size as data
-                                       // block includes intra-block halos
-                k * dat->size[0] * dat->size[1]; // +
-        // l * dat->size[0] * dat->size[1] * dat->size[2] +
-        // m * dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3];
-        memcpy(&dat->data[index * dat->elem_size],
-               &data[count * dat->elem_size], dat->elem_size);
-        count++;
-      }
-    }
-  }
-  //}
-  //}
-  return;
-};
-void add_mpi_halos4D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data){};
-void add_mpi_halos5D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data){};
 
 void determine_plane_global_range(const ops_dat dat,
                                   const int cross_section_dir, const int pos,
@@ -1719,15 +1558,6 @@ void ops_read_dat_hdf5(ops_dat dat) {
     hid_t datatype = h5_type(dat->type);
     H5Dread(dset_id, datatype, memspace, filespace, plist_id, data);
 
-    // add MPI halos
-    // if (block->dims == 2)
-    //   add_mpi_halos2D(dat, size2, l_disp, data);
-    // else if (block->dims == 3)
-    //   add_mpi_halos3D(dat, size2, l_disp, data);
-    // else if (block->dims == 4)
-    //   add_mpi_halos4D(dat, size2, l_disp, data);
-    // else if (block->dims == 5)
-    //   add_mpi_halos5D(dat, size2, l_disp, data);
     ops_dat_set_data(dat, 0, data);
 
     free(data);
@@ -1821,16 +1651,7 @@ extern "C" char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
     MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
     MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
 
-    if (block->dims == 1)
-      remove_mpi_halos1D(dat, size, l_disp, u_dat);
-    else if (block->dims == 2)
-      remove_mpi_halos2D(dat, size, l_disp, u_dat);
-    else if (block->dims == 3)
-      remove_mpi_halos3D(dat, size, l_disp, u_dat);
-    else if (block->dims == 4)
-      remove_mpi_halos4D(dat, size, l_disp, u_dat);
-    else if (block->dims == 5)
-      remove_mpi_halos5D(dat, size, l_disp, u_dat);
+    remove_mpi_halos(dat, size, l_disp, u_dat, block->dims);
   }
   return u_dat;
 }
@@ -2207,114 +2028,6 @@ hid_t H5_file_handle(const MPI_Comm &mpi_comm, const char *file_name) {
   return file_id;
 }
 
-
-
-
-void write_plane_buf_hdf5(const char *file_name, const char *data_name,
-                          const ops_dat dat, const int cross_section_dir,
-                          const int *local_range, const int *global_range,
-                          const char *buf) {
-  const sub_block *sb{OPS_sub_block_list[dat->block->index]};
-  int my_block_rank;
-  MPI_Comm PLANE_WORLD;
-  MPI_Comm BLOCK_WORLD{sb->comm1};
-  MPI_Comm_rank(BLOCK_WORLD, &my_block_rank);
-  int color{0};
-  if ((local_range[2 * cross_section_dir + 1] -
-       local_range[2 * cross_section_dir]) == 0) {
-    color = MPI_UNDEFINED;
-  }
-  MPI_Comm_split(BLOCK_WORLD, color, my_block_rank, &PLANE_WORLD);
-  if (color == 0) {
-    int my_plane_rank;
-    MPI_Comm_rank(PLANE_WORLD, &my_plane_rank);
-    MPI_Barrier(PLANE_WORLD);
-    const int space_dim{dat->block->dims};
-    const int data_dims{space_dim - 1};
-    const sub_dat *sd = OPS_sub_dat_list[dat->index];
-    hsize_t *local_data_size_c{new hsize_t[data_dims]};
-    hsize_t *local_data_size_f{new hsize_t[data_dims]};
-    hsize_t *global_data_size_c{new hsize_t[data_dims]};
-    hsize_t *global_data_size_f{new hsize_t[data_dims]};
-    hsize_t *global_data_disp_c{new hsize_t[data_dims]};
-    hsize_t *global_data_disp_f{new hsize_t[data_dims]};
-
-    {
-      int reduced_index{0};
-      for (int d = 0; d < space_dim; d++) {
-        if (d != cross_section_dir) {
-          local_data_size_c[reduced_index] =
-              local_range[2 * d + 1] - local_range[2 * d];
-          global_data_size_c[reduced_index] =
-              global_range[2 * d + 1] - global_range[2 * d];
-          global_data_disp_c[reduced_index] =
-              sd->decomp_disp[d] < 0 ? 0 : sd->decomp_disp[d];
-          reduced_index++;
-        }
-      }
-    }
-    local_data_size_c[0] *= (dat->dim);
-    global_data_size_c[0] *= (dat->dim);
-    global_data_disp_c[0] *= (dat->dim);
-
-    for (int d = 0; d < data_dims; d++) {
-      local_data_size_f[d] = local_data_size_c[data_dims - d - 1];
-      global_data_size_f[d] = global_data_size_c[data_dims - d - 1];
-      global_data_disp_f[d] = global_data_disp_c[data_dims - d - 1];
-    }
-
-    hid_t file_id{H5_file_handle(PLANE_WORLD, file_name)};
-
-    // space in file
-
-    hid_t file_space;
-
-    hid_t dataset_id;
-    std::vector<std::string> h5_name_list;
-    split_h5_name(data_name, h5_name_list);
-    std::vector<hid_t> groupid_list;
-    groupid_list.resize(h5_name_list.size() - 1);
-
-    H5_dataset_space(file_id, data_dims, global_data_size_f, h5_name_list,
-                     dat->type, groupid_list,dataset_id, file_space);
-
-    // block of memory to write to file by each proc
-    hid_t memspace{H5Screate_simple(data_dims, local_data_size_f, NULL)};
-    hsize_t *stride{new hsize_t[data_dims]};
-    hsize_t *count{new hsize_t[data_dims]};
-    for (int d = 0; d < data_dims; d++) {
-      stride[d] = 1;
-      count[d] = 1;
-    }
-    H5Sselect_hyperslab(file_space, H5S_SELECT_SET, global_data_disp_f, stride,
-                        count, local_data_size_f);
-    // Create property list for collective dataset write.
-    hid_t xfer_data_plist_id = H5Pcreate(H5P_DATASET_XFER);
-    H5Pset_dxpl_mpio(xfer_data_plist_id, H5FD_MPIO_COLLECTIVE);
-
-    H5Dwrite(dataset_id, h5_type(dat->type), memspace, file_space,
-             xfer_data_plist_id, buf);
-    H5Pclose(xfer_data_plist_id);
-    H5Sclose(file_space);
-    H5Sclose(memspace);
-    H5Dclose(dataset_id);
-    for (int grp = groupid_list.size() - 1; grp >= 0;grp--){
-      H5Gclose(groupid_list[grp]);
-    }
-    H5Fclose(file_id);
-
-    delete[] count;
-    delete[] stride;
-    delete[] local_data_size_c;
-    delete[] local_data_size_f;
-    delete[] global_data_size_c;
-    delete[] global_data_size_f;
-    delete[] global_data_disp_c;
-    delete[] global_data_disp_f;
-    MPI_Comm_free(&PLANE_WORLD);
-  }
-}
-
 void write_plane_buf_hdf5(const char *file_name, const char *data_name,
                           const ops_dat dat, const int cross_section_dir,
                           const int *local_range, const int *global_range,REAL_PRECISION real_precision,
@@ -2380,9 +2093,13 @@ void write_plane_buf_hdf5(const char *file_name, const char *data_name,
     std::vector<hid_t> groupid_list;
     groupid_list.resize(h5_name_list.size() - 1);
 
-    H5_dataset_space(file_id, data_dims, global_data_size_f, h5_name_list,
-                     dat->type, real_precision, groupid_list, dataset_id,
-                     file_space);
+    if (real_precision != REAL_PRECISION::Undefined)
+      H5_dataset_space(file_id, data_dims, global_data_size_f, h5_name_list,
+                       dat->type, real_precision, groupid_list, dataset_id,
+                       file_space);
+    else
+      H5_dataset_space(file_id, data_dims, global_data_size_f, h5_name_list,
+                       dat->type, groupid_list, dataset_id, file_space);
 
     // block of memory to write to file by each proc
     hid_t memspace{H5Screate_simple(data_dims, local_data_size_f, NULL)};
@@ -2421,115 +2138,12 @@ void write_plane_buf_hdf5(const char *file_name, const char *data_name,
   }
 }
 
-
-void write_slab_buf_hdf5(const char *file_name, const char *data_name,
-                         const ops_dat dat, const int *local_range,
-                         const int *global_range, const char *buf) {
-  const sub_block *sb{OPS_sub_block_list[dat->block->index]};
-  const int space_dim{dat->block->dims};
-  int my_block_rank;
-  MPI_Comm SLAB_WORLD;
-  MPI_Comm BLOCK_WORLD{sb->comm1};
-  MPI_Comm_rank(BLOCK_WORLD, &my_block_rank);
-  int color{0};
-  bool no_data{true};
-  for (int d = 0; d < space_dim; d++) {
-    if ((local_range[2 * d + 1] - local_range[2 * d]) != 0) {
-      no_data = false;
-    }
-  }
-  if (no_data){
-    color=MPI_UNDEFINED;
-  }
-
-  MPI_Comm_split(BLOCK_WORLD, color, my_block_rank, &SLAB_WORLD);
-  if (color == 0) {
-    int my_plane_rank;
-    MPI_Comm_rank(SLAB_WORLD, &my_plane_rank);
-    MPI_Barrier(SLAB_WORLD);
-
-
-    const sub_dat *sd = OPS_sub_dat_list[dat->index];
-    hsize_t *local_data_size_c{new hsize_t[space_dim]};
-    hsize_t *local_data_size_f{new hsize_t[space_dim]};
-    hsize_t *global_data_size_c{new hsize_t[space_dim]};
-    hsize_t *global_data_size_f{new hsize_t[space_dim]};
-    hsize_t *global_data_disp_c{new hsize_t[space_dim]};
-    hsize_t *global_data_disp_f{new hsize_t[space_dim]};
-
-    for (int d = 0; d < space_dim; d++) {
-
-      local_data_size_c[d] = local_range[2 * d + 1] - local_range[2 * d];
-      global_data_size_c[d] = global_range[2 * d + 1] - global_range[2 * d];
-      global_data_disp_c[d] = sd->decomp_disp[d] < 0
-                                  ? 0
-                                  : (sd->decomp_disp[d] - global_range[2 * d]);
-      // printf("At slab Rank= %d disp[%d]=%d gb=%d ld=%d ls=%d\n",
-      // ops_my_global_rank,
-      //        d, sd->decomp_disp[d], global_data_disp_c[d],
-      //        local_range[2 * d],local_data_size_c[d]);
-    }
-
-    local_data_size_c[0] *= (dat->dim);
-    global_data_size_c[0] *= (dat->dim);
-    global_data_disp_c[0] *= (dat->dim);
-
-    for (int d = 0; d < space_dim; d++) {
-      local_data_size_f[d] = local_data_size_c[space_dim - d - 1];
-      global_data_size_f[d] = global_data_size_c[space_dim - d - 1];
-      global_data_disp_f[d] = global_data_disp_c[space_dim - d - 1];
-    }
-
-    hid_t file_id{H5_file_handle(SLAB_WORLD, file_name)};
-
-    // space in file
-
-    hid_t file_space;
-
-    hid_t dataset_id;
-    std::vector<std::string> h5_name_list;
-    split_h5_name(data_name, h5_name_list);
-    std::vector<hid_t> groupid_list;
-    groupid_list.resize(h5_name_list.size() - 1);
-
-    H5_dataset_space(file_id, space_dim, global_data_size_f, h5_name_list,
-                     dat->type, groupid_list,dataset_id, file_space);
-
-    // block of memory to write to file by each proc
-    hid_t memspace{H5Screate_simple(space_dim, local_data_size_f, NULL)};
-    hsize_t *stride{new hsize_t[space_dim]};
-    hsize_t *count{new hsize_t[space_dim]};
-    for (int d = 0; d < space_dim; d++) {
-      stride[d] = 1;
-      count[d] = 1;
-    }
-    H5Sselect_hyperslab(file_space, H5S_SELECT_SET, global_data_disp_f, stride,
-                        count, local_data_size_f);
-    // Create property list for collective dataset write.
-    hid_t xfer_data_plist_id = H5Pcreate(H5P_DATASET_XFER);
-    H5Pset_dxpl_mpio(xfer_data_plist_id, H5FD_MPIO_COLLECTIVE);
-
-    H5Dwrite(dataset_id, h5_type(dat->type), memspace, file_space,
-             xfer_data_plist_id, buf);
-    H5Pclose(xfer_data_plist_id);
-    H5Sclose(file_space);
-    H5Sclose(memspace);
-    H5Dclose(dataset_id);
-    for (int grp = groupid_list.size() - 1; grp >= 0;grp--){
-      H5Gclose(groupid_list[grp]);
-    }
-    H5Fclose(file_id);
-
-    delete[] count;
-    delete[] stride;
-    delete[] local_data_size_c;
-    delete[] local_data_size_f;
-    delete[] global_data_size_c;
-    delete[] global_data_size_f;
-    delete[] global_data_disp_c;
-    delete[] global_data_disp_f;
-    MPI_Comm_free(&SLAB_WORLD);
-  }
+void write_plane_buf_hdf5(const char *file_name, const char *data_name,
+                          const ops_dat dat, const int cross_section_dir,
+                          const int *local_range, const int *global_range,
+                          const char *buf) {
+  write_plane_buf_hdf5(file_name, data_name, dat, cross_section_dir, local_range,
+                       global_range, REAL_PRECISION::Undefined, buf);
 }
 
 void write_slab_buf_hdf5(const char *file_name, const char *data_name,
@@ -2571,7 +2185,7 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
 
       local_data_size_c[d] = local_range[2 * d + 1] - local_range[2 * d];
       global_data_size_c[d] = global_range[2 * d + 1] - global_range[2 * d];
-      global_data_disp_c[d] = sd->decomp_disp[d] < 0
+      global_data_disp_c[d] = sd->decomp_disp[d] < 0 || (global_range[2 * d] > sd->decomp_disp[d])
                                   ? 0
                                   : (sd->decomp_disp[d] - global_range[2 * d]);
       // printf("At slab Rank= %d disp[%d]=%d gb=%d ld=%d ls=%d\n",
@@ -2602,9 +2216,13 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
     std::vector<hid_t> groupid_list;
     groupid_list.resize(h5_name_list.size() - 1);
 
-    H5_dataset_space(file_id, space_dim, global_data_size_f, h5_name_list,
+    if (real_precision != REAL_PRECISION::Undefined)
+      H5_dataset_space(file_id, space_dim, global_data_size_f, h5_name_list,
                      dat->type, real_precision, groupid_list, dataset_id,
                      file_space);
+    else
+      H5_dataset_space(file_id, space_dim, global_data_size_f, h5_name_list,
+                     dat->type, groupid_list, dataset_id, file_space);
 
     // block of memory to write to file by each proc
     hid_t memspace{H5Screate_simple(space_dim, local_data_size_f, NULL)};
@@ -2641,6 +2259,13 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
     delete[] global_data_disp_f;
     MPI_Comm_free(&SLAB_WORLD);
   }
+}
+
+void write_slab_buf_hdf5(const char *file_name, const char *data_name,
+                         const ops_dat dat, const int *local_range,
+                         const int *global_range, const char *buf) {
+  write_slab_buf_hdf5(file_name, data_name, dat, local_range, global_range,
+                      REAL_PRECISION::Undefined, buf);
 }
 
 void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,

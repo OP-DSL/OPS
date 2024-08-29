@@ -487,6 +487,10 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
 
     code('INTEGER(KIND=4), DIMENSION('+str(NDIM)+') :: start_indx, end_indx')
     code('INTEGER(KIND=4) :: n_indx')
+    code('CHARACTER(LEN=40) :: kernelName')
+    code('')
+
+    code('kernelName = "'+name+'"')
     code('')
 
     config.depth = 0
@@ -516,7 +520,7 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
 
     code('')
     config.depth = 4
-    code('CALL setKernelTime('+str(nk)+', "'+name+'", 0.0_8, 0.0_8, 0.0_4, 1)')
+    code('CALL setKernelTime('+str(nk)+', kernelName//c_null_char, 0.0_8, 0.0_8, 0.0_4, 1)')
     code('CALL ops_timers_core(t1__)')
     code('')
 
@@ -651,7 +655,7 @@ def ops_fortran_gen_mpi(master, consts, kernels, soa_set):
         code('CALL ops_compute_transfer('+str(NDIM)+', start_indx, end_indx, opsArg'+str(n+1)+', transfer)')
         code('transfer_total = transfer_total + transfer')
     code('')
-    code('CALL setKernelTime('+str(nk)+', "'+name+'", t3__-t2__, t2__-t1__, transfer_total, 0)')
+    code('CALL setKernelTime('+str(nk)+', kernelName//c_null_char, t3__-t2__, t2__-t1__, transfer_total, 0)')
 
     config.depth = 0
     code('')
