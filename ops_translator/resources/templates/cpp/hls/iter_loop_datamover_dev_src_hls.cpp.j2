@@ -41,7 +41,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_read(
     ops::hls::mem2stream<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_read_mem_strm, memconfig);
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
-    ops::hls::stream2stream<mem_data_width, axis_data_width>(arg{{arg.id}}_read_mem_strm, arg{{arg.id}}_read_reduced_mem_strm, num_beats);
+    ops::hls::stream2streamStepdown<mem_data_width, axis_data_width>(arg{{arg.id}}_read_mem_strm, arg{{arg.id}}_read_reduced_mem_strm, num_beats);
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
         {% if arg is ops_read %}
@@ -108,7 +108,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_write(
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
     {% if arg is not read_only_rw %}
-    ops::hls::stream2stream<axis_data_width, mem_data_width>(arg{{arg.id}}_write_reduced_mem_strm, arg{{arg.id}}_write_mem_strm, num_beats);
+    ops::hls::stream2streamStepup<axis_data_width, mem_data_width>(arg{{arg.id}}_write_reduced_mem_strm, arg{{arg.id}}_write_mem_strm, num_beats);
     {% endif %}
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
@@ -165,7 +165,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write_dataflow_region(
         ops::hls::mem2stream<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_read_mem_strm, memconfig);
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
-        ops::hls::stream2stream<mem_data_width, axis_data_width>(arg{{arg.id}}_read_mem_strm, arg{{arg.id}}_read_reduced_mem_strm, num_beats);
+        ops::hls::stream2streamStepdown<mem_data_width, axis_data_width>(arg{{arg.id}}_read_mem_strm, arg{{arg.id}}_read_reduced_mem_strm, num_beats);
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
         {% if arg is ops_read %}
@@ -189,7 +189,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write_dataflow_region(
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
         {% if arg is not read_only_rw %}
-        ops::hls::stream2stream<axis_data_width, mem_data_width>(arg{{arg.id}}_write_reduced_mem_strm, arg{{arg.id}}_write_mem_strm, num_beats);
+        ops::hls::stream2streamStepup<axis_data_width, mem_data_width>(arg{{arg.id}}_write_reduced_mem_strm, arg{{arg.id}}_write_mem_strm, num_beats);
         {% endif %}
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
