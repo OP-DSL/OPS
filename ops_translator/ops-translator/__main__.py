@@ -177,7 +177,22 @@ def main(argv=None) -> None:
         for key in target.config:
             if key in args.config and key in target.config:
                 target.config[key] = args.config[key]
-
+                if key == "platform":
+                    if args.config[key] in target.platforms:
+                        logging.info("Specific platform %s found. Overiding granular configurations", args.config[key])
+                        # print(f"{args.config[key]} specific config found")
+                        target_specific_config = target.platforms[args.config[key]]
+                        for s_key in target_specific_config:
+                            #Overide number of SLR to the maximum SLR supported
+                            if s_key == "SLR_count":
+                                if args.config[s_key] > target_specific_config[s_key]:
+                                    target.config[s_key] = target_specific_config[s_key]
+                            else:
+                                target.config[s_key] = target_specific_config[s_key]
+                    else:
+                        logging.warning("Specific platform %s not found. ommiting granular configurations", args.config[key])
+                        # print(f"{args.config[key]} specific config not found")
+            
         logging.info("Found target: %s", str(target))
         
         scheme = Scheme.find((lang, target))

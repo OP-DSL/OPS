@@ -70,6 +70,7 @@ public:
         int narg = 0;
     {% for slr_id in range(config["SLR_count"]) %}
         {{"narg = 0;" if not loop.first}} 
+        OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, (unsigned short){{loop.index0}}));
         OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, adjusted_outer_iter));
         {% for i in range(ndim)%}
         OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, read_stencilConfig.grid_size[{{i}}]));

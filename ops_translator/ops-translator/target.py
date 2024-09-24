@@ -106,8 +106,24 @@ class HLS(Target):
         "maxi_offset" : "slave",
         "ops_max_dim" : 3,
         "axis_interconnect_buff_size" : 2048,
-        "datamover_mode" : 1
+        "datamover_mode" : 1,
+        "profile" : False,
+        "platform" : "",
+        "platform_is_multi_slr" : True,
+        "platform_is_sb_selectable" : True,
         }
+    platforms = {
+        "u280" : {
+            "SLR_count" : 3,
+            "platform_is_multi_slr" : True,
+            "platform_is_sb_selectable" : True
+        },
+        "vck5000" : {
+            "SLR_count" : 1,
+            "platform_is_multi_slr" : False,
+            "platform_is_sb_selectable" : False
+        }
+    }
 
 Target.register(MPIOpenMP)
 Target.register(Cuda)

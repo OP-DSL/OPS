@@ -24,19 +24,26 @@ stream_connect=kernel_outerloop_{{ilh.id}}_{{slr_id+1}}.arg{{arg.id}}_axis_out:k
     {% endfor %}
 {% endfor %}
 
-{% for ilh, program in app.uniqueOuterLoops() %}
-    {% for slr_id in range(config["SLR_count"]) %}
+{% if config["platform_is_multi_slr"] %}
+    {% for ilh, program in app.uniqueOuterLoops() %}
+        {% for slr_id in range(config["SLR_count"]) %}
 slr=kernel_outerloop_{{ilh.id}}_{{slr_id+1}}:SLR{{slr_id}}
+        {% endfor %}
     {% endfor %}
-{% endfor %}
+{% endif %}
 
-{% for ilh, program in app.uniqueOuterLoops() %}
-    {% for arg in ilh.joint_args|ops_dat %}
+{% if config["platform_is_sb_selectable"] %}
+    {% for ilh, program in app.uniqueOuterLoops() %}
+        {% for arg in ilh.joint_args|ops_dat %}
 sp=datamover_outerloop_{{ilh.id}}_1.arg{{arg.id}}:HBM[{{arg.id}}]
+        {% endfor %}
     {% endfor %}
-{% endfor %}
+{% endif %}
+
+{% if config["profile"] %}
 [profile]
 data=all:all:all
 memory=all
 stall=all:all
 exec=all:all
+{% endif %}

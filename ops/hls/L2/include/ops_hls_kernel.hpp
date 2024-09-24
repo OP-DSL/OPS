@@ -161,6 +161,9 @@ void sendGrid(Grid<T>& p_grid)
 {
 	if (p_grid.isHostBufDirty and p_grid.isSetAsArg)
 	{
+//#ifdef DEBUG_LOG
+		printf("Seinding dirty Host buffer to device. \n");
+//#endif
 		cl_int err;
 		cl::Event event;
 		OCL_CHECK(err, err = FPGA::getInstance()->getCommandQueue().enqueueMigrateMemObjects({p_grid.deviceBuffer}, 0, &p_grid.activeEvents, &event));
@@ -170,7 +173,13 @@ void sendGrid(Grid<T>& p_grid)
 		p_grid.isHostBufDirty = false;
 		p_grid.isSetAsArg = false;
 #ifndef ASYNC_DISPATCH
+//#ifdef DEBUG_LOG
+		printf("Waiting for sync completion. \n");
+//#endif
 		event.wait();
+//#ifdef DEBUG_LOG
+		printf("Sync completed \n");
+//#endif
 #endif
 	}
 }

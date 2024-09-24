@@ -40,6 +40,19 @@
 #define EPSILON 0.0001
 typedef float stencil_type;
 
+void printGridData(GridParameter& gridData, std::string prompt="")
+{
+	printf("--------------------------------\n");
+	printf("*    Grid Data %s\n", prompt.c_str());
+	printf("--------------------------------\n");
+
+	printf("bathes: %d\n", gridData.batch);
+	printf("num iter: %d\n", gridData.num_iter);
+	printf("logical size: (%d, %d, %d)\n", gridData.logical_size_x, gridData.logical_size_y, gridData.logical_size_z);
+	printf("actual size: (%d, %d, %d)\n", gridData.act_size_x, gridData.act_size_y, gridData.act_size_z);
+	printf("grid size: (%d, %d, %d)\n", gridData.grid_size_x, gridData.grid_size_y, gridData.grid_size_z);
+}
+
 bool verify(stencil_type * grid_data1, stencil_type *  grid_data2, int size[3], int d_m[3], int d_p[3], int range[6])
 {
     bool passed = true;
@@ -106,7 +119,7 @@ int heat3D_explicit(float * current, float *next, GridParameter gridData, std::v
                 calcParam[bat].K, calcParam[bat].K, calcParam[bat].K, calcParam[bat].K};
         int offset = bat * gridData.grid_size_x * gridData.grid_size_y * gridData.grid_size_z; 
 
-        for (unsigned int iter = 0; iter < gridData.num_iter; iter=+2)
+        for (unsigned int iter = 0; iter < gridData.num_iter; iter+=2)
         {
             for (unsigned int k = 1; k < gridData.act_size_z - 1; k++)
             {
@@ -137,6 +150,7 @@ int heat3D_explicit(float * current, float *next, GridParameter gridData, std::v
                         printf("[VERIFICATION_INTERNAL]|%s| read_val - reg_1_5: %f \n", __func__, current[index_j_pls_1]);
                         printf("[VERIFICATION_INTERNAL]|%s| read_val - reg_1_6: %f \n", __func__, current[index_k_pls_1]);
                         printf("[VERIFICATION_INTERNAL]|%s| index_val: (%d, %d, %d) \n", __func__, i, j, k);
+                        printf("[VERIFICATION_INTERNAL]|%s| num_iter: %d \n", __func__, iter);
 #endif
                     }
 

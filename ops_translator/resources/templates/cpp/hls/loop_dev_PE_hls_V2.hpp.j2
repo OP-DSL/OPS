@@ -93,7 +93,7 @@ inline void kernel_{{lh.kernel}}_core(
 )
 {
 #ifdef DEBUG_LOG
-    printf("[KERNEL_INTERNAL]|%s| starting kernel core: kernel_{{lh.kernel}}_core\n",__func__);
+    printf("[KERNEL_INTERNAL_CORE]|%s| starting kernel core: kernel_{{lh.kernel}}_core\n",__func__);
 #endif
     {{kernel_body}}
 
@@ -102,23 +102,23 @@ inline void kernel_{{lh.kernel}}_core(
         {% if arg is ops_read %}
             {% if prog.findStencil(arg.stencil_ptr) %}
                 {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
-    printf("[KERNEL_INTERNAL]|%s| read_val - reg_{{arg.id}}_{{i}}: %f \n", __func__, reg_{{arg.id}}_{{i}});
+    printf("[KERNEL_INTERNAL_CORE]|%s| read_val - reg_{{arg.id}}_{{i}}: %f \n", __func__, reg_{{arg.id}}_{{i}});
                 {% endfor %}
             {% endif %}
         {% elif arg is ops_write or ops_rw%}
             {% if prog.findStencil(arg.stencil_ptr) %}
                 {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
-    printf("[KERNEL_INTERNAL]|%s| write_val - reg_{{arg.id}}_{{i}}: %f \n", __func__, reg_{{arg.id}}_{{i}});
+    printf("[KERNEL_INTERNAL_CORE]|%s| write_val - reg_{{arg.id}}_{{i}}: %f \n", __func__, reg_{{arg.id}}_{{i}});
                 {% endfor %}
             {% endif %}
         {% elif arg is ops_idx %}
-    printf("[KERNEL_INTERNAL]|%s| index_val: (%d, %d, %d) \n", __func__, idx[0], idx[1], idx[2]);
+    printf("[KERNEL_INTERNAL_CORE]|%s| index_val: (%d, %d, %d) \n", __func__, idx[0], idx[1], idx[2]);
         {% endif %}
     {% endfor %}
 #endif
 
 #ifdef DEBUG_LOG
-    printf("[KERNEL_INTERNAL]|%s| exiting: kernel_{{lh.kernel}}_core\n",__func__);
+    printf("[KERNEL_INTERNAL_CORE]|%s| exiting: kernel_{{lh.kernel}}_core\n",__func__);
 #endif
 }
 {% endblock %}
@@ -258,22 +258,30 @@ public:
         {% endfor %}
     {% endfor %}
 
+        const short cond_x_val = stencilConfig.grid_size[0] - 1; 
+    {% if lh.ndim == 2 %}
+        const short cond_y_val = stencilConfig.outer_loop_limit - 1;
+    {% elif lh.ndim == 3 %}
+        const short cond_y_val = stencilConfig.grid_size[1] - 1;
+        const short cond_z_val = stencilConfig.outer_loop_limit - 1;
+    {% endif %}
+
         for (unsigned short itr = 0; itr < iter_limit; itr++)
         {
         #pragma HLS PIPELINE II=1
 
             spc_temp_blocking_read:
             {
-                bool cond_x_terminate = (i == stencilConfig.grid_size[0] - 1); 
+                bool cond_x_terminate = (i == cond_x_val ? true : false); 
     {% if lh.ndim == 2 %}
-                bool cond_y_terminate = (j == stencilConfig.outer_loop_limit - 1);
+                bool cond_y_terminate = (j == cond_y_val ? true : false);
     {% elif lh.ndim == 3 %}
-                bool cond_y_terminate = (j == stencilConfig.grid_size[1] - 1);
-                bool cond_z_terminate = (k == stencilConfig.outer_loop_limit - 1);
+                bool cond_y_terminate = (j == cond_y_val ? true : false);
+                bool cond_z_terminate = (k == cond_z_val ? true : false);
     {% endif %}
 
 #ifdef DEBUG_LOG
-                printf("[DEBUG][INTERNAL] loop params before update i(%d), "\
+                printf("[DEBUG][INTERNAL][{{lh.kernel}}_PE_%d] loop params before update i(%d), "\
     {% if lh.ndim > 1 %}
                     "j(%d), "\
     {% endif %}
@@ -286,7 +294,7 @@ public:
                     "{{stencil_name}}_{{buffer_write_idx(buffer)}}: %d, "\
         {% endfor %}
     {% endfor %}
-                    "itr(%d)\n", i, 
+                    "itr(%d)\n", m_PEId, i, 
     {% if lh.ndim > 1 %}
                     j,
     {% endif %}
@@ -356,7 +364,7 @@ public:
     {% endfor %}
 
 #ifdef DEBUG_LOG
-                printf("[DEBUG][INTERNAL] loop params after update i(%d), "\
+                printf("[DEBUG][INTERNAL][{{lh.kernel}}_PE_%d] loop params after update i(%d), "\
                 {% if lh.ndim > 1 %}
                                 "j(%d), "\
                 {% endif %}
@@ -369,7 +377,7 @@ public:
                                 "{{stencil_name}}_{{buffer_write_idx(buffer)}}(%d), "\
                     {% endfor %}
                 {% endfor %}
-                                "itr(%d)\n", i, 
+                                "itr(%d)\n", m_PEId, i, 
                 {% if lh.ndim > 1 %}
                                 j,
                 {% endif %}
@@ -384,10 +392,10 @@ public:
                 {% endfor %}
                                 itr);
             
-                printf("[DEBUG][INTERNAL] --------------------------------------------------------\n\n");
+                printf("[DEBUG][INTERNAL][{{lh.kernel}}_PE_%d] --------------------------------------------------------\n\n", m_PEId);
 
     {% for arg in lh.args|ops_dat|ops_read %}
-                printf("[DEBUG][INTERNAL] read values arg{{arg.id}}: (");
+                printf("[DEBUG][INTERNAL][{{lh.kernel}}_PE_%d] read values arg{{arg.id}}: (", m_PEId);
                 for (int ri = 0; ri < vector_factor; ri++)
                 {
                     ops::hls::DataConv tmpConverter;
@@ -462,14 +470,14 @@ public:
 
 #ifdef DEBUG_LOG
     {% if lh.ndim == 1 %}
-                printf("[DEBUG][INTERNAL] index=(%d), lowerbound=(%d), upperbound=(%d), neg_cond=%d\n", index,
+                printf("[DEBUG][INTERNAL][{{lh.kernel}}_PE_%d] index=(%d), lowerbound=(%d), upperbound=(%d), neg_cond=%d\n", m_PEId, index,
                             stencilConfig.lower_limit[0], stencilConfig.upper_limit[0], neg_cond);
 
     {% elif lh.ndim == 2 %}
-                printf("[DEBUG][INTERNAL] index=(%d, %d), lowerbound=(%d, %d), upperbound=(%d, %d), neg_cond=%d\n", index, j,
+                printf("[DEBUG][INTERNAL][{{lh.kernel}}_PE_%d] index=(%d, %d), lowerbound=(%d, %d), upperbound=(%d, %d), neg_cond=%d\n", m_PEId, index, j,
                             stencilConfig.lower_limit[0], stencilConfig.lower_limit[1], stencilConfig.upper_limit[0], stencilConfig.upper_limit[1], neg_cond);
     {% else %}
-                printf("[DEBUG][INTERNAL] index=(%d, %d, %d), lowerbound=(%d, %d, %d), upperbound=(%d, %d, %d), neg_cond=%d\n", index, j, k,
+                printf("[DEBUG][INTERNAL][{{lh.kernel}}_PE_%d] index=(%d, %d, %d), lowerbound=(%d, %d, %d), upperbound=(%d, %d, %d), neg_cond=%d\n", m_PEId, index, j, k,
                             stencilConfig.lower_limit[0], stencilConfig.lower_limit[1], stencilConfig.lower_limit[2], 
                             stencilConfig.upper_limit[0], stencilConfig.upper_limit[1], stencilConfig.upper_limit[2], neg_cond);
 
@@ -584,7 +592,7 @@ public:
 {% endblock %}
 
 {% block kernel_PE %}
-void kernel_{{lh.kernel}}_PE(const ops::hls::StencilConfigCore& stencilConfig,
+void kernel_{{lh.kernel}}_PE(const short& PEId, const ops::hls::StencilConfigCore& stencilConfig,
     {% for arg in lh.args|ops_not_idx %}
         {% if loop.last %}
             {% if consts %}
@@ -616,7 +624,7 @@ void kernel_{{lh.kernel}}_PE(const ops::hls::StencilConfigCore& stencilConfig,
 #ifdef DEBUG_LOG
     printf("[KERNEL_DEBUG]|%s| stencil config gridSize: %d (xblocks), %d, %d\n", __func__, stencilConfig.grid_size[0], stencilConfig.grid_size[1], stencilConfig.grid_size[2]);
 #endif
-    stencil.setConfig(stencilConfig);
+    stencil.setConfig(PEId, stencilConfig);
 
 #ifdef DEBUG_LOG
     printf("[KERNEL_DEBUG]|%s| starting stencil kernel PE\n", __func__);

@@ -437,6 +437,9 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 
 			ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
 			strm_out << tmp;
+#ifdef DEBUG_LOG
+			printf("|HLS DEBUG_LOG| %s | reading index: %d\n", __func__, index);
+#endif
 			index++;
 		}
 	}
@@ -446,6 +449,9 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 	#pragma HLS PIPELINE II=1
 		ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
 		strm_out << tmp;
+#ifdef DEBUG_LOG
+		printf("|HLS DEBUG_LOG| %s | reading index: %d\n", __func__, index);
+#endif
 		index++;
 	}
 }
@@ -553,7 +559,10 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 
 			ap_uint<MEM_DATA_WIDTH> tmp = strm_in.read();
 			mem_out[index] = tmp;
-			index++;
+#ifdef DEBUG_LOG
+			printf("|HLS DEBUG_LOG| %s | writing index: %d\n", __func__, index);
+#endif			
+            index++;
 		}
 	}
 
@@ -562,7 +571,10 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 	#pragma HLS PIPELINE II=1
 		ap_uint<MEM_DATA_WIDTH> tmp = strm_in.read();
 		mem_out[index] = tmp;
-		index++;
+#ifdef DEBUG_LOG
+		printf("|HLS DEBUG_LOG| %s | reading index: %d\n", __func__, index);
+#endif
+        index++;
 	}
 #ifdef DEBUG_LOG
 	printf("|HLS DEBUG_LOG|%s| exiting.\n"
@@ -2423,6 +2435,7 @@ void genMemConfig(SizeType& gridSize, AccessRange& range, MemConfig& config)
 		diff_z = range.end[2] - range.start[2];
 		config.grid_size_z = gridSize[2];
     }
+    else
     {
 		config.start_z = 0;
 		config.end_z = 1;
@@ -2435,11 +2448,14 @@ void genMemConfig(SizeType& gridSize, AccessRange& range, MemConfig& config)
     config.total_size_bytes = config.total_xblocks << ShiftBits << DataShiftBits;
 
 
- #ifdef DEBUG_LOG
+//  #ifdef DEBUG_LOG
+    printf("|HLS DEBUG LOG|%s| Input -> range_dim: % d, range: (%d, %d, %d) -> (%d, %d, %d), gridSize: (%d, %d, %d), Shiftbits: %d, DataShiftBits: %d\n",__func__, range.dim, range.start[0],
+    		range.start[1], range.start[2], range.end[0], range.end[1], range.end[2], gridSize[0], gridSize[1], gridSize[2], ShiftBits, DataShiftBits);
 	printf("|HLS DEBUG_LOG|%s| memconfig generated -> range: (%d(xblocks), %d, %d) --> (%d(xblocks), %d, %d), grid_size: (%d(xblocks), %d, %d), diff_x: %d, diff_y: %d,\n\
-            num_xblocks: %d, x_tile_size: %d, x_tile_bytes: %d, isContinous: %d, start_offset: %d(xblocks), total_size_bytes: %d\n", __func__, config.start_x, config.start_y, config.start_z,
-            config.end_x, config.end_y, config.end_z, config.grid_xblocks, config.grid_size_y, config.grid_size_z, diff_y, diff_z, config.num_xblocks, config.x_tile_size, config.x_tile_bytes, config.isContinous, config.start_offset, config.total_size_bytes);
- #endif
+            num_xblocks: %d, x_tile_size: %d, x_tile_bytes: %d, isContinous: %d, start_offset: %d(xblocks), total_xblocks: %d, total_size_bytes: %d\n", __func__, config.start_x, config.start_y, config.start_z,
+            config.end_x, config.end_y, config.end_z, config.grid_xblocks, config.grid_size_y, config.grid_size_z, diff_y, diff_z, config.num_xblocks, config.x_tile_size, config.x_tile_bytes, config.isContinous, config.start_offset,
+			config.total_xblocks, config.total_size_bytes);
+//  #endif
 }
 
 template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>

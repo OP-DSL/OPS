@@ -1,10 +1,10 @@
 {
     "grouped" : false,
-    "SLR_count" : 3,
+    "SLR_count" : 1,
     "device" : 1,
     "vector_factor" : 8,
     "mem_vector_factor": 16,
-    "iter_par_factor": 16,
+    "iter_par_factor": 15,
     "stencil_type" : "float",
     "data_width" : 32,
     "mem_data_width" : 32,
@@ -14,5 +14,8 @@
     "num_read_outstanding" : 4,
     "num_write_outstanding" : 4,
     "maxi_offset" : "slave",
-    "ops_max_dim" : 3
+    "ops_max_dim" : 3,
+    "axis_interconnect_buff_size" : 8192,
+    "datamover_mode" : 1,
+    "platform" : "vck5000"
 }
