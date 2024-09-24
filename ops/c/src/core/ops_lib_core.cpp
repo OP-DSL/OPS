@@ -1915,24 +1915,24 @@ extern "C" ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
 
 
 void *ops_malloc(size_t size) {
-  void *ptr = _mm_malloc(size, OPS_ALIGNMENT);
-  // if( posix_memalign((void**)&(ptr), OPS_ALIGNMENT, size) ) {
-  //     OPSException ex(OPS_INTERNAL_ERROR);
-  //     ex << "Error, posix_memalign() returned an error.";
-  //     throw ex;
-  // }
+  void *ptr=NULL;// = _mm_malloc(size, OPS_ALIGNMENT);
+  if( posix_memalign((void**)&(ptr), OPS_ALIGNMENT, size) ) {
+      OPSException ex(OPS_INTERNAL_ERROR);
+      ex << "Error, posix_memalign() returned an error.";
+      throw ex;
+  }
   return ptr;
 }
 
 void *ops_calloc(size_t num, size_t size) {
 //#ifdef __INTEL_COMPILER
-  void * ptr = _mm_malloc(num*size, OPS_ALIGNMENT);
-  // void *ptr=NULL;
-  // if( posix_memalign((void**)&(ptr), OPS_ALIGNMENT, num*size) ) {
-  //     OPSException ex(OPS_INTERNAL_ERROR);
-  //     ex << "Error, posix_memalign() returned an error.";
-  //     throw ex;
-  // }
+  //void * ptr = _mm_malloc(num*size, OPS_ALIGNMENT);
+  void *ptr=NULL;
+  if( posix_memalign((void**)&(ptr), OPS_ALIGNMENT, num*size) ) {
+      OPSException ex(OPS_INTERNAL_ERROR);
+      ex << "Error, posix_memalign() returned an error.";
+      throw ex;
+  }
   memset(ptr, 0, num * size);
   return ptr;
 //#else
@@ -1949,13 +1949,13 @@ void *ops_realloc(void *ptr, size_t size) {
 #endif
   static_assert(sizeof(size_t) == sizeof(void*), "size_t is not big enough to hold pointer address");
   if (((size_t)newptr & (OPS_ALIGNMENT - 1)) != 0) {
-    // void *newptr2=NULL;
-    // if( posix_memalign((void**)&(newptr2), OPS_ALIGNMENT, size) ) {
-    //     OPSException ex(OPS_INTERNAL_ERROR);
-    //     ex << "Error, posix_memalign() returned an error.";
-    //     throw ex;
-    // }
-    void *newptr2 = _mm_malloc(size, OPS_ALIGNMENT);
+    void *newptr2=NULL;
+    if( posix_memalign((void**)&(newptr2), OPS_ALIGNMENT, size) ) {
+        OPSException ex(OPS_INTERNAL_ERROR);
+        ex << "Error, posix_memalign() returned an error.";
+        throw ex;
+    }
+    //void *newptr2 = _mm_malloc(size, OPS_ALIGNMENT);
     memcpy(newptr2, newptr, size);
     ops_free(newptr);
     return newptr2;
@@ -1971,7 +1971,7 @@ void ops_free(void *ptr) {
 #if defined (_WIN32) || defined(WIN32)
   _aligned_free(ptr);
 #else
-  _mm_free(ptr);
+  free(ptr);
 #endif
 }
 
