@@ -795,9 +795,9 @@ constexpr unsigned short FACTOR = STREAM2_DATA_WIDTH / STREAM1_DATA_WIDTH;
 #endif
 
     ap_uint<STREAM2_DATA_WIDTH> tmp2;
-    for (int pkt = 0; pkt < num_big_pkts; pkt++)
+    for (unsigned int pkt = 0; pkt < num_big_pkts; pkt++)
     {
-        for (unsigned n = 0; n < FACTOR; n++)
+        for (unsigned short n = 0; n < FACTOR; n++)
         {
         #pragma HLS PIPELINE II=1
         #pragma HLS LOOP_FLATTEN
@@ -879,9 +879,9 @@ constexpr unsigned short FACTOR = STREAM1_DATA_WIDTH / STREAM2_DATA_WIDTH;
 
     ap_uint<STREAM1_DATA_WIDTH> tmp1;
     
-    for (int pkt = 0; pkt < num_big_pkts; pkt++)
+    for (unsigned int pkt = 0; pkt < num_big_pkts; pkt++)
     {
-        for (unsigned n = 0; n < FACTOR; n++)
+        for (unsigned short n = 0; n < FACTOR; n++)
         {
         #pragma HLS PIPELINE II=1
         #pragma HLS LOOP_FLATTEN
