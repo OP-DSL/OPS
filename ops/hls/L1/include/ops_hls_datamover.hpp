@@ -642,7 +642,7 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
  * @param num_big_pkts : Number of pkts of the wider stream
  */
 template <unsigned int STREAM1_DATA_WIDTH, unsigned int STREAM2_DATA_WIDTH>
-void stream2stream(::hls::stream<ap_uint<STREAM1_DATA_WIDTH>>& strm_in,
+DEPRECATED void stream2stream(::hls::stream<ap_uint<STREAM1_DATA_WIDTH>>& strm_in,
 				::hls::stream<ap_uint<STREAM2_DATA_WIDTH>>& strm_out,
 				const unsigned int num_big_pkts)
 {
@@ -760,6 +760,168 @@ void stream2stream(::hls::stream<ap_uint<STREAM1_DATA_WIDTH>>& strm_in,
 	printf("|HLS DEBUG_LOG|%s| exiting.\n"
 			, __func__);
 #endif
+}
+
+/**
+ * @brief stream2streamStepup Converts from one hls-stream to another with bigger size.
+ *
+ * @tparam STREAM1_DATA_WIDTH : Data width of the hls port1
+ * @tparam STREAM2_DATA_WIDTH : Data width of the hls port2
+ *
+ * @param num_big_pkts : Number of pkts of the wider stream
+ */
+template <unsigned int STREAM1_DATA_WIDTH, unsigned int STREAM2_DATA_WIDTH>
+void stream2streamStepup(::hls::stream<ap_uint<STREAM1_DATA_WIDTH>>& strm_in,
+				::hls::stream<ap_uint<STREAM2_DATA_WIDTH>>& strm_out,
+				const unsigned int num_big_pkts)
+{
+#ifndef __SYTHESIS__
+	static_assert(STREAM1_DATA_WIDTH < STREAM2_DATA_WIDTH,
+			"STREAM1_DATA_WIDTH has to be smaller than STREAM2_DATA_WIDTH");
+    static_assert(STREAM2_DATA_WIDTH % STREAM1_DATA_WIDTH == 0, 
+            "STREAM2_DATA_WIDTH has to be fully divisible by STREAM1_DATA_WIDTH");
+    static_assert(STREAM1_DATA_WIDTH % 8 == 0, "STREAM1_DATA_WIDTH should be divisible by 8");
+    static_assert(STREAM2_DATA_WIDTH % 8 == 0, "STREAM2_DATA_WIDTH should be divisible by 8");
+#endif
+
+constexpr unsigned short FACTOR = STREAM2_DATA_WIDTH / STREAM1_DATA_WIDTH;
+
+#ifndef __SYTHESIS__
+    #ifdef DEBUG_LOG
+        printf("|HLS DEBUG_LOG| %s | num_big_pkts: %d\n"
+                , __func__, num_big_pkts);
+        printf("====================================================================================\n");
+    #endif
+#endif
+
+    ap_uint<STREAM2_DATA_WIDTH> tmp2;
+    for (unsigned int pkt = 0; pkt < num_big_pkts; pkt++)
+    {
+        for (unsigned short n = 0; n < FACTOR; n++)
+        {
+        #pragma HLS PIPELINE II=1
+        #pragma HLS LOOP_FLATTEN
+
+            ap_uint<STREAM1_DATA_WIDTH> tmp1 = strm_in.read();
+#ifndef __SYTHESIS__
+#ifdef DEBUG_LOG
+            printf("   |HLS DEBUG_LOG||%s| reading pkt: %d, val=(", __func__, pkt*FACTOR + n);
+
+            for (unsigned k = 0; k < STREAM1_DATA_WIDTH/(DEBUG_LOG_SIZE_OF * 8); k++)
+            {
+                DataConv conv;
+                conv.i = tmp1.range((k+1) * DEBUG_LOG_SIZE_OF * 8 - 1, k * DEBUG_LOG_SIZE_OF * 8);
+                printf("%f,", conv.f);
+            }
+            printf(")\n");
+#endif
+#endif
+            tmp2.range((n+1)* STREAM1_DATA_WIDTH -1, n * STREAM1_DATA_WIDTH) = tmp1;
+
+            if (n == FACTOR - 1)
+            {
+#ifndef __SYTHESIS__
+#ifdef DEBUG_LOG
+            printf("   |HLS DEBUG_LOG||%s| writing pkt: %d, val=(", __func__, pkt*FACTOR + n);
+
+            for (unsigned k = 0; k < STREAM2_DATA_WIDTH/(DEBUG_LOG_SIZE_OF * 8); k++)
+            {
+                DataConv conv;
+                conv.i = tmp2.range((k+1) * DEBUG_LOG_SIZE_OF * 8 - 1, k * DEBUG_LOG_SIZE_OF * 8);
+                printf("%f,", conv.f);
+            }
+            printf(")\n");
+#endif
+#endif
+
+            strm_out.write(tmp2);
+            }
+        }
+    }
+
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| exiting.\n"
+			, __func__);
+#endif
+}
+
+/**
+ * @brief stream2streamStepdown Converts from one hls-stream to another with smaller size.
+ *
+ * @tparam STREAM1_DATA_WIDTH : Data width of the hls port1
+ * @tparam STREAM2_DATA_WIDTH : Data width of the hls port2
+ *
+ * @param num_big_pkts : Number of pkts of the wider stream
+ */
+template <unsigned int STREAM1_DATA_WIDTH, unsigned int STREAM2_DATA_WIDTH>
+void stream2streamStepdown(::hls::stream<ap_uint<STREAM1_DATA_WIDTH>>& strm_in,
+				::hls::stream<ap_uint<STREAM2_DATA_WIDTH>>& strm_out,
+				const unsigned int num_big_pkts)
+{
+#ifndef __SYTHESIS__
+	static_assert(STREAM1_DATA_WIDTH > STREAM2_DATA_WIDTH,
+			"STREAM1_DATA_WIDTH has to be bigger than STREAM2_DATA_WIDTH");
+    static_assert(STREAM1_DATA_WIDTH % STREAM2_DATA_WIDTH == 0, 
+            "STREAM1_DATA_WIDTH has to be fully divisible by STREAM2_DATA_WIDTH");
+    static_assert(STREAM1_DATA_WIDTH % 8 == 0, "STREAM1_DATA_WIDTH should be divisible by 8");
+    static_assert(STREAM2_DATA_WIDTH % 8 == 0, "STREAM2_DATA_WIDTH should be divisible by 8");
+#endif
+
+constexpr unsigned short FACTOR = STREAM1_DATA_WIDTH / STREAM2_DATA_WIDTH;
+
+#ifndef __SYTHESIS__
+    #ifdef DEBUG_LOG
+        printf("|HLS DEBUG_LOG| %s | num_big_pkts: %d\n"
+                , __func__, num_big_pkts);
+        printf("====================================================================================\n");
+    #endif
+#endif
+
+    ap_uint<STREAM1_DATA_WIDTH> tmp1;
+    
+    for (unsigned int pkt = 0; pkt < num_big_pkts; pkt++)
+    {
+        for (unsigned short n = 0; n < FACTOR; n++)
+        {
+        #pragma HLS PIPELINE II=1
+        #pragma HLS LOOP_FLATTEN
+
+            if (n == 0)
+            {
+                tmp1 = strm_in.read();
+#ifndef __SYTHESIS__
+    #ifdef DEBUG_LOG
+                    printf("   |HLS DEBUG_LOG||%s| receiving pkt: %d, val=(", __func__, pkt);
+
+                    for (unsigned n = 0; n < STREAM1_DATA_WIDTH/(DEBUG_LOG_SIZE_OF * 8); n++)
+                    {
+                        DataConv conv;
+                        conv.i = tmp1.range((n+1) * DEBUG_LOG_SIZE_OF * 8 - 1, n * DEBUG_LOG_SIZE_OF * 8);
+                        printf("%f,", conv.f);
+                    }
+                    printf(")\n");
+    #endif
+#endif
+            }
+
+            ap_uint<STREAM2_DATA_WIDTH> tmp2 = tmp1.range((n+1)* STREAM2_DATA_WIDTH -1, n * STREAM2_DATA_WIDTH);
+            strm_out.write(tmp2);
+#ifndef __SYTHESIS__
+    #ifdef DEBUG_LOG
+                printf("   |HLS DEBUG_LOG||%s| writing pkt: %d, val=(", __func__, pkt*FACTOR + n);
+
+                for (unsigned k = 0; k < STREAM2_DATA_WIDTH/(DEBUG_LOG_SIZE_OF * 8); k++)
+                {
+                    DataConv conv;
+                    conv.i = tmp2.range((k+1) * DEBUG_LOG_SIZE_OF * 8 - 1, k * DEBUG_LOG_SIZE_OF * 8);
+                    printf("%f,", conv.f);
+                }
+                printf(")\n");
+    #endif
+#endif
+        }
+    }
+
 }
 
 /**
