@@ -208,27 +208,27 @@ public:
         #pragma HLS ARRAY_PARTITION variable = stencilConfig.upper_limit dim = 1 complete
 
     {% if lh.ndim  == 1 %}
-        unsigned short iter_limit = stencilConfig.outer_loop_limit;
+        unsigned int iter_limit = stencilConfig.outer_loop_limit;
     {% elif lh.ndim == 2%}
-        unsigned short iter_limit = stencilConfig.outer_loop_limit * stencilConfig.grid_size[0]{%- if read_origin_wide_diff_x != 0 %} + {{read_origin_wide_diff_x}}{%- endif %};
+        unsigned int iter_limit = stencilConfig.outer_loop_limit * stencilConfig.grid_size[0]{%- if read_origin_wide_diff_x != 0 %} + {{read_origin_wide_diff_x}}{%- endif %};
     {% else %}
-        unsigned short iter_limit = stencilConfig.outer_loop_limit * 
+        unsigned int iter_limit = stencilConfig.outer_loop_limit * 
                 stencilConfig.grid_size[1] * stencilConfig.grid_size[0] {% if read_origin_wide_diff[1] !=0 -%} + {{read_origin_wide_diff[1]}} * stencilConfig.grid_size[0] {%- endif %} {%- if read_origin_wide_diff_x != 0 %} + {{read_origin_wide_diff_x}}{%- endif %};
     {% endif %}
 
     {% for arg in lh.args|ops_dat|ops_read_or_rw %}
         {% if lh.ndim == 1 %}
             {% set base_offset = widen_read_stencil_desc.widen_stencil.base_point.x - widen_stencil_disc[arg.stencil_ptr].widen_stencil.base_point.x %}
-        unsigned short arg{{arg.id}}_read_lb_itr = {{base_offset}};
-        unsigned short arg{{arg.id}}_read_ub_itr = {{base_offset}} + stencilConfig.grid_size[0];
+        unsigned int arg{{arg.id}}_read_lb_itr = {{base_offset}};
+        unsigned int arg{{arg.id}}_read_ub_itr = {{base_offset}} + stencilConfig.grid_size[0];
         {% elif lh.ndim == 2 %}
             {% set base_offset = widen_read_stencil_desc.widen_stencil.base_point.y - widen_stencil_disc[arg.stencil_ptr].widen_stencil.base_point.y %}
-        unsigned short arg{{arg.id}}_read_lb_itr = {{base_offset}} * stencilConfig.grid_size[0];
-        unsigned short arg{{arg.id}}_read_ub_itr = ({{base_offset}} + stencilConfig.grid_size[1]) * stencilConfig.grid_size[0];
+        unsigned int arg{{arg.id}}_read_lb_itr = {{base_offset}} * stencilConfig.grid_size[0];
+        unsigned int arg{{arg.id}}_read_ub_itr = ({{base_offset}} + stencilConfig.grid_size[1]) * stencilConfig.grid_size[0];
         {% else %}
             {% set base_offset = widen_read_stencil_desc.widen_stencil.base_point.z - widen_stencil_disc[arg.stencil_ptr].widen_stencil.base_point.z %}
-        unsigned short arg{{arg.id}}_read_lb_itr = {{base_offset}} * stencilConfig.grid_size[0] * stencilConfig.grid_size[1];
-        unsigned short arg{{arg.id}}_read_ub_itr = ({{base_offset}} + stencilConfig.grid_size[2]) * stencilConfig.grid_size[1] * stencilConfig.grid_size[0];
+        unsigned int arg{{arg.id}}_read_lb_itr = {{base_offset}} * stencilConfig.grid_size[0] * stencilConfig.grid_size[1];
+        unsigned int arg{{arg.id}}_read_ub_itr = ({{base_offset}} + stencilConfig.grid_size[2]) * stencilConfig.grid_size[1] * stencilConfig.grid_size[0];
         {% endif %}
     {% endfor %}
 
@@ -266,7 +266,7 @@ public:
         const short cond_z_val = stencilConfig.outer_loop_limit - 1;
     {% endif %}
 
-        for (unsigned short itr = 0; itr < iter_limit; itr++)
+        for (unsigned int itr = 0; itr < iter_limit; itr++)
         {
         #pragma HLS PIPELINE II=1
 
