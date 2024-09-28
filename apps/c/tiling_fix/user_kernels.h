@@ -143,3 +143,7 @@ void equationAE(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, cons
 void equationAF(ACC<double> &a, ACC<double> &b, const ACC<double> &c, const ACC<double> &d) {
 }
 
+//WRITE,READ,READ,READ
+void equationAG(ACC<double> &a, const ACC<double> &b, const ACC<double> &c, const ACC<double> &d) {
+}
+

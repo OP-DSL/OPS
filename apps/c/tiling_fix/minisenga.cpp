@@ -31,6 +31,7 @@ int main(int argc, const char** argv)
 //  Flags controlling loop sequence
     int flmavt = 1;
     int fxlcnv = 1, fxrcnv = 1;
+    int flmixp = 1;
 
     double *temp = NULL;
     int *temp_int = NULL;
@@ -65,6 +66,14 @@ int main(int argc, const char** argv)
     ops_dat wd2x = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "wd2x");
     ops_dat pd2x = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "pd2x");
     ops_dat td2x = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "td2x");
+
+    ops_dat pd1y = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "pd1y");
+
+    ops_dat pd2y = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "pd2y");
+
+    ops_dat pd1z = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "pd1z");
+
+    ops_dat pd2z = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "pd2z");
 
     ops_dat ufxl = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "ufxl");
     ops_dat vfxl = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "double", "vfxl");
@@ -274,7 +283,7 @@ int main(int argc, const char** argv)
             ops_arg_dat(drhs, 1, S3D_000, "double", OPS_READ),
             ops_arg_dat(trun, 1, S3D_000, "double", OPS_READ),
             ops_arg_dat(store7, 1, S3D_000, "double", OPS_READ));
-/*
+
     ops_par_loop(equationDX, "equationDX rhscal dfbydx 146", block, 1, internal_iter_range,
             ops_arg_dat(urhs, 1, S3D_p500_to_m500_x, "double", OPS_READ),
             ops_arg_dat(store1, 1, S3D_000, "double", OPS_WRITE));
@@ -423,7 +432,7 @@ int main(int argc, const char** argv)
             ops_arg_dat(store4, 1, S3D_000, "double", OPS_READ),
             ops_arg_dat(store5, 1, S3D_000, "double", OPS_READ),
             ops_arg_dat(store6, 1, S3D_000, "double", OPS_READ));
-*/
+
     ops_par_loop(equationDX, "equationDX rhscal d2fdx2 654", block, 1, internal_iter_range,
             ops_arg_dat(trun, 1, S3D_p500_to_m500_x, "double", OPS_READ),
             ops_arg_dat(store1, 1, S3D_000, "double", OPS_WRITE));
@@ -435,7 +444,7 @@ int main(int argc, const char** argv)
     ops_par_loop(equationDZ, "equationDZ rhscal d2fdz2 656", block, 1, internal_iter_range,
             ops_arg_dat(trun, 1, S3D_p005_to_m005_z, "double", OPS_READ),
             ops_arg_dat(store3, 1, S3D_000, "double", OPS_WRITE));
-/*
+
     ops_par_loop(equationI, "equationI chrate 212 rhscal 696", block, 1, internal_iter_range,
                 ops_arg_dat(store1, 1, S3D_000, "double", OPS_WRITE),
                 ops_arg_dat(store2, 1, S3D_000, "double", OPS_WRITE),
@@ -446,7 +455,7 @@ int main(int argc, const char** argv)
                 ops_arg_dat(rrte[ispec], 1, S3D_000, "double", OPS_WRITE),
                 ops_arg_dat(rate[ispec], 1, S3D_000, "double", OPS_READ));
     }
-*/
+
 
 /*  needs correction due to converting test app from 1D to 3D  
     if(fxlcnv) {
@@ -490,7 +499,7 @@ int main(int argc, const char** argv)
     }
 
     for(int ispec = 0; ispec < nspec; ispec++) {
-/*
+
         ops_par_loop(equationJ, "equationJ rhscal 916", block, 1, internal_iter_range,
                 ops_arg_dat(rate[ispec], 1, S3D_000, "double", OPS_INC),
                 ops_arg_dat(yrhs[ispec], 1, S3D_000, "double", OPS_READ),
@@ -582,7 +591,7 @@ int main(int argc, const char** argv)
         ops_par_loop(equationDZ, "equationDZ rhscal dfbydz 1431", block, 1, internal_iter_range,
                 ops_arg_dat(store7, 1, S3D_p005_to_m005_z, "double", OPS_READ),
                 ops_arg_dat(store6, 1, S3D_000, "double", OPS_WRITE));
-*/
+
         ops_par_loop(equationW, "equationW rhscal 1445", block, 1, internal_iter_range,
                 ops_arg_dat(rate[ispec], 1, S3D_000, "double", OPS_INC),
                 ops_arg_dat(vtmp, 1, S3D_000, "double", OPS_INC),
@@ -592,7 +601,7 @@ int main(int argc, const char** argv)
                 ops_arg_dat(store4, 1, S3D_000, "double", OPS_READ),
                 ops_arg_dat(store5, 1, S3D_000, "double", OPS_READ),
                 ops_arg_dat(store6, 1, S3D_000, "double", OPS_READ));
-/*
+
         ops_par_loop(equationV, "equationV rhscal 1470", block, 1, internal_iter_range,
                 ops_arg_dat(erhs, 1, S3D_000, "double", OPS_INC),
                 ops_arg_dat(utmp, 1, S3D_000, "double", OPS_READ),
@@ -628,7 +637,7 @@ int main(int argc, const char** argv)
         ops_par_loop(equationE, "equationE rhscal 1630", block, 1, internal_iter_range,
                 ops_arg_dat(store4, 1, S3D_000, "double", OPS_WRITE),
                 ops_arg_dat(store7, 1, S3D_000, "double", OPS_READ));
-*/
+
         ops_par_loop(equationDX, "equationDX rhscal d2fdx2 1643", block, 1, internal_iter_range,
                 ops_arg_dat(yrhs[ispec], 1, S3D_p500_to_m500_x, "double", OPS_READ),
                 ops_arg_dat(store1, 1, S3D_000, "double", OPS_WRITE));
@@ -640,7 +649,7 @@ int main(int argc, const char** argv)
         ops_par_loop(equationDZ, "equationDZ rhscal d2fdz2 1645", block, 1, internal_iter_range,
                 ops_arg_dat(yrhs[ispec], 1, S3D_p005_to_m005_z, "double", OPS_READ),
                 ops_arg_dat(store3, 1, S3D_000, "double", OPS_WRITE));
-/*
+
         ops_par_loop(equationT, "equationT rhscal 1662", block, 1, internal_iter_range,
                 ops_arg_dat(rate[ispec], 1, S3D_000, "double", OPS_INC),
                 ops_arg_dat(vtmp, 1, S3D_000, "double", OPS_INC),
@@ -656,7 +665,63 @@ int main(int argc, const char** argv)
                 ops_arg_dat(store2, 1, S3D_000, "double", OPS_READ),
                 ops_arg_dat(store3, 1, S3D_000, "double", OPS_READ),
                 ops_arg_dat(store4, 1, S3D_000, "double", OPS_READ));
-*/
+
+        if( flmixp ) {
+
+            ops_par_loop(equationAG, "equationAG rhscal 1981", block, 1, extended_iter_range,
+                    ops_arg_dat(store7, 1, S3D_000, "double", OPS_WRITE),
+                    ops_arg_dat(difmix, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(yrhs[ispec], 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(wmomix, 1, S3D_000, "double", OPS_READ));
+
+            ops_par_loop(equationJ_fused, "equationJ rhscal 2007", block, 1, internal_iter_range,
+                    ops_arg_dat(ucor, 1, S3D_000, "double", OPS_INC),
+                    ops_arg_dat(vcor, 1, S3D_000, "double", OPS_INC),
+                    ops_arg_dat(wcor, 1, S3D_000, "double", OPS_INC),
+                    ops_arg_dat(store7, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(pd1x, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(pd1y, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(pd1z, 1, S3D_000, "double", OPS_READ));
+
+            ops_par_loop(equationDX, "equationDX rhscal dfbydx 2022", block, 1, internal_iter_range,
+                    ops_arg_dat(store7, 1, S3D_p500_to_m500_x, "double", OPS_READ),
+                    ops_arg_dat(store1, 1, S3D_000, "double", OPS_WRITE));
+
+            ops_par_loop(equationDY, "equationDY rhscal dfbydy 2023", block, 1, internal_iter_range,
+                    ops_arg_dat(store7, 1, S3D_p050_to_m050_y, "double", OPS_READ),
+                    ops_arg_dat(store2, 1, S3D_000, "double", OPS_WRITE));
+
+            ops_par_loop(equationDZ, "equationDZ rhscal dfbydz 2024", block, 1, internal_iter_range,
+                    ops_arg_dat(store7, 1, S3D_p005_to_m005_z, "double", OPS_READ),
+                    ops_arg_dat(store3, 1, S3D_000, "double", OPS_WRITE));
+
+            ops_par_loop(equationV, "equationV rhscal 2106", block, 1, internal_iter_range,
+                    ops_arg_dat(erhs, 1, S3D_000, "double", OPS_INC),
+                    ops_arg_dat(store4, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(pd1x, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(store5, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(pd1y, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(store6, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(pd1z, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(store7, 1, S3D_000, "double", OPS_READ));
+
+            ops_par_loop(equationT, "equationT rhscal 2217", block, 1, internal_iter_range,
+                    ops_arg_dat(rate[ispec], 1, S3D_000, "double", OPS_INC),
+                    ops_arg_dat(vtmp, 1, S3D_000, "double", OPS_INC),
+                    ops_arg_dat(pd2x, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(pd2y, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(pd2z, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(store7, 1, S3D_000, "double", OPS_READ));
+    
+            ops_par_loop(equationS, "equationS rhscal 2240", block, 1, internal_iter_range,
+                    ops_arg_dat(erhs, 1, S3D_000, "double", OPS_INC),
+                    ops_arg_dat(pd2x, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(pd2y, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(pd2z, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(store7, 1, S3D_000, "double", OPS_READ),
+                    ops_arg_dat(utmp, 1, S3D_000, "double", OPS_READ));
+        } // if (flmixp)
+
     } // End of ispec loop
 
     ops_par_loop(equationDX, "equationDX rhscal dfbydx 2755", block, 1, internal_iter_range,
@@ -808,7 +873,7 @@ int main(int argc, const char** argv)
     ops_par_loop(equationDY, "equationDY rhsvel dfbydy 154", block, 1, internal_iter_range,
             ops_arg_dat(wtmp, 1, S3D_p050_to_m050_y, "double", OPS_READ),
             ops_arg_dat(store2, 1, S3D_000, "double", OPS_WRITE));
-/*
+
     ops_par_loop(equationDY, "equationDY rhsvel dfbydy 186", block, 1, internal_iter_range,
             ops_arg_dat(vtmp, 1, S3D_p050_to_m050_y, "double", OPS_READ),
             ops_arg_dat(store1, 1, S3D_000, "double", OPS_WRITE));
@@ -865,7 +930,7 @@ int main(int argc, const char** argv)
     ops_par_loop(equationDX, "equationDX rhsvel dfbydx 348", block, 1, internal_iter_range,
             ops_arg_dat(store7, 1, S3D_p500_to_m500_x, "double", OPS_READ),
             ops_arg_dat(store4, 1, S3D_000, "double", OPS_WRITE));
-*/
+
     ops_par_loop(equationH, "equationH rhsvel 361", block, 1, extended_iter_range,
             ops_arg_dat(store7, 1, S3D_000, "double", OPS_WRITE),
             ops_arg_dat(urhs, 1, S3D_000, "double", OPS_READ),
