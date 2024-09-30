@@ -113,7 +113,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_write(
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
     {% if arg is not read_only_rw %}
-    ops::hls::stream2mem<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_write_mem_strm, num_beats);
+    ops::hls::stream2mem<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_write_mem_strm, memconfig);
     {% endif %}
     {% endfor %}
     {#{% for arg in ilh.joint_args|ops_dat %}
@@ -194,7 +194,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write_dataflow_region(
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
         {% if arg is not read_only_rw %}
-        ops::hls::stream2mem<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_write_mem_strm, num_beats);
+        ops::hls::stream2mem<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_write_mem_strm, memconfig);
         {% endif %}
     {% endfor %}
     
