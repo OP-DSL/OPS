@@ -1,0 +1,29 @@
+#!/bin/bash
+
+export OPS_COMPILER=amd
+export OPS_INSTALL_PATH=/home/aac/shared/teams/dcgpu_training/epcc/alondhe/warwick/OPS/ops
+
+export AMD_ARCH=MI300A
+
+module load openmpi/5.0.5-ucc1.3.0-ucx1.17.0-xpmem2.7.3
+module load amdflang-new-beta-drop
+
+export CC=/opt/rocmplus-6.2.1/rocm-afar-5891/bin/amdclang
+export CXX=/opt/rocmplus-6.2.1/rocm-afar-5891/bin/amdclang++
+export FC=/opt/rocmplus-6.2.1/rocm-afar-5891/bin/amdflang-new
+
+export OMPI_CC=/opt/rocmplus-6.2.1/rocm-afar-5891/bin/amdclang
+export OMPI_CXX=/opt/rocmplus-6.2.1/rocm-afar-5891/bin/amdclang++
+export OMPI_FC=/opt/rocmplus-6.2.1/rocm-afar-5891/bin/amdflang-new
+
+export AMDGPU_GFXMODEL=rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'
+
+export MPI_INSTALL_PATH=/opt/rocmplus-6.2.1/openmpi-5.0.5-ucc-1.3.0-ucx-1.17.0-xpmem-2.7.3
+export LD_LIBRARY_PATH=$MPI_INSTALL_PATH/lib:$LD_LIBRARY_PATH
+
+unset HDF5_INSTALL_PATH
+export HDF5_INSTALL_PATH=/home/aac/shared/teams/dcgpu_training/epcc/alondhe/warwick/install/build_hdf5
+export PATH=$HDF5_INSTALL_PATH/bin:$PATH
+export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
+
+source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate

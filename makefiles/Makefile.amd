@@ -1,0 +1,14 @@
+CC        ?= amdclang
+CXX       ?= amdclang++
+FC        ?= amdflang-new
+
+CCFLAGS   := -O3 -std=c++11 -g -fPIC 
+CXXFLAGS  := $(CCFLAGS) -fopenmp
+FFLAGS    := -O3 -g -fopenmp -ffree-form
+
+FMODS         := -J$(F_INC_MOD)
+FMODS_OMPOFFLOAD    := -J$(F_INC_MOD)/ompoffload
+
+ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
+
+OMPOFFLOADFLAGS = -fopenmp --offload-arch=${ROCM_GPU} -D__HIP_PLATFORM_AMD__
