@@ -31,10 +31,7 @@ void poisson_kernel_stencil(const ACC<float> &u,
 //    float tmp5 = (2.0 * (dx_2_plus_dy_2));
 //    u2(0,0) = tmp4 / tmp5;
 
-	  float tmp1 = u(-1,0)+ u(1,0) + u(0,1) + u(0,-1);
-	  float tmp2 = 0.5f * u(0,0);
-	  float tmp3 = tmp1 * 0.125f;
-	  u2(0,0) = tmp2 + tmp3;
+	  u2(0,0) = 0.5f * u(0,0) + 0.125f * (u(-1,0)+ u(1,0) + u(0,1) + u(0,-1));
 }
 
 void poisson_kernel_update(const ACC<float> &u2, ACC<float> &u) {
