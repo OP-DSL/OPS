@@ -157,7 +157,9 @@ int main(int argc,  char **argv)
   //declare stencils
   int s3D_000[]         = {0,0,0};
   ops_stencil S3D_000 = ops_decl_stencil( 3, 1, s3D_000, "000");
-  int s3D_big_sten[3*3*(2*ORDER+1)];
+  int s3D_big_sten[] = {-4,0,0, -3,0,0, -2,0,0, -1,0,0, 0,0,0, 1,0,0, 2,0,0, 3,0,0, 4,0,0, 
+                        0,-4,0, 0,-3,0, 0,-2,0, 0,-1,0,        0,1,0, 0,2,0, 0,3,0, 0,4,0,
+                        0,0,-4, 0,0,-3, 0,0,-2, 0,0,-1,        0,0,1, 0,0,2, 0,0,3, 0,0,4};
   int is = 0;
   for (int ix=-HALF;ix<=HALF;ix++) {
     printf("ix = %d\n",ix);
@@ -184,7 +186,7 @@ int main(int argc,  char **argv)
     s3D_big_sten[is] = ix;
     is = is + 1;
   }
-  ops_stencil S3D_big_sten = ops_decl_stencil( 3, 3*(2*ORDER+1), s3D_big_sten, "big_sten");
+  ops_stencil S3D_big_sten = ops_decl_stencil( 3, 3*ORDER+1, s3D_big_sten, "big_sten");
 
   printf(" HERE2 \n");
   
