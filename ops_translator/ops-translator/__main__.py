@@ -275,15 +275,15 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, target_config: di
         if scheme.lang.kernel_dir:
             if scheme.target.name == "hls":
                 Path(args.out, scheme.target.name, "host", "kernel_wrappers").mkdir(parents=True, exist_ok=True)
-                path = Path(args.out, scheme.target.name, "host", "kernel_wrappers", f"{loop.kernel}_kernel.{extension}")                
+                path = Path(args.out, scheme.target.name, "host", "kernel_wrappers", f"{loop.kernel}_kernel.hpp")                
             else:
                 Path(args.out, scheme.target.name).mkdir(parents=True, exist_ok=True)
-                path = Path(args.out, scheme.target.name, f"{loop.kernel}_kernel.{extension}")
+                path = Path(args.out, scheme.target.name, f"{loop.kernel}_kernel.hpp")
         else:
             if scheme.target.name == "hls":
-                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel_wrapper.{extension}")
+                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel_wrapper.hpp")
             else:
-                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.{extension}")
+                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.hpp")
 
         # Write the gernerated source file
         if not scheme.target.name == "hls" or loop.iterativeLoopId == -1:
