@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union, Any
-
+from clang import cindex
 from clang.cindex import Cursor, CursorKind, TranslationUnit, TypeKind, conf
 
 import ops
@@ -284,9 +284,18 @@ def parseStencil(name: str, args: List[Cursor], loc: Location, macros: Dict[Loca
 def parseArrayIntLit(node: Cursor)->List[int]:
     logging.debug("array: %s, array_decl: %s, type:%s, loc:%s", node, node.get_definition(), 
             node.get_definition().kind, parseLocation(node.get_definition()))
-     
-    first_child = decend(node.get_definition())
+    if node.get_definition().kind == CursorKind.VAR_DECL:
+        logging.debug("array typekind: %s", node.get_definition().type.kind)
+        if node.get_definition().type.kind != TypeKind.CONSTANTARRAY:
+            raise ParseError("The array of stencil points should be contant sized array", parseLocation(node.get_definition()))
+    else:
+        raise ParseError("Not an array node", parseLocation(node.get_definition()))
     
+    first_child = decend(node.get_definition())
+
+    if first_child.kind != CursorKind.INIT_LIST_EXPR:
+        #TODO: make sure this is not breaking the other platforms. Technically, this has to be the case.
+        raise ParseError("Array is not declared with initializer. OPS stencil point array has to be intialized", parseLocation(node.get_definition()))
     outList=[]
     
     for child in first_child.get_children():
@@ -397,7 +406,22 @@ def parseIntLiteral(node: Cursor) -> Optional[int]:
         conf.lib.clang_EvalResult_dispose(eval_result)
         return val
     else:
-        raise ParseError("Invalid node type " + str(node.kind), parseLocation(node))
+        try:
+            eval_result = conf.lib.clang_Cursor_Evaluate(node)
+            
+            if eval_result:
+                eval_kind = conf.lib.clang_EvalResult_getKind(eval_result) #should produce CXEval_int == 1
+                if eval_kind == 1:
+                    val = conf.lib.clang_EvalResult_getAsInt(eval_result)
+                    conf.lib.clang_EvalResult_dispose(eval_result)
+                    return val
+                else:
+                    raise ParseError()
+            else:
+                raise ParseError()
+        except Exception as e:
+            conf.lib.clang_EvalResult_dispose(eval_result)
+            raise ParseError(f"Invalid node type {str(node.kind)} raised error{e}", parseLocation(node))
 
 
 def parseType(typ: str, loc: Location, include_custom=False) -> Tuple[ops.Type, bool]:
