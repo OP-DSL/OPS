@@ -43,7 +43,7 @@ void fd3d_pml_kernel1(const int *dispx, const int *dispy, const int *dispz, cons
   int ypmlend=yend-pml_width;
   int zpmlend=zend-pml_width;
 
-  float sigma = mu(0,0,0)]/rho(0,0,0)];
+  float sigma = mu(0,0,0)/rho(0,0,0);
   float sigmax=0.0;
   float sigmay=0.0;
   float sigmaz=0.0;
