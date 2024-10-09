@@ -127,8 +127,9 @@ class Program:
         logging.debug(f"searching stencil: {name_ptr}")
         for stencil in self.stencils:
             if stencil.stencil_ptr == name_ptr:
-                logging.debug(f"found stencil:\n {stencil}")
+                logging.debug(f"found stencil: \n {stencil}")
                 return stencil
+        logging.warning(f"couldn't find stencil name: {name_ptr}\n")
         return None
     
     def __str__(self) -> str:

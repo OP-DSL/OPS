@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Callable, List, Optional, Union, Tuple, Any
 
 from util import ABDC, findIdx
 from functools import cmp_to_key
+import logging
+import graphviz
 
 if TYPE_CHECKING:
     from store import Location
@@ -561,10 +563,62 @@ class DependancyEdge:
     dat_id: int
     sink_id: int
     sink_arg_id: int
+    is_stray: Optional[bool] = False
     
     def __str__(self) -> str:
-        return f"source_id: {self.source_id}, source_arg_id: {self.source_arg_id}, dat_id: {self.dat_id}, sink_id:{self.sink_id}, sink_arg_id: {self.sink_arg_id}"
+        return f"Edge:-> source_id: {self.source_id}, source_arg_id: {self.source_arg_id}, dat_id: {self.dat_id}, sink_id:{self.sink_id}, sink_arg_id: {self.sink_arg_id}, is_stray: {self.is_stray}"
        
+
+@dataclass
+class DataflowNode:
+    loop: Loop
+    node_id: int
+    internal_dat_swap_map: Optional[map[int]] = field(default_factory=dict)
+    
+    def __post_init__(self) -> None:
+        self.internal_dat_swap_map = {}
+    
+    def __str__(self) -> str:
+        return f"Node:-> Loop: {self.loop.kernel}, node_id: {self.node_id}, interna_dat_swap_map: {self.internal_dat_swap_map}"
+
+@dataclass
+class DataFlowGraph:
+    unique_name: str
+    nodes: Optional[List[DataflowNode]] = field(default_factory=list)
+    edges: Optional[List[DependancyEdge]] = field(default_factory=list)
+    global_dats: Optional[List[Dat]] = field(default_factory=list)
+    
+    def print(self, filename: str, format: str = "png") -> None:
+        logging.debug("Generating Dataflow graph image")
+
+    def addDat(self, dat: Dat)-> None:
+        if not findIdx(self.global_dats, lambda d: d.ptr == dat.ptr):
+            self.global_dats.append(dat)
+    
+    def __str__(self) -> str:
+        prompt =  f"DataflowGraph {self.unique_name} \n"
+        prompt += f"================================ \n\n"
+        prompt += f"  nodes \n"
+        prompt += f"  ----- \n"
+        
+        for node in self.nodes:
+            prompt += f"    |- {node} \n"
+            
+        prompt += f"\n  edges \n"
+        prompt += f"  ----- \n"
+        
+        for edge in self.edges:
+            prompt += f"    |- {edge} \n"       
+        
+        prompt += f"\n  dats \n"
+        prompt += f"  ---- \n"
+        
+        for dat in self.global_dats:
+            prompt += f"    |- {dat} \n"    
+        
+        return prompt
+    
+
 class IterLoop:
     unique_name: str
     id: int
@@ -582,6 +636,7 @@ class IterLoop:
     PE_args: List[List[str]]
     interconnector_names: List[str]
     ops_range: str = None
+    dataflow_graph: DataFlowGraph = None
     
     def __init__(self, unique_name: str, id: int, num_iter: Union[int, str], scope: List[Location], args: List[Any] = []) -> None:
         self.unique_name = unique_name
@@ -606,10 +661,87 @@ class IterLoop:
             if isinstance(arg, ParCopy):
                 self.addParCopy(arg)
         
-        self.gen_graph_v2()
-        self.gen_PE_args()
-        self.gen_arg_globals()
+        self.gen_graph_v3()
+        
+        if logging.DEBUG >= logging.root.level:
+            self.printDataflowGraph(f"{self.unique_name}")
+            
+        # self.gen_PE_args()
+        # self.gen_arg_globals()
 
+    def gen_graph_v3(self) -> None:
+        '''
+        This generates pure dataflow graph IR
+        '''
+        # temporary_map_of_maps to store consumers from the node-produced-dat
+        # key: dat value: {key: origin_loop.id, value: [consumer_loop.id, ....] }
+        read_map_of_maps = {}
+        
+        # map to store current update. key: dat val: (loop.id, local arg_id)
+        dat_current_update_map = {}
+        
+        self.dataflow_graph = DataFlowGraph(f"{self.unique_name}")
+        
+        for node_id, node in enumerate(self.itrloop_args):
+            if not isinstance(node, Loop):
+                continue
+            
+            self.dataflow_graph.nodes.append(DataflowNode(node, node_id))
+            
+            for arg in filter(lambda x: isinstance(x, ArgDat), node.args):
+                global_dat_id = findIdx(self.dats, lambda d: d[0].ptr == node.dats[arg.dat_id].ptr)
+                self.dataflow_graph.addDat(self.dats[global_dat_id][0])
+                if arg.access_type == AccessType.OPS_READ or arg.access_type == AccessType.OPS_RW: 
+                    if global_dat_id in dat_current_update_map.keys(): #if current reading dat being updated by previous nodes, then current node should have dependancy edge
+                        new_edge = DependancyEdge(dat_current_update_map[global_dat_id][0], dat_current_update_map[global_dat_id][1], global_dat_id, node_id, arg.id)
+                        self.dataflow_graph.edges.append(new_edge)
+                        read_map_of_maps[global_dat_id][dat_current_update_map[global_dat_id][0]].append((node_id, arg.id))
+                    else:
+                        if global_dat_id not in read_map_of_maps.keys():
+                            new_edge = DependancyEdge(-1, 0, global_dat_id, node_id, arg.id)
+                            read_map_of_maps[global_dat_id] = {-1:[(node_id, arg.id)]}
+                        elif (-1 not in read_map_of_maps[global_dat_id].keys()):
+                            new_edge = DependancyEdge(-1, 0, global_dat_id, node_id, arg.id)
+                            read_map_of_maps[global_dat_id] = {-1:[(node_id, arg.id)]}
+                        else:
+                            new_edge = DependancyEdge(-1, len(read_map_of_maps[global_dat_id]), global_dat_id, node_id, arg.id)
+                            read_map_of_maps[global_dat_id][-1].append((node_id, arg.id))
+                            
+                        self.dataflow_graph.edges.append(new_edge)
+                        
+                        
+                if arg.access_type == AccessType.OPS_WRITE or arg.access_type == AccessType.OPS_RW:
+                    # Error if the dat is WAW as 
+                    if global_dat_id in dat_current_update_map.keys():
+                        if global_dat_id not in read_map_of_maps.keys() \
+                            or not(read_map_of_maps[global_dat_id][dat_current_update_map[global_dat_id][0]]):
+                            #TODO: if this is not an error make sure proper warning given as this might be a design flaw from user's side
+                            OpsError(f"Dataflow failure: arg {dat_current_update_map[global_dat_id][1]} \
+                                of par_loop {self.itrloop_args[dat_current_update_map[global_dat_id][0]].kernel} will be redundant \
+                                write as no consumer for updated values as dat been overide by arg {arg.id} of par_loop {node.kernel}")
+                    
+                    dat_current_update_map[global_dat_id] = (node_id, arg.id)
+                    
+                    # Initializing read_map_of_map entries if not in the map_of_maps
+                    if global_dat_id in read_map_of_maps.keys():
+                        if node_id not in read_map_of_maps[global_dat_id]:
+                            read_map_of_maps[global_dat_id][node_id] = []
+                    else:
+                        read_map_of_maps[global_dat_id]= {node_id: []}
+                             
+        # Analysing left over write dats that updated by ISL reigon
+        for dat_id in dat_current_update_map.keys():
+            # stray write, as this will be overide each iteration mark this stray write
+            if dat_id not in read_map_of_maps.keys():
+                new_edge = DependancyEdge(dat_current_update_map[dat_id][0], dat_current_update_map[dat_id][1], dat_id, -2, -1, True)
+                self.dataflow_graph.edges.append(new_edge)
+            elif len(read_map_of_maps[dat_id][dat_current_update_map[dat_id][0]]) == 0:
+                new_edge = DependancyEdge(dat_current_update_map[dat_id][0], dat_current_update_map[dat_id][1], dat_id, -2, -1, True)
+                self.dataflow_graph.edges.append(new_edge)
+                
+        
+                   
+                            
     def gen_graph_v2(self) -> None:
         # temporary_map_of_maps to store consumers from the node-produced-dat
         # key: dat value: {key: origin_loop.id, value: [consumer_loop.id, ....] }
@@ -619,6 +751,7 @@ class IterLoop:
         edges = []
         source_dats = []
         sink_dats = []
+        self.dataflow_graph = DataFlowGraph()
         
         # for aditional write channels
         loop_read_arg_sinks = {}
@@ -630,18 +763,25 @@ class IterLoop:
             if not isinstance(v, Loop):
                 continue
             
+            self.dataflow_graph.nodes.append(DataflowNode(v, v_id))
+            
             for arg in filter(lambda x: isinstance(x, ArgDat), v.args):
-                global_dat_id = findIdx(self.dats, lambda d: d[0].ptr == v.dats[arg.dat_id].ptr)
+                global_dat_id = findIdx(self.dats, lambda d: d[0].ptr == v.dats[arg.dat_id].ptr) #finding the global dat_id from the dat info of par_loop node in iter_par_loop region
                 
                 if arg.access_type == AccessType.OPS_READ or arg.access_type == AccessType.OPS_RW:    
-                    if global_dat_id in dat_current_update_map.keys():
-                        edges.append(DependancyEdge(dat_current_update_map[global_dat_id][0], dat_current_update_map[global_dat_id][1], global_dat_id, v_id, arg.id))
+                    if global_dat_id in dat_current_update_map.keys(): #if current reading dat being updated by previous nodes, then current node should have dependancy edge
+                        new_edge = DependancyEdge(dat_current_update_map[global_dat_id][0], dat_current_update_map[global_dat_id][1], global_dat_id, v_id, arg.id)
+                        edges.append(new_edge)
+                        self.dataflow_graph.edges.append(new_edge)
                         read_map_of_maps[global_dat_id][(dat_current_update_map[global_dat_id][0])].append((v_id, arg.id))
                     else:
-                        edges.append(DependancyEdge(-1, len(source_dats), global_dat_id, v_id, arg.id))
-                        dat_current_update_map[global_dat_id] = (-1, len(source_dats))
-                        source_dats.append([global_dat_id, arg])
-                        print (f"global id: {global_dat_id}")
+                        new_edge = DependancyEdge(-1, len(source_dats), global_dat_id, v_id, arg.id)
+                        edges.append(new_edge) #This dat is never been updated. Therefore, should come from the source dat 
+                        self.dataflow_graph.edges.append(new_edge)
+                        # dat_current_update_map[global_dat_id] = (-1, len(source_dats)) #source (-1) is recorded as the upding node of the dat
+                        if (-1 not in read_map_of_maps[global_dat_id].keys()) or len(read_map_of_maps[global_dat_id]) == 0:
+                            source_dats.append([global_dat_id, arg])
+                        # print (f"global id: {global_dat_id}")
                         read_map_of_maps[global_dat_id] = {-1:[(v_id, arg.id)]}
                         
                         # By assuming one read and one right in each channels. There can be multiple reads from a source, where need to 
@@ -918,7 +1058,9 @@ class IterLoop:
                 return arg
         return None      
             
-    
+    def printDataflowGraph(self, filename: str) -> None:
+        print(self.dataflow_graph)
+        
 class ParCopy:
     target: str
     source: str
