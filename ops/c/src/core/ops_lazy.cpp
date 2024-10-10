@@ -583,7 +583,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
 
       //need to check full intersection in other dimensions
       int other_dims = 1;
-      for (int d2 = 0; d2 < OPS_MAX_DIM; d2++) {
+      for (int d2 = 0; d2 < dims; d2++) {
         if (d2 == d) continue;
         int full_intersection = intersection2(start[d2], end[d2], decomp_disp[d2], decomp_disp[d2] + decomp_size[d2]);
         other_dims = other_dims && (full_intersection>=decomp_size[d2]);

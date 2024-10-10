@@ -441,6 +441,13 @@ module OPS_Fortran_Declarations
             character(kind=c_char,len=1), intent(in) :: file_name(*)
         end subroutine ops_print_dat_to_txtfile_core_c
 
+        subroutine ops_NaNcheck_c (dat) BIND(C,name='ops_NaNcheck')
+            use ISO_C_BINDING
+            import :: ops_dat_core
+
+            type(ops_dat_core) :: dat
+        end subroutine ops_NaNcheck_c
+
         integer(kind=c_int) function ops_dat_get_local_npartitions_c( dat ) BIND(C,name='ops_dat_get_local_npartitions')
             use, intrinsic :: ISO_C_BINDING
 
@@ -1229,7 +1236,12 @@ module OPS_Fortran_Declarations
     call ops_print_dat_to_txtfile_core_c (dat%dataPtr, fileName//C_NULL_CHAR)
   end subroutine ops_print_dat_to_txtfile_core
 
- subroutine ops_reduction_result_scalar_real_8 (reduction_handle, var)
+  subroutine ops_NaNcheck (dat)
+    type(ops_dat) :: dat
+    call ops_NaNcheck_c (dat%dataPtr)
+  end subroutine ops_NaNcheck
+
+  subroutine ops_reduction_result_scalar_real_8 (reduction_handle, var)
     use, intrinsic :: ISO_C_BINDING
     type(ops_reduction) :: reduction_handle
     real(8), target    :: var

@@ -211,6 +211,7 @@ ops_arg ops_arg_gbl_core(char *data, int dim, int size, ops_access acc);
 OPS_FTN_INTEROP
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name);
 
+OPS_FTN_INTEROP
 void ops_NaNcheck(ops_dat dat);
 void ops_NaNcheck_core(ops_dat dat, char *buffer);
 
