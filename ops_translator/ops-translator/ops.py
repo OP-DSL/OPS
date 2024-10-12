@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Callable, List, Optional, Union, Tuple, Any
 
 from util import ABDC, findIdx
 from functools import cmp_to_key
+import logging
+import pygraphviz
 
 if TYPE_CHECKING:
     from store import Location
@@ -355,7 +357,7 @@ def genRowDiscriptors(array: List[Point], base_point: Point = Point([0,0,0]))-> 
             row_discriptors[-1].row_points.append(point)
     
     return row_discriptors
-     
+    
 def  computeWidenPoints(row_discriptors: List[StencilRowDiscriptor], vector_factor: int):
     widen_points = []
     init_point_to_widen_point_map = {}
@@ -449,7 +451,7 @@ class Stencil:
                     
     def __eq__(self, __value: str) -> bool:
         return self.stencil_ptr == __value 
-         
+    
     def __str__(self) -> str:
         return f"Stencil(id={self.id}, dim={self.dim}, stencil_ptr='{self.stencil_ptr}', \
 number of points={self.num_points}, points={self.points}, base_point={self.base_point}, stride_ptr='{self.stride}')"
@@ -554,6 +556,15 @@ class Block:
             self.dats.append(dat)
 
 
+# OPS Dataflow components 
+class DFNodeType(Enum):
+    DF_START = -1
+    DF_END = -2 
+    
+    @staticmethod
+    def values() -> List[str]:
+        return [x.value for x in list(AccessType)]
+
 @dataclass
 class DependancyEdge:
     source_id: int
@@ -561,10 +572,154 @@ class DependancyEdge:
     dat_id: int
     sink_id: int
     sink_arg_id: int
+    is_stray: Optional[bool] = False
     
     def __str__(self) -> str:
-        return f"source_id: {self.source_id}, source_arg_id: {self.source_arg_id}, dat_id: {self.dat_id}, sink_id:{self.sink_id}, sink_arg_id: {self.sink_arg_id}"
-       
+        return f"Edge:-> source_id: {self.source_id}, source_arg_id: {self.source_arg_id}, dat_id: {self.dat_id}, sink_id:{self.sink_id}, sink_arg_id: {self.sink_arg_id}, is_stray: {self.is_stray}"
+
+
+@dataclass
+class DataflowNode:
+    loop: Loop
+    node_id: int
+    internal_dat_swap_map: Optional[map[int]] = field(default_factory=dict)
+    
+    def __post_init__(self) -> None:
+        self.internal_dat_swap_map = {}
+    
+    def __str__(self) -> str:
+        return f"Node:-> Loop: {self.loop.kernel}, node_id: {self.node_id}, interna_dat_swap_map: {self.internal_dat_swap_map}"
+
+    def getArgDat(self, dat_ptr: str) -> Union[ArgDat, None]:
+        local_dat_id = findIdx(self.loop.dats, lambda d: d.ptr == dat_ptr)
+        
+        for arg in self.loop.args:
+            if isinstance(arg, ArgDat) and arg.dat_id == local_dat_id:
+                return arg
+        return None
+    
+@dataclass
+class DataFlowGraph:
+    unique_name: str
+    nodes: Optional[List[DataflowNode]] = field(default_factory=list)
+    edges: Optional[List[DependancyEdge]] = field(default_factory=list)
+    global_dats: Optional[List[Dat]] = field(default_factory=list)
+    global_dat_swap_map: Optional[List[int]] = field(default_factory=list)
+    
+    def __str__(self) -> str:
+        prompt =  f"DataflowGraph {self.unique_name} \n"
+        prompt += f"================================ \n\n"
+        prompt += f"  nodes \n"
+        prompt += f"  ----- \n"
+        
+        for node in self.nodes:
+            prompt += f"    |- {node} \n"
+            
+        prompt += f"\n  edges \n"
+        prompt += f"  ----- \n"
+        
+        for edge in self.edges:
+            prompt += f"    |- {edge} \n"       
+        
+        prompt += f"\n  dats \n"
+        prompt += f"  ---- \n"
+        
+        for dat in self.global_dats:
+            prompt += f"    |- {dat} \n"    
+        
+        return prompt
+    
+    def print(self, filename: str, format: str = "png") -> None:
+        logging.debug("Generating Dataflow graph image")
+        g = pygraphviz.AGraph(strict=True, directed=True)
+        
+        nodeMap = {}
+        nodeNameList = []
+        
+        for node in self.nodes:
+            nodeMap[node.node_id] = f"{node.loop.kernel}({node.node_id})"
+            nodeNameList.append(f"{node.loop.kernel}({node.node_id})")
+        
+        g.add_node("start", color="red")
+        g.add_nodes_from(nodeNameList, shape="rectangle", color="blue")
+        g.add_node("end", color="red")
+        
+        for edge in self.edges:
+            type = 0
+            if edge.source_id == DFNodeType.DF_START:
+                source_node = "start"
+                type = 1
+            else:
+                source_node = nodeNameList[edge.source_id]
+            
+            if edge.sink_id == DFNodeType.DF_END:
+                sink_node = "end"
+                type = 2
+            else:
+                sink_node =  nodeNameList[edge.sink_id]
+            
+            if type == 1:
+                g.add_edge(source_node, f"{self.global_dats[edge.dat_id].ptr}", style="dashed")
+            else:
+                g.add_edge(source_node, f"{self.global_dats[edge.dat_id].ptr}")
+            if type == 2:
+                g.add_edge(f"{self.global_dats[edge.dat_id].ptr}", sink_node, style="dashed")
+                if self.global_dat_swap_map[edge.dat_id] != edge.dat_id:
+                    g.add_edge(f"{self.global_dats[edge.dat_id].ptr}", f"{self.global_dats[self.global_dat_swap_map[edge.dat_id]].ptr}", color="red")
+            else:
+                g.add_edge(f"{self.global_dats[edge.dat_id].ptr}", sink_node)
+        
+        
+        g.layout(prog="dot")
+        g.draw(f"{filename}.{format}")
+        
+
+    def addDat(self, dat: Dat)-> None:
+        if not findIdx(self.global_dats, lambda d: d.ptr == dat.ptr):
+            self.global_dats.append(dat)
+    
+    def getGlobalSourceDatIndices(self) -> List[int]:
+        sourceDats = []
+        
+        for edge in self.edges:
+            if edge.source_id == DFNodeType.DF_START:
+                if edge.dat_id not in sourceDats:
+                    sourceDats.append(edge.dat_id)
+        return sourceDats
+    
+    def getGlobalSinkDatIndices(self) -> List[int]:
+        sinkDats = []
+        
+        for edge in self.edges:
+            if edge.sink_id == DFNodeType.DF_END:
+                if edge.dat_id not in sinkDats:
+                    sinkDats.append(edge.dat_id)    
+        return sinkDats
+        
+    def getFirstReadingNode(self, dat_id: int) -> Union[DataflowNode, None]:
+        fr_edge_idx = findIdx(self.edges, lambda edge: edge.dat_id == dat_id and edge.source_id == DFNodeType.DF_START)
+        print (f"found first read edge idx: {fr_edge_idx}\n")
+        if fr_edge_idx != None:
+            print (f"firs read edge: {self.edges[fr_edge_idx]}, first read node: {self.getNode(self.edges[fr_edge_idx].sink_id)}")
+            return self.getNode(self.edges[fr_edge_idx].sink_id)
+        return None
+    
+    def getWritingNode(self, dat_id: int) -> Union[DataflowNode, None]:
+        w_edge_idx = findIdx(self.edges, lambda edge: edge.dat_id == dat_id and edge.sink_id == DFNodeType.DF_END)
+        print (f"found writing edge idx: {w_edge_idx}\n")
+        if w_edge_idx != None:
+            print (f"writing edge: {self.edges[w_edge_idx]}, first read node: {self.getNode(self.edges[w_edge_idx].source_id)}")
+            return self.getNode(self.edges[w_edge_idx].source_id)
+        return None
+
+    def getNode(self, node_id: int) -> Optional[DataflowNode]:
+        idx = findIdx(self.nodes, lambda node: node.node_id == node_id)
+        if (idx != -1):
+            return self.nodes[idx]
+        
+        logging.warning(f"Node id: {node_id} does not exist in the dataflow graph: {self.unique_name}")
+        return None
+            
 class IterLoop:
     unique_name: str
     id: int
@@ -582,6 +737,7 @@ class IterLoop:
     PE_args: List[List[str]]
     interconnector_names: List[str]
     ops_range: str = None
+    dataflow_graph: DataFlowGraph = None
     
     def __init__(self, unique_name: str, id: int, num_iter: Union[int, str], scope: List[Location], args: List[Any] = []) -> None:
         self.unique_name = unique_name
@@ -606,10 +762,93 @@ class IterLoop:
             if isinstance(arg, ParCopy):
                 self.addParCopy(arg)
         
-        self.gen_graph_v2()
+        self.gen_graph_v3()
+        
+        if logging.DEBUG >= logging.root.level:
+            self.printDataflowGraph(f"{self.unique_name}")
+        
+        self.gen_global_dat_args() 
         self.gen_PE_args()
-        self.gen_arg_globals()
+        self.gen_global_const_args()
 
+    def gen_graph_v3(self) -> None:
+        '''
+        This generates pure dataflow graph IR
+        '''
+        # temporary_map_of_maps to store consumers from the node-produced-dat
+        # key: dat value: {key: origin_loop.id, value: [consumer_loop.id, ....] }
+        read_map_of_maps = {}
+        
+        # map to store current update. key: dat val: (loop.id, local arg_id)
+        dat_current_update_map = {}
+        
+        self.dataflow_graph = DataFlowGraph(f"{self.unique_name}")
+        
+        for dat_id, (dat, AccessType) in enumerate(self.dats):
+            self.dataflow_graph.addDat(dat)
+            self.dataflow_graph.global_dat_swap_map.append(self.dat_swap_map[dat_id])
+            
+        for node_id, node in enumerate(self.itrloop_args):
+            if not isinstance(node, Loop):
+                continue
+            
+            self.dataflow_graph.nodes.append(DataflowNode(node, node_id))
+            
+            for arg in filter(lambda x: isinstance(x, ArgDat), node.args):
+                global_dat_id = findIdx(self.dats, lambda d: d[0].ptr == node.dats[arg.dat_id].ptr)
+                
+                if arg.access_type == AccessType.OPS_READ or arg.access_type == AccessType.OPS_RW: 
+                    if global_dat_id in dat_current_update_map.keys(): #if current reading dat being updated by previous nodes, then current node should have dependancy edge
+                        new_edge = DependancyEdge(dat_current_update_map[global_dat_id][0], dat_current_update_map[global_dat_id][1], global_dat_id, node_id, arg.id)
+                        self.dataflow_graph.edges.append(new_edge)
+                        read_map_of_maps[global_dat_id][dat_current_update_map[global_dat_id][0]].append((node_id, arg.id))
+                    else:
+                        if global_dat_id not in read_map_of_maps.keys():
+                            new_edge = DependancyEdge(DFNodeType.DF_START, 0, global_dat_id, node_id, arg.id)
+                            read_map_of_maps[global_dat_id] = {DFNodeType.DF_START:[(node_id, arg.id)]}
+                        elif (-1 not in read_map_of_maps[global_dat_id].keys()):
+                            new_edge = DependancyEdge(DFNodeType.DF_START, 0, global_dat_id, node_id, arg.id)
+                            read_map_of_maps[global_dat_id] = {DFNodeType.DF_START:[(node_id, arg.id)]}
+                        else:
+                            new_edge = DependancyEdge(DFNodeType.DF_START, len(read_map_of_maps[global_dat_id]), global_dat_id, node_id, arg.id)
+                            read_map_of_maps[global_dat_id][DFNodeType.DF_START].append((node_id, arg.id))
+                            
+                        self.dataflow_graph.edges.append(new_edge)
+                        
+                        
+                if arg.access_type == AccessType.OPS_WRITE or arg.access_type == AccessType.OPS_RW:
+                    # Error if the dat is WAW as 
+                    if global_dat_id in dat_current_update_map.keys():
+                        if global_dat_id not in read_map_of_maps.keys() \
+                            or not(read_map_of_maps[global_dat_id][dat_current_update_map[global_dat_id][0]]):
+                            #TODO: if this is not an error make sure proper warning given as this might be a design flaw from user's side
+                            raise OpsError(f"Dataflow failure: arg {dat_current_update_map[global_dat_id][1]} \
+                                of par_loop {self.itrloop_args[dat_current_update_map[global_dat_id][0]].kernel} will be redundant \
+                                write as no consumer for updated values as dat been overide by arg {arg.id} of par_loop {node.kernel}")
+                    
+                    dat_current_update_map[global_dat_id] = (node_id, arg.id)
+                    
+                    # Initializing read_map_of_map entries if not in the map_of_maps
+                    if global_dat_id in read_map_of_maps.keys():
+                        if node_id not in read_map_of_maps[global_dat_id]:
+                            read_map_of_maps[global_dat_id][node_id] = []
+                    else:
+                        read_map_of_maps[global_dat_id]= {node_id: []}
+                             
+        # Analysing left over write dats that updated by ISL reigon
+        for dat_id in dat_current_update_map.keys():
+            # stray write, as this will be overide each iteration mark this stray write
+            if dat_id not in read_map_of_maps.keys():
+                new_edge = DependancyEdge(dat_current_update_map[dat_id][0], dat_current_update_map[dat_id][1], dat_id, DFNodeType.DF_END, -1, True)
+                self.dataflow_graph.edges.append(new_edge)
+            elif len(read_map_of_maps[dat_id][dat_current_update_map[dat_id][0]]) == 0:
+                new_edge = DependancyEdge(dat_current_update_map[dat_id][0], dat_current_update_map[dat_id][1], dat_id, DFNodeType.DF_END, -1, True)
+                self.dataflow_graph.edges.append(new_edge)
+        
+        self.read_map_of_maps = read_map_of_maps       
+        
+                   
+                            
     def gen_graph_v2(self) -> None:
         # temporary_map_of_maps to store consumers from the node-produced-dat
         # key: dat value: {key: origin_loop.id, value: [consumer_loop.id, ....] }
@@ -619,6 +858,7 @@ class IterLoop:
         edges = []
         source_dats = []
         sink_dats = []
+        self.dataflow_graph = DataFlowGraph()
         
         # for aditional write channels
         loop_read_arg_sinks = {}
@@ -630,18 +870,25 @@ class IterLoop:
             if not isinstance(v, Loop):
                 continue
             
+            self.dataflow_graph.nodes.append(DataflowNode(v, v_id))
+            
             for arg in filter(lambda x: isinstance(x, ArgDat), v.args):
-                global_dat_id = findIdx(self.dats, lambda d: d[0].ptr == v.dats[arg.dat_id].ptr)
+                global_dat_id = findIdx(self.dats, lambda d: d[0].ptr == v.dats[arg.dat_id].ptr) #finding the global dat_id from the dat info of par_loop node in iter_par_loop region
                 
                 if arg.access_type == AccessType.OPS_READ or arg.access_type == AccessType.OPS_RW:    
-                    if global_dat_id in dat_current_update_map.keys():
-                        edges.append(DependancyEdge(dat_current_update_map[global_dat_id][0], dat_current_update_map[global_dat_id][1], global_dat_id, v_id, arg.id))
+                    if global_dat_id in dat_current_update_map.keys(): #if current reading dat being updated by previous nodes, then current node should have dependancy edge
+                        new_edge = DependancyEdge(dat_current_update_map[global_dat_id][0], dat_current_update_map[global_dat_id][1], global_dat_id, v_id, arg.id)
+                        edges.append(new_edge)
+                        self.dataflow_graph.edges.append(new_edge)
                         read_map_of_maps[global_dat_id][(dat_current_update_map[global_dat_id][0])].append((v_id, arg.id))
                     else:
-                        edges.append(DependancyEdge(-1, len(source_dats), global_dat_id, v_id, arg.id))
-                        dat_current_update_map[global_dat_id] = (-1, len(source_dats))
-                        source_dats.append([global_dat_id, arg])
-                        print (f"global id: {global_dat_id}")
+                        new_edge = DependancyEdge(-1, len(source_dats), global_dat_id, v_id, arg.id)
+                        edges.append(new_edge) #This dat is never been updated. Therefore, should come from the source dat 
+                        self.dataflow_graph.edges.append(new_edge)
+                        # dat_current_update_map[global_dat_id] = (-1, len(source_dats)) #source (-1) is recorded as the upding node of the dat
+                        if (-1 not in read_map_of_maps[global_dat_id].keys()) or len(read_map_of_maps[global_dat_id]) == 0:
+                            source_dats.append([global_dat_id, arg])
+                        # print (f"global id: {global_dat_id}")
                         read_map_of_maps[global_dat_id] = {-1:[(v_id, arg.id)]}
                         
                         # By assuming one read and one right in each channels. There can be multiple reads from a source, where need to 
@@ -662,7 +909,7 @@ class IterLoop:
                     if global_dat_id in dat_current_update_map.keys():
                         if global_dat_id not in read_map_of_maps.keys() \
                             or not(read_map_of_maps[global_dat_id][dat_current_update_map[global_dat_id][0]]):
-                            OpsError(f"Dataflow analysis failed: arg {dat_current_update_map[global_dat_id][1]} \
+                            raise OpsError(f"Dataflow analysis failed: arg {dat_current_update_map[global_dat_id][1]} \
                                 of par_loop {self.itrloop_args[dat_current_update_map[global_dat_id][0]].kernel} overide before read")
                             
                     dat_current_update_map[global_dat_id] = (v_id, arg.id)
@@ -708,19 +955,60 @@ class IterLoop:
         for edge in edges:
             print (f"edge: {edge}")
         
-    def gen_arg_globals(self) -> None:
-        global_args_ptrs = []
-        global_args = []
-        for v_id,v in enumerate(self.itrloop_args):
-            if isinstance(v, Loop):
-                print(f"args: {v.args}")
-                for arg in filter(lambda x: isinstance(x, ArgGbl), v.args):
-                    if arg.ptr not in global_args_ptrs:
-                        global_args_ptrs.append(arg.ptr)
-                        global_args.append(arg)
+    def gen_global_dat_args(self) -> None:
+        source_dats = self.dataflow_graph.getGlobalSourceDatIndices()
+        sink_dats = self.dataflow_graph.getGlobalSinkDatIndices()
         
-        for arg in global_args:
-            self.joint_args.append(arg)
+        print (f"source dats: {source_dats}, sink_dats: {sink_dats}")
+        for dat_id in source_dats:
+            idx = findIdx(sink_dats, lambda x: x == dat_id)
+            node = self.dataflow_graph.getFirstReadingNode(dat_id)
+            
+            if not node:
+                raise OpsError(f"Error finding node that read from dat: {self.dats[dat_id][0].ptr}")
+            
+            arg = node.getArgDat(self.dats[dat_id][0].ptr)
+            
+            if not arg:
+                raise OpsError(f"Error finding ArgDat from node: {node.node_id} of parloop: {node.loop.kernel}, loc: {node.loop.loc}")
+            if idx:
+                if self.dat_swap_map[dat_id] == dat_id:
+                    self.joint_args.append(ArgDat(len(self.joint_args), arg.loc, AccessType.OPS_RW, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id, True))
+                else:
+                     self.joint_args.append(ArgDat(len(self.joint_args), arg.loc, AccessType.OPS_RW, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))
+                del sink_dats[idx]
+            else:
+                self.joint_args.append(ArgDat(len(self.joint_args), arg.loc, AccessType.OPS_READ, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))
+   
+        for dat_id in sink_dats:
+            node = self.dataflow_graph.getWritingNode(dat_id)
+            
+            if not node:
+                raise OpsError(f"Error finding node that read from dat: {self.dats[dat_id][0].ptr}")
+            
+            arg = node.getArgDat(self.dats[dat_id][0].ptr)
+            
+            if not arg:
+                raise OpsError(f"Error finding ArgDat from node: {node.node_id} of parloop: {node.loop.kernel}, loc: {node.loop.loc}")
+
+            self.joint_args.append(ArgDat(len(self.joint_args), arg.loc, AccessType.OPS_WRITE, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))    
+
+
+    def gen_global_const_args(self) -> None:
+            
+            global_args_ptrs = []
+            global_args = []
+            for v_id,v in enumerate(self.itrloop_args):
+                if isinstance(v, Loop):
+                    print(f"args: {v.args}")
+                    for arg in filter(lambda x: isinstance(x, ArgGbl), v.args):
+                        if arg.ptr not in global_args_ptrs:
+                            global_args_ptrs.append(arg.ptr)
+                            global_args.append(arg)
+            
+            for arg in global_args:
+                self.joint_args.append(arg)
+        
             
                     
     # def gen_graph(self) -> None:
@@ -776,9 +1064,9 @@ class IterLoop:
     def gen_PE_args_loop(self, i: int,  v: Loop) -> List[str]:
         arg_map = {}
         PE_args = []
-        for edge in self.edges:
+        for edge in self.dataflow_graph.edges:
             if i == edge.source_id:
-                if edge.sink_id == -2:
+                if edge.sink_id == DFNodeType.DF_END:
                     search_list = filter(lambda x: (x.access_type == AccessType.OPS_WRITE or x.access_type == AccessType.OPS_RW) and x.dat_id == edge.dat_id, self.joint_args)
                     # print(f"search list: {[i for i in search_list]}")
                     if edge.source_arg_id in arg_map.keys():
@@ -791,7 +1079,7 @@ class IterLoop:
                         self.interconnector_names.append(connector_name)
                     arg_map[edge.source_arg_id] = connector_name
             elif i == edge.sink_id:
-                if edge.source_id == -1:
+                if edge.source_id == DFNodeType.DF_START:
                     search_list = filter(lambda x: x.access_type in [AccessType.OPS_READ, AccessType.OPS_RW] and x.dat_id == edge.dat_id, self.joint_args)
                     arg_id = next(search_list).id
                     if edge.sink_arg_id in arg_map.keys():
@@ -819,34 +1107,34 @@ class IterLoop:
         outer_loop_str = ""
         outer_loop_str += f"OPS Iterative Loop at {self.scope[0]}:\n ID: {self.id}, UID: {self.unique_id}, with num of iteration: {self.num_iter}\n\n DATS: \n ------ \n"
         
-        for i,dat in enumerate(self.dats):
-            outer_loop_str += f"dat{i}: " + str(dat) + "\n"
+        # for i,dat in enumerate(self.dats):
+        #     outer_loop_str += f"dat{i}: " + str(dat) + "\n"
         
-        outer_loop_str += "SOURCE DATS: " + str(self.source_dats) + "\n"
-        outer_loop_str += "SINK DATS: " + str(self.sink_dats) + "\n"
+        # outer_loop_str += "SOURCE DATS: " + str(self.source_dats) + "\n"
+        # outer_loop_str += "SINK DATS: " + str(self.sink_dats) + "\n"
         
-        outer_loop_str +="\n JOINT_ARGS: \n ------ \n"
-        for i,arg in enumerate(self.joint_args):
-            outer_loop_str += f"arg{i}: " + str(arg) + "\n"
+        # outer_loop_str +="\n JOINT_ARGS: \n ------ \n"
+        # for i,arg in enumerate(self.joint_args):
+        #     outer_loop_str += f"arg{i}: " + str(arg) + "\n"
             
-        outer_loop_str +="\n EDGES: \n ------ \n"
+        # outer_loop_str +="\n EDGES: \n ------ \n"
 
-        for i, edge in enumerate(self.edges):
-            outer_loop_str += f"edges{i}: " + str(edge) + "\n"
+        # for i, edge in enumerate(self.edges):
+        #     outer_loop_str += f"edges{i}: " + str(edge) + "\n"
         
-        outer_loop_str +="\n SWAP MAP: \n ------ \n"
+        # outer_loop_str +="\n SWAP MAP: \n ------ \n"
             
-        for i,j in enumerate(self.dat_swap_map):
-            outer_loop_str += f"dat{i} - dat{j}\n"
+        # for i,j in enumerate(self.dat_swap_map):
+        #     outer_loop_str += f"dat{i} - dat{j}\n"
         
-        outer_loop_str +="\n ARGS: \n ------ \n"
+        # outer_loop_str +="\n ARGS: \n ------ \n"
         
-        dat_arg_i = 0
-        for i,arg in enumerate(self.itrloop_args):
-            outer_loop_str += f" arg{i}: " + str(arg)
-            if (isinstance(arg, Loop)):
-                outer_loop_str += f"   PE_args: {self.PE_args[dat_arg_i]} \n\n"
-                dat_arg_i += 1
+        # dat_arg_i = 0
+        # for i,arg in enumerate(self.itrloop_args):
+        #     outer_loop_str += f" arg{i}: " + str(arg)
+        #     if (isinstance(arg, Loop)):
+        #         outer_loop_str += f"   PE_args: {self.PE_args[dat_arg_i]} \n\n"
+        #         dat_arg_i += 1
         return outer_loop_str
     
     def addParCopy(self, ParCopy: ParCopy) -> None:
@@ -879,7 +1167,7 @@ class IterLoop:
             if self.ops_range == None:
                 self.ops_range = loop.range.ptr
             elif self.ops_range != loop.range.ptr:
-                OpsError("Missmatching ranging in par_loops within iter_par_loop scope")
+                raise OpsError("Missmatching ranging in par_loops within iter_par_loop scope")
                 
 
             # elif isinstance(arg, ArgIdx):
@@ -918,7 +1206,10 @@ class IterLoop:
                 return arg
         return None      
             
-    
+    def printDataflowGraph(self, filename: str) -> None:
+        print(self.dataflow_graph)
+        self.dataflow_graph.print(self.unique_name)
+        
 class ParCopy:
     target: str
     source: str

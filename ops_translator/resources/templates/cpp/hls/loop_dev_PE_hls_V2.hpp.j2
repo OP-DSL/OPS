@@ -547,6 +547,7 @@ public:
                 {
 
     {% for arg in lh.args|ops_dat|ops_write %}
+    {# TODO: FIX This line un notFullyMapped check weather the dat have read arg that is mapped otherwise replace it with similar to not neg_cond #}
     {% set base_offset = lh.get_read_stencil(prog).base_point.x - prog.findStencil(arg.stencil_ptr).base_point.x %}
                     arg{{arg.id}}_tmpConvWrite.f = arg{{get_read_arg_from_dat(lh.dats[datMap[arg.dat_id]], lh).id}}_rowArr_{{prog.findStencil(get_read_arg_from_dat(lh.dats[datMap[arg.dat_id]], lh).stencil_ptr).base_point.y}}_{{prog.findStencil(get_read_arg_from_dat(lh.dats[datMap[arg.dat_id]], lh).stencil_ptr).base_point.z}}[x + {{base_offset}}];
     {% endfor %}

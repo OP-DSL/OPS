@@ -31,8 +31,10 @@ class ParseError(Exception):
 
     def __str__(self) -> str:
         if self.loc:
+            logging.error(f"[PARSE_ERROR] at {self.loc}: {self.message}")
             return f"Parse error at {self.loc}: {self.message}"
         else:
+            logging.error(f"[PARSE_ERROR]: {self.message}")
             return f"Parse error: {self.message}"
 
 
@@ -127,8 +129,9 @@ class Program:
         logging.debug(f"searching stencil: {name_ptr}")
         for stencil in self.stencils:
             if stencil.stencil_ptr == name_ptr:
-                logging.debug(f"found stencil:\n {stencil}")
+                logging.debug(f"found stencil: \n {stencil}")
                 return stencil
+        logging.warning(f"couldn't find stencil name: {name_ptr}\n")
         return None
     
     def __str__(self) -> str:

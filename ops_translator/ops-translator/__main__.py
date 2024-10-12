@@ -9,6 +9,7 @@ import logging
 
 #custom implementation imports
 import cpp
+import cpp.parser
 import fortran
 
 from jinja_utils import env
@@ -34,7 +35,7 @@ def main(argv=None) -> None:
     parser.add_argument("-o", "--out", help="Output directory", type=isDirPath)
     parser.add_argument("-c", "--config", help="Target configuration", type=jsonReadFile, default="{}")
     parser.add_argument("-soa", "--force_soa", help="Force structs of arrays", action="store_true")
-
+    parser.add_argument("-ast", "--ast_dump", help="Dump ast file", action="store_true")
     parser.add_argument("--suffix", help="Add a suffix to genreated program translations", default="_ops")
 
     parser.add_argument("-I", help="Add to include directories", type=isDirPath, action="append", nargs=1, default=[])
@@ -126,6 +127,9 @@ def main(argv=None) -> None:
         print(app)
         logging.debug("App: \n %s", str(app))
 
+    if args.ast_dump:
+        for prog in app.programs:
+            cpp.parser.dumpAST(prog.ast.cursor, prog.path.stem)
     # Validation phase
     try: 
         validate(args, lang, app)

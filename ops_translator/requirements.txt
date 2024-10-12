@@ -1,11 +1,12 @@
-fparser
-cached-property
-dataclasses
-clang
-jinja2
-pylint
-mypy
-pcpp
-sympy
-libclang
+fparser==0.0.16
+cached-property==1.5.2
+dataclasses==0.6
+clang==16.0.6
+jinja2==3.1.2
+pylint==2.16.2
+mypy==1.0.0
+pcpp==1.30
+sympy==1.12
+libclang==16.0.6
+pygraphviz==1.14
 
