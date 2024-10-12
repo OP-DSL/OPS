@@ -9,7 +9,26 @@ from store import Function, Location, ParseError, Program, Type
 from util import safeFind #TODO: implement safe find
 import logging
 from math import floor
+from dataclasses import field
 
+def ASTtoString(node: Cursor, indent: str = "", is_last=True, print_lines: List[str] = []) -> List[str]:
+    prefix = indent + ("└─" if is_last else "├─")   
+    print_lines.append(f"{prefix} {node.kind} {node.spelling} [{node.location}] (type: {node.type})")
+    indent += "  " if is_last else "| "
+    children = list(node.get_children())
+    
+    for i, child in enumerate(children):
+        ASTtoString(child, indent, i == len(children) - 1, print_lines)
+
+    return print_lines
+
+def dumpAST(node: Cursor, filename: Path)-> None:
+    printLines = ASTtoString(node)
+    
+    with open(f"{filename}_ast.txt", "w+") as f:
+        for line in printLines:
+            f.write(line + "\n")
+            
 def parseMeta(node: Cursor, program: Program) -> None:
     if node.kind == CursorKind.TYPE_REF:
         parseTypeRef(node, program)
