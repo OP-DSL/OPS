@@ -31,8 +31,10 @@ class ParseError(Exception):
 
     def __str__(self) -> str:
         if self.loc:
+            logging.error(f"[PARSE_ERROR] at {self.loc}: {self.message}")
             return f"Parse error at {self.loc}: {self.message}"
         else:
+            logging.error(f"[PARSE_ERROR]: {self.message}")
             return f"Parse error: {self.message}"
 
 
