@@ -650,13 +650,13 @@ class DataFlowGraph:
                 source_node = "start"
                 type = 1
             else:
-                source_node = nodeNameList[edge.source_id]
+                source_node = nodeMap[edge.source_id]
             
             if edge.sink_id == DFNodeType.DF_END:
                 sink_node = "end"
                 type = 2
             else:
-                sink_node =  nodeNameList[edge.sink_id]
+                sink_node =  nodeMap[edge.sink_id]
             
             if type == 1:
                 g.add_edge(source_node, f"{self.global_dats[edge.dat_id].ptr}", style="dashed")
@@ -668,7 +668,6 @@ class DataFlowGraph:
                     g.add_edge(f"{self.global_dats[edge.dat_id].ptr}", f"{self.global_dats[self.global_dat_swap_map[edge.dat_id]].ptr}", color="red")
             else:
                 g.add_edge(f"{self.global_dats[edge.dat_id].ptr}", sink_node)
-        
         
         g.layout(prog="dot")
         g.draw(f"{filename}.{format}")
@@ -1436,3 +1435,9 @@ class Loop:
             if arg.access_type in [AccessType.OPS_READ, AccessType.OPS_RW] and arg.stencil_ptr not in unique_stencil_names:
                 unique_stencil_names.append(arg.stencil_ptr)
         return unique_stencil_names
+    
+    def get_dat_name(self, arg_id: int) -> str:
+        assert isinstance(self.args[arg_id], ArgDat)
+        dat_id = self.args[arg_id].dat_id 
+        return self.dats[dat_id].ptr
+        

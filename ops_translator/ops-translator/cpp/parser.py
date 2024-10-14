@@ -2,7 +2,7 @@ import re
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union, Any
 from clang import cindex
-from clang.cindex import Cursor, CursorKind, TranslationUnit, TypeKind, conf
+from clang.cindex import Cursor, CursorKind, TranslationUnit, TypeKind, conf, Token
 
 import ops
 from store import Function, Location, ParseError, Program, Type
@@ -11,7 +11,9 @@ import logging
 from math import floor
 from dataclasses import field
 
-def ASTtoString(node: Cursor, indent: str = "", is_last=True, print_lines: List[str] = []) -> List[str]:
+def ASTtoString(node: Cursor, indent: str = "", is_last=True, print_lines: Optional[List[str]] = None) -> List[str]:
+    if not print_lines:
+        print_lines = []
     prefix = indent + ("└─" if is_last else "├─")   
     print_lines.append(f"{prefix} {node.kind} {node.spelling} [{node.location}] (type: {node.type})")
     indent += "  " if is_last else "| "
@@ -39,7 +41,22 @@ def parseMeta(node: Cursor, program: Program) -> None:
     for child in node.get_children():
         parseMeta(child, program) 
 
+def getBinaryOp(node: Cursor) -> Token:
+    assert node.kind == CursorKind.BINARY_OPERATOR
+    children = [child for child in node.get_children()]
+    assert len(children) == 2
+    token_offset = len([i for i in children[0].get_tokens()])
+    return [i for i in node.get_tokens()][token_offset]
 
+def getAccessorAccessIndices(node: Cursor) -> Optional[Tuple[str, List]]:
+    if not node.kind == CursorKind.UNEXPOSED_EXPR:
+        logging.warning(f"Accessor access operand {node.spelling} is {node.kind}. It has to be UNEXPOSED_EXPR")
+        return None
+    children = [child for child in node.get_children()]
+    operand = children[0].spelling
+    indices = [parseIntLiteral(child) for child in children[1:]]
+    return (operand, indices)
+    
 def parseTypeRef(node: Cursor, program: Program) -> None:
     node = node.get_definition()
 

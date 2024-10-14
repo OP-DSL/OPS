@@ -11,6 +11,7 @@ from typing import List, Tuple, Set, Union, Optional
 from util import KernelProcess
 import re
 import logging
+from cpp import optimizer
 
 class CppMPIOpenMP(Scheme):
     lang = Lang.find("cpp")
@@ -80,7 +81,7 @@ class CppHLS(Scheme):
         app: Application, 
         kernel_idx: int
     ) -> str:
-                
+
         print ("Range of loop: ", str(loop.range))
         
         kernel_entities = app.findEntities(loop.kernel, program)
@@ -258,6 +259,8 @@ class CppHLS(Scheme):
         iterLoop_datamover_src_template = env.get_template(str(self.iterloop_datamover_src_template))
         iterLoop_kernel_inc_template = env.get_template(str(self.iterloop_device_inc_template))
         iterLoop_kernel_src_template = env.get_template(str(self.iterloop_device_src_template))
+        
+        optimizer.ISLCopyDetection(iterLoop.dataflow_graph, program, app, self)
         
         kernel_processor = KernelProcess()
         consts = []
