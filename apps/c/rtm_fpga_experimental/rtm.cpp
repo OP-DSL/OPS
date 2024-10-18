@@ -485,12 +485,12 @@ int main(int argc,  char **argv)
                 ops_arg_dat(ytemp1_3[bat], 1, S3D_big_sten, "float", OPS_READ),
                 ops_arg_dat(ytemp1_4[bat], 1, S3D_big_sten, "float", OPS_READ),
                 ops_arg_dat(ytemp1_5[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_sum_0[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_1[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_2[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_3[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_4[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_5[bat], 1, S3D_000, "float", OPS_RW));
+                ops_arg_dat(yy_sum_0[bat], 1, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_sum_1[bat], 1, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_sum_2[bat], 1, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_sum_3[bat], 1, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_sum_4[bat], 1, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_sum_5[bat], 1, S3D_000, "float", OPS_READ));
 
         // //if (ngrid_x>1 || ngrid_y>1 || ngrid_z>1) ops_halo_transfer(u_halos);
         // // if (iter%itertile == 0) ops_execute();
@@ -644,12 +644,12 @@ int main(int argc,  char **argv)
                 ops_arg_dat(ytemp1_3[bat], 1, S3D_big_sten, "float", OPS_READ),
                 ops_arg_dat(ytemp1_4[bat], 1, S3D_big_sten, "float", OPS_READ),
                 ops_arg_dat(ytemp1_5[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_sum_0[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_1[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_2[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_3[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_4[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_5[bat], 1, S3D_000, "float", OPS_RW)));
+                ops_arg_dat(yy_sum_0[bat], 1, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_sum_1[bat], 1, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_sum_2[bat], 1, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_sum_3[bat], 1, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_sum_4[bat], 1, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_sum_5[bat], 1, S3D_000, "float", OPS_READ)));
 #endif
 #ifdef PROFILE
         auto main_loop_end_clk_point = std::chrono::high_resolution_clock::now();

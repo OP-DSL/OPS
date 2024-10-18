@@ -713,11 +713,31 @@ class DataFlowGraph:
 
     def getNode(self, node_id: int) -> Optional[DataflowNode]:
         idx = findIdx(self.nodes, lambda node: node.node_id == node_id)
-        if (idx != -1):
+        if (idx != None):
             return self.nodes[idx]
         
         logging.warning(f"Node id: {node_id} does not exist in the dataflow graph: {self.unique_name}")
         return None
+    
+    def getEdge(self, node_id: int, dat_id: int = None, acc_dir: int = None) -> Optional[List[DependancyEdge]]:
+        
+        edges = []
+        logging.debug(f"searching node: {node_id}, with dat_id: {dat_id}")
+        for edge in self.edges:
+            if (not acc_dir == None):
+                if acc_dir == 0:
+                    if not edge.source_id == node_id:
+                        continue
+                elif acc_dir == 1:
+                    if not edge.sink_id == node_id:
+                        continue 
+            elif not (edge.sink_id == node_id or edge.source_id == node_id):
+                continue
+            if not((not dat_id == None) and dat_id == edge.dat_id):
+                continue
+
+            edges.append(edge)
+        return edges
             
 class IterLoop:
     unique_name: str
@@ -1441,3 +1461,16 @@ class Loop:
         dat_id = self.args[arg_id].dat_id 
         return self.dats[dat_id].ptr
         
+    def get_arg_dat(self, dat_ptr: str, acc_type: List[AccessType] = []) -> Optional[List[ArgDat]]:
+        candidate_arg_dats = []
+        for arg in self.args:
+            if not isinstance(arg, ArgDat):
+                continue
+            if not self.dats[arg.dat_id].ptr == dat_ptr:
+                continue 
+            if not acc_type:
+                candidate_arg_dats.append(arg)
+            elif arg.access_type in acc_type:
+                candidate_arg_dats.append(arg)
+        
+        return candidate_arg_dats

@@ -260,7 +260,8 @@ class CppHLS(Scheme):
         iterLoop_kernel_inc_template = env.get_template(str(self.iterloop_device_inc_template))
         iterLoop_kernel_src_template = env.get_template(str(self.iterloop_device_src_template))
         
-        optimizer.ISLCopyDetection(iterLoop.dataflow_graph, program, app, self)
+        output_dataflow_graph = optimizer.ISLCopyDetection(iterLoop.dataflow_graph, program, app, self)
+        optimizer.ISLDataDependancyCyclesDetection(output_dataflow_graph, program, app, self)
         
         kernel_processor = KernelProcess()
         consts = []
