@@ -793,6 +793,9 @@ class DataflowGraph_v2:
             return self.__graph[node_uid]
         return None
 
+    def getAllLoopNodes(self) -> List[DataflowNode]:
+        return [node for node in self.__graph.nodes() if isinstance(node, DataflowNode)]
+    
     def getOutEdgesFromNode(self, node_uid: int) -> List[Any]:
         if not self.__graph.has_node(node_uid):
             OpsError(f"Cannot retrieve out edges from node_id: {node_uid} as it does not exist")

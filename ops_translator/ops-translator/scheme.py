@@ -12,7 +12,7 @@ from target import Target
 from util import sycl_set_flat_parallel
 from util import Findable
 from util import KernelProcess
-
+from abc import abstractmethod
 
 class Scheme(Findable):
     lang: Lang
@@ -24,6 +24,9 @@ class Scheme(Findable):
     def __str__(self) -> str:
         return f"{self.lang.name}/{self.target.name}: \n \
             lang_details: {self.lang}, target_details: {self.target}"
+    
+    def optimize(self, program: Program, app: Application) -> None:
+        return None
     
     def genLoopDevice(
         self,

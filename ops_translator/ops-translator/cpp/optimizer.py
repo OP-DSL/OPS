@@ -51,14 +51,40 @@ def findCopyPairsInsideKernelCompoundStatement(node: Cursor) -> List[Tuple]:
                 continue
             copy_pairs.append((LHS_op, RHS_op))
     return copy_pairs
+
+def ISLUpdateNodeSwapPairs(graph: DataflowGraph_v2) -> None:
+    """ This is to update local dat_swap_pairs of each node based on global swap pairs.
+    
+    Args: 
+        graph (DataFlowGraph_v2): Original dataflow graph
         
+    Returns: 
+        None
+    """
+    global_dat_swap_map = graph.getGlobalDatsSwapMap()
+    
+    for node in graph.getAllLoopNodes():  
+        for dat in node.loop.dats:
+            global_swap_dat_name = global_dat_swap_map[dat.ptr]
+            
+            if global_swap_dat_name == dat.ptr:
+                node.internal_dat_swap_map[dat.ptr] = dat.ptr
+            else:
+                local_dat_idx = findIdx(node.loop.dats, lambda dat: dat.ptr == global_swap_dat_name)
+                if local_dat_idx is None:
+                    node.internal_dat_swap_map[dat.ptr] = dat.ptr
+                else:
+                    node.internal_dat_swap_map[dat.ptr] = global_swap_dat_name
+
+    logging.debug(f"Internal dat swap updated graph: \n {graph}")
+    
 def ISLCopyDetection(original_graph: DataflowGraph_v2, prog: Program, app: Application, scheme: Scheme) -> DataflowGraph_v2:
     
     """ This dataflow analysis check ops_par_loop nodes writing output to DF_END node and check weather there are any copy kernels that can be identified and
     eliminated to avoid synthesis of hardware for data copy 
 
     Args:
-        original_graph (DataFlowGraph): Original dataflow graph
+        original_graph (DataFlowGraph_v2): Original dataflow graph
         prog (Program): OPS program
         app (Application): OPS app
         scheme (Scheme): The OPS translation scheme calling the optimization
@@ -157,8 +183,10 @@ def ISLCopyDetection(original_graph: DataflowGraph_v2, prog: Program, app: Appli
     #     # copy_graph.edges.remove(edge)
     
     logging.debug(f"global swap map is ISL COpy detect: {copy_graph.getGlobalDatsSwapMap()}")
+    ISLUpdateNodeSwapPairs(copy_graph)
     copy_graph.print("after_copy_detection", make_dats_node=True)
     return copy_graph
+
 
 
 @dataclass

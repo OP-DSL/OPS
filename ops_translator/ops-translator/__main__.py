@@ -266,6 +266,10 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, target_config: di
     include_dirs = set([Path(dir) for [dir] in args.I])
     defines = [define for [define] in args.D]
 
+    #Calling Optimizer
+    for program in app.programs:
+        scheme.optimize(program, app)
+        
     # Generate loop hosts
     for i, (loop, program) in enumerate(app.uniqueLoops(), 1):
         # Generate loop host source

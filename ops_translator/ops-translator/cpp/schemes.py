@@ -246,6 +246,10 @@ class CppHLS(Scheme):
         new_kernel_body = re.sub(idx_arg_name, "idx", kernel_body)
         return new_kernel_body
 
+    def optimize(self, program: Program, app: Application):
+        for iterLoop in program.outerloops:
+            iterLoop.opt_df_graph = optimizer.ISLCopyDetection(iterLoop.df_graph, program, app, self).copy()
+            
     def genIterLoopDevice(
         self,
         env: Environment,
@@ -259,9 +263,6 @@ class CppHLS(Scheme):
         iterLoop_datamover_src_template = env.get_template(str(self.iterloop_datamover_src_template))
         iterLoop_kernel_inc_template = env.get_template(str(self.iterloop_device_inc_template))
         iterLoop_kernel_src_template = env.get_template(str(self.iterloop_device_src_template))
-        
-        output_dataflow_graph = optimizer.ISLCopyDetection(iterLoop.df_graph, program, app, self)
-        optimizer.ISLDataDependancyCyclesDetection(output_dataflow_graph, program, app, self)
         
         kernel_processor = KernelProcess()
         consts = []
