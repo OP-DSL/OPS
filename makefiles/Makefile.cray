@@ -3,11 +3,24 @@ CC        := cc
 CCFLAGS   := -Ofast  #-Ofast -ffp=3 #-g -fsanitize=undefined
 CXX       := CC
 CXXFLAGS  := $(CCFLAGS)
+
 MPICC=cc
 MPICPP=CC
 MPICXX=CC
+
+ifeq ($(AMD_ARCH),MI100)
+HIP_ARCH=gfx908
+else
+ifeq ($(AMD_ARCH),MI200)
+HIP_ARCH=gfx90a
+endif
+endif
+
 HIPCC=CC
 HIPMPICPP=CC
-HIPFLAGS=-std=c++11 --rocm-path=${ROCM_PATH} --offload-arch=gfx90a -x hip --rocm-path=${ROCM_PATH} -L${ROCM_PATH}/lib -lamdhip64 -I/opt/rocm/hip/include -D__HIP_PLATFORM_AMD__
-HIPLINK=-std=c++11 --rocm-path=${ROCM_PATH} --offload-arch=gfx90a --rocm-path=${ROCM_PATH} -L${ROCM_PATH}/lib -lamdhip64 -I/opt/rocm/hip/include -D__HIP_PLATFORM_AMD__
+
+HIPFLAGS=-xhip
+
+HIP_LINK=-L${HIP_INSTALL_PATH}/lib -lamdhip64
+
 OMPOFFLOADFLAGS=-fopenmp
