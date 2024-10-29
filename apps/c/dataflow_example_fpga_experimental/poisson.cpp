@@ -197,7 +197,7 @@ int main(int argc, const char **argv)
                 ops_arg_dat(f[bat], 1, S2D_00, "float", OPS_WRITE),
                 ops_arg_dat(ref[bat], 1, S2D_00, "float", OPS_WRITE));
 
-        ops_par_loop(poisson_kernel_update, "poisson_kernel_update", blocks[bat], 2, full_range, 
+        ops_par_loop(copy, "copy", blocks[bat], 2, full_range, 
                 ops_arg_dat(u[bat], 1, S2D_00, "float", OPS_READ),
                 ops_arg_dat(u2[bat], 1, S2D_00, "float", OPS_WRITE));
 
