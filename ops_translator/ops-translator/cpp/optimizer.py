@@ -4,11 +4,12 @@ from typing import Optional, List, Tuple, Any, Union, Set
 from store import Program, Location, Application
 import logging
 from dataclasses import dataclass, field
-from util import KernelProcess, findIdx
+from util import KernelProcess, findIdx, function_name
 from scheme import Scheme
 from cpp.parser import ASTtoString, CursorKind, getBinaryOp, Cursor, getAccessorAccessIndices, decend
 from copy import deepcopy
 import pygraphviz
+import rustworkx as rx
 @dataclass
 class OptError(Exception):
     message: str
@@ -187,8 +188,63 @@ def ISLCopyDetection(original_graph: DataflowGraph_v2, prog: Program, app: Appli
     copy_graph.print("after_copy_detection", make_dats_node=True)
     return copy_graph
 
+def ISLReadBufferPropagation(original_graph: DataflowGraph_v2, prog: Program, app: Application, scheme: Scheme) -> DataflowGraph_v2:
+    read_only_dats = []
+    copy_graph = original_graph.copy(original_graph.unique_name + "_buff_prop")
+    
+    for dat in copy_graph.getGlobalDats():
+        edges = [(src_id, sink_id, attr) for src_id, sink_id, attr in copy_graph.getEdges() if attr["dat_str"] == dat.ptr]
 
+        is_read_only_dat = True
+        
+        for (src_id, sink_id, attr) in edges:
+            if not src_id == copy_graph.getStartNodeIdx():
+                is_read_only_dat = False
+                break
+        
+        if is_read_only_dat:
+            read_only_dats.append(dat)
+    
+    for dat in read_only_dats:
+        if not copy_graph.getGlobalDatsSwapMap()[dat.ptr] == dat.ptr:
+            read_only_dats.remove(dat)
 
+    logging.debug(f"{function_name()}: read_only_dats: {read_only_dats}")
+    
+    #initializing propagation path from start node
+    propagation_paths = {}
+    read_only_dat_names = []
+    for dat in read_only_dats:
+        read_only_dat_names.append(dat.ptr)
+        propagation_paths[dat.ptr] = [(copy_graph.getStartNodeIdx(), 0)] #(node, node_arg_id)
+      
+    #topological sort
+    sorted_nodes = rx.topological_sort(copy_graph.getRXGraph())
+    logging.debug(f"{function_name()}: topological sorted nodes: {sorted_nodes}")
+    
+    for node_uid in sorted_nodes:
+        if node_uid == copy_graph.getStartNodeIdx(): #skip start node as propogation paths are initialized from start node earlier
+            continue
+        in_edges = copy_graph.getInEdgesFromNode(node_uid)
+        
+        for src_id, sink_id, attr in in_edges:
+            if not attr["dat_str"] in read_only_dat_names:
+                continue
+            if not propagation_paths[attr["dat_str"]][0] == src_id: #remove edge and connect with previous
+                copy_graph.addEdge(propagation_paths[attr["dat_str"]][-1][0], propagation_paths[attr["dat_str"]][-1][1], attr["dat_str"], sink_id, attr["sink_arg_id"])
+                copy_graph.deleteEdge(src_id, sink_id, attr)
+                
+            propagation_paths[attr["dat_str"]].append((node_uid, attr["sink_arg_id"]))
+    
+    #final sweep to create edges to sink nodes
+    for key in propagation_paths.keys():
+        copy_graph.addEdge(propagation_paths[key][-1][0], propagation_paths[key][-1][1], key, copy_graph.getEndNodeIdx(), 0, True)
+
+    logging.debug(f"{function_name()}: propagation paths: {propagation_paths}")
+    logging.debug(f"{copy_graph}")
+    copy_graph.print("after_buffer_propagation", make_dats_node=False)
+    return copy_graph
+    
 @dataclass
 class BasicDataDepNode:
     dat_ptr: str
