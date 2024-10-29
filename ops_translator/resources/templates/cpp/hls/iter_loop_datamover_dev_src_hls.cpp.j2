@@ -244,7 +244,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write(
                     num_pkts,
                     memconfig,
                 {% for arg in ilh.joint_args|ops_dat %}
-                    arg{{ilh.getArg(ilh.dat_swap_map[arg.dat_id]).id}},
+                    arg{{ilh.getSwapArg(arg).id}},
                 {% endfor %}
                 {% for arg in ilh.joint_args|ops_dat %}
                     {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
@@ -279,7 +279,7 @@ static void datamover_outerloop_{{ilh.id}}_loopback_dataflow_region(
 #pragma HLS DATAFLOW
     {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is ops_read or arg is ops_rw %}
-        ops::hls::axis2stream<axis_data_width>(arg{{ilh.getArg(ilh.dat_swap_map[arg.dat_id]).id}}_axis_in, arg{{arg.id}}_mem_strm, num_pkts);
+        ops::hls::axis2stream<axis_data_width>(arg{{ilh.getSwapArg(arg).id}}_axis_in, arg{{arg.id}}_mem_strm, num_pkts);
         {% endif %}
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat %}

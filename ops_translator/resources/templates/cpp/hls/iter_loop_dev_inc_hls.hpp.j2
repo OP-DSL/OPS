@@ -17,8 +17,8 @@ arg{{arg.id}}_hls_stream_{{suffix}}
 
 {% block header_block %}
 #pragma once
-    {% for lh in ilh.getLoops() %}
-#include "PE_{{lh.kernel}}.hpp"
+    {% for df_node in ilh.opt_df_graph.getAllLoopNodes() %}
+#include "PE_{{df_node.loop.kernel}}.hpp"
     {% endfor %}
 {% endblock %}
 

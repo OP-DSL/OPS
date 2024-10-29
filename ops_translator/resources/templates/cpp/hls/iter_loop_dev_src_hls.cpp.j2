@@ -1,7 +1,7 @@
 {% extends "cpp/hls/iter_loop_dev_inc_hls.hpp.j2" %}
 
 {% macro internal_stream_name(arg) -%}
-arg{{ilh.getOrderedSwapPair(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPair(arg.dat_id)[1]}}_streams
+arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[1]}}_streams
 {%- endmacro -%}
 
 {% block header_block %}
@@ -30,8 +30,9 @@ static void joint_PE_outerloop_{{ilh.id}}(const unsigned short PEId, const ops::
 
 //TODO: Need to define inter_kernal_stream connections
 //#pragma HLS DATAFLOW
-    {% for lh in ilh.getLoops() %}
-        {% set loop_idx = loop.index0 %}
+    {% for df_node in ilh.get_active_df_graph().getAllLoopNodes() %}
+        {% set loop_idx = df_node.node_uid %}
+        {% set lh = df_node.loop %}
     kernel_{{lh.kernel}}_PE(PEId, stencilConfig,
         {% for arg_str in ilh.PE_args[loop_idx]%}
             {% if loop.last %}
@@ -60,7 +61,7 @@ static void joint_PE_outerloop_{{ilh.id}}(const unsigned short PEId, const ops::
 {% block kernel_dataflow_region %}
 
 static void kernel_outerloop_{{ilh.id}}_dataflow_region_cascaded(const unsigned short& slr_region, const ops::hls::StencilConfigCore& stencilConfig, const unsigned int total_bytes,
-    {% for swap_pair in ilh.getUniqueDatSwaps() %}
+    {% for swap_pair in ilh.getUniqueDatSwapsIds() %}
     ::hls::stream<ap_uint<axis_data_width>> arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams[iter_par_factor + 1]{{", " if (not loop.last or consts or ilh.joint_args|ops_gbl)}}
     {% endfor %}
     {% for const_arg in ilh.joint_args|ops_gbl%}
@@ -111,7 +112,7 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region(const unsigned short& sl
     {% for const in consts %}const {{const.typ}}& {{const.ptr}}{{", " if not loop.last }}{% endfor %})
 {
 #pragma HLS DATAFLOW
-    {% for swap_pair in ilh.getUniqueDatSwaps() -%}
+    {% for swap_pair in ilh.getUniqueDatSwapsIds() -%}
     ::hls::stream<ap_uint<axis_data_width>> arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams[iter_par_factor + 1];
     #pragma HLS STREAM variable = arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams depth = max_depth
     {% endfor %}
@@ -125,7 +126,7 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region(const unsigned short& sl
     {% endfor %}
 
         kernel_outerloop_{{ilh.id}}_dataflow_region_cascaded(slr_region, stencilConfig, total_bytes,
-    {%- for swap_pair in ilh.getUniqueDatSwaps() -%}
+    {%- for swap_pair in ilh.getUniqueDatSwapsIds() -%}
         {% if loop.last %}
             {% if consts or ilh.joint_args|ops_gbl %}
                 {% set last_check = False %}

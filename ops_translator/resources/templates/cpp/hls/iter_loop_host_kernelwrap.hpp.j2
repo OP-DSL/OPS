@@ -45,10 +45,10 @@ public:
     )
     {
         cl_int err;
-    {% set read_stencil = prog.findStencil(ilh.getReadStencil()) %}
+    {% set read_stencil = ilh.getReadStencil(prog) %}
     {% if read_stencil %}    
-        ops::hls::SizeType read_stencil_d_m = { {{read_stencil.d_m.x}}, {{read_stencil.d_m.y}}, {{read_stencil.d_m.z}} };
-        ops::hls::SizeType read_stencil_d_p = { {{read_stencil.d_p.x}}, {{read_stencil.d_p.y}}, {{read_stencil.d_p.z}} };
+        ops::hls::SizeType read_stencil_d_m = { {{read_stencil.d_m[0]}}, {{read_stencil.d_m[1]}}, {{read_stencil.d_m[2]}} };
+        ops::hls::SizeType read_stencil_d_p = { {{read_stencil.d_p[0]}}, {{read_stencil.d_p[1]}}, {{read_stencil.d_p[2]}} };
         ops::hls::SizeType write_stencil_d_m = {0,0,0};
         ops::hls::SizeType write_stencil_d_p = {0,0,0};
     {% else %}
