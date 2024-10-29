@@ -8,7 +8,7 @@ from store import Application, ParseError, Program
 from target import Target
 from jinja2 import Environment
 from typing import List, Tuple, Set, Union, Optional
-from util import KernelProcess
+from util import KernelProcess, findIdx
 import re
 import logging
 from cpp import optimizer
@@ -154,7 +154,9 @@ class CppHLS(Scheme):
         kernel_processor = KernelProcess()
         consts = []
         
-        for kernel_idx, loop in enumerate(iterloop.getLoops()):
+        for df_node in iterloop.get_active_df_graph().getAllLoopNodes():
+                kernel_idx = df_node.node_uid
+                loop = df_node.loop
                 kernel_func = self.translateKernel(loop, program, app, kernel_idx)
                 kernel_func = kernel_processor.clean_kernel_func_text(kernel_func)
                 kernel_body, kernel_args = kernel_processor.get_kernel_body_and_arg_list(kernel_func)
@@ -249,6 +251,12 @@ class CppHLS(Scheme):
     def optimize(self, program: Program, app: Application):
         for iterLoop in program.outerloops:
             iterLoop.opt_df_graph = optimizer.ISLCopyDetection(iterLoop.df_graph, program, app, self).copy()
+            iterLoop.opt_df_graph = optimizer.ISLReadBufferPropagation(iterLoop.opt_df_graph, program, app, self)
+            iterLoop.joint_args.clear()
+            iterLoop.set_opt_graph()
+            iterLoop.gen_global_dat_args() 
+            iterLoop.gen_PE_args()
+            iterLoop.gen_global_const_args()
             
     def genIterLoopDevice(
         self,
@@ -267,7 +275,9 @@ class CppHLS(Scheme):
         kernel_processor = KernelProcess()
         consts = []
         consts_map = []
-        for kernel_idx, loop in enumerate(iterLoop.getLoops()):
+        for df_node in iterLoop.get_active_df_graph().getAllLoopNodes():
+                kernel_idx = df_node.node_uid
+                loop = df_node.loop
                 kernel_func = self.translateKernel(loop, program, app, kernel_idx)
                 kernel_func = kernel_processor.clean_kernel_func_text(kernel_func)
                 kernel_body, kernel_args = kernel_processor.get_kernel_body_and_arg_list(kernel_func)
@@ -281,6 +291,22 @@ class CppHLS(Scheme):
                 (iterLoop_kernel_inc_template.render(ilh=iterLoop, ndim=program.ndim, config=config, consts=consts), self.iterloop_device_inc_extension),
                 (iterLoop_kernel_src_template.render(ilh=iterLoop, ndim=program.ndim, config=config, consts=consts, consts_map = consts_map), self.iterloop_device_src_extension)]
     
+    def gen_local_dependancy_map(self, node: ops.DataflowNode) -> List[int]:
+        datMap = [x for x in range(len(node.loop.dats))]
+        internal_dat_swap_map = node.internal_dat_swap_map
+
+        for dat_name in internal_dat_swap_map.keys():
+            dat_idx = findIdx(node.loop.dats, lambda dat: dat.ptr == dat_name)
+            other_dat_idx = findIdx(node.loop.dats, lambda dat: dat.ptr == internal_dat_swap_map[dat_name])
+            
+            if dat_idx is None:
+                raise ParseError(f"{dat_name} is not found in {node.node_uid}:{node.loop.kernel}")
+            if other_dat_idx is None:
+                raise ParseError(f"{internal_dat_swap_map[dat_name]} is not found in {node.node_uid}:{node.loop.kernel}")
+            datMap[dat_idx] = other_dat_idx
+            
+        return datMap
+    
     def genLoopDevice(
         self,
         env: Environment,
@@ -289,7 +315,8 @@ class CppHLS(Scheme):
         app: Application,
         config: dict,
         kernel_idx: int,
-        outerLoop: Optional[ops.IterLoop] = None
+        outerLoop: Optional[ops.IterLoop] = None, 
+        node: Optional[ops.DataflowNode] = None
     ) -> List[Tuple[str, str]]:
         
         #load datamover_templates
@@ -322,9 +349,8 @@ class CppHLS(Scheme):
             kernel_body = self.replace_idx_access(kernel_body, kernel_idx_arg_name)
         
         if outerLoop:
-            isFullyMapped, datMap = kernel_processor.gen_local_dependancy_map(loop, outerLoop)
+            datMap = self.gen_local_dependancy_map(node)
         else:
-            isFullyMapped = False
             datMap = []
         return (
             [(loop_PE_template.render(
@@ -334,7 +360,6 @@ class CppHLS(Scheme):
                  prog=program,
                  consts=kernel_consts,
                  config=config,
-                 isFullyMapped = isFullyMapped,
                  datMap = datMap,
                  is_arg_idx = (kernel_idx_arg_name != None),
                  ops=ops,

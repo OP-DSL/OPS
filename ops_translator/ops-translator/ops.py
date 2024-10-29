@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Callable, List, Optional, Union, Tuple, Any, Dict
 
-from util import ABDC, findIdx
+from util import ABDC, findIdx, function_name, find
 from functools import cmp_to_key
 import logging
 import rustworkx as rx
@@ -341,7 +341,7 @@ def windowBuffChainingAlgo(sorted_array: List[Point], ndim: int) -> Tuple[List[s
             chains.append((p_idx, curr_buff))
             if prev_buff:
                 chains.append((prev_buff.pop(), feeding_point.pop()))
-            # print(p_idx)
+            # #print(p_idx)
             feeding_point.append(p_idx+1)
             prev_buff.append(curr_buff)
 
@@ -385,7 +385,7 @@ def  computeWidenPoints(row_discriptors: List[StencilRowDiscriptor], vector_fact
             init_point_to_widen_point_map[point] = index
             
     minWidenPoint = getMinPoint(widen_points)
-    print("minwiden point: %d", minWidenPoint)
+    #print("minwiden point: %d", minWidenPoint)
     widen_points = cordinateOriginTranslation(-minWidenPoint, widen_points)
     
     for key in init_point_to_widen_point_map.keys():
@@ -456,7 +456,7 @@ class Stencil:
     
     def __str__(self) -> str:
         return f"Stencil(id={self.id}, dim={self.dim}, stencil_ptr='{self.stencil_ptr}', \
-number of points={self.num_points}, points={self.points}, base_point={self.base_point}, stride_ptr='{self.stride}')"
+number of points={self.num_points}, points={self.points}, base_point={self.base_point}, d_m={self.d_m}, d_p={self.d_p}, stride_ptr='{self.stride}')"
 
 @dataclass(frozen=True)
 class Arg(ABDC):
@@ -639,7 +639,7 @@ class DataflowGraph_v2:
         prompt += f"\n  edges \n"
         prompt += f"  ----- \n"
         
-        for edge in self.__graph.edges():
+        for edge in self.getEdges():
             prompt += f"    |- {edge} \n"       
         
         prompt += f"\n  dats \n"
@@ -648,6 +648,12 @@ class DataflowGraph_v2:
         for dat in self.__global_dats:
             prompt += f"    |- {dat} \n"    
         
+        prompt += f"\n  global dats swap pairs \n"
+        prompt += f"  ---------------------- \n"
+        
+        for dat in self.__global_dat_swap_map.keys():
+            prompt += f"    |- {dat} -> {self.__global_dat_swap_map[dat]} \n" 
+            
         return prompt
 
     def addDat(self, dat: Dat)-> None:
@@ -703,6 +709,12 @@ class DataflowGraph_v2:
             OpsError(f"Delete failed. Node with node id {node_uid} does not exist.")
         self.__graph.remove_node(node_uid)
         
+    def deleteEdge(self, src_id: int, sink_id: int, attr: Dict[Any]) -> None:
+        for idx, (e_src_id, e_sink_id, e_attr) in enumerate(self.getEdges()):
+            if src_id == e_src_id and e_sink_id == sink_id and attr["dat_str"] == e_attr["dat_str"]:
+                self.__graph.remove_edge_from_index(idx)
+                break
+            
     def findNodeById(self, node_uid: int) -> Optional[DataflowNode]:
         idx = findIdx(self.__graph.nodes(), lambda node: node.node_uid == node_uid)
         
@@ -760,7 +772,8 @@ class DataflowGraph_v2:
         sink_dat_names = []
         end_node_id = self.getEndNodeIdx()
         for src, sink, edge_attr in self.__graph.in_edges(end_node_id):
-            sink_dat_names.append(edge_attr["dat_str"])
+            if not edge_attr["isStray"]:
+                sink_dat_names.append(edge_attr["dat_str"])
         return sink_dat_names
 
 
@@ -876,15 +889,16 @@ class IterLoop:
     dats: List[List[Dat, AccessType]] = []
     joint_args: List[Arg] = []
     unique_id: int
-    source_dats: List[Union[int, ArgDat]]
-    sink_dats: List[Union[int, ArgDat]]
-    dat_swap_map: List[int]
-    raw_dat_swap_map: List[ParCopy]
-    PE_args: List[List[str]]
+    # source_dats: List[Union[int, ArgDat]]
+    # sink_dats: List[Union[int, ArgDat]]
+    # dat_swap_map: List[int]
+    raw_par_copy_args: List[ParCopy]
+    PE_args: Dict[int,List[str]] = {}
     interconnector_names: List[str]
     ops_range: str = None
     df_graph: DataflowGraph_v2 = None
     opt_df_graph: DataflowGraph_v2 = None
+    __is_opt_df_graph: bool = False
         
     def __init__(self, unique_name: str, id: int, num_iter: Union[int, str], scope: List[Location], args: List[Any] = []) -> None:
         self.unique_name = unique_name
@@ -892,7 +906,7 @@ class IterLoop:
         self.num_iter = num_iter
         self.scope = scope
         self.itrloop_args = args
-        self.raw_dat_swap_map = filter(lambda x: isinstance(x, ParCopy), args)
+        self.raw_par_copy_args = filter(lambda x: isinstance(x, ParCopy), args)
         self.interconnector_names = []
 
         key =  ""
@@ -903,21 +917,34 @@ class IterLoop:
                 
         self.unique_id = hash(key)
         
-        self.dat_swap_map = [i for i in range(len(self.dats))]
-        
-        for arg in args:
-            if isinstance(arg, ParCopy):
-                self.addParCopy(arg)
-        
         self.gen_graph_v3()
         
+        # for df_node in self.get_active_df_graph().getAllLoopNodes():
+        #     self.PE_args[df_node.node_uid] = []
+            
         if logging.DEBUG >= logging.root.level:
             self.printDataflowGraph(f"{self.unique_name}")
         
         self.gen_global_dat_args() 
         self.gen_PE_args()
         self.gen_global_const_args()
-
+        
+    def set_opt_graph(self) -> None:
+        if not self.opt_df_graph:
+            return
+        self.__is_opt_df_graph = True
+        
+    def set_orig_graph(self) -> None:
+        self.__is_opt_df_graph = False
+        
+    def is_opt_graph(self) -> bool:
+        return self.__is_opt_df_graph
+    
+    def get_active_df_graph(self) -> DataflowGraph_v2:
+        if not self.is_opt_graph():
+            return self.df_graph
+        return self.opt_df_graph
+    
     def gen_graph_v3(self) -> None:
         '''
         This generates pure dataflow graph IR
@@ -929,12 +956,17 @@ class IterLoop:
         # map to store current update. key: dat val: (loop.id, local arg_id)
         dat_current_update_map = {}
         
+        dat_swap_map = [i for i in range(len(self.dats))]
+        
+        for arg in self.raw_par_copy_args:
+            if isinstance(arg, ParCopy):
+                self.addParCopy(arg, dat_swap_map)
+        
         self.df_graph = DataflowGraph_v2(f"{self.unique_name}")
         
         for dat_id, (dat, AccessType) in enumerate(self.dats):
             self.df_graph.addDat(dat)
-            self.df_graph.addDatSwapUpdate(dat.ptr, self.dats[self.dat_swap_map[dat_id]][0].ptr)
-            # self.df_graph.global_dat_swap_map.append(self.dat_swap_map[dat_id])
+            self.df_graph.addDatSwapUpdate(dat.ptr, self.dats[dat_swap_map[dat_id]][0].ptr)
             
         for node in self.itrloop_args:
             if not isinstance(node, Loop):
@@ -1005,13 +1037,14 @@ class IterLoop:
         self.read_map_of_maps = read_map_of_maps       
 
     def gen_global_dat_args(self) -> None:
-        source_dats = self.df_graph.getGlobalSourceDatIndices()
-        sink_dats = self.df_graph.getGlobalSinkDatIndices()
+        source_dats = self.get_active_df_graph().getGlobalSourceDatIndices()
+        sink_dats = self.get_active_df_graph().getGlobalSinkDatIndices()
         
-        print (f"source dats: {source_dats}, sink_dats: {sink_dats}")
+        #print (f"source dats: {source_dats}, sink_dats: {sink_dats}")
+        #print(self.get_active_df_graph().getGlobalDatsSwapMap())
         for dat_id in source_dats:
             idx = findIdx(sink_dats, lambda x: x == dat_id)
-            node = self.df_graph.getFirstReadingNode(self.dats[dat_id][0].ptr)
+            node = self.get_active_df_graph().getFirstReadingNode(self.dats[dat_id][0].ptr)
             
             if node is None:
                 raise OpsError(f"Error finding node that read from dat: {self.dats[dat_id][0].ptr}")
@@ -1020,17 +1053,19 @@ class IterLoop:
             
             if not arg:
                 raise OpsError(f"Error finding ArgDat from node: {node.node_id} of parloop: {node.loop.kernel}, loc: {node.loop.loc}")
-            if idx:
-                if self.dat_swap_map[dat_id] == dat_id:
-                    self.joint_args.append(ArgDat(len(self.joint_args), arg.loc, AccessType.OPS_RW, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id, True))
+            
+            if self.get_active_df_graph().getGlobalDatsSwapMap()[self.dats[dat_id][0].ptr] == self.dats[dat_id][0].ptr:
+                if not idx is None:
+                    self.joint_args.append(ArgDat(len(self.joint_args), arg.loc, AccessType.OPS_RW, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))
+                    del sink_dats[idx]
                 else:
-                     self.joint_args.append(ArgDat(len(self.joint_args), arg.loc, AccessType.OPS_RW, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))
-                del sink_dats[idx]
+                    self.joint_args.append(ArgDat(len(self.joint_args), arg.loc, AccessType.OPS_RW, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id, True))
+                     
             else:
                 self.joint_args.append(ArgDat(len(self.joint_args), arg.loc, AccessType.OPS_READ, arg.opt, dat_id, arg.stencil_ptr, arg.dim, arg.restrict, arg.prolong, dat_id))
    
         for dat_id in sink_dats:
-            node = self.df_graph.getFirstWritingNode(self.dats[dat_id][0].ptr)
+            node = self.get_active_df_graph().getFirstWritingNode(self.dats[dat_id][0].ptr)
             
             if node is None:
                 raise OpsError(f"Error finding node that read from dat: {self.dats[dat_id][0].ptr}")
@@ -1049,7 +1084,7 @@ class IterLoop:
             global_args = []
             for v_id,v in enumerate(self.itrloop_args):
                 if isinstance(v, Loop):
-                    print(f"args: {v.args}")
+                    #print(f"args: {v.args}")
                     for arg in filter(lambda x: isinstance(x, ArgGbl), v.args):
                         if arg.ptr not in global_args_ptrs:
                             global_args_ptrs.append(arg.ptr)
@@ -1060,33 +1095,21 @@ class IterLoop:
 
     def gen_PE_args(self) -> None:
         PE_args = []
-        for i, v in enumerate(self.itrloop_args):
-            if isinstance(v, Loop):
-                PE_args.append(self.gen_PE_args_loop(i, v))
-        self.PE_args = PE_args
+        for df_node in self.get_active_df_graph().getAllLoopNodes():
+            PE_args = self.gen_PE_args_loop(df_node.node_uid, df_node.loop)
+            self.PE_args[df_node.node_uid] = PE_args
         
     def gen_PE_args_loop(self, i: int,  v: Loop) -> List[str]:
+        #print(f"{function_name()}, curr_node_uid:  {i}, kernel: {v.kernel}")
         arg_map = {}
         PE_args = []
-
-        for source_id, sink_id, attr in self.df_graph.getEdges():
-            print(attr)
-            if i == source_id:
-                if sink_id == self.df_graph.getEndNodeIdx():
-                    search_list = filter(lambda x: (x.access_type == AccessType.OPS_WRITE or x.access_type == AccessType.OPS_RW) and self.dats[x.dat_id].ptr == attr["dat_str"], self.joint_args)
-                    # print(f"search list: {[i for i in search_list]}")
-                    if attr['src_arg_id'] in arg_map.keys():
-                        arg_map[attr['src_arg_id']].append(f"arg{next(search_list).id}_hls_stream_out")
-                    else:
-                        arg_map[attr['src_arg_id']] = [f"arg{next(search_list).id}_hls_stream_out"]
-                else:
-                    connector_name = f"node{source_id}_{attr['src_arg_id']}_to_node{sink_id}_{attr['sink_arg_id']}"
-                    if connector_name not in self.interconnector_names:
-                        self.interconnector_names.append(connector_name)
-                    arg_map[attr['src_arg_id']] = connector_name
-            elif i == sink_id:
-                if source_id == self.df_graph.getStartNodeIdx():
-                    search_list = filter(lambda x: x.access_type in [AccessType.OPS_READ, AccessType.OPS_RW] and self.dats[x.dat_id].ptr == attr["dat_str"], self.joint_args)
+        
+        #first sweep to read      
+        for source_id, sink_id, attr in self.get_active_df_graph().getEdges():
+            #print(f"{function_name()}, source_id:  {source_id}, sink_id: {sink_id}, attr: {attr}")
+            if i == sink_id:
+                if source_id == self.get_active_df_graph().getStartNodeIdx():
+                    search_list = filter(lambda x: x.access_type in [AccessType.OPS_READ, AccessType.OPS_RW] and self.dats[x.dat_id][0].ptr == attr["dat_str"], self.joint_args)
                     arg_id = next(search_list).id
                     if attr['sink_arg_id'] in arg_map.keys():
                         arg_map[attr['sink_arg_id']].append(f"arg{arg_id}_hls_stream_in")
@@ -1099,7 +1122,25 @@ class IterLoop:
                         self.interconnector_names.append(connector_name)
                     arg_map[attr['sink_arg_id']] = [connector_name]
         
-        # print(f"PE_args: {arg_map}")
+        #second sweep to write
+        for source_id, sink_id, attr in self.get_active_df_graph().getEdges():
+            #print(f"{function_name()}, source_id:  {source_id}, sink_id: {sink_id}, attr: {attr}")
+            if i == source_id:
+                if sink_id == self.get_active_df_graph().getEndNodeIdx():
+                    #print("sink_id is end_node ")
+                    search_list = filter(lambda x: (x.access_type == AccessType.OPS_WRITE or x.access_type == AccessType.OPS_RW) and self.dats[x.dat_id][0].ptr == attr["dat_str"], self.joint_args)
+                    # #print(f"search list: {[i for i in search_list]}")
+                    if attr['src_arg_id'] in arg_map.keys():
+                        arg_map[attr['src_arg_id']].append(f"arg{next(search_list).id}_hls_stream_out")
+                    else:
+                        arg_map[attr['src_arg_id']] = [f"arg{next(search_list).id}_hls_stream_out"]
+                else:
+                    connector_name = f"node{source_id}_{attr['src_arg_id']}_to_node{sink_id}_{attr['sink_arg_id']}"
+                    if connector_name not in self.interconnector_names:
+                        self.interconnector_names.append(connector_name)
+                    arg_map[attr['src_arg_id']] = connector_name
+                    
+        #print(f"PE_args: {arg_map}")
         for k in range(len(v.args)):
             if k in arg_map.keys():
                 if isinstance(arg_map[k], list):
@@ -1116,8 +1157,9 @@ class IterLoop:
         for i,dat in enumerate(self.dats):
             outer_loop_str += f"dat{i}: " + str(dat) + "\n"
         
-        outer_loop_str += "SOURCE DATS: " + str(self.df_graph.getGlobalSourceDatNames()) + "\n"
-        outer_loop_str += "SINK DATS: " + str(self.df_graph.getGlobalSinkDatNames()) + "\n"
+        outer_loop_str += f"Graph selected: " + "Original" if not self.is_opt_graph() else "Optimized"
+        outer_loop_str += "SOURCE DATS: " + str(self.get_active_df_graph().getGlobalSourceDatNames()) + "\n"
+        outer_loop_str += "SINK DATS: " + str(self.get_active_df_graph().getGlobalSinkDatNames()) + "\n"
         
         outer_loop_str +="\n JOINT_ARGS: \n ------ \n"
         for i,arg in enumerate(self.joint_args):
@@ -1125,25 +1167,21 @@ class IterLoop:
             
         outer_loop_str +="\n EDGES: \n ------ \n"
 
-        for i, edge in enumerate(self.df_graph.getEdges()):
+        for i, edge in enumerate(self.get_active_df_graph().getEdges()):
             outer_loop_str += f"edges{i}: " + str(edge) + "\n"
         
         outer_loop_str +="\n SWAP MAP: \n ------ \n"
             
-        for i,j in enumerate(self.dat_swap_map):
-            outer_loop_str += f"dat{i} - dat{j}\n"
+        for key in  self.get_active_df_graph().getGlobalDatsSwapMap().keys():
+            outer_loop_str += f"{key} - {self.get_active_df_graph().getGlobalDatsSwapMap()[key]}\n"
         
         outer_loop_str +="\n ARGS: \n ------ \n"
         
-        dat_arg_i = 0
         for i,arg in enumerate(self.itrloop_args):
             outer_loop_str += f" arg{i}: " + str(arg)
-            if (isinstance(arg, Loop)):
-                outer_loop_str += f"   PE_args: {self.PE_args[dat_arg_i]} \n\n"
-                dat_arg_i += 1
         return outer_loop_str
     
-    def addParCopy(self, ParCopy: ParCopy) -> None:
+    def addParCopy(self, ParCopy: ParCopy, dat_swap_map: List[int]) -> None:
         target_dat_id = findIdx(self.dats, lambda d: d[0].ptr == ParCopy.target)
         source_dat_id = findIdx(self.dats, lambda d: d[0].ptr == ParCopy.source)
         if target_dat_id is None:
@@ -1151,8 +1189,8 @@ class IterLoop:
         elif source_dat_id is None:
             raise OpsError(f"ParCopy missing source dat used in any par-loop '{ParCopy.source}'")
 
-        self.dat_swap_map[target_dat_id] = source_dat_id
-        self.dat_swap_map[source_dat_id] = target_dat_id 
+        dat_swap_map[target_dat_id] = source_dat_id
+        dat_swap_map[source_dat_id] = target_dat_id 
          
         
     def addLoop(self, loop: Loop) -> None:
@@ -1179,42 +1217,81 @@ class IterLoop:
             # elif isinstance(arg, ArgIdx):
             # elif isinstance(arg, ArgReduce):
             # elif isinstance(arg, ArgGbl):
-    def getLoops(self)-> List[Loop]:
+    def getLoopsFromRawOpsIterParloopArgs(self)-> List[Loop]:
         return filter(lambda x: isinstance(x, Loop), self.itrloop_args)
     
-    def getReadStencil(self) -> str:
-        for arg in self.joint_args:
-            if arg.access_type == AccessType.OPS_READ:
-                return arg.stencil_ptr
-        return None
-
-    def getUniqueDatSwaps(self) -> List[Union[int,int]]:
-        unique_swap_map = []
-        for i in range(len(self.dat_swap_map)):
-            found = False
-            for j in unique_swap_map:
-                if i == j[1]:
-                    found = True
-            if not found:
-                unique_swap_map.append((i, self.dat_swap_map[i]))
+    def getReadStencil(self, prog: Any) -> Stencil:
+        #each loop read stencil should match. Otherwise, there will be alignment miss match.
+        first_read_stencil = None
+        for i, df_loop_node in enumerate(self.get_active_df_graph().getAllLoopNodes()):
+            if i == 0:
+                first_read_stencil = df_loop_node.loop.get_read_stencil(prog)
+            if not first_read_stencil == df_loop_node.loop.get_read_stencil(prog):
+                raise OpsError("All loop nodes in ISL region should have same read stencil")
         
+        return first_read_stencil
+    
+    def getUniqueDatSwaps(self) -> List[Tuple[str]]:
+        unique_swap_map = []
+        for key in self.get_active_df_graph().getGlobalDatsSwapMap().keys():
+            found = False
+            val = self.get_active_df_graph().getGlobalDatsSwapMap()[key]
+            if (key,val) in unique_swap_map or (val,key) in unique_swap_map:
+                found = True
+            if not found:
+                unique_swap_map.append((key, val))
+                
         return unique_swap_map
     
-    def getOrderedSwapPair(self, dat_id: int) -> Union[int, int]:
-        other_dat = self.dat_swap_map[dat_id]
-        pair = [other_dat, dat_id]
+    def getUniqueDatSwapsIds(self) -> List[Tuple[int]]:
+        unique_swap_map = self.getUniqueDatSwaps()
+        unique_swap_map_ids = []
+        
+        for first,second in unique_swap_map:
+            unique_swap_map_ids.append((self.getDatId(first), self.getDatId(second)))
+
+        return unique_swap_map_ids
+    def getDatId(self, dat_name: str) -> int:
+        idx = findIdx(self.dats, lambda dat_l: dat_l[0].ptr == dat_name)
+        if idx is None:
+            raise OpsError(f"{function_name()}: dat {dat_name} not found in global dats")
+        return idx
+    
+    def getDatSwapPair(self, dat_name: str) -> Tuple[str]:
+        if not dat_name in self.get_active_df_graph().getGlobalDatsSwapMap().keys():
+            raise OpsError(f"{function_name()}: Failed to find dat: {dat_name} in global swap map of df_graph: {self.get_active_df_graph().unique_name}")
+        return (dat_name, self.get_active_df_graph().getGlobalDatsSwapMap()[dat_name])
+    
+    def getSwapArg(self, arg: ArgDat) -> ArgDat:
+        pair  = self.getDatSwapPair(self.dats[arg.dat_id][0].ptr)
+        #print(f"{function_name()}: swap_pair: {pair}")
+        return self.getArg(pair[1])
+    
+    def getOrderedSwapPairIds(self, dat_id: int) -> List[int]:
+        dat_name = self.dats[dat_id][0].ptr
+        other_dat_name = self.getDatSwapPair(dat_name)[1]
+        other_dat_idx = self.getDatId(other_dat_name)
+        pair = [dat_id, other_dat_idx]
         pair.sort()
         return (pair)
          
-    def getArg(self, dat_id: int) -> Union[ArgDat, None]:
-        for arg in self.joint_args:
-            if arg.dat_id == dat_id:
-                return arg
-        return None      
-            
-    def printDataflowGraph(self, filename: str) -> None:
-        print(self.df_graph)
-        self.df_graph.print(self.unique_name, make_dats_node = True)
+    def getArg(self, dat_id_or_name: Union[int, str]) -> Union[ArgDat, None]:
+        if isinstance(dat_id_or_name, int):
+            arg_id = findIdx(self.joint_args, lambda jarg: jarg.dat_id == dat_id_or_name)
+            if arg_id is None:
+                raise OpsError(f"{function_name()}: No argument found with dat id: {dat_id_or_name} in outerloop: {self.unique_name}")
+            return self.joint_args[arg_id]
+        elif isinstance(dat_id_or_name, str):
+            arg_id = findIdx(self.joint_args, lambda jarg: self.dats[jarg.dat_id][0].ptr == dat_id_or_name)
+            if arg_id is None:
+                raise OpsError(f"{function_name()}: No argument found with dat name: {dat_id_or_name} in outerloop: {self.unique_name}")
+            return self.joint_args[arg_id]
+        else:
+            raise OpsError(f"{function_name()}: wrong argument type")
+        
+    def printDataflowGraph(self, filename: str) -> None: 
+        logging.debug(self.get_active_df_graph())
+        self.get_active_df_graph().print(self.unique_name, make_dats_node = True)
         
 class ParCopy:
     target: str
@@ -1368,7 +1445,7 @@ class Loop:
 
         return f"{kernel_detail_str}\n  ARGS:\n{args_str}\n  DATS:\n{dat_str}\n"
 
-    def get_read_stencil(self, prog) -> str:
+    def get_read_stencil(self, prog) -> Stencil:
         """! return the union of all read stenils
 
         Returns:
@@ -1394,13 +1471,13 @@ class Loop:
         d_p = [0,0,0]
           
         for i, stencil in enumerate(unique_stencils):
-            print(f"Unique stencil {i} - {stencil}")
+            #print(f"Unique stencil {i} - {stencil}")
             
             dim = max(dim, stencil.dim)
             local_base_afine_points = [(p - stencil.base_point) for p in stencil.points]
             base_afine_points.extend([p for p in local_base_afine_points if p not in base_afine_points])
             
-            print (f"stencil_dim: {stencil.dim}")
+            #print (f"stencil_dim: {stencil.dim}")
             for i in range(stencil.dim):
                 d_m[i] = max(d_m[i], stencil.d_m[i])
                 d_p[i] = max(d_p[i], stencil.d_p[i])
@@ -1419,7 +1496,7 @@ class Loop:
         
         self.read_stencil = Stencil(id, dim, stencil_ptr, num_points, points, base_point, stencil_size, d_m, d_p, row_discriptors)
         
-        print(f"read stencil: {self.read_stencil}")
+        #print(f"read stencil: {self.read_stencil}")
         
         return self.read_stencil
         

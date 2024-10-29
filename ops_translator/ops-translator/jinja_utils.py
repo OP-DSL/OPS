@@ -68,7 +68,7 @@ env.tests["instance"] = lambda x, c: isinstance(x, c)
 env.tests["isnumaric"] = lambda arg, loop=None: isinstance(arg, str) and arg.isnumeric()
 
 def isArgSwap(arg: ops.ArgDat, iterloop: ops.IterLoop) -> bool:
-    pair = iterloop.getOrderedSwapPair(arg.dat_id)
+    pair = iterloop.getDatSwapPair(iterloop.dats[arg.dat_id][0].ptr)
     if pair[0] != pair[1]:
         return True
     else:
