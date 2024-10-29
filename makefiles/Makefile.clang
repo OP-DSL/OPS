@@ -67,7 +67,7 @@ ifeq ($(AMD_ARCH),MI100)
 	OMPOFFLOADFLAGS += -fopenmp=libomp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx908
 	HIP_ARCH=gfx908
 else
-ifeq ($(AMD_ARCH),MI200)
+ifeq ($(AMD_ARCH),MI210)
 	OMPOFFLOADFLAGS += -fopenmp=libomp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx90a
 	HIP_ARCH=gfx90a
 endif

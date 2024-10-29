@@ -108,7 +108,12 @@ ifdef THREADED
     CXXFLAGS += $(THREADING_FLAGS)
 endif
 
-MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
+ifneq ($(strip $(MPI_INSTALL_PATH)),)
+    I_MPI_INC = -I$(MPI_INC)
+    L_MPI_LIB = -L$(MPI_LIB)
+else
+    I_MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
+endif
 
 APP_TARGETS = $(addprefix $(APP)_, $(TARGETS))
 
@@ -205,26 +210,28 @@ $(APP)_mpi_ompoffload_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS
 # HIP version
 #
 
+HIP_KERNELS = hip_kernels.cpp
+
 $(APP)_hip: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_hip.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_hip"
 		@echo ""
-		$(HIPCC) $(CXXFLAGS) $(HIPFLAGS) -I$(C_OPS_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./hip/hip_kernels.cpp $(HDF5_LIB_SEQ) $(OPS_LINK) $(OPS_LIB_HIP) $(HIP_LINK) $(HIPRAND) -o $(APP)_hip
+		$(HIPCC) $(CXXFLAGS) $(HIPFLAGS) -I$(C_OPS_INC) $(OPS_FILES_GEN) -I. ./hip/$(HIP_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_HIP) $(HDF5_LIB_SEQ) $(HIP_LINK) $(HIPRAND) -o $(APP)_hip
 
 $(APP)_mpi_hip: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_hip.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_hip"
 		@echo ""
-		$(HIPMPICPP) $(CXXFLAGS) $(HIPFLAGS) -DOPS_MPI -I$(C_OPS_INC) $(MPI_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./hip/hip_kernels.cpp $(HDF5_LIB_MPI) $(OPS_LINK) $(OPS_LIB_MPI_HIP) $(HIP_LINK) $(HIPRAND) $(HIP_MPI_LINK) -o $(APP)_mpi_hip
+		$(HIPMPICPP) $(CXXFLAGS) $(HIPFLAGS) -DOPS_MPI -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./hip/$(HIP_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_HIP) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_HIP_LINK) $(HIP_LINK) $(HIPRAND) -o $(APP)_mpi_hip
 
 $(APP)_mpi_hip_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_hip.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_hip_tiled"
 		@echo ""
-		$(HIPMPICPP) $(CXXFLAGS) $(HIPFLAGS) -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) $(MPI_INC) -L$(C_OPS_LIB) $(OPS_FILES_GEN) $(TRID_LIB) -I. ./hip/hip_kernels.cpp $(HDF5_LIB_MPI) $(OPS_LINK) $(OPS_LIB_MPI_HIP) $(HIP_LINK) $(HIPRAND) $(HIP_MPI_LINK) -o $(APP)_mpi_hip_tiled
+		$(HIPMPICPP) $(CXXFLAGS) $(HIPFLAGS) -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./hip/$(HIP_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_HIP) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_HIP_LINK) $(HIP_LINK) $(HIPRAND) -o $(APP)_mpi_hip_tiled
 
 
 #=====================================================================================================================================================================
