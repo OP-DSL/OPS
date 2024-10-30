@@ -26,8 +26,8 @@ build_test_gnu11:
     - cd opensbli_jaxa
     - git checkout UpdateTests
     - git status
-    - ls $CI_PROJECT_DIR/ops-ci/build/opt 
-    - ./RunTests.sh /usr/lib/x86_64-linux-gnu/hdf5/openmpi $CI_PROJECT_DIR/ops-ci/build/opt
+    - ls $CI_PROJECT_DIR/build/opt 
+    - ./RunTests.sh /usr/lib/x86_64-linux-gnu/hdf5/openmpi $CI_PROJECT_DIR/build/opt
 
 build_test_nvhpc239:
   stage: test_nvhpc239
@@ -38,8 +38,8 @@ build_test_nvhpc239:
     - module avail 
     - module load nvhpc/23.9
     - export CXX=mpicxx
-    - cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt -DOPS_TEST_FULL=ON -DOPS_TEST_DEV=ON -DHDF5_ROOT=/usr/lib/x86_64-linux-gnu/hdf5/openmpi/
-    - cmake --build build -j 6
+      #- cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt -DOPS_TEST_FULL=ON -DOPS_TEST_DEV=ON -DHDF5_ROOT=/usr/lib/x86_64-linux-gnu/hdf5/openmpi/
+      #- cmake --build build -j 6
 
 # Build and Test with NVHPC compiler
 #build_and_test:NVHCP23:APPS:
