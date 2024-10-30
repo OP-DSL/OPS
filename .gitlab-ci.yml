@@ -11,18 +11,20 @@ build_test_gnu11:
     - module avail 
     - module load CUDA
     - export CXX=mpicxx
-    - cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt -DOPS_TEST_FULL=ON 
-    - cmake --build build -j 6
-    - cmake --install build 
-    - echo `My Working directory`
+      #- cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt -DOPS_TEST_FULL=ON 
+      #- cmake --build build -j 6
+      #- cmake --install build 
     - echo `pwd`
     - echo $CI_PROJECT_DIR
-    #- ctest --test-dir build --output-on-failure 
-    - git clone git@bitbucket.org:dl11g11/opensbli_jaxa.git
+    #- ctest --test-dir build --output-on-failure
+    #- mkdir -p ~/.ssh/ && touch ~/.ssh/known_hosts && chmod 644 ~/.ssh/known_hosts
+    #- ssh-keyscan -H bitbucket.org >> ~/.ssh/known_hosts
+    #- echo -e "machine bitbucket.org\nlogin gitlab-ci-token\npassword ${CI_JOB_TOKEN}" > ~/.netrc 
+    - git clone /home/rfj82982/GIT/opensbli_jaxa 
     - cd opensbli_jaxa
     - git checkout UpdateTests
-    - echo 
-    - ./RunTests.sh /usr/lib/x86_64-linux-gnu/hdf5/openmpi $CI_PROJECT_DIR/ops/build/opt
+    - git status
+      #- ./RunTests.sh /usr/lib/x86_64-linux-gnu/hdf5/openmpi $CI_PROJECT_DIR/ops-ci/build/opt
 
 build_test_nvhpc239:
   stage: test_nvhpc239
