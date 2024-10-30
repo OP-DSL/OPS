@@ -52,5 +52,3 @@ if(${OPS_TEST_FULL})
   #add_subdirectory(CloverLeaf_3D_HDF5)
   add_subdirectory(mb_shsgc)
 endif()
-
-

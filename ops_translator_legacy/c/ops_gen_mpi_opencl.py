@@ -1211,6 +1211,6 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
         if not (("initialise" in kernel_name) or ("generate" in kernel_name)):
             code(f'#include "{kernel_name}_opencl_kernel.cpp"')
         else:
-            code(f'#include "../mpi_openmp/{kernel_name}_cpu_kernel.cpp"')
+            code(f'#include "../mpi_openmp/{kernel_name}_kernel.cpp"')
 
     util.write_text_to_file(f"./opencl/opencl_kernels.cpp")

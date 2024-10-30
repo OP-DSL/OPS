@@ -51,7 +51,6 @@
 //#include <math_constants.h>
 
 #include <ops_lib_core.h>
-#include <ops_mpi_core.h>
 #include <ops_opencl_rt_support.h>
 #include <ops_exceptions.h>
 

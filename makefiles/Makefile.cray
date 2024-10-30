@@ -1,13 +1,35 @@
 CC        := cc
-#CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
-CCFLAGS   := -Ofast  #-Ofast -ffp=3 #-g -fsanitize=undefined
 CXX       := CC
-CXXFLAGS  := $(CCFLAGS)
+FC        := ftn
+
+CCFLAGS   := -O3 -std=c++11 -g -fPIC #-ffp=3 -fsanitize=undefined
+CXXFLAGS  := $(CCFLAGS) -fopenmp
+FFLAGS    := -O3 -g -fopenmp -M 878 -f free
+#-M 878 will disable ftn-878 warning message - module named <name> has already been directly or indirectly use 
+#CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
+
+FMODS         := -J$(F_INC_MOD)
+FMODS_OMPOFFLOAD    := -J$(F_INC_MOD)/ompoffload
+
+MPI_INSTALL_PATH = $(CRAY_MPICH_DIR)
+
 MPICC=cc
 MPICPP=CC
 MPICXX=CC
+MPIFC=ftn
+MPIF90=ftn
+
+MPI_INC = $(CRAY_MPICH_DIR)/include
+MPI_LIB = $(CRAY_MPICH_DIR)/lib $(PE_MPICH_GTL_DIR_amd_gfx90a)
+MPI_LINK = -lmpi
+
+#$PE_MPICH_GTL_LIBS_amd_gfx90a = -lmpi_gtl_hsa
+MPI_OMPOFFLOAD_LINK = -lmpi_gtl_hsa
+
 HIPCC=CC
 HIPMPICPP=CC
 HIPFLAGS=-std=c++11 --rocm-path=${ROCM_PATH} --offload-arch=gfx90a -x hip --rocm-path=${ROCM_PATH} -L${ROCM_PATH}/lib -lamdhip64 -I/opt/rocm/hip/include -D__HIP_PLATFORM_AMD__
 HIPLINK=-std=c++11 --rocm-path=${ROCM_PATH} --offload-arch=gfx90a --rocm-path=${ROCM_PATH} -L${ROCM_PATH}/lib -lamdhip64 -I/opt/rocm/hip/include -D__HIP_PLATFORM_AMD__
-OMPOFFLOADFLAGS=-fopenmp
+
+OMPOFFLOADFLAGS = -fopenmp
+OMPOFFLOADFOR = -DOPS_WITH_OMPOFFLOADFOR
