@@ -14,7 +14,15 @@ build_test_gnu11:
     - cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt -DOPS_TEST_FULL=ON 
     - cmake --build build -j 6
     - cmake --install build 
-    - ctest --test-dir build --output-on-failure 
+    - echo `My Working directory`
+    - echo `pwd`
+    - echo $CI_PROJECT_DIR
+    #- ctest --test-dir build --output-on-failure 
+    - git clone git@bitbucket.org:dl11g11/opensbli_jaxa.git
+    - cd opensbli_jaxa
+    - git checkout UpdateTests
+    - echo 
+    - ./RunTests.sh /usr/lib/x86_64-linux-gnu/hdf5/openmpi $CI_PROJECT_DIR/ops/build/opt
 
 build_test_nvhpc239:
   stage: test_nvhpc239
