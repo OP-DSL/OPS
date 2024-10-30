@@ -11,9 +11,9 @@ build_test_gnu11:
     - module avail 
     - module load CUDA
     - export CXX=mpicxx
-      #- cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt -DOPS_TEST_FULL=ON 
-      #- cmake --build build -j 6
-      #- cmake --install build 
+    - cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt -DOPS_TEST_FULL=ON 
+    - cmake --build build -j 6
+    - cmake --install build 
     - echo `pwd`
     - echo $CI_PROJECT_DIR
     #- ctest --test-dir build --output-on-failure
@@ -25,7 +25,7 @@ build_test_gnu11:
     - cd opensbli_jaxa
     - git checkout UpdateTests
     - git status
-      #- ./RunTests.sh /usr/lib/x86_64-linux-gnu/hdf5/openmpi $CI_PROJECT_DIR/ops-ci/build/opt
+    - ./RunTests.sh /usr/lib/x86_64-linux-gnu/hdf5/openmpi $CI_PROJECT_DIR/ops-ci/build/opt
 
 build_test_nvhpc239:
   stage: test_nvhpc239
