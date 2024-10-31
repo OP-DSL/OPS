@@ -242,7 +242,7 @@ def ISLReadBufferPropagation(original_graph: DataflowGraph_v2, prog: Program, ap
 
     logging.debug(f"{function_name()}: propagation paths: {propagation_paths}")
     logging.debug(f"{copy_graph}")
-    copy_graph.print("after_buffer_propagation", make_dats_node=False)
+    copy_graph.print("after_buffer_propagation", make_dats_node=True)
     return copy_graph
     
 @dataclass

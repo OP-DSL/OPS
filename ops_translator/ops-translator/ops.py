@@ -841,10 +841,12 @@ class DataflowGraph_v2:
             if "dat_connect" in edge_det.keys():
                 if edge_det["swap_connect"]:
                     return {"color": "red"}
-                return {}
-        
+                elif "stray" in edge_det.keys():
+                    if edge_det["stray"]:
+                        return {"color": "blue"}
             else:
                 return {"label": f"{edge_det['dat_str']}"}
+            return {}
         
         if not make_dats_node:  
             graphviz_draw(self.__graph, node_attr_fn=node_attr, edge_attr_fn=edge_attr, filename=f"{filename}.{format}", image_type=f"{format}")
@@ -857,22 +859,29 @@ class DataflowGraph_v2:
             edges = [(edge_list[i][0], edge_list[i][1], edge_attr_list[i]) for i in range(0,len(edge_list))]
 
             copy_graph.clear_edges()
-            added_dat_id_map = {}
-            
+            curr_dat_id_map = {}
+            curr_dat_id_count = {}
+            first_dat_id_map = {}
             for src_id, sink_id, attr in edges:
-                if not attr["dat_str"] in added_dat_id_map.keys():
-                    dat_node_id = copy_graph.add_node(DatDataflowNode(attr["dat_str"]))
-                    added_dat_id_map[attr["dat_str"]] = dat_node_id
-                dat_node_id = added_dat_id_map[attr["dat_str"]]
-                copy_graph.add_edge(src_id, dat_node_id, {"weight" : 1, "dat_connect" : True, "swap_connect": False})
-                copy_graph.add_edge(dat_node_id, sink_id, {"weight" : 1, "dat_connect" : True, "swap_connect": False})
+                if not attr["dat_str"] in curr_dat_id_count.keys():
+                    curr_dat_id_count[attr["dat_str"]] = 0
+                dat_node_id = copy_graph.add_node(DatDataflowNode(attr["dat_str"]))
+                if curr_dat_id_count[attr["dat_str"]] == 0:
+                    first_dat_id_map[attr["dat_str"]] = dat_node_id
+                curr_dat_id_count[attr["dat_str"]] += 1
+                curr_dat_id_map[attr["dat_str"]] = dat_node_id
+               
+                dat_node_id = curr_dat_id_map[attr["dat_str"]]
+                copy_graph.add_edge(src_id, dat_node_id, {"weight" : 1, "dat_connect" : True, "swap_connect": False, "dat_str": attr["dat_str"], "stray": False})
+                copy_graph.add_edge(dat_node_id, sink_id, {"weight" : 1, "dat_connect" : True, "swap_connect": False, "dat_str": attr["dat_str"], "stray": attr["isStray"]})
             
                 if sink_id == self.getEndNodeIdx() and not self.__global_dat_swap_map[attr["dat_str"]] == attr["dat_str"]:
-                    if not self.__global_dat_swap_map[attr["dat_str"]] in added_dat_id_map.keys():
+                    if not self.__global_dat_swap_map[attr["dat_str"]] in curr_dat_id_count.keys():
+                        curr_dat_id_count[self.__global_dat_swap_map[attr["dat_str"]]] = 0
                         dat_node_id = copy_graph.add_node(DatDataflowNode(self.__global_dat_swap_map[attr["dat_str"]]))
-                        added_dat_id_map[self.__global_dat_swap_map[attr["dat_str"]]] = dat_node_id
-                    sink_dat_node_id = added_dat_id_map[self.__global_dat_swap_map[attr["dat_str"]]]
-                    copy_graph.add_edge(dat_node_id, sink_dat_node_id, {"weight" : 1, "dat_connect" : True, "swap_connect": True})
+                        curr_dat_id_map[self.__global_dat_swap_map[attr["dat_str"]]] = dat_node_id
+                    sink_dat_node_id = curr_dat_id_map[self.__global_dat_swap_map[attr["dat_str"]]]
+                    copy_graph.add_edge(first_dat_id_map[attr["dat_str"]], sink_dat_node_id, {"weight" : 1, "dat_connect" : True, "swap_connect": True, "dat_str": self.__global_dat_swap_map[attr["dat_str"]]})
             
             graphviz_draw(copy_graph, node_attr_fn=node_attr, edge_attr_fn=edge_attr, filename=f"{filename}.{format}", image_type=f"{format}")
                 # graphviz_obj = rx.visualization.graphviz_graph(self.__graph)
