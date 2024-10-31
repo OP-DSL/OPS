@@ -189,12 +189,20 @@ def ISLCopyDetection(original_graph: DataflowGraph_v2, prog: Program, app: Appli
     return copy_graph
 
 def ISLReadBufferPropagation(original_graph: DataflowGraph_v2, prog: Program, app: Application, scheme: Scheme) -> DataflowGraph_v2:
+    
+    #1. Read Only buffer propagation as they require stray connection
     read_only_dats = []
     copy_graph = original_graph.copy(original_graph.unique_name + "_buff_prop")
+    #initializing propagation path from start node
+    propagation_paths = {}
     
     for dat in copy_graph.getGlobalDats():
         edges = [(src_id, sink_id, attr) for src_id, sink_id, attr in copy_graph.getEdges() if attr["dat_str"] == dat.ptr]
 
+        for src_id, sink_id, attr in edges:
+            if src_id == copy_graph.getStartNodeIdx():
+                propagation_paths[dat.ptr] = [(copy_graph.getStartNodeIdx(), 0)] #(node, node_arg_id)
+            
         is_read_only_dat = True
         
         for (src_id, sink_id, attr) in edges:
@@ -211,12 +219,9 @@ def ISLReadBufferPropagation(original_graph: DataflowGraph_v2, prog: Program, ap
 
     logging.debug(f"{function_name()}: read_only_dats: {read_only_dats}")
     
-    #initializing propagation path from start node
-    propagation_paths = {}
     read_only_dat_names = []
     for dat in read_only_dats:
         read_only_dat_names.append(dat.ptr)
-        propagation_paths[dat.ptr] = [(copy_graph.getStartNodeIdx(), 0)] #(node, node_arg_id)
       
     #topological sort
     sorted_nodes = rx.topological_sort(copy_graph.getRXGraph())
@@ -238,8 +243,67 @@ def ISLReadBufferPropagation(original_graph: DataflowGraph_v2, prog: Program, ap
     
     #final sweep to create edges to sink nodes
     for key in propagation_paths.keys():
-        copy_graph.addEdge(propagation_paths[key][-1][0], propagation_paths[key][-1][1], key, copy_graph.getEndNodeIdx(), 0, True)
+        if key in read_only_dat_names:
+            copy_graph.addEdge(propagation_paths[key][-1][0], propagation_paths[key][-1][1], key, copy_graph.getEndNodeIdx(), 0, True)
 
+    # phase 2
+    
+    for node_uid in sorted_nodes:
+        #checking each read_only nodes
+        df_node = copy_graph.getNode(node_uid)
+        if not isinstance(df_node, DataflowNode):
+            continue
+        
+        for arg in df_node.loop.args:
+            if not isinstance(arg, ArgDat):
+                continue
+            dat_name = df_node.loop.dats[arg.dat_id].ptr
+            
+            if dat_name in read_only_dat_names:
+                continue
+            
+            if not (isinstance(arg, ArgDat) and (arg.access_type == AccessType.OPS_READ or arg.access_type == AccessType.OPS_RW)):
+                continue
+            
+            if not dat_name in propagation_paths.keys():
+                print(f"not in {dat_name}, node: {df_node.node_uid}|{df_node.loop.kernel}")
+                continue
+            elif not propagation_paths[dat_name][-1] == copy_graph.getStartNodeIdx():
+                print(f"removing in {dat_name}, node: {df_node.node_uid}|{df_node.loop.kernel}")
+                # remove edge connecting dat to current node
+                filtered_edges = [(src_id, sink_id, attr) for src_id, sink_id, attr in copy_graph.getInEdgesFromNode(node_uid) if (attr["dat_str"] == dat_name and sink_id == node_uid)]
+                
+                if not filtered_edges or not len(filtered_edges) == 1:
+                    raise OptError(f"{function_name()}: couldn't find edge read dat: {dat_name} from node: {df_node.node_uid}|{df_node.loop.kernel}")
+                
+                src_id,sink_id, attr = filtered_edges[0]
+                
+                if not src_id == copy_graph.getStartNodeIdx():
+                    print(f"src id is not start {src_id}, node: {df_node.node_uid}|{df_node.loop.kernel}")
+                    continue
+                 
+                copy_graph.addEdge(propagation_paths[dat_name][-1][0], propagation_paths[dat_name][-1][1], dat_name, node_uid, arg.id)
+                copy_graph.deleteEdge(src_id, sink_id, attr)
+                propagation_paths[dat_name].append((node_uid, arg.id)) 
+                
+            else:
+                print(f"first read {dat_name}, node: {df_node.node_uid}|{df_node.loop.kernel}")
+                propagation_paths[dat_name].append((node_uid, arg.id)) 
+            
+                
+         
+    # # creating propagation path for hierarchical nodes via single read from start
+    # for x in range(len(sorted_nodes)-1):
+    #     for y in range(x+1, len(sorted_nodes)):
+    #         if (sorted_nodes[x] == copy_graph.getStartNodeIdx() or sorted_nodes[y] == copy_graph.getEndNodeIdx()):
+    #             break
+            
+    #         first_node = copy_graph.getNode(sorted_nodes[x])
+    #         second_node = copy_graph.getNode(sorted_nodes[y])
+            
+    #         #TODO if first and second node
+            
+            
     logging.debug(f"{function_name()}: propagation paths: {propagation_paths}")
     logging.debug(f"{copy_graph}")
     copy_graph.print("after_buffer_propagation", make_dats_node=True)
