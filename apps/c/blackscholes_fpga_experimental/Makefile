@@ -12,18 +12,19 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
 
-HEADERS=blacksholes_utils.h blacksholes_cpu.h blacksholes_kernels.h
+HEADERS=blackscholes_utils.h blackscholes_cpu.h blackscholes_kernels.h
 
-OPS_FILES=blacksholes.cpp
+OPS_FILES=blackscholes.cpp
 OPS_GENERATED_SUFFIX=_ops
 
-OTHER_FILES=blacksholes_cpu.cpp 
+OTHER_FILES=blackscholes_cpu.cpp 
 
 
-APP=blacksholes
-MAIN_SRC=blacksholes
+APP=blackscholes
+MAIN_SRC=blackscholes
 
 OPS_GENERATOR_VERBOSE=1
+OPS_GENERATOR_DEBUG=1
 OPS_FPGA_ONLY=1
 OPS_TARGET_CONFIG_FILE= ./config.json
 

@@ -30,7 +30,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief Test application for 1D fpga blacksholes application based on OPS-DSL
+/** @brief Test application for 1D fpga blackscholes application based on OPS-DSL
   * @author Beniel Thileepan, Istvan Reguly (some components)
   * @details
   *
@@ -39,14 +39,14 @@
   *  Coded in C API.
   */
 
-#include "blacksholes_cpu.h"
+#include "blackscholes_cpu.h"
 
 float standard_normal_CDF(float val)
 {
 	return 0.5 * erfc(-val * INV_SQRT_2);
 }
 
-float blacksholes_call_option(float spot_price, float strike_price,
+float blackscholes_call_option(float spot_price, float strike_price,
 		float time_to_maturity, float risk_free_interest_rate, float volatility)
 {
 	float d1 = (log(spot_price / strike_price) + (risk_free_interest_rate + pow(volatility,2) / 2) * time_to_maturity)
@@ -59,9 +59,9 @@ float blacksholes_call_option(float spot_price, float strike_price,
 	return return_on_portfolio - return_on_deposit;
 }
 
-float test_blacksholes_call_option(BlacksholesParameter calcParam, double * time_to_run)
+float test_blackscholes_call_option(blackscholesParameter calcParam, double * time_to_run)
 {
-	//testing blacksholes_call_option
+	//testing blackscholes_call_option
 
 //	float spot_price = 62;
 //	float strike_price = 60;
@@ -75,7 +75,7 @@ float test_blacksholes_call_option(BlacksholesParameter calcParam, double * time
 	float risk_free_rate = calcParam.risk_free_rate;
 
 	std::cout << "*********************************************"  << std::endl;
-	std::cout << "** testing blacksholes direct calculations **"  << std::endl;
+	std::cout << "** testing blackscholes direct calculations **"  << std::endl;
 	std::cout << "*********************************************"  << std::endl;
 
 	std::cout << "spot_price		: " << spot_price << std::endl;
@@ -85,7 +85,7 @@ float test_blacksholes_call_option(BlacksholesParameter calcParam, double * time
 	std::cout << "risk_free_rate	: " << risk_free_rate << std::endl;
 	std::cout << std::endl;
 	auto start = std::chrono::high_resolution_clock::now();
-	float option_price = blacksholes_call_option(spot_price, strike_price, t, risk_free_rate, volatility);
+	float option_price = blackscholes_call_option(spot_price, strike_price, t, risk_free_rate, volatility);
 	auto stop = std::chrono::high_resolution_clock::now();
 	std::cout << "option_price 		: " << option_price << std::endl;
 	std::chrono::duration<double, std::micro> time_us = stop - start;
@@ -100,7 +100,7 @@ float test_blacksholes_call_option(BlacksholesParameter calcParam, double * time
 
 
 // golden non optimised stencil computation on host PC. 1D stencil calculation
-void bs_explicit1(float* current, float *next, GridParameter& gridData, BlacksholesParameter& computeParam)
+void bs_explicit1(float* current, float *next, GridParameter& gridData, blackscholesParameter& computeParam)
 {
 	float alpha = computeParam.volatility *  computeParam.volatility *  computeParam.delta_t;
 	float beta =  computeParam.risk_free_rate *  computeParam.delta_t;
@@ -144,7 +144,7 @@ float cubicInterpolate(float p0, float p1, float p2, float p3, float x)
 	return (p1 + 0.5 * x*(p2 - p0 + x*(2.0*p0 - 5.0*p1 + 4.0*p2 - p3 + x*(3.0*(p1 - p2) + p3 - p0))));
 }
 //get the exact call option pricing for given spot price and strike price
-float get_call_option(float* data, BlacksholesParameter& computeParam)
+float get_call_option(float* data, blackscholesParameter& computeParam)
 {
 	float index 	= (float)computeParam.spot_price / ((float) computeParam.strike_price * computeParam.SMaxFactor) * computeParam.K;
 	unsigned int indexLower 	= (int)std::floor(index);
@@ -160,7 +160,7 @@ float get_call_option(float* data, BlacksholesParameter& computeParam)
 	return option_price;
 }
 
-float get_call_option_cubic(float* data, BlacksholesParameter& computeParam)
+float get_call_option_cubic(float* data, blackscholesParameter& computeParam)
 {
 	float index 	= (float)computeParam.spot_price / ((float) computeParam.strike_price * computeParam.SMaxFactor) * computeParam.K;
 	unsigned int indexLower 	= (int)std::floor(index);
@@ -186,7 +186,7 @@ float get_call_option_cubic(float* data, BlacksholesParameter& computeParam)
 
 
 // copy of instvan's implementation explicit1 in BS_1D_CPU
-int bs_explicit2(float* current, float *next, GridParameter gridData, std::vector<BlacksholesParameter> & computeParam)
+int bs_explicit2(float* current, float *next, GridParameter gridData, std::vector<blackscholesParameter> & computeParam)
 {
 	assert(computeParam.size() == gridData.batch);
 
@@ -259,7 +259,7 @@ int bs_explicit2(float* current, float *next, GridParameter gridData, std::vecto
 	return 0;
 }
 
-bool stencil_stability(BlacksholesParameter& computeParam, bool verbose)
+bool stencil_stability(blackscholesParameter& computeParam, bool verbose)
 {
 
 
@@ -268,7 +268,7 @@ bool stencil_stability(BlacksholesParameter& computeParam, bool verbose)
 		if(verbose)
 		{
 			std::cout << "*********************************************"  << std::endl;
-			std::cout << "**   Blacksholes stability check - PASSED  **"  << std::endl;
+			std::cout << "**   blackscholes stability check - PASSED  **"  << std::endl;
 			std::cout << "*********************************************"  << std::endl;
 
 			std::cout << "1/(sigmaˆ2*(K-1) + 0.5*r): " << (1/(pow(computeParam.volatility, 2)*(computeParam.K - 1) + 0.5*computeParam.risk_free_rate)) << std::endl;
@@ -280,7 +280,7 @@ bool stencil_stability(BlacksholesParameter& computeParam, bool verbose)
 	else
 	{
 		std::cout << "*********************************************"  << std::endl;
-		std::cout << "**   Blacksholes stability check - FAILED  **"  << std::endl;
+		std::cout << "**   blackscholes stability check - FAILED  **"  << std::endl;
 		std::cout << "*********************************************"  << std::endl;
 
 		std::cout << "1/(sigmaˆ2*(K-1) + 0.5*r): " << (1/(pow(computeParam.volatility, 2)*(computeParam.K - 1) + 0.5*computeParam.risk_free_rate)) << std::endl;
@@ -336,7 +336,7 @@ int copy_grid(float* grid_s, float* grid_d, GridParameter gridData)
     return 0;
 }
 
-void intialize_grid(float* grid, GridParameter gridProp, BlacksholesParameter& computeParam)
+void intialize_grid(float* grid, GridParameter gridProp, blackscholesParameter& computeParam)
 {
 	float sMax = computeParam.strike_price * computeParam.SMaxFactor;
 

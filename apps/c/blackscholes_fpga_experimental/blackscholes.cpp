@@ -31,7 +31,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief Test application for 1D fpga blacksholes application based on OPS-DSL
+/** @brief Test application for 1D fpga blackscholes application based on OPS-DSL
   * @author Beniel Thileepan
   * @details
   *
@@ -46,8 +46,8 @@
 #include <stdlib.h>
 #include <chrono>
 #include <random>
-#include "blacksholes_utils.h"
-#include "blacksholes_cpu.h"
+#include "blackscholes_utils.h"
+#include "blackscholes_cpu.h"
 
 #define OPS_1D
 #define OPS_HLS_V2
@@ -56,7 +56,7 @@
 #define DEBUG_VERBOSE
 #define PROFILE
 #include <ops_seq_v2.h>
-#include "blacksholes_kernels.h"
+#include "blackscholes_kernels.h"
 
 extern const unsigned short mem_vector_factor;
 
@@ -124,7 +124,7 @@ int main(int argc, const char **argv)
 	double init_runtime[gridProp.batch];
 	double main_loop_runtime[gridProp.batch];
 #endif
-	std::vector<BlacksholesParameter> calcParam(gridProp.batch); //multiple blacksholes calculations
+	std::vector<blackscholesParameter> calcParam(gridProp.batch); //multiple blackscholes calculations
 
 	//First calculation for test value
 
@@ -283,7 +283,7 @@ int main(int argc, const char **argv)
 				ops_arg_dat(dat_next[bat], 1, S1D_1pt, "float", OPS_WRITE),
 				ops_arg_dat(dat_current[bat], 1, S1D_1pt, "float", OPS_READ));
 
-		//blacksholes calc
+		//blackscholes calc
 		float alpha = calcParam[bat].volatility * calcParam[bat].volatility * calcParam[bat].delta_t;
 		float beta = calcParam[bat].risk_free_rate * calcParam[bat].delta_t;
 
@@ -298,12 +298,12 @@ int main(int argc, const char **argv)
 #ifdef PROFILE
 		auto grid_init_stop_clk_point = std::chrono::high_resolution_clock::now();
 		init_runtime[bat] = std::chrono::duration<double, std::micro>(grid_init_stop_clk_point - grid_init_start_clk_point).count();
-		auto blacksholes_calc_start_clk_point = grid_init_stop_clk_point;
+		auto blackscholes_calc_start_clk_point = grid_init_stop_clk_point;
 #endif
 #ifndef OPS_FPGA
 		for (int iter = 0 ; iter < calcParam[bat].N; iter++)
 		{
-			ops_par_loop(ops_krnl_blacksholes, "blacksholes_1", grid1D, 1, interior_range,
+			ops_par_loop(ops_krnl_blackscholes, "blackscholes_1", grid1D, 1, interior_range,
 					ops_arg_dat(dat_next[bat], 1, S1D_1pt, "float", OPS_WRITE),
 					ops_arg_dat(dat_current[bat], 1, S1D_3pt, "float", OPS_READ),
 					ops_arg_dat(dat_a[bat], 1, S1D_1pt, "float", OPS_READ),
@@ -315,7 +315,7 @@ int main(int argc, const char **argv)
 		}
 #else
         ops_iter_par_loop("ops_iter_par_loop_0", calcParam[bat].N,
-			ops_par_loop(ops_krnl_blacksholes, "blacksholes_1", grid1D, 1, interior_range,
+			ops_par_loop(ops_krnl_blackscholes, "blackscholes_1", grid1D, 1, interior_range,
 					ops_arg_dat(dat_next[bat], 1, S1D_1pt, "float", OPS_WRITE),
 					ops_arg_dat(dat_current[bat], 1, S1D_3pt, "float", OPS_READ),
 					ops_arg_dat(dat_a[bat], 1, S1D_1pt, "float", OPS_READ),
@@ -328,8 +328,8 @@ int main(int argc, const char **argv)
 
 #ifdef PROFILE
      #ifndef OPS_FPGA
-		auto blacksholes_calc_stop_clk_point = std::chrono::high_resolution_clock::now();
-		main_loop_runtime[bat] = std::chrono::duration<double, std::micro>(blacksholes_calc_stop_clk_point - blacksholes_calc_start_clk_point).count();
+		auto blackscholes_calc_stop_clk_point = std::chrono::high_resolution_clock::now();
+		main_loop_runtime[bat] = std::chrono::duration<double, std::micro>(blackscholes_calc_stop_clk_point - blackscholes_calc_start_clk_point).count();
     #else
 		main_loop_runtime[bat] = ops_hls_get_execution_runtime<std::chrono::microseconds>(std::string("ops_iter_par_loop_0"));
     #endif
@@ -360,8 +360,8 @@ int main(int argc, const char **argv)
 
 	for (unsigned int bat = 0; bat < gridProp.batch; bat++)
 	{
-		//explicit blacksholes test
-    	float direct_calc_value = test_blacksholes_call_option(calcParam[bat]);
+		//explicit blackscholes test
+    	float direct_calc_value = test_blackscholes_call_option(calcParam[bat]);
 
 		float* current_raw = (float*)ops_dat_get_raw_pointer(dat_current[bat], 0, S1D_1pt, OPS_HOST);
 		float* next_raw = (float*)ops_dat_get_raw_pointer(dat_next[bat], 0, S1D_1pt, OPS_HOST);

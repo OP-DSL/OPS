@@ -19,7 +19,7 @@ struct GridParameter
 	unsigned int num_iter;
 };
 
-struct BlacksholesParameter
+struct blackscholesParameter
 {
 	float spot_price;
 	float strike_price;
