@@ -261,8 +261,9 @@ void ops_halo_transfer(ops_halo_group group) {
     for (int i = 1; i < halo->from->block->dims; i++)
       size *= halo->iter_size[i];
     if (size > group->instance->ops_halo_buffer_size) {
-      ops_device_free(group->instance, (void**)&group->instance->ops_halo_buffer_d);
-      ops_device_malloc(group->instance, (void **)&group->instance->ops_halo_buffer_d, size);
+      ops_device_free(group->instance, (void **)&(group->instance->ops_halo_buffer_d));
+      ops_device_malloc(group->instance, (void **)&(group->instance->ops_halo_buffer_d), size);
+      ops_device_memset(group->instance, (void **)&(group->instance->ops_halo_buffer_d), 0, size);
       group->instance->ops_halo_buffer_size = size;
       //deviceSafeCall(cudaDeviceSynchronize());
     }
