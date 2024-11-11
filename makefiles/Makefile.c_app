@@ -116,10 +116,14 @@ ifdef THREADED
 endif
 
 ifneq ($(strip $(MPI_INSTALL_PATH)),)
-    I_MPI_INC = -I$(MPI_INC)
-    L_MPI_LIB = -L$(MPI_LIB)
+ifneq (,$(wildcard $(MPI_INC)))
+I_MPI_INC = -I$(MPI_INC)
+endif
+ifneq (,$(wildcard $(MPI_LIB)))
+L_MPI_LIB = -L$(MPI_LIB)
+endif
 else
-    I_MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
+I_MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
 endif
 
 APP_TARGETS = $(addprefix $(APP)_, $(TARGETS))
