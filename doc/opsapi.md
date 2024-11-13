@@ -6,10 +6,9 @@ The key characteristic of structured mesh applications is the implicit connectiv
 
 ## Key Concepts and Structure
 
-The OPS API allows to declare a computation over such multi-block structured meshes. An OPS application can generally be declared in two key parts: (1) initialisation and (2) iteration over the mesh (carried out as a parallel loop). During the initialisation phase, one or more blocks (we call these `ops_block`s) are defined: these only have a dimensionality (i.e. 1D, 2D, etc.), and serve to group datasets together. Datasets are defined on a block, and have a specific size (in each dimension of the block), which may be slightly different across different datasets (e.g. staggered grids), in some directions they may be degenerate (a size of 1), or they can represent data associated with different multigrid levels (where their size if a multiple or a fraction of other datasets). Datasets can be declared with empty (NULL) pointers, then OPS will allocate the appropriate amount of memory, may be passed non-NULL pointers (currently only supported in non-MPI environments), in which case OPS will assume the memory is large enough for the data and the block halo, and there are HDF5 dataset declaration routines which allow the distributed reading of datasets from HDF5 files. The concept of blocks is necessary to group datasets together, as in a multi-block problem, in a distributed memory environment, OPS needs to be able to determine how to
-decompose the problem.
+The OPS API allows to declare a computation over such multi-block structured meshes. An OPS application can generally be declared in two key parts: (1) initialisation and (2) iteration over the mesh (carried out as a parallel loop). During the initialisation phase, one or more blocks (we call these `ops_block`s) are defined: these only have a dimensionality (i.e. 1D, 2D, or 3D etc.), and serve to group datasets together. Datasets are defined on a block, and have a specific size (in each dimension of the block), which may be slightly different across different datasets (e.g. staggered grids), in some directions they may be degenerate (a size of 1), or they can represent data associated with different multigrid levels (where their size is a multiple or a fraction of other datasets). Datasets can be declared with empty (NULL) pointers, in which case OPS will automatically allocate the required memory. Alternatively, non-NULL pointers can be passed (currently supported only in non-MPI environments), where OPS will assume that the provided memory is sufficient for both the dataset and its block halo. Additionally, there are HDF5 dataset declaration routines (ops_decl_dat_hdf5) available that enable distributed reading of datasets from HDF5 files. The concept of blocks is essential for grouping datasets, particularly in multi-block problems. In a distributed memory environment, OPS relies on blocks to determine how to decompose the problem for parallel execution.
 
-The initialisation phase usually also consists of defining the stencils to be used later on (though they can be defined later as well), which describe the data access patterns used in parallel loops. Stencils are always relative to the "current" point; e.g. if at iteration $(i,j)$, we wish to access $(i-1,j)$ and $(i,j)$, then the stencil will have two points: $\{(-1, 0), (0, 0)\}$. To support degenerate datasets (where in one of the dimensions the dataset's size is 1), as well as for multigrid, there are special strided, restriction, and prolongation stencils: they differ from normal stencils in that as one steps through a grid in a parallel loop, the stepping is done with a non-unit stride
+The initialization phase typically includes defining the stencils, which describe the data access patterns for parallel loops. While stencils are usually defined at this stage, they can also be specified later if needed. Stencils are always relative to the "current" point; e.g. if at iteration $(i,j)$, we wish to access $(i-1,j)$ and $(i,j)$, then the stencil will have two points: $\{(-1, 0), (0, 0)\}$. To support degenerate datasets (where in one of the dimensions the dataset's size is 1), as well as for multigrid, there are special strided, restriction, and prolongation stencils: they differ from normal stencils in that as one steps through a grid in a parallel loop, the stepping is done with a non-unit stride
 for these datasets. For example, in a 2D problem, if we have a degenerate dataset called xcoords, size $(N,1)$, then we will need a stencil with stride $(1,0)$ to access it in a regular 2D loop.
 
 Finally, the initialisation phase may declare a number of global constants - these are variables in global scope that can be accessed from within elemental kernels, without having to pass them in explicitly. These may be scalars or small arrays, generally for values that do not change during execution, though they may be updated during execution
@@ -17,13 +16,9 @@ with repeated calls to `ops_decl_const`.
 
 The initialisation phase is terminated by a call to `ops_partition`.
 
-The bulk of the application consists of parallel loops, implemented using calls to `ops_par_loop`. These constructs work with datasets, passed through the opaque `ops_dat` handles declared during the initialisation phase. The iterations of parallel loops are semantically independent, and it is the responsibility of the user to enforce this:
-the order in which iterations are executed cannot affect the result (within the limits of floating point precision). Parallel loops are defined on a block, with a prescribed iteration range that is always defined from the perspective of the dataset written/modified (the sizes of datasets, particularly in multigrid situations, may be very
-different). Datasets are passed in using `ops_arg_dat`, and during execution, values at the current grid point will be passed to the user kernel. These values are passed wrapped in a templated `ACC<>` object (templated on the type of the data), whose parentheses operator is overloaded, which the user must use to specify the relative offset to
-access the grid point's neighbours (which accesses have to match the the declared stencil). Datasets written may only be accessed with a one-point, zero-offset stencil (otherwise the parallel semantics may be violated).
+The bulk of the application consists of parallel loops, implemented using calls to `ops_par_loop`. These constructs work with datasets, passed through the opaque `ops_dat` handles declared during the initialisation phase. Iterations of parallel loops are expected to be semantically independent, and it is the user's responsibility to ensure this. The order of execution should not impact the final result (within the limits of floating-point precision). Parallel loops are defined on a block, with a prescribed iteration range that is always defined from the perspective of the dataset written/modified (the sizes of datasets, particularly in multigrid situations, may be very different). Datasets are passed using `ops_arg_dat`, and during execution, values at the current grid point will be passed to the user kernel. Values are passed using a templated `ACC<>` object (templated on the data type), with an overloaded parentheses operator. The user must use this operator to specify relative offsets when accessing neighboring grid points, ensuring that accesses match the declared stencil. When writing to datasets, only a one-point, zero-offset stencil is allowed to avoid violating parallel execution semantics.
 
-Other than datasets, one can pass in read-only scalars or small arrays that are iteration space invariant with `ops_arg_gbl` (typically weights, $\delta t$, etc. which may be different in different loops). The current iteration index can also be passed in with `ops_arg_idx`, which will pass a globally consistent index to the user kernel (i.e.
-also under MPI).
+Other than datasets, one can pass read-only scalars or small arrays that are iteration space invariant with `ops_arg_gbl` (typically weights, $\delta t$, etc. which may be different in different loops). The current iteration index can be passed using `ops_arg_idx`, which provides a globally consistent index to the user kernel, including in MPI environments.
 
 Reductions in loops are done using the `ops_arg_reduce` argument, which takes a reduction handle as an argument. The result of the reduction can then be acquired using a separate call to `ops_reduction_result`. The semantics are the following: a reduction handle after it was declared is in an "uninitialised" state. The first time it is used as an argument to a loop, its type is determined (increment/min/max), and is initialised appropriately $(0,\infty,-\infty)$, and subsequent uses of the handle in parallel loops are combined together, up until the point, where the result is acquired using `ops_reduction_result`, which then sets it back to an uninitialised state. This also implies, that different parallel loops, which all use the same reduction handle, but are otherwise independent, are independent and their partial reduction results can be combined together associatively and commutatively.
 
@@ -80,7 +75,8 @@ MPI receives depth (for OPS internal development only)
 
 __void ops_exit()__
 
-This routine must be called last to cleanly terminate the OPS computation.
+
+This routine must be called at the end to ensure a clean termination of the OPS computation.
 #### C++ style
 
 With the C++ style APIs, all data structures (block, data and stencils etc ) are encapsulated into a class  ``OPS_instance``. Thus, we can allocate multiple instances of ``OPS_instance`` by using the class constructor, for example,
@@ -92,7 +88,7 @@ OPS_instance *instance = new OPS_instance(argc,argv,1,ss);
 
 where the meaning of arguments are same to the C API, while the extra argument (i.e., ss) is for accpeting the messages.
 
-An explicit termination is not needed for the C++ API, although we need to "delete" the instance in if it is allocated through pointer, i.e.,
+An explicit termination is not required for the C++ API. However, if an instance is allocated through a pointer, it must be properly deleted to release resources.
 ```C++
 delete instance;
 ```
@@ -112,7 +108,7 @@ This routine defines a structured grid block.
 
 ##### OPS_instance::decl_block (C++)
 
-A method of the OPS_instance class for declaring a block, which accepts same arguments with the C style function. A OPS_instance object should be constructed before this. The method returns a pointer to a ops_block type variable, where ops_block is an alias to a pointer type of ops_block_core. An example is
+This method of the OPS_instance class is used to declare a block and accepts the same arguments as the C-style function. An OPS_instance object must be constructed before calling this method. The method returns a pointer to a variable of type ops_block, which is an alias for a pointer type of ops_block_core. An example is as follows:
 
 ```C++
 ops_block grid2D = instance->decl_block(2, "grid2D");
@@ -130,11 +126,7 @@ This routine reads the details of a structured grid block from a named HDF5 file
 | name  |  a name used for output diagnostics |
 | file |hdf5 file to read and obtain the block information from|
 
-Although this routine does not read in any extra information about the
-block from the named HDF5 file than what is already specified in the
-arguments, it is included here for error checking (e.g. check if blocks
-defined in an HDF5 file is matching with the declared arguments in an
-application) and completeness.
+Although this routine does not read any additional information about the block from the specified HDF5 file beyond what is already provided in the arguments, it is included for error checking (e.g., to verify that the blocks defined in the HDF5 file match the declared arguments in the application) and for completeness.
 
 #### Dat (ops_cat_core)
 ##### ops_decl_dat (C)
@@ -151,14 +143,14 @@ This routine defines a dataset.
 |base    |  base indices in each dimension of the block |
 |d_m    |  padding from the face in the negative direction for each dimension (used for block halo) |
 |d_p    |  padding from the face in the positive direction for each dimension (used for block halo) |
-|data    |     input data of type *T* |
+|data    |     input data pointer of type *T* |
 |type     |     the name of type used for output diagnostics (e.g. ``double``,``float``)|
 |name     |     a name used for output diagnostics|
 
 The `size` allows to declare different sized data arrays on a given
 `block`. `d_m` and `d_p` are depth of the "block halos" that are used to
 indicate the offset from the edge of a block (in both the negative and
-positive directions of each dimension).
+positive directions of each dimension). The data pointer can be either NULL, in which case OPS will allocate and manage the memory, or non-NULL (currently only supported in non-MPI environments), where the user specifies an existing allocated dataset that is sufficiently large to accommodate both the data and the block halo.
 
 ##### ops_block_core::decl_dat (C++)
 The method ops_block_core::decl_dat is used to define a ops_dat object, which accepts almost same arguments with the C conterpart where the block argument is not necessary, e.g.,
@@ -167,13 +159,13 @@ The method ops_block_core::decl_dat is used to define a ops_dat object, which ac
 ops_dat dat0    = grid2D->decl_dat(2, size, base, d_m, d_p, temp, "double", "dat0");
 ops_dat dat1    = grid2D->decl_dat(2, size, base, d_m, d_p, temp, "double", "dat1");
 ```
-where grid2D is a ops_block_core object which shall be defined before this.
+Here, grid2D is an ops_block_core object that must be defined prior to this.
 
 ##### ops_decl_dat_hdf5 (C)
 
 __ops_dat ops_decl_dat_hdf5(ops_block block, int dim, char *type, char *name, char *file)__
 
-This routine defines a dataset to be read in from a named hdf5 file
+This routine defines a dataset to be read from a specified HDF5 file.
 
 | Arguments      | Description |
 | ----------- | ----------- |
@@ -775,6 +767,46 @@ This routine copies the data given  by the user to the internal data structure u
 
 #### ops_dat_core::set_data (C++)
 The C++ version of ``ops_dat_set_data_memspace`` where the arguments the same except no need of the ops_dat arguments.
+
+### Random Number Initialization
+
+OPS supports initializing OPS_DATS with random numbers. This feature is particularly useful because the methods for generating random numbers differ between CPU and GPU architectures. On the CPU, standard library functions or custom algorithms can be used to generate random numbers. However, on the GPU, generating random numbers typically requires specialized libraries (e.g., cuRAND for CUDA or HIP).
+
+By providing built-in support for random number initialization, OPS abstracts these differences and ensures consistency in random data generation across different hardware architectures. This capability simplifies the development process, making it easier to test and debug applications on various platforms.
+
+Please refer `OPS/apps/c/random/random.cpp` example application.
+
+####  ops_randomgen_init(C)
+
+__void ops_randomgen_init(seed, options)__
+
+This routine is used to set the seed value for the random number distribution.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|seed|  seed value|
+|options|   extra argument to seed function|
+
+#### ops_fill_random_uniform(C)
+
+__void ops_fill_random_uniform(dat)__
+
+This routine initializes the dataset using a uniform random number distribution.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dat|         the dataset|
+
+#### ops_fill_random_normal(C)
+
+__void ops_fill_random_normal(dat)__
+
+This routine initializes the dataset using a normal (Gaussian) random number distribution.
+
+| Arguments      | Description |
+| ----------- | ----------- |
+|dat|         the dataset|
+
 ### Linear algebra solvers
 
 ####  Tridiagonal solver
@@ -828,7 +860,7 @@ This solves multiple tridiagonal systems of equations in multidimensional datase
 
 The following is a list of all the runtime flags and options that can be used when executing OPS generated applications.
 
-* `OPS_DIAGS=` : set OPS diagnostics level at runtime.
+* `-OPS_DIAGS=` : set OPS diagnostics level at runtime.
 
   `OPS_DIAGS=1` - no diagnostics, default level to achieve the best runtime performance.
 
@@ -837,6 +869,8 @@ The following is a list of all the runtime flags and options that can be used wh
   `OPS_DIAGS>4` - print intra-block halo buffer allocation feedback (for OPS internal development only).
 
   `OPS_DIAGS>5` - check if intra-block halo MPI sends depth match MPI receives depth (for OPS internal development only).  
+
+* `-DOPS_FORCE_DECOMP_X=`, `-DOPS_FORCE_DECOMP_Z=` and `-DOPS_FORCE_DECOMP_Z=` : Forcing the number of processors in the X, Y, and Z directions for domain decomposition in MPI. By default, OPS selects the most suitable configuration unless the user explicitly specifies it using these options.
 
 * `OPS_BLOCK_SIZE_X=`, `OPS_BLOCK_SIZE_Y=` and `OPS_BLOCK_SIZE_Y=` : The CUDA (and OpenCL) thread block sizes in X, Y and Z dimensions. The sizes should be an integer between 1 - 1024, and currently they should be selected such that `OPS_BLOCK_SIZE_X`*`OPS_BLOCK_SIZE_Y`*`OPS_BLOCK_SIZE_Z`< 1024
 

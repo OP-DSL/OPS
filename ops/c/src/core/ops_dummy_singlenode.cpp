@@ -763,7 +763,7 @@ void ops_dat_deep_copy(ops_dat target, ops_dat source)
   int realloc = ops_dat_copy_metadata_core(target, source);
   if(realloc && source->block->instance->OPS_hybrid_gpu) {
     if(target->data_d != nullptr) {
-      ops_device_free(source->block->instance, (void**)&(target->data_d));
+      ops_device_free(source->block->instance, (void **)&(target->data_d));
       target->data_d = nullptr;
     }
     ops_device_malloc(source->block->instance, (void **)&(target->data_d), target->mem);

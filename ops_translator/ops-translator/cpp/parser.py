@@ -186,6 +186,30 @@ def parseIntExpression(node: Cursor) -> int:
 
 
 def parseIntLiteral(node: Cursor) -> Optional[int]:
+    if node.kind == CursorKind.INTEGER_LITERAL:
+        tokens = list(node.get_tokens())
+        if len(tokens) == 1:
+            value_str = tokens[0].spelling
+            return int(value_str)
+    elif node.kind == CursorKind.UNARY_OPERATOR:
+        operator = None
+        value = None
+        for token in node.get_tokens():
+            if operator is None:
+                operator = token.spelling
+            else:
+                value = int(token.spelling)
+        if operator == '-' and value is not None:
+            return -value
+        elif operator == '+' and value is not None:
+            return value
+    else:
+        raise ParseError("Expected int expression", parseLocation(node))
+
+    raise ParseError("Invalid node type " + str(node.kind), parseLocation(node))
+
+
+def parseIntLiteral_old(node: Cursor) -> Optional[int]:
     if node.type.kind != TypeKind.INT:
         raise ParseError("Expected int expression", parseLocation(node))
 
@@ -277,14 +301,21 @@ def parseConst(args: List[Cursor], loc: Location, macros: Dict[Location, str]) -
 
 
 def parseAccessType(node: Cursor, loc: Location, macros: Dict[Location, str]) -> ops.AccessType:
-    access_type_raw = parseIntExpression(node)
 
-    if access_type_raw not in ops.AccessType.values():
-        raise ParseError(
-            f"Invalid access type {access_type_raw}, expected one of {', '.join(ops.AccessType.values())}", 
-            loc)
+    if parseLocation(node) in macros.keys():
+        access_type_str = macros[parseLocation(node)]
 
-    return ops.AccessType(access_type_raw)
+#        print(str(loc) + "   " + access_type_str)
+
+        access_type_map = {"OPS_READ": 0, "OPS_WRITE": 1, "OPS_RW": 2, "OPS_INC": 3, "OPS_MIN": 4, "OPS_MAX": 5}
+
+        if access_type_str not in access_type_map:
+            raise ParseError(
+                f"invalid access type {access_type_str}, expected one of {', '.join(access_type_map.keys())}", loc
+            )
+
+        access_type_raw = access_type_map[access_type_str]
+        return ops.AccessType(access_type_raw)
 
 
 def parseArgDat(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> None:

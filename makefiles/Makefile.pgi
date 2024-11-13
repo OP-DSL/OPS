@@ -13,8 +13,19 @@ CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\
 
 CXXFLAGS      := $(CCFLAGS) -std=c++11
 FFLAGS         = -O3 -fast -gopt
-NVCCFLAGS      = -O3 -std=c++11
+
+NVCCFLAGS ?= -Xcompiler="-fPIC"
+
+ifndef DEBUG
+    NVCCFLAGS += -O3 -g -std=c++11
+else
+    NVCCFLAGS += -O0 -g -G -std=c++11
+endif
+ifdef IEEE
+NVCCFLAGS += --fmad false
+endif
 NVCC_FLAG_SET := 1
+
 OPENACCFLAGS   = $(CCFLAGS) -module $(F_INC_MOD)/openacc
 
 FMODS         := -module $(F_INC_MOD)
