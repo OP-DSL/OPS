@@ -64,6 +64,7 @@
     if(BUILD_OMPOFFLOAD)
         file(GLOB_RECURSE OMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/*"
                 "${CMAKE_CURRENT_SOURCE_DIR}/src/core/ops_device_singlenode_common.cpp")
+        list(FILTER OMPOFFLOAD EXCLUDE REGEX "ops_ompoffload_common_omp5")
         add_library(ops_ompoffload ${CORE} ${EXTERN} ${OMPOFFLOAD})
         target_link_libraries(ops_ompoffload PRIVATE OpenMP::OpenMP_CXX)
         target_compile_options(ops_ompoffload PRIVATE ${OMPOFFLOAD_FLAGS})
@@ -136,6 +137,7 @@
             file(GLOB_RECURSE MPIOMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/*ompoffload*.cpp"
                     "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/*")
                 list(FILTER MPIOMPOFFLOAD EXCLUDE REGEX "singlenode")
+                list(FILTER MPIOMPOFFLOAD EXCLUDE REGEX "ops_ompoffload_common_omp5")
                 list(APPEND MPIOMPOFFLOAD ${CommonFiles})
                 add_library(ops_mpi_ompoffload ${MPICORE} ${EXTERN} ${MPIOMPOFFLOAD})
                 target_link_libraries(ops_mpi_ompoffload PRIVATE OpenMP::OpenMP_CXX
