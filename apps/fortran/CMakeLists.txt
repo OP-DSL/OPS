@@ -485,6 +485,7 @@
             file(GLOB CONSTANTS_MODULE "${TMP_SOURCE_DIR}/constants.F90")
             file(GLOB CONSTANTS_OFFLOAD_MODULE "${TMP_SOURCE_DIR}/constants_offload.F90")
             list(FILTER OTHERS EXCLUDE REGEX ${CONSTANTS_MODULE})
+            list(FILTER OTHERS EXCLUDE REGEX ${CONSTANTS_OFFLOAD_MODULE})
 
             file(GLOB_RECURSE SEQ_TEMPLATES "${TMP_SOURCE_DIR}/mpi_openmp/*_seq_kernel.F90")
             foreach(source_file ${SEQ_TEMPLATES})
