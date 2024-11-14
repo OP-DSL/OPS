@@ -43,7 +43,7 @@
 
 program POISSON
   use OPS_Fortran_Reference
-  use OPS_Fortran_hdf5_Declarations
+!  use OPS_Fortran_hdf5_Declarations
   use OPS_CONSTANTS
 
   use, intrinsic :: ISO_C_BINDING
