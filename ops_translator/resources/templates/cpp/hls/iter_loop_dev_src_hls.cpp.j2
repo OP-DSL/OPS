@@ -27,9 +27,14 @@ static void joint_PE_outerloop_{{ilh.id}}(const unsigned short PEId, const ops::
         const {{const.typ}}& {{const.ptr}}{{", " if not loop.last }}
     {% endfor %})
 {
+    {% if ilh.get_active_df_graph().getAllLoopNodes()|length > 1 %}
+#pragma HLS DATAFLOW
+    {% endif %}
+    {% for stream_interconnector in ilh.interconnector_names %}
+    ::hls::stream<ap_uint<axis_data_width>> {{stream_interconnector}};
+    #pragma HLS STREAM variable = {{stream_interconnector}} depth = max_depth
+    {% endfor %}
 
-//TODO: Need to define inter_kernal_stream connections
-//#pragma HLS DATAFLOW
     {% for df_node in ilh.get_active_df_graph().getAllLoopNodes() %}
         {% set loop_idx = df_node.node_uid %}
         {% set lh = df_node.loop %}

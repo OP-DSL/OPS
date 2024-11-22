@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Callable, List, Optional, Union, Tuple, Any, Dict
 
-from util import ABDC, findIdx, function_name, find
+from util import ABDC, findIdx, function_name, find, str_add_prefix
 from functools import cmp_to_key
 import logging
 import rustworkx as rx
@@ -732,6 +732,17 @@ class DataflowGraph_v2:
         merged = [(edge_list[i][0], edge_list[i][1], edge_attr_list[i]) for i in range(0,len(edge_list))]
         return merged
 
+    def getEdgeFromNode(self, node_uid: int, dat_name: str = None) -> List[Any]:
+        inEdges = self.getInEdgesFromNode(node_uid)
+        outEdges = self.getOutEdgesFromNode(node_uid)
+        
+        merged = inEdges + outEdges
+        
+        if not dat_name is None:
+            out = [(src_id, sink_id, attr) for src_id, sink_id, attr in merged if attr["dat_str"] == dat_name]
+            return out
+        return merged
+    
     def getEndNodeIdx(self) -> None:
         return self.__graph.nodes().index(DF_END_NODE)
 
@@ -796,10 +807,13 @@ class DataflowGraph_v2:
             source_dat_names.append(edge_attr["dat_str"])
         return source_dat_names
 
-    def getInEdgesFromNode(self, node_uid: int) -> List[Any]:
+    def getInEdgesFromNode(self, node_uid: int, dat_name: str = None) -> List[Any]:
         if not self.__graph.has_node(node_uid):
             OpsError(f"Cannot retrieve in edges from node_id: {node_uid} as it does not exist")
-        return self.__graph.in_edges(node_uid)
+        if dat_name is None:
+            return self.__graph.in_edges(node_uid)
+        else:
+            return [(src_id, sink_id, attr) for src_id, sink_id, attr in self.__graph.in_edges(node_uid) if attr["dat_str"] == dat_name]
 
     def getNode(self, node_uid: int) -> Optional[DataflowNode]:
         if node_uid in self.__graph.node_indices():
@@ -809,10 +823,13 @@ class DataflowGraph_v2:
     def getAllLoopNodes(self) -> List[DataflowNode]:
         return [node for node in self.__graph.nodes() if isinstance(node, DataflowNode)]
     
-    def getOutEdgesFromNode(self, node_uid: int) -> List[Any]:
+    def getOutEdgesFromNode(self, node_uid: int, dat_name: str = None) -> List[Any]:
         if not self.__graph.has_node(node_uid):
             OpsError(f"Cannot retrieve out edges from node_id: {node_uid} as it does not exist")
-        return self.__graph.out_edges(node_uid)
+        if dat_name is None:
+            return self.__graph.out_edges(node_uid)
+        else:
+            return [(src_id, sink_id, attr) for src_id, sink_id, attr in self.__graph.out_edges(node_uid) if attr["dat_str"] == dat_name]
     
     def getRXGraph(self) -> rx.PyDiGraph:
         return self.__graph
@@ -1101,7 +1118,19 @@ class IterLoop:
             
             for arg in global_args:
                 self.joint_args.append(arg)
-
+    
+    def update_loop_node_args(self) -> None:
+        for df_node in self.get_active_df_graph().getAllLoopNodes():
+            loop = df_node.loop
+            arg_list = loop.args
+            
+            for i, arg in enumerate(arg_list):
+                if not isinstance(arg, ArgDat):
+                    continue
+                if arg.access_type == AccessType.OPS_READ and \
+                len(self.get_active_df_graph().getOutEdgesFromNode(df_node.node_uid, loop.dats[arg.dat_id].ptr)):
+                    arg_list[i] = ArgDat(arg.id, loc=arg.loc, access_type=AccessType.OPS_RW, opt=arg.opt, dat_id=arg.dat_id, stencil_ptr=arg.stencil_ptr, dim=arg.dim, restrict=arg.restrict, prolong=arg.prolong, global_dat_id=arg.global_dat_id, is_read_only=False)        
+    
     def gen_PE_args(self) -> None:
         PE_args = []
         for df_node in self.get_active_df_graph().getAllLoopNodes():
@@ -1113,11 +1142,13 @@ class IterLoop:
         arg_map = {}
         PE_args = []
         
-        #first sweep to read      
+        #first sweep to read
+        logging.debug(f"start node id: {self.get_active_df_graph().getStartNodeIdx()}, end node id: {self.get_active_df_graph().getEndNodeIdx()}")    
         for source_id, sink_id, attr in self.get_active_df_graph().getEdges():
-            #print(f"{function_name()}, source_id:  {source_id}, sink_id: {sink_id}, attr: {attr}")
+            logging.debug(f"{function_name()}, source_id:  {source_id}, sink_id: {sink_id}, attr: {attr}")
             if i == sink_id:
                 if source_id == self.get_active_df_graph().getStartNodeIdx():
+                    logging.debug(f"source is start node")
                     search_list = filter(lambda x: x.access_type in [AccessType.OPS_READ, AccessType.OPS_RW] and self.dats[x.dat_id][0].ptr == attr["dat_str"], self.joint_args)
                     arg_id = next(search_list).id
                     if attr['sink_arg_id'] in arg_map.keys():
@@ -1129,11 +1160,13 @@ class IterLoop:
                     connector_name = f"node{source_id}_{attr['src_arg_id']}_to_node{sink_id}_{attr['sink_arg_id']}"
                     if connector_name not in self.interconnector_names:
                         self.interconnector_names.append(connector_name)
-                    arg_map[attr['sink_arg_id']] = [connector_name]
+                    if attr['sink_arg_id'] in arg_map.keys():
+                        arg_map[attr['sink_arg_id']].append(connector_name)
+                    else:
+                        arg_map[attr['sink_arg_id']] = [connector_name]
         
         #second sweep to write
-        for source_id, sink_id, attr in self.get_active_df_graph().getEdges():
-            #print(f"{function_name()}, source_id:  {source_id}, sink_id: {sink_id}, attr: {attr}")
+        for source_id, sink_id, attr in self.get_active_df_graph().getEdges():           
             if i == source_id:
                 if sink_id == self.get_active_df_graph().getEndNodeIdx():
                     #print("sink_id is end_node ")
@@ -1147,7 +1180,15 @@ class IterLoop:
                     connector_name = f"node{source_id}_{attr['src_arg_id']}_to_node{sink_id}_{attr['sink_arg_id']}"
                     if connector_name not in self.interconnector_names:
                         self.interconnector_names.append(connector_name)
-                    arg_map[attr['src_arg_id']] = connector_name
+                    if attr['src_arg_id'] in arg_map.keys():
+                        arg_map[attr['src_arg_id']].append(connector_name)
+                    else:
+                        arg_map[attr['src_arg_id']] = [connector_name]
+        # #second sweep to write
+        # for source_id, sink_id, attr in self.get_active_df_graph().getEdges():
+        #     #print(f"{function_name()}, source_id:  {source_id}, sink_id: {sink_id}, attr: {attr}")
+        #     if i == source_id:
+
                     
         #print(f"PE_args: {arg_map}")
         for k in range(len(v.args)):
@@ -1161,33 +1202,79 @@ class IterLoop:
     
     def __str__(self) -> str:
         outer_loop_str = ""
-        outer_loop_str += f"OPS Iterative Loop at {self.scope[0]}:\n ID: {self.id}, UID: {self.unique_id}, with num of iteration: {self.num_iter}\n\n DATS: \n ------ \n"
+        outer_loop_str += f" OPS Iterative Loop at {self.scope[0]}:\n ID: {self.id}, UID: {self.unique_id}, with num of iteration: {self.num_iter} \n |\n"
+        
+        outer_loop_str += " ├─ DATS: \n |  ------ \n"
         
         for i,dat in enumerate(self.dats):
-            outer_loop_str += f"dat{i}: " + str(dat) + "\n"
+            if not i == len(self.dats) - 1:
+                outer_loop_str += " |   ├─"
+            else:
+                outer_loop_str += " |   └─"
+            outer_loop_str += f" dat{i}: " + str(dat) + "\n"
         
-        outer_loop_str += f"Graph selected: " + "Original" if not self.is_opt_graph() else "Optimized"
-        outer_loop_str += "SOURCE DATS: " + str(self.get_active_df_graph().getGlobalSourceDatNames()) + "\n"
-        outer_loop_str += "SINK DATS: " + str(self.get_active_df_graph().getGlobalSinkDatNames()) + "\n"
+        outer_loop_str += f" |\n"
+        outer_loop_str += f" ├─ GRAPH INFO: \n |  ------ \n"
+        outer_loop_str += f" |  ├─ Graph selected: " + "Original \n" if not self.is_opt_graph() else "Optimized \n"
+        outer_loop_str += f" |  ├─ SOURCE DATS: " + str(self.get_active_df_graph().getGlobalSourceDatNames()) + "\n"
+        outer_loop_str += f" |  └─ SINK DATS: " + str(self.get_active_df_graph().getGlobalSinkDatNames()) + "\n"
         
-        outer_loop_str +="\n JOINT_ARGS: \n ------ \n"
+        outer_loop_str += f" |\n"
+        outer_loop_str += f" ├─ JOINT_ARGS: \n |  ------ \n"
         for i,arg in enumerate(self.joint_args):
-            outer_loop_str += f"arg{i}: " + str(arg) + "\n"
+            if not i == len(self.joint_args) - 1:
+                outer_loop_str += " |   ├─"
+            else:
+                outer_loop_str += " |   └─"
+            outer_loop_str += f" arg{i}: " + str(arg) + "\n"
             
-        outer_loop_str +="\n EDGES: \n ------ \n"
-
+        outer_loop_str += f" |\n"
+        outer_loop_str += f" ├─ EDGES: \n |  ------ \n"
         for i, edge in enumerate(self.get_active_df_graph().getEdges()):
-            outer_loop_str += f"edges{i}: " + str(edge) + "\n"
+            if not i == len(self.get_active_df_graph().getEdges()) - 1:
+                outer_loop_str += " |   ├─"
+            else:
+                outer_loop_str += " |   └─"    
+            outer_loop_str += f" edges{i}: " + str(edge) + "\n"
         
-        outer_loop_str +="\n SWAP MAP: \n ------ \n"
-            
-        for key in  self.get_active_df_graph().getGlobalDatsSwapMap().keys():
-            outer_loop_str += f"{key} - {self.get_active_df_graph().getGlobalDatsSwapMap()[key]}\n"
+        outer_loop_str += f" |\n"
+        outer_loop_str += f" ├─ SWAP MAP: \n |  ------ \n"
+        for i, key in  enumerate(self.get_active_df_graph().getGlobalDatsSwapMap().keys()):
+            if not i == len(self.get_active_df_graph().getGlobalDatsSwapMap().keys()) - 1:
+                outer_loop_str += " |   ├─"
+            else:
+                outer_loop_str += " |   └─" 
+            outer_loop_str += f" {key} - {self.get_active_df_graph().getGlobalDatsSwapMap()[key]}\n"
         
-        outer_loop_str +="\n ARGS: \n ------ \n"
-        
+        outer_loop_str += f" |\n"
+        outer_loop_str += f" └─ ITERLOOP NODES: \n |  ------ \n"
         for i,arg in enumerate(self.itrloop_args):
-            outer_loop_str += f" arg{i}: " + str(arg)
+            if not i == len(self.itrloop_args) - 1:
+                outer_loop_str += " |   ├─"
+                outer_loop_str += f" iterloop {i}: \n" + str_add_prefix(str(arg), " |   | ")
+            else:
+                outer_loop_str += " |   └─" 
+                outer_loop_str += f" iterloop {i}: \n" + str_add_prefix(str(arg), " |   | ")
+                
+        # outer_loop_str += f" |\n"
+        # outer_loop_str += f" └─ PE ARGS: \n |  ------ \n"
+        # for i,key in enumerate(self.PE_args.keys()):
+        #     if not i == len(self.PE_args.keys()) - 1:
+        #         outer_loop_str += "     ├─"
+        #     else:
+        #         outer_loop_str += "     └─"
+        #     outer_loop_str += f" kernel {i}: " + str(self.get_active_df_graph().getNode(key).loop.kernel) + "\n"
+        #     for j,arg in enumerate(self.PE_args[key]):
+        #         if not i == len(self.PE_args.keys()) - 1:
+        #             outer_loop_str += "     |"
+        #         else:
+        #             outer_loop_str += "      "
+        #         if not j == len(self.PE_args[key]) - 1:
+        #             outer_loop_str += "  ├─"
+        #         else:
+        #             outer_loop_str += "  └─"
+        #         outer_loop_str += f" PE_arg_name {j}: " + str(arg) + "\n"
+                
         return outer_loop_str
     
     def addParCopy(self, ParCopy: ParCopy, dat_swap_map: List[int]) -> None:

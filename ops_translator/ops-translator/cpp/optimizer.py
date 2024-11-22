@@ -4,12 +4,13 @@ from typing import Optional, List, Tuple, Any, Union, Set
 from store import Program, Location, Application
 import logging
 from dataclasses import dataclass, field
-from util import KernelProcess, findIdx, function_name
+from util import KernelProcess, findIdx, function_name, print_rx_graph
 from scheme import Scheme
 from cpp.parser import ASTtoString, CursorKind, getBinaryOp, Cursor, getAccessorAccessIndices, decend
 from copy import deepcopy
 import pygraphviz
 import rustworkx as rx
+import jaro
 @dataclass
 class OptError(Exception):
     message: str
@@ -313,54 +314,69 @@ def ISLReadBufferPropagation(original_graph: DataflowGraph_v2, prog: Program, ap
 class BasicDataDepNode:
     dat_ptr: str
     df_node: Union[DataflowNode, DFNodeType]
-@dataclass
-class DataDepNode(BasicDataDepNode):
-    children: Optional[List[Any]] = field(default_factory=list)
-    
-    def add_child(self, child: Any) -> None:
-        self.children.append(child)
-    
-    def get_children(self) -> List[Any]:
-        return self.children
-    
-    def remove_child(self, child: Any) -> None:
-        if child in self.children:
-            self.children.remove(child)
-            
-    def __eq__(self, other) -> bool:
-        if isinstance(other, DataDepNode):
-            return (self.df_node == other.df_node and self.dat_ptr == other.dat_ptr)
-        return False
-    def add_node_to_graph(self, graph: pygraphviz.AGraph) -> None:
-        for child in self.children:
-            if child.df_node == DFNodeType.DF_START:
-                graph.add_edge(f"{child.dat_ptr}:START", f"{self.dat_ptr}:{self.df_node.loop.kernel}")
-            else:
-                graph.add_edge(f"{child.dat_ptr}:{child.df_node.loop.kernel}", f"{self.dat_ptr}:{self.df_node.loop.kernel}")
-        for child in self.children:
-            child.add_node_to_graph(graph)
-    
-    def print_tree(self) -> str:
-        logging.debug(f"Generating dependency graph for {self.dat_ptr}:{self.df_node.loop.kernel}")
-        g = pygraphviz.AGraph(strict=True, directed=True)
-        self.add_node_to_graph(g)
-        
-        g.layout(prog="dot")
-        g.draw(f"{self.dat_ptr}_data_dependency.png")
-    
-    # def search
-    def str_dep_tree(self) -> str:
-        out_str = f"{self.dat_ptr}"
-        if (self.children):
-            out_str += " <- "
-        for child in self.children:
-            out_str += f"({child.str_dep_tree()}), "
-        return out_str
+    head_dat_ptr: str = None
+    is_assigned: bool = False
     
     def __str__(self) -> str:
-        out_str = f"loop kernel: {self.df_node.loop.kernel}, dep tree: {self.str_dep_tree()}"
-        return out_str
-
+        if self.df_node.type == DFNodeType.DF_START:
+            node_name_suffix = "start"
+        elif self.df_node.type == DFNodeType.DF_END:
+            node_name_suffix = "end"
+        else:
+            node_name_suffix = self.df_node.loop.kernel
+            
+        return (f"{self.dat_ptr}:{self.df_node.node_uid}_{node_name_suffix}")
+    
+# @dataclass
+# class DataDepNode(BasicDataDepNode):
+#     children: Optional[List[Any]] = field(default_factory=list)
+    
+#     def add_child(self, child: Any) -> None:
+#         self.children.append(child)
+    
+#     def get_children(self) -> List[Any]:
+#         return self.children
+    
+#     def remove_child(self, child: Any) -> None:
+#         if child in self.children:
+#             self.children.remove(child)
+            
+#     def __eq__(self, other) -> bool:
+#         if isinstance(other, DataDepNode):
+#             return (self.df_node == other.df_node and self.dat_ptr == other.dat_ptr)
+#         return False
+#     def add_node_to_graph(self, graph: pygraphviz.AGraph) -> None:
+#         for child in self.children:
+#             if child.df_node.node_uid == 0:
+#                 graph.add_edge(f"{child.dat_ptr}:START", f"{self.dat_ptr}:{self.df_node.loop.kernel}")
+#             else:
+#                 graph.add_edge(f"{child.dat_ptr}:{child.df_node.loop.kernel}", f"{self.dat_ptr}:{self.df_node.loop.kernel}")
+#         for child in self.children:
+#             child.add_node_to_graph(graph)
+    
+#     def print_tree(self) -> str:
+#         logging.debug(f"Generating dependency graph for {self.dat_ptr}:{self.df_node.loop.kernel}")
+#         g = pygraphviz.AGraph(strict=True, directed=True)
+#         self.add_node_to_graph(g)
+        
+#         g.layout(prog="dot")
+#         g.draw(f"{self.dat_ptr}_data_dependency.png")
+    
+#     # def search
+#     def str_dep_tree(self) -> str:
+#         out_str = f"{self.dat_ptr}"
+#         if (self.children):
+#             out_str += " <- "
+#         for child in self.children:
+#             out_str += f"({child.str_dep_tree()}), "
+#         return out_str
+    
+#     def __str__(self) -> str:
+#         out_str = f"loop kernel: {self.df_node.loop.kernel}, dep tree: {self.str_dep_tree()}"
+#         return out_str
+def jaro_weight_distance(first: str, second: str) -> float:
+    return (1 - jaro.jaro_winkler_metric(first, second))
+    
 def findVariables(astnode: Cursor, variables: Set) -> None:
     if astnode.kind == CursorKind.DECL_REF_EXPR:
         variables.add(astnode.spelling)
@@ -368,7 +384,7 @@ def findVariables(astnode: Cursor, variables: Set) -> None:
     for child in astnode.get_children():
         findVariables(child, variables)
 
-def getDependencyVariables_v2(astnode: Cursor, dependant: str, visited: Set[str] = None, original_compound_ast_node: Cursor = None, curr_compound_idx: int = -1) -> Optional[Set[str]]:
+def getDependencyVariables(astnode: Cursor, dependant: str, visited: Set[str] = None, original_compound_ast_node: Cursor = None, curr_compound_idx: int = -1) -> Optional[Set[str]]:
     if visited is None:
         visited = set()
     
@@ -440,14 +456,14 @@ def getDependencyVariables_v2(astnode: Cursor, dependant: str, visited: Set[str]
             findVariables(rhs_operand, variables_found)
             
         elif child.kind == CursorKind.FOR_STMT or child.kind == CursorKind.IF_STMT:
-            dependencies.update(getDependencyVariables_v2(list(child.get_children())[-1], dependant))
+            dependencies.update(getDependencyVariables(list(child.get_children())[-1], dependant))
             
         if variables_found:
             idx_cur_child_in_compound_children = children.index(child)
             dependencies.update(variables_found)
             
             for var in variables_found:
-                dependencies.update(getDependencyVariables_v2(child, var, visited, original_compound_ast_node, idx_cur_child_in_compound_children))
+                dependencies.update(getDependencyVariables(child, var, visited, original_compound_ast_node, idx_cur_child_in_compound_children))
     
     for var in local_vars:
         if not var in dependencies:
@@ -455,129 +471,8 @@ def getDependencyVariables_v2(astnode: Cursor, dependant: str, visited: Set[str]
         dependencies.remove(var)
         
     return dependencies    
-    
-# def getDependencyVariables(astnode: Cursor, dependant: str, visited: List[str] = None, original_ast_node: Cursor = None) -> Optional[Set[str]]:
-#     if visited is None:
-#         visited = set()
 
-#     # The exit condition
-#     if dependant in visited:
-#         return set()
-    
-#     dependencies = set()
-#     dependant_found = False
-    
-#     if astnode.kind == CursorKind.VAR_DECL or astnode.kind == CursorKind.DECL_REF_EXPR:
-#         if astnode.spelling == dependant:
-#             dependant_found = True
-#             visited.add(dependant)
-#             newly_found = set()
-#             findVariables(decend(astnode), newly_found)
-#             dependencies.update(newly_found)
-#             for var in newly_found:
-#                 dependencies += getDependencyVariables(astnode, var, visited)
-        
-#     elif astnode.kind == CursorKind.BINARY_OPERATOR or astnode.kind == CursorKind.COMPOUND_ASSIGNMENT_OPERATOR:
-#         operands = list(astnode.get_children())
-        
-#         if not len(operands) == 2:
-#             raise OptError("Binary operator or compound assignment should have RHS and LHS")
-        
-#         lhs_operand = operands[0]
-#         rhs_operand = operands[1]
-#         print(f"Original ast node kind: {astnode.kind}, spelling: {astnode.spelling}, type: {astnode.type}, location: {astnode.extent}")
-#         print(f"lhs: kind: {lhs_operand.kind}, spelling: {lhs_operand.spelling}, type: {lhs_operand.type}, location: {lhs_operand.extent}")
-#         # print(f"lhs: kind: {rhs_operand.kind}, spelling: {rhs_operand.spelling}, type: {rhs_operand.type}, location: {rhs_operand.extent}")
-        
-#         if lhs_operand.kind == CursorKind.UNEXPOSED_EXPR:
-#             lhs_operand = decend(lhs_operand)
-#         if lhs_operand.spelling == dependant:
-#             dependant_found = True
-#             visited.add(dependant)
-#             newly_found = set()
-#             findVariables(rhs_operand, newly_found)
-#             dependencies.update(newly_found)
-#             for var in newly_found:
-#                 new_dependencies = getDependencyVariables(astnode, var, visited)
-#                 dependencies.update(new_dependencies)
-    
-#     elif not dependant_found:
-#         for child in astnode.get_children():
-#             new_dependencies = getDependencyVariables(child, dependant, visited)
-#             if new_dependencies:
-#                 dependencies.update(new_dependencies)
-#                 dependant_found = True
-#                 break
-            
-#     if not dependant_found:
-#         logging.warning(f"Couldn't find dependant: {dependant}")
-#         # return None
-        
-#     return dependencies
-        
-            # # Found a declaration or assignment for the variable
-            # for child in cursor.get_children():
-            #     if child.kind == clang.cindex.CursorKind.DECL_REF_EXPR:
-            #         dep_var = child.spelling
-            #         dependencies.append(dep_var)
-            #         # Recursively find dependencies for this variable (indirect dependencies)
-            #         dependencies += get_variable_dependencies(translation_unit.cursor, dep_var, visited)
-
-            
-# def  getSupportingVariablesInsideKernel(node: Cursor, dependant: str, last_child_node_idx: int = -1) -> list[str]:
-#     if not node.kind == CursorKind.COMPOUND_STMT:
-#         raise OptError(f"node should be compound statement")
-    
-#     children = [child for child in node.get_children()]
-    
-    
-#     # if last_child_node_idx == -1:
-#     #     end_child_node = len(children)
-#     # else:
-#     #     end_child_node =last_child_node_idx
-    
-#     support_var_list = [] 
-#     for child in children[last_child_node_idx::-1]:
-#         if child.kind == CursorKind.BINARY_OPERATOR:
-#             ops = getBinaryOp(child)
-            
-#             if not ops.spelling == "=":
-#                 continue
-        
-#             operands = list(child.get_children())
-            
-#             if not len(operands) == 2:
-#                 raise OptError(f"Checking Binary operator in line {children.index(child)} should have LHS and RHS")
-            
-#             lhs = operands[0]
-#             rhs = operands[1]
-            
-#             if lhs.kind == CursorKind.UNEXPOSED_EXPR:
-#                 lhs_var = decend(lhs).spelling
-#             elif lhs.kind == CursorKind.DECL_REF_EXPR:
-#                 lhs_var = lhs.spelling
-                 
-#             if lhs_var == dependant:
-#                 rhs_vars = [] 
-#                 findVariables(rhs, rhs_vars)
-#                 support_var_list.extend(rhs_vars)
-#                 for rhs_var in rhs_vars:
-#                     support_var_list.extend(v for v in getSupportingVariablesInsideKernel(node, rhs_var, children.index(child)) if v not in support_var_list)
-#                 break
-#         elif child.kind == CursorKind.DECL_STMT:
-#             lhs_var = decend(child).spelling
-            
-#             if lhs_var == dependant:
-#                 rhs_vars = []
-#                 findVariables(decend(decend(child)), rhs_vars)
-#                 support_var_list.extend(rhs_vars)
-#                 for rhs_var in rhs_vars:
-#                     support_var_list.extend(v for v in getSupportingVariablesInsideKernel(node, rhs_var, children.index(child)) if v not in support_var_list)
-#                 break
-#     return support_var_list
-
-def  ISLDataDependancyCyclesDetection(original_graph: DataflowGraph_v2, prog: Program, app: Application, scheme: Scheme) -> DataflowGraph_v2:
-    pass
+def ISLDataDependencyCyclesDetection(original_graph: DataflowGraph_v2, prog: Program, app: Application, scheme: Scheme) -> DataflowGraph_v2:
     """This Dataflow analysis read an original dataflow graph and detects buffer cycles which is crucial to maintain the halo flow in FPGAs
 
     Args:
@@ -590,87 +485,270 @@ def  ISLDataDependancyCyclesDetection(original_graph: DataflowGraph_v2, prog: Pr
         DataFlowGraph: Output dataflow graph with each ops_par_loop node will have internal swap map adjusted with the data dependency cycles detected to 
         maintain halo flow.
     """
-    # kernel_processor = KernelProcess()
+    kernel_processor = KernelProcess()
     
-    # copy_graph = DataFlowGraph(original_graph.unique_name + "_dat_cycle_detected")
-    # copy_graph.nodes = [node for node in original_graph.nodes]
-    # copy_graph.edges = [edge for edge in original_graph.edges]
-    # copy_graph.global_dats = [global_dat for global_dat in original_graph.global_dats]
-    # copy_graph.global_dat_swap_map = [swap_id for swap_id in original_graph.global_dat_swap_map]
+    copy_graph = original_graph.copy(original_graph.unique_name + "_dat_cycle_detected")
     
+    logging.debug(f"df_graph before ISLDataDepCyclesDet \n {copy_graph}")
     
-    # check_queue = []
-    # cycle_heads = []
-    # for edge in copy_graph.edges:
-    #     if edge.sink_id == DFNodeType.DF_END:
-    #         dep_node = DataDepNode(copy_graph.global_dats[edge.dat_id].ptr, copy_graph.getNode(edge.source_id))
-    #         cycle_heads.append(dep_node)
-    #         check_queue.append(dep_node)
-    # init_dats = []
-    # for dep_node in check_queue:        
-    #     init_dats.append(dep_node.dat_ptr)
+    dependency_graph = rx.PyDiGraph(multigraph=False)
+    check_queue_uids = []
+    cycle_heads_uids = []
+    checked_uids = []
+    
+    for src_id, sink_id, attr in copy_graph.getEdges():
+        if sink_id == copy_graph.getEndNodeIdx() and not attr["isStray"]:
+            dep_node = BasicDataDepNode(attr["dat_str"], copy_graph.getNode(src_id))
+            dep_node_uid = dependency_graph.add_node(dep_node)
+            cycle_heads_uids.append(dep_node_uid)
+            check_queue_uids.append(dep_node_uid)
+    init_dats = []
+    for dep_node_uid in check_queue_uids:        
+        init_dats.append(dependency_graph[dep_node_uid].dat_ptr)#(dep_node.dat_ptr)
         
-    # logging.debug(f"Initial dats being checked for dataDependency: {init_dats}")
+    logging.debug(f"Initial dats being checked for dataDependency: {init_dats}")
             
-    # while check_queue:
-    #     depNode = check_queue.pop(0)
-    #     if depNode.df_node == DFNodeType.DF_START:
-    #         continue
-    #     cur_dat_name = depNode.dat_ptr
-    #     arg_dats = depNode.df_node.loop.get_arg_dat(cur_dat_name, [AccessType.OPS_WRITE, AccessType.OPS_RW])
-    #     if not len(arg_dats) == 1:
-    #         if len(arg_dats) == 0:
-    #             raise OptError(f"Failed to find arg_dat of {depNode.dat_ptr} in loop: {depNode.df_node.loop.kernel} ({depNode.df_node.loop})")
-    #         raise OptError(f"One ops_par_loop can only write a dat once. Critical error in {depNode.df_node.loop}")
-    #     kernel_func = scheme.translateKernel(depNode.df_node.loop, prog, app, 1)
-    #     # logging.debug(f"translated kernel function: {kernel_func}")
-    #     kernel_func = kernel_processor.clean_kernel_func_text(kernel_func)
-    #     # logging.debug(f"kernel function after cleaning: {kernel_func}")
-    #     kernel_body, kernel_args = kernel_processor.get_kernel_body_and_arg_list(kernel_func)
-    #     # logging.debug(f"kernel arguments: {kernel_args}, kernel body: {kernel_body}")
-    #     # logging.debug(f"ops_par_loop arugments: {depNode.df_node.loop.args}")
-    #     relevant_kernel_arg = kernel_args[depNode.df_node.loop.args.index(arg_dats[0])]
-    #     # logging.debug(f"arg_dats: {arg_dats}, cur_dat_name: {cur_dat_name}")
-    #     logging.debug(f"relevant_kernel_parameter to be checked for dependency: {relevant_kernel_arg} for argument {depNode.df_node.loop.dats[arg_dats[0].id].ptr}")
-    #     kernel_entities = prog.findEntities(depNode.df_node.loop.kernel)
-    #     kernel_children = [child for child in kernel_entities[0].ast.get_children()]
-    #     # logging.debug(f"kernel entity: {kernel_entities[0].ast.spelling}, {kernel_entities[0].ast.extent}, {id(kernel_entities[0].ast)}")
-    #     # lines = ASTtoString(kernel_entities[0].ast)
-    #     # logging.debug(f"AST dump of the body of kernel declaration of kernel {depNode.df_node.loop.kernel}")
-    #     # for line in lines:
-    #     #     logging.debug(line)
+    while check_queue_uids:
+        dep_node_uid = check_queue_uids.pop(0)
+        depNode = dependency_graph[dep_node_uid]
+        if depNode.df_node.node_uid == copy_graph.getStartNodeIdx():
+            continue
+        cur_dat_name = depNode.dat_ptr
+        arg_dats = depNode.df_node.loop.get_arg_dat(cur_dat_name, [AccessType.OPS_WRITE, AccessType.OPS_RW])
+        if not len(arg_dats) == 1:
+            if len(arg_dats) == 0:
+                continue
+                # raise OptError(f"Failed to find arg_dat of {depNode.dat_ptr} in loop: {depNode.df_node.loop.kernel} ({depNode.df_node.loop})")
+            raise OptError(f"One ops_par_loop can only write a dat once. Critical error in {depNode.df_node.loop}")
+        kernel_func = scheme.translateKernel(depNode.df_node.loop, prog, app, 1)
+        # logging.debug(f"translated kernel function: {kernel_func}")
+        kernel_func = kernel_processor.clean_kernel_func_text(kernel_func)
+        # logging.debug(f"kernel function after cleaning: {kernel_func}")
+        kernel_body, kernel_args = kernel_processor.get_kernel_body_and_arg_list(kernel_func)
+        # logging.debug(f"kernel arguments: {kernel_args}, kernel body: {kernel_body}")
+        # logging.debug(f"ops_par_loop arugments: {depNode.df_node.loop.args}")
+        relevant_kernel_arg = kernel_args[depNode.df_node.loop.args.index(arg_dats[0])]
+        # logging.debug(f"arg_dats: {arg_dats}, cur_dat_name: {cur_dat_name}")
+        logging.debug(f"relevant_kernel_parameter to be checked for dependency: {relevant_kernel_arg} for argument {depNode.df_node.loop.dats[arg_dats[0].id].ptr}")
+        kernel_entities = prog.findEntities(depNode.df_node.loop.kernel)
+        kernel_children = [child for child in kernel_entities[0].ast.get_children()]
+        # logging.debug(f"kernel entity: {kernel_entities[0].ast.spelling}, {kernel_entities[0].ast.extent}, {id(kernel_entities[0].ast)}")
+        # lines = ASTtoString(kernel_entities[0].ast)
+        # logging.debug(f"AST dump of the body of kernel declaration of kernel {depNode.df_node.loop.kernel}")
+        # for line in lines:
+        #     logging.debug(line)
         
-    #     supporting_vars = getDependencyVariables_v2(kernel_children[-1], relevant_kernel_arg)
+        supporting_vars = getDependencyVariables(kernel_children[-1], relevant_kernel_arg)
             
-    #     logging.debug(f"supporting vars: {supporting_vars}")
-    #     for var in supporting_vars:
-    #         if var not in kernel_args:
-    #             continue
-    #         arg_idx = kernel_args.index(var)
-    #         loop_arg = depNode.df_node.loop.args[arg_idx]
+        logging.debug(f"supporting vars: {supporting_vars}")
+        
+        for var in supporting_vars:
+            if var not in kernel_args:
+                continue
+            arg_idx = kernel_args.index(var)
+            loop_arg = depNode.df_node.loop.args[arg_idx]
             
-    #         if not isinstance(loop_arg, ArgDat):
-    #             continue
+            if not isinstance(loop_arg, ArgDat):
+                continue
             
-    #         dat_name = depNode.df_node.loop.dats[loop_arg.dat_id].ptr
-    #         logging.debug(f"found dat in supporting vars: {dat_name}")
-    #         global_dat_id = findIdx(copy_graph.global_dats, lambda dat: dat.ptr == dat_name)
-    #         logging.debug(f"found dat_id: {global_dat_id}")
-    #         searched_edges = copy_graph.getEdge(depNode.df_node.node_id, global_dat_id, 1)
-    #         logging.debug(f"found searched_edges: {searched_edges}")
-    #         if not len(searched_edges) == 1:
-    #             logging.warning(f"Couldn't find edge connecting to sink node {depNode.df_node.loop.kernel} with dat: {dat_name}({global_dat_id}), is there any nodes: {copy_graph.getEdge(depNode.df_node.node_id, global_dat_id)}")
-    #             continue
-    #         if searched_edges[0].source_id == DFNodeType.DF_START:
-    #             newDepNode = DataDepNode(copy_graph.global_dats[global_dat_id].ptr, DFNodeType.DF_START)
-    #         else:
-    #             newDepNode = DataDepNode(copy_graph.global_dats[global_dat_id].ptr, copy_graph.getNode(searched_edges[0].source_id))
-    #         depNode.add_child(newDepNode)
-    #         check_queue.append(newDepNode)
-    #         # dat_id = findIdx(copy_graph.global_dats, lambda dat: dat.ptr == dat_name)
-    #         # # for 
-    #         # # node = DataDepNode(dat_id, )
+            dat_name = depNode.df_node.loop.dats[loop_arg.dat_id].ptr
+            logging.debug(f"found dat in supporting vars: {dat_name}")
+            global_dat_id = findIdx(copy_graph.getGlobalDats(), lambda dat: dat.ptr == dat_name)
+            logging.debug(f"found dat_id: {global_dat_id}")
+            searched_edges = copy_graph.getInEdgesFromNode(depNode.df_node.node_uid, dat_name)   #getEdge(depNode.df_node.node_id, global_dat_id, 1)
+            logging.debug(f"found searched_edges: {searched_edges}")
+            if not len(searched_edges) == 1:
+                logging.warning(f"Couldn't find edge connecting to sink node {depNode.df_node.loop.kernel} with dat: {dat_name}({global_dat_id})")
+                continue
+            # if searched_edges[0][0] == copy_graph.getStartNodeIdx():
+            #     newDepNode = BasicDataDepNode(dat_name, copy_graph.getNode(copy_graph.getStartNodeIdx()))
+            #     newDepNode_uid = dependency_graph.add_node(newDepNode)
+            # else:
+            src_node = copy_graph.getNode(searched_edges[0][0])
+            provider_dep_node_id = findIdx(dependency_graph.nodes(), lambda dep_node: dep_node.df_node.node_uid == src_node.node_uid and dep_node.dat_ptr == dat_name)
+            
+            if provider_dep_node_id is None:
+                provider_dep_node = BasicDataDepNode(dat_name, src_node)
+                provider_dep_node_id = dependency_graph.add_node(provider_dep_node)
+            
+            if (not provider_dep_node_id in checked_uids) and (not provider_dep_node_id in check_queue_uids):
+                check_queue_uids.append(provider_dep_node_id)
+                
+            dependency_graph.add_edge(provider_dep_node_id, dep_node_uid, {"weight" : 1, "src_dat_name" : provider_dep_node.dat_ptr, "sink_dat_name" : dep_node.dat_ptr})
+            
+    def node_attr(node):
+        if node.df_node.node_uid == copy_graph.getStartNodeIdx():
+            node_name_suffix = "start"
+        elif node.df_node.node_uid == copy_graph.getEndNodeIdx():
+            node_name_suffix = "end"
+        else:
+            node_name_suffix = node.df_node.loop.kernel
+            
+        return {"label" : f"{node.dat_ptr}:{node.df_node.node_uid}_{node_name_suffix}"}
+    
+    print_rx_graph(f"{copy_graph.unique_name}", dependency_graph, node_attr=node_attr)
+    
+    # Phase 2: Explore shortest paths.
+    # The cycle heads, the dats writing to end should have a swap pair dat (sometimes it can be same dat) that read from start
+    # if the swap pair dat is read from start it is an error in the ISL definition from user side.
+    
+    logging.debug(f"head dep nodes: {[str(dependency_graph[node_id]) for node_id in cycle_heads_uids]}")
+    
+    for head_dep_node_id in cycle_heads_uids:
+        head_dep_node = dependency_graph[head_dep_node_id]
+        swap_dep_node_id  = findIdx(dependency_graph.nodes(), lambda dep_node: dep_node.dat_ptr == copy_graph.getGlobalDatsSwapMap()[head_dep_node.dat_ptr] \
+            and dep_node.df_node.node_uid == copy_graph.getStartNodeIdx())
+        
+        if swap_dep_node_id is None:
+            raise OptError(f"Error in the generated dependency graph: the writing dat {head_dep_node.dat_ptr}," \
+                f"swap pair dat {copy_graph.getGlobalDatsSwapMap()[head_dep_node.dat_ptr]} doesn't have a read from start. Fix the ISL region definition")
+        swap_dep_node = dependency_graph[swap_dep_node_id]
+        
+        def dijkstra_distance_function(edge_attr):
+            # distance = jaro_weight_distance(head_dep_node.dat_ptr, edge_attr["sink_dat_name"]) + jaro_weight_distance(edge_attr["src_dat_name"], edge_attr["sink_dat_name"])
+            # logging.debug(f"jaro weight call: {edge_attr}, distance: {jaro_distance}")
+            distance = edge_attr["weight"]
+            return distance
+    
+        all_shortest_paths = rx.digraph_all_shortest_paths(dependency_graph, swap_dep_node_id, head_dep_node_id)
+        logging.debug(f"{all_shortest_paths}")
+        
+        plausible_shortest_paths = find_plausible_shortest_paths(dependency_graph, swap_dep_node_id, head_dep_node_id, all_shortest_paths)
+        
+        if not plausible_shortest_paths:
+            raise OptError(f"{function_name()}: Cannot find any plausible path from {head_dep_node.dat_ptr} to {swap_dep_node.dat_ptr}")
+        
+        
+        # logging.debug(f"shortest paths from {swap_dep_node}|{swap_dep_node_id} to {head_dep_node}|{head_dep_node_id}: {[str(dependency_graph[node_id]) for node_id in all_shortest_paths[head_dep_node_id]]}")
+        
+        # removing path internal connection and update dataflow graph internal swap map. This will allow each source to sink path in ISL region is disjoint
+        removeInternalDependencyPathEdgesAndUpdateSwap(copy_graph, dependency_graph,  head_dep_node_id, swap_dep_node_id, plausible_shortest_paths[0][1])
+        # print_rx_graph(f"{copy_graph.unique_name}_{head_dep_node_id}", dependency_graph, node_attr=node_attr)
+        
+        #updating internal swap map
+    logging.debug(f"df_graph after ISLDataDepCyclesDet \n {copy_graph}")
+    copy_graph.print("after_buffer_DataDepCycleDet", make_dats_node=True)
+    return copy_graph
     # for head in cycle_heads:
     #     logging.debug(f"dependency train: {head}")
     #     head.print_tree()
-    #     # dependancy_kernel_arguments = findDependancyArguments(kernel_children[-1], relevent_kernel_args[0])
+    #     dependancy_kernel_arguments = findDependancyArguments(kernel_children[-1], relevent_kernel_args[0])
+
+def find_plausible_shortest_paths(dep_graph: rx.PyDiGraph, source_id: int, sink_id: int, paths: List[List[int]]) -> List[List[Any]]:
+    
+    plausible_paths = []
+    
+    for path in paths:     
+        updated_kernel_args_map = {} # To store kernel arg_id with updating node according to current path
+        
+        prev_node_id = path[0]
+        valid_path = True
+        weighted_path_length = 0
+        
+        for i in range(1,len(path)):
+            curr_node_id = path[i]
+            curr_node = dep_graph[curr_node_id]
+            prev_node = dep_graph[prev_node_id]
+            curr_dat_name = curr_node.dat_ptr
+            prev_dat_name = prev_node.dat_ptr
+            curr_kernel_name = curr_node.df_node.loop.kernel
+            
+            '''
+            Finding the reading ArgDat of current_kernel ops_par_loop args. 
+            If previously stored arg_id is not same as this then this path can be flagged invalid.
+            '''
+            read_arg_dats = curr_node.df_node.loop.get_arg_dat(prev_dat_name, [AccessType.OPS_READ, AccessType.OPS_RW]) 
+            
+            if len(read_arg_dats) == 0:
+                raise OptError(f"{function_name()} - Unable to find READ or RW arg_dat in {curr_node.df_node.loop.kernel} of dat: {prev_dat_name}")
+            if not len(read_arg_dats) == 1:
+                raise OptError(f"{function_name()} -  READ or RW arg_dats in {curr_node.df_node.loop.kernel} of dat: {prev_dat_name} has to be exactly one")
+
+            write_arg_dats = curr_node.df_node.loop.get_arg_dat(curr_dat_name, [AccessType.OPS_WRITE, AccessType.OPS_RW])
+            
+            if len(write_arg_dats) == 0:
+                raise OptError(f"{function_name()} - Unable to find WRITE or RW arg_dat in {curr_node.df_node.loop.kernel} of dat: {curr_dat_name}")
+            if not len(write_arg_dats) == 1:
+                raise OptError(f"{function_name()} -  WRITE or RW arg_dats in {curr_node.df_node.loop.kernel} of dat: {curr_dat_name} has to be exactly one")
+            
+            if curr_kernel_name in updated_kernel_args_map.keys():
+                idx = findIdx(updated_kernel_args_map[curr_kernel_name], lambda arg_pairs: arg_pairs[1] == write_arg_dats[0].id)
+                
+                if not idx is None:
+                    #If already updated, then check the update dep_nodes are with the same source argument id as it was used before
+                    prev_updated_args_pair = updated_kernel_args_map[curr_kernel_name][idx]
+                    if not prev_updated_args_pair[0] == read_arg_dats[0]:
+                        valid_path = False
+                else:
+                    updated_kernel_args_map[curr_kernel_name].append([read_arg_dats[0].id, write_arg_dats[0].id])
+            else:
+                updated_kernel_args_map[curr_kernel_name] = [[read_arg_dats[0].id, write_arg_dats[0].id]]
+            
+            weighted_path_length += jaro_weight_distance(dep_graph[source_id].dat_ptr, curr_dat_name) + jaro_weight_distance(prev_dat_name, curr_dat_name)
+
+        if valid_path:
+            plausible_paths.append([weighted_path_length, path])
+    
+    plausible_paths.sort(key=lambda val: val[0])
+          
+    logging.debug(f"Plausible paths for {dep_graph[source_id]} -> {dep_graph[sink_id]}")
+    for i in range(len(plausible_paths)):
+        if not  i == len(plausible_paths) - 1:
+            logging.debug(f"  |- weight: { plausible_paths[i][0]}, path: {[str(dep_graph[k]) for k in plausible_paths[i][1]]}")
+        else:
+            logging.debug(f"  `- weight: { plausible_paths[i][0]}, path: {[str(dep_graph[k]) for k in plausible_paths[i][1]]}")
+
+    return plausible_paths
+
+def removeInternalDependencyPathEdgesAndUpdateSwap(df_graph: DataflowGraph_v2, dep_graph: rx.PyDiGraph, src_dep_node_id: int, sink_dep_node_id: int, path: List[int]) -> None:
+    """_summary_
+
+    Args:
+        df_graph (DataflowGraph_v2): _description_
+        dep_graph (rx.PyDiGraph): _description_
+        src_dep_node_id (int): _description_
+        sink_dep_node_id (int): _description_
+        path_map (rx.PathMapping): _description_
+        updated_kernel_args_map (_type_, optional): Map to hold the previous updating arg_id, dep_node pair for a particular kernel argument. 
+            Defaults to map[str, List[Any]].
+
+    """    
+    prev_node_id = path[0]
+    logging.debug(f"first dep node: {dep_graph[prev_node_id]}")
+    
+    for i in range(1,len(path)):
+        curr_node_id = path[i]
+        
+        if not dep_graph.has_edge(prev_node_id, curr_node_id):
+            raise OptError(f"The edge in-between node: {dep_graph[prev_node_id]}, node: {dep_graph[curr_node_id]}")
+
+        # check updated kernel arg map whether the sink dat arg was updated in the context of the kernel
+        already_updated = False
+
+        curr_node = dep_graph[curr_node_id]
+        prev_node = dep_graph[prev_node_id]
+        curr_dat_name = curr_node.dat_ptr
+
+        curr_kernel_name = curr_node.df_node.loop.kernel
+        
+        arg_dats = curr_node.df_node.loop.get_arg_dat(curr_dat_name, [AccessType.OPS_WRITE, AccessType.OPS_RW])
+        
+        if len(arg_dats) == 0:
+            raise OptError(f"{function_name()} - Unable to find WRITE or RW arg_dat in {curr_node.df_node.loop.kernel} of dat: {curr_dat_name}")
+        if not len(arg_dats) == 1:
+            raise OptError(f"{function_name()} -  WRITE or RW arg_dats in {curr_node.df_node.loop.kernel} of dat: {curr_dat_name} has to be exactly one")
+        
+        
+        dep_graph.remove_edge(prev_node_id, curr_node_id)
+        
+        if not curr_node_id == sink_dep_node_id:
+            dep_graph[curr_node_id].is_assigned = True
+            
+            for in_n, out_n, attr in dep_graph.in_edges(curr_node_id):
+                dep_graph.remove_edge(in_n, out_n)
+        
+            #updating internal swap map
+            curr_node.df_node.internal_dat_swap_map[curr_dat_name] = prev_node.dat_ptr
+            
+        prev_node_id = curr_node_id
+    

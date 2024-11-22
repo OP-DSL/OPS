@@ -219,6 +219,7 @@ class CppHLS(Scheme):
                 logging.debug(f"corrected access indice point: {access_indices}")
                 
             except Exception as e:
+                logging.error(f"Unable to evaluate accessor indices: {access_raw_indices.group(0)}")
                 raise ParseError(f"Transaltor filed with error: {str(e)}")
                 
             if isReplaceWithReg:
@@ -252,12 +253,16 @@ class CppHLS(Scheme):
         for iterLoop in program.outerloops:
             iterLoop.opt_df_graph = optimizer.ISLCopyDetection(iterLoop.df_graph, program, app, self).copy()
             iterLoop.opt_df_graph = optimizer.ISLReadBufferPropagation(iterLoop.opt_df_graph, program, app, self)
+            # iterLoop.opt_df_graph = optimizer.ISLDataDependencyCyclesDetection(iterLoop.opt_df_graph, program, app, self)
+
             iterLoop.joint_args.clear()
             iterLoop.set_opt_graph()
             iterLoop.gen_global_dat_args() 
             iterLoop.gen_PE_args()
             iterLoop.gen_global_const_args()
+            # iterLoop.update_loop_node_args()
             
+            logging.debug(f"iterloop after optimization : {iterLoop}")
     def genIterLoopDevice(
         self,
         env: Environment,
@@ -274,7 +279,7 @@ class CppHLS(Scheme):
         
         kernel_processor = KernelProcess()
         consts = []
-        consts_map = []
+        consts_map = {}
         for df_node in iterLoop.get_active_df_graph().getAllLoopNodes():
                 kernel_idx = df_node.node_uid
                 loop = df_node.loop
@@ -283,7 +288,7 @@ class CppHLS(Scheme):
                 kernel_body, kernel_args = kernel_processor.get_kernel_body_and_arg_list(kernel_func)
                 kernel_body = self.hls_replace_accessors(kernel_body, kernel_args, loop, program)
                 kernel_consts = self.find_const_in_kernel(kernel_body, program.consts)
-                consts_map.append(kernel_consts)
+                consts_map[kernel_idx] = kernel_consts
                 consts.extend(x for x in kernel_consts if x not in consts)
         
         return [(iterloop_datamover_inc_template.render(ilh=iterLoop, ndim=program.ndim), self.iterloop_datamover_inc_extension),
@@ -352,6 +357,8 @@ class CppHLS(Scheme):
             datMap = self.gen_local_dependancy_map(node)
         else:
             datMap = []
+            
+        logging.debug(f"kernel {loop.kernel} datmap: {datMap}")
         return (
             [(loop_PE_template.render(
                  lh=loop,

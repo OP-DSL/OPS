@@ -419,11 +419,11 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
             
     translatedIterUIDs = []
     translatedKernelNames = []
-    for i, (iterloop, program) in enumerate(app.uniqueOuterLoops()):
+    for j, (iterloop, program) in enumerate(app.uniqueOuterLoops()):
         if iterloop.unique_id in translatedIterUIDs:
             continue
         
-        for i, node in enumerate(filter(lambda node: isinstance(node, DataflowNode), iterloop.opt_df_graph.getAllLoopNodes())):
+        for i, node in enumerate(iterloop.get_active_df_graph().getAllLoopNodes()):
         # for i, loop in enumerate(filter(lambda x: isinstance(x, Loop), iterloop.itrloop_args)):
             loop = node.loop
             # Generate loop device source
@@ -460,11 +460,11 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
         path = None
         if scheme.lang.kernel_dir:
             Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
-            path = Path(args.out, scheme.target.name, "device", "include", f"datamover_outerloop_{i}.{iter_datamov_inc_extension}")                
+            path = Path(args.out, scheme.target.name, "device", "include", f"datamover_outerloop_{j}.{iter_datamov_inc_extension}")                
         else:
-            path = Path(args.out,f"outerloop_{i}_{scheme.target.name}_datamover.{iter_datamov_inc_extension}")
+            path = Path(args.out,f"outerloop_{j}_{scheme.target.name}_datamover.{iter_datamov_inc_extension}")
 
-        logging.debug(f"writing datamover include for: outerloop_{i} to {path}")
+        logging.debug(f"writing datamover include for: outerloop_{j} to {path}")
         
         # Write the gernerated datamover include file
         with open(path, "w") as file:
@@ -472,17 +472,17 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
             file.write(iter_datamov_inc_source)
 
             if args.verbose:
-                print(f"Generated loop device datamover include {i} of {len(app.uniqueOuterLoops())}: {path}")
+                print(f"Generated loop device datamover include {j} of {len(app.uniqueOuterLoops())}: {path}")
  
         ## iterloop datamover src
         path = None
         if scheme.lang.kernel_dir:
             Path(args.out, scheme.target.name, "device", "src").mkdir(parents=True, exist_ok=True)
-            path = Path(args.out, scheme.target.name, "device", "src", f"datamover_outerloop_{i}.{iter_datamov_src_extension}")                
+            path = Path(args.out, scheme.target.name, "device", "src", f"datamover_outerloop_{j}.{iter_datamov_src_extension}")                
         else:
-            path = Path(args.out,f"outerloop_{i}_{scheme.target.name}_datamover.{iter_datamov_src_extension}")
+            path = Path(args.out,f"outerloop_{j}_{scheme.target.name}_datamover.{iter_datamov_src_extension}")
 
-        logging.debug(f"writing datamover src for: outerloop_{i} to {path}")
+        logging.debug(f"writing datamover src for: outerloop_{j} to {path}")
         
         # Write the gernerated datamover include file
         with open(path, "w") as file:
@@ -496,11 +496,11 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
         path = None
         if scheme.lang.kernel_dir:
             Path(args.out, scheme.target.name, "device", "include").mkdir(parents=True, exist_ok=True)
-            path = Path(args.out, scheme.target.name, "device", "include", f"kernel_outerloop_{i}.{iter_kernel_inc_extension}")                
+            path = Path(args.out, scheme.target.name, "device", "include", f"kernel_outerloop_{j}.{iter_kernel_inc_extension}")                
         else:
-            path = Path(args.out,f"outerloop_{i}_{scheme.target.name}_kernel.{iter_kernel_inc_extension}")
+            path = Path(args.out,f"outerloop_{j}_{scheme.target.name}_kernel.{iter_kernel_inc_extension}")
 
-        logging.debug(f"writing kernel: outerloop_{i} include to {path}")
+        logging.debug(f"writing kernel: outerloop_{j} include to {path}")
         
         # Write the gernerated source file
         with open(path, "w") as file:
@@ -508,17 +508,17 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
             file.write(iter_kernel_inc_source)
 
             if args.verbose:
-                print(f"Generated loop device kernel include {i} of {len(app.uniqueLoops())}: {path}")
+                print(f"Generated loop device kernel include {j} of {len(app.uniqueLoops())}: {path}")
 
         ## iterloop kernel src
         path = None
         if scheme.lang.kernel_dir:
             Path(args.out, scheme.target.name, "device", "src").mkdir(parents=True, exist_ok=True)
-            path = Path(args.out, scheme.target.name, "device", "src", f"kernel_outerloop_{i}.{iter_kernel_src_extension}")                
+            path = Path(args.out, scheme.target.name, "device", "src", f"kernel_outerloop_{j}.{iter_kernel_src_extension}")                
         else:
-            path = Path(args.out,f"outerloop_{i}_{scheme.target.name}_kernel.{iter_kernel_src_extension}")
+            path = Path(args.out,f"outerloop_{j}_{scheme.target.name}_kernel.{iter_kernel_src_extension}")
 
-        logging.debug(f"writing kernel: outerloop_{i} src to {path}")
+        logging.debug(f"writing kernel: outerloop_{j} src to {path}")
         
         # Write the gernerated source file
         with open(path, "w") as file:
@@ -526,7 +526,7 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
             file.write(iter_kernel_src_source)
 
             if args.verbose:
-                print(f"Generated loop device kernel src {i} of {len(app.uniqueLoops())}: {path}")
+                print(f"Generated loop device kernel src {j} of {len(app.uniqueLoops())}: {path}")
     
 
 

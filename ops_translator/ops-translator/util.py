@@ -12,6 +12,8 @@ from argparse import ArgumentTypeError
 import json
 import logging
 import sys
+from rustworkx import PyDiGraph
+from rustworkx.visualization import graphviz_draw 
 
 #Generic type
 T = TypeVar("T")
@@ -97,7 +99,26 @@ def sycl_set_flat_parallel(has_reduction: bool):
         ops_cpu = False
     return flat_parallel, ops_cpu
 
-
+def str_add_prefix(string_buffer: str, prefix: str = "")-> str:
+    lines = string_buffer.splitlines()
+    out_str = ""
+    for i in range(len(lines)):
+        out_str += prefix + lines[i] + "\n"
+    
+    return out_str
+def print_rx_graph(filename: str, rx_graph: PyDiGraph, node_attr: Callable = None, edge_attr: Callable = None, format: str = "png") -> None:
+        def def_node_attr(node):
+            return {}
+            
+        def def_edge_attr(edge_det):
+            return {}
+        
+        if not node_attr:
+            node_attr = def_node_attr
+        if not edge_attr:
+            edge_attr = def_edge_attr
+            
+        graphviz_draw(rx_graph, node_attr_fn=node_attr, edge_attr_fn=edge_attr, filename=f"{filename}.{format}", image_type=f"{format}")
 class Findable(ABC):
     """
     A parent abstact class for findable support
