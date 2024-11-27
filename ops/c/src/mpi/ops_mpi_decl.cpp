@@ -210,7 +210,8 @@ void ops_dat_deep_copy(ops_dat target, ops_dat source) {
       ops_device_free(source->block->instance, (void**)&(target->data_d));
       target->data_d = nullptr;
     }
-    ops_device_malloc(source->block->instance, (void**)&(target->data_d), target->mem);
+    ops_device_malloc(source->block->instance, (void **)&(target->data_d), target->mem);
+    ops_device_memset(source->block->instance, (void **)&(target->data_d), 0, target->mem);
   }
 
   ops_kernel_descriptor *desc = ops_dat_deep_copy_mpi_core(target, source);

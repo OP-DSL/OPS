@@ -57,15 +57,20 @@ endif
 
 ifeq ($(AMD_ARCH),Vega10)
 	OMPOFFLOADFLAGS += -fopenmp=libomp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx900
+	HIP_ARCH=gfx900
 else
 ifeq ($(AMD_ARCH),Vega20)
 	OMPOFFLOADFLAGS += -fopenmp=libomp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx906
+	HIP_ARCH=gfx906
 else
 ifeq ($(AMD_ARCH),MI100)
 	OMPOFFLOADFLAGS += -fopenmp=libomp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx908
+	HIP_ARCH=gfx908
 else
 ifeq ($(AMD_ARCH),MI200)
+#valid for ARCHER2 AMD Instinct MI210 and LUMI AMD MI250X GPU
 	OMPOFFLOADFLAGS += -fopenmp=libomp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx90a
+	HIP_ARCH=gfx90a
 endif
 endif
 endif
@@ -73,9 +78,10 @@ endif
 
 SYCLCXX = clang++
 SYCLMPICXX = mpicxx
-HIPCC=hipcc
-ifdef HIP_ARCH
-OMPOFFLOADFLAGS=-target x86_64-pc-linux-gnu -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=$(HIP_ARCH)
+
 SYCL_FLAGS = -fsycl -fsycl-targets=amdgcn-amd-amdhsa -Xsycl-target-backend --offload-arch=$(HIP_ARCH) -munsafe-fp-atomics
+
+HIPCC=hipcc
+HIPMPICPP=hipcc
+
 HIPFLAGS=--offload-arch=$(HIP_ARCH)
-endif
