@@ -104,6 +104,11 @@ int main(int argc, const char** argv)
       ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_WRITE),
       ops_arg_idx());
 
+//  ops_par_loop(set_nan, "set nan", block, 2, full_range,
+//      ops_arg_dat(d_A, 1, S2D_00, "double", OPS_WRITE),
+//      ops_arg_idx());
+
+//  ops_NaNcheck(d_A);
 
   while ( error > tol && iter < iter_max )
   {

@@ -193,7 +193,8 @@ void ops_NaNcheck(ops_dat dat) {
     ops_get_data(dat);
     char buffer[30];
     sprintf(buffer, "On rank %d \t", ops_my_global_rank);
-    ops_NaNcheck_core(dat, buffer);
+    sub_dat *sd = OPS_sub_dat_list[dat->index];
+    ops_NaNcheck_core(dat, buffer, sd->decomp_disp, sd->d_im);
   }
 }
 

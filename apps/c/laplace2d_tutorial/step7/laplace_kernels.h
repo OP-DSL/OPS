@@ -1,5 +1,14 @@
 //Kernels for Laplace demo app
 //
+
+void set_nan(ACC<double> &A, const int *idx) {
+//#include <limits>
+  if(idx[0] == 2041 && idx[1] == 1023) {
+    A(0,0) = 0.0 / 0.0;
+//    A(0,0) = std::numeric_limits<double>::quiet_NaN();
+  }
+}
+
 void set_zero(ACC<double> &A) {
   A(0,0) = 0.0;
 }

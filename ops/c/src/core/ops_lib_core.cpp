@@ -1648,8 +1648,9 @@ int ops_stencil_check_5d(int arg_idx, int idx0, int idx1, int idx2, int idx3, in
   return idx0 + dim0 * (idx1) + dim0 * dim1 * (idx2) + dim0 * dim1 * dim2 * idx3 + dim0 * dim1 * dim2 * dim3 * idx4;
 }
 
-void ops_NaNcheck_core(ops_dat dat, char *buffer) {
+void ops_NaNcheck_core(ops_dat dat, char *buffer, int *disp, int *d_m) {
 
+ int indices[OPS_MAX_DIM] = {0};
   size_t prod[OPS_MAX_DIM+1];
   prod[0] = dat->size[0];
   for (int d = 1; d < OPS_MAX_DIM; d++) {
@@ -1660,36 +1661,42 @@ void ops_NaNcheck_core(ops_dat dat, char *buffer) {
 
 #if OPS_MAX_DIM > 5
   for (int n = 0; n < dat->size[5]; n++) {
+    indices[5] = n + disp[5] + d_m[5];
 #else
   {
   int n = 0;
 #endif
   #if OPS_MAX_DIM > 4
     for (int m = 0; m < dat->size[4]; m++) {
+      indices[4] = m + disp[4] + d_m[4];
   #else
     {
     int m = 0;
   #endif
     #if OPS_MAX_DIM > 3
       for (int l = 0; l < dat->size[3]; l++) {
+        indices[3] = l + disp[3] + d_m[3];
     #else
       {
       int l = 0;
     #endif
       #if OPS_MAX_DIM > 2
         for (int k = 0; k < dat->size[2]; k++) {
+          indices[2] = k + disp[2] + d_m[2];
       #else
         {
         int k = 0;
       #endif
         #if OPS_MAX_DIM > 1
           for (int j = 0; j < dat->size[1]; j++) {
+            indices[1] = j + disp[1] + d_m[1];
         #else
           {
           int j = 0;
         #endif
           #if OPS_MAX_DIM > 0
             for (int i = 0; i < dat->size[0]; i++) {
+              indices[0] = i + disp[0] + d_m[0];
           #else
             {
             int i = 0;
@@ -1707,7 +1714,9 @@ void ops_NaNcheck_core(ops_dat dat, char *buffer) {
                 {
                   if (  std::isnan(((double *)dat->data)[offset])  )
                   {
-                    printf("%sError: NaN detected at element %zu\n", buffer, offset);
+                    printf("%sError: NaN detected at element dim:%d,index:(%d", buffer, d, indices[0]);
+                    for(int dim = 1; dim < dat->block->dims; dim++) printf(",%d",indices[dim]);
+                    printf(")\n");
                     exit(2);
                   }
                 }
@@ -1718,7 +1727,9 @@ void ops_NaNcheck_core(ops_dat dat, char *buffer) {
                 {
                   if (  std::isnan(((float *)dat->data)[offset])  )
                   {
-                    printf("%sError: NaN detected at element %zu\n", buffer, offset);
+                    printf("%sError: NaN detected at element dim:%d,index:(%d", buffer, d, indices[0]);
+                    for(int dim = 1; dim < dat->block->dims; dim++) printf(",%d",indices[dim]);
+                    printf(")\n");
                     exit(2);
                   }
                 }
