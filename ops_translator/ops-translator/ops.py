@@ -879,25 +879,30 @@ class DataflowGraph_v2:
             curr_dat_id_map = {}
             curr_dat_id_count = {}
             first_dat_id_map = {}
-            for src_id, sink_id, attr in edges:
-                if not attr["dat_str"] in curr_dat_id_count.keys():
-                    curr_dat_id_count[attr["dat_str"]] = 0
-                dat_node_id = copy_graph.add_node(DatDataflowNode(attr["dat_str"]))
-                if curr_dat_id_count[attr["dat_str"]] == 0:
-                    first_dat_id_map[attr["dat_str"]] = dat_node_id
-                curr_dat_id_count[attr["dat_str"]] += 1
-                curr_dat_id_map[attr["dat_str"]] = dat_node_id
-               
-                dat_node_id = curr_dat_id_map[attr["dat_str"]]
-                copy_graph.add_edge(src_id, dat_node_id, {"weight" : 1, "dat_connect" : True, "swap_connect": False, "dat_str": attr["dat_str"], "stray": False})
-                copy_graph.add_edge(dat_node_id, sink_id, {"weight" : 1, "dat_connect" : True, "swap_connect": False, "dat_str": attr["dat_str"], "stray": attr["isStray"]})
-            
+            #first sweap by going from nodes in order
+            for node in copy_graph.nodes():
+                for src_id, sink_id, attr in self.getOutEdgesFromNode(node.node_uid):
+                    if not attr["dat_str"] in curr_dat_id_count.keys():
+                        curr_dat_id_count[attr["dat_str"]] = 0
+                    dat_node_id = copy_graph.add_node(DatDataflowNode(attr["dat_str"]))
+                    if curr_dat_id_count[attr["dat_str"]] == 0:
+                        first_dat_id_map[attr["dat_str"]] = dat_node_id
+                    curr_dat_id_count[attr["dat_str"]] += 1
+                    curr_dat_id_map[attr["dat_str"]] = dat_node_id
+                
+                    dat_node_id = curr_dat_id_map[attr["dat_str"]]
+                    copy_graph.add_edge(src_id, dat_node_id, {"weight" : 1, "dat_connect" : True, "swap_connect": False, "dat_str": attr["dat_str"], "stray": False})
+                    copy_graph.add_edge(dat_node_id, sink_id, {"weight" : 1, "dat_connect" : True, "swap_connect": False, "dat_str": attr["dat_str"], "stray": attr["isStray"]})
+                
+            #checking only END node
+            for src_id, sink_id, attr in self.getInEdgesFromNode(self.getEndNodeIdx()):
                 if sink_id == self.getEndNodeIdx() and not self.__global_dat_swap_map[attr["dat_str"]] == attr["dat_str"]:
                     if not self.__global_dat_swap_map[attr["dat_str"]] in curr_dat_id_count.keys():
                         curr_dat_id_count[self.__global_dat_swap_map[attr["dat_str"]]] = 0
-                        dat_node_id = copy_graph.add_node(DatDataflowNode(self.__global_dat_swap_map[attr["dat_str"]]))
-                        curr_dat_id_map[self.__global_dat_swap_map[attr["dat_str"]]] = dat_node_id
-                    sink_dat_node_id = curr_dat_id_map[self.__global_dat_swap_map[attr["dat_str"]]]
+                        swap_dat_node_id = copy_graph.add_node(DatDataflowNode(self.__global_dat_swap_map[attr["dat_str"]]))
+                        first_dat_id_map[self.__global_dat_swap_map[attr["dat_str"]]] = swap_dat_node_id
+                        curr_dat_id_map[self.__global_dat_swap_map[attr["dat_str"]]] = swap_dat_node_id
+                    sink_dat_node_id = first_dat_id_map[self.__global_dat_swap_map[attr["dat_str"]]]
                     copy_graph.add_edge(first_dat_id_map[attr["dat_str"]], sink_dat_node_id, {"weight" : 1, "dat_connect" : True, "swap_connect": True, "dat_str": self.__global_dat_swap_map[attr["dat_str"]]})
             
             graphviz_draw(copy_graph, node_attr_fn=node_attr, edge_attr_fn=edge_attr, filename=f"{filename}.{format}", image_type=f"{format}")
