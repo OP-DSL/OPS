@@ -1174,13 +1174,14 @@ class IterLoop:
         for source_id, sink_id, attr in self.get_active_df_graph().getEdges():           
             if i == source_id:
                 if sink_id == self.get_active_df_graph().getEndNodeIdx():
-                    #print("sink_id is end_node ")
-                    search_list = filter(lambda x: (x.access_type == AccessType.OPS_WRITE or x.access_type == AccessType.OPS_RW) and self.dats[x.dat_id][0].ptr == attr["dat_str"], self.joint_args)
-                    # #print(f"search list: {[i for i in search_list]}")
+                    # search_list = filter(lambda x: (x.access_type == AccessType.OPS_WRITE or x.access_type == AccessType.OPS_RW) and self.dats[x.dat_id][0].ptr == attr["dat_str"], self.joint_args)
+                    idx = findIdx(self.joint_args, lambda x: (x.access_type == AccessType.OPS_WRITE or x.access_type == AccessType.OPS_RW) and self.dats[x.dat_id][0].ptr == attr["dat_str"])
+                    if idx is None:
+                        OpsError(f"{function_name()} Error finding joint_arg writing {attr['dat_str']}")
                     if attr['src_arg_id'] in arg_map.keys():
-                        arg_map[attr['src_arg_id']].append(f"arg{next(search_list).id}_hls_stream_out")
+                        arg_map[attr['src_arg_id']].append(f"arg{self.joint_args[idx].id}_hls_stream_out")
                     else:
-                        arg_map[attr['src_arg_id']] = [f"arg{next(search_list).id}_hls_stream_out"]
+                        arg_map[attr['src_arg_id']] = [f"arg{self.joint_args[idx].id}_hls_stream_out"]
                 else:
                     connector_name = f"node{source_id}_{attr['src_arg_id']}_to_node{sink_id}_{attr['sink_arg_id']}"
                     if connector_name not in self.interconnector_names:

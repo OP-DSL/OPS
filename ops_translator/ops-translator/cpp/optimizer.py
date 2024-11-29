@@ -211,6 +211,9 @@ def ISLReadBufferPropagation(original_graph: DataflowGraph_v2, prog: Program, ap
                 is_read_only_dat = False
                 break
         
+        if not copy_graph.getGlobalDatsSwapMap()[attr["dat_str"]] == attr["dat_str"]:
+            is_read_only_dat = False
+            
         if is_read_only_dat:
             read_only_dats.append(dat)
     
