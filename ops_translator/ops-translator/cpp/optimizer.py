@@ -611,7 +611,15 @@ def ISLDataDependencyCyclesDetection(original_graph: DataflowGraph_v2, prog: Pro
             return distance
     
         all_shortest_paths = rx.digraph_all_shortest_paths(dependency_graph, swap_dep_node_id, head_dep_node_id)
-        logging.debug(f"{all_shortest_paths}")
+        all_shortest_paths_by_dats = ""
+        for path in all_shortest_paths:
+            all_shortest_paths_by_dats += "["
+            for i, uid in enumerate(path):
+                all_shortest_paths_by_dats += dependency_graph[uid].dat_ptr
+                if i < len(path) - 1:
+                    all_shortest_paths_by_dats += ","
+            all_shortest_paths_by_dats += "]\n"
+        logging.debug(f"all shortest paths: {all_shortest_paths_by_dats}")
         
         plausible_shortest_paths = find_plausible_shortest_paths(dependency_graph, swap_dep_node_id, head_dep_node_id, all_shortest_paths)
         
@@ -685,7 +693,8 @@ def find_plausible_shortest_paths(dep_graph: rx.PyDiGraph, source_id: int, sink_
                 updated_kernel_args_map[curr_kernel_name] = [[read_arg_dats[0].id, write_arg_dats[0].id]]
             
             weighted_path_length += jaro_weight_distance(dep_graph[source_id].dat_ptr, curr_dat_name) + jaro_weight_distance(prev_dat_name, curr_dat_name)
-
+            prev_node_id = curr_node_id
+            
         if valid_path:
             plausible_paths.append([weighted_path_length, path])
     
