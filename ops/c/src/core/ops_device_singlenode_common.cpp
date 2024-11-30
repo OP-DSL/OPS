@@ -71,17 +71,23 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     dat->user_managed = 0;
     dat->mem = bytes;
     dat->data_d = NULL;
+    int init_deviceptr = 1;
     if (data != NULL && block->instance->OPS_realloc) {
       ops_convert_layout(data, dat->data, block, size,
           dat->size, dat_size, type_size, 0);
 //          dat->size, dat_size_orig, type_size, 0);
 //          block->instance->OPS_hybrid_layout ? //TODO: comes in when batching
 //          block->instance->ops_batch_size : 0);
-    } else
-      ops_init_zero(dat->data, bytes);
+    } else {
+      ops_device_malloc(block->instance, ( void ** ) &( dat->data_d ), bytes);
+      ops_device_memset(block->instance, ( void ** ) &( dat->data_d ), 0, bytes);
+      init_deviceptr = 0;
+      dat->dirty_hd = 2;
+    }
 
-    ops_cpHostToDevice ( block->instance, ( void ** ) &( dat->data_d ),
-            ( void ** ) &(data), bytes );
+    if(init_deviceptr)
+      ops_cpHostToDevice ( block->instance, ( void ** ) &( dat->data_d ),
+                                            ( void ** ) &( data ), bytes );
   }
 
   // Compute offset in bytes to the base index

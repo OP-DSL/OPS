@@ -11,6 +11,7 @@ from store import Application, Program
 from target import Target
 from util import sycl_set_flat_parallel
 from util import extract_intrinsic_functions
+from util import extract_arglist_fortran
 from util import Findable
 from util import KernelProcess
 
@@ -66,7 +67,7 @@ class Scheme(Findable):
             kernel_body = None
             consts_in_kernel = None
             const_dims = None
-            args_list = None
+            args_list = extract_arglist_fortran(kernel_func)
             flat_parallel = None
             ops_cpu = None
             intrinsic_funcs = extract_intrinsic_functions(kernel_func)

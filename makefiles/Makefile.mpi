@@ -1,7 +1,10 @@
-MPICC ?= $(MPI_INSTALL_PATH)/bin/mpicc
-MPICPP ?= $(MPI_INSTALL_PATH)/bin/mpicxx
-MPICXX ?= $(MPI_INSTALL_PATH)/bin/mpicxx
-MPIFC ?= $(MPI_INSTALL_PATH)/bin/mpif90
-MPIF90 ?= $(MPI_INSTALL_PATH)/bin/mpif90
-MPI_INC ?= $(MPI_INSTALL_PATH)/include
-MPI_LIB ?= $(MPI_INSTALL_PATH)/lib
+
+ifneq ($(strip $(MPI_INSTALL_PATH)),)
+	MPICC ?= $(MPI_INSTALL_PATH)/bin/mpicc
+	MPICPP ?= $(MPI_INSTALL_PATH)/bin/mpicxx
+	MPICXX ?= $(MPI_INSTALL_PATH)/bin/mpicxx
+	MPIFC ?= $(MPI_INSTALL_PATH)/bin/mpif90
+	MPIF90 ?= $(MPI_INSTALL_PATH)/bin/mpif90
+	MPI_INC ?= $(MPI_INSTALL_PATH)/include
+	MPI_LIB ?= $(MPI_INSTALL_PATH)/lib
+endif
