@@ -4,6 +4,8 @@
 find_package(OpenMP QUIET)
 if(NOT OpenMP_FOUND)
   message(FATAL_ERROR "OpenMP support NOT FOUND!")
+else()
+  message(STATUS "OpenMP version ${OpenMP_CXX_VERSION}")
 endif()
 # HDF5
 find_package(HDF5 QUIET COMPONENTS C HL)

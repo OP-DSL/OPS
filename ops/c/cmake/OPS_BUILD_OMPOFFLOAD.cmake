@@ -18,7 +18,7 @@ if(MPI_FOUND)
   set(SRC ${MPICORE} ${MPICommonFiles} ${MPIOMPOFFLOAD} ${EXTERN})
   #
   set(LibName "${lib_prefix}${TargetName}")
-  list(APPEND "MPI::MPI_CXX")
+  list(APPEND Links "MPI::MPI_CXX")
   setlib(${LibName} "${SRC}" "${Links}" "${Opts}")
 endif()
 

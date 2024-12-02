@@ -17,8 +17,14 @@ set(HDF_MPI "${CMAKE_CURRENT_SOURCE_DIR}/src/externlib/ops_hdf5_common.cpp"
 file(GLOB_RECURSE CUDA "${CMAKE_CURRENT_SOURCE_DIR}/src/cuda/*"
                        "${CMAKE_CURRENT_SOURCE_DIR}/src/core/ops_device_singlenode_common.cpp")
 # Set sources for OMPOFFLOAD
-file(GLOB_RECURSE OMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/*"
+file(GLOB_RECURSE OMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/ops_ompoffload_rt_support_kernels.cpp"
+                             "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/ops_ompoffload_singlenode.cpp"
                              "${CMAKE_CURRENT_SOURCE_DIR}/src/core/ops_device_singlenode_common.cpp")
+if (OpenMP_CXX_VERSION GREATER_EQUAL "5")
+  list(APPEND OMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/ops_ompoffload_common_omp5.cpp")
+else()
+  list(APPEND OMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/ops_ompoffload_common_omp4.cpp")
+endif()
 #
 set(MPICommonFiles
                 "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/ops_mpi_core.cpp"
@@ -35,5 +41,10 @@ file(GLOB_RECURSE MPICUDA "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/*cuda*.cu"
 list(FILTER MPICUDA EXCLUDE REGEX "singlenode")
 #
 file(GLOB_RECURSE MPIOMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/*ompoffload*.cpp"
-                                "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/*")
-list(FILTER MPIOMPOFFLOAD EXCLUDE REGEX "singlenode")
+                                "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/ops_ompoffload_rt_support_kernels.cpp")
+
+if (OpenMP_CXX_VERSION GREATER_EQUAL "5")
+  list(APPEND MPIOMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/ops_ompoffload_common_omp5.cpp")
+else()
+  list(APPEND MPIOMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/ops_ompoffload_common_omp4.cpp")
+endif()

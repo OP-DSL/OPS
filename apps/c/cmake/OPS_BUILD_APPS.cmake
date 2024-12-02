@@ -124,9 +124,6 @@ macro(
     TestDev
     OMPNT)
 
-    message(STATUS "TEST DEV ${TestDev}")
-    message(STATUS "OPS_TEST_DEV ${OPS_TEST_DEV}")
-
     # Copy all source and head files into tmp
     file(GLOB CPP "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
     

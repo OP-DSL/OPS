@@ -6,7 +6,7 @@ set(SRC ${CORE} ${EXTERN} ${CUDA})
 #
 set(LibName "${lib_prefix}${TargetName}")
 set(Links "OpenMP::OpenMP_CXX"
-           "CUDA::cudart_static")
+          "CUDA::cudart_static")
 set(Opts "")
 setlib(${LibName} "${SRC}" "${Links}" "${Opts}")
 if(MPI_FOUND)
@@ -14,6 +14,6 @@ if(MPI_FOUND)
   set(SRC ${MPICORE} ${EXTERN} ${MPICUDA} ${MPICommonFiles})
   #
   set(LibName "${lib_prefix}${TargetName}")
-  list(APPEND "MPI::MPI_CXX")
+  list(APPEND Links "MPI::MPI_CXX")
   setlib(${LibName} "${SRC}" "${Links}" "${Opts}")
 endif()
