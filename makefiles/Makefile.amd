@@ -1,10 +1,14 @@
-CC        ?= amdclang
-CXX       ?= amdclang++
-FC        ?= amdflang-new
+CC        := amdclang
+CXX       := amdclang++
+FC        := amdflang-new
 
 CCFLAGS   := -O3 -std=c++11 -g -fPIC 
 CXXFLAGS  := $(CCFLAGS) -fopenmp
 FFLAGS    := -O3 -g -fopenmp -ffree-form
+
+OMPI_CC=amdclang
+OMPI_CXX=amdclang++
+OMPI_FC=amdflang-new
 
 FMODS         := -J$(F_INC_MOD)
 FMODS_OMPOFFLOAD    := -J$(F_INC_MOD)/ompoffload
