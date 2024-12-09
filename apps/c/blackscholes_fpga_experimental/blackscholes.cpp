@@ -295,6 +295,25 @@ int main(int argc, const char **argv)
 				ops_arg_gbl(&(beta), 1 , "float", OPS_READ),
 				ops_arg_idx());
 
+#ifdef VERIFICATION
+    for (unsigned int bat = 0; bat < gridProp.batch; bat++)
+    { 
+        float* current_raw = (float*)ops_dat_get_raw_pointer(dat_current[bat], 0, S1D_1pt, OPS_HOST);
+		float* next_raw = (float*)ops_dat_get_raw_pointer(dat_next[bat], 0, S1D_1pt, OPS_HOST);
+        float* a_raw = (float*)ops_dat_get_raw_pointer(dat_a[bat], 0, S1D_1pt, OPS_HOST);
+        float* b_raw = (float*)ops_dat_get_raw_pointer(dat_b[bat], 0, S1D_1pt, OPS_HOST);
+        float* c_raw = (float*)ops_dat_get_raw_pointer(dat_c[bat], 0, S1D_1pt, OPS_HOST);
+
+    #ifdef DEBUG_VERBOSE
+
+		printGrid2D<float>(next_raw, dat_next[bat].originalProperty, "next after init");
+		printGrid2D<float>(a_raw, dat_a[bat].originalProperty, "coeff a after init");
+        printGrid2D<float>(a_raw, dat_b[bat].originalProperty, "coeff b after init");
+        printGrid2D<float>(a_raw, dat_c[bat].originalProperty, "coeff c after init");
+	#endif
+    }
+#endif
+
 #ifdef PROFILE
 		auto grid_init_stop_clk_point = std::chrono::high_resolution_clock::now();
 		init_runtime[bat] = std::chrono::duration<double, std::micro>(grid_init_stop_clk_point - grid_init_start_clk_point).count();

@@ -41,6 +41,8 @@
 
 #include "blackscholes_cpu.h"
 
+const unsigned short mem_vector_factor = 16;
+
 float standard_normal_CDF(float val)
 {
 	return 0.5 * erfc(-val * INV_SQRT_2);
