@@ -186,7 +186,7 @@ def ISLCopyDetection(original_graph: DataflowGraph_v2, prog: Program, app: Appli
     
     logging.debug(f"global swap map is ISL COpy detect: {copy_graph.getGlobalDatsSwapMap()}")
     ISLUpdateNodeSwapPairs(copy_graph)
-    copy_graph.print("after_copy_detection", make_dats_node=True)
+    copy_graph.print("after_copy_detection", make_dats_node=True, attr={'show_arg_id': True})
     return copy_graph
 
 def ISLReadBufferPropagation(original_graph: DataflowGraph_v2, prog: Program, app: Application, scheme: Scheme) -> DataflowGraph_v2:
@@ -310,7 +310,7 @@ def ISLReadBufferPropagation(original_graph: DataflowGraph_v2, prog: Program, ap
             
     logging.debug(f"{function_name()}: propagation paths: {propagation_paths}")
     logging.debug(f"{copy_graph}")
-    copy_graph.print("after_buffer_propagation", make_dats_node=True)
+    copy_graph.print("after_buffer_propagation", make_dats_node=True, attr={'show_arg_id': True})
     return copy_graph
     
 @dataclass
@@ -638,7 +638,7 @@ def ISLDataDependencyCyclesDetection(original_graph: DataflowGraph_v2, prog: Pro
         
         #updating internal swap map
     logging.debug(f"df_graph after ISLDataDepCyclesDet \n {copy_graph}")
-    copy_graph.print("after_buffer_DataDepCycleDet", make_dats_node=True)
+    copy_graph.print("after_buffer_DataDepCycleDet", make_dats_node=True, attr={'show_arg_id':True})
     return copy_graph
     # for head in cycle_heads:
     #     logging.debug(f"dependency train: {head}")
@@ -760,7 +760,7 @@ def removeInternalDependencyPathEdgesAndUpdateSwap(df_graph: DataflowGraph_v2, d
                 dep_graph.remove_edge(in_n, out_n)
         
             #updating internal swap map
-            curr_node.df_node.internal_dat_swap_map[curr_dat_name] = prev_node.dat_ptr
+            curr_node.df_node.internal_dat_swap_map[prev_node.dat_ptr] = curr_dat_name
             
         prev_node_id = curr_node_id
     

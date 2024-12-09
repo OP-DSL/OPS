@@ -594,6 +594,8 @@ DF_END_NODE = BaseDataflowNode(DFNodeType.DF_END)
 class DatDataflowNode:
     dat_name: str
     type: Optional[DFNodeType] = DFNodeType.DF_DAT
+    src_id: int = None
+    sink_id: int = None
 @dataclass
 class DataflowNode:
     loop: Loop
@@ -842,7 +844,14 @@ class DataflowGraph_v2:
             return True
         return False
 
-    def print(self, filename: str, format: str = "png", make_dats_node: bool = False) -> None:
+    def print(self, filename: str, format: str = "png", make_dats_node: bool = False, attr: Dict[Any] = {}) -> None:
+        
+        SHOW_ARG_ID = False
+        
+        if "show_arg_id" in attr.keys():
+            if attr["show_arg_id"]:
+                SHOW_ARG_ID = True
+            
         def node_attr(node):
             if node.type == DFNodeType.DF_START:
                 return {"color": "red", "label": "START"}
@@ -851,7 +860,13 @@ class DataflowGraph_v2:
             elif node.type == DFNodeType.DF_LOOP:
                 return {"color": "blue", "label": f"{node.node_uid}:{node.loop.kernel}", "shape" : "box"}
             elif node.type == DFNodeType.DF_DAT:
-                return {"label": f"{node.dat_name}", "color" : "green"}
+                label = ""
+                if not node.src_id is None:
+                    label += f"{node.src_id}:"
+                label += f"{node.dat_name}"
+                if not node.sink_id is None:
+                    label += f":{node.sink_id}"
+                return {"label": label, "color" : "green"}
             
         def edge_attr(edge_det):
             # edge, attr =  edge_det
@@ -862,7 +877,8 @@ class DataflowGraph_v2:
                     if edge_det["stray"]:
                         return {"color": "blue"}
             else:
-                return {"label": f"{edge_det['dat_str']}"}
+                label = f"{edge_det['src_arg_id']}->{edge_det['dat_str']}->{edge_det['src_arg_id']}" if SHOW_ARG_ID else f"{edge_det['dat_str']}"
+                return {"label": label}
             return {}
         
         if not make_dats_node:  
@@ -882,9 +898,9 @@ class DataflowGraph_v2:
             #first sweap by going from nodes in order
             for node in copy_graph.nodes():
                 for src_id, sink_id, attr in self.getOutEdgesFromNode(node.node_uid):
+                    dat_node_id = copy_graph.add_node(DatDataflowNode(attr["dat_str"], src_id=attr["src_arg_id"], sink_id=attr["sink_arg_id"]))
                     if not attr["dat_str"] in curr_dat_id_count.keys():
                         curr_dat_id_count[attr["dat_str"]] = 0
-                    dat_node_id = copy_graph.add_node(DatDataflowNode(attr["dat_str"]))
                     if curr_dat_id_count[attr["dat_str"]] == 0:
                         first_dat_id_map[attr["dat_str"]] = dat_node_id
                     curr_dat_id_count[attr["dat_str"]] += 1
@@ -1135,7 +1151,8 @@ class IterLoop:
                 if arg.access_type == AccessType.OPS_READ and \
                 len(self.get_active_df_graph().getOutEdgesFromNode(df_node.node_uid, loop.dats[arg.dat_id].ptr)):
                     arg_list[i] = ArgDat(arg.id, loc=arg.loc, access_type=AccessType.OPS_RW, opt=arg.opt, dat_id=arg.dat_id, stencil_ptr=arg.stencil_ptr, dim=arg.dim, restrict=arg.restrict, prolong=arg.prolong, global_dat_id=arg.global_dat_id, is_read_only=False)        
-    
+            df_node.loop.args = arg_list
+            
     def gen_PE_args(self) -> None:
         PE_args = []
         for df_node in self.get_active_df_graph().getAllLoopNodes():
