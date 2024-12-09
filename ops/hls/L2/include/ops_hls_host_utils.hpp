@@ -24,6 +24,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <ops_hls_kernel.hpp>
 
 static ops::hls::SizeType default_d_p({0,0,0});
 static ops::hls::SizeType default_d_m({0,0,0});
