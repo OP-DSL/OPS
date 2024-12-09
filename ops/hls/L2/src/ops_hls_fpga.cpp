@@ -20,7 +20,7 @@
   * @details This class manage FPGA platform interaction with XOCL API and wrapping related objects.
   */
 
-#include <ops_hls_fpga.hpp>
+#include "../include/ops_hls_fpga.hpp"
 
 ops::hls::FPGA* ops::hls::FPGA::FPGA_ = nullptr;
 

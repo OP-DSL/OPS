@@ -12,8 +12,9 @@ arg{{arg.id}}_stream_{{suffix}}
 {% block header_block %}
 
 #pragma once
+#include <ops_hls_kernel_support.h>
 #include "common_config.hpp"
-#include <ops_hls_datamover.hpp>
+
 {% endblock %}
 {% block datamover_prototype %}
 extern "C" void datamover_{{lh.kernel}}(

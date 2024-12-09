@@ -293,9 +293,10 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
         index = buffer.search(r'.*ops_partition.*')
         buffer.remove(index)
     
-    # 9. Add kernel_wrapp_master_kernels include
+    # 9. Add kernel_wrapp_master_kernels include and add ops_hls_rt_support.h
     if (buffer.search(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)')):
         index = buffer.search(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)')
+        buffer.insert(index+1, "#include <ops_hls_rt_support.h>")
         buffer.insert(index+1, "#include <hls_kernels.hpp>")
     else:
         raise OpsError(f"OPS program failed to include core header file, ops_seq.h or ops_seq_V2.h")
@@ -363,8 +364,8 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
     # 13. Replace ops_printf
     new_source = new_source.replace("ops_printf", "printf")
     
-    # 14. Substitude the ops_seq.h/ops_seq_v2.h with ops_lib_core.h
-    new_source = re.sub(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)', '#include <ops_hls_rt_support.h>', new_source)
+    # # 14. Substitude the ops_seq.h/ops_seq_v2.h with ops_lib_core.h
+    # new_source = re.sub(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)', '#include <ops_hls_rt_support.h>', new_source)
 
     # 15. check if SOA is set
     def replacer(match):

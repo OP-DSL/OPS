@@ -37,8 +37,8 @@ arg{{arg.id}}_{{link}}
 {% set half_span_x = (widen_read_stencil_desc.widen_stencil.stencil_size - 1) / 2 %}
 {% block header_block %}
 #pragma once
+#include <ops_hls_kernel_support.h>
 #include "common_config.hpp"
-#include <ops_hls_stencil_core_v2.hpp>
 
  
 {% set stencil = widen_read_stencil_desc.widen_stencil %}
