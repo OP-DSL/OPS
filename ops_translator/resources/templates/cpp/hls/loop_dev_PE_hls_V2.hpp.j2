@@ -344,7 +344,7 @@ public:
                     arg{{arg.id}}_read_val = arg{{arg.id}}_rd_buffer.read();
     {% endfor %}
                 
-    {% for arg in lh.args|ops_dat|ops_read %}
+    {% for arg in lh.args|ops_dat|ops_read_or_rw %}
         {% for chain in widen_stencil_disc[arg.stencil_ptr].chains %}                
                 {{chainLinkTranform(chain[0], arg, 1)}} = {{chainLinkTranform(chain[1], arg, 0)}};{% endfor %}
     {% endfor %}
@@ -403,7 +403,7 @@ public:
             
                 printf("[DEBUG][INTERNAL][{{lh.kernel}}_PE_%d] --------------------------------------------------------\n\n", m_PEId);
 
-    {% for arg in lh.args|ops_dat|ops_read %}
+    {% for arg in lh.args|ops_dat|ops_read_or_rw %}
                 printf("[DEBUG][INTERNAL][{{lh.kernel}}_PE_%d] read values arg{{arg.id}}: (", m_PEId);
                 for (int ri = 0; ri < vector_factor; ri++)
                 {
@@ -419,7 +419,7 @@ public:
             vec2arr: for (unsigned short x = 0; x < vector_factor; x++)
             {
 #pragma HLS UNROLL factor=vector_factor
-    {% for arg in lh.args|ops_dat|ops_read %}
+    {% for arg in lh.args|ops_dat|ops_read_or_rw %}
         {% set stencil = prog.findStencil(arg.stencil_ptr) %}
         {% set widen_stencil = widen_stencil_disc[stencil.stencil_ptr].widen_stencil %}
         {% for row_discriptor in stencil.row_discriptors %}
@@ -436,7 +436,7 @@ public:
             }
             vec2arr_rest:
             {
-    {% for arg in lh.args|ops_dat|ops_read %}
+    {% for arg in lh.args|ops_dat|ops_read_or_rw %}
         {% set stencil = prog.findStencil(arg.stencil_ptr) %}
         {% set widen_stencil = widen_stencil_disc[stencil.stencil_ptr].widen_stencil %}
         {% for row_discriptor in stencil.row_discriptors %}
@@ -493,7 +493,7 @@ public:
     {% endif %}
 #endif
     {% for arg in lh.args|ops_dat %}
-        {% if (arg is ops_write or arg is ops_rw) or (not isFullyMapped and arg.dat_id == datMap[arg.dat_id]) %}
+        {% if (arg is ops_write) or (not isFullyMapped and arg.dat_id == datMap[arg.dat_id]) %}
                 stencil_type arg{{arg.id}}_result;
         {% endif %} 
     {% endfor %}
@@ -513,7 +513,7 @@ public:
         {% else %}
             {% set last_check = False %}
         {% endif %}
-        {% if arg is ops_read %}
+        {% if arg is ops_read or arg is ops_rw %}
             {% if prog.findStencil(arg.stencil_ptr) %}
             {% set base_offset = lh.get_read_stencil(prog).base_point.x - prog.findStencil(arg.stencil_ptr).base_point.x %}
                 {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
@@ -521,7 +521,7 @@ public:
                 {% endfor %}
             {% endif %}
         {% endif %}
-        {% if arg is ops_write or arg is ops_rw%}
+        {% if arg is ops_write %}
             {% if prog.findStencil(arg.stencil_ptr) %}
                 {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
                         arg{{arg.id}}_result{{"," if (not loop.last or not last_check)}}
@@ -569,11 +569,17 @@ public:
     {% if not isFullyMapped %}
         {% for arg in lh.args|ops_dat|ops_read %}
         {% set base_offset = lh.get_read_stencil(prog).base_point.x - prog.findStencil(arg.stencil_ptr).base_point.x %}
-            {% if arg.dat_id == datMap[arg.dat_id] %}
-                    arg{{arg.id}}_tmpConvWrite.f = arg{{arg.id}}_rowArr_{{prog.findStencil(arg.stencil_ptr).base_point.y}}_{{prog.findStencil(arg.stencil_ptr).base_point.z}}[x + {{prog.findStencil(arg.stencil_ptr).base_point.x + base_offset}}];
-            {% endif %}
+        {% if arg.dat_id == datMap[arg.dat_id] %}
+                arg{{arg.id}}_tmpConvWrite.f = arg{{arg.id}}_rowArr_{{prog.findStencil(arg.stencil_ptr).base_point.y}}_{{prog.findStencil(arg.stencil_ptr).base_point.z}}[x + {{prog.findStencil(arg.stencil_ptr).base_point.x + base_offset}}];
+        {% endif %}
         {% endfor %}
     {% endif %}
+    {% for arg in lh.args|ops_dat|ops_rw %}
+        {% set base_offset = lh.get_read_stencil(prog).base_point.x - prog.findStencil(arg.stencil_ptr).base_point.x %}
+        {% if arg.dat_id == datMap[arg.dat_id] %}
+                arg{{arg.id}}_tmpConvWrite.f = arg{{arg.id}}_rowArr_{{prog.findStencil(arg.stencil_ptr).base_point.y}}_{{prog.findStencil(arg.stencil_ptr).base_point.z}}[x + {{prog.findStencil(arg.stencil_ptr).base_point.x + base_offset}}];
+        {% endif %}
+    {% endfor %}
 
     {% for arg in lh.args|ops_dat %}
         {% if (arg is ops_write or arg is ops_rw) or (not isFullyMapped and arg.dat_id == datMap[arg.dat_id]) %}
@@ -635,6 +641,7 @@ void kernel_{{lh.kernel}}_PE(const short& PEId, const ops::hls::StencilConfigCor
             {% set last_check = False %}
         {% endif %}
         {% if arg is ops_dat %}
+            //{{arg}}
             {% if ((arg is ops_read) and (arg.dat_id != datMap[arg.dat_id])) %}
     Stencil_{{lh.kernel}}::widen_stream_dt& {{hls_stream_name(arg)-}}{{"," if (not loop.last or not last_check)}}
             {% elif arg is ops_write %}
