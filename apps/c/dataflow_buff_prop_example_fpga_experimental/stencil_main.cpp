@@ -133,8 +133,8 @@ int main(int argc, const char **argv)
     ops_dat dat3;
     ops_dat dat0_2;
     ops_dat dat1_2;
-    ops_dat a;
-    ops_dat b;
+    ops_dat dat_a;
+    ops_dat dat_b;
 
 #ifdef VERIFICATION
     float* dat0_cpu;
@@ -161,9 +161,9 @@ int main(int argc, const char **argv)
     name = std::string("dat1_2");
     dat1_2 = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "float", name.c_str());
     name = std::string("a");
-    a = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "int", name.c_str());
+    dat_a = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "int", name.c_str());
     name = std::string("b");
-    b = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "int", name.c_str());
+    dat_b = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "int", name.c_str());
 
 #ifdef VERIFICATION
     dat0_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y);
@@ -193,10 +193,10 @@ int main(int argc, const char **argv)
     // init a and b
     ops_par_loop(kernel_const_init_int, "init_a", block, 2, full_range,
             ops_arg_gbl(&const_a, 1, "int", OPS_READ),
-            ops_arg_dat(a, 1, S2D_00, "int", OPS_WRITE));
+            ops_arg_dat(dat_a, 1, S2D_00, "int", OPS_WRITE));
     ops_par_loop(kernel_const_init_int, "init_b", block, 2, full_range,
             ops_arg_gbl(&const_b, 1, "int", OPS_READ),
-            ops_arg_dat(b, 1, S2D_00, "int", OPS_WRITE));
+            ops_arg_dat(dat_b, 1, S2D_00, "int", OPS_WRITE));
 
 #ifdef VERIFICATION
     init_a_b_cpu(a_cpu, b_cpu, size, d_m, d_p, full_range);
@@ -205,8 +205,8 @@ int main(int argc, const char **argv)
 
     auto dat0_raw = (float*)ops_dat_get_raw_pointer(dat0, 0, S2D_00, OPS_HOST);
     auto dat1_raw = (float*)ops_dat_get_raw_pointer(dat1, 0, S2D_00, OPS_HOST);
-    auto a_raw = (int*)ops_dat_get_raw_pointer(a, 0, S2D_00, OPS_HOST);
-    auto b_raw = (int*)ops_dat_get_raw_pointer(b, 0, S2D_00, OPS_HOST);
+    auto a_raw = (int*)ops_dat_get_raw_pointer(dat_a, 0, S2D_00, OPS_HOST);
+    auto b_raw = (int*)ops_dat_get_raw_pointer(dat_b, 0, S2D_00, OPS_HOST);
 
 #endif
     // iterative stencil loop
@@ -216,14 +216,14 @@ int main(int argc, const char **argv)
     for (int iter = 0; iter < iter_max; iter++)
     {
         ops_par_loop(kernel_1_5pt, "stencil5pt_k1", block, 2, internal_range,
-                ops_arg_dat(a, 1, S2D_00, "int", OPS_READ),
+                ops_arg_dat(dat_a, 1, S2D_00, "int", OPS_READ),
                 ops_arg_dat(dat0, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
                 ops_arg_dat(dat1, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
                 ops_arg_dat(dat2, 1, S2D_00, "float", OPS_WRITE),
                 ops_arg_dat(dat3, 1, S2D_00, "float", OPS_WRITE));
         
         ops_par_loop(kernel_2_1pt, "stencil1pt_k2", block, 2, internal_range,
-                ops_arg_dat(b, 1, S2D_00, "int", OPS_READ),
+                ops_arg_dat(dat_b, 1, S2D_00, "int", OPS_READ),
                 ops_arg_dat(dat0, 1, S2D_00, "float", OPS_READ),
                 ops_arg_dat(dat2, 1, S2D_00, "float", OPS_READ),
                 ops_arg_dat(dat3, 1, S2D_00, "float", OPS_READ),
@@ -242,14 +242,14 @@ int main(int argc, const char **argv)
 
     ops_iter_par_loop("ops_iter_par_loop_0", iter_max,
         ops_par_loop(kernel_1_5pt, "stencil5pt_k1", block, 2, internal_range,
-                ops_arg_dat(a, 1, S2D_00, "int", OPS_READ),
+                ops_arg_dat(dat_a, 1, S2D_00, "int", OPS_READ),
                 ops_arg_dat(dat0, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
                 ops_arg_dat(dat1, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
                 ops_arg_dat(dat2, 1, S2D_00, "float", OPS_WRITE),
                 ops_arg_dat(dat3, 1, S2D_00, "float", OPS_WRITE)),
         
         ops_par_loop(kernel_2_1pt, "stencil1pt_k2", block, 2, internal_range,
-                ops_arg_dat(b, 1, S2D_00, "int", OPS_READ),
+                ops_arg_dat(dat_b, 1, S2D_00, "int", OPS_READ),
                 ops_arg_dat(dat0, 1, S2D_00, "float", OPS_READ),
                 ops_arg_dat(dat2, 1, S2D_00, "float", OPS_READ),
                 ops_arg_dat(dat3, 1, S2D_00, "float", OPS_READ),
@@ -297,8 +297,8 @@ int main(int argc, const char **argv)
     ops_free_dat(dat3);
     ops_free_dat(dat0_2);
     ops_free_dat(dat1_2);
-    ops_free_dat(a);
-    ops_free_dat(b);
+    ops_free_dat(dat_a);
+    ops_free_dat(dat_b);
 
 #ifdef VERIFICATION
     free(dat0_cpu);

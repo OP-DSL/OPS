@@ -73,7 +73,7 @@ void init_zero_cpu(const T* u, int size[2], int d_m[2], int d_p[2], int range[4]
         for (int i = range[0] - d_m[0]; i < range[1] - d_m[0]; i++)
         {
             int index = j * grid_size_x + i;
-            u[index] = (T)0;
+            u[index] = std::static_cast<T>(0);
         }
     }
 }
