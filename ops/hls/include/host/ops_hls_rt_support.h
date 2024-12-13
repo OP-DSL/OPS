@@ -8,15 +8,19 @@
   */
 
  // This extension file is required for stream APIs
-#include <CL/cl_ext_xilinx.h>
+// #include <CL/cl_ext_xilinx.h>
 // This file is required for OpenCL C++ wrapper APIs
-#include "../ext/xcl2/xcl2.hpp"
+#include "../../ext/xcl2/xcl2.hpp"
 
 #include <ap_int.h>
-#include <ops_hls_defs.hpp>
-#include <ops_hls_fpga.hpp>
-#include <ops_hls_kernel.hpp>
-#include <ops_hls_host_utils.hpp>
+#include "../../L1/include/ops_hls_datamover.hpp"
+#include "../../L1/include/ops_hls_defs.hpp"
+#include "../../L1/include/ops_hls_stencil_core_v2.hpp"
+#include "../../L1/include/ops_hls_utils.hpp"
+
+#include "../../L2/include/ops_hls_fpga.hpp"
+#include "../../L2/include/ops_hls_host_utils.hpp"
+#include "../../L2/include/ops_hls_kernel.hpp"
 
 // typedef struct ops_hls_core
 // {

@@ -9,4 +9,6 @@ pcpp==1.30
 sympy==1.12
 libclang==16.0.6
 pygraphviz==1.14
-
+pydot==3.0.2
+pillow==11.0.0
+rustworkx==0.15.1

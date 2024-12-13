@@ -7,8 +7,8 @@
 #include <algorithm>
 #include <chrono>
 #include <vector>
-#include "blacksholes_utils.h"
-//#include "blacksholes_ops.h"
+#include "blackscholes_utils.h"
+//#include "blackscholes_ops.h"
 
 
 
@@ -41,24 +41,24 @@ float standard_normal_CDF(float val);
  *
  * @return 	estimated value of the option.
  */
-float blacksholes_call_option(float spot_price, float strike_price,
+float blackscholes_call_option(float spot_price, float strike_price,
 		float time_to_maturity, float risk_free_rate, float volatility);
 
 //exact solution. To check the correctness
-float test_blacksholes_call_option(BlacksholesParameter calcParam, double * time_to_run=nullptr);
+float test_blackscholes_call_option(blackscholesParameter calcParam, double * time_to_run=nullptr);
 
-void bs_explicit1(float* current, float *next, GridParameter& gridData, BlacksholesParameter& computeParam);
+void bs_explicit1(float* current, float *next, GridParameter& gridData, blackscholesParameter& computeParam);
 
-float get_call_option(float* data, BlacksholesParameter& computeParam);
+float get_call_option(float* data, blackscholesParameter& computeParam);
 
-float get_call_option_cubic(float* data, BlacksholesParameter& computeParam);
+float get_call_option_cubic(float* data, blackscholesParameter& computeParam);
 
 // copy of instvan's implementation explicit1 in BS_1D_CPU
-int bs_explicit2(float* current, float *next, GridParameter gridData, std::vector<BlacksholesParameter> & computeParam);
+int bs_explicit2(float* current, float *next, GridParameter gridData, std::vector<blackscholesParameter> & computeParam);
 
-void intialize_grid(float* grid, GridParameter gridProp, BlacksholesParameter& computeParam);
+void intialize_grid(float* grid, GridParameter gridProp, blackscholesParameter& computeParam);
 
-bool stencil_stability(BlacksholesParameter& computeParam, bool verbose=false);
+bool stencil_stability(blackscholesParameter& computeParam, bool verbose=false);
 
 double square_error(float* current, float* next, GridParameter gridData);
 

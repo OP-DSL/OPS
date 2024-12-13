@@ -8,6 +8,7 @@ import clang.cindex
 
 import pcpp
 
+import cpp.optimizer
 import cpp.parser
 import cpp.translator.program
 import ops
@@ -100,7 +101,7 @@ class Cpp(Lang):
         cpp.parser.parseMeta(ast_pp.cursor, program)
 
         return program
-
+    
     def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], app_consts: List[ops.Const], force_soa: bool = False, hls: bool = False) -> str:
         if hls:
             return cpp.translator.program.translateProgramHLS(program.path.read_text(), program, app_consts, force_soa)

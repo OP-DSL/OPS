@@ -68,7 +68,7 @@ env.tests["instance"] = lambda x, c: isinstance(x, c)
 env.tests["isnumaric"] = lambda arg, loop=None: isinstance(arg, str) and arg.isnumeric()
 
 def isArgSwap(arg: ops.ArgDat, iterloop: ops.IterLoop) -> bool:
-    pair = iterloop.getOrderedSwapPair(arg.dat_id)
+    pair = iterloop.getDatSwapPair(iterloop.dats[arg.dat_id][0].ptr)
     if pair[0] != pair[1]:
         return True
     else:
@@ -84,6 +84,7 @@ def getReadArgFromDat(dat: ops.Dat, loop: ops.Loop) -> ops.ArgDat:
         if not isinstance(arg, ops.ArgDat):
             continue
         if arg.dat_id  == dat.id and arg.access_type in [ops.AccessType.OPS_READ, ops.AccessType.OPS_RW]:
+            print(f"Arg found from dat {dat.ptr}: {arg}")
             return arg
     logging.warning(f"Couldn't find dat:{dat} in loop: {loop}")
     return None

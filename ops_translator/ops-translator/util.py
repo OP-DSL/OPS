@@ -11,9 +11,14 @@ from cached_property import cached_property
 from argparse import ArgumentTypeError
 import json
 import logging
+import sys
+from rustworkx import PyDiGraph
+from rustworkx.visualization import graphviz_draw 
 
 #Generic type
 T = TypeVar("T")
+def function_name():
+    return sys._getframe().f_back.f_code.co_name
 
 def isDirPath(path):
     if os.path.isdir(path):
@@ -94,7 +99,26 @@ def sycl_set_flat_parallel(has_reduction: bool):
         ops_cpu = False
     return flat_parallel, ops_cpu
 
-
+def str_add_prefix(string_buffer: str, prefix: str = "")-> str:
+    lines = string_buffer.splitlines()
+    out_str = ""
+    for i in range(len(lines)):
+        out_str += prefix + lines[i] + "\n"
+    
+    return out_str
+def print_rx_graph(filename: str, rx_graph: PyDiGraph, node_attr: Callable = None, edge_attr: Callable = None, format: str = "png") -> None:
+        def def_node_attr(node):
+            return {}
+            
+        def def_edge_attr(edge_det):
+            return {}
+        
+        if not node_attr:
+            node_attr = def_node_attr
+        if not edge_attr:
+            edge_attr = def_edge_attr
+            
+        graphviz_draw(rx_graph, node_attr_fn=node_attr, edge_attr_fn=edge_attr, filename=f"{filename}.{format}", image_type=f"{format}")
 class Findable(ABC):
     """
     A parent abstact class for findable support
@@ -568,38 +592,4 @@ class KernelProcess:
                 const_dims.append(c.dim)
 
         return const_names, const_dims
-
-    def gen_local_dependancy_map(self, loop, outerloop) -> Union[bool, List[int]]:
-        datMap = [x for x in range(len(loop.dats))]
-        raw_parCpy_objs = outerloop.raw_dat_swap_map
-        fully_mapped = True
-        dat_strings = [dat.ptr for dat in loop.dats]
-        
-        for i in range(len(datMap)):
-            dat_str = loop.dats[i].ptr
-            pair_idx = -1
-            if datMap[i] != i:
-                continue
-            
-            for obj in raw_parCpy_objs:
-                if obj.source == dat_str:
-                    pair_str = obj.target
-                    if pair_str in dat_strings:
-                        pair_idx = findIdx(loop.dats, lambda x: x.ptr == pair_str)
-                        break
-                elif obj.target == dat_str:
-                    pair_str = obj.source
-                    if pair_str in dat_strings:
-                        pair_idx = findIdx(loop.dats, lambda x: x.ptr == pair_str)
-                        break
-            
-            if pair_idx == -1:
-                fully_mapped = False
-                
-            else:
-                datMap[i] = pair_idx
-                datMap[pair_idx] = i
-                
-        return (fully_mapped, datMap)
-
-            
+    

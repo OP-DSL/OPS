@@ -9,7 +9,7 @@ arg{{arg.id}}_stream_{{suffix}}
 {% block header_block %}
 
 #pragma once
-#include <common_config.hpp>
+#include "common_config.hpp"
 {% for stencil in lh.stencils %}
 #include <stencil_{{stencil}}.hpp>
 {% endfor %}

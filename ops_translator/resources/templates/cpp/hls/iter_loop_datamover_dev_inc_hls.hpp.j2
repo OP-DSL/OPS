@@ -12,8 +12,8 @@ arg{{arg.id}}_axis_{{suffix}}
 {% block header_block %}
 
 #pragma once
+#include <ops_hls_kernel_support.h>
 #include "common_config.hpp"
-#include <ops_hls_datamover.hpp>
 
 {% endblock %}
 {% block datamover_dataflow_region %}
@@ -32,9 +32,11 @@ extern "C" void datamover_outerloop_{{ilh.id}}(
     {% endfor %}
         const unsigned int outer_itr,
     {% for arg in ilh.joint_args|ops_dat %}
+    //{{ilh.dats[arg.dat_id][0].ptr}}
         ap_uint<mem_data_width>* arg{{(arg.id)}},
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat %}
+    //{{ilh.dats[arg.dat_id][0].ptr}}
         {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
         hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
         {% else %}
