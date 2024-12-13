@@ -150,7 +150,7 @@ public:
             {% set last_check = False %}
         {% endif %}
         {% if arg is ops_dat %}
-            {% if ((arg is ops_read) and (arg.dat_id != datMap[arg.dat_id])) %}
+            {% if (arg is ops_read) %}
             widen_stream_dt& {{hls_stream_name(arg)-}}{{"," if (not loop.last or not last_check)}}
             {% elif arg is ops_write %}
             widen_stream_dt& {{hls_stream_name(arg)-}}{{"," if (not loop.last or not last_check)}}
@@ -242,7 +242,7 @@ public:
     {% endfor %}
 
     {% for arg in lh.args|ops_dat %}
-        {% if arg is ops_read and arg.dat_id != datMap[arg.dat_id] %}
+        {% if arg is ops_read %}
         widen_dt arg{{arg.id}}_read_val = 0;
         {% elif arg is ops_write %}
         widen_dt arg{{arg.id}}_update_val;
@@ -493,7 +493,7 @@ public:
     {% endif %}
 #endif
     {% for arg in lh.args|ops_dat %}
-        {% if (arg is ops_write) or (not isFullyMapped and arg.dat_id == datMap[arg.dat_id]) %}
+        {% if (arg is ops_write) %}
                 stencil_type arg{{arg.id}}_result;
         {% endif %} 
     {% endfor %}
@@ -541,7 +541,7 @@ public:
                 );
 
     {% for arg in lh.args|ops_dat %}
-        {% if (arg is ops_write or arg is ops_rw) or (not isFullyMapped and arg.dat_id == datMap[arg.dat_id]) %}
+        {% if (arg is ops_write or arg is ops_rw) %}
                 ops::hls::DataConv arg{{arg.id}}_tmpConvWrite;
         {% endif %}
     {% endfor %}
@@ -555,10 +555,12 @@ public:
                 else
                 {
 
+    // {{datMap}}
     {% for arg in lh.args|ops_dat|ops_write %}
     {# TODO: FIX This line un notFullyMapped check weather the dat have read arg that is mapped otherwise replace it with similar to not neg_cond #}
     {% set base_offset = lh.get_read_stencil(prog).base_point.x - prog.findStencil(arg.stencil_ptr).base_point.x %}
             {#{{get_read_arg_from_dat(lh.dats[datMap[arg.dat_id]], lh)}}#}
+            //dat_id: {{arg.dat_id}}, dat: {{lh.dats[arg.dat_id].ptr}}, swap_id: {{datMap[arg.dat_id]}}, swap_dat: {{lh.dats[datMap[arg.dat_id]].ptr}}
             {% if get_read_arg_from_dat(lh.dats[datMap[arg.dat_id]], lh) %}
                 arg{{arg.id}}_tmpConvWrite.f = arg{{get_read_arg_from_dat(lh.dats[datMap[arg.dat_id]], lh).id}}_rowArr_{{prog.findStencil(get_read_arg_from_dat(lh.dats[datMap[arg.dat_id]], lh).stencil_ptr).base_point.y}}_{{prog.findStencil(get_read_arg_from_dat(lh.dats[datMap[arg.dat_id]], lh).stencil_ptr).base_point.z}}[x + {{base_offset}}];
             {% else %}
@@ -566,23 +568,14 @@ public:
             {% endif %}
     {% endfor %}
                 }
-    {% if not isFullyMapped %}
-        {% for arg in lh.args|ops_dat|ops_read %}
-        {% set base_offset = lh.get_read_stencil(prog).base_point.x - prog.findStencil(arg.stencil_ptr).base_point.x %}
-        {% if arg.dat_id == datMap[arg.dat_id] %}
-                arg{{arg.id}}_tmpConvWrite.f = arg{{arg.id}}_rowArr_{{prog.findStencil(arg.stencil_ptr).base_point.y}}_{{prog.findStencil(arg.stencil_ptr).base_point.z}}[x + {{prog.findStencil(arg.stencil_ptr).base_point.x + base_offset}}];
-        {% endif %}
-        {% endfor %}
-    {% endif %}
     {% for arg in lh.args|ops_dat|ops_rw %}
         {% set base_offset = lh.get_read_stencil(prog).base_point.x - prog.findStencil(arg.stencil_ptr).base_point.x %}
-        {% if arg.dat_id == datMap[arg.dat_id] %}
+            //that
                 arg{{arg.id}}_tmpConvWrite.f = arg{{arg.id}}_rowArr_{{prog.findStencil(arg.stencil_ptr).base_point.y}}_{{prog.findStencil(arg.stencil_ptr).base_point.z}}[x + {{prog.findStencil(arg.stencil_ptr).base_point.x + base_offset}}];
-        {% endif %}
     {% endfor %}
 
     {% for arg in lh.args|ops_dat %}
-        {% if (arg is ops_write or arg is ops_rw) or (not isFullyMapped and arg.dat_id == datMap[arg.dat_id]) %}
+        {% if (arg is ops_write or arg is ops_rw) %}
                 arg{{arg.id}}_update_val.range(s_datatype_size * (x + 1) - 1, x * s_datatype_size) = arg{{arg.id}}_tmpConvWrite.i;
         {% endif %}
     {% endfor %} 
@@ -604,7 +597,7 @@ public:
                     printf("[DEBUG][INTERNAL][{{lh.kernel}}_PE_%d] --------------------------------------------------------\n\n", m_PEId);
 
     {% for arg in lh.args|ops_dat %}
-        {% if (arg is ops_write or arg is ops_rw) or (not isFullyMapped and arg.dat_id == datMap[arg.dat_id]) %}
+        {% if (arg is ops_write or arg is ops_rw) %}
                     printf("[DEBUG][INTERNAL][{{lh.kernel}}_PE_%d] wirte values arg{{arg.id}}: (", m_PEId);
                     for (int ri = 0; ri < vector_factor; ri++)
                     {
@@ -617,7 +610,7 @@ public:
     {% endfor %}
 #endif
     {% for arg in lh.args|ops_dat %}
-        {% if (arg is ops_write or arg is ops_rw) or (not isFullyMapped and arg.dat_id == datMap[arg.dat_id]) %}
+        {% if (arg is ops_write or arg is ops_rw)  %}
                     {{hls_stream_name_t2(arg, "wr")}} <<  arg{{arg.id}}_update_val;
         {% endif %}
     {% endfor %}
@@ -641,8 +634,8 @@ void kernel_{{lh.kernel}}_PE(const short& PEId, const ops::hls::StencilConfigCor
             {% set last_check = False %}
         {% endif %}
         {% if arg is ops_dat %}
-            //{{arg}}
-            {% if ((arg is ops_read) and (arg.dat_id != datMap[arg.dat_id])) %}
+            //{{lh.dats[arg.dat_id].ptr}}
+            {% if (arg is ops_read) %}
     Stencil_{{lh.kernel}}::widen_stream_dt& {{hls_stream_name(arg)-}}{{"," if (not loop.last or not last_check)}}
             {% elif arg is ops_write %}
     Stencil_{{lh.kernel}}::widen_stream_dt& {{hls_stream_name(arg)-}}{{"," if (not loop.last or not last_check)}}        
@@ -694,7 +687,7 @@ void kernel_{{lh.kernel}}_PE(const short& PEId, const ops::hls::StencilConfigCor
             {% set last_check = False %}
         {% endif %}
         {% if arg is ops_dat %}
-            {% if ((arg is ops_read) and (arg.dat_id != datMap[arg.dat_id])) %}
+            {% if (arg is ops_read)  %}
             {{hls_stream_name(arg)-}}{{"," if (not loop.last or not last_check)}}
             {% elif arg is ops_write %}
             {{hls_stream_name(arg)-}}{{"," if (not loop.last or not last_check)}}

@@ -255,13 +255,14 @@ class CppHLS(Scheme):
             iterLoop.opt_df_graph = optimizer.ISLReadBufferPropagation(iterLoop.opt_df_graph, program, app, self)
             iterLoop.joint_args.clear()
             iterLoop.set_opt_graph()
+            iterLoop.update_loop_node_args()
             iterLoop.opt_df_graph = optimizer.ISLDataDependencyCyclesDetection(iterLoop.opt_df_graph, program, app, self)
 
 
             iterLoop.gen_global_dat_args() 
             iterLoop.gen_PE_args()
             iterLoop.gen_global_const_args()
-            iterLoop.update_loop_node_args()
+            
             
             logging.debug(f"iterloop after optimization : {iterLoop}")
     def genIterLoopDevice(

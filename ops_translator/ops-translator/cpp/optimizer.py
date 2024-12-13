@@ -517,11 +517,12 @@ def ISLDataDependencyCyclesDetection(original_graph: DataflowGraph_v2, prog: Pro
         if depNode.df_node.node_uid == copy_graph.getStartNodeIdx():
             continue
         cur_dat_name = depNode.dat_ptr
+        logging.debug(f"{function_name()}: Checking dat: {cur_dat_name}")
         arg_dats = depNode.df_node.loop.get_arg_dat(cur_dat_name, [AccessType.OPS_WRITE, AccessType.OPS_RW])
         if not len(arg_dats) == 1:
             if len(arg_dats) == 0:
-                continue
-                # raise OptError(f"Failed to find arg_dat of {depNode.dat_ptr} in loop: {depNode.df_node.loop.kernel} ({depNode.df_node.loop})")
+                # continue
+                raise OptError(f"Failed to find arg_dat of {depNode.dat_ptr} in loop: {depNode.df_node.loop.kernel} ({depNode.df_node.loop})")
             raise OptError(f"One ops_par_loop can only write a dat once. Critical error in {depNode.df_node.loop}")
         kernel_func = scheme.translateKernel(depNode.df_node.loop, prog, app, 1)
         # logging.debug(f"translated kernel function: {kernel_func}")
@@ -575,10 +576,36 @@ def ISLDataDependencyCyclesDetection(original_graph: DataflowGraph_v2, prog: Pro
                 provider_dep_node_id = dependency_graph.add_node(provider_dep_node)
             
             if (not provider_dep_node_id in checked_uids) and (not provider_dep_node_id in check_queue_uids):
+                logging.debug(f"Adding new dat to be checked : {dependency_graph[provider_dep_node_id].dat_ptr}")
                 check_queue_uids.append(provider_dep_node_id)
                 
             dependency_graph.add_edge(provider_dep_node_id, dep_node_uid, {"weight" : 1, "src_dat_name" : provider_dep_node.dat_ptr, "sink_dat_name" : dep_node.dat_ptr})
+        
+        # Add a dep node if RW arg
+        # searched_edges = copy_graph.getInEdgesFromNode(depNode.df_node.node_uid, dat_name)
+        
+        # provider_dep_node_id = findIdx(dependency_graph.nodes(), lambda dep_node: dep_node.df_node.node_uid == src_node.node_uid and dep_node.dat_ptr == dat_name)
+        logging.debug(f"arg_dats_searched: {arg_dats[0]}")
+        if arg_dats[0].access_type == AccessType.OPS_RW:
+            logging.debug("degfsregb")
+            searched_edges = copy_graph.getInEdgesFromNode(depNode.df_node.node_uid, cur_dat_name)
+            if not len(searched_edges) == 1:
+                logging.error(f"Couldn't find edge connecting to sink node {depNode.df_node.loop.kernel} with dat: {cur_dat_name}({global_dat_id})")
+            src_node = copy_graph.getNode(searched_edges[0][0])
+            provider_dep_node_id = findIdx(dependency_graph.nodes(), lambda dep_node: dep_node.df_node.node_uid == src_node.node_uid and dep_node.dat_ptr == cur_dat_name)
             
+            if provider_dep_node_id is None:
+                provider_dep_node = BasicDataDepNode(cur_dat_name, src_node)
+                provider_dep_node_id = dependency_graph.add_node(provider_dep_node)
+            
+            if (not provider_dep_node_id in checked_uids) and (not provider_dep_node_id in check_queue_uids):
+                logging.debug(f"Adding new dat to be checked : {dependency_graph[provider_dep_node_id].dat_ptr}")
+                check_queue_uids.append(provider_dep_node_id)
+            
+            dependency_graph.add_edge(provider_dep_node_id, dep_node_uid, {"weight" : 1, "src_dat_name" : provider_dep_node.dat_ptr, "sink_dat_name" : dep_node.dat_ptr})
+
+        checked_uids.append(dep_node_uid)
+        
     def node_attr(node):
         if node.df_node.node_uid == copy_graph.getStartNodeIdx():
             node_name_suffix = "start"
@@ -760,7 +787,7 @@ def removeInternalDependencyPathEdgesAndUpdateSwap(df_graph: DataflowGraph_v2, d
                 dep_graph.remove_edge(in_n, out_n)
         
             #updating internal swap map
+            curr_node.df_node.internal_dat_swap_map[curr_dat_name] = prev_node.dat_ptr
             curr_node.df_node.internal_dat_swap_map[prev_node.dat_ptr] = curr_dat_name
-            
         prev_node_id = curr_node_id
     

@@ -57,6 +57,7 @@ extern "C" void kernel_outerloop_{{ilh.id}}(
         const {{const.typ}} {{const.ptr}},
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat %}
+    //{{ilh.dats[arg.dat_id][0].ptr}}
         {% if arg is not ops_rw %}
         hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
         {% else %}
