@@ -8,7 +8,7 @@ from util import KernelProcess, findIdx, function_name, print_rx_graph
 from scheme import Scheme
 from cpp.parser import ASTtoString, CursorKind, getBinaryOp, Cursor, getAccessorAccessIndices, decend
 from copy import deepcopy
-import pygraphviz
+# import pygraphviz
 import rustworkx as rx
 import jaro
 @dataclass

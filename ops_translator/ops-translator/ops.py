@@ -9,7 +9,7 @@ from functools import cmp_to_key
 import logging
 import rustworkx as rx
 from rustworkx.visualization import graphviz_draw
-import pygraphviz
+# import pygraphviz
 if TYPE_CHECKING:
     from store import Location
 from copy import deepcopy
