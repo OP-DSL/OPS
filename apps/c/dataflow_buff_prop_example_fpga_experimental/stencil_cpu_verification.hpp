@@ -36,9 +36,9 @@
 
 #pragma once
 
-#define EPSILON 0.0001;
+#define EPSILON 0.0001
 
-void init_a_b_cpu(int *a, int*b, int size[2], int d_m[2], int d_p[2], int range[4])
+void init_a_b_cpu(float *a, float*b, float& const_a, float& const_b, int size[2], int d_m[2], int d_p[2], int range[4])
 {
     int grid_size_y = size[1] - d_m[1] + d_p[1];
 #ifdef OPS_FPGA
@@ -52,14 +52,14 @@ void init_a_b_cpu(int *a, int*b, int size[2], int d_m[2], int d_p[2], int range[
         for (int i = range[0] - d_m[0]; i < range[1] - d_m[0]; i++)
         {
             int index = j * grid_size_x + i;
-            a[index] = 1;
-            b[index] = 2;
+            a[index] = const_a;
+            b[index] = const_b;
         }
     }
 }
 
 template <typename T>
-void init_zero_cpu(const T* u, int size[2], int d_m[2], int d_p[2], int range[4])
+void init_zero_cpu(T* u, int size[2], int d_m[2], int d_p[2], int range[4])
 {
     int grid_size_y = size[1] - d_m[1] + d_p[1];
 #ifdef OPS_FPGA
@@ -73,12 +73,54 @@ void init_zero_cpu(const T* u, int size[2], int d_m[2], int d_p[2], int range[4]
         for (int i = range[0] - d_m[0]; i < range[1] - d_m[0]; i++)
         {
             int index = j * grid_size_x + i;
-            u[index] = std::static_cast<T>(0);
+            u[index] = 0;
         }
     }
 }
 
-void kernel_1_5pt_cpu(const int* a, const float* d0, const float* d1, float* u1, float* u2, 
+template <typename T>
+void init_const_cpu(const T& cnst, T* u, int size[2], int d_m[2], int d_p[2], int range[4])
+{
+    int grid_size_y = size[1] - d_m[1] + d_p[1];
+#ifdef OPS_FPGA
+    int grid_size_x = ((size[0] - d_m[0] + d_p[0] + mem_vector_factor - 1) / mem_vector_factor) * mem_vector_factor;
+#else
+    int grid_size_x = size[0] - d_m[0] + d_p[0];
+#endif
+
+    for (int j = range[2] - d_m[1]; j < range[3] -d_m[1]; j++)
+    {
+        for (int i = range[0] - d_m[0]; i < range[1] - d_m[0]; i++)
+        {
+            int index = j * grid_size_x + i;
+            u[index] = cnst;
+        }
+    }
+}
+
+template <typename T>
+void init_index_cpu(T* u, int size[2], int d_m[2], int d_p[2], int range[4])
+{
+    int grid_size_y = size[1] - d_m[1] + d_p[1];
+    int act_size_x = size[0] - d_m[0] + d_p[0];
+#ifdef OPS_FPGA
+    int grid_size_x = ((size[0] - d_m[0] + d_p[0] + mem_vector_factor - 1) / mem_vector_factor) * mem_vector_factor;
+#else
+    int grid_size_x = size[0] - d_m[0] + d_p[0];
+#endif
+
+    for (int j = range[2] - d_m[1]; j < range[3] -d_m[1]; j++)
+    {
+        for (int i = range[0] - d_m[0]; i < range[1] - d_m[0]; i++)
+        {
+            int index = j * grid_size_x + i;
+            int int_idx = (j + d_m[1]) * act_size_x + (i + d_m[0]);
+            u[index] = int_idx;
+        }
+    }
+}
+
+void kernel_1_5pt_cpu(const float* a, const float* d0, const float* d1, float* u1, float* u2, 
         int size[2], int d_m[2], int d_p[2], int range[4])
 {
     int grid_size_y = size[1] - d_m[1] + d_p[1];
@@ -99,11 +141,13 @@ void kernel_1_5pt_cpu(const int* a, const float* d0, const float* d1, float* u1,
             u2[index] = a[index] + 0.2 * (d1[index] + d1[index + d_m[0]] 
                     + d1[index + d_p[0]] + d1[index + grid_size_x * d_m[1]] 
                     + d1[index + grid_size_x * d_p[1]]);
+            // u1[index] = a[index] * d0[index];
+            // u2[index] = a[index] + d1[index];
         }
     }
 }
 
-void kernel_2_1pt_cpu(const int* b, const float* d0, const float* u1, const float* u2,
+void kernel_2_1pt_cpu(const float* b, const float* d0, const float* u1, const float* u2,
         float* u3, float* u4, int size[2], int d_m[2], int d_p[2], int range[4])
 {
     int grid_size_y = size[1] - d_m[1] + d_p[1];
