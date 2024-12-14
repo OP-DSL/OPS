@@ -103,7 +103,7 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region_cascaded(const unsigned 
         {% endif %}
     {% endfor %}
     {% for const_arg in ilh.joint_args|ops_gbl %}
-                {{get_arg_gbl_name(const_arg)}}{{", " if not loop.last }}
+                {{get_arg_gbl_name(const_arg)}}{{", " if not loop.last or consts}}
     {% endfor %}
     {% for const in consts %}
                 {{const.ptr}}{{"," if not loop.last}}
@@ -144,7 +144,7 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region(const unsigned short& sl
  arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams{{"," if not last_check}}
     {%- endfor -%}
     {%- for const_arg in ilh.joint_args|ops_gbl -%}
-{{get_arg_gbl_name(const_arg)}}{{", " if not loop.last }}
+{{get_arg_gbl_name(const_arg)}}{{", " if not loop.last or consts}}
     {%- endfor -%}
     {% for const in consts -%}
  {{const.ptr}}{{", " if not loop.last }}
