@@ -694,7 +694,7 @@ class DataflowGraph_v2:
         if datIdx is None:
             raise OpsError(f"Failed to find {dat_str} in global dats")
 
-        self.__graph.add_edge(self.__graph.nodes().index(src_node), self.__graph.nodes().index(sink_node), {"weight": 1, "src_arg_id": src_arg_id, "sink_arg_id": sink_arg_id, "dat_str": dat_str, "isStray": isStray})
+        self.__graph.add_edge(self.__graph.nodes().index(src_node), self.__graph.nodes().index(sink_node), {"src_id": src_id, "sink_id": sink_id, "weight": 1, "src_arg_id": src_arg_id, "sink_arg_id": sink_arg_id, "dat_str": dat_str, "isStray": isStray})
 
     def addNode(self, df_node: DataflowNode) -> int:
         if findIdx(self.__graph.nodes(), lambda node: node.node_uid == df_node.node_uid):
@@ -855,24 +855,26 @@ class DataflowGraph_v2:
         SHOW_ARG_ID = False
         
         if "show_arg_id" in attr.keys():
-            if attr["show_arg_id"]:
+            if attr["show_arg_id"] == True:
                 SHOW_ARG_ID = True
             
         def node_attr(node):
             if node.type == DFNodeType.DF_START:
-                return {"color": "red", "label": "START"}
+                return {"color": "red", "label": "START", "shape" : "box"}
             elif node.type == DFNodeType.DF_END:
-                return {"color": "red", "label": "END"}
+                return {"color": "red", "label": "END", "shape" : "box"}
             elif node.type == DFNodeType.DF_LOOP:
                 return {"color": "blue", "label": f"{node.node_uid}:{node.loop.kernel}", "shape" : "box"}
             elif node.type == DFNodeType.DF_DAT:
                 label = ""
-                if not node.src_id is None:
-                    label += f"{node.src_id}:"
+                if SHOW_ARG_ID:
+                    if not node.src_id is None:
+                        label += f"{node.src_id}:"
                 label += f"{node.dat_name}"
-                if not node.sink_id is None:
-                    label += f":{node.sink_id}"
-                return {"label": label, "color" : "green"}
+                if SHOW_ARG_ID:
+                    if not node.sink_id is None:
+                        label += f":{node.sink_id}"
+                return {"label": label, "color" : "green", "style" : "dashed"}
             
         def edge_attr(edge_det):
             # edge, attr =  edge_det
@@ -881,9 +883,18 @@ class DataflowGraph_v2:
                     return {"color": "red"}
                 elif "stray" in edge_det.keys():
                     if edge_det["stray"]:
-                        return {"color": "blue"}
+                        return {"color": "blue", "style": "dashed"} 
+                if (edge_det['src_id'] == self.getStartNodeIdx() or edge_det['sink_id'] == self.getEndNodeIdx()):
+                    return {"style": "dashed"}  
             else:
-                label = f"{edge_det['src_arg_id']}->{edge_det['dat_str']}->{edge_det['src_arg_id']}" if SHOW_ARG_ID else f"{edge_det['dat_str']}"
+                label = ""
+                if SHOW_ARG_ID:
+                    label = f"{edge_det['src_arg_id']}->{edge_det['dat_str']}->{edge_det['src_arg_id']}"
+                else:
+                    label = f"{edge_det['dat_str']}"
+                    
+                if edge_det["src_id"] == self.getStartNodeIdx() or edge_det["sink_id"] == self.getEndNodeIdx():
+                    return {"label": label, "style": "dashed"}   
                 return {"label": label}
             return {}
         
@@ -913,8 +924,8 @@ class DataflowGraph_v2:
                     curr_dat_id_map[attr["dat_str"]] = dat_node_id
                 
                     dat_node_id = curr_dat_id_map[attr["dat_str"]]
-                    copy_graph.add_edge(src_id, dat_node_id, {"weight" : 1, "dat_connect" : True, "swap_connect": False, "dat_str": attr["dat_str"], "stray": False})
-                    copy_graph.add_edge(dat_node_id, sink_id, {"weight" : 1, "dat_connect" : True, "swap_connect": False, "dat_str": attr["dat_str"], "stray": attr["isStray"]})
+                    copy_graph.add_edge(src_id, dat_node_id, {"src_id": src_id, "sink_id": dat_node_id, "weight" : 1, "dat_connect" : True, "swap_connect": False, "dat_str": attr["dat_str"], "stray": False})
+                    copy_graph.add_edge(dat_node_id, sink_id, {"src_id": dat_node_id, "sink_id": sink_id, "weight" : 1, "dat_connect" : True, "swap_connect": False, "dat_str": attr["dat_str"], "stray": attr["isStray"]})
                 
             #checking only END node
             for src_id, sink_id, attr in self.getInEdgesFromNode(self.getEndNodeIdx()):
@@ -925,7 +936,7 @@ class DataflowGraph_v2:
                         first_dat_id_map[self.__global_dat_swap_map[attr["dat_str"]]] = swap_dat_node_id
                         curr_dat_id_map[self.__global_dat_swap_map[attr["dat_str"]]] = swap_dat_node_id
                     sink_dat_node_id = first_dat_id_map[self.__global_dat_swap_map[attr["dat_str"]]]
-                    copy_graph.add_edge(first_dat_id_map[attr["dat_str"]], sink_dat_node_id, {"weight" : 1, "dat_connect" : True, "swap_connect": True, "dat_str": self.__global_dat_swap_map[attr["dat_str"]]})
+                    copy_graph.add_edge(first_dat_id_map[attr["dat_str"]], sink_dat_node_id, {"src_id": first_dat_id_map[attr["dat_str"]], "sink_id": sink_dat_node_id, "weight" : 1, "dat_connect" : True, "swap_connect": True, "dat_str": self.__global_dat_swap_map[attr["dat_str"]]})
             
             graphviz_draw(copy_graph, node_attr_fn=node_attr, edge_attr_fn=edge_attr, filename=f"{filename}.{format}", image_type=f"{format}")
                 # graphviz_obj = rx.visualization.graphviz_graph(self.__graph)
