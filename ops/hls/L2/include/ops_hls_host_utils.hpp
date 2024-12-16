@@ -29,6 +29,13 @@
 static ops::hls::SizeType default_d_p({0,0,0});
 static ops::hls::SizeType default_d_m({0,0,0});
 
+void printIdx(ops::hls::IdxType& idx, std::string prompt= "")
+{
+	std::cout << "-------------------------------" << std::endl;
+	std::cout << "  index: " << prompt << ": (" << idx[0] << "," << idx[1] << "," << idx[2] << ")" << std::endl;
+	std::cout << "-------------------------------" << std::endl;
+}
+
 void printGridProp(ops::hls::GridPropertyCore& gridProp, std::string prompt = "")
 {
 	std::cout << "-------------------------------" << std::endl;
