@@ -261,12 +261,12 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
 
 void ops_halo_transfer(ops_halo_group group) {
 
-
+  if (group->nhalos == 0)
+    return;
   int storage_type_size = group->halos[0]->from->type_size < group->halos[0]->to->type_size ? group->halos[0]->from->type_size : group->halos[0]->to->type_size;
   bool mixed_exchange = group->halos[0]->from->type_size!=group->halos[0]->to->type_size &&
                   (strcmp(group->halos[0]->from->type, "float") == 0 || strcmp(group->halos[0]->from->type, "double") == 0 || strcmp(group->halos[0]->from->type, "half") == 0) &&
                   (strcmp(group->halos[0]->to->type, "float") == 0 || strcmp(group->halos[0]->to->type, "double") == 0 || strcmp(group->halos[0]->to->type, "half") == 0);
-
 
   for (int h = 0; h < group->nhalos; h++) {
     ops_halo halo = group->halos[h];
