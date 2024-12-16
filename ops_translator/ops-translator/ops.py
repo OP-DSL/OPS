@@ -290,9 +290,15 @@ def stencilPointsSort(npoints: int, ndim: int, array: List[int])-> List[Point]:
 
 def getStencilSize(array: List[Point])->int:
     xes = [point.x for point in array]
+    ys = [point.y for point in array]
+    zs = [point.z for point in array]
     minX = min(xes)
     maxX = max(xes)
-    return (maxX - minX + 1)
+    minY = min(ys)
+    maxY = max(ys)
+    minZ = min(zs)
+    maxZ = max(zs)
+    return Point([maxX - minX + 1, maxY - minY + 1, maxZ - minZ + 1])
 
 def isInSameRow(one: Point , two: Point):
     if one.y == two.y and one.z == two.z:
@@ -431,7 +437,7 @@ class Stencil:
     num_points: int
     points: List[Point]
     base_point: Point
-    stencil_size: int
+    stencil_size: Point
     # window_buffers : List[WindowBuffer]
     # chains: List[Tuple[Union[int, WindowBuffer], Union[int, WindowBuffer, str]]]
     d_m: Point
@@ -1607,9 +1613,15 @@ class Loop:
                 
         num_points = len(points)
         xes = [point.x for point in points]
+        ys = [point.y for point in points]
+        zs = [point.z for point in points]
         minX = min(xes)
         maxX = max(xes)
-        stencil_size = (maxX - minX + 1)
+        minY = min(ys)
+        maxY = max(ys)
+        minZ = min(zs)
+        maxZ = max(zs)
+        stencil_size = Point([maxX - minX + 1, maxY - minY + 1, maxZ - minZ + 1])
         
         row_discriptors = genRowDiscriptors(points, base_point)
         
