@@ -30,9 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** @brief Test Application on intended for FPGA with multi kernel 
- *      dataflow with buffer propagation optimization.
- * @author Beniel Thileepan
+/** @ Test Application on intended for FPGA with multi kernel dataflow with buffer propagation optimization
+  * @author Beniel Thileepan
   */
 
 // standard headers
@@ -41,7 +40,7 @@
 #include <string.h>
 #include <math.h>
 
-int grid_size_x, grid_size_y, logical_size_x, logical_size_y;
+int grid_size_x, grid_size_y, grid_size_z, logical_size_x, logical_size_y, logical_size_z;
 extern const unsigned short mem_vector_factor;
 
 // OPS header file
@@ -70,7 +69,8 @@ int main(int argc, const char **argv)
     //Mesh
     int imax = 20;
     int jmax = 20;
-    unsigned int iter_max = 135;
+
+    unsigned int iter_max = 120;
     unsigned int batches = 1;
 
     const char* pch;
@@ -105,15 +105,20 @@ int main(int argc, const char **argv)
 
     //declare stencils
     int s2D_00[] = {0,0};
-    ops_stencil S2D_00 = ops_decl_stencil(2, 1, s2D_00, "00");
-    int s2D_00_P10_M10_0P1_0M1[] = {0,0, 1,0, -1,0, 0,1, 0,-1};
-    ops_stencil S2D_00_P10_M10_0P1_0M1 = ops_decl_stencil(2, 5, s2D_00_P10_M10_0P1_0M1, "00:10:-10:01:0-1");
+    ops_stencil S2D_00 = ops_decl_stencil(2, 1, s2D_00, "default_stencil");
+    int s2D_cross_9pt[] = {             0,2,
+                                        0,1,
+                            -2,0, -1,0, 0,0, 1,0, 2,0,
+                                        0,-1,
+                                        0,-2};
+
+    ops_stencil S2D_CROSS_9PT = ops_decl_stencil(2, 9, s2D_cross_9pt, "9pt_2d_stencil");
 
     //declare datasets
     int size[] = {imax, jmax};
     int base[] = {0,0};
-    int d_m[] = {-1,-1};
-    int d_p[] = {1,1};
+    int d_m[] = {-2,-2};
+    int d_p[] = {2,2};
     float* temp = NULL;
 
     int grid_size_y = size[1] - d_m[1] + d_p[1];
@@ -125,27 +130,19 @@ int main(int argc, const char **argv)
 
     logical_size_x = size[0] - d_m[0] + d_p[0];
     logical_size_y = size[1] - d_m[1] + d_p[1];
+
     ops_decl_const("size_x", 1, "int", &logical_size_x);
     ops_decl_const("size_y", 1, "int", &logical_size_y);
 
+
     ops_dat dat0;
     ops_dat dat1;
-    ops_dat dat2;
-    ops_dat dat3;
-    ops_dat dat0_2;
-    ops_dat dat1_2;
     ops_dat dat_a;
-    ops_dat dat_b;
 
 #ifdef VERIFICATION
     float* dat0_cpu;
     float* dat1_cpu;
-    float* dat2_cpu;
-    float* dat3_cpu;
-    float* dat0_2_cpu;
-    float* dat1_2_cpu;
     float* a_cpu;
-    float* b_cpu;
 #endif
 
     // Allocation
@@ -153,37 +150,22 @@ int main(int argc, const char **argv)
     dat0 = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "float", name.c_str());
     name = std::string("dat1");
     dat1 = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "float", name.c_str());
-    name = std::string("dat2");
-    dat2 = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "float", name.c_str());
-    name = std::string("dat3");
-    dat3 = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "float", name.c_str());
-    name = std::string("dat0_2");
-    dat0_2 = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "float", name.c_str());
-    name = std::string("dat1_2");
-    dat1_2 = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "float", name.c_str());
     name = std::string("a");
     dat_a = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "float", name.c_str());
-    name = std::string("b");
-    dat_b = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "float", name.c_str());
 
 #ifdef VERIFICATION
-    dat0_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y);
-    dat1_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y);
-    dat2_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y);
-    dat3_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y);
-    dat0_2_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y);
-    dat1_2_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y);
-    a_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y);
-    b_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y);
+    dat0_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y * grid_size_z);
+    dat1_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y * grid_size_z);
+    a_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y * grid_size_z);
 #endif
     ops_partition("");
 
-    int full_range[] = {d_m[0], size[0] + d_p[0], d_m[1], size[1] + d_p[1]};
-    int internal_range[] = {0, size[0], 0, size[1]};
+    int full_range[] = {d_m[0], size[0] + d_p[0], d_m[1], size[1] + d_p[1], d_m[2], size[2] + d_p[2]};
+    int internal_range[] = {0, size[0], 0, size[1], 0, size[2]};
 
     // init 
-    ops_par_loop(kernel_init_zero, "init_dat0", block, 2, full_range,
-            ops_arg_dat(dat0, 1, S2D_00, "float", OPS_WRITE));
+    // ops_par_loop(kernel_init_zero, "init_dat0", block, 2, full_range,
+    //         ops_arg_dat(dat0, 1, S2D_00, "float", OPS_WRITE));
     
     // float init_const = 1;
     // ops_par_loop(kernel_const_init, "init_dat0_step2", block, 2, internal_range,
@@ -198,18 +180,14 @@ int main(int argc, const char **argv)
             ops_arg_dat(dat1, 1, S2D_00, "float", OPS_WRITE));
 
     float const_a = 1;
-    float const_b = 1.1;
     // init a and b
     ops_par_loop(kernel_const_init, "init_a", block, 2, full_range,
             ops_arg_gbl(&const_a, 1, "float", OPS_READ),
             ops_arg_dat(dat_a, 1, S2D_00, "float", OPS_WRITE));
-    ops_par_loop(kernel_const_init, "init_b", block, 2, full_range,
-            ops_arg_gbl(&const_b, 1, "float", OPS_READ),
-            ops_arg_dat(dat_b, 1, S2D_00, "float", OPS_WRITE));
 
 #ifdef VERIFICATION
-    init_a_b_cpu(a_cpu, b_cpu, const_a, const_b, size, d_m, d_p, full_range);
-    init_zero_cpu(dat0_cpu, size, d_m, d_p, full_range);
+    init_a_cpu(a_cpu, const_a, size, d_m, d_p, full_range);
+    // init_zero_cpu(dat0_cpu, size, d_m, d_p, full_range);
     // init_const_cpu(init_const, dat0_cpu, size, d_m, d_p, internal_range);
     init_index_cpu(dat0_cpu, size, d_m, d_p, full_range);
     copy_cpu(dat0_cpu, dat1_cpu, size, d_m, d_p, full_range);
@@ -217,14 +195,12 @@ int main(int argc, const char **argv)
     auto dat0_raw = (float*)ops_dat_get_raw_pointer(dat0, 0, S2D_00, OPS_HOST);
     auto dat1_raw = (float*)ops_dat_get_raw_pointer(dat1, 0, S2D_00, OPS_HOST);
     auto a_raw = (float*)ops_dat_get_raw_pointer(dat_a, 0, S2D_00, OPS_HOST);
-    auto b_raw = (float*)ops_dat_get_raw_pointer(dat_b, 0, S2D_00, OPS_HOST);
 
     // printGrid2D(dat0_raw, dat0.originalProperty, "dat0_before_calc");
     // printGrid2D(dat0_cpu, dat0.originalProperty, "dat0_cpu_before_calc");
     // printGrid2D(dat1_raw, dat1.originalProperty, "dat1_before_calc");
     // printGrid2D(dat1_cpu, dat1.originalProperty, "dat1_cpu_before_calc");
     // printGrid2D(a_raw, dat_a.originalProperty, "a_before_calc");
-    // printGrid2D(b_raw, dat_b.originalProperty, "b_before_calc");
 
 #endif
     // iterative stencil loop
@@ -233,81 +209,42 @@ int main(int argc, const char **argv)
 #ifndef OPS_FPGA
     for (int iter = 0; iter < iter_max; iter++)
     {
-        ops_par_loop(kernel_1_5pt, "stencil5pt_k1", block, 2, internal_range,
+        ops_par_loop(kernel_2D_9pt, "stencil9pt_k1", block, 2, internal_range,
                 ops_arg_dat(dat_a, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat0, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-                ops_arg_dat(dat1, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-                ops_arg_dat(dat2, 1, S2D_00, "float", OPS_WRITE),
-                ops_arg_dat(dat3, 1, S2D_00, "float", OPS_WRITE));
-        
-        ops_par_loop(kernel_2_1pt, "stencil1pt_k2", block, 2, internal_range,
-                ops_arg_dat(dat_b, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat0, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-                ops_arg_dat(dat2, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat3, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat0_2, 1, S2D_00, "float", OPS_WRITE),
-                ops_arg_dat(dat1_2, 1, S2D_00, "float", OPS_WRITE));
+                ops_arg_dat(dat0, 1, S2D_CROSS_9PT, "float", OPS_READ),
+                ops_arg_dat(dat1, 1, S2D_00, "float", OPS_WRITE));
+    
 
         ops_par_loop(copy, "copy_2", block, 2, internal_range,
-                ops_arg_dat(dat0_2, 1, S2D_00, "float", OPS_READ),
+                ops_arg_dat(dat1, 1, S2D_00, "float", OPS_READ),
                 ops_arg_dat(dat0, 1, S2D_00, "float", OPS_WRITE));
-
-        ops_par_loop(copy, "copy_3", block, 2, internal_range,
-                ops_arg_dat(dat1_2, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat1, 1, S2D_00, "float", OPS_WRITE));
     }
 #else
-
     ops_iter_par_loop("ops_iter_par_loop_0", iter_max,
-        ops_par_loop(kernel_1_5pt, "stencil5pt_k1", block, 2, internal_range,
+        ops_par_loop(kernel_2D_9pt, "stencil9pt_k1", block, 2, internal_range,
                 ops_arg_dat(dat_a, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat0, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-                ops_arg_dat(dat1, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-                ops_arg_dat(dat2, 1, S2D_00, "float", OPS_WRITE),
-                ops_arg_dat(dat3, 1, S2D_00, "float", OPS_WRITE)),
-        
-        ops_par_loop(kernel_2_1pt, "stencil1pt_k2", block, 2, internal_range,
-                ops_arg_dat(dat_b, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat0, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-                ops_arg_dat(dat2, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat3, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat0_2, 1, S2D_00, "float", OPS_WRITE),
-                ops_arg_dat(dat1_2, 1, S2D_00, "float", OPS_WRITE)),
-
+                ops_arg_dat(dat0, 1, S2D_CROSS_9PT, "float", OPS_READ),
+                ops_arg_dat(dat1, 1, S2D_00, "float", OPS_WRITE)),
         ops_par_loop(copy, "copy_2", block, 2, internal_range,
-                ops_arg_dat(dat0_2, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat0, 1, S2D_00, "float", OPS_WRITE)),
-
-        ops_par_loop(copy, "copy_3", block, 2, internal_range,
-                ops_arg_dat(dat1_2, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat1, 1, S2D_00, "float", OPS_WRITE)));
+                ops_arg_dat(dat1, 1, S2D_00, "float", OPS_READ),
+                ops_arg_dat(dat0, 1, S2D_00, "float", OPS_WRITE)));
 #endif
 
     //Final Verification after calc
 #ifdef VERIFICATION
 
-        auto dat0_2_raw = (float*)ops_dat_get_raw_pointer(dat0_2, 0, S2D_00, OPS_HOST);
-        auto dat1_2_raw = (float*)ops_dat_get_raw_pointer(dat1_2, 0, S2D_00, OPS_HOST);
+        dat1_raw = (float*)ops_dat_get_raw_pointer(dat1, 0, S2D_00, OPS_HOST);
 
         for (int iter = 0; iter < iter_max; iter++)
         {
-            kernel_1_5pt_cpu(a_cpu, dat0_cpu, dat1_cpu, dat2_cpu, dat3_cpu, size, d_m, d_p, internal_range);
-            kernel_2_1pt_cpu(b_cpu, dat0_cpu, dat2_cpu, dat3_cpu, dat0_2_cpu, dat1_2_cpu, size, d_m, d_p, internal_range);
-            copy_cpu(dat0_2_cpu, dat0_cpu, size, d_m, d_p, internal_range);
-            copy_cpu(dat1_2_cpu, dat1_cpu, size, d_m, d_p, internal_range);
+            kernel_2D_9pt_cpu(a_cpu, dat0_cpu, dat1_cpu, size, d_m, d_p, internal_range);
+            copy_cpu(dat1_cpu, dat0_cpu, size, d_m, d_p, internal_range);
         }
 
-        // printGrid2D(dat0_2_raw, dat0_2.originalProperty, "dat0_after_calc");
-        // printGrid2D(dat0_2_cpu, dat0_2.originalProperty, "dat0_cpu_after_calc");
-        // printGrid2D(dat1_2_raw, dat1_2.originalProperty, "dat1_after_calc");
-        // printGrid2D(dat1_2_cpu, dat1_2.originalProperty, "dat1_cpu_after_calc");
+        // printGrid2D(dat1_raw, dat1.originalProperty, "dat1_after_calc");
+        // printGrid2D(dat1_cpu, dat1.originalProperty, "dat1_cpu_after_calc");
 
-        if(verify(dat0_2_raw, dat0_2_cpu, size, d_m, d_p, internal_range))
-            std::cout << "verification of dat0 after calculation" << "[PASSED]" << std::endl;
-        else
-            std::cout << "verification of dat0 after calculation" << "[FAILED]" << std::endl;
-
-                if(verify(dat1_2_raw, dat1_2_cpu, size, d_m, d_p, internal_range))
+        if(verify(dat1_raw, dat1_cpu, size, d_m, d_p, internal_range))
             std::cout << "verification of dat1 after calculation" << "[PASSED]" << std::endl;
         else
             std::cout << "verification of dat1 after calculation" << "[FAILED]" << std::endl;
@@ -316,20 +253,11 @@ int main(int argc, const char **argv)
     //cleaning
     ops_free_dat(dat0);
     ops_free_dat(dat1);
-    ops_free_dat(dat2);
-    ops_free_dat(dat3);
-    ops_free_dat(dat0_2);
-    ops_free_dat(dat1_2);
     ops_free_dat(dat_a);
-    ops_free_dat(dat_b);
 
 #ifdef VERIFICATION
     free(dat0_cpu);
     free(dat1_cpu);
-    free(dat2_cpu);
-    free(dat3_cpu);
-    free(dat0_2_cpu);
-    free(dat1_2_cpu);
 #endif
 
     ops_exit();
