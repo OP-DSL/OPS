@@ -137,7 +137,7 @@ void kernel_2D_9pt_cpu(const float* a, const float* d0,  float* d1,
             float d0_temp_x = 0;
             float d0_temp_y = 0;
             
-            for (int k = d_m[0]; k < d_p[0]; k++)
+            for (int k = d_m[0]; k <= d_p[0]; k++)
             {
                 if (k != 0)
                 {
@@ -145,7 +145,7 @@ void kernel_2D_9pt_cpu(const float* a, const float* d0,  float* d1,
                     d0_temp_y += d0[index + grid_size_x * k];
                 }
             }
-            d1[index] = a[index] * ldexpf(d0_temp_x + d0_temp_y,-3);
+            d1[index] = a[index] * 0.125f * (d0_temp_x + d0_temp_y);
             // u1[index] = a[index] * d0[index];
             // u2[index] = a[index] + d1[index];
         }

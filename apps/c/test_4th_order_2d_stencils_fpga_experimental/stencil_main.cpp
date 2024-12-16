@@ -40,7 +40,7 @@
 #include <string.h>
 #include <math.h>
 
-int grid_size_x, grid_size_y, grid_size_z, logical_size_x, logical_size_y, logical_size_z;
+int actual_size_x, actual_size_y;
 extern const unsigned short mem_vector_factor;
 
 // OPS header file
@@ -106,12 +106,13 @@ int main(int argc, const char **argv)
     //declare stencils
     int s2D_00[] = {0,0};
     ops_stencil S2D_00 = ops_decl_stencil(2, 1, s2D_00, "default_stencil");
+    int s2D_cross_5pt[] = {0,0, 1,0, -1,0, 0,1, 0,-1};
+    ops_stencil S2D_CROSS_5PT = ops_decl_stencil(2, 5, s2D_cross_5pt, "5pt_2d_stencil");
     int s2D_cross_9pt[] = {             0,2,
                                         0,1,
                             -2,0, -1,0, 0,0, 1,0, 2,0,
                                         0,-1,
                                         0,-2};
-
     ops_stencil S2D_CROSS_9PT = ops_decl_stencil(2, 9, s2D_cross_9pt, "9pt_2d_stencil");
 
     //declare datasets
@@ -128,11 +129,11 @@ int main(int argc, const char **argv)
     int grid_size_x = size[0] - d_m[0] + d_p[0];
 #endif
 
-    logical_size_x = size[0] - d_m[0] + d_p[0];
-    logical_size_y = size[1] - d_m[1] + d_p[1];
+    actual_size_x = size[0] - d_m[0] + d_p[0];
+    actual_size_y = size[1] - d_m[1] + d_p[1];
 
-    ops_decl_const("size_x", 1, "int", &logical_size_x);
-    ops_decl_const("size_y", 1, "int", &logical_size_y);
+    ops_decl_const("actual_size_x", 1, "int", &actual_size_x);
+    ops_decl_const("actual_size_y", 1, "int", &actual_size_y);
 
 
     ops_dat dat0;
@@ -154,9 +155,9 @@ int main(int argc, const char **argv)
     dat_a = ops_decl_dat(block, 1, size, base, d_m, d_p, temp, "float", name.c_str());
 
 #ifdef VERIFICATION
-    dat0_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y * grid_size_z);
-    dat1_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y * grid_size_z);
-    a_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y * grid_size_z);
+    dat0_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y);
+    dat1_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y);
+    a_cpu = (float*)malloc(sizeof(float) * grid_size_x * grid_size_y);
 #endif
     ops_partition("");
 

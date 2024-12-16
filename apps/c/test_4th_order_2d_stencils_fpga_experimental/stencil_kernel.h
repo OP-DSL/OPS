@@ -10,7 +10,7 @@ void kernel_init_zero(ACC<float>& u) {
 
 void kernel_idx_init(const int *idx, ACC<float> &u)
 {
-    u(0,0) = idx[0] + logical_size_x * idx[1] + logical_size_x;
+    u(0,0) = idx[0] + actual_size_x * idx[1];
 }
 
 void kernel_const_init(const float* cnst, ACC<float> &u)
@@ -27,6 +27,10 @@ void kernel_2D_9pt(const ACC<float>& a, const ACC<float> &d0, ACC<float> &d1) {
     float t5 = t2 + t3;
     float t6 = t4 + t5;
     d1(0,0) =  a(0,0) * ldexpf(t6,-3);
+}
+
+void kernel_2D_5pt(const ACC<float>& a, const ACC<float> &d0, ACC<float> &d1) {
+    d1(0,0) = a(0,0) * 0.2 * (d0(0,0)+d0(-1,0)+d0(1,0)+d0(0,-1)+d0(0,1));
 }
 
 void copy(const ACC<float> &u2, ACC<float> &u) {
