@@ -43,14 +43,14 @@ class StencilCoreV2
 
         StencilCoreV2()
         {
-		#pragma HLS ARRAY_PARTITION variable = m_sizes complete
+//		#pragma HLS ARRAY_PARTITION variable = m_sizes complete
 
 #ifndef __SYTHESIS__
             static_assert(s_dim <= ops_max_dim, "Stencil cannot have more than maximum dimention supported by OPS_MAX_s_dim");
             static_assert(s_axis_width >= min_axis_data_width && s_axis_width <= max_axis_data_width,
 			        "axis_width failed limit check. VEC_FACTOR and T should be within limits");
 #endif        
-            __init();
+//            __init();
         }
 
         void setConfig(const short& PEId, const StencilConfigCore& stencilConfig)
@@ -58,10 +58,10 @@ class StencilCoreV2
         	m_PEId = PEId;
             m_stencilConfig = stencilConfig;
 
-#ifdef DEBUG_LOG
-            printf("[KERNEL_DEBUG]|%s| s_dim: %d, s_size_x: %d, s_stencil_span_x: %d, s_stencil_half_span_x: %d \n"
-            		,__func__, s_dim, s_size_x, s_stencil_span_x, s_stencil_half_span_x);
-#endif
+//#ifdef DEBUG_LOG
+//            printf("[KERNEL_DEBUG]|%s| s_dim: %d, s_size_x: %d, s_stencil_span_x: %d, s_stencil_half_span_x: %d \n"
+//            		,__func__, s_dim, s_size_x, s_stencil_span_x, s_stencil_half_span_x);
+//#endif
         }
 
         // void setPoints(const unsigned short * stencilPoints)
@@ -91,23 +91,23 @@ class StencilCoreV2
 
     private:
 
-        inline void __init()
-        {
-            for (unsigned short i = 0; i < s_dim; i++)
-            {
-                m_sizes[i] = s_size_x;
-            }
-        }
+//        inline void __init()
+//        {
+//            for (unsigned short i = 0; i < s_dim; i++)
+//            {
+//                m_sizes[i] = s_size_x;
+//            }
+//        }
 
     protected:
         static const unsigned short s_dim = STENCIL_DIM;
-        static const unsigned short s_size_x = STENCIL_SIZE_X;
-        static const unsigned short s_stencil_span_x = s_size_x - 1;
-        static const unsigned short s_stencil_half_span_x = s_stencil_span_x / 2;
+        // static const unsigned short s_size_x = STENCIL_SIZE_X;
+        // static const unsigned short s_stencil_span_x = s_size_x - 1;
+        // static const unsigned short s_stencil_half_span_x = s_stencil_span_x / 2;
 
         StencilConfigCore m_stencilConfig;
         // unsigned short m_stencilPoints[NUM_POINTS * 2];
-        unsigned short m_sizes[s_dim];
+        // unsigned short m_sizes[s_dim];
         short m_PEId;
         // SizeType m_lowerLimits;
         // SizeType m_upperLimits;
