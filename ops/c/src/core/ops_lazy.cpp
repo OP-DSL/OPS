@@ -740,6 +740,14 @@ int ops_construct_tile_plan(OPS_instance *instance) {
           }
 
         if (instance->OPS_diags > 5 && tile_sizes[d] != -1)
+
+        if(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]
+          - tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] <= 0)
+          printf2(instance,"Proc %d, %s dead tile %d dim %d: exec range is: %d-%d\n",
+                 ops_get_proc(), ops_kernel_list[loop]->name, tile, d,
+                 tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
+                 tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
+        else
           printf2(instance,"Proc %d, %s tile %d dim %d: exec range is: %d-%d\n",
                  ops_get_proc(), ops_kernel_list[loop]->name, tile, d,
                  tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
