@@ -163,49 +163,24 @@ int main(int argc, const char** argv)
   int s3D_big_sten[] = {-4,0,0, -3,0,0, -2,0,0, -1,0,0, 0,0,0, 1,0,0, 2,0,0, 3,0,0, 4,0,0, 
                         0,-4,0, 0,-3,0, 0,-2,0, 0,-1,0,        0,1,0, 0,2,0, 0,3,0, 0,4,0,
                         0,0,-4, 0,0,-3, 0,0,-2, 0,0,-1,        0,0,1, 0,0,2, 0,0,3, 0,0,4};
-//   int is = 0;
-//   for (int ix=-HALF_ORDER;ix<=HALF_ORDER;ix++) {
-//     printf("ix = %d\n",ix);
-//     s3D_big_sten[is] = ix;
-//     is = is + 1;
-//     s3D_big_sten[is] = 0;
-//     is = is + 1;
-//     s3D_big_sten[is] = 0;
-//     is = is + 1;
-//   }
-//   for (int ix=-HALF_ORDER;ix<=HALF_ORDER;ix++) {
-//     s3D_big_sten[is] = 0;
-//     is = is + 1;
-//     s3D_big_sten[is] = ix;
-//     is = is + 1;
-//     s3D_big_sten[is] = 0;
-//     is = is + 1;
-//   }
-//   for (int ix=-HALF_ORDER;ix<=HALF_ORDER;ix++) {
-//     s3D_big_sten[is] = 0;
-//     is = is + 1;
-//     s3D_big_sten[is] = 0;
-//     is = is + 1;
-//     s3D_big_sten[is] = ix;
-//     is = is + 1;
-//   }
+
   ops_stencil S3D_big_sten = ops_decl_stencil( 3, 3*ORDER+1, s3D_big_sten, "big_sten");
 
   printf(" HERE2 \n");
   
 
   //declare datasets
-  int d_p[3] = {HALF_ORDER,HALF_ORDER,HALF_ORDER}; //max halo depths for the dat in the possitive direction
-  int d_m[3] = {-HALF_ORDER,-HALF_ORDER,-HALF_ORDER}; //max halo depths for the dat in the negative direction
-  int base[3] = {0,0,0};
+    int size[] = {logical_size_x, logical_size_y, logical_size_z};
+    int d_p[] = {HALF_ORDER,HALF_ORDER,HALF_ORDER}; //max halo depths for the dat in the possitive direction
+    int d_m[] = {-HALF_ORDER,-HALF_ORDER,-HALF_ORDER}; //max halo depths for the dat in the negative direction
+    int base[] = {0,0,0};
 //   int uniform_size[3] = {(logical_size_x-1)/ngrid_x+1,(logical_size_y-1)/ngrid_y+1,(logical_size_z-1)/ngrid_z+1};
-  float* temp = NULL;
-  int *sizes = (int*)malloc(3*sizeof(int));
-  int *disps = (int*)malloc(3*sizeof(int));
+    float* temp = NULL;
+    int disps[] = {0,0,0};
 
   printf(" HERE 3\n");
   
-  int size[3] = {logical_size_x, logical_size_y, logical_size_z};
+
 //   if (size[0]>logical_size_x) size[0] = logical_size_x;
 //   if (size[1]>logical_size_y) size[1] = logical_size_y;
 //   if (size[2]>logical_size_z) size[2] = logical_size_z;
@@ -302,13 +277,6 @@ int main(int argc, const char** argv)
         ytemp2_5[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
     }
 
-  sizes[0] = size[0];
-  sizes[1] = size[1];
-  sizes[2] = size[2];
-  disps[0] = 0;
-  disps[1] = 0;
-  disps[2] = 0;
-
   printf(" HERE 4\n");
 
   
@@ -327,7 +295,7 @@ int main(int argc, const char** argv)
   
   //populate density, bulk modulus, velx, vely, velz, and boundary conditions
 	int full_range[] = {d_m[0], size[0] + d_p[0], d_m[1], size[1] + d_p[1], d_m[2], size[2] + d_p[2]};
-    int internal_range[] = {0,sizes[0],0,sizes[1],0,sizes[2]};
+    int internal_range[] = {0,size[0],0,size[1],0,size[2]};
 	
     //Intialisation
     for (unsigned int bat = 0; bat < batches; bat++)
@@ -342,22 +310,22 @@ int main(int argc, const char** argv)
                 ops_arg_idx(),
                 ops_arg_dat(rho[bat], 1, S3D_000, "float", OPS_WRITE),
                 ops_arg_dat(mu[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_0[bat], 1, S3D_big_sten, "float", OPS_WRITE));
+                ops_arg_dat(yy_0[bat], 1, S3D_000, "float", OPS_WRITE));
         ops_par_loop(kernel_copy, "copy_yy_1", blocks[bat],  3 ,  full_range,
                 ops_arg_dat(yy_0[bat], 1, S3D_000, "float", OPS_READ), 
-                ops_arg_dat(yy_1[bat], 1, S3D_big_sten, "float", OPS_WRITE));
+                ops_arg_dat(yy_1[bat], 1, S3D_000, "float", OPS_WRITE));
         ops_par_loop(kernel_copy, "copy_yy_2", blocks[bat],  3 ,  full_range,
                 ops_arg_dat(yy_0[bat], 1, S3D_000, "float", OPS_READ), 
-                ops_arg_dat(yy_2[bat], 1, S3D_big_sten, "float", OPS_WRITE));
+                ops_arg_dat(yy_2[bat], 1, S3D_000, "float", OPS_WRITE));
         ops_par_loop(kernel_copy, "copy_yy_3", blocks[bat],  3 ,  full_range,
                 ops_arg_dat(yy_0[bat], 1, S3D_000, "float", OPS_READ), 
-                ops_arg_dat(yy_3[bat], 1, S3D_big_sten, "float", OPS_WRITE));
+                ops_arg_dat(yy_3[bat], 1, S3D_000, "float", OPS_WRITE));
         ops_par_loop(kernel_copy, "copy_yy_4", blocks[bat],  3 ,  full_range,
                 ops_arg_dat(yy_0[bat], 1, S3D_000, "float", OPS_READ), 
-                ops_arg_dat(yy_4[bat], 1, S3D_big_sten, "float", OPS_WRITE));
+                ops_arg_dat(yy_4[bat], 1, S3D_000, "float", OPS_WRITE));
         ops_par_loop(kernel_copy, "copy_yy_5", blocks[bat],  3 ,  full_range,
                 ops_arg_dat(yy_0[bat], 1, S3D_000, "float", OPS_READ), 
-                ops_arg_dat(yy_5[bat], 1, S3D_big_sten, "float", OPS_WRITE));
+                ops_arg_dat(yy_5[bat], 1, S3D_000, "float", OPS_WRITE));
         // ops_par_loop(rtm_kernel_populate, "copy_yy_sum_1", blocks[bat],  3 ,  full_range,
         //         ops_arg_dat(yy_sum_0[bat], 1, S3D_000, "float", OPS_READ), 
         //         ops_arg_dat(yy_sum_1[bat], 1, S3D_big_sten, "float", OPS_WRITE));
@@ -529,33 +497,6 @@ int main(int argc, const char** argv)
                 ops_arg_dat(yy_sum_4[bat], 1, S3D_000, "float", OPS_READ),
                 ops_arg_dat(yy_sum_5[bat], 1, S3D_000, "float", OPS_READ));
 
-        // //if (ngrid_x>1 || ngrid_y>1 || ngrid_z>1) ops_halo_transfer(u_halos);
-        // // if (iter%itertile == 0) ops_execute();
-
-        // /* The following is 4th order Runga-Kutta */
-        // float dt = 0.1f; //=sqrt(mu/rho);
-        // float scale1 = 0.5f;
-        // float scale2 = 1/6.0f;
-
-        // derivs1(ngrid_x, ngrid_y, ngrid_z, sizes, disps, blocks, S3D_000, S3D_big_sten,
-        //    &dt, &scale1, &scale2, rho, mu, yy, ytemp1, yy_sum);
-
-
-        // scale1 = 0.5f;
-        // scale2 = 1/3.0f;
-        // derivs2(ngrid_x, ngrid_y, ngrid_z, sizes, disps, blocks, S3D_000, S3D_big_sten,
-        //    &dt, &scale1, &scale2, rho, mu, yy, ytemp1, ytemp2, yy_sum);
-
-        // scale1 = 1.0f;
-        // scale2 = 1/3.0f;
-        // derivs2(ngrid_x, ngrid_y, ngrid_z, sizes, disps, blocks, S3D_000, S3D_big_sten,
-        //    &dt, &scale1, &scale2, rho, mu, yy, ytemp2, ytemp1, yy_sum);
-
-
-        // scale1 = 1.0f;
-        // scale2 = 1/6.0f;
-        // derivs3(ngrid_x, ngrid_y, ngrid_z, sizes, disps, blocks, S3D_000, S3D_big_sten,
-        //    &dt, &scale1, &scale2, rho, mu, yy, ytemp1, yy_sum);
         } 
 #else
         ops_iter_par_loop("ops_iter_par_loop_0", n_iter,
