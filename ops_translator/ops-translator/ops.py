@@ -860,11 +860,11 @@ class DataflowGraph_v2:
             
         def node_attr(node):
             if node.type == DFNodeType.DF_START:
-                return {"color": "red", "label": "START", "shape" : "box"}
+                return {"color": "red", "label": "START"}
             elif node.type == DFNodeType.DF_END:
-                return {"color": "red", "label": "END", "shape" : "box"}
+                return {"color": "red", "label": "END"}
             elif node.type == DFNodeType.DF_LOOP:
-                return {"color": "blue", "label": f"{node.node_uid}:{node.loop.kernel}", "shape" : "box"}
+                return {"color": "blue", "label": f"{node.node_uid}:{node.loop.kernel}"}
             elif node.type == DFNodeType.DF_DAT:
                 label = ""
                 if SHOW_ARG_ID:
@@ -874,7 +874,7 @@ class DataflowGraph_v2:
                 if SHOW_ARG_ID:
                     if not node.sink_id is None:
                         label += f":{node.sink_id}"
-                return {"label": label, "color" : "green", "style" : "dashed"}
+                return {"label": label, "color" : "green", "style" : "dashed", "shape" : "box"}
             
         def edge_attr(edge_det):
             # edge, attr =  edge_det
