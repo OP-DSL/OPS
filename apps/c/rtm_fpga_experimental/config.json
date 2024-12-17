@@ -2,7 +2,7 @@
     "grouped" : false,
     "SLR_count" : 3,
     "device" : 7,
-    "vector_factor" : 8,
+    "vector_factor" : 1,
     "mem_vector_factor": 16,
     "iter_par_factor": 1,
     "stencil_type" : "float",
@@ -14,5 +14,7 @@
     "num_read_outstanding" : 4,
     "num_write_outstanding" : 4,
     "maxi_offset" : "slave",
-    "ops_max_dim" : 3
+    "ops_max_dim" : 3,
+    "axis_interconnect_buff_size" : 1024,
+    "datamover_mode" : 2
 }

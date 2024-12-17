@@ -25,7 +25,7 @@ void inline kernel_{{lh.kernel}}_core(
         {% if arg is ops_write or ops_rw%}
             {% if prog.findStencil(arg.stencil_ptr) %}
                 {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
-        {{lh.dats[arg.dat_id].typ}}& arg{{arg.dat_id}}_{{i}}{{"," if (not last_check)}}
+        {{lh.dats[arg.dat_id].typ}}& arg{{arg.dat_id}}_{{i}}{{"," if (not last_check or not loop.last)}}
                 {% endfor %}
             {% endif %}
         {% endif %}
@@ -97,7 +97,7 @@ void inline kernel_{{lh.kernel}}_core(
         {% if arg is ops_dat %}
             {% if prog.findStencil(arg.stencil_ptr) %}
                 {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
-                    arg{{arg.id}}.hostBuffer[getOffset(arg{{arg.id}}_{{i}}_stencil_offset, arg{{arg.id}}.originalProperty, i {{", j" if (lh.ndim > 1)}}{{", k" if (lh.ndim > 2)}})]{{"," if not last_check}}
+                    arg{{arg.id}}.hostBuffer[getOffset(arg{{arg.id}}_{{i}}_stencil_offset, arg{{arg.id}}.originalProperty, i {{", j" if (lh.ndim > 1)}}{{", k" if (lh.ndim > 2)}})]{{"," if not last_check or not loop.last}}
                 {% endfor %}
             {% endif %}
         {% elif arg is ops_idx %}
