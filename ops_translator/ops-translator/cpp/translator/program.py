@@ -243,8 +243,8 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
         buffer.update(index, '\tops_init_backend(argc, argv);\n')
 
     # 5. Update ops_exit
-    if buffer.search(r'\s* ops_exit\s*\('):
-        index = buffer.search(r'\s* ops_exit\s*\(')
+    if buffer.search(r'\s*ops_exit\s*\('):
+        index = buffer.search(r'\s*ops_exit\s*\(')
         buffer.update(index, '\tops_exit_backend();\n')
     
     # 6. Find the Global declarations of constant and check extern or not
