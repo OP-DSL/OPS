@@ -336,13 +336,16 @@ def windowBuffChainingAlgo(sorted_array: List[Point], ndim: int) -> Tuple[List[s
         elif isInSameRow(sorted_array[p_idx], sorted_array[p_idx+1]):
             chains.append((p_idx, p_idx+1))
         else:
+            is_aligned = False
             if sorted_array[p_idx+1].z == sorted_array[p_idx].z:
                 buffer_type = BufferType.LINE_BUFF
                 curr_buff_name = "buf_r" + str(sorted_array[p_idx].y) + "_" + str(sorted_array[p_idx+1].y) + "_p" + str(sorted_array[p_idx].z)
+                is_aligned =  sorted_array[p_idx+1].x == sorted_array[p_idx].x
             else:
                 buffer_type = BufferType.PLANE_BUFF
                 curr_buff_name = "buf_p" + str(sorted_array[p_idx].z) + "_" + str(sorted_array[p_idx+1].z)
-            curr_buff = WindowBuffer(curr_buff_name, buffer_type, sorted_array[p_idx+1], sorted_array[p_idx])
+                is_aligned =  sorted_array[p_idx+1].x == sorted_array[p_idx].x and sorted_array[p_idx+1].y == sorted_array[p_idx].y
+            curr_buff = WindowBuffer(curr_buff_name, buffer_type, sorted_array[p_idx+1], sorted_array[p_idx], is_aligned)
             unique_buffers.append(curr_buff)
             chains.append((p_idx, curr_buff))
             if prev_buff:
@@ -425,7 +428,7 @@ class WindowBuffer:
     buffer_type: BufferType
     read_point: Point
     write_point: Point
-    
+    is_read_write_aligned: bool = False
     def __str__(self) -> str:
         return f"WindowBuffer(name={self.name}, read_point={self.read_point}, write_point={self.write_point})"
     
