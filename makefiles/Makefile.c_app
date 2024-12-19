@@ -415,5 +415,6 @@ clean:
 	rm -f *_ops_hls.cpp
 	rm -f ops_translator_run.log
 	rm -f xrc.log
-	rm -f *_ast.txt
+	rm -f *_ast.txt  
 	rm -f *.png
+	rm -f *.dot
