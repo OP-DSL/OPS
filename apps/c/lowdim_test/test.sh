@@ -41,7 +41,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -rf perf_out output.h5 output.h5
 
 echo '============> Running MPI+OpenMP'
-export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 12 ./lowdim_mpi_openmp > perf_out
+export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 4 ./lowdim_mpi_openmp > perf_out
 #$HDF5_INSTALL_PATH/bin/h5diff output.h5 output_seq.h5
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi;
 grep "PASSED" perf_out
@@ -49,7 +49,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -rf perf_out output.h5
 
 echo '============> Running DEV_MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./lowdim_dev_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./lowdim_dev_mpi > perf_out
 #$HDF5_INSTALL_PATH/bin/h5diff output.h5 output_seq.h5
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi;
 grep "PASSED" perf_out
@@ -57,7 +57,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -rf perf_out output.h5
 
 echo '============> Running MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./lowdim_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./lowdim_mpi > perf_out
 #$HDF5_INSTALL_PATH/bin/h5diff output.h5 output_seq.h5
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi;
 grep "PASSED" perf_out
@@ -117,7 +117,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -rf perf_out output.h5
 
 echo '============> Running MPI+SYCL on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 12 ./lowdim_mpi_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./lowdim_mpi_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
 #$HDF5_INSTALL_PATH/bin/h5diff output.h5 output_seq.h5
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi;
 grep "PASSED" perf_out
@@ -158,7 +158,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -rf perf_out output.h5
 
 echo '============> Running MPI+OpenMP'
-export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 12 ./lowdim_mpi_openmp > perf_out
+export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 4 ./lowdim_mpi_openmp > perf_out
 #$HDF5_INSTALL_PATH/bin/h5diff output.h5 output_seq.h5
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi;
 grep "PASSED" perf_out
@@ -166,7 +166,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -rf perf_out output.h5
 
 echo '============> Running DEV_MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./lowdim_dev_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./lowdim_dev_mpi > perf_out
 #$HDF5_INSTALL_PATH/bin/h5diff output.h5 output_seq.h5
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi;
 grep "PASSED" perf_out
@@ -174,7 +174,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -rf perf_out output.h5
 
 echo '============> Running MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./lowdim_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./lowdim_mpi > perf_out
 #$HDF5_INSTALL_PATH/bin/h5diff output.h5 output_seq.h5
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi;
 grep "PASSED" perf_out

@@ -2,7 +2,7 @@
 set -e
 cd $OPS_INSTALL_PATH/c
 
-export SOURCE_INTEL=source_intel_2021.3_pythonenv
+export SOURCE_INTEL=source_intel_2021.3_pythonenv_ashutosh_new
 
 #export AMOS=TRUE
 #export DMOS=TRUE
