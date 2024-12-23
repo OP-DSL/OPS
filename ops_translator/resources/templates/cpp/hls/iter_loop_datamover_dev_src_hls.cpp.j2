@@ -31,24 +31,37 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_read(
     {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is ops_read_or_rw%}
     static ::hls::stream<ap_uint<mem_data_width>> arg{{arg.id}}_read_mem_strm;
-    static ::hls::stream<ap_uint<axis_data_width>> arg{{arg.id}}_read_reduced_mem_strm;
     #pragma HLS STREAM variable = arg{{arg.id}}_read_mem_strm depth = max_depth_v16
+            {% if config["vector_factor"] < config["mem_vector_factor"] %}
+    static ::hls::stream<ap_uint<axis_data_width>> arg{{arg.id}}_read_reduced_mem_strm;
     #pragma HLS STREAM variable = arg{{arg.id}}_read_reduced_mem_strm depth = max_depth_v8
+            {% endif %}
         {% endif %}
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
     ops::hls::mem2stream<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_read_mem_strm, memconfig);
     {% endfor %}
-    {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
+    {% if config["vector_factor"] < config["mem_vector_factor"] %}
+        {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
     ops::hls::stream2streamStepdown<mem_data_width, axis_data_width>(arg{{arg.id}}_read_mem_strm, arg{{arg.id}}_read_reduced_mem_strm, num_beats);
-    {% endfor %}
-    {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
-        {% if arg is ops_read %}
+        {% endfor %}
+        {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
+            {% if arg is ops_read %}
     ops::hls::stream2axis<axis_data_width>(arg{{arg.id}}_read_reduced_mem_strm, {{axis_name(arg)}}, num_pkts);
-        {% elif arg is ops_rw %}
+            {% elif arg is ops_rw %}
     ops::hls::stream2axis<axis_data_width>(arg{{arg.id}}_read_reduced_mem_strm, {{axis_name_t2(arg, "out")}}, num_pkts);
-        {% endif %}
-    {% endfor %}
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
+            {% if arg is ops_read %}
+    ops::hls::stream2axis<axis_data_width>(arg{{arg.id}}_read_mem_strm, {{axis_name(arg)}}, num_pkts);
+            {% elif arg is ops_rw %}
+    ops::hls::stream2axis<axis_data_width>(arg{{arg.id}}_read_mem_strm, {{axis_name_t2(arg, "out")}}, num_pkts);
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
     {#{% for arg in ilh.joint_args|ops_dat %}
         {% if arg is ops_read %}
     ops::hls::memReadGridV2<mem_data_width, axis_data_width, data_width>(arg{{arg.id}}, {{axis_name(arg)}}, arg{{arg.id}}_gridSize, range);
@@ -85,9 +98,11 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_write(
     {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is ops_write_or_rw and arg is not read_only_rw %}
     static ::hls::stream<ap_uint<mem_data_width>> arg{{arg.id}}_write_mem_strm;
-    static ::hls::stream<ap_uint<axis_data_width>> arg{{arg.id}}_write_reduced_mem_strm;
     #pragma HLS STREAM variable = arg{{arg.id}}_write_mem_strm depth = max_depth_v16
+            {% if config["vector_factor"] < config["mem_vector_factor"] %}
+    static ::hls::stream<ap_uint<axis_data_width>> arg{{arg.id}}_write_reduced_mem_strm;
     #pragma HLS STREAM variable = arg{{arg.id}}_write_reduced_mem_strm depth = max_depth_v8
+            {% endif %}
         {% endif %}
     {% endfor %}
 
@@ -97,23 +112,33 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_write(
         {% if arg is read_only_rw %}
     ops::hls::axisTerminate<axis_data_width>({{axis_name_t2(arg, "in")}}, num_pkts);
         {% else %}
-            {% if arg is ops_write %}
+            {% if config["vector_factor"] < config["mem_vector_factor"] %}
+                {% if arg is ops_write %}
     ops::hls::axis2stream<axis_data_width>({{axis_name(arg)}}, arg{{arg.id}}_write_reduced_mem_strm, num_pkts);
-            {% else %}
+                {% else %}
     ops::hls::axis2stream<axis_data_width>({{axis_name_t2(arg, "in")}}, arg{{arg.id}}_write_reduced_mem_strm, num_pkts);
+                {% endif %}
+            {% else %}
+                {% if arg is ops_write %}
+    ops::hls::axis2stream<axis_data_width>({{axis_name(arg)}}, arg{{arg.id}}_write_mem_strm, num_pkts);
+                {% else %}
+    ops::hls::axis2stream<axis_data_width>({{axis_name_t2(arg, "in")}}, arg{{arg.id}}_write_mem_strm, num_pkts);
+                {% endif %}
             {% endif %}
         {% endif %}
     {% endif %}    
     {% endfor %}
-    {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
-    {% if arg is not read_only_rw %}
+    {% if config["vector_factor"] < config["mem_vector_factor"] %}
+        {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
+            {% if arg is not read_only_rw %}
     ops::hls::stream2streamStepup<axis_data_width, mem_data_width>(arg{{arg.id}}_write_reduced_mem_strm, arg{{arg.id}}_write_mem_strm, num_beats);
+            {% endif %}
+        {% endfor %}
     {% endif %}
-    {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
-    {% if arg is not read_only_rw %}
+        {% if arg is not read_only_rw %}
     ops::hls::stream2mem<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_write_mem_strm, memconfig);
-    {% endif %}
+        {% endif %}
     {% endfor %}
     {#{% for arg in ilh.joint_args|ops_dat %}
         {% if arg is ops_write %}
@@ -147,15 +172,19 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write_dataflow_region(
     {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is ops_read_or_rw%}
     static ::hls::stream<ap_uint<mem_data_width>> arg{{arg.id}}_read_mem_strm;
-    static ::hls::stream<ap_uint<axis_data_width>> arg{{arg.id}}_read_reduced_mem_strm;
     #pragma HLS STREAM variable = arg{{arg.id}}_read_mem_strm depth = max_depth_v16
+            {% if config["vector_factor"] < config["mem_vector_factor"] %}
+    static ::hls::stream<ap_uint<axis_data_width>> arg{{arg.id}}_read_reduced_mem_strm;
     #pragma HLS STREAM variable = arg{{arg.id}}_read_reduced_mem_strm depth = max_depth_v8
+            {% endif %}
         {% endif %}
         {% if arg is ops_write_or_rw and arg is not read_only_rw %}
     static ::hls::stream<ap_uint<mem_data_width>> arg{{arg.id}}_write_mem_strm;
-    static ::hls::stream<ap_uint<axis_data_width>> arg{{arg.id}}_write_reduced_mem_strm;
     #pragma HLS STREAM variable = arg{{arg.id}}_write_mem_strm depth = max_depth_v16
+            {% if config["vector_factor"] < config["mem_vector_factor"] %}
+    static ::hls::stream<ap_uint<axis_data_width>> arg{{arg.id}}_write_reduced_mem_strm;
     #pragma HLS STREAM variable = arg{{arg.id}}_write_reduced_mem_strm depth = max_depth_v8
+            {% endif %}
         {% endif %}
     {% endfor %}
 
@@ -163,14 +192,24 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write_dataflow_region(
     {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
         ops::hls::mem2stream<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_read_mem_strm, memconfig);
     {% endfor %}
-    {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
+    {% if config["vector_factor"] < config["mem_vector_factor"] %}
+        {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
         ops::hls::stream2streamStepdown<mem_data_width, axis_data_width>(arg{{arg.id}}_read_mem_strm, arg{{arg.id}}_read_reduced_mem_strm, num_beats);
-    {% endfor %}
+        {% endfor %}
+    {% endif %}
     {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
-        {% if arg is ops_read %}
+        {% if config["vector_factor"] < config["mem_vector_factor"] %}
+            {% if arg is ops_read %}
         ops::hls::stream2axis<axis_data_width>(arg{{arg.id}}_read_reduced_mem_strm, {{axis_name(arg)}}, num_pkts);
-        {% elif arg is ops_rw %}
+            {% elif arg is ops_rw %}
         ops::hls::stream2axis<axis_data_width>(arg{{arg.id}}_read_reduced_mem_strm, {{axis_name_t2(arg, "out")}}, num_pkts);
+            {% endif %}
+        {% else %}
+            {% if arg is ops_read %}
+        ops::hls::stream2axis<axis_data_width>(arg{{arg.id}}_read_mem_strm, {{axis_name(arg)}}, num_pkts);
+            {% elif arg is ops_rw %}
+        ops::hls::stream2axis<axis_data_width>(arg{{arg.id}}_read_mem_strm, {{axis_name_t2(arg, "out")}}, num_pkts);
+            {% endif %}
         {% endif %}
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
@@ -178,19 +217,29 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write_dataflow_region(
             {% if arg is read_only_rw %}
         ops::hls::axisTerminate<axis_data_width>({{axis_name_t2(arg, "in")}}, num_pkts);
             {% else %}
-                {% if arg is ops_write %}
+                {% if config["vector_factor"] < config["mem_vector_factor"] %}
+                    {% if arg is ops_write %}
         ops::hls::axis2stream<axis_data_width>({{axis_name(arg)}}, arg{{arg.id}}_write_reduced_mem_strm, num_pkts);
-                {% else %}
+                    {% else %}
         ops::hls::axis2stream<axis_data_width>({{axis_name_t2(arg, "in")}}, arg{{arg.id}}_write_reduced_mem_strm, num_pkts);
+                    {% endif %}
+                {% else %}
+                    {% if arg is ops_write %}
+        ops::hls::axis2stream<axis_data_width>({{axis_name(arg)}}, arg{{arg.id}}_write_mem_strm, num_pkts);
+                    {% else %}
+        ops::hls::axis2stream<axis_data_width>({{axis_name_t2(arg, "in")}}, arg{{arg.id}}_write_mem_strm, num_pkts);
+                    {% endif %}
                 {% endif %}
             {% endif %}
         {% endif %}    
     {% endfor %}
-    {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
-        {% if arg is not read_only_rw %}
+    {% if config["vector_factor"] < config["mem_vector_factor"] %}
+        {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
+            {% if arg is not read_only_rw %}
         ops::hls::stream2streamStepup<axis_data_width, mem_data_width>(arg{{arg.id}}_write_reduced_mem_strm, arg{{arg.id}}_write_mem_strm, num_beats);
-        {% endif %}
-    {% endfor %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
     {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
         {% if arg is not read_only_rw %}
         ops::hls::stream2mem<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_write_mem_strm, memconfig);
