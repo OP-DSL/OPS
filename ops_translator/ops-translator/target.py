@@ -30,6 +30,15 @@ class MPIOpenMP(Target):
         "device" : 1
         }
 
+class F2CMPIOpenMP(Target):
+    name = "f2c_mpi_openmp"
+    suffix = "f2c"
+    kernel_translation = False
+    config = {
+        "grouped" : False,
+        "device" : 1
+        }
+
 class Cuda(Target):
     name = "cuda"
     suffix = "cuda"
@@ -92,6 +101,7 @@ class HLS(Target):
         }
 
 Target.register(MPIOpenMP)
+Target.register(F2CMPIOpenMP)
 Target.register(Cuda)
 Target.register(Hip)
 Target.register(OpenMPOffload)

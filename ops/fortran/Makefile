@@ -33,7 +33,7 @@ endif
 
 .PHONY: mkdir
 
-TARGETS	= f_seq f_mpi f_ompoffload f_mpi_ompoffload
+TARGETS	= f_seq f2c_seq f_mpi f_ompoffload f_mpi_ompoffload
 
 ifdef HDF5_INSTALL_PATH
 	TARGETS += hdf5_seq
@@ -116,6 +116,12 @@ $(F_OPS_OBJ)/ops_for_declarations.o: $(F_OPS_SRC)/ops_for_declarations.F90
 $(F_OPS_OBJ)/%.o : $(F_OPS_SRC)/%.F90 $(F_OPS_OBJ)/ops_for_declarations.o
 	$(FC) $(FFLAGS) $(FMODS) -c $< -o $@
 
+$(F_OPS_OBJ)/ops_for_declarations_f2c.o: $(F_OPS_SRC)/ops_for_declarations.F90
+	$(FC) $(FFLAGS) -DOPS_F2C_INTEROP $(FMODS) -c $< -o $@
+
+$(F_OPS_OBJ)/%.o : $(F_OPS_SRC)/%.F90 $(F_OPS_OBJ)/ops_for_declarations_f2c.o
+	$(FC) $(FFLAGS) $(FMODS) -c $< -o $@
+
 $(F_OPS_OBJ)/%_cuda.o : $(F_OPS_SRC)/%.F90
 	$(FC) $(FFLAGS) $(FMODS_CUDA) -c $< -o $@
 
@@ -124,7 +130,6 @@ $(F_OPS_OBJ)/%_cuda.o : $(F_OPS_SRC)/%.CUF
 
 $(F_OPS_OBJ)/%_ompoffload.o : $(F_OPS_SRC)/%.F90
 	$(FC) $(FFLAGS) $(FMODS_OMPOFFLOAD) -c $< -o $@
-
 
 hdf5_seq: mkdir $(F_OPS_OBJ)/ops_hdf5.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_hdf5_declarations.o
 	ar -r $(F_OPS_LIB)/libops_hdf5.a $(F_OPS_OBJ)/ops_hdf5.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_hdf5_declarations.o
@@ -135,6 +140,13 @@ f_seq: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ
 	ar -r $(F_OPS_LIB)/libops_for_seq.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_host_common.o $(F_OPS_OBJ)/ops_host_singlenode.o $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_checkpointing_strategy.o \
 	$(F_OPS_OBJ)/ops_for_declarations.o $(F_OPS_OBJ)/ops_for_rt_support.o
+
+f2c_seq: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
+	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_host_common.o $(F_OPS_OBJ)/ops_host_singlenode.o $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_checkpointing_strategy.o \
+	$(F_OPS_OBJ)/ops_for_declarations_f2c.o $(F_OPS_OBJ)/ops_for_rt_support.o
+	ar -r $(F_OPS_LIB)/libops_for_seq.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
+	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_host_common.o $(F_OPS_OBJ)/ops_host_singlenode.o $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_checkpointing_strategy.o \
+	$(F_OPS_OBJ)/ops_for_declarations_f2c.o $(F_OPS_OBJ)/ops_for_rt_support.o
 
 f_cuda: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_cuda_common_cuda.o $(F_OPS_OBJ)/ops_cuda_rt_support_cuda.o \

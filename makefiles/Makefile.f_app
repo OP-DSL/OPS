@@ -287,7 +287,7 @@ $(APP)_mpi_ompoffload_tiled: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib
 #
 
 cleanall: clean
-	rm -rf ./mpi_openmp ./cuda ./openmp_offload
+	rm -rf ./mpi_openmp ./cuda ./openmp_offload ./f2c_mpi_openmp
 
 clean:
 	rm -f *.o

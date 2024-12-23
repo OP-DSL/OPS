@@ -572,3 +572,64 @@ class KernelProcess:
                 const_dims.append(c.dim)
 
         return const_names, const_dims
+
+    # Function to create the replacer for 3D to 1D indexing
+    def create_replacer_3d(self, array_name, dim2, dim3):
+        def replacer(match):
+            i, j, k = match.groups()
+            return f"{array_name}[({i})*{dim2}*{dim3}+({j})*{dim3}+({k})-1]"
+        return replacer
+
+    # Function to convert 3D to 1D indexing
+    def convert_3d_to_1d_indexing(self, fortrantocpp_code, array_name, dim2, dim3):
+        # Updated pattern to ensure word boundaries for exact matches
+        pattern = rf"\b{array_name}\b\s*\(\s*([^,()]+)\s*,\s*([^,()]+)\s*,\s*([^)]+)\s*\)"
+        replacer = self.create_replacer_3d(array_name, dim2, dim3)
+        return re.sub(pattern, replacer, fortrantocpp_code)
+
+    # Function to create the replacer for 2D to 1D indexing
+    def create_replacer_2d(self, array_name, dim2):
+        def replacer(match):
+            i, j = match.groups()
+            return f"{array_name}[({i})*{dim2}+({j})-1]"
+        return replacer
+
+    # Function to convert 2D to 1D indexing
+    def convert_2d_to_1d_indexing(self, fortrantocpp_code, array_name, dim2):
+        # Updated pattern to ensure word boundaries for exact matches
+        pattern = rf"\b{array_name}\b\s*\(\s*([^,()]+)\s*,\s*([^)]+)\s*\)"
+        replacer = self.create_replacer_2d(array_name, dim2)
+        return re.sub(pattern, replacer, fortrantocpp_code)
+
+    # Function to create the replacer for 1D indexing
+    def create_replacer_1d(self, array_name):
+        def replacer(match):
+            index = match.group(1)
+            return f"{array_name}[{index}-1]"
+        return replacer
+
+    # Function to convert 1D indexing
+    def convert_1d_indexing(self, fortrantocpp_code, array_name):
+        # Updated pattern to ensure word boundaries for exact matches
+        pattern = rf"\b{array_name}\b\s*\(\s*([^,]+)\s*\)"
+        replacer = self.create_replacer_1d(array_name)
+        return re.sub(pattern, replacer, fortrantocpp_code)
+
+    # Function to replace fixed indexing for array_name(n) -> array_name[n-1]
+    def replace_fixed_indexing(self, fortrantocpp_code, array_name):
+        # Regular expression to match exact array_name with specific index
+        pattern = rf"\b{array_name}\b\s*\((\d+)\)"
+        def replacer(match):
+            index = int(match.group(1))
+            return f"{array_name}[{index - 1}]"
+        return re.sub(pattern, replacer, fortrantocpp_code)
+
+    def replace_array_with_pointer(self, fortrantocpp_code, array_name):
+        """
+        Replaces all occurrences of array_name with *array_name in the given code.
+        Ensures exact matches using word boundaries.
+        """
+        pattern = rf"\b{array_name}\b"
+        replacement = f"*{array_name}"
+        return re.sub(pattern, replacement, fortrantocpp_code)
+

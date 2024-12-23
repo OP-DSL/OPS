@@ -383,6 +383,7 @@ module OPS_Fortran_Declarations
             integer(kind=c_int), value :: acc
         end function ops_arg_gbl_c
 
+#ifdef OPS_F2C_INTEROP
         subroutine ops_decl_const_c ( name, dim, size, data) BIND(C,name='ops_decl_const_f2c')
             use, intrinsic :: ISO_C_BINDING
 
@@ -390,6 +391,7 @@ module OPS_Fortran_Declarations
             integer(kind=c_int), value :: dim, size
             type(c_ptr), value :: data
         end subroutine ops_decl_const_c
+#endif
 
         subroutine ops_reduction_result_c (handle, type_size, var) BIND(C,name='ops_reduction_result_char')
             use, intrinsic      :: ISO_C_BINDING
@@ -546,9 +548,11 @@ module OPS_Fortran_Declarations
     module procedure ops_arg_gbl_real_scalar, ops_arg_gbl_int_scalar, ops_arg_gbl_real_1dim, ops_arg_gbl_real_2dim, ops_arg_gbl_real_3dim, ops_arg_gbl_int_1dim, ops_arg_gbl_int_2dim
   end interface ops_arg_gbl
 
+#ifdef OPS_F2C_INTEROP
   interface ops_decl_const
     module procedure ops_decl_const_real_scalar, ops_decl_const_int_scalar, ops_decl_const_real_1dim, ops_decl_const_real_2dim, ops_decl_const_real_3dim, ops_decl_const_int_1dim, ops_decl_const_int_2dim, ops_decl_const_int_3dim
   end interface ops_decl_const
+#endif
 
   interface ops_dat_fetch_data
     module procedure ops_dat_fetch_data_real_8, ops_dat_fetch_data_integer_4, ops_dat_fetch_data_real_8_2d, &
@@ -1157,6 +1161,7 @@ module OPS_Fortran_Declarations
         ops_arg_gbl_int_2dim = ops_arg_gbl_c( c_loc(data) , dim, 4, access-1 )
     end function ops_arg_gbl_int_2dim
 
+#ifdef OPS_F2C_INTEROP
     subroutine ops_decl_const_real_scalar(name, dim, typ, data)
         use, intrinsic :: ISO_C_BINDING
         implicit none
@@ -1252,6 +1257,7 @@ module OPS_Fortran_Declarations
 
         call ops_decl_const_c( name//C_NULL_CHAR, dim, 4, c_loc(data) )
     end subroutine ops_decl_const_int_3dim
+#endif
 
     subroutine ops_decl_halo (from, to, iter_size, from_base, to_base, from_dir, to_dir, halo)
         type(ops_dat)                                :: from
