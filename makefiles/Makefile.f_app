@@ -206,7 +206,7 @@ $(APP)_cuda: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)
 		@echo ""
 		@echo "Building ${APP}_cuda"
 		@echo ""
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) $(CUDA_OBJ) $(OTHER_FILES) cuda/*_cuda_kernel.CUF $(OPS_GENERATED) $(APP_LIBS) $(FLINK) -lops_for_cuda $(F_HDF5_LIB_SEQ) $(FCURAND) -o $(APP)_cuda
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) $(CUDA_OBJ) $(APP_LIBS) $(FLINK) -lops_for_cuda $(F_HDF5_LIB_SEQ) $(FCURAND) -o $(APP)_cuda
 
 $(APP)_mpi_cuda: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_mpi_cuda.a $(OPS_FILES_GEN) $(MPI_CUDA_OBJ)
 		@echo ""

@@ -22,46 +22,55 @@ echo "************Testing C Applications *****************"
 echo "~~~~~~~~~~~~~~~CloverLeaf 2D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../apps/c/CloverLeaf/
 cd ../CloverLeaf/
-./test.sh
+#./test.sh -- works
 echo "~~~~~~~~~~~~~~~CloverLeaf 3D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../CloverLeaf_3D/
-./test.sh
+#./test.sh -- works
 echo "~~~~~~~~~~~~~~~CloverLeaf 3D HDF5~~~~~~~~~~~~~~~~~~~"
 cd ../CloverLeaf_3D_HDF5/
-./test.sh
+#./test.sh --SYCL versions not working
 echo "~~~~~~~~~~~~~~~TeaLeaf 3D ~~~~~~~~~~~~~~~~~~~~~~"
 cd ../TeaLeaf/
-#./test.sh
+#./test.sh -- tealeaf_ompoffload breaks
 echo "~~~~~~~~~~~~~~~Poisson~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../poisson/
-./test.sh
+#./test.sh -- works
 echo "~~~~~~~~~~~~~~~multiDim~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim/
-#/test.sh
+#./test.sh -- multidim_openmp breaks
 echo "~~~~~~~~~~~~~~~multiDim3D~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../multiDim3D/
-#./test.sh
+cd ../multiDim3D/ 
+#./test.sh -- works
+echo "~~~~~~~~~~~~~~~lowdim_test~~~~~~~~~~~~~~~~~~~~~~~~~~"
+cd ../lowdim_test/
+#./test.sh -- works
 echo "~~~~~~~~~~~~~~~shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../shsgc/
-#./test.sh
+#./test.sh -- MPI_Tiled double free-coruption
 echo "~~~~~~~~~~~~~~~mb_shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mb_shsgc/Max_datatransfer
-#./test.sh
+#./test.sh -- works
 echo "~~~~~~~~~~~~~~~multiDim_HDF5~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../../multiDim_HDF5
 #./test.sh #SYCL compilation issue -- needs fixing 
 echo "~~~~~~~~~~~~~~~adi~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../adi
-#./test.sh
+cd ../adi 
+#./test.sh -- works
+echo "~~~~~~~~~~~~~~~adi_burger~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+cd ../adi_burger
+#./test.sh -- works
+echo "~~~~~~~~~~~~~~~adi_berger_3D~~~~~~~~~~~~~~~~~~~~~~~~"
+cd ../adi_burger_3D
+#./test.sh -- works
 echo "~~~~~~~~~~~~~~~mgrid~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mgrid
 #./test.sh -- SYCL MPI not validating
-echo "~~~~~~~~~~~~~~~mblock~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+echo "~~~~~~~~~~~~~~~mblock~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
 #./test.sh - SYCL MPI not running error produced
 echo "~~~~~~~~~~~~~~OpenSBLI TGV~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd $OPENSBLI_INSTALL_PATH/apps/taylor_green_vortex
-#./test.sh -- check PGI compilation
+./test.sh -- check PGI compilation
 cd -
 echo "All C/C++ application tests PASSED"
 

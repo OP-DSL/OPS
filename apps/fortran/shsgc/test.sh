@@ -8,10 +8,10 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
 #export DMOS=TRUE
-#export TELOS=TRUE
+export TELOS=TRUE
 #export KOS=TRUE
 
-<<comment
+#<<comment
 cd $OPS_INSTALL_PATH/fortran
 source ../../scripts/$SOURCE_INTEL
 
@@ -49,7 +49,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 
-comment
+#comment
 
 cd $OPS_INSTALL_PATH/fortran
 source ../../scripts/$SOURCE_PGI
