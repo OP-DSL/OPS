@@ -57,7 +57,8 @@ make clean
 make 
 cd -
 make clean
-make multidim_openmp multidim_mpi_openmp multidim_mpi multidim_cuda multidim_mpi_cuda
+make 
+#multidim_openmp multidim_mpi_openmp multidim_mpi multidim_cuda multidim_mpi_cuda
 
 echo '============================ Test MultiDim3D PGI Compilers=========================================================='
 echo '============> Running OpenMP'
@@ -107,6 +108,31 @@ grep "Max total runtime" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
+
+echo '============> Running OMPOFFLOAD'
+./multidim_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Reduction result" perf_out
+grep "Max total runtim" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running MPI+OMPOFFLOAD'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Reduction result" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running MPI+OMPOFFLOAD+Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_ompoffload_tiled OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Reduction result" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
 
 echo "All PGI complier based applications ---- PASSED"
 fi

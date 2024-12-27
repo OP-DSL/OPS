@@ -60,7 +60,8 @@ source ../../scripts/$SOURCE_PGI
 make
 cd -
 make clean
-make multidim_openmp multidim_mpi_openmp multidim_mpi multidim_cuda multidim_mpi_cuda
+make 
+#multidim_openmp multidim_mpi_openmp multidim_mpi multidim_cuda multidim_mpi_cuda
 
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./multidim_openmp > perf_out
@@ -104,6 +105,30 @@ rm perf_out
 
 echo '============> Running MPI+CUDA with GPU-Direct'
 MV2_USE_CUDA=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_cuda -gpudirect OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Reduction result" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running OMPOFFLOAD'
+./multidim_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Reduction result" perf_out
+grep "Max total runtim" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running MPI+OMPOFFLOAD'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Reduction result" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running MPI+OMPOFFLOAD+Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_ompoffload_tiled OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
 grep "Max total runtime" perf_out
 grep "PASSED" perf_out

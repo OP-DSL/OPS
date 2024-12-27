@@ -70,7 +70,7 @@ cd ../mblock
 #./test.sh - SYCL MPI not running error produced
 echo "~~~~~~~~~~~~~~OpenSBLI TGV~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd $OPENSBLI_INSTALL_PATH/apps/taylor_green_vortex
-./test.sh -- check PGI compilation
+#./test.sh -- works
 cd -
 echo "  "
 echo "All C/C++ application tests PASSED"

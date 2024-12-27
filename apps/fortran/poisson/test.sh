@@ -56,7 +56,8 @@ make clean
 make
 cd -
 make clean
-make poisson_openmp poisson_mpi_openmp poisson_mpi poisson_cuda poisson_mpi_cuda
+make 
+#poisson_openmp poisson_mpi_openmp poisson_mpi poisson_cuda poisson_mpi_cuda
 
 
 echo '============================ Test Poisson PGI Compilers=========================================================='
@@ -107,6 +108,30 @@ rm perf_out
 #grep "PASSED" perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
+
+echo '============> Running OMPOFFLOAD'
+./poisson_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Max total runtim" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running MPI+OMPOFFLOAD'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running MPI+OMPOFFLOAD+Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_ompoffload_tiled OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
 
 echo "All PGI complier based applications ---- PASSED"
 fi
