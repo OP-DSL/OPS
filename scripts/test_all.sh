@@ -72,7 +72,9 @@ echo "~~~~~~~~~~~~~~OpenSBLI TGV~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd $OPENSBLI_INSTALL_PATH/apps/taylor_green_vortex
 ./test.sh -- check PGI compilation
 cd -
+echo "  "
 echo "All C/C++ application tests PASSED"
+echo "  "
 
 echo "************Testing Fortran Applications *****************"
 cd $OPS_INSTALL_PATH
@@ -88,5 +90,17 @@ cd ../multiDim
 echo "~~~~~~~~~~~~~~~multiDim3D Fortran~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim3D
 ./test.sh
-echo "END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+echo "~~~~~~~~~~~~~~~lowdim_test Fortran~~~~~~~~~~~~~~~~~~~~~~~~"
+cd ../lowdim_test
+./test.sh
+echo "~~~~~~~~~~~~~~~laplace2d Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
+cd ../laplace2dtutorial/step7
+./test.sh
+echo "END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+echo "  "
+echo "All Fortran application tests PASSED"
+echo "  "
+
 echo "All Tests Passed"
+echo "*****************************************************************  "
+
