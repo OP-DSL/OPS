@@ -12,6 +12,8 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 export TELOS=TRUE
 #export KOS=TRUE
 
+if [[ -v TELOS || -v KOS ]]; then
+
 source ../../scripts/$SOURCE_INTEL
 make
 cd -
@@ -43,13 +45,19 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+rm -f multidim.dat.*
+echo "All Intel classic complier based applications ---- PASSED"
+fi
+
+if [[ -v TELOS ]]; then
+
 cd $OPS_INSTALL_PATH/fortran
 source ../../scripts/$SOURCE_PGI
 make clean
 make 
 cd -
 make clean
-make
+make multidim_openmp multidim_mpi_openmp multidim_mpi multidim_cuda multidim_mpi_cuda
 
 echo '============================ Test MultiDim3D PGI Compilers=========================================================='
 echo '============> Running OpenMP'
@@ -100,4 +108,11 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-echo "All PGI tests PASSED ... exiting script"
+echo "All PGI complier based applications ---- PASSED"
+fi
+
+rm -f multidim.dat.*
+
+echo "---------- Exiting Test Script "
+
+

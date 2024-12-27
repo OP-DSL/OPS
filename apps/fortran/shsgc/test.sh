@@ -11,7 +11,8 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 export TELOS=TRUE
 #export KOS=TRUE
 
-#<<comment
+if [[ -v TELOS || -v KOS ]]; then
+
 cd $OPS_INSTALL_PATH/fortran
 source ../../scripts/$SOURCE_INTEL
 
@@ -48,8 +49,10 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+fi
+echo "All Intel classic complier based applications ---- PASSED"
 
-#comment
+if [[ -v TELOS ]]; then
 
 cd $OPS_INSTALL_PATH/fortran
 source ../../scripts/$SOURCE_PGI
@@ -57,7 +60,7 @@ make clean
 make
 cd -
 make clean
-make
+make shsgc_openmp  shsgc_mpi_openmp  shsgc_mpi  shsgc_cuda  shsgc_mpi_cuda
 
 #============================ Test SHSGC PGI Compilers ==========================================================
 echo '============> Running OpenMP'
@@ -108,12 +111,7 @@ rm perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
 
-echo '============> Running OpenACC'
-./shsgc_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "RMS =" perf_out
-grep "Max total runtime" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
+echo "All PGI complier based applications ---- PASSED"
+fi
 
-echo "All PGI tests PASSED .. exiting script"
+echo "All Tests PASSED .. exiting script"

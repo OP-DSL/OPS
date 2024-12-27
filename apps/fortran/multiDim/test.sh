@@ -12,6 +12,9 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 export TELOS=TRUE
 #export KOS=TRUE
 
+if [[ -v TELOS || -v KOS ]]; then
+echo '============================ Test MultiDim Intel Compilers=========================================================='
+
 source ../../scripts/$SOURCE_INTEL
 make clean
 make
@@ -21,7 +24,6 @@ make clean
 make
 
 #<<COMMENT
-echo '============================ Test MultiDim Intel Compilers=========================================================='
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./multidim_openmp > perf_out
 grep "Reduction result" perf_out
@@ -48,15 +50,18 @@ rm perf_out
 
 #COMMENT
 echo "All Intel complied applications PASSED : Moving no to PGI Compiler Tests "
+fi
+
+if [[ -v TELOS ]]; then
+echo '============================ Test MultiDim PGI Compilers=========================================================='
 
 cd $OPS_INSTALL_PATH/fortran
 source ../../scripts/$SOURCE_PGI
 make
 cd -
 make clean
-make
+make multidim_openmp multidim_mpi_openmp multidim_mpi multidim_cuda multidim_mpi_cuda
 
-echo '============================ Test MultiDim PGI Compilers=========================================================='
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./multidim_openmp > perf_out
 grep "Reduction result" perf_out
@@ -105,5 +110,7 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-echo "All PGI complied applications PASSED : Exiting Test Script "
+echo "All PGI complier based applications ---- PASSED"
+fi
 
+echo "---------- Exiting Test Script "
