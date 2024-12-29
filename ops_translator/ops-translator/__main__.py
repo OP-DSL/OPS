@@ -143,6 +143,13 @@ def main(argv=None) -> None:
                 print(f"Translated program {i} of {len(args.file_paths)}: {new_path}")
     print("Code-gen : Program translation phase finished.........")
 
+
+    # Write all consts to a file - required for Fortran
+    if(lang.name == "Fortran"):
+        with open('constants_list.txt', 'w') as file:
+            file.writelines([item.ptr + '\n' for item in app_consts])
+
+
     # Generating code for targets
     for [target] in args.target:
         target = Target.find(target)

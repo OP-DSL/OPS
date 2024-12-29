@@ -16,7 +16,7 @@ real(8), constant :: pl_opsconstant
 real(8), constant :: pr_opsconstant
 real(8), constant :: rhol_opsconstant
 real(8), constant :: rhor_opsconstant
-real(8), constant :: ul_opsconstant
+real(8), constant :: shsgcul_opsconstant
 real(8), constant :: ur_opsconstant
 real(8), constant :: gam_opsconstant
 real(8), constant :: gam1_opsconstant
@@ -43,7 +43,7 @@ real(8) :: pl
 real(8) :: pr
 real(8) :: rhol
 real(8) :: rhor
-real(8) :: ul
+real(8) :: shsgcul
 real(8) :: ur
 real(8) :: gam
 real(8) :: gam1
@@ -71,7 +71,7 @@ real(8) :: pl
 real(8) :: pr
 real(8) :: rhol
 real(8) :: rhor
-real(8) :: ul
+real(8) :: shsgcul
 real(8) :: ur
 real(8) :: gam
 real(8) :: gam1

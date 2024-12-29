@@ -611,7 +611,8 @@ class KernelProcess:
     # Function to convert 1D indexing
     def convert_1d_indexing(self, fortrantocpp_code, array_name):
         # Updated pattern to ensure word boundaries for exact matches
-        pattern = rf"\b{array_name}\b\s*\(\s*([^,]+)\s*\)"
+        #pattern = rf"\b{array_name}\b\s*\(\s*([^,]+)\s*\)"
+        pattern = rf"\b{array_name}\b\s*\(\s*([^\)]+)\s*\)"  # Matches only within the nearest closing parenthesis
         replacer = self.create_replacer_1d(array_name)
         return re.sub(pattern, replacer, fortrantocpp_code)
 
@@ -632,4 +633,27 @@ class KernelProcess:
         pattern = rf"\b{array_name}\b"
         replacement = f"*{array_name}"
         return re.sub(pattern, replacement, fortrantocpp_code)
+
+    def replace_array_with_first_element(self, fortrantocpp_code, array_name):
+        """
+        Replaces all occurrences of array_name with array_name[0] in the given code.
+        Ensures exact matches using word boundaries.
+        """
+        pattern = rf"\b{array_name}\b"
+        replacement = f"{array_name}[0]"
+        return re.sub(pattern, replacement, fortrantocpp_code)
+
+    def create_md_replacer(self, array_name):
+        def replacer(match):
+            indices = match.group(1).split(",")
+            if indices: #check if indices is not empty
+                indices[0] = f"{indices[0]}-1"  # Subtract 1 from the FIRST index only
+            return f"{array_name}({','.join(indices)})"
+
+        return replacer
+
+    def convert_muldim_dat_indexing(self, fortrantocpp_code, array_name):
+        pattern = rf"\b{array_name}\b\s*\(\s*(.*?)\s*\)"
+        replacer = self.create_md_replacer(array_name)
+        return re.sub(pattern, replacer, fortrantocpp_code)
 

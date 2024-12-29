@@ -48,13 +48,7 @@ def generate_cpp_Kernel(loop: OPS.Loop,
             else:
                 arg_str += f"ACC<{c_type}> &{var_name}, "
         elif isinstance(arg, OPS.ArgGbl):
-            if len(arr_sizes) == 1:
-                if arr_sizes[0].isdigit() and int(arr_sizes[0]) == 0:       # scalar variable
-                    arg_str += f"const {c_type} {var_name}, "
-                else:                                                       # 1 dimentional vector
-                    arg_str += f"const {c_type} *{var_name}, "
-            else:                                                           # multi-dimentional vector
-                arg_str += f"const {c_type} *{var_name}, "
+            arg_str += f"const {c_type} *{var_name}, "
         elif isinstance(arg, OPS.ArgReduce):
             arg_str += f"{c_type} *{var_name}, "
         elif isinstance(arg, OPS.ArgIdx):
@@ -75,20 +69,24 @@ def generate_cpp_Kernel(loop: OPS.Loop,
             raise ParseError(f"Unable to find file {var_name} for subroutine in argument list: {subroutine_name}")
         arr_sizes = param_type_and_size[1]
 
-        if isinstance(arg, OPS.ArgGbl): # convert all multi-dim vectors to single dim
-            if (len(arr_sizes) == 1 and
-                    (
-                        (arr_sizes[0].isdigit() and int(arr_sizes[0]) != 0) or
-                        (not arr_sizes[0].isdigit())
-                    )
-               ):
-                kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
+        if isinstance(arg, OPS.ArgDat):
+            if arg.dim > 1:
+                kernel_body = kp_obj.convert_muldim_dat_indexing(kernel_body, var_name)
+        elif isinstance(arg, OPS.ArgGbl): # convert all multi-dim vectors to single dim
+            if (len(arr_sizes) == 1):
+                if arr_sizes[0].isdigit() and int(arr_sizes[0]) == 0:
+                    kernel_body = kp_obj.replace_array_with_first_element(kernel_body, var_name)
+                else:
+                    kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
             elif len(arr_sizes) == 2:
                 kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[1])
             elif len(arr_sizes) == 3:
                 kernel_body = kp_obj.convert_3d_to_1d_indexing(kernel_body, var_name, arr_sizes[1], arr_sizes[2])
         elif isinstance(arg, OPS.ArgReduce):
-            kernel_body = kp_obj.replace_array_with_pointer(kernel_body, var_name)
+            if arg.dim > 1:
+                kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
+            else:
+                kernel_body = kp_obj.replace_array_with_pointer(kernel_body, var_name)
         elif isinstance(arg, OPS.ArgIdx):   # converting idx from fortran to c style
             kernel_body = kp_obj.replace_fixed_indexing(kernel_body, var_name)
 
@@ -106,6 +104,10 @@ def generate_cpp_Kernel(loop: OPS.Loop,
             kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[1])
         elif len(arr_sizes) == 3:
             kernel_body = kp_obj.convert_3d_to_1d_indexing(kernel_body, var_name, arr_sizes[1], arr_sizes[2])
+
+#    print("============================================================================")
+#    print(kernel_body)
+#    print("============================================================================")
 
     # Add declarations of local variables
     for value in local_vars.keys():
@@ -126,7 +128,8 @@ def retrieve_subroutine_ast(file_path, subroutine_name):
     # Replace OPS_ACC<digit> and OPS_ACC_MD<digit>
     # converting to normal array shape fortran uses before generating AST
     # and passing it to kernels_c.py
-    pattern = r'\s*\(\s*\b(?:OPS_ACC|OPS_ACC_MD)[0-9]+\s*\(\s*([\s0-9,+-]+)\s*\)\s*\)'
+    #pattern = r'\s*\(\s*\b(?:OPS_ACC|OPS_ACC_MD)[0-9]+\s*\(\s*([\s0-9,+-]+)\s*\)\s*\)'
+    pattern = r'\s*\(\s*\b(?:OPS_ACC|OPS_ACC_MD)[0-9]+\s*\(\s*([a-zA-Z0-9_,+\-\s]+)\s*\)\s*\)'
 
     # Replace function
     def replace_function(match):
@@ -136,6 +139,10 @@ def retrieve_subroutine_ast(file_path, subroutine_name):
 
     # Perform substitution with case-insensitive flag
     result_src = re.sub(pattern, replace_function, source, flags=re.IGNORECASE)
+
+#    print("============================================================================")
+#    print(result_src)
+#    print("============================================================================")
 
     reader = FortranStringReader(result_src, ignore_comments=True)
     parser = ParserFactory().create(std="f2003")

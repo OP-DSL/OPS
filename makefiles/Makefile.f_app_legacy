@@ -64,6 +64,10 @@ ifneq (,$(filter openacc mpi_openacc mpi_openacc_tiled,$(TARGETS)))
 TARGETS:=$(filter-out openacc mpi_openacc mpi_openacc_tiled,$(TARGETS))
 endif
 
+ifneq (,$(filter f2c_seq f2c_mpi f2c_mpi_tiled,$(TARGETS)))
+TARGETS:=$(filter-out f2c_seq f2c_mpi f2c_mpi_tiled,$(TARGETS))
+endif
+
 ifneq ($(strip $(MPI_INSTALL_PATH)),)
 I_MPI_INC = -I$(MPI_INC)
 L_MPI_LIB = -L$(MPI_LIB)
