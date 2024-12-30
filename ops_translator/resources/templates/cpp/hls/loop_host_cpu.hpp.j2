@@ -25,7 +25,11 @@ void inline kernel_{{lh.kernel}}_core(
         {% if arg is ops_write or ops_rw%}
             {% if prog.findStencil(arg.stencil_ptr) %}
                 {% for i in range(prog.findStencil(arg.stencil_ptr).num_points)%}
+                    {% if lh.dats[arg.dat_id].isMultiDim() %}
+        {{lh.dats[arg.dat_id].typ}}* arg{{arg.dat_id}}_{{i}}{{"," if (not last_check or not loop.last)}}
+                    {% else %}
         {{lh.dats[arg.dat_id].typ}}& arg{{arg.dat_id}}_{{i}}{{"," if (not last_check or not loop.last)}}
+                    {% endif %}
                 {% endfor %}
             {% endif %}
         {% endif %}
