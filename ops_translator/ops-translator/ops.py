@@ -202,6 +202,11 @@ class Dat:
     def __str__(self) -> str:
         return f"Dat(block_id={self.block_id}, id={self.id}, ptr='{self.ptr}', dim={self.dim}, type={self.typ}, soa={self.soa})"
 
+    def isMultiDim(self) -> bool:
+        if self.dim > 1:
+            return True
+        
+        return False
 
 @dataclass(frozen=False)
 class Point:

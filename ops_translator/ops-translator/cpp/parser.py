@@ -6,7 +6,7 @@ from clang.cindex import Cursor, CursorKind, TranslationUnit, TypeKind, conf, To
 
 import ops
 from store import Function, Location, ParseError, Program, Type
-from util import safeFind, function_name #TODO: implement safe find
+from util import safeFind, function_name, findIdx #TODO: implement safe find
 import logging
 from math import floor
 from dataclasses import field
@@ -255,11 +255,11 @@ def parseVariableDeclaration(node: Cursor, macros: Dict[Location, str], program:
                 raise ParseError("ops_decl_block has 2 arguments", parseLocation(node))
             parseBlock(node, var_name, args, parseLocation(node), program)
             
-        # if name == "ops_decl_dat":
-        #     logging.debug("found ops_dec_dat")
-        #     if len(args) != 2:
-        #         raise ParseError("ops_decl_dat has 2 arguments", parseLocation(node))
-        #     parseBlock(node, var_name, args, parseLocation(node), program)
+        if name == "ops_decl_dat":
+            logging.debug("found ops_dec_dat")
+            if len(args) != 9:
+                raise ParseError("ops_decl_dat has 9 arguments", parseLocation(node))
+            parseDat(node, parseIdentifier(l_val), var_name, args, parseLocation(node), program)
         
 def parseFunctionCall(node: Cursor) -> Union[Tuple[str, List[Cursor]], None]:
     args = []
@@ -673,8 +673,18 @@ def parseBlock(node: Cursor, ptr: str, args: List[Any], loc: Location, prog: Pro
     block.id = len(prog.blocks)
     prog.blocks.append(block)
 
-def parseDats(node: Cursor, ptr: str, args: List[Any], loc: Location, prog: Program) -> None:
-    return None
+def parseDat(node: Cursor, ptr_raw: str, ptr: str, args: List[Any], loc: Location, prog: Program) -> None:
+    block_ptr = parseIdentifier(args[0], raw=False)
+    multidim_dim = parseIntExpression(args[1])
+    typ, soa = parseType(parseStringLit(args[7]), parseLocation(args[7]))
+    blk_idx = findIdx(prog.blocks, lambda blk: blk.ptr == block_ptr)
+    
+    if block_ptr is None:
+        raise ParseError(f"Unable to find Block ({block_ptr})", parseLocation(node))
+    
+    prog.blocks[blk_idx].dats.append(ops.Dat(len(prog.blocks[blk_idx].dats), ptr_raw, ptr, multidim_dim, typ, soa, blk_idx))
+    
+    
 
 def parseRange(node: Cursor, dim: int) -> ops.Range:
     ptr = parseIdentifier(node)
