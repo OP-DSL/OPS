@@ -175,6 +175,7 @@ class Range:
 class Dat:
     id: int
 
+    ptr_raw: str # This is to hold the raw use of the pointer in replacing in the program. Othwerwise need to be avoided.
     ptr: str
     dim: int
     # size: List[int]
@@ -541,14 +542,15 @@ class Block:
     loc: Location
     ptr: str
     id: int
-
     dim: int
+    prompt: str
     dats: List[Dat]
 
-    def __init__(self, loc: Location, ptr: str, dim: int) -> None:
+    def __init__(self, loc: Location, ptr: str, dim: int, prompt: str = None) -> None:
         self.loc = loc
         self.ptr = ptr
         self.dim = dim
+        self.prompt = prompt
         self.dats = []
 
     def __str__(self) -> str:
@@ -1339,7 +1341,7 @@ class IterLoop:
                 
                 if dat_id is None:
                     dat_id = len(self.dats)
-                    self.dats.append([Dat(dat_id, loop.dats[arg.dat_id].ptr,loop.dats[arg.dat_id].dim, loop.dats[arg.dat_id].typ, loop.dats[arg.dat_id].soa), arg.access_type])
+                    self.dats.append([Dat(dat_id, loop.dats[arg.dat_id].ptr_raw, loop.dats[arg.dat_id].ptr,loop.dats[arg.dat_id].dim, loop.dats[arg.dat_id].typ, loop.dats[arg.dat_id].soa), arg.access_type])
                 else:
                     if (self.dats[dat_id][1] == AccessType.OPS_READ and arg.access_type == AccessType.OPS_WRITE) or \
                         (self.dats[dat_id][1] == AccessType.OPS_WRITE and arg.access_type == AccessType.OPS_READ):
@@ -1483,6 +1485,7 @@ class Loop:
     def addArgDat(
         self,
         loc: Location,
+        dat_raw_ptr: str,
         dat_ptr: str,
         dat_dim: int,
         dat_typ: Type,
@@ -1498,7 +1501,7 @@ class Loop:
         if dat_id is None:
             dat_id = len(self.dats)
             # if findIdx(self.block.dats, lambda d: d.ptr == dat_ptr) is not None:
-            self.dats.append(Dat(dat_id, dat_ptr, dat_dim, dat_typ, dat_soa))
+            self.dats.append(Dat(dat_id, dat_raw_ptr, dat_ptr, dat_dim, dat_typ, dat_soa))
             # else:
             #     OpsError(f"Parsing Dat='{dat_ptr}' as argument of loop in {self.loc} which is not belong to block='{self.block.ptr}'", loc)
 

@@ -161,7 +161,7 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
         
         for arg in iterloop.joint_args:
             if isinstance(arg, ArgDat):
-                new_iter_loop_call += f", {iterloop.dats[arg.dat_id][0].ptr}"
+                new_iter_loop_call += f", {iterloop.dats[arg.dat_id][0].ptr_raw}"
             elif isinstance(arg, ArgGbl):
                 new_iter_loop_call += f", {arg.ptr}"
         
@@ -198,7 +198,7 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
         for arg in loop.args:
             if isinstance(arg, ArgDat):
                 dat = loop.dats[arg.dat_id]
-                new_loop_call = f"{new_loop_call}, {dat.ptr}"
+                new_loop_call = f"{new_loop_call}, {dat.ptr_raw}"
             elif isinstance(arg, ArgGbl):
                 new_loop_call = f"{new_loop_call}, {arg.ptr}"
                 
