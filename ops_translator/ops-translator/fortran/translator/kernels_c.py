@@ -558,24 +558,24 @@ def getCall(ref: f2003.Name, ctx: Context) -> Optional[Tuple[str, int]]:
     return None
 
 
-def translate(info: Info) -> Tuple[dict, dict, str]:
+def translate(info: Info) -> Tuple[dict, dict, str, str]:
     for sub_info in info.subprograms.values():
-        param_dict, local_dict, execution_part = translateSubprogram(Context(info, sub_info))
+        param_dict, local_dict, init_src, execution_part = translateSubprogram(Context(info, sub_info))
 
-    return param_dict, local_dict, execution_part
+    return param_dict, local_dict, init_src, execution_part
 
 
-def translateSubprogram(ctx: Context) -> Tuple[dict, dict, str]:
+def translateSubprogram(ctx: Context) -> Tuple[dict, dict, str, str]:
     spec_part = fpu.get_child(ctx.sub_info.ast, f2003.Specification_Part)
     execution_part = fpu.get_child(ctx.sub_info.ast, f2003.Execution_Part)
 
-    param_dict, local_dict = translateSpecificationPart(spec_part, ctx)
+    param_dict, local_dict, init_src = translateSpecificationPart(spec_part, ctx)
     execution = indent(translateExecutionPart(execution_part, ctx)) + "\n"
 
-    return param_dict, local_dict, execution
+    return param_dict, local_dict, init_src, execution
 
 
-def translateSpecificationPart(spec_part: f2003.Specification_Part, ctx: Context) -> Tuple[dict,dict]:
+def translateSpecificationPart(spec_part: f2003.Specification_Part, ctx: Context) -> Tuple[dict,dict,str]:
     init_src = ""
     parameters = {}
 
@@ -664,16 +664,15 @@ def translateSpecificationPart(spec_part: f2003.Specification_Part, ctx: Context
             continue
 
         if name in parameters:
-            continue
-#            assert(not isinstance(type_, FArray))
-#            src += f"constexpr {type_.asLocal(name)} = {parameters[name]};\n"
+            assert(not isinstance(type_, FArray))
+            init_src += f"constexpr {type_.asLocal(name)} = {parameters[name]};\n"
         elif isinstance(type_, FPrimitive):
             local_vars[f"{type_.asLocal(name)}"] = [name, ['0']] 
         else:
             sizes = type_.spanSizes()
             local_vars[f"{type_.asLocal(name)}"] = [name, sizes]
 
-    return kernel_param,local_vars
+    return kernel_param,local_vars,init_src
 
 def translateDataStmt(data_stmt: f2003.Data_Stmt, ctx: Context) -> str:
     src = "";
@@ -731,8 +730,28 @@ def translateContinueStmt(continue_stmt: f2003.Continue_Stmt, ctx: Context) -> s
     return f"// {continue_stmt}\n"
 
 
+def translateExitStmt(exit_stmt: f2003.Exit_Stmt, ctx: Context) -> str:
+    return f"break;\n"
+
+
 def translateIfStmt(if_stmt: f2003.If_Stmt, ctx: Context) -> str:
     return f"if ({translateGeneric(if_stmt.items[0], ctx)}) {{\n{indent(translateGeneric(if_stmt.items[1], ctx))}\n}}\n"
+
+
+def translatePrintStmt(print_stmt: f2003.Print_Stmt, ctx: Context) -> str:
+    output_item_list = print_stmt.items[1]
+
+    print_str_parts = []
+    for item in output_item_list.items:
+        if hasattr(item, 'tostr'):
+            print_str_parts.append(f'"{item.tostr().strip()}"' if item.tostr().startswith("'") else item.tostr().strip())
+        else:
+            print_str_parts.append(str(item))
+
+    print_str = ""
+    if len(print_str_parts) > 0:
+        print_str += 'std::cout << ' + ' << " " << '.join(print_str_parts) + ' << std::endl;\n'
+    return print_str
 
 
 def translateReturnStmt(return_stmt: f2003.Return_Stmt, ctx: Context) -> str:
@@ -763,6 +782,12 @@ def translateBlockNonlabelDoConstruct(block_nonlabel_do_construct: f2003.Block_N
                 ctx.error("Unsupported labelled do construct", child)
 
             loop_control = child.items[1]
+
+            # Do Loop without control - infinite loop
+            if loop_control == None:
+                #src += f"for (;;)" + " {\n"
+                src += f"while (true)" + " {\n"
+                continue
 
             # While loop
             if loop_control.items[0] != None:
@@ -1007,6 +1032,7 @@ def translateIntrinsicFunctionReference(intrinsic_function_reference: f2003.Intr
     intrinsic_funcs = {
         "abs":   "f2c::abs",
         "dble":  "f2c::dble",
+        "real":  "f2c::dble",
         "int":   "f2c::int_",
         "min":   "f2c::min",
         "max":   "f2c::max",
@@ -1216,7 +1242,7 @@ TRANSLATE_TABLE = {
     # f2003.End_Function_Stmt
     # f2003.End_Program_Stmt
     # f2003.End_Subroutine_Stmt
-    # f2003.Exit_Stmt
+    f2003.Exit_Stmt: translateExitStmt,
     # f2003.Flush_Stmt
     # f2003.Forall_Stmt
     # f2003.Goto_Stmt
@@ -1226,7 +1252,7 @@ TRANSLATE_TABLE = {
     # f2003.Nullify_Stmt
     # f2003.Open_Stmt
     # f2003.Pointer_Assignment_Stmt
-    # f2003.Print_Stmt
+    f2003.Print_Stmt: translatePrintStmt,
     # f2003.Read_Stmt
     f2003.Return_Stmt: translateReturnStmt,
     # f2003.Rewind_Stmt

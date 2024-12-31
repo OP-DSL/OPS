@@ -54,6 +54,7 @@ inline constexpr double pow(double x, double e) { return ::pow(x, e); }
 inline constexpr double pow(float x, double e) { return ::pow((double) x, e); }
 inline constexpr double pow(double x, float e) { return ::pow(x, (double) e); }
 
+inline constexpr int pow(int x, int e) { return pow(x, e); }
 inline constexpr float pow(int x, float e) { return powf((float) x, e); }
 inline constexpr double pow(int x, double e) { return ::pow((double) x, e); }
 

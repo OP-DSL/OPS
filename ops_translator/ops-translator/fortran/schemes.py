@@ -23,6 +23,7 @@ from fparser.two.parser import ParserFactory
 def generate_cpp_Kernel(loop: OPS.Loop,
                     kernel_args: dict,
                     local_vars: dict,
+                    var_init: str,
                     kernel_body: str,
                     f90_src: str) -> str :
 
@@ -59,6 +60,7 @@ def generate_cpp_Kernel(loop: OPS.Loop,
 
     kp_obj = KernelProcess()
 
+    sorted_args = []  # storing ops_gbl in descending order of sizes
     # Update kernel body
     for i, arg in enumerate(loop.args):
         var_name = param_list[i].lower()        # variable name used in fortran subroutine declaration
@@ -73,15 +75,7 @@ def generate_cpp_Kernel(loop: OPS.Loop,
             if arg.dim > 1:
                 kernel_body = kp_obj.convert_muldim_dat_indexing(kernel_body, var_name)
         elif isinstance(arg, OPS.ArgGbl): # convert all multi-dim vectors to single dim
-            if (len(arr_sizes) == 1):
-                if arr_sizes[0].isdigit() and int(arr_sizes[0]) == 0:
-                    kernel_body = kp_obj.replace_array_with_first_element(kernel_body, var_name)
-                else:
-                    kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
-            elif len(arr_sizes) == 2:
-                kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[1])
-            elif len(arr_sizes) == 3:
-                kernel_body = kp_obj.convert_3d_to_1d_indexing(kernel_body, var_name, arr_sizes[1], arr_sizes[2])
+            sorted_args.append((var_name, arr_sizes))
         elif isinstance(arg, OPS.ArgReduce):
             if arg.dim > 1:
                 kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
@@ -90,9 +84,31 @@ def generate_cpp_Kernel(loop: OPS.Loop,
         elif isinstance(arg, OPS.ArgIdx):   # converting idx from fortran to c style
             kernel_body = kp_obj.replace_fixed_indexing(kernel_body, var_name)
 
+    # Sort them in descending order so that first 3D index will be converted, then 2D and lastly 1D
+    sorted_args.sort(key=lambda x: len(x[1]), reverse=True)
+
+    for var_name, arr_sizes in sorted_args:
+        # print(var_name + " : " + str(arr_sizes))
+        if (len(arr_sizes) == 1):
+            if arr_sizes[0].isdigit() and int(arr_sizes[0]) == 0:
+                kernel_body = kp_obj.replace_array_with_first_element(kernel_body, var_name)
+            else:
+                kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
+        elif len(arr_sizes) == 2:
+            kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[1])
+        elif len(arr_sizes) == 3:
+            kernel_body = kp_obj.convert_3d_to_1d_indexing(kernel_body, var_name, arr_sizes[1], arr_sizes[2])
+
+    sorted_local_args = []
+
     for value in local_vars.values():
         var_name = value[0]
         arr_sizes = value[1]
+        sorted_local_args.append((var_name, arr_sizes))
+
+    sorted_local_args.sort(key=lambda x: len(x[1]), reverse=True)
+
+    for var_name, arr_sizes in sorted_local_args:
         if (len(arr_sizes) == 1 and
                     (
                         (arr_sizes[0].isdigit() and int(arr_sizes[0]) != 0) or
@@ -114,6 +130,9 @@ def generate_cpp_Kernel(loop: OPS.Loop,
         cpp_kernel += f"    {value};" + "\n"
 
     cpp_kernel += "\n"
+    if len(var_init) > 0:
+        cpp_kernel += var_init
+        cpp_kernel += "\n\n"
     cpp_kernel += kernel_body
     cpp_kernel += "\n}"
     return cpp_kernel
@@ -139,6 +158,11 @@ def retrieve_subroutine_ast(file_path, subroutine_name):
 
     # Perform substitution with case-insensitive flag
     result_src = re.sub(pattern, replace_function, source, flags=re.IGNORECASE)
+
+    # Replace kind=8 used in intrinsic functions
+    pattern = r",\s*kind\s*=\s*8\s*\)"
+    replacement = ")"
+    result_src = re.sub(pattern, replacement, result_src, flags=re.IGNORECASE)
 
 #    print("============================================================================")
 #    print(result_src)
@@ -269,9 +293,9 @@ class F2CMPIOpenMP(Scheme):
         f90_src, entity_ast = retrieve_subroutine_ast(filename, loop.kernel)
 
         info = ftk_c.parseInfo(entity_ast, app, loop)
-        kernel_args, local_vars, c_kernel_body = ftk_c.translate(info)
+        kernel_args, local_vars, c_var_init, c_kernel_body = ftk_c.translate(info)
 
-        cpp_kernel = generate_cpp_Kernel(loop, kernel_args, local_vars, c_kernel_body, f90_src)
+        cpp_kernel = generate_cpp_Kernel(loop, kernel_args, local_vars, c_var_init, c_kernel_body, f90_src)
 
         return cpp_kernel
 

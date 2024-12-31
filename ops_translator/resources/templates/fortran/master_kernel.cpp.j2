@@ -5,7 +5,7 @@
 {% if soa_set %}
 #define OPS_SOA
 {% endif %}
-#define OPS_API 2
+#define OPS_API {{app.global_dim}}
 #include "ops_lib_core.h"
 
 #ifdef OPS_MPI

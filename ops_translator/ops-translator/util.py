@@ -573,33 +573,54 @@ class KernelProcess:
 
         return const_names, const_dims
 
-    # Function to create the replacer for 3D to 1D indexing
     def create_replacer_3d(self, array_name, dim2, dim3):
         def replacer(match):
             i, j, k = match.groups()
-            return f"{array_name}[({i})*{dim2}*{dim3}+({j})*{dim3}+({k})-1]"
+            return f"{array_name}[({i}-1)*{dim2}*{dim3}+({j}-1)*{dim3}+({k})-1]"
         return replacer
 
-    # Function to convert 3D to 1D indexing
     def convert_3d_to_1d_indexing(self, fortrantocpp_code, array_name, dim2, dim3):
-        # Updated pattern to ensure word boundaries for exact matches
-        pattern = rf"\b{array_name}\b\s*\(\s*([^,()]+)\s*,\s*([^,()]+)\s*,\s*([^)]+)\s*\)"
+        # Handle simple nested cases with balancing brackets
+        pattern = rf"""
+            \b{re.escape(array_name)}\b  # Match the array name
+            \s*\(\s*                   # Match the opening parenthesis and optional whitespace
+            (                          # First capturing group for i
+                [^(),]+
+                (?:\(.*?\))*           # Allow for simple nested parentheses
+            )\s*,\s*                   # Match a comma with optional whitespace
+            (                          # Second capturing group for j
+                [^(),]+
+                (?:\(.*?\))*
+            )\s*,\s*                   # Match another comma with optional whitespace
+            (                          # Third capturing group for k
+                [^(),]+
+                (?:\(.*?\))*
+            )\s*\)                     # Match closing parenthesis
+        """
         replacer = self.create_replacer_3d(array_name, dim2, dim3)
-        return re.sub(pattern, replacer, fortrantocpp_code)
+        return re.sub(pattern, replacer, fortrantocpp_code, flags=re.VERBOSE)
 
-    # Function to create the replacer for 2D to 1D indexing
     def create_replacer_2d(self, array_name, dim2):
         def replacer(match):
             i, j = match.groups()
-            return f"{array_name}[({i})*{dim2}+({j})-1]"
+            return f"{array_name}[({i}-1)*{dim2}+({j})-1]"
         return replacer
 
-    # Function to convert 2D to 1D indexing
     def convert_2d_to_1d_indexing(self, fortrantocpp_code, array_name, dim2):
-        # Updated pattern to ensure word boundaries for exact matches
-        pattern = rf"\b{array_name}\b\s*\(\s*([^,()]+)\s*,\s*([^)]+)\s*\)"
+        pattern = rf"""
+            \b{re.escape(array_name)}\b  # Match the array name
+            \s*\(\s*                   # Match the opening parenthesis and optional whitespace
+            (                          # First capturing group for i
+                [^(),]+
+                (?:\(.*?\))*
+            )\s*,\s*                   # Match a comma with optional whitespace
+            (                          # Second capturing group for j
+                [^(),]+
+                (?:\(.*?\))*
+            )\s*\)                     # Match closing parenthesis
+        """
         replacer = self.create_replacer_2d(array_name, dim2)
-        return re.sub(pattern, replacer, fortrantocpp_code)
+        return re.sub(pattern, replacer, fortrantocpp_code, flags=re.VERBOSE)
 
     # Function to create the replacer for 1D indexing
     def create_replacer_1d(self, array_name):
