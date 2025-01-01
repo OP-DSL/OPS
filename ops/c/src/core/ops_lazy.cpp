@@ -344,7 +344,7 @@ void ops_compute_mpi_dependencies(OPS_instance *instance, int loop, int d, int *
           MIN(data_read_deps_edge[LOOPARG.dat->index][2 * d + 1],
           right_neighbour_start + d_m_min);
       }
-//      if (instance->OPS_diags>5) printf2(instance,"Proc %d dim %d name %s read_deps_edge %d-%d\n",ops_get_proc(), d, LOOPARG.dat->name, data_read_deps_edge[LOOPARG.dat->index][2 * d + 0], data_read_deps_edge[LOOPARG.dat->index][2 * d + 1]);
+      if (instance->OPS_diags>5) printf2(instance,"Proc %d dim %d name %s read_deps_edge %d-%d\n",ops_get_proc(), d, LOOPARG.dat->name, data_read_deps_edge[LOOPARG.dat->index][2 * d + 0], data_read_deps_edge[LOOPARG.dat->index][2 * d + 1]);
 
     }
   }
@@ -393,6 +393,8 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++)
     tiling_plans[tiling_plans.size() - 1].loop_sequence[i] =
         ops_kernel_list[i]->hash;
+
+  std::vector<int> dead_tiles;
 
   int *store_left_neighbour_end, *store_right_neighbour_start;
   store_left_neighbour_end = (int*) calloc(ops_kernel_list.size()*OPS_MAX_DIM, sizeof(int));
@@ -551,6 +553,10 @@ int ops_construct_tile_plan(OPS_instance *instance) {
     loop_decomp_disp[i].resize(OPS_MAX_DIM);
     loop_decomp_size[i].resize(OPS_MAX_DIM);
   }
+  // Initialise dead tile flags
+  dead_tiles.resize(total_tiles * OPS_MAX_DIM);
+  for (int i = 0; i < total_tiles * OPS_MAX_DIM; i++)
+    dead_tiles[i] = -1;
 
   // Initialise dataset dependencies
   data_read_deps.resize(instance->OPS_dat_index);
@@ -572,10 +578,16 @@ int ops_construct_tile_plan(OPS_instance *instance) {
     }
   }
 
+  std::vector<int> largest_computed_index(OPS_MAX_DIM);
+  for (int d = 0; d < OPS_MAX_DIM; d++)
+    largest_computed_index[d] = biggest_range[2*d+1];
+
   //
   // Main tiling dependency analysis loop
   //
   for (int loop = (int)ops_kernel_list.size() - 1; loop >= 0; loop--) {
+    if (instance->OPS_diags > 5)
+      printf2(instance,"---Proc %d, %s loop %d---\n",ops_get_proc(), ops_kernel_list[loop]->name, loop);
     int start[OPS_MAX_DIM], end[OPS_MAX_DIM], decomp_disp[OPS_MAX_DIM], decomp_size[OPS_MAX_DIM];
     ops_get_abs_owned_range(ops_kernel_list[loop]->block, LOOPRANGE, start, end, decomp_disp, decomp_size);
 
@@ -591,85 +603,107 @@ int ops_construct_tile_plan(OPS_instance *instance) {
 
       ops_compute_mpi_dependencies(instance, loop, d, start, end, biggest_range, store_left_neighbour_end, store_right_neighbour_start, other_dims);
 
-      for (int tile = 0; tile < total_tiles; tile++) {
-
-        
-        // If this tile is the first on this process in this dimension
-        if ((tile / tiles_prod[d]) % ntiles[d] == 0) {
-          //If this is the leftmost process for this loop, then start index is the
-          // same as the original start index
-          if (LOOPRANGE[2 * d + 0] == start[d])
-            tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] = start[d];
-          else {
-            //If this is not the leftmost process, look at read dependencies
-              tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] = INT_MAX;
-            // Look at read dependencies of datasets being written
-              for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
-              // For any dataset written (i.e. not read)
-                if (LOOPARG.argtype == OPS_ARG_DAT &&
-                  LOOPARG.opt == 1 &&
-                  LOOPARG.acc != OPS_READ) {
-                // Start index is the smallest across all of the dependencies, but
-                // no smaller than the loop range
-                  int intersect_begin = 0;
-                  //Take intersection of execution range with prior data dependency and my end range
-                  int intersect_len = intersection(data_read_deps[LOOPARG.dat->index][tile * OPS_MAX_DIM * 2 + 2 * d + 0], 
-                                                   biggest_range[2*d+1],
-                                                   LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
-                  if (intersect_len > 0)
-                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] = 
-                      MIN(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],intersect_begin);
-              }
-            }
-
-            //If no prior dependencies, set to normal start index
-            if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] == INT_MAX) 
-              tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] = 
-                  MIN(LOOPRANGE[2*d+1],start[d]);
-          }
-        }
-        else // Otherwise begin range is end of previous tile's
-          tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] =
-              tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile - tiles_prod[d]) +
-                                 2 * d + 1];
-
-        // End index, if last tile in the dimension and if
-        // this is the rightmost process involved in the loop
-        if ((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 &&
-             LOOPRANGE[2 * d + 1] == end[d]) {
-            tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] =
-                LOOPRANGE[2 * d + 1];
-        }
-        // Otherwise it depends on data dependencies
-        else {
-          //By default make end index = start index, then extend upwards from there
-          tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
-
-					//
-					// Extend by checking dependencies
-					//
-          // Look at read dependencies of datasets being written
-          for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
-            // For any dataset written (i.e. not read)
-            if (LOOPARG.argtype == OPS_ARG_DAT &&
-                LOOPARG.opt == 1 &&
-                LOOPARG.acc != OPS_READ) {
-              // End index is the greatest across all of the dependencies, but
-              // no greater than the loop range
-              int intersect_begin = 0;
-              //Take intersection of execution range with tile start index and prior data dependency
-              int intersect_len = intersection(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
-                                               data_read_deps[LOOPARG.dat->index][tile * OPS_MAX_DIM * 2 + 2 * d + 1],
-                                               LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
-              if (intersect_len > 0)
-                tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
-                  MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1],intersect_begin + intersect_len);
-            }
-          }
-        }
-        }
+      bool repeat = true;
+      while (repeat) {
+        repeat = false;
+        //
+        // Sweep 1: compute tile ranges based on read dependencies
+        //
         for (int tile = 0; tile < total_tiles; tile++) {
 
+          // If this tile is the first on this process in this dimension
+          if ((tile / tiles_prod[d]) % ntiles[d] == 0) {
+            //If this is the leftmost process for this loop, then start index is the
+            // same as the original start index
+            if (LOOPRANGE[2 * d + 0] == start[d])
+              tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] = start[d];
+            else {
+              //If this is not the leftmost process, look at read dependencies
+                tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] = INT_MAX;
+              // Look at read dependencies of datasets being written
+                for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
+                // For any dataset written (i.e. not read)
+                  if (LOOPARG.argtype == OPS_ARG_DAT &&
+                    LOOPARG.opt == 1 &&
+                    LOOPARG.acc != OPS_READ) {
+                  // Start index is the smallest across all of the dependencies, but
+                  // no smaller than the loop range
+                    int intersect_begin = 0;
+                    //Take intersection of execution range with prior data dependency and my end range
+                    int intersect_len = intersection(data_read_deps[LOOPARG.dat->index][tile * OPS_MAX_DIM * 2 + 2 * d + 0], 
+                                                    biggest_range[2*d+1],
+                                                    LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
+                    if (intersect_len > 0)
+                      tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] = 
+                        MIN(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],intersect_begin);
+                }
+              }
+
+              //If no prior dependencies, set to normal start index
+              if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] == INT_MAX) 
+                tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] = 
+                    MIN(LOOPRANGE[2*d+1],start[d]);
+            }
+          }
+          else {// Otherwise begin range is end of previous tile's
+            tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] =
+                tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile - tiles_prod[d]) + 2 * d + 1];
+          }
+
+          // End index, if last tile in the dimension that is not dead and if
+          // this is the rightmost process involved in the loop
+          if (LOOPRANGE[2 * d + 1] == end[d] &&
+          (((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 ) || 
+              (tile + tiles_prod[d] < total_tiles && dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1 &&
+              dead_tiles[tile * OPS_MAX_DIM + d] == -1))) {
+              tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] =
+                  LOOPRANGE[2 * d + 1];
+          }
+          // Otherwise it depends on data dependencies
+          else {
+            //By default make end index = start index, then extend upwards from there
+            tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] =
+                tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
+
+            //
+            // Extend by checking dependencies
+            //
+            // Look at read dependencies of datasets being written
+            for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
+              // For any dataset written (i.e. not read)
+              if (LOOPARG.argtype == OPS_ARG_DAT &&
+                  LOOPARG.opt == 1 &&
+                  LOOPARG.acc != OPS_READ) {
+                // End index is the greatest across all of the dependencies, but
+                // no greater than the loop range
+                int intersect_begin = 0;
+                //Take intersection of execution range with tile start index and prior data dependency
+                int intersect_len = intersection(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
+                                                data_read_deps[LOOPARG.dat->index][tile * OPS_MAX_DIM * 2 + 2 * d + 1],
+                                                LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
+                if (intersect_len > 0) {
+                  tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
+                    MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1],intersect_begin + intersect_len);
+                  if (instance->OPS_diags > 5)
+                    printf2(instance,"Proc %d, %s due to read %s: tile %d dim %d: exec range is: %d-%d\n",
+                      ops_get_proc(), ops_kernel_list[loop]->name, LOOPARG.dat->name, tile, d,
+                      tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
+                      tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
+                }
+              }
+            }
+          }
+          if (instance->OPS_diags > 5)
+            printf2(instance,"Proc %d, %s after read deps: tile %d dim %d: exec range is: %d-%d\n",
+                  ops_get_proc(), ops_kernel_list[loop]->name, tile, d,
+                  tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
+                  tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
+        }
+
+        //
+        // Sweep 2: adjust tile ranges based on write dependencies, and handle leftover tiles
+        //
+        for (int tile = 0; tile < total_tiles; tile++) {
           //Keep tile begin indices consistent
           if ((tile / tiles_prod[d]) % ntiles[d] != 0) //If not first tile, begin should be end of previous tile's end
             tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] =
@@ -678,23 +712,22 @@ int ops_construct_tile_plan(OPS_instance *instance) {
           if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] > tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1])
             tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
 
-          //TODO: how about first tile?
-          //If this is not the last tile, we need to check write-after-write dependencies too
-          if ((tile / tiles_prod[d]) % ntiles[d] != ntiles[d] - 1 &&
-            //unless the next tile shrunk to 0, in which case this is the last tile
-              tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 1] -
-              tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 0] > 0) {
+          //If this is NOT the last non-dead tile, we need to check write-after-write dependencies too
+          if (!((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 || ( 
+                tile + tiles_prod[d] < total_tiles && 
+                dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1))) {
+
             // Look at write dependencies of datasets being accessed
             for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
               if (LOOPARG.argtype == OPS_ARG_DAT &&
                   LOOPARG.opt == 1 &&
                   data_write_deps[LOOPARG.dat->index]
-                                 [tile * OPS_MAX_DIM * 2 + 2 * d + 1] != INT_MIN ) {
+                                  [tile * OPS_MAX_DIM * 2 + 2 * d + 1] != INT_MIN ) {
                 int d_m_min = INT_MAX;  // Find biggest positive/negative direction
-                                 // stencil point for this dimension
+                                  // stencil point for this dimension
                 int d_p_max = INT_MIN;
                 for (int p = 0;
-                     p < LOOPARG.stencil->points; p++) {
+                      p < LOOPARG.stencil->points; p++) {
                   d_m_min = MIN(d_m_min,
                       LOOPARG.stencil->stencil
                           [LOOPARG.stencil->dims * p + d]);
@@ -707,11 +740,12 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                 int intersect_begin = 0;
                 //Take intersection of execution range with tile start index and write data dependency + stencil width
                 int intersect_len = intersection(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
-                                                 data_write_deps[LOOPARG.dat->index][tile * OPS_MAX_DIM * 2 + 2 * d + 1]-d_m_min,
-                                                 LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
+                                                  data_write_deps[LOOPARG.dat->index][tile * OPS_MAX_DIM * 2 + 2 * d + 1]-d_m_min,
+                                                  LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
                 if (intersect_len > 0) {
                   tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
                     MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1],intersect_begin + intersect_len);
+                  
                   //If we overshot the next tile's end index - due to different skewing factors
                   // that means this tile is now the last one, and we don't need to worry about
                   // write dependencies beyond that point
@@ -724,38 +758,113 @@ int ops_construct_tile_plan(OPS_instance *instance) {
             }
           }
 
-          // If no prior dependencies, end index is leftmost range + (tile index
+          // Leftover tiles: If no prior dependencies, end index is leftmost range + (tile index
           // + 1) * tile size, or end index if not tiled in this dimension
           if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] ==
-              tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0]) {
-            if (tile_sizes[d] <= 0)
+              tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] &&
+              dead_tiles[tile * OPS_MAX_DIM + d] == -1) { // and this tile is dead
+
+            //if no tiling in this dimension, or if next tile is dead, set end index to end of loop range
+            if (tile_sizes[d] <= 0 || (tile + tiles_prod[d] < total_tiles && 
+              dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1))
               tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = end[d];
             else
               tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
                 MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
-											MIN(end[d],
+                      MIN(end[d],
                           biggest_range[2 * d + 0] +
                               ((tile / tiles_prod[d]) % ntiles[d] + 1) *
                                   tile_sizes[d]));
           }
 
-        if (instance->OPS_diags > 5 && tile_sizes[d] != -1)
+          if (instance->OPS_diags > 5 && tile_sizes[d] != -1) {
+            if(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]
+              - tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] <= 0)
+              printf2(instance,"Proc %d, %s empty tile %d dim %d: exec range is: %d-%d\n",
+                    ops_get_proc(), ops_kernel_list[loop]->name, tile, d,
+                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
+                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
+            else
+              printf2(instance,"Proc %d, %s tile %d dim %d: exec range is: %d-%d\n",
+                    ops_get_proc(), ops_kernel_list[loop]->name, tile, d,
+                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
+                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
+          }
 
-        if(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]
-          - tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] <= 0)
-          printf2(instance,"Proc %d, %s dead tile %d dim %d: exec range is: %d-%d\n",
-                 ops_get_proc(), ops_kernel_list[loop]->name, tile, d,
-                 tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
-                 tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
-        else
-          printf2(instance,"Proc %d, %s tile %d dim %d: exec range is: %d-%d\n",
-                 ops_get_proc(), ops_kernel_list[loop]->name, tile, d,
-                 tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
-                 tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
+          //Update largest computed index for this dimension
+          if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]
+              - tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] > 0)
+            largest_computed_index[d] = MAX(largest_computed_index[d], tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
+        }
+        //
+        // Sweep 3: detect dead tiles: tiles that have shrunk to 0 outside of the owned range (biggest_range)
+        //
+        for (int tile = 0; tile < total_tiles; tile++) {
+          //Sanity check: dead tile should not have non-zero range
+          if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] - tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] > 0 &&
+              dead_tiles[tile * OPS_MAX_DIM + d] != -1) {
+            printf2(instance,"Proc %d, %s dead tile %d dim %d resurrected: exec range is: %d-%d\n",
+                    ops_get_proc(), ops_kernel_list[loop]->name, tile, d,
+                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
+                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
+          }
+          //If this tile is newly dead
+          bool has_zero_range = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] - 
+                                tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] <= 0;
+          bool is_last_live_tile = ((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 || //last tile in dimension
+                                    (tile + tiles_prod[d] < total_tiles &&  //or next tile is dead
+                                    dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1)) &&
+                                    dead_tiles[tile * OPS_MAX_DIM + d] == -1; //live
+          bool previous_tile_exists = tile - tiles_prod[d] >= 0;
+          int intersect_begin = 0;
+          if (biggest_range[2*d+1] == largest_computed_index[d]) largest_computed_index[d]++;
+          bool loop_executes_in_halo = intersection(biggest_range[2*d+1], largest_computed_index[d],
+                                                  LOOPRANGE[2*d+0], LOOPRANGE[2*d+1],
+                                                  &intersect_begin) > 0;
+          //A tile can become dead if it is the last live tile in a dimension, but was reduced to 0, even
+          // though the loop executes in the halo
+          if (is_last_live_tile && loop_executes_in_halo && has_zero_range && previous_tile_exists) {
+
+              if (instance->OPS_diags > 5)
+                printf2(instance,"Proc %d, %s new dead tile %d dim %d: exec range is: %d-%d\n",
+                      ops_get_proc(), ops_kernel_list[loop]->name, tile, d,
+                      tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
+                      tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
+
+
+              //Go through all read dependencies of all datasets, if end index was cleared (INT_MIN)
+              // for this tile, then we need to clear the read dependency of the previous tile (if it exists).
+              // Also extend the read dependency of the previous tile with this one's if it wasn't cleared.
+              // No need to check for write dependencies, as they will be ignored since previous tile will be last
+              for (int datidx = 0; datidx < instance->OPS_dat_index; datidx++) {
+                if (data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1] == INT_MIN) {
+                  data_read_deps[datidx][(tile - tiles_prod[d]) * OPS_MAX_DIM * 2 + 2 * d + 1] = INT_MIN;
+                  if (instance->OPS_diags > 5)
+                    printf2(instance,"Proc %d, %s new dead tile %d dim %d: read dependency on ?? of previous tile %d set to INT_MIN\n",
+                          ops_get_proc(), ops_kernel_list[loop]->name, tile, d,
+                           tile - tiles_prod[d]);
+                } else if (data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1] > 
+                           data_read_deps[datidx][(tile - tiles_prod[d]) * OPS_MAX_DIM * 2 + 2 * d + 1]) {
+                  data_read_deps[datidx][(tile - tiles_prod[d]) * OPS_MAX_DIM * 2 + 2 * d + 1] = 
+                          data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1];
+                  if (instance->OPS_diags > 5)
+                    printf2(instance,"Proc %d, %s new dead tile %d dim %d: read dependency on ?? of previous tile %d extended to %d-%d\n",
+                          ops_get_proc(), ops_kernel_list[loop]->name, tile, d,
+                           tile - tiles_prod[d],
+                          data_read_deps[datidx][(tile - tiles_prod[d]) * OPS_MAX_DIM * 2 + 2 * d + 0],
+                          data_read_deps[datidx][(tile - tiles_prod[d]) * OPS_MAX_DIM * 2 + 2 * d + 1]);
+                }
+              }
+              dead_tiles[tile * OPS_MAX_DIM + d] = loop;
+              repeat = true;
+              
+          }
+        }
       }
 
-
-
+      //
+      // Dependency sweep: update read and write dependencies
+      //
       for (int tile = 0; tile < total_tiles; tile++) {
 
         int intersect_begin = 0;
@@ -824,12 +933,20 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                                    [tile * OPS_MAX_DIM * 2 + 2 * d + 0] = INT_MAX;
               //If this is the last tile, and we cover full range in other dims, we need to clear read dependency
               if (((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 ||
-                //or if the next tile shrunk to 0, in which case this is the last tile
+                //or if the next tile is dead, in which case this is the last tile
                   (tile + tiles_prod[d] < total_tiles &&
-                  tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 1] -
-                  tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 0] == 0)) && other_dims)
+                  dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1)) && other_dims) {
                 data_read_deps[LOOPARG.dat->index]
                                    [tile * OPS_MAX_DIM * 2 + 2 * d + 1] = INT_MIN;
+                if (tile + tiles_prod[d] < total_tiles) {
+                  //Clear read dependency of next tile
+                  data_read_deps[LOOPARG.dat->index]
+                                    [(tile + tiles_prod[d]) * OPS_MAX_DIM * 2 + 2 * d + 0] = INT_MAX;
+                  data_read_deps[LOOPARG.dat->index]
+                                    [(tile + tiles_prod[d]) * OPS_MAX_DIM * 2 + 2 * d + 1] = INT_MIN;
+                  }
+                  }
+             
               if (instance->OPS_diags > 5 && tile_sizes[d] != -1) {
                 printf2(instance,
                     "Dataset overwrite %s read dependency update dim %d tile %d set to %d %d\n",
@@ -923,7 +1040,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
       //take the max
       
       int right_read_dep = INT_MIN;
-      for (int tile = 0; tile < ntiles[d]; tile++)
+      for (int tile = 0; tile < ntiles[d]; tile++) //no need to find last non-dead tile, this finds max read dependency
         right_read_dep = MAX(right_read_dep,data_read_deps[dats_to_exchange[i]->index][tile*tiles_prod[d]*OPS_MAX_DIM*2+2*d+1]);
       if (right_read_dep == INT_MIN) {
         depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 3] = 0;
