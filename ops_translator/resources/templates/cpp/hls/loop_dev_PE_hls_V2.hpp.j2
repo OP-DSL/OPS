@@ -47,7 +47,7 @@ arg{{arg.id}}_{{link}}
 {% set stencil = widen_read_stencil_desc.widen_stencil %}
     {% if stencil is not none %}
 static constexpr unsigned short read_num_points_{{lh.kernel}} = {{stencil.num_points}};
-static constexpr unsigned short read_stencil_size_{{lh.kernel}} = {{stencil.stencil_size}};
+static constexpr unsigned short read_stencil_size_{{lh.kernel}} = {{stencil.stencil_size.x}};
 static constexpr unsigned short read_stencil_dim_{{lh.kernel}} = {{stencil.dim}};
     {% endif %}
 
