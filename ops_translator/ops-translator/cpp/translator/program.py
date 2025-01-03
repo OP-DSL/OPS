@@ -208,8 +208,47 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
             buffer.remove(index)
         
         buffer.update(index, new_loop_call)
-
-    # 3. Update headers
+        
+    # 3. ops_decl_dat
+    if buffer.search(r".*ops_decl_dat.*"):
+        logging.debug("ops_decl_dat found in program")
+        instances_lines = buffer.search_all(r".*ops_decl_dat.*")
+        
+        for line in instances_lines:
+            # logging.debug(f"{buffer.get(line)}")
+            before, after = buffer.get(line).split("ops_decl_dat", 1)
+            def_indices = [line]
+            
+            if (after.find(";") == -1):
+                index = line + 1
+                def_indices.append(index)
+                
+                while(True):
+                    line = buffer.get(index)
+                    after += line
+                    buffer.remove(index)
+                    if line.find(";") != -1:
+                        break
+                    index += 1
+            after = after[after.find("("):after.rfind(")")]
+            split_after = after.split(",")
+            split_after.append("mem_vector_factor")
+            new_decl_dat = before + f"ops_hls_decl_dat"
+            
+            for i, arg in enumerate(split_after):
+                if i == 0: 
+                    new_decl_dat = f"{new_decl_dat}{arg}"
+                else:
+                    new_decl_dat = f"{new_decl_dat}, {arg}"
+            
+            new_decl_dat += ");"
+            
+            for index in def_indices:
+                buffer.remove(index)
+        
+            buffer.update(index, new_decl_dat)
+            
+    # 4. Update headers
     index = buffer.search(r'\s*#include\s*("|<)\s*ops_seq(_v2)?\.h\s*("|>)') + 2
 
     buffer.insert(index, '/* ops_par_loop declarations */\n')
@@ -236,18 +275,18 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
             # {", ops::hls::Grid" * len(loop.args)});\n'
             buffer.insert(index, prototype)
 
-    # 4. Update ops_init
+    # 5. Update ops_init
 
     if buffer.search(r'\s* ops_init\s*\('):
         index = buffer.search(r'\s* ops_init\s*\(')
         buffer.update(index, '\tops_init_backend(argc, argv);\n')
 
-    # 5. Update ops_exit
+    # 6. Update ops_exit
     if buffer.search(r'\s*ops_exit\s*\('):
         index = buffer.search(r'\s*ops_exit\s*\(')
         buffer.update(index, '\tops_exit_backend();\n')
     
-    # 6. Find the Global declarations of constant and check extern or not
+    # 7. Find the Global declarations of constant and check extern or not
     for const in app_consts:
         name, typ = const.name, repr(const.typ)
         pattern1 = rf'\s*\b{typ}\b(?:(?!;).)*\b{name}\b'
@@ -261,7 +300,7 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
         #     const.setExtern(True) 
     
     
-    # 7. Removing stencil declaration
+    # 8. Removing stencil declaration
     if buffer.search(r'\s*ops_stencil.*'):
         line_indices = buffer.search_all(r'\s*ops_stencil.*')
     
@@ -288,12 +327,12 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
                     break
                 index += 1
         
-    # 8. Removing ops_partition        
+    # 9. Removing ops_partition        
     if (buffer.search(r'.*ops_partition.*')):
         index = buffer.search(r'.*ops_partition.*')
         buffer.remove(index)
     
-    # 9. Add kernel_wrapp_master_kernels include and add ops_hls_rt_support.h
+    # 10. Add kernel_wrapp_master_kernels include and add ops_hls_rt_support.h
     if (buffer.search(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)')):
         index = buffer.search(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)')
         buffer.insert(index+1, "#include <ops_hls_rt_support.h>")
@@ -301,7 +340,7 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
     else:
         raise OpsError(f"OPS program failed to include core header file, ops_seq.h or ops_seq_V2.h")
 
-    # 10. get_raw_pointer update
+    # 11. get_raw_pointer update
     found_indices = buffer.search_all(r'.*ops_dat_get_raw_pointer.*')
     print (f"found_indices: {found_indices}")
     
@@ -351,23 +390,23 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
         buffer.update(index, new_call_line)
     new_source = buffer.translate()
     
-    # 11. Replace ops_block to ops::hls::Block and replace ops_decl_block to ops_hls_decl_block
+    # 12. Replace ops_block to ops::hls::Block and replace ops_decl_block to ops_hls_decl_block
     new_source = new_source.replace("ops_block", "ops::hls::Block").replace("ops_decl_block", "ops_hls_decl_block")
     
-    # 12. Replace ops_dat to auto and ops_decl_dat to ops_hls_decl_dat
+    # 13. Replace ops_dat to auto and ops_decl_dat to ops_hls_decl_dat
     # TODO: Make the ops_dat to ops::hls::Grid without type defined. to support predefined ops_dat without declaration. 
     #       right now simply translating ops_dat to ops::hls::Grid<stencil_type>
     # found_indices = buffer.search_all(r'.*ops_decl_dat.*')
     # print (f"found_indices ops_hls_decl_dat: {found_indices}")
-    new_source = new_source.replace("ops_dat ", "ops::hls::Grid<stencil_type> ").replace("ops_decl_dat", "ops_hls_decl_dat")
+    new_source = new_source.replace("ops_dat ", "ops::hls::Grid<stencil_type> ")
     
-    # 13. Replace ops_printf
+    # 14. Replace ops_printf
     new_source = new_source.replace("ops_printf", "printf")
     
-    # # 14. Substitude the ops_seq.h/ops_seq_v2.h with ops_lib_core.h
+    # # 15. Substitude the ops_seq.h/ops_seq_v2.h with ops_lib_core.h
     # new_source = re.sub(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)', '#include <ops_hls_rt_support.h>', new_source)
 
-    # 15. check if SOA is set
+    # 16. check if SOA is set
     def replacer(match):
         s = match.group(0)
         if s.startswith("/"):

@@ -14,10 +14,10 @@ static void joint_PE_outerloop_{{ilh.id}}(const unsigned short PEId, const ops::
     {% for arg in ilh.joint_args|ops_not_idx %}
         {% if arg is ops_dat %}
             {% if arg is not ops_rw %}
-        ::hls::stream<ap_uint<axis_data_width>>& {{hls_name(arg)-}}{{", " if not loop.last or consts }}
+        ::hls::stream<ap_uint<{{axis_data_width(arg)}}>>& {{hls_name(arg)-}}{{", " if not loop.last or consts }}
             {% else %}
-        ::hls::stream<ap_uint<axis_data_width>>& {{hls_name_t2(arg, "in")-}}, 
-        ::hls::stream<ap_uint<axis_data_width>>& {{hls_name_t2(arg, "out")-}}{{", " if not loop.last or consts }}
+        ::hls::stream<ap_uint<{{axis_data_width(arg)}}>>& {{hls_name_t2(arg, "in")-}}, 
+        ::hls::stream<ap_uint<{{axis_data_width(arg)}}>>& {{hls_name_t2(arg, "out")-}}{{", " if not loop.last or consts }}
             {% endif %}
         {% elif arg is ops_gbl %}
         const {{arg.typ}}& {{get_arg_gbl_name(arg)}}{{", " if not loop.last or consts }}
@@ -30,8 +30,8 @@ static void joint_PE_outerloop_{{ilh.id}}(const unsigned short PEId, const ops::
     {% if ilh.get_active_df_graph().getAllLoopNodes()|length > 1 %}
 #pragma HLS DATAFLOW
     {% endif %}
-    {% for stream_interconnector in ilh.interconnector_names %}
-    ::hls::stream<ap_uint<axis_data_width>> {{stream_interconnector}};
+    {% for stream_interconnector, dat_id in ilh.interconnectors %}
+    ::hls::stream<ap_uint<{{axis_data_width_datid(dat_id)}}>> {{stream_interconnector}};
     #pragma HLS STREAM variable = {{stream_interconnector}} depth = max_depth
     {% endfor %}
 
@@ -67,7 +67,7 @@ static void joint_PE_outerloop_{{ilh.id}}(const unsigned short PEId, const ops::
 
 static void kernel_outerloop_{{ilh.id}}_dataflow_region_cascaded(const unsigned short& slr_region, const ops::hls::StencilConfigCore& stencilConfig, const unsigned int total_bytes,
     {% for swap_pair in ilh.getUniqueDatSwapsIds() %}
-    ::hls::stream<ap_uint<axis_data_width>> arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams[iter_par_factor + 1]{{", " if (not loop.last or consts or ilh.joint_args|ops_gbl)}}
+    ::hls::stream<ap_uint<{{axis_data_width_datid(swap_pair[0])}}>> arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams[iter_par_factor + 1]{{", " if (not loop.last or consts or ilh.joint_args|ops_gbl)}}
     {% endfor %}
     {% for const_arg in ilh.joint_args|ops_gbl%}
     const {{const_arg.typ}}& {{get_arg_gbl_name(const_arg)}}{{", " if (not loop.last or consts)}}
@@ -112,21 +112,21 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region_cascaded(const unsigned 
     }
 }
 static void kernel_outerloop_{{ilh.id}}_dataflow_region(const unsigned short& slr_region, const ops::hls::StencilConfigCore& stencilConfig, const unsigned int total_bytes,
-    {% for arg in ilh.joint_args|ops_dat -%}{% if arg is not ops_rw %}hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)-}}{{", " if not loop.last or consts or ilh.joint_args|ops_gbl }}{% else %} hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")-}}, hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "out")-}}{{", " if not loop.last or consts or ilh.joint_args|ops_gbl}}{% endif %}{% endfor %}
+    {% for arg in ilh.joint_args|ops_dat -%}{% if arg is not ops_rw %}hls::stream <ap_axiu<{{axis_data_width(arg)}}, 0, 0, 0>>& {{axis_name(arg)-}}{{", " if not loop.last or consts or ilh.joint_args|ops_gbl }}{% else %} hls::stream <ap_axiu<{{axis_data_width(arg)}}, 0, 0, 0>>& {{axis_name_t2(arg, "in")-}}, hls::stream <ap_axiu<{{axis_data_width(arg)}}, 0, 0, 0>>& {{axis_name_t2(arg, "out")-}}{{", " if not loop.last or consts or ilh.joint_args|ops_gbl}}{% endif %}{% endfor %}
     {% for const_arg in ilh.joint_args|ops_gbl%}const {{const_arg.typ}}& {{get_arg_gbl_name(const_arg)}}{{", " if not loop.last or consts}}{% endfor %}
     {% for const in consts %}const {{const.typ}}& {{const.ptr}}{{", " if not loop.last }}{% endfor %})
 {
 #pragma HLS DATAFLOW
     {% for swap_pair in ilh.getUniqueDatSwapsIds() -%}
-    ::hls::stream<ap_uint<axis_data_width>> arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams[iter_par_factor + 1];
+    ::hls::stream<ap_uint<{{axis_data_width_datid(swap_pair[0])}}>> arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams[iter_par_factor + 1];
     #pragma HLS STREAM variable = arg{{swap_pair[0]}}_arg{{swap_pair[1]}}_streams depth = max_depth
     {% endfor %}
     
     {% for arg in ilh.joint_args|ops_dat -%}
         {% if arg is ops_read %}
-        ops::hls::axis2stream<axis_data_width, axis_data_width>({{axis_name(arg)-}}, {{internal_stream_name(arg)}}[0], total_bytes);
+        ops::hls::axis2stream<{{axis_data_width(arg)}}, {{axis_data_width(arg)}}>({{axis_name(arg)-}}, {{internal_stream_name(arg)}}[0], total_bytes);
         {% elif arg is ops_rw %}
-        ops::hls::axis2stream<axis_data_width, axis_data_width>({{axis_name_t2(arg, "in")-}}, {{internal_stream_name(arg)}}[0], total_bytes);
+        ops::hls::axis2stream<{{axis_data_width(arg)}}, {{axis_data_width(arg)}}>({{axis_name_t2(arg, "in")-}}, {{internal_stream_name(arg)}}[0], total_bytes);
         {% endif %}
     {% endfor %}
 
@@ -152,9 +152,9 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region(const unsigned short& sl
 
     {% for arg in ilh.joint_args|ops_dat -%}
         {% if arg is ops_write %}
-        ops::hls::stream2axis<axis_data_width, axis_data_width>({{axis_name(arg)-}}, {{internal_stream_name(arg)}}[iter_par_factor], total_bytes);
+        ops::hls::stream2axis<{{axis_data_width(arg)}}, {{axis_data_width(arg)}}>({{axis_name(arg)-}}, {{internal_stream_name(arg)}}[iter_par_factor], total_bytes);
         {% elif arg is ops_rw %}
-        ops::hls::stream2axis<axis_data_width, axis_data_width>({{axis_name_t2(arg, "out")-}}, {{internal_stream_name(arg)}}[iter_par_factor], total_bytes);
+        ops::hls::stream2axis<{{axis_data_width(arg)}}, {{axis_data_width(arg)}}>({{axis_name_t2(arg, "out")-}}, {{internal_stream_name(arg)}}[iter_par_factor], total_bytes);
         {% endif %}
     {% endfor %}
 

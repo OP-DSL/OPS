@@ -103,8 +103,8 @@ public:
         OCL_CHECK(err, err = m_datamover.setArg(narg++, read_range.start[{{i}}]));
         OCL_CHECK(err, err = m_datamover.setArg(narg++, read_range.end[{{i}}]));
     {% endfor %}
-    {% for arg in ilh.joint_args %}
-        {% if arg is ops_dat %}
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if loop.first %}
             {% for idx in range(ndim)%}
         OCL_CHECK(err, err = m_datamover.setArg(narg++, arg{{arg.id}}.originalProperty.grid_size[{{idx}}]));
             {% endfor %}

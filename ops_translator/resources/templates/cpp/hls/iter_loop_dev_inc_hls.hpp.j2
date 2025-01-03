@@ -14,12 +14,35 @@ arg{{arg.id}}_hls_stream_{{"in" if (arg is ops_read) else ("out" if (arg is ops_
 {% macro hls_name_t2(arg, suffix) -%}
 arg{{arg.id}}_hls_stream_{{suffix}}
 {%- endmacro -%}
-
+{% macro axis_data_width(arg) -%}
+    {%- if ilh.dats[arg.dat_id][0].isMultiDim() -%}
+multidim_axis_data_width_{{ilh.id}}_{{ilh.dats[arg.dat_id][0].ptr}}
+    {%- else -%}
+axis_data_width
+    {%- endif -%}
+{%- endmacro -%}
+{% macro axis_data_width_datid(dat_id) -%}
+    {%- if ilh.dats[dat_id][0].isMultiDim() -%}
+multidim_axis_data_width_{{ilh.id}}_{{ilh.dats[dat_id][0].ptr}}
+    {%- else -%}
+axis_data_width
+    {%- endif -%}
+{%- endmacro -%}
 {% block header_block %}
 #pragma once
     {% for df_node in ilh.get_active_df_graph().getAllLoopNodes() %}
 #include "PE_{{df_node.loop.kernel}}.hpp"
     {% endfor %}
+
+{% if ilh.isMultiDim() %}
+    {% for dat, acc_type in ilh.dats %}
+        {% if dat.isMultiDim() %}
+constexpr unsigned short multidim_vector_factor_{{ilh.id}}_{{dat.ptr}} = vector_factor * {{dat.dim}};
+constexpr unsigned short multidim_axis_data_width_{{ilh.id}}_{{dat.ptr}} = data_width * multidim_vector_factor_{{ilh.id}}_{{dat.ptr}};
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
 {% endblock %}
 
 {% block joint_PE %}
@@ -59,10 +82,10 @@ extern "C" void kernel_outerloop_{{ilh.id}}(
     {% for arg in ilh.joint_args|ops_dat %}
     //{{ilh.dats[arg.dat_id][0].ptr}}
         {% if arg is not ops_rw %}
-        hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
+        hls::stream <ap_axiu<{{axis_data_width(arg)}}, 0, 0, 0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
         {% else %}
-        hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "in")-}},
-        hls::stream <ap_axiu<axis_data_width, 0, 0, 0>>& {{axis_name_t2(arg, "out")-}}{{"," if not loop.last}}
+        hls::stream <ap_axiu<{{axis_data_width(arg)}}, 0, 0, 0>>& {{axis_name_t2(arg, "in")-}},
+        hls::stream <ap_axiu<{{axis_data_width(arg)}}, 0, 0, 0>>& {{axis_name_t2(arg, "out")-}}{{"," if not loop.last}}
         {% endif %}
     {% endfor %}
 )
