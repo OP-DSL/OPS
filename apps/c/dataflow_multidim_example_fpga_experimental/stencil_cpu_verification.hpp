@@ -38,7 +38,7 @@
 
 #define EPSILON 0.0001
 
-void init_a_b_cpu(float *a, float*b, float& const_a, float& const_b, int size[2], int d_m[2], int d_p[2], int range[4])
+void init_a_b_cpu(float *a, float*b, float& const_a, float& const_b, int size[2], int d_m[2], int d_p[2], int range[4], int multidim = 1)
 {
     int grid_size_y = size[1] - d_m[1] + d_p[1];
 #ifdef OPS_FPGA
@@ -59,7 +59,7 @@ void init_a_b_cpu(float *a, float*b, float& const_a, float& const_b, int size[2]
 }
 
 template <typename T>
-void init_zero_cpu(T* u, int size[2], int d_m[2], int d_p[2], int range[4])
+void init_zero_cpu(T* u, int size[2], int d_m[2], int d_p[2], int range[4], int multidim = 1)
 {
     int grid_size_y = size[1] - d_m[1] + d_p[1];
 #ifdef OPS_FPGA
@@ -73,13 +73,24 @@ void init_zero_cpu(T* u, int size[2], int d_m[2], int d_p[2], int range[4])
         for (int i = range[0] - d_m[0]; i < range[1] - d_m[0]; i++)
         {
             int index = j * grid_size_x + i;
-            u[index] = 0;
+
+            if (multidim == 1)
+            {
+                u[index] = 0;
+            }
+            else
+            { 
+                for (int m_dim = 0; m_dim < multidim; m_dim++)
+                {
+                    u[index * multidim + m_dim] = 0;
+                }
+            }
         }
     }
 }
 
 template <typename T>
-void init_const_cpu(const T& cnst, T* u, int size[2], int d_m[2], int d_p[2], int range[4])
+void init_const_cpu(const T& cnst, T* u, int size[2], int d_m[2], int d_p[2], int range[4], int multidim = 1)
 {
     int grid_size_y = size[1] - d_m[1] + d_p[1];
 #ifdef OPS_FPGA
@@ -93,13 +104,24 @@ void init_const_cpu(const T& cnst, T* u, int size[2], int d_m[2], int d_p[2], in
         for (int i = range[0] - d_m[0]; i < range[1] - d_m[0]; i++)
         {
             int index = j * grid_size_x + i;
-            u[index] = cnst;
+
+            if (multidim == 1)
+            {
+                u[index] = cnst;
+            }
+            else
+            { 
+                for (int m_dim = 0; m_dim < multidim; m_dim++)
+                {
+                    u[index * multidim + m_dim] = cnst;
+                }
+            }
         }
     }
 }
 
 template <typename T>
-void init_index_cpu(T* u, int size[2], int d_m[2], int d_p[2], int range[4])
+void init_index_cpu(T* u, int size[2], int d_m[2], int d_p[2], int range[4], int multidim = 1)
 {
     int grid_size_y = size[1] - d_m[1] + d_p[1];
     int act_size_x = size[0] - d_m[0] + d_p[0];
@@ -115,7 +137,18 @@ void init_index_cpu(T* u, int size[2], int d_m[2], int d_p[2], int range[4])
         {
             int index = j * grid_size_x + i;
             int int_idx = (j + d_m[1]) * act_size_x + (i + d_m[0]);
-            u[index] = int_idx;
+            
+            if (multidim == 1)
+            {
+                u[index] = int_idx;
+            }
+            else
+            { 
+                for (int m_dim = 0; m_dim < multidim; m_dim++)
+                {
+                    u[index * multidim + m_dim] = int_idx;
+                }
+            }
         }
     }
 }
@@ -135,7 +168,9 @@ void kernel_1_cpu(const float* a, const float* d0, float* d1,
         for (int i = range[0] - d_m[0]; i < range[1] - d_m[0]; i++)
         {
             int index = j * grid_size_x + i;
-            d1[index] = a[index] * d0[index];
+            d1[index * 3] = a[index] * d0[index * 3];
+            d1[index * 3 + 1] = a[index] * d0[index * 3 + 1];
+            d1[index * 3 + 2] = a[index] * d0[index * 3 + 2];
         }
     }
 }
@@ -155,12 +190,14 @@ void kernel_2_cpu(const float* b, const float* d0, const float* d1, float* d2,
         for (int i = range[0] - d_m[0]; i < range[1] - d_m[0]; i++)
         {
             int index = j * grid_size_x + i;
-            d2[index] = b[index] * d1[index] + d0[index];
+            d2[index * 3] = b[index] * d1[index * 3] + d0[index * 3];
+            d2[index * 3 + 1] = b[index] * d1[index * 3 + 1] + d0[index * 3 + 1];
+            d2[index * 3 + 2] = b[index] * d1[index * 3 + 2] + d0[index * 3 + 2];
         }
     }    
 }
 template <typename T>
-void copy_cpu(const T* in, T* out, int size[2], int d_m[2], int d_p[2], int range[4])
+void copy_cpu(const T* in, T* out, int size[2], int d_m[2], int d_p[2], int range[4], int multidim = 1)
 {
     int grid_size_y = size[1] - d_m[1] + d_p[1];
 #ifdef OPS_FPGA
@@ -174,13 +211,24 @@ void copy_cpu(const T* in, T* out, int size[2], int d_m[2], int d_p[2], int rang
         for (int i = range[0] - d_m[0]; i < range[1] - d_m[0]; i++)
         {
             int index = j * grid_size_x + i;
-            out[index] = in[index];
+            
+            if (multidim == 1)
+            {
+                out[index] = in[index];
+            }
+            else 
+            {
+                for (int m_dim = 0; m_dim < multidim; m_dim++)
+                {
+                    out[index * multidim + m_dim] = in[index * multidim + m_dim];
+                }
+            }
         }
     }
 }
 
 template <typename T>
-bool verify(T * grid_data1, T *  grid_data2, int size[2], int d_m[2], int d_p[2], int range[4])
+bool verify(T * grid_data1, T *  grid_data2, int size[2], int d_m[2], int d_p[2], int range[4], int multidim = 1)
 {
     bool passed = true;
     int grid_size_y = size[1] - d_m[1] + d_p[1];
@@ -196,11 +244,26 @@ bool verify(T * grid_data1, T *  grid_data2, int size[2], int d_m[2], int d_p[2]
         {
             int index = j * grid_size_x + i;
 
-            if (abs(grid_data1[index] - grid_data2[index]) > EPSILON)
+            if (multidim == 1)
             {
-                std::cerr << "[ERROR] value Mismatch index: (" << i << ", " << j << "), grid_data1: "
-						<< grid_data1[index] << ", and grid_data2: " << grid_data2[index] << std::endl;
-                passed = false;
+                if (abs(grid_data1[index] - grid_data2[index]) > EPSILON)
+                {
+                    std::cerr << "[ERROR] value Mismatch index: (" << i << ", " << j << "), grid_data1: "
+                            << grid_data1[index] << ", and grid_data2: " << grid_data2[index] << std::endl;
+                    passed = false;
+                }
+            }
+            else
+            {
+                for (int m_dim = 0; m_dim < multidim; m_dim++)
+                {
+                    if (abs(grid_data1[index * multidim + m_dim] - grid_data2[index * multidim + m_dim]) > EPSILON)
+                    {
+                        std::cerr << "[ERROR] value Mismatch index: (" << i << ", " << j << ")[" <<  m_dim << "], grid_data1: "
+                                << grid_data1[index] << ", and grid_data2: " << grid_data2[index] << std::endl;
+                        passed = false;
+                    }
+                }
             }
         }
     }

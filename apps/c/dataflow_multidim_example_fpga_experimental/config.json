@@ -3,7 +3,7 @@
     "SLR_count" : 3,
     "device" : 1,
     "vector_factor" : 1,
-    "mem_vector_factor": 16,
+    "mem_vector_factor": 12,
     "iter_par_factor": 1,
     "stencil_type" : "float",
     "data_width" : 32,

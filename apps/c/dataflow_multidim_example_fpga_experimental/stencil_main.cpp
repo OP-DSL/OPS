@@ -194,10 +194,10 @@ int main(int argc, const char **argv)
 
 #ifdef VERIFICATION
     init_a_b_cpu(a_cpu, b_cpu, const_a, const_b, size, d_m, d_p, full_range);
-    init_zero_cpu(d0_cpu, size, d_m, d_p, full_range);
+    init_zero_cpu(d0_cpu, size, d_m, d_p, full_range, 3);
     // init_const_cpu(init_const, d0_cpu, size, d_m, d_p, internal_range);
-    init_index_cpu(d0_cpu, size, d_m, d_p, full_range);
-    copy_cpu(d0_cpu, d2_cpu, size, d_m, d_p, full_range);
+    init_index_cpu(d0_cpu, size, d_m, d_p, full_range, 3);
+    copy_cpu(d0_cpu, d2_cpu, size, d_m, d_p, full_range, 3);
 
     auto d0_raw = (float*)ops_dat_get_raw_pointer(d0, 0, S2D_00, OPS_HOST);
     auto a_raw = (float*)ops_dat_get_raw_pointer(a, 0, S2D_00, OPS_HOST);
@@ -212,42 +212,42 @@ int main(int argc, const char **argv)
     // iterative stencil loop
     ops_printf("Launching stencil calculation: %d x %d mesh\n", size[0], size[1]);
 
-// #ifndef OPS_FPGA
-//     for (int iter = 0; iter < iter_max; iter++)
-//     {
-//         ops_par_loop(kernel_1, "kernel_1", block, 2, internal_range,
-//                 ops_arg_dat(a, 1, S2D_00, "float", OPS_READ),
-//                 ops_arg_dat(d0, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-//                 ops_arg_dat(d1, 1, S2D_00, "float", OPS_WRITE));
+#ifndef OPS_FPGA
+    for (int iter = 0; iter < iter_max; iter++)
+    {
+        ops_par_loop(kernel_1, "kernel_1", block, 2, internal_range,
+                ops_arg_dat(a, 1, S2D_00, "float", OPS_READ),
+                ops_arg_dat(d0, 3, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
+                ops_arg_dat(d1, 3, S2D_00, "float", OPS_WRITE));
         
-//         ops_par_loop(kernel_2, "kernel_2", block, 2, internal_range,
-//                 ops_arg_dat(b, 1, S2D_00, "float", OPS_READ),
-//                 ops_arg_dat(d0, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-//                 ops_arg_dat(d1, 1, S2D_00, "float", OPS_READ),
-//                 ops_arg_dat(d2, 1, S2D_00, "float", OPS_WRITE));
+        ops_par_loop(kernel_2, "kernel_2", block, 2, internal_range,
+                ops_arg_dat(b, 1, S2D_00, "float", OPS_READ),
+                ops_arg_dat(d0, 3, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
+                ops_arg_dat(d1, 3, S2D_00, "float", OPS_READ),
+                ops_arg_dat(d2, 3, S2D_00, "float", OPS_WRITE));
 
-//         ops_par_loop(copy, "copy_2", block, 2, internal_range,
-//                 ops_arg_dat(d2, 1, S2D_00, "float", OPS_READ),
-//                 ops_arg_dat(d0, 1, S2D_00, "float", OPS_WRITE));
-//     }
-// #else
+        ops_par_loop(copy_d3, "copy_2", block, 2, internal_range,
+                ops_arg_dat(d2, 3, S2D_00, "float", OPS_READ),
+                ops_arg_dat(d0, 3, S2D_00, "float", OPS_WRITE));
+    }
+#else
 
-//     ops_iter_par_loop("ops_iter_par_loop_0", iter_max,
-//         ops_par_loop(kernel_1, "kernel_1", block, 2, internal_range,
-//                 ops_arg_dat(a, 1, S2D_00, "float", OPS_READ),
-//                 ops_arg_dat(d0, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-//                 ops_arg_dat(d1, 1, S2D_00, "float", OPS_WRITE)),
+    ops_iter_par_loop("ops_iter_par_loop_0", iter_max,
+        ops_par_loop(kernel_1, "kernel_1", block, 2, internal_range,
+                ops_arg_dat(a, 1, S2D_00, "float", OPS_READ),
+                ops_arg_dat(d0, 3, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
+                ops_arg_dat(d1, 3, S2D_00, "float", OPS_WRITE)),
         
-//         ops_par_loop(kernel_2, "kernel_2", block, 2, internal_range,
-//                 ops_arg_dat(b, 1, S2D_00, "float", OPS_READ),
-//                 ops_arg_dat(d0, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-//                 ops_arg_dat(d1, 1, S2D_00, "float", OPS_READ),
-//                 ops_arg_dat(d2, 1, S2D_00, "float", OPS_WRITE)),
+        ops_par_loop(kernel_2, "kernel_2", block, 2, internal_range,
+                ops_arg_dat(b, 1, S2D_00, "float", OPS_READ),
+                ops_arg_dat(d0, 3, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
+                ops_arg_dat(d1, 3, S2D_00, "float", OPS_READ),
+                ops_arg_dat(d2, 3, S2D_00, "float", OPS_WRITE)),
 
-//         ops_par_loop(copy, "copy_2", block, 2, internal_range,
-//                 ops_arg_dat(d2, 1, S2D_00, "float", OPS_READ),
-//                 ops_arg_dat(d0, 1, S2D_00, "float", OPS_WRITE)));
-// #endif
+        ops_par_loop(copy_d3, "copy_2", block, 2, internal_range,
+                ops_arg_dat(d2, 3, S2D_00, "float", OPS_READ),
+                ops_arg_dat(d0, 3, S2D_00, "float", OPS_WRITE)));
+#endif
 
     //Final Verification after calc
 #ifdef VERIFICATION
