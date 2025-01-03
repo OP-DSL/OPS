@@ -105,6 +105,7 @@ void printAccessRange(ops::hls::AccessRange& range, std::string prompt = "")
 
 #ifndef OPS_HLS_V2
 ops::hls::GridPropertyCore createGridPropery(const unsigned short dim,
+        const unsigned short multidim_dim,
 		const ops::hls::SizeType& size,
 		const ops::hls::SizeType& d_m,
 		const ops::hls::SizeType& d_p,
@@ -112,6 +113,7 @@ ops::hls::GridPropertyCore createGridPropery(const unsigned short dim,
 {
 	ops::hls::GridPropertyCore gridProp;
 	gridProp.dim = dim;
+    gridProp.multidim_dim = multidim_dim;
 
 	for (int i = 0; i < ops_max_dim; i++)
 	{
@@ -139,12 +141,14 @@ ops::hls::GridPropertyCore createGridPropery(const unsigned short dim,
 }
 #else
 ops::hls::GridPropertyCoreV2 createGridPropery(const unsigned short dim,
+        const unsigned short multidim_dim,
 		const ops::hls::SizeType& size,
 		const ops::hls::SizeType& d_m,
 		const ops::hls::SizeType& d_p,
 		const unsigned short vector_factor=16)
 {
 	ops::hls::GridPropertyCoreV2 gridProp;
+    gridProp.multidim_dim = multidim_dim;
 	gridProp.dim = dim;
 
 	for (int i = 0; i < ops_max_dim; i++)
@@ -195,9 +199,10 @@ ops::hls::Grid<T> ops_hls_decl_dat(ops::hls::Block& block, int elem_size, int* s
 	}
 
 	ops::hls::Grid<T> grid;
-	grid.originalProperty = createGridPropery(block.dims, size_, d_m_, d_p_, mem_vector_factor);
+	grid.originalProperty = createGridPropery(block.dims, elem_size, size_, d_m_, d_p_, mem_vector_factor);
 
-	unsigned int data_size = 1;
+	unsigned int data_size = elem_size;
+    
 	for (int i = 0; i < block.dims; i++)
 		data_size *= grid.originalProperty.grid_size[i];
 	
@@ -372,9 +377,9 @@ unsigned int getOffset(const int* stencilOffset, ops::hls::GridPropertyCore& gri
 unsigned int getOffset(const int* stencilOffset, ops::hls::GridPropertyCoreV2& gridProp, const unsigned short i, const unsigned short j = 0, const unsigned short k = 0)
 #endif
 {
-    return (i + stencilOffset[0]
+    return ((i + (stencilOffset[0]
             + (j + stencilOffset[1]) * gridProp.grid_size[0]
-            + (k + stencilOffset[2]) * gridProp.grid_size[0] * gridProp.grid_size[1]);
+            + (k + stencilOffset[2]) * gridProp.grid_size[0] * gridProp.grid_size[1])) * gridProp.multidim_dim);
 
 }
 
@@ -425,7 +430,20 @@ void printGrid2D(T* p_grid, ops::hls::GridPropertyCoreV2& gridProperty, std::str
 		for (int i = 0; i < gridProperty.grid_size[0]; i++)
 		{
 			int index = i + j * gridProperty.grid_size[0];
-			std::cout << std::setw(12) << p_grid[index];
+
+            if (gridProperty.multidim_dim == 1)
+            {
+			    std::cout << std::setw(12) << p_grid[index];
+            }
+            else
+            {
+                std::cout << "[";
+                for (int m_dim = 0; m_dim < gridProperty.multidim_dim; m_dim++)
+                {
+                    std::cout << std::setw(12) << p_grid[index * gridProperty.multidim_dim + m_dim];
+                }
+                std::cout << "]";
+            }
 		}
 		std::cout << std::endl;
 	}
