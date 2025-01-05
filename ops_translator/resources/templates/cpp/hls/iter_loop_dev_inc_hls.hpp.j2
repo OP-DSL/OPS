@@ -28,6 +28,13 @@ multidim_axis_data_width_{{ilh.id}}_{{ilh.dats[dat_id][0].ptr}}
 axis_data_width
     {%- endif -%}
 {%- endmacro -%}
+{% macro total_bytes(arg) -%}
+    {%- if ilh.dats[arg.dat_id][0].isMultiDim() -%}
+total_bytes_d{{ilh.dats[arg.dat_id][0].dim}}
+    {%- else -%}
+total_bytes
+    {%- endif -%}
+{%- endmacro -%}
 {% block header_block %}
 #pragma once
     {% for df_node in ilh.get_active_df_graph().getAllLoopNodes() %}

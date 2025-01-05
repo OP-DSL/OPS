@@ -168,9 +168,9 @@ void kernel_1_cpu(const float* a, const float* d0, float* d1,
         for (int i = range[0] - d_m[0]; i < range[1] - d_m[0]; i++)
         {
             int index = j * grid_size_x + i;
-            d1[index * 3] = a[index] * d0[index * 3];
-            d1[index * 3 + 1] = a[index] * d0[index * 3 + 1];
-            d1[index * 3 + 2] = a[index] * d0[index * 3 + 2];
+            d1[index * 4] = a[index] * d0[index * 4];
+            d1[index * 4 + 1] = a[index] * d0[index * 4 + 1];
+            d1[index * 4 + 2] = a[index] * d0[index * 4 + 2];
         }
     }
 }
@@ -190,9 +190,9 @@ void kernel_2_cpu(const float* b, const float* d0, const float* d1, float* d2,
         for (int i = range[0] - d_m[0]; i < range[1] - d_m[0]; i++)
         {
             int index = j * grid_size_x + i;
-            d2[index * 3] = b[index] * d1[index * 3] + d0[index * 3];
-            d2[index * 3 + 1] = b[index] * d1[index * 3 + 1] + d0[index * 3 + 1];
-            d2[index * 3 + 2] = b[index] * d1[index * 3 + 2] + d0[index * 3 + 2];
+            d2[index * 4] = b[index] * d1[index * 4] + d0[index * 4];
+            d2[index * 4 + 1] = b[index] * d1[index * 4 + 1] + d0[index * 4 + 1];
+            d2[index * 4 + 2] = b[index] * d1[index * 4 + 2] + d0[index * 4 + 2];
         }
     }    
 }
@@ -228,7 +228,7 @@ void copy_cpu(const T* in, T* out, int size[2], int d_m[2], int d_p[2], int rang
 }
 
 template <typename T>
-bool verify(T * grid_data1, T *  grid_data2, int size[2], int d_m[2], int d_p[2], int range[4], int multidim = 1)
+bool verify(T * grid_data1, T *  grid_data2, int size[2], int d_m[2], int d_p[2], int range[4], int multidim = 1, int valid_mdim = 1)
 {
     bool passed = true;
     int grid_size_y = size[1] - d_m[1] + d_p[1];
@@ -255,12 +255,12 @@ bool verify(T * grid_data1, T *  grid_data2, int size[2], int d_m[2], int d_p[2]
             }
             else
             {
-                for (int m_dim = 0; m_dim < multidim; m_dim++)
+                for (int m_dim = 0; m_dim < valid_mdim; m_dim++)
                 {
                     if (abs(grid_data1[index * multidim + m_dim] - grid_data2[index * multidim + m_dim]) > EPSILON)
                     {
                         std::cerr << "[ERROR] value Mismatch index: (" << i << ", " << j << ")[" <<  m_dim << "], grid_data1: "
-                                << grid_data1[index] << ", and grid_data2: " << grid_data2[index] << std::endl;
+                                << grid_data1[index * multidim + m_dim] << ", and grid_data2: " << grid_data2[index * multidim + m_dim] << std::endl;
                         passed = false;
                     }
                 }
