@@ -434,30 +434,10 @@ int main(int argc, const char** argv)
         ops_free_dat(rho[bat]);
         ops_free_dat(mu[bat]);
         ops_free_dat(rho[bat]);
-        ops_free_dat(yy_0[bat]);
-        ops_free_dat(yy_1[bat]);
-        ops_free_dat(yy_2[bat]);
-        ops_free_dat(yy_3[bat]);
-        ops_free_dat(yy_4[bat]);
-        ops_free_dat(yy_5[bat]);
-        ops_free_dat(ytemp1_0[bat]);
-        ops_free_dat(ytemp1_1[bat]);
-        ops_free_dat(ytemp1_2[bat]);
-        ops_free_dat(ytemp1_3[bat]);
-        ops_free_dat(ytemp1_4[bat]);
-        ops_free_dat(ytemp1_5[bat]);
-        ops_free_dat(ytemp2_0[bat]);
-        ops_free_dat(ytemp2_1[bat]);
-        ops_free_dat(ytemp2_2[bat]);
-        ops_free_dat(ytemp2_3[bat]);
-        ops_free_dat(ytemp2_4[bat]);
-        ops_free_dat(ytemp2_5[bat]);
-        ops_free_dat(yy_sum_0[bat]);
-        ops_free_dat(yy_sum_1[bat]);
-        ops_free_dat(yy_sum_2[bat]);
-        ops_free_dat(yy_sum_3[bat]);
-        ops_free_dat(yy_sum_4[bat]);
-        ops_free_dat(yy_sum_5[bat]);
+        ops_free_dat(yy[bat]);
+        ops_free_dat(ytemp1[bat]);
+        ops_free_dat(ytemp2[bat]);
+        ops_free_dat(yy_sum[bat]);
     }
 
 #ifdef PROFILE
