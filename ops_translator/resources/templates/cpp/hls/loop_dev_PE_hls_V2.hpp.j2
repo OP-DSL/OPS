@@ -338,9 +338,9 @@ public:
         {{widen_dt_name(arg)}} arg{{arg.id}}_{{buffer.name}}[max_depth];
             {% endif %}
             {% if buffer.is_read_write_aligned %}
-        #pragma HLS BIND_STORAGE variable = arg{{arg.id}}_{{buffer.name}} type = ram_1p latency=2
-            {% else %}
         #pragma HLS BIND_STORAGE variable = arg{{arg.id}}_{{buffer.name}} type = ram_s2p latency=2
+            {% else %}
+        #pragma HLS BIND_STORAGE variable = arg{{arg.id}}_{{buffer.name}} type = ram_t2p latency=2
             {% endif %}
         {% endfor %}
 
