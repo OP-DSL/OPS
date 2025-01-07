@@ -95,9 +95,9 @@ def generate_cpp_Kernel(loop: OPS.Loop,
             else:
                 kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
         elif len(arr_sizes) == 2:
-            kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[1])
+            kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[0])
         elif len(arr_sizes) == 3:
-            kernel_body = kp_obj.convert_3d_to_1d_indexing(kernel_body, var_name, arr_sizes[1], arr_sizes[2])
+            kernel_body = kp_obj.convert_3d_to_1d_indexing(kernel_body, var_name, arr_sizes[0], arr_sizes[1])
 
     sorted_local_args = []
 
@@ -117,9 +117,9 @@ def generate_cpp_Kernel(loop: OPS.Loop,
             ):
             kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
         elif len(arr_sizes) == 2:
-            kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[1])
+            kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[0])
         elif len(arr_sizes) == 3:
-            kernel_body = kp_obj.convert_3d_to_1d_indexing(kernel_body, var_name, arr_sizes[1], arr_sizes[2])
+            kernel_body = kp_obj.convert_3d_to_1d_indexing(kernel_body, var_name, arr_sizes[0], arr_sizes[1])
 
 #    print("============================================================================")
 #    print(kernel_body)

@@ -773,6 +773,8 @@ def translateWriteStmt(write_stmt: f2003.Write_Stmt, ctx: Context) -> str:
     return f"// {write_stmt}\n"
 
 
+
+
 def translateBlockNonlabelDoConstruct(block_nonlabel_do_construct: f2003.Block_Nonlabel_Do_Construct, ctx: Context) -> str:
     src = ""
 
@@ -804,7 +806,14 @@ def translateBlockNonlabelDoConstruct(block_nonlabel_do_construct: f2003.Block_N
                 src += f"for ({control_var} = {lb}; {control_var} <= {ub}; ++{control_var})" + " {\n"
             else:
                 step = translateGeneric(bounds[2], ctx)
-                src += f"for ({control_var} = {lb}; {control_var} <= {ub}; {control_var} += {step})" + " {\n"
+                if step.lstrip("+-").isdigit() and int(step) > 0:        # Forward loop
+                    src += f"for ({control_var} = {lb}; {control_var} <= {ub}; {control_var} += {step})" + " {\n"
+                elif step.lstrip("+-").isdigit() and int(step) < 0:        # Backward loop
+                    step_val = abs(int(step))
+                    src += f"for ({control_var} = {lb}; {control_var} >= {ub}; {control_var} -= {step_val})" + " {\n"
+                else:
+                    print(int(step))
+                    ctx.error("Unsupported labelled do construct", child)
 
         elif isinstance(child, f2003.End_Do_Stmt):
             src += "}\n"

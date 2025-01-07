@@ -573,13 +573,13 @@ class KernelProcess:
 
         return const_names, const_dims
 
-    def create_replacer_3d(self, array_name, dim2, dim3):
+    def create_replacer_3d(self, array_name, dim1, dim2):
         def replacer(match):
             i, j, k = match.groups()
-            return f"{array_name}[({i}-1)*{dim2}*{dim3}+({j}-1)*{dim3}+({k})-1]"
+            return f"{array_name}[({i}-1)+({j}-1)*{dim1}+({k}-1)*{dim1}*{dim2}]"
         return replacer
 
-    def convert_3d_to_1d_indexing(self, fortrantocpp_code, array_name, dim2, dim3):
+    def convert_3d_to_1d_indexing(self, fortrantocpp_code, array_name, dim1, dim2):
         # Handle simple nested cases with balancing brackets
         pattern = rf"""
             \b{re.escape(array_name)}\b  # Match the array name
@@ -597,16 +597,16 @@ class KernelProcess:
                 (?:\(.*?\))*
             )\s*\)                     # Match closing parenthesis
         """
-        replacer = self.create_replacer_3d(array_name, dim2, dim3)
+        replacer = self.create_replacer_3d(array_name, dim1, dim2)
         return re.sub(pattern, replacer, fortrantocpp_code, flags=re.VERBOSE)
 
-    def create_replacer_2d(self, array_name, dim2):
+    def create_replacer_2d(self, array_name, dim1):
         def replacer(match):
             i, j = match.groups()
-            return f"{array_name}[({i}-1)*{dim2}+({j})-1]"
+            return f"{array_name}[({i}-1)+({j}-1)*{dim1}]"
         return replacer
 
-    def convert_2d_to_1d_indexing(self, fortrantocpp_code, array_name, dim2):
+    def convert_2d_to_1d_indexing(self, fortrantocpp_code, array_name, dim1):
         pattern = rf"""
             \b{re.escape(array_name)}\b  # Match the array name
             \s*\(\s*                   # Match the opening parenthesis and optional whitespace
@@ -619,7 +619,7 @@ class KernelProcess:
                 (?:\(.*?\))*
             )\s*\)                     # Match closing parenthesis
         """
-        replacer = self.create_replacer_2d(array_name, dim2)
+        replacer = self.create_replacer_2d(array_name, dim1)
         return re.sub(pattern, replacer, fortrantocpp_code, flags=re.VERBOSE)
 
     # Function to create the replacer for 1D indexing

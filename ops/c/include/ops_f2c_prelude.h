@@ -35,7 +35,7 @@ DEVICE inline void trap() {
 }
 
 /* Fortran intrinsics */
-
+/*
 template<typename T>
 inline constexpr T pow(T x, int e) {
     if (e < 0)  return 0;
@@ -46,17 +46,18 @@ inline constexpr T pow(T x, int e) {
         r *= x;
 
     return r;
-}
+}*/
 
-inline constexpr float pow(float x, float e) { return powf(x, e); }
-inline constexpr double pow(double x, double e) { return ::pow(x, e); }
+inline constexpr float pow(float x, float e) { return std::pow(x, e); }
+inline constexpr float pow(int x, float e) { return std::pow((float) x, e); }
 
-inline constexpr double pow(float x, double e) { return ::pow((double) x, e); }
-inline constexpr double pow(double x, float e) { return ::pow(x, (double) e); }
+inline constexpr double pow(double x, double e) { return std::pow(x, e); }
+inline constexpr double pow(int x, double e) { return std::pow((double) x, e); }
 
-inline constexpr int pow(int x, int e) { return pow(x, e); }
-inline constexpr float pow(int x, float e) { return powf((float) x, e); }
-inline constexpr double pow(int x, double e) { return ::pow((double) x, e); }
+inline constexpr double pow(float x, double e) { return std::pow((double) x, e); }
+inline constexpr double pow(double x, float e) { return std::pow(x, (double) e); }
+
+inline constexpr int pow(int x, int e) { return std::pow(x, e); }
 
 DEVICE inline int abs(int x) { return ::abs(x); }
 DEVICE inline int64_t abs(int64_t x) { return ::abs(x); }
