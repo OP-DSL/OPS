@@ -119,39 +119,39 @@ program lowdim
                     ops_arg_gbl(val, 1, "real(kind=8)", OPS_READ))
 
     val = 1.0_8
-    rangexyz = [1,10,1,10,1,1]
-    call ops_par_loop(lowdim_kernel_set_val, "set value", grid3D, 3, rangexyz,  &
-                    ops_arg_dat(d_dat2D_XY, 1, s3d_000, "real(kind=8)", OPS_WRITE), &
+    rangexyz = [1,10,1,10,10,10]
+    call ops_par_loop(lowdim_kernel_set_val_xy, "set value", grid3D, 3, rangexyz,  &
+                    ops_arg_dat(d_dat2D_XY, 1, s3d_000_strid3d_xy, "real(kind=8)", OPS_WRITE), &
                     ops_arg_gbl(val, 1, "real(kind=8)", OPS_READ))
 
     val = 2.0_8
-    rangexyz = [1,1,1,10,1,10]
-    call ops_par_loop(lowdim_kernel_set_val, "set value", grid3D, 3, rangexyz,  &
-                    ops_arg_dat(d_dat2D_YZ, 1, s3d_000, "real(kind=8)", OPS_WRITE), &
+    rangexyz = [10,10,1,10,1,10]
+    call ops_par_loop(lowdim_kernel_set_val_yz, "set value", grid3D, 3, rangexyz,  &
+                    ops_arg_dat(d_dat2D_YZ, 1, s3d_000_strid3d_yz, "real(kind=8)", OPS_WRITE), &
                     ops_arg_gbl(val, 1, "real(kind=8)", OPS_READ))
 
     val = 3.0_8
-    rangexyz = [1,10,1,1,1,10]
-    call ops_par_loop(lowdim_kernel_set_val, "set value", grid3D, 3, rangexyz,  &
-                    ops_arg_dat(d_dat2D_XZ, 1, s3d_000, "real(kind=8)", OPS_WRITE), &
+    rangexyz = [1,10,10,10,1,10]
+    call ops_par_loop(lowdim_kernel_set_val_xz, "set value", grid3D, 3, rangexyz,  &
+                    ops_arg_dat(d_dat2D_XZ, 1, s3d_000_strid3d_xz, "real(kind=8)", OPS_WRITE), &
                     ops_arg_gbl(val, 1, "real(kind=8)", OPS_READ))
 
     val = 4.0_8
-    rangexyz = [1,10,1,1,1,1]
-    call ops_par_loop(lowdim_kernel_set_val, "set value", grid3D, 3, rangexyz,  &
-                    ops_arg_dat(d_dat1D_X, 1, s3d_000, "real(kind=8)", OPS_WRITE), &
+    rangexyz = [1,10,10,10,10,10]
+    call ops_par_loop(lowdim_kernel_set_val_xdir, "set value", grid3D, 3, rangexyz,  &
+                    ops_arg_dat(d_dat1D_X, 1, s3d_000_strid3d_x, "real(kind=8)", OPS_WRITE), &
                     ops_arg_gbl(val, 1, "real(kind=8)", OPS_READ))
 
     val = 5.0_8
-    rangexyz = [1,1,1,10,1,1]
-    call ops_par_loop(lowdim_kernel_set_val, "set value", grid3D, 3, rangexyz,  &
-                    ops_arg_dat(d_dat1D_Y, 1, s3d_000, "real(kind=8)", OPS_WRITE), &
+    rangexyz = [10,10,1,10,10,10]
+    call ops_par_loop(lowdim_kernel_set_val_ydir, "set value", grid3D, 3, rangexyz,  &
+                    ops_arg_dat(d_dat1D_Y, 1, s3d_000_strid3d_y, "real(kind=8)", OPS_WRITE), &
                     ops_arg_gbl(val, 1, "real(kind=8)", OPS_READ))
 
     val = 6.0_8
-    rangexyz = [1,1,1,1,1,10]
-    call ops_par_loop(lowdim_kernel_set_val, "set value", grid3D, 3, rangexyz,  &
-                    ops_arg_dat(d_dat1D_Z, 1, s3d_000, "real(kind=8)", OPS_WRITE), &
+    rangexyz = [10,10,10,10,1,10]
+    call ops_par_loop(lowdim_kernel_set_val_zdir, "set value", grid3D, 3, rangexyz,  &
+                    ops_arg_dat(d_dat1D_Z, 1, s3d_000_strid3d_z, "real(kind=8)", OPS_WRITE), &
                     ops_arg_gbl(val, 1, "real(kind=8)", OPS_READ))
 
     rangexyz = [1,10,1,10,1,10]
@@ -166,6 +166,8 @@ program lowdim
  
     fname = 'output'//pnxhdf
     call ops_dump_to_hdf5(trim(fname))
+    !call ops_fetch_block_hdf5_file(grid3D, trim(fname))
+    !call ops_fetch_dat_hdf5_file(d_dat3D, trim(fname))
 
     call ops_timers( endTime )
 
