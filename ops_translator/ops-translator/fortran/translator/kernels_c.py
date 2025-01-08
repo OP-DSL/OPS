@@ -665,7 +665,8 @@ def translateSpecificationPart(spec_part: f2003.Specification_Part, ctx: Context
 
         if name in parameters:
             assert(not isinstance(type_, FArray))
-            init_src += f"constexpr {type_.asLocal(name)} = {parameters[name]};\n"
+            # init_src += f"constexpr {type_.asLocal(name)} = {parameters[name]};\n"
+            init_src += f"{type_.asLocal(name)} = {parameters[name]};\n"
         elif isinstance(type_, FPrimitive):
             local_vars[f"{type_.asLocal(name)}"] = [name, ['0']] 
         else:

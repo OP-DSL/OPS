@@ -143,10 +143,10 @@ f_seq: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ
 
 f2c_seq: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_host_common.o $(F_OPS_OBJ)/ops_host_singlenode.o $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_checkpointing_strategy.o \
-	$(F_OPS_OBJ)/ops_for_declarations_f2c.o $(F_OPS_OBJ)/ops_for_rt_support.o
+	$(F_OPS_OBJ)/ops_for_declarations_f2c.o $(F_OPS_OBJ)/ops_for_rt_support.o $(F_OPS_OBJ)/ops_for_math_support.o
 	ar -r $(F_OPS_LIB)/libops_f2c_seq.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_host_common.o $(F_OPS_OBJ)/ops_host_singlenode.o $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_checkpointing_strategy.o \
-	$(F_OPS_OBJ)/ops_for_declarations_f2c.o $(F_OPS_OBJ)/ops_for_rt_support.o
+	$(F_OPS_OBJ)/ops_for_declarations_f2c.o $(F_OPS_OBJ)/ops_for_rt_support.o $(F_OPS_OBJ)/ops_for_math_support.o
 
 f_cuda: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_cuda_common_cuda.o $(F_OPS_OBJ)/ops_cuda_rt_support_cuda.o \
@@ -182,12 +182,12 @@ f2c_mpi:  mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_mpi.o $(F_OPS_OBJ)/ops_checkpointing_strategy_mpi.o \
 	$(F_OPS_OBJ)/ops_mpi_core_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_host_mpi.o $(F_OPS_OBJ)/ops_mpi_partition_mpi.o $(F_OPS_OBJ)/ops_host_common.o \
 	$(F_OPS_OBJ)/ops_mpi_hdf5_mpi.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_declarations_f2c.o $(F_OPS_OBJ)/ops_for_rt_support.o \
-	$(F_OPS_OBJ)/ops_for_hdf5_declarations.o
+	$(F_OPS_OBJ)/ops_for_hdf5_declarations.o $(F_OPS_OBJ)/ops_for_math_support.o
 	ar -r $(F_OPS_LIB)/libops_f2c_mpi.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_mpi.o $(F_OPS_OBJ)/ops_checkpointing_strategy_mpi.o \
 	$(F_OPS_OBJ)/ops_mpi_core_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_host_mpi.o $(F_OPS_OBJ)/ops_mpi_partition_mpi.o $(F_OPS_OBJ)/ops_host_common.o \
 	$(F_OPS_OBJ)/ops_mpi_hdf5_mpi.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_declarations_f2c.o $(F_OPS_OBJ)/ops_for_rt_support.o \
-	$(F_OPS_OBJ)/ops_for_hdf5_declarations.o
+	$(F_OPS_OBJ)/ops_for_hdf5_declarations.o $(F_OPS_OBJ)/ops_for_math_support.o
 
 f_mpi_cuda: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o \
 	$(F_OPS_OBJ)/ops_checkpointing.o $(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_mpi.o \

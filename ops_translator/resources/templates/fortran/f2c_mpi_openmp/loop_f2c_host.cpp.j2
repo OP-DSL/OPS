@@ -172,7 +172,7 @@
         {% set line2 = line[0] %}
     {% endif %}
     {% set indent = [0] %}
-    #pragma omp parallel for{{line2}}
+//    #pragma omp parallel for{{line2}}
     {% if lh.ndim > 2 %}
     for (int n_z = start_indx[2]; n_z < end_indx[2]; n_z++)
     {
