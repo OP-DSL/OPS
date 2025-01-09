@@ -39,7 +39,7 @@
 #include <string.h>
 #include <math.h>
 
-float dx,dy,dz;
+float dx,dy,dz, invdx, invdy, invdz;
 int pml_width;
 int half_order, order, nx, ny, nz;
 #include "coeffs8.h"
@@ -132,10 +132,16 @@ int main(int argc, const char** argv)
   dx = 0.005;
   dy = 0.005;
   dz = 0.005;
+  invdx = 1/dx;
+  invdy = 1/dy;
+  invdz = 1/dz;
   pml_width = 10;
   ops_decl_const("dx",1,"float",&dx);
   ops_decl_const("dy",1,"float",&dy);
   ops_decl_const("dz",1,"float",&dz);
+  ops_decl_const("invdx",1,"float",&invdx);
+  ops_decl_const("invdy",1,"float",&invdy);
+  ops_decl_const("invdz",1,"float",&invdz);
   ops_decl_const("nx",1,"int",&nx);
   ops_decl_const("ny",1,"int",&ny);
   ops_decl_const("nz",1,"int",&nz);
