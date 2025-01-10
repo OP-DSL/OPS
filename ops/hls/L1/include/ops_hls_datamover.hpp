@@ -437,9 +437,19 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 
 			ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
 			strm_out << tmp;
+
 #ifdef DEBUG_LOG
-			printf("|HLS DEBUG_LOG| %s | reading index: %d\n", __func__, index);
+			printf("|HLS DEBUG_LOG| %s | reading index: %d, val=(\n", __func__, index);
+
+            for (unsigned k = 0; k < MEM_DATA_WIDTH/(DEBUG_LOG_SIZE_OF * 8); k++)
+            {
+                DataConv conv;
+                conv.i = tmp.range((k+1) * DEBUG_LOG_SIZE_OF * 8 - 1, k * DEBUG_LOG_SIZE_OF * 8);
+                printf("%f,", conv.f);
+            }
+            printf(")\n");
 #endif
+
 			index++;
 		}
 	}
@@ -450,7 +460,15 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 		ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
 		strm_out << tmp;
 #ifdef DEBUG_LOG
-		printf("|HLS DEBUG_LOG| %s | reading index: %d\n", __func__, index);
+			printf("|HLS DEBUG_LOG| %s | reading index: %d, val=(\n", __func__, index);
+
+            for (unsigned k = 0; k < MEM_DATA_WIDTH/(DEBUG_LOG_SIZE_OF * 8); k++)
+            {
+                DataConv conv;
+                conv.i = tmp.range((k+1) * DEBUG_LOG_SIZE_OF * 8 - 1, k * DEBUG_LOG_SIZE_OF * 8);
+                printf("%f,", conv.f);
+            }
+            printf(")\n");
 #endif
 		index++;
 	}
@@ -2610,14 +2628,42 @@ void genMemConfig(SizeType& gridSize, AccessRange& range, MemConfig& config)
     config.total_size_bytes = config.total_xblocks << ShiftBits << DataShiftBits;
 
 
-//  #ifdef DEBUG_LOG
+#ifdef DEBUG_LOG
     printf("|HLS DEBUG LOG|%s| Input -> range_dim: % d, range: (%d, %d, %d) -> (%d, %d, %d), gridSize: (%d, %d, %d), Shiftbits: %d, DataShiftBits: %d\n",__func__, range.dim, range.start[0],
     		range.start[1], range.start[2], range.end[0], range.end[1], range.end[2], gridSize[0], gridSize[1], gridSize[2], ShiftBits, DataShiftBits);
 	printf("|HLS DEBUG_LOG|%s| memconfig generated -> range: (%d(xblocks), %d, %d) --> (%d(xblocks), %d, %d), grid_size: (%d(xblocks), %d, %d), diff_x: %d, diff_y: %d,\n\
             num_xblocks: %d, x_tile_size: %d, x_tile_bytes: %d, isContinous: %d, start_offset: %d(xblocks), total_xblocks: %d, total_size_bytes: %d\n", __func__, config.start_x, config.start_y, config.start_z,
             config.end_x, config.end_y, config.end_z, config.grid_xblocks, config.grid_size_y, config.grid_size_z, diff_y, diff_z, config.num_xblocks, config.x_tile_size, config.x_tile_bytes, config.isContinous, config.start_offset,
 			config.total_xblocks, config.total_size_bytes);
-//  #endif
+#endif
+}
+
+template <unsigned short MULTIDIM_DIM>
+void multidimConfigConverter(MemConfig& orig_cfg, MemConfig& mdim_cfg)
+{
+    mdim_cfg.start_x = orig_cfg.start_x * MULTIDIM_DIM;
+    mdim_cfg.end_x = orig_cfg.end_x * MULTIDIM_DIM;
+    mdim_cfg.start_y = orig_cfg.start_y;
+	mdim_cfg.end_y = orig_cfg.end_y;
+	mdim_cfg.start_z = orig_cfg.start_z;
+	mdim_cfg.end_z = orig_cfg.end_z ;
+	mdim_cfg.grid_xblocks = orig_cfg.grid_xblocks * MULTIDIM_DIM;
+	mdim_cfg.grid_size_y = orig_cfg.grid_size_y;
+	mdim_cfg.grid_size_z = orig_cfg.grid_size_z;
+	mdim_cfg.num_xblocks = orig_cfg.num_xblocks * MULTIDIM_DIM;
+	mdim_cfg.x_tile_size = orig_cfg.x_tile_size * MULTIDIM_DIM;
+	mdim_cfg.x_tile_bytes = orig_cfg.x_tile_bytes * MULTIDIM_DIM;
+	mdim_cfg.isContinous = orig_cfg.isContinous;
+	mdim_cfg.start_offset = orig_cfg.start_offset * MULTIDIM_DIM;
+	mdim_cfg.total_xblocks = orig_cfg.total_xblocks * MULTIDIM_DIM;
+	mdim_cfg.total_size_bytes = orig_cfg.total_size_bytes * MULTIDIM_DIM;
+
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| multidim memconfig generated for dim: %d -> range: (%d(xblocks), %d, %d) --> (%d(xblocks), %d, %d), grid_size: (%d(xblocks), %d, %d), \n\
+            num_xblocks: %d, x_tile_size: %d, x_tile_bytes: %d, isContinous: %d, start_offset: %d(xblocks), total_xblocks: %d, total_size_bytes: %d\n", __func__, MULTIDIM_DIM, mdim_cfg.start_x, mdim_cfg.start_y, mdim_cfg.start_z,
+            mdim_cfg.end_x, mdim_cfg.end_y, mdim_cfg.end_z, mdim_cfg.grid_xblocks, mdim_cfg.grid_size_y, mdim_cfg.grid_size_z, mdim_cfg.num_xblocks, mdim_cfg.x_tile_size, mdim_cfg.x_tile_bytes, mdim_cfg.isContinous, mdim_cfg.start_offset,
+			mdim_cfg.total_xblocks, mdim_cfg.total_size_bytes);
+#endif
 }
 
 template <unsigned int MEM_DATA_WIDTH, unsigned int AXIS_DATA_WIDTH, unsigned int DATA_WIDTH=32>

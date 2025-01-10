@@ -100,6 +100,7 @@ class Program:
     ast: Any
     source: str
 
+    blocks: List[ops.Block] = field(default_factory=list)
     consts: List[ops.Const] = field(default_factory=list)
     stencils: List[ops.Stencil] = field(default_factory=list)
     loops: List[ops.Loop] = field(default_factory=list)
@@ -145,6 +146,12 @@ class Program:
             outString += str(const) + "\n"
 
         outString += "\n---------------------\n"    
+        outString += "       Blocks      \n"
+        outString += "---------------------\n"
+        for block in self.blocks:
+            outString += str(block) + "\n"  
+            
+        outString += "\n---------------------\n"    
         outString += "        par loops        \n"
         outString += "---------------------\n"
         for loop in self.loops:
@@ -155,12 +162,6 @@ class Program:
         outString += "---------------------\n"
         for loop in self.outerloops:
             outString += str(loop) + "\n"
-
-        outString += "\n---------------------\n"    
-        outString += "       Entities      \n"
-        outString += "---------------------\n"
-        for entity in self.entities:
-            outString += str(entity) + "\n"  
             
         outString += "\n---------------------\n"    
         outString += "       Stencils      \n"
@@ -168,6 +169,12 @@ class Program:
         for stencil in self.stencils:
             outString += str(stencil) + "\n"   
         
+        outString += "\n---------------------\n"    
+        outString += "       Entities      \n"
+        outString += "---------------------\n"
+        for entity in self.entities:
+            outString += str(entity) + "\n"  
+            
         return outString
 
 @dataclass

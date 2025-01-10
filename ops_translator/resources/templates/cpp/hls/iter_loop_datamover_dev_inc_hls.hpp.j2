@@ -9,11 +9,48 @@ arg{{arg.id}}_axis_{{"out" if (arg is ops_read) else ("in" if (arg is ops_write)
 {% macro axis_name_t2(arg, suffix) -%}
 arg{{arg.id}}_axis_{{suffix}}
 {%- endmacro -%}
+{% macro axis_data_width(arg) -%}
+    {%- if ilh.dats[arg.dat_id][0].isMultiDim() -%}
+multidim_axis_data_width_{{ilh.id}}_{{ilh.dats[arg.dat_id][0].ptr}}
+    {%- else -%}
+axis_data_width
+    {%- endif -%}
+{%- endmacro -%}
+{% macro num_pkts(arg) -%}
+    {%- if ilh.dats[arg.dat_id][0].isMultiDim() -%}
+num_pkts
+    {%- else -%}
+num_pkts
+    {%- endif -%}
+{%- endmacro -%}
+{% macro num_beats(arg) -%}
+    {%- if ilh.dats[arg.dat_id][0].isMultiDim() -%}
+memconfig_d{{ilh.dats[arg.dat_id][0].dim}}.total_xblocks
+    {%- else -%}
+memconfig.total_xblocks
+    {%- endif -%}
+{%- endmacro -%}
+{% macro memconfig(arg) -%}
+    {%- if ilh.dats[arg.dat_id][0].isMultiDim() -%}
+memconfig_d{{ilh.dats[arg.dat_id][0].dim}}
+    {%- else -%}
+memconfig
+    {%- endif -%}
+{%- endmacro -%}
 {% block header_block %}
 
 #pragma once
 #include <ops_hls_kernel_support.h>
 #include "common_config.hpp"
+
+{% if ilh.isMultiDim() %}
+    {% for dat, acc_type in ilh.dats %}
+        {% if dat.isMultiDim() %}
+constexpr unsigned short multidim_vector_factor_{{ilh.id}}_{{dat.ptr}} = vector_factor * {{dat.dim}};
+constexpr unsigned short multidim_axis_data_width_{{ilh.id}}_{{dat.ptr}} = data_width * multidim_vector_factor_{{ilh.id}}_{{dat.ptr}};
+        {% endif %}
+    {% endfor %}
+{% endif %}
 
 {% endblock %}
 {% block datamover_dataflow_region %}
@@ -25,10 +62,8 @@ extern "C" void datamover_outerloop_{{ilh.id}}(
         const unsigned short range_start_{{i}},
         const unsigned short range_end_{{i}},
     {% endfor%}
-    {% for arg in ilh.joint_args|ops_dat %}
-        {% for i in range(ndim) %}
-        const unsigned short arg{{arg.id}}_gridSize_{{i}},
-        {% endfor %}
+    {% for i in range(ndim) %}
+        const unsigned short gridSize_{{i}},
     {% endfor %}
         const unsigned int outer_itr,
     {% for arg in ilh.joint_args|ops_dat %}
@@ -38,10 +73,11 @@ extern "C" void datamover_outerloop_{{ilh.id}}(
     {% for arg in ilh.joint_args|ops_dat %}
     //{{ilh.dats[arg.dat_id][0].ptr}}
         {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
-        hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
+
+        hls::stream <ap_axiu<{{axis_data_width(arg)-}},0,0,0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
         {% else %}
-        hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name_t2(arg, "out")-}},
-        hls::stream <ap_axiu<axis_data_width,0,0,0>>& {{axis_name_t2(arg, "in")-}}{{"," if not loop.last}}
+        hls::stream <ap_axiu<{{axis_data_width(arg)-}},0,0,0>>& {{axis_name_t2(arg, "out")-}},
+        hls::stream <ap_axiu<{{axis_data_width(arg)-}},0,0,0>>& {{axis_name_t2(arg, "in")-}}{{"," if not loop.last}}
         {% endif %}
     {% endfor %}
     )

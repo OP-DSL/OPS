@@ -175,6 +175,7 @@ class Range:
 class Dat:
     id: int
 
+    ptr_raw: str # This is to hold the raw use of the pointer in replacing in the program. Othwerwise need to be avoided.
     ptr: str
     dim: int
     # size: List[int]
@@ -201,6 +202,11 @@ class Dat:
     def __str__(self) -> str:
         return f"Dat(block_id={self.block_id}, id={self.id}, ptr='{self.ptr}', dim={self.dim}, type={self.typ}, soa={self.soa})"
 
+    def isMultiDim(self) -> bool:
+        if self.dim > 1:
+            return True
+        
+        return False
 
 @dataclass(frozen=False)
 class Point:
@@ -541,14 +547,15 @@ class Block:
     loc: Location
     ptr: str
     id: int
-
     dim: int
+    prompt: str
     dats: List[Dat]
 
-    def __init__(self, loc: Location, ptr: str, dim: int) -> None:
+    def __init__(self, loc: Location, ptr: str, dim: int, prompt: str = None) -> None:
         self.loc = loc
         self.ptr = ptr
         self.dim = dim
+        self.prompt = prompt
         self.dats = []
 
     def __str__(self) -> str:
@@ -961,7 +968,7 @@ class IterLoop:
     # dat_swap_map: List[int]
     raw_par_copy_args: List[ParCopy]
     PE_args: Dict[int,List[str]] = {}
-    interconnector_names: List[str]
+    interconnectors: List[Any]
     ops_range: str = None
     df_graph: DataflowGraph_v2 = None
     opt_df_graph: DataflowGraph_v2 = None
@@ -974,7 +981,7 @@ class IterLoop:
         self.scope = scope
         self.itrloop_args = args
         self.raw_par_copy_args = filter(lambda x: isinstance(x, ParCopy), args)
-        self.interconnector_names = []
+        self.interconnectors = []
 
         key =  ""
         for arg in args:
@@ -1200,8 +1207,14 @@ class IterLoop:
                         
                 else:
                     connector_name = f"node{source_id}_{attr['src_arg_id']}_to_node{sink_id}_{attr['sink_arg_id']}"
-                    if connector_name not in self.interconnector_names:
-                        self.interconnector_names.append(connector_name)
+                    
+                    idx = findIdx(self.interconnectors, lambda interconector_disc: interconector_disc[0] == connector_name)
+                    
+                    if idx is None:
+                        dat_id = findIdx(self.dats, lambda dat_desc: dat_desc[0].ptr == attr["dat_str"])
+                        if dat_id is None:
+                            raise OpsError(f"{function_name()}: Cannot find dat {attr['dat_str']} in iterloop: {self.id}")
+                        self.interconnectors.append([connector_name, dat_id])
                     if attr['sink_arg_id'] in arg_map.keys():
                         arg_map[attr['sink_arg_id']].append(connector_name)
                     else:
@@ -1221,8 +1234,12 @@ class IterLoop:
                         arg_map[attr['src_arg_id']] = [f"arg{self.joint_args[idx].id}_hls_stream_out"]
                 else:
                     connector_name = f"node{source_id}_{attr['src_arg_id']}_to_node{sink_id}_{attr['sink_arg_id']}"
-                    if connector_name not in self.interconnector_names:
-                        self.interconnector_names.append(connector_name)
+                    idx = findIdx(self.interconnectors, lambda interconector_disc: interconector_disc[0] == connector_name)
+                    if idx is None:
+                        dat_id = findIdx(self.dats, lambda dat_desc: dat_desc[0].ptr == attr["dat_str"])
+                        if dat_id is None:
+                            raise OpsError(f"{function_name()}: Cannot find dat {attr['dat_str']} in iterloop: {self.id}")
+                        self.interconnectors.append([connector_name, dat_id])
                     if attr['src_arg_id'] in arg_map.keys():
                         arg_map[attr['src_arg_id']].append(connector_name)
                     else:
@@ -1339,7 +1356,7 @@ class IterLoop:
                 
                 if dat_id is None:
                     dat_id = len(self.dats)
-                    self.dats.append([Dat(dat_id, loop.dats[arg.dat_id].ptr,loop.dats[arg.dat_id].dim, loop.dats[arg.dat_id].typ, loop.dats[arg.dat_id].soa), arg.access_type])
+                    self.dats.append([Dat(dat_id, loop.dats[arg.dat_id].ptr_raw, loop.dats[arg.dat_id].ptr,loop.dats[arg.dat_id].dim, loop.dats[arg.dat_id].typ, loop.dats[arg.dat_id].soa), arg.access_type])
                 else:
                     if (self.dats[dat_id][1] == AccessType.OPS_READ and arg.access_type == AccessType.OPS_WRITE) or \
                         (self.dats[dat_id][1] == AccessType.OPS_WRITE and arg.access_type == AccessType.OPS_READ):
@@ -1390,6 +1407,7 @@ class IterLoop:
             unique_swap_map_ids.append((self.getDatId(first), self.getDatId(second)))
 
         return unique_swap_map_ids
+    
     def getDatId(self, dat_name: str) -> int:
         idx = findIdx(self.dats, lambda dat_l: dat_l[0].ptr == dat_name)
         if idx is None:
@@ -1431,6 +1449,20 @@ class IterLoop:
     def printDataflowGraph(self, filename: str) -> None: 
         logging.debug(self.get_active_df_graph())
         self.get_active_df_graph().print(self.unique_name, make_dats_node = True)
+        
+    def isMultiDim(self) -> bool:
+        for dat, ac_type in self.dats:
+            if dat.isMultiDim():
+                return True
+        return False
+    
+    def getMultidimList(self) -> List[int]:
+        dims = []
+        for dat, ac_type in self.dats:
+            if dat.isMultiDim():
+                if dat.dim not in dims:
+                    dims.append(dat.dim)
+        return dims
         
 class ParCopy:
     target: str
@@ -1483,6 +1515,7 @@ class Loop:
     def addArgDat(
         self,
         loc: Location,
+        dat_raw_ptr: str,
         dat_ptr: str,
         dat_dim: int,
         dat_typ: Type,
@@ -1498,7 +1531,7 @@ class Loop:
         if dat_id is None:
             dat_id = len(self.dats)
             # if findIdx(self.block.dats, lambda d: d.ptr == dat_ptr) is not None:
-            self.dats.append(Dat(dat_id, dat_ptr, dat_dim, dat_typ, dat_soa))
+            self.dats.append(Dat(dat_id, dat_raw_ptr, dat_ptr, dat_dim, dat_typ, dat_soa))
             # else:
             #     OpsError(f"Parsing Dat='{dat_ptr}' as argument of loop in {self.loc} which is not belong to block='{self.block.ptr}'", loc)
 
@@ -1683,3 +1716,17 @@ class Loop:
                 candidate_arg_dats.append(arg)
         
         return candidate_arg_dats
+    
+    def isMultiDim(self) -> bool:
+        for dat in self.dats:
+            if dat.isMultiDim():
+                return True
+        return False
+    
+    def getMultidimList(self) -> List[int]:
+        dims = []
+        for dat in self.dats:
+            if dat.isMultiDim():
+                if dat.dim not in dims:
+                    dims.append(dat.dim)
+        return dims

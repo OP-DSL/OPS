@@ -12,20 +12,19 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
 
-HEADERS=rtm_kernel.h
+HEADERS=jac3D7pt_kernel.h
 
-OPS_FILES=rtm.cpp
+OPS_FILES=jac3D7pt.cpp
 
 OPS_GENERATED_SUFFIX=_ops
 
 OTHER_FILES=
 
 
-APP=rtm3d
-MAIN_SRC=rtm
+APP=jac3D7pt
+MAIN_SRC=jac3D7pt
 
 OPS_GENERATOR_VERBOSE=1
-OPS_GENERATOR_DEBUG=1
 OPS_FPGA_ONLY=1
 OPS_TARGET_CONFIG_FILE= ./config.json
 

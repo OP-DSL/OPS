@@ -6,7 +6,7 @@ from clang.cindex import Cursor, CursorKind, TranslationUnit, TypeKind, conf, To
 
 import ops
 from store import Function, Location, ParseError, Program, Type
-from util import safeFind #TODO: implement safe find
+from util import safeFind, function_name, findIdx #TODO: implement safe find
 import logging
 from math import floor
 from dataclasses import field
@@ -127,9 +127,6 @@ def parseLocation(node: Cursor) -> Location:
 def getLocation(location: Cursor.location) -> Location:
     return Location(location.file.name, location.line, location.column)
 
-# def parseDats(translation_unit: TranslationUnit, program: Program) -> None:
-#     return None
-
 def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
     macros: Dict[Location, str] = {}
     nodes: List[Cursor] = []
@@ -210,43 +207,81 @@ def parseVariableDeclaration(node: Cursor, macros: Dict[Location, str], program:
         rval_expr = children[1]
             
     elif (node.kind == CursorKind.BINARY_OPERATOR):
+        aststringlist = ASTtoString(node)
+        aststring = ""
+        
+        for line in aststringlist:
+            aststring += line + "\n"
+            
+        logging.debug(f"AST: \n" + aststring)
+
         for child in node.get_children():
             children.append(child)
         
         if len(children) < 2:
             return
         
-        var_name = children[0].spelling
+        l_val = children[0]
+        
+        if l_val.kind == CursorKind.ARRAY_SUBSCRIPT_EXPR:
+            var_name = decend(l_val).spelling
+        else:
+            var_name = l_val.spelling
         rval_expr = children[1]
     
-    logging.debug("Variable detected: %s", var_name)
-    print(f"rval_expr.spelling: {rval_expr.spelling}, kind: {rval_expr.kind}")
+    logging.debug("Variable detected: %s, r_val_kind: %s", var_name, rval_expr.kind)
+
+    # print(f"rval_expr.spelling: {rval_expr.spelling}, kind: {rval_expr.kind}")
     if rval_expr.kind == CursorKind.CALL_EXPR or rval_expr.kind.is_unexposed():
         if rval_expr.kind.is_unexposed():
+            logging.debug(" |- This is unexposed")
             out = parseUnexposedFunction(rval_expr)
         else:
+            logging.debug(" |- This is exposed")
             out = parseFunctionCall(rval_expr)
         
         if not out:
             return
         
         (name, args) = out
-        if name != "ops_decl_stencil":
-            ParseError("Expected ops_decl stencil as RHS expression", parseLocation(node))
-            
-        parseStencil(var_name, args, parseLocation(node), macros, program)
+        
+        if name == "ops_decl_stencil":
+            parseStencil(var_name, args, parseLocation(node), macros, program)
     
      
+        if name == "ops_decl_block":
+            logging.debug("found ops_decl_block")
+            if len(args) != 2:
+                raise ParseError("ops_decl_block has 2 arguments", parseLocation(node))
+            parseBlock(node, var_name, args, parseLocation(node), program)
+            
+        if name == "ops_decl_dat":
+            logging.debug("found ops_dec_dat")
+            if len(args) != 9:
+                raise ParseError("ops_decl_dat has 9 arguments", parseLocation(node))
+            parseDat(node, parseIdentifier(l_val), var_name, args, parseLocation(node), program)
         
 def parseFunctionCall(node: Cursor) -> Union[Tuple[str, List[Cursor]], None]:
     args = []
     if node.kind != CursorKind.CALL_EXPR:
+        logging.debug(" |- This is not a call expression")
         return None
+    
+    # aststringlist = ASTtoString(decend(node))
+    # aststring = ""
+    
+    # for line in aststringlist:
+    #     aststring += line + "\n"
+        
+    # logging.debug(f"AST: \n" + aststring)
     
     for arg in node.get_arguments():
         args.append(arg)
-    
+
     name = node.spelling
+    if name == "":
+        if decend(node).kind == CursorKind.DECL_REF_EXPR and decend(decend(node)).kind == CursorKind.OVERLOADED_DECL_REF:
+            name = decend(decend(node)).spelling
 
     logging.debug("Detected function: %s, args: %s", name, args)
         
@@ -264,7 +299,7 @@ def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> No
 
     if name == "ops_decl_stencil":
         if len(args) != 4:
-            raise ParseError("ops_decl_stencil need 4 arguments", parseLocation(node))
+            raise ParseError("ops_decl_stencil need 4 arguments", loc)
         
         print(f"node {node}: {node.spelling}: type: {node.kind}")
         for arg in args: 
@@ -272,8 +307,8 @@ def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> No
                 print(f"|-- argument {arg.spelling}: type: {arg.kind}, definition: {arg.get_definition().kind}, defLoc:{str(parseLocation(arg.get_definition()))}")
             else:
                 print(f"|-- argument {arg.spelling}: type: {arg.kind}")
-    
-    print(f"node:{node.spelling}, type: {node.type}")
+
+    # print(f"node:{node.spelling}, type: {node.type}")
     ov_node = decend(decend(node))   
     
     # print (f"node: {name}, ov_node: {ov_node.spelling}, args: {args}") 
@@ -413,10 +448,10 @@ def parseStringLit(node: Cursor) -> str:
     if node.kind == CursorKind.UNEXPOSED_EXPR:
         node = decend(node)
         if node.kind != CursorKind.STRING_LITERAL:
-            raise ParseError("Expected string literal")
+            raise ParseError("Expected string literal", parseLocation(node))
 
     elif node.kind != CursorKind.STRING_LITERAL:
-        raise ParseError("Expected string literal")
+        raise ParseError("Expected string literal", parseLocation(node))
 
     return node.spelling[1:-1]
 
@@ -503,23 +538,26 @@ def parseType(typ: str, loc: Location, include_custom=False) -> Tuple[ops.Type, 
 def parseIdentifier(node: Cursor, raw: bool = True) -> str:
     if raw:
         return "".join([t.spelling for t in node.get_tokens()])
-
+    
     while node.kind == CursorKind.CSTYLE_CAST_EXPR:
         node = list(node.get_children())[1]
-
-    if node.kind == CursorKind.ARRAY_SUBSCRIPT_EXPR:
-        node = decend(node)
         
     if node.kind == CursorKind.UNEXPOSED_EXPR:
-        node = decend(node)
+        logging.debug(f"{function_name()}: unexposed")
+        return parseIdentifier(decend(node), raw)
 
-    if node.kind == CursorKind.UNARY_OPERATOR and next(node.get_tokens()).spelling in ("&", "*"):
-        node = decend(node)
+    elif node.kind == CursorKind.ARRAY_SUBSCRIPT_EXPR:
+        logging.debug(f"{function_name()}: array_subscript")
+        return parseIdentifier(decend(node), raw)
+        
+    elif node.kind == CursorKind.UNARY_OPERATOR and next(node.get_tokens()).spelling in ("&", "*"):
+        logging.debug(f"{function_name()}: ref or pointer")
+        return parseIdentifier(decend(node), raw)
 
-    if node.kind == CursorKind.GNU_NULL_EXPR:
+    elif node.kind == CursorKind.GNU_NULL_EXPR:
         raise ParseError("Expected identifier, found NULL", parseLocation(node))
 
-    if node.kind != CursorKind.DECL_REF_EXPR:
+    elif node.kind != CursorKind.DECL_REF_EXPR:
         raise ParseError("Expected identifier", parseLocation(node))
 
     return node.spelling
@@ -570,13 +608,23 @@ def parseArgDat(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[
     if len(args) != 5:
         raise ParseError(f"Incorrect number({len(args)}) of args passed to ops_arg_dat", loc)
 
-    dat_ptr = parseIdentifier(args[0])
+    aststringlist = ASTtoString(args[0])
+    aststring = ""
+    
+    for line in aststringlist:
+        aststring += line + "\n"
+        
+    logging.debug(f"AST: \n" + aststring)
+    
+    dat_raw_ptr = parseIdentifier(args[0])
+    dat_ptr = parseIdentifier(args[0], raw=False)
     dim = parseIntLiteral(args[1])
     stencil_ptr = parseIdentifier(args[2])
     dat_typ, dat_soa = parseType(parseStringLit(args[3]), loc)
     access_type = parseAccessType(args[4], loc, macros)
 
-    loop.addArgDat(loc, dat_ptr, dim, dat_typ, dat_soa, stencil_ptr, access_type, True)
+    logging.debug(f"Found arg dat {dat_ptr}")
+    loop.addArgDat(loc, dat_raw_ptr, dat_ptr, dim, dat_typ, dat_soa, stencil_ptr, access_type, True)
 
 
 def parseArgDatOpt(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> None:
@@ -604,11 +652,39 @@ def parseArgReduce(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Di
 
     loop.addArgReduce(loc, reduct_handle_ptr, dim, typ, access_type)
 
-def parseBlock(node: Cursor, dim: int) -> ops.Block:
-    ptr = parseIdentifier(node)
-    loc = parseLocation(node)
-    return ops.Block(loc, ptr, dim)
+def parseBlock(node: Cursor, ptr: str, args: List[Any], loc: Location, prog: Program) -> ops.Block:
+    dim = parseIntExpression(args[0])
+    try:
+        prompt = parseStringLit(args[1])
+    except ParseError as e:
+        logging.warning(f"{e.args[0]}")
+        prompt = ""
+        
+    block = ops.Block(loc, ptr, dim, prompt)
+    
+    # if prog.ndim < dim: 
+    #     raise ParseError(f"Defining block dim {dim} is not permited inside a {prog.ndim}D program", loc)
+    
+    idx = safeFind(prog.blocks, lambda b: b.ptr == ptr)
+    
+    if not idx is None:
+        raise ParseError(f"Block {ptr} is redefined. First defined in {prog.blocks[idx].loc} and again in {loc}")
+    
+    block.id = len(prog.blocks)
+    prog.blocks.append(block)
 
+def parseDat(node: Cursor, ptr_raw: str, ptr: str, args: List[Any], loc: Location, prog: Program) -> None:
+    block_ptr = parseIdentifier(args[0], raw=False)
+    multidim_dim = parseIntExpression(args[1])
+    typ, soa = parseType(parseStringLit(args[7]), parseLocation(args[7]))
+    blk_idx = findIdx(prog.blocks, lambda blk: blk.ptr == block_ptr)
+    
+    if block_ptr is None:
+        raise ParseError(f"Unable to find Block ({block_ptr})", parseLocation(node))
+    
+    prog.blocks[blk_idx].dats.append(ops.Dat(len(prog.blocks[blk_idx].dats), ptr_raw, ptr, multidim_dim, typ, soa, blk_idx))
+    
+    
 
 def parseRange(node: Cursor, dim: int) -> ops.Range:
     ptr = parseIdentifier(node)
@@ -686,8 +762,8 @@ def parse_par_copy(loopNode: Cursor, args: List[Cursor], loc: Location, macros: 
     if len(args) != 2:
         raise ParseError("Incorrect number of args passed to ops_par_copy")
     
-    target = parseIdentifier(args[0])
-    source = parseIdentifier(args[1])
+    target = parseIdentifier(args[0], raw=False)
+    source = parseIdentifier(args[1], raw=False)
     
     return ops.ParCopy(target, source)
         

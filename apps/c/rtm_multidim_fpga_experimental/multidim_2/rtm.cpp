@@ -39,7 +39,7 @@
 #include <string.h>
 #include <math.h>
 
-float dx,dy,dz, invdx, invdy, invdz;
+float dx,dy,dz;
 int pml_width;
 int half_order, order, nx, ny, nz;
 #include "coeffs8.h"
@@ -132,16 +132,10 @@ int main(int argc, const char** argv)
   dx = 0.005;
   dy = 0.005;
   dz = 0.005;
-  invdx = 1/dx;
-  invdy = 1/dy;
-  invdz = 1/dz;
   pml_width = 10;
   ops_decl_const("dx",1,"float",&dx);
   ops_decl_const("dy",1,"float",&dy);
   ops_decl_const("dz",1,"float",&dz);
-  ops_decl_const("invdx",1,"float",&invdx);
-  ops_decl_const("invdy",1,"float",&invdy);
-  ops_decl_const("invdz",1,"float",&invdz);
   ops_decl_const("nx",1,"int",&nx);
   ops_decl_const("ny",1,"int",&ny);
   ops_decl_const("nz",1,"int",&nz);
@@ -196,30 +190,19 @@ int main(int argc, const char** argv)
     ops_dat coordz[batches];
     ops_dat rho[batches];
     ops_dat mu[batches];
-    ops_dat yy_0[batches];
-    ops_dat yy_1[batches];
-    ops_dat yy_2[batches];
-    ops_dat yy_3[batches];
-    ops_dat yy_4[batches];
-    ops_dat yy_5[batches];
-    ops_dat yy_sum_0[batches];
-    ops_dat yy_sum_1[batches];
-    ops_dat yy_sum_2[batches];
-    ops_dat yy_sum_3[batches];
-    ops_dat yy_sum_4[batches];
-    ops_dat yy_sum_5[batches];
-    ops_dat ytemp1_0[batches];
-    ops_dat ytemp1_1[batches];
-    ops_dat ytemp1_2[batches];
-    ops_dat ytemp1_3[batches];
-    ops_dat ytemp1_4[batches];
-    ops_dat ytemp1_5[batches];
-    ops_dat ytemp2_0[batches];
-    ops_dat ytemp2_1[batches];
-    ops_dat ytemp2_2[batches];
-    ops_dat ytemp2_3[batches];
-    ops_dat ytemp2_4[batches];
-    ops_dat ytemp2_5[batches];
+    ops_dat yy_0_1[batches];
+    ops_dat yy_2_3[batches];
+    ops_dat yy_4_5[batches];
+    ops_dat yy_sum_0_1[batches];
+    ops_dat yy_sum_2_3[batches];
+    ops_dat yy_sum_4_5[batches];
+    ops_dat ytemp1_0_1[batches];
+    ops_dat ytemp1_2_3[batches];
+    ops_dat ytemp1_4_5[batches];
+    ops_dat ytemp2_0_1[batches];
+    ops_dat ytemp2_2_3[batches];
+    ops_dat ytemp2_4_5[batches];
+
     //Allocationß
     for (unsigned int bat=0; bat < batches; bat++)
     {
@@ -233,54 +216,34 @@ int main(int argc, const char** argv)
         rho[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
         name = std::string("mu_bat_") + std::to_string(bat);
         mu[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("yy_0_bat_") + std::to_string(bat);
-        yy_0[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("yy_1_bat_") + std::to_string(bat);
-        yy_1[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("yy_2_bat_") + std::to_string(bat);
-        yy_2[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("yy_3_bat_") + std::to_string(bat);
-        yy_3[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("yy_4_bat_") + std::to_string(bat);
-        yy_4[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("yy_5_bat_") + std::to_string(bat);
-        yy_5[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("yy_sum_0_bat_") + std::to_string(bat);
-        yy_sum_0[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("yy_sum_1_bat_") + std::to_string(bat);
-        yy_sum_1[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("yy_sum_2_bat_") + std::to_string(bat);
-        yy_sum_2[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("yy_sum_3_bat_") + std::to_string(bat);
-        yy_sum_3[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("yy_sum_4_bat_") + std::to_string(bat);
-        yy_sum_4[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("yy_sum_5_bat_") + std::to_string(bat);
-        yy_sum_5[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("ytemp1_0_bat_") + std::to_string(bat);
-        ytemp1_0[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("ytemp1_1_bat_") + std::to_string(bat);
-        ytemp1_1[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("ytemp1_2_bat_") + std::to_string(bat);
-        ytemp1_2[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("ytemp1_3_bat_") + std::to_string(bat);
-        ytemp1_3[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("ytemp1_4_bat_") + std::to_string(bat);
-        ytemp1_4[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("ytemp1_5_bat_") + std::to_string(bat);
-        ytemp1_5[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("ytemp2_0_bat_") + std::to_string(bat);
-        ytemp2_0[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("ytemp2_1_bat_") + std::to_string(bat);
-        ytemp2_1[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("ytemp2_2_bat_") + std::to_string(bat);
-        ytemp2_2[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("ytemp2_3_bat_") + std::to_string(bat);
-        ytemp2_3[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("ytemp2_4_bat_") + std::to_string(bat);
-        ytemp2_4[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
-        name = std::string("ytemp2_5_bat_") + std::to_string(bat);
-        ytemp2_5[bat] = ops_hls_decl_dat(blocks[bat], 1, size, base, d_m, d_p, temp, "float", name.c_str());
+        
+        name = std::string("yy_0_1_bat_") + std::to_string(bat);
+        yy_0_1[bat] = ops_hls_decl_dat(blocks[bat], 2, size, base, d_m, d_p, temp, "float", name.c_str());
+        name = std::string("yy_2_3_bat_") + std::to_string(bat);
+        yy_2_3[bat] = ops_hls_decl_dat(blocks[bat], 2, size, base, d_m, d_p, temp, "float", name.c_str());
+        name = std::string("yy_4_5_bat_") + std::to_string(bat);
+        yy_4_5[bat] = ops_hls_decl_dat(blocks[bat], 2, size, base, d_m, d_p, temp, "float", name.c_str());
+
+        name = std::string("yy_sum_0_1_bat_") + std::to_string(bat);
+        yy_sum_0_1[bat] = ops_hls_decl_dat(blocks[bat], 2, size, base, d_m, d_p, temp, "float", name.c_str());
+        name = std::string("yy_sum_2_3_bat_") + std::to_string(bat);
+        yy_sum_2_3[bat] = ops_hls_decl_dat(blocks[bat], 2, size, base, d_m, d_p, temp, "float", name.c_str());
+        name = std::string("yy_sum_4_5_bat_") + std::to_string(bat);
+        yy_sum_4_5[bat] = ops_hls_decl_dat(blocks[bat], 2, size, base, d_m, d_p, temp, "float", name.c_str());
+
+        name = std::string("ytemp1_0_1_bat_") + std::to_string(bat);
+        ytemp1_0_1[bat] = ops_hls_decl_dat(blocks[bat], 2, size, base, d_m, d_p, temp, "float", name.c_str());
+        name = std::string("ytemp1_2_3_bat_") + std::to_string(bat);
+        ytemp1_2_3[bat] = ops_hls_decl_dat(blocks[bat], 2, size, base, d_m, d_p, temp, "float", name.c_str());
+        name = std::string("ytemp1_4_5_bat_") + std::to_string(bat);
+        ytemp1_4_5[bat] = ops_hls_decl_dat(blocks[bat], 2, size, base, d_m, d_p, temp, "float", name.c_str());
+
+        name = std::string("ytemp2_0_1_bat_") + std::to_string(bat);
+        ytemp2_0_1[bat] = ops_hls_decl_dat(blocks[bat], 2, size, base, d_m, d_p, temp, "float", name.c_str());
+        name = std::string("ytemp2_2_3_bat_") + std::to_string(bat);
+        ytemp2_2_3[bat] = ops_hls_decl_dat(blocks[bat], 2, size, base, d_m, d_p, temp, "float", name.c_str());
+        name = std::string("ytemp2_4_5_bat_") + std::to_string(bat);
+        ytemp2_4_5[bat] = ops_hls_decl_dat(blocks[bat], 2, size, base, d_m, d_p, temp, "float", name.c_str());
     }
 
   printf(" HERE 4\n");
@@ -316,22 +279,13 @@ int main(int argc, const char** argv)
                 ops_arg_idx(),
                 ops_arg_dat(rho[bat], 1, S3D_000, "float", OPS_WRITE),
                 ops_arg_dat(mu[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_0[bat], 1, S3D_000, "float", OPS_WRITE));
-        ops_par_loop(kernel_copy, "copy_yy_1", blocks[bat],  3 ,  full_range,
-                ops_arg_dat(yy_0[bat], 1, S3D_000, "float", OPS_READ), 
-                ops_arg_dat(yy_1[bat], 1, S3D_000, "float", OPS_WRITE));
-        ops_par_loop(kernel_copy, "copy_yy_2", blocks[bat],  3 ,  full_range,
-                ops_arg_dat(yy_0[bat], 1, S3D_000, "float", OPS_READ), 
-                ops_arg_dat(yy_2[bat], 1, S3D_000, "float", OPS_WRITE));
-        ops_par_loop(kernel_copy, "copy_yy_3", blocks[bat],  3 ,  full_range,
-                ops_arg_dat(yy_0[bat], 1, S3D_000, "float", OPS_READ), 
-                ops_arg_dat(yy_3[bat], 1, S3D_000, "float", OPS_WRITE));
-        ops_par_loop(kernel_copy, "copy_yy_4", blocks[bat],  3 ,  full_range,
-                ops_arg_dat(yy_0[bat], 1, S3D_000, "float", OPS_READ), 
-                ops_arg_dat(yy_4[bat], 1, S3D_000, "float", OPS_WRITE));
-        ops_par_loop(kernel_copy, "copy_yy_5", blocks[bat],  3 ,  full_range,
-                ops_arg_dat(yy_0[bat], 1, S3D_000, "float", OPS_READ), 
-                ops_arg_dat(yy_5[bat], 1, S3D_000, "float", OPS_WRITE));
+                ops_arg_dat(yy_0_1[bat], 2, S3D_000, "float", OPS_WRITE));
+        ops_par_loop(kernel_copy_d2, "copyd2_0", blocks[bat], 3, full_range, 
+                ops_arg_dat(yy_0_1[bat], 2, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_2_3[bat], 2, S3D_000, "float", OPS_WRITE));
+        ops_par_loop(kernel_copy_d2, "copyd2_0", blocks[bat], 3, full_range, 
+                ops_arg_dat(yy_0_1[bat], 2, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_4_5[bat], 2, S3D_000, "float", OPS_WRITE));
         // ops_par_loop(rtm_kernel_populate, "copy_yy_sum_1", blocks[bat],  3 ,  full_range,
         //         ops_arg_dat(yy_sum_0[bat], 1, S3D_000, "float", OPS_READ), 
         //         ops_arg_dat(yy_sum_1[bat], 1, S3D_big_sten, "float", OPS_WRITE));
@@ -384,24 +338,15 @@ int main(int argc, const char** argv)
                 ops_arg_gbl(&scale2_der1, 1, "float", OPS_READ),
                 ops_arg_dat(rho[bat], 1, S3D_000, "float", OPS_READ),
                 ops_arg_dat(mu[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_0[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_1[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_2[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_3[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_4[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_5[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_0[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_1[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_2[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_3[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_4[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_5[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_sum_0[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_sum_1[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_sum_2[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_sum_3[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_sum_4[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_sum_5[bat], 1, S3D_000, "float", OPS_WRITE));
+                ops_arg_dat(yy_0_1[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(yy_2_3[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(yy_4_5[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp1_0_1[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(ytemp1_2_3[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(ytemp1_4_5[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(yy_sum_0_1[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(yy_sum_2_3[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(yy_sum_4_5[bat], 2, S3D_000, "float", OPS_WRITE));
             
 
             ops_par_loop(fd3d_pml_kernel2, "fd3d_pml_kernel2", blocks[bat], 3, internal_range,
@@ -414,30 +359,18 @@ int main(int argc, const char** argv)
                 ops_arg_gbl(&scale2_der2_1, 1, "float", OPS_READ),
                 ops_arg_dat(rho[bat], 1, S3D_000, "float", OPS_READ),
                 ops_arg_dat(mu[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_0[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_1[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_2[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_3[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_4[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_5[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_0[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_1[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_2[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_3[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_4[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_5[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp2_0[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp2_1[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp2_2[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp2_3[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp2_4[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp2_5[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_sum_0[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_1[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_2[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_3[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_4[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_5[bat], 1, S3D_000, "float", OPS_RW));
+                ops_arg_dat(yy_0_1[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(yy_2_3[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(yy_4_5[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp1_0_1[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp1_2_3[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp1_4_5[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp2_0_1[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(ytemp2_2_3[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(ytemp2_4_5[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(yy_sum_0_1[bat], 2, S3D_000, "float", OPS_RW),
+                ops_arg_dat(yy_sum_2_3[bat], 2, S3D_000, "float", OPS_RW),
+                ops_arg_dat(yy_sum_4_5[bat], 2, S3D_000, "float", OPS_RW));
 
             ops_par_loop(fd3d_pml_kernel2, "fd3d_pml_kernel2", blocks[bat], 3, internal_range,
                 ops_arg_gbl(&disps[0], 1, "int", OPS_READ),
@@ -449,30 +382,18 @@ int main(int argc, const char** argv)
                 ops_arg_gbl(&scale2_der2_2, 1, "float", OPS_READ),
                 ops_arg_dat(rho[bat], 1, S3D_000, "float", OPS_READ),
                 ops_arg_dat(mu[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_0[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_1[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_2[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_3[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_4[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_5[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(ytemp2_0[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp2_1[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp2_2[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp2_3[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp2_4[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp2_5[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_0[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_1[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_2[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_3[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_4[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_5[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_sum_0[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_1[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_2[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_3[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_4[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_5[bat], 1, S3D_000, "float", OPS_RW));
+                ops_arg_dat(yy_0_1[bat], 2, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_2_3[bat], 2, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_4_5[bat], 2, S3D_000, "float", OPS_READ),
+                ops_arg_dat(ytemp2_0_1[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp2_2_3[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp2_4_5[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp1_0_1[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(ytemp1_2_3[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(ytemp1_4_5[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(yy_sum_0_1[bat], 2, S3D_000, "float", OPS_RW),
+                ops_arg_dat(yy_sum_2_3[bat], 2, S3D_000, "float", OPS_RW),
+                ops_arg_dat(yy_sum_4_5[bat], 2, S3D_000, "float", OPS_RW));
 
             ops_par_loop(fd3d_pml_kernel3, "fd3d_pml_kernel3", blocks[bat], 3, internal_range,
                 ops_arg_gbl(&disps[0], 1, "int", OPS_READ),
@@ -484,24 +405,15 @@ int main(int argc, const char** argv)
                 ops_arg_gbl(&scale2_der3, 1, "float", OPS_READ),
                 ops_arg_dat(rho[bat], 1, S3D_000, "float", OPS_READ),
                 ops_arg_dat(mu[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_0[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_1[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_2[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_3[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_4[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_5[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(ytemp1_0[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_1[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_2[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_3[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_4[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_5[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_sum_0[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_sum_1[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_sum_2[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_sum_3[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_sum_4[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_sum_5[bat], 1, S3D_000, "float", OPS_READ));
+                ops_arg_dat(yy_0_1[bat], 2, S3D_000, "float", OPS_RW),
+                ops_arg_dat(yy_2_3[bat], 2, S3D_000, "float", OPS_RW),
+                ops_arg_dat(yy_4_5[bat], 2, S3D_000, "float", OPS_RW),
+                ops_arg_dat(ytemp1_0_1[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp1_2_3[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp1_4_5[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(yy_sum_0_1[bat], 2, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_sum_2_3[bat], 2, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_sum_4_5[bat], 2, S3D_000, "float", OPS_READ));
 
         } 
 #else
@@ -516,24 +428,15 @@ int main(int argc, const char** argv)
                 ops_arg_gbl(&scale2_der1, 1, "float", OPS_READ),
                 ops_arg_dat(rho[bat], 1, S3D_000, "float", OPS_READ),
                 ops_arg_dat(mu[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_0[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_1[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_2[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_3[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_4[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_5[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_0[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_1[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_2[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_3[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_4[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_5[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_sum_0[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_sum_1[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_sum_2[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_sum_3[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_sum_4[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_sum_5[bat], 1, S3D_000, "float", OPS_WRITE)),
+                ops_arg_dat(yy_0_1[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(yy_2_3[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(yy_4_5[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp1_0_1[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(ytemp1_2_3[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(ytemp1_4_5[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(yy_sum_0_1[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(yy_sum_2_3[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(yy_sum_4_5[bat], 2, S3D_000, "float", OPS_WRITE)),
             
 
             ops_par_loop(fd3d_pml_kernel2, "fd3d_pml_kernel2", blocks[bat], 3, internal_range,
@@ -546,30 +449,18 @@ int main(int argc, const char** argv)
                 ops_arg_gbl(&scale2_der2_1, 1, "float", OPS_READ),
                 ops_arg_dat(rho[bat], 1, S3D_000, "float", OPS_READ),
                 ops_arg_dat(mu[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_0[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_1[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_2[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_3[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_4[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_5[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_0[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_1[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_2[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_3[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_4[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_5[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp2_0[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp2_1[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp2_2[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp2_3[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp2_4[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp2_5[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_sum_0[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_1[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_2[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_3[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_4[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_5[bat], 1, S3D_000, "float", OPS_RW)),
+                ops_arg_dat(yy_0_1[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(yy_2_3[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(yy_4_5[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp1_0_1[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp1_2_3[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp1_4_5[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp2_0_1[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(ytemp2_2_3[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(ytemp2_4_5[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(yy_sum_0_1[bat], 2, S3D_000, "float", OPS_RW),
+                ops_arg_dat(yy_sum_2_3[bat], 2, S3D_000, "float", OPS_RW),
+                ops_arg_dat(yy_sum_4_5[bat], 2, S3D_000, "float", OPS_RW)),
 
             ops_par_loop(fd3d_pml_kernel2, "fd3d_pml_kernel2", blocks[bat], 3, internal_range,
                 ops_arg_gbl(&disps[0], 1, "int", OPS_READ),
@@ -581,30 +472,18 @@ int main(int argc, const char** argv)
                 ops_arg_gbl(&scale2_der2_2, 1, "float", OPS_READ),
                 ops_arg_dat(rho[bat], 1, S3D_000, "float", OPS_READ),
                 ops_arg_dat(mu[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_0[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_1[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_2[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_3[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_4[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_5[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(ytemp2_0[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp2_1[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp2_2[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp2_3[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp2_4[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp2_5[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_0[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_1[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_2[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_3[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_4[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(ytemp1_5[bat], 1, S3D_000, "float", OPS_WRITE),
-                ops_arg_dat(yy_sum_0[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_1[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_2[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_3[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_4[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_sum_5[bat], 1, S3D_000, "float", OPS_RW)),
+                ops_arg_dat(yy_0_1[bat], 2, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_2_3[bat], 2, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_4_5[bat], 2, S3D_000, "float", OPS_READ),
+                ops_arg_dat(ytemp2_0_1[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp2_2_3[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp2_4_5[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp1_0_1[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(ytemp1_2_3[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(ytemp1_4_5[bat], 2, S3D_000, "float", OPS_WRITE),
+                ops_arg_dat(yy_sum_0_1[bat], 2, S3D_000, "float", OPS_RW),
+                ops_arg_dat(yy_sum_2_3[bat], 2, S3D_000, "float", OPS_RW),
+                ops_arg_dat(yy_sum_4_5[bat], 2, S3D_000, "float", OPS_RW)),
 
             ops_par_loop(fd3d_pml_kernel3, "fd3d_pml_kernel3", blocks[bat], 3, internal_range,
                 ops_arg_gbl(&disps[0], 1, "int", OPS_READ),
@@ -616,24 +495,15 @@ int main(int argc, const char** argv)
                 ops_arg_gbl(&scale2_der3, 1, "float", OPS_READ),
                 ops_arg_dat(rho[bat], 1, S3D_000, "float", OPS_READ),
                 ops_arg_dat(mu[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_0[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_1[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_2[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_3[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_4[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(yy_5[bat], 1, S3D_000, "float", OPS_RW),
-                ops_arg_dat(ytemp1_0[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_1[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_2[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_3[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_4[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(ytemp1_5[bat], 1, S3D_big_sten, "float", OPS_READ),
-                ops_arg_dat(yy_sum_0[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_sum_1[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_sum_2[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_sum_3[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_sum_4[bat], 1, S3D_000, "float", OPS_READ),
-                ops_arg_dat(yy_sum_5[bat], 1, S3D_000, "float", OPS_READ)));
+                ops_arg_dat(yy_0_1[bat], 2, S3D_000, "float", OPS_RW),
+                ops_arg_dat(yy_2_3[bat], 2, S3D_000, "float", OPS_RW),
+                ops_arg_dat(yy_4_5[bat], 2, S3D_000, "float", OPS_RW),
+                ops_arg_dat(ytemp1_0_1[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp1_2_3[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(ytemp1_4_5[bat], 2, S3D_big_sten, "float", OPS_READ),
+                ops_arg_dat(yy_sum_0_1[bat], 2, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_sum_2_3[bat], 2, S3D_000, "float", OPS_READ),
+                ops_arg_dat(yy_sum_4_5[bat], 2, S3D_000, "float", OPS_READ)));
 #endif
 #ifdef PROFILE
         auto main_loop_end_clk_point = std::chrono::high_resolution_clock::now();
@@ -654,30 +524,18 @@ int main(int argc, const char** argv)
         ops_free_dat(rho[bat]);
         ops_free_dat(mu[bat]);
         ops_free_dat(rho[bat]);
-        ops_free_dat(yy_0[bat]);
-        ops_free_dat(yy_1[bat]);
-        ops_free_dat(yy_2[bat]);
-        ops_free_dat(yy_3[bat]);
-        ops_free_dat(yy_4[bat]);
-        ops_free_dat(yy_5[bat]);
-        ops_free_dat(ytemp1_0[bat]);
-        ops_free_dat(ytemp1_1[bat]);
-        ops_free_dat(ytemp1_2[bat]);
-        ops_free_dat(ytemp1_3[bat]);
-        ops_free_dat(ytemp1_4[bat]);
-        ops_free_dat(ytemp1_5[bat]);
-        ops_free_dat(ytemp2_0[bat]);
-        ops_free_dat(ytemp2_1[bat]);
-        ops_free_dat(ytemp2_2[bat]);
-        ops_free_dat(ytemp2_3[bat]);
-        ops_free_dat(ytemp2_4[bat]);
-        ops_free_dat(ytemp2_5[bat]);
-        ops_free_dat(yy_sum_0[bat]);
-        ops_free_dat(yy_sum_1[bat]);
-        ops_free_dat(yy_sum_2[bat]);
-        ops_free_dat(yy_sum_3[bat]);
-        ops_free_dat(yy_sum_4[bat]);
-        ops_free_dat(yy_sum_5[bat]);
+        ops_free_dat(yy_0_1[bat]);
+        ops_free_dat(yy_2_3[bat]);
+        ops_free_dat(yy_4_5[bat]);
+        ops_free_dat(ytemp1_0_1[bat]);
+        ops_free_dat(ytemp1_2_3[bat]);
+        ops_free_dat(ytemp1_4_5[bat]);
+        ops_free_dat(ytemp2_0_1[bat]);
+        ops_free_dat(ytemp2_2_3[bat]);
+        ops_free_dat(ytemp2_4_5[bat]);
+        ops_free_dat(yy_sum_0_1[bat]);
+        ops_free_dat(yy_sum_2_3[bat]);
+        ops_free_dat(yy_sum_4_5[bat]);
     }
 
 #ifdef PROFILE

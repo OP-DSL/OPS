@@ -48,6 +48,7 @@ def findCopyPairsInsideKernelCompoundStatement(node: Cursor) -> List[Tuple]:
                 continue
             LHS_op,LHS_indices = LHS
             RHS_op,RHS_indices = RHS
+            logging.debug(f"{function_name()}: LHS_operand: {LHS_op}, RHS_operand: {RHS_op}, LHS index: {LHS_indices}, RHS index: {RHS_indices}")
             
             if not len(LHS_indices) == len(RHS_indices) or not LHS_indices == RHS_indices:
                 continue
@@ -145,7 +146,12 @@ def ISLCopyDetection(original_graph: DataflowGraph_v2, prog: Program, app: Appli
         copy_pairs = findCopyPairsInsideKernelCompoundStatement(kernel_children[-1])
         logging.debug(f"copy pairs found {copy_pairs}")
         
-        if not len(copy_pairs) == len(kernel_args) / 2:
+        unique_copy_pairs = []
+        for pair in copy_pairs:
+            if pair not in unique_copy_pairs:
+                unique_copy_pairs.append(pair)
+                
+        if not len(unique_copy_pairs) == len(kernel_args) / 2:
             logging.warning(f"kernel {node.loop.kernel} cannot be a copy kernel")
         else:
             for pair in copy_pairs:

@@ -176,7 +176,7 @@ class CppHLS(Scheme):
             self.iterloop_host_kernelwrap_extension
         )
             
-    def hls_replace_accessors(self, kernel_body: str, kernel_args: List[str], loop: ops.Loop, prog: Program, isReplaceWithReg = True):
+    def hls_replace_accessors(self, kernel_body: str, kernel_args: List[str], loop: ops.Loop, prog: Program, isReplaceWithReg: bool = True):
         logging.getLogger(__name__)
         assert len(kernel_args) == len(loop.args), f"kernel arguments of kernel {loop.kernel} count mismatch with loop"
         logging.debug("starting accessor replacer")
@@ -189,7 +189,7 @@ class CppHLS(Scheme):
                 match_string = "[A-Za-z0-9_]+\s*\(\s*-?\s*\d+\s*,\s*-?\s*\d+\s*\)"
             else:
                 match_string = "[A-Za-z0-9_]+\s*\(\s*-?\s*\d+\s*,\s*-?\s*\d+\s*,\s*-?\s*\d+\s*\)"
-            logging.debug(f"matching string: {match_string}")
+            # logging.debug(f"matching string: {match_string}")
             match = re.search(match_string, kernel_body)
             if not match:
                 break
@@ -197,26 +197,31 @@ class CppHLS(Scheme):
             name = re.search(r"[A-Za-z0-9_]+", match.group(0))
             access_raw_indices = re.search(r"\(.*\)",match.group(0))
             arg_idx = kernel_args.index(name.group(0))
-            logging.debug("match found: %s, name: %s, access_raw_indices: %s", match.group(0), name.group(0), access_raw_indices.group(0))
+            # logging.debug("match found for accessing: %s, name: %s, access_raw_indices: %s", match.group(0), name.group(0), access_raw_indices.group(0))
 
             if not isinstance(loop.args[arg_idx], ops.ArgDat):
                 logging.error("Transltor failed finding matchin argument for: %s in loop: %s data", match.group(0), loop.kernel)
                 raise ParseError(f"Translator failed finding relevent Dat argument of loop{loop.kernel}")
-                
+            
+            is_multidim = loop.dats[loop.args[arg_idx].dat_id].isMultiDim()
+
+            if is_multidim:
+                raise ParseError(f"Accessing a multidim dat {loop.dats[loop.args[arg_idx].dat_id].ptr} via normal accessing. Please check the matching kernel argument, it's accesses and the ops_arg_dat in the parloop")
+            
             stencil_ptr = loop.args[arg_idx].stencil_ptr
             stencil = prog.findStencil(stencil_ptr)
-            logging.debug("Matching stencil: %s", str(stencil))
+            # logging.debug("Matching stencil: %s", str(stencil))
             
             if not stencil:
                 raise ParseError(f"Translator failed finding relevent stencil: {stencil_ptr} in program: {str(prog.path)}")
             try:
-                print(f"re search: {access_raw_indices.group(0)}, eval: {eval(access_raw_indices.group(0))}")
+                # print(f"re search: {access_raw_indices.group(0)}, eval: {eval(access_raw_indices.group(0))}")
                 if loop.ndim == 1:
                     access_indices = ops.Point(list([eval(access_raw_indices.group(0))]))
                 else:
                     access_indices = ops.Point(list(eval(access_raw_indices.group(0))))
                 access_indices = access_indices + stencil.base_point
-                logging.debug(f"corrected access indice point: {access_indices}")
+                # logging.debug(f"corrected access indice point: {access_indices}")
                 
             except Exception as e:
                 logging.error(f"Unable to evaluate accessor indices: {access_raw_indices.group(0)}")
@@ -226,6 +231,60 @@ class CppHLS(Scheme):
                 kernel_body = re.sub(match_string, f"reg_{loop.args[arg_idx].dat_id}_{stencil.points.index(access_indices)}", kernel_body, count = 1)
             else:
                 kernel_body = re.sub(match_string, f"arg{loop.args[arg_idx].dat_id}_{stencil.points.index(access_indices)}", kernel_body, count = 1)
+                
+        # Checking multidim accessing
+        while(True):
+            if loop.ndim == 1:
+                match_string = "[A-Za-z0-9_]+\s*\(\s*-?\s*\d+\s*,\s*-?\s*\d+\s*\)"
+            elif loop.ndim == 2:
+                match_string = "[A-Za-z0-9_]+\s*\(\s*-?\s*\d+\s*,\s*-?\s*\d+\s*,\s*-?\s*\d+\s*\)"
+            else:
+                match_string = "[A-Za-z0-9_]+\s*\(\s*-?\s*\d+\s*,\s*-?\s*\d+\s*,\s*-?\s*\d+\s*,\s*-?\s*\d+\s*\)"
+            logging.debug(f"matching string for multidim: {match_string}")
+            match = re.search(match_string, kernel_body)
+            if not match:
+                break
+            
+            name = re.search(r"[A-Za-z0-9_]+", match.group(0))
+            access_raw_indices = re.search(r"\(.*\)",match.group(0))
+            arg_idx = kernel_args.index(name.group(0))
+            logging.debug("match found multidim accessing: %s, name: %s, access_raw_indices: %s", match.group(0), name.group(0), access_raw_indices.group(0))
+
+            if not isinstance(loop.args[arg_idx], ops.ArgDat):
+                logging.error("Transltor failed finding matchin argument for: %s in loop: %s data", match.group(0), loop.kernel)
+                raise ParseError(f"Translator failed finding relevent Dat argument of loop{loop.kernel}")
+            
+            is_multidim = loop.dats[loop.args[arg_idx].dat_id].isMultiDim()
+            multidim_dim = loop.dats[loop.args[arg_idx].dat_id].dim
+            
+            if not is_multidim:
+                raise ParseError(f"Accessing a non multidim dat {loop.dats[loop.args[arg_idx].dat_id].ptr} via multidim accessing. Please check the matching kernel argument, it's accesses and the ops_arg_dat in the parloop")
+            
+            
+            stencil_ptr = loop.args[arg_idx].stencil_ptr
+            stencil = prog.findStencil(stencil_ptr)
+            logging.debug("Matching stencil: %s", str(stencil))
+            
+            if not stencil:
+                raise ParseError(f"Translator failed finding relevent stencil: {stencil_ptr} in program: {str(prog.path)}")
+            try:
+                print(f"re search: {access_raw_indices.group(0)}, eval: {eval(access_raw_indices.group(0))}")
+                indices = eval(access_raw_indices.group(0))
+                dim_index = indices[0]
+                indices = indices[1:]
+                access_indices = ops.Point(indices)
+                access_indices = access_indices + stencil.base_point
+                logging.debug(f"corrected access indice point: {access_indices}")
+                
+            except Exception as e:
+                logging.error(f"Unable to evaluate accessor indices: {access_raw_indices.group(0)}")
+                raise ParseError(f"Transaltor filed with error: {str(e)}")
+                
+            if isReplaceWithReg:
+                kernel_body = re.sub(match_string, f"reg_{loop.args[arg_idx].dat_id}_{stencil.points.index(access_indices)}_{dim_index}", kernel_body, count = 1)
+            else:
+                kernel_body = re.sub(match_string, f"arg{loop.args[arg_idx].dat_id}_{stencil.points.index(access_indices)}[{dim_index}]", kernel_body, count = 1)
+                
         return kernel_body
 
     def generateWidenStencilandBufferDiscriptor(self, stencil: ops.Stencil, vector_factor: int) -> Tuple[ops.Stencil, ops.WindowBufferDiscriptor]:

@@ -12,20 +12,21 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
 
-HEADERS=rtm_kernel.h
+HEADERS=stencil_kernel.h
 
-OPS_FILES=rtm.cpp
+OPS_FILES=stencil_main.cpp
 
 OPS_GENERATED_SUFFIX=_ops
 
 OTHER_FILES=
 
 
-APP=rtm3d
-MAIN_SRC=rtm
+APP=stencil2d
+MAIN_SRC=stencil_main
 
 OPS_GENERATOR_VERBOSE=1
 OPS_GENERATOR_DEBUG=1
+OPS_DUMP_AST=1
 OPS_FPGA_ONLY=1
 OPS_TARGET_CONFIG_FILE= ./config.json
 

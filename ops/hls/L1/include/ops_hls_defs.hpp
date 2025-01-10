@@ -111,6 +111,7 @@ DEPRECATED struct GridPropertyCore
     SizeType actual_size;
     SizeType offset;
     unsigned short dim;
+    unsigned short multidim_dim;
     unsigned short xblocks;
     unsigned int total_itr;
     unsigned int outer_loop_limit;
@@ -125,6 +126,7 @@ struct GridPropertyCoreV2
     SizeType actual_size;
     SizeType offset;
     unsigned short dim;
+    unsigned short multidim_dim;
 };
 
 struct StencilConfigCore
