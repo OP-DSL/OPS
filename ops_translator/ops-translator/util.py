@@ -637,6 +637,19 @@ class KernelProcess:
         replacer = self.create_replacer_1d(array_name)
         return re.sub(pattern, replacer, fortrantocpp_code)
 
+    def create_replacer_zerobase_1d(self, array_name):
+        def replacer(match):
+            index = match.group(1)
+            return f"{array_name}[{index}]"
+        return replacer
+
+    def convert_zerobase_1d_indexing(self, fortrantocpp_code, array_name):
+        # Updated pattern to ensure word boundaries for exact matches
+        #pattern = rf"\b{array_name}\b\s*\(\s*([^,]+)\s*\)"
+        pattern = rf"\b{array_name}\b\s*\(\s*([^\)]+)\s*\)"  # Matches only within the nearest closing parenthesis
+        replacer = self.create_replacer_zerobase_1d(array_name)
+        return re.sub(pattern, replacer, fortrantocpp_code)
+
     # Function to replace fixed indexing for array_name(n) -> array_name[n-1]
     def replace_fixed_indexing(self, fortrantocpp_code, array_name):
         # Regular expression to match exact array_name with specific index

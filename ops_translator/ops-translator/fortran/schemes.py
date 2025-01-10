@@ -87,6 +87,8 @@ def generate_cpp_Kernel(loop: OPS.Loop,
     # Sort them in descending order so that first 3D index will be converted, then 2D and lastly 1D
     sorted_args.sort(key=lambda x: len(x[1]), reverse=True)
 
+    # This will convert from multi-dim array to single-dim array format.
+    # Here each these routine subtract 1 from index position assume array start at 1 base index in Fortran and C++ side will be 0
     for var_name, arr_sizes in sorted_args:
         # print(var_name + " : " + str(arr_sizes))
         if (len(arr_sizes) == 1):
@@ -115,7 +117,12 @@ def generate_cpp_Kernel(loop: OPS.Loop,
                         (not arr_sizes[0].isdigit())
                     )
             ):
-            kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
+            patterm = rf"{var_name}\s*\(\s*0\s*:\s*[^)]+\)"
+            match = re.search(patterm, f90_src)
+            if match:   # Fortran using 0 base index declaration, just replace var_name(index) -> var_name[index]
+                kernel_body = kp_obj.convert_zerobase_1d_indexing(kernel_body, var_name)
+            else:
+                kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
         elif len(arr_sizes) == 2:
             kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[0])
         elif len(arr_sizes) == 3:

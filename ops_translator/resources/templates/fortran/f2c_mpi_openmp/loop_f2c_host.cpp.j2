@@ -172,7 +172,7 @@
         {% set line2 = line[0] %}
     {% endif %}
     {% set indent = [0] %}
-//    #pragma omp parallel for{{line2}}
+{#    #pragma omp parallel for{{line2}}     #}
     {% if lh.ndim > 2 %}
     for (int n_z = start_indx[2]; n_z < end_indx[2]; n_z++)
     {
@@ -183,6 +183,7 @@
       {{indent[0] * "  "}}{
         {% if indent.append(indent.pop() + 1) %}{% endif %}
     {% endif %}
+{#
     {% if lh.ndim > 1%}
 #ifdef __INTEL_COMPILER
     {{indent[0] * "    "}}#pragma loop_count(10000)
@@ -199,11 +200,12 @@
     {{indent[0] * "    "}}#pragma simd
 #endif
     {% endif %}
+#}
     {{indent[0] * "    "}}for(int n_x = start_indx[0]; n_x < end_indx[0]; n_x++)
     {{indent[0] * "    "}}{
     {% if indent.append(indent.pop() + 1) %}{% endif %}
-// Adding 1 to each idx value as in Fortran it starts from 1 instead of zero
     {% if lh.arg_idx != -1 %}
+// Adding 1 to each idx value as in Fortran it starts from 1 instead of zero
         {% if lh.ndim == 1 %}
     {{indent[0] * "    "}}int idx[] = {% raw %}{arg_idx[0] + n_x + 1};{% endraw %}
         {% elif lh.ndim == 2 %}
