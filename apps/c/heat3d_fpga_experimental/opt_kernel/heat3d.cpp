@@ -208,33 +208,33 @@ int main(int argc, const char** argv)
 #endif
         //Initializing data
         ops_par_loop(ops_krnl_zero_init, "ops_top_plane_init", blocks[bat], 3, top_plane_range,
-                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE));
+                ops_arg_dat(u[bat], 1, stencil3D_1pt, "float", OPS_WRITE));
 
         ops_par_loop(ops_krnl_zero_init, "ops_bottom_plane_init", blocks[bat], 3, bottom_plane_range,
-                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE));
+                ops_arg_dat(u[bat], 1, stencil3D_1pt, "float", OPS_WRITE));
 
         ops_par_loop(ops_krnl_zero_init, "ops_front_plane_init", blocks[bat], 3, front_plane_range,
-                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE));
+                ops_arg_dat(u[bat], 1, stencil3D_1pt, "float", OPS_WRITE));
         
         ops_par_loop(ops_krnl_zero_init, "ops_back_plane_init", blocks[bat], 3, back_plane_range,
-                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE));
+                ops_arg_dat(u[bat], 1, stencil3D_1pt, "float", OPS_WRITE));
 
         ops_par_loop(ops_krnl_zero_init, "ops_left_plane_init", blocks[bat], 3, left_plane_range,
-                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE));
+                ops_arg_dat(u[bat], 1, stencil3D_1pt, "float", OPS_WRITE));
 
         ops_par_loop(ops_krnl_zero_init, "ops_right_plane_init", blocks[bat], 3, right_plane_range,
-                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE));
+                ops_arg_dat(u[bat], 1, stencil3D_1pt, "float", OPS_WRITE));
 
         ops_par_loop(ops_krnl_interior_init, "ops_interior_init", blocks[bat], 3, interior_range,
-                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE),
+                ops_arg_dat(u[bat], 1, stencil3D_1pt, "float", OPS_WRITE),
                 ops_arg_idx(),
                 ops_arg_gbl(&angle_res_x, 1, "float", OPS_READ),
                 ops_arg_gbl(&angle_res_y, 1, "float", OPS_READ),
                 ops_arg_gbl(&angle_res_z, 1, "float", OPS_READ));
 
         ops_par_loop(ops_krnl_copy, "ops_copy_init", blocks[bat], 3, full_range,
-                ops_arg_dat(u2[bat], 3, stencil3D_1pt, "float", OPS_WRITE),
-                ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_READ));
+                ops_arg_dat(u2[bat], 1, stencil3D_1pt, "float", OPS_WRITE),
+                ops_arg_dat(u[bat], 1, stencil3D_1pt, "float", OPS_READ));
 
 #ifdef PROFILE
         auto init_end_clk_point = std::chrono::high_resolution_clock::now();
@@ -271,20 +271,20 @@ int main(int argc, const char** argv)
         for (int iter = 0; iter < iter_max; iter++)
         {
             ops_par_loop(ops_krnl_heat3D, "ops_krnl_heat3D", blocks[bat], 3, interior_range,
-                    ops_arg_dat(u2[bat], 3, stencil3D_1pt, "float", OPS_WRITE),
-                    ops_arg_dat(u[bat], 3, stencil3D_7pt, "float", OPS_READ),
+                    ops_arg_dat(u2[bat], 1, stencil3D_1pt, "float", OPS_WRITE),
+                    ops_arg_dat(u[bat], 1, stencil3D_7pt, "float", OPS_READ),
                     ops_arg_gbl(&param_k, 1, "float", OPS_READ),
                     ops_arg_idx());
 
             ops_par_loop(ops_krnl_copy, "ops_krnl_copy after_calc", blocks[bat], 3, interior_range,
-                    ops_arg_dat(u[bat], 3, stencil3D_1pt, "float", OPS_WRITE),
-                    ops_arg_dat(u2[bat], 3, stencil3D_1pt, "float", OPS_READ));
+                    ops_arg_dat(u[bat], 1, stencil3D_1pt, "float", OPS_WRITE),
+                    ops_arg_dat(u2[bat], 1, stencil3D_1pt, "float", OPS_READ));
         }
 #else
         ops_iter_par_loop("ops_iter_par_loop_0", iter_max,
             ops_par_loop(ops_krnl_heat3D, "ops_krnl_heat3D", blocks[bat], 3, interior_range,
-                    ops_arg_dat(u2[bat], 3, stencil3D_1pt, "float", OPS_WRITE),
-                    ops_arg_dat(u[bat], 3, stencil3D_7pt, "float", OPS_READ),
+                    ops_arg_dat(u2[bat], 1, stencil3D_1pt, "float", OPS_WRITE),
+                    ops_arg_dat(u[bat], 1, stencil3D_7pt, "float", OPS_READ),
                     ops_arg_gbl(&param_k, 1, "float", OPS_READ),
                     ops_arg_idx()),
             ops_par_copy<float>(u[bat], u2[bat]));
