@@ -365,13 +365,13 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
 
   if (sb->id_m[dim] != MPI_PROC_NULL && sd->d_im[dim] > -left_recv_depth) {
     OPSException ex(OPS_RUNTIME_CONFIGURATION_ERROR);
-    ex << "Error: trying to exchange a " << left_recv_depth << "-deep halo for " << dat->name << ", but halo is only " << -sd->d_im[dim] << " deep. Please set OPS_TILING_MAXDEPTH accordingly";
+    ex << "Error: Proc " << ops_get_proc() << " trying to exchange a " << left_recv_depth << "-deep halo for " << dat->name << ", but halo is only " << -sd->d_im[dim] << " deep. Please set OPS_TILING_MAXDEPTH accordingly";
     throw ex;
   }
 
   if (sb->id_p[dim] != MPI_PROC_NULL && sd->d_ip[dim] < right_recv_depth) {
     OPSException ex(OPS_RUNTIME_CONFIGURATION_ERROR);
-    ex << "Error: trying to exchange a " << right_recv_depth << "-deep halo for " << dat->name << ", but halo is only " << sd->d_ip[dim] << " deep. Please set OPS_TILING_MAXDEPTH accordingly";
+    ex << "Error: Proc " << ops_get_proc() << " trying to exchange a " << right_recv_depth << "-deep halo for " << dat->name << ", but halo is only " << sd->d_ip[dim] << " deep. Please set OPS_TILING_MAXDEPTH accordingly";
     throw ex;
   }
 

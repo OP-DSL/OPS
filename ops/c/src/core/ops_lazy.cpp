@@ -587,7 +587,8 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   //
   for (int loop = (int)ops_kernel_list.size() - 1; loop >= 0; loop--) {
     if (instance->OPS_diags > 5)
-      printf2(instance,"---Proc %d, %s loop %d---\n",ops_get_proc(), ops_kernel_list[loop]->name, loop);
+      printf2(instance,"---Proc %d, %s loop %d--- %d-%d,%d-%d,%d-%d\n",ops_get_proc(), ops_kernel_list[loop]->name, loop,
+        LOOPRANGE[0], LOOPRANGE[1], LOOPRANGE[2], LOOPRANGE[3], LOOPRANGE[4], LOOPRANGE[5]);
     int start[OPS_MAX_DIM], end[OPS_MAX_DIM], decomp_disp[OPS_MAX_DIM], decomp_size[OPS_MAX_DIM];
     ops_get_abs_owned_range(ops_kernel_list[loop]->block, LOOPRANGE, start, end, decomp_disp, decomp_size);
 
@@ -762,12 +763,15 @@ int ops_construct_tile_plan(OPS_instance *instance) {
           // + 1) * tile size, or end index if not tiled in this dimension
           if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] ==
               tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] &&
-              dead_tiles[tile * OPS_MAX_DIM + d] == -1) { // and this tile is dead
+              dead_tiles[tile * OPS_MAX_DIM + d] == -1) { // and this tile is not dead
 
-            //if no tiling in this dimension, or if next tile is dead, set end index to end of loop range
-            if (tile_sizes[d] <= 0 || (tile + tiles_prod[d] < total_tiles && 
+            //if no tiling in this dimension, this is the last, or 
+            // if next tile is dead, set end index to end of loop range
+            if (tile_sizes[d] <= 0 || (tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 ||
+              (tile + tiles_prod[d] < total_tiles && 
               dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1))
-              tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = end[d];
+              tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
+                MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0], end[d]);
             else
               tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
                 MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
@@ -934,18 +938,17 @@ int ops_construct_tile_plan(OPS_instance *instance) {
               //If this is the last tile, and we cover full range in other dims, we need to clear read dependency
               if (((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 ||
                 //or if the next tile is dead, in which case this is the last tile
-                  (tile + tiles_prod[d] < total_tiles &&
-                  dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1)) && other_dims) {
+                  (dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1)) && other_dims) {
                 data_read_deps[LOOPARG.dat->index]
                                    [tile * OPS_MAX_DIM * 2 + 2 * d + 1] = INT_MIN;
-                if (tile + tiles_prod[d] < total_tiles) {
-                  //Clear read dependency of next tile
+                for (int t = 1; t < ntiles[d]-((tile / tiles_prod[d]) % ntiles[d]); t++) {
+                  //Clear read dependency of the rest of the (dead) tiles
                   data_read_deps[LOOPARG.dat->index]
-                                    [(tile + tiles_prod[d]) * OPS_MAX_DIM * 2 + 2 * d + 0] = INT_MAX;
+                                    [(tile + t*tiles_prod[d]) * OPS_MAX_DIM * 2 + 2 * d + 0] = INT_MAX;
                   data_read_deps[LOOPARG.dat->index]
-                                    [(tile + tiles_prod[d]) * OPS_MAX_DIM * 2 + 2 * d + 1] = INT_MIN;
-                  }
-                  }
+                                    [(tile + t*tiles_prod[d]) * OPS_MAX_DIM * 2 + 2 * d + 1] = INT_MIN;
+                 }
+              }
              
               if (instance->OPS_diags > 5 && tile_sizes[d] != -1) {
                 printf2(instance,
