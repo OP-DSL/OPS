@@ -10,7 +10,26 @@ arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPairIds(a
 {% endblock %}
 
 {% block joint_PE %}
-static void joint_PE_outerloop_{{ilh.id}}(const unsigned short PEId, const ops::hls::StencilConfigCore& stencilConfig, 
+static void joint_PE_outerloop_{{ilh.id}}
+{% if ilh.get_active_df_graph().isMultiLoop() %}
+(const unsigned short m_PEId, const ops::hls::StencilConfigCore& m_stencilConfig, 
+    {% for arg in ilh.joint_args|ops_not_idx %}
+        {% if arg is ops_dat %}
+            {% if arg is not ops_rw %}
+        ::hls::stream<ap_uint<{{axis_data_width(arg)}}>>& {{hls_name(arg)-}}{{", " if not loop.last or consts }}
+            {% else %}
+        ::hls::stream<ap_uint<{{axis_data_width(arg)}}>>& {{hls_name_t2(arg, "in")-}}, 
+        ::hls::stream<ap_uint<{{axis_data_width(arg)}}>>& {{hls_name_t2(arg, "out")-}}{{", " if not loop.last or consts }}
+            {% endif %}
+        {% elif arg is ops_gbl %}
+        const {{arg.typ}}& m_{{get_arg_gbl_name(arg)}}{{", " if not loop.last or consts }}
+        {% endif %}
+    {% endfor %}
+    {% for const in consts %}
+        const {{const.typ}}& m_{{const.ptr}}{{", " if not loop.last }}
+    {% endfor %})
+{% else %}
+(const unsigned short PEId, const ops::hls::StencilConfigCore& stencilConfig, 
     {% for arg in ilh.joint_args|ops_not_idx %}
         {% if arg is ops_dat %}
             {% if arg is not ops_rw %}
@@ -26,15 +45,26 @@ static void joint_PE_outerloop_{{ilh.id}}(const unsigned short PEId, const ops::
     {% for const in consts %}
         const {{const.typ}}& {{const.ptr}}{{", " if not loop.last }}
     {% endfor %})
+{% endif %}
 {
-    {% if ilh.get_active_df_graph().getAllLoopNodes()|length > 1 %}
+    {% if ilh.get_active_df_graph().isMultiLoop() %}
 #pragma HLS DATAFLOW
-    {% endif %}
-    {% for stream_interconnector, dat_id in ilh.interconnectors %}
-    ::hls::stream<ap_uint<{{axis_data_width_datid(dat_id)}}>> {{stream_interconnector}};
-    #pragma HLS STREAM variable = {{stream_interconnector}} depth = max_depth
-    {% endfor %}
 
+        {% for stream_interconnector, dat_id in ilh.interconnectors %}
+    ::hls::stream<ap_uint<{{axis_data_width_datid(dat_id)}}>> {{stream_interconnector}};
+    #pragma HLS STREAM variable = {{stream_interconnector}} depth = 2048
+        {% endfor %}
+
+    const unsigned short PEId = m_PEId;
+    const ops::hls::StencilConfigCore stencilConfig = m_stencilConfig;
+        {% for arg in ilh.joint_args|ops_gbl %}
+    const {{arg.typ}} {{get_arg_gbl_name(arg)}} = m_{{get_arg_gbl_name(arg)}};
+        {% endfor %}
+        {% for const in consts %}
+    const {{const.typ}} {{const.ptr}} = m_{{const.ptr}};
+        {% endfor %}
+    {% endif %}
+    
     {% for df_node in ilh.get_active_df_graph().getAllLoopNodes() %}
         {% set loop_idx = df_node.node_uid %}
         {% set lh = df_node.loop %}

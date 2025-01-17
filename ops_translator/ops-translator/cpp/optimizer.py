@@ -623,7 +623,7 @@ def ISLDataDependencyCyclesDetection(original_graph: DataflowGraph_v2, prog: Pro
         return {"label" : f"{node.dat_ptr}:{node.df_node.node_uid}_{node_name_suffix}"}
     
     print_rx_graph(f"{copy_graph.unique_name}", dependency_graph, node_attr=node_attr)
-    
+    print_rx_graph(f"{copy_graph.unique_name}", dependency_graph, node_attr=node_attr, format="dot")
     # Phase 2: Explore shortest paths.
     # The cycle heads, the dats writing to end should have a swap pair dat (sometimes it can be same dat) that read from start
     # if the swap pair dat is read from start it is an error in the ISL definition from user side.

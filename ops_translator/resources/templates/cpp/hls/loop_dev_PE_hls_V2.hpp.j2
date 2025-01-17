@@ -816,7 +816,7 @@ public:
 {% endblock %}
 
 {% block kernel_PE %}
-void kernel_{{lh.kernel}}_PE(const short& PEId, const ops::hls::StencilConfigCore& stencilConfig,
+void kernel_{{lh.kernel}}_PE(const short& PEId, const ops::hls::StencilConfigCore stencilConfig,
     {% for arg in lh.args|ops_not_idx %}
         {% if loop.last %}
             {% if consts or lh.args|ops_gbl|length > 0 %}
@@ -850,11 +850,11 @@ void kernel_{{lh.kernel}}_PE(const short& PEId, const ops::hls::StencilConfigCor
             {% set last_check = False %}
         {% endif %}
         {% if arg is ops_gbl %}
-    const {{arg.typ}}& {{get_arg_gbl_name(arg)}}{{"," if (not loop.last or not last_check)}}
+    const {{arg.typ}} {{get_arg_gbl_name(arg)}}{{"," if (not loop.last or not last_check)}}
         {% endif %}
     {% endfor %}
     {% for const in consts %}
-    const {{const.typ}}& {{const.ptr}}{{"," if not loop.last}}
+    const {{const.typ}} {{const.ptr}}{{"," if not loop.last}}
     {% endfor %}
 )
 {

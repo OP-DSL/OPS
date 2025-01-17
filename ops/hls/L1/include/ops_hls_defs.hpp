@@ -21,7 +21,7 @@
 constexpr unsigned int ops_max_dim = 3;
 
 /* Tiling */
-constexpr unsigned int max_depth_bytes = 8192;
+constexpr unsigned int max_depth_bytes = 16384;
 constexpr unsigned int max_depth_v8 = max_depth_bytes / 8;
 constexpr unsigned int max_depth_v16 = max_depth_bytes / 16;
 constexpr unsigned int max_depth_d32 = max_depth_bytes / 4;

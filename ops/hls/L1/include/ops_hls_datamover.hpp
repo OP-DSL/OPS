@@ -411,7 +411,7 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 #endif
 
 	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
-
+	constexpr unsigned int burst_size = BURST_SIZE;
 	const unsigned int num_bursts = num_beats / BURST_SIZE;
 	const unsigned int non_burst_beats = num_beats % BURST_SIZE;
 
@@ -429,10 +429,10 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 	{
 	#pragma HLS LOOP_TRIPCOUNT avg=avg_num_of_bursts max=max_num_of_bursts
 
-		for (unsigned int beat = 0; beat < BURST_SIZE; beat++)
+		for (unsigned int beat = 0; beat < burst_size; beat++)
 		{
-		#pragma HLS PIPELINE II=1
-		#pragma HLS LOOP_TRIPCOUNT min=min_burst_len avg=avg_burst_len max=max_burst_len
+		#pragma HLS PIPELINE II=2
+		#pragma HLS LOOP_TRIPCOUNT avg=burst_size
 		#pragma HLS LOOP_FLATTEN
 
 			ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
@@ -456,7 +456,7 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 
 	for (unsigned int beat = 0; beat < non_burst_beats; beat++)
 	{
-	#pragma HLS PIPELINE II=1
+	#pragma HLS PIPELINE II=2
 		ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
 		strm_out << tmp;
 #ifdef DEBUG_LOG
@@ -551,7 +551,7 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 #endif
 
 	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
-
+	const unsigned int burst_size = BURST_SIZE;
 	const unsigned int num_bursts = num_beats / BURST_SIZE;
 	const unsigned int non_burst_beats = num_beats % BURST_SIZE;
 
@@ -569,10 +569,10 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 	{
 	#pragma HLS LOOP_TRIPCOUNT avg=avg_num_of_bursts max=max_num_of_bursts
 
-		for (unsigned int beat = 0; beat < BURST_SIZE; beat++)
+		for (unsigned int beat = 0; beat < burst_size; beat++)
 		{
-		#pragma HLS PIPELINE II=1
-		#pragma HLS LOOP_TRIPCOUNT min=min_burst_len avg=avg_burst_len max=max_burst_len
+		#pragma HLS PIPELINE II=2
+		#pragma HLS LOOP_TRIPCOUNT avg=burst_size
 		#pragma HLS LOOP_FLATTEN
 
 			ap_uint<MEM_DATA_WIDTH> tmp = strm_in.read();
@@ -586,7 +586,7 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 
 	for (unsigned int beat = 0; beat < non_burst_beats; beat++)
 	{
-	#pragma HLS PIPELINE II=1
+	#pragma HLS PIPELINE II=2
 		ap_uint<MEM_DATA_WIDTH> tmp = strm_in.read();
 		mem_out[index] = tmp;
 #ifdef DEBUG_LOG

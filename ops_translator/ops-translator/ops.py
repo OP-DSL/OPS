@@ -860,6 +860,11 @@ class DataflowGraph_v2:
             return True
         return False
 
+    def isMultiLoop(self)-> Bool:
+        if len(self.getAllLoopNodes()) > 1:
+            return True
+        return False
+    
     def print(self, filename: str, format: str = "png", make_dats_node: bool = False, attr: Dict[Any] = {}) -> None:
         
         SHOW_ARG_ID = False

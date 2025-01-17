@@ -44,7 +44,7 @@ extern const unsigned short mem_vector_factor;
 
 // OPS header file
 #define OPS_3D
-//#define VERIFICATION
+#define VERIFICATION
 // #define OPS_CPP_API
 #define OPS_HLS_V2
 // #define OPS_FPGA
@@ -117,7 +117,7 @@ int main(int argc, const char **argv)
     for (unsigned int bat = 0; bat < batches; bat++)
     {
         std::string name = std::string("batch_") + std::to_string(bat);
-        blocks[bat] = ops_decl_block(2, name.c_str());
+        blocks[bat] = ops_decl_block(3, name.c_str());
     }
 
 
@@ -190,8 +190,8 @@ int main(int argc, const char **argv)
         ops_dat_fetch_data(u[bat], 0, (char*)u_cpu[bat]);
 
         ops_par_loop(kernel_copy, "kernel_update", blocks[bat], 3, full_range, 
-            ops_arg_dat(u[bat], 1, S2D_00, "float", OPS_READ),
-            ops_arg_dat(u2[bat], 1, S2D_00, "float", OPS_WRITE));
+            ops_arg_dat(u[bat], 1, S3D_00, "float", OPS_READ),
+            ops_arg_dat(u2[bat], 1, S3D_00, "float", OPS_WRITE));
 #else
         ops_par_loop(kernel_populate, "kernel_populate", blocks[bat], 3, full_range,
                 ops_arg_dat(u[bat], 1, S3D_00, "float", OPS_WRITE));

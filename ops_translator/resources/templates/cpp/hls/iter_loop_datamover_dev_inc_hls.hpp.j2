@@ -27,7 +27,7 @@ num_pkts
     {%- if ilh.dats[arg.dat_id][0].isMultiDim() -%}
 memconfig_d{{ilh.dats[arg.dat_id][0].dim}}.total_xblocks
     {%- else -%}
-memconfig.total_xblocks
+total_xblocks
     {%- endif -%}
 {%- endmacro -%}
 {% macro memconfig(arg) -%}
