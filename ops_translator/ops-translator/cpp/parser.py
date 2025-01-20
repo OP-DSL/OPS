@@ -204,6 +204,7 @@ def parseVariableDeclaration(node: Cursor, macros: Dict[Location, str], program:
         if len(children) < 2:
             return
         var_name = node.spelling
+        var_name_raw = node.spelling
         rval_expr = children[1]
             
     elif (node.kind == CursorKind.BINARY_OPERATOR):
@@ -222,7 +223,7 @@ def parseVariableDeclaration(node: Cursor, macros: Dict[Location, str], program:
             return
         
         l_val = children[0]
-        
+        var_name_raw =  parseIdentifier(l_val)
         if l_val.kind == CursorKind.ARRAY_SUBSCRIPT_EXPR:
             var_name = decend(l_val).spelling
         else:
@@ -259,7 +260,7 @@ def parseVariableDeclaration(node: Cursor, macros: Dict[Location, str], program:
             logging.debug("found ops_dec_dat")
             if len(args) != 9:
                 raise ParseError("ops_decl_dat has 9 arguments", parseLocation(node))
-            parseDat(node, parseIdentifier(l_val), var_name, args, parseLocation(node), program)
+            parseDat(node, var_name_raw, var_name, args, parseLocation(node), program)
         
 def parseFunctionCall(node: Cursor) -> Union[Tuple[str, List[Cursor]], None]:
     args = []
