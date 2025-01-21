@@ -281,6 +281,7 @@ OPS_FTN_INTEROP
 void ops_execute(OPS_instance *instance=NULL);
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp);
 int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx);
+OPS_FTN_INTEROP
 int ops_get_proc();
 int ops_num_procs();
 void ops_put_data(ops_dat dat);

@@ -58,18 +58,16 @@ module OPS_Fortran_RT_Support
     character(kind=c_char) :: routine(*)
   end subroutine
 
-
-  subroutine ops_halo_exchanges_c (args, argsNumber, range) BIND(C,name='ops_halo_exchanges')
+  subroutine ops_halo_exchanges_c (args, nargs, range) BIND(C,name='ops_halo_exchanges')
 
       use, intrinsic :: ISO_C_BINDING
       use OPS_Fortran_Declarations
 
-      integer(kind=c_int), value :: argsNumber ! number of ops_dat arguments to ops_par_loop
-      type(ops_arg), dimension(*) :: args       ! array with ops_args
-      integer(4), dimension(*), intent(in), target :: range ! iteration range to determin if halo exchanges are needed
-
+      type(c_ptr)                :: args        ! array of ops_args
+      integer(kind=c_int), value :: nargs       ! number of ops_dat arguments to ops_par_loop
+      type(c_ptr), intent(in) :: range          ! iteration range to determin if halo exchanges are needed
+                                                ! converted to c-style before passing
   end subroutine
-
 
   subroutine ops_H_D_exchanges_host (args, argsNumber) BIND(C,name='ops_H_D_exchanges_host')
       use, intrinsic :: ISO_C_BINDING
@@ -106,15 +104,20 @@ module OPS_Fortran_RT_Support
       type(ops_arg), dimension(*) :: args       ! array with ops_args
   end subroutine
 
-  subroutine ops_set_halo_dirtybit3 (arg, range) BIND(C,name='ops_set_halo_dirtybit3')
+  subroutine ops_set_halo_dirtybit3_c (arg, range) BIND(C,name='ops_set_halo_dirtybit3')
       use, intrinsic :: ISO_C_BINDING
       use OPS_Fortran_Declarations
-      type(ops_arg) :: arg
-      integer(4), dimension(*), intent(in), target :: range ! iteration range to determin if halo exchanges are needed
+      type(c_ptr) :: arg
+      type(c_ptr), intent(in) :: range   ! iteration range to determin if halo exchanges are needed
+                                                ! converted to c-style before passing
   end subroutine
 
-
   integer(kind=c_int) function ops_is_root () BIND(C,name='ops_is_root')
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+  end function
+
+  integer(kind=c_int) function ops_get_proc () BIND(C,name='ops_get_proc')
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
   end function
@@ -171,10 +174,10 @@ module OPS_Fortran_RT_Support
   integer function getRange_c (block, start, end, range) BIND(C,name='getRange')
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
-    type(c_ptr), value, intent(in)           :: block
-    type(c_ptr), value :: start
-    type(c_ptr), value :: end
-    type(c_ptr), intent(in), value           :: range
+    type(c_ptr), value, intent(in)  :: block
+    type(c_ptr), value              :: start
+    type(c_ptr), value              :: end
+    type(c_ptr), intent(in)         :: range   ! converted to c-style before passing
   end function getRange_c
 
   subroutine getIdx_c (block, start, idx) BIND(C,name='getIdx')
@@ -244,16 +247,24 @@ module OPS_Fortran_RT_Support
     call ops_partition_c (routine//C_NULL_CHAR)
   end subroutine
 
-  integer function getRange(block, start, end, range )
+  integer function getRange(block, start, end, range, ndim)
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
     implicit none
     type(ops_block), intent(in)  :: block
-    integer(4), dimension(*),target :: start
-    integer(4), dimension(*),target :: end
-    integer(4), dimension(*), intent(in), target :: range
+    integer(kind=4), intent(in)  :: ndim
+    integer(kind=4), dimension(ndim), target :: start
+    integer(kind=4), dimension(ndim), target :: end
+    integer(kind=4), dimension(2*ndim), intent(in), target :: range
+    integer(kind=4), dimension(2*ndim), target :: range_tmp
+    integer(kind=4) :: n_indx
 
-    getRange = getRange_c ( block%blockCptr, c_loc(start), c_loc(end), c_loc(range))
+    DO n_indx = 1, ndim
+        range_tmp(2*n_indx-1) = range(2*n_indx-1) - 1   ! subtracting 1 from beg to convert to C style
+        range_tmp(2*n_indx)   = range(2*n_indx)
+    END DO
+
+    getRange = getRange_c ( block%blockCptr, c_loc(start), c_loc(end), c_loc(range_tmp))
   end function
 
   subroutine getIdx(block, start, idx )
@@ -278,19 +289,44 @@ module OPS_Fortran_RT_Support
 
   end function getReductionPtrFromOpsArg
 
-  subroutine ops_halo_exchanges (args, nargs, range)
+  subroutine ops_halo_exchanges (args, nargs, range, ndim)
     use, intrinsic :: ISO_C_BINDING
     use OPS_Fortran_Declarations
     implicit none
-    integer(4), dimension(*):: range
-    integer(kind=c_int), value  :: nargs
-    type(ops_arg), dimension(nargs)  :: args
 
-    !range(1) = range(1) - 1
-    !range(3) = range(3) - 1
-    call ops_halo_exchanges_c (args,nargs,range)
-    !range(1) = range(1) + 1
-    !range(3) = range(3) + 1
+    integer(kind=4), intent(in)  :: nargs
+    type(ops_arg), dimension(nargs), target  :: args
+    integer(kind=4), intent(in)  :: ndim
+    integer(kind=4), dimension(2*ndim), intent(in), target  :: range
+    integer(kind=4), dimension(2*ndim), target :: range_tmp
+    integer(kind=4) :: n_indx
+
+    DO n_indx = 1, ndim
+        range_tmp(2*n_indx-1) = range(2*n_indx-1) - 1   ! subtracting 1 from beg to convert to C style
+        range_tmp(2*n_indx)   = range(2*n_indx)
+    END DO
+
+    call ops_halo_exchanges_c (c_loc(args), nargs, c_loc(range_tmp))
+
+  end subroutine
+
+  subroutine ops_set_halo_dirtybit3 (arg, range, ndim)
+    use, intrinsic :: ISO_C_BINDING
+    use OPS_Fortran_Declarations
+    implicit none
+
+    type(ops_arg), target  :: arg
+    integer(kind=4), intent(in)  :: ndim
+    integer(kind=4), dimension(2*ndim), intent(in), target  :: range
+    integer(kind=4), dimension(2*ndim), target :: range_tmp
+    integer(kind=4) :: n_indx
+
+    DO n_indx = 1, ndim
+        range_tmp(2*n_indx-1) = range(2*n_indx-1) - 1   ! subtracting 1 from beg to convert to C style
+        range_tmp(2*n_indx)   = range(2*n_indx)
+    END DO
+
+    call ops_set_halo_dirtybit3_c(c_loc(arg), c_loc(range_tmp))
 
   end subroutine
 
