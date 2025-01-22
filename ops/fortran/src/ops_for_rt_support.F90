@@ -63,10 +63,10 @@ module OPS_Fortran_RT_Support
       use, intrinsic :: ISO_C_BINDING
       use OPS_Fortran_Declarations
 
-      type(c_ptr)                :: args        ! array of ops_args
-      integer(kind=c_int), value :: nargs       ! number of ops_dat arguments to ops_par_loop
-      type(c_ptr), intent(in) :: range          ! iteration range to determin if halo exchanges are needed
-                                                ! converted to c-style before passing
+      type(ops_arg), dimension(*)    :: args        ! array of ops_args
+      integer(kind=c_int), value     :: nargs       ! number of ops_dat arguments to ops_par_loop
+      type(c_ptr), intent(in), value :: range       ! iteration range to determin if halo exchanges are needed
+                                                    ! converted to c-style before passing
   end subroutine
 
   subroutine ops_H_D_exchanges_host (args, argsNumber) BIND(C,name='ops_H_D_exchanges_host')
@@ -107,8 +107,8 @@ module OPS_Fortran_RT_Support
   subroutine ops_set_halo_dirtybit3_c (arg, range) BIND(C,name='ops_set_halo_dirtybit3')
       use, intrinsic :: ISO_C_BINDING
       use OPS_Fortran_Declarations
-      type(c_ptr) :: arg
-      type(c_ptr), intent(in) :: range   ! iteration range to determin if halo exchanges are needed
+      type(ops_arg) :: arg
+      type(c_ptr), intent(in), value :: range   ! iteration range to determin if halo exchanges are needed
                                                 ! converted to c-style before passing
   end subroutine
 
@@ -177,7 +177,7 @@ module OPS_Fortran_RT_Support
     type(c_ptr), value, intent(in)  :: block
     type(c_ptr), value              :: start
     type(c_ptr), value              :: end
-    type(c_ptr), intent(in)         :: range   ! converted to c-style before passing
+    type(c_ptr), intent(in), value  :: range   ! converted to c-style before passing
   end function getRange_c
 
   subroutine getIdx_c (block, start, idx) BIND(C,name='getIdx')
@@ -295,7 +295,7 @@ module OPS_Fortran_RT_Support
     implicit none
 
     integer(kind=4), intent(in)  :: nargs
-    type(ops_arg), dimension(nargs), target  :: args
+    type(ops_arg), dimension(nargs) :: args
     integer(kind=4), intent(in)  :: ndim
     integer(kind=4), dimension(2*ndim), intent(in), target  :: range
     integer(kind=4), dimension(2*ndim), target :: range_tmp
@@ -306,7 +306,7 @@ module OPS_Fortran_RT_Support
         range_tmp(2*n_indx)   = range(2*n_indx)
     END DO
 
-    call ops_halo_exchanges_c (c_loc(args), nargs, c_loc(range_tmp))
+    call ops_halo_exchanges_c (args, nargs, c_loc(range_tmp))
 
   end subroutine
 
@@ -315,7 +315,7 @@ module OPS_Fortran_RT_Support
     use OPS_Fortran_Declarations
     implicit none
 
-    type(ops_arg), target  :: arg
+    type(ops_arg) :: arg
     integer(kind=4), intent(in)  :: ndim
     integer(kind=4), dimension(2*ndim), intent(in), target  :: range
     integer(kind=4), dimension(2*ndim), target :: range_tmp
@@ -326,7 +326,7 @@ module OPS_Fortran_RT_Support
         range_tmp(2*n_indx)   = range(2*n_indx)
     END DO
 
-    call ops_set_halo_dirtybit3_c(c_loc(arg), c_loc(range_tmp))
+    call ops_set_halo_dirtybit3_c(arg, c_loc(range_tmp))
 
   end subroutine
 
