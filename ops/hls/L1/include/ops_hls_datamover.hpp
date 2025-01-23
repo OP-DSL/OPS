@@ -411,12 +411,13 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 #endif
 
 	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
-
-	const unsigned int num_bursts = num_beats / BURST_SIZE;
+	constexpr unsigned int burst_size = BURST_SIZE;
 	const unsigned int non_burst_beats = num_beats % BURST_SIZE;
+    const unsigned int burst_beats = num_beats - non_burst_beats;
 
 #ifndef __SYTHESIS__
 #ifdef DEBUG_LOG
+    const unsigned int num_bursts = num_beats / BURST_SIZE; 
 	printf("|HLS DEBUG_LOG| %s | num_beats: %d, num_burst: %d, non_burst_beats: %d\n"
 			, __func__, num_beats, num_bursts, non_burst_beats);
 	printf("====================================================================================\n");
@@ -425,33 +426,26 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 
 	unsigned int index = 0;
 
-	for (unsigned int brst = 0; brst < num_bursts; brst++)
+	for (unsigned int beat = 0; beat < burst_beats; beat++)
 	{
-	#pragma HLS LOOP_TRIPCOUNT avg=avg_num_of_bursts max=max_num_of_bursts
+    #pragma HLS PIPELINE II=1
 
-		for (unsigned int beat = 0; beat < BURST_SIZE; beat++)
-		{
-		#pragma HLS PIPELINE II=1
-		#pragma HLS LOOP_TRIPCOUNT min=min_burst_len avg=avg_burst_len max=max_burst_len
-		#pragma HLS LOOP_FLATTEN
-
-			ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
-			strm_out << tmp;
+        ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
+        strm_out << tmp;
 
 #ifdef DEBUG_LOG
-			printf("|HLS DEBUG_LOG| %s | reading index: %d, val=(\n", __func__, index);
+        printf("|HLS DEBUG_LOG| %s | reading index: %d, val=(\n", __func__, index);
 
-            for (unsigned k = 0; k < MEM_DATA_WIDTH/(DEBUG_LOG_SIZE_OF * 8); k++)
-            {
-                DataConv conv;
-                conv.i = tmp.range((k+1) * DEBUG_LOG_SIZE_OF * 8 - 1, k * DEBUG_LOG_SIZE_OF * 8);
-                printf("%f,", conv.f);
-            }
-            printf(")\n");
+        for (unsigned k = 0; k < MEM_DATA_WIDTH/(DEBUG_LOG_SIZE_OF * 8); k++)
+        {
+            DataConv conv;
+            conv.i = tmp.range((k+1) * DEBUG_LOG_SIZE_OF * 8 - 1, k * DEBUG_LOG_SIZE_OF * 8);
+            printf("%f,", conv.f);
+        }
+        printf(")\n");
 #endif
 
-			index++;
-		}
+        index++;
 	}
 
 	for (unsigned int beat = 0; beat < non_burst_beats; beat++)
@@ -460,15 +454,15 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 		ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
 		strm_out << tmp;
 #ifdef DEBUG_LOG
-			printf("|HLS DEBUG_LOG| %s | reading index: %d, val=(\n", __func__, index);
+        printf("|HLS DEBUG_LOG| %s | reading index: %d, val=(\n", __func__, index);
 
-            for (unsigned k = 0; k < MEM_DATA_WIDTH/(DEBUG_LOG_SIZE_OF * 8); k++)
-            {
-                DataConv conv;
-                conv.i = tmp.range((k+1) * DEBUG_LOG_SIZE_OF * 8 - 1, k * DEBUG_LOG_SIZE_OF * 8);
-                printf("%f,", conv.f);
-            }
-            printf(")\n");
+        for (unsigned k = 0; k < MEM_DATA_WIDTH/(DEBUG_LOG_SIZE_OF * 8); k++)
+        {
+            DataConv conv;
+            conv.i = tmp.range((k+1) * DEBUG_LOG_SIZE_OF * 8 - 1, k * DEBUG_LOG_SIZE_OF * 8);
+            printf("%f,", conv.f);
+        }
+        printf(")\n");
 #endif
 		index++;
 	}
@@ -551,12 +545,13 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 #endif
 
 	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
-
-	const unsigned int num_bursts = num_beats / BURST_SIZE;
+	const unsigned int burst_size = BURST_SIZE;
 	const unsigned int non_burst_beats = num_beats % BURST_SIZE;
+    const unsigned int burst_beats = num_beats - non_burst_beats;
 
 #ifndef __SYTHESIS__
 #ifdef DEBUG_LOG
+    const unsigned int num_bursts = num_beats / BURST_SIZE;
 	printf("|HLS DEBUG_LOG| %s | num_beats: %d, num_burst: %d, non_burst_beats: %d\n"
 			, __func__, num_beats, num_bursts, non_burst_beats);
 	printf("====================================================================================\n");
@@ -565,23 +560,17 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 
 	unsigned int index = 0;
 
-	for (unsigned int brst = 0; brst < num_bursts; brst++)
+	for (unsigned int beat = 0; beat < burst_beats; beat++)
 	{
-	#pragma HLS LOOP_TRIPCOUNT avg=avg_num_of_bursts max=max_num_of_bursts
+    #pragma HLS PIPELINE II=1
 
-		for (unsigned int beat = 0; beat < BURST_SIZE; beat++)
-		{
-		#pragma HLS PIPELINE II=1
-		#pragma HLS LOOP_TRIPCOUNT min=min_burst_len avg=avg_burst_len max=max_burst_len
-		#pragma HLS LOOP_FLATTEN
-
-			ap_uint<MEM_DATA_WIDTH> tmp = strm_in.read();
-			mem_out[index] = tmp;
+        ap_uint<MEM_DATA_WIDTH> tmp = strm_in.read();
+        mem_out[index] = tmp;
 #ifdef DEBUG_LOG
-			printf("|HLS DEBUG_LOG| %s | writing index: %d\n", __func__, index);
+        printf("|HLS DEBUG_LOG| %s | writing index: %d\n", __func__, index);
 #endif			
-            index++;
-		}
+        index++;
+		
 	}
 
 	for (unsigned int beat = 0; beat < non_burst_beats; beat++)
