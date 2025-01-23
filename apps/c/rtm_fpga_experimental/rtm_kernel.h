@@ -403,12 +403,12 @@ void fd3d_pml_kernel1(const int *dispx, const int *dispy, const int *dispz, cons
     float ytemp4_scale2 = ytemp4 * *scale2;
     float ytemp5_scale2 = ytemp5 * *scale2;
 
-    sum_0(0,0,0) += ytemp0_scale2;
-    sum_3(0,0,0) += ytemp3_scale2;
-    sum_1(0,0,0) += ytemp1_scale2;
-    sum_4(0,0,0) += ytemp4_scale2;
-    sum_2(0,0,0) += ytemp2_scale2;
-    sum_5(0,0,0) += ytemp5_scale2;
+    sum_0(0,0,0) = ytemp0_scale2;
+    sum_3(0,0,0) = ytemp3_scale2;
+    sum_1(0,0,0) = ytemp1_scale2;
+    sum_4(0,0,0) = ytemp4_scale2;
+    sum_2(0,0,0) = ytemp2_scale2;
+    sum_5(0,0,0) = ytemp5_scale2;
     
 }
 
