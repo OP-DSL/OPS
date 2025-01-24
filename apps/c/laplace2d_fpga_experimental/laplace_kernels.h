@@ -17,8 +17,11 @@ void right_bndcon(ACC<float> &A, const int *idx) {
 }
 
 void apply_stencil(const ACC<float> &A, ACC<float> &Anew) {
-  Anew(0,0) = 0.25f * ( A(1,0) + A(-1,0)
-      + A(0,-1) + A(0,1));
+    float tmp0 = A(1,0) + A(-1,0);
+    float tmp1 = A(0,-1) + A(0,1);
+    Anew(0,0) =  0.25f * (tmp0 + tmp1);
+//   Anew(0,0) = 0.25f * ( A(1,0) + A(-1,0)
+//       + A(0,-1) + A(0,1));
 }
 
 void test_init(ACC<float> &A, const int *idx) {
