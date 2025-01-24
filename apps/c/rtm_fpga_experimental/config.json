@@ -1,6 +1,6 @@
 {
     "grouped" : false,
-    "SLR_count" : 2,
+    "SLR_count" : 1,
     "device" : 7,
     "vector_factor" : 1,
     "mem_vector_factor": 2,
@@ -9,8 +9,8 @@
     "data_width" : 32,
     "mem_data_width" : 32,
     "maxi_depth" : 4096,
-    "maxi_read_burst_length" : 16,
-    "maxi_write_burst_length" : 16,
+    "maxi_read_burst_length" : 64,
+    "maxi_write_burst_length" : 64,
     "num_read_outstanding" : 4,
     "num_write_outstanding" : 4,
     "maxi_offset" : "slave",
