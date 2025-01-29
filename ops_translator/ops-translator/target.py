@@ -91,6 +91,7 @@ class HLS(Target):
     config = {
         "grouped" : False,
         "SLR_count" : 1,
+        "max_SLR_count" : 3,
         "device" : 7,
         "vector_factor" : 8,
         "mem_vector_factor": 16,
@@ -115,11 +116,13 @@ class HLS(Target):
     platforms = {
         "u280" : {
             "SLR_count" : 3,
+            "max_SLR_count" : 3,
             "platform_is_multi_slr" : True,
             "platform_is_sb_selectable" : True
         },
         "vck5000" : {
             "SLR_count" : 1,
+            "max_SLR_count" : 1,
             "platform_is_multi_slr" : False,
             "platform_is_sb_selectable" : False
         }
