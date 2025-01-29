@@ -1,4 +1,4 @@
-MODULE math_FUNCTIONs
+module math_functions
     use, intrinsic :: ISO_C_BINDING
     implicit none
 
@@ -8,277 +8,277 @@ MODULE math_FUNCTIONs
 
 !   SIN function
 !   ------------
-    FUNCTION ftn_sin_float ( var ) BIND(C,name="ftn_sin_float") RESULT( res )
+    function fsin_float ( var ) BIND(C,name="fsin_float") result( res )
         real(kind=4), intent(in) :: var
         real(kind=4) :: res
 
         res = SIN(var)
-    END FUNCTION ftn_sin_float
+    end function fsin_float
 
-    FUNCTION ftn_sin_double ( var ) BIND(C,name="ftn_sin_double") RESULT( res )
+    function fsin_dble ( var ) BIND(C,name="fsin_dble") result( res )
         real(kind=8), intent(in) :: var
         real(kind=8) :: res
-
+        !print *, "sin real*8 called"
         res = SIN(var)
-    END FUNCTION ftn_sin_double
+    end function fsin_dble
 
 !   ==============================================================================
 
 !   SINH function
 !   -------------
-    FUNCTION ftn_sinh_float ( var ) BIND(C,name="ftn_sinh_float") RESULT( res )
+    function fsinh_float ( var ) BIND(C,name="fsinh_float") result( res )
         real(kind=4), intent(in) :: var
         real(kind=4) :: res
 
         res = SINH(var)
-    END FUNCTION ftn_sinh_float
+    end function fsinh_float
 
-    FUNCTION ftn_sinh_double ( var ) BIND(C,name="ftn_sinh_double") RESULT( res )
+    function fsinh_dble ( var ) BIND(C,name="fsinh_dble") result( res )
         real(kind=8), intent(in) :: var
         real(kind=8) :: res
 
         res = SINH(var)
-    END FUNCTION ftn_sinh_double
+    end function fsinh_dble
 
 !   ==============================================================================
 
 !   COS function
 !   ------------
-    FUNCTION ftn_cos_float ( var ) BIND(C,name="ftn_cos_float") RESULT( res )
+    function fcos_float ( var ) BIND(C,name="fcos_float") result( res )
         real(kind=4), intent(in) :: var
         real(kind=4) :: res
 
         res = COS(var)
-    END FUNCTION ftn_cos_float
+    end function fcos_float
 
-    FUNCTION ftn_cos_double ( var ) BIND(C,name="ftn_cos_double") RESULT( res )
+    function fcos_dble ( var ) BIND(C,name="fcos_dble") result( res )
         real(kind=8), intent(in) :: var
         real(kind=8) :: res
 
         res = COS(var)
-    END FUNCTION ftn_cos_double
+    end function fcos_dble
 
 !   ==============================================================================
 
 !   COSH function
 !   -------------
-    FUNCTION ftn_cosh_float ( var ) BIND(C,name="ftn_cosh_float") RESULT( res )
+    function fcosh_float ( var ) BIND(C,name="fcosh_float") result( res )
         real(kind=4), intent(in) :: var
         real(kind=4) :: res
 
         res = COSH(var)
-    END FUNCTION ftn_cosh_float
+    end function fcosh_float
 
-    FUNCTION ftn_cosh_double ( var ) BIND(C,name="ftn_cosh_double") RESULT( res )
+    function fcosh_dble ( var ) BIND(C,name="fcosh_dble") result( res )
         real(kind=8), intent(in) :: var
         real(kind=8) :: res
 
         res = COSH(var)
-    END FUNCTION ftn_cosh_double
+    end function fcosh_dble
 
 !   ==============================================================================
 
 !   TAN function
 !   ------------
-    FUNCTION ftn_tan_float ( var ) BIND(C,name="ftn_tan_float") RESULT( res )
+    function ftan_float ( var ) BIND(C,name="ftan_float") result( res )
         real(kind=4), intent(in) :: var
         real(kind=4) :: res
 
         res = TAN(var)
-    END FUNCTION ftn_tan_float
+    end function ftan_float
 
-    FUNCTION ftn_tan_double ( var ) BIND(C,name="ftn_tan_double") RESULT( res )
+    function ftan_dble ( var ) BIND(C,name="ftan_dble") result( res )
         real(kind=8), intent(in) :: var
         real(kind=8) :: res
 
         res = TAN(var)
-    END FUNCTION ftn_tan_double
+    end function ftan_dble
 
 !   ==============================================================================
 
 !   TANH function
 !   -------------
-    FUNCTION ftn_tanh_float ( var ) BIND(C,name="ftn_tanh_float") RESULT( res )
+    function ftanh_float ( var ) BIND(C,name="ftanh_float") result( res )
         real(kind=4), intent(in) :: var
         real(kind=4) :: res
 
         res = TANH(var)
-    END FUNCTION ftn_tanh_float
+    end function ftanh_float
 
-    FUNCTION ftn_tanh_double ( var ) BIND(C,name="ftn_tanh_double") RESULT( res )
+    function ftanh_dble ( var ) BIND(C,name="ftanh_dble") result( res )
         real(kind=8), intent(in) :: var
         real(kind=8) :: res
 
         res = TANH(var)
-    END FUNCTION ftn_tanh_double
+    end function ftanh_dble
 
 !   ==============================================================================
 
 !   ASIN function
 !   -------------
-    FUNCTION ftn_asin_float ( var ) BIND(C,name="ftn_asin_float") RESULT( res )
+    function fasin_float ( var ) BIND(C,name="fasin_float") result( res )
         real(kind=4), intent(in) :: var
         real(kind=4) :: res
 
         res = ASIN(var)
-    END FUNCTION ftn_asin_float
+    end function fasin_float
 
-    FUNCTION ftn_asin_double ( var ) BIND(C,name="ftn_asin_double") RESULT( res )
+    function fasin_dble ( var ) BIND(C,name="fasin_dble") result( res )
         real(kind=8), intent(in) :: var
         real(kind=8) :: res
 
         res = ASIN(var)
-    END FUNCTION ftn_asin_double
+    end function fasin_dble
 
 !   ==============================================================================
 
 !   ACOS function
 !   -------------
-    FUNCTION ftn_acos_float ( var ) BIND(C,name="ftn_acos_float") RESULT( res )
+    function facos_float ( var ) BIND(C,name="facos_float") result( res )
         real(kind=4), intent(in) :: var
         real(kind=4) :: res
 
         res = ACOS(var)
-    END FUNCTION ftn_acos_float
+    end function facos_float
 
-    FUNCTION ftn_acos_double ( var ) BIND(C,name="ftn_acos_double") RESULT( res )
+    function facos_dble ( var ) BIND(C,name="facos_dble") result( res )
         real(kind=8), intent(in) :: var
         real(kind=8) :: res
 
         res = ACOS(var)
-    END FUNCTION ftn_acos_double
+    end function facos_dble
 
 !   ==============================================================================
 
 !   ATAN function
 !   -------------
-    FUNCTION ftn_atan_float ( var ) BIND(C,name="ftn_atan_float") RESULT( res )
+    function fatan_float ( var ) BIND(C,name="fatan_float") result( res )
         real(kind=4), intent(in) :: var
         real(kind=4) :: res
 
         res = ATAN(var)
-    END FUNCTION ftn_atan_float
+    end function fatan_float
 
-    FUNCTION ftn_atan_double ( var ) BIND(C,name="ftn_atan_double") RESULT( res )
+    function fatan_dble ( var ) BIND(C,name="fatan_dble") result( res )
         real(kind=8), intent(in) :: var
         real(kind=8) :: res
 
         res = ATAN(var)
-    END FUNCTION ftn_atan_double
+    end function fatan_dble
 
 !   ==============================================================================
 
 !   ATAN2 function
 !   -------------
-    FUNCTION ftn_atan2_float ( xvar, yvar ) BIND(C,name="ftn_atan2_float") RESULT( res )
+    function fatan2_float ( xvar, yvar ) BIND(C,name="fatan2_float") result( res )
         real(kind=4), intent(in) :: xvar, yvar
         real(kind=4) :: res
 
         res = ATAN2(xvar, yvar)
-    END FUNCTION ftn_atan2_float
+    end function fatan2_float
 
-    FUNCTION ftn_atan2_double ( xvar, yvar ) BIND(C,name="ftn_atan2_double") RESULT( res )
+    function fatan2_dble ( xvar, yvar ) BIND(C,name="fatan2_dble") result( res )
         real(kind=8), intent(in) :: xvar, yvar
         real(kind=8) :: res
 
         res = ATAN2(xvar, yvar)
-    END FUNCTION ftn_atan2_double
+    end function fatan2_dble
 
 !   ==============================================================================
 
 !   SQRT function
 !   -------------
-    FUNCTION ftn_sqrt_float ( var ) BIND(C,name="ftn_sqrt_float") RESULT( res )
+    function fsqrt_float ( var ) BIND(C,name="fsqrt_float") result( res )
         real(kind=4), intent(in) :: var
         real(kind=4) :: res
 
         res = SQRT(var)
-    END FUNCTION ftn_sqrt_float
+    end function fsqrt_float
 
-    FUNCTION ftn_sqrt_double ( var ) BIND(C,name="ftn_sqrt_double") RESULT( res )
+    function fsqrt_dble ( var ) BIND(C,name="fsqrt_dble") result( res )
         real(kind=8), intent(in) :: var
         real(kind=8) :: res
 
         res = SQRT(var)
-    END FUNCTION ftn_sqrt_double
+    end function fsqrt_dble
 
 !   ==============================================================================
 
 !   EXP function
 !   ------------
-    FUNCTION ftn_exp_float ( var ) BIND(C,name="ftn_exp_float") RESULT( res )
+    function fexp_float ( var ) BIND(C,name="fexp_float") result( res )
         real(kind=4), intent(in) :: var
         real(kind=4) :: res
 
         res = EXP(var)
-    END FUNCTION ftn_exp_float
+    end function fexp_float
 
-    FUNCTION ftn_exp_double ( var ) BIND(C,name="ftn_exp_double") RESULT( res )
+    function fexp_dble ( var ) BIND(C,name="fexp_dble") result( res )
         real(kind=8), intent(in) :: var
         real(kind=8) :: res
-
+        !print *, "exp real*8 called"
         res = EXP(var)
-    END FUNCTION ftn_exp_double
+    end function fexp_dble
 
 !   ==============================================================================
 
 !   LOG function
 !   -------------
-    FUNCTION ftn_log_float ( var ) BIND(C,name="ftn_log_float") RESULT( res )
+    function flog_float ( var ) BIND(C,name="flog_float") result( res )
         real(kind=4), intent(in) :: var
         real(kind=4) :: res
 
         res = LOG(var)
-    END FUNCTION ftn_log_float
+    end function flog_float
 
-    FUNCTION ftn_log_double ( var ) BIND(C,name="ftn_log_double") RESULT( res )
+    function flog_dble ( var ) BIND(C,name="flog_dble") result( res )
         real(kind=8), intent(in) :: var
         real(kind=8) :: res
 
         res = LOG(var)
-    END FUNCTION ftn_log_double
+    end function flog_dble
 
 !   ==============================================================================
 
 !   LOG10 function
 !   --------------
-    FUNCTION ftn_log10_float ( var ) BIND(C,name="ftn_log10_float") RESULT( res )
+    function flog10_float ( var ) BIND(C,name="flog10_float") result( res )
         real(kind=4), intent(in) :: var
         real(kind=4) :: res
 
         res = LOG10(var)
-    END FUNCTION ftn_log10_float
+    end function flog10_float
 
-    FUNCTION ftn_log10_double ( var ) BIND(C,name="ftn_log10_double") RESULT( res )
+    function flog10_dble ( var ) BIND(C,name="flog10_dble") result( res )
         real(kind=8), intent(in) :: var
         real(kind=8) :: res
 
         res = LOG10(var)
-    END FUNCTION ftn_log10_double
+    end function flog10_dble
 
 !   ==============================================================================
 
 !   POW function
 !   -------------
-    FUNCTION ftn_pow_float ( base, expn ) BIND(C,name="ftn_pow_float") RESULT( res )
+    function fpow_float ( base, expn ) BIND(C,name="fpow_float") result( res )
         real(kind=4), intent(in) :: base,expn
         real(kind=4) :: res
 
         res = base**expn
-    END FUNCTION ftn_pow_float
+    end function fpow_float
 
-    FUNCTION ftn_pow_double ( base, expn ) BIND(C,name="ftn_pow_double") RESULT( res )
+    function fpow_dble ( base, expn ) BIND(C,name="fpow_dble") result( res )
         real(kind=8), intent(in) :: base,expn
         real(kind=8) :: res
 
         res = base**expn
-    END FUNCTION ftn_pow_double
+    end function fpow_dble
 
-    FUNCTION ftn_pow_int ( base, expn ) BIND(C,name="ftn_pow_int") RESULT( res )
+    function fpow_int ( base, expn ) BIND(C,name="fpow_int") result( res )
         integer(kind=4), intent(in) :: base,expn
         integer(kind=4) :: res
 
         res = base**expn
-    END FUNCTION ftn_pow_int
+    end function fpow_int
 
-END MODULE 
+end module 

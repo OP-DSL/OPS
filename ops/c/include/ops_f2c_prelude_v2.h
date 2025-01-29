@@ -36,14 +36,14 @@ DEVICE inline void trap() {
 
 //------------------------ SIN ---------------------
 extern "C" {
-    inline constexpr float ftn_pow_float(float *x, float *e);
-    inline constexpr double ftn_pow_double(double *x, double *e);
-    inline constexpr int ftn_pow_int(int *x, int *e);
+    inline constexpr float fpow_float(float *x, float *e);
+    inline constexpr double fpow_dble(double *x, double *e);
+    inline constexpr int fpow_int(int *x, int *e);
 }
 
-inline constexpr float pow(float x, float e) { return ftn_pow_float(&x, &e); }
-inline constexpr double pow(double x, double e) { return ftn_pow_double(&x, &e); }
-inline constexpr int pow(int x, int e) { return ftn_pow_int(&x, &e); }
+inline constexpr float pow(float x, float e) { return fpow_float(&x, &e); }
+inline constexpr double pow(double x, double e) { return fpow_dble(&x, &e); }
+inline constexpr int pow(int x, int e) { return fpow_int(&x, &e); }
 
 inline constexpr float pow(int x, float e) { return std::pow((float) x, e); }
 inline constexpr double pow(int x, double e) { return std::pow((double) x, e); }
@@ -113,124 +113,126 @@ inline constexpr double copysign(double x, double y) { return ::copysign(x, y); 
 
 //------------------------ SIN ---------------------
 extern "C" {
-    inline constexpr float ftn_sin_float(float *x);
-    inline constexpr double ftn_sin_double(double *x);
+    inline constexpr float fsin_float(float *x);
+    inline constexpr double fsin_dble(double *x);
 }
 
-inline constexpr float sin(float x) { return ftn_sin_float(&x); }
-inline constexpr double sin(double x) { return ftn_sin_double(&x); }
+inline constexpr float sin(float x) { return fsin_float(&x); }
+inline constexpr double sin(double x) { return fsin_dble(&x); }
 
 //------------------------ SINH ---------------------
 extern "C" {
-    inline constexpr float ftn_sinh_float(float *x);
-    inline constexpr double ftn_sinh_double(double *x);
+    inline constexpr float fsinh_float(float *x);
+    inline constexpr double fsinh_dble(double *x);
 }
 
-inline constexpr float sinh(float x) { return ftn_sinh_float(&x); }
-inline constexpr double sinh(double x) { return ftn_sinh_double(&x); }
+inline constexpr float sinh(float x) { return fsinh_float(&x); }
+inline constexpr double sinh(double x) { return fsinh_dble(&x); }
 
 //------------------------ COS ---------------------
 extern "C" {
-    inline constexpr float ftn_cos_float(float *x);
-    inline constexpr double ftn_cos_double(double *x);
+    inline constexpr float fcos_float(float *x);
+    inline constexpr double fcos_dble(double *x);
 }
 
-inline constexpr float cos(float x) { return ftn_cos_float(&x); }
-inline constexpr double cos(double x) { return ftn_cos_double(&x); }
+inline constexpr float cos(float x) { return fcos_float(&x); }
+inline constexpr double cos(double x) { return fcos_dble(&x); }
 
 //------------------------ COSH ---------------------
 extern "C" {
-    inline constexpr float ftn_cosh_float(float *x);
-    inline constexpr double ftn_cosh_double(double *x);
+    inline constexpr float fcosh_float(float *x);
+    inline constexpr double fcosh_dble(double *x);
 }
 
-inline constexpr float cosh(float x) { return ftn_cosh_float(&x); }
-inline constexpr double cosh(double x) { return ftn_cosh_double(&x); }
+inline constexpr float cosh(float x) { return fcosh_float(&x); }
+inline constexpr double cosh(double x) { return fcosh_dble(&x); }
 
 //------------------------ TAN ---------------------
 extern "C" {
-    inline constexpr float ftn_tan_float(float *x);
-    inline constexpr double ftn_tan_double(double *x);
+    inline constexpr float ftan_float(float *x);
+    inline constexpr double ftan_dble(double *x);
 }
 
-inline constexpr float tan(float x) { return ftn_tan_float(&x); }
-inline constexpr double tan(double x) { return ftn_tan_double(&x); }
+inline constexpr float tan(float x) { return ftan_float(&x); }
+inline constexpr double tan(double x) { return ftan_dble(&x); }
 
 //------------------------ TANH ---------------------
 extern "C" {
-    inline constexpr float ftn_tanh_float(float *x);
-    inline constexpr double ftn_tanh_double(double *x);
+    inline constexpr float ftanh_float(float *x);
+    inline constexpr double ftanh_dble(double *x);
 }
 
-inline constexpr float tanh(float x) { return ftn_tanh_float(&x); }
-inline constexpr double tanh(double x) { return ftn_tanh_double(&x); }
+inline constexpr float tanh(float x) { return ftanh_float(&x); }
+inline constexpr double tanh(double x) { return ftanh_dble(&x); }
 
 //------------------------ ASIN ---------------------
 extern "C" {
-    inline constexpr float ftn_asin_float(float *x);
-    inline constexpr double ftn_asin_double(double *x);
+    inline constexpr float fasin_float(float *x);
+    inline constexpr double fasin_dble(double *x);
 }
 
-inline constexpr float asin(float x) { return ftn_asin_float(&x); }
-inline constexpr double asin(double x) { return ftn_asin_double(&x); }
+inline constexpr float asin(float x) { return fasin_float(&x); }
+inline constexpr double asin(double x) { return fasin_dble(&x); }
 
 //------------------------ ACOS ---------------------
 extern "C" {
-    inline constexpr float ftn_acos_float(float *x);
-    inline constexpr double ftn_acos_double(double *x);
+    inline constexpr float facos_float(float *x);
+    inline constexpr double facos_dble(double *x);
 }
 
-inline constexpr float acos(float x) { return ftn_acos_float(&x); }
-inline constexpr double acos(double x) { return ftn_acos_double(&x); }
+inline constexpr float acos(float x) { return facos_float(&x); }
+inline constexpr double acos(double x) { return facos_dble(&x); }
 
 //------------------------ ATAN ---------------------
 extern "C" {
-    inline constexpr float ftn_atan_float(float *x);
-    inline constexpr double ftn_atan_double(double *x);
+    inline constexpr float fatan_float(float *x);
+    inline constexpr double fatan_dble(double *x);
 }
 
-inline constexpr float atan(float x) { return ftn_atan_float(&x); }
-inline constexpr double atan(double x) { return ftn_atan_double(&x); }
+inline constexpr float atan(float x) { return fatan_float(&x); }
+inline constexpr double atan(double x) { return fatan_dble(&x); }
 
 //------------------------ ATAN2 ---------------------
 extern "C" {
-    inline constexpr float ftn_atan2_float(float *x, float *y);
-    inline constexpr double ftn_atan2_double(double *x, double *y);
+    inline constexpr float fatan2_float(float *x, float *y);
+    inline constexpr double fatan2_dble(double *x, double *y);
 }
 
-inline constexpr float atan2(float x, float y) { return ftn_atan2_float(&x, &y); }
-inline constexpr double atan2(double x, double y) { return ftn_atan2_double(&x, &y); }
+inline constexpr float atan2(float x, float y) { return fatan2_float(&x, &y); }
+inline constexpr double atan2(double x, double y) { return fatan2_dble(&x, &y); }
 
 //------------------------ SQRT ---------------------
 extern "C" {
-    inline constexpr float ftn_sqrt_float(float *x);
-    inline constexpr double ftn_sqrt_double(double *x);
+    inline constexpr float fsqrt_float(float *x);
+    inline constexpr double fsqrt_dble(double *x);
 }
-inline constexpr float sqrt(float x) { return ftn_sqrt_float(&x); }
-inline constexpr double sqrt(double x) { return ftn_sqrt_double(&x); }
+inline constexpr float sqrt(float x) { return fsqrt_float(&x); }
+inline constexpr double sqrt(double x) { return fsqrt_dble(&x); }
 
 //------------------------ EXP ---------------------
 extern "C" {
-    inline constexpr float ftn_exp_float(float *x);
-    inline constexpr double ftn_exp_double(double *x);
+    inline constexpr float fexp_float(float *x);
+    inline constexpr double fexp_dble(double *x);
 }
-inline constexpr float exp(float x) { return ftn_exp_float(&x); }
-inline constexpr double exp(double x) { return ftn_exp_double(&x); }
+inline constexpr float exp(float x) { return fexp_float(&x); }
+inline constexpr double exp(double x) { return fexp_dble(&x); }
 
 //------------------------ LOG ---------------------
 extern "C" {
-    inline constexpr float ftn_log_float(float *x);
-    inline constexpr double ftn_log_double(double *x);
+    inline constexpr float flog_float(float *x);
+    inline constexpr double flog_dble(double *x);
 }
-inline constexpr float log(float x) { return ftn_log_float(&x); }
-inline constexpr double log(double x) { return ftn_log_double(&x); }
+
+inline constexpr float log(float x) { return flog_float(&x); }
+inline constexpr double log(double x) { return flog_dble(&x); }
 
 //------------------------ LOG10 ---------------------
 extern "C" {
-    inline constexpr float ftn_log10_float(float *x);
-    inline constexpr double ftn_log10_double(double *x);
+    inline constexpr float flog10_float(float *x);
+    inline constexpr double flog10_dble(double *x);
 }
-inline constexpr float log10(float x) { return ftn_log10_float(&x); }
-inline constexpr double log10(double x) { return ftn_log10_double(&x); }
+
+inline constexpr float log10(float x) { return flog10_float(&x); }
+inline constexpr double log10(double x) { return flog10_dble(&x); }
 
 } // namespace ops::prelude
