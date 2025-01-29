@@ -428,7 +428,7 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 
 	for (unsigned int beat = 0; beat < burst_beats; beat++)
 	{
-    #pragma HLS PIPELINE II=1
+    #pragma HLS PIPELINE II=2
 
         ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
         strm_out << tmp;
@@ -450,7 +450,7 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 
 	for (unsigned int beat = 0; beat < non_burst_beats; beat++)
 	{
-	#pragma HLS PIPELINE II=1
+	#pragma HLS PIPELINE II=2
 		ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
 		strm_out << tmp;
 #ifdef DEBUG_LOG
@@ -562,7 +562,7 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 
 	for (unsigned int beat = 0; beat < burst_beats; beat++)
 	{
-    #pragma HLS PIPELINE II=1
+    #pragma HLS PIPELINE II=2
 
         ap_uint<MEM_DATA_WIDTH> tmp = strm_in.read();
         mem_out[index] = tmp;
@@ -575,7 +575,7 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 
 	for (unsigned int beat = 0; beat < non_burst_beats; beat++)
 	{
-	#pragma HLS PIPELINE II=1
+	#pragma HLS PIPELINE II=2
 		ap_uint<MEM_DATA_WIDTH> tmp = strm_in.read();
 		mem_out[index] = tmp;
 #ifdef DEBUG_LOG
