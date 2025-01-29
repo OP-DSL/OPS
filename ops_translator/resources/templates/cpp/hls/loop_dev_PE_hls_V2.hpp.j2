@@ -183,17 +183,19 @@ inline void kernel_{{lh.kernel}}_core(
 {% endblock %}
 
 {% block stencil_class %}
+{#
 class Stencil_{{lh.kernel}} : public ops::hls::StencilCoreV2<stencil_type, read_num_points_{{lh.kernel}}, vector_factor, ops::hls::CoefTypes::CONST_COEF,
         read_stencil_size_{{lh.kernel}}, read_stencil_dim_{{lh.kernel}}>
 {
     using ops::hls::StencilCoreV2<stencil_type, read_num_points_{{lh.kernel}}, vector_factor, ops::hls::CoefTypes::CONST_COEF,
             read_stencil_size_{{lh.kernel}}, read_stencil_dim_{{lh.kernel}}>::m_stencilConfig;
 public:
-
-    void stencilRun(
+#}
+    void Stencil_{{lh.kernel}}_run(
+            const short PEId, const ops::hls::StencilConfigCore m_stencilConfig,
     {% for arg in lh.args|ops_not_idx %}
         {% if loop.last %}
-            {% if consts %}
+            {% if consts or lh.args|ops_gbl %}
                 {% set last_check = False %}
             {% else %}
                 {% set last_check = True %}
@@ -210,9 +212,19 @@ public:
             {{widen_stream_dt_name(arg)}}& {{hls_stream_name_t2(arg, "rd")-}},
             {{widen_stream_dt_name(arg)}}& {{hls_stream_name_t2(arg, "wr")-}}{{"," if (not loop.last or not last_check)}}
             {% endif %}
-        {% elif arg is ops_gbl %}
-            const {{arg.typ}}& {{get_arg_gbl_name(arg)}}{{"," if (not loop.last or not last_check)}}
         {% endif %}
+    {% endfor %}
+    {% for arg in lh.args|ops_gbl %}
+        {% if loop.last %}
+            {% if consts or lh.args|ops_gbl %}
+                {% set last_check = False %}
+            {% else %}
+                {% set last_check = True %}
+            {% endif %}
+        {% else %}
+            {% set last_check = False %}
+        {% endif %}
+            const {{arg.typ}}& {{get_arg_gbl_name(arg)}}{{"," if (not loop.last or not last_check)}}
     {% endfor %}
     {% for const in consts %}
             const {{const.typ}}& {{const.ptr}}{{"," if not loop.last}}
@@ -222,7 +234,7 @@ public:
         const unsigned short span_x = {{span_x}};
         const unsigned short half_span_x = {{half_span_x}};
 
-        ::ops::hls::StencilConfigCore stencilConfig = m_stencilConfig;
+    ::ops::hls::StencilConfigCore stencilConfig = m_stencilConfig;
     {% set read_origin_wide_diff = read_stencil.read_origin_diff %}
     {% set read_origin_wide_diff_x = read_origin_wide_diff.x %}
     {% set read_origin_wide_diff_x  = ((read_origin_wide_diff_x + config["vector_factor"] - 1) / config["vector_factor"])|round(0,"floor")|int %}
@@ -505,7 +517,7 @@ public:
                 for (int ri = 0; ri < {{vector_factor_name(arg)}}; ri++)
                 {
                     ops::hls::DataConv tmpConverter;
-                    tmpConverter.i = arg{{arg.id}}_read_val.range((ri + 1)*s_datatype_size - 1, ri * s_datatype_size);
+                    tmpConverter.i = arg{{arg.id}}_read_val.range((ri + 1)*data_width - 1, ri * data_width);
                  
                     printf("%f ", tmpConverter.f);
                 }
@@ -513,7 +525,7 @@ public:
                 for (int ri = 0; ri < vector_factor; ri++)
                 {
                     ops::hls::DataConv tmpConverter;
-                    tmpConverter.i = arg{{arg.id}}_read_val.range((ri + 1)*s_datatype_size - 1, ri * s_datatype_size);
+                    tmpConverter.i = arg{{arg.id}}_read_val.range((ri + 1)*data_width - 1, ri * data_width);
                  
                     printf("%f ", tmpConverter.f);
                 }
@@ -541,12 +553,12 @@ public:
                     {% if lh.dats[arg.dat_id].isMultiDim() %}
                         {% for m_dim in range(lh.dats[arg.dat_id].dim) %}
                 ops::hls::DataConv arg{{arg.id}}_{{m_dim}}_tmpConverter_{{point.y}}_{{point.z}};
-                arg{{arg.id}}_{{m_dim}}_tmpConverter_{{point.y}}_{{point.z}}.i = arg{{arg.id}}_widenStencilValues[{{widen_stencil.points.index(widen_point)}}].range(s_datatype_size * (x_d{{lh.dats[arg.dat_id].dim}} + {{m_dim + 1}}) - 1, (x_d{{lh.dats[arg.dat_id].dim}} + {{m_dim}}) * s_datatype_size);
+                arg{{arg.id}}_{{m_dim}}_tmpConverter_{{point.y}}_{{point.z}}.i = arg{{arg.id}}_widenStencilValues[{{widen_stencil.points.index(widen_point)}}].range(data_width * (x_d{{lh.dats[arg.dat_id].dim}} + {{m_dim + 1}}) - 1, (x_d{{lh.dats[arg.dat_id].dim}} + {{m_dim}}) * data_width);
                 arg{{arg.id}}_{{m_dim}}_rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}}[x + half_span_x] = arg{{arg.id}}_{{m_dim}}_tmpConverter_{{point.y}}_{{point.z}}.f; 
                         {% endfor %}
                     {% else %}
                 ops::hls::DataConv arg{{arg.id}}_tmpConverter_{{point.y}}_{{point.z}};
-                arg{{arg.id}}_tmpConverter_{{point.y}}_{{point.z}}.i = arg{{arg.id}}_widenStencilValues[{{widen_stencil.points.index(widen_point)}}].range(s_datatype_size * (x + 1) - 1, x * s_datatype_size);
+                arg{{arg.id}}_tmpConverter_{{point.y}}_{{point.z}}.i = arg{{arg.id}}_widenStencilValues[{{widen_stencil.points.index(widen_point)}}].range(data_width * (x + 1) - 1, x * data_width);
                 arg{{arg.id}}_rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}}[x + half_span_x] = arg{{arg.id}}_tmpConverter_{{point.y}}_{{point.z}}.f; 
                     {% endif %}
                 {% endif %}
@@ -573,12 +585,12 @@ public:
                             {% set i_d = i * lh.dats[arg.dat_id].dim %}
                                 {% for m_dim in range(lh.dats[arg.dat_id].dim) %}
                 ops::hls::DataConv arg{{arg.id}}_{{m_dim}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}};
-                arg{{arg.id}}_{{m_dim}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}}.i = arg{{arg.id}}_widenStencilValues[{{widen_stencil.points.index(widen_point)}}].range(s_datatype_size * ({{i_d + m_dim}} + 1) - 1, s_datatype_size * {{i + m_dim}});
+                arg{{arg.id}}_{{m_dim}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}}.i = arg{{arg.id}}_widenStencilValues[{{widen_stencil.points.index(widen_point)}}].range(data_width * ({{i_d + m_dim}} + 1) - 1, data_width * {{i + m_dim}});
                 arg{{arg.id}}_{{m_dim}}_rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}}[{{access_idx}}] = arg{{arg.id}}_{{m_dim}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}}.f;
                                 {% endfor %}
                             {% else %}
                 ops::hls::DataConv arg{{arg.id}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}};
-                arg{{arg.id}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}}.i = arg{{arg.id}}_widenStencilValues[{{widen_stencil.points.index(widen_point)}}].range(s_datatype_size * ({{i}} + 1) - 1, s_datatype_size * {{i}});
+                arg{{arg.id}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}}.i = arg{{arg.id}}_widenStencilValues[{{widen_stencil.points.index(widen_point)}}].range(data_width * ({{i}} + 1) - 1, data_width * {{i}});
                 arg{{arg.id}}_rowArr_{{row_discriptor.row_id[0]}}_{{row_discriptor.row_id[1]}}[{{access_idx}}] = arg{{arg.id}}_tmpConverter_{{point.x}}_{{point.y}}_{{point.z}}_{{i}}.f;
                             {% endif %}
                         {% endif %}
@@ -755,10 +767,10 @@ public:
         {% if (arg is ops_write or arg is ops_rw) %}
             {% if lh.dats[arg.dat_id].isMultiDim() %}
                 {% for m_dim in range(lh.dats[arg.dat_id].dim) %}
-                arg{{arg.id}}_update_val.range(s_datatype_size * (x + {{m_dim + 1}}) - 1, (x + {{m_dim}}) * s_datatype_size) = arg{{arg.id}}_{{m_dim}}_tmpConvWrite.i;
+                arg{{arg.id}}_update_val.range(data_width * (x + {{m_dim + 1}}) - 1, (x + {{m_dim}}) * data_width) = arg{{arg.id}}_{{m_dim}}_tmpConvWrite.i;
                 {% endfor %}
             {% else %}
-                arg{{arg.id}}_update_val.range(s_datatype_size * (x + 1) - 1, x * s_datatype_size) = arg{{arg.id}}_tmpConvWrite.i;
+                arg{{arg.id}}_update_val.range(data_width * (x + 1) - 1, x * data_width) = arg{{arg.id}}_tmpConvWrite.i;
             {% endif %}
         {% endif %}
     {% endfor %} 
@@ -786,7 +798,7 @@ public:
                     for (int ri = 0; ri < {{vector_factor_name(arg)}}; ri++)
                     {
                         ops::hls::DataConv tmpConverter;
-                        tmpConverter.i = arg{{arg.id}}_update_val.range((ri + 1)*s_datatype_size - 1, ri * s_datatype_size);
+                        tmpConverter.i = arg{{arg.id}}_update_val.range((ri + 1)*data_width - 1, ri * data_width);
                         printf("%f ", tmpConverter.f);
                     }
                     printf(")\n");
@@ -795,7 +807,7 @@ public:
                     for (int ri = 0; ri < vector_factor; ri++)
                     {
                         ops::hls::DataConv tmpConverter;
-                        tmpConverter.i = arg{{arg.id}}_update_val.range((ri + 1)*s_datatype_size - 1, ri * s_datatype_size);
+                        tmpConverter.i = arg{{arg.id}}_update_val.range((ri + 1)*data_width - 1, ri * data_width);
                         printf("%f ", tmpConverter.f);
                     }
                     printf(")\n");
@@ -812,9 +824,11 @@ public:
             }
         }
     } 
-};
+{#
+};#}
 {% endblock %}
 
+{#
 {% block kernel_PE %}
 void kernel_{{lh.kernel}}_PE(const short& PEId, const ops::hls::StencilConfigCore stencilConfig,
     {% for arg in lh.args|ops_not_idx %}
@@ -870,9 +884,9 @@ void kernel_{{lh.kernel}}_PE(const short& PEId, const ops::hls::StencilConfigCor
 #endif
 
     stencil.stencilRun(
-        {% for arg in lh.args|ops_not_idx %}
+    {% for arg in lh.args|ops_not_idx %}
         {% if loop.last %}
-            {% if consts %}
+            {% if consts or lh.args|ops_gbl %}
                 {% set last_check = False %}
             {% else %}
                 {% set last_check = True %}
@@ -889,10 +903,20 @@ void kernel_{{lh.kernel}}_PE(const short& PEId, const ops::hls::StencilConfigCor
             {{hls_stream_name_t2(arg, "rd")-}},
             {{hls_stream_name_t2(arg, "wr")-}}{{"," if (not loop.last or not last_check)}}
             {% endif %}
-        {% elif arg is ops_gbl %}
-            {{get_arg_gbl_name(arg)}}{{"," if (not loop.last or not last_check)}}
         {% endif %}
-    {% endfor %}    
+    {% endfor %} 
+    {% for arg in lh.args|ops_gbl %}
+        {% if loop.last %}
+            {% if consts %}
+                {% set last_check = False %}
+            {% else %}
+                {% set last_check = True %}
+            {% endif %}
+        {% else %}
+            {% set last_check = False %}
+        {% endif %}
+            {{get_arg_gbl_name(arg)}}{{"," if (not loop.last or not last_check)}}   
+    {% endfor %}
     {% for const in consts %}
             {{const.ptr}}{{"," if not loop.last}}
     {% endfor %});
@@ -901,4 +925,4 @@ void kernel_{{lh.kernel}}_PE(const short& PEId, const ops::hls::StencilConfigCor
     printf("[KERNEL_DEBUG]|%s| Ending stencil kernel PE\n", __func__);
 #endif
 } 
-{% endblock %}
+{% endblock %}#}
