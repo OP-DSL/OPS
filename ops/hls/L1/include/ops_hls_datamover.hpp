@@ -393,12 +393,13 @@ static void convStreamPkt2memBeatMasked(ap_uint<DATA_WIDTH>* mem_out,
  *
  * @tparam MEM_DATA_WIDTH : Data width of the AXI4 port and the hls stream port
  * @tparam BURST_SIZE : Burst length of the AXI4 (max beats < 256)
+ * @tparam IN_ITR: II of the mem read
  *
  * @param mem_in : input memory port
  * @param stream_out : output hls-stream
  * @param size : Number of bytes of the data
  */
-template <unsigned int MEM_DATA_WIDTH, unsigned int BURST_SIZE=32>
+template <unsigned int MEM_DATA_WIDTH, unsigned int BURST_SIZE=32, unsigned int IN_ITR=2>
 void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 				::hls::stream<ap_uint<MEM_DATA_WIDTH>>& strm_out,
 				const unsigned int num_beats)
@@ -411,6 +412,7 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 #endif
 
 	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
+    constexpr unsigned int ii = IN_ITR;
 	constexpr unsigned int burst_size = BURST_SIZE;
 	const unsigned int non_burst_beats = num_beats % BURST_SIZE;
     const unsigned int burst_beats = num_beats - non_burst_beats;
@@ -428,7 +430,7 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 
 	for (unsigned int beat = 0; beat < burst_beats; beat++)
 	{
-    #pragma HLS PIPELINE II=2
+    #pragma HLS PIPELINE II=ii
 
         ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
         strm_out << tmp;
@@ -450,7 +452,7 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
 
 	for (unsigned int beat = 0; beat < non_burst_beats; beat++)
 	{
-	#pragma HLS PIPELINE II=2
+	#pragma HLS PIPELINE II=ii
 		ap_uint<MEM_DATA_WIDTH> tmp = mem_in[index];
 		strm_out << tmp;
 #ifdef DEBUG_LOG
@@ -527,12 +529,13 @@ void mem2stream(ap_uint<MEM_DATA_WIDTH>* mem_in,
  *
  * @tparam MEM_DATA_WIDTH : Data width of the AXI4 port the hls stream port
  * @tparam BURST_SIZE : Burst length of the AXI4 (max beats < 256)
+ * @tparam IN_ITR: II configuration of mem write
  *
  * @param mem_out : out memory port
  * @param stream_in : input hls-stream
  * @param size : Number of bytes of the data
  */
-template <unsigned int MEM_DATA_WIDTH, unsigned int BURST_SIZE=32>
+template <unsigned int MEM_DATA_WIDTH, unsigned int BURST_SIZE=32, unsigned int IN_ITR=2>
 void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 				::hls::stream<ap_uint<MEM_DATA_WIDTH>>& strm_in,
 				const unsigned int num_beats)
@@ -545,6 +548,7 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 #endif
 
 	constexpr unsigned int bytes_per_beat = MEM_DATA_WIDTH / 8;
+    constexpr unsigned int ii = IN_ITR;
 	const unsigned int burst_size = BURST_SIZE;
 	const unsigned int non_burst_beats = num_beats % BURST_SIZE;
     const unsigned int burst_beats = num_beats - non_burst_beats;
@@ -562,7 +566,7 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 
 	for (unsigned int beat = 0; beat < burst_beats; beat++)
 	{
-    #pragma HLS PIPELINE II=2
+    #pragma HLS PIPELINE II=ii
 
         ap_uint<MEM_DATA_WIDTH> tmp = strm_in.read();
         mem_out[index] = tmp;
@@ -575,7 +579,7 @@ void stream2mem(ap_uint<MEM_DATA_WIDTH>* mem_out,
 
 	for (unsigned int beat = 0; beat < non_burst_beats; beat++)
 	{
-	#pragma HLS PIPELINE II=2
+	#pragma HLS PIPELINE II=ii
 		ap_uint<MEM_DATA_WIDTH> tmp = strm_in.read();
 		mem_out[index] = tmp;
 #ifdef DEBUG_LOG
