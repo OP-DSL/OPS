@@ -292,13 +292,13 @@ $(APP)_mpi_cuda_tiled: ./cuda/$(APP)_kernels_mpi_tiled_cu.o Makefile .generated 
 		$(MPICPP) $(OMPFLAGS) $(CXXFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -DOPS_LAZY -I$(CUDA_INC) -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) ./cuda/$(APP)_kernels_mpi_tiled_cu.o $(HDF5_LIB_MPI) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_CUDA) $(TRID_MPI_CUDA) -L$(CUDA_LIB) $(CUDART) $(CURAND) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_cuda_tiled
 
 ./cuda/$(APP)_kernels_cu.o:	.generated Makefile
-		$(NVCC) $(NVCCFLAGS) $(CODE_GEN_CUDA) -I$(C_OPS_INC) -I. -c -o ./cuda/$(APP)_kernels_cu.o ./cuda/cuda_kernels.cu
+		$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -I. -c -o ./cuda/$(APP)_kernels_cu.o ./cuda/cuda_kernels.cu
 
 ./cuda/$(APP)_kernels_mpi_cu.o:	.generated Makefile
-		$(NVCC) $(NVCCFLAGS) -DOPS_MPI $(CODE_GEN_CUDA) -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c -o ./cuda/$(APP)_kernels_mpi_cu.o ./cuda/cuda_kernels.cu
+		$(NVCC) $(NVCCFLAGS) -DOPS_MPI -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c -o ./cuda/$(APP)_kernels_mpi_cu.o ./cuda/cuda_kernels.cu
 
 ./cuda/$(APP)_kernels_mpi_tiled_cu.o:	.generated Makefile
-		$(NVCC) $(NVCCFLAGS) -DOPS_MPI -DOPS_LAZY $(CODE_GEN_CUDA) -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c -o ./cuda/$(APP)_kernels_mpi_tiled_cu.o ./cuda/cuda_kernels.cu
+		$(NVCC) $(NVCCFLAGS) -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c -o ./cuda/$(APP)_kernels_mpi_tiled_cu.o ./cuda/cuda_kernels.cu
 
 #=====================================================================================================================================================================
 #

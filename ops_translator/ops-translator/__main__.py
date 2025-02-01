@@ -286,7 +286,7 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
             path = Path(args.out, name)
 
         with open(path, "w") as file:
-            if scheme.target.name == "f2c_mpi_openmp":
+            if(scheme.target.name == "f2c_mpi_openmp" or scheme.target.name == "f2c_cuda" or scheme.target.name == "f2c_hip"):
                 file.write(f"// Auto-generated at {datetime.now()} by ops-translator\n")
             else:
                 file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")

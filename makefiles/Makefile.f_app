@@ -41,6 +41,7 @@ ifneq ($(strip $(TARGETS)),)
 ifneq (,$(filter cuda mpi_cuda mpi_cuda_tiled,$(TARGETS)))
 ifneq ($(OPS_COMPILER),pgi)
 TARGETS:=$(filter-out cuda mpi_cuda mpi_cuda_tiled,$(TARGETS))
+TARGETS:=$(filter-out f2c_cuda f2c_mpi_cuda f2c_mpi_cuda_tiled,$(TARGETS))
 #$(info CUDA targets cannot be built with current environment settings....)
 #$(info Build continues without CUDA targets.....)
 endif
@@ -53,6 +54,7 @@ TARGETS	= seq tiled openmp mpi mpi_openmp mpi_tiled ompoffload mpi_ompoffload mp
 
 ifeq ($(OPS_COMPILER),pgi)
 TARGETS += $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled
+TARGETS += $(APP)_f2c_cuda $(APP)_f2c_mpi_cuda $(APP)_f2c_mpi_cuda_tiled
 endif
 
 ifeq ($(OPS_COMPILER),xlp8)
@@ -89,8 +91,19 @@ I_MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
 endif
 
 F2C_CXXFLAGS = $(CXXFLAGS)
-ifeq ($(OPS_COMPILER),intel)
+ifeq ($(filter $(OPS_COMPILER),intel pgi),$(OPS_COMPILER))
 F2C_CXXFLAGS := $(subst -std=c++11,-std=c++14,$(F2C_CXXFLAGS))
+endif
+
+F2C_NVCCFLAGS = $(NVCCFLAGS)
+ifeq ($(OPS_COMPILER),pgi)
+F2C_NVCCFLAGS := $(subst -std=c++11,-std=c++14,$(F2C_NVCCFLAGS))
+F2C_NVCCFLAGS += --expt-relaxed-constexpr
+endif
+
+F2C_CUDAFOR = $(CUDAFOR)
+ifeq ($(OPS_COMPILER),pgi)
+F2C_CUDAFOR := $(filter-out -DOPS_WITH_CUDAFOR, $(F2C_CUDAFOR))
 endif
 
 APP_TARGETS = $(addprefix $(APP)_, $(TARGETS))
@@ -254,41 +267,13 @@ OTHER_CUDA_OBJ = $(OTHER_FILES:.F90=_cuda.o)
 CUDA_KERNELS_OBJ = $(CUDA_KERNELS:.CUF=_cuda.o)
 CUDA_OPS_GENERATED_OBJ = $(OPS_GENERATED:.F90=_cuda.o)
 
-$(CUDA_OPS_GENERATED_OBJ): $(OTHER_CUDA_OBJ) $(CUDA_KERNELS_OBJ)
-CUDA_OBJ = $(OTHER_CUDA_OBJ) $(CUDA_KERNELS_OBJ) $(CUDA_OPS_GENERATED_OBJ)
-
 OTHER_MPI_CUDA_OBJ = $(OTHER_FILES:.F90=_mpi_cuda.o)
 MPI_CUDA_KERNELS_OBJ = $(CUDA_KERNELS:.CUF=_mpi_cuda.o)
 MPI_CUDA_OPS_GENERATED_OBJ = $(OPS_GENERATED:.F90=_mpi_cuda.o)
 
-$(MPI_CUDA_OPS_GENERATED_OBJ): $(OTHER_MPI_CUDA_OBJ) $(MPI_CUDA_KERNELS_OBJ)
-MPI_CUDA_OBJ = $(OTHER_MPI_CUDA_OBJ) $(MPI_CUDA_KERNELS_OBJ) $(MPI_CUDA_OPS_GENERATED_OBJ)
-
 OTHER_MPI_CUDA_TILED_OBJ = $(OTHER_FILES:.F90=_mpi_cuda_tiled.o)
 MPI_CUDA_TILED_KERNELS_OBJ = $(CUDA_KERNELS:.CUF=_mpi_cuda_tiled.o)
 MPI_CUDA_TILED_OPS_GENERATED_OBJ = $(OPS_GENERATED:.F90=_mpi_cuda_tiled.o)
-
-$(MPI_CUDA_TILED_OPS_GENERATED_OBJ): $(OTHER_MPI_CUDA_TILED_OBJ) $(MPI_CUDA_TILED_KERNELS_OBJ)
-MPI_CUDA_TILED_OBJ = $(OTHER_MPI_CUDA_TILED_OBJ) $(MPI_CUDA_TILED_KERNELS_OBJ) $(MPI_CUDA_TILED_OPS_GENERATED_OBJ)
-
-
-%_cuda.o: %.F90
-	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(CUDAFOR) $(FMODS_CUDA) -c $< -o $@
-
-%_cuda.o: %.CUF
-	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(CUDAFOR) $(FMODS_CUDA) -c $< -o $@
-
-%_mpi_cuda.o: %.F90
-	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(CUDAFOR) -DOPS_MPI $(FMODS_CUDA) -c $< -o $@
-
-%_mpi_cuda.o: %.CUF
-	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(CUDAFOR) -DOPS_MPI $(FMODS_CUDA) -c $< -o $@
-
-%_mpi_cuda_tiled.o: %.F90
-	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(CUDAFOR) -DOPS_MPI -DOPS_LAZY $(FMODS_CUDA) -c $< -o $@
-
-%_mpi_cuda_tiled.o: %.CUF
-	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(CUDAFOR) -DOPS_MPI -DOPS_LAZY $(FMODS_CUDA) -c $< -o $@
 
 
 $(APP)_cuda: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_cuda.a $(OPS_FILES_GEN) $(CUDA_OBJ)
@@ -296,21 +281,94 @@ $(APP)_cuda: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)
 		@echo ""
 		@echo "Building ${APP}_cuda"
 		@echo ""
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) $(CUDA_OBJ) $(APP_LIBS) $(FLINK) -lops_for_cuda $(F_HDF5_LIB_SEQ) $(FCURAND) -o $(APP)_cuda
+		$(foreach src, $(OTHER_FILES), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(CUDAFOR) $(FMODS_CUDA) -c $(src) -o $(src:.F90=_cuda.o);)
+		$(foreach src, $(CUDA_KERNELS), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(CUDAFOR) $(FMODS_CUDA) -c $(src) -o $(src:.CUF=_cuda.o);)
+		$(foreach src, $(OPS_GENERATED), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(CUDAFOR) $(FMODS_CUDA) -c $(src) -o $(src:.F90=_cuda.o);)
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) $(OTHER_CUDA_OBJ) $(CUDA_KERNELS_OBJ) $(CUDA_OPS_GENERATED_OBJ) $(APP_LIBS) $(FLINK) -lops_for_cuda $(F_HDF5_LIB_SEQ) $(FCURAND) -o $(APP)_cuda
 
 $(APP)_mpi_cuda: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_mpi_cuda.a $(OPS_FILES_GEN) $(MPI_CUDA_OBJ)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_cuda"
 		@echo ""
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) -DOPS_MPI $(I_MPI_INC) $(MPI_CUDA_OBJ) $(APP_LIBS) $(FLINK) -lops_for_mpi_cuda $(F_HDF5_LIB_MPI) $(FCURAND) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_cuda
+		$(foreach src, $(OTHER_FILES), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(CUDAFOR) -DOPS_MPI $(FMODS_CUDA) -c $(src) -o $(src:.F90=_mpi_cuda.o);)
+		$(foreach src, $(CUDA_KERNELS), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(CUDAFOR) -DOPS_MPI $(FMODS_CUDA) -c $(src) -o $(src:.CUF=_mpi_cuda.o);)
+		$(foreach src, $(OPS_GENERATED), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(CUDAFOR) -DOPS_MPI $(FMODS_CUDA) -c $(src) -o $(src:.F90=_mpi_cuda.o);)
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) -DOPS_MPI $(I_MPI_INC) $(OTHER_MPI_CUDA_OBJ) $(MPI_CUDA_KERNELS_OBJ) $(MPI_CUDA_OPS_GENERATED_OBJ) $(APP_LIBS) $(FLINK) -lops_for_mpi_cuda $(F_HDF5_LIB_MPI) $(FCURAND) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_cuda
 
 $(APP)_mpi_cuda_tiled: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_for_mpi_cuda.a $(OPS_FILES_GEN) $(MPI_CUDA_TILED_OBJ)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_cuda_tiled"
 		@echo ""
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) -DOPS_MPI -DOPS_LAZY $(I_MPI_INC) $(MPI_CUDA_TILED_OBJ) $(APP_LIBS) $(FLINK) -lops_for_mpi_cuda $(F_HDF5_LIB_MPI) $(FCURAND) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_cuda_tiled
+		$(foreach src, $(OTHER_FILES), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(CUDAFOR) -DOPS_MPI -DOPS_LAZY $(FMODS_CUDA) -c $(src) -o $(src:.F90=_mpi_cuda_tiled.o);)
+		$(foreach src, $(CUDA_KERNELS), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(CUDAFOR) -DOPS_MPI -DOPS_LAZY $(FMODS_CUDA) -c $(src) -o $(src:.CUF=_mpi_cuda_tiled.o);)
+		$(foreach src, $(OPS_GENERATED), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(CUDAFOR) -DOPS_MPI -DOPS_LAZY $(FMODS_CUDA) -c $(src) -o $(src:.F90=_mpi_cuda_tiled.o);)
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_CUDA) $(CUDAFOR) -DOPS_MPI -DOPS_LAZY $(I_MPI_INC) $(OTHER_MPI_CUDA_TILED_OBJ) $(MPI_CUDA_TILED_KERNELS_OBJ) $(MPI_CUDA_TILED_OPS_GENERATED_OBJ) $(APP_LIBS) $(FLINK) -lops_for_mpi_cuda $(F_HDF5_LIB_MPI) $(FCURAND) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_cuda_tiled
+
+#=====================================================================================================================================================================
+#
+# F2C CUDA version
+#
+F2C_CUDA_FTN_KERNELS = $(wildcard f2c_cuda/*.F90)
+F2C_CUDA_FTN_OBJS = $(F2C_CUDA_FTN_KERNELS:.F90=_f2c_cuda.o)
+
+F2C_CUDA_CXX_MASTER_KERNELS = f2c_cuda/f2c_cuda_kernels.cu
+F2C_CUDA_CXX_OBJS = $(F2C_CUDA_CXX_MASTER_KERNELS:.cu=_f2c_cuda.o)
+
+F2C_CUDA_OTHER_OBJS = $(OTHER_FILES:.F90=_f2c_cuda.o)
+F2C_CUDA_OPS_GEN_OBJS = $(OPS_GENERATED:.F90=_f2c_cuda.o)
+
+$(F2C_CUDA_CXX_OBJS) : $(F2C_CUDA_CXX_MASTER_KERNELS)
+	$(NVCC) $(F2C_NVCCFLAGS) -DOPS_FTN -I$(C_OPS_INC) -I. -c $< -o $@
+
+$(APP)_f2c_cuda: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_f2c_cuda.a $(OPS_FILES_GEN) $(F2C_CUDA_CXX_OBJS)
+		@echo ""
+		@echo ""
+		@echo "Building ${APP}_f2c_cuda"
+		@echo ""
+		$(foreach src, $(OTHER_FILES), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_CUDA) -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_cuda.o);)
+		$(foreach src, $(F2C_CUDA_FTN_KERNELS), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_CUDA) -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_cuda.o);)
+		$(foreach src, $(OPS_GENERATED), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_CUDA) -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_cuda.o);)
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_CUDA) $(F2C_CUDAFOR) -DOPS_F2C_INTEROP $(F2C_CUDA_CXX_OBJS) $(F2C_CUDA_OTHER_OBJS) $(F2C_CUDA_FTN_OBJS) $(F2C_CUDA_OPS_GEN_OBJS) $(APP_LIBS) $(FLINK) -lops_f2c_cuda $(F_HDF5_LIB_SEQ) $(FCURAND) -o $(APP)_f2c_cuda
+
+
+F2C_MPI_CUDA_FTN_OBJS = $(F2C_CUDA_FTN_KERNELS:.F90=_f2c_mpi_cuda.o)
+F2C_MPI_CUDA_CXX_OBJS = $(F2C_CUDA_CXX_MASTER_KERNELS:.cu=_f2c_mpi_cuda.o)
+F2C_MPI_CUDA_OTHER_OBJS = $(OTHER_FILES:.F90=_f2c_mpi_cuda.o)
+F2C_MPI_CUDA_OPS_GEN_OBJS = $(OPS_GENERATED:.F90=_f2c_mpi_cuda.o)
+
+$(F2C_MPI_CUDA_CXX_OBJS) : $(F2C_CUDA_CXX_MASTER_KERNELS)
+	$(NVCC) $(F2C_NVCCFLAGS) -DOPS_FTN -DOPS_MPI  -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c $< -o $@
+
+$(APP)_f2c_mpi_cuda: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_f2c_mpi_cuda.a $(OPS_FILES_GEN) $(F2C_MPI_CUDA_CXX_OBJS)
+		@echo ""
+		@echo ""
+		@echo "Building ${APP}_f2c_mpi_cuda"
+		@echo ""
+		$(foreach src, $(OTHER_FILES), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_CUDA) -DOPS_MPI -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_cuda.o);)
+		$(foreach src, $(F2C_CUDA_FTN_KERNELS), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_CUDA) -DOPS_MPI -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_cuda.o);)
+		$(foreach src, $(OPS_GENERATED), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_CUDA) -DOPS_MPI -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_cuda.o);)
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_CUDA) $(F2C_CUDAFOR) -DOPS_MPI -DOPS_F2C_INTEROP $(I_MPI_INC) $(F2C_MPI_CUDA_CXX_OBJS) $(F2C_MPI_CUDA_OTHER_OBJS) $(F2C_MPI_CUDA_FTN_OBJS) $(F2C_MPI_CUDA_OPS_GEN_OBJS) $(APP_LIBS) $(FLINK) -lops_f2c_mpi_cuda $(F_HDF5_LIB_MPI) $(FCURAND) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_f2c_mpi_cuda
+
+
+F2C_MPI_CUDA_TILED_FTN_OBJS = $(F2C_CUDA_FTN_KERNELS:.F90=_f2c_mpi_cuda_tiled.o)
+F2C_MPI_CUDA_TILED_CXX_OBJS = $(F2C_CUDA_CXX_MASTER_KERNELS:.cu=_f2c_mpi_cuda_tiled.o)
+F2C_MPI_CUDA_TILED_OTHER_OBJS = $(OTHER_FILES:.F90=_f2c_mpi_cuda_tiled.o)
+F2C_MPI_CUDA_TILED_OPS_GEN_OBJS = $(OPS_GENERATED:.F90=_f2c_mpi_cuda_tiled.o)
+
+$(F2C_MPI_CUDA_TILED_CXX_OBJS) : $(F2C_CUDA_CXX_MASTER_KERNELS)
+	$(NVCC) $(F2C_NVCCFLAGS) -DOPS_FTN -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c $< -o $@
+
+$(APP)_f2c_mpi_cuda_tiled: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_f2c_mpi_cuda.a $(OPS_FILES_GEN) $(F2C_MPI_CUDA_TILED_CXX_OBJS)
+		@echo ""
+		@echo ""
+		@echo "Building ${APP}_f2c_mpi_cuda_tiled"
+		@echo ""
+		$(foreach src, $(OTHER_FILES), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_CUDA) -DOPS_MPI -DOPS_LAZY -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_cuda_tiled.o);)
+		$(foreach src, $(F2C_CUDA_FTN_KERNELS), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_CUDA) -DOPS_MPI -DOPS_LAZY -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_cuda_tiled.o);)
+		$(foreach src, $(OPS_GENERATED), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_CUDA) -DOPS_MPI -DOPS_LAZY -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_cuda_tiled.o);)
+		$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_CUDA) $(F2C_CUDAFOR) -DOPS_MPI -DOPS_LAZY -DOPS_F2C_INTEROP $(I_MPI_INC) $(F2C_MPI_CUDA_TILED_CXX_OBJS) $(F2C_MPI_CUDA_TILED_OTHER_OBJS) $(F2C_MPI_CUDA_TILED_FTN_OBJS) $(F2C_MPI_CUDA_TILED_OPS_GEN_OBJS) $(APP_LIBS) $(FLINK) -lops_f2c_mpi_cuda $(F_HDF5_LIB_MPI) $(FCURAND) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_f2c_mpi_cuda_tiled
 
 #=====================================================================================================================================================================
 #
@@ -377,7 +435,7 @@ $(APP)_mpi_ompoffload_tiled: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib
 #
 
 cleanall: clean
-	rm -rf ./mpi_openmp ./cuda ./openmp_offload ./f2c_mpi_openmp
+	rm -rf ./mpi_openmp ./cuda ./openmp_offload ./f2c_mpi_openmp ./f2c_cuda ./f2c_hip
 
 clean:
 	rm -f *.o
@@ -395,8 +453,11 @@ clean:
 	rm -f $(APP)_f2c_mpi_tiled
 	rm -f $(APP)_mpi_openmp
 	rm -f $(APP)_cuda
+	rm -f $(APP)_f2c_cuda
 	rm -f $(APP)_mpi_cuda
+	rm -f $(APP)_f2c_mpi_cuda
 	rm -f $(APP)_mpi_cuda_tiled
+	rm -f $(APP)_f2c_mpi_cuda_tiled
 	rm -f $(APP)_ompoffload
 	rm -f $(APP)_mpi_ompoffload
 	rm -f $(APP)_mpi_ompoffload_tiled

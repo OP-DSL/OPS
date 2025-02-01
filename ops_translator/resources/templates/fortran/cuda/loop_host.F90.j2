@@ -676,7 +676,6 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
 #ifndef OPS_LAZY
     CALL ops_H_D_exchanges_device(opsArgArray, {{lh.args|length}})
     CALL ops_halo_exchanges(opsArgArray, {{lh.args|length}}, range, {{lh.ndim}})
-    CALL ops_H_D_exchanges_device(opsArgArray, {{lh.args|length}})
 #endif
 
     CALL ops_timers_core(t2__)

@@ -5,7 +5,7 @@
 {% if soa_set %}
 #define OPS_SOA
 {% endif %}
-#define OPS_API {{app.global_dim}}
+#define OPS_API 2
 #include "ops_lib_core.h"
 
 #ifdef OPS_MPI
@@ -13,7 +13,11 @@
 #include <limits>
 #endif
 
+{% if target.name == "f2c_cuda" or target.name == "f2c_hip" %}
+#include "ops_f2c_prelude.h"
+{% else %}
 #include "ops_f2c_prelude_v2.h"
+{% endif %}
 
 namespace f2c = ops::f2c;
 

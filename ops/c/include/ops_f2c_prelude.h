@@ -19,7 +19,7 @@
 #define H_MAX std::max
 #endif
 
-#define m_pi (4.0*atan(1.0))
+//#define m_pi (4.0*atan(1.0))
 
 namespace ops::f2c {
 

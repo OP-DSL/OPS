@@ -112,7 +112,7 @@ class Scheme(Findable):
         kp_obj = KernelProcess()
         kernel_func = kp_obj.clean_kernel_func_text(kernel_func)
 
-        if(self.target.name == "cuda"):
+        if(self.target.name == "f2c_cuda"):
             kernel_func = kp_obj.cuda_complex_numbers(kernel_func)
 
         #TODO : Complex arguments in HIP
@@ -163,7 +163,7 @@ class Scheme(Findable):
 
         const_c_type = []
 
-        if(self.target.name == "f2c_mpi_openmp"):
+        if(self.target.name == "f2c_mpi_openmp" or self.target.name == "f2c_cuda" or self.target.name == "f2c_hip"):
             for const in app.consts():
                 const_f90_type = str(const.typ).lower().strip()
                 const_f90_type.replace(" ", "")

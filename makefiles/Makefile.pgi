@@ -30,6 +30,7 @@ OPENACCFLAGS   = $(CCFLAGS) -module $(F_INC_MOD)/openacc
 
 FMODS         := -module $(F_INC_MOD)
 FMODS_CUDA    := -module $(F_INC_MOD)/cuda
+FMODS_F2C_CUDA    := -module $(F_INC_MOD)/f2c_cuda
 FMODS_OMPOFFLOAD    := -module $(F_INC_MOD)/ompoffload
 
 OMPFLAGS := -mp

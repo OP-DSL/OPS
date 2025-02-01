@@ -365,6 +365,76 @@ class FortranCuda(Scheme):
 Scheme.register(FortranCuda)
 
 
+class F2CCuda(Scheme):
+    lang = Lang.find("F90")
+    target = Target.find("f2c_cuda")
+
+    fallback = None
+
+    loop_host_template = Path("fortran/f2c_cuda/loop_host.F90.j2")
+    loop_host_f2c_template = Path("fortran/f2c_cuda/loop_f2c_host.cpp.j2")
+    master_kernel_template = Path("fortran/f2c_cuda/master_kernel.cpp.j2")
+
+    loop_kernel_extension = "F90"
+    loop_kernel_f2c_extension = "cu"
+    master_kernel_extension = "cu"
+
+    def translateKernel(
+        self,
+        loop: OPS.Loop,
+        program: Program,
+        app: Application,
+        kernel_idx: int
+    ) -> str:
+
+        filename = loop.kernel[:loop.kernel.find("kernel")]+"kernel.inc"
+        f90_src, entity_ast = retrieve_subroutine_ast(filename, loop.kernel)
+
+        info = ftk_c.parseInfo(entity_ast, app, loop)
+        kernel_args, local_vars, c_var_init, c_kernel_body = ftk_c.translate(info)
+
+        cpp_kernel = generate_cpp_Kernel(loop, kernel_args, local_vars, c_var_init, c_kernel_body, f90_src)
+
+        return cpp_kernel
+
+Scheme.register(F2CCuda)
+
+
+class F2CHip(Scheme):
+    lang = Lang.find("F90")
+    target = Target.find("f2c_hip")
+
+    fallback = None
+
+    loop_host_template = Path("fortran/f2c_cuda/loop_host.F90.j2")
+    loop_host_f2c_template = Path("fortran/f2c_cuda/loop_f2c_host.cpp.j2")
+    master_kernel_template = Path("fortran/f2c_cuda/master_kernel.cpp.j2")
+
+    loop_kernel_extension = "F90"
+    loop_kernel_f2c_extension = "cpp"
+    master_kernel_extension = "cpp"
+
+    def translateKernel(
+        self,
+        loop: OPS.Loop,
+        program: Program,
+        app: Application,
+        kernel_idx: int
+    ) -> str:
+
+        filename = loop.kernel[:loop.kernel.find("kernel")]+"kernel.inc"
+        f90_src, entity_ast = retrieve_subroutine_ast(filename, loop.kernel)
+
+        info = ftk_c.parseInfo(entity_ast, app, loop)
+        kernel_args, local_vars, c_var_init, c_kernel_body = ftk_c.translate(info)
+
+        cpp_kernel = generate_cpp_Kernel(loop, kernel_args, local_vars, c_var_init, c_kernel_body, f90_src)
+
+        return cpp_kernel
+
+Scheme.register(F2CHip)
+
+
 class FortranOpenMPOffload(Scheme):
     lang = Lang.find("F90")
     target = Target.find("openmp_offload")

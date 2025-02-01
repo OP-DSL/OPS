@@ -45,6 +45,14 @@ TARGETS:=$(filter-out cuda mpi_cuda mpi_cuda_tiled,$(TARGETS))
 endif
 endif
 
+ifneq (,$(filter f2c_seq f2c_mpi f2c_mpi_tiled,$(TARGETS)))
+TARGETS:=$(filter-out f2c_seq f2c_mpi f2c_mpi_tiled,$(TARGETS))
+endif
+
+ifneq (,$(filter f2c_cuda f2c_mpi_cuda f2c_mpi_cuda_tiled,$(TARGETS)))
+TARGETS:=$(filter-out f2c_cuda f2c_mpi_cuda f2c_mpi_cuda_tiled,$(TARGETS))
+endif
+
 endif	#ifneq TARGETS
 
 ifndef TARGETS
