@@ -20,10 +20,16 @@ ifdef PROFILE_ITT
 	CXXFLAGS += -DPROFILE_ITT -I$(VTUNE_PROFILER_DIR)/include
 	OPS_LINK += -L$(VTUNE_PROFILER_DIR)/lib64 -littnotify
 endif
-#FFLAGS  = $(CXXFLAGS) -module $(F_INC_MOD)
-FFLAGS  = -O3 -g -xHost -qopenmp -qopt-report -module $(F_INC_MOD)
+
+FFLAGS  = -O3 -g -xHost -qopenmp -qopt-report
+
 OMPFLAGS := -qopenmp
 ifdef THREADED
 	THREADING_FLAGS ?= -qopenmp
 endif
+
+FMODS := -module $(F_INC_MOD)
+FMODS_F2C_CUDA    := -module $(F_INC_MOD)/f2c_cuda
+
 CXXLINK := -lstdc++
+FTNLINK := -lifcore -lifport

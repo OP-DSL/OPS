@@ -41,8 +41,12 @@ ifdef HDF5_INSTALL_PATH
 endif
 
 ifeq ($(OPS_COMPILER),pgi)
-	TARGETS += f_cuda f2c_cuda f_mpi_cuda f2c_mpi_cuda
+	TARGETS += f_cuda f_mpi_cuda
 	C_OPS_INC += -I$(CUDA_INC)
+endif
+
+ifdef CUDA_INSTALL_PATH
+	TARGETS += f2c_cuda f2c_mpi_cuda
 endif
 
 ifneq (,$(filter f_ompoffload f_mpi_ompoffload,$(TARGETS)))

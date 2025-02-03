@@ -21,7 +21,8 @@
 
 //#define m_pi (4.0*atan(1.0))
 
-namespace ops::f2c {
+namespace ops {
+  namespace f2c {
 
 constexpr int round32(int x) { return (x + 31) & ~31; }
 constexpr size_t round32(size_t x) { return (x + 31) & ~31; }
@@ -162,5 +163,5 @@ inline constexpr double tan(double x) { return ::tan(x); }
 
 inline constexpr float tanh(float x) { return tanhf(x); }
 inline constexpr double tanh(double x) { return ::tanh(x); }
-
-} // namespace ops::prelude
+  } // namespace f2c
+} // namespace ops

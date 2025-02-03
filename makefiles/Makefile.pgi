@@ -43,7 +43,8 @@ endif
 CUDAFOR	= -DOPS_WITH_CUDAFOR
 OMPOFFLOADFOR = -DOPS_WITH_OMPOFFLOADFOR
 OpenACCFLAGS = -acc
-CXXLINK := -pgc++libs -lstdc++
+CXXLINK := -c++libs -lstdc++
+FTNLINK := -fortranlibs
 MPI_LINK = -lmpi_cxx
 
 ifdef IEEE
