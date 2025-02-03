@@ -115,6 +115,9 @@ class Scheme(Findable):
         if(self.target.name == "f2c_cuda"):
             kernel_func = kp_obj.cuda_complex_numbers(kernel_func)
 
+        if(self.target.name == "f2c_cuda" or self.target.name == "f2c_hip"):
+            kernel_func = kp_obj.comment_stdcout(kernel_func)
+
         #TODO : Complex arguments in HIP
 
         kernel_body, args_list = kp_obj.get_kernel_body_and_arg_list(kernel_func)

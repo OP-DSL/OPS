@@ -19,6 +19,22 @@ import fparser.two.Fortran2003 as f2003
 from fparser.common.readfortran import FortranStringReader
 from fparser.two.parser import ParserFactory
 
+def extract_values(data, var):
+    result = None
+    # Regex pattern to match exact variable name and capture value
+    pattern = rf"\b{var}\b\s*=\s*(\d+)"
+    match = re.search(pattern, data)
+    if match:
+        result = match.group(1)
+    return result
+
+
+def replace_variable(data, var, value):
+    # Regex pattern to match the exact variable name with word boundaries
+    pattern = rf"\b{var}\b"
+    # Replace all occurrences with (value)
+    return re.sub(pattern, f"{value}", data)
+
 
 def generate_cpp_Kernel(loop: OPS.Loop,
                     kernel_args: dict,
@@ -110,6 +126,8 @@ def generate_cpp_Kernel(loop: OPS.Loop,
 
     sorted_local_args.sort(key=lambda x: len(x[1]), reverse=True)
 
+    local_var_sizes = {}
+
     for var_name, arr_sizes in sorted_local_args:
         if (len(arr_sizes) == 1 and
                     (
@@ -117,12 +135,24 @@ def generate_cpp_Kernel(loop: OPS.Loop,
                         (not arr_sizes[0].isdigit())
                     )
             ):
+            #   if 1D array declared, find its size from constants.F90 and replaced in code: causing problem in F2C CUDA version otherwise
+            filename = "constants.F90"
+            if not os.path.exists(filename):
+                raise ParseError(f"Unable to find file {filename}")
+            with open(filename, 'r') as f:
+                fortran_code = f.read()
+
+            arr_size_lit = extract_values(fortran_code, arr_sizes[0])
+            if arr_size_lit is not None and arr_size_lit.isdigit():
+                size_lit = int(arr_size_lit)
+
             patterm = rf"{var_name}\s*\(\s*0\s*:\s*[^)]+\)"
             match = re.search(patterm, f90_src)
             if match:   # Fortran using 0 base index declaration, just replace var_name(index) -> var_name[index]
                 kernel_body = kp_obj.convert_zerobase_1d_indexing(kernel_body, var_name)
             else:
                 kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
+            local_var_sizes[var_name] = size_lit
         elif len(arr_sizes) == 2:
             kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[0])
         elif len(arr_sizes) == 3:
@@ -133,8 +163,10 @@ def generate_cpp_Kernel(loop: OPS.Loop,
 #    print("============================================================================")
 
     # Add declarations of local variables
-    for value in local_vars.keys():
-        cpp_kernel += f"    {value};" + "\n"
+    for key, value in local_vars.items():
+        if value[0] in local_var_sizes.keys():
+            key = replace_variable(key, value[1][0], local_var_sizes[value[0]])
+        cpp_kernel += f"    {key};" + "\n"
 
     cpp_kernel += "\n"
     if len(var_init) > 0:
@@ -142,6 +174,7 @@ def generate_cpp_Kernel(loop: OPS.Loop,
         cpp_kernel += "\n\n"
     cpp_kernel += kernel_body
     cpp_kernel += "\n}"
+#    print(cpp_kernel)
     return cpp_kernel
 
 

@@ -691,3 +691,7 @@ class KernelProcess:
         replacer = self.create_md_replacer(array_name)
         return re.sub(pattern, replacer, fortrantocpp_code)
 
+    def comment_stdcout(self, kernel_func: str):
+        pattern = r'\bstd::cout\b'
+        # Replace with '//std::cout'
+        return re.sub(pattern, r'//std::cout', kernel_func)
