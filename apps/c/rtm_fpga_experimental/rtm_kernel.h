@@ -12,12 +12,24 @@ void rtm_kernel_populate(const int *dispx, const int *dispy, const int *dispz, c
     rho(0,0,0) = 1000.0f; /* density */
     mu(0,0,0) = 0.001f; /* bulk modulus */
 
-    yy_0(0,0,0) = (1./3.)*C*exp(-(x*x+y*y+z*z)/r0); //idx[0] + idx[1] + idx[2];//
+    yy_0(0,0,0) = idx[0] + grid_size_x * idx[1] + grid_size_x * grid_size_y * idx[2];//(1./3.)*C*exp(-(x*x+y*y+z*z)/r0); //
 }
 
 void kernel_copy(const ACC<float> &in, ACC<float> &out) {
   out(0,0,0) = in(0,0,0);
 }
+
+void simple_forward_k1(ACC<float>& yy_0, ACC<float>& yy_1, ACC<float>& yy_2, ACC<float>& yy_3, ACC<float>& yy_4, ACC<float>& yy_5,
+    ACC<float>& n_yy_0, ACC<float>& n_yy_1, ACC<float>& n_yy_2, ACC<float>& n_yy_3, ACC<float>& n_yy_4, ACC<float>& n_yy_5)
+{
+    n_yy_0(0,0,0) = yy_0(0,0,0);
+    n_yy_1(0,0,0) = yy_1(0,0,0);
+    n_yy_2(0,0,0) = yy_2(0,0,0);
+    n_yy_3(0,0,0) = yy_3(0,0,0);
+    n_yy_4(0,0,0) = yy_4(0,0,0);
+    n_yy_5(0,0,0) = yy_5(0,0,0);
+}
+
 
 void fd3d_pml_kernel1(const int *dispx, const int *dispy, const int *dispz, const int *idx, float* dt,  float* scale1, float* scale2, const ACC<float>& rho, const ACC<float>& mu, 
     const ACC<float>& yy_0, const ACC<float>& yy_1, const ACC<float>& yy_2, const ACC<float>& yy_3, const ACC<float>& yy_4, const ACC<float>& yy_5,
@@ -403,12 +415,12 @@ void fd3d_pml_kernel1(const int *dispx, const int *dispy, const int *dispz, cons
     float ytemp4_scale2 = ytemp4 * *scale2;
     float ytemp5_scale2 = ytemp5 * *scale2;
 
-    sum_0(0,0,0) += ytemp0_scale2;
-    sum_3(0,0,0) += ytemp3_scale2;
-    sum_1(0,0,0) += ytemp1_scale2;
-    sum_4(0,0,0) += ytemp4_scale2;
-    sum_2(0,0,0) += ytemp2_scale2;
-    sum_5(0,0,0) += ytemp5_scale2;
+    sum_0(0,0,0) = ytemp0_scale2;
+    sum_3(0,0,0) = ytemp3_scale2;
+    sum_1(0,0,0) = ytemp1_scale2;
+    sum_4(0,0,0) = ytemp4_scale2;
+    sum_2(0,0,0) = ytemp2_scale2;
+    sum_5(0,0,0) = ytemp5_scale2;
     
 }
 
@@ -777,8 +789,9 @@ void fd3d_pml_kernel2(const int *dispx, const int *dispy, const int *dispz, cons
 }
 
 void fd3d_pml_kernel3(const int *dispx, const int *dispy, const int *dispz, const int *idx, float* dt,  float* scale1, float* scale2, const ACC<float>& rho, const ACC<float>& mu, 
-        ACC<float>& yy_0, ACC<float>& yy_1, ACC<float>& yy_2, ACC<float>& yy_3, ACC<float>& yy_4, ACC<float>& yy_5,
+        const ACC<float>& yy_0, const ACC<float>& yy_1, const ACC<float>& yy_2, const ACC<float>& yy_3, const ACC<float>& yy_4, const ACC<float>& yy_5,
         const ACC<float>& dyyIn_0, const ACC<float>& dyyIn_1, const ACC<float>& dyyIn_2, const ACC<float>& dyyIn_3, const ACC<float>& dyyIn_4, const ACC<float>& dyyIn_5,
+        ACC<float>& dyyOut_0, ACC<float>& dyyOut_1, ACC<float>& dyyOut_2, ACC<float>& dyyOut_3, ACC<float>& dyyOut_4, ACC<float>& dyyOut_5,
         ACC<float>& sum_0, ACC<float>& sum_1, ACC<float>& sum_2, ACC<float>& sum_3, ACC<float>& sum_4, ACC<float>& sum_5) {
   
     // #include "../coeffs/coeffs8.h"
@@ -1124,11 +1137,11 @@ void fd3d_pml_kernel3(const int *dispx, const int *dispy, const int *dispz, cons
     float ytemp5 =((pxz+pyz+pzz)*mu(0,0,0) - sigmaz*vz)* *dt;
 
 
-    yy_0(0,0,0) += sum_0(0,0,0) + ytemp0 * *scale2;
-    yy_3(0,0,0) += sum_3(0,0,0) + ytemp3 * *scale2;
-    yy_1(0,0,0) += sum_1(0,0,0) + ytemp1 * *scale2;
-    yy_4(0,0,0) += sum_4(0,0,0) + ytemp4 * *scale2;
-    yy_2(0,0,0) += sum_2(0,0,0) + ytemp2 * *scale2;
-    yy_5(0,0,0) += sum_5(0,0,0) + ytemp5 * *scale2;
+    dyyOut_0(0,0,0) = yy_0(0,0,0) + sum_0(0,0,0) + ytemp0 * *scale2;
+    dyyOut_3(0,0,0) = yy_3(0,0,0) + sum_3(0,0,0) + ytemp3 * *scale2;
+    dyyOut_1(0,0,0) = yy_1(0,0,0) + sum_1(0,0,0) + ytemp1 * *scale2;
+    dyyOut_4(0,0,0) = yy_4(0,0,0) + sum_4(0,0,0) + ytemp4 * *scale2;
+    dyyOut_2(0,0,0) = yy_2(0,0,0) + sum_2(0,0,0) + ytemp2 * *scale2;
+    dyyOut_5(0,0,0) = yy_5(0,0,0) + sum_5(0,0,0) + ytemp5 * *scale2;
     
 }
