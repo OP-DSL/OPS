@@ -157,6 +157,35 @@ SUBROUTINE {{lh.kernel}}_wrap( &
     INTEGER(KIND=4) :: n_x, n_y, n_z
 {% endif %}
 
+    INTEGER(KIND=4) :: start_indx_1, end_indx_1
+{% if lh.ndim == 2 %}
+    INTEGER(KIND=4) :: start_indx_2, end_indx_2
+{% elif lh.ndim == 3 %}
+    INTEGER(KIND=4) :: start_indx_2, end_indx_2
+    INTEGER(KIND=4) :: start_indx_3, end_indx_3
+{% endif %}
+
+{% if lh.arg_idx != -1 %}
+    INTEGER(KIND=4) :: idx_1
+    {% if lh.ndim == 2 %}
+    INTEGER(KIND=4) :: idx_2
+    {% elif lh.ndim == 3 %}
+    INTEGER(KIND=4) :: idx_2
+    INTEGER(KIND=4) :: idx_3
+    {% endif %}
+{% endif %}
+
+{% for d in range(lh.ndim) %}
+    start_indx_{{d+1}} = start_indx({{d+1}})
+    end_indx_{{d+1}}  = end_indx({{d+1}})
+{% endfor %}
+
+{% if lh.arg_idx != -1 %}
+{% for d in range(lh.ndim) %}
+    idx_{{d+1}} = idx({{d+1}})
+{% endfor %}
+{% endif %}
+
 {# Initialize local reduction variables depending on the operation #}
 {% for arg in lh.args %}
     {% if arg is ops_gbl or arg is ops_reduce %}
@@ -212,7 +241,7 @@ SUBROUTINE {{lh.kernel}}_wrap( &
 #else
 !$OMP TARGET TEAMS LOOP PRIVATE(n_x{{private_idx[0]}}){{reduct_line[0]}}
 #endif
-    DO n_x = 1, end_indx(1)-start_indx(1)+1
+    DO n_x = 1, end_indx_1-start_indx_1+1
 {% elif lh.ndim == 2 %}
 {% if lh.has_reduction or lh.has_reductionMDIM %}
 #ifdef _CRAYFTN
@@ -227,8 +256,8 @@ SUBROUTINE {{lh.kernel}}_wrap( &
 !$OMP TARGET TEAMS LOOP COLLAPSE(2) PRIVATE(n_x,n_y{{private_idx[0]}}){{reduct_line[0]}}
 #endif
 {% endif %}
-    DO n_y = 1, end_indx(2)-start_indx(2)+1
-        DO n_x = 1, end_indx(1)-start_indx(1)+1
+    DO n_y = 1, end_indx_2-start_indx_2+1
+        DO n_x = 1, end_indx_1-start_indx_1+1
 {% elif lh.ndim == 3 %}
 {% if lh.has_reduction or lh.has_reductionMDIM %}
 #ifdef _CRAYFTN
@@ -243,18 +272,18 @@ SUBROUTINE {{lh.kernel}}_wrap( &
 !$OMP TARGET TEAMS LOOP COLLAPSE(3) PRIVATE(n_x,n_y,n_z{{private_idx[0]}}){{reduct_line[0]}}
 #endif
 {% endif %}
-    DO n_z = 1, end_indx(3)-start_indx(3)+1
-        DO n_y = 1, end_indx(2)-start_indx(2)+1
-            DO n_x = 1, end_indx(1)-start_indx(1)+1
+    DO n_z = 1, end_indx_3-start_indx_3+1
+        DO n_y = 1, end_indx_2-start_indx_2+1
+            DO n_x = 1, end_indx_1-start_indx_1+1
 {% endif %}
 
 {% if lh.arg_idx != -1 %}
     {% if lh.ndim == 1 %}
-        idx_local = [idx(1)+n_x-1]
+        idx_local = [idx_1+n_x-1]
     {% elif lh.ndim == 2 %}
-        idx_local = [idx(1)+n_x-1,idx(2)+n_y-1]
+        idx_local = [idx_1+n_x-1, idx_2+n_y-1]
     {% elif lh.ndim == 3 %}
-        idx_local = [idx(1)+n_x-1,idx(2)+n_y-1,idx(3) + n_z - 1]
+        idx_local = [idx_1+n_x-1, idx_2+n_y-1, idx_3+n_z-1]
     {% endif %}
 {% endif %}
 

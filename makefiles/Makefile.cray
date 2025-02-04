@@ -10,6 +10,7 @@ FFLAGS    := -O3 -g -fopenmp -M 878 -f free
 
 FMODS         := -J$(F_INC_MOD)
 FMODS_OMPOFFLOAD    := -J$(F_INC_MOD)/ompoffload
+FMODS_F2C_HIP    := -J$(F_INC_MOD)/f2c_hip
 
 MPI_INSTALL_PATH = $(CRAY_MPICH_DIR)
 
