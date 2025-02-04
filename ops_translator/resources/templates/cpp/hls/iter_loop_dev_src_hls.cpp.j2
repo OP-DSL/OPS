@@ -1,9 +1,5 @@
 {% extends "cpp/hls/iter_loop_dev_inc_hls.hpp.j2" %}
 
-{% macro internal_stream_name(arg) -%}
-arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[1]}}_streams
-{%- endmacro -%}
-
 {% block header_block %}
 #include <ops_hls_kernel_support.h>
 #include <kernel_outerloop_{{ilh.id}}.hpp>
@@ -198,7 +194,7 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region(const unsigned short& sl
     {% endfor %}#}
     
     {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw -%}
-    ::hls::stream<ap_uint<{{axis_data_width_datid(arg.dat_id)}}>> {{internal_stream_name(arg)}}[iter_par_factor + 1];
+    static ::hls::stream<ap_uint<{{axis_data_width_datid(arg.dat_id)}}>> {{internal_stream_name(arg)}}[iter_par_factor + 1];
     #pragma HLS STREAM variable = {{internal_stream_name(arg)}} depth = 10
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat -%}
@@ -304,6 +300,9 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region(const unsigned short& sl
 {% endblock %}
 {% block kernel_top_body %}
 {
+{% if config['datamover_mode'] == 2 and config['SLR_count'] == 1 %}
+
+{% else %}
     #pragma HLS INTERFACE s_axilite port = slr_region bundle = control
     #pragma HLS INTERFACE s_axilite port = outer_itr bundle = control
     {% for i in range(ndim)%}
@@ -382,6 +381,7 @@ static void kernel_outerloop_{{ilh.id}}_dataflow_region(const unsigned short& sl
 #ifdef DEBUG_LOG
     printf("[KERNEL_DEBUG]|%s| Ending outerloop_{{ilh.id}} kernel TOP \n", __func__);
 #endif
+{% endif %}
 }
 {% endblock %}
 {% block kernel_top_prototype_semicolon %}

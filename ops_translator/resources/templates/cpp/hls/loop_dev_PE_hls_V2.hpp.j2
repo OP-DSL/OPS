@@ -191,7 +191,7 @@ class Stencil_{{lh.kernel}} : public ops::hls::StencilCoreV2<stencil_type, read_
             read_stencil_size_{{lh.kernel}}, read_stencil_dim_{{lh.kernel}}>::m_stencilConfig;
 public:
 #}
-    void Stencil_{{lh.kernel}}_run(
+    static void Stencil_{{lh.kernel}}_run(
             const short PEId, const ops::hls::StencilConfigCore m_stencilConfig,
     {% for arg in lh.args|ops_not_idx %}
         {% if loop.last %}

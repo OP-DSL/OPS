@@ -2,9 +2,10 @@
 
 {% block header_block %}
 #include <datamover_outerloop_{{ilh.id}}.hpp>
-{% endblock %}
 
+{% endblock %}
 {% block datamover_dataflow_region %}
+{% if config["datamover_mode"] == 1 %}
 static void datamover_outerloop_{{ilh.id}}_dataflow_region_read(
         const unsigned int num_pkts,
     {#{% if ilh.isMultiDim() %}
@@ -172,7 +173,8 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_write(
         {% endif %}
     {% endfor %}#}
 }
-
+{% endif %}
+{% if config["datamover_mode"] == 2 %}
 static void datamover_outerloop_{{ilh.id}}_dataflow_read_write_dataflow_region(
         const unsigned int num_pkts,
     {#{% if ilh.isMultiDim() %}
@@ -186,92 +188,144 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write_dataflow_region(
         const ops::hls::MemConfig& memconfig_d{{m_dim}},
         {% endfor %}
     {% endif %}
-    {% for arg in ilh.joint_args|ops_dat %}
-        ap_uint<mem_data_width>* arg{{(arg.id)}},
+        const ops::hls::StencilConfigCore& stencilConfig,
+    {% for const_arg in ilh.joint_args|ops_gbl%}
+        const {{const_arg.typ}} {{get_arg_gbl_name(const_arg)}},
+    {% endfor %}
+    {% for const in consts %}
+        const {{const.typ}} {{const.ptr}},
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat %}
-        {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
+        ap_uint<mem_data_width>* arg{{(arg.id)}}{{"," if (not loop.last or (config['SLR_count'] > 1))}}
+    {% endfor %}
+    {% if config['SLR_count'] > 1 %}
+        {% for arg in ilh.joint_args|ops_dat %}
+            {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
         hls::stream <ap_axiu<{{axis_data_width(arg)-}},0,0,0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
-        {% else %}
+            {% else %}
         hls::stream <ap_axiu<{{axis_data_width(arg)-}},0,0,0>>& {{axis_name_t2(arg, "out")-}},
         hls::stream <ap_axiu<{{axis_data_width(arg)-}},0,0,0>>& {{axis_name_t2(arg, "in")-}}{{"," if not loop.last}}
-        {% endif %}
-    {% endfor %})    
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    )    
 {
     {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is ops_read_or_rw%}
-    static ::hls::stream<ap_uint<mem_data_width>> arg{{arg.id}}_read_mem_strm;
-    #pragma HLS STREAM variable = arg{{arg.id}}_read_mem_strm depth = max_depth_v16
             {% if config["vector_factor"] * ilh.dats[arg.dat_id][0].dim < config["mem_vector_factor"] %}
-    static ::hls::stream<ap_uint<{{axis_data_width(arg)-}}>> arg{{arg.id}}_read_reduced_mem_strm;
-    #pragma HLS STREAM variable = arg{{arg.id}}_read_reduced_mem_strm depth = max_depth_v8
+    static ::hls::stream<ap_uint<mem_data_width>> arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[1]}}_mem_strm[2];
+    #pragma HLS STREAM variable = arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[1]}}_mem_strm depth = mem_vec_strm_depth
             {% endif %}
-        {% endif %}
-        {% if arg is ops_write_or_rw and arg is not read_only_rw %}
-    static ::hls::stream<ap_uint<mem_data_width>> arg{{arg.id}}_write_mem_strm;
-    #pragma HLS STREAM variable = arg{{arg.id}}_write_mem_strm depth = max_depth_v16
-            {% if config["vector_factor"] * ilh.dats[arg.dat_id][0].dim < config["mem_vector_factor"] %}
-    static ::hls::stream<ap_uint<{{axis_data_width(arg)-}}>> arg{{arg.id}}_write_reduced_mem_strm;
-    #pragma HLS STREAM variable = arg{{arg.id}}_write_reduced_mem_strm depth = max_depth_v8
+            {% if config['SLR_count'] > 1 %}
+    static ::hls::stream<ap_uint<{{axis_data_width_datid(arg.dat_id)}}>> {{internal_stream_name(arg)}}[iter_par_factor + 2];
+            {% else %}
+    static ::hls::stream<ap_uint<{{axis_data_width_datid(arg.dat_id)}}>> {{internal_stream_name(arg)}}[iter_par_factor + 1];
             {% endif %}
+    #pragma HLS STREAM variable = {{internal_stream_name(arg)}} depth = 10
         {% endif %}
     {% endfor %}
 unsigned int total_xblocks = memconfig.total_xblocks;
 #pragma HLS DATAFLOW
     {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
-        ops::hls::mem2stream<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_read_mem_strm, total_xblocks);
-    {% endfor %}
-    {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
         {% if config["vector_factor"] * ilh.dats[arg.dat_id][0].dim < config["mem_vector_factor"] %}
-        ops::hls::stream2streamStepdown<mem_data_width, {{axis_data_width(arg)-}}>(arg{{arg.id}}_read_mem_strm, arg{{arg.id}}_read_reduced_mem_strm, {{num_beats(arg)}});
-        {% endif %}
-    {% endfor %}
-    {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
-        {% if config["vector_factor"] * ilh.dats[arg.dat_id][0].dim < config["mem_vector_factor"] %}
-            {% if arg is ops_read %}
-        ops::hls::stream2axis<{{axis_data_width(arg)-}}>(arg{{arg.id}}_read_reduced_mem_strm, {{axis_name(arg)}}, {{num_pkts(arg)}});
-            {% elif arg is ops_rw %}
-        ops::hls::stream2axis<{{axis_data_width(arg)-}}>(arg{{arg.id}}_read_reduced_mem_strm, {{axis_name_t2(arg, "out")}}, {{num_pkts(arg)}});
-            {% endif %}
+        ops::hls::mem2stream<mem_data_width>(arg{{arg.id}}, arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[1]}}_mem_strm[0], total_xblocks);
         {% else %}
-            {% if arg is ops_read %}
-        ops::hls::stream2axis<{{axis_data_width(arg)-}}>(arg{{arg.id}}_read_mem_strm, {{axis_name(arg)}}, {{num_pkts(arg)}});
-            {% elif arg is ops_rw %}
-        ops::hls::stream2axis<{{axis_data_width(arg)-}}>(arg{{arg.id}}_read_mem_strm, {{axis_name_t2(arg, "out")}}, {{num_pkts(arg)}});
-            {% endif %}
+        ops::hls::mem2stream<mem_data_width>(arg{{arg.id}}, {{internal_stream_name(arg)}}[0], total_xblocks);
         {% endif %}
     {% endfor %}
-    {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
-        {% if arg is ops_write_or_rw %}
-            {% if arg is read_only_rw %}
-        ops::hls::axisTerminate<{{axis_data_width(arg)-}}>({{axis_name_t2(arg, "in")}}, {{num_pkts(arg)}});
-            {% else %}
-                {% if config["vector_factor"] * ilh.dats[arg.dat_id][0].dim < config["mem_vector_factor"] %}
-                    {% if arg is ops_write %}
-        ops::hls::axis2stream<{{axis_data_width(arg)-}}>({{axis_name(arg)}}, arg{{arg.id}}_write_reduced_mem_strm, {{num_pkts(arg)}});
+    {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
+        {% if config["vector_factor"] * ilh.dats[arg.dat_id][0].dim < config["mem_vector_factor"] %}
+        ops::hls::stream2streamStepdown<mem_data_width, {{axis_data_width(arg)-}}>(arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[1]}}_mem_strm[0], 
+                {{internal_stream_name(arg)}}[0], {{num_beats(arg)}});
+        {% endif %}
+    {% endfor %}
+    for (int i = 0; i < iter_par_factor; i++)
+    {
+#pragma HLS UNROLL factor=iter_par_factor
+
+        {% for stream_interconnector, dat_id in ilh.interconnectors %}
+        static ::hls::stream<ap_uint<{{axis_data_width_datid(dat_id)}}>> {{stream_interconnector}};
+        #pragma HLS STREAM variable = {{stream_interconnector}} depth = 256
+        {% endfor %}
+        {% for df_node in ilh.get_active_df_graph().getAllLoopNodes() %}
+            {% set loop_idx = df_node.node_uid %}
+            {% set lh = df_node.loop %}
+
+         Stencil_{{lh.kernel}}_run(i, stencilConfig, 
+            {% for arg_str in ilh.PE_args[loop_idx]%}
+                {% if loop.last %}
+                    {% if consts_map[loop_idx] or lh.args|ops_gbl %}
+                        {% set last_check = False %}
                     {% else %}
-        ops::hls::axis2stream<{{axis_data_width(arg)-}}>({{axis_name_t2(arg, "in")}}, arg{{arg.id}}_write_reduced_mem_strm, {{num_pkts(arg)}});
+                        {% set last_check = True %}
                     {% endif %}
                 {% else %}
+                    {% set last_check = False %}
+                {% endif %}
+                {{arg_str}}{{"," if not last_check}}
+            {% endfor %}
+            {% for const_arg in lh.args|ops_gbl %}
+                {{get_arg_gbl_name(const_arg)}}{{"," if (not loop.last or consts_map[loop_idx])}}
+            {% endfor %}
+            {% for const in consts_map[loop_idx] %}
+                {{const.ptr}}{{"," if not loop.last}}
+            {% endfor -%}
+                );
+        {% endfor %}
+    }
+
+    {% if config['SLR_count'] > 1 %}
+        {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
+            {% if arg is ops_read %}
+        ops::hls::stream2axis<{{axis_data_width(arg)-}}>({{internal_stream_name(arg)}}[iter_par_factor], {{axis_name(arg)}}, {{num_pkts(arg)}});
+            {% elif arg is ops_rw %}
+        ops::hls::stream2axis<{{axis_data_width(arg)-}}>({{internal_stream_name(arg)}}[iter_par_factor], {{axis_name_t2(arg, "out")}}, {{num_pkts(arg)}});
+            {% endif %}
+        {% endfor %}
+        {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
+            {% if arg is ops_write_or_rw %}
+                {% if arg is read_only_rw %}
+        ops::hls::axisTerminate<{{axis_data_width(arg)-}}>({{axis_name_t2(arg, "in")}}, {{num_pkts(arg)}});
+                {% else %}
                     {% if arg is ops_write %}
-        ops::hls::axis2stream<{{axis_data_width(arg)-}}>({{axis_name(arg)}}, arg{{arg.id}}_write_mem_strm, {{num_pkts(arg)}});
+        ops::hls::axis2stream<{{axis_data_width(arg)-}}>({{axis_name(arg)}}, {{internal_stream_name(arg)}}[iter_par_factor+1], {{num_pkts(arg)}});
                     {% else %}
-        ops::hls::axis2stream<{{axis_data_width(arg)-}}>({{axis_name_t2(arg, "in")}}, arg{{arg.id}}_write_mem_strm, {{num_pkts(arg)}});
+        ops::hls::axis2stream<{{axis_data_width(arg)-}}>({{axis_name_t2(arg, "in")}}, {{internal_stream_name(arg)}}[iter_par_factor+1], {{num_pkts(arg)}});
                     {% endif %}
                 {% endif %}
+            {% endif %}    
+        {% endfor %}
+    {% else %}
+        {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
+            {% if arg is ops_write_or_rw %}
+                {% if arg is read_only_rw %}
+        ops::hls::hlsTerminate<{{axis_data_width(arg)-}}>({{internal_stream_name(arg)}}[iter_par_factor], {{num_pkts(arg)}});
+                {% endif %}
             {% endif %}
-        {% endif %}    
-    {% endfor %}
+        {% endfor %}
+    {% endif %}
     {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
         {% if config["vector_factor"] * ilh.dats[arg.dat_id][0].dim < config["mem_vector_factor"] %}
             {% if arg is not read_only_rw %}
-        ops::hls::stream2streamStepup<{{axis_data_width(arg)-}}, mem_data_width>(arg{{arg.id}}_write_reduced_mem_strm, arg{{arg.id}}_write_mem_strm, {{num_beats(arg)}});
+                {% if config['SLR_count'] > 1 %}
+        ops::hls::stream2streamStepup<{{axis_data_width(arg)-}}, mem_data_width>({{internal_stream_name(arg)}}[iter_par_factor+1], arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[1]}}_mem_strm[1], {{num_beats(arg)}});
+                {% else %}
+        ops::hls::stream2streamStepup<{{axis_data_width(arg)-}}, mem_data_width>({{internal_stream_name(arg)}}[iter_par_factor], arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[1]}}_mem_strm[1], {{num_beats(arg)}});
+                {% endif %}
             {% endif %}
         {% endif %}
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
         {% if arg is not read_only_rw %}
-        ops::hls::stream2mem<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_write_mem_strm, total_xblocks);
+            {% if config["vector_factor"] * ilh.dats[arg.dat_id][0].dim < config["mem_vector_factor"] %}
+        ops::hls::stream2mem<mem_data_width>(arg{{arg.id}}, arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[1]}}_mem_strm[1], total_xblocks);
+            {% else %}
+                {% if config['SLR_count'] > 1 %}
+        ops::hls::stream2mem<mem_data_width>(arg{{arg.id}}, {{internal_stream_name(arg)}}[iter_par_factor+1], total_xblocks);
+                {% else %}
+        ops::hls::stream2mem<mem_data_width>(arg{{arg.id}}, {{internal_stream_name(arg)}}[iter_par_factor], total_xblocks);
+                {% endif %}
+            {% endif %}
         {% endif %}
     {% endfor %}
 }
@@ -290,17 +344,27 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write(
         const ops::hls::MemConfig& memconfig_d{{m_dim}},
         {% endfor %}
     {% endif %}
-    {% for arg in ilh.joint_args|ops_dat %}
-        ap_uint<mem_data_width>* arg{{(arg.id)}},
+        const ops::hls::StencilConfigCore& stencilConfig,
+    {% for const_arg in ilh.joint_args|ops_gbl%}
+        const {{const_arg.typ}} {{get_arg_gbl_name(const_arg)}},
+        {% endfor %}
+        {% for const in consts %}
+        const {{const.typ}} {{const.ptr}},
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat %}
-        {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
+        ap_uint<mem_data_width>* arg{{(arg.id)}}{{"," if (not loop.last or (config['SLR_count'] > 1))}}
+    {% endfor %}
+    {% if config['SLR_count'] > 1 %}
+        {% for arg in ilh.joint_args|ops_dat %}
+            {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
         hls::stream <ap_axiu<{{axis_data_width(arg)-}},0,0,0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
-        {% else %}
+            {% else %}
         hls::stream <ap_axiu<{{axis_data_width(arg)-}},0,0,0>>& {{axis_name_t2(arg, "out")-}},
         hls::stream <ap_axiu<{{axis_data_width(arg)-}},0,0,0>>& {{axis_name_t2(arg, "in")-}}{{"," if not loop.last}}
-        {% endif %}
-    {% endfor %})    
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    )    
 {
     for (unsigned int i = 0; i < iter/2; i++)
     {
@@ -321,17 +385,26 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write(
                 memconfig_d{{m_dim}},
                 {% endfor %}
             {% endif %}
-            {% for arg in ilh.joint_args|ops_dat %}
-                arg{{(arg.id)}},
+                stencilConfig,
+            {% for const_arg in ilh.joint_args|ops_gbl%}
+                {{get_arg_gbl_name(const_arg)}},
+            {% endfor %}
+            {% for const in consts %}
+                {{const.ptr}},
             {% endfor %}
             {% for arg in ilh.joint_args|ops_dat %}
-                {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
+                arg{{(arg.id)}}{{"," if (not loop.last or (config['SLR_count'] > 1))}}
+            {% endfor %}
+            {% if config['SLR_count'] > 1 %}
+                {% for arg in ilh.joint_args|ops_dat %}
+                    {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
                 {{axis_name(arg)-}}{{"," if not loop.last}}
-                {% else %}
+                    {% else %}
                 {{axis_name_t2(arg, "out")-}},
                 {{axis_name_t2(arg, "in")-}}{{"," if not loop.last}}
-                {% endif %}
-            {% endfor %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
         );
         datamover_outerloop_{{ilh.id}}_dataflow_read_write_dataflow_region(
                 num_pkts,
@@ -341,14 +414,22 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write(
                     {% endfor %}
                 {% endif %}#}
                 memconfig,
-                {% if ilh.isMultiDim() %}
-                    {% for m_dim in ilh.getMultidimList() %}
+            {% if ilh.isMultiDim() %}
+                {% for m_dim in ilh.getMultidimList() %}
                 memconfig_d{{m_dim}},
-                    {% endfor %}
-                {% endif %}
-                {% for arg in ilh.joint_args|ops_dat %}
-                arg{{ilh.getSwapArg(arg).id}},
                 {% endfor %}
+            {% endif %}
+                stencilConfig,
+            {% for const_arg in ilh.joint_args|ops_gbl%}
+                {{get_arg_gbl_name(const_arg)}},
+            {% endfor %}
+            {% for const in consts %}
+                {{const.ptr}},
+            {% endfor %}
+            {% for arg in ilh.joint_args|ops_dat %}
+                arg{{ilh.getSwapArg(arg).id}}{{"," if (not loop.last or (config['SLR_count'] > 1))}}
+            {% endfor %}
+            {% if config['SLR_count'] > 1 %}
                 {% for arg in ilh.joint_args|ops_dat %}
                     {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
                 {{axis_name(arg)-}}{{"," if not loop.last}}
@@ -357,10 +438,12 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write(
                 {{axis_name_t2(arg, "in")-}}{{"," if not loop.last}}
                     {% endif %}
                 {% endfor -%}
+            {% endif %}
         );
     }
 }
-
+{% endif %}
+{% if config["datamover_mode"] == 1 %}
 static void datamover_outerloop_{{ilh.id}}_loopback_dataflow_region(
         const unsigned int num_pkts
     {#{%- if ilh.isMultiDim() -%}
@@ -442,6 +525,7 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
         );
     } 
 }
+{% endif %}
 {% endblock %}
 
 {% block datamover_prototype %}
@@ -458,20 +542,38 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
     #pragma HLS INTERFACE s_axilite port = gridSize_{{i}} bundle = control
     {% endfor %}
     #pragma HLS INTERFACE s_axilite port = outer_itr bundle = control
+    {% if config['datamover_mode'] == 2 %}
+    #pragma HLS INTERFACE s_axilite port = stencilConfig_dim bundle = control
+        {% for i in range(ndim)%}
+    #pragma HLS INTERFACE s_axilite port = stencilConfig_lower_limit_{{i}} bundle = control
+        {% endfor %}
+        {% for i in range(ndim)%}
+    #pragma HLS INTERFACE s_axilite port = stencilConfig_upper_limit_{{i}} bundle = control
+        {% endfor %}
+    #pragma HLS INTERFACE s_axilite port = stencilConfig_outer_loop_limit bundle = control
+        {% for const_arg in ilh.joint_args|ops_gbl%}
+    #pragma HLS INTERFACE s_axilite port = {{get_arg_gbl_name(const_arg)}} bundle = control
+        {% endfor %}    
+        {% for const in consts %}
+    #pragma HLS INTERFACE s_axilite port = {{const.ptr}} bundle = control
+        {% endfor %}
+    {% endif %}
     {% for arg in ilh.joint_args|ops_dat %} 
     #pragma HLS INTERFACE mode=m_axi bundle=gmem{{arg.id}} depth={{config["maxi_depth"]}} max_read_burst_length={{config["maxi_read_burst_length"]}} max_write_burst_length={{config["maxi_write_burst_length"]}} \
             num_read_outstanding={{config["num_read_outstanding"]}} num_write_outstanding={{config["num_write_outstanding"]}} \
             port=arg{{arg.id}} offset={{config["maxi_offset"]}}
     #pragma HLS INTERFACE s_axilite port = arg{{arg.id}} bundle = control
     {% endfor %}
-    {% for arg in ilh.joint_args|ops_dat %}
-        {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
+    {% if config['SLR_count'] > 1 or config['datamover_mode'] == 1 %}
+        {% for arg in ilh.joint_args|ops_dat %}
+            {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
     #pragma HLS INTERFACE mode=axis port={{axis_name(arg)}} register
-        {% else %}
+            {% else %}
     #pragma HLS INTERFACE mode=axis port={{axis_name_t2(arg, "out")}} register
     #pragma HLS INTERFACE mode=axis port={{axis_name_t2(arg, "in")}} register
-        {% endif %}
-    {% endfor %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
 
     #pragma HLS INTERFACE mode=s_axilite port=return bundle = control
     #pragma HLS INTERFACE mode=ap_ctrl_chain port=return
@@ -536,30 +638,43 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
     constexpr unsigned int num_of_pkts_per_bytes_d{{m_dim}} = mem_data_width / {{config["data_width"] * config["vector_factor"] * m_dim}};
         {% endfor %}
     {% endif %}#}
-    ops::hls::MemConfig config;
+    ops::hls::MemConfig memconfig;
     {% if ilh.isMultiDim() %}
         {% for m_dim in ilh.getMultidimList() %}
-    ops::hls::MemConfig config_d{{m_dim}};
+    ops::hls::MemConfig memconfig_d{{m_dim}};
         {% endfor %}
     {% endif %}
-    ops::hls::genMemConfig<mem_data_width, axis_data_width, data_width>(read_gridSize, range, config);
+    ops::hls::genMemConfig<mem_data_width, axis_data_width, data_width>(read_gridSize, range, memconfig);
     {% if ilh.isMultiDim() %}
         {% for m_dim in ilh.getMultidimList() %}
-    ops::hls::multidimConfigConverter<{{m_dim}}>(config, config_d{{m_dim}});
+    ops::hls::multidimConfigConverter<{{m_dim}}>(memconfig, memconfig_d{{m_dim}});
         {% endfor %}
     {% endif %}
-    const unsigned int num_beats = config.total_xblocks;
-    const unsigned int num_pkts = num_of_pkts_per_bytes * config.total_xblocks;
+    const unsigned int num_beats = memconfig.total_xblocks;
+    const unsigned int num_pkts = num_of_pkts_per_bytes * memconfig.total_xblocks;
     {#{% if ilh.isMultiDim() %}
         {% for m_dim in ilh.getMultidimList() %}
-    const unsigned int num_pkts_d{{m_dim}} = num_of_pkts_per_bytes_d{{m_dim}} * config_d{{m_dim}}.total_xblocks;
+    const unsigned int num_pkts_d{{m_dim}} = num_of_pkts_per_bytes_d{{m_dim}} * memconfig_d{{m_dim}}.total_xblocks;
         {% endfor %}
     {% endif %}#}
-    {% if config["datamover_mode"] == 3 %}
-    if (is_loopback)
-    {
+    {% if config['datamover_mode'] == 2 %}
+    ops::hls::StencilConfigCore stencilConfig;
+
+    stencilConfig.dim = stencilConfig_dim;
+        {% for i in range(ndim)%}
+    stencilConfig.grid_size[{{i}}] = gridSize_{{i}};
+        {% endfor %}
+        {% for i in range(ndim)%}
+    stencilConfig.lower_limit[{{i}}] = stencilConfig_lower_limit_{{i}};
+        {% endfor %}
+        {% for i in range(ndim)%}
+    stencilConfig.upper_limit[{{i}}] = stencilConfig_upper_limit_{{i}};
+        {% endfor %}
+    stencilConfig.total_itr = outer_itr;
+    stencilConfig.outer_loop_limit = stencilConfig_outer_loop_limit;
     {% endif %}
-    {% if config["datamover_mode"] == 3 or config["datamover_mode"] == 1 %}
+
+    {% if config["datamover_mode"] == 1 %}
         datamover_outerloop_{{ilh.id}}_dataflow_region_read(
                 num_pkts,
         {#{% if ilh.isMultiDim() %}
@@ -567,10 +682,10 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
                 num_pkts_d{{m_dim}},
             {% endfor %}
         {% endif %}#}
-                config
+                memconfig
         {%- if ilh.isMultiDim() -%}
             {%- for m_dim in ilh.getMultidimList() -%}
-                ,{{"\n"}}                config_d{{m_dim}}
+                ,{{"\n"}}                memconfig_d{{m_dim}}
             {%- endfor -%}
         {%- endif -%}
         {%- for arg in ilh.joint_args|ops_dat -%}
@@ -609,10 +724,10 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
                 num_pkts_d{{m_dim}},
             {% endfor %}
         {% endif %}#}
-                config
+                memconfig
         {%- if ilh.isMultiDim() -%}
             {%- for m_dim in ilh.getMultidimList() -%}
-                ,{{"\n"}}                config_d{{m_dim}}
+                ,{{"\n"}}                memconfig_d{{m_dim}}
             {%- endfor -%}
         {%- endif -%}
         {%- for arg in ilh.joint_args|ops_dat -%}
@@ -628,13 +743,7 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
             {%- endif -%}
         {%- endfor -%}
         );
-    {% endif %}
-    {% if config["datamover_mode"] == 3 %}
-    }
-    else
-    {
-    {% endif %}
-    {% if config["datamover_mode"] == 3 or config["datamover_mode"] == 2 %}
+    {% elif config["datamover_mode"] == 2 %}
         datamover_outerloop_{{ilh.id}}_dataflow_read_write(
                 outer_itr,
                 num_pkts,
@@ -643,27 +752,33 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
                 num_pkts_d{{m_dim}},
             {% endfor %}
         {% endif %}#}
-                config,
+                memconfig,
         {% if ilh.isMultiDim() %}
                 {% for m_dim in ilh.getMultidimList() %}
-                config_d{{m_dim}},
+                memconfig_d{{m_dim}},
                 {% endfor %}
         {% endif %}
-        {% for arg in ilh.joint_args|ops_dat %}
-                arg{{(arg.id)}},
+                stencilConfig,
+        {% for const_arg in ilh.joint_args|ops_gbl%}
+                {{get_arg_gbl_name(const_arg)}},
+        {% endfor %}
+        {% for const in consts %}
+                {{const.ptr}},
         {% endfor %}
         {% for arg in ilh.joint_args|ops_dat %}
+                arg{{(arg.id)}}{{"," if (not loop.last or (config['SLR_count'] > 1))}}
+        {% endfor %}
+        {% if config['SLR_count'] > 1 %}
+            {% for arg in ilh.joint_args|ops_dat %}
                 {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
-            {{axis_name(arg)-}}{{"," if not loop.last}}
-            {% else %}
+                {{axis_name(arg)-}}{{"," if not loop.last}}
+                {% else %}
                 {{axis_name_t2(arg, "out")-}},
                 {{axis_name_t2(arg, "in")-}}{{"," if not loop.last}}
-            {% endif %}
-        {% endfor %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
             );
-    {% endif %}
-    {% if config["datamover_mode"] == 3 %}
-    }
     {% endif %}
 }
 

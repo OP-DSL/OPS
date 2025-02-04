@@ -37,11 +37,26 @@ memconfig_d{{ilh.dats[arg.dat_id][0].dim}}
 memconfig
     {%- endif -%}
 {%- endmacro -%}
+{% macro axis_data_width_datid(dat_id) -%}
+    {%- if ilh.dats[dat_id][0].isMultiDim() -%}
+multidim_axis_data_width_{{ilh.id}}_{{ilh.dats[dat_id][0].ptr}}
+    {%- else -%}
+axis_data_width
+    {%- endif -%}
+{%- endmacro -%}
+{% macro internal_stream_name(arg) -%}
+arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[1]}}_streams
+{%- endmacro -%}
 {% block header_block %}
 
 #pragma once
 #include <ops_hls_kernel_support.h>
 #include "common_config.hpp"
+{% if config["datamover_mode"] == 2 %}
+    {% for df_node in ilh.get_active_df_graph().getAllLoopNodes() %}
+#include "PE_{{df_node.loop.kernel}}.hpp"
+    {% endfor %}
+{% endif %}
 
 {% if ilh.isMultiDim() %}
     {% for dat, acc_type in ilh.dats %}
@@ -66,20 +81,38 @@ extern "C" void datamover_outerloop_{{ilh.id}}(
         const unsigned short gridSize_{{i}},
     {% endfor %}
         const unsigned int outer_itr,
+    {% if config['datamover_mode'] == 2 %}
+        const unsigned short stencilConfig_dim,
+        {% for i in range(ndim)%}
+        const unsigned short stencilConfig_lower_limit_{{i}},
+        {% endfor %}
+        {% for i in range(ndim)%}
+        const unsigned short stencilConfig_upper_limit_{{i}},
+        {% endfor %}
+        const unsigned short stencilConfig_outer_loop_limit,
+        {% for const_arg in ilh.joint_args|ops_gbl%}
+        const {{const_arg.typ}} {{get_arg_gbl_name(const_arg)}},
+        {% endfor %}
+        {% for const in consts %}
+        const {{const.typ}} {{const.ptr}},
+        {% endfor %}
+    {% endif %}
     {% for arg in ilh.joint_args|ops_dat %}
     //{{ilh.dats[arg.dat_id][0].ptr}}
-        ap_uint<mem_data_width>* arg{{(arg.id)}},
+        ap_uint<mem_data_width>* arg{{(arg.id)}}{{"," if (not loop.last or (config['SLR_count'] > 1 or config['datamover_mode'] == 1))}}
     {% endfor %}
-    {% for arg in ilh.joint_args|ops_dat %}
+    {% if config['SLR_count'] > 1 or config['datamover_mode'] == 1 %}
+        {% for arg in ilh.joint_args|ops_dat %}
     //{{ilh.dats[arg.dat_id][0].ptr}}
-        {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
+            {% if (arg is not ops_rw) and arg is is_arg_swap(ilh) %}
 
         hls::stream <ap_axiu<{{axis_data_width(arg)-}},0,0,0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
-        {% else %}
+            {% else %}
         hls::stream <ap_axiu<{{axis_data_width(arg)-}},0,0,0>>& {{axis_name_t2(arg, "out")-}},
         hls::stream <ap_axiu<{{axis_data_width(arg)-}},0,0,0>>& {{axis_name_t2(arg, "in")-}}{{"," if not loop.last}}
-        {% endif %}
-    {% endfor %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
     )
 {% endblock %}
 {% block datamover_body %}

@@ -16,9 +16,15 @@ public:
             m_datamoverName("datamover_outerloop_{{ilh.id}}")
     {
         cl_int err;
-    {% for i in range(config["SLR_count"])%}
+    {% if config['datamover_mode'] == 1%}
+        {% for i in range(config["SLR_count"])%}
         OCL_CHECK(err, m_kernel_{{i}} = cl::Kernel(m_fpga->getProgram(), m_kernelName.c_str(), &err));
-    {% endfor %}
+        {% endfor %}
+    {% else %}
+        {% for i in range(config["SLR_count"] - 1)%}
+        OCL_CHECK(err, m_kernel_{{i}} = cl::Kernel(m_fpga->getProgram(), m_kernelName.c_str(), &err));
+        {% endfor %}
+    {% endif %}
         OCL_CHECK(err, m_datamover = cl::Kernel(m_fpga->getProgram(), m_datamoverName.c_str(), &err));    
     }
 
@@ -68,7 +74,12 @@ public:
 		unsigned int adjusted_outer_iter = (outer_iter + total_iter_par_factor - 1) / total_iter_par_factor;
 
         int narg = 0;
-    {% for slr_id in range(config["SLR_count"]) %}
+    {% if config['datamover_mode'] == 1 %}
+        {% set slr_count_limit_red = 0 %}
+    {% else %}
+        {% set slr_count_limit_red = 1 %}
+    {% endif %}
+    {% for slr_id in range(config["SLR_count"] - slr_count_limit_red) %}
         {{"narg = 0;" if not loop.first}} 
         OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, (unsigned short){{loop.index0}}));
         OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, adjusted_outer_iter));
@@ -111,6 +122,22 @@ public:
         {% endif %}
     {% endfor %} 
         OCL_CHECK(err, err = m_datamover.setArg(narg++, adjusted_outer_iter));
+    {% if config['datamover_mode'] == 2 %}
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, read_stencilConfig.dim));
+        {% for i in range(ndim)%}
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, read_stencilConfig.lower_limit[{{i}}]));
+        {% endfor %}
+        {% for i in range(ndim)%}
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, read_stencilConfig.upper_limit[{{i}}]));
+        {% endfor %}
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, read_stencilConfig.outer_loop_limit));
+        {% for arg in ilh.joint_args|ops_gbl%}
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, *{{get_arg_gbl_name(arg)}}));
+        {% endfor %}
+        {% for const in consts %}
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, {{const.ptr}}));
+        {% endfor %}   
+    {% endif %}
     {% for arg in ilh.joint_args %}
         {% if arg is ops_dat %}
         OCL_CHECK(err, err = m_datamover.setArg(narg++, arg{{arg.id}}.deviceBuffer));
@@ -129,7 +156,7 @@ public:
     endHtoDTimer();
 #endif
 
-    {% for slr_id in range(config["SLR_count"]) %}
+    {% for slr_id in range(config["SLR_count"] - slr_count_limit_red) %}
         cl::Event event_kernel_{{slr_id}};
     {% endfor %}
         cl::Event event_datamover;
@@ -145,7 +172,7 @@ public:
     startExecTimer();
 #endif
         OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueTask(m_datamover, &activeEvents, &event_datamover));
-    {% for slr_id in range(config["SLR_count"]) %}
+    {% for slr_id in range(config["SLR_count"] - slr_count_limit_red) %}
         OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueTask(m_kernel_{{slr_id}}, &activeEvents, &event_kernel_{{slr_id}}));
     {% endfor %}
 
@@ -162,7 +189,7 @@ public:
         arg{{arg.id}}.isDevBufDirty = true;
         arg{{arg.id}}.activeEvents.resize(0);
         arg{{arg.id}}.activeEvents.push_back(event_datamover);
-            {% for slr_id in range(config["SLR_count"]) %}
+            {% for slr_id in range(config["SLR_count"] - slr_count_limit_red) %}
         arg{{arg.id}}.activeEvents.push_back(event_kernel_{{slr_id}});
             {% endfor %}
         {% endif %}
@@ -170,7 +197,7 @@ public:
 
 #ifndef ASYNC_DISPATCH
         event_datamover.wait();
-    {% for slr_id in range(config["SLR_count"]) %}
+    {% for slr_id in range(config["SLR_count"] - slr_count_limit_red) %}
         event_kernel_{{slr_id}}.wait();
     {% endfor %}
 #endif
@@ -223,7 +250,7 @@ public:
 private:
     std::string m_kernelName;
     std::string m_datamoverName;
-{% for slr_id in range(config["SLR_count"]) %}
+{% for slr_id in range(config["SLR_count"] - slr_count_limit_red) %}
     cl::Kernel m_kernel_{{slr_id}};
 {% endfor %}
     cl::Kernel m_datamover;

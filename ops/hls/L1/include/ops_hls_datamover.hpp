@@ -1858,6 +1858,37 @@ void axisTerminate(::hls::stream<ap_axiu<AXIS_DATA_WIDTH,0,0,0>>& axis_in,
 }
 
 /**
+ * @brief hlsTerminate read from axis stream and discard the packets
+ *
+ * @tparam AXIS_DATA_WIDTH : Data width of the HLS-stream port
+ *
+ * @param strm_in : HLS-stream input
+ * @param num_pkts: number of axis pkts
+ */
+template <unsigned int AXIS_DATA_WIDTH>
+void hlsTerminate(::hls::stream<ap_uint<AXIS_DATA_WIDTH>>& strm_in,
+		unsigned int num_pkts)
+{
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| starting.\n"
+			, __func__);
+#endif
+	for (unsigned int i = 0; i < num_pkts; i++)
+	{
+#pragma HLS PIPELINE II=1
+#ifdef DEBUG_LOG
+		printf("|HLS DEBUG_LOG|%s| terminating pkt:%d.\n"
+				, __func__, i);
+#endif
+		auto pkt = strm_in.read();
+	}
+#ifdef DEBUG_LOG
+	printf("|HLS DEBUG_LOG|%s| exiting.\n"
+			, __func__);
+#endif
+}
+
+/**
  * @brief stream2axis converts hls-stream to AXI4-stream
  *
  * @tparam AXIS_DATA_WIDTH : Data width of the AXI4-stream port

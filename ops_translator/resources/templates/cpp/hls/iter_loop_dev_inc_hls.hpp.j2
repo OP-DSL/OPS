@@ -35,6 +35,9 @@ total_bytes_d{{ilh.dats[arg.dat_id][0].dim}}
 total_bytes
     {%- endif -%}
 {%- endmacro -%}
+{% macro internal_stream_name(arg) -%}
+arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[0]}}_arg{{ilh.getOrderedSwapPairIds(arg.dat_id)[1]}}_streams
+{%- endmacro -%}
 {% block header_block %}
 #pragma once
     {% for df_node in ilh.get_active_df_graph().getAllLoopNodes() %}
@@ -59,6 +62,9 @@ constexpr unsigned short multidim_axis_data_width_{{ilh.id}}_{{dat.ptr}} = data_
 {% endblock %}
 
 {% block kernel_top_prototype %}
+{% if config['datamover_mode'] == 2 and config['SLR_count'] == 1 %}
+extern "C" void kernel_outerloop_{{ilh.id}}()
+{% else %}
 extern "C" void kernel_outerloop_{{ilh.id}}(
         const unsigned short slr_region,
         const unsigned int outer_itr,
@@ -96,6 +102,7 @@ extern "C" void kernel_outerloop_{{ilh.id}}(
         {% endif %}
     {% endfor %}
 )
+{% endif %}
 {% endblock %}
 {% block kernel_top_prototype_semicolon %}
 ;
