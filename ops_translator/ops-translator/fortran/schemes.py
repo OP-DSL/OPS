@@ -144,7 +144,7 @@ def generate_cpp_Kernel(loop: OPS.Loop,
 
             arr_size_lit = extract_values(fortran_code, arr_sizes[0])
             if arr_size_lit is not None and arr_size_lit.isdigit():
-                size_lit = int(arr_size_lit)
+                local_var_sizes[var_name] = int(arr_size_lit)
 
             patterm = rf"{var_name}\s*\(\s*0\s*:\s*[^)]+\)"
             match = re.search(patterm, f90_src)
@@ -152,7 +152,6 @@ def generate_cpp_Kernel(loop: OPS.Loop,
                 kernel_body = kp_obj.convert_zerobase_1d_indexing(kernel_body, var_name)
             else:
                 kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
-            local_var_sizes[var_name] = size_lit
         elif len(arr_sizes) == 2:
             kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[0])
         elif len(arr_sizes) == 3:
