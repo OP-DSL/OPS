@@ -73,6 +73,10 @@ else
     OMP_OFFLOAD_COMMON=ops_ompoffload_common_omp5.o
 endif
 
+CXXFLAGS_NOOMP = $(CXXFLAGS)
+CXXFLAGS_NOOMP := $(filter-out -fopenmp, $(CXXFLAGS_NOOMP))
+CXXFLAGS_NOOMP := $(filter-out -qopenmp, $(CXXFLAGS_NOOMP))
+
 
 all: $(TARGETS)
 
@@ -84,17 +88,26 @@ mkdir:
 $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/core/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
+$(F_OPS_OBJ)/%_hip.o : $(C_OPS_SRC)/core/%.cpp
+	$(CXX) $(CXXFLAGS_NOOMP) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
+
 $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/sequential/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
 $(F_OPS_OBJ)/ops_hdf5.o : $(C_OPS_SRC)/externlib/ops_hdf5.cpp
-	$(CHKCXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
+	$(CHKCXX) $(CXXFLAGS_NOOMP) -I$(C_OPS_INC) -c $< -o $@
 
 $(F_OPS_OBJ)/ops_hdf5_common.o : $(C_OPS_SRC)/externlib/ops_hdf5_common.cpp
-	$(CHKCXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
+	$(CHKCXX) $(CXXFLAGS_NOOMP) -I$(C_OPS_INC) -c $< -o $@
+
+$(F_OPS_OBJ)/ops_mpi_hdf5_mpi.o : $(C_OPS_SRC)/mpi/ops_mpi_hdf5.cpp
+	$(MPICXX) $(CXXFLAGS_NOOMP) -I$(C_OPS_INC) $(I_MPI_INC) $(HDF5_INC) -c $< -o $@
 
 $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/externlib/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
+
+$(F_OPS_OBJ)/%_hip.o : $(C_OPS_SRC)/externlib/%.cpp
+	$(CXX) $(CXXFLAGS_NOOMP) -I$(C_OPS_INC) -c $< -o $@
 
 $(F_OPS_OBJ)/%_mpi.o : $(C_OPS_SRC)/externlib/%.cpp
 	$(MPICXX) $(CXXFLAGS) -I$(C_OPS_INC) $(I_MPI_INC) $(HDF5_INC) -c $< -o $@
@@ -108,11 +121,14 @@ $(F_OPS_OBJ)/%_ompoffload_mpi.o : $(C_OPS_SRC)/mpi/%_ompoffload.cpp
 $(F_OPS_OBJ)/%_mpi.o : $(C_OPS_SRC)/mpi/%.cpp
 	$(MPICXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) $(I_MPI_INC) $(HDF5_INC) -c $< -o $@
 
+$(F_OPS_OBJ)/%_mpi_hip.o : $(C_OPS_SRC)/mpi/%.cpp
+	$(MPICXX) $(CXXFLAGS_NOOMP) -I$(C_OPS_INC) $(I_MPI_INC) $(HDF5_INC) -c $< -o $@
+
 $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/mpi/%.cu
 	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(F_OPS_OBJ)/%_hip_mpi.o : $(C_OPS_SRC)/mpi/%_hip.cpp
-	$(HIPCC) $(CXXFLAGS) $(HIPFLAGS) -I$(C_OPS_INC) $(I_MPI_INC) -c $< -o $@
+$(F_OPS_OBJ)/%_hip_mpi_hip.o : $(C_OPS_SRC)/mpi/%_hip.cpp
+	$(HIPCC) $(CXXFLAGS_NOOMP) $(HIPFLAGS) -I$(C_OPS_INC) $(I_MPI_INC) -c $< -o $@
 
 $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/cuda/%.cpp
 	$(CXX) $(CXXFLAGS) -I$(C_OPS_INC) -c $< -o $@
@@ -123,11 +139,8 @@ $(F_OPS_OBJ)/%_cuda.o : $(C_OPS_SRC)/cuda/%.cu
 $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/cuda/%.cu
 	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
-$(F_OPS_OBJ)/%_hip.o : $(C_OPS_SRC)/hip/%.cpp
-	$(HIPCC) $(CXXFLAGS) $(HIPFLAGS) -I$(C_OPS_INC) -c $< -o $@
-
 $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/hip/%.cpp
-	$(HIPCC) $(CXXFLAGS) $(HIPFLAGS) -I$(C_OPS_INC) -c $< -o $@
+	$(HIPCC) $(CXXFLAGS_NOOMP) $(HIPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
 #	******************************	Sequential	************************************
 $(F_OPS_OBJ)/ops_for_declarations.o: $(F_OPS_SRC)/ops_for_declarations.F90
@@ -162,10 +175,10 @@ $(F_OPS_OBJ)/%_f2c_cuda.o : $(F_OPS_SRC)/%.F90 $(F_OPS_OBJ)/ops_for_declarations
 
 #   ******************************  F2C HIP    *************************************
 $(F_OPS_OBJ)/ops_for_declarations_f2c_hip.o: $(F_OPS_SRC)/ops_for_declarations.F90
-	$(FC) $(FFLAGS) -DOPS_F2C_INTEROP $(FMODS_F2C_HIP) -c $< -o $@
+	$(FC) $(FFLAGS_HIP) -DOPS_F2C_INTEROP $(FMODS_F2C_HIP) -c $< -o $@
 
 $(F_OPS_OBJ)/%_f2c_hip.o : $(F_OPS_SRC)/%.F90 $(F_OPS_OBJ)/ops_for_declarations_f2c_hip.o
-	$(FC) $(FFLAGS) $(FMODS_F2C_HIP) -c $< -o $@
+	$(FC) $(FFLAGS_HIP) $(FMODS_F2C_HIP) -c $< -o $@
 
 #	******************************	OpenMP Offload	*********************************
 $(F_OPS_OBJ)/%_ompoffload.o : $(F_OPS_SRC)/%.F90
@@ -219,15 +232,15 @@ f_ompoffload: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_
 	$(F_OPS_OBJ)/ops_ompoffload_singlenode.o $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_checkpointing_strategy.o \
 	$(F_OPS_OBJ)/ops_device_singlenode_common.o $(F_OPS_OBJ)/ops_for_declarations_ompoffload.o $(F_OPS_OBJ)/ops_for_rt_support_ompoffload.o
 
-f2c_hip: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
-	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_hip_common.o $(F_OPS_OBJ)/ops_hip_rt_support_kernels.o \
-	$(F_OPS_OBJ)/ops_hip_singlenode.o $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_checkpointing_strategy.o \
-	$(F_OPS_OBJ)/ops_device_singlenode_common.o \
+f2c_hip: mkdir $(F_OPS_OBJ)/ops_lib_core_hip.o $(F_OPS_OBJ)/ops_instance_hip.o $(F_OPS_OBJ)/ops_lazy_hip.o $(F_OPS_OBJ)/ops_checkpointing_hip.o \
+	$(F_OPS_OBJ)/ops_util_hip.o $(F_OPS_OBJ)/ops_hip_common.o $(F_OPS_OBJ)/ops_hip_rt_support_kernels.o \
+	$(F_OPS_OBJ)/ops_hip_singlenode.o $(F_OPS_OBJ)/ops_dummy_singlenode_hip.o $(F_OPS_OBJ)/ops_checkpointing_strategy_hip.o \
+	$(F_OPS_OBJ)/ops_device_singlenode_common_hip.o \
 	$(F_OPS_OBJ)/ops_for_declarations_f2c_hip.o $(F_OPS_OBJ)/ops_for_rt_support_f2c_hip.o $(F_OPS_OBJ)/ops_for_math_support_f2c_hip.o
-	ar -r $(F_OPS_LIB)/libops_f2c_hip.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
-	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_hip_common.o $(F_OPS_OBJ)/ops_hip_rt_support_kernels.o \
-	$(F_OPS_OBJ)/ops_hip_singlenode.o $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_checkpointing_strategy.o \
-	$(F_OPS_OBJ)/ops_device_singlenode_common.o \
+	ar -r $(F_OPS_LIB)/libops_f2c_hip.a $(F_OPS_OBJ)/ops_lib_core_hip.o $(F_OPS_OBJ)/ops_instance_hip.o $(F_OPS_OBJ)/ops_lazy_hip.o $(F_OPS_OBJ)/ops_checkpointing_hip.o \
+	$(F_OPS_OBJ)/ops_util_hip.o $(F_OPS_OBJ)/ops_hip_common.o $(F_OPS_OBJ)/ops_hip_rt_support_kernels.o \
+	$(F_OPS_OBJ)/ops_hip_singlenode.o $(F_OPS_OBJ)/ops_dummy_singlenode_hip.o $(F_OPS_OBJ)/ops_checkpointing_strategy_hip.o \
+	$(F_OPS_OBJ)/ops_device_singlenode_common_hip.o \
 	$(F_OPS_OBJ)/ops_for_declarations_f2c_hip.o $(F_OPS_OBJ)/ops_for_rt_support_f2c_hip.o $(F_OPS_OBJ)/ops_for_math_support_f2c_hip.o
 
 f_mpi: 	mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
@@ -291,16 +304,16 @@ f_mpi_ompoffload: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o 
 	$(F_OPS_OBJ)/ops_mpi_hdf5_mpi.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_declarations_ompoffload.o \
 	$(F_OPS_OBJ)/ops_for_rt_support_ompoffload.o $(F_OPS_OBJ)/ops_for_hdf5_declarations_ompoffload.o
 
-f2c_mpi_hip: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o \
-	$(F_OPS_OBJ)/ops_checkpointing.o $(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
-	$(F_OPS_OBJ)/ops_mpi_core_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_hip_mpi.o $(F_OPS_OBJ)/ops_mpi_partition_mpi.o \
-	$(F_OPS_OBJ)/ops_checkpointing_strategy.o $(F_OPS_OBJ)/ops_hip_common.o \
+f2c_mpi_hip: mkdir $(F_OPS_OBJ)/ops_lib_core_hip.o $(F_OPS_OBJ)/ops_instance_hip.o $(F_OPS_OBJ)/ops_lazy_hip.o \
+	$(F_OPS_OBJ)/ops_checkpointing_hip.o $(F_OPS_OBJ)/ops_util_hip.o $(F_OPS_OBJ)/ops_mpi_decl_mpi_hip.o $(F_OPS_OBJ)/ops_mpi_rt_support_mpi_hip.o \
+	$(F_OPS_OBJ)/ops_mpi_core_mpi_hip.o $(F_OPS_OBJ)/ops_mpi_rt_support_hip_mpi_hip.o $(F_OPS_OBJ)/ops_mpi_partition_mpi_hip.o \
+	$(F_OPS_OBJ)/ops_checkpointing_strategy_hip.o $(F_OPS_OBJ)/ops_hip_common.o \
 	$(F_OPS_OBJ)/ops_mpi_hdf5_mpi.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_declarations_f2c_hip.o $(F_OPS_OBJ)/ops_for_rt_support_f2c_hip.o \
 	$(F_OPS_OBJ)/ops_for_hdf5_declarations_f2c_hip.o $(F_OPS_OBJ)/ops_for_math_support_f2c_hip.o
-	ar -r $(F_OPS_LIB)/libops_f2c_mpi_hip.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o \
-	$(F_OPS_OBJ)/ops_checkpointing.o $(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
-	$(F_OPS_OBJ)/ops_mpi_core_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_hip_mpi.o $(F_OPS_OBJ)/ops_mpi_partition_mpi.o \
-	$(F_OPS_OBJ)/ops_checkpointing_strategy.o $(F_OPS_OBJ)/ops_hip_common.o \
+	ar -r $(F_OPS_LIB)/libops_f2c_mpi_hip.a $(F_OPS_OBJ)/ops_lib_core_hip.o $(F_OPS_OBJ)/ops_instance_hip.o $(F_OPS_OBJ)/ops_lazy_hip.o \
+	$(F_OPS_OBJ)/ops_checkpointing_hip.o $(F_OPS_OBJ)/ops_util_hip.o $(F_OPS_OBJ)/ops_mpi_decl_mpi_hip.o $(F_OPS_OBJ)/ops_mpi_rt_support_mpi_hip.o \
+	$(F_OPS_OBJ)/ops_mpi_core_mpi_hip.o $(F_OPS_OBJ)/ops_mpi_rt_support_hip_mpi_hip.o $(F_OPS_OBJ)/ops_mpi_partition_mpi_hip.o \
+	$(F_OPS_OBJ)/ops_checkpointing_strategy_hip.o $(F_OPS_OBJ)/ops_hip_common.o \
 	$(F_OPS_OBJ)/ops_mpi_hdf5_mpi.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_declarations_f2c_hip.o $(F_OPS_OBJ)/ops_for_rt_support_f2c_hip.o \
 	$(F_OPS_OBJ)/ops_for_hdf5_declarations_f2c_hip.o $(F_OPS_OBJ)/ops_for_math_support_f2c_hip.o
 

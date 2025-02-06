@@ -116,6 +116,10 @@ ifdef THREADED
     CXXFLAGS += $(THREADING_FLAGS)
 endif
 
+CXXFLAGS_NOOMP = $(CXXFLAGS)
+CXXFLAGS_NOOMP := $(filter-out -fopenmp, $(CXXFLAGS_NOOMP))
+CXXFLAGS_NOOMP := $(filter-out -qopenmp, $(CXXFLAGS_NOOMP))
+
 ifneq ($(strip $(MPI_INSTALL_PATH)),)
 ifneq (,$(wildcard $(MPI_INC)))
 I_MPI_INC = -I$(MPI_INC)
@@ -229,21 +233,21 @@ $(APP)_hip: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops
 		@echo ""
 		@echo "Building ${APP}_hip"
 		@echo ""
-	    $(HIPCC) $(CXXFLAGS) $(HIPFLAGS) -D$(OPS_COMPILER) -I$(C_OPS_INC) $(OPS_FILES_GEN) -I. ./hip/$(HIP_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_HIP) $(HDF5_LIB_SEQ) $(HIP_LINK) $(HIPRAND) -o $(APP)_hip
+	    $(HIPCC) $(CXXFLAGS_NOOMP) $(HIPFLAGS) -D$(OPS_COMPILER) -I$(C_OPS_INC) $(OPS_FILES_GEN) -I. ./hip/$(HIP_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_HIP) $(HDF5_LIB_SEQ) $(HIP_LINK) $(HIPRAND) -o $(APP)_hip
 
 $(APP)_mpi_hip: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_hip.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_hip"
 		@echo ""
-		$(HIPMPICPP) $(CXXFLAGS) $(HIPFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./hip/$(HIP_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_HIP) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_HIP_LINK) $(HIP_LINK) $(HIPRAND) -o $(APP)_mpi_hip
+		$(HIPMPICPP) $(CXXFLAGS_NOOMP) $(HIPFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./hip/$(HIP_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_HIP) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_HIP_LINK) $(HIP_LINK) $(HIPRAND) -o $(APP)_mpi_hip
 
 $(APP)_mpi_hip_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_hip.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_hip_tiled"
 		@echo ""
-		$(HIPMPICPP) $(CXXFLAGS) $(HIPFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./hip/$(HIP_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_HIP) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_HIP_LINK) $(HIP_LINK) $(HIPRAND) -o $(APP)_mpi_hip_tiled
+		$(HIPMPICPP) $(CXXFLAGS_NOOMP) $(HIPFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./hip/$(HIP_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_HIP) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_HIP_LINK) $(HIP_LINK) $(HIPRAND) -o $(APP)_mpi_hip_tiled
 
 
 #=====================================================================================================================================================================
@@ -337,21 +341,21 @@ $(APP)_sycl: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libop
 		@echo ""
 		@echo "Building ${APP}_sycl"
 		@echo ""
-		$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -D$(OPS_COMPILER) -I$(C_OPS_INC) $(OPS_FILES_GEN) -I. ./sycl/$(SYCL_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_SYCL) $(HDF5_LIB_SEQ) -o $(APP)_sycl
+		$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) $(OPS_FILES_GEN) -I. ./sycl/$(SYCL_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_SYCL) $(HDF5_LIB_SEQ) -o $(APP)_sycl
 
 $(APP)_mpi_sycl: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_sycl.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_sycl"
 		@echo ""
-		$(SYCLMPICXX) $(CXXFLAGS) $(SYCL_FLAGS) -D$(OPS_COMPILER) -DOPS_MPI -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./sycl/$(SYCL_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_SYCL) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_sycl
+		$(SYCLMPICXX) $(CXXFLAGS) $(SYCL_FLAGS) -DOPS_MPI -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./sycl/$(SYCL_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_SYCL) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_sycl
 
 $(APP)_mpi_sycl_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_sycl.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_sycl_tiled"
 		@echo ""
-		$(SYCLMPICXX) $(CXXFLAGS) $(SYCL_FLAGS) -D$(OPS_COMPILER) -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./sycl/$(SYCL_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_SYCL) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_sycl_tiled
+		$(SYCLMPICXX) $(CXXFLAGS) $(SYCL_FLAGS) -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./sycl/$(SYCL_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_SYCL) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_mpi_sycl_tiled
 
 #=====================================================================================================================================================================
 #

@@ -255,7 +255,7 @@ char* OPS_realloc_fast(char *ptr, size_t olds, size_t news) {
     }
   } else {
     char *ptr2;
-    hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMallocHost((void**)&ptr2,news)); //TODO: is this aligned??
+    hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipHostMalloc((void**)&ptr2,news)); //TODO: is this aligned??
     if (olds > 0)
   	  memcpy(ptr2, ptr, olds);
     if (ptr != NULL) hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipHostFree(ptr));
@@ -492,16 +492,18 @@ __global__ void ops_internal_copy_hip_kernel(char * dat0_p, char *dat1_p,
 #endif
 #endif
 #endif
-       )
+       ) {
 
-    if (OPS_soa)
+    if (OPS_soa) {
       for (int d = 0; d < dim; d++)
         for (int c = 0; c < type_size; c++)
           dat1_p[idx+d*fullsize*type_size+c] = dat0_p[idx+d*fullsize*type_size+c];
-    else
+    }
+    else {
       for (int d = 0; d < dim*type_size; d++)
         dat1_p[idx+d] = dat0_p[idx+d];
-
+    }
+  }
 }
 
 
