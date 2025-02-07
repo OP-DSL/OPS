@@ -5,31 +5,37 @@
 # OPS_COMPILER      - Compiler toolchain: gnu (gcc, gfortran) or pgi (pgc++, pgfortran)
 # OPS_INSTALL_PATH  - OPS base directory
 #
+OPS_INSTALL_PATH ?= $(subst /ops/fortran,/ops,$(shell pwd))
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.common
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.mpi
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
-include ../../makefiles/Makefile.hip
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
 
 ifdef HDF5_INSTALL_PATH
   HDF5_INC 	  	:= -I$(HDF5_INSTALL_PATH)/include
   HDF5_LIB		:= -L$(HDF5_INSTALL_PATH)/lib
   CHKCC			:= $(MPICPP)
-  CHKCXX            := $(MPICXX)
+  CHKCXX		:= $(MPICXX)
 ifdef CHECKPOINTING
   HDF5_INC 	  	:= $(HDF5_INC) -DCHECKPOINTING
 endif
 else
   CHKCC			:= $(CC)
-  CHKCXX            := $(CXX)
+  CHKCXX      	:= $(CXX)
 endif
 
 CXXFLAGS += -DOPS_FTN
 NVCCFLAGS += -DOPS_FTN
 
 ifneq ($(strip $(MPI_INSTALL_PATH)),)
-    I_MPI_INC = -I$(MPI_INC)
+ifneq (,$(wildcard $(MPI_INC)))
+I_MPI_INC = -I$(MPI_INC)
+endif
+ifneq (,$(wildcard $(MPI_LIB)))
+L_MPI_LIB = -L$(MPI_LIB)
+endif
 else
-    I_MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
+I_MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
 endif
 
 .PHONY: mkdir
@@ -43,11 +49,11 @@ endif
 
 ifeq ($(OPS_COMPILER),pgi)
 	TARGETS += f_cuda f_mpi_cuda
-	C_OPS_INC += -I$(CUDA_INC)
 endif
 
 ifdef CUDA_INSTALL_PATH
 	TARGETS += f2c_cuda f2c_mpi_cuda
+	C_OPS_INC += -I$(CUDA_INC)
 endif
 
 ifdef HIP_INSTALL_PATH
@@ -89,7 +95,7 @@ $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/core/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
 $(F_OPS_OBJ)/%_hip.o : $(C_OPS_SRC)/core/%.cpp
-	$(CXX) $(CXXFLAGS_NOOMP) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
+	$(CXX) $(CXXFLAGS_NOOMP) -I$(C_OPS_INC) -c $< -o $@
 
 $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/sequential/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@

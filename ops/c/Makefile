@@ -32,9 +32,14 @@ else
 endif
 
 ifneq ($(strip $(MPI_INSTALL_PATH)),)
-	I_MPI_INC = -I$(MPI_INC)
+ifneq (,$(wildcard $(MPI_INC)))
+I_MPI_INC = -I$(MPI_INC)
+endif
+ifneq (,$(wildcard $(MPI_LIB)))
+L_MPI_LIB = -L$(MPI_LIB)
+endif
 else
-	I_MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
+I_MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
 endif
 
 .PHONY: mklib
@@ -106,7 +111,7 @@ $(C_OPS_OBJ)/%.o : $(C_OPS_SRC)/core/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
 $(C_OPS_OBJ)/%_hip.o : $(C_OPS_SRC)/core/%.cpp
-	$(CXX) $(CXXFLAGS_NOOMP) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
+	$(CXX) $(CXXFLAGS_NOOMP) -I$(C_OPS_INC) -c $< -o $@
 
 $(C_OPS_OBJ)/%.o : $(C_OPS_SRC)/sequential/%.cpp
 	$(CXX) $(CXXFLAGS) $(OMPFLAGS) -I$(C_OPS_INC) -c $< -o $@
