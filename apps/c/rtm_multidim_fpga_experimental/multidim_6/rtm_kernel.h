@@ -25,6 +25,17 @@ void kernel_copy(const ACC<float> &in, ACC<float> &out) {
   out(0,0,0) = in(0,0,0);
 }
 
+void kernel_copy_full(const ACC<float> &in, ACC<float> &out) {
+    out(0,0,0,0) = in(0,0,0,0); 
+    out(1,0,0,0) = in(1,0,0,0);
+    out(2,0,0,0) = in(2,0,0,0);
+    out(3,0,0,0) = in(3,0,0,0);
+    out(4,0,0,0) = in(4,0,0,0);
+    out(5,0,0,0) = in(5,0,0,0);
+    out(6,0,0,0) = in(6,0,0,0);
+    out(7,0,0,0) = in(7,0,0,0);
+}
+
 void fd3d_pml_kernel1(const int *dispx, const int *dispy, const int *dispz, const int *idx, float* dt,  float* scale1, float* scale2, const ACC<float>& rho, const ACC<float>& mu, 
     const ACC<float>& yy, ACC<float>& dyy, ACC<float>& sum) {
     

@@ -48,7 +48,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_read(
         {% endif %}
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
-    ops::hls::mem2stream<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_read_mem_strm, {{memconfig(arg)}});
+    ops::hls::mem2stream<mem_data_width, 32, {{II(arg)}}>(arg{{arg.id}}, arg{{arg.id}}_read_mem_strm, {{memconfig(arg)}}.total_xblocks);
     {% endfor %}
     
     {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
@@ -155,7 +155,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_write(
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
         {% if arg is not read_only_rw %}
-    ops::hls::stream2mem<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_write_mem_strm, {{memconfig(arg)}});
+    ops::hls::stream2mem<mem_data_width, 32, {{II(arg)}}>(arg{{arg.id}}, arg{{arg.id}}_write_mem_strm, {{memconfig(arg)}}.total_xblocks);
         {% endif %}
     {% endfor %}
     {#{% for arg in ilh.joint_args|ops_dat %}
@@ -217,7 +217,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write_dataflow_region(
 
 #pragma HLS DATAFLOW
     {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
-        ops::hls::mem2stream<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_read_mem_strm, {{memconfig(arg)}});
+        ops::hls::mem2stream<mem_data_width, 32, {{II(arg)}}>(arg{{arg.id}}, arg{{arg.id}}_read_mem_strm, {{memconfig(arg)}}.total_xblocks);
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_read_or_rw %}
         {% if config["vector_factor"] * ilh.dats[arg.dat_id][0].dim < config["mem_vector_factor"] %}
@@ -269,7 +269,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write_dataflow_region(
     {% endfor %}
     {% for arg in ilh.joint_args|ops_dat|ops_write_or_rw %}
         {% if arg is not read_only_rw %}
-        ops::hls::stream2mem<mem_data_width>(arg{{arg.id}}, arg{{arg.id}}_write_mem_strm, {{memconfig(arg)}});
+        ops::hls::stream2mem<mem_data_width, 32, {{II(arg)}}>(arg{{arg.id}}, arg{{arg.id}}_write_mem_strm, {{memconfig(arg)}}.total_xblocks);
         {% endif %}
     {% endfor %}
 }
