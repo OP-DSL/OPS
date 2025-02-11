@@ -9,8 +9,8 @@ void rtm_kernel_populate(const int *dispx, const int *dispy, const int *dispz, c
     //printf("x,y,z = %f %f %f\n",x,y,z);
     const float C = 1.0f;
     const float r0 = 0.001f;
-    rho(0,0,0) = 1000.0f; /* density */
-    mu(0,0,0) = 0.001f; /* bulk modulus */
+    rho(0,0,0) = (idx[0] + grid_size_x * idx[1] + grid_size_x * grid_size_y * idx[2])/10; //1000.0f; /* density */
+    mu(0,0,0) = (idx[0] + grid_size_x * idx[1] + grid_size_x * grid_size_y * idx[2])/100; //0.001f; /* bulk modulus */
 
     yy_0(0,0,0) = idx[0] + grid_size_x * idx[1] + grid_size_x * grid_size_y * idx[2];//(1./3.)*C*exp(-(x*x+y*y+z*z)/r0); //
 }
