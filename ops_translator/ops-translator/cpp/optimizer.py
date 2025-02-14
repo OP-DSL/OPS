@@ -397,10 +397,15 @@ def getDependencyVariables(astnode: Cursor, dependant: str, visited: Set[str] = 
     if visited is None:
         visited = set()
     
+    # print(f"astnode: {astnode.spelling}, kind: {astnode.kind}, {ASTtoString(decend(astnode))}")
     if original_compound_ast_node is None:
-        if not astnode.kind is CursorKind.COMPOUND_STMT:
+        if astnode.kind is CursorKind.IF_STMT:
+            original_compound_ast_node = decend(astnode)
+        elif astnode.kind is CursorKind.COMPOUND_STMT:
+            original_compound_ast_node = astnode
+        else:
             raise OptError("Original first node should be a compound statement")
-        original_compound_ast_node = astnode
+        
     
     # exit condition 1    
     if dependant in visited:
