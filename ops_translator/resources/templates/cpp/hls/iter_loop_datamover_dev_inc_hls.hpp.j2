@@ -39,7 +39,7 @@ memconfig
 {%- endmacro -%}
 {% macro II(arg) -%}
     {%- set base_ii_factor = 1 -%}
-    {%- set ii_factor = [(config['mem_vector_factor'] / config['vector_factor'] * ilh.dats[arg.dat_id][0].dim), base_ii_factor] | max -%}
+    {%- set ii_factor = [(config['mem_vector_factor'] / (config['vector_factor'] * ilh.dats[arg.dat_id][0].dim)), base_ii_factor] | max -%}
     {%- set ii_factor = ii_factor | int %}
 {{ii_factor}}
 {%- endmacro -%}

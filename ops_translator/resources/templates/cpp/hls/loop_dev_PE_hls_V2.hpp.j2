@@ -405,6 +405,7 @@ public:
         for (unsigned int itr = 0; itr < iter_limit; itr++)
         {
         #pragma HLS PIPELINE II=1
+            unsigned int reg_itr = register_it(itr);
 
             spc_temp_blocking_read:
             {
@@ -430,7 +431,7 @@ public:
                     "{{stencil_name}}_{{buffer_write_idx(buffer)}}: %d, "\
         {% endfor %}
     {% endfor %}
-                    "itr(%d)\n", m_PEId, i, 
+                    "reg_itr(%d)\n", m_PEId, i, 
     {% if lh.ndim > 1 %}
                     j,
     {% endif %}
@@ -443,7 +444,7 @@ public:
                     {{stencil_name}}_{{buffer_write_idx(buffer)}}, 
         {% endfor %}
     {% endfor %}
-                    itr);
+                    reg_itr);
 #endif
                 if (cond_x_terminate)
                     i = 0;
@@ -463,9 +464,9 @@ public:
     {% endif %}
 
     /*{% for arg in lh.args|ops_dat|ops_read_or_rw %}
-                bool arg{{arg.id}}_read_cond = (itr < arg{{arg.id}}_read_ub_itr) and (itr >= arg{{arg.id}}_read_lb_itr);
+                bool arg{{arg.id}}_read_cond = (reg_itr < arg{{arg.id}}_read_ub_itr) and (reg_itr >= arg{{arg.id}}_read_lb_itr);
     {% endfor %}*/
-                bool read_cond  =  (itr < read_ub_itr) and (itr >= read_lb_itr);
+                bool read_cond  =  (reg_itr < read_ub_itr) and (reg_itr >= read_lb_itr);
 
                 if (read_cond)
                 {
@@ -523,7 +524,7 @@ public:
                                 "{{stencil_name}}_{{buffer_write_idx(buffer)}}(%d), "\
                     {% endfor %}
                 {% endfor %}
-                                "itr(%d)\n", m_PEId, i, 
+                                "reg_itr(%d)\n", m_PEId, i, 
                 {% if lh.ndim > 1 %}
                                 j,
                 {% endif %}
@@ -536,7 +537,7 @@ public:
                                 {{stencil_name}}_{{buffer_write_idx(buffer)}}, 
                     {% endfor %}
                 {% endfor %}
-                                itr);
+                                reg_itr);
             
                 printf("[DEBUG][INTERNAL][{{lh.kernel}}_PE_%d] --------------------------------------------------------\n\n", m_PEId);
 
