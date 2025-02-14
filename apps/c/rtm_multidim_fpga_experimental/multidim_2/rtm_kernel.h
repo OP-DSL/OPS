@@ -64,27 +64,31 @@ void fd3d_pml_kernel1(const int *dispx, const int *dispy, const int *dispz, cons
     int zpmlend=zend-pml_width;
 
     float sigma = rho_mu(1,0,0,0)/rho_mu(0,0,0,0);
+    float sigma_10_percent = sigma * 0.1f;
     float sigmax=0.0;
     float sigmay=0.0;
     float sigmaz=0.0;
+
     if(idx[0]<=xbeg+pml_width){
-        sigmax = (xbeg+pml_width-idx[0])*sigma * 0.1f;///pml_width;
+
+        sigmax = (xpmlbeg-idx[0])*sigma_10_percent;///pml_width;
     }
-    if(idx[0]>=xend-pml_width){
-        sigmax=(idx[0]-(xend-pml_width))*sigma * 0.1f;///pml_width;
+    else if(idx[0]>=xend-pml_width){
+        sigmax=(idx[0]-xpmlend)*sigma_10_percent;///pml_width;
     }
     if(idx[1]<=ybeg+pml_width){
-        sigmay=(ybeg+pml_width-idx[1])*sigma * 0.1f;///pml_width;
+        sigmay=(ypmlbeg-idx[1])*sigma_10_percent;///pml_width;
     }
-    if(idx[1]>=yend-pml_width){
-        sigmay=(idx[1]-(yend-pml_width))*sigma * 0.1f;///pml_width;
+    else if(idx[1]>=yend-pml_width){
+        sigmay=(idx[1]-ypmlend)*sigma_10_percent;///pml_width;
     }
     if(idx[2]<=zbeg+pml_width){
-        sigmaz=(zbeg+pml_width-idx[2])*sigma * 0.1f;///pml_width;
+        sigmaz=(zpmlbeg-idx[2])*sigma_10_percent;///pml_width;
     }
-    if(idx[2]>=zend-pml_width){
-        sigmaz=(idx[2]-(zend-pml_width))*sigma * 0.1f;///pml_width;
+    else if(idx[2]>=zend-pml_width){
+        sigmaz=(idx[2]-zpmlend)*sigma_10_percent;///pml_width;
     }
+
 
                         //sigmax=0.0;
                         //sigmay=0.0;
@@ -97,6 +101,13 @@ void fd3d_pml_kernel1(const int *dispx, const int *dispy, const int *dispz, cons
     float vy = yy_4_5(0,0,0,0);
     float vz = yy_4_5(1,0,0,0);
     
+    float sigmax_mul_px = sigmax * px;
+    float sigmay_mul_py = sigmay * py;
+    float sigmaz_mul_pz = sigmaz * pz;
+    float sigmax_mul_vx = sigmax * vx;
+    float sigmay_mul_vy = sigmay * vy;
+    float sigmaz_mul_vz = sigmaz * vz;
+
     float vxx=0.0;
     float vxy=0.0;
     float vxz=0.0;
@@ -526,25 +537,40 @@ void fd3d_pml_kernel1(const int *dispx, const int *dispy, const int *dispz, cons
     float vyy_div_rho = vyy/rho_mu(0,0,0,0);
     float vzz_div_rho = vzz/rho_mu(0,0,0,0);
 
-    float add_pxx_pyx_pxz = pxx+pyx+pxz;
-    float add_pxy_pyy_pyz = pxy+pyy+pyz;
-    float add_pxz_pyz_pzz = pxz+pyz+pzz;
+    float add_pxx_pyx_pxz0 = pxx+pyx;
+    float add_pxx_pyx_pxz = add_pxx_pyx_pxz0 + pxz;
+    float add_pxx_pyx_pxz_mul_mu = add_pxx_pyx_pxz*rho_mu(1,0,0,0);
+    float add_pxy_pyy_pyz0 = pxy+pyy;
+    float add_pxy_pyy_pyz = add_pxy_pyy_pyz0 + pyz;
+    float add_pxy_pyy_pyz_mul_mu = add_pxy_pyy_pyz*rho_mu(1,0,0,0);
+    float add_pxz_pyz_pzz0 = pxz+pyz;
+    float add_pxz_pyz_pzz = add_pxz_pyz_pzz0 + pzz;
+    float add_pxz_pyz_pzz_mul_mu = add_pxz_pyz_pzz*rho_mu(1,0,0,0);
 
-    float ytemp0 =(vxx_div_rho - sigmax*px) * *dt;
-    float ytemp3 =(add_pxx_pyx_pxz*rho_mu(1,0,0,0) - sigmax*vx)* *dt;
+    float ytemp0 =(vxx_div_rho - sigmax_mul_px) * *dt;
+    float ytemp3 =(add_pxx_pyx_pxz_mul_mu - sigmax_mul_vx)* *dt;
     
-    float ytemp1 =(vyy_div_rho - sigmay*py)* *dt;
-    float ytemp4 =(add_pxy_pyy_pyz*rho_mu(1,0,0,0) - sigmay*vy)* *dt;
+    float ytemp1 =(vyy_div_rho - sigmay_mul_py)* *dt;
+    float ytemp4 =(add_pxy_pyy_pyz_mul_mu - sigmay_mul_vy)* *dt;
     
-    float ytemp2 =(vzz_div_rho - sigmaz*pz)* *dt;
-    float ytemp5 =(add_pxz_pyz_pzz*rho_mu(1,0,0,0) - sigmaz*vz)* *dt;
+    float ytemp2 =(vzz_div_rho - sigmaz_mul_pz)* *dt;
+    float ytemp5 =(add_pxz_pyz_pzz_mul_mu - sigmaz_mul_vz)* *dt;
 
-    dyy_0_1(0,0,0,0) = yy_0_1(0,0,0,0) + ytemp0* *scale1;
-    dyy_2_3(1,0,0,0) = yy_2_3(1,0,0,0) + ytemp3* *scale1;
-    dyy_0_1(1,0,0,0) = yy_0_1(1,0,0,0) + ytemp1* *scale1;
-    dyy_4_5(0,0,0,0) = yy_4_5(0,0,0,0) + ytemp4* *scale1;
-    dyy_2_3(0,0,0,0) = yy_2_3(0,0,0,0) + ytemp2* *scale1;
-    dyy_4_5(1,0,0,0) = yy_4_5(1,0,0,0) + ytemp5* *scale1;
+    float scale1_ytemp0 = ytemp0 * *scale1;
+    float scale1_ytemp1 = ytemp1 * *scale1;
+    float scale1_ytemp2 = ytemp2 * *scale1;
+    float scale1_ytemp3 = ytemp3 * *scale1;
+    float scale1_ytemp4 = ytemp4 * *scale1;
+    float scale1_ytemp5 = ytemp5 * *scale1;
+
+
+    dyy_0_1(0,0,0,0) = yy_0_1(0,0,0,0) + scale1_ytemp0;
+    dyy_2_3(1,0,0,0) = yy_2_3(1,0,0,0) + scale1_ytemp3;
+    dyy_0_1(1,0,0,0) = yy_0_1(1,0,0,0) + scale1_ytemp1;
+    dyy_4_5(0,0,0,0) = yy_4_5(0,0,0,0) + scale1_ytemp4;
+    dyy_2_3(0,0,0,0) = yy_2_3(0,0,0,0) + scale1_ytemp2;
+    dyy_4_5(1,0,0,0) = yy_4_5(1,0,0,0) + scale1_ytemp5;
+
 
     sum_0_1(0,0,0,0) += ytemp0 * *scale2;
     sum_2_3(1,0,0,0) += ytemp3 * *scale2;
@@ -580,26 +606,30 @@ void fd3d_pml_kernel2(const int *dispx, const int *dispy, const int *dispz, cons
     int zpmlend=zend-pml_width;
 
     float sigma = rho_mu(1,0,0,0)/rho_mu(0,0,0,0);
+    float sigma_10_percent = sigma * 0.1f;
     float sigmax=0.0;
     float sigmay=0.0;
     float sigmaz=0.0;
+
+
     if(idx[0]<=xbeg+pml_width){
-        sigmax = (xbeg+pml_width-idx[0])*sigma * 0.1f;///pml_width;
+
+        sigmax = (xpmlbeg-idx[0])*sigma_10_percent;///pml_width;
     }
-    if(idx[0]>=xend-pml_width){
-        sigmax=(idx[0]-(xend-pml_width))*sigma * 0.1f;///pml_width;
+    else if(idx[0]>=xend-pml_width){
+        sigmax=(idx[0]-xpmlend)*sigma_10_percent;///pml_width;
     }
     if(idx[1]<=ybeg+pml_width){
-        sigmay=(ybeg+pml_width-idx[1])*sigma * 0.1f;///pml_width;
+        sigmay=(ypmlbeg-idx[1])*sigma_10_percent;///pml_width;
     }
-    if(idx[1]>=yend-pml_width){
-        sigmay=(idx[1]-(yend-pml_width))*sigma * 0.1f;///pml_width;
+    else if(idx[1]>=yend-pml_width){
+        sigmay=(idx[1]-ypmlend)*sigma_10_percent;///pml_width;
     }
     if(idx[2]<=zbeg+pml_width){
-        sigmaz=(zbeg+pml_width-idx[2])*sigma * 0.1f;///pml_width;
+        sigmaz=(zpmlbeg-idx[2])*sigma_10_percent;///pml_width;
     }
-    if(idx[2]>=zend-pml_width){
-        sigmaz=(idx[2]-(zend-pml_width))*sigma * 0.1f;///pml_width;
+    else if(idx[2]>=zend-pml_width){
+        sigmaz=(idx[2]-zpmlend)*sigma_10_percent;///pml_width;
     }
 
             //sigmax=0.0;
@@ -612,6 +642,20 @@ void fd3d_pml_kernel2(const int *dispx, const int *dispy, const int *dispz, cons
     float vx = dyyIn_2_3(1,0,0,0);
     float vy = dyyIn_4_5(0,0,0,0);
     float vz = dyyIn_4_5(1,0,0,0);
+    
+    float yy_0_add_sum_0 = yy_0_1(0,0,0,0) + sum_0_1(0,0,0,0);
+    float yy_1_add_sum_1 = yy_0_1(1,0,0,0) + sum_0_1(1,0,0,0);
+    float yy_2_add_sum_2 = yy_2_3(0,0,0,0) + sum_2_3(0,0,0,0);
+    float yy_3_add_sum_3 = yy_2_3(1,0,0,0) + sum_2_3(1,0,0,0);
+    float yy_4_add_sum_4 = yy_4_5(0,0,0,0) + sum_4_5(0,0,0,0);
+    float yy_5_add_sum_5 = yy_4_5(1,0,0,0) + sum_4_5(1,0,0,0);
+
+    float sigmax_mul_px = sigmax * px;
+    float sigmay_mul_py = sigmay * py;
+    float sigmaz_mul_pz = sigmaz * pz;
+    float sigmax_mul_vx = sigmax * vx;
+    float sigmay_mul_vy = sigmay * vy;
+    float sigmaz_mul_vz = sigmaz * vz;
     
     float vxx=0.0;
     float vxy=0.0;
@@ -1042,28 +1086,40 @@ void fd3d_pml_kernel2(const int *dispx, const int *dispy, const int *dispz, cons
     float vyy_div_rho = vyy/rho_mu(0,0,0,0);
     float vzz_div_rho = vzz/rho_mu(0,0,0,0);
 
-    float add_pxx_pyx_pxz = pxx+pyx+pxz;
-    float add_pxy_pyy_pyz = pxy+pyy+pyz;
-    float add_pxz_pyz_pzz = pxz+pyz+pzz;
+    float add_pxx_pyx_pxz0 = pxx+pyx;
+    float add_pxx_pyx_pxz = add_pxx_pyx_pxz0 + pxz;
+    float add_pxx_pyx_pxz_mul_mu = add_pxx_pyx_pxz*rho_mu(1,0,0,0);
+    float add_pxy_pyy_pyz0 = pxy+pyy;
+    float add_pxy_pyy_pyz = add_pxy_pyy_pyz0 + pyz;
+    float add_pxy_pyy_pyz_mul_mu = add_pxy_pyy_pyz*rho_mu(1,0,0,0);
+    float add_pxz_pyz_pzz0 = pxz+pyz;
+    float add_pxz_pyz_pzz = add_pxz_pyz_pzz0 + pzz;
+    float add_pxz_pyz_pzz_mul_mu = add_pxz_pyz_pzz*rho_mu(1,0,0,0);
 
-    float ytemp0 =(vxx_div_rho - sigmax*px) * *dt;
-    float ytemp3 =(add_pxx_pyx_pxz*rho_mu(1,0,0,0) - sigmax*vx)* *dt;
+    float ytemp0 =(vxx_div_rho - sigmax_mul_px) * *dt;
+    float ytemp3 =(add_pxx_pyx_pxz_mul_mu - sigmax_mul_vx)* *dt;
     
-    float ytemp1 =(vyy_div_rho - sigmay*py)* *dt;
-    float ytemp4 =(add_pxy_pyy_pyz*rho_mu(1,0,0,0) - sigmay*vy)* *dt;
+    float ytemp1 =(vyy_div_rho - sigmay_mul_py)* *dt;
+    float ytemp4 =(add_pxy_pyy_pyz_mul_mu - sigmay_mul_vy)* *dt;
     
-    float ytemp2 =(vzz_div_rho - sigmaz*pz)* *dt;
-    float ytemp5 =(add_pxz_pyz_pzz*rho_mu(1,0,0,0) - sigmaz*vz)* *dt;
+    float ytemp2 =(vzz_div_rho - sigmaz_mul_pz)* *dt;
+    float ytemp5 =(add_pxz_pyz_pzz_mul_mu - sigmaz_mul_vz)* *dt;
+
+    float scale1_ytemp0 = ytemp0 * *scale1;
+    float scale1_ytemp1 = ytemp1 * *scale1;
+    float scale1_ytemp2 = ytemp2 * *scale1;
+    float scale1_ytemp3 = ytemp3 * *scale1;
+    float scale1_ytemp4 = ytemp4 * *scale1;
+    float scale1_ytemp5 = ytemp5 * *scale1;
 
 
+    dyyOut_0_1(0,0,0,0) = yy_0_add_sum_0 + scale1_ytemp0;
+    dyyOut_2_3(1,0,0,0) = yy_3_add_sum_3 + scale1_ytemp3;
+    dyyOut_0_1(1,0,0,0) = yy_1_add_sum_1 + scale1_ytemp1;
+    dyyOut_4_5(0,0,0,0) = yy_4_add_sum_4 + scale1_ytemp4;
+    dyyOut_2_3(0,0,0,0) = yy_2_add_sum_2 + scale1_ytemp2;
+    dyyOut_4_5(1,0,0,0) = yy_5_add_sum_5 + scale1_ytemp5;
 
-
-    dyyOut_0_1(0,0,0,0) = yy_0_1(0,0,0,0) + ytemp0* *scale1;
-    dyyOut_2_3(1,0,0,0) = yy_2_3(1,0,0,0) + ytemp3* *scale1;
-    dyyOut_0_1(1,0,0,0) = yy_0_1(1,0,0,0) + ytemp1* *scale1;
-    dyyOut_4_5(0,0,0,0) = yy_4_5(0,0,0,0) + ytemp4* *scale1;
-    dyyOut_2_3(0,0,0,0) = yy_2_3(0,0,0,0) + ytemp2* *scale1;
-    dyyOut_4_5(1,0,0,0) = yy_4_5(1,0,0,0) + ytemp5* *scale1;
 
     sum_0_1(0,0,0,0) += ytemp0 * *scale2;
     sum_2_3(1,0,0,0) += ytemp3 * *scale2;
@@ -1099,26 +1155,29 @@ void fd3d_pml_kernel3(const int *dispx, const int *dispy, const int *dispz, cons
     int zpmlend=zend-pml_width;
 
     float sigma = rho_mu(1,0,0,0)/rho_mu(0,0,0,0);
+    float sigma_10_percent = sigma * 0.1f;
     float sigmax=0.0;
     float sigmay=0.0;
     float sigmaz=0.0;
+    
     if(idx[0]<=xbeg+pml_width){
-        sigmax = (xbeg+pml_width-idx[0])*sigma * 0.1f;///pml_width;
+
+        sigmax = (xpmlbeg-idx[0])*sigma_10_percent;///pml_width;
     }
-    if(idx[0]>=xend-pml_width){
-        sigmax=(idx[0]-(xend-pml_width))*sigma * 0.1f;///pml_width;
+    else if(idx[0]>=xend-pml_width){
+        sigmax=(idx[0]-xpmlend)*sigma_10_percent;///pml_width;
     }
     if(idx[1]<=ybeg+pml_width){
-        sigmay=(ybeg+pml_width-idx[1])*sigma * 0.1f;///pml_width;
+        sigmay=(ypmlbeg-idx[1])*sigma_10_percent;///pml_width;
     }
-    if(idx[1]>=yend-pml_width){
-        sigmay=(idx[1]-(yend-pml_width))*sigma * 0.1f;///pml_width;
+    else if(idx[1]>=yend-pml_width){
+        sigmay=(idx[1]-ypmlend)*sigma_10_percent;///pml_width;
     }
     if(idx[2]<=zbeg+pml_width){
-        sigmaz=(zbeg+pml_width-idx[2])*sigma * 0.1f;///pml_width;
+        sigmaz=(zpmlbeg-idx[2])*sigma_10_percent;///pml_width;
     }
-    if(idx[2]>=zend-pml_width){
-        sigmaz=(idx[2]-(zend-pml_width))*sigma * 0.1f;///pml_width;
+    else if(idx[2]>=zend-pml_width){
+        sigmaz=(idx[2]-zpmlend)*sigma_10_percent;///pml_width;
     }
 
             //sigmax=0.0;
@@ -1132,6 +1191,20 @@ void fd3d_pml_kernel3(const int *dispx, const int *dispy, const int *dispz, cons
     float vy = dyyIn_4_5(0,0,0,0);
     float vz = dyyIn_4_5(1,0,0,0);
     
+    float yy_0_add_sum_0 = yy_0_1(0,0,0,0) + sum_0_1(0,0,0,0);
+    float yy_1_add_sum_1 = yy_0_1(1,0,0,0) + sum_0_1(1,0,0,0);
+    float yy_2_add_sum_2 = yy_2_3(0,0,0,0) + sum_2_3(0,0,0,0);
+    float yy_3_add_sum_3 = yy_2_3(1,0,0,0) + sum_2_3(1,0,0,0);
+    float yy_4_add_sum_4 = yy_4_5(0,0,0,0) + sum_4_5(0,0,0,0);
+    float yy_5_add_sum_5 = yy_4_5(1,0,0,0) + sum_4_5(1,0,0,0);
+
+    float sigmax_mul_px = sigmax * px;
+    float sigmay_mul_py = sigmay * py;
+    float sigmaz_mul_pz = sigmaz * pz;
+    float sigmax_mul_vx = sigmax * vx;
+    float sigmay_mul_vy = sigmay * vy;
+    float sigmaz_mul_vz = sigmaz * vz;
+
     float vxx=0.0;
     float vxy=0.0;
     float vxz=0.0;
@@ -1562,26 +1635,38 @@ void fd3d_pml_kernel3(const int *dispx, const int *dispy, const int *dispz, cons
     float vyy_div_rho = vyy/rho_mu(0,0,0,0);
     float vzz_div_rho = vzz/rho_mu(0,0,0,0);
 
-    float add_pxx_pyx_pxz = pxx+pyx+pxz;
-    float add_pxy_pyy_pyz = pxy+pyy+pyz;
-    float add_pxz_pyz_pzz = pxz+pyz+pzz;
+    float add_pxx_pyx_pxz0 = pxx+pyx;
+    float add_pxx_pyx_pxz = add_pxx_pyx_pxz0 + pxz;
+    float add_pxx_pyx_pxz_mul_mu = add_pxx_pyx_pxz*rho_mu(1,0,0,0);
+    float add_pxy_pyy_pyz0 = pxy+pyy;
+    float add_pxy_pyy_pyz = add_pxy_pyy_pyz0 + pyz;
+    float add_pxy_pyy_pyz_mul_mu = add_pxy_pyy_pyz*rho_mu(1,0,0,0);
+    float add_pxz_pyz_pzz0 = pxz+pyz;
+    float add_pxz_pyz_pzz = add_pxz_pyz_pzz0 + pzz;
+    float add_pxz_pyz_pzz_mul_mu = add_pxz_pyz_pzz*rho_mu(1,0,0,0);
 
-    float ytemp0 =(vxx_div_rho - sigmax*px) * *dt;
-    float ytemp3 =(add_pxx_pyx_pxz*rho_mu(1,0,0,0) - sigmax*vx)* *dt;
+    float ytemp0 =(vxx_div_rho - sigmax_mul_px) * *dt;
+    float ytemp3 =(add_pxx_pyx_pxz_mul_mu - sigmax_mul_vx)* *dt;
     
-    float ytemp1 =(vyy_div_rho - sigmay*py)* *dt;
-    float ytemp4 =(add_pxy_pyy_pyz*rho_mu(1,0,0,0) - sigmay*vy)* *dt;
+    float ytemp1 =(vyy_div_rho - sigmay_mul_py)* *dt;
+    float ytemp4 =(add_pxy_pyy_pyz_mul_mu - sigmay_mul_vy)* *dt;
     
-    float ytemp2 =(vzz_div_rho - sigmaz*pz)* *dt;
-    float ytemp5 =(add_pxz_pyz_pzz*rho_mu(1,0,0,0) - sigmaz*vz)* *dt;
+    float ytemp2 =(vzz_div_rho - sigmaz_mul_pz)* *dt;
+    float ytemp5 =(add_pxz_pyz_pzz_mul_mu - sigmaz_mul_vz)* *dt;
+
+    float scale2_ytemp0 = ytemp0 * *scale2;
+    float scale2_ytemp1 = ytemp1 * *scale2;
+    float scale2_ytemp2 = ytemp2 * *scale2;
+    float scale2_ytemp3 = ytemp3 * *scale2;
+    float scale2_ytemp4 = ytemp4 * *scale2;
+    float scale2_ytemp5 = ytemp5 * *scale2;
 
 
-
-    dyyOut_0_1(0,0,0,0) = yy_0_1(0,0,0,0) + sum_0_1(0,0,0,0) + ytemp0 * *scale2;
-    dyyOut_2_3(1,0,0,0) = yy_2_3(1,0,0,0) + sum_2_3(1,0,0,0) + ytemp3 * *scale2;
-    dyyOut_0_1(1,0,0,0) = yy_0_1(1,0,0,0) + sum_0_1(1,0,0,0) + ytemp1 * *scale2;
-    dyyOut_4_5(0,0,0,0) = yy_4_5(0,0,0,0) + sum_4_5(0,0,0,0) + ytemp4 * *scale2;
-    dyyOut_2_3(0,0,0,0) = yy_2_3(0,0,0,0) + sum_2_3(0,0,0,0) + ytemp2 * *scale2;
-    dyyOut_4_5(1,0,0,0) = yy_4_5(1,0,0,0) + sum_4_5(1,0,0,0) + ytemp5 * *scale2;
+    dyyOut_0_1(0,0,0,0) = yy_0_add_sum_0 + scale2_ytemp0;
+    dyyOut_2_3(1,0,0,0) = yy_3_add_sum_3 + scale2_ytemp3;
+    dyyOut_0_1(1,0,0,0) = yy_1_add_sum_1 + scale2_ytemp1;
+    dyyOut_4_5(0,0,0,0) = yy_4_add_sum_4 + scale2_ytemp4;
+    dyyOut_2_3(0,0,0,0) = yy_2_add_sum_2 + scale2_ytemp2;
+    dyyOut_4_5(1,0,0,0) = yy_5_add_sum_5 + scale2_ytemp5;
     
 }
