@@ -420,7 +420,7 @@ static void datamover_outerloop_{{ilh.id}}_loopback(
 {
     for (unsigned int i = 0; i < iter; i++)
     {
-        #pragma HLS PIPELINE REWIND
+     //   pragma HLS PIPELINE REWIND
     #ifdef DEBUG_LOG
         printf("[KERNEL_DEBUG]|%s| Calling loopback. i:%d\n", __func__, i);
     #endif
