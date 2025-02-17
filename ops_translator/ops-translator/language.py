@@ -40,7 +40,7 @@ class Lang(Findable):
         pass
 
     @abstractmethod
-    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], app_consts: List[Const], force_soa: bool) -> str:
+    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], app_consts: List[Const], force_soa: bool, offload_pragma_flag_dict = {}) -> str:
         pass
 
     @abstractmethod

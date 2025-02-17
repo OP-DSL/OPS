@@ -197,7 +197,7 @@ contains
     stencil%stencilPtr => null()
 
     ! assume names are /0 terminated - will fix this if needed later
-    stencil%stencilCPtr = ops_decl_stencil_hdf5_c ( mapdims, points, stencilName//C_NULL_CHAR, fileName//C_NULL_CHAR )
+    stencil%stencilCPtr = ops_decl_stencil_hdf5_c ( dims, points, stencilName//C_NULL_CHAR, fileName//C_NULL_CHAR )
 
     ! convert the generated C pointer to Fortran pointer and store it inside the op_map variable
     call c_f_pointer ( stencil%stencilCPtr, stencil%stencilPtr )

@@ -1,5 +1,6 @@
 //Kernels for Laplace demo app
 //
+
 void set_zero(ACC<double> &A) {
   A(0,0) = 0.0;
 }

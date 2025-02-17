@@ -60,6 +60,13 @@ int main(int argc, const char** argv)
 
   ops_partition("");
 
+  // memset
+  int full_range[] = {-1, imax+1, -1, jmax+1};
+  ops_par_loop(set_zero, "set zero", block, 2, full_range,
+      ops_arg_dat(d_A, 1, S2D_00, "double", OPS_WRITE));
+  ops_par_loop(set_zero, "set zero", block, 2, full_range,
+      ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_WRITE));
+
   // set boundary conditions
   int bottom_range[] = {-1, imax+1, -1, 0};
   ops_par_loop(set_zero, "set zero", block, 2, bottom_range,
@@ -97,7 +104,6 @@ int main(int argc, const char** argv)
       ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_WRITE),
       ops_arg_idx());
 
-
   while ( error > tol && iter < iter_max )
   {
     int interior_range[] = {0,imax,0,jmax};
@@ -129,7 +135,7 @@ int main(int argc, const char** argv)
   //Finalising the OPS library
   free(A);
   free(Anew);
-  ops_exit();
+  //ops_exit();
   return 0;
 }
 

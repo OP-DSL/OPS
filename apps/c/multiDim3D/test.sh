@@ -9,7 +9,7 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
 #export DMOS=TRUE
-#export TELOS=TRUE
+export TELOS=TRUE
 #export KOS=TRUE
 
 #<<comment
@@ -88,7 +88,7 @@ rm perf_out
 
 
 #cleanup
-rm multidim.dat*
+rm -rf multidim.dat*
 fi
 echo "All Intel classic complier based applications ---- PASSED"
 
@@ -199,7 +199,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 #cleanup
-rm multidim.dat*
+rm -rf multidim.dat*
 
 echo "All PGI complier based applications ---- PASSED"
 

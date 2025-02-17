@@ -193,7 +193,8 @@ void ops_NaNcheck(ops_dat dat) {
     ops_get_data(dat);
     char buffer[30];
     sprintf(buffer, "On rank %d \t", ops_my_global_rank);
-    ops_NaNcheck_core(dat, buffer);
+    sub_dat *sd = OPS_sub_dat_list[dat->index];
+    ops_NaNcheck_core(dat, buffer, sd->decomp_disp, sd->d_im);
   }
 }
 
@@ -210,7 +211,8 @@ void ops_dat_deep_copy(ops_dat target, ops_dat source) {
       ops_device_free(source->block->instance, (void**)&(target->data_d));
       target->data_d = nullptr;
     }
-    ops_device_malloc(source->block->instance, (void**)&(target->data_d), target->mem);
+    ops_device_malloc(source->block->instance, (void **)&(target->data_d), target->mem);
+    ops_device_memset(source->block->instance, (void **)&(target->data_d), 0, target->mem);
   }
 
   ops_kernel_descriptor *desc = ops_dat_deep_copy_mpi_core(target, source);

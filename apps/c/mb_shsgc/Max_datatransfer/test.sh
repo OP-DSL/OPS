@@ -9,7 +9,7 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
 #export DMOS=TRUE
-#export TELOS=TRUE
+export TELOS=TRUE
 #export KOS=TRUE
 
 if [[ -v TELOS || -v KOS ]]; then
@@ -255,7 +255,7 @@ rm perf_out
 fi
 
 echo '============> Running OMPOFFLOAD'
-./shsgc_offload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+./shsgc_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Pre shock error is:" perf_out
 grep "Post shock error is:" perf_out
 grep "Post shock Error is" perf_out
@@ -265,7 +265,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+OMPOFFLOAD'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_offload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./shsgc_mpi_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Pre shock error is:" perf_out
 grep "Post shock error is:" perf_out
 grep "Post shock Error is" perf_out

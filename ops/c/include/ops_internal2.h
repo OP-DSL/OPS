@@ -212,7 +212,7 @@ OPS_FTN_INTEROP
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name);
 
 void ops_NaNcheck(ops_dat dat);
-void ops_NaNcheck_core(ops_dat dat, char *buffer);
+void ops_NaNcheck_core(ops_dat dat, char *buffer, int *disp, int *d_m);
 
 void ops_timing_realloc(OPS_instance *instance, int, const char *);
 float ops_compute_transfer(int dims, int *start, int *end, ops_arg *arg);
