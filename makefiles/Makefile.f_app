@@ -61,8 +61,28 @@ endif
 
 endif	#ifndef TARGETS
 
-ifneq (,$(filter openacc mpi_openacc mpi_openacc_tiled,$(TARGETS)))
-TARGETS:=$(filter-out openacc mpi_openacc mpi_openacc_tiled,$(TARGETS))
+
+ifneq (,$(filter ompoffload mpi_ompoffload mpi_ompoffload_tiled,$(TARGETS)))
+OTHER_FILES_OFFLOAD := $(patsubst %, %_offload, $(filter-out constants.F90, $(OTHER_FILES))) constants_offload.F90
+endif
+
+ifneq (,$(filter ompoffload mpi_ompoffload mpi_ompoffload_tiled,$(TARGETS)))
+ifeq ($(OPS_COMPILER),gnu)
+TARGETS:=$(filter-out ompoffload mpi_ompoffload mpi_ompoffload_tiled,$(TARGETS))
+endif
+ifeq ($(OPS_COMPILER),intel)
+TARGETS:=$(filter-out ompoffload mpi_ompoffload mpi_ompoffload_tiled,$(TARGETS))
+endif
+ifeq ($(OPS_COMPILER),intel-sycl)
+TARGETS:=$(filter-out ompoffload mpi_ompoffload mpi_ompoffload_tiled,$(TARGETS))
+endif
+endif
+
+ifneq ($(strip $(MPI_INSTALL_PATH)),)
+I_MPI_INC = -I$(MPI_INC)
+L_MPI_LIB = -L$(MPI_LIB)
+else
+I_MPI_INC = $(foreach dir,$(shell $(MPICC) --showme:incdirs),-I$(dir))
 endif
 
 ifneq (,$(filter ompoffload mpi_ompoffload mpi_ompoffload_tiled,$(TARGETS)))

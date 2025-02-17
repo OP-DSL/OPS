@@ -171,7 +171,7 @@ program lowdim
 
     IF (ops_is_root() == 1) THEN
         write(*,'(a)') 'This run is considered PASSED'
-        write(*,'(a,f16.7,a)')  ' completed in ', endTime - startTime, ' seconds'
+        write(*,'(a,f16.7,a)')  ' Max total runtime ', endTime - startTime, ' seconds'
     END IF
 
     call ops_exit( )
