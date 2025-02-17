@@ -373,6 +373,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
       z_step, src->size[0], src->size[1], src->size[2], buf_strides_x,
       buf_strides_y, buf_strides_z, src->type_size, src->dim, OPS_instance::getOPSInstance()->OPS_soa);
   hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipGetLastError());
+  ops_device_sync(OPS_instance::getOPSInstance());
 
   if (!OPS_instance::getOPSInstance()->OPS_gpu_direct)
     hipSafeCall(OPS_instance::getOPSInstance()->ostream(),hipMemcpy(dest, halo_buffer_d, size * sizeof(char),
