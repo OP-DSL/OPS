@@ -107,6 +107,7 @@ class HLS(Target):
         "maxi_offset" : "slave",
         "ops_max_dim" : 3,
         "axis_interconnect_buff_size" : 2048,
+        "hls_interconnect_buff_size" : 10,
         "datamover_mode" : 1,
         "profile" : False,
         "platform" : "",
