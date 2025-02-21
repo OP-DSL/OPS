@@ -46,6 +46,7 @@
 #include <string.h>
 
 #include <hip/hip_runtime.h>
+#include <hip/device_functions.h>
 #include <hip/hip_runtime_api.h>
 
 #include <ops_hip_rt_support.h>

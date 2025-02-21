@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 double dx,dy;
 
@@ -55,9 +56,14 @@ double dx,dy;
 int main(int argc, char **argv)
 {
   /**-------------------------- Initialisation --------------------------**/
+ // Get the number of OpenMP target devices
+ int num_devices = omp_get_num_devices();
+ std::cout << "Number of OpenMP devices available: " << num_devices << "\n";
 
   // OPS initialisation
+  std::cout << "BEFORE INIT";
   ops_init(argc,argv,1);
+  std::cout << "AFTER INIT";
 
 
   //Mesh
@@ -100,6 +106,7 @@ int main(int argc, char **argv)
   ops_decl_const("dy",1,"double",&dy);
 
   //declare blocks
+  ops_printf("Declare block\n");
   ops_block *blocks = (ops_block *)malloc(ngrid_x*ngrid_y*sizeof(ops_block*));
   char buf[50];
   for (int j = 0; j < ngrid_y; j++) {
@@ -110,6 +117,7 @@ int main(int argc, char **argv)
   }
 
   //declare stencils
+  ops_printf("Declare stencil\n");
   int s2D_00[]         = {0,0};
   ops_stencil S2D_00 = ops_decl_stencil( 2, 1, s2D_00, "00");
   int s2D_00_P10_M10_0P1_0M1[]         = {0,0, 1,0, -1,0, 0,1, 0,-1};
@@ -118,6 +126,7 @@ int main(int argc, char **argv)
   ops_reduction red_err = ops_decl_reduction_handle(sizeof(double), "double", "err");
 
   //declare datasets
+  ops_printf("Declare dataset\n");
   int d_p[2] = {1,1}; //max halo depths for the dat in the possitive direction
   int d_m[2] = {-1,-1}; //max halo depths for the dat in the negative direction
   int base[2] = {0,0};
@@ -130,6 +139,7 @@ int main(int argc, char **argv)
   int *sizes = (int*)malloc(2*ngrid_x*ngrid_y*sizeof(int));
   int *disps = (int*)malloc(2*ngrid_x*ngrid_y*sizeof(int));
 
+  ops_printf("Loop Mesh\n");
   for (int j = 0; j < ngrid_y; j++) {
     for (int i = 0; i < ngrid_x; i++) {
       int size[2] = {uniform_size[0], uniform_size[1]};
@@ -161,6 +171,7 @@ int main(int argc, char **argv)
     }
   }*/
 
+  ops_printf("Loop HALO\n");
   ops_halo *halos = (ops_halo *)malloc(2*(ngrid_x*(ngrid_y-1)+(ngrid_x-1)*ngrid_y)*sizeof(ops_halo));
   int off = 0;
   for (int j = 0; j < ngrid_y; j++) {
@@ -190,10 +201,12 @@ int main(int argc, char **argv)
   if (off != 2*(ngrid_x*(ngrid_y-1)+(ngrid_x-1)*ngrid_y)) printf("Something is not right\n");
   ops_halo_group u_halos = ops_decl_halo_group(off,halos);
 
+  ops_printf("Loop Partition\n");
   ops_partition("");
   ops_checkpointing_init("check.h5", 5.0, 0);
 	ops_diagnostic_output();
   /**-------------------------- Computations --------------------------**/
+  ops_printf("Start Computation\n");
 
 
   double ct0, ct1, et0, et1;
@@ -222,6 +235,8 @@ int main(int argc, char **argv)
 
     }
   }
+  
+  ops_printf("Initial Guess\n");
 
   //initial guess 0
   for (int j = 0; j < ngrid_y; j++) {
@@ -239,11 +254,15 @@ int main(int argc, char **argv)
   double it0, it1;
   ops_timers(&ct0, &it0);
 
+
+  ops_printf("Start Iter loop\n");
+
   for (int iter = 0; iter < n_iter; iter++) {
     if (ngrid_x>1 || ngrid_y>1) ops_halo_transfer(u_halos);
     if (iter%itertile == 0) ops_execute(blocks[0]->instance);
 
 
+    ops_printf("Iteration\n");
     for (int j = 0; j < ngrid_y; j++) {
       for (int i = 0; i < ngrid_x; i++) {
         int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
@@ -254,35 +273,39 @@ int main(int argc, char **argv)
       }
     }
 
-		if (non_copy) {
-			for (int j = 0; j < ngrid_y; j++) {
-				for (int i = 0; i < ngrid_x; i++) {
-					int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
-					ops_par_loop(poisson_kernel_stencil, "poisson_kernel_stencil", blocks[i+ngrid_x*j], 2, iter_range,
-							ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00_P10_M10_0P1_0M1, "double", OPS_READ),
-              ops_arg_dat(f[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
-							ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
-				}
-			}
-		} else {
-			for (int j = 0; j < ngrid_y; j++) {
-				for (int i = 0; i < ngrid_x; i++) {
-					int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
-					ops_par_loop(poisson_kernel_update, "poisson_kernel_update", blocks[i+ngrid_x*j], 2, iter_range,
-							ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
-							ops_arg_dat(u[i+ngrid_x*j] , 1, S2D_00, "double", OPS_WRITE));
-				}
-			}
-		}
+    if (non_copy) {
+    	for (int j = 0; j < ngrid_y; j++) {
+    		for (int i = 0; i < ngrid_x; i++) {
+    			int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
+    			ops_par_loop(poisson_kernel_stencil, "poisson_kernel_stencil", blocks[i+ngrid_x*j], 2, iter_range,
+    					ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00_P10_M10_0P1_0M1, "double", OPS_READ),
+                                            ops_arg_dat(f[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
+    					ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
+    		}
+    	}
+    } else {
+    	for (int j = 0; j < ngrid_y; j++) {
+    		for (int i = 0; i < ngrid_x; i++) {
+    			int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
+    			ops_par_loop(poisson_kernel_update, "poisson_kernel_update", blocks[i+ngrid_x*j], 2, iter_range,
+    					ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
+    					ops_arg_dat(u[i+ngrid_x*j] , 1, S2D_00, "double", OPS_WRITE));
+    		}
+    	}
+    }
 //    if (iter == 5) u[0] = ops_dat_copy(u[0]); //TESTING
   }
-	ops_execute(blocks[0]->instance);
+
+  ops_printf("Execute\n");
+  ops_execute(blocks[0]->instance);
+  ops_printf("Timers\n");
   ops_timers(&ct0, &it1);
 
   //ops_print_dat_to_txtfile(u[0], "poisson.dat");
   //ops_print_dat_to_txtfile(ref[0], "poisson.dat");
   //exit(0);
 
+  ops_printf("Error\n");
   double err = 0.0;
   for (int j = 0; j < ngrid_y; j++) {
     for (int i = 0; i < ngrid_x; i++) {
@@ -294,6 +317,7 @@ int main(int argc, char **argv)
     }
   }
 
+  ops_printf("Reduction\n");
   ops_reduction_result(red_err,&err);
 
   ops_timers(&ct1, &et1);

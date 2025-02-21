@@ -794,11 +794,14 @@ void ops_dat_deep_copy(ops_dat target, ops_dat source)
 }
 
 void _ops_init(OPS_instance *instance, const int argc, const char * const argv[], const int diags) {
+  std::cout << "DUMMY SINGLE NODE _ops_init\n";
   ops_init_core(instance, argc, argv, diags);
+  std::cout << "DUMMY SINGLE NODE _ops_init ops_init_core\n";
   ops_init_device(instance, argc, argv, diags);
 }
 
 void ops_init(const int argc, const char *const argv[], const int diags) {
+  std::cout << "DUMMY SINGLE NODE ops_init\n";
   _ops_init(OPS_instance::getOPSInstance(), argc, argv, diags);
 }
 

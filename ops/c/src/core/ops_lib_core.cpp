@@ -251,12 +251,15 @@ extern "C" void ops_set_args(const char *argv) {
 * OPS core functions
 */
 void ops_init_core(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
+  std::cout << "LIB_CORE ops_init_core\n";
   instance->OPS_diags = diags;
+  std::cout << "LIB_CORE ops_init_core diags \n" << diags;
   for (int n = 1; n < argc; n++) {
     _ops_set_args(instance, argv[n]);
   }
 
   /*Initialize the double linked list to hold ops_dats*/
+  std::cout << "LIB_CORE TAILQ_INIT\n";
   TAILQ_INIT(&instance->OPS_dat_list);
 }
 

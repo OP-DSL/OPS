@@ -14,6 +14,11 @@ endif()
 if(CUDAToolkit_FOUND)
   include(OPS_BUILD_CUDA)
 endif()
+# seq with HIP
+if(HIP_FOUND)
+  message(STATUS "Call BUILD_HIP")
+  include(OPS_BUILD_HIP)
+endif()
 # OMPOFFLOAD
 # If the FLAFS are set for the OMPOFFLOAD than we build
 if (OPS_CXXFLAGS_OMPOFFLOAD)

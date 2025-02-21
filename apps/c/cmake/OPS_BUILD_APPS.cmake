@@ -59,6 +59,22 @@ macro(SetAppExe
     if(FLAG_FOUND GREATER -1)
       list(APPEND Defs_Loc "-DOPS_MPI")
     endif()
+    string(FIND ${APP_type} "hip" FLAG_HIP)
+    if(FLAG_HIP GREATER -1)
+      message(STATUS "FLAG ${FLAG_HIP}")
+      message(STATUS "APP_type ${APP_type}")
+      set(MY_HIPCC_OPTIONS "-fPIC -I/opt/rocm/include")
+      message(STATUS "MY_HIPCC_OPTIONS ${MY_HIPCC_OPTIONS}")
+      set(SRC_LIB "${APP_SRC}")
+      set(SRC_EXE "${APP_SRC}")
+      list(FILTER SRC_EXE EXCLUDE REGEX "hip")
+      list(FILTER SRC_LIB INCLUDE REGEX "hip")
+      message(STATUS "SRC for HIP EXE: ${SRC_EXE}")
+      message(STATUS "SRC for HIP LIB: ${SRC_LIB}")
+      set_target_properties(hip::device PROPERTIES INTERFACE_COMPILE_OPTIONS "-fPIC")
+      set_target_properties(hip::device PROPERTIES INTERFACE_LINK_LIBRARIES "hip::host")
+    endif()
+
     #
     if (HDF5_FOUND)
       if(FLAG_FOUND GREATER -1)
@@ -78,14 +94,31 @@ macro(SetAppExe
     #message(STATUS "Defs for ${APP_exe} ${Defs_Loc}")
     #message(STATUS "Links for ${APP_exe} ${Links_Loc}")
     #message(" ")
-    add_executable(${APP_exe} ${APP_SRC})
+    if(FLAG_HIP GREATER -1)
+      message(STATUS "USE HIP_ADD_EXE for ${APP_exe}")
+      message(STATUS "HIP SOURCE ${APP_SRC}")
+      #add_executable(${APP_exe} ${APP_SRC})
+
+      HIP_ADD_EXECUTABLE(${APP_exe} ${APP_SRC}
+                         HIPCC_OPTIONS "${MY_HIPCC_OPTIONS}")
+      set_target_properties(${APP_exe} PROPERTIES LINKER_LANGUAGE HIP)
+      target_include_directories(${APP_exe} PRIVATE ${HIP_PATH}/include/hip)
+      target_include_directories(${APP_exe} PRIVATE ${HIP_PATH}/include)
+    else()
+      add_executable(${APP_exe} ${APP_SRC})
+    endif()
+    message(STATUS "${APP_type} APP_DIR_SRC ${APP_DIR_SRC}")
     target_include_directories(${APP_exe} PRIVATE ${APP_DIR_SRC})
     foreach(Def IN LISTS Defs_Loc)
       target_compile_definitions(${APP_exe} PRIVATE ${Def})
     endforeach()
     foreach(Opt IN LISTS Opts_Loc)
-      target_compile_options(${APP_exe} PRIVATE ${Opt})
+      target_compile_options(${APP_exe} PUBLIC ${Opt})
     endforeach()
+    string(FIND ${APP_type} "ompoffload" FLAG_FOUND)
+    if(FLAG_FOUND GREATER -1)
+      set_target_properties(${APP_exe} PROPERTIES LINK_FLAGS "-fast -target=gpu")
+    endif()
     # Copy the input and forcing the name to be case.in
     #message(STATUS "MY INPUT ${INP}")
     string(FIND "${INP}" "/" position REVERSE)
@@ -123,6 +156,8 @@ macro(
     Trid
     TestDev
     OMPNT)
+
+    message(STATUS "------Build SAMPLE-----------")
 
     # Copy all source and head files into tmp
     file(GLOB CPP "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
@@ -356,7 +391,25 @@ macro(
                   "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
                   "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
       endif()
-    endif()     
+    endif()
+    # HIP    
+    if(HIP_FOUND) 
+      set(APP_TYPE "hip")
+      set(APP_SRC ${OPS} ${OTHERS} 
+                  "${TMP_SOURCE_DIR}/hip/hip_kernels.cpp")
+      set(Links "ops_hip"
+	        "hip::device"
+                "OpenMP::OpenMP_CXX")
+	set(Defs "-D__HIP_PLATFORM_NVIDIA__")
+      # Not sure this should be here: why not on the general nvcc flags? 
+      set(Opts "")
+      # Make sure to use "" for potentially empty inputs
+      message(STATUS "HIP SRC ${APP_SRC} for ${APP_TYPE}")
+      setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+             	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
+	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	        "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+    endif()
     # OMPOFFLOAD
     if(OPS_CXXFLAGS_OMPOFFLOAD)
       set(APP_TYPE "ompoffload")
