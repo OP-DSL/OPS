@@ -295,7 +295,7 @@ public:
     {% endif %}
 
     //  *** data read write boundary definitions ****
-    {% for arg in lh.args|ops_dat|ops_read_or_rw %}
+    /*{% for arg in lh.args|ops_dat|ops_read_or_rw %}
         {% if lh.ndim == 1 %}
             {% set base_offset = widen_read_stencil_desc.widen_stencil.base_point.x - widen_stencil_disc_map[arg.stencil_ptr].widen_stencil.base_point.x %}
         unsigned int arg{{arg.id}}_read_lb_itr = {{base_offset}};
@@ -309,7 +309,18 @@ public:
         unsigned int arg{{arg.id}}_read_lb_itr = {{base_offset}} * stencilConfig.grid_size[0] * stencilConfig.grid_size[1];
         unsigned int arg{{arg.id}}_read_ub_itr = ({{base_offset}} + stencilConfig.grid_size[2]) * stencilConfig.grid_size[1] * stencilConfig.grid_size[0];
         {% endif %}
-    {% endfor %}
+    {% endfor %}*/
+
+    {% if lh.ndim == 1 %}
+        unsigned int read_lb_itr = 0;
+        unsigned int read_ub_itr = stencilConfig.grid_size[0];
+    {% elif lh.ndim == 2 %}
+        unsigned int read_lb_itr = 0;
+        unsigned int read_ub_itr = stencilConfig.grid_size[1] * stencilConfig.grid_size[0];
+    {% else %}
+        unsigned int read_lb_itr = 0;
+        unsigned int read_ub_itr = stencilConfig.grid_size[2] * stencilConfig.grid_size[1] * stencilConfig.grid_size[0];
+    {% endif %}
 
     //  *** Read & write widen temporaries ****
     {% for arg in lh.args|ops_dat %}
@@ -323,7 +334,14 @@ public:
         {{widen_dt_name(arg)}} arg{{arg.id}}_update_val;
         {% endif %}
     {% endfor %}
-
+    {% if config["platform_is_ib_selectable"] %}
+        {% set SIS = true %}
+        {% set SIS_type_count = config["supported_internal_storage"] | length %}
+    // {{SIS_type_count}}
+        {% set SIS_id = [0] %}
+    {% else %}
+        {% set SIS = false %}
+    {% endif %}
     //  *** widen stencil values holder & window buffers ****
     {% for arg in lh.args|ops_dat|ops_read_or_rw %}
 
@@ -338,9 +356,28 @@ public:
         {{widen_dt_name(arg)}} arg{{arg.id}}_{{buffer.name}}[max_depth];
             {% endif %}
             {% if buffer.is_read_write_aligned %}
+                {% if SIS %}
+        #pragma HLS BIND_STORAGE variable = arg{{arg.id}}_{{buffer.name}} type = ram_s2p impl = {{config["supported_internal_storage"][SIS_id[0]]}} latency=2
+                {% else %}
         #pragma HLS BIND_STORAGE variable = arg{{arg.id}}_{{buffer.name}} type = ram_s2p latency=2
+                {% endif %}
             {% else %}
-        #pragma HLS BIND_STORAGE variable = arg{{arg.id}}_{{buffer.name}} type = ram_t2p latency=2
+                {% if SIS %}
+        #pragma HLS BIND_STORAGE variable = arg{{arg.id}}_{{buffer.name}} type = ram_s2p impl = {{config["supported_internal_storage"][SIS_id[0]]}} latency=2
+                {% else %}
+        #pragma HLS BIND_STORAGE variable = arg{{arg.id}}_{{buffer.name}} type = ram_s2p latency=2
+                {% endif %}
+            {% endif %}
+            {% if SIS %}
+                // curr SIS_id = {{SIS_id[0]}}
+                {% if SIS_id[0] == SIS_type_count - 1 %}
+                    {% set _ = SIS_id.pop() %}
+                    {% set _ = SIS_id.append(0) %}
+                {% else %}
+                    {% set _ = SIS_id.pop() %}
+                    {% set _ = SIS_id.append(_ + 1) %}
+                {% endif %}
+                // next SIS_id = {{SIS_id[0]}}
             {% endif %}
         {% endfor %}
 
@@ -368,6 +405,7 @@ public:
         for (unsigned int itr = 0; itr < iter_limit; itr++)
         {
         #pragma HLS PIPELINE II=1
+            unsigned int reg_itr = register_it(itr);
 
             spc_temp_blocking_read:
             {
@@ -393,7 +431,7 @@ public:
                     "{{stencil_name}}_{{buffer_write_idx(buffer)}}: %d, "\
         {% endfor %}
     {% endfor %}
-                    "itr(%d)\n", m_PEId, i, 
+                    "reg_itr(%d)\n", m_PEId, i, 
     {% if lh.ndim > 1 %}
                     j,
     {% endif %}
@@ -406,7 +444,7 @@ public:
                     {{stencil_name}}_{{buffer_write_idx(buffer)}}, 
         {% endfor %}
     {% endfor %}
-                    itr);
+                    reg_itr);
 #endif
                 if (cond_x_terminate)
                     i = 0;
@@ -425,15 +463,19 @@ public:
                     k++;
     {% endif %}
 
-    {% for arg in lh.args|ops_dat|ops_read_or_rw %}
-                bool arg{{arg.id}}_read_cond = (itr < arg{{arg.id}}_read_ub_itr) and (itr >= arg{{arg.id}}_read_lb_itr);
-    {% endfor %}
+    /*{% for arg in lh.args|ops_dat|ops_read_or_rw %}
+                bool arg{{arg.id}}_read_cond = (reg_itr < arg{{arg.id}}_read_ub_itr) and (reg_itr >= arg{{arg.id}}_read_lb_itr);
+    {% endfor %}*/
+                bool read_cond  =  (reg_itr < read_ub_itr) and (reg_itr >= read_lb_itr);
 
+                if (read_cond)
+                {
     {% for arg in lh.args|ops_dat|ops_read_or_rw %}
-                if (arg{{arg.id}}_read_cond)
+                
                     arg{{arg.id}}_read_val = arg{{arg.id}}_rd_buffer.read();
     {% endfor %}
-                
+                }
+
     {% for arg in lh.args|ops_dat|ops_read_or_rw %}
         {% for chain in widen_stencil_disc_map[arg.stencil_ptr].chains %}                
                 {{chainLinkTranform(chain[0], arg, 1)}} = {{chainLinkTranform(chain[1], arg, 0)}};{% endfor %}
@@ -482,7 +524,7 @@ public:
                                 "{{stencil_name}}_{{buffer_write_idx(buffer)}}(%d), "\
                     {% endfor %}
                 {% endfor %}
-                                "itr(%d)\n", m_PEId, i, 
+                                "reg_itr(%d)\n", m_PEId, i, 
                 {% if lh.ndim > 1 %}
                                 j,
                 {% endif %}
@@ -495,7 +537,7 @@ public:
                                 {{stencil_name}}_{{buffer_write_idx(buffer)}}, 
                     {% endfor %}
                 {% endfor %}
-                                itr);
+                                reg_itr);
             
                 printf("[DEBUG][INTERNAL][{{lh.kernel}}_PE_%d] --------------------------------------------------------\n\n", m_PEId);
 

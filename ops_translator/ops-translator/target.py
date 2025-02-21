@@ -107,18 +107,31 @@ class HLS(Target):
         "maxi_offset" : "slave",
         "ops_max_dim" : 3,
         "axis_interconnect_buff_size" : 2048,
+        "hls_interconnect_buff_size" : 10,
         "datamover_mode" : 1,
         "profile" : False,
         "platform" : "",
         "platform_is_multi_slr" : True,
         "platform_is_sb_selectable" : True,
+        "platform_is_ib_selectable" : False,
+        "supported_internal_storage" : []
         }
     platforms = {
         "u280" : {
             "SLR_count" : 3,
             "max_SLR_count" : 3,
             "platform_is_multi_slr" : True,
-            "platform_is_sb_selectable" : True
+            "platform_is_sb_selectable" : True,
+            "platform_is_ib_selectable" : True,
+            "supported_internal_storage" : ["URAM",  "BRAM"]
+        },
+        "u55c" : {
+            "SLR_count" : 3,
+            "max_SLR_count" : 3,
+            "platform_is_multi_slr" : True,
+            "platform_is_sb_selectable" : True,
+            "platform_is_ib_selectable" : True,
+            "supported_internal_storage" : ["URAM",  "BRAM"]
         },
         "vck5000" : {
             "SLR_count" : 1,
