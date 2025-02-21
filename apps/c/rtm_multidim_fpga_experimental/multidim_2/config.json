@@ -1,6 +1,6 @@
 {
     "grouped" : false,
-    "SLR_count" : 1,
+    "SLR_count" : 3,
     "device" : 7,
     "vector_factor" : 1,
     "mem_vector_factor": 4,
@@ -15,7 +15,7 @@
     "num_write_outstanding" : 4,
     "maxi_offset" : "slave",
     "ops_max_dim" : 3,
-    "axis_interconnect_buff_size" : 128,
+    "axis_interconnect_buff_size" : 16,
     "datamover_mode" : 2,
     "platform" : "u280"
 }
