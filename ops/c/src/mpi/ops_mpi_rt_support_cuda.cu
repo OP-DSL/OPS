@@ -362,6 +362,7 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
       z_step, src->size[0], src->size[1], src->size[2], buf_strides_x,
       buf_strides_y, buf_strides_z, src->type_size, src->dim, OPS_instance::getOPSInstance()->OPS_soa);
   cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaGetLastError());
+  ops_device_sync(OPS_instance::getOPSInstance());
 
   if (!OPS_instance::getOPSInstance()->OPS_gpu_direct)
     cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaMemcpy(dest, halo_buffer_d, size * sizeof(char),
@@ -423,6 +424,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
       z_step, dest->size[0], dest->size[1], dest->size[2], buf_strides_x,
       buf_strides_y, buf_strides_z, dest->type_size, dest->dim, OPS_instance::getOPSInstance()->OPS_soa);
   cutilSafeCall(OPS_instance::getOPSInstance()->ostream(),cudaGetLastError());
+  ops_device_sync(OPS_instance::getOPSInstance());
   dest->dirty_hd = 2;
 }
 

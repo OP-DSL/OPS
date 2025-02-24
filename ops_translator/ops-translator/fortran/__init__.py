@@ -137,8 +137,8 @@ class Fortran(Lang):
     use_regex_translator = False
 
     def __init__(self):
-#        with open("constants_list.txt", 'w') as file:
-#            pass
+        #with open("constants_list.txt", 'w') as file:
+        #    pass
         pass
 
     def validate(self, app: Application) -> None:

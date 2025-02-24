@@ -135,7 +135,7 @@ int main(int argc, const char** argv)
   //Finalising the OPS library
   free(A);
   free(Anew);
-  ops_exit();
+  //ops_exit();
   return 0;
 }
 

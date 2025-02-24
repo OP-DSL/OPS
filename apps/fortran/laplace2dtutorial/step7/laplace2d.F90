@@ -196,7 +196,7 @@ program laplace
     call ops_timers( endTime )
     call ops_timing_output()
     if (ops_is_root() == 1) then
-        write(*,'(a,f16.7,a)')  ' completed in ', endTime - startTime, ' seconds'
+        write(*,'(a,f16.7,a)')  ' Max total runtime ', endTime - startTime, ' seconds'
     end if
     call ops_exit( )
 

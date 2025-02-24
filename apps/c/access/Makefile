@@ -20,10 +20,13 @@ OPS_FILES=access.cpp
 
 OPS_GENERATED=access_ops.cpp
 
-OTHER_FILES = fetch_data.cpp
+OTHER_FILES = fetch_data.cu
 
 
 APP=access
 MAIN_SRC=access
+
+# Only support CUDA target
+TARGETS=cuda
 
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app
