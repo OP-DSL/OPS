@@ -435,7 +435,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   size_t full_owned_size = 1;
   for (int d = 0; d < dims; d++) {
     full_owned_size *= (biggest_range[2 * d + 1] - biggest_range[2 * d]);
-		if (instance->OPS_diags>5) printf2(instance,"Proc %d dim %d biggest range %d-%d\n",ops_get_proc(), d, biggest_range[2 * d], biggest_range[2 * d+1]);
+    if (instance->OPS_diags>3) printf2(instance,"Proc %d dim %d biggest range %d-%d\n",ops_get_proc(), d, biggest_range[2 * d], biggest_range[2 * d+1]);
   }
 
   //
@@ -503,6 +503,14 @@ int ops_construct_tile_plan(OPS_instance *instance) {
       if (tile_sizes[0] <= 0 || tile_sizes[1] <= 0 || tile_sizes[2] <= 0)
         tile_sizes[0] = tile_sizes[1] = tile_sizes[2] = -1;
     }
+
+    for (int d = 0; d < dims; d++) {
+      int biggest_range_size = biggest_range[2 * d + 1] - biggest_range[2 * d];
+      if(biggest_range_size < tile_sizes[d]) {
+        tile_sizes[d] = (biggest_range_size/2 == 0) ? 1 : (biggest_range_size/2);
+      }
+    }
+
     if (instance->OPS_diags > 3)
       ops_printf2(instance, "Defaulting to the following tile size: %dx%dx%d\n",
                  tile_sizes[0], tile_sizes[1], tile_sizes[2]);
