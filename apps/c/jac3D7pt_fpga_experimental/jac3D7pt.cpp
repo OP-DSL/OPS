@@ -117,7 +117,7 @@ int main(int argc, const char **argv)
     for (unsigned int bat = 0; bat < batches; bat++)
     {
         std::string name = std::string("batch_") + std::to_string(bat);
-        blocks[bat] = ops_decl_block(2, name.c_str());
+        blocks[bat] = ops_decl_block(3, name.c_str());
     }
 
 
