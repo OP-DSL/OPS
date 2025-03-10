@@ -273,8 +273,12 @@ macro(
     if(${TestDev})
       message(STATUS "Set UP also DEV")
       set(APP_TYPE "dev_seq")
-      set(Links "ops_seq" 
-                "OpenMP::OpenMP_CXX")
+      if (USE_OMP)
+        set(Links "ops_seq" 
+                  "OpenMP::OpenMP_CXX")
+      else ()
+        set(Links "ops_seq")
+      endif()
       # Make sure to use "" for potentially empty inputs
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
          	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
@@ -282,8 +286,12 @@ macro(
 		"${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
       if(MPI_FOUND)
         set(APP_TYPE "dev_mpi")
-        set(Links "ops_mpi" 
-                  "OpenMP::OpenMP_CXX")
+        if (USE_OMP)
+          set(Links "ops_mpi" 
+                    "OpenMP::OpenMP_CXX")
+        else ()
+          set(Links "ops_mpi") 
+        endif()
         setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
           	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
                   "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
@@ -293,8 +301,12 @@ macro(
    
     set(APP_TYPE "seq")
     set(APP_SRC ${OPS} ${OTHERS} "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
-    set(Links "ops_seq" 
-	      "OpenMP::OpenMP_CXX")
+    if (USE_OMP)
+      set(Links "ops_seq" 
+                "OpenMP::OpenMP_CXX")
+    else ()
+      set(Links "ops_seq")
+    endif()
     set(Defs "")
     set(Opts "")
     # Make sure to use "" for potentially empty inputs
@@ -304,41 +316,51 @@ macro(
 	      "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
     if(MPI_FOUND)
       set(APP_TYPE "mpi")
-      set(Links "ops_mpi" 
-	        "OpenMP::OpenMP_CXX")
+      if (USE_OMP)
+        set(Links "ops_mpi" 
+                  "OpenMP::OpenMP_CXX")
+      else ()
+        set(Links "ops_mpi") 
+      endif()
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
         	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
   	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
   	        "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
     endif()
 
-    set(APP_TYPE "openmp")
-    set(APP_SRC ${OPS} ${OTHERS} 
-	        "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
-    set(Links "ops_seq" 
-	      "OpenMP::OpenMP_CXX")
-    set(Defs "")
-    set(Opts "")
-    # Make sure to use "" for potentially empty inputs
-    setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
-	      "${app_dir_c}" "${TMP_SOURCE_DIR}" 
-	      "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-	      "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
-    if(MPI_FOUND)
-      set(APP_TYPE "mpi_openmp")
-      set(Links "ops_mpi" 
-	        "OpenMP::OpenMP_CXX")
+    if (USE_OMP)
+      set(APP_TYPE "openmp")
+      set(APP_SRC ${OPS} ${OTHERS} 
+                  "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
+      set(Links "ops_seq" 
+                "OpenMP::OpenMP_CXX")
+      set(Defs "")
+      set(Opts "")
+      # Make sure to use "" for potentially empty inputs
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
-        	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
-  	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-  	        "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+                "${app_dir_c}" "${TMP_SOURCE_DIR}" 
+                "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+                "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+      if(MPI_FOUND)
+        set(APP_TYPE "mpi_openmp")
+        set(Links "ops_mpi" 
+                  "OpenMP::OpenMP_CXX")
+        setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+          	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
+                  "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+                  "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+      endif()
     endif()
     
     set(APP_TYPE "tiled")
     set(APP_SRC ${OPS} ${OTHERS} 
 	        "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
-    set(Links "ops_seq" 
-	      "OpenMP::OpenMP_CXX")
+    if (USE_OMP)
+      set(Links "ops_seq" 
+                "OpenMP::OpenMP_CXX")
+    else ()
+      set(Links "ops_seq")
+    endif()
     set(Defs "")
     set(Opts "")
     # Make sure to use "" for potentially empty inputs
@@ -348,8 +370,12 @@ macro(
 	      "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
     if(MPI_FOUND)
       set(APP_TYPE "mpi_tiled")
-      set(Links "ops_mpi" 
-	        "OpenMP::OpenMP_CXX")
+      if (USE_OMP)
+        set(Links "ops_mpi" 
+                  "OpenMP::OpenMP_CXX")
+      else ()
+        set(Links "ops_mpi") 
+      endif()
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
         	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
   	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
@@ -360,10 +386,17 @@ macro(
       set(APP_TYPE "cuda")
       set(APP_SRC ${OPS} ${OTHERS} 
                   "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
-      set(Links "ops_cuda"
-	        "CUDA::cudart_static"
-	        "-lcurand"	
-                "OpenMP::OpenMP_CXX")
+      if (USE_OMP)
+        set(Links "ops_cuda"
+                  "CUDA::cudart_static"
+                  "-lcurand"	
+                  "OpenMP::OpenMP_CXX")
+      else ()
+        set(Links "ops_cuda"
+                  "CUDA::cudart_static"
+                  "-lcurand")
+      endif()
+      
       set(Defs "")
       # Not sure this should be here: why not on the general nvcc flags? 
       set(Opts "")
@@ -375,10 +408,16 @@ macro(
       if(MPI_FOUND)
         set(APP_TYPE "mpi_cuda")
         set(Defs "-DMPICH_IGNORE_CXX_SEEK")
-        set(Links "ops_mpi_cuda" 
-	          "CUDA::cudart_static"
-	          "-lcurand"	
-                  "OpenMP::OpenMP_CXX")
+        if (USE_OMP)
+          set(Links "ops_mpi_cuda" 
+	            "CUDA::cudart_static"
+	            "-lcurand"	
+                    "OpenMP::OpenMP_CXX")
+	else()
+          set(Links "ops_mpi_cuda" 
+	            "CUDA::cudart_static"
+	            "-lcurand")	
+	endif()
 	list(APPEND Opts ${MPI_INC_LIST})
         setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
                   "${app_dir_c}" "${TMP_SOURCE_DIR}" 
