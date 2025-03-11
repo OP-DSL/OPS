@@ -1,9 +1,9 @@
 {
     "grouped" : false,
-    "SLR_count" : 3,
+    "SLR_count" : 2,
     "device" : 7,
     "vector_factor" : 1,
-    "mem_vector_factor": 4,
+    "mem_vector_factor": 2,
     "iter_par_factor": 1,
     "stencil_type" : "float",
     "data_width" : 32,
