@@ -2,40 +2,21 @@ import os
 from functools import lru_cache
 from io import StringIO
 from pathlib import Path
-from typing import FrozenSet, List, Optional, Set, Tuple, Any
+from typing import FrozenSet, List, Set, Tuple, Any
 
 import clang.cindex
-
-import pcpp
 
 import cpp.optimizer
 import cpp.parser
 import cpp.translator.program
+import cpp.preprocessor
 import ops
 from language import Lang
-from store import Application, Location, ParseError, Program
+from store import Program
 
 libclang_path = os.getenv("LIBCLANG_PATH")
 if libclang_path is not None:
     clang.cindex.Config.set_library_file(libclang_path)
-
-class Preprocessor(pcpp.Preprocessor):
-    def __init__(self, lexer=None):
-        super(Preprocessor, self).__init__(lexer)
-        self.line_directive = None
-
-    def on_comment(self, tok: str) -> bool:
-        return True
-
-    def on_error(self, file: str, line: int, msg: str) -> None:
-        loc = Location(file, line, 0)
-        raise ParseError(msg, loc)
-
-    def on_include_not_found(self, is_malformed, is_system_include, curdir, includepath) -> None:
-        if is_system_include:
-            raise pcpp.OutputDirective(pcpp.Action.IgnoreAndPassThrough)
-
-        super().on_include_not_found(is_malformed, is_system_include, curdir, includepath)
 
 class Cpp(Lang):
     name = "C++"
@@ -57,7 +38,7 @@ class Cpp(Lang):
         source = path.read_text()
 
         if preprocess:
-            preprocessor = Preprocessor() 
+            preprocessor = cpp.preprocessor.Preprocessor() 
 
             for dir in include_dirs:
                 preprocessor.add_path(str(dir.resolve()))
@@ -74,6 +55,7 @@ class Cpp(Lang):
 
             source_io.seek(0)
             source = source_io.read()
+            
 
         translation_unit = clang.cindex.Index.create().parse(
             path,
