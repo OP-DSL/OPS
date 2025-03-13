@@ -127,7 +127,7 @@ def parseLocation(node: Cursor) -> Location:
 def getLocation(location: Cursor.location) -> Location:
     return Location(location.file.name, location.line, location.column)
 
-def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
+def parseLoops(translation_unit: TranslationUnit, program: Program, isl_directives: Any = None) -> None:
     macros: Dict[Location, str] = {}
     nodes: List[Cursor] = []
     # counter = 0

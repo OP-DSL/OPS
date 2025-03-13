@@ -31,12 +31,13 @@ class Cpp(Lang):
     @lru_cache(maxsize=None)
     def parseFile(
         self, path: Path, include_dirs: FrozenSet[Path], defines: FrozenSet[str], preprocess: bool = False
-        ) -> Tuple[clang.cindex.TranslationUnit, str]:
+        ) -> Tuple[clang.cindex.TranslationUnit, str, Any]:
         args = [f"-I{dir}" for dir in include_dirs]
         args = args + [f"-D{define}" for define in defines]
         args = args +['-std=c++11']
         source = path.read_text()
-
+        isl_directives = None
+        
         if preprocess:
             preprocessor = cpp.preprocessor.Preprocessor() 
 
@@ -50,12 +51,14 @@ class Cpp(Lang):
                 preprocessor.define(define.replace("=", " ", 1))
 
             preprocessor.parse(source, str(path.resolve()))
+                
             source_io = StringIO()
             preprocessor.write(source_io)
 
             source_io.seek(0)
             source = source_io.read()
             
+            isl_directives = preprocessor.get_isl_directives()
 
         translation_unit = clang.cindex.Index.create().parse(
             path,
@@ -70,16 +73,27 @@ class Cpp(Lang):
                 f"{cpp.parser.parseLocation(diagnostic)}: {diagnostic.spelling}"
             )
 
-        return translation_unit, source
+        if isl_directives:
+            return translation_unit, source, isl_directives
+        else:
+            return translation_unit, source 
 
     def parseProgram(self, path: Path, include_dirs: Set[Path], defines: List[str]) -> Program:
         ast, source = self.parseFile(path, frozenset(include_dirs), frozenset(defines))
-        ast_pp, source_pp =  self.parseFile(path, frozenset(include_dirs), frozenset(defines), preprocess = True)
+        ast_pp, source_pp, isl_directives =  self.parseFile(path, frozenset(include_dirs), frozenset(defines), preprocess = True)
 
+        with open("./source_pp.txt", "w") as f:        
+            f.write("=================================================================================")
+            f.write("================================== source PP ====================================")
+            f.write("=================================================================================")
+            f.write(source_pp)
+            f.write("=================================================================================")
+            f.write("=================================================================================")
+            
         # TODO: Find the global ndim programatically
         program = Program(path, ast_pp, source_pp)
 
-        cpp.parser.parseLoops(ast, program)
+        cpp.parser.parseLoops(ast, program, isl_directives)
         cpp.parser.parseMeta(ast_pp.cursor, program)
 
         return program
