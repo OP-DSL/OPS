@@ -98,8 +98,10 @@ class Program:
     path: Path
 
     ast: Any
-    source: str
-
+    ast_pp: Any
+    source_pp: str
+    
+    isl_directives: List[Any] = field(default_factory=list)
     blocks: List[ops.Block] = field(default_factory=list)
     consts: List[ops.Const] = field(default_factory=list)
     stencils: List[ops.Stencil] = field(default_factory=list)
@@ -137,7 +139,6 @@ class Program:
     
     def __str__(self) -> str:
         outString = "\nprogram path=" + str(self.path)  + ",\n"
-        outString += "ast=" + str(self.ast) + ",\n"
         outString += "ndim=" + str(self.ndim) + ",\n"
         outString += "\n---------------------\n"
         outString += "       consts        \n"

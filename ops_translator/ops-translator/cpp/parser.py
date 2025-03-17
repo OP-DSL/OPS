@@ -127,9 +127,17 @@ def parseLocation(node: Cursor) -> Location:
 def getLocation(location: Cursor.location) -> Location:
     return Location(location.file.name, location.line, location.column)
 
-def parseLoops(translation_unit: TranslationUnit, program: Program, isl_directives: Any = None) -> None:
+def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
     macros: Dict[Location, str] = {}
     nodes: List[Cursor] = []
+    isl_directives = program.isl_directives
+    cur_isl_directive_id = None
+    
+    if not isl_directives:
+        isl_directives = None
+    else:
+        cur_isl_directive_id = 0
+        
     # counter = 0
     for node in translation_unit.cursor.get_children():
         # print(f"node {counter}: {node.spelling}")
@@ -150,9 +158,19 @@ def parseLoops(translation_unit: TranslationUnit, program: Program, isl_directiv
     for node in nodes:
         for child in node.walk_preorder(): 
             # print(f"node {node.spelling}: child - {child.spelling}/{child.kind}")  
-            # if child.kind == CursorKind.FOR_STMT:
-            #     print(f"For loop found: {parseLocation(node)}")
-            #     parseForLoop(child)
+            if child.kind == CursorKind.FOR_STMT:
+                print(f"For loop found: {parseLocation(child)}")
+                
+                if isl_directives is None:
+                    break
+    
+                if child.location.line >  isl_directives[cur_isl_directive_id].get_lineno():
+                    print(f"found iter_parloop: {isl_directives[cur_isl_directive_id].get_isl_name()}, param: {isl_directives[cur_isl_directive_id].get_max_iter_param()}")
+                    
+                    if cur_isl_directive_id < len(isl_directives) - 1:
+                        cur_isl_directive_id +=1
+                    else:
+                        isl_directives = None
                 
             if child.kind == CursorKind.CALL_EXPR:
                 parseCall(child, macros, program)

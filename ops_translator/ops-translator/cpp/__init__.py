@@ -36,7 +36,7 @@ class Cpp(Lang):
         args = args + [f"-D{define}" for define in defines]
         args = args +['-std=c++11']
         source = path.read_text()
-        isl_directives = None
+        isl_directives = []
         
         if preprocess:
             preprocessor = cpp.preprocessor.Preprocessor() 
@@ -59,6 +59,8 @@ class Cpp(Lang):
             source = source_io.read()
             
             isl_directives = preprocessor.get_isl_directives()
+        else:
+            isl_directives = None
 
         translation_unit = clang.cindex.Index.create().parse(
             path,
@@ -73,10 +75,10 @@ class Cpp(Lang):
                 f"{cpp.parser.parseLocation(diagnostic)}: {diagnostic.spelling}"
             )
 
-        if isl_directives:
+        if isl_directives is not None:
             return translation_unit, source, isl_directives
         else:
-            return translation_unit, source 
+            return translation_unit, source,  
 
     def parseProgram(self, path: Path, include_dirs: Set[Path], defines: List[str]) -> Program:
         ast, source = self.parseFile(path, frozenset(include_dirs), frozenset(defines))
@@ -90,10 +92,14 @@ class Cpp(Lang):
             f.write("=================================================================================")
             f.write("=================================================================================")
             
+        if isl_directives:
+            for directive in isl_directives:
+                print(directive)
+                
         # TODO: Find the global ndim programatically
-        program = Program(path, ast_pp, source_pp)
+        program = Program(path, ast, ast_pp, source_pp, isl_directives)
 
-        cpp.parser.parseLoops(ast, program, isl_directives)
+        cpp.parser.parseLoops(ast, program)
         cpp.parser.parseMeta(ast_pp.cursor, program)
 
         return program
