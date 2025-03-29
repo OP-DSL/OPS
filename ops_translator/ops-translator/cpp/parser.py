@@ -809,7 +809,7 @@ def parseIterForLoop(node: Cursor, isl_dir: isl_directive, macros: Dict[Location
             parCpyObj = parse_par_copy(child, loop_args, parseLocation(child), macros)
             iterLoop_args.append(parCpyObj)
      
-    iterLoopObj = ops.IterLoop(isl_dir.get_isl_name(), len(program.outerloops), iter, [getLocation(node.extent.start), getLocation(node.extent.end)], iterLoop_args)
+    iterLoopObj = ops.IterLoop(isl_dir.get_isl_name(), len(program.outerloops), isl_dir.get_max_iter_param(), [getLocation(node.extent.start), getLocation(node.extent.end)], iterLoop_args)
     if iterLoopObj.unique_id not in program.uniqueOuterloopMap.keys():
         program.uniqueOuterloopMap[iterLoopObj.unique_id] = len(program.uniqueOuterloopMap.keys())
     
