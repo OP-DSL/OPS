@@ -10,6 +10,7 @@ from util import safeFind, function_name, findIdx #TODO: implement safe find
 import logging
 from math import floor
 from dataclasses import field
+from cpp.preprocessor import isl_directive
 
 def ASTtoString(node: Cursor, indent: str = "", is_last=True, print_lines: Optional[List[str]] = None) -> List[str]:
     if not print_lines:
@@ -47,6 +48,10 @@ def getBinaryOp(node: Cursor) -> Token:
     assert len(children) == 2
     token_offset = len([i for i in children[0].get_tokens()])
     return [i for i in node.get_tokens()][token_offset]
+
+def getUnaryOp(node: Cursor) -> Token:
+    assert node.kind == CursorKind.UNARY_OPERATOR
+    return [i for i in node.get_tokens()][0]
 
 def getAccessorAccessIndices(node: Cursor) -> Optional[Tuple[str, List]]:
     if not node.kind == CursorKind.UNEXPOSED_EXPR:
@@ -167,10 +172,15 @@ def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
                 if child.location.line >  isl_directives[cur_isl_directive_id].get_lineno():
                     print(f"found iter_parloop: {isl_directives[cur_isl_directive_id].get_isl_name()}, param: {isl_directives[cur_isl_directive_id].get_max_iter_param()}")
                     
+                    outerLoop = parseIterForLoop(child, isl_directives[cur_isl_directive_id], macros, program)
+                    program.outerloops.append(outerLoop)
+                    
                     if cur_isl_directive_id < len(isl_directives) - 1:
                         cur_isl_directive_id +=1
                     else:
                         isl_directives = None
+                    
+                    
                 
             if child.kind == CursorKind.CALL_EXPR:
                 parseCall(child, macros, program)
@@ -732,6 +742,80 @@ def parseArgIdx(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[
 
     loop.addArgIdx(loc)
 
+
+def parseIterForLoop(node: Cursor, isl_dir: isl_directive, macros: Dict[Location, str], program: Program)-> ops.IterLoop:
+    if node.kind != CursorKind.FOR_STMT:
+        raise ParseError("The ISL region shuld be a FOR statement", parseLocation(node))
+    lines = ASTtoString(node)
+    
+    print("ISL Region AST")
+    for  l in  lines:
+        print(l)
+    
+    cond_stmt = None
+    init_stmt = None
+    inc_stmt = None
+    comp_stmt = None
+    iterLoop_args = []
+     
+    for child in node.get_children():
+        if child.kind == CursorKind.BINARY_OPERATOR:
+            cond_stmt = child
+        elif child.kind == CursorKind.DECL_STMT:
+            init_stmt = child
+        elif child.kind == CursorKind.UNARY_OPERATOR:
+            inc_stmt = child
+        elif child.kind == CursorKind.COMPOUND_STMT:
+            comp_stmt = child
+    
+    if decend(decend(init_stmt)).kind != CursorKind.INTEGER_LITERAL:
+        raise ParseError("The loop iterator variable should be intialized 0 inside ISL FOR STMT", parseLocation(node))
+    elif parseIntLiteral(decend(decend(init_stmt))) != 0:
+        raise ParseError("Currenty loop iterator supports for ISL FOR STMT with 0 intialization", parseLocation(node))
+    
+    if not getBinaryOp(cond_stmt).spelling == "<":
+        raise ParseError(f"Only the < operator in ISL FOR STMT supported. got {getBinaryOp(cond_stmt).spelling}")
+    
+    #TODO: Fix this check
+    # if inc_stmt == None or not getUnaryOp(inc_stmt).spelling == "++":
+    #     raise ParseError(f"Only supported increament operation in ISL FOR is ++", parseLocation(node))
+    
+    for child in comp_stmt.get_children():
+        if child.kind != CursorKind.UNEXPOSED_EXPR:
+            raise ParseError(f"The ISL FOR STMT only allow ops_par_loop statements")
+
+        out = parseUnexposedFunction(child)
+    
+        if out == None:
+            raise ParseError("Incorrect argument passed to ops_iter_par_loop")
+        else:
+            (name, loop_args) = out
+            
+        if name == "ops_par_loop":
+            loop = parseLoop(child, loop_args, parseLocation(child), macros)
+            loop.iterativeLoopId = len(program.outerloops)
+            
+            iterLoop_args.append(loop)
+            
+            if loop not in program.loops:
+                program.loops.append(loop)
+
+            if program.ndim == None:
+                program.ndim = loop.ndim
+            elif program.ndim < loop.ndim:
+                program.ndim = loop.ndim
+        
+        elif name == "ops_par_copy":
+            parCpyObj = parse_par_copy(child, loop_args, parseLocation(child), macros)
+            iterLoop_args.append(parCpyObj)
+     
+    iterLoopObj = ops.IterLoop(isl_dir.get_isl_name(), len(program.outerloops), iter, [getLocation(node.extent.start), getLocation(node.extent.end)], iterLoop_args)
+    if iterLoopObj.unique_id not in program.uniqueOuterloopMap.keys():
+        program.uniqueOuterloopMap[iterLoopObj.unique_id] = len(program.uniqueOuterloopMap.keys())
+    
+    return iterLoopObj       
+        
+    
 def parseIterLoop(node: Cursor, args: List[Cursor], scope: List[Location], macros: Dict[Location, str], program: Program)-> ops.IterLoop:
     print(f"Found iterLoop: {node.spelling}, scope: (start - {getLocation(node.extent.start)}, end - {getLocation(node.extent.end)}), args: {print([(arg.spelling, arg.kind) for arg in args])}")
     is_iter_literal = args[1].kind == CursorKind.INTEGER_LITERAL
