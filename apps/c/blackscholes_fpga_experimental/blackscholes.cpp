@@ -353,7 +353,7 @@ int main(int argc, const char **argv)
 		auto blackscholes_calc_stop_clk_point = std::chrono::high_resolution_clock::now();
 		main_loop_runtime[bat] = std::chrono::duration<double, std::micro>(blackscholes_calc_stop_clk_point - blackscholes_calc_start_clk_point).count();
     #else
-		main_loop_runtime[bat] = ops_hls_get_execution_runtime<std::chrono::microseconds>(std::string("ops_iter_par_loop_0"));
+		main_loop_runtime[bat] = ops_hls_get_execution_runtime<std::chrono::microseconds>(std::string("isl0"));
     #endif
 #endif  
 }

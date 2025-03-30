@@ -202,7 +202,7 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write_dataflow_region(
     #pragma HLS STREAM variable = arg{{arg.id}}_read_mem_strm depth = 10
             {% if config["vector_factor"] * ilh.dats[arg.dat_id][0].dim < config["mem_vector_factor"] %}
     static ::hls::stream<ap_uint<{{axis_data_width(arg)-}}>> arg{{arg.id}}_read_reduced_mem_strm;
-    #pragma HLS STREAM variable = arg{{arg.id}}_read_reduced_mem_strm8
+    #pragma HLS STREAM variable = arg{{arg.id}}_read_reduced_mem_strm
             {% endif %}
         {% endif %}
         {% if arg is ops_write_or_rw and arg is not read_only_rw %}
