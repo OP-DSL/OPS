@@ -768,9 +768,16 @@ def parseIterForLoop(node: Cursor, isl_dir: isl_directive, macros: Dict[Location
         elif child.kind == CursorKind.COMPOUND_STMT:
             comp_stmt = child
     
-    if decend(decend(init_stmt)).kind != CursorKind.INTEGER_LITERAL:
-        raise ParseError("The loop iterator variable should be intialized 0 inside ISL FOR STMT", parseLocation(node))
-    elif parseIntLiteral(decend(decend(init_stmt))) != 0:
+    init_val_expr = None
+    if decend(decend(init_stmt)).kind == CursorKind.INTEGER_LITERAL:
+        init_val_expr = decend(decend(init_stmt))
+    elif decend(decend(init_stmt)).kind == CursorKind.UNEXPOSED_EXPR \
+            and decend(decend(decend(init_stmt))).kind == CursorKind.INTEGER_LITERAL:
+        init_val_expr = decend(decend(decend(init_stmt)))
+    else:
+        raise ParseError("ISL For loop should be a simple iteration variable with 0 initializer")
+    
+    if parseIntLiteral(init_val_expr) != 0:
         raise ParseError("Currenty loop iterator supports for ISL FOR STMT with 0 intialization", parseLocation(node))
     
     if not getBinaryOp(cond_stmt).spelling == "<":
