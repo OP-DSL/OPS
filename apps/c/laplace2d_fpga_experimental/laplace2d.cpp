@@ -69,7 +69,7 @@ int main(int argc, const char** argv)
     jmax = 100;
     //Size along x
     imax = 100;
-    unsigned int iter_max = 100;
+    unsigned int iter_max = 180;
 
     const char* pch;
     for ( int n = 1; n < argc; n++ )
@@ -253,7 +253,9 @@ int main(int argc, const char** argv)
 		auto main_loop_start_clk_point = std::chrono::high_resolution_clock::now();
 #endif
 
-#ifndef OPS_FPGA
+#ifdef OPS_FPGA
+        #pragma ISL "isl0" iter_max
+#endif
         for (unsigned int i = 0; i < iter_max; i++)
         {
             
@@ -269,20 +271,20 @@ int main(int argc, const char** argv)
             // if(iter % 10 == 0) ops_printf("%5d, %0.6f\n", iter, error);        
             // iter++;
         }
-#else
-        ops_iter_par_loop("ops_iter_par_loop_0", iter_max, 
-            ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
-                ops_arg_dat(d_A,    1, S2D_5pt, "float", OPS_READ),
-                ops_arg_dat(d_Anew, 1, S2D_00, "float", OPS_WRITE)), 
-        ops_par_copy<float>(d_A, d_Anew));
-#endif
+// #else
+//         ops_iter_par_loop("ops_iter_par_loop_0", iter_max, 
+//             ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
+//                 ops_arg_dat(d_A,    1, S2D_5pt, "float", OPS_READ),
+//                 ops_arg_dat(d_Anew, 1, S2D_00, "float", OPS_WRITE)), 
+//         ops_par_copy<float>(d_A, d_Anew));
+// #endif
 
 #ifdef PROFILE
 		auto main_loop_end_clk_point = std::chrono::high_resolution_clock::now();
     #ifndef OPS_FPGA
 		main_loop_runtime[bat] = std::chrono::duration<double, std::micro>(main_loop_end_clk_point - main_loop_start_clk_point).count();
     #else
-        main_loop_runtime[bat] = ops_hls_get_execution_runtime<std::chrono::microseconds>(std::string("ops_iter_par_loop_0"));
+        main_loop_runtime[bat] = ops_hls_get_execution_runtime<std::chrono::microseconds>(std::string("isl0"));
     #endif
 #endif
 
