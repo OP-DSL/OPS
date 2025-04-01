@@ -26,7 +26,6 @@ class isl_directive:
 
 class Preprocessor(pcpp.Preprocessor):
     def __init__(self, lexer=None):
-        print("Custom Preprocessor Enabled")
         super(Preprocessor, self).__init__(lexer)
         self.__iter_parloop_directives = []
         self.line_directive = None
