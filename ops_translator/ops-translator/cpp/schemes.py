@@ -81,15 +81,11 @@ class CppHLS(Scheme):
         app: Application, 
         kernel_idx: int
     ) -> str:
-
-        print ("Range of loop: ", str(loop.range))
-        
+               
         kernel_entities = app.findEntities(loop.kernel, program)
 
         if len(kernel_entities) == 0:
             raise ParseError(f"Unable to find kernel: {loop.kernel}")
-
-        print ("Found loop entity: ", kernel_entities[0])
         
         extracted_entities = ctk.extractDependancies(kernel_entities, app)
         return ctk.writeSource(extracted_entities)

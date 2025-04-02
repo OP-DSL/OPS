@@ -133,6 +133,7 @@ def getLocation(location: Cursor.location) -> Location:
     return Location(location.file.name, location.line, location.column)
 
 def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
+    logging.debug(f"{function_name()}: Starting Parsing")
     macros: Dict[Location, str] = {}
     nodes: List[Cursor] = []
     isl_directives = program.isl_directives
@@ -164,13 +165,13 @@ def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
         for child in node.walk_preorder(): 
             # print(f"node {node.spelling}: child - {child.spelling}/{child.kind}")  
             if child.kind == CursorKind.FOR_STMT:
-                print(f"For loop found: {parseLocation(child)}")
+                logging.debug(f" For loop found: {parseLocation(child)}")
                 
                 if isl_directives is None:
-                    break
+                    logging.debug(f" Not a ISL")
     
-                if child.location.line >  isl_directives[cur_isl_directive_id].get_lineno():
-                    print(f"found iter_parloop: {isl_directives[cur_isl_directive_id].get_isl_name()}, param: {isl_directives[cur_isl_directive_id].get_max_iter_param()}")
+                elif child.location.line >  isl_directives[cur_isl_directive_id].get_lineno():
+                    logging.debug(f" found iter_parloop: {isl_directives[cur_isl_directive_id].get_isl_name()}, param: {isl_directives[cur_isl_directive_id].get_max_iter_param()}")
                     
                     outerLoop = parseIterForLoop(child, isl_directives[cur_isl_directive_id], macros, program)
                     program.outerloops.append(outerLoop)
@@ -178,12 +179,10 @@ def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
                     if cur_isl_directive_id < len(isl_directives) - 1:
                         cur_isl_directive_id +=1
                     else:
-                        isl_directives = None
-                    
-                    
+                        isl_directives = None  
                 
-            if child.kind == CursorKind.CALL_EXPR:
-                parseCall(child, macros, program)
+            # if child.kind == CursorKind.CALL_EXPR:
+            #     parseCall(child, macros, program)
                 
             elif child.kind.is_unexposed():
                 parseCallUnexposed(child, macros, program)
@@ -236,14 +235,6 @@ def parseVariableDeclaration(node: Cursor, macros: Dict[Location, str], program:
         rval_expr = children[1]
             
     elif (node.kind == CursorKind.BINARY_OPERATOR):
-        aststringlist = ASTtoString(node)
-        aststring = ""
-        
-        for line in aststringlist:
-            aststring += line + "\n"
-            
-        logging.debug(f"AST: \n" + aststring)
-
         for child in node.get_children():
             children.append(child)
         
@@ -317,38 +308,39 @@ def parseFunctionCall(node: Cursor) -> Union[Tuple[str, List[Cursor]], None]:
     return (name, args)
 
 
-def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> None:
-    out = parseFunctionCall(node)
+# def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> None:
+#     logging.debug(f"{function_name()} at {parseLocation(node)}")
+#     out = parseFunctionCall(node)
     
-    if out == None:
-        return
+#     if out == None:
+#         return
 
-    (name, args) = out  
-    loc = parseLocation(node)
+#     (name, args) = out  
+#     loc = parseLocation(node)
 
-    if name == "ops_decl_stencil":
-        if len(args) != 4:
-            raise ParseError("ops_decl_stencil need 4 arguments", loc)
+#     if name == "ops_decl_stencil":
+#         if len(args) != 4:
+#             raise ParseError("ops_decl_stencil need 4 arguments", loc)
         
-        print(f"node {node}: {node.spelling}: type: {node.kind}")
-        for arg in args: 
-            if arg.kind == CursorKind.UNEXPOSED_EXPR and arg.get_definition():
-                print(f"|-- argument {arg.spelling}: type: {arg.kind}, definition: {arg.get_definition().kind}, defLoc:{str(parseLocation(arg.get_definition()))}")
-            else:
-                print(f"|-- argument {arg.spelling}: type: {arg.kind}")
+#         # print(f"node {node}: {node.spelling}: type: {node.kind}")
+#         # for arg in args: 
+#         #     if arg.kind == CursorKind.UNEXPOSED_EXPR and arg.get_definition():
+#         #         print(f"|-- argument {arg.spelling}: type: {arg.kind}, definition: {arg.get_definition().kind}, defLoc:{str(parseLocation(arg.get_definition()))}")
+#         #     else:
+#         #         print(f"|-- argument {arg.spelling}: type: {arg.kind}")
 
-    # print(f"node:{node.spelling}, type: {node.type}")
-    ov_node = decend(decend(node))   
+#     # print(f"node:{node.spelling}, type: {node.type}")
+#     ov_node = decend(decend(node))   
     
-    # print (f"node: {name}, ov_node: {ov_node.spelling}, args: {args}") 
-    if not ov_node:
-        return
+#     # print (f"node: {name}, ov_node: {ov_node.spelling}, args: {args}") 
+#     if not ov_node:
+#         return
     
-    name = ov_node.spelling        
-    if name == "ops_iter_par_loop":
-        scope = [getLocation(node.extent.start), getLocation(node.extent.end)]
-        outerLoop = parseIterLoop(node, args, scope, macros, program)
-        program.outerloops.append(outerLoop)
+#     name = ov_node.spelling        
+#     if name == "ops_iter_par_loop":
+#         scope = [getLocation(node.extent.start), getLocation(node.extent.end)]
+#         outerLoop = parseIterLoop(node, args, scope, macros, program)
+#         program.outerloops.append(outerLoop)
         
         
 def parseStencil(name: str, args: List[Cursor], loc: Location, macros: Dict[Location, str], program: Program, vector_factor: int = 1) -> Union[ops.Stencil, None]:
@@ -888,7 +880,7 @@ def parseLoop(loopNode: Cursor, args: List[Cursor], loc: Location, macros: Dict[
     block  = parseIdentifier(args[2])
     range = parseRange(args[4], dim)
 
-    print(f"[DEBUG] kernel={kernel}, name={name}, dim={dim}, block={block}, range={range}\n")
+    logging.debug(f"{function_name()}: kernel={kernel}, name={name}, dim={dim}, block={block}, range={range}\n")
     
     loop = ops.Loop(loopNode, loc, kernel, block, range, dim)
 
