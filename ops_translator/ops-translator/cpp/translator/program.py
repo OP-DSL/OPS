@@ -397,11 +397,11 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
         buffer.update(index, new_call_line)
     
     found_indices = buffer.search_all(r'.*->.*get_raw_pointer.*')
-    print (f"found_indices: {found_indices}")
+    # print (f"found_indices: {found_indices}")
     
     for index in found_indices:
         before, after = buffer.get(index).split("get_raw_pointer", 1)
-        print (f"before: {before}, after: {after}")
+        # print (f"before: {before}, after: {after}")
         loop_indices = [index]
         
         if (after.find(";") == -1):
