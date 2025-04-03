@@ -206,7 +206,7 @@ int main(int argc, const char** argv)
 #endif
 
 #ifdef VERIFICATION
-        ops_print_dat_to_txtfile(d_A, "dataA.txt");
+        // ops_print_dat_to_txtfile(d_A, "dataA.txt");
         ops_memspace memspace = OPS_HOST;
         A = (float*)ops_dat_get_raw_pointer(d_A, 0, S2D_5pt, &memspace);
         Anew = (float*)ops_dat_get_raw_pointer(d_Anew, 0, S2D_5pt, &memspace);

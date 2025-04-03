@@ -230,7 +230,9 @@ int main(int argc, const char **argv)
     // iterative stencil loop
     ops_printf("Launching stencil calculation: %d x %d mesh\n", size[0], size[1]);
 
-#ifndef OPS_FPGA
+#ifdef OPS_FPGA
+    #pragma ISL "isl0" iter_max
+#endif
     for (int iter = 0; iter < iter_max; iter++)
     {
         ops_par_loop(kernel_1_5pt, "stencil5pt_k1", block, 2, internal_range,
@@ -256,33 +258,6 @@ int main(int argc, const char **argv)
                 ops_arg_dat(dat1_2, 1, S2D_00, "float", OPS_READ),
                 ops_arg_dat(dat1, 1, S2D_00, "float", OPS_WRITE));
     }
-#else
-
-    ops_iter_par_loop("ops_iter_par_loop_0", iter_max,
-        ops_par_loop(kernel_1_5pt, "stencil5pt_k1", block, 2, internal_range,
-                ops_arg_dat(dat_a, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat0, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-                ops_arg_dat(dat1, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-                ops_arg_dat(dat2, 1, S2D_00, "float", OPS_WRITE),
-                ops_arg_dat(dat3, 1, S2D_00, "float", OPS_WRITE)),
-        
-        ops_par_loop(kernel_2_1pt, "stencil1pt_k2", block, 2, internal_range,
-                ops_arg_dat(dat_b, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat0, 1, S2D_00_P10_M10_0P1_0M1, "float", OPS_READ),
-                ops_arg_dat(dat2, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat3, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat0_2, 1, S2D_00, "float", OPS_WRITE),
-                ops_arg_dat(dat1_2, 1, S2D_00, "float", OPS_WRITE)),
-
-        ops_par_loop(copy, "copy_2", block, 2, internal_range,
-                ops_arg_dat(dat0_2, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat0, 1, S2D_00, "float", OPS_WRITE)),
-
-        ops_par_loop(copy, "copy_3", block, 2, internal_range,
-                ops_arg_dat(dat1_2, 1, S2D_00, "float", OPS_READ),
-                ops_arg_dat(dat1, 1, S2D_00, "float", OPS_WRITE)));
-#endif
-
     //Final Verification after calc
 #ifdef VERIFICATION
 
