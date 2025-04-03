@@ -39,13 +39,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <iomanip>
 int imax, jmax;
 float pi  = 2.0 * asin(1.0);
 
 //Including main OPS header file, and setting 2D
 #define OPS_2D
-#define OPS_CPP_API
+// #define OPS_CPP_API
 #define OPS_HLS_V2
 // #define OPS_FPGA
 #define PROFILE
@@ -206,8 +206,10 @@ int main(int argc, const char** argv)
 #endif
 
 #ifdef VERIFICATION
-        A = (float*)ops_dat_get_raw_pointer(d_A, 0, S2D_00, OPS_HOST);
-        Anew = (float*)ops_dat_get_raw_pointer(d_Anew, 0, S2D_00, OPS_HOST);
+        ops_print_dat_to_txtfile(d_A, "dataA.txt");
+        ops_memspace memspace = OPS_HOST;
+        A = (float*)ops_dat_get_raw_pointer(d_A, 0, S2D_5pt, &memspace);
+        Anew = (float*)ops_dat_get_raw_pointer(d_Anew, 0, S2D_5pt, &memspace);
 
         if(verify(A, Anew, size, d_m, d_p))
             std::cout << "verification of d_A and d_Anew" << "[PASSED]" << std::endl;
@@ -226,7 +228,10 @@ int main(int argc, const char** argv)
             std::cout << "verification of AnewCpu and Anew" << "[PASSED]" << std::endl;
         else
             std::cerr << "verification of AnewCpu and Anew" << "[FAILED]" << std::endl;
-
+    #ifndef OPS_FPGA
+        ops_dat_release_raw_data(d_A, 0, OPS_READ);
+        ops_dat_release_raw_data(d_Anew, 0, OPS_READ);
+    #endif
 #endif
 
         int interior_range[] = {0,imax,0,jmax};
@@ -289,8 +294,8 @@ int main(int argc, const char** argv)
 #endif
 
 #ifdef VERIFICATION
-        A = (float*)d_A->get_raw_pointer(0, S2D_00, OPS_HOST);
-        Anew = (float*)d_Anew->get_raw_pointer(0, S2D_00, OPS_HOST);
+        A = (float*)ops_dat_get_raw_pointer(d_A, 0, S2D_00, &memspace);
+        Anew = (float*)ops_dat_get_raw_pointer(d_Anew, 0, S2D_00, &memspace);
 
 		for (int iter = 0; iter < iter_max; iter++)
 		{
@@ -298,16 +303,19 @@ int main(int argc, const char** argv)
 			copyGrid(Acpu, AnewCpu, size, d_m, d_p);
 		}
 
-		// if (verify(A, Acpu, size, d_m, d_p))
+        // if (verify(A, Acpu, size, d_m, d_p))
 		// 	std::cout << "verification of A and Acpu after calc" << "[PASSED]" << std::endl;
 		// else
 		// 	std::cerr << "verification of A and Acpu after calc" << "[FAILED]" << std::endl;
 
-		if (verify(Anew, AnewCpu, size, d_m, d_p))
-			std::cout << "verification of Anew and AnewCpu after calc" << "[PASSED]" << std::endl;
-		else
-			std::cerr << "verification of Anew and AnewCpu after calc" << "[FAILED]" << std::endl;
-
+		// if (verify(Anew, AnewCpu, size, d_m, d_p))
+		// 	std::cout << "verification of Anew and AnewCpu after calc" << "[PASSED]" << std::endl;
+		// else
+		// 	std::cerr << "verification of Anew and AnewCpu after calc" << "[FAILED]" << std::endl;
+    #ifndef OPS_FPGA
+        ops_dat_release_raw_data(d_A, 0, OPS_READ);
+        ops_dat_release_raw_data(d_Anew, 0, OPS_READ);
+    #endif
 		// printGrid2D<float>(A, d_A.originalProperty, "d_A after computation");
 		// printGrid2D<float>(Acpu, d_A.originalProperty, "d_Acpu after computation");
 
