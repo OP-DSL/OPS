@@ -319,7 +319,9 @@ int main(int argc, const char **argv)
 		init_runtime[bat] = std::chrono::duration<double, std::micro>(grid_init_stop_clk_point - grid_init_start_clk_point).count();
 		auto blackscholes_calc_start_clk_point = grid_init_stop_clk_point;
 #endif
+#ifdef OPS_FPGA
         #pragma ISL "isl0" calcParam[bat].N
+#endif 
 // #ifndef OPS_FPGA
 		for (int iter = 0 ; iter < calcParam[bat].N; iter++)
 		{
