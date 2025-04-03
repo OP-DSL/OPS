@@ -4,6 +4,7 @@ OPS_GENERATED_SUFFIX=_ops
 endif
 
 OPS_GENERATED=$(join $(addsuffix $(OPS_GENERATED_SUFFIX), $(basename $(OPS_FILES))), $(suffix $(OPS_FILES)))
+OPS_GENERATED_HLS=$(join $(addsuffix $(OPS_GENERATED_SUFFIX)_hls, $(basename $(OPS_FILES))), $(suffix $(OPS_FILES)))
 OPS_FILES_PLAIN=$(OPS_FILES) $(OTHER_FILES)
 OPS_FILES_GEN=$(OPS_GENERATED) $(OTHER_FILES)
 
@@ -36,12 +37,6 @@ ifdef OPS_GENERATOR_DEBUG
 	OPS_GEN_DEBUG=-g
 endif
 
-FPGA_ONLY=
-ifdef OPS_FPGA_ONLY
-	FPGA_ONLY=--fpga
-    DEFINES += -DOPS_FPGA
-endif
-
 OPS_TARGET_CONFIG_JSON=
 ifdef OPS_TARGET_CONFIG_FILE
 	OPS_TARGET_CONFIG_JSON=--config ${OPS_TARGET_CONFIG_FILE}
@@ -54,9 +49,18 @@ DEFINES+= -DOPS_ACC_IGNORE
 	@echo "OPS_EXTENTIONS: ${OPS_GENERATED_SUFFIX}"
 	@echo "OPS_GENERATED: ${OPS_GENERATED}"
 	which python3
-	python3 $(OPS_INSTALL_PATH)/../ops_translator/ops-translator $(VERBOSE) $(DUMP) $(DUMP_AST) $(OPS_GEN_DEBUG) $(FPGA_ONLY) $(OPS_TARGET_CONFIG_JSON) $(DEFINES) -I $(OPS_INSTALL_PATH)/c/include/ --file_paths $(OPS_FILES)
+	python3 $(OPS_INSTALL_PATH)/../ops_translator/ops-translator $(VERBOSE) $(DUMP) $(DUMP_AST) $(OPS_GEN_DEBUG) $(OPS_TARGET_CONFIG_JSON) $(DEFINES) -I $(OPS_INSTALL_PATH)/c/include/ --file_paths $(OPS_FILES)
 	rm -f .generated
 	touch .generated
+
+.generated_hls: $(HEADERS) $(OPS_FILES) $(OPS_INSTALL_PATH)/../ops_translator/ops-translator/*.py
+	@echo "generating translations for ${OPS_FILES}"
+	@echo "OPS_EXTENTIONS: ${OPS_GENERATED_SUFFIX}_hls"
+	@echo "OPS_GENERATED: ${OPS_GENERATED_HLS}"
+	which python3
+	python3 $(OPS_INSTALL_PATH)/../ops_translator/ops-translator $(VERBOSE) $(DUMP) $(DUMP_AST) $(OPS_GEN_DEBUG) --fpga $(OPS_TARGET_CONFIG_JSON) $(DEFINES) -DOPS_FPGA -I $(OPS_INSTALL_PATH)/c/include/ --file_paths $(OPS_FILES)
+	rm -f .generated_hls
+	touch .generated_hls
 
 # check what targets can not be built with current environment setting and give warnings
 ifneq ($(strip $(TARGETS)),)
@@ -101,10 +105,10 @@ endif
 endif
 
 ifneq (,$(filter hls,$(TARGETS)))
-ifndef OPS_FPGA_ONLY
+ifndef XILINX_VITIS
 TARGETS:=$(filter-out hls,$(TARGETS))
 $(info HLS targets cannot be built with current environment settings....)
-$(info Please set the OPS_FPGA_ONLY and relevant environment variables (e.g., PATH, LD_LIBRARY_PATH).)
+$(info Please set the XILINX_VITIS and relevant environment variables (e.g., PATH, LD_LIBRARY_PATH).)
 $(info Build continues without HLS targets.....)
 endif
 endif
@@ -371,7 +375,7 @@ $(APP)_mpi_sycl_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPI
 # HLS version
 #
 
-$(APP)_hls: Makefile .generated
+$(APP)_hls: Makefile .generated_hls
 		@echo "Translation ${APP} HLS completed"
 #=====================================================================================================================================================================
 #
@@ -410,7 +414,7 @@ clean:
 	rm -f $(APP)_mpi_openacc
 	rm -f $(APP)_mpi_openacc_tiled
 	rm -f $(OPS_GENERATED)
-	rm -f .generated constants_list.txt cudafe
+	rm -f .generated constants_list.txt cudafe .generated_hls
 	rm -rf ./mpi_openmp ./cuda ./hip ./openmp_offload ./sycl ./openacc ./hls
 	rm -f *_ops_hls.cpp
 	rm -f ops_translator_run.log
