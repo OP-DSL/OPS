@@ -417,7 +417,7 @@ clean:
 	rm -f .generated constants_list.txt cudafe .generated_hls
 	rm -rf ./mpi_openmp ./cuda ./hip ./openmp_offload ./sycl ./openacc ./hls
 	rm -f *_ops_hls.cpp
-	rm -f ops_translator_run.log
+	rm -f ops_translator_run.log source_pp.txt
 	rm -f xrc.log
 	rm -f *_ast.txt  
 	rm -f *.png
