@@ -108,9 +108,11 @@ def main(argv=None) -> None:
     if len(args.target) == 0:
         if not args.fpga:
             args.target = [[target_name] for target_name in target_names]
+            args.target.remove(["hls"])
         else:
             args.target = [["hls"]]
 
+    print(f"Targets: {args.target}")
     try:
         app = parse(args, lang)
     except ParseError as e:

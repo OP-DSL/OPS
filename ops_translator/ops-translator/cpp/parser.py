@@ -652,14 +652,15 @@ def parseArgDatOpt(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Di
     if len(args) != 6:
         raise ParseError(f"Incorrect number({len(args)}) of args passed to ops_arg_dat_opt", loc)
 
-    dat_ptr = parseIdentifier(args[0])
+    dat_raw_ptr = parseIdentifier(args[0])
+    dat_ptr = parseIdentifier(args[0], raw=False)
     dim = parseIntLiteral(args[1])
     stencil_ptr = parseIdentifier(args[2])
     dat_typ, dat_soa = parseType(parseStringLit(args[3]), loc)
     access_type = parseAccessType(args[4], loc, macros)
     opt = parseIntExpression(args[5])
 
-    loop.addArgDat(loc, dat_ptr, dim, dat_typ, dat_soa, stencil_ptr, access_type, bool(opt))
+    loop.addArgDat(loc, dat_raw_ptr, dat_ptr, dim, dat_typ, dat_soa, stencil_ptr, access_type, bool(opt))
 
 
 def parseArgReduce(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> None:
