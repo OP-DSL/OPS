@@ -4,7 +4,7 @@ import sys
 from store import ParseError, Location
 from typing import List, Any
 from dataclasses import dataclass
-
+import logging
 @dataclass
 class isl_directive:
     dirtoken: Any
@@ -60,19 +60,19 @@ class Preprocessor(pcpp.Preprocessor):
                 self.on_error(directive.source, directive.lineno, f"error in ISL pragma. it got #{len(cleaned_args)} prameters. It should have the name and the total iteration as parameters")
                 
             self.__iter_parloop_directives.append(isl_directive(directive,cleaned_args))
-            print("[PREPROC_DEBUG] %s:%d ISL directive: %s" % (directive.source,directive.lineno,''.join(tok.value for tok in toks[1:])), file = sys.stderr)
+            logging.debug("[PREPROC_DEBUG] %s:%d ISL directive: %s" % (directive.source,directive.lineno,''.join(tok.value for tok in toks[1:])))
             return True
         else:
-            print("[PREPROC_DEBUG] %s:%d unknown directive: %s" % (directive.source,directive.lineno,''.join(tok.value for tok in toks)), file = sys.stderr)
+            logging.debug("[PREPROC_DEBUG] %s:%d unknown directive: %s" % (directive.source,directive.lineno,''.join(tok.value for tok in toks)))
             
         # This section is part of original hook
         if directive.value == 'error':
-            print("%s:%d error: %s" % (directive.source,directive.lineno,''.join(tok.value for tok in toks)), file = sys.stderr)
+            logging.error("[PREPORC] %s:%d: %s" % (directive.source,directive.lineno,''.join(tok.value for tok in toks)))
             self.on_error(directive.source, directive.lineno, f"error directive wit values: {''.join(tok.value for tok in toks)}")
             self.return_code += 1
             return True
         elif directive.value == 'warning':
-            print("%s:%d warning: %s" % (directive.source,directive.lineno,''.join(tok.value for tok in toks)), file = sys.stderr)
+            logging.warning("[PREPORC] %s:%d: %s" % (directive.source,directive.lineno,''.join(tok.value for tok in toks)))
             return True
         return None
     

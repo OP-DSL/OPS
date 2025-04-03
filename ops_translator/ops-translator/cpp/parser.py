@@ -740,9 +740,9 @@ def parseIterForLoop(node: Cursor, isl_dir: isl_directive, macros: Dict[Location
         raise ParseError("The ISL region shuld be a FOR statement", parseLocation(node))
     lines = ASTtoString(node)
     
-    print("ISL Region AST")
+    logging.debug("ISL Region AST")
     for  l in  lines:
-        print(l)
+        logging.debug(l)
     
     cond_stmt = None
     init_stmt = None
@@ -816,7 +816,7 @@ def parseIterForLoop(node: Cursor, isl_dir: isl_directive, macros: Dict[Location
         
     
 def parseIterLoop(node: Cursor, args: List[Cursor], scope: List[Location], macros: Dict[Location, str], program: Program)-> ops.IterLoop:
-    print(f"Found iterLoop: {node.spelling}, scope: (start - {getLocation(node.extent.start)}, end - {getLocation(node.extent.end)}), args: {print([(arg.spelling, arg.kind) for arg in args])}")
+    logging.debug(f"Found iterLoop: {node.spelling}, scope: (start - {getLocation(node.extent.start)}, end - {getLocation(node.extent.end)}), args: {print([(arg.spelling, arg.kind) for arg in args])}")
     is_iter_literal = args[1].kind == CursorKind.INTEGER_LITERAL
     iterLoop_args = []
     unique_name = parseStringLit(args[0])

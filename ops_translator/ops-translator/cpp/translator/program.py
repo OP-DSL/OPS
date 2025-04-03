@@ -372,7 +372,7 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
 
     # 12. get_raw_pointer update
     found_indices = buffer.search_all(r'.*ops_dat_get_raw_pointer.*')
-    print (f"found_indices: {found_indices}")
+    # print (f"found_indices: {found_indices}")
     
     for index in found_indices:
         before, after = buffer.get(index).split("ops_dat_get_raw_pointer", 1)

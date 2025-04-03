@@ -38,9 +38,8 @@ def findCopyPairsInsideKernelCompoundStatement(node: Cursor) -> List[Tuple]:
             if not ops.spelling == "=":
                 continue
             
-            print (f"child kind: {child.kind}, child spelling: {child.spelling}, op: {ops.spelling}")
             operands = [i for i in child.get_children()]
-            print(f"operands: {operands}")
+
             LHS = getAccessorAccessIndices(operands[0])
             RHS = getAccessorAccessIndices(operands[1])
             
@@ -276,10 +275,10 @@ def ISLReadBufferPropagation(original_graph: DataflowGraph_v2, prog: Program, ap
                 continue
             
             if not dat_name in propagation_paths.keys():
-                print(f"not in {dat_name}, node: {df_node.node_uid}|{df_node.loop.kernel}")
+                logging.debug(f"not in {dat_name}, node: {df_node.node_uid}|{df_node.loop.kernel}")
                 continue
             elif not propagation_paths[dat_name][-1] == copy_graph.getStartNodeIdx():
-                print(f"removing in {dat_name}, node: {df_node.node_uid}|{df_node.loop.kernel}")
+                logging.debug(f"removing in {dat_name}, node: {df_node.node_uid}|{df_node.loop.kernel}")
                 # remove edge connecting dat to current node
                 filtered_edges = [(src_id, sink_id, attr) for src_id, sink_id, attr in copy_graph.getInEdgesFromNode(node_uid) if (attr["dat_str"] == dat_name and sink_id == node_uid)]
                 
@@ -289,7 +288,7 @@ def ISLReadBufferPropagation(original_graph: DataflowGraph_v2, prog: Program, ap
                 src_id,sink_id, attr = filtered_edges[0]
                 
                 if not src_id == copy_graph.getStartNodeIdx():
-                    print(f"src id is not start {src_id}, node: {df_node.node_uid}|{df_node.loop.kernel}")
+                    logging.debug(f"src id is not start {src_id}, node: {df_node.node_uid}|{df_node.loop.kernel}")
                     continue
                  
                 copy_graph.addEdge(propagation_paths[dat_name][-1][0], propagation_paths[dat_name][-1][1], dat_name, node_uid, arg.id)
@@ -297,7 +296,7 @@ def ISLReadBufferPropagation(original_graph: DataflowGraph_v2, prog: Program, ap
                 propagation_paths[dat_name].append((node_uid, arg.id)) 
                 
             else:
-                print(f"first read {dat_name}, node: {df_node.node_uid}|{df_node.loop.kernel}")
+                logging.debug(f"first read {dat_name}, node: {df_node.node_uid}|{df_node.loop.kernel}")
                 propagation_paths[dat_name].append((node_uid, arg.id)) 
             
                 

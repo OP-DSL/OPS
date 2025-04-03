@@ -211,7 +211,6 @@ class CppHLS(Scheme):
             if not stencil:
                 raise ParseError(f"Translator failed finding relevent stencil: {stencil_ptr} in program: {str(prog.path)}")
             try:
-                # print(f"re search: {access_raw_indices.group(0)}, eval: {eval(access_raw_indices.group(0))}")
                 if loop.ndim == 1:
                     access_indices = ops.Point(list([eval(access_raw_indices.group(0))]))
                 else:
@@ -264,7 +263,6 @@ class CppHLS(Scheme):
             if not stencil:
                 raise ParseError(f"Translator failed finding relevent stencil: {stencil_ptr} in program: {str(prog.path)}")
             try:
-                print(f"re search: {access_raw_indices.group(0)}, eval: {eval(access_raw_indices.group(0))}")
                 indices = eval(access_raw_indices.group(0))
                 dim_index = indices[0]
                 indices = indices[1:]

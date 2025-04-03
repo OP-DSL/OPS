@@ -91,10 +91,6 @@ class Cpp(Lang):
             f.write(source_pp)
             f.write("=================================================================================")
             f.write("=================================================================================")
-            
-        if isl_directives:
-            for directive in isl_directives:
-                print(directive)
                 
         # TODO: Find the global ndim programatically
         program = Program(path, ast, ast_pp, source_pp, isl_directives)
