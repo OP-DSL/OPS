@@ -234,7 +234,9 @@ int main(int argc, const char **argv)
 #ifdef PROFILE
         auto main_loop_start_clk_point = std::chrono::high_resolution_clock::now();
 #endif
-#ifndef OPS_FPGA
+#ifdef OPS_FPGA
+        #pragma ISL "isl0" iter_max
+#endif
         for (int iter = 0; iter < iter_max; iter++)
         {
             ops_par_loop(jac3D_kernel_stencil, "jac2D_kernel_stencil", blocks[bat], 3, internal_range,
@@ -245,16 +247,7 @@ int main(int argc, const char **argv)
                     ops_arg_dat(u2[bat], 1, S3D_00, "float", OPS_READ),
                     ops_arg_dat(u[bat], 1, S3D_00, "float", OPS_WRITE));
         }
-#else
-        ops_iter_par_loop("ops_iter_par_loop_0", iter_max,
-                        ops_par_loop(jac3D_kernel_stencil, "jac2D_kernel_stencil", blocks[bat], 3, internal_range,
-                    ops_arg_dat(u[bat], 1, S3D_7PT, "float", OPS_READ),
-                    ops_arg_dat(u2[bat], 1, S3D_00, "float", OPS_WRITE)),
-            
-            ops_par_loop(kernel_copy, "kernel_update", blocks[bat], 3, internal_range,
-                    ops_arg_dat(u2[bat], 1, S3D_00, "float", OPS_READ),
-                    ops_arg_dat(u[bat], 1, S3D_00, "float", OPS_WRITE)));
-#endif
+
 #ifdef PROFILE
         auto main_loop_end_clk_point = std::chrono::high_resolution_clock::now();
     #ifndef OPS_FPGA

@@ -281,7 +281,9 @@ int main(int argc, const char** argv)
 #ifdef PROFILE
         auto main_loop_start_clk_point = std::chrono::high_resolution_clock::now();
 #endif
-#ifndef OPS_FPGA
+#ifdef OPS_FPGA
+        #pragma ISL "isl_0" n_iter 
+#endif
         for (int iter = 0; iter < n_iter; iter++) {
 #ifndef OPT_KERNEL
             ops_par_loop(pw_advection_kernel, "fd3d_pml_kernel1", blocks[bat], 3, internal_range,
@@ -307,33 +309,6 @@ int main(int argc, const char** argv)
                     ops_arg_dat(v[bat], 1, S3D_000, "float", OPS_WRITE),
                     ops_arg_dat(w[bat], 1, S3D_000, "float", OPS_WRITE));
         } 
-#else
-        ops_iter_par_loop("ops_iter_par_loop_0", n_iter,
-#ifndef OPT_KERNEL
-            ops_par_loop(pw_advection_kernel, "fd3d_pml_kernel1", blocks[bat], 3, internal_range,
-#else
-            ops_par_loop(pw_advection_opt_kernel, "fd3d_pml_kernel1", blocks[bat], 3, internal_range,
-#endif   
-                                ops_arg_dat(u[bat], 1, S3D_27PT_STEN, "float", OPS_READ),
-                                ops_arg_dat(v[bat], 1, S3D_27PT_STEN, "float", OPS_READ),
-                                ops_arg_dat(w[bat], 1, S3D_27PT_STEN, "float", OPS_READ),
-                                ops_arg_dat(u2[bat], 1, S3D_000, "float", OPS_WRITE),
-                                ops_arg_dat(v2[bat], 1, S3D_000, "float", OPS_WRITE),
-                                ops_arg_dat(w2[bat], 1, S3D_000, "float", OPS_WRITE),
-                                ops_arg_dat(tzc1[bat], 1, S3D_000, "float", OPS_READ),
-                                ops_arg_dat(tzc2[bat], 1, S3D_000, "float", OPS_READ),
-                                ops_arg_dat(tzd1[bat], 1, S3D_000, "float", OPS_READ),
-                                ops_arg_dat(tzd2[bat], 1, S3D_000, "float", OPS_READ)),
-                
-                            ops_par_loop(pw_copy_all, "copy_all_2", blocks[bat],  3 ,  internal_range,
-                                    ops_arg_dat(u2[bat], 1, S3D_000, "float", OPS_READ),
-                                    ops_arg_dat(v2[bat], 1, S3D_000, "float", OPS_READ),
-                                    ops_arg_dat(w2[bat], 1, S3D_000, "float", OPS_READ),
-                                    ops_arg_dat(u[bat], 1, S3D_000, "float", OPS_WRITE),
-                                    ops_arg_dat(v[bat], 1, S3D_000, "float", OPS_WRITE),
-                                    ops_arg_dat(w[bat], 1, S3D_000, "float", OPS_WRITE))
-            );
-#endif
 #ifdef PROFILE
         auto main_loop_end_clk_point = std::chrono::high_resolution_clock::now();
     #ifndef OPS_FPGA

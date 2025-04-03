@@ -267,7 +267,9 @@ int main(int argc, const char** argv)
 
         float param_k = calcParam[bat].K;
 
-#ifndef OPS_FPGA
+#ifdef OPS_FPGA
+        #pragma ISL "isl0" iter_max
+#endif
         for (int iter = 0; iter < iter_max; iter++)
         {
             ops_par_loop(ops_krnl_heat3D, "ops_krnl_heat3D", blocks[bat], 3, interior_range,
@@ -280,15 +282,7 @@ int main(int argc, const char** argv)
                     ops_arg_dat(u[bat], 1, stencil3D_1pt, "float", OPS_WRITE),
                     ops_arg_dat(u2[bat], 1, stencil3D_1pt, "float", OPS_READ));
         }
-#else
-        ops_iter_par_loop("ops_iter_par_loop_0", iter_max,
-            ops_par_loop(ops_krnl_heat3D, "ops_krnl_heat3D", blocks[bat], 3, interior_range,
-                    ops_arg_dat(u2[bat], 1, stencil3D_1pt, "float", OPS_WRITE),
-                    ops_arg_dat(u[bat], 1, stencil3D_7pt, "float", OPS_READ),
-                    ops_arg_gbl(&param_k, 1, "float", OPS_READ),
-                    ops_arg_idx()),
-            ops_par_copy<float>(u[bat], u2[bat]));
-#endif
+
 #ifdef PROFILE
         auto main_loop_end_clk_point = std::chrono::high_resolution_clock::now();
     #ifndef OPS_FPGA

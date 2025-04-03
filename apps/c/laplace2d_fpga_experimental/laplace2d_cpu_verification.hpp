@@ -39,6 +39,31 @@
 #define EPSILON 0.0001
 typedef float stencil_type;
 
+void printGrid(stencil_type * grid_data, int size[2], int d_m[2], int d_p[2], std::string prompt="")
+{
+    std::cout << "----------------------------------------------" << std::endl;
+	std::cout << " [DEBUG] grid values: " << prompt << std::endl;
+	std::cout << "----------------------------------------------" << std::endl;
+    
+    int grid_size_y = size[1] - d_m[1] + d_p[1];
+#ifdef OPS_FPGA
+    int grid_size_x = ((size[0] - d_m[0] + d_p[0] + 16 - 1) / 16) * 16;
+#else
+    int grid_size_x = size[0] - d_m[0] + d_p[0];
+#endif
+
+    for (int j = 0; j < grid_size_y; j++)
+    {
+        for (int i = 0; i < grid_size_x; i++)
+        {
+            int index = j * grid_size_x + i;
+
+            std::cout << std::setw(12) << grid_data[index];
+        }
+        std::cout << std::endl;
+    }
+}
+
 bool verify(stencil_type * grid_data1, stencil_type *  grid_data2, int size[2], int d_m[2], int d_p[2])
 {
     bool passed = true;

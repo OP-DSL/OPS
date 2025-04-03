@@ -108,9 +108,11 @@ def main(argv=None) -> None:
     if len(args.target) == 0:
         if not args.fpga:
             args.target = [[target_name] for target_name in target_names]
+            args.target.remove(["hls"])
         else:
             args.target = [["hls"]]
 
+    print(f"Targets: {args.target}")
     try:
         app = parse(args, lang)
     except ParseError as e:
@@ -172,9 +174,8 @@ def main(argv=None) -> None:
         scheme = Scheme.find((lang, target))
 
         if not scheme:
-            if args.verbose:
-                print(f"No scheme register for {lang}/{target}")
-                logging.warning(f"No scheme register for {lang}/{target}")
+            print(f"No scheme register for {lang}/{target}")
+            logging.warning(f"No scheme register for {lang}/{target}")
             continue
 
         if args.verbose:
@@ -288,12 +289,12 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, target_config: di
                 path = Path(args.out, scheme.target.name, "host", "kernel_wrappers", f"{loop.kernel}_kernel.hpp")                
             else:
                 Path(args.out, scheme.target.name).mkdir(parents=True, exist_ok=True)
-                path = Path(args.out, scheme.target.name, f"{loop.kernel}_kernel.hpp")
+                path = Path(args.out, scheme.target.name, f"{loop.kernel}_kernel.{extension}")
         else:
             if scheme.target.name == "hls":
                 path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel_wrapper.hpp")
             else:
-                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.hpp")
+                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.{extension}")
 
         # Write the gernerated source file
         if not scheme.target.name == "hls" or loop.iterativeLoopId == -1:
@@ -329,7 +330,6 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, target_config: di
 
             logging.debug(f"writing kernel: {loop.kernel} include to {path}")
             
-            print(path)
             # Write the gernerated source file
             with open(path, "w") as file:
                 file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")

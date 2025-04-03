@@ -40,10 +40,10 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_read(
     {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is ops_read_or_rw%}
     static ::hls::stream<ap_uint<mem_data_width>> arg{{arg.id}}_read_mem_strm;
-    #pragma HLS STREAM variable = arg{{arg.id}}_read_mem_strm depth = 10
+    #pragma HLS STREAM variable = arg{{arg.id}}_read_mem_strm
             {% if config["vector_factor"] * ilh.dats[arg.dat_id][0].dim < config["mem_vector_factor"] %}
     static ::hls::stream<ap_uint<{{axis_data_width(arg)-}}>> arg{{arg.id}}_read_reduced_mem_strm;
-    #pragma HLS STREAM variable = arg{{arg.id}}_read_reduced_mem_strm depth = 10
+    #pragma HLS STREAM variable = arg{{arg.id}}_read_reduced_mem_strm
             {% endif %}
         {% endif %}
     {% endfor %}
@@ -116,10 +116,10 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_region_write(
     {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is ops_write_or_rw and arg is not read_only_rw %}
     static ::hls::stream<ap_uint<mem_data_width>> arg{{arg.id}}_write_mem_strm;
-    #pragma HLS STREAM variable = arg{{arg.id}}_write_mem_strm depth = 10
+    #pragma HLS STREAM variable = arg{{arg.id}}_write_mem_strm
             {% if config["vector_factor"] * ilh.dats[arg.dat_id][0].dim < config["mem_vector_factor"] %}
     static ::hls::stream<ap_uint<{{axis_data_width(arg)-}}>> arg{{arg.id}}_write_reduced_mem_strm;
-    #pragma HLS STREAM variable = arg{{arg.id}}_write_reduced_mem_strm depth = 10
+    #pragma HLS STREAM variable = arg{{arg.id}}_write_reduced_mem_strm
             {% endif %}
         {% endif %}
     {% endfor %}
@@ -199,15 +199,15 @@ static void datamover_outerloop_{{ilh.id}}_dataflow_read_write_dataflow_region(
     {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is ops_read_or_rw%}
     static ::hls::stream<ap_uint<mem_data_width>> arg{{arg.id}}_read_mem_strm;
-    #pragma HLS STREAM variable = arg{{arg.id}}_read_mem_strm depth = 10
+    #pragma HLS STREAM variable = arg{{arg.id}}_read_mem_strm
             {% if config["vector_factor"] * ilh.dats[arg.dat_id][0].dim < config["mem_vector_factor"] %}
     static ::hls::stream<ap_uint<{{axis_data_width(arg)-}}>> arg{{arg.id}}_read_reduced_mem_strm;
-    #pragma HLS STREAM variable = arg{{arg.id}}_read_reduced_mem_strm8
+    #pragma HLS STREAM variable = arg{{arg.id}}_read_reduced_mem_strm
             {% endif %}
         {% endif %}
         {% if arg is ops_write_or_rw and arg is not read_only_rw %}
     static ::hls::stream<ap_uint<mem_data_width>> arg{{arg.id}}_write_mem_strm;
-    #pragma HLS STREAM variable = arg{{arg.id}}_write_mem_strm depth = 10
+    #pragma HLS STREAM variable = arg{{arg.id}}_write_mem_strm
             {% if config["vector_factor"] * ilh.dats[arg.dat_id][0].dim < config["mem_vector_factor"] %}
     static ::hls::stream<ap_uint<{{axis_data_width(arg)-}}>> arg{{arg.id}}_write_reduced_mem_strm;
     #pragma HLS STREAM variable = arg{{arg.id}}_write_reduced_mem_strm
@@ -379,7 +379,7 @@ static void datamover_outerloop_{{ilh.id}}_loopback_dataflow_region(
     {% for arg in ilh.joint_args|ops_dat %}
         {% if arg is ops_read or arg is ops_rw %}
     static ::hls::stream<ap_uint<{{axis_data_width(arg)-}}>> arg{{arg.id}}_mem_strm;
-    #pragma HLS STREAM variable = arg{{arg.id}}_mem_strm depth = 10
+    #pragma HLS STREAM variable = arg{{arg.id}}_mem_strm
         {% endif %}
     {% endfor %}
 #pragma HLS DATAFLOW
