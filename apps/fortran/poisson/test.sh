@@ -10,7 +10,9 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 export TELOS=TRUE
 #export KOS=TRUE
 
+if [[ -v TELOS || -v KOS ]]; then
 
+echo '============================ Test Poisson Intel Compilers=========================================================='
 cd $OPS_INSTALL_PATH/fortran
 source ../../scripts/$SOURCE_INTEL
 make
@@ -18,7 +20,6 @@ cd -
 make clean
 make IEEE=1
 
-echo '============================ Test Poisson Intel Compilers=========================================================='
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./poisson_openmp > perf_out
 grep "Total error:" perf_out
@@ -43,14 +44,20 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-cd $OPS_INSTALL_PATH/fortran
+fi
+echo "All Intel classic complier based applications ---- PASSED"
 
+if [[ -v TELOS ]]; then
+
+cd $OPS_INSTALL_PATH/fortran
+#============================ Test with PGI Compilers==========================================
 source ../../scripts/$SOURCE_PGI
-#make clean
-#make
-cd -
 make clean
 make
+cd -
+make clean
+make 
+#poisson_openmp poisson_mpi_openmp poisson_mpi poisson_cuda poisson_mpi_cuda
 
 
 echo '============================ Test Poisson PGI Compilers=========================================================='
@@ -102,4 +109,31 @@ rm perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
 
-echo "All PGI tests passed. Exiting Test script"
+echo '============> Running OMPOFFLOAD'
+./poisson_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Max total runtim" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running MPI+OMPOFFLOAD'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running MPI+OMPOFFLOAD+Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_ompoffload_tiled OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo "All PGI complier based applications ---- PASSED"
+fi
+
+echo "---------- Exiting Test Script "

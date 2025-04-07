@@ -85,6 +85,20 @@ def extract_intrinsic_functions(kernel_func: str):
     return result_string
 
 
+def extract_arglist_fortran(kernel_func: str):
+    start_index = kernel_func.find('(')
+    end_index   = kernel_func.find(')', start_index)
+
+    arguments_str = kernel_func[start_index + 1:end_index]
+
+    arguments_str = arguments_str.replace('&', '')
+
+    # Split the string by ',' to get individual arguments
+    arguments_list = [arg.strip() for arg in arguments_str.split(',')]
+
+    return arguments_list
+
+
 class Findable(ABC):
     """
     A parent abstact class for findable support
@@ -558,3 +572,126 @@ class KernelProcess:
                 const_dims.append(c.dim)
 
         return const_names, const_dims
+
+    def create_replacer_3d(self, array_name, dim1, dim2):
+        def replacer(match):
+            i, j, k = match.groups()
+            return f"{array_name}[({i}-1)+({j}-1)*{dim1}+({k}-1)*{dim1}*{dim2}]"
+        return replacer
+
+    def convert_3d_to_1d_indexing(self, fortrantocpp_code, array_name, dim1, dim2):
+        # Handle simple nested cases with balancing brackets
+        pattern = rf"""
+            \b{re.escape(array_name)}\b  # Match the array name
+            \s*\(\s*                   # Match the opening parenthesis and optional whitespace
+            (                          # First capturing group for i
+                [^(),]+
+                (?:\(.*?\))*           # Allow for simple nested parentheses
+            )\s*,\s*                   # Match a comma with optional whitespace
+            (                          # Second capturing group for j
+                [^(),]+
+                (?:\(.*?\))*
+            )\s*,\s*                   # Match another comma with optional whitespace
+            (                          # Third capturing group for k
+                [^(),]+
+                (?:\(.*?\))*
+            )\s*\)                     # Match closing parenthesis
+        """
+        replacer = self.create_replacer_3d(array_name, dim1, dim2)
+        return re.sub(pattern, replacer, fortrantocpp_code, flags=re.VERBOSE)
+
+    def create_replacer_2d(self, array_name, dim1):
+        def replacer(match):
+            i, j = match.groups()
+            return f"{array_name}[({i}-1)+({j}-1)*{dim1}]"
+        return replacer
+
+    def convert_2d_to_1d_indexing(self, fortrantocpp_code, array_name, dim1):
+        pattern = rf"""
+            \b{re.escape(array_name)}\b  # Match the array name
+            \s*\(\s*                   # Match the opening parenthesis and optional whitespace
+            (                          # First capturing group for i
+                [^(),]+
+                (?:\(.*?\))*
+            )\s*,\s*                   # Match a comma with optional whitespace
+            (                          # Second capturing group for j
+                [^(),]+
+                (?:\(.*?\))*
+            )\s*\)                     # Match closing parenthesis
+        """
+        replacer = self.create_replacer_2d(array_name, dim1)
+        return re.sub(pattern, replacer, fortrantocpp_code, flags=re.VERBOSE)
+
+    # Function to create the replacer for 1D indexing
+    def create_replacer_1d(self, array_name):
+        def replacer(match):
+            index = match.group(1)
+            return f"{array_name}[{index}-1]"
+        return replacer
+
+    # Function to convert 1D indexing
+    def convert_1d_indexing(self, fortrantocpp_code, array_name):
+        # Updated pattern to ensure word boundaries for exact matches
+        #pattern = rf"\b{array_name}\b\s*\(\s*([^,]+)\s*\)"
+        pattern = rf"\b{array_name}\b\s*\(\s*([^\)]+)\s*\)"  # Matches only within the nearest closing parenthesis
+        replacer = self.create_replacer_1d(array_name)
+        return re.sub(pattern, replacer, fortrantocpp_code)
+
+    def create_replacer_zerobase_1d(self, array_name):
+        def replacer(match):
+            index = match.group(1)
+            return f"{array_name}[{index}]"
+        return replacer
+
+    def convert_zerobase_1d_indexing(self, fortrantocpp_code, array_name):
+        # Updated pattern to ensure word boundaries for exact matches
+        #pattern = rf"\b{array_name}\b\s*\(\s*([^,]+)\s*\)"
+        pattern = rf"\b{array_name}\b\s*\(\s*([^\)]+)\s*\)"  # Matches only within the nearest closing parenthesis
+        replacer = self.create_replacer_zerobase_1d(array_name)
+        return re.sub(pattern, replacer, fortrantocpp_code)
+
+    # Function to replace fixed indexing for array_name(n) -> array_name[n-1]
+    def replace_fixed_indexing(self, fortrantocpp_code, array_name):
+        # Regular expression to match exact array_name with specific index
+        pattern = rf"\b{array_name}\b\s*\((\d+)\)"
+        def replacer(match):
+            index = int(match.group(1))
+            return f"{array_name}[{index - 1}]"
+        return re.sub(pattern, replacer, fortrantocpp_code)
+
+    def replace_array_with_pointer(self, fortrantocpp_code, array_name):
+        """
+        Replaces all occurrences of array_name with *array_name in the given code.
+        Ensures exact matches using word boundaries.
+        """
+        pattern = rf"\b{array_name}\b"
+        replacement = f"*{array_name}"
+        return re.sub(pattern, replacement, fortrantocpp_code)
+
+    def replace_array_with_first_element(self, fortrantocpp_code, array_name):
+        """
+        Replaces all occurrences of array_name with array_name[0] in the given code.
+        Ensures exact matches using word boundaries.
+        """
+        pattern = rf"\b{array_name}\b"
+        replacement = f"{array_name}[0]"
+        return re.sub(pattern, replacement, fortrantocpp_code)
+
+    def create_md_replacer(self, array_name):
+        def replacer(match):
+            indices = match.group(1).split(",")
+            if indices: #check if indices is not empty
+                indices[0] = f"{indices[0]}-1"  # Subtract 1 from the FIRST index only
+            return f"{array_name}({','.join(indices)})"
+
+        return replacer
+
+    def convert_muldim_dat_indexing(self, fortrantocpp_code, array_name):
+        pattern = rf"\b{array_name}\b\s*\(\s*(.*?)\s*\)"
+        replacer = self.create_md_replacer(array_name)
+        return re.sub(pattern, replacer, fortrantocpp_code)
+
+    def comment_stdcout(self, kernel_func: str):
+        pattern = r'\bstd::cout\b'
+        # Replace with '//std::cout'
+        return re.sub(pattern, r'//std::cout', kernel_func)

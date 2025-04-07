@@ -36,6 +36,7 @@
 
 program MULTIDIM
   use OPS_Fortran_Reference
+  use OPS_Fortran_hdf5_Declarations
   use OPS_CONSTANTS
 
   use, intrinsic :: ISO_C_BINDING
@@ -132,8 +133,8 @@ program MULTIDIM
                & ops_arg_dat(dat0, 2, S2D_00, "real(kind=8)", OPS_READ), &
                & ops_arg_dat(dat1, 2, S2D_00, "real(kind=8)", OPS_WRITE))
 
-  call ops_par_loop(multidim_print_kernel,"multidim_print_kernel", grid2D, 2, iter_range, &
-               & ops_arg_dat(dat0, 2, S2D_00, "real(kind=8)", OPS_READ))
+!  call ops_par_loop(multidim_print_kernel,"multidim_print_kernel", grid2D, 2, iter_range, &
+!               & ops_arg_dat(dat0, 2, S2D_00, "real(kind=8)", OPS_READ))
 
   call ops_par_loop(multidim_reduce_kernel,"multidim_reduce_kernel", grid2D, 2, iter_range, &
                & ops_arg_dat(dat1, 2, S2D_00, "real(kind=8)", OPS_READ), &
@@ -145,6 +146,11 @@ program MULTIDIM
   call ops_timers ( endTime )
   !call ops_print_dat_to_txtfile(dat1, "multidim.dat")
   !call ops_print_dat_to_txtfile(dat0, "multidim.dat")
+
+  call ops_fetch_block_hdf5_file(grid2D, "multidim.h5")
+  call ops_fetch_dat_hdf5_file(dat0, "multidim.h5")
+  call ops_fetch_dat_hdf5_file(dat1, "multidim.h5")
+
 
   !call ops_timing_output (6) ! where is this printing to ? .. problem in what stdout is in fortran
   if (ops_is_root() .eq. 1) then

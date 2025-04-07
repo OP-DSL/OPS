@@ -9,7 +9,7 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
 #export DMOS=TRUE
-#export TELOS=TRUE
+export TELOS=TRUE
 #export KOS=TRUE
 
 #<<comment
@@ -129,7 +129,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f mblock.out *.h5 data*
 
 echo '============> Running MPI+SYCL on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 10 ./mblock_mpi_sycl OPS_CL_DEVICE=0  > mblock.out
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./mblock_mpi_sycl OPS_CL_DEVICE=0  > mblock.out
 grep "Total Wall time" mblock.out
 grep "PASSED" mblock.out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi

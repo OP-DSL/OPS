@@ -69,7 +69,7 @@ program laplace
     !initialize and declare constants
     imax = 4094
     jmax = 4094
-    pi = 2.0_8*asin(1.0_8)
+!    pi = 2.0_8*asin(1.0_8)
 
 #ifdef OPS_WITH_CUDAFOR
     imax_opsconstant = imax
@@ -85,7 +85,7 @@ program laplace
     top_range      = [0,imax+1,      jmax+1,jmax+1]
     left_range     = [0,0,           0,jmax+1]
     right_range    = [imax+1,imax+1, 0,jmax+1]
-    interior_range = [1,imax,      1,jmax]     
+    interior_range = [1,imax,      1,jmax]
 
     !-----------------------OPS Initialization------------------------
     call ops_init(2)
@@ -196,7 +196,7 @@ program laplace
     call ops_timers( endTime )
     call ops_timing_output()
     if (ops_is_root() == 1) then
-        write(*,'(a,f16.7,a)')  ' completed in ', endTime - startTime, ' seconds'
+        write(*,'(a,f16.7,a)')  ' Max total runtime ', endTime - startTime, ' seconds'
     end if
     call ops_exit( )
 

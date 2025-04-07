@@ -449,10 +449,6 @@ extern "C" int getRange(ops_block block, int *start, int *end, int *range) {
   if (sb->owned) {
     owned = 1;
     for (int n = 0; n < block_dim; n++) {
-      range[2 * n] -= 1;
-      // range[2*n+1] -= 1; -- c indexing end is exclusive so do not reduce
-    }
-    for (int n = 0; n < block_dim; n++) {
       start[n] = sb->decomp_disp[n];
       end[n] = sb->decomp_disp[n] + sb->decomp_size[n];
       if (start[n] >= range[2 * n]) {
@@ -474,7 +470,7 @@ extern "C" int getRange(ops_block block, int *start, int *end, int *range) {
 
     /*revert to Fortran indexing*/
     for (int n = 0; n < block_dim; n++) {
-      range[2 * n] += 1;
+      // range[2 * n] += 1;  -- no need, passed temporary array here
       start[n] += 1;
       // end[n] += 1; -- no need as fortran indexing is inclusive
     }

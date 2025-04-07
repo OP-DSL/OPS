@@ -69,6 +69,7 @@
 /**
  * maximum number of spatial dimensions supported.
  * Can reduce to save on size of metadata
+ * Declared in Fortran side as well, correct the number there if changed from 5
  */
 #define OPS_MAX_DIM 5
 
@@ -526,7 +527,7 @@ struct ops_halo_core {
 typedef ops_halo_core *ops_halo;
 
 /** Storage for OPS halo groups */
-typedef struct {
+typedef struct ops_halo_group_core {
   int nhalos;                     /**< number of halos */
   ops_halo *halos;                /**< list of halos */
   int index;                      /**< index of halo group */

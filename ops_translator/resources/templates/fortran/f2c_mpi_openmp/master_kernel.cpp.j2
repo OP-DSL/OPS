@@ -1,0 +1,62 @@
+{% extends "fortran/master_kernel.cpp.j2" %}
+
+{% block ops_headers %}
+{{super()}}
+
+{% if user_types %}
+#include "user_types.h"
+{% endif %}
+{% endblock %}
+
+{% block const_decls %}
+//  global constants
+    {% for const in app.consts() %}
+    {% if const.dim.isdigit() %}
+        {% set NDIM = const.dim|int %}
+            {% if NDIM > 1 %}
+{{const_c_type[loop.index0]}} {{const.ptr}}[{{NDIM}}];
+            {% else %}
+{{const_c_type[loop.index0]}} {{const.ptr}};
+            {% endif %}
+    {% else %}
+{{const_c_type[loop.index0]}} *{{const.ptr}};
+    {% endif %}
+    {% endfor %}
+
+void ops_init_backend(){}
+
+extern "C"
+void ops_decl_const_f2c(char const *name, int dim, int size, char *dat) {
+    
+    ops_execute(OPS_instance::getOPSInstance());
+
+    {% for const in app.consts() %}
+    if(!strcmp(name, "{{const.name}}")) {
+        {% if const.dim.isdigit() %}
+            {% set NDIM = const.dim|int %}
+                {% if NDIM > 1 %}
+        {{const_c_type[loop.index0]}} *ptr = ({{const_c_type[loop.index0]}} *)dat;
+        for(int i = 0; i < NDIM; i++)
+            {{const.ptr}}[i] = *ptr[i];
+                {% else %}
+        {{const.ptr}} = *({{const_c_type[loop.index0]}} *)dat;
+                {% endif %}
+        {% else %}
+        {{const_c_type[loop.index0]}} *ptr = ({{const_c_type[loop.index0]}} *)dat;
+        for(int i = 0; i < {{const.dim}}; i++)
+            {{const.ptr}}[i] = *ptr[i];
+        {% endif %}
+    }
+    else
+    {% if loop.last %}
+    {
+        throw OPSException(OPS_RUNTIME_ERROR, "error: unknown const name");
+    }
+    {% endif %}
+    {% endfor %}
+}
+{% endblock %}
+
+{% block header_includes %}
+{{super()}}
+{% endblock %}

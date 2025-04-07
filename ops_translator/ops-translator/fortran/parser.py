@@ -163,6 +163,11 @@ def parseCall(node: f2003.Call_Stmt, program: Program, loc: Location) -> None:
         loop = parseLoop(program, args, loc)
         program.loops.append(loop)
 
+        if program.ndim == None:
+            program.ndim = loop.ndim
+        elif program.ndim < loop.ndim:
+            program.ndim = loop.ndim
+
     elif name == "ops_init":
         program.init_flag = True
 

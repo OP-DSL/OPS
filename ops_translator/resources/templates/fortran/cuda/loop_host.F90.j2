@@ -438,11 +438,11 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
 !   Set from kernel descriptor
 !   ==========================
     dim = descPtr%dim
-    CALL c_f_pointer(descPtr%range, range, (/2*dim/))
-    CALL c_f_pointer(descPtr%name, userSubroutine, (/descPtr%name_len/))
+    CALL c_f_pointer(descPtr%range, range, [2*dim])
+    CALL c_f_pointer(descPtr%name, userSubroutine, [descPtr%name_len])
     block%blockCptr = descPtr%block
     CALL c_f_pointer(block%blockCptr, block%blockPtr)
-    CALL c_f_pointer(descPtr%args, opsArgArray, (/descPtr%nargs/))
+    CALL c_f_pointer(descPtr%args, opsArgArray, [descPtr%nargs])
 
 {% for d in range(lh.args | length) %}
     opsArg{{d+1}} = opsArgArray({{d+1}})
@@ -457,7 +457,7 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
     CALL ops_timers_core(t1__)
 
 #if defined(OPS_MPI) && !defined(OPS_LAZY)
-    IF ( getRange(block, start_indx, end_indx, range) < 0 ) THEN
+    IF ( getRange(block, start_indx, end_indx, range, {{lh.ndim}}) < 0 ) THEN
         RETURN
     END IF
 #elif !defined(OPS_MPI)  && !defined(OPS_LAZY)
@@ -497,7 +497,7 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
 
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
-    CALL c_f_pointer(getDatSizeFromOpsArg(opsArg{{arg.id+1}}), dat{{arg.id+1}}_size, (/dim/))
+    CALL c_f_pointer(getDatSizeFromOpsArg(opsArg{{arg.id+1}}), dat{{arg.id+1}}_size, [dim])
         {% if lh.ndim == 1 %}
     xdim{{arg.id+1}} = dat{{arg.id+1}}_size(1)
     opsDat{{arg.id+1}}Cardinality = opsArg{{arg.id+1}}%dim * xdim{{arg.id+1}}
@@ -517,17 +517,17 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
         {% else %}
     dat{{arg.id+1}}_base = getDatBaseFromOpsArg{{lh.ndim}}D(opsArg{{arg.id+1}}, start_indx, 1)
         {% endif %}
-    CALL c_f_pointer(opsArg{{arg.id+1}}%data_d, opsDat{{arg.id+1}}Local, (/opsDat{{arg.id+1}}Cardinality/))
+    CALL c_f_pointer(opsArg{{arg.id+1}}%data_d, opsDat{{arg.id+1}}Local, [opsDat{{arg.id+1}}Cardinality])
     {% elif arg is ops_gbl or arg is ops_reduce %}
     opsDat{{arg.id+1}}Cardinality = opsArg{{arg.id+1}}%dim
         {% if arg is ops_read %}
             {% if arg.dim.isdigit() and arg.dim|int == 1 %}
-    CALL c_f_pointer(opsArg{{arg.id+1}}%data, opsDat{{arg.id+1}}Host, (/opsDat{{arg.id+1}}Cardinality/))
+    CALL c_f_pointer(opsArg{{arg.id+1}}%data, opsDat{{arg.id+1}}Host, [opsDat{{arg.id+1}}Cardinality])
             {% else %}
-    CALL c_f_pointer(opsArgArray({{arg.id+1}})%data_d, opsDat{{arg.id+1}}Host, (/opsDat{{arg.id+1}}Cardinality/))
+    CALL c_f_pointer(opsArgArray({{arg.id+1}})%data_d, opsDat{{arg.id+1}}Host, [opsDat{{arg.id+1}}Cardinality])
             {% endif %}
         {% elif arg is ops_inc or arg is ops_min or arg is ops_max %}
-    CALL c_f_pointer(getReductionPtrFromOpsArg(opsArg{{arg.id+1}},block), opsDat{{arg.id+1}}Host, (/opsDat{{arg.id+1}}Cardinality/))
+    CALL c_f_pointer(getReductionPtrFromOpsArg(opsArg{{arg.id+1}},block), opsDat{{arg.id+1}}Host, [opsDat{{arg.id+1}}Cardinality])
         {% endif %}
     {% endif %}
 
@@ -675,8 +675,7 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
 !   ==============
 #ifndef OPS_LAZY
     CALL ops_H_D_exchanges_device(opsArgArray, {{lh.args|length}})
-    CALL ops_halo_exchanges(opsArgArray, {{lh.args|length}}, range)
-    CALL ops_H_D_exchanges_device(opsArgArray, {{lh.args|length}})
+    CALL ops_halo_exchanges(opsArgArray, {{lh.args|length}}, range, {{lh.ndim}})
 #endif
 
     CALL ops_timers_core(t2__)
@@ -759,7 +758,7 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
     CALL ops_set_dirtybit_device(opsArgArray, {{lh.args|length}})
 {% for arg in lh.args %}
     {% if arg is ops_dat and (arg is ops_write or arg is ops_rw or arg is ops_inc) %}
-    CALL ops_set_halo_dirtybit3(opsArg{{arg.id+1}}, range)
+    CALL ops_set_halo_dirtybit3(opsArg{{arg.id+1}}, range, {{lh.ndim}})
     {% endif %}
 {% endfor %}
 #endif

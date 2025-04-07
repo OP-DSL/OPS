@@ -327,7 +327,9 @@ class Loop:
     isGblRead: Optional[bool] = False
     isGblReadMDIM: Optional[bool] = False
     has_reduction: Optional[bool] = False
+    has_reductionMDIM: Optional[bool] = False
     has_argGbl: Optional[bool] = False
+    f2c_type: Optional[List[str]]
 
     def __init__(self, loc: Location, kernel: str, block: Block, range: Range, ndim: int) -> None:
         self.loc = loc
@@ -339,6 +341,7 @@ class Loop:
         self.dats = []
         self.args = []
         self.stencils = []
+        self.f2c_type = []
 
     def addArgDat(
         self,
@@ -414,6 +417,10 @@ class Loop:
 
         if not self.has_reduction:
             self.has_reduction = True
+
+        if dim > 1:
+            if not self.has_reductionMDIM:
+                has_reductionMDIM = True
 
         arg = ArgReduce(arg_id, loc, access_type, reduct_handle, dim, typ)
         self.args.append(arg)
