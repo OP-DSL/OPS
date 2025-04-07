@@ -11,6 +11,9 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.cuda
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
 include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hdf5
 
+PLATFORM=xilinx_u280_gen3x16_xdma_1_202211_1
+HLS_TARGET_MODE=sw_emu
+include $(OPS_INSTALL_PATH)/../makefiles/Makefile_hls.mk
 
 HEADERS=laplace_kernels.h
 
