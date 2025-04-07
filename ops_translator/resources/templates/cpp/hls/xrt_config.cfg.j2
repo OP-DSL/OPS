@@ -1,9 +1,7 @@
 [connectivity]
 {% for ilh, program in app.uniqueOuterLoops() %}
     {% for slr_id in range(config["SLR_count"]) %}
-        {% if not loop.first %}
 nk=kernel_outerloop_{{ilh.id}}:1:kernel_outerloop_{{ilh.id}}_{{slr_id+1}}
-        {% endif %}
     {% endfor %}
 {% endfor %}
 
