@@ -52,9 +52,10 @@
 #define OPS_1D
 #define OPS_HLS_V2
 // #define OPS_FPGA
-#define VERIFICATION
+// #define VERIFICATION
 #define DEBUG_VERBOSE
 #define PROFILE
+#include "ops_lib_core.h"
 #include <ops_seq_v2.h>
 #include "blackscholes_kernels.h"
 
@@ -104,9 +105,13 @@ int main(int argc, const char **argv)
 	gridProp.act_size_y = 1;
 
 	//padding each row as multiple of vectorization factor
+#ifdef OPS_FPGA
 	gridProp.grid_size_x = (gridProp.act_size_x % mem_vector_factor) != 0 ?
 			(gridProp.act_size_x/mem_vector_factor + 1) * mem_vector_factor :
 			gridProp.act_size_x;
+#else
+gridProp.grid_size_x = gridProp.act_size_x;
+#endif
 	gridProp.grid_size_y = gridProp.act_size_y;
 
 	//allocating memory buffer
