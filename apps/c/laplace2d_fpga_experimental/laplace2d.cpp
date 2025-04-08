@@ -49,7 +49,7 @@ float pi  = 2.0 * asin(1.0);
 #define OPS_HLS_V2
 // #define OPS_FPGA
 #define PROFILE
-#define VERIFICATION
+// #define VERIFICATION
 #include <ops_seq_v2.h>
 //Including applicaiton-specific "user kernels"
 #include "laplace_kernels.h"
@@ -99,6 +99,17 @@ int main(int argc, const char** argv)
 #ifdef PROFILE
 	double init_runtime[batches];
 	double main_loop_runtime[batches];
+
+    std::string profile_filename = "perf_profile.csv";
+
+    std::ofstream fstream;
+    fstream.open(profile_filename, std::ios::out | std::ios::trunc);
+
+    if (!fstream.is_open()) {
+        std::cerr << "Error: Could not open the file " << profile_filename << std::endl;
+        return 1; // Indicate an error occurred
+    }
+
 #endif
 
     for (unsigned int bat = 0; bat < batches; bat++)
@@ -357,8 +368,12 @@ int main(int argc, const char** argv)
 	double init_std = 0;
 	double total_std = 0;
 
+    fstream << "grid_x," << "grid_y," << "grid_z," << "iters," << "batch_size," << "batch_id," << "init_time," << "main_time," << "total_time" << std::endl; 
+
 	for (unsigned int bat = 0; bat < batches; bat++)
 	{
+        fstream << imax << "," << jmax << "," << 1 << "," << iter_max << "," << 1 << "," << bat << "," << init_runtime[bat] \
+                << "," << main_loop_runtime[bat] << "," << main_loop_runtime[bat] + init_runtime[bat] << std::endl;
 		std::cout << "run: "<< bat << "| total runtime: " << main_loop_runtime[bat] + init_runtime[bat] << "(us)" << std::endl;
 		std::cout << "     |--> init runtime: " << init_runtime[bat] << "(us)" << std::endl;
 		std::cout << "     |--> main loop runtime: " << main_loop_runtime[bat] << "(us)" << std::endl;
@@ -409,7 +424,14 @@ int main(int argc, const char** argv)
 	std::cout << "Standard Deviation total: " << total_std << std::endl;
 	std::cout << "======================================================" << std::endl;
 #endif
+    fstream.close();
 
+    if (fstream.good()) { // Check if operations were successful after closing
+        std::cout << "Successfully wrote data to " << profile_filename << std::endl;
+    } else {
+            std::cerr << "Error occurred during writing to " << profile_filename << std::endl;
+            return 1; // Indicate an error occurred
+    }
     ops_exit();
 
     std::cout << "Exit properly" << std::endl;

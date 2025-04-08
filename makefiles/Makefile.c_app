@@ -34,7 +34,7 @@ ifdef OPS_DUMP_AST
 endif
 
 OPS_GEN_DEBUG=
-ifdef OPS_GENERATOR_DEBUG
+ifdef OPS_GENERATOR_LOG_DEBUG
 	OPS_GEN_DEBUG=-g
 endif
 
@@ -408,6 +408,15 @@ $(APP)_hls: Makefile .generated_hls ./hls/build/$(HLS_TARGET_MODE)/$(APP)_host .
 		done
 		$(VPP) --target $(HLS_TARGET_MODE) --platform $(PLATFORM) --temp_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/link/ --log_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/link/logs/ --link --config hls/host/xrt.cfg -o"$@" ${patsubst %.cpp, %.xo, ${patsubst ./hls/device/src/%, ./hls/build/$(HLS_TARGET_MODE)/%, $(shell ls ./hls/device/src/*.cpp)}}
 
+.PHONY: build_hls_host
+build_hls_host: 
+	rm -f ./hls/build/$(HLS_TARGET_MODE)/$(APP)_host
+	make ./hls/build/$(HLS_TARGET_MODE)/$(APP)_host
+
+.PHONY: run_hls_app
+run_hls_app:
+	bash ./run_script_hls.sh $(HLS_TARGET_MODE) $(APP)
+	
 # hls/build/$(HLS_TARGET_MODE)/%.xo: ./hls/device/src/%.cpp
 # 		@echo ""
 # 		@echo ""
