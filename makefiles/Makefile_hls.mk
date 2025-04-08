@@ -41,13 +41,15 @@ else
 $(error hls build mode is not set: please set HLS_TARGET_MODE=<sw_emu/hw_emu/hw>)
 endif
 
+# Set remote IP Cache for faster compilation 
+HLS_IP_CACHE_DIR = $(OPS_INSTALL_PATH)/hls/IP_CACHE/
 # OPS include paths
 OPS_HLS_DEVICE_INC = -I$(OPS_INSTALL_PATH)/hls/include/device/ -I$(OPS_INSTALL_PATH)/hls/L1/include/
 OPS_HLS_HOST_INC = -I$(OPS_INSTALL_PATH)/c/include/ -I$(OPS_INSTALL_PATH)/hls/include/host/ -I$(OPS_INSTALL_PATH)/hls/ext/xcl2/ -I$(OPS_INSTALL_PATH)/hls/L1/include/ -I$(OPS_INSTALL_PATH)/hls/L2/include/
 
 
 VPP=v++
-VPP_FLAGS= --target $(HLS_TARGET_MODE) --platform $(PLATFORM) --hls.jobs $(HLS_JOBS)
+VPP_FLAGS= --target $(HLS_TARGET_MODE) --platform $(PLATFORM) --hls.jobs $(HLS_JOBS) --remote_ip_cache $(HLS_IP_CACHE_DIR)
 HLS_LDFLAGS= -lxilinxopencl -lops_seq -lops_hls -lpthread -lrt -lstdc++ -L$(XILINX_XRT)/lib/ -L$(OPS_INSTALL_PATH)/hls/lib/$(OPS_COMPILER)/ -Wl,-rpath-link,$(XILINX_XRT)/lib 
 HLS_CXXFLAGS= -I$(XILINX_XRT)/include/ -I$(XILINX_VIVADO)/include/ -DVITIS_PLATFORM=$(PLATFORM) -DOPS_FPGA -D__USE_XOPEN2K8 -I$(XILINX_HLS)/include/ -fmessage-length=0 $(OPS_HLS_HOST_INC)
 
