@@ -26,12 +26,17 @@ else
 $(info hls platform: $(PLATFORM))
 endif
 
+# Check HLS_JOBS
+ifeq ($(HLS_JOBS),)
+HLS_JOBS = 10
+endif
+
 ifeq ($(HLS_TARGET_MODE),sw_emu)
 $(info hls mode: SW_EMU)
 else ifeq ($(HLS_TARGET_MODE),hw_emu)
-$(info hls mode: SW_EMU)
+$(info hls mode: HW_EMU)
 else ifeq ($(HLS_TARGET_MODE),hw)
-$(info hls mode: SW_EMU)
+$(info hls mode: HW)
 else
 $(error hls build mode is not set: please set HLS_TARGET_MODE=<sw_emu/hw_emu/hw>)
 endif
@@ -42,6 +47,7 @@ OPS_HLS_HOST_INC = -I$(OPS_INSTALL_PATH)/c/include/ -I$(OPS_INSTALL_PATH)/hls/in
 
 
 VPP=v++
-VPP_FLAGS= --target $(HLS_TARGET_MODE) --platform $(PLATFORM)
+VPP_FLAGS= --target $(HLS_TARGET_MODE) --platform $(PLATFORM) --hls.jobs $(HLS_JOBS)
 HLS_LDFLAGS= -lxilinxopencl -lops_seq -lops_hls -lpthread -lrt -lstdc++ -L$(XILINX_XRT)/lib/ -L$(OPS_INSTALL_PATH)/hls/lib/$(OPS_COMPILER)/ -Wl,-rpath-link,$(XILINX_XRT)/lib 
 HLS_CXXFLAGS= -I$(XILINX_XRT)/include/ -I$(XILINX_VIVADO)/include/ -DVITIS_PLATFORM=$(PLATFORM) -DOPS_FPGA -D__USE_XOPEN2K8 -I$(XILINX_HLS)/include/ -fmessage-length=0 $(OPS_HLS_HOST_INC)
+
