@@ -48,7 +48,8 @@ float pi  = 2.0 * asin(1.0);
 // #define OPS_CPP_API
 #define OPS_HLS_V2
 // #define OPS_FPGA
-#define PROFILE
+// #define PROFILE
+// #define POWER_PROFILE
 // #define VERIFICATION
 #include <ops_seq_v2.h>
 //Including applicaiton-specific "user kernels"
@@ -72,6 +73,14 @@ int main(int argc, const char** argv)
     unsigned int iter_max = 180;
 
     const char* pch;
+
+#ifdef POWER_PROFILE
+    unsigned int power_iter = 1;
+    #ifdef PROFILE
+    std::cerr << "POWER_PROFILE cannot be enabled with PROFILE" << std::endl;
+    exit(-1);
+    #endif  
+#endif
     for ( int n = 1; n < argc; n++ )
     {
         pch = strstr(argv[n], "-sizex=");
@@ -94,6 +103,12 @@ int main(int argc, const char** argv)
         if(pch != NULL) {
             batches = atoi ( argv[n] + 7 ); continue;
         }
+#ifdef POWER_PROFILE
+        pch = strstr(argv[n], "-piter=");
+        if(pch != NULL) {
+            power_iter = atoi ( argv[n] + 7 ); continue;
+        }
+#endif
     }
 
 #ifdef PROFILE
@@ -190,7 +205,10 @@ int main(int argc, const char** argv)
 		auto init_end_clk_point = std::chrono::high_resolution_clock::now();
 		init_runtime[bat] = std::chrono::duration<double, std::micro> (init_end_clk_point - init_start_clk_point).count();
 #endif
-
+#ifdef POWER_PROFILE
+    for (unsigned int p = 0; p < power_iter; p++)
+    {
+#endif
         ops_printf("Laplace 2D Calculation: %d x %d mesh\n", imax+2, jmax+2);
 
 #ifdef PROFILE
@@ -303,7 +321,9 @@ int main(int argc, const char** argv)
         main_loop_runtime[bat] = ops_hls_get_execution_runtime<std::chrono::microseconds>(std::string("isl0"));
     #endif
 #endif
-
+#ifdef POWER_PROFILE
+    }
+#endif
 #ifdef VERIFICATION
         A = (float*)ops_dat_get_raw_pointer(d_A, 0, S2D_00, &memspace);
         Anew = (float*)ops_dat_get_raw_pointer(d_Anew, 0, S2D_00, &memspace);
@@ -423,7 +443,7 @@ int main(int argc, const char** argv)
 	std::cout << "Standard Deviation main loop: " << main_loop_std << std::endl;
 	std::cout << "Standard Deviation total: " << total_std << std::endl;
 	std::cout << "======================================================" << std::endl;
-#endif
+
     fstream.close();
 
     if (fstream.good()) { // Check if operations were successful after closing
@@ -432,6 +452,8 @@ int main(int argc, const char** argv)
             std::cerr << "Error occurred during writing to " << profile_filename << std::endl;
             return 1; // Indicate an error occurred
     }
+#endif
+    
     ops_exit();
 
     std::cout << "Exit properly" << std::endl;
