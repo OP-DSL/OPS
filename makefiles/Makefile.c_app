@@ -404,9 +404,9 @@ $(APP)_hls: Makefile .generated_hls ./hls/build/$(HLS_TARGET_MODE)/$(APP)_host .
 		test -d hls/build/$(HLS_TARGET_MODE)/temp_dir/link/ || mkdir -p hls/build/$(HLS_TARGET_MODE)/temp_dir/link/
 		@for xo_file in ${basename ${notdir ${shell ls ./hls/device/src/*.cpp}}}; do \
 			echo "Compiling $${xo_file}"; \
-			$(VPP) -s -O3 --target $(HLS_TARGET_MODE) --temp_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/ --log_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/ --platform $(PLATFORM) --compile $(OPS_HLS_DEVICE_INC) -I./hls/device/include/ -k $${xo_file} -o hls/build/$(HLS_TARGET_MODE)/$${xo_file}.xo  hls/device/src/$${xo_file}.cpp; \
+			$(VPP) -s -O3 $(VPP_FLAGS) --temp_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/ --log_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/ --compile $(OPS_HLS_DEVICE_INC) -I./hls/device/include/ -k $${xo_file} -o hls/build/$(HLS_TARGET_MODE)/$${xo_file}.xo  hls/device/src/$${xo_file}.cpp; \
 		done
-		$(VPP) -s -O3 --target $(HLS_TARGET_MODE) --platform $(PLATFORM) --temp_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/link/ --log_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/link/logs/ --link --config hls/host/xrt.cfg -o"$@" ${patsubst %.cpp, %.xo, ${patsubst ./hls/device/src/%, ./hls/build/$(HLS_TARGET_MODE)/%, $(shell ls ./hls/device/src/*.cpp)}}
+		$(VPP) -s -O3 $(VPP_FLAGS) --temp_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/link/ --log_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/link/logs/ --link --config hls/host/xrt.cfg -o"$@" ${patsubst %.cpp, %.xo, ${patsubst ./hls/device/src/%, ./hls/build/$(HLS_TARGET_MODE)/%, $(shell ls ./hls/device/src/*.cpp)}}
 
 .PHONY: build_hls_host
 build_hls_host: 
@@ -415,7 +415,7 @@ build_hls_host:
 
 .PHONY: run_hls_app
 run_hls_app:
-	bash ./run_script_hls.sh $(HLS_TARGET_MODE) $(APP)
+	bash ./run_script_hls.sh $(HLS_TARGET_MODE) $(APP) $(CXXFLAGS)
 	
 # hls/build/$(HLS_TARGET_MODE)/%.xo: ./hls/device/src/%.cpp
 # 		@echo ""
@@ -423,7 +423,7 @@ run_hls_app:
 # 		@echo "Building $@"
 # 		@echo ""
 # 		test -d hls/build/$(HLS_TARGET_MODE)/temp_dir/ || mkdir -p hls/build/$(HLS_TARGET_MODE)/temp_dir/
-# 		$(VPP) --target $(HLS_TARGET_MODE) --temp_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/ --platform $(PLATFORM) --compile $(OPS_HLS_DEVICE_INC) -I./hls/device/include/ -k $(basename $(notdir $@)) -o $@ $<
+# 		$(VPP) $(VPP_FLAGS) --temp_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/ --compile $(OPS_HLS_DEVICE_INC) -I./hls/device/include/ -k $(basename $(notdir $@)) -o $@ $<
 
 #=====================================================================================================================================================================
 #
