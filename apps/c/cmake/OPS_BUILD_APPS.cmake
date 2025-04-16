@@ -44,14 +44,17 @@ macro(SetAppExe
     Links 
     Defs
     Options
+    Props
     OMPNT)
     # Init the lists for FLAGS and LINKS
     set(Defs_Loc "")
     set(Links_Loc "")
     set(Opts_Loc "")
+    set(Props_Loc "")
     list(APPEND Defs_Loc ${Defs})
     list(APPEND Links_Loc ${Links})
     list(APPEND Opts_Loc ${Options})
+    list(APPEND Props_Loc ${Props})
     # Set APP names and paths
     set(APP_exe ${Root_Name}_${APP_TYPE})
     set(APP_DIR_DST ${APP_DIR_ROOT}/${APP_exe})
@@ -59,22 +62,6 @@ macro(SetAppExe
     if(FLAG_FOUND GREATER -1)
       list(APPEND Defs_Loc "-DOPS_MPI")
     endif()
-    string(FIND ${APP_type} "hip" FLAG_HIP)
-    if(FLAG_HIP GREATER -1)
-      message(STATUS "FLAG ${FLAG_HIP}")
-      message(STATUS "APP_type ${APP_type}")
-      set(MY_HIPCC_OPTIONS "-fPIC -I/opt/rocm/include")
-      message(STATUS "MY_HIPCC_OPTIONS ${MY_HIPCC_OPTIONS}")
-      set(SRC_LIB "${APP_SRC}")
-      set(SRC_EXE "${APP_SRC}")
-      list(FILTER SRC_EXE EXCLUDE REGEX "hip")
-      list(FILTER SRC_LIB INCLUDE REGEX "hip")
-      message(STATUS "SRC for HIP EXE: ${SRC_EXE}")
-      message(STATUS "SRC for HIP LIB: ${SRC_LIB}")
-      set_target_properties(hip::device PROPERTIES INTERFACE_COMPILE_OPTIONS "-fPIC")
-      set_target_properties(hip::device PROPERTIES INTERFACE_LINK_LIBRARIES "hip::host")
-    endif()
-
     #
     if (HDF5_FOUND)
       if(FLAG_FOUND GREATER -1)
@@ -91,39 +78,24 @@ macro(SetAppExe
     if(FLAG_FOUND GREATER -1)
       list(APPEND Defs_Loc "-DOPS_LAZY")
     endif()
-    #message(STATUS "Defs for ${APP_exe} ${Defs_Loc}")
-    #message(STATUS "Links for ${APP_exe} ${Links_Loc}")
-    #message(" ")
-    if(FLAG_HIP GREATER -1)
-      message(STATUS "USE HIP_ADD_EXE for ${APP_exe}")
-      message(STATUS "HIP SOURCE ${APP_SRC}")
-      #add_executable(${APP_exe} ${APP_SRC})
-
-      HIP_ADD_EXECUTABLE(${APP_exe} ${APP_SRC}
-                         HIPCC_OPTIONS "${MY_HIPCC_OPTIONS}")
-      set_target_properties(${APP_exe} PROPERTIES LINKER_LANGUAGE HIP)
-      target_include_directories(${APP_exe} PRIVATE ${HIP_PATH}/include/hip)
-      target_include_directories(${APP_exe} PRIVATE ${HIP_PATH}/include)
-    else()
-      add_executable(${APP_exe} ${APP_SRC})
-    endif()
-    message(STATUS "${APP_type} APP_DIR_SRC ${APP_DIR_SRC}")
+    add_executable(${APP_exe} ${APP_SRC})
+    #message(STATUS "${APP_type} APP_DIR_SRC ${APP_DIR_SRC}")
     target_include_directories(${APP_exe} PRIVATE ${APP_DIR_SRC})
     foreach(Def IN LISTS Defs_Loc)
-      target_compile_definitions(${APP_exe} PRIVATE ${Def})
+      target_compile_definitions(${APP_exe} PUBLIC ${Def})
     endforeach()
     foreach(Opt IN LISTS Opts_Loc)
       target_compile_options(${APP_exe} PUBLIC ${Opt})
     endforeach()
-    string(FIND ${APP_type} "ompoffload" FLAG_FOUND)
-    if(FLAG_FOUND GREATER -1)
-      set_target_properties(${APP_exe} PROPERTIES LINK_FLAGS "-fast -target=gpu")
-    endif()
-    # Copy the input and forcing the name to be case.in
-    #message(STATUS "MY INPUT ${INP}")
+    list(LENGTH Props_Loc Props_length)
+    # These link properties needs to be passed and a single string 
+    # Passing them individually does not work
+    if(Props_length GREATER 0)
+      string(REPLACE ";" " " Props_string "${Props_Loc}")
+      set_target_properties(${APP_exe} PROPERTIES LINK_FLAGS "${Props_string}")
+    endif() 
     string(FIND "${INP}" "/" position REVERSE)
     if(position GREATER -1)
-      #message(STATUS "POSITION ${position}")
       install(FILES ${INP} DESTINATION ${APP_DIR_DST} RENAME clover.in)
     endif()
     foreach(Link IN LISTS Links_Loc)
@@ -131,8 +103,9 @@ macro(SetAppExe
     endforeach()
     install(TARGETS ${APP_exe} DESTINATION ${APP_DIR_DST})
     # Append the number of GPUs
-    string(FIND ${APP_type} "mpi_cuda" FLAG_FOUND)
-    if(FLAG_FOUND GREATER -1)
+    string(FIND ${APP_type} "mpi_cuda" FLAG_FOUND1)
+    string(FIND ${APP_type} "mpi_ompoffload" FLAG_FOUND2)
+    if(FLAG_FOUND1 GREATER -1 OR FLAG_FOUND2 GREATER -1) 
       set(ARGUMENTS "${APP_type} ${GPU_NUMBER}")
     else()
       set(ARGUMENTS "${APP_type}" )
@@ -269,6 +242,7 @@ macro(
     # TARGET: DEV_SEQ, SEQ, OPENMP, TILED
     set(Defs "")
     set(Opts "")
+    set(Props "")
     set(APP_SRC ${DEV} ${OTHERS})
     if(${TestDev})
       message(STATUS "Set UP also DEV")
@@ -283,7 +257,7 @@ macro(
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
          	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
 	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-		"${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+		"${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
       if(MPI_FOUND)
         set(APP_TYPE "dev_mpi")
         if (USE_OMP)
@@ -295,7 +269,7 @@ macro(
         setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
           	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
                   "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-                  "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+		  "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
       endif()
     endif()
    
@@ -309,11 +283,12 @@ macro(
     endif()
     set(Defs "")
     set(Opts "")
+    set(Props "")
     # Make sure to use "" for potentially empty inputs
     setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
 	      "${app_dir_c}" "${TMP_SOURCE_DIR}" 
 	      "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-	      "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+	      "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
     if(MPI_FOUND)
       set(APP_TYPE "mpi")
       if (USE_OMP)
@@ -325,7 +300,7 @@ macro(
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
         	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
   	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-  	        "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+	        "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
     endif()
 
     if (USE_OMP)
@@ -336,19 +311,20 @@ macro(
                 "OpenMP::OpenMP_CXX")
       set(Defs "")
       set(Opts "")
+      set(Props "")
       # Make sure to use "" for potentially empty inputs
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
                 "${app_dir_c}" "${TMP_SOURCE_DIR}" 
                 "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-                "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+	        "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
       if(MPI_FOUND)
         set(APP_TYPE "mpi_openmp")
         set(Links "ops_mpi" 
                   "OpenMP::OpenMP_CXX")
         setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
           	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
-                  "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-                  "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+                "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	        "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
       endif()
     endif()
     
@@ -363,11 +339,12 @@ macro(
     endif()
     set(Defs "")
     set(Opts "")
+    set(Props "")
     # Make sure to use "" for potentially empty inputs
     setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
 	      "${app_dir_c}" "${TMP_SOURCE_DIR}" 
 	      "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-	      "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+	      "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
     if(MPI_FOUND)
       set(APP_TYPE "mpi_tiled")
       if (USE_OMP)
@@ -379,7 +356,7 @@ macro(
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
         	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
   	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-  	        "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+	        "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
     endif()
    
     if(CUDAToolkit_FOUND) 
@@ -400,11 +377,12 @@ macro(
       set(Defs "")
       # Not sure this should be here: why not on the general nvcc flags? 
       set(Opts "")
+      set(Props "")
       # Make sure to use "" for potentially empty inputs
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
              	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
 	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-	        "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+	        "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
       if(MPI_FOUND)
         set(APP_TYPE "mpi_cuda")
         set(Defs "-DMPICH_IGNORE_CXX_SEEK")
@@ -422,13 +400,13 @@ macro(
         setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
                   "${app_dir_c}" "${TMP_SOURCE_DIR}" 
                   "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-                  "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+	          "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
 	#
 	set(APP_TYPE "mpi_cuda_tiled")
         setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
                   "${app_dir_c}" "${TMP_SOURCE_DIR}" 
                   "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-                  "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+	          "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
       endif()
     endif()
     # HIP    
@@ -439,15 +417,16 @@ macro(
       set(Links "ops_hip"
 	        "hip::device"
                 "OpenMP::OpenMP_CXX")
-	set(Defs "-D__HIP_PLATFORM_NVIDIA__")
+      set(Defs "-D__HIP_PLATFORM_NVIDIA__")
       # Not sure this should be here: why not on the general nvcc flags? 
       set(Opts "")
+      set(Props "")
       # Make sure to use "" for potentially empty inputs
       message(STATUS "HIP SRC ${APP_SRC} for ${APP_TYPE}")
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
              	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
 	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-	        "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+	        "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
     endif()
     # OMPOFFLOAD
     if(OPS_CXXFLAGS_OMPOFFLOAD)
@@ -458,16 +437,34 @@ macro(
                 "OpenMP::OpenMP_CXX")
       set(Defs "")
       set(Opts "")
+      set(Props "")
       foreach(Flag IN LISTS OPS_CXXFLAGS_OMPOFFLOAD)
         set(Opt "$<$<COMPILE_LANGUAGE:CXX>:${Flag}>")
         list(APPEND Opts "${Opt}")
+	list(APPEND Props "${Flag}")
       endforeach()
-      message(STATUS "Additional Flags for OMPOFF ${Opts}")
       # Make sure to use "" for potentially empty inputs
       setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
   	        "${app_dir_c}" "${TMP_SOURCE_DIR}" 
   	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
-  	        "${Links}" "${Defs}" "${Opts}" "${OMPNT}")  
+	        "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+      if(MPI_FOUND)
+        set(APP_TYPE "mpi_ompoffload")
+        set(Defs "-DMPICH_IGNORE_CXX_SEEK")
+        set(Links "ops_mpi_ompoffload" 
+                  "OpenMP::OpenMP_CXX")
+	list(APPEND Opts ${MPI_INC_LIST})
+        setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+                  "${app_dir_c}" "${TMP_SOURCE_DIR}" 
+                  "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	          "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+	#
+        set(APP_TYPE "mpi_ompoffload_tiled")
+        setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+                  "${app_dir_c}" "${TMP_SOURCE_DIR}" 
+                  "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	          "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+      endif()
 
     endif()
 
