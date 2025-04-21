@@ -26,4 +26,4 @@ CPU_BIND="map_cpu:49,57,17,25,1,9,33,41"
 export MPICH_GPU_SUPPORT_ENABLED=1
 
 # OPS MPI + HIP C version
-srun --cpu-bind=${CPU_BIND} --ntasks=8 ./senga2_f2c_mpi_hip -OPS_DIAGS=2 OPS_FORCE_DECOMP_X=4 OPS_FORCE_DECOMP_Y=2 OPS_FORCE_DECOMP_Z=1 2>&1 | tee log_1node_8ranks_cray_lumi-g_hip_c.txt
+srun --cpu-bind=${CPU_BIND} --ntasks=8 ./senga2_f2c_mpi_hip -gpudirect -OPS_DIAGS=2 OPS_FORCE_DECOMP_X=4 OPS_FORCE_DECOMP_Y=2 OPS_FORCE_DECOMP_Z=1 2>&1 | tee log_1node_8ranks_cray_lumi-g_hip_c.txt
