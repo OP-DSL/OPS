@@ -296,7 +296,7 @@ void ops_halo_transfer(ops_halo_group group) {
                     memcpy(get_buffer_ptr(ops_halo_buffer, i, j, k, l, m, d, 8, ranges, step, buf_strides, 8), &value, 8);
                   } 
                   else if (storage_type_size == 2) {
-                    half value = 0;
+                    half value = 0.0;
                     if (halo->from->type_size == 4) {
                       value = *((float *)get_data_ptr(halo->from, i, j, k, l, m, d, OPS_soa));
                     } else if (halo->from->type_size == 8) {
@@ -415,7 +415,7 @@ void ops_halo_transfer(ops_halo_group group) {
                     }
                   } 
                   else if (storage_type_size == 2) {
-                    half value = 0;
+                    half value = 0.0;
                     memcpy(&value, get_buffer_ptr(ops_halo_buffer, i, j, k, l, m, d, 2, ranges, step, buf_strides, 2), 2);
                     if (halo->to->type_size == 4) {
                       *((float *)get_data_ptr(halo->to, i, j, k, l, m, d, OPS_soa)) = value;
