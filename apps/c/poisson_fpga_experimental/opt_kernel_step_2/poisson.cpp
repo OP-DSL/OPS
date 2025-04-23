@@ -50,6 +50,7 @@ extern const unsigned short mem_vector_factor;
 #define OPS_HLS_V2
 // #define OPS_FPGA
 // #define PROFILE
+// #define POWER_PROFILE
 #include "user_types.h"
 #include <ops_seq_v2.h>
 #include "poisson_kernel.h"
@@ -59,6 +60,13 @@ extern const unsigned short mem_vector_factor;
     #include <chrono>
 #endif
 
+#ifdef POWER_PROFILE
+    unsigned int power_iter = 1;
+    #ifdef PROFILE
+    std::cerr << "POWER_PROFILE cannot be enabled with PROFILE" << std::endl;
+    exit(-1);
+    #endif  
+#endif
 /******************************************************************************
 * Main program
 *******************************************************************************/
@@ -99,6 +107,13 @@ int main(int argc, const char **argv)
         if(pch != NULL) {
             batches = atoi ( argv[n] + 7 ); continue;
         }
+#ifdef POWER_PROFILE
+        pch = strstr(argv[n], "-piter=");
+        if(pch != NULL) {
+            power_iter = atoi ( argv[n] + 7 ); continue;
+        }
+        batches = 1;
+#endif
     }
 
 #ifdef PROFILE
@@ -253,7 +268,10 @@ int main(int argc, const char **argv)
 #endif
     }
 
-
+#ifdef POWER_PROFILE
+    for (unsigned int p = 0; p < power_iter; p++)
+    {
+#endif
     //iterative stencil loop
     for (unsigned int bat = 0; bat < batches; bat++)
     {
@@ -283,7 +301,9 @@ int main(int argc, const char **argv)
     #endif
 #endif
     }
-
+#ifdef POWER_PROFILE
+    }
+#endif
     //Final Verification after calc
 #ifdef VERIFICATION
     for (unsigned int bat = 0; bat < batches; bat++)

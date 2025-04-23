@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$#" -lt 2 ]; then
-    echo "Usage: ${0} <target_mode> <app_name>"
+    echo "Usage: ${0} <target_mode> <app_name> [<additional_args>]"
     exit 1
 fi
 
@@ -9,23 +9,27 @@ SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 
 TARGET_MODE=$1
 APP_NAME=$2
+shift 2
+CXXFLAGS="$@"
 
 PROFILE_DIR=./hls/profile_data/${TARGET_MODE}/
 PROFILE_FILE=perf_profile.csv
-POWER_PROFILE_FILE=power_profile.csv
+POWER_PROFILE_FILE=hls_power_profile.csv
+DEVICE_BDF=0000:c1:00.1
 
 # Hardcoded parameter sets (sizex, sizey, iters, batch)
 if [[ "${CXXFLAGS}" == *"-DPOWER_PROFILE"* ]]; then
+    @echo "Power profiling enabled"
     if [[ "${TARGET_MODE}" == "hw" ]]; then
         parameter_sets=(
-            "100,100,60144,1000"
-            "200,100,60144,1000"
-            "200,200,60144,1000"
-            "300,150,60144,500"
-            "300,300,60144,200"
-            "400,200,60144,100"
-            "400,300,60144,100"
-            "400,400,60144,50"
+            "100,100,60102,5000"
+            "200,100,60102,5000"
+            "200,200,60102,5000"
+            "300,150,60102,2500"
+            "300,300,60102,1000"
+            "400,200,60102,500"
+            "400,300,60102,500"
+            "400,400,60102,500"
             # Add more parameter sets here as needed
         )
     else
@@ -34,25 +38,38 @@ if [[ "${CXXFLAGS}" == *"-DPOWER_PROFILE"* ]]; then
     fi
 else
     if [[ "${TARGET_MODE}" == "hw" ]]; then
-    parameter_sets=(
-        "30,30,168,100"
-        "30,30,60144,100"
-        "60,60,60144,100"
-        "100,100,60144,100"
-        "200,100,60144,100"
-        "200,200,60144,100"
-        "300,150,60144,20"
-        "300,300,60144,20"
-        "400,200,60144,20"
-        "400,300,60144,20"
-        "400,400,60144,20"
-        # Add more parameter sets here as needed
+        parameter_sets=(
+            "30,30,162,100"
+            "30,30,60102,100"
+            "60,60,60102,100"
+            "100,100,60102,100"
+            "200,100,60102,100"
+            "200,200,60102,100"
+            "300,150,60102,20"
+            "300,300,60102,20"
+            "400,200,60102,20"
+            "400,300,60102,20"
+            "400,400,60102,20"
+            "400,425,60102,20"
+            "400,350,60102,20"
+            "400,375,60102,20"
+            "300,350,60102,20"
+            "300,375,60102,20"
+            "300,400,60102,20"
+            "300,425,60102,20"
+            "300,450,60102,20"
+            "300,475,60102,20"
+            "300,500,60102,20"
+            "300,525,60102,20"
+            "300,550,60102,20"
+            "300,575,60102,20"
+            # Add more parameter sets here as needed
     )
     else
-    parameter_sets=(
-        "30,30,168,1"
-        # Add more parameter sets here as needed
-    )
+        parameter_sets=(
+            "30,30,162,1"
+            # Add more parameter sets here as needed
+        )
     fi
 fi
 
@@ -77,13 +94,21 @@ for params in "${parameter_sets[@]}"; do
 
     echo "-----------------------------------------------------------------"
     echo "Running with sizex=${sizex}, sizey=${sizey}, iters=${iters}, batch=${batch}"
+    echo "-----------------------------------------------------------------"
 
-    if [[ $TARGET_MODE == sw_emu || $TARGET_MODE == hw_emu ]]; then
-        echo "Running in emulation mode with ${TARGET_MODE}"
-        XCL_EMULATION_MODE=${TARGET_MODE} ${SCRIPT_DIR}/hls/build/${TARGET_MODE}/${APP_NAME}_host ${SCRIPT_DIR}/hls/build/${TARGET_MODE}/${APP_NAME}.xclbin -sizex="${sizex}" -sizey="${sizey}" -iters="${iters}" -batch="${batch}"
+
+    if [[ "${CXXFLAGS}" == *"-DPOWER_PROFILE"* ]]; then
+        echo "Running HW mode with power profiling"
+            ${OPS_INSTALL_PATH}/../scripts/power_profile_hls.sh ${DEVICE_BDF} ${SCRIPT_DIR}/hls/build/${TARGET_MODE}/${APP_NAME}_host ${SCRIPT_DIR}/hls/build/${TARGET_MODE}/${APP_NAME}.xclbin -sizex="${sizex}" -sizey="${sizey}" -iters="${iters}" -piter="${batch}"
+
     else
-        echo "Running HW mode"
-        ${SCRIPT_DIR}/hls/build/${TARGET_MODE}/${APP_NAME}_host ${SCRIPT_DIR}/hls/build/${TARGET_MODE}/${APP_NAME}.xclbin -sizex="${sizex}" -sizey="${sizey}" -iters="${iters}" -batch="${batch}"
+        if [[ $TARGET_MODE == sw_emu || $TARGET_MODE == hw_emu ]]; then
+            echo "Running in emulation mode with ${TARGET_MODE}"
+            XCL_EMULATION_MODE=${TARGET_MODE} ${SCRIPT_DIR}/hls/build/${TARGET_MODE}/${APP_NAME}_host ${SCRIPT_DIR}/hls/build/${TARGET_MODE}/${APP_NAME}.xclbin -sizex="${sizex}" -sizey="${sizey}" -iters="${iters}" -batch="${batch}"
+        else
+            echo "Running HW mode"
+            ${SCRIPT_DIR}/hls/build/${TARGET_MODE}/${APP_NAME}_host ${SCRIPT_DIR}/hls/build/${TARGET_MODE}/${APP_NAME}.xclbin -sizex="${sizex}" -sizey="${sizey}" -iters="${iters}" -batch="${batch}"
+        fi
     fi
 
     if [ ! -d "${PROFILE_DIR}" ]; then
