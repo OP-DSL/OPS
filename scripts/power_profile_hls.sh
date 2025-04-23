@@ -41,7 +41,7 @@ capture_power() {
     # if [[ -f "$TEMP_JSON_FILE" ]]; then
     local power_val
     power_val=$(xbutil examine -r electrical -d "$DEVICE_BDF" | awk '/^[[:space:]]*Power[[:space:]]+:[[:space:]]+[0-9.]+ Watts/ { print $3 }')
-    echo "$(date +%s),$power_val" >> "$HLS_POW_PROF_LOG_FILE"
+    echo "$(date +%s%3N),$power_val" >> "$HLS_POW_PROF_LOG_FILE"
     # fi
 
     # rm -f "$TEMP_JSON_FILE"
