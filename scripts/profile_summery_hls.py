@@ -33,6 +33,9 @@ def generate_profile_summary(directory):
     # Create a DataFrame for the summary data
     summary_df = pd.DataFrame(summary_data)
 
+    # Sort the DataFrame by grid sizes
+    summary_df = summary_df.sort_values(by=["grid_x", "grid_y", "grid_z"])
+
     # Save the summary DataFrame to a new CSV file
     output_file = os.path.join(directory, "profile_summary.csv")
     summary_df.to_csv(output_file, index=False)
