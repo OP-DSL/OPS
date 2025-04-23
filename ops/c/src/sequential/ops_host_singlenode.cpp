@@ -226,8 +226,8 @@ void ops_halo_transfer(ops_halo_group group) {
     #pragma omp parallel for OMP_COLLAPSE(5)
     #endif
     #endif
-    for (int m = MIN(ranges[8], ranges[9] + 1);
-         m < MAX(ranges[8] + 1, ranges[9]); m++) {
+    for (int m = std::min(ranges[8], ranges[9] + 1);
+         m < std::max(ranges[8] + 1, ranges[9]); m++) {
   #else
     int m = 0;
     {
@@ -238,8 +238,8 @@ void ops_halo_transfer(ops_halo_group group) {
       #pragma omp parallel for OMP_COLLAPSE(4)
       #endif
       #endif
-      for (int l = MIN(ranges[6], ranges[7] + 1);
-           l < MAX(ranges[6] + 1, ranges[7]); l++) {
+      for (int l = std::min(ranges[6], ranges[7] + 1);
+           l < std::max(ranges[6] + 1, ranges[7]); l++) {
     #else
       int l = 0;
       {
@@ -250,8 +250,8 @@ void ops_halo_transfer(ops_halo_group group) {
         #pragma omp parallel for OMP_COLLAPSE(3)
         #endif
         #endif
-        for (int k = MIN(ranges[4], ranges[5] + 1);
-             k < MAX(ranges[4] + 1, ranges[5]); k++) {
+        for (int k = std::min(ranges[4], ranges[5] + 1);
+             k < std::max(ranges[4] + 1, ranges[5]); k++) {
       #else
         int k = 0;
         {
@@ -262,14 +262,14 @@ void ops_halo_transfer(ops_halo_group group) {
           #pragma omp parallel for OMP_COLLAPSE(2)
           #endif
           #endif
-          for (int j = MIN(ranges[2], ranges[3] + 1);
-               j < MAX(ranges[2] + 1, ranges[3]); j++) {
+          for (int j = std::min(ranges[2], ranges[3] + 1);
+               j < std::max(ranges[2] + 1, ranges[3]); j++) {
         #else
           int j = 0;
           {
         #endif
-            for (int i = MIN(ranges[0], ranges[1] + 1);
-                 i < MAX(ranges[0] + 1, ranges[1]); i++) {
+            for (int i = std::min(ranges[0], ranges[1] + 1);
+                 i < std::max(ranges[0] + 1, ranges[1]); i++) {
               for (int d = 0; d < halo->from->dim; d++) {
                 if (mixed_exchange) {
                   if (storage_type_size == 4) {
@@ -345,8 +345,8 @@ void ops_halo_transfer(ops_halo_group group) {
     #pragma omp parallel for OMP_COLLAPSE(5)
     #endif
     #endif
-    for (int m = MIN(ranges[8], ranges[9] + 1);
-         m < MAX(ranges[8] + 1, ranges[9]); m++) {
+    for (int m = std::min(ranges[8], ranges[9] + 1);
+         m < std::max(ranges[8] + 1, ranges[9]); m++) {
   #else
     int m = 0;
     {
@@ -357,8 +357,8 @@ void ops_halo_transfer(ops_halo_group group) {
       #pragma omp parallel for OMP_COLLAPSE(4)
       #endif
       #endif
-      for (int l = MIN(ranges[6], ranges[7] + 1);
-           l < MAX(ranges[6] + 1, ranges[7]); l++) {
+      for (int l = std::min(ranges[6], ranges[7] + 1);
+           l < std::max(ranges[6] + 1, ranges[7]); l++) {
     #else
       int l = 0;
       {
@@ -369,8 +369,8 @@ void ops_halo_transfer(ops_halo_group group) {
         #pragma omp parallel for OMP_COLLAPSE(3)
         #endif
         #endif
-        for (int k = MIN(ranges[4], ranges[5] + 1);
-             k < MAX(ranges[4] + 1, ranges[5]); k++) {
+        for (int k = std::min(ranges[4], ranges[5] + 1);
+             k < std::max(ranges[4] + 1, ranges[5]); k++) {
       #else
         int k = 0;
         {
@@ -381,14 +381,14 @@ void ops_halo_transfer(ops_halo_group group) {
           #pragma omp parallel for OMP_COLLAPSE(2)
           #endif
           #endif
-          for (int j = MIN(ranges[2], ranges[3] + 1);
-               j < MAX(ranges[2] + 1, ranges[3]); j++) {
+          for (int j = std::min(ranges[2], ranges[3] + 1);
+               j < std::max(ranges[2] + 1, ranges[3]); j++) {
         #else
           int j = 0;
           {
         #endif
-            for (int i = MIN(ranges[0], ranges[1] + 1);
-                 i < MAX(ranges[0] + 1, ranges[1]); i++) {
+            for (int i = std::min(ranges[0], ranges[1] + 1);
+                 i < std::max(ranges[0] + 1, ranges[1]); i++) {
               for (int d = 0; d < halo->to->dim; d++) {
                 if (mixed_exchange) {
                   if (storage_type_size == 4) {
