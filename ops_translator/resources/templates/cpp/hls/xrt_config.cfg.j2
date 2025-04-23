@@ -1,8 +1,10 @@
 [connectivity]
 {% for ilh, program in app.uniqueOuterLoops() %}
-    {% for slr_id in range(config["SLR_count"]) %}
+    {% if config["SLR_count"] > 1 %}
+        {% for slr_id in range(config["SLR_count"]) %}
 nk=kernel_outerloop_{{ilh.id}}:1:kernel_outerloop_{{ilh.id}}_{{slr_id+1}}
-    {% endfor %}
+        {% endfor %}
+    {% endif %}
 {% endfor %}
 
 {% for ilh, program in app.uniqueOuterLoops() %}
