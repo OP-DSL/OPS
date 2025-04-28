@@ -223,7 +223,7 @@ void ops_halo_transfer(ops_halo_group group) {
   #if OPS_MAX_DIM>4
     #if OPS_MAX_DIM == 5
     #ifdef _OPENMP
-    #pragma omp parallel for OMP_COLLAPSE(5)
+    //#pragma omp parallel for OMP_COLLAPSE(5)
     #endif
     #endif
     for (int m = std::min(ranges[8], ranges[9] + 1);
@@ -235,7 +235,7 @@ void ops_halo_transfer(ops_halo_group group) {
     #if OPS_MAX_DIM>3
       #if OPS_MAX_DIM == 4
       #ifdef _OPENMP
-      #pragma omp parallel for OMP_COLLAPSE(4)
+      //#pragma omp parallel for OMP_COLLAPSE(4)
       #endif
       #endif
       for (int l = std::min(ranges[6], ranges[7] + 1);
@@ -247,7 +247,7 @@ void ops_halo_transfer(ops_halo_group group) {
       #if OPS_MAX_DIM>2
         #if OPS_MAX_DIM == 3
         #ifdef _OPENMP
-        #pragma omp parallel for OMP_COLLAPSE(3)
+        //#pragma omp parallel for OMP_COLLAPSE(3)
         #endif
         #endif
         for (int k = std::min(ranges[4], ranges[5] + 1);
@@ -259,7 +259,7 @@ void ops_halo_transfer(ops_halo_group group) {
         #if OPS_MAX_DIM>1
           #if OPS_MAX_DIM == 2
           #ifdef _OPENMP
-          #pragma omp parallel for OMP_COLLAPSE(2)
+          //#pragma omp parallel for OMP_COLLAPSE(2)
           #endif
           #endif
           for (int j = std::min(ranges[2], ranges[3] + 1);
@@ -342,7 +342,7 @@ void ops_halo_transfer(ops_halo_group group) {
   #if OPS_MAX_DIM>4
     #if OPS_MAX_DIM == 5
     #ifdef _OPENMP
-    #pragma omp parallel for OMP_COLLAPSE(5)
+//    #pragma omp parallel for OMP_COLLAPSE(5)
     #endif
     #endif
     for (int m = std::min(ranges[8], ranges[9] + 1);
@@ -354,7 +354,7 @@ void ops_halo_transfer(ops_halo_group group) {
     #if OPS_MAX_DIM>3
       #if OPS_MAX_DIM == 4
       #ifdef _OPENMP
-      #pragma omp parallel for OMP_COLLAPSE(4)
+  //    #pragma omp parallel for OMP_COLLAPSE(4)
       #endif
       #endif
       for (int l = std::min(ranges[6], ranges[7] + 1);
@@ -366,7 +366,7 @@ void ops_halo_transfer(ops_halo_group group) {
       #if OPS_MAX_DIM>2
         #if OPS_MAX_DIM == 3
         #ifdef _OPENMP
-        #pragma omp parallel for OMP_COLLAPSE(3)
+    //    #pragma omp parallel for OMP_COLLAPSE(3)
         #endif
         #endif
         for (int k = std::min(ranges[4], ranges[5] + 1);
@@ -378,7 +378,7 @@ void ops_halo_transfer(ops_halo_group group) {
         #if OPS_MAX_DIM>1
           #if OPS_MAX_DIM == 2
           #ifdef _OPENMP
-          #pragma omp parallel for OMP_COLLAPSE(2)
+      //    #pragma omp parallel for OMP_COLLAPSE(2)
           #endif
           #endif
           for (int j = std::min(ranges[2], ranges[3] + 1);
