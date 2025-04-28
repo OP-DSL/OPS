@@ -15,7 +15,8 @@
     "num_write_outstanding" : 4,
     "maxi_offset" : "slave",
     "ops_max_dim" : 3,
-    "axis_interconnect_buff_size" : 16,
+    "axis_interconnect_buff_size" : 128,
+    "hls_interconnect_buff_size" : 10,
     "datamover_mode" : 2,
     "platform" : "vck5000"
 }
