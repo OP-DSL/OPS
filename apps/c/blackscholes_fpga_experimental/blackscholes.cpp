@@ -110,7 +110,7 @@ int main(int argc, const char **argv)
         if(pch != NULL) {
             power_iter = atoi ( argv[n] + 7 ); continue;
         }
-        batches = 1;
+        gridProp.batch = 1;
 #endif
 	}
 
