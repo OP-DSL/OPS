@@ -222,8 +222,8 @@ void ops_halo_transfer(ops_halo_group group) {
                     (strcmp(halo->to->type, "float") == 0 || strcmp(halo->to->type, "double") == 0 || strcmp(halo->to->type, "half") == 0);
   #if OPS_MAX_DIM>4
     #if OPS_MAX_DIM == 5
-    #ifdef _OPENMP
-    //#pragma omp parallel for OMP_COLLAPSE(5)
+    #if defined(_OPENMP) && !defined(__NVCOMPILER)
+    #pragma omp parallel for OMP_COLLAPSE(5)
     #endif
     #endif
     for (int m = std::min(ranges[8], ranges[9] + 1);
@@ -234,8 +234,8 @@ void ops_halo_transfer(ops_halo_group group) {
   #endif
     #if OPS_MAX_DIM>3
       #if OPS_MAX_DIM == 4
-      #ifdef _OPENMP
-      //#pragma omp parallel for OMP_COLLAPSE(4)
+      #if defined(_OPENMP) && !defined(__NVCOMPILER)
+      #pragma omp parallel for OMP_COLLAPSE(4)
       #endif
       #endif
       for (int l = std::min(ranges[6], ranges[7] + 1);
@@ -246,8 +246,8 @@ void ops_halo_transfer(ops_halo_group group) {
     #endif
       #if OPS_MAX_DIM>2
         #if OPS_MAX_DIM == 3
-        #ifdef _OPENMP
-        //#pragma omp parallel for OMP_COLLAPSE(3)
+        #if defined(_OPENMP) && !defined(__NVCOMPILER)
+        #pragma omp parallel for OMP_COLLAPSE(3)
         #endif
         #endif
         for (int k = std::min(ranges[4], ranges[5] + 1);
@@ -258,8 +258,8 @@ void ops_halo_transfer(ops_halo_group group) {
       #endif
         #if OPS_MAX_DIM>1
           #if OPS_MAX_DIM == 2
-          #ifdef _OPENMP
-          //#pragma omp parallel for OMP_COLLAPSE(2)
+          #if defined(_OPENMP) && !defined(__NVCOMPILER)
+          #pragma omp parallel for OMP_COLLAPSE(2)
           #endif
           #endif
           for (int j = std::min(ranges[2], ranges[3] + 1);
@@ -341,8 +341,8 @@ void ops_halo_transfer(ops_halo_group group) {
     ops_halo_buffer =  group->instance->ops_halo_buffer;
   #if OPS_MAX_DIM>4
     #if OPS_MAX_DIM == 5
-    #ifdef _OPENMP
-//    #pragma omp parallel for OMP_COLLAPSE(5)
+    #if defined(_OPENMP) && !defined(__NVCOMPILER)
+    #pragma omp parallel for OMP_COLLAPSE(5)
     #endif
     #endif
     for (int m = std::min(ranges[8], ranges[9] + 1);
@@ -353,8 +353,8 @@ void ops_halo_transfer(ops_halo_group group) {
   #endif
     #if OPS_MAX_DIM>3
       #if OPS_MAX_DIM == 4
-      #ifdef _OPENMP
-  //    #pragma omp parallel for OMP_COLLAPSE(4)
+      #if defined(_OPENMP) && !defined(__NVCOMPILER)
+      #pragma omp parallel for OMP_COLLAPSE(4)
       #endif
       #endif
       for (int l = std::min(ranges[6], ranges[7] + 1);
@@ -365,8 +365,8 @@ void ops_halo_transfer(ops_halo_group group) {
     #endif
       #if OPS_MAX_DIM>2
         #if OPS_MAX_DIM == 3
-        #ifdef _OPENMP
-    //    #pragma omp parallel for OMP_COLLAPSE(3)
+        #if defined(_OPENMP) && !defined(__NVCOMPILER)
+        #pragma omp parallel for OMP_COLLAPSE(3)
         #endif
         #endif
         for (int k = std::min(ranges[4], ranges[5] + 1);
@@ -377,8 +377,8 @@ void ops_halo_transfer(ops_halo_group group) {
       #endif
         #if OPS_MAX_DIM>1
           #if OPS_MAX_DIM == 2
-          #ifdef _OPENMP
-      //    #pragma omp parallel for OMP_COLLAPSE(2)
+          #if defined(_OPENMP) && !defined(__NVCOMPILER)
+          #pragma omp parallel for OMP_COLLAPSE(2)
           #endif
           #endif
           for (int j = std::min(ranges[2], ranges[3] + 1);
