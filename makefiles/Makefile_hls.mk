@@ -1,3 +1,5 @@
+# Defining XSA platforms
+XSA_PLATFORMS := vck5000 v80
 
 # Checks for XILINX_VITIS
 ifndef XILINX_VITIS
@@ -24,6 +26,19 @@ $(error PLATFORM not set. Please set the PLATFORM properly and rerun.)
 endif
 else
 $(info hls platform: $(PLATFORM))
+endif
+
+# define OPS_HLS_XSA_PLATFORM if PLATFORM is in XSA_PLATFORMS
+$(foreach P,$(XSA_PLATFORMS), \
+	$(if $(findstring $(P),$(PLATFORM)), \
+		$(eval OPS_HLS_XSA_PLATFORM := 1) \
+	) \
+)
+
+ifdef OPS_HLS_XSA_PLATFORM
+$(info Found XSA platform)
+else
+$(info Found non XSA platform)
 endif
 
 # Check HLS_JOBS
