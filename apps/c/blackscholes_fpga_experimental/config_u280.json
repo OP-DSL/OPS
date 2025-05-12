@@ -15,5 +15,6 @@
     "num_write_outstanding" : 4,
     "maxi_offset" : "slave",
     "ops_max_dim" : 3,
-    "axis_interconnect_buff_size": 512
+    "axis_interconnect_buff_size" : 8192,
+    "hls_interconnect_buff_size" : 10
 }
