@@ -394,27 +394,20 @@ $(APP)_hls: Makefile .generated_hls ./hls/build/$(HLS_TARGET_MODE)/$(APP)_host .
 		$(CXX)  -o ./hls/build/$(HLS_TARGET_MODE)/$(APP)_host $(OPS_FILES_GEN_HLS) $(CXXFLAGS) $(HLS_CXXFLAGS) -I./ -I./hls/host/kernel_wrappers/ $(HLS_LDFLAGS)
 
 
-TOP_MODULES_XOS := ${patsubst %.cpp, %.xo, ${patsubst hls/device/src/%, hls/build/$(HLS_TARGET_MODE)/%, ${shell ls hls/device/src/*.cpp}}}
-./hls/build/$(HLS_TARGET_MODE)/%.xo: ./hls/device/src/%.cpp
-		@echo ""
-		@echo ""
-		@echo "Building $@"
-		@echo ""
-		test -d hls/build/$(HLS_TARGET_MODE)/temp_dir/ || mkdir -p hls/build/$(HLS_TARGET_MODE)/temp_dir/
-		$(VPP) -s -O3 $(VPP_FLAGS) --temp_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/ --log_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/ --compile $(OPS_HLS_DEVICE_INC) -I./hls/device/include/ -k $(basename $(notdir $@)) -o $@ $<
-		
-./hls/build/$(HLS_TARGET_MODE)/$(APP).xclbin: $(TOP_MODULES_XOS)
-		@echo "$(patsubst %.cpp, ./hls/build/$(HLS_TARGET_MODE)/%.xo, $(notdir $(wildcard ./hls/device/src/*.cpp)))"
+# TOP_MODULES_XOS := ${patsubst %.cpp, %.xo, ${patsubst hls/device/src/%, hls/build/$(HLS_TARGET_MODE)/%, ${shell ls hls/device/src/*.cpp}}}
+
+./hls/build/$(HLS_TARGET_MODE)/$(APP).xclbin: .generated_hls
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_hls.xclbin"
 		@echo ""
 		test -d hls/build/$(HLS_TARGET_MODE)/temp_dir/link/ || mkdir -p hls/build/$(HLS_TARGET_MODE)/temp_dir/link/
-		
-		# @for xo_file in ${basename ${notdir ${shell ls ./hls/device/src/*.cpp}}}; do \
-		# 	echo "Compiling $${xo_file}"; \
-		# 	$(VPP) -s -O3 $(VPP_FLAGS) --temp_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/ --log_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/ --compile $(OPS_HLS_DEVICE_INC) -I./hls/device/include/ -k $${xo_file} -o hls/build/$(HLS_TARGET_MODE)/$${xo_file}.xo  hls/device/src/$${xo_file}.cpp; \
-		# done
+
+		@for xo_file in ${basename ${notdir ${shell ls ./hls/device/src/*.cpp}}}; do \
+			echo "Compiling $${xo_file}"; \
+			$(VPP) -s -O3 $(VPP_FLAGS) --temp_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/ --log_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/ --compile $(OPS_HLS_DEVICE_INC) -I./hls/device/include/ -k $${xo_file} -o hls/build/$(HLS_TARGET_MODE)/$${xo_file}.xo  hls/device/src/$${xo_file}.cpp; \
+		done
+
 		@if [ -n "$(OPS_HLS_XSA_PLATFORM)" ]; then \
 			echo "Building XSA platform"; \
 			$(VPP) -s -O3 $(VPP_FLAGS) --temp_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/link/  --log_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/link/logs/ --link --config hls/host/xrt.cfg -o ./hls/build/$(HLS_TARGET_MODE)/$(APP).xsa  ${patsubst %.cpp, %.xo, ${patsubst ./hls/device/src/%, ./hls/build/$(HLS_TARGET_MODE)/%, $(shell ls ./hls/device/src/*.cpp)}}; \
