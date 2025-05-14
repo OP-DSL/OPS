@@ -4,7 +4,7 @@
     "device" : 7,
     "vector_factor" : 8,
     "mem_vector_factor": 16,
-    "iter_par_factor": 9,
+    "iter_par_factor": 22,
     "stencil_type" : "float",
     "data_width" : 32,
     "mem_data_width" : 32,
@@ -15,7 +15,6 @@
     "num_write_outstanding" : 4,
     "maxi_offset" : "slave",
     "ops_max_dim" : 3,
-    "axis_interconnect_buff_size" : 1024,
-    "datamover_mode" : 2,
-    "platform" : "u280"
+    "axis_interconnect_buff_size" : 8192,
+    "hls_interconnect_buff_size" : 10
 }

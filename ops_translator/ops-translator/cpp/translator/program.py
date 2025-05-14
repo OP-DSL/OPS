@@ -141,38 +141,62 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
     for iterloop in program.outerloops:
         startLoc = iterloop.scope[0]
         
-        before, after = buffer.get(startLoc.line - 1).split("ops_iter_par_loop", 1)
-        loop_indices = [startLoc.line - 1]
+        if "ops_iter_par_loop" in buffer.get(startLoc.line - 1):
+            before, after = buffer.get(startLoc.line - 1).split("ops_iter_par_loop", 1)
+            loop_indices = [startLoc.line - 1]
         
-        if (after.find(";") == -1):
-            index = startLoc.line
-            loop_indices.append(index)
-            while(True):
-                line = buffer.get(index)
-                after += line
-                buffer.remove(index)
-                if line.find(";") != -1:
-                    break
-                index += 1
-        [split_after, split_retain] = after.split(";", 1)
-        split_after = split_after.split(",")
-        
-        new_iter_loop_call = f"{iterloop.unique_name}({split_after[1]}, {iterloop.ops_range}"
-        
-        for arg in iterloop.joint_args:
-            if isinstance(arg, ArgDat):
-                new_iter_loop_call += f", {iterloop.dats[arg.dat_id][0].ptr_raw}"
-            elif isinstance(arg, ArgGbl):
-                new_iter_loop_call += f", {arg.ptr}"
-        
-        new_iter_loop_call = before + new_iter_loop_call + ");" + split_retain 
-        
+            if (after.find(";") == -1):
+                index = startLoc.line
+                loop_indices.append(index)
+                while(True):
+                    line = buffer.get(index)
+                    after += line
+                    buffer.remove(index)
+                    if line.find(";") != -1:
+                        break
+                    index += 1
+            [split_after, split_retain] = after.split(";", 1)
+            split_after = split_after.split(",")
+            
+            new_iter_loop_call = f"{iterloop.unique_name}({split_after[1]}, {iterloop.ops_range}"
+            
+            for arg in iterloop.joint_args:
+                if isinstance(arg, ArgDat):
+                    new_iter_loop_call += f", {iterloop.dats[arg.dat_id][0].ptr_raw}"
+                elif isinstance(arg, ArgGbl):
+                    new_iter_loop_call += f", {arg.ptr}"
+            
+            new_iter_loop_call = before + new_iter_loop_call + ");" + split_retain 
+            
 
-        buffer.remove(startLoc.line - 1)
-        
-        buffer.update(index, new_iter_loop_call)
-        
-        
+            buffer.remove(startLoc.line - 1)
+            
+            buffer.update(index, new_iter_loop_call)
+            
+        else:
+            startLoc = iterloop.scope[0]
+            before_begin, after_begin = buffer.get(startLoc.line - 1).split("for", 1)
+            index = startLoc.line
+            loop_indices = [startLoc.line - 1]
+            endLoc = iterloop.scope[1]
+            loop_indices.extend([index for index in range(startLoc.line, endLoc.line)])
+            before_end, after_end =  buffer.get(endLoc.line -1).split("}", 1)
+
+            new_iter_loop_call = f"{iterloop.unique_name}({iterloop.num_iter}, {iterloop.ops_range}"
+            
+            for arg in iterloop.joint_args:
+                if isinstance(arg, ArgDat):
+                    new_iter_loop_call += f", {iterloop.dats[arg.dat_id][0].ptr_raw}"
+                elif isinstance(arg, ArgGbl):
+                    new_iter_loop_call += f", {arg.ptr}"
+            
+            new_iter_loop_call = before_begin + new_iter_loop_call + ");" + after_end 
+            
+            for idx in loop_indices:
+                buffer.remove(idx)
+            
+            buffer.update(index, new_iter_loop_call)
+            
     for loop in program.loops:
         if loop.iterativeLoopId != -1:
             continue
@@ -299,8 +323,14 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
         # elif buffer.search2(pattern2) is not None:
         #     const.setExtern(True) 
     
-    
-    # 8. Removing stencil declaration
+    # 8. Reomving custom #pragma leftovers
+    if buffer.search(r'\s*#pragma ISL*'):
+        line_indices = buffer.search_all(r'\s*#pragma ISL*')
+        
+        for index in line_indices:
+            buffer.remove(index)
+            
+    # 9. Removing stencil declaration
     if buffer.search(r'\s*ops_stencil.*'):
         line_indices = buffer.search_all(r'\s*ops_stencil.*')
     
@@ -327,12 +357,12 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
                     break
                 index += 1
         
-    # 9. Removing ops_partition        
+    # 10. Removing ops_partition        
     if (buffer.search(r'.*ops_partition.*')):
         index = buffer.search(r'.*ops_partition.*')
         buffer.remove(index)
     
-    # 10. Add kernel_wrapp_master_kernels include and add ops_hls_rt_support.h
+    # 11. Add kernel_wrapp_master_kernels include and add ops_hls_rt_support.h
     if (buffer.search(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)')):
         index = buffer.search(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)')
         buffer.insert(index+1, "#include <ops_hls_rt_support.h>")
@@ -340,9 +370,9 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
     else:
         raise OpsError(f"OPS program failed to include core header file, ops_seq.h or ops_seq_V2.h")
 
-    # 11. get_raw_pointer update
+    # 12. get_raw_pointer update
     found_indices = buffer.search_all(r'.*ops_dat_get_raw_pointer.*')
-    print (f"found_indices: {found_indices}")
+    # print (f"found_indices: {found_indices}")
     
     for index in found_indices:
         before, after = buffer.get(index).split("ops_dat_get_raw_pointer", 1)
@@ -367,11 +397,11 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
         buffer.update(index, new_call_line)
     
     found_indices = buffer.search_all(r'.*->.*get_raw_pointer.*')
-    print (f"found_indices: {found_indices}")
+    # print (f"found_indices: {found_indices}")
     
     for index in found_indices:
         before, after = buffer.get(index).split("get_raw_pointer", 1)
-        print (f"before: {before}, after: {after}")
+        # print (f"before: {before}, after: {after}")
         loop_indices = [index]
         
         if (after.find(";") == -1):
@@ -390,23 +420,23 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
         buffer.update(index, new_call_line)
     new_source = buffer.translate()
     
-    # 12. Replace ops_block to ops::hls::Block and replace ops_decl_block to ops_hls_decl_block
+    # 13. Replace ops_block to ops::hls::Block and replace ops_decl_block to ops_hls_decl_block
     new_source = new_source.replace("ops_block", "ops::hls::Block").replace("ops_decl_block", "ops_hls_decl_block")
     
-    # 13. Replace ops_dat to auto and ops_decl_dat to ops_hls_decl_dat
+    # 14. Replace ops_dat to auto and ops_decl_dat to ops_hls_decl_dat
     # TODO: Make the ops_dat to ops::hls::Grid without type defined. to support predefined ops_dat without declaration. 
     #       right now simply translating ops_dat to ops::hls::Grid<stencil_type>
     # found_indices = buffer.search_all(r'.*ops_decl_dat.*')
     # print (f"found_indices ops_hls_decl_dat: {found_indices}")
     new_source = new_source.replace("ops_dat ", "ops::hls::Grid<stencil_type> ")
     
-    # 14. Replace ops_printf
+    # 15. Replace ops_printf
     new_source = new_source.replace("ops_printf", "printf")
     
-    # # 15. Substitude the ops_seq.h/ops_seq_v2.h with ops_lib_core.h
+    # # 16. Substitude the ops_seq.h/ops_seq_v2.h with ops_lib_core.h
     # new_source = re.sub(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)', '#include <ops_hls_rt_support.h>', new_source)
 
-    # 16. check if SOA is set
+    # 17. check if SOA is set
     def replacer(match):
         s = match.group(0)
         if s.startswith("/"):

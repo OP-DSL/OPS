@@ -81,15 +81,11 @@ class CppHLS(Scheme):
         app: Application, 
         kernel_idx: int
     ) -> str:
-
-        print ("Range of loop: ", str(loop.range))
-        
+               
         kernel_entities = app.findEntities(loop.kernel, program)
 
         if len(kernel_entities) == 0:
             raise ParseError(f"Unable to find kernel: {loop.kernel}")
-
-        print ("Found loop entity: ", kernel_entities[0])
         
         extracted_entities = ctk.extractDependancies(kernel_entities, app)
         return ctk.writeSource(extracted_entities)
@@ -215,7 +211,6 @@ class CppHLS(Scheme):
             if not stencil:
                 raise ParseError(f"Translator failed finding relevent stencil: {stencil_ptr} in program: {str(prog.path)}")
             try:
-                # print(f"re search: {access_raw_indices.group(0)}, eval: {eval(access_raw_indices.group(0))}")
                 if loop.ndim == 1:
                     access_indices = ops.Point(list([eval(access_raw_indices.group(0))]))
                 else:
@@ -268,7 +263,6 @@ class CppHLS(Scheme):
             if not stencil:
                 raise ParseError(f"Translator failed finding relevent stencil: {stencil_ptr} in program: {str(prog.path)}")
             try:
-                print(f"re search: {access_raw_indices.group(0)}, eval: {eval(access_raw_indices.group(0))}")
                 indices = eval(access_raw_indices.group(0))
                 dim_index = indices[0]
                 indices = indices[1:]

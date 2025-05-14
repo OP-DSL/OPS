@@ -49,8 +49,8 @@ extern const unsigned short mem_vector_factor;
 // #define OPS_CPP_API
 #define OPS_HLS_V2
 // #define OPS_FPGA
-#define PROFILE
-#define VERIFICATION
+// #define PROFILE
+// #define VERIFICATION
 #include <ops_seq_v2.h>
 //Including applicaiton-specific "user kernels"
 #include "heat3d.hpp"
@@ -61,6 +61,13 @@ extern const unsigned short mem_vector_factor;
     #include <chrono>
 #endif
 
+#ifdef POWER_PROFILE
+    unsigned int power_iter = 1;
+    #ifdef PROFILE
+    std::cerr << "POWER_PROFILE cannot be enabled with PROFILE" << std::endl;
+    exit(-1);
+    #endif  
+#endif
 int main(int argc, const char** argv)
 {
     //Initialise the OPS library, passing runtime args, and setting diagnostics level to low (1)
@@ -101,6 +108,13 @@ int main(int argc, const char** argv)
         if(pch != NULL) {
             batches = atoi ( argv[n] + 7 ); continue;
         }
+#ifdef POWER_PROFILE
+        pch = strstr(argv[n], "-piter=");
+        if(pch != NULL) {
+            power_iter = atoi ( argv[n] + 7 ); continue;
+        }
+        batches = 1;
+#endif
     }
 
     GridParameter gridData;
@@ -137,6 +151,16 @@ int main(int argc, const char** argv)
 #ifdef PROFILE
 	double init_runtime[batches];
 	double main_loop_runtime[batches];
+
+    std::string profile_filename = "perf_profile.csv";
+
+    std::ofstream fstream;
+    fstream.open(profile_filename, std::ios::out | std::ios::trunc);
+
+    if (!fstream.is_open()) {
+        std::cerr << "Error: Could not open the file " << profile_filename << std::endl;
+        return 1; // Indicate an error occurred
+    }
 #endif
 
     //The 3D block
@@ -258,6 +282,10 @@ int main(int argc, const char** argv)
             std::cout << "[BATCH - " << bat << "] verification of u2 after initiation" << "[FAILED]" << std::endl;
 #endif
 
+#ifdef POWER_PROFILE
+    for (unsigned int p = 0; p < power_iter; p++)
+    {
+#endif
         ops_printf("Launching poisson calculation: %d x %d x %d mesh\n", size[0], size[1], size[2]);
 
         //iterative stencil loop
@@ -267,7 +295,9 @@ int main(int argc, const char** argv)
 
         float param_k = calcParam[bat].K;
 
-#ifndef OPS_FPGA
+#ifdef OPS_FPGA
+        #pragma ISL "isl0" iter_max
+#endif
         for (int iter = 0; iter < iter_max; iter++)
         {
             ops_par_loop(ops_krnl_heat3D, "ops_krnl_heat3D", blocks[bat], 3, interior_range,
@@ -280,23 +310,18 @@ int main(int argc, const char** argv)
                     ops_arg_dat(u[bat], 1, stencil3D_1pt, "float", OPS_WRITE),
                     ops_arg_dat(u2[bat], 1, stencil3D_1pt, "float", OPS_READ));
         }
-#else
-        ops_iter_par_loop("ops_iter_par_loop_0", iter_max,
-            ops_par_loop(ops_krnl_heat3D, "ops_krnl_heat3D", blocks[bat], 3, interior_range,
-                    ops_arg_dat(u2[bat], 1, stencil3D_1pt, "float", OPS_WRITE),
-                    ops_arg_dat(u[bat], 1, stencil3D_7pt, "float", OPS_READ),
-                    ops_arg_gbl(&param_k, 1, "float", OPS_READ),
-                    ops_arg_idx()),
-            ops_par_copy<float>(u[bat], u2[bat]));
-#endif
+
 #ifdef PROFILE
         auto main_loop_end_clk_point = std::chrono::high_resolution_clock::now();
     #ifndef OPS_FPGA
         main_loop_runtime[bat] = std::chrono::duration<double, std::micro>(main_loop_end_clk_point - main_loop_start_clk_point).count();
     #else
-        main_loop_runtime[bat] = ops_hls_get_execution_runtime<std::chrono::microseconds>(std::string("ops_iter_par_loop_0"));
+        main_loop_runtime[bat] = ops_hls_get_execution_runtime<std::chrono::microseconds>(std::string("isl0"));
     #endif
-#endif        
+#endif 
+#ifdef POWER_PROFILE
+    }
+#endif
     }
 
     //Final Verification after calc
@@ -349,8 +374,13 @@ int main(int argc, const char** argv)
 	double init_std = 0;
 	double total_std = 0;
 
+    fstream << "grid_x," << "grid_y," << "grid_z," << "iters," << "batch_size," << "batch_id," << "init_time," << "main_time," << "total_time" << std::endl; 
+
 	for (unsigned int bat = 0; bat < batches; bat++)
 	{
+        fstream << imax << "," << jmax << "," << kmax << "," << iter_max << "," << 1 << "," << bat << "," << init_runtime[bat] \
+                << "," << main_loop_runtime[bat] << "," << main_loop_runtime[bat] + init_runtime[bat] << std::endl;
+
 		std::cout << "run: "<< bat << "| total runtime: " << main_loop_runtime[bat] + init_runtime[bat] << "(us)" << std::endl;
 		std::cout << "     |--> init runtime: " << init_runtime[bat] << "(us)" << std::endl;
 		std::cout << "     |--> main loop runtime: " << main_loop_runtime[bat] << "(us)" << std::endl;
@@ -400,6 +430,16 @@ int main(int argc, const char** argv)
 	std::cout << "Standard Deviation main loop: " << main_loop_std << std::endl;
 	std::cout << "Standard Deviation total: " << total_std << std::endl;
 	std::cout << "======================================================" << std::endl;
+
+    fstream.close();
+
+    if (fstream.good()) { // Check if operations were successful after closing
+        std::cout << "Successfully wrote data to " << profile_filename << std::endl;
+    } else {
+            std::cerr << "Error occurred during writing to " << profile_filename << std::endl;
+            return 1; // Indicate an error occurred
+    }
+
 #endif
 
     ops_exit();

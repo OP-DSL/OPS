@@ -10,6 +10,7 @@ from util import safeFind, function_name, findIdx #TODO: implement safe find
 import logging
 from math import floor
 from dataclasses import field
+from cpp.preprocessor import isl_directive
 
 def ASTtoString(node: Cursor, indent: str = "", is_last=True, print_lines: Optional[List[str]] = None) -> List[str]:
     if not print_lines:
@@ -47,6 +48,10 @@ def getBinaryOp(node: Cursor) -> Token:
     assert len(children) == 2
     token_offset = len([i for i in children[0].get_tokens()])
     return [i for i in node.get_tokens()][token_offset]
+
+def getUnaryOp(node: Cursor) -> Token:
+    assert node.kind == CursorKind.UNARY_OPERATOR
+    return [i for i in node.get_tokens()][0]
 
 def getAccessorAccessIndices(node: Cursor) -> Optional[Tuple[str, List]]:
     if not node.kind == CursorKind.UNEXPOSED_EXPR:
@@ -128,8 +133,17 @@ def getLocation(location: Cursor.location) -> Location:
     return Location(location.file.name, location.line, location.column)
 
 def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
+    logging.debug(f"{function_name()}: Starting Parsing")
     macros: Dict[Location, str] = {}
     nodes: List[Cursor] = []
+    isl_directives = program.isl_directives
+    cur_isl_directive_id = None
+    
+    if not isl_directives:
+        isl_directives = None
+    else:
+        cur_isl_directive_id = 0
+        
     # counter = 0
     for node in translation_unit.cursor.get_children():
         # print(f"node {counter}: {node.spelling}")
@@ -150,12 +164,25 @@ def parseLoops(translation_unit: TranslationUnit, program: Program) -> None:
     for node in nodes:
         for child in node.walk_preorder(): 
             # print(f"node {node.spelling}: child - {child.spelling}/{child.kind}")  
-            # if child.kind == CursorKind.FOR_STMT:
-            #     print(f"For loop found: {parseLocation(node)}")
-            #     parseForLoop(child)
+            if child.kind == CursorKind.FOR_STMT:
+                logging.debug(f" For loop found: {parseLocation(child)}")
                 
-            if child.kind == CursorKind.CALL_EXPR:
-                parseCall(child, macros, program)
+                if isl_directives is None:
+                    logging.debug(f" Not a ISL")
+    
+                elif child.location.line >  isl_directives[cur_isl_directive_id].get_lineno():
+                    logging.debug(f" found iter_parloop: {isl_directives[cur_isl_directive_id].get_isl_name()}, param: {isl_directives[cur_isl_directive_id].get_max_iter_param()}")
+                    
+                    outerLoop = parseIterForLoop(child, isl_directives[cur_isl_directive_id], macros, program)
+                    program.outerloops.append(outerLoop)
+                    
+                    if cur_isl_directive_id < len(isl_directives) - 1:
+                        cur_isl_directive_id +=1
+                    else:
+                        isl_directives = None  
+                
+            # if child.kind == CursorKind.CALL_EXPR:
+            #     parseCall(child, macros, program)
                 
             elif child.kind.is_unexposed():
                 parseCallUnexposed(child, macros, program)
@@ -208,14 +235,6 @@ def parseVariableDeclaration(node: Cursor, macros: Dict[Location, str], program:
         rval_expr = children[1]
             
     elif (node.kind == CursorKind.BINARY_OPERATOR):
-        aststringlist = ASTtoString(node)
-        aststring = ""
-        
-        for line in aststringlist:
-            aststring += line + "\n"
-            
-        logging.debug(f"AST: \n" + aststring)
-
         for child in node.get_children():
             children.append(child)
         
@@ -289,38 +308,39 @@ def parseFunctionCall(node: Cursor) -> Union[Tuple[str, List[Cursor]], None]:
     return (name, args)
 
 
-def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> None:
-    out = parseFunctionCall(node)
+# def parseCall(node: Cursor, macros: Dict[Location, str], program: Program) -> None:
+#     logging.debug(f"{function_name()} at {parseLocation(node)}")
+#     out = parseFunctionCall(node)
     
-    if out == None:
-        return
+#     if out == None:
+#         return
 
-    (name, args) = out  
-    loc = parseLocation(node)
+#     (name, args) = out  
+#     loc = parseLocation(node)
 
-    if name == "ops_decl_stencil":
-        if len(args) != 4:
-            raise ParseError("ops_decl_stencil need 4 arguments", loc)
+#     if name == "ops_decl_stencil":
+#         if len(args) != 4:
+#             raise ParseError("ops_decl_stencil need 4 arguments", loc)
         
-        print(f"node {node}: {node.spelling}: type: {node.kind}")
-        for arg in args: 
-            if arg.kind == CursorKind.UNEXPOSED_EXPR and arg.get_definition():
-                print(f"|-- argument {arg.spelling}: type: {arg.kind}, definition: {arg.get_definition().kind}, defLoc:{str(parseLocation(arg.get_definition()))}")
-            else:
-                print(f"|-- argument {arg.spelling}: type: {arg.kind}")
+#         # print(f"node {node}: {node.spelling}: type: {node.kind}")
+#         # for arg in args: 
+#         #     if arg.kind == CursorKind.UNEXPOSED_EXPR and arg.get_definition():
+#         #         print(f"|-- argument {arg.spelling}: type: {arg.kind}, definition: {arg.get_definition().kind}, defLoc:{str(parseLocation(arg.get_definition()))}")
+#         #     else:
+#         #         print(f"|-- argument {arg.spelling}: type: {arg.kind}")
 
-    # print(f"node:{node.spelling}, type: {node.type}")
-    ov_node = decend(decend(node))   
+#     # print(f"node:{node.spelling}, type: {node.type}")
+#     ov_node = decend(decend(node))   
     
-    # print (f"node: {name}, ov_node: {ov_node.spelling}, args: {args}") 
-    if not ov_node:
-        return
+#     # print (f"node: {name}, ov_node: {ov_node.spelling}, args: {args}") 
+#     if not ov_node:
+#         return
     
-    name = ov_node.spelling        
-    if name == "ops_iter_par_loop":
-        scope = [getLocation(node.extent.start), getLocation(node.extent.end)]
-        outerLoop = parseIterLoop(node, args, scope, macros, program)
-        program.outerloops.append(outerLoop)
+#     name = ov_node.spelling        
+#     if name == "ops_iter_par_loop":
+#         scope = [getLocation(node.extent.start), getLocation(node.extent.end)]
+#         outerLoop = parseIterLoop(node, args, scope, macros, program)
+#         program.outerloops.append(outerLoop)
         
         
 def parseStencil(name: str, args: List[Cursor], loc: Location, macros: Dict[Location, str], program: Program, vector_factor: int = 1) -> Union[ops.Stencil, None]:
@@ -632,14 +652,15 @@ def parseArgDatOpt(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Di
     if len(args) != 6:
         raise ParseError(f"Incorrect number({len(args)}) of args passed to ops_arg_dat_opt", loc)
 
-    dat_ptr = parseIdentifier(args[0])
+    dat_raw_ptr = parseIdentifier(args[0])
+    dat_ptr = parseIdentifier(args[0], raw=False)
     dim = parseIntLiteral(args[1])
     stencil_ptr = parseIdentifier(args[2])
     dat_typ, dat_soa = parseType(parseStringLit(args[3]), loc)
     access_type = parseAccessType(args[4], loc, macros)
     opt = parseIntExpression(args[5])
 
-    loop.addArgDat(loc, dat_ptr, dim, dat_typ, dat_soa, stencil_ptr, access_type, bool(opt))
+    loop.addArgDat(loc, dat_raw_ptr, dat_ptr, dim, dat_typ, dat_soa, stencil_ptr, access_type, bool(opt))
 
 
 def parseArgReduce(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[Location, str]) -> None:
@@ -714,8 +735,89 @@ def parseArgIdx(loop: ops.Loop, args: List[Cursor], loc: Location, macros: Dict[
 
     loop.addArgIdx(loc)
 
+
+def parseIterForLoop(node: Cursor, isl_dir: isl_directive, macros: Dict[Location, str], program: Program)-> ops.IterLoop:
+    if node.kind != CursorKind.FOR_STMT:
+        raise ParseError("The ISL region shuld be a FOR statement", parseLocation(node))
+    lines = ASTtoString(node)
+    
+    logging.debug("ISL Region AST")
+    for  l in  lines:
+        logging.debug(l)
+    
+    cond_stmt = None
+    init_stmt = None
+    inc_stmt = None
+    comp_stmt = None
+    iterLoop_args = []
+     
+    for child in node.get_children():
+        if child.kind == CursorKind.BINARY_OPERATOR:
+            cond_stmt = child
+        elif child.kind == CursorKind.DECL_STMT:
+            init_stmt = child
+        elif child.kind == CursorKind.UNARY_OPERATOR:
+            inc_stmt = child
+        elif child.kind == CursorKind.COMPOUND_STMT:
+            comp_stmt = child
+    
+    init_val_expr = None
+    if decend(decend(init_stmt)).kind == CursorKind.INTEGER_LITERAL:
+        init_val_expr = decend(decend(init_stmt))
+    elif decend(decend(init_stmt)).kind == CursorKind.UNEXPOSED_EXPR \
+            and decend(decend(decend(init_stmt))).kind == CursorKind.INTEGER_LITERAL:
+        init_val_expr = decend(decend(decend(init_stmt)))
+    else:
+        raise ParseError("ISL For loop should be a simple iteration variable with 0 initializer")
+    
+    if parseIntLiteral(init_val_expr) != 0:
+        raise ParseError("Currenty loop iterator supports for ISL FOR STMT with 0 intialization", parseLocation(node))
+    
+    if not getBinaryOp(cond_stmt).spelling == "<":
+        raise ParseError(f"Only the < operator in ISL FOR STMT supported. got {getBinaryOp(cond_stmt).spelling}")
+    
+    #TODO: Fix this check
+    # if inc_stmt == None or not getUnaryOp(inc_stmt).spelling == "++":
+    #     raise ParseError(f"Only supported increament operation in ISL FOR is ++", parseLocation(node))
+    
+    for child in comp_stmt.get_children():
+        if child.kind != CursorKind.UNEXPOSED_EXPR:
+            raise ParseError(f"The ISL FOR STMT only allow ops_par_loop statements")
+
+        out = parseUnexposedFunction(child)
+    
+        if out == None:
+            raise ParseError("Incorrect argument passed to ops_iter_par_loop")
+        else:
+            (name, loop_args) = out
+            
+        if name == "ops_par_loop":
+            loop = parseLoop(child, loop_args, parseLocation(child), macros)
+            loop.iterativeLoopId = len(program.outerloops)
+            
+            iterLoop_args.append(loop)
+            
+            if loop not in program.loops:
+                program.loops.append(loop)
+
+            if program.ndim == None:
+                program.ndim = loop.ndim
+            elif program.ndim < loop.ndim:
+                program.ndim = loop.ndim
+        
+        elif name == "ops_par_copy":
+            parCpyObj = parse_par_copy(child, loop_args, parseLocation(child), macros)
+            iterLoop_args.append(parCpyObj)
+     
+    iterLoopObj = ops.IterLoop(isl_dir.get_isl_name(), len(program.outerloops), isl_dir.get_max_iter_param(), [getLocation(node.extent.start), getLocation(node.extent.end)], iterLoop_args)
+    if iterLoopObj.unique_id not in program.uniqueOuterloopMap.keys():
+        program.uniqueOuterloopMap[iterLoopObj.unique_id] = len(program.uniqueOuterloopMap.keys())
+    
+    return iterLoopObj       
+        
+    
 def parseIterLoop(node: Cursor, args: List[Cursor], scope: List[Location], macros: Dict[Location, str], program: Program)-> ops.IterLoop:
-    print(f"Found iterLoop: {node.spelling}, scope: (start - {getLocation(node.extent.start)}, end - {getLocation(node.extent.end)}), args: {print([(arg.spelling, arg.kind) for arg in args])}")
+    logging.debug(f"Found iterLoop: {node.spelling}, scope: (start - {getLocation(node.extent.start)}, end - {getLocation(node.extent.end)}), args: {print([(arg.spelling, arg.kind) for arg in args])}")
     is_iter_literal = args[1].kind == CursorKind.INTEGER_LITERAL
     iterLoop_args = []
     unique_name = parseStringLit(args[0])
@@ -779,7 +881,7 @@ def parseLoop(loopNode: Cursor, args: List[Cursor], loc: Location, macros: Dict[
     block  = parseIdentifier(args[2])
     range = parseRange(args[4], dim)
 
-    print(f"[DEBUG] kernel={kernel}, name={name}, dim={dim}, block={block}, range={range}\n")
+    logging.debug(f"{function_name()}: kernel={kernel}, name={name}, dim={dim}, block={block}, range={range}\n")
     
     loop = ops.Loop(loopNode, loc, kernel, block, range, dim)
 

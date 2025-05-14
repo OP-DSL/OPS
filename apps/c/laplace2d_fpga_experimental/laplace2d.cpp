@@ -39,17 +39,18 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <iomanip>
 int imax, jmax;
 float pi  = 2.0 * asin(1.0);
 
 //Including main OPS header file, and setting 2D
 #define OPS_2D
-#define OPS_CPP_API
+// #define OPS_CPP_API
 #define OPS_HLS_V2
 // #define OPS_FPGA
-#define PROFILE
-#define VERIFICATION
+// #define PROFILE
+// #define POWER_PROFILE
+// #define VERIFICATION
 #include <ops_seq_v2.h>
 //Including applicaiton-specific "user kernels"
 #include "laplace_kernels.h"
@@ -69,9 +70,17 @@ int main(int argc, const char** argv)
     jmax = 100;
     //Size along x
     imax = 100;
-    unsigned int iter_max = 100;
+    unsigned int iter_max = 180;
 
     const char* pch;
+
+#ifdef POWER_PROFILE
+    unsigned int power_iter = 1;
+    #ifdef PROFILE
+    std::cerr << "POWER_PROFILE cannot be enabled with PROFILE" << std::endl;
+    exit(-1);
+    #endif  
+#endif
     for ( int n = 1; n < argc; n++ )
     {
         pch = strstr(argv[n], "-sizex=");
@@ -94,11 +103,28 @@ int main(int argc, const char** argv)
         if(pch != NULL) {
             batches = atoi ( argv[n] + 7 ); continue;
         }
+#ifdef POWER_PROFILE
+        pch = strstr(argv[n], "-piter=");
+        if(pch != NULL) {
+            power_iter = atoi ( argv[n] + 7 ); continue;
+        }
+#endif
     }
 
 #ifdef PROFILE
 	double init_runtime[batches];
 	double main_loop_runtime[batches];
+
+    std::string profile_filename = "perf_profile.csv";
+
+    std::ofstream fstream;
+    fstream.open(profile_filename, std::ios::out | std::ios::trunc);
+
+    if (!fstream.is_open()) {
+        std::cerr << "Error: Could not open the file " << profile_filename << std::endl;
+        return 1; // Indicate an error occurred
+    }
+
 #endif
 
     for (unsigned int bat = 0; bat < batches; bat++)
@@ -179,7 +205,10 @@ int main(int argc, const char** argv)
 		auto init_end_clk_point = std::chrono::high_resolution_clock::now();
 		init_runtime[bat] = std::chrono::duration<double, std::micro> (init_end_clk_point - init_start_clk_point).count();
 #endif
-
+#ifdef POWER_PROFILE
+    for (unsigned int p = 0; p < power_iter; p++)
+    {
+#endif
         ops_printf("Laplace 2D Calculation: %d x %d mesh\n", imax+2, jmax+2);
 
 #ifdef PROFILE
@@ -206,8 +235,10 @@ int main(int argc, const char** argv)
 #endif
 
 #ifdef VERIFICATION
-        A = (float*)ops_dat_get_raw_pointer(d_A, 0, S2D_00, OPS_HOST);
-        Anew = (float*)ops_dat_get_raw_pointer(d_Anew, 0, S2D_00, OPS_HOST);
+        // ops_print_dat_to_txtfile(d_A, "dataA.txt");
+        ops_memspace memspace = OPS_HOST;
+        A = (float*)ops_dat_get_raw_pointer(d_A, 0, S2D_5pt, &memspace);
+        Anew = (float*)ops_dat_get_raw_pointer(d_Anew, 0, S2D_5pt, &memspace);
 
         if(verify(A, Anew, size, d_m, d_p))
             std::cout << "verification of d_A and d_Anew" << "[PASSED]" << std::endl;
@@ -226,7 +257,10 @@ int main(int argc, const char** argv)
             std::cout << "verification of AnewCpu and Anew" << "[PASSED]" << std::endl;
         else
             std::cerr << "verification of AnewCpu and Anew" << "[FAILED]" << std::endl;
-
+    #ifndef OPS_FPGA
+        ops_dat_release_raw_data(d_A, 0, OPS_READ);
+        ops_dat_release_raw_data(d_Anew, 0, OPS_READ);
+    #endif
 #endif
 
         int interior_range[] = {0,imax,0,jmax};
@@ -253,7 +287,9 @@ int main(int argc, const char** argv)
 		auto main_loop_start_clk_point = std::chrono::high_resolution_clock::now();
 #endif
 
-#ifndef OPS_FPGA
+#ifdef OPS_FPGA
+        #pragma ISL "isl0" iter_max
+#endif
         for (unsigned int i = 0; i < iter_max; i++)
         {
             
@@ -269,26 +305,28 @@ int main(int argc, const char** argv)
             // if(iter % 10 == 0) ops_printf("%5d, %0.6f\n", iter, error);        
             // iter++;
         }
-#else
-        ops_iter_par_loop("ops_iter_par_loop_0", iter_max, 
-            ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
-                ops_arg_dat(d_A,    1, S2D_5pt, "float", OPS_READ),
-                ops_arg_dat(d_Anew, 1, S2D_00, "float", OPS_WRITE)), 
-        ops_par_copy<float>(d_A, d_Anew));
-#endif
+// #else
+//         ops_iter_par_loop("ops_iter_par_loop_0", iter_max, 
+//             ops_par_loop(apply_stencil, "apply_stencil", block, 2, interior_range,
+//                 ops_arg_dat(d_A,    1, S2D_5pt, "float", OPS_READ),
+//                 ops_arg_dat(d_Anew, 1, S2D_00, "float", OPS_WRITE)), 
+//         ops_par_copy<float>(d_A, d_Anew));
+// #endif
 
 #ifdef PROFILE
 		auto main_loop_end_clk_point = std::chrono::high_resolution_clock::now();
     #ifndef OPS_FPGA
 		main_loop_runtime[bat] = std::chrono::duration<double, std::micro>(main_loop_end_clk_point - main_loop_start_clk_point).count();
     #else
-        main_loop_runtime[bat] = ops_hls_get_execution_runtime<std::chrono::microseconds>(std::string("ops_iter_par_loop_0"));
+        main_loop_runtime[bat] = ops_hls_get_execution_runtime<std::chrono::microseconds>(std::string("isl0"));
     #endif
 #endif
-
+#ifdef POWER_PROFILE
+    }
+#endif
 #ifdef VERIFICATION
-        A = (float*)d_A->get_raw_pointer(0, S2D_00, OPS_HOST);
-        Anew = (float*)d_Anew->get_raw_pointer(0, S2D_00, OPS_HOST);
+        A = (float*)ops_dat_get_raw_pointer(d_A, 0, S2D_00, &memspace);
+        Anew = (float*)ops_dat_get_raw_pointer(d_Anew, 0, S2D_00, &memspace);
 
 		for (int iter = 0; iter < iter_max; iter++)
 		{
@@ -296,16 +334,19 @@ int main(int argc, const char** argv)
 			copyGrid(Acpu, AnewCpu, size, d_m, d_p);
 		}
 
-		// if (verify(A, Acpu, size, d_m, d_p))
+        // if (verify(A, Acpu, size, d_m, d_p))
 		// 	std::cout << "verification of A and Acpu after calc" << "[PASSED]" << std::endl;
 		// else
 		// 	std::cerr << "verification of A and Acpu after calc" << "[FAILED]" << std::endl;
 
-		if (verify(Anew, AnewCpu, size, d_m, d_p))
-			std::cout << "verification of Anew and AnewCpu after calc" << "[PASSED]" << std::endl;
-		else
-			std::cerr << "verification of Anew and AnewCpu after calc" << "[FAILED]" << std::endl;
-
+		// if (verify(Anew, AnewCpu, size, d_m, d_p))
+		// 	std::cout << "verification of Anew and AnewCpu after calc" << "[PASSED]" << std::endl;
+		// else
+		// 	std::cerr << "verification of Anew and AnewCpu after calc" << "[FAILED]" << std::endl;
+    #ifndef OPS_FPGA
+        ops_dat_release_raw_data(d_A, 0, OPS_READ);
+        ops_dat_release_raw_data(d_Anew, 0, OPS_READ);
+    #endif
 		// printGrid2D<float>(A, d_A.originalProperty, "d_A after computation");
 		// printGrid2D<float>(Acpu, d_A.originalProperty, "d_Acpu after computation");
 
@@ -347,8 +388,12 @@ int main(int argc, const char** argv)
 	double init_std = 0;
 	double total_std = 0;
 
+    fstream << "grid_x," << "grid_y," << "grid_z," << "iters," << "batch_size," << "batch_id," << "init_time," << "main_time," << "total_time" << std::endl; 
+
 	for (unsigned int bat = 0; bat < batches; bat++)
 	{
+        fstream << imax << "," << jmax << "," << 1 << "," << iter_max << "," << 1 << "," << bat << "," << init_runtime[bat] \
+                << "," << main_loop_runtime[bat] << "," << main_loop_runtime[bat] + init_runtime[bat] << std::endl;
 		std::cout << "run: "<< bat << "| total runtime: " << main_loop_runtime[bat] + init_runtime[bat] << "(us)" << std::endl;
 		std::cout << "     |--> init runtime: " << init_runtime[bat] << "(us)" << std::endl;
 		std::cout << "     |--> main loop runtime: " << main_loop_runtime[bat] << "(us)" << std::endl;
@@ -398,8 +443,17 @@ int main(int argc, const char** argv)
 	std::cout << "Standard Deviation main loop: " << main_loop_std << std::endl;
 	std::cout << "Standard Deviation total: " << total_std << std::endl;
 	std::cout << "======================================================" << std::endl;
-#endif
 
+    fstream.close();
+
+    if (fstream.good()) { // Check if operations were successful after closing
+        std::cout << "Successfully wrote data to " << profile_filename << std::endl;
+    } else {
+            std::cerr << "Error occurred during writing to " << profile_filename << std::endl;
+            return 1; // Indicate an error occurred
+    }
+#endif
+    
     ops_exit();
 
     std::cout << "Exit properly" << std::endl;

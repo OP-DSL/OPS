@@ -79,12 +79,12 @@ env.tests["is_arg_swap"] = isArgSwap
 env.globals.update(shift_bits = lambda widen, base_size: int(log2(widen+1) - log2(base_size)))
 
 def getReadArgFromDat(dat: ops.Dat, loop: ops.Loop) -> ops.ArgDat:
-    print(f"dat:  {dat}, dat.name: {dat.ptr}, dat_id: {dat.id}, loop: {loop}\n")
+    # print(f"dat:  {dat}, dat.name: {dat.ptr}, dat_id: {dat.id}, loop: {loop}\n")
     for arg in loop.args:
         if not isinstance(arg, ops.ArgDat):
             continue
         if arg.dat_id  == dat.id and arg.access_type in [ops.AccessType.OPS_READ, ops.AccessType.OPS_RW]:
-            print(f"Arg found from dat {dat.ptr}: {arg}")
+            # print(f"Arg found from dat {dat.ptr}: {arg}")
             return arg
     logging.warning(f"Couldn't find dat:{dat} in loop: {loop}")
     return None
