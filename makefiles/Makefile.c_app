@@ -7,6 +7,7 @@ OPS_GENERATED=$(join $(addsuffix $(OPS_GENERATED_SUFFIX), $(basename $(OPS_FILES
 OPS_GENERATED_HLS=$(join $(addsuffix $(OPS_GENERATED_SUFFIX)_hls, $(basename $(OPS_FILES))), $(suffix $(OPS_FILES)))
 OPS_FILES_PLAIN=$(OPS_FILES) $(OTHER_FILES)
 OPS_FILES_GEN=$(OPS_GENERATED) $(OTHER_FILES)
+OPS_FILES_GEN_HLS=$(OPS_GENERATED_HLS) $(OTHER_FILES)
 
 ifndef APP
 $(error APP is not set)
@@ -33,7 +34,7 @@ ifdef OPS_DUMP_AST
 endif
 
 OPS_GEN_DEBUG=
-ifdef OPS_GENERATOR_DEBUG
+ifdef OPS_GENERATOR_LOG_DEBUG
 	OPS_GEN_DEBUG=-g
 endif
 
@@ -59,6 +60,7 @@ DEFINES+= -DOPS_ACC_IGNORE
 	@echo "OPS_GENERATED: ${OPS_GENERATED_HLS}"
 	which python3
 	python3 $(OPS_INSTALL_PATH)/../ops_translator/ops-translator $(VERBOSE) $(DUMP) $(DUMP_AST) $(OPS_GEN_DEBUG) --fpga $(OPS_TARGET_CONFIG_JSON) $(DEFINES) -DOPS_FPGA -I $(OPS_INSTALL_PATH)/c/include/ --file_paths $(OPS_FILES)
+	@echo ""
 	rm -f .generated_hls
 	touch .generated_hls
 
@@ -375,8 +377,63 @@ $(APP)_mpi_sycl_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPI
 # HLS version
 #
 
-$(APP)_hls: Makefile .generated_hls
-		@echo "Translation ${APP} HLS completed"
+
+$(APP)_hls: Makefile .generated_hls ./hls/build/$(HLS_TARGET_MODE)/$(APP)_host ./hls/build/$(HLS_TARGET_MODE)/$(APP).xclbin
+		@echo ""
+		@echo ""
+		@echo "Building ${APP}_hls"
+		@echo ""
+		
+./hls/build/$(HLS_TARGET_MODE)/$(APP)_host: .generated_hls $(OPS_INSTALL_PATH)/hls/lib/$(OPS_COMPILER)/libops_hls.a $(OPS_INSTALL_PATH)/hls/lib/$(OPS_COMPILER)/libops_seq.a 
+		@echo ""
+		@echo ""
+		@echo "Building ${APP}_hls_host"
+		@echo ""
+		@echo ""
+		test -d ./hls/build/$(HLS_TARGET_MODE) || mkdir -p ./hls/build/$(HLS_TARGET_MODE)
+		$(CXX)  -o ./hls/build/$(HLS_TARGET_MODE)/$(APP)_host $(OPS_FILES_GEN_HLS) $(CXXFLAGS) $(HLS_CXXFLAGS) -I./ -I./hls/host/kernel_wrappers/ $(HLS_LDFLAGS)
+
+
+# TOP_MODULES_XOS := ${patsubst %.cpp, %.xo, ${patsubst hls/device/src/%, hls/build/$(HLS_TARGET_MODE)/%, ${shell ls hls/device/src/*.cpp}}}
+
+./hls/build/$(HLS_TARGET_MODE)/$(APP).xclbin: .generated_hls
+		@echo ""
+		@echo ""
+		@echo "Building ${APP}_hls.xclbin"
+		@echo ""
+		test -d hls/build/$(HLS_TARGET_MODE)/temp_dir/link/ || mkdir -p hls/build/$(HLS_TARGET_MODE)/temp_dir/link/
+
+		@for xo_file in ${basename ${notdir ${shell ls ./hls/device/src/*.cpp}}}; do \
+			echo "Compiling $${xo_file}"; \
+			$(VPP) -s -O3 $(VPP_FLAGS) --temp_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/ --log_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/ --compile $(OPS_HLS_DEVICE_INC) -I./hls/device/include/ -k $${xo_file} -o hls/build/$(HLS_TARGET_MODE)/$${xo_file}.xo  hls/device/src/$${xo_file}.cpp; \
+		done
+
+		@if [ -n "$(OPS_HLS_XSA_PLATFORM)" ]; then \
+			echo "Building XSA platform"; \
+			$(VPP) -s -O3 $(VPP_FLAGS) --temp_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/link/  --log_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/link/logs/ --link --config hls/host/xrt.cfg -o ./hls/build/$(HLS_TARGET_MODE)/$(APP).xsa  ${patsubst %.cpp, %.xo, ${patsubst ./hls/device/src/%, ./hls/build/$(HLS_TARGET_MODE)/%, $(shell ls ./hls/device/src/*.cpp)}}; \
+			$(VPP) -s -O3 --target $(HLS_TARGET_MODE) --platform $(PLATFORM) --temp_dir  hls/build/$(HLS_TARGET_MODE)/temp_dir/link/ --log_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/link/logs/ --package  ./hls/build/$(HLS_TARGET_MODE)/$(APP).xsa -o "$@"; \
+		else \
+			echo "Building non-XSA platform"; \
+			$(VPP) -s -O3 $(VPP_FLAGS) --temp_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/link/  --log_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/link/logs/ --link --config hls/host/xrt.cfg -o "$@"  ${patsubst %.cpp, %.xo, ${patsubst ./hls/device/src/%, ./hls/build/$(HLS_TARGET_MODE)/%, $(shell ls ./hls/device/src/*.cpp)}}; \
+		fi
+		
+.PHONY: build_hls_host
+build_hls_host: 
+	rm -f ./hls/build/$(HLS_TARGET_MODE)/$(APP)_host
+	make ./hls/build/$(HLS_TARGET_MODE)/$(APP)_host
+
+.PHONY: run_hls_app
+run_hls_app:
+	bash ./run_script_hls.sh $(HLS_TARGET_MODE) $(APP) $(CXXFLAGS)
+	
+# hls/build/$(HLS_TARGET_MODE)/%.xo: ./hls/device/src/%.cpp
+# 		@echo ""
+# 		@echo ""
+# 		@echo "Building $@"
+# 		@echo ""
+# 		test -d hls/build/$(HLS_TARGET_MODE)/temp_dir/ || mkdir -p hls/build/$(HLS_TARGET_MODE)/temp_dir/
+# 		$(VPP) $(VPP_FLAGS) --temp_dir hls/build/$(HLS_TARGET_MODE)/temp_dir/ --compile $(OPS_HLS_DEVICE_INC) -I./hls/device/include/ -k $(basename $(notdir $@)) -o $@ $<
+
 #=====================================================================================================================================================================
 #
 # cleanup
@@ -417,6 +474,7 @@ clean:
 	rm -f .generated constants_list.txt cudafe .generated_hls
 	rm -rf ./mpi_openmp ./cuda ./hip ./openmp_offload ./sycl ./openacc ./hls
 	rm -f *_ops_hls.cpp
+	rm -rf _x .Xil xcd.log
 	rm -f ops_translator_run.log source_pp.txt
 	rm -f xrc.log
 	rm -f *_ast.txt  

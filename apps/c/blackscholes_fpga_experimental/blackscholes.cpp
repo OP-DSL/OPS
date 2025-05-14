@@ -52,13 +52,23 @@
 #define OPS_1D
 #define OPS_HLS_V2
 // #define OPS_FPGA
-#define VERIFICATION
-#define DEBUG_VERBOSE
-#define PROFILE
+// #define VERIFICATION
+// #define DEBUG_VERBOSE
+// #define PROFILE
+// #define POWER_PROFILE
+#include "ops_lib_core.h"
 #include <ops_seq_v2.h>
 #include "blackscholes_kernels.h"
 
 extern const unsigned short mem_vector_factor;
+
+#ifdef POWER_PROFILE
+    unsigned int power_iter = 1;
+    #ifdef PROFILE
+    std::cerr << "POWER_PROFILE cannot be enabled with PROFILE" << std::endl;
+    exit(-1);
+    #endif  
+#endif
 
 int main(int argc, const char **argv)
 {
@@ -95,6 +105,13 @@ int main(int argc, const char **argv)
 		{
 			gridProp.batch = atoi ( argv[n] + 7 ); continue;
 		}
+#ifdef POWER_PROFILE
+        pch = strstr(argv[n], "-piter=");
+        if(pch != NULL) {
+            power_iter = atoi ( argv[n] + 7 ); continue;
+        }
+        gridProp.batch = 1;
+#endif
 	}
 
     	printf("Grid: %dx1 , %d iterations, %d batches\n", gridProp.logical_size_x, gridProp.num_iter, gridProp.batch);
@@ -104,9 +121,13 @@ int main(int argc, const char **argv)
 	gridProp.act_size_y = 1;
 
 	//padding each row as multiple of vectorization factor
+#ifdef OPS_FPGA
 	gridProp.grid_size_x = (gridProp.act_size_x % mem_vector_factor) != 0 ?
 			(gridProp.act_size_x/mem_vector_factor + 1) * mem_vector_factor :
 			gridProp.act_size_x;
+#else
+gridProp.grid_size_x = gridProp.act_size_x;
+#endif
 	gridProp.grid_size_y = gridProp.act_size_y;
 
 	//allocating memory buffer
@@ -123,6 +144,16 @@ int main(int argc, const char **argv)
 	double main_loop_cpu_runtime[gridProp.batch];
 	double init_runtime[gridProp.batch];
 	double main_loop_runtime[gridProp.batch];
+
+    std::string profile_filename = "perf_profile.csv";
+
+    std::ofstream fstream;
+    fstream.open(profile_filename, std::ios::out | std::ios::trunc);
+
+    if (!fstream.is_open()) {
+        std::cerr << "Error: Could not open the file " << profile_filename << std::endl;
+        return 1; // Indicate an error occurred
+    }
 #endif
 	std::vector<blackscholesParameter> calcParam(gridProp.batch); //multiple blackscholes calculations
 
@@ -319,6 +350,10 @@ int main(int argc, const char **argv)
 		init_runtime[bat] = std::chrono::duration<double, std::micro>(grid_init_stop_clk_point - grid_init_start_clk_point).count();
 		auto blackscholes_calc_start_clk_point = grid_init_stop_clk_point;
 #endif
+#ifdef POWER_PROFILE
+    for (unsigned int p = 0; p < power_iter; p++)
+    {
+#endif
 #ifdef OPS_FPGA
         #pragma ISL "isl0" calcParam[bat].N
 #endif 
@@ -358,6 +393,9 @@ int main(int argc, const char **argv)
 		main_loop_runtime[bat] = ops_hls_get_execution_runtime<std::chrono::microseconds>(std::string("isl0"));
     #endif
 #endif  
+#ifdef POWER_PROFILE
+    }
+#endif
 }
 
 #ifdef VERIFICATION
@@ -442,6 +480,8 @@ int main(int argc, const char **argv)
 	double init_std = 0;
 	double total_std = 0;
 
+    fstream << "grid_x," << "grid_y," << "grid_z," << "iters," << "batch_size," << "batch_id," << "init_time," << "main_time," << "total_time" << std::endl; 
+
 	#ifdef VERIFICATION
 	double cpu_avg_main_loop_runtime = 0;
 	double cpu_max_main_loop_runtime = 0;
@@ -456,6 +496,9 @@ int main(int argc, const char **argv)
 
 	for (unsigned int bat = 0; bat < gridProp.batch; bat++)
 	{
+        fstream << gridProp.logical_size_x << "," << 1 << "," << 1 << "," << calcParam[bat].N << "," << 1 << "," << bat << "," << init_runtime[bat] \
+                << "," << main_loop_runtime[bat] << "," << main_loop_runtime[bat] + init_runtime[bat] << std::endl;
+
 		std::cout << "run: "<< bat << "| total runtime (DEVICE): " << main_loop_runtime[bat] + init_runtime[bat] << "(us)" << std::endl;
 		std::cout << "     |--> init runtime: " << init_runtime[bat] << "(us)" << std::endl;
 		std::cout << "     |--> main loop runtime: " << main_loop_runtime[bat] << "(us)" << std::endl;
@@ -554,6 +597,15 @@ int main(int argc, const char **argv)
 	std::cout << "Standard Deviation total - CPU: " << cpu_total_std << std::endl;
 	#endif
 	std::cout << "======================================================" << std::endl;
+
+    fstream.close();
+
+    if (fstream.good()) { // Check if operations were successful after closing
+        std::cout << "Successfully wrote data to " << profile_filename << std::endl;
+    } else {
+            std::cerr << "Error occurred during writing to " << profile_filename << std::endl;
+            return 1; // Indicate an error occurred
+    }
 #endif
 
 	//Finalizing the OPS library
