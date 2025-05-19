@@ -40,6 +40,9 @@
 #include <ops_device_rt_support.h>
 #include <ops_sycl_rt_support.h>
 
+#include <random>
+//std::default_random_engine ops_rand_gen;
+std::mt19937 ops_rand_gen;
 
 void ops_init_device(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
   cutilDeviceInit(instance, argc, argv);
@@ -111,6 +114,7 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
     }
   }
   instance->sycl_instance = new OPS_instance_sycl();
+
   switch (OPS_sycl_device) {
   case 0:
     instance->sycl_instance->queue =
@@ -148,4 +152,19 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
   instance->OPS_hybrid_gpu = 1;
   auto platform = instance->sycl_instance->queue->get_device().get_platform();
   if (instance->OPS_diags>=1) instance->ostream() << "Running on " << instance->sycl_instance->queue->get_device().get_info<cl::sycl::info::device::name>() << " platform " << platform.get_info<cl::sycl::info::platform::name>() << "\n";
+}
+
+void ops_randomgen_init(unsigned int seed, int options) {
+  ops_randomgen_init_host(seed, options, ops_rand_gen);
+}
+
+void ops_fill_random_uniform(ops_dat dat) {
+  ops_fill_random_uniform_host(dat, ops_rand_gen);
+}
+
+void ops_fill_random_normal(ops_dat dat) {
+  ops_fill_random_normal_host(dat, ops_rand_gen);
+}
+
+void ops_randomgen_exit() {
 }

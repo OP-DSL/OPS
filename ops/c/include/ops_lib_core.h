@@ -49,7 +49,9 @@
 #include "queue.h" //contains double linked list implementation
 #include <strings.h>
 #endif
+#include <stdint.h>
 #include <complex>
+#include <random>
 
 /** default byte alignment for allocations made by OPS */
 #ifndef OPS_ALIGNMENT
@@ -67,6 +69,7 @@
 /**
  * maximum number of spatial dimensions supported.
  * Can reduce to save on size of metadata
+ * Declared in Fortran side as well, correct the number there if changed from 5
  */
 #define OPS_MAX_DIM 5
 
@@ -92,6 +95,102 @@
 typedef std::complex<double> complexd;
 typedef std::complex<float> complexf;
 
+#if (defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)) && !(defined(__HIP_PLATFORM_NVCC__) || defined(__HIP_PLATFORM_NVIDIA__))
+#include <hip/hip_fp16.h>
+#elif !(defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)) && (defined(__HIP_PLATFORM_NVCC__) || defined(__HIP_PLATFORM_NVIDIA__))
+#ifndef __HALF_DEFINED__
+#include <cuda_fp16.h>
+#endif
+#elif defined(__CUDA_ARCH__) || defined(__CUDACC__)
+#ifndef __HALF_DEFINED__
+#include <cuda_fp16.h>
+#endif
+typedef __half half;
+//#elif defined(__SYCL_DEVICE_ONLY__)
+#elif defined(__INTEL_SYCL__)
+#include <CL/sycl.hpp>
+typedef sycl::half half;
+#elif defined(__STDCPP_FLOAT16_T__) || defined(FLT16_MIN)
+typedef _Float16 half;
+#elif defined(__VITIS_HLS__)
+#include <ap_int.h>
+#else
+typedef uint16_t half;
+#endif
+
+
+/*#ifdef __CUDACC__
+__device__ inline half operator*(int lhs, const half& rhs) {
+    half lhs_half = __float2half(static_cast<float>(lhs));
+    return __hmul(lhs_half, rhs);
+}
+
+__device__ inline half operator*(const half& lhs, int rhs) {
+    half rhs_half = __float2half(static_cast<float>(rhs));
+    return __hmul(lhs, rhs_half);
+}
+
+__device__ inline half operator+(int lhs, const half& rhs) {
+    half lhs_half = __float2half(static_cast<float>(lhs));
+    return __hadd(lhs_half, rhs);
+}
+
+__device__ inline half operator+(const half& lhs, int rhs) {
+    half rhs_half = __float2half(static_cast<float>(rhs));
+    return __hadd(lhs, rhs_half);
+}
+
+__device__ inline half operator-(int lhs, const half& rhs) {
+    half lhs_half = __float2half(static_cast<float>(lhs));
+    return __hsub(lhs_half, rhs);
+}
+
+__device__ inline half operator-(const half& lhs, int rhs) {
+    half rhs_half = __float2half(static_cast<float>(rhs));
+    return __hsub(lhs, rhs_half);
+}
+
+__device__ inline half operator/(int lhs, const half& rhs) {
+    half lhs_half = __float2half(static_cast<float>(lhs));
+    return __hdiv(lhs_half, rhs);
+}
+
+__device__ inline half operator/(const half& lhs, int rhs) {
+    half rhs_half = __float2half(static_cast<float>(rhs));
+    return __hdiv(lhs, rhs_half);
+}
+
+__device__ inline half cos(const half& lhs) {
+    return (half)cos((float)lhs);
+}
+
+__device__ inline half sin(const half& lhs) {
+    return (half)sin((float)lhs);
+}
+
+
+__device__ inline half operator*(double lhs, const half& rhs) {
+    half lhs_half = __float2half(lhs);
+    return __hmul(lhs_half, rhs);
+}
+
+__device__ inline half operator*(const half& lhs, float rhs) {
+    half rhs_half = __float2half(rhs);
+    return __hmul(lhs, rhs_half);
+}
+
+__device__ inline half operator+(float lhs, const half& rhs) {
+    half lhs_half = __float2half(lhs);
+    return __hadd(lhs_half, rhs);
+}
+
+__device__ inline half operator+(const half& lhs, float rhs) {
+    half rhs_half = __float2half(rhs);
+    return __hadd(lhs, rhs_half);
+}
+
+#endif 
+*/
 /*
  * * zero constants
  * */
@@ -508,7 +607,7 @@ struct ops_halo_core {
 typedef ops_halo_core *ops_halo;
 
 /** Storage for OPS halo groups */
-typedef struct {
+typedef struct ops_halo_group_core {
   int nhalos;                     /**< number of halos */
   ops_halo *halos;                /**< list of halos */
   int index;                      /**< index of halo group */
@@ -1269,6 +1368,15 @@ void ops_dat_set_data_slab_memspace(ops_dat dat, int part, char *data, int *rang
 OPS_FTN_INTEROP
 int ops_dat_get_global_npartitions(ops_dat dat);
 #endif
+
+/*******************************************************************************
+* Random number generations
+*******************************************************************************/
+void ops_randomgen_init(unsigned int seed, int options);
+void ops_fill_random_uniform(ops_dat dat);
+void ops_fill_random_normal(ops_dat dat);
+void ops_randomgen_exit();
+
 
 /**
  * This class is an accessor to data stored in ops_dats. It is

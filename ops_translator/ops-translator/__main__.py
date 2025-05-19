@@ -12,6 +12,7 @@ import cpp
 import cpp.parser
 import fortran
 
+from fortran.translator.program import add_offload_directives, check_offload_pragma_required, check_repeated_kernels_fortran
 from jinja_utils import env
 from language import Lang
 from ops import OpsError, Type, Loop, DataflowNode
@@ -139,12 +140,27 @@ def main(argv=None) -> None:
         logging.error("parsed application validation failed with exception: %e", str(e))
         exit(e)
 
+    logging.info("Code-gen : Parsing done for all files")
     
     app_consts = app.consts()
+    # Find out if declare pragma in case of openmp offload is required for constants or not
+    offload_pragma_flag_dict = {}
+    if(lang.name == "Fortran"):
+        offload_pragma_flag_dict = check_offload_pragma_required(app_consts)
 
-
-    # Generating code for targets
-    logging.info("Found config overides: %s", str(args.config))
+    all_par_loops = {}
+    # Check if repeated kernels are there with argument mismatch
+    if(lang.name == "Fortran"):
+        for program in app.programs:
+            check_repeated_kernels_fortran(program, all_par_loops)
+    
+    # Write all consts to a file - required for Fortran
+    if(lang.name == "Fortran"):
+        with open('constants_list.txt', 'w') as file:
+            file.writelines([item.ptr + '\n' for item in app_consts])
+             
+    # Generating codegen for targets
+    logging.debug("Found config overides: %s", str(args.config))
      
     for [target] in args.target:
         target = Target.find(target)
@@ -187,6 +203,7 @@ def main(argv=None) -> None:
             for program in app.programs:
                 scheme.optimize(program, app)
 
+        logging.info("Code-gen : Generating target specific template, scheme - " + scheme.target.name)
         codegen(args, scheme, app, target.config, args.force_soa)
         
         if target.name == "hls":
@@ -228,6 +245,13 @@ def main(argv=None) -> None:
                 logging.info(f"Translated program {i} of {len(args.file_paths)}: {new_path}")
 
 
+    logging.info("Code-gen : Program translation phase finished.........")
+
+    # Create new constants.F90 file with relevant pragms for openmp offload for F90 version
+    if(lang.name == "Fortran"):
+        add_offload_directives(app_consts,offload_pragma_flag_dict)
+
+
 def parse(args: Namespace, lang: Lang) -> Application:
     app = Application()
 
@@ -238,17 +262,12 @@ def parse(args: Namespace, lang: Lang) -> Application:
     # Parse the input files
     for i, raw_path in enumerate(args.file_paths, 1):
         if args.verbose:
-            print(f"Parseing file {i} of {len(args.file_paths)}: {raw_path}")
+            print(f"Parsing file {i} of {len(args.file_paths)}: {raw_path}")
 
         # Parse the program
         program = lang.parseProgram(Path(raw_path), include_dirs, defines)
         app.programs.append(program)
 
-    # for item in app.loops():
-    #     loop = item[0]
-    #     KernelEntity = app.findEntities(loop.kernel)
-        
-    #     print(f"Found Kernel Entity: {KernelEntity[0]}")
     return app
 
 def validate(args: Namespace, lang: Lang, app: Application) -> None:
@@ -284,13 +303,19 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, target_config: di
         # From output files path
         path = None
         if scheme.lang.kernel_dir:
+            
             if scheme.target.name == "hls":
                 Path(args.out, scheme.target.name, "host", "kernel_wrappers").mkdir(parents=True, exist_ok=True)
                 path = Path(args.out, scheme.target.name, "host", "kernel_wrappers", f"{loop.kernel}_kernel.hpp")                
             else:
                 Path(args.out, scheme.target.name).mkdir(parents=True, exist_ok=True)
-                path = Path(args.out, scheme.target.name, f"{loop.kernel}_kernel.{extension}")
+                
+                if(scheme.lang.name == "C++"):
+                    path = Path(args.out, scheme.target.name, f"{loop.kernel}_kernel.{extension}")
+                else:
+                    path = Path(args.out, scheme.target.name, f"{loop.kernel}_{scheme.target.suffix}_kernel.{extension}")
         else:
+            
             if scheme.target.name == "hls":
                 path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel_wrapper.hpp")
             else:
@@ -306,6 +331,7 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, target_config: di
                 if args.verbose:
                     print(f"Generated loop host {i} of {len(app.uniqueLoops())}: {path}")
         else:
+            
             if args.verbose:
                 print(f"Skipping loop host {i} of {len(app.uniqueLoops())}: {path}")
 
@@ -370,7 +396,7 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, target_config: di
 
             if args.verbose:
                 print(f"Generated master kernel file: {path}")
-                
+               
 
 #TODO: Add a generic target flag to target class "kernel_device_translation"
 def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_config: dict, force_soa: bool = False) -> None:
@@ -528,7 +554,6 @@ def codegenHLSDevice(args: Namespace, scheme: Scheme, app: Application, target_c
             if args.verbose:
                 print(f"Generated loop device kernel src {j} of {len(app.uniqueLoops())}: {path}")
     
-
 
 if __name__ == "__main__":
     main()

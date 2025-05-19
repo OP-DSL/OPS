@@ -13,6 +13,7 @@
 
 program laplace
     use OPS_Fortran_Reference
+!    use OPS_Fortran_hdf5_Declarations
     use OPS_CONSTANTS
 
     use, intrinsic :: ISO_C_BINDING
@@ -68,7 +69,7 @@ program laplace
     !initialize and declare constants
     imax = 4094
     jmax = 4094
-    pi = 2.0_8*asin(1.0_8)
+!    pi = 2.0_8*asin(1.0_8)
 
 #ifdef OPS_WITH_CUDAFOR
     imax_opsconstant = imax
@@ -84,7 +85,7 @@ program laplace
     top_range      = [0,imax+1,      jmax+1,jmax+1]
     left_range     = [0,0,           0,jmax+1]
     right_range    = [imax+1,imax+1, 0,jmax+1]
-    interior_range = [1,imax,      1,jmax]     
+    interior_range = [1,imax,      1,jmax]
 
     !-----------------------OPS Initialization------------------------
     call ops_init(2)
@@ -132,7 +133,9 @@ program laplace
                & ops_arg_dat(d_A, 1, S2D_0pt, "real(kind=8)", OPS_WRITE), &
                & ops_arg_idx())
 
-    write(*,'(a,i5,a,i5,a)') 'Jacobi relaxation Calculation:', imax+2, ' x', jmax+2, ' mesh'
+    if (ops_is_root() == 1) then
+        write(*,'(a,i5,a,i5,a)') 'Jacobi relaxation Calculation:', imax+2, ' x', jmax+2, ' mesh'
+    end if
 
     iter=0
 
@@ -150,23 +153,25 @@ program laplace
                & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(kind=8)", OPS_WRITE), &
                & ops_arg_idx())
 
-    !call ops_print_dat_to_txtfile(d_A, "data_A.txt")
-    !call ops_print_dat_to_txtfile(d_Anew, "data_Anew.txt")
+!    call ops_fetch_block_hdf5_file(grid2D, "A.h5")
+!    call ops_fetch_dat_hdf5_file(d_A, "A.h5")
 
-    do while ( iter .lt. iter_max ) ! .and. error .gt. tol
-        error=0.0_8
+!    call ops_print_dat_to_txtfile(d_A, "data_A.txt")
+!    call ops_print_dat_to_txtfile(d_Anew, "data_Anew.txt")
+
+    do while ( iter < iter_max .and. error > tol )
 
         call ops_par_loop(apply_stencil_kernel, "apply_stencil", grid2D, 2, interior_range, &
                         & ops_arg_dat(d_A,    1, S2D_5pt, "real(kind=8)", OPS_READ), &
                         & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(kind=8)", OPS_WRITE), &
                         & ops_arg_reduce(h_err, 1, "real(kind=8)", OPS_MAX))
+        call ops_reduction_result(h_err, error)
 
         call ops_par_loop(copy_kernel, "copy", grid2D, 2, interior_range, &
                         & ops_arg_dat(d_A,    1, S2D_0pt, "real(kind=8)", OPS_WRITE), &
                         & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(kind=8)", OPS_READ))
                         
-        IF (mod(iter,10).eq.0 ) THEN
-            call ops_reduction_result(h_err, error)
+        IF ( mod(iter,10) == 0 .and. ops_is_root() == 1) THEN
             write(*,'(i5,a,f16.7)') iter, ', ',error
         END IF
 
@@ -174,10 +179,11 @@ program laplace
 
     end do  ! End of do while loop
 
-    call ops_reduction_result(h_err, error)
-    write(*,'(i5,a,f16.7)') iter, ', ',error
+    if (ops_is_root() == 1) then
+        write(*,'(i5,a,f16.7)') iter, ', ',error
+    end if
 
-    err_diff = abs((100.0*(error/0.0026300795485))-100.0)
+    err_diff = abs((100.0*(error/2.421354960840227e-03))-100.0)
 
     write(*,'(a,e18.5,a)') 'Total error is within ', err_diff,' % of the expected error'
 
@@ -188,8 +194,10 @@ program laplace
     end if    
 
     call ops_timers( endTime )
-    write(*,'(a,f16.7,a)')  ' completed in ', endTime - startTime, ' seconds'
-
+    call ops_timing_output()
+    if (ops_is_root() == 1) then
+        write(*,'(a,f16.7,a)')  ' Max total runtime ', endTime - startTime, ' seconds'
+    end if
     call ops_exit( )
 
 end program laplace

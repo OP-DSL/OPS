@@ -163,13 +163,25 @@ def parseCall(node: f2003.Call_Stmt, program: Program, loc: Location) -> None:
         loop = parseLoop(program, args, loc)
         program.loops.append(loop)
 
+    elif name == "ops_init":
+        program.init_flag = True
+
+    elif name == "ops_set_soa":
+        assert args is not None
+        if not program.init_flag:
+            raise ParseError("ops_set_soa is called before a call to ops_init")
+        soa_val = parseIntLiteral(args.items[0], loc)
+        if not (soa_val == 0 or soa_val == 1):
+            raise ParseError("SOA argument value should be either 0 or 1, soa_val provided: " + str(soa_val))
+        if soa_val==1 and not program.soa_val:
+            program.soa_val = True
 
 def parseConst(args: Optional[f2003.Actual_Arg_Spec_List], loc: Location) -> OPS.Const:
     if args is None or len(args.items) != 4:
         raise ParseError("incorrect number of arguments for ops_decl_const", loc)
 
     name    = parseStringLiteral(args.items[0], loc)
-    dim     = parseIntLiteral(args.items[1], loc)  # TODO: Might not be an integer literal?
+    dim     = parseIdentifier(args.items[1], loc)
     assert dim is not None
 
     typ_str = parseStringLiteral(args.items[2], loc).strip().lower()
@@ -221,11 +233,11 @@ def parseLoop(program: Program, args: Optional[f2003.Actual_Arg_Spec_List], loc:
 
 
 def parseIdentifier(node: Any, loc: Location) -> str:
-    # if not hasattr(node, "string"):
-    #    raise ParseError(f"Unable to parse identifier for node: {node}", loc)
+    if not hasattr(node, "string"):
+        raise ParseError(f"Unable to parse identifier for node: {node}", loc)
 
-    return node.string.lower()
-
+    #return node.string.lower()
+    return node.string
 
 def parseIntLiteral(node: Any, loc: Location, optional: bool = False) -> Optional[int]:
     if type(node) is f2003.Parenthesis:

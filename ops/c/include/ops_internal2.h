@@ -212,7 +212,7 @@ OPS_FTN_INTEROP
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name);
 
 void ops_NaNcheck(ops_dat dat);
-void ops_NaNcheck_core(ops_dat dat, char *buffer);
+void ops_NaNcheck_core(ops_dat dat, char *buffer, int *disp, int *d_m);
 
 void ops_timing_realloc(OPS_instance *instance, int, const char *);
 float ops_compute_transfer(int dims, int *start, int *end, ops_arg *arg);
@@ -269,11 +269,11 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                            int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
                            int x_step, int y_step, int z_step,
                            int buf_strides_x, int buf_strides_y,
-                           int buf_strides_z);
+                           int buf_strides_z, bool mixed_exchange, int storage_type_size);
 void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
                          int x_step, int y_step, int z_step, int buf_strides_x,
-                         int buf_strides_y, int buf_strides_z);
+                         int buf_strides_y, int buf_strides_z, bool mixed_exchange, int storage_type_size);
 
 /* lazy execution */
 void ops_enqueue_kernel(ops_kernel_descriptor *desc);
@@ -285,7 +285,15 @@ int ops_get_proc();
 int ops_num_procs();
 void ops_put_data(ops_dat dat);
 OPS_FTN_INTEROP
-void create_kerneldesc_and_enque(char const *name, char const* kernel_name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc));
+void create_kerneldesc_and_enque(char const* kernel_name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc));
+
+
+/*******************************************************************************
+* Random number generations
+*******************************************************************************/
+void ops_randomgen_init_host(unsigned int seed, int options, std::mt19937 &ops_rand_gen);
+void ops_fill_random_uniform_host(ops_dat dat, std::mt19937 &ops_rand_gen);
+void ops_fill_random_normal_host(ops_dat dat, std::mt19937 &ops_rand_gen);
 
 /*******************************************************************************
 * Memory allocation functions
@@ -310,7 +318,12 @@ void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_
 void ops_device_memset(OPS_instance *instance, void** ptr, int val, size_t size);
 void ops_device_sync(OPS_instance *instance);
 void ops_exit_device(OPS_instance *instance);
+//
+void reallocConstArrays(OPS_instance *instance, int consts_bytes);
+void mvConstArraysToDevice(OPS_instance *instance, int consts_bytes);
 
+void reallocConstArrays(OPS_instance *instance, int consts_bytes);
+void mvConstArraysToDevice(OPS_instance *instance, int consts_bytes);
 
 void _ops_init(OPS_instance *instance, const int argc, const char * const argv[], const int diags_level);
 ops_block _ops_decl_block(OPS_instance *instance, int dims, const char * name);

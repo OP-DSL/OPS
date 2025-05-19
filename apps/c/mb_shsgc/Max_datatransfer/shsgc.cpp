@@ -513,4 +513,5 @@ int main(int argc, const char **argv) {
 //   ops_printf("Post shock num is is: %d\n",(err2));
   ops_printf("-----------------------------------------\n");
   ops_exit();
+  return 0;
 }

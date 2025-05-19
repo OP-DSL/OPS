@@ -137,8 +137,9 @@ class Fortran(Lang):
     use_regex_translator = False
 
     def __init__(self):
-        with open("constants_list.txt", 'w') as file:
-            pass
+        #with open("constants_list.txt", 'w') as file:
+        #    pass
+        pass
 
     def validate(self, app: Application) -> None:
         # TODO: see fortran.parser
@@ -149,23 +150,23 @@ class Fortran(Lang):
             fortran.validator.validateLoop(loop, program, app)
 
     def preprocess(self, path: Path, include_dirs: FrozenSet[Path], defines: FrozenSet[str]) -> str:
-        #TODO fpp = os.getenv("OPS_FPP")
-        #if fpp is not None:
-        #    args = [fpp, "-P", "-free", "-f90"]
+        fpp = os.getenv("OPS_FPP")
+        if fpp is not None:
+            args = [fpp, "-P", "-free", "-f90"]
 
-        #    for dir in include_dirs:
-        #        args.append(f"-I{dir}")
+            for dir in include_dirs:
+                args.append(f"-I{dir}")
 
-        #    for define in defines:
-        #        args.append(f"-D{define}")
+            for define in defines:
+                args.append(f"-D{define}")
 
-        #    args.append(str(path))
+            args.append(str(path))
 
-        #    print(" ".join(args))
-        #    res = subprocess.run(args, capture_output=True, check=True)
-        #    print(res.stderr.decode("utf-8"))
+            print(" ".join(args))
+            res = subprocess.run(args, capture_output=True, check=True)
+            print(res.stderr.decode("utf-8"))
 
-        #    return res.stdout.decode("utf-8")
+            return res.stdout.decode("utf-8")
 
         preprocessor = Preprocessor()
 
@@ -203,26 +204,30 @@ class Fortran(Lang):
         source = path.read_text()
         reader = FortranStringReader(source, include_dirs=list(include_dirs), ignore_comments=False)
         parser = ParserFactory().create(std="f2003")
+#        try:
+#            print(parser(reader))
+#        except Exception as e:
+#            print(f"An error occurred: {e}")
         return parser(reader), source
 
     def parseProgram(self, path: Path, include_dirs: Set[Path], defines: List[str]) -> Program:
         ast, source = self.parseFile(path, frozenset(include_dirs), frozenset(defines))
         return fortran.parser.parseProgram(ast, source, path)
 
-    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], app_consts: List[OPS.Const], force_soa: bool) -> str:
+    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], app_consts: List[OPS.Const], force_soa: bool, offload_pragma_flag_dict) -> str:
         #if self.use_regex_translator:
         #    return fortran.translator.program.translateProgram2(program, force_soa)
 
-        return fortran.translator.program.translateProgram(program, force_soa)
+        return fortran.translator.program.translateProgram(program, force_soa, offload_pragma_flag_dict)
 
     def formatType(self, typ: OPS.Type) -> str:
         if isinstance(typ, OPS.Int):
             if not typ.signed:
                 raise NotImplementedError("Fortran does not support unsigned integers")
 
-            return f"integer({int(typ.size / 8)})"
+            return f"integer(kind={int(typ.size / 8)})"
         elif isinstance(typ, OPS.Float):
-            return f"real({int(typ.size / 8)})"
+            return f"real(kind={int(typ.size / 8)})"
         elif isinstance(typ, OPS.Bool):
             return "logical"
         elif isinstance(typ, OPS.Custom):

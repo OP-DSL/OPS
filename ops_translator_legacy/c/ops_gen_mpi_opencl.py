@@ -71,8 +71,8 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
     ##########################################################################
     #  create new kernel files **_kernel.cl
     ##########################################################################
-    if not os.path.exists("./OpenCL"):
-        os.makedirs("./OpenCL")
+    if not os.path.exists("./opencl"):
+        os.makedirs("./opencl")
 
     for nk in range(0, len(kernels)):
         assert config.file_text == "" and config.depth == 0
@@ -427,13 +427,13 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
         config.depth = config.depth - 2
         code("}")
 
-        util.write_text_to_file(f"./OpenCL/{name}.cl")
+        util.write_text_to_file(f"./opencl/{name}.cl")
 
         ##########################################################################
         #  generate opencl kernel build function
         ##########################################################################
 
-        kernel_list_text = f'"./OpenCL/{name}.cl"'
+        kernel_list_text = f'"./opencl/{name}.cl"'
         arg_text = ""
         compile_line = ""
         arg_values = ""
@@ -718,23 +718,23 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
         comm("set up OpenCL thread blocks")
         if NDIM == 1:
             code(
-                "size_t globalWorkSize[3] = {((x_size-1)/block->instance->OPS_block_size_x+ 1)*block->instance->OPS_block_size_x, 1, 1};"
+                "size_t globalWorkSize[3] = {static_cast<size_t>(((x_size-1)/block->instance->OPS_block_size_x+ 1)*block->instance->OPS_block_size_x), static_cast<size_t>(1), static_cast<size_t>(1)};"
             )
         if NDIM == 2:
             code(
-                "size_t globalWorkSize[3] = {((x_size-1)/block->instance->OPS_block_size_x+ 1)*block->instance->OPS_block_size_x, ((y_size-1)/block->instance->OPS_block_size_y + 1)*block->instance->OPS_block_size_y, 1};"
+                "size_t globalWorkSize[3] = {static_cast<size_t>(((x_size-1)/block->instance->OPS_block_size_x+ 1)*block->instance->OPS_block_size_x), static_cast<size_t>(((y_size-1)/block->instance->OPS_block_size_y + 1)*block->instance->OPS_block_size_y), static_cast<size_t>(1)};"
             )
         if NDIM == 3:
             code(
-                "size_t globalWorkSize[3] = {((x_size-1)/block->instance->OPS_block_size_x+ 1)*block->instance->OPS_block_size_x, ((y_size-1)/block->instance->OPS_block_size_y + 1)*block->instance->OPS_block_size_y, ((z_size-1)/block->instance->OPS_block_size_z+ 1)*block->instance->OPS_block_size_z};"
+                "size_t globalWorkSize[3] = {static_cast<size_t>(((x_size-1)/block->instance->OPS_block_size_x+ 1)*block->instance->OPS_block_size_x), static_cast<size_t>(((y_size-1)/block->instance->OPS_block_size_y + 1)*block->instance->OPS_block_size_y), static_cast<size_t>(((z_size-1)/block->instance->OPS_block_size_z+ 1)*block->instance->OPS_block_size_z)};"
             )
 
         if NDIM > 1:
             code(
-                "size_t localWorkSize[3] =  {block->instance->OPS_block_size_x,block->instance->OPS_block_size_y,block->instance->OPS_block_size_z};"
+                "size_t localWorkSize[3] =  {static_cast<size_t>(block->instance->OPS_block_size_x),static_cast<size_t>(block->instance->OPS_block_size_y),static_cast<size_t>(block->instance->OPS_block_size_z)};"
             )
         else:
-            code("size_t localWorkSize[3] =  {block->instance->OPS_block_size_x,1,1};")
+            code("size_t localWorkSize[3] =  {static_cast<size_t>(block->instance->OPS_block_size_x),static_cast<size_t>(1),static_cast<size_t>(1)};")
         code("")
 
         # setup reduction variables
@@ -1105,7 +1105,7 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
         ##########################################################################
         #  output individual kernel file
         ##########################################################################
-        util.write_text_to_file(f"./OpenCL/{name}_opencl_kernel.cpp")
+        util.write_text_to_file(f"./opencl/{name}_opencl_kernel.cpp")
 
     # end of main kernel call loop
 
@@ -1211,6 +1211,6 @@ def ops_gen_mpi_opencl(master, consts, kernels, soa_set):
         if not (("initialise" in kernel_name) or ("generate" in kernel_name)):
             code(f'#include "{kernel_name}_opencl_kernel.cpp"')
         else:
-            code(f'#include "../MPI_OpenMP/{kernel_name}_cpu_kernel.cpp"')
+            code(f'#include "../mpi_openmp/{kernel_name}_kernel.cpp"')
 
-    util.write_text_to_file(f"./OpenCL/{master_basename[0]}_opencl_kernels.cpp")
+    util.write_text_to_file(f"./opencl/opencl_kernels.cpp")

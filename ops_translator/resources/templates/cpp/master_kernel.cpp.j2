@@ -27,7 +27,11 @@
 // user kernel files
     {% for lh, p in app.uniqueLoops() %}
         {% if not outerloop_enbl or lh.iterativeLoopId == -1 %}
+            {% if lh.kernel == "calc_dt_kernel_print" and target.name == "sycl" %}
+#include "../mpi_openmp/{{lh.kernel}}_kernel.{{include_extension}}"
+            {% else %}
 #include "{{lh.kernel}}_kernel.{{include_extension}}"
+            {% endif %}
         {% endif %}
     {% endfor %}
     {% if outerloop_enbl %}

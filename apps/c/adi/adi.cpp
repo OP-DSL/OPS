@@ -248,7 +248,7 @@ int main(int argc, char *argv[]) {
   bx = 16384;
   by = 16384;
   bz = 16384;
-  m = 0;
+  m = 5;
   halo = 1;
   t = 0;
 
@@ -496,5 +496,7 @@ int main(int argc, char *argv[]) {
   ops_printf("X Dim total time (s): %lf\n", total_x);
   ops_printf("Y Dim total time (s): %lf\n", total_y);
   ops_printf("Z Dim total time (s): %lf\n", total_z);
+  ops_printf("\nSuccessful exit from OPS!\n");
   ops_exit();
+  return 0;
 }

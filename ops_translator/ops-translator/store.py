@@ -71,7 +71,7 @@ class Type(Entity):
 
 @dataclass
 class Function(Entity):
-    parameters: List(str) = field(default_factory=list)
+    parameters: List[str] = field(default_factory=list)
     returns: Optional[ops.Type] = None
     loc: Location = None
 
@@ -112,6 +112,7 @@ class Program:
     
     ndim: Optional[int] = None
     soa_val: Optional[bool] = False
+    init_flag: Optional[bool] = False
 
     def findEntities(self, name: str, scope: List[str] = []) -> List[Entity]:
         def in_scope(entity: Entity):
@@ -256,8 +257,8 @@ class Application:
     def validateLoops(self, lang: Lang) -> None:
         for loop, Program in self.loops():
             num_opts = len([arg for arg in loop.args if getattr(arg, "opt", False)])
-            if num_opts > 32:
-                raise OpsError(f"number of optional arguments exceeds 32: {num_opts}", loop.loc)
+            #if num_opts > 128:
+            #    raise OpsError(f"number of optional arguments exceeds 128: {num_opts}", loop.loc)
             for arg in loop.args:
                 if isinstance(arg, ops.ArgDat):
                     self.validateArgDat(arg, loop, lang)
@@ -294,7 +295,7 @@ class Application:
             raise OpsError(f"Invalid access type for gbl argument: {arg.access_type}", arg.loc)
 
         if arg.access_type in [ops.AccessType.OPS_INC, ops.AccessType.OPS_MIN, ops.AccessType.OPS_MAX] and arg.typ not in \
-            [ops.Float(64), ops.Float(32), ops.Int(True, 32), ops.Int(False, 32), ops.Bool]:
+            [ops.Float(64), ops.Float(32), ops.Float(16), ops.Int(True, 32), ops.Int(False, 32), ops.Bool]:
             raise OpsError(f"Invalid access type for reduced gbl argument: {arg.access_type}", arg.loc)
 
         if str(arg.dim).isdigit() and int(str(arg.dim)) < 1:

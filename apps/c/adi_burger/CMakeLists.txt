@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
-CreateTempDir()
-if (LIBTRID_PATH)
-    BUILD_OPS_C_SAMPLE(adi_burger "NONE" "NONE" "NONE" "YES" "NONE")
-endif ()
-
+createtempdir()
+if(LIBTRID_PATH)
+  build_ops_c_sample(adi_burger "NONE" "NONE" "NONE" "YES" "NONE")
+endif()

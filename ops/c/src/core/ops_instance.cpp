@@ -15,7 +15,7 @@ namespace {
 
 
    // The number of OPS_instances in flight, set to zero at process load
-   std::atomic< std::int32_t> numInstances(0);
+   std::atomic< int32_t> numInstances(0);
 
 
    void incrementInstanceCount()

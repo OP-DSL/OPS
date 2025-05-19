@@ -27,17 +27,18 @@ Detailed instructions for installing virtual environment using pip can be found 
 Execute following **after cloning the OPS repository (see below)** to install required packages. Note `OPS_INSTALL_PATH` is the installation directory of OPS/ops:
 ```
 #Install virtual environment using pip (if not installed earlier)
+#Please set the OPS_INSTALL_PATH variable before running following commands
 python3 -m pip install --user virtualenv
 
-mkdir -p $OPS_INSTALL_PATH/../ops_translator_v2/ops_venv
-python3 -m venv $OPS_INSTALL_PATH/../ops_translator_v2/ops_venv
-source $OPS_INSTALL_PATH/../ops_translator_v2/ops_venv/bin/activate
+mkdir -p $OPS_INSTALL_PATH/../ops_translator/ops_venv
+python3 -m venv $OPS_INSTALL_PATH/../ops_translator/ops_venv
+source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
 python3 -m pip install --upgrade pip
-python3 -m pip install fparser cached-property dataclasses jinja2 pylint mypy pcpp sympy
-python3 -m pip install clang==14.0.6 libclang==14.0.6
+python3 -m pip install -r $OPS_INSTALL_PATH/../ops_translator/requirements.txt
+python3 -m pip install --force-reinstall libclang==16.0.6
 ```
-These instructions can be executed by running the script `OPS/ops_translator_v2/setup_venv.sh` file. 
-After successfully setting up the Python virtual environment and installing the required dependent packages using the above instructions, you will need to activate the virtual environment by `source $OPS_INSTALL_PATH/../ops_translator_v2/ops_venv/bin/activate` every time you want to use the code generator. Activating the virtual environment ensures that the code generator and its dependencies are isolated from the system-wide Python installtion, avoiding conflicts and ensuring proper execution.
+These instructions can be executed by running the script `OPS/ops_translator/setup_venv.sh` file.
+After successfully setting up the Python virtual environment and installing the required dependent packages using the above instructions, you will need to activate the virtual environment by `source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate` every time you want to use the code generator. Activating the virtual environment ensures that the code generator and its dependencies are isolated from the system-wide Python installation, avoiding conflicts and ensuring proper execution.
 
  **HDF5**
 
@@ -82,7 +83,7 @@ git clone https://github.com/OP-DSL/OPS.git
   make # IEEE=1 enable IEEE flags in compiler
   make install # sudo is needed if a directory like /usr/local/ is chosen.
   ```
-After installation, the library and the python translator can be found at the direcory specified by `CMAKE_INSTALL_PREFIX`, together with the executable files for applications at `APP_INSTALL_DIR`.
+After installation, the library and the python translator can be found at the directory specified by `CMAKE_INSTALL_PREFIX`, together with the executable files for applications at `APP_INSTALL_DIR`.
 
 ####  Build library and example applications separately
 
@@ -138,11 +139,10 @@ The current tests are mainly based on the applications.
   * `OPS_COMPILER` - compiler to be used (Currently supports Intel, PGI and Cray compilers, but others can be easily incorporated by extending the Makefiles used in step 2 and 3)
   * `OPS_INSTALL_PATH` - Installation directory of OPS/ops
   * `CUDA_INSTALL_PATH` - Installation directory of CUDA, usually `/usr/local/cuda` (to build CUDA libs and applications)
-  * `OPENCL_INSTALL_PATH` - Installation directory of OpenCL, usually `/usr/local/cuda` for NVIDIA OpenCL implementation (to build OpenCL libs and applications)
   * `MPI_INSTALL_PATH` - Installation directory of MPI (to build MPI based distributed memory libs and applications)
   * `HDF5_INSTALL_PATH` - Installation directory of HDF5 (to support HDF5 based File I/O)
 
-See example scripts (e.g. `source_intel`, `source_pgi_15.10`, `source_cray`) under `OPS/ops/scripts` that sets up the environment for building with various compilers (Intel, PGI, Cray).
+See example scripts (e.g. `source_intel_2021.3_pythonenv`, `source_pgi_nvhpc_23_pythonenv`, `source_amd_rocm-5.4.3_pythonenv`) under `OPS/scripts` that sets up the environment for building with various compilers (Intel, PGI, ROCm).
 
 #### Build back-end library
 For C/C++ back-end use Makefile under `OPS/ops/c` (modify Makefile if required). The libraries will be built in `OPS/ops/c/lib`
@@ -156,9 +156,10 @@ cd $OPS_INSTALL_PATH/fortran
 make
 ```
 #### Build exampe applications
+Once the backend libraries are built, the example application can be compiled for different supported architectures based on the configured environment using a simple `make` command.
 For example to build CloverLeaf_3D under `OPS/apps/c/CloverLeaf_3D`
 ```bash  
-cd ../apps/c/Cloverleaf_3D/
+cd OPS/apps/c/Cloverleaf_3D/
 make
 ```  
 <!---#### Makefile options -->

@@ -43,49 +43,45 @@
 
 program POISSON
   use OPS_Fortran_Reference
+!  use OPS_Fortran_hdf5_Declarations
   use OPS_CONSTANTS
 
   use, intrinsic :: ISO_C_BINDING
 
   implicit none
 
-  !integer logical_size_x
-  !integer logical_size_y
-  !integer ngrid_x
-  !integer ngrid_y
-  !integer n_iter
-
   ! vars for halo_depths
-  integer d_p(2) /1,1/   !max halo depths for the dat in the possitive direction
-  integer d_m(2) /-1,-1/ !max halo depths for the dat in the negative direction
+  integer(kind=4) ::  d_p(2) = [1,1]   !max halo depths for the dat in the possitive direction
+  integer(kind=4) ::  d_m(2) = [-1,-1] !max halo depths for the dat in the negative direction
 
   !base
-  integer base(2) /1,1/ ! this is in fortran indexing
+  integer(kind=4) ::  base(2) = [1,1] ! this is in fortran indexing
 
   !size
-  integer uniform_size(2)
-  integer size(2) !size of the dat
+  integer(kind=4) ::  uniform_size(2)
+  integer(kind=4) ::  size(2) !size of the dat
 
   !null array
-  real(8), dimension(:), allocatable :: temp
+  real(kind=8), dimension(:), allocatable :: temp
 
   !halo vars
-  integer :: sizes(2*ngrid_x*ngrid_y), disps(2*ngrid_x*ngrid_y)
+  integer(kind=4) ::  sizes(2*ngrid_x*ngrid_y), disps(2*ngrid_x*ngrid_y)
+  integer(kind=4) ::  dispx, dispy
 
-  integer halo_iter(2), base_from(2), base_to(2), dir(2), dir_to(2)
+  integer(kind=4) ::  halo_iter(2), base_from(2), base_to(2), dir(2), dir_to(2)
 
   !ops blocks
   type(ops_block) :: blocks(ngrid_x*ngrid_y)
 
   ! vars for stencils
-  integer S2D_00_array(2) /0,0/
+  integer(kind=4) ::  S2D_00_array(2) = [0,0]
   type(ops_stencil) :: S2D_00
-  integer S2D_00_P10_M10_0P1_0M1_array(10) /0,0, 1,0, -1,0, 0,1, 0,-1/
+  integer(kind=4) ::  S2D_00_P10_M10_0P1_0M1_array(10) = [0,0, 1,0, -1,0, 0,1, 0,-1]
   type(ops_stencil) :: S2D_00_P10_M10_0P1_0M1
 
   !ops_reduction
   type(ops_reduction) :: red_err
-  real(8) :: err, err_diff
+  real(kind=8) :: err, err_diff
 
 
   !ops_dats
@@ -99,9 +95,9 @@ program POISSON
   type(ops_halo_group) :: u_halos
 
   !iteration ranges
-  integer iter_range(4)
+  integer(kind=4) ::  iter_range(4)
 
-  integer i,j, off, iter
+  integer(kind=4) ::  i,j, off, iter
   character(len=20) buf
 
   ! profiling
@@ -110,7 +106,12 @@ program POISSON
 
   ! constants
   dx = 0.01_8
-  dy = 0.01_8
+!  dy = 0.01_8
+
+#ifdef OPS_WITH_CUDAFOR
+  dx_opsconstant = dx
+  dy_opsconstant = dy
+#endif
 
   !ALLOCATE(blocks(ngrid_x*ngrid_y))
 
@@ -134,7 +135,7 @@ program POISSON
   call ops_decl_stencil( 2, 5, S2D_00_P10_M10_0P1_0M1_array, S2D_00_P10_M10_0P1_0M1, "00:10:-10:01:0-1")
 
   ! reduction handle for rms variable
-  call ops_decl_reduction_handle(8, red_err, "real(8)", "err")
+  call ops_decl_reduction_handle(8, red_err, "real(kind=8)", "err")
 
   ! declare dats
   d_p(1) = 1
@@ -158,17 +159,17 @@ program POISSON
     end if
 
     write(buf,"(A6,I2,A1,I2)") "coordx",i,",",j
-    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, coordx((i-1)+ngrid_x*(j-1)+1), "real(8)", buf)
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, coordx((i-1)+ngrid_x*(j-1)+1), "real(kind=8)", buf)
     write(buf,"(A6,I2,A1,I2)") "coordy",i,",",j
-    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, coordy((i-1)+ngrid_x*(j-1)+1), "real(8)", buf)
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, coordy((i-1)+ngrid_x*(j-1)+1), "real(kind=8)", buf)
     write(buf,"(A6,I2,A1,I2)") "u",i,",",j
-    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, u((i-1)+ngrid_x*(j-1)+1), "real(8)", buf)
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, u((i-1)+ngrid_x*(j-1)+1), "real(kind=8)", buf)
     write(buf,"(A6,I2,A1,I2)") "u2",i,",",j
-    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, u2((i-1)+ngrid_x*(j-1)+1), "real(8)", buf)
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, u2((i-1)+ngrid_x*(j-1)+1), "real(kind=8)", buf)
     write(buf,"(A6,I2,A1,I2)") "f",i,",",j
-    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, f((i-1)+ngrid_x*(j-1)+1), "real(8)", buf)
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, f((i-1)+ngrid_x*(j-1)+1), "real(kind=8)", buf)
     write(buf,"(A6,I2,A1,I2)") "ref",i,",",j
-    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, ref((i-1)+ngrid_x*(j-1)+1), "real(8)", buf)
+    call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, ref((i-1)+ngrid_x*(j-1)+1), "real(kind=8)", buf)
 
     sizes(2*((i-1)+ngrid_x*(j-1))+1) = size(1)
     sizes(2*((i-1)+ngrid_x*(j-1))+2) = size(2)
@@ -235,7 +236,8 @@ program POISSON
   end if
   call ops_decl_halo_group((off-1),halos, u_halos)
 
-
+  call ops_decl_const("dx", 1, "real(8)", dx)
+  call ops_decl_const("dy", 1, "real(8)", dy)
 
   call ops_partition("")
 
@@ -252,13 +254,15 @@ program POISSON
       iter_range(3) = 0
       iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2) +1
       !write(*,*) iter_range
+      dispx = disps(2*((i-1)+ngrid_x*(j-1))+1)
+      dispy = disps(2*((i-1)+ngrid_x*(j-1))+2)
       call ops_par_loop(poisson_populate_kernel, "poisson_populate_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
-            &  ops_arg_gbl(disps(2*((i-1)+ngrid_x*(j-1))+1), 1, "integer(4)", OPS_READ), &
-            &  ops_arg_gbl(disps(2*((i-1)+ngrid_x*(j-1))+2), 1, "integer(4)", OPS_READ), &
+            &  ops_arg_gbl(dispx, 1, "integer(kind=4)", OPS_READ), &
+            &  ops_arg_gbl(dispy, 1, "integer(kind=4)", OPS_READ), &
             &  ops_arg_idx(), &
-            &  ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_WRITE), &
-            &  ops_arg_dat(f((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_WRITE), &
-            &  ops_arg_dat(ref((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_WRITE))
+            &  ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE), &
+            &  ops_arg_dat(f((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE), &
+            &  ops_arg_dat(ref((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE))
     END DO
   END DO
 
@@ -271,7 +275,7 @@ program POISSON
       iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
       !write(*,*) iter_range
       call ops_par_loop(poisson_initialguess_kernel, "poisson_initialguess_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
-                & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_WRITE))
+                & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE))
 
     END DO
   END DO
@@ -287,12 +291,12 @@ program POISSON
       DO i = 1, ngrid_x
       iter_range(1) = 1
       iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
-      iter_range(1) = 1
-      iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
+      iter_range(3) = 1
+      iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
         call ops_par_loop(poisson_stencil_kernel, "poisson_stencil_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
-                & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00_P10_M10_0P1_0M1, "real(8)", OPS_READ), &
-                & ops_arg_dat(f((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_READ), &
-                & ops_arg_dat(u2((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_WRITE));
+                & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00_P10_M10_0P1_0M1, "real(kind=8)", OPS_READ), &
+                & ops_arg_dat(f((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_READ), &
+                & ops_arg_dat(u2((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE));
       END DO
     END DO
 
@@ -301,16 +305,17 @@ program POISSON
       DO i = 1, ngrid_x
         iter_range(1) = 1
         iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
-        iter_range(1) = 1
-        iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
+        iter_range(3) = 1
+        iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
         call ops_par_loop(poisson_update_kernel, "poisson_update_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
-                & ops_arg_dat(u2((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_READ), &
-                & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1) , 1, S2D_00, "real(8)", OPS_WRITE))
+                & ops_arg_dat(u2((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_READ), &
+                & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1) , 1, S2D_00, "real(kind=8)", OPS_WRITE))
       END DO
     END DO
 
   END DO
 
+  !call ops_dump_to_hdf5("output.h5")
   !call ops_print_dat_to_txtfile(u(1), "poisson.dat")
   !call ops_print_dat_to_txtfile(ref(1), "poisson.dat")
   !call exit()
@@ -320,12 +325,12 @@ program POISSON
     DO i = 1, ngrid_x
       iter_range(1) = 1
       iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
-      iter_range(1) = 1
-      iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
+      iter_range(3) = 1
+      iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
       call ops_par_loop(poisson_error_kernel, "poisson_error_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
-              & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(8)", OPS_READ), &
-              & ops_arg_dat(ref((i-1)+ngrid_x*(j-1)+1) , 1, S2D_00, "real(8)", OPS_READ), &
-              & ops_arg_reduce(red_err, 1, "real(8)", OPS_INC))
+              & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_READ), &
+              & ops_arg_dat(ref((i-1)+ngrid_x*(j-1)+1) , 1, S2D_00, "real(kind=8)", OPS_READ), &
+              & ops_arg_reduce(red_err, 1, "real(kind=8)", OPS_INC))
     END DO
   END DO
 
