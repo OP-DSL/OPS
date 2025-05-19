@@ -58,31 +58,31 @@ def code(text):
 
 def DO(i,start,finish):
   code('DO '+i+' = '+start+', '+finish)
-  config.depth += 2
+  config.depth += 4
 
 def ENDDO():
-  config.depth -= 2
+  config.depth -= 4
   code('END DO')
 
 def IF(line):
   code('IF ('+ line + ') THEN')
-  config.depth += 2
+  config.depth += 4
 
 def ELSEIF(line):
-  code('ELSEIF ('+ line + ') THEN')
-  config.depth += 2
+  code('ELSE IF ('+ line + ') THEN')
+  config.depth += 4
 
 def ELSE():
   code('ELSE')
-  config.depth += 2
+  config.depth += 4
 
 def ENDIF():
-  config.depth -= 2
-  code('ENDIF')
+  config.depth -= 4
+  code('END IF')
 
 def DOWHILE(line):
   code('DO WHILE ('+line+' )')
-  config.depth += 2
+  config.depth += 4
 
 
 def remove_trailing_w_space(text):
@@ -130,3 +130,45 @@ def find_kernel_routine(text, fun_name):
     exit(1)
   req_kernel = text[beg_pos:beg_pos+end.end()]
   return req_kernel+'\n'
+
+def populate_stride(nargs,NDIM,stens):
+    stride = [[1] * NDIM for _ in range(nargs)]
+
+    if NDIM == 2:
+        for n, sten in enumerate(stens):
+            if sten.lower().find("strid2d_x") > 0:
+                stride[n][1] = 0
+            elif sten.lower().find("strid2d_y") > 0:
+                stride[n][0] = 0
+
+    if NDIM == 3:
+        for n, sten in enumerate(stens):
+            if sten.lower().find("strid3d_xy") > 0:
+                stride[n][2] = 0
+            elif sten.lower().find("strid3d_yz") > 0:
+                stride[n][0] = 0
+            elif sten.lower().find("strid3d_xz") > 0:
+                stride[n][1] = 0
+            elif sten.lower().find("strid3d_x") > 0:
+                stride[n][1] = 0
+                stride[n][2] = 0
+            elif sten.lower().find("strid3d_y") > 0:
+                stride[n][0] = 0
+                stride[n][2] = 0
+            elif sten.lower().find("strid3d_z") > 0:
+                stride[n][0] = 0
+                stride[n][1] = 0
+
+    return stride
+
+def extract_intrinsic_functions(kernel_func):
+    pattern = re.compile(r'\b(?:EXP|LOG|LOG10|SQRT|ABS|MOD|SIN|COS|TAN|ASIN|ACOS|ATAN|ATAN2|SINH|COSH|TANH|POW|MAX|MIN|SIGN|CEILING|FLOOR|NINT|INT)\s*\(', re.IGNORECASE)
+
+    matches = pattern.findall(kernel_func)
+
+    function_names = [match.strip().rstrip('(').upper() for match in matches]
+
+    result_string = ', '.join(function_names)
+
+    return result_string
+

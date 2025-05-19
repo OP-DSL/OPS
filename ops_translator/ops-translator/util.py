@@ -119,6 +119,33 @@ def print_rx_graph(filename: str, rx_graph: PyDiGraph, node_attr: Callable = Non
             edge_attr = def_edge_attr
             
         graphviz_draw(rx_graph, node_attr_fn=node_attr, edge_attr_fn=edge_attr, filename=f"{filename}.{format}", image_type=f"{format}")
+
+def extract_intrinsic_functions(kernel_func: str):
+    pattern = re.compile(r'\b(?:EXP|LOG|LOG10|SQRT|ABS|MOD|SIN|COS|TAN|ASIN|ACOS|ATAN|ATAN2|SINH|COSH|TANH|POW|MAX|MIN|SIGN|CEILING|FLOOR|NINT|INT)\s*\(', re.IGNORECASE)
+
+    matches = pattern.findall(kernel_func)
+
+    function_names = [match.strip().rstrip('(').upper() for match in matches]
+
+    result_string = ', '.join(function_names)
+
+    return result_string
+
+
+def extract_arglist_fortran(kernel_func: str):
+    start_index = kernel_func.find('(')
+    end_index   = kernel_func.find(')', start_index)
+
+    arguments_str = kernel_func[start_index + 1:end_index]
+
+    arguments_str = arguments_str.replace('&', '')
+
+    # Split the string by ',' to get individual arguments
+    arguments_list = [arg.strip() for arg in arguments_str.split(',')]
+
+    return arguments_list
+
+
 class Findable(ABC):
     """
     A parent abstact class for findable support
@@ -454,7 +481,7 @@ class KernelProcess:
         return new_text[:j+1]+kernel_body+"}"
 
     def parse_signature(self,text):
-        pattern = r"\bll\b|\bconst\b|\bACC<|>|\bint\b|\blong long\b|\blong\b|\bshort\b|\bchar\b|\bfloat\b|\bdouble\b|\bcomplexf\b|\bcomplexd\b|\*|&|\)|\(|\n|\[[0-9]*\]|__restrict__|RESTRICT|__volatile__|\/\/[^\n]*|\/*[^*]*\*\/|\/\*.*?\*\/"
+        pattern = r"\bll\b|\bconst\b|\bACC<|>|\bint\b|\blong long\b|\blong\b|\bshort\b|\bchar\b|\bhalf\b|\bfloat\b|\bdouble\b|\bcomplexf\b|\bcomplexd\b|\*|&|\)|\(|\n|\[[0-9]*\]|__restrict__|RESTRICT|__volatile__|\/\/[^\n]*|\/*[^*]*\*\/|\/\*.*?\*\/"
         text2 = re.sub(pattern, "", text)
 
         args_list = [arg.strip() for arg in text2.split(",")]
@@ -592,4 +619,3 @@ class KernelProcess:
                 const_dims.append(c.dim)
 
         return const_names, const_dims
-    

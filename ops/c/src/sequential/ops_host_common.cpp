@@ -39,6 +39,10 @@
 
 #include <ops_device_rt_support.h>
 
+#include <random>
+//std::default_random_engine ops_rand_gen;
+std::mt19937 ops_rand_gen;
+
 void ops_init_device(OPS_instance *instance, const int argc, const char *const argv[], const int diags) {
   instance->OPS_hybrid_gpu = 0;
 }
@@ -102,4 +106,19 @@ void ops_decl_const_char(OPS_instance *instance, int dim, char const *type, int 
   (void)size;
   (void)dat;
   (void)name;
+}
+
+void ops_randomgen_init(unsigned int seed, int options) {
+  ops_randomgen_init_host(seed, options, ops_rand_gen);
+}
+
+void ops_fill_random_uniform(ops_dat dat) {
+  ops_fill_random_uniform_host(dat, ops_rand_gen);
+}
+
+void ops_fill_random_normal(ops_dat dat) {
+  ops_fill_random_normal_host(dat, ops_rand_gen);
+}
+
+void ops_randomgen_exit() {
 }

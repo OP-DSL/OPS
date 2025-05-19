@@ -75,195 +75,34 @@ extern sub_dat_list *OPS_sub_dat_list; // pointer to list holding sub-dat
 // details
 
 extern void (*ops_read_dat_hdf5_dynamic)(ops_dat dat);
-/*******************************************************************************
- * Routine to remove the intra-block (i.e. MPI) halos from the flattened 1D dat
- * before writing to HDF5 files - Maximum dimension of block is 1
- *******************************************************************************/
-void remove_mpi_halos1D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
+
+
+void remove_mpi_halos(ops_dat dat, hsize_t *size, hsize_t *disp, char *data, int dimensions) {
   int index = 0;
   int count = 0;
-  // for(int m = disp[4]; m < size[4]; m++) {
-  //  for(int l = disp[3]; l < size[3]; l++) {
-  //  for(int k = disp[2]; k < disp[2]+size[2]; k++) {
-  // for(int j = disp[1]; j < disp[1]+size[1]; j++) {
-  for (int i = disp[0]; i < disp[0] + size[0]; i++) {
-    index = i; //+
-    // j * dat->size[0]; //+ // need to stride in dat->size as data block
-    // includes intra-block halos
-    // k * dat->size[0] * dat->size[1];// +
-    // l * dat->size[0] * dat->size[1] * dat->size[2] +
-    // m * dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3];
-    memcpy(&data[count * dat->elem_size], &dat->data[index * dat->elem_size],
-           dat->elem_size);
-    count++;
-  }
-  // }
-  //}
-  //}
-  //}
-  return;
-  /*
-     x = disp[0] to size[0]
-     y = disp[1] to size[1]
-     z = disp[2] to size[2]
-     t = disp[3] to size[4]
-     u = disp[4] to size[4]
-     index = x + y * D1 + z * D1 * D2 + t * D1 * D2 * D3 + u * D1 * D2 * D3 *
-     D4;
-
-
-     D1 - dat->size[0]
-     D2 - dat->size[1]
-     D3 - dat->size[2]
-     D4 - dat->size[3]
-   */
-}
-
-/*******************************************************************************
- * Routine to remove the intra-block (i.e. MPI) halos from the flattened 1D dat
- * before writing to HDF5 files - Maximum dimension of block is 2
- *******************************************************************************/
-void remove_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
-  int index = 0;
-  int count = 0;
-  // for(int m = disp[4]; m < size[4]; m++) {
-  //  for(int l = disp[3]; l < size[3]; l++) {
-  //  for(int k = disp[2]; k < disp[2]+size[2]; k++) {
-  for (int j = disp[1]; j < disp[1] + size[1]; j++) {
-    for (int i = disp[0]; i < disp[0] + size[0]; i++) {
-      index = i + j * dat->size[0]; //+ // need to stride in dat->size as data
-      // block includes intra-block halos
-      // k * dat->size[0] * dat->size[1];// +
-      // l * dat->size[0] * dat->size[1] * dat->size[2] +
-      // m * dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3];
-      memcpy(&data[count * dat->elem_size], &dat->data[index * dat->elem_size],
-             dat->elem_size);
-      count++;
-    }
-  }
-  //}
-  //}
-  //}
-  return;
-  /*
-     x = disp[0] to size[0]
-     y = disp[1] to size[1]
-     z = disp[2] to size[2]
-     t = disp[3] to size[4]
-     u = disp[4] to size[4]
-     index = x + y * D1 + z * D1 * D2 + t * D1 * D2 * D3 + u * D1 * D2 * D3 *
-     D4;
-
-
-     D1 - dat->size[0]
-     D2 - dat->size[1]
-     D3 - dat->size[2]
-     D4 - dat->size[3]
-   */
-}
-
-/*******************************************************************************
- * Routine to remove the intra-block (i.e. MPI) halos from the flattened 1D dat
- * before writing to HDF5 files - Maximum dimension of block is 3
- *******************************************************************************/
-void remove_mpi_halos3D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
-  int index = 0;
-  int count = 0;
-  // for(int m = disp[4]; m < size[4]; m++) {
-  //  for(int l = disp[3]; l < size[3]; l++) {
-  for (int k = disp[2]; k < disp[2] + size[2]; k++) {
-    for (int j = disp[1]; j < disp[1] + size[1]; j++) {
-      for (int i = disp[0]; i < disp[0] + size[0]; i++) {
-        index = i + j * dat->size[0] + // need to stride in dat->size as data
-                                       // block includes intra-block halos
-                k * dat->size[0] * dat->size[1]; // +
-        // l * dat->size[0] * dat->size[1] * dat->size[2] +
-        // m * dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3];
-        memcpy(&data[count * dat->elem_size],
-               &dat->data[index * dat->elem_size], dat->elem_size);
-        count++;
+  for (int m = (dimensions > 4 ? disp[4] : 0); m < (dimensions > 4 ? disp[4] + size[4] : 1); m++) {
+    for (int l = (dimensions > 3 ? disp[3] : 0); l < (dimensions > 3 ? disp[3] + size[3] : 1); l++) {
+      for (int k = (dimensions > 2 ? disp[2] : 0); k < (dimensions > 2 ? disp[2] + size[2] : 1); k++) {
+        for (int j = (dimensions > 1 ? disp[1] : 0); j < (dimensions > 1 ? disp[1] + size[1] : 1); j++) {
+          for (int i = disp[0]; i < disp[0] + size[0]; i++) {
+            index = i + (j * (dimensions > 1 ? dat->size[0] : 0)) + (k * (dimensions > 2 ? dat->size[0] * dat->size[1] : 0))
+                    + (l * (dimensions > 3 ? dat->size[0] * dat->size[1] * dat->size[2] : 0))
+                    + (m * (dimensions > 4 ? dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3] : 0));
+            memcpy(&data[count * dat->elem_size], &dat->data[index * dat->elem_size], dat->elem_size);
+            count++;
+          }
+        }
       }
     }
   }
-  //}
-  //}
-  return;
 }
-
-/*******************************************************************************
- * Routine to remove the intra-block (i.e. MPI) halos from the flattened 1D dat
- * before writing to HDF5 files - Maximum dimension of block is 4
- *******************************************************************************/
-void remove_mpi_halos4D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
-}
-
-/*******************************************************************************
- * Routine to remove the intra-block (i.e. MPI) halos from the flattened 1D dat
- * before writing to HDF5 files - Maximum dimension of block is 5
- *******************************************************************************/
-void remove_mpi_halos5D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
-}
-
-/*******************************************************************************
- * Routine to add the intra-block halos (i.e. MPI) from the flattened 1D data
- * after reading from an HDF5 file - Maximum dimension of block is 2
- *******************************************************************************/
-void add_mpi_halos2D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
-  int index = 0;
-  int count = 0;
-  // for(int m = disp[4]; m < size[4]; m++) {
-  //  for(int l = disp[3]; l < size[3]; l++) {
-  //  for(int k = disp[2]; k < disp[2]+size[2]; k++) {
-  for (int j = disp[1]; j < disp[1] + size[1]; j++) {
-    for (int i = disp[0]; i < disp[0] + size[0]; i++) {
-      index = i + j * dat->size[0]; //+ // need to stride in dat->size as data
-      // block includes intra-block halos
-      // k * dat->size[0] * dat->size[1];// +
-      // l * dat->size[0] * dat->size[1] * dat->size[2] +
-      // m * dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3];
-      memcpy(&dat->data[index * dat->elem_size], &data[count * dat->elem_size],
-             dat->elem_size);
-      count++;
-    }
-  }
-  //}
-  //}
-  //}
-  return;
-}
-
-void add_mpi_halos3D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data) {
-  int index = 0;
-  int count = 0;
-  // for(int m = disp[4]; m < size[4]; m++) {
-  //  for(int l = disp[3]; l < size[3]; l++) {
-  for (int k = disp[2]; k < disp[2] + size[2]; k++) {
-    for (int j = disp[1]; j < disp[1] + size[1]; j++) {
-      for (int i = disp[0]; i < disp[0] + size[0]; i++) {
-        index = i + j * dat->size[0] + // need to stride in dat->size as data
-                                       // block includes intra-block halos
-                k * dat->size[0] * dat->size[1]; // +
-        // l * dat->size[0] * dat->size[1] * dat->size[2] +
-        // m * dat->size[0] * dat->size[1] * dat->size[2] * dat->size[3];
-        memcpy(&dat->data[index * dat->elem_size],
-               &data[count * dat->elem_size], dat->elem_size);
-        count++;
-      }
-    }
-  }
-  //}
-  //}
-  return;
-};
-void add_mpi_halos4D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data){};
-void add_mpi_halos5D(ops_dat dat, hsize_t *size, hsize_t *disp, char *data){};
 
 void determine_plane_global_range(const ops_dat dat,
                                   const int cross_section_dir, const int pos,
                                   int *range) {
   const int space_dim{dat->block->dims};
   const sub_dat *sd = OPS_sub_dat_list[dat->index];
-  int *size{new int(space_dim)};
+  int *size{new int[space_dim]};
   for (int d = 0; d < space_dim; d++) {
     size[d] = sd->gbl_size[d] - (sd->gbl_d_p[d] - sd->gbl_d_m[d]);
   }
@@ -274,7 +113,7 @@ void determine_plane_global_range(const ops_dat dat,
   }
   range[2 * cross_section_dir + 1] = pos + 1;
   range[2 * cross_section_dir] = pos;
-  delete size;
+  delete[] size;
 }
 void copy_data_buf(const ops_dat &dat, const int *local_range,
                    char *local_buf) {
@@ -639,16 +478,16 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     MPI_Comm_size(OPS_MPI_HDF5_BLOCK_WORLD, &comm_size);
 
     const int space_dim{dat->block->dims};
-    int *local_range{new int(2 * space_dim)};
-    int *range{new int(2 * space_dim)};
+    int *local_range{new int[2 * space_dim]};
+    int *range{new int[2 * space_dim]};
     for (int d = 0; d < space_dim; d++) {
       range[2 * d] = g_d_m[d];
       range[2 * d + 1] = g_size[d] + g_d_p[d];
     }
     determine_local_range(dat, range, local_range);
     copy_data_buf(dat, local_range, data);
-    delete range;
-    delete local_range;
+    delete[] range;
+    delete[] local_range;
 
     // make sure we multiply by the number of data values per
     // element (i.e. dat->dim) to get full size of the data
@@ -1009,28 +848,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
 
       // write data
-      if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 || strcmp(dat->type, "real(kind=8)") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, plist_id, data);
-      else if (strcmp(dat->type, "float") == 0 || strcmp(dat->type, "real") == 0 || strcmp(dat->type, "real(4)") == 0
-            || strcmp(dat->type, "real(kind=4)") == 0 )
-          H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, data);
-      else if (strcmp(dat->type, "int") == 0 || strcmp(dat->type, "int(4)") == 0 || strcmp(dat->type, "integer") == 0
-             || strcmp(dat->type, "integer(4)") == 0 || strcmp(dat->type, "integer(kind=4)") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id, data);
-      else if (strcmp(dat->type, "long") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_LONG, memspace, filespace, plist_id, data);
-      else if ((strcmp(dat->type, "long long") == 0) || (strcmp(dat->type, "ll") == 0))
-          H5Dwrite(dset_id, H5T_NATIVE_LLONG, memspace, filespace, plist_id, data);
-      else if (strcmp(dat->type, "short") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_SHORT, memspace, filespace, plist_id, data);
-      else if (strcmp(dat->type, "char") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_CHAR, memspace, filespace, plist_id, data);
-      else
-      {
-          OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: Unknown type in ops_fetch_dat_hdf5_file(): " << dat->type;
-          throw ex;
-      }
+      hid_t datatype = h5_type(dat->type);
+      H5Dwrite(dset_id, datatype, memspace, filespace, plist_id, data);
 
       MPI_Barrier(OPS_MPI_HDF5_BLOCK_WORLD);
       free(data);
@@ -1525,27 +1344,8 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   }
 
   // set type size
-  int type_size;
-  if (strcmp(read_type, "double") == 0)
-    type_size = sizeof(double);
-  else if (strcmp(read_type, "float") == 0)
-    type_size = sizeof(float);
-  else if (strcmp(read_type, "int") == 0)
-    type_size = sizeof(int);
-  else if (strcmp(read_type, "long") == 0)
-    type_size = sizeof(long);
-  else if ((strcmp(read_type, "long long") == 0) ||
-           (strcmp(read_type, "ll") == 0))
-    type_size = sizeof(long long);
-  else if (strcmp(read_type, "short") == 0)
-    type_size = sizeof(short);
-  else if (strcmp(read_type, "char") == 0)
-    type_size = sizeof(char);
-  else {
-    OPSException ex(OPS_HDF5_ERROR);
-    ex << "Error: Unknown type in ops_decl_dat_hdf5(): " << read_type;
-    throw ex;
-  }
+  hid_t datatype = h5_type(read_type);
+  size_t type_size = H5Tget_size(datatype);
 
   char *data = NULL;
 
@@ -1755,36 +1555,9 @@ void ops_read_dat_hdf5(ops_dat dat) {
     H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
 
     // read data
-    if (strcmp(dat->type, "double") == 0)
-      H5Dread(dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, plist_id, data);
-    else if (strcmp(dat->type, "float") == 0)
-      H5Dread(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, data);
-    else if (strcmp(dat->type, "int") == 0)
-      H5Dread(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id, data);
-    else if (strcmp(dat->type, "long") == 0)
-      H5Dread(dset_id, H5T_NATIVE_LONG, memspace, filespace, plist_id, data);
-    else if ((strcmp(dat->type, "long long") == 0) ||
-             (strcmp(dat->type, "ll") == 0))
-      H5Dread(dset_id, H5T_NATIVE_LLONG, memspace, filespace, plist_id, data);
-    else if (strcmp(dat->type, "char") == 0)
-      H5Dread(dset_id, H5T_NATIVE_CHAR, memspace, filespace, plist_id, data);
-    else if (strcmp(dat->type, "short") == 0)
-      H5Dread(dset_id, H5T_NATIVE_SHORT, memspace, filespace, plist_id, data);
-    else {
-      OPSException ex(OPS_HDF5_ERROR);
-      ex << "Error: Unknown type in ops_read_dat_hdf5(): " << dat->type;
-      throw ex;
-    }
+    hid_t datatype = h5_type(dat->type);
+    H5Dread(dset_id, datatype, memspace, filespace, plist_id, data);
 
-    // add MPI halos
-    // if (block->dims == 2)
-    //   add_mpi_halos2D(dat, size2, l_disp, data);
-    // else if (block->dims == 3)
-    //   add_mpi_halos3D(dat, size2, l_disp, data);
-    // else if (block->dims == 4)
-    //   add_mpi_halos4D(dat, size2, l_disp, data);
-    // else if (block->dims == 5)
-    //   add_mpi_halos5D(dat, size2, l_disp, data);
     ops_dat_set_data(dat, 0, data);
 
     free(data);
@@ -1878,16 +1651,7 @@ extern "C" char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
     MPI_Comm_rank(OPS_MPI_HDF5_WORLD, &my_rank);
     MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
 
-    if (block->dims == 1)
-      remove_mpi_halos1D(dat, size, l_disp, u_dat);
-    else if (block->dims == 2)
-      remove_mpi_halos2D(dat, size, l_disp, u_dat);
-    else if (block->dims == 3)
-      remove_mpi_halos3D(dat, size, l_disp, u_dat);
-    else if (block->dims == 4)
-      remove_mpi_halos4D(dat, size, l_disp, u_dat);
-    else if (block->dims == 5)
-      remove_mpi_halos5D(dat, size, l_disp, u_dat);
+    remove_mpi_halos(dat, size, l_disp, u_dat, block->dims);
   }
   return u_dat;
 }
@@ -1899,33 +1663,7 @@ typedef struct {
   size_t elem_bytes;    // element byte-size
 } ops_hdf5_dataset_properties;
 
-const char *ops_hdf5_type_to_string(hid_t t) {
-  char *text = NULL;
-  if (H5Tequal(t, H5T_NATIVE_INT)) {
-    text = (char *)malloc(4 * sizeof(char));
-    strcpy(text, "int");
-  } else if (H5Tequal(t, H5T_NATIVE_LONG)) {
-    text = (char *)malloc(5 * sizeof(char));
-    strcpy(text, "long");
-  } else if (H5Tequal(t, H5T_NATIVE_LLONG)) {
-    text = (char *)malloc(20 * sizeof(char));
-    strcpy(text, "long long");
-  } else if (H5Tequal(t, H5T_NATIVE_FLOAT)) {
-    text = (char *)malloc(6 * sizeof(char));
-    strcpy(text, "float");
-  } else if (H5Tequal(t, H5T_NATIVE_DOUBLE)) {
-    text = (char *)malloc(7 * sizeof(char));
-    strcpy(text, "double");
-  } else if (H5Tequal(t, H5T_NATIVE_CHAR)) {
-    text = (char *)malloc(5 * sizeof(char));
-    strcpy(text, "char");
-  } else {
-    text = (char *)malloc(13 * sizeof(char));
-    strcpy(text, "UNRECOGNISED");
-  }
-
-  return (const char *)text;
-}
+const char *ops_hdf5_type_to_string(hid_t t);
 
 herr_t get_dataset_properties(hid_t dset_id,
                               ops_hdf5_dataset_properties *dset_props) {
@@ -1963,25 +1701,7 @@ herr_t get_dataset_properties(hid_t dset_id,
     return -1;
   }
   dset_props->type_str = ops_hdf5_type_to_string(t);
-  if (H5Tequal(t, H5T_NATIVE_INT)) {
-    dset_props->elem_bytes = sizeof(int);
-  } else if (H5Tequal(t, H5T_NATIVE_LONG)) {
-    dset_props->elem_bytes = sizeof(long);
-  } else if (H5Tequal(t, H5T_NATIVE_LLONG)) {
-    dset_props->elem_bytes = sizeof(long long);
-  } else if (H5Tequal(t, H5T_NATIVE_FLOAT)) {
-    dset_props->elem_bytes = sizeof(float);
-  } else if (H5Tequal(t, H5T_NATIVE_DOUBLE)) {
-    dset_props->elem_bytes = sizeof(double);
-  } else if (H5Tequal(t, H5T_NATIVE_CHAR)) {
-    dset_props->elem_bytes = sizeof(char);
-  } else {
-    size_t name_len = H5Iget_name(dset_id, NULL, 0);
-    char name[name_len];
-    H5Iget_name(dset_id, name, name_len + 1);
-    ops_printf("Error: Do not recognise type of dataset '%s'\n", name);
-    exit(2);
-  }
+  dset_props->elem_bytes = H5Tget_size(t);
   dset_props->elem_bytes *= dset_props->dim;
 
   return 0;
@@ -2065,39 +1785,11 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
   dset_id = H5Dopen(file_id, name, H5P_DEFAULT);
 
   char *data = nullptr;
-  // initialize data buffer and read data
-  if (strcmp(typ, "int") == 0 || strcmp(typ, "int(4)") == 0 ||
-      strcmp(typ, "integer") == 0 || strcmp(typ, "integer(4)") == 0) {
-    data = (char *)xmalloc(sizeof(int) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, plist_id, data);
-    memcpy((void *)const_data, (void *)data, sizeof(int) * const_dim);
-  } else if (strcmp(typ, "long") == 0) {
-    data = (char *)xmalloc(sizeof(long) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, plist_id, data);
-    memcpy((void *)const_data, (void *)data, sizeof(long) * const_dim);
-  } else if (strcmp(typ, "long long") == 0) {
-    data = (char *)xmalloc(sizeof(long long) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_LLONG, H5S_ALL, H5S_ALL, plist_id, data);
-    memcpy((void *)const_data, (void *)data, sizeof(long long) * const_dim);
-  } else if (strcmp(typ, "float") == 0 || strcmp(typ, "real(4)") == 0 ||
-             strcmp(typ, "real") == 0) {
-    data = (char *)xmalloc(sizeof(float) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, plist_id, data);
-    memcpy((void *)const_data, (void *)data, sizeof(float) * const_dim);
-  } else if (strcmp(typ, "double") == 0 ||
-             strcmp(typ, "double precision") == 0 ||
-             strcmp(typ, "real(8)") == 0) {
-    data = (char *)xmalloc(sizeof(double) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, plist_id, data);
-    memcpy((void *)const_data, (void *)data, sizeof(double) * const_dim);
-  } else if (strcmp(typ, "char") == 0) {
-    data = (char *)xmalloc(sizeof(char) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_CHAR, H5S_ALL, H5S_ALL, plist_id, data);
-    memcpy((void *)const_data, (void *)data, sizeof(char) * const_dim);
-  } else {
-    ops_printf("Unknown type in file %s for constant %s\n", file_name, name);
-    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
-  }
+  hid_t datatype = h5_type(typ);
+  size_t type_size = H5Tget_size(datatype);
+  data = (char *)xmalloc(type_size * const_dim);
+  H5Dread(dset_id, datatype, H5S_ALL, H5S_ALL, plist_id, data);
+  memcpy((void *)const_data, (void *)data, type_size * const_dim);
 
   free(data);
 
@@ -2199,36 +1891,9 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
 
     dataspace = H5Dget_space(dset_id);
 
-    // Write to the exisiting dataset with default properties
-    if (strcmp(type, "double") == 0 || strcmp(type, "double precision") == 0 ||
-        strcmp(type, "real(8)") == 0) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, dataspace, plist_id,
+    hid_t datatype = h5_type(type);
+    H5Dwrite(dset_id, datatype, H5S_ALL, dataspace, plist_id,
                const_data);
-    } else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0 ||
-               strcmp(type, "real") == 0) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_FLOAT, H5S_ALL, dataspace, plist_id,
-               const_data);
-    } else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 ||
-               strcmp(type, "integer") == 0 ||
-               strcmp(type, "integer(4)") == 0) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_INT, H5S_ALL, dataspace, plist_id,
-               const_data);
-    } else if ((strcmp(type, "long") == 0)) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_LONG, H5S_ALL, dataspace, plist_id,
-               const_data);
-    } else if ((strcmp(type, "long long") == 0)) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_LLONG, H5S_ALL, dataspace, plist_id,
-               const_data);
-    } else if (strcmp(type, "char") == 0) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_CHAR, H5S_ALL, dataspace, plist_id,
-               const_data);
-    }
 
     H5Pclose(plist_id);
     H5Sclose(dataspace);
@@ -2251,57 +1916,13 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   plist_id = H5Pcreate(H5P_DATASET_XFER);
   H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
 
-  // Create the dataset with default properties
-  if (strcmp(type, "double") == 0 || strcmp(type, "double precision") == 0 ||
-      strcmp(type, "real(8)") == 0) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_DOUBLE, dataspace,
-                        H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, dataspace, plist_id,
-             const_data);
-    H5Dclose(dset_id);
-  } else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0 ||
-             strcmp(type, "real") == 0) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_FLOAT, dataspace, H5P_DEFAULT,
-                        H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_FLOAT, H5S_ALL, dataspace, plist_id,
-             const_data);
-    H5Dclose(dset_id);
-  } else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 ||
-             strcmp(type, "integer") == 0 || strcmp(type, "integer(4)") == 0) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_INT, dataspace, H5P_DEFAULT,
-                        H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_INT, H5S_ALL, dataspace, plist_id, const_data);
-    H5Dclose(dset_id);
-  } else if ((strcmp(type, "long") == 0)) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_LONG, dataspace, H5P_DEFAULT,
-                        H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_LONG, H5S_ALL, dataspace, plist_id,
-             const_data);
-    H5Dclose(dset_id);
-  } else if ((strcmp(type, "long long") == 0)) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_LLONG, dataspace, H5P_DEFAULT,
-                        H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_LLONG, H5S_ALL, dataspace, plist_id,
-             const_data);
-    H5Dclose(dset_id);
-  } else if (strcmp(type, "char") == 0) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_CHAR, dataspace, H5P_DEFAULT,
-                        H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_CHAR, H5S_ALL, dataspace, plist_id,
-             const_data);
-    H5Dclose(dset_id);
-  } else {
-    ops_printf(
-        "Unknown type %s for constant %s: cannot write constant to file\n",
-        type, name);
-    MPI_Abort(OPS_MPI_HDF5_WORLD, 2);
-  }
+  hid_t datatype = h5_type(type);
+  dset_id = H5Dcreate(file_id, name, datatype, dataspace,
+      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  // write data
+  H5Dwrite(dset_id, datatype, H5S_ALL, dataspace, plist_id,
+      const_data);
+  H5Dclose(dset_id);
 
   H5Pclose(plist_id);
   H5Sclose(dataspace);
@@ -2332,22 +1953,46 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   attribute =
       H5Acreate(dset_id, "type", atype, dataspace, H5P_DEFAULT, H5P_DEFAULT);
 
-  if (strcmp(type, "double") == 0 || strcmp(type, "double precision") == 0 ||
-      strcmp(type, "real(8)") == 0)
+  if (strcmp(type, "double") == 0 ||
+      strcmp(type, "double precision") == 0 ||
+      strcmp(type, "real(8)") == 0 ||
+      strcmp(type, "real(kind=8)") == 0)
+  {
     H5Awrite(attribute, atype, "double");
-  else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 ||
-           strcmp(type, "integer") == 0 || strcmp(type, "integer(4)") == 0)
-    H5Awrite(attribute, atype, "int");
-  else if (strcmp(type, "long") == 0)
-    H5Awrite(attribute, atype, "long");
-  else if (strcmp(type, "long long") == 0)
-    H5Awrite(attribute, atype, "long long");
-  else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0 ||
-           strcmp(type, "real") == 0)
+  }
+  else if (strcmp(type, "float") == 0 ||
+           strcmp(type, "real") == 0 ||
+           strcmp(type, "real(4)") == 0 ||
+           strcmp(type, "real(kind=4)") == 0)
+  {
     H5Awrite(attribute, atype, "float");
+  }
+  else if (strcmp(type, "int") == 0 ||
+           strcmp(type, "int(4)") == 0 ||
+           strcmp(type, "integer") == 0 ||
+           strcmp(type, "integer(4)") == 0 ||
+           strcmp(type, "integer(kind=4)") == 0)
+  {
+    H5Awrite(attribute, atype, "int");
+  }
+  else if (strcmp(type, "long") == 0)
+  {
+    H5Awrite(attribute, atype, "long");
+  }
+  else if (strcmp(type, "long long") == 0)
+  {
+    H5Awrite(attribute, atype, "long long");
+  }
   else if (strcmp(type, "char") == 0)
+  {
     H5Awrite(attribute, atype, "char");
-  else {
+  }
+  else if (strcmp(type, "half") == 0)
+  {
+    H5Awrite(attribute, atype, "half");
+  }
+  else
+  {
     ops_printf(
         "Unknown type %s for constant %s: cannot write constant to file\n",
         type, name);
@@ -2383,114 +2028,6 @@ hid_t H5_file_handle(const MPI_Comm &mpi_comm, const char *file_name) {
   return file_id;
 }
 
-
-
-
-void write_plane_buf_hdf5(const char *file_name, const char *data_name,
-                          const ops_dat dat, const int cross_section_dir,
-                          const int *local_range, const int *global_range,
-                          const char *buf) {
-  const sub_block *sb{OPS_sub_block_list[dat->block->index]};
-  int my_block_rank;
-  MPI_Comm PLANE_WORLD;
-  MPI_Comm BLOCK_WORLD{sb->comm1};
-  MPI_Comm_rank(BLOCK_WORLD, &my_block_rank);
-  int color{0};
-  if ((local_range[2 * cross_section_dir + 1] -
-       local_range[2 * cross_section_dir]) == 0) {
-    color = MPI_UNDEFINED;
-  }
-  MPI_Comm_split(BLOCK_WORLD, color, my_block_rank, &PLANE_WORLD);
-  if (color == 0) {
-    int my_plane_rank;
-    MPI_Comm_rank(PLANE_WORLD, &my_plane_rank);
-    MPI_Barrier(PLANE_WORLD);
-    const int space_dim{dat->block->dims};
-    const int data_dims{space_dim - 1};
-    const sub_dat *sd = OPS_sub_dat_list[dat->index];
-    hsize_t *local_data_size_c{new hsize_t(data_dims)};
-    hsize_t *local_data_size_f{new hsize_t(data_dims)};
-    hsize_t *global_data_size_c{new hsize_t(data_dims)};
-    hsize_t *global_data_size_f{new hsize_t(data_dims)};
-    hsize_t *global_data_disp_c{new hsize_t(data_dims)};
-    hsize_t *global_data_disp_f{new hsize_t(data_dims)};
-
-    {
-      int reduced_index{0};
-      for (int d = 0; d < space_dim; d++) {
-        if (d != cross_section_dir) {
-          local_data_size_c[reduced_index] =
-              local_range[2 * d + 1] - local_range[2 * d];
-          global_data_size_c[reduced_index] =
-              global_range[2 * d + 1] - global_range[2 * d];
-          global_data_disp_c[reduced_index] =
-              sd->decomp_disp[d] < 0 ? 0 : sd->decomp_disp[d];
-          reduced_index++;
-        }
-      }
-    }
-    local_data_size_c[0] *= (dat->dim);
-    global_data_size_c[0] *= (dat->dim);
-    global_data_disp_c[0] *= (dat->dim);
-
-    for (int d = 0; d < data_dims; d++) {
-      local_data_size_f[d] = local_data_size_c[data_dims - d - 1];
-      global_data_size_f[d] = global_data_size_c[data_dims - d - 1];
-      global_data_disp_f[d] = global_data_disp_c[data_dims - d - 1];
-    }
-
-    hid_t file_id{H5_file_handle(PLANE_WORLD, file_name)};
-
-    // space in file
-
-    hid_t file_space;
-
-    hid_t dataset_id;
-    std::vector<std::string> h5_name_list;
-    split_h5_name(data_name, h5_name_list);
-    std::vector<hid_t> groupid_list;
-    groupid_list.resize(h5_name_list.size() - 1);
-
-    H5_dataset_space(file_id, data_dims, global_data_size_f, h5_name_list,
-                     dat->type, groupid_list,dataset_id, file_space);
-
-    // block of memory to write to file by each proc
-    hid_t memspace{H5Screate_simple(data_dims, local_data_size_f, NULL)};
-    hsize_t *stride{new hsize_t(data_dims)};
-    hsize_t *count{new hsize_t(data_dims)};
-    for (int d = 0; d < data_dims; d++) {
-      stride[d] = 1;
-      count[d] = 1;
-    }
-    H5Sselect_hyperslab(file_space, H5S_SELECT_SET, global_data_disp_f, stride,
-                        count, local_data_size_f);
-    // Create property list for collective dataset write.
-    hid_t xfer_data_plist_id = H5Pcreate(H5P_DATASET_XFER);
-    H5Pset_dxpl_mpio(xfer_data_plist_id, H5FD_MPIO_COLLECTIVE);
-
-    H5Dwrite(dataset_id, h5_type(dat->type), memspace, file_space,
-             xfer_data_plist_id, buf);
-    H5Pclose(xfer_data_plist_id);
-    H5Sclose(file_space);
-    H5Sclose(memspace);
-    H5Dclose(dataset_id);
-    for (int grp = groupid_list.size() - 1; grp >= 0;grp--){
-      H5Gclose(groupid_list[grp]);
-    }
-    H5Fclose(file_id);
-
-    delete count;
-    delete stride;
-    delete local_data_size_c;
-    delete local_data_size_f;
-    delete global_data_size_c;
-    delete global_data_size_f;
-    delete global_data_disp_c;
-    delete global_data_disp_f;
-    MPI_Comm_free(&PLANE_WORLD);
-  }
-}
-
 void write_plane_buf_hdf5(const char *file_name, const char *data_name,
                           const ops_dat dat, const int cross_section_dir,
                           const int *local_range, const int *global_range,REAL_PRECISION real_precision,
@@ -2513,12 +2050,12 @@ void write_plane_buf_hdf5(const char *file_name, const char *data_name,
     const int space_dim{dat->block->dims};
     const int data_dims{space_dim - 1};
     const sub_dat *sd = OPS_sub_dat_list[dat->index];
-    hsize_t *local_data_size_c{new hsize_t(data_dims)};
-    hsize_t *local_data_size_f{new hsize_t(data_dims)};
-    hsize_t *global_data_size_c{new hsize_t(data_dims)};
-    hsize_t *global_data_size_f{new hsize_t(data_dims)};
-    hsize_t *global_data_disp_c{new hsize_t(data_dims)};
-    hsize_t *global_data_disp_f{new hsize_t(data_dims)};
+    hsize_t *local_data_size_c{new hsize_t[data_dims]};
+    hsize_t *local_data_size_f{new hsize_t[data_dims]};
+    hsize_t *global_data_size_c{new hsize_t[data_dims]};
+    hsize_t *global_data_size_f{new hsize_t[data_dims]};
+    hsize_t *global_data_disp_c{new hsize_t[data_dims]};
+    hsize_t *global_data_disp_f{new hsize_t[data_dims]};
 
     {
       int reduced_index{0};
@@ -2556,14 +2093,18 @@ void write_plane_buf_hdf5(const char *file_name, const char *data_name,
     std::vector<hid_t> groupid_list;
     groupid_list.resize(h5_name_list.size() - 1);
 
-    H5_dataset_space(file_id, data_dims, global_data_size_f, h5_name_list,
-                     dat->type, real_precision, groupid_list, dataset_id,
-                     file_space);
+    if (real_precision != REAL_PRECISION::Undefined)
+      H5_dataset_space(file_id, data_dims, global_data_size_f, h5_name_list,
+                       dat->type, real_precision, groupid_list, dataset_id,
+                       file_space);
+    else
+      H5_dataset_space(file_id, data_dims, global_data_size_f, h5_name_list,
+                       dat->type, groupid_list, dataset_id, file_space);
 
     // block of memory to write to file by each proc
     hid_t memspace{H5Screate_simple(data_dims, local_data_size_f, NULL)};
-    hsize_t *stride{new hsize_t(data_dims)};
-    hsize_t *count{new hsize_t(data_dims)};
+    hsize_t *stride{new hsize_t[data_dims]};
+    hsize_t *count{new hsize_t[data_dims]};
     for (int d = 0; d < data_dims; d++) {
       stride[d] = 1;
       count[d] = 1;
@@ -2585,127 +2126,24 @@ void write_plane_buf_hdf5(const char *file_name, const char *data_name,
     }
     H5Fclose(file_id);
 
-    delete count;
-    delete stride;
-    delete local_data_size_c;
-    delete local_data_size_f;
-    delete global_data_size_c;
-    delete global_data_size_f;
-    delete global_data_disp_c;
-    delete global_data_disp_f;
+    delete[] count;
+    delete[] stride;
+    delete[] local_data_size_c;
+    delete[] local_data_size_f;
+    delete[] global_data_size_c;
+    delete[] global_data_size_f;
+    delete[] global_data_disp_c;
+    delete[] global_data_disp_f;
     MPI_Comm_free(&PLANE_WORLD);
   }
 }
 
-
-void write_slab_buf_hdf5(const char *file_name, const char *data_name,
-                         const ops_dat dat, const int *local_range,
-                         const int *global_range, const char *buf) {
-  const sub_block *sb{OPS_sub_block_list[dat->block->index]};
-  const int space_dim{dat->block->dims};
-  int my_block_rank;
-  MPI_Comm SLAB_WORLD;
-  MPI_Comm BLOCK_WORLD{sb->comm1};
-  MPI_Comm_rank(BLOCK_WORLD, &my_block_rank);
-  int color{0};
-  bool no_data{true};
-  for (int d = 0; d < space_dim; d++) {
-    if ((local_range[2 * d + 1] - local_range[2 * d]) != 0) {
-      no_data = false;
-    }
-  }
-  if (no_data){
-    color=MPI_UNDEFINED;
-  }
-
-  MPI_Comm_split(BLOCK_WORLD, color, my_block_rank, &SLAB_WORLD);
-  if (color == 0) {
-    int my_plane_rank;
-    MPI_Comm_rank(SLAB_WORLD, &my_plane_rank);
-    MPI_Barrier(SLAB_WORLD);
-
-
-    const sub_dat *sd = OPS_sub_dat_list[dat->index];
-    hsize_t *local_data_size_c{new hsize_t(space_dim)};
-    hsize_t *local_data_size_f{new hsize_t(space_dim)};
-    hsize_t *global_data_size_c{new hsize_t(space_dim)};
-    hsize_t *global_data_size_f{new hsize_t(space_dim)};
-    hsize_t *global_data_disp_c{new hsize_t(space_dim)};
-    hsize_t *global_data_disp_f{new hsize_t(space_dim)};
-
-    for (int d = 0; d < space_dim; d++) {
-
-      local_data_size_c[d] = local_range[2 * d + 1] - local_range[2 * d];
-      global_data_size_c[d] = global_range[2 * d + 1] - global_range[2 * d];
-      global_data_disp_c[d] = sd->decomp_disp[d] < 0
-                                  ? 0
-                                  : (sd->decomp_disp[d] - global_range[2 * d]);
-      // printf("At slab Rank= %d disp[%d]=%d gb=%d ld=%d ls=%d\n",
-      // ops_my_global_rank,
-      //        d, sd->decomp_disp[d], global_data_disp_c[d],
-      //        local_range[2 * d],local_data_size_c[d]);
-    }
-
-    local_data_size_c[0] *= (dat->dim);
-    global_data_size_c[0] *= (dat->dim);
-    global_data_disp_c[0] *= (dat->dim);
-
-    for (int d = 0; d < space_dim; d++) {
-      local_data_size_f[d] = local_data_size_c[space_dim - d - 1];
-      global_data_size_f[d] = global_data_size_c[space_dim - d - 1];
-      global_data_disp_f[d] = global_data_disp_c[space_dim - d - 1];
-    }
-
-    hid_t file_id{H5_file_handle(SLAB_WORLD, file_name)};
-
-    // space in file
-
-    hid_t file_space;
-
-    hid_t dataset_id;
-    std::vector<std::string> h5_name_list;
-    split_h5_name(data_name, h5_name_list);
-    std::vector<hid_t> groupid_list;
-    groupid_list.resize(h5_name_list.size() - 1);
-
-    H5_dataset_space(file_id, space_dim, global_data_size_f, h5_name_list,
-                     dat->type, groupid_list,dataset_id, file_space);
-
-    // block of memory to write to file by each proc
-    hid_t memspace{H5Screate_simple(space_dim, local_data_size_f, NULL)};
-    hsize_t *stride{new hsize_t(space_dim)};
-    hsize_t *count{new hsize_t(space_dim)};
-    for (int d = 0; d < space_dim; d++) {
-      stride[d] = 1;
-      count[d] = 1;
-    }
-    H5Sselect_hyperslab(file_space, H5S_SELECT_SET, global_data_disp_f, stride,
-                        count, local_data_size_f);
-    // Create property list for collective dataset write.
-    hid_t xfer_data_plist_id = H5Pcreate(H5P_DATASET_XFER);
-    H5Pset_dxpl_mpio(xfer_data_plist_id, H5FD_MPIO_COLLECTIVE);
-
-    H5Dwrite(dataset_id, h5_type(dat->type), memspace, file_space,
-             xfer_data_plist_id, buf);
-    H5Pclose(xfer_data_plist_id);
-    H5Sclose(file_space);
-    H5Sclose(memspace);
-    H5Dclose(dataset_id);
-    for (int grp = groupid_list.size() - 1; grp >= 0;grp--){
-      H5Gclose(groupid_list[grp]);
-    }
-    H5Fclose(file_id);
-
-    delete count;
-    delete stride;
-    delete local_data_size_c;
-    delete local_data_size_f;
-    delete global_data_size_c;
-    delete global_data_size_f;
-    delete global_data_disp_c;
-    delete global_data_disp_f;
-    MPI_Comm_free(&SLAB_WORLD);
-  }
+void write_plane_buf_hdf5(const char *file_name, const char *data_name,
+                          const ops_dat dat, const int cross_section_dir,
+                          const int *local_range, const int *global_range,
+                          const char *buf) {
+  write_plane_buf_hdf5(file_name, data_name, dat, cross_section_dir, local_range,
+                       global_range, REAL_PRECISION::Undefined, buf);
 }
 
 void write_slab_buf_hdf5(const char *file_name, const char *data_name,
@@ -2736,18 +2174,18 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
 
 
     const sub_dat *sd = OPS_sub_dat_list[dat->index];
-    hsize_t *local_data_size_c{new hsize_t(space_dim)};
-    hsize_t *local_data_size_f{new hsize_t(space_dim)};
-    hsize_t *global_data_size_c{new hsize_t(space_dim)};
-    hsize_t *global_data_size_f{new hsize_t(space_dim)};
-    hsize_t *global_data_disp_c{new hsize_t(space_dim)};
-    hsize_t *global_data_disp_f{new hsize_t(space_dim)};
+    hsize_t *local_data_size_c{new hsize_t[space_dim]};
+    hsize_t *local_data_size_f{new hsize_t[space_dim]};
+    hsize_t *global_data_size_c{new hsize_t[space_dim]};
+    hsize_t *global_data_size_f{new hsize_t[space_dim]};
+    hsize_t *global_data_disp_c{new hsize_t[space_dim]};
+    hsize_t *global_data_disp_f{new hsize_t[space_dim]};
 
     for (int d = 0; d < space_dim; d++) {
 
       local_data_size_c[d] = local_range[2 * d + 1] - local_range[2 * d];
       global_data_size_c[d] = global_range[2 * d + 1] - global_range[2 * d];
-      global_data_disp_c[d] = sd->decomp_disp[d] < 0
+      global_data_disp_c[d] = sd->decomp_disp[d] < 0 || (global_range[2 * d] > sd->decomp_disp[d])
                                   ? 0
                                   : (sd->decomp_disp[d] - global_range[2 * d]);
       // printf("At slab Rank= %d disp[%d]=%d gb=%d ld=%d ls=%d\n",
@@ -2778,14 +2216,18 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
     std::vector<hid_t> groupid_list;
     groupid_list.resize(h5_name_list.size() - 1);
 
-    H5_dataset_space(file_id, space_dim, global_data_size_f, h5_name_list,
+    if (real_precision != REAL_PRECISION::Undefined)
+      H5_dataset_space(file_id, space_dim, global_data_size_f, h5_name_list,
                      dat->type, real_precision, groupid_list, dataset_id,
                      file_space);
+    else
+      H5_dataset_space(file_id, space_dim, global_data_size_f, h5_name_list,
+                     dat->type, groupid_list, dataset_id, file_space);
 
     // block of memory to write to file by each proc
     hid_t memspace{H5Screate_simple(space_dim, local_data_size_f, NULL)};
-    hsize_t *stride{new hsize_t(space_dim)};
-    hsize_t *count{new hsize_t(space_dim)};
+    hsize_t *stride{new hsize_t[space_dim]};
+    hsize_t *count{new hsize_t[space_dim]};
     for (int d = 0; d < space_dim; d++) {
       stride[d] = 1;
       count[d] = 1;
@@ -2807,16 +2249,23 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
     }
     H5Fclose(file_id);
 
-    delete count;
-    delete stride;
-    delete local_data_size_c;
-    delete local_data_size_f;
-    delete global_data_size_c;
-    delete global_data_size_f;
-    delete global_data_disp_c;
-    delete global_data_disp_f;
+    delete[] count;
+    delete[] stride;
+    delete[] local_data_size_c;
+    delete[] local_data_size_f;
+    delete[] global_data_size_c;
+    delete[] global_data_size_f;
+    delete[] global_data_disp_c;
+    delete[] global_data_disp_f;
     MPI_Comm_free(&SLAB_WORLD);
   }
+}
+
+void write_slab_buf_hdf5(const char *file_name, const char *data_name,
+                         const ops_dat dat, const int *local_range,
+                         const int *global_range, const char *buf) {
+  write_slab_buf_hdf5(file_name, data_name, dat, local_range, global_range,
+                      REAL_PRECISION::Undefined, buf);
 }
 
 void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
@@ -2830,9 +2279,9 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
       sub_block *sb = OPS_sub_block_list[dat->block->index];
       if (sb->owned == 1) {
         const int space_dim{dat->block->dims};
-        int *global_range{new int(2 * space_dim)};
+        int *global_range{new int[2 * space_dim]};
         determine_plane_global_range(dat, cross_section_dir, pos, global_range);
-        int *local_range{new int(2 * space_dim)};
+        int *local_range{new int[2 * space_dim]};
         // TODO if the plane is out of global range, computer range will
         // generate error
         determine_local_range(dat, global_range, local_range);
@@ -2853,8 +2302,8 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
                              local_range, global_range, local_buf);
         free(local_buf);
         //}
-        delete global_range;
-        delete local_range;
+        delete[] global_range;
+        delete[] local_range;
       }
     } else {
       ops_printf("The dat %s doesn't have the specified plane = %d \n",
@@ -2876,7 +2325,7 @@ void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
   sub_block *sb = OPS_sub_block_list[dat->block->index];
   if (sb->owned == 1) {
     const int space_dim{dat->block->dims};
-    int *local_range{new int(2 * space_dim)};
+    int *local_range{new int[2 * space_dim]};
     // TODO if the plane is out of global range, computer range will generate
     // error
     determine_local_range(dat, range, local_range);
@@ -2898,7 +2347,7 @@ void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
     free(local_buf);
     //}
 
-    delete local_range;
+    delete[] local_range;
   }
 }
 
@@ -2960,9 +2409,9 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
       sub_block *sb = OPS_sub_block_list[dat->block->index];
       if (sb->owned == 1) {
         const int space_dim{dat->block->dims};
-        int *global_range{new int(2 * space_dim)};
+        int *global_range{new int[2 * space_dim]};
         determine_plane_global_range(dat, cross_section_dir, pos, global_range);
-        int *local_range{new int(2 * space_dim)};
+        int *local_range{new int[2 * space_dim]};
         // TODO if the plane is out of global range, computer range will
         // generate error
         determine_local_range(dat, global_range, local_range);
@@ -2977,8 +2426,8 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
                              local_range, global_range, real_precision, local_buf);
         free(local_buf);
         //}
-        delete global_range;
-        delete local_range;
+        delete[] global_range;
+        delete[] local_range;
       }
     } else {
       ops_printf("The dat %s doesn't have the specified plane = %d \n",
@@ -3000,7 +2449,7 @@ void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
   sub_block *sb = OPS_sub_block_list[dat->block->index];
   if (sb->owned == 1) {
     const int space_dim{dat->block->dims};
-    int *local_range{new int(2 * space_dim)};
+    int *local_range{new int[2 * space_dim]};
     // TODO if the plane is out of global range, computer range will generate
     // error
     determine_local_range(dat, range, local_range);
@@ -3022,7 +2471,7 @@ void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
     free(local_buf);
     //}
 
-    delete local_range;
+    delete[] local_range;
   }
 }
 

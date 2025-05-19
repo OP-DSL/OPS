@@ -1,11 +1,10 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
-
-#export SOURCE_INTEL=source_intel_2021.3_pythonenv
-#export SOURCE_PGI=source_pgi_nvhpc-23-new
-#export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
-#export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
+export SOURCE_INTEL=source_intel_2021.3_pythonenv
+export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
+export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
 #export DMOS=TRUE
@@ -46,7 +45,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
 echo '============> Running MPI+OpenMP'
-export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 10 numawrap10 ./tealeaf_mpi_openmp > perf_out
+export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 8 numawrap8 ./tealeaf_mpi_openmp > perf_out
 grep "Total Wall time" tea.out
 #grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
 grep "PASSED" tea.out
@@ -54,7 +53,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
 echo '============> Running DEV_MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_dev_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 8 ./tealeaf_dev_mpi > perf_out
 grep "Total Wall time" tea.out
 #grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
 grep "PASSED" tea.out
@@ -62,7 +61,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
 echo '============> Running MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 8 ./tealeaf_mpi > perf_out
 grep "Total Wall time" tea.out
 #grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
 grep "PASSED" tea.out
@@ -70,7 +69,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
 echo '============> Running MPI_Tiled'
-export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 ./tealeaf_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=6 > perf_out
+export OMP_NUM_THREADS=10;$MPI_INSTALL_PATH/bin/mpirun -np 2 numawrap2 ./tealeaf_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=6 > perf_out
 grep "Total Wall time" tea.out
 #grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
 grep "PASSED" tea.out
@@ -118,6 +117,7 @@ fi
 echo "All Intel classic complier based applications ---- PASSED"
 
 
+
 if [[ -v TELOS ]]; then
 
 #============================ Test with Intel SYCL Compilers==========================================
@@ -126,12 +126,12 @@ cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_INTEL_SYCL
 #make -j -B
 make clean
-make
+make IEEE=1
 cd $OPS_INSTALL_PATH/../apps/c/TeaLeaf
 
 make clean
 #make IEEE=1 -j
-make tealeaf_sycl tealeaf_mpi_sycl tealeaf_mpi_sycl_tiled
+make IEEE=1 tealeaf_sycl tealeaf_mpi_sycl tealeaf_mpi_sycl_tiled
 
 echo '============> Running SYCL on CPU'
 ./tealeaf_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
@@ -141,7 +141,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+SYCL on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_mpi_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 8 ./tealeaf_mpi_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
@@ -171,7 +171,7 @@ make
 echo "in here "
 cd $OPS_INSTALL_PATH/../apps/c/TeaLeaf
 make clean
-make tealeaf_dev_seq tealeaf_dev_mpi tealeaf_seq tealeaf_tiled tealeaf_openmp tealeaf_mpi tealeaf_mpi_tiled \
+make IEEE=1 tealeaf_dev_seq tealeaf_dev_mpi tealeaf_seq tealeaf_tiled tealeaf_openmp tealeaf_mpi tealeaf_mpi_tiled \
 tealeaf_mpi_openmp tealeaf_ompoffload tealeaf_mpi_ompoffload tealeaf_mpi_ompoffload_tiled
 
 echo '============> Running OpenMP'
@@ -191,7 +191,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
 echo '============> Running DEV_MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_dev_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 8 ./tealeaf_dev_mpi > perf_out
 grep "Total Wall time" tea.out
 #grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
 grep "PASSED" tea.out
@@ -199,7 +199,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
 echo '============> Running MPI'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./tealeaf_mpi > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 8 ./tealeaf_mpi > perf_out
 grep "Total Wall time" tea.out
 #grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
 grep "PASSED" tea.out
@@ -207,8 +207,8 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
 if [[ -v CUDA_INSTALL_PATH ]]; then
-make IEEE=1 tealeaf_cuda tealeaf_mpi_cuda tealeaf_mpi_cuda_tiled tealeaf_openacc tealeaf_mpi_openacc \
-tealeaf_mpi_openacc_tiled
+make IEEE=1 tealeaf_cuda tealeaf_mpi_cuda tealeaf_mpi_cuda_tiled
+#tealeaf_openacc tealeaf_mpi_openacc tealeaf_mpi_openacc_tiled
 
 echo '============> Running CUDA'
 ./tealeaf_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out

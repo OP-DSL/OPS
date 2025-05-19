@@ -24,6 +24,7 @@ class Target(Findable):
 
 class MPIOpenMP(Target):
     name = "mpi_openmp"
+    suffix = "seq"
     kernel_translation = False
     config = {
         "grouped" : False, 
@@ -32,6 +33,7 @@ class MPIOpenMP(Target):
 
 class Cuda(Target):
     name = "cuda"
+    suffix = "cuda"
     kernel_translation = True
     config = {
         "grouped" : True,
@@ -53,6 +55,7 @@ class Hip(Target):
 class OpenMPOffload(Target):
     name = "openmp_offload"
     kernel_translation = True
+    suffix = "ompoffload"
     config = {
         "grouped" : True,
         "device" : 4,
@@ -60,15 +63,15 @@ class OpenMPOffload(Target):
         "color2": False
         }
 
-class OpenACC(Target):
-    name = "openacc"
-    kernel_translation = True
-    config = {
-        "grouped" : True,
-        "device" : 5,
-        "atomics": True,
-        "color2": False
-        }
+#class OpenACC(Target):
+#    name = "openacc"
+#    kernel_translation = True
+#    config = {
+#        "grouped" : True,
+#        "device" : 5,
+#        "atomics": True,
+#        "color2": False
+#        }
 
 class Sycl(Target):
     name = "sycl"
@@ -92,7 +95,7 @@ class HLS(Target):
         "grouped" : False,
         "SLR_count" : 1,
         "max_SLR_count" : 3,
-        "device" : 7,
+        "device" : 0,
         "vector_factor" : 8,
         "mem_vector_factor": 16,
         "iter_par_factor": 20,
@@ -145,6 +148,6 @@ Target.register(MPIOpenMP)
 Target.register(Cuda)
 Target.register(Hip)
 Target.register(OpenMPOffload)
-Target.register(OpenACC)
+#Target.register(OpenACC)
 Target.register(Sycl)
 Target.register(HLS)

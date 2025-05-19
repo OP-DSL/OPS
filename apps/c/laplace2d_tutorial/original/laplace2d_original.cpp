@@ -12,19 +12,19 @@ int main(int argc, const char** argv)
   //Size along x
   int iter_max = 100;
 
-  double pi  = 2.0 * asin(1.0);
-  const double tol = 1.0e-6;
-  double error     = 1.0;
+  float pi  = 2.0 * asin(1.0);
+  const _Float16 tol = 1.0e-6;
+  _Float16 error     = 1.0;
 
-  double *A;
-  double *Anew;
-  double *y0;
+  _Float16 *A;
+  _Float16 *Anew;
+  _Float16 *y0;
 
-  A    = (double *)malloc((imax+2) * (jmax+2) * sizeof(double));
-  Anew = (double *)malloc((imax+2) * (jmax+2) * sizeof(double));
-  y0   = (double *)malloc((imax+2) * sizeof(double));
+  A    = (_Float16 *)malloc((imax+2) * (jmax+2) * sizeof(_Float16));
+  Anew = (_Float16 *)malloc((imax+2) * (jmax+2) * sizeof(_Float16));
+  y0   = (_Float16 *)malloc((imax+2) * sizeof(_Float16));
 
-  memset(A, 0, (imax+2) * (jmax+2) * sizeof(double));
+  memset(A, 0, (imax+2) * (jmax+2) * sizeof(_Float16));
 
   // set boundary conditions
   for (int i = 0; i < imax+2; i++)
@@ -69,7 +69,7 @@ int main(int argc, const char** argv)
       {
         Anew[(j)*(imax+2)+i] = 0.25f * ( A[(j)*(imax+2)+i+1] + A[(j)*(imax+2)+i-1]
             + A[(j-1)*(imax+2)+i] + A[(j+1)*(imax+2)+i]);
-        error = fmax( error, fabs(Anew[(j)*(imax+2)+i]-A[(j)*(imax+2)+i]));
+        error = fmax( error, fabs((float)(Anew[(j)*(imax+2)+i]-A[(j)*(imax+2)+i])));
       }
     }
 
@@ -80,13 +80,13 @@ int main(int argc, const char** argv)
         A[(j)*(imax+2)+i] = Anew[(j)*(imax+2)+i];    
       }
     }
-    if(iter % 10 == 0) printf("%5d, %0.6f\n", iter, error);        
+    if(iter % 10 == 0) printf("%5d, %0.6f\n", iter, (float)error);        
     iter++;
   }
 
-  printf("%5d, %0.6f\n", iter, error);
+  printf("%5d, %0.6f\n", iter, (float)error);
 
-  double err_diff = fabs((100.0*(error/2.421354960840227e-03))-100.0);
+  double err_diff = fabs((100.0*((double)error/2.421354960840227e-03))-100.0);
   printf("Total error is within %3.15E %% of the expected error\n",err_diff);
   if(err_diff < 0.001)
     printf("This run is considered PASSED\n");

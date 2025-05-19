@@ -82,4 +82,3 @@ def writeSource(entities: List[Tuple[Entity, Rewriter]]) -> str:
                 break
 
     return source
-

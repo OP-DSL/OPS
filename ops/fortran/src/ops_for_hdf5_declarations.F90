@@ -126,6 +126,12 @@ module OPS_Fortran_hdf5_Declarations
 
     end function ops_fetch_dat_c
 
+    subroutine ops_dump_to_hdf5_c (fileName) BIND(C,name='ops_dump_to_hdf5')
+        use, intrinsic :: ISO_C_BINDING
+
+        character(len=1,kind=c_char) :: fileName(*)
+    end subroutine ops_dump_to_hdf5_c
+
   end interface
 
   interface ops_fetch_dat
@@ -191,7 +197,7 @@ contains
     stencil%stencilPtr => null()
 
     ! assume names are /0 terminated - will fix this if needed later
-    stencil%stencilCPtr = ops_decl_stencil_hdf5_c ( mapdims, points, stencilName//C_NULL_CHAR, fileName//C_NULL_CHAR )
+    stencil%stencilCPtr = ops_decl_stencil_hdf5_c ( dims, points, stencilName//C_NULL_CHAR, fileName//C_NULL_CHAR )
 
     ! convert the generated C pointer to Fortran pointer and store it inside the op_map variable
     call c_f_pointer ( stencil%stencilCPtr, stencil%stencilPtr )
@@ -332,5 +338,16 @@ contains
 
 !end subroutine ops_read_dat_hdf5
 
+  subroutine ops_dump_to_hdf5 (file_name)
+
+    use, intrinsic :: ISO_C_BINDING
+
+    implicit none
+
+    character(kind=c_char,len=*) :: file_name
+
+    call ops_dump_to_hdf5_c (file_name//C_NULL_CHAR)
+
+  end subroutine ops_dump_to_hdf5
 
 end module OPS_Fortran_hdf5_Declarations

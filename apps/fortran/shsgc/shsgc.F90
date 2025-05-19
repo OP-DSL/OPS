@@ -17,7 +17,7 @@ program SHSGC
 
   intrinsic :: sqrt, real
 
-  integer niter, iter, nrk
+  integer(kind=4) ::  niter, iter, nrk
   real(8) :: totaltime
   real(8) :: local_rms
 
@@ -38,22 +38,22 @@ program SHSGC
   type(ops_reduction) :: rms
 
   ! vars for stencils
-  integer S1D_0_array(1) /0/
-  integer S1D_01_array(2) /0,1/
-  integer S1D_0M1_array(2) /0,-1/
-  integer S1D_0M1M2P1P2_array(5) /0,-1,-2,1,2/
+  integer(kind=4) ::  S1D_0_array(1) = [0]
+  integer(kind=4) ::  S1D_01_array(2) = [0,1]
+  integer(kind=4) ::  S1D_0M1_array(2) = [0,-1]
+  integer(kind=4) ::  S1D_0M1M2P1P2_array(5) = [0,-1,-2,1,2]
   type(ops_stencil) :: S1D_0, S1D_01, S1D_0M1
   type(ops_stencil) :: S1D_0M1M2P1P2
 
   ! vars for halo_depths
-  integer d_p(1) /2/   !max halo depths for the dat in the possitive direction
-  integer d_m(1) /-2/ !max halo depths for the dat in the negative direction
+  integer(kind=4) ::  d_p(1) = [2]   !max halo depths for the dat in the possitive direction
+  integer(kind=4) ::  d_m(1) = [-2] !max halo depths for the dat in the negative direction
 
   !base
-  integer base(1) /1/ ! this is in fortran indexing
+  integer(kind=4) ::  base(1) = [1] ! this is in fortran indexing
 
   !size
-  integer size(1) /204/ !size of the dat -- should be identical to the block on which its define on
+  integer(kind=4) ::  size(1) = [204] !size of the dat -- should be identical to the block on which its define on
 
   !null array
   real(kind=c_double), dimension(:), allocatable :: temp
@@ -64,7 +64,7 @@ program SHSGC
   !iterange needs to be fortran indexed here
   ! inclusive indexing for both min and max points in the range
   !.. but internally will convert to c index
-  integer nxp_range(2), nxp_range_1(2), nxp_range_2(2), nxp_range_3(2), &
+  integer(kind=4) ::  nxp_range(2), nxp_range_1(2), nxp_range_2(2), nxp_range_3(2), &
   & nxp_range_4(2), nxp_range_5(2)
 
   ! profiling
@@ -76,10 +76,14 @@ program SHSGC
   real(8) :: a2(3)
 
   !status variable to check success of ops_fetch_dat()
-  integer(4) :: status
+  integer(kind=4) :: status
 
   !for validation
   real(8) :: validate_rms, rms_diff
+
+  character(len=60) :: fname
+  character(len=3) :: pnxhdf
+  parameter(pnxhdf = '.h5')
 
   !-------------------------- Initialis constants--------------------------
   nxp = 204
@@ -117,10 +121,39 @@ program SHSGC
   a2(2) = 3.0_8/20.0_8
   a2(3) = 3.0_8/5.0_8
 
+#ifdef OPS_WITH_CUDAFOR
+  nxp_opsconstant = nxp
+  nyp_opsconstant = nyp
+  xhalo_opsconstant = xhalo
+  yhalo_opsconstant = yhalo
+  xmin_opsconstant = xmin
+  ymin_opsconstant = ymin
+  xmax_opsconstant = xmax
+  ymax_opsconstant = ymax
+  dx_opsconstant = dx
+  dy_opsconstant = dy
+  pl_opsconstant = pl
+  pr_opsconstant = pr
+  rhol_opsconstant = rhol
+  rhor_opsconstant = rhor
+  ul_opsconstant = ul
+  ur_opsconstant = ur
+  gam_opsconstant = gam
+  gam1_opsconstant = gam1
+  eps_opsconstant = eps
+  lambda_opsconstant = lambda
+  dt_opsconstant = dt
+  del2_opsconstant = del2
+  akap2_opsconstant = akap2
+  tvdsmu_opsconstant = tvdsmu
+  con_opsconstant = con
+#endif
+
   !-------------------------- Initialisation --------------------------
 
   ! OPS initialisation
   call ops_init(1)
+  call ops_set_soa(1)
 
   !----------------------------OPS Declarations------------------------
 
@@ -169,7 +202,33 @@ program SHSGC
   ! reduction handle for rms variable
   call ops_decl_reduction_handle(8, rms, "real(8)", "rms")
 
-  call ops_partition("1D_BLOCK_DECOMPOSE")
+  call ops_decl_const("nxp", 1, "integer(4)", nxp)
+  call ops_decl_const("nyp", 1, "integer(4)", nyp)
+  call ops_decl_const("xhalo", 1, "integer(4)", xhalo)
+  call ops_decl_const("yhalo", 1, "integer(4)", yhalo)
+  call ops_decl_const("xmin", 1, "real(8)", xmin)
+  call ops_decl_const("ymin", 1, "real(8)", ymin)
+  call ops_decl_const("xmax", 1, "real(8)", xmax)
+  call ops_decl_const("ymax", 1, "real(8)", ymax)
+  call ops_decl_const("dx", 1, "real(8)", dx)
+  call ops_decl_const("dy", 1, "real(8)", dy)
+  call ops_decl_const("pl", 1, "real(8)", pl)
+  call ops_decl_const("pr", 1, "real(8)", pr)
+  call ops_decl_const("rhol", 1, "real(8)", rhol)
+  call ops_decl_const("rhor", 1, "real(8)", rhor)
+  call ops_decl_const("ul", 1, "real(8)", ul)
+  call ops_decl_const("ur", 1, "real(8)", ur)
+  call ops_decl_const("gam", 1, "real(8)", gam)
+  call ops_decl_const("gam1", 1, "real(8)", gam1)
+  call ops_decl_const("eps", 1, "real(8)", eps)
+  call ops_decl_const("lambda", 1, "real(8)", lambda)
+  call ops_decl_const("dt", 1, "real(8)", dt)
+  call ops_decl_const("del2", 1, "real(8)", del2)
+  call ops_decl_const("akap2", 1, "real(8)", akap2)
+  call ops_decl_const("tvdsmu", 1, "real(8)", tvdsmu)
+  call ops_decl_const("con", 1, "real(8)", con)
+
+  call ops_partition("1D_BLOCK_DECOMPOSE"  )
 
   !
   ! Initialize with the test case
@@ -335,6 +394,10 @@ program SHSGC
       write (*,*) iter, totaltime
     endif
 
+#ifdef OPS_LAZY
+    call ops_execute()
+#endif
+
   ENDDO
 
   call ops_timers(endTime)
@@ -353,8 +416,8 @@ program SHSGC
 
     validate_rms = sqrt(local_rms)/nxp
     rms_diff=ABS((100.0_8*(validate_rms/0.233688543536201_8))-100.0_8)
-    write (*,'(a,f16.7)'), "RMS = " , validate_rms; !Correct RMS = 0.233689
-    write(*,'(a,e16.7,a)') "Total error is within",rms_diff,"% of the expected error"
+    write (*,'(a,f16.7)') "RMS = ", validate_rms !Correct RMS = 0.233689
+    write (*,'(a,e16.7,a)') "Total error is within",rms_diff,"% of the expected error"
 
     IF(rms_diff.LT.0.001) THEN
       write(*,'(a)')"This test is considered PASSED"
@@ -364,9 +427,11 @@ program SHSGC
 
   end if
 
-  call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
-  call ops_fetch_block_hdf5_file(shsgc_grid, "shsgc.h5")
-  call ops_fetch_dat_hdf5_file(rho_new, "shsgc.h5")
+!  call ops_print_dat_to_txtfile(rho_new, "shsgc.dat")
+
+  fname = 'shsgc'//pnxhdf
+  call ops_fetch_block_hdf5_file(shsgc_grid, trim(fname))
+  call ops_fetch_dat_hdf5_file(rho_new, trim(fname))
 
   call ops_fetch_dat(rho_new, u_rho_new, status);
   if (status .lt. 0)then

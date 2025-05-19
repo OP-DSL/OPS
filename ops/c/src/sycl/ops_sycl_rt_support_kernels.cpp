@@ -92,14 +92,14 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
     //nd_range elso argumentume a teljes méret, nem a blokkok száma: https://docs.oneapi.com/versions/latest/dpcpp/iface/nd_range.html
     cgh.parallel_for<class copy_tobuf>(cl::sycl::nd_range<3>(cl::sycl::range<3>(blk_z*thr_z,blk_y*thr_y,blk_x*thr_x),cl::sycl::range<3>(thr_z,thr_y,thr_x)), [=](cl::sycl::nd_item<3> item) {
       //get x dimension id
-      cl::sycl::cl_int global_x_id = item.get_global_id()[2];
+      int global_x_id = item.get_global_id()[2];
       //get y dimension id
-      cl::sycl::cl_int global_y_id = item.get_global_id()[1];
+      int global_y_id = item.get_global_id()[1];
       //get z dimension id
-      cl::sycl::cl_int global_z_id = item.get_global_id()[0];
+      int global_z_id = item.get_global_id()[0];
 
-      cl::sycl::cl_int d_offset = dest_offset;
-      cl::sycl::cl_int s_offset = 0;
+      int d_offset = dest_offset;
+      int s_offset = 0;
 
       int idx_z = rz_s + z_step * global_z_id;
       int idx_y = ry_s + y_step * global_y_id;
@@ -170,14 +170,14 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
     //Accessors
     cgh.parallel_for<class copy_frombuf1>(cl::sycl::nd_range<3>(cl::sycl::range<3>(blk_z*thr_z,blk_y*thr_y,blk_x*thr_x),cl::sycl::range<3>(thr_z,thr_y,thr_x)), [=](cl::sycl::nd_item<3> item) {
       //get x dimension id
-      cl::sycl::cl_int global_x_id = item.get_global_id()[2];
+      int global_x_id = item.get_global_id()[2];
       //get y dimension id
-      cl::sycl::cl_int global_y_id = item.get_global_id()[1];
+      int global_y_id = item.get_global_id()[1];
       //get z dimension id
-      cl::sycl::cl_int global_z_id = item.get_global_id()[0];
+      int global_z_id = item.get_global_id()[0];
       
-      cl::sycl::cl_int d_offset = 0;
-      cl::sycl::cl_int s_offset = src_offset;
+      int d_offset = 0;
+      int s_offset = src_offset;
       
       int idx_z = rz_s + z_step * global_z_id;
       int idx_y = ry_s + y_step * global_y_id;

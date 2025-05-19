@@ -177,6 +177,6 @@ int main(int argc, char *argv[]) {
 
   WriteDataToH5("Compact3D.h5", compact3d, resList);
   delete trid_ctx;
-
+  ops_printf("\nSuccessful exit from OPS!\n");
   ops_exit();
 }

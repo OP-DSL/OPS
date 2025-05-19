@@ -250,17 +250,20 @@ If you add the−`OPS_DIAGS=2` runtime flag, at the end of execution, OPS will r
 
 ## Code generated versions
 OPS will generate and compile a large number of different versions.
-* `laplace2d_dev_seq` and `laplace2d_dev_mpi` :  these do not use code generation, they are intended for development only
-* `laplace2d_seq` and `laplace2d_mpi` : baseline sequential and MPI implementations
-* `laplace2d_openmp` : baseline OpenMP implementation
-* `laplace2d_cuda`, `laplace2d_opencl`, `laplace2d_openacc` : implementations targeting GPUs 
-* `laplace2d_mpiinline` : optimised implementation with MPI+OpenMP
-* `laplace2d_tiled`: optimised implementation with OpenMP that improves spatial and temporal locality
+* `laplace2d_dev_seq` and `laplace2d_dev_mpi` :  these do not use code generation, they are intended for development only.
+* `laplace2d_seq` : baseline sequential implementation.
+* `laplace2d_openmp` : baseline OpenMP implementation.
+* `laplace2d_tiled`: optimised implementation with OpenMP that improves spatial and temporal locality.
+* `laplace2d_mpi` : MPI implementation.
+* `laplace2d_mpi_tiled` : MPI implementation optimized for halo exchanges and spatial and temporal locality.
+* `laplace2d_cuda`, `laplace2d_hip`, `laplace2d_ompoffload`, `laplace2d_sycl` : implementations targeting GPUs`*`.
+`*` The generated code (CUDA, HIP, OpenMP Offload, SYCL) is dependent on the compilation environment setup. Ensure that the appropriate compiler flags, libraries, and toolchains for the desired parallelization model are correctly configured during the build process. MPI versions can also be generated when an appropriate MPI compiler (e.g., mpicc, mpicxx) is set in the build environment.
+
 
 ## Optimizations - general
 Try the following performance tuning options
-* `laplace2d_cuda`, `laplace2d_opencl` : you can set the `OPS_BLOCK_SIZE_X` and `OPS_BLOCK_SIZE_Y` runtime arguments to control thread block or work group sizes 
-* `laplace2d_mpi_cuda`, `laplace2d_mpi_openacc` : add the `-gpudirect` runtime flag to enable GPU Direct communications
+* `laplace2d_cuda` : you can set the `OPS_BLOCK_SIZE_X` and `OPS_BLOCK_SIZE_Y` runtime arguments to control thread block or work group sizes
+* `laplace2d_mpi_cuda` : add the `-gpudirect` runtime flag to enable GPU Direct communications
 
 
 ## Optimizations - tiling
@@ -273,7 +276,12 @@ This works over MPI as well:  OPS extends the halo regions, and does one big hal
 
 The following versions can be executed with the tiling optimzations.
 
-* `laplace2d_tiled`, `laplace2d_mpi_tiled` : add the `OPS_TILING` runtime flag, and move `-OPSDIAGS=3` to see the cache blocking tiling at work. For some applications, such as this one, the initial guess gives too large tiles, try setting `OPS_CACHE_SIZE` to a lower value (in MB, for L3 size).  Thread affinity control and using 1 process per socket isstrongly recommended.  E.g. `OMP_NUM_THREADS=20 numactl--cpunodebind=0 ./laplace2dtiled -OPSDIAGS=3 OPS_TILING OPS_CACHE_SIZE=5`. Over MPI, you will have to set `OPS_TILING_MAX_DEPTH` to extend halo regions.
+* `laplace2d_tiled`, `laplace2d_mpi_tiled` : add the `OPS_TILING` runtime flag, and move `-OPSDIAGS=3` to see the cache blocking tiling at work. For some applications, such as this one, the initial guess gives too large tiles, try setting `OPS_CACHE_SIZE` to a lower value (in MB, for L3 size). Thread affinity control and using 1 process per socket is strongly recommended.
+E.g.
+```
+OMP_NUM_THREADS=20 numactl --cpunodebind=0 ./laplace2d_tiled -OPSDIAGS=3 OPS_TILING OPS_CACHE_SIZE=5
+```
+Over MPI, you will have to set `OPS_TILING_MAX_DEPTH` to extend halo regions.
 
 
 

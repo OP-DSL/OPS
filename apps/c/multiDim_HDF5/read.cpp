@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
   // EXIT OPS AND PRINT TIMING INFO
   //---------------------------------------
   ops_timing_output(std::cout);
-  ops_printf("\nSucessful exit from OPS!\n");
+  ops_printf("\nSuccessful exit from OPS!\n");
   ops_exit();
   return 0;
   //*******************************************************************

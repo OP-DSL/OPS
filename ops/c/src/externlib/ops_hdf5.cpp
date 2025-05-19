@@ -351,7 +351,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     t_size *= g_size[d];
   char *data = (char *)ops_malloc(t_size * dat->elem_size);
 
-  int *range{new int(2 * block->dims)};
+  int range[2*OPS_MAX_DIM] = {0};
   for (int d = 0; d < block->dims; d++) {
     range[2 * d] = dat->d_m[d];
     range[2 * d + 1] = dat->size[d] - dat->d_p[d];
@@ -360,7 +360,6 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     //            dat->d_p[d], dat->d_m[d]);
   }
   ops_dat_fetch_data_slab_host(dat, 0, data, range);
-  delete range;
   // make sure we multiply by the number of data values per element (i.e.
   // dat->dim)
   // g_size[1] = g_size[1]*dat->dim;
@@ -608,31 +607,10 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       hid_t dset_id = H5Dopen(group_id, dat->name, H5P_DEFAULT);
       hid_t dataspace = H5Dget_space(dset_id);
-
-      if (strcmp(dat->type, "double") == 0 || strcmp(dat->type, "real(8)") == 0 || strcmp(dat->type, "real(kind=8)") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, dataspace, H5P_DEFAULT, data);
-      else if (strcmp(dat->type, "float") == 0 || strcmp(dat->type, "real") == 0 || strcmp(dat->type, "real(4)") == 0
-                || strcmp(dat->type, "real(kind=4)") == 0 )
-          H5Dwrite(dset_id, H5T_NATIVE_FLOAT, H5S_ALL, dataspace, H5P_DEFAULT, data);
-      else if (strcmp(dat->type, "int") == 0 || strcmp(dat->type, "int(4)") == 0 || strcmp(dat->type, "integer") == 0
-               || strcmp(dat->type, "integer(4)") == 0 || strcmp(dat->type, "integer(kind=4)") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_INT, H5S_ALL, dataspace, H5P_DEFAULT, data);
-      else if (strcmp(dat->type, "long") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_LONG, H5S_ALL, dataspace, H5P_DEFAULT, data);
-      else if ((strcmp(dat->type, "long long") == 0) || (strcmp(dat->type, "ll") == 0))
-          H5Dwrite(dset_id, H5T_NATIVE_LLONG, H5S_ALL, dataspace, H5P_DEFAULT, data);
-      else if (strcmp(dat->type, "short") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_SHORT, H5S_ALL, dataspace, H5P_DEFAULT, data);
-      else if (strcmp(dat->type, "char") == 0)
-          H5Dwrite(dset_id, H5T_NATIVE_CHAR, H5S_ALL, dataspace, H5P_DEFAULT, data);
-      else
-      {
-          OPSException ex(OPS_HDF5_ERROR);
-          ex << "Error: Unknown type in ops_fetch_dat_hdf5_file(): " << dat->type;
-          throw ex;
-      }
+      hid_t datatype = h5_type(dat->type);
+      H5Dwrite(dset_id, datatype, H5S_ALL, dataspace, H5P_DEFAULT, data);
     }
-
+    free(data);
     H5Gclose(group_id);
     H5Fclose(file_id);
   }
@@ -1069,27 +1047,8 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   }
 
   // set type size
-  int type_size;
-  if (strcmp(read_type, "double") == 0)
-    type_size = sizeof(double);
-  else if (strcmp(read_type, "float") == 0)
-    type_size = sizeof(float);
-  else if (strcmp(read_type, "int") == 0)
-    type_size = sizeof(int);
-  else if (strcmp(read_type, "long") == 0)
-    type_size = sizeof(long);
-  else if ((strcmp(read_type, "long long") == 0) ||
-           (strcmp(read_type, "ll") == 0))
-    type_size = sizeof(long long);
-  else if (strcmp(read_type, "char") == 0)
-    type_size = sizeof(char);
-  else if (strcmp(read_type, "short") == 0)
-    type_size = sizeof(short);
-  else {
-    OPSException ex(OPS_HDF5_ERROR);
-    ex << "Error: Unknown type in ops_decl_dat_hdf5(): " << type;
-    throw ex;
-  }
+  hid_t datatype = h5_type(read_type);
+  size_t type_size = H5Tget_size(datatype);
 
   // read in the actual data
   hsize_t t_size = 1;
@@ -1097,26 +1056,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
     t_size *= read_size[d] - read_d_m[d] + read_d_p[d];
   char *data = (char *)ops_malloc(t_size * dat_dim * type_size);
 
-  if (strcmp(read_type, "double") == 0)
-    H5LTread_dataset(group_id, dat_name, H5T_NATIVE_DOUBLE, data);
-  else if (strcmp(read_type, "float") == 0)
-    H5LTread_dataset(group_id, dat_name, H5T_NATIVE_FLOAT, data);
-  else if (strcmp(read_type, "int") == 0)
-    H5LTread_dataset(group_id, dat_name, H5T_NATIVE_INT, data);
-  else if (strcmp(read_type, "long") == 0)
-    H5LTread_dataset(group_id, dat_name, H5T_NATIVE_LONG, data);
-  else if ((strcmp(read_type, "long long") == 0) ||
-           (strcmp(read_type, "ll") == 0))
-    H5LTread_dataset(group_id, dat_name, H5T_NATIVE_LLONG, data);
-  else if (strcmp(read_type, "char") == 0)
-    H5LTread_dataset(group_id, dat_name, H5T_NATIVE_CHAR, data);
-  else if (strcmp(read_type, "short") == 0)
-    H5LTread_dataset(group_id, dat_name, H5T_NATIVE_SHORT, data);
-  else {
-    OPSException ex(OPS_HDF5_ERROR);
-    ex << "Error: Unknown type in ops_decl_dat_hdf5(): " << type;
-    throw ex;
-  }
+  H5LTread_dataset(group_id, dat_name, datatype, data);
 
   int stride[] = {1, 1, 1, 1, 1};
   char *data_char = NULL;
@@ -1281,43 +1221,13 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
   // Create the dataset with default properties and close dataspace.
   dset_id = H5Dopen(file_id, name, H5P_DEFAULT);
   dataspace = H5Dget_space(dset_id);
+  hid_t datatype = h5_type(typ);
+  size_t bytesize = H5Tget_size(datatype);
 
-  char *data;
-  // initialize data buffer and read data
-  if (strcmp(typ, "int") == 0 || strcmp(typ, "int(4)") == 0 ||
-      strcmp(typ, "integer") == 0 || strcmp(typ, "integer(4)") == 0) {
-    data = (char *)xmalloc(sizeof(int) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-    memcpy((void *)const_data, (void *)data, sizeof(int) * const_dim);
-  } else if (strcmp(typ, "long") == 0) {
-    data = (char *)xmalloc(sizeof(long) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-    memcpy((void *)const_data, (void *)data, sizeof(long) * const_dim);
-  } else if (strcmp(typ, "long long") == 0) {
-    data = (char *)xmalloc(sizeof(long long) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_LLONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-    memcpy((void *)const_data, (void *)data, sizeof(long long) * const_dim);
-  } else if (strcmp(typ, "float") == 0 || strcmp(typ, "real(4)") == 0 ||
-             strcmp(typ, "real") == 0) {
-    data = (char *)xmalloc(sizeof(float) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-    memcpy((void *)const_data, (void *)data, sizeof(float) * const_dim);
-  } else if (strcmp(typ, "double") == 0 ||
-             strcmp(typ, "double precision") == 0 ||
-             strcmp(typ, "real(8)") == 0) {
-    data = (char *)xmalloc(sizeof(double) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-    memcpy((void *)const_data, (void *)data, sizeof(double) * const_dim);
-  } else if (strcmp(typ, "char") == 0) {
-    data = (char *)xmalloc(sizeof(char) * const_dim);
-    H5Dread(dset_id, H5T_NATIVE_CHAR, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-    memcpy((void *)const_data, (void *)data, sizeof(char) * const_dim);
-  } else {
-    OPSException ex(OPS_HDF5_ERROR);
-    ex << "Unknown type in file " << file_name << " for constant " << name
-       << "\n";
-    throw ex;
-  }
+  char *data = (char *)xmalloc(bytesize * const_dim);
+  H5Dread(dset_id, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+  memcpy((void *)const_data, (void *)data, bytesize * const_dim);
+
   ops_free(typ);
   free(data);
 
@@ -1396,38 +1306,10 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
     OPS_instance::getOPSInstance()->ostream() << " overwriting"
                                               << "\n";
     dataspace = H5Dget_space(dset_id);
-
+    hid_t datatype = h5_type(typ);
     // write to the existing dataset with default properties
-    if (strcmp(type, "double") == 0 || strcmp(type, "double:soa") == 0 ||
-        strcmp(type, "double precision") == 0 || strcmp(type, "real(8)") == 0) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, dataspace, H5P_DEFAULT,
-               const_data);
-    } else if (strcmp(type, "float") == 0 || strcmp(type, "float:soa") == 0 ||
-               strcmp(type, "real(4)") == 0 || strcmp(type, "real") == 0) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_FLOAT, H5S_ALL, dataspace, H5P_DEFAULT,
-               const_data);
-    } else if (strcmp(type, "int") == 0 || strcmp(type, "int:soa") == 0 ||
-               strcmp(type, "int(4)") == 0 || strcmp(type, "integer") == 0 ||
-               strcmp(type, "integer(4)") == 0) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_INT, H5S_ALL, dataspace, H5P_DEFAULT,
-               const_data);
-    } else if ((strcmp(type, "long") == 0) || (strcmp(type, "long:soa") == 0)) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_LONG, H5S_ALL, dataspace, H5P_DEFAULT,
-               const_data);
-    } else if ((strcmp(type, "long long") == 0) ||
-               (strcmp(type, "long long:soa") == 0)) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_LLONG, H5S_ALL, dataspace, H5P_DEFAULT,
-               const_data);
-    } else if (strcmp(type, "char") == 0) {
-      // write data
-      H5Dwrite(dset_id, H5T_NATIVE_CHAR, H5S_ALL, dataspace, H5P_DEFAULT,
-               const_data);
-    }
+    H5Dwrite(dset_id, datatype, H5S_ALL, dataspace, H5P_DEFAULT,
+                          const_data);
     ops_free(typ);
     H5Dclose(dset_id);
     H5Fclose(file_id);
@@ -1442,60 +1324,13 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   // Create the dataspace for the dataset.
   hsize_t dims_of_const = (hsize_t)dim;
   dataspace = H5Screate_simple(1, &dims_of_const, NULL);
-
-  // Create the dataset with default properties
-  if (strcmp(type, "double") == 0 || strcmp(type, "double:soa") == 0 ||
-      strcmp(type, "double precision") == 0 || strcmp(type, "real(8)") == 0) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_DOUBLE, dataspace,
-                        H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, dataspace, H5P_DEFAULT,
-             const_data);
-    H5Dclose(dset_id);
-  } else if (strcmp(type, "float") == 0 || strcmp(type, "float:soa") == 0 ||
-             strcmp(type, "real(4)") == 0 || strcmp(type, "real") == 0) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_FLOAT, dataspace, H5P_DEFAULT,
-                        H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_FLOAT, H5S_ALL, dataspace, H5P_DEFAULT,
-             const_data);
-    H5Dclose(dset_id);
-  } else if (strcmp(type, "int") == 0 || strcmp(type, "int:soa") == 0 ||
-             strcmp(type, "int(4)") == 0 || strcmp(type, "integer") == 0 ||
-             strcmp(type, "integer(4)") == 0) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_INT, dataspace, H5P_DEFAULT,
-                        H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_INT, H5S_ALL, dataspace, H5P_DEFAULT,
-             const_data);
-    H5Dclose(dset_id);
-  } else if ((strcmp(type, "long") == 0) || (strcmp(type, "long:soa") == 0)) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_LONG, dataspace, H5P_DEFAULT,
-                        H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_LONG, H5S_ALL, dataspace, H5P_DEFAULT,
-             const_data);
-    H5Dclose(dset_id);
-  } else if ((strcmp(type, "long long") == 0) ||
-             (strcmp(type, "long long:soa") == 0)) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_LLONG, dataspace, H5P_DEFAULT,
-                        H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_LLONG, H5S_ALL, dataspace, H5P_DEFAULT,
-             const_data);
-    H5Dclose(dset_id);
-  } else if (strcmp(type, "char") == 0) {
-    dset_id = H5Dcreate(file_id, name, H5T_NATIVE_CHAR, dataspace, H5P_DEFAULT,
-                        H5P_DEFAULT, H5P_DEFAULT);
-    // write data
-    H5Dwrite(dset_id, H5T_NATIVE_CHAR, H5S_ALL, dataspace, H5P_DEFAULT,
-             const_data);
-    H5Dclose(dset_id);
-  } else {
-    OPSException ex(OPS_HDF5_ERROR);
-    ex << "Unknown type for write_const for constant " << name << "\n";
-    throw ex;
-  }
+  hid_t datatype = h5_type(type);
+  dset_id = H5Dcreate(file_id, name, datatype, dataspace,
+      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  // write data
+  H5Dwrite(dset_id, datatype, H5S_ALL, dataspace, H5P_DEFAULT,
+      const_data);
+  H5Dclose(dset_id);
 
   H5Sclose(dataspace);
 
@@ -1525,24 +1360,48 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   attribute =
       H5Acreate(dset_id, "type", atype, dataspace, H5P_DEFAULT, H5P_DEFAULT);
 
-  if (strcmp(type, "double") == 0 || strcmp(type, "double precision") == 0 ||
-      strcmp(type, "real(8)") == 0)
+  if (strcmp(type, "double") == 0 ||
+      strcmp(type, "double precision") == 0 ||
+      strcmp(type, "real(8)") == 0 ||
+      strcmp(type, "real(kind=8)") == 0)
+  {
     H5Awrite(attribute, atype, "double");
-  else if (strcmp(type, "int") == 0 || strcmp(type, "int(4)") == 0 ||
-           strcmp(type, "integer") == 0 || strcmp(type, "integer(4)") == 0)
-    H5Awrite(attribute, atype, "int");
-  else if (strcmp(type, "long") == 0)
-    H5Awrite(attribute, atype, "long");
-  else if (strcmp(type, "long long") == 0)
-    H5Awrite(attribute, atype, "long long");
-  else if (strcmp(type, "float") == 0 || strcmp(type, "real(4)") == 0 ||
-           strcmp(type, "real") == 0)
+  }
+  else if (strcmp(type, "float") == 0 ||
+           strcmp(type, "real") == 0 ||
+           strcmp(type, "real(4)") == 0 ||
+           strcmp(type, "real(kind=4)") == 0)
+  {
     H5Awrite(attribute, atype, "float");
+  }
+  else if (strcmp(type, "int") == 0 ||
+           strcmp(type, "int(4)") == 0 ||
+           strcmp(type, "integer") == 0 ||
+           strcmp(type, "integer(4)") == 0 ||
+           strcmp(type, "integer(kind=4)") == 0)
+  {
+    H5Awrite(attribute, atype, "int");
+  }
+  else if (strcmp(type, "half") == 0)
+  {
+    H5Awrite(attribute, atype, "half");
+  }
+  else if (strcmp(type, "long") == 0)
+  {
+    H5Awrite(attribute, atype, "long");
+  }
+  else if (strcmp(type, "long long") == 0)
+  {
+    H5Awrite(attribute, atype, "long long");
+  }
   else if (strcmp(type, "char") == 0)
+  {
     H5Awrite(attribute, atype, "char");
-  else {
+  }
+  else
+  {
     OPSException ex(OPS_HDF5_ERROR);
-    ex << "Unknown type in type " << type << " for constant " << name
+    ex << "Unknown type - " << type << " for constant " << name
        << ": cannot write constant to file\n";
     throw ex;
   }
@@ -1557,7 +1416,7 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
 void determin_plane_buf_size(const ops_dat &data, const int buf_dims,
                        const int cross_section_dir, int *buf_size) {
   const int space_dim{data->block->dims};
-  int *size{new int(space_dim)};
+  int *size{new int[space_dim]};
   for (int d = 0; d < space_dim; d++) {
     size[d] = data->size[d] - (data->d_p[d] - data->d_m[d]);
   }
@@ -1570,13 +1429,13 @@ void determin_plane_buf_size(const ops_dat &data, const int buf_dims,
       reduced_index++;
     }
   }
-  delete size;
+  delete[] size;
 }
 
 void determine_plane_range(const ops_dat &data, const int cross_section_dir,
                      const int pos, int *range) {
   const int space_dim{data->block->dims};
-  int *size{new int(space_dim)};
+  int *size{new int[space_dim]};
   for (int d = 0; d < space_dim; d++) {
     size[d] = data->size[d] - (data->d_p[d] - data->d_m[d]);
   }
@@ -1587,7 +1446,7 @@ void determine_plane_range(const ops_dat &data, const int cross_section_dir,
   }
   range[2 * cross_section_dir + 1] = pos + 1;
   range[2 * cross_section_dir] = pos;
-  delete size;
+  delete[] size;
 }
 
 hid_t H5_file_handle(const char *file_name) {
@@ -1615,7 +1474,7 @@ void write_buf_hdf5(char const *file_name, const char *data_name,
                           char *buf) {
   // HDF5 APIs definitions
   hid_t file_id{H5_file_handle(file_name)};
-  hsize_t *size_f{new hsize_t(dims)};
+  hsize_t *size_f{new hsize_t[dims]};
   for (int d = 0; d < dims; d++) {
     size_f[d] = size[dims - d - 1];
   }
@@ -1636,7 +1495,7 @@ void write_buf_hdf5(char const *file_name, const char *data_name,
     H5Gclose(groupid_list[grp]);
   }
   H5Fclose(file_id);
-  delete size_f;
+  delete[] size_f;
 }
 
 void write_buf_hdf5(char const *file_name, const char *data_name,
@@ -1644,7 +1503,7 @@ void write_buf_hdf5(char const *file_name, const char *data_name,
                           char *buf) {
   // HDF5 APIs definitions
   hid_t file_id{H5_file_handle(file_name)};
-  hsize_t *size_f{new hsize_t(dims)};
+  hsize_t *size_f{new hsize_t[dims]};
   for (int d = 0; d < dims; d++) {
     size_f[d] = size[dims - d - 1];
   }
@@ -1665,7 +1524,7 @@ void write_buf_hdf5(char const *file_name, const char *data_name,
     H5Gclose(groupid_list[grp]);
   }
   H5Fclose(file_id);
-  delete size_f;
+  delete[] size_f;
 }
 
 void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
@@ -1676,8 +1535,8 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
         (pos <= dat->size[cross_section_dir])) {
 
       int dims{dat->block->dims - 1};
-      int *range{new int(2 * dat->block->dims)};
-      int *size{new int(dims)};
+      int *range{new int[2 * dat->block->dims]};
+      int *size{new int[dims]};
       determin_plane_buf_size(dat, dims, cross_section_dir, size);
       hsize_t buf_element_size{1};
       for (int i = 0; i < dims; i++) {
@@ -1692,9 +1551,9 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
       size[0] *= (dat->dim);
       write_buf_hdf5(file_name, data_name, dat, dims, size, real_precision,
                      write_buf);
-      delete range;
+      delete[] range;
       free(write_buf);
-      delete size;
+      delete[] size;
     } else {
       ops_printf("The dat %s doesn't have the specified plane = %d \n",
                  dat->name, pos);
@@ -1716,8 +1575,8 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
         (pos <= dat->size[cross_section_dir])) {
 
       int dims{dat->block->dims - 1};
-      int *range{new int(2 * dat->block->dims)};
-      int *size{new int(dims)};
+      int *range{new int[2 * dat->block->dims]};
+      int *size{new int[dims]};
       determin_plane_buf_size(dat, dims, cross_section_dir, size);
       hsize_t buf_element_size{1};
       for (int i = 0; i < dims; i++) {
@@ -1731,9 +1590,9 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
       // Consider the multi-dim data
       size[0] *= (dat->dim);
       write_buf_hdf5(file_name, data_name, dat, dims, size, write_buf);
-      delete range;
+      delete[] range;
       free(write_buf);
-      delete size;
+      delete[] size;
     } else {
       ops_printf("The dat %s doesn't have the specified plane = %d \n",
                  dat->name, pos);
@@ -1749,7 +1608,7 @@ void ops_write_plane_hdf5(const ops_dat dat, const int cross_section_dir,
 void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
                               const char *file_name, const char *data_name) {
   const int dims{dat->block->dims};
-  int *size{new int(dims)};
+  int *size{new int[dims]};
   size_t total_size{1};
   for (int d = 0; d < dims; d++) {
     size[d] = range[2 * d + 1] - range[2 * d];
@@ -1762,14 +1621,14 @@ void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
   ops_dat_fetch_data_slab_host(dat, 0, write_buf, (int *)range);
   write_buf_hdf5(file_name, data_name, dat, dims, size, write_buf);
   free(write_buf);
-  delete size;
+  delete[] size;
 }
 
 void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
                               const char *file_name, const char *data_name,
                               REAL_PRECISION real_precision) {
   const int dims{dat->block->dims};
-  int *size{new int(dims)};
+  int *size{new int[dims]};
   size_t total_size{1};
   for (int d = 0; d < dims; d++) {
     size[d] = range[2 * d + 1] - range[2 * d];
@@ -1782,7 +1641,7 @@ void ops_write_data_slab_hdf5(const ops_dat dat, const int *range,
   ops_dat_fetch_data_slab_host(dat, 0, write_buf, (int *)range);
   write_buf_hdf5(file_name, data_name, dat, dims, size, real_precision, write_buf);
   free(write_buf);
-  delete size;
+  delete[] size;
 }
 
 void ops_write_plane_group_hdf5(
