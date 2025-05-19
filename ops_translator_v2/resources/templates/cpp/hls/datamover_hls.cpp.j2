@@ -1,0 +1,64 @@
+{% macro maxi_name(arg) -%}
+arg{{arg.id}}_{{"in" if arg is ops_read}}{{"out" if arg is ops_write}}{{"inout" if arg is ops_rw}}
+{% endmacro -%}
+
+#include <stdint.h>
+#include <ops_hls_datamover.hpp>
+
+extern "C" 
+{
+
+void kernel_datamover_{{datamover_name}}(
+    const unsigned int gridSizeBytes, {# gridSizeBytes need to be precalculated by a L3 wrapper #}
+    {% for arg in lh.args|ops_dat %}
+    ap_uint<{{config.maxi_data_width}}>* maxi_name(arg),
+    {% endfor %}
+    {% for arg in lh.args %}
+        {% if (arg is ops_dat) and (arg is ops_read) %}
+    hls::stream<ap_axiu<{{config.axis_data_width}}, 0, 0, 0>>& stream{{arg.id}}_out{{"," if not loop.last}}
+        {% endif %}
+        {% if (arg is ops_dat) and (arg is ops_write) %}
+    hls::stream<ap_axiu<{{config.axis_data_width}}, 0, 0, 0>>& stream{{arg.id}}_in{{"," if not loop.last}}
+        {% endif %}
+        {% if (arg is ops_dat) and (arg is ops_rw) %}
+    hls::stream<ap_axiu<{{config.axis_data_width}}, 0, 0, 0>>& stream{{arg.id}}_in,
+    hls::stream<ap_axiu<{{config.axis_data_width}}, 0, 0, 0>>& stream{{arg.id}}_out,{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+) 
+    {% for arg in lh.args %} {# pragma for m_axi interfaces #}
+        {% if arg is ops_dat %} 
+    #pragma HLS INTERFACE mode=ma_axi bundle=gmem{{arg.id}} depth=4096 maxi_read_burst_length={{config.maxi_read_burst_length}} maxi_write_burst_length={{config.maxi_write_burst_length}} \
+            num_read_outstanding={{config.num_read_outstanding}} num_write_outstanding={{config.num_write_outstanding}} port=arg{{arg.id}}_{{"in" if arg is ops_read}}{{"out" if arg is ops_write}}{{"inout" if arg is ops_rw}} offset=slave
+        {% endif %}
+    {% endfor %}
+    {% for arg in lh.args %} {# pragma for axis interfaces #}
+        {% if (arg is ops_dat) and (arg is ops_read) %}
+    #pragma HLS INTERFACE mode=axis port=stream{{arg.id}}_out register
+        {% endif %}
+        {% if (arg is ops_dat) and (arg is ops_write) %}
+    #pragma HLS INTERFACE mode=axis port=stream{{arg.id}}_in register
+        {% endif %}
+        {% if (arg is ops_dat) and (arg is ops_rw) %}
+    #pragma HLS INTERFACE mode=axis port=stream{{arg.id}}_in register
+    #pragma HLS INTERFACE mode=axis port=stream{{arg.id}}_out register
+        {% endif %}
+    {% endfor %}
+    #pragma HLS INTERFACE mode=s_axilite port=gridSizeBytes bundle=control
+    #pragma HLS INTERFACE mode=s_axilite port=return
+    #pragma HLS INTERFACE mode=ap_ctr_chain port=return
+
+    #pragma HLS DATAFLOW
+    {% for arg in lh.args %}
+        {% if (arg is ops_dat) and (arg is ops_write) %}
+    ops::hls::stream2mem<{{config.maxi_data_width}}, {{config.axis_data_width}}>(maxi_name(arg), stream{{arg.id}}_in, gridSizeBytes);
+        {% endif %}
+        {% if (arg is ops_dat) and (arg is ops_read) %}
+    ops::hls::mem2stream<{{config.maxi_data_width}}, {{config.axis_data_width}}>(maxi_name(arg), stream{{arg.id}}_out, gridSizeBytes);
+        {% endif %}
+        {% if (arg is ops_dat) and (arg is ops_rw) %}
+    ops::hls::stream2mem<{{config.maxi_data_width}}, {{config.axis_data_width}}>(maxi_name(arg), stream{{arg.id}}_in, gridSizeBytes);
+    ops::hls::mem2stream<{{config.maxi_data_width}}, {{config.axis_data_width}}>(maxi_name(arg), stream{{arg.id}}_out, gridSizeBytes);
+        {% endif %}
+    {% endfor %}
+}

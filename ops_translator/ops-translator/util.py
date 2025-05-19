@@ -5,13 +5,40 @@ import os
 import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
 from pathlib import Path
 from cached_property import cached_property
+from argparse import ArgumentTypeError
+import json
+import logging
+import sys
+from rustworkx import PyDiGraph
+from rustworkx.visualization import graphviz_draw 
 
 #Generic type
 T = TypeVar("T")
+def function_name():
+    return sys._getframe().f_back.f_code.co_name
 
+def isDirPath(path):
+    if os.path.isdir(path):
+        return path
+    else:
+        raise ArgumentTypeError("Invalid directory path: {path}")
+
+def isFilePath(path):
+    if os.path.isfile(path):
+        return path
+    else:
+        raise ArgumentTypeError("Invalid file: {path}")
+
+def jsonReadFile(filename: str):
+    if os.path.isfile(filename):
+        with open(filename) as fp:
+            print(f"Found config overide file: {filename}")
+            return json.load(fp)
+    print(f"couldn't find config file: {filename}")
+    return json.loads("{}")  
 
 def getRootPath() -> Path:
     return Path(__file__).parent.parent.absolute()
@@ -72,6 +99,26 @@ def sycl_set_flat_parallel(has_reduction: bool):
         ops_cpu = False
     return flat_parallel, ops_cpu
 
+def str_add_prefix(string_buffer: str, prefix: str = "")-> str:
+    lines = string_buffer.splitlines()
+    out_str = ""
+    for i in range(len(lines)):
+        out_str += prefix + lines[i] + "\n"
+    
+    return out_str
+def print_rx_graph(filename: str, rx_graph: PyDiGraph, node_attr: Callable = None, edge_attr: Callable = None, format: str = "png") -> None:
+        def def_node_attr(node):
+            return {}
+            
+        def def_edge_attr(edge_det):
+            return {}
+        
+        if not node_attr:
+            node_attr = def_node_attr
+        if not edge_attr:
+            edge_attr = def_edge_attr
+            
+        graphviz_draw(rx_graph, node_attr_fn=node_attr, edge_attr_fn=edge_attr, filename=f"{filename}.{format}", image_type=f"{format}")
 
 def extract_intrinsic_functions(kernel_func: str):
     pattern = re.compile(r'\b(?:EXP|LOG|LOG10|SQRT|ABS|MOD|SIN|COS|TAN|ASIN|ACOS|ATAN|ATAN2|SINH|COSH|TANH|POW|MAX|MIN|SIGN|CEILING|FLOOR|NINT|INT)\s*\(', re.IGNORECASE)
@@ -262,12 +309,12 @@ class SourceBuffer:
 
 
     def search_all(self, pattern: str, flags: int = 0):
-        indexes = []
+        indices = []
         for i, line in enumerate(self.rawLines):
             if re.match(pattern, line.strip(), flags):
-                indexes.append(i)
+                indices.append(i)
 
-        return indexes
+        return indices
 
     def translate(self) -> str:
         lines = self.rawLines

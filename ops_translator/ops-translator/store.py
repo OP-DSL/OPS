@@ -4,9 +4,9 @@ import os
 import copy
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple, Union
 from util import flatten, uniqueBy
-
+import logging
 import ops
 from ops import OpsError
 
@@ -31,8 +31,10 @@ class ParseError(Exception):
 
     def __str__(self) -> str:
         if self.loc:
+            logging.error(f"[PARSE_ERROR] at {self.loc}: {self.message}")
             return f"Parse error at {self.loc}: {self.message}"
         else:
+            logging.error(f"[PARSE_ERROR]: {self.message}")
             return f"Parse error: {self.message}"
 
 
@@ -69,24 +71,45 @@ class Type(Entity):
 
 @dataclass
 class Function(Entity):
-    parameters: List(str) = field(default_factory=list)
+    parameters: List[str] = field(default_factory=list)
     returns: Optional[ops.Type] = None
+    loc: Location = None
 
     def __str__(self) -> str:
-        return f"Function(name='{self.name}', scope={self.scope}, depends={self.depends})"
+        return f"Function(name='{self.name}', loc={self.loc}, scope={self.scope}, depends={self.depends}, parameters={self.parameters}, ast={self.ast})"
 
+# @dataclass
+# class OuterForLoop(Entity):
+#     decls: List(Any) = field(default_factory=list)
+#     conditions: List(Any) = field(default_factory=list)
+#     iters: List(Any) = field(default_factory=list)
+#     loc: Location = None
+    
+#     def __str__(self) -> str:
+#         return f"ForStmt(loc='{self.loc}', decls='{self.decls}', conditions='{self.conditions}', iters='{self.iters}'"
+    
+@dataclass 
+class KernelDef(Function):
+    def __str__(self) -> str:
+        return f"Function(name='{self.name}', scope={self.scope}, depends={self.depends}, parameters={self.parameters}, ast={self.ast})"
+        
 @dataclass
 class Program:
     path: Path
 
     ast: Any
-    source: str
-
+    ast_pp: Any
+    source_pp: str
+    
+    isl_directives: List[Any] = field(default_factory=list)
+    blocks: List[ops.Block] = field(default_factory=list)
     consts: List[ops.Const] = field(default_factory=list)
+    stencils: List[ops.Stencil] = field(default_factory=list)
     loops: List[ops.Loop] = field(default_factory=list)
-
+    outerloops: List[ops.IterLoop] = field(default_factory=list)
+    uniqueOuterloopMap: Dict[int, int] = field(default_factory=dict)
     entities: List[Entity] = field(default_factory=list)
-
+    
     ndim: Optional[int] = None
     soa_val: Optional[bool] = False
     init_flag: Optional[bool] = False
@@ -105,12 +128,19 @@ class Program:
 
         #returning canditages with min scope    
         return list(filter(lambda e: len(e.scope) == min_scope, candidates))
-
+    
+    def findStencil(self, name_ptr: str)->Union[ops.Stencil, None]:
+        logging.debug(f"searching stencil: {name_ptr}")
+        for stencil in self.stencils:
+            if stencil.stencil_ptr == name_ptr:
+                logging.debug(f"found stencil: \n {stencil}")
+                return stencil
+        logging.warning(f"couldn't find stencil name: {name_ptr}\n")
+        return None
+    
     def __str__(self) -> str:
         outString = "\nprogram path=" + str(self.path)  + ",\n"
-        outString += "ast=" + str(self.ast) + ",\n"
         outString += "ndim=" + str(self.ndim) + ",\n"
-
         outString += "\n---------------------\n"
         outString += "       consts        \n"
         outString += "---------------------\n"
@@ -118,18 +148,36 @@ class Program:
             outString += str(const) + "\n"
 
         outString += "\n---------------------\n"    
-        outString += "        loops        \n"
+        outString += "       Blocks      \n"
+        outString += "---------------------\n"
+        for block in self.blocks:
+            outString += str(block) + "\n"  
+            
+        outString += "\n---------------------\n"    
+        outString += "        par loops        \n"
         outString += "---------------------\n"
         for loop in self.loops:
             outString += str(loop) + "\n"
-
+            
+        outString += "\n---------------------\n"    
+        outString += "  iterative par loops  \n"
+        outString += "---------------------\n"
+        for loop in self.outerloops:
+            outString += str(loop) + "\n"
+            
+        outString += "\n---------------------\n"    
+        outString += "       Stencils      \n"
+        outString += "---------------------\n"
+        for stencil in self.stencils:
+            outString += str(stencil) + "\n"   
+        
         outString += "\n---------------------\n"    
         outString += "       Entities      \n"
         outString += "---------------------\n"
         for entity in self.entities:
             outString += str(entity) + "\n"  
+            
         return outString
-
 
 @dataclass
 class Application:
@@ -170,11 +218,15 @@ class Application:
     def loops(self) -> List[Tuple[ops.Loop, Program]]:
         return flatten(map(lambda l: (l, p), p.loops) for p in self.programs)
 
-    def uniqueLoops(self) -> List[ops.Loop]:
+    def uniqueLoops(self) -> List[Tuple[ops.Loop, Program]]:
         return uniqueBy(self.loops(), lambda m: m[0].kernel)
-        for p in self.programs:
-            id = findId
 
+    def outerloops(self)->List[Tuple[ops.IterLoop, Program]]:
+        return flatten(map(lambda l: (l,p), p.outerloops) for p in self.programs)
+    
+    def uniqueOuterLoops(self) -> List[Tuple[ops.IterLoop, Program]]:
+        return uniqueBy(self.outerloops(), lambda m: m[0].unique_id)
+    
     def validate(self, lang: Lang) -> None:
         self.validateConst(lang)
         self.validateLoops(lang)
@@ -250,7 +302,6 @@ class Application:
             raise OpsError(f"Invalid gbl argument dimension: {arg.dim}", arg.loc)
 
     # TODO: Implement Kernel Validation
-
 
 
 

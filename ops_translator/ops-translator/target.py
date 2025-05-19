@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 from util import Findable
+from enum import Enum
 
 #TODO: Add documentaion (numpy style)
 class Target(Findable):
@@ -10,8 +11,8 @@ class Target(Findable):
     config: Dict[str, Any]
 
     def __str__(self) -> str:
-        return self.name
-
+        return f"{self.name}: config: {self.config}"
+    
     def __eq__(self, other) -> bool:
         return self.name == other.name if type(other) is type(self) else False
 
@@ -82,14 +83,66 @@ class Sycl(Target):
         "color2": False
         }
 
+class FpgaDatamoverMode(Enum):
+    DATAMOVER_LOOPBACK = 1
+    DATAMOVER_DATACOPY = 2
+    DATAMOVER_HYBRID = 3
+
 class HLS(Target):
     name = "hls"
     kernel_translation = True
     config = {
         "grouped" : False,
         "SLR_count" : 1,
-        "device" : 7
+        "max_SLR_count" : 3,
+        "device" : 0,
+        "vector_factor" : 8,
+        "mem_vector_factor": 16,
+        "iter_par_factor": 20,
+        "stencil_type" : "float",
+        "data_width" : 32,
+        "mem_data_width" : 32,
+        "maxi_depth" : 4096,
+        "maxi_read_burst_length" : 64,
+        "maxi_write_burst_length" : 64,
+        "num_read_outstanding" : 4,
+        "num_write_outstanding" : 4,
+        "maxi_offset" : "slave",
+        "ops_max_dim" : 3,
+        "axis_interconnect_buff_size" : 2048,
+        "hls_interconnect_buff_size" : 10,
+        "datamover_mode" : 1,
+        "profile" : False,
+        "platform" : "",
+        "platform_is_multi_slr" : True,
+        "platform_is_sb_selectable" : True,
+        "platform_is_ib_selectable" : False,
+        "supported_internal_storage" : []
         }
+    platforms = {
+        "u280" : {
+            "SLR_count" : 3,
+            "max_SLR_count" : 3,
+            "platform_is_multi_slr" : True,
+            "platform_is_sb_selectable" : True,
+            "platform_is_ib_selectable" : True,
+            "supported_internal_storage" : ["URAM",  "BRAM"]
+        },
+        "u55c" : {
+            "SLR_count" : 3,
+            "max_SLR_count" : 3,
+            "platform_is_multi_slr" : True,
+            "platform_is_sb_selectable" : True,
+            "platform_is_ib_selectable" : True,
+            "supported_internal_storage" : ["URAM",  "BRAM"]
+        },
+        "vck5000" : {
+            "SLR_count" : 1,
+            "max_SLR_count" : 1,
+            "platform_is_multi_slr" : False,
+            "platform_is_sb_selectable" : False
+        }
+    }
 
 Target.register(MPIOpenMP)
 Target.register(Cuda)

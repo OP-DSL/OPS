@@ -14,6 +14,7 @@ from util import extract_intrinsic_functions
 from util import extract_arglist_fortran
 from util import Findable
 from util import KernelProcess
+from abc import abstractmethod
 
 class Scheme(Findable):
     lang: Lang
@@ -23,8 +24,65 @@ class Scheme(Findable):
     master_kernel_template: Optional[Path]
 
     def __str__(self) -> str:
-        return f"{self.lang.name}/{self.target.name}"
-
+        return f"{self.lang.name}/{self.target.name}: \n \
+            lang_details: {self.lang}, target_details: {self.target}"
+    
+    def optimize(self, program: Program, app: Application) -> None:
+        return None
+    
+    def genLoopDevice(
+        self,
+        env: Environment,
+        loop: ops.Loop,
+        program: Program,
+        app: Application,
+        config: dict,
+    ) -> List[Tuple[str, str]]:
+            return None
+    
+    def genIterLoopDevice(
+        self,
+        env: Environment,
+        iterLoop: ops.IterLoop,
+        program: Program,
+        app: Application,
+        config: dict
+    ) -> List[Tuple[str, str]]:
+        return None
+    
+    def genConfigHost(
+        self,
+        env: Environment,
+        config: dict,
+        app: Application
+    ) -> Tuple[str, str]:
+        return None
+    
+    def genStencilDecl(
+        self,
+        env: Environment,
+        config: dict,
+        stencil: ops.Stencil
+    ) -> Tuple[str, str]:
+        return None
+    
+    def genConfigDevice(
+        self,
+        env: Environment,
+        config: dict,
+    ) -> Tuple[str, str]:
+        return None
+    
+    
+    def find_const_in_kernel(self, kernel_body: str, global_consts: List[ops.Const]) -> List[ops.Const]:
+        selected_consts = []
+        for const in global_consts:
+            if const.name in kernel_body:
+                selected_consts.append(const)
+        
+        return selected_consts
+    
+     
     def genLoopHost(
         self,
         include_dirs: Set[Path],
@@ -53,8 +111,9 @@ class Scheme(Findable):
             if(self.target.name == "sycl"):
                 kernel_func, consts_in_kernel = kp_obj.sycl_kernel_func_text(kernel_func, app.consts())
 
+            if(self.target.name == "hls"):
+                consts_in_kernel = self.find_const_in_kernel(kernel_func, program.consts)
             #TODO : Complex arguments in HIP
-
             const_dims = []
             if(self.target.name == "openacc"):
                 consts_in_kernel, const_dims = kp_obj.openacc_get_const_names_and_dim(kernel_func, app.consts())
@@ -93,7 +152,7 @@ class Scheme(Findable):
             self.loop_kernel_extension
         )
 
-    def genMasterKernel(self, env: Environment, app: Application, user_types_file: Optional[Path], force_soa: bool) -> Tuple[str, str]:
+    def genMasterKernel(self, env: Environment, app: Application, user_types_file: Optional[Path], target_config: dict, force_soa: bool, outerloop_enbl: bool = False) -> Tuple[str, str]:
         if self.master_kernel_template is None:
             exit(f"No master kernel template registered for {self}")
 
@@ -117,11 +176,27 @@ class Scheme(Findable):
                 target=self.target,
                 user_types=user_types,
                 include_extension=self.master_kernel_extension,
-                soa_set=force_soa
+                target_config=target_config,
+                soa_set=force_soa,
+                outerloop_enbl=outerloop_enbl
             ),
             name
         )
-        
+    
+    def genIterLoopHost(
+        self,
+        include_dirs: Set[Path],
+        defines: List[str],
+        env: Environment,
+        iterloop: ops.IterLoop,
+        program: Program,
+        app: Application,
+        kernel_idx: int,
+        force_soa: bool,
+        config: dict
+    ) -> Tuple[str, str]:
+        pass
+            
     def translateKernel(
         self,
         loop: ops.Loop,

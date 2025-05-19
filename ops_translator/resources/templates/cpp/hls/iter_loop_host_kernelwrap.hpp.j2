@@ -1,0 +1,288 @@
+
+{% block prologue %}
+#pragma once 
+#include <ops_hls_rt_support.h>
+{% endblock %}
+
+{% block loopback_checker %}
+{% endblock %}
+{% block host_kernel_wrapper_class %}
+class KernelWrapper_outerloop_{{ilh.id}} : public ops::hls::Kernel
+{
+public:
+    KernelWrapper_outerloop_{{ilh.id}}():
+            Kernel("{{ilh.unique_name}}"),
+            m_kernelName("kernel_outerloop_{{ilh.id}}"),
+            m_datamoverName("datamover_outerloop_{{ilh.id}}")
+    {
+        cl_int err;
+    {% for i in range(config["SLR_count"])%}
+        OCL_CHECK(err, m_kernel_{{i}} = cl::Kernel(m_fpga->getProgram(), m_kernelName.c_str(), &err));
+    {% endfor %}
+        OCL_CHECK(err, m_datamover = cl::Kernel(m_fpga->getProgram(), m_datamoverName.c_str(), &err));    
+    }
+
+    void run(ops::hls::AccessRange& range, unsigned int outer_iter,
+    {% for arg in ilh.joint_args %}
+        {% if loop.last %}
+            {% if consts %}
+                {% set last_check = False %}
+            {% else %}
+                {% set last_check = True %}
+            {% endif %}
+        {% else %}
+            {% set last_check = False %}
+        {% endif %}
+        {% if arg is ops_dat %}
+            ops::hls::Grid<{{ilh.dats[arg.dat_id][0].typ}}>& arg{{arg.id}}{{"," if not last_check}}
+        {% elif arg is ops_gbl %}
+            const {{arg.typ}}* {{get_arg_gbl_name(arg)}}{{"," if not last_check}}
+        {% endif %}
+    {% endfor %}
+    {% for const in consts %}
+            const {{const.typ}} {{const.ptr}}{{"," if not loop.last}}
+    {% endfor %}
+    )
+    {
+        cl_int err;
+    {% set read_stencil = ilh.getReadStencil(prog) %}
+    {% if read_stencil %}    
+        ops::hls::SizeType read_stencil_d_m = { {{read_stencil.d_m[0]}}, {{read_stencil.d_m[1]}}, {{read_stencil.d_m[2]}} };
+        ops::hls::SizeType read_stencil_d_p = { {{read_stencil.d_p[0]}}, {{read_stencil.d_p[1]}}, {{read_stencil.d_p[2]}} };
+        ops::hls::SizeType write_stencil_d_m = {0,0,0};
+        ops::hls::SizeType write_stencil_d_p = {0,0,0};
+    {% else %}
+        //ERROR: No read_stencil
+    {% endif %}
+        auto read_stencilConfig = getStencilConfig(arg0.originalProperty, range, vector_factor, mem_vector_factor, read_stencil_d_m, read_stencil_d_p);
+        ops::hls::AccessRange read_range;
+        getAdjustedRange(arg0.originalProperty, range, read_range, read_stencil_d_m, read_stencil_d_p);
+
+#ifdef DEBUG_LOG
+        printAccessRange(range, "common access range");
+        printGridProp(arg0.originalProperty, "arg0_originalGridProp");
+        printStencilConfig(read_stencilConfig, "read_stencilConfig");
+#endif
+
+		unsigned int total_iter_par_factor = iter_par_factor * {{config["SLR_count"]}};
+		unsigned int adjusted_outer_iter = (outer_iter + total_iter_par_factor - 1) / total_iter_par_factor;
+
+        int narg = 0;
+    {% for slr_id in range(config["SLR_count"]) %}
+        {{"narg = 0;" if not loop.first}} 
+        OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, (unsigned short){{loop.index0}}));
+        OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, adjusted_outer_iter));
+        {% for i in range(ndim)%}
+        OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, read_stencilConfig.grid_size[{{i}}]));
+        {% endfor %}
+        OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, read_stencilConfig.dim));
+        OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, read_stencilConfig.total_itr));
+        {% for i in range(ndim)%}
+        OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, read_stencilConfig.lower_limit[{{i}}]));
+        {% endfor %}
+        {% for i in range(ndim)%}
+        OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, read_stencilConfig.upper_limit[{{i}}]));
+        {% endfor %}
+        OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, read_stencilConfig.outer_loop_limit));
+        {% for arg in ilh.joint_args|ops_gbl%}
+        OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, *{{get_arg_gbl_name(arg)}}));
+        {% endfor %}
+        {% for const in consts %}
+        OCL_CHECK(err, err = m_kernel_{{slr_id}}.setArg(narg++, {{const.ptr}}));
+        {% endfor %}
+    {% endfor %}
+
+#ifndef OPS_HLS_NO_LOOPBACK
+        bool loopback_enbl = true;
+#else
+        bool loopback_enbl = false;
+#endif 
+        narg = 0;
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, loopback_enbl));
+    {% for i in range(ndim)%}
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, read_range.start[{{i}}]));
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, read_range.end[{{i}}]));
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if loop.first %}
+            {% for idx in range(ndim)%}
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, arg{{arg.id}}.originalProperty.grid_size[{{idx}}]));
+            {% endfor %}
+        {% endif %}
+    {% endfor %} 
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, adjusted_outer_iter));
+    {% for arg in ilh.joint_args %}
+        {% if arg is ops_dat %}
+        OCL_CHECK(err, err = m_datamover.setArg(narg++, arg{{arg.id}}.deviceBuffer));
+        {% endif%}
+    {% endfor %}
+
+#ifdef PROFILE
+    startHtoDTimer();
+#endif
+    {% for arg in ilh.joint_args %}
+        {% if arg is ops_dat %}
+        arg{{arg.id}}.set_as_arg();
+        {% endif %}
+    {% endfor %}
+#ifdef PROFILE
+    endHtoDTimer();
+#endif
+
+    {% for slr_id in range(config["SLR_count"]) %}
+        cl::Event event_kernel_{{slr_id}};
+    {% endfor %}
+        cl::Event event_datamover;
+
+        std::vector<cl::Event> activeEvents;
+    {% for arg in ilh.joint_args %}
+        {% if arg is ops_dat %}
+        activeEvents.insert(activeEvents.end(), arg{{arg.id}}.activeEvents.begin(), arg{{arg.id}}.activeEvents.end());
+        {% endif %}
+    {% endfor %}
+
+#ifdef PROFILE
+    startExecTimer();
+#endif
+        OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueTask(m_datamover, &activeEvents, &event_datamover));
+    {% for slr_id in range(config["SLR_count"]) %}
+        OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueTask(m_kernel_{{slr_id}}, &activeEvents, &event_kernel_{{slr_id}}));
+    {% endfor %}
+
+{##ifdef DEBUG_LOG
+    {% for arg in ilh.joint_args %}
+        {% if arg is ops_dat %}
+        ops::hls::addEvent(arg{{arg.id}}, event_kernel, m_kernelName);
+        ops::hls::addEvent(arg{{arg.id}}, event_datamover, m_kernelName);
+        {% endif %}
+    {% endfor %}
+#endif#}
+    {% for arg in ilh.joint_args %}
+        {% if arg is ops_dat %}
+        arg{{arg.id}}.isDevBufDirty = true;
+        arg{{arg.id}}.activeEvents.resize(0);
+        arg{{arg.id}}.activeEvents.push_back(event_datamover);
+            {% for slr_id in range(config["SLR_count"]) %}
+        arg{{arg.id}}.activeEvents.push_back(event_kernel_{{slr_id}});
+            {% endfor %}
+        {% endif %}
+    {% endfor %}
+
+#ifndef ASYNC_DISPATCH
+        event_datamover.wait();
+    {% for slr_id in range(config["SLR_count"]) %}
+        event_kernel_{{slr_id}}.wait();
+    {% endfor %}
+#endif
+#ifdef PROFILE
+    endExecTimer();
+    registerProfileTime();
+#endif
+
+/*
+        //Sync maped dats
+        activeEvents.resize(0);
+    {% for arg in ilh.joint_args %}
+        {% if arg is ops_dat %}
+        activeEvents.insert(activeEvents.end(), arg{{arg.id}}.activeEvents.begin(), arg{{arg.id}}.activeEvents.end());
+        {% endif %}
+    {% endfor %}
+
+    {% for swap_pair in ilh.getUniqueDatSwaps() %}
+        {% if swap_pair[0] != swap_pair[1] %}
+        cl::Event event_arg{{ilh.getArg(swap_pair[0]).id}}_arg{{ilh.getArg(swap_pair[1]).id}}_bufCpy;
+        size_t arg{{ilh.getArg(swap_pair[0]).id}}_total_bytes = arg{{ilh.getArg(swap_pair[0]).id}}.originalProperty.grid_size[0] * arg{{ilh.getArg(swap_pair[0]).id}}.originalProperty.grid_size[1] * arg{{ilh.getArg(swap_pair[0]).id}}.originalProperty.grid_size[2] * sizeof(stencil_type);
+        {% endif %}
+    {% endfor %}
+
+        if (adjusted_outer_iter %2 != 0)
+        {
+    {% for swap_pair in ilh.getUniqueDatSwaps() %}
+        {% if swap_pair[0] != swap_pair[1] %}
+            OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueCopyBuffer(arg{{ilh.getArg(swap_pair[0]).id}}.deviceBuffer, arg{{ilh.getArg(swap_pair[1]).id}}.deviceBuffer, 0, 0, arg{{ilh.getArg(swap_pair[0]).id}}_total_bytes, &activeEvents, &event_arg{{ilh.getArg(swap_pair[0]).id}}_arg{{ilh.getArg(swap_pair[1]).id}}_bufCpy));
+        {% endif %}
+    {% endfor %}
+        }
+        else
+        {
+    {% for swap_pair in ilh.getUniqueDatSwaps() %}
+        {% if swap_pair[0] != swap_pair[1] %}
+            OCL_CHECK(err, err = m_fpga->getCommandQueue().enqueueCopyBuffer(arg{{ilh.getArg(swap_pair[1]).id}}.deviceBuffer, arg{{ilh.getArg(swap_pair[0]).id}}.deviceBuffer, 0, 0, arg{{ilh.getArg(swap_pair[0]).id}}_total_bytes, &activeEvents, &event_arg{{ilh.getArg(swap_pair[0]).id}}_arg{{ilh.getArg(swap_pair[1]).id}}_bufCpy));
+        {% endif %}
+    {% endfor %}
+        }
+#ifndef ASYNC_DISPATCH
+    {% for swap_pair in ilh.getUniqueDatSwaps() %}
+        {% if swap_pair[0] != swap_pair[1] %}
+        event_arg{{ilh.getArg(swap_pair[0]).id}}_arg{{ilh.getArg(swap_pair[1]).id}}_bufCpy.wait();
+        {% endif %}
+    {% endfor %}
+#endif
+*/
+    }
+private:
+    std::string m_kernelName;
+    std::string m_datamoverName;
+{% for slr_id in range(config["SLR_count"]) %}
+    cl::Kernel m_kernel_{{slr_id}};
+{% endfor %}
+    cl::Kernel m_datamover;
+};
+{% endblock %}
+
+{% block par_loop %}
+void {{ilh.unique_name}}(int outer_iter, int* ops_range,
+    {% for arg in ilh.joint_args %}
+        {% if loop.last %}
+            {#{% if consts %}
+                {% set last_check = False %}
+            {% else %}
+                {% set last_check = True %}
+            {% endif %}#}
+            {% set last_check = True %}
+        {% else %}
+            {% set last_check = False %}
+        {% endif %}
+        {% if arg is ops_dat %}
+            ops::hls::Grid<{{ilh.dats[arg.dat_id][0].typ}}>& arg{{arg.id}}{{"," if not last_check}}
+        {% elif arg is ops_gbl %}
+            const {{arg.typ}}* {{get_arg_gbl_name(arg)}}{{"," if not last_check}}
+        {% endif %}
+    {% endfor %}
+    {# {% for const in consts %}
+            const {{const.typ}} {{const.ptr}}{{"," if not loop.last}}
+    {% endfor %} #}
+)
+{
+    static  KernelWrapper_outerloop_{{ilh.id}} kernelWrapper_inst;
+    ops::hls::AccessRange range;
+    opsRange2hlsRange({{ndim}}, ops_range, range, arg{{ilh.joint_args[0].id}}.originalProperty);
+    {% for arg in ilh.joint_args|ops_dat %}
+        {% if arg is ops_read %}
+    sendGrid(arg{{ilh.getArg(arg.dat_id).id}});
+        {% endif %}
+    {% endfor %}
+    
+    kernelWrapper_inst.run(range, outer_iter,
+    {% for arg in ilh.joint_args %}
+        {% if loop.last %}
+            {% if consts %}
+                {% set last_check = False %}
+            {% else %}
+                {% set last_check = True %}
+            {% endif %}
+        {% else %}
+            {% set last_check = False %}
+        {% endif %}
+        {% if arg is ops_dat %}
+            arg{{arg.id}}{{"," if not last_check}}
+        {% elif arg is ops_gbl %}
+            {{get_arg_gbl_name(arg)}}{{"," if not last_check}}
+        {% endif %}
+    {% endfor %}
+    {% for const in consts %}
+            {{const.ptr}}{{"," if not loop.last}}
+    {% endfor %}
+    );
+}
+{% endblock %}

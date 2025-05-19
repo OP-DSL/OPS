@@ -1,0 +1,104 @@
+{% macro axis_name(arg) -%}
+    {%- if arg is not ops_rw -%}
+arg{{arg.id}}_axis_{{"in" if (arg is ops_read) else ("out" if (arg is ops_write))}}
+    {%- endif -%}
+{%- endmacro -%}
+{% macro axis_name_t2(arg, suffix) -%}
+arg{{arg.id}}_axis_{{suffix}}
+{%- endmacro -%}
+{% macro hls_name(arg) -%}
+    {%- if arg is not ops_rw -%}
+arg{{arg.id}}_hls_stream_{{"in" if (arg is ops_read) else ("out" if (arg is ops_write))}}
+    {%- endif -%}
+{%- endmacro -%}
+{% macro hls_name_t2(arg, suffix) -%}
+arg{{arg.id}}_hls_stream_{{suffix}}
+{%- endmacro -%}
+{% macro axis_data_width(arg) -%}
+    {%- if ilh.dats[arg.dat_id][0].isMultiDim() -%}
+multidim_axis_data_width_{{ilh.id}}_{{ilh.dats[arg.dat_id][0].ptr}}
+    {%- else -%}
+axis_data_width
+    {%- endif -%}
+{%- endmacro -%}
+{% macro axis_data_width_datid(dat_id) -%}
+    {%- if ilh.dats[dat_id][0].isMultiDim() -%}
+multidim_axis_data_width_{{ilh.id}}_{{ilh.dats[dat_id][0].ptr}}
+    {%- else -%}
+axis_data_width
+    {%- endif -%}
+{%- endmacro -%}
+{% macro total_bytes(arg) -%}
+    {%- if ilh.dats[arg.dat_id][0].isMultiDim() -%}
+total_bytes_d{{ilh.dats[arg.dat_id][0].dim}}
+    {%- else -%}
+total_bytes
+    {%- endif -%}
+{%- endmacro -%}
+{% block header_block %}
+#pragma once
+    {% for df_node in ilh.get_active_df_graph().getAllLoopNodes() %}
+#include "PE_{{df_node.loop.kernel}}.hpp"
+    {% endfor %}
+
+{% if ilh.isMultiDim() %}
+    {% for dat, acc_type in ilh.dats %}
+        {% if dat.isMultiDim() %}
+constexpr unsigned short multidim_vector_factor_{{ilh.id}}_{{dat.ptr}} = vector_factor * {{dat.dim}};
+constexpr unsigned short multidim_axis_data_width_{{ilh.id}}_{{dat.ptr}} = data_width * multidim_vector_factor_{{ilh.id}}_{{dat.ptr}};
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+{% endblock %}
+
+{% block joint_PE %}
+{% endblock %}
+
+{% block kernel_dataflow_region %}
+{% endblock %}
+
+{% block kernel_top_prototype %}
+extern "C" void kernel_outerloop_{{ilh.id}}(
+        const unsigned short slr_region,
+        const unsigned int outer_itr,
+    {% for i in range(ndim)%}
+        const unsigned short stencilConfig_grid_size_{{i}},
+    {% endfor %}
+    {#{% for i in range(ndim)%}
+        const unsigned short gridProp_actual_size_{{i}},
+    {% endfor %}
+    {% for i in range(ndim)%}
+        const unsigned short gridProp_grid_size_{{i}},
+    {% endfor %}#}
+        const unsigned short stencilConfig_dim,
+        const unsigned int stencilConfig_total_itr,
+    {% for i in range(ndim)%}
+        const unsigned short stencilConfig_lower_limit_{{i}},
+    {% endfor %}
+    {% for i in range(ndim)%}
+        const unsigned short stencilConfig_upper_limit_{{i}},
+    {% endfor %}
+        const unsigned short stencilConfig_outer_loop_limit,
+    {% for const_arg in ilh.joint_args|ops_gbl%}
+        const {{const_arg.typ}} {{get_arg_gbl_name(const_arg)}},
+    {% endfor %}
+    {% for const in consts %}
+        const {{const.typ}} {{const.ptr}},
+    {% endfor %}
+    {% for arg in ilh.joint_args|ops_dat %}
+    //{{ilh.dats[arg.dat_id][0].ptr}}
+        {% if arg is not ops_rw %}
+        hls::stream <ap_axiu<{{axis_data_width(arg)}}, 0, 0, 0>>& {{axis_name(arg)-}}{{"," if not loop.last}}
+        {% else %}
+        hls::stream <ap_axiu<{{axis_data_width(arg)}}, 0, 0, 0>>& {{axis_name_t2(arg, "in")-}},
+        hls::stream <ap_axiu<{{axis_data_width(arg)}}, 0, 0, 0>>& {{axis_name_t2(arg, "out")-}}{{"," if not loop.last}}
+        {% endif %}
+    {% endfor %}
+)
+{% endblock %}
+{% block kernel_top_prototype_semicolon %}
+;
+{% endblock %}
+{% block kernel_top_body %}
+{% endblock %}

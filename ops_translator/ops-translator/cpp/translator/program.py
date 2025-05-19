@@ -2,9 +2,10 @@ import re
 
 from typing import List
 
-from ops import Const, OpsError
+from ops import Const, OpsError, ArgDat, ArgGbl, ArgIdx, ArgReduce
 from store import Program
 from util import SourceBuffer, Rewriter, findIdx
+import logging
 
 # Augment source program to use generated kernel hosts
 def translateProgram(source: str, program: Program, app_consts: List[Const], force_soa: bool = False) -> str:
@@ -102,6 +103,340 @@ def translateProgram(source: str, program: Program, app_consts: List[Const], for
     new_source = re.sub(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)', '#include "ops_lib_core.h"', new_source)
 
     # 8. check if SOA is set
+    def replacer(match):
+        s = match.group(0)
+        if s.startswith("/"):
+            return ""
+        else:
+            return s
+
+    pattern_comment = re.compile(r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
+                                 re.DOTALL | re.MULTILINE,
+                                )
+
+    pattern = r'(#define\s*OPS_SOA|OPS_soa\s*=\s*1\s*;)'
+    matches = re.findall(pattern, re.sub(pattern_comment, replacer, new_source), re.IGNORECASE)
+
+    if len(matches) == 2 and not program.soa_val:
+        program.soa_val = True
+
+    # Return new updated source
+    return new_source
+
+
+# Augment source program to use generated kernel hosts
+def translateProgramHLS(source: str, program: Program, app_consts: List[Const], force_soa: bool = False) -> str:
+    buffer = SourceBuffer(source)
+
+    # 1. Update const calls
+    for const in program.consts:
+        # buffer.apply(
+        #     const.loc.line -1,
+        #     lambda line: re.sub(r"ops_decl_const\s*\(", f"ops_decl_const2(", line)
+        # )
+        buffer.remove(const.loc.line -1)
+
+    # 2. Update loop calls
+    
+    for iterloop in program.outerloops:
+        startLoc = iterloop.scope[0]
+        
+        if "ops_iter_par_loop" in buffer.get(startLoc.line - 1):
+            before, after = buffer.get(startLoc.line - 1).split("ops_iter_par_loop", 1)
+            loop_indices = [startLoc.line - 1]
+        
+            if (after.find(";") == -1):
+                index = startLoc.line
+                loop_indices.append(index)
+                while(True):
+                    line = buffer.get(index)
+                    after += line
+                    buffer.remove(index)
+                    if line.find(";") != -1:
+                        break
+                    index += 1
+            [split_after, split_retain] = after.split(";", 1)
+            split_after = split_after.split(",")
+            
+            new_iter_loop_call = f"{iterloop.unique_name}({split_after[1]}, {iterloop.ops_range}"
+            
+            for arg in iterloop.joint_args:
+                if isinstance(arg, ArgDat):
+                    new_iter_loop_call += f", {iterloop.dats[arg.dat_id][0].ptr_raw}"
+                elif isinstance(arg, ArgGbl):
+                    new_iter_loop_call += f", {arg.ptr}"
+            
+            new_iter_loop_call = before + new_iter_loop_call + ");" + split_retain 
+            
+
+            buffer.remove(startLoc.line - 1)
+            
+            buffer.update(index, new_iter_loop_call)
+            
+        else:
+            startLoc = iterloop.scope[0]
+            before_begin, after_begin = buffer.get(startLoc.line - 1).split("for", 1)
+            index = startLoc.line
+            loop_indices = [startLoc.line - 1]
+            endLoc = iterloop.scope[1]
+            loop_indices.extend([index for index in range(startLoc.line, endLoc.line)])
+            before_end, after_end =  buffer.get(endLoc.line -1).split("}", 1)
+
+            new_iter_loop_call = f"{iterloop.unique_name}({iterloop.num_iter}, {iterloop.ops_range}"
+            
+            for arg in iterloop.joint_args:
+                if isinstance(arg, ArgDat):
+                    new_iter_loop_call += f", {iterloop.dats[arg.dat_id][0].ptr_raw}"
+                elif isinstance(arg, ArgGbl):
+                    new_iter_loop_call += f", {arg.ptr}"
+            
+            new_iter_loop_call = before_begin + new_iter_loop_call + ");" + after_end 
+            
+            for idx in loop_indices:
+                buffer.remove(idx)
+            
+            buffer.update(index, new_iter_loop_call)
+            
+    for loop in program.loops:
+        if loop.iterativeLoopId != -1:
+            continue
+        
+        before, after = buffer.get(loop.loc.line - 1).split("ops_par_loop", 1)
+        loop_indices = [loop.loc.line - 1]
+        
+        if (after.find(";") == -1):
+            index = loop.loc.line
+            loop_indices.append(index)
+            while(True):
+                line = buffer.get(index)
+                after += line
+                buffer.remove(index)
+                if line.find(";") != -1:
+                    break
+                index += 1
+                
+        # print ("After: ", after)
+        split_after = after.split(",")
+        new_loop_call = before + f"ops_par_loop_{loop.kernel}({split_after[2]}, {split_after[3]} , {split_after[4]}"
+        
+        for arg in loop.args:
+            if isinstance(arg, ArgDat):
+                dat = loop.dats[arg.dat_id]
+                new_loop_call = f"{new_loop_call}, {dat.ptr_raw}"
+            elif isinstance(arg, ArgGbl):
+                new_loop_call = f"{new_loop_call}, {arg.ptr}"
+                
+        new_loop_call = f'{new_loop_call});' 
+        
+        for index in loop_indices:
+            buffer.remove(index)
+        
+        buffer.update(index, new_loop_call)
+        
+    # 3. ops_decl_dat
+    if buffer.search(r".*ops_decl_dat.*"):
+        logging.debug("ops_decl_dat found in program")
+        instances_lines = buffer.search_all(r".*ops_decl_dat.*")
+        
+        for line in instances_lines:
+            # logging.debug(f"{buffer.get(line)}")
+            before, after = buffer.get(line).split("ops_decl_dat", 1)
+            def_indices = [line]
+            
+            if (after.find(";") == -1):
+                index = line + 1
+                def_indices.append(index)
+                
+                while(True):
+                    line = buffer.get(index)
+                    after += line
+                    buffer.remove(index)
+                    if line.find(";") != -1:
+                        break
+                    index += 1
+            after = after[after.find("("):after.rfind(")")]
+            split_after = after.split(",")
+            split_after.append("mem_vector_factor")
+            new_decl_dat = before + f"ops_hls_decl_dat"
+            
+            for i, arg in enumerate(split_after):
+                if i == 0: 
+                    new_decl_dat = f"{new_decl_dat}{arg}"
+                else:
+                    new_decl_dat = f"{new_decl_dat}, {arg}"
+            
+            new_decl_dat += ");"
+            
+            for index in def_indices:
+                buffer.remove(index)
+        
+            buffer.update(index, new_decl_dat)
+            
+    # 4. Update headers
+    index = buffer.search(r'\s*#include\s*("|<)\s*ops_seq(_v2)?\.h\s*("|>)') + 2
+
+    buffer.insert(index, '/* ops_par_loop declarations */\n')
+
+    existingLoopProtypes = []
+
+    for loop in program.loops:
+        existingIdx = findIdx(existingLoopProtypes, lambda l: l.kernel == loop.kernel and len(l.args) == len(loop.args))
+        
+        if (existingIdx is None) and (loop.iterativeLoopId == -1):
+            existingLoopProtypes.append(loop)
+            prototype = f'void ops_par_loop_{loop.kernel}(ops::hls::Block, int, int*'
+            isArgIdx = loop.arg_idx == 1
+            
+            for arg in loop.args:
+                if isinstance(arg, ArgDat):
+                    dat = loop.dats[arg.dat_id]
+                    prototype = f'{prototype}, ops::hls::Grid<{dat.typ}>&'
+                    
+                #elif isinstance(arg, ArgGbl): TODO: ArgGbl 
+                #TODO: ArgReduce
+            
+            prototype = f'{prototype});\n'        
+            # {", ops::hls::Grid" * len(loop.args)});\n'
+            buffer.insert(index, prototype)
+
+    # 5. Update ops_init
+
+    if buffer.search(r'\s* ops_init\s*\('):
+        index = buffer.search(r'\s* ops_init\s*\(')
+        buffer.update(index, '\tops_init_backend(argc, argv);\n')
+
+    # 6. Update ops_exit
+    if buffer.search(r'\s*ops_exit\s*\('):
+        index = buffer.search(r'\s*ops_exit\s*\(')
+        buffer.update(index, '\tops_exit_backend();\n')
+    
+    # 7. Find the Global declarations of constant and check extern or not
+    for const in app_consts:
+        name, typ = const.name, repr(const.typ)
+        pattern1 = rf'\s*\b{typ}\b(?:(?!;).)*\b{name}\b'
+        pattern2 = rf'\s*extern \s*\b{typ}\b(?:(?!;).)*\b{name}\b'
+        # Check if main declaration of global is present in file, skip for extern declarations
+        
+        # TODO: Have to find a mechanism to do this
+        # if buffer.search2(pattern1) is not None and buffer.search2(pattern2) is None:
+        #     const.setExtern(False)
+        # elif buffer.search2(pattern2) is not None:
+        #     const.setExtern(True) 
+    
+    # 8. Reomving custom #pragma leftovers
+    if buffer.search(r'\s*#pragma ISL*'):
+        line_indices = buffer.search_all(r'\s*#pragma ISL*')
+        
+        for index in line_indices:
+            buffer.remove(index)
+            
+    # 9. Removing stencil declaration
+    if buffer.search(r'\s*ops_stencil.*'):
+        line_indices = buffer.search_all(r'\s*ops_stencil.*')
+    
+        # print(f"Found ops_stencils ({len(line_indices)})")  
+        for start_index in line_indices:
+            index = start_index
+            while(True):
+                line = buffer.get(index)
+                buffer.remove(index)
+                if line.find(";") != -1:
+                    break
+                index += 1
+                
+    if buffer.search(r'.*ops_decl_stencil.*'):
+        line_indices = buffer.search_all(r'.*ops_decl_stencil.*')
+    
+        # print(f"Found ops_stencils ({len(line_indices)})")  
+        for start_index in line_indices:
+            index = start_index
+            while(True):
+                line = buffer.get(index)
+                buffer.remove(index)
+                if line.find(";") != -1:
+                    break
+                index += 1
+        
+    # 10. Removing ops_partition        
+    if (buffer.search(r'.*ops_partition.*')):
+        index = buffer.search(r'.*ops_partition.*')
+        buffer.remove(index)
+    
+    # 11. Add kernel_wrapp_master_kernels include and add ops_hls_rt_support.h
+    if (buffer.search(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)')):
+        index = buffer.search(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)')
+        buffer.insert(index+1, "#include <ops_hls_rt_support.h>")
+        buffer.insert(index+1, "#include <hls_kernels.hpp>")
+    else:
+        raise OpsError(f"OPS program failed to include core header file, ops_seq.h or ops_seq_V2.h")
+
+    # 12. get_raw_pointer update
+    found_indices = buffer.search_all(r'.*ops_dat_get_raw_pointer.*')
+    # print (f"found_indices: {found_indices}")
+    
+    for index in found_indices:
+        before, after = buffer.get(index).split("ops_dat_get_raw_pointer", 1)
+        # print (f"before: {before}, after: {after}")
+        loop_indices = [index]
+        
+        if (after.find(";") == -1):
+            index = startLoc.line
+            loop_indices.append(index)
+            while(True):
+                line = buffer.get(index)
+                after += line
+                buffer.remove(index)
+                if line.find(";") != -1:
+                    break
+                index += 1
+        [split_after, split_retain] = after.split(";", 1)
+        
+        dat_name = split_after.split(",", 1)[0].replace('(', '')
+        
+        new_call_line = before + f"{dat_name}.get_raw_pointer()" + ";" + split_retain 
+        buffer.update(index, new_call_line)
+    
+    found_indices = buffer.search_all(r'.*->.*get_raw_pointer.*')
+    # print (f"found_indices: {found_indices}")
+    
+    for index in found_indices:
+        before, after = buffer.get(index).split("get_raw_pointer", 1)
+        # print (f"before: {before}, after: {after}")
+        loop_indices = [index]
+        
+        if (after.find(";") == -1):
+            index = startLoc.line
+            loop_indices.append(index)
+            while(True):
+                line = buffer.get(index)
+                after += line
+                buffer.remove(index)
+                if line.find(";") != -1:
+                    break
+                index += 1
+        [split_after, split_retain] = after.split(";", 1)
+        
+        new_call_line = before.replace("->", ".") + f"get_raw_pointer()" + ";" + split_retain 
+        buffer.update(index, new_call_line)
+    new_source = buffer.translate()
+    
+    # 13. Replace ops_block to ops::hls::Block and replace ops_decl_block to ops_hls_decl_block
+    new_source = new_source.replace("ops_block", "ops::hls::Block").replace("ops_decl_block", "ops_hls_decl_block")
+    
+    # 14. Replace ops_dat to auto and ops_decl_dat to ops_hls_decl_dat
+    # TODO: Make the ops_dat to ops::hls::Grid without type defined. to support predefined ops_dat without declaration. 
+    #       right now simply translating ops_dat to ops::hls::Grid<stencil_type>
+    # found_indices = buffer.search_all(r'.*ops_decl_dat.*')
+    # print (f"found_indices ops_hls_decl_dat: {found_indices}")
+    new_source = new_source.replace("ops_dat ", "ops::hls::Grid<stencil_type> ")
+    
+    # 15. Replace ops_printf
+    new_source = new_source.replace("ops_printf", "printf")
+    
+    # # 16. Substitude the ops_seq.h/ops_seq_v2.h with ops_lib_core.h
+    # new_source = re.sub(r'#include\s+("|<)\s*ops_seq(_v2)?\.h\s*("|>)', '#include <ops_hls_rt_support.h>', new_source)
+
+    # 17. check if SOA is set
     def replacer(match):
         s = match.group(0)
         if s.startswith("/"):

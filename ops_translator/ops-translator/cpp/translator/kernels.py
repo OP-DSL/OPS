@@ -30,7 +30,7 @@ def extractDependancies(entities: List[Entity], app: Application) -> List[Tuple[
         #    dependancy_entities = app.findEntities(dependancy, entity.program)
         #    unprocessed_entities.extend(dependancy_entities)
 
-        rewriter = Rewriter(entity.program.source, [extentToSpan(entity.ast.extent)])
+        rewriter = Rewriter(entity.program.source_pp, [extentToSpan(entity.ast.extent)])
         extracted_entities.insert(0,(entity, rewriter))
 
     return extracted_entities
@@ -63,7 +63,7 @@ def writeSource(entities: List[Tuple[Entity, Rewriter]]) -> str:
         for i in range(len(entities)):
             entity, rewriter = entities[i]
             resolved = True
-
+            
             for dependancy in entity.depends:
                 if safeFind(entities, lambda e: e[0].name == dependancy):
                     resolved = False

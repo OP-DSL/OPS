@@ -241,15 +241,15 @@
                 {% set n_z -%}n_z{%- endset %}             
             {% endif %}
             {% if lh.ndim > 0 %}
-                {% set offset_val -%}({{n_x}} * {{arg.strides[0] | int}}){%- endset %}
+                {% set offset_val -%}({{n_x}} * args[{{arg.id}}].stencil->stride[0]){%- endset %}
                 {% if offset.append(offset.pop() + offset_val) %}{% endif %}
             {% endif %}
             {% if lh.ndim > 1 %}
-                {% set offset_val -%}({{n_y}} * xdim{{arg.id}}_{{lh.kernel}} * {{arg.strides[1] | int}}){%- endset %}
+                {% set offset_val -%}({{n_y}} * xdim{{arg.id}}_{{lh.kernel}} * args[{{arg.id}}].stencil->stride[1]){%- endset %}
                 {% if offset.append(offset.pop() + " + " + offset_val) %}{% endif %}
             {% endif %}
             {% if lh.ndim > 2 %}
-                {% set offset_val -%}({{n_z}} * xdim{{arg.id}}_{{lh.kernel}} * ydim{{arg.id}}_{{lh.kernel}} * {{arg.strides[2] | int}}){%- endset %}
+                {% set offset_val -%}({{n_z}} * xdim{{arg.id}}_{{lh.kernel}} * ydim{{arg.id}}_{{lh.kernel}} * args[{{arg.id}}].stencil->stride[2]){%- endset %}
                 {% if offset.append(offset.pop() + " + " + offset_val) %}{% endif %}
             {% endif %}
             {% set dimlabels = "xyzuv" %}
@@ -265,7 +265,6 @@
     {{indent[0] * "    "}}{{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{arg.dim}} * ({{offset[0]}}));
 #endif
             {% endif %}
-
         {% endif %}
     {% endfor %}
 

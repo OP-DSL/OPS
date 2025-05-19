@@ -20,13 +20,23 @@
 {% block const_decls required %}
 {% endblock %}
 
+{% block config %}
+{% endblock%}
+
 {% block header_includes %}
 // user kernel files
-{% for lh,p in app.uniqueLoops() %}
-{% if lh.kernel == "calc_dt_kernel_print" and target.name == "sycl" %}
+    {% for lh, p in app.uniqueLoops() %}
+        {% if not outerloop_enbl or lh.iterativeLoopId == -1 %}
+            {% if lh.kernel == "calc_dt_kernel_print" and target.name == "sycl" %}
 #include "../mpi_openmp/{{lh.kernel}}_kernel.{{include_extension}}"
-{% else %}
+            {% else %}
 #include "{{lh.kernel}}_kernel.{{include_extension}}"
-{% endif %}
-{% endfor %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+    {% if outerloop_enbl %}
+        {% for ilh, p in app.uniqueOuterLoops() %}
+#include "outerloop_{{loop.index0}}.{{include_extension}}"
+        {% endfor%}
+    {% endif %}
 {% endblock %}

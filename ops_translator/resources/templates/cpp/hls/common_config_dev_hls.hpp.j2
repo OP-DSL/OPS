@@ -1,0 +1,21 @@
+{% block header_block %}
+#pragma once
+{% endblock %}
+
+{% block config_body %}
+typedef {{config["stencil_type"]}} stencil_type;
+constexpr unsigned short data_width = sizeof(stencil_type) * 8;
+constexpr unsigned short max_depth = max_depth_bytes / data_width;
+constexpr unsigned short line_buff_2d_depth = max_depth;
+constexpr unsigned short line_buff_3d_depth = max_depth / 2;
+constexpr unsigned short vector_factor = {{config["vector_factor"]}};
+constexpr unsigned short mem_vector_factor = {{config["mem_vector_factor"]}};
+constexpr unsigned short iter_par_factor = {{config["iter_par_factor"]}};
+constexpr unsigned short mem_data_width = data_width * mem_vector_factor;
+constexpr unsigned short shift_bits = {{shift_bits(config["mem_data_width"] * config["vector_factor"], config["data_width"])}}; 
+constexpr unsigned short axis_data_width = data_width * vector_factor;
+
+#ifdef DEBUG_LOG
+    #include <stdio.h>
+#endif
+{% endblock %}
