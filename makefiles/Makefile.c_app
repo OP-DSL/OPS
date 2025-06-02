@@ -436,7 +436,7 @@ build_hls_host:
 
 .PHONY: run_hls_app
 run_hls_app:
-	bash ./run_script_hls.sh $(HLS_TARGET_MODE) $(APP) $(CXXFLAGS)
+	bash ./run_script_hls.sh $(HLS_TARGET_MODE) $(APP) $(PLATFORM) $(CXXFLAGS)
 	
 # hls/build/$(HLS_TARGET_MODE)/%.xo: ./hls/device/src/%.cpp
 # 		@echo ""
