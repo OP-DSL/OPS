@@ -9,7 +9,8 @@ SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 
 TARGET_MODE=$1
 APP_NAME=$2
-shift 2
+PLATFORM=$3
+shift 3
 CXXFLAGS="$@"
 
 PROFILE_DIR=./hls/profile_data/${TARGET_MODE}/
