@@ -15,7 +15,7 @@
     "num_write_outstanding" : 4,
     "maxi_offset" : "slave",
     "ops_max_dim" : 3,
-    "axis_interconnect_buff_size" : 8192,
+    "axis_interconnect_buff_size" : 1024,
     "hls_interconnect_buff_size" : 10,
     "datamover_mode" : 2,
     "platform" : "u280"
