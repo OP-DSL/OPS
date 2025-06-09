@@ -16,40 +16,40 @@ CXXFLAGS="$@"
 PROFILE_DIR=./hls/profile_data/${TARGET_MODE}/
 PROFILE_FILE=perf_profile.csv
 POWER_PROFILE_FILE=hls_power_profile.csv
-DEVICE_BDF=0000:c1:00.1
+DEVICE_BDF=0000:81:00.1
 
 # Hardcoded parameter sets (sizex, sizey, iters, batch)
-if [[ "${CXXFLAGS}" == *"-DPOWER_PROFILE"* ]]; then
-    @echo "Power profiling enabled"
-    if [[ "${TARGET_MODE}" == "hw" ]]; then
-        if [[ "${PLATFORM}" == *"u280"* ]]; then
-            parameter_sets=(
-                # Add more parameter sets here as needed
-            )
-        else
-            parameter_sets=(
-                "30,30,30,104,1000"
-                "30,30,50,1800,1000"
-                "50,50,16,1800,1000"
-                "50,50,30,1800,500"
-                "50,50,50,1800,200"
-                "75,75,75,1800,100"
-                "100,100,100,1800,100"
-                "150,150,150,1800,50"
-                "200,200,200,1800,30"
-                "250,250,250,1800,20"
-                "300,300,300,1800,20"
-                "256,256,32,1800,20"
-                "512,256,64,1800,20"
-                "512,512,128,1800,20"
-                # Add more parameter sets here as needed
-            )
-        fi
-    else
-        echo "Error: Cannot power profile sw_emu or hw_emu"
-        exit 1
-    fi
-else
+# if [[ "${CXXFLAGS}" == *"-DPOWER_PROFILE"* ]]; then
+#     @echo "Power profiling enabled"
+#     if [[ "${TARGET_MODE}" == "hw" ]]; then
+#         if [[ "${PLATFORM}" == *"u280"* ]]; then
+#             parameter_sets=(
+#                 # Add more parameter sets here as needed
+#             )
+#         else
+#             parameter_sets=(
+#                 "30,30,30,104,1000"
+#                 "30,30,50,1800,1000"
+#                 "50,50,16,1800,1000"
+#                 "50,50,30,1800,500"
+#                 "50,50,50,1800,200"
+#                 "75,75,75,1800,100"
+#                 "100,100,100,1800,100"
+#                 "150,150,150,1800,50"
+#                 "200,200,200,1800,30"
+#                 "250,250,250,1800,20"
+#                 "300,300,300,1800,20"
+#                 "256,256,32,1800,20"
+#                 "512,256,64,1800,20"
+#                 "512,512,128,1800,20"
+#                 # Add more parameter sets here as needed
+#             )
+#         fi
+#     else
+#         echo "Error: Cannot power profile sw_emu or hw_emu"
+#         exit 1
+#     fi
+# else
     if [[ "${TARGET_MODE}" == "hw" ]]; then
         if [[ "${PLATFORM}" == *"u280"* ]]; then
             parameter_sets=(
@@ -58,19 +58,19 @@ else
         else
             parameter_sets=(
                 "30,30,30,104,100"
-                "30,30,50,1800,100"
-                "50,50,16,1800,100"
-                "50,50,30,1800,50"
-                "50,50,50,1800,20"
-                "75,75,75,1800,10"
-                "100,100,100,1800,10"
-                "150,150,150,1800,5"
-                "200,200,200,1800,3"
-                "250,250,250,1800,2"
-                "300,300,300,1800,2"
-                "256,256,32,1800,2"
-                "512,256,64,1800,2"
-                "512,512,128,1800,2"
+                # "30,30,50,1800,100"
+                # "50,50,16,1800,100"
+                # "50,50,30,1800,50"
+                # "50,50,50,1800,20"
+                # "75,75,75,1800,10"
+                # "100,100,100,1800,10"
+                # "150,150,150,1800,5"
+                # "200,200,200,1800,3"
+                # "250,250,250,1800,2"
+                # "300,300,300,1800,2"
+                # "256,256,32,1800,2"
+                # "512,256,64,1800,2"
+                # "512,512,128,1800,2"
                 # Add more parameter sets here as needed
                 )
         fi
@@ -87,7 +87,7 @@ else
             )
         fi
     fi
-fi
+# fi
 
 echo "Running application '${APP_NAME}' in '${TARGET_MODE}' mode with hardcoded parameters:"
 
