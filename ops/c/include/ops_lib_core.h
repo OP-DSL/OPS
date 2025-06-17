@@ -98,19 +98,97 @@ typedef std::complex<float> complexf;
 #if (defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)) && !(defined(__HIP_PLATFORM_NVCC__) || defined(__HIP_PLATFORM_NVIDIA__))
 #include <hip/hip_fp16.h>
 #elif !(defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)) && (defined(__HIP_PLATFORM_NVCC__) || defined(__HIP_PLATFORM_NVIDIA__))
+#ifndef __HALF_DEFINED__
 #include <cuda_fp16.h>
+#endif
 #elif defined(__CUDA_ARCH__) || defined(__CUDACC__)
+#ifndef __HALF_DEFINED__
 #include <cuda_fp16.h>
+#endif
 typedef __half half;
 //#elif defined(__SYCL_DEVICE_ONLY__)
 #elif defined(__INTEL_SYCL__)
 #include <CL/sycl.hpp>
+typedef sycl::half half;
 #elif defined(__STDCPP_FLOAT16_T__) || defined(FLT16_MIN)
 typedef _Float16 half;
 #else
 typedef uint16_t half;
+//typedef _Float16 half;
 #endif
 
+/*#ifdef __CUDACC__
+__device__ inline half operator*(int lhs, const half& rhs) {
+    half lhs_half = __float2half(static_cast<float>(lhs));
+    return __hmul(lhs_half, rhs);
+}
+
+__device__ inline half operator*(const half& lhs, int rhs) {
+    half rhs_half = __float2half(static_cast<float>(rhs));
+    return __hmul(lhs, rhs_half);
+}
+
+__device__ inline half operator+(int lhs, const half& rhs) {
+    half lhs_half = __float2half(static_cast<float>(lhs));
+    return __hadd(lhs_half, rhs);
+}
+
+__device__ inline half operator+(const half& lhs, int rhs) {
+    half rhs_half = __float2half(static_cast<float>(rhs));
+    return __hadd(lhs, rhs_half);
+}
+
+__device__ inline half operator-(int lhs, const half& rhs) {
+    half lhs_half = __float2half(static_cast<float>(lhs));
+    return __hsub(lhs_half, rhs);
+}
+
+__device__ inline half operator-(const half& lhs, int rhs) {
+    half rhs_half = __float2half(static_cast<float>(rhs));
+    return __hsub(lhs, rhs_half);
+}
+
+__device__ inline half operator/(int lhs, const half& rhs) {
+    half lhs_half = __float2half(static_cast<float>(lhs));
+    return __hdiv(lhs_half, rhs);
+}
+
+__device__ inline half operator/(const half& lhs, int rhs) {
+    half rhs_half = __float2half(static_cast<float>(rhs));
+    return __hdiv(lhs, rhs_half);
+}
+
+__device__ inline half cos(const half& lhs) {
+    return (half)cos((float)lhs);
+}
+
+__device__ inline half sin(const half& lhs) {
+    return (half)sin((float)lhs);
+}
+
+
+__device__ inline half operator*(double lhs, const half& rhs) {
+    half lhs_half = __float2half(lhs);
+    return __hmul(lhs_half, rhs);
+}
+
+__device__ inline half operator*(const half& lhs, float rhs) {
+    half rhs_half = __float2half(rhs);
+    return __hmul(lhs, rhs_half);
+}
+
+__device__ inline half operator+(float lhs, const half& rhs) {
+    half lhs_half = __float2half(lhs);
+    return __hadd(lhs_half, rhs);
+}
+
+__device__ inline half operator+(const half& lhs, float rhs) {
+    half rhs_half = __float2half(rhs);
+    return __hadd(lhs, rhs_half);
+}
+
+#endif 
+*/
 /*
  * * zero constants
  * */

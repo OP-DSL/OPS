@@ -1208,11 +1208,21 @@ void ops_halo_transfer(ops_halo_group group) {
 
   double c, t1, t2;
   ops_timers_core(&c, &t1);
+
+  int storage_type_size = mpi_group->mpi_halos[0]->halo->from->type_size < mpi_group->mpi_halos[0]->halo->to->type_size ? mpi_group->mpi_halos[0]->halo->from->type_size : mpi_group->mpi_halos[0]->halo->to->type_size;
+  bool mixed_exchange = mpi_group->mpi_halos[0]->halo->from->type_size!=mpi_group->mpi_halos[0]->halo->to->type_size &&
+                  (strcmp(mpi_group->mpi_halos[0]->halo->from->type, "float") == 0 || strcmp(mpi_group->mpi_halos[0]->halo->from->type, "double") == 0 || strcmp(mpi_group->mpi_halos[0]->halo->from->type, "half") == 0) &&
+                  (strcmp(mpi_group->mpi_halos[0]->halo->to->type, "float") == 0 || strcmp(mpi_group->mpi_halos[0]->halo->to->type, "double") == 0 || strcmp(mpi_group->mpi_halos[0]->halo->to->type, "half") == 0);
+
   // Reset offset counters
   mpi_neigh_size[0] = 0;
   for (int i = 1; i < mpi_group->num_neighbors_send; i++)
-    mpi_neigh_size[i] = mpi_neigh_size[i - 1] + mpi_group->send_sizes[i - 1];
-
+    if (mixed_exchange && mpi_group->mpi_halos[0]->halo->from->type_size > storage_type_size){
+      mpi_neigh_size[i] = mpi_neigh_size[i - 1] + mpi_group->send_sizes[i - 1] * storage_type_size/mpi_group->mpi_halos[0]->halo->from->type_size;
+    } else {
+      mpi_neigh_size[i] = mpi_neigh_size[i - 1] + mpi_group->send_sizes[i - 1];
+    }
+    
   // Loop over all the halos we own in the group
   for (int h = 0; h < mpi_group->nhalos; h++) {
     ops_mpi_halo *halo = mpi_group->mpi_halos[h];
@@ -1256,28 +1266,35 @@ void ops_halo_transfer(ops_halo_group group) {
                           halo->halo->from, ranges[0], ranges[1], ranges[2],
                           ranges[3], ranges[4], ranges[5], step[0], step[1],
                           step[2], buf_strides[0], buf_strides[1],
-                          buf_strides[2]);
+                          buf_strides[2], mixed_exchange, storage_type_size);
       mpi_neigh_size[proc_grp_idx] += fragment_size;
     }
   }
 
   mpi_neigh_size[0] = 0;
   for (int i = 1; i < mpi_group->num_neighbors_send; i++)
-    mpi_neigh_size[i] = mpi_neigh_size[i - 1] + mpi_group->send_sizes[i - 1];
-  for (int i = 0; i < mpi_group->num_neighbors_send; i++)
+    if (mixed_exchange && mpi_group->mpi_halos[0]->halo->from->type_size > storage_type_size){
+      mpi_neigh_size[i] = mpi_neigh_size[i - 1] + mpi_group->send_sizes[i - 1] * storage_type_size/mpi_group->mpi_halos[0]->halo->from->type_size;
+    } else {
+      mpi_neigh_size[i] = mpi_neigh_size[i - 1] + mpi_group->send_sizes[i - 1];
+    }
+
+  for (int i = 0; i < mpi_group->num_neighbors_send; i++){
     MPI_Isend(&ops_buffer_send_1[mpi_neigh_size[i]], mpi_group->send_sizes[i],
               MPI_BYTE, mpi_group->neighbors_send[i], 100 + mpi_group->index,
               OPS_MPI_GLOBAL, &mpi_group->requests[i]);
-
+  }
   mpi_neigh_size[0] = 0;
   for (int i = 1; i < mpi_group->num_neighbors_recv; i++)
-    mpi_neigh_size[i] = mpi_neigh_size[i - 1] + mpi_group->recv_sizes[i - 1];
-  for (int i = 0; i < mpi_group->num_neighbors_recv; i++)
+    mpi_neigh_size[i] = mpi_neigh_size[i - 1] + (mixed_exchange? mpi_group->recv_sizes[i - 1] * storage_type_size/mpi_group->mpi_halos[0]->halo->from->type_size:mpi_group->recv_sizes[i - 1]);
+
+  for (int i = 0; i < mpi_group->num_neighbors_recv; i++){
     MPI_Irecv(&ops_buffer_recv_1[mpi_neigh_size[i]], mpi_group->recv_sizes[i],
               MPI_BYTE, mpi_group->neighbors_recv[i], 100 + mpi_group->index,
               OPS_MPI_GLOBAL,
               &mpi_group->requests[mpi_group->num_neighbors_send + i]);
 
+  }
   MPI_Waitall(mpi_group->num_neighbors_recv,
               &mpi_group->requests[mpi_group->num_neighbors_send],
               &mpi_group->statuses[mpi_group->num_neighbors_send]);
@@ -1323,7 +1340,7 @@ void ops_halo_transfer(ops_halo_group group) {
                             mpi_neigh_size[proc_grp_idx], ranges[0], ranges[1],
                             ranges[2], ranges[3], ranges[4], ranges[5], step[0],
                             step[1], step[2], buf_strides[0], buf_strides[1],
-                            buf_strides[2]);
+                            buf_strides[2], mixed_exchange, storage_type_size);
       mpi_neigh_size[proc_grp_idx] += fragment_size;
     }
   }
