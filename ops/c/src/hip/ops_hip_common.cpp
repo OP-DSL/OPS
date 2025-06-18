@@ -347,16 +347,33 @@ void _ops_get_gpu_power(OPS_instance *instance, unsigned int *power_watts) {
     }
     
     uint64_t power_microwatts = 0;
+    rsmi_status_t result;
+    
+    // Use newer API for ROCm 6.0+ or fall back to older API
+#if defined(RSMI_VERSION_MAJOR) && (RSMI_VERSION_MAJOR >= 6)
+    // ROCm 6.0+ - use rsmi_dev_power_get
     RSMI_POWER_TYPE power_type;
-    rsmi_status_t result = rsmi_dev_power_get(rocm_device_id, &power_microwatts, &power_type);
+    result = rsmi_dev_power_get(rocm_device_id, &power_microwatts, &power_type);
     if (result != RSMI_STATUS_SUCCESS || power_type == RSMI_INVALID_POWER) {
         if (instance->OPS_diags > 3) {
-            instance->ostream() << "Warning: Failed to get GPU power usage from ROCm SMI: error " 
+            instance->ostream() << "Warning: Failed to get GPU power usage from ROCm SMI (6+ API): error " 
                                << result << std::endl;
         }
         *power_watts = 0;
         return;
     }
+#else
+    // ROCm 5.x and earlier - use rsmi_dev_power_ave_get
+    result = rsmi_dev_power_ave_get(rocm_device_id, 0, &power_microwatts);
+    if (result != RSMI_STATUS_SUCCESS) {
+        if (instance->OPS_diags > 3) {
+            instance->ostream() << "Warning: Failed to get GPU power usage from ROCm SMI (5.x API): error " 
+                               << result << std::endl;
+        }
+        *power_watts = 0;
+        return;
+    }
+#endif
     
     // Convert from microwatts to watts
     *power_watts = (unsigned int)(power_microwatts / 1000000);
