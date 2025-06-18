@@ -201,6 +201,13 @@ void _ops_set_args(OPS_instance *instance, const char *argv) {
     if (instance->is_root()) instance->ostream() << "\n Forced decomposition in z direction = " << counts << '\n';
   }
 
+  pch = strstr(argv, "OPS_GPU_MEASUREMENT_FREQUENCY=");
+  if (pch != NULL) {
+    snprintf(temp, 64, "%s", pch);
+    instance->ops_gpu_measurement_frequency = atoi(temp + 30);
+    if (instance->is_root()) instance->ostream() << "\n GPU power measurement frequency = " << instance->ops_gpu_measurement_frequency << '\n';
+  }
+
   if (strstr(argv, "OPS_CHECKPOINT_INMEMORY") != NULL) {
     instance->ops_checkpoint_inmemory = 1;
     if (instance->is_root()) instance->ostream() << "\n OPS Checkpointing in memory\n";
@@ -263,6 +270,12 @@ void ops_init_core(OPS_instance *instance, const int argc, const char *const arg
 void ops_exit_core(OPS_instance *instance) {
   ops_checkpointing_exit(instance);
   ops_exit_lazy(instance);
+  
+  // Finalize GPU power measurement
+  if (instance->ops_gpu_power_measurement_active) {
+    _ops_finalize_gpu_power_measurement(instance);
+  }
+  
   ops_dat_entry *item = TAILQ_FIRST(&instance->OPS_dat_list);
 
   /*free doubly linked list holding the ops_dats */
@@ -1120,8 +1133,55 @@ void _ops_reset_power_counters(OPS_instance *instance) {
 				}
     }
   }
+  
+  // Reset GPU power counters as well
+  _ops_reset_gpu_power_counters(instance);
 }
 
+void _ops_reset_gpu_power_counters(OPS_instance *instance) {
+  instance->ops_gpu_energy_consumed = 0.0;
+  instance->ops_gpu_power_measurement_active = 0;
+  instance->ops_gpu_power_watts = 0;
+  instance->ops_gpu_measurement_counter = 0;
+  
+  // Get current time and initialize timing
+  double current_time;
+  ops_timers_core(&current_time, &current_time);
+  instance->ops_gpu_power_measurement_start_time = current_time;
+  instance->ops_gpu_last_power_sample_time = current_time;
+  
+  // Initialize GPU power measurement (calls backend-specific implementation)
+  if (!instance->ops_gpu_power_measurement_active) {
+    _ops_init_gpu_power_measurement(instance);
+    instance->ops_gpu_power_measurement_active = 1;
+  }
+}
+
+void _ops_sample_gpu_power(OPS_instance *instance) {
+  if (!instance->ops_gpu_power_measurement_active) return;
+  
+  double current_time;
+  ops_timers_core(&current_time, &current_time);
+  
+  // Get current GPU power (calls backend-specific implementation)
+  unsigned int current_power_watts = 0;
+  _ops_get_gpu_power(instance, &current_power_watts);
+  
+  // Calculate energy consumed since last sample (P * dt)
+  if (instance->ops_gpu_last_power_sample_time > 0) {
+    double time_delta = current_time - instance->ops_gpu_last_power_sample_time;
+    double energy_delta = instance->ops_gpu_power_watts * time_delta; // Watts * seconds = Joules
+    instance->ops_gpu_energy_consumed += energy_delta;
+  }
+  
+  // Update for next sample
+  instance->ops_gpu_power_watts = current_power_watts;
+  instance->ops_gpu_last_power_sample_time = current_time;
+}
+
+double _ops_get_gpu_energy_consumed(OPS_instance *instance) {
+  return instance->ops_gpu_energy_consumed;
+}
 
 void _ops_diagnostic_output(OPS_instance *instance) {
   if (instance->OPS_diags > 2) {
@@ -1519,7 +1579,14 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
       moments_time[0] = 0.0;
       double aggregate_energy_dram_d = (double)aggregate_energy_dram/1000000.0;
       ops_compute_moment(aggregate_energy_dram_d, &moments_time[0], &moments_time[1]);
-      ops_fprintf2(stream, "Total CPU energy consumed (RAPL): %g J, of which DRAM energy: %g\n", avg_energy, moments_time[0]);
+      ops_fprintf2(stream, "Total CPU energy consumed (RAPL): %g J, of which DRAM energy: %g J\n", avg_energy, moments_time[0]);
+    }
+
+    // GPU energy reporting
+    if (instance->ops_gpu_energy_consumed > 0.0) {
+      moments_time[0] = 0.0;
+      ops_compute_moment(instance->ops_gpu_energy_consumed, &moments_time[0], &moments_time[1]);
+      ops_fprintf2(stream, "Total GPU energy consumed: %g J\n", moments_time[0]);
     }
 
     // printf("Times: %g %g %g\n",ops_gather_time, ops_sendrecv_time,
@@ -1582,6 +1649,10 @@ void ops_timing_realloc(OPS_instance *instance, int kernel, const char *name) {
     instance->OPS_kernels[kernel].name = (char *)ops_malloc((strlen(name) + 1) * sizeof(char));
     strcpy_s(instance->OPS_kernels[kernel].name, strlen(name)+1, name);
     instance->OPS_kernels[kernel].count = 0;
+  }
+
+  if (instance->ops_gpu_power_measurement_active && instance->ops_gpu_measurement_counter++ % instance->ops_gpu_measurement_frequency == 0) {
+    _ops_sample_gpu_power(instance);
   }
 }
 
@@ -2470,3 +2541,21 @@ void _ops_free_dat(ops_dat dat) {
 extern "C" int getOPS_block_size_x() { return OPS_instance::getOPSInstance()->OPS_block_size_x; }
 extern "C" int getOPS_block_size_y() { return OPS_instance::getOPSInstance()->OPS_block_size_y; }
 extern "C" int getOPS_block_size_z() { return OPS_instance::getOPSInstance()->OPS_block_size_z; }
+
+/*
+ * GPU Power Measurement Public APIs
+ * (Backend-specific implementations are in their respective files)
+ */
+
+// Public GPU power measurement APIs that delegate to instance methods
+void ops_reset_gpu_power_counters() {
+    OPS_instance::getOPSInstance()->reset_gpu_power_counters();
+}
+
+void ops_sample_gpu_power() {
+    OPS_instance::getOPSInstance()->sample_gpu_power();
+}
+
+double ops_get_gpu_energy_consumed() {
+    return OPS_instance::getOPSInstance()->get_gpu_energy_consumed();
+}

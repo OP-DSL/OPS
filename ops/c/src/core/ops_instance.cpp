@@ -148,6 +148,15 @@ void OPS_instance::init_globals() {
   ops_message_count = 0;
   ops_message_size = 0;
   ops_reduction_time = 0.0;
+  
+  // Initialize GPU power measurement
+  ops_gpu_energy_consumed = 0.0;
+  ops_gpu_power_measurement_start_time = 0.0;
+  ops_gpu_last_power_sample_time = 0.0;
+  ops_gpu_power_watts = 0;
+  ops_gpu_power_measurement_active = 0;
+  ops_gpu_measurement_counter = 0;
+  ops_gpu_measurement_frequency = 10;
 	
 	//Tiling
 	ops_enable_tiling = 0;
@@ -239,6 +248,18 @@ ops_halo_group OPS_instance::decl_halo_group(int nhalos, ops_halo *halos) {
 
 void OPS_instance::reset_power_counters() {
   _ops_reset_power_counters(this);
+}
+
+void OPS_instance::reset_gpu_power_counters() {
+  _ops_reset_gpu_power_counters(this);
+}
+
+void OPS_instance::sample_gpu_power() {
+  _ops_sample_gpu_power(this);
+}
+
+double OPS_instance::get_gpu_energy_consumed() {
+  return _ops_get_gpu_energy_consumed(this);
 }
 
 void OPS_instance::diagnostic_output() {

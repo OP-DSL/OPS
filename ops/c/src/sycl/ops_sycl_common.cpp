@@ -168,3 +168,23 @@ void ops_fill_random_normal(ops_dat dat) {
 
 void ops_randomgen_exit() {
 }
+
+/*
+ * GPU Power Measurement Functions (SYCL backends)
+ * These return zero values since SYCL power measurement is not implemented
+ */
+
+void _ops_init_gpu_power_measurement(OPS_instance *instance) {
+    (void)instance; // Suppress unused parameter warning
+    // Do nothing for SYCL backends - power measurement not implemented
+}
+
+void _ops_get_gpu_power(OPS_instance *instance, unsigned int *power_watts) {
+    (void)instance; // Suppress unused parameter warning
+    *power_watts = 0; // Always return 0 for SYCL backends
+}
+
+void _ops_finalize_gpu_power_measurement(OPS_instance *instance) {
+    (void)instance; // Suppress unused parameter warning
+    // Do nothing for SYCL backends
+}
