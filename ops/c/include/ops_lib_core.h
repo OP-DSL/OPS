@@ -1375,6 +1375,36 @@ void ops_fill_random_uniform(ops_dat dat);
 void ops_fill_random_normal(ops_dat dat);
 void ops_randomgen_exit();
 
+/*
+ * GPU Power Measurement Support
+ */
+
+// Global define to control NVML availability
+#ifndef OPS_ENABLE_NVML
+#define OPS_ENABLE_NVML 1  // Enable by default, disable if NVML not available
+#endif
+
+// Global define to control ROCm SMI availability
+#ifndef OPS_ENABLE_ROCM_SMI
+#define OPS_ENABLE_ROCM_SMI 1  // Enable by default, disable if ROCm SMI not available
+#endif
+
+// Backend-specific GPU power measurement functions
+// These are implemented in each backend (CUDA, HIP, etc.)
+void _ops_init_gpu_power_measurement(OPS_instance *instance);
+void _ops_get_gpu_power(OPS_instance *instance, unsigned int *power_watts);
+void _ops_finalize_gpu_power_measurement(OPS_instance *instance);
+
+// GPU power measurement implementation functions
+void _ops_reset_gpu_power_counters(OPS_instance *instance);
+void _ops_sample_gpu_power(OPS_instance *instance);
+double _ops_get_gpu_energy_consumed(OPS_instance *instance);
+
+// Public GPU power measurement APIs
+void ops_reset_gpu_power_counters();
+void ops_sample_gpu_power();
+double ops_get_gpu_energy_consumed();
+
 
 /**
  * This class is an accessor to data stored in ops_dats. It is
