@@ -244,6 +244,26 @@ class OPS_instance {
  * code, usually after partitioning.
  */
 	void reset_power_counters();
+
+/**
+ * Reset GPU power measurement counters.
+ * This initializes GPU power measurement and resets accumulated energy.
+ */
+	void reset_gpu_power_counters();
+
+/**
+ * Sample current GPU power and update energy accumulation.
+ * This should be called periodically during computation to maintain
+ * accurate energy measurements.
+ */
+	void sample_gpu_power();
+
+/**
+ * Get the total GPU energy consumed since last reset.
+ * @return Total GPU energy consumed in Joules
+ */
+	double get_gpu_energy_consumed();
+
 /**
  * This routine prints out various useful bits of diagnostic info about sets,
  * mappings and datasets.
@@ -328,6 +348,15 @@ class OPS_instance {
   long long ops_message_count;
   long long ops_message_size;
   double ops_reduction_time;
+  
+  // GPU power measurement
+  double ops_gpu_energy_consumed;      // Total GPU energy consumed in Joules
+  double ops_gpu_power_measurement_start_time;  // Time when power measurement started
+  double ops_gpu_last_power_sample_time;       // Time of last power sample
+  unsigned int ops_gpu_power_watts;           // Last measured power in Watts
+  int ops_gpu_power_measurement_active;       // Flag indicating if GPU power measurement is active
+  int ops_gpu_measurement_counter;            // Counter for GPU power measurement
+  int ops_gpu_measurement_frequency;          // Frequency of GPU power measurement
 	
 	//Tiling
 	int ops_enable_tiling;
