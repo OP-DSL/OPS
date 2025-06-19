@@ -350,7 +350,7 @@ void _ops_get_gpu_power(OPS_instance *instance, unsigned int *power_watts) {
     rsmi_status_t result;
     
     // Use newer API for ROCm 6.0+ or fall back to older API
-#if defined(RSMI_VERSION_MAJOR) && (RSMI_VERSION_MAJOR >= 6)
+#if defined(HIP_VERSION_MAJOR) && (HIP_VERSION_MAJOR >= 6)
     // ROCm 6.0+ - use rsmi_dev_power_get
     RSMI_POWER_TYPE power_type;
     result = rsmi_dev_power_get(rocm_device_id, &power_microwatts, &power_type);
