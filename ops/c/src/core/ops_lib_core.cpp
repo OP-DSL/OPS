@@ -208,6 +208,13 @@ void _ops_set_args(OPS_instance *instance, const char *argv) {
     if (instance->is_root()) instance->ostream() << "\n GPU power measurement frequency = " << instance->ops_gpu_measurement_frequency << '\n';
   }
 
+  pch = strstr(argv, "OPS_DEVICE=");
+  if (pch != NULL) {
+    snprintf(temp, 64, "%s", pch);
+    instance->OPS_device_id = atoi(temp + 11);
+    if (instance->is_root()) instance->ostream() << "\n OPS device ID = " << instance->OPS_device_id << '\n';
+  }
+
   if (strstr(argv, "OPS_CHECKPOINT_INMEMORY") != NULL) {
     instance->ops_checkpoint_inmemory = 1;
     if (instance->is_root()) instance->ostream() << "\n OPS Checkpointing in memory\n";

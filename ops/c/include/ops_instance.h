@@ -381,6 +381,7 @@ class OPS_instance {
 	int OPS_block_size_x;
 	int OPS_block_size_y;
 	int OPS_block_size_z;
+	int OPS_device_id;
 	char *OPS_consts_h, *OPS_consts_d, *OPS_reduct_h, *OPS_reduct_d;
 	int OPS_consts_bytes, OPS_reduct_bytes;
 	int OPS_cl_device;
