@@ -179,6 +179,7 @@ void OPS_instance::init_globals() {
 	OPS_block_size_x = 32;
 	OPS_block_size_y = 4;
 	OPS_block_size_z = 1;
+	OPS_device_id = -1; // -1 means auto-select device
 	OPS_consts_h=NULL; OPS_consts_d=NULL; OPS_reduct_h=NULL; OPS_reduct_d=NULL;
 	OPS_consts_bytes = 0; OPS_reduct_bytes = 0;
 	OPS_cl_device=0;

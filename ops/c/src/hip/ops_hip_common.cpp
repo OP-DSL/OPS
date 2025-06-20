@@ -132,13 +132,33 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
   float *test = 0;
   int my_id = ops_get_proc();
   instance->OPS_hybrid_gpu = 0;
-  for (int i = 0; i < deviceCount; i++) {
-    hipError_t err = hipSetDevice((i+my_id)%deviceCount);
+  
+  if (instance->OPS_device_id >= 0) {
+    // User specified a device ID
+    if (instance->OPS_device_id >= deviceCount) {
+      throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: specified HIP device ID exceeds available device count");
+    }
+    hipError_t err = hipSetDevice(instance->OPS_device_id);
     if (err == hipSuccess) {
       hipError_t err2 = hipMalloc((void **)&test, sizeof(float));
       if (err2 == hipSuccess) {
         instance->OPS_hybrid_gpu = 1;
-        break;
+      } else {
+        throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: specified HIP device is not accessible");
+      }
+    } else {
+      throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: failed to set specified HIP device");
+    }
+  } else {
+    // Auto-select device
+    for (int i = 0; i < deviceCount; i++) {
+      hipError_t err = hipSetDevice((i+my_id)%deviceCount);
+      if (err == hipSuccess) {
+        hipError_t err2 = hipMalloc((void **)&test, sizeof(float));
+        if (err2 == hipSuccess) {
+          instance->OPS_hybrid_gpu = 1;
+          break;
+        }
       }
     }
   }
