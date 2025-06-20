@@ -37,7 +37,9 @@
   */
 
 #include <ops_cuda_rt_support.h>
+#include <ops_gpu_memory_pool.h>
 
 void ops_exit_device(OPS_instance *instance) {
+  ops_gpu_memory_pool_cleanup();
   (void)instance;
 }

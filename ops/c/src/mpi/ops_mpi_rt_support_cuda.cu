@@ -38,11 +38,13 @@
   */
 
 #include <ops_cuda_rt_support.h>
+#include <ops_gpu_memory_pool.h>
 
 int halo_buffer_size = 0;
 char *halo_buffer_d = NULL;
 
 void ops_exit_device(OPS_instance *instance) {
+  ops_gpu_memory_pool_cleanup();
   if (halo_buffer_d != NULL)
     ops_device_free(instance, (void**)&halo_buffer_d);
 

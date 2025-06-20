@@ -40,5 +40,6 @@
 #include <hip/hip_runtime.h>
 
 void ops_exit_device(OPS_instance *instance) {
+  ops_gpu_memory_pool_cleanup();
   (void)instance;
 }
