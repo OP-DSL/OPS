@@ -326,22 +326,26 @@ __global__ void ops_internal_copy_hip_kernel(char * dat0_p, char *dat1_p,
 #endif
 #endif
 #endif
-       )
+       ) {
 
     if (OPS_soa) {
-      for (int d = 0; d < dim; d++)
-        for (int c = 0; c < type_size; c++)
+      for (int d = 0; d < dim; d++) {
+        for (int c = 0; c < type_size; c++) {
           if (dir == 0)
             dat1_p[idx1+d*fullsize1*type_size+c] = dat0_p[idx+d*fullsize*type_size+c];
           else
             dat0_p[idx+d*fullsize*type_size+c] = dat1_p[idx1+d*fullsize1*type_size+c];
-    } else
-      for (int d = 0; d < dim*type_size; d++)
+        }
+      }
+    } else {
+      for (int d = 0; d < dim*type_size; d++) {
         if (dir == 0)
           dat1_p[idx1+d] = dat0_p[idx+d];
         else
           dat0_p[idx+d] = dat1_p[idx1+d];
-
+      }
+    }
+  }
 }
 
 

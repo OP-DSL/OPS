@@ -281,12 +281,21 @@ OPS_FTN_INTEROP
 void ops_execute(OPS_instance *instance=NULL);
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp);
 int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx);
+OPS_FTN_INTEROP
 int ops_get_proc();
 int ops_num_procs();
 void ops_put_data(ops_dat dat);
 OPS_FTN_INTEROP
 void create_kerneldesc_and_enque(char const* kernel_name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc));
 
+extern "C" {
+int getRange(ops_block block, int *start, int *end, int *range);
+void getIdx(ops_block block, int *start, int *idx);
+int getDatDimFromOpsArg(ops_arg *arg);
+int getDatBaseFromOpsArg1D(ops_arg *arg, int *start, int dim);
+int getDatBaseFromOpsArg2D(ops_arg *arg, int *start, int dim);
+int getDatBaseFromOpsArg3D(ops_arg *arg, int *start, int dim);
+}
 
 /*******************************************************************************
 * Random number generations

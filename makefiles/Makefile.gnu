@@ -11,10 +11,14 @@ else
 	CXXFLAGS   := -O3 -fPIC -Wall -ffloat-store -g -std=c++11 -fopenmp
 	FFLAGS += -O3 -g -ffree-form -ffree-line-length-none -fopenmp
 endif
-CXXLINK := -lstdc++
-FMODS   := -J$(F_INC_MOD)
 OMPFLAGS := -fopenmp
 ifdef THREADED
 	THREADING_FLAGS ?= -fopenmp
 endif
+
+FMODS   := -J$(F_INC_MOD)
+FMODS_F2C_CUDA    := -J$(F_INC_MOD)/f2c_cuda
+
+CXXLINK := -lstdc++
+FTNLINK := -lgfortran
 MPI_LINK = -lmpi_cxx

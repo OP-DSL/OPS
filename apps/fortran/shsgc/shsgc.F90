@@ -100,7 +100,7 @@ program SHSGC
   pr = 1.0_8
   rhol = 3.857143_8
   rhor = 1.0_8
-  ul = 2.6293690_8
+  shsgcul = 2.6293690_8
   ur = 0.0_8
   gam = 1.4_8
   gam1=gam - 1.0_8
@@ -136,7 +136,7 @@ program SHSGC
   pr_opsconstant = pr
   rhol_opsconstant = rhol
   rhor_opsconstant = rhor
-  ul_opsconstant = ul
+  shsgcul_opsconstant = shsgcul
   ur_opsconstant = ur
   gam_opsconstant = gam
   gam1_opsconstant = gam1
@@ -216,7 +216,7 @@ program SHSGC
   call ops_decl_const("pr", 1, "real(8)", pr)
   call ops_decl_const("rhol", 1, "real(8)", rhol)
   call ops_decl_const("rhor", 1, "real(8)", rhor)
-  call ops_decl_const("ul", 1, "real(8)", ul)
+  call ops_decl_const("shsgcul", 1, "real(8)", shsgcul)
   call ops_decl_const("ur", 1, "real(8)", ur)
   call ops_decl_const("gam", 1, "real(8)", gam)
   call ops_decl_const("gam1", 1, "real(8)", gam1)

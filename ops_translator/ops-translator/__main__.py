@@ -220,7 +220,7 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
     # Generate loop hosts
     for i, (loop, program) in enumerate(app.uniqueLoops(), 1):
         # Generate loop host source
-        source, extension = scheme.genLoopHost(include_dirs, defines, env, loop, program, app, i, force_soa)
+        source, extension, kernel_func = scheme.genLoopHost(include_dirs, defines, env, loop, program, app, i, force_soa)
 
         new_source = re.sub(r'\n\s*\n', '\n\n', source)
 
@@ -243,6 +243,27 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
             if args.verbose:
                 print(f"Generated loop host {i} of {len(app.uniqueLoops())}: {path}")
 
+        # F2C loop host CPP template
+        if scheme.loop_host_f2c_template is not None:
+            source, extension = scheme.genF2CLoopHost(include_dirs, defines, env, loop, program, app, i, force_soa, kernel_func)
+
+            new_source = re.sub(r'\n\s*\n', '\n\n', source)
+            # From output files path
+            path = None
+            if scheme.lang.kernel_dir:
+                Path(args.out, scheme.target.name).mkdir(parents=True, exist_ok=True)
+                path = Path(args.out, scheme.target.name, f"{loop.kernel}_{scheme.target.suffix}_kernel.{extension}")
+            else:
+                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.{extension}")
+
+            # Write the gernerated source file
+            with open(path, "w") as file:
+                file.write(f"// Auto-generated at {datetime.now()} by ops-translator\n")
+                file.write(new_source)
+
+                if args.verbose:
+                    print(f"Generated loop host {i} of {len(app.uniqueLoops())}: {path}")
+
     # Gernerate master kernel file
     if scheme.master_kernel_template is not None:
         user_types_name = f"user_types.{scheme.lang.include_ext}"
@@ -263,7 +284,10 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
             path = Path(args.out, name)
 
         with open(path, "w") as file:
-            file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+            if(scheme.target.name == "f2c_mpi_openmp" or scheme.target.name == "f2c_cuda" or scheme.target.name == "f2c_hip"):
+                file.write(f"// Auto-generated at {datetime.now()} by ops-translator\n")
+            else:
+                file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
             file.write(new_source)
 
             if args.verbose:

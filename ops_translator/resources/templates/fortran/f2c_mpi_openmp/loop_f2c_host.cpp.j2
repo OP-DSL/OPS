@@ -1,0 +1,329 @@
+{% extends "fortran/loop_f2c_host.cpp.j2" %}
+
+{% block host_prologue_sub_1 %}
+    ops_block block = desc->block;
+{% endblock %}
+
+{% block host_prologue_sub_2 %}
+#ifdef OPS_DEBUG
+    ops_register_args(block->instance, args, "{{lh.kernel}}");
+#endif
+{% endblock %}
+
+{% block host_prologue_sub_3 %}
+{% if lh.arg_idx != -1 %}
+    int arg_idx[{{lh.ndim}}];
+{% endif %}
+{% endblock %}
+
+{% block host_prologue %}
+{{super()}}
+
+{% if lh.arg_idx != -1 %}
+#ifdef OPS_MPI
+    getIdx(block, start_indx, arg_idx);
+#else
+{% for d in range(lh.ndim) %}
+    arg_idx[{{d}}] = start_indx[{{d}}];
+{% endfor %}
+#endif
+
+{% endif %}
+//  ======================================================
+//  Initialize global variable with the dimensions of dats
+//  ======================================================
+{% for arg in lh.args %}
+    {% if arg is ops_dat %}
+        {% if lh.ndim > 1 or (lh.ndim == 1 and (arg.dim) > 1) %}
+    int xdim{{arg.id}}_{{lh.kernel}} = args[{{arg.id}}].dat->size[0];
+        {% endif %}
+        {% if lh.ndim > 2 or (lh.ndim == 2 and (arg.dim) > 1) %}
+    int ydim{{arg.id}}_{{lh.kernel}} = args[{{arg.id}}].dat->size[1];
+        {% endif %}
+        {% if lh.ndim > 3 or (lh.ndim == 3 and (arg.dim) > 1) %}
+    int zdim{{arg.id}}_{{lh.kernel}} = args[{{arg.id}}].dat->size[2];
+        {% endif %}
+    {% endif %}
+{% endfor%}
+
+//  =======================================================
+//  Set up initial pointers and exchange halos if necessary
+//  =======================================================
+    {% for arg in lh.args %}
+        {% if arg is ops_dat %}
+            {% if arg.dim > 1 %}
+    int multi_d{{arg.id}} = getDatDimFromOpsArg(&args[{{arg.id}}]);
+    int base{{arg.id}} = getDatBaseFromOpsArg{{lh.ndim}}D(&args[{{arg.id}}], start_indx, multi_d{{arg.id}});
+            {% else %}
+    int base{{arg.id}} = getDatBaseFromOpsArg{{lh.ndim}}D(&args[{{arg.id}}], start_indx, 1);
+            {% endif %}
+{# Subtracting 1 from base, as base is in Fortran style #}
+    {{lh.f2c_type[loop.index0]}} * __restrict__ {{args_list[arg.id]}}_p = ({{lh.f2c_type[loop.index0]}} *)(args[{{arg.id}}].data) + base{{arg.id}} - 1; // Subtracting 1 to convert to C-style
+
+        {% elif arg is ops_gbl or arg is ops_reduce %}
+            {% if arg is ops_read %}
+    {{lh.f2c_type[loop.index0]}} * __restrict__  {{args_list[arg.id]}} = ({{lh.f2c_type[loop.index0]}} *)args[{{arg.id}}].data;
+            {% else %}
+#ifdef OPS_MPI
+    {{lh.f2c_type[loop.index0]}} * __restrict__ p_a{{arg.id}} = ({{lh.f2c_type[loop.index0]}} *)(((ops_reduction)args[{{arg.id}}].data)->data + ((ops_reduction)args[{{arg.id}}].data)->size * block->index);
+#else //OPS_MPI
+    {{lh.f2c_type[loop.index0]}} * __restrict__ p_a{{arg.id}} = ({{lh.f2c_type[loop.index0]}} *)((ops_reduction)args[{{arg.id}}].data)->data;
+#endif //OPS_MPI
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
+//  ==============
+//  Halo exchanges
+//  ==============
+#ifndef OPS_LAZY
+    ops_H_D_exchanges_host(args, {{lh.args|length}});
+    ops_halo_exchanges(args, {{lh.args|length}}, range);
+    ops_H_D_exchanges_host(args, {{lh.args|length}});
+#endif //OPS_LAZY
+
+    if (block->instance->OPS_diags > 1) {
+        ops_timers_core(&__c2, &__t2);
+        block->instance->OPS_kernels[{{kernel_idx}}].mpi_time += __t2 - __t1;
+    }
+{% endblock %}
+
+{% block host_loop %}
+    {% for arg in lh.args %}
+        {% if arg is ops_gbl or arg is ops_reduce %}
+            {% if not arg is ops_read %}
+                 {% set f2c_type_value = lh.f2c_type[loop.index0] %}
+                {% for d in range(arg.dim) %}
+    {{f2c_type_value}} p_a{{arg.id}}_{{d}} = p_a{{arg.id}}[{{d}}];
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
+    {% set line = [""] %}
+    {% for arg in lh.args %}
+        {% if arg is ops_gbl or arg is ops_reduce %}
+            {% if arg is ops_inc %}
+                {% for d in range(arg.dim) %}
+                    {%if line.append(line.pop() + " reduction(+:p_a" + arg.id|string + "_" + d|string + ")") %}{% endif %}
+                {% endfor %}
+            {% elif arg is ops_min %}
+                {% for d in range(arg.dim) %}
+                    {%if line.append(line.pop() + " reduction(min:p_a" + arg.id|string + "_" + d|string + ")") %}{% endif %}
+                {% endfor %}
+            {% elif arg is ops_max %}
+                {% for d in range(arg.dim) %}
+                    {%if line.append(line.pop() + " reduction(max:p_a" + arg.id|string + "_" + d|string + ")") %}{% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+    {% if lh.ndim == 3 and (not lh.has_reduction) %}
+        {% set line2 = " collapse(2)"%}
+    {% else %}
+        {% set line2 = line[0] %}
+    {% endif %}
+    {% set indent = [0] %}
+{#    #pragma omp parallel for{{line2}}     #}
+    {% if lh.ndim > 2 %}
+    for (int n_z = 0; n_z < end_indx[2]-start_indx[2] +1; n_z++)
+    {
+        {% if indent.append(indent.pop() + 1) %}}{% endif %}
+    {% endif %}
+    {% if lh.ndim > 1 %}
+      {{indent[0] * "  "}}for (int n_y = 0; n_y < end_indx[1]-start_indx[1] +1; n_y++)
+      {{indent[0] * "  "}}{
+        {% if indent.append(indent.pop() + 1) %}{% endif %}
+    {% endif %}
+{#
+    {% if lh.ndim > 1%}
+#ifdef __INTEL_COMPILER
+    {{indent[0] * "    "}}#pragma loop_count(10000)
+    {{indent[0] * "    "}}#pragma omp simd{{line[0]}}
+#elif defined(__clang__)
+{% if lh.has_reduction %}
+    {{indent[0] * "    "}}#pragma clang loop vectorize(disable)
+{% else %}
+    {{indent[0] * "    "}}#pragma clang loop vectorize(assume_safety)
+{% endif %}
+#elif defined(__GNUC__)
+    {{indent[0] * "    "}}#pragma GCC ivdep
+#else
+    {{indent[0] * "    "}}#pragma simd
+#endif
+    {% endif %}
+#}
+    {{indent[0] * "    "}}for(int n_x = 0; n_x < end_indx[0]-start_indx[0] +1; n_x++)
+    {{indent[0] * "    "}}{
+    {% if indent.append(indent.pop() + 1) %}{% endif %}
+    {% if lh.arg_idx != -1 %}
+        {% if lh.ndim == 1 %}
+    {{indent[0] * "    "}}int idx[] = {% raw %}{arg_idx[0] + n_x};{% endraw %}
+        {% elif lh.ndim == 2 %}
+    {{indent[0] * "    "}}int idx[] = {% raw %}{arg_idx[0] + n_x, arg_idx[1] + n_y};{% endraw %}
+        {% elif lh.ndim == 3 %}
+    {{indent[0] * "    "}}int idx[] = {% raw %}{arg_idx[0] + n_x, arg_idx[1] + n_y, arg_idx[2] + n_z};{% endraw %}
+        {% endif %}
+    {% endif %}
+
+{#
+    {% if lh.arg_idx != -1 %}
+    if(n_x == 0 && n_y == 0)
+        printf("idx-0: %d, idx-1: %d\n", idx[0], idx[1]);
+    {% endif %}
+#}
+
+    {# Insert declarations for OPS_DATS with offset calculation #}
+    {% for arg in lh.args %}
+        {% if arg is ops_dat %}
+            {% if arg is ops_read %}
+                {% set pre = "const " %}
+            {% else %}
+                {% set pre = "" %}
+            {% endif %}
+            {% set dim = "" %}
+            {% set extradim = 0 %}
+            {% set offset = [""] %}
+            {% set sizelist = [""] %}
+            {% if arg.dim > 1 %}
+                {% set dim -%}{{arg.dim|string}}, {%- endset %}
+                {% set extradim = 1 %}
+            {% endif %}
+                {% set n_x -%}n_x{%- endset %}
+                {% set n_y -%}n_y{%- endset %} 
+                {% set n_z -%}n_z{%- endset %}             
+            {% if lh.ndim > 0 %}
+                {% set offset_val -%}({{n_x}} * {{arg.strides[0] | int}}){%- endset %}
+                {% if offset.append(offset.pop() + offset_val) %}{% endif %}
+            {% endif %}
+            {% if lh.ndim > 1 %}
+                {% set offset_val -%}({{n_y}} * xdim{{arg.id}}_{{lh.kernel}} * {{arg.strides[1] | int}}){%- endset %}
+                {% if offset.append(offset.pop() + " + " + offset_val) %}{% endif %}
+            {% endif %}
+            {% if lh.ndim > 2 %}
+                {% set offset_val -%}({{n_z}} * xdim{{arg.id}}_{{lh.kernel}} * ydim{{arg.id}}_{{lh.kernel}} * {{arg.strides[2] | int}}){%- endset %}
+                {% if offset.append(offset.pop() + " + " + offset_val) %}{% endif %}
+            {% endif %}
+            {% set dimlabels = "xyzuv" %}
+            {% for i in range(1, lh.ndim + extradim) %}
+                {% if sizelist.append(sizelist.pop() + dimlabels[i-1]|string + "dim" + arg.id|string + "_" + lh.kernel|string + ", ") %}{% endif %}
+            {% endfor %}
+            {% if arg.dim > 1 %}
+#ifdef OPS_SOA
+            {% endif %}
+    {{indent[0] * "    "}}{{pre}} ACC<{{lh.f2c_type[loop.index0]}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{offset[0]}});
+            {% if arg.dim > 1 %}
+#else
+    {{indent[0] * "    "}}{{pre}} ACC<{{lh.f2c_type[loop.index0]}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{arg.dim}} * ({{offset[0]}}));
+#endif
+            {% endif %}
+
+        {% endif %}
+    {% endfor %}
+
+    {# Insert declaration for reduction variables #}
+    {% for arg in lh.args %}
+        {% if arg is ops_gbl or arg is ops_reduce %}
+            {% set f2c_type_value = lh.f2c_type[loop.index0] %}
+            {% if arg is ops_inc %}
+    {{indent[0] * "    "}}{{f2c_type_value}} {{args_list[arg.id]}}[{{arg.dim}}];
+                {% for d in range(arg.dim) %}
+    {{indent[0] * "    "}}{{args_list[arg.id]}}[{{d}}] = ZERO_{{f2c_type_value}};
+                {% endfor %}
+            {% elif arg is ops_min %}
+    {{indent[0] * "    "}}{{f2c_type_value}} {{args_list[arg.id]}}[{{arg.dim}}];
+                {% for d in range(arg.dim) %}
+    {{indent[0] * "    "}}{{args_list[arg.id]}}[{{d}}] = INFINITY_{{f2c_type_value}};
+                {% endfor %}
+            {% elif arg is ops_max %}
+    {{indent[0] * "    "}}{{f2c_type_value}} {{args_list[arg.id]}}[{{arg.dim}}];
+                {% for d in range(arg.dim) %}
+    {{indent[0] * "    "}}{{args_list[arg.id]}}[{{d}}] = -INFINITY_{{f2c_type_value}};
+                {% endfor %}
+            {% elif arg is ops_write %} {# this may not be correct #}
+    {{indent[0] * "    "}}{{f2c_type_value}} {{args_list[arg.id]}}[{{arg.dim}}];
+                {% for d in range(arg.dim) %}
+    {{indent[0] * "    "}}{{args_list[arg.id]}}[{{d}}] = ZERO_{{f2c_type_value}};
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
+    {# insert kernel body #}
+    {{indent[0] * "    "}} {{kernel_body}}
+
+    {# Add statements to copy back reduction value calculated in kernel #}
+    {% for arg in lh.args %}
+        {% if arg is ops_gbl or arg is ops_reduce %}
+            {% if arg is ops_inc %}
+                {% for d in range(arg.dim) %}
+                {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} += {{args_list[arg.id]}}[{{d}}];
+                {% endfor %}
+            {% elif arg is ops_min %}
+                {% for d in range(arg.dim) %}
+                {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} = MIN(p_a{{arg.id}}_{{d}}, {{args_list[arg.id]}}[{{d}}]);
+                {% endfor %}            
+            {% elif arg is ops_max %}
+                {% for d in range(arg.dim) %}
+                {{indent[0] * "    "}}p_a{{arg.id}}_{{d}} = MAX(p_a{{arg.id}}_{{d}}, {{args_list[arg.id]}}[{{d}}]);
+                {% endfor %}            
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
+    {% if indent.append(indent.pop() - 1) %}{% endif %}
+    {{indent[0] * "    "}}}
+    {% if lh.ndim > 1 %}
+        {% if indent.append(indent.pop() - 1) %}{% endif %}
+    {{indent[0] * "  "}}}
+    {% endif %} 
+    {% if lh.ndim > 2 %}
+        {% if indent.append(indent.pop() - 1) %}{% endif %}
+    {{indent[0] * ""}}}
+    {% endif %}  
+
+    {% for arg in lh.args %}
+        {% if arg is ops_gbl or arg is ops_reduce %}
+            {% if not arg is ops_read %}
+                {% for d in range(arg.dim) %}
+    p_a{{arg.id}}[{{d}}] = p_a{{arg.id}}_{{d}};    
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}        
+{% endblock %}
+
+{% block host_epilogue %}
+    if (block->instance->OPS_diags > 1) {
+        ops_timers_core(&__c1, &__t1);
+        block->instance->OPS_kernels[{{kernel_idx}}].time += __t1 - __t2;
+    }
+
+#ifndef OPS_LAZY
+    ops_set_dirtybit_host(args, {{lh.args|length}});
+    {% for arg in lh.args %}
+        {% if arg is ops_dat and (arg is ops_write or arg is ops_rw or arg is ops_inc) %}
+    ops_set_halo_dirtybit3(&args[{{arg.id}}], range);
+        {% endif %}
+    {% endfor %}
+#endif
+
+//  ====================
+//  Update kernel record
+//  ====================
+    if (block->instance->OPS_diags > 1) {
+        ops_timers_core(&__c2, &__t2);
+        block->instance->OPS_kernels[{{kernel_idx}}].mpi_time += __t2 -__t1;
+        {% for arg in lh.args %}
+            {% if arg is ops_dat %}
+        block->instance->OPS_kernels[{{kernel_idx}}].transfer += ops_compute_transfer(dim, start_indx, end_indx, &arg{{arg.id}});
+            {% endif %}
+        {% endfor %}
+    }
+}
+
+{% endblock %}
+
+{% block kernel_descriptor_lazy_call %}
+    create_kerneldesc_and_enque("{{lh.kernel}}", args, {{lh.args|length}}, {{kernel_idx}}, dim, 0, range, block, {{lh.kernel}}_execute);
+{% endblock %}

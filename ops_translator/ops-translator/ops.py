@@ -329,6 +329,7 @@ class Loop:
     has_reduction: Optional[bool] = False
     has_reductionMDIM: Optional[bool] = False
     has_argGbl: Optional[bool] = False
+    f2c_type: Optional[List[str]]
 
     def __init__(self, loc: Location, kernel: str, block: Block, range: Range, ndim: int) -> None:
         self.loc = loc
@@ -340,6 +341,7 @@ class Loop:
         self.dats = []
         self.args = []
         self.stencils = []
+        self.f2c_type = []
 
     def addArgDat(
         self,

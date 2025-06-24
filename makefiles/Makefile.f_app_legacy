@@ -45,13 +45,21 @@ TARGETS:=$(filter-out cuda mpi_cuda mpi_cuda_tiled,$(TARGETS))
 endif
 endif
 
+ifneq (,$(filter f2c_seq f2c_mpi f2c_mpi_tiled,$(TARGETS)))
+TARGETS:=$(filter-out f2c_seq f2c_mpi f2c_mpi_tiled,$(TARGETS))
+endif
+
+ifneq (,$(filter f2c_cuda f2c_mpi_cuda f2c_mpi_cuda_tiled,$(TARGETS)))
+TARGETS:=$(filter-out f2c_cuda f2c_mpi_cuda f2c_mpi_cuda_tiled,$(TARGETS))
+endif
+
 endif	#ifneq TARGETS
 
 ifndef TARGETS
 TARGETS	= seq tiled openmp mpi mpi_openmp mpi_tiled
 
 ifeq ($(OPS_COMPILER),pgi)
-TARGETS += $(APP)_cuda $(APP)_mpi_cuda $(APP)_mpi_cuda_tiled
+TARGETS += cuda mpi_cuda mpi_cuda_tiled
 endif
 
 ifeq ($(OPS_COMPILER),xlp8)
@@ -62,6 +70,18 @@ endif	#ifndef TARGETS
 
 ifneq (,$(filter openacc mpi_openacc mpi_openacc_tiled,$(TARGETS)))
 TARGETS:=$(filter-out openacc mpi_openacc mpi_openacc_tiled,$(TARGETS))
+endif
+
+ifneq (,$(filter f2c_seq f2c_mpi f2c_mpi_tiled,$(TARGETS)))
+TARGETS:=$(filter-out f2c_seq f2c_mpi f2c_mpi_tiled,$(TARGETS))
+endif
+
+ifneq (,$(filter f2c_cuda f2c_mpi_cuda f2c_mpi_cuda_tiled,$(TARGETS)))
+TARGETS:=$(filter-out f2c_cuda f2c_mpi_cuda f2c_mpi_cuda_tiled,$(TARGETS))
+endif
+
+ifneq (,$(filter f2c_hip f2c_mpi_hip f2c_mpi_hip_tiled,$(TARGETS)))
+TARGETS:=$(filter-out f2c_hip f2c_mpi_hip f2c_mpi_hip_tiled,$(TARGETS))
 endif
 
 ifneq ($(strip $(MPI_INSTALL_PATH)),)
