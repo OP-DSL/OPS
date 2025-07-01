@@ -33,6 +33,15 @@ env.tests["ops_not_idx"] = lambda arg, loop=None: not isinstance(arg, ops.ArgIdx
 env.tests["ops_inc"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_INC
 env.tests["ops_min"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_MIN
 env.tests["ops_max"] = lambda arg, loop=None: hasattr(arg, "access_type") and arg.access_type == ops.AccessType.OPS_MAX
+
+def isArgUseStencil(arg: ops.ArgDat, stencil_ptr: str) -> bool:
+    if not hasattr(arg, "stencil_ptr"):
+        return False
+    if arg.stencil_ptr == stencil_ptr:
+        return True
+    return False
+env.tests["ops_arg_use_stencil"] = isArgUseStencil
+
 env.tests["point"] = lambda point, loop=None: isinstance(point, ops.Point)
 env.tests["window_buffer"] = lambda buff, loop=None: isinstance(buff, ops.WindowBuffer)
 
@@ -102,9 +111,19 @@ def getWriteArgFromDat(dat: ops.Dat, loop: ops.Loop) -> ops.ArgDat:
 def getArgGblName(arg: ops.ArgGbl):
     return re.sub(r'\W+', '', arg.ptr)
 
+def getReadArgsFromStencil(stencil_ptr: str, loop: ops.Loop) :
+    read_args = []
+    for arg in loop.args:
+        if not isinstance(arg, ops.ArgDat):
+            continue
+        if isArgUseStencil(arg, stencil_ptr) and arg.access_type in [ops.AccessType.OPS_READ, ops.AccessType.OPS_RW]:
+            read_args.append(arg)
+    return read_args
+
 env.globals.update(get_read_arg_from_dat = lambda dat, loop: getReadArgFromDat(dat, loop))
 env.globals.update(get_write_arg_from_dat = lambda dat, loop: getWriteArgFromDat(dat, loop))
 env.globals.update(get_arg_gbl_name = lambda gbl: getArgGblName(gbl))
+env.globals.update(get_read_args_from_stencil = lambda stencil_ptr, loop: getReadArgsFromStencil(stencil_ptr, loop))
 
 def unpack(tup):
     if not isinstance(tup, tuple):
