@@ -113,13 +113,24 @@ class Sycl(Target):
         "color2": False
         }
 
+class F2CSycl(Target):
+    name = "f2c_sycl"
+    suffix = "f2c"
+    kernel_translation = True
+    config = {
+        "grouped" : True,
+        "device" : 9,
+        "atomics": True,
+        "color2": False
+        }
+
 class HLS(Target):
     name = "hls"
     kernel_translation = True
     config = {
         "grouped" : False,
         "SLR_count" : 1,
-        "device" : 9
+        "device" : 10
         }
 
 Target.register(MPIOpenMP)
@@ -131,4 +142,5 @@ Target.register(F2CHip)
 Target.register(OpenMPOffload)
 #Target.register(OpenACC)
 Target.register(Sycl)
+Target.register(F2CSycl)
 Target.register(HLS)

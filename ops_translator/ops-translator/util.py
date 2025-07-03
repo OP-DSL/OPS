@@ -549,16 +549,18 @@ class KernelProcess:
                 else:
                     kernel_func = re.sub(r"\b"+const_name+r"\b", const_name+"_sycl", kernel_func)
 
-        kernel_func = re.sub(r"\bsqrt\b", "cl::sycl::sqrt", kernel_func)
-        kernel_func = re.sub(r"\bcbrt\b", "cl::sycl::cbrt", kernel_func)
-        kernel_func = re.sub(r"\bfabs\b", "cl::sycl::fabs", kernel_func)
-        kernel_func = re.sub(r"\bfmin\b", "cl::sycl::fmin", kernel_func)
-        kernel_func = re.sub(r"\bfmax\b", "cl::sycl::fmax", kernel_func)
-        kernel_func = re.sub(r"\bisnan\b", "cl::sycl::isnan", kernel_func)
-        kernel_func = re.sub(r"\bisinf\b", "cl::sycl::isinf", kernel_func)
-        kernel_func = re.sub(r"\bsin\b", "cl::sycl::sin", kernel_func)
-        kernel_func = re.sub(r"\bcos\b", "cl::sycl::cos", kernel_func)
-        kernel_func = re.sub(r"\bexp\b", "cl::sycl::exp", kernel_func)
+        # List of math functions to replace
+        math_funcs = [
+                        "sqrt", "cbrt", "fabs", "fmin", "fmax",
+                        "isnan", "isinf", "sin", "cos", "exp",
+                        "atan", "pow"
+                    ]
+
+        for func in math_funcs:
+            # Replace f2c::<func>(...) or <func>(...), ignoring existing cl::sycl::<func>(...)
+            pattern = rf'\b(?<!cl::sycl::)(?:f2c::)?{func}\s*\('
+            replacement = f'cl::sycl::{func}('
+            kernel_func = re.sub(pattern, replacement, kernel_func)
 
         return kernel_func, const_names
 

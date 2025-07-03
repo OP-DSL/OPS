@@ -1,13 +1,13 @@
 CC      := icx
-CXX       := icpx
-FC := ifx
+CXX     := icpx
+FC 		:= ifx
 
 ifdef DEBUG
 	CCFLAGS   := -O0 -std=c99 -fPIC -Wall -ffloat-store -g
 	CXXFLAGS   := -O0 -fPIC -Wall -ffloat-store -g -std=c++11
 else
-	CCFLAGS   := -Ofast -march=native -std=c99 -fPIC -Wall -g -ftree-vectorize -fopenmp
-	CXXFLAGS   := -Ofast -march=native -fPIC -Wall -g -std=c++11 -fopenmp
+	CCFLAGS   := -Ofast -march=native -std=c99 -fPIC -Wall -g -ftree-vectorize -qopenmp
+	CXXFLAGS   := -Ofast -march=native -std=c++17 -fPIC -Wall -qopenmp
 endif
 CXXLINK := -lstdc++
 FFLAGS  := -Ofast -march=native -fPIC -g -fopenmp -free -mcmodel=medium
@@ -15,10 +15,8 @@ FFLAGS  := -Ofast -march=native -fPIC -g -fopenmp -free -mcmodel=medium
 FMODS   := -module $(F_INC_MOD)
 FMODS_F2C_HIP     := -module $(F_INC_MOD)/f2c_hip
 
-OMPFLAGS := -fopenmp
-CXXFLAGS += $(OMPFLAGS)
 ifdef THREADED
-	THREADING_FLAGS ?= -fopenmp
+	THREADING_FLAGS ?= -qopenmp
 endif
 
 ifdef IEEE
@@ -44,3 +42,15 @@ HIPMPICPP=hipcc
 # HIPFLAGS from Makefile.hip based on what environment variable set, AMD_ARCH or NV_ARCH
 HIPFLAGS=-std=c++17 -isystem -march=native
 HIP_LINK=-L${HIP_INSTALL_PATH}/lib -lamdhip64
+
+SYCLCXX = icpx
+SYCLMPICXX = mpiicpc
+
+HOST := $(shell hostname)
+
+ifeq ($(HOST),gi001.pri.cosma.local)
+SYCL_FLAGS := -fsycl -fsycl-targets=spir64
+else
+SYCL_FLAGS := -fsycl -fsycl-targets=spir64_x86_64
+endif
+#SYCL_FLAGS += -D__INTEL_SYCL__

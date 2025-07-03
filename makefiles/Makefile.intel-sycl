@@ -1,17 +1,24 @@
 CC    := icx
 CXX   := icpx
+FC 	  := ifx
 
 ifdef DEBUG
 	CCFLAGS   := -O0 -std=c99 -fPIC -Wall -g #-ffloat-store
 	CXXFLAGS   := -O0 -std=c++17 -fPIC -Wall -g -DSYCL_COPY -DSYCL_USM #-DSYCL_COPY #-ffloat-store
 else
-	CCFLAGS   := -O3 -std=c99 -fPIC -Wall -g #-ffloat-store
-	CXXFLAGS  := -O3 -std=c++17 -fPIC -Wall -g -qopenmp
+	CCFLAGS   := -Ofast -march=native -std=c99 -fPIC -Wall -g -ftree-vectorize -qopenmp #-ffloat-store
+	CXXFLAGS  := -Ofast -march=native -std=c++17 -fPIC -Wall -g -qopenmp
 endif
+CXXLINK := -lstdc++
+FFLAGS  := -Ofast -march=native -fPIC -g -qopenmp -free -mcmodel=medium
+
+FMODS   := -module $(F_INC_MOD)
+FMODS_F2C_SYCL     := -module $(F_INC_MOD)/f2c_sycl
 
 ifdef IEEE
-	CCFLAGS += -fp-model=strict 
-	CXXFLAGS += -fp-model=strict 
+	CCFLAGS += -fp-model=strict -fp-model source -prec-div -prec-sqrt
+	CXXFLAGS += -fp-model=strict -fp-model source -prec-div -prec-sqrt
+	FFLAGS += -fp-model strict -fp-model source -prec-div -prec-sqrt
 endif
 
 ifdef THREADED
