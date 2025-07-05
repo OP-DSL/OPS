@@ -95,6 +95,7 @@
 typedef std::complex<double> complexd;
 typedef std::complex<float> complexf;
 
+#include <hip/hip_fp16.h>
 #if (defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)) && !(defined(__HIP_PLATFORM_NVCC__) || defined(__HIP_PLATFORM_NVIDIA__))
 #include <hip/hip_fp16.h>
 #elif !(defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)) && (defined(__HIP_PLATFORM_NVCC__) || defined(__HIP_PLATFORM_NVIDIA__))
@@ -113,15 +114,73 @@ typedef sycl::half half;
 #elif defined(__STDCPP_FLOAT16_T__) || defined(FLT16_MIN)
 typedef _Float16 half;
 #else
-typedef uint16_t half;
+//typedef uint16_t half;
 //typedef _Float16 half;
 #endif
 
-/*#ifdef __CUDACC__
-__device__ inline half operator*(int lhs, const half& rhs) {
+__device__  inline half operator*(int lhs, const half& rhs) {
     half lhs_half = __float2half(static_cast<float>(lhs));
     return __hmul(lhs_half, rhs);
 }
+
+__device__  inline half operator*(const half& lhs, int rhs) {
+    half rhs_half = __float2half(static_cast<float>(rhs));
+    return __hmul(lhs, rhs_half);
+}
+
+__device__  inline half operator/(double lhs, const half& rhs) {
+  half lhs_half = __float2half(static_cast<float>(lhs));
+  return __hdiv(lhs_half, rhs);
+}
+
+__device__  inline half operator/(float lhs, const half& rhs) {
+  half lhs_half = __float2half(static_cast<float>(lhs));
+  return __hdiv(lhs_half, rhs);
+}
+
+__device__  inline half operator-(float lhs, const half& rhs) {
+  half lhs_half = __float2half(static_cast<float>(lhs));
+  return __hsub(lhs_half, rhs);
+}
+
+__device__  inline half operator-(double lhs, const half& rhs) {
+  half lhs_half = __float2half(static_cast<float>(lhs));
+  return __hsub(lhs_half, rhs);
+}
+
+__device__  inline half operator+(int lhs, const half& rhs) {
+    half lhs_half = __float2half(static_cast<float>(lhs));
+    return __hadd(lhs_half, rhs);
+}
+
+__device__  inline half operator+(float lhs, const half& rhs) {
+    half lhs_half = __float2half(static_cast<float>(lhs));
+    return __hadd(lhs_half, rhs);
+}
+
+__device__  inline half operator+(double lhs, const half& rhs) {
+    half lhs_half = __float2half(static_cast<float>(lhs));
+    return __hadd(lhs_half, rhs);
+}
+
+__device__  inline half operator+(const half& lhs, const float& rhs) {
+    half rhs_half = __float2half(rhs);
+    return __hadd(lhs, rhs_half);
+}
+
+__device__  inline half operator*(const half& lhs, float rhs) {
+    half rhs_half = __float2half(rhs);
+    return __hmul(lhs, rhs_half);
+}
+
+__device__  inline half operator*(const float& lhs, const half& rhs) {
+    half lhs_half = __float2half(lhs);
+    return __hmul(lhs_half, rhs);
+}
+
+
+
+/*#ifdef __CUDACC__
 
 __device__ inline half operator*(const half& lhs, int rhs) {
     half rhs_half = __float2half(static_cast<float>(rhs));

@@ -48,7 +48,7 @@ public:
         int (*malloc_func)(void** ptr, size_t bytes),
         int (*free_func)(void* ptr),
         int (*meminfo_func)(size_t* free, size_t* total),
-        double memory_fraction = 0.99
+        double memory_fraction = 0.9
     );
     
     // Allocate memory from the pool

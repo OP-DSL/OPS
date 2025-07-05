@@ -92,7 +92,7 @@ void ops_init_device(OPS_instance *instance, const int argc, const char *const a
   hipDeviceSetCacheConfig(hipFuncCachePreferL1);
   
   // Initialize GPU memory pool
-  ops_gpu_memory_pool_init(hip_platform_malloc, hip_platform_free, hip_platform_meminfo, 0.99);
+  ops_gpu_memory_pool_init(hip_platform_malloc, hip_platform_free, hip_platform_meminfo, 0.95);
 }
 
 void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
@@ -412,7 +412,7 @@ void _ops_get_gpu_power(OPS_instance *instance, unsigned int *power_watts) {
     // ROCm 6.0+ - use rsmi_dev_power_get
     RSMI_POWER_TYPE power_type;
     result = rsmi_dev_power_get(rocm_device_id, &power_microwatts, &power_type);
-    ops_printf("power_microwatts: %llu\n", power_microwatts);
+    // ops_printf("power_microwatts: %llu\n", power_microwatts);
     if (result != RSMI_STATUS_SUCCESS || power_type == RSMI_INVALID_POWER) {
         if (instance->OPS_diags > 3) {
             instance->ostream() << "Warning: Failed to get GPU power usage from ROCm SMI (6+ API): error " 

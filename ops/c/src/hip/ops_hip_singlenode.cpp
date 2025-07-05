@@ -38,6 +38,7 @@
 
 #include <ops_lib_core.h>
 #include <hip/hip_runtime.h>
+#include <ops_gpu_memory_pool.h>
 
 void ops_exit_device(OPS_instance *instance) {
   ops_gpu_memory_pool_cleanup();
