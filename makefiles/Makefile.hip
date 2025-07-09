@@ -4,6 +4,14 @@ ifdef IEEE
 HIPFLAGS += $(HIPIEEE)
 endif
 
+ifeq ($(OPS_COMPILER),icx)
+HIPFLAGS += -lirc -limf
+endif
+
+ifeq ($(OPS_COMPILER),gnu)
+MPI_LINK = -lmpi
+endif
+
 HIP_INC ?= $(HIP_INSTALL_PATH)/include -I$(HIP_INSTALL_PATH)/../include
 HIP_LIB ?= $(HIP_INSTALL_PATH)/lib
 MPI_HIP_LINK ?= -L$(MPI_LIB) -lmpi
