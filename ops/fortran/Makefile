@@ -62,7 +62,7 @@ ifdef HIP_INSTALL_PATH
 endif
 
 ifdef SYCL_INSTALL_PATH
-	TARGETS += f2c_sycl
+	TARGETS += f2c_sycl f2c_mpi_sycl
 endif
 
 ifneq (,$(filter f_ompoffload f_mpi_ompoffload,$(TARGETS)))
@@ -357,6 +357,18 @@ f2c_mpi_hip: mkdir $(F_OPS_OBJ)/ops_lib_core_hip.o $(F_OPS_OBJ)/ops_instance_hip
 	$(F_OPS_OBJ)/ops_mpi_hdf5_mpi.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_declarations_f2c_hip.o $(F_OPS_OBJ)/ops_for_rt_support_f2c_hip.o \
 	$(F_OPS_OBJ)/ops_for_hdf5_declarations_f2c_hip.o $(F_OPS_OBJ)/ops_for_math_support_f2c_hip.o
 
+f2c_mpi_sycl: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o \
+	$(F_OPS_OBJ)/ops_checkpointing.o $(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
+	$(F_OPS_OBJ)/ops_mpi_core_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_sycl_mpi.o $(F_OPS_OBJ)/ops_mpi_partition_mpi.o \
+	$(F_OPS_OBJ)/ops_checkpointing_strategy.o $(F_OPS_OBJ)/ops_sycl_common.o \
+	$(F_OPS_OBJ)/ops_mpi_hdf5_mpi.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_declarations_f2c_sycl.o $(F_OPS_OBJ)/ops_for_rt_support_f2c_sycl.o \
+	$(F_OPS_OBJ)/ops_for_hdf5_declarations_f2c_sycl.o $(F_OPS_OBJ)/ops_for_math_support_f2c_sycl.o
+	ar -r $(F_OPS_LIB)/libops_f2c_mpi_sycl.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o \
+	$(F_OPS_OBJ)/ops_checkpointing.o $(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
+	$(F_OPS_OBJ)/ops_mpi_core_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_sycl_mpi.o $(F_OPS_OBJ)/ops_mpi_partition_mpi.o \
+	$(F_OPS_OBJ)/ops_checkpointing_strategy.o $(F_OPS_OBJ)/ops_sycl_common.o \
+	$(F_OPS_OBJ)/ops_mpi_hdf5_mpi.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_declarations_f2c_sycl.o $(F_OPS_OBJ)/ops_for_rt_support_f2c_sycl.o \
+	$(F_OPS_OBJ)/ops_for_hdf5_declarations_f2c_sycl.o $(F_OPS_OBJ)/ops_for_math_support_f2c_sycl.o
 
 clean:
 	-rm -if $(F_OPS_OBJ)/*.o $(F_OPS_OBJ)/*.optrpt
