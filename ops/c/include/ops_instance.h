@@ -334,7 +334,7 @@ class OPS_instance {
 	int OPS_soa;
 	int OPS_diags;
 
-	// CUDA & OpenCL
+	// CUDA, HIP & OpenCL
 	int OPS_hybrid_gpu, OPS_gpu_direct;
 	int OPS_block_size_x;
 	int OPS_block_size_y;
@@ -342,6 +342,7 @@ class OPS_instance {
 	char *OPS_consts_h, *OPS_consts_d, *OPS_reduct_h, *OPS_reduct_d;
 	int OPS_consts_bytes, OPS_reduct_bytes;
 	int OPS_cl_device;
+    bool OPS_uvm_device;
 	char *ops_halo_buffer;
 	char *ops_halo_buffer_d;
 	int ops_halo_buffer_size;
