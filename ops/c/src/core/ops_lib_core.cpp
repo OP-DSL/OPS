@@ -587,7 +587,11 @@ void ops_free_dat_core(ops_dat dat) {
     }
   }
   if(dat->user_managed == 0) {
-      ops_free(dat->data);
+      if (OPS_instance::getOPSInstance()->OPS_uvm_device)
+      {
+        dat->data = nullptr; // UVM managed memory, no need to free as data_d will be freed
+      } else
+        ops_free(dat->data);
       dat->data = nullptr;
   }
   ops_free((char*)dat->name);

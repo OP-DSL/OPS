@@ -88,7 +88,10 @@ void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
 }
 
 void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
-  hipSafeCall(instance->ostream(), hipHostMalloc(ptr, bytes));
+    if (instance->OPS_uvm_device) 
+        hipSafeCall(instance->ostream(), hipMalloc(ptr, bytes));
+    else
+        hipSafeCall(instance->ostream(), hipHostMalloc(ptr, bytes));
 }
 
 void ops_device_free(OPS_instance *instance, void** ptr) {
