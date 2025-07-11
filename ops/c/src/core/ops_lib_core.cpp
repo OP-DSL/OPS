@@ -2194,8 +2194,10 @@ void ops_put_data(ops_dat dat) {
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];
   if (not dat->block->instance->OPS_uvm_device)
+  {
     ops_device_memcpy_h2d(dat->block->instance, (void**)&dat->data_d, (void**)&dat->data, bytes);
-  ops_device_sync(dat->block->instance);
+    ops_device_sync(dat->block->instance);
+  }
 }
 
 void ops_randomgen_init_host(unsigned int seed, int options, std::mt19937 &ops_rand_gen) {
