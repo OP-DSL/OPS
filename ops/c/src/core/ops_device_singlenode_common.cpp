@@ -67,7 +67,12 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
                              // ops_decl_dat_hdf5()
   } else {
     // Allocate memory immediately
-    dat->data = (char*) ops_malloc(bytes);
+    if (dat->block->instance->OPS_uvm_device) {
+      // If UVM is enabled, we can use the host pointer directly
+      ops_device_mallochost(block->instance, (void**)&dat->data, bytes);
+    } else {
+      dat->data = (char*) ops_malloc(bytes);
+    }
     dat->user_managed = 0;
     dat->mem = bytes;
     dat->data_d = NULL;
