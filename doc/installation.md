@@ -24,7 +24,7 @@ CMake 3.18 or newer is required for using the CMake building system. If the late
 
 The Python dependencies (primarily used for the OPS code generator) are best installed by setting up a virtual environment so that required packages can be installed without superuser privileges. To set up the Python virtual environment and install the required dependant packages, ensure that you have Python3.9 or a more recent version with pip installed.
 Detailed instructions for installing virtual environment using pip can be found [here](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/).
-Execute following **after cloning the OPS repository (see below)** to install required packages. Note `OPS_INSTALL_PATH` is the installation directory of OPS/ops (these instructions can be executed by running the script `OPS/ops_translator/setup_venv.sh` file.) :
+Execute following **after cloning the OPS repository (see below)** to install required packages. Note `OPS_INSTALL_PATH` is the installation directory of OPS/ops. (Node - these instructions can be executed by running the script `OPS/ops_translator/setup_venv.sh` file.) :
 ```
 #Install virtual environment using pip (if not installed earlier)
 #Please set the OPS_INSTALL_PATH variable before running following commands
@@ -133,6 +133,9 @@ The current tests are mainly based on the applications.
 * `HDF5_ROOT` - Installation directory of HDF5 (to support HDF5 based File I/O) if HDF5 not installed in standard location -->
 
 ### Using Makefiles
+
+OPS can also be built using Makefiles located in the ops directory and for Makefiles located at each example application's directory. 
+
 #### Set up environmental variables:
 
   * `OPS_COMPILER` - compiler to be used (Currently supports Intel, PGI and Cray compilers, but others can be easily incorporated by extending the Makefiles used in step 2 and 3)
