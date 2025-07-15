@@ -65,5 +65,79 @@
 void __cudaSafeCall(std::ostream &stream, cudaError_t err, const char *file, const int line);
 void __curandSafeCall(std::ostream &stream, curandStatus_t err, const char *file, const int line);
 
+//inline __device__ __half operator*(int a, const half& b) {
+//  return __float2half(static_cast<float>(a)) * static_cast<__half>(b);
+//}
+//
+//inline __device__ __half operator*(const half& a, int b) {
+//  return static_cast<__half>(a) * __float2half(static_cast<float>(b));
+//}
+//
+//inline __device__ __half operator-(const half& a, int b) {
+//  return static_cast<__half>(a) - __float2half(static_cast<float>(b));
+//}
+//
+//__device__ inline half operator+(const half& lhs, float rhs) {
+//    half rhs_half = __float2half(rhs);
+//    return __hadd(lhs, rhs_half);
+//}
+//
+//__device__ inline half operator+(const float& lhs, half rhs) {
+//    half lhs_half = __float2half(lhs);
+//    return __hadd(lhs_half, rhs);
+//}
+
+inline __device__ __half pow(const half& base, int exponent) {
+  return __float2half(pow(__half2float(base), static_cast<float>(exponent)));
+}
+
+inline __device__ __half cos(const half& angle) {
+  return __float2half(cos(__half2float(angle)));
+}
+
+inline __device__ __half sin(const half& angle) {
+  return __float2half(sin(__half2float(angle)));
+}
+
+__device__ inline float operator+(float lhs, half rhs) {
+  float rhs_float = __half2float(rhs);
+  return lhs + rhs_float;
+}
+
+__device__ inline float operator+(half lhs, float rhs) {
+  float lhs_float = __half2float(lhs);
+  return lhs_float + rhs;
+}
+
+__device__ inline float operator*(float lhs, half rhs) {
+  float rhs_float = __half2float(rhs);
+  return lhs * rhs_float;
+}
+
+__device__ inline float operator*(half lhs, float rhs) {
+  float lhs_float = __half2float(lhs);
+  return lhs_float * rhs;
+}
+
+__device__ inline float operator-(float lhs, half rhs) {
+  float rhs_float = __half2float(rhs);
+  return lhs - rhs_float;
+}
+
+__device__ inline float operator-(half lhs, float rhs) {
+  float lhs_float = __half2float(lhs);
+  return lhs_float - rhs;
+}
+
+__device__ inline float operator/(float lhs, half rhs) {
+  float rhs_float = __half2float(rhs);
+  return lhs / rhs_float;
+}
+
+__device__ inline float operator/(half lhs, float rhs) {
+  float lhs_float = __half2float(lhs);
+  return lhs_float / rhs;
+}
+
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /* __OPS_CUDA_RT_SUPPORT_H */

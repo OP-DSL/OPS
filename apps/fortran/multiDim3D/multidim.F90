@@ -135,8 +135,8 @@ program MULTIDIM
                & ops_arg_dat(dat0, 3, S3D_00, "real(kind=8)", OPS_READ), &
                & ops_arg_dat(dat1, 3, S3D_00, "real(kind=8)", OPS_WRITE))
 
-  call ops_par_loop(multidim_print_kernel,"multidim_print_kernel", grid3D, 3, iter_range, &
-               & ops_arg_dat(dat0, 3, S3D_00, "real(kind=8)", OPS_READ))
+!  call ops_par_loop(multidim_print_kernel,"multidim_print_kernel", grid3D, 3, iter_range, &
+!               & ops_arg_dat(dat0, 3, S3D_00, "real(kind=8)", OPS_READ))
 
   call ops_par_loop(multidim_reduce_kernel,"multidim_reduce_kernel", grid3D, 3, iter_range, &
                & ops_arg_dat(dat1, 3, S3D_00, "real(kind=8)", OPS_READ), &

@@ -18,19 +18,18 @@ def translateProgram(program: Program, force_soa: bool, offload_pragma_flag_dict
     const_list_dim = []
 
     # 1. comment const calls
-    for call in fpu.walk(ast, f2003.Call_Stmt):
-        name = fpu.get_child(call, f2003.Name)
-        if name is None or name.string.lower() != "ops_decl_const":
-            continue
+#    for call in fpu.walk(ast, f2003.Call_Stmt):
+#        name = fpu.get_child(call, f2003.Name)
+#        if name is None or name.string.lower() != "ops_decl_const":
+#            continue
 
-        args = fpu.get_child(call, f2003.Actual_Arg_Spec_List)
-        const_list_dim.append(str(list(args.items)[1]))
-        const_list.append(str(list(args.items)[3])) 
+#        args = fpu.get_child(call, f2003.Actual_Arg_Spec_List)
+#        const_list.append(str(list(args.items)[3])) 
 
     #print(const_list)
     # Write all constants to file, required to replace the constantname with constantname_opsconstant for CUDA kernels generated
-    with open('constants_list.txt', 'a') as file:
-        file.writelines([item + '\n' for item in const_list])
+#    with open('constants_list.txt', 'a') as file:
+#        file.writelines([item + '\n' for item in const_list])
 
     # 2. Update loop calls
     for call in fpu.walk(ast, f2003.Call_Stmt):
@@ -83,11 +82,29 @@ def translateProgram(program: Program, force_soa: bool, offload_pragma_flag_dict
         spec.content = new_content
 
     temp_source = str(ast)
-    # Comment the call to ops_decl_const, no implementation needed in Fortran
-    pattern = r"(?i)(call|CALL)\sops_decl_const\(.*?\)"
-    new_source = re.sub(pattern, r"!\g<0>", temp_source)
+    # 4. Comment the call to ops_decl_const, no implementation needed in Fortran
+#    pattern = r"(?i)(call|CALL)\sops_decl_const\(.*?\)"
+#    new_source = re.sub(pattern, r"!\g<0>", temp_source)
 
-    # 5. add the omp target directives for constants
+    # 5. Encausulate ops_decl_const call under #ifdef OPS_F2C_INTEROP
+    def encapsulate_ops_calls(source_code):
+        # Regex to match a single ops_decl_const call with support for nested parentheses
+        def balanced_parentheses_regex():
+            return r'(\s*call\s+ops_decl_const\s*\((?:[^()]*|\([^()]*\))*\)\s*)'
+
+        pattern = balanced_parentheses_regex()
+
+        # Replace each occurrence of ops_decl_const call with #ifdef and #endif around it
+        def replacer(match):
+            call_string = match.group(0)
+            return f"\n#ifdef OPS_F2C_INTEROP\n{call_string.strip()}\n#endif\n"
+
+        modified_code = re.sub(pattern, replacer, source_code, flags=re.IGNORECASE | re.DOTALL)
+        return modified_code
+
+    new_source = encapsulate_ops_calls(temp_source)
+
+    # 6. add the omp target directives for constants
     content_to_append = ""
     if len(const_list): # Contain call to ops_decl_const
         content_to_append += "\n#ifdef OPS_WITH_OMPOFFLOADFOR\n"
@@ -105,11 +122,18 @@ def translateProgram(program: Program, force_soa: bool, offload_pragma_flag_dict
 
         if matches:
             last_occurrence = matches[-1]
-            next_line_start = new_source.find('\n', last_occurrence.end())
-            modified_new_source = (
-                new_source[:next_line_start] + content_to_append + new_source[next_line_start:]
-            )
-            return unindent_cpp_directives(modified_new_source)
+
+            # Find the first #endif after the last occurrence
+            endif_pattern = re.compile(r'#endif', re.IGNORECASE)
+            endif_match = endif_pattern.search(new_source, last_occurrence.end())
+
+            if endif_match:
+                # Insert the content_to_append after this #endif
+                next_line_start = new_source.find('\n', endif_match.end())
+                modified_new_source = (
+                    new_source[:next_line_start] + content_to_append + new_source[next_line_start:]
+                )
+                return unindent_cpp_directives(modified_new_source)
 
     return unindent_cpp_directives(new_source)
 

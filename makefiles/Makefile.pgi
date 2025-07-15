@@ -30,6 +30,7 @@ OPENACCFLAGS   = $(CCFLAGS) -module $(F_INC_MOD)/openacc
 
 FMODS         := -module $(F_INC_MOD)
 FMODS_CUDA    := -module $(F_INC_MOD)/cuda
+FMODS_F2C_CUDA    := -module $(F_INC_MOD)/f2c_cuda
 FMODS_OMPOFFLOAD    := -module $(F_INC_MOD)/ompoffload
 
 OMPFLAGS := -mp
@@ -43,7 +44,8 @@ endif
 CUDAFOR	= -DOPS_WITH_CUDAFOR
 OMPOFFLOADFOR = -DOPS_WITH_OMPOFFLOADFOR
 OpenACCFLAGS = -acc
-CXXLINK := -pgc++libs -lstdc++
+CXXLINK := -c++libs -lstdc++
+FTNLINK := -fortranlibs
 MPI_LINK = -lmpi_cxx
 
 ifdef IEEE
