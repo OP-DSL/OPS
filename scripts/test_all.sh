@@ -10,9 +10,9 @@ source ./$SOURCE_INTEL #default source to set environment vars
 #application executions.
 set -e
 
-#export AMOS=TRUE
+export AMOS=TRUE
 #export DMOS=TRUE
-export TELOS=TRUE
+#export TELOS=TRUE
 #export KOS=TRUE
 
 echo $OPS_INSTALL_PATH

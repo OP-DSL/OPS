@@ -5,8 +5,9 @@
 #export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
 #unset LD_LIBRARY_PATH
 module purge
-#. ~/.bashrc
+. ~/.bashrc
 export PATH=/rr-home/gihan/numawrap:$PATH
+module load cmake/3.20.1
 
 #OPS specifics
 export OPS_COMPILER=pgi
@@ -20,8 +21,10 @@ module load python/3.9.7
 source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
 
 #PGI/NVIDIA MPI and Compilers
-module load nvhpc/23.1
-export MPI_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/mpi
+#module load nvhpc/23.1
+module load  nvhpc/23.9
+#export MPI_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/mpi
+export MPI_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/23.9/comm_libs/mpi
 export PATH=$MPI_INSTALL_PATH/bin:$PATH
 export LD_LIBRARY_PATH=$MPI_INSTALL_PATH/lib:$LD_LIBRARY_PATH
 
@@ -48,7 +51,8 @@ fi
 echo "GPU architecture" $NV_ARCH
 
 unset SYCL_INSTALL_PATH
-export CUDA_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/23.1/cuda
+#export CUDA_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/23.1/cuda
+export CUDA_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/23.9/cuda
 export CUDA_MATH_LIBS=$CUDA_INSTALL_PATH/lib64
 export LD_LIBRARY_PATH=$CUDA_INSTALL_PATH/lib64:$LD_LIBRARY_PATH
 else
@@ -66,9 +70,12 @@ export LD_LIBRARY_PATH=/rr-home/gihan//HDF5/build_hdf5/gnu/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
 
 #Tridiagonal LIB
-##
+export TDMA_INSTALL_PATH=~/tridsolver/scalar/libtrid
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TDMA_INSTALL_PATH/lib/
+#unset TDMA_INSTALL_PATH 
+#unset LD_LIBRARY_PATH
 
 #OpenSBLI -- for testing app TGV only
-#export OPENSBLI_INSTALL_PATH=/rr-home/gihan/OpenSBLI/OpenSBLI_OPS_TESTING/opensbli/
+export OPENSBLI_INSTALL_PATH=/rr-home/gihan/OpenSBLI/OpenSBLI_OPS_TESTING/opensbli/
 
 #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/rr-home/gihan/libffi/
