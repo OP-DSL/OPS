@@ -5,14 +5,13 @@ This page provides a tutorial in the basics of using OPS for multi-block structu
 OPS is a Domain Specific Language embedded in C/C++ and Fortran, targeting the development of multi-block structured mesh computations. The abstraction has two distinct components:  the definition of the mesh, and operations over the mesh.
 * Defining a number of 1-3D blocks, and on them a number of datasets, which have specific extents in the different dimensions.
 * Describing a parallel loop over a given block, with a given iteration range, executing a given "kernel function" at each mesh point, and describing what datasets are going to be accessed and how.
-* Additionally, one needs to declare stencils (access patterns) that will be used in parallel loops to access datasets, and any global constants (read-only global scope variables)
+* Additionally, one needs to declare stencils (access patterns) that will be used in parallel loops to access datasets, and any global constants (read-only global scope variables).
 
-Data and computations expressed this way can be automatically managed and parallelised by the OPS library. Higher dimensions are supported in the backend, but not currently by the code generators.
+Data and computations expressed this way can be automatically managed and parallelised by the OPS library. Higher dimensions are supported in the backend, but are not currently supported by the code generator.
 
 ## Example Application
 In this tutorial we will use an example application, a simple 2D iterative Laplace equation solver. 
-* Go to the `OPS/apps/c/laplace2dtutorial/original` directory
-* Open the `laplace2d.cpp` file
+* Go to the `OPS/apps/c/laplace2dtutorial/original` directory and open the `laplace2d.cpp` file
 * It uses an $imax$ x $jmax$ mesh, with an additional 1 layers of boundary cells on all sides
 * There are a number of loops that set the boundary conditions along the four edges
 * The bulk of the simulation is spent in a whilel oop, repeating a stencil kernel with a maximum reduction, and a copy kernel
@@ -45,7 +44,7 @@ y0   = (double *)malloc((imax+2) * sizeof(double));
 memset(A, 0, (imax+2) * (jmax+2) * sizeof(double));
 ```
 ## Original - Boundary loops
-The application sen sets boundary conditions:
+The application then sets boundary conditions:
 ```
 for (int i = 0; i < imax+2; i++)
     A[(0)*(imax+2)+i]   = 0.0;
@@ -64,7 +63,7 @@ for (int j = 0; j < imax+2; j++) {
 Note how in the latter two loops the loop index is used.
 
 ## Original - Main iteration
-The main iterative loop is a while loop iterating until the error tolarance is at a set level and the number of iterations are les than the maximum set. 
+The main iterative loop is a while loop iterating until the error tolarance is at a set level and the number of iterations are less than the maximum set. 
 ```
 while ( error > tol && iter < iter_max ) {
   error = 0.0;
@@ -125,9 +124,9 @@ ops_dat d_A    = ops_decl_dat(block, 1, size, base,
 ops_dat d_Anew = ops_decl_dat(block, 1, size, base,
                                d_m, d_p, Anew, "double", "Anew");
 ```
-Data sets have a size (number of mesh points in each dimension). There is passing for halos or boundaries in the positive (`d_p`) and negative directions (`d_m`). Here we use a 1 thick boundary layer. Base index can be defined as it may be different from 0 (e.g. in Fortran). Item these with a 0 base index and a 1 wide halo, these datasets can be indexed from −1 tosize +1.
+Data sets have a size (number of mesh points in each dimension). There is passing for halos or boundaries in the positive (`d_p`) and negative directions (`d_m`). Here we use a 1 thick boundary layer. Base index can be defined as it may be different from 0 (e.g. in Fortran). Item these with a 0 base index and a 1 wide halo, these datasets can be indexed from `−1` to `size+1`.
 
-OPS supports gradual conversion of applications to its API, but in this case the described data sizes will need to match:  the allocated memory and its extents need to be correctly described to OPS. In this example we have two `(imax+ 2) ∗ (jmax+ 2)` size arrays, and the total size in each dimension needs to matchsize `[i] + d_p[i] − d_m[i]`.  This is only supported for the sequential and OpenMP backends. If a `NULL` pointer is passed, OPS will allocate the data internally.
+OPS supports gradual conversion of applications to its API, but in this case the described data sizes will need to match the allocated memory and its extents need to be correctly described to OPS. In this example we have two `(imax+ 2) ∗ (jmax+ 2)` size arrays, and the total size in each dimension needs to matchsize `[i] + d_p[i] − d_m[i]`.  This is only supported for the sequential and OpenMP backends. If a `NULL` pointer is passed, OPS will allocate the data internally.
 
 We also need to declare the stencils that will be used - in this example most loops use a simple 1-point stencil, and one uses a 5-point stencil:
 ```
@@ -145,11 +144,11 @@ You can now convert the first loop to use OPS:
 for (int i = 0; i < imax+2; i++)
     A[(0)*(imax+2)+i]   = 0.0;
 ```    
-This is a loop on the ottom boundary of the domain, which is at the −1 index for our dataset, therefore our iteration range will be over the entire domain, including halos in the X direction, and the bottom boundary in the Y direction.  The iteration range is given as beginning (inclusive) and end (exclusive) indices in the x, y, etc.  directions.
+This is a loop on the bottom boundary of the domain, which is at the −1 index for our dataset, therefore our iteration range will be over the entire domain, including halos in the X direction, and the bottom boundary in the Y direction.  The iteration range is given as beginning (inclusive) and end (exclusive) indices in the x, y, etc.  directions.
 ```
 int bottom_range[] = {-1, imax+1, -1, 0};
 ```
-Next, we need to outline the “elemental” into `laplacekernels.h`, and place the appropriate access objects - `ACC<double> &A`, in the kernel’s formal parameter list, and `(i,j)` are the stencil offsets in the X and Y directions respectively:
+Next, we need to outline the “elemental” kernel into `laplacekernels.h`, and place the appropriate access objects - `ACC<double> &A`, in the kernel’s formal parameter list, and `(i,j)` are the stencil offsets in the X and Y directions respectively:
 ```
 void set_zero(ACC<double> &A) {
   A(0,0) = 0.0;
