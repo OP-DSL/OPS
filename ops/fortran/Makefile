@@ -72,9 +72,6 @@ endif
 ifeq ($(OPS_COMPILER),intel)
 TARGETS:=$(filter-out f_ompoffload f_mpi_ompoffload,$(TARGETS))
 endif
-ifeq ($(OPS_COMPILER),intel-sycl)
-TARGETS:=$(filter-out f_ompoffload f_mpi_ompoffload,$(TARGETS))
-endif
 endif
 
 ifdef USE_OPENMP4

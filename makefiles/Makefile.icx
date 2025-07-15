@@ -4,23 +4,31 @@ FC 		:= ifx
 
 ifdef DEBUG
 	CCFLAGS   := -O0 -std=c99 -fPIC -Wall -ffloat-store -g
-	CXXFLAGS   := -O0 -fPIC -Wall -ffloat-store -g -std=c++11
+	CXXFLAGS   := -O0 -fPIC -Wall -ffloat-store -g -std=c++17 -DSYCL_COPY -DSYCL_USM
 else
 	CCFLAGS   := -Ofast -march=native -std=c99 -fPIC -Wall -g -ftree-vectorize -qopenmp
 	CXXFLAGS   := -Ofast -march=native -std=c++17 -fPIC -Wall -qopenmp
 endif
 CXXLINK := -lstdc++
-FFLAGS  := -Ofast -march=native -fPIC -g -fopenmp -free -mcmodel=medium
+FFLAGS  := -Ofast -march=native -fPIC -g -qopenmp -free -mcmodel=medium
 
 FMODS   := -module $(F_INC_MOD)
 FMODS_F2C_HIP     := -module $(F_INC_MOD)/f2c_hip
+FMODS_F2C_SYCL    := -module $(F_INC_MOD)/f2c_sycl
 
 ifdef THREADED
 	THREADING_FLAGS ?= -qopenmp
 endif
 
 ifdef IEEE
+CCFLAGS += -fp-model=strict -fp-model source -prec-div -prec-sqrt
+CXXFLAGS += -fp-model=strict -fp-model source -prec-div -prec-sqrt
 FFLAGS += -fp-model strict -fp-model source -prec-div -prec-sqrt
+endif
+
+ifdef PROFILE_ITT
+CXXFLAGS += -DPROFILE_ITT -I$(VTUNE_PROFILER_DIR)/include
+OPS_LINK += -L$(VTUNE_PROFILER_DIR)/lib64 -littnotify
 endif
 
 ifeq ($(AMD_ARCH),MI100)
@@ -50,7 +58,9 @@ HOST := $(shell hostname)
 
 ifeq ($(HOST),gi001.pri.cosma.local)
 SYCL_FLAGS := -fsycl -fsycl-targets=spir64
+OMPOFFLOADFLAGS := -fiopenmp -fopenmp-targets=spir64
 else
 SYCL_FLAGS := -fsycl -fsycl-targets=spir64_x86_64
+OMPOFFLOADFLAGS := -fiopenmp -fopenmp-targets=spir64_x86_64
 endif
 #SYCL_FLAGS += -D__INTEL_SYCL__

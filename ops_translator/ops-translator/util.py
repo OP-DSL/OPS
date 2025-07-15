@@ -553,7 +553,7 @@ class KernelProcess:
         math_funcs = [
                         "sqrt", "cbrt", "fabs", "fmin", "fmax",
                         "isnan", "isinf", "sin", "cos", "exp",
-                        "atan", "pow"
+                        "atan", "pow", "log", "log10", "tanh"
                     ]
 
         for func in math_funcs:
