@@ -53,7 +53,11 @@ The HIP backend targets AMD GPUs and NVIDIA GPUs which are supported by HIP - ei
 
  **SYCL Backend**
 
-The [SYCL](https://www.khronos.org/sycl/) backend is currently in development and only working without MPI. It has been tested with Intel OneAPI (>=2021.1), Intel's public LLVM version, and hipSYCL (>=0.9.1), and runs on Intel CPUs and GPUs through Intel's OpenCL and Level Zero, NVIDIA and AMD GPUs both with the LLVM fork as well as hipSYCL. hipSYCL's OpenMP support covers most CPU architectures too.
+The [SYCL](https://www.khronos.org/sycl/) backend targets Intel, AMD, and NVIDIA GPUs. It is supported via Intel OneAPI (tested with >=2024.2.0), Intel’s public LLVM, and hipSYCL (>=0.9.1). It runs on Intel CPUs and GPUs using OpenCL and Level Zero, and on AMD and NVIDIA GPUs through the LLVM fork and hipSYCL. hipSYCL also provides OpenMP support for a wide range of CPU architectures.
+
+ **Supported Features**
+
+* OPS allows data to be stored and operated on in single (float), double (double), and half (__fp16 or half) precision. Support for half-precision operations may depend on the capabilities of the target hardware and backend (e.g., SYCL, CUDA, OpenMP).
 
  **Tridiagonal Solver Backend**
 
