@@ -45,7 +45,7 @@ OMPOFFLOADFOR = -DOPS_WITH_OMPOFFLOADFOR
 OpenACCFLAGS = -acc
 CXXLINK := -c++libs -lstdc++
 FTNLINK := -fortranlibs
-MPI_LINK = -lmpi_cxx
+#MPI_LINK = -lmpi_cxx
 
 ifdef IEEE
 CCFLAGS += -Kieee -nofma
