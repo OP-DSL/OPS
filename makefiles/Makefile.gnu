@@ -21,4 +21,4 @@ FMODS_F2C_CUDA    := -J$(F_INC_MOD)/f2c_cuda
 
 CXXLINK := -lstdc++
 FTNLINK := -lgfortran
-MPI_LINK = -lmpi_cxx
+#MPI_LINK = -lmpi_cxx
