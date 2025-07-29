@@ -36,3 +36,17 @@ jobs:
         ctest --test-dir build --output-on-failure
         rm -rf build  
     
+    # Configure-Build-Test 
+    - name: Compile-Test GCC13
+      run: |
+        ls -ltr ~/.bashrc
+        source /etc/profile.d/lmod.sh
+        source ~/.bash_aliases
+        module load OpenMPI
+        module load CUDA
+        export CXX=mpicxx
+        cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt -DCMAKE_CUDA_HOST_COMPILER=gcc-11 
+        cmake --build build -j 16
+        cmake --install build 
+        ctest --test-dir build --output-on-failure
+        rm -rf build  
