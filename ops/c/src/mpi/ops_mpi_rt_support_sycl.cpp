@@ -273,7 +273,7 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset,
 void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
                          int x_step, int y_step, int z_step, int buf_strides_x,
-                         int buf_strides_y, int buf_strides_z) {
+                         int buf_strides_y, int buf_strides_z, bool mixed_exchange, int storage_type_size) {
 
   ops_block block = src->block;
 
@@ -335,10 +335,43 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
             d_offset += ((idx_z - rz_s) * z_step * buf_strides_z +
                          (idx_y - ry_s) * y_step * buf_strides_y +
                          (idx_x - rx_s) * x_step * buf_strides_x) *
-                        type_size * dim;
+                        (mixed_exchange?storage_type_size:type_size) * dim;
             for (int d = 0; d < dim; d++) {
-              memcpy(&gpu_ptr[d_offset + d * type_size], &src_buff[s_offset],
-                     type_size);
+              if (mixed_exchange) {
+                if (storage_type_size == 4) {
+                  float val = 0.0f;
+                  if (type_size == 4) {
+                    val = *((float *)(&src_buff[s_offset+d*type_size]));
+                  } else if (type_size == 8) {
+                    val = (float)(*((double *)(&src_buff[s_offset+d*type_size])));
+                  } else if (type_size == 2) {
+                    val = (float)(*((half *)(&src_buff[s_offset+d*type_size])));
+                  }
+                  memcpy(&gpu_ptr[d_offset+d*storage_type_size], &val, storage_type_size);
+                } else if (storage_type_size == 8) {
+                  double val = 0.0;
+                  if (type_size == 4) {
+                    val = (double)(*((float *)(&src_buff[s_offset+d*type_size])));
+                  } else if (type_size == 8) {
+                    val = *((double *)(&src_buff[s_offset+d*type_size]));
+                  } else if (type_size == 2) {
+                    val = (double)(*((half *)(&src_buff[s_offset+d*type_size])));
+                  }
+                  memcpy(&gpu_ptr[d_offset+d*storage_type_size], &val, storage_type_size);
+                } else if (storage_type_size == 2) {
+                  half val = 0.0;
+                  if (type_size == 4) {
+                    val = (half)(*((float *)(&src_buff[s_offset+d*type_size])));
+                  } else if (type_size == 8) {
+                    val = (half)(*((double *)(&src_buff[s_offset+d*type_size])));
+                  } else if (type_size == 2) {
+                    val = *((half *)(&src_buff[s_offset+d*type_size]));
+                  }
+                  memcpy(&gpu_ptr[d_offset+d*storage_type_size], &val, storage_type_size);
+                }
+              } else {
+                memcpy(&gpu_ptr[d_offset+d*type_size], &src_buff[s_offset], type_size);
+              }
               if (OPS_soa)
                 s_offset += size_x * size_y * size_z * type_size;
               else
@@ -358,7 +391,7 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                            int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
                            int x_step, int y_step, int z_step,
                            int buf_strides_x, int buf_strides_y,
-                           int buf_strides_z) {
+                           int buf_strides_z, bool mixed_exchange, int storage_type_size) {
 
   ops_block block = dest->block;
 
@@ -421,10 +454,43 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
             s_offset += ((idx_z - rz_s) * z_step * buf_strides_z +
                          (idx_y - ry_s) * y_step * buf_strides_y +
                          (idx_x - rx_s) * x_step * buf_strides_x) *
-                        type_size * dim;
+                        (mixed_exchange?storage_type_size:type_size) * dim;
             for (int d = 0; d < dim; d++) {
-              memcpy(&dest_buff[d_offset], &gpu_ptr[s_offset + d * type_size],
-                     type_size);
+              if (mixed_exchange){
+                if (storage_type_size == 4) {
+                  float val = 0.0f;
+                  memcpy(&val, &gpu_ptr[s_offset+d*storage_type_size], storage_type_size);
+                  if (type_size == 4) {
+                    *((float *)(&dest_buff[d_offset + d*type_size])) = val;
+                  } else if (type_size == 8) {
+                    *((double *)(&dest_buff[d_offset + d*type_size])) = (double)val;
+                  } else if (type_size == 2) {
+                    *((half *)(&dest_buff[d_offset + d*type_size])) = (half)val;
+                  }
+                } else if (storage_type_size == 8) {
+                  double val = 0.0;
+                  memcpy(&val, &gpu_ptr[s_offset+d*storage_type_size], storage_type_size);
+                  if (type_size == 4) {
+                    *((float *)(&dest_buff[d_offset + d*type_size])) = (float)val;
+                  } else if (type_size == 8) {
+                    *((double *)(&dest_buff[d_offset + d*type_size])) = val;
+                  } else if (type_size == 2) {
+                    *((half *)(&dest_buff[d_offset + d*type_size])) = (half)val;
+                  }
+                } else if (storage_type_size == 2) {
+                  half val = 0.0;
+                  memcpy(&val, &gpu_ptr[s_offset+d*storage_type_size], storage_type_size);
+                  if (type_size == 4) {
+                    *((float *)(&dest_buff[d_offset + d*type_size])) = (float)val;
+                  } else if (type_size == 8) {
+                    *((double *)(&dest_buff[d_offset + d*type_size])) = (double)val;
+                  } else if (type_size == 2) {
+                    *((half *)(&dest_buff[d_offset + d*type_size])) = val;
+                  }
+                }
+              } else {
+                memcpy(&dest_buff[d_offset], &gpu_ptr[s_offset+d*type_size], type_size);
+              }
               if (OPS_soa)
                 d_offset += size_x * size_y * size_z * type_size;
               else
