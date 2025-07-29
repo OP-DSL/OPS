@@ -6,7 +6,7 @@ export SOURCE_INTEL=source_intel_2021.3_pythonenv
 
 #export AMOS=TRUE
 #export DMOS=TRUE
-#export TELOS=TRUE
+export TELOS=TRUE
 #export KOS=TRUE
 
 if [[ -v TELOS || -v KOS ]]; then
@@ -43,7 +43,7 @@ cd -
 make IEEE=1
 cd $OPS_INSTALL_PATH/../apps/c/adi
 make clean
-rm -f .generated
+#rm -f .generated
 make IEEE=1
 
 #COMMENT

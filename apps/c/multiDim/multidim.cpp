@@ -58,10 +58,13 @@ int ny{3};
 // Utility functions mainly debug
 void WriteDataToH5(const std::string &fileName, const ops_block &block,
                    const std::vector<ops_dat> &dataList) {
+#pragma omp single
+  {
     ops_fetch_block_hdf5_file(block, fileName.c_str());
     for (auto data : dataList) {
         ops_fetch_dat_hdf5_file(data, fileName.c_str());
     }
+  }
 }
 
 int main(int argc, char **argv)

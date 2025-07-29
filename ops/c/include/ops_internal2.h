@@ -212,7 +212,7 @@ OPS_FTN_INTEROP
 void ops_print_dat_to_txtfile_core(ops_dat dat, const char *file_name);
 
 void ops_NaNcheck(ops_dat dat);
-void ops_NaNcheck_core(ops_dat dat, char *buffer);
+void ops_NaNcheck_core(ops_dat dat, char *buffer, int *disp, int *d_m);
 
 void ops_timing_realloc(OPS_instance *instance, int, const char *);
 float ops_compute_transfer(int dims, int *start, int *end, ops_arg *arg);
@@ -269,11 +269,11 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                            int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
                            int x_step, int y_step, int z_step,
                            int buf_strides_x, int buf_strides_y,
-                           int buf_strides_z);
+                           int buf_strides_z, bool mixed_exchange, int storage_type_size);
 void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
                          int x_step, int y_step, int z_step, int buf_strides_x,
-                         int buf_strides_y, int buf_strides_z);
+                         int buf_strides_y, int buf_strides_z, bool mixed_exchange, int storage_type_size);
 
 /* lazy execution */
 void ops_enqueue_kernel(ops_kernel_descriptor *desc);
@@ -281,12 +281,21 @@ OPS_FTN_INTEROP
 void ops_execute(OPS_instance *instance=NULL);
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp);
 int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx);
+OPS_FTN_INTEROP
 int ops_get_proc();
 int ops_num_procs();
 void ops_put_data(ops_dat dat);
 OPS_FTN_INTEROP
 void create_kerneldesc_and_enque(char const* kernel_name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc));
 
+extern "C" {
+int getRange(ops_block block, int *start, int *end, int *range);
+void getIdx(ops_block block, int *start, int *idx);
+int getDatDimFromOpsArg(ops_arg *arg);
+int getDatBaseFromOpsArg1D(ops_arg *arg, int *start, int dim);
+int getDatBaseFromOpsArg2D(ops_arg *arg, int *start, int dim);
+int getDatBaseFromOpsArg3D(ops_arg *arg, int *start, int dim);
+}
 
 /*******************************************************************************
 * Random number generations

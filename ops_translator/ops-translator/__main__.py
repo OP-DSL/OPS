@@ -9,6 +9,7 @@ from pathlib import Path
 #custom implementation imports
 import cpp
 import fortran
+from fortran.translator.program import add_offload_directives, check_offload_pragma_required, check_repeated_kernels_fortran
 from jinja_utils import env
 from language import Lang
 from ops import OpsError, Type
@@ -106,14 +107,26 @@ def main(argv=None) -> None:
 
     print("Code-gen : Parsing done for all files")
 
+    # Find out if declare pragma in case of openmp offload is required for constants or not
+    app_consts = app.consts()
+    offload_pragma_flag_dict = {}
+    if(lang.name == "Fortran"):
+        offload_pragma_flag_dict = check_offload_pragma_required(app_consts)
+
+
+    all_par_loops = {}
+    # Check if repeated kernels are there with argument mismatch
+    if(lang.name == "Fortran"):
+        for program in app.programs:
+            check_repeated_kernels_fortran(program, all_par_loops)
+
     # Generate program translations
     print("Code-gen : Program translation phase started......")
-    app_consts = app.consts()
     for i, program in enumerate(app.programs, 1):
         include_dirs = set([Path(dir) for [dir] in args.I])
         defines = [define for [define] in args.D]
 
-        source = lang.translateProgram(program, include_dirs, defines, app_consts, args.force_soa)
+        source = lang.translateProgram(program, include_dirs, defines, app_consts, args.force_soa, offload_pragma_flag_dict)
 
         if not args.force_soa and program.soa_val:
             args.force_soa = program.soa_val
@@ -129,6 +142,11 @@ def main(argv=None) -> None:
             if args.verbose:
                 print(f"Translated program {i} of {len(args.file_paths)}: {new_path}")
     print("Code-gen : Program translation phase finished.........")
+
+    # Write all consts to a file - required for Fortran
+    if(lang.name == "Fortran"):
+        with open('constants_list.txt', 'w') as file:
+            file.writelines([item.ptr + '\n' for item in app_consts])
 
     # Generating code for targets
     for [target] in args.target:
@@ -156,6 +174,9 @@ def main(argv=None) -> None:
         if args.verbose:
             print(f"Translation completed: {scheme}")
 
+    # Create new constants.F90 file with relevant pragms for openmp offload for F90 version
+    if(lang.name == "Fortran"):
+        add_offload_directives(app_consts,offload_pragma_flag_dict)
 
 def parse(args: Namespace, lang: Lang) -> Application:
     app = Application()
@@ -199,7 +220,7 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
     # Generate loop hosts
     for i, (loop, program) in enumerate(app.uniqueLoops(), 1):
         # Generate loop host source
-        source, extension = scheme.genLoopHost(include_dirs, defines, env, loop, program, app, i, force_soa)
+        source, extension, kernel_func = scheme.genLoopHost(include_dirs, defines, env, loop, program, app, i, force_soa)
 
         new_source = re.sub(r'\n\s*\n', '\n\n', source)
 
@@ -222,6 +243,27 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
             if args.verbose:
                 print(f"Generated loop host {i} of {len(app.uniqueLoops())}: {path}")
 
+        # F2C loop host CPP template
+        if scheme.loop_host_f2c_template is not None:
+            source, extension = scheme.genF2CLoopHost(include_dirs, defines, env, loop, program, app, i, force_soa, kernel_func)
+
+            new_source = re.sub(r'\n\s*\n', '\n\n', source)
+            # From output files path
+            path = None
+            if scheme.lang.kernel_dir:
+                Path(args.out, scheme.target.name).mkdir(parents=True, exist_ok=True)
+                path = Path(args.out, scheme.target.name, f"{loop.kernel}_{scheme.target.suffix}_kernel.{extension}")
+            else:
+                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.{extension}")
+
+            # Write the gernerated source file
+            with open(path, "w") as file:
+                file.write(f"// Auto-generated at {datetime.now()} by ops-translator\n")
+                file.write(new_source)
+
+                if args.verbose:
+                    print(f"Generated loop host {i} of {len(app.uniqueLoops())}: {path}")
+
     # Gernerate master kernel file
     if scheme.master_kernel_template is not None:
         user_types_name = f"user_types.{scheme.lang.include_ext}"
@@ -242,7 +284,10 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
             path = Path(args.out, name)
 
         with open(path, "w") as file:
-            file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
+            if(scheme.target.name == "f2c_mpi_openmp" or scheme.target.name == "f2c_cuda" or scheme.target.name == "f2c_hip"):
+                file.write(f"// Auto-generated at {datetime.now()} by ops-translator\n")
+            else:
+                file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
             file.write(new_source)
 
             if args.verbose:

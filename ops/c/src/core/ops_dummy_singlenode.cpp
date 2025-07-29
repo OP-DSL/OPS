@@ -696,7 +696,8 @@ void ops_NaNcheck(ops_dat dat) {
   char buffer[1]={'\0'};
   // need to get data from GPU
   ops_get_data(dat);
-  ops_NaNcheck_core(dat, buffer);
+  int disp[OPS_MAX_DIM] = {0};
+  ops_NaNcheck_core(dat, buffer, disp, dat->d_m);
 }
 
 

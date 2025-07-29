@@ -862,21 +862,19 @@ The following is a list of all the runtime flags and options that can be used wh
 
 * `-OPS_DIAGS=` : set OPS diagnostics level at runtime.
 
-  `OPS_DIAGS=1` - no diagnostics, default level to achieve the best runtime performance.
+  `-OPS_DIAGS=1` - no diagnostics, default level to achieve the best runtime performance.
 
-  `OPS_DIAGS>1` - print block decomposition and `ops_par_loop` timing breakdown.
+  `-OPS_DIAGS>1` - print block decomposition and `ops_par_loop` timing breakdown.
 
-  `OPS_DIAGS>4` - print intra-block halo buffer allocation feedback (for OPS internal development only).
+  `-OPS_DIAGS>4` - print intra-block halo buffer allocation feedback (for OPS internal development only).
 
-  `OPS_DIAGS>5` - check if intra-block halo MPI sends depth match MPI receives depth (for OPS internal development only).  
+  `-OPS_DIAGS>5` - check if intra-block halo MPI sends depth match MPI receives depth (for OPS internal development only).  
 
-* `-DOPS_FORCE_DECOMP_X=`, `-DOPS_FORCE_DECOMP_Z=` and `-DOPS_FORCE_DECOMP_Z=` : Forcing the number of processors in the X, Y, and Z directions for domain decomposition in MPI. By default, OPS selects the most suitable configuration unless the user explicitly specifies it using these options.
+* `OPS_FORCE_DECOMP_X=`, `OPS_FORCE_DECOMP_Z=` and `OPS_FORCE_DECOMP_Z=` : Forcing the number of processors in the X, Y, and Z directions for domain decomposition in MPI. By default, OPS selects the most suitable configuration unless the user explicitly specifies it using these options.
 
-* `OPS_BLOCK_SIZE_X=`, `OPS_BLOCK_SIZE_Y=` and `OPS_BLOCK_SIZE_Y=` : The CUDA (and OpenCL) thread block sizes in X, Y and Z dimensions. The sizes should be an integer between 1 - 1024, and currently they should be selected such that `OPS_BLOCK_SIZE_X`*`OPS_BLOCK_SIZE_Y`*`OPS_BLOCK_SIZE_Z`< 1024
+* `OPS_BLOCK_SIZE_X=`, `OPS_BLOCK_SIZE_Y=` and `OPS_BLOCK_SIZE_Y=` : The CUDA (and HIP) thread block sizes in X, Y and Z dimensions. The sizes should be an integer between 1 - 1024, and currently they should be selected such that `OPS_BLOCK_SIZE_X`*`OPS_BLOCK_SIZE_Y`*`OPS_BLOCK_SIZE_Z`< 1024
 
 * `-gpudirect` : Enable GPU direct support when executing MPI+CUDA executables.
-
-* `OPS_CL_DEVICE=` : Select the OpenCL device for execution. Usually `OPS_CL_DEVICE=0` selects the CPU and `OPS_CL_DEVICE=1` selects GPUs. The selected device will be reported by OPS during execution.
 
 * `OPS_TILING` : Execute OpenMP code with cache blocking tiling. See the [Performance Tuning](https://github.com/OP-DSL/OPS/blob/MarkdownDocDev/doc/perf.md) section.
 * `OPS_TILING_MAXDEPTH=` : Execute MPI+OpenMP code with cache blocking tiling and further communication avoidance. See the [Performance Tuning](https://github.com/OP-DSL/OPS/blob/MarkdownDocDev/doc/perf.md) section.

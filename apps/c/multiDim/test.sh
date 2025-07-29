@@ -9,7 +9,7 @@ export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
 #export DMOS=TRUE
-#export TELOS=TRUE
+export TELOS=TRUE
 #export KOS=TRUE
 
 if [[ -v TELOS || -v KOS ]]; then
@@ -158,7 +158,7 @@ make clean
 make
 
 echo '============> Running OpenMP'
-KMP_AFFINITY=compact OMP_NUM_THREADS=1,12 ./multidim_openmp > perf_out
+KMP_AFFINITY=compact OMP_NUM_THREADS=12 ./multidim_openmp > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out

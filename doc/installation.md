@@ -139,7 +139,6 @@ The current tests are mainly based on the applications.
   * `OPS_COMPILER` - compiler to be used (Currently supports Intel, PGI and Cray compilers, but others can be easily incorporated by extending the Makefiles used in step 2 and 3)
   * `OPS_INSTALL_PATH` - Installation directory of OPS/ops
   * `CUDA_INSTALL_PATH` - Installation directory of CUDA, usually `/usr/local/cuda` (to build CUDA libs and applications)
-  * `OPENCL_INSTALL_PATH` - Installation directory of OpenCL, usually `/usr/local/cuda` for NVIDIA OpenCL implementation (to build OpenCL libs and applications)
   * `MPI_INSTALL_PATH` - Installation directory of MPI (to build MPI based distributed memory libs and applications)
   * `HDF5_INSTALL_PATH` - Installation directory of HDF5 (to support HDF5 based File I/O)
 
