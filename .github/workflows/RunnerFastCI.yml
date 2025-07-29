@@ -1,0 +1,38 @@
+# This is a basic workflow to help you get started with Actions
+name: FastCI4Push
+
+defaults:
+  run:
+    shell: bash 
+
+# Controls when the action will run. Triggers the workflow on pull request
+# events but only for the master branch
+on: [push, fork]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  FastCI4Push: 
+    # The type of runner that the job will run on
+    runs-on: [self-hosted, linux, x64]
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v4
+      with: 
+        clean: true
+
+    # Configure-Build-Test 
+    - name: Compile-Test NHVHPC
+      run: |
+        ls -ltr ~/.bashrc
+        source /etc/profile.d/lmod.sh
+        source ~/.bash_aliases
+        module load nvhpc
+        export CXX=mpicxx
+        cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt 
+        cmake --build build -j 16
+        cmake --install build 
+        ctest --test-dir build --output-on-failure
+        rm -rf build  
+    
