@@ -66,6 +66,7 @@ endif
 
 ifeq ($(GPU_VENDOR), AMD)
 SYCL_FLAGS := -fsycl -fsycl-targets=amdgcn-amd-amdhsa -Xsycl-target-backend --offload-arch=$(HIP_ARCH)
+HIP_LINK += -lirc -lirc_s -limf -lsvml -lintlc
 endif
 
 ifeq ($(GPU_VENDOR), INTEL)

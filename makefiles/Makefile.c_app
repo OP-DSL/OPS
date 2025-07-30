@@ -131,6 +131,7 @@ endif
 CXXFLAGS_NOOMP = $(CXXFLAGS)
 CXXFLAGS_NOOMP := $(filter-out -fopenmp, $(CXXFLAGS_NOOMP))
 CXXFLAGS_NOOMP := $(filter-out -qopenmp, $(CXXFLAGS_NOOMP))
+CXXFLAGS_NOOMP := $(subst -fp-model=strict,-ffp-model=strict,$(CXXFLAGS_NOOMP))
 
 ifneq ($(strip $(MPI_INSTALL_PATH)),)
 ifneq (,$(wildcard $(MPI_INC)))
