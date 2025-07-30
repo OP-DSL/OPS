@@ -6,11 +6,11 @@ ifdef DEBUG
 	CCFLAGS   := -O0 -std=c99 -fPIC -Wall -ffloat-store -g
 	CXXFLAGS   := -O0 -fPIC -Wall -ffloat-store -g -std=c++17 -DSYCL_COPY -DSYCL_USM
 else
-	CCFLAGS   := -Ofast -march=native -std=c99 -fPIC -Wall -g -ftree-vectorize -qopenmp
-	CXXFLAGS   := -Ofast -march=native -std=c++17 -fPIC -Wall -qopenmp
+	CCFLAGS   := -O3 -march=native -std=c99 -fPIC -Wall -g -ftree-vectorize -qopenmp
+	CXXFLAGS   := -O3 -march=native -std=c++17 -fPIC -Wall -qopenmp
 endif
 CXXLINK := -lstdc++
-FFLAGS  := -Ofast -march=native -fPIC -g -qopenmp -free -mcmodel=medium
+FFLAGS  := -O3 -march=native -fPIC -g -qopenmp -free -mcmodel=medium
 
 FMODS   := -module $(F_INC_MOD)
 FMODS_F2C_HIP     := -module $(F_INC_MOD)/f2c_hip
@@ -21,9 +21,9 @@ ifdef THREADED
 endif
 
 ifdef IEEE
-CCFLAGS += -fp-model=strict -fp-model source -prec-div -prec-sqrt
-CXXFLAGS += -fp-model=strict -fp-model source -prec-div -prec-sqrt
-FFLAGS += -fp-model strict -fp-model source -prec-div -prec-sqrt
+CCFLAGS += -fp-model=strict
+CXXFLAGS += -fp-model=strict
+FFLAGS += -fp-model strict
 endif
 
 ifdef PROFILE_ITT
@@ -52,15 +52,30 @@ HIPFLAGS=-std=c++17 -isystem -march=native
 HIP_LINK=-L${HIP_INSTALL_PATH}/lib -lamdhip64
 
 SYCLCXX = icpx
-SYCLMPICXX = mpiicpc
+SYCLMPICXX = mpiicpx
 
-HOST := $(shell hostname)
+GPU_VENDOR := $(shell \
+	if lspci | grep -i 'vga\|3d\|display' | grep -qi 'nvidia'; then echo NVIDIA; \
+	elif lspci | grep -i 'vga\|3d\|display' | grep -qi 'amd\|ati'; then echo AMD; \
+	elif lspci | grep -i 'vga\|3d\|display' | grep -qi 'intel'; then echo INTEL; \
+	else echo UNKNOWN; fi)
 
-ifeq ($(HOST),gi001.pri.cosma.local)
+ifeq ($(GPU_VENDOR), NVIDIA)
+SYCL_FLAGS := -fsycl -fsycl-targets=nvptx64-nvidia-cuda
+endif
+
+ifeq ($(GPU_VENDOR), AMD)
+SYCL_FLAGS := -fsycl -fsycl-targets=amdgcn-amd-amdhsa -Xsycl-target-backend --offload-arch=$(HIP_ARCH)
+endif
+
+ifeq ($(GPU_VENDOR), INTEL)
 SYCL_FLAGS := -fsycl -fsycl-targets=spir64
 OMPOFFLOADFLAGS := -fiopenmp -fopenmp-targets=spir64
-else
+endif
+
+ifeq ($(GPU_VENDOR), UNKNOWN)
 SYCL_FLAGS := -fsycl -fsycl-targets=spir64_x86_64
 OMPOFFLOADFLAGS := -fiopenmp -fopenmp-targets=spir64_x86_64
 endif
+
 #SYCL_FLAGS += -D__INTEL_SYCL__
