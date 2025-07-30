@@ -1,6 +1,6 @@
 CC      := icx
 CXX     := icpx
-FC 		:= ifx
+FC 	:= ifx
 
 ifdef DEBUG
 	CCFLAGS   := -O0 -std=c99 -fPIC -Wall -ffloat-store -g
@@ -79,4 +79,4 @@ SYCL_FLAGS := -fsycl -fsycl-targets=spir64_x86_64
 OMPOFFLOADFLAGS := -fiopenmp -fopenmp-targets=spir64_x86_64
 endif
 
-#SYCL_FLAGS += -D__INTEL_SYCL__
+SYCL_FLAGS += -D__INTEL_SYCL__
