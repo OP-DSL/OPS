@@ -45,7 +45,7 @@ endif
 endif
 
 HIPCC=hipcc
-HIPMPICPP=hipcc
+HIPMPICXX=hipcc
 # -D__HIP_PLATFORM_AMD__ or -D__HIP_PLATFORM_NVIDIA__ will be added to
 # HIPFLAGS from Makefile.hip based on what environment variable set, AMD_ARCH or NV_ARCH
 HIPFLAGS=-std=c++17 -isystem -march=native

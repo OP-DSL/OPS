@@ -38,7 +38,7 @@ MPI_LINK = -lmpi
 MPI_OMPOFFLOAD_LINK = -lmpi_gtl_hsa
 
 HIPCC=CC
-HIPMPICPP=CC
+HIPMPICXX=CC
 #ROCM_PATH environment variable provided by rocm module loaded
 HIPFLAGS=-x hip -std=c++17 -D__HIP_ROCclr__ --rocm-path=${ROCM_PATH} --offload-arch=${HIP_ARCH}
 HIP_LINK=-L${HIP_INSTALL_PATH}/lib -lamdhip64

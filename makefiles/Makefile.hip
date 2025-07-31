@@ -10,7 +10,7 @@ MPI_HIP_LINK ?= -L$(MPI_LIB) -lmpi
 
 #HIP_LINK ?= $(shell mpicxx --showme:compile) -L$(HIP_INSTALL_PATH)/lib -L$(HIP_INSTALL_PATH)/lib64 -L$(HIP_INSTALL_PATH)/hsa/lib64 -L$(HIP_INSTALL_PATH)/hsa/lib -L$(HIP_INSTALL_PATH)/hcc/lib -lhc_am -lmcwamp -lhip_hcc -lhsa-runtime64 -lamd_comgr -lhsakmt $(shell mpicxx --showme:link)
 
-HIPMPICPP ?= $(HIPCC)
+HIPMPICXX ?= $(HIPCC)
 
 ifneq ($(strip $(NV_ARCH)),)
 HIPFLAGS += -D__HIP_PLATFORM_NVIDIA__

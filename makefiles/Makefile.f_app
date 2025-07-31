@@ -177,7 +177,7 @@ F2C_OTHER_OBJS = $(OTHER_FILES:.F90=_f2c_seq.o)
 F2C_OPS_GEN_OBJS = $(OPS_GENERATED:.F90=_f2c_seq.o)
 
 $(F2C_CXX_OBJS): $(F2C_CXX_SRC)
-	$(MPICPP) $(F2C_CXXFLAGS) -DOPS_FTN -I$(C_OPS_INC) -I. -c $< -o $@
+	$(MPICXX) $(F2C_CXXFLAGS) -DOPS_FTN -I$(C_OPS_INC) -I. -c $< -o $@
 
 # Final target
 $(APP)_f2c_seq: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_f2c_seq.a $(OPS_FILES_GEN) $(F2C_CXX_OBJS)
@@ -217,7 +217,7 @@ MPI_F2C_OTHER_OBJS = $(OTHER_FILES:.F90=_f2c_mpi.o)
 MPI_F2C_OPS_GEN_OBJS = $(OPS_GENERATED:.F90=_f2c_mpi.o)
 
 $(MPI_F2C_CXX_OBJS): $(F2C_CXX_SRC)
-	$(MPICPP) $(F2C_CXXFLAGS) -DOPS_FTN -DOPS_MPI $(I_MPI_INC) -I$(C_OPS_INC) -I. -c $< -o $@
+	$(MPICXX) $(F2C_CXXFLAGS) -DOPS_FTN -DOPS_MPI $(I_MPI_INC) -I$(C_OPS_INC) -I. -c $< -o $@
 
 $(APP)_f2c_mpi: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_f2c_mpi.a $(OPS_FILES_GEN) $(MPI_F2C_CXX_OBJS)
 		@echo ""
@@ -282,7 +282,7 @@ MPI_TILED_F2C_OTHER_OBJS = $(OTHER_FILES:.F90=_f2c_mpi_tiled.o)
 MPI_TILED_F2C_OPS_GEN_OBJS = $(OPS_GENERATED:.F90=_f2c_mpi_tiled.o)
 
 $(MPI_TILED_F2C_CXX_OBJS): $(F2C_CXX_SRC)
-	$(MPICPP) $(F2C_CXXFLAGS) -DOPS_FTN -DOPS_MPI -DOPS_LAZY $(I_MPI_INC) -I$(C_OPS_INC) -I. -c $< -o $@
+	$(MPICXX) $(F2C_CXXFLAGS) -DOPS_FTN -DOPS_MPI -DOPS_LAZY $(I_MPI_INC) -I$(C_OPS_INC) -I. -c $< -o $@
 
 $(APP)_f2c_mpi_tiled: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_f2c_mpi.a $(OPS_FILES_GEN) $(MPI_TILED_F2C_CXX_OBJS)
 		@echo ""
@@ -495,7 +495,7 @@ F2C_MPI_HIP_OTHER_OBJS = $(OTHER_FILES:.F90=_f2c_mpi_hip.o)
 F2C_MPI_HIP_OPS_GEN_OBJS = $(OPS_GENERATED:.F90=_f2c_mpi_hip.o)
 
 $(F2C_MPI_HIP_CXX_OBJS) : $(F2C_HIP_CXX_MASTER_KERNELS)
-	$(HIPMPICPP) $(CXXFLAGS_NOOMP) $(F2C_HIPFLAGS) -DOPS_FTN -DOPS_MPI  -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c $< -o $@
+	$(HIPMPICXX) $(CXXFLAGS_NOOMP) $(F2C_HIPFLAGS) -DOPS_FTN -DOPS_MPI  -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c $< -o $@
 
 $(APP)_f2c_mpi_hip: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_f2c_mpi_hip.a $(OPS_FILES_GEN) $(F2C_MPI_HIP_CXX_OBJS)
 		@echo ""
@@ -513,7 +513,7 @@ F2C_MPI_HIP_TILED_OTHER_OBJS = $(OTHER_FILES:.F90=_f2c_mpi_hip_tiled.o)
 F2C_MPI_HIP_TILED_OPS_GEN_OBJS = $(OPS_GENERATED:.F90=_f2c_mpi_hip_tiled.o)
 
 $(F2C_MPI_HIP_TILED_CXX_OBJS) : $(F2C_HIP_CXX_MASTER_KERNELS)
-	$(HIPMPICPP) $(CXXFLAGS_NOOMP) $(F2C_HIPFLAGS) -DOPS_FTN -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c $< -o $@
+	$(HIPMPICXX) $(CXXFLAGS_NOOMP) $(F2C_HIPFLAGS) -DOPS_FTN -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c $< -o $@
 
 $(APP)_f2c_mpi_hip_tiled: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_f2c_mpi_hip.a $(OPS_FILES_GEN) $(F2C_MPI_HIP_TILED_CXX_OBJS)
 		@echo ""
