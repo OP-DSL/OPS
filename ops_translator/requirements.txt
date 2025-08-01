@@ -7,4 +7,6 @@ pylint
 mypy
 pcpp
 sympy
+numpy
+h5py
 libclang==16.0.6
