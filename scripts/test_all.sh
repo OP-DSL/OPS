@@ -28,16 +28,16 @@ cd ../CloverLeaf_3D/
 #./test.sh -- works
 echo "~~~~~~~~~~~~~~~CloverLeaf 3D HDF5~~~~~~~~~~~~~~~~~~~"
 cd ../CloverLeaf_3D_HDF5/
-#./test.sh --SYCL versions not working
+#./test.sh -- works
 echo "~~~~~~~~~~~~~~~TeaLeaf 3D ~~~~~~~~~~~~~~~~~~~~~~"
 cd ../TeaLeaf/
-#./test.sh -- tealeaf_ompoffload breaks
+#./test.sh -- tealeaf_ompoffload with pgi compilers does not compile
 echo "~~~~~~~~~~~~~~~Poisson~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../poisson/
 #./test.sh -- works
 echo "~~~~~~~~~~~~~~~multiDim~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim/
-#./test.sh -- multidim_openmp breaks
+#./test.sh -- multidim_mpi_openmp breaks
 echo "~~~~~~~~~~~~~~~multiDim3D~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim3D/ 
 #./test.sh -- works
@@ -46,13 +46,13 @@ cd ../lowdim_test/
 #./test.sh -- works
 echo "~~~~~~~~~~~~~~~shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../shsgc/
-#./test.sh -- MPI_Tiled double free-coruption
+#./test.sh -- works
 echo "~~~~~~~~~~~~~~~mb_shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mb_shsgc/Max_datatransfer
 #./test.sh -- works
 echo "~~~~~~~~~~~~~~~multiDim_HDF5~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../../multiDim_HDF5
-#./test.sh #SYCL compilation issue -- needs fixing 
+cd ../../multiDim_HDF5 #-- to test 31/07/2025
+#./test.sh -- works 
 echo "~~~~~~~~~~~~~~~adi~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../adi 
 #./test.sh -- works
