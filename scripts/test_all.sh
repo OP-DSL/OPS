@@ -1,7 +1,8 @@
 #!/bin/bash
-export SOURCE_INTEL=source_intel_2021.3_pythonenv
+
+export SOURCE_INTEL=source_oneapi_sycl_pythonenv
 export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
-export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_INTEL_SYCL=source_oneapi_sycl_pythonenv
 export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 source ./$SOURCE_INTEL #default source to set environment vars
@@ -11,8 +12,8 @@ source ./$SOURCE_INTEL #default source to set environment vars
 set -e
 
 #export AMOS=TRUE
-#export DMOS=TRUE
-export TELOS=TRUE
+export DEMOS=TRUE
+#export TELOS=TRUE
 #export KOS=TRUE
 
 echo $OPS_INSTALL_PATH
@@ -51,7 +52,7 @@ echo "~~~~~~~~~~~~~~~mb_shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mb_shsgc/Max_datatransfer
 #./test.sh -- works
 echo "~~~~~~~~~~~~~~~multiDim_HDF5~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../../multiDim_HDF5 #-- to test 31/07/2025
+cd ../../multiDim_HDF5 
 #./test.sh -- works 
 echo "~~~~~~~~~~~~~~~adi~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../adi 
@@ -64,13 +65,13 @@ cd ../adi_burger_3D
 #./test.sh -- works
 echo "~~~~~~~~~~~~~~~mgrid~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mgrid
-#./test.sh -- SYCL MPI not validating
+#./test.sh -- SYCL error at runtime 
 echo "~~~~~~~~~~~~~~~mblock~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
 #./test.sh - SYCL MPI not running error produced
 echo "~~~~~~~~~~~~~~OpenSBLI TGV~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd $OPENSBLI_INSTALL_PATH/apps/taylor_green_vortex
-#./test.sh -- works
+#./test.sh #-- works -- totest, need numpy installed on demos
 cd -
 echo "  "
 echo "All C/C++ application tests PASSED"

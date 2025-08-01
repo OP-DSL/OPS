@@ -1,21 +1,21 @@
 #!/bin/bash
 set -e
 
-export SOURCE_INTEL=source_intel_2021.3_pythonenv
+export SOURCE_INTEL=source_oneapi_sycl_pythonenv
 export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
-export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_INTEL_SYCL=source_oneapi_sycl_pythonenv
 export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
-#export DMOS=TRUE
-export TELOS=TRUE
+export DEMOS=TRUE
+#export TELOS=TRUE
 #export KOS=TRUE
 
-if [[ -v TELOS || -v KOS ]]; then
+if [[ -v TELOS || -v DEMOS || -v KOS ]]; then
 
 cd $OPS_INSTALL_PATH/fortran
 source ../../scripts/$SOURCE_INTEL
-
+make clean
 make
 cd -
 make clean
@@ -52,7 +52,7 @@ rm perf_out
 fi
 echo "All Intel classic complier based applications ---- PASSED"
 
-if [[ -v TELOS ]]; then
+if [[ -v TELOS || -v DEMOS ]]; then
 
 cd $OPS_INSTALL_PATH/fortran
 source ../../scripts/$SOURCE_PGI

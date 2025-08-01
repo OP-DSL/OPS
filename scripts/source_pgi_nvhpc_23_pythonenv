@@ -73,6 +73,5 @@ export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
 ##
 
 #OpenSBLI -- for testing app TGV only
-#export OPENSBLI_INSTALL_PATH=/rr-home/gihan/OpenSBLI/OpenSBLI_OPS_TESTING/opensbli/
-
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/rr-home/gihan/libffi/
+export OPENSBLI_INSTALL_PATH=/rr-home/gihan/OpenSBLI/OpenSBLI_OPS_TESTING/opensbli/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/rr-home/gihan/libffi/
