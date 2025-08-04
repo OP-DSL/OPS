@@ -79,7 +79,7 @@ TARGETS += f2c_hip f2c_mpi_hip f2c_mpi_hip_tiled
 endif
 
 ifdef SYCL_INSTALL_PATH
-TARGETS += f2c_sycl
+TARGETS += f2c_sycl f2c_mpi_sycl f2c_mpi_sycl_tiled
 endif
 
 ifeq ($(OPS_COMPILER),xlp8)
@@ -92,6 +92,12 @@ ifneq (,$(filter ompoffload mpi_ompoffload mpi_ompoffload_tiled,$(TARGETS)))
 OTHER_FILES_OFFLOAD := $(patsubst %, %_offload, $(filter-out constants.F90, $(OTHER_FILES))) constants_offload.F90
 endif
 
+GPU_VENDOR := $(shell \
+	if lspci | grep -i 'vga\|3d\|display' | grep -qi 'nvidia'; then echo NVIDIA; \
+	elif lspci | grep -i 'vga\|3d\|display' | grep -qi 'amd\|ati'; then echo AMD; \
+	elif lspci | grep -i 'vga\|3d\|display' | grep -qi 'intel'; then echo INTEL; \
+	else echo UNKNOWN; fi)
+
 ifneq (,$(filter ompoffload mpi_ompoffload mpi_ompoffload_tiled,$(TARGETS)))
 ifeq ($(OPS_COMPILER),gnu)
 TARGETS:=$(filter-out ompoffload mpi_ompoffload mpi_ompoffload_tiled,$(TARGETS))
@@ -99,11 +105,30 @@ endif
 ifeq ($(OPS_COMPILER),intel)
 TARGETS:=$(filter-out ompoffload mpi_ompoffload mpi_ompoffload_tiled,$(TARGETS))
 endif
+ifeq ($(OPS_COMPILER),icx)
+ifeq ($(GPU_VENDOR), NVIDIA)
+TARGETS:=$(filter-out ompoffload mpi_ompoffload mpi_ompoffload_tiled,$(TARGETS))
+endif
+ifeq ($(GPU_VENDOR), AMD)
+TARGETS:=$(filter-out ompoffload mpi_ompoffload mpi_ompoffload_tiled,$(TARGETS))
+endif
+endif
 endif
 
 ifneq (,$(filter f2c_sycl f2c_mpi_sycl f2c_mpi_sycl_tiled,$(TARGETS)))
 ifndef SYCL_INSTALL_PATH
 TARGETS:=$(filter-out f2c_sycl f2c_mpi_sycl f2c_mpi_sycl_tiled,$(TARGETS))
+endif
+ifdef SYCL_INSTALL_PATH
+ifeq ($(OPS_COMPILER),icx)
+# target architecture triple setting of 'nvptx64' not supported with ifx
+ifeq ($(GPU_VENDOR), NVIDIA)
+TARGETS:=$(filter-out f2c_sycl f2c_mpi_sycl f2c_mpi_sycl_tiled,$(TARGETS))
+endif
+ifeq ($(GPU_VENDOR), AMD)
+TARGETS:=$(filter-out f2c_sycl f2c_mpi_sycl f2c_mpi_sycl_tiled,$(TARGETS))
+endif
+endif
 endif
 endif
 

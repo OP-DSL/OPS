@@ -13,6 +13,7 @@ CXXLINK := -lstdc++
 FFLAGS  := -O3 -march=native -fPIC -g -qopenmp -free -mcmodel=medium
 
 FMODS   := -module $(F_INC_MOD)
+FMODS_F2C_CUDA    := -module $(F_INC_MOD)/f2c_cuda
 FMODS_F2C_HIP     := -module $(F_INC_MOD)/f2c_hip
 FMODS_F2C_SYCL    := -module $(F_INC_MOD)/f2c_sycl
 
