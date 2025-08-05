@@ -8,42 +8,32 @@ The current OPS eDSL supports generating code targeting multi-core/multi-threade
 
 These pages provide detailed documentation on using OPS, including an installation guide, developing and running OPS applications, the OPS API, developer documentation and performance tuning.
 
-Applicability
-=============
+## Applicability
 
-What Kind of Codes Suit OPS-DSL?
----------------------------------
+### What Kind of Codes Suit OPS-DSL?
 
 OPS is designed specifically for applications operating on multi-block structured grids and using explicit solvers. It provides a clean abstraction for stencil-based computations over structured domains, allowing automatic parallelization and performance portability across CPUs, GPUs, and distributed systems.
 
-Suitable Application Types
---------------------------
+### Suitable Application Types
 
 OPS-DSL is best suited for:
-
 - Structured mesh codes with regular grid topology
 - Explicit time-stepping solvers
 - Algorithms based on stencil computations
 - Applications with static data dependencies and regular iteration patterns
 - Typical domains:
-
   - Computational Fluid Dynamics (CFD)
   - Finite Difference Time Domain (FDTD) methods
   - Heat transfer
   - Shallow water models
 
-Limitations / Unsuitable Use Cases
-----------------------------------
+### Limitations / Unsuitable Use Cases
 
 OPS is not suitable for:
-
 - **Unstructured grid-based applications**  
   → For these, the OP2 DSL (`OP2 GitHub <https://github.com/OP-DSL/OP2-Common>`_) is a more appropriate framework.
-
 - **Implicit solvers**, where the global data dependencies and sparse matrix assembly patterns are not well-suited to OPS’s local update model.
-
 - **Adaptive Mesh Refinement (AMR)** techniques, where the grid structure is dynamic and hierarchical, breaking the assumptions of regular, structured block iteration used in OPS.
-
 
 ## Licencing
 OPS is released as an open-source project under the BSD 3-Clause License. See the [LICENSE](https://github.com/OP-DSL/OPS/blob/master/LICENSE) file for more information.
