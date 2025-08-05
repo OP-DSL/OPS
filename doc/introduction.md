@@ -17,7 +17,7 @@ OPS is designed specifically for applications operating on multi-block structure
 ### Suitable Application Types
 
 OPS-DSL is best suited for:
-- Structured mesh codes with regular grid topology
+- Multi-block structured mesh codes with regular grid topology
 - Explicit time-stepping solvers
 - Algorithms based on stencil computations
 - Applications with static data dependencies and regular iteration patterns
@@ -32,7 +32,9 @@ OPS-DSL is best suited for:
 OPS is not suitable for:
 - **Unstructured grid-based applications**  
   → For these, the [OP2 DSL](https://github.com/OP-DSL/OP2-Common) is a more appropriate framework.
-- **Implicit solvers**, where the global data dependencies and sparse matrix assembly patterns are not well-suited to OPS’s local update model.
+- **Implicit solvers**, where the global data dependencies and sparse matrix assembly patterns are generally not well-suited to OPS’s local update model.
+  - However, OPS does support certain classes of implicit problems—specifically tridiagonal systems—through integration with a third-party [tridiagonal solver library] (https://github.com/OP-DSL/tridsolver/tree/master).
+  - Example applications such as `adi`, `adi_burger`, and `adi_burger_3D` in the `OPS/apps/c` directory demonstrate the use of the tridiagonal solver via the OPS API and can serve as useful references for users interested in implementing similar methods.
 - **Adaptive Mesh Refinement (AMR)** techniques, where the grid structure is dynamic and hierarchical, breaking the assumptions of regular, structured block iteration used in OPS.
 
 ## Licencing
