@@ -19,8 +19,8 @@ echo "Testing Intel classic complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_INTEL
 
-#make clean
-#make
+make clean
+make
 cd $OPS_INSTALL_PATH/../apps/c/multiDim/
 
 make clean
@@ -38,7 +38,8 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+OpenMP'
-export OMP_NUM_THREADS=1,2;$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_openmp > perf_out
+# Only supports 1 tread per MPI process
+export OMP_NUM_THREADS=1;$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_openmp > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -159,7 +160,8 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+OpenMP'
-export OMP_NUM_THREADS=1,2;$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_openmp > perf_out
+#Only supports 1 thread per MPI process
+export OMP_NUM_THREADS=1;$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_openmp > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -227,7 +229,7 @@ rm perf_out
 fi
 
 echo '============> Running OMPOFFLOAD'
-./multidim_offload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+./multidim_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -235,7 +237,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+OMPOFFLOAD'
-OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_offload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
