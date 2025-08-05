@@ -17,7 +17,7 @@ if [[ -v TELOS || -v DEMOS || -v KOS ]]; then
 source ../../scripts/$SOURCE_INTEL
 make
 cd -
-make clean
+make cleanall
 make
 
 echo '============================ Test MultiDim3D Intel Compilers=========================================================='
@@ -56,7 +56,7 @@ source ../../scripts/$SOURCE_PGI
 make clean
 make 
 cd -
-make clean
+make cleanall
 make 
 #multidim_openmp multidim_mpi_openmp multidim_mpi multidim_cuda multidim_mpi_cuda
 

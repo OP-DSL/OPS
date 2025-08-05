@@ -22,7 +22,7 @@ make clean
 make
 cd -
 pwd
-make clean
+make cleanall
 make
 
 #<<COMMENT
@@ -61,7 +61,7 @@ cd $OPS_INSTALL_PATH/fortran
 source ../../scripts/$SOURCE_PGI
 make
 cd -
-make clean
+make cleanall
 make 
 #multidim_openmp multidim_mpi_openmp multidim_mpi multidim_cuda multidim_mpi_cuda
 

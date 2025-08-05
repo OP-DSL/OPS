@@ -22,7 +22,7 @@ source ../../scripts/$SOURCE_INTEL
 make clean
 make
 cd $OPS_INSTALL_PATH/../apps/c/mgrid/
-make clean
+make cleanall
 rm -f .generated
 make IEEE=1
 
@@ -116,7 +116,7 @@ make clean
 make
 cd $OPS_INSTALL_PATH/../apps/c/mgrid/
 
-make clean
+make cleanall
 #make IEEE=1 -j
 make IEEE=1 mgrid_sycl mgrid_mpi_sycl mgrid_mpi_sycl_tiled
 
@@ -160,7 +160,7 @@ echo "Testing PGI/NVHPC complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_PGI
 
-make clean
+make cleanall
 make
 cd $OPS_INSTALL_PATH/../apps/c/mgrid/
 make clean
