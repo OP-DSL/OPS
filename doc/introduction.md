@@ -31,7 +31,7 @@ OPS-DSL is best suited for:
 
 OPS is not suitable for:
 - **Unstructured grid-based applications**  
-  → For these, the OP2 DSL (`OP2 GitHub <https://github.com/OP-DSL/OP2-Common>`_) is a more appropriate framework.
+  → For these, the [OP2 DSL](`https://github.com/OP-DSL/OP2-Common`) is a more appropriate framework.
 - **Implicit solvers**, where the global data dependencies and sparse matrix assembly patterns are not well-suited to OPS’s local update model.
 - **Adaptive Mesh Refinement (AMR)** techniques, where the grid structure is dynamic and hierarchical, breaking the assumptions of regular, structured block iteration used in OPS.
 
