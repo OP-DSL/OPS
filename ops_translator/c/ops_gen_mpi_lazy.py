@@ -138,7 +138,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
 
     reduction = 0
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduction = 1
 
     arg_idx = -1
@@ -187,7 +187,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       code('#if OPS_BATCHED=='+str(NDIM)+' || !defined(OPS_BATCHED)')
       for n in range (0,nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          if accs[n] <> OPS_READ:
+          if accs[n] != OPS_READ:
             for d in range(0,int(dims[n])):
                 code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(NDIM)+'*'+dims[n]+'+'+str(d)+'];')
       code('#endif')
@@ -221,7 +221,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         code('#if OPS_BATCHED==2')
         for n in range (0,nargs):
           if arg_typ[n] == 'ops_arg_gbl':
-            if accs[n] <> OPS_READ:
+            if accs[n] != OPS_READ:
               for d in range(0,int(dims[n])):
                 code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(2)+'*'+dims[n]+'+'+str(d)+'];')
         code('#endif')
@@ -231,13 +231,13 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         code('#if OPS_BATCHED==1')
         for n in range (0,nargs):
           if arg_typ[n] == 'ops_arg_gbl':
-            if accs[n] <> OPS_READ:
+            if accs[n] != OPS_READ:
               for d in range(0,int(dims[n])):
                 code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(1)+'*'+dims[n]+'+'+str(d)+'];')
         code('#endif')
 
     line3 = ''
-    for n in range (0,nargs):
+    for n in range (0,len(arg_list)):
       if arg_typ[n] == 'ops_arg_dat':
         line3 = line3 +arg_list[n]+','
     if NDIM>1:
@@ -264,11 +264,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       code('#if defined(OPS_BATCHED) && OPS_BATCHED==0')
       for n in range (0,nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          if accs[n] <> OPS_READ:
+          if accs[n] != OPS_READ:
             for d in range(0,int(dims[n])):
               code(typs[n]+' p_a'+str(n)+'_'+str(d)+' = p_a'+str(n)+'[n_'+str(0)+'*'+dims[n]+'+'+str(d)+'];')
       code('#endif')
-    if arg_idx <> -1:
+    if arg_idx != -1:
       ops_gen_common.generate_arg_idx(arg_idx, arg_list, NDIM)
 
     def dimstr(n, d):
@@ -301,7 +301,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
       code('#if defined(OPS_BATCHED) && OPS_BATCHED==0')
       for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          if accs[n] <> OPS_READ:
+          if accs[n] != OPS_READ:
             for d in range(0,int(dims[n])):
               code('p_a'+str(n)+'[n_'+str(0)+'*'+dims[n]+'+'+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
       code('#endif')
@@ -311,7 +311,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         code('#if OPS_BATCHED==1')
         for n in range (0, nargs):
           if arg_typ[n] == 'ops_arg_gbl':
-            if accs[n] <> OPS_READ:
+            if accs[n] != OPS_READ:
               for d in range(0,int(dims[n])):
                 code('p_a'+str(n)+'[n_'+str(1)+'*'+dims[n]+'+'+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
         code('#endif')
@@ -321,7 +321,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
         code('#if OPS_BATCHED==2')
         for n in range (0, nargs):
           if arg_typ[n] == 'ops_arg_gbl':
-            if accs[n] <> OPS_READ:
+            if accs[n] != OPS_READ:
               for d in range(0,int(dims[n])):
                 code('p_a'+str(n)+'[n_'+str(2)+'*'+dims[n]+'+'+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
         code('#endif')
@@ -332,7 +332,7 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     code('#if OPS_BATCHED=='+str(NDIM)+' || !defined(OPS_BATCHED)')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] <> OPS_READ:
+        if accs[n] != OPS_READ:
           for d in range(0,int(dims[n])):
             code('p_a'+str(n)+'[n_'+str(NDIM)+'*'+dims[n]+'+'+str(d)+'] = p_a'+str(n)+'_'+str(d)+';')
     code('#endif')
@@ -349,11 +349,11 @@ def ops_gen_mpi_lazy(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
 
       text = text +' ops_arg arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +') {'
-      if n%n_per_line == 3 and n <> nargs-1:
+      if n%n_per_line == 3 and n != nargs-1:
          text = text +'\n'
     code(text);
     config.depth = 2

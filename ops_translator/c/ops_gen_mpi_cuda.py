@@ -149,7 +149,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 
     reduct = 0
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduct = 1
 
     config.file_text = ''
@@ -164,7 +164,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     ng_args = 0
 
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         reduction = True
       else:
         ng_args = ng_args + 1
@@ -202,7 +202,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
 ##########################################################################
 
     code('__global__ void ops_'+name+'(')
-    for n in range (0, nargs):
+    for n in range (0, len(arg_list)):
       if arg_typ[n] == 'ops_arg_dat':
         code(typs[n]+'* __restrict '+clean_type(arg_list[n])+'_p,')
       elif arg_typ[n] == 'ops_arg_gbl':
@@ -257,7 +257,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       code('int n_2 = bounds_2_l + blockDim.z * blockIdx.z + threadIdx.z;')
       code('int n_3 = n_2/(bounds_2_u-bounds_2_l);')
       code('#ifdef OPS_BATCHED')
-      code('n_2 = n_2%(bounds_2_u-bounds_2_l) ')
+      code('n_2 = n_2%(bounds_2_u-bounds_2_l); ')
       code('#endif')
     if NDIM==2:
       code('int n_2 = bounds_2_l + blockDim.z * blockIdx.z + threadIdx.z;')
@@ -421,7 +421,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       if arg_typ[n] == 'ops_arg_gbl':
         if accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1):
           code('consts_bytes += ROUND_UP('+str(dims[n])+'*sizeof('+typs[n]+'));')
-        elif accs[n] <> OPS_READ:
+        elif accs[n] != OPS_READ:
           code('reduct_bytes += ROUND_UP(nblocks*'+str(dims[n])+'*sizeof('+typs[n]+'));')
           code('reduct_size = MAX(reduct_size,sizeof('+typs[n]+')*'+str(dims[n])+');')
     code('')
@@ -434,7 +434,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       code('')
 
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code('arg'+str(n)+'.data = OPS_instance::getOPSInstance()->OPS_reduct_h + reduct_bytes;')
         code('arg'+str(n)+'.data_d = OPS_instance::getOPSInstance()->OPS_reduct_d + reduct_bytes;')
         code('for (int b=0; b<nblocks; b++)')
@@ -472,7 +472,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
        code('int nthread = OPS_instance::getOPSInstance()->OPS_block_size_x*OPS_instance::getOPSInstance()->OPS_block_size_y*OPS_instance::getOPSInstance()->OPS_block_size_z;')
        code('')
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code('nshared = MAX(nshared,sizeof('+typs[n]+')*'+str(dims[n])+');')
     code('')
     if GBL_INC == True or GBL_MIN == True or GBL_MAX == True or GBL_WRITE == True:
@@ -494,7 +494,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       text = 'ops_'+name+'<<<grid, tblock, nshared >>> ( '
     else:
       text = 'ops_'+name+'<<<grid, tblock >>> ( '
-    for n in range (0, nargs):
+    for n in range (0, len(arg_list)):
       if arg_typ[n] == 'ops_arg_dat':
         text = text +' '+arg_list[n]+'_p,'
       elif arg_typ[n] == 'ops_arg_gbl':
@@ -510,7 +510,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
         if NDIM==3:
           text = text + 'stride_'+str(n)+'[0],stride_'+str(n)+'[1],stride_'+str(n)+'[2],'
 
-      if n%n_per_line == 1 and n <> nargs-1:
+      if n%n_per_line == 1 and n != nargs-1:
         text = text +'\n        '
     if arg_idx>=0 or any_prolong:
         text = text + config.depth*' '+'     blockidx_start,'
@@ -546,7 +546,7 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
       code('mvReductArraysToHost(reduct_bytes);')
 
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         FOR('b','0','nblocks')
         FOR('d','0',str(dims[n]))
         code('#ifdef OPS_BATCHED')
@@ -583,11 +583,11 @@ def ops_gen_mpi_cuda(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
 
       text = text +' ops_arg arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +') {'
-      if n%n_per_line == 3 and n <> nargs-1:
+      if n%n_per_line == 3 and n != nargs-1:
          text = text +'\n'
     code(text);
     config.depth = 2

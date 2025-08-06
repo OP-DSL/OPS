@@ -233,7 +233,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
         break;
 
     if found == 0:
-      print "COUND NOT FIND KERNEL", name
+      print ("COUND NOT FIND KERNEL", name)
 
     fid = open(file_name, 'r')
     text = fid.read()
@@ -247,8 +247,8 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     i = p.search(text).start()
 
     if(i < 0):
-      print "\n********"
-      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      print ("\n********")
+      print ("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
       exit(2)
 
     i2 = text[i:].find(name)
@@ -291,12 +291,12 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 ##########################################################################
     code('void '+name+'_c_wrapper(')
     config.depth = config.depth+2
-    for n in range (0, nargs):
+    for n in range (0, len(arg_list)):
       if accs[n] == OPS_READ:
         pre = 'const '
       else:
         pre = ''
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         code(pre+typs[n]+' * restrict '+arg_list[n]+'_g,')
       else:
         if arg_typ[n] == 'ops_arg_dat':
@@ -325,13 +325,13 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
     for n in range (0,nargs):
       if arg_typ[n] == 'ops_arg_gbl':
-        if accs[n] <> OPS_READ:
+        if accs[n] != OPS_READ:
           for d in range(0,int(dims[n])):
             code(typs[n]+' '+arg_list[n]+'_'+str(d)+' = '+arg_list[n]+'_g['+str(d)+'];')
 
     redlist=''
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         if accs[n] == OPS_INC:
           for d in range(0,int(dims[n])):
             redlist = redlist + ' reduction(+:'+arg_list[n]+'_'+str(d)+')'
@@ -378,7 +378,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
         elif NDIM==3:
           code('int '+arg_list[n]+'[] = {arg_idx0+n_x, arg_idx1+n_y, arg_idx2+n_z};')
 
-    for n in range (0, nargs):
+    for n in range (0, len(arg_list)):
       if arg_typ[n] == 'ops_arg_dat':
         pre = ''
         if accs[n] == OPS_READ:
@@ -442,7 +442,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
       ENDFOR()
 
     for n in range (0, nargs):
-      if arg_typ[n] == 'ops_arg_gbl' and accs[n] <> OPS_READ:
+      if arg_typ[n] == 'ops_arg_gbl' and accs[n] != OPS_READ:
         for d in range(0,int(dims[n])):
           code(arg_list[n]+'_g['+str(d)+'] = '+arg_list[n]+'_'+str(d)+';')
 
@@ -516,11 +516,11 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     for n in range (0, nargs):
 
       text = text +' ops_arg arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +') {'
-      if n%n_per_line == 3 and n <> nargs-1:
+      if n%n_per_line == 3 and n != nargs-1:
          text = text +'\n'
     code(text);
     config.depth = 2
@@ -530,11 +530,11 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):
       text = text +' arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +'};\n'
-      if n%n_per_line == 5 and n <> nargs-1:
+      if n%n_per_line == 5 and n != nargs-1:
         text = text +'\n                    '
     code(text);
     code('')
@@ -638,7 +638,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
     code('')
     for n in range (0, nargs):
         if arg_typ[n] == 'ops_arg_gbl':
-          if accs[n] <> OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1)):
+          if accs[n] != OPS_READ or (accs[n] == OPS_READ and (not dims[n].isdigit() or int(dims[n])>1)):
             #code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)args['+str(n)+'].data;')
             if (accs[n] == OPS_READ):
               code(''+typs[n]+' *arg'+str(n)+'h = ('+typs[n]+' *)arg'+str(n)+'.data;')
@@ -769,7 +769,7 @@ def ops_gen_mpi_inline(master, date, consts, kernels, soa_set):
 
     # for n in range (0, nargs):
     #   if arg_typ[n] == 'ops_arg_gbl':
-    #     if accs[n] <> OPS_READ:
+    #     if accs[n] != OPS_READ:
     #       code('*('+typs[n]+' *)args['+str(n)+'].data = *p_a'+str(n)+';')
     code('')
     IF('OPS_instance::getOPSInstance()->OPS_diags > 1')

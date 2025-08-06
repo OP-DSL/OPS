@@ -126,11 +126,11 @@ def generate_header(nk, name, nargs, arg_typ, accs, arg_idx, NDIM, MULTI_GRID, g
     text = ''
     for n in range (0, nargs):
       text = text +' ops_arg arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +') {'
-      if n%n_per_line == 3 and n <> nargs-1:
+      if n%n_per_line == 3 and n != nargs-1:
          text = text +'\n'
     code(text);
     code('const int blockidx_start = 0; const int blockidx_end = block->count;')
@@ -163,11 +163,11 @@ def generate_header(nk, name, nargs, arg_typ, accs, arg_idx, NDIM, MULTI_GRID, g
     text ='ops_arg args['+str(nargs)+'] = {'
     for n in range (0, nargs):
       text = text +' arg'+str(n)
-      if nargs <> 1 and n != nargs-1:
+      if nargs != 1 and n != nargs-1:
         text = text +','
       else:
         text = text +'};\n\n'
-      if n%n_per_line == 5 and n <> nargs-1:
+      if n%n_per_line == 5 and n != nargs-1:
         text = text +'\n                    '
     code(text);
     code('#endif')
@@ -195,10 +195,10 @@ def generate_header(nk, name, nargs, arg_typ, accs, arg_idx, NDIM, MULTI_GRID, g
     comm('compute locally allocated range for the sub-block')
     code('int start['+str(NDIM)+'];')
     code('int end['+str(NDIM)+'];')
-    if not (arg_idx<>-1 or MULTI_GRID):
+    if not (arg_idx!=-1 or MULTI_GRID):
       code('#ifdef OPS_MPI')
     code('int arg_idx['+str(NDIM)+'];')
-    if not (arg_idx<>-1 or MULTI_GRID):
+    if not (arg_idx!=-1 or MULTI_GRID):
       code('#endif')
 
     code('#if defined(OPS_LAZY) || !defined(OPS_MPI)')
@@ -211,7 +211,7 @@ def generate_header(nk, name, nargs, arg_typ, accs, arg_idx, NDIM, MULTI_GRID, g
 
     code('')
 
-    if arg_idx<>-1 or MULTI_GRID:
+    if arg_idx!=-1 or MULTI_GRID:
       code('#ifdef OPS_MPI')
       arg_write = -1
       for n in range(0,nargs):
@@ -313,7 +313,7 @@ def generate_strides(nargs, stens, stride, NDIM):
 
 def generate_pointers(nargs, arg_typ, accs, typs, arg_list, restrict, prolong, dims, decl_read_1d=1, device = ''):
     comm('set up initial pointers')
-    for n in range (0, nargs):
+    for n in range (0, len(arg_list)):
       if arg_typ[n] == 'ops_arg_dat':
           code(typs[n]+' * __restrict__ '+clean_type(arg_list[n])+'_p = ('+typs[n]+' *)(args['+str(n)+'].data'+device+' + args['+str(n)+'].dat->base_offset + blockidx_start * args['+str(n)+'].dat->batch_offset);')
           if restrict[n] == 1 or prolong[n] == 1:
@@ -379,7 +379,7 @@ def get_user_function(name, arg_typ, src_dir):
         break;
 
     if found == 0:
-      print "COUND NOT FIND KERNEL", name
+      print ("COUND NOT FIND KERNEL", name)
 
     fid = open(file_name, 'r')
     text = fid.read()
@@ -393,8 +393,8 @@ def get_user_function(name, arg_typ, src_dir):
     i = p.search(text).start()
 
     if(i < 0):
-      print "\n********"
-      print "Error: cannot locate user kernel function: "+name+" - Aborting code generation"
+      print ("\n********")
+      print ("Error: cannot locate user kernel function: "+name+" - Aborting code generation")
       exit(2)
 
     i2 = text[i:].find(name)
@@ -436,7 +436,7 @@ def generate_arg_idx(arg_idx, arg_list, NDIM):
 
 
 def generate_accessors(nargs, arg_typ, dims, NDIM, stride, typs, accs, arg_list, restrict, prolong, dimstr):
-    for n in range (0, nargs):
+    for n in range (0, len(arg_list)):
       if arg_typ[n] == 'ops_arg_dat':
         if restrict[n] == 1:
           n_0 = 'n_0*stride_'+str(n)+'0'
