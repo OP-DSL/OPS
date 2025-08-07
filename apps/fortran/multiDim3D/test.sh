@@ -45,6 +45,54 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+echo '============> Running F2C Sequential'
+./multidim_f2c_seq > perf_out
+grep "Reduction result" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C MPI'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_f2c_mpi > perf_out
+grep "Reduction result" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C CUDA'
+./multidim_f2c_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Reduction result" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C MPI+CUDA'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_f2c_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Reduction result" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+#echo '============> Running F2C MPI+CUDA+Tiled'
+#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_f2c_mpi_cuda_tiled OPS_TILING OPS_TILING_MAXDEPTH=2 OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Reduction result" perf_out
+#grep "Max total runtime" perf_out
+#grep "PASSED" perf_out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+#rm perf_out
+
+#echo '============> Running F2C MPI+Tiled'
+#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_f2c_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=2 > perf_out
+#grep "Reduction result" perf_out
+#grep "Max total runtime" perf_out
+#grep "PASSED" perf_out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+#rm perf_out
+
 rm -f multidim.dat.*
 echo "All Intel classic complier based applications ---- PASSED"
 fi
@@ -54,10 +102,10 @@ if [[ -v TELOS || -v DEMOS ]]; then
 cd $OPS_INSTALL_PATH/fortran
 source ../../scripts/$SOURCE_PGI
 make clean
-make 
+make
 cd -
 make cleanall
-make 
+make
 #multidim_openmp multidim_mpi_openmp multidim_mpi multidim_cuda multidim_mpi_cuda
 
 echo '============================ Test MultiDim3D PGI Compilers=========================================================='
@@ -109,6 +157,54 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+echo '============> Running F2C Sequential'
+./multidim_f2c_seq > perf_out
+grep "Reduction result" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C MPI'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_f2c_mpi > perf_out
+grep "Reduction result" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C CUDA'
+./multidim_f2c_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Reduction result" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C MPI+CUDA'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_f2c_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Reduction result" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+#echo '============> Running F2C MPI+CUDA+Tiled'
+#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_f2c_mpi_cuda_tiled OPS_TILING OPS_TILING_MAXDEPTH=2 OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+#grep "Reduction result" perf_out
+#grep "Max total runtime" perf_out
+#grep "PASSED" perf_out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+#rm perf_out
+
+#echo '============> Running F2C MPI+Tiled'
+#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_f2c_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=2 > perf_out
+#grep "Reduction result" perf_out
+#grep "Max total runtime" perf_out
+#grep "PASSED" perf_out
+#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+#rm perf_out
+
 echo '============> Running OMPOFFLOAD'
 ./multidim_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
@@ -140,5 +236,3 @@ fi
 rm -f multidim.dat.*
 
 echo "---------- Exiting Test Script "
-
-

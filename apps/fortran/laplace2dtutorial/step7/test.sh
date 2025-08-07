@@ -44,6 +44,54 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+echo '============> Running F2C Sequential'
+./laplace2d_f2c_seq > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C MPI'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./laplace2d_f2c_mpi > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C CUDA'
+./laplace2d_f2c_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C MPI+CUDA'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./laplace2d_f2c_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C MPI+CUDA+Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./laplace2d_f2c_mpi_cuda_tiled OPS_TILING OPS_TILING_MAXDEPTH=10 OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C MPI+Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./laplace2d_f2c_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=10 > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
 fi
 echo "All Intel classic complier based applications ---- PASSED"
 
@@ -56,7 +104,7 @@ make clean
 make
 cd -
 make clean
-make 
+make
 #laplace2d_openmp laplace2d_mpi_openmp laplace2d_mpi laplace2d_cuda laplace2d_mpi_cuda
 
 echo '============================ Test laplace2d PGI Compilers=========================================================='
@@ -84,6 +132,15 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
+echo '============> Running MPI+Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 20 ./laplace2d_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=10 > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+
 echo '============> Running CUDA'
 ./laplace2d_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total error" perf_out
@@ -100,13 +157,61 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-#echo '============> Running MPI+CUDA with GPU-Direct'
-#MV2_USE_CUDA=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./laplace2d_mpi_cuda -gpudirect OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-#grep "Total error" perf_out
-#grep "Max total runtime" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#rm perf_out
+echo '============> Running MPI+CUDA with GPU-Direct'
+MV2_USE_CUDA=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./laplace2d_mpi_cuda -gpudirect OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C Sequential'
+./laplace2d_f2c_seq > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C MPI'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./laplace2d_f2c_mpi > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C CUDA'
+./laplace2d_f2c_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C MPI+CUDA'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./laplace2d_f2c_mpi_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C MPI+CUDA+Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./laplace2d_f2c_mpi_cuda_tiled OPS_TILING OPS_TILING_MAXDEPTH=10 OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C MPI+Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./laplace2d_f2c_mpi_tiled OPS_TILING OPS_TILING_MAXDEPTH=10 > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
 
 echo '============> Running OMPOFFLOAD'
 ./laplace2d_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
@@ -125,7 +230,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+OMPOFFLOAD+Tiled'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./laplace2d_mpi_ompoffload_tiled OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./laplace2d_mpi_ompoffload_tiled OPS_TILING OPS_TILING_MAXDEPTH=10 OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total error" perf_out
 grep "Max total runtime" perf_out
 grep "PASSED" perf_out

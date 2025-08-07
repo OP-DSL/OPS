@@ -79,12 +79,12 @@ echo "  "
 
 echo "************Testing Fortran Applications *****************"
 cd $OPS_INSTALL_PATH
-echo "~~~~~~~~~~~~~~~hsgc Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+echo "~~~~~~~~~~~~~~~shsgc Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../apps/fortran/shsgc
-#./test.sh #-- works
+#./test.sh #-- +tiled versions break at runtime
 echo "~~~~~~~~~~~~~~~poisson Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../poisson 
-#./test.sh #-- works
+#./test.sh #-- +tiled versions break at runtime
 echo "~~~~~~~~~~~~~~~multiDim Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim
 #./test.sh #-- works
@@ -93,10 +93,10 @@ cd ../multiDim3D
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~lowdim_test Fortran~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../lowdim_test
-#./test.sh #-- MPI+OMPOFFLOAD+Tiled runtime error
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~laplace2d Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../laplace2dtutorial/step7
-#./test.sh #-- MPI+OMPOFFLOAD+Tiled runtime error
+#./test.sh #-- works
 echo "END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "  "
 echo "All Fortran application tests PASSED"
