@@ -16,16 +16,17 @@ OPS is designed specifically for applications operating on multi-block structure
 
 ### Suitable Application Types
 
-OPS-DSL is best suited for:
+**OPS-DSL is best suited for:**
 - Multi-block structured mesh codes with regular grid topology
 - Explicit time-stepping solvers
 - Algorithms based on stencil computations
 - Applications with static data dependencies and regular iteration patterns
-- Typical domains:
-  - Computational Fluid Dynamics (CFD)
-  - Finite Difference Time Domain (FDTD) methods
-  - Heat transfer
-  - Shallow water models
+
+**Typical domains:**
+- Computational Fluid Dynamics (CFD)
+- Finite Difference Time Domain (FDTD) methods
+- Heat transfer
+- Shallow water models
 
 ### Limitations / Unsuitable Use Cases
 
