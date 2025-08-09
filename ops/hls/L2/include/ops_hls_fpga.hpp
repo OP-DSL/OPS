@@ -125,7 +125,9 @@ class FPGA {
         cl_int err;
         // get_xil_devices() is a utility API which will find the xilinx
         // platforms and will return list of devices connected to Xilinx platform
-
+        std::string cl_device_name;
+        OCL_CHECK(err, err = m_device.getInfo(CL_DEVICE_NAME, &cl_device_name));
+        std::cout << "programing device: " << cl_device_name << std::endl;
         // Creating Context
         OCL_CHECK(err, m_context = cl::Context(m_device, NULL, NULL, NULL, &err));
 
@@ -256,6 +258,7 @@ class FPGA {
         for (auto device : devices) {
             std::string cl_device_name;
             OCL_CHECK(err, err = device.getInfo(CL_DEVICE_NAME, &cl_device_name));
+            std::cout << "Found device: " << cl_device_name << std::endl;
             if (regex_match(cl_device_name, regexStr)) m_Devices.push_back(device);
         }
         if (0 == m_Devices.size()) {
