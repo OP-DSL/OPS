@@ -126,7 +126,7 @@ class HLS(Target):
         "grouped" : False,
         "SLR_count" : 1,
         "max_SLR_count" : 3,
-        "device" : 0,
+        "device_id" : 0,
         "vector_factor" : 8,
         "mem_vector_factor": 16,
         "iter_par_factor": 20,

@@ -2,7 +2,7 @@ import os
 from functools import lru_cache
 from io import StringIO
 from pathlib import Path
-from typing import FrozenSet, List, Set, Tuple, Any
+from typing import FrozenSet, List, Set, Tuple, Any, Dict
 
 import clang.cindex
 
@@ -100,11 +100,11 @@ class Cpp(Lang):
 
         return program
     
-    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], app_consts: List[ops.Const], force_soa: bool = False, hls: bool = False) -> str:
+    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], app_consts: List[ops.Const], config: Dict[str,Any], force_soa: bool = False, hls: bool = False) -> str:
         if hls:
-            return cpp.translator.program.translateProgramHLS(program.path.read_text(), program, app_consts, force_soa)
+            return cpp.translator.program.translateProgramHLS(program.path.read_text(), program, app_consts,  config, force_soa)
         else:
-            return cpp.translator.program.translateProgram(program.path.read_text(), program, app_consts, force_soa)
+            return cpp.translator.program.translateProgram(program.path.read_text(), program, app_consts, config, force_soa)
 
     def formatType(self, typ: ops.Type) -> str:
         int_types = {

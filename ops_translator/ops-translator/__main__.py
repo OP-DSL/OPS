@@ -220,9 +220,9 @@ def main(argv=None) -> None:
 
         if (args.fpga):
             logging.warning("only FPGA vitis HLS mode selected")
-            source = lang.translateProgram(program, include_dirs, defines, app_consts, args.force_soa, True)
+            source = lang.translateProgram(program, include_dirs, defines, app_consts, target.config, args.force_soa, True)
         else:   
-            source = lang.translateProgram(program, include_dirs, defines, app_consts, args.force_soa)
+            source = lang.translateProgram(program, include_dirs, defines, app_consts, target.config, args.force_soa)
 
         if not args.force_soa and program.soa_val:
             args.force_soa = program.soa_val
@@ -328,7 +328,26 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, target_config: di
                 file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")
                 file.write(new_source)
 
-<<<<<<< HEAD
+                if args.verbose:
+                    print(f"Generated loop host {i} of {len(app.uniqueLoops())}: {path}")
+                    
+        if scheme.loop_host_f2c_template is not None:
+            source, extension = scheme.genF2CLoopHost(include_dirs, defines, env, loop, program, app, i, force_soa, kernel_func)
+
+            new_source = re.sub(r'\n\s*\n', '\n\n', source)
+            # From output files path
+            path = None
+            if scheme.lang.kernel_dir:
+                Path(args.out, scheme.target.name).mkdir(parents=True, exist_ok=True)
+                path = Path(args.out, scheme.target.name, f"{loop.kernel}_{scheme.target.suffix}_kernel.{extension}")
+            else:
+                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.{extension}")
+
+            # Write the gernerated source file
+            with open(path, "w") as file:
+                file.write(f"// Auto-generated at {datetime.now()} by ops-translator\n")
+                file.write(new_source)
+
                 if args.verbose:
                     print(f"Generated loop host {i} of {len(app.uniqueLoops())}: {path}")
         else:
@@ -367,30 +386,6 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, target_config: di
                     
              
     # Generate master kernel file
-=======
-        # F2C loop host CPP template
-        if scheme.loop_host_f2c_template is not None:
-            source, extension = scheme.genF2CLoopHost(include_dirs, defines, env, loop, program, app, i, force_soa, kernel_func)
-
-            new_source = re.sub(r'\n\s*\n', '\n\n', source)
-            # From output files path
-            path = None
-            if scheme.lang.kernel_dir:
-                Path(args.out, scheme.target.name).mkdir(parents=True, exist_ok=True)
-                path = Path(args.out, scheme.target.name, f"{loop.kernel}_{scheme.target.suffix}_kernel.{extension}")
-            else:
-                path = Path(args.out,f"{loop.kernel}_{scheme.target.name}_kernel.{extension}")
-
-            # Write the gernerated source file
-            with open(path, "w") as file:
-                file.write(f"// Auto-generated at {datetime.now()} by ops-translator\n")
-                file.write(new_source)
-
-                if args.verbose:
-                    print(f"Generated loop host {i} of {len(app.uniqueLoops())}: {path}")
-
-    # Gernerate master kernel file
->>>>>>> 8dd09c88a556b815a6e0475448952015dd686fc8
     if scheme.master_kernel_template is not None:
         user_types_name = f"user_types.{scheme.lang.include_ext}"
         user_types_candidates = [Path(dir, user_types_name) for dir in include_dirs]
