@@ -16,6 +16,7 @@ FMODS   := -module $(F_INC_MOD)
 FMODS_F2C_CUDA    := -module $(F_INC_MOD)/f2c_cuda
 FMODS_F2C_HIP     := -module $(F_INC_MOD)/f2c_hip
 FMODS_F2C_SYCL    := -module $(F_INC_MOD)/f2c_sycl
+FMODS_OMPOFFLOAD    := -module $(F_INC_MOD)/ompoffload
 
 ifdef THREADED
 	THREADING_FLAGS ?= -qopenmp
@@ -57,7 +58,7 @@ SYCLMPICXX = mpiicpx
 
 GPU_VENDOR := $(shell \
 	if lspci | grep -i 'vga\|3d\|display' | grep -qi 'nvidia'; then echo NVIDIA; \
-	elif lspci | grep -i 'vga\|3d\|display' | grep -qi 'amd\|ati'; then echo AMD; \
+	elif lspci | grep -i 'vga\|3d\|display' | grep -qi 'amd'; then echo AMD; \
 	elif lspci | grep -i 'vga\|3d\|display' | grep -qi 'intel'; then echo INTEL; \
 	else echo UNKNOWN; fi)
 
