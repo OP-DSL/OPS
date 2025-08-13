@@ -553,16 +553,18 @@ __global__ void ops_internal_copy_hip_kernel(char * dat0_p, char *dat1_p,
 #endif
 #endif
 #endif
-       )
+       ) {
 
-    if (OPS_soa)
+    if (OPS_soa) {
       for (int d = 0; d < dim; d++)
         for (int c = 0; c < type_size; c++)
           dat1_p[idx+d*fullsize*type_size+c] = dat0_p[idx+d*fullsize*type_size+c];
-    else
+    }
+    else {
       for (int d = 0; d < dim*type_size; d++)
         dat1_p[idx+d] = dat0_p[idx+d];
-
+    }
+  }
 }
 
 

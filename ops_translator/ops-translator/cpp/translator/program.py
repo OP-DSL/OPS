@@ -1,6 +1,6 @@
 import re
 
-from typing import List
+from typing import List, Dict, Any
 
 from ops import Const, OpsError, ArgDat, ArgGbl, ArgIdx, ArgReduce
 from store import Program
@@ -8,7 +8,7 @@ from util import SourceBuffer, Rewriter, findIdx
 import logging
 
 # Augment source program to use generated kernel hosts
-def translateProgram(source: str, program: Program, app_consts: List[Const], force_soa: bool = False) -> str:
+def translateProgram(source: str, program: Program, app_consts: List[Const], args: Dict[str,Any], force_soa: bool = False) -> str:
     buffer = SourceBuffer(source)
 
     # 1. Update const calls
@@ -125,7 +125,7 @@ def translateProgram(source: str, program: Program, app_consts: List[Const], for
 
 
 # Augment source program to use generated kernel hosts
-def translateProgramHLS(source: str, program: Program, app_consts: List[Const], force_soa: bool = False) -> str:
+def translateProgramHLS(source: str, program: Program, app_consts: List[Const], args: Dict[str,Any], force_soa: bool = False) -> str:
     buffer = SourceBuffer(source)
 
     # 1. Update const calls
@@ -303,8 +303,17 @@ def translateProgramHLS(source: str, program: Program, app_consts: List[Const], 
 
     if buffer.search(r'\s* ops_init\s*\('):
         index = buffer.search(r'\s* ops_init\s*\(')
-        buffer.update(index, '\tops_init_backend(argc, argv);\n')
-
+        
+        if "device_id" in args:
+            device_id = args["device_id"]
+        else:
+            device_id = 0
+        
+        if device_id == 0:
+            buffer.update(index, '\tops_init_backend(argc, argv);\n')
+        else:
+            buffer.update(index, f'\tops_init_backend(argc, argv, {device_id});\n')
+            
     # 6. Update ops_exit
     if buffer.search(r'\s*ops_exit\s*\('):
         index = buffer.search(r'\s*ops_exit\s*\(')

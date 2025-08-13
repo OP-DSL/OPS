@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from pathlib import Path
-from typing import Any, FrozenSet, List, Optional, Set
+from typing import Any, FrozenSet, List, Optional, Set, Dict
 
 from util import Findable
 from store import Application, Program
@@ -40,7 +40,7 @@ class Lang(Findable):
         pass
 
     @abstractmethod
-    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], app_consts: List[Const], force_soa: bool, offload_pragma_flag_dict = {}) -> str:
+    def translateProgram(self, program: Program, include_dirs: Set[Path], defines: List[str], app_consts: List[Const], config: Dict[str,Any], force_soa: bool, offload_pragma_flag_dict = {}) -> str:
         pass
 
     @abstractmethod

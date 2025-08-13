@@ -295,21 +295,27 @@ public:
     {% endif %}
 
     //  *** data read write boundary definitions ****
-    /*{% for arg in lh.args|ops_dat|ops_read_or_rw %}
-        {% if lh.ndim == 1 %}
-            {% set base_offset = widen_read_stencil_desc.widen_stencil.base_point.x - widen_stencil_disc_map[arg.stencil_ptr].widen_stencil.base_point.x %}
-        unsigned int arg{{arg.id}}_read_lb_itr = {{base_offset}};
-        unsigned int arg{{arg.id}}_read_ub_itr = {{base_offset}} + stencilConfig.grid_size[0];
-        {% elif lh.ndim == 2 %}
-            {% set base_offset = widen_read_stencil_desc.widen_stencil.base_point.y - widen_stencil_disc_map[arg.stencil_ptr].widen_stencil.base_point.y %}
-        unsigned int arg{{arg.id}}_read_lb_itr = {{base_offset}} * stencilConfig.grid_size[0];
-        unsigned int arg{{arg.id}}_read_ub_itr = ({{base_offset}} + stencilConfig.grid_size[1]) * stencilConfig.grid_size[0];
-        {% else %}
-            {% set base_offset = widen_read_stencil_desc.widen_stencil.base_point.z - widen_stencil_disc_map[arg.stencil_ptr].widen_stencil.base_point.z %}
-        unsigned int arg{{arg.id}}_read_lb_itr = {{base_offset}} * stencilConfig.grid_size[0] * stencilConfig.grid_size[1];
-        unsigned int arg{{arg.id}}_read_ub_itr = ({{base_offset}} + stencilConfig.grid_size[2]) * stencilConfig.grid_size[1] * stencilConfig.grid_size[0];
-        {% endif %}
-    {% endfor %}*/
+    {% set processed_stencil_ptrs = [] %}
+        {% for arg in lh.args|ops_dat|ops_read_or_rw %}
+            {% if arg.stencil_ptr not in processed_stencil_ptrs %}
+                {% set _ = processed_stencil_ptrs.append(arg.stencil_ptr) %}
+                {% if lh.ndim == 1 %}
+                    {% set base_offset = widen_read_stencil_desc.widen_stencil.base_point.x - widen_stencil_disc_map[arg.stencil_ptr].widen_stencil.base_point.x %}
+            unsigned int {{arg.stencil_ptr}}_read_lb_itr = {{base_offset}};
+            unsigned int {{arg.stencil_ptr}}_read_ub_itr = {{base_offset}} + stencilConfig.grid_size[0];
+                {% elif lh.ndim == 2 %}
+                    {% set base_offset = widen_read_stencil_desc.widen_stencil.base_point.y - widen_stencil_disc_map[arg.stencil_ptr].widen_stencil.base_point.y %}
+            unsigned int {{arg.stencil_ptr}}_read_lb_itr = {{base_offset}} * stencilConfig.grid_size[0];
+            unsigned int {{arg.stencil_ptr}}_read_ub_itr = ({{base_offset}} + stencilConfig.grid_size[1]) * stencilConfig.grid_size[0];
+                {% else %}
+                    {% set base_offset = widen_read_stencil_desc.widen_stencil.base_point.z - widen_stencil_disc_map[arg.stencil_ptr].widen_stencil.base_point.z %}
+            unsigned int {{arg.stencil_ptr}}_read_lb_itr = {{base_offset}} * stencilConfig.grid_size[0] * stencilConfig.grid_size[1];
+            unsigned int {{arg.stencil_ptr}}_read_ub_itr = ({{base_offset}} + stencilConfig.grid_size[2]) * stencilConfig.grid_size[1] * stencilConfig.grid_size[0];
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+
+        /*
 
     {% if lh.ndim == 1 %}
         unsigned int read_lb_itr = 0;
@@ -321,7 +327,7 @@ public:
         unsigned int read_lb_itr = 0;
         unsigned int read_ub_itr = stencilConfig.grid_size[2] * stencilConfig.grid_size[1] * stencilConfig.grid_size[0];
     {% endif %}
-
+    */
     //  *** Read & write widen temporaries ****
     {% for arg in lh.args|ops_dat %}
     // arg{{arg.id}}({{lh.dats[arg.dat_id].ptr}})
@@ -462,19 +468,31 @@ public:
                 else if (cond_x_terminate && cond_y_terminate)
                     k++;
     {% endif %}
+           {% set processed_stencil_ptrs = [] %}
+        {% for arg in lh.args|ops_dat|ops_read_or_rw %}
+            {% if arg.stencil_ptr not in processed_stencil_ptrs %}
+                {% set _ = processed_stencil_ptrs.append(arg.stencil_ptr) %}
+                    bool {{arg.stencil_ptr}}_read_cond = (reg_itr < {{arg.stencil_ptr}}_read_ub_itr) and (reg_itr >= {{arg.stencil_ptr}}_read_lb_itr);
+            {% endif %}
+        {% endfor %}
+                /*    bool read_cond  =  (reg_itr < read_ub_itr) and (reg_itr >= read_lb_itr); */
 
-    /*{% for arg in lh.args|ops_dat|ops_read_or_rw %}
-                bool arg{{arg.id}}_read_cond = (reg_itr < arg{{arg.id}}_read_ub_itr) and (reg_itr >= arg{{arg.id}}_read_lb_itr);
-    {% endfor %}*/
-                bool read_cond  =  (reg_itr < read_ub_itr) and (reg_itr >= read_lb_itr);
-
-                if (read_cond)
-                {
-    {% for arg in lh.args|ops_dat|ops_read_or_rw %}
-                
-                    arg{{arg.id}}_read_val = arg{{arg.id}}_rd_buffer.read();
-    {% endfor %}
-                }
+        {% for stencil_ptr in lh.get_unique_read_stencil_names() %}
+            {% if get_read_args_from_stencil(stencil_ptr, lh) %}
+                    if ({{stencil_ptr}}_read_cond)
+                    {
+                {% for arg in get_read_args_from_stencil(stencil_ptr, lh) %}
+                        arg{{arg.id}}_read_val = arg{{arg.id}}_rd_buffer.read();
+                {% endfor %}
+                    }
+            {% endif %}    
+        {% endfor %}
+                    /*if (read_cond)
+                    {
+        {% for arg in lh.args|ops_dat|ops_read_or_rw %}
+                        arg{{arg.id}}_read_val = arg{{arg.id}}_rd_buffer.read();
+        {% endfor %}
+                    }*/
 
     {% for arg in lh.args|ops_dat|ops_read_or_rw %}
         {% for chain in widen_stencil_disc_map[arg.stencil_ptr].chains %}                

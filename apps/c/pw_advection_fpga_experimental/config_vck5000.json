@@ -1,10 +1,10 @@
 {
     "grouped" : false,
-    "SLR_count" : 3,
+    "SLR_count" : 1,
     "device" : 7,
     "vector_factor" : 8,
     "mem_vector_factor": 16,
-    "iter_par_factor": 1,
+    "iter_par_factor": 4,
     "stencil_type" : "float",
     "data_width" : 32,
     "mem_data_width" : 32,
@@ -17,5 +17,5 @@
     "ops_max_dim" : 3,
     "axis_interconnect_buff_size" : 16,
     "datamover_mode" : 2,
-    "platform" : "u280"
+    "platform" : "vck5000"
 }

@@ -4,12 +4,14 @@ FC        := ftn
 
 CCFLAGS   := -O3 -std=c++17 -g -fPIC #-ffp=3 -fsanitize=undefined
 CXXFLAGS  := $(CCFLAGS) #-fopenmp
+
 FFLAGS    := -O3 -g -fopenmp -M 878 -f free
 #-M 878 will disable ftn-878 warning message - module named <name> has already been directly or indirectly use 
 #CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\) -D__location__\(a\)=__annotate__\(a\) -DCUDARTAPI=
 
 FMODS         := -J$(F_INC_MOD)
 FMODS_OMPOFFLOAD    := -J$(F_INC_MOD)/ompoffload
+FMODS_F2C_HIP    := -J$(F_INC_MOD)/f2c_hip
 
 MPI_INSTALL_PATH = $(CRAY_MPICH_DIR)
 
