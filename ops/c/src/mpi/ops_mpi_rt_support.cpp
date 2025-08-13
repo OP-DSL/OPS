@@ -789,6 +789,7 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
                   val = INFINITY_int;
                 }
                 memcpy(args[i].dat->data, &val, args[i].dat->mem);
+                args[i].dat->dirty_hd = OPS_HOST;
               }
               ops_lowdim_reduction_int(args[i].dat, edat_prev_acc[args[i].dat->index]);
             }
@@ -808,6 +809,7 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
                   val = INFINITY_float;
                 }
                 memcpy(args[i].dat->data, &val, args[i].dat->mem);
+                args[i].dat->dirty_hd = OPS_HOST;
               }
               ops_lowdim_reduction_float(args[i].dat, edat_prev_acc[args[i].dat->index]);
             }
@@ -827,6 +829,7 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
                   val = INFINITY_double;
                 }
                 memcpy(args[i].dat->data, &val, args[i].dat->mem);
+                args[i].dat->dirty_hd = OPS_HOST;
               }
               ops_lowdim_reduction_double(args[i].dat, edat_prev_acc[args[i].dat->index]);
             }
@@ -1329,6 +1332,19 @@ void ops_update_pencil(ops_dat dat, int *range){
             strcmp(dat->type, "integer(4)") == 0 ||
             strcmp(dat->type, "integer(kind=4)") == 0)
         {
+          if(!executed_locally) {
+            ops_get_data(dat);
+            int val;
+            if (edat_prev_acc[dat->index] == OPS_INC){
+              val = ZERO_int;
+            }  else if (edat_prev_acc[dat->index] == OPS_MAX){
+              val = -INFINITY_int;
+            } else if (edat_prev_acc[dat->index] == OPS_MIN){
+              val = INFINITY_int;
+            }
+            memcpy(dat->data, &val, dat->mem);
+            dat->dirty_hd = OPS_HOST;
+          }
           ops_broadcast_pencil_int(dat, source_rank, i);
         }
         else if (strcmp(dat->type, "float") == 0 ||
@@ -1336,6 +1352,19 @@ void ops_update_pencil(ops_dat dat, int *range){
                 strcmp(dat->type, "real(4)") == 0 ||
                 strcmp(dat->type, "real(kind=4)") == 0)
         {
+          if(!executed_locally) {
+            ops_get_data(dat);
+            float val;
+            if (edat_prev_acc[dat->index] == OPS_INC){
+                  val = ZERO_float;
+            }  else if (edat_prev_acc[dat->index] == OPS_MAX){
+                  val = -INFINITY_float;
+            } else if (edat_prev_acc[dat->index] == OPS_MIN){
+                  val = INFINITY_float;
+            }
+            memcpy(dat->data, &val, dat->mem);
+            dat->dirty_hd = OPS_HOST;
+          }
           ops_broadcast_pencil_float(dat, source_rank, i);
         }
         else if (strcmp(dat->type, "double") == 0 ||
@@ -1343,6 +1372,19 @@ void ops_update_pencil(ops_dat dat, int *range){
                 strcmp(dat->type, "real(kind=8)") == 0 ||
                 strcmp(dat->type, "double precision") == 0)
         {
+          if(!executed_locally) {
+            ops_get_data(dat);
+            double val;
+            if (edat_prev_acc[dat->index] == OPS_INC){
+              val = ZERO_double;
+            }  else if (edat_prev_acc[dat->index] == OPS_MAX){
+              val = -INFINITY_double;
+            } else if (edat_prev_acc[dat->index] == OPS_MIN){
+              val = INFINITY_double;
+            }
+            memcpy(dat->data, &val, dat->mem);
+            dat->dirty_hd = OPS_HOST;
+          }
           ops_broadcast_pencil_double(dat, source_rank, i);
         }
         else if (strcmp(dat->type, "char") == 0)
