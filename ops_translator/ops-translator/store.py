@@ -183,6 +183,7 @@ class Program:
 class Application:
     programs: List[Program] = field(default_factory=list)
     global_dim: Optional[int] = None
+    consts_module: Any = None
 
     def __str__(self) -> str:
         if len(self.programs) > 0:

@@ -241,9 +241,9 @@ All data and parallelisation is now handed to OPS. We can now also compile the d
 
 Now that the developer versions of our code work, it’s time to generate code.  On the console, type: 
 ```
-$OPSINSTALLPATH/../ops_translator/c/ops.py laplace2d.cpp
+python3 $OPS_INSTALL_PATH/../ops_translator/ops-translator -I $OPS_INSTALL_PATH/c/include/ --file_paths laplace2d.cpp
 ```
-We have provided a Makefile which can use several different compilers (intel, cray, pgi, clang), we suggest modifying it for your own applications. Try building CUDA, OpenMP, MPI+CUDA, MPI+OpenMP, and other versions of the code. You can take a look at the generated kernels for different parallelisations under the appropriate subfolders. 
+We have provided a Makefile which can use several different compilers (gnu, intel, cray, pgi, clang rtc.), we suggest modifying it for your own applications. Try building CUDA, OpenMP, MPI+CUDA, MPI+OpenMP, and other versions of the code. You can take a look at the generated kernels for different parallelisations under the appropriate subfolders. 
 
 If you add the−`OPS_DIAGS=2` runtime flag, at the end of execution, OPS will report timings and achieved bandwidth for each of your kernels. For more options, see [Runtime Flags and Options](https://ops-dsl.readthedocs.io/en/markdowndocdev/devanapp.html#runtime-flags-and-options).
 
@@ -259,6 +259,17 @@ OPS will generate and compile a large number of different versions.
 * `laplace2d_cuda`, `laplace2d_hip`, `laplace2d_ompoffload`, `laplace2d_sycl` : implementations targeting GPUs`*`.
 `*` The generated code (CUDA, HIP, OpenMP Offload, SYCL) is dependent on the compilation environment setup. Ensure that the appropriate compiler flags, libraries, and toolchains for the desired parallelization model are correctly configured during the build process. MPI versions can also be generated when an appropriate MPI compiler (e.g., mpicc, mpicxx) is set in the build environment.
 
+
+## Re-engineering Fortran Applications
+Similar steps can be followed to re-engineer Fortran applications using the OPS API. A detailed, step-by-step conversion tutorial is available in the `OPS/apps/fortran/laplace2dtutorial` directory.
+
+In addition to the standard CPU targets, OPS also enables GPU code generation for Fortran applications. Specifically, OPS can generate:
+
+* CUDA Fortran kernels,
+* CUDA C kernels via Fortran-to-C bindings, and
+* HIP C kernels, also through Fortran-to-C bindings.
+
+The automatic code generation framework that enables F90-to-CUDA/HIP translation is a distinctive capability of OPS, providing seamless support for GPU acceleration of Fortran applications. Despite the lack of direct HIP support for Fortran, OPS leverages Fortran-to-C bindings to generate HIP C kernels, ensuring portability across both NVIDIA and AMD GPU architectures. It establishes a robust and portable toolchain for deploying large-scale Fortran applications on modern heterogeneous architectures.
 
 ## Optimizations - general
 Try the following performance tuning options

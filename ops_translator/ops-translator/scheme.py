@@ -21,6 +21,7 @@ class Scheme(Findable):
     target: Target
 
     loop_host_template: Path
+    loop_host_f2c_template: Optional[Path]
     master_kernel_template: Optional[Path]
 
     def __str__(self) -> str:
@@ -93,7 +94,7 @@ class Scheme(Findable):
         app: Application,
         kernel_idx: int,
         force_soa: bool
-    ) -> Tuple[str, str]:
+    ) -> Tuple[str, str, str]:
         # Load the loop host template
         template = env.get_template(str(self.loop_host_template))
         #extention = self.loop_host_template.suffixes[-2][1:]
@@ -149,8 +150,64 @@ class Scheme(Findable):
                 flat_parallel=flat_parallel,
                 ops_cpu=ops_cpu
             ),
-            self.loop_kernel_extension
+            self.loop_kernel_extension, kernel_func
         )
+
+
+    def genF2CLoopHost(
+        self,
+        include_dirs: Set[Path],
+        defines: List[str],
+        env: Environment,
+        loop: ops.Loop,
+        program: Program,
+        app: Application,
+        kernel_idx: int,
+        force_soa: bool,
+        kernel_func: str
+    ) -> Tuple[str, str]:
+
+        template = env.get_template(str(self.loop_host_f2c_template))
+
+        kp_obj = KernelProcess()
+        kernel_func = kp_obj.clean_kernel_func_text(kernel_func)
+
+        if(self.target.name == "f2c_cuda"):
+            kernel_func = kp_obj.cuda_complex_numbers(kernel_func)
+
+        if(self.target.name == "f2c_cuda" or self.target.name == "f2c_hip"):
+            kernel_func = kp_obj.comment_stdcout(kernel_func)
+
+        #TODO : Complex arguments in HIP
+
+        kernel_body, args_list = kp_obj.get_kernel_body_and_arg_list(kernel_func)
+        consts_in_kernel = None
+        const_dims = None
+        flat_parallel = None
+        ops_cpu = None
+        intrinsic_funcs = ""
+
+        # Generalte source from the template
+        return (
+            template.render (
+                ops=ops,
+                lh=loop,
+                kernel_func=kernel_func,
+                kernel_idx=kernel_idx,
+                kernel_body=kernel_body,
+                consts_in_kernel=consts_in_kernel,
+                const_dims=const_dims,
+                args_list=args_list,
+                intrinsic_funcs=intrinsic_funcs,
+                lang=self.lang,
+                target=self.target,
+                soa_set=force_soa,
+                flat_parallel=flat_parallel,
+                ops_cpu=ops_cpu
+            ),
+            self.loop_kernel_f2c_extension
+        )
+
 
     def genMasterKernel(self, env: Environment, app: Application, user_types_file: Optional[Path], target_config: dict, force_soa: bool, outerloop_enbl: bool = False) -> Tuple[str, str]:
         if self.master_kernel_template is None:
@@ -167,6 +224,21 @@ class Scheme(Findable):
         #name = f"{self.target.name}_kernels.{extension}"
         name = f"{self.target.name}_kernels.{self.master_kernel_extension}"
 
+        const_c_type = []
+
+        if(self.target.name == "f2c_mpi_openmp" or self.target.name == "f2c_cuda" or self.target.name == "f2c_hip"):
+            for const in app.consts():
+                const_f90_type = str(const.typ).lower().strip()
+                const_f90_type.replace(" ", "")
+                if const_f90_type=="integer" or const_f90_type=="integer(4)" or const_f90_type=="integer(kind=4)":
+                    const_c_type.append("int")
+                elif const_f90_type=="integer(8)" or const_f90_type=="integer(kind=8)":
+                    const_c_type.append("int64_t")
+                elif const_f90_type=="real(4)" or const_f90_type=="real(kind=4)":
+                    const_c_type.append("float")
+                elif const_f90_type=="real" or const_f90_type=="real(8)" or const_f90_type=="real(kind=8)":
+                    const_c_type.append("double")
+
         # Generate source from the template
         return (
             template.render(
@@ -178,6 +250,7 @@ class Scheme(Findable):
                 include_extension=self.master_kernel_extension,
                 target_config=target_config,
                 soa_set=force_soa,
+                const_c_type=const_c_type,
                 outerloop_enbl=outerloop_enbl
             ),
             name
