@@ -447,9 +447,9 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
 
     config.depth = config.depth - 2
     code('#if defined(OPS_MPI) && !defined(OPS_LAZY)')
-    config.depth = config.depth + 2
-    IF('getRange(block, start_indx, end_indx, range) < 0')
-    code('return')
+    config.depth = 4
+    IF('getRange(block, start_indx, end_indx, range, dim) < 0')
+    code('RETURN')
     ENDIF()
     config.depth = config.depth - 2
     code('#elif !defined(OPS_MPI)  && !defined(OPS_LAZY)')
@@ -519,11 +519,11 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
 
     config.depth = config.depth - 2
     code('#ifndef OPS_LAZY')
-    config.depth = config.depth + 2
-    code('call ops_H_D_exchanges_host(opsArgArray,'+str(nargs)+')')
-    code('call ops_halo_exchanges(opsArgArray,'+str(nargs)+',range)')
-    code('call ops_H_D_exchanges_host(opsArgArray,'+str(nargs)+')')
-    config.depth = config.depth - 2
+    config.depth = 4
+    code('CALL ops_H_D_exchanges_host(opsArgArray, '+str(nargs)+')')
+    code('CALL ops_halo_exchanges(opsArgArray, '+str(nargs)+', range, dim)')
+    code('CALL ops_H_D_exchanges_host(opsArgArray, '+str(nargs)+')')
+    config.depth = 0
     code('#endif')
     config.depth = config.depth + 2
     code('')
@@ -552,8 +552,8 @@ def ops_fortran_gen_mpi(master, date, consts, kernels, soa_set):
     code('call ops_set_dirtybit_host(opsArgArray, '+str(nargs)+')')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
-        code('call ops_set_halo_dirtybit3(opsArg'+str(n+1)+',range)')
-    config.depth = config.depth - 2
+        code('CALL ops_set_halo_dirtybit3(opsArg'+str(n+1)+', range, dim)')
+    config.depth = 0
     code('#endif')
     config.depth = config.depth + 2
 

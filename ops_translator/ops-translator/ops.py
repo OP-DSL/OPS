@@ -1501,6 +1501,7 @@ class Loop:
     has_reductionMDIM: Optional[bool] = False
     has_argGbl: Optional[bool] = False
     iterativeLoopId: Optional[int] = -1
+    f2c_type: Optional[List[str]]
     
     def __init__(self, ast: Any, loc: Location, kernel: str, block: str, range: Range, ndim: int) -> None:
         self.ast = ast
@@ -1513,6 +1514,7 @@ class Loop:
         self.dats = []
         self.args = []
         self.stencils = []
+        self.f2c_type = []
 
     def __eq__ (self, other: Loop) -> bool:
         return self.ast == other.ast

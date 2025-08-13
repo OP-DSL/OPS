@@ -7,6 +7,60 @@ SUBROUTINE lowdim_kernel_set_val(farray, val)
 
 END SUBROUTINE lowdim_kernel_set_val
 
+SUBROUTINE lowdim_kernel_set_val_xy(farray, val)
+
+    real(kind=8), dimension(1) :: farray
+    real(kind=8), intent(in) :: val
+
+    farray(OPS_ACC1(0,0,0)) = val
+
+END SUBROUTINE lowdim_kernel_set_val_xy
+
+SUBROUTINE lowdim_kernel_set_val_xz(farray, val)
+
+    real(kind=8), dimension(1) :: farray
+    real(kind=8), intent(in) :: val
+
+    farray(OPS_ACC1(0,0,0)) = val
+
+END SUBROUTINE lowdim_kernel_set_val_xz
+
+SUBROUTINE lowdim_kernel_set_val_yz(farray, val)
+
+    real(kind=8), dimension(1) :: farray
+    real(kind=8), intent(in) :: val
+
+    farray(OPS_ACC1(0,0,0)) = val
+
+END SUBROUTINE lowdim_kernel_set_val_yz
+
+SUBROUTINE lowdim_kernel_set_val_xdir(farray, val)
+
+    real(kind=8), dimension(1) :: farray
+    real(kind=8), intent(in) :: val
+
+    farray(OPS_ACC1(0,0,0)) = val
+
+END SUBROUTINE lowdim_kernel_set_val_xdir
+
+SUBROUTINE lowdim_kernel_set_val_ydir(farray, val)
+
+    real(kind=8), dimension(1) :: farray
+    real(kind=8), intent(in) :: val
+
+    farray(OPS_ACC1(0,0,0)) = val
+
+END SUBROUTINE lowdim_kernel_set_val_ydir
+
+SUBROUTINE lowdim_kernel_set_val_zdir(farray, val)
+
+    real(kind=8), dimension(1) :: farray
+    real(kind=8), intent(in) :: val
+
+    farray(OPS_ACC1(0,0,0)) = val
+
+END SUBROUTINE lowdim_kernel_set_val_zdir
+
 SUBROUTINE lowdim_kernel_calc(dat3D,dat2D_xy,dat2D_yz,dat2D_xz,dat1D_x,dat1D_y,dat1D_z)
 
     real(kind=8), dimension(1) :: dat3D

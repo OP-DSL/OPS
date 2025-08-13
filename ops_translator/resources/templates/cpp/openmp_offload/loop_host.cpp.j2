@@ -147,13 +147,12 @@
     {% endfor %}
 {% endif %}
 
-#ifndef OPS_LAZY
 //  ==============
 //  Halo exchanges
 //  ==============
+#ifndef OPS_LAZY
     ops_H_D_exchanges_device(args, {{lh.args|length}});
     ops_halo_exchanges(args, {{lh.args|length}}, range);
-    ops_H_D_exchanges_device(args, {{lh.args|length}});
 #endif //OPS_LAZY
 
     if (block->instance->OPS_diags > 1) {

@@ -781,11 +781,11 @@ def ops_fortran_gen_mpi_cuda_process(date, consts, cur_kernel, soa_set, nk):
     code('call ops_timers_core(t1)')
     code('')
 
-    config.depth = config.depth - 2
-    code('#ifdef OPS_MPI')
-    config.depth = config.depth + 2
-    IF('getRange(block, start_indx, end_indx, range) < 0')
-    code('return')
+    config.depth = 0
+    code('#if defined(OPS_MPI) && !defined(OPS_LAZY)')
+    config.depth = 4
+    IF(' getRange(block, start_indx, end_indx, range, dim) < 0 ')
+    code('RETURN')
     ENDIF()
     config.depth = config.depth - 2
     code('#else')
@@ -944,6 +944,18 @@ def ops_fortran_gen_mpi_cuda_process(date, consts, cur_kernel, soa_set, nk):
 
 
     #halo exchange
+    config.depth = 0
+    comm('    ==============')
+    comm('    Halo exchanges')
+    comm('    ==============')
+    code('#ifndef OPS_LAZY')
+    config.depth = 4
+    code('CALL ops_H_D_exchanges_device(opsArgArray, '+str(nargs)+')')
+    code('CALL ops_halo_exchanges(opsArgArray, '+str(nargs)+', range, dim)')
+    code('CALL ops_H_D_exchanges_device(opsArgArray, '+str(nargs)+')')
+    config.depth = 0
+    code('#endif')
+    config.depth = 4
     code('')
     comm('halo exchanges')
     code('call ops_H_D_exchanges_device(opsArgArray,'+str(nargs)+')')
@@ -1032,7 +1044,9 @@ def ops_fortran_gen_mpi_cuda_process(date, consts, cur_kernel, soa_set, nk):
     code('call ops_set_dirtybit_device(opsArgArray, '+str(nargs)+')')
     for n in range (0, nargs):
       if arg_typ[n] == 'ops_arg_dat' and (accs[n] == OPS_WRITE or accs[n] == OPS_RW or accs[n] == OPS_INC):
-        code('call ops_set_halo_dirtybit3(opsArg'+str(n+1)+',range)')
+        code('CALL ops_set_halo_dirtybit3(opsArg'+str(n+1)+', range, dim)')
+    config.depth = 0
+    code('#endif')
     code('')
 
     comm('Timing and data movement')

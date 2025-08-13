@@ -19,6 +19,7 @@ class CppMPIOpenMP(Scheme):
 
     const_template = None
     loop_host_template = Path("cpp/mpi_openmp/loop_host.cpp.j2")
+    loop_host_f2c_template = None
     master_kernel_template = Path("cpp/mpi_openmp/master_kernel.cpp.j2")
 
     loop_kernel_extension = "cpp"
@@ -478,6 +479,7 @@ class CppCuda(Scheme):
 
     const_template = None
     loop_host_template = Path("cpp/cuda/loop_host.cpp.j2")
+    loop_host_f2c_template = None
     master_kernel_template = Path("cpp/cuda/master_kernel.cpp.j2")
 
     loop_kernel_extension = "cu"
@@ -506,6 +508,7 @@ class CppHip(Scheme):
 
     const_template = None
     loop_host_template = Path("cpp/cuda/loop_host.cpp.j2")
+    loop_host_f2c_template = None
     master_kernel_template = Path("cpp/cuda/master_kernel.cpp.j2")
 
     loop_kernel_extension = "cpp"
@@ -532,6 +535,7 @@ class CppOpenMPOffload(Scheme):
 
     const_template = None
     loop_host_template = Path("cpp/openmp_offload/loop_host.cpp.j2")
+    loop_host_f2c_template = None
     master_kernel_template = Path("cpp/openmp_offload/master_kernel.cpp.j2")
 
     loop_kernel_extension = "cpp"
@@ -588,6 +592,7 @@ class CppSycl(Scheme):
 
     const_template = None
     loop_host_template = Path("cpp/sycl/loop_host.cpp.j2")
+    loop_host_f2c_template = None
     master_kernel_template = Path("cpp/sycl/master_kernel.cpp.j2")
 
     loop_kernel_extension = "cpp"

@@ -1,19 +1,46 @@
 CC      := icx
 CXX       := icpx
-FC := ifort
+FC := ifx
+
 ifdef DEBUG
 	CCFLAGS   := -O0 -std=c99 -fPIC -Wall -ffloat-store -g
 	CXXFLAGS   := -O0 -fPIC -Wall -ffloat-store -g -std=c++11
 else
-	CCFLAGS   := -Ofast -march=native -std=c99 -fPIC -Wall -g -ftree-vectorize
-	CXXFLAGS   := -Ofast -march=native -fPIC -Wall -g -std=c++11
+	CCFLAGS   := -Ofast -march=native -std=c99 -fPIC -Wall -g -ftree-vectorize -fopenmp
+	CXXFLAGS   := -Ofast -march=native -fPIC -Wall -g -std=c++11 -fopenmp
 endif
 CXXLINK := -lstdc++
-FFLAGS  := $(CFLAGS) -ffree-form -ffree-line-length-none
-FMODS   := -J$(F_INC_MOD)
+FFLAGS  := -Ofast -march=native -fPIC -g -fopenmp -free -mcmodel=medium
 
-OMPFLAGS := -fiopenmp
+FMODS   := -module $(F_INC_MOD)
+FMODS_F2C_HIP     := -module $(F_INC_MOD)/f2c_hip
+
+OMPFLAGS := -fopenmp
 CXXFLAGS += $(OMPFLAGS)
 ifdef THREADED
 	THREADING_FLAGS ?= -fopenmp
 endif
+
+ifdef IEEE
+FFLAGS += -fp-model strict -fp-model source -prec-div -prec-sqrt
+endif
+
+ifeq ($(AMD_ARCH),MI100)
+HIP_ARCH=gfx908
+else
+ifeq ($(AMD_ARCH),MI200)
+#valid for ARCHER2 AMD Instinct MI210 and LUMI AMD MI250X GPU
+HIP_ARCH=gfx90a
+else
+ifeq ($(AMD_ARCH),MI300X)
+HIP_ARCH=gfx942
+endif
+endif
+endif
+
+HIPCC=hipcc
+HIPMPICPP=hipcc
+# -D__HIP_PLATFORM_AMD__ or -D__HIP_PLATFORM_NVIDIA__ will be added to
+# HIPFLAGS from Makefile.hip based on what environment variable set, AMD_ARCH or NV_ARCH
+HIPFLAGS=-std=c++17 -isystem -march=native
+HIP_LINK=-L${HIP_INSTALL_PATH}/lib -lamdhip64
