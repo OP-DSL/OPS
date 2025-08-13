@@ -693,6 +693,52 @@ void ops_exchange_halo_unpacker_given(ops_dat dat, int *depths, int dim,
 
 }
 
+#define ops_lowdim_reduction_gen(type, mpi_type) \
+void ops_lowdim_reduction_##type (ops_dat dat, ops_access acc){ \
+\
+  int ndim=dat->block->dims;\
+  sub_block* sb = OPS_sub_block_list[dat->block->index];\
+\
+  if (sb->owned){\
+    for (int i = 0; i < ndim; i++){\
+      if (dat->size[i] ==1){\
+         if (OPS_instance::getOPSInstance()->OPS_gpu_direct){\
+          if (acc == OPS_INC){\
+              MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_SUM, sb->pencils[i]);\
+            } else if (acc == OPS_MAX){\
+              MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_MAX, sb->pencils[i]);\
+            } else if (acc == OPS_MIN){\
+              MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_MIN, sb->pencils[i]);\
+            } \
+            dat->dirty_hd = OPS_DEVICE;\
+          } else {\
+            ops_get_data(dat);\
+            if (acc == OPS_INC){\
+              MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_SUM, sb->pencils[i]);\
+            } else if (acc == OPS_MAX){\
+              MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_MAX, sb->pencils[i]);\
+            } else if (acc == OPS_MIN){\
+              MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_MIN, sb->pencils[i]);\
+            } \
+            dat->dirty_hd = OPS_HOST;\
+          }\
+      } \
+    }\
+  }\
+  return;\
+}
+
+ops_lowdim_reduction_gen(double, MPI_DOUBLE)
+ops_lowdim_reduction_gen(float, MPI_FLOAT)
+ops_lowdim_reduction_gen(int, MPI_INT)
+ops_lowdim_reduction_gen(char, MPI_CHAR)
+ops_lowdim_reduction_gen(short, MPI_SHORT)
+ops_lowdim_reduction_gen(long, MPI_LONG)
+ops_lowdim_reduction_gen(ll, MPI_LONG_LONG)
+ops_lowdim_reduction_gen(ull, MPI_UNSIGNED_LONG_LONG)
+ops_lowdim_reduction_gen(ul, MPI_UNSIGNED_LONG)
+ops_lowdim_reduction_gen(uint, MPI_UNSIGNED)
+
 void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
   // double c1,c2,t1,t2;
   // printf("*************** range[i] %d %d %d %d\n",range[0],range[1],range[2],
@@ -723,6 +769,123 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
           args[i].stencil->points == 1 &&
           args[i].stencil->stencil[dim] == 0)
         continue;
+
+      // lowdim data treatment
+      if (args[i].dat->e_dat && args[i].dat->size[dim] == 1) {
+        if(edat_prev_acc[args[i].dat->index] == OPS_WRITE && OPS_sub_dat_list[args[i].dat->index]->dirtybit == 1) {
+          if(edat_prev_range[args[i].dat->index][2 * dim + 0] != range_in[2 * dim + 0] ||
+             edat_prev_range[args[i].dat->index][2 * dim + 1] != range_in[2 * dim + 1]) {
+            ops_update_pencil(args[i].dat, range_in);
+            OPS_sub_dat_list[args[i].dat->index]->dirtybit = 0;    // not dirty anymore
+          }
+        } else if(edat_prev_acc[args[i].dat->index] != OPS_READ && OPS_sub_dat_list[args[i].dat->index]->dirtybit == 1) {
+          if(edat_prev_range[args[i].dat->index][2 * dim + 0] != range_in[2 * dim + 0] ||
+             edat_prev_range[args[i].dat->index][2 * dim + 1] != range_in[2 * dim + 1]) {
+
+            int local_range[2*OPS_MAX_DIM];
+            determine_local_range(dat, range_in, local_range);
+            int executed_locally = local_range[2*i+1] > local_range[2*i];
+
+            if (strcmp(dat->type, "int") == 0 ||
+                strcmp(dat->type, "int(4)") == 0 ||
+                strcmp(dat->type, "integer") == 0 ||
+                strcmp(dat->type, "integer(4)") == 0 ||
+                strcmp(dat->type, "integer(kind=4)") == 0)
+            {
+              if(!executed_locally) {
+                ops_get_data(args[i].dat);
+                int val;
+                if (edat_prev_acc[args[i].dat->index] == OPS_INC){
+                  val = ZERO_int;
+                }  else if (edat_prev_acc[args[i].dat->index] == OPS_MAX){
+                  val = -INFINITY_int;
+                } else if (edat_prev_acc[args[i].dat->index] == OPS_MIN){
+                  val = INFINITY_int;
+                }
+                memcpy(args[i].dat->data, &val, args[i].dat->mem);
+              }
+              ops_lowdim_reduction_int(args[i].dat, edat_prev_acc[args[i].dat->index]);
+            }
+            else if (strcmp(dat->type, "float") == 0 ||
+                     strcmp(dat->type, "real") == 0 ||
+                     strcmp(dat->type, "real(4)") == 0 ||
+                     strcmp(dat->type, "real(kind=4)") == 0)
+            {
+              if(!executed_locally) {
+                ops_get_data(args[i].dat);
+                float val;
+                if (edat_prev_acc[args[i].dat->index] == OPS_INC){
+                  val = ZERO_float;
+                }  else if (edat_prev_acc[args[i].dat->index] == OPS_MAX){
+                  val = -INFINITY_float;
+                } else if (edat_prev_acc[args[i].dat->index] == OPS_MIN){
+                  val = INFINITY_float;
+                }
+                memcpy(args[i].dat->data, &val, args[i].dat->mem);
+              }
+              ops_lowdim_reduction_float(args[i].dat, edat_prev_acc[args[i].dat->index]);
+            }
+            else if (strcmp(dat->type, "double") == 0 ||
+                     strcmp(dat->type, "real(8)") == 0 ||
+                     strcmp(dat->type, "real(kind=8)") == 0 ||
+                     strcmp(dat->type, "double precision") == 0)
+            {
+              if(!executed_locally) {
+                ops_get_data(args[i].dat);
+                double val;
+                if (edat_prev_acc[args[i].dat->index] == OPS_INC){
+                  val = ZERO_double;
+                }  else if (edat_prev_acc[args[i].dat->index] == OPS_MAX){
+                  val = -INFINITY_double;
+                } else if (edat_prev_acc[args[i].dat->index] == OPS_MIN){
+                  val = INFINITY_double;
+                }
+                memcpy(args[i].dat->data, &val, args[i].dat->mem);
+              }
+              ops_lowdim_reduction_double(args[i].dat, edat_prev_acc[args[i].dat->index]);
+            }
+            else if (strcmp(dat->type, "char") == 0)
+            {
+              ops_lowdim_reduction_char(args[i].dat, edat_prev_acc[args[i].dat->index]);
+            }
+	        else if (strcmp(dat->type, "short") == 0)
+            {
+              ops_lowdim_reduction_short(args[i].dat, edat_prev_acc[args[i].dat->index]);
+            }
+            else if (strcmp(dat->type, "long") == 0)
+            {
+              ops_lowdim_reduction_long(args[i].dat, edat_prev_acc[args[i].dat->index]);
+            }
+            else if (strcmp(dat->type, "long long") == 0 ||
+                     strcmp(dat->type, "ll") == 0)
+            {
+              ops_lowdim_reduction_ll(args[i].dat, edat_prev_acc[args[i].dat->index]);
+            }
+            else if (strcmp(dat->type, "unsigned long long") == 0 ||
+                     strcmp(dat->type, "ull") == 0)
+            {
+              ops_lowdim_reduction_ull(args[i].dat, edat_prev_acc[args[i].dat->index]);
+            }
+            else if (strcmp(dat->type, "unsigned long") == 0 ||
+                     strcmp(dat->type, "ul") == 0)
+            {
+              ops_lowdim_reduction_ul(args[i].dat, edat_prev_acc[args[i].dat->index]);
+            }
+            else if (strcmp(dat->type, "unsigned int") == 0 ||
+                     strcmp(dat->type, "uint") == 0)
+            {
+              ops_lowdim_reduction_uint(args[i].dat, edat_prev_acc[args[i].dat->index]);
+            }
+	        else
+            {
+              OPSException ex(OPS_NOT_IMPLEMENTED);
+              ex << "Error: Unknown data type for ops_lowdim_reduction";
+              throw ex;
+            }
+            OPS_sub_dat_list[args[i].dat->index]->dirtybit = 0;    // not dirty anymore
+          }  
+        }
+      }
 
       if (dat_ndim <= dim || dat->size[dim] <= 1)
         continue; // dimension of the sub-block is less than current dim OR has
@@ -1107,51 +1270,6 @@ void ops_execute_reduction(ops_reduction handle) {
 
 }
 
-#define ops_lowdim_reduction_gen(type, mpi_type) \
-void ops_lowdim_reduction_##type (ops_dat dat, ops_access acc){ \
-\
-  int ndim=dat->block->dims;\
-  sub_block* sb = OPS_sub_block_list[dat->block->index];\
-\
-  if (sb->owned){\
-    for (int i = 0; i < ndim; i++){\
-      if (dat->size[i] ==1){\
-         if (OPS_instance::getOPSInstance()->OPS_gpu_direct){\
-          if (acc == OPS_INC){\
-              MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_SUM, sb->pencils[i]);\
-            } else if (acc == OPS_MAX){\
-              MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_MAX, sb->pencils[i]);\
-            } else if (acc == OPS_MIN){\
-              MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_MIN, sb->pencils[i]);\
-            } \
-            dat->dirty_hd = OPS_DEVICE;\
-          } else {\
-            ops_get_data(dat);\
-            if (acc == OPS_INC){\
-              MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_SUM, sb->pencils[i]);\
-            } else if (acc == OPS_MAX){\
-              MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_MAX, sb->pencils[i]);\
-            } else if (acc == OPS_MIN){\
-              MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_MIN, sb->pencils[i]);\
-            } \
-            dat->dirty_hd = OPS_HOST;\
-          }\
-      } \
-    }\
-  }\
-  return;\
-}
-
-ops_lowdim_reduction_gen(double, MPI_DOUBLE)
-ops_lowdim_reduction_gen(float, MPI_FLOAT)
-ops_lowdim_reduction_gen(int, MPI_INT)
-ops_lowdim_reduction_gen(char, MPI_CHAR)
-ops_lowdim_reduction_gen(short, MPI_SHORT)
-ops_lowdim_reduction_gen(long, MPI_LONG)
-ops_lowdim_reduction_gen(ll, MPI_LONG_LONG)
-ops_lowdim_reduction_gen(ull, MPI_UNSIGNED_LONG_LONG)
-ops_lowdim_reduction_gen(ul, MPI_UNSIGNED_LONG)
-ops_lowdim_reduction_gen(uint, MPI_UNSIGNED)
 
 #define ops_broadcast_pencil_gen(type, mpi_type) \
 void ops_broadcast_pencil_##type(ops_dat dat, int source_rank, int dim){\
@@ -1313,70 +1431,15 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
 
   for (int dim = 0; dim < ndim; dim++) {
     if (dat->e_dat && dat->size[dim] == 1){
-      if (arg->acc == OPS_WRITE) 
-        ops_update_pencil(dat, iter_range);
-      else if (dat->type != OPS_READ )
-        if (strcmp(dat->type, "int") == 0 ||
-            strcmp(dat->type, "int(4)") == 0 ||
-            strcmp(dat->type, "integer") == 0 ||
-            strcmp(dat->type, "integer(4)") == 0 ||
-            strcmp(dat->type, "integer(kind=4)") == 0)
-        {
-          ops_lowdim_reduction_int(dat, arg->acc);
+      if (arg->acc != OPS_READ) {
+        for (int dim2 = 0; dim2 < ndim; dim2++) {
+          edat_prev_range[dat->index][2 * dim2 + 0] = iter_range[2 * dim2 + 0];
+          edat_prev_range[dat->index][2 * dim2 + 1] = iter_range[2 * dim2 + 1];
         }
-        else if (strcmp(dat->type, "float") == 0 ||
-                strcmp(dat->type, "real") == 0 ||
-                strcmp(dat->type, "real(4)") == 0 ||
-                strcmp(dat->type, "real(kind=4)") == 0)
-        {
-          ops_lowdim_reduction_float(dat, arg->acc);
-        }
-        else if (strcmp(dat->type, "double") == 0 ||
-                strcmp(dat->type, "real(8)") == 0 ||
-                strcmp(dat->type, "real(kind=8)") == 0 ||
-                strcmp(dat->type, "double precision") == 0)
-        {
-          ops_lowdim_reduction_double(dat, arg->acc);
-        }
-        else if (strcmp(dat->type, "char") == 0)
-        {
-          ops_lowdim_reduction_char(dat, arg->acc);
-        }
-        else if (strcmp(dat->type, "short") == 0)
-        {
-          ops_lowdim_reduction_short(dat, arg->acc);
-        }
-        else if (strcmp(dat->type, "long") == 0)
-        {
-          ops_lowdim_reduction_long(dat, arg->acc);
-        }
-        else if (strcmp(dat->type, "long long") == 0 ||
-                strcmp(dat->type, "ll") == 0)
-        {
-          ops_lowdim_reduction_ll(dat, arg->acc);
-        }
-        else if (strcmp(dat->type, "unsigned long long") == 0 ||
-                strcmp(dat->type, "ull") == 0)
-        {
-          ops_lowdim_reduction_ull(dat, arg->acc);
-        }
-        else if (strcmp(dat->type, "unsigned long") == 0 ||
-                strcmp(dat->type, "ul") == 0)
-        {
-          ops_lowdim_reduction_ul(dat, arg->acc);
-        }
-        else if (strcmp(dat->type, "unsigned int") == 0 ||
-                strcmp(dat->type, "uint") == 0)
-        {
-          ops_lowdim_reduction_uint(dat, arg->acc);
-        }
-        else
-        {
-          OPSException ex(OPS_NOT_IMPLEMENTED);
-          ex << "Error: Unknown data type for ops_lowdim_reduction";
-          throw ex;
-        }
-      break;
+        edat_prev_acc[dat->index] = arg->acc;
+        sd->dirtybit = 1;
+        break;
+      }
     } 
   }
 
