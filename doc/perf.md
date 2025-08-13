@@ -50,5 +50,5 @@ The CUDA (and HIP) thread block sizes can be controlled by setting
 the ``OPS_BLOCK_SIZE_X``, ``OPS_BLOCK_SIZE_Y``, and ``OPS_BLOCK_SIZE_Z`` runtime
 arguments. For example,
 ```bash
-./cloverleaf_cuda OPS_BLOCK_SIZE_X=
+./cloverleaf_cuda OPS_BLOCK_SIZE_X==64 OPS_BLOCK_SIZE_Y=4
 
