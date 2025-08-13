@@ -182,6 +182,9 @@ extern sub_dat_list *OPS_sub_dat_list;
 extern ops_mpi_halo *OPS_mpi_halo_list;
 extern ops_mpi_halo_group *OPS_mpi_halo_group_list;
 
+// for lowdim
+extern std::vector<std::vector<int> > edat_prev_range;
+extern std::vector<ops_access >       edat_prev_acc; 
 
 extern double ops_gather_time;
 extern double ops_scatter_time;

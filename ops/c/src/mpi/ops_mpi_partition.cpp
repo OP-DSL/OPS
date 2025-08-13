@@ -54,6 +54,9 @@ extern int ops_buffer_recv_2_size;
 extern int *mpi_neigh_size;
 extern char *OPS_checkpointing_dup_buffer;
 
+std::vector<std::vector<int> > edat_prev_range;
+std::vector<ops_access >       edat_prev_acc;
+
 MPI_Comm OPS_MPI_GLOBAL; // comm world
 ops_mpi_halo *OPS_mpi_halo_list = NULL;
 ops_mpi_halo_group *OPS_mpi_halo_group_list = NULL;
@@ -1017,6 +1020,13 @@ void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::s
   ops_partition_halos(processes, proc_offsets, proc_disps, proc_sizes,
                       proc_dimsplit);
 
+// for lowdim treatment
+  edat_prev_range.resize(OPS_instance::getOPSInstance()->OPS_dat_index);
+  edat_prev_acc.resize(OPS_instance::getOPSInstance()->OPS_dat_index);
+
+  for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_dat_index; i++)
+    edat_prev_range[i].resize(OPS_MAX_DIM * 2);
+
   ops_free(processes);
   ops_free(proc_offsets);
   ops_free(proc_disps);
@@ -1097,6 +1107,18 @@ void ops_mpi_exit(OPS_instance *instance) {
   ops_free(mpi_neigh_size);
   if (OPS_instance::getOPSInstance()->OPS_enable_checkpointing)
     ops_free(OPS_checkpointing_dup_buffer);
+
+// lowdim treatment
+  for (auto& vec : edat_prev_range) {
+    vec.clear();
+    std::vector<int>().swap(vec);  // Force release of capacity
+  }
+
+  edat_prev_range.clear();
+  std::vector<std::vector<int>>().swap(edat_prev_range);  // Free outer vector
+
+  edat_prev_acc.clear();
+  std::vector<ops_access>().swap(edat_prev_acc);  // Free ops_access vector
 
   //printf("OPS_block_index = %d\n",OPS_block_index);
   for (int b = 0; b < OPS_instance::getOPSInstance()->OPS_block_index; b++) { // for each block

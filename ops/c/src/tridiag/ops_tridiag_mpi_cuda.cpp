@@ -39,7 +39,7 @@
 
 #include <string>
 
-#include <ops_cuda_rt_support.h>
+//#include <ops_cuda_rt_support.h>
 #include <ops_mpi_core.h>
 #include <ops_exceptions.h>
 #include <ops_tridiag.h>
