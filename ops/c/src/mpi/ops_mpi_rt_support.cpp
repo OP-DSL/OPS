@@ -764,26 +764,31 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
 
       ops_dat dat = args[i].dat;
       int dat_ndim = OPS_sub_block_list[dat->block->index]->ndim;
-      if (args[i].argtype == OPS_ARG_DAT &&
-          (args[i].acc == OPS_READ || args[i].acc == OPS_RW || args[i].acc == OPS_INC) &&
-          args[i].stencil->points == 1 &&
-          args[i].stencil->stencil[dim] == 0)
-        continue;
 
       // lowdim data treatment
       if (args[i].dat->e_dat && args[i].dat->size[dim] == 1) {
         if(edat_prev_acc[args[i].dat->index] == OPS_WRITE && OPS_sub_dat_list[args[i].dat->index]->dirtybit == 1) {
           if(edat_prev_range[args[i].dat->index][2 * dim + 0] != range_in[2 * dim + 0] ||
              edat_prev_range[args[i].dat->index][2 * dim + 1] != range_in[2 * dim + 1]) {
-            ops_update_pencil(args[i].dat, range_in);
+            int range_prev[2*OPS_MAX_DIM];
+            for(int dim_prev = 0; dim_prev < OPS_MAX_DIM; dim_prev++) {
+              range_prev[2*dim_prev + 0] = edat_prev_range[args[i].dat->index][2 * dim + 0];
+              range_prev[2*dim_prev + 1] = edat_prev_range[args[i].dat->index][2 * dim + 1];   
+            }
+            ops_update_pencil(args[i].dat, range_prev);
             OPS_sub_dat_list[args[i].dat->index]->dirtybit = 0;    // not dirty anymore
           }
         } else if(edat_prev_acc[args[i].dat->index] != OPS_READ && OPS_sub_dat_list[args[i].dat->index]->dirtybit == 1) {
           if(edat_prev_range[args[i].dat->index][2 * dim + 0] != range_in[2 * dim + 0] ||
              edat_prev_range[args[i].dat->index][2 * dim + 1] != range_in[2 * dim + 1]) {
 
+            int range_prev[2*OPS_MAX_DIM];
+            for(int dim_prev = 0; dim_prev < OPS_MAX_DIM; dim_prev++) {
+              range_prev[2*dim_prev + 0] = edat_prev_range[args[i].dat->index][2 * dim + 0];
+              range_prev[2*dim_prev + 1] = edat_prev_range[args[i].dat->index][2 * dim + 1];
+            }
             int local_range[2*OPS_MAX_DIM];
-            determine_local_range(dat, range_in, local_range);
+            determine_local_range(dat, range_prev, local_range);
             int executed_locally = local_range[2*i+1] > local_range[2*i];
 
             if (strcmp(dat->type, "int") == 0 ||
@@ -889,6 +894,12 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
           }  
         }
       }
+
+      if (args[i].argtype == OPS_ARG_DAT &&
+          (args[i].acc == OPS_READ || args[i].acc == OPS_RW || args[i].acc == OPS_INC) &&
+          args[i].stencil->points == 1 &&
+          args[i].stencil->stencil[dim] == 0)
+        continue;
 
       if (dat_ndim <= dim || dat->size[dim] <= 1)
         continue; // dimension of the sub-block is less than current dim OR has
@@ -1346,19 +1357,6 @@ void ops_update_pencil(ops_dat dat, int *range){
             strcmp(dat->type, "integer(4)") == 0 ||
             strcmp(dat->type, "integer(kind=4)") == 0)
         {
-          if(!executed_locally) {
-            ops_get_data(dat);
-            int val;
-            if (edat_prev_acc[dat->index] == OPS_INC){
-              val = ZERO_int;
-            }  else if (edat_prev_acc[dat->index] == OPS_MAX){
-              val = -INFINITY_int;
-            } else if (edat_prev_acc[dat->index] == OPS_MIN){
-              val = INFINITY_int;
-            }
-            memcpy(dat->data, &val, dat->mem);
-            dat->dirty_hd = OPS_HOST;
-          }
           ops_broadcast_pencil_int(dat, source_rank, i);
         }
         else if (strcmp(dat->type, "float") == 0 ||
@@ -1366,19 +1364,6 @@ void ops_update_pencil(ops_dat dat, int *range){
                 strcmp(dat->type, "real(4)") == 0 ||
                 strcmp(dat->type, "real(kind=4)") == 0)
         {
-          if(!executed_locally) {
-            ops_get_data(dat);
-            float val;
-            if (edat_prev_acc[dat->index] == OPS_INC){
-                  val = ZERO_float;
-            }  else if (edat_prev_acc[dat->index] == OPS_MAX){
-                  val = -INFINITY_float;
-            } else if (edat_prev_acc[dat->index] == OPS_MIN){
-                  val = INFINITY_float;
-            }
-            memcpy(dat->data, &val, dat->mem);
-            dat->dirty_hd = OPS_HOST;
-          }
           ops_broadcast_pencil_float(dat, source_rank, i);
         }
         else if (strcmp(dat->type, "double") == 0 ||
@@ -1386,19 +1371,6 @@ void ops_update_pencil(ops_dat dat, int *range){
                 strcmp(dat->type, "real(kind=8)") == 0 ||
                 strcmp(dat->type, "double precision") == 0)
         {
-          if(!executed_locally) {
-            ops_get_data(dat);
-            double val;
-            if (edat_prev_acc[dat->index] == OPS_INC){
-              val = ZERO_double;
-            }  else if (edat_prev_acc[dat->index] == OPS_MAX){
-              val = -INFINITY_double;
-            } else if (edat_prev_acc[dat->index] == OPS_MIN){
-              val = INFINITY_double;
-            }
-            memcpy(dat->data, &val, dat->mem);
-            dat->dirty_hd = OPS_HOST;
-          }
           ops_broadcast_pencil_double(dat, source_rank, i);
         }
         else if (strcmp(dat->type, "char") == 0)
