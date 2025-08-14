@@ -254,7 +254,7 @@ OPS will generate and compile a large number of different versions.
 * `laplace2d_mpi`: MPI implementation.
 * `laplace2d_mpi_tiled`: MPI implementation optimized for halo exchanges and spatial and temporal locality.
 * `laplace2d_cuda`, `laplace2d_hip`, `laplace2d_ompoffload`, `laplace2d_sycl`: implementations targeting GPUs.
-  * **Note:* The generated code (CUDA, HIP, OpenMP Offload, SYCL) is dependent on the compilation environment setup. Ensure that the appropriate compiler flags, libraries, and toolchains for the desired parallelization model are correctly configured during the build process. MPI versions can also be generated when an appropriate MPI compiler (e.g., ``mpicc``, ``mpicxx``) is set in the build environment.
+  * `**Note**`:* The generated code (CUDA, HIP, OpenMP Offload, SYCL) is dependent on the compilation environment setup. Ensure that the appropriate compiler flags, libraries, and toolchains for the desired parallelization model are correctly configured during the build process. MPI versions can also be generated when an appropriate MPI compiler (e.g., ``mpicc``, ``mpicxx``) is set in the build environment.
 
 
 ## Re-engineering Fortran Applications
