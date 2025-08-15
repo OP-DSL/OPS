@@ -57,7 +57,7 @@ The [SYCL](https://www.khronos.org/sycl/) backend targets Intel, AMD, and NVIDIA
 
  **Supported Features**
 
-* OPS allows data to be stored and operated on in single (float), double (double), and half (__fp16 or half) precision. Support for half-precision operations may depend on the capabilities of the target hardware and backend (e.g., SYCL, CUDA, OpenMP). A test application demonstrating the use of half-precision datasets—Laplace2D—is available at `OPS/apps/c/halfprecision`.
+* `Precision Support in OPS` - OPS allows data to be stored and operated on in single (float), double (double), and half (__fp16 or half) precision. Support for half-precision operations may depend on the capabilities of the target hardware and backend (e.g., SYCL, CUDA, OpenMP). A test application demonstrating the use of half-precision datasets—Laplace2D—is available at `OPS/apps/c/halfprecision`.
 
  **Tridiagonal Solver Backend**
 
