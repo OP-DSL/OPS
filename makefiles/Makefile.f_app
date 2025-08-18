@@ -15,7 +15,7 @@ $(error APP is not set)
 endif
 
 ifndef MAIN_SRC
-$(error MAIN_SRC is not set)
+$(error MAIN_SRC is not set, please specify name of file containing fortran main (PROGRAM ...))
 endif
 
 VERBOSE=
@@ -119,16 +119,35 @@ ifneq (,$(filter f2c_sycl f2c_mpi_sycl f2c_mpi_sycl_tiled,$(TARGETS)))
 ifndef SYCL_INSTALL_PATH
 TARGETS:=$(filter-out f2c_sycl f2c_mpi_sycl f2c_mpi_sycl_tiled,$(TARGETS))
 endif
-ifdef SYCL_INSTALL_PATH
-ifeq ($(OPS_COMPILER),icx)
-# target architecture triple setting of 'nvptx64' not supported with ifx
-ifeq ($(GPU_VENDOR), NVIDIA)
-TARGETS:=$(filter-out f2c_sycl f2c_mpi_sycl f2c_mpi_sycl_tiled,$(TARGETS))
+#ifdef SYCL_INSTALL_PATH
+#ifeq ($(OPS_COMPILER),icx)
+## target architecture triple setting of 'nvptx64' not supported with ifx
+#ifeq ($(GPU_VENDOR), NVIDIA)
+#TARGETS:=$(filter-out f2c_sycl f2c_mpi_sycl f2c_mpi_sycl_tiled,$(TARGETS))
+#endif
+#ifeq ($(GPU_VENDOR), AMD)
+#TARGETS:=$(filter-out f2c_sycl f2c_mpi_sycl f2c_mpi_sycl_tiled,$(TARGETS))
+#endif
+#endif
+#endif
 endif
-ifeq ($(GPU_VENDOR), AMD)
-TARGETS:=$(filter-out f2c_sycl f2c_mpi_sycl f2c_mpi_sycl_tiled,$(TARGETS))
-endif
-endif
+
+# For generating a list removing Fortran file containing main entry from OPS_GENERATED and adding new fortran_main.F90 file to the list which is copy of OPS generated file of Fortran main, but instead of Program, it is subroutine now which will be called from main.cpp - required for building SYCL on NVIDIA or AMD GPU using icx
+
+# Pattern to match PROGRAM or END PROGRAM at start of line (case-insensitive), avoiding variables
+PROGRAM_PATTERN := '^[[:space:]]*(end[[:space:]]+)?[Pp][Rr][Oo][Gg][Rr][Aa][Mm][[:space:]]+[A-Za-z0-9_]+'
+
+# File to check
+MAIN_OPS_FILE := $(MAIN_SRC)_ops.F90
+
+# Check if MAIN_OPS_FILE contains the main program, else error
+ifneq ($(filter clean cleanall,$(MAKECMDGOALS)),)
+    # skip check
+else ifneq ($(wildcard .generated),) # only trigger when code-gen is already run
+ifeq ($(shell grep -i -q -E $(PROGRAM_PATTERN) $(MAIN_OPS_FILE) && echo yes || echo no),yes)
+    OPS_GENERATED_F2C_SYCL := $(filter-out $(MAIN_OPS_FILE),$(OPS_GENERATED)) fortran_main.F90
+else
+    $(error File $(MAIN_OPS_FILE) does not contain a valid Fortran PROGRAM/END PROGRAM. Please set MAIN_SRC correctly.)
 endif
 endif
 
@@ -561,7 +580,11 @@ F2C_SYCL_CXX_MASTER_KERNELS = f2c_sycl/f2c_sycl_kernels.cpp
 F2C_SYCL_CXX_OBJS = $(F2C_SYCL_CXX_MASTER_KERNELS:.cpp=_f2c_sycl.o)
 
 F2C_SYCL_OTHER_OBJS = $(OTHER_FILES:.F90=_f2c_sycl.o)
+ifeq ($(GPU_VENDOR), INTEL)
 F2C_SYCL_OPS_GEN_OBJS = $(OPS_GENERATED:.F90=_f2c_sycl.o)
+else
+F2C_SYCL_OPS_GEN_OBJS = $(OPS_GENERATED_F2C_SYCL:.F90=_f2c_sycl.o)
+endif
 
 $(F2C_SYCL_CXX_OBJS) : $(F2C_SYCL_CXX_MASTER_KERNELS)
 	$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -DOPS_FTN -I$(C_OPS_INC) -I. -c $< -o $@
@@ -573,14 +596,23 @@ $(APP)_f2c_sycl: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPI
 		@echo ""
 		$(foreach src, $(OTHER_FILES), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_SYCL) -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_sycl.o);)
 		$(foreach src, $(F2C_SYCL_FTN_KERNELS), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_SYCL) -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_sycl.o);)
+ifeq ($(GPU_VENDOR), INTEL)
 		$(foreach src, $(OPS_GENERATED), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_SYCL) -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_sycl.o);)
 		$(MPIF90) $(FFLAGS) $(SYCL_FLAGS) $(APP_FLAGS) -I$(C_OPS_INC) $(FMODS_F2C_SYCL) $(F2C_SYCL_CXX_OBJS) $(F2C_SYCL_OTHER_OBJS) $(F2C_SYCL_FTN_OBJS) $(F2C_SYCL_OPS_GEN_OBJS) $(APP_LIBS) $(FLINK) -lops_f2c_sycl $(F_HDF5_LIB_SEQ) -L$(SYCL_INSTALL_PATH)/lib -lsycl -o $(APP)_f2c_sycl
-
+else
+		$(foreach src, $(OPS_GENERATED_F2C_SYCL), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_SYCL) -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_sycl.o);)
+		$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -I. -c main.cpp -o main.o
+		$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC)	-I$(F_INC_MOD)/f2c_sycl main.o $(F2C_SYCL_CXX_OBJS) $(F2C_SYCL_OTHER_OBJS) $(F2C_SYCL_FTN_OBJS) $(F2C_SYCL_OPS_GEN_OBJS) $(APP_LIBS) $(FLINK) -lops_f2c_sycl -fortlib $(F_HDF5_LIB_SEQ) -L$(SYCL_INSTALL_PATH)/lib -lsycl -o $(APP)_f2c_sycl
+endif
 
 F2C_MPI_SYCL_FTN_OBJS = $(F2C_SYCL_FTN_KERNELS:.F90=_f2c_mpi_sycl.o)
 F2C_MPI_SYCL_CXX_OBJS = $(F2C_SYCL_CXX_MASTER_KERNELS:.cpp=_f2c_mpi_sycl.o)
 F2C_MPI_SYCL_OTHER_OBJS = $(OTHER_FILES:.F90=_f2c_mpi_sycl.o)
+ifeq ($(GPU_VENDOR), INTEL)
 F2C_MPI_SYCL_OPS_GEN_OBJS = $(OPS_GENERATED:.F90=_f2c_mpi_sycl.o)
+else
+F2C_MPI_SYCL_OPS_GEN_OBJS = $(OPS_GENERATED_F2C_SYCL:.F90=_f2c_mpi_sycl.o)
+endif
 
 $(F2C_MPI_SYCL_CXX_OBJS) : $(F2C_SYCL_CXX_MASTER_KERNELS)
 	$(SYCLMPICXX) $(CXXFLAGS) $(SYCL_FLAGS) -DOPS_FTN -DOPS_MPI -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c $< -o $@
@@ -591,14 +623,24 @@ $(APP)_f2c_mpi_sycl: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_C
 		@echo "Building ${APP}_f2c_mpi_sycl"
 		$(foreach src, $(OTHER_FILES), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_SYCL) -DOPS_MPI -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_sycl.o);)
 		$(foreach src, $(F2C_SYCL_FTN_KERNELS), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_SYCL) -DOPS_MPI -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_sycl.o);)
+ifeq ($(GPU_VENDOR), INTEL)
 		$(foreach src, $(OPS_GENERATED), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_SYCL) -DOPS_MPI -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_sycl.o);)
 		$(MPIF90) $(FFLAGS) $(SYCL_FLAGS) $(APP_FLAGS) -DOPS_MPI -I$(C_OPS_INC) $(FMODS_F2C_SYCL) $(I_MPI_INC) $(F2C_MPI_SYCL_CXX_OBJS) $(F2C_MPI_SYCL_OTHER_OBJS) $(F2C_MPI_SYCL_FTN_OBJS) $(F2C_MPI_SYCL_OPS_GEN_OBJS) $(APP_LIBS) $(FLINK) -lops_f2c_mpi_sycl $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_f2c_mpi_sycl
+else
+		$(foreach src, $(OPS_GENERATED_F2C_SYCL), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_SYCL) -DOPS_MPI -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_sycl.o);)
+		$(SYCLMPICXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c main.cpp -o main.o
+		$(SYCLMPICXX) $(CXXFLAGS) $(SYCL_FLAGS) -DOPS_MPI -I$(C_OPS_INC) $(I_MPI_INC) -I$(F_INC_MOD)/f2c_sycl main.o $(F2C_MPI_SYCL_CXX_OBJS) $(F2C_MPI_SYCL_OTHER_OBJS) $(F2C_MPI_SYCL_FTN_OBJS) $(F2C_MPI_SYCL_OPS_GEN_OBJS) $(APP_LIBS) $(FLINK) -lops_f2c_mpi_sycl -fortlib $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_f2c_mpi_sycl
+endif
 
 
 F2C_MPI_SYCL_TILED_FTN_OBJS = $(F2C_SYCL_FTN_KERNELS:.F90=_f2c_mpi_sycl_tiled.o)
 F2C_MPI_SYCL_TILED_CXX_OBJS = $(F2C_SYCL_CXX_MASTER_KERNELS:.cpp=_f2c_mpi_sycl_tiled.o)
 F2C_MPI_SYCL_TILED_OTHER_OBJS = $(OTHER_FILES:.F90=_f2c_mpi_sycl_tiled.o)
+ifeq ($(GPU_VENDOR), INTEL)
 F2C_MPI_SYCL_TILED_OPS_GEN_OBJS = $(OPS_GENERATED:.F90=_f2c_mpi_sycl_tiled.o)
+else
+F2C_MPI_SYCL_TILED_OPS_GEN_OBJS = $(OPS_GENERATED_F2C_SYCL:.F90=_f2c_mpi_sycl_tiled.o)
+endif
 
 $(F2C_MPI_SYCL_TILED_CXX_OBJS) : $(F2C_SYCL_CXX_MASTER_KERNELS)
 	$(SYCLMPICXX) $(CXXFLAGS) $(SYCL_FLAGS) -DOPS_FTN -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c $< -o $@
@@ -610,8 +652,14 @@ $(APP)_f2c_mpi_sycl_tiled: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$
 		@echo ""
 		$(foreach src, $(OTHER_FILES), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_SYCL) -DOPS_MPI -DOPS_LAZY -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_sycl_tiled.o);)
 		$(foreach src, $(F2C_SYCL_FTN_KERNELS), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_SYCL) -DOPS_MPI -DOPS_LAZY -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_sycl_tiled.o);)
+ifeq ($(GPU_VENDOR), INTEL)
 		$(foreach src, $(OPS_GENERATED), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_SYCL) -DOPS_MPI -DOPS_LAZY -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_sycl_tiled.o);)
 		$(MPIF90) $(FFLAGS) $(SYCL_FLAGS) $(APP_FLAGS) -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) $(FMODS_F2C_SYCL) $(I_MPI_INC) $(F2C_MPI_SYCL_TILED_CXX_OBJS) $(F2C_MPI_SYCL_TILED_OTHER_OBJS) $(F2C_MPI_SYCL_TILED_FTN_OBJS) $(F2C_MPI_SYCL_TILED_OPS_GEN_OBJS) $(APP_LIBS) $(FLINK) -lops_f2c_mpi_sycl $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_f2c_mpi_sycl_tiled
+else
+		$(foreach src, $(OPS_GENERATED_F2C_SYCL), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_SYCL) -DOPS_MPI -DOPS_LAZY -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_mpi_sycl_tiled.o);)
+		$(SYCLMPICXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -I. -DMPICH_IGNORE_CXX_SEEK $(I_MPI_INC) -c main.cpp -o main.o
+		$(SYCLMPICXX) $(CXXFLAGS) $(SYCL_FLAGS) -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) $(I_MPI_INC) -I$(F_INC_MOD)/f2c_sycl main.o $(F2C_MPI_SYCL_TILED_CXX_OBJS) $(F2C_MPI_SYCL_TILED_OTHER_OBJS) $(F2C_MPI_SYCL_TILED_FTN_OBJS) $(F2C_MPI_SYCL_TILED_OPS_GEN_OBJS) $(APP_LIBS) $(FLINK) -lops_f2c_mpi_sycl -fortlib $(F_HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) -o $(APP)_f2c_mpi_sycl_tiled
+endif
 
 #=====================================================================================================================================================================
 #
@@ -652,4 +700,4 @@ clean:
 	rm -f $(APP)_f2c_mpi_sycl
 	rm -f $(APP)_f2c_mpi_sycl_tiled
 	rm -f $(OPS_GENERATED)
-	rm -f .generated constants_list.txt constants_offload.F90
+	rm -f .generated constants_list.txt constants_offload.F90 main.cpp fortran_main.F90
