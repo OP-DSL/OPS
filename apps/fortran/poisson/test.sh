@@ -234,4 +234,40 @@ rm perf_out
 echo "All PGI complier based applications ---- PASSED"
 fi
 
+if [[ -v AMOS ]]; then
+
+echo "Testing AMD HIP complier based applications ---- "
+cd $OPS_INSTALL_PATH/c
+source ../../scripts/$SOURCE_AMD_HIP
+#make -j -B
+make clean
+make
+cd $OPS_INSTALL_PATH/../apps/c/poisson
+
+make clean
+rm -f .generated
+#make IEEE=1 -j
+make IEEE=1 poisson_hip poisson_mpi_hip #poisson_hip_tiled poisson_mpi_hip_tiled
+
+echo '============> Running HIP'
+./poisson_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running MPI+HIP'
+#mpirun --allow-run-as-root -np 2 ./poisson_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+mpirun -np 2 ./poisson_mpi_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo "All AMD HIP complier based applications ---- PASSED"
+
+fi
+
 echo "---------- Exiting Test Script "
