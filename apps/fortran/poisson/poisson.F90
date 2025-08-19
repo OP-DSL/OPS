@@ -306,9 +306,11 @@ program POISSON
         call ops_halo_transfer(u_halos)
     END IF
 
+#ifdef OPS_LAZY
     IF (mod(iter,itertile) == 0) THEN
         call ops_execute_block(blocks(1))
     END IF
+#endif
 
     DO j = 1, ngrid_y
       DO i = 1, ngrid_x
@@ -359,7 +361,9 @@ program POISSON
 
   END DO
 
+#ifdef OPS_LAZY
   call ops_execute_block(blocks(1))
+#endif
 
   !call ops_dump_to_hdf5("output.h5")
   !call ops_print_dat_to_txtfile(u(1), "poisson.dat")
