@@ -145,7 +145,7 @@ ifneq ($(filter clean cleanall,$(MAKECMDGOALS)),)
     # skip check
 else ifneq ($(wildcard .generated),) # only trigger when code-gen is already run
 ifeq ($(shell grep -i -q -E $(PROGRAM_PATTERN) $(MAIN_OPS_FILE) && echo yes || echo no),yes)
-    OPS_GENERATED_F2C_SYCL := $(filter-out $(MAIN_OPS_FILE),$(OPS_GENERATED)) fortran_main.F90
+    OPS_GENERATED_F2C_SYCL := $(filter-out $(MAIN_OPS_FILE),$(OPS_GENERATED))
 else
     $(error File $(MAIN_OPS_FILE) does not contain a valid Fortran PROGRAM/END PROGRAM. Please set MAIN_SRC correctly.)
 endif
@@ -583,6 +583,7 @@ F2C_SYCL_OTHER_OBJS = $(OTHER_FILES:.F90=_f2c_sycl.o)
 ifeq ($(GPU_VENDOR), INTEL)
 F2C_SYCL_OPS_GEN_OBJS = $(OPS_GENERATED:.F90=_f2c_sycl.o)
 else
+OPS_GENERATED_F2C_SYCL += fortran_main.F90
 F2C_SYCL_OPS_GEN_OBJS = $(OPS_GENERATED_F2C_SYCL:.F90=_f2c_sycl.o)
 endif
 
