@@ -513,6 +513,13 @@ module OPS_Fortran_Declarations
             type(c_ptr), value :: nullPtr
         end subroutine ops_execute_c
 
+        subroutine ops_execute_block_c( block ) BIND(C,name='ops_execute_block')
+            use, intrinsic :: ISO_C_BINDING
+            import :: ops_block_core
+
+            type(c_ptr), value      :: block
+        end subroutine ops_execute_block_c
+
         subroutine create_kerneldesc_and_enque( name, args, nargs, index, dim, isdevice, range, block, func) BIND(C,name='create_kerneldesc_and_enque')
             use, intrinsic :: ISO_C_BINDING
             import :: ops_block_core, ops_arg
@@ -1414,6 +1421,13 @@ module OPS_Fortran_Declarations
 
         call ops_execute_c(c_null_ptr)
     end subroutine ops_execute
+
+    subroutine ops_execute_block(block)
+        use, intrinsic :: ISO_C_BINDING
+        type(ops_block) :: block
+
+        call ops_execute_block_c(block%blockCPtr)
+    end subroutine ops_execute_block
 
     subroutine ops_fill_random_uniform( dat )
         use, intrinsic :: ISO_C_BINDING

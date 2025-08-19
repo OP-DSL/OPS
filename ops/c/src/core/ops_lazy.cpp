@@ -834,6 +834,10 @@ int ops_construct_tile_plan(OPS_instance *instance) {
 ////////////////////////////////////////////////////////////////////
 // Execute tiling plan
 ////////////////////////////////////////////////////////////////////
+void ops_execute_block(ops_block block) {
+    ops_execute(block->instance);
+}
+
 void ops_execute(OPS_instance *instance) {
 
   if(instance == NULL)

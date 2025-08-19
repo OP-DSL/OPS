@@ -1,8 +1,8 @@
-subroutine poisson_update_kernel(u2, u)
+subroutine poisson_update_kernel(inp, out)
 
-  real (kind=8), DIMENSION(1), intent(in):: u2
-  real (kind=8),  DIMENSION(1) :: u
+  real (kind=8), DIMENSION(1), intent(in):: inp
+  real (kind=8),  DIMENSION(1) :: out
 
-  u(OPS_ACC2(0,0)) = u2(OPS_ACC1(0,0))
+  out(OPS_ACC2(0,0)) = inp(OPS_ACC1(0,0))
 
 end subroutine

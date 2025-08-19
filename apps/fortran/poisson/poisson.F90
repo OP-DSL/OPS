@@ -35,11 +35,13 @@
 !
 
 ! sizes
-#define logical_size_x 200
-#define logical_size_y 200
-#define ngrid_x 2
-#define ngrid_y 2
-#define n_iter  10000
+#define logical_size_x 20
+#define logical_size_y 20
+#define ngrid_x 1
+#define ngrid_y 1
+#define n_iter  10
+#define itertile 10
+#define non_copy 0
 
 program POISSON
   use OPS_Fortran_Reference
@@ -90,7 +92,7 @@ program POISSON
 
   !ops_halos
   type(ops_halo) :: halos((2*(ngrid_x*(ngrid_y-1)+(ngrid_x-1)*ngrid_y)))
-
+  
   !ops_halo group
   type(ops_halo_group) :: u_halos
 
@@ -151,12 +153,12 @@ program POISSON
     DO i=1,ngrid_x
     size(1) = uniform_size(1)
     size(2) = uniform_size(2)
-    if ((i)*size(1)>logical_size_x) then
+    IF ((i)*size(1)>logical_size_x) THEN
       size(1) = logical_size_x - (i-1)*size(1)
-    end if
-    if ((j)*size(2)>logical_size_y) then
+    END IF
+    IF ((j)*size(2)>logical_size_y) THEN
       size(2) = logical_size_y - (j-1)*size(2)
-    end if
+    END IF
 
     write(buf,"(A6,I2,A1,I2)") "coordx",i,",",j
     call ops_decl_dat(blocks((i-1)+ngrid_x*(j-1)+1), 1, size, base, d_m, d_p, temp, coordx((i-1)+ngrid_x*(j-1)+1), "real(kind=8)", buf)
@@ -179,65 +181,75 @@ program POISSON
     END DO
   END DO
 
-  !write (*,*) "sizes", sizes
-  !write (*,*) "disps", disps
+  DO j = 1, ngrid_y
+    DO i = 1, ngrid_x
+      print *, "sizes ",sizes(2*((i-1)+ngrid_x*(j-1))+1),", ",sizes(2*((i-1)+ngrid_x*(j-1))+2)
+      print *, "disps ",disps(2*((i-1)+ngrid_x*(j-1))+1),", ",disps(2*((i-1)+ngrid_x*(j-1))+2)
+    END DO
+  END DO
 
   off = 1
   DO j = 1, ngrid_y
     DO i = 1, ngrid_x
-      if ((i-1) > 0) then
-      halo_iter(1) = 1
-      halo_iter(2) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
-      base_from(1) = sizes(2*((i-2)+ngrid_x*(j-1))+1)
-      base_from(2) = 1
-      base_to(1) = 0
-      base_to(2) = 1
-      dir(1) = 1
-      dir(2) = 2
+      IF ((i-1) .gt. 0) THEN
+        halo_iter(1) = 1
+        halo_iter(2) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
+        base_from(1) = sizes(2*((i-2)+ngrid_x*(j-1))+1)
+        base_from(2) = 1
+        base_to(1) = 0
+        base_to(2) = 1
+        dir(1) = 1
+        dir(2) = 2
 
-      !write (*,*) "in first ", i,j, halo_iter
-      !write (*,*) "in first ", i,j, base_from
-      !write (*,*) "in first ", i,j, base_to
+        !write (*,*) "in first ", i,j, halo_iter
+        !write (*,*) "in first ", i,j, base_from
+        !write (*,*) "in first ", i,j, base_to
 
-      call ops_decl_halo(u((i-2)+ngrid_x*(j-1)+1), u((i-1)+ngrid_x*(j-1)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
-      off = off + 1
-      base_from(1) = 1; base_to(1) = sizes(2*((i-1)+ngrid_x*(j-1))+1)+1
-      !write (*,*) "in first", i,j, base_from
-      !write (*,*) "in first base to", i,j, base_to
-      call ops_decl_halo(u((i-1)+ngrid_x*(j-1)+1), u((i-2)+ngrid_x*(j-1)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
-      off = off + 1
-      end if
-      if ((j-1) > 0) then
-      halo_iter(1) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
-      halo_iter(2) = 1
-      base_from(1) = 1
-      base_from(2) = sizes(2*((i-1)+ngrid_x*(j-2))+2)
-      base_to(1) = 1
-      base_to(2) = 0
-      dir(1) = 1
-      dir(2) = 2
+        call ops_decl_halo(u((i-2)+ngrid_x*(j-1)+1), u((i-1)+ngrid_x*(j-1)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
+        off = off + 1
 
-      !write (*,*) "in second", i,j, halo_iter
-      !write (*,*) "in second", i,j, base_from
-      !write (*,*) "in second", i,j, base_to
+        base_from(1) = 1; base_to(1) = sizes(2*((i-1)+ngrid_x*(j-1))+1)+1
+        !write (*,*) "in first", i,j, base_from
+        !write (*,*) "in first base to", i,j, base_to
+        call ops_decl_halo(u((i-1)+ngrid_x*(j-1)+1), u((i-2)+ngrid_x*(j-1)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
+        off = off + 1
+      END IF
 
-      call ops_decl_halo(u((i-1)+ngrid_x*(j-2)+1), u((i-1)+ngrid_x*(j-1)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
-      off = off + 1
-      base_from(2) = 1; base_to(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)+1
-      !write (*,*) "in second", i,j, base_from
-      !write (*,*) "in second base to", i,j, base_to
-      call ops_decl_halo(u((i-1)+ngrid_x*(j-1)+1), u((i-1)+ngrid_x*(j-2)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
-      off = off + 1
-      end if
-    end do
-  end do
-  if ((off-1) .NE. 2*(ngrid_x*(ngrid_y-1)+(ngrid_x-1)*ngrid_y)) then
+      IF ((j-1) .gt. 0) THEN
+        halo_iter(1) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
+        halo_iter(2) = 1
+        base_from(1) = 1
+        base_from(2) = sizes(2*((i-1)+ngrid_x*(j-2))+2)
+        base_to(1) = 1
+        base_to(2) = 0
+        dir(1) = 1
+        dir(2) = 2
+
+        !write (*,*) "in second", i,j, halo_iter
+        !write (*,*) "in second", i,j, base_from
+        !write (*,*) "in second", i,j, base_to
+
+        call ops_decl_halo(u((i-1)+ngrid_x*(j-2)+1), u((i-1)+ngrid_x*(j-1)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
+        off = off + 1
+
+        base_from(2) = 1; base_to(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)+1
+        !write (*,*) "in second", i,j, base_from
+        !write (*,*) "in second base to", i,j, base_to
+        call ops_decl_halo(u((i-1)+ngrid_x*(j-1)+1), u((i-1)+ngrid_x*(j-2)+1), halo_iter, base_from, base_to, dir, dir, halos(off))
+        off = off + 1
+      END IF
+
+    END DO
+  END DO
+
+  IF ((off-1) .ne. 2*(ngrid_x*(ngrid_y-1)+(ngrid_x-1)*ngrid_y)) THEN
     write (*,*) "Something is not right"
-  end if
+  END IF
+
   call ops_decl_halo_group((off-1),halos, u_halos)
 
-  call ops_decl_const("dx", 1, "real(8)", dx)
-  call ops_decl_const("dy", 1, "real(8)", dy)
+  call ops_decl_const("dx", 1, "real(kind=8)", dx)
+  call ops_decl_const("dy", 1, "real(kind=8)", dy)
 
   call ops_partition("")
 
@@ -257,12 +269,17 @@ program POISSON
       dispx = disps(2*((i-1)+ngrid_x*(j-1))+1)
       dispy = disps(2*((i-1)+ngrid_x*(j-1))+2)
       call ops_par_loop(poisson_populate_kernel, "poisson_populate_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
-            &  ops_arg_gbl(dispx, 1, "integer(kind=4)", OPS_READ), &
-            &  ops_arg_gbl(dispy, 1, "integer(kind=4)", OPS_READ), &
-            &  ops_arg_idx(), &
-            &  ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE), &
-            &  ops_arg_dat(f((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE), &
-            &  ops_arg_dat(ref((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE))
+                        ops_arg_gbl(dispx, 1, "integer(kind=4)", OPS_READ), &
+                        ops_arg_gbl(dispy, 1, "integer(kind=4)", OPS_READ), &
+                        ops_arg_idx(), &
+                        ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE), &
+                        ops_arg_dat(f((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE), &
+                        ops_arg_dat(ref((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE))
+
+      call ops_par_loop(poisson_update_kernel, "poisson_update_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
+                        ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1) , 1, S2D_00, "real(kind=8)", OPS_READ), &
+                        ops_arg_dat(u2((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE))
+
     END DO
   END DO
 
@@ -275,31 +292,23 @@ program POISSON
       iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
       !write(*,*) iter_range
       call ops_par_loop(poisson_initialguess_kernel, "poisson_initialguess_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
-                & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE))
+                      ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE))
 
     END DO
   END DO
+
 
   !
   ! Main iterative loop
   !
   DO iter = 1, n_iter
+    IF (ngrid_x .gt. 1 .or. ngrid_y .gt. 1) THEN
+        call ops_halo_transfer(u_halos)
+    END IF
 
-    call ops_halo_transfer(u_halos)
-
-    DO j = 1, ngrid_y
-      DO i = 1, ngrid_x
-      iter_range(1) = 1
-      iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
-      iter_range(3) = 1
-      iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
-        call ops_par_loop(poisson_stencil_kernel, "poisson_stencil_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
-                & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00_P10_M10_0P1_0M1, "real(kind=8)", OPS_READ), &
-                & ops_arg_dat(f((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_READ), &
-                & ops_arg_dat(u2((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE));
-      END DO
-    END DO
-
+    IF (mod(iter,itertile) == 0) THEN
+        call ops_execute_block(blocks(1))
+    END IF
 
     DO j = 1, ngrid_y
       DO i = 1, ngrid_x
@@ -307,13 +316,50 @@ program POISSON
         iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
         iter_range(3) = 1
         iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
-        call ops_par_loop(poisson_update_kernel, "poisson_update_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
-                & ops_arg_dat(u2((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_READ), &
-                & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1) , 1, S2D_00, "real(kind=8)", OPS_WRITE))
+
+        call ops_par_loop(poisson_stencil_kernel, "poisson_stencil_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
+                        ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00_P10_M10_0P1_0M1, "real(kind=8)", OPS_READ), &
+                        ops_arg_dat(f((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_READ), &
+                        ops_arg_dat(u2((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE));
       END DO
     END DO
 
+    IF ( non_copy .ne. 0 ) THEN
+
+      DO j = 1, ngrid_y
+        DO i = 1, ngrid_x
+          iter_range(1) = 1
+          iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
+          iter_range(3) = 1
+          iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
+
+          call ops_par_loop(poisson_stencil_kernel, "poisson_stencil_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
+                        ops_arg_dat(u2((i-1)+ngrid_x*(j-1)+1), 1, S2D_00_P10_M10_0P1_0M1, "real(kind=8)", OPS_READ), &
+                        ops_arg_dat(f((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_READ), &
+                        ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE));
+        END DO
+      END DO
+
+    ELSE
+
+      DO j = 1, ngrid_y
+        DO i = 1, ngrid_x
+          iter_range(1) = 1
+          iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
+          iter_range(3) = 1
+          iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
+
+          call ops_par_loop(poisson_update_kernel, "poisson_update_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
+                            ops_arg_dat(u2((i-1)+ngrid_x*(j-1)+1) , 1, S2D_00, "real(kind=8)", OPS_READ), &
+                            ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_WRITE))
+        END DO
+      END DO
+
+    END IF
+
   END DO
+
+  call ops_execute_block(blocks(1))
 
   !call ops_dump_to_hdf5("output.h5")
   !call ops_print_dat_to_txtfile(u(1), "poisson.dat")
@@ -327,30 +373,32 @@ program POISSON
       iter_range(2) = sizes(2*((i-1)+ngrid_x*(j-1))+1)
       iter_range(3) = 1
       iter_range(4) = sizes(2*((i-1)+ngrid_x*(j-1))+2)
+
       call ops_par_loop(poisson_error_kernel, "poisson_error_kernel", blocks((i-1)+ngrid_x*(j-1)+1), 2, iter_range, &
-              & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_READ), &
-              & ops_arg_dat(ref((i-1)+ngrid_x*(j-1)+1) , 1, S2D_00, "real(kind=8)", OPS_READ), &
-              & ops_arg_reduce(red_err, 1, "real(kind=8)", OPS_INC))
+                    & ops_arg_dat(u((i-1)+ngrid_x*(j-1)+1), 1, S2D_00, "real(kind=8)", OPS_READ), &
+                    & ops_arg_dat(ref((i-1)+ngrid_x*(j-1)+1) , 1, S2D_00, "real(kind=8)", OPS_READ), &
+                    & ops_arg_reduce(red_err, 1, "real(kind=8)", OPS_INC))
     END DO
   END DO
 
   call ops_reduction_result(red_err, err)
 
   call ops_timers(endTime)
-  !call ops_timing_output()
+  call ops_timing_output()
 
-  if (ops_is_root() .eq. 1) then
+  IF (ops_is_root() .eq. 1) THEN
     write (*,*) 'Max total runtime =', endTime - startTime,'seconds'
-    err_diff=ABS((100.0_8*(err/0.150875331209075_8))-100.0_8)
+    err_diff=ABS((100.0_8*(err/16.5173570176708_8))-100.0_8)
     write(*,'(a,e16.7)') "Total error: ", err
     write(*,'(a,e16.7,a)') "Total error is within",err_diff,"% of the expected error"
 
-    IF(err_diff.LT.0.001) THEN
+    IF(err_diff .lt. 0.001) THEN
       write(*,'(a)')"This test is considered PASSED"
     ELSE
       write(*,'(a)')"This test is considered FAILED"
     ENDIF
-  end if
+  END IF
 
   call ops_exit( )
+
 end program POISSON
