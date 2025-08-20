@@ -94,9 +94,15 @@ cd ../multiDim3D
 echo "~~~~~~~~~~~~~~~lowdim_test Fortran~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../lowdim_test
 #./test.sh #-- works -- check further as there can be issues
+echo "~~~~~~~~~~~~~~~random Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
+cd ../random
+#./test.sh #-- breaks all
+echo "~~~~~~~~~~~~~~~mblock Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
+cd ../mblock
+#./test.sh #-- breaks in cuda+tiled and sycl+tiled
 echo "~~~~~~~~~~~~~~~laplace2d Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../laplace2dtutorial/step7
-#./test.sh #-- works
+#./test.sh #-- works  
 echo "END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "  "
 echo "All Fortran application tests PASSED"
