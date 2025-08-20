@@ -92,6 +92,30 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
 rm perf_out
 
+echo '============> Running F2C SYCL'
+./laplace2d_f2c_sycl OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C MPI+SYCL'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./laplace2d_f2c_mpi_sycl OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
+echo '============> Running F2C MPI+SYCL+Tiled'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./laplace2d_f2c_mpi_sycl_tiled OPS_TILING OPS_TILING_MAXDEPTH=10 OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error" perf_out
+grep "Max total runtime" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED"; exit $rc; fi
+rm perf_out
+
 fi
 echo "All Intel classic complier based applications ---- PASSED"
 

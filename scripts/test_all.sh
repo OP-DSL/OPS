@@ -84,7 +84,7 @@ cd ../apps/fortran/shsgc
 #./test.sh #-- +tiled versions break at runtime
 echo "~~~~~~~~~~~~~~~poisson Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../poisson 
-#./test.sh #-- +tiled versions break at runtime
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim
 #./test.sh #-- works
@@ -93,7 +93,7 @@ cd ../multiDim3D
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~lowdim_test Fortran~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../lowdim_test
-#./test.sh #-- works
+#./test.sh #-- works -- check further as there can be issues
 echo "~~~~~~~~~~~~~~~laplace2d Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../laplace2dtutorial/step7
 #./test.sh #-- works
