@@ -1022,10 +1022,10 @@ void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::s
 
 // for lowdim treatment
   edat_prev_range.resize(OPS_instance::getOPSInstance()->OPS_dat_index);
-  edat_prev_acc.resize(OPS_instance::getOPSInstance()->OPS_dat_index);
+  edat_prev_acc.resize(OPS_instance::getOPSInstance()->OPS_dat_index, OPS_READ);
 
   for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_dat_index; i++)
-    edat_prev_range[i].resize(OPS_MAX_DIM * 2);
+    edat_prev_range[i].resize(OPS_MAX_DIM * 2, 0);
 
   ops_free(processes);
   ops_free(proc_offsets);

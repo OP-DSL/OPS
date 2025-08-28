@@ -215,9 +215,157 @@ void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
 }
 
 void ops_halo_exchanges(ops_arg *args, int nargs, int *range) {
-  (void)args;
-  (void)range;
-  (void)nargs;
+  // for (int dim = 0; dim < OPS_MAX_DIM; dim++) {
+  //   for (int i = 0; i < nargs; i++) {
+  //     if (args[i].argtype != OPS_ARG_DAT ||
+  //         args[i].opt == 0)
+  //       continue;
+
+  //     if(dim >= args[i].stencil->dims)
+  //       continue;
+  //     // lowdim data treatment
+  //     if (args[i].dat->e_dat && args[i].dat->size[dim] == 1) {
+  //       //if the data is being accumulated into, for the first time since the last read/broadcast or other reduction, we need to initialize it
+  //       if( (args[i].acc == OPS_INC || args[i].acc == OPS_MAX || args[i].acc == OPS_MIN) &&
+  //               edat_prev_acc[args[i].dat->index] != args[i].acc) {
+
+  //         edat_prev_acc[args[i].dat->index] = args[i].acc;
+          
+  //         if (strcmp(dat->type, "int") == 0 ||
+  //             strcmp(dat->type, "int(4)") == 0 ||
+  //             strcmp(dat->type, "integer") == 0 ||
+  //             strcmp(dat->type, "integer(4)") == 0 ||
+  //             strcmp(dat->type, "integer(kind=4)") == 0) {
+  //             int val;
+  //             if (args[i].acc == OPS_INC){
+  //               val = (int)0;
+  //             }  else if (args[i].acc == OPS_MAX){
+  //               val = std::numeric_limits<int>::lowest();
+  //             } else if (args[i].acc == OPS_MIN){
+  //               val = std::numeric_limits<int>::max();
+  //             }
+  //             std::fill((int*)args[i].dat->data, (int*)args[i].dat->data + args[i].dat->mem/sizeof(int), val);
+  //         }
+  //         else if (strcmp(dat->type, "float") == 0 ||
+  //                   strcmp(dat->type, "real") == 0 ||
+  //                   strcmp(dat->type, "real(4)") == 0 ||
+  //                   strcmp(dat->type, "real(kind=4)") == 0) {
+  //           float val;
+  //           if (args[i].acc == OPS_INC){
+  //               val = (float)0;
+  //             }  else if (args[i].acc == OPS_MAX){
+  //               val = std::numeric_limits<float>::lowest();
+  //             } else if (args[i].acc == OPS_MIN){
+  //               val = std::numeric_limits<float>::max();
+  //             }
+  //           std::fill((float*)args[i].dat->data, (float*)args[i].dat->data + args[i].dat->mem/sizeof(float), val);
+  //         }
+  //         else if (strcmp(dat->type, "double") == 0 ||
+  //                   strcmp(dat->type, "real(8)") == 0 ||
+  //                   strcmp(dat->type, "real(kind=8)") == 0 ||
+  //                   strcmp(dat->type, "double precision") == 0) {
+  //           double val;
+  //           if (args[i].acc == OPS_INC){
+  //               val = (double)0;
+  //             }  else if (args[i].acc == OPS_MAX){
+  //               val = std::numeric_limits<double>::lowest();
+  //             } else if (args[i].acc == OPS_MIN){
+  //               val = std::numeric_limits<double>::max();
+  //             }
+  //           std::fill((double*)args[i].dat->data, (double*)args[i].dat->data + args[i].dat->mem/sizeof(double), val);
+  //         }
+  //         else if (strcmp(dat->type, "char") == 0) {
+  //           char val;
+  //           if (args[i].acc == OPS_INC){
+  //               val = (char)0;
+  //             }  else if (args[i].acc == OPS_MAX){
+  //               val = std::numeric_limits<char>::lowest();
+  //             } else if (args[i].acc == OPS_MIN){
+  //               val = std::numeric_limits<char>::max();
+  //             }
+  //           std::fill((char*)args[i].dat->data, (char*)args[i].dat->data + args[i].dat->mem/sizeof(char), val);
+  //         }
+  //         else if (strcmp(dat->type, "short") == 0) {
+  //           short val;
+  //           if (args[i].acc == OPS_INC){
+  //               val = (short)0;
+  //             }  else if (args[i].acc == OPS_MAX){
+  //               val = std::numeric_limits<short>::lowest();
+  //             } else if (args[i].acc == OPS_MIN){
+  //               val = std::numeric_limits<short>::max();
+  //             }
+  //           std::fill((short*)args[i].dat->data, (short*)args[i].dat->data + args[i].dat->mem/sizeof(short), val);
+  //         }
+  //         else if (strcmp(dat->type, "long") == 0) {
+  //           long val;
+  //           if (args[i].acc == OPS_INC){
+  //               val = (long)0;
+  //             }  else if (args[i].acc == OPS_MAX){
+  //               val = std::numeric_limits<long>::lowest();
+  //             } else if (args[i].acc == OPS_MIN){
+  //               val = std::numeric_limits<long>::max();
+  //             }
+  //           std::fill((long*)args[i].dat->data, (long*)args[i].dat->data + args[i].dat->mem/sizeof(long), val);
+  //         }
+  //         else if (strcmp(dat->type, "long long") == 0 ||
+  //                   strcmp(dat->type, "ll") == 0) {
+  //           long long val;
+  //           if (args[i].acc == OPS_INC){
+  //               val = (long long)0;
+  //             }  else if (args[i].acc == OPS_MAX){
+  //               val = std::numeric_limits<long long>::lowest();
+  //             } else if (args[i].acc == OPS_MIN){
+  //               val = std::numeric_limits<long long>::max();
+  //             }
+  //           std::fill((long long*)args[i].dat->data, (long long*)args[i].dat->data + args[i].dat->mem/sizeof(long long), val);
+  //         }
+  //         else if (strcmp(dat->type, "unsigned long long") == 0 ||
+  //                   strcmp(dat->type, "ull") == 0) {
+  //           unsigned long long val;
+  //           if (args[i].acc == OPS_INC){
+  //               val = (unsigned long long)0;
+  //             }  else if (args[i].acc == OPS_MAX){
+  //               val = std::numeric_limits<unsigned long long>::lowest();
+  //             } else if (args[i].acc == OPS_MIN){
+  //               val = std::numeric_limits<unsigned long long>::max();
+  //             }
+  //           std::fill((unsigned long long*)args[i].dat->data, (unsigned long long*)args[i].dat->data + args[i].dat->mem/sizeof(unsigned long long), val);
+  //         }
+  //         else if (strcmp(dat->type, "unsigned long") == 0 ||
+  //                   strcmp(dat->type, "ul") == 0) {
+  //           unsigned long val;
+  //           if (args[i].acc == OPS_INC){
+  //               val = (unsigned long)0;
+  //             }  else if (args[i].acc == OPS_MAX){
+  //               val = std::numeric_limits<unsigned long>::lowest();
+  //             } else if (args[i].acc == OPS_MIN){
+  //               val = std::numeric_limits<unsigned long>::max();
+  //             }
+  //           std::fill((unsigned long*)args[i].dat->data, (unsigned long*)args[i].dat->data + args[i].dat->mem/sizeof(unsigned long), val);
+  //         }
+  //         else if (strcmp(dat->type, "unsigned int") == 0 ||
+  //                   strcmp(dat->type, "uint") == 0) {
+  //           unsigned int val;
+  //           if (args[i].acc == OPS_INC){
+  //               val = (unsigned int)0;
+  //             }  else if (args[i].acc == OPS_MAX){
+  //               val = std::numeric_limits<unsigned int>::lowest();
+  //             } else if (args[i].acc == OPS_MIN){
+  //               val = std::numeric_limits<unsigned int>::max();
+  //             }
+  //           std::fill((unsigned int*)args[i].dat->data, (unsigned int*)args[i].dat->data + args[i].dat->mem/sizeof(unsigned int), val);
+  //         }
+  //         else {
+  //           OPSException ex(OPS_NOT_IMPLEMENTED);
+  //           ex << "Error: Unknown data type for ops_lowdim_reduction";
+  //           throw ex;
+  //         }
+  //         ops_put_data(args[i].dat);
+  //         OPS_sub_dat_list[args[i].dat->index]->dirtybit = 1;
+  //       }
+  //     }
+  //   }
+  // }
 }
 
 void ops_mpi_reduce_float(ops_arg *args, float *data) {

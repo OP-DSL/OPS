@@ -12,6 +12,7 @@
 #include <math.h>
 #define OPS_3D
 #include "ops_seq_v2.h"
+#include "ops_mpi_core.h"
 #include "lowdim_kernels.h"
 
 
@@ -100,23 +101,9 @@ int main(int argc, char **argv)
       ops_arg_dat(dat3D, 1, S3D_000, "double", OPS_WRITE),
       ops_arg_gbl(size, 3, "int", OPS_READ),
       ops_arg_idx());
-
  
   ops_printf("Check OPS_MAX on 2D directions...\n");
-  
-  double val= -INFINITY_double;
-  
-  ops_par_loop(set_valXY, "set_valXY", block, 3, range_2D_XY,
-      ops_arg_dat(dat2D_XY, 1, S3D_000_STRID3D_XY, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
 
-  ops_par_loop(set_valYZ, "set_valYZ", block, 3, range_2D_YZ,
-      ops_arg_dat(dat2D_YZ, 1, S3D_000_STRID3D_YZ, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
-
-  ops_par_loop(set_valXZ, "set_valXZ", block, 3, range_2D_XZ,
-      ops_arg_dat(dat2D_XZ, 1, S3D_000_STRID3D_XZ, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
       
   // Reduction to lower dimension
   ops_par_loop(reduct22D_max, "reduct22D_max", block, 3, range_3D,
@@ -165,19 +152,6 @@ int main(int argc, char **argv)
 
   
   ops_printf("Check OPS_MIN on 2D directions...\n");
-  
-  val= INFINITY_double;
-  ops_par_loop(set_valXY, "set_valXY", block, 3, range_2D_XY,
-      ops_arg_dat(dat2D_XY, 1, S3D_000_STRID3D_XY, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
-
-  ops_par_loop(set_valYZ, "set_valYZ", block, 3, range_2D_YZ,
-      ops_arg_dat(dat2D_YZ, 1, S3D_000_STRID3D_YZ, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
-
-  ops_par_loop(set_valXZ, "set_valXZ", block, 3, range_2D_XZ,
-      ops_arg_dat(dat2D_XZ, 1, S3D_000_STRID3D_XZ, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
       
   // Reduction to lower dimension
   ops_par_loop(reduct22D_min, "reduct22D_min", block, 3, range_3D,
@@ -227,19 +201,6 @@ int main(int argc, char **argv)
 
   
   ops_printf("Check OPS_INC on 2D directions...\n");
-  
-  val= 0.0;
-  ops_par_loop(set_valXY, "set_valXY", block, 3, range_2D_XY,
-      ops_arg_dat(dat2D_XY, 1, S3D_000_STRID3D_XY, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
-
-  ops_par_loop(set_valYZ, "set_valYZ", block, 3, range_2D_YZ,
-      ops_arg_dat(dat2D_YZ, 1, S3D_000_STRID3D_YZ, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
-
-  ops_par_loop(set_valXZ, "set_valXZ", block, 3, range_2D_XZ,
-      ops_arg_dat(dat2D_XZ, 1, S3D_000_STRID3D_XZ, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
       
   // Reduction to lower dimension
   ops_par_loop(reduct22D_inc, "reduct22D_inc", block, 3, range_3D,
@@ -294,22 +255,6 @@ int main(int argc, char **argv)
   int range_1D_Z[] = {0, 1, 9, 10, 0, 10};
  
   ops_printf("Check OPS_MAX on 1D directions...\n");
-  
-  val= -INFINITY_double;
-
-  ops_par_loop(set_valX, "set_valX", block, 3, range_1D_X,
-      ops_arg_dat(dat1D_X, 1, S3D_000_STRID3D_X, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
-
-  ops_par_loop(set_valY, "set_valY", block, 3, range_1D_Y,
-      ops_arg_dat(dat1D_Y, 1, S3D_000_STRID3D_Y, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
-
-  ops_par_loop(set_valZ, "set_valZ", block, 3, range_1D_Z,
-      ops_arg_dat(dat1D_Z, 1, S3D_000_STRID3D_Z, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
-
-
 
   ops_par_loop(reduct21D_max, "reduct21D_max", block, 3, range_3D,
       ops_arg_dat(dat3D, 1, S3D_000, "double", OPS_READ),
@@ -353,22 +298,6 @@ int main(int argc, char **argv)
 
 
   ops_printf("Check OPS_MIN on 1D directions...\n");
-
-  val= INFINITY_double;
-
-  ops_par_loop(set_valX, "set_valX", block, 3, range_1D_X,
-      ops_arg_dat(dat1D_X, 1, S3D_000_STRID3D_X, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
-
-  ops_par_loop(set_valY, "set_valY", block, 3, range_1D_Y,
-      ops_arg_dat(dat1D_Y, 1, S3D_000_STRID3D_Y, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
-
-  ops_par_loop(set_valZ, "set_valZ", block, 3, range_1D_Z,
-      ops_arg_dat(dat1D_Z, 1, S3D_000_STRID3D_Z, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
-
-
 
   ops_par_loop(reduct21D_min, "reduct21D_min", block, 3, range_3D,
       ops_arg_dat(dat3D, 1, S3D_000, "double", OPS_READ),
@@ -415,21 +344,6 @@ int main(int argc, char **argv)
 
 
   ops_printf("Check OPS_INC on 1D directions...\n");
- 
-  val= 0.0;
-
-  ops_par_loop(set_valX, "set_valX", block, 3, range_1D_X,
-      ops_arg_dat(dat1D_X, 1, S3D_000_STRID3D_X, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
-
-  ops_par_loop(set_valY, "set_valY", block, 3, range_1D_Y,
-      ops_arg_dat(dat1D_Y, 1, S3D_000_STRID3D_Y, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
-
-  ops_par_loop(set_valZ, "set_valZ", block, 3, range_1D_Z,
-      ops_arg_dat(dat1D_Z, 1, S3D_000_STRID3D_Z, "double", OPS_WRITE),
-      ops_arg_gbl(&val, 1, "double", OPS_READ));
-
 
   ops_par_loop(reduct21D_inc, "reduct21D_inc", block, 3, range_3D,
       ops_arg_dat(dat3D, 1, S3D_000, "double", OPS_READ),
@@ -475,7 +389,7 @@ int main(int argc, char **argv)
 
   ops_printf("Check reading from strided dats...\n");
 
-  val=1.0;
+  double val=1.0;
   ops_par_loop(set_valXY_idx, "set_valXY_idx", block, 3, range_2D_XY,
       ops_arg_dat(dat2D_XY, 1, S3D_000_STRID3D_XY, "double", OPS_WRITE),
       ops_arg_gbl(&val, 1, "double", OPS_READ),
@@ -522,7 +436,8 @@ int main(int argc, char **argv)
       ops_arg_dat(dat2D_XZ, 1, S3D_000_STRID3D_XZ, "double", OPS_READ),
       ops_arg_dat(dat1D_X, 1, S3D_000_STRID3D_X, "double", OPS_READ),
       ops_arg_dat(dat1D_Y, 1, S3D_000_STRID3D_Y, "double", OPS_READ),
-      ops_arg_dat(dat1D_Z, 1, S3D_000_STRID3D_Z, "double", OPS_READ));
+      ops_arg_dat(dat1D_Z, 1, S3D_000_STRID3D_Z, "double", OPS_READ),
+      ops_arg_idx());
 
   ops_par_loop(check_3D, "check_3D", block, 3, range_3D,
       ops_arg_dat(dat3D, 1, S3D_000, "double", OPS_READ),
@@ -532,20 +447,22 @@ int main(int argc, char **argv)
 
   ops_reduction_result(reduct_err, &error_count);
 
+  char name0[80];
+  sprintf(name0, "output.h5");
+  ops_fetch_block_hdf5_file(block, name0);
+  ops_fetch_dat_hdf5_file(dat3D, name0);
+
   checkError(error_count, "check_3D");
       
 
   ops_printf("Calc done\n");
-  char name0[80];
-  sprintf(name0, "output.h5");
-  ops_fetch_block_hdf5_file(block, name0);
+  
   ops_fetch_dat_hdf5_file(dat2D_XZ, name0);
   ops_fetch_dat_hdf5_file(dat2D_XY, name0);
   ops_fetch_dat_hdf5_file(dat2D_YZ, name0);
   ops_fetch_dat_hdf5_file(dat1D_X, name0);
   ops_fetch_dat_hdf5_file(dat1D_Y, name0);
   ops_fetch_dat_hdf5_file(dat1D_Z, name0);
-  ops_fetch_dat_hdf5_file(dat3D, name0);
 
 
   ops_printf("All checks PASSED\n");
