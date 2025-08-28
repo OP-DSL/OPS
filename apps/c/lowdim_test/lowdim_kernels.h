@@ -62,6 +62,7 @@ void check2D_XY_max(const ACC<double> &dat2D, const int* sizes, const int *idx, 
     expectedValue =(sizes[2]-1)*sizes[1]*sizes[0] + sizes[0]*shifted_idx[1] + shifted_idx[0];
 
     if (dat2D(0,0,0) != expectedValue) {
+        // printf("Process %d: check2D_XY_max: expectedValue %f, got %f\n", ops_my_global_rank, expectedValue, dat2D(0,0,0));
         *error_count += 1;
     }
 }
@@ -367,7 +368,7 @@ void set_valZ_idx(ACC<double> &dat, const double *val,  const int *idx)
 
 
 void calc(ACC<double> &dat3D, const ACC<double> &dat2D_xy,  const ACC<double> &dat2D_yz, const ACC<double> &dat2D_xz,
-    const ACC<double> &dat1D_x,  const ACC<double> &dat1D_y, const ACC<double> &dat1D_z)
+    const ACC<double> &dat1D_x,  const ACC<double> &dat1D_y, const ACC<double> &dat1D_z, const int *idx)
 {
   dat3D(0,0,0) = dat2D_xy(0,0,0) +
                            dat2D_yz(0,0,0) +
@@ -375,6 +376,7 @@ void calc(ACC<double> &dat3D, const ACC<double> &dat2D_xy,  const ACC<double> &d
                            dat1D_x(0,0,0) +
                            dat1D_y(0,0,0) +
                            dat1D_z(0,0,0);
+    // printf("Process %d: calc: dat3D(%d,%d,%d) %f = %f + %f + %f + %f + %f + %f\n", ops_my_global_rank, idx[0], idx[1], idx[2], dat3D(0,0,0), dat2D_xy(0,0,0), dat2D_yz(0,0,0), dat2D_xz(0,0,0), dat1D_x(0,0,0), dat1D_y(0,0,0), dat1D_z(0,0,0));
 }
 
 
@@ -388,6 +390,7 @@ void check_3D(const ACC<double> &dat3D, const int* sizes, const int *idx, int *e
                            0.000001*idx[2];
     
     if (dat3D(0,0,0) != expectedValue) {
+        // printf("Process %d: check_3D: expectedValue %f, got %f\n", ops_my_global_rank, expectedValue, dat3D(0,0,0));
         *error_count += 1;
     }
 }

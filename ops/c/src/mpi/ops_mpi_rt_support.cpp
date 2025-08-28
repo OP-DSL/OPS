@@ -42,6 +42,8 @@
 #include <ops_mpi_core.h>
 #include <ops_exceptions.h>
 #include <cassert>
+#include <limits>
+#include <algorithm>
 
 #define AGGREGATE
 int ops_buffer_size = 0;
@@ -698,11 +700,14 @@ void ops_lowdim_reduction_##type (ops_dat dat, ops_access acc){ \
 \
   int ndim=dat->block->dims;\
   sub_block* sb = OPS_sub_block_list[dat->block->index];\
+  if (OPS_instance::getOPSInstance()->OPS_diags > 3) \
+    printf("Process %d: doing reduction on %s, acc = %d, size[2] = %d\n", ops_my_global_rank, dat->name, acc, dat->size[2]);\
 \
   if (sb->owned){\
     for (int i = 0; i < ndim; i++){\
       if (dat->size[i] ==1){\
          if (OPS_instance::getOPSInstance()->OPS_gpu_direct){\
+          ops_put_data(dat);\
           if (acc == OPS_INC){\
               MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_SUM, sb->pencils[i]);\
             } else if (acc == OPS_MAX){\
@@ -739,6 +744,68 @@ ops_lowdim_reduction_gen(ull, MPI_UNSIGNED_LONG_LONG)
 ops_lowdim_reduction_gen(ul, MPI_UNSIGNED_LONG)
 ops_lowdim_reduction_gen(uint, MPI_UNSIGNED)
 
+void ops_lowdim_reduction(ops_dat dat, ops_access acc) {
+  if (strcmp(dat->type, "int") == 0 ||
+        strcmp(dat->type, "int(4)") == 0 ||
+        strcmp(dat->type, "integer") == 0 ||
+        strcmp(dat->type, "integer(4)") == 0 ||
+        strcmp(dat->type, "integer(kind=4)") == 0) {
+    ops_lowdim_reduction_int(dat, acc);
+  }
+  else if (strcmp(dat->type, "float") == 0 ||
+            strcmp(dat->type, "real") == 0 ||
+            strcmp(dat->type, "real(4)") == 0 ||
+            strcmp(dat->type, "real(kind=4)") == 0)
+  {
+    ops_lowdim_reduction_float(dat, acc);
+  }
+  else if (strcmp(dat->type, "double") == 0 ||
+          strcmp(dat->type, "real(8)") == 0 ||
+          strcmp(dat->type, "real(kind=8)") == 0 ||
+          strcmp(dat->type, "double precision") == 0)
+  {
+    ops_lowdim_reduction_double(dat, acc);
+  }
+  else if (strcmp(dat->type, "char") == 0)
+  {
+    ops_lowdim_reduction_char(dat, acc);
+  }
+  else if (strcmp(dat->type, "short") == 0)
+  {
+    ops_lowdim_reduction_short(dat, acc);
+  }
+  else if (strcmp(dat->type, "long") == 0)
+  {
+    ops_lowdim_reduction_long(dat, acc);
+  }
+  else if (strcmp(dat->type, "long long") == 0 ||
+          strcmp(dat->type, "ll") == 0)
+  {
+    ops_lowdim_reduction_ll(dat, acc);
+  }
+  else if (strcmp(dat->type, "unsigned long long") == 0 ||
+          strcmp(dat->type, "ull") == 0)
+  {
+    ops_lowdim_reduction_ull(dat, acc);
+  }
+  else if (strcmp(dat->type, "unsigned long") == 0 ||
+          strcmp(dat->type, "ul") == 0)
+  {
+    ops_lowdim_reduction_ul(dat, acc);
+  }
+  else if (strcmp(dat->type, "unsigned int") == 0 ||
+          strcmp(dat->type, "uint") == 0)
+  {
+    ops_lowdim_reduction_uint(dat, acc);
+  }
+  else
+  {
+    OPSException ex(OPS_NOT_IMPLEMENTED);
+    ex << "Error: Unknown data type for ops_lowdim_reduction";
+    throw ex;
+  }
+}
+
 void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
   // double c1,c2,t1,t2;
   // printf("*************** range[i] %d %d %d %d\n",range[0],range[1],range[2],
@@ -755,7 +822,6 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
       send_recv_offsets[i] = 0;
     for (int i = 0; i < nargs; i++) {
       if (args[i].argtype != OPS_ARG_DAT ||
-          (args[i].acc == OPS_WRITE || args[i].acc == OPS_MAX || args[i].acc == OPS_MIN) ||
           args[i].opt == 0)
         continue;
 
@@ -767,133 +833,188 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
 
       // lowdim data treatment
       if (args[i].dat->e_dat && args[i].dat->size[dim] == 1) {
-        if(edat_prev_acc[args[i].dat->index] == OPS_WRITE && OPS_sub_dat_list[args[i].dat->index]->dirtybit == 1) {
+        // if the data is read and the previous access was write, and it wasn't broadcast, then broadcast it if needed
+        if(args[i].acc == OPS_READ &&
+           edat_prev_acc[args[i].dat->index] == OPS_WRITE &&
+           OPS_sub_dat_list[args[i].dat->index]->dirtybit == 1) {
           if(edat_prev_range[args[i].dat->index][2 * dim + 0] != range_in[2 * dim + 0] ||
              edat_prev_range[args[i].dat->index][2 * dim + 1] != range_in[2 * dim + 1]) {
             int range_prev[2*OPS_MAX_DIM];
             for(int dim_prev = 0; dim_prev < OPS_MAX_DIM; dim_prev++) {
-              range_prev[2*dim_prev + 0] = edat_prev_range[args[i].dat->index][2 * dim + 0];
-              range_prev[2*dim_prev + 1] = edat_prev_range[args[i].dat->index][2 * dim + 1];   
+              range_prev[2*dim_prev + 0] = edat_prev_range[args[i].dat->index][2 * dim_prev + 0];
+              range_prev[2*dim_prev + 1] = edat_prev_range[args[i].dat->index][2 * dim_prev + 1];   
             }
-            ops_update_pencil(args[i].dat, range_prev);
+            if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+              printf("Process %d: READ after write, on different range, on %s, broadcasting\n", ops_my_global_rank, args[i].dat->name);
+            ops_broadcast_pencil(args[i].dat, range_prev);
             OPS_sub_dat_list[args[i].dat->index]->dirtybit = 0;    // not dirty anymore
+            edat_prev_acc[args[i].dat->index] = OPS_READ;
+          } else {
+            if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+            printf("Process %d: READ after write, on same range, on %s\n", ops_my_global_rank, args[i].dat->name);
           }
-        } else if(edat_prev_acc[args[i].dat->index] != OPS_READ && OPS_sub_dat_list[args[i].dat->index]->dirtybit == 1) {
-          if(edat_prev_range[args[i].dat->index][2 * dim + 0] != range_in[2 * dim + 0] ||
-             edat_prev_range[args[i].dat->index][2 * dim + 1] != range_in[2 * dim + 1]) {
+        }
+        // if the data is read and the previous access was a reduction, then do the reduction
+        else if (args[i].acc == OPS_READ &&
+                   edat_prev_acc[args[i].dat->index] != OPS_READ &&
+                   OPS_sub_dat_list[args[i].dat->index]->dirtybit == 1) {
+          // Sanity check - we can only do reductions on lowdim data if the previous access was inc, max, or min
+          if (!(edat_prev_acc[args[i].dat->index] == OPS_INC ||
+                edat_prev_acc[args[i].dat->index] == OPS_MAX ||
+                edat_prev_acc[args[i].dat->index] == OPS_MIN)) {
+            throw OPSException(OPS_RUNTIME_ERROR, "Error: lowdim data is read and the previous access was not read, inc, max, or min");
+          }
+          if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+          printf("Process %d: READ after reduction, on %s, doing reduction\n", ops_my_global_rank, args[i].dat->name);
+          ops_lowdim_reduction(args[i].dat, edat_prev_acc[args[i].dat->index]);
+          edat_prev_acc[args[i].dat->index] = OPS_READ;
+          OPS_sub_dat_list[args[i].dat->index]->dirtybit = 0;    // not dirty anymore
 
-            int range_prev[2*OPS_MAX_DIM];
-            for(int dim_prev = 0; dim_prev < OPS_MAX_DIM; dim_prev++) {
-              range_prev[2*dim_prev + 0] = edat_prev_range[args[i].dat->index][2 * dim + 0];
-              range_prev[2*dim_prev + 1] = edat_prev_range[args[i].dat->index][2 * dim + 1];
-            }
-            int local_range[2*OPS_MAX_DIM];
-            determine_local_range(dat, range_prev, local_range);
-            int executed_locally = local_range[2*i+1] > local_range[2*i];
+        }
+        //if the data is being accumulated into, for the first time since the last read/broadcast or other reduction, we need to initialize it
+        else if( (args[i].acc == OPS_INC || args[i].acc == OPS_MAX || args[i].acc == OPS_MIN) &&
+                edat_prev_acc[args[i].dat->index] != args[i].acc) {
 
-            if (strcmp(dat->type, "int") == 0 ||
-                strcmp(dat->type, "int(4)") == 0 ||
-                strcmp(dat->type, "integer") == 0 ||
-                strcmp(dat->type, "integer(4)") == 0 ||
-                strcmp(dat->type, "integer(kind=4)") == 0)
-            {
-              if(!executed_locally) {
-                ops_get_data(args[i].dat);
-                int val;
-                if (edat_prev_acc[args[i].dat->index] == OPS_INC){
-                  val = ZERO_int;
-                }  else if (edat_prev_acc[args[i].dat->index] == OPS_MAX){
-                  val = -INFINITY_int;
-                } else if (edat_prev_acc[args[i].dat->index] == OPS_MIN){
-                  val = INFINITY_int;
-                }
-                memcpy(args[i].dat->data, &val, args[i].dat->mem);
-                args[i].dat->dirty_hd = OPS_HOST;
+          edat_prev_acc[args[i].dat->index] = args[i].acc;
+
+          if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+          printf("Process %d: first reduction, initializing %s data\n", ops_my_global_rank, args[i].dat->name);
+          if (strcmp(dat->type, "int") == 0 ||
+              strcmp(dat->type, "int(4)") == 0 ||
+              strcmp(dat->type, "integer") == 0 ||
+              strcmp(dat->type, "integer(4)") == 0 ||
+              strcmp(dat->type, "integer(kind=4)") == 0) {
+              int val = 0;
+              if (args[i].acc == OPS_INC){
+                val = (int)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<int>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<int>::max();
               }
-              ops_lowdim_reduction_int(args[i].dat, edat_prev_acc[args[i].dat->index]);
-            }
-            else if (strcmp(dat->type, "float") == 0 ||
-                     strcmp(dat->type, "real") == 0 ||
-                     strcmp(dat->type, "real(4)") == 0 ||
-                     strcmp(dat->type, "real(kind=4)") == 0)
-            {
-              if(!executed_locally) {
-                ops_get_data(args[i].dat);
-                float val;
-                if (edat_prev_acc[args[i].dat->index] == OPS_INC){
-                  val = ZERO_float;
-                }  else if (edat_prev_acc[args[i].dat->index] == OPS_MAX){
-                  val = -INFINITY_float;
-                } else if (edat_prev_acc[args[i].dat->index] == OPS_MIN){
-                  val = INFINITY_float;
-                }
-                memcpy(args[i].dat->data, &val, args[i].dat->mem);
-                args[i].dat->dirty_hd = OPS_HOST;
+              std::fill((int*)args[i].dat->data, (int*)args[i].dat->data + args[i].dat->mem/sizeof(int), val);
+          }
+          else if (strcmp(dat->type, "float") == 0 ||
+                    strcmp(dat->type, "real") == 0 ||
+                    strcmp(dat->type, "real(4)") == 0 ||
+                    strcmp(dat->type, "real(kind=4)") == 0) {
+            float val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (float)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<float>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<float>::max();
               }
-              ops_lowdim_reduction_float(args[i].dat, edat_prev_acc[args[i].dat->index]);
-            }
-            else if (strcmp(dat->type, "double") == 0 ||
-                     strcmp(dat->type, "real(8)") == 0 ||
-                     strcmp(dat->type, "real(kind=8)") == 0 ||
-                     strcmp(dat->type, "double precision") == 0)
-            {
-              if(!executed_locally) {
-                ops_get_data(args[i].dat);
-                double val;
-                if (edat_prev_acc[args[i].dat->index] == OPS_INC){
-                  val = ZERO_double;
-                }  else if (edat_prev_acc[args[i].dat->index] == OPS_MAX){
-                  val = -INFINITY_double;
-                } else if (edat_prev_acc[args[i].dat->index] == OPS_MIN){
-                  val = INFINITY_double;
-                }
-                memcpy(args[i].dat->data, &val, args[i].dat->mem);
-                args[i].dat->dirty_hd = OPS_HOST;
+            std::fill((float*)args[i].dat->data, (float*)args[i].dat->data + args[i].dat->mem/sizeof(float), val);
+          }
+          else if (strcmp(dat->type, "double") == 0 ||
+                    strcmp(dat->type, "real(8)") == 0 ||
+                    strcmp(dat->type, "real(kind=8)") == 0 ||
+                    strcmp(dat->type, "double precision") == 0) {
+            double val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (double)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<double>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<double>::max();
               }
-              ops_lowdim_reduction_double(args[i].dat, edat_prev_acc[args[i].dat->index]);
-            }
-            else if (strcmp(dat->type, "char") == 0)
-            {
-              ops_lowdim_reduction_char(args[i].dat, edat_prev_acc[args[i].dat->index]);
-            }
-	        else if (strcmp(dat->type, "short") == 0)
-            {
-              ops_lowdim_reduction_short(args[i].dat, edat_prev_acc[args[i].dat->index]);
-            }
-            else if (strcmp(dat->type, "long") == 0)
-            {
-              ops_lowdim_reduction_long(args[i].dat, edat_prev_acc[args[i].dat->index]);
-            }
-            else if (strcmp(dat->type, "long long") == 0 ||
-                     strcmp(dat->type, "ll") == 0)
-            {
-              ops_lowdim_reduction_ll(args[i].dat, edat_prev_acc[args[i].dat->index]);
-            }
-            else if (strcmp(dat->type, "unsigned long long") == 0 ||
-                     strcmp(dat->type, "ull") == 0)
-            {
-              ops_lowdim_reduction_ull(args[i].dat, edat_prev_acc[args[i].dat->index]);
-            }
-            else if (strcmp(dat->type, "unsigned long") == 0 ||
-                     strcmp(dat->type, "ul") == 0)
-            {
-              ops_lowdim_reduction_ul(args[i].dat, edat_prev_acc[args[i].dat->index]);
-            }
-            else if (strcmp(dat->type, "unsigned int") == 0 ||
-                     strcmp(dat->type, "uint") == 0)
-            {
-              ops_lowdim_reduction_uint(args[i].dat, edat_prev_acc[args[i].dat->index]);
-            }
-	        else
-            {
-              OPSException ex(OPS_NOT_IMPLEMENTED);
-              ex << "Error: Unknown data type for ops_lowdim_reduction";
-              throw ex;
-            }
-            OPS_sub_dat_list[args[i].dat->index]->dirtybit = 0;    // not dirty anymore
-          }  
+            std::fill((double*)args[i].dat->data, (double*)args[i].dat->data + args[i].dat->mem/sizeof(double), val);
+          }
+          else if (strcmp(dat->type, "char") == 0) {
+            char val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (char)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<char>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<char>::max();
+              }
+            std::fill((char*)args[i].dat->data, (char*)args[i].dat->data + args[i].dat->mem/sizeof(char), val);
+          }
+          else if (strcmp(dat->type, "short") == 0) {
+            short val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (short)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<short>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<short>::max();
+              }
+            std::fill((short*)args[i].dat->data, (short*)args[i].dat->data + args[i].dat->mem/sizeof(short), val);
+          }
+          else if (strcmp(dat->type, "long") == 0) {
+            long val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (long)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<long>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<long>::max();
+              }
+            std::fill((long*)args[i].dat->data, (long*)args[i].dat->data + args[i].dat->mem/sizeof(long), val);
+          }
+          else if (strcmp(dat->type, "long long") == 0 ||
+                    strcmp(dat->type, "ll") == 0) {
+            long long val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (long long)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<long long>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<long long>::max();
+              }
+            std::fill((long long*)args[i].dat->data, (long long*)args[i].dat->data + args[i].dat->mem/sizeof(long long), val);
+          }
+          else if (strcmp(dat->type, "unsigned long long") == 0 ||
+                    strcmp(dat->type, "ull") == 0) {
+            unsigned long long val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (unsigned long long)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<unsigned long long>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<unsigned long long>::max();
+              }
+            std::fill((unsigned long long*)args[i].dat->data, (unsigned long long*)args[i].dat->data + args[i].dat->mem/sizeof(unsigned long long), val);
+          }
+          else if (strcmp(dat->type, "unsigned long") == 0 ||
+                    strcmp(dat->type, "ul") == 0) {
+            unsigned long val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (unsigned long)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<unsigned long>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<unsigned long>::max();
+              }
+            std::fill((unsigned long*)args[i].dat->data, (unsigned long*)args[i].dat->data + args[i].dat->mem/sizeof(unsigned long), val);
+          }
+          else if (strcmp(dat->type, "unsigned int") == 0 ||
+                    strcmp(dat->type, "uint") == 0) {
+            unsigned int val = 0;
+            if (args[i].acc == OPS_INC){
+                val = (unsigned int)0;
+              }  else if (args[i].acc == OPS_MAX){
+                val = std::numeric_limits<unsigned int>::lowest();
+              } else if (args[i].acc == OPS_MIN){
+                val = std::numeric_limits<unsigned int>::max();
+              }
+            std::fill((unsigned int*)args[i].dat->data, (unsigned int*)args[i].dat->data + args[i].dat->mem/sizeof(unsigned int), val);
+          }
+          else {
+            OPSException ex(OPS_NOT_IMPLEMENTED);
+            ex << "Error: Unknown data type for ops_lowdim_reduction";
+            throw ex;
+          }
+          OPS_sub_dat_list[args[i].dat->index]->dirtybit = 1;
         }
       }
+
+      if (args[i].argtype == OPS_ARG_DAT &&
+        (args[i].acc == OPS_WRITE || args[i].acc == OPS_MAX || args[i].acc == OPS_MIN))
+        continue;
 
       if (args[i].argtype == OPS_ARG_DAT &&
           (args[i].acc == OPS_READ || args[i].acc == OPS_RW || args[i].acc == OPS_INC) &&
@@ -1311,7 +1432,7 @@ ops_broadcast_pencil_gen(ul, MPI_UNSIGNED_LONG)
 ops_broadcast_pencil_gen(uint, MPI_UNSIGNED)
 
 
-void ops_update_pencil(ops_dat dat, int *range){
+void ops_broadcast_pencil(ops_dat dat, int *range){
   int ndim=dat->block->dims;
   sub_block* sb = OPS_sub_block_list[dat->block->index];
 
@@ -1330,6 +1451,8 @@ void ops_update_pencil(ops_dat dat, int *range){
 
         //Check if I executed this particular computation
         int executed_locally = local_range[2*i+1] > local_range[2*i];
+        if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+        printf("Process %d, dim %d: ops_broadcast_pencil: executed_locally %d, range: %d %d\n", ops_my_global_rank, i, executed_locally, local_range[2*i], local_range[2*i+1]);
         int rank;
         if (executed_locally)
           MPI_Comm_rank(sb->pencils[i], &rank);
@@ -1344,13 +1467,10 @@ void ops_update_pencil(ops_dat dat, int *range){
           ex << "Error: write to low dimensional dataset could not be broadcast. ops_dat name: " << dat->name;
           throw ex;
         }
-        ////Broadcast data
-        //if (OPS_instance::getOPSInstance()->OPS_gpu_direct){
-        //  MPI_Bcast(dat->data_d, dat->mem/sizeof(double), MPI_DOUBLE, source_rank, sb->pencils[i]);
-        //} else {
-        //  MPI_Bcast(dat->data, dat->mem/sizeof(double), MPI_DOUBLE, source_rank, sb->pencils[i]);
-        //}
+        if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+        printf("Process %d: ops_broadcast_pencil: Broadcasting from rank %d\n", ops_my_global_rank, source_rank);
 
+        //Broadcast data
         if (strcmp(dat->type, "int") == 0 ||
             strcmp(dat->type, "int(4)") == 0 ||
             strcmp(dat->type, "integer") == 0 ||
@@ -1452,6 +1572,8 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
         }
         edat_prev_acc[dat->index] = arg->acc;
         sd->dirtybit = 1;
+        if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+          printf("Process %d: ops_set_halo_dirtybit3: %s: dirtybit set to 1, range: %d %d, %d %d, %d %d\n", ops_my_global_rank, dat->name, iter_range[0], iter_range[1], iter_range[2], iter_range[3], iter_range[4], iter_range[5]);
         break;
       }
     } 
