@@ -12,7 +12,6 @@
 #include <math.h>
 #define OPS_3D
 #include "ops_seq_v2.h"
-#include "ops_mpi_core.h"
 #include "lowdim_kernels.h"
 
 

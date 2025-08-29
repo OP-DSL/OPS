@@ -52,37 +52,61 @@ void ops_exit_device(OPS_instance *instance) {
 }
 
 void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
-  throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
+  (void)instance;
+  (void)ptr;
+  (void)bytes;
+  //throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
 }
 
 void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
-  throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
+  (void)instance;
+  (void)ptr;
+  (void)bytes;
+  //throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
 }
 
 void ops_device_free(OPS_instance *instance, void** ptr) {
   *ptr = nullptr;
-  throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
+  (void)instance;
+  //throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
 }
 
 void ops_device_freehost(OPS_instance *instance, void** ptr) {
   *ptr = nullptr;
-  throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
+  (void)instance;
+  //throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
 }
 
 void ops_device_memcpy_h2d(OPS_instance *instance, void** to, void **from, size_t size) {
-    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
+  (void)instance;
+  (void)to;
+  (void)from;
+  (void)size;
+    //throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
 }
 
 void ops_device_memcpy_d2h(OPS_instance *instance, void** to, void **from, size_t size) {
-    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
+  (void)instance;
+  (void)to;
+  (void)from;
+  (void)size;
+    //throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
 }
 
 void ops_device_memcpy_d2d(OPS_instance *instance, void** to, void **from, size_t size) {
-    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
+  (void)instance;
+  (void)to;
+  (void)from;
+  (void)size;
+    //throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
 }
 
 void ops_device_memset(OPS_instance *instance, void** ptr, int val, size_t size) {
-    throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
+  (void)instance;
+  (void)ptr;
+  (void)val;
+  (void)size;
+    //throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
 }
 
 void ops_device_sync(OPS_instance *instance) {
@@ -96,7 +120,8 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
 }
 
 void ops_internal_copy_device(ops_kernel_descriptor *desc) {
-  throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
+  (void)desc;
+  //throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: should not have ended up here for host backend");
 }
 
 void ops_decl_const_char(OPS_instance *instance, int dim, char const *type, int size, char *dat, char const *name){

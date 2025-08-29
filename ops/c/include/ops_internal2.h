@@ -181,6 +181,10 @@ void ops_exit_core(OPS_instance *instance);
 
 
 
+// for lowdim
+extern std::vector<std::vector<int> > edat_prev_range;
+extern std::vector<ops_access >       edat_prev_acc; 
+extern std::vector<int> edge_dirtybit;
 
 ops_dat ops_decl_dat_core(ops_block block, int data_size, int *block_size,
                           int *base, int *d_m, int *d_p, int *stride, char *data,
@@ -233,12 +237,12 @@ int ops_stencil_check_3d_md(int arg_idx, int idx0, int idx1, int idx2, int dim0,
 OPS_FTN_INTEROP
 void ops_set_dirtybit_host(
     ops_arg *args, int nargs); // data updated on host .. i.e. dirty on host
-void ops_set_halo_dirtybit(ops_arg *arg);
 OPS_FTN_INTEROP
 void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range);
 OPS_FTN_INTEROP
 void ops_halo_exchanges(ops_arg *args, int nargs, int *range);
 void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths);
+void ops_check_lowdim_update(ops_dat dat);
 
 OPS_FTN_INTEROP
 void ops_set_dirtybit_device(ops_arg *args, int nargs);
