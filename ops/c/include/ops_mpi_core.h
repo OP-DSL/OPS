@@ -108,8 +108,6 @@ typedef struct {
   int gbl_d_m[OPS_MAX_DIM];
   int gbl_d_p[OPS_MAX_DIM];
 
-  /// flag to indicate MPI halo exchange is needed
-  int dirtybit;
   /// flag to indicate MPI halo exchange in a direction is needed
   int *dirty_dir_send;
   /// flag to indicate MPI halo exchange in a direction is needed
@@ -182,10 +180,6 @@ extern sub_block_list *OPS_sub_block_list;
 extern sub_dat_list *OPS_sub_dat_list;
 extern ops_mpi_halo *OPS_mpi_halo_list;
 extern ops_mpi_halo_group *OPS_mpi_halo_group_list;
-
-// for lowdim
-extern std::vector<std::vector<int> > edat_prev_range;
-extern std::vector<ops_access >       edat_prev_acc; 
 
 extern double ops_gather_time;
 extern double ops_scatter_time;

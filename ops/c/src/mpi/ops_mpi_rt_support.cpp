@@ -709,24 +709,26 @@ void ops_lowdim_reduction_##type (ops_dat dat, ops_access acc){ \
          if (OPS_instance::getOPSInstance()->OPS_gpu_direct){\
           ops_put_data(dat);\
           if (acc == OPS_INC){\
-              MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_SUM, sb->pencils[i]);\
-            } else if (acc == OPS_MAX){\
-              MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_MAX, sb->pencils[i]);\
-            } else if (acc == OPS_MIN){\
-              MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_MIN, sb->pencils[i]);\
-            } \
-            dat->dirty_hd = OPS_DEVICE;\
-          } else {\
-            ops_get_data(dat);\
-            if (acc == OPS_INC){\
-              MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_SUM, sb->pencils[i]);\
-            } else if (acc == OPS_MAX){\
-              MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_MAX, sb->pencils[i]);\
-            } else if (acc == OPS_MIN){\
-              MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_MIN, sb->pencils[i]);\
-            } \
-            dat->dirty_hd = OPS_HOST;\
-          }\
+            MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_SUM, sb->pencils[i]);\
+          } else if (acc == OPS_MAX){\
+            MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_MAX, sb->pencils[i]);\
+          } else if (acc == OPS_MIN){\
+            MPI_Allreduce(MPI_IN_PLACE, dat->data_d, dat->mem/sizeof(type), mpi_type, MPI_MIN, sb->pencils[i]);\
+          } \
+          dat->dirty_hd = OPS_DEVICE;\
+          ops_get_data(dat);\
+        } else {\
+          ops_get_data(dat);\
+          if (acc == OPS_INC){\
+            MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_SUM, sb->pencils[i]);\
+          } else if (acc == OPS_MAX){\
+            MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_MAX, sb->pencils[i]);\
+          } else if (acc == OPS_MIN){\
+            MPI_Allreduce(MPI_IN_PLACE, dat->data, dat->mem/sizeof(type), mpi_type, MPI_MIN, sb->pencils[i]);\
+          } \
+          dat->dirty_hd = OPS_HOST;\
+          ops_put_data(dat);\
+        }\
       } \
     }\
   }\
@@ -806,6 +808,29 @@ void ops_lowdim_reduction(ops_dat dat, ops_access acc) {
   }
 }
 
+void ops_check_lowdim_update(ops_dat dat) {
+  if (!dat->e_dat) return;
+  if (edge_dirtybit[dat->index] == 0) return;
+  for (int i = 0; i < dat->block->dims; i++) {
+    if (dat->size[i] == 1) {
+      if (edat_prev_acc[dat->index] == OPS_WRITE) {
+          ops_broadcast_pencil(dat, edat_prev_range[dat->index].data());
+          edge_dirtybit[dat->index] = 0;    // not dirty anymore
+          edat_prev_acc[dat->index] = OPS_READ;
+          break;
+      }
+      else if (edat_prev_acc[dat->index] == OPS_INC ||
+               edat_prev_acc[dat->index] == OPS_MAX ||
+               edat_prev_acc[dat->index] == OPS_MIN) {
+        ops_lowdim_reduction(dat, edat_prev_acc[dat->index]);
+        edge_dirtybit[dat->index] = 0;    // not dirty anymore
+        edat_prev_acc[dat->index] = OPS_READ;
+        break;
+      }
+    }
+  }
+}
+
 void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
   // double c1,c2,t1,t2;
   // printf("*************** range[i] %d %d %d %d\n",range[0],range[1],range[2],
@@ -836,7 +861,7 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
         // if the data is read and the previous access was write, and it wasn't broadcast, then broadcast it if needed
         if(args[i].acc == OPS_READ &&
            edat_prev_acc[args[i].dat->index] == OPS_WRITE &&
-           OPS_sub_dat_list[args[i].dat->index]->dirtybit == 1) {
+           edge_dirtybit[args[i].dat->index] == 1) {
           if(edat_prev_range[args[i].dat->index][2 * dim + 0] != range_in[2 * dim + 0] ||
              edat_prev_range[args[i].dat->index][2 * dim + 1] != range_in[2 * dim + 1]) {
             int range_prev[2*OPS_MAX_DIM];
@@ -847,7 +872,7 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
             if (OPS_instance::getOPSInstance()->OPS_diags > 3)
               printf("Process %d: READ after write, on different range, on %s, broadcasting\n", ops_my_global_rank, args[i].dat->name);
             ops_broadcast_pencil(args[i].dat, range_prev);
-            OPS_sub_dat_list[args[i].dat->index]->dirtybit = 0;    // not dirty anymore
+            edge_dirtybit[args[i].dat->index] = 0;    // not dirty anymore
             edat_prev_acc[args[i].dat->index] = OPS_READ;
           } else {
             if (OPS_instance::getOPSInstance()->OPS_diags > 3)
@@ -857,7 +882,7 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
         // if the data is read and the previous access was a reduction, then do the reduction
         else if (args[i].acc == OPS_READ &&
                    edat_prev_acc[args[i].dat->index] != OPS_READ &&
-                   OPS_sub_dat_list[args[i].dat->index]->dirtybit == 1) {
+                   edge_dirtybit[args[i].dat->index] == 1) {
           // Sanity check - we can only do reductions on lowdim data if the previous access was inc, max, or min
           if (!(edat_prev_acc[args[i].dat->index] == OPS_INC ||
                 edat_prev_acc[args[i].dat->index] == OPS_MAX ||
@@ -868,7 +893,7 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
           printf("Process %d: READ after reduction, on %s, doing reduction\n", ops_my_global_rank, args[i].dat->name);
           ops_lowdim_reduction(args[i].dat, edat_prev_acc[args[i].dat->index]);
           edat_prev_acc[args[i].dat->index] = OPS_READ;
-          OPS_sub_dat_list[args[i].dat->index]->dirtybit = 0;    // not dirty anymore
+          edge_dirtybit[args[i].dat->index] = 0;    // not dirty anymore
 
         }
         //if the data is being accumulated into, for the first time since the last read/broadcast or other reduction, we need to initialize it
@@ -1008,7 +1033,9 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
             ex << "Error: Unknown data type for ops_lowdim_reduction";
             throw ex;
           }
-          OPS_sub_dat_list[args[i].dat->index]->dirtybit = 1;
+          edge_dirtybit[args[i].dat->index] = 1;
+          args[i].dat->dirty_hd = OPS_HOST;
+          ops_put_data(args[i].dat);
         }
       }
 
@@ -1411,12 +1438,15 @@ void ops_broadcast_pencil_##type(ops_dat dat, int source_rank, int dim){\
   sub_block* sb = OPS_sub_block_list[dat->block->index];\
 \
   if (OPS_instance::getOPSInstance()->OPS_gpu_direct){\
+    ops_put_data(dat);\
     MPI_Bcast(dat->data_d, dat->mem/sizeof(type), mpi_type, source_rank, sb->pencils[dim]);\
     dat->dirty_hd = OPS_DEVICE;\
+    ops_get_data(dat);\
   } else {\
     ops_get_data(dat);\
     MPI_Bcast(dat->data, dat->mem/sizeof(type), mpi_type, source_rank, sb->pencils[dim]);\
     dat->dirty_hd = OPS_HOST;\
+    ops_put_data(dat);\
   }\
 }
 
@@ -1536,17 +1566,6 @@ void ops_broadcast_pencil(ops_dat dat, int *range){
   }
 }
 
-void ops_set_halo_dirtybit(ops_arg *arg) {
-  if (arg->opt == 0)
-    return;
-  sub_dat_list sd = OPS_sub_dat_list[arg->dat->index];
-  sd->dirtybit = 1;
-  for (int i = 0; i < 2 * arg->dat->block->dims * MAX_DEPTH; i++)
-    sd->dirty_dir_send[i] = 1;
-  for (int i = 0; i < 2 * arg->dat->block->dims * MAX_DEPTH; i++)
-    sd->dirty_dir_recv[i] = 1;
-}
-
 void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
   // TODO: account for base
   if (arg->opt == 0)
@@ -1571,7 +1590,7 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
           edat_prev_range[dat->index][2 * dim2 + 1] = iter_range[2 * dim2 + 1];
         }
         edat_prev_acc[dat->index] = arg->acc;
-        sd->dirtybit = 1;
+        edge_dirtybit[dat->index] = 1;
         if (OPS_instance::getOPSInstance()->OPS_diags > 3)
           printf("Process %d: ops_set_halo_dirtybit3: %s: dirtybit set to 1, range: %d %d, %d %d, %d %d\n", ops_my_global_rank, dat->name, iter_range[0], iter_range[1], iter_range[2], iter_range[3], iter_range[4], iter_range[5]);
         break;
@@ -1608,7 +1627,7 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
         sd->decomp_disp[dim] - MAX_DEPTH + 1, sd->decomp_disp[dim]);
   }
 
-  sd->dirtybit = 1;
+  edge_dirtybit[dat->index] = 1;
   for (int dim = 0; dim < ndim; dim++) {
     int other_dims = 1;
     for (int d2 = 0; d2 < ndim; d2++)
@@ -1989,7 +2008,7 @@ void ops_dat_release_raw_data(ops_dat dat, int part, ops_access acc) {
   if (acc != OPS_READ) {
     dat->dirty_hd = dat->locked_hd; // dirty on host or device depending on where the pointer was obtained
     sub_dat_list sd = OPS_sub_dat_list[dat->index];
-    sd->dirtybit = 1;
+    edge_dirtybit[dat->index] = 1;
     for (int i = 0; i < 2 * dat->block->dims * MAX_DEPTH; i++) {
       sd->dirty_dir_send[i] = 1;
       sd->dirty_dir_recv[i] = 1;
@@ -2007,7 +2026,7 @@ void ops_dat_release_raw_data_memspace(ops_dat dat, int part, ops_access acc, op
   if (acc != OPS_READ) {
     dat->dirty_hd = *memspace; // dirty on host or device depending on argument
     sub_dat_list sd = OPS_sub_dat_list[dat->index];
-    sd->dirtybit = 1;
+    edge_dirtybit[dat->index] = 1;
     for (int i = 0; i < 2 * dat->block->dims * MAX_DEPTH; i++) {
       sd->dirty_dir_send[i] = 1;
       sd->dirty_dir_recv[i] = 1;
@@ -2025,6 +2044,7 @@ void ops_dat_fetch_data_slab_host(ops_dat dat, int part, char *data, int *range)
 
 void ops_dat_fetch_data(ops_dat dat, int part, char *data) {
   ops_execute(dat->block->instance);
+  ops_check_lowdim_update(dat);
   ops_get_data(dat);
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
   int lsize[OPS_MAX_DIM] = {1};
@@ -2080,7 +2100,7 @@ void ops_dat_set_data_slab_host(ops_dat dat, int part, char *local_buf,
                 dat->elem_size, dat->dim, range_max_dim);
 
   dat->dirty_hd = 1;
-  sd->dirtybit = 1;
+  edge_dirtybit[dat->index] = 1;
   for (int i = 0; i < 2 * dat->block->dims * MAX_DEPTH; i++) {
     sd->dirty_dir_send[i] = 1;
     sd->dirty_dir_recv[i] = 1;

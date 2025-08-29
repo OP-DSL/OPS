@@ -591,7 +591,6 @@ ops_dat ops_dat_copy_mpi_core(ops_dat orig_dat) {
       OPS_sub_dat_list, OPS_instance::getOPSInstance()->OPS_dat_index * sizeof(sub_dat_list));
 
   sub_dat_list sd = (sub_dat_list)ops_calloc(1, sizeof(sub_dat));
-  sd->dirtybit = 1;
   sd->dirty_dir_send =
       (int *)ops_malloc(sizeof(int) * 2 * dat->block->dims * MAX_DEPTH);
   sd->dirty_dir_recv =

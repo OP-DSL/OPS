@@ -120,6 +120,7 @@ void copy_data_buf(const ops_dat &dat, const int *local_range,
   const sub_dat *sd = OPS_sub_dat_list[dat->index];
   ops_execute(dat->block->instance);
   ops_get_data(dat);
+  ops_check_lowdim_update(dat);
   int local_buf_size[OPS_MAX_DIM] = {1};
   int range_max_dim[2 * OPS_MAX_DIM] = {0};
   int d_m[OPS_MAX_DIM]{0};
@@ -404,6 +405,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
   if (sb->owned == 1) {
     // fetch data onto the host ( if needed ) based on the backend
     ops_get_data(dat);
+    ops_check_lowdim_update(dat);
 
     // compute the number of elements that this process will write to the final
     // file
@@ -1631,6 +1633,7 @@ extern "C" char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
   if (sb->owned == 1) {
     // fetch data onto the host ( if needed ) based on the backend
     ops_get_data(dat);
+    ops_check_lowdim_update(dat);
 
     // compute the number of elements that this process will copy over to the
     // user space
