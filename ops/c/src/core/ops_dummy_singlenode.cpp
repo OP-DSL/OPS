@@ -202,8 +202,14 @@ int ops_get_proc() { return 0; }
 int ops_num_procs() { return 1; }
 
 void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
-  (void)arg;
-  (void)iter_range;
+  if (arg->dat->e_dat == 1 && arg->acc != OPS_READ) {
+    for (int dim2 = 0; dim2 < arg->dat->block->dims; dim2++) {
+      edat_prev_range[arg->dat->index][2 * dim2 + 0] = iter_range[2 * dim2 + 0];
+      edat_prev_range[arg->dat->index][2 * dim2 + 1] = iter_range[2 * dim2 + 1];
+    }
+    edat_prev_acc[arg->dat->index] = arg->acc;
+    edge_dirtybit[arg->dat->index] = 1;
+  }
 }
 
 void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
