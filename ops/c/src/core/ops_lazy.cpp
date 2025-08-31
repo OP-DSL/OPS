@@ -431,7 +431,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
       total_mem += item->dat->mem;
   }
 
-  double data_per_point = (double)total_mem / (double)full_owned_size;
+  double data_per_point = MAX(1.0,(double)total_mem / (double)full_owned_size);
   if (instance->OPS_diags > 3)
       ops_printf2(instance, "Bytes per gridpoint: %g\n", data_per_point);
   if (tile_sizes[0] == -1 && tile_sizes[1] == -1 && tile_sizes[2] == -1 &&
