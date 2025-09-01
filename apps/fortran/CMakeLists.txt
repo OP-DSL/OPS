@@ -793,7 +793,7 @@
                     if(HDF5_SEQ)
                         target_link_libraries(${Name}_cuda PRIVATE ops_for_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl)
                     endif()
-                    target_link_libraries(${Name}_cuda PRIVATE ops_for_cuda "-cudalib=curand -c++libs -lstdc++ -lcudart")
+                    target_link_libraries(${Name}_cuda PRIVATE ops_for_cuda "-cudalib=curand -lnvidia-ml -c++libs -lstdc++ -lcudart")
                     install(TARGETS ${Name}_cuda     DESTINATION ${APP_INSTALL_DIR}/${Name})
 
                     if((OPS_TEST)
