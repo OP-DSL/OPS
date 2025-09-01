@@ -886,9 +886,9 @@
                     endif()
                 endif()
 
-                target_link_libraries(${Name}_mpi_cuda PRIVATE ops_mpi_cuda CUDA::cudart_static -lcurand MPI::MPI_CXX
+                target_link_libraries(${Name}_mpi_cuda PRIVATE ops_mpi_cuda CUDA::cudart_static -lcurand -lnvidia-ml MPI::MPI_CXX
                                         OpenMP::OpenMP_CXX)
-                target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_mpi_cuda CUDA::cudart_static -lcurand MPI::MPI_CXX
+                target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_mpi_cuda CUDA::cudart_static -lcurand -lnvidia-ml MPI::MPI_CXX
                                         OpenMP::OpenMP_CXX)
 
                 install(TARGETS ${Name}_mpi_cuda DESTINATION ${APP_INSTALL_DIR}/${Name})
