@@ -835,7 +835,7 @@
                              target_link_libraries(${Name}_mpi_cuda PRIVATE ops_for_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
                                                                 MPI::MPI_Fortran)
                         endif()
-                        target_link_libraries(${Name}_mpi_cuda PRIVATE ops_for_mpi_cuda MPI::MPI_Fortran "${MPI_LINK}" "-cudalib=curand -c++libs -lstdc++ -lcudart")
+                        target_link_libraries(${Name}_mpi_cuda PRIVATE ops_for_mpi_cuda MPI::MPI_Fortran "${MPI_LINK}" "-cudalib=curand -c++libs -lstdc++ -lcudart -lnvidia-ml")
                         install(TARGETS ${Name}_mpi_cuda     DESTINATION ${APP_INSTALL_DIR}/${Name})
 
                         if((OPS_TEST)
@@ -879,7 +879,7 @@
                              target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_for_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
                                                                 MPI::MPI_Fortran)
                         endif()
-                        target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_for_mpi_cuda MPI::MPI_Fortran "${MPI_LINK}" "-cudalib=curand -c++libs -lstdc++ -lcudart")
+                        target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_for_mpi_cuda MPI::MPI_Fortran "${MPI_LINK}" "-cudalib=curand -c++libs -lstdc++ -lcudart -lnvidia-ml")
                         install(TARGETS ${Name}_mpi_cuda_tiled     DESTINATION ${APP_INSTALL_DIR}/${Name})
 
                         if((OPS_TEST)
