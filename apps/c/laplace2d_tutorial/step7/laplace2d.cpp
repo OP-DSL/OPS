@@ -105,7 +105,7 @@ int main(int argc, const char** argv)
       ops_arg_idx());
 
   double t1,c1;
-  ops_timers(&t1,&c1);
+  ops_timers(&c1,&t1);
   while ( error > tol && iter < iter_max )
   {
     int interior_range[] = {0,imax,0,jmax};
@@ -123,7 +123,7 @@ int main(int argc, const char** argv)
     iter++;
   }
   double t2,c2;
-  ops_timers(&t2,&c2);
+  ops_timers(&c2,&t2);
   ops_printf("%5d, %0.6f\n", iter, error);        
 
   ops_timing_output(std::cout);
