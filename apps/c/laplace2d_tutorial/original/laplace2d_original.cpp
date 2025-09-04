@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <omp.h>
 
 int main(int argc, const char** argv)
 {
@@ -13,18 +14,18 @@ int main(int argc, const char** argv)
   int iter_max = 100;
 
   float pi  = 2.0 * asin(1.0);
-  const _Float16 tol = 1.0e-6;
-  _Float16 error     = 1.0;
+  const double tol = 1.0e-6;
+  double error     = 1.0;
 
-  _Float16 *A;
-  _Float16 *Anew;
-  _Float16 *y0;
+  double *A;
+  double *Anew;
+  double *y0;
 
-  A    = (_Float16 *)malloc((imax+2) * (jmax+2) * sizeof(_Float16));
-  Anew = (_Float16 *)malloc((imax+2) * (jmax+2) * sizeof(_Float16));
-  y0   = (_Float16 *)malloc((imax+2) * sizeof(_Float16));
+  A    = (double *)malloc((imax+2) * (jmax+2) * sizeof(double));
+  Anew = (double *)malloc((imax+2) * (jmax+2) * sizeof(double));
+  y0   = (double *)malloc((imax+2) * sizeof(double));
 
-  memset(A, 0, (imax+2) * (jmax+2) * sizeof(_Float16));
+  memset(A, 0, (imax+2) * (jmax+2) * sizeof(double));
 
   // set boundary conditions
   for (int i = 0; i < imax+2; i++)
@@ -59,7 +60,7 @@ int main(int argc, const char** argv)
   for (int j = 1; j < jmax+2; j++)
     Anew[(j)*(imax+2)+jmax+1] = sin(pi * j / (jmax+1))*expf(-pi);
 
-
+  double t1 = omp_get_wtime();
   while ( error > tol && iter < iter_max )
   {
     error = 0.0;
@@ -83,6 +84,7 @@ int main(int argc, const char** argv)
     if(iter % 10 == 0) printf("%5d, %0.6f\n", iter, (float)error);        
     iter++;
   }
+  double t2 = omp_get_wtime();
 
   printf("%5d, %0.6f\n", iter, (float)error);
 
@@ -93,6 +95,7 @@ int main(int argc, const char** argv)
   else
     printf("This test is considered FAILED\n");
 
+  printf("Total runtime was %g seconds\n", t2-t1);
 
   free(A);
   free(Anew);

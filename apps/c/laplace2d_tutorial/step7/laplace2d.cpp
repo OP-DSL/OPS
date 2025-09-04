@@ -126,16 +126,16 @@ int main(int argc, const char** argv)
   ops_timing_output(std::cout);
 
   double err_diff = fabs((100.0*(error/2.421354960840227e-03))-100.0);
-  printf("Total error is within %3.15E %% of the expected error\n",err_diff);
+  ops_printf("Total error is within %3.15E %% of the expected error\n",err_diff);
   if(err_diff < 0.001)
-    printf("This run is considered PASSED\n");
+    ops_printf("This run is considered PASSED\n");
   else
-    printf("This test is considered FAILED\n");
+    ops_printf("This test is considered FAILED\n");
 
   //Finalising the OPS library
   free(A);
   free(Anew);
-  //ops_exit();
+  ops_exit();
   return 0;
 }
 
