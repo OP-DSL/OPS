@@ -95,7 +95,7 @@ int main(int argc, const char** argv)
   else
     printf("This test is considered FAILED\n");
 
-  printf("Total runtime was %g seconds\n", t2-t1);
+  printf("Total Wall time %g seconds\n", t2-t1);
 
   free(A);
   free(Anew);

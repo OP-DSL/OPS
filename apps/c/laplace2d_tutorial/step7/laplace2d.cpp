@@ -104,6 +104,8 @@ int main(int argc, const char** argv)
       ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_WRITE),
       ops_arg_idx());
 
+  double t1,c1;
+  ops_timers(&t1,&c1);
   while ( error > tol && iter < iter_max )
   {
     int interior_range[] = {0,imax,0,jmax};
@@ -120,7 +122,8 @@ int main(int argc, const char** argv)
     if(iter % 10 == 0) ops_printf("%5d, %0.6f\n", iter, error);        
     iter++;
   }
-
+  double t2,c2;
+  ops_timers(&t2,&c2);
   ops_printf("%5d, %0.6f\n", iter, error);        
 
   ops_timing_output(std::cout);
@@ -131,6 +134,8 @@ int main(int argc, const char** argv)
     ops_printf("This run is considered PASSED\n");
   else
     ops_printf("This test is considered FAILED\n");
+
+  ops_printf("Total Wall time %g seconds\n", t2-t1);
 
   //Finalising the OPS library
   free(A);

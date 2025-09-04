@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <omp.h>
 
 //Including main OPS header file, and setting 2D
 #define OPS_2D
@@ -75,7 +76,7 @@ int main(int argc, const char** argv)
   printf("Jacobi relaxation Calculation: %d x %d mesh\n", imax+2, jmax+2);
 
   int iter = 0;
-
+  double t1 = omp_get_wtime();
   ops_par_loop(set_zero, "set_zero", block, 2, bottom_range,
       ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_WRITE));
 
@@ -110,7 +111,7 @@ int main(int argc, const char** argv)
     if(iter % 10 == 0) printf("%5d, %0.6f\n", iter, error);        
     iter++;
   }
-
+  double t2 = omp_get_wtime();
   printf("%5d, %0.6f\n", iter, error);        
 
   double err_diff = fabs((100.0*(error/2.421354960840227e-03))-100.0);
@@ -119,6 +120,8 @@ int main(int argc, const char** argv)
     printf("This run is considered PASSED\n");
   else
     printf("This test is considered FAILED\n");
+
+  printf("Total Wall time %g seconds\n", t2-t1);
 
   //Finalising the OPS library
   ops_exit();

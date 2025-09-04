@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <omp.h>
 
 //Including main OPS header file, and setting 2D
 #define OPS_2D
@@ -86,7 +87,7 @@ int main(int argc, const char** argv)
   for (int j = 1; j < jmax+2; j++)
     Anew[(j)*(imax+2)+jmax+1] = sin(pi * j / (jmax+1))*expf(-pi);
 
-
+  double t1 = omp_get_wtime();
   while ( error > tol && iter < iter_max )
   {
     error = 0.0;
@@ -110,7 +111,7 @@ int main(int argc, const char** argv)
     if(iter % 10 == 0) printf("%5d, %0.6f\n", iter, error);        
     iter++;
   }
-
+  double t2 = omp_get_wtime();
   printf("%5d, %0.6f\n", iter, error);        
 
   double err_diff = fabs((100.0*(error/2.421354960840227e-03))-100.0);
@@ -119,6 +120,8 @@ int main(int argc, const char** argv)
     printf("This run is considered PASSED\n");
   else
     printf("This test is considered FAILED\n");
+
+  printf("Total Wall time %g seconds\n", t2-t1);
 
   //Finalising the OPS library
   ops_exit();

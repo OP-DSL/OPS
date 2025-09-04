@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <omp.h>
 
 int imax, jmax;
 double pi  = 2.0 * asin(1.0);
@@ -97,7 +98,7 @@ int main(int argc, const char** argv)
       ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_WRITE),
       ops_arg_idx());
 
-
+  double t1 = omp_get_wtime();
   while ( error > tol && iter < iter_max )
   {
     int interior_range[] = {0,imax,0,jmax};
@@ -114,7 +115,7 @@ int main(int argc, const char** argv)
     if(iter % 10 == 0) ops_printf("%5d, %0.6f\n", iter, error);        
     iter++;
   }
-
+  double t2 = omp_get_wtime();
   ops_printf("%5d, %0.6f\n", iter, error);        
 
   double err_diff = fabs((100.0*(error/2.421354960840227e-03))-100.0);
@@ -123,6 +124,8 @@ int main(int argc, const char** argv)
     printf("This run is considered PASSED\n");
   else
     printf("This test is considered FAILED\n");
+
+  printf("Total Wall time %g seconds\n", t2-t1);
 
   //Finalising the OPS library
   ops_exit();
