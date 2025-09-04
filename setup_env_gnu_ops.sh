@@ -3,8 +3,18 @@
 export OPS_COMPILER=gnu
 export OPS_INSTALL_PATH=$(pwd)/ops
 
+export NV_ARCH=Ampere
+
+echo "GPU architecture " $NV_ARCH
 
 module purge
+source /opt/rh/gcc-toolset-11/enable
+# PGI and MPI compiler
+module load nvhpc-nompi/22.11
+
+export CUDA_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/22.11/cuda
+export CUDA_MATH_LIBS=/opt/nvidia/hpc_sdk/Linux_x86_64/22.11/math_libs/lib64
+export LD_LIBRARY_PATH=$CUDA_MATH_LIBS:$LD_LIBRARY_PATH
 
 module load mpi/openmpi-x86_64
 
