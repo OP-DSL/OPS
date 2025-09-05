@@ -289,3 +289,39 @@ E.g.
 OMP_NUM_THREADS=20 numactl --cpunodebind=0 ./laplace2d_tiled -OPS_DIAGS=3 OPS_TILING OPS_CACHE_SIZE=5
 ```
 Over MPI, you will have to set `OPS_TILING_MAX_DEPTH` to extend halo regions.
+
+## Performance measurement and profiling
+
+### Energy Consumption Measurement
+
+OPS now provides support for reporting CPU and GPU energy consumption during the execution of an application. This is integrated into the existing `ops_timing_output()` routine.
+
+When enabled, the following information is reported:
+
+* Total CPU energy consumed (measured via RAPL), and the share consumed by DRAM
+* Total GPU energy consumed
+
+Example output:
+```bash
+Total CPU energy consumed (RAPL): 123.45 J, of which DRAM energy: 12.34 J
+Total GPU energy consumed: 56.78 J
+```
+
+Usage
+To measure energy only for the main computation (and exclude initialization/IO), the user should:
+
+1. Reset power counters just before the main compute section:
+```bash
+OPS_instance->reset_power_counters();
+```
+2. Run the computation kernels.
+3. Call timing output at the end to print results:
+```bash
+ops_timing_output(stdout);
+```
+
+Example
+
+The CloverLeaf-3D application demonstrates this usage.
+See: `apps/c/CloverLeaf_3D/clover_leaf.cpp`
+

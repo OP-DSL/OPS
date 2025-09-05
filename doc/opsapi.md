@@ -344,6 +344,7 @@ HDF5 file using MPI I/O).
 #### ops_print_dat_to_txtfile
 
 __void ops_print_dat_to_txtfile(ops_dat dat, char *file)__
+
 Write the details of an ops_dat to a named text file. When used under an MPI parallelization, each MPI process
 will write its own data set separately to the text file. As such, it does not use MPI I/O. The data can be viewed using
 a simple text editor.
@@ -352,6 +353,13 @@ a simple text editor.
 | ----------- | ----------- |
 | dat|  ops_dat to be written|
 | file|     text file to write to|
+
+#### reset_power_counters
+
+__void reset_power_counters()__
+
+Resets the internal power and energy counters.
+This should be called before the region of interest in the application (e.g., main time-stepping loop). Energy reported in `ops_timing_output()` will then correspond only to the region after the reset.
 
 #### ops_timing_output
 
