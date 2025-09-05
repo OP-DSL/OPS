@@ -31,11 +31,17 @@ export MPICH_FC=mpif90
 
 # HDF5
 unset HDF5_INSTALL_PATH
+#export HDF5_INSTALL_PATH=/usr/lib64/openmpi 
 export HDF5_INSTALL_PATH=/opt/hdf5-parallel
 export PATH=$HDF5_INSTALL_PATH/bin:$PATH
 export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
 
 # Python
 # Available by defualt >3.8
-source $(pwd)/ops_translator/ops_venv/bin/activate
-
+export osbli_venv_activate=$(pwd)/ops_translator/ops_venv/bin/activate
+if [ -f ${osbli_venv_activate} ]; then
+  source ${osbli_venv_activate}
+else
+  echo "** OPS Virtual enviroment does not exist                     **"
+  echo "** Please source ops_translator/setup_venv.sh to generate it **"
+fi
