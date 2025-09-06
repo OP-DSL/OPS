@@ -1,0 +1,8 @@
+MODULE OPS_CONSTANTS
+
+#ifdef OPS_WITH_CUDAFOR
+    use cudafor
+#else
+#endif
+
+END MODULE OPS_CONSTANTS

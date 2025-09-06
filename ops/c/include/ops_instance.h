@@ -237,6 +237,33 @@ class OPS_instance {
       decl_const(name, dim, type, data);
     }
 
+
+/**
+ * This routine resets OPS's internal power counters.
+ * This is useful for measuring the power consumption of a specific section of
+ * code, usually after partitioning.
+ */
+	void reset_power_counters();
+
+/**
+ * Reset GPU power measurement counters.
+ * This initializes GPU power measurement and resets accumulated energy.
+ */
+	void reset_gpu_power_counters();
+
+/**
+ * Sample current GPU power and update energy accumulation.
+ * This should be called periodically during computation to maintain
+ * accurate energy measurements.
+ */
+	void sample_gpu_power();
+
+/**
+ * Get the total GPU energy consumed since last reset.
+ * @return Total GPU energy consumed in Joules
+ */
+	double get_gpu_energy_consumed();
+
 /**
  * This routine prints out various useful bits of diagnostic info about sets,
  * mappings and datasets.
@@ -315,10 +342,25 @@ class OPS_instance {
 	int OPS_kern_max, OPS_kern_curr;
 	ops_kernel *OPS_kernels;
 	double ops_user_halo_exchanges_time;
+	long long *ops_energy_counters;
+	char **ops_energy_paths;
+	int ops_energy_paths_count;
+  long long ops_message_count;
+  long long ops_message_size;
+  double ops_reduction_time;
+  
+  // GPU power measurement
+  double ops_gpu_energy_consumed;      // Total GPU energy consumed in Joules
+  double ops_gpu_power_measurement_start_time;  // Time when power measurement started
+  double ops_gpu_last_power_sample_time;       // Time of last power sample
+  unsigned int ops_gpu_power_watts;           // Last measured power in Watts
+  int ops_gpu_power_measurement_active;       // Flag indicating if GPU power measurement is active
+  int ops_gpu_measurement_counter;            // Counter for GPU power measurement
+  int ops_gpu_measurement_frequency;          // Frequency of GPU power measurement
 	
 	//Tiling
 	int ops_enable_tiling;
-	int ops_cache_size;
+	double ops_cache_size;
 	int ops_tiling_mpidepth;
 	double ops_tiled_halo_exchange_time;
 	OPS_instance_tiling *tiling_instance;
@@ -339,6 +381,7 @@ class OPS_instance {
 	int OPS_block_size_x;
 	int OPS_block_size_y;
 	int OPS_block_size_z;
+	int OPS_device_id;
 	char *OPS_consts_h, *OPS_consts_d, *OPS_reduct_h, *OPS_reduct_d;
 	int OPS_consts_bytes, OPS_reduct_bytes;
 	int OPS_cl_device;

@@ -466,7 +466,7 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
     char *p_a[{{lh.args|length}}];
 
 //  =======================
-//  set up initial pointers
+//  Set up initial pointers
 //  =======================
 {% for arg in lh.args %}
 {% if arg is ops_dat %}

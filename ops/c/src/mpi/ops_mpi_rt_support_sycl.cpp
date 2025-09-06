@@ -273,9 +273,29 @@ void ops_unpack_sycl_internal(ops_dat dat, const int dest_offset,
 void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
                          int x_step, int y_step, int z_step, int buf_strides_x,
-                         int buf_strides_y, int buf_strides_z) {
+                         int buf_strides_y, int buf_strides_z, bool mixed_exchange, int storage_type_size) {
 
   ops_block block = src->block;
+
+  // dest += dest_offset; <- a kernelen belül kell
+  int thr_x = abs(rx_s - rx_e);
+  int blk_x = 1;
+  if (abs(rx_s - rx_e) > 8) {
+   blk_x = (thr_x - 1) / 8 + 1;
+   thr_x = 8;
+  }
+  int thr_y = abs(ry_s - ry_e);
+  int blk_y = 1;
+  if (abs(ry_s - ry_e) > 8) {
+   blk_y = (thr_y - 1) / 8 + 1;
+   thr_y = 8;
+  }
+  int thr_z = abs(rz_s - rz_e);
+  int blk_z = 1;
+  if (abs(rz_s - rz_e) > 8) {
+   blk_z = (thr_z - 1) / 8 + 1;
+   thr_z = 8;
+  }
 
   int size =
       abs(src->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
@@ -314,14 +334,20 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {
 
     cgh.parallel_for<class copy_tobuf>(
-        cl::sycl::range<3>(rz_e - rz_s, ry_e - ry_s, rx_e - rx_s),
-        [=](cl::sycl::id<3> item) {
+      cl::sycl::nd_range<3>(
+        cl::sycl::range<3>(blk_z*thr_z,blk_y*thr_y,blk_x*thr_x),
+        cl::sycl::range<3>(thr_z,thr_y,thr_x)),
+   [=](cl::sycl::nd_item<3> item) {
           int d_offset = dest_offset_local;
           int s_offset = 0;
 
-          int idx_z = rz_s + z_step * item.get(0);
-          int idx_y = ry_s + y_step * item.get(1);
-          int idx_x = rx_s + x_step * item.get(2);
+          int global_x_id = item.get_global_id()[2];
+          int global_y_id = item.get_global_id()[1];
+          int global_z_id = item.get_global_id()[0];
+
+          int idx_z = rz_s + z_step * global_z_id;
+          int idx_y = ry_s + y_step * global_y_id;
+          int idx_x = rx_s + x_step * global_x_id;
           if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
               (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
               (z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
@@ -335,10 +361,43 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
             d_offset += ((idx_z - rz_s) * z_step * buf_strides_z +
                          (idx_y - ry_s) * y_step * buf_strides_y +
                          (idx_x - rx_s) * x_step * buf_strides_x) *
-                        type_size * dim;
+                        (mixed_exchange?storage_type_size:type_size) * dim;
             for (int d = 0; d < dim; d++) {
-              memcpy(&gpu_ptr[d_offset + d * type_size], &src_buff[s_offset],
-                     type_size);
+              if (mixed_exchange) {
+                if (storage_type_size == 4) {
+                  float val = 0.0f;
+                  if (type_size == 4) {
+                    val = *((float *)(&src_buff[s_offset+d*type_size]));
+                  } else if (type_size == 8) {
+                    val = (float)(*((double *)(&src_buff[s_offset+d*type_size])));
+                  } else if (type_size == 2) {
+                    val = (float)(*((half *)(&src_buff[s_offset+d*type_size])));
+                  }
+                  memcpy(&gpu_ptr[d_offset+d*storage_type_size], &val, storage_type_size);
+                } else if (storage_type_size == 8) {
+                  double val = 0.0;
+                  if (type_size == 4) {
+                    val = (double)(*((float *)(&src_buff[s_offset+d*type_size])));
+                  } else if (type_size == 8) {
+                    val = *((double *)(&src_buff[s_offset+d*type_size]));
+                  } else if (type_size == 2) {
+                    val = (double)(*((half *)(&src_buff[s_offset+d*type_size])));
+                  }
+                  memcpy(&gpu_ptr[d_offset+d*storage_type_size], &val, storage_type_size);
+                } else if (storage_type_size == 2) {
+                  half val = 0.0;
+                  if (type_size == 4) {
+                    val = (half)(*((float *)(&src_buff[s_offset+d*type_size])));
+                  } else if (type_size == 8) {
+                    val = (half)(*((double *)(&src_buff[s_offset+d*type_size])));
+                  } else if (type_size == 2) {
+                    val = *((half *)(&src_buff[s_offset+d*type_size]));
+                  }
+                  memcpy(&gpu_ptr[d_offset+d*storage_type_size], &val, storage_type_size);
+                }
+              } else {
+                memcpy(&gpu_ptr[d_offset+d*type_size], &src_buff[s_offset], type_size);
+              }
               if (OPS_soa)
                 s_offset += size_x * size_y * size_z * type_size;
               else
@@ -358,9 +417,28 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                            int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
                            int x_step, int y_step, int z_step,
                            int buf_strides_x, int buf_strides_y,
-                           int buf_strides_z) {
+                           int buf_strides_z, bool mixed_exchange, int storage_type_size) {
 
   ops_block block = dest->block;
+
+  int thr_x = abs(rx_s - rx_e);
+  int blk_x = 1;
+  if (abs(rx_s - rx_e) > 8) {
+    blk_x = (thr_x - 1) / 8 + 1;
+    thr_x = 8;
+  }
+  int thr_y = abs(ry_s - ry_e);
+  int blk_y = 1;
+  if (abs(ry_s - ry_e) > 8) {
+    blk_y = (thr_y - 1) / 8 + 1;
+    thr_y = 8;
+  }
+  int thr_z = abs(rz_s - rz_e);
+  int blk_z = 1;
+  if (abs(rz_s - rz_e) > 8) {
+    blk_z = (thr_z - 1) / 8 + 1;
+    thr_z = 8;
+  }
 
   int size =
       abs(dest->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
@@ -400,14 +478,20 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {
 
     cgh.parallel_for<class copy_frombuf>(
-        cl::sycl::range<3>(rz_e - rz_s, ry_e - ry_s, rx_e - rx_s),
-        [=](cl::sycl::id<3> item) {
+      cl::sycl::nd_range<3>(
+        cl::sycl::range<3>(blk_z*thr_z,blk_y*thr_y,blk_x*thr_x),
+        cl::sycl::range<3>(thr_z,thr_y,thr_x)),
+   [=](cl::sycl::nd_item<3> item) {
           int d_offset = 0;
           int s_offset = src_offset_local;
 
-          int idx_z = rz_s + z_step * item.get(0);
-          int idx_y = ry_s + y_step * item.get(1);
-          int idx_x = rx_s + x_step * item.get(2);
+          int global_x_id = item.get_global_id()[2];
+          int global_y_id = item.get_global_id()[1];
+          int global_z_id = item.get_global_id()[0];
+
+          int idx_z = rz_s + z_step * global_z_id;
+          int idx_y = ry_s + y_step * global_y_id;
+          int idx_x = rx_s + x_step * global_x_id;
           if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
               (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
               (z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
@@ -421,10 +505,43 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
             s_offset += ((idx_z - rz_s) * z_step * buf_strides_z +
                          (idx_y - ry_s) * y_step * buf_strides_y +
                          (idx_x - rx_s) * x_step * buf_strides_x) *
-                        type_size * dim;
+                        (mixed_exchange?storage_type_size:type_size) * dim;
             for (int d = 0; d < dim; d++) {
-              memcpy(&dest_buff[d_offset], &gpu_ptr[s_offset + d * type_size],
-                     type_size);
+              if (mixed_exchange){
+                if (storage_type_size == 4) {
+                  float val = 0.0f;
+                  memcpy(&val, &gpu_ptr[s_offset+d*storage_type_size], storage_type_size);
+                  if (type_size == 4) {
+                    *((float *)(&dest_buff[d_offset + d*type_size])) = val;
+                  } else if (type_size == 8) {
+                    *((double *)(&dest_buff[d_offset + d*type_size])) = (double)val;
+                  } else if (type_size == 2) {
+                    *((half *)(&dest_buff[d_offset + d*type_size])) = (half)val;
+                  }
+                } else if (storage_type_size == 8) {
+                  double val = 0.0;
+                  memcpy(&val, &gpu_ptr[s_offset+d*storage_type_size], storage_type_size);
+                  if (type_size == 4) {
+                    *((float *)(&dest_buff[d_offset + d*type_size])) = (float)val;
+                  } else if (type_size == 8) {
+                    *((double *)(&dest_buff[d_offset + d*type_size])) = val;
+                  } else if (type_size == 2) {
+                    *((half *)(&dest_buff[d_offset + d*type_size])) = (half)val;
+                  }
+                } else if (storage_type_size == 2) {
+                  half val = 0.0;
+                  memcpy(&val, &gpu_ptr[s_offset+d*storage_type_size], storage_type_size);
+                  if (type_size == 4) {
+                    *((float *)(&dest_buff[d_offset + d*type_size])) = (float)val;
+                  } else if (type_size == 8) {
+                    *((double *)(&dest_buff[d_offset + d*type_size])) = (double)val;
+                  } else if (type_size == 2) {
+                    *((half *)(&dest_buff[d_offset + d*type_size])) = val;
+                  }
+                }
+              } else {
+                memcpy(&dest_buff[d_offset], &gpu_ptr[s_offset+d*type_size], type_size);
+              }
               if (OPS_soa)
                 d_offset += size_x * size_y * size_z * type_size;
               else

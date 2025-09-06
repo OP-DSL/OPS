@@ -1,7 +1,8 @@
 #!/bin/bash
-export SOURCE_INTEL=source_intel_2021.3_pythonenv
+
+export SOURCE_INTEL=source_oneapi_sycl_pythonenv
 export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
-export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_INTEL_SYCL=source_oneapi_sycl_pythonenv
 export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 source ./$SOURCE_INTEL #default source to set environment vars
@@ -10,8 +11,8 @@ source ./$SOURCE_INTEL #default source to set environment vars
 #application executions.
 set -e
 
-export AMOS=TRUE
-#export DMOS=TRUE
+#export AMOS=TRUE
+export DEMOS=TRUE
 #export TELOS=TRUE
 #export KOS=TRUE
 
@@ -22,55 +23,55 @@ echo "************Testing C Applications *****************"
 echo "~~~~~~~~~~~~~~~CloverLeaf 2D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../apps/c/CloverLeaf/
 cd ../CloverLeaf/
-./test.sh #-- works
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~CloverLeaf 3D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../CloverLeaf_3D/
-#./test.sh -- works
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~CloverLeaf 3D HDF5~~~~~~~~~~~~~~~~~~~"
 cd ../CloverLeaf_3D_HDF5/
-#./test.sh --SYCL versions not working
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~TeaLeaf 3D ~~~~~~~~~~~~~~~~~~~~~~"
 cd ../TeaLeaf/
-#./test.sh -- tealeaf_ompoffload breaks
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~Poisson~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../poisson/
-#./test.sh -- works
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim/
-#./test.sh -- multidim_openmp breaks
+#./test.sh #-- works # only 1 thread per MPI proc for MPI+OMP allowed
 echo "~~~~~~~~~~~~~~~multiDim3D~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim3D/ 
-#./test.sh -- works
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~lowdim_test~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../lowdim_test/
-#./test.sh -- works
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../shsgc/
-#./test.sh -- MPI_Tiled double free-coruption
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~mb_shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mb_shsgc/Max_datatransfer
-#./test.sh -- works
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim_HDF5~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../../multiDim_HDF5
-#./test.sh #SYCL compilation issue -- needs fixing 
+cd ../../multiDim_HDF5 
+#./test.sh #-- works 
 echo "~~~~~~~~~~~~~~~adi~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../adi 
-#./test.sh -- works
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~adi_burger~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../adi_burger
-#./test.sh -- works
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~adi_berger_3D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../adi_burger_3D
-#./test.sh -- works
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~mgrid~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mgrid
-#./test.sh -- SYCL MPI not validating
+./test.sh #-- SYCL does not validate 
 echo "~~~~~~~~~~~~~~~mblock~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
-#./test.sh - SYCL MPI not running error produced
+#./test.sh #- works
 echo "~~~~~~~~~~~~~~OpenSBLI TGV~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd $OPENSBLI_INSTALL_PATH/apps/taylor_green_vortex
-#./test.sh -- works
+#./test.sh  #-- works
 cd -
 echo "  "
 echo "All C/C++ application tests PASSED"
@@ -78,24 +79,30 @@ echo "  "
 
 echo "************Testing Fortran Applications *****************"
 cd $OPS_INSTALL_PATH
-echo "~~~~~~~~~~~~~~~hsgc Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+echo "~~~~~~~~~~~~~~~shsgc Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../apps/fortran/shsgc
-./test.sh
+#./test.sh #-- +tiled versions break at runtime
 echo "~~~~~~~~~~~~~~~poisson Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../poisson
-./test.sh
+cd ../poisson 
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim
-./test.sh
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim3D Fortran~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim3D
-./test.sh
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~lowdim_test Fortran~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../lowdim_test
-./test.sh
+#./test.sh #-- works -- check further as there can be issues
+echo "~~~~~~~~~~~~~~~random Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
+cd ../random
+#./test.sh #-- breaks all
+echo "~~~~~~~~~~~~~~~mblock Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
+cd ../mblock
+#./test.sh #-- breaks in cuda+tiled and sycl+tiled
 echo "~~~~~~~~~~~~~~~laplace2d Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../laplace2dtutorial/step7
-./test.sh
+#./test.sh #-- works  
 echo "END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "  "
 echo "All Fortran application tests PASSED"

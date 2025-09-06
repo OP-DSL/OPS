@@ -17,13 +17,14 @@ void poisson_kernel_initialguess(ACC<double> &u) {
 
 void poisson_kernel_stencil(const ACC<double> &u, const ACC<double> &f,
                             ACC<double> &u2) {
-  u2(0, 0) = ((u(-1, 0) + u(1, 0)) * dy * dy + (u(0, -1) + u(0, 1)) * dx * dx -
-              f(0, 0) * dx * dx * dy * dy) /
-             (2.0 * (dx * dx + dy * dy));
+  u2(0, 0) = (  ((u(-1, 0) + u(1, 0)) * dx * dx)
+              + ((u(0, -1) + u(0, 1)) * dy * dy)
+              - ( f(0, 0) * dx * dx * dy * dy) )
+           / (2.0 * (dx * dx + dy * dy));
 }
 
-void poisson_kernel_update(const ACC<double> &u2, ACC<double> &u) {
-  u(0,0) = u2(0,0);
+void poisson_kernel_update(const ACC<double> &inp, ACC<double> &out) {
+  out(0,0) = inp(0,0);
 }
 
 void poisson_kernel_error(const ACC<double> &u, const ACC<double> &ref, double *err) {

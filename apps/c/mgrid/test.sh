@@ -2,17 +2,17 @@
 set -e
 cd $OPS_INSTALL_PATH/c
 
-export SOURCE_INTEL=source_intel_2021.3_pythonenv
+export SOURCE_INTEL=source_oneapi_sycl_pythonenv
 export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
-export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_INTEL_SYCL=source_oneapi_sycl_pythonenv
 export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
-#export DMOS=TRUE
+export DEMOS=TRUE
 #export TELOS=TRUE
 #export KOS=TRUE
 
-if [[ -v TELOS || -v KOS ]]; then
+if [[ -v TELOS || -v DEMOS || -v KOS ]]; then
 
 #============================ Test with Intel Classic Compilers==========================================
 echo "Testing Intel classic complier based applications ---- "  
@@ -22,7 +22,7 @@ source ../../scripts/$SOURCE_INTEL
 make clean
 make
 cd $OPS_INSTALL_PATH/../apps/c/mgrid/
-make clean
+make cleanall
 rm -f .generated
 make IEEE=1
 
@@ -106,7 +106,7 @@ rm -f data.h5
 fi
 echo "All Intel classic complier based applications ---- PASSED"
 
-if [[ -v TELOS ]]; then
+if [[ -v TELOS || -v DEMOS ]]; then
 
 echo "Testing Intel SYCL complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
@@ -116,7 +116,7 @@ make clean
 make
 cd $OPS_INSTALL_PATH/../apps/c/mgrid/
 
-make clean
+make cleanall
 #make IEEE=1 -j
 make IEEE=1 mgrid_sycl mgrid_mpi_sycl mgrid_mpi_sycl_tiled
 
@@ -152,7 +152,7 @@ echo "All Intel SYCL complier based applications ---- PASSED"
 
 fi  
 
-if [[ -v TELOS ]]; then
+if [[ -v TELOS || -v DEMOS ]]; then
 
 #============================ Test with PGI Compilers==========================================
 echo "Testing PGI/NVHPC complier based applications ---- "
@@ -160,7 +160,7 @@ echo "Testing PGI/NVHPC complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_PGI
 
-make clean
+make cleanall
 make
 cd $OPS_INSTALL_PATH/../apps/c/mgrid/
 make clean

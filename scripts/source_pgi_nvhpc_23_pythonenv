@@ -2,8 +2,8 @@
 #A rough example of environmental variables for compiling with PGI/NVHPC compilers
 
 #unset and set defaults
-#export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
-#unset LD_LIBRARY_PATH
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+unset LD_LIBRARY_PATH
 module purge
 . ~/.bashrc
 export PATH=/rr-home/gihan/numawrap:$PATH
@@ -18,42 +18,45 @@ export OP_AUTO_SOA=1
 #export LIBCLANG_PATH=/opt/llvm/14.0.6/lib/libclang.so
 
 module load python/3.9.7
+
+#Uncomment the following to test/reinstall the environment setup for the code-gen
+#cd  $OPS_INSTALL_PATH/../ops_translator/
+#rm -rf ./ops_venv
+#. setup_venv.sh
+#cd -
+module load python/3.9.7
 source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
 
 #PGI/NVIDIA MPI and Compilers
-#module load nvhpc/23.1
-module load  nvhpc/23.9
-#export MPI_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/mpi
-export MPI_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/23.9/comm_libs/mpi
+module load nvhpc/24.3
+export MPI_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/24.3/comm_libs/12.3/openmpi4/openmpi-4.1.5/
 export PATH=$MPI_INSTALL_PATH/bin:$PATH
 export LD_LIBRARY_PATH=$MPI_INSTALL_PATH/lib:$LD_LIBRARY_PATH
 
+
+export MPICC=mpicc
 export MPICPP=mpic++
-export MPICH_CXX=pgc++
-export MPICH_CC=pgcc
-export MPICH_F90=pgfortran
+export MPICXX=mpicxx
+export MPIFC=mpif90
+export MPIF90=mpif90
 export MPIF90_F90=pgfortran
 export MPICH_FC=pgfortran
+
+echo "MPICC=$MPICC"
+echo "MPICPP=$MPICPP"
+echo "MPICXX=$MPICXX"
 
 #CUDA and NVIDIA OpenCL
 if (lspci | grep -i 'nvidia') then
 
-module load cuda/toolkit-10.2.89
-if [ "$HOSTNAME" == "telos" ]
-then
-    #Telos
-    export NV_ARCH=Volta
-elif [ "$HOSTNAME" == "kos" ]
-then
-    # Kos
-    export NV_ARCH=Pascal
-fi
+export NV_ARCH=Hopper
 echo "GPU architecture" $NV_ARCH
 
 unset SYCL_INSTALL_PATH
-#export CUDA_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/23.1/cuda
-export CUDA_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/23.9/cuda
-export CUDA_MATH_LIBS=$CUDA_INSTALL_PATH/lib64
+
+export CUDA_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/24.3/cuda/
+export CUDA_MATH_LIBS=$CUDA_INSTALL_PATH/../math_libs/lib64
+
 export LD_LIBRARY_PATH=$CUDA_INSTALL_PATH/lib64:$LD_LIBRARY_PATH
 else
 unset CUDA_INSTALL_PATH
@@ -78,4 +81,5 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TDMA_INSTALL_PATH/lib/
 #OpenSBLI -- for testing app TGV only
 export OPENSBLI_INSTALL_PATH=/rr-home/gihan/OpenSBLI/OpenSBLI_OPS_TESTING/opensbli/
 
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/rr-home/gihan/libffi/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/rr-home/gihan/libffi/
+

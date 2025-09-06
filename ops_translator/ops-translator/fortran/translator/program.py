@@ -17,16 +17,17 @@ def translateProgram(program: Program, force_soa: bool, offload_pragma_flag_dict
     const_list = []
     const_list_dim = []
 
-    # 1. comment const calls
-#    for call in fpu.walk(ast, f2003.Call_Stmt):
-#        name = fpu.get_child(call, f2003.Name)
-#        if name is None or name.string.lower() != "ops_decl_const":
-#            continue
+    # 1. Find name of variables in ops_decl_const - required for adding necessary pragmas for openmp offload
+    for call in fpu.walk(ast, f2003.Call_Stmt):
+        name = fpu.get_child(call, f2003.Name)
+        if name is None or name.string.lower() != "ops_decl_const":
+            continue
 
-#        args = fpu.get_child(call, f2003.Actual_Arg_Spec_List)
-#        const_list.append(str(list(args.items)[3])) 
+        args = fpu.get_child(call, f2003.Actual_Arg_Spec_List)
+        const_list_dim.append(str(list(args.items)[1]))
+        const_list.append(str(list(args.items)[3]))
 
-    #print(const_list)
+#    print(const_list)
     # Write all constants to file, required to replace the constantname with constantname_opsconstant for CUDA kernels generated
 #    with open('constants_list.txt', 'a') as file:
 #        file.writelines([item + '\n' for item in const_list])

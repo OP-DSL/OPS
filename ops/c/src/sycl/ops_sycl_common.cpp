@@ -96,20 +96,18 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
   char temp[64];
   const char *pch;
 
-  int OPS_sycl_device = 3;
+  int OPS_sycl_device = 2;
   for (int i = 0; i < argc; ++i) {
     pch = strstr(argv[i], "OPS_SYCL_DEVICE=");
     if (pch != NULL) {
       snprintf(temp, 64, "%s", pch);
-      if (strcmp(temp + strlen("OPS_SYCL_DEVICE="), "host") == 0)
+      if (strcmp(temp + strlen("OPS_SYCL_DEVICE="), "cpu") == 0)
         OPS_sycl_device = 0;
-      else if (strcmp(temp + strlen("OPS_SYCL_DEVICE="), "cpu") == 0)
-        OPS_sycl_device = 1;
       else if (strcmp(temp + strlen("OPS_SYCL_DEVICE="), "gpu") == 0)
-        OPS_sycl_device = 2;
+        OPS_sycl_device = 1;
       else {
         int val = atoi(temp + strlen("OPS_SYCL_DEVICE="));
-        OPS_sycl_device=4+val;
+        OPS_sycl_device=3+val;
       }
     }
   }
@@ -118,24 +116,20 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
   switch (OPS_sycl_device) {
   case 0:
     instance->sycl_instance->queue =
-        new cl::sycl::queue(cl::sycl::host_selector(), cl::sycl::property::queue::in_order());
+        new cl::sycl::queue(cl::sycl::cpu_selector(), cl::sycl::property::queue::in_order());
     break;
   case 1:
     instance->sycl_instance->queue =
-        new cl::sycl::queue(cl::sycl::cpu_selector(), cl::sycl::property::queue::in_order());
-    break;
-  case 2:
-    instance->sycl_instance->queue =
         new cl::sycl::queue(cl::sycl::gpu_selector(), cl::sycl::property::queue::in_order());
     break;
-  case 3:
+  case 2:
     instance->sycl_instance->queue =
         new cl::sycl::queue(cl::sycl::default_selector(), cl::sycl::property::queue::in_order());
     break;
   default:
     std::vector<cl::sycl::device> devices;
     devices = cl::sycl::device::get_devices();
-    int devid = OPS_sycl_device - 4;
+    int devid = OPS_sycl_device - 3;
     if (devid < 0 || devid >= devices.size()) {
       ops_printf("Error, unrecognised SYCL device selection. Available devices (%d)\n",devices.size());
       for (int i = 0; i < devices.size(); i++)
@@ -167,4 +161,24 @@ void ops_fill_random_normal(ops_dat dat) {
 }
 
 void ops_randomgen_exit() {
+}
+
+/*
+ * GPU Power Measurement Functions (SYCL backends)
+ * These return zero values since SYCL power measurement is not implemented
+ */
+
+void _ops_init_gpu_power_measurement(OPS_instance *instance) {
+    (void)instance; // Suppress unused parameter warning
+    // Do nothing for SYCL backends - power measurement not implemented
+}
+
+void _ops_get_gpu_power(OPS_instance *instance, unsigned int *power_watts) {
+    (void)instance; // Suppress unused parameter warning
+    *power_watts = 0; // Always return 0 for SYCL backends
+}
+
+void _ops_finalize_gpu_power_measurement(OPS_instance *instance) {
+    (void)instance; // Suppress unused parameter warning
+    // Do nothing for SYCL backends
 }
