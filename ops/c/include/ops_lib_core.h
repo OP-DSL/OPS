@@ -1370,9 +1370,13 @@ int ops_dat_get_global_npartitions(ops_dat dat);
 /*******************************************************************************
 * Random number generations
 *******************************************************************************/
+OPS_FTN_INTEROP
 void ops_randomgen_init(unsigned int seed, int options);
+OPS_FTN_INTEROP
 void ops_fill_random_uniform(ops_dat dat);
+OPS_FTN_INTEROP
 void ops_fill_random_normal(ops_dat dat);
+OPS_FTN_INTEROP
 void ops_randomgen_exit();
 
 /*

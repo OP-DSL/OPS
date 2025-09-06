@@ -50,9 +50,9 @@
 void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
                          int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
                          int x_step, int y_step, int z_step, int buf_strides_x,
-                         int buf_strides_y, int buf_strides_z) {
+                         int buf_strides_y, int buf_strides_z, bool mixed_exchange, int storage_type_size) {
 
-  char *srcptr = src->data_d;
+  char *src_buff = (char*) src->data_d;
   size_t bufsize = src->block->instance->ops_halo_buffer_size;
   int thr_x = abs(rx_s - rx_e);
   int thr_y = abs(ry_s - ry_e);
@@ -77,17 +77,79 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
         if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
             (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
             (z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
-          if (OPS_soa) srcptr += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size;
-          else srcptr += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size * dim;
+          if (OPS_soa) src_buff += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size;
+          else src_buff += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size * dim;
           dest += dest_offset + ((idx_z - rz_s) * z_step * buf_strides_z +
                   (idx_y - ry_s) * y_step * buf_strides_y +
                   (idx_x - rx_s) * x_step * buf_strides_x) *
-                  type_size * dim;
+                  (mixed_exchange?storage_type_size:type_size) * dim ;
           for (int d = 0; d < dim; d++) {
-            for (int l = 0; l < type_size; l++)
-              dest[d*type_size+l] = srcptr[l];
-            if (OPS_soa) srcptr += size_x * size_y * size_z * type_size;
-            else srcptr += type_size;
+            if (mixed_exchange) {
+              if (storage_type_size == 4) {
+                float val = 0.0f;
+                if (type_size == 4) {
+                  val = *((float *)(src_buff + d * type_size));
+                } else if (type_size == 8) {
+                  val = (float)(*((double *)(src_buff + d * type_size)));
+                } else if (type_size == 2) {
+                  val = (float)(*((half *)(src_buff + d * type_size)));
+                }
+#ifdef __NVCOMPILER
+                memcpy(dest + d * storage_type_size, &val, storage_type_size);
+#else
+                char *dest_buff = dest + d * storage_type_size;
+                char *val_buff = (char*) &val;
+                for (size_t i_size = 0; i_size < storage_type_size; i_size++)
+                  dest_buff[i_size] = val_buff[i_size];
+#endif
+              } else if (storage_type_size == 8) {
+                double val = 0.0;
+                if (type_size == 4) {
+                  val = (double)(*((float *)(src_buff + d * type_size)));
+                } else if (type_size == 8) {
+                  val = *((double *)(src_buff + d * type_size));
+                } else if (type_size == 2) {
+                  val = (double)(*((half *)(src_buff + d * type_size)));
+                }
+#ifdef __NVCOMPILER
+                memcpy(dest + d * storage_type_size, &val, storage_type_size);
+#else
+                char *dest_buff = dest + d * storage_type_size;
+                char *val_buff = (char*) &val;
+                for (size_t i_size = 0; i_size < storage_type_size; i_size++)
+                  dest_buff[i_size] = val_buff[i_size];
+#endif
+              } else if (storage_type_size == 2) {
+                half val = 0.0;
+                if (type_size == 4) {
+                  val = (half)(*((float *)(src_buff + d * type_size)));
+                } else if (type_size == 8) {
+                  val = (half)(*((double *)(src_buff + d * type_size)));
+                } else if (type_size == 2) {
+                  val = *((half *)(src_buff + d * type_size));
+                }
+#ifdef __NVCOMPILER
+                memcpy(dest + d * storage_type_size, &val, storage_type_size);
+#else
+                char *dest_buff = dest + d * storage_type_size;
+                char *val_buff = (char*) &val;
+                for (size_t i_size = 0; i_size < storage_type_size; i_size++)
+                  dest_buff[i_size] = val_buff[i_size];
+#endif
+              }
+            } else {
+#ifdef __NVCOMPILER
+              memcpy(dest + d * type_size, src_buff, type_size);
+#else
+              char *dest_buff = dest + d * type_size;
+              for (size_t i_size = 0; i_size < type_size; i_size++)
+                dest_buff[i_size] = src_buff[i_size];
+#endif
+            }
+//            for (int l = 0; l < type_size; l++)
+//              dest[d*type_size+l] = srcptr[l];
+            if (OPS_soa) src_buff += size_x * size_y * size_z * type_size;
+            else src_buff += type_size;
           }
         }
       }
@@ -99,9 +161,9 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
                            int rx_e, int ry_s, int ry_e, int rz_s, int rz_e,
                            int x_step, int y_step, int z_step,
                            int buf_strides_x, int buf_strides_y,
-                           int buf_strides_z) {
+                           int buf_strides_z, bool mixed_exchange, int storage_type_size) {
 
-  char *destptr = dest->data_d;
+  char *dest_buff = (char*) dest->data_d;
   size_t bufsize = dest->block->instance->ops_halo_buffer_size;
   int thr_x = abs(rx_s - rx_e);
   int thr_y = abs(ry_s - ry_e);
@@ -121,22 +183,84 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
             k > abs(rz_s - rz_e))
           continue;
         int idx_z = rz_s + z_step * k;
-        int idx_y = ry_s + y_step * j;
-        int idx_x = rx_s + x_step * i;
-        if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
+          int idx_y = ry_s + y_step * j;
+          int idx_x = rx_s + x_step * i;
+          if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
             (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
             (z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
-          if (OPS_soa) destptr += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size;
-          else destptr += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size * dim;
-          src += src_offset + ((idx_z - rz_s) * z_step * buf_strides_z +
+            if (OPS_soa) dest_buff += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size;
+            else dest_buff += (idx_z * size_x * size_y + idx_y * size_x + idx_x) * type_size * dim;
+            src += src_offset + ((idx_z - rz_s) * z_step * buf_strides_z +
                   (idx_y - ry_s) * y_step * buf_strides_y +
                   (idx_x - rx_s) * x_step * buf_strides_x) *
-                  type_size * dim;
-          for (int d = 0; d < dim; d++) {
-            for (int l = 0; l < type_size; l++)
-              destptr[l] = src[d*type_size+l];
-            if (OPS_soa) destptr += size_x * size_y * size_z * type_size;
-            else destptr += type_size;
+                  (mixed_exchange?storage_type_size:type_size) * dim ;
+            for (int d = 0; d < dim; d++) {
+              if (mixed_exchange){
+                if (storage_type_size == 4) {
+                  float val = 0.0f;
+#ifdef __NVCOMPILER
+                  memcpy(&val, src + d * storage_type_size, storage_type_size);
+#else
+                  char *src_buff = src + d * storage_type_size;
+                  char *val_buff = (char*) &val;
+                  for (size_t i_size = 0; i_size < storage_type_size; i_size++)
+                    val_buff[i_size] = src_buff[i_size];
+#endif
+                  if (type_size == 4) {
+                    *((float *)(dest_buff + d * type_size)) = val;
+                  } else if (type_size == 8) {
+                    *((double *)(dest_buff + d * type_size)) = (double)val;
+                  } else if (type_size == 2) {
+                    *((half *)(dest_buff + d * type_size)) = (half)val;
+                  }
+                } else if (storage_type_size == 8) {
+                  double val = 0.0;
+#ifdef __NVCOMPILER
+                  memcpy(&val, src + d * storage_type_size, storage_type_size);
+#else
+                  char *src_buff = src + d * storage_type_size;
+                  char *val_buff = (char*) &val;
+                  for (size_t i_size = 0; i_size < storage_type_size; i_size++)
+                    val_buff[i_size] = src_buff[i_size];
+#endif
+                  if (type_size == 4) {
+                    *((float *)(dest_buff + d * type_size)) = (float)val;
+                  } else if (type_size == 8) {
+                    *((double *)(dest_buff + d * type_size)) = val;
+                  } else if (type_size == 2) {
+                    *((half *)(dest_buff + d * type_size)) = (half)val;
+                  }
+                } else if (storage_type_size == 2) {
+                  half val = 0.0;
+#ifdef __NVCOMPILER
+                  memcpy(&val, src + d * storage_type_size, storage_type_size);
+#else
+                  char *src_buff = src + d * storage_type_size;
+                  char *val_buff = (char*) &val;
+                  for (size_t i_size = 0; i_size < storage_type_size; i_size++)
+                    val_buff[i_size] = src_buff[i_size];
+#endif
+                  if (type_size == 4) {
+                    *((float *)(dest_buff + d * type_size)) = (float)val;
+                  } else if (type_size == 8) {
+                    *((double *)(dest_buff + d * type_size)) = (double)val;
+                  } else if (type_size == 2) {
+                    *((half *)(dest_buff + d * type_size)) = val;
+                  }
+                }
+              } else {
+#ifdef __NVCOMPILER
+                memcpy(dest_buff, src + d * type_size, type_size);
+#else
+                char *src_buff = src + d * type_size;
+                for (size_t i_size = 0; i_size < type_size; i_size++)
+                  dest_buff[i_size] = src_buff[i_size];
+#endif
+            }
+//            for (int l = 0; l < type_size; l++)
+//              destptr[l] = src[d*type_size+l];
+            if (OPS_soa) dest_buff += size_x * size_y * size_z * type_size;
+            else dest_buff += type_size;
           }
         }
       }

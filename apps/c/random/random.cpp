@@ -91,6 +91,7 @@ int main(int argc, char **argv)
     ops_fill_random_uniform(dat0);
     ops_print_dat_to_txtfile(dat0, "random.dat");
   }
+  ops_randomgen_exit();
 
   int iter_range[] = {0,4,0,4};
   ops_par_loop(random_print_kernel,"random_print_kernel", grid2D, 2, iter_range,

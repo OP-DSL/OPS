@@ -84,6 +84,6 @@ SYCLMPICXX = mpicxx
 SYCL_FLAGS = -fsycl -fsycl-targets=amdgcn-amd-amdhsa -Xsycl-target-backend --offload-arch=$(HIP_ARCH) -munsafe-fp-atomics
 
 HIPCC=hipcc
-HIPMPICPP=hipcc
+HIPMPICXX=hipcc
 
 HIPFLAGS=--offload-arch=$(HIP_ARCH)

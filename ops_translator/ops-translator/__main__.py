@@ -17,6 +17,7 @@ from scheme import Scheme
 from store import Application, ParseError
 from target import Target
 from util import getVersion, safeFind
+from util import create_cpp_main, replace_fortran_program_with_subroutine
 
 def main(argv=None) -> None:
 
@@ -178,6 +179,12 @@ def main(argv=None) -> None:
     if(lang.name == "Fortran"):
         add_offload_directives(app_consts,offload_pragma_flag_dict)
 
+    # Create main.cpp file required for f2c_sycl when building on Nvidia or AMD GPUs
+    if(lang.name == "Fortran"):
+        create_cpp_main()
+        replace_fortran_program_with_subroutine(args.file_paths)
+
+
 def parse(args: Namespace, lang: Lang) -> Application:
     app = Application()
 
@@ -284,7 +291,7 @@ def codegen(args: Namespace, scheme: Scheme, app: Application, force_soa: bool =
             path = Path(args.out, name)
 
         with open(path, "w") as file:
-            if(scheme.target.name == "f2c_mpi_openmp" or scheme.target.name == "f2c_cuda" or scheme.target.name == "f2c_hip"):
+            if(scheme.target.name == "f2c_mpi_openmp" or scheme.target.name == "f2c_cuda" or scheme.target.name == "f2c_hip" or scheme.target.name == "f2c_sycl"):
                 file.write(f"// Auto-generated at {datetime.now()} by ops-translator\n")
             else:
                 file.write(f"{scheme.lang.com_delim} Auto-generated at {datetime.now()} by ops-translator\n")

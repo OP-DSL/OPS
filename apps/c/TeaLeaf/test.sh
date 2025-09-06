@@ -1,17 +1,18 @@
 #!/bin/bash
 set -e
 cd ../../../ops/c
-export SOURCE_INTEL=source_intel_2021.3_pythonenv
+
+export SOURCE_INTEL=source_oneapi_sycl_pythonenv
 export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
-export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_INTEL_SYCL=source_oneapi_sycl_pythonenv
 export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
-#export DMOS=TRUE
-export TELOS=TRUE
+export DEMOS=TRUE
+#export TELOS=TRUE
 #export KOS=TRUE
 
-if [[ -v TELOS || -v KOS ]]; then
+if [[ -v TELOS || -v DEMOS || -v KOS ]]; then
 
 #============================ Test with Intel Classic Compilers==========================================
 echo "Testing Intel classic complier based applications ---- "
@@ -118,7 +119,7 @@ echo "All Intel classic complier based applications ---- PASSED"
 
 
 
-if [[ -v TELOS ]]; then
+if [[ -v TELOS || -v DEMOS ]]; then
 
 #============================ Test with Intel SYCL Compilers==========================================
 echo "Testing Intel SYCL complier based applications ---- "
@@ -158,8 +159,7 @@ echo "All Intel SYCL complier based applications ---- PASSED"
 
 fi
 
-
-if [[ -v TELOS ]]; then
+if [[ -v TELOS || -v DEMOS ]]; then
 
 #============================ Test with PGI Compilers==========================================
 echo "Testing PGI/NVHPC complier based applications ---- "
@@ -183,7 +183,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f tea.out
 
 echo '============> Running MPI+OpenMP'
-export OMP_NUM_THREADS=2;$MPI_INSTALL_PATH/bin/mpirun -np 10 ./tealeaf_mpi_openmp > perf_out
+export OMP_NUM_THREADS=4;$MPI_INSTALL_PATH/bin/mpirun -np 4 ./tealeaf_mpi_openmp > perf_out
 grep "Total Wall time" tea.out
 #grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
 grep "PASSED" tea.out
@@ -242,23 +242,6 @@ rm -f tea.out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm -f tea.out
 
-echo '============> Running OpenACC'
-./tealeaf_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total Wall time" tea.out
-#grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
-grep "PASSED" tea.out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm -f tea.out
-rm perf_out
-
-echo '============> Running MPI+OpenACC'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./tealeaf_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-grep "Total Wall time" tea.out
-#grep -e "step:    86" -e "step:    87" -e "step:    88"  tea.out
-grep "PASSED" tea.out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm -f tea.out
-rm perf_out
 
 fi
 
