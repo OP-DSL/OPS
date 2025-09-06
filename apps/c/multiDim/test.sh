@@ -2,17 +2,17 @@
 set -e
 cd $OPS_INSTALL_PATH/c
 
-export SOURCE_INTEL=source_intel_2021.3_pythonenv
+export SOURCE_INTEL=source_oneapi_sycl_pythonenv
 export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
-export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_INTEL_SYCL=source_oneapi_sycl_pythonenv
 export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
-#export DMOS=TRUE
-export TELOS=TRUE
+export DEMOS=TRUE
+#export TELOS=TRUE
 #export KOS=TRUE
 
-if [[ -v TELOS || -v KOS ]]; then
+if [[ -v TELOS || -v DEMOS || -v KOS ]]; then
 
 #============================ Test with Intel Classic Compilers==========================================
 echo "Testing Intel classic complier based applications ---- "  
@@ -25,7 +25,8 @@ cd $OPS_INSTALL_PATH/../apps/c/multiDim/
 
 make clean
 rm -f .generated
-make IEEE=1 
+make IEEE=1 multidim_dev_seq multidim_dev_mpi multidim_seq multidim_tiled multidim_openmp multidim_mpi \
+multidim_mpi_tiled multidim_mpi_openmp 
 
 
 echo '============> Running OpenMP'
@@ -37,7 +38,8 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+OpenMP'
-export OMP_NUM_THREADS=1,2;$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_openmp > perf_out
+# Only supports 1 tread per MPI process
+export OMP_NUM_THREADS=1;$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_openmp > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -60,16 +62,8 @@ grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
-
-echo '============> Running MPI_inline'
-$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_inline > perf_out
-grep "Reduction result" perf_out
-grep "Total Wall time" perf_out
-grep "PASSED" perf_out
-rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-rm perf_out
-
 if [[ -v CUDA_INSTALL_PATH ]]; then
+make IEEE=1 multidim_cuda multidim_mpi_cuda multidim_mpi_cuda_tiled
 echo '============> Running CUDA'
 ./multidim_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
@@ -99,7 +93,7 @@ fi
 echo "All Intel classic complier based applications ---- PASSED"
 fi
 
-if [[ -v TELOS ]]; then
+if [[ -v TELOS || -v DEMOS ]]; then
 
 echo "Testing Intel SYCL complier based applications ---- "
 
@@ -143,7 +137,7 @@ echo "All Intel SYCL complier based applications ---- PASSED"
 fi
 
 
-if [[ -v TELOS ]]; then
+if [[ -v TELOS || -v DEMOS ]]; then
 
 #============================ Test with PGI Compilers==========================================
 echo "Testing PGI/NVHPC complier based applications ---- "
@@ -166,7 +160,8 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+OpenMP'
-export OMP_NUM_THREADS=1,2;$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_openmp > perf_out
+#Only supports 1 thread per MPI process
+export OMP_NUM_THREADS=1;$MPI_INSTALL_PATH/bin/mpirun -np 4 ./multidim_mpi_openmp > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -234,7 +229,7 @@ rm perf_out
 fi
 
 echo '============> Running OMPOFFLOAD'
-./multidim_offload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+./multidim_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -242,7 +237,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+OMPOFFLOAD'
-OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_offload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+OMP_NUM_THREADS=1 $MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_ompoffload OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Reduction result" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out

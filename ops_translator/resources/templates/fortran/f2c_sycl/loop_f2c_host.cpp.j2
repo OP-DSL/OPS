@@ -1,4 +1,4 @@
-{% extends "cpp/loop_host.cpp.j2" %}
+{% extends "fortran/loop_f2c_host.cpp.j2" %}
 
 {% block host_prologue_sub_1 %}
     ops_block block = desc->block;
@@ -11,35 +11,22 @@
 {% endblock %}
 
 {% block host_prologue_sub_3 %}
-{% if not (lh.arg_idx != -1) and not lh.multiGrid %}
-#if defined(OPS_MPI) && !defined(OPS_LAZY)
-{% endif %}
+{% if lh.arg_idx != -1 %}
     int arg_idx[{{lh.ndim}}];
-{% if not (lh.arg_idx != -1) and not lh.multiGrid %}
-#endif
-{% endif %}    
+{% endif %}
 {% endblock %}
 
 {% block host_prologue %}
 {{super()}}
 
-{% if lh.arg_idx != -1 or lh.multiGrid %}
-#if defined(OPS_MPI)
-#if defined(OPS_LAZY)
-    sub_block_list sb = OPS_sub_block_list[block->index];
-    {% for n in range(0, lh.ndim) %}
-    arg_idx[{{n}}] = sb->decomp_disp[{{n}}];
-    {% endfor %}
+{% if lh.arg_idx != -1 %}
+#ifdef OPS_MPI
+    getIdx(block, start_indx, arg_idx);
 #else
-    {% for n in range(0, lh.ndim) %}
-    arg_idx[{{n}}] -= start_indx[{{n}}];
-    {% endfor %}
-#endif  //OPS_LAZY
-#else //OPS_MPI 
-    {% for n in range(0, lh.ndim) %}
-    arg_idx[{{n}}] = 0;
-    {% endfor %}
-#endif //OPS_MPI
+{% for d in range(lh.ndim) %}
+    arg_idx[{{d}}] = start_indx[{{d}}];
+{% endfor %}
+#endif
 {% endif %}
 
 //  ======================================================
@@ -63,52 +50,44 @@
 //  Set up initial pointers and exchange halos if necessary
 //  =======================================================
 {% for arg in lh.args %}
+    {% set f2c_type_value = lh.f2c_type[loop.index0] %}
     {% if arg is ops_dat %}
-    int base{{arg.id}} = args[{{arg.id}}].dat->base_offset;
-    {{lh.dats[arg.dat_id].typ}} * __restrict__ {{args_list[arg.id]}}_p = ({{lh.dats[arg.dat_id].typ}} *)(args[{{arg.id}}].data_d + base{{arg.id}});
+        {% if arg.dim > 1 %}
+    int multi_d{{arg.id}} = getDatDimFromOpsArg(&args[{{arg.id}}]);
+    int base{{arg.id}} = getDatBaseFromOpsArg{{lh.ndim}}D(&args[{{arg.id}}], start_indx, multi_d{{arg.id}});
+        {% else %}
+    int base{{arg.id}} = getDatBaseFromOpsArg{{lh.ndim}}D(&args[{{arg.id}}], start_indx, 1);
+        {% endif %}
+{# Subtracting 1 from base, as base is in Fortran style #}
+    {{f2c_type_value}} * __restrict__ {{args_list[arg.id]}}_p = ({{f2c_type_value}} *)(args[{{arg.id}}].data_d) + base{{arg.id}} - 1; // Subtracting 1 to convert to C-style
 
-        {% if arg.restrict or arg.prolong %}
-#ifdef OPS_MPI
-    sub_dat_list sd{{arg.id}} = OPS_sub_dat_list[args[{{arg.id}}].dat->index];
-        {% endif %}
-        {% if arg.restrict %}
-    {{args_list[arg.id]}}_p += arg_idx[0]*args[{{arg.id}}].stencil->mgrid_stride[0] - sd{{arg.id}}->decomp_disp[0] + args[{{arg.id}}].dat->d_m[0];
-            {% if lh.ndim > 1 %}
-    {{args_list[arg.id]}}_p += (arg_idx[1]*args[{{arg.id}}].stencil->mgrid_stride[1] - sd{{arg.id}}->decomp_disp[1] + args[{{arg.id}}].dat->d_m[1]) * xdim{{arg.id}}_{{lh.kernel}};
-            {% endif %}
-            {% if lh.ndim > 2 %}
-    {{args_list[arg.id]}}_p += (arg_idx[2]*args[{{arg.id}}].stencil->mgrid_stride[2] - sd{{arg.id}}->decomp_disp[2] + args[{{arg.id}}].dat->d_m[2]) * xdim{{arg.id}}_{{lh.kernel}} * ydim{{arg.id}}_{{lh.kernel}};
-            {% endif %}
-        {% endif %}
-        {% if arg.prolong %}
-    {{args_list[arg.id]}}_p += arg_idx[0]/args[{{arg.id}}].stencil->mgrid_stride[0] - sd{{arg.id}}->decomp_disp[0] + args[{{arg.id}}].dat->d_m[0];
-            {% if lh.ndim > 1 %}
-    {{args_list[arg.id]}}_p += (arg_idx[1]/args[{{arg.id}}].stencil->mgrid_stride[1] - sd{{arg.id}}->decomp_disp[1] + args[{{arg.id}}].dat->d_m[1]) * xdim{{arg.id}}_{{lh.kernel}};
-            {% endif %}
-            {% if lh.ndim > 2 %}
-    {{args_list[arg.id]}}_p += (arg_idx[2]/args[{{arg.id}}].stencil->mgrid_stride[2] - sd{{arg.id}}->decomp_disp[2] + args[{{arg.id}}].dat->d_m[2]) * xdim{{arg.id}}_{{lh.kernel}} * ydim{{arg.id}}_{{lh.kernel}};"
-            {% endif %}
-        {% endif %}
-        {% if arg.restrict or arg.prolong %}
-#endif
-        {% endif %}
     {% elif arg is ops_gbl or arg is ops_reduce %}
         {% if arg is ops_read %}
             {% if arg.dim.isdigit() and arg.dim|int == 1 %}
-    {{arg.typ}} {{args_list[arg.id]}}_val = *({{arg.typ}} *)args[{{arg.id}}].data;
+    {{f2c_type_value}} {{args_list[arg.id]}}_val = *({{f2c_type_value}} *)args[{{arg.id}}].data;
 
             {% else %}
-    {{arg.typ}} *arg{{arg.id}}h = ({{arg.typ}} *)args[{{arg.id}}].data;
+    {{f2c_type_value}} *arg{{arg.id}}h = ({{f2c_type_value}} *)args[{{arg.id}}].data;
 
             {% endif %}    
         {% else %}
 #ifdef OPS_MPI
-    {{arg.typ}} * __restrict__ p_a{{arg.id}} = ({{arg.typ}} *)(((ops_reduction)args[{{arg.id}}].data)->data + ((ops_reduction)args[{{arg.id}}].data)->size * block->index);
+    {{f2c_type_value}} * __restrict__ p_a{{arg.id}} = ({{f2c_type_value}} *)(((ops_reduction)args[{{arg.id}}].data)->data + ((ops_reduction)args[{{arg.id}}].data)->size * block->index);
 #else //OPS_MPI
-    {{arg.typ}} * __restrict__ p_a{{arg.id}} = ({{arg.typ}} *)((ops_reduction)args[{{arg.id}}].data)->data;
+    {{f2c_type_value}} * __restrict__ p_a{{arg.id}} = ({{f2c_type_value}} *)((ops_reduction)args[{{arg.id}}].data)->data;
 #endif //OPS_MPI
 
         {% endif %}
+    {% endif %}
+{% endfor %}
+
+{# Subtracting 1 here as start_indx and end_indx is in Fortran style - converting it to c-style range #}
+//  Subtracting 1 here as start_indx and end_indx is in Fortran style - converting it to c-style range
+{% for d in range(lh.ndim) %}
+    int start_{{d}} = start_indx[{{d}}]-1;
+    int end_{{d}} = end_indx[{{d}}];
+    {% if lh.arg_idx != -1 %}
+    int arg_idx_{{d}} = arg_idx[{{d}}];
     {% endif %}
 {% endfor %}
 
@@ -116,15 +95,15 @@
     {% if ops_cpu and ops_cpu >= 1 %}
     int maxblocks = 1;
     {% else %}
-    int maxblocks = (end_indx[0]-start_indx[0]-1)/block->instance->OPS_block_size_x+1;
+    int maxblocks = (end_0-start_0-1)/block->instance->OPS_block_size_x+1;
     {% endif %}
     {% if lh.ndim > 1 %}
         {% if not ops_cpu or ops_cpu < 2 %}
-    maxblocks *= (end_indx[1]-start_indx[1]-1)/block->instance->OPS_block_size_y+1;
+    maxblocks *= (end_1-start_1-1)/block->instance->OPS_block_size_y+1;
         {% endif %}
     {% endif %}
     {% if lh.ndim > 2 %}
-    maxblocks *= (end_indx[2]-start_indx[2]-1)/block->instance->OPS_block_size_z+1;
+    maxblocks *= (end_2-start_2-1)/block->instance->OPS_block_size_z+1;
     {% endif %}
     int reduct_bytes = 0;
     size_t reduct_size = 0;
@@ -135,14 +114,15 @@
 {% endif %}
 
 {% for arg in lh.args %}
+{% set f2c_type_value = lh.f2c_type[loop.index0] %}
 {% if arg is ops_gbl or arg is ops_reduce %}
     {% if arg is ops_read %}
         {% if (not arg.dim.isdigit()) or (arg.dim.isdigit() and arg.dim|int > 1) %}
-    consts_bytes += ROUND_UP(arg{{arg.id}}.dim*sizeof({{arg.typ}}));
+    consts_bytes += ROUND_UP(arg{{arg.id}}.dim*sizeof({{f2c_type_value}}));
         {% endif %}
     {% else %}
-    reduct_bytes += ROUND_UP(maxblocks*{{arg.dim}}*sizeof({{arg.typ}}));
-    reduct_size = MAX(reduct_size,{{arg.dim}}*sizeof({{arg.typ}}));
+    reduct_bytes += ROUND_UP(maxblocks*{{arg.dim}}*sizeof({{f2c_type_value}}));
+    reduct_size = MAX(reduct_size,{{arg.dim}}*sizeof({{f2c_type_value}}));
     {% endif %}
 {% endif %}    
 {% endfor %}
@@ -157,38 +137,40 @@
     reduct_bytes = 0;
 
 {% for arg in lh.args %}
+    {% set f2c_type_value = lh.f2c_type[loop.index0] %}
     {% if arg is ops_gbl or arg is ops_reduce %}
     {% if not arg is ops_read %}
     arg{{arg.id}}.data = block->instance->OPS_reduct_h + reduct_bytes;
-    {{arg.typ}} *arg{{arg.id}}_data_d = ({{arg.typ}}*)(block->instance->OPS_reduct_d + reduct_bytes);
+    {{f2c_type_value}} *arg{{arg.id}}_data_d = ({{f2c_type_value}}*)(block->instance->OPS_reduct_d + reduct_bytes);
     for (int b = 0; b < maxblocks; b++) {
     {% endif %}
     {% if arg is ops_inc %}
-        for (int d = 0; d < {{arg.dim}}; d++)   (({{arg.typ}} *)arg{{arg.id}}.data)[d+b*{{arg.dim}}] = ZERO_{{arg.typ}};
+        for (int d = 0; d < {{arg.dim}}; d++)   (({{f2c_type_value}} *)arg{{arg.id}}.data)[d+b*{{arg.dim}}] = ZERO_{{f2c_type_value}};
     }
     {% elif arg is ops_min %}
-        for (int d = 0; d < {{arg.dim}}; d++)   (({{arg.typ}} *)arg{{arg.id}}.data)[d+b*{{arg.dim}}] = INFINITY_{{arg.typ}};
+        for (int d = 0; d < {{arg.dim}}; d++)   (({{f2c_type_value}} *)arg{{arg.id}}.data)[d+b*{{arg.dim}}] = INFINITY_{{f2c_type_value}};
     }
     {% elif arg is ops_max %}
-        for (int d = 0; d < {{arg.dim}}; d++)   (({{arg.typ}} *)arg{{arg.id}}.data)[d+b*{{arg.dim}}] = -INFINITY_{{arg.typ}};
+        for (int d = 0; d < {{arg.dim}}; d++)   (({{f2c_type_value}} *)arg{{arg.id}}.data)[d+b*{{arg.dim}}] = -INFINITY_{{f2c_type_value}};
     }
     {% endif %}
     {% if not arg is ops_read %}
-    reduct_bytes += ROUND_UP(maxblocks*{{arg.dim}}*sizeof({{arg.typ}}));
+    reduct_bytes += ROUND_UP(maxblocks*{{arg.dim}}*sizeof({{f2c_type_value}}));
     {% endif %}
     {% endif %}
 {% endfor %}
 {% endif %}
 
 {% for arg in lh.args %}
+{% set f2c_type_value = lh.f2c_type[loop.index0] %}
 {% if arg is ops_gbl or arg is ops_reduce %}
     {% if arg is ops_read %}
         {% if (not arg.dim.isdigit()) or (arg.dim.isdigit() and arg.dim|int > 1) %}
     consts_bytes = 0;
     arg{{arg.id}}.data = block->instance->OPS_consts_h + consts_bytes;
-    {{arg.typ}}* arg{{arg.id}}_data_d = ({{arg.typ}}*)(block->instance->OPS_consts_d + consts_bytes);
-    for (int d = 0; d < arg{{arg.id}}.dim; d++)     (({{arg.typ}} *)arg{{arg.id}}.data)[d] = arg{{arg.id}}h[d];
-    consts_bytes += ROUND_UP(arg{{arg.id}}.dim*sizeof({{arg.typ}}));
+    {{f2c_type_value}}* arg{{arg.id}}_data_d = ({{f2c_type_value}}*)(block->instance->OPS_consts_d + consts_bytes);
+    for (int d = 0; d < arg{{arg.id}}.dim; d++)     (({{f2c_type_value}} *)arg{{arg.id}}.data)[d] = arg{{arg.id}}h[d];
+    consts_bytes += ROUND_UP(arg{{arg.id}}.dim*sizeof({{f2c_type_value}}));
         {% endif %}
     {% endif %}
 {% endif %}
@@ -215,21 +197,13 @@
         block->instance->OPS_kernels[{{kernel_idx}}].mpi_time += __t2 - __t1;
     }
 
-{% for d in range(lh.ndim) %}
-    int start_{{d}} = start_indx[{{d}}];
-    int end_{{d}} = end_indx[{{d}}];
-    {% if lh.arg_idx != -1 %}
-    int arg_idx_{{d}} = arg_idx[{{d}}];
-    {% endif %}
-{% endfor %}
-
 {% set condition=[""] %}
-{% if condition.append(condition.pop() + "(end_indx[0]-start_indx[0])>0") %}{% endif %}
+{% if condition.append(condition.pop() + "(end_0-start_0)>0") %}{% endif %}
 {% if lh.ndim > 1 %}
-    {% if condition.append(condition.pop() + " && (end_indx[1]-start_indx[1])>0") %}{% endif %}
+    {% if condition.append(condition.pop() + " && (end_1-start_1)>0") %}{% endif %}
 {% endif %}
 {% if lh.ndim > 2 %}
-    {% if condition.append(condition.pop() + " && (end_indx[2]-start_indx[2])>0") %}{% endif %}
+    {% if condition.append(condition.pop() + " && (end_2-start_2)>0") %}{% endif %}
 {% endif %}
 
     if ({{condition[0]}}) {
@@ -259,63 +233,50 @@
             auto {{const}}_sycl = (*{{const}}_p).template get_access<cl::sycl::access::mode::read>(cgh);
 {% endfor %}
 
-{# Copy mgrid_strides to local variables if arg.stencil is restrict or prolong #}
-    {% for arg in lh.args %}
-        {% if arg is ops_dat %}
-            {% if arg.restrict or arg.prolong %}
-    int {{args_list[arg.id]}}_mgridstridX = args[{{arg.id}}].stencil->mgrid_stride[0];
-                {% if lh.ndim > 1 %}
-    int {{args_list[arg.id]}}_mgridstridY = args[{{arg.id}}].stencil->mgrid_stride[1];
-                {% endif %}
-                {% if lh.ndim > 2 %}
-    int {{args_list[arg.id]}}_mgridstridZ = args[{{arg.id}}].stencil->mgrid_stride[2];
-                {% endif %}
-            {% endif %}
-        {% endif %}
-    {% endfor %}
-
 {% if flat_parallel %}
-            cgh.parallel_for<class {{lh.kernel}}_kernel>(cl::sycl::range<{{lh.ndim}}>(
+            cgh.parallel_for<class {{lh.kernel}}_sycl>(cl::sycl::range<{{lh.ndim}}>(
     {% if lh.ndim > 2 %}
-                end_indx[2]-start_indx[2],
+                end_2-start_2,
     {% endif %}
     {% if lh.ndim > 1 %}
-                end_indx[1]-start_indx[1],
+                end_1-start_1,
     {% endif %}
-                end_indx[0]-start_indx[0])
+                end_0-start_0)
 {% else %}
-            cgh.parallel_for<class {{lh.kernel}}_kernel>(cl::sycl::nd_range<{{lh.ndim}}>(cl::sycl::range<{{lh.ndim}}>(
+            cgh.parallel_for<class {{lh.kernel}}_sycl>(
+                cl::sycl::nd_range<{{lh.ndim}}>(
+                    cl::sycl::range<{{lh.ndim}}>(
     {% if lh.ndim > 2 %}
-                ((end_indx[2]-start_indx[2]-1)/block->instance->OPS_block_size_z+1)*block->instance->OPS_block_size_z,
+                        ((end_2-start_2-1)/block->instance->OPS_block_size_z+1)*block->instance->OPS_block_size_z,
     {% endif %}
     {% if lh.ndim > 1 %}
         {% if ops_cpu and ops_cpu >= 2 %}
-                end_indx[1]-start_indx[1],
+                        end_1-start_1,
         {% else %}
-                ((end_indx[1]-start_indx[1]-1)/block->instance->OPS_block_size_y+1)*block->instance->OPS_block_size_y,
+                        ((end_1-start_1-1)/block->instance->OPS_block_size_y+1)*block->instance->OPS_block_size_y,
         {% endif %}
     {% endif %}
     {% if ops_cpu and ops_cpu >= 1 %}
-                end_indx[0]-start_indx[0])
+                        end_0-start_0),
     {% else %}
-                ((end_indx[0]-start_indx[0]-1)/block->instance->OPS_block_size_x+1)*block->instance->OPS_block_size_x)
+                        ((end_0-start_0-1)/block->instance->OPS_block_size_x+1)*block->instance->OPS_block_size_x),
     {% endif %}
-                , cl::sycl::range<{{lh.ndim}}>(
+                    cl::sycl::range<{{lh.ndim}}>(
     {% if lh.ndim > 2 %}
-                    block->instance->OPS_block_size_z,
+                        block->instance->OPS_block_size_z,
     {% endif %}
     {% if lh.ndim > 1 %}
         {% if ops_cpu and ops_cpu >= 2 %}
-                    end_indx[1]-start_indx[1],
+                        end_1-start_1,
         {% else %}
-                    block->instance->OPS_block_size_y,
+                        block->instance->OPS_block_size_y,
         {% endif %}
     {% endif %}
     {% if ops_cpu and ops_cpu >= 1 %}
-                    end_indx[0]-start_indx[0])
+                        end_0-start_0)
             )
     {% else %}
-                    block->instance->OPS_block_size_x)
+                        block->instance->OPS_block_size_x)
             )
     {% endif %}
 {% endif %}
@@ -358,22 +319,22 @@
 
 {% if lh.ndim > 2 %}
     {% if flat_parallel %}
-                int n_z = item.get_id(0)+start_2;
+                int n_z = item.get_id(0);
     {% else %}
-                int n_z = item.get_global_id()[0]+start_2;
+                int n_z = item.get_global_id()[0];
     {% endif %}
 {% endif %}
 {% if lh.ndim > 1 %}
     {% if flat_parallel %}
-                int n_y = item.get_id({{lh.ndim-2}})+start_1;
+                int n_y = item.get_id({{lh.ndim-2}});
     {% else %}
-                int n_y = item.get_global_id()[{{lh.ndim-2}}]+start_1;
+                int n_y = item.get_global_id()[{{lh.ndim-2}}];
     {% endif %}
 {% endif %}
 {% if flat_parallel %}
-                int n_x = item.get_id({{lh.ndim-1}})+start_0;
+                int n_x = item.get_id({{lh.ndim-1}});
 {% else %}
-                int n_x = item.get_global_id()[{{lh.ndim-1}}]+start_0;
+                int n_x = item.get_global_id()[{{lh.ndim-1}}];
 {% endif %}
 
 {% for arg in lh.args %}
@@ -389,6 +350,7 @@
 {% endfor %}
 
 {% for arg in lh.args %}
+    {% set f2c_type_value = lh.f2c_type[loop.index0] %}
     {% if arg is ops_dat %}
         {% if arg is ops_read %}
             {% set pre = "const " %}
@@ -403,19 +365,9 @@
             {% set dim -%}{{arg.dim|string}}, {%- endset %}
             {% set extradim = 1 %}
         {% endif %}
-        {% if arg.restrict %}
-            {% set n_x -%}n_x*{{args_list[arg.id]}}_mgridstridX{%- endset %}
-            {% set n_y -%}n_y*{{args_list[arg.id]}}_mgridstridY{%- endset %}
-            {% set n_z -%}n_z*{{args_list[arg.id]}}_mgridstridZ{%- endset %}
-        {% elif arg.prolong %}
-            {% set n_x -%}(n_x+arg_idx[0]%{{args_list[arg.id]}}_mgridstridX)/{{args_list[arg.id]}}_mgridstridX{%- endset %}
-            {% set n_y -%}(n_y+arg_idx[1]%{{args_list[arg.id]}}_mgridstridY)/{{args_list[arg.id]}}_mgridstridY{%- endset %}
-            {% set n_z -%}(n_z+arg_idx[2]%{{args_list[arg.id]}}_mgridstridZ)/{{args_list[arg.id]}}_mgridstridZ{%- endset %}
-        {% else %}
             {% set n_x -%}n_x{%- endset %}
             {% set n_y -%}n_y{%- endset %}
             {% set n_z -%}n_z{%- endset %}
-        {% endif %}
         {% if lh.ndim > 0 %}
             {% set offset_val -%}({{n_x}} * {{arg.strides[0] | int}}){%- endset %}
             {% if offset.append(offset.pop() + offset_val) %}{% endif %}
@@ -435,10 +387,10 @@
         {% if arg.dim > 1 %}
 #ifdef OPS_SOA
         {% endif %}
-                {{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{offset[0]}});
+                {{pre}} ACC<{{f2c_type_value}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{offset[0]}});
         {% if arg.dim > 1 %}
 #else
-                {{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{arg.dim}} * ({{offset[0]}}));
+                {{pre}} ACC<{{f2c_type_value}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{arg.dim}} * ({{offset[0]}}));
 #endif
         {% endif %}
     {% endif %}
@@ -446,32 +398,33 @@
 
 {# Insert declaration for reduction variables #}
 {% for arg in lh.args %}
+    {% set f2c_type_value = lh.f2c_type[loop.index0] %}
     {% if arg is ops_gbl or arg is ops_reduce %}
         {% if arg is ops_inc %}
-                {{arg.typ}} {{args_list[arg.id]}}[{{arg.dim}}];
+                {{f2c_type_value}} {{args_list[arg.id]}}[{{arg.dim}}];
             {% for d in range(arg.dim) %}
-                {{args_list[arg.id]}}[{{d}}] = ZERO_{{arg.typ}};
+                {{args_list[arg.id]}}[{{d}}] = ZERO_{{f2c_type_value}};
             {% endfor %}
         {% elif arg is ops_min %}
-                {{arg.typ}} {{args_list[arg.id]}}[{{arg.dim}}];
+                {{f2c_type_value}} {{args_list[arg.id]}}[{{arg.dim}}];
             {% for d in range(arg.dim) %}
-                {{args_list[arg.id]}}[{{d}}] = INFINITY_{{arg.typ}};
+                {{args_list[arg.id]}}[{{d}}] = INFINITY_{{f2c_type_value}};
             {% endfor %}
         {% elif arg is ops_max %}
-                {{arg.typ}} {{args_list[arg.id]}}[{{arg.dim}}];
+                {{f2c_type_value}} {{args_list[arg.id]}}[{{arg.dim}}];
             {% for d in range(arg.dim) %}
-                {{args_list[arg.id]}}[{{d}}] = -INFINITY_{{arg.typ}};
+                {{args_list[arg.id]}}[{{d}}] = -INFINITY_{{f2c_type_value}};
             {% endfor %}
         {% elif arg is ops_write %} {# this may not be correct #}
-                {{arg.typ}} {{args_list[arg.id]}}[{{arg.dim}}];
+                {{f2c_type_value}} {{args_list[arg.id]}}[{{arg.dim}}];
             {% for d in range(arg.dim) %}
-                {{args_list[arg.id]}}[{{d}}] = ZERO_{{arg.typ}};
+                {{args_list[arg.id]}}[{{d}}] = ZERO_{{f2c_type_value}};
             {% endfor %}
         {% elif arg is ops_read %}
             {% if arg.dim.isdigit() and arg.dim|int  == 1 %}
-                const {{arg.typ}} *{{args_list[arg.id]}} = &{{args_list[arg.id]}}_val;
+                const {{f2c_type_value}} *{{args_list[arg.id]}} = &{{args_list[arg.id]}}_val;
             {% else %}
-                const {{arg.typ}} *{{args_list[arg.id]}} = arg{{arg.id}}_data_d;
+                const {{f2c_type_value}} *{{args_list[arg.id]}} = arg{{arg.id}}_data_d;
             {% endif%}
         {% endif %}
     {% endif %}
@@ -481,12 +434,12 @@
 // User code
 // =========
 {% set condition = [""] %}
-{% if condition.append(condition.pop() + "n_x < end_0") %}{% endif %}
+{% if condition.append(condition.pop() + "(n_x < end_0-start_0)") %}{% endif %}
 {% if lh.ndim > 1 %}
-    {% if condition.append(condition.pop() + " && n_y < end_1") %}{% endif %}
+    {% if condition.append(condition.pop() + " && (n_y < end_1-start_1)") %}{% endif %}
 {% endif %}
 {% if lh.ndim > 2 %}
-    {% if condition.append(condition.pop() + " && n_z < end_2") %}{% endif %}
+    {% if condition.append(condition.pop() + " && (n_z < end_2-start_2)") %}{% endif %}
 {% endif %}
                 if ({{condition[0]}}) {
     {# insert kernel body #}    
@@ -502,22 +455,23 @@
                     group_size *= item.get_local_range(2);
     {% endif %}
     {% for arg in lh.args %}
+        {% set f2c_type_value = lh.f2c_type[loop.index0] %}
         {% if arg is ops_gbl or arg is ops_reduce %}
             {% if arg is ops_inc %}
                 for (int d = 0; d < {{arg.dim}}; d++) {
-                    ops_reduction_sycl<OPS_INC>(arg{{arg.id}}_data_d + d + item.get_group_linear_id()*{{arg.dim}}, {{args_list[arg.id]}}[d], ({{arg.typ}}*)&local_mem[0], item, group_size);
+                    ops_reduction_sycl<OPS_INC>(arg{{arg.id}}_data_d + d + item.get_group_linear_id()*{{arg.dim}}, {{args_list[arg.id]}}[d], ({{f2c_type_value}}*)&local_mem[0], item, group_size);
                 }
             {% elif arg is ops_min %}
                 for (int d = 0; d < {{arg.dim}}; d++) {
-                    ops_reduction_sycl<OPS_MIN>(arg{{arg.id}}_data_d + d + item.get_group_linear_id()*{{arg.dim}}, {{args_list[arg.id]}}[d], ({{arg.typ}}*)&local_mem[0], item, group_size);
+                    ops_reduction_sycl<OPS_MIN>(arg{{arg.id}}_data_d + d + item.get_group_linear_id()*{{arg.dim}}, {{args_list[arg.id]}}[d], ({{f2c_type_value}}*)&local_mem[0], item, group_size);
                 }
             {% elif arg is ops_max %}
                 for (int d = 0; d < {{arg.dim}}; d++) {
-                    ops_reduction_sycl<OPS_MAX>(arg{{arg.id}}_data_d + d + item.get_group_linear_id()*{{arg.dim}}, {{args_list[arg.id]}}[d], ({{arg.typ}}*)&local_mem[0], item, group_size);
+                    ops_reduction_sycl<OPS_MAX>(arg{{arg.id}}_data_d + d + item.get_group_linear_id()*{{arg.dim}}, {{args_list[arg.id]}}[d], ({{f2c_type_value}}*)&local_mem[0], item, group_size);
                 }
             {% elif arg is ops_write %} {# this may not be correct #}
                 for (int d = 0; d < {{arg.dim}}; d++) {
-                    ops_reduction_sycl<OPS_MIN>(arg{{arg.id}}_data_d + d + item.get_group_linear_id()*{{arg.dim}}, {{args_list[arg.id]}}[d], ({{arg.typ}}*)&local_mem[0], item, group_size);
+                    ops_reduction_sycl<OPS_MIN>(arg{{arg.id}}_data_d + d + item.get_group_linear_id()*{{arg.dim}}, {{args_list[arg.id]}}[d], ({{f2c_type_value}}*)&local_mem[0], item, group_size);
                 }
             {% endif %}
         {% endif %}
@@ -537,19 +491,20 @@
 {% endif %}
 
 {% for arg in lh.args %}
+    {% set f2c_type_value = lh.f2c_type[loop.index0] %}
     {% if arg is ops_gbl or arg is ops_reduce %}
         {% if arg is ops_inc %}
     for (int b = 0; b < maxblocks; b++)
         for (int d = 0; d < {{arg.dim}}; d++)
-            p_a{{arg.id}}[d] = p_a{{arg.id}}[d] + (({{arg.typ}} *)arg{{arg.id}}.data)[d+b*{{arg.dim}}];
+            p_a{{arg.id}}[d] = p_a{{arg.id}}[d] + (({{f2c_type_value}} *)arg{{arg.id}}.data)[d+b*{{arg.dim}}];
         {% elif arg is ops_min %}
     for (int b = 0; b < maxblocks; b++)
         for (int d = 0; d < {{arg.dim}}; d++)
-            p_a{{arg.id}}[d] = MIN(p_a{{arg.id}}[d], (({{arg.typ}} *)arg{{arg.id}}.data)[d+b*{{arg.dim}}]);
+            p_a{{arg.id}}[d] = MIN(p_a{{arg.id}}[d], (({{f2c_type_value}} *)arg{{arg.id}}.data)[d+b*{{arg.dim}}]);
         {% elif arg is ops_max %}
     for (int b = 0; b < maxblocks; b++)
         for (int d = 0; d < {{arg.dim}}; d++)
-            p_a{{arg.id}}[d] = MAX(p_a{{arg.id}}[d], (({{arg.typ}} *)arg{{arg.id}}.data)[d+b*{{arg.dim}}]);
+            p_a{{arg.id}}[d] = MAX(p_a{{arg.id}}[d], (({{f2c_type_value}} *)arg{{arg.id}}.data)[d+b*{{arg.dim}}]);
         {% endif %}
     {% endif %}
 {% endfor %}
@@ -588,5 +543,5 @@
 {% endblock %}
 
 {% block kernel_descriptor_lazy_call %}
-    create_kerneldesc_and_enque("{{lh.kernel}}", args, {{lh.args|length}}, {{kernel_idx}}, dim, 1, range, block, ops_par_loop_{{lh.kernel}}_execute);
+    create_kerneldesc_and_enque("{{lh.kernel}}", args, {{lh.args|length}}, {{kernel_idx}}, dim, 1, range, block, {{lh.kernel}}_execute);
 {% endblock %}
