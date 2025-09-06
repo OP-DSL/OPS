@@ -2,7 +2,15 @@
 set -e
 cd $OPS_INSTALL_PATH/c
 
+
+#export SOURCE_INTEL=source_intel_2021.3_pythonenv
+#export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
+#export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+#export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
+
+
 export SOURCE_INTEL=source_oneapi_sycl_pythonenv
+
 
 #export AMOS=TRUE
 export DEMOS=TRUE
@@ -16,7 +24,9 @@ echo "Testing Intel classic complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
 source $OPS_INSTALL_PATH/../scripts/$SOURCE_INTEL
 
-#<<COMMENT
+
+source ../../scripts/$SOURCE_INTEL
+
 # Build and copy Referance application from the TDMA Library
 # build lib first
 cd $TDMA_INSTALL_PATH/../build

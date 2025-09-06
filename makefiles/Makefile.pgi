@@ -34,6 +34,7 @@ FMODS_F2C_CUDA    := -module $(F_INC_MOD)/f2c_cuda
 FMODS_OMPOFFLOAD    := -module $(F_INC_MOD)/ompoffload
 
 OMPFLAGS := -mp
+
 OMPOFFLOADFLAGS = -mp=gpu #-Minline=reshape -Mvect=levels:5 #-Minfo
 
 ifdef THREADED

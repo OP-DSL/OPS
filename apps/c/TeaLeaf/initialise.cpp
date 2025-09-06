@@ -54,7 +54,7 @@ void initialise()
   ops_fprintf(g_out," Tea will run from the following input:-\n");
   ops_fprintf(g_out,"\n");
 
-  if ((g_in = fopen(in_file,"r")) == NULL) {
+if ((g_in = fopen(in_file,"r")) == NULL) {
     g_in = fopen(in_file,"w+");
     ops_fprintf(g_in,"*tea\n");
     ops_fprintf(g_in," state 1 density=100.0 energy=0.0001\n");
