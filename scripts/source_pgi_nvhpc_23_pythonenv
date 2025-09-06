@@ -7,6 +7,7 @@ unset LD_LIBRARY_PATH
 module purge
 . ~/.bashrc
 export PATH=/rr-home/gihan/numawrap:$PATH
+module load cmake/3.20.1
 
 #OPS specifics
 export OPS_COMPILER=pgi
@@ -52,8 +53,10 @@ export NV_ARCH=Hopper
 echo "GPU architecture" $NV_ARCH
 
 unset SYCL_INSTALL_PATH
+
 export CUDA_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/24.3/cuda/
 export CUDA_MATH_LIBS=$CUDA_INSTALL_PATH/../math_libs/lib64
+
 export LD_LIBRARY_PATH=$CUDA_INSTALL_PATH/lib64:$LD_LIBRARY_PATH
 else
 unset CUDA_INSTALL_PATH
@@ -70,8 +73,13 @@ export LD_LIBRARY_PATH=/rr-home/gihan//HDF5/build_hdf5/gnu/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
 
 #Tridiagonal LIB
-##
+export TDMA_INSTALL_PATH=~/tridsolver/scalar/libtrid
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TDMA_INSTALL_PATH/lib/
+#unset TDMA_INSTALL_PATH 
+#unset LD_LIBRARY_PATH
 
 #OpenSBLI -- for testing app TGV only
 export OPENSBLI_INSTALL_PATH=/rr-home/gihan/OpenSBLI/OpenSBLI_OPS_TESTING/opensbli/
+
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/rr-home/gihan/libffi/
+

@@ -7,6 +7,7 @@ export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
 export SOURCE_INTEL_SYCL=source_oneapi_sycl_pythonenv
 export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
+
 #export AMOS=TRUE
 #export TELOS=TRUE
 export DEMOS=TRUE
