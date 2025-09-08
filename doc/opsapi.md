@@ -356,7 +356,7 @@ a simple text editor.
 
 #### reset_power_counters
 
-__void reset_power_counters()__
+__void OPS_instance::reset_power_counters()__
 
 Resets the internal power and energy counters.
 This should be called before the region of interest in the application (e.g., main time-stepping loop). Energy reported in `ops_timing_output()` will then correspond only to the region after the reset.
