@@ -15,7 +15,7 @@ double pi  = 2.0 * asin(1.0);
 int main(int argc, const char** argv)
 {
   //Initialise the OPS library, passing runtime args, and setting diagnostics level to low (1)
-  ops_init(argc, argv,1);
+  ops_init(argc, argv,2);
 
   //Size along y
   jmax = 4094;
@@ -59,6 +59,8 @@ int main(int argc, const char** argv)
   ops_decl_const("pi",1,"double",&pi);
 
   ops_partition("");
+
+  block->instance->reset_power_counters();
 
   // memset
   int full_range[] = {-1, imax+1, -1, jmax+1};
