@@ -30,7 +30,8 @@ export MPICH_FC=mpif90
 # HDF5
 unset HDF5_INSTALL_PATH
 #export HDF5_INSTALL_PATH=/usr/lib64/openmpi 
-export HDF5_INSTALL_PATH=$HDF5_ROOT
+#export HDF5_INSTALL_PATH=$HDF5_ROOT
+export HDF5_INSTALL_PATH=/work4/training/OPS_Training/Software/opt_nvhpc
 
 # Python
 # Available by defualt >3.8

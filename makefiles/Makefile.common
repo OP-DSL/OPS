@@ -31,6 +31,7 @@ OPS_LINK=
 CUDART=-lcudart
 CURAND=-lcurand
 FCURAND=-cudalib=curand
+FCUNVIDIA-ML=-lnvidia-ml
 HIPRAND=-lhiprand
 
 COMPILER_AVAILABLE := clang gnu intel icx intel_win mic pgi cray xl hip xlp8 aocc
