@@ -4,12 +4,10 @@
 
 ## Executing with GPUDirect
 
-GPUDirect support for MPI+CUDA: to enable it (on the OPS side), add
-**-gpudirect** when running the executable. You may also have to use
-certain environment variables when using different MPI distributions. For
-an example of the required flags and environment settings on the
-Cambridge Wilkes2 GPU cluster see:  
+GPUDirect support for MPI+CUDA and MPI+HIP: To enable it on the OPS side, add **-gpudirect** flag when running the executable. Depending on the MPI distribution, you may also need to set specific environment variables. For
+reference, see the example flags and environment setting provided for the Cambridge Wilkes2 GPU cluster:  
 <https://docs.hpc.cam.ac.uk/hpc/user-guide/performance-tips.html>
+**Note**: This OPS **-gpudirect** option should not be confused with NVIDIA's GPUDirect technology.
 
 ## Cache-blocking Tiling
 
