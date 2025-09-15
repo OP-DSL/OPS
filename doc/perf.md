@@ -10,6 +10,7 @@ reference, see the example flags and environment setting provided for the Cambri
 Enabling this flag activates MPI-aware GPU-to-GPU communication on both AMD and NVIDIA GPUs.
 * On NVIDIA GPUs, OPS leverages NVIDIA GPUDirect RDMA technology, which allows direct data transfers between GPU memory and the network interface without staging through host memory.
 * On AMD GPUs, OPS utilizes the ROCm RDMA technology, which provides similar direct communication capabilities, enabling efficient GPU-to-GPU data movement over high-performance interconnects.
+  
 **Note**: The OPS **-gpudirect** option is an abstraction that activates MPI-aware GPU  communications across both vendor platforms. It should not be confused with NVIDIA's GPUDirect technology specifically - rather, it is a portable OPS runtime option that selects the appropriate mechanism depending on the underlying hardware and software stack.
 
 ## Cache-blocking Tiling
