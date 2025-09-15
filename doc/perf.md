@@ -4,12 +4,14 @@
 
 ## Executing with GPUDirect
 
-GPUDirect support for MPI+CUDA: to enable it (on the OPS side), add
-**-gpudirect** when running the executable. You may also have to use
-certain environment variables when using different MPI distributions. For
-an example of the required flags and environment settings on the
-Cambridge Wilkes2 GPU cluster see:  
+GPUDirect support for MPI+CUDA and MPI+HIP: To enable it on the OPS side, add **-gpudirect** flag when running the executable. Depending on the MPI distribution, you may also need to set specific environment variables. For
+reference, see the example flags and environment setting provided for the Cambridge Wilkes2 GPU cluster:  
 <https://docs.hpc.cam.ac.uk/hpc/user-guide/performance-tips.html>
+Enabling this flag activates MPI-aware GPU-to-GPU communication on both AMD and NVIDIA GPUs.
+* On NVIDIA GPUs, OPS leverages NVIDIA GPUDirect RDMA technology, which allows direct data transfers between GPU memory and the network interface without staging through host memory.
+* On AMD GPUs, OPS utilizes the ROCm RDMA technology, which provides similar direct communication capabilities, enabling efficient GPU-to-GPU data movement over high-performance interconnects.
+  
+**Note**: The OPS **-gpudirect** option is an abstraction that activates MPI-aware GPU  communications across both vendor platforms. It should not be confused with NVIDIA's GPUDirect technology specifically - rather, it is a portable OPS runtime option that selects the appropriate mechanism depending on the underlying hardware and software stack.
 
 ## Cache-blocking Tiling
 
