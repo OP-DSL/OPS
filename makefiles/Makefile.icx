@@ -50,8 +50,9 @@ HIPCC=hipcc
 HIPMPICXX=hipcc
 # -D__HIP_PLATFORM_AMD__ or -D__HIP_PLATFORM_NVIDIA__ will be added to
 # HIPFLAGS from Makefile.hip based on what environment variable set, AMD_ARCH or NV_ARCH
-HIPFLAGS=-std=c++17 -isystem -march=native
-HIP_LINK=-L${HIP_INSTALL_PATH}/lib -lamdhip64
+HIPFLAGS = -std=c++17 -isystem -march=native
+HIP_LINK = -L${HIP_INSTALL_PATH}/lib -lamdhip64 
+HIP_LINK+= -lrocm_smi64
 
 SYCLCXX = icpx
 SYCLMPICXX = mpiicpx
