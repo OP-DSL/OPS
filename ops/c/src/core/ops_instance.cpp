@@ -157,6 +157,10 @@ void OPS_instance::init_globals() {
   ops_gpu_power_measurement_active = 0;
   ops_gpu_measurement_counter = 0;
   ops_gpu_measurement_frequency = 10;
+
+  // Initialize memory allocation counter
+  ops_host_memory_allocated_bytes = 0;
+  ops_device_memory_allocated_bytes = 0;
 	
 	//Tiling
 	ops_enable_tiling = 0;

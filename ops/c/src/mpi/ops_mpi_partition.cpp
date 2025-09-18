@@ -986,6 +986,31 @@ void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::s
   }
   ops_printf("Finished block decomposition\n");
 
+  const char* memory_units[] = {"B", "KB", "MB", "GB", "TB", "PB"};
+  if(instance->ops_host_memory_allocated_bytes > 0) {
+    double allocated_size = static_cast<double>(instance->ops_host_memory_allocated_bytes);
+    int unit_index = 0;
+    while (allocated_size >= 1024.0 && unit_index < 5) {
+        allocated_size /= 1024.0;
+        unit_index++;
+    }
+
+    printf("Rank: %d, allocated host memory: %.2f %s\n", ops_get_proc(), allocated_size, memory_units[unit_index]);
+    fflush(stdout);
+  }
+
+  if(instance->ops_device_memory_allocated_bytes > 0) {
+    double allocated_size = static_cast<double>(instance->ops_device_memory_allocated_bytes);
+    int unit_index = 0;
+    while (allocated_size >= 1024.0 && unit_index < 5) {
+        allocated_size /= 1024.0;
+        unit_index++;
+    }
+
+    printf("Rank: %d, allocated device memory: %.2f %s\n", ops_get_proc(), allocated_size, memory_units[unit_index]);
+    fflush(stdout);
+  }
+
   // allocate send/recv buffer (double, 8 args, maximum depth)
   int size_depth = OPS_instance::getOPSInstance()->ops_tiling_mpidepth>0 ? OPS_instance::getOPSInstance()->ops_tiling_mpidepth : 5;
   ops_buffer_size = 8 * 8 * size_depth *
