@@ -1,0 +1,113 @@
+CC      := icx
+CXX     := icpx
+FC 	    := ifx
+
+ifdef DEBUG
+	CCFLAGS   := -O0 -std=c99 -fPIC -Wall -ffloat-store -g
+	CXXFLAGS   := -O0 -fPIC -Wall -ffloat-store -g -std=c++17 -DSYCL_COPY -DSYCL_USM
+else
+	CCFLAGS   := -O3 -march=native -std=c99 -fPIC -Wall -g -ftree-vectorize -qopenmp
+	CXXFLAGS   := -O3 -march=native -std=c++17 -fPIC -Wall -qopenmp
+endif
+
+CXXLINK := -lstdc++
+FFLAGS  := -O3 -march=native -fPIC -g -qopenmp -free -mcmodel=medium
+
+FMODS   := -module $(F_INC_MOD)
+FMODS_F2C_CUDA    := -module $(F_INC_MOD)/f2c_cuda
+FMODS_F2C_HIP     := -module $(F_INC_MOD)/f2c_hip
+FMODS_F2C_SYCL    := -module $(F_INC_MOD)/f2c_sycl
+FMODS_OMPOFFLOAD    := -module $(F_INC_MOD)/ompoffload
+
+ifdef THREADED
+	THREADING_FLAGS ?= -qopenmp
+endif
+
+ifdef IEEE
+CCFLAGS += -fp-model=strict
+CXXFLAGS += -fp-model=strict
+FFLAGS += -fp-model strict
+endif
+
+ifdef PROFILE_ITT
+CXXFLAGS += -DPROFILE_ITT -I$(VTUNE_PROFILER_DIR)/include
+OPS_LINK += -L$(VTUNE_PROFILER_DIR)/lib64 -littnotify
+endif
+
+ifeq ($(AMD_ARCH),MI100)
+HIP_ARCH=gfx908
+else
+ifeq ($(AMD_ARCH),MI200)
+#valid for ARCHER2 AMD Instinct MI210 and LUMI AMD MI250X GPU
+HIP_ARCH=gfx90a
+else
+ifeq ($(AMD_ARCH),MI300X)
+HIP_ARCH=gfx942
+endif
+endif
+endif
+
+MPI_INSTALL_PATH = $(CRAY_MPICH_DIR)
+
+MPICC=icpx
+MPICPP=icpx
+MPICXX=icpx
+MPIFC=ifx
+MPIF90=ifx
+
+MPI_INC = $(CRAY_MPICH_DIR)/include
+MPI_LIB = $(CRAY_MPICH_DIR)/lib $(PE_MPICH_GTL_DIR_amd_gfx90a)
+MPI_LINK = -lmpi -lmpi_cray
+
+HIPCC=hipcc
+HIPMPICXX=hipcc
+# -D__HIP_PLATFORM_AMD__ or -D__HIP_PLATFORM_NVIDIA__ will be added to
+# HIPFLAGS from Makefile.hip based on what environment variable set, AMD_ARCH or NV_ARCH
+HIPFLAGS = -std=c++17 -isystem -march=native
+HIP_LINK = -L${HIP_INSTALL_PATH}/lib -lamdhip64 
+HIP_LINK+= -lrocm_smi64
+
+#$PE_MPICH_GTL_LIBS_amd_gfx90a = -lmpi_gtl_hsa
+MPI_HIP_LINK = -lmpi_gtl_hsa
+
+SYCLCXX = icpx
+SYCLMPICXX = icpx
+
+MPI_SYCL_LINK = -lmpi_gtl_hsa
+
+GPU_VENDOR := $(shell \
+    if command -v nvidia-smi >/dev/null 2>&1; then \
+        echo NVIDIA; \
+    elif command -v rocm-smi >/dev/null 2>&1; then \
+        echo AMD; \
+    elif command -v intel-smi >/dev/null 2>&1; then \
+        echo INTEL; \
+    elif command -v lspci >/dev/null 2>&1; then \
+        if lspci | grep -i 'vga\|3d\|display' | grep -qi 'nvidia'; then echo NVIDIA; \
+        elif lspci | grep -i 'vga\|3d\|display' | grep -qi 'amd'; then echo AMD; \
+        elif lspci | grep -i 'vga\|3d\|display' | grep -qi 'intel'; then echo INTEL; \
+        else echo UNKNOWN; fi; \
+    else \
+        echo UNKNOWN; \
+    fi)
+
+ifeq ($(GPU_VENDOR), NVIDIA)
+SYCL_FLAGS := -fsycl -fsycl-targets=nvptx64-nvidia-cuda
+endif
+
+ifeq ($(GPU_VENDOR), AMD)
+SYCL_FLAGS := -fsycl -fsycl-targets=amdgcn-amd-amdhsa -Xsycl-target-backend --offload-arch=$(HIP_ARCH)
+HIP_LINK += -lirc -lirc_s -limf -lsvml -lintlc
+endif
+
+ifeq ($(GPU_VENDOR), INTEL)
+SYCL_FLAGS := -fsycl -fsycl-targets=spir64
+OMPOFFLOADFLAGS := -fiopenmp -fopenmp-targets=spir64
+endif
+
+ifeq ($(GPU_VENDOR), UNKNOWN)
+SYCL_FLAGS := -fsycl -fsycl-targets=spir64_x86_64
+OMPOFFLOADFLAGS := -fiopenmp -fopenmp-targets=spir64_x86_64
+endif
+
+SYCL_FLAGS += -D__INTEL_SYCL__

@@ -33,7 +33,7 @@ CURAND=-lcurand
 FCURAND=-cudalib=curand
 HIPRAND=-lhiprand
 
-COMPILER_AVAILABLE := clang gnu intel icx intel_win mic pgi cray xl hip xlp8 aocc
+COMPILER_AVAILABLE := clang gnu intel icx intel_win mic pgi cray xl hip xlp8 aocc icx_cray
 
 ifeq ($(wildcard $(OPS_INSTALL_PATH)/../makefiles/Makefile.$(OPS_COMPILER)),)
 print:

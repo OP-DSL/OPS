@@ -21,6 +21,15 @@ MPICXX=CC
 MPIFC=ftn
 MPIF90=ftn
 
+MPI_INC = $(CRAY_MPICH_DIR)/include
+MPI_LIB = $(CRAY_MPICH_DIR)/lib $(PE_MPICH_GTL_DIR_amd_gfx90a)
+MPI_LINK = -lmpi
+
+
+#$PE_MPICH_GTL_LIBS_amd_gfx90a = -lmpi_gtl_hsa
+MPI_OMPOFFLOAD_LINK = -lmpi_gtl_hsa
+
+
 ifeq ($(AMD_ARCH),MI100)
 HIP_ARCH=gfx908
 else
@@ -29,13 +38,6 @@ ifeq ($(AMD_ARCH),MI200)
 HIP_ARCH=gfx90a
 endif
 endif
-
-MPI_INC = $(CRAY_MPICH_DIR)/include
-MPI_LIB = $(CRAY_MPICH_DIR)/lib $(PE_MPICH_GTL_DIR_amd_gfx90a)
-MPI_LINK = -lmpi
-
-#$PE_MPICH_GTL_LIBS_amd_gfx90a = -lmpi_gtl_hsa
-MPI_OMPOFFLOAD_LINK = -lmpi_gtl_hsa
 
 HIPCC=CC
 HIPMPICXX=CC
