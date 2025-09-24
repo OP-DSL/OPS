@@ -196,13 +196,14 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
   for (int arg = 0; arg < desc->nargs; arg++) {
     //I need to mark these dirty here, because normally they are only marked dirty once ops_execute is done
     // but the next if would not catch that in time
-    if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].dat->e_dat == 1 &&
-        desc->args[arg].acc == OPS_WRITE) {
-      edge_dirtybit[desc->args[arg].dat->index] = 1;
-    }
-    if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].dat->e_dat == 1 &&
+    // if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].dat->e_dat == 1 &&
+    //     desc->args[arg].acc == OPS_WRITE) {
+      
+    //   edge_dirtybit[desc->args[arg].dat->index] = 1;
+    // }
+    if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].dat->e_dat == 1 /*&&
         (desc->args[arg].acc == OPS_INC || desc->args[arg].acc == OPS_MAX || desc->args[arg].acc == OPS_MIN ||
-        (desc->args[arg].acc == OPS_READ && edge_dirtybit[desc->args[arg].dat->index] == 1))) {
+        (desc->args[arg].acc == OPS_READ && edge_dirtybit[desc->args[arg].dat->index] == 1))*/) {
       lowdim_treatment = true;
       break;
     }
@@ -449,6 +450,13 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   for (int d = 0; d < dims; d++) {
     if (biggest_range[2*d] > biggest_range[2*d+1])
       biggest_range[2*d] = biggest_range[2*d+1];
+  }
+
+  if (instance->OPS_diags>5) {
+    printf2(instance, "Proc %d constructing tiling plan for %d loops:\n", ops_kernel_list.size());
+    for (int i = 0; i < ops_kernel_list.size(); i++)
+      printf2(instance, "%s, ", ops_kernel_list[i]->name);
+    printf2(instance,"\n");
   }
 
   size_t full_owned_size = 1;
@@ -939,7 +947,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                     tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] +
                         d_p_max);
 
-            if (instance->OPS_diags > 5 && tile_sizes[d] != -1)
+            if (instance->OPS_diags > 5) // && tile_sizes[d] != -1
               printf2(instance, "Dataset read %s dependency dim %d set to %d %d\n",
                      LOOPARG.dat->name, d,
                      data_read_deps[LOOPARG.dat->index]
@@ -1031,6 +1039,13 @@ int ops_construct_tile_plan(OPS_instance *instance) {
     }
   }
 
+  for (int loop = 0; loop < ops_kernel_list.size(); loop++) {
+    int d = 0; int tile = 0;
+    printf2(instance, "Proc %d loop %s range dim 0, tile 0: %d-%d\n", ops_get_proc(), ops_kernel_list[loop]->name, 
+    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
+    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
+  }
+
   //Figure out which datasets need halo exchange - based on whether written or read first
   std::vector<int> datasets_accessed(instance->OPS_dat_index, -1);
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
@@ -1048,18 +1063,25 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   depths_to_exchange.resize(OPS_MAX_DIM*4*dats_to_exchange.size()); //left send, left recv, right send, right recv
   for (unsigned int i = 0; i < dats_to_exchange.size(); i++) {
     for (int d = 0; d < dims; d++) {
+
+      //Left send
       if (data_read_deps_edge[dats_to_exchange[i]->index][2*d] == INT_MIN)
         depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 0] = 0;
       else
         depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 0] = MAX(0,data_read_deps_edge[dats_to_exchange[i]->index][2*d]-biggest_range[2*d]);
 
       //Left recv depth is the read dependency range of the first tile, extending beyond the left owned range
+      if (instance->OPS_diags > 5)
+        printf2(instance, "Proc %d Dataset %s, dim %d, left recv dependency: %d\n", ops_get_proc(),dats_to_exchange[i]->name, d,          data_read_deps[dats_to_exchange[i]->index][2*d]);
       //TODO: use owned ranges instead of biggest range, even though they are the same for non-edge processes
       if (data_read_deps[dats_to_exchange[i]->index][2*d] == INT_MAX)
         depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 1] = 0;
       else
         depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 1] = MAX(0,biggest_range[2*d]-data_read_deps[dats_to_exchange[i]->index][2*d]);
 
+      //right send
+      if (instance->OPS_diags > 5)
+        printf2(instance, "Proc %d Dataset %s, dim %d, right send dependency: %d\n", ops_get_proc(),dats_to_exchange[i]->name, d,          data_read_deps_edge[dats_to_exchange[i]->index][2*d+1]);
       if (data_read_deps_edge[dats_to_exchange[i]->index][2*d+1] == INT_MAX)
         depths_to_exchange[i*OPS_MAX_DIM*4 + d*4 + 2] = 0;
       else

@@ -162,25 +162,25 @@ void ops_fprintf(FILE *stream, const char *format, ...) {
 }
 
 void printf2(OPS_instance *instance, const char *format, ...) {
-  if (ops_my_global_rank == MPI_ROOT) {
+  // if (ops_my_global_rank == MPI_ROOT) {
     char buf[1000];
     va_list argptr;
     va_start(argptr, format);
     vsprintf(buf,format, argptr);
     va_end(argptr);
     instance->ostream() << buf;
-  }
+  // }
 }
 
 void ops_printf2(OPS_instance *instance, const char *format, ...) {
-  if (ops_my_global_rank == MPI_ROOT) {
+  // if (ops_my_global_rank == MPI_ROOT) {
     char buf[1000];
     va_list argptr;
     va_start(argptr, format);
     vsprintf(buf,format, argptr);
     va_end(argptr);
     instance->ostream() << buf;
-  }
+  // }
 }
 
 

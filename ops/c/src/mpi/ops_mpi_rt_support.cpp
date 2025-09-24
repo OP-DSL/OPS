@@ -499,6 +499,7 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
     MPI_Sendrecv(&actual_depth_send, 1, MPI_INT, sb->id_p[dim], 766+dat->index, &they_send,
                  1, MPI_INT, sb->id_m[dim], 766+dat->index, sb->comm, &status);
     if (sb->id_m[dim] != MPI_PROC_NULL && actual_depth_recv != they_send) {
+      printf("left recv mismatch for dat %s\n", dat->name);
       throw OPSException(OPS_INTERNAL_ERROR, "Error: Left recv mismatch");
     }
   }
