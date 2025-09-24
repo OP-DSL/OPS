@@ -7,7 +7,7 @@ export OPS_INSTALL_PATH=$HOME/repos/OPS/ops
 module purge
 
 # Compiler
-module load oneAPI/2024.2.0
+module load intel_comp/2024.2.0
 module load compiler-rt tbb compiler mpi dpl dpct
 module load parallel_hdf5/1.14.4
 
