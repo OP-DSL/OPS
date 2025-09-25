@@ -2,6 +2,8 @@ NVCC  ?= $(CUDA_INSTALL_PATH)/bin/nvcc
 CUDA_INC ?= $(CUDA_INSTALL_PATH)/include
 CUDA_LIB ?= $(CUDA_INSTALL_PATH)/lib64
 
+CUDA_LIB += -L$(CUDA_INSTALL_PATH)/lib64/stubs -lnvidia-ml
+
 ifneq ($(CUDA_MATH_LIBS),)
 	CUDA_LIB += -L$(CUDA_MATH_LIBS)
 endif

@@ -77,6 +77,22 @@ ifdef SYCL_INSTALL_PATH
 	TARGETS += sycl mpi_sycl
 endif
 
+GPU_VENDOR := $(shell \
+    if command -v nvidia-smi >/dev/null 2>&1; then \
+        echo NVIDIA; \
+    elif command -v rocm-smi >/dev/null 2>&1; then \
+        echo AMD; \
+    elif command -v intel-smi >/dev/null 2>&1; then \
+        echo INTEL; \
+    elif command -v lspci >/dev/null 2>&1; then \
+        if lspci | grep -i 'vga\|3d\|display' | grep -qi 'nvidia'; then echo NVIDIA; \
+        elif lspci | grep -i 'vga\|3d\|display' | grep -qi 'amd'; then echo AMD; \
+        elif lspci | grep -i 'vga\|3d\|display' | grep -qi 'intel'; then echo INTEL; \
+        else echo UNKNOWN; fi; \
+    else \
+        echo UNKNOWN; \
+    fi)
+
 ifneq (,$(filter ompoffload mpi_ompoffload,$(TARGETS)))
 ifeq ($(OPS_COMPILER),gnu)
 TARGETS:=$(filter-out ompoffload mpi_ompoffload,$(TARGETS))
@@ -84,8 +100,13 @@ endif
 ifeq ($(OPS_COMPILER),intel)
 TARGETS:=$(filter-out ompoffload mpi_ompoffload,$(TARGETS))
 endif
-ifeq ($(OPS_COMPILER),intel-sycl)
+ifeq ($(OPS_COMPILER),icx)
+ifeq ($(GPU_VENDOR), NVIDIA)
 TARGETS:=$(filter-out ompoffload mpi_ompoffload,$(TARGETS))
+endif
+ifeq ($(GPU_VENDOR), AMD)
+TARGETS:=$(filter-out ompoffload mpi_ompoffload,$(TARGETS))
+endif
 endif
 endif
 

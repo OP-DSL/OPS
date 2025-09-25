@@ -132,7 +132,7 @@ void _ops_set_args(OPS_instance *instance, const char *argv) {
   pch = strstr(argv, "OPS_CACHE_SIZE=");
   if (pch != NULL) {
     snprintf(temp, 64, "%s", pch);
-    instance->ops_cache_size = atoi(temp + 15);
+    instance->ops_cache_size = atof(temp + 15);
     if (instance->is_root()) instance->ostream() << "\n Cache size per process = " << instance->ops_cache_size << '\n';
   }
   pch = strstr(argv, "OPS_REALLOC=");
@@ -201,6 +201,20 @@ void _ops_set_args(OPS_instance *instance, const char *argv) {
     if (instance->is_root()) instance->ostream() << "\n Forced decomposition in z direction = " << counts << '\n';
   }
 
+  pch = strstr(argv, "OPS_GPU_MEASUREMENT_FREQUENCY=");
+  if (pch != NULL) {
+    snprintf(temp, 64, "%s", pch);
+    instance->ops_gpu_measurement_frequency = atoi(temp + 30);
+    if (instance->is_root()) instance->ostream() << "\n GPU power measurement frequency = " << instance->ops_gpu_measurement_frequency << '\n';
+  }
+
+  pch = strstr(argv, "OPS_DEVICE=");
+  if (pch != NULL) {
+    snprintf(temp, 64, "%s", pch);
+    instance->OPS_device_id = atoi(temp + 11);
+    if (instance->is_root()) instance->ostream() << "\n OPS device ID = " << instance->OPS_device_id << '\n';
+  }
+
   if (strstr(argv, "OPS_CHECKPOINT_INMEMORY") != NULL) {
     instance->ops_checkpoint_inmemory = 1;
     if (instance->is_root()) instance->ostream() << "\n OPS Checkpointing in memory\n";
@@ -263,6 +277,12 @@ void ops_init_core(OPS_instance *instance, const int argc, const char *const arg
 void ops_exit_core(OPS_instance *instance) {
   ops_checkpointing_exit(instance);
   ops_exit_lazy(instance);
+  
+  // Finalize GPU power measurement
+  if (instance->ops_gpu_power_measurement_active) {
+    _ops_finalize_gpu_power_measurement(instance);
+  }
+  
   ops_dat_entry *item = TAILQ_FIRST(&instance->OPS_dat_list);
 
   /*free doubly linked list holding the ops_dats */
@@ -1111,6 +1131,68 @@ void ops_reduction_result_char(ops_reduction handle, int type_size, char *ptr) {
   handle->initialized = 0;
 }
 
+void _ops_reset_power_counters(OPS_instance *instance) {
+  for (int i = 0; i < instance->ops_energy_paths_count; i++) {
+    if (instance->ops_energy_paths[i] != NULL) {
+        FILE* file = fopen(instance->ops_energy_paths[i], "r");
+				if (file == NULL) {
+          if (instance->OPS_diags > 3)
+					  ops_printf("Error: Could not open RAPL path %s. Skipping.\n", instance->ops_energy_paths[i]);
+				} else {
+					fscanf(file, "%lld", &(instance->ops_energy_counters[i]));
+					fclose(file);
+				}
+    }
+  }
+  
+  // Reset GPU power counters as well
+  _ops_reset_gpu_power_counters(instance);
+}
+
+void _ops_reset_gpu_power_counters(OPS_instance *instance) {
+  instance->ops_gpu_energy_consumed = 0.0;
+  instance->ops_gpu_power_measurement_active = 0;
+  instance->ops_gpu_power_watts = 0;
+  instance->ops_gpu_measurement_counter = 0;
+  
+  // Get current time and initialize timing
+  double current_time;
+  ops_timers_core(&current_time, &current_time);
+  instance->ops_gpu_power_measurement_start_time = current_time;
+  instance->ops_gpu_last_power_sample_time = current_time;
+  
+  // Initialize GPU power measurement (calls backend-specific implementation)
+  if (!instance->ops_gpu_power_measurement_active) {
+    _ops_init_gpu_power_measurement(instance);
+    instance->ops_gpu_power_measurement_active = 1;
+  }
+}
+
+void _ops_sample_gpu_power(OPS_instance *instance) {
+  if (!instance->ops_gpu_power_measurement_active) return;
+  
+  double current_time;
+  ops_timers_core(&current_time, &current_time);
+  
+  // Get current GPU power (calls backend-specific implementation)
+  unsigned int current_power_watts = 0;
+  _ops_get_gpu_power(instance, &current_power_watts);
+  
+  // Calculate energy consumed since last sample (P * dt)
+  if (instance->ops_gpu_last_power_sample_time > 0) {
+    double time_delta = current_time - instance->ops_gpu_last_power_sample_time;
+    double energy_delta = instance->ops_gpu_power_watts * time_delta; // Watts * seconds = Joules
+    instance->ops_gpu_energy_consumed += energy_delta;
+  }
+  
+  // Update for next sample
+  instance->ops_gpu_power_watts = current_power_watts;
+  instance->ops_gpu_last_power_sample_time = current_time;
+}
+
+double _ops_get_gpu_energy_consumed(OPS_instance *instance) {
+  return instance->ops_gpu_energy_consumed;
+}
 
 void _ops_diagnostic_output(OPS_instance *instance) {
   if (instance->OPS_diags > 2) {
@@ -1438,6 +1520,86 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
     if (moments_time[0] > 0.0) {
       ops_fprintf2(stream, "Total user halo exchange time: %g\n", moments_time[0]);
     }
+
+    moments_time[0] = 0.0;
+    ops_compute_moment(instance->ops_reduction_time, &moments_time[0], &moments_time[1]);
+    if (moments_time[0] > 0.0) {
+      ops_fprintf2(stream, "Total reduction time: %g\n", moments_time[0]);
+    }
+
+    moments_time[0] = 0.0;
+    double msg_count = instance->ops_message_count;
+    ops_compute_moment(msg_count, &moments_time[0], &moments_time[1]);
+    if (moments_time[0] > 0.0) {
+      ops_fprintf2(stream, "Average number of MPI messages per process: %g\n", moments_time[0]);
+    }
+
+    moments_time[0] = 0.0;
+    double msg_size = instance->ops_message_size;
+    ops_compute_moment(msg_size, &moments_time[0], &moments_time[1]);
+    if (moments_time[0] > 0.0) {
+      ops_fprintf2(stream, "Average volume of MPI communications per process: %g MB\n", moments_time[0]/1e6);
+    }
+
+    long long aggregate_energy = 0;
+    long long aggregate_energy_dram = 0;
+    long long max_energy = 262143328850LL;
+    for (int i = 0; i < instance->ops_energy_paths_count; i++) {
+      if (instance->ops_energy_paths[i] != NULL) {
+          FILE* file = fopen(instance->ops_energy_paths[i], "r");
+          if (file == NULL) {
+            if (instance->OPS_diags > 3)
+              ops_printf("Error: Could not open RAPL path %s. Skipping.\n", instance->ops_energy_paths[i]);
+          } else {
+            long long energy;
+            fscanf(file, "%lld", &energy);
+            if (energy < instance->ops_energy_counters[i]) {
+              // Energy counter has wrapped around.
+              char max_energy_filename[128];
+              strcpy(max_energy_filename, instance->ops_energy_paths[i]);
+              char* substring = strstr(max_energy_filename, "energy_uj");
+              if (substring != NULL) {
+                strncpy(substring, "max_energy_range_uj", strlen("max_energy_range_uj"));
+              }
+              FILE *max_energy_file = fopen(max_energy_filename, "r");
+              if (max_energy_file != NULL) {
+                fscanf(max_energy_file, "%lld", &max_energy);
+                fclose(max_energy_file);
+              }
+              if (i < instance->ops_energy_paths_count/2)
+                aggregate_energy += (max_energy - instance->ops_energy_counters[i] + energy);
+              else 
+                aggregate_energy_dram += (max_energy - instance->ops_energy_counters[i] + energy);
+            } else {
+              if (i < instance->ops_energy_paths_count/2)
+                aggregate_energy += (energy - instance->ops_energy_counters[i]);
+              else
+                aggregate_energy_dram += (energy - instance->ops_energy_counters[i]);
+            }
+            //ops_printf("starting value %lld, ending value %lld for %s\n", instance->ops_energy_counters[i], energy, instance->ops_energy_paths[i]);
+            fclose(file);
+                
+          }
+      }
+    }
+    if (aggregate_energy > 0) {
+      moments_time[0] = 0.0;
+      double aggregate_energy_d = (double)aggregate_energy/1000000.0;
+      ops_compute_moment(aggregate_energy_d, &moments_time[0], &moments_time[1]);
+      double avg_energy = moments_time[0];
+      moments_time[0] = 0.0;
+      double aggregate_energy_dram_d = (double)aggregate_energy_dram/1000000.0;
+      ops_compute_moment(aggregate_energy_dram_d, &moments_time[0], &moments_time[1]);
+      ops_fprintf2(stream, "Total CPU energy consumed (RAPL): %g J, of which DRAM energy: %g J\n", avg_energy, moments_time[0]);
+    }
+
+    // GPU energy reporting
+    if (instance->ops_gpu_energy_consumed > 0.0) {
+      moments_time[0] = 0.0;
+      ops_compute_moment(instance->ops_gpu_energy_consumed, &moments_time[0], &moments_time[1]);
+      ops_fprintf2(stream, "Total GPU energy consumed: %g J\n", moments_time[0]);
+    }
+
     // printf("Times: %g %g %g\n",ops_gather_time, ops_sendrecv_time,
     // ops_scatter_time);
     ops_free(buf);
@@ -1498,6 +1660,10 @@ void ops_timing_realloc(OPS_instance *instance, int kernel, const char *name) {
     instance->OPS_kernels[kernel].name = (char *)ops_malloc((strlen(name) + 1) * sizeof(char));
     strcpy_s(instance->OPS_kernels[kernel].name, strlen(name)+1, name);
     instance->OPS_kernels[kernel].count = 0;
+  }
+
+  if (instance->ops_gpu_power_measurement_active && instance->ops_gpu_measurement_counter++ % instance->ops_gpu_measurement_frequency == 0) {
+    _ops_sample_gpu_power(instance);
   }
 }
 
@@ -1844,7 +2010,7 @@ extern "C" ops_halo_group ops_decl_halo_group_elem(int nhalos, ops_halo *halos,
 
 
 void *ops_malloc(size_t size) {
-  void *ptr = NULL;
+  void *ptr=NULL;// = _mm_malloc(size, OPS_ALIGNMENT);
   if( posix_memalign((void**)&(ptr), OPS_ALIGNMENT, size) ) {
       OPSException ex(OPS_INTERNAL_ERROR);
       ex << "Error, posix_memalign() returned an error.";
@@ -1855,7 +2021,7 @@ void *ops_malloc(size_t size) {
 
 void *ops_calloc(size_t num, size_t size) {
 //#ifdef __INTEL_COMPILER
-  // void * ptr = _mm_malloc(num*size, OPS_ALIGNMENT);
+  //void * ptr = _mm_malloc(num*size, OPS_ALIGNMENT);
   void *ptr=NULL;
   if( posix_memalign((void**)&(ptr), OPS_ALIGNMENT, num*size) ) {
       OPSException ex(OPS_INTERNAL_ERROR);
@@ -1884,7 +2050,7 @@ void *ops_realloc(void *ptr, size_t size) {
         ex << "Error, posix_memalign() returned an error.";
         throw ex;
     }
-    // void *newptr2 = _mm_malloc(size, OPS_ALIGNMENT);
+    //void *newptr2 = _mm_malloc(size, OPS_ALIGNMENT);
     memcpy(newptr2, newptr, size);
     ops_free(newptr);
     return newptr2;
@@ -2394,3 +2560,21 @@ void _ops_free_dat(ops_dat dat) {
 extern "C" int getOPS_block_size_x() { return OPS_instance::getOPSInstance()->OPS_block_size_x; }
 extern "C" int getOPS_block_size_y() { return OPS_instance::getOPSInstance()->OPS_block_size_y; }
 extern "C" int getOPS_block_size_z() { return OPS_instance::getOPSInstance()->OPS_block_size_z; }
+
+/*
+ * GPU Power Measurement Public APIs
+ * (Backend-specific implementations are in their respective files)
+ */
+
+// Public GPU power measurement APIs that delegate to instance methods
+void ops_reset_gpu_power_counters() {
+    OPS_instance::getOPSInstance()->reset_gpu_power_counters();
+}
+
+void ops_sample_gpu_power() {
+    OPS_instance::getOPSInstance()->sample_gpu_power();
+}
+
+double ops_get_gpu_energy_consumed() {
+    return OPS_instance::getOPSInstance()->get_gpu_energy_consumed();
+}

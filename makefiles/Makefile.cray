@@ -21,6 +21,15 @@ MPICXX=CC
 MPIFC=ftn
 MPIF90=ftn
 
+MPI_INC = $(CRAY_MPICH_DIR)/include
+MPI_LIB = $(CRAY_MPICH_DIR)/lib $(PE_MPICH_GTL_DIR_amd_gfx90a)
+MPI_LINK = -lmpi
+
+
+#$PE_MPICH_GTL_LIBS_amd_gfx90a = -lmpi_gtl_hsa
+MPI_OMPOFFLOAD_LINK = -lmpi_gtl_hsa
+
+
 ifeq ($(AMD_ARCH),MI100)
 HIP_ARCH=gfx908
 else
@@ -30,18 +39,13 @@ HIP_ARCH=gfx90a
 endif
 endif
 
-MPI_INC = $(CRAY_MPICH_DIR)/include
-MPI_LIB = $(CRAY_MPICH_DIR)/lib $(PE_MPICH_GTL_DIR_amd_gfx90a)
-MPI_LINK = -lmpi
-
-#$PE_MPICH_GTL_LIBS_amd_gfx90a = -lmpi_gtl_hsa
-MPI_OMPOFFLOAD_LINK = -lmpi_gtl_hsa
-
 HIPCC=CC
-HIPMPICPP=CC
+HIPMPICXX=CC
 #ROCM_PATH environment variable provided by rocm module loaded
-HIPFLAGS=-x hip -std=c++17 -D__HIP_ROCclr__ --rocm-path=${ROCM_PATH} --offload-arch=${HIP_ARCH}
-HIP_LINK=-L${HIP_INSTALL_PATH}/lib -lamdhip64
+HIPFLAGS = -x hip -std=c++17 -D__HIP_ROCclr__ --rocm-path=${ROCM_PATH} --offload-arch=${HIP_ARCH}
+HIP_LINK = -L${HIP_INSTALL_PATH}/lib -lamdhip64
+HIP_LINK+= -lrocm_smi64
+
 #$PE_MPICH_GTL_LIBS_amd_gfx90a = -lmpi_gtl_hsa
 MPI_HIP_LINK = -lmpi_gtl_hsa
 

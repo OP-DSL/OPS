@@ -14,7 +14,7 @@ include $(OPS_INSTALL_PATH)/../makefiles/Makefile.hip
 ifdef HDF5_INSTALL_PATH
   HDF5_INC 	  	:= -I$(HDF5_INSTALL_PATH)/include
   HDF5_LIB		:= -L$(HDF5_INSTALL_PATH)/lib
-  CHKCC			:= $(MPICPP)
+  CHKCC			:= $(MPICC)
   CHKCXX		:= $(MPICXX)
 ifdef CHECKPOINTING
   HDF5_INC 	  	:= $(HDF5_INC) -DCHECKPOINTING
@@ -61,6 +61,26 @@ ifdef HIP_INSTALL_PATH
 	C_OPS_INC += -I$(HIP_INC)
 endif
 
+ifdef SYCL_INSTALL_PATH
+	TARGETS += f2c_sycl f2c_mpi_sycl
+endif
+
+GPU_VENDOR := $(shell \
+    if command -v nvidia-smi >/dev/null 2>&1; then \
+        echo NVIDIA; \
+    elif command -v rocm-smi >/dev/null 2>&1; then \
+        echo AMD; \
+    elif command -v intel-smi >/dev/null 2>&1; then \
+        echo INTEL; \
+    elif command -v lspci >/dev/null 2>&1; then \
+        if lspci | grep -i 'vga\|3d\|display' | grep -qi 'nvidia'; then echo NVIDIA; \
+        elif lspci | grep -i 'vga\|3d\|display' | grep -qi 'amd'; then echo AMD; \
+        elif lspci | grep -i 'vga\|3d\|display' | grep -qi 'intel'; then echo INTEL; \
+        else echo UNKNOWN; fi; \
+    else \
+        echo UNKNOWN; \
+    fi)
+
 ifneq (,$(filter f_ompoffload f_mpi_ompoffload,$(TARGETS)))
 ifeq ($(OPS_COMPILER),gnu)
 TARGETS:=$(filter-out f_ompoffload f_mpi_ompoffload,$(TARGETS))
@@ -68,8 +88,13 @@ endif
 ifeq ($(OPS_COMPILER),intel)
 TARGETS:=$(filter-out f_ompoffload f_mpi_ompoffload,$(TARGETS))
 endif
-ifeq ($(OPS_COMPILER),intel-sycl)
+ifeq ($(OPS_COMPILER),icx)
+ifeq ($(GPU_VENDOR), NVIDIA)
 TARGETS:=$(filter-out f_ompoffload f_mpi_ompoffload,$(TARGETS))
+endif
+ifeq ($(GPU_VENDOR), AMD)
+TARGETS:=$(filter-out f_ompoffload f_mpi_ompoffload,$(TARGETS))
+endif
 endif
 endif
 
@@ -83,11 +108,15 @@ CXXFLAGS_NOOMP = $(CXXFLAGS)
 CXXFLAGS_NOOMP := $(filter-out -fopenmp, $(CXXFLAGS_NOOMP))
 CXXFLAGS_NOOMP := $(filter-out -qopenmp, $(CXXFLAGS_NOOMP))
 
+FFLAGS_NOOMP = $(FFLAGS)
+FFLAGS_NOOMP := $(filter-out -fopenmp, $(FFLAGS_NOOMP))
+FFLAGS_NOOMP := $(filter-out -qopenmp, $(FFLAGS_NOOMP))
+
 
 all: $(TARGETS)
 
 mkdir:
-	@mkdir -p $(F_OPS_LIB) $(F_OPS_OBJ) $(F_OPS_MOD) $(F_INC_MOD) $(F_INC_MOD)/cuda $(F_INC_MOD)/f2c_cuda $(F_INC_MOD)/ompoffload $(F_INC_MOD)/f2c_hip
+	@mkdir -p $(F_OPS_LIB) $(F_OPS_OBJ) $(F_OPS_MOD) $(F_INC_MOD) $(F_INC_MOD)/cuda $(F_INC_MOD)/f2c_cuda $(F_INC_MOD)/ompoffload $(F_INC_MOD)/f2c_hip $(F_INC_MOD)/f2c_sycl
 
 .SUFFIXES: .cpp .cu .F90 .o
 
@@ -133,6 +162,9 @@ $(F_OPS_OBJ)/%_mpi_hip.o : $(C_OPS_SRC)/mpi/%.cpp
 $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/mpi/%.cu
 	$(NVCC) $(NVCCFLAGS) -I$(C_OPS_INC) -c $< -o $@
 
+$(F_OPS_OBJ)/%_sycl_mpi.o : $(C_OPS_SRC)/mpi/%_sycl.cpp
+	$(SYCLMPICXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) $(I_MPI_INC) -c $< -o $@
+
 $(F_OPS_OBJ)/%_hip_mpi_hip.o : $(C_OPS_SRC)/mpi/%_hip.cpp
 	$(HIPCC) $(CXXFLAGS_NOOMP) $(HIPFLAGS) -I$(C_OPS_INC) $(I_MPI_INC) -c $< -o $@
 
@@ -147,6 +179,9 @@ $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/cuda/%.cu
 
 $(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/hip/%.cpp
 	$(HIPCC) $(CXXFLAGS_NOOMP) $(HIPFLAGS) -I$(C_OPS_INC) -c $< -o $@
+
+$(F_OPS_OBJ)/%.o : $(C_OPS_SRC)/sycl/%.cpp
+	$(SYCLCXX) $(CXXFLAGS) $(SYCL_FLAGS) -I$(C_OPS_INC) -c $< -o $@
 
 #	******************************	Sequential	************************************
 $(F_OPS_OBJ)/ops_for_declarations.o: $(F_OPS_SRC)/ops_for_declarations.F90
@@ -181,10 +216,17 @@ $(F_OPS_OBJ)/%_f2c_cuda.o : $(F_OPS_SRC)/%.F90 $(F_OPS_OBJ)/ops_for_declarations
 
 #   ******************************  F2C HIP    *************************************
 $(F_OPS_OBJ)/ops_for_declarations_f2c_hip.o: $(F_OPS_SRC)/ops_for_declarations.F90
-	$(FC) $(FFLAGS_HIP) -DOPS_F2C_INTEROP $(FMODS_F2C_HIP) -c $< -o $@
+	$(FC) $(FFLAGS_NOOMP) -DOPS_F2C_INTEROP $(FMODS_F2C_HIP) -c $< -o $@
 
 $(F_OPS_OBJ)/%_f2c_hip.o : $(F_OPS_SRC)/%.F90 $(F_OPS_OBJ)/ops_for_declarations_f2c_hip.o
-	$(FC) $(FFLAGS_HIP) $(FMODS_F2C_HIP) -c $< -o $@
+	$(FC) $(FFLAGS_NOOMP) $(FMODS_F2C_HIP) -c $< -o $@
+
+#   ******************************  F2C SYCL    *************************************
+$(F_OPS_OBJ)/ops_for_declarations_f2c_sycl.o: $(F_OPS_SRC)/ops_for_declarations.F90
+	$(FC) $(FFLAGS) -DOPS_F2C_INTEROP $(FMODS_F2C_SYCL) -c $< -o $@
+
+$(F_OPS_OBJ)/%_f2c_sycl.o : $(F_OPS_SRC)/%.F90 $(F_OPS_OBJ)/ops_for_declarations_f2c_sycl.o
+	$(FC) $(FFLAGS) $(FMODS_F2C_SYCL) -c $< -o $@
 
 #	******************************	OpenMP Offload	*********************************
 $(F_OPS_OBJ)/%_ompoffload.o : $(F_OPS_SRC)/%.F90
@@ -248,6 +290,19 @@ f2c_hip: mkdir $(F_OPS_OBJ)/ops_lib_core_hip.o $(F_OPS_OBJ)/ops_instance_hip.o $
 	$(F_OPS_OBJ)/ops_hip_singlenode.o $(F_OPS_OBJ)/ops_dummy_singlenode_hip.o $(F_OPS_OBJ)/ops_checkpointing_strategy_hip.o \
 	$(F_OPS_OBJ)/ops_device_singlenode_common_hip.o \
 	$(F_OPS_OBJ)/ops_for_declarations_f2c_hip.o $(F_OPS_OBJ)/ops_for_rt_support_f2c_hip.o $(F_OPS_OBJ)/ops_for_math_support_f2c_hip.o
+
+f2c_sycl: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
+	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_sycl_common.o $(F_OPS_OBJ)/ops_sycl_rt_support_kernels.o \
+	$(F_OPS_OBJ)/ops_sycl_singlenode.o $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_checkpointing_strategy.o \
+	$(F_OPS_OBJ)/ops_device_singlenode_common.o \
+	$(F_OPS_OBJ)/ops_for_declarations_f2c_sycl.o $(F_OPS_OBJ)/ops_for_rt_support_f2c_sycl.o $(F_OPS_OBJ)/ops_for_math_support_f2c_sycl.o \
+	$(F_OPS_OBJ)/ops_for_hdf5_declarations_f2c_sycl.o
+	ar -r $(F_OPS_LIB)/libops_f2c_sycl.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
+	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_sycl_common.o $(F_OPS_OBJ)/ops_sycl_rt_support_kernels.o \
+	$(F_OPS_OBJ)/ops_sycl_singlenode.o $(F_OPS_OBJ)/ops_dummy_singlenode.o $(F_OPS_OBJ)/ops_checkpointing_strategy.o \
+	$(F_OPS_OBJ)/ops_device_singlenode_common.o \
+	$(F_OPS_OBJ)/ops_for_declarations_f2c_sycl.o $(F_OPS_OBJ)/ops_for_rt_support_f2c_sycl.o $(F_OPS_OBJ)/ops_for_math_support_f2c_sycl.o \
+	$(F_OPS_OBJ)/ops_for_hdf5_declarations_f2c_sycl.o
 
 f_mpi: 	mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o $(F_OPS_OBJ)/ops_checkpointing.o \
 	$(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_mpi.o $(F_OPS_OBJ)/ops_checkpointing_strategy_mpi.o \
@@ -323,6 +378,18 @@ f2c_mpi_hip: mkdir $(F_OPS_OBJ)/ops_lib_core_hip.o $(F_OPS_OBJ)/ops_instance_hip
 	$(F_OPS_OBJ)/ops_mpi_hdf5_mpi.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_declarations_f2c_hip.o $(F_OPS_OBJ)/ops_for_rt_support_f2c_hip.o \
 	$(F_OPS_OBJ)/ops_for_hdf5_declarations_f2c_hip.o $(F_OPS_OBJ)/ops_for_math_support_f2c_hip.o
 
+f2c_mpi_sycl: mkdir $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o \
+	$(F_OPS_OBJ)/ops_checkpointing.o $(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
+	$(F_OPS_OBJ)/ops_mpi_core_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_sycl_mpi.o $(F_OPS_OBJ)/ops_mpi_partition_mpi.o \
+	$(F_OPS_OBJ)/ops_checkpointing_strategy.o $(F_OPS_OBJ)/ops_sycl_common.o \
+	$(F_OPS_OBJ)/ops_mpi_hdf5_mpi.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_declarations_f2c_sycl.o $(F_OPS_OBJ)/ops_for_rt_support_f2c_sycl.o \
+	$(F_OPS_OBJ)/ops_for_hdf5_declarations_f2c_sycl.o $(F_OPS_OBJ)/ops_for_math_support_f2c_sycl.o
+	ar -r $(F_OPS_LIB)/libops_f2c_mpi_sycl.a $(F_OPS_OBJ)/ops_lib_core.o $(F_OPS_OBJ)/ops_instance.o $(F_OPS_OBJ)/ops_lazy.o \
+	$(F_OPS_OBJ)/ops_checkpointing.o $(F_OPS_OBJ)/ops_util.o $(F_OPS_OBJ)/ops_mpi_decl_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_mpi.o \
+	$(F_OPS_OBJ)/ops_mpi_core_mpi.o $(F_OPS_OBJ)/ops_mpi_rt_support_sycl_mpi.o $(F_OPS_OBJ)/ops_mpi_partition_mpi.o \
+	$(F_OPS_OBJ)/ops_checkpointing_strategy.o $(F_OPS_OBJ)/ops_sycl_common.o \
+	$(F_OPS_OBJ)/ops_mpi_hdf5_mpi.o $(F_OPS_OBJ)/ops_hdf5_common.o $(F_OPS_OBJ)/ops_for_declarations_f2c_sycl.o $(F_OPS_OBJ)/ops_for_rt_support_f2c_sycl.o \
+	$(F_OPS_OBJ)/ops_for_hdf5_declarations_f2c_sycl.o $(F_OPS_OBJ)/ops_for_math_support_f2c_sycl.o
 
 clean:
 	-rm -if $(F_OPS_OBJ)/*.o $(F_OPS_OBJ)/*.optrpt
@@ -335,5 +402,6 @@ clean:
 	-rm -if $(F_INC_MOD)/f2c_cuda/*.mod
 	-rm -if $(F_INC_MOD)/ompoffload/*.mod
 	-rm -if $(F_INC_MOD)/f2c_hip/*.mod
+	-rm -if $(F_INC_MOD)/f2c_sycl/*.mod
 	-rm -if $(F_OPS)/*~
 	-rm -if *.lst cudafe

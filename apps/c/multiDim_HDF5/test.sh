@@ -2,19 +2,19 @@
 set -e
 cd ../../../ops/c
 
-export SOURCE_INTEL=source_intel_2021.3_pythonenv
+export SOURCE_INTEL=source_oneapi_sycl_pythonenv
 export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
-export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_INTEL_SYCL=source_oneapi_sycl_pythonenv
 export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
-#export DMOS=TRUE
-export TELOS=TRUE
+#export TELOS=TRUE
+export DEMOS=TRUE
 #export KOS=TRUE
 
 #<<comment
 
-if [[ -v TELOS || -v KOS ]]; then
+if [[ -v TELOS || -v DEMOS || -v KOS ]]; then
 
 #============================ Test with Intel Classic Compilers==========================================
 echo "Testing Intel classic complier based applications ---- "
@@ -96,7 +96,7 @@ fi
 
 #comment
 
-if [[ -v TELOS ]]; then
+if [[ -v TELOS || -v DEMOS ]]; then
 #============================ Test with Intel SYCL Compilers==========================================
 echo "Testing Intel SYCL complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
@@ -144,7 +144,7 @@ echo "All Intel SYCL complier based applications ---- PASSED"
 fi
 
 
-if [[ -v TELOS ]]; then
+if [[ -v TELOS || -v DEMOS ]]; then
 #============================ Test with PGI Compilers==========================================
 echo "Testing PGI/NVHPC complier based applications ---- "
 cd $OPS_INSTALL_PATH/c

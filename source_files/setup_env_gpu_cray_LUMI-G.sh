@@ -15,7 +15,7 @@ module load craype-x86-milan
 module load cpe/24.03
 
 # CRAY CPU TARGET
-export CRAY_CPU_TARGET=x86-64
+export CRAY_CPU_TARGET=x86-milan
 
 # MPI setting
 export MPI_INSTALL_PATH=$CRAY_MPICH_DIR

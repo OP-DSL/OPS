@@ -487,6 +487,9 @@
             list(FILTER OTHERS EXCLUDE REGEX ${CONSTANTS_MODULE})
             list(FILTER OTHERS EXCLUDE REGEX ${CONSTANTS_OFFLOAD_MODULE})
 
+            file(GLOB FORTRAN_MAIN_MODULE "${TMP_SOURCE_DIR}/fortran_main.F90")
+            list(FILTER OTHERS EXCLUDE REGEX ${FORTRAN_MAIN_MODULE})
+
             file(GLOB_RECURSE SEQ_TEMPLATES "${TMP_SOURCE_DIR}/mpi_openmp/*_seq_kernel.F90")
             foreach(source_file ${SEQ_TEMPLATES})
                 set_source_files_properties(${source_file} PROPERTIES GENERATED TRUE)
@@ -793,7 +796,7 @@
                     if(HDF5_SEQ)
                         target_link_libraries(${Name}_cuda PRIVATE ops_for_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl)
                     endif()
-                    target_link_libraries(${Name}_cuda PRIVATE ops_for_cuda "-cudalib=curand -c++libs -lstdc++ -lcudart")
+                    target_link_libraries(${Name}_cuda PRIVATE ops_for_cuda "-cudalib=curand -lnvidia-ml -c++libs -lstdc++ -lcudart")
                     install(TARGETS ${Name}_cuda     DESTINATION ${APP_INSTALL_DIR}/${Name})
 
                     if((OPS_TEST)
@@ -835,7 +838,7 @@
                              target_link_libraries(${Name}_mpi_cuda PRIVATE ops_for_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
                                                                 MPI::MPI_Fortran)
                         endif()
-                        target_link_libraries(${Name}_mpi_cuda PRIVATE ops_for_mpi_cuda MPI::MPI_Fortran "${MPI_LINK}" "-cudalib=curand -c++libs -lstdc++ -lcudart")
+                        target_link_libraries(${Name}_mpi_cuda PRIVATE ops_for_mpi_cuda MPI::MPI_Fortran "${MPI_LINK}" "-cudalib=curand -c++libs -lstdc++ -lcudart -lnvidia-ml")
                         install(TARGETS ${Name}_mpi_cuda     DESTINATION ${APP_INSTALL_DIR}/${Name})
 
                         if((OPS_TEST)
@@ -879,7 +882,7 @@
                              target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_for_hdf5_mpi hdf5::hdf5 hdf5::hdf5_hl
                                                                 MPI::MPI_Fortran)
                         endif()
-                        target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_for_mpi_cuda MPI::MPI_Fortran "${MPI_LINK}" "-cudalib=curand -c++libs -lstdc++ -lcudart")
+                        target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_for_mpi_cuda MPI::MPI_Fortran "${MPI_LINK}" "-cudalib=curand -c++libs -lstdc++ -lcudart -lnvidia-ml")
                         install(TARGETS ${Name}_mpi_cuda_tiled     DESTINATION ${APP_INSTALL_DIR}/${Name})
 
                         if((OPS_TEST)

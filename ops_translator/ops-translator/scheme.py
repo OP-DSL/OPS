@@ -115,16 +115,18 @@ class Scheme(Findable):
         if(self.target.name == "f2c_cuda"):
             kernel_func = kp_obj.cuda_complex_numbers(kernel_func)
 
-        if(self.target.name == "f2c_cuda" or self.target.name == "f2c_hip"):
+        consts_in_kernel = []
+        if(self.target.name == "f2c_sycl"):
+            kernel_func, consts_in_kernel = kp_obj.sycl_kernel_func_text(kernel_func, app.consts())
+
+        if(self.target.name == "f2c_cuda" or self.target.name == "f2c_hip" or self.target.name == "f2c_sycl"):
             kernel_func = kp_obj.comment_stdcout(kernel_func)
 
         #TODO : Complex arguments in HIP
 
         kernel_body, args_list = kp_obj.get_kernel_body_and_arg_list(kernel_func)
-        consts_in_kernel = None
+        flat_parallel, ops_cpu = sycl_set_flat_parallel(loop.has_reduction)
         const_dims = None
-        flat_parallel = None
-        ops_cpu = None
         intrinsic_funcs = ""
 
         # Generalte source from the template
@@ -166,7 +168,7 @@ class Scheme(Findable):
 
         const_c_type = []
 
-        if(self.target.name == "f2c_mpi_openmp" or self.target.name == "f2c_cuda" or self.target.name == "f2c_hip"):
+        if(self.target.name == "f2c_mpi_openmp" or self.target.name == "f2c_cuda" or self.target.name == "f2c_hip" or self.target.name == "f2c_sycl"):
             for const in app.consts():
                 const_f90_type = str(const.typ).lower().strip()
                 const_f90_type.replace(" ", "")

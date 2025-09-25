@@ -549,16 +549,18 @@ class KernelProcess:
                 else:
                     kernel_func = re.sub(r"\b"+const_name+r"\b", const_name+"_sycl", kernel_func)
 
-        kernel_func = re.sub(r"\bsqrt\b", "cl::sycl::sqrt", kernel_func)
-        kernel_func = re.sub(r"\bcbrt\b", "cl::sycl::cbrt", kernel_func)
-        kernel_func = re.sub(r"\bfabs\b", "cl::sycl::fabs", kernel_func)
-        kernel_func = re.sub(r"\bfmin\b", "cl::sycl::fmin", kernel_func)
-        kernel_func = re.sub(r"\bfmax\b", "cl::sycl::fmax", kernel_func)
-        kernel_func = re.sub(r"\bisnan\b", "cl::sycl::isnan", kernel_func)
-        kernel_func = re.sub(r"\bisinf\b", "cl::sycl::isinf", kernel_func)
-        kernel_func = re.sub(r"\bsin\b", "cl::sycl::sin", kernel_func)
-        kernel_func = re.sub(r"\bcos\b", "cl::sycl::cos", kernel_func)
-        kernel_func = re.sub(r"\bexp\b", "cl::sycl::exp", kernel_func)
+        # List of math functions to replace
+        math_funcs = [
+                        "sqrt", "cbrt", "fabs", "fmin", "fmax",
+                        "isnan", "isinf", "sin", "cos", "exp",
+                        "atan", "pow", "log", "log10", "tanh"
+                    ]
+
+        for func in math_funcs:
+            # Replace f2c::<func>(...) or <func>(...), ignoring existing cl::sycl::<func>(...)
+            pattern = rf'\b(?<!cl::sycl::)(?:f2c::)?{func}\s*\('
+            replacement = f'cl::sycl::{func}('
+            kernel_func = re.sub(pattern, replacement, kernel_func)
 
         return kernel_func, const_names
 
@@ -695,3 +697,99 @@ class KernelProcess:
         pattern = r'\bstd::cout\b'
         # Replace with '//std::cout'
         return re.sub(pattern, r'//std::cout', kernel_func)
+
+
+def create_cpp_main():
+    content = '''
+extern "C" {
+    void fortran_main_(); // trailing underscore depends on compiler name mangling
+#if defined(__INTEL_CLANG_COMPILER)
+    void for_rtl_init_(int *argc, char **argv);
+    void for_rtl_finish_();
+#endif
+}
+
+int main(int argc, char **argv) {
+
+#if defined(__INTEL_CLANG_COMPILER)
+    for_rtl_init_(&argc, argv);
+#endif
+
+    fortran_main_();
+
+#if defined(__INTEL_CLANG_COMPILER)
+    for_rtl_finish_();
+#endif
+
+    return 0;
+}
+    '''
+
+    with open("main.cpp", "w") as f:
+        f.write(content)
+
+
+def replace_fortran_program_with_subroutine(files):
+    """
+    From the list of files, find the one containing both PROGRAM and END PROGRAM.
+    Avoid matches in comments or variables.
+    Then copy <basename>_ops.F90 and replace program with subroutine.
+    """
+    # Regex patterns (case-insensitive), ignoring leading spaces and avoiding variables
+    program_pattern = re.compile(r'^\s*program\s+([A-Za-z0-9_]+)', re.IGNORECASE)
+    end_program_pattern = re.compile(r'^\s*end\s+program\s+([A-Za-z0-9_]+)', re.IGNORECASE)
+    comment_pattern = re.compile(r'^\s*!')  # full-line comment
+
+    for file_path in files:
+        file_path = Path(file_path)
+        if not file_path.exists():
+            continue
+
+        with open(file_path, 'r') as f:
+            lines = f.readlines()
+
+        has_program = has_end_program = False
+
+        for line in lines:
+            if comment_pattern.match(line):  # skip full-line comments
+                continue
+            if program_pattern.match(line):
+                has_program = True
+            elif end_program_pattern.match(line):
+                has_end_program = True
+
+        if has_program and has_end_program:
+            print(f"Found Fortran main program in: {file_path}")
+
+            # Determine the _ops.F90 file
+            ops_file = file_path.with_name(file_path.stem + "_ops.F90")
+            if not ops_file.exists():
+                print(f"ERROR: Expected file {ops_file} not found.")
+                return
+
+            # Read _ops.F90 file
+            with open(ops_file, 'r') as f:
+                ops_lines = f.readlines()
+
+            # Replace PROGRAM with SUBROUTINE
+            new_lines = []
+            for line in ops_lines:
+                if program_pattern.match(line):
+                    new_lines.append("SUBROUTINE fortran_main\n")
+                elif end_program_pattern.match(line):
+                    new_lines.append("END SUBROUTINE fortran_main\n")
+                else:
+                    new_lines.append(line)
+
+            # Write output file
+            with open("fortran_main.F90", "w") as out_file:
+                out_file.writelines(new_lines)
+
+            print("Created fortran_main.F90 from", ops_file)
+            break
+    else:
+        print("No valid PROGRAM/END PROGRAM pair found in the given files.")
+
+
+
+

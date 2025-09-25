@@ -4,26 +4,30 @@
 
 ## Executing with GPUDirect
 
-GPU direct support for MPI+CUDA, to enable (on the OPS side) add
-**-gpudirect** when running the executable. You may also have to use
-certain environmental flags when using different MPI distributions. For
-an example of the required flags and environmental settings on the
-Cambridge Wilkes2 GPU cluster see:\
+GPUDirect support for MPI+CUDA and MPI+HIP: To enable it on the OPS side, add **-gpudirect** flag when running the executable. Depending on the MPI distribution, you may also need to set specific environment variables. For
+reference, see the example flags and environment setting provided for the Cambridge Wilkes2 GPU cluster:  
 <https://docs.hpc.cam.ac.uk/hpc/user-guide/performance-tips.html>
+Enabling this flag activates MPI-aware GPU-to-GPU communication on both AMD and NVIDIA GPUs.
+* On NVIDIA GPUs, OPS leverages NVIDIA GPUDirect RDMA technology, which allows direct data transfers between GPU memory and the network interface without staging through host memory.
+* On AMD GPUs, OPS utilizes the ROCm RDMA technology, which provides similar direct communication capabilities, enabling efficient GPU-to-GPU data movement over high-performance interconnects.
+  
+**Note**: The OPS **-gpudirect** option is an abstraction that activates MPI-aware GPU  communications across both vendor platforms. It should not be confused with NVIDIA's GPUDirect technology specifically - rather, it is a portable OPS runtime option that selects the appropriate mechanism depending on the underlying hardware and software stack.
+
 ## Cache-blocking Tiling
-OPS has a code generation (ops_gen_mpi_lazy) and build target for
-tiling. Once compiled, to enable, use the `OPS_TILING` runtime parameter. This will look at the L3 cache size of your CPU and guess the correct
+
+OPS has a code generation (`ops_gen_mpi_lazy`) and build target for
+tiling. Once compiled, to enable tiling, use the `OPS_TILING` runtime parameter. This will look at the L3 cache size of your CPU and guess the correct
 tile size. If you want to alter the amount of cache to be used for the
 guess, use the ``OPS_CACHE_SIZE=XX`` runtime parameter, where the value is
 in Megabytes. To manually specify the tile sizes, use the
 ``OPS_TILESIZE_X``, ``OPS_TILESIZE_Y``, and ``OPS_TILESIZE_Z`` runtime arguments.
 
-When MPI is combined with OpenMP tiling can be extended to the MPI
-halos. Set `OPS_TILING_MAXDEPTH` to increase the the halo depths so that
+When MPI is combined with OpenMP, tiling can be extended to the MPI
+halos. Set `OPS_TILING_MAXDEPTH` to increase the halo depths so that
 halos for multiple `ops_par_loops` can be exchanged with a single MPI
-message (see [TPDS2017](https://ieeexplore.ieee.org/abstract/document/8121995) for more details)\
+message (see [TPDS2017](https://ieeexplore.ieee.org/abstract/document/8121995) for more details).  
 To test, compile CloverLeaf under ``OPS/apps/c/CloverLeaf``, modify clover.in
-to use a $6144^2$ mesh, then run as follows:\
+to use a $6144^2$ mesh, then run as follows:  
 For OpenMP with tiling:
 ```bash
 export OMP_NUM_THREADS=xx; numactl -physnodebind=0 ./cloverleaf_tiled OPS_TILING
@@ -37,14 +41,16 @@ OPS_TILESIZE_X, OPS_TILESIZE_Y, and OPS_TILESIZE_Z runtime arguments:
 ```bash
 export OMP_NUM_THREADS=xx; numactl -physnodebind=0 ./cloverleaf_tiled OPS_TILING OPS_TILESIZE_X=600 OPS_TILESIZE_Y=200
 ```
+
 ## OpenMP and OpenMP+MPI
-It is recommended that you assign one MPI rank per NUMA region when executing MPI+OpenMP parallel code. Usually for a multi-CPU system a single CPU socket is a single NUMA region. Thus, for a 4 socket system, OPS's MPI+OpenMP code should be executed with 4 MPI processes with each MPI process having multiple OpenMP threads (typically specified by the `OMP_NUM_THREAD` flag). Additionally on some systems using `numactl` to bind threads to cores could give performance improvements (see `OPS/scripts/numawrap` for an example script that wraps the `numactl` command to be used with common MPI distributions). 
+
+It is recommended that you assign one MPI rank per NUMA region when executing MPI+OpenMP parallel code. Usually, for a multi-CPU system, a single CPU socket is a single NUMA region. Thus, for a 4-socket system, OPS MPI+OpenMP code should be executed with 4 MPI processes, with each MPI process having multiple OpenMP threads (typically specified by the `OMP_NUM_THREADS` environment variable). Additionally, on some systems, using `numactl` to bind threads to cores can provide performance improvements (see `OPS/scripts/numawrap` for an example script that wraps the `numactl` command for use with common MPI distributions).
 
 ## CUDA arguments
+
 The CUDA (and HIP) thread block sizes can be controlled by setting
-the ``OPS_BLOCK_SIZE_X``, ``OPS_BLOCK_SIZE_Y`` and ``OPS_BLOCK_SIZE_Z`` runtime
+the ``OPS_BLOCK_SIZE_X``, ``OPS_BLOCK_SIZE_Y``, and ``OPS_BLOCK_SIZE_Z`` runtime
 arguments. For example,
 ```bash
 ./cloverleaf_cuda OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4
 ```
-

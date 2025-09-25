@@ -279,6 +279,9 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 void ops_enqueue_kernel(ops_kernel_descriptor *desc);
 OPS_FTN_INTEROP
 void ops_execute(OPS_instance *instance=NULL);
+OPS_FTN_INTEROP
+void ops_execute_block(ops_block block);
+
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp);
 int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx);
 OPS_FTN_INTEROP
@@ -351,6 +354,7 @@ ops_reduction _ops_decl_reduction_handle(OPS_instance *instance, int size, const
                                         const char *name);
 void ops_free_dat_core(ops_dat dat);
 void _ops_free_dat(ops_dat dat);
+void _ops_reset_power_counters(OPS_instance *instance);
 void _ops_diagnostic_output(OPS_instance *instance);
 void _ops_timing_output(OPS_instance *instance,std::ostream &stream);
 

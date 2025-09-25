@@ -2,14 +2,14 @@
 set -e
 cd $OPS_INSTALL_PATH/c
 
-export SOURCE_INTEL=source_intel_2021.3_pythonenv
+export SOURCE_INTEL=source_oneapi_sycl_pythonenv
 
 #export AMOS=TRUE
-#export DMOS=TRUE
-export TELOS=TRUE
+export DEMOS=TRUE
+#export TELOS=TRUE
 #export KOS=TRUE
 
-if [[ -v TELOS || -v KOS ]]; then
+if [[ -v TELOS || -v DEMOS || -v KOS ]]; then
 
 #============================ Test with Intel Classic Compilers==========================================
 echo "Testing Intel classic complier based applications ---- "
@@ -21,7 +21,7 @@ source ../../scripts/$SOURCE_INTEL
 # build lib first
 cd $TDMA_INSTALL_PATH/../build
 rm -rf ./*
-cmake .. -DCUDA_cublas_LIBRARY=/opt/cuda/10.2.89/lib64/libcublas.so -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_SN=ON -DBUILD_FOR_MPI=ON -DCMAKE_INSTALL_PREFIX=$TDMA_INSTALL_PATH/../
+cmake .. -DCUDA_cublas_LIBRARY=$CUDA_INSTALL_PATH/lib64/libcublas.so -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_SN=ON -DBUILD_FOR_MPI=ON -DCMAKE_INSTALL_PREFIX=$TDMA_INSTALL_PATH/../
 
 make
 make install
@@ -37,7 +37,7 @@ make IEEE=1
 #now build application
 cd $OPS_INSTALL_PATH/../apps/c/adi_burger_3D
 make clean
-make IEEE=1
+make IEEE=1 adi_burger_dev_seq adi_burger_dev_mpi adi_burger_seq adi_burger_mpi adi_burger_openmp adi_burger_mpi_openmp adi_burger_cuda adi_burger_mpi_cuda
 
 
 rm -rf *.h5

@@ -2,19 +2,19 @@
 set -e
 cd ../../../ops/c
 
-export SOURCE_INTEL=source_intel_2021.3_pythonenv
+export SOURCE_INTEL=source_oneapi_sycl_pythonenv
 export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
-export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_INTEL_SYCL=source_oneapi_sycl_pythonenv
 export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
-#export DMOS=TRUE
-export TELOS=TRUE
+#export TELOS=TRUE
+export DEMOS=TRUE
 #export KOS=TRUE
 
-#<<comment
+#<<COMMENT
 
-if [[ -v TELOS || -v KOS ]]; then
+if [[ -v TELOS || -v DEMOS || -v KOS ]]; then
 
 #============================ Test with Intel Classic Compilers==========================================
 echo "Testing Intel classic complier based applications ---- "
@@ -94,8 +94,56 @@ echo "All Intel classic complier based applications ---- PASSED"
 
 fi
 
+#COMMENT
 
-if [[ -v TELOS ]]; then
+if [[ -v TELOS || -v DEMOS ]]; then
+
+#============================ Test with Intel SYCL Compilers==========================================
+echo "Testing Intel SYCL complier based applications ---- "
+cd $OPS_INSTALL_PATH/c
+source ../../scripts/$SOURCE_INTEL_SYCL
+#make -j -B
+#make clean
+make sycl mpi_sycl
+cd $OPS_INSTALL_PATH/../apps/c/multiDim3D
+
+make clean
+rm -f .generated
+#make IEEE=1 -j
+make IEEE=1 multidim_sycl multidim_mpi_sycl multidim_mpi_sycl_tiled
+
+echo '============> Running SYCL on CPU'
+./multidim_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
+grep "Reduction result" perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running MPI+SYCL on CPU'
+$MPI_INSTALL_PATH/bin/mpirun -np 20 ./multidim_mpi_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
+grep "Reduction result" perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running MPI+SYCL Tiled on CPU'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./multidim_mpi_sycl_tiled OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Reduction result" perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo "All Intel SYCL complier based applications ---- PASSED"
+
+fi
+
+
+
+
+if [[ -v TELOS || -v DEMOS ]]; then
 
 #============================ Test with PGI Compilers==========================================
 echo "Testing PGI/NVHPC complier based applications ---- "

@@ -712,7 +712,7 @@
                             "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
             target_include_directories(${Name}_cuda PRIVATE ${TMP_SOURCE_DIR})
             target_compile_options(${Name}_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--fmad=false>)
-            target_link_libraries(${Name}_cuda ops_cuda CUDA::cudart_static -lcurand OpenMP::OpenMP_CXX)
+            target_link_libraries(${Name}_cuda ops_cuda CUDA::cudart_static -lcurand -lnvidia-ml OpenMP::OpenMP_CXX)
             if(HDF5_SEQ)
                 target_link_libraries(${Name}_cuda ops_hdf5_seq hdf5::hdf5 hdf5::hdf5_hl)
             endif()
@@ -886,9 +886,9 @@
                     endif()
                 endif()
 
-                target_link_libraries(${Name}_mpi_cuda PRIVATE ops_mpi_cuda CUDA::cudart_static -lcurand MPI::MPI_CXX
+                target_link_libraries(${Name}_mpi_cuda PRIVATE ops_mpi_cuda CUDA::cudart_static -lcurand -lnvidia-ml MPI::MPI_CXX
                                         OpenMP::OpenMP_CXX)
-                target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_mpi_cuda CUDA::cudart_static -lcurand MPI::MPI_CXX
+                target_link_libraries(${Name}_mpi_cuda_tiled PRIVATE ops_mpi_cuda CUDA::cudart_static -lcurand -lnvidia-ml MPI::MPI_CXX
                                         OpenMP::OpenMP_CXX)
 
                 install(TARGETS ${Name}_mpi_cuda DESTINATION ${APP_INSTALL_DIR}/${Name})

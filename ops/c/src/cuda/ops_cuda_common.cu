@@ -134,13 +134,33 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
   float *test = 0;
   int my_id = ops_get_proc();
   instance->OPS_hybrid_gpu = 0;
-  for (int i = 0; i < deviceCount; i++) {
-    cudaError_t err = cudaSetDevice((i+my_id)%deviceCount);
+  
+  if (instance->OPS_device_id >= 0) {
+    // User specified a device ID
+    if (instance->OPS_device_id >= deviceCount) {
+      throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: specified CUDA device ID exceeds available device count");
+    }
+    cudaError_t err = cudaSetDevice(instance->OPS_device_id);
     if (err == cudaSuccess) {
       cudaError_t err2 = cudaMalloc((void **)&test, sizeof(float));
       if (err2 == cudaSuccess) {
         instance->OPS_hybrid_gpu = 1;
-        break;
+      } else {
+        throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: specified CUDA device is not accessible");
+      }
+    } else {
+      throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: failed to set specified CUDA device");
+    }
+  } else {
+    // Auto-select device
+    for (int i = 0; i < deviceCount; i++) {
+      cudaError_t err = cudaSetDevice((i+my_id)%deviceCount);
+      if (err == cudaSuccess) {
+        cudaError_t err2 = cudaMalloc((void **)&test, sizeof(float));
+        if (err2 == cudaSuccess) {
+          instance->OPS_hybrid_gpu = 1;
+          break;
+        }
       }
     }
   }
@@ -153,6 +173,9 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
     cutilSafeCall(instance->ostream(), cudaGetDeviceProperties(&deviceProp, deviceId));
     if (instance->OPS_diags>=1) instance->ostream() << "\n Using CUDA device: " <<
       deviceId << " " << deviceProp.name <<"\n";
+
+    // Initialize GPU power measurement
+    _ops_reset_gpu_power_counters(instance);
   } else {
     throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: no available CUDA devices");
   }
@@ -212,6 +235,7 @@ void ops_fill_random_uniform(ops_dat dat) {
     iter_range[2*n+1] = dat->size[n];
   }
   ops_set_halo_dirtybit3(&arg, iter_range);
+  delete[] iter_range;
 }
 
 void ops_fill_random_normal(ops_dat dat) {
@@ -255,4 +279,114 @@ void ops_randomgen_exit() {
     curand_initialised = 0;
     curandSafeCall(instance->ostream(), curandDestroyGenerator(ops_rand_gen));
   }
+}
+
+/*
+ * GPU Power Measurement Functions using NVML
+ */
+
+#if OPS_ENABLE_NVML
+#include <nvml.h>
+
+// NVML device handle for current GPU
+static nvmlDevice_t nvml_device = NULL;
+static bool nvml_initialized = false;
+
+void __nvmlSafeCall(nvmlReturn_t result, const char *file, int line) {
+    if (result != NVML_SUCCESS) {
+        fprintf(stderr, "NVML error at %s:%d - %s\n", file, line, nvmlErrorString(result));
+        // Don't throw exception, just disable GPU power measurement
+        nvml_initialized = false;
+    }
+}
+
+#define nvmlSafeCall(call) __nvmlSafeCall(call, __FILE__, __LINE__)
+
+#endif // OPS_ENABLE_NVML
+
+void _ops_init_gpu_power_measurement(OPS_instance *instance) {
+#if OPS_ENABLE_NVML
+    nvmlReturn_t result;
+    
+    // Initialize NVML
+    result = nvmlInit();
+    if (result != NVML_SUCCESS) {
+        if (instance->OPS_diags > 4) {
+            instance->ostream() << "Warning: Failed to initialize NVML for GPU power measurement: " 
+                               << nvmlErrorString(result) << std::endl;
+        }
+        nvml_initialized = false;
+        return;
+    }
+    
+    // Get current CUDA device
+    int deviceId = -1;
+    cudaError_t cuda_result = cudaGetDevice(&deviceId);
+    if (cuda_result != cudaSuccess) {
+        if (instance->OPS_diags > 4) {
+            instance->ostream() << "Warning: Failed to get current CUDA device for power measurement" << std::endl;
+        }
+        nvml_initialized = false;
+        return;
+    }
+    
+    // Get NVML device handle
+    result = nvmlDeviceGetHandleByIndex(deviceId, &nvml_device);
+    if (result != NVML_SUCCESS) {
+        if (instance->OPS_diags > 4) {
+            instance->ostream() << "Warning: Failed to get NVML device handle: " 
+                               << nvmlErrorString(result) << std::endl;
+        }
+        nvml_initialized = false;
+        return;
+    }
+    
+    nvml_initialized = true;
+    if (instance->OPS_diags > 4) {
+        instance->ostream() << "GPU power measurement initialized using NVML" << std::endl;
+    }
+#else
+    (void)instance; // Suppress unused parameter warning
+    nvml_initialized = false;
+    if (instance->OPS_diags > 4) {
+        instance->ostream() << "GPU power measurement not available (NVML disabled)" << std::endl;
+    }
+#endif
+}
+
+void _ops_get_gpu_power(OPS_instance *instance, unsigned int *power_watts) {
+    (void)instance; // Suppress unused parameter warning
+    
+    *power_watts = 0; // Default to 0 if measurement fails
+    
+#if OPS_ENABLE_NVML
+    if (!nvml_initialized || nvml_device == NULL) {
+        return;
+    }
+    
+    nvmlReturn_t result = nvmlDeviceGetPowerUsage(nvml_device, power_watts);
+    if (result != NVML_SUCCESS) {
+        if (instance->OPS_diags > 3) {
+            instance->ostream() << "Warning: Failed to get GPU power usage: " 
+                               << nvmlErrorString(result) << std::endl;
+        }
+        *power_watts = 0;
+        return;
+    }
+    
+    // Convert from milliwatts to watts
+    *power_watts = *power_watts / 1000;
+#endif
+}
+
+void _ops_finalize_gpu_power_measurement(OPS_instance *instance) {
+    (void)instance; // Suppress unused parameter warning
+    
+#if OPS_ENABLE_NVML
+    if (nvml_initialized) {
+        nvmlShutdown();
+        nvml_initialized = false;
+        nvml_device = NULL;
+    }
+#endif
 }
