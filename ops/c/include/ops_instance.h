@@ -357,7 +357,7 @@ class OPS_instance {
   int ops_gpu_power_measurement_active;       // Flag indicating if GPU power measurement is active
   int ops_gpu_measurement_counter;            // Counter for GPU power measurement
   int ops_gpu_measurement_frequency;          // Frequency of GPU power measurement
-	
+
 	//Tiling
 	int ops_enable_tiling;
 	double ops_cache_size;

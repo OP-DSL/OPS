@@ -184,7 +184,6 @@
 {% if arg is ops_gbl or arg is ops_reduce %}
     {% if arg is ops_read %}
         {% if (not arg.dim.isdigit()) or (arg.dim.isdigit() and arg.dim|int > 1) %}
-    consts_bytes = 0;
     arg{{arg.id}}.data = block->instance->OPS_consts_h + consts_bytes;
     {{arg.typ}}* arg{{arg.id}}_data_d = ({{arg.typ}}*)(block->instance->OPS_consts_d + consts_bytes);
     for (int d = 0; d < arg{{arg.id}}.dim; d++)     (({{arg.typ}} *)arg{{arg.id}}.data)[d] = arg{{arg.id}}h[d];

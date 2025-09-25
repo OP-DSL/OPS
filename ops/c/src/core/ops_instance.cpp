@@ -157,7 +157,7 @@ void OPS_instance::init_globals() {
   ops_gpu_power_measurement_active = 0;
   ops_gpu_measurement_counter = 0;
   ops_gpu_measurement_frequency = 10;
-	
+
 	//Tiling
 	ops_enable_tiling = 0;
 	ops_cache_size = 0;
