@@ -13,7 +13,7 @@ MPI_LINK = -lmpi
 endif
 
 HIP_INC ?= $(HIP_INSTALL_PATH)/include -I$(HIP_INSTALL_PATH)/../include
-HIP_LIB ?= $(HIP_INSTALL_PATH)/lib
+HIP_LIB ?= -L$(HIP_INSTALL_PATH)/lib
 MPI_HIP_LINK ?= -L$(MPI_LIB) -lmpi
 
 HIP_LIB += -lrocm_smi64
