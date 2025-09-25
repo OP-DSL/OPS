@@ -51,12 +51,10 @@ void ops_init_device(OPS_instance *instance, const int argc, const char *const a
 
 void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
   *ptr = cl::sycl::malloc_device(bytes, *instance->sycl_instance->queue);
-  instance->ops_device_memory_allocated_bytes += bytes;
 }
 
 void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
   *ptr = cl::sycl::malloc_host(bytes, *instance->sycl_instance->queue);
-  instance->ops_host_memory_allocated_bytes += bytes;
 }
 
 void ops_device_free(OPS_instance *instance, void** ptr) {
