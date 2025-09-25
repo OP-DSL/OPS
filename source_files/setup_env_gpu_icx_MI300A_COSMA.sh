@@ -8,16 +8,16 @@ module purge
 
 # Compiler
 module load intel_comp/2024.2.0
-module load compiler-rt tbb compiler mpi dpl dpct
+module load compiler-rt tbb compiler openmpi/5.0.3 ucx dpl dpct 
 module load parallel_hdf5/1.14.4
 
 # MPI setting
-export MPI_INSTALL_PATH=/cosma/local/intel/oneAPI_2024.2.0/mpi/2021.13
+export MPI_INSTALL_PATH=/cosma/local/openmpi/intel_2024.2.0/5.0.3
 export LD_LIBRARY_PATH=$MPI_INSTALL_PATH/lib:$LD_LIBRARY_PATH
 
-export MPICC=mpicxx
-export MPICPP=mpicxx
-export MPICXX=mpiicpx
+export MPICC=mpicc
+export MPICPP=mpiCC
+export MPICXX=mpicxx
 export MPIFC=mpiifort
 export MPIF90=mpiifort
 # HIP
@@ -25,7 +25,7 @@ export AMD_ARCH=MI300A
 
 # export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
-export ROCM_PATH=/etc/alternatives/rocm
+export ROCM_PATH=/opt/rocm
 export LD_LIBRARY_PATH=$ROCM_PATH/llvm/lib:$LD_LIBRARY_PATH
 export HIP_INSTALL_PATH=$ROCM_PATH
 export AOMP=$ROCM_PATH/llvm
