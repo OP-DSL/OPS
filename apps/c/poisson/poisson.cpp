@@ -58,13 +58,9 @@ int main(int argc, char **argv)
   /**-------------------------- Initialisation --------------------------**/
  // Get the number of OpenMP target devices
  int num_devices = omp_get_num_devices();
- std::cout << "Number of OpenMP devices available: " << num_devices << "\n";
 
   // OPS initialisation
-  std::cout << "BEFORE INIT";
   ops_init(argc,argv,1);
-  std::cout << "AFTER INIT";
-
 
   //Mesh
   int logical_size_x = 20;

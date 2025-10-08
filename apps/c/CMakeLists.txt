@@ -43,8 +43,8 @@ add_subdirectory(ops-lbm/step5)
 #add_subdirectory(lowdim_test) # Issue with mpi-cuda with multiple definition
 #add_subdirectory(mblock) # Issue with mpi-cuda with multiple definition
 #add_subdirectory(mgrid)  # Issue with mpi-cuda with multiple definition
-add_subdirectory(multiDim)
-add_subdirectory(multiDim3D)
+#add_subdirectory(multiDim)
+#add_subdirectory(multiDim3D)
 add_subdirectory(poisson)
 add_subdirectory(shsgc)
 if(${OPS_TEST_FULL})
