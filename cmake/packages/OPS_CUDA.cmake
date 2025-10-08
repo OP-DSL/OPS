@@ -21,14 +21,28 @@ if(CUDAToolkit_FOUND)
   #set(CMAKE_CUDA_ARCHITECTURES "${SET_GPU_ARCH}"                                                               
   #    CACHE STRING "CUDA architectures")  
   # Set the CUDA Flags compilers
-  set(OPS_CUDAFLAGS "-Xcompiler=\"-fPIC\" -g -std=c++11 -gencode arch=compute_${SET_CUDA_ARCH},code=sm_${SET_CUDA_ARCH}") 
+  set(OPS_CUDAFLAGS "-Xcompiler=\"-fPIC\" -g -std=c++11 -gencode arch=compute_${SET_CUDA_ARCH},code=sm_${SET_CUDA_ARCH}")
+   
   # If CMAKE_CUDA_ARCHITECTURES is correct there is no need to add the flags for the architectures, CMake does it
   #set(OPS_CUDAFLAGS "-Xcompiler=\"-fPIC\" -g -std=c++11") 
   set(OPS_CUDAFLAGS_RELEASE "-O3 --use_fast_math") 
-  set(OPS_CUDAFLAGS_DEBUG "-O0") 
+  set(OPS_CUDAFLAGS_DEBUG "-O0 -G") 
   if(IEEE)
     set(OPS_CUDAFLAGS "${OPS_CUDAFLAGS} --fmad=false")
   endif(IEEE)
+
+  # Now look for nvidia-ml
+  find_library(NVML_LIB nvidia-ml
+               PATHS /usr/lib/x86_64-linux-gnu /usr/lib64)
+
+  if(NOT NVML_LIB)
+    message(FATAL_ERROR "NVML not found. Install 'libnvidia-ml' or set NVML_ROOT.")
+  endif()
+
+  add_library(NVML::nvml UNKNOWN IMPORTED)
+  set_target_properties(NVML::nvml PROPERTIES
+    IMPORTED_LOCATION "${NVML_LIB}")
+
 else()                                                                             
   message(WARNING "CUDA toolkit not found! The CUDA codes won't compile!")      
 endif()

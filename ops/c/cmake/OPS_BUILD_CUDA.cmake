@@ -7,9 +7,11 @@ set(SRC ${CORE} ${EXTERN} ${CUDA})
 set(LibName "${lib_prefix}${TargetName}")
 if (USE_OMP)
   set(Links "OpenMP::OpenMP_CXX"
-            "CUDA::cudart_static")
+            "CUDA::cudart_static"
+            "NVML::nvml")
 else ()
-  set(Links "CUDA::cudart_static")
+  set(Links "CUDA::cudart_static"
+            "NVML::nvml")
 endif()
 set(Opts "")
 setlib(${LibName} "${SRC}" "${Links}" "${Opts}")
