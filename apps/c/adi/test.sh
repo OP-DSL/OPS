@@ -3,25 +3,30 @@ set -e
 cd $OPS_INSTALL_PATH/c
 
 export SOURCE_INTEL=source_intel_2021.3_pythonenv
+export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
+export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
-#export DMOS=TRUE
-export TELOS=TRUE
+export DEMOS=TRUE
+#export TELOS=TRUE
 #export KOS=TRUE
 
-if [[ -v TELOS || -v KOS ]]; then
+if [[ -v TELOS || -v DEMOS || -v KOS ]]; then
 
 #============================ Test with Intel Classic Compilers==========================================
 echo "Testing Intel classic complier based applications ---- "
+cd $OPS_INSTALL_PATH/c
+source $OPS_INSTALL_PATH/../scripts/$SOURCE_INTEL
+
 
 source ../../scripts/$SOURCE_INTEL
-
 
 # Build and copy Referance application from the TDMA Library
 # build lib first
 cd $TDMA_INSTALL_PATH/../build
 rm -rf ./*
-cmake .. -DCUDA_cublas_LIBRARY=/opt/cuda/10.2.89/lib64/libcublas.so -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_SN=ON -DBUILD_FOR_MPI=ON -DCMAKE_INSTALL_PREFIX=$TDMA_INSTALL_PATH/../
+cmake .. -DCUDA_cublas_LIBRARY=$CUDA_INSTALL_PATH/lib64/libcublas.so -DCMAKE_BUILD_TYPE=Release -DBUILD_FOR_CPU=ON -DBUILD_FOR_GPU=ON -DBUILD_FOR_SN=ON -DBUILD_FOR_MPI=ON -DCMAKE_INSTALL_PREFIX=$TDMA_INSTALL_PATH/../
 
 make
 make install
@@ -41,15 +46,13 @@ make adi_orig compare
 cp compare adi_orig $OPS_INSTALL_PATH/../apps/c/adi
 cd -
 make IEEE=1
-cd $OPS_INSTALL_PATH/../apps/c/adi
-make clean
-#rm -f .generated
-make IEEE=1
-
 #COMMENT
+cd $OPS_INSTALL_PATH/../apps/c/adi
+#make clean
+#rm -f .generated
+make IEEE=1 compare adi_seq adi_mpi adi_openmp adi_mpi_openmp adi_cuda adi_mpi_cuda
 
 rm -rf h_u.dat adi_orig.dat adi_seq.dat adi_dev_seq.dat adi_cuda.dat adi_openmp.dat  *.h5
-
 # set Relative Tolarance for solution check -- h5diff check only
 export TOL="1.000E-14"
 

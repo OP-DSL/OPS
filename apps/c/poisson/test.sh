@@ -2,32 +2,29 @@
 set -e
 cd $OPS_INSTALL_PATH/c
 
-export SOURCE_INTEL=source_intel_2021.3_pythonenv
+export SOURCE_INTEL=source_oneapi_sycl_pythonenv
 export SOURCE_PGI=source_pgi_nvhpc_23_pythonenv
-export SOURCE_INTEL_SYCL=source_intel_2021.3_sycl_pythonenv
+export SOURCE_INTEL_SYCL=source_oneapi_sycl_pythonenv
 export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
-#export DMOS=TRUE
-export TELOS=TRUE
+#export TELOS=TRUE
+export DEMOS=TRUE
 #export KOS=TRUE
 
-if [[ -v TELOS || -v KOS ]]; then
+#<<COMMENT
+if [[ -v TELOS || -v DEMOS || -v KOS ]]; then
 
 #============================ Test with Intel Classic Compilers==========================================
 echo "Testing Intel classic complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_INTEL
-#make -j -B
-make clean
+make clean 
 make
 cd $OPS_INSTALL_PATH/../apps/c/poisson
 
-make clean
-rm -f .generated
-#make IEEE=1 -j
-make IEEE=1 poisson_dev_seq poisson_dev_mpi poisson_seq poisson_tiled poisson_openmp poisson_mpi \
-poisson_mpi_tiled poisson_mpi_openmp
+make clean all
+make IEEE=1
 
 echo '============> Running OpenMP'
 KMP_AFFINITY=compact OMP_NUM_THREADS=20 ./poisson_openmp > perf_out
@@ -117,16 +114,14 @@ fi
 
 echo "All Intel classic complier based applications ---- PASSED"
 
-
-if [[ -v TELOS ]]; then
+if [[ -v TELOS || -v DEMOS ]]; then
 
 #============================ Test with Intel SYCL Compilers==========================================
 echo "Testing Intel SYCL complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_INTEL_SYCL
-#make -j -B
 make clean
-make
+make sycl mpi_sycl
 cd $OPS_INSTALL_PATH/../apps/c/poisson
 
 make clean
@@ -162,18 +157,21 @@ echo "All Intel SYCL complier based applications ---- PASSED"
 
 fi
 
-if [[ -v TELOS ]]; then
+#COMMENT
+
+if [[ -v TELOS || -v DEMOS ]]; then
 
 #============================ Test with PGI Compilers==========================================
 echo "Testing PGI/NVHPC complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_PGI
+
 make clean
 #make -j
 make
 
 cd $OPS_INSTALL_PATH/../apps/c/poisson
-make clean
+make clean all
 make IEEE=1 poisson_dev_seq poisson_dev_mpi poisson_seq poisson_tiled poisson_openmp poisson_mpi poisson_mpi_tiled \
 poisson_mpi_openmp poisson_ompoffload poisson_mpi_ompoffload poisson_mpi_ompoffload_tiled
 
@@ -253,22 +251,6 @@ rm perf_out
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 #rm perf_out
 
-#echo '============> Running OpenACC'
-#./poisson_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-#grep "Total error:" perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#rm perf_out
-
-#echo '============> Running MPI+OpenACC'
-#$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_openacc OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
-#grep "Total error:" perf_out
-#grep "Total Wall time" perf_out
-#grep "PASSED" perf_out
-#rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
-#rm perf_out
-
 fi
 
 echo '============> Running OMPOFFLOAD'
@@ -301,10 +283,8 @@ make clean
 make
 cd $OPS_INSTALL_PATH/../apps/c/poisson
 
-make clean
-rm -f .generated
-#make IEEE=1 -j
-make IEEE=1 poisson_hip poisson_mpi_hip #poisson_hip_tiled poisson_mpi_hip_tiled
+make clean all
+make IEEE=1 poisson_hip poisson_mpi_hip poisson_hip_tiled poisson_mpi_hip_tiled
 
 echo '============> Running HIP'
 ./poisson_hip OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out

@@ -175,6 +175,10 @@ int main(int argc, const char **argv) {
   **-----------------------------hydro loop---------------------------------**
   ***************************************************************************/
   double ct0, ct1, et0, et1;
+
+  //We time the main computational part below, we only want energy consumption
+  // for the same region of code
+  clover_grid->instance->reset_power_counters();
 #ifdef PROFILE_ITT
   __itt_resume();
 #endif

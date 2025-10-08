@@ -90,7 +90,11 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {    //Queue->Submit
 
     //nd_range elso argumentume a teljes méret, nem a blokkok száma: https://docs.oneapi.com/versions/latest/dpcpp/iface/nd_range.html
-    cgh.parallel_for<class copy_tobuf>(cl::sycl::nd_range<3>(cl::sycl::range<3>(blk_z*thr_z,blk_y*thr_y,blk_x*thr_x),cl::sycl::range<3>(thr_z,thr_y,thr_x)), [=](cl::sycl::nd_item<3> item) {
+    cgh.parallel_for<class copy_tobuf>(
+      cl::sycl::nd_range<3>(
+        cl::sycl::range<3>(blk_z*thr_z,blk_y*thr_y,blk_x*thr_x),
+        cl::sycl::range<3>(thr_z,thr_y,thr_x)),
+   [=](cl::sycl::nd_item<3> item) {
       //get x dimension id
       int global_x_id = item.get_global_id()[2];
       //get y dimension id
@@ -199,7 +203,11 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   
   block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {
     //Accessors
-    cgh.parallel_for<class copy_frombuf1>(cl::sycl::nd_range<3>(cl::sycl::range<3>(blk_z*thr_z,blk_y*thr_y,blk_x*thr_x),cl::sycl::range<3>(thr_z,thr_y,thr_x)), [=](cl::sycl::nd_item<3> item) {
+    cgh.parallel_for<class copy_frombuf1>(
+      cl::sycl::nd_range<3>(
+        cl::sycl::range<3>(blk_z*thr_z,blk_y*thr_y,blk_x*thr_x),
+        cl::sycl::range<3>(thr_z,thr_y,thr_x)),
+   [=](cl::sycl::nd_item<3> item) {
       //get x dimension id
       int global_x_id = item.get_global_id()[2];
       //get y dimension id

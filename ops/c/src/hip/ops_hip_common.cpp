@@ -132,13 +132,33 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
   float *test = 0;
   int my_id = ops_get_proc();
   instance->OPS_hybrid_gpu = 0;
-  for (int i = 0; i < deviceCount; i++) {
-    hipError_t err = hipSetDevice((i+my_id)%deviceCount);
+  
+  if (instance->OPS_device_id >= 0) {
+    // User specified a device ID
+    if (instance->OPS_device_id >= deviceCount) {
+      throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: specified HIP device ID exceeds available device count");
+    }
+    hipError_t err = hipSetDevice(instance->OPS_device_id);
     if (err == hipSuccess) {
       hipError_t err2 = hipMalloc((void **)&test, sizeof(float));
       if (err2 == hipSuccess) {
         instance->OPS_hybrid_gpu = 1;
-        break;
+      } else {
+        throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: specified HIP device is not accessible");
+      }
+    } else {
+      throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: failed to set specified HIP device");
+    }
+  } else {
+    // Auto-select device
+    for (int i = 0; i < deviceCount; i++) {
+      hipError_t err = hipSetDevice((i+my_id)%deviceCount);
+      if (err == hipSuccess) {
+        hipError_t err2 = hipMalloc((void **)&test, sizeof(float));
+        if (err2 == hipSuccess) {
+          instance->OPS_hybrid_gpu = 1;
+          break;
+        }
       }
     }
   }
@@ -151,6 +171,9 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
     hipSafeCall(instance->ostream(), hipGetDeviceProperties(&deviceProp, deviceId));
     if (instance->OPS_diags>=1) instance->ostream() << "\n Using HIP device: " <<
       deviceId << " " << deviceProp.name <<"\n";
+
+    // Initialize GPU power measurement
+    _ops_reset_gpu_power_counters(instance);
   } else {
     throw OPSException(OPS_RUNTIME_CONFIGURATION_ERROR, "Error: no available HIP devices");
   }
@@ -255,4 +278,137 @@ void ops_randomgen_exit() {
     hiprand_initialised = 0;
     hiprandSafeCall(instance->ostream(), hiprandDestroyGenerator(ops_rand_gen));
   }
+}
+
+/*
+ * GPU Power Measurement Functions using ROCm SMI
+ */
+
+#if OPS_ENABLE_ROCM_SMI
+#include <rocm_smi/rocm_smi.h>
+
+// ROCm SMI device handle for current GPU
+static uint32_t rocm_device_id = 0;
+static bool rocm_smi_initialized = false;
+static uint32_t rocm_num_devices = 0;
+
+void __rocmSmiSafeCall(rsmi_status_t result, const char *file, int line) {
+    if (result != RSMI_STATUS_SUCCESS) {
+        fprintf(stderr, "ROCm SMI error at %s:%d - error code %d\n", file, line, result);
+        // Don't throw exception, just disable GPU power measurement
+        rocm_smi_initialized = false;
+    }
+}
+
+#define rocmSmiSafeCall(call) __rocmSmiSafeCall(call, __FILE__, __LINE__)
+
+#endif // OPS_ENABLE_ROCM_SMI
+
+void _ops_init_gpu_power_measurement(OPS_instance *instance) {
+#if OPS_ENABLE_ROCM_SMI
+    rsmi_status_t result;
+    
+    // Initialize ROCm SMI
+    result = rsmi_init(0);
+    if (result != RSMI_STATUS_SUCCESS) {
+        if (instance->OPS_diags > 4) {
+            instance->ostream() << "Warning: Failed to initialize ROCm SMI for GPU power measurement: error " 
+                               << result << std::endl;
+        }
+        rocm_smi_initialized = false;
+        return;
+    }
+    
+    // Get number of monitoring devices
+    result = rsmi_num_monitor_devices(&rocm_num_devices);
+    if (result != RSMI_STATUS_SUCCESS || rocm_num_devices == 0) {
+        if (instance->OPS_diags > 4) {
+            instance->ostream() << "Warning: No ROCm SMI monitoring devices found" << std::endl;
+        }
+        rocm_smi_initialized = false;
+        return;
+    }
+    
+    // Get current HIP device (assumes it matches ROCm SMI device index)
+    int deviceId = -1;
+    hipError_t hip_result = hipGetDevice(&deviceId);
+    if (hip_result != hipSuccess || deviceId < 0 || (uint32_t)deviceId >= rocm_num_devices) {
+        if (instance->OPS_diags > 4) {
+            instance->ostream() << "Warning: Failed to get current HIP device for power measurement" << std::endl;
+        }
+        rocm_smi_initialized = false;
+        return;
+    }
+    
+    rocm_device_id = (uint32_t)deviceId;
+    rocm_smi_initialized = true;
+    
+    if (instance->OPS_diags > 4) {
+        instance->ostream() << "GPU power measurement initialized using ROCm SMI for device " 
+                           << rocm_device_id << std::endl;
+    }
+#else
+    (void)instance; // Suppress unused parameter warning
+    rocm_smi_initialized = false;
+    if (instance->OPS_diags > 4) {
+        instance->ostream() << "GPU power measurement not available (ROCm SMI disabled)" << std::endl;
+    }
+#endif
+}
+
+void _ops_get_gpu_power(OPS_instance *instance, unsigned int *power_watts) {
+    (void)instance; // Suppress unused parameter warning
+    
+    *power_watts = 0; // Default to 0 if measurement fails
+    
+#if OPS_ENABLE_ROCM_SMI
+    if (!rocm_smi_initialized) {
+        return;
+    }
+    
+    uint64_t power_microwatts = 0;
+    rsmi_status_t result;
+    
+    // Use newer API for ROCm 6.0+ or fall back to older API
+#if defined(HIP_VERSION_MAJOR) && (HIP_VERSION_MAJOR >= 6)
+    // ROCm 6.0+ - use rsmi_dev_power_get
+    RSMI_POWER_TYPE power_type;
+    result = rsmi_dev_power_get(rocm_device_id, &power_microwatts, &power_type);
+    if (result != RSMI_STATUS_SUCCESS || power_type == RSMI_INVALID_POWER) {
+        if (instance->OPS_diags > 3) {
+            instance->ostream() << "Warning: Failed to get GPU power usage from ROCm SMI (6+ API): error " 
+                               << result << std::endl;
+        }
+        *power_watts = 0;
+        return;
+    }
+#else
+    // ROCm 5.x and earlier - use rsmi_dev_power_ave_get
+    result = rsmi_dev_power_ave_get(rocm_device_id, 0, &power_microwatts);
+    if (result != RSMI_STATUS_SUCCESS) {
+        if (instance->OPS_diags > 3) {
+            instance->ostream() << "Warning: Failed to get GPU power usage from ROCm SMI (5.x API): error " 
+                               << result << std::endl;
+        }
+        *power_watts = 0;
+        return;
+    }
+#endif
+    
+    // Convert from microwatts to watts
+    *power_watts = (unsigned int)(power_microwatts / 1000000);
+#endif
+}
+
+void _ops_finalize_gpu_power_measurement(OPS_instance *instance) {
+    (void)instance; // Suppress unused parameter warning
+    
+#if OPS_ENABLE_ROCM_SMI
+    if (rocm_smi_initialized) {
+        rsmi_shut_down();
+        rocm_smi_initialized = false;
+        rocm_device_id = 0;
+        rocm_num_devices = 0;
+    }
+#endif
 }

@@ -2,6 +2,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 
+import fparser.two as fparse2
 import fparser.two.Fortran2003 as f2003
 import fparser.two.Fortran2008 as f2008
 import fparser.two.utils as fpu
@@ -842,6 +843,18 @@ def translateIfConstruct(if_construct: f2003.If_Construct, ctx: Context) -> str:
     return src
 
 
+def translateCppIfDirective(if_directive: fparse2.C99Preprocessor.Cpp_If_Stmt, ctx: Context) -> str:
+    src = ""
+    src += str(if_directive).strip() + "\n"
+    return src
+
+
+def translateCppEndIfDirective(endif_directive: fparse2.C99Preprocessor.Cpp_Endif_Stmt, ctx: Context) -> str:
+    src = ""
+    src += str(endif_directive).strip() + "\n"
+    return src
+
+
 def translateName(name: f2003.Name, ctx: Optional[Context] = None) -> str:
     raw = name.string.lower()
 
@@ -1285,7 +1298,8 @@ TRANSLATE_TABLE = {
     f2003.If_Construct: translateIfConstruct,
     # f2003.Select_Type_Construct
     # f2003.Where_Construct
-
+    fparse2.C99Preprocessor.Cpp_If_Stmt: translateCppIfDirective,
+    fparse2.C99Preprocessor.Cpp_Endif_Stmt: translateCppEndIfDirective,
 
     # Misc
 

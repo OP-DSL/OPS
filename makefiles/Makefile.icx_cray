@@ -1,6 +1,6 @@
 CC      := icx
 CXX     := icpx
-FC 	:= ifx
+FC 	    := ifx
 
 ifdef DEBUG
 	CCFLAGS   := -O0 -std=c99 -fPIC -Wall -ffloat-store -g
@@ -9,6 +9,7 @@ else
 	CCFLAGS   := -O3 -march=native -std=c99 -fPIC -Wall -g -ftree-vectorize -qopenmp
 	CXXFLAGS   := -O3 -march=native -std=c++17 -fPIC -Wall -qopenmp
 endif
+
 CXXLINK := -lstdc++
 FFLAGS  := -O3 -march=native -fPIC -g -qopenmp -free -mcmodel=medium
 
@@ -46,6 +47,18 @@ endif
 endif
 endif
 
+MPI_INSTALL_PATH = $(CRAY_MPICH_DIR)
+
+MPICC=icpx
+MPICPP=icpx
+MPICXX=icpx
+MPIFC=ifx
+MPIF90=ifx
+
+MPI_INC = $(CRAY_MPICH_DIR)/include
+MPI_LIB = $(CRAY_MPICH_DIR)/lib $(PE_MPICH_GTL_DIR_amd_gfx90a)
+MPI_LINK = -lmpi -lmpi_cray
+
 HIPCC=hipcc
 HIPMPICXX=hipcc
 # -D__HIP_PLATFORM_AMD__ or -D__HIP_PLATFORM_NVIDIA__ will be added to
@@ -54,8 +67,13 @@ HIPFLAGS = -std=c++17 -isystem -march=native
 HIP_LINK = -L${HIP_INSTALL_PATH}/lib -lamdhip64 
 HIP_LINK+= -lrocm_smi64
 
+#$PE_MPICH_GTL_LIBS_amd_gfx90a = -lmpi_gtl_hsa
+MPI_HIP_LINK = -lmpi_gtl_hsa
+
 SYCLCXX = icpx
-SYCLMPICXX = mpiicpx
+SYCLMPICXX = icpx
+
+MPI_SYCL_LINK = -lmpi_gtl_hsa
 
 GPU_VENDOR := $(shell \
     if command -v nvidia-smi >/dev/null 2>&1; then \

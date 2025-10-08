@@ -96,46 +96,61 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
   char temp[64];
   const char *pch;
 
-  int OPS_sycl_device = 3;
+  int OPS_sycl_device = 2;
+
+  // This will not work for Fortran apps as command line arguments are empty during ops_init
+  // So updated case 2 in switch to first check if GPUs are available, if not then do defualt selection
   for (int i = 0; i < argc; ++i) {
     pch = strstr(argv[i], "OPS_SYCL_DEVICE=");
     if (pch != NULL) {
       snprintf(temp, 64, "%s", pch);
-      if (strcmp(temp + strlen("OPS_SYCL_DEVICE="), "host") == 0)
+      if (strcmp(temp + strlen("OPS_SYCL_DEVICE="), "cpu") == 0)
         OPS_sycl_device = 0;
-      else if (strcmp(temp + strlen("OPS_SYCL_DEVICE="), "cpu") == 0)
-        OPS_sycl_device = 1;
       else if (strcmp(temp + strlen("OPS_SYCL_DEVICE="), "gpu") == 0)
-        OPS_sycl_device = 2;
+        OPS_sycl_device = 1;
       else {
         int val = atoi(temp + strlen("OPS_SYCL_DEVICE="));
-        OPS_sycl_device=4+val;
+        OPS_sycl_device=3+val;
       }
     }
   }
   instance->sycl_instance = new OPS_instance_sycl();
 
+  int my_id = ops_get_proc();
   switch (OPS_sycl_device) {
   case 0:
     instance->sycl_instance->queue =
-        new cl::sycl::queue(cl::sycl::host_selector(), cl::sycl::property::queue::in_order());
-    break;
-  case 1:
-    instance->sycl_instance->queue =
         new cl::sycl::queue(cl::sycl::cpu_selector(), cl::sycl::property::queue::in_order());
     break;
-  case 2:
+  case 1: {
+    auto all_devices = cl::sycl::device::get_devices(cl::sycl::info::device_type::gpu);
+    cl::sycl::device my_device = all_devices[my_id % all_devices.size()];
+    if(ops_is_root()) printf("GPU device are available for selection, count: %d\n",all_devices.size());
     instance->sycl_instance->queue =
-        new cl::sycl::queue(cl::sycl::gpu_selector(), cl::sycl::property::queue::in_order());
+        new cl::sycl::queue(my_device, cl::sycl::property::queue::in_order());
     break;
-  case 3:
-    instance->sycl_instance->queue =
-        new cl::sycl::queue(cl::sycl::default_selector(), cl::sycl::property::queue::in_order());
+  }
+  case 2: {
+    // Check for available GPU devices
+    auto gpu_devices = cl::sycl::device::get_devices(cl::sycl::info::device_type::gpu);
+
+    if (!gpu_devices.empty()) {
+        if(ops_is_root()) printf("GPU device are available for selection, count: %d\n",gpu_devices.size());
+        // GPUs available → use the same logic as case 1
+        cl::sycl::device my_device = gpu_devices[my_id % gpu_devices.size()];
+        instance->sycl_instance->queue =
+            new cl::sycl::queue(my_device, cl::sycl::property::queue::in_order());
+    } else {
+        // No GPUs → fallback to default selector
+        instance->sycl_instance->queue =
+            new cl::sycl::queue(cl::sycl::default_selector(), cl::sycl::property::queue::in_order());
+    }
     break;
+  }
   default:
     std::vector<cl::sycl::device> devices;
     devices = cl::sycl::device::get_devices();
-    int devid = OPS_sycl_device - 4;
+    int devid = OPS_sycl_device - 3;
     if (devid < 0 || devid >= devices.size()) {
       ops_printf("Error, unrecognised SYCL device selection. Available devices (%d)\n",devices.size());
       for (int i = 0; i < devices.size(); i++)
@@ -151,7 +166,10 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
 
   instance->OPS_hybrid_gpu = 1;
   auto platform = instance->sycl_instance->queue->get_device().get_platform();
-  if (instance->OPS_diags>=1) instance->ostream() << "Running on " << instance->sycl_instance->queue->get_device().get_info<cl::sycl::info::device::name>() << " platform " << platform.get_info<cl::sycl::info::platform::name>() << "\n";
+  if (instance->OPS_diags>=1)
+    instance->ostream()
+      << "Running on device " << instance->sycl_instance->queue->get_device().get_info<cl::sycl::info::device::name>()
+      << " ,platform " << platform.get_info<cl::sycl::info::platform::name>() << "\n";
 }
 
 void ops_randomgen_init(unsigned int seed, int options) {
@@ -167,4 +185,24 @@ void ops_fill_random_normal(ops_dat dat) {
 }
 
 void ops_randomgen_exit() {
+}
+
+/*
+ * GPU Power Measurement Functions (SYCL backends)
+ * These return zero values since SYCL power measurement is not implemented
+ */
+
+void _ops_init_gpu_power_measurement(OPS_instance *instance) {
+    (void)instance; // Suppress unused parameter warning
+    // Do nothing for SYCL backends - power measurement not implemented
+}
+
+void _ops_get_gpu_power(OPS_instance *instance, unsigned int *power_watts) {
+    (void)instance; // Suppress unused parameter warning
+    *power_watts = 0; // Always return 0 for SYCL backends
+}
+
+void _ops_finalize_gpu_power_measurement(OPS_instance *instance) {
+    (void)instance; // Suppress unused parameter warning
+    // Do nothing for SYCL backends
 }

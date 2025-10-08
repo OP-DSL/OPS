@@ -277,6 +277,26 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
 
   ops_block block = src->block;
 
+  // dest += dest_offset; <- a kernelen belül kell
+  int thr_x = abs(rx_s - rx_e);
+  int blk_x = 1;
+  if (abs(rx_s - rx_e) > 8) {
+   blk_x = (thr_x - 1) / 8 + 1;
+   thr_x = 8;
+  }
+  int thr_y = abs(ry_s - ry_e);
+  int blk_y = 1;
+  if (abs(ry_s - ry_e) > 8) {
+   blk_y = (thr_y - 1) / 8 + 1;
+   thr_y = 8;
+  }
+  int thr_z = abs(rz_s - rz_e);
+  int blk_z = 1;
+  if (abs(rz_s - rz_e) > 8) {
+   blk_z = (thr_z - 1) / 8 + 1;
+   thr_z = 8;
+  }
+
   int size =
       abs(src->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
 
@@ -314,14 +334,20 @@ void ops_halo_copy_tobuf(char *dest, int dest_offset, ops_dat src, int rx_s,
   block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {
 
     cgh.parallel_for<class copy_tobuf>(
-        cl::sycl::range<3>(rz_e - rz_s, ry_e - ry_s, rx_e - rx_s),
-        [=](cl::sycl::id<3> item) {
+      cl::sycl::nd_range<3>(
+        cl::sycl::range<3>(blk_z*thr_z,blk_y*thr_y,blk_x*thr_x),
+        cl::sycl::range<3>(thr_z,thr_y,thr_x)),
+   [=](cl::sycl::nd_item<3> item) {
           int d_offset = dest_offset_local;
           int s_offset = 0;
 
-          int idx_z = rz_s + z_step * item.get(0);
-          int idx_y = ry_s + y_step * item.get(1);
-          int idx_x = rx_s + x_step * item.get(2);
+          int global_x_id = item.get_global_id()[2];
+          int global_y_id = item.get_global_id()[1];
+          int global_z_id = item.get_global_id()[0];
+
+          int idx_z = rz_s + z_step * global_z_id;
+          int idx_y = ry_s + y_step * global_y_id;
+          int idx_x = rx_s + x_step * global_x_id;
           if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
               (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
               (z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
@@ -395,6 +421,25 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
 
   ops_block block = dest->block;
 
+  int thr_x = abs(rx_s - rx_e);
+  int blk_x = 1;
+  if (abs(rx_s - rx_e) > 8) {
+    blk_x = (thr_x - 1) / 8 + 1;
+    thr_x = 8;
+  }
+  int thr_y = abs(ry_s - ry_e);
+  int blk_y = 1;
+  if (abs(ry_s - ry_e) > 8) {
+    blk_y = (thr_y - 1) / 8 + 1;
+    thr_y = 8;
+  }
+  int thr_z = abs(rz_s - rz_e);
+  int blk_z = 1;
+  if (abs(rz_s - rz_e) > 8) {
+    blk_z = (thr_z - 1) / 8 + 1;
+    thr_z = 8;
+  }
+
   int size =
       abs(dest->elem_size * (rx_e - rx_s) * (ry_e - ry_s) * (rz_e - rz_s));
   char *gpu_ptr;
@@ -433,14 +478,20 @@ void ops_halo_copy_frombuf(ops_dat dest, char *src, int src_offset, int rx_s,
   block->instance->sycl_instance->queue->submit([&](cl::sycl::handler &cgh) {
 
     cgh.parallel_for<class copy_frombuf>(
-        cl::sycl::range<3>(rz_e - rz_s, ry_e - ry_s, rx_e - rx_s),
-        [=](cl::sycl::id<3> item) {
+      cl::sycl::nd_range<3>(
+        cl::sycl::range<3>(blk_z*thr_z,blk_y*thr_y,blk_x*thr_x),
+        cl::sycl::range<3>(thr_z,thr_y,thr_x)),
+   [=](cl::sycl::nd_item<3> item) {
           int d_offset = 0;
           int s_offset = src_offset_local;
 
-          int idx_z = rz_s + z_step * item.get(0);
-          int idx_y = ry_s + y_step * item.get(1);
-          int idx_x = rx_s + x_step * item.get(2);
+          int global_x_id = item.get_global_id()[2];
+          int global_y_id = item.get_global_id()[1];
+          int global_z_id = item.get_global_id()[0];
+
+          int idx_z = rz_s + z_step * global_z_id;
+          int idx_y = ry_s + y_step * global_y_id;
+          int idx_x = rx_s + x_step * global_x_id;
           if ((x_step == 1 ? idx_x < rx_e : idx_x > rx_e) &&
               (y_step == 1 ? idx_y < ry_e : idx_y > ry_e) &&
               (z_step == 1 ? idx_z < rz_e : idx_z > rz_e)) {
