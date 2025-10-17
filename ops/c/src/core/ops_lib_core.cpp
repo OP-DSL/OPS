@@ -1814,6 +1814,13 @@ int ops_stencil_check_5d(int arg_idx, int idx0, int idx1, int idx2, int idx3, in
   return idx0 + dim0 * (idx1) + dim0 * dim1 * (idx2) + dim0 * dim1 * dim2 * idx3 + dim0 * dim1 * dim2 * dim3 * idx4;
 }
 
+constexpr bool is_nan_fp16(uint16_t fp16_bits) {
+  // Combine the checks into a single return statement for C++11 compatibility.
+  // 1. Check if exponent bits (0x7C00) are all 1s.
+  // 2. Check if mantissa bits (0x03FF) are non-zero.
+  return ((fp16_bits & 0x7C00) == 0x7C00) && ((fp16_bits & 0x03FF) > 0);
+}
+
 void ops_NaNcheck_core(ops_dat dat, char *buffer, int *disp, int *d_m) {
 
  int indices[OPS_MAX_DIM] = {0};
@@ -1894,6 +1901,15 @@ void ops_NaNcheck_core(ops_dat dat, char *buffer, int *disp, int *d_m) {
                          strcmp(dat->type, "real(kind=4)") == 0)
                 {
                   if (  std::isnan(((float *)dat->data)[offset])  )
+                  {
+                    printf("%sError: NaN detected at element dim:%d,index:(%d", buffer, d, indices[0]);
+                    for(int dim = 1; dim < dat->block->dims; dim++) printf(",%d",indices[dim]);
+                    printf(")\n");
+                    exit(2);
+                  }
+                }
+                else if (strcmp(dat->type, "half") == 0) {
+                  if ( is_nan_fp16(((uint16_t *)dat->data)[offset])  )
                   {
                     printf("%sError: NaN detected at element dim:%d,index:(%d", buffer, d, indices[0]);
                     for(int dim = 1; dim < dat->block->dims; dim++) printf(",%d",indices[dim]);
