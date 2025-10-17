@@ -1909,7 +1909,7 @@ void ops_NaNcheck_core(ops_dat dat, char *buffer, int *disp, int *d_m) {
                   }
                 }
                 else if (strcmp(dat->type, "half") == 0) {
-                  if ( is_nan_fp16(((uint16_t *)dat->data)[offset])  )
+                  if (is_nan_fp16(((uint16_t *)dat->data)[offset]))
                   {
                     printf("%sError: NaN detected at element dim:%d,index:(%d", buffer, d, indices[0]);
                     for(int dim = 1; dim < dat->block->dims; dim++) printf(",%d",indices[dim]);
