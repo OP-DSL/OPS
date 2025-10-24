@@ -412,7 +412,7 @@
         {# {% if arg.dim > 1 %} #}
         {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
             {# {% set dim -%}{{arg.dim|string}}, {%- endset %} #}
-            {% set dim -%}arg{{arg.id}}_dim, {%- endset %}
+            {% set dim -%}arg{{arg.id}}_dim{%- endset %}
             {% set extradim = 1 %}
         {% endif %}
         {% if arg.restrict %}
@@ -448,11 +448,11 @@
         {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
 #ifdef OPS_SOA
         {% endif %}
-                {{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{offset[0]}});
+                {{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{ ', ' if dim else '' }}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{offset[0]}});
         {# {% if arg.dim > 1 %} #}
         {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
 #else
-                {{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{dim}} * ({{offset[0]}}));
+                {{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{ ', ' if dim else '' }}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{dim}} * ({{offset[0]}}));
 #endif
         {% endif %}
     {% endif %}
