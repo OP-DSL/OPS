@@ -81,7 +81,7 @@ int main(int argc, char **argv)
   // OPS initialisation
   std::stringstream ss;
   OPS_instance *instance = new OPS_instance(argc,argv,1,ss);
-  instance->OPS_soa = 1;
+//  instance->OPS_soa = 1;
   instance->ostream() << "Hello from instance " << instance << std::endl;
 
   /**----------------------------OPS Declarations----------------------------**/

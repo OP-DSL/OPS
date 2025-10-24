@@ -42,7 +42,11 @@ __device__ void {{lh.kernel}}_gpu({{signature[0]}}) {
 
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
-        {% set current_arg %}{{lh.dats[arg.dat_id].typ}}* __restrict arg{{arg.id}}, {% endset %}
+        {% if arg.dim.isdigit() and arg.dim|int == 1 %}
+            {% set current_arg %}{{lh.dats[arg.dat_id].typ}}* __restrict arg{{arg.id}}, {% endset %}
+        {% else %}
+            {% set current_arg %}{{lh.dats[arg.dat_id].typ}}* __restrict arg{{arg.id}}, int arg{{arg.id}}_dim, {% endset %}
+        {% endif %}
     {% elif arg is ops_gbl or arg is ops_reduce %}
         {% if arg is ops_read %}
             {% if arg.dim.isdigit() and arg.dim|int == 1 %}
@@ -145,16 +149,6 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
     arg_idx[2] = arg_idx2+idx_z;
     {% endif %}
 {% endif %}
-
-{% for arg in lh.args %}
-    {% if arg is ops_dat %}
-        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
-    int arg{{arg.id}}_dim = args[{{arg.id}}].dat->dim;
-        {% else %}
-    int arg{{arg.id}}_dim = 1;
-        {% endif %}
-    {% endif %}
-{% endfor %}
 
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
@@ -649,7 +643,11 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
 {% if signature.append(signature.pop() + "\n") %} {% endif %}
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
-        {% set current_arg %}                   ({{lh.dats[arg.dat_id].typ}} *)p_a[{{arg.id}}], {% endset %}
+        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
+            {% set current_arg %}                   ({{lh.dats[arg.dat_id].typ}} *)p_a[{{arg.id}}], args[{{arg.id}}].dat->dim, {% endset %}
+        {% else %}
+            {% set current_arg %}                   ({{lh.dats[arg.dat_id].typ}} *)p_a[{{arg.id}}], {% endset %}
+        {% endif %}
     {% elif arg is ops_gbl or arg is ops_reduce %}
         {% if arg is ops_read %}
             {% if arg.dim.isdigit() and arg.dim|int == 1 %}
