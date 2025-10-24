@@ -198,10 +198,10 @@ class Fortran(Lang):
     def parseFile(
         self, path: Path, include_dirs: FrozenSet[Path], defines: FrozenSet[str]
     ) -> Tuple[f2003.Program, str]:
-        #source = self.preprocess(path, include_dirs, defines)
-        #with open("_preprocessed.F90", "w") as f:
-        #           f.write(source)
-        source = path.read_text()
+        source = self.preprocess(path, include_dirs, defines)
+        with open("_preprocessed.F90", "w") as f:
+            f.write(source)
+        #source = path.read_text()
         reader = FortranStringReader(source, include_dirs=list(include_dirs), ignore_comments=False)
         parser = ParserFactory().create(std="f2003")
 #        try:

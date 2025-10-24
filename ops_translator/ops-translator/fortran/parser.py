@@ -382,7 +382,8 @@ def parseArgDat(loop: OPS.Loop, opt: bool, args: Optional[f2003.Component_Spec_L
     args_list = args.items
 
     dat_ptr = parseIdentifier(args_list[0], loc)
-    dat_dim = parseIntLiteral(args_list[1], loc, True)
+    dat_dim = parseIdentifier(args_list[1], loc)
+    #dat_dim = parseIntLiteral(args_list[1], loc, True)
     stencil_ptr = parseIdentifier(args_list[2], loc)
     dat_typ, dat_soa = parseType(parseStringLiteral(args_list[3], loc), loc)
     access_type = parseAccessType(args_list[4], loc)

@@ -43,7 +43,11 @@ __device__ void {{lh.kernel}}_gpu({{signature[0]}}) {
 {% for arg in lh.args %}
     {% set f2c_type_value = lh.f2c_type[loop.index0] %}
     {% if arg is ops_dat %}
-        {% set current_arg %}{{f2c_type_value}}* __restrict arg{{arg.id}}, {% endset %}
+        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
+            {% set current_arg %}{{f2c_type_value}}* __restrict arg{{arg.id}}, int arg{{arg.id}}_dim, {% endset %}
+        {% else %}
+            {% set current_arg %}{{f2c_type_value}}* __restrict arg{{arg.id}}, {% endset %}
+        {% endif %}
     {% elif arg is ops_gbl or arg is ops_reduce %}
         {% if arg is ops_read %}
             {% if arg.dim.isdigit() and arg.dim|int == 1 %}
@@ -136,19 +140,19 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
         {% if soa_set %}
     arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}};
         {% else %}
-    arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*{{arg.dim}};
+    arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*arg{{arg.id}}_dim;
         {% endif %}
     {% elif lh.ndim == 2 %}
         {% if soa_set %}
     arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}} + {{n_y}} * ystride_{{arg.id}} * dims_{{lh.kernel}}[{{arg.id}}][0];
         {% else %}
-    arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*{{arg.dim}} + {{n_y}} * ystride_{{arg.id}}*{{arg.dim}} * dims_{{lh.kernel}}[{{arg.id}}][0];
+    arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*arg{{arg.id}}_dim + {{n_y}} * ystride_{{arg.id}}*arg{{arg.id}}_dim * dims_{{lh.kernel}}[{{arg.id}}][0];
         {% endif %}
     {% elif lh.ndim == 3 %}
         {% if soa_set %}
     arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}} + {{n_y}} * ystride_{{arg.id}} * dims_{{lh.kernel}}[{{arg.id}}][0] + {{n_z}} * zstride_{{arg.id}} * dims_{{lh.kernel}}[{{arg.id}}][0] * dims_{{lh.kernel}}[{{arg.id}}][1];
         {% else %}
-    arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*{{arg.dim}} + {{n_y}} * ystride_{{arg.id}}*{{arg.dim}} * dims_{{lh.kernel}}[{{arg.id}}][0] + {{n_z}} * zstride_{{arg.id}}*{{arg.dim}} * dims_{{lh.kernel}}[{{arg.id}}][0] * dims_{{lh.kernel}}[{{arg.id}}][1];
+    arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*arg{{arg.id}}_dim + {{n_y}} * ystride_{{arg.id}}*arg{{arg.id}}_dim * dims_{{lh.kernel}}[{{arg.id}}][0] + {{n_z}} * zstride_{{arg.id}}*arg{{arg.id}}_dim * dims_{{lh.kernel}}[{{arg.id}}][0] * dims_{{lh.kernel}}[{{arg.id}}][1];
         {% endif %}
     {% endif %}
     {% endif %}
@@ -166,15 +170,20 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
     {% set f2c_type_value = lh.f2c_type[loop.index0] %}
     {% if arg is ops_dat %}
         {% set signature = [""] %}
-        {% if arg.dim > 1 %}
-            {% set current_val %}{{arg.dim}}, {% endset %}
-            {% if signature.append(signature.pop() + current_val) %} {% endif %}
-        {% endif %}
+        {# {% if arg.dim > 1 %} #}
+        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
+            {# {% set current_val %}{{arg.dim}}, {% endset %} #}
+            {% set current_val -%}arg{{arg.id}}_dim, {%- endset %}
+        {% else %}
+            {% set current_val -%}1, {%- endset %}
+        {% endif%}
+        {% if signature.append(signature.pop() + current_val) %} {% endif %}
         {% for i in range(lh.ndim-1) %}
             {% set current_val %}dims_{{lh.kernel}}[{{arg.id}}][{{i}}], {% endset %}
             {% if signature.append(signature.pop() + current_val) %} {% endif %}
         {% endfor %}
-        {% if arg.dim > 1 %}
+        {# {% if arg.dim > 1 %} #}
+        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
             {% if soa_set %}
                 {% set current_val %}dims_{{lh.kernel}}[{{arg.id}}][{{lh.ndim-1}}], {% endset %}
             {% else %}
@@ -470,7 +479,8 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
 //  =======================
 {% for arg in lh.args %}
 {% if arg is ops_dat %}
-        {% if arg.dim > 1 %}
+        {# {% if arg.dim > 1 %} #}
+        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
     int multi_d{{arg.id}} = getDatDimFromOpsArg(&args[{{arg.id}}]);
     int base{{arg.id}} = getDatBaseFromOpsArg{{lh.ndim}}D(&args[{{arg.id}}], start_indx, multi_d{{arg.id}});
         {% else %}
@@ -552,7 +562,11 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
 {% for arg in lh.args %}
     {% set f2c_type_value = lh.f2c_type[loop.index0] %}
     {% if arg is ops_dat %}
-        {% set current_arg %}                   ({{f2c_type_value}} *)p_a[{{arg.id}}], {% endset %}
+        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
+            {% set current_arg %}                   ({{f2c_type_value}} *)p_a[{{arg.id}}], multi_d{{arg.id}}, {% endset %}
+        {% else %}
+            {% set current_arg %}                   ({{f2c_type_value}} *)p_a[{{arg.id}}], {% endset %}
+        {% endif %}
     {% elif arg is ops_gbl or arg is ops_reduce %}
         {% if arg is ops_read %}
             {% if arg.dim.isdigit() and arg.dim|int == 1 %}

@@ -51,13 +51,16 @@
 //  ======================================================
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
-        {% if lh.ndim > 1 or (lh.ndim == 1 and (arg.dim) > 1) %}
+        {# {% if lh.ndim > 1 or (lh.ndim == 1 and (arg.dim) > 1) %} #}
+        {% if lh.ndim >= 1 %}
     int xdim{{arg.id}}_{{lh.kernel}} = args[{{arg.id}}].dat->size[0];
         {% endif %}
-        {% if lh.ndim > 2 or (lh.ndim == 2 and (arg.dim) > 1) %}
+        {# {% if lh.ndim > 2 or (lh.ndim == 2 and (arg.dim) > 1) %} #}
+        {% if lh.ndim >= 2 %}
     int ydim{{arg.id}}_{{lh.kernel}} = args[{{arg.id}}].dat->size[1];
         {% endif %}
-        {% if lh.ndim > 3 or (lh.ndim == 3 and (arg.dim) > 1) %}
+        {# {% if lh.ndim > 3 or (lh.ndim == 3 and (arg.dim) > 1) %} #}
+        {% if lh.ndim >= 3 %}
     int zdim{{arg.id}}_{{lh.kernel}} = args[{{arg.id}}].dat->size[2];
         {% endif %}
     {% endif %}
@@ -172,6 +175,14 @@
     {% endif %}
 {% endfor %}
 
+{% for arg in lh.args %}
+    {% if arg is ops_dat %}
+        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
+    int arg{{arg.id}}_dim = args[{{arg.id}}].dat->dim;
+        {% endif %}
+    {% endif %}
+{% endfor %}
+
 {# Copy mgrid_strides to local variables if arg.stencil is restrict or prolong #}
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
@@ -243,8 +254,10 @@
         {% set extradim = 0 %}
         {% set offset = [""] %}
         {% set sizelist = [""] %}
-        {% if arg.dim > 1 %}
-            {% set dim -%}{{arg.dim|string}}, {%- endset %}
+        {# {% if arg.dim > 1 %} #}
+        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
+            {# {% set dim -%}{{arg.dim|string}}, {%- endset %} #}
+            {% set dim -%}arg{{arg.id}}_dim, {%- endset %}
             {% set extradim = 1 %}
         {% endif %}
         {% if arg.restrict %}
@@ -276,13 +289,15 @@
         {% for i in range(1, lh.ndim + extradim) %}
             {% if sizelist.append(sizelist.pop() + dimlabels[i-1]|string + "dim" + arg.id|string + "_" + lh.kernel|string + ", ") %}{% endif %}
         {% endfor %}
-        {% if arg.dim > 1 %}
+        {# {% if arg.dim > 1 %} #}
+        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
 #ifdef OPS_SOA
         {% endif %}
                 {{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{offset[0]}});
-        {% if arg.dim > 1 %}
+        {# {% if arg.dim > 1 %} #}
+        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
 #else
-                {{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{arg.dim}} * ({{offset[0]}}));
+                {{pre}} ACC<{{lh.dats[arg.dat_id].typ}}> {{args_list[arg.id]}}({{dim}}{{sizelist[0]}}{{args_list[arg.id]}}_p + {{dim}} * ({{offset[0]}}));
 #endif
         {% endif %}
 

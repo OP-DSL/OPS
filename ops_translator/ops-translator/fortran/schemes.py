@@ -88,7 +88,10 @@ def generate_cpp_Kernel(loop: OPS.Loop,
         arr_sizes = param_type_and_size[1]
 
         if isinstance(arg, OPS.ArgDat):
-            if arg.dim > 1:
+            #if arg.dim > 1:
+            if (isinstance(arg.dim, str) and arg.dim.isdigit() and int(arg.dim) > 1) or (
+    not (isinstance(arg.dim, str) and arg.dim.isdigit())
+):
                 kernel_body = kp_obj.convert_muldim_dat_indexing(kernel_body, var_name)
         elif isinstance(arg, OPS.ArgGbl): # convert all multi-dim vectors to single dim
             sorted_args.append((var_name, arr_sizes))

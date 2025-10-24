@@ -47,6 +47,7 @@ program MULTIDIM
   !initialize sizes using global values
   integer(kind=4) :: x_cells = 4
   integer(kind=4) :: y_cells = 4
+  integer(kind=4) :: two = 2
 
   ! integer(kind=4) :: references (valid inside the OPS library) for ops_block
   type(ops_block)   :: grid2D
@@ -93,7 +94,7 @@ program MULTIDIM
 
   !OPS initialisation
   call ops_init(2)
-  call ops_set_soa(1)
+  !call ops_set_soa(1)
 
   !----------------------------OPS Declarations------------------------
 
@@ -126,7 +127,7 @@ program MULTIDIM
   call ops_timers ( startTime )
 
   call ops_par_loop(multidim_kernel, "multidim_kernel", grid2D, 2, iter_range, &
-               & ops_arg_dat(dat0, 2, S2D_00, "real(kind=8)", OPS_WRITE), &
+               & ops_arg_dat(dat0, two, S2D_00, "real(kind=8)", OPS_WRITE), &
                & ops_arg_idx())
 
   call ops_par_loop(multidim_copy_kernel, "multidim_copy_kernel", grid2D, 2, iter_range, &

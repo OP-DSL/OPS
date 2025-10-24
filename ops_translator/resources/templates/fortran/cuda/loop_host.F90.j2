@@ -17,7 +17,8 @@
 {% endfor %}
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
-        {% if arg.dim == 1 %}
+        {# {% if arg.dim == 1 %} #}
+        {% if (arg.dim.isdigit() and arg.dim|int == 1) %}
     INTEGER(KIND=4), CONSTANT :: xdim{{arg.id+1}}_{{lh.kernel}}
     INTEGER(KIND=4) :: xdim{{arg.id+1}}_{{lh.kernel}}_h = -1
             {% if lh.ndim == 1 %}
@@ -29,7 +30,8 @@
     INTEGER(KIND=4) :: ydim{{arg.id+1}}_{{lh.kernel}}_h = -1
 #define OPS_ACC{{arg.id+1}}(x,y,z) ((x) + (xdim{{arg.id+1}}_{{lh.kernel}}*(y)) + (xdim{{arg.id+1}}_{{lh.kernel}}*ydim{{arg.id+1}}_{{lh.kernel}}*(z)) + 1)
             {% endif %}
-        {% elif arg.dim > 1 %}
+        {# {% elif arg.dim > 1 %} #}
+        {% elif (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
     INTEGER(KIND=4), MANAGED :: multi_d{{arg.id+1}}
     INTEGER(KIND=4), CONSTANT :: xdim{{arg.id+1}}_{{lh.kernel}}
     INTEGER(KIND=4) :: xdim{{arg.id+1}}_{{lh.kernel}}_h = -1
@@ -114,9 +116,11 @@ ATTRIBUTES (DEVICE) {{kernel_func}}
 
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
-        {% if arg.dim == 1 %}
+        {# {% if arg.dim == 1 %} #}
+        {% if (arg.dim.isdigit() and arg.dim|int == 1) %}
 #undef OPS_ACC{{arg.id+1}}
-        {% elif arg.dim > 1 %}
+        {# {% elif arg.dim > 1 %} #}
+        {% elif (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
 #undef OPS_ACC_MD{{arg.id+1}}
         {% endif %}
     {% endif %}
@@ -226,6 +230,11 @@ ATTRIBUTES (GLOBAL) SUBROUTINE {{lh.kernel}}_wrap( &
 
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
+        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
+            {% set dim -%}multi_d{{arg.id+1}}{%- endset %}
+        {% elif arg.dim.isdigit() and arg.dim|int == 1 %}
+            {% set dim -%}1{%- endset %}
+        {% endif %}
         {% if soa_set %}
             {% if lh.ndim == 1 %}
     arg{{arg.id+1}}_offset = ((n_x-1)*{{arg.strides[0] | int}})
@@ -236,11 +245,11 @@ ATTRIBUTES (GLOBAL) SUBROUTINE {{lh.kernel}}_wrap( &
             {% endif %}
         {% else %}
             {% if lh.ndim == 1 %}
-    arg{{arg.id+1}}_offset = ((n_x-1)*{{arg.strides[0] | int}}*{{arg.dim}})
+    arg{{arg.id+1}}_offset = ((n_x-1)*{{arg.strides[0] | int}}*{{dim}})
             {% elif lh.ndim == 2 %}
-    arg{{arg.id+1}}_offset = ((n_x-1)*{{arg.strides[0] | int}}*{{arg.dim}}) + ((n_y-1)*{{arg.strides[1] | int}}*{{arg.dim}}*xdim{{arg.id+1}}_{{lh.kernel}})
+    arg{{arg.id+1}}_offset = ((n_x-1)*{{arg.strides[0] | int}}*{{dim}}) + ((n_y-1)*{{arg.strides[1] | int}}*{{dim}}*xdim{{arg.id+1}}_{{lh.kernel}})
             {% elif lh.ndim == 3 %}
-    arg{{arg.id+1}}_offset = ((n_x-1)*{{arg.strides[0] | int}}*{{arg.dim}}) + ((n_y-1)*{{arg.strides[1] | int}}*{{arg.dim}}*xdim{{arg.id+1}}_{{lh.kernel}}) + ((n_z-1)*{{arg.strides[2] | int}}*{{arg.dim}}*xdim{{arg.id+1}}_{{lh.kernel}}*ydim{{arg.id+1}}_{{lh.kernel}})
+    arg{{arg.id+1}}_offset = ((n_x-1)*{{arg.strides[0] | int}}*{{dim}}) + ((n_y-1)*{{arg.strides[1] | int}}*{{dim}}*xdim{{arg.id+1}}_{{lh.kernel}}) + ((n_z-1)*{{arg.strides[2] | int}}*{{dim}}*xdim{{arg.id+1}}_{{lh.kernel}}*ydim{{arg.id+1}}_{{lh.kernel}})
             {% endif %}
         {% endif %}
     {% endif %}
@@ -511,7 +520,8 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
     zdim{{arg.id+1}} = dat{{arg.id+1}}_size(3)
     opsDat{{arg.id+1}}Cardinality = opsArg{{arg.id+1}}%dim * xdim{{arg.id+1}} * ydim{{arg.id+1}} * zdim{{arg.id+1}}
         {% endif %}
-        {% if arg.dim > 1 %}
+        {# {% if arg.dim > 1 %} #}
+        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
     multi_d{{arg.id+1}} = getDatDimFromOpsArg(opsArg{{arg.id+1}}) ! dimension of dat
     dat{{arg.id+1}}_base = getDatBaseFromOpsArg{{lh.ndim}}D(opsArg{{arg.id+1}}, start_indx, multi_d{{arg.id+1}})
         {% else %}
@@ -535,7 +545,8 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
 {% set if_condition = [""] %}
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
-        {% if arg.dim == 1 %}
+        {# {% if arg.dim == 1 %} #}
+        {% if (arg.dim.isdigit() and arg.dim|int == 1) %}
             {%if if_condition.append(if_condition.pop() + "         (xdim"+(arg.id+1)|string+" .NE. xdim"+(arg.id+1)|string+"_"+lh.kernel+"_h) .OR. &\n") %}{% endif %}
             {% if lh.ndim == 3 %}
                 {%if if_condition.append(if_condition.pop() + "         (ydim"+(arg.id+1)|string+" .NE. ydim"+(arg.id+1)|string+"_"+lh.kernel+"_h) .OR. &\n") %}{% endif %}
@@ -563,7 +574,8 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
        ) THEN
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
-        {% if arg.dim == 1 %}
+        {# {% if arg.dim == 1 %} #}
+        {% if (arg.dim.isdigit() and arg.dim|int == 1) %}
             xdim{{arg.id+1}}_{{lh.kernel}} = xdim{{arg.id+1}}
             xdim{{arg.id+1}}_{{lh.kernel}}_h = xdim{{arg.id+1}}
             {% if lh.ndim == 3 %}

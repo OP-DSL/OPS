@@ -7,7 +7,8 @@
 {% block global_decls %}
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
-        {% if arg.dim == 1 %}
+        {# {% if arg.dim == 1 %} #}
+         {% if arg.dim.isdigit() and arg.dim|int == 1 %}
     INTEGER(KIND=4) :: xdim{{arg.id+1}}
             {% if lh.ndim == 1 %}
 #define OPS_ACC{{arg.id+1}}(x) (x + 1)
@@ -19,7 +20,8 @@
     INTEGER(KIND=4) :: zdim{{arg.id+1}}
 #define OPS_ACC{{arg.id+1}}(x,y,z) ((x) + (xdim{{arg.id+1}}*(y)) + (xdim{{arg.id+1}}*ydim{{arg.id+1}}*(z)) + 1)
             {% endif %}
-        {% elif arg.dim > 1 %}
+        {# {% elif arg.dim > 1 %} #}
+    {% elif (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
     INTEGER(KIND=4) :: multi_d{{arg.id+1}}
     INTEGER(KIND=4) :: xdim{{arg.id+1}}
             {% if soa_set %}
@@ -65,9 +67,11 @@
 
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
-        {% if arg.dim == 1 %}
+        {# {% if arg.dim == 1 %} #}
+        {% if arg.dim.isdigit() and arg.dim|int == 1 %}
 #undef OPS_ACC{{arg.id+1}}
-        {% elif arg.dim > 1 %}
+        {# {% elif arg.dim > 1 %} #}
+        {% elif (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
 #undef OPS_ACC_MD{{arg.id+1}}
         {% endif %}
     {% endif %}
@@ -102,7 +106,6 @@ SUBROUTINE {{lh.kernel}}_wrap( &
     {{lh.dats[arg.dat_id].typ | upper}}, DIMENSION(*), INTENT(INOUT) :: opsDat{{arg.id+1}}Local
         {% endif %}
     INTEGER(KIND=4), INTENT(IN) :: dat{{arg.id+1}}_base
-
     {% elif arg is ops_gbl or arg is ops_reduce %}
         {% if arg is ops_read %}
     {{arg.typ | upper}}, DIMENSION(*), INTENT(IN) :: opsDat{{arg.id+1}}Local
@@ -201,21 +204,26 @@ SUBROUTINE {{lh.kernel}}_wrap( &
                 CALL {{lh.kernel}}( &
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
+        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
+            {% set dim -%}multi_d{{arg.id+1}}{%- endset %}
+        {% elif arg.dim.isdigit() and arg.dim|int == 1 %}
+            {% set dim -%}1{%- endset %}
+        {% endif %}
         {% if soa_set %}
             {% if lh.ndim == 1 %}
                 opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}})){% if not loop.last %},{% endif %} &
             {% elif lh.ndim == 2 %}
                 opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}) + ((n_y-1)*xdim{{arg.id+1}}*{{arg.strides[1] | int}})){% if not loop.last %},{% endif %} &
-            {% elif lh.ndim == 3 %} 
+            {% elif lh.ndim == 3 %}
                 opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}) + ((n_y-1)*xdim{{arg.id+1}}*{{arg.strides[1] | int}}) + ((n_z-1)*ydim{{arg.id+1}}*xdim{{arg.id+1}}*{{arg.strides[2] | int}})){% if not loop.last %},{% endif %} &
             {% endif %}
         {% else %}
             {% if lh.ndim == 1 %}
-                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}*{{arg.dim}})){% if not loop.last %},{% endif %} &
+                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}*{{dim}})){% if not loop.last %},{% endif %} &
             {% elif lh.ndim == 2 %}
-                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}*{{arg.dim}}) + ((n_y-1)*xdim{{arg.id+1}}*{{arg.strides[1] | int}}*{{arg.dim}})){% if not loop.last %},{% endif %} &
+                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}*{{dim}}) + ((n_y-1)*xdim{{arg.id+1}}*{{arg.strides[1] | int}}*{{dim}})){% if not loop.last %},{% endif %} &
             {% elif lh.ndim == 3 %}
-                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}*{{arg.dim}}) + ((n_y-1)*xdim{{arg.id+1}}*{{arg.strides[1] | int}}*{{arg.dim}}) + ((n_z-1)*ydim{{arg.id+1}}*xdim{{arg.id+1}}*{{arg.strides[2] | int}}*{{arg.dim}})){% if not loop.last %},{% endif %} &
+                opsDat{{arg.id+1}}Local(dat{{arg.id+1}}_base + ((n_x-1)*{{arg.strides[0] | int}}*{{dim}}) + ((n_y-1)*xdim{{arg.id+1}}*{{arg.strides[1] | int}}*{{dim}}) + ((n_z-1)*ydim{{arg.id+1}}*xdim{{arg.id+1}}*{{arg.strides[2] | int}}*{{dim}})){% if not loop.last %},{% endif %} &
             {% endif %}
         {% endif %}
     {% elif arg is ops_gbl or arg is ops_reduce %}
@@ -384,7 +392,8 @@ SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
     zdim{{arg.id+1}} = dat{{arg.id+1}}_size(3)
     opsDat{{arg.id+1}}Cardinality = opsArg{{arg.id+1}}%dim * xdim{{arg.id+1}} * ydim{{arg.id+1}} * zdim{{arg.id+1}}
         {% endif %}
-        {% if arg.dim > 1 %}
+        {# {% if arg.dim > 1 %} #}
+    {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
     multi_d{{arg.id+1}} = getDatDimFromOpsArg(opsArg{{arg.id+1}}) ! dimension of the multi-dim dat
     dat{{arg.id+1}}_base = getDatBaseFromOpsArg{{lh.ndim}}D(opsArg{{arg.id+1}}, start_indx, multi_d{{arg.id+1}})
         {% else %}

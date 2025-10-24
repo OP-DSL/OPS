@@ -165,7 +165,8 @@ class Dat:
     id: int
 
     ptr: str
-    dim: int
+    dim: str
+    # dim: int
     # size: List[int]
     # base: List[int]
     # d_m: List[int]
@@ -212,7 +213,7 @@ class Arg(ABDC):
     loc: Location
 
 
-# TODO: Remove Dat and incorpareate into ArgDat
+# TODO: Remove Dat and incorporate into ArgDat
 @dataclass(frozen=True)
 class ArgDat(Arg):
     access_type: AccessType
@@ -221,7 +222,7 @@ class ArgDat(Arg):
     dat_id: int
     stencil_id: int
 
-    dim: int
+    dim: str
     strides: List[int]
     restrict: Optional[bool] = False
     prolong: Optional[bool] = False
@@ -347,7 +348,7 @@ class Loop:
         self,
         loc: Location,
         dat_ptr: str,
-        dat_dim: int,
+        dat_dim: str,
         dat_typ: Type,
         dat_soa: bool,
         stencil_ptr: str,

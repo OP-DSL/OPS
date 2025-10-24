@@ -144,9 +144,10 @@ int main(int argc, char **argv)
   double ct0, ct1, et0, et1;
   ops_timers(&ct0, &et0);
 
+  int two = 2;
   int iter_range[] = {0,4,0,4};
   ops_par_loop(multidim_kernel, "multidim_kernel", grid2D, 2, iter_range,
-               ops_arg_dat(dat0, 2, S2D_00, "double", OPS_WRITE),
+               ops_arg_dat(dat0, two, S2D_00, "double", OPS_WRITE),
                ops_arg_idx());
   ops_par_loop(multidim_copy_kernel,"multidim_copy_kernel", grid2D, 2, iter_range,
                ops_arg_dat(dat0, 2, S2D_00_P10_P20_M10_M20, "double", OPS_READ),

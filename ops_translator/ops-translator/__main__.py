@@ -192,6 +192,8 @@ def parse(args: Namespace, lang: Lang) -> Application:
     include_dirs = set([Path(dir) for [dir] in args.I])
     defines = [define for [define] in args.D]
 
+    #print("Include dirs: " + str(include_dirs))
+
     # Parse the input files
     for i, raw_path in enumerate(args.file_paths, 1):
         if args.verbose:

@@ -724,4 +724,4 @@ clean:
 	rm -f $(APP)_f2c_mpi_sycl
 	rm -f $(APP)_f2c_mpi_sycl_tiled
 	rm -f $(OPS_GENERATED)
-	rm -f .generated constants_list.txt constants_offload.F90 main.cpp fortran_main.F90
+	rm -f .generated constants_list.txt constants_offload.F90 main.cpp fortran_main.F90 _preprocessed.F90
