@@ -159,6 +159,8 @@ program laplace
 !    call ops_print_dat_to_txtfile(d_A, "data_A.txt")
 !    call ops_print_dat_to_txtfile(d_Anew, "data_Anew.txt")
 
+    call ops_NaNcheck(d_A)
+
     do while ( iter < iter_max .and. error > tol )
 
         call ops_par_loop(apply_stencil_kernel, "apply_stencil", grid2D, 2, interior_range, &

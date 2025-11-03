@@ -562,6 +562,13 @@ module OPS_Fortran_Declarations
 
         end subroutine ops_fill_random_normal_c
 
+        subroutine ops_NaNcheck_c (dat) BIND(C,name='ops_NaNcheck')
+            use ISO_C_BINDING
+            import :: ops_dat_core
+
+            type(ops_dat_core) :: dat
+        end subroutine ops_NaNcheck_c
+
   end interface
 
   !##################################################################
@@ -1440,6 +1447,12 @@ module OPS_Fortran_Declarations
         type(ops_dat) :: dat
         call ops_fill_random_normal_c( dat%dataCPtr )
     end subroutine ops_fill_random_normal
+
+    subroutine ops_NaNcheck (dat)
+        use, intrinsic :: ISO_C_BINDING
+        type(ops_dat) :: dat
+        call ops_NaNcheck_c(dat%dataPtr)
+    end subroutine ops_NaNcheck
 
  !ops_decl_const -- various versions .. no-ops in ref ?
 
