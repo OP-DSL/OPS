@@ -52,6 +52,7 @@
 #endif
 
 #include <vector>
+#include <ops_internal2.h>
 
 /*******************************************************************************
 * Wrapper for malloc from www.gnu.org/
@@ -544,3 +545,15 @@ void determine_local_range(const ops_dat dat, const int *global_range,
   delete[] local_end;
 }
 
+
+
+ops::dim3 ops_get_kernel_block_size(int kernel_id, int ndims, int *local_range, int nargs, ops_arg* args, int max_threads, int registers) {
+  int global_x = OPS_instance::getOPSInstance()->OPS_block_size_x;
+  int global_y = ndims > 1 ? OPS_instance::getOPSInstance()->OPS_block_size_y : 1;
+  int global_z = ndims > 2 ? OPS_instance::getOPSInstance()->OPS_block_size_z : 1;
+  return ops::dim3(global_x, global_y, global_z);
+}
+
+void ops_record_kernel_performance(int kernel_id, double seconds) {
+
+}

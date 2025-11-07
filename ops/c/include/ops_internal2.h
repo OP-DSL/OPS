@@ -105,6 +105,20 @@
 #define ROUND_UP(bytes) (((bytes) + 15) & ~15)
 #define ROUND_UP_64(bytes) (((bytes) + 63) & ~63)
 
+// Provide a CUDA-like dim3 type in the ops namespace without requiring CUDA headers.
+// If CUDA's ::dim3 is available, alias to it; otherwise, define a lightweight replacement.
+namespace ops {
+#if defined(__CUDACC__) || defined(__CUDA_RUNTIME_H__) || defined(__VECTOR_TYPES_H__) || defined(__CUDA_ARCH__)
+using dim3 = ::dim3;
+#else
+struct dim3 {
+  unsigned int x, y, z;
+  dim3(unsigned int vx = 1, unsigned int vy = 1, unsigned int vz = 1)
+      : x(vx), y(vy), z(vz) {}
+};
+#endif
+}
+
 // struct definition for a double linked list entry to hold an ops_dat
 struct ops_dat_entry_core {
   ops_dat dat;
@@ -316,6 +330,9 @@ void  ops_free (void *ptr);
 void* ops_calloc (size_t num, size_t size);
 void ops_init_zero(char *data, size_t bytes);
 void ops_convert_layout(char *in, char *out, ops_block block, int size, int *dat_size, int *dat_size_orig, int type_size, int hybrid_layout);
+
+// Query preferred kernel block size for backends using CUDA-like 3D launch configuration
+ops::dim3 ops_get_kernel_block_size(int kernel_id, int ndims, int *local_range, int nargs, ops_arg* args, int max_threads, int registers);
 
 //Includes for common device backends
 void ops_init_device(OPS_instance *instance, const int argc, const char *const argv[], const int diags);
