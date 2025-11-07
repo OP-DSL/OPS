@@ -7,6 +7,8 @@
 {% endif %}
 __constant__ int dims_{{lh.kernel}}[{{lh.args|length}}][{{num_dims}}];
 static int dims_{{lh.kernel}}_h[{{lh.args|length}}][{{num_dims}}] = {{'{{'|safe}}0{{'}}'|safe}};
+cudaEvent_t ops_timing_{{lh.kernel}}_start;
+cudaEvent_t ops_timing_{{lh.kernel}}_stop;
 {% endblock %}
 
 {% block kernel_wrapper %}
@@ -581,6 +583,11 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
     if (block->instance->OPS_diags > 1) { 
         ops_timers_core(&__c2, &__t2);
         block->instance->OPS_kernels[{{kernel_idx}}].mpi_time += __t2 - __t1;
+        if (block->instance->OPS_kernels[{{kernel_idx}}].count == 1) {
+            cutilSafeCall(block->instance->ostream(), cudaEventCreate(&ops_timing_{{lh.kernel}}_start));
+            cutilSafeCall(block->instance->ostream(), cudaEventCreate(&ops_timing_{{lh.kernel}}_stop));
+        }
+        cutilSafeCall(block->instance->ostream(), cudaEventRecord(ops_timing_{{lh.kernel}}_start, 0));
     }
 
 {# set up shared memory for reduction #}
@@ -717,6 +724,10 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
     hipSafeCall(block->instance->ostream(), hipGetLastError());
 {% endif %}
 
+    if (block->instance->OPS_diags > 1) {
+        cutilSafeCall(block->instance->ostream(), cudaEventRecord(ops_timing_{{lh.kernel}}_stop, 0));
+    }
+
 {# Complete Reduction Operation by moving data onto host #}
 {# and reducing over blocks #}
 {% if lh.has_reduction %}
@@ -749,13 +760,12 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
 
 {% block host_epilogue %}
     if(block->instance->OPS_diags > 1) {
-    {% if target.name == "cuda" %}
-        cutilSafeCall(block->instance->ostream(), cudaDeviceSynchronize());
-    {% elif target.name == "hip" %}
-        hipSafeCall(block->instance->ostream(), hipDeviceSynchronize());
-    {% endif %}
+        cutilSafeCall(block->instance->ostream(), cudaEventSynchronize(ops_timing_{{lh.kernel}}_stop));
+        float milliseconds = 0;
+        cudaEventElapsedTime(&milliseconds, ops_timing_{{lh.kernel}}_start, ops_timing_{{lh.kernel}}_stop);
         ops_timers_core(&__c1, &__t1);
         block->instance->OPS_kernels[{{kernel_idx}}].time += __t1 - __t2;
+        ops_record_kernel_performance({{kernel_idx}}, milliseconds / 1000.0);
     }
 
 #ifndef OPS_LAZY
