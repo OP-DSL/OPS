@@ -16,4 +16,12 @@ if(OpenMP_CXX_FOUND)
   #  endif()
   #endif()
 endif(OpenMP_CXX_FOUND)
-
+# Fortran
+if(OPS_FORTRAN)
+  set(OPS_FORTFLAGS "-g -ffree-form -ffree-line-length-none")
+  set(OPS_FORTFLAGS_RELEASE "-O3 -march=native")
+  set(OPS_FORTFLAGS_DEBUG   "-O0 -ffloat-store -g3 -Og -ffpe-trap=invalid,zero -fcheck=all -fimplicit-none")
+  if(OpenMP_FORTRAN_FOUND)
+    set(OPS_FORTFLAGS_RELEASE "${OPS_FORTFLAGS_RELEASE} -fopenmp")
+  endif()
+endif()

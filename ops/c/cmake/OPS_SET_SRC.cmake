@@ -1,50 +1,51 @@
 # List the core subrotines
-file(GLOB_RECURSE CORE "${CMAKE_CURRENT_SOURCE_DIR}/src/core/*.cpp")
-file(GLOB_RECURSE SEQ "${CMAKE_CURRENT_SOURCE_DIR}/src/sequential/*.cpp")
-file(GLOB_RECURSE EXTERN "${CMAKE_CURRENT_SOURCE_DIR}/src/externlib/*.cpp")
-file(GLOB_RECURSE MPICORE "${CMAKE_CURRENT_SOURCE_DIR}/src/core/*.cpp")
+set(SRC_CXX_DIR "${CMAKE_SOURCE_DIR}/ops/c/src")
+file(GLOB_RECURSE CORE "${SRC_CXX_DIR}/core/*.cpp")
+file(GLOB_RECURSE SEQ "${SRC_CXX_DIR}/sequential/*.cpp")
+file(GLOB_RECURSE EXTERN "${SRC_CXX_DIR}/externlib/*.cpp")
+file(GLOB_RECURSE MPICORE "${SRC_CXX_DIR}/core/*.cpp")
 
 # Remove some specific routines for the lists
 list(FILTER EXTERN EXCLUDE REGEX "hdf5")
 list(FILTER CORE EXCLUDE REGEX "device")
 list(FILTER MPICORE EXCLUDE REGEX "singlenode")
 # Set the source for HDF5
-set(HDF "${CMAKE_CURRENT_SOURCE_DIR}/src/externlib/ops_hdf5_common.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/externlib/ops_hdf5.cpp")
-set(HDF_MPI "${CMAKE_CURRENT_SOURCE_DIR}/src/externlib/ops_hdf5_common.cpp"
-            "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/ops_mpi_hdf5.cpp")
+set(HDF "${SRC_CXX_DIR}/externlib/ops_hdf5_common.cpp"
+        "${SRC_CXX_DIR}/externlib/ops_hdf5.cpp")
+set(HDF_MPI "${SRC_CXX_DIR}/externlib/ops_hdf5_common.cpp"
+            "${SRC_CXX_DIR}/mpi/ops_mpi_hdf5.cpp")
 # Set the sources for CUDA
-file(GLOB_RECURSE CUDA "${CMAKE_CURRENT_SOURCE_DIR}/src/cuda/*"
-                       "${CMAKE_CURRENT_SOURCE_DIR}/src/core/ops_device_singlenode_common.cpp")
+file(GLOB_RECURSE CUDA "${SRC_CXX_DIR}/cuda/*"
+                       "${SRC_CXX_DIR}/core/ops_device_singlenode_common.cpp")
 # Set sources for OMPOFFLOAD
-file(GLOB_RECURSE OMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/ops_ompoffload_rt_support_kernels.cpp"
-                             "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/ops_ompoffload_singlenode.cpp"
-                             "${CMAKE_CURRENT_SOURCE_DIR}/src/core/ops_device_singlenode_common.cpp")
+file(GLOB_RECURSE OMPOFFLOAD "${SRC_CXX_DIR}/ompoffload/ops_ompoffload_rt_support_kernels.cpp"
+                             "${SRC_CXX_DIR}/ompoffload/ops_ompoffload_singlenode.cpp"
+                             "${SRC_CXX_DIR}/core/ops_device_singlenode_common.cpp")
 if (OpenMP_CXX_VERSION GREATER_EQUAL "5")
-  list(APPEND OMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/ops_ompoffload_common_omp5.cpp")
+  list(APPEND OMPOFFLOAD "${SRC_CXX_DIR}/ompoffload/ops_ompoffload_common_omp5.cpp")
 else()
-  list(APPEND OMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/ops_ompoffload_common_omp4.cpp")
+  list(APPEND OMPOFFLOAD "${SRC_CXX_DIR}/ompoffload/ops_ompoffload_common_omp4.cpp")
 endif()
 #
 set(MPICommonFiles
-                "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/ops_mpi_core.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/ops_mpi_decl.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/ops_mpi_partition.cpp"
-	        "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/ops_mpi_rt_support.cpp")
+                "${SRC_CXX_DIR}/mpi/ops_mpi_core.cpp"
+                "${SRC_CXX_DIR}/mpi/ops_mpi_decl.cpp"
+                "${SRC_CXX_DIR}/mpi/ops_mpi_partition.cpp"
+	        "${SRC_CXX_DIR}/mpi/ops_mpi_rt_support.cpp")
 
 file(GLOB_RECURSE PUREMPI
-            "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/ops_mpi_rt_support_host.cpp"
-            "${CMAKE_CURRENT_SOURCE_DIR}/src/sequential/ops_host_common.cpp")
+            "${SRC_CXX_DIR}/mpi/ops_mpi_rt_support_host.cpp"
+            "${SRC_CXX_DIR}/sequential/ops_host_common.cpp")
 #
-file(GLOB_RECURSE MPICUDA "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/*cuda*.cu"
-                          "${CMAKE_CURRENT_SOURCE_DIR}/src/cuda/*")
+file(GLOB_RECURSE MPICUDA "${SRC_CXX_DIR}/mpi/*cuda*.cu"
+                          "${SRC_CXX_DIR}/cuda/*")
 list(FILTER MPICUDA EXCLUDE REGEX "singlenode")
 #
-file(GLOB_RECURSE MPIOMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/mpi/*ompoffload*.cpp"
-                                "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/ops_ompoffload_rt_support_kernels.cpp")
+file(GLOB_RECURSE MPIOMPOFFLOAD "${SRC_CXX_DIR}/mpi/*ompoffload*.cpp"
+                                "${SRC_CXX_DIR}/ompoffload/ops_ompoffload_rt_support_kernels.cpp")
 
 if (OpenMP_CXX_VERSION GREATER_EQUAL "5")
-  list(APPEND MPIOMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/ops_ompoffload_common_omp5.cpp")
+  list(APPEND MPIOMPOFFLOAD "${SRC_CXX_DIR}/ompoffload/ops_ompoffload_common_omp5.cpp")
 else()
-  list(APPEND MPIOMPOFFLOAD "${CMAKE_CURRENT_SOURCE_DIR}/src/ompoffload/ops_ompoffload_common_omp4.cpp")
+  list(APPEND MPIOMPOFFLOAD "${SRC_CXX_DIR}/ompoffload/ops_ompoffload_common_omp4.cpp")
 endif()

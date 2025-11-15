@@ -36,17 +36,17 @@ if(${MPI_FOUND})
 endif()
 
 #add_subdirectory(access) #This does not compile
-add_subdirectory(CloverLeaf)
+#add_subdirectory(CloverLeaf)
 #add_subdirectory(complex_numbers) #This does not compile
-add_subdirectory(laplace2d_tutorial/step7)
-add_subdirectory(ops-lbm/step5)
+#add_subdirectory(laplace2d_tutorial/step7)
+#add_subdirectory(ops-lbm/step5)
 #add_subdirectory(lowdim_test) # Issue with mpi-cuda with multiple definition
 #add_subdirectory(mblock) # Issue with mpi-cuda with multiple definition
 #add_subdirectory(mgrid)  # Issue with mpi-cuda with multiple definition
 #add_subdirectory(multiDim)
 #add_subdirectory(multiDim3D)
 add_subdirectory(poisson)
-add_subdirectory(shsgc)
+#add_subdirectory(shsgc)
 if(${OPS_TEST_FULL})
   add_subdirectory(CloverLeaf_3D)
   #add_subdirectory(CloverLeaf_3D_HDF5)

@@ -1,6 +1,4 @@
-# Add the Include files
 message(STATUS "Build HIP")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 # Build the basic sequential target
 set(TargetName "hip")
 set(SRC ${CORE} ${EXTERN} ${HIP})

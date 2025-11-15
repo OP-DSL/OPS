@@ -1,5 +1,3 @@
-# Add the Include files
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 # Build the basic sequential target
 set(TargetName "seq")
 set(SRC ${CORE} ${EXTERN} ${SEQ})
@@ -12,12 +10,14 @@ else ()
 endif()
 message(STATUS "Linking ${Links}")
 set(Opts "")
-setlib(${LibName} "${SRC}" "${Links}" "${Opts}")
+set(Defs "")
+set(Deps "")
+setlib(${LibName} "${SRC}" "${Links}" "${Opts}" "${Defs}" "${Deps}")
 if(MPI_FOUND)
   set(TargetName "mpi")
   set(SRC ${MPICORE} ${MPICommonFiles} ${PUREMPI} ${EXTERN})
   #
   set(LibName "${lib_prefix}${TargetName}")
   list(APPEND Links "MPI::MPI_CXX")
-  setlib(${LibName} "${SRC}" "${Links}" "${Opts}")
+  setlib(${LibName} "${SRC}" "${Links}" "${Opts}" "${Defs}" "${Deps}")
 endif()

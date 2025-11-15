@@ -26,6 +26,10 @@ else (CXX_COMPILER_NAME MATCHES "GNU")
   message ("No optimized CXX compiler flags are known, we just try -O2...")
   set(OPS_CXXFLAGS_RELEASE "-O2")
   set(OPS_CXXFLAGS_DEBUG   "-O0 -g")
+  if(OPS_FORTRAN)
+    set(OPS_FORTFLAGS_RELEASE "-O2")
+    set(OPS_FORTFLAGS_DEBUG   "-O0 -g")
+  endif()
 endif (CXX_COMPILER_NAME MATCHES "GNU")
 
 if (NOT FLAGS_SET)
@@ -46,4 +50,13 @@ if (NOT FLAGS_SET)
     set(CMAKE_CUDA_FLAGS_DEBUG ${OPS_CUDAFLAGS_DEBUG} CACHE STRING
 	"Additional CUDAFLAGS for Debug build" FORCE)
   endif(CUDAToolkit_FOUND)                                                              
+  # FORTRAN
+  if(OPS_FORTRAN)
+    set(CMAKE_Fortran_FLAGS ${OPS_FORTFLAGS} CACHE STRING 
+  	  "Base Fortran FLAGS for build" FORCE)
+    set(CMAKE_Fortran_FLAGS_RELEASE ${OPS_FORTFLAGS_RELEASE} CACHE STRING
+  	  "Additional Fortran FLAGS for Release (optimised) build" FORCE)
+    set(CMAKE_Fortran_FLAGS_DEBUG ${OPS_FORTFLAGS_DEBUG} CACHE STRING
+  	  "Additional Fortran FLAGS for Debug build" FORCE)
+  endif()
 endif()

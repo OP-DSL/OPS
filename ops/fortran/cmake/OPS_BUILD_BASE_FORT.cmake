@@ -1,25 +1,25 @@
 # Build the basic sequential target
-set(TargetName "cuda")
-set(SRC ${CORE} ${EXTERN} ${CUDA})
+set(TargetName "seq")
+set(SRC ${CORE} ${EXTERN} ${SEQ})
 #
 set(LibName "${lib_prefix}${TargetName}")
+set(Links "ops_for_common")
 if (USE_OMP)
-  set(Links "OpenMP::OpenMP_CXX"
-            "CUDA::cudart_static"
-            "NVML::nvml")
+  set(Links "OpenMP::OpenMP_CXX")
 else ()
-  set(Links "CUDA::cudart_static"
-            "NVML::nvml")
+  set(Links "")
 endif()
+message(STATUS "Linking ${Links}")
 set(Opts "")
-set(Defs "")
+set(Defs "OPS_FTN")
 set(Deps "")
 setlib(${LibName} "${SRC}" "${Links}" "${Opts}" "${Defs}" "${Deps}")
 if(MPI_FOUND)
-  set(TargetName "mpi_cuda")
-  set(SRC ${MPICORE} ${EXTERN} ${MPICUDA} ${MPICommonFiles})
+  set(TargetName "mpi")
+  set(SRC ${MPICORE} ${MPICommonFiles} ${PUREMPI} ${EXTERN})
   #
   set(LibName "${lib_prefix}${TargetName}")
   list(APPEND Links "MPI::MPI_CXX")
+  list(APPEND Links "MPI::MPI_Fortran")
   setlib(${LibName} "${SRC}" "${Links}" "${Opts}" "${Defs}" "${Deps}")
 endif()

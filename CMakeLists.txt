@@ -7,6 +7,7 @@ enable_testing()
 option(OPS_TEST "Turn on tests for Apps" ON)
 option(OPS_HIP "Turn on the HIP backend" OFF)
 option(OPS_CUDA "Turn on the CUDA backend" ON)
+option(OPS_FORTRAN "Turn on the Fortran build" ON)
 option(IEEE "Use IEEE flags" ON)
 
 # Output of the installation directory
@@ -58,6 +59,9 @@ set(ConfigPackageLocation ${CMAKE_INSTALL_PREFIX}/lib/cmake)
 
 # Include paths to find pachages 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_SOURCE_DIR}/cmake/compilers" "${CMAKE_SOURCE_DIR}/cmake/packages")
+
+# Activate Fortran if necessary and check if provided
+include(OPS_Fortran)
 
 include(OPS_FindPackages)
 include(OPS_Compilers)
