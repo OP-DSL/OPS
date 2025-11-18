@@ -67,6 +67,15 @@
 {% block user_kernel_function %}
     CONTAINS
 
+{% if sub_kernels_func %}
+!   =========================================
+!   Sub function called from elemental kernel
+!   =========================================
+    {% for kernel_name,subroutine in sub_kernels_func %}
+{{subroutine}}
+    {% endfor %}
+{% endif%}
+
 !   =============
 !   User function
 !   =============

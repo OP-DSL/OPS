@@ -41,7 +41,11 @@ class Scheme(Findable):
         template = env.get_template(str(self.loop_host_template))
         #extention = self.loop_host_template.suffixes[-2][1:]
 
-        kernel_func = self.translateKernel(loop, program, app, kernel_idx)
+        sub_kernels_func = []
+        if(self.lang.name == "C++"):
+            kernel_func = self.translateKernel(loop, program, app, kernel_idx)
+        elif (self.lang.name == "Fortran"):
+            kernel_func, sub_kernels_func = self.translateKernel(loop, program, app, kernel_idx)
 
         kp_obj = KernelProcess()
         if(self.lang.name == "C++"):
@@ -79,6 +83,7 @@ class Scheme(Findable):
                 ops=ops,
                 lh=loop,
                 kernel_func=kernel_func,
+                sub_kernels_func=sub_kernels_func,
                 kernel_idx=kernel_idx,
                 kernel_body=kernel_body,
                 consts_in_kernel=consts_in_kernel,

@@ -1,0 +1,8 @@
+SUBROUTINE copy_kernel(A, Anew)
+
+    REAL(KIND=8), DIMENSION(1), INTENT(IN) :: Anew
+    REAL(KIND=8), DIMENSION(1) :: A
+    
+    A(OPS_ACC1(0,0)) = Anew(OPS_ACC2(0,0))
+
+END SUBROUTINE

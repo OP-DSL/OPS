@@ -194,7 +194,9 @@ def retrieve_subroutine_ast(file_path, subroutine_name):
     if not os.path.exists(file_path):
         raise ParseError(f"Unable to find file {file_path} for subroutine: {subroutine_name}")
 
-    source = retrieve_subroutine_by_name_regex(file_path, subroutine_name)
+    ftn_source = retrieve_subroutine_by_name_regex(file_path, subroutine_name)
+    if ftn_source is None or (ftn_source is not None and len(ftn_source) == 0):
+        raise ParseError(f"unable to find kernel function: {subroutine_name}")
 
     # Replace OPS_ACC<digit> and OPS_ACC_MD<digit>
     # converting to normal array shape fortran uses before generating AST
@@ -209,7 +211,7 @@ def retrieve_subroutine_ast(file_path, subroutine_name):
         return f"({digits})"
 
     # Perform substitution with case-insensitive flag
-    result_src = re.sub(pattern, replace_function, source, flags=re.IGNORECASE)
+    result_src = re.sub(pattern, replace_function, ftn_source, flags=re.IGNORECASE)
 
     # Replace kind=8 used in intrinsic functions
     pattern = r",\s*kind\s*=\s*8\s*\)"
@@ -286,6 +288,51 @@ def retrieve_subroutine_by_name_regex(file_path, subroutine_name):
     return req_kernel+'\n'
 
 
+def retrieve_subroutine_and_nestedsubroutines(loop_kernel):
+
+    filename = loop_kernel[:loop_kernel.find("kernel")]+"kernel.inc"
+
+    #kernel_entities = retrieve_subroutine_by_name(filename, loop_kernel)
+    kernel_entities = retrieve_subroutine_by_name_regex(filename, loop_kernel)
+
+    if kernel_entities is None or (kernel_entities is not None and len(kernel_entities) == 0):
+        raise ParseError(f"unable to find kernel function: {loop_kernel}")
+
+    # find if there is any nested subroutine/function calls inside elemental kernel and retrieve those as well
+    pattern = r"\bCALL\s+([a-zA-Z0-9_]+)\s*\(([^)]*)\)"
+    # Find all matches
+    subroutine_calls = re.findall(pattern, kernel_entities.strip(), re.IGNORECASE)
+
+    modified_kernel = kernel_entities.strip()
+
+    sub_kernels = []
+    for match in subroutine_calls:
+
+        subroutine_call, args = match
+
+        # Modify the subroutine call in the original kernel code
+        modified_call = f"CALL {loop_kernel}_{subroutine_call}({args})"
+
+        # modified_kernel = re.sub(rf"\bCALL\s+{re.escape(subroutine_call)}\s*\({re.escape(args)}\)", modified_call, modified_kernel, flags=re.IGNORECASE)
+        modified_kernel = re.sub(rf"\b{re.escape(subroutine_call)}\b", f"{loop_kernel}_{subroutine_call}", modified_kernel)
+
+        # Determine the filename and retrieve the corresponding subroutine code
+        filename = subroutine_call[:subroutine_call.find("kernel")]+"kernel.inc"
+
+        # Retrieve the subroutine code from the file or other sources
+        sub_kernel = retrieve_subroutine_by_name_regex(filename, subroutine_call)
+
+        if sub_kernel is None or (sub_kernel is not None and len(sub_kernel) == 0):
+            raise ParseError(f"unable to find kernel function: {sub_kernel}")
+
+        # Replace the original subroutine name in the sub_kernel with the new modified name
+        modified_sub_kernel = re.sub(rf"\b{re.escape(subroutine_call)}\b", f"{loop_kernel}_{subroutine_call}", sub_kernel.strip())
+
+        sub_kernels.append([f"{loop_kernel}_{subroutine_call}",modified_sub_kernel])
+
+    return modified_kernel, sub_kernels
+
+
 class FortranMPIOpenMP(Scheme):
     lang = Lang.find("F90")
     target = Target.find("mpi_openmp")
@@ -306,15 +353,9 @@ class FortranMPIOpenMP(Scheme):
         kernel_idx: int
     ) -> str:
 
-        filename = loop.kernel[:loop.kernel.find("kernel")]+"kernel.inc"
+        kernel_entities, sub_kernels = retrieve_subroutine_and_nestedsubroutines(loop.kernel)
 
-        #kernel_entities = retrieve_subroutine_by_name(filename, loop.kernel)
-        kernel_entities = retrieve_subroutine_by_name_regex(filename, loop.kernel)
-
-        if kernel_entities is None or (kernel_entities is not None and len(kernel_entities) == 0):
-            raise ParseError(f"unable to find kernel function: {loop.kernel}")
-
-        return kernel_entities.strip()
+        return kernel_entities, sub_kernels
 
 Scheme.register(FortranMPIOpenMP)
 
@@ -351,7 +392,7 @@ class F2CMPIOpenMP(Scheme):
 
         return cpp_kernel
 
-Scheme.register(F2CMPIOpenMP)
+#Scheme.register(F2CMPIOpenMP)
 
 
 class FortranCuda(Scheme):
@@ -374,13 +415,7 @@ class FortranCuda(Scheme):
         kernel_idx: int
     ) -> str:
 
-        filename = loop.kernel[:loop.kernel.find("kernel")]+"kernel.inc"
-
-        #kernel_entities = retrieve_subroutine_by_name(filename, loop.kernel)
-        kernel_entities = retrieve_subroutine_by_name_regex(filename, loop.kernel)
-
-        if kernel_entities is None or (kernel_entities is not None and len(kernel_entities) == 0):
-            raise ParseError(f"unable to find kernel function: {loop.kernel}")
+        kernel_entities, sub_kernels = retrieve_subroutine_and_nestedsubroutines(loop.kernel)
 
         # Replace KernelName with KernelName_gpu
         replacement_string = loop.kernel+"_gpu"
@@ -405,7 +440,7 @@ class FortranCuda(Scheme):
 
         output_string = replace_consts(output_string)
 
-        return output_string.strip()
+        return output_string.strip(), sub_kernels
 
 Scheme.register(FortranCuda)
 
@@ -442,7 +477,7 @@ class F2CCuda(Scheme):
 
         return cpp_kernel
 
-Scheme.register(F2CCuda)
+#Scheme.register(F2CCuda)
 
 
 class F2CHip(Scheme):
@@ -477,7 +512,7 @@ class F2CHip(Scheme):
 
         return cpp_kernel
 
-Scheme.register(F2CHip)
+#Scheme.register(F2CHip)
 
 
 class F2CSycl(Scheme):
@@ -512,7 +547,7 @@ class F2CSycl(Scheme):
 
         return cpp_kernel
 
-Scheme.register(F2CSycl)
+#Scheme.register(F2CSycl)
 
 
 class FortranOpenMPOffload(Scheme):
@@ -535,14 +570,8 @@ class FortranOpenMPOffload(Scheme):
         kernel_idx: int
     ) -> str:
 
-        filename = loop.kernel[:loop.kernel.find("kernel")]+"kernel.inc"
+        kernel_entities, sub_kernels = retrieve_subroutine_and_nestedsubroutines(loop.kernel)
 
-        #kernel_entities = retrieve_subroutine_by_name(filename, loop.kernel)
-        kernel_entities = retrieve_subroutine_by_name_regex(filename, loop.kernel)
-
-        if kernel_entities is None or (kernel_entities is not None and len(kernel_entities) == 0):
-            raise ParseError(f"unable to find kernel function: {loop.kernel}")
-
-        return kernel_entities.strip()
+        return kernel_entities.strip(), sub_kernels
 
 Scheme.register(FortranOpenMPOffload)

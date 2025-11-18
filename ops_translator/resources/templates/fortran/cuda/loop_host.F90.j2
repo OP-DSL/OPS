@@ -109,6 +109,15 @@
 
 {% endif %}
 
+{% if sub_kernels_func %}
+!   =========================================
+!   Sub function called from elemental kernel
+!   =========================================
+    {% for kernel_name,subroutine in sub_kernels_func %}
+ATTRIBUTES (DEVICE) {{subroutine}}
+    {% endfor %}
+{% endif%}
+
 !   =============
 !   User function
 !   =============
