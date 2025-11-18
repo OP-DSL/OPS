@@ -23,7 +23,7 @@ def extract_values(data, var):
     result = None
     # Regex pattern to match exact variable name and capture value
     pattern = rf"\b{var}\b\s*=\s*(\d+)"
-    match = re.search(pattern, data)
+    match = re.search(pattern, data, re.IGNORECASE)
     if match:
         result = match.group(1)
     return result
@@ -138,16 +138,23 @@ def generate_cpp_Kernel(loop: OPS.Loop,
                         (not arr_sizes[0].isdigit())
                     )
             ):
-            #   if 1D array declared, find its size from constants.F90 and replaced in code: causing problem in F2C CUDA version otherwise
-            filename = "constants.F90"
-            if not os.path.exists(filename):
-                raise ParseError(f"Unable to find file {filename}")
-            with open(filename, 'r') as f:
-                fortran_code = f.read()
 
-            arr_size_lit = extract_values(fortran_code, arr_sizes[0])
-            if arr_size_lit is not None and arr_size_lit.isdigit():
-                local_var_sizes[var_name] = int(arr_size_lit)
+            if((arr_sizes[0].isdigit() and int(arr_sizes[0]) > 0)):
+                local_var_sizes[var_name] = int(arr_sizes[0])
+            else:
+                # if 1D array declared locally inside kernel with variable name in dimension in Fortran side, find its size (literal value)
+                # from constants.F90 and replace in code: causing problem in F2C CUDA version otherwise
+                filename = "constants.F90"
+                if not os.path.exists(filename):
+                    raise ParseError(f"Unable to find file {filename}")
+                with open(filename, 'r') as f:
+                    fortran_code = f.read()
+
+                arr_size_lit = extract_values(fortran_code, arr_sizes[0])
+                if arr_size_lit is not None and arr_size_lit.isdigit():
+                    local_var_sizes[var_name] = int(arr_size_lit)
+                else:
+                    raise ParseError(f"Unable to find array dimension {arr_sizes[0]} literal value for variable {var_name} in constants.F90, please declare this variable with parameter in constants.F90")
 
             patterm = rf"{var_name}\s*\(\s*0\s*:\s*[^)]+\)"
             match = re.search(patterm, f90_src)
@@ -155,6 +162,9 @@ def generate_cpp_Kernel(loop: OPS.Loop,
                 kernel_body = kp_obj.convert_zerobase_1d_indexing(kernel_body, var_name)
             else:
                 kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
+        # TODO_ITEM: Similar to 1D, when 2D or 3D array declared using variable name in dimension field insteda of integer literal
+        # Try to find the literal value from constant.F90, and if not found inform user that there is need to mention the variable and 
+        # its value in constants.F90
         elif len(arr_sizes) == 2:
             kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[0])
         elif len(arr_sizes) == 3:
