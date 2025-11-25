@@ -198,6 +198,21 @@ def retrieve_subroutine_ast(file_path, subroutine_name):
     if ftn_source is None or (ftn_source is not None and len(ftn_source) == 0):
         raise ParseError(f"unable to find kernel function: {subroutine_name}")
 
+    # find if there is any nested subroutine/function calls inside elemental kernel and retrieve those as well
+    pattern = r"\bCALL\s+([a-zA-Z0-9_]+)\s*\(([^)]*)\)"
+    # Find all matches
+    subroutine_calls = re.findall(pattern, ftn_source.strip(), re.IGNORECASE)
+
+    for match in subroutine_calls:
+        subroutine_call, args = match
+        # Determine the filename and retrieve the corresponding subroutine code
+        filename = subroutine_call[:subroutine_call.find("kernel")]+"kernel.inc"
+        # Retrieve the subroutine code from the file or other sources
+        sub_kernel = retrieve_subroutine_by_name_regex(filename, subroutine_call)
+        if sub_kernel is None or (sub_kernel is not None and len(sub_kernel) == 0):
+            raise ParseError(f"unable to find kernel function: {sub_kernel}")
+        ftn_source = sub_kernel + "\n" + ftn_source
+
     # Replace OPS_ACC<digit> and OPS_ACC_MD<digit>
     # converting to normal array shape fortran uses before generating AST
     # and passing it to kernels_c.py
@@ -384,13 +399,16 @@ class F2CMPIOpenMP(Scheme):
 
         filename = loop.kernel[:loop.kernel.find("kernel")]+"kernel.inc"
         f90_src, entity_ast = retrieve_subroutine_ast(filename, loop.kernel)
-
-        info = ftk_c.parseInfo(entity_ast, app, loop)
+        
+        info = ftk_c.parseInfo([entity_ast], app, loop)
         kernel_args, local_vars, c_var_init, c_kernel_body = ftk_c.translate(info)
 
         cpp_kernel = generate_cpp_Kernel(loop, kernel_args, local_vars, c_var_init, c_kernel_body, f90_src)
 
-        return cpp_kernel
+#        print("=========================")
+#        print(cpp_kernel)
+
+        return cpp_kernel, []
 
 #Scheme.register(F2CMPIOpenMP)
 

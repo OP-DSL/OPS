@@ -199,22 +199,26 @@ class Context:
         raise OpsError(full_msg)
 
 
-def parseInfo(entity_ast, app: Application, loop: OPS.Loop, config: Dict[str, Any] = None, const_rename: Optional[Callable[[str], str]] = None) -> Info:
+def parseInfo(entities: List[Entity], app: Application, loop: OPS.Loop, config: Dict[str, Any] = None, const_rename: Optional[Callable[[str], str]] = None) -> Info:
     info = Info(loop, config)
 
     is_first = True
-    sub_info = None
 
-    if isinstance(entity_ast, f2003.Subroutine_Subprogram):
-        sub_info = parseSubroutineInfo(entity_ast)
-    else:
-        raise OpsError(f"Unknown top level entity AST type: {type(entity_ast)}")
+    for entity in entities:
+        sub_info = None
 
-    info.subprograms[sub_info.name] = sub_info
+        if isinstance(entity, f2003.Subroutine_Subprogram):
+            sub_info = parseSubroutineInfo(entity)
+        elif isinstance(entity, f2003.Function_Subprogram):
+            sub_info = parseFunctionInfo(entity)
+        else:
+            raise OpsError(f"Unknown top level entity AST type: {type(entity_ast)}")
 
-    if is_first:
-        info.entry_subprogram = sub_info.name
-        is_first = False
+        info.subprograms[sub_info.name] = sub_info
+
+        if is_first:
+            info.entry_subprogram = sub_info.name
+            is_first = False
 
     if app.consts_module is not None:
         consts = parseConstsModule(app.consts_module, info)
