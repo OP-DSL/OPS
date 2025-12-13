@@ -213,12 +213,13 @@ void ops_set_halo_dirtybit3(ops_arg *arg, int *iter_range) {
 }
 
 void ops_set_halo_dirtybit3_tiled(ops_arg *arg, int *iter_range, int *left_bnd, int *left_halo, int *right_bnd, int *right_halo) {
-  (void)arg;
-  (void)iter_range;
+
   (void)left_bnd;
   (void)left_halo;
   (void)right_bnd;
   (void)right_halo;
+
+  ops_set_halo_dirtybit3(arg, iter_range);
 }
 
 void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {

@@ -1698,6 +1698,22 @@ void ops_set_halo_dirtybit3_tiled(ops_arg *arg, int *iter_range, int *left_bound
   int ndim = sb->ndim;
 
   for (int dim = 0; dim < ndim; dim++) {
+    if (dat->e_dat && dat->size[dim] == 1){
+      if (arg->acc != OPS_READ) {
+        for (int dim2 = 0; dim2 < ndim; dim2++) {
+          edat_prev_range[dat->index][2 * dim2 + 0] = iter_range[2 * dim2 + 0];
+          edat_prev_range[dat->index][2 * dim2 + 1] = iter_range[2 * dim2 + 1];
+        }
+        edat_prev_acc[dat->index] = arg->acc;
+        edge_dirtybit[dat->index] = 1;
+        if (OPS_instance::getOPSInstance()->OPS_diags > 3)
+          printf("Process %d: ops_set_halo_dirtybit3: %s: dirtybit set to 1, range: %d %d, %d %d, %d %d\n", ops_my_global_rank, dat->name, iter_range[0], iter_range[1], iter_range[2], iter_range[3], iter_range[4], iter_range[5]);
+        break;
+      }
+    } 
+  }
+
+  for (int dim = 0; dim < ndim; dim++) {
     // the intersection of the execution range with my full range
     range_intersect[dim] = intersection( iter_range[2 * dim], iter_range[2 * dim + 1],
                                          sd->decomp_disp[dim], (sd->decomp_disp[dim] + sd->decomp_size[dim]));
@@ -1720,7 +1736,6 @@ void ops_set_halo_dirtybit3_tiled(ops_arg *arg, int *iter_range, int *left_bound
   int left_bnd_beg[ndim]={0}, left_bnd_end[ndim]={0}, left_halo_beg[ndim]={0}, left_halo_end[ndim]={0};
   int right_bnd_beg[ndim]={0}, right_bnd_end[ndim]={0}, right_halo_beg[ndim]={0}, right_halo_end[ndim]={0};
 
-  sd->dirtybit = 1;
   for (int dim = 0; dim < ndim; dim++) {
     int other_dims = 1;
     for (int d2 = 0; d2 < ndim; d2++)
