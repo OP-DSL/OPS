@@ -320,10 +320,15 @@ def retrieve_subroutine_and_nestedsubroutines(loop_kernel):
 
     modified_kernel = kernel_entities.strip()
 
+    kernel_founds = []
+
     sub_kernels = []
     for match in subroutine_calls:
 
         subroutine_call, args = match
+
+        if subroutine_call in kernel_founds:
+            continue
 
         # Modify the subroutine call in the original kernel code
         modified_call = f"CALL {loop_kernel}_{subroutine_call}({args})"
@@ -344,6 +349,7 @@ def retrieve_subroutine_and_nestedsubroutines(loop_kernel):
         modified_sub_kernel = re.sub(rf"\b{re.escape(subroutine_call)}\b", f"{loop_kernel}_{subroutine_call}", sub_kernel.strip())
 
         sub_kernels.append([f"{loop_kernel}_{subroutine_call}",modified_sub_kernel])
+        kernel_founds.append(f"{subroutine_call}")
 
     return modified_kernel, sub_kernels
 
