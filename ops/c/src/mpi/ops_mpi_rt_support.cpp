@@ -877,7 +877,7 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
             edat_prev_acc[args[i].dat->index] = OPS_READ;
           } else {
             if (OPS_instance::getOPSInstance()->OPS_diags > 3)
-            printf("Process %d: READ after write, on same range, on %s\n", ops_my_global_rank, args[i].dat->name);
+              printf("Process %d: READ after write, on same range, on %s\n", ops_my_global_rank, args[i].dat->name);
           }
         }
         // if the data is read and the previous access was a reduction, then do the reduction

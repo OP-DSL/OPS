@@ -431,6 +431,12 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   }
   // TODO: mixed dim blocks, currently it's just the last loop's block
   ops_dims_tiling_internal = dims;
+
+
+  std::vector<int> terminal_read_min(instance->OPS_dat_index * OPS_MAX_DIM, INT_MAX);
+  std::vector<int> terminal_read_max(instance->OPS_dat_index * OPS_MAX_DIM, INT_MIN);
+  std::vector<char> dataset_written(instance->OPS_dat_index, 0);
+
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
     int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM], decomp_size[OPS_MAX_DIM];
     ops_get_abs_owned_range(ops_kernel_list[i]->block, ops_kernel_list[i]->range, start, end, disp, decomp_size);
@@ -440,6 +446,21 @@ int ops_construct_tile_plan(OPS_instance *instance) {
           MIN(biggest_range[2 * d], start[d]);
       biggest_range[2 * d + 1] =
           MAX(biggest_range[2 * d + 1], end[d]);
+    }
+    // Track the union of all writes so we can enforce a terminal dependency
+    // for datasets that are produced by this tiling plan.
+    for (int arg = 0; arg < ops_kernel_list[i]->nargs; arg++) {
+      if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT &&
+          ops_kernel_list[i]->args[arg].opt == 1 &&
+          ops_kernel_list[i]->args[arg].acc != OPS_READ) {
+        int datidx = ops_kernel_list[i]->args[arg].dat->index;
+        dataset_written[datidx] = 1;
+        for (int d = 0; d < ops_kernel_list[i]->block->dims; d++) {
+          int off = datidx * OPS_MAX_DIM + d;
+          terminal_read_min[off] = MIN(terminal_read_min[off], start[d]);
+          terminal_read_max[off] = MAX(terminal_read_max[off], end[d]);
+        }
+      }
     }
     for (int d = dims; d < OPS_MAX_DIM; d++) {
       biggest_range[2 * d] = 1;
@@ -453,7 +474,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   }
 
   if (instance->OPS_diags>5) {
-    printf2(instance, "Proc %d constructing tiling plan for %d loops:\n", ops_kernel_list.size());
+    printf2(instance, "Proc %d constructing tiling plan for %d loops:\n", ops_get_proc(), ops_kernel_list.size());
     for (int i = 0; i < ops_kernel_list.size(); i++)
       printf2(instance, "%s, ", ops_kernel_list[i]->name);
     printf2(instance,"\n");
@@ -576,6 +597,9 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   int total_tiles = tiles_prod[OPS_MAX_DIM];
   tiling_plans[tiling_plans.size() - 1].ntiles = total_tiles;
 
+  if (instance->OPS_diags > 3) {
+    printf2(instance, "Proc %d, tile sizes: %d,%d,%d,%d,%d, total tiles: %d\n", ops_get_proc(), tile_sizes[0], tile_sizes[1], tile_sizes[2], tile_sizes[3], tile_sizes[4], total_tiles);
+  }
   //
   // Initialise storage
   //
@@ -613,6 +637,27 @@ int ops_construct_tile_plan(OPS_instance *instance) {
     }
   }
 
+  // Seed a terminal read dependency to cover the union of writes across the
+  // tiling plan. Without this, if the last loops only touch boundaries, prior
+  // full writes could be reduced to boundary-only execution.
+  for (int datidx = 0; datidx < instance->OPS_dat_index; datidx++) {
+    if (!dataset_written[datidx]) continue;
+    for (int tile = 0; tile < total_tiles; tile++) {
+      for (int d = 0; d < dims; d++) {
+        int off = datidx * OPS_MAX_DIM + d;
+        if (terminal_read_min[off] == INT_MAX ||
+            terminal_read_max[off] == INT_MIN)
+          continue;
+        //If first tile in dimension, set to terminal read min
+        if ((tile / tiles_prod[d]) % ntiles[d] == 0)
+          data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 0] = terminal_read_min[off];
+        //If last tile in dimension, set to terminal read max
+        if ((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1)
+          data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1] = terminal_read_max[off];
+      }
+    }
+  }
+
   std::vector<int> largest_computed_index(OPS_MAX_DIM);
   for (int d = 0; d < OPS_MAX_DIM; d++)
     largest_computed_index[d] = biggest_range[2*d+1];
@@ -630,14 +675,18 @@ int ops_construct_tile_plan(OPS_instance *instance) {
     for (int d = 0; d < dims; d++) {
 
       //need to check full intersection in other dimensions
-      int other_dims = 1;
+      int full_overlap_other_dims = 1;
+      int full_overlap_this_dim = 1;
       for (int d2 = 0; d2 < dims; d2++) {
-        if (d2 == d) continue;
         int full_intersection = intersection2(start[d2], end[d2], decomp_disp[d2], decomp_disp[d2] + decomp_size[d2]);
-        other_dims = other_dims && (full_intersection>=decomp_size[d2]);
+        if (d2 == d) {
+          full_overlap_this_dim = full_intersection >= decomp_size[d2];
+        } else {
+          full_overlap_other_dims = full_overlap_other_dims && (full_intersection>=decomp_size[d2]);
+        }
       }
 
-      ops_compute_mpi_dependencies(instance, loop, d, start, end, biggest_range, store_left_neighbour_end, store_right_neighbour_start, other_dims);
+      ops_compute_mpi_dependencies(instance, loop, d, start, end, biggest_range, store_left_neighbour_end, store_right_neighbour_start, full_overlap_other_dims);
 
       bool repeat = true;
       while (repeat) {
@@ -965,15 +1014,15 @@ int ops_construct_tile_plan(OPS_instance *instance) {
               LOOPARG.acc != OPS_READ) {
 
             //if this is the first/last tile and OPS_WRITE, clear read dependency
-            if (LOOPARG.acc == OPS_WRITE) {
+            if (LOOPARG.acc == OPS_WRITE && full_overlap_this_dim && full_overlap_other_dims) {
               //If this is the first tile, and we cover full range in other dims, we need to clear read dependency
-              if ((tile / tiles_prod[d]) % ntiles[d] == 0 && other_dims)
+              if ((tile / tiles_prod[d]) % ntiles[d] == 0)
                 data_read_deps[LOOPARG.dat->index]
                                    [tile * OPS_MAX_DIM * 2 + 2 * d + 0] = INT_MAX;
               //If this is the last tile, and we cover full range in other dims, we need to clear read dependency
               if (((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 ||
                 //or if the next tile is dead, in which case this is the last tile
-                  (dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1)) && other_dims) {
+                  (dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1))) {
                 data_read_deps[LOOPARG.dat->index]
                                    [tile * OPS_MAX_DIM * 2 + 2 * d + 1] = INT_MIN;
                 for (int t = 1; t < ntiles[d]-((tile / tiles_prod[d]) % ntiles[d]); t++) {
@@ -1037,13 +1086,6 @@ int ops_construct_tile_plan(OPS_instance *instance) {
         tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] -= decomp_disp[d];
       }
     }
-  }
-
-  for (int loop = 0; loop < ops_kernel_list.size(); loop++) {
-    int d = 0; int tile = 0;
-    printf2(instance, "Proc %d loop %s range dim 0, tile 0: %d-%d\n", ops_get_proc(), ops_kernel_list[loop]->name, 
-    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
-    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
   }
 
   //Figure out which datasets need halo exchange - based on whether written or read first
