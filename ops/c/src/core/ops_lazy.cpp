@@ -60,6 +60,7 @@ inline int omp_get_max_threads() {
 #include <vector>
 using namespace std;
 
+int total_loop_counter = 0;
 
 /////////////////////////////////////////////////////////////////////////
 // Data structures
@@ -1367,7 +1368,14 @@ void ops_execute(OPS_instance *instance) {
     ops_free(ops_kernel_list[i]);
     ops_kernel_list[i] = nullptr;
   }
+  total_loop_counter += ops_kernel_list.size();
+
+  std::string filename = "clover_" + std::to_string(total_loop_counter) + ".h5";
+  ops_dump_to_hdf5(filename.c_str());
+  if (total_loop_counter == 130)
+    exit(0);
   ops_kernel_list.clear();
+
 }
 
 void create_kerneldesc_and_enque(char const* kernel_name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc))
