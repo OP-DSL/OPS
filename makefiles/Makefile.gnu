@@ -1,5 +1,5 @@
-CC      := gcc-14
-CXX       := g++-14
+CC      := gcc
+CXX       := g++
 FC := gfortran
 
 ifdef DEBUG

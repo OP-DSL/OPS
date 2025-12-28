@@ -196,14 +196,14 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
   for (int arg = 0; arg < desc->nargs; arg++) {
     //I need to mark these dirty here, because normally they are only marked dirty once ops_execute is done
     // but the next if would not catch that in time
-    // if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].dat->e_dat == 1 &&
-    //     desc->args[arg].acc == OPS_WRITE) {
+    if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].dat->e_dat == 1 &&
+        desc->args[arg].acc == OPS_WRITE) {
       
-    //   edge_dirtybit[desc->args[arg].dat->index] = 1;
-    // }
-    if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].dat->e_dat == 1 /*&&
+      edge_dirtybit[desc->args[arg].dat->index] = 1;
+    }
+    if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].dat->e_dat == 1 &&
         (desc->args[arg].acc == OPS_INC || desc->args[arg].acc == OPS_MAX || desc->args[arg].acc == OPS_MIN ||
-        (desc->args[arg].acc == OPS_READ && edge_dirtybit[desc->args[arg].dat->index] == 1))*/) {
+        (desc->args[arg].acc == OPS_READ && edge_dirtybit[desc->args[arg].dat->index] == 1))) {
       lowdim_treatment = true;
       break;
     }
