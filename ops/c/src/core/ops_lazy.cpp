@@ -60,8 +60,6 @@ inline int omp_get_max_threads() {
 #include <vector>
 using namespace std;
 
-int total_loop_counter = 0;
-
 /////////////////////////////////////////////////////////////////////////
 // Data structures
 /////////////////////////////////////////////////////////////////////////
@@ -476,7 +474,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
 
   if (instance->OPS_diags>5) {
     printf2(instance, "Proc %d constructing tiling plan for %d loops:\n", ops_get_proc(), ops_kernel_list.size());
-    for (int i = 0; i < ops_kernel_list.size(); i++)
+    for (long unsigned int i = 0; i < ops_kernel_list.size(); i++)
       printf2(instance, "%s, ", ops_kernel_list[i]->name);
     printf2(instance,"\n");
   }
@@ -484,7 +482,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   size_t full_owned_size = 1;
   for (int d = 0; d < dims; d++) {
     full_owned_size *= (biggest_range[2 * d + 1] - biggest_range[2 * d]);
-    if (instance->OPS_diags>3) printf2(instance,"Proc %d dim %d biggest range %d-%d\n",ops_get_proc(), d, biggest_range[2 * d], biggest_range[2 * d+1]);
+    if (instance->OPS_diags>5) printf2(instance,"Proc %d dim %d biggest range %d-%d\n",ops_get_proc(), d, biggest_range[2 * d], biggest_range[2 * d+1]);
   }
 
   //
@@ -638,6 +636,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
     }
   }
 
+
   // Seed a terminal read dependency to cover the union of writes across the
   // tiling plan. Without this, if the last loops only touch boundaries, prior
   // full writes could be reduced to boundary-only execution.
@@ -760,7 +759,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
               if (LOOPARG.argtype == OPS_ARG_DAT &&
                   LOOPARG.opt == 1 &&
                   LOOPARG.acc != OPS_READ) {
-                // End index is the greatest across all of the dependencies, but
+                // End index is the greatest across all of the read dependencies, but
                 // no greater than the loop range
                 int intersect_begin = 0;
                 //Take intersection of execution range with tile start index and prior data dependency
@@ -775,6 +774,35 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                       ops_get_proc(), ops_kernel_list[loop]->name, LOOPARG.dat->name, tile, d,
                       tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
                       tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
+                }
+
+                //check for terminal read dependencies - if there is one, and none came from regular read 
+                //dependencies, set end index to start + tile size (but no greater than loop range), and update
+                //terminal read dependency start/end if begin/end is covered by the tile
+                if (terminal_read_min[LOOPARG.dat->index * OPS_MAX_DIM + d] != INT_MAX &&
+                    terminal_read_max[LOOPARG.dat->index * OPS_MAX_DIM + d] != INT_MIN &&
+                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] >=
+                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]) {
+                  
+                  tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
+                      MIN(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] + tile_sizes[d], end[d]);
+
+                  if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] <= 
+                          terminal_read_min[LOOPARG.dat->index * OPS_MAX_DIM + d])
+                    terminal_read_min[LOOPARG.dat->index * OPS_MAX_DIM + d] = 
+                        MIN(terminal_read_max[LOOPARG.dat->index * OPS_MAX_DIM + d], 
+                            tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
+                  if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] >= 
+                         terminal_read_max[LOOPARG.dat->index * OPS_MAX_DIM + d])
+                    terminal_read_max[LOOPARG.dat->index * OPS_MAX_DIM + d] = 
+                        MAX(terminal_read_min[LOOPARG.dat->index * OPS_MAX_DIM + d], 
+                            tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0]);
+                  //If terminal read dependency is now empty, clear it
+                  if (terminal_read_min[LOOPARG.dat->index * OPS_MAX_DIM + d] >= 
+                      terminal_read_max[LOOPARG.dat->index * OPS_MAX_DIM + d]) {
+                    terminal_read_min[LOOPARG.dat->index * OPS_MAX_DIM + d] = INT_MAX;
+                    terminal_read_max[LOOPARG.dat->index * OPS_MAX_DIM + d] = INT_MIN;
+                  }
                 }
               }
             }
@@ -797,7 +825,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
           //But if we overshoot, just make begin=end
           if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] > tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1])
             tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
-
+          
           //If this is NOT the last non-dead tile, we need to check write-after-write dependencies too
           if (!((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 || ( 
                 tile + tiles_prod[d] < total_tiles && 
@@ -843,6 +871,12 @@ int ops_construct_tile_plan(OPS_instance *instance) {
               }
             }
           }
+
+          if (instance->OPS_diags > 5)
+            printf2(instance,"Proc %d, %s after write deps: tile %d dim %d: exec range is: %d-%d\n",
+                ops_get_proc(), ops_kernel_list[loop]->name, tile, d,
+                tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
+                tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
 
           // Leftover tiles: If no prior dependencies, end index is leftmost range + (tile index
           // + 1) * tile size, or end index if not tiled in this dimension
@@ -1368,12 +1402,6 @@ void ops_execute(OPS_instance *instance) {
     ops_free(ops_kernel_list[i]);
     ops_kernel_list[i] = nullptr;
   }
-  total_loop_counter += ops_kernel_list.size();
-
-  std::string filename = "clover_" + std::to_string(total_loop_counter) + ".h5";
-  ops_dump_to_hdf5(filename.c_str());
-  if (total_loop_counter == 130)
-    exit(0);
   ops_kernel_list.clear();
 
 }
