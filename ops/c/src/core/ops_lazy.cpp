@@ -642,18 +642,38 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   // full writes could be reduced to boundary-only execution.
   for (int datidx = 0; datidx < instance->OPS_dat_index; datidx++) {
     if (!dataset_written[datidx]) continue;
-    for (int tile = 0; tile < total_tiles; tile++) {
-      for (int d = 0; d < dims; d++) {
+    for (int d = 0; d < dims; d++) {
+      for (int tile = 0; tile < total_tiles; tile++) {
         int off = datidx * OPS_MAX_DIM + d;
         if (terminal_read_min[off] == INT_MAX ||
             terminal_read_max[off] == INT_MIN)
           continue;
+        
+        //Calculate normal tile begin and end
+        int normal_tile_begin = biggest_range[2 * d + 0] +
+                                ((tile / tiles_prod[d]) % ntiles[d]) *
+                                    tile_sizes[d];
+        int normal_tile_end = MIN(normal_tile_begin + tile_sizes[d], biggest_range[2 * d + 1]);
+
+        //calculate terminal read dependency's intersection with normal tile
+        int intersect_begin = 0;
+        int intersect_len = intersection(terminal_read_min[off], terminal_read_max[off], normal_tile_begin, normal_tile_end, &intersect_begin);
+        if (intersect_len > 0) {
+          data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 0] = intersect_begin;
+          data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1] = intersect_begin + intersect_len;
+          if (instance->OPS_diags > 5)
+            printf2(instance, "Proc %d, terminal read dependency, dim %d tile %d set to %d %d\n", ops_get_proc(), d, tile, data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 0], data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1]);
+        }
+
         //If first tile in dimension, set to terminal read min
         if ((tile / tiles_prod[d]) % ntiles[d] == 0)
-          data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 0] = terminal_read_min[off];
+          if (data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 0] != terminal_read_min[off])
+            printf2(instance, "Proc %d, terminal read dependency sanity check fail dim %d tile %d %d != %d\n", ops_get_proc(), d, tile, data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 0], terminal_read_min[off]);
+
         //If last tile in dimension, set to terminal read max
         if ((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1)
-          data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1] = terminal_read_max[off];
+          if (data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1] != terminal_read_max[off])
+            printf2(instance, "Proc %d, terminal read dependency sanity check fail dim %d tile %d %d != %d\n", ops_get_proc(), d, tile, data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1], terminal_read_max[off]);
       }
     }
   }
@@ -774,35 +794,6 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                       ops_get_proc(), ops_kernel_list[loop]->name, LOOPARG.dat->name, tile, d,
                       tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
                       tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
-                }
-
-                //check for terminal read dependencies - if there is one, and none came from regular read 
-                //dependencies, set end index to start + tile size (but no greater than loop range), and update
-                //terminal read dependency start/end if begin/end is covered by the tile
-                if (terminal_read_min[LOOPARG.dat->index * OPS_MAX_DIM + d] != INT_MAX &&
-                    terminal_read_max[LOOPARG.dat->index * OPS_MAX_DIM + d] != INT_MIN &&
-                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] >=
-                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]) {
-                  
-                  tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
-                      MIN(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] + tile_sizes[d], end[d]);
-
-                  if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] <= 
-                          terminal_read_min[LOOPARG.dat->index * OPS_MAX_DIM + d])
-                    terminal_read_min[LOOPARG.dat->index * OPS_MAX_DIM + d] = 
-                        MIN(terminal_read_max[LOOPARG.dat->index * OPS_MAX_DIM + d], 
-                            tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
-                  if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] >= 
-                         terminal_read_max[LOOPARG.dat->index * OPS_MAX_DIM + d])
-                    terminal_read_max[LOOPARG.dat->index * OPS_MAX_DIM + d] = 
-                        MAX(terminal_read_min[LOOPARG.dat->index * OPS_MAX_DIM + d], 
-                            tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0]);
-                  //If terminal read dependency is now empty, clear it
-                  if (terminal_read_min[LOOPARG.dat->index * OPS_MAX_DIM + d] >= 
-                      terminal_read_max[LOOPARG.dat->index * OPS_MAX_DIM + d]) {
-                    terminal_read_min[LOOPARG.dat->index * OPS_MAX_DIM + d] = INT_MAX;
-                    terminal_read_max[LOOPARG.dat->index * OPS_MAX_DIM + d] = INT_MIN;
-                  }
                 }
               }
             }
@@ -1032,8 +1023,8 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                         d_p_max);
 
             if (instance->OPS_diags > 5) // && tile_sizes[d] != -1
-              printf2(instance, "Dataset read %s dependency dim %d set to %d %d\n",
-                     LOOPARG.dat->name, d,
+              printf2(instance, "Dataset read %s dependency dim %d tile %d set to %d %d\n",
+                     LOOPARG.dat->name, d, tile,
                      data_read_deps[LOOPARG.dat->index]
                                    [tile * OPS_MAX_DIM * 2 + 2 * d + 0],
                      data_read_deps[LOOPARG.dat->index]
@@ -1095,8 +1086,8 @@ int ops_construct_tile_plan(OPS_instance *instance) {
 
             if (instance->OPS_diags > 5 && tile_sizes[d] != -1)
               printf2(instance,
-                  "Dataset write %s dependency dim %d set to %d %d\n",
-                  LOOPARG.dat->name, d,
+                  "Dataset write %s dependency dim %d tile %d set to %d %d\n",
+                  LOOPARG.dat->name, d, tile,
                   data_write_deps[LOOPARG.dat->index]
                                  [tile * OPS_MAX_DIM * 2 + 2 * d + 0],
                   data_write_deps[LOOPARG.dat->index]
