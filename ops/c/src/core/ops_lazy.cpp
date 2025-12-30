@@ -663,17 +663,16 @@ int ops_construct_tile_plan(OPS_instance *instance) {
           data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1] = intersect_begin + intersect_len;
           if (instance->OPS_diags > 5)
             printf2(instance, "Proc %d, terminal read dependency, dim %d tile %d set to %d %d\n", ops_get_proc(), d, tile, data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 0], data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1]);
+
+          //Sanity checks
+          if ((tile / tiles_prod[d]) % ntiles[d] == 0)
+            if (data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 0] != terminal_read_min[off])
+              printf2(instance, "Proc %d, terminal read dependency sanity check fail dim %d tile %d %d != %d\n", ops_get_proc(), d, tile, data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 0], terminal_read_min[off]);
+
+          if ((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1)
+            if (data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1] != terminal_read_max[off])
+              printf2(instance, "Proc %d, terminal read dependency sanity check fail dim %d tile %d %d != %d\n", ops_get_proc(), d, tile, data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1], terminal_read_max[off]);
         }
-
-        //If first tile in dimension, set to terminal read min
-        if ((tile / tiles_prod[d]) % ntiles[d] == 0)
-          if (data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 0] != terminal_read_min[off])
-            printf2(instance, "Proc %d, terminal read dependency sanity check fail dim %d tile %d %d != %d\n", ops_get_proc(), d, tile, data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 0], terminal_read_min[off]);
-
-        //If last tile in dimension, set to terminal read max
-        if ((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1)
-          if (data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1] != terminal_read_max[off])
-            printf2(instance, "Proc %d, terminal read dependency sanity check fail dim %d tile %d %d != %d\n", ops_get_proc(), d, tile, data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1], terminal_read_max[off]);
       }
     }
   }
