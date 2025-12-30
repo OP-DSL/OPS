@@ -118,7 +118,7 @@ void determine_plane_global_range(const ops_dat dat,
 void copy_data_buf(const ops_dat &dat, const int *local_range,
                    char *local_buf) {
   const sub_dat *sd = OPS_sub_dat_list[dat->index];
-  // ops_execute(dat->block->instance);
+  ops_execute(dat->block->instance);
   ops_get_data(dat);
   ops_check_lowdim_update(dat);
   int local_buf_size[OPS_MAX_DIM] = {1};
