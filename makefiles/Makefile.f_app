@@ -59,6 +59,7 @@ TARGETS:=$(filter-out f2c_hip f2c_mpi_hip f2c_mpi_hip_tiled,$(TARGETS))
 #$(info Please set the HIP_INSTALL_PATH and relevant environment variables (e.g., PATH, LD_LIBRARY_PATH).)
 #$(info Build continues without HIP targets.....)
 endif
+endif
 
 ifneq (,$(filter f2c_cuda f2c_mpi_cuda f2c_mpi_cuda_tiled,$(TARGETS)))
 ifndef CUDA_INSTALL_PATH
