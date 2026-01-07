@@ -142,6 +142,15 @@ void _ops_set_args(OPS_instance *instance, const char *argv) {
     if (instance->is_root()) instance->ostream() << "\n Reallocating = " << instance->OPS_realloc << '\n';
   }
 
+  pch = strstr(argv, "OPS_AUTOTUNE_MODE=");
+  if (pch != NULL) {
+    snprintf(temp, 64, "%s", pch);
+    int mode = atoi(temp + strlen("OPS_AUTOTUNE_MODE="));
+    if (mode != 0 && mode != 1) mode = 1; // default to full autotune
+    instance->OPS_autotune_mode = mode;
+    if (instance->is_root()) instance->ostream() << "\n OPS_autotune_mode = " << instance->OPS_autotune_mode << '\n';
+  }
+
   pch = strstr(argv, "OPS_TILING");
   if (pch != NULL) {
     instance->ops_enable_tiling = 1;
@@ -355,6 +364,9 @@ void ops_exit_core(OPS_instance *instance) {
   }
 
   instance->is_initialised = 0;
+
+  // Flush autotuning CSV footers once at program end
+  ops_flush_autotune_logs();
 }
 
 void ops_set_soa(const int soa_val) {
@@ -1487,7 +1499,7 @@ void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
         strncat_s(buf, (maxlen + 180), " ",1);
 
       snprintf(
-          buf2, 180, "%-5d %-6f (%-6f) %-6f (%-6f)  %-13.2f", instance->OPS_kernels[k].count,
+          buf2, 180, "%-5d %-5d %-6f (%-6f) %-6f (%-6f)  %-13.2f", k, instance->OPS_kernels[k].count,
           moments_time[0],
           sqrt(moments_time[1] - moments_time[0] * moments_time[0]),
           moments_mpi_time[0],

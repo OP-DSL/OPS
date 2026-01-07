@@ -44,6 +44,9 @@
 #include <limits.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#if defined(__linux__)
+#include <unistd.h>
+#endif
 
 #ifdef OPS_MPI
 #include <ops_mpi_core.h>
@@ -53,6 +56,10 @@
 
 #include <vector>
 #include <ops_internal2.h>
+#include <unordered_map>
+#include <fstream>
+#include <sstream>
+#include <mutex>
 
 /*******************************************************************************
 * Wrapper for malloc from www.gnu.org/
@@ -547,13 +554,359 @@ void determine_local_range(const ops_dat dat, const int *global_range,
 
 
 
-ops::dim3 ops_get_kernel_block_size(int kernel_id, int ndims, int *local_range, int nargs, ops_arg* args, int max_threads, int registers) {
-  int global_x = OPS_instance::getOPSInstance()->OPS_block_size_x;
-  int global_y = ndims > 1 ? OPS_instance::getOPSInstance()->OPS_block_size_y : 1;
-  int global_z = ndims > 2 ? OPS_instance::getOPSInstance()->OPS_block_size_z : 1;
-  return ops::dim3(global_x, global_y, global_z);
+// ------------------------------
+// Autotuning state and utilities
+// ------------------------------
+namespace {
+  struct TuneState {
+    std::vector<ops::dim3> candidates;
+    size_t next_idx{0};
+    bool decided{false};
+    double best_time{1e300};
+    ops::dim3 best{1,1,1};
+    ops::dim3 last_served{1,1,1};
+    long long last_points{0};
+    long long best_points{0};
+    // Metadata captured once per kernel
+    int nargs_meta{0};
+    int nstencil_args{0};
+    int widest_radius{0};
+    std::string stencil_sig{};
+    bool meta_set{false};
+   
+
+  };
+
+  std::unordered_map<int, TuneState> g_tune;
+  std::ofstream g_log;
+  std::once_flag g_log_once;
+  std::mutex g_mutex;
+  std::ofstream g_best_log;
+  std::once_flag g_best_log_once;
+  long long g_tuning_rows = 0;
+  long long g_best_rows = 0;
+
+
+  std::string get_app_name() {
+  std::string app_name = "unknown";
+  #if defined(__linux__)
+    char exe_path[4096];
+    ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
+    if (len > 0) {
+      exe_path[len] = '\0';
+      std::string full(exe_path);
+      size_t pos = full.find_last_of('/');
+      app_name = (pos == std::string::npos) ? full : full.substr(pos + 1);
+    }
+  #endif
+  return app_name;
 }
 
-void ops_record_kernel_performance(int kernel_id, double seconds) {
 
+bool is_autotune(){
+  OPS_instance *inst = OPS_instance::getOPSInstance();
+  return (!inst || inst->OPS_autotune_mode != 0);
+}
+
+
+void ensure_dir_exists(const std::string &path) {
+  struct stat st;
+  if (stat(path.c_str(), &st) == 0) {
+    if (S_ISDIR(st.st_mode)) return;   
+
+    printf("[OPS] WARNING: path exists but is not a directory: %s\n", path.c_str());
+    return;
+  }
+  // No existe: intentar crearlo
+  if (mkdir(path.c_str(), 0777) != 0 && errno != EEXIST) {
+    printf("[OPS] ERROR: failed to create directory %s: %s\n", path.c_str(), strerror(errno));
+
+  }
+}
+
+  void ensure_log_open() {
+    std::call_once(g_log_once, [](){
+      OPS_instance *inst = OPS_instance::getOPSInstance();
+      bool autotune = is_autotune();
+      std::string app_name = get_app_name();
+      std::string base_dir = "/home/kevin/OPS_LOGS";
+      std::string app_root = base_dir + "/" + app_name; // /home/.../OPS_LOGS/lattboltz2d_cuda
+      std::string app_dir = base_dir + "/" + app_name + (autotune ? "/autotune_on" : "/autotune_off");
+
+      ensure_dir_exists(base_dir);
+      ensure_dir_exists(app_root); 
+      ensure_dir_exists(app_dir);
+      // printf("[OPS] Logging opening %s\n", app_dir.c_str());
+      g_log.open(app_dir + "/ops_blocksize_tuning_logmod.csv",
+                std::ios::out | std::ios::app);
+      if (g_log.tellp() == 0) {
+        g_log << "kernel_id,bx,by,bz,execution_time,points,gpoints_per_s,"
+                "nargs,nstencil_args,widest_radius,stencil_sig"
+              << std::endl;
+      }
+    });
+  }
+
+  void ensure_best_log_open() {
+    std::call_once(g_best_log_once, [](){
+      OPS_instance *inst = OPS_instance::getOPSInstance();
+      bool autotune = is_autotune();
+      std::string app_name = get_app_name();
+      std::string base_dir = "/home/kevin/OPS_LOGS";
+      std::string app_root = base_dir + "/" + app_name; // /home/.../OPS_LOGS/lattboltz2d_cuda
+      std::string app_dir = base_dir + "/" + app_name + (autotune ? "/autotune_on" : "/autotune_off");
+
+      g_best_log.open(app_dir + "/ops_blocksize_best_logmod.csv",
+                std::ios::out | std::ios::app);
+      if (g_best_log.tellp() == 0) {
+      
+        g_best_log << "kernel_id,bx,by,bz,best_time,points,gpoints_per_s,nargs,nstencil_args,widest_radius,stencil_sig" << std::endl;
+      }
+    });
+  }
+
+  inline int clamp_positive(int v) { return v < 1 ? 1 : v; }
+
+  void build_candidates_1d(TuneState &st, int x_extent, int max_threads_hw) {
+    const int max_threads = std::min(1024, max_threads_hw);
+    const int max_x = std::min(x_extent, max_threads);
+    for (int bx = 1; bx <= max_x; bx <<= 1) {
+      if (bx <= max_threads && bx >= 32) st.candidates.emplace_back(bx, 1, 1);
+      if (bx == 0) break; // safety for overflow
+    }
+  }
+
+  void build_candidates_2d(TuneState &st, int x_extent, int y_extent, int max_threads_hw) {
+    const int max_threads = std::min(1024, max_threads_hw);
+    const int max_x = std::min(x_extent, max_threads);
+    const int max_y = std::min(y_extent, max_threads);
+    for (int by = 1; by <= max_y; by <<= 1) {
+      for (int bx = 1; bx <= max_x; bx <<= 1) {
+        const int prod = bx * by;
+        if (prod <= max_threads && prod >= 32 /*&& bx > by*/)
+          st.candidates.emplace_back(bx, by, 1);
+        if (bx == 0) break; // safety for overflow
+      }
+      if (by == 0) break; // safety for overflow
+    }
+  }
+
+  void build_candidates_3d(TuneState &st, int x_extent, int y_extent, int z_extent, int max_threads_hw) {
+    const int max_threads = std::min(1024, max_threads_hw);
+    const int max_x = std::min(x_extent, max_threads);
+    const int max_y = std::min(y_extent, max_threads);
+    const int max_z = std::min(std::min(z_extent, max_threads), 64);
+    for (int bz = 1; bz <= max_z; bz <<= 1) {
+      for (int by = 1; by <= max_y; by <<= 1) {
+        for (int bx = 1; bx <= max_x; bx <<= 1) {
+          const long long prod = 1LL * bx * by * bz;
+          if (prod <= max_threads && prod >= 32 /*&& bx > by && bx > bz*/)
+            st.candidates.emplace_back(bx, by, bz);
+          if (bx == 0) break; // safety for overflow
+        }
+        if (by == 0) break; // safety for overflow
+      }
+      if (bz == 0) break; // safety for overflow
+    }
+  }
+}
+
+ops::dim3 ops_get_kernel_block_size(int kernel_id, int ndims, int *local_range, int nargs, ops_arg* args, int max_threads, int registers) {
+  
+  
+  (void)nargs; (void)args; (void)registers;
+  //std::lock_guard<std::mutex> lock(g_mutex);
+  // ensure_log_open();
+
+  auto &st = g_tune[kernel_id]; //replicate (instead of find)
+
+  // Compute extents from local_range
+  const int x_extent = ndims >= 1 ? clamp_positive(local_range[1] - local_range[0]) : 1;
+  const int y_extent = ndims >= 2 ? clamp_positive(local_range[3] - local_range[2]) : 1;
+  const int z_extent = ndims >= 3 ? clamp_positive(local_range[5] - local_range[4]) : 1;
+
+  // Capture kernel metadata once (argument count, stencil usage, widest stencil, signature)
+  if (!st.meta_set) {
+    st.nargs_meta = nargs;
+    st.nstencil_args = 0;
+    st.widest_radius = 0;
+    std::ostringstream ss;
+    for (int i = 0; i < nargs; ++i) {
+      ops_arg &a = args[i];
+      if (a.stencil != nullptr) {
+        st.nstencil_args++;
+        int dims = ndims; // default to kernel dims
+        // If ops_stencil exposes dims, prefer it
+        // NOTE: using pointer checks to avoid UB if fields differ across builds
+        // Compute maximal Chebyshev radius among stencil points
+        int max_rad = 0;
+        if (a.stencil->points > 0 && a.stencil->stencil != nullptr) {
+          // Heuristic: try a.stencil->dims if available via sizeof trick is not possible here; assume ndims
+          for (int p = 0; p < a.stencil->points; ++p) {
+            for (int d = 0; d < dims; ++d) {
+              int off = a.stencil->stencil[p*dims + d];
+              int abso = off < 0 ? -off : off;
+              if (abso > max_rad) max_rad = abso;
+            }
+          }
+        }
+        if (max_rad > st.widest_radius) st.widest_radius = max_rad;
+        if (a.stencil->name && a.stencil->name[0] != '\0') {
+          ss << a.stencil->name;
+        } else {
+          ss << "rad" << max_rad;
+        }
+      } else {
+        ss << "none";
+      }
+      if (i + 1 < nargs) ss << ';';
+    }
+    st.stencil_sig = ss.str();
+    st.meta_set = true;
+  }
+
+  if (st.candidates.empty()) {
+    OPS_instance *inst = OPS_instance::getOPSInstance();
+    const int mode = inst ? inst->OPS_autotune_mode : 1;
+    // printf("mode : %d\n", mode);
+    if (mode == 0) {
+      // printf("[OPS] using default block sizes ...\n");
+      // Modo bloques por defecto: usar solo OPS_BLOCK_SIZE_* como candidato único
+      unsigned int gx = OPS_instance::getOPSInstance()->OPS_block_size_x;
+      unsigned int gy = (ndims > 1) ? OPS_instance::getOPSInstance()->OPS_block_size_y : 1;
+      unsigned int gz = (ndims > 2) ? OPS_instance::getOPSInstance()->OPS_block_size_z : 1;
+      st.candidates.clear();
+      st.candidates.emplace_back(gx, gy, gz);
+      st.best = st.candidates.front();
+      st.next_idx = 0;
+    } else {
+      // printf("[OPS] building candidates ...\n");
+      // Modo autotune completo: construir candidatos
+      if (ndims <= 1) {
+        build_candidates_1d(st, x_extent, max_threads);
+      } else if (ndims == 2) {
+        build_candidates_2d(st, x_extent, y_extent, max_threads);
+
+      } else {
+        build_candidates_3d(st, x_extent, y_extent, z_extent, max_threads);
+      }
+
+      // Fallback a bloque global si no hay candidatos
+      if (st.candidates.empty() && inst) {
+        unsigned int gx = inst->OPS_block_size_x;
+        unsigned int gy = (ndims > 1) ? inst->OPS_block_size_y : 1;
+        unsigned int gz = (ndims > 2) ? inst->OPS_block_size_z : 1;
+        if (gz > 64) gz = 64; // enforce bz <= 64
+        if (ndims > 1 && gy >= gx) {
+          if (gx > 1) gy = gx / 2;
+          else gy = 1;
+        }
+        st.candidates.emplace_back(gx, gy, gz);
+      }
+    }
+  }
+
+  if (st.decided) {
+    st.last_served = st.best;
+    st.last_points = 1LL * x_extent * y_extent * z_extent;
+    return st.best;
+  }
+
+  // Serve next candidate
+  if (st.next_idx < st.candidates.size()) {
+    st.last_served = st.candidates[st.next_idx++];
+    st.last_points = 1LL * x_extent * y_extent * z_extent;
+    return st.last_served;
+  }
+
+  // If ran out (should not happen without performance records), fall back to best or first
+  st.decided = true;
+  if (st.best.x == 0) st.best = st.candidates.front();
+  st.last_served = st.best;
+  st.last_points = 1LL * x_extent * y_extent * z_extent;
+  return st.best;
+}
+
+
+// New API variant that can record both total and MPI (remote) time per kernel.
+// Existing callers can continue to use ops_record_kernel_performance, which
+// delegates here with seconds_mpi = 0.0.
+void ops_record_kernel_performance(int kernel_id, double seconds_total) {
+
+  //std::lock_guard<std::mutex> lock(g_mutex);
+  ensure_log_open();
+  auto it = g_tune.find(kernel_id);
+  auto &st = it->second;
+  const ops::dim3 bs = st.last_served;
+  const long long points = st.last_points > 0 ? st.last_points : 0;
+  const double gpoints = (seconds_total > 0.0 && points > 0) ? (points / seconds_total) / 1e9 : 0.0;
+
+
+  // CSV log: kernel_id,bx,by,bz,execution_time,mpi_time,mpi_fraction,points,gpoints_per_s
+  if (g_log.good()) {
+    g_log << kernel_id << ',' << bs.x << ',' << bs.y << ',' << bs.z << ','
+          << seconds_total << ',' 
+          << points << ',' << gpoints << ','
+          << st.nargs_meta << ',' << st.nstencil_args << ','
+          << st.widest_radius << ',' << '"' << st.stencil_sig << '"' << std::endl;
+    g_log.flush();
+    g_tuning_rows++;
+  }
+
+  // Track best
+  if (seconds_total > 0.0 && seconds_total) {
+    st.best_time = seconds_total;
+    st.best = bs;
+    st.best_points = points;
+  }
+
+  // Decide when all candidates have been tested
+  if (!st.decided && st.next_idx >= st.candidates.size()) {
+    st.decided = true;
+    // Optional: brief stdout summary
+    // printf("[OPS autotune] v1.2 kernel %d best block = (%u,%u,%u) time = %.6f s \n",
+    //        kernel_id, st.best.x, st.best.y, st.best.z, st.best_time,
+    //        (st.best_time > 0.0 ? st.best_time : 0.0));
+
+    // Write best-only CSV summary
+    // ensure_best_log_open();
+    const double best_gpoints = (st.best_time > 0.0 && st.best_points > 0)
+                                ? (st.best_points / st.best_time) / 1e9 : 0.0;
+   
+    if (g_best_log.good()) {
+      g_best_log << kernel_id << ',' << st.best.x << ',' << st.best.y << ',' << st.best.z << ','
+                 << st.best_time << ',' 
+                 << st.best_points << ',' << best_gpoints << ','
+                 << st.nargs_meta << ',' << st.nstencil_args << ','
+                 << st.widest_radius << ',' << '"' << st.stencil_sig << '"' << std::endl;
+      g_best_log.flush();
+      g_best_rows++;
+    }
+  }
+}
+
+
+
+
+void ops_flush_autotune_logs() {
+  
+  std::string app_name = get_app_name();
+  bool autotune = is_autotune();
+
+
+  if (g_tuning_rows > 0 && g_log.good()) {
+    g_log << std::endl << std::endl << std::endl;
+    g_log << "Autotune -- " << autotune << std::endl;
+    g_log << "total of rows -- " << g_tuning_rows << std::endl;
+    g_log << "app name -- " << app_name << std::endl;
+    g_log.flush();
+  }
+
+  if (g_best_rows > 0 && g_best_log.good()) {
+    g_best_log << std::endl << std::endl << std::endl;
+    g_best_log << "Autotune -- " << autotune << std::endl;
+    g_best_log << "total of rows -- " << g_best_rows << std::endl;
+    g_best_log << "app name -- " << app_name << std::endl;
+    g_best_log.flush();
+  }
 }

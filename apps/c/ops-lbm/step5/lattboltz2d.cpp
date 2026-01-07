@@ -10,6 +10,8 @@ double deltaUX = 10e-6;
 
 // Including main OPS header file, and setting 2D
 #define OPS_2D
+//Structure of arrays
+#define OPS_SOA  
 #include <ops_seq_v2.h>
 // Including applicaiton-specific "elemental kernels"
 #include "lattice_kernels.h"
@@ -24,8 +26,19 @@ int main(int argc, char ** argv) {
     // Initialise the OPS library, passing runtime args, and setting diagnostics level to low (1)
     ops_init(argc, argv, 1);
 
-    const int NX = 128;
-    const int NY = 128;
+    // Grid size (default 2040x2040, can be set with -nx=N -ny=N)
+    int NX = 2040;
+    int NY = 2040;
+    // Max iterations (default 4000, can be set with -iter=N)
+    int iter_max = 4000;
+
+    // Parse command line arguments
+    for (int i = 1; i < argc; i++) {
+        if (strncmp(argv[i], "-nx=", 4) == 0) NX = atoi(argv[i] + 4);
+        if (strncmp(argv[i], "-ny=", 4) == 0) NY = atoi(argv[i] + 4);
+        if (strncmp(argv[i], "-iter=", 6) == 0) iter_max = atoi(argv[i] + 6);
+    }
+    ops_printf("Configuration: NX=%d, NY=%d, iter_max=%d\n", NX, NY, iter_max);
 
     const double W[] = {4.0/9.0,1.0/9.0,1.0/36.0,1.0/9.0,1.0/36.0,1.0/9.0,1.0/36.0,1.0/9.0,1.0/36.0};
     const int cx[] = {0,0,1,1, 1, 0,-1,-1,-1};
@@ -135,7 +148,7 @@ int main(int argc, char ** argv) {
     ops_timers(&ct0, &et0);
     
     // Main time loop
-    for (int t = 0; t < 4000; t++) {
+    for (int t = 0; t < iter_max; t++) {
 
         // Backup values
         ops_par_loop(timeloop_eqA, "equation_A", lb_block, 2, full_range,
@@ -214,7 +227,7 @@ int main(int argc, char ** argv) {
 
         if (t%100==0) 
             ops_printf(" %d  %10.5e \n", t, energy);            
-        if (t==3999 && NX == 128 && NY == 128) {
+        if (t==(iter_max-1) && NX == 128 && NY == 128) {
           double diff = fabs(((energy - 0.0000111849)/0.0000111849));
           if (diff < 0.00001) {
             ops_printf("Energy : %10.5e diff: %10.5e %s\n", energy, diff, "Test PASSED");

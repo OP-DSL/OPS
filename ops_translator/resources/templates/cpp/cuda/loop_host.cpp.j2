@@ -7,8 +7,6 @@
 {% endif %}
 __constant__ int dims_{{lh.kernel}}[{{lh.args|length}}][{{num_dims}}];
 static int dims_{{lh.kernel}}_h[{{lh.args|length}}][{{num_dims}}] = {{'{{'|safe}}0{{'}}'|safe}};
-cudaEvent_t ops_timing_{{lh.kernel}}_start;
-cudaEvent_t ops_timing_{{lh.kernel}}_stop;
 {% endblock %}
 
 {% block kernel_wrapper %}
@@ -409,7 +407,9 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
         local_range[2*i] = start_indx[i];
         local_range[2*i+1] = end_indx[i];
     }
-    dim3 tblock = ops_get_kernel_block_size({{kernel_idx}}, {{lh.ndim}}, local_range, {{lh.args|length}}, args, attributes.maxThreadsPerBlock, attributes.numRegs);
+
+    dim3 tblock;
+    tblock = ops_get_kernel_block_size({{kernel_idx}}, {{lh.ndim}}, local_range, {{lh.args|length}}, args, attributes.maxThreadsPerBlock, attributes.numRegs);
 {% if lh.ndim == 1 %}
     dim3 grid( (x_size-1)/tblock.x + 1, 1, 1);
 {% elif lh.ndim == 2 %}
@@ -583,11 +583,6 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
     if (block->instance->OPS_diags > 1) { 
         ops_timers_core(&__c2, &__t2);
         block->instance->OPS_kernels[{{kernel_idx}}].mpi_time += __t2 - __t1;
-        if (block->instance->OPS_kernels[{{kernel_idx}}].count == 1) {
-            cutilSafeCall(block->instance->ostream(), cudaEventCreate(&ops_timing_{{lh.kernel}}_start));
-            cutilSafeCall(block->instance->ostream(), cudaEventCreate(&ops_timing_{{lh.kernel}}_stop));
-        }
-        cutilSafeCall(block->instance->ostream(), cudaEventRecord(ops_timing_{{lh.kernel}}_start, 0));
     }
 
 {# set up shared memory for reduction #}
@@ -724,10 +719,6 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
     hipSafeCall(block->instance->ostream(), hipGetLastError());
 {% endif %}
 
-    if (block->instance->OPS_diags > 1) {
-        cutilSafeCall(block->instance->ostream(), cudaEventRecord(ops_timing_{{lh.kernel}}_stop, 0));
-    }
-
 {# Complete Reduction Operation by moving data onto host #}
 {# and reducing over blocks #}
 {% if lh.has_reduction %}
@@ -758,14 +749,17 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
 
 {% endblock %}
 
+
 {% block host_epilogue %}
     if(block->instance->OPS_diags > 1) {
-        cutilSafeCall(block->instance->ostream(), cudaEventSynchronize(ops_timing_{{lh.kernel}}_stop));
-        float milliseconds = 0;
-        cudaEventElapsedTime(&milliseconds, ops_timing_{{lh.kernel}}_start, ops_timing_{{lh.kernel}}_stop);
+    {% if target.name == "cuda" %}
+        cutilSafeCall(block->instance->ostream(), cudaDeviceSynchronize());
+    {% elif target.name == "hip" %}
+        hipSafeCall(block->instance->ostream(), hipDeviceSynchronize());
+    {% endif %}
         ops_timers_core(&__c1, &__t1);
         block->instance->OPS_kernels[{{kernel_idx}}].time += __t1 - __t2;
-        ops_record_kernel_performance({{kernel_idx}}, milliseconds / 1000.0);
+        ops_record_kernel_performance({{kernel_idx}},__t1 - __t2);
     }
 
 #ifndef OPS_LAZY

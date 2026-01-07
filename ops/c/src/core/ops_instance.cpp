@@ -173,6 +173,16 @@ void OPS_instance::init_globals() {
 	OPS_realloc = 0;
 	OPS_soa=0;
 	OPS_diags=0;
+	OPS_autotune_mode = 1;
+	// control of autotuning CSV logs (default on, can be disabled via env)
+	OPS_autotune_logs = 1;
+	char *env_autologs = getenv("OPS_AUTOTUNE_LOGS");
+	if (env_autologs && env_autologs[0] != '\0') {
+	  if (env_autologs[0] == '0' || env_autologs[0] == 'f' || env_autologs[0] == 'F' ||
+	      env_autologs[0] == 'n' || env_autologs[0] == 'N') {
+	    OPS_autotune_logs = 0;
+	  }
+	}
 
 	// CUDA & OpenCL
 	OPS_hybrid_gpu=0; OPS_gpu_direct=0;

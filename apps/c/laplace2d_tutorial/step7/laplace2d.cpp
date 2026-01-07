@@ -17,11 +17,20 @@ int main(int argc, const char** argv)
   //Initialise the OPS library, passing runtime args, and setting diagnostics level to low (1)
   ops_init(argc, argv,1);
 
-  //Size along y
+  //Size along y (default 4094, can be set with -jmax=N)
   jmax = 4094;
-  //Size along x
+  //Size along x (default 4094, can be set with -imax=N)
   imax = 4094;
-  int iter_max = 100;
+  //Max iterations (default 10000, can be set with -iter=N)
+  int iter_max = 10000;
+
+  // Parse command line arguments for imax, jmax, iter
+  for (int i = 1; i < argc; i++) {
+    if (strncmp(argv[i], "-imax=", 6) == 0) imax = atoi(argv[i] + 6);
+    if (strncmp(argv[i], "-jmax=", 6) == 0) jmax = atoi(argv[i] + 6);
+    if (strncmp(argv[i], "-iter=", 6) == 0) iter_max = atoi(argv[i] + 6);
+  }
+  ops_printf("Configuration: imax=%d, jmax=%d, iter_max=%d\n", imax, jmax, iter_max);
 
   const double tol = 1.0e-6;
   double error     = 1.0;
@@ -135,7 +144,7 @@ int main(int argc, const char** argv)
   //Finalising the OPS library
   free(A);
   free(Anew);
-  //ops_exit();
+  ops_exit();
   return 0;
 }
 
