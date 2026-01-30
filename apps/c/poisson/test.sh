@@ -8,8 +8,8 @@ export SOURCE_INTEL_SYCL=source_oneapi_sycl_pythonenv
 export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
-#export TELOS=TRUE
-export DEMOS=TRUE
+export TELOS=TRUE
+#export DEMOS=TRUE
 #export KOS=TRUE
 
 #<<COMMENT
