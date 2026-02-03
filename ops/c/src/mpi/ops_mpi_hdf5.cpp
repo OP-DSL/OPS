@@ -1592,7 +1592,7 @@ void ops_read_dat_hdf5(ops_dat dat) {
 void ops_dump_to_hdf5(char const *file_name) {
   ops_dat_entry *item;
   for (int n = 0; n < OPS_instance::getOPSInstance()->OPS_block_index; n++) {
-    printf("Dumping block %15s to HDF5 file %s\n",
+    ops_printf("Dumping block %15s to HDF5 file %s\n",
            OPS_instance::getOPSInstance()->OPS_block_list[n].block->name,
            file_name);
     ops_fetch_block_hdf5_file(
@@ -1600,23 +1600,23 @@ void ops_dump_to_hdf5(char const *file_name) {
   }
 
   TAILQ_FOREACH(item, &OPS_instance::getOPSInstance()->OPS_dat_list, entries) {
-    printf("Dumping dat %15s to HDF5 file %s\n", (item->dat)->name, file_name);
+    ops_printf("Dumping dat %15s to HDF5 file %s\n", (item->dat)->name, file_name);
     if (item->dat->e_dat !=
         1) // currently cannot write edge dats .. need to fix this
       ops_fetch_dat_hdf5_file(item->dat, file_name);
   }
 
   for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_stencil_index; i++) {
-    printf("Dumping stencil %15s to HDF5 file %s\n",
+    ops_printf("Dumping stencil %15s to HDF5 file %s\n",
            OPS_instance::getOPSInstance()->OPS_stencil_list[i]->name,
            file_name);
     ops_fetch_stencil_hdf5_file(
         OPS_instance::getOPSInstance()->OPS_stencil_list[i], file_name);
   }
 
-  printf("halo index = %d \n", OPS_instance::getOPSInstance()->OPS_halo_index);
+  ops_printf("halo index = %d \n", OPS_instance::getOPSInstance()->OPS_halo_index);
   for (int i = 0; i < OPS_instance::getOPSInstance()->OPS_halo_index; i++) {
-    printf("Dumping halo %15s--%15s to HDF5 file %s\n",
+    ops_printf("Dumping halo %15s--%15s to HDF5 file %s\n",
            OPS_instance::getOPSInstance()->OPS_halo_list[i]->from->name,
            OPS_instance::getOPSInstance()->OPS_halo_list[i]->to->name,
            file_name);
