@@ -46,7 +46,7 @@
 #include <algorithm>
 
 #define AGGREGATE
-int ops_buffer_size = 0;
+size_t ops_buffer_size = 0;
 char *ops_buffer_send_1 = NULL;
 char *ops_buffer_recv_1 = NULL;
 char *ops_buffer_send_2 = NULL;
@@ -887,8 +887,10 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
           // Sanity check - we can only do reductions on lowdim data if the previous access was inc, max, or min
           if (!(edat_prev_acc[args[i].dat->index] == OPS_INC ||
                 edat_prev_acc[args[i].dat->index] == OPS_MAX ||
-                edat_prev_acc[args[i].dat->index] == OPS_MIN)) {
-            throw OPSException(OPS_RUNTIME_ERROR, "Error: lowdim data is read and the previous access was not read, inc, max, or min");
+                edat_prev_acc[args[i].dat->index] == OPS_MIN ||
+                edat_prev_acc[args[i].dat->index] == OPS_WRITE ||
+                edat_prev_acc[args[i].dat->index] == OPS_RW)) {
+            throw OPSException(OPS_RUNTIME_ERROR, "Error: lowdim data is read and the previous access was not write, inc, max, or min");
           }
           if (OPS_instance::getOPSInstance()->OPS_diags > 3)
           printf("Process %d: READ after reduction, on %s, doing reduction\n", ops_my_global_rank, args[i].dat->name);
@@ -1750,8 +1752,17 @@ void ops_set_halo_dirtybit3_tiled(ops_arg *arg, int *iter_range, int *left_bound
                            sd->decomp_disp[dim] - MAX_DEPTH + 1, sd->decomp_disp[dim]);
   }
 
-  int left_bnd_beg[ndim]={0}, left_bnd_end[ndim]={0}, left_halo_beg[ndim]={0}, left_halo_end[ndim]={0};
-  int right_bnd_beg[ndim]={0}, right_bnd_end[ndim]={0}, right_halo_beg[ndim]={0}, right_halo_end[ndim]={0};
+  int left_bnd_beg[ndim], left_bnd_end[ndim], left_halo_beg[ndim], left_halo_end[ndim];
+  int right_bnd_beg[ndim], right_bnd_end[ndim], right_halo_beg[ndim], right_halo_end[ndim];
+
+  memset(left_bnd_beg, 0, ndim*sizeof(int));
+  memset(left_bnd_end, 0, ndim*sizeof(int));
+  memset(left_halo_beg, 0, ndim*sizeof(int));
+  memset(left_halo_end, 0, ndim*sizeof(int));
+  memset(right_bnd_beg, 0, ndim*sizeof(int));
+  memset(right_bnd_end, 0, ndim*sizeof(int));
+  memset(right_halo_beg, 0, ndim*sizeof(int));
+  memset(right_halo_end, 0, ndim*sizeof(int));
 
   for (int dim = 0; dim < ndim; dim++) {
     int other_dims = 1;
