@@ -60,6 +60,8 @@ inline int omp_get_max_threads() {
 #include <vector>
 using namespace std;
 
+int ops_loop_count = 0;
+
 /////////////////////////////////////////////////////////////////////////
 // Data structures
 /////////////////////////////////////////////////////////////////////////
@@ -102,6 +104,8 @@ public:
 
   // dimensionality of blocks used throughout
   int ops_dims_tiling_internal;
+
+  int executing = 0;
 
 };
 #define TILE4D -1
@@ -210,9 +214,14 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
   if (lowdim_treatment)
     ops_execute(instance);
 
-  if (instance->ops_enable_tiling && !lowdim_treatment)
+  if (instance->ops_enable_tiling && !lowdim_treatment) {
     ops_kernel_list.push_back(desc);
-  else {
+    if (ops_loop_count + ops_kernel_list.size() == (1925+50) || 
+        ops_loop_count + ops_kernel_list.size() == (1925+75) ||
+        ops_loop_count + ops_kernel_list.size() == (1925+95) || ops_loop_count + ops_kernel_list.size() == (1925+100)) {
+      ops_execute(instance);
+    }
+  } else {
     //Prepare the local execution ranges
     int start[OPS_MAX_DIM]={0}, end[OPS_MAX_DIM]={1}, arg_idx[OPS_MAX_DIM];
     if (compute_ranges(desc->args, desc->nargs,desc->block, desc->range, start, end, arg_idx) < 0) return;
@@ -272,6 +281,14 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     desc->orig_range = nullptr;
     ops_free(desc);
     desc = nullptr;
+
+    ops_loop_count++;
+    if (instance->OPS_diags > 2 && (ops_loop_count == (1925+50) 
+               || ops_loop_count == (1925+75) || ops_loop_count == (1925+95) || ops_loop_count == (1925+100))) {
+      std::string filename = "dump_" + std::to_string(ops_loop_count) + ".h5";
+      ops_dump_to_hdf5(filename.c_str());
+      if (ops_loop_count >= (1925+75)) exit(0);
+    }
   }
 }
 
@@ -1253,8 +1270,10 @@ void ops_execute(OPS_instance *instance) {
   if (!instance->ops_enable_tiling) return;
   if (instance->tiling_instance == NULL)
     instance->tiling_instance = new OPS_instance_tiling();
-  if (ops_kernel_list.size() == 0)
+  if (ops_kernel_list.size() == 0 || instance->tiling_instance->executing == 1)
     return;
+
+  instance->tiling_instance->executing = 1;
 
   // Try to find an existing tiling plan for this sequence of loops which is
   // 
@@ -1396,8 +1415,17 @@ void ops_execute(OPS_instance *instance) {
     ops_free(ops_kernel_list[i]);
     ops_kernel_list[i] = nullptr;
   }
+
+  ops_loop_count+=ops_kernel_list.size();
+  if (instance->OPS_diags > 2 && ops_loop_count >= 1925) {
+    std::string filename = "dump_" + std::to_string(ops_loop_count) + ".h5";
+    ops_dump_to_hdf5(filename.c_str());
+    if (ops_loop_count >= (1925+75)) exit(0);
+  }
+  
   ops_kernel_list.clear();
 
+  instance->tiling_instance->executing = 0;
 }
 
 void create_kerneldesc_and_enque(char const* kernel_name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc))
