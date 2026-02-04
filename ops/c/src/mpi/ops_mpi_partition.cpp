@@ -42,7 +42,7 @@
 #include <ops_mpi_core.h>
 #include <ops_exceptions.h>
 
-extern int ops_buffer_size;
+extern size_t ops_buffer_size;
 extern char *ops_buffer_send_1;
 extern char *ops_buffer_recv_1;
 extern char *ops_buffer_send_2;
@@ -1001,6 +1001,9 @@ void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::s
   int size_depth = OPS_instance::getOPSInstance()->ops_tiling_mpidepth>0 ? OPS_instance::getOPSInstance()->ops_tiling_mpidepth : 5;
   ops_buffer_size = 8 * 8 * size_depth *
                     pow(2 * size_depth + max_block_dim, max_block_dims - 1);
+
+  std::cout<<"size_depth: "<<size_depth<<"  ops_buffer_size: "<<ops_buffer_size<<std::endl;
+
   ops_buffer_send_1=OPS_realloc_fast(ops_buffer_send_1, 0, ops_buffer_size * sizeof(char));
   ops_buffer_recv_1=OPS_realloc_fast(ops_buffer_recv_1, 0, ops_buffer_size * sizeof(char));
   ops_buffer_send_2=OPS_realloc_fast(ops_buffer_send_2, 0, ops_buffer_size * sizeof(char));
@@ -1010,6 +1013,8 @@ void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::s
   ops_buffer_send_2_size = ops_buffer_size;
   ops_buffer_recv_2_size = ops_buffer_size;
 
+  ops_printf("Allocated send and recv buffers\n");
+
   OPS_mpi_halo_list =
       (ops_mpi_halo *)ops_calloc(OPS_instance::getOPSInstance()->OPS_halo_index , sizeof(ops_mpi_halo));
   OPS_mpi_halo_group_list = (ops_mpi_halo_group *)ops_calloc(
@@ -1017,6 +1022,7 @@ void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::s
   ops_partition_halos(processes, proc_offsets, proc_disps, proc_sizes,
                       proc_dimsplit);
 
+  ops_printf("Allocated OPS MPI Halos\n");
 
   ops_free(processes);
   ops_free(proc_offsets);
