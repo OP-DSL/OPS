@@ -84,7 +84,7 @@ cd ../apps/fortran/shsgc
 #./test.sh #-- +tiled versions break at runtime
 echo "~~~~~~~~~~~~~~~poisson Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../poisson 
-#./test.sh #-- breaks due to some power measurement stuff
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim
 #./test.sh #-- works
