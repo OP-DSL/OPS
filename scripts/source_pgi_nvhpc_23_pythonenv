@@ -7,7 +7,7 @@ unset LD_LIBRARY_PATH
 module purge
 . ~/.bashrc
 export PATH=/rr-home/gihan/numawrap:$PATH
-module load cmake/3.20.1
+#module load cmake/3.20.1
 
 #OPS specifics
 export OPS_COMPILER=pgi
@@ -20,11 +20,11 @@ export OP_AUTO_SOA=1
 module load python/3.9.7
 
 #Uncomment the following to test/reinstall the environment setup for the code-gen
-cd  $OPS_INSTALL_PATH/../ops_translator/
-rm -rf ./ops_venv
-. setup_venv.sh
-cd -
-module load python/3.9.7
+#cd  $OPS_INSTALL_PATH/../ops_translator/
+#rm -rf ./ops_venv
+#. setup_venv.sh
+#cd -
+#module load python/3.9.7
 source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
 
 #PGI/NVIDIA MPI and Compilers
