@@ -51,10 +51,10 @@ char *ops_buffer_send_1 = NULL;
 char *ops_buffer_recv_1 = NULL;
 char *ops_buffer_send_2 = NULL;
 char *ops_buffer_recv_2 = NULL;
-int ops_buffer_send_1_size = 0;
-int ops_buffer_recv_1_size = 0;
-int ops_buffer_send_2_size = 0;
-int ops_buffer_recv_2_size = 0;
+size_t ops_buffer_send_1_size = 0;
+size_t ops_buffer_recv_1_size = 0;
+size_t ops_buffer_send_2_size = 0;
+size_t ops_buffer_recv_2_size = 0;
 int *mpi_neigh_size = NULL;
 
 extern double ops_gather_time;
@@ -164,7 +164,7 @@ int ops_compute_intersections(ops_dat dat, int d_pos, int d_neg,
 }
 void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
                               int *iter_range, int dim,
-                              int *send_recv_offsets) {
+                              size_t *send_recv_offsets) {
   sub_block_list sb = OPS_sub_block_list[dat->block->index];
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
 
@@ -229,9 +229,9 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
   }
 
   // Compute size of packed data
-  int send_size = sd->halos[MAX_DEPTH * dim + actual_depth_send].blocklength *
+  size_t send_size = sd->halos[MAX_DEPTH * dim + actual_depth_send].blocklength *
                   sd->halos[MAX_DEPTH * dim + actual_depth_send].count * dat->dim;
-  int recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
+  size_t recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
                   sd->halos[MAX_DEPTH * dim + actual_depth_recv].count * dat->dim;
 
   if (send_recv_offsets[0] + send_size > ops_buffer_send_1_size) {
@@ -348,7 +348,7 @@ void ops_exchange_halo_packer(ops_dat dat, int d_pos, int d_neg,
 }
 
 void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
-                              int *send_recv_offsets) {
+                              size_t *send_recv_offsets) {
   sub_block_list sb = OPS_sub_block_list[dat->block->index];
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
 
@@ -430,9 +430,9 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
   }
 
   // Compute size of packed data
-  int send_size = sd->halos[MAX_DEPTH * dim + actual_depth_send].blocklength *
+  size_t send_size = sd->halos[MAX_DEPTH * dim + actual_depth_send].blocklength *
                   sd->halos[MAX_DEPTH * dim + actual_depth_send].count * dat->dim;
-  int recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
+  size_t recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
                   sd->halos[MAX_DEPTH * dim + actual_depth_recv].count * dat->dim;
 
   if (send_recv_offsets[0] + send_size > ops_buffer_send_1_size) {
@@ -545,7 +545,7 @@ void ops_exchange_halo_packer_given(ops_dat dat, int *depths, int dim,
 
 void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg,
                                 int *iter_range, int dim,
-                                int *send_recv_offsets) {
+                                size_t *send_recv_offsets) {
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
   int left_recv_depth = 0;
   int right_recv_depth = 0;
@@ -576,7 +576,7 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg,
   int i4 = (prod[dim] / prod[dim - 1] - (d_p[dim])) * prod[dim - 1];
 
   // Compute size of packed data
-  int recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
+  size_t recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
                   sd->halos[MAX_DEPTH * dim + actual_depth_recv].count * dat->dim;
 
   // Unpack data
@@ -619,7 +619,7 @@ void ops_exchange_halo_unpacker(ops_dat dat, int d_pos, int d_neg,
 
 
 void ops_exchange_halo_unpacker_given(ops_dat dat, int *depths, int dim,
-                              int *send_recv_offsets) {
+                              size_t *send_recv_offsets) {
   sub_block_list sb = OPS_sub_block_list[dat->block->index];
   sub_dat_list sd = OPS_sub_dat_list[dat->index];
   int left_recv_depth = depths[1];
@@ -650,7 +650,7 @@ void ops_exchange_halo_unpacker_given(ops_dat dat, int *depths, int dim,
   int i4 = (prod[dim] / prod[dim - 1] - (d_p[dim])) * prod[dim - 1];
 
   // Compute size of packed data
-  int recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
+  size_t recv_size = sd->halos[MAX_DEPTH * dim + actual_depth_recv].blocklength *
                   sd->halos[MAX_DEPTH * dim + actual_depth_recv].count * dat->dim;
 
   // Unpack data
@@ -833,10 +833,9 @@ void ops_check_lowdim_update(ops_dat dat) {
 }
 
 void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
-  double c,t1,t2;
   // printf("*************** range[i] %d %d %d %d\n",range[0],range[1],range[2],
   // range[3]);
-  int send_recv_offsets[4]; //{send_1, recv_1, send_2, recv_2}, for the two
+  size_t send_recv_offsets[4]; //{send_1, recv_1, send_2, recv_2}, for the two
                             // directions, negative then positive
   MPI_Comm comm = MPI_COMM_NULL;
 
@@ -1189,7 +1188,7 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
 
 void ops_halo_exchanges_datlist(ops_dat *dats, int ndats, int *depths) {
   // double c1,c2,t1,t2;
-  int send_recv_offsets[4]; //{send_1, recv_1, send_2, recv_2}, for the two
+  size_t send_recv_offsets[4]; //{send_1, recv_1, send_2, recv_2}, for the two
                             // directions, negative then positive
   MPI_Comm comm = MPI_COMM_NULL;
 

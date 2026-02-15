@@ -47,10 +47,10 @@ extern char *ops_buffer_send_1;
 extern char *ops_buffer_recv_1;
 extern char *ops_buffer_send_2;
 extern char *ops_buffer_recv_2;
-extern int ops_buffer_send_1_size;
-extern int ops_buffer_recv_1_size;
-extern int ops_buffer_send_2_size;
-extern int ops_buffer_recv_2_size;
+extern size_t ops_buffer_send_1_size;
+extern size_t ops_buffer_recv_1_size;
+extern size_t ops_buffer_send_2_size;
+extern size_t ops_buffer_recv_2_size;
 extern int *mpi_neigh_size;
 extern char *OPS_checkpointing_dup_buffer;
 
@@ -911,7 +911,7 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
         (mpi_group->num_neighbors_send + mpi_group->num_neighbors_recv) ,
         sizeof(MPI_Status));
 
-    int total_size = 0;
+    size_t total_size = 0;
     int k = 0;
     for (int j = 0; j < ops_comm_global_size; ++j) {
       if (neighbor_array_send[j] > 0) {
@@ -921,10 +921,11 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
         k++;
       }
     }
-    if (ops_buffer_send_1_size < total_size)
+    if (ops_buffer_send_1_size < total_size) {
       ops_buffer_send_1 = OPS_realloc_fast(ops_buffer_send_1,
-                       ops_buffer_send_1_size,
-		       total_size * sizeof(char));
+                                           ops_buffer_send_1_size,
+                                           total_size * sizeof(char));
+    }
 
     k = 0;
     total_size = 0;
@@ -936,10 +937,11 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
         k++;
       }
     }
-    if (ops_buffer_recv_1_size < total_size)
+    if (ops_buffer_recv_1_size < total_size) {
       ops_buffer_recv_1 = OPS_realloc_fast(ops_buffer_recv_1,
-                       ops_buffer_recv_1_size,
-		       total_size * sizeof(char));
+                                           ops_buffer_recv_1_size,
+                                           total_size * sizeof(char));
+    }
   }
   mpi_neigh_size = (int *)ops_malloc(max_neigh * sizeof(int));
   ops_free(neighbor_array_recv);
