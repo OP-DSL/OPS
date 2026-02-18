@@ -8,15 +8,11 @@ export OPS_INSTALL_PATH=$HOME/OPS/ops
 module purge
 
 # Compiler
-module load cpe/25.03
 module load PrgEnv-cray
-module load craype-accel-amd-gfx90a
-module load craype-x86-milan
-module load rocm/6.3.4
-module load craype/2.7.35
+module load cpe/24.03
 
 # CRAY CPU TARGET
-export CRAY_CPU_TARGET=x86-milan
+export CRAY_CPU_TARGET=x86-64
 
 # MPI setting
 export MPI_INSTALL_PATH=$CRAY_MPICH_DIR
@@ -27,16 +23,6 @@ export MPICPP=CC
 export MPICXX=CC
 export MPIFC=ftn
 export MPIF90=ftn
-
-export MPICH_GPU_SUPPORT_ENABLED=1
-
-# HIP
-export AMD_ARCH=MI200
-
-export ROCM_PATH=/opt/rocm-6.0.3
-export LD_LIBRARY_PATH=$ROCM_PATH/llvm/lib:$LD_LIBRARY_PATH
-export HIP_INSTALL_PATH=$ROCM_PATH
-export AOMP=$ROCM_PATH/llvm
 
 # HDF5
 module load cray-hdf5-parallel/1.12.2.11
