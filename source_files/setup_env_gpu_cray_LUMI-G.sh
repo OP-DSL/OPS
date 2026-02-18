@@ -33,7 +33,7 @@ export MPICH_GPU_SUPPORT_ENABLED=1
 # HIP
 export AMD_ARCH=MI200
 
-export ROCM_PATH=/opt/rocm-6.0.3
+export ROCM_PATH=/opt/rocm-6.3.4
 export LD_LIBRARY_PATH=$ROCM_PATH/llvm/lib:$LD_LIBRARY_PATH
 export HIP_INSTALL_PATH=$ROCM_PATH
 export AOMP=$ROCM_PATH/llvm
@@ -46,5 +46,5 @@ export HDF5_INSTALL_PATH=/opt/cray/pe/hdf5-parallel/1.12.2.11/crayclang/17.0/inc
 export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
 
 # Python
-module load cray-python/3.10.10
+module load cray-python/3.11.7
 source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
