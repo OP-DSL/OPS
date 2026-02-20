@@ -18,9 +18,9 @@ int main(int argc, const char** argv)
   ops_init(argc, argv,2);
 
   //Size along y
-  jmax = 4094*2;
+  jmax = 4094;//*2;
   //Size along x
-  imax = 4094*2;
+  imax = 4094;//*2;
   int iter_max = 100;
 
   const double tol = 1.0e-6;
