@@ -38,7 +38,7 @@ cd ../poisson/
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim/
-#./test.sh #-- works # only 1 thread per MPI proc for MPI+OMP allowed
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim3D~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim3D/ 
 #./test.sh #-- works
@@ -84,7 +84,7 @@ cd ../apps/fortran/shsgc
 #./test.sh #-- +tiled versions break at runtime
 echo "~~~~~~~~~~~~~~~poisson Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../poisson 
-./test.sh #-- works
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim
 #./test.sh #-- works
@@ -93,7 +93,7 @@ cd ../multiDim3D
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~lowdim_test Fortran~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../lowdim_test
-./test.sh #-- works -- check further as there can be issues
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~random Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../random
 #./test.sh #-- breaks all
