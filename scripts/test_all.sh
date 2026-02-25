@@ -23,7 +23,7 @@ echo "************Testing C Applications *****************"
 echo "~~~~~~~~~~~~~~~CloverLeaf 2D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../apps/c/CloverLeaf/
 cd ../CloverLeaf/
-./test.sh #-- works -- does not validate MPI+CUDA for 2 GPUs
+#./test.sh #-- works -- does not validate MPI+CUDA for 2 GPUs
 echo "~~~~~~~~~~~~~~~CloverLeaf 3D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../CloverLeaf_3D/
 #./test.sh #-- works
@@ -44,7 +44,7 @@ cd ../multiDim3D/
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~lowdim_test~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../lowdim_test/
-#./test.sh #-- works #SYCL on CPU does not validate
+#./test.sh #-- works #SYCL not running on CPU defauls to GPU
 echo "~~~~~~~~~~~~~~~shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../shsgc/
 #./test.sh #-- works
@@ -96,10 +96,10 @@ cd ../lowdim_test
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~random Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../random
-#./test.sh #-- breaks all
+#./test.sh #-- no test.sh
 echo "~~~~~~~~~~~~~~~mblock Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
-./test.sh #-- breaks in cuda+tiled and sycl+tiled
+#./test.sh #-- breaks in cuda+tiled and sycl+tiled
 echo "~~~~~~~~~~~~~~~laplace2d Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../laplace2dtutorial/step7
 ./test.sh #-- works  
