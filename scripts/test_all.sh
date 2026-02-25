@@ -23,7 +23,7 @@ echo "************Testing C Applications *****************"
 echo "~~~~~~~~~~~~~~~CloverLeaf 2D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../apps/c/CloverLeaf/
 cd ../CloverLeaf/
-#./test.sh #-- works -- does not validate MPI+CUDA for 2 GPUs
+./test.sh #-- works -- does not validate MPI+CUDA for 2 GPUs
 echo "~~~~~~~~~~~~~~~CloverLeaf 3D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../CloverLeaf_3D/
 #./test.sh #-- works
@@ -81,7 +81,7 @@ echo "************Testing Fortran Applications *****************"
 cd $OPS_INSTALL_PATH
 echo "~~~~~~~~~~~~~~~shsgc Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../apps/fortran/shsgc
-#./test.sh #-- +tiled versions break at runtime
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~poisson Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../poisson 
 #./test.sh #-- works
@@ -99,7 +99,7 @@ cd ../random
 #./test.sh #-- breaks all
 echo "~~~~~~~~~~~~~~~mblock Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
-#./test.sh #-- breaks in cuda+tiled and sycl+tiled
+./test.sh #-- breaks in cuda+tiled and sycl+tiled
 echo "~~~~~~~~~~~~~~~laplace2d Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../laplace2dtutorial/step7
 ./test.sh #-- works  

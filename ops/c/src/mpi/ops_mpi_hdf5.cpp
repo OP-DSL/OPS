@@ -425,10 +425,10 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     int g_size[block->dims]; // global size of the dat attribute to write to
     // hdf5 file
     int g_d_m[block->dims]; // global size of the block halo (-) depth
-                            // attribute
+                // attribute
     // to write to hdf5 file
     int g_d_p[block->dims]; // global size of the block halo (+) depth
-                            // attribute
+                // attribute
     // to write to hdf5 file
 
     hsize_t count[block->dims];  // parameters for for hdf5 file chuck writing

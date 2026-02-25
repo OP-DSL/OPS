@@ -108,7 +108,8 @@ typedef std::complex<float> complexf;
 typedef __half half;
 //#elif defined(__SYCL_DEVICE_ONLY__)
 #elif defined(__INTEL_SYCL__)
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
+namespace cl { namespace sycl = ::sycl; }
 typedef sycl::half half;
 #elif defined(__STDCPP_FLOAT16_T__) || defined(FLT16_MIN)
 typedef _Float16 half;
@@ -314,7 +315,7 @@ class ops_dat_core {
 
 
   // Default constructor zeros out all data in the struct
-  ops_dat_core() { memset(this, 0, sizeof(ops_dat_core)); }
+  ops_dat_core() { memset((void*)this, 0, sizeof(ops_dat_core)); }
   ~ops_dat_core();
 
 
