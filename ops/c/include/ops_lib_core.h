@@ -1397,6 +1397,14 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMax(&operator()(xoff), val);
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff));
+    T old = aref.load();
+    while (old < val && !aref.compare_exchange_weak(old, val)) {}
     #else
     #pragma omp critical
     operator()(xoff) = std::max(operator()(xoff), val);
@@ -1410,6 +1418,14 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMin(&operator()(xoff), val);
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff));
+    T old = aref.load();
+    while (old > val && !aref.compare_exchange_weak(old, val)) {}
     #else
     #pragma omp critical
     operator()(xoff) = std::min(operator()(xoff), val);
@@ -1423,6 +1439,13 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicAdd(&operator()(xoff), val);
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff));
+    aref.fetch_add(val);
     #else
     #pragma omp critical
     operator()(xoff) += val;
@@ -1472,6 +1495,14 @@ public:
 
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMax(&operator()(xoff, yoff), val);
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff));
+    T old = aref.load();
+    while (old < val && !aref.compare_exchange_weak(old, val)) {}
     #else
     #pragma omp critical
     operator()(xoff, yoff) = std::max(operator()(xoff, yoff), val);
@@ -1485,6 +1516,14 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMin(&operator()(xoff, yoff), val);
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff));
+    T old = aref.load();
+    while (old > val && !aref.compare_exchange_weak(old, val)) {}
     #else
     #pragma omp critical
     operator()(xoff, yoff) = std::min(operator()(xoff, yoff), val);
@@ -1498,6 +1537,13 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicAdd(&operator()(xoff, yoff), val);
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff));
+    aref.fetch_add(val);
     #else
     #pragma omp critical
     operator()(xoff, yoff) += val;
@@ -1548,6 +1594,14 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMax(&operator()(xoff, yoff, zoff), val);
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff, zoff));
+    T old = aref.load();
+    while (old < val && !aref.compare_exchange_weak(old, val)) {}
     #else
     #pragma omp critical
     operator()(xoff, yoff, zoff) = std::max(operator()(xoff, yoff, zoff), val);
@@ -1561,6 +1615,14 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMin(&operator()(xoff, yoff, zoff), val);
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff, zoff));
+    T old = aref.load();
+    while (old > val && !aref.compare_exchange_weak(old, val)) {}
     #else
     #pragma omp critical
     operator()(xoff, yoff, zoff) = std::min(operator()(xoff, yoff, zoff), val);
@@ -1574,6 +1636,13 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicAdd(&operator()(xoff, yoff, zoff), val);
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff, zoff));
+    aref.fetch_add(val);
     #else
     #pragma omp critical
     operator()(xoff, yoff, zoff) += val;
@@ -1624,6 +1693,14 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMax(&operator()(xoff, yoff, zoff, uoff), val);
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff, zoff, uoff));
+    T old = aref.load();
+    while (old < val && !aref.compare_exchange_weak(old, val)) {}
     #else
     #pragma omp critical
     operator()(xoff, yoff, zoff, uoff) = std::max(operator()(xoff, yoff, zoff, uoff), val);
@@ -1637,6 +1714,14 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMin(&operator()(xoff, yoff, zoff, uoff), val);
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff, zoff, uoff));
+    T old = aref.load();
+    while (old > val && !aref.compare_exchange_weak(old, val)) {}
     #else
     #pragma omp critical
     operator()(xoff, yoff, zoff, uoff) = std::min(operator()(xoff, yoff, zoff, uoff), val);
@@ -1650,6 +1735,13 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicAdd(&operator()(xoff, yoff, zoff, uoff), val);
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff, zoff, uoff));
+    aref.fetch_add(val);
     #else
     #pragma omp critical
     operator()(xoff, yoff, zoff, uoff) += val;

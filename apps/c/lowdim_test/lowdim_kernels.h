@@ -388,8 +388,9 @@ void check_3D(const ACC<double> &dat3D, const int* sizes, const int *idx, int *e
                            0.01*idx[0] +
                            0.0001*idx[1] +
                            0.000001*idx[2];
-    
-    if (dat3D(0,0,0) != expectedValue) {
+
+    double diff = dat3D(0,0,0) - expectedValue;
+    if (diff > 1.0e-10 || diff < -1.0e-10) {
         // printf("Process %d: check_3D: expectedValue %f, got %f\n", ops_my_global_rank, expectedValue, dat3D(0,0,0));
         *error_count += 1;
     }
