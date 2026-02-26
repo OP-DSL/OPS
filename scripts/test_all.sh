@@ -44,7 +44,7 @@ cd ../multiDim3D/
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~lowdim_test~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../lowdim_test/
-#./test.sh #-- works #SYCL not running on CPU defauls to GPU
+#./test.sh #-- works 
 echo "~~~~~~~~~~~~~~~shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../shsgc/
 #./test.sh #-- works
@@ -65,7 +65,7 @@ cd ../adi_burger_3D
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~mgrid~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mgrid
-#./test.sh #-- SYCL does not validate 
+#./test.sh #-- MPI SYCL tiled does not validate 
 echo "~~~~~~~~~~~~~~~mblock~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
 #./test.sh #- works
@@ -99,7 +99,7 @@ cd ../random
 #./test.sh #-- no test.sh
 echo "~~~~~~~~~~~~~~~mblock Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
-#./test.sh #-- breaks in cuda+tiled and sycl+tiled
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~laplace2d Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../laplace2dtutorial/step7
 ./test.sh #-- works  
