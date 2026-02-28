@@ -12,10 +12,16 @@ This directory contains a suite of scientific mini-applications and benchmarks p
 
 ## Main Applications
 
+
 ### CloverLeaf (2D & 3D)
 - **Location:** `apps/c/CloverLeaf`, `apps/c/CloverLeaf_3D`, `apps/c/CloverLeaf_3D_HDF5`
 - **Purpose:** Solves the compressible Euler equations for hydrodynamics in 2D/3D using explicit, second-order methods. Used for benchmarking and performance studies. See the [original CloverLeaf project](https://uk-mac.github.io/) for more details.
 - **Features:** Demonstrates all OPS backends, including MPI, OpenMP, CUDA, OpenCL, OpenACC, SYCL, and their combinations. The HDF5 variant tests file I/O.
+
+### Poisson
+- **Location:** `apps/c/poisson`
+- **Purpose:** Solves the Poisson equation using iterative methods (e.g., Jacobi, Gauss-Seidel). Demonstrates OPS support for stencil computations and iterative solvers in C.
+- **Features:** Supports all major OPS backends and demonstrates iterative solver patterns.
 
 ### TeaLeaf
 - **Location:** `apps/c/TeaLeaf`
@@ -26,6 +32,12 @@ This directory contains a suite of scientific mini-applications and benchmarks p
 
 - **Location:** `apps/c/adi`
 - **Purpose:** Demonstrates the ADI method for solving parabolic PDEs. Useful for testing OPS with implicit time-stepping and tridiagonal solvers. See the [original ADI/tridsolver project](https://github.com/OP-DSL/tridsolver) for more details.
+ - **Features:** Showcases the tridiagonal solver for available OPS backends (e.g., OpenMP, CUDA, MPI, etc.).
+
+## Laplace2D Tutorial (C)
+- **Location:** `apps/c/laplace2d_tutorial`
+- **Purpose:** Simple 2D Laplace equation solver in C. Serves as a tutorial for new OPS users, especially in C.
+- **Features:** Supports all major OPS backends and demonstrates iterative solver patterns.
 
 ## Additional C Applications
 
@@ -34,7 +46,6 @@ This directory contains a suite of scientific mini-applications and benchmarks p
 - **complex / complex_numbers**: Demonstrates OPS support for complex data types and operations.
 - **halfprecision**: Tests half-precision floating point support in OPS.
 - **hdf5_slice**: Example of HDF5 file I/O and slicing.
-- **laplace2d_tutorial**: Another Laplace equation tutorial in C.
 - **mb_shsgc / mb_trid_test / mblock / mblock4D**: Multi-block and multi-dimensional domain decomposition and tridiagonal solver tests.
 - **mgrid**: Multi-grid solver example.
 - **multiDim / multiDim3D / multiDim_HDF5**: Multi-dimensional stencils and reductions, including HDF5 I/O.
@@ -55,11 +66,11 @@ This directory contains a suite of scientific mini-applications and benchmarks p
 - **random**: Random number generation in Fortran with OPS.
 - **shsgc**: Scientific kernel or benchmark (details TBD).
 - **mathtest**: Mathematical function and operation tests (details TBD).
-- **Purpose:** Solves the Poisson equation using iterative methods. Available in both C and Fortran, showing OPS support for multiple languages.
 
 ### Laplace2D Tutorial
 - **Location:** `apps/fortran/laplace2dtutorial`
 - **Purpose:** Simple 2D Laplace equation solver. Serves as a tutorial for new OPS users, especially in Fortran.
+- **Features:** Supports all major OPS backends and demonstrates iterative solver patterns.
 
 ## Adding New Applications
 
