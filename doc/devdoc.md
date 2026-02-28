@@ -11,15 +11,15 @@ OPS consists of two main components:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        User Application                             │
+│                         User Application                            │
 │                    (ops_par_loop calls + kernels)                   │
 └─────────────────────────────────────────────────────────────────────┘
                                   │
                                   ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                      Code Generator (ops_translator)                │
+│                     Code Generator (ops_translator)                 │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────────┐  │
-│  │   Parser    │───▶│   Scheme    │───▶│  Jinja2 Templates       │  │
+│  │   Parser    │───>│   Scheme    │───>│   Jinja2 Templates      │  │
 │  │ (libclang/  │    │  (target    │    │  (loop_host, master_    │  │
 │  │  fparser2)  │    │   logic)    │    │   kernel, etc.)         │  │
 │  └─────────────┘    └─────────────┘    └─────────────────────────┘  │
@@ -27,15 +27,15 @@ OPS consists of two main components:
                                   │
                                   ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                    Generated Parallel Code                          │
-│       (CUDA, HIP, SYCL, OpenMP, OpenMP Offload + MPI variants)      │
+│                       Generated Parallel Code                       │
+│      (CUDA, HIP, SYCL, OpenMP, OpenMP Offload + MPI variants)       │
 └─────────────────────────────────────────────────────────────────────┘
                                   │
                                   ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                      Runtime Library (ops/c/src/)                   │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐             │
-│  │   core/  │  │   cuda/  │  │   sycl/  │  │   mpi/   │   ...       │
+│  │  core/   │  │  cuda/   │  │  sycl/   │  │   mpi/   │    ...      │
 │  └──────────┘  └──────────┘  └──────────┘  └──────────┘             │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -314,6 +314,8 @@ For an application named `APP`, the following targets are generated:
 | `$(APP)_mpi_sycl`    | MPI + SYCL                          |
 | `$(APP)_hip`         | HIP single GPU                      |
 | `$(APP)_mpi_hip`     | MPI + HIP                           |
+| `$(APP)_ompoffload`  | OpenMP Offload single GPU           |
+| `$(APP)_mpi_ompoffload` | MPI + OpenMP Offload             |
 
 ---
 
