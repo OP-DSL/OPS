@@ -34,7 +34,7 @@ This directory contains a suite of scientific mini-applications and benchmarks p
 - **Purpose:** Demonstrates the ADI method for solving parabolic PDEs. Useful for testing OPS with implicit time-stepping and tridiagonal solvers. See the [original ADI/tridsolver project](https://github.com/OP-DSL/tridsolver) for more details.
  - **Features:** Showcases the tridiagonal solver for available OPS backends (e.g., OpenMP, CUDA, MPI, etc.).
 
-## Laplace2D Tutorial (C)
+### Laplace2D Tutorial (C)
 - **Location:** `apps/c/laplace2d_tutorial`
 - **Purpose:** Simple 2D Laplace equation solver in C. Serves as a tutorial for new OPS users, especially in C.
 - **Features:** Supports all major OPS backends and demonstrates iterative solver patterns.
