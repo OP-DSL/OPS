@@ -23,21 +23,47 @@ cd OPS
  cd ..
  ```
 
-## 3. Build a Sample Application
+
+## 3. Build Backend Libraries
+
+Before building and running applications, you must build the OPS backend libraries for your target platforms. From the OPS root directory:
+
+- For the C/C++ backend library:
+	```bash
+	cd ops/c
+	make
+	cd ../..
+	```
+- For the Fortran backend library (if needed):
+	```bash
+	cd ops/fortran
+	make
+	cd ../..
+	```
+
+Make sure your environment variables (e.g., OPS_INSTALL_PATH, CUDA_INSTALL_PATH, MPI_INSTALL_PATH) are set appropriately for your platform. See the example scripts in the `scripts/` directory for help with environment setup.
+
+## 4. Build a Sample Application
 
 Navigate to an example app, e.g. CloverLeaf:
 ```bash
 cd apps/c/CloverLeaf
-bash test.sh
+make
 ```
-This will build and run all supported parallel versions for your environment.
+This will build all available versions (sequential, MPI, OpenMP, CUDA, etc.) for your environment. To run a specific version, execute the corresponding binary. For example:
+```bash
+./cloverleaf_seq                # Run the sequential version
+mpirun -np 2 ./cloverleaf_mpi   # Run the MPI version
+./cloverleaf_cuda               # Run the CUDA version
+```
+See the Makefile in each app directory for the list of available targets and executables.
 
-## 4. Check Results
+## 5. Check Results
 
 - Output and performance logs will be generated in the app directory.
 - Check for "PASSED" in the output to confirm success.
 
-## 5. Next Steps
+## 6. Next Steps
 
 - See `doc/installation.md` for detailed installation and platform-specific setup instructions.
 - Explore other applications in `apps/c/` and `apps/fortran/`.
