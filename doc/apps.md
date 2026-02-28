@@ -1,4 +1,3 @@
-
 # OPS Example Applications
 
 This directory contains a suite of scientific mini-applications and benchmarks ported to the OPS framework. Each application demonstrates how OPS enables single-source code to be automatically parallelized for a range of backends (OpenMP, CUDA, HIP, SYCL, MPI, etc.).
