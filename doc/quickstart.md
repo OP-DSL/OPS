@@ -13,13 +13,15 @@ cd OPS
 
 - Load required modules for your system (compiler, MPI, CUDA, etc.). Consult your cluster or system documentation for details.
 - If a setup script is provided for your platform (see `source_files/`), source it. Otherwise, set environment variables (e.g., `OPS_INSTALL_PATH`, `CUDA_INSTALL_PATH`, `MPI_INSTALL_PATH`) as needed for your environment.
- You must set up a Python virtual environment, as the OPS code generator (ops_translator) is required to generate the parallelized application code. For more details, see `doc/installation.md`. To create and activate one:
-  From the OPS root directory, run:
-  ```bash
-  python3 -m venv ops_venv
-  source ops_venv/bin/activate
-  pip install -r ops_translator/requirements.txt  # requirements.txt is in ops_translator/
-  ```
+ You must set up a Python virtual environment, as the OPS code generator (ops_translator) is required to generate the parallelized application code. For more details, see `doc/installation.md`.
+ 
+ From the OPS root directory, run:
+ ```bash
+ cd ops_translator
+ . setup_venv.sh
+ source ops_venv/bin/activate
+ cd ..
+ ```
 
 ## 3. Build a Sample Application
 
