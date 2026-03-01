@@ -169,19 +169,31 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
     {% if soa_set %}
     arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}};
     {% else %}
-    arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*arg{{arg.id}}_dim;
+        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
+            arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*arg{{arg.id}}_dim;
+        {% else %}
+             arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}};
+        {% endif %}
     {% endif %}
     {% elif lh.ndim == 2 %}
     {% if soa_set %}
     arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}} + {{n_y}} * ystride_{{arg.id}} * dims_{{lh.kernel}}[{{arg.id}}][0];
     {% else %}
-    arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*arg{{arg.id}}_dim + {{n_y}} * ystride_{{arg.id}}*arg{{arg.id}}_dim * dims_{{lh.kernel}}[{{arg.id}}][0];
+        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
+            arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*arg{{arg.id}}_dim + {{n_y}} * ystride_{{arg.id}}*arg{{arg.id}}_dim * dims_{{lh.kernel}}[{{arg.id}}][0];
+        {% else %}
+            arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}} + {{n_y}} * ystride_{{arg.id}} * dims_{{lh.kernel}}[{{arg.id}}][0];
+        {% endif %}
     {% endif %}
     {% elif lh.ndim == 3 %}
     {% if soa_set %}
     arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}} + {{n_y}} * ystride_{{arg.id}} * dims_{{lh.kernel}}[{{arg.id}}][0] + {{n_z}} * zstride_{{arg.id}} * dims_{{lh.kernel}}[{{arg.id}}][0] * dims_{{lh.kernel}}[{{arg.id}}][1];
     {% else %}
-    arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*arg{{arg.id}}_dim + {{n_y}} * ystride_{{arg.id}}*arg{{arg.id}}_dim * dims_{{lh.kernel}}[{{arg.id}}][0] + {{n_z}} * zstride_{{arg.id}}*arg{{arg.id}}_dim * dims_{{lh.kernel}}[{{arg.id}}][0] * dims_{{lh.kernel}}[{{arg.id}}][1];
+        {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
+            arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*arg{{arg.id}}_dim + {{n_y}} * ystride_{{arg.id}}*arg{{arg.id}}_dim * dims_{{lh.kernel}}[{{arg.id}}][0] + {{n_z}} * zstride_{{arg.id}}*arg{{arg.id}}_dim * dims_{{lh.kernel}}[{{arg.id}}][0] * dims_{{lh.kernel}}[{{arg.id}}][1];
+        {% else %}
+            arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}} + {{n_y}} * ystride_{{arg.id}}* * dims_{{lh.kernel}}[{{arg.id}}][0] + {{n_z}} * zstride_{{arg.id}} * dims_{{lh.kernel}}[{{arg.id}}][0] * dims_{{lh.kernel}}[{{arg.id}}][1];
+        {% endif %}
     {% endif %}
     {% endif %}
     {% endif %}
@@ -198,9 +210,7 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
         {% set signature = [""] %}
-        {# {% if arg.dim > 1 %} #}
         {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
-            {# {% set current_val %}{{arg.dim}}, {% endset %}#}
             {% set current_val %}arg{{arg.id}}_dim, {% endset %}
             {% if signature.append(signature.pop() + current_val) %} {% endif %}
         {% endif %}
@@ -208,7 +218,6 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
             {% set current_val %}dims_{{lh.kernel}}[{{arg.id}}][{{i}}], {% endset %}
             {% if signature.append(signature.pop() + current_val) %} {% endif %}
         {% endfor %}
-        {# {% if arg.dim > 1 %} #}
         {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
             {% if soa_set %}
                 {% set current_val %}dims_{{lh.kernel}}[{{arg.id}}][{{lh.ndim-1}}], {% endset %}
@@ -770,7 +779,7 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
 #ifndef OPS_LAZY
     ops_set_dirtybit_device(args, {{lh.args|length}});
     {% for arg in lh.args %}
-        {% if arg is ops_dat and (arg is ops_write or arg is ops_rw or arg is ops_inc) %}
+        {% if arg is ops_dat and (arg is ops_write or arg is ops_rw or arg is ops_inc or arg is ops_max or arg is ops_min) %}
     ops_set_halo_dirtybit3(&args[{{arg.id}}], range);
         {% endif %}
     {% endfor %}

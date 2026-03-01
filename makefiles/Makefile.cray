@@ -3,7 +3,7 @@ CXX       := CC
 FC        := ftn
 
 CCFLAGS   := -O3 -std=c++17 -g -fPIC #-ffp=3 -fsanitize=undefined
-CXXFLAGS  := $(CCFLAGS) #-fopenmp
+CXXFLAGS  := $(CCFLAGS) -fopenmp
 
 FFLAGS    := -O3 -g -fopenmp -M 878 -f free
 #-M 878 will disable ftn-878 warning message - module named <name> has already been directly or indirectly use 

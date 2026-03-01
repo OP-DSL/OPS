@@ -1,6 +1,13 @@
-CC      := gcc
-CXX       := g++
-FC := gfortran
+# if using GNU programming environment on cray machine
+ifneq ($(findstring GNU,$(PE_ENV)),)
+	CC  := cc
+	CXX := CC
+	FC  := ftn
+else
+	CC  := gcc
+	CXX := g++
+	FC  := gfortran
+endif
 
 ifdef DEBUG
 	CCFLAGS   := -O0 -std=c99 -fPIC -Wall -ffloat-store -g

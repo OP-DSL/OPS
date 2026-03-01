@@ -1817,7 +1817,7 @@ int ops_stencil_check_5d(int arg_idx, int idx0, int idx1, int idx2, int idx3, in
 void ops_NaNcheck_core(ops_dat dat, char *buffer, int *disp, int *d_m) {
 
  int indices[OPS_MAX_DIM] = {0};
-  ops_printf("ops_NaNcheck_core called for %s \n", dat->name);
+// ops_printf("ops_NaNcheck_core called for %s \n", dat->name);
 
   size_t prod[OPS_MAX_DIM+1];
   prod[0] = dat->size[0];

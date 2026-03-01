@@ -466,7 +466,7 @@ class FortranCuda(Scheme):
 
         return output_string.strip(), sub_kernels
 
-Scheme.register(FortranCuda)
+#Scheme.register(FortranCuda)
 
 
 class F2CCuda(Scheme):
