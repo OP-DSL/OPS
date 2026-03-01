@@ -7,9 +7,11 @@ export OPS_INSTALL_PATH=$HOME/OPS/ops
 
 module purge
 
+module load ARMForge/22.0.1
+
 # Compiler
+module load cpe/25.03
 module load PrgEnv-cray
-module load cpe/24.03
 
 # CRAY CPU TARGET
 export CRAY_CPU_TARGET=x86-64
