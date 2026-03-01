@@ -15,7 +15,7 @@ This directory contains a suite of scientific mini-applications and benchmarks p
 ### CloverLeaf (2D & 3D)
 - **Location:** `apps/c/CloverLeaf`, `apps/c/CloverLeaf_3D`, `apps/c/CloverLeaf_3D_HDF5`
 - **Purpose:** Solves the compressible Euler equations for hydrodynamics in 2D/3D using explicit, second-order methods. Used for benchmarking and performance studies. See the [original CloverLeaf project](https://uk-mac.github.io/) for more details.
-- **Features:** Demonstrates all OPS backends, including MPI, OpenMP, CUDA, OpenCL, OpenACC, SYCL, and their combinations. The HDF5 variant tests file I/O.
+- **Features:** Demonstrates all OPS backends, including OpenMP, CUDA, HIP, SYCL, and their combinations with MPI. The HDF5 variant tests file I/O.
 
 ### Poisson
 - **Location:** `apps/c/poisson`

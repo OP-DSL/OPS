@@ -261,4 +261,6 @@ echo "All Intel classic complier based applications ---- PASSED"
 
 fi
 
+rm -rf diff_out perf_out
+
 echo "---------- Exiting Test Script "

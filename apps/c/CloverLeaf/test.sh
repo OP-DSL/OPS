@@ -329,4 +329,6 @@ echo "All AMD HIP complier based applications ---- PASSED"
 
 fi
 
+rm -rf perf_out*
+
 echo "---------- Exiting Test Script "

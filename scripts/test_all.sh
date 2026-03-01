@@ -35,25 +35,25 @@ cd ../TeaLeaf/
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~Poisson~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../poisson/
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim/
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim3D~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim3D/ 
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~lowdim_test~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../lowdim_test/
-#./test.sh #-- works 
+./test.sh #-- works 
 echo "~~~~~~~~~~~~~~~shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../shsgc/
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~mb_shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mb_shsgc/Max_datatransfer
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim_HDF5~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../../multiDim_HDF5 
-#./test.sh #-- works 
+./test.sh #-- works 
 echo "~~~~~~~~~~~~~~~adi~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../adi 
 #./test.sh #-- works
@@ -69,10 +69,21 @@ cd ../mgrid
 echo "~~~~~~~~~~~~~~~mblock~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
 #./test.sh #- works
+echo "~~~~~~~~~~~~~~~laplace2d ~~~~~~~~~~~~~~~~~~~~~~~~~~"
+cd ../laplace2d_tutorial/step7
+./test.sh #-- works
+echo "~~~~~~~~~~~~~~~compact_scheme~~~~~~~~~~~~~~~~~~~~~~~~"
+cd $OPS_INSTALL_PATH/../apps/c/compact_scheme
+#./test.sh #-- not fully working
+echo "~~~~~~~~~~~~~~~halfprecision~~~~~~~~~~~~~~~~~~~~~~~~"
+cd $OPS_INSTALL_PATH/../apps/c/halfprecision
+#./test.sh #-- not fully working
 echo "~~~~~~~~~~~~~~OpenSBLI TGV~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd $OPENSBLI_INSTALL_PATH/apps/taylor_green_vortex
 #./test.sh  #-- works
 cd -
+
+cd $OPS_INSTALL_PATH
 echo "  "
 echo "All C/C++ application tests PASSED"
 echo "  "
@@ -81,27 +92,27 @@ echo "************Testing Fortran Applications *****************"
 cd $OPS_INSTALL_PATH
 echo "~~~~~~~~~~~~~~~shsgc Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../apps/fortran/shsgc
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~poisson Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../poisson 
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim3D Fortran~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim3D
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~lowdim_test Fortran~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../lowdim_test
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~random Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../random
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~mblock Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~laplace2d Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../laplace2dtutorial/step7
+cd ../laplace2d_tutorial/step7
 ./test.sh #-- works  
 echo "END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "  "
