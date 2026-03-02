@@ -61,6 +61,12 @@ TARGETS:=$(filter-out f2c_hip f2c_mpi_hip f2c_mpi_hip_tiled,$(TARGETS))
 endif
 endif
 
+ifneq (,$(filter f2c_cuda f2c_mpi_cuda f2c_mpi_cuda_tiled,$(TARGETS)))
+ifndef CUDA_INSTALL_PATH
+TARGETS:=$(filter-out f2c_cuda f2c_mpi_cuda f2c_mpi_cuda_tiled,$(TARGETS))
+endif	#ifndef CUDA_INSTALL_PATH
+endif
+
 endif	#ifneq TARGETS
 
 ifndef TARGETS

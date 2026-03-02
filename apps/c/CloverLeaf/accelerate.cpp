@@ -53,11 +53,11 @@ void accelerate()
     ops_arg_dat(volume, 1, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
     ops_arg_dat(work_array1, 1, S2D_00, "double", OPS_WRITE),
     ops_arg_dat(xvel0, 1, S2D_00, "double", OPS_READ),
-    ops_arg_dat(xvel1, 1, S2D_00, "double", OPS_INC),
+    ops_arg_dat(xvel1, 1, S2D_00, "double", OPS_WRITE),
     ops_arg_dat(xarea, 1, S2D_00_0M1, "double", OPS_READ),
     ops_arg_dat(pressure, 1, S2D_00_M10_0M1_M1M1, "double", OPS_READ),
     ops_arg_dat(yvel0, 1, S2D_00, "double", OPS_READ),
-    ops_arg_dat(yvel1, 1, S2D_00, "double", OPS_INC),
+    ops_arg_dat(yvel1, 1, S2D_00, "double", OPS_WRITE),
     ops_arg_dat(yarea, 1, S2D_00_M10, "double", OPS_READ),
     ops_arg_dat(viscosity, 1, S2D_00_M10_0M1_M1M1, "double", OPS_READ));
 }

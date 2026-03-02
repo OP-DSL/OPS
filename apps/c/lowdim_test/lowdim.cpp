@@ -93,7 +93,7 @@ int main(int argc, char **argv)
   int range_3D[] = {0, 10, 0, 10, 0, 10};
   int range_2D_XY[] = {0, 10, 0, 10, 0, 1};
   int range_2D_YZ[] = {9, 10, 0, 10, 0, 10};
-  int range_2D_XZ[] = {0, 10, 5, 6, 0, 10};
+  int range_2D_XZ[] = {0, 10, 6, 7, 0, 10};
 
   size[0] = 10; size[1] = 10; size[2] = 10;
   ops_par_loop(set3D, "set3D", block, 3, range_3D,

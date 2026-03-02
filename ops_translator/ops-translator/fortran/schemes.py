@@ -174,6 +174,10 @@ def generate_cpp_Kernel(loop: OPS.Loop,
 #    print(kernel_body)
 #    print("============================================================================")
 
+#    print("============================================================================")
+#    print(kernel_body)
+#    print("============================================================================")
+
     # Add declarations of local variables
     for key, value in local_vars.items():
         if value[0] in local_var_sizes.keys():

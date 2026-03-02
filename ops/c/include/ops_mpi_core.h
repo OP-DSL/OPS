@@ -73,6 +73,8 @@ typedef struct {
   /// Group communicator for intra-block
   MPI_Group grp;
   int owned;
+  /// MPI Communicators for low dimension reduction
+  MPI_Comm pencils[OPS_MAX_DIM];
 } sub_block;
 
 typedef sub_block *sub_block_list;
@@ -106,8 +108,6 @@ typedef struct {
   int gbl_d_m[OPS_MAX_DIM];
   int gbl_d_p[OPS_MAX_DIM];
 
-  /// flag to indicate MPI halo exchange is needed
-  int dirtybit;
   /// flag to indicate MPI halo exchange in a direction is needed
   int *dirty_dir_send;
   /// flag to indicate MPI halo exchange in a direction is needed
@@ -156,6 +156,10 @@ char* OPS_realloc_fast(char *ptr, size_t old_size, size_t new_size);
 ops_dat ops_dat_copy_mpi_core(ops_dat orig_dat);
 ops_kernel_descriptor * ops_dat_deep_copy_mpi_core(ops_dat target, ops_dat orig_dat);
 
+void ops_lowdim_reduction(ops_dat dat, ops_access acc);
+void ops_broadcast_pencil(ops_dat dat, int *range);
+void ops_lowdim_reduction(ops_dat dat, ops_access acc);
+
 /*******************************************************************************
 * Other External functions
 *******************************************************************************/
@@ -176,7 +180,6 @@ extern sub_block_list *OPS_sub_block_list;
 extern sub_dat_list *OPS_sub_dat_list;
 extern ops_mpi_halo *OPS_mpi_halo_list;
 extern ops_mpi_halo_group *OPS_mpi_halo_group_list;
-
 
 extern double ops_gather_time;
 extern double ops_scatter_time;
