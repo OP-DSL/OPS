@@ -114,19 +114,19 @@ cd $OPS_INSTALL_PATH/../apps/c/laplace2d_tutorial/step7
 make IEEE=1 laplace2d_sycl laplace2d_mpi_sycl laplace2d_mpi_sycl_tiled
 
 echo '============> Running SYCL on CPU'
-./laplace2d_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
+./laplace2d_sycl OPS_SYCL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+SYCL on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./laplace2d_mpi_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 20 ./laplace2d_mpi_sycl OPS_SYCL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+SYCL Tiled on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./laplace2d_mpi_sycl_tiled OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./laplace2d_mpi_sycl_tiled OPS_SYCL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "PASSED" perf_out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
