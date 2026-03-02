@@ -14,7 +14,7 @@ CUDA_ALIGNE_FLAG := -D__x86_64 -D__align__\(n\)=__attribute__\(\(aligned\(n\)\)\
 CXXFLAGS      := $(CCFLAGS) -std=c++11
 FFLAGS         = -O3 -fast -gopt
 
-NVCCFLAGS ?= -Xcompiler="-fPIC"
+NVCCFLAGS ?= -Xcompiler="-fPIC" -allow-unsupported-compiler
 
 ifndef DEBUG
     NVCCFLAGS += -O3 -g -std=c++11

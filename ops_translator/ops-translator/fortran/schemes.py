@@ -442,8 +442,13 @@ class FortranCuda(Scheme):
         kernel_entities, sub_kernels = retrieve_subroutine_and_nestedsubroutines(loop.kernel)
 
         # Replace KernelName with KernelName_gpu
-        replacement_string = loop.kernel+"_gpu"
-        output_string = re.sub(re.escape(loop.kernel), replacement_string, kernel_entities, flags=re.IGNORECASE)
+        replacement_string = loop.kernel + "_gpu"
+
+        # Pattern: match 'subroutine' (any case) + spaces + kernel name
+        pattern = r'(\bsubroutine\s+)' + re.escape(loop.kernel) + r'\b'
+
+        # Replace with 'SUBROUTINE ' + kernel_gpu
+        output_string = re.sub(pattern, r'SUBROUTINE ' + replacement_string, kernel_entities, flags=re.IGNORECASE)
 
         # Replace all constants:   constname-> constname_opsconstant
         def replace_consts(text):
@@ -466,7 +471,7 @@ class FortranCuda(Scheme):
 
         return output_string.strip(), sub_kernels
 
-#Scheme.register(FortranCuda)
+Scheme.register(FortranCuda)
 
 
 class F2CCuda(Scheme):
