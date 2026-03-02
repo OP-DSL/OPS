@@ -354,6 +354,18 @@ void ops_exit_core(OPS_instance *instance) {
      instance->OPS_kern_max=0;
   }
 
+  // Free lowdim edge dataset treatment
+  edge_dirtybit.clear();
+  std::vector<int>().swap(edge_dirtybit);
+  for (auto& vec : edat_prev_range) {
+    vec.clear();
+    std::vector<int>().swap(vec);  // Force release of capacity
+  }
+  edat_prev_range.clear();
+  std::vector<std::vector<int>>().swap(edat_prev_range);  // Free outer vector
+  edat_prev_acc.clear();
+  std::vector<ops_access>().swap(edat_prev_acc);  // Free ops_access vector
+
   instance->is_initialised = 0;
 }
 
@@ -569,6 +581,12 @@ ops_dat ops_dat_alloc_core(ops_block block)
   TAILQ_INSERT_TAIL(&block->instance->OPS_block_list[block->index].datasets, item, entries);
   block->instance->OPS_block_list[block->index].num_datasets++;
 
+  // Initialize lowdim edge dataset treatment
+  edge_dirtybit.push_back(0);
+  edat_prev_range.push_back(std::vector<int>());
+  edat_prev_range[dat->index].resize(2*OPS_MAX_DIM, 0);
+  edat_prev_acc.push_back(OPS_READ);
+
   return dat;
 }
 
@@ -591,6 +609,9 @@ ops_dat ops_decl_dat_temp_core(ops_block block, int dim, int *dataset_size,
 }
 
 void ops_free_dat_core(ops_dat dat) {
+  // Free lowdim edge dataset treatment
+  edat_prev_range[dat->index].clear();
+
   ops_dat_entry *item;
   TAILQ_FOREACH(item, &dat->block->instance->OPS_dat_list, entries) {
     if (item->dat->index == dat->index) {
@@ -1814,6 +1835,13 @@ int ops_stencil_check_5d(int arg_idx, int idx0, int idx1, int idx2, int idx3, in
   return idx0 + dim0 * (idx1) + dim0 * dim1 * (idx2) + dim0 * dim1 * dim2 * idx3 + dim0 * dim1 * dim2 * dim3 * idx4;
 }
 
+constexpr bool is_nan_fp16(uint16_t fp16_bits) {
+  // Combine the checks into a single return statement for C++11 compatibility.
+  // 1. Check if exponent bits (0x7C00) are all 1s.
+  // 2. Check if mantissa bits (0x03FF) are non-zero.
+  return ((fp16_bits & 0x7C00) == 0x7C00) && ((fp16_bits & 0x03FF) > 0);
+}
+
 void ops_NaNcheck_core(ops_dat dat, char *buffer, int *disp, int *d_m) {
 
  int indices[OPS_MAX_DIM] = {0};
@@ -1894,6 +1922,15 @@ void ops_NaNcheck_core(ops_dat dat, char *buffer, int *disp, int *d_m) {
                          strcmp(dat->type, "real(kind=4)") == 0)
                 {
                   if (  std::isnan(((float *)dat->data)[offset])  )
+                  {
+                    printf("%sError: NaN detected at element dim:%d,index:(%d", buffer, d, indices[0]);
+                    for(int dim = 1; dim < dat->block->dims; dim++) printf(",%d",indices[dim]);
+                    printf(")\n");
+                    exit(2);
+                  }
+                }
+                else if (strcmp(dat->type, "half") == 0) {
+                  if (is_nan_fp16(((uint16_t *)dat->data)[offset]))
                   {
                     printf("%sError: NaN detected at element dim:%d,index:(%d", buffer, d, indices[0]);
                     for(int dim = 1; dim < dat->block->dims; dim++) printf(",%d",indices[dim]);
@@ -2311,7 +2348,7 @@ void ops_set_dirtybit_device(ops_arg *args, int nargs) {
   for (int n = 0; n < nargs; n++) {
     if ((args[n].argtype == OPS_ARG_DAT) &&
         (args[n].acc == OPS_INC || args[n].acc == OPS_WRITE ||
-         args[n].acc == OPS_RW)) {
+         args[n].acc == OPS_RW || args[n].acc == OPS_MAX || args[n].acc == OPS_MIN)) {
       args[n].dat->dirty_hd = 2;
     }
   }
@@ -2542,6 +2579,10 @@ void _ops_free_dat(ops_dat dat) {
   ops_free_dat_core(dat);
 }
 
+/* Edge dataset treatment*/
+std::vector<std::vector<int> > edat_prev_range;
+std::vector<ops_access >       edat_prev_acc;
+std::vector<int> edge_dirtybit;
 
 /************* Functions only use in the Fortran Backend ************/
 

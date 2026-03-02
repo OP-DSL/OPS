@@ -23,7 +23,7 @@ echo "************Testing C Applications *****************"
 echo "~~~~~~~~~~~~~~~CloverLeaf 2D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../apps/c/CloverLeaf/
 cd ../CloverLeaf/
-#./test.sh #-- works
+#./test.sh #-- works -- does not validate MPI+CUDA for 2 GPUs
 echo "~~~~~~~~~~~~~~~CloverLeaf 3D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../CloverLeaf_3D/
 #./test.sh #-- works
@@ -38,13 +38,13 @@ cd ../poisson/
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim/
-#./test.sh #-- works # only 1 thread per MPI proc for MPI+OMP allowed
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim3D~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim3D/ 
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~lowdim_test~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../lowdim_test/
-#./test.sh #-- works
+#./test.sh #-- works #SYCL on CPU does not validate
 echo "~~~~~~~~~~~~~~~shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../shsgc/
 #./test.sh #-- works
@@ -65,7 +65,7 @@ cd ../adi_burger_3D
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~mgrid~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mgrid
-./test.sh #-- SYCL does not validate 
+#./test.sh #-- SYCL does not validate 
 echo "~~~~~~~~~~~~~~~mblock~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
 #./test.sh #- works
@@ -93,7 +93,7 @@ cd ../multiDim3D
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~lowdim_test Fortran~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../lowdim_test
-#./test.sh #-- works -- check further as there can be issues
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~random Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../random
 #./test.sh #-- breaks all
@@ -102,7 +102,7 @@ cd ../mblock
 #./test.sh #-- breaks in cuda+tiled and sycl+tiled
 echo "~~~~~~~~~~~~~~~laplace2d Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../laplace2dtutorial/step7
-#./test.sh #-- works  
+./test.sh #-- works  
 echo "END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "  "
 echo "All Fortran application tests PASSED"

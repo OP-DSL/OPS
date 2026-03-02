@@ -179,8 +179,7 @@ void ops_tridMultiDimBatch(
   }
 
   int device = OPS_DEVICE;
-  int s3D_000[] = {0, 0, 0};
-  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+  ops_stencil S3D_000 = a->block->instance->OPS_internal_0[3];
 
   if(strcmp(a->type, "double") == 0) {
     // Get raw pointer access to data held by OPS
@@ -281,8 +280,7 @@ void ops_tridMultiDimBatch_Inc(
   }
 
   int device = OPS_DEVICE;
-  int s3D_000[] = {0, 0, 0};
-  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+  ops_stencil S3D_000 = a->block->instance->OPS_internal_0[3];
 
   if(strcmp(a->type, "double") == 0) {
     const double *a_ptr = (double *)ops_dat_get_raw_pointer(a, 0, S3D_000, &device);

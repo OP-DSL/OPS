@@ -69,8 +69,6 @@ void WriteDataToH5(const std::string &fileName, const ops_block &block,
 
 int main(int argc, char **argv)
 {
-#pragma omp parallel
-{
   try {
   //initialize sizes using global values
   int x_cells = 4;
@@ -213,7 +211,6 @@ int main(int argc, char **argv)
     std::cout << "This test is considered FAILED" << std::endl;
     exit(-1);
   }
-}
 
   exit(0);
 }

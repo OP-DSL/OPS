@@ -119,8 +119,7 @@ void ops_tridMultiDimBatch(
   }
 
   int device = OPS_DEVICE;
-  int s3D_000[] = {0, 0, 0};
-  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+  ops_stencil S3D_000 = a->block->instance->OPS_internal_0[3];
 
   // Calculate dimension of area being solved and the starting offset from the
   // origin of the dat
@@ -196,8 +195,7 @@ void ops_tridMultiDimBatch_Inc(
   }
 
   int device = OPS_DEVICE;
-  int s3D_000[] = {0, 0, 0};
-  ops_stencil S3D_000 = ops_decl_stencil(3, 1, s3D_000, "000");
+  ops_stencil S3D_000 = a->block->instance->OPS_internal_0[3];
 
   // Calculate dimension of area being solved and the starting offset from the
   // origin of the dat
