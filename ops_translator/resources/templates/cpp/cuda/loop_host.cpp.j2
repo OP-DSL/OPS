@@ -192,7 +192,7 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
         {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
             arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*arg{{arg.id}}_dim + {{n_y}} * ystride_{{arg.id}}*arg{{arg.id}}_dim * dims_{{lh.kernel}}[{{arg.id}}][0] + {{n_z}} * zstride_{{arg.id}}*arg{{arg.id}}_dim * dims_{{lh.kernel}}[{{arg.id}}][0] * dims_{{lh.kernel}}[{{arg.id}}][1];
         {% else %}
-            arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}} + {{n_y}} * ystride_{{arg.id}}* * dims_{{lh.kernel}}[{{arg.id}}][0] + {{n_z}} * zstride_{{arg.id}} * dims_{{lh.kernel}}[{{arg.id}}][0] * dims_{{lh.kernel}}[{{arg.id}}][1];
+            arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}} + {{n_y}} * ystride_{{arg.id}} * dims_{{lh.kernel}}[{{arg.id}}][0] + {{n_z}} * zstride_{{arg.id}} * dims_{{lh.kernel}}[{{arg.id}}][0] * dims_{{lh.kernel}}[{{arg.id}}][1];
         {% endif %}
     {% endif %}
     {% endif %}
