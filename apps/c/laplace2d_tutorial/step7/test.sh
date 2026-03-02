@@ -8,12 +8,12 @@ export SOURCE_INTEL_SYCL=source_oneapi_sycl_pythonenv
 export SOURCE_AMD_HIP=source_amd_rocm-5.4.3_pythonenv
 
 #export AMOS=TRUE
-#export DMOS=TRUE
-export TELOS=TRUE
+export DEMOS=TRUE
+#export TELOS=TRUE
 #export KOS=TRUE
 
-#<<COMMENT
-if [[ -v TELOS || -v KOS || -v DMOS ]]; then
+<<COMMENT
+if [[ -v TELOS || -v KOS || -v DEMOS ]]; then
 #============================ Test with Intel Classic Compilers==========================================
 echo "Testing Intel classic complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
@@ -98,7 +98,7 @@ fi
 echo "All Intel classic complier based applications ---- PASSED"
 
 #COMMENT
-if [[ -v TELOS ]]; then
+if [[ -v TELOS || -v KOS || -v DEMOS ]]; then
 
 #============================ Test with Intel SYCL Compilers==========================================
 echo "Testing Intel SYCL complier based applications ---- "
@@ -135,7 +135,8 @@ echo "All Intel SYCL complier based applications ---- PASSED"
 
 fi
 
-if [[ -v TELOS ]]; then
+COMMENT
+if [[ -v TELOS || -v KOS || -v DEMOS ]]; then
 
 #============================ Test with PGI Compilers==========================================
 echo "Testing PGI/NVHPC complier based applications ---- "
