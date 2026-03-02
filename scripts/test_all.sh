@@ -74,10 +74,10 @@ cd ../laplace2d_tutorial/step7
 ./test.sh #-- works
 echo "~~~~~~~~~~~~~~~compact_scheme~~~~~~~~~~~~~~~~~~~~~~~~"
 cd $OPS_INSTALL_PATH/../apps/c/compact_scheme
-#./test.sh #-- not fully working
+#./test.sh #-- PGI/NVIDIA compiled version not fully working
 echo "~~~~~~~~~~~~~~~halfprecision~~~~~~~~~~~~~~~~~~~~~~~~"
 cd $OPS_INSTALL_PATH/../apps/c/halfprecision
-#./test.sh #-- not fully working
+#./test.sh #-- not fully working, need half precision support in the compilers
 echo "~~~~~~~~~~~~~~OpenSBLI TGV~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd $OPENSBLI_INSTALL_PATH/apps/taylor_green_vortex
 #./test.sh  #-- works
