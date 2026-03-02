@@ -124,8 +124,12 @@ void cutilDeviceInit(OPS_instance *instance, const int argc, const char * const 
     break;
   case 1: {
     auto all_devices = cl::sycl::device::get_devices(cl::sycl::info::device_type::gpu);
+    if (all_devices.empty()) {
+      ops_printf("Error: OPS_SYCL_DEVICE=gpu requested but no GPU devices found\n");
+      exit(-1);
+    }
     cl::sycl::device my_device = all_devices[my_id % all_devices.size()];
-    if(ops_is_root()) printf("GPU device are available for selection, count: %zu\n",all_devices.size());
+    if(ops_is_root()) printf("GPU devices available for selection, count: %zu\n",all_devices.size());
     instance->sycl_instance->queue =
         new cl::sycl::queue(my_device, cl::sycl::property::queue::in_order());
     break;
