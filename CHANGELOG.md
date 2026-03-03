@@ -20,6 +20,7 @@ Major changes since `v1.0.0` (high-level)
   - A new OPS code-generation engine (`ops_translator`) replaces the legacy translator.
   - Based on Python/Clang/Fparser/Jinja2 — produces improved C/C++/Fortran backends.
   - Enables broader target support and improved codegen quality (SYCL, HIP, CUDA, OpenMP offload, etc.).
+  - All apps (including CloverLeaf, CloverLeaf_3D, wave_test, halfprecision) now use the new translator.
   - Migration notes: translator runtime requires updated Python dependencies (see `ops_translator/requirements.txt`), and generated output paths/filenames may differ from the legacy translator — review build scripts when upgrading.
 
 - New back-end & language support:
@@ -40,13 +41,21 @@ Major changes since `v1.0.0` (high-level)
   - HDF5 improvements including SoA output mode and robustness fixes for MPI HDF5 writes.
   - Energy and power measurement hooks (RAPL/powercap and GPU power capture).
 
+- Bug fixes:
+  - Fixed SYCL device selection (`OPS_SYCL_DEVICE=gpu`) crashing on empty device list.
+  - Fixed Fortran I/O deadlock when using `print`/`WRITE` inside OpenMP parallel regions with Intel Fortran runtime.
+
 - Build, CI and testing:
   - Numerous CMake and Makefile improvements (F90/CMake additions, device selection, build flags).
+  - Added `EXTRA_CLEAN_FILES` support in `Makefile.c_app` for app-specific clean targets.
+  - Added `clean_all_apps.sh` utility script.
   - CI/test additions and config changes (expanded tests, GPU_NUMBER config update).
+  - Added `test.sh` for multiple C and Fortran apps.
 
 - Documentation and developer experience:
   - Major documentation refreshes across the docs, developer guide updates and a new `doc/quickstart.md`.
   - Added example/test scripts for apps and updated tutorial timings.
+  - Updated AUTHORS.
 
 Notes:
 - This section lists high-level, user-facing and potentially breaking changes since `v1.0.0`.
