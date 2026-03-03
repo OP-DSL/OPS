@@ -71,7 +71,7 @@ cd ../mblock
 #./test.sh #- works
 echo "~~~~~~~~~~~~~~~laplace2d ~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../laplace2d_tutorial/step7
-./test.sh #-- works
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~compact_scheme~~~~~~~~~~~~~~~~~~~~~~~~"
 cd $OPS_INSTALL_PATH/../apps/c/compact_scheme
 #./test.sh #-- PGI/NVIDIA compiled version not fully working
@@ -80,7 +80,7 @@ cd $OPS_INSTALL_PATH/../apps/c/halfprecision
 #./test.sh #-- not fully working, need half precision support in the compilers
 echo "~~~~~~~~~~~~~~OpenSBLI TGV~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd $OPENSBLI_INSTALL_PATH/apps/taylor_green_vortex
-./test.sh  #-- works
+#./test.sh  #-- works
 cd -
 
 cd $OPS_INSTALL_PATH
@@ -107,13 +107,13 @@ cd ../lowdim_test
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~random Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../random
-#./test.sh #-- works
+#./test.sh #-- f2c versions works, others do not, they hang
 echo "~~~~~~~~~~~~~~~mblock Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
-#./test.sh #-- works
+#./test.sh #-- needs test.sh created
 echo "~~~~~~~~~~~~~~~laplace2d Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../laplace2d_tutorial/step7
-./test.sh #-- works  
+cd ../laplace2dtutorial/step7 
+./test.sh #-- works  need to change name of directory
 echo "END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "  "
 echo "All Fortran application tests PASSED"

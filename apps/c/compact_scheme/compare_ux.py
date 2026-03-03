@@ -44,7 +44,7 @@ if count == 0:
     sys.exit(0)
 
 # Show first 50 significant differences
-idx = np.argwhere(diff > 0.0).ravel()
+idx = np.flatnonzero(diff > 0.0)
 for k in range(min(50, idx.size)):
     i = idx[k]
     print(f"index {i}: ref={dref.flat[i]:.17g} gpu={dgpu.flat[i]:.17g} diff={diff.flat[i]:.17g}")
