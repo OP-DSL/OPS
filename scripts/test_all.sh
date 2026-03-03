@@ -110,7 +110,7 @@ cd ../random
 #./test.sh #-- f2c versions works, others do not, they hang
 echo "~~~~~~~~~~~~~~~mblock Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
-#./test.sh #-- needs test.sh created
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~laplace2d Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../laplace2d_tutorial/step7 
 ./test.sh #-- works  
