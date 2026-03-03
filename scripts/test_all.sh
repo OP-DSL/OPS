@@ -112,8 +112,8 @@ echo "~~~~~~~~~~~~~~~mblock Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
 #./test.sh #-- needs test.sh created
 echo "~~~~~~~~~~~~~~~laplace2d Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../laplace2dtutorial/step7 
-./test.sh #-- works  need to change name of directory
+cd ../laplace2d_tutorial/step7 
+./test.sh #-- works  
 echo "END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "  "
 echo "All Fortran application tests PASSED"
