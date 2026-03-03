@@ -431,3 +431,4 @@ clean:
 	rm -f $(APP)_mpi_sycl_tiled
 	rm -f $(OPS_GENERATED)
 	rm -f .generated constants_list.txt cudafe
+	rm -f $(EXTRA_CLEAN_FILES)

@@ -25,4 +25,13 @@ for mk in "${makefiles[@]}"; do
   fi
 done
 
+# Handle multiDim_HDF5 which uses separate Makefile.read and Makefile.write
+MULTIDIM_HDF5="$REPO_ROOT/apps/c/multiDim_HDF5"
+if [ -d "$MULTIDIM_HDF5" ]; then
+  echo "---- Running 'make -f Makefile.read cleanall' in: $MULTIDIM_HDF5"
+  (cd "$MULTIDIM_HDF5" && make -f Makefile.read cleanall)
+  echo "---- Running 'make -f Makefile.write cleanall' in: $MULTIDIM_HDF5"
+  (cd "$MULTIDIM_HDF5" && make -f Makefile.write cleanall)
+fi
+
 echo "Done."
