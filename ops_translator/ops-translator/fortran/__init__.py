@@ -100,7 +100,6 @@ def walk(node_list, types=None, indent=0, debug=False):
 
 fparser.two.utils.walk = walk
 
-
 class Preprocessor(pcpp.Preprocessor):
     def __init__(self, lexer=None):
         super(Preprocessor, self).__init__(lexer)
@@ -119,6 +118,16 @@ class Preprocessor(pcpp.Preprocessor):
             raise pcpp.OutputDirective(pcpp.Action.IgnoreAndPassThrough)
 
         super(Preprocessor, self).on_include_not_found(is_malformed, is_system_include, curdir, includepath)
+
+
+def protect_conditionals(src):
+    # Replace all preprocessor lines with a marker that pcpp ignores
+    pattern = r'^\s*#(if|ifdef|ifndef|elif|else|endif)(.*)$'
+    return re.sub(pattern, r'!OPS_PP_PROTECT_\1\2', src, flags=re.MULTILINE)
+
+def restore_conditionals(src):
+    pattern = r'^!OPS_PP_PROTECT_(if|ifdef|ifndef|elif|else|endif)(.*)$'
+    return re.sub(pattern, r'#\1\2', src, flags=re.MULTILINE)
 
 
 class Fortran(Lang):
@@ -179,7 +188,11 @@ class Fortran(Lang):
 
             preprocessor.define(define.replace("=", " ", 1))
 
-        preprocessor.parse(path.read_text(), str(path))
+        # Read the Fortran source and convert #ifdef and #endif to comments so that preprocessing will not remove it
+        fortran_src = path.read_text()
+        fortran_src = protect_conditionals(fortran_src)
+
+        preprocessor.parse(fortran_src, str(path))
 
         source = io.StringIO()
         source.name = str(path)
@@ -192,6 +205,9 @@ class Fortran(Lang):
 
         source = re.sub(r"__FILE__", f'"{path}"', source)
         source = re.sub(r"__LINE__", "0", source)
+
+        # restore #ifdef and #endif to original state
+        source = restore_conditionals(source)
 
         return source
 

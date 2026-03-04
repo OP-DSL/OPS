@@ -153,8 +153,9 @@ program laplace
                & ops_arg_dat(d_Anew, 1, S2D_0pt, "real(kind=8)", OPS_WRITE), &
                & ops_arg_idx())
 
-!    call ops_fetch_block_hdf5_file(grid2D, "A.h5")
-!    call ops_fetch_dat_hdf5_file(d_A, "A.h5")
+!   call ops_fetch_block_hdf5_file(grid2D, "dats.h5")
+!   call ops_fetch_dat_hdf5_file(d_A, "dats.h5")
+!   call ops_fetch_dat_hdf5_file(d_Anew, "dats.h5")
 
 !    call ops_print_dat_to_txtfile(d_A, "data_A.txt")
 !    call ops_print_dat_to_txtfile(d_Anew, "data_Anew.txt")
