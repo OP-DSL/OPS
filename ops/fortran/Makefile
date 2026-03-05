@@ -112,6 +112,7 @@ FFLAGS_NOOMP = $(FFLAGS)
 FFLAGS_NOOMP := $(filter-out -fopenmp, $(FFLAGS_NOOMP))
 FFLAGS_NOOMP := $(filter-out -qopenmp, $(FFLAGS_NOOMP))
 
+CHKCXX += $(I_MPI_INC)
 
 all: $(TARGETS)
 

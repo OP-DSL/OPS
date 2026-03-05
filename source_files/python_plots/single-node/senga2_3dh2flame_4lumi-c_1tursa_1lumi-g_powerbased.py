@@ -83,7 +83,7 @@ for i in range(len(species)):
 ax.set_xticks(xtick_positions)
 ax.set_xticklabels(species)
 ax.set_ylabel('Runtime (s)', fontsize=21)
-ax.set_xlabel("System, (Ranks,nodes), Paralellization", fontsize=21, labelpad=1)
+ax.set_xlabel("System, (Ranks,nodes), Parallelization", fontsize=21, labelpad=1)
 ax.set_ylim(0, 8000)
 ax.grid(axis='y', linestyle=':')
 

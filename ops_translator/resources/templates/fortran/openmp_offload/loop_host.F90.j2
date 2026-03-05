@@ -72,6 +72,7 @@
 !   Sub function called from elemental kernel
 !   =========================================
     {% for kernel_name,subroutine in sub_kernels_func %}
+!! !$OMP DECLARE TARGET
 {{subroutine}}
     {% endfor %}
 {% endif%}
@@ -80,6 +81,7 @@
 !   User function
 !   =============
 
+!! !$OMP DECLARE TARGET
 {{kernel_func}}
 
 {% for arg in lh.args %}
