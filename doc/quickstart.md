@@ -65,9 +65,9 @@ See the Makefile in each app directory for the list of available targets and exe
 
 ## 6. Next Steps
 
-- See `doc/installation.md` for detailed installation and platform-specific setup instructions.
-- Explore other applications in `apps/c/` and `apps/fortran/`.
-- See `doc/apps.md` for details on each example.
-- See `doc/devdoc.md` for developer and contributor information.
+- The above quickstart guide used the Makefile build system of OPS. For further detailed instructions including dependencies and the CMake-based build instructions please see [installation.md](installation.md).
+- Explore other applications in [apps/c/](../apps/c/) and [apps/fortran/](../apps/fortran/).
+- See [apps.md](apps.md) for details on each example.
+- See [devdoc.md](devdoc.md) for developer and contributor information.
 
 For more help, see the full documentation or open an issue on the OPS GitHub.
