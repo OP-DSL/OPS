@@ -51,7 +51,7 @@ make IEEE=1
 cd $OPS_INSTALL_PATH/../apps/c/adi
 #make clean
 #rm -f .generated
-make IEEE=1 compare adi_seq adi_mpi adi_openmp adi_mpi_openmp adi_cuda adi_mpi_cuda
+make IEEE=1 compare adi_dev_seq adi_dev_mpi adi_seq adi_mpi adi_openmp adi_mpi_openmp adi_cuda adi_mpi_cuda
 
 rm -rf h_u.dat adi_orig.dat adi_seq.dat adi_dev_seq.dat adi_cuda.dat adi_openmp.dat  *.h5
 # set Relative Tolarance for solution check -- h5diff check only
@@ -260,5 +260,7 @@ rm -rf *.h5
 echo "All Intel classic complier based applications ---- PASSED"
 
 fi
+
+rm -rf diff_out perf_out
 
 echo "---------- Exiting Test Script "

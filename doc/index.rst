@@ -10,6 +10,7 @@ Welcome to OPS documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   quickstart.md
    introduction.md
    installation.md
    devanapp.md

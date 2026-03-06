@@ -44,7 +44,7 @@ cd ../multiDim3D/
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~lowdim_test~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../lowdim_test/
-#./test.sh #-- works #SYCL on CPU does not validate
+#./test.sh #-- works 
 echo "~~~~~~~~~~~~~~~shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../shsgc/
 #./test.sh #-- works
@@ -65,14 +65,25 @@ cd ../adi_burger_3D
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~mgrid~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mgrid
-#./test.sh #-- SYCL does not validate 
+#./test.sh #-- MPI SYCL tiled does not validate 
 echo "~~~~~~~~~~~~~~~mblock~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
 #./test.sh #- works
+echo "~~~~~~~~~~~~~~~laplace2d ~~~~~~~~~~~~~~~~~~~~~~~~~~"
+cd ../laplace2d_tutorial/step7
+#./test.sh #-- works
+echo "~~~~~~~~~~~~~~~compact_scheme~~~~~~~~~~~~~~~~~~~~~~~~"
+cd $OPS_INSTALL_PATH/../apps/c/compact_scheme
+#./test.sh #-- PGI/NVIDIA compiled version not fully working
+echo "~~~~~~~~~~~~~~~halfprecision~~~~~~~~~~~~~~~~~~~~~~~~"
+cd $OPS_INSTALL_PATH/../apps/c/halfprecision
+#./test.sh #-- not fully working, need half precision support in the compilers
 echo "~~~~~~~~~~~~~~OpenSBLI TGV~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd $OPENSBLI_INSTALL_PATH/apps/taylor_green_vortex
 #./test.sh  #-- works
 cd -
+
+cd $OPS_INSTALL_PATH
 echo "  "
 echo "All C/C++ application tests PASSED"
 echo "  "
@@ -81,7 +92,7 @@ echo "************Testing Fortran Applications *****************"
 cd $OPS_INSTALL_PATH
 echo "~~~~~~~~~~~~~~~shsgc Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../apps/fortran/shsgc
-#./test.sh #-- +tiled versions break at runtime
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~poisson Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../poisson 
 #./test.sh #-- works
@@ -96,12 +107,12 @@ cd ../lowdim_test
 #./test.sh #-- works
 echo "~~~~~~~~~~~~~~~random Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../random
-#./test.sh #-- breaks all
+#./test.sh #-- f2c versions works, others do not, they hang
 echo "~~~~~~~~~~~~~~~mblock Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
-#./test.sh #-- breaks in cuda+tiled and sycl+tiled
+#./test.sh #-- works
 echo "~~~~~~~~~~~~~~~laplace2d Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../laplace2dtutorial/step7
+cd ../laplace2d_tutorial/step7 
 ./test.sh #-- works  
 echo "END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "  "

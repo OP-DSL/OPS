@@ -24,20 +24,17 @@ CMake 3.18 or newer is required for using the CMake build system. If the latest 
 
 The Python dependencies (primarily used for the OPS code generator) are best installed by setting up a virtual environment so that required packages can be installed without superuser privileges. To set up the Python virtual environment and install the required dependent packages, ensure that you have Python 3.9 or a more recent version with pip installed.
 Detailed instructions for installing a virtual environment using pip can be found [here](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/).
-Execute the following **after cloning the OPS repository (see below)** to install required packages. Note `OPS_INSTALL_PATH` is the installation directory of OPS/ops. (Note - these instructions can be executed by running the script `OPS/ops_translator/setup_venv.sh` file.) :
-```
-# Install virtual environment using pip (if not installed earlier)
-# Please set the OPS_INSTALL_PATH variable before running the following commands
-python3 -m pip install --user virtualenv
 
-mkdir -p $OPS_INSTALL_PATH/../ops_translator/ops_venv
-python3 -m venv $OPS_INSTALL_PATH/../ops_translator/ops_venv
-source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
-python3 -m pip install --upgrade pip
-python3 -m pip install -r $OPS_INSTALL_PATH/../ops_translator/requirements.txt
-python3 -m pip install --force-reinstall libclang==16.0.6
+The recommended way to set up the Python environment is to use the provided script:
+
 ```
-After successfully setting up the Python virtual environment and installing the required dependent packages using the above instructions, you will need to activate the virtual environment by `source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate` every time you want to use the code generator. Activating the virtual environment ensures that the code generator and its dependencies are isolated from the system-wide Python installation, avoiding conflicts and ensuring proper execution.
+cd ops_translator
+. setup_venv.sh
+source ops_venv/bin/activate
+cd ..
+```
+
+This will create and activate a virtual environment in `ops_translator/ops_venv` and install all required dependencies. You will need to activate the virtual environment by `source ops_translator/ops_venv/bin/activate` every time you want to use the code generator. Activating the virtual environment ensures that the code generator and its dependencies are isolated from the system-wide Python installation, avoiding conflicts and ensuring proper execution.
 
  **HDF5**
 

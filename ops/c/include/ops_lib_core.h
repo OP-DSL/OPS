@@ -108,7 +108,8 @@ typedef std::complex<float> complexf;
 typedef __half half;
 //#elif defined(__SYCL_DEVICE_ONLY__)
 #elif defined(__INTEL_SYCL__)
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
+namespace cl { namespace sycl = ::sycl; }
 typedef sycl::half half;
 #elif defined(__STDCPP_FLOAT16_T__) || defined(FLT16_MIN)
 typedef _Float16 half;
@@ -314,7 +315,7 @@ class ops_dat_core {
 
 
   // Default constructor zeros out all data in the struct
-  ops_dat_core() { memset(this, 0, sizeof(ops_dat_core)); }
+  ops_dat_core() { memset((void*)this, 0, sizeof(ops_dat_core)); }
   ~ops_dat_core();
 
 
@@ -1396,8 +1397,47 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMax(&operator()(xoff), val);
-    #else
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff));
+    T old = aref.load();
+    while (old < val && !aref.compare_exchange_weak(old, val)) {}
+    #elif defined(_OPENMP) && (defined(__INTEL_LLVM_COMPILER) || defined(__INTEL_COMPILER))
+    #pragma omp atomic compare
+    if (operator()(xoff) < val) { operator()(xoff) = val; }
+    #elif defined(__NVCOMPILER) && defined(_OPENMP) && defined(OPS_OMPOFFLOAD)
+    if (sizeof(T) == sizeof(unsigned long long)) {
+      unsigned long long *addr = (unsigned long long*)(&operator()(xoff));
+      union { unsigned long long i; T t; } oldv, newv;
+      oldv.i = *addr;
+      while (true) {
+        newv.t = (oldv.t > val) ? oldv.t : val;
+        if (newv.t == oldv.t) break;
+        unsigned long long prev = __sync_val_compare_and_swap(addr, oldv.i, newv.i);
+        if (prev == oldv.i) break;
+        oldv.i = prev;
+      }
+    } else if (sizeof(T) == sizeof(unsigned int)) {
+      unsigned int *addr = (unsigned int*)(&operator()(xoff));
+      union { unsigned int i; T t; } oldv, newv;
+      oldv.i = *addr;
+      while (true) {
+        newv.t = (oldv.t > val) ? oldv.t : val;
+        if (newv.t == oldv.t) break;
+        unsigned int prev = __sync_val_compare_and_swap(addr, oldv.i, newv.i);
+        if (prev == oldv.i) break;
+        oldv.i = prev;
+      }
+    } else {
+      operator()(xoff) = std::max(operator()(xoff), val);
+    }
+    #elif defined(_OPENMP)
     #pragma omp critical
+    operator()(xoff) = std::max(operator()(xoff), val);
+    #else
     operator()(xoff) = std::max(operator()(xoff), val);
     #endif
 
@@ -1409,8 +1449,47 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMin(&operator()(xoff), val);
-    #else
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff));
+    T old = aref.load();
+    while (old > val && !aref.compare_exchange_weak(old, val)) {}
+    #elif defined(_OPENMP) && (defined(__INTEL_LLVM_COMPILER) || defined(__INTEL_COMPILER))
+    #pragma omp atomic compare
+    if (operator()(xoff) > val) { operator()(xoff) = val; }
+    #elif defined(__NVCOMPILER) && defined(_OPENMP) && defined(OPS_OMPOFFLOAD)
+    if (sizeof(T) == sizeof(unsigned long long)) {
+      unsigned long long *addr = (unsigned long long*)(&operator()(xoff));
+      union { unsigned long long i; T t; } oldv, newv;
+      oldv.i = *addr;
+      while (true) {
+        newv.t = (oldv.t < val) ? oldv.t : val;
+        if (newv.t == oldv.t) break;
+        unsigned long long prev = __sync_val_compare_and_swap(addr, oldv.i, newv.i);
+        if (prev == oldv.i) break;
+        oldv.i = prev;
+      }
+    } else if (sizeof(T) == sizeof(unsigned int)) {
+      unsigned int *addr = (unsigned int*)(&operator()(xoff));
+      union { unsigned int i; T t; } oldv, newv;
+      oldv.i = *addr;
+      while (true) {
+        newv.t = (oldv.t < val) ? oldv.t : val;
+        if (newv.t == oldv.t) break;
+        unsigned int prev = __sync_val_compare_and_swap(addr, oldv.i, newv.i);
+        if (prev == oldv.i) break;
+        oldv.i = prev;
+      }
+    } else {
+      operator()(xoff) = std::min(operator()(xoff), val);
+    }
+    #elif defined(_OPENMP)
     #pragma omp critical
+    operator()(xoff) = std::min(operator()(xoff), val);
+    #else
     operator()(xoff) = std::min(operator()(xoff), val);
     #endif
 
@@ -1422,8 +1501,17 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicAdd(&operator()(xoff), val);
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff));
+    aref.fetch_add(val);
+    #elif defined(_OPENMP)
+    #pragma omp atomic update
+    operator()(xoff) += val;
     #else
-    #pragma omp critical
     operator()(xoff) += val;
     #endif
 
@@ -1471,8 +1559,47 @@ public:
 
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMax(&operator()(xoff, yoff), val);
-    #else
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff));
+    T old = aref.load();
+    while (old < val && !aref.compare_exchange_weak(old, val)) {}
+    #elif defined(_OPENMP) && (defined(__INTEL_LLVM_COMPILER) || defined(__INTEL_COMPILER))
+    #pragma omp atomic compare
+    if (operator()(xoff, yoff) < val) { operator()(xoff, yoff) = val; }
+    #elif defined(__NVCOMPILER) && defined(_OPENMP) && defined(OPS_OMPOFFLOAD)
+    if (sizeof(T) == sizeof(unsigned long long)) {
+      unsigned long long *addr = (unsigned long long*)(&operator()(xoff, yoff));
+      union { unsigned long long i; T t; } oldv, newv;
+      oldv.i = *addr;
+      while (true) {
+        newv.t = (oldv.t > val) ? oldv.t : val;
+        if (newv.t == oldv.t) break;
+        unsigned long long prev = __sync_val_compare_and_swap(addr, oldv.i, newv.i);
+        if (prev == oldv.i) break;
+        oldv.i = prev;
+      }
+    } else if (sizeof(T) == sizeof(unsigned int)) {
+      unsigned int *addr = (unsigned int*)(&operator()(xoff, yoff));
+      union { unsigned int i; T t; } oldv, newv;
+      oldv.i = *addr;
+      while (true) {
+        newv.t = (oldv.t > val) ? oldv.t : val;
+        if (newv.t == oldv.t) break;
+        unsigned int prev = __sync_val_compare_and_swap(addr, oldv.i, newv.i);
+        if (prev == oldv.i) break;
+        oldv.i = prev;
+      }
+    } else {
+      operator()(xoff, yoff) = std::max(operator()(xoff, yoff), val);
+    }
+    #elif defined(_OPENMP)
     #pragma omp critical
+    operator()(xoff, yoff) = std::max(operator()(xoff, yoff), val);
+    #else
     operator()(xoff, yoff) = std::max(operator()(xoff, yoff), val);
     #endif
 
@@ -1484,8 +1611,47 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMin(&operator()(xoff, yoff), val);
-    #else
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff));
+    T old = aref.load();
+    while (old > val && !aref.compare_exchange_weak(old, val)) {}
+    #elif defined(_OPENMP) && (defined(__INTEL_LLVM_COMPILER) || defined(__INTEL_COMPILER))
+    #pragma omp atomic compare
+    if (operator()(xoff, yoff) > val) { operator()(xoff, yoff) = val; }
+    #elif defined(__NVCOMPILER) && defined(_OPENMP) && defined(OPS_OMPOFFLOAD)
+    if (sizeof(T) == sizeof(unsigned long long)) {
+      unsigned long long *addr = (unsigned long long*)(&operator()(xoff, yoff));
+      union { unsigned long long i; T t; } oldv, newv;
+      oldv.i = *addr;
+      while (true) {
+        newv.t = (oldv.t < val) ? oldv.t : val;
+        if (newv.t == oldv.t) break;
+        unsigned long long prev = __sync_val_compare_and_swap(addr, oldv.i, newv.i);
+        if (prev == oldv.i) break;
+        oldv.i = prev;
+      }
+    } else if (sizeof(T) == sizeof(unsigned int)) {
+      unsigned int *addr = (unsigned int*)(&operator()(xoff, yoff));
+      union { unsigned int i; T t; } oldv, newv;
+      oldv.i = *addr;
+      while (true) {
+        newv.t = (oldv.t < val) ? oldv.t : val;
+        if (newv.t == oldv.t) break;
+        unsigned int prev = __sync_val_compare_and_swap(addr, oldv.i, newv.i);
+        if (prev == oldv.i) break;
+        oldv.i = prev;
+      }
+    } else {
+      operator()(xoff, yoff) = std::min(operator()(xoff, yoff), val);
+    }
+    #elif defined(_OPENMP)
     #pragma omp critical
+    operator()(xoff, yoff) = std::min(operator()(xoff, yoff), val);
+    #else
     operator()(xoff, yoff) = std::min(operator()(xoff, yoff), val);
     #endif
 
@@ -1497,8 +1663,17 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicAdd(&operator()(xoff, yoff), val);
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff));
+    aref.fetch_add(val);
+    #elif defined(_OPENMP)
+    #pragma omp atomic update
+    operator()(xoff, yoff) += val;
     #else
-    #pragma omp critical
     operator()(xoff, yoff) += val;
     #endif
 
@@ -1547,8 +1722,47 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMax(&operator()(xoff, yoff, zoff), val);
-    #else
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff, zoff));
+    T old = aref.load();
+    while (old < val && !aref.compare_exchange_weak(old, val)) {}
+    #elif defined(_OPENMP) && (defined(__INTEL_LLVM_COMPILER) || defined(__INTEL_COMPILER))
+    #pragma omp atomic compare
+    if (operator()(xoff, yoff, zoff) < val) { operator()(xoff, yoff, zoff) = val; }
+    #elif defined(__NVCOMPILER) && defined(_OPENMP) && defined(OPS_OMPOFFLOAD)
+    if (sizeof(T) == sizeof(unsigned long long)) {
+      unsigned long long *addr = (unsigned long long*)(&operator()(xoff, yoff, zoff));
+      union { unsigned long long i; T t; } oldv, newv;
+      oldv.i = *addr;
+      while (true) {
+        newv.t = (oldv.t > val) ? oldv.t : val;
+        if (newv.t == oldv.t) break;
+        unsigned long long prev = __sync_val_compare_and_swap(addr, oldv.i, newv.i);
+        if (prev == oldv.i) break;
+        oldv.i = prev;
+      }
+    } else if (sizeof(T) == sizeof(unsigned int)) {
+      unsigned int *addr = (unsigned int*)(&operator()(xoff, yoff, zoff));
+      union { unsigned int i; T t; } oldv, newv;
+      oldv.i = *addr;
+      while (true) {
+        newv.t = (oldv.t > val) ? oldv.t : val;
+        if (newv.t == oldv.t) break;
+        unsigned int prev = __sync_val_compare_and_swap(addr, oldv.i, newv.i);
+        if (prev == oldv.i) break;
+        oldv.i = prev;
+      }
+    } else {
+      operator()(xoff, yoff, zoff) = std::max(operator()(xoff, yoff, zoff), val);
+    }
+    #elif defined(_OPENMP)
     #pragma omp critical
+    operator()(xoff, yoff, zoff) = std::max(operator()(xoff, yoff, zoff), val);
+    #else
     operator()(xoff, yoff, zoff) = std::max(operator()(xoff, yoff, zoff), val);
     #endif
 
@@ -1560,8 +1774,47 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMin(&operator()(xoff, yoff, zoff), val);
-    #else
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff, zoff));
+    T old = aref.load();
+    while (old > val && !aref.compare_exchange_weak(old, val)) {}
+    #elif defined(_OPENMP) && (defined(__INTEL_LLVM_COMPILER) || defined(__INTEL_COMPILER))
+    #pragma omp atomic compare
+    if (operator()(xoff, yoff, zoff) > val) { operator()(xoff, yoff, zoff) = val; }
+    #elif defined(__NVCOMPILER) && defined(_OPENMP) && defined(OPS_OMPOFFLOAD)
+    if (sizeof(T) == sizeof(unsigned long long)) {
+      unsigned long long *addr = (unsigned long long*)(&operator()(xoff, yoff, zoff));
+      union { unsigned long long i; T t; } oldv, newv;
+      oldv.i = *addr;
+      while (true) {
+        newv.t = (oldv.t < val) ? oldv.t : val;
+        if (newv.t == oldv.t) break;
+        unsigned long long prev = __sync_val_compare_and_swap(addr, oldv.i, newv.i);
+        if (prev == oldv.i) break;
+        oldv.i = prev;
+      }
+    } else if (sizeof(T) == sizeof(unsigned int)) {
+      unsigned int *addr = (unsigned int*)(&operator()(xoff, yoff, zoff));
+      union { unsigned int i; T t; } oldv, newv;
+      oldv.i = *addr;
+      while (true) {
+        newv.t = (oldv.t < val) ? oldv.t : val;
+        if (newv.t == oldv.t) break;
+        unsigned int prev = __sync_val_compare_and_swap(addr, oldv.i, newv.i);
+        if (prev == oldv.i) break;
+        oldv.i = prev;
+      }
+    } else {
+      operator()(xoff, yoff, zoff) = std::min(operator()(xoff, yoff, zoff), val);
+    }
+    #elif defined(_OPENMP)
     #pragma omp critical
+    operator()(xoff, yoff, zoff) = std::min(operator()(xoff, yoff, zoff), val);
+    #else
     operator()(xoff, yoff, zoff) = std::min(operator()(xoff, yoff, zoff), val);
     #endif
 
@@ -1573,8 +1826,17 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicAdd(&operator()(xoff, yoff, zoff), val);
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff, zoff));
+    aref.fetch_add(val);
+    #elif defined(_OPENMP)
+    #pragma omp atomic update
+    operator()(xoff, yoff, zoff) += val;
     #else
-    #pragma omp critical
     operator()(xoff, yoff, zoff) += val;
     #endif
 
@@ -1623,8 +1885,47 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMax(&operator()(xoff, yoff, zoff, uoff), val);
-    #else
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff, zoff, uoff));
+    T old = aref.load();
+    while (old < val && !aref.compare_exchange_weak(old, val)) {}
+    #elif defined(_OPENMP) && (defined(__INTEL_LLVM_COMPILER) || defined(__INTEL_COMPILER))
+    #pragma omp atomic compare
+    if (operator()(xoff, yoff, zoff, uoff) < val) { operator()(xoff, yoff, zoff, uoff) = val; }
+    #elif defined(__NVCOMPILER) && defined(_OPENMP) && defined(OPS_OMPOFFLOAD)
+    if (sizeof(T) == sizeof(unsigned long long)) {
+      unsigned long long *addr = (unsigned long long*)(&operator()(xoff, yoff, zoff, uoff));
+      union { unsigned long long i; T t; } oldv, newv;
+      oldv.i = *addr;
+      while (true) {
+        newv.t = (oldv.t > val) ? oldv.t : val;
+        if (newv.t == oldv.t) break;
+        unsigned long long prev = __sync_val_compare_and_swap(addr, oldv.i, newv.i);
+        if (prev == oldv.i) break;
+        oldv.i = prev;
+      }
+    } else if (sizeof(T) == sizeof(unsigned int)) {
+      unsigned int *addr = (unsigned int*)(&operator()(xoff, yoff, zoff, uoff));
+      union { unsigned int i; T t; } oldv, newv;
+      oldv.i = *addr;
+      while (true) {
+        newv.t = (oldv.t > val) ? oldv.t : val;
+        if (newv.t == oldv.t) break;
+        unsigned int prev = __sync_val_compare_and_swap(addr, oldv.i, newv.i);
+        if (prev == oldv.i) break;
+        oldv.i = prev;
+      }
+    } else {
+      operator()(xoff, yoff, zoff, uoff) = std::max(operator()(xoff, yoff, zoff, uoff), val);
+    }
+    #elif defined(_OPENMP)
     #pragma omp critical
+    operator()(xoff, yoff, zoff, uoff) = std::max(operator()(xoff, yoff, zoff, uoff), val);
+    #else
     operator()(xoff, yoff, zoff, uoff) = std::max(operator()(xoff, yoff, zoff, uoff), val);
     #endif
 
@@ -1636,8 +1937,47 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicMin(&operator()(xoff, yoff, zoff, uoff), val);
-    #else
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff, zoff, uoff));
+    T old = aref.load();
+    while (old > val && !aref.compare_exchange_weak(old, val)) {}
+    #elif defined(_OPENMP) && (defined(__INTEL_LLVM_COMPILER) || defined(__INTEL_COMPILER))
+    #pragma omp atomic compare
+    if (operator()(xoff, yoff, zoff, uoff) > val) { operator()(xoff, yoff, zoff, uoff) = val; }
+    #elif defined(__NVCOMPILER) && defined(_OPENMP) && defined(OPS_OMPOFFLOAD)
+    if (sizeof(T) == sizeof(unsigned long long)) {
+      unsigned long long *addr = (unsigned long long*)(&operator()(xoff, yoff, zoff, uoff));
+      union { unsigned long long i; T t; } oldv, newv;
+      oldv.i = *addr;
+      while (true) {
+        newv.t = (oldv.t < val) ? oldv.t : val;
+        if (newv.t == oldv.t) break;
+        unsigned long long prev = __sync_val_compare_and_swap(addr, oldv.i, newv.i);
+        if (prev == oldv.i) break;
+        oldv.i = prev;
+      }
+    } else if (sizeof(T) == sizeof(unsigned int)) {
+      unsigned int *addr = (unsigned int*)(&operator()(xoff, yoff, zoff, uoff));
+      union { unsigned int i; T t; } oldv, newv;
+      oldv.i = *addr;
+      while (true) {
+        newv.t = (oldv.t < val) ? oldv.t : val;
+        if (newv.t == oldv.t) break;
+        unsigned int prev = __sync_val_compare_and_swap(addr, oldv.i, newv.i);
+        if (prev == oldv.i) break;
+        oldv.i = prev;
+      }
+    } else {
+      operator()(xoff, yoff, zoff, uoff) = std::min(operator()(xoff, yoff, zoff, uoff), val);
+    }
+    #elif defined(_OPENMP)
     #pragma omp critical
+    operator()(xoff, yoff, zoff, uoff) = std::min(operator()(xoff, yoff, zoff, uoff), val);
+    #else
     operator()(xoff, yoff, zoff, uoff) = std::min(operator()(xoff, yoff, zoff, uoff), val);
     #endif
 
@@ -1649,8 +1989,17 @@ public:
     
     #if defined(__CUDA_ARCH__) && defined(__CUDACC__)
     atomicAdd(&operator()(xoff, yoff, zoff, uoff), val);
+    #elif defined(__INTEL_SYCL__)
+    cl::sycl::atomic_ref<T,
+                         cl::sycl::memory_order::relaxed,
+                         cl::sycl::memory_scope::device,
+                         cl::sycl::access::address_space::global_space>
+        aref(operator()(xoff, yoff, zoff, uoff));
+    aref.fetch_add(val);
+    #elif defined(_OPENMP)
+    #pragma omp atomic update
+    operator()(xoff, yoff, zoff, uoff) += val;
     #else
-    #pragma omp critical
     operator()(xoff, yoff, zoff, uoff) += val;
     #endif
 
