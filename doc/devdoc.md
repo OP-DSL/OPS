@@ -91,16 +91,16 @@ class Target(Findable):
 ```
 
 Available targets:
-| Target Class     | Name             | Description               |
-|------------------|------------------|---------------------------|
-| `MPIOpenMP`      | `mpi_openmp`     | CPU sequential/OpenMP     |
-| `Cuda`           | `cuda`           | NVIDIA GPUs via CUDA      |
-| `Hip`            | `hip`            | AMD GPUs via HIP          |
-| `Sycl`           | `sycl`           | Intel/AMD/NVIDIA via SYCL |
-| `OpenMPOffload`  | `openmp_offload` | GPU via OpenMP target     |
-| `F2CCuda`        | `f2c_cuda`       | Fortran-to-C CUDA         |
-| `F2CHip`         | `f2c_hip`        | Fortran-to-C HIP          |
-| `F2CSycl`        | `f2c_sycl`       | Fortran-to-C SYCL         |
+| Target Class    | Name             | Description               |
+|-----------------|------------------|---------------------------|
+| `MPIOpenMP`     | `mpi_openmp`     | CPU sequential/OpenMP     |
+| `Cuda`          | `cuda`           | NVIDIA GPUs via CUDA      |
+| `Hip`           | `hip`            | AMD GPUs via HIP          |
+| `Sycl`          | `sycl`           | Intel/AMD/NVIDIA via SYCL |
+| `OpenMPOffload` | `openmp_offload` | GPU via OpenMP target     |
+| `F2CCuda`       | `f2c_cuda`       | Fortran-to-C CUDA         |
+| `F2CHip`        | `f2c_hip`        | Fortran-to-C HIP          |
+| `F2CSycl`       | `f2c_sycl`       | Fortran-to-C SYCL         |
 
 #### Scheme (`scheme.py`)
 
@@ -147,14 +147,14 @@ def parseLoops(translation_unit, program) -> None:
 
 Templates use Jinja2 syntax with OPS-specific filters and tests. Key template variables:
 
-| Variable           | Description                                     |
-|--------------------|-------------------------------------------------|
-| `lh`               | Loop host object (kernel name, args, ndim, etc.)|
-| `kernel_func`      | Original kernel function text                   |
-| `kernel_body`      | Extracted kernel body                           |
-| `args_list`        | Argument name list                              |
-| `target`           | Current target object                           |
-| `consts_in_kernel` | Constants used in kernel                        |
+| Variable           | Description                                      |
+|--------------------|--------------------------------------------------|
+| `lh`               | Loop host object (kernel name, args, ndim, etc.) |
+| `kernel_func`      | Original kernel function text                    |
+| `kernel_body`      | Extracted kernel body                            |
+| `args_list`        | Argument name list                               |
+| `target`           | Current target object                            |
+| `consts_in_kernel` | Constants used in kernel                         |
 
 Example template structure (`loop_host.cpp.j2`):
 ```jinja2
@@ -280,9 +280,98 @@ ops/c/
 
 ## Build System
 
+OPS supports two build systems: **CMake** (recommended) and **Makefiles**. Both produce the same set of backend libraries and application binaries. For full build instructions see [installation.md](installation.md).
+
+### CMake Build System
+
+The top-level [CMakeLists.txt](../CMakeLists.txt) orchestrates the entire build: compiler detection, dependency discovery, backend library compilation, translator installation, and optional application builds.
+
+#### Key CMake Options
+
+| Option                  | Default          | Description                                          |
+|-------------------------|------------------|------------------------------------------------------|
+| `CMAKE_BUILD_TYPE`      | —                | Build type: `Release`, `Debug`, or empty for default |
+| `BUILD_OPS_CXX`         | `ON`             | Build the C/C++ backend libraries                    |
+| `BUILD_OPS_FORTRAN`     | `OFF`            | Build the Fortran backend libraries                  |
+| `BUILD_OPS_APPS`        | `OFF`            | Build sample applications (library CMake only)       |
+| `OPS_TEST`              | `OFF`            | Enable CTest-based tests                             |
+| `OPS_HIP`               | `OFF`            | Enable the HIP backend                               |
+| `LEGACY_CODEGEN`        | `OFF`            | Use the legacy code generator                        |
+| `ENABLE_IEEE`           | `OFF`            | Enable strict IEEE floating-point flags              |
+| `OPS_VERBOSE_WARNING`   | `OFF`            | Show verbose output during build                     |
+| `CMAKE_INSTALL_PREFIX`  | `/usr/local`     | Library installation directory                       |
+| `APP_INSTALL_DIR`       | `$HOME/OPS-APPS` | Application installation directory                   |
+| `OPS_INSTALL_DIR`       | —                | Path to installed OPS library (app CMake only)       |
+| `GPU_NUMBER`            | —                | Number of GPUs for tests                             |
+| `GPU_ARCH`              | `70`             | CUDA compute capability (e.g., `80` for A100)        |
+| `LIBTRID_PATH`          | —                | Path to tridiagonal solver library (optional)        |
+
+#### Dependency Detection
+
+CMake automatically discovers:  MPI (`find_package(MPI)`), HDF5 (`find_package(HDF5)`), CUDA (`find_package(CUDAToolkit)`), OpenMP (`find_package(OpenMP)`), HIP (when `OPS_HIP=ON`), and Python 3.8+. The translator's Python virtual environment is set up automatically during the CMake install step via `ops_translator/setup_venv_cmake.sh`.
+
+#### Build Structure
+
+```
+CMakeLists.txt                  # Top-level: compiler flags, dependencies, options
+├── ops_translator/CMakeLists.txt   # Installs translator + sets up Python venv
+├── ops/c/CMakeLists.txt            # Backend libraries (ops_seq, ops_cuda, ops_mpi, etc.)
+├── ops/fortran/CMakeLists.txt      # Fortran backend libraries
+├── apps/c/CMakeLists.txt           # C/C++ example applications
+│   ├── CloverLeaf/CMakeLists.txt
+│   ├── shsgc/CMakeLists.txt
+│   └── ...
+└── apps/fortran/CMakeLists.txt     # Fortran example applications
+```
+
+#### Library Targets
+
+The CMake build in `ops/c/CMakeLists.txt` produces these library targets:
+
+| CMake Target     | Condition                | Description           |
+|------------------|--------------------------|-----------------------|
+| `ops_seq`        | Always                   | Sequential + OpenMP   |
+| `ops_cuda`       | `CUDAToolkit_FOUND`      | CUDA single-node      |
+| `ops_hip`        | `OPS_HIP` + `HIP_FOUND`  | HIP single-node       |
+| `ops_ompoffload` | NVHPC compiler + CUDA    | OpenMP Offload        |
+| `ops_mpi`        | `MPI_FOUND`              | MPI + sequential      |
+| `ops_mpi_cuda`   | MPI + CUDA               | MPI + CUDA            |
+| `ops_mpi_hip`    | MPI + HIP                | MPI + HIP             |
+| `ops_hdf5_seq`   | `HDF5_FOUND`             | HDF5 I/O (sequential) |
+| `ops_hdf5_mpi`   | HDF5 + MPI               | HDF5 I/O (MPI)        |
+
+All libraries are installed under `${CMAKE_INSTALL_PREFIX}/lib` with CMake export files at `${CMAKE_INSTALL_PREFIX}/lib/cmake`, allowing downstream projects to use `find_package(OPS)`.
+
+#### Typical Build Workflow
+
+```bash
+# Build everything (library + apps)
+mkdir build && cd build
+cmake .. -DBUILD_OPS_APPS=ON -DCMAKE_INSTALL_PREFIX=$HOME/OPS-INSTALL \
+         -DAPP_INSTALL_DIR=$HOME/OPS-APPS -DGPU_NUMBER=1
+make
+make install
+
+# Or build library and apps separately
+mkdir build && cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/OPS-INSTALL
+make && make install
+
+mkdir appbuild && cd appbuild
+cmake ../../apps/c -DOPS_INSTALL_DIR=$HOME/OPS-INSTALL -DAPP_INSTALL_DIR=$HOME/OPS-APPS
+make
+```
+
+#### Adding a New Backend to CMake
+
+1. Add a new library target in `ops/c/CMakeLists.txt` (following the pattern of existing backends)
+2. Add conditional detection logic in the top-level `CMakeLists.txt` if a new dependency is needed
+3. Use `installtarget()` macro to register the target for installation and export
+4. Add MPI variant if applicable (create `ops_mpi_<backend>` target)
+
 ### Makefile System
 
-The makefile-based build uses modular includes:
+The Makefile-based build uses modular includes:
 
 ```
 makefiles/
@@ -299,23 +388,23 @@ makefiles/
 
 For an application named `APP`, the following targets are generated:
 
-| Target               | Description                         |
-|----------------------|-------------------------------------|
-| `$(APP)_dev_seq`     | Development sequential (no code-gen)|
-| `$(APP)_dev_mpi`     | Development MPI (no code-gen)       |
-| `$(APP)_seq`         | Sequential with generated kernels   |
-| `$(APP)_openmp`      | OpenMP parallel                     |
-| `$(APP)_mpi`         | MPI distributed                     |
-| `$(APP)_mpi_openmp`  | MPI + OpenMP hybrid                 |
-| `$(APP)_tiled`       | Lazy execution with tiling          |
-| `$(APP)_cuda`        | CUDA single GPU                     |
-| `$(APP)_mpi_cuda`    | MPI + CUDA                          |
-| `$(APP)_sycl`        | SYCL single device                  |
-| `$(APP)_mpi_sycl`    | MPI + SYCL                          |
-| `$(APP)_hip`         | HIP single GPU                      |
-| `$(APP)_mpi_hip`     | MPI + HIP                           |
-| `$(APP)_ompoffload`  | OpenMP Offload single GPU           |
-| `$(APP)_mpi_ompoffload` | MPI + OpenMP Offload             |
+| Target                   | Description                          |
+|--------------------------|--------------------------------------|
+| `$(APP)_dev_seq`         | Development sequential (no code-gen) |
+| `$(APP)_dev_mpi`         | Development MPI (no code-gen)        |
+| `$(APP)_seq`             | Sequential with generated kernels    |
+| `$(APP)_openmp`          | OpenMP parallel                      |
+| `$(APP)_mpi`             | MPI distributed                      |
+| `$(APP)_mpi_openmp`      | MPI + OpenMP hybrid                  |
+| `$(APP)_tiled`           | Lazy execution with tiling           |
+| `$(APP)_cuda`            | CUDA single GPU                      |
+| `$(APP)_mpi_cuda`        | MPI + CUDA                           |
+| `$(APP)_sycl`            | SYCL single device                   |
+| `$(APP)_mpi_sycl`        | MPI + SYCL                           |
+| `$(APP)_hip`             | HIP single GPU                       |
+| `$(APP)_mpi_hip`         | MPI + HIP                            |
+| `$(APP)_ompoffload`      | OpenMP Offload single GPU            |
+| `$(APP)_mpi_ompoffload`  | MPI + OpenMP Offload                 |
 
 ---
 
@@ -349,11 +438,11 @@ ops_timing_output(stdout);
 
 ### Common Issues
 
-| Issue                              | Cause                              | Solution                       |
-|------------------------------------|------------------------------------| ------------------------------ |
-| `GET_MACRO` redefined              | Name collision with Intel headers  | Harmless warning, ignore       |
-| `printf` in SYCL kernel            | Variadic functions not allowed     | Guard with `#ifndef OPS_SYCL`  |
-| Preprocessor directives stripped   | Code generator limitation          | Use runtime conditionals       |
+| Issue                            | Cause                             | Solution                      |
+|----------------------------------|-----------------------------------|-------------------------------|
+| `GET_MACRO` redefined            | Name collision with Intel headers | Harmless warning, ignore      |
+| `printf` in SYCL kernel          | Variadic functions not allowed    | Guard with `#ifndef OPS_SYCL` |
+| Preprocessor directives stripped | Code generator limitation         | Use runtime conditionals      |
 
 ---
 
