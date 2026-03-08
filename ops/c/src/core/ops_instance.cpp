@@ -183,6 +183,7 @@ void OPS_instance::init_globals() {
 	OPS_consts_h=NULL; OPS_consts_d=NULL; OPS_reduct_h=NULL; OPS_reduct_d=NULL;
 	OPS_consts_bytes = 0; OPS_reduct_bytes = 0;
 	OPS_cl_device=0;
+    OPS_uvm_device=false;
 	ops_halo_buffer = NULL;
 	ops_halo_buffer_d = NULL;
 	ops_halo_buffer_size = 0;

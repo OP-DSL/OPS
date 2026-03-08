@@ -72,7 +72,15 @@ void ops_init_device(OPS_instance *instance, const int argc, const char *const a
   cutilDeviceInit(instance, argc, argv);
   instance->OPS_hybrid_gpu = 1;
   //hipSafeCall(instance->ostream(),hipDeviceSetCacheConfig(hipFuncCachePreferL1));
-  hipDeviceSetCacheConfig(hipFuncCachePreferL1);
+  hipDeviceProp_t hipDeviceProp;
+  hipSafeCall(instance->ostream(), hipGetDeviceProperties(&hipDeviceProp, 0));
+
+  if (hipDeviceProp.integrated) {
+    instance->OPS_uvm_device = true;
+    ops_printf("Using integrated GPU with UVM support\n");
+  }
+  
+  hipSafeCall(instance->ostream(), hipDeviceSetCacheConfig(hipFuncCachePreferL1));
 }
 
 void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
@@ -80,7 +88,10 @@ void ops_device_malloc(OPS_instance *instance, void** ptr, size_t bytes) {
 }
 
 void ops_device_mallochost(OPS_instance *instance, void** ptr, size_t bytes) {
-  hipSafeCall(instance->ostream(), hipHostMalloc(ptr, bytes));
+    if (instance->OPS_uvm_device) 
+        hipSafeCall(instance->ostream(), hipMalloc(ptr, bytes));
+    else
+        hipSafeCall(instance->ostream(), hipHostMalloc(ptr, bytes));
 }
 
 void ops_device_free(OPS_instance *instance, void** ptr) {
@@ -94,10 +105,18 @@ void ops_device_freehost(OPS_instance *instance, void** ptr) {
 }
 
 void ops_device_memcpy_h2d(OPS_instance *instance, void** to, void **from, size_t size) {
+    if (instance->OPS_uvm_device) {
+        // For UVM, the host pointer and device pointer are the same, so we can skip the copy
+        return;
+    }
     hipSafeCall(instance->ostream(), hipMemcpy(*to, *from, size, hipMemcpyHostToDevice));
 }
 
 void ops_device_memcpy_d2h(OPS_instance *instance, void** to, void **from, size_t size) {
+    if (instance->OPS_uvm_device) {
+        // For UVM, the host pointer and device pointer are the same, so we can skip the copy
+        return;
+    }
     hipSafeCall(instance->ostream(), hipMemcpy(*to, *from, size, hipMemcpyDeviceToHost));
 }
 

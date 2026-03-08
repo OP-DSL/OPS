@@ -67,7 +67,12 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
                              // ops_decl_dat_hdf5()
   } else {
     // Allocate memory immediately
-    dat->data = (char*) ops_malloc(bytes);
+    if (dat->block->instance->OPS_uvm_device) {
+      // If UVM is enabled, we can use the host pointer directly
+      ops_device_mallochost(block->instance, (void**)&dat->data, bytes);
+    } else {
+      dat->data = (char*) ops_malloc(bytes);
+    }
     dat->user_managed = 0;
     dat->mem = bytes;
     dat->data_d = NULL;
@@ -79,10 +84,17 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
 //          block->instance->OPS_hybrid_layout ? //TODO: comes in when batching
 //          block->instance->ops_batch_size : 0);
     } else {
-      ops_device_malloc(block->instance, ( void ** ) &( dat->data_d ), bytes);
-      ops_device_memset(block->instance, ( void ** ) &( dat->data_d ), 0, bytes);
+      if (block->instance->OPS_uvm_device){
+        dat->data_d = dat->data;
+      }
+      else
+      {
+        // Allocate memory on the device
+        ops_device_malloc(block->instance, ( void ** ) &( dat->data_d ), bytes);
+        ops_device_memset(block->instance, ( void ** ) &( dat->data_d ), 0, bytes);
+        dat->dirty_hd = 2;
+      }
       init_deviceptr = 0;
-      dat->dirty_hd = 2;
     }
 
     if(init_deviceptr)
