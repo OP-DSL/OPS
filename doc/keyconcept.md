@@ -1,4 +1,4 @@
-# Key concepts and structure
+# Key Concepts and Structure
 
 An OPS application can generally be divided into two key parts:
 initialisation and parallel execution. During the initialisation phase,
