@@ -12,6 +12,7 @@ Welcome to OPS documentation!
 
    quickstart.md
    introduction.md
+   keyconcept.md
    installation.md
    devanapp.md
    opsapi.md
