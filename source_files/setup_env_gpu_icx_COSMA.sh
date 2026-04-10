@@ -36,7 +36,3 @@ export AOMP=$ROCM_PATH/llvm
 unset HDF5_INSTALL_PATH
 export HDF5_INSTALL_PATH=/cosma/local/parallel-hdf5/intel_2024.2.0_intel_mpi_2024.2.0/1.14.4
 export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
-
-# Python
-module load python/3.9.19
-source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate

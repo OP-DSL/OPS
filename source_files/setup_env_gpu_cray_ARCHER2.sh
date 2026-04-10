@@ -42,7 +42,3 @@ module load cray-hdf5-parallel/1.12.2.1
 unset HDF5_INSTALL_PATH
 export HDF5_INSTALL_PATH=/opt/cray/pe/hdf5-parallel/1.12.2.1
 export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
-
-# Python
-module load cray-python/3.9.13.1
-source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
