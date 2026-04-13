@@ -6,45 +6,25 @@ undefine CXXFLAGS
 
 PWD != dirname $(realpath $(word $(words $(MAKEFILE_LIST)), $(MAKEFILE_LIST)))
 
-PYTHON_VER := cpython-3.11.15+20260325-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz 
 PYTHON_DIR := $(PWD)/.python
 
-.PHONY: python packages-download packages clean
+# Pick a python3 that has SSL support (needed for pip to reach PyPI).
+# The module-loaded python3 may lack libssl.so.1.1 on newer OS; fall back to /usr/bin/python3.
+PYTHON3 != python3 -c "import ssl" 2>/dev/null && echo python3 || echo /usr/bin/python3
 
-# Top-level target
+.PHONY: python clean
+
+# Create venv from system python3 and install all required packages.
+# Requires a python3 with SSL on PATH or at /usr/bin/python3.
 python: $(PYTHON_DIR)/.python-packages
 
-packages-download: $(PYTHON_DIR)/.python-packages-download
-
-packages: $(PYTHON_DIR)/.python-packages
-
-# -------------------------
-# Step 1: Setup Python
-# -------------------------
-$(PYTHON_DIR)/.python: python_source/$(PYTHON_VER)
-	mkdir -p $(PYTHON_DIR)
-	tar xf $^ --strip-components=1 --directory $(PYTHON_DIR)
+$(PYTHON_DIR)/.python-packages:
+	@echo "Using Python: $(shell $(PYTHON3) --version 2>&1)"
+	$(PYTHON3) -m venv $(PYTHON_DIR)
+	$(PYTHON_DIR)/bin/pip3 install --upgrade pip
+	$(PYTHON_DIR)/bin/pip3 install -r $(PWD)/requirements.txt
+	$(PYTHON_DIR)/bin/pip3 install --force-reinstall libclang==16.0.6
 	touch $@
 
-# -------------------------
-# Step 2: Download wheels
-# -------------------------
-$(PYTHON_DIR)/.python-packages-download: $(PYTHON_DIR)/.python
-	$(PYTHON_DIR)/bin/python3 -m ensurepip
-	$(PYTHON_DIR)/bin/pip3 download --destination-directory=python_source/wheels -r requirements.txt
-	touch $@
-
-# -------------------------
-# Step 3: Install packages
-# -------------------------
-$(PYTHON_DIR)/.python-packages: $(PYTHON_DIR)/.python-packages-download
-	$(PYTHON_DIR)/bin/python3 -m ensurepip
-	$(PYTHON_DIR)/bin/pip3 install --no-index --find-links=python_source/wheels -r requirements.txt
-	$(PYTHON_DIR)/bin/pip3 install --no-index --find-links=python_source/wheels --force-reinstall libclang==16.0.6
-	touch $@
-
-# -------------------------
-# Cleanup
-# -------------------------
 clean:
 	$(RM) -rf $(PYTHON_DIR)
