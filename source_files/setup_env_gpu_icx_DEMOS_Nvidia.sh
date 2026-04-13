@@ -40,3 +40,5 @@ export HDF5_INSTALL_PATH=<path to HDF5 installl dir>
 export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
 export PATH=$HDF5_INSTALL_PATH/bin:$PATH
 
+# Python
+module load python/3.9.7

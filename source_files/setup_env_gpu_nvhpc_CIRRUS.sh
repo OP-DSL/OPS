@@ -10,7 +10,12 @@ module purge
 module use /mnt/lustre/e1000/home/y07/shared/cirrus-modulefiles
 module load epcc/setup-env
 
+# Python
+module load python/3.9.13
+
 # Compiler
+module rm --force openmpi/4.1.6 gcc/10.2.0
+
 module load nvidia/nvhpc-nompi/22.11
 module load mpt/2.25
 module load gcc/8.2.0

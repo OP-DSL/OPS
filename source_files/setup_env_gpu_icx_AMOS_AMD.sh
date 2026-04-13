@@ -42,4 +42,7 @@ export PATH=$HDF5_INSTALL_PATH/bin:$PATH
 export LD_LIBRARY_PATH=<path to ZLIB installl dir>:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
 
+# Python
+module load python/3.9.7
+
 #export LD_LIBRARY_PATH=<softline for libffi.so.6 specific issue of amos>:$LD_LIBRARY_PATH
