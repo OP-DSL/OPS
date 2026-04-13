@@ -12,7 +12,7 @@ PYTHON_DIR := $(PWD)/.python
 .PHONY: python packages-download packages clean
 
 # Top-level target
-python: $(PYTHON_DIR)/.python
+python: $(PYTHON_DIR)/.python-packages
 
 packages-download: $(PYTHON_DIR)/.python-packages-download
 
