@@ -7,7 +7,13 @@ The format is based on "Keep a Changelog" (https://keepachangelog.com/).
 
 ## [Unreleased]
 
-No changes yet.
+Changes since `v2.0.0`
+
+### Changed
+- `ops_translator`: the code-generator virtual environment is now built automatically via `make python` in `ops_translator/`, replacing the previous manual `setup_venv.sh` / `source ops_venv/bin/activate` workflow. Users no longer need to manually create or activate the venv — it is set up and invoked transparently during the build. The system `python3` (e.g. loaded via `module load python/3.x`) is used; automatically falls back to `/usr/bin/python3` when the module-provided Python was compiled against an incompatible OpenSSL version (`import ssl` fails).
+
+### Added
+- `ops_translator/.gitignore` to exclude the generated `.python/` venv, `python_source/`, `ops_venv/`, and `__pycache__` from version control.
 
 
 ---

@@ -22,19 +22,28 @@ CMake 3.18 or newer is required for using the CMake build system. If the latest 
 
  **Python**
 
-The Python dependencies (primarily used for the OPS code generator) are best installed by setting up a virtual environment so that required packages can be installed without superuser privileges. To set up the Python virtual environment and install the required dependent packages, ensure that you have Python 3.9 or a more recent version with pip installed.
-Detailed instructions for installing a virtual environment using pip can be found [here](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/).
+The Python dependencies (primarily used for the OPS code generator) are installed into a virtual environment under `ops_translator/.python/`. Python 3.8 or newer is required. The build system will use whatever `python3` is on your `PATH` — on HPC systems this is typically loaded via a module, e.g.:
 
-The recommended way to set up the Python environment is to use the provided script:
-
+```bash
+module load python/3.9.7
 ```
+
+The virtual environment is built automatically as part of the normal build process (CMake or Makefile). If you need to build or rebuild it manually:
+
+```bash
 cd ops_translator
-. setup_venv.sh
-source ops_venv/bin/activate
-cd ..
+make python        # creates .python/ venv and installs all dependencies
 ```
 
-This will create and activate a virtual environment in `ops_translator/ops_venv` and install all required dependencies. You will need to activate the virtual environment by `source ops_translator/ops_venv/bin/activate` every time you want to use the code generator. Activating the virtual environment ensures that the code generator and its dependencies are isolated from the system-wide Python installation, avoiding conflicts and ensuring proper execution.
+To force a clean rebuild of the environment:
+
+```bash
+cd ops_translator
+make clean         # removes the .python/ venv
+make python        # rebuilds from scratch
+```
+
+> **Note for HPC systems:** Some module-provided Python builds lack SSL support (e.g. compiled against an older `libssl.so.1.1` no longer present on the system). The Makefile automatically detects this and falls back to `/usr/bin/python3` to create the venv, which typically has working SSL. The resulting venv is otherwise identical.
 
  **HDF5**
 
