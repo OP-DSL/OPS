@@ -1,7 +1,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "sys/time.h"
 
 #define OPS_3D
 #include "ops_seq_v2.h"
@@ -12,7 +11,7 @@ float r10;
 #include "tti_kernels.h"
 
 
-float dt = 0.001, start = 0, stop = 0.1;  // time variables
+float dt = 0.001, start = 0, stop = 1;  // time variables
 int space_order = 8;                     // Space order
 
 
@@ -33,7 +32,7 @@ int main(int argc, char **argv) {
         printf("Inform grid size\n");
         exit(-1);
     }
-
+    // size getting by command
     size[0] = atoi(argv[1]);
     size[1] = atoi(argv[2]);
     size[2] = atoi(argv[3]);

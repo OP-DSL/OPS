@@ -333,7 +333,10 @@ void ops_convert_layout(char *in, char *out, ops_block block, int size, int *dat
 
 // Query preferred kernel block size for backends using CUDA-like 3D launch configuration
 ops::dim3 ops_get_kernel_block_size(int kernel_id, int ndims, int *local_range, int nargs, ops_arg* args, int max_threads, int registers);
+// Autotuning performance recording (total and optional MPI/remote component)
+void ops_record_kernel_performance_mpi(int kernel_id, double seconds_total, double seconds_mpi);
 void ops_record_kernel_performance(int kernel_id, double seconds);
+void ops_flush_autotune_logs();
 
 
 //Includes for common device backends

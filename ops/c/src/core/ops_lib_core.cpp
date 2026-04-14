@@ -146,7 +146,7 @@ void _ops_set_args(OPS_instance *instance, const char *argv) {
   if (pch != NULL) {
     snprintf(temp, 64, "%s", pch);
     int mode = atoi(temp + strlen("OPS_AUTOTUNE_MODE="));
-    if (mode != 0 && mode != 1) mode = 1; // default to full autotune
+    if (mode < 0 || mode > 6) mode = 1; // 0=default, 1=tune, 2=precomputed, 3=MLP, 4=XGBoost multi, 5=explore+train, 6=XGBoost single
     instance->OPS_autotune_mode = mode;
     if (instance->is_root()) instance->ostream() << "\n OPS_autotune_mode = " << instance->OPS_autotune_mode << '\n';
   }
@@ -284,6 +284,8 @@ void ops_init_core(OPS_instance *instance, const int argc, const char *const arg
 }
 
 void ops_exit_core(OPS_instance *instance) {
+  // Flush autotuning CSV footers once at program end
+  ops_flush_autotune_logs();
   ops_checkpointing_exit(instance);
   ops_exit_lazy(instance);
   
@@ -365,8 +367,7 @@ void ops_exit_core(OPS_instance *instance) {
 
   instance->is_initialised = 0;
 
-  // Flush autotuning CSV footers once at program end
-  ops_flush_autotune_logs();
+  
 }
 
 void ops_set_soa(const int soa_val) {

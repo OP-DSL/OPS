@@ -129,7 +129,10 @@ def parseUnexposedFunction(node: Cursor) -> Union[Tuple[str, List[Cursor]], None
         name_token = list(first_child.get_children())[1]
         name = name_token.spelling
     elif first_child.kind == CursorKind.DECL_REF_EXPR:
-        name = list(first_child.get_tokens())[0].spelling
+        tokens = list(first_child.get_tokens())
+        if len(tokens) == 0:
+            return None
+        name = tokens[0].spelling
     else:
         return None
 

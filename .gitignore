@@ -44,12 +44,23 @@ __pycache__/
 Makefile
 *_ops.cpp
 hip/
+HIP/
+MPI_inline/
+mpi_openmp/
+MPI_OpenMP/
+OpenACC/
 sycl/
+SYCL/
 opencl/
+OpenCL/
 openmp_offload/
+cuda/
+CUDA/
 ops_venv/
 tridsolver/
 run_modes.sh
+ops_util copy*.cpp
+ops_util_original.cpp
 autotune/
 noautotune/
 *.aux

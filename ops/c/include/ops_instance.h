@@ -375,6 +375,8 @@ class OPS_instance {
 	int OPS_realloc;
 	int OPS_soa;
 	int OPS_diags;
+	int OPS_autotune_mode;
+	int OPS_autotune_logs; // flag to control CSV autotuning logs
 
 	// CUDA & OpenCL
 	int OPS_hybrid_gpu, OPS_gpu_direct;
