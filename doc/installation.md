@@ -22,19 +22,31 @@ CMake 3.18 or newer is required for using the CMake build system. If the latest 
 
  **Python**
 
-The Python dependencies (primarily used for the OPS code generator) are best installed by setting up a virtual environment so that required packages can be installed without superuser privileges. To set up the Python virtual environment and install the required dependent packages, ensure that you have Python 3.9 or a more recent version with pip installed.
-Detailed instructions for installing a virtual environment using pip can be found [here](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/).
+Python 3.8 or newer is required for the OPS code generator (`ops_translator`). How the virtual environment is set up depends on which build system you use:
 
-The recommended way to set up the Python environment is to use the provided script:
-
+**CMake build** — the venv is created automatically during the CMake configure step (no manual action needed). The entire `ops_translator/` tree is copied to `${CMAKE_INSTALL_PREFIX}/translator/ops_translator/` and `setup_venv_cmake.sh` runs automatically to create:
 ```
+${CMAKE_INSTALL_PREFIX}/translator/ops_translator/ops_venv/
+```
+If the venv already exists at that path it is left untouched.
+
+**Makefile build** — the venv is created under `ops_translator/.python/` by running:
+```bash
 cd ops_translator
-. setup_venv.sh
-source ops_venv/bin/activate
-cd ..
+make python        # creates .python/ venv and installs all dependencies
+```
+To force a clean rebuild:
+```bash
+cd ops_translator
+make clean         # removes the .python/ venv
+make python        # rebuilds from scratch
+```
+The Makefile uses whatever `python3` is on your `PATH` — on HPC systems this is typically loaded via a module, e.g.:
+```bash
+module load python/3.9.7
 ```
 
-This will create and activate a virtual environment in `ops_translator/ops_venv` and install all required dependencies. You will need to activate the virtual environment by `source ops_translator/ops_venv/bin/activate` every time you want to use the code generator. Activating the virtual environment ensures that the code generator and its dependencies are isolated from the system-wide Python installation, avoiding conflicts and ensuring proper execution.
+> **Note for HPC systems (Makefile build):** Some module-provided Python builds lack SSL support (e.g. compiled against an older `libssl.so.1.1` no longer present on the system). The Makefile automatically detects this and falls back to `/usr/bin/python3` to create the venv, which typically has working SSL. The resulting venv is otherwise identical.
 
  **HDF5**
 

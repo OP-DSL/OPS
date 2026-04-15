@@ -7,7 +7,13 @@ The format is based on "Keep a Changelog" (https://keepachangelog.com/).
 
 ## [Unreleased]
 
-No changes yet.
+Changes since `v2.0.0`
+
+### Changed
+- `ops_translator`: the code-generator virtual environment is now built automatically, replacing the previous manual `setup_venv.sh` / `source ops_venv/bin/activate` workflow. Users no longer need to manually create or activate the venv. Two flows exist: the **Makefile build** creates the venv via `make python` at `ops_translator/.python/` (uses the `python3` on `PATH`, with automatic fallback to `/usr/bin/python3` when `import ssl` fails); the **CMake build** creates the venv at `${CMAKE_INSTALL_PREFIX}/translator/ops_translator/ops_venv/` automatically during the configure step via `setup_venv_cmake.sh`.
+
+### Added
+- `ops_translator/.gitignore` to exclude the generated `.python/` venv, `python_source/`, `ops_venv/`, and `__pycache__` from version control.
 
 
 ---

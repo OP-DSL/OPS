@@ -18,7 +18,6 @@ export LD_LIBRARY_PATH=$CUDA_MATH_LIBS:$LD_LIBRARY_PATH
 
 # Python
 module load python/3.8.1-icl
-source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
 
 # HDF5
 module load hdf5/openmpi/gcc/9.3/openmpi-4.0.4/1.12.0
