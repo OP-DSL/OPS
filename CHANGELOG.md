@@ -10,7 +10,7 @@ The format is based on "Keep a Changelog" (https://keepachangelog.com/).
 Changes since `v2.0.0`
 
 ### Changed
-- `ops_translator`: the code-generator virtual environment is now built automatically via `make python` in `ops_translator/`, replacing the previous manual `setup_venv.sh` / `source ops_venv/bin/activate` workflow. Users no longer need to manually create or activate the venv — it is set up and invoked transparently during the build. The system `python3` (e.g. loaded via `module load python/3.x`) is used; automatically falls back to `/usr/bin/python3` when the module-provided Python was compiled against an incompatible OpenSSL version (`import ssl` fails).
+- `ops_translator`: the code-generator virtual environment is now built automatically, replacing the previous manual `setup_venv.sh` / `source ops_venv/bin/activate` workflow. Users no longer need to manually create or activate the venv. Two flows exist: the **Makefile build** creates the venv via `make python` at `ops_translator/.python/` (uses the `python3` on `PATH`, with automatic fallback to `/usr/bin/python3` when `import ssl` fails); the **CMake build** creates the venv at `${CMAKE_INSTALL_PREFIX}/translator/ops_translator/ops_venv/` automatically during the configure step via `setup_venv_cmake.sh`.
 
 ### Added
 - `ops_translator/.gitignore` to exclude the generated `.python/` venv, `python_source/`, `ops_venv/`, and `__pycache__` from version control.

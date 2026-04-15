@@ -1,5 +1,5 @@
 OPS = $(OPS_INSTALL_PATH)
-ROOT_DIR != realpath $(OPS_INSTALL_PATH)/../
+ROOT_DIR := $(abspath $(OPS_INSTALL_PATH)/..)
 C_OPS = $(OPS)/c
 C_OPS_INC = $(C_OPS)/include
 C_OPS_SRC = $(C_OPS)/src

@@ -22,28 +22,31 @@ CMake 3.18 or newer is required for using the CMake build system. If the latest 
 
  **Python**
 
-The Python dependencies (primarily used for the OPS code generator) are installed into a virtual environment under `ops_translator/.python/`. Python 3.8 or newer is required. The build system will use whatever `python3` is on your `PATH` — on HPC systems this is typically loaded via a module, e.g.:
+Python 3.8 or newer is required for the OPS code generator (`ops_translator`). How the virtual environment is set up depends on which build system you use:
 
-```bash
-module load python/3.9.7
+**CMake build** — the venv is created automatically during the CMake configure step (no manual action needed). The entire `ops_translator/` tree is copied to `${CMAKE_INSTALL_PREFIX}/translator/ops_translator/` and `setup_venv_cmake.sh` runs automatically to create:
 ```
+${CMAKE_INSTALL_PREFIX}/translator/ops_translator/ops_venv/
+```
+If the venv already exists at that path it is left untouched.
 
-The virtual environment is built automatically as part of the normal build process (CMake or Makefile). If you need to build or rebuild it manually:
-
+**Makefile build** — the venv is created under `ops_translator/.python/` by running:
 ```bash
 cd ops_translator
 make python        # creates .python/ venv and installs all dependencies
 ```
-
-To force a clean rebuild of the environment:
-
+To force a clean rebuild:
 ```bash
 cd ops_translator
 make clean         # removes the .python/ venv
 make python        # rebuilds from scratch
 ```
+The Makefile uses whatever `python3` is on your `PATH` — on HPC systems this is typically loaded via a module, e.g.:
+```bash
+module load python/3.9.7
+```
 
-> **Note for HPC systems:** Some module-provided Python builds lack SSL support (e.g. compiled against an older `libssl.so.1.1` no longer present on the system). The Makefile automatically detects this and falls back to `/usr/bin/python3` to create the venv, which typically has working SSL. The resulting venv is otherwise identical.
+> **Note for HPC systems (Makefile build):** Some module-provided Python builds lack SSL support (e.g. compiled against an older `libssl.so.1.1` no longer present on the system). The Makefile automatically detects this and falls back to `/usr/bin/python3` to create the venv, which typically has working SSL. The resulting venv is otherwise identical.
 
  **HDF5**
 

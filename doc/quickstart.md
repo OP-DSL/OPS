@@ -13,7 +13,7 @@ cd OPS
 
 - Load required modules for your system (compiler, MPI, CUDA, etc.). Consult your cluster or system documentation for details.
 - If a setup script is provided for your platform (see `source_files/`), source it. Otherwise, set environment variables (e.g., `OPS_INSTALL_PATH`, `CUDA_INSTALL_PATH`, `MPI_INSTALL_PATH`) as needed for your environment.
- The OPS code generator (`ops_translator`) requires a Python virtual environment, which is built automatically during the normal build process. No manual setup is needed. For details and HPC-specific notes, see `doc/installation.md`.
+ The OPS code generator (`ops_translator`) requires a Python virtual environment. For the **Makefile build** it is created automatically under `ops_translator/.python/`; for the **CMake build** it is created under `${CMAKE_INSTALL_PREFIX}/translator/ops_translator/ops_venv/` during the configure step. No manual setup is needed in either case. For details and HPC-specific notes, see `doc/installation.md`.
 
 
 ## 3. Build Backend Libraries
