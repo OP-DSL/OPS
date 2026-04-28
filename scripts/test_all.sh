@@ -23,56 +23,67 @@ echo "************Testing C Applications *****************"
 echo "~~~~~~~~~~~~~~~CloverLeaf 2D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../apps/c/CloverLeaf/
 cd ../CloverLeaf/
-#./test.sh #-- works
+#./test.sh #-- works -- does not validate MPI+CUDA for 2 GPUs
 echo "~~~~~~~~~~~~~~~CloverLeaf 3D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../CloverLeaf_3D/
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~CloverLeaf 3D HDF5~~~~~~~~~~~~~~~~~~~"
 cd ../CloverLeaf_3D_HDF5/
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~TeaLeaf 3D ~~~~~~~~~~~~~~~~~~~~~~"
 cd ../TeaLeaf/
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~Poisson~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../poisson/
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim/
-#./test.sh #-- works # only 1 thread per MPI proc for MPI+OMP allowed
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim3D~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim3D/ 
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~lowdim_test~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../lowdim_test/
-#./test.sh #-- works
+./test.sh #-- works 
 echo "~~~~~~~~~~~~~~~shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../shsgc/
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~mb_shsgc~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mb_shsgc/Max_datatransfer
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim_HDF5~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../../multiDim_HDF5 
-#./test.sh #-- works 
+./test.sh #-- works 
 echo "~~~~~~~~~~~~~~~adi~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../adi 
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~adi_burger~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../adi_burger
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~adi_berger_3D~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../adi_burger_3D
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~mgrid~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mgrid
-./test.sh #-- SYCL does not validate 
+#./test.sh #-- MPI SYCL tiled does not validate 
 echo "~~~~~~~~~~~~~~~mblock~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
-#./test.sh #- works
+./test.sh #- works
+echo "~~~~~~~~~~~~~~~laplace2d ~~~~~~~~~~~~~~~~~~~~~~~~~~"
+cd ../laplace2d_tutorial/step7
+./test.sh #-- works
+echo "~~~~~~~~~~~~~~~compact_scheme~~~~~~~~~~~~~~~~~~~~~~~~"
+cd $OPS_INSTALL_PATH/../apps/c/compact_scheme
+#./test.sh #-- PGI/NVIDIA compiled version not fully working
+echo "~~~~~~~~~~~~~~~halfprecision~~~~~~~~~~~~~~~~~~~~~~~~"
+cd $OPS_INSTALL_PATH/../apps/c/halfprecision
+#./test.sh #-- not fully working, need half precision support in the compilers
 echo "~~~~~~~~~~~~~~OpenSBLI TGV~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd $OPENSBLI_INSTALL_PATH/apps/taylor_green_vortex
-#./test.sh  #-- works
+./test.sh  #-- works
 cd -
+
+cd $OPS_INSTALL_PATH
 echo "  "
 echo "All C/C++ application tests PASSED"
 echo "  "
@@ -81,28 +92,28 @@ echo "************Testing Fortran Applications *****************"
 cd $OPS_INSTALL_PATH
 echo "~~~~~~~~~~~~~~~shsgc Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../apps/fortran/shsgc
-#./test.sh #-- +tiled versions break at runtime
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~poisson Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../poisson 
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~multiDim3D Fortran~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../multiDim3D
-#./test.sh #-- works
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~lowdim_test Fortran~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../lowdim_test
-#./test.sh #-- works -- check further as there can be issues
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~random Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../random
-#./test.sh #-- breaks all
+#./test.sh #-- f2c versions works, others do not, they hang
 echo "~~~~~~~~~~~~~~~mblock Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
 cd ../mblock
-#./test.sh #-- breaks in cuda+tiled and sycl+tiled
+./test.sh #-- works
 echo "~~~~~~~~~~~~~~~laplace2d Fortran~~~~~~~~~~~~~~~~~~~~~~~~~~"
-cd ../laplace2dtutorial/step7
-#./test.sh #-- works  
+cd ../laplace2d_tutorial/step7 
+./test.sh #-- works  
 echo "END~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "  "
 echo "All Fortran application tests PASSED"

@@ -122,14 +122,14 @@ make clean
 make IEEE=1 mblock_sycl mblock_mpi_sycl 
 
 echo '============> Running SYCL on CPU'
-./mblock_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > mblock.out
+./mblock_sycl OPS_SYCL_DEVICE=cpu OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > mblock.out
 grep "Total Wall time" mblock.out
 grep "PASSED" mblock.out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -f mblock.out *.h5 data*
 
 echo '============> Running MPI+SYCL on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./mblock_mpi_sycl OPS_CL_DEVICE=0  > mblock.out
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./mblock_mpi_sycl OPS_SYCL_DEVICE=cpu  > mblock.out
 grep "Total Wall time" mblock.out
 grep "PASSED" mblock.out
 rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi

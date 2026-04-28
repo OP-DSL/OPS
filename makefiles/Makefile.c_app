@@ -1,4 +1,6 @@
 
+TRANSLATOR ?= $(ROOT_DIR)/ops_translator/translator_setup.sh
+
 ifndef OPS_GENERATED_SUFFIX
 OPS_GENERATED_SUFFIX=_ops
 endif
@@ -31,8 +33,7 @@ DEFINES=-DOPS_ACC_IGNORE
 	@echo "generating translations for ${OPS_FILES}"
 	@echo "OPS_EXTENTIONS: ${OPS_GENERATED_SUFFIX}"
 	@echo "OPS_GENERATED: ${OPS_GENERATED}"
-	which python3
-	python3 $(OPS_INSTALL_PATH)/../ops_translator/ops-translator $(VERBOSE) $(DEFINES) -I $(OPS_INSTALL_PATH)/c/include/ --file_paths $(OPS_FILES)
+	bash $(TRANSLATOR) $(VERBOSE) $(DEFINES) -I $(OPS_INSTALL_PATH)/c/include/ --file_paths $(OPS_FILES)
 	rm -f .generated
 	touch .generated
 
@@ -240,21 +241,21 @@ $(APP)_ompoffload: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)
 		@echo ""
 		@echo "Building ${APP}_ompoffload"
 		@echo ""
-		$(CXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -D$(OPS_COMPILER) -I$(C_OPS_INC) $(OPS_FILES_GEN) -I. ./openmp_offload/$(OMPOFFLOAD_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_OMPOFFLOAD) $(HDF5_LIB_SEQ) -o $(APP)_ompoffload
+		$(CXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -D$(OPS_COMPILER) -DOPS_OMPOFFLOAD -I$(C_OPS_INC) $(OPS_FILES_GEN) -I. ./openmp_offload/$(OMPOFFLOAD_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_OMPOFFLOAD) $(HDF5_LIB_SEQ) -o $(APP)_ompoffload
 
 $(APP)_mpi_ompoffload: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_ompoffload.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_ompoffload"
 		@echo ""
-		$(MPICXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./openmp_offload/$(OMPOFFLOAD_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_OMPOFFLOAD) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_OMPOFFLOAD_LINK) -o $(APP)_mpi_ompoffload
+		$(MPICXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -DOPS_OMPOFFLOAD -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./openmp_offload/$(OMPOFFLOAD_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_OMPOFFLOAD) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_OMPOFFLOAD_LINK) -o $(APP)_mpi_ompoffload
 
 $(APP)_mpi_ompoffload_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_ompoffload.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_ompoffload_tiled"
 		@echo ""
-		$(MPICXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./openmp_offload/$(OMPOFFLOAD_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_OMPOFFLOAD) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_OMPOFFLOAD_LINK) -o $(APP)_mpi_ompoffload_tiled
+		$(MPICXX) $(CXXFLAGS) $(OMPOFFLOADFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -DOPS_LAZY -DOPS_OMPOFFLOAD -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./openmp_offload/$(OMPOFFLOAD_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_OMPOFFLOAD) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_OMPOFFLOAD_LINK) -o $(APP)_mpi_ompoffload_tiled
 
 #=====================================================================================================================================================================
 #
@@ -431,3 +432,4 @@ clean:
 	rm -f $(APP)_mpi_sycl_tiled
 	rm -f $(OPS_GENERATED)
 	rm -f .generated constants_list.txt cudafe
+	rm -f $(EXTRA_CLEAN_FILES)

@@ -56,5 +56,3 @@ export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
 
 # Python
 module load cray-python/3.10.10
-source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
-

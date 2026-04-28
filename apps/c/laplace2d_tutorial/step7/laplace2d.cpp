@@ -15,12 +15,12 @@ double pi  = 2.0 * asin(1.0);
 int main(int argc, const char** argv)
 {
   //Initialise the OPS library, passing runtime args, and setting diagnostics level to low (1)
-  ops_init(argc, argv,1);
+  ops_init(argc, argv,2);
 
   //Size along y
-  jmax = 4094;
+  jmax = 4094;//*2;
   //Size along x
-  imax = 4094;
+  imax = 4094;//*2;
   int iter_max = 100;
 
   const double tol = 1.0e-6;
@@ -104,6 +104,12 @@ int main(int argc, const char** argv)
       ops_arg_dat(d_Anew, 1, S2D_00, "double", OPS_WRITE),
       ops_arg_idx());
 
+#ifdef OPS_LAZY
+  ops_execute();
+#endif
+  double ct0, ct1, et0, et1;
+  ops_timers(&ct0, &et0);
+
   while ( error > tol && iter < iter_max )
   {
     int interior_range[] = {0,imax,0,jmax};
@@ -120,11 +126,11 @@ int main(int argc, const char** argv)
     if(iter % 10 == 0) ops_printf("%5d, %0.6f\n", iter, error);        
     iter++;
   }
-
   ops_printf("%5d, %0.6f\n", iter, error);        
-
+  ops_timers(&ct1, &et1);
   ops_timing_output(std::cout);
-
+  ops_printf("\nTotal Wall time %lf\n",et1-et0);
+  
   double err_diff = fabs((100.0*(error/2.421354960840227e-03))-100.0);
   printf("Total error is within %3.15E %% of the expected error\n",err_diff);
   if(err_diff < 0.001)
@@ -135,7 +141,7 @@ int main(int argc, const char** argv)
   //Finalising the OPS library
   free(A);
   free(Anew);
-  //ops_exit();
+  ops_exit();
   return 0;
 }
 

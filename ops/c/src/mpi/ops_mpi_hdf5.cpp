@@ -120,6 +120,7 @@ void copy_data_buf(const ops_dat &dat, const int *local_range,
   const sub_dat *sd = OPS_sub_dat_list[dat->index];
   ops_execute(dat->block->instance);
   ops_get_data(dat);
+  ops_check_lowdim_update(dat);
   int local_buf_size[OPS_MAX_DIM] = {1};
   int range_max_dim[2 * OPS_MAX_DIM] = {0};
   int d_m[OPS_MAX_DIM]{0};
@@ -148,6 +149,7 @@ void copy_data_buf(const ops_dat &dat, const int *local_range,
   //     "At Rank II = %d istart=%d iend=%d  jstart=%d jend=%d  kstart=%d kend=%d\n",
   //     ops_my_global_rank,range_max_dim[0], range_max_dim[1], range_max_dim[2],
   //     range_max_dim[3],range_max_dim[4], range_max_dim[5]);
+  
   fetch_loop_slab(local_buf, dat->data, local_buf_size, dat->size, d_m,
                     dat->elem_size, dat->dim, range_max_dim);
   dat->dirty_hd = 1;
@@ -403,6 +405,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
   if (sb->owned == 1) {
     // fetch data onto the host ( if needed ) based on the backend
     ops_get_data(dat);
+    ops_check_lowdim_update(dat);
 
     // compute the number of elements that this process will write to the final
     // file
@@ -422,10 +425,10 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     int g_size[block->dims]; // global size of the dat attribute to write to
     // hdf5 file
     int g_d_m[block->dims]; // global size of the block halo (-) depth
-                            // attribute
+                // attribute
     // to write to hdf5 file
     int g_d_p[block->dims]; // global size of the block halo (+) depth
-                            // attribute
+                // attribute
     // to write to hdf5 file
 
     hsize_t count[block->dims];  // parameters for for hdf5 file chuck writing
@@ -485,6 +488,14 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       range[2 * d + 1] = g_size[d] + g_d_p[d];
     }
     determine_local_range(dat, range, local_range);
+
+    for (int d = 0; d < block->dims; d++) {
+      if (dat->size[d] == 1) {
+        local_range[2 * d] = 0;
+        local_range[2 * d + 1] = 1;
+      }
+    }
+
     copy_data_buf(dat, local_range, data);
     delete[] range;
     delete[] local_range;
@@ -1622,6 +1633,7 @@ extern "C" char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
   if (sb->owned == 1) {
     // fetch data onto the host ( if needed ) based on the backend
     ops_get_data(dat);
+    ops_check_lowdim_update(dat);
 
     // compute the number of elements that this process will copy over to the
     // user space

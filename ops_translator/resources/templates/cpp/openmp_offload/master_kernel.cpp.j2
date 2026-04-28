@@ -2,7 +2,9 @@
 
 {% block ops_headers %}
 {{super()}}
+{% endblock %}
 
+{% block ops_user_types %}
 {% if user_types %}
 #include "user_types.h"
 {% endif %}

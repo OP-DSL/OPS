@@ -333,3 +333,7 @@ clean:
 	-rm -if include/*~
 	-rm -if *~
 	-rm -if *.lst cudafe
+
+cleanall: clean
+	-rm -rf $(C_OPS_OBJ) $(C_OPS_LIB)
+	-rm -rf $(dir $(C_OPS_OBJ)) $(dir $(C_OPS_LIB))
