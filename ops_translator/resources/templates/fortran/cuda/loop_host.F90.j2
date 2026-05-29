@@ -15,6 +15,11 @@
 
     {% endif %}
 {% endfor %}
+{% if lh.has_reduction %}
+#define ROUND_UP(bytes) IAND((bytes) + 15, NOT(15))
+!#define ROUND_UP(bytes) ((((bytes) + 15) / 16) * 16)
+
+{% endif %}
 {% for arg in lh.args %}
     {% if arg is ops_dat %}
         {# {% if arg.dim == 1 %} #}
@@ -193,7 +198,6 @@ ATTRIBUTES (GLOBAL) SUBROUTINE {{lh.kernel}}_wrap( &
             {% else %}
     {{arg.typ | upper}}, DIMENSION({{arg.dim}}) :: opsGblDat{{arg.id+1}}Device
             {% endif %}
-    {{arg.typ | upper}}, DIMENSION(0:*), SHARED :: sharedMem
         {% endif %}
 
     {% elif arg is ops_idx %}
@@ -219,6 +223,19 @@ ATTRIBUTES (GLOBAL) SUBROUTINE {{lh.kernel}}_wrap( &
     INTEGER(KIND=4)        :: n_x, n_y, n_z
 {% endif %}
 
+{% if lh.has_reduction %}
+{% set ns = namespace(found=false) %}
+{% for arg in lh.args if not ns.found %}
+    {% if arg is ops_gbl or arg is ops_reduce %}
+        {% if arg is ops_inc or arg is ops_min or arg is ops_max %}
+!   Shared memory for reduction
+    {{arg.typ | upper}}, DIMENSION(0:*), SHARED :: sharedMem
+    {% set ns.found = true %} {# break the loop #}
+        {% endif %}
+    {% endif %}
+{% endfor %}
+
+{% endif %}
 {% if lh.ndim == 2 %}
     n_y = blockDim%y * (blockIdx%y-1) + threadIdx%y
 {% elif lh.ndim == 3 %}
@@ -438,14 +455,18 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
     INTEGER(KIND=4) :: n_indx
     INTEGER(KIND=4) :: i10
     INTEGER(KIND=4) :: i20
-    INTEGER(KIND=4) :: blocksPerGrid
-    INTEGER(KIND=4) :: nshared
-    INTEGER(KIND=4) :: nthread
 
 !   ================================
 !   CUDA grid and thread block sizes
 !   ================================
     TYPE(dim3) :: grid, tblock
+    INTEGER(KIND=4) :: blocksPerGrid
+    INTEGER(KIND=4) :: nshared
+    INTEGER(KIND=4) :: nthread
+    INTEGER(KIND=4) :: nblocks
+    INTEGER(KIND=4) :: maxblocks
+    INTEGER(KIND=4) :: reduct_bytes
+    INTEGER(KIND=4) :: reduct_size
 
     CHARACTER(LEN=40) :: kernelName
 
@@ -632,35 +653,55 @@ ATTRIBUTES (HOST) SUBROUTINE {{lh.kernel}}_host_execute( descPtr )
 !   ====================================================
 !   Reduction variables and shared memory for reductions
 !   ====================================================
-    nshared = 0
     {% if lh.ndim == 1 %}
-    nthread = getOPS_block_size_x()
-    blocksPerGrid = ((x_size-1)/getOPS_block_size_x()+ 1) * 1 * 1
+    nblocks = ((x_size-1)/getOPS_block_size_x() + 1)
     {% elif lh.ndim == 2 %}
-    nthread = getOPS_block_size_x()*getOPS_block_size_y()
-    blocksPerGrid = ((x_size-1)/getOPS_block_size_x()+ 1) * ((y_size-1)/getOPS_block_size_y() + 1) * 1
+    nblocks = ((x_size-1)/getOPS_block_size_x() + 1)*((y_size-1)/getOPS_block_size_y() + 1);
     {% elif lh.ndim == 3 %}
-    nthread = getOPS_block_size_x()*getOPS_block_size_y()
-    blocksPerGrid = ((x_size-1)/getOPS_block_size_x()+ 1) * ((y_size-1)/getOPS_block_size_y() + 1) * z_size
+    nblocks = ((x_size-1)/getOPS_block_size_x() + 1)*((y_size-1)/getOPS_block_size_y() + 1)*((z_size-1)/getOPS_block_size_z() + 1);
     {% endif %}
+
+    maxblocks = nblocks
+    reduct_bytes = 0
+    reduct_size = 0
 
     {% for arg in lh.args %}
         {% if arg is ops_gbl or arg is ops_reduce %}
             {% if arg is ops_inc or arg is ops_min or arg is ops_max %}
                 {% if arg is fortran_real_type %}
-    nshared = MAX(nshared, 8*{{arg.dim}}*nthread)
+    reduct_bytes = reduct_bytes + ROUND_UP(maxblocks*{{arg.dim}}*8)
+    reduct_size = MAX(reduct_size,{{arg.dim}}*8)
                 {% elif arg is fortran_integer_type %}
-    nshared = MAX(nshared, 4*{{arg.dim}}*nthread)
+    reduct_bytes = reduct_bytes + ROUND_UP(maxblocks*{{arg.dim}}*4)
+    reduct_size = MAX(reduct_size,{{arg.dim}}*4)
                 {% endif %}
             {% endif %}
         {% endif %}
     {% endfor %}
+
+    nthread = getOPS_block_size_x()*getOPS_block_size_y()*getOPS_block_size_z()
+
+    nshared = 0
+    {% for arg in lh.args %}
+        {% if arg is ops_gbl or arg is ops_reduce %}
+            {% if arg is ops_inc or arg is ops_min or arg is ops_max %}
+                {% if arg is fortran_real_type %}
+    nshared = MAX(nshared, 8*{{arg.dim}})
+                {% elif arg is fortran_integer_type %}
+    nshared = MAX(nshared, 4*{{arg.dim}})
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
+    nshared = MAX(nshared*nthread,reduct_size*nthread)
+
 {% endif %}
 
 {% for arg in lh.args %}
     {% if arg is ops_gbl or arg is ops_reduce %}
         {% if arg is ops_inc or arg is ops_min or arg is ops_max %}
-    reductionCardinality{{arg.id+1}} = blocksPerGrid * 1
+    reductionCardinality{{arg.id+1}} = maxblocks * 1
     ALLOCATE( reductionArrayHost{{arg.id+1}}(reductionCardinality{{arg.id+1}}*({{arg.dim}})) )
     IF ( .NOT. ALLOCATED(reductionArrayDevice{{arg.id+1}}_{{lh.kernel}}) ) THEN
         ALLOCATE( reductionArrayDevice{{arg.id+1}}_{{lh.kernel}}(reductionCardinality{{arg.id+1}}*({{arg.dim}})) )
