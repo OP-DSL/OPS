@@ -37,175 +37,296 @@ def replace_variable(data, var, value):
 
 
 def generate_cpp_Kernel(loop: OPS.Loop,
-                    kernel_args: dict,
-                    local_vars: dict,
-                    var_init: str,
-                    kernel_body: str,
-                    f90_src: str) -> str :
+                        kernel_args: dict,
+                        local_vars: dict,
+                        var_init: str,
+                        kernel_body: str,
+                        f90_src: str) -> str:
 
+    # ============================================================
+    # Extract argument list from the original Fortran subroutine
+    # ============================================================
     param_list = extract_arglist_fortran(f90_src)
 
-    # Create CPP side function argument list
-    arg_str = ""
-    for i, arg in enumerate(loop.args):
-        var_name = param_list[i].lower()        # variable name used in fortran subroutine declaration
+    # ============================================================
+    # Generate C++ kernel function argument list
+    # ============================================================
+    cpp_argument_list = ""
 
-        if var_name in kernel_args:
-            param_type_and_size = kernel_args.get(var_name)
+    for arg_index, arg in enumerate(loop.args):
+        variable_name = param_list[arg_index].lower()
+
+        if variable_name in kernel_args:
+            parameters_type_and_size = kernel_args.get(variable_name)
         else:
-            raise ParseError(f"Unable to find file {var_name} for subroutine in argument list: {subroutine_name}")
-        c_type = param_type_and_size[0]
-        arr_sizes = param_type_and_size[1]
+            raise ParseError(
+                f"Unable to find file {variable_name} for subroutine in argument list: {subroutine_name}"
+            )
 
-        loop.f2c_type.insert(i, c_type)
+        cpp_type = parameters_type_and_size[0]
+        array_sizes = parameters_type_and_size[1]
+
+        loop.f2c_type.insert(arg_index, cpp_type)
 
         if isinstance(arg, OPS.ArgDat):
             if arg.access_type == OPS.AccessType.OPS_READ:
-                arg_str += f"const ACC<{c_type}> &{var_name}, "
+                cpp_argument_list += f"const ACC<{cpp_type}> &{variable_name}, "
             else:
-                arg_str += f"ACC<{c_type}> &{var_name}, "
+                cpp_argument_list += f"ACC<{cpp_type}> &{variable_name}, "
+
         elif isinstance(arg, OPS.ArgGbl):
-            arg_str += f"const {c_type} *{var_name}, "
+            cpp_argument_list += f"const {cpp_type} *{variable_name}, "
+
         elif isinstance(arg, OPS.ArgReduce):
-            arg_str += f"{c_type} *{var_name}, "
+            cpp_argument_list += f"{cpp_type} *{variable_name}, "
+
         elif isinstance(arg, OPS.ArgIdx):
-            arg_str += f"const int *{var_name}, "
+            cpp_argument_list += f"const int *{variable_name}, "
 
-    cpp_kernel = ""
-    cpp_kernel = f"void {loop.kernel}({arg_str[:-2]}) " + "{\n\n"
+    cpp_kernel = f"void {loop.kernel}({cpp_argument_list[:-2]}) " + "{\n\n"
 
-    kp_obj = KernelProcess()
+    # Helper object used for all Fortran-to-C++ indexing conversions
+    kernel_process = KernelProcess()
 
-    sorted_ops_gbl_args = []  # storing ops_gbl in descending order of sizes
-    # Update kernel body
-    for i, arg in enumerate(loop.args):
-        var_name = param_list[i].lower()        # variable name used in fortran subroutine declaration
+    # ============================================================
+    # Convert Fortran array indexing into equivalent C++ indexing
+    # for OPS arguments used inside the kernel body
+    # ============================================================
+    sorted_ops_gbl_args = []
 
-        if var_name in kernel_args:
-            param_type_and_size = kernel_args.get(var_name)
+    for arg_index, arg in enumerate(loop.args):
+        variable_name = param_list[arg_index].lower()
+
+        if variable_name in kernel_args:
+            parameters_type_and_size = kernel_args.get(variable_name)
         else:
-            raise ParseError(f"Unable to find file {var_name} for subroutine in argument list: {subroutine_name}")
-        arr_sizes = param_type_and_size[1]
+            raise ParseError(
+                f"Unable to find file {variable_name} for subroutine in argument list: {subroutine_name}"
+            )
+
+        array_sizes = parameters_type_and_size[1]
 
         if isinstance(arg, OPS.ArgDat):
-            #if arg.dim > 1:
-            if (isinstance(arg.dim, str) and arg.dim.isdigit() and int(arg.dim) > 1) or (
-    not (isinstance(arg.dim, str) and arg.dim.isdigit())
-):
-                kernel_body = kp_obj.convert_muldim_dat_indexing(kernel_body, var_name)
-        elif isinstance(arg, OPS.ArgGbl): # convert all multi-dim vectors to single dim
-            sorted_ops_gbl_args.append((var_name, arr_sizes))
+
+            is_numeric_dimension = (
+                isinstance(arg.dim, str) and arg.dim.isdigit()
+            )
+
+            is_multidimensional_dat = (
+                (is_numeric_dimension and int(arg.dim) > 1)
+                or not is_numeric_dimension
+            )
+
+            if is_multidimensional_dat:
+                kernel_body = kernel_process.convert_muldim_dat_indexing(
+                    kernel_body, variable_name
+                )
+
+        elif isinstance(arg, OPS.ArgGbl):
+            sorted_ops_gbl_args.append((variable_name, array_sizes))
+
         elif isinstance(arg, OPS.ArgReduce):
             if arg.dim > 1:
-                kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
+                kernel_body = kernel_process.convert_1d_indexing(
+                    kernel_body, variable_name
+                )
             else:
-                kernel_body = kp_obj.replace_array_with_pointer(kernel_body, var_name)
-        elif isinstance(arg, OPS.ArgIdx):   # converting idx from fortran to c style
-            kernel_body = kp_obj.replace_fixed_indexing(kernel_body, var_name)
+                kernel_body = kernel_process.replace_array_with_pointer(
+                    kernel_body, variable_name
+                )
 
+        elif isinstance(arg, OPS.ArgIdx):
+            kernel_body = kernel_process.replace_fixed_indexing(
+                kernel_body, variable_name
+            )
+
+    # ============================================================
+    # Collect dimension-variable names used in local array
+    # declarations. These symbolic dimensions will later be
+    # resolved from constants.F90.
+    # ============================================================
     sorted_local_args = []
 
-    for value in local_vars.values():
-        var_name = value[0]
-        arr_sizes = value[1]
-        sorted_local_args.append((var_name, arr_sizes))
+    for local_var_info in local_vars.values():
+        variable_name = local_var_info[0]
+        array_sizes = local_var_info[1]
+        sorted_local_args.append((variable_name, array_sizes))
 
     sorted_local_args.sort(key=lambda x: len(x[1]), reverse=True)
 
     local_var_sizes = {}
-    local_var_dim_names = [] # store the dim variable name if not digit
-    for var_name, arr_sizes in sorted_local_args:
-        for arr_size in arr_sizes:
-            if(not arr_size.isdigit()):
-                if(arr_size not in local_var_dim_names):
-                    local_var_dim_names.append(arr_size)
+    local_arr_dimvar_names = []
 
-    # For all dim variables in local_var_dim_names, find its literal value from constants.F90
-    # When 1D, 2D or 3D array declared with variable name in their dimension field instead of literal value, we need to find its literal value and replace in array declaration in CPP function 
-    # This is required otherwise causing problem in F2C CUDA version
+    for variable_name, array_sizes in sorted_local_args:
+        for array_size in array_sizes:
+            if not array_size.isdigit():
+                if array_size not in local_arr_dimvar_names:
+                    local_arr_dimvar_names.append(array_size)
+
+    # ============================================================
+    # Resolve dimension-variable values from constants.F90
+    #
+    # Example:
+    #   real :: tmp(nx, ny)
+    #
+    # Here nx and ny are looked up from constants.F90 and replaced
+    # by their literal values because CUDA/HIP code generation
+    # requires compile-time array dimensions.
+    # ============================================================
     filename = "constants.F90"
+
     if not os.path.exists(filename):
         raise ParseError(f"Unable to find file {filename}")
-    with open(filename, 'r') as f:
-        constants_f90_code = f.read()
 
-    for arr_size_name in local_var_dim_names:
-        # Find literal value associated with variable
-        arr_size_lit = extract_values(constants_f90_code, arr_size_name)
-        if arr_size_lit is not None and arr_size_lit.isdigit():
-            local_var_sizes[arr_size_name] = int(arr_size_lit)
+    with open(filename, "r") as f:
+        constants_f90source = f.read()
+
+    for arr_dimvar_name in local_arr_dimvar_names:
+
+        arr_dimvar_value = extract_values(
+            constants_f90source,
+            arr_dimvar_name
+        )
+
+        if arr_dimvar_value is not None and arr_dimvar_value.isdigit():
+            local_var_sizes[arr_dimvar_name] = int(arr_dimvar_value)
         else:
-            raise ParseError(f"Unable to find varible {arr_size_name}'s literal value in constants.F90, please declare this variable with parameter in constants.F90")
+            raise ParseError(
+                f"Unable to find varible {arr_dimvar_name}'s literal value in constants.F90, "
+                f"please declare this variable with parameter in constants.F90"
+            )
 
-    for var_name, arr_sizes in sorted_local_args:
-        if (len(arr_sizes) == 1 and
-                    (
-                        (arr_sizes[0].isdigit() and int(arr_sizes[0]) != 0) or
-                        (not arr_sizes[0].isdigit())
-                    )
-            ):
+    # ============================================================
+    # Convert indexing of local arrays declared inside the kernel
+    # ============================================================
+    for variable_name, array_sizes in sorted_local_args:
 
-            patterm = rf"{var_name}\s*\(\s*0\s*:\s*[^)]+\)"
-            match = re.search(patterm, f90_src)
-            if match:   # Fortran using 0 base index declaration, just replace var_name(index) -> var_name[index]
-                kernel_body = kp_obj.convert_zerobase_1d_indexing(kernel_body, var_name)
+        if (
+            len(array_sizes) == 1
+            and (
+                (array_sizes[0].isdigit() and int(array_sizes[0]) != 0)
+                or (not array_sizes[0].isdigit())
+            )
+        ):
+
+            pattern = rf"{variable_name}\s*\(\s*0\s*:\s*[^)]+\)"
+            match = re.search(pattern, f90_src)
+
+            if match:
+                # Fortran array declared with 0-based indexing
+                kernel_body = kernel_process.convert_zerobase_1d_indexing(
+                    kernel_body,
+                    variable_name,
+                )
             else:
-                kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
-        elif len(arr_sizes) == 2:
-            kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[0])
-        elif len(arr_sizes) == 3:
-            kernel_body = kp_obj.convert_3d_to_1d_indexing(kernel_body, var_name, arr_sizes[0], arr_sizes[1])
+                kernel_body = kernel_process.convert_1d_indexing(
+                    kernel_body,
+                    variable_name,
+                )
 
-    # Do this multi-dim to single dim conversion for OPS_ARG_GBL after converting multi-dimensional local arrays to 1 dimensional arrays
-    # Sort ops_arg_gbl in descending order so that first 3D index will be converted, then 2D and lastly 1D
-    sorted_ops_gbl_args.sort(key=lambda x: len(x[1]), reverse=True)
+        elif len(array_sizes) == 2:
+            kernel_body = kernel_process.convert_2d_to_1d_indexing(
+                kernel_body,
+                variable_name,
+                array_sizes[0],
+            )
 
-    # This will convert from multi-dim array to single-dim array format.
-    # Here each these routine subtract 1 from index position assume array start at 1 base index in Fortran and C++ side will be 0
-    for var_name, arr_sizes in sorted_ops_gbl_args:
-        # print(var_name + " : " + str(arr_sizes))
-        if (len(arr_sizes) == 1):
-            if arr_sizes[0].isdigit() and int(arr_sizes[0]) == 0:
-                kernel_body = kp_obj.replace_array_with_first_element(kernel_body, var_name)
+        elif len(array_sizes) == 3:
+            kernel_body = kernel_process.convert_3d_to_1d_indexing(
+                kernel_body,
+                variable_name,
+                array_sizes[0],
+                array_sizes[1],
+            )
+
+    # ============================================================
+    # Convert OPS_GBL arrays after local arrays have been processed.
+    # Multi-dimensional arrays are handled first (3D -> 2D -> 1D)
+    # to avoid incorrect partial replacements.
+    # ============================================================
+    sorted_ops_gbl_args.sort(
+        key=lambda x: len(x[1]),
+        reverse=True
+    )
+
+    for variable_name, array_sizes in sorted_ops_gbl_args:
+
+        if len(array_sizes) == 1:
+
+            if array_sizes[0].isdigit() and int(array_sizes[0]) == 0:
+                kernel_body = kernel_process.replace_array_with_first_element(
+                    kernel_body,
+                    variable_name,
+                )
             else:
-                kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
-        elif len(arr_sizes) == 2:
-            kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[0])
-        elif len(arr_sizes) == 3:
-            kernel_body = kp_obj.convert_3d_to_1d_indexing(kernel_body, var_name, arr_sizes[0], arr_sizes[1])
+                kernel_body = kernel_process.convert_1d_indexing(
+                    kernel_body,
+                    variable_name,
+                )
 
-#    print("============================================================================")
-#    print(kernel_body)
-#    print("============================================================================")
+        elif len(array_sizes) == 2:
+            kernel_body = kernel_process.convert_2d_to_1d_indexing(
+                kernel_body,
+                variable_name,
+                array_sizes[0],
+            )
 
-#    print("============================================================================")
-#    print(kernel_body)
-#    print("============================================================================")
+        elif len(array_sizes) == 3:
+            kernel_body = kernel_process.convert_3d_to_1d_indexing(
+                kernel_body,
+                variable_name,
+                array_sizes[0],
+                array_sizes[1],
+            )
 
-    # Add declarations of local variables
+    # ============================================================
+    # Emit local variable declarations into generated C++ kernel
+    # ============================================================
     for variable_declaration_with_type, name_and_sizes in local_vars.items():
-        # name_and_sizes[0] represent name of variable
-        # name_and_sizes[1] is list of all sizes of that variable
-        for arr_size_name in name_and_sizes[1]:
-            if(not arr_size_name.isdigit()):
-                # check the literal value in local_var_sizes dictionary
-                if(arr_size_name in local_var_sizes.keys()):
-                    arr_size_lit_value = local_var_sizes[arr_size_name]
-                    if(arr_size_lit_value == 0):    # When the kernel we are parsing is not been called for particular test case, in that case sometime size parameter used for array declaration is set to zero, but that will not be allowed in hip or cuda kernel so we set the literal value to 1 as it doesnt matter as this kernel will not be called
-                        arr_size_lit_value = 1
-                    variable_declaration_with_type = replace_variable(variable_declaration_with_type, arr_size_name, arr_size_lit_value)
-                else:
-                    raise ParseError(f"Unable to find varible {arr_size_name}'s literal value, please check if declared in constants.F90")
 
-        cpp_kernel += f"    {variable_declaration_with_type};" + "\n"
+        for array_size in name_and_sizes[1]:
+
+            if not array_size.isdigit():
+
+                if array_size in local_var_sizes.keys():
+
+                    array_size_literal_value = local_var_sizes[array_size]
+
+                    # When a kernel is not used in a particular test case,
+                    # some dimension parameters may evaluate to zero.
+                    # CUDA/HIP do not allow zero-sized arrays, therefore
+                    # use size 1 as a safe fallback.
+                    if array_size_literal_value == 0:
+                        array_size_literal_value = 1
+
+                    variable_declaration_with_type = replace_variable(
+                        variable_declaration_with_type,
+                        array_size,
+                        array_size_literal_value,
+                    )
+
+                else:
+                    raise ParseError(
+                        f"Unable to find varible {array_size}'s literal value, "
+                        f"please check if declared in constants.F90"
+                    )
+
+        cpp_kernel += (
+            f"    {variable_declaration_with_type};\n"
+        )
 
     cpp_kernel += "\n"
+
     if len(var_init) > 0:
         cpp_kernel += var_init
         cpp_kernel += "\n\n"
+
+    # ============================================================
+    # Assemble final generated C++ kernel source
+    # ============================================================
     cpp_kernel += kernel_body
     cpp_kernel += "\n}"
-#    print(cpp_kernel)
+
     return cpp_kernel
 
 
