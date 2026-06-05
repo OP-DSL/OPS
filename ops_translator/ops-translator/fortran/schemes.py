@@ -76,7 +76,7 @@ def generate_cpp_Kernel(loop: OPS.Loop,
 
     kp_obj = KernelProcess()
 
-    sorted_args = []  # storing ops_gbl in descending order of sizes
+    sorted_ops_gbl_args = []  # storing ops_gbl in descending order of sizes
     # Update kernel body
     for i, arg in enumerate(loop.args):
         var_name = param_list[i].lower()        # variable name used in fortran subroutine declaration
@@ -94,7 +94,7 @@ def generate_cpp_Kernel(loop: OPS.Loop,
 ):
                 kernel_body = kp_obj.convert_muldim_dat_indexing(kernel_body, var_name)
         elif isinstance(arg, OPS.ArgGbl): # convert all multi-dim vectors to single dim
-            sorted_args.append((var_name, arr_sizes))
+            sorted_ops_gbl_args.append((var_name, arr_sizes))
         elif isinstance(arg, OPS.ArgReduce):
             if arg.dim > 1:
                 kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
@@ -102,23 +102,6 @@ def generate_cpp_Kernel(loop: OPS.Loop,
                 kernel_body = kp_obj.replace_array_with_pointer(kernel_body, var_name)
         elif isinstance(arg, OPS.ArgIdx):   # converting idx from fortran to c style
             kernel_body = kp_obj.replace_fixed_indexing(kernel_body, var_name)
-
-    # Sort them in descending order so that first 3D index will be converted, then 2D and lastly 1D
-    sorted_args.sort(key=lambda x: len(x[1]), reverse=True)
-
-    # This will convert from multi-dim array to single-dim array format.
-    # Here each these routine subtract 1 from index position assume array start at 1 base index in Fortran and C++ side will be 0
-    for var_name, arr_sizes in sorted_args:
-        # print(var_name + " : " + str(arr_sizes))
-        if (len(arr_sizes) == 1):
-            if arr_sizes[0].isdigit() and int(arr_sizes[0]) == 0:
-                kernel_body = kp_obj.replace_array_with_first_element(kernel_body, var_name)
-            else:
-                kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
-        elif len(arr_sizes) == 2:
-            kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[0])
-        elif len(arr_sizes) == 3:
-            kernel_body = kp_obj.convert_3d_to_1d_indexing(kernel_body, var_name, arr_sizes[0], arr_sizes[1])
 
     sorted_local_args = []
 
@@ -130,6 +113,29 @@ def generate_cpp_Kernel(loop: OPS.Loop,
     sorted_local_args.sort(key=lambda x: len(x[1]), reverse=True)
 
     local_var_sizes = {}
+    local_var_dim_names = [] # store the dim variable name if not digit
+    for var_name, arr_sizes in sorted_local_args:
+        for arr_size in arr_sizes:
+            if(not arr_size.isdigit()):
+                if(arr_size not in local_var_dim_names):
+                    local_var_dim_names.append(arr_size)
+
+    # For all dim variables in local_var_dim_names, find its literal value from constants.F90
+    # When 1D, 2D or 3D array declared with variable name in their dimension field instead of literal value, we need to find its literal value and replace in array declaration in CPP function 
+    # This is required otherwise causing problem in F2C CUDA version
+    filename = "constants.F90"
+    if not os.path.exists(filename):
+        raise ParseError(f"Unable to find file {filename}")
+    with open(filename, 'r') as f:
+        constants_f90_code = f.read()
+
+    for arr_size_name in local_var_dim_names:
+        # Find literal value associated with variable
+        arr_size_lit = extract_values(constants_f90_code, arr_size_name)
+        if arr_size_lit is not None and arr_size_lit.isdigit():
+            local_var_sizes[arr_size_name] = int(arr_size_lit)
+        else:
+            raise ParseError(f"Unable to find varible {arr_size_name}'s literal value in constants.F90, please declare this variable with parameter in constants.F90")
 
     for var_name, arr_sizes in sorted_local_args:
         if (len(arr_sizes) == 1 and
@@ -139,32 +145,30 @@ def generate_cpp_Kernel(loop: OPS.Loop,
                     )
             ):
 
-            if((arr_sizes[0].isdigit() and int(arr_sizes[0]) > 0)):
-                local_var_sizes[var_name] = int(arr_sizes[0])
-            else:
-                # if 1D array declared locally inside kernel with variable name in dimension in Fortran side, find its size (literal value)
-                # from constants.F90 and replace in code: causing problem in F2C CUDA version otherwise
-                filename = "constants.F90"
-                if not os.path.exists(filename):
-                    raise ParseError(f"Unable to find file {filename}")
-                with open(filename, 'r') as f:
-                    fortran_code = f.read()
-
-                arr_size_lit = extract_values(fortran_code, arr_sizes[0])
-                if arr_size_lit is not None and arr_size_lit.isdigit():
-                    local_var_sizes[var_name] = int(arr_size_lit)
-                else:
-                    raise ParseError(f"Unable to find array dimension {arr_sizes[0]} literal value for variable {var_name} in constants.F90, please declare this variable with parameter in constants.F90")
-
             patterm = rf"{var_name}\s*\(\s*0\s*:\s*[^)]+\)"
             match = re.search(patterm, f90_src)
             if match:   # Fortran using 0 base index declaration, just replace var_name(index) -> var_name[index]
                 kernel_body = kp_obj.convert_zerobase_1d_indexing(kernel_body, var_name)
             else:
                 kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
-        # TODO_ITEM: Similar to 1D, when 2D or 3D array declared using variable name in dimension field insteda of integer literal
-        # Try to find the literal value from constant.F90, and if not found inform user that there is need to mention the variable and 
-        # its value in constants.F90
+        elif len(arr_sizes) == 2:
+            kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[0])
+        elif len(arr_sizes) == 3:
+            kernel_body = kp_obj.convert_3d_to_1d_indexing(kernel_body, var_name, arr_sizes[0], arr_sizes[1])
+
+    # Do this multi-dim to single dim conversion for OPS_ARG_GBL after converting multi-dimensional local arrays to 1 dimensional arrays
+    # Sort ops_arg_gbl in descending order so that first 3D index will be converted, then 2D and lastly 1D
+    sorted_ops_gbl_args.sort(key=lambda x: len(x[1]), reverse=True)
+
+    # This will convert from multi-dim array to single-dim array format.
+    # Here each these routine subtract 1 from index position assume array start at 1 base index in Fortran and C++ side will be 0
+    for var_name, arr_sizes in sorted_ops_gbl_args:
+        # print(var_name + " : " + str(arr_sizes))
+        if (len(arr_sizes) == 1):
+            if arr_sizes[0].isdigit() and int(arr_sizes[0]) == 0:
+                kernel_body = kp_obj.replace_array_with_first_element(kernel_body, var_name)
+            else:
+                kernel_body = kp_obj.convert_1d_indexing(kernel_body, var_name)
         elif len(arr_sizes) == 2:
             kernel_body = kp_obj.convert_2d_to_1d_indexing(kernel_body, var_name, arr_sizes[0])
         elif len(arr_sizes) == 3:
@@ -179,10 +183,21 @@ def generate_cpp_Kernel(loop: OPS.Loop,
 #    print("============================================================================")
 
     # Add declarations of local variables
-    for key, value in local_vars.items():
-        if value[0] in local_var_sizes.keys():
-            key = replace_variable(key, value[1][0], local_var_sizes[value[0]])
-        cpp_kernel += f"    {key};" + "\n"
+    for variable_declaration_with_type, name_and_sizes in local_vars.items():
+        # name_and_sizes[0] represent name of variable
+        # name_and_sizes[1] is list of all sizes of that variable
+        for arr_size_name in name_and_sizes[1]:
+            if(not arr_size_name.isdigit()):
+                # check the literal value in local_var_sizes dictionary
+                if(arr_size_name in local_var_sizes.keys()):
+                    arr_size_lit_value = local_var_sizes[arr_size_name]
+                    if(arr_size_lit_value == 0):    # When the kernel we are parsing is not been called for particular test case, in that case sometime size parameter used for array declaration is set to zero, but that will not be allowed in hip or cuda kernel so we set the literal value to 1 as it doesnt matter as this kernel will not be called
+                        arr_size_lit_value = 1
+                    variable_declaration_with_type = replace_variable(variable_declaration_with_type, arr_size_name, arr_size_lit_value)
+                else:
+                    raise ParseError(f"Unable to find varible {arr_size_name}'s literal value, please check if declared in constants.F90")
+
+        cpp_kernel += f"    {variable_declaration_with_type};" + "\n"
 
     cpp_kernel += "\n"
     if len(var_init) > 0:
@@ -202,20 +217,20 @@ def retrieve_subroutine_ast(file_path, subroutine_name):
     if ftn_source is None or (ftn_source is not None and len(ftn_source) == 0):
         raise ParseError(f"unable to find kernel function: {subroutine_name}")
 
-    # find if there is any nested subroutine/function calls inside elemental kernel and retrieve those as well
-    pattern = r"\bCALL\s+([a-zA-Z0-9_]+)\s*\(([^)]*)\)"
-    # Find all matches
-    subroutine_calls = re.findall(pattern, ftn_source.strip(), re.IGNORECASE)
-
-    for match in subroutine_calls:
-        subroutine_call, args = match
-        # Determine the filename and retrieve the corresponding subroutine code
-        filename = subroutine_call[:subroutine_call.find("kernel")]+"kernel.inc"
-        # Retrieve the subroutine code from the file or other sources
-        sub_kernel = retrieve_subroutine_by_name_regex(filename, subroutine_call)
-        if sub_kernel is None or (sub_kernel is not None and len(sub_kernel) == 0):
-            raise ParseError(f"unable to find kernel function: {sub_kernel}")
-        ftn_source = sub_kernel + "\n" + ftn_source
+#    # find if there is any nested subroutine/function calls inside elemental kernel and retrieve those as well
+#    pattern = r"\bCALL\s+([a-zA-Z0-9_]+)\s*\(([^)]*)\)"
+#    # Find all matches
+#    subroutine_calls = re.findall(pattern, ftn_source.strip(), re.IGNORECASE)
+#
+#    for match in subroutine_calls:
+#        subroutine_call, args = match
+#        # Determine the filename and retrieve the corresponding subroutine code
+#        filename = subroutine_call[:subroutine_call.find("kernel")]+"kernel.inc"
+#        # Retrieve the subroutine code from the file or other sources
+#        sub_kernel = retrieve_subroutine_by_name_regex(filename, subroutine_call)
+#        if sub_kernel is None or (sub_kernel is not None and len(sub_kernel) == 0):
+#            raise ParseError(f"unable to find kernel function: {sub_kernel}")
+#        ftn_source = sub_kernel + "\n" + ftn_source
 
     # Replace OPS_ACC<digit> and OPS_ACC_MD<digit>
     # converting to normal array shape fortran uses before generating AST
@@ -378,9 +393,18 @@ class FortranMPIOpenMP(Scheme):
         kernel_idx: int
     ) -> str:
 
-        kernel_entities, sub_kernels = retrieve_subroutine_and_nestedsubroutines(loop.kernel)
+        filename = loop.kernel[:loop.kernel.find("kernel")]+"kernel.inc"
 
-        return kernel_entities, sub_kernels
+        #kernel_entities = retrieve_subroutine_by_name(filename, loop.kernel)
+        kernel_entities = retrieve_subroutine_by_name_regex(filename, loop.kernel)
+
+        if kernel_entities is None or (kernel_entities is not None and len(kernel_entities) == 0):
+            raise ParseError(f"unable to find kernel function: {loop.kernel}")
+
+        return kernel_entities.strip()
+
+        #kernel_entities, sub_kernels = retrieve_subroutine_and_nestedsubroutines(loop.kernel)
+        #return kernel_entities, sub_kernels
 
 Scheme.register(FortranMPIOpenMP)
 
@@ -410,7 +434,7 @@ class F2CMPIOpenMP(Scheme):
         filename = loop.kernel[:loop.kernel.find("kernel")]+"kernel.inc"
         f90_src, entity_ast = retrieve_subroutine_ast(filename, loop.kernel)
         
-        info = ftk_c.parseInfo([entity_ast], app, loop)
+        info = ftk_c.parseInfo(entity_ast, app, loop)
         kernel_args, local_vars, c_var_init, c_kernel_body = ftk_c.translate(info)
 
         cpp_kernel = generate_cpp_Kernel(loop, kernel_args, local_vars, c_var_init, c_kernel_body, f90_src)
@@ -418,9 +442,9 @@ class F2CMPIOpenMP(Scheme):
 #        print("=========================")
 #        print(cpp_kernel)
 
-        return cpp_kernel, []
+        return cpp_kernel
 
-#Scheme.register(F2CMPIOpenMP)
+Scheme.register(F2CMPIOpenMP)
 
 
 class FortranCuda(Scheme):
@@ -443,7 +467,12 @@ class FortranCuda(Scheme):
         kernel_idx: int
     ) -> str:
 
-        kernel_entities, sub_kernels = retrieve_subroutine_and_nestedsubroutines(loop.kernel)
+        filename = loop.kernel[:loop.kernel.find("kernel")]+"kernel.inc"
+
+	    #kernel_entities = retrieve_subroutine_by_name(filename, loop.kernel)
+        kernel_entities = retrieve_subroutine_by_name_regex(filename, loop.kernel)
+
+        #kernel_entities, sub_kernels = retrieve_subroutine_and_nestedsubroutines(loop.kernel)
 
         # Replace KernelName with KernelName_gpu
         replacement_string = loop.kernel + "_gpu"
@@ -473,7 +502,7 @@ class FortranCuda(Scheme):
 
         output_string = replace_consts(output_string)
 
-        return output_string.strip(), sub_kernels
+        return output_string.strip()#, sub_kernels
 
 Scheme.register(FortranCuda)
 
@@ -510,7 +539,7 @@ class F2CCuda(Scheme):
 
         return cpp_kernel
 
-#Scheme.register(F2CCuda)
+Scheme.register(F2CCuda)
 
 
 class F2CHip(Scheme):
@@ -545,7 +574,7 @@ class F2CHip(Scheme):
 
         return cpp_kernel
 
-#Scheme.register(F2CHip)
+Scheme.register(F2CHip)
 
 
 class F2CSycl(Scheme):
@@ -580,7 +609,7 @@ class F2CSycl(Scheme):
 
         return cpp_kernel
 
-#Scheme.register(F2CSycl)
+Scheme.register(F2CSycl)
 
 
 class FortranOpenMPOffload(Scheme):
@@ -603,8 +632,17 @@ class FortranOpenMPOffload(Scheme):
         kernel_idx: int
     ) -> str:
 
-        kernel_entities, sub_kernels = retrieve_subroutine_and_nestedsubroutines(loop.kernel)
+        filename = loop.kernel[:loop.kernel.find("kernel")]+"kernel.inc"
 
-        return kernel_entities.strip(), sub_kernels
+        #kernel_entities = retrieve_subroutine_by_name(filename, loop.kernel)
+        kernel_entities = retrieve_subroutine_by_name_regex(filename, loop.kernel)
+
+        if kernel_entities is None or (kernel_entities is not None and len(kernel_entities) == 0):
+            raise ParseError(f"unable to find kernel function: {loop.kernel}")
+
+        return kernel_entities.strip()
+
+        #kernel_entities, sub_kernels = retrieve_subroutine_and_nestedsubroutines(loop.kernel)
+        #return kernel_entities.strip(), sub_kernels
 
 Scheme.register(FortranOpenMPOffload)

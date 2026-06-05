@@ -635,7 +635,7 @@ class KernelProcess:
     def convert_1d_indexing(self, fortrantocpp_code, array_name):
         # Updated pattern to ensure word boundaries for exact matches
         #pattern = rf"\b{array_name}\b\s*\(\s*([^,]+)\s*\)"
-        pattern = rf"\b{array_name}\b\s*\(\s*([^\)]+)\s*\)"  # Matches only within the nearest closing parenthesis
+        pattern = rf"\b{re.escape(array_name)}\b\s*\(\s*((?:[^()]|\([^()]*\))*)\s*\)"
         replacer = self.create_replacer_1d(array_name)
         return re.sub(pattern, replacer, fortrantocpp_code)
 
@@ -647,8 +647,7 @@ class KernelProcess:
 
     def convert_zerobase_1d_indexing(self, fortrantocpp_code, array_name):
         # Updated pattern to ensure word boundaries for exact matches
-        #pattern = rf"\b{array_name}\b\s*\(\s*([^,]+)\s*\)"
-        pattern = rf"\b{array_name}\b\s*\(\s*([^\)]+)\s*\)"  # Matches only within the nearest closing parenthesis
+        pattern = rf"\b{re.escape(array_name)}\b\s*\(\s*((?:[^()]|\([^()]*\))*)\s*\)"
         replacer = self.create_replacer_zerobase_1d(array_name)
         return re.sub(pattern, replacer, fortrantocpp_code)
 

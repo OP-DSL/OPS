@@ -146,13 +146,21 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
         {% if soa_set %}
     arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}} + {{n_y}} * ystride_{{arg.id}} * dims_{{lh.kernel}}[{{arg.id}}][0];
         {% else %}
-    arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*arg{{arg.id}}_dim + {{n_y}} * ystride_{{arg.id}}*arg{{arg.id}}_dim * dims_{{lh.kernel}}[{{arg.id}}][0];
+            {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
+     arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*arg{{arg.id}}_dim + {{n_y}} * ystride_{{arg.id}}*arg{{arg.id}}_dim * dims_{{lh.kernel}}[{{arg.id}}][0];
+            {% else %}
+    arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*{{arg.dim}} + {{n_y}} * ystride_{{arg.id}}*{{arg.dim}} * dims_{{lh.kernel}}[{{arg.id}}][0];
+            {% endif %}
         {% endif %}
     {% elif lh.ndim == 3 %}
         {% if soa_set %}
     arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}} + {{n_y}} * ystride_{{arg.id}} * dims_{{lh.kernel}}[{{arg.id}}][0] + {{n_z}} * zstride_{{arg.id}} * dims_{{lh.kernel}}[{{arg.id}}][0] * dims_{{lh.kernel}}[{{arg.id}}][1];
         {% else %}
+            {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
     arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*arg{{arg.id}}_dim + {{n_y}} * ystride_{{arg.id}}*arg{{arg.id}}_dim * dims_{{lh.kernel}}[{{arg.id}}][0] + {{n_z}} * zstride_{{arg.id}}*arg{{arg.id}}_dim * dims_{{lh.kernel}}[{{arg.id}}][0] * dims_{{lh.kernel}}[{{arg.id}}][1];
+            {% else %}
+    arg{{arg.id}} += {{n_x}} * xstride_{{arg.id}}*{{arg.dim}} + {{n_y}} * ystride_{{arg.id}}*{{arg.dim}} * dims_{{lh.kernel}}[{{arg.id}}][0] + {{n_z}} * zstride_{{arg.id}}*{{arg.dim}} * dims_{{lh.kernel}}[{{arg.id}}][0] * dims_{{lh.kernel}}[{{arg.id}}][1];
+            {% endif %}
         {% endif %}
     {% endif %}
     {% endif %}
@@ -174,10 +182,8 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
         {% if (arg.dim.isdigit() and arg.dim|int > 1) or (not (arg.dim.isdigit())) %}
             {# {% set current_val %}{{arg.dim}}, {% endset %} #}
             {% set current_val -%}arg{{arg.id}}_dim, {%- endset %}
-        {% else %}
-            {% set current_val -%}1, {%- endset %}
+            {% if signature.append(signature.pop() + current_val) %} {% endif %}
         {% endif%}
-        {% if signature.append(signature.pop() + current_val) %} {% endif %}
         {% for i in range(lh.ndim-1) %}
             {% set current_val %}dims_{{lh.kernel}}[{{arg.id}}][{{i}}], {% endset %}
             {% if signature.append(signature.pop() + current_val) %} {% endif %}

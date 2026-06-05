@@ -27,7 +27,7 @@ export AMD_ARCH=MI300X
 
 export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
-export ROCM_PATH=/opt/rocm-6.3.2
+export ROCM_PATH=/opt/rocm-7.2.4
 export LD_LIBRARY_PATH=$ROCM_PATH/llvm/lib:$LD_LIBRARY_PATH
 export HIP_INSTALL_PATH=$ROCM_PATH
 export AOMP=$ROCM_PATH/llvm
