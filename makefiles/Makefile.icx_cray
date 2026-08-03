@@ -57,7 +57,7 @@ MPIF90=ifx
 
 MPI_INC = $(CRAY_MPICH_DIR)/include
 MPI_LIB = $(CRAY_MPICH_DIR)/lib $(PE_MPICH_GTL_DIR_amd_gfx90a)
-MPI_LINK = -lmpi -lmpi_cray
+MPI_LINK = -lmpi -lmpi_cray -lmpifort_cray
 
 HIPCC=hipcc
 HIPMPICXX=hipcc
