@@ -294,7 +294,7 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps,
   if (sb->owned) {
     MPI_Cart_create(sb->comm1, ndim, pdims, periodic, 0, &(sb->comm));
     
-    int remain_dims[ndim];
+    int *remain_dims = (int *)ops_malloc(ndim * sizeof(int));
     for (int i = 0; i < ndim; i++) {      
         for (int j = 0; j < ndim; j++) {
             remain_dims[j] = 0;
@@ -303,6 +303,7 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps,
         // Create the pencil communicator
         MPI_Cart_sub(sb->comm, remain_dims, &sb->pencils[i]);
     }
+    ops_free(remain_dims);
   }
 
   // Store number of procs in each dimension for latter use

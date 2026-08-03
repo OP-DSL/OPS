@@ -1751,17 +1751,11 @@ void ops_set_halo_dirtybit3_tiled(ops_arg *arg, int *iter_range, int *left_bound
                            sd->decomp_disp[dim] - MAX_DEPTH + 1, sd->decomp_disp[dim]);
   }
 
-  int left_bnd_beg[ndim], left_bnd_end[ndim], left_halo_beg[ndim], left_halo_end[ndim];
-  int right_bnd_beg[ndim], right_bnd_end[ndim], right_halo_beg[ndim], right_halo_end[ndim];
 
-  memset(left_bnd_beg, 0, ndim*sizeof(int));
-  memset(left_bnd_end, 0, ndim*sizeof(int));
-  memset(left_halo_beg, 0, ndim*sizeof(int));
-  memset(left_halo_end, 0, ndim*sizeof(int));
-  memset(right_bnd_beg, 0, ndim*sizeof(int));
-  memset(right_bnd_end, 0, ndim*sizeof(int));
-  memset(right_halo_beg, 0, ndim*sizeof(int));
-  memset(right_halo_end, 0, ndim*sizeof(int));
+  int *left_bnd_beg = (int *)ops_malloc(ndim * sizeof(int));	int *left_bnd_end = (int *)ops_malloc(ndim * sizeof(int));
+  int *left_halo_beg = (int *)ops_malloc(ndim * sizeof(int));   int *left_halo_end = (int *)ops_malloc(ndim * sizeof(int));
+  int *right_bnd_beg = (int *)ops_malloc(ndim * sizeof(int));   int *right_bnd_end = (int *)ops_malloc(ndim * sizeof(int));
+  int *right_halo_beg = (int *)ops_malloc(ndim * sizeof(int));  int *right_halo_end = (int *)ops_malloc(ndim * sizeof(int));
 
   for (int dim = 0; dim < ndim; dim++) {
     int other_dims = 1;
@@ -1828,6 +1822,11 @@ void ops_set_halo_dirtybit3_tiled(ops_arg *arg, int *iter_range, int *left_bound
     if (instance->OPS_diags>5) printf2(instance,"Proc %d dim %d name %s Points to skip left-boundary %d, left-halo %d, right-boundary %d, right-halo %d \n", ops_get_proc(), dim, dat->name, left_boundary_cleanUpTo[dim], left_halo_cleanUpTo[dim], right_boundary_cleanUpTo[dim], right_halo_cleanUpTo[dim]);
     if (instance->OPS_diags>5) printf2(instance,"Proc %d dim %d name %s dirtybit set left-boundary %d-%d, left-halo %d-%d, right-boundary %d-%d, right-halo %d-%d \n", ops_get_proc(), dim, dat->name, left_bnd_beg[dim], left_bnd_end[dim], left_halo_beg[dim], left_halo_end[dim], right_bnd_beg[dim], right_bnd_end[dim], right_halo_beg[dim], right_halo_end[dim]);
   }
+
+  ops_free(left_bnd_beg);       ops_free(left_bnd_end);
+  ops_free(left_halo_beg);      ops_free(left_halo_end);
+  ops_free(right_bnd_beg);      ops_free(right_bnd_end);
+  ops_free(right_halo_beg);     ops_free(right_halo_end);
 
 }
 

@@ -777,7 +777,7 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
   // checks passed ..
 
   // get the strides
-  int read_stride[OPS_MAX_DIM];
+  int *read_stride = (int *)ops_malloc(read_dims * sizeof(int));
   if (H5LTget_attribute_int(file_id, stencil_name, "stride", read_stride) < 0) {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_stencil_hdf5: Attribute \"stride\" not found in "
@@ -786,13 +786,18 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
     throw ex;
   }
 
-  std::vector<int> read_sten(read_dims * read_points);
-  H5LTread_dataset_int(file_id, stencil_name, read_sten.data());
+  int *read_sten  = (int *)ops_malloc( read_dims * read_points * sizeof(int));
+  H5LTread_dataset_int(file_id, stencil_name, read_sten);
   H5Pclose(plist_id);
   H5Fclose(file_id);
   // use decl_strided stencil for both normal and strided stencils
-  return ops_decl_strided_stencil(read_dims, read_points, read_sten.data(),
+  ops_stencil result_stencil = ops_decl_strided_stencil(read_dims, read_points, read_sten,
                                   read_stride, stencil_name);
+
+  ops_free(read_stride);
+  ops_free(read_sten);
+
+  return result_stencil;
 }
 
 /*******************************************************************************

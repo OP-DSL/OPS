@@ -414,25 +414,17 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
     sub_dat *sd = OPS_sub_dat_list[dat->index];
     ops_block block = dat->block;
 
-    hsize_t disp[block->dims]; // global disps to compute the chunk data set
-    // dimensions
-    hsize_t l_disp[block->dims]; // local disps to remove MPI halos
-    hsize_t size[block->dims];   // local size to compute the chunk data set
-    // dimensions
-    hsize_t gbl_size[block->dims]; // global size to compute the chunk data set
-    // dimensions
+    hsize_t *disp = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t));       // global disps to compute the chunk data set dimensions
+    hsize_t *l_disp = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t));     // local disps to remove MPI halos
+    hsize_t *size = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t));       // local size to compute the chunk data set dimensions
+    hsize_t *gbl_size = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t));   // global size to compute the chunk data set dimensions
 
-    int g_size[block->dims]; // global size of the dat attribute to write to
-    // hdf5 file
-    int g_d_m[block->dims]; // global size of the block halo (-) depth
-                            // attribute
-    // to write to hdf5 file
-    int g_d_p[block->dims]; // global size of the block halo (+) depth
-                            // attribute
-    // to write to hdf5 file
+    int *g_size = (int *)ops_malloc(block->dims * sizeof(int));     // global size of the dat attribute to write to hdf5 file
+    int *g_d_m = (int *)ops_malloc(block->dims * sizeof(int));      // global size of the block halo (-) depth attribute to write to hdf5 file
+    int *g_d_p = (int *)ops_malloc(block->dims * sizeof(int));      // global size of the block halo (+) depth attribute to write to hdf5 file
 
-    hsize_t count[block->dims];  // parameters for for hdf5 file chuck writing
-    hsize_t stride[block->dims]; // parameters for for hdf5 file chuck writing
+    hsize_t *count = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t));  // parameters for for hdf5 file chuck writing
+    hsize_t *stride = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t)); // parameters for for hdf5 file chuck writing
 
     for (int d = 0; d < block->dims; d++) {
       // remove left MPI halo to get start disp from beginning of dat
@@ -570,7 +562,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
               dat->name, block->name);
 
         // transpose global size as on hdf5 file the dims are written transposed
-        hsize_t GBL_SIZE[block->dims];
+        hsize_t *GBL_SIZE = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t));
         if (block->dims == 1) {
           GBL_SIZE[0] = gbl_size[0];
         } else if (block->dims == 2) {
@@ -609,6 +601,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         // H5Pset_chunk(plist_id, block->dims, GBL_SIZE); // chunk data set need
         //  to be the same size
         //  on each proc
+
+        ops_free(GBL_SIZE);
 
         // Create the dataset with default properties and close filespace.
         dset_id = H5Dcreate(group_id, dat->name, h5_type(dat->type), filespace,
@@ -719,7 +713,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         }
       }
 
-      int read_size[block->dims];
+      int *read_size = (int *)ops_malloc(block->dims * sizeof(int));
       if (H5LTget_attribute_int(group_id, dat->name, "size", read_size) < 0) {
         OPSException ex(OPS_HDF5_ERROR);
         ex << "Error: ops_decl_block_hdf5: Attribute \"size\" not found in "
@@ -739,7 +733,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         }
       }
 
-      int read_d_m[block->dims];
+      int *read_d_m = (int *)ops_malloc(block->dims * sizeof(int));
       if (H5LTget_attribute_int(group_id, dat->name, "d_m", read_d_m) < 0) {
         OPSException ex(OPS_HDF5_ERROR);
         ex << "Error: ops_decl_block_hdf5: Attribute \"d_m\" not found in "
@@ -759,7 +753,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         }
       }
 
-      int read_d_p[block->dims];
+      int *read_d_p = (int *)ops_malloc(block->dims * sizeof(int));
       if (H5LTget_attribute_int(group_id, dat->name, "d_p", read_d_p) < 0) {
         OPSException ex(OPS_HDF5_ERROR);
         ex << "Error: ops_decl_block_hdf5: Attribute \"d_p\" not found in "
@@ -779,7 +773,7 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
         }
       }
 
-      int read_base[block->dims];
+      int *read_base = (int *)ops_malloc(block->dims * sizeof(int));
       if (H5LTget_attribute_int(group_id, dat->name, "base", read_base) < 0) {
         OPSException ex(OPS_HDF5_ERROR);
         ex << "Error: ops_decl_block_hdf5: Attribute \"base\" not found in "
@@ -827,8 +821,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       // Need to flip the dimensions to accurately write to HDF5 chunk
       // decomposition
-      hsize_t DISP[block->dims];
-      hsize_t SIZE[block->dims];
+      hsize_t *DISP = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t));
+      hsize_t *SIZE = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t));
       if (block->dims == 1) {
         DISP[0] = disp[0];
         SIZE[0] = size[0];
@@ -865,6 +859,14 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       MPI_Barrier(OPS_MPI_HDF5_BLOCK_WORLD);
       free(data);
 
+      ops_free(read_size);
+      ops_free(read_d_m);
+      ops_free(read_d_p);
+      ops_free(read_base);
+
+      ops_free(DISP);
+      ops_free(SIZE);
+
       H5Sclose(filespace);
       H5Pclose(plist_id);
       H5Dclose(dset_id);
@@ -874,6 +876,16 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       H5Fclose(file_id);
       MPI_Comm_free(&OPS_MPI_HDF5_BLOCK_WORLD);
     }
+
+    ops_free(disp);
+    ops_free(l_disp);
+    ops_free(size);
+    ops_free(gbl_size);
+    ops_free(g_size);
+    ops_free(g_d_m);
+    ops_free(g_d_p);
+    ops_free(count);
+    ops_free(stride);
   }
   MPI_Barrier(OPS_MPI_GLOBAL); // wait for every rank to finish their I/O
   return;
@@ -1059,7 +1071,7 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
   // checks passed ..
 
   // get the strides
-  int read_stride[read_dims];
+  int *read_stride = (int *)ops_malloc(read_dims * sizeof(int));
   if (H5LTget_attribute_int(file_id, stencil_name, "stride", read_stride) < 0) {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_stencil_hdf5: Attribute \"stride\" not found in "
@@ -1068,14 +1080,19 @@ ops_stencil ops_decl_stencil_hdf5(int dims, int points,
     throw ex;
   }
 
-  int read_sten[read_dims * read_points];
+  int *read_sten = (int *)ops_malloc( read_dims * read_points * sizeof(int));
   H5LTread_dataset_int(file_id, stencil_name, read_sten);
   H5Pclose(plist_id);
   H5Fclose(file_id);
 
   // use decl_strided stencil for both normal and strided stencils
-  return ops_decl_strided_stencil(read_dims, read_points, read_sten,
+  ops_stencil result_stencil = ops_decl_strided_stencil(read_dims, read_points, read_sten,
                                   read_stride, stencil_name);
+
+  ops_free(read_stride);
+  ops_free(read_sten);
+
+  return result_stencil;
 }
 
 /*******************************************************************************
@@ -1148,7 +1165,7 @@ ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
   // checks passed ..
 
   // get the iter_size
-  int read_iter_size[dim];
+  int *read_iter_size = (int *)ops_malloc(dim * sizeof(int));
   if (H5LTget_attribute_int(file_id, halo_name, "iter_size", read_iter_size) <
       0) {
     OPSException ex(OPS_HDF5_ERROR);
@@ -1158,7 +1175,7 @@ ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
     throw ex;
   }
   // get the from_base
-  int read_from_base[dim];
+  int *read_from_base = (int *)ops_malloc(dim * sizeof(int));
   if (H5LTget_attribute_int(file_id, halo_name, "from_base", read_from_base) <
       0) {
     OPSException ex(OPS_HDF5_ERROR);
@@ -1168,7 +1185,7 @@ ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
     throw ex;
   }
   // get the to_base
-  int read_to_base[dim];
+  int *read_to_base = (int *)ops_malloc(dim * sizeof(int));
   if (H5LTget_attribute_int(file_id, halo_name, "to_base", read_to_base) < 0) {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_stencil_hdf5: Attribute \"to_base\" not found in "
@@ -1177,7 +1194,7 @@ ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
     throw ex;
   }
   // get the from_dir
-  int read_from_dir[dim];
+  int *read_from_dir = (int *)ops_malloc(dim * sizeof(int));
   if (H5LTget_attribute_int(file_id, halo_name, "from_dir", read_from_dir) <
       0) {
     OPSException ex(OPS_HDF5_ERROR);
@@ -1187,7 +1204,7 @@ ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
     throw ex;
   }
   // get the to_dir
-  int read_to_dir[dim];
+  int *read_to_dir = (int *)ops_malloc(dim * sizeof(int));
   if (H5LTget_attribute_int(file_id, halo_name, "to_dir", read_to_dir) < 0) {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_stencil_hdf5: Attribute \"to_dir\" not found in halo"
@@ -1198,8 +1215,17 @@ ops_halo ops_decl_halo_hdf5(ops_dat from, ops_dat to, char const *file_name) {
   H5Pclose(plist_id);
   H5Fclose(file_id);
 
-  return ops_decl_halo(from, to, read_iter_size, read_from_base, read_to_base,
+  ops_halo result_halo = ops_decl_halo(from, to, read_iter_size, read_from_base, read_to_base,
                        read_from_dir, read_to_dir);
+
+  ops_free(read_iter_size);
+  ops_free(read_from_base);
+  ops_free(read_to_base);
+  ops_free(read_from_dir);
+  ops_free(read_to_dir);
+
+  return result_halo;
+
 }
 
 /*******************************************************************************
@@ -1322,7 +1348,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
 
   // checks passed .. now read in all other details of ops_dat from file
 
-  int read_size[block->dims];
+  int *read_size = (int *)ops_malloc(block->dims * sizeof(int));
   if (H5LTget_attribute_int(group_id, dat_name, "size", read_size) < 0) {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_dat_hdf5: Attribute \"size\" not found in data set "
@@ -1330,7 +1356,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
     throw ex;
   }
 
-  int read_d_m[block->dims];
+  int *read_d_m = (int *)ops_malloc(block->dims * sizeof(int));
   if (H5LTget_attribute_int(group_id, dat_name, "d_m", read_d_m) < 0) {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_dat_hdf5: Attribute \"d_m\" not found in data set "
@@ -1338,7 +1364,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
     throw ex;
   }
 
-  int read_d_p[block->dims];
+  int *read_d_p = (int *)ops_malloc(block->dims * sizeof(int));
   if (H5LTget_attribute_int(group_id, dat_name, "d_p", read_d_p) < 0) {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_dat_hdf5: Attribute \"d_p\" not found in data set "
@@ -1346,7 +1372,7 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
     throw ex;
   }
 
-  int read_base[block->dims];
+  int *read_base = (int *)ops_malloc(block->dims * sizeof(int));
   if (H5LTget_attribute_int(group_id, dat_name, "base", read_base) < 0) {
     OPSException ex(OPS_HDF5_ERROR);
     ex << "Error: ops_decl_dat_hdf5: Attribute \"base\" not found in data set "
@@ -1375,6 +1401,11 @@ ops_dat ops_decl_dat_hdf5(ops_block block, int dat_dim, char const *type,
   H5Fclose(file_id);
   MPI_Comm_free(&OPS_MPI_HDF5_WORLD);
 
+  ops_free(read_size);
+  ops_free(read_d_m);
+  ops_free(read_d_p);
+  ops_free(read_base);
+
   return created_dat;
   /**
     When ops_decomp_dats are encountered read the correct hyperslab chunk form
@@ -1397,14 +1428,11 @@ void ops_read_dat_hdf5(ops_dat dat) {
     ops_block block = dat->block;
     sub_block *sb = OPS_sub_block_list[dat->block->index];
 
-    hsize_t disp[block->dims]; // global disps to compute the chunk data set
-    // dimensions
-    hsize_t l_disp[block->dims]; // local disps to remove MPI halos
-    hsize_t size[block->dims];   // local size to compute the chunk data set
-    // dimensions
-    hsize_t size2[block->dims];    // local size - stored for later use
-    hsize_t gbl_size[block->dims]; // global size to compute the chunk data set
-    // dimensions
+    hsize_t *disp = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t));   // global disps to compute the chunk data set dimensions
+    hsize_t *l_disp = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t)); // local disps to remove MPI halos
+    hsize_t *size = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t));   // local size to compute the chunk data set dimensions
+    hsize_t *size2 = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t));    // local size - stored for later use
+    hsize_t *gbl_size = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t)); // global size to compute the chunk data set dimensions
 
     // int g_d_m[block->dims]; // global size of the block halo (-) depth
     // attribute
@@ -1413,8 +1441,8 @@ void ops_read_dat_hdf5(ops_dat dat) {
     // attribute
     // to read from hdf5 file
 
-    hsize_t count[block->dims];  // parameters for for hdf5 file chuck reading
-    hsize_t stride[block->dims]; // parameters for for hdf5 file chuck reading
+    hsize_t *count = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t));  // parameters for for hdf5 file chuck reading
+    hsize_t *stride = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t)); // parameters for for hdf5 file chuck reading
 
     for (int d = 0; d < block->dims; d++) {
       // remove left MPI halo to get start disp from beginning of dat
@@ -1537,8 +1565,8 @@ void ops_read_dat_hdf5(ops_dat dat) {
 
     // Need to flip the dimensions to accurately read from HDF5 chunk
     // decomposition
-    hsize_t DISP[block->dims];
-    hsize_t SIZE[block->dims];
+    hsize_t *DISP = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t));
+    hsize_t *SIZE = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t));
     if (block->dims == 2) {
       DISP[0] = disp[1];
       DISP[1] = disp[0];
@@ -1572,6 +1600,15 @@ void ops_read_dat_hdf5(ops_dat dat) {
     ops_dat_set_data(dat, 0, data);
 
     free(data);
+    ops_free(disp);
+    ops_free(l_disp);
+    ops_free(size);
+    ops_free(size2);
+    ops_free(gbl_size);
+    ops_free(count);
+    ops_free(stride);
+    ops_free(DISP);
+    ops_free(SIZE);
     H5Sclose(filespace);
     H5Pclose(plist_id);
     H5Dclose(dset_id);
@@ -1640,8 +1677,8 @@ extern "C" char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
     sub_dat *sd = OPS_sub_dat_list[dat->index];
     ops_block block = dat->block;
 
-    hsize_t l_disp[block->dims]; // local disps to remove MPI halos
-    hsize_t size[block->dims];   // local size to compute the chunk data set
+    hsize_t *l_disp = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t));     // local disps to remove MPI halos
+    hsize_t *size = (hsize_t *)ops_malloc(block->dims * sizeof(hsize_t));       // local size to compute the chunk data set
     // dimensions
 
     for (int d = 0; d < block->dims; d++) {
@@ -1664,6 +1701,9 @@ extern "C" char *ops_fetch_dat_char(ops_dat dat, char *u_dat) {
     MPI_Comm_size(OPS_MPI_HDF5_WORLD, &comm_size);
 
     remove_mpi_halos(dat, size, l_disp, u_dat, block->dims);
+
+    ops_free(l_disp);
+    ops_free(size);
   }
   return u_dat;
 }
@@ -1696,8 +1736,8 @@ herr_t get_dataset_properties(hid_t dset_id,
     dset_props->dim = 0;
     H5Sclose(dataspace);
   } else {
-    hsize_t dims[ndims];
-    hsize_t maxdims[ndims];
+    hsize_t *dims = (hsize_t *)ops_malloc(ndims * sizeof(hsize_t));
+    hsize_t *maxdims = (hsize_t *)ops_malloc(ndims * sizeof(hsize_t));
     status = H5Sget_simple_extent_dims(dataspace, dims, maxdims);
     H5Sclose(dataspace);
     if (status < 0) {
@@ -1705,6 +1745,9 @@ herr_t get_dataset_properties(hid_t dset_id,
     }
     dset_props->size = dims[0];
     dset_props->dim = (ndims > 1) ? dims[1] : 1;
+
+    ops_free(dims);
+    ops_free(maxdims);
   }
 
   // Get type information:
