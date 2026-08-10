@@ -216,11 +216,6 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
 
   if (instance->ops_enable_tiling && !lowdim_treatment) {
     ops_kernel_list.push_back(desc);
-    if (ops_loop_count + ops_kernel_list.size() == (1925+50) || 
-        ops_loop_count + ops_kernel_list.size() == (1925+75) ||
-        ops_loop_count + ops_kernel_list.size() == (1925+95) || ops_loop_count + ops_kernel_list.size() == (1925+100)) {
-      ops_execute(instance);
-    }
   } else {
     //Prepare the local execution ranges
     int start[OPS_MAX_DIM]={0}, end[OPS_MAX_DIM]={1}, arg_idx[OPS_MAX_DIM];
@@ -283,12 +278,6 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     desc = nullptr;
 
     ops_loop_count++;
-    if (instance->OPS_diags > 2 && (ops_loop_count == (1925+50) 
-               || ops_loop_count == (1925+75) || ops_loop_count == (1925+95) || ops_loop_count == (1925+100))) {
-      std::string filename = "dump_" + std::to_string(ops_loop_count) + ".h5";
-      ops_dump_to_hdf5(filename.c_str());
-      if (ops_loop_count >= (1925+75)) exit(0);
-    }
   }
 }
 
@@ -864,16 +853,29 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                                                   data_write_deps[LOOPARG.dat->index][tile * OPS_MAX_DIM * 2 + 2 * d + 1]-d_m_min,
                                                   LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
                 if (intersect_len > 0) {
-                  tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
-                    MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1],intersect_begin + intersect_len);
-                  
-                  //If we overshot the next tile's end index - due to different skewing factors
-                  // that means this tile is now the last one, and we don't need to worry about
-                  // write dependencies beyond that point
-                  if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] >
-                    tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 1])
-                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
-                      tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 1];
+                  int &tile_end =
+                      tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1];
+                  tile_end = MAX(tile_end, intersect_begin + intersect_len);
+
+                  // WAW skew may push this tile past the next tile's end.  Capping
+                  // at the neighbour (old behaviour) emptied only that neighbour and
+                  // left further tiles live, splitting producer/snapshot/mutate
+                  // chains across tile-major execution.  Instead absorb every
+                  // following tile we overlap and empty them.
+                  for (int t = tile + tiles_prod[d];
+                       t < total_tiles &&
+                       (t / tiles_prod[d]) % ntiles[d] >
+                           (tile / tiles_prod[d]) % ntiles[d];
+                       t += tiles_prod[d]) {
+                    int &tb =
+                        tiled_ranges[loop][OPS_MAX_DIM * 2 * t + 2 * d + 0];
+                    int &te =
+                        tiled_ranges[loop][OPS_MAX_DIM * 2 * t + 2 * d + 1];
+                    if (tile_end <= tb)
+                      break;
+                    tile_end = MAX(tile_end, te);
+                    tb = te = tile_end; // empty absorbed tile
+                  }
                 }
               }
             }
@@ -1327,6 +1329,7 @@ void ops_execute(OPS_instance *instance) {
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
     if (ops_kernel_list[i]->startup_func) ops_kernel_list[i]->startup_func(ops_kernel_list[i]);
   }
+
   //Execute tiles
   for (int tile = 0; tile < total_tiles; tile++) {
     for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
@@ -1354,6 +1357,7 @@ void ops_execute(OPS_instance *instance) {
                ops_kernel_list[i]->range[4], ops_kernel_list[i]->range[5]);
       // This function call could potentially throw
       ops_kernel_list[i]->func(ops_kernel_list[i]);
+
     }
   }
 
@@ -1417,12 +1421,7 @@ void ops_execute(OPS_instance *instance) {
   }
 
   ops_loop_count+=ops_kernel_list.size();
-  if (instance->OPS_diags > 2 && ops_loop_count >= 1925) {
-    std::string filename = "dump_" + std::to_string(ops_loop_count) + ".h5";
-    ops_dump_to_hdf5(filename.c_str());
-    if (ops_loop_count >= (1925+75)) exit(0);
-  }
-  
+
   ops_kernel_list.clear();
 
   instance->tiling_instance->executing = 0;
