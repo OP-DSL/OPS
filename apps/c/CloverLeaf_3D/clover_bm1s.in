@@ -19,5 +19,6 @@
  end_step=10
  end_time=1000.1
  test_problem 5
+ checkpoint_frequency=10
  profiler_on=1
 *endclover
