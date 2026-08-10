@@ -433,15 +433,22 @@ F2C_CUDA_OPS_GEN_OBJS = $(OPS_GENERATED:.F90=_f2c_cuda.o)
 $(F2C_CUDA_CXX_OBJS) : $(F2C_CUDA_CXX_MASTER_KERNELS)
 	$(NVCC) $(F2C_NVCCFLAGS) -DOPS_FTN -I$(C_OPS_INC) -I. -c $< -o $@
 
-$(APP)_f2c_cuda: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_f2c_cuda.a $(OPS_FILES_GEN) $(F2C_CUDA_CXX_OBJS)
-		@echo ""
-		@echo ""
-		@echo "Building ${APP}_f2c_cuda"
-		@echo ""
-		$(foreach src, $(OTHER_FILES), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_CUDA) -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_cuda.o);)
-		$(foreach src, $(F2C_CUDA_FTN_KERNELS), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_CUDA) -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_cuda.o);)
-		$(foreach src, $(OPS_GENERATED), $(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_CUDA) -DOPS_F2C_INTEROP -c $(src) -o $(src:.F90=_f2c_cuda.o);)
-		$(MPIF90) $(FFLAGS) $(APP_FLAGS) -I$(CUDA_INC) -I$(C_OPS_INC) $(FMODS_F2C_CUDA) $(F2C_CUDA_CXX_OBJS) $(F2C_CUDA_OTHER_OBJS) $(F2C_CUDA_FTN_OBJS) $(F2C_CUDA_OPS_GEN_OBJS) $(APP_LIBS) $(FLINK) -lops_f2c_cuda $(F_HDF5_LIB_SEQ) -L$(CUDA_LIB) $(CUDART) $(CURAND) -o $(APP)_f2c_cuda
+# New Fortran pattern rule (replaces all 3 foreach loops)
+%_f2c_cuda.o: %.F90
+	$(MPIF90) $(FFLAGS) $(APP_FLAGS) $(FMODS_F2C_CUDA) -DOPS_F2C_INTEROP -c $< -o $@
+
+
+# ==============================================================================
+# Main Target Rule
+# ==============================================================================
+
+# Added the 3 object list variables as prerequisites to this target line
+$(APP)_f2c_cuda: Makefile .generated $(OPS_INSTALL_PATH)/fortran/lib/$(OPS_COMPILER)/libops_f2c_cuda.a $(OPS_FILES_GEN) $(F2C_CUDA_CXX_OBJS) $(F2C_CUDA_OTHER_OBJS) $(F2C_CUDA_FTN_OBJS) $(F2C_CUDA_OPS_GEN_OBJS)
+	@echo ""
+	@echo ""
+	@echo "Building ${APP}_f2c_cuda"
+	@echo ""
+	$(MPIF90) $(FFLAGS) $(APP_FLAGS) -I$(CUDA_INC) -I$(C_OPS_INC) $(FMODS_F2C_CUDA) $(F2C_CUDA_CXX_OBJS) $(F2C_CUDA_OTHER_OBJS) $(F2C_CUDA_FTN_OBJS) $(F2C_CUDA_OPS_GEN_OBJS) $(APP_LIBS) $(FLINK) -lops_f2c_cuda $(F_HDF5_LIB_SEQ) -L$(CUDA_LIB) $(CUDART) $(CURAND) -o $(APP)_f2c_cuda
 
 
 F2C_MPI_CUDA_FTN_OBJS = $(F2C_CUDA_FTN_KERNELS:.F90=_f2c_mpi_cuda.o)

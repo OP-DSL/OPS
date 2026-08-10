@@ -1752,17 +1752,9 @@ void ops_set_halo_dirtybit3_tiled(ops_arg *arg, int *iter_range, int *left_bound
                            sd->decomp_disp[dim] - MAX_DEPTH + 1, sd->decomp_disp[dim]);
   }
 
-  int left_bnd_beg[ndim], left_bnd_end[ndim], left_halo_beg[ndim], left_halo_end[ndim];
-  int right_bnd_beg[ndim], right_bnd_end[ndim], right_halo_beg[ndim], right_halo_end[ndim];
 
-  memset(left_bnd_beg, 0, ndim*sizeof(int));
-  memset(left_bnd_end, 0, ndim*sizeof(int));
-  memset(left_halo_beg, 0, ndim*sizeof(int));
-  memset(left_halo_end, 0, ndim*sizeof(int));
-  memset(right_bnd_beg, 0, ndim*sizeof(int));
-  memset(right_bnd_end, 0, ndim*sizeof(int));
-  memset(right_halo_beg, 0, ndim*sizeof(int));
-  memset(right_halo_end, 0, ndim*sizeof(int));
+  int left_bnd_beg[OPS_MAX_DIM]={0}, left_bnd_end[OPS_MAX_DIM]={0}, left_halo_beg[OPS_MAX_DIM]={0}, left_halo_end[OPS_MAX_DIM]={0};
+  int right_bnd_beg[OPS_MAX_DIM]={0}, right_bnd_end[OPS_MAX_DIM]={0}, right_halo_beg[OPS_MAX_DIM]={0}, right_halo_end[OPS_MAX_DIM]={0};
 
   for (int dim = 0; dim < ndim; dim++) {
     int other_dims = 1;
