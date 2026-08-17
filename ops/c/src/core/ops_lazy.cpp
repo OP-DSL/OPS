@@ -656,6 +656,19 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   if (instance->OPS_diags > 2 && ops_get_proc() == 0)
     printf2(instance, "MDIM WAW: %s\n", skip_mdim_waw ? "skipped (dim>1)" : "on");
 
+  // Sweep 3 marks an empty last-live tile dead so halo work attaches to the
+  // previous tile. If the next tile is already dead, the previous empty tile
+  // becomes "last live" and is marked dead too — that cascade continues until
+  // tile 0 is last, Sweep 1 then assigns the full loop range, and the loop is
+  // unblocked. OPS_SWEEP3_NO_CASCADE=1 only allows the geometric last tile
+  // (tile_idx == ntiles-1) to become dead.
+  const char *sweep3_env = getenv("OPS_SWEEP3_NO_CASCADE");
+  const bool sweep3_no_cascade =
+      sweep3_env != NULL && atoi(sweep3_env) != 0;
+  if (instance->OPS_diags > 2 && ops_get_proc() == 0)
+    printf2(instance, "Sweep3 dead-tile cascade: %s\n",
+            sweep3_no_cascade ? "off" : "on");
+
   const int nloops_plan = (int)ops_kernel_list.size();
   std::vector<int> waw_cause_loop(nloops_plan * OPS_MAX_DIM, -1);
   std::vector<const char *> waw_cause_dat(nloops_plan * OPS_MAX_DIM, nullptr);
@@ -804,6 +817,25 @@ int ops_construct_tile_plan(OPS_instance *instance) {
               dead_tiles[tile * OPS_MAX_DIM + d] == -1))) {
               tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] =
                   LOOPRANGE[2 * d + 1];
+              bool next_dead =
+                  tile + tiles_prod[d] < total_tiles &&
+                  dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1 &&
+                  (tile / tiles_prod[d]) % ntiles[d] != ntiles[d] - 1;
+              if (next_dead) {
+                int key = loop * OPS_MAX_DIM + d;
+                int tile_begin =
+                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
+                int new_end = LOOPRANGE[2 * d + 1];
+                if (new_end - tile_begin >=
+                    waw_cause_new[key] - waw_cause_old[key]) {
+                  waw_cause_loop[key] = -2;
+                  waw_cause_dat[key] = "Sweep3-dead-cascade";
+                  waw_cause_datdim[key] = 0;
+                  waw_cause_old[key] = tile_begin;
+                  waw_cause_new[key] = new_end;
+                  waw_cause_emptied[key] = 0;
+                }
+              }
           }
           // Otherwise it depends on data dependencies
           else {
@@ -964,9 +996,27 @@ int ops_construct_tile_plan(OPS_instance *instance) {
             } else if (tile_sizes[d] <= 0 || tile_idx == ntiles[d] - 1 ||
                        (tile + tiles_prod[d] < total_tiles &&
                         dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] !=
-                            -1))
+                            -1)) {
+              int old_te = te;
               te = MAX(tb, end[d]);
-            else
+              bool next_dead =
+                  tile + tiles_prod[d] < total_tiles &&
+                  dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] !=
+                      -1 &&
+                  tile_idx != ntiles[d] - 1;
+              if (next_dead && te > old_te) {
+                int key = loop * OPS_MAX_DIM + d;
+                if (te - old_te >=
+                    waw_cause_new[key] - waw_cause_old[key]) {
+                  waw_cause_loop[key] = -2;
+                  waw_cause_dat[key] = "Sweep3-dead-cascade";
+                  waw_cause_datdim[key] = 0;
+                  waw_cause_old[key] = old_te;
+                  waw_cause_new[key] = te;
+                  waw_cause_emptied[key] = 0;
+                }
+              }
+            } else
               te = MAX(tb, nat_end);
           }
 
@@ -1004,10 +1054,14 @@ int ops_construct_tile_plan(OPS_instance *instance) {
           //If this tile is newly dead
           bool has_zero_range = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] - 
                                 tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] <= 0;
-          bool is_last_live_tile = ((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 || //last tile in dimension
-                                    (tile + tiles_prod[d] < total_tiles &&  //or next tile is dead
-                                    dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1)) &&
-                                    dead_tiles[tile * OPS_MAX_DIM + d] == -1; //live
+          bool is_geom_last =
+              (tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1;
+          bool is_last_live_tile =
+              (is_geom_last ||
+               (!sweep3_no_cascade && tile + tiles_prod[d] < total_tiles &&
+                dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] !=
+                    -1)) &&
+              dead_tiles[tile * OPS_MAX_DIM + d] == -1;
           bool previous_tile_exists = tile - tiles_prod[d] >= 0;
           int intersect_begin = 0;
           if (biggest_range[2*d+1] == largest_computed_index[d]) largest_computed_index[d]++;
