@@ -18,6 +18,7 @@ Welcome to OPS documentation!
    opsapi.md
    apps.md
    perf.md
+   tiling.md
    devdoc.md
    pubs.md
 

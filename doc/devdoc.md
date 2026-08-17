@@ -256,6 +256,7 @@ ops/c/
 - Tiling plan computation
 - Communication-avoiding optimizations
 - Key structures: `ops_kernel_list`, `tiling_plan`
+- WAW/RAW tile growth, diagnostics, and app-level checks: [tiling.md](tiling.md)
 
 #### MPI Support (ops/c/src/mpi/)
 - Domain decomposition (`ops_mpi_partition.cpp`)
