@@ -626,9 +626,13 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   data_read_deps.resize(instance->OPS_dat_index);
   data_write_deps.resize(instance->OPS_dat_index);
   data_read_deps_edge.resize(instance->OPS_dat_index);
+  // Which loop last extended write_deps end, per dat/tile/dim. Used to
+  // name the later writer when Sweep 2 unblocks a loop.
+  std::vector<std::vector<int> > data_write_src(instance->OPS_dat_index);
   for (int i = 0; i < instance->OPS_dat_index; i++) {
     data_read_deps[i].resize(total_tiles * OPS_MAX_DIM * 2);
     data_write_deps[i].resize(total_tiles * OPS_MAX_DIM * 2);
+    data_write_src[i].assign(total_tiles * OPS_MAX_DIM, -1);
     data_read_deps_edge[i].resize(OPS_MAX_DIM * 2);
     for (int d = 0; d < total_tiles * OPS_MAX_DIM; d++) {
       data_read_deps[i][2 * d + 0] = INT_MAX;   // Anything will be less
@@ -641,6 +645,24 @@ int ops_construct_tile_plan(OPS_instance *instance) {
       data_read_deps_edge[i][2 * d + 1] = INT_MAX;  // Anything will be less
     }
   }
+
+  // Diagnostic: skip Sweep-2 WAW on dats with more than one component.
+  // OPS cannot name which field of a multi-species dat a loop touches, so a
+  // later write of any component looks like a WAW on the whole dat. Default
+  // off — this is a hypothesis test, not a correctness-preserving fix.
+  const char *mdim_skip_env = getenv("OPS_MDIM_SKIP_WAW");
+  const bool skip_mdim_waw =
+      mdim_skip_env != NULL && atoi(mdim_skip_env) != 0;
+  if (instance->OPS_diags > 2 && ops_get_proc() == 0)
+    printf2(instance, "MDIM WAW: %s\n", skip_mdim_waw ? "skipped (dim>1)" : "on");
+
+  const int nloops_plan = (int)ops_kernel_list.size();
+  std::vector<int> waw_cause_loop(nloops_plan * OPS_MAX_DIM, -1);
+  std::vector<const char *> waw_cause_dat(nloops_plan * OPS_MAX_DIM, nullptr);
+  std::vector<int> waw_cause_datdim(nloops_plan * OPS_MAX_DIM, 0);
+  std::vector<int> waw_cause_old(nloops_plan * OPS_MAX_DIM, 0);
+  std::vector<int> waw_cause_new(nloops_plan * OPS_MAX_DIM, 0);
+  std::vector<int> waw_cause_emptied(nloops_plan * OPS_MAX_DIM, 0);
 
 
   // Seed a terminal read dependency to cover the union of writes across the
@@ -853,6 +875,8 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                   LOOPARG.opt == 1 &&
                   data_write_deps[LOOPARG.dat->index]
                                   [tile * OPS_MAX_DIM * 2 + 2 * d + 1] != INT_MIN ) {
+                if (skip_mdim_waw && LOOPARG.dat->dim > 1)
+                  continue;
                 int d_m_min = 0;
                 for (int p = 0;
                       p < LOOPARG.stencil->points; p++) {
@@ -868,7 +892,9 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                   int &tile_end =
                       tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1];
                   int waw_end = intersect_begin + intersect_len;
+                  int old_end = tile_end;
                   tile_end = MAX(tile_end, waw_end);
+                  int emptied = 0;
                   for (int t = tile + tiles_prod[d];
                        t < total_tiles &&
                        (t / tiles_prod[d]) % ntiles[d] >
@@ -882,9 +908,27 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                       break;
                     if (tile_end >= te) {
                       tb = te = tile_end;
+                      emptied++;
                     } else {
                       tb = tile_end;
                       break;
+                    }
+                  }
+                  int tile_w = tile_end - tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
+                  int nom_w = tile_sizes[d] > 0 ? tile_sizes[d] : 1;
+                  if (tile_end > old_end &&
+                      (emptied > 0 || tile_w > 2 * nom_w)) {
+                    int key = loop * OPS_MAX_DIM + d;
+                    if (tile_end - old_end >=
+                        waw_cause_new[key] - waw_cause_old[key]) {
+                      waw_cause_loop[key] =
+                          data_write_src[LOOPARG.dat->index]
+                                        [tile * OPS_MAX_DIM + d];
+                      waw_cause_dat[key] = LOOPARG.dat->name;
+                      waw_cause_datdim[key] = LOOPARG.dat->dim;
+                      waw_cause_old[key] = old_end;
+                      waw_cause_new[key] = tile_end;
+                      waw_cause_emptied[key] = emptied;
                     }
                   }
                 }
@@ -1112,11 +1156,13 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                     data_write_deps[LOOPARG.dat->index]
                                    [tile * OPS_MAX_DIM * 2 + 2 * d + 0],
                     tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0]);
-            data_write_deps[LOOPARG.dat->index]
-                [tile * OPS_MAX_DIM * 2 + 2 * d + 1] = MAX(
-                    data_write_deps[LOOPARG.dat->index]
-                                   [tile * OPS_MAX_DIM * 2 + 2 * d + 1],
-                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
+            int woff = tile * OPS_MAX_DIM * 2 + 2 * d + 1;
+            int new_write_end =
+                tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1];
+            if (new_write_end > data_write_deps[LOOPARG.dat->index][woff]) {
+              data_write_deps[LOOPARG.dat->index][woff] = new_write_end;
+              data_write_src[LOOPARG.dat->index][tile * OPS_MAX_DIM + d] = loop;
+            }
 
             if (instance->OPS_diags > 5 && tile_sizes[d] != -1)
               printf2(instance,
@@ -1231,6 +1277,9 @@ int ops_construct_tile_plan(OPS_instance *instance) {
     const char *worst_name[nworst] = {NULL};
     int worst_tiles[nworst] = {0};
     int worst_w[nworst][OPS_MAX_DIM] = {{0}};
+    int worst_loop[nworst] = {-1, -1, -1};
+    int n_unblocked = 0;
+    int n_mdim_cause = 0;
     for (unsigned int loop = 0; loop < ops_kernel_list.size(); loop++) {
       int live_tiles = 0;
       long long biggest_tile_vol = 0;
@@ -1273,18 +1322,27 @@ int ops_construct_tile_plan(OPS_instance *instance) {
       double ratio = nominal_tile_vol > 0
                          ? (double)biggest_tile_vol / (double)nominal_tile_vol
                          : 0.0;
+      if (live_tiles == 1 && ratio > 1.5)
+        n_unblocked++;
+      for (int d = 0; d < dims; d++) {
+        int key = (int)loop * OPS_MAX_DIM + d;
+        if (waw_cause_dat[key] && waw_cause_datdim[key] > 1)
+          n_mdim_cause++;
+      }
       for (int i = 0; i < nworst; i++) {
         if (ratio > worst_ratio[i]) {
           for (int j = nworst - 1; j > i; j--) {
             worst_ratio[j] = worst_ratio[j - 1];
             worst_name[j] = worst_name[j - 1];
             worst_tiles[j] = worst_tiles[j - 1];
+            worst_loop[j] = worst_loop[j - 1];
             for (int d = 0; d < OPS_MAX_DIM; d++)
               worst_w[j][d] = worst_w[j - 1][d];
           }
           worst_ratio[i] = ratio;
           worst_name[i] = ops_kernel_list[loop]->name;
           worst_tiles[i] = live_tiles;
+          worst_loop[i] = (int)loop;
           for (int d = 0; d < OPS_MAX_DIM; d++) worst_w[i][d] = biggest_tile_w[d];
           break;
         }
@@ -1300,6 +1358,11 @@ int ops_construct_tile_plan(OPS_instance *instance) {
             max_w_name[2] ? max_w_name[2] : "-",
             live_tiles_max, total_tiles,
             nominal_cells > 0 ? (double)live_cells / (double)nominal_cells : 0.0);
+    printf2(instance,
+            "Proc %d unblocked loops: %d/%d (1 live tile, >1.5x nominal); "
+            "WAW growth via dim>1 dats: %d loop-dims\n",
+            ops_get_proc(), n_unblocked, (int)ops_kernel_list.size(),
+            n_mdim_cause);
     if (worst_ratio[0] > 1.5) {
       printf2(instance, "Proc %d biggest tiles vs nominal:", ops_get_proc());
       for (int i = 0; i < nworst; i++)
@@ -1307,6 +1370,60 @@ int ops_construct_tile_plan(OPS_instance *instance) {
           printf2(instance, " %s %.1fx (%dx%dx%d, %d live tiles);",
                   worst_name[i], worst_ratio[i], worst_w[i][0], worst_w[i][1],
                   worst_w[i][2], worst_tiles[i]);
+      printf2(instance, "\n");
+      printf2(instance, "Proc %d WAW cause for biggest tiles:", ops_get_proc());
+      for (int i = 0; i < nworst; i++) {
+        if (worst_loop[i] < 0)
+          continue;
+        int best_d = -1;
+        int best_grow = 0;
+        for (int d = 0; d < dims; d++) {
+          int key = worst_loop[i] * OPS_MAX_DIM + d;
+          int grow = waw_cause_new[key] - waw_cause_old[key];
+          if (waw_cause_dat[key] && grow >= best_grow) {
+            best_grow = grow;
+            best_d = d;
+          }
+        }
+        if (best_d < 0) {
+          printf2(instance, " %s (no Sweep-2 WAW recorded);", worst_name[i]);
+          continue;
+        }
+        int key = worst_loop[i] * OPS_MAX_DIM + best_d;
+        int src = waw_cause_loop[key];
+        const char *src_name =
+            (src >= 0 && src < (int)ops_kernel_list.size())
+                ? ops_kernel_list[src]->name
+                : "?";
+        printf2(instance,
+                " %s dim%d via %s(dim=%d) from %s (%d->%d, emptied %d)",
+                worst_name[i], best_d, waw_cause_dat[key],
+                waw_cause_datdim[key], src_name, waw_cause_old[key],
+                waw_cause_new[key], waw_cause_emptied[key]);
+        // One hop: if the later writer was itself unblocked by WAW, name it.
+        if (src >= 0) {
+          int hop_d = -1, hop_grow = 0;
+          for (int d = 0; d < dims; d++) {
+            int hk = src * OPS_MAX_DIM + d;
+            int grow = waw_cause_new[hk] - waw_cause_old[hk];
+            if (waw_cause_dat[hk] && grow >= hop_grow) {
+              hop_grow = grow;
+              hop_d = d;
+            }
+          }
+          if (hop_d >= 0) {
+            int hk = src * OPS_MAX_DIM + hop_d;
+            int src2 = waw_cause_loop[hk];
+            const char *src2_name =
+                (src2 >= 0 && src2 < (int)ops_kernel_list.size())
+                    ? ops_kernel_list[src2]->name
+                    : "?";
+            printf2(instance, " <- %s via %s from %s", src_name,
+                    waw_cause_dat[hk], src2_name);
+          }
+        }
+        printf2(instance, ";");
+      }
       printf2(instance, "\n");
     }
   }
