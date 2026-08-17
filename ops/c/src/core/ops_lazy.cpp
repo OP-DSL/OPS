@@ -1216,12 +1216,30 @@ int ops_construct_tile_plan(OPS_instance *instance) {
     long long live_cells = 0;
     long long nominal_cells = 0;
     int live_tiles_max = 0;
+    // Worst offenders by footprint: the largest single tile a loop executes,
+    // against the nominal tile. A loop that is not blocked at all - one tile
+    // covering its whole range - shows up here with a large ratio and a low
+    // live tile count, and streams its dats through the cache once per plan.
+    long long nominal_tile_vol = 1;
+    for (int d = 0; d < dims; d++) {
+      int tw = tile_sizes[d] > 0 ? tile_sizes[d]
+                                 : (biggest_range[2 * d + 1] - biggest_range[2 * d]);
+      nominal_tile_vol *= MAX(1, tw);
+    }
+    const int nworst = 3;
+    double worst_ratio[nworst] = {0};
+    const char *worst_name[nworst] = {NULL};
+    int worst_tiles[nworst] = {0};
+    int worst_w[nworst][OPS_MAX_DIM] = {{0}};
     for (unsigned int loop = 0; loop < ops_kernel_list.size(); loop++) {
       int live_tiles = 0;
+      long long biggest_tile_vol = 0;
+      int biggest_tile_w[OPS_MAX_DIM] = {0};
       for (int tile = 0; tile < total_tiles; tile++) {
         int vol = 1;
         int nom = 1;
         bool live = true;
+        int w_all[OPS_MAX_DIM] = {0};
         for (int d = 0; d < dims; d++) {
           int w = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] -
                   tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
@@ -1230,6 +1248,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
             vol = 0;
             break;
           }
+          w_all[d] = w;
           if (w > max_w[d]) {
             max_w[d] = w;
             max_w_name[d] = ops_kernel_list[loop]->name;
@@ -1243,9 +1262,33 @@ int ops_construct_tile_plan(OPS_instance *instance) {
           live_tiles++;
           live_cells += vol;
           nominal_cells += nom;
+          if (vol > biggest_tile_vol) {
+            biggest_tile_vol = vol;
+            for (int d = 0; d < dims; d++) biggest_tile_w[d] = w_all[d];
+          }
         }
       }
       live_tiles_max = MAX(live_tiles_max, live_tiles);
+
+      double ratio = nominal_tile_vol > 0
+                         ? (double)biggest_tile_vol / (double)nominal_tile_vol
+                         : 0.0;
+      for (int i = 0; i < nworst; i++) {
+        if (ratio > worst_ratio[i]) {
+          for (int j = nworst - 1; j > i; j--) {
+            worst_ratio[j] = worst_ratio[j - 1];
+            worst_name[j] = worst_name[j - 1];
+            worst_tiles[j] = worst_tiles[j - 1];
+            for (int d = 0; d < OPS_MAX_DIM; d++)
+              worst_w[j][d] = worst_w[j - 1][d];
+          }
+          worst_ratio[i] = ratio;
+          worst_name[i] = ops_kernel_list[loop]->name;
+          worst_tiles[i] = live_tiles;
+          for (int d = 0; d < OPS_MAX_DIM; d++) worst_w[i][d] = biggest_tile_w[d];
+          break;
+        }
+      }
     }
     printf2(instance,
             "Proc %d tile skew: nominal %dx%dx%d, max live %dx%dx%d "
@@ -1257,6 +1300,15 @@ int ops_construct_tile_plan(OPS_instance *instance) {
             max_w_name[2] ? max_w_name[2] : "-",
             live_tiles_max, total_tiles,
             nominal_cells > 0 ? (double)live_cells / (double)nominal_cells : 0.0);
+    if (worst_ratio[0] > 1.5) {
+      printf2(instance, "Proc %d biggest tiles vs nominal:", ops_get_proc());
+      for (int i = 0; i < nworst; i++)
+        if (worst_name[i])
+          printf2(instance, " %s %.1fx (%dx%dx%d, %d live tiles);",
+                  worst_name[i], worst_ratio[i], worst_w[i][0], worst_w[i][1],
+                  worst_w[i][2], worst_tiles[i]);
+      printf2(instance, "\n");
+    }
   }
 
   // free local storage

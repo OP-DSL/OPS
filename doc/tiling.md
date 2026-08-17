@@ -120,7 +120,7 @@ Confirm `ops_lazy.o` and the application binary timestamps moved. Relink `*_mpi_
 | Flag | What to look at |
 |---|---|
 | `-OPS_DIAGS=2` | `Tiling enabled`, kernel times and counts, `Total Wall time`, `Total tiled halo` |
-| `-OPS_DIAGS=3` (or `>2`) | `Created tiling plan for N loops`, tile size, **tile skew** (proc 0) |
+| `-OPS_DIAGS=3` (or `>2`) | `Created tiling plan for N loops`, tile size, **tile skew** and **biggest tiles vs nominal** (proc 0) |
 | `-OPS_DIAGS=4` | `Executing tiling plan for N loops` — the plan sequence, one line per flush |
 | `-OPS_DIAGS=5` | Per-tile exec ranges after read/write deps, empty tiles, dataset deps |
 | (always) | `dead tile … resurrected` — leftover/WAW filled a Sweep-3 dead tile |
@@ -132,9 +132,22 @@ Proc 0 tile skew: nominal 120x40x-1, max live 122x46x0 (loops update_halo_kernel
 ```
 
 - **nominal** — `OPS_CACHE_SIZE` / `OPS_TILESIZE_*` guess, clamped to the owned range. It is computed per plan, so plans over different loop sets legitimately print different nominals; compare max live against the nominal on the *same* line.
-- **max live** — largest live tile extent in each dim and which loop hit it.
+- **max live** — the largest extent in each dimension, maximised over tiles and loops **independently per dimension**. It is not necessarily one tile: `max live 74x74x138` can mean one tile is 74 wide in x, a different tile is 74 in y, and a third is 138 in z. Do not read it as a tile footprint; that is what the next line is for.
 - **live tiles / total** — if expensive kernels show `1/N` live tiles, WAW absorb (or dead-tile expansion) has collapsed the rank.
-- **overlap factor** — sum of live cell counts / sum of nominal tile volumes. ~1 is healthy; ≫1 means skew/stacking; ≪1 on a 3D app with `TILESIZE=1000`, or when the nominal is larger than the owned block, is normal.
+- **overlap factor** — sum of live cell counts / sum of nominal tile volumes, over live tiles only. ~1 is healthy. ≫1 does *not* by itself mean redundant execution: a loop that runs its whole range on a single tile contributes its full volume to the numerator but only one nominal tile to the denominator, so a handful of unblocked loops can push the factor to 5 with no repeated work at all. ≪1 on a 3D app with `TILESIZE=1000`, or when the nominal is larger than the owned block, is normal.
+
+When any loop's largest single tile exceeds 1.5x the nominal tile, a second line names the worst three:
+
+```text
+Proc 0 biggest tiles vs nominal: temper_kernel_eqA 35.8x (74x74x138, 1 live tiles); set_zero_kernel_MD5 35.8x (74x74x138, 1 live tiles); set_zero_kernel 35.8x (74x74x138, 1 live tiles);
+```
+
+This is the line to read when tiling does not pay off. It is a real tile footprint, so it distinguishes the two ways a plan can lose cache blocking:
+
+- **`N live tiles` with a large ratio** — the loop is skewed/stacked and genuinely redoes work.
+- **`1 live tiles` with a large ratio**, as above — the loop is not blocked at all. It executes its whole range in one go, streaming its dats through the cache once per plan and evicting everything the neighbouring tiles just built. No redundant arithmetic, but the fused chain around it is broken.
+
+Absence of the line means every loop is within 1.5x of nominal. CloverLeaf never prints it.
 
 Kernel **invocation counts** (`-OPS_DIAGS=2` profiler): `advec_cell_kernel4_xdir` should be about `(tiles per rank) × (steps)`, not `~steps`. One count per step means one tile per rank for that kernel.
 
@@ -248,6 +261,8 @@ Healthy fine-X: `live tiles 3/3`, max live in X about `25` plus a wide stencil (
 
 `h5diff -p 1e-10` uses **relative** tolerance. Fine-X can report **48 diffs in `WRUN` only** with absolute error ~10⁻¹⁷ on a field of magnitude ~10⁻⁸ (relative ~10⁻⁹). That is fused-loop rounding, not a split-chain bug. Failure looks like **millions of diffs on many fields** (e.g. `WRUN` count equal to the grid size).
 
+Current status on 256³, 10 steps, 32 ranks, `-O3`: all three tiled configurations agree with untiled. Large tiles and default have **no** cell above a 10⁻¹⁰ relative difference on any field; fine-X has 48 cells, all in `WRUN`, with absolute error 1.3×10⁻¹⁷ on a field of magnitude 4.9×10⁻⁸, and every other field at machine epsilon.
+
 `h5diff` counts differences but not their size, which is the difference between rounding and divergence. To get magnitudes, compare a field directly:
 
 ```python
@@ -258,6 +273,32 @@ ad = np.abs(ref - t)
 print("n", np.count_nonzero(ad > 1e-10), "abs max", ad.max(),
       "rel max", np.nanmax(ad / np.maximum(np.abs(ref), 1e-30)))
 ```
+
+### SENGA2 performance: an open case
+
+SENGA2 is correct under tiling but barely gains from it. Same 256³ / 10-step / 32-rank `-O3` runs, timed by SENGA’s own `total_ttime`:
+
+| configuration | time |
+|---|---|
+| untiled | 458.9 s |
+| large tiles (one tile per rank) | 488.6 s |
+| default | 452.4 s |
+| fine X (`TILESIZE_X=25`) | 554.2 s |
+
+One tile per rank is the cost of the tiled code path with none of its benefit: 6.5% over untiled. Default tiling recovers that and 1.4% more, so the cache blocking is worth only about 8% against the same code path — far less than the 2.1x CloverLeaf gets, on a rank whose 64x64x128 block with 30-plus multi-component fields is nowhere near cache-resident.
+
+The footprint line points at why. In the two large plans (1179 and 1180 loops):
+
+```text
+Proc 0 tile skew: nominal 69x18x17, max live 74x74x138 (loops temper_kernel_eqA / ...), live tiles 32/32, overlap factor 5.362
+Proc 0 biggest tiles vs nominal: temper_kernel_eqA 35.8x (74x74x138, 1 live tiles); set_zero_kernel_MD5 35.8x (74x74x138, 1 live tiles); set_zero_kernel 35.8x (74x74x138, 1 live tiles);
+```
+
+Those three are consecutive loops at the top of `temper.F90`, and all are point-wise `OPS_WRITE` with `s3d_000` stencils — `d_tcoeff` (6 components), `d_tderiv` (5 components), `d_store7`. They are the easiest loops in the plan to block, and they are the ones that are not blocked: each runs the whole owned-plus-halo block on tile 0 while the other 31 tiles are empty. Writing tens of megabytes of multi-component fields in one pass evicts whatever the surrounding tiles are trying to keep resident.
+
+The `1 live tiles` shape says leftover did not do it — leftover only fills the *last* tile in a dimension to `end[d]`, and tile 0 is not last in y or z, so it would have been clamped to `nat_end`. Sweep 2 did it: a later write dependency on tile 0 reached the full range, `tile_end` grew to match, and the loop over later tiles emptied all of them. That later writer must itself have been filled to the full range, so this is the leftover-to-owned-end rule feeding the WAW rule one loop at a time — the same shape as the absorb cascade, but arriving through a write dependency that looks legitimate at each individual step.
+
+What is *not* yet known is which loop starts the chain. Finding it needs the per-tile ranges for one of those dats (`-OPS_DIAGS=5`, which for a 1179-loop plan is a very large log — grep a single dat name), and the fix has to avoid the clamps in “What not to try” above, all of which were tried and break either CloverLeaf coverage or the SENGA2 chain. Do not attempt it without re-running the full SENGA2 comparison: the current analysis is correct, and that is the property most easily lost here.
 
 ### Mini WAW app
 
