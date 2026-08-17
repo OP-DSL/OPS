@@ -282,7 +282,7 @@ print("n", np.count_nonzero(ad > 1e-10), "abs max", ad.max(),
 
 ### SENGA2 performance
 
-SENGA2 is correct under tiling but barely gains from it **until the fused chain is shortened**. Same 256³ / 10-step / 32-rank `-O3` runs, timed by SENGA’s own `total_ttime`:
+SENGA2 is correct under tiling but barely gains from it **until the fused chain is shortened**. Same 256³ / 10-step / 32-rank `-O3` runs, timed by SENGA’s own `total_ttime`. **Before** the `ops_execute` map (1179-loop plans, most loops unblocked):
 
 | configuration | time |
 |---|---|
@@ -291,7 +291,7 @@ SENGA2 is correct under tiling but barely gains from it **until the fused chain 
 | default (1179-loop plans) | 452.4 s |
 | fine X (`TILESIZE_X=25`) | 554.2 s |
 
-One tile per rank is the cost of the tiled code path with none of its benefit: 6.5% over untiled. Default tiling recovers that and 1.4% more, so the cache blocking is worth only about 8% against the same code path — far less than the 2.1x CloverLeaf gets, on a rank whose 64x64x128 block with 30-plus multi-component fields is nowhere near cache-resident.
+One tile per rank is the cost of the tiled code path with none of its benefit: 6.5% over untiled. Default tiling recovers that and 1.4% more, so the cache blocking is worth only about 8% against the same code path — far less than the 2.1x CloverLeaf gets, on a rank whose 64x64x128 block with 30-plus multi-component fields is nowhere near cache-resident. After the execute map the same default is 382.2 s and `OPS_CACHE_SIZE=2` is 314.8 s (see the sweep below).
 
 The footprint line points at why. In the two large plans (1179 and 1180 loops), **before** the SENGA `ops_execute` map:
 
@@ -338,7 +338,23 @@ So:
    - RK stages in `senga2`: after `boundt`, `parfer`, `rhscal`, `rhsvel`, `bounds`
    - `rhscal`: after `temper`; immediately before `eqT` (internal-energy convert); after E convection; before species/`chrate`; after the Y=`Y/ρ` convert loop; after each species body in both species loops; before the second (Y-diffusive) species loop
    - `rhsvel`: before momentum convection; before viscous terms; before continuity
-   Keep snapshot/mutate pairs together (do not flush between a convert and the later overwrite of the same dat). A 1-step 256³ / 32-rank run with this map has **0 unblocked loops**, no 1179-loop plan, and `eqA` on 15 live tiles. Subsequent performance work should sweep `OPS_CACHE_SIZE` from about 0.25 to 4, not explicit `OPS_TILESIZE_*`, and must always include `OPS_TILING_MAXDEPTH=6` (CACHE_SIZE alone does not turn tiling on).
+   Keep snapshot/mutate pairs together (do not flush between a convert and the later overwrite of the same dat). A 1-step 256³ / 32-rank run with this map has **0 unblocked loops**, no 1179-loop plan, and `eqA` on 15 live tiles.
+
+### SENGA2 `OPS_CACHE_SIZE` sweep (after the execute map)
+
+Always pass `OPS_TILING_MAXDEPTH=6` together with `OPS_CACHE_SIZE`. CACHE_SIZE only sizes tiles; it does not enable tiling. Sweep 0.25–4, not explicit `OPS_TILESIZE_*`. Same 256³ / 10-step / 32-rank `-O3` methodology (`OMP_NUM_THREADS=1`, `mpirun -np 32 -bind-to core`, timed by `total_ttime`). Every tiled config still has **0 unblocked loops** and no IEEE / `TRUNCATE`.
+
+| flags | 10-step `total_ttime` | vs untiled | 612-loop tile | `eqA` nominal, live | `eqA` overlap |
+|---|---|---|---|---|---|
+| (none, same tiled binary) | 457.5 s | 1.00x | — | — | — |
+| `OPS_TILING_MAXDEPTH=6` | 382.2 s | 1.20x | 69x16x15 | 69x33x32, 15/15 | 0.58 |
+| `… MAXDEPTH=6 OPS_CACHE_SIZE=0.25` | 364.3 s | 1.26x | 16x4x3 | 69x4x3, 810/810 | 0.94 |
+| `… MAXDEPTH=6 OPS_CACHE_SIZE=0.5` | 323.9 s | 1.41x | 32x4x3 | 69x6x4, 408/408 | 0.94 |
+| `… MAXDEPTH=6 OPS_CACHE_SIZE=1` | 317.7 s | 1.44x | 69x4x3 | 69x8x6, 207/207 | 0.92 |
+| `… MAXDEPTH=6 OPS_CACHE_SIZE=2` | **314.8 s** | **1.45x** | 69x5x5 | 69x10x9, 105/105 | 0.97 |
+| `… MAXDEPTH=6 OPS_CACHE_SIZE=4` | 319.4 s | 1.43x | 69x7x7 | 69x15x13, 55/55 | 0.86 |
+
+The auto-detected default (MAXDEPTH only) is the right size for the old 1179-loop plan (~`69x16x15` on the 612-loop leftover; `eqA` itself becomes `69x33x32` because that 35-loop plan touches less data per point). Once the chain is flushed, those tiles are too fat: default is 382 s, while 1–2 MB is the sweet spot at ~315 s. `CACHE_SIZE=0.25` is too fine (`16x4x3`, 810 `eqA` tiles, 0.59 s just to build the 612-loop plan). Pre-map default was 452.4 s, so the execute map alone is ~1.20x and the map plus `CACHE_SIZE=2` is ~1.45x versus untiled.
 
 To dump JUMPs on a 1-step run: `apps/fortran/SENGA2/senga_tiling_split.sh` (restores `input/cont.dat`). Rebuild `ops/fortran` after editing `ops_lazy.cpp`.
 
