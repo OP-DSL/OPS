@@ -216,6 +216,17 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
 
   if (instance->ops_enable_tiling && !lowdim_treatment) {
     ops_kernel_list.push_back(desc);
+    // Cap fused-chain length. SENGA2's 1179-loop plans let Sweep 3 walk
+    // left until tile 0 is last live; ops_execute every N loops is the
+    // supported way to break that chain. 0 / unset = unlimited.
+    static int fusion_maxloops = -1;
+    if (fusion_maxloops < 0) {
+      const char *e = getenv("OPS_FUSION_MAXLOOPS");
+      fusion_maxloops = (e != NULL && atoi(e) > 0) ? atoi(e) : 0;
+    }
+    if (fusion_maxloops > 0 &&
+        (int)ops_kernel_list.size() >= fusion_maxloops)
+      ops_execute(instance);
   } else {
     //Prepare the local execution ranges
     int start[OPS_MAX_DIM]={0}, end[OPS_MAX_DIM]={1}, arg_idx[OPS_MAX_DIM];

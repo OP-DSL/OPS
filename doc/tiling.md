@@ -50,7 +50,7 @@ A later write on this tile can push `tile_end` past the next tile. The old neigh
 
 On CloverLeaf a leftover tile’s end is often the **entire owned range**. Absorbing that, then the next leftover, collapsed expensive kernels (`PdV`, `advec_cell_kernel4_*`) onto **one full-domain tile**. Fusion still reported 100+ loops per plan, but cache blocking was gone: kernel counts dropped to about one invocation per timestep instead of hundreds of tiles. Measured cost is the entire tiling benefit — 62.1 s tiled against 62.9 s untiled.
 
-**Current rule:** grow only to **this tile’s** later write of an accessed dataset, plus this access’s stencil (`write_deps_end - d_m_min`). If that extent fully covers a later tile, empty it (`begin = end = tile_end`) **without** taking the neighbour’s leftover end. If the previous tile already covers this tile’s natural chunk (`begin >= nat_end`), leftover must **not** refill it.
+**Current rule:** grow only to **this tile’s** later write of an accessed dataset, plus this access’s stencil (`write_deps_end - d_m_min`). If that extent fully covers a later tile, empty it (`begin = end = tile_end`) **without** taking the neighbour’s leftover end. If the previous tile already covers this tile’s natural chunk (`begin >= nat_end`), leftover must **not** refill an *interior* tile. A last-live tile (geometric last, or next tile Sweep-3 dead) still fills to the owned end — otherwise Sweep 3 marks it dead too and the cascade walks left until tile 0 owns the rank.
 
 WAW applies to **reads as well as writes**. A snapshot that only reads `U` must still extend when a later mutate writes `U`. Restricting WAW to `acc != OPS_READ` corrupts SENGA2.
 
@@ -123,6 +123,7 @@ Confirm `ops_lazy.o` and the application binary timestamps moved. Relink `*_mpi_
 | `-OPS_DIAGS=3` (or `>2`) | `Created tiling plan for N loops`, tile size, **tile skew**, **unblocked loops**, **biggest tiles vs nominal**, and **WAW cause** (proc 0) |
 | `OPS_MDIM_SKIP_WAW=1` | Skip Sweep-2 WAW on dats with `dim>1`. Hypothesis test only; does not change SENGA2's 1179-loop plan. |
 | `OPS_SWEEP3_NO_CASCADE=1` | Only the geometric last tile may become Sweep-3 dead. **Unsafe** on SENGA2 (halo-depth crash). |
+| `OPS_FUSION_MAXLOOPS=N` | Flush the fused queue every N loops (`ops_execute`). 0 / unset = unlimited. The way to break a chain that is too long for leftover / Sweep 3. |
 | `SENGA_TILING_SPLIT=N` | SENGA2 only: insert `ops_execute` after named call sites (see the split experiment below). |
 | `-OPS_DIAGS=4` | `Executing tiling plan for N loops` — the plan sequence, one line per flush |
 | `-OPS_DIAGS=5` | Per-tile exec ranges after read/write deps, empty tiles, dataset deps |
@@ -340,7 +341,7 @@ So:
 
 The remaining analysis bug was leftover staying empty on a last-live tile when `begin >= natural_end` (WAW already covered that chunk). Sweep 3 then marked that tile dead too, until tile 0 was last live and Sweep 1 assigned the full owned range. **Default now:** last-live leftover still fills to the owned end (needed so a later `OPS_WRITE` can clear stacked halo `read_deps`); interior leftover tiles still stay empty when WAW already covers the natural chunk. Do not disable last-live expand: CloverLeaf then asks for an 11-deep halo and SENGA2 for 197-deep `DRHS`. Any further change still needs the CloverLeaf 7680² `PASSED` canary and the SENGA2 tiled-vs-untiled dump comparison.
 
-To rerun the 1-step matrix: `apps/fortran/SENGA2/senga_tiling_split.sh` (restores `input/cont.dat`). Rebuild `ops/fortran` after editing `ops_lazy.cpp`. `SENGA_TILING_SPLIT` and `OPS_MDIM_SKIP_WAW` default off.
+To rerun the 1-step matrix: `apps/fortran/SENGA2/senga_tiling_split.sh` (restores `input/cont.dat`). Rebuild `ops/fortran` after editing `ops_lazy.cpp`. `SENGA_TILING_SPLIT`, `OPS_MDIM_SKIP_WAW`, and `OPS_FUSION_MAXLOOPS` default off.
 
 ### Mini WAW app
 
@@ -352,6 +353,7 @@ To rerun the 1-step matrix: `apps/fortran/SENGA2/senga_tiling_split.sh` (restore
 |---|---|
 | `makefiles/Makefile.gnu` | `CXXFLAGS`; `-ffloat-store` costs ~1.7x on tiled runs |
 | `ops/c/src/core/ops_lazy.cpp` — `ops_construct_tile_plan` | Sweeps 1–3, leftover, terminal reads, tile skew / WAW-cause print, `OPS_MDIM_SKIP_WAW`, `OPS_SWEEP3_NO_CASCADE` |
+| `ops/c/src/core/ops_lazy.cpp` — `ops_enqueue_kernel` | `OPS_FUSION_MAXLOOPS` flush |
 | `ops/c/src/core/ops_lazy.cpp` — `ops_compute_mpi_dependencies` | `data_read_deps_edge` |
 | `ops/c/src/mpi/ops_mpi_rt_support.cpp` — `ops_halo_exchanges_datlist` | Pack/unpack using plan depths |
 | `apps/c/CloverLeaf` | Performance canary (many fused loops, small stencils) |
